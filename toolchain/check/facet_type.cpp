@@ -283,8 +283,8 @@ auto IsPeriodSelf(Context& context, SemIR::InstId inst_id) -> bool {
   return false;
 }
 
-// If `inst_id` is an `ImplWitnessAccess` into `.Self`, return it. Otherwise,
-// returns `nullopt`.
+// If `inst_id` is the ID of an `ImplWitnessAccess` into `.Self`, return it.
+// Otherwise, returns `nullopt`.
 static auto TryGetImplWitnessAccessOfPeriodSelf(Context& context,
                                                 SemIR::InstId inst_id)
     -> std::optional<SemIR::ImplWitnessAccess> {
@@ -326,14 +326,20 @@ static auto TryGetImplWitnessAccessOfPeriodSelf(Context& context,
 // `ImplWitnessAccess` will not loop infinitely.
 class SubstImplWitnessAccessCallbacks : public SubstInstCallbacks {
  public:
+  // The `facet_type_info` is for the facet whose rewrite constraints are being
+  // substituted, and where it looks for rewritten values to substitute from.
+  //
+  // The `substituting_constaint` is the rewrite constraint for which the RHS is
+  // being substituted with the value from another rewrite constraint, if
+  // possible. That is, `.Y = .X` in the example in the class docs.
   explicit SubstImplWitnessAccessCallbacks(
       Context* context, SemIR::LocId loc_id,
-      const SemIR::FacetTypeInfo* facet_type,
-      const SemIR::FacetTypeInfo::RewriteConstraint* current_constraint)
+      const SemIR::FacetTypeInfo* facet_type_info,
+      const SemIR::FacetTypeInfo::RewriteConstraint* substituting_constaint)
       : SubstInstCallbacks(context),
         loc_id_(loc_id),
-        facet_type_(facet_type),
-        current_constraint_(current_constraint) {}
+        facet_type_info_(facet_type_info),
+        substituting_constaint_(substituting_constaint) {}
 
   auto Subst(SemIR::InstId& rhs_inst_id) const -> bool override {
     if (context().constant_values().Get(rhs_inst_id).is_concrete()) {
@@ -350,7 +356,8 @@ class SubstImplWitnessAccessCallbacks : public SubstInstCallbacks {
     // algorithm with something more efficient for searching, such as a map.
     // However that would probably require heap allocations which may be worse
     // overall since the number of rewrite constraints is generally low.
-    for (const auto& search_constraint : facet_type().rewrite_constraints) {
+    for (const auto& search_constraint :
+         facet_type_info().rewrite_constraints) {
       auto search_lhs_access = TryGetImplWitnessAccessOfPeriodSelf(
           context(), search_constraint.lhs_id);
       if (!search_lhs_access) {
@@ -359,7 +366,7 @@ class SubstImplWitnessAccessCallbacks : public SubstInstCallbacks {
 
       if (search_lhs_access->witness_id == rhs_access->witness_id &&
           search_lhs_access->index == rhs_access->index) {
-        if (IsCurrentConstraint(search_constraint)) {
+        if (&search_constraint == substituting_constaint_) {
           if (search_constraint.rhs_id != SemIR::ErrorInst::InstId) {
             CARBON_DIAGNOSTIC(FacetTypeConstraintCycle, Error,
                               "found cycle in facet type constraint for {0}",
@@ -370,7 +377,7 @@ class SubstImplWitnessAccessCallbacks : public SubstInstCallbacks {
             // location along with them in the rewrite constraints, and track
             // propagation of locations here, which may imply heap allocations.
             context().emitter().Emit(loc_id_, FacetTypeConstraintCycle,
-                                     current_constraint_->lhs_id);
+                                     substituting_constaint_->lhs_id);
             rhs_inst_id = SemIR::ErrorInst::InstId;
           }
         } else {
@@ -389,34 +396,28 @@ class SubstImplWitnessAccessCallbacks : public SubstInstCallbacks {
   }
 
  private:
-  auto facet_type() const -> const SemIR::FacetTypeInfo& {
-    return *facet_type_;
-  }
-
-  auto IsCurrentConstraint(
-      const SemIR::FacetTypeInfo::RewriteConstraint& constraint) const -> bool {
-    return &constraint == current_constraint_;
+  auto facet_type_info() const -> const SemIR::FacetTypeInfo& {
+    return *facet_type_info_;
   }
 
   SemIR::LocId loc_id_;
-  const SemIR::FacetTypeInfo* facet_type_;
-  const SemIR::FacetTypeInfo::RewriteConstraint* current_constraint_;
+  const SemIR::FacetTypeInfo* facet_type_info_;
+  const SemIR::FacetTypeInfo::RewriteConstraint* substituting_constaint_;
 };
 
-auto ResolveRewriteConstraintsAndCanonicalize(Context& context,
-                                              SemIR::LocId loc_id,
-                                              SemIR::FacetTypeInfo& facet_type)
-    -> void {
+auto ResolveRewriteConstraintsAndCanonicalize(
+    Context& context, SemIR::LocId loc_id,
+    SemIR::FacetTypeInfo& facet_type_info) -> void {
   // This operation sorts and dedupes the rewrite constraints. They are sorted
   // primarily by the `lhs_id`, then by the `rhs_id`.
-  facet_type.Canonicalize();
+  facet_type_info.Canonicalize();
 
-  if (facet_type.rewrite_constraints.empty()) {
+  if (facet_type_info.rewrite_constraints.empty()) {
     return;
   }
 
-  for (size_t i = 0; i < facet_type.rewrite_constraints.size() - 1; ++i) {
-    auto& constraint = facet_type.rewrite_constraints[i];
+  for (size_t i = 0; i < facet_type_info.rewrite_constraints.size() - 1; ++i) {
+    auto& constraint = facet_type_info.rewrite_constraints[i];
     if (constraint.lhs_id == SemIR::ErrorInst::InstId ||
         constraint.rhs_id == SemIR::ErrorInst::InstId) {
       continue;
@@ -431,8 +432,8 @@ auto ResolveRewriteConstraintsAndCanonicalize(Context& context,
     // This loop moves `i` to the last position with the same LHS value, so that
     // we don't diagnose more than once within the same contiguous range of
     // assignments to a single LHS value.
-    for (; i < facet_type.rewrite_constraints.size() - 1; ++i) {
-      auto& next = facet_type.rewrite_constraints[i + 1];
+    for (; i < facet_type_info.rewrite_constraints.size() - 1; ++i) {
+      auto& next = facet_type_info.rewrite_constraints[i + 1];
       if (constraint.lhs_id != next.lhs_id) {
         break;
       }
@@ -462,7 +463,7 @@ auto ResolveRewriteConstraintsAndCanonicalize(Context& context,
   while (true) {
     bool applied_rewrite = false;
 
-    for (auto& constraint : facet_type.rewrite_constraints) {
+    for (auto& constraint : facet_type_info.rewrite_constraints) {
       if (constraint.lhs_id == SemIR::ErrorInst::InstId ||
           constraint.rhs_id == SemIR::ErrorInst::InstId) {
         continue;
@@ -479,8 +480,8 @@ auto ResolveRewriteConstraintsAndCanonicalize(Context& context,
       // constant being accessed in the RHS.
       auto subst_inst_id =
           SubstInst(context, constraint.rhs_id,
-                    SubstImplWitnessAccessCallbacks(&context, loc_id,
-                                                    &facet_type, &constraint));
+                    SubstImplWitnessAccessCallbacks(
+                        &context, loc_id, &facet_type_info, &constraint));
       if (subst_inst_id != constraint.rhs_id) {
         constraint.rhs_id = subst_inst_id;
         if (constraint.rhs_id != SemIR::ErrorInst::InstId) {
@@ -498,7 +499,7 @@ auto ResolveRewriteConstraintsAndCanonicalize(Context& context,
 
   // Canonicalize again, as we may have inserted errors into the rewrite
   // constraints, and these could change sorting order and need to be deduped.
-  facet_type.Canonicalize();
+  facet_type_info.Canonicalize();
 }
 
 }  // namespace Carbon::Check

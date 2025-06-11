@@ -278,8 +278,9 @@ interface I {
 
 class C(T:! type, U:! type);
 
-// TODO: This should fail, as it resolves to `.X1 = C(C(.X3, .X1), .X3)` which
-// is cyclical.
+// This fails because it resolves to `.X1 = C(C(.X3, .X1), .X3)` which is
+// cyclical.
+//
 // CHECK:STDERR: fail_complex_indirect_cycle.carbon:[[@LINE+4]]:10: error: found cycle in facet type constraint for `.(I.X1)` [FacetTypeConstraintCycle]
 // CHECK:STDERR: fn F(T:! I where .X1 = C(.X2, .X3) and .X2 = C(.X3, .X1));
 // CHECK:STDERR:          ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
