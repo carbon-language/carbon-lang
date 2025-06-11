@@ -15,7 +15,7 @@ namespace Carbon {
 
 // An optional override of argv0, particularly used by `//toolchain/carbon` to
 // get desired behavior without further special-casing.
-constexpr const char* Argv0OverrideEnv = "CARBON_ARGV0_OVERRIDE";
+inline constexpr const char* Argv0OverrideEnv = "CARBON_ARGV0_OVERRIDE";
 
 struct BusyboxInfo {
   // The path to `carbon-busybox`.

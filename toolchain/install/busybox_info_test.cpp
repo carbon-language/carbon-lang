@@ -311,14 +311,17 @@ TEST_F(BusyboxInfoTest, RejectSymlinkInUnrelatedInstall) {
 TEST_F(BusyboxInfoTest, EnvBinaryPathOverride) {
   // The test should not have this environment variable set.
   ASSERT_THAT(getenv(Argv0OverrideEnv), Eq(nullptr));
-  // Clean up this environment variable when this test finishes.
-  auto _ = llvm::make_scope_exit([] { unsetenv(Argv0OverrideEnv); });
 
   // Set the environment to our actual busybox.
   auto busybox = MakeBusyboxFile(dir_ / "carbon-busybox");
-  setenv(Argv0OverrideEnv, busybox.c_str(), /*overwrite=*/1);
 
+  setenv(Argv0OverrideEnv, busybox.c_str(), /*overwrite=*/1);
   auto info = GetBusyboxInfo("/some/nonexistent/path");
+  if (getenv(Argv0OverrideEnv)) {
+    unsetenv(Argv0OverrideEnv);
+    ADD_FAILURE() << "GetBusyboxInfo should unset Argv0OverrideEnv";
+  }
+
   ASSERT_TRUE(info.ok()) << info.error();
   EXPECT_THAT(info->bin_path, Eq(busybox));
   EXPECT_THAT(info->mode, Eq(std::nullopt));
