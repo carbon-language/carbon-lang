@@ -60,15 +60,13 @@ struct FunctionFields {
   // implicit_param_patterns_id from EntityWithParamsBase.
   InstId self_param_id = InstId::None;
 
-  union SpecialFunctionKindInfo {
-    // If special_function_kind is Builtin, the corresponding builtin kind.
-    // This member is set at the end of a builtin function definition.
-    BuiltinFunctionKind builtin_function_kind;
-
-    // If special_function_kind is Thunk, the declaration that this is a thunk
-    // for. This member is set when a thunk is declared.
-    InstId thunk_decl_id = InstId::None;
-  } special_function_kind_info;
+  // Data that is specific to the special function kind. This is:
+  //
+  //  - A `BuiltinFunctionKind builtin_function_kind;` for a builtin function.
+  //  - An `InstId thunk_decl_id;` for a thunk.
+  //
+  // Use `builtin_function_kind()` or `thunk_decl_id()` to access this.
+  AnyRawId special_function_kind_data = AnyRawId(AnyRawId::NoneIndex);
 
   // The following members are accumulated throughout the function definition.
 
@@ -115,7 +113,7 @@ struct Function : public EntityWithParamsBase,
   // a builtin function.
   auto builtin_function_kind() const -> BuiltinFunctionKind {
     return special_function_kind == SpecialFunctionKind::Builtin
-               ? special_function_kind_info.builtin_function_kind
+               ? BuiltinFunctionKind::FromInt(special_function_kind_data.index)
                : BuiltinFunctionKind::None;
   }
 
@@ -123,7 +121,7 @@ struct Function : public EntityWithParamsBase,
   // is not a thunk.
   auto thunk_decl_id() const -> InstId {
     return special_function_kind == SpecialFunctionKind::Thunk
-               ? special_function_kind_info.thunk_decl_id
+               ? InstId(special_function_kind_data.index)
                : InstId::None;
   }
 
@@ -150,14 +148,14 @@ struct Function : public EntityWithParamsBase,
   auto SetBuiltinFunction(BuiltinFunctionKind kind) -> void {
     CARBON_CHECK(special_function_kind == SpecialFunctionKind::None);
     special_function_kind = SpecialFunctionKind::Builtin;
-    special_function_kind_info.builtin_function_kind = kind;
+    special_function_kind_data = AnyRawId(kind.AsInt());
   }
 
   // Sets that this function is a thunk.
   auto SetThunk(InstId decl_id) -> void {
     CARBON_CHECK(special_function_kind == SpecialFunctionKind::None);
     special_function_kind = SpecialFunctionKind::Thunk;
-    special_function_kind_info.thunk_decl_id = decl_id;
+    special_function_kind_data = AnyRawId(decl_id.index);
   }
 };
 
