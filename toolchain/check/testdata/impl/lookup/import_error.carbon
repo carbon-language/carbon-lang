@@ -20,7 +20,7 @@ interface Z {
 // The value of .X is an error.
 final impl forall [T:! type] T as Z where .X = {} and .X = () {}
 
-// --- import_final.carbon
+// --- import_error.carbon
 library "[[@TEST_NAME]]";
 
 import library "error_interface_z";
