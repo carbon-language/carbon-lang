@@ -355,30 +355,22 @@ impl forall [N:! IntLiteral(), U:! ImplicitAs(UInt(N))]
 
 // Increment and decrement.
 
-// TODO: Add builtins for these and make them final. For now we provide
-// specializations for `u32` because we're not yet able to lower imported
-// generic functions.
+// TODO: Add builtins for these to avoid emitting a call.
 
 impl forall [N:! IntLiteral()] UInt(N) as Dec {
   fn Op[addr self: Self*]() {
-    *self -= 1;
+    // TODO: `*self -= 1;` should work, but fails because the `impl IntLiteral
+    // as ImplicitAs(Int(N))` is not final, which causes us to not attempt the
+    // conversion from `1` to `Int(N)` until runtime, when we've lost the
+    // constant value.
+    fn AsUInt(n: IntLiteral()) -> UInt(N) = "int.convert_checked";
+    *self -= AsUInt(1);
   }
 }
 
 impl forall [N:! IntLiteral()] UInt(N) as Inc {
   fn Op[addr self: Self*]() {
-    *self += 1;
-  }
-}
-
-impl u32 as Dec {
-  fn Op[addr self: Self*]() {
-    *self -= 1;
-  }
-}
-
-impl u32 as Inc {
-  fn Op[addr self: Self*]() {
-    *self += 1;
+    fn AsUInt(n: IntLiteral()) -> UInt(N) = "int.convert_checked";
+    *self += AsUInt(1);
   }
 }
