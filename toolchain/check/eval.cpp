@@ -580,12 +580,11 @@ static auto GetConstantValue(EvalContext& eval_context,
            GetConstantValue(eval_context, interface.specific_id, phase)});
 }
 
-// Like `GetConstantValue` but does a `FacetTypeId` -> `FacetTypeInfo`
-// conversion. Does not perform canonicalization.
+// Like `GetConstantValue` but for a `FacetTypeInfo`.
 static auto GetConstantFacetTypeInfo(EvalContext& eval_context,
-                                     SemIR::FacetTypeId facet_type_id,
+                                     SemIR::LocId loc_id,
+                                     const SemIR::FacetTypeInfo& orig,
                                      Phase* phase) -> SemIR::FacetTypeInfo {
-  const auto& orig = eval_context.facet_types().Get(facet_type_id);
   SemIR::FacetTypeInfo info;
   info.extend_constraints.reserve(orig.extend_constraints.size());
   for (const auto& interface : orig.extend_constraints) {
@@ -612,16 +611,18 @@ static auto GetConstantFacetTypeInfo(EvalContext& eval_context,
   }
   // TODO: Process other requirements.
   info.other_requirements = orig.other_requirements;
+
+  ResolveRewriteConstraintsAndCanonicalize(eval_context.context(), loc_id,
+                                           info);
   return info;
 }
 
 static auto GetConstantValue(EvalContext& eval_context,
                              SemIR::FacetTypeId facet_type_id, Phase* phase)
     -> SemIR::FacetTypeId {
-  SemIR::FacetTypeInfo info =
-      GetConstantFacetTypeInfo(eval_context, facet_type_id, phase);
-  ResolveRewriteConstraintsAndCanonicalize(eval_context.context(),
-                                           SemIR::LocId::None, info);
+  SemIR::FacetTypeInfo info = GetConstantFacetTypeInfo(
+      eval_context, SemIR::LocId::None,
+      eval_context.facet_types().Get(facet_type_id), phase);
   // TODO: Return `facet_type_id` if we can detect nothing has changed.
   return eval_context.facet_types().Add(info);
 }
@@ -1537,11 +1538,12 @@ static auto MakeConstantForBuiltinCall(EvalContext& eval_context,
         return context.types().GetConstantId(
             context.types().GetTypeIdForTypeInstId(arg_ids[0]));
       }
-      auto info = SemIR::FacetTypeInfo::Combine(
+      auto combined_info = SemIR::FacetTypeInfo::Combine(
           context.facet_types().Get(lhs_facet_type_id),
           context.facet_types().Get(rhs_facet_type_id));
-      ResolveRewriteConstraintsAndCanonicalize(context, loc_id, info);
-      return MakeFacetTypeResult(eval_context.context(), info, phase);
+      auto const_info =
+          GetConstantFacetTypeInfo(eval_context, loc_id, combined_info, &phase);
+      return MakeFacetTypeResult(eval_context.context(), const_info, phase);
     }
 
     case SemIR::BuiltinFunctionKind::IntLiteralMakeType: {
@@ -1969,7 +1971,7 @@ static auto IsPeriodSelf(EvalContext& eval_context, SemIR::ConstantId const_id)
   return false;
 }
 
-// TODO: Convert this to an EvalConstantInst instruction. This will require
+// TODO: Convert this to an EvalConstantInst function. This will require
 // providing a `GetConstantValue` overload for a requirement block.
 template <>
 auto TryEvalTypedInst<SemIR::WhereExpr>(EvalContext& eval_context,
@@ -1983,11 +1985,11 @@ auto TryEvalTypedInst<SemIR::WhereExpr>(EvalContext& eval_context,
   SemIR::Inst base_facet_inst =
       eval_context.types().GetAsInst(base_facet_type_id);
   SemIR::FacetTypeInfo info = {.other_requirements = false};
+
   // `where` provides that the base facet is an error, `type`, or a facet
   // type.
   if (auto facet_type = base_facet_inst.TryAs<SemIR::FacetType>()) {
-    info = GetConstantFacetTypeInfo(eval_context, facet_type->facet_type_id,
-                                    &phase);
+    info = eval_context.facet_types().Get(facet_type->facet_type_id);
   } else if (base_facet_type_id == SemIR::ErrorInst::TypeId) {
     return SemIR::ErrorInst::ConstantId;
   } else {
@@ -1995,35 +1997,33 @@ auto TryEvalTypedInst<SemIR::WhereExpr>(EvalContext& eval_context,
                  "Unexpected type_id: {0}, inst: {1}", base_facet_type_id,
                  base_facet_inst);
   }
+
+  // Add the constraints from the `WhereExpr` instruction into `info`.
   if (typed_inst.requirements_id.has_value()) {
     auto insts = eval_context.inst_blocks().Get(typed_inst.requirements_id);
     for (auto inst_id : insts) {
       if (auto rewrite =
               eval_context.insts().TryGetAs<SemIR::RequirementRewrite>(
                   inst_id)) {
-        // `where` requirements using `.Self` should not be considered
-        // symbolic.
-        auto lhs_id = GetConstantValueIgnoringPeriodSelf(
-            eval_context, rewrite->lhs_id, &phase);
-        auto rhs_id = GetConstantValueIgnoringPeriodSelf(
-            eval_context, rewrite->rhs_id, &phase);
         info.rewrite_constraints.push_back(
-            {.lhs_id = lhs_id, .rhs_id = rhs_id});
-      } else if (auto impls =
-                     eval_context.insts().TryGetAs<SemIR::RequirementImpls>(
-                         inst_id)) {
-        SemIR::ConstantId lhs = eval_context.GetConstantValue(impls->lhs_id);
-        SemIR::ConstantId rhs = eval_context.GetConstantValue(impls->rhs_id);
-        if (rhs != SemIR::ErrorInst::ConstantId &&
-            IsPeriodSelf(eval_context, lhs)) {
-          auto rhs_inst_id = eval_context.constant_values().GetInstId(rhs);
-          if (rhs_inst_id == SemIR::TypeType::TypeInstId) {
+            {.lhs_id = rewrite->lhs_id, .rhs_id = rewrite->rhs_id});
+        continue;
+      }
+
+      if (auto impls =
+              eval_context.insts().TryGetAs<SemIR::RequirementImpls>(inst_id)) {
+        if (impls->rhs_id != SemIR::ErrorInst::InstId &&
+            IsPeriodSelf(eval_context,
+                         eval_context.constant_values().Get(impls->lhs_id))) {
+          if (impls->rhs_id == SemIR::TypeType::TypeInstId) {
             // `.Self impls type` -> nothing to do.
+            continue;
           } else {
-            auto facet_type =
-                eval_context.insts().GetAs<SemIR::FacetType>(rhs_inst_id);
-            SemIR::FacetTypeInfo more_info = GetConstantFacetTypeInfo(
-                eval_context, facet_type.facet_type_id, &phase);
+            auto facet_type = eval_context.insts().GetAs<SemIR::FacetType>(
+                eval_context.constant_values().GetConstantInstId(
+                    impls->rhs_id));
+            const auto& more_info =
+                eval_context.facet_types().Get(facet_type.facet_type_id);
             // The way to prevent lookup into the interface requirements of a
             // facet type is to put it to the right of a `.Self impls`, which we
             // accomplish by putting them into `self_impls_constraints`.
@@ -2036,19 +2036,22 @@ auto TryEvalTypedInst<SemIR::WhereExpr>(EvalContext& eval_context,
                                more_info.rewrite_constraints);
             info.other_requirements |= more_info.other_requirements;
           }
-        } else {
-          // TODO: Handle `impls` constraints beyond `.Self impls`.
-          info.other_requirements = true;
+          continue;
         }
-      } else {
-        // TODO: Handle other requirements
+
+        // TODO: Handle `impls` constraints beyond `.Self impls`.
         info.other_requirements = true;
+        continue;
       }
+
+      // TODO: Handle other requirements
+      info.other_requirements = true;
     }
   }
-  ResolveRewriteConstraintsAndCanonicalize(eval_context.context(),
-                                           SemIR::LocId(inst_id), info);
-  return MakeFacetTypeResult(eval_context.context(), info, phase);
+
+  auto const_info = GetConstantFacetTypeInfo(
+      eval_context, SemIR::LocId(inst_id), info, &phase);
+  return MakeFacetTypeResult(eval_context.context(), const_info, phase);
 }
 
 // Implementation for `TryEvalInst`, wrapping `Context` with `EvalContext`.
