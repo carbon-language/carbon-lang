@@ -67,44 +67,6 @@ static auto DumpSpecificSummary(const File& file, SpecificId specific_id)
   return out.TakeStr();
 }
 
-LLVM_DUMP_METHOD auto Dump(const File& file, SemIR::LocId loc_id)
-    -> std::string {
-  RawStringOstream out;
-  // TODO: If the canonical location is None but the original is an InstId,
-  // should we dump the InstId anyway even though it has no location? Is that
-  // ever useful?
-  loc_id = file.insts().GetCanonicalLocId(loc_id);
-  switch (loc_id.kind()) {
-    case SemIR::LocId::Kind::None: {
-      out << "LocId(<none>)";
-      break;
-    }
-
-    case SemIR::LocId::Kind::ImportIRInstId: {
-      auto import_ir_id =
-          file.import_ir_insts().Get(loc_id.import_ir_inst_id()).ir_id();
-      const auto* import_file = file.import_irs().Get(import_ir_id).sem_ir;
-      out << "LocId(import from \"" << FormatEscaped(import_file->filename())
-          << "\")";
-      break;
-    }
-
-    case SemIR::LocId::Kind::NodeId: {
-      auto token = file.parse_tree().node_token(loc_id.node_id());
-      auto line = file.parse_tree().tokens().GetLineNumber(token);
-      auto col = file.parse_tree().tokens().GetColumnNumber(token);
-      const char* implicit = loc_id.is_desugared() ? " implicit" : "";
-      out << "LocId(" << FormatEscaped(file.filename()) << ":" << line << ":"
-          << col << implicit << ")";
-      break;
-    }
-
-    case SemIR::LocId::Kind::InstId:
-      CARBON_FATAL("unexpected LocId kind");
-  }
-  return out.TakeStr();
-}
-
 LLVM_DUMP_METHOD auto Dump(const File& file, ClassId class_id) -> std::string {
   RawStringOstream out;
   out << class_id;
@@ -276,6 +238,44 @@ LLVM_DUMP_METHOD auto Dump(const File& file, InterfaceId interface_id)
   if (interface_id.has_value()) {
     const auto& interface = file.interfaces().Get(interface_id);
     out << ": " << interface << DumpNameIfValid(file, interface.name_id);
+  }
+  return out.TakeStr();
+}
+
+LLVM_DUMP_METHOD auto Dump(const File& file, SemIR::LocId loc_id)
+    -> std::string {
+  RawStringOstream out;
+  // TODO: If the canonical location is None but the original is an InstId,
+  // should we dump the InstId anyway even though it has no location? Is that
+  // ever useful?
+  loc_id = file.insts().GetCanonicalLocId(loc_id);
+  switch (loc_id.kind()) {
+    case SemIR::LocId::Kind::None: {
+      out << "LocId(<none>)";
+      break;
+    }
+
+    case SemIR::LocId::Kind::ImportIRInstId: {
+      auto import_ir_id =
+          file.import_ir_insts().Get(loc_id.import_ir_inst_id()).ir_id();
+      const auto* import_file = file.import_irs().Get(import_ir_id).sem_ir;
+      out << "LocId(import from \"" << FormatEscaped(import_file->filename())
+          << "\")";
+      break;
+    }
+
+    case SemIR::LocId::Kind::NodeId: {
+      auto token = file.parse_tree().node_token(loc_id.node_id());
+      auto line = file.parse_tree().tokens().GetLineNumber(token);
+      auto col = file.parse_tree().tokens().GetColumnNumber(token);
+      const char* implicit = loc_id.is_desugared() ? " implicit" : "";
+      out << "LocId(" << FormatEscaped(file.filename()) << ":" << line << ":"
+          << col << implicit << ")";
+      break;
+    }
+
+    case SemIR::LocId::Kind::InstId:
+      CARBON_FATAL("unexpected LocId kind");
   }
   return out.TakeStr();
 }
