@@ -392,9 +392,8 @@ static auto RequireConstantValue(EvalContext& eval_context,
   }
 
   if (inst_id != SemIR::ErrorInst::InstId) {
-    CARBON_DIAGNOSTIC(
-        EvalRequiresConstantValue, Error,
-        "expression is runtime; expected constant");
+    CARBON_DIAGNOSTIC(EvalRequiresConstantValue, Error,
+                      "expression is runtime; expected constant");
     eval_context.emitter().Emit(eval_context.GetDiagnosticLoc({inst_id}),
                                 EvalRequiresConstantValue);
   }
