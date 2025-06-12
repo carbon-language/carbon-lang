@@ -2061,16 +2061,13 @@ auto TryEvalTypedInst<SemIR::WhereExpr>(EvalContext& eval_context,
                   inst_id)) {
         info.rewrite_constraints.push_back(
             {.lhs_id = rewrite->lhs_id, .rhs_id = rewrite->rhs_id});
-        continue;
-      }
-
-      if (auto impls =
-              eval_context.insts().TryGetAs<SemIR::RequirementImpls>(inst_id)) {
+      } else if (auto impls =
+                     eval_context.insts().TryGetAs<SemIR::RequirementImpls>(
+                         inst_id)) {
         if (IsPeriodSelf(eval_context,
                          eval_context.constant_values().Get(impls->lhs_id))) {
           if (impls->rhs_id == SemIR::TypeType::TypeInstId) {
             // `.Self impls type` -> nothing to do.
-            continue;
           } else if (auto facet_type =
                          eval_context.insts().TryGetAs<SemIR::FacetType>(
                              RequireConstantValue(eval_context, impls->rhs_id,
@@ -2089,16 +2086,14 @@ auto TryEvalTypedInst<SemIR::WhereExpr>(EvalContext& eval_context,
                                more_info.rewrite_constraints);
             info.other_requirements |= more_info.other_requirements;
           }
-          continue;
+        } else {
+          // TODO: Handle `impls` constraints beyond `.Self impls`.
+          info.other_requirements = true;
         }
-
-        // TODO: Handle `impls` constraints beyond `.Self impls`.
+      } else {
+        // TODO: Handle other requirements
         info.other_requirements = true;
-        continue;
       }
-
-      // TODO: Handle other requirements
-      info.other_requirements = true;
     }
   }
 
