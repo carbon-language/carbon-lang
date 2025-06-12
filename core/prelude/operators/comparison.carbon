@@ -7,6 +7,13 @@ package Core library "prelude/operators/comparison";
 export import library "prelude/types/bool";
 import library "prelude/types/int_literal";
 
+// TODO: Per the design, for each *With interface there should also be a
+// non-With named constraint, such as:
+//
+//   constraint Eq {
+//     extend require impls EqWith(Self);
+//   }
+
 // Equality comparison: `a == b` and `a != b`.
 interface EqWith(Other:! type) {
   fn Equal[self: Self](other: Other) -> bool;

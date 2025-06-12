@@ -11,6 +11,13 @@ import library "prelude/types/int_literal";
 //
 //   default let Result:! type = Self;
 
+// TODO: Per the design, for each *With interface there should also be a
+// non-With named constraint, such as:
+//
+//   constraint BitAnd {
+//     extend require impls BitAndWith(Self) where .Result = Self;
+//   }
+
 // Bit complement: `^a`.
 interface BitComplement {
   let Result:! type;

@@ -11,6 +11,13 @@ import library "prelude/types/int_literal";
 //
 //   default let Result:! type = Self;
 
+// TODO: Per the design, for each *With interface there should also be a
+// non-With named constraint, such as:
+//
+//   constraint Add {
+//     extend require impls AddWith(Self) where .Result = Self;
+//   }
+
 // Addition: `a + b`.
 interface AddWith(Other:! type) {
   let Result:! type;
