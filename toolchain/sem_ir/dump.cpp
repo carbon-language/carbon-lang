@@ -188,7 +188,7 @@ LLVM_DUMP_METHOD auto Dump(const File& file, ImplId impl_id) -> std::string {
         file.specifics().Get(impl.interface.specific_id).args_id;
     out << '\n' << Dump(file, inst_block_id);
   }
-  out << "\n  - witness loc: " << Dump(file, SemIR::LocId(impl.witness_id));
+  out << "\n  - witness loc: " << Dump(file, LocId(impl.witness_id));
   return out.TakeStr();
 }
 
@@ -227,7 +227,7 @@ LLVM_DUMP_METHOD auto Dump(const File& file, InstId inst_id) -> std::string {
       out << DumpConstantSummary(file, const_id);
     }
   }
-  out << "\n  - loc: " << Dump(file, SemIR::LocId(inst_id));
+  out << "\n  - loc: " << Dump(file, LocId(inst_id));
   return out.TakeStr();
 }
 
@@ -242,20 +242,19 @@ LLVM_DUMP_METHOD auto Dump(const File& file, InterfaceId interface_id)
   return out.TakeStr();
 }
 
-LLVM_DUMP_METHOD auto Dump(const File& file, SemIR::LocId loc_id)
-    -> std::string {
+LLVM_DUMP_METHOD auto Dump(const File& file, LocId loc_id) -> std::string {
   RawStringOstream out;
   // TODO: If the canonical location is None but the original is an InstId,
   // should we dump the InstId anyway even though it has no location? Is that
   // ever useful?
   loc_id = file.insts().GetCanonicalLocId(loc_id);
   switch (loc_id.kind()) {
-    case SemIR::LocId::Kind::None: {
+    case LocId::Kind::None: {
       out << "LocId(<none>)";
       break;
     }
 
-    case SemIR::LocId::Kind::ImportIRInstId: {
+    case LocId::Kind::ImportIRInstId: {
       auto import_ir_id =
           file.import_ir_insts().Get(loc_id.import_ir_inst_id()).ir_id();
       const auto* import_file = file.import_irs().Get(import_ir_id).sem_ir;
@@ -264,7 +263,7 @@ LLVM_DUMP_METHOD auto Dump(const File& file, SemIR::LocId loc_id)
       break;
     }
 
-    case SemIR::LocId::Kind::NodeId: {
+    case LocId::Kind::NodeId: {
       auto token = file.parse_tree().node_token(loc_id.node_id());
       auto line = file.parse_tree().tokens().GetLineNumber(token);
       auto col = file.parse_tree().tokens().GetColumnNumber(token);
@@ -274,7 +273,7 @@ LLVM_DUMP_METHOD auto Dump(const File& file, SemIR::LocId loc_id)
       break;
     }
 
-    case SemIR::LocId::Kind::InstId:
+    case LocId::Kind::InstId:
       CARBON_FATAL("unexpected LocId kind");
   }
   return out.TakeStr();
