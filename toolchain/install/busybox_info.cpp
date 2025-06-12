@@ -12,8 +12,9 @@
 namespace Carbon {
 
 // The mode is set to the initial filename used for `argv[0]`.
-static auto GetMode(const char* argv0) -> std::optional<std::string> {
-  std::string filename = std::filesystem::path(argv0).filename();
+static auto GetMode(const std::filesystem::path& argv0)
+    -> std::optional<std::string> {
+  std::string filename = argv0.filename();
   if (filename != "carbon" && filename != "carbon-busybox") {
     return filename;
   }
@@ -21,14 +22,18 @@ static auto GetMode(const char* argv0) -> std::optional<std::string> {
 }
 
 auto GetBusyboxInfo(const char* argv0) -> ErrorOr<BusyboxInfo> {
+  // Need storage due to `unsetenv` affecting `getenv` lifetime; using `path`
+  // for `GetMode`.
+  std::filesystem::path argv0_path = argv0;
+
   // Check for an override of `argv[0]` from the environment and apply it.
   if (const char* argv0_override = getenv(Argv0OverrideEnv)) {
-    argv0 = argv0_override;
+    argv0_path = argv0_override;
     unsetenv(Argv0OverrideEnv);
   }
 
-  BusyboxInfo info = {.bin_path = FindExecutablePath(argv0),
-                      .mode = GetMode(argv0)};
+  BusyboxInfo info = {.bin_path = FindExecutablePath(argv0_path.c_str()),
+                      .mode = GetMode(argv0_path)};
 
   if (info.bin_path.filename() == "carbon-busybox") {
     // Check for bazel structure. For example, this makes work:
