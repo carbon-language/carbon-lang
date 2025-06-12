@@ -10,6 +10,7 @@
 
 #include "common/command_line.h"
 #include "common/version.h"
+#include "toolchain/base/pretty_stack_trace_function.h"
 #include "toolchain/driver/clang_subcommand.h"
 #include "toolchain/driver/compile_subcommand.h"
 #include "toolchain/driver/format_subcommand.h"
@@ -100,6 +101,10 @@ applies to each message that forms a diagnostic, not just the primary message.
 }
 
 auto Driver::RunCommand(llvm::ArrayRef<llvm::StringRef> args) -> DriverResult {
+  PrettyStackTraceFunction trace_version([&](llvm::raw_ostream& out) {
+    out << "Carbon version: " << Version::String << "\n";
+  });
+
   if (driver_env_.installation->error()) {
     CARBON_DIAGNOSTIC(DriverInstallInvalid, Error, "{0}", std::string);
     driver_env_.emitter.Emit(DriverInstallInvalid,
