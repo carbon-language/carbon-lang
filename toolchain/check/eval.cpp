@@ -1546,9 +1546,13 @@ static auto MakeConstantForBuiltinCall(EvalContext& eval_context,
       auto combined_info = SemIR::FacetTypeInfo::Combine(
           context.facet_types().Get(lhs_facet_type_id),
           context.facet_types().Get(rhs_facet_type_id));
-      auto const_info =
-          GetConstantFacetTypeInfo(eval_context, loc_id, combined_info, &phase);
-      return MakeFacetTypeResult(eval_context.context(), const_info, phase);
+      if (!ResolveRewriteConstraintsAndCanonicalize(eval_context.context(),
+                                                    loc_id, combined_info)) {
+        // TODO: Should ResolveRewriteConstraintsAndCanonicalize() move into
+        // eval.cpp so it can set the Phase directly?
+        phase = Phase::UnknownDueToError;
+      }
+      return MakeFacetTypeResult(eval_context.context(), combined_info, phase);
     }
 
     case SemIR::BuiltinFunctionKind::IntLiteralMakeType: {
