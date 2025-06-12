@@ -191,18 +191,38 @@ Arithmetic operators can be provided for user-defined types by implementing the
 following family of interfaces:
 
 ```
+package Core;
+
 // Unary `-`.
-interface Negate {
-  default let Result:! type = Self;
-  fn Op[self: Self]() -> Result;
+interface NegatePrimitive[anchor Self:! NoRefForm] {
+  default let out ResultForm:! NoRefForm
+      = form(var Self);
+  fn Op[bound self:? Self]()
+      ->? ResultForm;
+
+}
+constraint Negate {
+  let Result:! type;
+  extend require form(let Self) impls
+      NegatePrimitive
+      where .ResultForm = form(var Result);
 }
 ```
 
 ```
 // Binary `+`.
-interface AddWith(U:! type) {
-  default let Result:! type = Self;
-  fn Op[self: Self](other: U) -> Result;
+interface AddWithPrimitive
+    [in Self:! NoRefForm](in U:! NoRefForm) {
+  default let out ResultForm:! NoRefForm
+      = form(var Self);
+  fn Op[self:? Self](other:? U)
+      ->? ResultForm;
+}
+constraint AddWith(U:! type) {
+  let Result:! type;
+  extend require form(let Self) impls
+      AddWithPrimitive
+      where .ResultForm = form(var Result);
 }
 constraint Add {
   extend AddWith(Self) where .Result = Self;
@@ -211,9 +231,18 @@ constraint Add {
 
 ```
 // Binary `-`.
-interface SubWith(U:! type) {
-  default let Result:! type = Self;
-  fn Op[self: Self](other: U) -> Result;
+interface SubWithPrimitive
+    [in Self:! NoRefForm](in U:! NoRefForm) {
+  default let out ResultForm:! NoRefForm
+      = form(var Self);
+  fn Op[self:? Self](other:? U)
+      ->? ResultForm;
+}
+constraint SubWith(U:! type) {
+  let Result:! type;
+  extend require form(let Self) impls
+      SubWithPrimitive
+      where .ResultForm = form(var Result);
 }
 constraint Sub {
   extend SubWith(Self) where .Result = Self;
@@ -222,9 +251,18 @@ constraint Sub {
 
 ```
 // Binary `*`.
-interface MulWith(U:! type) {
-  default let Result:! type = Self;
-  fn Op[self: Self](other: U) -> Result;
+interface MulWithPrimitive
+    [in Self:! NoRefForm](in U:! NoRefForm) {
+  default let out ResultForm:! NoRefForm
+      = form(var Self);
+  fn Op[self:? Self](other:? U)
+      ->? ResultForm;
+}
+constraint MulWith(U:! type) {
+  let Result:! type;
+  extend require form(let Self) impls
+      MulWithPrimitive
+      where .ResultForm = form(var Result);
 }
 constraint Mul {
   extend MulWith(Self) where .Result = Self;
@@ -233,9 +271,18 @@ constraint Mul {
 
 ```
 // Binary `/`.
-interface DivWith(U:! type) {
-  default let Result:! type = Self;
-  fn Op[self: Self](other: U) -> Result;
+interface DivWithPrimitive
+    [in Self:! NoRefForm](in U:! NoRefForm) {
+  default let out ResultForm:! NoRefForm
+      = form(var Self);
+  fn Op[self:? Self](other:? U)
+      ->? ResultForm;
+}
+constraint DivWith(U:! type) {
+  let Result:! type;
+  extend require form(let Self) impls
+      DivWithPrimitive
+      where .ResultForm = form(var Result);
 }
 constraint Div {
   extend DivWith(Self) where .Result = Self;
@@ -244,23 +291,37 @@ constraint Div {
 
 ```
 // Binary `%`.
-interface ModWith(U:! type) {
-  default let Result:! type = Self;
-  fn Op[self: Self](other: U) -> Result;
+interface ModWithPrimitive
+    [in Self:! NoRefForm](in U:! NoRefForm) {
+  default let out ResultForm:! NoRefForm
+      = form(var Self);
+  fn Op[self:? Self](other:? U)
+      ->? ResultForm;
+}
+constraint ModWith(U:! type) {
+  let Result:! type;
+  extend require form(let Self) impls
+      ModWithPrimitive
+      where .ResultForm = form(var Result);
 }
 constraint Mod {
   extend ModWith(Self) where .Result = Self;
 }
 ```
 
-Given `x: T` and `y: U`:
+These interfaces are used to rewrite uses of arithmetic operators:
 
--   The expression `-x` is rewritten to `x.(Negate.Op)()`.
--   The expression `x + y` is rewritten to `x.(AddWith(U).Op)(y)`.
--   The expression `x - y` is rewritten to `x.(SubWith(U).Op)(y)`.
--   The expression `x * y` is rewritten to `x.(MulWith(U).Op)(y)`.
--   The expression `x / y` is rewritten to `x.(DivWith(U).Op)(y)`.
--   The expression `x % y` is rewritten to `x.(ModWith(U).Op)(y)`.
+-   The expression `-x` is rewritten to `x.(NegatePrimitive.Op)()`.
+-   The expression `x + y` is rewritten to
+    `x.(AddWithPrimitive(formof(y)).Op)(y)`.
+-   The expression `x - y` is rewritten to
+    `x.(SubWithPrimitive(formof(y)).Op)(y)`.
+-   The expression `x * y` is rewritten to
+    `x.(MulWithPrimitive(formof(y)).Op)(y)`.
+-   The expression `x / y` is rewritten to
+    `x.(DivWithPrimitive(formof(y)).Op)(y)`.
+-   The expression `x % y` is rewritten to
+    `x.(ModWithPrimitive(formof(y)).Op)(y)`.
 
 Implementations of these interfaces are provided for built-in types as necessary
 to give the semantics described above.

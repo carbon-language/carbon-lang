@@ -208,10 +208,13 @@ which extends
 or the `ImplicitAs` named constraint:
 
 ```
-interface ImplicitAsPrimitive(Dest:! type) {
+package Core;
+
+interface ImplicitAsPrimitive
+    [in Self:! Form](Dest:! type) {
   final extend impl as AsPrimitive(Dest);
   // Inherited from AsPrimitive(Dest):
-  // let ResultForm:! Form where .type = Dest;
+  // let out ResultForm:! Form where .type = Dest;
   // fn Convert[bound self:? Self]()
   //     ->? ResultForm;
 }

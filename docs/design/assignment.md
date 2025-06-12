@@ -211,7 +211,8 @@ constraint AddAssign {
 
 ```
 // Compound `-=`.
-interface SubAssignWithPrimitive(in U:! NoRefForm) {
+interface SubAssignWithPrimitive
+    (in U:! NoRefForm) {
   fn Op[ref self: Self](other:? U);
 }
 constraint SubAssignWith(U:! type) {
@@ -225,7 +226,8 @@ constraint SubAssign {
 
 ```
 // Compound `*=`.
-interface MulAssignWithPrimitive(in U:! NoRefForm) {
+interface MulAssignWithPrimitive
+    (in U:! NoRefForm) {
   fn Op[ref self: Self](other:? U);
 }
 constraint MulAssignWith(U:! type) {
@@ -239,7 +241,8 @@ constraint MulAssign {
 
 ```
 // Compound `/=`.
-interface DivAssignWithPrimitive(in U:! NoRefForm) {
+interface DivAssignWithPrimitive
+    (in U:! NoRefForm) {
   fn Op[ref self: Self](other:? U);
 }
 constraint DivAssignWith(U:! type) {
@@ -253,7 +256,8 @@ constraint DivAssign {
 
 ```
 // Compound `%=`.
-interface ModAssignWithPrimitive(in U:! NoRefForm) {
+interface ModAssignWithPrimitive
+    (in U:! NoRefForm) {
   fn Op[ref self: Self](other:? U);
 }
 constraint ModAssignWith(U:! type) {

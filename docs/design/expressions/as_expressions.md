@@ -167,9 +167,9 @@ Explicit casts can be defined for user-defined types such as
 ```
 package Core;
 
-interface AsPrimitive[Self: Form]
+interface AsPrimitive[in Self:! Form]
     (Dest:! type) {
-  let ResultForm:! Form where .type = Dest;
+  let out ResultForm:! Form where .type = Dest;
   fn Convert[bound self:? Self]()
       ->? ResultForm;
 }
