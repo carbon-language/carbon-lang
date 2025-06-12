@@ -599,8 +599,8 @@ fn CallF() {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.IntLiteral: %IntLiteral.type = import_ref Core//prelude/types/int_literal, IntLiteral, loaded [concrete = constants.%IntLiteral]
 // CHECK:STDOUT:   %Core.Negate: type = import_ref Core//prelude/operators/arithmetic, Negate, loaded [concrete = constants.%Negate.type]
-// CHECK:STDOUT:   %Core.import_ref.abd = import_ref Core//prelude/operators/arithmetic, loc104_50, unloaded
-// CHECK:STDOUT:   %Core.import_ref.5e6: %Op.type.18a = import_ref Core//prelude/operators/arithmetic, loc105_31, loaded [concrete = constants.%Op.99f]
+// CHECK:STDOUT:   %Core.import_ref.abd = import_ref Core//prelude/operators/arithmetic, loc111_50, unloaded
+// CHECK:STDOUT:   %Core.import_ref.5e6: %Op.type.18a = import_ref Core//prelude/operators/arithmetic, loc112_31, loaded [concrete = constants.%Op.99f]
 // CHECK:STDOUT:   %Negate.impl_witness_table = impl_witness_table (%Core.import_ref.abd, %Core.import_ref.5e6), @impl.0ef [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

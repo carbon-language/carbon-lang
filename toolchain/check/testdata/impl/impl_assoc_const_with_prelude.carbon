@@ -121,12 +121,12 @@ impl () as I where .X = {.a = true, .b = (1, 2)} and .X = {.a = false, .b = (3, 
 // CHECK:STDOUT:   %Core.import_ref.a5b: @impl.4f9.%Convert.type (%Convert.type.0f9) = import_ref Core//prelude/types/int, loc19_39, loaded [symbolic = @impl.4f9.%Convert (constants.%Convert.f06)]
 // CHECK:STDOUT:   %ImplicitAs.impl_witness_table.a2f = impl_witness_table (%Core.import_ref.a5b), @impl.4f9 [concrete]
 // CHECK:STDOUT:   %Core.SubWith: %SubWith.type.378 = import_ref Core//prelude/operators/arithmetic, SubWith, loaded [concrete = constants.%SubWith.generic]
-// CHECK:STDOUT:   %Core.import_ref.abd97d.1 = import_ref Core//prelude/operators/arithmetic, loc108_57, unloaded
-// CHECK:STDOUT:   %Core.import_ref.252: %Op.type.ff7 = import_ref Core//prelude/operators/arithmetic, loc109_42, loaded [concrete = constants.%Op.9f1]
+// CHECK:STDOUT:   %Core.import_ref.abd97d.1 = import_ref Core//prelude/operators/arithmetic, loc115_57, unloaded
+// CHECK:STDOUT:   %Core.import_ref.252: %Op.type.ff7 = import_ref Core//prelude/operators/arithmetic, loc116_42, loaded [concrete = constants.%Op.9f1]
 // CHECK:STDOUT:   %SubWith.impl_witness_table.ad5 = impl_witness_table (%Core.import_ref.abd97d.1, %Core.import_ref.252), @impl.e41 [concrete]
 // CHECK:STDOUT:   %Core.DivWith: %DivWith.type.fc9 = import_ref Core//prelude/operators/arithmetic, DivWith, loaded [concrete = constants.%DivWith.generic]
-// CHECK:STDOUT:   %Core.import_ref.abd97d.2 = import_ref Core//prelude/operators/arithmetic, loc92_57, unloaded
-// CHECK:STDOUT:   %Core.import_ref.0316: %Op.type.c21 = import_ref Core//prelude/operators/arithmetic, loc93_42, loaded [concrete = constants.%Op.32d]
+// CHECK:STDOUT:   %Core.import_ref.abd97d.2 = import_ref Core//prelude/operators/arithmetic, loc99_57, unloaded
+// CHECK:STDOUT:   %Core.import_ref.0316: %Op.type.c21 = import_ref Core//prelude/operators/arithmetic, loc100_42, loaded [concrete = constants.%Op.32d]
 // CHECK:STDOUT:   %DivWith.impl_witness_table.cc4 = impl_witness_table (%Core.import_ref.abd97d.2, %Core.import_ref.0316), @impl.ba5 [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

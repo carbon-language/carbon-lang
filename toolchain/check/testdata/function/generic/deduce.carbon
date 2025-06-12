@@ -1861,8 +1861,8 @@ fn F() {
 // CHECK:STDOUT:     import Core//prelude/...
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.BitAndWith: %BitAndWith.type.f2e = import_ref Core//prelude/operators/bitwise, BitAndWith, loaded [concrete = constants.%BitAndWith.generic]
-// CHECK:STDOUT:   %Core.import_ref.ad2 = import_ref Core//prelude/operators/bitwise, loc106_52, unloaded
-// CHECK:STDOUT:   %Core.import_ref.0f9: %Op.type.c6f = import_ref Core//prelude/operators/bitwise, loc107_42, loaded [concrete = constants.%Op.a92]
+// CHECK:STDOUT:   %Core.import_ref.ad2 = import_ref Core//prelude/operators/bitwise, loc113_52, unloaded
+// CHECK:STDOUT:   %Core.import_ref.0f9: %Op.type.c6f = import_ref Core//prelude/operators/bitwise, loc114_42, loaded [concrete = constants.%Op.a92]
 // CHECK:STDOUT:   %BitAndWith.impl_witness_table = impl_witness_table (%Core.import_ref.ad2, %Core.import_ref.0f9), @impl.ee8 [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

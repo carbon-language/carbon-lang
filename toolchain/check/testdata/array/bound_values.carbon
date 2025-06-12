@@ -83,8 +83,8 @@ var b: array(1, 39999999999999999993);
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
-// CHECK:STDOUT:   %Core.import_ref.abd9 = import_ref Core//prelude/operators/arithmetic, loc88_57, unloaded
-// CHECK:STDOUT:   %Core.import_ref.d10: %Op.type.b60 = import_ref Core//prelude/operators/arithmetic, loc89_42, loaded [concrete = constants.%Op.14b]
+// CHECK:STDOUT:   %Core.import_ref.abd9 = import_ref Core//prelude/operators/arithmetic, loc95_57, unloaded
+// CHECK:STDOUT:   %Core.import_ref.d10: %Op.type.b60 = import_ref Core//prelude/operators/arithmetic, loc96_42, loaded [concrete = constants.%Op.14b]
 // CHECK:STDOUT:   %AddWith.impl_witness_table.255 = impl_witness_table (%Core.import_ref.abd9, %Core.import_ref.d10), @impl.013 [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

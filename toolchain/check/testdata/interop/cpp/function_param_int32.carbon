@@ -689,8 +689,8 @@ fn F() {
 // CHECK:STDOUT:     %a: %i32 = bind_name a, %a.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.Negate: type = import_ref Core//prelude/operators/arithmetic, Negate, loaded [concrete = constants.%Negate.type]
-// CHECK:STDOUT:   %Core.import_ref.abd9 = import_ref Core//prelude/operators/arithmetic, loc104_50, unloaded
-// CHECK:STDOUT:   %Core.import_ref.5e6a: %Op.type.18a = import_ref Core//prelude/operators/arithmetic, loc105_31, loaded [concrete = constants.%Op.99f]
+// CHECK:STDOUT:   %Core.import_ref.abd9 = import_ref Core//prelude/operators/arithmetic, loc111_50, unloaded
+// CHECK:STDOUT:   %Core.import_ref.5e6a: %Op.type.18a = import_ref Core//prelude/operators/arithmetic, loc112_31, loaded [concrete = constants.%Op.99f]
 // CHECK:STDOUT:   %Negate.impl_witness_table.b22 = impl_witness_table (%Core.import_ref.abd9, %Core.import_ref.5e6a), @impl.0ef [concrete]
 // CHECK:STDOUT:   %Core.ImplicitAs: %ImplicitAs.type.cc7 = import_ref Core//prelude/operators/as, ImplicitAs, loaded [concrete = constants.%ImplicitAs.generic]
 // CHECK:STDOUT:   %Core.import_ref.a5b: @impl.4f9.%Convert.type (%Convert.type.0f9) = import_ref Core//prelude/types/int, loc19_39, loaded [symbolic = @impl.4f9.%Convert (constants.%Convert.f06)]
@@ -799,8 +799,8 @@ fn F() {
 // CHECK:STDOUT:     %a: %i32 = bind_name a, %a.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.Negate: type = import_ref Core//prelude/operators/arithmetic, Negate, loaded [concrete = constants.%Negate.type]
-// CHECK:STDOUT:   %Core.import_ref.abd9 = import_ref Core//prelude/operators/arithmetic, loc104_50, unloaded
-// CHECK:STDOUT:   %Core.import_ref.5e6a: %Op.type.18a = import_ref Core//prelude/operators/arithmetic, loc105_31, loaded [concrete = constants.%Op.99f]
+// CHECK:STDOUT:   %Core.import_ref.abd9 = import_ref Core//prelude/operators/arithmetic, loc111_50, unloaded
+// CHECK:STDOUT:   %Core.import_ref.5e6a: %Op.type.18a = import_ref Core//prelude/operators/arithmetic, loc112_31, loaded [concrete = constants.%Op.99f]
 // CHECK:STDOUT:   %Negate.impl_witness_table.b22 = impl_witness_table (%Core.import_ref.abd9, %Core.import_ref.5e6a), @impl.0ef [concrete]
 // CHECK:STDOUT:   %Core.ImplicitAs: %ImplicitAs.type.cc7 = import_ref Core//prelude/operators/as, ImplicitAs, loaded [concrete = constants.%ImplicitAs.generic]
 // CHECK:STDOUT:   %Core.import_ref.a5b: @impl.4f9.%Convert.type (%Convert.type.0f9) = import_ref Core//prelude/types/int, loc19_39, loaded [symbolic = @impl.4f9.%Convert (constants.%Convert.f06)]
