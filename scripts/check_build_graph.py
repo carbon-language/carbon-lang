@@ -9,15 +9,14 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 """
 
 import subprocess
-import sys
 
 import scripts_utils
 
 
-def main() -> int:
+def main() -> None:
     scripts_utils.chdir_repo_root()
     bazel = scripts_utils.locate_bazel()
-    sys.exit(subprocess.run([bazel, "build", "--nobuild", "//..."]).returncode)
+    subprocess.check_call([bazel, "build", "--nobuild", "//..."])
 
 
 if __name__ == "__main__":
