@@ -26,6 +26,7 @@
 #include "toolchain/sem_ir/generic.h"
 #include "toolchain/sem_ir/id_kind.h"
 #include "toolchain/sem_ir/ids.h"
+#include "toolchain/sem_ir/inst_categories.h"
 #include "toolchain/sem_ir/inst_kind.h"
 #include "toolchain/sem_ir/typed_insts.h"
 
@@ -619,7 +620,8 @@ static auto GetConstantValue(EvalContext& eval_context,
     -> SemIR::FacetTypeId {
   SemIR::FacetTypeInfo info =
       GetConstantFacetTypeInfo(eval_context, facet_type_id, phase);
-  info.Canonicalize();
+  ResolveRewriteConstraintsAndCanonicalize(eval_context.context(),
+                                           SemIR::LocId::None, info);
   // TODO: Return `facet_type_id` if we can detect nothing has changed.
   return eval_context.facet_types().Add(info);
 }
@@ -1538,7 +1540,7 @@ static auto MakeConstantForBuiltinCall(EvalContext& eval_context,
       auto info = SemIR::FacetTypeInfo::Combine(
           context.facet_types().Get(lhs_facet_type_id),
           context.facet_types().Get(rhs_facet_type_id));
-      info.Canonicalize();
+      ResolveRewriteConstraintsAndCanonicalize(context, loc_id, info);
       return MakeFacetTypeResult(eval_context.context(), info, phase);
     }
 
@@ -1716,7 +1718,7 @@ static auto MakeConstantForCall(EvalContext& eval_context,
     // Calls to builtins might be constant.
     builtin_kind = eval_context.functions()
                        .Get(callee_function.function_id)
-                       .builtin_function_kind;
+                       .builtin_function_kind();
     if (builtin_kind == SemIR::BuiltinFunctionKind::None) {
       // TODO: Eventually we'll want to treat some kinds of non-builtin
       // functions as producing constants.
@@ -1971,8 +1973,8 @@ static auto IsPeriodSelf(EvalContext& eval_context, SemIR::ConstantId const_id)
 // providing a `GetConstantValue` overload for a requirement block.
 template <>
 auto TryEvalTypedInst<SemIR::WhereExpr>(EvalContext& eval_context,
-                                        SemIR::InstId /*inst_id*/,
-                                        SemIR::Inst inst) -> SemIR::ConstantId {
+                                        SemIR::InstId inst_id, SemIR::Inst inst)
+    -> SemIR::ConstantId {
   auto typed_inst = inst.As<SemIR::WhereExpr>();
 
   Phase phase = Phase::Concrete;
@@ -2044,7 +2046,8 @@ auto TryEvalTypedInst<SemIR::WhereExpr>(EvalContext& eval_context,
       }
     }
   }
-  info.Canonicalize();
+  ResolveRewriteConstraintsAndCanonicalize(eval_context.context(),
+                                           SemIR::LocId(inst_id), info);
   return MakeFacetTypeResult(eval_context.context(), info, phase);
 }
 

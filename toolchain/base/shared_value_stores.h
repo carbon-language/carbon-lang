@@ -55,6 +55,7 @@ class SharedValueStores : public Yaml::Printable<SharedValueStores> {
               Yaml::OutputMapping([&](Yaml::OutputMapping::Map map) {
                 map.Add("ints", ints_.OutputYaml());
                 map.Add("reals", reals_.OutputYaml());
+                map.Add("floats", floats_.OutputYaml());
                 map.Add("identifiers", identifiers_.OutputYaml());
                 map.Add("strings", string_literals_.OutputYaml());
               }));

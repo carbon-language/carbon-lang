@@ -2,8 +2,7 @@
 // Exceptions. See /LICENSE for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
-// TODO: Add ranges and switch to "--dump-sem-ir-ranges=only".
-// EXTRA-ARGS: --no-prelude-import --dump-sem-ir-ranges=if-present
+// EXTRA-ARGS: --no-prelude-import
 //
 // AUTOUPDATE
 // TIP: To test this file alone, run:
@@ -26,7 +25,9 @@ library "[[@TEST_NAME]]";
 import Cpp library "global.h";
 
 fn MyF() {
+  //@dump-sem-ir-begin
   Cpp.foo();
+  //@dump-sem-ir-end
 }
 
 // --- fail_import_global_use_different_name.carbon
@@ -72,7 +73,9 @@ library "[[@TEST_NAME]]";
 import Cpp library "special_name.h";
 
 fn MyF() {
+  //@dump-sem-ir-begin
   Cpp.r#base();
+  //@dump-sem-ir-end
 }
 
 // ============================================================================
@@ -91,6 +94,7 @@ library "[[@TEST_NAME]]";
 import Cpp library "overloaded.h";
 
 fn F() {
+  //@dump-sem-ir-begin
   // CHECK:STDERR: fail_todo_import_overloaded.carbon:[[@LINE+7]]:3: error: semantics TODO: `Unsupported: Lookup succeeded but couldn't find a single result; LookupResultKind: 3` [SemanticsTodo]
   // CHECK:STDERR:   Cpp.foo();
   // CHECK:STDERR:   ^~~~~~~
@@ -99,6 +103,7 @@ fn F() {
   // CHECK:STDERR:   ^~~~~~~
   // CHECK:STDERR:
   Cpp.foo();
+  //@dump-sem-ir-end
 }
 
 // ============================================================================
@@ -116,6 +121,7 @@ library "[[@TEST_NAME]]";
 import Cpp library "variadic.h";
 
 fn F() {
+  //@dump-sem-ir-begin
   // CHECK:STDERR: fail_todo_import_variadic.carbon:[[@LINE+7]]:3: error: semantics TODO: `Unsupported: Variadic function` [SemanticsTodo]
   // CHECK:STDERR:   Cpp.foo();
   // CHECK:STDERR:   ^~~~~~~
@@ -124,6 +130,7 @@ fn F() {
   // CHECK:STDERR:   ^~~~~~~
   // CHECK:STDERR:
   Cpp.foo();
+  //@dump-sem-ir-end
 }
 
 // ============================================================================
@@ -141,6 +148,7 @@ library "[[@TEST_NAME]]";
 import Cpp library "static.h";
 
 fn F() {
+  //@dump-sem-ir-begin
   // CHECK:STDERR: fail_todo_import_static.carbon:[[@LINE+7]]:3: error: semantics TODO: `Unsupported: Non-global function` [SemanticsTodo]
   // CHECK:STDERR:   Cpp.foo();
   // CHECK:STDERR:   ^~~~~~~
@@ -149,6 +157,7 @@ fn F() {
   // CHECK:STDERR:   ^~~~~~~
   // CHECK:STDERR:
   Cpp.foo();
+  //@dump-sem-ir-end
 }
 
 // TODO: Test that template functions are unsupported.
@@ -161,149 +170,54 @@ fn F() {
 // CHECK:STDOUT: --- import_global.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
-// CHECK:STDOUT:   %MyF.type: type = fn_type @MyF [concrete]
 // CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [concrete]
-// CHECK:STDOUT:   %MyF: %MyF.type = struct_value () [concrete]
 // CHECK:STDOUT:   %foo.type: type = fn_type @foo [concrete]
 // CHECK:STDOUT:   %foo: %foo.type = struct_value () [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT:   %Cpp: <namespace> = namespace file.%Cpp.import_cpp, [concrete] {
-// CHECK:STDOUT:     .foo = @MyF.%foo.decl
+// CHECK:STDOUT:     .foo = %foo.decl
 // CHECK:STDOUT:     import Cpp//...
 // CHECK:STDOUT:   }
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: file {
-// CHECK:STDOUT:   package: <namespace> = namespace [concrete] {
-// CHECK:STDOUT:     .Cpp = imports.%Cpp
-// CHECK:STDOUT:     .MyF = %MyF.decl
-// CHECK:STDOUT:   }
-// CHECK:STDOUT:   %Cpp.import_cpp = import_cpp {
-// CHECK:STDOUT:     import Cpp "global.h"
-// CHECK:STDOUT:   }
-// CHECK:STDOUT:   %MyF.decl: %MyF.type = fn_decl @MyF [concrete = constants.%MyF] {} {}
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: fn @MyF() {
-// CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %Cpp.ref: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
 // CHECK:STDOUT:   %foo.decl: %foo.type = fn_decl @foo [concrete = constants.%foo] {} {}
-// CHECK:STDOUT:   %foo.ref: %foo.type = name_ref foo, %foo.decl [concrete = constants.%foo]
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: fn @MyF() {
+// CHECK:STDOUT: !entry:
+// CHECK:STDOUT:   %Cpp.ref: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
+// CHECK:STDOUT:   %foo.ref: %foo.type = name_ref foo, imports.%foo.decl [concrete = constants.%foo]
 // CHECK:STDOUT:   %foo.call: init %empty_tuple.type = call %foo.ref()
-// CHECK:STDOUT:   return
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: fn @foo();
-// CHECK:STDOUT:
-// CHECK:STDOUT: --- fail_import_global_use_different_name.carbon
-// CHECK:STDOUT:
-// CHECK:STDOUT: constants {
-// CHECK:STDOUT:   %MyF.type: type = fn_type @MyF [concrete]
-// CHECK:STDOUT:   %MyF: %MyF.type = struct_value () [concrete]
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: imports {
-// CHECK:STDOUT:   %Cpp: <namespace> = namespace file.%Cpp.import_cpp, [concrete] {
-// CHECK:STDOUT:     .bar = <poisoned>
-// CHECK:STDOUT:     import Cpp//...
-// CHECK:STDOUT:   }
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: file {
-// CHECK:STDOUT:   package: <namespace> = namespace [concrete] {
-// CHECK:STDOUT:     .Cpp = imports.%Cpp
-// CHECK:STDOUT:     .MyF = %MyF.decl
-// CHECK:STDOUT:   }
-// CHECK:STDOUT:   %Cpp.import_cpp = import_cpp {
-// CHECK:STDOUT:     import Cpp "global.h"
-// CHECK:STDOUT:   }
-// CHECK:STDOUT:   %MyF.decl: %MyF.type = fn_decl @MyF [concrete = constants.%MyF] {} {}
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: fn @MyF() {
-// CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %Cpp.ref: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
-// CHECK:STDOUT:   %bar.ref: <error> = name_ref bar, <error> [concrete = <error>]
-// CHECK:STDOUT:   return
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: --- fail_import_special_name_call_unescaped.carbon
-// CHECK:STDOUT:
-// CHECK:STDOUT: constants {
-// CHECK:STDOUT:   %MyF.type: type = fn_type @MyF [concrete]
-// CHECK:STDOUT:   %MyF: %MyF.type = struct_value () [concrete]
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: imports {
-// CHECK:STDOUT:   %Cpp: <namespace> = namespace file.%Cpp.import_cpp, [concrete] {
-// CHECK:STDOUT:     import Cpp//...
-// CHECK:STDOUT:   }
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: file {
-// CHECK:STDOUT:   package: <namespace> = namespace [concrete] {
-// CHECK:STDOUT:     .Cpp = imports.%Cpp
-// CHECK:STDOUT:     .MyF = %MyF.decl
-// CHECK:STDOUT:   }
-// CHECK:STDOUT:   %Cpp.import_cpp = import_cpp {
-// CHECK:STDOUT:     import Cpp "special_name.h"
-// CHECK:STDOUT:   }
-// CHECK:STDOUT:   %MyF.decl: %MyF.type = fn_decl @MyF [concrete = constants.%MyF] {} {}
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: fn @MyF() {
-// CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %Cpp.ref: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
-// CHECK:STDOUT:   %base.ref: <error> = name_ref base, <error> [concrete = <error>]
-// CHECK:STDOUT:   return
+// CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- import_special_name_call_escaped.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
-// CHECK:STDOUT:   %MyF.type: type = fn_type @MyF [concrete]
 // CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [concrete]
-// CHECK:STDOUT:   %MyF: %MyF.type = struct_value () [concrete]
 // CHECK:STDOUT:   %base.type: type = fn_type @base [concrete]
 // CHECK:STDOUT:   %base: %base.type = struct_value () [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT:   %Cpp: <namespace> = namespace file.%Cpp.import_cpp, [concrete] {
-// CHECK:STDOUT:     .r#base = @MyF.%base.decl
+// CHECK:STDOUT:     .r#base = %base.decl
 // CHECK:STDOUT:     import Cpp//...
 // CHECK:STDOUT:   }
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: file {
-// CHECK:STDOUT:   package: <namespace> = namespace [concrete] {
-// CHECK:STDOUT:     .Cpp = imports.%Cpp
-// CHECK:STDOUT:     .MyF = %MyF.decl
-// CHECK:STDOUT:   }
-// CHECK:STDOUT:   %Cpp.import_cpp = import_cpp {
-// CHECK:STDOUT:     import Cpp "special_name.h"
-// CHECK:STDOUT:   }
-// CHECK:STDOUT:   %MyF.decl: %MyF.type = fn_decl @MyF [concrete = constants.%MyF] {} {}
+// CHECK:STDOUT:   %base.decl: %base.type = fn_decl @base [concrete = constants.%base] {} {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @MyF() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %Cpp.ref: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
-// CHECK:STDOUT:   %base.decl: %base.type = fn_decl @base [concrete = constants.%base] {} {}
-// CHECK:STDOUT:   %base.ref: %base.type = name_ref r#base, %base.decl [concrete = constants.%base]
+// CHECK:STDOUT:   %base.ref: %base.type = name_ref r#base, imports.%base.decl [concrete = constants.%base]
 // CHECK:STDOUT:   %base.call: init %empty_tuple.type = call %base.ref()
-// CHECK:STDOUT:   return
+// CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: fn @base();
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- fail_todo_import_overloaded.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
-// CHECK:STDOUT:   %F.type: type = fn_type @F [concrete]
-// CHECK:STDOUT:   %F: %F.type = struct_value () [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -313,29 +227,16 @@ fn F() {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: file {
-// CHECK:STDOUT:   package: <namespace> = namespace [concrete] {
-// CHECK:STDOUT:     .Cpp = imports.%Cpp
-// CHECK:STDOUT:     .F = %F.decl
-// CHECK:STDOUT:   }
-// CHECK:STDOUT:   %Cpp.import_cpp = import_cpp {
-// CHECK:STDOUT:     import Cpp "overloaded.h"
-// CHECK:STDOUT:   }
-// CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [concrete = constants.%F] {} {}
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
 // CHECK:STDOUT: fn @F() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %Cpp.ref: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
 // CHECK:STDOUT:   %foo.ref: <error> = name_ref foo, <error> [concrete = <error>]
-// CHECK:STDOUT:   return
+// CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- fail_todo_import_variadic.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
-// CHECK:STDOUT:   %F.type: type = fn_type @F [concrete]
-// CHECK:STDOUT:   %F: %F.type = struct_value () [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -345,29 +246,16 @@ fn F() {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: file {
-// CHECK:STDOUT:   package: <namespace> = namespace [concrete] {
-// CHECK:STDOUT:     .Cpp = imports.%Cpp
-// CHECK:STDOUT:     .F = %F.decl
-// CHECK:STDOUT:   }
-// CHECK:STDOUT:   %Cpp.import_cpp = import_cpp {
-// CHECK:STDOUT:     import Cpp "variadic.h"
-// CHECK:STDOUT:   }
-// CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [concrete = constants.%F] {} {}
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
 // CHECK:STDOUT: fn @F() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %Cpp.ref: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
 // CHECK:STDOUT:   %foo.ref: <error> = name_ref foo, <error> [concrete = <error>]
-// CHECK:STDOUT:   return
+// CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- fail_todo_import_static.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
-// CHECK:STDOUT:   %F.type: type = fn_type @F [concrete]
-// CHECK:STDOUT:   %F: %F.type = struct_value () [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -377,21 +265,10 @@ fn F() {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: file {
-// CHECK:STDOUT:   package: <namespace> = namespace [concrete] {
-// CHECK:STDOUT:     .Cpp = imports.%Cpp
-// CHECK:STDOUT:     .F = %F.decl
-// CHECK:STDOUT:   }
-// CHECK:STDOUT:   %Cpp.import_cpp = import_cpp {
-// CHECK:STDOUT:     import Cpp "static.h"
-// CHECK:STDOUT:   }
-// CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [concrete = constants.%F] {} {}
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
 // CHECK:STDOUT: fn @F() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %Cpp.ref: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
 // CHECK:STDOUT:   %foo.ref: <error> = name_ref foo, <error> [concrete = <error>]
-// CHECK:STDOUT:   return
+// CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

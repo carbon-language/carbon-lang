@@ -22,10 +22,9 @@ filegroup(
 )
 
 filegroup(
-    name = "minimal_preludes",
-    data = [
-        "//toolchain/testing/min_prelude",
-    ],
+    name = "min_prelude",
+    srcs = glob(["testdata/min_prelude/**/*.carbon"]),
+    visibility = ["//visibility:public"],
 )
 
 cc_library(
@@ -61,7 +60,7 @@ file_test(
     size = "small",
     timeout = "moderate",  # Taking >60 seconds in GitHub actions
     srcs = ["file_test.cpp"],
-    data = [":minimal_preludes"],
+    data = [":min_prelude"],
     tests = [":all_testdata"],
     deps = [
         "//common:all_llvm_targets",

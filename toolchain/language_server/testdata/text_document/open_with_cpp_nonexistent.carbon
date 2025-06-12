@@ -2,11 +2,6 @@
 // Exceptions. See /LICENSE for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
-// TODO: At present, this has a
-// "dropping diagnostic in /test.carbon.generated.cpp_imports.h". That should be
-// fixed to assign back to this file, but that may come from other fixes to C++
-// diagnostic output.
-//
 // AUTOUPDATE
 // TIP: To test this file alone, run:
 // TIP:   bazel test //toolchain/testing:file_test --test_arg=--file_tests=toolchain/language_server/testdata/text_document/open_with_cpp_nonexistent.carbon
@@ -27,17 +22,6 @@
 
 // --- AUTOUPDATE-SPLIT
 
-// CHECK:STDERR: /test.carbon: warning: dropping diagnostic in /test.carbon.generated.cpp_imports.h:
-// CHECK:STDERR: /test.carbon.generated.cpp_imports.h:1: error: C++:
-// CHECK:STDERR: /test.carbon.generated.cpp_imports.h:1:10: fatal error: 'nonexistent.h' file not found
-// CHECK:STDERR:     1 | #include "nonexistent.h"
-// CHECK:STDERR:       |          ^~~~~~~~~~~~~~~
-// CHECK:STDERR:
-// CHECK:STDERR: /test.carbon:1:1: note: in `Cpp` import
-// CHECK:STDERR: import Cpp library "nonexistent.h";
-// CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-// CHECK:STDERR:  [LanguageServerDiagnosticInWrongFile]
-// CHECK:STDERR:
 // CHECK:STDOUT: Content-Length: 146{{\r}}
 // CHECK:STDOUT: {{\r}}
 // CHECK:STDOUT: {
@@ -49,13 +33,29 @@
 // CHECK:STDOUT:       "textDocumentSync": 2
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:   }
-// CHECK:STDOUT: }Content-Length: 144{{\r}}
+// CHECK:STDOUT: }Content-Length: 443{{\r}}
 // CHECK:STDOUT: {{\r}}
 // CHECK:STDOUT: {
 // CHECK:STDOUT:   "jsonrpc": "2.0",
 // CHECK:STDOUT:   "method": "textDocument/publishDiagnostics",
 // CHECK:STDOUT:   "params": {
-// CHECK:STDOUT:     "diagnostics": [],
+// CHECK:STDOUT:     "diagnostics": [
+// CHECK:STDOUT:       {
+// CHECK:STDOUT:         "message": "in import",
+// CHECK:STDOUT:         "range": {
+// CHECK:STDOUT:           "end": {
+// CHECK:STDOUT:             "character": 36,
+// CHECK:STDOUT:             "line": 1
+// CHECK:STDOUT:           },
+// CHECK:STDOUT:           "start": {
+// CHECK:STDOUT:             "character": 0,
+// CHECK:STDOUT:             "line": 0
+// CHECK:STDOUT:           }
+// CHECK:STDOUT:         },
+// CHECK:STDOUT:         "severity": 1,
+// CHECK:STDOUT:         "source": "carbon"
+// CHECK:STDOUT:       }
+// CHECK:STDOUT:     ],
 // CHECK:STDOUT:     "uri": "file:///test.carbon"
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }Content-Length: 144{{\r}}

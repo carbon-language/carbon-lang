@@ -122,7 +122,7 @@ fn Foo(n: ()) -> ((), ()) {
 // CHECK:STDOUT:     inst_block_empty: {}
 // CHECK:STDOUT:     exports:
 // CHECK:STDOUT:       0:               inst36
-// CHECK:STDOUT:     import_refs:     {}
+// CHECK:STDOUT:     imports:         {}
 // CHECK:STDOUT:     global_init:     {}
 // CHECK:STDOUT:     inst_block4:
 // CHECK:STDOUT:       0:               inst16

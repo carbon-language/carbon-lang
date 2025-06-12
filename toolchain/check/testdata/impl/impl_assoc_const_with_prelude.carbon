@@ -25,7 +25,7 @@ library "[[@TEST_NAME]]";
 interface I {
   let X:! {.a: bool, .b: (i32, i32)};
 }
-// CHECK:STDERR: fail_two_different_non_type.carbon:[[@LINE+4]]:12: error: associated constant X given two different values `{.a = true, .b = (1, 2)}` and `{.a = false, .b = (3, 4)}` [AssociatedConstantWithDifferentValues]
+// CHECK:STDERR: fail_two_different_non_type.carbon:[[@LINE+4]]:12: error: associated constant `.(I.X)` given two different values `{.a = true, .b = (1, 2)}` and `{.a = false, .b = (3, 4)}` [AssociatedConstantWithDifferentValues]
 // CHECK:STDERR: impl () as I where .X = {.a = true, .b = (1, 2)} and .X = {.a = false, .b = (3, 4)} {}
 // CHECK:STDERR:            ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 // CHECK:STDERR:
@@ -298,7 +298,7 @@ impl () as I where .X = {.a = true, .b = (1, 2)} and .X = {.a = false, .b = (3, 
 // CHECK:STDOUT:   %int_4.940: %i32 = int_value 4 [concrete]
 // CHECK:STDOUT:   %tuple.ffd: %tuple.type.d07 = tuple_value (%int_3.822, %int_4.940) [concrete]
 // CHECK:STDOUT:   %struct.68c: %struct_type.a.b.fe2 = struct_value (%false, %tuple.ffd) [concrete]
-// CHECK:STDOUT:   %I_where.type: type = facet_type <@I where %impl.elem0 = %struct.682 and %impl.elem0 = %struct.68c> [concrete]
+// CHECK:STDOUT:   %I_where.type: type = facet_type <@I where %impl.elem0 = <error>> [concrete]
 // CHECK:STDOUT:   %I.impl_witness: <witness> = impl_witness file.%I.impl_witness_table [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -324,7 +324,7 @@ impl () as I where .X = {.a = true, .b = (1, 2)} and .X = {.a = false, .b = (3, 
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %I.decl: type = interface_decl @I [concrete = constants.%I.type] {} {}
-// CHECK:STDOUT:   impl_decl @impl.dd8 [concrete] {} {
+// CHECK:STDOUT:   impl_decl @impl.fa8 [concrete] {} {
 // CHECK:STDOUT:     %.loc10_7.1: %empty_tuple.type = tuple_literal ()
 // CHECK:STDOUT:     %.loc10_7.2: type = converted %.loc10_7.1, constants.%empty_tuple.type [concrete = constants.%empty_tuple.type]
 // CHECK:STDOUT:     %I.ref: type = name_ref I, file.%I.decl [concrete = constants.%I.type]
@@ -390,9 +390,8 @@ impl () as I where .X = {.a = true, .b = (1, 2)} and .X = {.a = false, .b = (3, 
 // CHECK:STDOUT:       requirement_rewrite %impl.elem0.loc10_54, %.loc10_83.3
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %I.impl_witness_table = impl_witness_table (<error>), @impl.dd8 [concrete]
+// CHECK:STDOUT:   %I.impl_witness_table = impl_witness_table (<error>), @impl.fa8 [concrete]
 // CHECK:STDOUT:   %I.impl_witness: <witness> = impl_witness %I.impl_witness_table [concrete = constants.%I.impl_witness]
-// CHECK:STDOUT:   %impl_witness_assoc_constant: %struct_type.a.b.fe2 = impl_witness_assoc_constant constants.%struct.682 [concrete = constants.%struct.682]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: interface @I {
@@ -411,7 +410,7 @@ impl () as I where .X = {.a = true, .b = (1, 2)} and .X = {.a = false, .b = (3, 
 // CHECK:STDOUT:   assoc_const X:! %struct_type.a.b.fe2;
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: impl @impl.dd8: %.loc10_7.2 as %.loc10_14 {
+// CHECK:STDOUT: impl @impl.fa8: %.loc10_7.2 as %.loc10_14 {
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   witness = file.%I.impl_witness
 // CHECK:STDOUT: }

@@ -10,6 +10,7 @@
 #include <utility>
 
 #include "common/check.h"
+#include "common/growing_range.h"
 #include "toolchain/base/kind_switch.h"
 #include "toolchain/check/context.h"
 #include "toolchain/check/eval.h"
@@ -87,7 +88,7 @@ auto AddImportRef(Context& context, SemIR::ImportIRInst import_ir_inst,
   // ImportRefs have a dedicated block because this may be called during
   // processing where the instruction shouldn't be inserted in the current inst
   // block.
-  context.import_ref_ids().push_back(import_ref_id);
+  context.imports().push_back(import_ref_id);
   return import_ref_id;
 }
 
@@ -104,7 +105,7 @@ static auto AddLoadedImportRef(Context& context, SemIR::TypeId type_id,
                                  .entity_name_id = SemIR::EntityNameId::None};
   auto inst_id = AddPlaceholderInstInNoBlock(
       context, MakeImportedLocIdAndInst(context, import_ir_inst_id, inst));
-  context.import_ref_ids().push_back(inst_id);
+  context.imports().push_back(inst_id);
 
   context.constant_values().Set(inst_id, const_id);
   context.import_ir_constant_values()[import_ir_inst.ir_id().index].Set(
@@ -674,7 +675,7 @@ static auto AddPlaceholderImportedInst(ImportContext& context,
                  "AddPlaceholderImportedInst: {0}\n", inst);
   // Track the instruction in the imports block so that it's included in
   // formatted SemIR if it's referenced.
-  context.local_context().import_ref_ids().push_back(inst_id);
+  context.local_context().imports().push_back(inst_id);
   return inst_id;
 }
 
@@ -1840,9 +1841,7 @@ static auto MakeFunctionDecl(ImportContext& context,
   function_decl.function_id = context.local_functions().Add(
       {GetIncompleteLocalEntityBase(context, function_decl_id, import_function),
        {.call_params_id = SemIR::InstBlockId::None,
-        .return_slot_pattern_id = SemIR::InstId::None,
-        .special_function_kind = import_function.special_function_kind,
-        .builtin_function_kind = import_function.builtin_function_kind}});
+        .return_slot_pattern_id = SemIR::InstId::None}});
 
   function_decl.type_id = GetFunctionType(
       context.local_context(), function_decl.function_id, specific_id);
@@ -1925,6 +1924,24 @@ static auto TryResolveTypedInst(ImportRefResolver& resolver,
 
   if (import_function.definition_id.has_value()) {
     new_function.definition_id = new_function.first_owning_decl_id;
+  }
+
+  switch (import_function.special_function_kind) {
+    case SemIR::Function::SpecialFunctionKind::None: {
+      break;
+    }
+    case SemIR::Function::SpecialFunctionKind::Builtin: {
+      new_function.SetBuiltinFunction(import_function.builtin_function_kind());
+      break;
+    }
+    case SemIR::Function::SpecialFunctionKind::Thunk: {
+      auto entity_name_id = resolver.local_entity_names().AddCanonical(
+          {.name_id = new_function.name_id,
+           .parent_scope_id = new_function.parent_scope_id});
+      new_function.SetThunk(AddImportRef(
+          resolver, import_function.thunk_decl_id(), entity_name_id));
+      break;
+    }
   }
 
   return ResolveResult::Done(function_const_id, new_function.first_decl_id());
@@ -3278,9 +3295,8 @@ auto ImportRefResolver::PerformPendingWork() -> void {
     // state.
     // TODO: Import the generic eval block rather than calling
     // RebuildGenericEvalBlock to rebuild it so that order doesn't matter.
-    // NOLINTNEXTLINE(modernize-loop-convert)
-    for (size_t i = 0; i != pending_generics().size(); ++i) {
-      FinishPendingGeneric(*this, pending_generics()[i]);
+    for (auto generic_id : GrowingRange(pending_generics())) {
+      FinishPendingGeneric(*this, generic_id);
     }
     pending_generics().clear();
 

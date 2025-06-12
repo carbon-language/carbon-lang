@@ -18,6 +18,7 @@
 namespace clang {
 
 // Forward declare indexed types, for integration with ValueStore.
+class Decl;
 class SourceLocation;
 
 }  // namespace clang
@@ -622,9 +623,9 @@ struct InstBlockId : public IdBase<InstBlockId> {
   // state is in the Check::Context.
   static const InstBlockId Exports;
 
-  // ImportRef instructions. Empty until the File is fully checked; intermediate
-  // state is in the Check::Context.
-  static const InstBlockId ImportRefs;
+  // Instructions produced through import logic. Empty until the File is fully
+  // checked; intermediate state is in the Check::Context.
+  static const InstBlockId Imports;
 
   // Global declaration initialization instructions. Empty if none are present.
   // Otherwise, __global_init function will be generated and this block will
@@ -640,7 +641,7 @@ struct InstBlockId : public IdBase<InstBlockId> {
 
 constexpr InstBlockId InstBlockId::Empty = InstBlockId(0);
 constexpr InstBlockId InstBlockId::Exports = InstBlockId(1);
-constexpr InstBlockId InstBlockId::ImportRefs = InstBlockId(2);
+constexpr InstBlockId InstBlockId::Imports = InstBlockId(2);
 constexpr InstBlockId InstBlockId::GlobalInit = InstBlockId(3);
 constexpr InstBlockId InstBlockId::Unreachable = InstBlockId(NoneIndex - 1);
 
@@ -785,6 +786,17 @@ struct TypeId : public IdBase<TypeId> {
   auto is_concrete() const -> bool { return AsConstantId().is_concrete(); }
 
   auto Print(llvm::raw_ostream& out) const -> void;
+};
+
+// The ID of a Clang `Decl` pointer, pointing to the Clang AST.
+struct ClangDeclId : public IdBase<ClangDeclId> {
+  static constexpr llvm::StringLiteral Label = "clang_decl_id";
+
+  // TODO: Ensure we can easily serialize/deserialize this. Consider
+  // `clang::LazyDeclPtr`.
+  using ValueType = clang::Decl*;
+
+  using IdBase::IdBase;
 };
 
 // The ID of a Clang Source Location.

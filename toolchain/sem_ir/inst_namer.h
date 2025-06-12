@@ -11,6 +11,7 @@
 #include "toolchain/parse/tree.h"
 #include "toolchain/sem_ir/file.h"
 #include "toolchain/sem_ir/ids.h"
+#include "toolchain/sem_ir/inst_categories.h"
 #include "toolchain/sem_ir/inst_fingerprinter.h"
 
 namespace Carbon::SemIR {
@@ -23,7 +24,7 @@ class InstNamer {
     None = -1,
     // The three top-level scopes.
     File = 0,
-    ImportRefs = 1,
+    Imports = 1,
     Constants = 2,
     // The first entity scope; see entities in `ScopeIdTypeEnum`.
     FirstEntityScope = 3,

@@ -161,7 +161,6 @@ CARBON_DIAGNOSTIC_KIND(RequirementEqualAfterNonDesignator)
 CARBON_DIAGNOSTIC_KIND(SemanticsTodo)
 
 // Location context.
-CARBON_DIAGNOSTIC_KIND(InCppImport)
 CARBON_DIAGNOSTIC_KIND(InImport)
 CARBON_DIAGNOSTIC_KIND(ResolvingSpecificHere)
 
@@ -483,6 +482,7 @@ CARBON_DIAGNOSTIC_KIND(WhereOnNonFacetType)
 CARBON_DIAGNOSTIC_KIND(AssociatedConstantNotConstantAfterConversion)
 CARBON_DIAGNOSTIC_KIND(AssociatedConstantWithDifferentValues)
 CARBON_DIAGNOSTIC_KIND(RewriteForAssociatedFunction)
+CARBON_DIAGNOSTIC_KIND(FacetTypeConstraintCycle)
 
 // Facet type combination.
 CARBON_DIAGNOSTIC_KIND(FacetTypeRequiredForTypeAndOperator)

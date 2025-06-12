@@ -19,6 +19,18 @@ auto SubstInstCallbacks::RebuildType(SemIR::TypeInstId type_inst_id) const
   return context().types().GetTypeIdForTypeInstId(type_inst_id);
 }
 
+auto SubstInstCallbacks::RebuildNewInst(SemIR::LocId loc_id,
+                                        SemIR::Inst new_inst) const
+    -> SemIR::InstId {
+  auto const_id = EvalOrAddInst(
+      context(), SemIR::LocIdAndInst::UncheckedLoc(loc_id, new_inst));
+  CARBON_CHECK(const_id.has_value(),
+               "Substitution into constant produced non-constant");
+  CARBON_CHECK(const_id.is_constant(),
+               "Substitution into constant produced runtime value");
+  return context().constant_values().GetInstId(const_id);
+}
+
 namespace {
 
 // Information about an instruction that we are substituting into.
@@ -393,13 +405,7 @@ class SubstConstantCallbacks final : public SubstInstCallbacks {
   // Rebuilds an instruction by building a new constant.
   auto Rebuild(SemIR::InstId /*old_inst_id*/, SemIR::Inst new_inst) const
       -> SemIR::InstId override {
-    auto const_id = EvalOrAddInst(
-        context(), SemIR::LocIdAndInst::UncheckedLoc(loc_id_, new_inst));
-    CARBON_CHECK(const_id.has_value(),
-                 "Substitution into constant produced non-constant");
-    CARBON_CHECK(const_id.is_constant(),
-                 "Substitution into constant produced runtime value");
-    return context().constant_values().GetInstId(const_id);
+    return RebuildNewInst(loc_id_, new_inst);
   }
 
  private:

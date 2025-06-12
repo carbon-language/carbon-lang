@@ -9,6 +9,7 @@
 #include "toolchain/sem_ir/builtin_function_kind.h"
 #include "toolchain/sem_ir/entity_with_params_base.h"
 #include "toolchain/sem_ir/ids.h"
+#include "toolchain/sem_ir/inst_categories.h"
 #include "toolchain/sem_ir/typed_insts.h"
 
 namespace Carbon::SemIR {
@@ -16,7 +17,7 @@ namespace Carbon::SemIR {
 // Function-specific fields.
 struct FunctionFields {
   // Kinds of special functions.
-  enum class SpecialFunctionKind : uint8_t { None, Thunk };
+  enum class SpecialFunctionKind : uint8_t { None, Builtin, Thunk };
 
   // Kinds of virtual modifiers that can apply to functions.
   enum class VirtualModifier : uint8_t { None, Virtual, Abstract, Impl };
@@ -60,13 +61,9 @@ struct FunctionFields {
   // implicit_param_patterns_id from EntityWithParamsBase.
   InstId self_param_id = InstId::None;
 
-  // The following member is set on the first call to the function, or at the
-  // point where the function is defined.
-
-  // The following members are set at the end of a builtin function definition.
-
-  // If this is a builtin function, the corresponding builtin kind.
-  BuiltinFunctionKind builtin_function_kind = BuiltinFunctionKind::None;
+  // Data that is specific to the special function kind. Use
+  // `builtin_function_kind()` or `thunk_decl_id()` to access this.
+  AnyRawId special_function_kind_data = AnyRawId(AnyRawId::NoneIndex);
 
   // The following members are accumulated throughout the function definition.
 
@@ -75,13 +72,11 @@ struct FunctionFields {
   // be empty for declarations that don't have a visible definition.
   llvm::SmallVector<InstBlockId> body_block_ids = {};
 
-  // If the function is imported from C++, points to the Clang declaration in
-  // the AST. Used for mangling and inline function definition code generation.
-  // The AST is owned by `CompileSubcommand` so we expect it to be live from
-  // `Function` creation to mangling.
-  // TODO: #4666 Ensure we can easily serialize/deserialize this. Consider decl
-  // ID to point into the AST.
-  clang::FunctionDecl* cpp_decl = nullptr;
+  // If the function is imported from C++, the Clang function declaration. Used
+  // for mangling and inline function definition code generation. The AST is
+  // owned by `CompileSubcommand` so we expect it to be live from `Function`
+  // creation to mangling.
+  ClangDeclId clang_decl_id = ClangDeclId::None;
 };
 
 // A function. See EntityWithParamsBase regarding the inheritance here.
@@ -111,6 +106,22 @@ struct Function : public EntityWithParamsBase,
     out << "}";
   }
 
+  // Returns the builtin function kind for this function, or None if this is not
+  // a builtin function.
+  auto builtin_function_kind() const -> BuiltinFunctionKind {
+    return special_function_kind == SpecialFunctionKind::Builtin
+               ? BuiltinFunctionKind::FromInt(special_function_kind_data.index)
+               : BuiltinFunctionKind::None;
+  }
+
+  // Returns the declaration that this is a thunk for, or None if this function
+  // is not a thunk.
+  auto thunk_decl_id() const -> InstId {
+    return special_function_kind == SpecialFunctionKind::Thunk
+               ? InstId(special_function_kind_data.index)
+               : InstId::None;
+  }
+
   // Given the ID of an instruction from `param_patterns_id` or
   // `implicit_param_patterns_id`, returns a `ParamPatternInfo` value with the
   // corresponding `Call` parameter pattern, its ID, and the entity_name_id of
@@ -129,6 +140,20 @@ struct Function : public EntityWithParamsBase,
   auto GetDeclaredReturnType(const File& file,
                              SpecificId specific_id = SpecificId::None) const
       -> TypeId;
+
+  // Sets that this function is a builtin function.
+  auto SetBuiltinFunction(BuiltinFunctionKind kind) -> void {
+    CARBON_CHECK(special_function_kind == SpecialFunctionKind::None);
+    special_function_kind = SpecialFunctionKind::Builtin;
+    special_function_kind_data = AnyRawId(kind.AsInt());
+  }
+
+  // Sets that this function is a thunk.
+  auto SetThunk(InstId decl_id) -> void {
+    CARBON_CHECK(special_function_kind == SpecialFunctionKind::None);
+    special_function_kind = SpecialFunctionKind::Thunk;
+    special_function_kind_data = AnyRawId(decl_id.index);
+  }
 };
 
 class File;

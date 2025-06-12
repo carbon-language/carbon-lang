@@ -2,8 +2,7 @@
 // Exceptions. See /LICENSE for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
-// TODO: Add ranges and switch to "--dump-sem-ir-ranges=only".
-// EXTRA-ARGS: --no-prelude-import --dump-sem-ir-ranges=if-present
+// EXTRA-ARGS: --no-prelude-import
 //
 // AUTOUPDATE
 // TIP: To test this file alone, run:
@@ -25,54 +24,20 @@ import Cpp;
 
 library "[[@TEST_NAME]]";
 
-// CHECK:STDERR: fail_import_cpp_library_empty.carbon:[[@LINE+9]]:1: error: `Cpp` import missing library [CppInteropMissingLibrary]
+// CHECK:STDERR: fail_import_cpp_library_empty.carbon:[[@LINE+4]]:1: error: `Cpp` import missing library [CppInteropMissingLibrary]
 // CHECK:STDERR: import Cpp library "";
 // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~
 // CHECK:STDERR:
-// CHECK:STDERR: fail_import_cpp_library_file_with_quotes.carbon.generated.cpp_imports.h:1: error: C++:
-// CHECK:STDERR: fail_import_cpp_library_file_with_quotes.carbon.generated.cpp_imports.h:1:10: fatal error: '\"foo.h\"' file not found
-// CHECK:STDERR:     1 | #include "\"foo.h\""
-// CHECK:STDERR:       |          ^~~~~~~~~~~
-// CHECK:STDERR:  [CppInteropParseError]
 import Cpp library "";
 
 // --- fail_import_cpp_library_file_with_quotes.carbon
 
 library "[[@TEST_NAME]]";
 
-// CHECK:STDERR: fail_import_cpp_library_file_with_quotes.carbon:[[@LINE+4]]:1: note: in `Cpp` import [InCppImport]
-// CHECK:STDERR: import Cpp library "\"foo.h\"";
-// CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+// CHECK:STDERR: fail_import_cpp_library_file_with_quotes.carbon:[[@LINE+6]]:1: in import [InImport]
+// CHECK:STDERR: fail_import_cpp_library_file_with_quotes.carbon.generated.cpp_imports.h:1: error: fail_import_cpp_library_file_with_quotes.carbon.generated.cpp_imports.h:1:10: fatal error: '\"foo.h\"' file not found
+// CHECK:STDERR:     1 | #include "\"foo.h\""
+// CHECK:STDERR:       |          ^~~~~~~~~~~
+// CHECK:STDERR:  [CppInteropParseError]
 // CHECK:STDERR:
 import Cpp library "\"foo.h\"";
-
-// CHECK:STDOUT: --- fail_import_cpp.carbon
-// CHECK:STDOUT:
-// CHECK:STDOUT: file {
-// CHECK:STDOUT:   package: <namespace> = namespace [concrete] {}
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: --- fail_import_cpp_library_empty.carbon
-// CHECK:STDOUT:
-// CHECK:STDOUT: file {
-// CHECK:STDOUT:   package: <namespace> = namespace [concrete] {}
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: --- fail_import_cpp_library_file_with_quotes.carbon
-// CHECK:STDOUT:
-// CHECK:STDOUT: imports {
-// CHECK:STDOUT:   %Cpp: <namespace> = namespace file.%Cpp.import_cpp, [concrete] {
-// CHECK:STDOUT:     import Cpp//...
-// CHECK:STDOUT:     has_error
-// CHECK:STDOUT:   }
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: file {
-// CHECK:STDOUT:   package: <namespace> = namespace [concrete] {
-// CHECK:STDOUT:     .Cpp = imports.%Cpp
-// CHECK:STDOUT:   }
-// CHECK:STDOUT:   %Cpp.import_cpp = import_cpp {
-// CHECK:STDOUT:     import Cpp "\"foo.h\""
-// CHECK:STDOUT:   }
-// CHECK:STDOUT: }
-// CHECK:STDOUT:

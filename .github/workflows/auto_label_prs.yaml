@@ -11,7 +11,7 @@ permissions:
   pull-requests: write # For gh to edit labels.
 
 jobs:
-  assign_reviewer:
+  set_labels:
     runs-on: ubuntu-latest
     steps:
       - name: Harden Runner
