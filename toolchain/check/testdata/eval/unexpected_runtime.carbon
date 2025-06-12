@@ -19,7 +19,7 @@ interface Z {
 }
 
 class D {
-  // CHECK:STDERR: fail_unexpected_runtime.carbon:[[@LINE+4]]:31: error: found runtime value where a compile-time value was expected [EvalRequiresConstantValue]
+  // CHECK:STDERR: fail_unexpected_runtime.carbon:[[@LINE+4]]:31: error: expression is runtime; expected constant [EvalRequiresConstantValue]
   // CHECK:STDERR:   extend impl as Z where .T = x {}
   // CHECK:STDERR:                               ^
   // CHECK:STDERR:
