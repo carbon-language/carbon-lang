@@ -30,8 +30,9 @@ static auto HandleBinaryOperator(Context& context,
     -> bool {
   auto rhs_id = context.node_stack().PopExpr();
   auto lhs_id = context.node_stack().PopExpr();
-  // All the binary operator interfaces take a single argument that is the type
-  // of the RHS operand.
+  // All the `*With` binary operator interfaces take a single argument that is
+  // the type of the RHS operand. `as` has different rules and we don't call
+  // this function for it.
   SemIR::InstId args[] = {
       context.types().GetInstId(context.insts().Get(rhs_id).type_id())};
   op.interface_args_ref = args;
