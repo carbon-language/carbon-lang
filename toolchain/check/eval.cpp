@@ -18,6 +18,7 @@
 #include "toolchain/check/import_ref.h"
 #include "toolchain/check/type.h"
 #include "toolchain/check/type_completion.h"
+#include "toolchain/diagnostics/diagnostic.h"
 #include "toolchain/diagnostics/diagnostic_emitter.h"
 #include "toolchain/diagnostics/format_providers.h"
 #include "toolchain/sem_ir/builtin_function_kind.h"
@@ -354,7 +355,8 @@ static auto MakeFacetTypeResult(Context& context,
 
 // `GetConstantValue` checks to see whether the provided ID describes a value
 // with constant phase, and if so, returns the corresponding constant value.
-// Overloads are provided for different kinds of ID.
+// Overloads are provided for different kinds of ID. `RequireConstantValue` does
+// the same, but produces an error diagnostic if the input is not constant.
 
 // AbsoluteInstId can not have its values substituted, so this overload is
 // deleted. This prevents conversion to InstId.
@@ -374,28 +376,57 @@ static auto GetConstantValue(EvalContext& eval_context, SemIR::InstId inst_id,
   return eval_context.constant_values().GetInstId(const_id);
 }
 
-// If the given instruction is constant, returns its constant value. When
-// determining the phase of the result, ignore any dependence on `.Self`.
+// Gets a constant value for an `inst_id`, diagnosing when the input is not a
+// constant value.
+static auto RequireConstantValue(EvalContext& eval_context,
+                                 SemIR::InstId inst_id, Phase* phase)
+    -> SemIR::InstId {
+  if (!inst_id.has_value()) {
+    return SemIR::InstId::None;
+  }
+  auto const_id = eval_context.GetConstantValue(inst_id);
+  *phase =
+      LatestPhase(*phase, GetPhase(eval_context.constant_values(), const_id));
+  if (const_id.is_constant()) {
+    return eval_context.constant_values().GetInstId(const_id);
+  }
+
+  if (inst_id != SemIR::ErrorInst::InstId) {
+    CARBON_DIAGNOSTIC(
+        EvalRequiresConstantValue, Error,
+        "found runtime value where a compile-time value was expected");
+    eval_context.emitter().Emit(eval_context.GetDiagnosticLoc({inst_id}),
+                                EvalRequiresConstantValue);
+  }
+  *phase = Phase::UnknownDueToError;
+  return SemIR::ErrorInst::InstId;
+}
+
+// If the given instruction is constant, returns its constant value. Otherwise,
+// produces an error diagnostic. When determining the phase of the result,
+// ignore any dependence on `.Self`.
 //
 // This is used when evaluating facet types, for which `where` expressions using
 // `.Self` should not be considered symbolic
 // - `Interface where .Self impls I and .A = bool` -> concrete
 // - `T:! type` ... `Interface where .A = T` -> symbolic, since uses `T` which
 //   is symbolic and not due to `.Self`.
-static auto GetConstantValueIgnoringPeriodSelf(EvalContext& eval_context,
-                                               SemIR::InstId inst_id,
-                                               Phase* phase) -> SemIR::InstId {
+static auto RequireConstantValueIgnoringPeriodSelf(EvalContext& eval_context,
+                                                   SemIR::InstId inst_id,
+                                                   Phase* phase)
+    -> SemIR::InstId {
   if (!inst_id.has_value()) {
     return SemIR::InstId::None;
   }
-  auto const_id = eval_context.GetConstantValue(inst_id);
-  Phase constant_phase = GetPhase(eval_context.constant_values(), const_id);
+  Phase constant_phase = *phase;
+  auto const_inst_id =
+      RequireConstantValue(eval_context, inst_id, &constant_phase);
   // Since LatestPhase(x, Phase::Concrete) == x, this is equivalent to replacing
   // Phase::PeriodSelfSymbolic with Phase::Concrete.
   if (constant_phase != Phase::PeriodSelfSymbolic) {
     *phase = LatestPhase(*phase, constant_phase);
   }
-  return eval_context.constant_values().GetInstId(const_id);
+  return const_inst_id;
 }
 
 // Find the instruction that the given instruction instantiates to, and return
@@ -615,10 +646,10 @@ static auto GetConstantFacetTypeInfo(EvalContext& eval_context,
 
   for (auto& rewrite : info.rewrite_constraints) {
     // `where` requirements using `.Self` should not be considered symbolic.
-    auto lhs_id =
-        GetConstantValueIgnoringPeriodSelf(eval_context, rewrite.lhs_id, phase);
-    auto rhs_id =
-        GetConstantValueIgnoringPeriodSelf(eval_context, rewrite.rhs_id, phase);
+    auto lhs_id = RequireConstantValueIgnoringPeriodSelf(eval_context,
+                                                         rewrite.lhs_id, phase);
+    auto rhs_id = RequireConstantValueIgnoringPeriodSelf(eval_context,
+                                                         rewrite.rhs_id, phase);
     rewrite = {.lhs_id = lhs_id, .rhs_id = rhs_id};
   }
 
@@ -2036,18 +2067,17 @@ auto TryEvalTypedInst<SemIR::WhereExpr>(EvalContext& eval_context,
 
       if (auto impls =
               eval_context.insts().TryGetAs<SemIR::RequirementImpls>(inst_id)) {
-        if (impls->rhs_id != SemIR::ErrorInst::InstId &&
-            IsPeriodSelf(eval_context,
+        if (IsPeriodSelf(eval_context,
                          eval_context.constant_values().Get(impls->lhs_id))) {
           if (impls->rhs_id == SemIR::TypeType::TypeInstId) {
             // `.Self impls type` -> nothing to do.
             continue;
-          } else {
-            auto facet_type = eval_context.insts().GetAs<SemIR::FacetType>(
-                eval_context.constant_values().GetConstantInstId(
-                    impls->rhs_id));
+          } else if (auto facet_type =
+                         eval_context.insts().TryGetAs<SemIR::FacetType>(
+                             RequireConstantValue(eval_context, impls->rhs_id,
+                                                  &phase))) {
             const auto& more_info =
-                eval_context.facet_types().Get(facet_type.facet_type_id);
+                eval_context.facet_types().Get(facet_type->facet_type_id);
             // The way to prevent lookup into the interface requirements of a
             // facet type is to put it to the right of a `.Self impls`, which we
             // accomplish by putting them into `self_impls_constraints`.
