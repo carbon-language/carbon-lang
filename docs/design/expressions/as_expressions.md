@@ -161,15 +161,26 @@ permitted by this rule may only be allowed in certain contexts.
 ## Extensibility
 
 Explicit casts can be defined for user-defined types such as
-[classes](../classes.md) by implementing the `As` interface:
+[classes](../classes.md) by implementing the `AsPrimitive` form interface or
+`As` named constraint:
 
 ```
-interface As(Dest:! type) {
-  fn Convert[self: Self]() -> Dest;
+package Core;
+
+interface AsPrimitive[Self: Form]
+    (Dest:! type) {
+  let ResultForm:! Form where .type = Dest;
+  fn Convert[bound self:? Self]()
+      ->? ResultForm;
+}
+namespace As(Dest:! type) {
+  extend require form(let Self) as
+      AsPrimitive(Dest)
+      where .ResultForm = form(var Dest);
 }
 ```
 
-The expression `x as U` is rewritten to `x.(As(U).Convert)()`.
+The expression `x as U` is rewritten to `x.(AsPrimitive(U).Convert)()`.
 
 **Note:** This rewrite causes the expression `U` to be implicitly converted to
 type `type`. The program is invalid if this conversion is not possible.
