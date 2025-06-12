@@ -28,8 +28,6 @@
 
 namespace Carbon::Check {
 
-static auto Dump(const Context& context, SemIR::LocId loc_id) -> std::string;
-
 LLVM_DUMP_METHOD static auto Dump(const Context& context, Lex::TokenIndex token)
     -> std::string {
   return Parse::Dump(context.parse_tree(), token);
@@ -75,14 +73,7 @@ LLVM_DUMP_METHOD static auto Dump(const Context& context,
 
 LLVM_DUMP_METHOD static auto Dump(const Context& context, SemIR::ImplId impl_id)
     -> std::string {
-  RawStringOstream out;
-  out << SemIR::Dump(context.sem_ir(), impl_id);
-  if (!impl_id.has_value()) {
-    return out.TakeStr();
-  }
-  const auto& impl = context.sem_ir().impls().Get(impl_id);
-  out << "\nwitness loc: " << Dump(context, SemIR::LocId(impl.witness_id));
-  return out.TakeStr();
+  return SemIR::Dump(context.sem_ir(), impl_id);
 }
 
 LLVM_DUMP_METHOD static auto Dump(const Context& context,
@@ -93,10 +84,7 @@ LLVM_DUMP_METHOD static auto Dump(const Context& context,
 
 LLVM_DUMP_METHOD static auto Dump(const Context& context, SemIR::InstId inst_id)
     -> std::string {
-  RawStringOstream out;
-  out << SemIR::Dump(context.sem_ir(), inst_id) << '\n'
-      << "  - " << Dump(context, SemIR::LocId(inst_id));
-  return out.TakeStr();
+  return SemIR::Dump(context.sem_ir(), inst_id);
 }
 
 LLVM_DUMP_METHOD static auto Dump(const Context& context,
@@ -107,43 +95,7 @@ LLVM_DUMP_METHOD static auto Dump(const Context& context,
 
 LLVM_DUMP_METHOD static auto Dump(const Context& context, SemIR::LocId loc_id)
     -> std::string {
-  RawStringOstream out;
-  // TODO: If the canonical location is None but the original is an InstId,
-  // should we dump the InstId anyway even though it has no location? Is that
-  // ever useful?
-  loc_id = context.sem_ir().insts().GetCanonicalLocId(loc_id);
-  switch (loc_id.kind()) {
-    case SemIR::LocId::Kind::None: {
-      out << "LocId(<none>)";
-      break;
-    }
-
-    case SemIR::LocId::Kind::ImportIRInstId: {
-      auto import_ir_id = context.sem_ir()
-                              .import_ir_insts()
-                              .Get(loc_id.import_ir_inst_id())
-                              .ir_id();
-      const auto* import_file =
-          context.sem_ir().import_irs().Get(import_ir_id).sem_ir;
-      out << "LocId(import from \"" << FormatEscaped(import_file->filename())
-          << "\")";
-      break;
-    }
-
-    case SemIR::LocId::Kind::NodeId: {
-      auto token = context.parse_tree().node_token(loc_id.node_id());
-      auto line = context.tokens().GetLineNumber(token);
-      auto col = context.tokens().GetColumnNumber(token);
-      const char* implicit = loc_id.is_desugared() ? " implicit" : "";
-      out << "LocId(" << FormatEscaped(context.sem_ir().filename()) << ":"
-          << line << ":" << col << implicit << ")";
-      break;
-    }
-
-    case SemIR::LocId::Kind::InstId:
-      CARBON_FATAL("unexpected LocId kind");
-  }
-  return out.TakeStr();
+  return SemIR::Dump(context.sem_ir(), loc_id);
 }
 
 LLVM_DUMP_METHOD static auto Dump(const Context& context, SemIR::NameId name_id)

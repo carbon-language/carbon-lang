@@ -993,8 +993,6 @@ impl CD as IF where .F = 0 {
 // CHECK:STDOUT:   %I.facet: %I.type = facet_value %.Self.as_type, (%I.lookup_impl_witness) [symbolic_self]
 // CHECK:STDOUT:   %impl.elem0: type = impl_witness_access %I.lookup_impl_witness, element0 [symbolic_self]
 // CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [concrete]
-// CHECK:STDOUT:   %I_where.type: type = facet_type <@I where %impl.elem0 = <error>> [concrete]
-// CHECK:STDOUT:   %I.impl_witness: <witness> = impl_witness file.%I.impl_witness_table [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -1003,7 +1001,7 @@ impl CD as IF where .F = 0 {
 // CHECK:STDOUT:   %Main.NonType = import_ref Main//interface, NonType, unloaded
 // CHECK:STDOUT:   %Main.import_ref.e5d = import_ref Main//interface, inst17 [no loc], unloaded
 // CHECK:STDOUT:   %Main.import_ref.4fb: %I.assoc_type = import_ref Main//interface, loc3_20, loaded [concrete = constants.%assoc0]
-// CHECK:STDOUT:   %Main.T: type = import_ref Main//interface, T, loaded [concrete = %T]
+// CHECK:STDOUT:   %Main.T = import_ref Main//interface, T, unloaded
 // CHECK:STDOUT:   %Main.import_ref.652: type = import_ref Main//interface, loc3_20, loaded [concrete = %T]
 // CHECK:STDOUT:   %T: type = assoc_const_decl @T [concrete] {}
 // CHECK:STDOUT:   %Main.import_ref.5dd: %I.type = import_ref Main//interface, inst17 [no loc], loaded [symbolic = constants.%Self]
@@ -1036,13 +1034,11 @@ impl CD as IF where .F = 0 {
 // CHECK:STDOUT:     %impl.elem0.loc10_32: type = impl_witness_access constants.%I.lookup_impl_witness, element0 [symbolic_self = constants.%impl.elem0]
 // CHECK:STDOUT:     %.loc10_38.1: %empty_tuple.type = tuple_literal ()
 // CHECK:STDOUT:     %.loc10_38.2: type = converted %.loc10_38.1, constants.%empty_tuple.type [concrete = constants.%empty_tuple.type]
-// CHECK:STDOUT:     %.loc10_14: type = where_expr %.Self [concrete = constants.%I_where.type] {
+// CHECK:STDOUT:     %.loc10_14: type = where_expr %.Self [concrete = <error>] {
 // CHECK:STDOUT:       requirement_rewrite %impl.elem0.loc10_20, %.loc10_26.2
 // CHECK:STDOUT:       requirement_rewrite %impl.elem0.loc10_32, %.loc10_38.2
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %I.impl_witness_table = impl_witness_table (<error>), @impl [concrete]
-// CHECK:STDOUT:   %I.impl_witness: <witness> = impl_witness %I.impl_witness_table [concrete = constants.%I.impl_witness]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: interface @I [from "interface.carbon"] {
@@ -1058,7 +1054,7 @@ impl CD as IF where .F = 0 {
 // CHECK:STDOUT:
 // CHECK:STDOUT: impl @impl: %C7.ref as %.loc10_14 {
 // CHECK:STDOUT: !members:
-// CHECK:STDOUT:   witness = file.%I.impl_witness
+// CHECK:STDOUT:   witness = <error>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @C7 {

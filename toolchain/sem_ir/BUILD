@@ -27,6 +27,7 @@ cc_library(
     hdrs = [
         "id_kind.h",
         "ids.h",
+        "inst_categories.h",
         "inst_kind.h",
         "singleton_insts.h",
         "typed_insts.h",

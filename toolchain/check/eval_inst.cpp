@@ -240,9 +240,9 @@ auto EvalConstantInst(Context& context, SemIR::InstId inst_id,
 
 auto EvalConstantInst(Context& context, SemIR::InstId inst_id,
                       SemIR::ImplWitnessAccess inst) -> ConstantEvalResult {
-  // This is PerformAggregateAccess followed by GetConstantValueInSpecific.
   if (auto witness =
           context.insts().TryGetAs<SemIR::ImplWitness>(inst.witness_id)) {
+    // This is PerformAggregateAccess followed by GetConstantValueInSpecific.
     auto witness_table = context.insts().GetAs<SemIR::ImplWitnessTable>(
         witness->witness_table_id);
     auto elements = context.inst_blocks().Get(witness_table.elements_id);
@@ -264,6 +264,63 @@ auto EvalConstantInst(Context& context, SemIR::InstId inst_id,
     // TODO: Add note pointing to the impl declaration.
     context.emitter().Emit(inst_id, ImplAccessMemberBeforeSet);
     return ConstantEvalResult::Error;
+  } else if (auto witness = context.insts().TryGetAs<SemIR::LookupImplWitness>(
+                 inst.witness_id)) {
+    // If the witness is symbolic but has a self type that is a FacetType, it
+    // can pull rewrite values from the self type. If the access is for one of
+    // those rewrites, evaluate to the RHS of the rewrite.
+
+    auto witness_self_type_id =
+        context.insts().Get(witness->query_self_inst_id).type_id();
+    if (!context.types().Is<SemIR::FacetType>(witness_self_type_id)) {
+      return ConstantEvalResult::NewSamePhase(inst);
+    }
+
+    // The `ImplWitnessAccess` is accessing a value, by index, for this
+    // interface.
+    auto access_interface_id = witness->query_specific_interface_id;
+
+    auto witness_self_facet_type_id =
+        context.types()
+            .GetAs<SemIR::FacetType>(witness_self_type_id)
+            .facet_type_id;
+    // TODO: We could consider something better than linear search here, such as
+    // a map. However that would probably require heap allocations which may be
+    // worse overall since the number of rewrite constraints is generally low.
+    // If the `rewrite_constraints` were sorted so that associated constants are
+    // grouped together, as in ResolveFacetTypeRewriteConstraints(), and limited
+    // to just the `ImplWitnessAccess` entries, then a binary search may work
+    // here.
+    for (auto witness_rewrite : context.facet_types()
+                                    .Get(witness_self_facet_type_id)
+                                    .rewrite_constraints) {
+      // Look at each rewrite constraint in the self facet value's type. If the
+      // LHS is an `ImplWitnessAccess` into the same interface that `inst` is
+      // indexing into, then we can use its RHS as the value.
+      auto witness_rewrite_lhs_access =
+          context.insts().TryGetAs<SemIR::ImplWitnessAccess>(
+              witness_rewrite.lhs_id);
+      if (!witness_rewrite_lhs_access) {
+        continue;
+      }
+      if (witness_rewrite_lhs_access->index != inst.index) {
+        continue;
+      }
+
+      auto witness_rewrite_lhs_interface_id =
+          context.insts()
+              .GetAs<SemIR::LookupImplWitness>(
+                  witness_rewrite_lhs_access->witness_id)
+              .query_specific_interface_id;
+      if (witness_rewrite_lhs_interface_id != access_interface_id) {
+        continue;
+      }
+
+      // The `ImplWitnessAccess` evaluates to the RHS from the witness self
+      // facet value's type.
+      return ConstantEvalResult::Existing(
+          context.constant_values().Get(witness_rewrite.rhs_id));
+    }
   }
 
   return ConstantEvalResult::NewSamePhase(inst);

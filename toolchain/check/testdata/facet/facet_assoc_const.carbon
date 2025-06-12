@@ -123,7 +123,7 @@ fn G() {
   F(C);
 }
 
-// --- fail_todo_two_different_combined_from_final_impl_and_facet.carbon
+// --- fail_two_different_combined_from_final_impl_and_facet.carbon
 library "[[@TEST_NAME]]";
 
 interface L { let W:! type; }
@@ -133,15 +133,6 @@ final impl forall [T:! M] T as L where .W = () {}
 
 fn G(T:! M & L, a: T.W) -> () { return a; }
 
-// TODO: This should not fail.
-//
-// CHECK:STDERR: fail_todo_two_different_combined_from_final_impl_and_facet.carbon:[[@LINE+7]]:43: error: cannot implicitly convert expression of type `T.(L.W)` to `{}` [ConversionFailure]
-// CHECK:STDERR: fn H(T:! L where .W = {}, a: T.W) -> {} { return a; }
-// CHECK:STDERR:                                           ^~~~~~~~~
-// CHECK:STDERR: fail_todo_two_different_combined_from_final_impl_and_facet.carbon:[[@LINE+4]]:43: note: type `T.(L.W)` does not implement interface `Core.ImplicitAs({})` [MissingImplInMemberAccessNote]
-// CHECK:STDERR: fn H(T:! L where .W = {}, a: T.W) -> {} { return a; }
-// CHECK:STDERR:                                           ^~~~~~~~~
-// CHECK:STDERR:
 fn H(T:! L where .W = {}, a: T.W) -> {} { return a; }
 
 fn F(T:! M & (L where .W = {}), a: T.W) {
@@ -149,6 +140,16 @@ fn F(T:! M & (L where .W = {}), a: T.W) {
   // the impl or `{}` from the facet type of T.
 
   let b: () = G(T, a);
+  // CHECK:STDERR: fail_two_different_combined_from_final_impl_and_facet.carbon:[[@LINE+10]]:15: error: cannot implicitly convert expression of type `()` to `{}` [ConversionFailure]
+  // CHECK:STDERR:   let c: {} = H(T, a);
+  // CHECK:STDERR:               ^~~~~~~
+  // CHECK:STDERR: fail_two_different_combined_from_final_impl_and_facet.carbon:[[@LINE+7]]:15: note: type `()` does not implement interface `Core.ImplicitAs({})` [MissingImplInMemberAccessNote]
+  // CHECK:STDERR:   let c: {} = H(T, a);
+  // CHECK:STDERR:               ^~~~~~~
+  // CHECK:STDERR: fail_two_different_combined_from_final_impl_and_facet.carbon:[[@LINE-13]]:1: note: while deducing parameters of generic declared here [DeductionGenericHere]
+  // CHECK:STDERR: fn H(T:! L where .W = {}, a: T.W) -> {} { return a; }
+  // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+  // CHECK:STDERR:
   let c: {} = H(T, a);
 }
 
@@ -162,6 +163,26 @@ interface L { let W:! type; }
 // CHECK:STDERR:          ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 // CHECK:STDERR:
 fn G(T:! L where .W = ((), (), ()) and .W = ({}, (), ()) and .W = ({}, {}, ()) and .W = ({}, (), {})) {}
+
+// --- rewrite_uses_second_facet.carbon
+library "[[@TEST_NAME]]";
+
+interface M { let X:! type; let Y:! type; }
+
+fn F(T:! M where .X = (), U:! M where .Y = T.X) -> U.Y {
+  return ();
+}
+
+// --- fail_rewrite_conflicts_with_second_facet.carbon
+library "[[@TEST_NAME]]";
+
+interface M { let X:! type; let Y:! type; }
+
+// CHECK:STDERR: fail_rewrite_conflicts_with_second_facet.carbon:[[@LINE+4]]:31: error: associated constant `.(M.Y)` given two different values `.(M.X)` and `T.(M.X)` [AssociatedConstantWithDifferentValues]
+// CHECK:STDERR: fn F(T:! M where .X = (), U:! M where .Y = T.X and .Y = .X) {}
+// CHECK:STDERR:                               ^~~~~~~~~~~~~~~~~~~~~~~~~~~~
+// CHECK:STDERR:
+fn F(T:! M where .X = (), U:! M where .Y = T.X and .Y = .X) {}
 
 // --- repeated.carbon
 library "[[@TEST_NAME]]";
@@ -183,6 +204,27 @@ fn F(T:! M where .X = .Y and .X = .Y) {}
 
 fn G(T:! M where .X = () and .Y = ()) {
   F(T);
+}
+
+// --- fail_todo_repeated_with_bitand.carbon
+library "[[@TEST_NAME]]";
+
+interface M { let X:! type; let Y:! type; }
+
+// CHECK:STDERR: fail_todo_repeated_with_bitand.carbon:[[@LINE+4]]:10: error: associated constant `.(M.X)` given two different values `.(M.Y)` and `()` [AssociatedConstantWithDifferentValues]
+// CHECK:STDERR: fn F(T:! (M where .X = .Y) & (M where .X = .Y and .Y = ())) -> T.X {
+// CHECK:STDERR:          ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+// CHECK:STDERR:
+fn F(T:! (M where .X = .Y) & (M where .X = .Y and .Y = ())) -> T.X {
+  return ();
+}
+
+// CHECK:STDERR: fail_todo_repeated_with_bitand.carbon:[[@LINE+4]]:10: error: associated constant `.(M.X)` given two different values `.(M.Y)` and `()` [AssociatedConstantWithDifferentValues]
+// CHECK:STDERR: fn F(T:! (M where .X = .Y and .Y = ()) & (M where .X = .Y)) -> T.X {
+// CHECK:STDERR:          ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+// CHECK:STDERR:
+fn F(T:! (M where .X = .Y and .Y = ()) & (M where .X = .Y)) -> T.X {
+  return ();
 }
 
 // --- fail_repeated_and_different.carbon
@@ -333,9 +375,6 @@ fn F(T:! N where .Y = {.a = {}} and .Y = {.a = ()}) {}
 // CHECK:STDOUT:   %impl.elem1: type = impl_witness_access %M.lookup_impl_witness, element1 [symbolic_self]
 // CHECK:STDOUT:   %impl.elem2: type = impl_witness_access %M.lookup_impl_witness, element2 [symbolic_self]
 // CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [concrete]
-// CHECK:STDOUT:   %M_where.type: type = facet_type <@M where %impl.elem0 = <error> and %impl.elem1 = <error> and %impl.elem2 = %empty_tuple.type> [concrete]
-// CHECK:STDOUT:   %T: %M_where.type = bind_symbolic_name T, 0 [symbolic]
-// CHECK:STDOUT:   %pattern_type: type = pattern_type %M_where.type [concrete]
 // CHECK:STDOUT:   %F.type: type = fn_type @F [concrete]
 // CHECK:STDOUT:   %F: %F.type = struct_value () [concrete]
 // CHECK:STDOUT: }
@@ -345,9 +384,9 @@ fn F(T:! N where .Y = {.a = {}} and .Y = {.a = ()}) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [concrete = constants.%F] {
-// CHECK:STDOUT:     %T.patt: %pattern_type = symbolic_binding_pattern T, 0 [concrete]
+// CHECK:STDOUT:     %T.patt: <error> = symbolic_binding_pattern T, 0 [concrete]
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %.loc13_12.1: type = splice_block %.loc13_12.2 [concrete = constants.%M_where.type] {
+// CHECK:STDOUT:     %.loc13_12.1: type = splice_block %.loc13_12.2 [concrete = <error>] {
 // CHECK:STDOUT:       %M.ref: type = name_ref M, file.%M.decl [concrete = constants.%M.type]
 // CHECK:STDOUT:       <elided>
 // CHECK:STDOUT:       %.Self.ref.loc13_18: %M.type = name_ref .Self, %.Self [symbolic_self = constants.%.Self]
@@ -377,19 +416,17 @@ fn F(T:! N where .Y = {.a = {}} and .Y = {.a = ()}) {}
 // CHECK:STDOUT:       %impl.elem2: type = impl_witness_access constants.%M.lookup_impl_witness, element2 [symbolic_self = constants.%impl.elem2]
 // CHECK:STDOUT:       %.loc13_48.1: %empty_tuple.type = tuple_literal ()
 // CHECK:STDOUT:       %.loc13_48.2: type = converted %.loc13_48.1, constants.%empty_tuple.type [concrete = constants.%empty_tuple.type]
-// CHECK:STDOUT:       %.loc13_12.2: type = where_expr %.Self [concrete = constants.%M_where.type] {
+// CHECK:STDOUT:       %.loc13_12.2: type = where_expr %.Self [concrete = <error>] {
 // CHECK:STDOUT:         requirement_rewrite %impl.elem0.loc13_18, %impl.elem1.loc13_23
 // CHECK:STDOUT:         requirement_rewrite %impl.elem1.loc13_30, %impl.elem0.loc13_35
 // CHECK:STDOUT:         requirement_rewrite %impl.elem2, %.loc13_48.2
 // CHECK:STDOUT:       }
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %T.loc13_6.1: %M_where.type = bind_symbolic_name T, 0 [symbolic = %T.loc13_6.2 (constants.%T)]
+// CHECK:STDOUT:     %T: <error> = bind_symbolic_name T, 0 [concrete = <error>]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic fn @F(%T.loc13_6.1: %M_where.type) {
-// CHECK:STDOUT:   %T.loc13_6.2: %M_where.type = bind_symbolic_name T, 0 [symbolic = %T.loc13_6.2 (constants.%T)]
-// CHECK:STDOUT:
+// CHECK:STDOUT: generic fn @F(%T: <error>) {
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:
 // CHECK:STDOUT:   fn() {
@@ -398,7 +435,5 @@ fn F(T:! N where .Y = {.a = {}} and .Y = {.a = ()}) {}
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @F(constants.%T) {
-// CHECK:STDOUT:   %T.loc13_6.2 => constants.%T
-// CHECK:STDOUT: }
+// CHECK:STDOUT: specific @F(<error>) {}
 // CHECK:STDOUT:

@@ -43,4 +43,3 @@ fn TestAssign(b: D) {
   // CHECK:STDERR:
   a += b;
 }
-

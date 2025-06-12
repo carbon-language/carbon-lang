@@ -9,7 +9,6 @@
 
 #include "common/bazel_working_dir.h"
 #include "common/error.h"
-#include "common/exe_path.h"
 #include "common/init_llvm.h"
 #include "llvm/ADT/SmallVector.h"
 #include "llvm/ADT/StringRef.h"
@@ -26,8 +25,7 @@ static auto Main(int argc, char** argv) -> ErrorOr<int> {
   InitLLVM init_llvm(argc, argv);
 
   // Start by resolving any symlinks.
-  CARBON_ASSIGN_OR_RETURN(auto busybox_info,
-                          GetBusyboxInfo(FindExecutablePath(argv[0])));
+  CARBON_ASSIGN_OR_RETURN(auto busybox_info, GetBusyboxInfo(argv[0]));
 
   auto fs = llvm::vfs::getRealFileSystem();
 
@@ -37,6 +35,13 @@ static auto Main(int argc, char** argv) -> ErrorOr<int> {
   if (install_paths.error()) {
     return Error(*install_paths.error());
   }
+
+  // If `LLVM_SYMBOLIZER_PATH` is unset, sets it. Signals.cpp would do some more
+  // path resolution which this overrides in favor of using the busybox itself
+  // for symbolization.
+  setenv("LLVM_SYMBOLIZER_PATH",
+         (install_paths.llvm_install_bin() + "llvm-symbolizer").c_str(),
+         /*overwrite=*/0);
 
   SetWorkingDirForBazel();
 
