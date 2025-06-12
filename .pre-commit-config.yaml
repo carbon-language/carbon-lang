@@ -229,6 +229,19 @@ repos:
               .*/testdata/.*\.golden
           )$
       - id: check-links
+  - repo: local
+    hooks:
+      - id: check-build-graph
+        name: Check build graph
+        entry: scripts/check_build_graph.py
+        language: python
+        files: |
+          (?x)^(
+            .*BUILD.*|
+            .*MODULE.bazel.*|
+            .*WORKSPACE.*|
+            .*\.bzl
+          )$
 
 # This excludes third-party code, and patches to third-party code.
 exclude: |
