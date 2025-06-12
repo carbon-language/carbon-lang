@@ -23,8 +23,8 @@ static auto GetMode(const char* argv0) -> std::optional<std::string> {
 auto GetBusyboxInfo(const char* argv0) -> ErrorOr<BusyboxInfo> {
   // Check for an override of `argv[0]` from the environment and apply it.
   if (const char* argv0_override = getenv(Argv0OverrideEnv)) {
-    unsetenv(Argv0OverrideEnv);
     argv0 = argv0_override;
+    unsetenv(Argv0OverrideEnv);
   }
 
   BusyboxInfo info = {.bin_path = FindExecutablePath(argv0),
