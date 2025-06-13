@@ -491,7 +491,7 @@ auto ResolveFacetTypeRewriteConstraints(
             "associated constant {0} given two different values {1} and {2}",
             InstIdAsConstant, InstIdAsConstant, InstIdAsConstant);
         // Use inst id ordering as a simple proxy for source ordering, to try
-        // name the values in the same order they appear in the facet type.
+        // to name the values in the same order they appear in the facet type.
         auto source_order1 = constraint.rhs_id.index < next.rhs_id.index
                                  ? constraint.rhs_id
                                  : next.rhs_id;
