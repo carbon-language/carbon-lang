@@ -208,12 +208,11 @@ type would be obscure and can not be explained with the variable name. Function
 parameters generally name the type of each parameter, though lambdas may use
 `auto` if it's helpful.
 
-To disamgiuate types, we follow naming conventions to refer to the type in the
-variable name for common types in the toolchain, especially for our ID types.
-When the meaning is clear, just an `_id` suffix can provide sufficient
-disambiguation. Otherwise, we most commonly use suffixes like `_inst_id`,
-`_const_id`, `_name_id`, and so on, for variables of type `InstId`,
-`ConstantId`, `NameId`, and so on.
+When naming variables, we typically suffix `_id` for ID types. When needed, we
+can also resolve ambiguity by referring to the full type name in the variable
+name; for example, if there's a `ClassId`, `InstId`, and `TypeId` for the same
+class entity, we might call these `class_id`, `class_inst_id`, and
+`class_type_id`. Similarly, we might call an `Inst` `class_inst`.
 
 ### Copyable and movable types
 
