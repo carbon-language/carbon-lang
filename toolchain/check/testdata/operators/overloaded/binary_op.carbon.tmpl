@@ -13,19 +13,23 @@ package User;
 
 class C {};
 
-impl C as Core.INTERFACE {
+impl C as Core.INTERFACEWith(C) where .Result = C {
   fn Op[self: C](other: C) -> C {
     return {};
   }
 }
-impl C as Core.INTERFACEAssign {
+impl C as Core.INTERFACEAssignWith(C) {
   fn Op[addr self: C*](other: C) {}
 }
 
 fn TestOp(a: C, b: C) -> C {
+  //@dump-sem-ir-begin
   return a OP b;
+  //@dump-sem-ir-end
 }
 
 fn TestAssign(a: C*, b: C) {
+  //@dump-sem-ir-begin
   *a OP= b;
+  //@dump-sem-ir-end
 }

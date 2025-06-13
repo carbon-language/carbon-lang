@@ -231,8 +231,8 @@ let bad4: Core.IntLiteral() = LeftShiftOfLit(12, an_i32);
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %int_32: Core.IntLiteral = int_value 32 [concrete]
 // CHECK:STDOUT:   %i32: type = class_type @Int, @Int(%int_32) [concrete]
-// CHECK:STDOUT:   %LeftShift.type.ed3: type = fn_type @LeftShift.1 [concrete]
-// CHECK:STDOUT:   %LeftShift: %LeftShift.type.ed3 = struct_value () [concrete]
+// CHECK:STDOUT:   %LeftShift.type: type = fn_type @LeftShift [concrete]
+// CHECK:STDOUT:   %LeftShift: %LeftShift.type = struct_value () [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -240,7 +240,7 @@ let bad4: Core.IntLiteral() = LeftShiftOfLit(12, an_i32);
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @RuntimeCallIsValid(%a.param: %i32, %b.param: %i32) -> %i32 {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %LeftShift.ref: %LeftShift.type.ed3 = name_ref LeftShift, file.%LeftShift.decl [concrete = constants.%LeftShift]
+// CHECK:STDOUT:   %LeftShift.ref: %LeftShift.type = name_ref LeftShift, file.%LeftShift.decl [concrete = constants.%LeftShift]
 // CHECK:STDOUT:   %a.ref: %i32 = name_ref a, %a
 // CHECK:STDOUT:   %b.ref: %i32 = name_ref b, %b
 // CHECK:STDOUT:   %int.left_shift: init %i32 = call %LeftShift.ref(%a.ref, %b.ref)
@@ -255,8 +255,8 @@ let bad4: Core.IntLiteral() = LeftShiftOfLit(12, an_i32);
 // CHECK:STDOUT:   %int_32: Core.IntLiteral = int_value 32 [concrete]
 // CHECK:STDOUT:   %u32: type = class_type @UInt, @UInt(%int_32) [concrete]
 // CHECK:STDOUT:   %i32: type = class_type @Int, @Int(%int_32) [concrete]
-// CHECK:STDOUT:   %LeftShift.type.ed3: type = fn_type @LeftShift.1 [concrete]
-// CHECK:STDOUT:   %LeftShift: %LeftShift.type.ed3 = struct_value () [concrete]
+// CHECK:STDOUT:   %LeftShift.type: type = fn_type @LeftShift [concrete]
+// CHECK:STDOUT:   %LeftShift: %LeftShift.type = struct_value () [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -264,7 +264,7 @@ let bad4: Core.IntLiteral() = LeftShiftOfLit(12, an_i32);
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @RuntimeCall(%a.param: %u32, %b.param: %i32) -> %u32 {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %LeftShift.ref: %LeftShift.type.ed3 = name_ref LeftShift, file.%LeftShift.decl [concrete = constants.%LeftShift]
+// CHECK:STDOUT:   %LeftShift.ref: %LeftShift.type = name_ref LeftShift, file.%LeftShift.decl [concrete = constants.%LeftShift]
 // CHECK:STDOUT:   %a.ref: %u32 = name_ref a, %a
 // CHECK:STDOUT:   %b.ref: %i32 = name_ref b, %b
 // CHECK:STDOUT:   %int.left_shift: init %u32 = call %LeftShift.ref(%a.ref, %b.ref)

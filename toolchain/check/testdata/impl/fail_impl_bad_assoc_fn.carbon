@@ -243,7 +243,7 @@ class SelfNestedBadReturnType {
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %I.type: type = facet_type <@I> [concrete]
-// CHECK:STDOUT:   %Self.826: %I.type = bind_symbolic_name Self, 0 [symbolic]
+// CHECK:STDOUT:   %Self.8268: %I.type = bind_symbolic_name Self, 0 [symbolic]
 // CHECK:STDOUT:   %F.type.cf0: type = fn_type @F.1 [concrete]
 // CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [concrete]
 // CHECK:STDOUT:   %F.bc6: %F.type.cf0 = struct_value () [concrete]
@@ -338,18 +338,18 @@ class SelfNestedBadReturnType {
 // CHECK:STDOUT:   %F.be86c9.2: %F.type.d3b58f.2 = struct_value () [concrete]
 // CHECK:STDOUT:   %SelfNested.type: type = facet_type <@SelfNested> [concrete]
 // CHECK:STDOUT:   %Self.2ff: %SelfNested.type = bind_symbolic_name Self, 0 [symbolic]
-// CHECK:STDOUT:   %Self.as_type.e1e: type = facet_access_type %Self.2ff [symbolic]
-// CHECK:STDOUT:   %ptr.e87: type = ptr_type %Self.as_type.e1e [symbolic]
+// CHECK:STDOUT:   %Self.as_type.e1e8: type = facet_access_type %Self.2ff [symbolic]
+// CHECK:STDOUT:   %ptr.e87: type = ptr_type %Self.as_type.e1e8 [symbolic]
 // CHECK:STDOUT:   %int_32: Core.IntLiteral = int_value 32 [concrete]
 // CHECK:STDOUT:   %Int.type: type = generic_class_type @Int [concrete]
 // CHECK:STDOUT:   %Int.generic: %Int.type = struct_value () [concrete]
 // CHECK:STDOUT:   %i32: type = class_type @Int, @Int(%int_32) [concrete]
-// CHECK:STDOUT:   %struct_type.x.y.81e: type = struct_type {.x: %Self.as_type.e1e, .y: %i32} [symbolic]
+// CHECK:STDOUT:   %struct_type.x.y.81e: type = struct_type {.x: %Self.as_type.e1e8, .y: %i32} [symbolic]
 // CHECK:STDOUT:   %tuple.type.24b: type = tuple_type (type, type) [concrete]
 // CHECK:STDOUT:   %tuple.type.229: type = tuple_type (%ptr.e87, %struct_type.x.y.81e) [symbolic]
 // CHECK:STDOUT:   %pattern_type.ced: type = pattern_type %tuple.type.229 [symbolic]
 // CHECK:STDOUT:   %int_4: Core.IntLiteral = int_value 4 [concrete]
-// CHECK:STDOUT:   %array_type.873: type = array_type %int_4, %Self.as_type.e1e [symbolic]
+// CHECK:STDOUT:   %array_type.873: type = array_type %int_4, %Self.as_type.e1e8 [symbolic]
 // CHECK:STDOUT:   %pattern_type.c7e: type = pattern_type %array_type.873 [symbolic]
 // CHECK:STDOUT:   %F.type.6ed: type = fn_type @F.20 [concrete]
 // CHECK:STDOUT:   %F.998: %F.type.6ed = struct_value () [concrete]
@@ -443,7 +443,7 @@ class SelfNestedBadReturnType {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: interface @I {
-// CHECK:STDOUT:   %Self: %I.type = bind_symbolic_name Self, 0 [symbolic = constants.%Self.826]
+// CHECK:STDOUT:   %Self: %I.type = bind_symbolic_name Self, 0 [symbolic = constants.%Self.8268]
 // CHECK:STDOUT:   %F.decl: %F.type.cf0 = fn_decl @F.1 [concrete = constants.%F.bc6] {} {}
 // CHECK:STDOUT:   %assoc0: %I.assoc_type = assoc_entity element0, %F.decl [concrete = constants.%assoc0.82e]
 // CHECK:STDOUT:
@@ -501,21 +501,21 @@ class SelfNestedBadReturnType {
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %Self.ref.loc210_50: %SelfNested.type = name_ref Self, @SelfNested.%Self [symbolic = %Self (constants.%Self.2ff)]
 // CHECK:STDOUT:     %int_4: Core.IntLiteral = int_value 4 [concrete = constants.%int_4]
-// CHECK:STDOUT:     %Self.as_type.loc210_50: type = facet_access_type %Self.ref.loc210_50 [symbolic = %Self.as_type.loc210_16.1 (constants.%Self.as_type.e1e)]
-// CHECK:STDOUT:     %.loc210_50: type = converted %Self.ref.loc210_50, %Self.as_type.loc210_50 [symbolic = %Self.as_type.loc210_16.1 (constants.%Self.as_type.e1e)]
+// CHECK:STDOUT:     %Self.as_type.loc210_50: type = facet_access_type %Self.ref.loc210_50 [symbolic = %Self.as_type.loc210_16.1 (constants.%Self.as_type.e1e8)]
+// CHECK:STDOUT:     %.loc210_50: type = converted %Self.ref.loc210_50, %Self.as_type.loc210_50 [symbolic = %Self.as_type.loc210_16.1 (constants.%Self.as_type.e1e8)]
 // CHECK:STDOUT:     %array_type.loc210_57.2: type = array_type %int_4, %.loc210_50 [symbolic = %array_type.loc210_57.1 (constants.%array_type.873)]
 // CHECK:STDOUT:     %x.param: @F.20.%tuple.type (%tuple.type.229) = value_param call_param0
 // CHECK:STDOUT:     %.loc210_38.1: type = splice_block %.loc210_38.3 [symbolic = %tuple.type (constants.%tuple.type.229)] {
 // CHECK:STDOUT:       %Self.ref.loc210_12: %SelfNested.type = name_ref Self, @SelfNested.%Self [symbolic = %Self (constants.%Self.2ff)]
-// CHECK:STDOUT:       %Self.as_type.loc210_16.2: type = facet_access_type %Self.ref.loc210_12 [symbolic = %Self.as_type.loc210_16.1 (constants.%Self.as_type.e1e)]
-// CHECK:STDOUT:       %.loc210_16: type = converted %Self.ref.loc210_12, %Self.as_type.loc210_16.2 [symbolic = %Self.as_type.loc210_16.1 (constants.%Self.as_type.e1e)]
+// CHECK:STDOUT:       %Self.as_type.loc210_16.2: type = facet_access_type %Self.ref.loc210_12 [symbolic = %Self.as_type.loc210_16.1 (constants.%Self.as_type.e1e8)]
+// CHECK:STDOUT:       %.loc210_16: type = converted %Self.ref.loc210_12, %Self.as_type.loc210_16.2 [symbolic = %Self.as_type.loc210_16.1 (constants.%Self.as_type.e1e8)]
 // CHECK:STDOUT:       %ptr.loc210_16.2: type = ptr_type %.loc210_16 [symbolic = %ptr.loc210_16.1 (constants.%ptr.e87)]
 // CHECK:STDOUT:       %Self.ref.loc210_24: %SelfNested.type = name_ref Self, @SelfNested.%Self [symbolic = %Self (constants.%Self.2ff)]
-// CHECK:STDOUT:       %Self.as_type.loc210_24: type = facet_access_type %Self.ref.loc210_24 [symbolic = %Self.as_type.loc210_16.1 (constants.%Self.as_type.e1e)]
-// CHECK:STDOUT:       %.loc210_24: type = converted %Self.ref.loc210_24, %Self.as_type.loc210_24 [symbolic = %Self.as_type.loc210_16.1 (constants.%Self.as_type.e1e)]
+// CHECK:STDOUT:       %Self.as_type.loc210_24: type = facet_access_type %Self.ref.loc210_24 [symbolic = %Self.as_type.loc210_16.1 (constants.%Self.as_type.e1e8)]
+// CHECK:STDOUT:       %.loc210_24: type = converted %Self.ref.loc210_24, %Self.as_type.loc210_24 [symbolic = %Self.as_type.loc210_16.1 (constants.%Self.as_type.e1e8)]
 // CHECK:STDOUT:       %int_32: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
 // CHECK:STDOUT:       %i32: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
-// CHECK:STDOUT:       %struct_type.x.y.loc210_37.2: type = struct_type {.x: @F.20.%Self.as_type.loc210_16.1 (%Self.as_type.e1e), .y: %i32} [symbolic = %struct_type.x.y.loc210_37.1 (constants.%struct_type.x.y.81e)]
+// CHECK:STDOUT:       %struct_type.x.y.loc210_37.2: type = struct_type {.x: @F.20.%Self.as_type.loc210_16.1 (%Self.as_type.e1e8), .y: %i32} [symbolic = %struct_type.x.y.loc210_37.1 (constants.%struct_type.x.y.81e)]
 // CHECK:STDOUT:       %.loc210_38.2: %tuple.type.24b = tuple_literal (%ptr.loc210_16.2, %struct_type.x.y.loc210_37.2)
 // CHECK:STDOUT:       %.loc210_38.3: type = converted %.loc210_38.2, constants.%tuple.type.229 [symbolic = %tuple.type (constants.%tuple.type.229)]
 // CHECK:STDOUT:     }
@@ -1309,9 +1309,9 @@ class SelfNestedBadReturnType {
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic fn @F.20(@SelfNested.%Self: %SelfNested.type) {
 // CHECK:STDOUT:   %Self: %SelfNested.type = bind_symbolic_name Self, 0 [symbolic = %Self (constants.%Self.2ff)]
-// CHECK:STDOUT:   %Self.as_type.loc210_16.1: type = facet_access_type %Self [symbolic = %Self.as_type.loc210_16.1 (constants.%Self.as_type.e1e)]
+// CHECK:STDOUT:   %Self.as_type.loc210_16.1: type = facet_access_type %Self [symbolic = %Self.as_type.loc210_16.1 (constants.%Self.as_type.e1e8)]
 // CHECK:STDOUT:   %ptr.loc210_16.1: type = ptr_type %Self.as_type.loc210_16.1 [symbolic = %ptr.loc210_16.1 (constants.%ptr.e87)]
-// CHECK:STDOUT:   %struct_type.x.y.loc210_37.1: type = struct_type {.x: @F.20.%Self.as_type.loc210_16.1 (%Self.as_type.e1e), .y: %i32} [symbolic = %struct_type.x.y.loc210_37.1 (constants.%struct_type.x.y.81e)]
+// CHECK:STDOUT:   %struct_type.x.y.loc210_37.1: type = struct_type {.x: @F.20.%Self.as_type.loc210_16.1 (%Self.as_type.e1e8), .y: %i32} [symbolic = %struct_type.x.y.loc210_37.1 (constants.%struct_type.x.y.81e)]
 // CHECK:STDOUT:   %tuple.type: type = tuple_type (%ptr.loc210_16.1, %struct_type.x.y.loc210_37.1) [symbolic = %tuple.type (constants.%tuple.type.229)]
 // CHECK:STDOUT:   %pattern_type.loc210_8: type = pattern_type %tuple.type [symbolic = %pattern_type.loc210_8 (constants.%pattern_type.ced)]
 // CHECK:STDOUT:   %array_type.loc210_57.1: type = array_type constants.%int_4, %Self.as_type.loc210_16.1 [symbolic = %array_type.loc210_57.1 (constants.%array_type.873)]
@@ -1349,7 +1349,7 @@ class SelfNestedBadReturnType {
 // CHECK:STDOUT:   return <error> to %return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @F.1(constants.%Self.826) {}
+// CHECK:STDOUT: specific @F.1(constants.%Self.8268) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @F.1(constants.%I.facet.fa4) {}
 // CHECK:STDOUT:
@@ -1373,7 +1373,7 @@ class SelfNestedBadReturnType {
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @F.20(constants.%Self.2ff) {
 // CHECK:STDOUT:   %Self => constants.%Self.2ff
-// CHECK:STDOUT:   %Self.as_type.loc210_16.1 => constants.%Self.as_type.e1e
+// CHECK:STDOUT:   %Self.as_type.loc210_16.1 => constants.%Self.as_type.e1e8
 // CHECK:STDOUT:   %ptr.loc210_16.1 => constants.%ptr.e87
 // CHECK:STDOUT:   %struct_type.x.y.loc210_37.1 => constants.%struct_type.x.y.81e
 // CHECK:STDOUT:   %tuple.type => constants.%tuple.type.229
