@@ -201,7 +201,7 @@ package Core;
 interface BitComplementPrimitive
     [anchor Self:! NoRefForm] {
   default let out ResultForm:! NoRefForm
-      = form(var Self);
+      = form(var Self.type);
   fn Op[self: Self]() -> Result;
 }
 constraint BitComplement {
@@ -217,7 +217,7 @@ constraint BitComplement {
 interface BitAndWithPrimitive
     [in Self:! NoRefForm](in U:! NoRefForm) {
   default let out ResultForm:! NoRefForm
-      = form(var Self);
+      = form(var Self.type);
   fn Op[self:? Self](other:? U)
       ->? ResultForm;
 }
@@ -237,7 +237,7 @@ constraint BitAnd {
 interface BitOrWithPrimitive
     [in Self:! NoRefForm](in U:! NoRefForm) {
   default let out ResultForm:! NoRefForm
-      = form(var Self);
+      = form(var Self.type);
   fn Op[self:? Self](other:? U)
       ->? ResultForm;
 }
@@ -257,7 +257,7 @@ constraint BitOr {
 interface BitXorWithPrimitive
     [in Self:! NoRefForm](in U:! NoRefForm) {
   default let out ResultForm:! NoRefForm
-      = form(var Self);
+      = form(var Self.type);
   fn Op[self:? Self](other:? U)
       ->? ResultForm;
 }
@@ -279,7 +279,7 @@ Note that the shift operators anchor on the type of the left argument.
 interface LeftShiftWithPrimitive
     [anchor Self:! NoRefForm](in U:! NoRefForm) {
   default let out ResultForm:! NoRefForm
-      = form(var Self);
+      = form(var Self.type);
   fn Op[self:? Self](other:? U)
       ->? ResultForm;
 }
@@ -299,7 +299,7 @@ constraint LeftShift {
 interface RightShiftWithPrimitive
     [anchor Self:! NoRefForm](in U:! NoRefForm) {
   default let out ResultForm:! NoRefForm
-      = form(var Self);
+      = form(var Self.type);
   fn Op[self:? Self](other:? U)
       ->? ResultForm;
 }

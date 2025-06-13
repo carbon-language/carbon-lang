@@ -196,7 +196,7 @@ package Core;
 // Unary `-`.
 interface NegatePrimitive[anchor Self:! NoRefForm] {
   default let out ResultForm:! NoRefForm
-      = form(var Self);
+      = form(var Self.type);
   fn Op[bound self:? Self]()
       ->? ResultForm;
 
@@ -214,7 +214,7 @@ constraint Negate {
 interface AddWithPrimitive
     [in Self:! NoRefForm](in U:! NoRefForm) {
   default let out ResultForm:! NoRefForm
-      = form(var Self);
+      = form(var Self.type);
   fn Op[self:? Self](other:? U)
       ->? ResultForm;
 }
@@ -234,7 +234,7 @@ constraint Add {
 interface SubWithPrimitive
     [in Self:! NoRefForm](in U:! NoRefForm) {
   default let out ResultForm:! NoRefForm
-      = form(var Self);
+      = form(var Self.type);
   fn Op[self:? Self](other:? U)
       ->? ResultForm;
 }
@@ -254,7 +254,7 @@ constraint Sub {
 interface MulWithPrimitive
     [in Self:! NoRefForm](in U:! NoRefForm) {
   default let out ResultForm:! NoRefForm
-      = form(var Self);
+      = form(var Self.type);
   fn Op[self:? Self](other:? U)
       ->? ResultForm;
 }
@@ -274,7 +274,7 @@ constraint Mul {
 interface DivWithPrimitive
     [in Self:! NoRefForm](in U:! NoRefForm) {
   default let out ResultForm:! NoRefForm
-      = form(var Self);
+      = form(var Self.type);
   fn Op[self:? Self](other:? U)
       ->? ResultForm;
 }
@@ -294,7 +294,7 @@ constraint Div {
 interface ModWithPrimitive
     [in Self:! NoRefForm](in U:! NoRefForm) {
   default let out ResultForm:! NoRefForm
-      = form(var Self);
+      = form(var Self.type);
   fn Op[self:? Self](other:? U)
       ->? ResultForm;
 }
