@@ -297,9 +297,14 @@ static auto CompareFacetTypeConstraintValues(Context& context,
     }
   }
 
-  if (context.constant_values().GetConstantInstId(lhs_id) ==
-      context.constant_values().GetConstantInstId(rhs_id)) {
-    return std::weak_ordering::equivalent;
+  // We do *not* want to get the evaluated result of `ImplWitnessAccess` here,
+  // we want to keep them as a reference to an associated constant for the
+  // resolution phase.
+  if (!lhs_access && !rhs_access) {
+    if (context.constant_values().GetConstantInstId(lhs_id) ==
+        context.constant_values().GetConstantInstId(rhs_id)) {
+      return std::weak_ordering::equivalent;
+    }
   }
   // Try to return things in the order they appear in the code by using the
   // non-canonicalized id.
