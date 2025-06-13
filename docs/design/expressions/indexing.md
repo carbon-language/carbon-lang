@@ -41,10 +41,7 @@ implement that interface, or to method calls on `IndexWith` otherwise.
 can implement at most one of those two interfaces.
 
 The `Ref` methods of these interfaces, which are used to form durable reference
-expressions on indexing, must return by `ref`. The returned pointer is then
-dereferenced by the language to form the reference expression referring to the
-pointed-to object. These methods must return a raw pointer, and do not
-automatically chain with customized dereference interfaces.
+expressions on indexing, must return by `ref`.
 
 ## Details
 
