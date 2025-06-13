@@ -2066,7 +2066,8 @@ auto TryEvalTypedInst<SemIR::WhereExpr>(EvalContext& eval_context,
 
       if (auto impls =
               eval_context.insts().TryGetAs<SemIR::RequirementImpls>(inst_id)) {
-        if (IsPeriodSelf(eval_context,
+        if (impls->rhs_id != SemIR::ErrorInst::InstId &&
+            IsPeriodSelf(eval_context,
                          eval_context.constant_values().Get(impls->lhs_id))) {
           if (impls->rhs_id == SemIR::TypeType::TypeInstId) {
             // `.Self impls type` -> nothing to do.
