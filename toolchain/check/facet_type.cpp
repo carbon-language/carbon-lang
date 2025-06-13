@@ -462,6 +462,7 @@ auto ResolveFacetTypeRewriteConstraints(
     // This loop moves `i` to the last position with the same LHS value, so that
     // we don't diagnose more than once within the same contiguous range of
     // assignments to a single LHS value.
+    // TEST
     for (; i < rewrites.size() - 1; ++i) {
       auto& next = rewrites[i + 1];
       auto next_lhs_access =
