@@ -92,6 +92,18 @@ constraint IndexWith(SubscriptType:! type) {
   alias Ref = RefSelf(IndexWithPrimitive(
       form(let SubscriptType))).Op;
 }
+
+// FIXME
+interface IndexWith(SubscriptType:! type) {
+  let ElementType:! type;
+  fn At[bound self: Self](subscript: SubscriptType) -> let ElementType;
+  fn Ref[bound ref self: Self](subscript: SubscriptType) -> ref ElementType;
+}
+
+final impl forall [S:! type, T:! IndexWith(S)]
+    form(let T) as IndexWithPrimitive(form(let S)) { ... }
+final impl forall [S:! type, T:! IndexWith(S)]
+    form(ref T) as IndexWithPrimitive(form(let S)) { ... }
 ```
 
 FIXME: describe
