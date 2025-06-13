@@ -653,7 +653,7 @@ def _impl(ctx):
         )],
     )
 
-    # Clang HARDENED_MODE has 4 possible values:
+    # Clang HARDENING_MODE has 4 possible values:
     # https://libcxx.llvm.org/Hardening.html#notes-for-users
     libcpp_debug_flags = [
         "-D_LIBCPP_HARDENING_MODE=_LIBCPP_HARDENING_MODE_DEBUG",
