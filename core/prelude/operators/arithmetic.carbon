@@ -6,14 +6,27 @@ package Core library "prelude/operators/arithmetic";
 
 import library "prelude/types/int_literal";
 
+// TODO: Per the design, the associated type `Result` in each of these
+// interfaces should have a default value of `Self`:
+//
+//   default let Result:! type = Self;
+
+// TODO: Per the design, for each *With interface there should also be a
+// non-With named constraint, such as:
+//
+//   constraint Add {
+//     extend require impls AddWith(Self) where .Result = Self;
+//   }
+
 // Addition: `a + b`.
-interface Add {
-  fn Op[self: Self](other: Self) -> Self;
+interface AddWith(Other:! type) {
+  let Result:! type;
+  fn Op[self: Self](other: Other) -> Result;
 }
 
 // Addition with assignment: `a += b`.
-interface AddAssign {
-  fn Op[addr self: Self*](other: Self);
+interface AddAssignWith(Other:! type) {
+  fn Op[addr self: Self*](other: Other);
 }
 
 // Increment: `++a`.
@@ -23,17 +36,19 @@ interface Inc {
 
 // Negation: `-a`.
 interface Negate {
-  fn Op[self: Self]() -> Self;
+  let Result:! type;
+  fn Op[self: Self]() -> Result;
 }
 
 // Subtraction: `a - b`.
-interface Sub {
-  fn Op[self: Self](other: Self) -> Self;
+interface SubWith(Other:! type) {
+  let Result:! type;
+  fn Op[self: Self](other: Other) -> Result;
 }
 
 // Subtraction with assignment: `a -= b`.
-interface SubAssign {
-  fn Op[addr self: Self*](other: Self);
+interface SubAssignWith(Other:! type) {
+  fn Op[addr self: Self*](other: Other);
 }
 
 // Decrement: `--a`.
@@ -42,58 +57,61 @@ interface Dec {
 }
 
 // Multiplication: `a * b`.
-interface Mul {
-  fn Op[self: Self](other: Self) -> Self;
+interface MulWith(Other:! type) {
+  let Result:! type;
+  fn Op[self: Self](other: Other) -> Result;
 }
 
 // Multiplication with assignment: `a *= b`.
-interface MulAssign {
-  fn Op[addr self: Self*](other: Self);
+interface MulAssignWith(Other:! type) {
+  fn Op[addr self: Self*](other: Other);
 }
 
 // Division: `a / b`.
-interface Div {
-  fn Op[self: Self](other: Self) -> Self;
+interface DivWith(Other:! type) {
+  let Result:! type;
+  fn Op[self: Self](other: Other) -> Result;
 }
 
 // Division with assignment: `a /= b`.
-interface DivAssign {
-  fn Op[addr self: Self*](other: Self);
+interface DivAssignWith(Other:! type) {
+  fn Op[addr self: Self*](other: Other);
 }
 
 // Modulo: `a % b`.
-interface Mod {
-  fn Op[self: Self](other: Self) -> Self;
+interface ModWith(Other:! type) {
+  let Result:! type;
+  fn Op[self: Self](other: Other) -> Result;
 }
 
 // Modulo with assignment: `a %= b`.
-interface ModAssign {
-  fn Op[addr self: Self*](other: Self);
+interface ModAssignWith(Other:! type) {
+  fn Op[addr self: Self*](other: Other);
 }
 
 
 // Operations for IntLiteral. These need to be here because IntLiteral has no
 // associated library of its own.
-impl IntLiteral() as Add {
+impl IntLiteral() as AddWith(Self) where .Result = Self {
   fn Op[self: Self](other: Self) -> Self = "int.sadd";
 }
 
-impl IntLiteral() as Div {
+impl IntLiteral() as DivWith(Self) where .Result = Self {
   fn Op[self: Self](other: Self) -> Self = "int.sdiv";
 }
 
-impl IntLiteral() as Mod {
+impl IntLiteral() as ModWith(Self) where .Result = Self {
   fn Op[self: Self](other: Self) -> Self = "int.smod";
 }
 
-impl IntLiteral() as Mul {
+impl IntLiteral() as MulWith(Self) where .Result = Self {
   fn Op[self: Self](other: Self) -> Self = "int.smul";
 }
 
-impl IntLiteral() as Negate {
+impl IntLiteral() as Negate where .Result = Self {
   fn Op[self: Self]() -> Self = "int.snegate";
 }
 
-impl IntLiteral() as Sub {
+impl IntLiteral() as SubWith(Self) where .Result = Self {
   fn Op[self: Self](other: Self) -> Self = "int.ssub";
 }
