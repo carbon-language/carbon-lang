@@ -21,37 +21,32 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 ## Overview
 
 Carbon supports indexing using the conventional `a[i]` subscript syntax. When
-`a` is a
-[durable reference expression](/docs/design/values.md#durable-reference-expressions),
-the result of subscripting is also a durable reference expression, but when `a`
-is a [value expression](/docs/design/values.md#value-expressions), the result
-can be a durable reference expression or a value expression, depending on which
-interface the type implements:
+`a` is a [value expression](/docs/design/values.md#value-expressions), the
+result can be a durable reference expression or a value expression, depending on
+which constraint the type implements:
 
 -   If subscripting a value expression produces a value expression, as with an
     array, the type should implement `IndexWith`.
 -   If subscripting a value expression produces a durable reference expression,
     as with C++'s `std::span`, the type should implement `IndirectIndexWith`.
 
-`IndirectIndexWith` is a subtype of `IndexWith`, and subscript expressions are
-rewritten to method calls on `IndirectIndexWith` if the type is known to
-implement that interface, or to method calls on `IndexWith` otherwise.
+When `a` is a
+[durable reference expression](/docs/design/values.md#durable-reference-expressions),
+the result of subscripting is also a durable reference expression if either of
+those constraints are implemented.
 
-`IndirectIndexWith` provides a final blanket `impl` of `IndexWith`, so a type
-can implement at most one of those two interfaces.
+Any type that implements `IndirectIndexWith` automatically also implements
+`IndexWith`.
 
-The `Addr` methods of these interfaces, which are used to form durable reference
-expressions on indexing, must return a pointer and work similarly to the
-[pointer dereference customization interface](/docs/design/values.md#dereferencing-customization).
-The returned pointer is then dereferenced by the language to form the reference
-expression referring to the pointed-to object. These methods must return a raw
-pointer, and do not automatically chain with customized dereference interfaces.
+Other behaviors can be accomplished by implementing the underlying interface
+`IndexWithPrimitive`.
 
-**Open question:** It's not clear that the lack of chaining is necessary, and it
-might be more expressive for the pointer type returned by the `Addr` methods to
-be an associated facet with a default to allow types to produce custom
-pointer-like types on their indexing boundary and have them still be
-automatically dereferenced.
+`IndirectIndexWith` and `IndexWith` overlap, so a type can implement at most one
+of those two constraints.
+
+The `Ref` methods of these interfaces, which are used to form durable reference
+expressions on indexing, return by `ref`. The `IndexWith` interface also has an
+`At` method that returns by value.
 
 ## Details
 
@@ -59,7 +54,65 @@ A subscript expression has the form "_lhs_ `[` _index_ `]`". As in C++, this
 syntax has the same precedence as `.`, `->`, and function calls, and associates
 left-to-right with all of them.
 
-Its semantics are defined in terms of the following interfaces:
+Its semantics are defined in terms of the following interface:
+
+```carbon
+package Core;
+
+interface IndexWithPrimitive
+    [anchor Self:! Form]
+    (in Subscript:! Form) {
+  let out ResultForm:! Form;
+  fn Op[bound self:? Self](subscript:? Subscript)
+    ->? ResultForm;
+}
+```
+
+The expression "_lhs_ `[` _index_ `]`" is rewritten to "_lhs_
+`.(IndexWithPrimitive(formof(` _index_ `)).Op)(` _index_ `)`".
+
+The named constraint `IndexWith` covers the case of indexing into an object that
+owns the storage for its elements, like an array or C++'s `std::vector`:
+
+```carbon
+// `lhs[index]` is a reference expression or value
+// depending on the category of `lhs`.
+constraint IndexWith(SubscriptType:! type) {
+  let ElementType:! type;
+
+  require form(let Self) impls
+     IndexWithPrimitive(form(let SubscriptType))
+     where .ResultForm = form(let ElementType);
+  alias At = LetSelf(IndexWithPrimitive(
+      form(let SubscriptType))).Op;
+
+  require form(ref Self) impls
+     IndexWithPrimitive(form(let SubscriptType))
+     where .ResultForm = form(ref ElementType);
+  alias Ref = RefSelf(IndexWithPrimitive(
+      form(let SubscriptType))).Op;
+}
+```
+
+FIXME: describe
+
+```carbon
+// `lhs[index]` is always reference expression, even
+// when `lhs` is a value.
+constraint IndirectIndexWith(SubscriptType:! type) {
+  let ElementType:! type;
+
+  require form(let Self) impls
+     IndexWithPrimitive(form(let SubscriptType))
+     where .ResultForm = form(ref ElementType);
+  alias Ref = LetSelf(IndexWithPrimitive(
+      form(let SubscriptType))).Op;
+}
+```
+
+FIXME: describe will be used no matter the category of the _lhs_ argument.
+
+FIXME: both of these require
 
 ```
 interface IndexWith(SubscriptType:! type) {
