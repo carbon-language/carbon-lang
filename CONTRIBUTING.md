@@ -241,7 +241,7 @@ All contributions, regardless of what tools are used, are also still subject to
 normal code review and our
 [guidelines and standards](#contribution-guidelines-and-standards) below.
 
-Additionally, we want to avoid contributions to Carbon to also be viable as
+Additionally, we want contributions to Carbon to also be viable as
 contributions to LLVM so that we can potentially move things between these
 projects easily where relevant. We selected our license in part for this reason,
 and the same should also be true for the use of AI-based coding tools. Any
