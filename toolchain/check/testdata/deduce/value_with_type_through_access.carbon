@@ -611,9 +611,10 @@ fn G() {
 // CHECK:STDOUT:   %.loc26_26.4: init type = initialize_from %C.ref to %.loc26_26.3 [concrete = constants.%C]
 // CHECK:STDOUT:   %.loc26_26.5: init %Class = class_init (%.loc26_26.4), %.loc26_26.2 [concrete = constants.%Class.val]
 // CHECK:STDOUT:   %.loc26_26.6: ref %Class = temporary %.loc26_26.2, %.loc26_26.5
-// CHECK:STDOUT:   %.loc26_28: ref %Class = converted %.loc26_26.1, %.loc26_26.6
+// CHECK:STDOUT:   %.loc26_28.1: ref %Class = converted %.loc26_26.1, %.loc26_26.6
 // CHECK:STDOUT:   %Class.ref.loc26_11: type = name_ref Class, file.%Class.decl [concrete = constants.%Class]
-// CHECK:STDOUT:   %c: %Class = bind_symbolic_name c, 0, %.loc26_28 [symbolic = constants.%c]
+// CHECK:STDOUT:   %.loc26_28.2: %Class = bind_value %.loc26_28.1
+// CHECK:STDOUT:   %c: %Class = bind_symbolic_name c, 0, %.loc26_28.2 [symbolic = constants.%c]
 // CHECK:STDOUT:   %F.ref: %F.type = name_ref F, file.%F.decl [concrete = constants.%F]
 // CHECK:STDOUT:   %.loc27_6.1: %empty_struct_type = struct_literal ()
 // CHECK:STDOUT:   %HoldsType.ref: %HoldsType.type = name_ref HoldsType, file.%HoldsType.decl [concrete = constants.%HoldsType.generic]

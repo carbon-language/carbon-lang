@@ -666,9 +666,9 @@ fn H() {
 // CHECK:STDOUT:     %int_32.loc13_10: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
 // CHECK:STDOUT:     %i32.loc13_10: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %.loc13_25.1: ref %i32 = temporary_storage
-// CHECK:STDOUT:   %.loc13_25.2: ref %i32 = temporary %.loc13_25.1, %G.call
-// CHECK:STDOUT:   %i: ref %i32 = bind_name i, %.loc13_25.2
+// CHECK:STDOUT:   %.loc13_25.1: %i32 = value_of_initializer %G.call
+// CHECK:STDOUT:   %.loc13_25.2: %i32 = converted %G.call, %.loc13_25.1
+// CHECK:STDOUT:   %i: %i32 = bind_name i, %.loc13_25.2
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -865,9 +865,9 @@ fn H() {
 // CHECK:STDOUT:     %int_32.loc7_10: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
 // CHECK:STDOUT:     %i32.loc7_10: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %.loc7_25.1: ref %i32 = temporary_storage
-// CHECK:STDOUT:   %.loc7_25.2: ref %i32 = temporary %.loc7_25.1, %G.call
-// CHECK:STDOUT:   %j: ref %i32 = bind_name j, %.loc7_25.2
+// CHECK:STDOUT:   %.loc7_25.1: %i32 = value_of_initializer %G.call
+// CHECK:STDOUT:   %.loc7_25.2: %i32 = converted %G.call, %.loc7_25.1
+// CHECK:STDOUT:   %j: %i32 = bind_name j, %.loc7_25.2
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
