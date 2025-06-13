@@ -208,10 +208,12 @@ type would be obscure and can not be explained with the variable name. Function
 parameters generally name the type of each parameter, though lambdas may use
 `auto` if it's helpful.
 
-To make types visible regardless, we follow naming conventions to refer to the
-type in the variable name for common types in the toolchain, especially for our
-ID types. For example, the suffixes `_inst_id`, `_const_id`, `_name_id`, and so
-on, are used on variables of type `InstId`, `ConstantId`, `NameId`, and so on.
+To disamgiuate types, we follow naming conventions to refer to the type in the
+variable name for common types in the toolchain, especially for our ID types.
+When the meaning is clear, just an `_id` suffix can provide sufficient
+disambiguation. Otherwise, we most commonly use suffixes like `_inst_id`,
+`_const_id`, `_name_id`, and so on, for variables of type `InstId`,
+`ConstantId`, `NameId`, and so on.
 
 ### Copyable and movable types
 
