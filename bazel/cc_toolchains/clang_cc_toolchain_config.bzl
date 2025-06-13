@@ -654,12 +654,12 @@ def _impl(ctx):
     )
 
     # Clang HARDENED_MODE has 4 possible values:
-    # https://releases.llvm.org/18.1.0/projects/libcxx/docs/Hardening.html#hardening-modes
+    # https://libcxx.llvm.org/Hardening.html#notes-for-users
     libcpp_debug_flags = [
-        "-D_LIBCPP_ENABLE_HARDENED_MODE=_LIBCPP_HARDENING_MODE_EXTENSIVE",
+        "-D_LIBCPP_HARDENING_MODE=_LIBCPP_HARDENING_MODE_DEBUG",
     ]
     libcpp_release_flags = [
-        "-D_LIBCPP_ENABLE_HARDENED_MODE=_LIBCPP_HARDENING_MODE_FAST",
+        "-D_LIBCPP_HARDENING_MODE=_LIBCPP_HARDENING_MODE_FAST",
     ]
 
     linux_flags_feature = feature(
