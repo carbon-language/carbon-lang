@@ -14,6 +14,14 @@ jobs:
   set_labels:
     runs-on: ubuntu-latest
     steps:
+      - name: Update gh
+        run: |
+          # Update `gh` to get the fix for https://github.com/cli/cli/issues/11055
+          # TODO: This can be removed once https://github.com/cli/cli/releases/tag/v2.74.1
+          # makes its way to the ubuntu images on GitHub workers.
+          sudo apt update
+          sudo apt install gh
+
       - name: Harden Runner
         uses: step-security/harden-runner@17d0e2bd7d51742c71671bd19fa12bdc9d40a3d6 # v2.8.1
         with:
