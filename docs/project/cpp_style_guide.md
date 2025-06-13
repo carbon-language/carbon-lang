@@ -16,6 +16,7 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
     -   [General naming rules](#general-naming-rules)
     -   [File names](#file-names)
     -   [Syntax and formatting](#syntax-and-formatting)
+    -   [Naming variable types and the use of `auto`](#naming-variable-types-and-the-use-of-auto)
     -   [Copyable and movable types](#copyable-and-movable-types)
     -   [Static and global variables](#static-and-global-variables)
     -   [Foundational libraries and data types](#foundational-libraries-and-data-types)
@@ -196,6 +197,21 @@ these.
     specifically for test fixtures in `.cpp` files, we use `public` instead of
     `protected`. This is motivated by the
     `misc-non-private-member-variables-in-classes` tidy check.
+
+### Naming variable types and the use of `auto`
+
+We generally use `auto` for most local variables when a type can be inferred,
+except for primitive types such as `bool` and `int`. It is not required to use
+`auto`, and shorter type names such as `SemIR::InstId` are sometimes named even
+though they could be inferred. Naming the type can be helpful in cases where the
+type would be obscure and can not be explained with the variable name. Function
+parameters generally name the type of each parameter, though lambdas may use
+`auto` if it's helpful.
+
+To make types visible regardless, we follow naming conventions to refer to the
+type in the variable name for common types in the toolchain, especially for our
+ID types. For example, the suffixes `_inst_id`, `_const_id`, `_name_id`, and so
+on, are used on variables of type `InstId`, `ConstantId`, `NameId`, and so on.
 
 ### Copyable and movable types
 
