@@ -10,6 +10,10 @@ on:
 permissions:
   pull-requests: write # For gh to edit labels.
 
+# TODO: `--repo carbon-language/carbon-lang` is a temporary workaround for:
+# https://github.com/cli/cli/issues/11055
+# Once a later version is released on runners, maybe August 2025, we should be
+# able to remove the extra flag.
 jobs:
   set_labels:
     runs-on: ubuntu-latest
@@ -17,22 +21,11 @@ jobs:
       - name: Harden Runner
         uses: step-security/harden-runner@17d0e2bd7d51742c71671bd19fa12bdc9d40a3d6 # v2.8.1
         with:
-          # TODO: Re-enable `disable-sudo` and `block` when the `Update gh`
-          # step can be removed.
-          # disable-sudo: true
-          # egress-policy: block
-          egress-policy: audit
+          disable-sudo: true
+          egress-policy: block
           # prettier-ignore
           allowed-endpoints: >
             api.github.com:443
-
-      - name: Update gh
-        run: |
-          # Update `gh` to get the fix for https://github.com/cli/cli/issues/11055
-          # TODO: This can be removed once https://github.com/cli/cli/releases/tag/v2.74.1
-          # makes its way to the ubuntu images on GitHub workers.
-          sudo apt update
-          sudo apt install -y gh
 
       - id: filter
         uses: dorny/paths-filter@de90cc6fb38fc0963ad72b210f1f284cd68cea36 # v3.0.2
@@ -79,7 +72,7 @@ jobs:
       - id: documentation
         if: steps.filter.outputs.documentation == 'true'
         run: |
-          gh pr edit "${PR}" --add-label "documentation"
+          gh pr edit "${PR}" --add-label "documentation" --repo carbon-language/carbon-lang
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           PR: ${{ github.event.pull_request.html_url }}
@@ -87,7 +80,7 @@ jobs:
       - id: infrastructure
         if: steps.filter.outputs.infrastructure == 'true'
         run: |
-          gh pr edit "${PR}" --add-label "infrastructure"
+          gh pr edit "${PR}" --add-label "infrastructure" --repo carbon-language/carbon-lang
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           PR: ${{ github.event.pull_request.html_url }}
@@ -95,7 +88,7 @@ jobs:
       - id: proposal
         if: steps.filter.outputs.proposal == 'true'
         run: |
-          gh pr edit "${PR}" --add-label "proposal"
+          gh pr edit "${PR}" --add-label "proposal" --repo carbon-language/carbon-lang
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           PR: ${{ github.event.pull_request.html_url }}
@@ -103,7 +96,7 @@ jobs:
       - id: toolchain
         if: steps.filter.outputs.toolchain == 'true'
         run: |
-          gh pr edit "${PR}" --add-label "toolchain"
+          gh pr edit "${PR}" --add-label "toolchain" --repo carbon-language/carbon-lang
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           PR: ${{ github.event.pull_request.html_url }}
@@ -111,7 +104,7 @@ jobs:
       - id: utilities
         if: steps.filter.outputs.utilities == 'true'
         run: |
-          gh pr edit "${PR}" --add-label "utilities"
+          gh pr edit "${PR}" --add-label "utilities" --repo carbon-language/carbon-lang
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           PR: ${{ github.event.pull_request.html_url }}
@@ -123,7 +116,7 @@ jobs:
           contains(fromJSON('["CarbonInfraBot", "dependabot"]'),
           github.event.pull_request.user.login)
         run: |
-          gh pr edit "${PR}" --add-label "automated"
+          gh pr edit "${PR}" --add-label "automated" --repo carbon-language/carbon-lang
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           PR: ${{ github.event.pull_request.html_url }}
