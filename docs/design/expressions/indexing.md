@@ -75,9 +75,9 @@ The named constraint `IndexWith` covers the case of indexing into an object that
 owns the storage for its elements, like an array or C++'s `std::vector`:
 
 ```carbon
-// `lhs[index]` is a reference expression or value
-// depending on the category of `lhs`.
-constraint IndexWith(SubscriptType:! type) {
+// `lhs[index]` is a value expression when `lhs`
+// is a value expression.
+constraint IndexValueWith(SubscriptType:! type) {
   let ElementType:! type;
 
   require form(let Self) impls
@@ -85,6 +85,12 @@ constraint IndexWith(SubscriptType:! type) {
      where .ResultForm = form(let ElementType);
   alias At = LetSelf(IndexWithPrimitive(
       form(let SubscriptType))).Op;
+}
+
+// `lhs[index]` is a ref expression when `lhs`
+// is a ref expression.
+constraint IndexRefWith(SubscriptType:! type) {
+  let ElementType:! type;
 
   require form(ref Self) impls
      IndexWithPrimitive(form(let SubscriptType))
@@ -93,17 +99,24 @@ constraint IndexWith(SubscriptType:! type) {
       form(let SubscriptType))).Op;
 }
 
-// FIXME
-interface IndexWith(SubscriptType:! type) {
+// `lhs[index]` is a reference expression or value
+// depending on the category of `lhs`.
+constraint IndexWithConstraint
+    [Self:! NoVarForm](SubscriptType:! type) {
   let ElementType:! type;
-  fn At[bound self: Self](subscript: SubscriptType) -> let ElementType;
-  fn Ref[bound ref self: Self](subscript: SubscriptType) -> ref ElementType;
+  extend require impls IndexValueWith(SubscriptType)
+      where .ElementType = ElementType;
+  extend require impls IndexRefWith(SubscriptType)
+      where .ElementType = ElementType;
 }
 
-final impl forall [S:! type, T:! IndexWith(S)]
-    form(let T) as IndexWithPrimitive(form(let S)) { ... }
-final impl forall [S:! type, T:! IndexWith(S)]
-    form(ref T) as IndexWithPrimitive(form(let S)) { ... }
+interface IndexWithToImpl(SubscriptType:! type) {
+  let ElementType:! type;
+  extend final impl as IndexValueWith(SubscriptType)
+      where .ElementType = ElementType;
+  extend final impl as IndexRefWith(SubscriptType)
+      where .ElementType = ElementType;
+}
 ```
 
 FIXME: describe
