@@ -4,6 +4,7 @@
 //
 // EXTRA-ARGS: --custom-core --exclude-dump-file-prefix=min_prelude/
 // INCLUDE-FILE: toolchain/testing/testdata/min_prelude/parts/as.carbon
+// INCLUDE-FILE: toolchain/testing/testdata/min_prelude/parts/bool.carbon
 
 // --- min_prelude/bool.carbon
 
@@ -11,5 +12,4 @@
 package Core library "prelude";
 
 export import library "prelude/parts/as";
-
-fn Bool() -> type = "bool.make_type";
+export import library "prelude/parts/bool";

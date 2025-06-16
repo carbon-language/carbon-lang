@@ -6,10 +6,13 @@
 // INCLUDE-FILE: toolchain/testing/testdata/min_prelude/parts/as.carbon
 // INCLUDE-FILE: toolchain/testing/testdata/min_prelude/parts/int_literal.carbon
 // INCLUDE-FILE: toolchain/testing/testdata/min_prelude/parts/int.carbon
+// INCLUDE-FILE: toolchain/testing/testdata/min_prelude/parts/uint.carbon
 
-// --- min_prelude/int.carbon
+// --- min_prelude/uint.carbon
 
-// A minimal prelude for testing using `Int` or `i32`; required for arrays.
+// A minimal prelude for testing using `UInt` or `u32`, and includes `Int` and
+// `i32` as well.
 package Core library "prelude";
 
 export import library "prelude/parts/int";
+export import library "prelude/parts/uint";
