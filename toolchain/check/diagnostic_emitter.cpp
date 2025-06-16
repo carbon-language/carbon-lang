@@ -19,8 +19,8 @@ namespace Carbon::Check {
 auto DiagnosticEmitter::ConvertLoc(LocIdForDiagnostics loc_id,
                                    ContextFnT context_fn) const
     -> Diagnostics::ConvertedLoc {
-  auto [imports, converted] =
-      loc_converter_.Convert(loc_id.loc_id(), loc_id.is_token_only());
+  auto [imports, converted] = loc_converter_.ConvertWithImports(
+      loc_id.loc_id(), loc_id.is_token_only());
   for (const auto& import : imports) {
     CARBON_DIAGNOSTIC(InImport, LocationInfo, "in import");
     context_fn(import.loc, InImport);

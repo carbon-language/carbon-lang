@@ -57,24 +57,25 @@ auto FunctionContext::TryToReuseBlock(SemIR::InstBlockId block_id,
 }
 
 auto FunctionContext::LowerBlockContents(SemIR::InstBlockId block_id) -> void {
-  auto crash_inst_id = SemIR::InstId::None;
+  auto inst_id_for_stack_trace = SemIR::InstId::None;
 
   // On crash, report the instruction we were lowering.
   PrettyStackTraceFunction stack_trace_entry([&](llvm::raw_ostream& output) {
     SemIR::DiagnosticLocConverter converter(
         file_context_->context().tree_and_subtrees_getters(), &sem_ir());
-    auto [imports, converted] =
-        converter.Convert(SemIR::LocId(crash_inst_id), /*is_token_only=*/false);
+    auto converted = converter.Convert(SemIR::LocId(inst_id_for_stack_trace),
+                                       /*token_only=*/false);
     converted.loc.FormatLocation(output);
     // TODO: Format SemIR for the instruction we were lowering?
-    output << "lowering "
-           << sem_ir().insts().Get(crash_inst_id).kind().ir_name() << "\n";
+    output << "Lowering "
+           << sem_ir().insts().Get(inst_id_for_stack_trace).kind().ir_name()
+           << "\n";
     // Crash output has a tab indent; try to indent slightly past that.
     converted.loc.FormatSnippet(output, /*indent=*/10);
   });
 
   for (auto inst_id : sem_ir().inst_blocks().Get(block_id)) {
-    crash_inst_id = inst_id;
+    inst_id_for_stack_trace = inst_id;
     LowerInst(inst_id);
   }
 }

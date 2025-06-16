@@ -6,14 +6,15 @@
 
 namespace Carbon::SemIR {
 
-auto DiagnosticLocConverter::Convert(LocId loc_id, bool is_token_only) const
+auto DiagnosticLocConverter::ConvertWithImports(LocId loc_id,
+                                                bool token_only) const
     -> LocAndImports {
   llvm::SmallVector<SemIR::AbsoluteNodeId> absolute_node_ids =
       SemIR::GetAbsoluteNodeId(sem_ir_, loc_id);
   auto final_node_id = absolute_node_ids.pop_back_val();
 
   // Convert the final location.
-  LocAndImports result = {.loc = Convert(final_node_id, is_token_only)};
+  LocAndImports result = {.loc = Convert(final_node_id, token_only)};
 
   // Convert the import locations.
   for (const auto& absolute_node_id : absolute_node_ids) {
@@ -26,6 +27,13 @@ auto DiagnosticLocConverter::Convert(LocId loc_id, bool is_token_only) const
   }
 
   return result;
+}
+
+auto DiagnosticLocConverter::Convert(LocId loc_id, bool token_only) const
+    -> Diagnostics::ConvertedLoc {
+  llvm::SmallVector<SemIR::AbsoluteNodeId> absolute_node_ids =
+      SemIR::GetAbsoluteNodeId(sem_ir_, loc_id);
+  return Convert(absolute_node_ids.back(), token_only);
 }
 
 auto DiagnosticLocConverter::Convert(SemIR::AbsoluteNodeId absolute_node_id,

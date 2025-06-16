@@ -763,11 +763,11 @@ auto FileContext::BuildFunctionBody(SemIR::FunctionId function_id,
   PrettyStackTraceFunction stack_trace_entry([&](llvm::raw_ostream& output) {
     SemIR::DiagnosticLocConverter converter(
         context().tree_and_subtrees_getters(), &sem_ir());
-    auto [imports, converted] =
+    auto converted =
         converter.Convert(SemIR::LocId(declaration_function.definition_id),
-                          /*is_token_only=*/false);
+                          /*token_only=*/false);
     converted.loc.FormatLocation(output);
-    output << "lowering function ";
+    output << "Lowering function ";
     if (specific_id.has_value()) {
       output << SemIR::StringifySpecific(sem_ir(), specific_id);
     } else {

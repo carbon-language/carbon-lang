@@ -15,6 +15,10 @@
 
 namespace Carbon::SemIR {
 
+// Converter from compact location information into a diagnostic location
+// describing a filename, line location, and potentially a sequence of imports.
+// Such diagnostics locations are used to render user-facing diagnostics and
+// also locations for stack trace in crash diagnostics.
 class DiagnosticLocConverter {
  public:
   // Information about an import within which the location was found.
@@ -31,6 +35,7 @@ class DiagnosticLocConverter {
     Diagnostics::ConvertedLoc loc;
   };
 
+  // `sem_ir` must not be null.
   explicit DiagnosticLocConverter(
       llvm::ArrayRef<Parse::GetTreeAndSubtreesFn> tree_and_subtrees_getters,
       const File* sem_ir)
@@ -39,7 +44,11 @@ class DiagnosticLocConverter {
 
   // Converts the given location into a sequence of import locations and a final
   // diagnostic location.
-  auto Convert(LocId loc_id, bool is_token_only) const -> LocAndImports;
+  auto ConvertWithImports(LocId loc_id, bool token_only) const -> LocAndImports;
+
+  // Converts the given location into a diagnostic location.
+  auto Convert(LocId loc_id, bool token_only) const
+      -> Diagnostics::ConvertedLoc;
 
   // Converts an `absolute_node_id` in either a Carbon file or C++ import to a
   // diagnostic location.
@@ -51,8 +60,7 @@ class DiagnosticLocConverter {
   auto Convert(CheckIRId check_ir_id, Parse::NodeId node_id,
                bool token_only) const -> Diagnostics::ConvertedLoc;
 
-  // Converts a `node_id` corresponding to a specific sem_ir to a diagnostic
-  // location.
+  // Converts a location pointing into C++ code to a diagnostic location.
   auto Convert(ClangSourceLocId clang_source_loc_id) const
       -> Diagnostics::ConvertedLoc;
 
