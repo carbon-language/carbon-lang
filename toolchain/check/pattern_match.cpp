@@ -54,7 +54,7 @@ class MatchContext {
 
     auto Print(llvm::raw_ostream& out) const -> void {
       out << "{pattern_id: " << pattern_id << ", scrutinee_id: " << scrutinee_id
-          << ", inside_var_pattern: " << ref_binding_context << "}";
+          << ", ref_binding_context: " << ref_binding_context << "}";
     }
   };
 
