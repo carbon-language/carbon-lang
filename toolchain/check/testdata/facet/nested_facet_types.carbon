@@ -43,6 +43,21 @@ interface Z {
 
 fn F(FF:! ((Z where .T = .U) where .T = .U) where .T = .U) {}
 
+// --- fail_todo_nested_facet_types_same_two_associated.carbon
+library "[[@TEST_NAME]]";
+
+interface Z {
+  let T:! type;
+  let U:! type;
+  let V:! type;
+}
+
+// CHECK:STDERR: fail_todo_nested_facet_types_same_two_associated.carbon:[[@LINE+4]]:12: error: associated constant `.(Z.T)` given two different values `.(Z.V)` and `.(Z.U)` [AssociatedConstantWithDifferentValues]
+// CHECK:STDERR: fn F(FF:! ((Z where .T = .U and .U = .V) where .T = .U and .U = .V) where .T = .U and .U = .V) {}
+// CHECK:STDERR:            ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+// CHECK:STDERR:
+fn F(FF:! ((Z where .T = .U and .U = .V) where .T = .U and .U = .V) where .T = .U and .U = .V) {}
+
 // --- fail_nested_facet_types_different.carbon
 library "[[@TEST_NAME]]";
 
