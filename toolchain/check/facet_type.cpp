@@ -380,7 +380,16 @@ class SubstImplWitnessAccessCallbacks : public SubstInstCallbacks {
         rewrites_(rewrites),
         substituting_constraint_(substituting_constraint) {}
 
-  auto Subst(SemIR::InstId& rhs_inst_id) const -> bool override {
+  auto Subst(SemIR::InstId& rhs_inst_id) -> bool override {
+    // Only substitute one reference to another associated constant in the RHS
+    // for each pass through the rewrite constraints. This prevents exponential
+    // growth of the RHS while looking for a cycle, allowing the cycle to be
+    // found before expanding everything on the RHS. See
+    // https://github.com/carbon-language/carbon-lang/issues/5672.
+    if (did_substitute_) {
+      return true;
+    }
+
     if (!context().insts().Is<SemIR::ImplWitnessAccess>(rhs_inst_id)) {
       return context().constant_values().Get(rhs_inst_id).is_concrete();
     }
@@ -409,6 +418,7 @@ class SubstImplWitnessAccessCallbacks : public SubstInstCallbacks {
         } else {
           rhs_inst_id = search_constraint.rhs_id;
         }
+        did_substitute_ = true;
       }
     }
 
@@ -427,6 +437,7 @@ class SubstImplWitnessAccessCallbacks : public SubstInstCallbacks {
   SemIR::LocId loc_id_;
   llvm::ArrayRef<SemIR::FacetTypeInfo::RewriteConstraint> rewrites_;
   const SemIR::FacetTypeInfo::RewriteConstraint* substituting_constraint_;
+  bool did_substitute_ = false;
 };
 
 auto ResolveFacetTypeRewriteConstraints(

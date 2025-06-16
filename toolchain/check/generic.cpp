@@ -86,7 +86,7 @@ class RebuildGenericConstantInEvalBlockCallbacks : public SubstInstCallbacks {
 
   // Check for instructions for which we already have a mapping into the eval
   // block, and substitute them with the instructions in the eval block.
-  auto Subst(SemIR::InstId& inst_id) const -> bool override {
+  auto Subst(SemIR::InstId& inst_id) -> bool override {
     auto const_id = context().constant_values().Get(inst_id);
     if (!const_id.has_value()) {
       // An unloaded import ref should never contain anything we need to
@@ -230,7 +230,7 @@ static auto AddGenericConstantToEvalBlock(Context& context,
   auto const_inst_id = context.constant_values().GetConstantInstId(inst_id);
   auto callbacks = RebuildGenericConstantInEvalBlockCallbacks(
       &context, SemIR::LocId(inst_id));
-  auto new_inst_id = SubstInst(context, const_inst_id, callbacks);
+  auto new_inst_id = SubstInst(context, const_inst_id, std::move(callbacks));
   CARBON_CHECK(new_inst_id != const_inst_id,
                "No substitutions performed for generic constant {0}",
                context.insts().Get(inst_id));
