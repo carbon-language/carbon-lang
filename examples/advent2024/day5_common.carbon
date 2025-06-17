@@ -25,8 +25,7 @@ class Rules {
     var a: i32;
     var b: i32;
     while (ReadInt(&a) and ConsumeChar(0x7C) and ReadInt(&b)) {
-      // TODO: rules.disallowed_before[a] |= PageMask(b);
-      rules.disallowed_before[a] = rules.disallowed_before[a] | PageMask(b);
+      rules.disallowed_before[a] |= PageMask(b);
       SkipNewline();
     }
     return var;
@@ -75,8 +74,7 @@ class PageList {
       if (seen & rules.disallowed_before[page] != 0) {
         return false;
       }
-      // TODO: seen |= PageMask(page);
-      seen = seen | PageMask(page);
+      seen |= PageMask(page);
       ++i;
     }
     return true;

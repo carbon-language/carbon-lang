@@ -2,7 +2,7 @@
 // Exceptions. See /LICENSE for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
-// EXTRA-ARGS: --no-prelude-import
+// INCLUDE-FILE: toolchain/testing/testdata/min_prelude/convert.carbon
 //
 // AUTOUPDATE
 // TIP: To test this file alone, run:
@@ -96,7 +96,10 @@ var p: Incomplete* = &a[0];
 
 library "[[@TEST_NAME]]";
 
-// CHECK:STDERR: fail_invalid_element.carbon:[[@LINE+4]]:14: error: `Core.ImplicitAs` implicitly referenced here, but package `Core` not found [CoreNotFound]
+// CHECK:STDERR: fail_invalid_element.carbon:[[@LINE+7]]:14: error: cannot implicitly convert non-type value of type `Core.IntLiteral` to `type` [ConversionFailureNonTypeToFacet]
+// CHECK:STDERR: var a: array(1, 1);
+// CHECK:STDERR:              ^
+// CHECK:STDERR: fail_invalid_element.carbon:[[@LINE+4]]:14: note: type `Core.IntLiteral` does not implement interface `Core.ImplicitAs(type)` [MissingImplInMemberAccessNote]
 // CHECK:STDERR: var a: array(1, 1);
 // CHECK:STDERR:              ^
 // CHECK:STDERR:
@@ -118,6 +121,9 @@ var a: array(1, 1);
 // CHECK:STDOUT:   %tuple.elem2: ref %empty_tuple.type = tuple_access file.%a.var, element2 [concrete]
 // CHECK:STDOUT:   %int_2: Core.IntLiteral = int_value 2 [concrete]
 // CHECK:STDOUT:   %array: %array_type = tuple_value (%empty_tuple, %empty_tuple, %empty_tuple) [concrete]
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: imports {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -175,6 +181,9 @@ var a: array(1, 1);
 // CHECK:STDOUT:   %int_1: Core.IntLiteral = int_value 1 [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
+// CHECK:STDOUT: imports {
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
 // CHECK:STDOUT: fn @G() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   name_binding_decl {
@@ -220,6 +229,9 @@ var a: array(1, 1);
 // CHECK:STDOUT:   %pattern_type.035: type = pattern_type %array_type [concrete]
 // CHECK:STDOUT:   %tuple.type: type = tuple_type (%empty_tuple.type, %empty_tuple.type, %empty_tuple.type) [concrete]
 // CHECK:STDOUT:   %pattern_type.8c1: type = pattern_type %tuple.type [concrete]
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: imports {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @G() {
@@ -268,6 +280,9 @@ var a: array(1, 1);
 // CHECK:STDOUT:   %pattern_type.fe8: type = pattern_type %array_type [concrete]
 // CHECK:STDOUT:   %int_0: Core.IntLiteral = int_value 0 [concrete]
 // CHECK:STDOUT:   %array: %array_type = tuple_value (%empty_tuple) [concrete]
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: imports {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Run() {
@@ -327,6 +342,9 @@ var a: array(1, 1);
 // CHECK:STDOUT:   %int_7: Core.IntLiteral = int_value 7 [concrete]
 // CHECK:STDOUT:   %int_8: Core.IntLiteral = int_value 8 [concrete]
 // CHECK:STDOUT:   %array: %array_type = tuple_value (%empty_tuple, %empty_tuple, %empty_tuple, %empty_tuple, %empty_tuple, %empty_tuple, %empty_tuple, %empty_tuple, %empty_tuple) [concrete]
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: imports {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {

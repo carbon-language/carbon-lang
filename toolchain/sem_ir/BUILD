@@ -229,6 +229,20 @@ cc_library(
 )
 
 cc_library(
+    name = "diagnostic_loc_converter",
+    srcs = ["diagnostic_loc_converter.cpp"],
+    hdrs = ["diagnostic_loc_converter.h"],
+    deps = [
+        ":absolute_node_id",
+        ":file",
+        ":typed_insts",
+        "//toolchain/diagnostics:diagnostic_emitter",
+        "//toolchain/parse:tree",
+        "@llvm-project//llvm:Support",
+    ],
+)
+
+cc_library(
     name = "dump",
     srcs = ["dump.cpp"],
     hdrs = ["dump.h"],

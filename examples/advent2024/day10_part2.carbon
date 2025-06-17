@@ -42,12 +42,12 @@ class PathsToTop {
             if (adj_x >= 0 and adj_x < 43 and
                 adj_y >= 0 and adj_y < 43 and
                 terrain.height[adj_x][adj_y] == level + 1) {
-              paths = paths + self->paths[adj_x][adj_y];
+              paths += self->paths[adj_x][adj_y];
             }
             ++i;
           }
           self->paths[x][y] = paths;
-          total = total + paths;
+          total += paths;
         }
         ++x;
       }
