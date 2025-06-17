@@ -18,7 +18,7 @@ class SomeParam {}
 class ImplsSomeInterface {}
 impl ImplsSomeInterface as SomeInterface(i32) {
   fn F(x: i32) -> i32 {
-    return x;
+    return -x;
   }
 }
 
@@ -46,19 +46,20 @@ fn G() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: define i32 @"_CF.ImplsSomeInterface.Main:SomeInterface.Main"(i32 %x) !dbg !4 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   ret i32 %x, !dbg !7
+// CHECK:STDOUT:   %int.snegate = sub i32 0, %x, !dbg !7
+// CHECK:STDOUT:   ret i32 %int.snegate, !dbg !8
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: define void @_CG.Main() !dbg !8 {
+// CHECK:STDOUT: define void @_CG.Main() !dbg !9 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %CallGenericMethod.call = call i32 @_CCallGenericMethod.Main.b330a91dfda257ee(i32 10), !dbg !9
-// CHECK:STDOUT:   ret void, !dbg !10
+// CHECK:STDOUT:   %CallGenericMethod.call = call i32 @_CCallGenericMethod.Main.b330a91dfda257ee(i32 10), !dbg !10
+// CHECK:STDOUT:   ret void, !dbg !11
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: define linkonce_odr i32 @_CCallGenericMethod.Main.b330a91dfda257ee(i32 %x) !dbg !11 {
+// CHECK:STDOUT: define linkonce_odr i32 @_CCallGenericMethod.Main.b330a91dfda257ee(i32 %x) !dbg !12 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %.loc34_15 = call i32 @"_CF.ImplsSomeInterface.Main:SomeInterface.Main"(i32 %x), !dbg !12
-// CHECK:STDOUT:   ret i32 %.loc34_15, !dbg !13
+// CHECK:STDOUT:   %.loc34_15 = call i32 @"_CF.ImplsSomeInterface.Main:SomeInterface.Main"(i32 %x), !dbg !13
+// CHECK:STDOUT:   ret i32 %.loc34_15, !dbg !14
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: !llvm.module.flags = !{!0, !1}
@@ -71,10 +72,11 @@ fn G() {
 // CHECK:STDOUT: !4 = distinct !DISubprogram(name: "F", linkageName: "_CF.ImplsSomeInterface.Main:SomeInterface.Main", scope: null, file: !3, line: 20, type: !5, spFlags: DISPFlagDefinition, unit: !2)
 // CHECK:STDOUT: !5 = !DISubroutineType(types: !6)
 // CHECK:STDOUT: !6 = !{}
-// CHECK:STDOUT: !7 = !DILocation(line: 21, column: 5, scope: !4)
-// CHECK:STDOUT: !8 = distinct !DISubprogram(name: "G", linkageName: "_CG.Main", scope: null, file: !3, line: 37, type: !5, spFlags: DISPFlagDefinition, unit: !2)
-// CHECK:STDOUT: !9 = !DILocation(line: 38, column: 3, scope: !8)
-// CHECK:STDOUT: !10 = !DILocation(line: 37, column: 1, scope: !8)
-// CHECK:STDOUT: !11 = distinct !DISubprogram(name: "CallGenericMethod", linkageName: "_CCallGenericMethod.Main.b330a91dfda257ee", scope: null, file: !3, line: 33, type: !5, spFlags: DISPFlagDefinition, unit: !2)
-// CHECK:STDOUT: !12 = !DILocation(line: 34, column: 10, scope: !11)
-// CHECK:STDOUT: !13 = !DILocation(line: 34, column: 3, scope: !11)
+// CHECK:STDOUT: !7 = !DILocation(line: 21, column: 12, scope: !4)
+// CHECK:STDOUT: !8 = !DILocation(line: 21, column: 5, scope: !4)
+// CHECK:STDOUT: !9 = distinct !DISubprogram(name: "G", linkageName: "_CG.Main", scope: null, file: !3, line: 37, type: !5, spFlags: DISPFlagDefinition, unit: !2)
+// CHECK:STDOUT: !10 = !DILocation(line: 38, column: 3, scope: !9)
+// CHECK:STDOUT: !11 = !DILocation(line: 37, column: 1, scope: !9)
+// CHECK:STDOUT: !12 = distinct !DISubprogram(name: "CallGenericMethod", linkageName: "_CCallGenericMethod.Main.b330a91dfda257ee", scope: null, file: !3, line: 33, type: !5, spFlags: DISPFlagDefinition, unit: !2)
+// CHECK:STDOUT: !13 = !DILocation(line: 34, column: 10, scope: !12)
+// CHECK:STDOUT: !14 = !DILocation(line: 34, column: 3, scope: !12)
