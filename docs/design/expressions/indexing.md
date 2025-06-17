@@ -64,7 +64,7 @@ interface IndexWithPrimitive
     (in Subscript:! Form) {
   let out ResultForm:! Form;
   fn Op[bound self:? Self](subscript:? Subscript)
-    ->? ResultForm;
+      ->? ResultForm;
 }
 ```
 
@@ -104,10 +104,12 @@ constraint IndexRefWith(SubscriptType:! type) {
 constraint IndexWithConstraint
     [Self:! NoVarForm](SubscriptType:! type) {
   let ElementType:! type;
-  extend require impls IndexValueWith(SubscriptType)
-      where .ElementType = ElementType;
-  extend require impls IndexRefWith(SubscriptType)
-      where .ElementType = ElementType;
+  match_first {
+    extend require impls IndexRefWith(SubscriptType)
+        where .ElementType = ElementType;
+    extend require impls IndexValueWith(SubscriptType)
+        where .ElementType = ElementType;
+  }
 }
 
 interface IndexWithToImpl(SubscriptType:! type) {
