@@ -17,7 +17,7 @@ fn PopCount(n: u256) -> i32 {
     if (n & bit != 0) {
       ++total;
     }
-    bit = bit << 1;
+    bit <<= 1;
   }
   return total;
 }
@@ -32,7 +32,7 @@ class Reachable {
       while (x < 43) {
         if (terrain.height[x][y] == 0) {
           me.trailheads[x][y] = next;
-          next = next << 1;
+          next <<= 1;
         }
         ++x;
       }

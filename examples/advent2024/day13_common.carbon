@@ -63,8 +63,8 @@ class BezoutSolutionSet {
 
     // Find an initial solution. Note that m and n might be negative.
     let num_gcds: i64 = c / e.gcd;
-    e.m = e.m * num_gcds;
-    e.n = e.n * num_gcds;
+    e.m *= num_gcds;
+    e.n *= num_gcds;
 
     // Pick the smallest positive m we can.
     let a_over_gcd: i64 = a / e.gcd;
@@ -77,8 +77,8 @@ class BezoutSolutionSet {
     } else {
       adj = e.m / b_over_gcd;
     }
-    e.m = e.m - adj * b_over_gcd;
-    e.n = e.n + adj * a_over_gcd;
+    e.m -= adj * b_over_gcd;
+    e.n += adj * a_over_gcd;
     return {.m0 = e.m, .n0 = e.n,
             .m_step = b_over_gcd, .n_step = -a_over_gcd};
   }

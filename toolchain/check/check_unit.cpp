@@ -377,7 +377,7 @@ auto CheckUnit::ProcessNodeIds() -> bool {
     const auto& tree = tree_and_subtrees_getter_();
     auto converted = tree.NodeToDiagnosticLoc(node_id, /*token_only=*/false);
     converted.loc.FormatLocation(output);
-    output << "checking " << context_.parse_tree().node_kind(node_id) << "\n";
+    output << "Checking " << context_.parse_tree().node_kind(node_id) << "\n";
     // Crash output has a tab indent; try to indent slightly past that.
     converted.loc.FormatSnippet(output, /*indent=*/10);
   });
