@@ -2,6 +2,8 @@
 // Exceptions. See /LICENSE for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
+// INCLUDE-FILE: toolchain/testing/testdata/min_prelude/int.carbon
+//
 // AUTOUPDATE
 // TIP: To test this file alone, run:
 // TIP:   bazel test //toolchain/testing:file_test --test_arg=--file_tests=toolchain/lower/testdata/struct/two_entries.carbon
@@ -17,25 +19,25 @@ fn Run() -> i32 {
 // CHECK:STDOUT: ; ModuleID = 'two_entries.carbon'
 // CHECK:STDOUT: source_filename = "two_entries.carbon"
 // CHECK:STDOUT:
-// CHECK:STDOUT: @struct.loc12_3 = internal constant { i32, i32 } { i32 1, i32 2 }
+// CHECK:STDOUT: @struct.loc14_3 = internal constant { i32, i32 } { i32 1, i32 2 }
 // CHECK:STDOUT:
 // CHECK:STDOUT: define i32 @main() !dbg !4 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   %x.var = alloca { i32, i32 }, align 8, !dbg !7
 // CHECK:STDOUT:   %y.var = alloca { i32, i32 }, align 8, !dbg !8
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(i64 8, ptr %x.var), !dbg !7
-// CHECK:STDOUT:   %.loc12_46.3.a = getelementptr inbounds nuw { i32, i32 }, ptr %x.var, i32 0, i32 0, !dbg !9
-// CHECK:STDOUT:   %.loc12_46.6.b = getelementptr inbounds nuw { i32, i32 }, ptr %x.var, i32 0, i32 1, !dbg !9
-// CHECK:STDOUT:   call void @llvm.memcpy.p0.p0.i64(ptr align 4 %x.var, ptr align 4 @struct.loc12_3, i64 8, i1 false), !dbg !7
+// CHECK:STDOUT:   %.loc14_46.3.a = getelementptr inbounds nuw { i32, i32 }, ptr %x.var, i32 0, i32 0, !dbg !9
+// CHECK:STDOUT:   %.loc14_46.6.b = getelementptr inbounds nuw { i32, i32 }, ptr %x.var, i32 0, i32 1, !dbg !9
+// CHECK:STDOUT:   call void @llvm.memcpy.p0.p0.i64(ptr align 4 %x.var, ptr align 4 @struct.loc14_3, i64 8, i1 false), !dbg !7
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(i64 8, ptr %y.var), !dbg !8
-// CHECK:STDOUT:   %.loc13_31.1.a = getelementptr inbounds nuw { i32, i32 }, ptr %x.var, i32 0, i32 0, !dbg !10
-// CHECK:STDOUT:   %.loc13_31.2 = load i32, ptr %.loc13_31.1.a, align 4, !dbg !10
-// CHECK:STDOUT:   %.loc13_31.3.a = getelementptr inbounds nuw { i32, i32 }, ptr %y.var, i32 0, i32 0, !dbg !10
-// CHECK:STDOUT:   store i32 %.loc13_31.2, ptr %.loc13_31.3.a, align 4, !dbg !10
-// CHECK:STDOUT:   %.loc13_31.5.b = getelementptr inbounds nuw { i32, i32 }, ptr %x.var, i32 0, i32 1, !dbg !10
-// CHECK:STDOUT:   %.loc13_31.6 = load i32, ptr %.loc13_31.5.b, align 4, !dbg !10
-// CHECK:STDOUT:   %.loc13_31.7.b = getelementptr inbounds nuw { i32, i32 }, ptr %y.var, i32 0, i32 1, !dbg !10
-// CHECK:STDOUT:   store i32 %.loc13_31.6, ptr %.loc13_31.7.b, align 4, !dbg !10
+// CHECK:STDOUT:   %.loc15_31.1.a = getelementptr inbounds nuw { i32, i32 }, ptr %x.var, i32 0, i32 0, !dbg !10
+// CHECK:STDOUT:   %.loc15_31.2 = load i32, ptr %.loc15_31.1.a, align 4, !dbg !10
+// CHECK:STDOUT:   %.loc15_31.3.a = getelementptr inbounds nuw { i32, i32 }, ptr %y.var, i32 0, i32 0, !dbg !10
+// CHECK:STDOUT:   store i32 %.loc15_31.2, ptr %.loc15_31.3.a, align 4, !dbg !10
+// CHECK:STDOUT:   %.loc15_31.5.b = getelementptr inbounds nuw { i32, i32 }, ptr %x.var, i32 0, i32 1, !dbg !10
+// CHECK:STDOUT:   %.loc15_31.6 = load i32, ptr %.loc15_31.5.b, align 4, !dbg !10
+// CHECK:STDOUT:   %.loc15_31.7.b = getelementptr inbounds nuw { i32, i32 }, ptr %y.var, i32 0, i32 1, !dbg !10
+// CHECK:STDOUT:   store i32 %.loc15_31.6, ptr %.loc15_31.7.b, align 4, !dbg !10
 // CHECK:STDOUT:   ret i32 0, !dbg !11
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -58,11 +60,11 @@ fn Run() -> i32 {
 // CHECK:STDOUT: !1 = !{i32 2, !"Debug Info Version", i32 3}
 // CHECK:STDOUT: !2 = distinct !DICompileUnit(language: DW_LANG_C, file: !3, producer: "carbon", isOptimized: false, runtimeVersion: 0, emissionKind: FullDebug)
 // CHECK:STDOUT: !3 = !DIFile(filename: "two_entries.carbon", directory: "")
-// CHECK:STDOUT: !4 = distinct !DISubprogram(name: "Run", linkageName: "main", scope: null, file: !3, line: 11, type: !5, spFlags: DISPFlagDefinition, unit: !2)
+// CHECK:STDOUT: !4 = distinct !DISubprogram(name: "Run", linkageName: "main", scope: null, file: !3, line: 13, type: !5, spFlags: DISPFlagDefinition, unit: !2)
 // CHECK:STDOUT: !5 = !DISubroutineType(types: !6)
 // CHECK:STDOUT: !6 = !{}
-// CHECK:STDOUT: !7 = !DILocation(line: 12, column: 3, scope: !4)
-// CHECK:STDOUT: !8 = !DILocation(line: 13, column: 3, scope: !4)
-// CHECK:STDOUT: !9 = !DILocation(line: 12, column: 31, scope: !4)
-// CHECK:STDOUT: !10 = !DILocation(line: 13, column: 31, scope: !4)
-// CHECK:STDOUT: !11 = !DILocation(line: 14, column: 3, scope: !4)
+// CHECK:STDOUT: !7 = !DILocation(line: 14, column: 3, scope: !4)
+// CHECK:STDOUT: !8 = !DILocation(line: 15, column: 3, scope: !4)
+// CHECK:STDOUT: !9 = !DILocation(line: 14, column: 31, scope: !4)
+// CHECK:STDOUT: !10 = !DILocation(line: 15, column: 31, scope: !4)
+// CHECK:STDOUT: !11 = !DILocation(line: 16, column: 3, scope: !4)
