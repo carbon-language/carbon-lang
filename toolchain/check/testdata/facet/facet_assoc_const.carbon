@@ -370,7 +370,7 @@ interface Z {
   // CHECK:STDERR: fail_todo_cycle_through_self_reference.carbon:[[@LINE+7]]:11: error: associated constant has incomplete type `Z` [IncompleteTypeInAssociatedConstantDecl]
   // CHECK:STDERR:   let U:! Z;
   // CHECK:STDERR:           ^
-  // CHECK:STDERR: fail_todo_cycle_through_self_reference.carbon:[[@LINE-5]]:1: note: interface is currently being defined [InterfaceIncompleteWithinDefinition]
+  // CHECK:STDERR: fail_todo_cycle_through_self_reference.carbon:[[@LINE-7]]:1: note: interface is currently being defined [InterfaceIncompleteWithinDefinition]
   // CHECK:STDERR: interface Z {
   // CHECK:STDERR: ^~~~~~~~~~~~~
   // CHECK:STDERR:
@@ -390,7 +390,7 @@ interface Z {
   // CHECK:STDERR: fail_todo_reference_same_constant_in_different_self.carbon:[[@LINE+7]]:11: error: associated constant has incomplete type `Z` [IncompleteTypeInAssociatedConstantDecl]
   // CHECK:STDERR:   let U:! Z;
   // CHECK:STDERR:           ^
-  // CHECK:STDERR: fail_todo_reference_same_constant_in_different_self.carbon:[[@LINE-5]]:1: note: interface is currently being defined [InterfaceIncompleteWithinDefinition]
+  // CHECK:STDERR: fail_todo_reference_same_constant_in_different_self.carbon:[[@LINE-7]]:1: note: interface is currently being defined [InterfaceIncompleteWithinDefinition]
   // CHECK:STDERR: interface Z {
   // CHECK:STDERR: ^~~~~~~~~~~~~
   // CHECK:STDERR:
@@ -410,7 +410,7 @@ interface Z {
   // CHECK:STDERR: fail_todo_non_cycle_with_self_reference.carbon:[[@LINE+7]]:11: error: associated constant has incomplete type `Z` [IncompleteTypeInAssociatedConstantDecl]
   // CHECK:STDERR:   let T:! Z;
   // CHECK:STDERR:           ^
-  // CHECK:STDERR: fail_todo_non_cycle_with_self_reference.carbon:[[@LINE-4]]:1: note: interface is currently being defined [InterfaceIncompleteWithinDefinition]
+  // CHECK:STDERR: fail_todo_non_cycle_with_self_reference.carbon:[[@LINE-6]]:1: note: interface is currently being defined [InterfaceIncompleteWithinDefinition]
   // CHECK:STDERR: interface Z {
   // CHECK:STDERR: ^~~~~~~~~~~~~
   // CHECK:STDERR:
@@ -421,7 +421,7 @@ interface Z {
   // CHECK:STDERR: fail_todo_non_cycle_with_self_reference.carbon:[[@LINE+7]]:11: error: associated constant has incomplete type `Z` [IncompleteTypeInAssociatedConstantDecl]
   // CHECK:STDERR:   let V:! Z;
   // CHECK:STDERR:           ^
-  // CHECK:STDERR: fail_todo_non_cycle_with_self_reference.carbon:[[@LINE-13]]:1: note: interface is currently being defined [InterfaceIncompleteWithinDefinition]
+  // CHECK:STDERR: fail_todo_non_cycle_with_self_reference.carbon:[[@LINE-17]]:1: note: interface is currently being defined [InterfaceIncompleteWithinDefinition]
   // CHECK:STDERR: interface Z {
   // CHECK:STDERR: ^~~~~~~~~~~~~
   // CHECK:STDERR:
