@@ -14,8 +14,8 @@ fn Next(n: i64) -> (i64, i64) {
   var pow10: i64 = 10;
   var pow100: i64 = 1;
   while (n / pow100 >= 100) {
-    pow100 = pow100 * 100;
-    pow10 = pow10 * 10;
+    pow100 *= 100;
+    pow10 *= 10;
   }
   if (n / pow100 >= 10) {
     return (n / pow10, n % pow10);

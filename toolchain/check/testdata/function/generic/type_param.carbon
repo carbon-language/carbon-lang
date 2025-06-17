@@ -77,9 +77,10 @@ fn F(T:! type) {
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %p.ref: ref @F.%ptr.loc16_11.2 (%ptr) = name_ref p, %p
 // CHECK:STDOUT:     %.loc17_15: @F.%ptr.loc16_11.2 (%ptr) = bind_value %p.ref
-// CHECK:STDOUT:     %.loc17_14: ref @F.%T.loc15_6.2 (%T) = deref %.loc17_15
+// CHECK:STDOUT:     %.loc17_14.1: ref @F.%T.loc15_6.2 (%T) = deref %.loc17_15
 // CHECK:STDOUT:     %T.ref.loc17: type = name_ref T, %T.loc15_6.1 [symbolic = %T.loc15_6.2 (constants.%T)]
-// CHECK:STDOUT:     %n: ref @F.%T.loc15_6.2 (%T) = bind_name n, %.loc17_14
+// CHECK:STDOUT:     %.loc17_14.2: @F.%T.loc15_6.2 (%T) = bind_value %.loc17_14.1
+// CHECK:STDOUT:     %n: @F.%T.loc15_6.2 (%T) = bind_name n, %.loc17_14.2
 // CHECK:STDOUT:     return
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }

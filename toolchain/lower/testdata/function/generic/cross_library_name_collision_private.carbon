@@ -39,9 +39,9 @@ fn Lib2CallF[T:! type](a: T, b: T) -> T {
 
 // --- todo_use.carbon
 
-// TODO: This should call the `F` from lib1 and the `F` from lib2, where one
-// returns 1 and the other returns 2. Currently it calls the same function
-// twice, both returning 1.
+// TODO: This should call the `F` from lib1 and the `F` from lib2. Currently
+// it calls the same function in both (hashes match for both instances of
+// `call i32 @_CF.Main.<hash>`).
 
 import library "lib1";
 import library "lib2";
@@ -77,11 +77,7 @@ fn Run() {
 // CHECK:STDOUT: define void @main() !dbg !4 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   %Lib1CallF.call = call i32 @_CLib1CallF.Main.b88d1103f417c6d4(i32 1, i32 2), !dbg !7
-// CHECK:STDOUT:   %.loc10_44.1.temp = alloca i32, align 4, !dbg !7
-// CHECK:STDOUT:   store i32 %Lib1CallF.call, ptr %.loc10_44.1.temp, align 4, !dbg !7
 // CHECK:STDOUT:   %Lib2CallF.call = call i32 @_CLib2CallF.Main.b88d1103f417c6d4(i32 1, i32 2), !dbg !8
-// CHECK:STDOUT:   %.loc11_44.1.temp = alloca i32, align 4, !dbg !8
-// CHECK:STDOUT:   store i32 %Lib2CallF.call, ptr %.loc11_44.1.temp, align 4, !dbg !8
 // CHECK:STDOUT:   ret void, !dbg !9
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

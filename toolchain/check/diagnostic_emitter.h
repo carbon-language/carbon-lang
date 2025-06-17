@@ -9,10 +9,7 @@
 #include "toolchain/check/diagnostic_helpers.h"
 #include "toolchain/diagnostics/diagnostic_emitter.h"
 #include "toolchain/lex/token_index.h"
-#include "toolchain/parse/tree_and_subtrees.h"
-#include "toolchain/sem_ir/absolute_node_id.h"
-#include "toolchain/sem_ir/file.h"
-#include "toolchain/sem_ir/ids.h"
+#include "toolchain/sem_ir/diagnostic_loc_converter.h"
 
 namespace Carbon::Check {
 
@@ -24,8 +21,8 @@ class DiagnosticEmitter : public DiagnosticEmitterBase {
       llvm::ArrayRef<Parse::GetTreeAndSubtreesFn> tree_and_subtrees_getters,
       const SemIR::File* sem_ir)
       : DiagnosticEmitterBase(consumer),
-        tree_and_subtrees_getters_(tree_and_subtrees_getters),
-        sem_ir_(sem_ir) {}
+        sem_ir_(sem_ir),
+        loc_converter_(tree_and_subtrees_getters, sem_ir) {}
 
   // If a byte offset is past the current last byte offset, advances forward.
   // Earlier offsets are ignored.
@@ -47,30 +44,11 @@ class DiagnosticEmitter : public DiagnosticEmitterBase {
       -> Diagnostics::ConvertedLoc override;
 
  private:
-  // Implements `ConvertLoc`, but without `last_token_` applied.
-  auto ConvertLocImpl(SemIR::LocId loc_id, bool is_token_only,
-                      ContextFnT context_fn) const -> Diagnostics::ConvertedLoc;
-
-  // Converts an `absolute_node_id` in either a Carbon file or C++ import to a
-  // diagnostic location.
-  auto ConvertLocInFile(SemIR::AbsoluteNodeId absolute_node_id, bool token_only,
-                        ContextFnT context_fn) const
-      -> Diagnostics::ConvertedLoc;
-
-  // Converts a `node_id` corresponding to a specific sem_ir to a diagnostic
-  // location.
-  auto ConvertLocInCarbonFile(SemIR::CheckIRId check_ir_id,
-                              Parse::NodeId node_id, bool token_only) const
-      -> Diagnostics::ConvertedLoc;
-
-  // Adds `in import` note.
-  static auto AddInImport(Diagnostics::Loc loc, ContextFnT context_fn) -> void;
-
-  // Converters for each SemIR.
-  llvm::ArrayRef<Parse::GetTreeAndSubtreesFn> tree_and_subtrees_getters_;
-
   // The current SemIR being processed.
   const SemIR::File* sem_ir_;
+
+  // Converter for locations.
+  SemIR::DiagnosticLocConverter loc_converter_;
 
   // The last token encountered during processing.
   Lex::TokenIndex last_token_ = Lex::TokenIndex::None;

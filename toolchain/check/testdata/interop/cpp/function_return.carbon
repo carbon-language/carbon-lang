@@ -135,9 +135,9 @@ fn F() {
 // CHECK:STDOUT:     %int_16: Core.IntLiteral = int_value 16 [concrete = constants.%int_16]
 // CHECK:STDOUT:     %i16: type = class_type @Int, @Int(constants.%int_16) [concrete = constants.%i16]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %.loc7_30.1: ref %i16 = temporary_storage
-// CHECK:STDOUT:   %.loc7_30.2: ref %i16 = temporary %.loc7_30.1, %foo_short.call
-// CHECK:STDOUT:   %x: ref %i16 = bind_name x, %.loc7_30.2
+// CHECK:STDOUT:   %.loc7_30.1: %i16 = value_of_initializer %foo_short.call
+// CHECK:STDOUT:   %.loc7_30.2: %i16 = converted %foo_short.call, %.loc7_30.1
+// CHECK:STDOUT:   %x: %i16 = bind_name x, %.loc7_30.2
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

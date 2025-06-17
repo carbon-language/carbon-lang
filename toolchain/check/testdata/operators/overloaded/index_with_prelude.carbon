@@ -146,7 +146,8 @@ let x: i32 = c[0];
 // CHECK:STDOUT:   %.loc14_25.2: init %SubscriptType.8ee = class_init (), %.loc14_25.1 [concrete = constants.%SubscriptType.val]
 // CHECK:STDOUT:   %.loc14_25.3: ref %SubscriptType.8ee = temporary %.loc14_25.1, %.loc14_25.2
 // CHECK:STDOUT:   %.loc14_25.4: ref %SubscriptType.8ee = converted @__global_init.%.loc14, %.loc14_25.3
-// CHECK:STDOUT:   %s: ref %SubscriptType.8ee = bind_name s, %.loc14_25.4
+// CHECK:STDOUT:   %.loc14_25.5: %SubscriptType.8ee = bind_value %.loc14_25.4
+// CHECK:STDOUT:   %s: %SubscriptType.8ee = bind_name s, %.loc14_25.5
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %c.patt: %pattern_type.c48 = binding_pattern c [concrete]
 // CHECK:STDOUT:   }
@@ -155,13 +156,15 @@ let x: i32 = c[0];
 // CHECK:STDOUT:   %.loc15_13.2: init %C = class_init (), %.loc15_13.1 [concrete = constants.%C.val]
 // CHECK:STDOUT:   %.loc15_13.3: ref %C = temporary %.loc15_13.1, %.loc15_13.2
 // CHECK:STDOUT:   %.loc15_13.4: ref %C = converted @__global_init.%.loc15, %.loc15_13.3
-// CHECK:STDOUT:   %c: ref %C = bind_name c, %.loc15_13.4
+// CHECK:STDOUT:   %.loc15_13.5: %C = bind_value %.loc15_13.4
+// CHECK:STDOUT:   %c: %C = bind_name c, %.loc15_13.5
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %x.patt: %pattern_type.c39 = binding_pattern x [concrete]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %ElementType.ref: type = name_ref ElementType, %ElementType.decl [concrete = constants.%ElementType.e6b]
-// CHECK:STDOUT:   %.loc16: ref %ElementType.e6b = temporary @__global_init.%.loc16_25, @__global_init.%At.call
-// CHECK:STDOUT:   %x: ref %ElementType.e6b = bind_name x, %.loc16
+// CHECK:STDOUT:   %.loc16_25.1: ref %ElementType.e6b = temporary @__global_init.%.loc16, @__global_init.%At.call
+// CHECK:STDOUT:   %.loc16_25.2: %ElementType.e6b = bind_value %.loc16_25.1
+// CHECK:STDOUT:   %x: %ElementType.e6b = bind_name x, %.loc16_25.2
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: impl @impl: %C.ref as %IndexWith.type {
@@ -230,14 +233,12 @@ let x: i32 = c[0];
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %.loc14: %empty_struct_type = struct_literal ()
 // CHECK:STDOUT:   %.loc15: %empty_struct_type = struct_literal ()
-// CHECK:STDOUT:   %c.ref: ref %C = name_ref c, file.%c
-// CHECK:STDOUT:   %s.ref: ref %SubscriptType.8ee = name_ref s, file.%s
-// CHECK:STDOUT:   %.loc16_24: %SubscriptType.8ee = bind_value %s.ref
+// CHECK:STDOUT:   %c.ref: %C = name_ref c, file.%c
+// CHECK:STDOUT:   %s.ref: %SubscriptType.8ee = name_ref s, file.%s
 // CHECK:STDOUT:   %impl.elem0: %.d94 = impl_witness_access constants.%IndexWith.impl_witness, element0 [concrete = constants.%At.d43]
 // CHECK:STDOUT:   %bound_method: <bound method> = bound_method %c.ref, %impl.elem0
-// CHECK:STDOUT:   %.loc16_25: ref %ElementType.e6b = temporary_storage
-// CHECK:STDOUT:   %.loc16_22: %C = bind_value %c.ref
-// CHECK:STDOUT:   %At.call: init %ElementType.e6b = call %bound_method(%.loc16_22, %.loc16_24) to %.loc16_25
+// CHECK:STDOUT:   %.loc16: ref %ElementType.e6b = temporary_storage
+// CHECK:STDOUT:   %At.call: init %ElementType.e6b = call %bound_method(%c.ref, %s.ref) to %.loc16
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -364,9 +365,9 @@ let x: i32 = c[0];
 // CHECK:STDOUT:     %int_32.loc11: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
 // CHECK:STDOUT:     %i32.loc11: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %.loc11_17.1: ref %i32 = temporary_storage
-// CHECK:STDOUT:   %.loc11_17.2: ref %i32 = temporary %.loc11_17.1, @__global_init.%At.call
-// CHECK:STDOUT:   %e: ref %i32 = bind_name e, %.loc11_17.2
+// CHECK:STDOUT:   %.loc11_17.1: %i32 = value_of_initializer @__global_init.%At.call
+// CHECK:STDOUT:   %.loc11_17.2: %i32 = converted @__global_init.%At.call, %.loc11_17.1
+// CHECK:STDOUT:   %e: %i32 = bind_name e, %.loc11_17.2
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: impl @impl.18b: %.loc4_15.2 as %IndexWith.type {
@@ -495,13 +496,15 @@ let x: i32 = c[0];
 // CHECK:STDOUT:   %.loc14_13.2: init %C = class_init (), %.loc14_13.1 [concrete = constants.%C.val]
 // CHECK:STDOUT:   %.loc14_13.3: ref %C = temporary %.loc14_13.1, %.loc14_13.2
 // CHECK:STDOUT:   %.loc14_13.4: ref %C = converted @__global_init.%.loc14, %.loc14_13.3
-// CHECK:STDOUT:   %c: ref %C = bind_name c, %.loc14_13.4
+// CHECK:STDOUT:   %.loc14_13.5: %C = bind_value %.loc14_13.4
+// CHECK:STDOUT:   %c: %C = bind_name c, %.loc14_13.5
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %x.patt: %pattern_type.c39 = binding_pattern x [concrete]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %ElementType.ref: type = name_ref ElementType, %ElementType.decl [concrete = constants.%ElementType.e6b]
-// CHECK:STDOUT:   %.loc22: ref %ElementType.e6b = temporary @__global_init.%.loc22_25.2, @__global_init.%At.call
-// CHECK:STDOUT:   %x: ref %ElementType.e6b = bind_name x, %.loc22
+// CHECK:STDOUT:   %.loc22_25.1: ref %ElementType.e6b = temporary @__global_init.%.loc22_25.2, @__global_init.%At.call
+// CHECK:STDOUT:   %.loc22_25.2: %ElementType.e6b = bind_value %.loc22_25.1
+// CHECK:STDOUT:   %x: %ElementType.e6b = bind_name x, %.loc22_25.2
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: impl @impl.066: %C.ref as %IndexWith.type {
@@ -569,14 +572,13 @@ let x: i32 = c[0];
 // CHECK:STDOUT: fn @__global_init() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %.loc14: %empty_struct_type = struct_literal ()
-// CHECK:STDOUT:   %c.ref: ref %C = name_ref c, file.%c
+// CHECK:STDOUT:   %c.ref: %C = name_ref c, file.%c
 // CHECK:STDOUT:   %int_0: Core.IntLiteral = int_value 0 [concrete = constants.%int_0]
 // CHECK:STDOUT:   %.loc22_25.1: %SubscriptType.8ee = converted %int_0, <error> [concrete = <error>]
 // CHECK:STDOUT:   %impl.elem0: %.d94 = impl_witness_access constants.%IndexWith.impl_witness, element0 [concrete = constants.%At.d43]
 // CHECK:STDOUT:   %bound_method: <bound method> = bound_method %c.ref, %impl.elem0
 // CHECK:STDOUT:   %.loc22_25.2: ref %ElementType.e6b = temporary_storage
-// CHECK:STDOUT:   %.loc22_22: %C = bind_value %c.ref
-// CHECK:STDOUT:   %At.call: init %ElementType.e6b = call %bound_method(%.loc22_22, <error>) to %.loc22_25.2
+// CHECK:STDOUT:   %At.call: init %ElementType.e6b = call %bound_method(%c.ref, <error>) to %.loc22_25.2
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -626,7 +628,8 @@ let x: i32 = c[0];
 // CHECK:STDOUT:   %.loc6_13.2: init %C = class_init (), %.loc6_13.1 [concrete = constants.%C.val]
 // CHECK:STDOUT:   %.loc6_13.3: ref %C = temporary %.loc6_13.1, %.loc6_13.2
 // CHECK:STDOUT:   %.loc6_13.4: ref %C = converted @__global_init.%.loc6, %.loc6_13.3
-// CHECK:STDOUT:   %c: ref %C = bind_name c, %.loc6_13.4
+// CHECK:STDOUT:   %.loc6_13.5: %C = bind_value %.loc6_13.4
+// CHECK:STDOUT:   %c: %C = bind_name c, %.loc6_13.5
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %x.patt: %pattern_type.7ce = binding_pattern x [concrete]
 // CHECK:STDOUT:   }
@@ -649,7 +652,7 @@ let x: i32 = c[0];
 // CHECK:STDOUT: fn @__global_init() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %.loc6: %empty_struct_type = struct_literal ()
-// CHECK:STDOUT:   %c.ref: ref %C = name_ref c, file.%c
+// CHECK:STDOUT:   %c.ref: %C = name_ref c, file.%c
 // CHECK:STDOUT:   %int_0: Core.IntLiteral = int_value 0 [concrete = constants.%int_0]
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }

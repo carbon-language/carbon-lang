@@ -19,8 +19,12 @@ namespace Carbon::Check {
 auto DiagnosticEmitter::ConvertLoc(LocIdForDiagnostics loc_id,
                                    ContextFnT context_fn) const
     -> Diagnostics::ConvertedLoc {
-  auto converted =
-      ConvertLocImpl(loc_id.loc_id(), loc_id.is_token_only(), context_fn);
+  auto [imports, converted] = loc_converter_.ConvertWithImports(
+      loc_id.loc_id(), loc_id.is_token_only());
+  for (const auto& import : imports) {
+    CARBON_DIAGNOSTIC(InImport, LocationInfo, "in import");
+    context_fn(import.loc, InImport);
+  }
 
   // Use the token when possible, but -1 is the default value.
   auto last_offset = -1;
@@ -38,73 +42,6 @@ auto DiagnosticEmitter::ConvertLoc(LocIdForDiagnostics loc_id,
   }
 
   return converted;
-}
-
-auto DiagnosticEmitter::ConvertLocImpl(SemIR::LocId loc_id, bool is_token_only,
-                                       ContextFnT context_fn) const
-    -> Diagnostics::ConvertedLoc {
-  llvm::SmallVector<SemIR::AbsoluteNodeId> absolute_node_ids =
-      SemIR::GetAbsoluteNodeId(sem_ir_, loc_id);
-
-  auto final_node_id = absolute_node_ids.pop_back_val();
-  for (const auto& absolute_node_id : absolute_node_ids) {
-    if (!absolute_node_id.node_id().has_value()) {
-      // TODO: Add an "In implicit import of prelude." note for the case where
-      // we don't have a location.
-      continue;
-    }
-    // TODO: Include the name of the imported library in the diagnostic.
-    auto diag_loc =
-        ConvertLocInFile(absolute_node_id, is_token_only, context_fn);
-    AddInImport(diag_loc.loc, context_fn);
-  }
-
-  return ConvertLocInFile(final_node_id, is_token_only, context_fn);
-}
-
-auto DiagnosticEmitter::ConvertLocInFile(SemIR::AbsoluteNodeId absolute_node_id,
-                                         bool token_only,
-                                         ContextFnT context_fn) const
-    -> Diagnostics::ConvertedLoc {
-  if (absolute_node_id.check_ir_id() == SemIR::CheckIRId::Cpp) {
-    // Special handling of Clang source locations.
-    CARBON_CHECK(sem_ir_->import_cpps().size() > 0);
-    // TODO: Use information on the specific C++ import extract from Clang error
-    // message and propagated here instead of using first C++ import
-    // arbitrarily.
-    Parse::NodeId import_node_id =
-        sem_ir_->import_cpps().values().begin()->node_id;
-    AddInImport(ConvertLocInCarbonFile(sem_ir_->check_ir_id(), import_node_id,
-                                       /*token_only=*/false)
-                    .loc,
-                context_fn);
-
-    clang::SourceLocation clang_loc = sem_ir_->clang_source_locs().Get(
-        absolute_node_id.clang_source_loc_id());
-
-    CARBON_CHECK(sem_ir_->cpp_ast());
-    clang::PresumedLoc presumed_loc =
-        sem_ir_->cpp_ast()->getSourceManager().getPresumedLoc(clang_loc);
-
-    return Diagnostics::ConvertedLoc{
-        .loc = {.filename = presumed_loc.getFilename(),
-                .line_number = static_cast<int32_t>(presumed_loc.getLine())},
-        // TODO: Set `last_byte_offset` based on the `import Cpp` location.
-        .last_byte_offset = 0};
-  }
-
-  return ConvertLocInCarbonFile(absolute_node_id.check_ir_id(),
-                                absolute_node_id.node_id(), token_only);
-}
-
-auto DiagnosticEmitter::ConvertLocInCarbonFile(SemIR::CheckIRId check_ir_id,
-                                               Parse::NodeId node_id,
-                                               bool token_only) const
-    -> Diagnostics::ConvertedLoc {
-  CARBON_CHECK(check_ir_id != SemIR::CheckIRId::Cpp);
-  const auto& tree_and_subtrees =
-      tree_and_subtrees_getters_[check_ir_id.index]();
-  return tree_and_subtrees.NodeToDiagnosticLoc(node_id, token_only);
 }
 
 auto DiagnosticEmitter::ConvertArg(llvm::Any arg) const -> llvm::Any {
@@ -176,12 +113,6 @@ auto DiagnosticEmitter::ConvertArg(llvm::Any arg) const -> llvm::Any {
     return StringifySpecificInterface(*sem_ir_, specific_interface);
   }
   return DiagnosticEmitterBase::ConvertArg(arg);
-}
-
-auto DiagnosticEmitter::AddInImport(Diagnostics::Loc loc, ContextFnT context_fn)
-    -> void {
-  CARBON_DIAGNOSTIC(InImport, LocationInfo, "in import");
-  context_fn(loc, InImport);
 }
 
 }  // namespace Carbon::Check

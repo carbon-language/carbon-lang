@@ -708,13 +708,11 @@ auto CompilationUnit::RunLower() -> void {
     // TODO: Consider disabling instruction naming by default if we're not
     // producing textual LLVM IR.
     SemIR::InstNamer inst_namer(&*sem_ir_);
-    std::optional<llvm::ArrayRef<Parse::GetTreeAndSubtreesFn>> subtrees;
-    if (options_->include_debug_info) {
-      subtrees = cache_->tree_and_subtrees_getters();
-    }
-    module_ = Lower::LowerToLLVM(*llvm_context_, driver_env_->fs, subtrees,
-                                 input_filename_, *sem_ir_, &inst_namer,
-                                 vlog_stream_);
+    llvm::ArrayRef<Parse::GetTreeAndSubtreesFn> subtrees =
+        cache_->tree_and_subtrees_getters();
+    module_ = Lower::LowerToLLVM(
+        *llvm_context_, driver_env_->fs, options_->include_debug_info, subtrees,
+        input_filename_, *sem_ir_, &inst_namer, vlog_stream_);
   });
   if (vlog_stream_) {
     CARBON_VLOG("*** llvm::Module ***\n");
@@ -846,7 +844,7 @@ auto CompilationUnit::LogCall(llvm::StringLiteral logging_label,
                               llvm::StringLiteral timing_label,
                               llvm::function_ref<auto()->void> fn) -> void {
   PrettyStackTraceFunction trace_file([&](llvm::raw_ostream& out) {
-    out << "filename: " << input_filename_ << "\n";
+    out << "Filename: " << input_filename_ << "\n";
   });
   CARBON_VLOG("*** {0}: {1} ***\n", logging_label, input_filename_);
   Timings::ScopedTiming timing(timings_ ? &*timings_ : nullptr, timing_label);

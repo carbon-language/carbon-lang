@@ -3,8 +3,6 @@
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
 // EXTRA-ARGS: --custom-core --exclude-dump-file-prefix=min_prelude/
-// TODO: This should move to the place where it's imported, but it ends up
-// included more than once and that fails to build.
 // INCLUDE-FILE: toolchain/testing/testdata/min_prelude/parts/as.carbon
 // INCLUDE-FILE: toolchain/testing/testdata/min_prelude/parts/bool.carbon
 
