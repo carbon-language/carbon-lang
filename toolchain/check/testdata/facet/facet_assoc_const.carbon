@@ -206,24 +206,16 @@ fn G(T:! M where .X = () and .Y = ()) {
   F(T);
 }
 
-// --- fail_todo_repeated_with_bitand.carbon
+// --- repeated_with_bitand.carbon
 library "[[@TEST_NAME]]";
 
 interface M { let X:! type; let Y:! type; }
 
-// CHECK:STDERR: fail_todo_repeated_with_bitand.carbon:[[@LINE+4]]:10: error: associated constant `.(M.X)` given two different values `.(M.Y)` and `()` [AssociatedConstantWithDifferentValues]
-// CHECK:STDERR: fn F(T:! (M where .X = .Y) & (M where .X = .Y and .Y = ())) -> T.X {
-// CHECK:STDERR:          ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-// CHECK:STDERR:
-fn F(T:! (M where .X = .Y) & (M where .X = .Y and .Y = ())) -> T.X {
+fn F1(T:! (M where .X = .Y) & (M where .X = .Y and .Y = ())) -> T.X {
   return ();
 }
 
-// CHECK:STDERR: fail_todo_repeated_with_bitand.carbon:[[@LINE+4]]:10: error: associated constant `.(M.X)` given two different values `.(M.Y)` and `()` [AssociatedConstantWithDifferentValues]
-// CHECK:STDERR: fn F(T:! (M where .X = .Y and .Y = ()) & (M where .X = .Y)) -> T.X {
-// CHECK:STDERR:          ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-// CHECK:STDERR:
-fn F(T:! (M where .X = .Y and .Y = ()) & (M where .X = .Y)) -> T.X {
+fn F2(T:! (M where .X = .Y and .Y = ()) & (M where .X = .Y)) -> T.X {
   return ();
 }
 
