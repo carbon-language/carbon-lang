@@ -580,6 +580,12 @@ auto EvalConstantInst(Context& context, SemIR::ValueOfInitializer inst)
 
 auto EvalConstantInst(Context& context, SemIR::InstId inst_id,
                       SemIR::VarStorage inst) -> ConstantEvalResult {
+  if (!inst.pattern_id.has_value()) {
+    // This variable was not created from a `var` pattern, so isn't a global
+    // variable.
+    return ConstantEvalResult::NotConstant;
+  }
+
   // A variable is constant if it's global.
   auto entity_name_id = SemIR::GetFirstBindingNameFromPatternId(
       context.sem_ir(), inst.pattern_id);
