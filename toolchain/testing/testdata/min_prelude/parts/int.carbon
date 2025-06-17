@@ -34,12 +34,9 @@ final impl forall [From:! IntLiteral()] Int(From) as As(IntLiteral()) {
   fn Convert[self: Self]() -> IntLiteral() = "int.convert_checked";
 }
 
-// Support testing negative values.
+// Negate.
 
-interface Negate {
-  fn Op[self: Self]() -> Self;
-}
-
-impl IntLiteral() as Negate {
+final impl forall [N:! IntLiteral()]
+    Int(N) as Negate where .Result = Self {
   fn Op[self: Self]() -> Self = "int.snegate";
 }

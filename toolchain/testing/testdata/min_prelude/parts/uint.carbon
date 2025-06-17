@@ -33,3 +33,10 @@ impl forall [To:! IntLiteral()] IntLiteral() as As(UInt(To)) {
 final impl forall [From:! IntLiteral()] UInt(From) as As(IntLiteral()) {
   fn Convert[self: Self]() -> IntLiteral() = "int.convert_checked";
 }
+
+// Negate.
+
+final impl forall [N:! IntLiteral()]
+    UInt(N) as Negate where .Result = Self {
+  fn Op[self: Self]() -> Self = "int.unegate";
+}
