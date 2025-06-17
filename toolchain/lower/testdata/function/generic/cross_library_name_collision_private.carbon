@@ -37,9 +37,9 @@ fn Lib2CallF[T:! type](a: T, b: T) -> T {
 
 // --- todo_use.carbon
 
-// TODO: This should call the `F` from lib1 and the `F` from lib2, where one
-// returns 1 and the other returns 2. Currently it calls the same function
-// twice, both returning 1.
+// TODO: This should call the `F` from lib1 and the `F` from lib2. Currently
+// it calls the same function in both (hashes match for both instances of
+// `call i32 @_CF.Main.<hash>`).
 
 import library "lib1";
 import library "lib2";
