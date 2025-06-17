@@ -244,6 +244,8 @@ static auto CheckCompleteClassType(
             context.insts().GetAs<SemIR::VtablePtr>(
                 canonical_base_vtable_inst_id);
         base_vtable_id = base_vtable_ptr_inst.vtable_id;
+        // TODO: Retrieve the specific_id from the base_vtable_ptr_inst here,
+        // for use in BuildVtable.
       }
     }
     auto vtable_id =
