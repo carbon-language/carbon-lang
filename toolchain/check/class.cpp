@@ -131,8 +131,8 @@ static auto AddStructTypeFields(
 
 // Builds and returns a vtable for the current class. Assumes that the virtual
 // functions for the class are listed as the top element of the `vtable_stack`.
-static auto BuildVtable(Context& context, Parse::NodeId /* node_id */,
-                        SemIR::ClassId class_id, SemIR::VtableId base_vtable_id,
+static auto BuildVtable(Context& context, SemIR::ClassId class_id,
+                        SemIR::VtableId base_vtable_id,
                         llvm::ArrayRef<SemIR::InstId> vtable_contents)
     -> SemIR::VtableId {
   llvm::SmallVector<SemIR::InstId> vtable;
@@ -245,8 +245,8 @@ static auto CheckCompleteClassType(
         base_vtable_id = base_vtable_ptr_inst.vtable_id;
       }
     }
-    auto vtable_id = BuildVtable(context, node_id, class_id, base_vtable_id,
-                                 vtable_contents);
+    auto vtable_id =
+        BuildVtable(context, class_id, base_vtable_id, vtable_contents);
 
     auto vptr_type_id = GetPointerType(context, SemIR::VtableType::TypeInstId);
     class_info.vtable_ptr_id =
