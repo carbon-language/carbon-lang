@@ -199,3 +199,17 @@ fn F2(T:! ((Z where .Y = C(())) where .X = C(.Y)) where .X = C(C(()))) -> T.X {
 fn F3(T:! Z where .Y = C(()) and .X = C(.Y) and .X = C(C(()))) -> T.X {
   return () as C(C(()));
 }
+
+// --- conflicting_syntax_same_value.carbon
+
+library "[[@TEST_NAME]]";
+
+interface Z { let X:! type; let Y:! type; }
+
+fn F1(T:! ((Z where .Y = ()) where .X = .Y) where .X = ()) -> T.X {
+  return ();
+}
+
+fn F2(T:! ((Z where .Y = ()) where .X = ()) where .X = .Y) -> T.X {
+  return ();
+}
