@@ -143,7 +143,7 @@ static auto BuildVtable(Context& context, SemIR::ClassId class_id,
     // elements of the top of `vtable_stack`.
     for (auto fn_decl_id : base_vtable_inst_block) {
       auto fn_decl = GetCalleeFunction(context.sem_ir(), fn_decl_id);
-      auto& fn = context.functions().Get(fn_decl.function_id);
+      const auto& fn = context.functions().Get(fn_decl.function_id);
       for (auto override_fn_decl_id : vtable_contents) {
         auto override_fn_decl =
             context.insts().GetAs<SemIR::FunctionDecl>(override_fn_decl_id);
@@ -160,6 +160,7 @@ static auto BuildVtable(Context& context, SemIR::ClassId class_id,
                                    /*check_self=*/false);
           fn_decl_id = override_fn_decl_id;
           override_fn.virtual_index = vtable.size();
+          CARBON_CHECK(override_fn.virtual_index == fn.virtual_index);
           break;
         }
       }
