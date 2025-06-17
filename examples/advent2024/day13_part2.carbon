@@ -13,9 +13,9 @@ fn Run() {
   var total_cost: i64 = 0;
   while (true) {
     var m: Machine = Machine.Read();
-    m.prize.0 = m.prize.0 + 10000000000000;
-    m.prize.1 = m.prize.1 + 10000000000000;
-    total_cost = total_cost + CostIfPossible(m);
+    m.prize.0 += 10_000_000_000_000;
+    m.prize.1 += 10_000_000_000_000;
+    total_cost += CostIfPossible(m);
     if (not SkipNewline()) {
       break;
     }

@@ -135,8 +135,8 @@ let negative_lit_zero: Core.IntLiteral() = RightShiftLit(0, -1);
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %int_32: Core.IntLiteral = int_value 32 [concrete]
 // CHECK:STDOUT:   %i32: type = class_type @Int, @Int(%int_32) [concrete]
-// CHECK:STDOUT:   %RightShift.type.050: type = fn_type @RightShift.1 [concrete]
-// CHECK:STDOUT:   %RightShift: %RightShift.type.050 = struct_value () [concrete]
+// CHECK:STDOUT:   %RightShift.type: type = fn_type @RightShift [concrete]
+// CHECK:STDOUT:   %RightShift: %RightShift.type = struct_value () [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -144,7 +144,7 @@ let negative_lit_zero: Core.IntLiteral() = RightShiftLit(0, -1);
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @RuntimeCallIsValid(%a.param: %i32, %b.param: %i32) -> %i32 {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %RightShift.ref: %RightShift.type.050 = name_ref RightShift, file.%RightShift.decl [concrete = constants.%RightShift]
+// CHECK:STDOUT:   %RightShift.ref: %RightShift.type = name_ref RightShift, file.%RightShift.decl [concrete = constants.%RightShift]
 // CHECK:STDOUT:   %a.ref: %i32 = name_ref a, %a
 // CHECK:STDOUT:   %b.ref: %i32 = name_ref b, %b
 // CHECK:STDOUT:   %int.right_shift: init %i32 = call %RightShift.ref(%a.ref, %b.ref)
@@ -159,8 +159,8 @@ let negative_lit_zero: Core.IntLiteral() = RightShiftLit(0, -1);
 // CHECK:STDOUT:   %int_32: Core.IntLiteral = int_value 32 [concrete]
 // CHECK:STDOUT:   %u32: type = class_type @UInt, @UInt(%int_32) [concrete]
 // CHECK:STDOUT:   %i32: type = class_type @Int, @Int(%int_32) [concrete]
-// CHECK:STDOUT:   %RightShift.type.050: type = fn_type @RightShift.1 [concrete]
-// CHECK:STDOUT:   %RightShift: %RightShift.type.050 = struct_value () [concrete]
+// CHECK:STDOUT:   %RightShift.type: type = fn_type @RightShift [concrete]
+// CHECK:STDOUT:   %RightShift: %RightShift.type = struct_value () [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -168,7 +168,7 @@ let negative_lit_zero: Core.IntLiteral() = RightShiftLit(0, -1);
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @RuntimeCall(%a.param: %u32, %b.param: %i32) -> %u32 {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %RightShift.ref: %RightShift.type.050 = name_ref RightShift, file.%RightShift.decl [concrete = constants.%RightShift]
+// CHECK:STDOUT:   %RightShift.ref: %RightShift.type = name_ref RightShift, file.%RightShift.decl [concrete = constants.%RightShift]
 // CHECK:STDOUT:   %a.ref: %u32 = name_ref a, %a
 // CHECK:STDOUT:   %b.ref: %i32 = name_ref b, %b
 // CHECK:STDOUT:   %int.right_shift: init %u32 = call %RightShift.ref(%a.ref, %b.ref)

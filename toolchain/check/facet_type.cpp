@@ -259,8 +259,8 @@ auto AllocateFacetTypeImplWitness(Context& context,
 // Returns an ordering between two values in a rewrite constraint. Two
 // `ImplWitnessAccess` instructions that refer to the same associated constant
 // through the same facet value are treated as equivalent. Otherwise, the
-// ordering is somewhat arbitrary but is attempted to be the order they appear
-// in the source.
+// ordering is somewhat arbitrary with `ImplWitnessAccess` instructions coming
+// first.
 static auto CompareFacetTypeConstraintValues(Context& context,
                                              SemIR::InstId lhs_id,
                                              SemIR::InstId rhs_id)
@@ -295,15 +295,23 @@ static auto CompareFacetTypeConstraintValues(Context& context,
                rhs_lookup->query_specific_interface_id.index;
       }
     }
+
+    // We do *not* want to get the evaluated result of `ImplWitnessAccess` here,
+    // we want to keep them as a reference to an associated constant for the
+    // resolution phase.
+    return lhs_id.index <=> rhs_id.index;
   }
 
-  if (context.constant_values().GetConstantInstId(lhs_id) ==
-      context.constant_values().GetConstantInstId(rhs_id)) {
-    return std::weak_ordering::equivalent;
+  // ImplWitnessAccess sorts before other instructions.
+  if (lhs_access) {
+    return std::weak_ordering::less;
   }
-  // Try to return things in the order they appear in the code by using the
-  // non-canonicalized id.
-  return lhs_id.index <=> rhs_id.index;
+  if (rhs_access) {
+    return std::weak_ordering::greater;
+  }
+
+  return context.constant_values().GetConstantInstId(lhs_id).index <=>
+         context.constant_values().GetConstantInstId(rhs_id).index;
 }
 
 // Sort and dedupe the rewrite constraints, with accesses to the same associated
@@ -482,13 +490,20 @@ auto ResolveFacetTypeRewriteConstraints(
             AssociatedConstantWithDifferentValues, Error,
             "associated constant {0} given two different values {1} and {2}",
             InstIdAsConstant, InstIdAsConstant, InstIdAsConstant);
+        // Use inst id ordering as a simple proxy for source ordering, to try
+        // to name the values in the same order they appear in the facet type.
+        auto source_order1 = constraint.rhs_id.index < next.rhs_id.index
+                                 ? constraint.rhs_id
+                                 : next.rhs_id;
+        auto source_order2 = constraint.rhs_id.index >= next.rhs_id.index
+                                 ? constraint.rhs_id
+                                 : next.rhs_id;
         // TODO: It would be nice to note the places where the values are
         // assigned but rewrite constraint instructions are from canonical
         // constant values, and have no locations. We'd need to store a
         // location along with them in the rewrite constraints.
         context.emitter().Emit(loc_id, AssociatedConstantWithDifferentValues,
-                               constraint.lhs_id, constraint.rhs_id,
-                               next.rhs_id);
+                               constraint.lhs_id, source_order1, source_order2);
       }
       constraint.rhs_id = SemIR::ErrorInst::InstId;
       next.rhs_id = SemIR::ErrorInst::InstId;

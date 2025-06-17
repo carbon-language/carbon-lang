@@ -19,10 +19,12 @@
 #include "llvm/Transforms/Utils/BasicBlockUtils.h"
 #include "llvm/Transforms/Utils/ModuleUtils.h"
 #include "toolchain/base/kind_switch.h"
+#include "toolchain/base/pretty_stack_trace_function.h"
 #include "toolchain/lower/constant.h"
 #include "toolchain/lower/function_context.h"
 #include "toolchain/lower/mangler.h"
 #include "toolchain/sem_ir/absolute_node_id.h"
+#include "toolchain/sem_ir/diagnostic_loc_converter.h"
 #include "toolchain/sem_ir/entry_point.h"
 #include "toolchain/sem_ir/expr_info.h"
 #include "toolchain/sem_ir/file.h"
@@ -33,6 +35,7 @@
 #include "toolchain/sem_ir/inst_categories.h"
 #include "toolchain/sem_ir/inst_kind.h"
 #include "toolchain/sem_ir/pattern.h"
+#include "toolchain/sem_ir/stringify.h"
 #include "toolchain/sem_ir/typed_insts.h"
 
 namespace Carbon::Lower {
@@ -757,6 +760,26 @@ auto FileContext::BuildFunctionBody(SemIR::FunctionId function_id,
                                     FileContext& definition_context,
                                     const SemIR::Function& definition_function)
     -> void {
+  // On crash, report the function we were lowering.
+  PrettyStackTraceFunction stack_trace_entry([&](llvm::raw_ostream& output) {
+    SemIR::DiagnosticLocConverter converter(
+        context().tree_and_subtrees_getters(), &sem_ir());
+    auto converted =
+        converter.Convert(SemIR::LocId(declaration_function.definition_id),
+                          /*token_only=*/false);
+    converted.loc.FormatLocation(output);
+    output << "Lowering function ";
+    if (specific_id.has_value()) {
+      output << SemIR::StringifySpecific(sem_ir(), specific_id);
+    } else {
+      output << SemIR::StringifyConstantInst(
+          sem_ir(), declaration_function.definition_id);
+    }
+    output << "\n";
+    // Crash output has a tab indent; try to indent slightly past that.
+    converted.loc.FormatSnippet(output, /*indent=*/10);
+  });
+
   // Note that `definition_function` is potentially from a different SemIR::File
   // than the one that this file context represents. Any lowering done for
   // values derived from `definition_function` should use `definition_context`

@@ -44,26 +44,12 @@ class Digits {
   var count: array(array(i64, 75), 10);
 }
 
-// TODO: Add a builtin to perform integer conversion / truncation.
-fn I64DigitToI32(a: i64) -> i32 {
-  if (a == 0) { return 0; }
-  if (a == 1) { return 1; }
-  if (a == 2) { return 2; }
-  if (a == 3) { return 3; }
-  if (a == 4) { return 4; }
-  if (a == 5) { return 5; }
-  if (a == 6) { return 6; }
-  if (a == 7) { return 7; }
-  if (a == 8) { return 8; }
-  return 9;
-}
-
 fn ReduceToDigits(n: i64, depth: i32, multiplicity: i64, digits: Digits*) -> i64 {
   if (n == -1) { return 0; }
   if (depth == 0) { return multiplicity; }
   if (n < 10) {
-    let count: i64* = &digits->count[I64DigitToI32(n)][depth - 1];
-    *count = *count + multiplicity;
+    let count: i64* = &digits->count[n as i32][depth - 1];
+    *count += multiplicity;
     return 0;
   }
   let next: (i64, i64) = Next(n);
@@ -78,7 +64,7 @@ fn Run() {
 
   var n: i64;
   while (ReadInt64(&n)) {
-    total = total + ReduceToDigits(n, max_depth, 1, &digits);
+    total += ReduceToDigits(n, max_depth, 1, &digits);
     PrintInt64(total);
     digits.Print(max_depth - 1);
     SkipSpaces();
@@ -90,14 +76,13 @@ fn Run() {
     digits.Print(depth);
     var digit: i64 = 0;
     while (digit < 10) {
-      let m: i64 = digits.count[I64DigitToI32(digit)][depth];
+      let m: i64 = digits.count[digit as i32][depth];
       if (m > 0) {
         let next: (i64, i64) = Next(digit);
-        total = total +
-                ReduceToDigits(next.0, depth, m, &digits) +
-                ReduceToDigits(next.1, depth, m, &digits);
+        total += ReduceToDigits(next.0, depth, m, &digits) +
+                 ReduceToDigits(next.1, depth, m, &digits);
       }
-      digit = digit + 1;
+      ++digit;
     }
     --depth;
   }

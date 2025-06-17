@@ -178,7 +178,7 @@ library "[[@TEST_NAME]]";
 
 interface M { let X:! type; let Y:! type; }
 
-// CHECK:STDERR: fail_rewrite_conflicts_with_second_facet.carbon:[[@LINE+4]]:31: error: associated constant `.(M.Y)` given two different values `.(M.X)` and `T.(M.X)` [AssociatedConstantWithDifferentValues]
+// CHECK:STDERR: fail_rewrite_conflicts_with_second_facet.carbon:[[@LINE+4]]:31: error: associated constant `.(M.Y)` given two different values `T.(M.X)` and `.(M.X)` [AssociatedConstantWithDifferentValues]
 // CHECK:STDERR: fn F(T:! M where .X = (), U:! M where .Y = T.X and .Y = .X) {}
 // CHECK:STDERR:                               ^~~~~~~~~~~~~~~~~~~~~~~~~~~~
 // CHECK:STDERR:

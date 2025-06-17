@@ -475,9 +475,6 @@ fn NotEmptyStruct() {
 // CHECK:STDOUT:   %int_7: Core.IntLiteral = int_value 7 [concrete]
 // CHECK:STDOUT:   %ImplicitAs.type.cc7: type = generic_interface_type @ImplicitAs [concrete]
 // CHECK:STDOUT:   %ImplicitAs.generic: %ImplicitAs.type.cc7 = struct_value () [concrete]
-// CHECK:STDOUT:   %type_where: type = facet_type <type where TODO> [concrete]
-// CHECK:STDOUT:   %U: %type_where = bind_symbolic_name U, 0 [symbolic]
-// CHECK:STDOUT:   %pattern_type.344: type = pattern_type %type_where [concrete]
 // CHECK:STDOUT:   %ImplsNonType.type: type = fn_type @ImplsNonType [concrete]
 // CHECK:STDOUT:   %ImplsNonType: %ImplsNonType.type = struct_value () [concrete]
 // CHECK:STDOUT: }
@@ -498,30 +495,26 @@ fn NotEmptyStruct() {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %ImplsNonType.decl: %ImplsNonType.type = fn_decl @ImplsNonType [concrete = constants.%ImplsNonType] {
-// CHECK:STDOUT:     %U.patt: %pattern_type.344 = symbolic_binding_pattern U, 0 [concrete]
+// CHECK:STDOUT:     %U.patt: <error> = symbolic_binding_pattern U, 0 [concrete]
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %.loc11_26.1: type = splice_block %.loc11_26.2 [concrete = constants.%type_where] {
+// CHECK:STDOUT:     %.loc11_26.1: type = splice_block %.loc11_26.2 [concrete = <error>] {
 // CHECK:STDOUT:       %.Self: type = bind_symbolic_name .Self [symbolic_self = constants.%.Self]
 // CHECK:STDOUT:       %.Self.ref: type = name_ref .Self, %.Self [symbolic_self = constants.%.Self]
 // CHECK:STDOUT:       %int_7: Core.IntLiteral = int_value 7 [concrete = constants.%int_7]
 // CHECK:STDOUT:       %.loc11_44: type = converted %int_7, <error> [concrete = <error>]
-// CHECK:STDOUT:       %.loc11_26.2: type = where_expr %.Self [concrete = constants.%type_where] {
+// CHECK:STDOUT:       %.loc11_26.2: type = where_expr %.Self [concrete = <error>] {
 // CHECK:STDOUT:         requirement_impls %.Self.ref, <error>
 // CHECK:STDOUT:       }
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %U.loc11_17.1: %type_where = bind_symbolic_name U, 0 [symbolic = %U.loc11_17.2 (constants.%U)]
+// CHECK:STDOUT:     %U: <error> = bind_symbolic_name U, 0 [concrete = <error>]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic fn @ImplsNonType(%U.loc11_17.1: %type_where) {
-// CHECK:STDOUT:   %U.loc11_17.2: %type_where = bind_symbolic_name U, 0 [symbolic = %U.loc11_17.2 (constants.%U)]
-// CHECK:STDOUT:
+// CHECK:STDOUT: generic fn @ImplsNonType(%U: <error>) {
 // CHECK:STDOUT:   fn();
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @ImplsNonType(constants.%U) {
-// CHECK:STDOUT:   %U.loc11_17.2 => constants.%U
-// CHECK:STDOUT: }
+// CHECK:STDOUT: specific @ImplsNonType(<error>) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- fail_right_of_impls_non_facet_type.carbon
 // CHECK:STDOUT:
@@ -531,9 +524,6 @@ fn NotEmptyStruct() {
 // CHECK:STDOUT:   %Int.type: type = generic_class_type @Int [concrete]
 // CHECK:STDOUT:   %Int.generic: %Int.type = struct_value () [concrete]
 // CHECK:STDOUT:   %i32: type = class_type @Int, @Int(%int_32) [concrete]
-// CHECK:STDOUT:   %type_where: type = facet_type <type where TODO> [concrete]
-// CHECK:STDOUT:   %U: %type_where = bind_symbolic_name U, 0 [symbolic]
-// CHECK:STDOUT:   %pattern_type.344: type = pattern_type %type_where [concrete]
 // CHECK:STDOUT:   %ImplsOfNonFacetType.type: type = fn_type @ImplsOfNonFacetType [concrete]
 // CHECK:STDOUT:   %ImplsOfNonFacetType: %ImplsOfNonFacetType.type = struct_value () [concrete]
 // CHECK:STDOUT: }
@@ -554,30 +544,26 @@ fn NotEmptyStruct() {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %ImplsOfNonFacetType.decl: %ImplsOfNonFacetType.type = fn_decl @ImplsOfNonFacetType [concrete = constants.%ImplsOfNonFacetType] {
-// CHECK:STDOUT:     %U.patt: %pattern_type.344 = symbolic_binding_pattern U, 0 [concrete]
+// CHECK:STDOUT:     %U.patt: <error> = symbolic_binding_pattern U, 0 [concrete]
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %.loc8_33.1: type = splice_block %.loc8_33.2 [concrete = constants.%type_where] {
+// CHECK:STDOUT:     %.loc8_33.1: type = splice_block %.loc8_33.2 [concrete = <error>] {
 // CHECK:STDOUT:       %.Self: type = bind_symbolic_name .Self [symbolic_self = constants.%.Self]
 // CHECK:STDOUT:       %.Self.ref: type = name_ref .Self, %.Self [symbolic_self = constants.%.Self]
 // CHECK:STDOUT:       %int_32: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
 // CHECK:STDOUT:       %i32: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
-// CHECK:STDOUT:       %.loc8_33.2: type = where_expr %.Self [concrete = constants.%type_where] {
+// CHECK:STDOUT:       %.loc8_33.2: type = where_expr %.Self [concrete = <error>] {
 // CHECK:STDOUT:         requirement_impls %.Self.ref, <error>
 // CHECK:STDOUT:       }
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %U.loc8_24.1: %type_where = bind_symbolic_name U, 0 [symbolic = %U.loc8_24.2 (constants.%U)]
+// CHECK:STDOUT:     %U: <error> = bind_symbolic_name U, 0 [concrete = <error>]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic fn @ImplsOfNonFacetType(%U.loc8_24.1: %type_where) {
-// CHECK:STDOUT:   %U.loc8_24.2: %type_where = bind_symbolic_name U, 0 [symbolic = %U.loc8_24.2 (constants.%U)]
-// CHECK:STDOUT:
+// CHECK:STDOUT: generic fn @ImplsOfNonFacetType(%U: <error>) {
 // CHECK:STDOUT:   fn();
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @ImplsOfNonFacetType(constants.%U) {
-// CHECK:STDOUT:   %U.loc8_24.2 => constants.%U
-// CHECK:STDOUT: }
+// CHECK:STDOUT: specific @ImplsOfNonFacetType(<error>) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- fail_enforce_impls_constraint.carbon
 // CHECK:STDOUT:

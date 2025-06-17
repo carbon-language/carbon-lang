@@ -41,11 +41,11 @@ class Context {
     SemIR::SpecificId specific_id;
   };
 
-  explicit Context(llvm::LLVMContext& llvm_context,
-                   llvm::IntrusiveRefCntPtr<llvm::vfs::FileSystem> fs,
-                   std::optional<llvm::ArrayRef<Parse::GetTreeAndSubtreesFn>>
-                       tree_and_subtrees_getters_for_debug_info,
-                   llvm::StringRef module_name, llvm::raw_ostream* vlog_stream);
+  explicit Context(
+      llvm::LLVMContext& llvm_context,
+      llvm::IntrusiveRefCntPtr<llvm::vfs::FileSystem> fs, bool want_debug_info,
+      llvm::ArrayRef<Parse::GetTreeAndSubtreesFn> tree_and_subtrees_getters,
+      llvm::StringRef module_name, llvm::raw_ostream* vlog_stream);
 
   // Gets or creates the `FileContext` for a given SemIR file. If an
   // `inst_namer` is specified the first time this is called for a file, it will
@@ -95,6 +95,10 @@ class Context {
   }
   auto di_builder() -> llvm::DIBuilder& { return di_builder_; }
   auto di_compile_unit() -> llvm::DICompileUnit* { return di_compile_unit_; }
+  auto tree_and_subtrees_getters()
+      -> llvm::ArrayRef<Parse::GetTreeAndSubtreesFn> {
+    return tree_and_subtrees_getters_;
+  }
 
   auto printf_int_format_string() -> llvm::Value* {
     return printf_int_format_string_;
@@ -128,9 +132,8 @@ class Context {
   // The DICompileUnit, if any - null implies debug info is not being emitted.
   llvm::DICompileUnit* di_compile_unit_;
 
-  // The trees are only provided when debug info should be emitted.
-  std::optional<llvm::ArrayRef<Parse::GetTreeAndSubtreesFn>>
-      tree_and_subtrees_getters_for_debug_info_;
+  // Parse trees. Used for debug information and crash diagnostics.
+  llvm::ArrayRef<Parse::GetTreeAndSubtreesFn> tree_and_subtrees_getters_;
 
   // The optional vlog stream.
   llvm::raw_ostream* vlog_stream_;

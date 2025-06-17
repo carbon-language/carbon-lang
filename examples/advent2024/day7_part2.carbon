@@ -14,8 +14,7 @@ fn Run() {
   while (PeekChar() != Core.EOF()) {
     var eq: Equation = Equation.Read();
     if (eq.Solve(true)) {
-      // TODO: total += eq.result;
-      total = total + eq.result;
+      total += eq.result;
     }
   }
   PrintInt64(total);
