@@ -38,9 +38,9 @@ class A(T:! type) {}
 
 library "[[@TEST_NAME]]";
 
-class I {}
+class A {}
 
-class B(N:! I);
+class B(N:! A);
 // CHECK:STDERR: fail_mismatch_implicit_param_list.carbon:[[@LINE+7]]:1: error: redeclaration differs because of implicit parameter list [RedeclParamListDiffers]
 // CHECK:STDERR: class B[T:! type](N:! T) {}
 // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -54,7 +54,7 @@ class B[T:! type](N:! T) {}
 
 library "[[@TEST_NAME]]";
 
-class I {}
+class A {}
 
 class C(T:! type);
 // CHECK:STDERR: fail_mismatch_param_count.carbon:[[@LINE+7]]:1: error: redeclaration differs because of parameter count of 2 [RedeclParamCountDiffers]
@@ -64,13 +64,13 @@ class C(T:! type);
 // CHECK:STDERR: class C(T:! type);
 // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~
 // CHECK:STDERR:
-class C(T:! type, U:! I) {}
+class C(T:! type, U:! A) {}
 
 // --- fail_mismatch_param_type.carbon
 
 library "[[@TEST_NAME]]";
 
-class I {}
+class A {}
 
 class D(T:! type);
 // CHECK:STDERR: fail_mismatch_param_type.carbon:[[@LINE+7]]:9: error: type `<pattern for I>` of parameter 1 in redeclaration differs from previous parameter type `<pattern for type>` [RedeclParamDiffersType]
@@ -80,7 +80,7 @@ class D(T:! type);
 // CHECK:STDERR: class D(T:! type);
 // CHECK:STDERR:         ^
 // CHECK:STDERR:
-class D(T:! I) {}
+class D(T:! A) {}
 
 // --- fail_mismatch_param_name.carbon
 
