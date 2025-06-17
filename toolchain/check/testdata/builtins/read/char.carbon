@@ -58,9 +58,9 @@ fn Main() {
 // CHECK:STDOUT:     %int_32.loc8: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
 // CHECK:STDOUT:     %i32.loc8: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %.loc8_25.1: ref %i32 = temporary_storage
-// CHECK:STDOUT:   %.loc8_25.2: ref %i32 = temporary %.loc8_25.1, %read.char.loc8
-// CHECK:STDOUT:   %n: ref %i32 = bind_name n, %.loc8_25.2
+// CHECK:STDOUT:   %.loc8_25.1: %i32 = value_of_initializer %read.char.loc8
+// CHECK:STDOUT:   %.loc8_25.2: %i32 = converted %read.char.loc8, %.loc8_25.1
+// CHECK:STDOUT:   %n: %i32 = bind_name n, %.loc8_25.2
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %m.patt: %pattern_type.7ce = binding_pattern m [concrete]
 // CHECK:STDOUT:   }
@@ -71,9 +71,9 @@ fn Main() {
 // CHECK:STDOUT:     %int_32.loc9: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
 // CHECK:STDOUT:     %i32.loc9: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %.loc9_30.1: ref %i32 = temporary_storage
-// CHECK:STDOUT:   %.loc9_30.2: ref %i32 = temporary %.loc9_30.1, %read.char.loc9
-// CHECK:STDOUT:   %m: ref %i32 = bind_name m, %.loc9_30.2
+// CHECK:STDOUT:   %.loc9_30.1: %i32 = value_of_initializer %read.char.loc9
+// CHECK:STDOUT:   %.loc9_30.2: %i32 = converted %read.char.loc9, %.loc9_30.1
+// CHECK:STDOUT:   %m: %i32 = bind_name m, %.loc9_30.2
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
