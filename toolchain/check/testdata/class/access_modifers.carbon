@@ -307,24 +307,25 @@ class A {
 // CHECK:STDOUT:   %Make.call: init %Circle = call %Make.ref() to %.loc18_36.1
 // CHECK:STDOUT:   %Circle.ref.loc18_15: type = name_ref Circle, file.%Circle.decl [concrete = constants.%Circle]
 // CHECK:STDOUT:   %.loc18_36.2: ref %Circle = temporary %.loc18_36.1, %Make.call
-// CHECK:STDOUT:   %circle: ref %Circle = bind_name circle, %.loc18_36.2
+// CHECK:STDOUT:   %.loc18_36.3: %Circle = bind_value %.loc18_36.2
+// CHECK:STDOUT:   %circle: %Circle = bind_name circle, %.loc18_36.3
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %radius.patt: %pattern_type.7ce = binding_pattern radius [concrete]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %circle.ref.loc26: ref %Circle = name_ref circle, %circle
+// CHECK:STDOUT:   %circle.ref.loc26: %Circle = name_ref circle, %circle
 // CHECK:STDOUT:   %radius.ref.loc26: <error> = name_ref radius, <error> [concrete = <error>]
 // CHECK:STDOUT:   %.loc26: type = splice_block %i32 [concrete = constants.%i32] {
 // CHECK:STDOUT:     %int_32: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
 // CHECK:STDOUT:     %i32: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %radius: %i32 = bind_name radius, <error> [concrete = <error>]
-// CHECK:STDOUT:   %circle.ref.loc34: ref %Circle = name_ref circle, %circle
+// CHECK:STDOUT:   %circle.ref.loc34: %Circle = name_ref circle, %circle
 // CHECK:STDOUT:   %radius.ref.loc34: <error> = name_ref radius, <error> [concrete = <error>]
 // CHECK:STDOUT:   %int_5: Core.IntLiteral = int_value 5 [concrete = constants.%int_5.64b]
 // CHECK:STDOUT:   assign %radius.ref.loc34, <error>
-// CHECK:STDOUT:   %circle.ref.loc42: ref %Circle = name_ref circle, %circle
+// CHECK:STDOUT:   %circle.ref.loc42: %Circle = name_ref circle, %circle
 // CHECK:STDOUT:   %SOME_INTERNAL_CONSTANT.ref: <error> = name_ref SOME_INTERNAL_CONSTANT, <error> [concrete = <error>]
-// CHECK:STDOUT:   %circle.ref.loc51: ref %Circle = name_ref circle, %circle
+// CHECK:STDOUT:   %circle.ref.loc51: %Circle = name_ref circle, %circle
 // CHECK:STDOUT:   %SomeInternalFunction.ref: <error> = name_ref SomeInternalFunction, <error> [concrete = <error>]
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }

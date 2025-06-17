@@ -182,9 +182,9 @@ var b: B = {.x = ()} as B;
 // CHECK:STDOUT:   %Make: %Make.type = struct_value () [concrete]
 // CHECK:STDOUT:   %B: type = class_type @B [concrete]
 // CHECK:STDOUT:   %pattern_type.049: type = pattern_type %B [concrete]
-// CHECK:STDOUT:   %a_ref.var: ref %B = var file.%a_ref.var_patt [concrete]
 // CHECK:STDOUT:   %ptr.e79: type = ptr_type %B [concrete]
 // CHECK:STDOUT:   %pattern_type.960: type = pattern_type %ptr.e79 [concrete]
+// CHECK:STDOUT:   %a_ref.var: ref %B = var file.%a_ref.var_patt [concrete]
 // CHECK:STDOUT:   %addr: %ptr.e79 = addr_of %a_ref.var [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -196,7 +196,7 @@ var b: B = {.x = ()} as B;
 // CHECK:STDOUT:     %b_val.patt: %pattern_type.049 = binding_pattern b_val [concrete]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %B.ref.loc22: type = name_ref B, %B.decl [concrete = constants.%B]
-// CHECK:STDOUT:   %b_val: ref %B = bind_name b_val, @__global_init.%.loc22_22.2 [concrete = constants.%a_ref.var]
+// CHECK:STDOUT:   %b_val: %B = bind_name b_val, @__global_init.%.loc22_22.2
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %b_ptr.patt: %pattern_type.960 = binding_pattern b_ptr [concrete]
 // CHECK:STDOUT:   }
@@ -217,10 +217,10 @@ var b: B = {.x = ()} as B;
 // CHECK:STDOUT: fn @__global_init() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   <elided>
-// CHECK:STDOUT:   %a_val.ref: ref %A = name_ref a_val, file.%a_val [concrete = file.%a_ref.var]
+// CHECK:STDOUT:   %a_val.ref: %A = name_ref a_val, file.%a_val
 // CHECK:STDOUT:   %B.ref.loc22: type = name_ref B, file.%B.decl [concrete = constants.%B]
-// CHECK:STDOUT:   %.loc22_22.1: ref %B = as_compatible %a_val.ref [concrete = constants.%a_ref.var]
-// CHECK:STDOUT:   %.loc22_22.2: ref %B = converted %a_val.ref, %.loc22_22.1 [concrete = constants.%a_ref.var]
+// CHECK:STDOUT:   %.loc22_22.1: %B = as_compatible %a_val.ref
+// CHECK:STDOUT:   %.loc22_22.2: %B = converted %a_val.ref, %.loc22_22.1
 // CHECK:STDOUT:   %a_ref.ref.loc23: ref %A = name_ref a_ref, file.%a_ref [concrete = file.%a_ref.var]
 // CHECK:STDOUT:   %B.ref.loc23: type = name_ref B, file.%B.decl [concrete = constants.%B]
 // CHECK:STDOUT:   %.loc23_25.1: ref %B = as_compatible %a_ref.ref.loc23 [concrete = constants.%a_ref.var]
@@ -379,7 +379,8 @@ var b: B = {.x = ()} as B;
 // CHECK:STDOUT:     %b_value.patt: %pattern_type.049 = binding_pattern b_value [concrete]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %B.ref: type = name_ref B, %B.decl [concrete = constants.%B]
-// CHECK:STDOUT:   %b_value: ref %B = bind_name b_value, @__global_init.%.loc14_42.2
+// CHECK:STDOUT:   %.loc14: %B = bind_value @__global_init.%.loc14_42.2
+// CHECK:STDOUT:   %b_value: %B = bind_name b_value, %.loc14
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {

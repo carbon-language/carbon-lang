@@ -315,9 +315,9 @@ let convert_not_constant_widen: i64 = Int32ToInt64(not_constant);
 // CHECK:STDOUT:     %int_32: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
 // CHECK:STDOUT:     %u32: type = class_type @UInt, @UInt(constants.%int_32) [concrete = constants.%u32]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %.loc6_42.1: ref %u32 = temporary_storage
-// CHECK:STDOUT:   %.loc6_42.2: ref %u32 = temporary %.loc6_42.1, @__global_init.%int.convert_checked.loc6_42
-// CHECK:STDOUT:   %SizePreserving: ref %u32 = bind_name SizePreserving, %.loc6_42.2
+// CHECK:STDOUT:   %.loc6_42.1: %u32 = value_of_initializer @__global_init.%int.convert_checked.loc6_42 [concrete = constants.%int_1.c1d]
+// CHECK:STDOUT:   %.loc6_42.2: %u32 = converted @__global_init.%int.convert_checked.loc6_42, %.loc6_42.1 [concrete = constants.%int_1.c1d]
+// CHECK:STDOUT:   %SizePreserving: %u32 = bind_name SizePreserving, %.loc6_42.2
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %Narrowing.patt: %pattern_type.88f = binding_pattern Narrowing [concrete]
 // CHECK:STDOUT:   }
@@ -325,9 +325,9 @@ let convert_not_constant_widen: i64 = Int32ToInt64(not_constant);
 // CHECK:STDOUT:     %int_16: Core.IntLiteral = int_value 16 [concrete = constants.%int_16]
 // CHECK:STDOUT:     %i16: type = class_type @Int, @Int(constants.%int_16) [concrete = constants.%i16]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %.loc7_36.1: ref %i16 = temporary_storage
-// CHECK:STDOUT:   %.loc7_36.2: ref %i16 = temporary %.loc7_36.1, @__global_init.%int.convert_checked.loc7_36
-// CHECK:STDOUT:   %Narrowing: ref %i16 = bind_name Narrowing, %.loc7_36.2
+// CHECK:STDOUT:   %.loc7_36.1: %i16 = value_of_initializer @__global_init.%int.convert_checked.loc7_36 [concrete = constants.%int_1.c22]
+// CHECK:STDOUT:   %.loc7_36.2: %i16 = converted @__global_init.%int.convert_checked.loc7_36, %.loc7_36.1 [concrete = constants.%int_1.c22]
+// CHECK:STDOUT:   %Narrowing: %i16 = bind_name Narrowing, %.loc7_36.2
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %Widening.patt: %pattern_type.a10 = binding_pattern Widening [concrete]
 // CHECK:STDOUT:   }
@@ -335,9 +335,9 @@ let convert_not_constant_widen: i64 = Int32ToInt64(not_constant);
 // CHECK:STDOUT:     %int_64: Core.IntLiteral = int_value 64 [concrete = constants.%int_64]
 // CHECK:STDOUT:     %i64: type = class_type @Int, @Int(constants.%int_64) [concrete = constants.%i64]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %.loc8_35.1: ref %i64 = temporary_storage
-// CHECK:STDOUT:   %.loc8_35.2: ref %i64 = temporary %.loc8_35.1, @__global_init.%int.convert_checked.loc8_35
-// CHECK:STDOUT:   %Widening: ref %i64 = bind_name Widening, %.loc8_35.2
+// CHECK:STDOUT:   %.loc8_35.1: %i64 = value_of_initializer @__global_init.%int.convert_checked.loc8_35 [concrete = constants.%int_1.a95]
+// CHECK:STDOUT:   %.loc8_35.2: %i64 = converted @__global_init.%int.convert_checked.loc8_35, %.loc8_35.1 [concrete = constants.%int_1.a95]
+// CHECK:STDOUT:   %Widening: %i64 = bind_name Widening, %.loc8_35.2
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {

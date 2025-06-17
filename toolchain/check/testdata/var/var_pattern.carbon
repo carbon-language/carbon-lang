@@ -753,6 +753,7 @@ fn G() {
 // CHECK:STDOUT:   %G: %G.type = struct_value () [concrete]
 // CHECK:STDOUT:   %tuple.type: type = tuple_type (%empty_tuple.type, %empty_tuple.type, %empty_tuple.type) [concrete]
 // CHECK:STDOUT:   %pattern_type.8c1: type = pattern_type %tuple.type [concrete]
+// CHECK:STDOUT:   %empty_tuple: %empty_tuple.type = tuple_value () [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -805,7 +806,9 @@ fn G() {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %.loc8_38.1: ref %empty_tuple.type = temporary_storage
 // CHECK:STDOUT:   %.loc8_38.2: ref %empty_tuple.type = temporary %.loc8_38.1, %F.call.loc8_38
-// CHECK:STDOUT:   %x: ref %empty_tuple.type = bind_name x, %.loc8_38.2
+// CHECK:STDOUT:   %tuple.loc8_38: %empty_tuple.type = tuple_value () [concrete = constants.%empty_tuple]
+// CHECK:STDOUT:   %.loc8_38.3: %empty_tuple.type = converted %F.call.loc8_38, %tuple.loc8_38 [concrete = constants.%empty_tuple]
+// CHECK:STDOUT:   %x: %empty_tuple.type = bind_name x, %.loc8_38.3
 // CHECK:STDOUT:   assign %y.var, %F.call.loc8_43
 // CHECK:STDOUT:   %.loc8_23.1: type = splice_block %.loc8_23.3 [concrete = constants.%empty_tuple.type] {
 // CHECK:STDOUT:     %.loc8_23.2: %empty_tuple.type = tuple_literal ()
@@ -818,7 +821,9 @@ fn G() {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %.loc8_48.1: ref %empty_tuple.type = temporary_storage
 // CHECK:STDOUT:   %.loc8_48.2: ref %empty_tuple.type = temporary %.loc8_48.1, %F.call.loc8_48
-// CHECK:STDOUT:   %z: ref %empty_tuple.type = bind_name z, %.loc8_48.2
+// CHECK:STDOUT:   %tuple.loc8_48: %empty_tuple.type = tuple_value () [concrete = constants.%empty_tuple]
+// CHECK:STDOUT:   %.loc8_48.3: %empty_tuple.type = converted %F.call.loc8_48, %tuple.loc8_48 [concrete = constants.%empty_tuple]
+// CHECK:STDOUT:   %z: %empty_tuple.type = bind_name z, %.loc8_48.3
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

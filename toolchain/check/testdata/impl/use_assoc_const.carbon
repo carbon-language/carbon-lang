@@ -3680,7 +3680,7 @@ fn F() {
 // CHECK:STDOUT:   %.loc12_21.2: ref %C.131 = temporary_storage
 // CHECK:STDOUT:   %.loc12_21.3: init %C.131 = class_init (), %.loc12_21.2 [concrete = constants.%C.val]
 // CHECK:STDOUT:   %.loc12_21.4: ref %C.131 = temporary %.loc12_21.2, %.loc12_21.3
-// CHECK:STDOUT:   %.loc12_23: ref %C.131 = converted %.loc12_21.1, %.loc12_21.4
+// CHECK:STDOUT:   %.loc12_23.1: ref %C.131 = converted %.loc12_21.1, %.loc12_21.4
 // CHECK:STDOUT:   %.loc12_11.1: type = splice_block %impl.elem0 [concrete = constants.%C.131] {
 // CHECK:STDOUT:     %D.ref.loc12_10: type = name_ref D, file.%D.decl [concrete = constants.%D]
 // CHECK:STDOUT:     %Z.ref: type = name_ref Z, file.%Z.decl [concrete = constants.%Z.type]
@@ -3689,7 +3689,8 @@ fn F() {
 // CHECK:STDOUT:     %.loc12_11.2: %Z.type = converted %D.ref.loc12_10, %Z.facet [concrete = constants.%Z.facet.f2a]
 // CHECK:STDOUT:     %impl.elem0: type = impl_witness_access constants.%Z.impl_witness.19e, element0 [concrete = constants.%C.131]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %a: ref %C.131 = bind_name a, %.loc12_23
+// CHECK:STDOUT:   %.loc12_23.2: %C.131 = bind_value %.loc12_23.1
+// CHECK:STDOUT:   %a: %C.131 = bind_name a, %.loc12_23.2
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
