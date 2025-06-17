@@ -5,7 +5,7 @@
 //
 // INCLUDE-FILE: toolchain/testing/testdata/min_prelude/int.carbon
 // TODO: Add ranges and switch to "--dump-sem-ir-ranges=only".
-// EXTRA-ARGS: --dump-sem-ir-ranges=if-present --custom-core
+// EXTRA-ARGS: --dump-sem-ir-ranges=if-present
 //
 // This is mostly checking against crashes for compile time bindings in
 // difficult contexts.
