@@ -365,6 +365,8 @@ library "[[@TEST_NAME]]";
 
 interface Z {
   let T:! type;
+  // TODO: This should not be an error.
+  //
   // CHECK:STDERR: fail_todo_cycle_through_self_reference.carbon:[[@LINE+7]]:11: error: associated constant has incomplete type `Z` [IncompleteTypeInAssociatedConstantDecl]
   // CHECK:STDERR:   let U:! Z;
   // CHECK:STDERR:           ^
@@ -383,6 +385,8 @@ library "[[@TEST_NAME]]";
 
 interface Z {
   let T:! type;
+  // TODO: This should not be an error.
+  //
   // CHECK:STDERR: fail_todo_reference_same_constant_in_different_self.carbon:[[@LINE+7]]:11: error: associated constant has incomplete type `Z` [IncompleteTypeInAssociatedConstantDecl]
   // CHECK:STDERR:   let U:! Z;
   // CHECK:STDERR:           ^
@@ -401,6 +405,8 @@ fn F(A:! Z where .T = (), B:! Z where .T = .U.T and .U = A) {}
 library "[[@TEST_NAME]]";
 
 interface Z {
+  // TODO: This should not be an error.
+  //
   // CHECK:STDERR: fail_todo_non_cycle_with_self_reference.carbon:[[@LINE+7]]:11: error: associated constant has incomplete type `Z` [IncompleteTypeInAssociatedConstantDecl]
   // CHECK:STDERR:   let T:! Z;
   // CHECK:STDERR:           ^
@@ -410,6 +416,8 @@ interface Z {
   // CHECK:STDERR:
   let T:! Z;
   let U:! type;
+  // TODO: This should not be an error.
+  //
   // CHECK:STDERR: fail_todo_non_cycle_with_self_reference.carbon:[[@LINE+7]]:11: error: associated constant has incomplete type `Z` [IncompleteTypeInAssociatedConstantDecl]
   // CHECK:STDERR:   let V:! Z;
   // CHECK:STDERR:           ^
