@@ -2,7 +2,7 @@
 // Exceptions. See /LICENSE for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
-// INCLUDE-FILE: toolchain/testing/testdata/min_prelude/int.carbon
+// INCLUDE-FILE: toolchain/testing/testdata/min_prelude/primitives.carbon
 //
 // AUTOUPDATE
 // TIP: To test this file alone, run:
@@ -69,10 +69,6 @@ fn RuntimeCallIsValidTooMany(a: i32, b: i32, c: i32) -> i32 {
 
 library "[[@TEST_NAME]]";
 
-// CHECK:STDERR: fail_bad_return_type.carbon:[[@LINE+8]]:37: error: name `Core.Bool` implicitly referenced here, but not found [CoreNameNotFound]
-// CHECK:STDERR: fn BadReturnType(a: i32, b: i32) -> bool = "int.uadd";
-// CHECK:STDERR:                                     ^~~~
-// CHECK:STDERR:
 // CHECK:STDERR: fail_bad_return_type.carbon:[[@LINE+4]]:1: error: invalid signature for builtin function "int.uadd" [InvalidBuiltinSignature]
 // CHECK:STDERR: fn BadReturnType(a: i32, b: i32) -> bool = "int.uadd";
 // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -85,10 +81,6 @@ fn BadReturnType(a: i32, b: i32) -> bool = "int.uadd";
 // CHECK:STDERR:
 var bad_return_type: array(i32, BadReturnType(1, 2));
 
-// CHECK:STDERR: fail_bad_return_type.carbon:[[@LINE+4]]:55: error: name `Core.Bool` implicitly referenced here, but not found [CoreNameNotFound]
-// CHECK:STDERR: fn RuntimeCallIsValidBadReturnType(a: i32, b: i32) -> bool {
-// CHECK:STDERR:                                                       ^~~~
-// CHECK:STDERR:
 fn RuntimeCallIsValidBadReturnType(a: i32, b: i32) -> bool {
   return BadReturnType(a, b);
 }
