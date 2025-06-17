@@ -696,6 +696,8 @@ static auto IsValidExprCategoryForConversionTarget(
              category == SemIR::ExprCategory::DurableRef ||
              category == SemIR::ExprCategory::EphemeralRef ||
              category == SemIR::ExprCategory::Initializing;
+    case ConversionTarget::DurableRef:
+      return category == SemIR::ExprCategory::DurableRef;
     case ConversionTarget::ExplicitAs:
       return true;
     case ConversionTarget::Initializer:
@@ -1340,12 +1342,19 @@ auto Convert(Context& context, SemIR::LocId loc_id, SemIR::InstId expr_id,
       // Commit to using a temporary for this initializing expression.
       // TODO: Don't create a temporary if the initializing representation
       // is already a value representation.
+      // TODO: If the target is DurableRef, materialize a VarStorage instead of
+      // a TemporaryStorage to lifetime-extend.
       expr_id = FinalizeTemporary(context, expr_id,
                                   target.kind == ConversionTarget::Discarded);
       // We now have an ephemeral reference.
       [[fallthrough]];
 
     case SemIR::ExprCategory::DurableRef:
+      if (target.kind == ConversionTarget::DurableRef) {
+        break;
+      }
+      [[fallthrough]];
+
     case SemIR::ExprCategory::EphemeralRef:
       // If a reference expression is an acceptable result, we're done.
       if (target.kind == ConversionTarget::ValueOrRef ||
@@ -1362,6 +1371,18 @@ auto Convert(Context& context, SemIR::LocId loc_id, SemIR::InstId expr_id,
       [[fallthrough]];
 
     case SemIR::ExprCategory::Value:
+      if (target.kind == ConversionTarget::DurableRef) {
+        if (target.diagnose) {
+          CARBON_DIAGNOSTIC(ConversionFailureNonRefToRef, Error,
+                            "cannot bind durable reference to non-reference "
+                            "value of type {0}",
+                            SemIR::TypeId);
+          context.emitter().Emit(loc_id, ConversionFailureNonRefToRef,
+                                 target.type_id);
+        }
+        return SemIR::ErrorInst::InstId;
+      }
+
       // When initializing from a value, perform a copy.
       if (target.is_initializer()) {
         expr_id = PerformCopy(context, expr_id, target.diagnose);

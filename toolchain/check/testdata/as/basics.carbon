@@ -362,8 +362,9 @@ let n: {.x: ()} = {.x = ()} as {.x = ()};
 // CHECK:STDOUT:     %n.patt: %pattern_type.c27 = binding_pattern n [concrete]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Y.ref: type = name_ref Y, %Y.decl [concrete = constants.%Y]
-// CHECK:STDOUT:   %.loc19: ref %Y = temporary @__global_init.%.loc19_29.1, @__global_init.%.loc19_29.2
-// CHECK:STDOUT:   %n: ref %Y = bind_name n, %.loc19
+// CHECK:STDOUT:   %.loc19_29.1: ref %Y = temporary @__global_init.%.loc19_29.1, @__global_init.%.loc19_29.2
+// CHECK:STDOUT:   %.loc19_29.2: %Y = bind_value %.loc19_29.1
+// CHECK:STDOUT:   %n: %Y = bind_name n, %.loc19_29.2
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {

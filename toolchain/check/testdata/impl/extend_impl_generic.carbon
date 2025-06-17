@@ -270,12 +270,13 @@ class X(U:! type) {
 // CHECK:STDOUT:   %F.call.loc21: init %Param = call %impl.elem0.loc21() to %.loc21_20.1
 // CHECK:STDOUT:   %.loc21_20.2: ref %Param = temporary %.loc21_20.1, %F.call.loc21
 // CHECK:STDOUT:   %x.ref.loc21: %Param.elem = name_ref x, @Param.%.loc9 [concrete = @Param.%.loc9]
-// CHECK:STDOUT:   %.loc21_21: ref %i32 = class_element_access %.loc21_20.2, element0
+// CHECK:STDOUT:   %.loc21_21.1: ref %i32 = class_element_access %.loc21_20.2, element0
 // CHECK:STDOUT:   %.loc21_10: type = splice_block %i32.loc21 [concrete = constants.%i32] {
 // CHECK:STDOUT:     %int_32.loc21: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
 // CHECK:STDOUT:     %i32.loc21: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %a: ref %i32 = bind_name a, %.loc21_21
+// CHECK:STDOUT:   %.loc21_21.2: %i32 = bind_value %.loc21_21.1
+// CHECK:STDOUT:   %a: %i32 = bind_name a, %.loc21_21.2
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %b.patt: %pattern_type.7ce = binding_pattern b [concrete]
 // CHECK:STDOUT:     %b.var_patt: %pattern_type.7ce = var_pattern %b.patt [concrete]

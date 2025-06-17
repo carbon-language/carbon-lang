@@ -141,13 +141,14 @@ fn Test() {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %cv.ref.loc24: ref %Class = name_ref cv, %cv
 // CHECK:STDOUT:   %Class.ref.loc24: type = name_ref Class, file.%Class.decl [concrete = constants.%Class]
-// CHECK:STDOUT:   %c: ref %Class = bind_name c, %cv.ref.loc24
+// CHECK:STDOUT:   %.loc24: %Class = bind_value %cv.ref.loc24
+// CHECK:STDOUT:   %c: %Class = bind_name c, %.loc24
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %cj.patt: %pattern_type.7ce = binding_pattern cj [concrete]
 // CHECK:STDOUT:     %cj.var_patt: %pattern_type.7ce = var_pattern %cj.patt [concrete]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %cj.var: ref %i32 = var %cj.var_patt
-// CHECK:STDOUT:   %c.ref.loc25: ref %Class = name_ref c, %c
+// CHECK:STDOUT:   %c.ref.loc25: %Class = name_ref c, %c
 // CHECK:STDOUT:   %j.ref.loc25: %Class.elem = name_ref j, @Class.%.loc16 [concrete = @Class.%.loc16]
 // CHECK:STDOUT:   %.loc25_18.1: ref %i32 = class_element_access %c.ref.loc25, element0
 // CHECK:STDOUT:   %.loc25_18.2: %i32 = bind_value %.loc25_18.1
@@ -162,7 +163,7 @@ fn Test() {
 // CHECK:STDOUT:     %ck.var_patt: %pattern_type.7ce = var_pattern %ck.patt [concrete]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %ck.var: ref %i32 = var %ck.var_patt
-// CHECK:STDOUT:   %c.ref.loc26: ref %Class = name_ref c, %c
+// CHECK:STDOUT:   %c.ref.loc26: %Class = name_ref c, %c
 // CHECK:STDOUT:   %k.ref.loc26: %Class.elem = name_ref k, @Class.%.loc17 [concrete = @Class.%.loc17]
 // CHECK:STDOUT:   %.loc26_18.1: ref %i32 = class_element_access %c.ref.loc26, element1
 // CHECK:STDOUT:   %.loc26_18.2: %i32 = bind_value %.loc26_18.1

@@ -43,6 +43,23 @@ interface Z {
 
 fn F(FF:! ((Z where .T = .U) where .T = .U) where .T = .U) {}
 
+// --- fail_todo_nested_facet_types_same_two_associated.carbon
+library "[[@TEST_NAME]]";
+
+interface Z {
+  let T:! type;
+  let U:! type;
+  let V:! type;
+}
+
+// TODO: There should not be a diagnostic here.
+//
+// CHECK:STDERR: fail_todo_nested_facet_types_same_two_associated.carbon:[[@LINE+4]]:12: error: associated constant `.(Z.T)` given two different values `.(Z.V)` and `.(Z.U)` [AssociatedConstantWithDifferentValues]
+// CHECK:STDERR: fn F(FF:! ((Z where .T = .U and .U = .V) where .T = .U and .U = .V) where .T = .U and .U = .V) {}
+// CHECK:STDERR:            ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+// CHECK:STDERR:
+fn F(FF:! ((Z where .T = .U and .U = .V) where .T = .U and .U = .V) where .T = .U and .U = .V) {}
+
 // --- fail_nested_facet_types_different.carbon
 library "[[@TEST_NAME]]";
 
@@ -174,6 +191,9 @@ interface Z { let X:! type; let Y:! type; }
 // Verify that the `.Y = ()` does not get applied to `.X = .Y` prematurely, as
 // that would lead to `.X = () and .X = .Y` when combined with the outer `where`
 // expression, which would be an error.
+//
+// TODO: There should be no diagnostic here.
+//
 // CHECK:STDERR: fail_todo_repeated_with_value_available.carbon:[[@LINE+4]]:10: error: associated constant `.(Z.X)` given two different values `()` and `.(Z.Y)` [AssociatedConstantWithDifferentValues]
 // CHECK:STDERR: fn F(T:! ((Z where .Y = ()) where .X = .Y) where .X = .Y) -> T.X {
 // CHECK:STDERR:          ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~

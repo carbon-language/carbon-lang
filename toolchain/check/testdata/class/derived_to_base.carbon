@@ -315,7 +315,8 @@ fn ConvertInit() {
 // CHECK:STDOUT:   %.loc34_14.1: ref %B = class_element_access %c.ref, element0
 // CHECK:STDOUT:   %.loc34_14.2: ref %A = class_element_access %.loc34_14.1, element0
 // CHECK:STDOUT:   %.loc34_14.3: ref %A = converted %c.ref, %.loc34_14.2
-// CHECK:STDOUT:   %a: ref %A = bind_name a, %.loc34_14.3
+// CHECK:STDOUT:   %.loc34_14.4: %A = bind_value %.loc34_14.3
+// CHECK:STDOUT:   %a: %A = bind_name a, %.loc34_14.4
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -381,7 +382,8 @@ fn ConvertInit() {
 // CHECK:STDOUT:   %.loc42_59.2: ref %B = class_element_access %.loc42_59.1, element0
 // CHECK:STDOUT:   %.loc42_59.3: ref %A = class_element_access %.loc42_59.2, element0
 // CHECK:STDOUT:   %.loc42_59.4: ref %A = converted %.loc42_59.1, %.loc42_59.3
-// CHECK:STDOUT:   %a: ref %A = bind_name a, %.loc42_59.4
+// CHECK:STDOUT:   %.loc42_59.5: %A = bind_value %.loc42_59.4
+// CHECK:STDOUT:   %a: %A = bind_name a, %.loc42_59.5
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

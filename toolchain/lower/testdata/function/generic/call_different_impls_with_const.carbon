@@ -69,16 +69,12 @@ fn Run() {
 // CHECK:STDOUT: define linkonce_odr void @_CG.Main.ae78220c5e9d4af5() !dbg !16 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   %.loc35_20.1 = call i1 @"_CF.X.Main:I.Main"(), !dbg !17
-// CHECK:STDOUT:   %.loc35_20.2.temp = alloca i1, align 1, !dbg !17
-// CHECK:STDOUT:   store i1 %.loc35_20.1, ptr %.loc35_20.2.temp, align 1, !dbg !17
 // CHECK:STDOUT:   ret void, !dbg !18
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: define linkonce_odr void @_CG.Main.6b293b16be321a45() !dbg !19 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   %.loc35_20.1 = call i32 @"_CF.Y.Main:I.Main"(), !dbg !20
-// CHECK:STDOUT:   %.loc35_20.2.temp = alloca i32, align 4, !dbg !20
-// CHECK:STDOUT:   store i32 %.loc35_20.1, ptr %.loc35_20.2.temp, align 4, !dbg !20
 // CHECK:STDOUT:   ret void, !dbg !21
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
