@@ -15,9 +15,8 @@ class LoopDetector {
 
   fn Check[addr self: Self*](next: ((i32, i32), (i32, i32))) -> bool {
     // TODO: if (next == self->last) {
-    // TODO: The lexer mishandles `next.0.0` as `next` `.` `0.0`.
-    if (next.0 .0 == self->last.0 .0 and next.0 .1 == self->last.0 .1 and
-        next.1 .0 == self->last.1 .0 and next.1 .1 == self->last.1 .1) {
+    if (next.0.0 == self->last.0.0 and next.0.1 == self->last.0.1 and
+        next.1.0 == self->last.1.0 and next.1.1 == self->last.1.1) {
       return true;
     }
     --self->steps;

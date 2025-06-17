@@ -69,12 +69,12 @@ fn Test() {
 // CHECK:STDOUT:   %Sink_i32: %Sink_i32.type = struct_value () [concrete]
 // CHECK:STDOUT:   %Sink_X.type: type = fn_type @Sink_X [concrete]
 // CHECK:STDOUT:   %Sink_X: %Sink_X.type = struct_value () [concrete]
-// CHECK:STDOUT:   %T: type = bind_symbolic_name T, 0 [symbolic]
-// CHECK:STDOUT:   %pattern_type.7dcd0a.2: type = pattern_type %T [symbolic]
+// CHECK:STDOUT:   %T.8b3: type = bind_symbolic_name T, 0 [symbolic]
+// CHECK:STDOUT:   %pattern_type.7dcd0a.2: type = pattern_type %T.8b3 [symbolic]
 // CHECK:STDOUT:   %Source.type: type = fn_type @Source [concrete]
 // CHECK:STDOUT:   %Source: %Source.type = struct_value () [concrete]
-// CHECK:STDOUT:   %require_complete.4ae: <witness> = require_complete_type %T [symbolic]
-// CHECK:STDOUT:   %Source.specific_fn.ff0: <specific function> = specific_function %Source, @Source(%T) [symbolic]
+// CHECK:STDOUT:   %require_complete.4ae: <witness> = require_complete_type %T.8b3 [symbolic]
+// CHECK:STDOUT:   %Source.specific_fn.ff0: <specific function> = specific_function %Source, @Source(%T.8b3) [symbolic]
 // CHECK:STDOUT:   %Test.type: type = fn_type @Test [concrete]
 // CHECK:STDOUT:   %Test: %Test.type = struct_value () [concrete]
 // CHECK:STDOUT:   %Source.specific_fn.363: <specific function> = specific_function %Source, @Source(%X) [concrete]
@@ -149,10 +149,10 @@ fn Test() {
 // CHECK:STDOUT:     %return.patt: @Source.%pattern_type (%pattern_type.7dcd0a.2) = return_slot_pattern [concrete]
 // CHECK:STDOUT:     %return.param_patt: @Source.%pattern_type (%pattern_type.7dcd0a.2) = out_param_pattern %return.patt, call_param0 [concrete]
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %T.ref.loc30_24: type = name_ref T, %T.loc30_11.1 [symbolic = %T.loc30_11.2 (constants.%T)]
-// CHECK:STDOUT:     %T.loc30_11.1: type = bind_symbolic_name T, 0 [symbolic = %T.loc30_11.2 (constants.%T)]
-// CHECK:STDOUT:     %return.param: ref @Source.%T.loc30_11.2 (%T) = out_param call_param0
-// CHECK:STDOUT:     %return: ref @Source.%T.loc30_11.2 (%T) = return_slot %return.param
+// CHECK:STDOUT:     %T.ref.loc30_24: type = name_ref T, %T.loc30_11.1 [symbolic = %T.loc30_11.2 (constants.%T.8b3)]
+// CHECK:STDOUT:     %T.loc30_11.1: type = bind_symbolic_name T, 0 [symbolic = %T.loc30_11.2 (constants.%T.8b3)]
+// CHECK:STDOUT:     %return.param: ref @Source.%T.loc30_11.2 (%T.8b3) = out_param call_param0
+// CHECK:STDOUT:     %return: ref @Source.%T.loc30_11.2 (%T.8b3) = return_slot %return.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Test.decl: %Test.type = fn_decl @Test [concrete = constants.%Test] {} {}
 // CHECK:STDOUT: }
@@ -241,21 +241,21 @@ fn Test() {
 // CHECK:STDOUT: fn @Sink_X(%x.param: %X);
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic fn @Source(%T.loc30_11.1: type) {
-// CHECK:STDOUT:   %T.loc30_11.2: type = bind_symbolic_name T, 0 [symbolic = %T.loc30_11.2 (constants.%T)]
+// CHECK:STDOUT:   %T.loc30_11.2: type = bind_symbolic_name T, 0 [symbolic = %T.loc30_11.2 (constants.%T.8b3)]
 // CHECK:STDOUT:   %pattern_type: type = pattern_type %T.loc30_11.2 [symbolic = %pattern_type (constants.%pattern_type.7dcd0a.2)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %require_complete: <witness> = require_complete_type %T.loc30_11.2 [symbolic = %require_complete (constants.%require_complete.4ae)]
 // CHECK:STDOUT:   %Source.specific_fn.loc30_35.2: <specific function> = specific_function constants.%Source, @Source(%T.loc30_11.2) [symbolic = %Source.specific_fn.loc30_35.2 (constants.%Source.specific_fn.ff0)]
 // CHECK:STDOUT:
-// CHECK:STDOUT:   fn() -> @Source.%T.loc30_11.2 (%T) {
+// CHECK:STDOUT:   fn() -> @Source.%T.loc30_11.2 (%T.8b3) {
 // CHECK:STDOUT:   !entry:
 // CHECK:STDOUT:     %Source.ref: %Source.type = name_ref Source, file.%Source.decl [concrete = constants.%Source]
-// CHECK:STDOUT:     %T.ref.loc30_42: type = name_ref T, %T.loc30_11.1 [symbolic = %T.loc30_11.2 (constants.%T)]
-// CHECK:STDOUT:     %Source.specific_fn.loc30_35.1: <specific function> = specific_function %Source.ref, @Source(constants.%T) [symbolic = %Source.specific_fn.loc30_35.2 (constants.%Source.specific_fn.ff0)]
-// CHECK:STDOUT:     %Source.call: init @Source.%T.loc30_11.2 (%T) = call %Source.specific_fn.loc30_35.1()
-// CHECK:STDOUT:     %.loc30_44.1: @Source.%T.loc30_11.2 (%T) = value_of_initializer %Source.call
-// CHECK:STDOUT:     %.loc30_44.2: @Source.%T.loc30_11.2 (%T) = converted %Source.call, %.loc30_44.1
+// CHECK:STDOUT:     %T.ref.loc30_42: type = name_ref T, %T.loc30_11.1 [symbolic = %T.loc30_11.2 (constants.%T.8b3)]
+// CHECK:STDOUT:     %Source.specific_fn.loc30_35.1: <specific function> = specific_function %Source.ref, @Source(constants.%T.8b3) [symbolic = %Source.specific_fn.loc30_35.2 (constants.%Source.specific_fn.ff0)]
+// CHECK:STDOUT:     %Source.call: init @Source.%T.loc30_11.2 (%T.8b3) = call %Source.specific_fn.loc30_35.1()
+// CHECK:STDOUT:     %.loc30_44.1: @Source.%T.loc30_11.2 (%T.8b3) = value_of_initializer %Source.call
+// CHECK:STDOUT:     %.loc30_44.2: @Source.%T.loc30_11.2 (%T.8b3) = converted %Source.call, %.loc30_44.1
 // CHECK:STDOUT:     return %.loc30_44.2
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
@@ -295,8 +295,8 @@ fn Test() {
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @Source(constants.%T) {
-// CHECK:STDOUT:   %T.loc30_11.2 => constants.%T
+// CHECK:STDOUT: specific @Source(constants.%T.8b3) {
+// CHECK:STDOUT:   %T.loc30_11.2 => constants.%T.8b3
 // CHECK:STDOUT:   %pattern_type => constants.%pattern_type.7dcd0a.2
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:

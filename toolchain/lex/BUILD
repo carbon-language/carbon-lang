@@ -223,6 +223,18 @@ cc_library(
 )
 
 cc_library(
+    name = "token_info",
+    hdrs = ["token_info.h"],
+    deps = [
+        ":token_index",
+        ":token_kind",
+        "//common:check",
+        "//toolchain/base:int",
+        "//toolchain/base:value_ids",
+    ],
+)
+
+cc_library(
     name = "tokenized_buffer",
     srcs = ["tokenized_buffer.cpp"],
     hdrs = ["tokenized_buffer.h"],
@@ -232,6 +244,7 @@ cc_library(
         ":numeric_literal",
         ":string_literal",
         ":token_index",
+        ":token_info",
         ":token_kind",
         "//common:check",
         "//common:ostream",

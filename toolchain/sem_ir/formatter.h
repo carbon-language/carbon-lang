@@ -9,6 +9,7 @@
 
 #include "common/concepts.h"
 #include "llvm/Support/raw_ostream.h"
+#include "toolchain/base/fixed_size_value_store.h"
 #include "toolchain/parse/tree_and_subtrees.h"
 #include "toolchain/sem_ir/file.h"
 #include "toolchain/sem_ir/inst_namer.h"
@@ -375,13 +376,13 @@ class Formatter {
   llvm::StringRef pending_imported_from_;
 
   // Indexes of chunks of output that should be included when an instruction is
-  // referenced, indexed by the instruction's index. This is resized in advance
-  // to the correct size.
-  llvm::SmallVector<size_t, 0> tentative_inst_chunks_;
+  // referenced, indexed by the instruction's index.
+  FixedSizeValueStore<InstId, size_t> tentative_inst_chunks_;
 
   // Maps nodes to their parents. Only set when dump ranges are in use, because
   // the parents aren't used otherwise.
-  llvm::SmallVector<Parse::NodeId> node_parents_;
+  using NodeParentStore = FixedSizeValueStore<Parse::NodeId, Parse::NodeId>;
+  std::optional<NodeParentStore> node_parents_;
 };
 
 template <typename IdT>

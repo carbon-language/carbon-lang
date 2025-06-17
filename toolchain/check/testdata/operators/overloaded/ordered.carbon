@@ -17,7 +17,7 @@ package User;
 
 class C {};
 
-impl C as Core.Ordered {
+impl C as Core.OrderedWith(C) {
   fn Less[self: C](other: C) -> bool;
   fn LessOrEquivalent[self: C](other: C) -> bool;
   fn Greater[self: C](other: C) -> bool;
@@ -47,7 +47,7 @@ package FailNoImpl;
 class D {};
 
 fn TestLess(a: D, b: D) -> bool {
-  // CHECK:STDERR: fail_no_impl.carbon:[[@LINE+4]]:10: error: cannot access member of interface `Core.Ordered` in type `D` that does not implement that interface [MissingImplInMemberAccess]
+  // CHECK:STDERR: fail_no_impl.carbon:[[@LINE+4]]:10: error: cannot access member of interface `Core.OrderedWith(D)` in type `D` that does not implement that interface [MissingImplInMemberAccess]
   // CHECK:STDERR:   return a < b;
   // CHECK:STDERR:          ^~~~~
   // CHECK:STDERR:
@@ -55,7 +55,7 @@ fn TestLess(a: D, b: D) -> bool {
 }
 
 fn TestLessEqual(a: D, b: D) -> bool {
-  // CHECK:STDERR: fail_no_impl.carbon:[[@LINE+4]]:10: error: cannot access member of interface `Core.Ordered` in type `D` that does not implement that interface [MissingImplInMemberAccess]
+  // CHECK:STDERR: fail_no_impl.carbon:[[@LINE+4]]:10: error: cannot access member of interface `Core.OrderedWith(D)` in type `D` that does not implement that interface [MissingImplInMemberAccess]
   // CHECK:STDERR:   return a <= b;
   // CHECK:STDERR:          ^~~~~~
   // CHECK:STDERR:
@@ -63,7 +63,7 @@ fn TestLessEqual(a: D, b: D) -> bool {
 }
 
 fn TestGreater(a: D, b: D) -> bool {
-  // CHECK:STDERR: fail_no_impl.carbon:[[@LINE+4]]:10: error: cannot access member of interface `Core.Ordered` in type `D` that does not implement that interface [MissingImplInMemberAccess]
+  // CHECK:STDERR: fail_no_impl.carbon:[[@LINE+4]]:10: error: cannot access member of interface `Core.OrderedWith(D)` in type `D` that does not implement that interface [MissingImplInMemberAccess]
   // CHECK:STDERR:   return a > b;
   // CHECK:STDERR:          ^~~~~
   // CHECK:STDERR:
@@ -71,7 +71,7 @@ fn TestGreater(a: D, b: D) -> bool {
 }
 
 fn TestGreaterEqual(a: D, b: D) -> bool {
-  // CHECK:STDERR: fail_no_impl.carbon:[[@LINE+4]]:10: error: cannot access member of interface `Core.Ordered` in type `D` that does not implement that interface [MissingImplInMemberAccess]
+  // CHECK:STDERR: fail_no_impl.carbon:[[@LINE+4]]:10: error: cannot access member of interface `Core.OrderedWith(D)` in type `D` that does not implement that interface [MissingImplInMemberAccess]
   // CHECK:STDERR:   return a >= b;
   // CHECK:STDERR:          ^~~~~~
   // CHECK:STDERR:
@@ -84,47 +84,49 @@ fn TestGreaterEqual(a: D, b: D) -> bool {
 // CHECK:STDOUT:   %C: type = class_type @C [concrete]
 // CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [concrete]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [concrete]
-// CHECK:STDOUT:   %Ordered.type: type = facet_type <@Ordered> [concrete]
-// CHECK:STDOUT:   %Less.type.341: type = fn_type @Less.1 [concrete]
+// CHECK:STDOUT:   %OrderedWith.type.270: type = generic_interface_type @OrderedWith [concrete]
+// CHECK:STDOUT:   %OrderedWith.generic: %OrderedWith.type.270 = struct_value () [concrete]
 // CHECK:STDOUT:   %pattern_type.831: type = pattern_type bool [concrete]
-// CHECK:STDOUT:   %LessOrEquivalent.type.859: type = fn_type @LessOrEquivalent.1 [concrete]
-// CHECK:STDOUT:   %Greater.type.270: type = fn_type @Greater.1 [concrete]
-// CHECK:STDOUT:   %GreaterOrEquivalent.type.8af: type = fn_type @GreaterOrEquivalent.1 [concrete]
-// CHECK:STDOUT:   %Ordered.impl_witness: <witness> = impl_witness file.%Ordered.impl_witness_table [concrete]
+// CHECK:STDOUT:   %OrderedWith.type.914: type = facet_type <@OrderedWith, @OrderedWith(%C)> [concrete]
+// CHECK:STDOUT:   %Less.type.ef8: type = fn_type @Less.1, @OrderedWith(%C) [concrete]
+// CHECK:STDOUT:   %LessOrEquivalent.type.718: type = fn_type @LessOrEquivalent.1, @OrderedWith(%C) [concrete]
+// CHECK:STDOUT:   %Greater.type.394: type = fn_type @Greater.1, @OrderedWith(%C) [concrete]
+// CHECK:STDOUT:   %GreaterOrEquivalent.type.f2b: type = fn_type @GreaterOrEquivalent.1, @OrderedWith(%C) [concrete]
+// CHECK:STDOUT:   %OrderedWith.impl_witness: <witness> = impl_witness file.%OrderedWith.impl_witness_table [concrete]
 // CHECK:STDOUT:   %pattern_type.c48: type = pattern_type %C [concrete]
 // CHECK:STDOUT:   %Bool.type: type = fn_type @Bool [concrete]
 // CHECK:STDOUT:   %Bool: %Bool.type = struct_value () [concrete]
-// CHECK:STDOUT:   %Less.type.25a: type = fn_type @Less.2 [concrete]
-// CHECK:STDOUT:   %Less.738: %Less.type.25a = struct_value () [concrete]
-// CHECK:STDOUT:   %LessOrEquivalent.type.478: type = fn_type @LessOrEquivalent.2 [concrete]
-// CHECK:STDOUT:   %LessOrEquivalent.010: %LessOrEquivalent.type.478 = struct_value () [concrete]
-// CHECK:STDOUT:   %Greater.type.0a1: type = fn_type @Greater.2 [concrete]
-// CHECK:STDOUT:   %Greater.afe: %Greater.type.0a1 = struct_value () [concrete]
-// CHECK:STDOUT:   %GreaterOrEquivalent.type.caf: type = fn_type @GreaterOrEquivalent.2 [concrete]
-// CHECK:STDOUT:   %GreaterOrEquivalent.03b: %GreaterOrEquivalent.type.caf = struct_value () [concrete]
-// CHECK:STDOUT:   %Ordered.facet: %Ordered.type = facet_value %C, (%Ordered.impl_witness) [concrete]
+// CHECK:STDOUT:   %Less.type.e31: type = fn_type @Less.2 [concrete]
+// CHECK:STDOUT:   %Less.076: %Less.type.e31 = struct_value () [concrete]
+// CHECK:STDOUT:   %LessOrEquivalent.type.873: type = fn_type @LessOrEquivalent.2 [concrete]
+// CHECK:STDOUT:   %LessOrEquivalent.4d6: %LessOrEquivalent.type.873 = struct_value () [concrete]
+// CHECK:STDOUT:   %Greater.type.54b: type = fn_type @Greater.2 [concrete]
+// CHECK:STDOUT:   %Greater.548: %Greater.type.54b = struct_value () [concrete]
+// CHECK:STDOUT:   %GreaterOrEquivalent.type.311: type = fn_type @GreaterOrEquivalent.2 [concrete]
+// CHECK:STDOUT:   %GreaterOrEquivalent.1b2: %GreaterOrEquivalent.type.311 = struct_value () [concrete]
+// CHECK:STDOUT:   %OrderedWith.facet: %OrderedWith.type.914 = facet_value %C, (%OrderedWith.impl_witness) [concrete]
 // CHECK:STDOUT:   %TestLess.type: type = fn_type @TestLess [concrete]
 // CHECK:STDOUT:   %TestLess: %TestLess.type = struct_value () [concrete]
-// CHECK:STDOUT:   %.d60: type = fn_type_with_self_type %Less.type.341, %Ordered.facet [concrete]
+// CHECK:STDOUT:   %.dc0: type = fn_type_with_self_type %Less.type.ef8, %OrderedWith.facet [concrete]
 // CHECK:STDOUT:   %TestLessEqual.type: type = fn_type @TestLessEqual [concrete]
 // CHECK:STDOUT:   %TestLessEqual: %TestLessEqual.type = struct_value () [concrete]
-// CHECK:STDOUT:   %.6b1: type = fn_type_with_self_type %LessOrEquivalent.type.859, %Ordered.facet [concrete]
+// CHECK:STDOUT:   %.d74: type = fn_type_with_self_type %LessOrEquivalent.type.718, %OrderedWith.facet [concrete]
 // CHECK:STDOUT:   %TestGreater.type: type = fn_type @TestGreater [concrete]
 // CHECK:STDOUT:   %TestGreater: %TestGreater.type = struct_value () [concrete]
-// CHECK:STDOUT:   %.5ae: type = fn_type_with_self_type %Greater.type.270, %Ordered.facet [concrete]
+// CHECK:STDOUT:   %.aa9: type = fn_type_with_self_type %Greater.type.394, %OrderedWith.facet [concrete]
 // CHECK:STDOUT:   %TestGreaterEqual.type: type = fn_type @TestGreaterEqual [concrete]
 // CHECK:STDOUT:   %TestGreaterEqual: %TestGreaterEqual.type = struct_value () [concrete]
-// CHECK:STDOUT:   %.0c4: type = fn_type_with_self_type %GreaterOrEquivalent.type.8af, %Ordered.facet [concrete]
+// CHECK:STDOUT:   %.af7: type = fn_type_with_self_type %GreaterOrEquivalent.type.f2b, %OrderedWith.facet [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [concrete] {
-// CHECK:STDOUT:     .Ordered = %Core.Ordered
+// CHECK:STDOUT:     .OrderedWith = %Core.OrderedWith
 // CHECK:STDOUT:     .Bool = %Core.Bool
 // CHECK:STDOUT:     import Core//prelude
 // CHECK:STDOUT:     import Core//prelude/...
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %Core.Ordered: type = import_ref Core//prelude/operators/comparison, Ordered, loaded [concrete = constants.%Ordered.type]
+// CHECK:STDOUT:   %Core.OrderedWith: %OrderedWith.type.270 = import_ref Core//prelude/operators/comparison, OrderedWith, loaded [concrete = constants.%OrderedWith.generic]
 // CHECK:STDOUT:   %Core.Bool: %Bool.type = import_ref Core//prelude/types/bool, Bool, loaded [concrete = constants.%Bool]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -139,13 +141,15 @@ fn TestGreaterEqual(a: D, b: D) -> bool {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %C.decl: type = class_decl @C [concrete = constants.%C] {} {}
-// CHECK:STDOUT:   impl_decl @impl.d54 [concrete] {} {
-// CHECK:STDOUT:     %C.ref: type = name_ref C, file.%C.decl [concrete = constants.%C]
+// CHECK:STDOUT:   impl_decl @impl.ecd [concrete] {} {
+// CHECK:STDOUT:     %C.ref.loc6_6: type = name_ref C, file.%C.decl [concrete = constants.%C]
 // CHECK:STDOUT:     %Core.ref: <namespace> = name_ref Core, imports.%Core [concrete = imports.%Core]
-// CHECK:STDOUT:     %Ordered.ref: type = name_ref Ordered, imports.%Core.Ordered [concrete = constants.%Ordered.type]
+// CHECK:STDOUT:     %OrderedWith.ref: %OrderedWith.type.270 = name_ref OrderedWith, imports.%Core.OrderedWith [concrete = constants.%OrderedWith.generic]
+// CHECK:STDOUT:     %C.ref.loc6_28: type = name_ref C, file.%C.decl [concrete = constants.%C]
+// CHECK:STDOUT:     %OrderedWith.type: type = facet_type <@OrderedWith, @OrderedWith(constants.%C)> [concrete = constants.%OrderedWith.type.914]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %Ordered.impl_witness_table = impl_witness_table (@impl.d54.%Less.decl, @impl.d54.%LessOrEquivalent.decl, @impl.d54.%Greater.decl, @impl.d54.%GreaterOrEquivalent.decl), @impl.d54 [concrete]
-// CHECK:STDOUT:   %Ordered.impl_witness: <witness> = impl_witness %Ordered.impl_witness_table [concrete = constants.%Ordered.impl_witness]
+// CHECK:STDOUT:   %OrderedWith.impl_witness_table = impl_witness_table (@impl.ecd.%Less.decl, @impl.ecd.%LessOrEquivalent.decl, @impl.ecd.%Greater.decl, @impl.ecd.%GreaterOrEquivalent.decl), @impl.ecd [concrete]
+// CHECK:STDOUT:   %OrderedWith.impl_witness: <witness> = impl_witness %OrderedWith.impl_witness_table [concrete = constants.%OrderedWith.impl_witness]
 // CHECK:STDOUT:   %TestLess.decl: %TestLess.type = fn_decl @TestLess [concrete = constants.%TestLess] {
 // CHECK:STDOUT:     %a.patt: %pattern_type.c48 = binding_pattern a [concrete]
 // CHECK:STDOUT:     %a.param_patt: %pattern_type.c48 = value_param_pattern %a.patt, call_param0 [concrete]
@@ -228,8 +232,8 @@ fn TestGreaterEqual(a: D, b: D) -> bool {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: impl @impl.d54: %C.ref as %Ordered.ref {
-// CHECK:STDOUT:   %Less.decl: %Less.type.25a = fn_decl @Less.2 [concrete = constants.%Less.738] {
+// CHECK:STDOUT: impl @impl.ecd: %C.ref.loc6_6 as %OrderedWith.type {
+// CHECK:STDOUT:   %Less.decl: %Less.type.e31 = fn_decl @Less.2 [concrete = constants.%Less.076] {
 // CHECK:STDOUT:     %self.patt: %pattern_type.c48 = binding_pattern self [concrete]
 // CHECK:STDOUT:     %self.param_patt: %pattern_type.c48 = value_param_pattern %self.patt, call_param0 [concrete]
 // CHECK:STDOUT:     %other.patt: %pattern_type.c48 = binding_pattern other [concrete]
@@ -249,7 +253,7 @@ fn TestGreaterEqual(a: D, b: D) -> bool {
 // CHECK:STDOUT:     %return.param: ref bool = out_param call_param2
 // CHECK:STDOUT:     %return: ref bool = return_slot %return.param
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %LessOrEquivalent.decl: %LessOrEquivalent.type.478 = fn_decl @LessOrEquivalent.2 [concrete = constants.%LessOrEquivalent.010] {
+// CHECK:STDOUT:   %LessOrEquivalent.decl: %LessOrEquivalent.type.873 = fn_decl @LessOrEquivalent.2 [concrete = constants.%LessOrEquivalent.4d6] {
 // CHECK:STDOUT:     %self.patt: %pattern_type.c48 = binding_pattern self [concrete]
 // CHECK:STDOUT:     %self.param_patt: %pattern_type.c48 = value_param_pattern %self.patt, call_param0 [concrete]
 // CHECK:STDOUT:     %other.patt: %pattern_type.c48 = binding_pattern other [concrete]
@@ -269,7 +273,7 @@ fn TestGreaterEqual(a: D, b: D) -> bool {
 // CHECK:STDOUT:     %return.param: ref bool = out_param call_param2
 // CHECK:STDOUT:     %return: ref bool = return_slot %return.param
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %Greater.decl: %Greater.type.0a1 = fn_decl @Greater.2 [concrete = constants.%Greater.afe] {
+// CHECK:STDOUT:   %Greater.decl: %Greater.type.54b = fn_decl @Greater.2 [concrete = constants.%Greater.548] {
 // CHECK:STDOUT:     %self.patt: %pattern_type.c48 = binding_pattern self [concrete]
 // CHECK:STDOUT:     %self.param_patt: %pattern_type.c48 = value_param_pattern %self.patt, call_param0 [concrete]
 // CHECK:STDOUT:     %other.patt: %pattern_type.c48 = binding_pattern other [concrete]
@@ -289,7 +293,7 @@ fn TestGreaterEqual(a: D, b: D) -> bool {
 // CHECK:STDOUT:     %return.param: ref bool = out_param call_param2
 // CHECK:STDOUT:     %return: ref bool = return_slot %return.param
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %GreaterOrEquivalent.decl: %GreaterOrEquivalent.type.caf = fn_decl @GreaterOrEquivalent.2 [concrete = constants.%GreaterOrEquivalent.03b] {
+// CHECK:STDOUT:   %GreaterOrEquivalent.decl: %GreaterOrEquivalent.type.311 = fn_decl @GreaterOrEquivalent.2 [concrete = constants.%GreaterOrEquivalent.1b2] {
 // CHECK:STDOUT:     %self.patt: %pattern_type.c48 = binding_pattern self [concrete]
 // CHECK:STDOUT:     %self.param_patt: %pattern_type.c48 = value_param_pattern %self.patt, call_param0 [concrete]
 // CHECK:STDOUT:     %other.patt: %pattern_type.c48 = binding_pattern other [concrete]
@@ -316,7 +320,7 @@ fn TestGreaterEqual(a: D, b: D) -> bool {
 // CHECK:STDOUT:   .LessOrEquivalent = %LessOrEquivalent.decl
 // CHECK:STDOUT:   .Greater = %Greater.decl
 // CHECK:STDOUT:   .GreaterOrEquivalent = %GreaterOrEquivalent.decl
-// CHECK:STDOUT:   witness = file.%Ordered.impl_witness
+// CHECK:STDOUT:   witness = file.%OrderedWith.impl_witness
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @C {
@@ -340,7 +344,7 @@ fn TestGreaterEqual(a: D, b: D) -> bool {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %a.ref: %C = name_ref a, %a
 // CHECK:STDOUT:   %b.ref: %C = name_ref b, %b
-// CHECK:STDOUT:   %impl.elem0: %.d60 = impl_witness_access constants.%Ordered.impl_witness, element0 [concrete = constants.%Less.738]
+// CHECK:STDOUT:   %impl.elem0: %.dc0 = impl_witness_access constants.%OrderedWith.impl_witness, element0 [concrete = constants.%Less.076]
 // CHECK:STDOUT:   %bound_method: <bound method> = bound_method %a.ref, %impl.elem0
 // CHECK:STDOUT:   %Less.call: init bool = call %bound_method(%a.ref, %b.ref)
 // CHECK:STDOUT:   %.loc14_15.1: bool = value_of_initializer %Less.call
@@ -352,7 +356,7 @@ fn TestGreaterEqual(a: D, b: D) -> bool {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %a.ref: %C = name_ref a, %a
 // CHECK:STDOUT:   %b.ref: %C = name_ref b, %b
-// CHECK:STDOUT:   %impl.elem1: %.6b1 = impl_witness_access constants.%Ordered.impl_witness, element1 [concrete = constants.%LessOrEquivalent.010]
+// CHECK:STDOUT:   %impl.elem1: %.d74 = impl_witness_access constants.%OrderedWith.impl_witness, element1 [concrete = constants.%LessOrEquivalent.4d6]
 // CHECK:STDOUT:   %bound_method: <bound method> = bound_method %a.ref, %impl.elem1
 // CHECK:STDOUT:   %LessOrEquivalent.call: init bool = call %bound_method(%a.ref, %b.ref)
 // CHECK:STDOUT:   %.loc18_16.1: bool = value_of_initializer %LessOrEquivalent.call
@@ -364,7 +368,7 @@ fn TestGreaterEqual(a: D, b: D) -> bool {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %a.ref: %C = name_ref a, %a
 // CHECK:STDOUT:   %b.ref: %C = name_ref b, %b
-// CHECK:STDOUT:   %impl.elem2: %.5ae = impl_witness_access constants.%Ordered.impl_witness, element2 [concrete = constants.%Greater.afe]
+// CHECK:STDOUT:   %impl.elem2: %.aa9 = impl_witness_access constants.%OrderedWith.impl_witness, element2 [concrete = constants.%Greater.548]
 // CHECK:STDOUT:   %bound_method: <bound method> = bound_method %a.ref, %impl.elem2
 // CHECK:STDOUT:   %Greater.call: init bool = call %bound_method(%a.ref, %b.ref)
 // CHECK:STDOUT:   %.loc22_15.1: bool = value_of_initializer %Greater.call
@@ -376,7 +380,7 @@ fn TestGreaterEqual(a: D, b: D) -> bool {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %a.ref: %C = name_ref a, %a
 // CHECK:STDOUT:   %b.ref: %C = name_ref b, %b
-// CHECK:STDOUT:   %impl.elem3: %.0c4 = impl_witness_access constants.%Ordered.impl_witness, element3 [concrete = constants.%GreaterOrEquivalent.03b]
+// CHECK:STDOUT:   %impl.elem3: %.af7 = impl_witness_access constants.%OrderedWith.impl_witness, element3 [concrete = constants.%GreaterOrEquivalent.1b2]
 // CHECK:STDOUT:   %bound_method: <bound method> = bound_method %a.ref, %impl.elem3
 // CHECK:STDOUT:   %GreaterOrEquivalent.call: init bool = call %bound_method(%a.ref, %b.ref)
 // CHECK:STDOUT:   %.loc26_16.1: bool = value_of_initializer %GreaterOrEquivalent.call
@@ -396,7 +400,8 @@ fn TestGreaterEqual(a: D, b: D) -> bool {
 // CHECK:STDOUT:   %pattern_type.831: type = pattern_type bool [concrete]
 // CHECK:STDOUT:   %TestLess.type: type = fn_type @TestLess [concrete]
 // CHECK:STDOUT:   %TestLess: %TestLess.type = struct_value () [concrete]
-// CHECK:STDOUT:   %Ordered.type: type = facet_type <@Ordered> [concrete]
+// CHECK:STDOUT:   %OrderedWith.type.270: type = generic_interface_type @OrderedWith [concrete]
+// CHECK:STDOUT:   %OrderedWith.generic: %OrderedWith.type.270 = struct_value () [concrete]
 // CHECK:STDOUT:   %TestLessEqual.type: type = fn_type @TestLessEqual [concrete]
 // CHECK:STDOUT:   %TestLessEqual: %TestLessEqual.type = struct_value () [concrete]
 // CHECK:STDOUT:   %TestGreater.type: type = fn_type @TestGreater [concrete]
@@ -408,12 +413,12 @@ fn TestGreaterEqual(a: D, b: D) -> bool {
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [concrete] {
 // CHECK:STDOUT:     .Bool = %Core.Bool
-// CHECK:STDOUT:     .Ordered = %Core.Ordered
+// CHECK:STDOUT:     .OrderedWith = %Core.OrderedWith
 // CHECK:STDOUT:     import Core//prelude
 // CHECK:STDOUT:     import Core//prelude/...
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.Bool: %Bool.type = import_ref Core//prelude/types/bool, Bool, loaded [concrete = constants.%Bool]
-// CHECK:STDOUT:   %Core.Ordered: type = import_ref Core//prelude/operators/comparison, Ordered, loaded [concrete = constants.%Ordered.type]
+// CHECK:STDOUT:   %Core.OrderedWith: %OrderedWith.type.270 = import_ref Core//prelude/operators/comparison, OrderedWith, loaded [concrete = constants.%OrderedWith.generic]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {

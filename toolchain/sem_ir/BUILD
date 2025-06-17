@@ -27,6 +27,7 @@ cc_library(
     hdrs = [
         "id_kind.h",
         "ids.h",
+        "inst_categories.h",
         "inst_kind.h",
         "singleton_insts.h",
         "typed_insts.h",
@@ -184,6 +185,7 @@ cc_library(
         ":typed_insts",
         "//common:concepts",
         "//common:ostream",
+        "//toolchain/base:fixed_size_value_store",
         "//toolchain/base:kind_switch",
         "//toolchain/base:shared_value_stores",
         "//toolchain/lex:tokenized_buffer",
@@ -223,6 +225,20 @@ cc_library(
         ":typed_insts",
         "//common:check",
         "//toolchain/base:kind_switch",
+    ],
+)
+
+cc_library(
+    name = "diagnostic_loc_converter",
+    srcs = ["diagnostic_loc_converter.cpp"],
+    hdrs = ["diagnostic_loc_converter.h"],
+    deps = [
+        ":absolute_node_id",
+        ":file",
+        ":typed_insts",
+        "//toolchain/diagnostics:diagnostic_emitter",
+        "//toolchain/parse:tree",
+        "@llvm-project//llvm:Support",
     ],
 )
 

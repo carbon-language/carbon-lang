@@ -11,6 +11,7 @@
 #include "common/raw_string_ostream.h"
 #include "toolchain/check/diagnostic_helpers.h"
 #include "toolchain/sem_ir/absolute_node_id.h"
+#include "toolchain/sem_ir/ids.h"
 #include "toolchain/sem_ir/stringify.h"
 
 namespace Carbon::Check {
@@ -18,8 +19,12 @@ namespace Carbon::Check {
 auto DiagnosticEmitter::ConvertLoc(LocIdForDiagnostics loc_id,
                                    ContextFnT context_fn) const
     -> Diagnostics::ConvertedLoc {
-  auto converted =
-      ConvertLocImpl(loc_id.loc_id(), loc_id.is_token_only(), context_fn);
+  auto [imports, converted] = loc_converter_.ConvertWithImports(
+      loc_id.loc_id(), loc_id.is_token_only());
+  for (const auto& import : imports) {
+    CARBON_DIAGNOSTIC(InImport, LocationInfo, "in import");
+    context_fn(import.loc, InImport);
+  }
 
   // Use the token when possible, but -1 is the default value.
   auto last_offset = -1;
@@ -37,57 +42,6 @@ auto DiagnosticEmitter::ConvertLoc(LocIdForDiagnostics loc_id,
   }
 
   return converted;
-}
-
-auto DiagnosticEmitter::ConvertLocImpl(SemIR::LocId loc_id, bool is_token_only,
-                                       ContextFnT context_fn) const
-    -> Diagnostics::ConvertedLoc {
-  llvm::SmallVector<SemIR::AbsoluteNodeId> absolute_node_ids =
-      SemIR::GetAbsoluteNodeId(sem_ir_, loc_id);
-
-  auto final_node_id = absolute_node_ids.pop_back_val();
-  for (const auto& absolute_node_id : absolute_node_ids) {
-    if (!absolute_node_id.node_id().has_value()) {
-      // TODO: Add an "In implicit import of prelude." note for the case where
-      // we don't have a location.
-      continue;
-    }
-    // TODO: Include the name of the imported library in the diagnostic.
-    auto diag_loc =
-        ConvertLocInFile(absolute_node_id, is_token_only, context_fn);
-    CARBON_DIAGNOSTIC(InImport, LocationInfo, "in import");
-    context_fn(diag_loc.loc, InImport);
-  }
-
-  return ConvertLocInFile(final_node_id, is_token_only, context_fn);
-}
-
-auto DiagnosticEmitter::ConvertLocInFile(SemIR::AbsoluteNodeId absolute_node_id,
-                                         bool token_only,
-                                         ContextFnT /*context_fn*/) const
-    -> Diagnostics::ConvertedLoc {
-  if (absolute_node_id.check_ir_id() == SemIR::CheckIRId::Cpp) {
-    // Special handling of Clang source locations.
-    // TODO: Refactor to add an `InImport` pointing at the `Cpp` import, and
-    // eliminate `InCppImport`.
-    clang::SourceLocation clang_loc = sem_ir_->clang_source_locs().Get(
-        absolute_node_id.clang_source_loc_id());
-
-    CARBON_CHECK(sem_ir_->cpp_ast());
-    clang::PresumedLoc presumed_loc =
-        sem_ir_->cpp_ast()->getSourceManager().getPresumedLoc(clang_loc);
-
-    return Diagnostics::ConvertedLoc{
-        .loc = {.filename = presumed_loc.getFilename(),
-                .line_number = static_cast<int32_t>(presumed_loc.getLine())},
-        // TODO: Set `last_byte_offset` based on the `import Cpp` location.
-        .last_byte_offset = 0};
-  }
-
-  const auto& tree_and_subtrees =
-      tree_and_subtrees_getters_[absolute_node_id.check_ir_id().index]();
-  return tree_and_subtrees.NodeToDiagnosticLoc(absolute_node_id.node_id(),
-                                               token_only);
 }
 
 auto DiagnosticEmitter::ConvertArg(llvm::Any arg) const -> llvm::Any {

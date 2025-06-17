@@ -19,6 +19,8 @@ struct ConversionTarget {
     Value,
     // Convert to either a value or a reference of type `type_id`.
     ValueOrRef,
+    // Convert to a durable reference of type `type_id`.
+    DurableRef,
     // Convert for an explicit `as` cast. This allows any expression category
     // as the result, and uses the `As` interface instead of the `ImplicitAs`
     // interface.

@@ -18,7 +18,7 @@ namespace Carbon::Lower {
 class ConstantContext {
  public:
   explicit ConstantContext(FileContext& file_context,
-                           llvm::MutableArrayRef<llvm::Constant*> constants)
+                           const FileContext::LoweredConstantStore* constants)
       : file_context_(&file_context), constants_(constants) {}
 
   // Gets the lowered constant value for an instruction, which must have a
@@ -40,8 +40,7 @@ class ConstantContext {
       // This constant hasn't been lowered.
       return nullptr;
     }
-    CARBON_CHECK(inst_id.index >= 0);
-    return constants_[inst_id.index];
+    return constants_->Get(inst_id);
   }
 
   // Returns a constant for the case of a value that should never be used.
@@ -91,7 +90,7 @@ class ConstantContext {
 
  private:
   FileContext* file_context_;
-  llvm::MutableArrayRef<llvm::Constant*> constants_;
+  const FileContext::LoweredConstantStore* constants_;
   int32_t last_lowered_constant_index_ = -1;
 };
 
@@ -283,8 +282,8 @@ static auto MaybeEmitAsConstant(ConstantContext& context, InstT inst)
 }
 
 auto LowerConstants(FileContext& file_context,
-                    llvm::MutableArrayRef<llvm::Constant*> constants) -> void {
-  ConstantContext context(file_context, constants);
+                    FileContext::LoweredConstantStore& constants) -> void {
+  ConstantContext context(file_context, &constants);
   // Lower each constant in InstId order. This guarantees we lower the
   // dependencies of a constant before we lower the constant itself.
   for (auto [inst_id, const_id] :
@@ -317,7 +316,7 @@ auto LowerConstants(FileContext& file_context,
 #include "toolchain/sem_ir/inst_kind.def"
     }
 
-    constants[inst_id.index] = value;
+    constants.Set(inst_id, value);
     context.SetLastLoweredConstantIndex(inst_id.index);
   }
 }

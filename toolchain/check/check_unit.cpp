@@ -9,6 +9,7 @@
 #include <tuple>
 #include <utility>
 
+#include "common/growing_range.h"
 #include "llvm/ADT/IntrusiveRefCntPtr.h"
 #include "llvm/ADT/StringRef.h"
 #include "llvm/Support/VirtualFileSystem.h"
@@ -64,7 +65,6 @@ CheckUnit::CheckUnit(
       total_ir_count_(tree_and_subtrees_getters.size()),
       fs_(std::move(fs)),
       target_(target),
-      vlog_stream_(vlog_stream),
       emitter_(&unit_and_imports_->err_tracker, tree_and_subtrees_getters,
                unit_and_imports_->unit->sem_ir),
       context_(
@@ -367,7 +367,7 @@ auto CheckUnit::ImportOtherPackages(SemIR::TypeId namespace_type_id) -> void {
 // for example if an unrecoverable state is encountered.
 // NOLINTNEXTLINE(readability-function-size)
 auto CheckUnit::ProcessNodeIds() -> bool {
-  NodeIdTraversal traversal(&context_, vlog_stream_);
+  NodeIdTraversal traversal(&context_);
 
   Parse::NodeId node_id = Parse::NodeId::None;
 
@@ -376,7 +376,7 @@ auto CheckUnit::ProcessNodeIds() -> bool {
     const auto& tree = tree_and_subtrees_getter_();
     auto converted = tree.NodeToDiagnosticLoc(node_id, /*token_only=*/false);
     converted.loc.FormatLocation(output);
-    output << "checking " << context_.parse_tree().node_kind(node_id) << "\n";
+    output << "Checking " << context_.parse_tree().node_kind(node_id) << "\n";
     // Crash output has a tab indent; try to indent slightly past that.
     converted.loc.FormatSnippet(output, /*indent=*/10);
   });
@@ -454,11 +454,7 @@ auto CheckUnit::CheckRequiredDeclarations() -> void {
 auto CheckUnit::CheckRequiredDefinitions() -> void {
   CARBON_DIAGNOSTIC(MissingDefinitionInImpl, Error,
                     "no definition found for declaration in impl file");
-
-  // Note that more required definitions can be added during this loop.
-  // NOLINTNEXTLINE(modernize-loop-convert)
-  for (size_t i = 0; i != context_.definitions_required_by_decl().size(); ++i) {
-    SemIR::InstId decl_inst_id = context_.definitions_required_by_decl()[i];
+  for (SemIR::InstId decl_inst_id : context_.definitions_required_by_decl()) {
     SemIR::Inst decl_inst = context_.insts().Get(decl_inst_id);
     CARBON_KIND_SWITCH(context_.insts().Get(decl_inst_id)) {
       case CARBON_KIND(SemIR::ClassDecl class_decl): {
@@ -497,12 +493,10 @@ auto CheckUnit::CheckRequiredDefinitions() -> void {
     }
   }
 
-  // Note that more required definitions can be added during this loop.
-  // NOLINTNEXTLINE(modernize-loop-convert)
-  for (size_t i = 0; i != context_.definitions_required_by_use().size(); ++i) {
+  for (auto [loc, specific_id] :
+       GrowingRange(context_.definitions_required_by_use())) {
     // This is using the location for the use. We could track the
     // list of enclosing locations if this was used from a generic.
-    auto [loc, specific_id] = context_.definitions_required_by_use()[i];
     if (!ResolveSpecificDefinition(context_, loc, specific_id)) {
       CARBON_DIAGNOSTIC(MissingGenericFunctionDefinition, Error,
                         "use of undefined generic function");

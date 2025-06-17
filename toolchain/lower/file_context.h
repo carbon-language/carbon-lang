@@ -20,6 +20,9 @@ namespace Carbon::Lower {
 // Context and shared functionality for lowering within a SemIR file.
 class FileContext {
  public:
+  using LoweredConstantStore =
+      FixedSizeValueStore<SemIR::InstId, llvm::Constant*>;
+
   // Describes a specific function's body fingerprint.
   struct SpecificFunctionFingerprint {
     // Fingerprint with all specific-dependent instructions, except specific
@@ -72,9 +75,9 @@ class FileContext {
     CARBON_CHECK(type_id.has_value(), "Should not be called with `None`");
     CARBON_CHECK(type_id.is_concrete(), "Lowering symbolic type {0}: {1}",
                  type_id, sem_ir().types().GetAsInst(type_id));
-    CARBON_CHECK(types_[type_id.index], "Missing type {0}: {1}", type_id,
+    CARBON_CHECK(types_.Get(type_id), "Missing type {0}: {1}", type_id,
                  sem_ir().types().GetAsInst(type_id));
-    return types_[type_id.index];
+    return types_.Get(type_id);
   }
 
   // Returns location information for use with DebugInfo.
@@ -145,8 +148,8 @@ class FileContext {
   // Gets the location in which a callable's function is stored.
   auto GetFunctionAddr(SemIR::FunctionId function_id,
                        SemIR::SpecificId specific_id) -> llvm::Function** {
-    return specific_id.has_value() ? &specific_functions_[specific_id.index]
-                                   : &functions_[function_id.index];
+    return specific_id.has_value() ? &specific_functions_.Get(specific_id)
+                                   : &functions_.Get(function_id);
   }
 
   // Notes that a C++ function has been referenced for the first time, so we
@@ -195,7 +198,7 @@ class FileContext {
   // by one while lowering their definitions.
   auto AddLoweredSpecificForGeneric(SemIR::GenericId generic_id,
                                     SemIR::SpecificId specific_id) {
-    lowered_specifics_[generic_id.index].push_back(specific_id);
+    lowered_specifics_.Get(generic_id).push_back(specific_id);
   }
 
   // Initializes and returns a SpecificFunctionFingerprint* instance for a
@@ -206,7 +209,7 @@ class FileContext {
     if (!specific_id.has_value()) {
       return nullptr;
     }
-    return &lowered_specific_fingerprint_[specific_id.index];
+    return &lowered_specific_fingerprint_.Get(specific_id);
   }
 
   // Entry point for coalescing equivalent specifics. Two function definitions,
@@ -282,44 +285,38 @@ class FileContext {
 
   // Maps callables to lowered functions. SemIR treats callables as the
   // canonical form of a function, so lowering needs to do the same.
-  // Vector indexes correspond to `FunctionId` indexes. We resize this directly
-  // to the correct size.
-  llvm::SmallVector<llvm::Function*, 0> functions_;
+  using LoweredFunctionStore =
+      FixedSizeValueStore<SemIR::FunctionId, llvm::Function*>;
+  LoweredFunctionStore functions_;
 
-  // Maps specific callables to lowered functions. Vector indexes correspond to
-  // `SpecificId` indexes. We resize this directly to the correct size.
-  llvm::SmallVector<llvm::Function*, 0> specific_functions_;
+  // Maps specific callables to lowered functions.
+  FixedSizeValueStore<SemIR::SpecificId, llvm::Function*> specific_functions_;
 
-  // Provides lowered versions of types.
-  // Vector indexes correspond to `TypeId` indexes for non-symbolic types. We
-  // resize this directly to the (often large) correct size.
-  llvm::SmallVector<llvm::Type*, 0> types_;
+  // Provides lowered versions of types. Entries are non-symbolic types.
+  using LoweredTypeStore = FixedSizeValueStore<SemIR::TypeId, llvm::Type*>;
+  LoweredTypeStore types_;
 
-  // Maps constants to their lowered values.
-  // Vector indexes correspond to `InstId` indexes for constant instructions. We
-  // resize this directly to the (often large) correct size.
-  llvm::SmallVector<llvm::Constant*, 0> constants_;
+  // Maps constants to their lowered values. Indexes are the `InstId` for
+  // constant instructions.
+  LoweredConstantStore constants_;
 
   // Maps global variables to their lowered variant.
   Map<SemIR::InstId, llvm::GlobalVariable*> global_variables_;
 
   // For a generic function, keep track of the specifics for which LLVM
   // function declarations were created. Those can be retrieved then from
-  // `specific_functions_`. We resize this to the correct size. Vector indexes
-  // correspond to `GenericId` indexes.
-  llvm::SmallVector<llvm::SmallVector<SemIR::SpecificId>, 0> lowered_specifics_;
+  // `specific_functions_`.
+  FixedSizeValueStore<SemIR::GenericId, llvm::SmallVector<SemIR::SpecificId>>
+      lowered_specifics_;
 
   // For specifics that exist in lowered_specifics, a hash of their function
-  // type information: return and parameter types. We resize this to the
-  // correct size. Vector indexes correspond to `SpecificId` indexes.
+  // type information: return and parameter types.
   // TODO: Hashing all members of `FunctionTypeInfo` may not be necessary.
-  llvm::SmallVector<llvm::BLAKE3Result<32>, 0>
+  FixedSizeValueStore<SemIR::SpecificId, llvm::BLAKE3Result<32>>
       lowered_specifics_type_fingerprint_;
 
   // This is initialized and populated while lowering a specific.
-  // We resize this to the correct size. Vector indexes correspond to
-  // `SpecificId` indexes.
-  llvm::SmallVector<SpecificFunctionFingerprint, 0>
+  FixedSizeValueStore<SemIR::SpecificId, SpecificFunctionFingerprint>
       lowered_specific_fingerprint_;
 
   // Equivalent specifics that have been found. For each specific, this points
@@ -327,10 +324,10 @@ class FileContext {
   // define the canonical specific as the one with the lowest
   // `SpecificId.index`.
   //
-  // We resize this to the correct size and initialize to `SpecificId::None`,
-  // which defines that there is no other equivalent specific to this
-  // `SpecificId`. Vector indexes correspond to `SpecificId` indexes.
-  llvm::SmallVector<SemIR::SpecificId, 0> equivalent_specifics_;
+  // Entries are initialized to `SpecificId::None`, which defines that there is
+  // no other equivalent specific to this `SpecificId`.
+  FixedSizeValueStore<SemIR::SpecificId, SemIR::SpecificId>
+      equivalent_specifics_;
 
   // Non-equivalent specifics found.
   // TODO: Revisit this due to its quadratic space growth.

@@ -13,7 +13,7 @@
 #include "toolchain/base/value_store.h"
 #include "toolchain/check/decl_introducer_state.h"
 #include "toolchain/check/decl_name_stack.h"
-#include "toolchain/check/deferred_definition_scope.h"
+#include "toolchain/check/deferred_definition_worklist.h"
 #include "toolchain/check/diagnostic_helpers.h"
 #include "toolchain/check/full_pattern_stack.h"
 #include "toolchain/check/generic_region_stack.h"
@@ -129,8 +129,8 @@ class Context {
     return scope_stack_.full_pattern_stack();
   }
 
-  auto deferred_definition_scope_stack() -> DeferredDefinitionScopeStack& {
-    return deferred_definition_scope_stack_;
+  auto deferred_definition_worklist() -> DeferredDefinitionWorklist& {
+    return deferred_definition_worklist_;
   }
 
   auto generic_region_stack() -> GenericRegionStack& {
@@ -340,8 +340,9 @@ class Context {
   // The stack of scopes we are currently within.
   ScopeStack scope_stack_;
 
-  // The stack of non-nested deferred definition scopes we are currently within.
-  DeferredDefinitionScopeStack deferred_definition_scope_stack_;
+  // The worklist of deferred definition tasks to perform at the end of the
+  // enclosing deferred definition scope.
+  DeferredDefinitionWorklist deferred_definition_worklist_;
 
   // The stack of generic regions we are currently within.
   GenericRegionStack generic_region_stack_;

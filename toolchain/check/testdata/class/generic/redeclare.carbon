@@ -38,13 +38,15 @@ class A(T:! type) {}
 
 library "[[@TEST_NAME]]";
 
-class B(N:! i32);
+class A {}
+
+class B(N:! A);
 // CHECK:STDERR: fail_mismatch_implicit_param_list.carbon:[[@LINE+7]]:1: error: redeclaration differs because of implicit parameter list [RedeclParamListDiffers]
 // CHECK:STDERR: class B[T:! type](N:! T) {}
 // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~
 // CHECK:STDERR: fail_mismatch_implicit_param_list.carbon:[[@LINE-4]]:1: note: previously declared without implicit parameter list [RedeclParamListPrevious]
-// CHECK:STDERR: class B(N:! i32);
-// CHECK:STDERR: ^~~~~~~~~~~~~~~~~
+// CHECK:STDERR: class B(N:! A);
+// CHECK:STDERR: ^~~~~~~~~~~~~~~
 // CHECK:STDERR:
 class B[T:! type](N:! T) {}
 
@@ -52,29 +54,33 @@ class B[T:! type](N:! T) {}
 
 library "[[@TEST_NAME]]";
 
+class A {}
+
 class C(T:! type);
 // CHECK:STDERR: fail_mismatch_param_count.carbon:[[@LINE+7]]:1: error: redeclaration differs because of parameter count of 2 [RedeclParamCountDiffers]
-// CHECK:STDERR: class C(T:! type, U:! i32) {}
-// CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~
+// CHECK:STDERR: class C(T:! type, U:! A) {}
+// CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~
 // CHECK:STDERR: fail_mismatch_param_count.carbon:[[@LINE-4]]:1: note: previously declared with parameter count of 1 [RedeclParamCountPrevious]
 // CHECK:STDERR: class C(T:! type);
 // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~
 // CHECK:STDERR:
-class C(T:! type, U:! i32) {}
+class C(T:! type, U:! A) {}
 
 // --- fail_mismatch_param_type.carbon
 
 library "[[@TEST_NAME]]";
 
+class A {}
+
 class D(T:! type);
-// CHECK:STDERR: fail_mismatch_param_type.carbon:[[@LINE+7]]:9: error: type `<pattern for i32>` of parameter 1 in redeclaration differs from previous parameter type `<pattern for type>` [RedeclParamDiffersType]
-// CHECK:STDERR: class D(T:! i32) {}
+// CHECK:STDERR: fail_mismatch_param_type.carbon:[[@LINE+7]]:9: error: type `<pattern for A>` of parameter 1 in redeclaration differs from previous parameter type `<pattern for type>` [RedeclParamDiffersType]
+// CHECK:STDERR: class D(T:! A) {}
 // CHECK:STDERR:         ^
 // CHECK:STDERR: fail_mismatch_param_type.carbon:[[@LINE-4]]:9: note: previous declaration's corresponding parameter here [RedeclParamPrevious]
 // CHECK:STDERR: class D(T:! type);
 // CHECK:STDERR:         ^
 // CHECK:STDERR:
-class D(T:! i32) {}
+class D(T:! A) {}
 
 // --- fail_mismatch_param_name.carbon
 
@@ -204,12 +210,11 @@ class E(U:! type) {}
 // CHECK:STDOUT: --- fail_mismatch_implicit_param_list.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
-// CHECK:STDOUT:   %int_32: Core.IntLiteral = int_value 32 [concrete]
-// CHECK:STDOUT:   %Int.type: type = generic_class_type @Int [concrete]
-// CHECK:STDOUT:   %Int.generic: %Int.type = struct_value () [concrete]
-// CHECK:STDOUT:   %i32: type = class_type @Int, @Int(%int_32) [concrete]
-// CHECK:STDOUT:   %N.51e: %i32 = bind_symbolic_name N, 0 [symbolic]
-// CHECK:STDOUT:   %pattern_type.7ce: type = pattern_type %i32 [concrete]
+// CHECK:STDOUT:   %A: type = class_type @A [concrete]
+// CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [concrete]
+// CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [concrete]
+// CHECK:STDOUT:   %N.9e6: %A = bind_symbolic_name N, 0 [symbolic]
+// CHECK:STDOUT:   %pattern_type.c10: type = pattern_type %A [concrete]
 // CHECK:STDOUT:   %B.type.844c0f.1: type = generic_class_type @B.1 [concrete]
 // CHECK:STDOUT:   %B.generic.ba299b.1: %B.type.844c0f.1 = struct_value () [concrete]
 // CHECK:STDOUT:   %T: type = bind_symbolic_name T, 0 [symbolic]
@@ -219,60 +224,64 @@ class E(U:! type) {}
 // CHECK:STDOUT:   %B.type.844c0f.2: type = generic_class_type @B.2 [concrete]
 // CHECK:STDOUT:   %B.generic.ba299b.2: %B.type.844c0f.2 = struct_value () [concrete]
 // CHECK:STDOUT:   %B.828: type = class_type @B.2, @B.2(%T, %N.f22) [symbolic]
-// CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [concrete]
-// CHECK:STDOUT:   %complete_type.357: <witness> = complete_type_witness %empty_struct_type [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [concrete] {
-// CHECK:STDOUT:     .Int = %Core.Int
 // CHECK:STDOUT:     import Core//prelude
 // CHECK:STDOUT:     import Core//prelude/...
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %Core.Int: %Int.type = import_ref Core//prelude/types/int, Int, loaded [concrete = constants.%Int.generic]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace [concrete] {
 // CHECK:STDOUT:     .Core = imports.%Core
-// CHECK:STDOUT:     .B = %B.decl.loc4
+// CHECK:STDOUT:     .A = %A.decl
+// CHECK:STDOUT:     .B = %B.decl.loc6
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import = import Core
-// CHECK:STDOUT:   %B.decl.loc4: %B.type.844c0f.1 = class_decl @B.1 [concrete = constants.%B.generic.ba299b.1] {
-// CHECK:STDOUT:     %N.patt: %pattern_type.7ce = symbolic_binding_pattern N, 0 [concrete]
+// CHECK:STDOUT:   %A.decl: type = class_decl @A [concrete = constants.%A] {} {}
+// CHECK:STDOUT:   %B.decl.loc6: %B.type.844c0f.1 = class_decl @B.1 [concrete = constants.%B.generic.ba299b.1] {
+// CHECK:STDOUT:     %N.patt: %pattern_type.c10 = symbolic_binding_pattern N, 0 [concrete]
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %.loc4: type = splice_block %i32 [concrete = constants.%i32] {
-// CHECK:STDOUT:       %int_32: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
-// CHECK:STDOUT:       %i32: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
-// CHECK:STDOUT:     }
-// CHECK:STDOUT:     %N.loc4_9.1: %i32 = bind_symbolic_name N, 0 [symbolic = %N.loc4_9.2 (constants.%N.51e)]
+// CHECK:STDOUT:     %A.ref: type = name_ref A, file.%A.decl [concrete = constants.%A]
+// CHECK:STDOUT:     %N.loc6_9.1: %A = bind_symbolic_name N, 0 [symbolic = %N.loc6_9.2 (constants.%N.9e6)]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %B.decl.loc12: %B.type.844c0f.2 = class_decl @B.2 [concrete = constants.%B.generic.ba299b.2] {
+// CHECK:STDOUT:   %B.decl.loc14: %B.type.844c0f.2 = class_decl @B.2 [concrete = constants.%B.generic.ba299b.2] {
 // CHECK:STDOUT:     %T.patt: %pattern_type.98f = symbolic_binding_pattern T, 0 [concrete]
 // CHECK:STDOUT:     %N.patt: @B.2.%pattern_type (%pattern_type.7dc) = symbolic_binding_pattern N, 1 [concrete]
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %T.loc12_9.1: type = bind_symbolic_name T, 0 [symbolic = %T.loc12_9.2 (constants.%T)]
-// CHECK:STDOUT:     %T.ref: type = name_ref T, %T.loc12_9.1 [symbolic = %T.loc12_9.2 (constants.%T)]
-// CHECK:STDOUT:     %N.loc12_19.1: @B.2.%T.loc12_9.2 (%T) = bind_symbolic_name N, 1 [symbolic = %N.loc12_19.2 (constants.%N.f22)]
+// CHECK:STDOUT:     %T.loc14_9.1: type = bind_symbolic_name T, 0 [symbolic = %T.loc14_9.2 (constants.%T)]
+// CHECK:STDOUT:     %T.ref: type = name_ref T, %T.loc14_9.1 [symbolic = %T.loc14_9.2 (constants.%T)]
+// CHECK:STDOUT:     %N.loc14_19.1: @B.2.%T.loc14_9.2 (%T) = bind_symbolic_name N, 1 [symbolic = %N.loc14_19.2 (constants.%N.f22)]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic class @B.1(%N.loc4_9.1: %i32) {
-// CHECK:STDOUT:   %N.loc4_9.2: %i32 = bind_symbolic_name N, 0 [symbolic = %N.loc4_9.2 (constants.%N.51e)]
+// CHECK:STDOUT: class @A {
+// CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [concrete = constants.%empty_struct_type]
+// CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [concrete = constants.%complete_type]
+// CHECK:STDOUT:   complete_type_witness = %complete_type
+// CHECK:STDOUT:
+// CHECK:STDOUT: !members:
+// CHECK:STDOUT:   .Self = constants.%A
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: generic class @B.1(%N.loc6_9.1: %A) {
+// CHECK:STDOUT:   %N.loc6_9.2: %A = bind_symbolic_name N, 0 [symbolic = %N.loc6_9.2 (constants.%N.9e6)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   class;
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic class @B.2(%T.loc12_9.1: type, %N.loc12_19.1: @B.2.%T.loc12_9.2 (%T)) {
-// CHECK:STDOUT:   %T.loc12_9.2: type = bind_symbolic_name T, 0 [symbolic = %T.loc12_9.2 (constants.%T)]
-// CHECK:STDOUT:   %N.loc12_19.2: @B.2.%T.loc12_9.2 (%T) = bind_symbolic_name N, 1 [symbolic = %N.loc12_19.2 (constants.%N.f22)]
-// CHECK:STDOUT:   %pattern_type: type = pattern_type %T.loc12_9.2 [symbolic = %pattern_type (constants.%pattern_type.7dc)]
+// CHECK:STDOUT: generic class @B.2(%T.loc14_9.1: type, %N.loc14_19.1: @B.2.%T.loc14_9.2 (%T)) {
+// CHECK:STDOUT:   %T.loc14_9.2: type = bind_symbolic_name T, 0 [symbolic = %T.loc14_9.2 (constants.%T)]
+// CHECK:STDOUT:   %N.loc14_19.2: @B.2.%T.loc14_9.2 (%T) = bind_symbolic_name N, 1 [symbolic = %N.loc14_19.2 (constants.%N.f22)]
+// CHECK:STDOUT:   %pattern_type: type = pattern_type %T.loc14_9.2 [symbolic = %pattern_type (constants.%pattern_type.7dc)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:
 // CHECK:STDOUT:   class {
 // CHECK:STDOUT:     %empty_struct_type: type = struct_type {} [concrete = constants.%empty_struct_type]
-// CHECK:STDOUT:     %complete_type: <witness> = complete_type_witness %empty_struct_type [concrete = constants.%complete_type.357]
+// CHECK:STDOUT:     %complete_type: <witness> = complete_type_witness %empty_struct_type [concrete = constants.%complete_type]
 // CHECK:STDOUT:     complete_type_witness = %complete_type
 // CHECK:STDOUT:
 // CHECK:STDOUT:   !members:
@@ -280,178 +289,184 @@ class E(U:! type) {}
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @B.1(constants.%N.51e) {
-// CHECK:STDOUT:   %N.loc4_9.2 => constants.%N.51e
+// CHECK:STDOUT: specific @B.1(constants.%N.9e6) {
+// CHECK:STDOUT:   %N.loc6_9.2 => constants.%N.9e6
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @B.2(constants.%T, constants.%N.f22) {
-// CHECK:STDOUT:   %T.loc12_9.2 => constants.%T
-// CHECK:STDOUT:   %N.loc12_19.2 => constants.%N.f22
+// CHECK:STDOUT:   %T.loc14_9.2 => constants.%T
+// CHECK:STDOUT:   %N.loc14_19.2 => constants.%N.f22
 // CHECK:STDOUT:   %pattern_type => constants.%pattern_type.7dc
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- fail_mismatch_param_count.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
+// CHECK:STDOUT:   %A: type = class_type @A [concrete]
+// CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [concrete]
+// CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [concrete]
 // CHECK:STDOUT:   %T: type = bind_symbolic_name T, 0 [symbolic]
 // CHECK:STDOUT:   %pattern_type.98f: type = pattern_type type [concrete]
 // CHECK:STDOUT:   %C.type.e6e560.1: type = generic_class_type @C.1 [concrete]
 // CHECK:STDOUT:   %C.generic.965b12.1: %C.type.e6e560.1 = struct_value () [concrete]
-// CHECK:STDOUT:   %int_32: Core.IntLiteral = int_value 32 [concrete]
-// CHECK:STDOUT:   %Int.type: type = generic_class_type @Int [concrete]
-// CHECK:STDOUT:   %Int.generic: %Int.type = struct_value () [concrete]
-// CHECK:STDOUT:   %i32: type = class_type @Int, @Int(%int_32) [concrete]
-// CHECK:STDOUT:   %U: %i32 = bind_symbolic_name U, 1 [symbolic]
-// CHECK:STDOUT:   %pattern_type.7ce: type = pattern_type %i32 [concrete]
+// CHECK:STDOUT:   %U: %A = bind_symbolic_name U, 1 [symbolic]
+// CHECK:STDOUT:   %pattern_type.c10: type = pattern_type %A [concrete]
 // CHECK:STDOUT:   %C.type.e6e560.2: type = generic_class_type @C.2 [concrete]
 // CHECK:STDOUT:   %C.generic.965b12.2: %C.type.e6e560.2 = struct_value () [concrete]
-// CHECK:STDOUT:   %C.9d5: type = class_type @C.2, @C.2(%T, %U) [symbolic]
-// CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [concrete]
-// CHECK:STDOUT:   %complete_type.357: <witness> = complete_type_witness %empty_struct_type [concrete]
+// CHECK:STDOUT:   %C.3d8: type = class_type @C.2, @C.2(%T, %U) [symbolic]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [concrete] {
-// CHECK:STDOUT:     .Int = %Core.Int
 // CHECK:STDOUT:     import Core//prelude
 // CHECK:STDOUT:     import Core//prelude/...
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %Core.Int: %Int.type = import_ref Core//prelude/types/int, Int, loaded [concrete = constants.%Int.generic]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace [concrete] {
 // CHECK:STDOUT:     .Core = imports.%Core
-// CHECK:STDOUT:     .C = %C.decl.loc4
+// CHECK:STDOUT:     .A = %A.decl
+// CHECK:STDOUT:     .C = %C.decl.loc6
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import = import Core
-// CHECK:STDOUT:   %C.decl.loc4: %C.type.e6e560.1 = class_decl @C.1 [concrete = constants.%C.generic.965b12.1] {
+// CHECK:STDOUT:   %A.decl: type = class_decl @A [concrete = constants.%A] {} {}
+// CHECK:STDOUT:   %C.decl.loc6: %C.type.e6e560.1 = class_decl @C.1 [concrete = constants.%C.generic.965b12.1] {
 // CHECK:STDOUT:     %T.patt: %pattern_type.98f = symbolic_binding_pattern T, 0 [concrete]
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %T.loc4_9.1: type = bind_symbolic_name T, 0 [symbolic = %T.loc4_9.2 (constants.%T)]
+// CHECK:STDOUT:     %T.loc6_9.1: type = bind_symbolic_name T, 0 [symbolic = %T.loc6_9.2 (constants.%T)]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %C.decl.loc12: %C.type.e6e560.2 = class_decl @C.2 [concrete = constants.%C.generic.965b12.2] {
+// CHECK:STDOUT:   %C.decl.loc14: %C.type.e6e560.2 = class_decl @C.2 [concrete = constants.%C.generic.965b12.2] {
 // CHECK:STDOUT:     %T.patt: %pattern_type.98f = symbolic_binding_pattern T, 0 [concrete]
-// CHECK:STDOUT:     %U.patt: %pattern_type.7ce = symbolic_binding_pattern U, 1 [concrete]
+// CHECK:STDOUT:     %U.patt: %pattern_type.c10 = symbolic_binding_pattern U, 1 [concrete]
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %T.loc12_9.1: type = bind_symbolic_name T, 0 [symbolic = %T.loc12_9.2 (constants.%T)]
-// CHECK:STDOUT:     %.loc12: type = splice_block %i32 [concrete = constants.%i32] {
-// CHECK:STDOUT:       %int_32: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
-// CHECK:STDOUT:       %i32: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
-// CHECK:STDOUT:     }
-// CHECK:STDOUT:     %U.loc12_19.1: %i32 = bind_symbolic_name U, 1 [symbolic = %U.loc12_19.2 (constants.%U)]
+// CHECK:STDOUT:     %T.loc14_9.1: type = bind_symbolic_name T, 0 [symbolic = %T.loc14_9.2 (constants.%T)]
+// CHECK:STDOUT:     %A.ref: type = name_ref A, file.%A.decl [concrete = constants.%A]
+// CHECK:STDOUT:     %U.loc14_19.1: %A = bind_symbolic_name U, 1 [symbolic = %U.loc14_19.2 (constants.%U)]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic class @C.1(%T.loc4_9.1: type) {
-// CHECK:STDOUT:   %T.loc4_9.2: type = bind_symbolic_name T, 0 [symbolic = %T.loc4_9.2 (constants.%T)]
+// CHECK:STDOUT: class @A {
+// CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [concrete = constants.%empty_struct_type]
+// CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [concrete = constants.%complete_type]
+// CHECK:STDOUT:   complete_type_witness = %complete_type
+// CHECK:STDOUT:
+// CHECK:STDOUT: !members:
+// CHECK:STDOUT:   .Self = constants.%A
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: generic class @C.1(%T.loc6_9.1: type) {
+// CHECK:STDOUT:   %T.loc6_9.2: type = bind_symbolic_name T, 0 [symbolic = %T.loc6_9.2 (constants.%T)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   class;
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic class @C.2(%T.loc12_9.1: type, %U.loc12_19.1: %i32) {
-// CHECK:STDOUT:   %T.loc12_9.2: type = bind_symbolic_name T, 0 [symbolic = %T.loc12_9.2 (constants.%T)]
-// CHECK:STDOUT:   %U.loc12_19.2: %i32 = bind_symbolic_name U, 1 [symbolic = %U.loc12_19.2 (constants.%U)]
+// CHECK:STDOUT: generic class @C.2(%T.loc14_9.1: type, %U.loc14_19.1: %A) {
+// CHECK:STDOUT:   %T.loc14_9.2: type = bind_symbolic_name T, 0 [symbolic = %T.loc14_9.2 (constants.%T)]
+// CHECK:STDOUT:   %U.loc14_19.2: %A = bind_symbolic_name U, 1 [symbolic = %U.loc14_19.2 (constants.%U)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:
 // CHECK:STDOUT:   class {
 // CHECK:STDOUT:     %empty_struct_type: type = struct_type {} [concrete = constants.%empty_struct_type]
-// CHECK:STDOUT:     %complete_type: <witness> = complete_type_witness %empty_struct_type [concrete = constants.%complete_type.357]
+// CHECK:STDOUT:     %complete_type: <witness> = complete_type_witness %empty_struct_type [concrete = constants.%complete_type]
 // CHECK:STDOUT:     complete_type_witness = %complete_type
 // CHECK:STDOUT:
 // CHECK:STDOUT:   !members:
-// CHECK:STDOUT:     .Self = constants.%C.9d5
+// CHECK:STDOUT:     .Self = constants.%C.3d8
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @C.1(constants.%T) {
-// CHECK:STDOUT:   %T.loc4_9.2 => constants.%T
+// CHECK:STDOUT:   %T.loc6_9.2 => constants.%T
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @C.2(constants.%T, constants.%U) {
-// CHECK:STDOUT:   %T.loc12_9.2 => constants.%T
-// CHECK:STDOUT:   %U.loc12_19.2 => constants.%U
+// CHECK:STDOUT:   %T.loc14_9.2 => constants.%T
+// CHECK:STDOUT:   %U.loc14_19.2 => constants.%U
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- fail_mismatch_param_type.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
+// CHECK:STDOUT:   %A: type = class_type @A [concrete]
+// CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [concrete]
+// CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [concrete]
 // CHECK:STDOUT:   %T.8b3: type = bind_symbolic_name T, 0 [symbolic]
 // CHECK:STDOUT:   %pattern_type.98f: type = pattern_type type [concrete]
 // CHECK:STDOUT:   %D.type.bbd080.1: type = generic_class_type @D.1 [concrete]
 // CHECK:STDOUT:   %D.generic.4e2319.1: %D.type.bbd080.1 = struct_value () [concrete]
-// CHECK:STDOUT:   %int_32: Core.IntLiteral = int_value 32 [concrete]
-// CHECK:STDOUT:   %Int.type: type = generic_class_type @Int [concrete]
-// CHECK:STDOUT:   %Int.generic: %Int.type = struct_value () [concrete]
-// CHECK:STDOUT:   %i32: type = class_type @Int, @Int(%int_32) [concrete]
-// CHECK:STDOUT:   %T.51e: %i32 = bind_symbolic_name T, 0 [symbolic]
-// CHECK:STDOUT:   %pattern_type.7ce: type = pattern_type %i32 [concrete]
+// CHECK:STDOUT:   %T.9e6: %A = bind_symbolic_name T, 0 [symbolic]
+// CHECK:STDOUT:   %pattern_type.c10: type = pattern_type %A [concrete]
 // CHECK:STDOUT:   %D.type.bbd080.2: type = generic_class_type @D.2 [concrete]
 // CHECK:STDOUT:   %D.generic.4e2319.2: %D.type.bbd080.2 = struct_value () [concrete]
-// CHECK:STDOUT:   %D.022: type = class_type @D.2, @D.2(%T.51e) [symbolic]
-// CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [concrete]
-// CHECK:STDOUT:   %complete_type.357: <witness> = complete_type_witness %empty_struct_type [concrete]
+// CHECK:STDOUT:   %D.384: type = class_type @D.2, @D.2(%T.9e6) [symbolic]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [concrete] {
-// CHECK:STDOUT:     .Int = %Core.Int
 // CHECK:STDOUT:     import Core//prelude
 // CHECK:STDOUT:     import Core//prelude/...
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %Core.Int: %Int.type = import_ref Core//prelude/types/int, Int, loaded [concrete = constants.%Int.generic]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace [concrete] {
 // CHECK:STDOUT:     .Core = imports.%Core
-// CHECK:STDOUT:     .D = %D.decl.loc4
+// CHECK:STDOUT:     .A = %A.decl
+// CHECK:STDOUT:     .D = %D.decl.loc6
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import = import Core
-// CHECK:STDOUT:   %D.decl.loc4: %D.type.bbd080.1 = class_decl @D.1 [concrete = constants.%D.generic.4e2319.1] {
+// CHECK:STDOUT:   %A.decl: type = class_decl @A [concrete = constants.%A] {} {}
+// CHECK:STDOUT:   %D.decl.loc6: %D.type.bbd080.1 = class_decl @D.1 [concrete = constants.%D.generic.4e2319.1] {
 // CHECK:STDOUT:     %T.patt: %pattern_type.98f = symbolic_binding_pattern T, 0 [concrete]
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %T.loc4_9.1: type = bind_symbolic_name T, 0 [symbolic = %T.loc4_9.2 (constants.%T.8b3)]
+// CHECK:STDOUT:     %T.loc6_9.1: type = bind_symbolic_name T, 0 [symbolic = %T.loc6_9.2 (constants.%T.8b3)]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %D.decl.loc12: %D.type.bbd080.2 = class_decl @D.2 [concrete = constants.%D.generic.4e2319.2] {
-// CHECK:STDOUT:     %T.patt: %pattern_type.7ce = symbolic_binding_pattern T, 0 [concrete]
+// CHECK:STDOUT:   %D.decl.loc14: %D.type.bbd080.2 = class_decl @D.2 [concrete = constants.%D.generic.4e2319.2] {
+// CHECK:STDOUT:     %T.patt: %pattern_type.c10 = symbolic_binding_pattern T, 0 [concrete]
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %.loc12: type = splice_block %i32 [concrete = constants.%i32] {
-// CHECK:STDOUT:       %int_32: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
-// CHECK:STDOUT:       %i32: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
-// CHECK:STDOUT:     }
-// CHECK:STDOUT:     %T.loc12_9.1: %i32 = bind_symbolic_name T, 0 [symbolic = %T.loc12_9.2 (constants.%T.51e)]
+// CHECK:STDOUT:     %A.ref: type = name_ref A, file.%A.decl [concrete = constants.%A]
+// CHECK:STDOUT:     %T.loc14_9.1: %A = bind_symbolic_name T, 0 [symbolic = %T.loc14_9.2 (constants.%T.9e6)]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic class @D.1(%T.loc4_9.1: type) {
-// CHECK:STDOUT:   %T.loc4_9.2: type = bind_symbolic_name T, 0 [symbolic = %T.loc4_9.2 (constants.%T.8b3)]
+// CHECK:STDOUT: class @A {
+// CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [concrete = constants.%empty_struct_type]
+// CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [concrete = constants.%complete_type]
+// CHECK:STDOUT:   complete_type_witness = %complete_type
+// CHECK:STDOUT:
+// CHECK:STDOUT: !members:
+// CHECK:STDOUT:   .Self = constants.%A
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: generic class @D.1(%T.loc6_9.1: type) {
+// CHECK:STDOUT:   %T.loc6_9.2: type = bind_symbolic_name T, 0 [symbolic = %T.loc6_9.2 (constants.%T.8b3)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   class;
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic class @D.2(%T.loc12_9.1: %i32) {
-// CHECK:STDOUT:   %T.loc12_9.2: %i32 = bind_symbolic_name T, 0 [symbolic = %T.loc12_9.2 (constants.%T.51e)]
+// CHECK:STDOUT: generic class @D.2(%T.loc14_9.1: %A) {
+// CHECK:STDOUT:   %T.loc14_9.2: %A = bind_symbolic_name T, 0 [symbolic = %T.loc14_9.2 (constants.%T.9e6)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:
 // CHECK:STDOUT:   class {
 // CHECK:STDOUT:     %empty_struct_type: type = struct_type {} [concrete = constants.%empty_struct_type]
-// CHECK:STDOUT:     %complete_type: <witness> = complete_type_witness %empty_struct_type [concrete = constants.%complete_type.357]
+// CHECK:STDOUT:     %complete_type: <witness> = complete_type_witness %empty_struct_type [concrete = constants.%complete_type]
 // CHECK:STDOUT:     complete_type_witness = %complete_type
 // CHECK:STDOUT:
 // CHECK:STDOUT:   !members:
-// CHECK:STDOUT:     .Self = constants.%D.022
+// CHECK:STDOUT:     .Self = constants.%D.384
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @D.1(constants.%T.8b3) {
-// CHECK:STDOUT:   %T.loc4_9.2 => constants.%T.8b3
+// CHECK:STDOUT:   %T.loc6_9.2 => constants.%T.8b3
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @D.2(constants.%T.51e) {
-// CHECK:STDOUT:   %T.loc12_9.2 => constants.%T.51e
+// CHECK:STDOUT: specific @D.2(constants.%T.9e6) {
+// CHECK:STDOUT:   %T.loc14_9.2 => constants.%T.9e6
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- fail_mismatch_param_name.carbon

@@ -150,8 +150,9 @@ auto Mangler::Mangle(SemIR::FunctionId function_id,
     CARBON_CHECK(!specific_id.has_value(), "entry point should not be generic");
     return "main";
   }
-  if (function.cpp_decl) {
-    return MangleCppClang(function.cpp_decl);
+  if (function.clang_decl_id.has_value()) {
+    return MangleCppClang(llvm::dyn_cast<clang::NamedDecl>(
+        sem_ir().clang_decls().Get(function.clang_decl_id)));
   }
   RawStringOstream os;
   os << "_C";
@@ -162,6 +163,9 @@ auto Mangler::Mangle(SemIR::FunctionId function_id,
   switch (function.special_function_kind) {
     case SemIR::Function::SpecialFunctionKind::None:
       break;
+    case SemIR::Function::SpecialFunctionKind::Builtin:
+      CARBON_FATAL("Attempting to mangle declaration of builtin function {0}",
+                   function.builtin_function_kind());
     case SemIR::Function::SpecialFunctionKind::Thunk:
       os << ":thunk";
       break;

@@ -5,6 +5,7 @@
 #include "toolchain/lower/context.h"
 
 #include "common/check.h"
+#include "common/growing_range.h"
 #include "common/vlog.h"
 #include "llvm/Transforms/Utils/ModuleUtils.h"
 #include "toolchain/lower/file_context.h"
@@ -12,21 +13,20 @@
 
 namespace Carbon::Lower {
 
-Context::Context(llvm::LLVMContext& llvm_context,
-                 llvm::IntrusiveRefCntPtr<llvm::vfs::FileSystem> fs,
-                 std::optional<llvm::ArrayRef<Parse::GetTreeAndSubtreesFn>>
-                     tree_and_subtrees_getters_for_debug_info,
-                 llvm::StringRef module_name, llvm::raw_ostream* vlog_stream)
+Context::Context(
+    llvm::LLVMContext& llvm_context,
+    llvm::IntrusiveRefCntPtr<llvm::vfs::FileSystem> fs, bool want_debug_info,
+    llvm::ArrayRef<Parse::GetTreeAndSubtreesFn> tree_and_subtrees_getters,
+    llvm::StringRef module_name, llvm::raw_ostream* vlog_stream)
     : llvm_context_(&llvm_context),
       llvm_module_(std::make_unique<llvm::Module>(module_name, llvm_context)),
       file_system_(std::move(fs)),
       di_builder_(*llvm_module_),
       di_compile_unit_(
-          tree_and_subtrees_getters_for_debug_info
+          want_debug_info
               ? BuildDICompileUnit(module_name, *llvm_module_, di_builder_)
               : nullptr),
-      tree_and_subtrees_getters_for_debug_info_(
-          tree_and_subtrees_getters_for_debug_info),
+      tree_and_subtrees_getters_(tree_and_subtrees_getters),
       vlog_stream_(vlog_stream) {}
 
 auto Context::GetFileContext(const SemIR::File* file,
@@ -43,12 +43,8 @@ auto Context::GetFileContext(const SemIR::File* file,
 
 auto Context::LowerPendingDefinitions() -> void {
   // Lower function definitions for generics.
-  // This cannot be a range-based loop, as new definitions can be added
-  // while building other definitions.
-  // NOLINTNEXTLINE(modernize-loop-convert)
-  for (size_t i = 0; i != specific_function_definitions_.size(); ++i) {
-    auto [file_context, function_id, specific_id] =
-        specific_function_definitions_[i];
+  for (auto [file_context, function_id, specific_id] :
+       GrowingRange(specific_function_definitions_)) {
     file_context->BuildFunctionDefinition(function_id, specific_id);
   }
 }
@@ -82,8 +78,7 @@ auto Context::BuildDICompileUnit(llvm::StringRef module_name,
 
 auto Context::GetLocForDI(SemIR::AbsoluteNodeId abs_node_id) -> LocForDI {
   const auto& tree_and_subtrees =
-      (*tree_and_subtrees_getters_for_debug_info_)[abs_node_id.check_ir_id()
-                                                       .index]();
+      tree_and_subtrees_getters()[abs_node_id.check_ir_id().index]();
   const auto& tokens = tree_and_subtrees.tree().tokens();
 
   if (abs_node_id.node_id().has_value()) {

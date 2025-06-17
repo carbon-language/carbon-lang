@@ -37,14 +37,16 @@ fn Lib2CallF[T:! type](a: T, b: T) -> T {
 
 // --- todo_use.carbon
 
-// TODO: This should call the `F` from lib1 and the `F` from lib2, and return 3.
-// Currently it calls the same function twice.
+// TODO: This should call the `F` from lib1 and the `F` from lib2. Currently
+// it calls the same function in both (hashes match for both instances of
+// `call i32 @_CF.Main.<hash>`).
 
 import library "lib1";
 import library "lib2";
 
-fn Run() -> i32 {
-  return Lib1CallF(1 as i32, 2 as i32) + Lib2CallF(1 as i32, 2 as i32);
+fn Run() {
+  let a: i32 = Lib1CallF(1 as i32, 2 as i32);
+  let b: i32 = Lib2CallF(1 as i32, 2 as i32);
 }
 
 // CHECK:STDOUT: ; ModuleID = 'lib1.carbon'
@@ -70,12 +72,11 @@ fn Run() -> i32 {
 // CHECK:STDOUT: ; ModuleID = 'todo_use.carbon'
 // CHECK:STDOUT: source_filename = "todo_use.carbon"
 // CHECK:STDOUT:
-// CHECK:STDOUT: define i32 @main() !dbg !4 {
+// CHECK:STDOUT: define void @main() !dbg !4 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   %Lib1CallF.call = call i32 @_CLib1CallF.Main.b88d1103f417c6d4(i32 1, i32 2), !dbg !7
 // CHECK:STDOUT:   %Lib2CallF.call = call i32 @_CLib2CallF.Main.b88d1103f417c6d4(i32 1, i32 2), !dbg !8
-// CHECK:STDOUT:   %int.sadd = add i32 %Lib1CallF.call, %Lib2CallF.call, !dbg !7
-// CHECK:STDOUT:   ret i32 %int.sadd, !dbg !9
+// CHECK:STDOUT:   ret void, !dbg !9
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: define linkonce_odr i32 @_CLib1CallF.Main.b88d1103f417c6d4(i32 %a, i32 %b) !dbg !10 {
@@ -102,12 +103,12 @@ fn Run() -> i32 {
 // CHECK:STDOUT: !1 = !{i32 2, !"Debug Info Version", i32 3}
 // CHECK:STDOUT: !2 = distinct !DICompileUnit(language: DW_LANG_C, file: !3, producer: "carbon", isOptimized: false, runtimeVersion: 0, emissionKind: FullDebug)
 // CHECK:STDOUT: !3 = !DIFile(filename: "todo_use.carbon", directory: "")
-// CHECK:STDOUT: !4 = distinct !DISubprogram(name: "Run", linkageName: "main", scope: null, file: !3, line: 8, type: !5, spFlags: DISPFlagDefinition, unit: !2)
+// CHECK:STDOUT: !4 = distinct !DISubprogram(name: "Run", linkageName: "main", scope: null, file: !3, line: 9, type: !5, spFlags: DISPFlagDefinition, unit: !2)
 // CHECK:STDOUT: !5 = !DISubroutineType(types: !6)
 // CHECK:STDOUT: !6 = !{}
-// CHECK:STDOUT: !7 = !DILocation(line: 9, column: 10, scope: !4)
-// CHECK:STDOUT: !8 = !DILocation(line: 9, column: 42, scope: !4)
-// CHECK:STDOUT: !9 = !DILocation(line: 9, column: 3, scope: !4)
+// CHECK:STDOUT: !7 = !DILocation(line: 10, column: 16, scope: !4)
+// CHECK:STDOUT: !8 = !DILocation(line: 11, column: 16, scope: !4)
+// CHECK:STDOUT: !9 = !DILocation(line: 9, column: 1, scope: !4)
 // CHECK:STDOUT: !10 = distinct !DISubprogram(name: "Lib1CallF", linkageName: "_CLib1CallF.Main.b88d1103f417c6d4", scope: null, file: !11, line: 8, type: !5, spFlags: DISPFlagDefinition, unit: !2)
 // CHECK:STDOUT: !11 = !DIFile(filename: "lib1.carbon", directory: "")
 // CHECK:STDOUT: !12 = !DILocation(line: 9, column: 10, scope: !10)

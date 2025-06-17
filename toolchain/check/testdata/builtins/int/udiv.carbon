@@ -63,8 +63,8 @@ let b: i32 = Div(0, 0);
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %int_32: Core.IntLiteral = int_value 32 [concrete]
 // CHECK:STDOUT:   %i32: type = class_type @Int, @Int(%int_32) [concrete]
-// CHECK:STDOUT:   %Div.type.ab4: type = fn_type @Div.1 [concrete]
-// CHECK:STDOUT:   %Div: %Div.type.ab4 = struct_value () [concrete]
+// CHECK:STDOUT:   %Div.type: type = fn_type @Div [concrete]
+// CHECK:STDOUT:   %Div: %Div.type = struct_value () [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -72,7 +72,7 @@ let b: i32 = Div(0, 0);
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @RuntimeCallIsValid(%a.param: %i32, %b.param: %i32) -> %i32 {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %Div.ref: %Div.type.ab4 = name_ref Div, file.%Div.decl [concrete = constants.%Div]
+// CHECK:STDOUT:   %Div.ref: %Div.type = name_ref Div, file.%Div.decl [concrete = constants.%Div]
 // CHECK:STDOUT:   %a.ref: %i32 = name_ref a, %a
 // CHECK:STDOUT:   %b.ref: %i32 = name_ref b, %b
 // CHECK:STDOUT:   %int.udiv: init %i32 = call %Div.ref(%a.ref, %b.ref)

@@ -12,12 +12,12 @@ class Number {
   var is_positive: bool;
 }
 
-impl Number as Core.Negate {
+impl Number as Core.Negate where .Result = Number {
   fn Op[self: Number]() -> Number {
     return {.is_positive = not self.is_positive};
   }
 }
-impl Number as Core.Mul {
+impl Number as Core.MulWith(Number) where .Result = Number {
   fn Op[self: Number](other: Number) -> Number {
     return {.is_positive = (self.is_positive and other.is_positive) or
                             (not self.is_positive and not other.is_positive)};
@@ -41,7 +41,7 @@ fn Calculate(a: Number, b: Number) -> Number {
 // CHECK:STDOUT:   ret void, !dbg !10
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: define void @"_COp.Number.Main:Mul.Core"(ptr sret({ i1 }) %return, ptr %self, ptr %other) !dbg !11 {
+// CHECK:STDOUT: define void @"_COp.Number.Main:MulWith.Core"(ptr sret({ i1 }) %return, ptr %self, ptr %other) !dbg !11 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   %.loc22_33.1.is_positive = getelementptr inbounds nuw { i1 }, ptr %self, i32 0, i32 0, !dbg !12
 // CHECK:STDOUT:   %.loc22_33.2 = load i1, ptr %.loc22_33.1.is_positive, align 1, !dbg !12
@@ -84,7 +84,7 @@ fn Calculate(a: Number, b: Number) -> Number {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   %.loc28_10.1.temp = alloca { i1 }, align 8, !dbg !22
 // CHECK:STDOUT:   call void @"_COp.Number.Main:Negate.Core"(ptr %.loc28_10.1.temp, ptr %a), !dbg !22
-// CHECK:STDOUT:   call void @"_COp.Number.Main:Mul.Core"(ptr %return, ptr %.loc28_10.1.temp, ptr %b), !dbg !22
+// CHECK:STDOUT:   call void @"_COp.Number.Main:MulWith.Core"(ptr %return, ptr %.loc28_10.1.temp, ptr %b), !dbg !22
 // CHECK:STDOUT:   ret void, !dbg !23
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -102,7 +102,7 @@ fn Calculate(a: Number, b: Number) -> Number {
 // CHECK:STDOUT: !8 = !DILocation(line: 17, column: 28, scope: !4)
 // CHECK:STDOUT: !9 = !DILocation(line: 17, column: 12, scope: !4)
 // CHECK:STDOUT: !10 = !DILocation(line: 17, column: 5, scope: !4)
-// CHECK:STDOUT: !11 = distinct !DISubprogram(name: "Op", linkageName: "_COp.Number.Main:Mul.Core", scope: null, file: !3, line: 21, type: !5, spFlags: DISPFlagDefinition, unit: !2)
+// CHECK:STDOUT: !11 = distinct !DISubprogram(name: "Op", linkageName: "_COp.Number.Main:MulWith.Core", scope: null, file: !3, line: 21, type: !5, spFlags: DISPFlagDefinition, unit: !2)
 // CHECK:STDOUT: !12 = !DILocation(line: 22, column: 29, scope: !11)
 // CHECK:STDOUT: !13 = !DILocation(line: 22, column: 50, scope: !11)
 // CHECK:STDOUT: !14 = !DILocation(line: 22, column: 28, scope: !11)
