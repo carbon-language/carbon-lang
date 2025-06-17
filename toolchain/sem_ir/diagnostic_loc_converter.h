@@ -50,21 +50,21 @@ class DiagnosticLocConverter {
   auto Convert(LocId loc_id, bool token_only) const
       -> Diagnostics::ConvertedLoc;
 
+ private:
   // Converts an `absolute_node_id` in either a Carbon file or C++ import to a
   // diagnostic location.
-  auto Convert(AbsoluteNodeId absolute_node_id, bool token_only) const
+  auto ConvertImpl(AbsoluteNodeId absolute_node_id, bool token_only) const
       -> Diagnostics::ConvertedLoc;
 
   // Converts a `node_id` corresponding to a specific check IR to a diagnostic
   // location.
-  auto Convert(CheckIRId check_ir_id, Parse::NodeId node_id,
-               bool token_only) const -> Diagnostics::ConvertedLoc;
+  auto ConvertImpl(CheckIRId check_ir_id, Parse::NodeId node_id,
+                   bool token_only) const -> Diagnostics::ConvertedLoc;
 
   // Converts a location pointing into C++ code to a diagnostic location.
-  auto Convert(ClangSourceLocId clang_source_loc_id) const
+  auto ConvertImpl(ClangSourceLocId clang_source_loc_id) const
       -> Diagnostics::ConvertedLoc;
 
- private:
   // Converters for each SemIR.
   llvm::ArrayRef<Parse::GetTreeAndSubtreesFn> tree_and_subtrees_getters_;
 
