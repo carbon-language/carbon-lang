@@ -300,6 +300,7 @@ auto MatchContext::DoEmitPatternMatch(Context& context,
                                       SemIR::ValueParamPattern param_pattern,
                                       SemIR::InstId pattern_inst_id,
                                       WorkItem entry) -> void {
+  CARBON_CHECK(!entry.ref_binding_context);
   switch (kind_) {
     case MatchKind::Caller: {
       CARBON_CHECK(
@@ -335,7 +336,7 @@ auto MatchContext::DoEmitPatternMatch(Context& context,
                context.sem_ir(), entry.pattern_id)});
       AddWork({.pattern_id = param_pattern.subpattern_id,
                .scrutinee_id = param_id,
-               .ref_binding_context = false});
+               .ref_binding_context = entry.ref_binding_context});
       results_.push_back(param_id);
       break;
     }
@@ -349,6 +350,7 @@ auto MatchContext::DoEmitPatternMatch(Context& context,
                                       SemIR::RefParamPattern param_pattern,
                                       SemIR::InstId pattern_inst_id,
                                       WorkItem entry) -> void {
+  CARBON_CHECK(entry.ref_binding_context);
   switch (kind_) {
     case MatchKind::Caller: {
       CARBON_CHECK(
@@ -378,7 +380,7 @@ auto MatchContext::DoEmitPatternMatch(Context& context,
                context.sem_ir(), entry.pattern_id)});
       AddWork({.pattern_id = param_pattern.subpattern_id,
                .scrutinee_id = param_id,
-               .ref_binding_context = true});
+               .ref_binding_context = entry.ref_binding_context});
       results_.push_back(param_id);
       break;
     }
@@ -392,6 +394,7 @@ auto MatchContext::DoEmitPatternMatch(Context& context,
                                       SemIR::OutParamPattern param_pattern,
                                       SemIR::InstId pattern_inst_id,
                                       WorkItem entry) -> void {
+  CARBON_CHECK(!entry.ref_binding_context);
   switch (kind_) {
     case MatchKind::Caller: {
       CARBON_CHECK(
@@ -425,7 +428,7 @@ auto MatchContext::DoEmitPatternMatch(Context& context,
                context.sem_ir(), entry.pattern_id)});
       AddWork({.pattern_id = param_pattern.subpattern_id,
                .scrutinee_id = param_id,
-               .ref_binding_context = false});
+               .ref_binding_context = entry.ref_binding_context});
       results_.push_back(param_id);
       break;
     }
