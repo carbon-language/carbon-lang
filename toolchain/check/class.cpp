@@ -250,6 +250,10 @@ static auto CheckCompleteClassType(
         BuildVtable(context, class_id, base_vtable_id, vtable_contents);
 
     auto vptr_type_id = GetPointerType(context, SemIR::VtableType::TypeInstId);
+    // TODO: Handle specifics here, probably passing
+    // `context.generics().GetSelfSpecific(class_info.generic_id)` as the
+    // specific_id here (but more work involved to get this all plumbed in and
+    // tested).
     class_info.vtable_ptr_id =
         AddInst<SemIR::VtablePtr>(context, node_id,
                                   {.type_id = vptr_type_id,
