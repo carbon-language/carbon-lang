@@ -512,6 +512,18 @@ struct ConstType {
   TypeInstId inner_id;
 };
 
+struct PartialType {
+  static constexpr auto Kind =
+      InstKind::PartialType.Define<Parse::PrefixOperatorPartialId>(
+          {.ir_name = "partial_type",
+           .is_type = InstIsType::Always,
+           .constant_kind = InstConstantKind::Conditional,
+           .deduce_through = true});
+
+  TypeId type_id;
+  TypeInstId inner_id;
+};
+
 // Records that a type conversion `original as new_type` was done, producing the
 // result.
 struct Converted {

@@ -127,6 +127,12 @@ auto TypeIterator::Next() -> Step {
         PushInstId(const_type.inner_id);
         break;
       }
+      case CARBON_KIND(SemIR::PartialType partial_type): {
+        // We don't stop at `partial` since it is a modifier; just move to the
+        // inner type.
+        PushInstId(partial_type.inner_id);
+        break;
+      }
       case CARBON_KIND(SemIR::ImplWitnessAssociatedConstant assoc): {
         Push(assoc.type_id);
         break;

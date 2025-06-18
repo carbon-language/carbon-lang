@@ -167,6 +167,10 @@ auto EvalConstantInst(Context& context, SemIR::ConstType inst)
   return ConstantEvalResult::NewSamePhase(inst);
 }
 
+auto EvalConstantInst(Context& /*context*/, SemIR::PartialType inst)
+    -> ConstantEvalResult {
+  return ConstantEvalResult::NewSamePhase(inst);
+}
 auto EvalConstantInst(Context& context, SemIR::Converted inst)
     -> ConstantEvalResult {
   // A conversion evaluates to the result of the conversion.

@@ -760,6 +760,12 @@ static auto BuildTypeForInst(FileContext& context, SemIR::ConstType inst)
       context.sem_ir().types().GetTypeIdForTypeInstId(inst.inner_id));
 }
 
+static auto BuildTypeForInst(FileContext& context, SemIR::PartialType inst)
+    -> llvm::Type* {
+  return context.GetType(
+      context.sem_ir().types().GetTypeIdForTypeInstId(inst.inner_id));
+}
+
 static auto BuildTypeForInst(FileContext& context,
                              SemIR::ImplWitnessAssociatedConstant inst)
     -> llvm::Type* {
