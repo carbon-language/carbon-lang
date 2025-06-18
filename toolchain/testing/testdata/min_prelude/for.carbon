@@ -10,7 +10,7 @@
 
 // --- min_prelude/bool.carbon
 
-// A minimal prelude for testing conversion between types.
+// A minimal prelude for testing `for` loops.
 package Core library "prelude";
 
 export import library "prelude/parts/as";
