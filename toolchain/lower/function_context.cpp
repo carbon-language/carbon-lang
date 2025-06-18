@@ -260,6 +260,15 @@ auto FunctionContext::GetInitRepr(TypeInFile type) -> SemIR::InitRepr {
   return result;
 }
 
+auto FunctionContext::GetReturnTypeInfo(TypeInFile type)
+    -> ReturnTypeInfoInFile {
+  auto result = ReturnTypeInfoInFile{
+      .file = type.file,
+      .info = SemIR::ReturnTypeInfo::ForType(*type.file, type.type_id)};
+  AddEnumToCurrentFingerprint(result.info.init_repr.kind);
+  return result;
+}
+
 auto FunctionContext::CopyValue(TypeInFile type, SemIR::InstId source_id,
                                 SemIR::InstId dest_id) -> void {
   switch (GetValueRepr(type).repr.kind) {

@@ -222,7 +222,7 @@ auto HandleInst(FunctionContext& /*context*/, SemIR::InstId /*inst_id*/,
 
 auto HandleInst(FunctionContext& context, SemIR::InstId inst_id,
                 SemIR::ReturnSlot inst) -> void {
-  if (SemIR::InitRepr::ForType(context.sem_ir(), inst.type_id).kind ==
+  if (context.GetInitRepr(context.GetTypeIdOfInstInSpecific(inst_id)).kind ==
       SemIR::InitRepr::InPlace) {
     context.SetLocal(inst_id, context.GetValue(inst.storage_id));
   }

@@ -318,11 +318,9 @@ static auto HandleBuiltinCall(FunctionContext& context, SemIR::InstId inst_id,
 
     case SemIR::BuiltinFunctionKind::IntConvert: {
       context.SetLocal(
-          inst_id,
-          CreateExtOrTrunc(
-              context, context.GetValue(arg_ids[0]),
-              context.GetType(context.sem_ir().insts().Get(inst_id).type_id()),
-              IsSignedInt(context, arg_ids[0])));
+          inst_id, CreateExtOrTrunc(context, context.GetValue(arg_ids[0]),
+                                    context.GetTypeOfInstInSpecific(inst_id),
+                                    IsSignedInt(context, arg_ids[0])));
       return;
     }
 
@@ -520,20 +518,15 @@ auto HandleInst(FunctionContext& context, SemIR::InstId inst_id,
 
   std::vector<llvm::Value*> args;
 
-  auto [inst_type_file, inst_type_id] =
-      context.GetTypeIdOfInstInSpecific(inst_id);
-
-  if (SemIR::ReturnTypeInfo::ForType(*inst_type_file, inst_type_id)
-          .has_return_slot()) {
+  auto inst_type = context.GetTypeIdOfInstInSpecific(inst_id);
+  if (context.GetReturnTypeInfo(inst_type).info.has_return_slot()) {
     args.push_back(context.GetValue(arg_ids.back()));
     arg_ids = arg_ids.drop_back();
   }
 
   for (auto arg_id : arg_ids) {
-    auto [arg_type_file, arg_type_id] =
-        context.GetTypeIdOfInstInSpecific(arg_id);
-    if (SemIR::ValueRepr::ForType(*arg_type_file, arg_type_id).kind !=
-        SemIR::ValueRepr::None) {
+    auto arg_type = context.GetTypeIdOfInstInSpecific(arg_id);
+    if (context.GetValueRepr(arg_type).repr.kind != SemIR::ValueRepr::None) {
       args.push_back(context.GetValue(arg_id));
     }
   }
