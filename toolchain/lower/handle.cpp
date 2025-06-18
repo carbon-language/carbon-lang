@@ -19,6 +19,17 @@
 
 namespace Carbon::Lower {
 
+// Returns whether this instruction names a namespace.
+static auto IsNamespace(FunctionContext& context, SemIR::InstId inst_id)
+    -> bool {
+  // Note, we don't use context.GetTypeOfInst here. An instruction can't change
+  // from being a non-namespace in a generic to being a namespace in a specific,
+  // because namespace names are not first-class.
+  auto type_inst_id = context.sem_ir().types().GetInstId(
+      context.sem_ir().insts().Get(inst_id).type_id());
+  return type_inst_id == SemIR::NamespaceType::TypeInstId;
+}
+
 auto HandleInst(FunctionContext& context, SemIR::InstId inst_id,
                 SemIR::AddrOf inst) -> void {
   context.SetLocal(inst_id, context.GetValue(inst.lvalue_id));
@@ -33,14 +44,16 @@ auto HandleInst(FunctionContext& context, SemIR::InstId inst_id,
   // IntLiteral. If it is an IntLiteral, its value representation is empty, so
   // create a ConstantInt from its SemIR value directly.
   llvm::Value* index;
-  if (context.sem_ir().types().GetInstId(
-          context.sem_ir().insts().Get(inst.index_id).type_id()) ==
+  auto index_type = context.GetTypeIdOfInst(inst.index_id);
+  if (index_type.file->types().GetInstId(index_type.type_id) ==
       SemIR::IntLiteralType::TypeInstId) {
     auto value = context.sem_ir().insts().GetAs<SemIR::IntValue>(
         context.sem_ir().constant_values().GetConstantInstId(inst.index_id));
-    index = llvm::ConstantInt::get(context.llvm_context(),
-                                   context.sem_ir().ints().Get(value.int_id));
+    const auto& apint_value = context.sem_ir().ints().Get(value.int_id);
+    context.AddIntToCurrentFingerprint(apint_value.getSExtValue());
+    index = llvm::ConstantInt::get(context.llvm_context(), apint_value);
   } else {
+    context.AddIntToCurrentFingerprint(-1);
     index = context.GetValue(inst.index_id);
   }
 
@@ -71,8 +84,7 @@ auto HandleInst(FunctionContext& context, SemIR::InstId /*inst_id*/,
 
 auto HandleInst(FunctionContext& context, SemIR::InstId inst_id,
                 SemIR::BindAlias inst) -> void {
-  auto type_inst_id = context.sem_ir().types().GetInstId(inst.type_id);
-  if (type_inst_id == SemIR::NamespaceType::TypeInstId) {
+  if (IsNamespace(context, inst_id)) {
     return;
   }
 
@@ -81,8 +93,7 @@ auto HandleInst(FunctionContext& context, SemIR::InstId inst_id,
 
 auto HandleInst(FunctionContext& context, SemIR::InstId inst_id,
                 SemIR::ExportDecl inst) -> void {
-  auto type_inst_id = context.sem_ir().types().GetInstId(inst.type_id);
-  if (type_inst_id == SemIR::NamespaceType::TypeInstId) {
+  if (IsNamespace(context, inst_id)) {
     return;
   }
 
@@ -190,8 +201,7 @@ auto HandleInst(FunctionContext& /*context*/, SemIR::InstId /*inst_id*/,
 
 auto HandleInst(FunctionContext& context, SemIR::InstId inst_id,
                 SemIR::NameRef inst) -> void {
-  auto type_inst_id = context.sem_ir().types().GetInstId(inst.type_id);
-  if (type_inst_id == SemIR::NamespaceType::TypeInstId) {
+  if (IsNamespace(context, inst_id)) {
     return;
   }
 
