@@ -130,7 +130,7 @@ fn F(N:! error_not_found) {
 // CHECK:STDOUT:   %F.type: type = fn_type @F [concrete]
 // CHECK:STDOUT:   %F: %F.type = struct_value () [concrete]
 // CHECK:STDOUT:   %ptr: type = ptr_type <vtable> [concrete]
-// CHECK:STDOUT:   %vtable_ptr: ref %ptr = vtable_ptr @C.vtable [concrete]
+// CHECK:STDOUT:   %C.vtable_ptr: ref %ptr = vtable_ptr @C.vtable [concrete]
 // CHECK:STDOUT:   %struct_type.vptr: type = struct_type {.<vptr>: %ptr} [concrete]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %struct_type.vptr [concrete]
 // CHECK:STDOUT: }
@@ -160,11 +160,11 @@ fn F(N:! error_not_found) {
 // CHECK:STDOUT:       %Self.ref: <error> = name_ref Self, <error> [concrete = <error>]
 // CHECK:STDOUT:       %self: <error> = bind_name self, %self.param [concrete = <error>]
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %vtable_ptr: ref %ptr = vtable_ptr @C.vtable [concrete = constants.%vtable_ptr]
+// CHECK:STDOUT:     %C.vtable_ptr: ref %ptr = vtable_ptr @C.vtable [concrete = constants.%C.vtable_ptr]
 // CHECK:STDOUT:     %struct_type.vptr: type = struct_type {.<vptr>: %ptr} [concrete = constants.%struct_type.vptr]
 // CHECK:STDOUT:     %complete_type: <witness> = complete_type_witness %struct_type.vptr [concrete = constants.%complete_type]
 // CHECK:STDOUT:     complete_type_witness = %complete_type
-// CHECK:STDOUT:     vtable_ptr = %vtable_ptr
+// CHECK:STDOUT:     vtable_ptr = %C.vtable_ptr
 // CHECK:STDOUT:
 // CHECK:STDOUT:   !members:
 // CHECK:STDOUT:     .Self = <error>

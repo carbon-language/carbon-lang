@@ -721,8 +721,10 @@ auto InstNamer::NamingContext::NameInst() -> void {
       AddInstName("complete_type");
       return;
     }
-    case VtablePtr::Kind: {
-      AddInstName("vtable_ptr");
+    case CARBON_KIND(VtablePtr inst): {
+      const auto& vtable = sem_ir().vtables().Get(inst.vtable_id);
+      const auto& class_info = sem_ir().classes().Get(vtable.class_id);
+      AddInstNameId(class_info.name_id, ".vtable_ptr");
       return;
     }
     case ConstType::Kind: {
