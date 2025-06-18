@@ -39,7 +39,8 @@ auto HandleInst(FunctionContext& context, SemIR::InstId inst_id,
 
 auto HandleInst(FunctionContext& context, SemIR::InstId inst_id,
                 SemIR::Temporary inst) -> void {
-  context.FinishInit(inst.type_id, inst.storage_id, inst.init_id);
+  context.FinishInit(context.GetTypeIdOfInstInSpecific(inst_id),
+                     inst.storage_id, inst.init_id);
   context.SetLocal(inst_id, context.GetValue(inst.storage_id));
 }
 

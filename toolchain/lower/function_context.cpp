@@ -217,63 +217,71 @@ auto FunctionContext::GetDebugLoc(SemIR::InstId inst_id) -> llvm::DebugLoc {
                                loc.column_number, di_subprogram_);
 }
 
-auto FunctionContext::FinishInit(SemIR::TypeId type_id, SemIR::InstId dest_id,
+auto FunctionContext::FinishInit(TypeInFile type, SemIR::InstId dest_id,
                                  SemIR::InstId source_id) -> void {
-  switch (SemIR::InitRepr::ForType(sem_ir(), type_id).kind) {
+  switch (SemIR::InitRepr::ForType(*type.file, type.type_id).kind) {
     case SemIR::InitRepr::None:
+      AddStringToCurrentFingerprint("Initialization: none");
       break;
     case SemIR::InitRepr::InPlace:
+      AddStringToCurrentFingerprint("Initialization: in place");
       if (sem_ir().constant_values().Get(source_id).is_constant()) {
         // When initializing from a constant, emission of the source doesn't
         // initialize the destination. Copy the constant value instead.
-        CopyValue(type_id, source_id, dest_id);
+        CopyValue(type, source_id, dest_id);
       }
       break;
     case SemIR::InitRepr::ByCopy:
-      CopyValue(type_id, source_id, dest_id);
+      AddStringToCurrentFingerprint("Initialization: by copy");
+      CopyValue(type, source_id, dest_id);
       break;
     case SemIR::InitRepr::Incomplete:
       CARBON_FATAL("Lowering aggregate initialization of incomplete type {0}",
-                   sem_ir().types().GetAsInst(type_id));
+                   type.file->types().GetAsInst(type.type_id));
   }
 }
 
 auto FunctionContext::GetTypeIdOfInstInSpecific(SemIR::InstId inst_id)
-    -> std::pair<const SemIR::File*, SemIR::TypeId> {
-  return SemIR::GetTypeOfInstInSpecific(specific_sem_ir(), specific_id(),
-                                        sem_ir(), inst_id);
+    -> TypeInFile {
+  auto [file, type_id] = SemIR::GetTypeOfInstInSpecific(
+      specific_sem_ir(), specific_id(), sem_ir(), inst_id);
+  return {.file = file, .type_id = type_id};
 }
 
-auto FunctionContext::CopyValue(SemIR::TypeId type_id, SemIR::InstId source_id,
+auto FunctionContext::CopyValue(TypeInFile type, SemIR::InstId source_id,
                                 SemIR::InstId dest_id) -> void {
-  switch (auto rep = SemIR::ValueRepr::ForType(sem_ir(), type_id); rep.kind) {
+  switch (auto rep = SemIR::ValueRepr::ForType(*type.file, type.type_id);
+          rep.kind) {
     case SemIR::ValueRepr::Unknown:
       CARBON_FATAL("Attempt to copy incomplete type");
     case SemIR::ValueRepr::None:
+      AddStringToCurrentFingerprint("Copy value: no value");
       break;
     case SemIR::ValueRepr::Copy:
+      AddStringToCurrentFingerprint("Copy value: trivial copy");
       builder().CreateStore(GetValue(source_id), GetValue(dest_id));
       break;
     case SemIR::ValueRepr::Pointer:
-      CopyObject(type_id, source_id, dest_id);
+      AddStringToCurrentFingerprint("Copy value: object copy");
+      CopyObject(type, source_id, dest_id);
       break;
     case SemIR::ValueRepr::Custom:
       CARBON_FATAL("TODO: Add support for CopyValue with custom value rep");
   }
 }
 
-auto FunctionContext::CopyObject(SemIR::TypeId type_id, SemIR::InstId source_id,
+auto FunctionContext::CopyObject(TypeInFile type, SemIR::InstId source_id,
                                  SemIR::InstId dest_id) -> void {
   const auto& layout = llvm_module().getDataLayout();
-  auto* type = GetType(type_id);
+  auto* llvm_type = GetType(type);
   // TODO: Compute known alignment of the source and destination, which may
   // be greater than the alignment computed by LLVM.
-  auto align = layout.getABITypeAlign(type);
+  auto align = layout.getABITypeAlign(llvm_type);
 
   // TODO: Attach !tbaa.struct metadata indicating which portions of the
   // type we actually need to copy and which are padding.
   builder().CreateMemCpy(GetValue(dest_id), align, GetValue(source_id), align,
-                         layout.getTypeAllocSize(type));
+                         layout.getTypeAllocSize(llvm_type));
 }
 
 auto FunctionContext::Inserter::InsertHelper(
@@ -314,6 +322,15 @@ auto FunctionContext::AddCallToCurrentFingerprint(SemIR::CheckIRId file_id,
     current_fingerprint_.specific_fingerprint.update(-1);
     function_fingerprint_->calls.push_back(specific_id);
   }
+}
+
+auto FunctionContext::AddStringToCurrentFingerprint(llvm::StringRef string)
+    -> void {
+  if (!function_fingerprint_) {
+    return;
+  }
+
+  current_fingerprint_.common_fingerprint.update(string);
 }
 
 auto FunctionContext::AddTypeToCurrentFingerprint(llvm::Type* type) -> void {

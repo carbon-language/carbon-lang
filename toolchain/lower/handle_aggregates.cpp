@@ -26,9 +26,8 @@ auto HandleInst(FunctionContext& /*context*/, SemIR::InstId /*inst_id*/,
 static auto GetAggregateElement(FunctionContext& context,
                                 SemIR::InstId aggr_inst_id,
                                 SemIR::ElementIndex idx,
-                                SemIR::TypeId result_type_id, llvm::Twine name)
+                                SemIR::InstId result_inst_id, llvm::Twine name)
     -> llvm::Value* {
-  auto aggr_inst = context.sem_ir().insts().Get(aggr_inst_id);
   auto* aggr_value = context.GetValue(aggr_inst_id);
 
   switch (SemIR::GetExprCategory(context.sem_ir(), aggr_inst_id)) {
@@ -39,16 +38,19 @@ static auto GetAggregateElement(FunctionContext& context,
       CARBON_FATAL("Unexpected expression category for aggregate access");
 
     case SemIR::ExprCategory::Value: {
-      auto value_rep =
-          SemIR::ValueRepr::ForType(context.sem_ir(), aggr_inst.type_id());
+      auto [aggr_type_file, aggr_type_id] =
+          context.GetTypeIdOfInstInSpecific(aggr_inst_id);
+      auto value_rep = SemIR::ValueRepr::ForType(*aggr_type_file, aggr_type_id);
       CARBON_CHECK(value_rep.aggregate_kind != SemIR::ValueRepr::NotAggregate,
                    "aggregate type should have aggregate value representation");
       switch (value_rep.kind) {
         case SemIR::ValueRepr::Unknown:
           CARBON_FATAL("Lowering access to incomplete aggregate type");
         case SemIR::ValueRepr::None:
+          context.AddStringToCurrentFingerprint("Aggregate element: empty");
           return aggr_value;
         case SemIR::ValueRepr::Copy:
+          context.AddStringToCurrentFingerprint("Aggregate element: copy");
           // We are holding the values of the aggregate directly, elementwise.
           return context.builder().CreateExtractValue(aggr_value, idx.index,
                                                       name);
@@ -56,8 +58,10 @@ static auto GetAggregateElement(FunctionContext& context,
           // The value representation is a pointer to an aggregate that we want
           // to index into.
           auto pointee_type_id =
-              context.sem_ir().GetPointeeType(value_rep.type_id);
-          auto* value_type = context.GetType(pointee_type_id);
+              aggr_type_file->GetPointeeType(value_rep.type_id);
+          auto* value_type =
+              context.GetFileContext(aggr_type_file).GetType(pointee_type_id);
+          context.AddTypeToCurrentFingerprint(value_type);
           auto* elem_ptr = context.builder().CreateStructGEP(
               value_type, aggr_value, idx.index, name);
 
@@ -68,11 +72,14 @@ static auto GetAggregateElement(FunctionContext& context,
           }
 
           // `elem_ptr` points to a value representation. Load it.
-          auto result_value_type_id =
-              SemIR::ValueRepr::ForType(context.sem_ir(), result_type_id)
-                  .type_id;
+          auto result_type = context.GetTypeIdOfInstInSpecific(result_inst_id);
+          auto result_value_type = FunctionContext::TypeInFile{
+              .file = result_type.file,
+              .type_id = SemIR::ValueRepr::ForType(*result_type.file,
+                                                   result_type.type_id)
+                             .type_id};
           return context.builder().CreateLoad(
-              context.GetType(result_value_type_id), elem_ptr, name + ".load");
+              context.GetType(result_value_type), elem_ptr, name + ".load");
         }
         case SemIR::ValueRepr::Custom:
           CARBON_FATAL(
@@ -83,52 +90,54 @@ static auto GetAggregateElement(FunctionContext& context,
     case SemIR::ExprCategory::DurableRef:
     case SemIR::ExprCategory::EphemeralRef: {
       // Just locate the aggregate element.
-      auto* aggr_type = context.GetType(aggr_inst.type_id());
+      auto* aggr_type = context.GetTypeOfInstInSpecific(aggr_inst_id);
       return context.builder().CreateStructGEP(aggr_type, aggr_value, idx.index,
                                                name);
     }
   }
 }
 
-static auto GetStructFieldName(FunctionContext& context,
+static auto GetStructFieldName(const SemIR::File& file,
                                SemIR::TypeId struct_type_id,
                                SemIR::ElementIndex index) -> llvm::StringRef {
-  auto struct_type =
-      context.sem_ir().types().GetAs<SemIR::StructType>(struct_type_id);
-  auto fields =
-      context.sem_ir().struct_type_fields().Get(struct_type.fields_id);
-  return context.sem_ir().names().GetIRBaseName(fields[index.index].name_id);
+  auto struct_type = file.types().GetAs<SemIR::StructType>(struct_type_id);
+  auto fields = file.struct_type_fields().Get(struct_type.fields_id);
+  return file.names().GetIRBaseName(fields[index.index].name_id);
 }
 
 auto HandleInst(FunctionContext& context, SemIR::InstId inst_id,
                 SemIR::ClassElementAccess inst) -> void {
   // Find the class that we're performing access into.
-  auto class_type_id = context.sem_ir().insts().Get(inst.base_id).type_id();
+  auto [class_file, class_type_id] =
+      context.GetTypeIdOfInstInSpecific(inst.base_id);
   SemIR::TypeId object_repr_id =
-      context.sem_ir().types().GetObjectRepr(class_type_id);
+      class_file->types().GetObjectRepr(class_type_id);
 
   // Translate the class field access into a struct access on the object
   // representation.
-  context.SetLocal(
-      inst_id, GetAggregateElement(
-                   context, inst.base_id, inst.index, inst.type_id,
-                   GetStructFieldName(context, object_repr_id, inst.index)));
+  context.SetLocal(inst_id, GetAggregateElement(
+                                context, inst.base_id, inst.index, inst_id,
+                                GetStructFieldName(*class_file, object_repr_id,
+                                                   inst.index)));
 }
 
 static auto EmitAggregateInitializer(FunctionContext& context,
-                                     SemIR::TypeId type_id,
+                                     SemIR::InstId init_inst_id,
                                      SemIR::InstBlockId refs_id,
                                      llvm::Twine name) -> llvm::Value* {
-  auto* llvm_type = context.GetType(type_id);
+  auto type = context.GetTypeIdOfInstInSpecific(init_inst_id);
+  auto* llvm_type = context.GetType(type);
   auto refs = context.sem_ir().inst_blocks().Get(refs_id);
 
-  switch (SemIR::InitRepr::ForType(context.sem_ir(), type_id).kind) {
+  switch (SemIR::InitRepr::ForType(*type.file, type.type_id).kind) {
     case SemIR::InitRepr::None: {
+      context.AddStringToCurrentFingerprint("Aggregate initializer: empty");
       // TODO: Add a helper to poison a value slot.
       return llvm::PoisonValue::get(llvm_type);
     }
 
     case SemIR::InitRepr::InPlace: {
+      context.AddStringToCurrentFingerprint("Aggregate initializer: in place");
       // Finish initialization of constant fields. We will have skipped this
       // when emitting the initializers because they have constant values.
       //
@@ -146,9 +155,8 @@ static auto EmitAggregateInitializer(FunctionContext& context,
           auto dest_id =
               SemIR::FindReturnSlotArgForInitializer(context.sem_ir(), ref_id);
           auto src_id = ref_id;
-          auto storage_type_id =
-              context.sem_ir().insts().Get(dest_id).type_id();
-          context.FinishInit(storage_type_id, dest_id, src_id);
+          auto storage_type = context.GetTypeIdOfInstInSpecific(dest_id);
+          context.FinishInit(storage_type, dest_id, src_id);
         }
       }
       // TODO: Add a helper to poison a value slot.
@@ -156,6 +164,7 @@ static auto EmitAggregateInitializer(FunctionContext& context,
     }
 
     case SemIR::InitRepr::ByCopy: {
+      context.AddStringToCurrentFingerprint("Aggregate initializer: by copy");
       auto refs = context.sem_ir().inst_blocks().Get(refs_id);
       CARBON_CHECK(
           refs.size() == 1,
@@ -169,24 +178,25 @@ static auto EmitAggregateInitializer(FunctionContext& context,
 
     case SemIR::InitRepr::Incomplete:
       CARBON_FATAL("Lowering aggregate initialization of incomplete type {0}",
-                   context.sem_ir().types().GetAsInst(type_id));
+                   type.file->types().GetAsInst(type.type_id));
   }
 }
 
 auto HandleInst(FunctionContext& context, SemIR::InstId inst_id,
                 SemIR::ClassInit inst) -> void {
-  context.SetLocal(
-      inst_id, EmitAggregateInitializer(context, inst.type_id, inst.elements_id,
-                                        "class.init"));
+  context.SetLocal(inst_id,
+                   EmitAggregateInitializer(context, inst_id, inst.elements_id,
+                                            "class.init"));
 }
 
 auto HandleInst(FunctionContext& context, SemIR::InstId inst_id,
                 SemIR::StructAccess inst) -> void {
-  auto struct_type_id = context.sem_ir().insts().Get(inst.struct_id).type_id();
-  context.SetLocal(
-      inst_id, GetAggregateElement(
-                   context, inst.struct_id, inst.index, inst.type_id,
-                   GetStructFieldName(context, struct_type_id, inst.index)));
+  auto [struct_file, struct_type_id] =
+      context.GetTypeIdOfInstInSpecific(inst.struct_id);
+  context.SetLocal(inst_id, GetAggregateElement(
+                                context, inst.struct_id, inst.index, inst_id,
+                                GetStructFieldName(*struct_file, struct_type_id,
+                                                   inst.index)));
 }
 
 auto HandleInst(FunctionContext& /*context*/, SemIR::InstId /*inst_id*/,
@@ -198,18 +208,23 @@ auto HandleInst(FunctionContext& /*context*/, SemIR::InstId /*inst_id*/,
 // Emits the value representation for a struct or tuple whose elements are the
 // contents of `refs_id`.
 static auto EmitAggregateValueRepr(FunctionContext& context,
-                                   SemIR::TypeId type_id,
+                                   SemIR::InstId value_inst_id,
                                    SemIR::InstBlockId refs_id) -> llvm::Value* {
-  auto value_rep = SemIR::ValueRepr::ForType(context.sem_ir(), type_id);
+  auto type = context.GetTypeIdOfInstInSpecific(value_inst_id);
+  auto value_rep = SemIR::ValueRepr::ForType(*type.file, type.type_id);
+  auto value_type = FunctionContext::TypeInFile{.file = type.file,
+                                                .type_id = value_rep.type_id};
   switch (value_rep.kind) {
     case SemIR::ValueRepr::Unknown:
       CARBON_FATAL("Incomplete aggregate type in lowering");
 
     case SemIR::ValueRepr::None:
+      context.AddStringToCurrentFingerprint("Aggregate value: none");
       // TODO: Add a helper to get a "no value representation" value.
-      return llvm::PoisonValue::get(context.GetType(value_rep.type_id));
+      return llvm::PoisonValue::get(context.GetType(value_type));
 
     case SemIR::ValueRepr::Copy: {
+      context.AddStringToCurrentFingerprint("Aggregate value: copy");
       auto refs = context.sem_ir().inst_blocks().Get(refs_id);
       CARBON_CHECK(
           refs.size() == 1,
@@ -217,13 +232,16 @@ static auto EmitAggregateValueRepr(FunctionContext& context,
       // TODO: Remove the LLVM StructType wrapper in this case, so we don't
       // need this `insert_value` wrapping.
       return context.builder().CreateInsertValue(
-          llvm::PoisonValue::get(context.GetType(value_rep.type_id)),
+          llvm::PoisonValue::get(context.GetType(value_type)),
           context.GetValue(refs[0]), {0});
     }
 
     case SemIR::ValueRepr::Pointer: {
-      auto pointee_type_id = context.sem_ir().GetPointeeType(value_rep.type_id);
-      auto* llvm_value_rep_type = context.GetType(pointee_type_id);
+      context.AddStringToCurrentFingerprint("Aggregate value: pointer");
+      auto pointee_type = FunctionContext::TypeInFile{
+          .file = value_type.file,
+          .type_id = value_type.file->GetPointeeType(value_type.type_id)};
+      auto* llvm_value_rep_type = context.GetType(pointee_type);
 
       // Write the value representation to a local alloca so we can produce a
       // pointer to it as the value representation of the struct or tuple.
@@ -244,28 +262,30 @@ static auto EmitAggregateValueRepr(FunctionContext& context,
 
 auto HandleInst(FunctionContext& context, SemIR::InstId inst_id,
                 SemIR::StructInit inst) -> void {
-  context.SetLocal(
-      inst_id, EmitAggregateInitializer(context, inst.type_id, inst.elements_id,
-                                        "struct.init"));
+  context.SetLocal(inst_id,
+                   EmitAggregateInitializer(context, inst_id, inst.elements_id,
+                                            "struct.init"));
 }
 
 auto HandleInst(FunctionContext& context, SemIR::InstId inst_id,
                 SemIR::StructValue inst) -> void {
-  if (auto fn_type = context.sem_ir().types().TryGetAs<SemIR::FunctionType>(
-          inst.type_id)) {
-    context.SetLocal(inst_id, context.GetFunction(fn_type->function_id));
+  auto type = context.GetTypeIdOfInstInSpecific(inst_id);
+  if (auto fn_type =
+          type.file->types().TryGetAs<SemIR::FunctionType>(type.type_id)) {
+    context.SetLocal(inst_id, context.GetFileContext(type.file).GetFunction(
+                                  fn_type->function_id));
     return;
   }
 
-  context.SetLocal(
-      inst_id, EmitAggregateValueRepr(context, inst.type_id, inst.elements_id));
+  context.SetLocal(inst_id,
+                   EmitAggregateValueRepr(context, inst_id, inst.elements_id));
 }
 
 auto HandleInst(FunctionContext& context, SemIR::InstId inst_id,
                 SemIR::TupleAccess inst) -> void {
-  context.SetLocal(inst_id,
-                   GetAggregateElement(context, inst.tuple_id, inst.index,
-                                       inst.type_id, "tuple.elem"));
+  context.SetLocal(
+      inst_id, GetAggregateElement(context, inst.tuple_id, inst.index, inst_id,
+                                   "tuple.elem"));
 }
 
 auto HandleInst(FunctionContext& /*context*/, SemIR::InstId /*inst_id*/,
@@ -276,15 +296,15 @@ auto HandleInst(FunctionContext& /*context*/, SemIR::InstId /*inst_id*/,
 
 auto HandleInst(FunctionContext& context, SemIR::InstId inst_id,
                 SemIR::TupleInit inst) -> void {
-  context.SetLocal(
-      inst_id, EmitAggregateInitializer(context, inst.type_id, inst.elements_id,
-                                        "tuple.init"));
+  context.SetLocal(inst_id,
+                   EmitAggregateInitializer(context, inst_id, inst.elements_id,
+                                            "tuple.init"));
 }
 
 auto HandleInst(FunctionContext& context, SemIR::InstId inst_id,
                 SemIR::TupleValue inst) -> void {
-  context.SetLocal(
-      inst_id, EmitAggregateValueRepr(context, inst.type_id, inst.elements_id));
+  context.SetLocal(inst_id,
+                   EmitAggregateValueRepr(context, inst_id, inst.elements_id));
 }
 
 }  // namespace Carbon::Lower

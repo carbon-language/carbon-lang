@@ -66,8 +66,8 @@ auto HandleInst(FunctionContext& context, SemIR::InstId inst_id,
 
 auto HandleInst(FunctionContext& context, SemIR::InstId /*inst_id*/,
                 SemIR::Assign inst) -> void {
-  auto storage_type_id = context.sem_ir().insts().Get(inst.lhs_id).type_id();
-  context.FinishInit(storage_type_id, inst.lhs_id, inst.rhs_id);
+  context.FinishInit(context.GetTypeIdOfInstInSpecific(inst.lhs_id),
+                     inst.lhs_id, inst.rhs_id);
 }
 
 auto HandleInst(FunctionContext& context, SemIR::InstId inst_id,
@@ -179,8 +179,8 @@ auto HandleInst(FunctionContext& context, SemIR::InstId inst_id,
 
 auto HandleInst(FunctionContext& context, SemIR::InstId /*inst_id*/,
                 SemIR::InitializeFrom inst) -> void {
-  auto storage_type_id = context.sem_ir().insts().Get(inst.dest_id).type_id();
-  context.FinishInit(storage_type_id, inst.dest_id, inst.src_id);
+  context.FinishInit(context.GetTypeIdOfInstInSpecific(inst.dest_id),
+                     inst.dest_id, inst.src_id);
 }
 
 auto HandleInst(FunctionContext& /*context*/, SemIR::InstId /*inst_id*/,
@@ -235,23 +235,27 @@ auto HandleInst(FunctionContext& context, SemIR::InstId /*inst_id*/,
 
 auto HandleInst(FunctionContext& context, SemIR::InstId /*inst_id*/,
                 SemIR::ReturnExpr inst) -> void {
-  auto result_type_id = context.sem_ir().insts().Get(inst.expr_id).type_id();
-  switch (SemIR::InitRepr::ForType(context.sem_ir(), result_type_id).kind) {
+  auto result_type = context.GetTypeIdOfInstInSpecific(inst.expr_id);
+  switch (
+      SemIR::InitRepr::ForType(*result_type.file, result_type.type_id).kind) {
     case SemIR::InitRepr::None:
       // Nothing to return.
+      context.AddStringToCurrentFingerprint("Return: none");
       context.builder().CreateRetVoid();
       return;
     case SemIR::InitRepr::InPlace:
-      context.FinishInit(result_type_id, inst.dest_id, inst.expr_id);
+      context.AddStringToCurrentFingerprint("Return: in place");
+      context.FinishInit(result_type, inst.dest_id, inst.expr_id);
       context.builder().CreateRetVoid();
       return;
     case SemIR::InitRepr::ByCopy:
       // The expression produces the value representation for the type.
+      context.AddStringToCurrentFingerprint("Return: by copy");
       context.builder().CreateRet(context.GetValue(inst.expr_id));
       return;
     case SemIR::InitRepr::Incomplete:
       CARBON_FATAL("Lowering return of incomplete type {0}",
-                   context.sem_ir().types().GetAsInst(result_type_id));
+                   result_type.file->types().GetAsInst(result_type.type_id));
   }
 }
 

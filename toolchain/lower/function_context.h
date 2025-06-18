@@ -52,6 +52,13 @@ class FunctionContext {
     llvm::BLAKE3 specific_fingerprint;
   };
 
+  // A type in a particular file. This is used when lowering a specific and we
+  // find a type that might be from the specific rather than the generic.
+  struct TypeInFile {
+    const SemIR::File* file;
+    SemIR::TypeId type_id;
+  };
+
   // Returns a basic block corresponding to the start of the given semantics
   // block, and enqueues it for emission.
   auto GetBlock(SemIR::InstBlockId block_id) -> llvm::BasicBlock*;
@@ -106,19 +113,22 @@ class FunctionContext {
     return file_context_->GetType(type_id);
   }
 
+  // Returns a lowered type for the given type_id in the given file.
+  auto GetType(TypeInFile type) -> llvm::Type* {
+    auto* llvm_type = GetFileContext(type.file).GetType(type.type_id);
+    AddTypeToCurrentFingerprint(llvm_type);
+    return llvm_type;
+  }
+
   // Returns the type of the given instruction in the current specific.
   auto GetTypeOfInstInSpecific(SemIR::InstId inst_id) -> llvm::Type* {
-    auto [type_file, type_id] = GetTypeIdOfInstInSpecific(inst_id);
-    auto* type = GetFileContext(type_file).GetType(type_id);
-    AddTypeToCurrentFingerprint(type);
-    return type;
+    return GetType(GetTypeIdOfInstInSpecific(inst_id));
   }
 
   // Returns the type of the given instruction in the current specific.
   // TODO: Each caller of this should add information to the fingerprint
   // indicating what information they used from the type.
-  auto GetTypeIdOfInstInSpecific(SemIR::InstId inst_id)
-      -> std::pair<const SemIR::File*, SemIR::TypeId>;
+  auto GetTypeIdOfInstInSpecific(SemIR::InstId inst_id) -> TypeInFile;
 
   // Returns a lowered value to use for a value of type `type`.
   auto GetTypeAsValue() -> llvm::Value* {
@@ -161,7 +171,7 @@ class FunctionContext {
   // initialization of `dest_id` from that initializer. This is a no-op if the
   // initialization was performed in-place, and otherwise performs a store or a
   // copy.
-  auto FinishInit(SemIR::TypeId type_id, SemIR::InstId dest_id,
+  auto FinishInit(TypeInFile type, SemIR::InstId dest_id,
                   SemIR::InstId source_id) -> void;
 
   // When fingerprinting for a specific, adds the call, found in the function
@@ -170,6 +180,9 @@ class FunctionContext {
   auto AddCallToCurrentFingerprint(SemIR::CheckIRId file_id,
                                    SemIR::FunctionId function_id,
                                    SemIR::SpecificId specific_id) -> void;
+
+  // When fingerprinting for a specific, adds a string.
+  auto AddStringToCurrentFingerprint(llvm::StringRef string) -> void;
 
   // When fingerprinting for a specific, adds the type.
   auto AddTypeToCurrentFingerprint(llvm::Type* type) -> void;
@@ -244,16 +257,16 @@ class FunctionContext {
     SemIR::InstId inst_id_ = SemIR::InstId::None;
   };
 
-  // Emits a value copy for type `type_id` from `source_id` to `dest_id`.
-  // `source_id` must produce a value representation for `type_id`, and
-  // `dest_id` must be a pointer to a `type_id` object.
-  auto CopyValue(SemIR::TypeId type_id, SemIR::InstId source_id,
+  // Emits a value copy for type `type` from `source_id` to `dest_id`.
+  // `source_id` must produce a value representation for `type`, and
+  // `dest_id` must be a pointer to a `type` object.
+  auto CopyValue(TypeInFile type, SemIR::InstId source_id,
                  SemIR::InstId dest_id) -> void;
 
-  // Emits an object representation copy for type `type_id` from `source_id` to
-  // `dest_id`. `source_id` and `dest_id` must produce pointers to `type_id`
+  // Emits an object representation copy for type `type` from `source_id` to
+  // `dest_id`. `source_id` and `dest_id` must produce pointers to `type`
   // objects.
-  auto CopyObject(SemIR::TypeId type_id, SemIR::InstId source_id,
+  auto CopyObject(TypeInFile type, SemIR::InstId source_id,
                   SemIR::InstId dest_id) -> void;
 
   // When fingerprinting for a specific, adds the global.
