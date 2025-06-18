@@ -164,6 +164,7 @@ static auto AddCleanupBlock(Context& context) -> void {
   }
 
   for (auto destroy_id : llvm::reverse(destroy_ids)) {
+    // TODO: Consider what location would be best to associate here.
     PerformCall(context, SemIR::LocId::None, destroy_id, {});
   }
 }
