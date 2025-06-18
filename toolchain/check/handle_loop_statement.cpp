@@ -200,8 +200,7 @@ auto HandleParseNode(Context& context, Parse::ForHeaderId node_id) -> bool {
   // Branch to the loop body if the optional element has a value.
   auto cond_value_id =
       CallOptionalAccessor(context, node_id, element_id, "HasValue");
-  auto loop_exit_id =
-      BranchAndStartLoopBody(context, node_id, cond_value_id);
+  auto loop_exit_id = BranchAndStartLoopBody(context, node_id, cond_value_id);
 
   // The loop pattern's initializer is now complete, and any bindings in it
   // should be in scope.
@@ -226,10 +225,8 @@ auto HandleParseNode(Context& context, Parse::ForHeaderId node_id) -> bool {
 }
 
 auto HandleParseNode(Context& context, Parse::ForStatementId node_id) -> bool {
-  auto loop_exit_id =
-      context.node_stack().Pop<Parse::NodeKind::ForHeader>();
-  auto loop_header_id =
-      context.node_stack().Pop<Parse::NodeKind::ForHeader>();
+  auto loop_exit_id = context.node_stack().Pop<Parse::NodeKind::ForHeader>();
+  auto loop_header_id = context.node_stack().Pop<Parse::NodeKind::ForHeader>();
   context.break_continue_stack().pop_back();
 
   FinishLoopBody(context, node_id, loop_header_id, loop_exit_id);
