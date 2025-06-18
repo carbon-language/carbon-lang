@@ -150,7 +150,7 @@ fn For() {
 // CHECK:STDOUT: !21 = !DILocation(line: 17, column: 14, scope: !20)
 // CHECK:STDOUT: !22 = !DILocation(line: 17, column: 7, scope: !20)
 // CHECK:STDOUT: !23 = distinct !DISubprogram(name: "HasValue", linkageName: "_CHasValue.Optional.Core.b88d1103f417c6d4", scope: null, file: !24, line: 22, type: !5, spFlags: DISPFlagDefinition, unit: !2)
-// CHECK:STDOUT: !24 = !DIFile(filename: "/usr/local/google/home/richardsmith/.cache/bazel/_bazel_richardsmith/6a55cebe9c704783710516afebb4acd9/execroot/_main/bazel-out/k8-dbg/bin/toolchain/install/prefix_root/lib/carbon/../../lib/carbon/core/prelude/types/optional.carbon", directory: "")
+// CHECK:STDOUT: !24 = !DIFile(filename: "{{.*}}/prelude/types/optional.carbon", directory: "")
 // CHECK:STDOUT: !25 = !DILocation(line: 22, column: 46, scope: !23)
 // CHECK:STDOUT: !26 = !DILocation(line: 22, column: 39, scope: !23)
 // CHECK:STDOUT: !27 = distinct !DISubprogram(name: "Get", linkageName: "_CGet.Optional.Core.b88d1103f417c6d4", scope: null, file: !24, line: 23, type: !5, spFlags: DISPFlagDefinition, unit: !2)
