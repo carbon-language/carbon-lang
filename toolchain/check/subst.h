@@ -63,9 +63,9 @@ class SubstInstCallbacks {
 // which are substituted recursively, and if any of them change then `Rebuild`
 // is used to build a new instruction with the substituted operands.
 auto SubstInst(Context& context, SemIR::InstId inst_id,
-               SubstInstCallbacks&& callbacks) -> SemIR::InstId;
+               SubstInstCallbacks& callbacks) -> SemIR::InstId;
 auto SubstInst(Context& context, SemIR::TypeInstId inst_id,
-               SubstInstCallbacks&& callbacks) -> SemIR::TypeInstId;
+               SubstInstCallbacks& callbacks) -> SemIR::TypeInstId;
 
 // A substitution that is being performed.
 struct Substitution {

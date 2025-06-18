@@ -466,10 +466,10 @@ auto ResolveFacetTypeRewriteConstraints(
       // Replace any `ImplWitnessAccess` in the RHS of this constraint with the
       // RHS of another constraint that sets the value of the associated
       // constant being accessed in the RHS.
+      auto replace_witness_callbacks = SubstImplWitnessAccessCallbacks(
+          &context, loc_id, rewrites, &constraint);
       auto subst_inst_id =
-          SubstInst(context, constraint.rhs_id,
-                    SubstImplWitnessAccessCallbacks(&context, loc_id, rewrites,
-                                                    &constraint));
+          SubstInst(context, constraint.rhs_id, replace_witness_callbacks);
       if (subst_inst_id != constraint.rhs_id) {
         constraint.rhs_id = subst_inst_id;
         if (constraint.rhs_id != SemIR::ErrorInst::InstId) {

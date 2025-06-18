@@ -288,7 +288,7 @@ static auto Rebuild(Context& context, Worklist& worklist, SemIR::InstId inst_id,
 }
 
 auto SubstInst(Context& context, SemIR::InstId inst_id,
-               SubstInstCallbacks&& callbacks) -> SemIR::InstId {
+               SubstInstCallbacks& callbacks) -> SemIR::InstId {
   Worklist worklist(inst_id);
 
   // For each instruction that forms part of the constant, we will visit it
@@ -352,9 +352,9 @@ auto SubstInst(Context& context, SemIR::InstId inst_id,
 }
 
 auto SubstInst(Context& context, SemIR::TypeInstId inst_id,
-               SubstInstCallbacks&& callbacks) -> SemIR::TypeInstId {
-  return context.types().GetAsTypeInstId(SubstInst(
-      context, static_cast<SemIR::InstId>(inst_id), std::move(callbacks)));
+               SubstInstCallbacks& callbacks) -> SemIR::TypeInstId {
+  return context.types().GetAsTypeInstId(
+      SubstInst(context, static_cast<SemIR::InstId>(inst_id), callbacks));
 }
 
 namespace {
@@ -435,9 +435,9 @@ auto SubstConstant(Context& context, SemIR::LocId loc_id,
     return const_id;
   }
 
-  auto subst_inst_id =
-      SubstInst(context, context.constant_values().GetInstId(const_id),
-                SubstConstantCallbacks(&context, loc_id, substitutions));
+  auto callbacks = SubstConstantCallbacks(&context, loc_id, substitutions);
+  auto subst_inst_id = SubstInst(
+      context, context.constant_values().GetInstId(const_id), callbacks);
   return context.constant_values().Get(subst_inst_id);
 }
 

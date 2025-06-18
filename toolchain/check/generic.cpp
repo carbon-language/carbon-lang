@@ -206,9 +206,10 @@ static auto AddGenericTypeToEvalBlock(Context& context, SemIR::LocId loc_id,
                                       SemIR::TypeId type_id) -> SemIR::TypeId {
   // Substitute into the type's constant instruction and rebuild it in the eval
   // block.
-  auto type_inst_id =
-      SubstInst(context, context.types().GetInstId(type_id),
-                RebuildGenericConstantInEvalBlockCallbacks(&context, loc_id));
+  auto rebuild_generic_constant_callbacks =
+      RebuildGenericConstantInEvalBlockCallbacks(&context, loc_id);
+  auto type_inst_id = SubstInst(context, context.types().GetInstId(type_id),
+                                rebuild_generic_constant_callbacks);
   return context.types().GetTypeIdForTypeConstantId(
       context.constant_values().GetAttached(type_inst_id));
 }
@@ -230,7 +231,7 @@ static auto AddGenericConstantToEvalBlock(Context& context,
   auto const_inst_id = context.constant_values().GetConstantInstId(inst_id);
   auto callbacks = RebuildGenericConstantInEvalBlockCallbacks(
       &context, SemIR::LocId(inst_id));
-  auto new_inst_id = SubstInst(context, const_inst_id, std::move(callbacks));
+  auto new_inst_id = SubstInst(context, const_inst_id, callbacks);
   CARBON_CHECK(new_inst_id != const_inst_id,
                "No substitutions performed for generic constant {0}",
                context.insts().Get(inst_id));
@@ -244,9 +245,11 @@ static auto AddGenericConstantToEvalBlock(Context& context,
 static auto AddTemplateActionToEvalBlock(Context& context,
                                          SemIR::InstId inst_id) -> void {
   // Substitute into the constant value and rebuild it in the eval block.
-  auto new_inst_id = SubstInst(context, inst_id,
-                               RebuildTemplateActionInEvalBlockCallbacks(
-                                   &context, SemIR::LocId(inst_id), inst_id));
+  auto rebuild_template_action_callbacks =
+      RebuildTemplateActionInEvalBlockCallbacks(&context, SemIR::LocId(inst_id),
+                                                inst_id);
+  auto new_inst_id =
+      SubstInst(context, inst_id, rebuild_template_action_callbacks);
   CARBON_CHECK(new_inst_id == inst_id,
                "Substitution changed InstId of template action");
   context.generic_region_stack().PeekConstantsInGenericMap().Insert(inst_id,
