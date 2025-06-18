@@ -2,6 +2,7 @@
 // Exceptions. See /LICENSE for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
+// INCLUDE-FILE: toolchain/testing/testdata/min_prelude/convert.carbon
 // TODO: Add ranges and switch to "--dump-sem-ir-ranges=only".
 // EXTRA-ARGS: --no-prelude-import --dump-sem-ir-ranges=if-present
 //
@@ -36,11 +37,11 @@ interface ForwardDeclared {
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace [concrete] {
 // CHECK:STDOUT:     .Empty = %Empty.decl
-// CHECK:STDOUT:     .ForwardDeclared = %ForwardDeclared.decl.loc17
+// CHECK:STDOUT:     .ForwardDeclared = %ForwardDeclared.decl.loc18
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Empty.decl: type = interface_decl @Empty [concrete = constants.%Empty.type] {} {}
-// CHECK:STDOUT:   %ForwardDeclared.decl.loc17: type = interface_decl @ForwardDeclared [concrete = constants.%ForwardDeclared.type] {} {}
-// CHECK:STDOUT:   %ForwardDeclared.decl.loc19: type = interface_decl @ForwardDeclared [concrete = constants.%ForwardDeclared.type] {} {}
+// CHECK:STDOUT:   %ForwardDeclared.decl.loc18: type = interface_decl @ForwardDeclared [concrete = constants.%ForwardDeclared.type] {} {}
+// CHECK:STDOUT:   %ForwardDeclared.decl.loc20: type = interface_decl @ForwardDeclared [concrete = constants.%ForwardDeclared.type] {} {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: interface @Empty {

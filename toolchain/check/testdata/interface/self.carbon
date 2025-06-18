@@ -2,6 +2,7 @@
 // Exceptions. See /LICENSE for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
+// INCLUDE-FILE: toolchain/testing/testdata/min_prelude/convert.carbon
 // TODO: Add ranges and switch to "--dump-sem-ir-ranges=only".
 // EXTRA-ARGS: --no-prelude-import --dump-sem-ir-ranges=if-present
 //
@@ -43,18 +44,18 @@ interface UseSelf {
 // CHECK:STDOUT:     %return.patt: @F.%pattern_type (%pattern_type) = return_slot_pattern [concrete]
 // CHECK:STDOUT:     %return.param_patt: @F.%pattern_type (%pattern_type) = out_param_pattern %return.patt, call_param1 [concrete]
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %Self.ref.loc15_25: %UseSelf.type = name_ref Self, @UseSelf.%Self [symbolic = %Self (constants.%Self)]
-// CHECK:STDOUT:     %Self.as_type.loc15_25: type = facet_access_type %Self.ref.loc15_25 [symbolic = %Self.as_type.loc15_14.1 (constants.%Self.as_type)]
-// CHECK:STDOUT:     %.loc15_25: type = converted %Self.ref.loc15_25, %Self.as_type.loc15_25 [symbolic = %Self.as_type.loc15_14.1 (constants.%Self.as_type)]
-// CHECK:STDOUT:     %self.param: @F.%Self.as_type.loc15_14.1 (%Self.as_type) = value_param call_param0
-// CHECK:STDOUT:     %.loc15_14.1: type = splice_block %.loc15_14.2 [symbolic = %Self.as_type.loc15_14.1 (constants.%Self.as_type)] {
-// CHECK:STDOUT:       %Self.ref.loc15_14: %UseSelf.type = name_ref Self, @UseSelf.%Self [symbolic = %Self (constants.%Self)]
-// CHECK:STDOUT:       %Self.as_type.loc15_14.2: type = facet_access_type %Self.ref.loc15_14 [symbolic = %Self.as_type.loc15_14.1 (constants.%Self.as_type)]
-// CHECK:STDOUT:       %.loc15_14.2: type = converted %Self.ref.loc15_14, %Self.as_type.loc15_14.2 [symbolic = %Self.as_type.loc15_14.1 (constants.%Self.as_type)]
+// CHECK:STDOUT:     %Self.ref.loc16_25: %UseSelf.type = name_ref Self, @UseSelf.%Self [symbolic = %Self (constants.%Self)]
+// CHECK:STDOUT:     %Self.as_type.loc16_25: type = facet_access_type %Self.ref.loc16_25 [symbolic = %Self.as_type.loc16_14.1 (constants.%Self.as_type)]
+// CHECK:STDOUT:     %.loc16_25: type = converted %Self.ref.loc16_25, %Self.as_type.loc16_25 [symbolic = %Self.as_type.loc16_14.1 (constants.%Self.as_type)]
+// CHECK:STDOUT:     %self.param: @F.%Self.as_type.loc16_14.1 (%Self.as_type) = value_param call_param0
+// CHECK:STDOUT:     %.loc16_14.1: type = splice_block %.loc16_14.2 [symbolic = %Self.as_type.loc16_14.1 (constants.%Self.as_type)] {
+// CHECK:STDOUT:       %Self.ref.loc16_14: %UseSelf.type = name_ref Self, @UseSelf.%Self [symbolic = %Self (constants.%Self)]
+// CHECK:STDOUT:       %Self.as_type.loc16_14.2: type = facet_access_type %Self.ref.loc16_14 [symbolic = %Self.as_type.loc16_14.1 (constants.%Self.as_type)]
+// CHECK:STDOUT:       %.loc16_14.2: type = converted %Self.ref.loc16_14, %Self.as_type.loc16_14.2 [symbolic = %Self.as_type.loc16_14.1 (constants.%Self.as_type)]
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %self: @F.%Self.as_type.loc15_14.1 (%Self.as_type) = bind_name self, %self.param
-// CHECK:STDOUT:     %return.param: ref @F.%Self.as_type.loc15_14.1 (%Self.as_type) = out_param call_param1
-// CHECK:STDOUT:     %return: ref @F.%Self.as_type.loc15_14.1 (%Self.as_type) = return_slot %return.param
+// CHECK:STDOUT:     %self: @F.%Self.as_type.loc16_14.1 (%Self.as_type) = bind_name self, %self.param
+// CHECK:STDOUT:     %return.param: ref @F.%Self.as_type.loc16_14.1 (%Self.as_type) = out_param call_param1
+// CHECK:STDOUT:     %return: ref @F.%Self.as_type.loc16_14.1 (%Self.as_type) = return_slot %return.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %assoc0: %UseSelf.assoc_type = assoc_entity element0, %F.decl [concrete = constants.%assoc0]
 // CHECK:STDOUT:
@@ -66,15 +67,15 @@ interface UseSelf {
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic fn @F(@UseSelf.%Self: %UseSelf.type) {
 // CHECK:STDOUT:   %Self: %UseSelf.type = bind_symbolic_name Self, 0 [symbolic = %Self (constants.%Self)]
-// CHECK:STDOUT:   %Self.as_type.loc15_14.1: type = facet_access_type %Self [symbolic = %Self.as_type.loc15_14.1 (constants.%Self.as_type)]
-// CHECK:STDOUT:   %pattern_type: type = pattern_type %Self.as_type.loc15_14.1 [symbolic = %pattern_type (constants.%pattern_type)]
+// CHECK:STDOUT:   %Self.as_type.loc16_14.1: type = facet_access_type %Self [symbolic = %Self.as_type.loc16_14.1 (constants.%Self.as_type)]
+// CHECK:STDOUT:   %pattern_type: type = pattern_type %Self.as_type.loc16_14.1 [symbolic = %pattern_type (constants.%pattern_type)]
 // CHECK:STDOUT:
-// CHECK:STDOUT:   fn(%self.param: @F.%Self.as_type.loc15_14.1 (%Self.as_type)) -> @F.%Self.as_type.loc15_14.1 (%Self.as_type);
+// CHECK:STDOUT:   fn(%self.param: @F.%Self.as_type.loc16_14.1 (%Self.as_type)) -> @F.%Self.as_type.loc16_14.1 (%Self.as_type);
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @F(constants.%Self) {
 // CHECK:STDOUT:   %Self => constants.%Self
-// CHECK:STDOUT:   %Self.as_type.loc15_14.1 => constants.%Self.as_type
+// CHECK:STDOUT:   %Self.as_type.loc16_14.1 => constants.%Self.as_type
 // CHECK:STDOUT:   %pattern_type => constants.%pattern_type
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
