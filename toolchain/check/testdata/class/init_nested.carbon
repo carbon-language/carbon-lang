@@ -2,6 +2,7 @@
 // Exceptions. See /LICENSE for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
+// INCLUDE-FILE: toolchain/testing/testdata/min_prelude/int.carbon
 // TODO: Add ranges and switch to "--dump-sem-ir-ranges=only".
 // EXTRA-ARGS: --dump-sem-ir-ranges=if-present
 //
@@ -56,7 +57,7 @@ fn MakeOuter() -> Outer {
 // CHECK:STDOUT:     import Core//prelude
 // CHECK:STDOUT:     import Core//prelude/...
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %Core.Int: %Int.type = import_ref Core//prelude/types/int, Int, loaded [concrete = constants.%Int.generic]
+// CHECK:STDOUT:   %Core.Int: %Int.type = import_ref Core//prelude/parts/int, Int, loaded [concrete = constants.%Int.generic]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -89,27 +90,27 @@ fn MakeOuter() -> Outer {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @Inner {
-// CHECK:STDOUT:   %int_32.loc15: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
-// CHECK:STDOUT:   %i32.loc15: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
-// CHECK:STDOUT:   %.loc15: %Inner.elem = field_decl a, element0 [concrete]
 // CHECK:STDOUT:   %int_32.loc16: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
 // CHECK:STDOUT:   %i32.loc16: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
-// CHECK:STDOUT:   %.loc16: %Inner.elem = field_decl b, element1 [concrete]
+// CHECK:STDOUT:   %.loc16: %Inner.elem = field_decl a, element0 [concrete]
+// CHECK:STDOUT:   %int_32.loc17: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
+// CHECK:STDOUT:   %i32.loc17: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
+// CHECK:STDOUT:   %.loc17: %Inner.elem = field_decl b, element1 [concrete]
 // CHECK:STDOUT:   %struct_type.a.b: type = struct_type {.a: %i32, .b: %i32} [concrete = constants.%struct_type.a.b]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %struct_type.a.b [concrete = constants.%complete_type.705]
 // CHECK:STDOUT:   complete_type_witness = %complete_type
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%Inner
-// CHECK:STDOUT:   .a = %.loc15
-// CHECK:STDOUT:   .b = %.loc16
+// CHECK:STDOUT:   .a = %.loc16
+// CHECK:STDOUT:   .b = %.loc17
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @Outer {
-// CHECK:STDOUT:   %Inner.ref.loc22: type = name_ref Inner, file.%Inner.decl [concrete = constants.%Inner]
-// CHECK:STDOUT:   %.loc22: %Outer.elem = field_decl c, element0 [concrete]
 // CHECK:STDOUT:   %Inner.ref.loc23: type = name_ref Inner, file.%Inner.decl [concrete = constants.%Inner]
-// CHECK:STDOUT:   %.loc23: %Outer.elem = field_decl d, element1 [concrete]
+// CHECK:STDOUT:   %.loc23: %Outer.elem = field_decl c, element0 [concrete]
+// CHECK:STDOUT:   %Inner.ref.loc24: type = name_ref Inner, file.%Inner.decl [concrete = constants.%Inner]
+// CHECK:STDOUT:   %.loc24: %Outer.elem = field_decl d, element1 [concrete]
 // CHECK:STDOUT:   %struct_type.c.d: type = struct_type {.c: %Inner, .d: %Inner} [concrete = constants.%struct_type.c.d.dce]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %struct_type.c.d [concrete = constants.%complete_type.8b6]
 // CHECK:STDOUT:   complete_type_witness = %complete_type
@@ -117,23 +118,23 @@ fn MakeOuter() -> Outer {
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%Outer
 // CHECK:STDOUT:   .Inner = <poisoned>
-// CHECK:STDOUT:   .c = %.loc22
-// CHECK:STDOUT:   .d = %.loc23
+// CHECK:STDOUT:   .c = %.loc23
+// CHECK:STDOUT:   .d = %.loc24
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @MakeInner() -> %return.param: %Inner;
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @MakeOuter() -> %return.param: %Outer {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %MakeInner.ref.loc27_16: %MakeInner.type = name_ref MakeInner, file.%MakeInner.decl [concrete = constants.%MakeInner]
-// CHECK:STDOUT:   %.loc27_45.1: ref %Inner = class_element_access %return, element0
-// CHECK:STDOUT:   %MakeInner.call.loc27_26: init %Inner = call %MakeInner.ref.loc27_16() to %.loc27_45.1
-// CHECK:STDOUT:   %MakeInner.ref.loc27_34: %MakeInner.type = name_ref MakeInner, file.%MakeInner.decl [concrete = constants.%MakeInner]
-// CHECK:STDOUT:   %.loc27_45.2: ref %Inner = class_element_access %return, element1
-// CHECK:STDOUT:   %MakeInner.call.loc27_44: init %Inner = call %MakeInner.ref.loc27_34() to %.loc27_45.2
-// CHECK:STDOUT:   %.loc27_45.3: %struct_type.c.d.dce = struct_literal (%MakeInner.call.loc27_26, %MakeInner.call.loc27_44)
-// CHECK:STDOUT:   %.loc27_45.4: init %Outer = class_init (%MakeInner.call.loc27_26, %MakeInner.call.loc27_44), %return
-// CHECK:STDOUT:   %.loc27_46: init %Outer = converted %.loc27_45.3, %.loc27_45.4
-// CHECK:STDOUT:   return %.loc27_46 to %return
+// CHECK:STDOUT:   %MakeInner.ref.loc28_16: %MakeInner.type = name_ref MakeInner, file.%MakeInner.decl [concrete = constants.%MakeInner]
+// CHECK:STDOUT:   %.loc28_45.1: ref %Inner = class_element_access %return, element0
+// CHECK:STDOUT:   %MakeInner.call.loc28_26: init %Inner = call %MakeInner.ref.loc28_16() to %.loc28_45.1
+// CHECK:STDOUT:   %MakeInner.ref.loc28_34: %MakeInner.type = name_ref MakeInner, file.%MakeInner.decl [concrete = constants.%MakeInner]
+// CHECK:STDOUT:   %.loc28_45.2: ref %Inner = class_element_access %return, element1
+// CHECK:STDOUT:   %MakeInner.call.loc28_44: init %Inner = call %MakeInner.ref.loc28_34() to %.loc28_45.2
+// CHECK:STDOUT:   %.loc28_45.3: %struct_type.c.d.dce = struct_literal (%MakeInner.call.loc28_26, %MakeInner.call.loc28_44)
+// CHECK:STDOUT:   %.loc28_45.4: init %Outer = class_init (%MakeInner.call.loc28_26, %MakeInner.call.loc28_44), %return
+// CHECK:STDOUT:   %.loc28_46: init %Outer = converted %.loc28_45.3, %.loc28_45.4
+// CHECK:STDOUT:   return %.loc28_46 to %return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

@@ -13,12 +13,14 @@ package User;
 
 class C {};
 
-impl C as Core.INTERFACE {
+impl C as Core.INTERFACE where .Result = C {
   fn Op[self: C]() -> C {
     return {};
   }
 }
 
 fn TestOp(a: C) -> C {
+  //@dump-sem-ir-begin
   return OPa;
+  //@dump-sem-ir-end
 }

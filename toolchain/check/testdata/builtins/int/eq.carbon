@@ -2,6 +2,8 @@
 // Exceptions. See /LICENSE for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
+// INCLUDE-FILE: toolchain/testing/testdata/min_prelude/primitives.carbon
+//
 // AUTOUPDATE
 // TIP: To test this file alone, run:
 // TIP:   bazel test //toolchain/testing:file_test --test_arg=--file_tests=toolchain/check/testdata/builtins/int/eq.carbon
@@ -110,8 +112,8 @@ fn Test(n: Core.IntLiteral()) {
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %int_32: Core.IntLiteral = int_value 32 [concrete]
 // CHECK:STDOUT:   %i32: type = class_type @Int, @Int(%int_32) [concrete]
-// CHECK:STDOUT:   %Eq.type.e7f: type = fn_type @Eq.1 [concrete]
-// CHECK:STDOUT:   %Eq: %Eq.type.e7f = struct_value () [concrete]
+// CHECK:STDOUT:   %Eq.type: type = fn_type @Eq [concrete]
+// CHECK:STDOUT:   %Eq: %Eq.type = struct_value () [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -119,7 +121,7 @@ fn Test(n: Core.IntLiteral()) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @RuntimeCallIsValid(%a.param: %i32, %b.param: %i32) -> bool {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %Eq.ref: %Eq.type.e7f = name_ref Eq, file.%Eq.decl [concrete = constants.%Eq]
+// CHECK:STDOUT:   %Eq.ref: %Eq.type = name_ref Eq, file.%Eq.decl [concrete = constants.%Eq]
 // CHECK:STDOUT:   %a.ref: %i32 = name_ref a, %a
 // CHECK:STDOUT:   %b.ref: %i32 = name_ref b, %b
 // CHECK:STDOUT:   %int.eq: init bool = call %Eq.ref(%a.ref, %b.ref)

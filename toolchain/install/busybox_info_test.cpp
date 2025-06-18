@@ -14,6 +14,7 @@
 
 #include "common/check.h"
 #include "llvm/ADT/ScopeExit.h"
+#include "llvm/Support/FileSystem.h"
 
 namespace Carbon {
 namespace {
@@ -22,13 +23,18 @@ using ::testing::Eq;
 
 class BusyboxInfoTest : public ::testing::Test {
  public:
-  // Set up a temp directory for the test case.
   explicit BusyboxInfoTest() {
+    // Set up a temp directory for the test case.
     const char* tmpdir = std::getenv("TEST_TMPDIR");
     CARBON_CHECK(tmpdir);
     dir_ = MakeDir(std::filesystem::absolute(
         std::filesystem::path(tmpdir) /
         ::testing::UnitTest::GetInstance()->current_test_info()->name()));
+
+    // Most tests need the running binary for `MakeBusyboxFile`.
+    static int static_for_main_addr;
+    running_binary_ = llvm::sys::fs::getMainExecutable("busybox_info_test",
+                                                       &static_for_main_addr);
   }
 
   // Delete the test case's temp directory.
@@ -74,7 +80,7 @@ class BusyboxInfoTest : public ::testing::Test {
     if (busybox_target) {
       MakeSymlink(prefix / "lib/carbon/carbon-busybox", *busybox_target);
     } else {
-      MakeFile(prefix / "lib/carbon/carbon-busybox");
+      MakeBusyboxFile(prefix / "lib/carbon/carbon-busybox");
     }
     MakeDir(prefix / "lib/carbon/llvm/bin");
     MakeSymlink(prefix / "lib/carbon/llvm/bin/clang++", "clang");
@@ -84,93 +90,108 @@ class BusyboxInfoTest : public ::testing::Test {
     return prefix;
   }
 
+  // Makes a fake busybox file. This is a symlink to the running binary because
+  // we validate to make sure the running binary is one and the same.
+  auto MakeBusyboxFile(std::filesystem::path file) -> std::filesystem::path {
+    return MakeSymlink(file, running_binary_);
+  }
+
+  // The path to the running binary, `busybox_info_test`. This is provided
+  // because `GetExecutablePath` can fall back to it.
+  std::string running_binary_;
+
   // The test's temp directory, deleted on destruction.
   std::filesystem::path dir_;
 };
 
 TEST_F(BusyboxInfoTest, Direct) {
-  auto busybox = MakeFile(dir_ / "carbon-busybox");
+  auto busybox = MakeBusyboxFile(dir_ / "carbon-busybox");
 
-  auto info = GetBusyboxInfo(busybox.string());
+  auto info = GetBusyboxInfo(busybox.c_str());
   ASSERT_TRUE(info.ok()) << info.error();
   EXPECT_THAT(info->bin_path, Eq(busybox));
   EXPECT_THAT(info->mode, Eq(std::nullopt));
 }
 
 TEST_F(BusyboxInfoTest, SymlinkInCurrentDirectory) {
-  MakeFile(dir_ / "carbon-busybox");
+  MakeBusyboxFile(dir_ / "carbon-busybox");
   auto target = MakeSymlink(dir_ / "carbon", "carbon-busybox");
 
-  auto info = GetBusyboxInfo(target.string());
+  auto info = GetBusyboxInfo(target.c_str());
   ASSERT_TRUE(info.ok()) << info.error();
   EXPECT_THAT(info->bin_path, Eq(dir_ / "carbon-busybox"));
   EXPECT_THAT(info->mode, Eq(std::nullopt));
 }
 
 TEST_F(BusyboxInfoTest, SymlinkInCurrentDirectoryWithDot) {
-  MakeFile(dir_ / "carbon-busybox");
+  MakeBusyboxFile(dir_ / "carbon-busybox");
   auto target = MakeSymlink(dir_ / "carbon", "./carbon-busybox");
 
-  auto info = GetBusyboxInfo(target.string());
+  auto info = GetBusyboxInfo(target.c_str());
   ASSERT_TRUE(info.ok()) << info.error();
   EXPECT_THAT(info->bin_path, Eq(dir_ / "./carbon-busybox"));
   EXPECT_THAT(info->mode, Eq(std::nullopt));
 }
 
 TEST_F(BusyboxInfoTest, ExtraSymlink) {
-  MakeFile(dir_ / "carbon-busybox");
+  MakeBusyboxFile(dir_ / "carbon-busybox");
   MakeSymlink(dir_ / "c", "carbon-busybox");
   auto target = MakeSymlink(dir_ / "carbon", "c");
 
-  auto info = GetBusyboxInfo(target.string());
+  auto info = GetBusyboxInfo(target.c_str());
   ASSERT_TRUE(info.ok()) << info.error();
   EXPECT_THAT(info->bin_path, Eq(dir_ / "carbon-busybox"));
   EXPECT_THAT(info->mode, Eq(std::nullopt));
 }
 
 TEST_F(BusyboxInfoTest, OriginalSymlinkNameFormsMode) {
-  MakeFile(dir_ / "carbon-busybox");
+  MakeBusyboxFile(dir_ / "carbon-busybox");
   MakeSymlink(dir_ / "carbon", "carbon-busybox");
   auto clang_target = MakeSymlink(dir_ / "clang", "carbon");
   auto clang_plusplus_target = MakeSymlink(dir_ / "clang++", "clang");
 
-  auto info = GetBusyboxInfo(clang_target.string());
+  auto info = GetBusyboxInfo(clang_target.c_str());
   ASSERT_TRUE(info.ok()) << info.error();
   EXPECT_THAT(info->bin_path, Eq(dir_ / "carbon-busybox"));
   EXPECT_THAT(info->mode, Eq("clang"));
 
-  info = GetBusyboxInfo(clang_plusplus_target.string());
+  info = GetBusyboxInfo(clang_plusplus_target.c_str());
   ASSERT_TRUE(info.ok()) << info.error();
   EXPECT_THAT(info->bin_path, Eq(dir_ / "carbon-busybox"));
   EXPECT_THAT(info->mode, Eq("clang++"));
 }
 
-TEST_F(BusyboxInfoTest, BusyboxIsSymlink) {
-  MakeFile(dir_ / "actual-busybox");
-  auto target = MakeSymlink(dir_ / "carbon-busybox", "actual-busybox");
-
-  auto info = GetBusyboxInfo(target.string());
-  ASSERT_TRUE(info.ok()) << info.error();
-  EXPECT_THAT(info->bin_path, Eq(target));
-  EXPECT_THAT(info->mode, Eq(std::nullopt));
-}
-
 TEST_F(BusyboxInfoTest, BusyboxIsSymlinkToNowhere) {
   auto target = MakeSymlink(dir_ / "carbon-busybox", "nonexistent");
 
-  auto info = GetBusyboxInfo(target.string());
-  ASSERT_TRUE(info.ok()) << info.error();
-  EXPECT_THAT(info->bin_path, Eq(dir_ / "carbon-busybox"));
-  EXPECT_THAT(info->mode, Eq(std::nullopt));
+  auto info = GetBusyboxInfo(target.c_str());
+  ASSERT_FALSE(info.ok());
+  EXPECT_THAT(info.error().message(),
+              Eq(llvm::formatv("expected carbon-busybox symlink at `{0}`",
+                               running_binary_)
+                     .str()));
+}
+
+TEST_F(BusyboxInfoTest, BusyboxIsWrongFile) {
+  // This has the correct name, but it doesn't map back to the running binary
+  // and so is ignored.
+  auto target = MakeFile(dir_ / "carbon-busybox");
+
+  auto info = GetBusyboxInfo(target.c_str());
+  ASSERT_FALSE(info.ok());
+  EXPECT_THAT(info.error().message(),
+              Eq(llvm::formatv("expected carbon-busybox symlink at `{0}`",
+                               running_binary_)
+                     .str()));
 }
 
 TEST_F(BusyboxInfoTest, RelativeSymlink) {
   MakeDir(dir_ / "dir1");
-  MakeFile(dir_ / "dir1/carbon-busybox");
+  MakeBusyboxFile(dir_ / "dir1/carbon-busybox");
   MakeDir(dir_ / "dir2");
   auto target = MakeSymlink(dir_ / "dir2/carbon", "../dir1/carbon-busybox");
 
-  auto info = GetBusyboxInfo(target.string());
+  auto info = GetBusyboxInfo(target.c_str());
   ASSERT_TRUE(info.ok()) << info.error();
   EXPECT_THAT(info->bin_path, Eq(dir_ / "dir2/../dir1/carbon-busybox"));
   EXPECT_THAT(info->mode, Eq(std::nullopt));
@@ -178,12 +199,12 @@ TEST_F(BusyboxInfoTest, RelativeSymlink) {
 
 TEST_F(BusyboxInfoTest, AbsoluteSymlink) {
   MakeDir(dir_ / "dir1");
-  auto busybox = MakeFile(dir_ / "dir1/carbon-busybox");
+  auto busybox = MakeBusyboxFile(dir_ / "dir1/carbon-busybox");
   ASSERT_TRUE(busybox.is_absolute());
   MakeDir(dir_ / "dir2");
   auto target = MakeSymlink(dir_ / "dir2/carbon", busybox);
 
-  auto info = GetBusyboxInfo(target.string());
+  auto info = GetBusyboxInfo(target.c_str());
   ASSERT_TRUE(info.ok()) << info.error();
   EXPECT_THAT(info->bin_path, Eq(busybox));
   EXPECT_THAT(info->mode, Eq(std::nullopt));
@@ -192,7 +213,7 @@ TEST_F(BusyboxInfoTest, AbsoluteSymlink) {
 TEST_F(BusyboxInfoTest, NotBusyboxFile) {
   auto target = MakeFile(dir_ / "file");
 
-  auto info = GetBusyboxInfo(target.string());
+  auto info = GetBusyboxInfo(target.c_str());
   EXPECT_FALSE(info.ok());
 }
 
@@ -200,30 +221,30 @@ TEST_F(BusyboxInfoTest, NotBusyboxSymlink) {
   MakeFile(dir_ / "file");
   auto target = MakeSymlink(dir_ / "carbon", "file");
 
-  auto info = GetBusyboxInfo(target.string());
+  auto info = GetBusyboxInfo(target.c_str());
   EXPECT_FALSE(info.ok());
 }
 
 TEST_F(BusyboxInfoTest, LayerSymlinksInstallTree) {
-  auto actual_busybox = MakeFile(dir_ / "actual-busybox");
+  auto actual_busybox = MakeBusyboxFile(dir_ / "actual-busybox");
 
   // Create a facsimile of the install prefix with even the busybox as a
   // symlink. Also include potential relative sibling symlinks like `clang++` to
   // `clang`.
   auto prefix = MakeInstallTree(dir_ / "test_prefix", actual_busybox);
 
-  auto info = GetBusyboxInfo((prefix / "bin/carbon").string());
+  auto info = GetBusyboxInfo((prefix / "bin/carbon").c_str());
   ASSERT_TRUE(info.ok()) << info.error();
   EXPECT_THAT(info->bin_path, Eq(prefix / "bin/../lib/carbon/carbon-busybox"));
   EXPECT_THAT(info->mode, Eq(std::nullopt));
 
-  info = GetBusyboxInfo((prefix / "lib/carbon/llvm/bin/clang").string());
+  info = GetBusyboxInfo((prefix / "lib/carbon/llvm/bin/clang").c_str());
   ASSERT_TRUE(info.ok()) << info.error();
   EXPECT_THAT(info->bin_path,
               Eq(prefix / "lib/carbon/llvm/bin/../../carbon-busybox"));
   EXPECT_THAT(info->mode, Eq("clang"));
 
-  info = GetBusyboxInfo((prefix / "lib/carbon/llvm/bin/clang++").string());
+  info = GetBusyboxInfo((prefix / "lib/carbon/llvm/bin/clang++").c_str());
   ASSERT_TRUE(info.ok()) << info.error();
   EXPECT_THAT(info->bin_path,
               Eq(prefix / "lib/carbon/llvm/bin/../../carbon-busybox"));
@@ -237,7 +258,7 @@ TEST_F(BusyboxInfoTest, StopSearchAtFirstSymlinkWithRelativeBusybox) {
   // A second install, but with its symlinks pointing into the `opt` tree rather
   // than at its busybox.
   MakeDir(dir_ / "lib/carbon");
-  MakeFile(dir_ / "lib/carbon/carbon-busybox");
+  MakeBusyboxFile(dir_ / "lib/carbon/carbon-busybox");
   MakeDir(dir_ / "bin");
   auto target = MakeSymlink(dir_ / "bin/carbon", "../opt/bin/carbon");
   MakeDir(dir_ / "lib/carbon/llvm/bin");
@@ -246,10 +267,10 @@ TEST_F(BusyboxInfoTest, StopSearchAtFirstSymlinkWithRelativeBusybox) {
 
   // Starting from the second install uses the relative busybox rather than
   // traversing the symlink further.
-  auto info = GetBusyboxInfo(target.string());
+  auto info = GetBusyboxInfo(target.c_str());
   ASSERT_TRUE(info.ok()) << info.error();
   EXPECT_THAT(info->bin_path, Eq(dir_ / "bin/../lib/carbon/carbon-busybox"));
-  info = GetBusyboxInfo(clang_target.string());
+  info = GetBusyboxInfo(clang_target.c_str());
   ASSERT_TRUE(info.ok()) << info.error();
   EXPECT_THAT(info->bin_path,
               Eq(dir_ / "lib/carbon/llvm/bin/../../carbon-busybox"));
@@ -271,7 +292,7 @@ TEST_F(BusyboxInfoTest, RejectSymlinkInUnrelatedInstall) {
 
   // Check that the busybox doesn't use the relative busybox in this case, and
   // walks the symlink to find the correct installation.
-  auto info = GetBusyboxInfo(stray_target.string());
+  auto info = GetBusyboxInfo(stray_target.c_str());
   ASSERT_TRUE(info.ok()) << info.error();
   EXPECT_THAT(info->bin_path,
               Eq(dir_ / "usr/local/bin/../lib/carbon/carbon-busybox"));
@@ -281,7 +302,7 @@ TEST_F(BusyboxInfoTest, RejectSymlinkInUnrelatedInstall) {
 
   // Check that the busybox doesn't use the relative busybox in this case, and
   // walks the symlink to find the correct installation.
-  info = GetBusyboxInfo(stray_target.string());
+  info = GetBusyboxInfo(stray_target.c_str());
   ASSERT_TRUE(info.ok()) << info.error();
   EXPECT_THAT(info->bin_path,
               Eq(dir_ / "usr/local/bin/../lib/carbon/carbon-busybox"));
@@ -290,14 +311,17 @@ TEST_F(BusyboxInfoTest, RejectSymlinkInUnrelatedInstall) {
 TEST_F(BusyboxInfoTest, EnvBinaryPathOverride) {
   // The test should not have this environment variable set.
   ASSERT_THAT(getenv(Argv0OverrideEnv), Eq(nullptr));
-  // Clean up this environment variable when this test finishes.
-  auto _ = llvm::make_scope_exit([] { unsetenv(Argv0OverrideEnv); });
 
   // Set the environment to our actual busybox.
-  auto busybox = MakeFile(dir_ / "carbon-busybox");
-  setenv(Argv0OverrideEnv, busybox.c_str(), /*overwrite=*/1);
+  auto busybox = MakeBusyboxFile(dir_ / "carbon-busybox");
 
+  setenv(Argv0OverrideEnv, busybox.c_str(), /*overwrite=*/1);
   auto info = GetBusyboxInfo("/some/nonexistent/path");
+  if (getenv(Argv0OverrideEnv)) {
+    unsetenv(Argv0OverrideEnv);
+    ADD_FAILURE() << "GetBusyboxInfo should unset Argv0OverrideEnv";
+  }
+
   ASSERT_TRUE(info.ok()) << info.error();
   EXPECT_THAT(info->bin_path, Eq(busybox));
   EXPECT_THAT(info->mode, Eq(std::nullopt));

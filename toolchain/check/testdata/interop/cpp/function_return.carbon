@@ -2,6 +2,8 @@
 // Exceptions. See /LICENSE for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
+// INCLUDE-FILE: toolchain/testing/testdata/min_prelude/primitives.carbon
+//
 // AUTOUPDATE
 // TIP: To test this file alone, run:
 // TIP:   bazel test //toolchain/testing:file_test --test_arg=--file_tests=toolchain/check/testdata/interop/cpp/function_return.carbon
@@ -111,9 +113,9 @@ fn F() {
 // CHECK:STDOUT:     %int_16: Core.IntLiteral = int_value 16 [concrete = constants.%int_16]
 // CHECK:STDOUT:     %i16: type = class_type @Int, @Int(constants.%int_16) [concrete = constants.%i16]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %.loc8_30.1: ref %i16 = temporary_storage
-// CHECK:STDOUT:   %.loc8_30.2: ref %i16 = temporary %.loc8_30.1, %foo_short.call
-// CHECK:STDOUT:   %x: ref %i16 = bind_name x, %.loc8_30.2
+// CHECK:STDOUT:   %.loc8_30.1: %i16 = value_of_initializer %foo_short.call
+// CHECK:STDOUT:   %.loc8_30.2: %i16 = converted %foo_short.call, %.loc8_30.1
+// CHECK:STDOUT:   %x: %i16 = bind_name x, %.loc8_30.2
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

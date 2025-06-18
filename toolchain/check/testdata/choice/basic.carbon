@@ -2,6 +2,8 @@
 // Exceptions. See /LICENSE for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
+// INCLUDE-FILE: toolchain/testing/testdata/min_prelude/uint.carbon
+//
 // AUTOUPDATE
 // TIP: To test this file alone, run:
 // TIP:   bazel test //toolchain/testing:file_test --test_arg=--file_tests=toolchain/check/testdata/choice/basic.carbon
@@ -143,8 +145,8 @@ let never: Never = {};
 // CHECK:STDOUT:   %int_0.5c6: Core.IntLiteral = int_value 0 [concrete]
 // CHECK:STDOUT:   %ImplicitAs.type.54b: type = facet_type <@ImplicitAs, @ImplicitAs(%u2)> [concrete]
 // CHECK:STDOUT:   %Convert.type.f0e: type = fn_type @Convert.1, @ImplicitAs(%u2) [concrete]
-// CHECK:STDOUT:   %To.c80: Core.IntLiteral = bind_symbolic_name To, 0 [symbolic]
-// CHECK:STDOUT:   %Convert.type.30e: type = fn_type @Convert.2, @impl.86e(%To.c80) [symbolic]
+// CHECK:STDOUT:   %To: Core.IntLiteral = bind_symbolic_name To, 0 [symbolic]
+// CHECK:STDOUT:   %Convert.type.30e: type = fn_type @Convert.2, @impl.86e(%To) [symbolic]
 // CHECK:STDOUT:   %Convert.d1a: %Convert.type.30e = struct_value () [symbolic]
 // CHECK:STDOUT:   %ImplicitAs.impl_witness.801: <witness> = impl_witness imports.%ImplicitAs.impl_witness_table.bb8, @impl.86e(%int_2.ecc) [concrete]
 // CHECK:STDOUT:   %Convert.type.70b: type = fn_type @Convert.2, @impl.86e(%int_2.ecc) [concrete]
@@ -174,7 +176,7 @@ let never: Never = {};
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
-// CHECK:STDOUT:   %Core.import_ref.c3d: @impl.86e.%Convert.type (%Convert.type.30e) = import_ref Core//prelude/types/uint, loc20_40, loaded [symbolic = @impl.86e.%Convert (constants.%Convert.d1a)]
+// CHECK:STDOUT:   %Core.import_ref.c3d: @impl.86e.%Convert.type (%Convert.type.30e) = import_ref Core//prelude/parts/uint, loc16_40, loaded [symbolic = @impl.86e.%Convert (constants.%Convert.d1a)]
 // CHECK:STDOUT:   %ImplicitAs.impl_witness_table.bb8 = impl_witness_table (%Core.import_ref.c3d), @impl.86e [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

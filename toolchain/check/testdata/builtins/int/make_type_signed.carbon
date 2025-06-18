@@ -2,6 +2,8 @@
 // Exceptions. See /LICENSE for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
+// INCLUDE-FILE: toolchain/testing/testdata/min_prelude/convert.carbon
+//
 // AUTOUPDATE
 // TIP: To test this file alone, run:
 // TIP:   bazel test //toolchain/testing:file_test --test_arg=--file_tests=toolchain/check/testdata/builtins/int/make_type_signed.carbon
@@ -78,7 +80,7 @@ library "[[@TEST_NAME]]";
 
 import library "types";
 
-fn Negate(n: i32) -> i32 = "int.snegate";
+fn Negate(a: IntLiteral()) -> IntLiteral() = "int.snegate";
 
 // CHECK:STDERR: fail_negative_size.carbon:[[@LINE+4]]:8: error: integer type width of -1 is not positive [IntWidthNotPositive]
 // CHECK:STDERR: var n: Int(Negate(1));

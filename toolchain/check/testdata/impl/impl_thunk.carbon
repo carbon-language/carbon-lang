@@ -2,7 +2,7 @@
 // Exceptions. See /LICENSE for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
-// EXTRA-ARGS: --no-prelude-import
+// INCLUDE-FILE: toolchain/testing/testdata/min_prelude/convert.carbon
 //
 // AUTOUPDATE
 // TIP: To test this file alone, run:
@@ -119,7 +119,10 @@ impl A as X {
 library "[[@TEST_NAME]]";
 
 interface I {
-  // CHECK:STDERR: fail_param_type_mismatch.carbon:[[@LINE+3]]:8: error: `Core.ImplicitAs` implicitly referenced here, but package `Core` not found [CoreNotFound]
+  // CHECK:STDERR: fail_param_type_mismatch.carbon:[[@LINE+6]]:8: error: cannot implicitly convert expression of type `A` to `B` [ConversionFailure]
+  // CHECK:STDERR:   fn F(a: Self);
+  // CHECK:STDERR:        ^~~~~~~
+  // CHECK:STDERR: fail_param_type_mismatch.carbon:[[@LINE+3]]:8: note: type `A` does not implement interface `Core.ImplicitAs(B)` [MissingImplInMemberAccessNote]
   // CHECK:STDERR:   fn F(a: Self);
   // CHECK:STDERR:        ^~~~~~~
   fn F(a: Self);
@@ -151,10 +154,13 @@ class A {}
 class B {}
 
 impl A as I {
-  // CHECK:STDERR: fail_return_mismatch.carbon:[[@LINE+7]]:3: error: `Core.ImplicitAs` implicitly referenced here, but package `Core` not found [CoreNotFound]
+  // CHECK:STDERR: fail_return_mismatch.carbon:[[@LINE+10]]:3: error: cannot implicitly convert expression of type `B` to `A` [ConversionFailure]
   // CHECK:STDERR:   fn F() -> B;
   // CHECK:STDERR:   ^~~~~~~~~~~~
-  // CHECK:STDERR: fail_return_mismatch.carbon:[[@LINE-10]]:3: note: while building thunk to match the signature of this function [ThunkSignature]
+  // CHECK:STDERR: fail_return_mismatch.carbon:[[@LINE+7]]:3: note: type `B` does not implement interface `Core.ImplicitAs(A)` [MissingImplInMemberAccessNote]
+  // CHECK:STDERR:   fn F() -> B;
+  // CHECK:STDERR:   ^~~~~~~~~~~~
+  // CHECK:STDERR: fail_return_mismatch.carbon:[[@LINE-13]]:3: note: while building thunk to match the signature of this function [ThunkSignature]
   // CHECK:STDERR:   fn F() -> Self;
   // CHECK:STDERR:   ^~~~~~~~~~~~~~~
   // CHECK:STDERR:
@@ -233,17 +239,20 @@ class B;
 
 class C {
   impl as I(B) {
-    // CHECK:STDERR: fail_param_type_incomplete.carbon:[[@LINE+14]]:5: note: while building thunk calling this function [ThunkCallee]
+    // CHECK:STDERR: fail_param_type_incomplete.carbon:[[@LINE+17]]:5: note: while building thunk calling this function [ThunkCallee]
     // CHECK:STDERR:     fn F(c: C);
     // CHECK:STDERR:     ^~~~~~~~~~~
     // CHECK:STDERR:
-    // CHECK:STDERR: fail_param_type_incomplete.carbon:[[@LINE-14]]:8: error: `Core.ImplicitAs` implicitly referenced here, but package `Core` not found [CoreNotFound]
+    // CHECK:STDERR: fail_param_type_incomplete.carbon:[[@LINE-14]]:8: error: cannot implicitly convert expression of type `B` to `C` [ConversionFailure]
+    // CHECK:STDERR:   fn F(a: T);
+    // CHECK:STDERR:        ^~~~
+    // CHECK:STDERR: fail_param_type_incomplete.carbon:[[@LINE-17]]:8: note: type `B` does not implement interface `Core.ImplicitAs(C)` [MissingImplInMemberAccessNote]
     // CHECK:STDERR:   fn F(a: T);
     // CHECK:STDERR:        ^~~~
     // CHECK:STDERR: fail_param_type_incomplete.carbon:[[@LINE+7]]:10: note: initializing function parameter [InCallToFunctionParam]
     // CHECK:STDERR:     fn F(c: C);
     // CHECK:STDERR:          ^~~~
-    // CHECK:STDERR: fail_param_type_incomplete.carbon:[[@LINE-20]]:3: note: while building thunk to match the signature of this function [ThunkSignature]
+    // CHECK:STDERR: fail_param_type_incomplete.carbon:[[@LINE-23]]:3: note: while building thunk to match the signature of this function [ThunkSignature]
     // CHECK:STDERR:   fn F(a: T);
     // CHECK:STDERR:   ^~~~~~~~~~~
     // CHECK:STDERR:
@@ -322,6 +331,9 @@ impl () as I({}) {
 // CHECK:STDOUT:   %struct: %struct_type.c.d.15a = struct_value (%empty_tuple, %empty_struct) [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
+// CHECK:STDOUT: imports {
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
 // CHECK:STDOUT: impl @impl: %.loc8_7.2 as %I.ref {
 // CHECK:STDOUT:   %F.decl.loc10_48.1: %F.type.39e918.1 = fn_decl @F.2 [concrete = constants.%F.c04b92.1] {
 // CHECK:STDOUT:     %y.patt: %pattern_type.231 = binding_pattern y [concrete]
@@ -359,7 +371,7 @@ impl () as I({}) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F.2(%y.param: %struct_type.b.a.40c) -> %return.param: %struct_type.d.c.b36;
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @F.3(%x.param: %struct_type.a.b.391) -> %return.param: %struct_type.c.d.15a {
+// CHECK:STDOUT: fn @F.3(%x.param: %struct_type.a.b.391) -> %return.param: %struct_type.c.d.15a [thunk @impl.%F.decl.loc10_48.1] {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %F.ref: %F.type.39e918.1 = name_ref F, @impl.%F.decl.loc10_48.1 [concrete = constants.%F.c04b92.1]
 // CHECK:STDOUT:   <elided>
@@ -398,6 +410,9 @@ impl () as I({}) {
 // CHECK:STDOUT:   %F.5161e9.2: %F.type.f1b0b1.2 = struct_value () [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
+// CHECK:STDOUT: imports {
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
 // CHECK:STDOUT: impl @impl: %B.ref as %X.ref {
 // CHECK:STDOUT:   %F.decl.loc14_39.1: %F.type.f1b0b1.1 = fn_decl @F.2 [concrete = constants.%F.5161e9.1] {
 // CHECK:STDOUT:     %self.patt: %pattern_type.5f8 = binding_pattern self [concrete]
@@ -440,7 +455,7 @@ impl () as I({}) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F.2(%self.param: %ptr.6db, %other.param: %ptr.6db) -> %ptr.019;
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @F.3(%self.param: %ptr.e79, %other.param: %ptr.e79) -> %ptr.e79 {
+// CHECK:STDOUT: fn @F.3(%self.param: %ptr.e79, %other.param: %ptr.e79) -> %ptr.e79 [thunk @impl.%F.decl.loc14_39.1] {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %F.ref: %F.type.f1b0b1.1 = name_ref F, @impl.%F.decl.loc14_39.1 [concrete = constants.%F.5161e9.1]
 // CHECK:STDOUT:   <elided>
@@ -467,6 +482,9 @@ impl () as I({}) {
 // CHECK:STDOUT:   %F.5161e9.1: %F.type.f1b0b1.1 = struct_value () [concrete]
 // CHECK:STDOUT:   %F.type.f1b0b1.2: type = fn_type @F.3 [concrete]
 // CHECK:STDOUT:   %F.5161e9.2: %F.type.f1b0b1.2 = struct_value () [concrete]
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: imports {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: impl @impl: %B.ref as %X.ref {
@@ -497,7 +515,7 @@ impl () as I({}) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F.2(%self.param: %A, %other.param: %A);
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @F.3(%self.param: %B, %other.param: %B) {
+// CHECK:STDOUT: fn @F.3(%self.param: %B, %other.param: %B) [thunk @impl.%F.decl.loc13_26.1] {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %F.ref: %F.type.f1b0b1.1 = name_ref F, @impl.%F.decl.loc13_26.1 [concrete = constants.%F.5161e9.1]
 // CHECK:STDOUT:   <elided>
@@ -523,6 +541,9 @@ impl () as I({}) {
 // CHECK:STDOUT:   %ptr.e79: type = ptr_type %B [concrete]
 // CHECK:STDOUT:   %F.type.f1b0b1.2: type = fn_type @F.3 [concrete]
 // CHECK:STDOUT:   %F.5161e9.2: %F.type.f1b0b1.2 = struct_value () [concrete]
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: imports {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: impl @impl: %B.ref as %X.ref {
@@ -567,7 +588,7 @@ impl () as I({}) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F.2(%self.param: %ptr.6db, %other.param: %ptr.6db) -> %ptr.019;
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @F.3(%self.param: %ptr.e79, %other.param: %ptr.e79) -> %ptr.e79 {
+// CHECK:STDOUT: fn @F.3(%self.param: %ptr.e79, %other.param: %ptr.e79) -> %ptr.e79 [thunk @impl.%F.decl.loc14_39.1] {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %F.ref: %F.type.f1b0b1.1 = name_ref F, @impl.%F.decl.loc14_39.1 [concrete = constants.%F.5161e9.1]
 // CHECK:STDOUT:   <elided>
@@ -595,6 +616,9 @@ impl () as I({}) {
 // CHECK:STDOUT:   %F.77e9d5.2: %F.type.b24d6f.2 = struct_value () [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
+// CHECK:STDOUT: imports {
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
 // CHECK:STDOUT: impl @impl: %A.ref as %X.ref {
 // CHECK:STDOUT:   %F.decl.loc20_14.1: %F.type.b24d6f.1 = fn_decl @F.2 [concrete = constants.%F.77e9d5.1] {
 // CHECK:STDOUT:     %return.patt: %pattern_type.049 = return_slot_pattern [concrete]
@@ -618,9 +642,10 @@ impl () as I({}) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F.2() -> %return.param: %B;
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @F.3() -> %return.param: %A {
+// CHECK:STDOUT: fn @F.3() -> %return.param: %A [thunk @impl.%F.decl.loc20_14.1] {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %F.ref: %F.type.b24d6f.1 = name_ref F, @impl.%F.decl.loc20_14.1 [concrete = constants.%F.77e9d5.1]
+// CHECK:STDOUT:   <elided>
 // CHECK:STDOUT:   %.loc20_14.1: ref %B = temporary_storage
 // CHECK:STDOUT:   %F.call: init %B = call %F.ref() to %.loc20_14.1
 // CHECK:STDOUT:   %.loc20_14.2: ref %B = temporary %.loc20_14.1, %F.call
@@ -646,6 +671,9 @@ impl () as I({}) {
 // CHECK:STDOUT:   %require_complete.4ae: <witness> = require_complete_type %U [symbolic]
 // CHECK:STDOUT:   %require_complete.6e5: <witness> = require_complete_type %ptr.79f [symbolic]
 // CHECK:STDOUT:   %F.specific_fn: <specific function> = specific_function %F.c04b92.1, @F.2(%ptr.79f) [symbolic]
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: imports {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: impl @impl: %.loc8_7.2 as %I.ref {
@@ -696,7 +724,7 @@ impl () as I({}) {
 // CHECK:STDOUT:   %F.specific_fn.loc10_29.2: <specific function> = specific_function constants.%F.c04b92.1, @F.2(%ptr) [symbolic = %F.specific_fn.loc10_29.2 (constants.%F.specific_fn)]
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT:
-// CHECK:STDOUT:   fn(%x.param: @F.3.%ptr (%ptr.79f)) -> @F.3.%ptr (%ptr.79f) {
+// CHECK:STDOUT:   fn(%x.param: @F.3.%ptr (%ptr.79f)) -> @F.3.%ptr (%ptr.79f) [thunk @impl.%F.decl.loc10_29.1] {
 // CHECK:STDOUT:   !entry:
 // CHECK:STDOUT:     %F.ref: %F.type.39e918.1 = name_ref F, @impl.%F.decl.loc10_29.1 [concrete = constants.%F.c04b92.1]
 // CHECK:STDOUT:     <elided>
@@ -743,6 +771,9 @@ impl () as I({}) {
 // CHECK:STDOUT:   %F.type.39e918.2: type = fn_type @F.3 [concrete]
 // CHECK:STDOUT:   %F.c04b92.2: %F.type.39e918.2 = struct_value () [concrete]
 // CHECK:STDOUT:   %require_complete.4ae: <witness> = require_complete_type %U [symbolic]
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: imports {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: impl @impl: %.loc10_7.2 as %I.ref {
@@ -799,7 +830,7 @@ impl () as I({}) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:
-// CHECK:STDOUT:   fn(%self.param: %empty_tuple.type, %x.param: @F.3.%ptr (%ptr.79f)) -> @F.3.%ptr (%ptr.79f) {
+// CHECK:STDOUT:   fn(%self.param: %empty_tuple.type, %x.param: @F.3.%ptr (%ptr.79f)) -> @F.3.%ptr (%ptr.79f) [thunk @impl.%F.decl.loc19_39.1] {
 // CHECK:STDOUT:   !entry:
 // CHECK:STDOUT:     %F.ref: %F.type.39e918.1 = name_ref F, @impl.%F.decl.loc19_39.1 [concrete = constants.%F.c04b92.1]
 // CHECK:STDOUT:     <elided>
@@ -833,6 +864,9 @@ impl () as I({}) {
 // CHECK:STDOUT:   %struct: %struct_type.a.b.f95 = struct_value (%empty_struct, %empty_struct) [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
+// CHECK:STDOUT: imports {
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
 // CHECK:STDOUT: impl @impl: %.loc8_7.2 as %I.type {
 // CHECK:STDOUT:   %F.decl.loc10_29.1: %F.type.29ab63.1 = fn_decl @F.2 [concrete = constants.%F.975709.1] {
 // CHECK:STDOUT:     %return.patt: %pattern_type.914 = return_slot_pattern [concrete]
@@ -859,9 +893,10 @@ impl () as I({}) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F.2() -> %return.param: %struct_type.b.a.1b0;
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @F.3() -> %return.param: %struct_type.a.b.f95 {
+// CHECK:STDOUT: fn @F.3() -> %return.param: %struct_type.a.b.f95 [thunk @impl.%F.decl.loc10_29.1] {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %F.ref: %F.type.29ab63.1 = name_ref F, @impl.%F.decl.loc10_29.1 [concrete = constants.%F.975709.1]
+// CHECK:STDOUT:   <elided>
 // CHECK:STDOUT:   %.loc10_29.1: ref %struct_type.b.a.1b0 = temporary_storage
 // CHECK:STDOUT:   %F.call: init %struct_type.b.a.1b0 = call %F.ref() to %.loc10_29.1
 // CHECK:STDOUT:   %.loc10_29.2: ref %struct_type.b.a.1b0 = temporary %.loc10_29.1, %F.call

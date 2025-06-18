@@ -2,6 +2,8 @@
 // Exceptions. See /LICENSE for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
+// INCLUDE-FILE: toolchain/testing/testdata/min_prelude/primitives.carbon
+//
 // AUTOUPDATE
 // TIP: To test this file alone, run:
 // TIP:   bazel test //toolchain/testing:file_test --test_arg=--file_tests=toolchain/lower/testdata/basics/numeric_literals.carbon
@@ -30,27 +32,27 @@ fn F() {
 // CHECK:STDOUT: ; ModuleID = 'numeric_literals.carbon'
 // CHECK:STDOUT: source_filename = "numeric_literals.carbon"
 // CHECK:STDOUT:
-// CHECK:STDOUT: @array.712.loc14_3 = internal constant [4 x i32] [i32 8, i32 9, i32 8, i32 8]
-// CHECK:STDOUT: @array.a2f.loc20_3 = internal constant [6 x double] [double 9.000000e-01, double 8.000000e+00, double 8.000000e+01, double 1.000000e+07, double 1.000000e+08, double 1.000000e-08]
+// CHECK:STDOUT: @array.712.loc16_3 = internal constant [4 x i32] [i32 8, i32 9, i32 8, i32 8]
+// CHECK:STDOUT: @array.a2f.loc22_3 = internal constant [6 x double] [double 9.000000e-01, double 8.000000e+00, double 8.000000e+01, double 1.000000e+07, double 1.000000e+08, double 1.000000e-08]
 // CHECK:STDOUT:
 // CHECK:STDOUT: define void @_CF.Main() !dbg !4 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   %ints.var = alloca [4 x i32], align 4, !dbg !7
 // CHECK:STDOUT:   %floats.var = alloca [6 x double], align 8, !dbg !8
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(i64 16, ptr %ints.var), !dbg !7
-// CHECK:STDOUT:   %.loc19_3.3.array.index = getelementptr inbounds [4 x i32], ptr %ints.var, i32 0, i64 0, !dbg !9
-// CHECK:STDOUT:   %.loc19_3.6.array.index = getelementptr inbounds [4 x i32], ptr %ints.var, i32 0, i64 1, !dbg !9
-// CHECK:STDOUT:   %.loc19_3.9.array.index = getelementptr inbounds [4 x i32], ptr %ints.var, i32 0, i64 2, !dbg !9
-// CHECK:STDOUT:   %.loc19_3.12.array.index = getelementptr inbounds [4 x i32], ptr %ints.var, i32 0, i64 3, !dbg !9
-// CHECK:STDOUT:   call void @llvm.memcpy.p0.p0.i64(ptr align 4 %ints.var, ptr align 4 @array.712.loc14_3, i64 16, i1 false), !dbg !7
+// CHECK:STDOUT:   %.loc21_3.3.array.index = getelementptr inbounds [4 x i32], ptr %ints.var, i32 0, i64 0, !dbg !9
+// CHECK:STDOUT:   %.loc21_3.6.array.index = getelementptr inbounds [4 x i32], ptr %ints.var, i32 0, i64 1, !dbg !9
+// CHECK:STDOUT:   %.loc21_3.9.array.index = getelementptr inbounds [4 x i32], ptr %ints.var, i32 0, i64 2, !dbg !9
+// CHECK:STDOUT:   %.loc21_3.12.array.index = getelementptr inbounds [4 x i32], ptr %ints.var, i32 0, i64 3, !dbg !9
+// CHECK:STDOUT:   call void @llvm.memcpy.p0.p0.i64(ptr align 4 %ints.var, ptr align 4 @array.712.loc16_3, i64 16, i1 false), !dbg !7
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(i64 48, ptr %floats.var), !dbg !8
-// CHECK:STDOUT:   %.loc27_3.2.array.index = getelementptr inbounds [6 x double], ptr %floats.var, i32 0, i64 0, !dbg !10
-// CHECK:STDOUT:   %.loc27_3.4.array.index = getelementptr inbounds [6 x double], ptr %floats.var, i32 0, i64 1, !dbg !10
-// CHECK:STDOUT:   %.loc27_3.6.array.index = getelementptr inbounds [6 x double], ptr %floats.var, i32 0, i64 2, !dbg !10
-// CHECK:STDOUT:   %.loc27_3.8.array.index = getelementptr inbounds [6 x double], ptr %floats.var, i32 0, i64 3, !dbg !10
-// CHECK:STDOUT:   %.loc27_3.10.array.index = getelementptr inbounds [6 x double], ptr %floats.var, i32 0, i64 4, !dbg !10
-// CHECK:STDOUT:   %.loc27_3.12.array.index = getelementptr inbounds [6 x double], ptr %floats.var, i32 0, i64 5, !dbg !10
-// CHECK:STDOUT:   call void @llvm.memcpy.p0.p0.i64(ptr align 8 %floats.var, ptr align 8 @array.a2f.loc20_3, i64 48, i1 false), !dbg !8
+// CHECK:STDOUT:   %.loc29_3.2.array.index = getelementptr inbounds [6 x double], ptr %floats.var, i32 0, i64 0, !dbg !10
+// CHECK:STDOUT:   %.loc29_3.4.array.index = getelementptr inbounds [6 x double], ptr %floats.var, i32 0, i64 1, !dbg !10
+// CHECK:STDOUT:   %.loc29_3.6.array.index = getelementptr inbounds [6 x double], ptr %floats.var, i32 0, i64 2, !dbg !10
+// CHECK:STDOUT:   %.loc29_3.8.array.index = getelementptr inbounds [6 x double], ptr %floats.var, i32 0, i64 3, !dbg !10
+// CHECK:STDOUT:   %.loc29_3.10.array.index = getelementptr inbounds [6 x double], ptr %floats.var, i32 0, i64 4, !dbg !10
+// CHECK:STDOUT:   %.loc29_3.12.array.index = getelementptr inbounds [6 x double], ptr %floats.var, i32 0, i64 5, !dbg !10
+// CHECK:STDOUT:   call void @llvm.memcpy.p0.p0.i64(ptr align 8 %floats.var, ptr align 8 @array.a2f.loc22_3, i64 48, i1 false), !dbg !8
 // CHECK:STDOUT:   ret void, !dbg !11
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -74,11 +76,11 @@ fn F() {
 // CHECK:STDOUT: !1 = !{i32 2, !"Debug Info Version", i32 3}
 // CHECK:STDOUT: !2 = distinct !DICompileUnit(language: DW_LANG_C, file: !3, producer: "carbon", isOptimized: false, runtimeVersion: 0, emissionKind: FullDebug)
 // CHECK:STDOUT: !3 = !DIFile(filename: "numeric_literals.carbon", directory: "")
-// CHECK:STDOUT: !4 = distinct !DISubprogram(name: "F", linkageName: "_CF.Main", scope: null, file: !3, line: 11, type: !5, spFlags: DISPFlagDefinition, unit: !2)
+// CHECK:STDOUT: !4 = distinct !DISubprogram(name: "F", linkageName: "_CF.Main", scope: null, file: !3, line: 13, type: !5, spFlags: DISPFlagDefinition, unit: !2)
 // CHECK:STDOUT: !5 = !DISubroutineType(types: !6)
 // CHECK:STDOUT: !6 = !{}
-// CHECK:STDOUT: !7 = !DILocation(line: 14, column: 3, scope: !4)
-// CHECK:STDOUT: !8 = !DILocation(line: 20, column: 3, scope: !4)
-// CHECK:STDOUT: !9 = !DILocation(line: 14, column: 29, scope: !4)
-// CHECK:STDOUT: !10 = !DILocation(line: 20, column: 31, scope: !4)
-// CHECK:STDOUT: !11 = !DILocation(line: 11, column: 1, scope: !4)
+// CHECK:STDOUT: !7 = !DILocation(line: 16, column: 3, scope: !4)
+// CHECK:STDOUT: !8 = !DILocation(line: 22, column: 3, scope: !4)
+// CHECK:STDOUT: !9 = !DILocation(line: 16, column: 29, scope: !4)
+// CHECK:STDOUT: !10 = !DILocation(line: 22, column: 31, scope: !4)
+// CHECK:STDOUT: !11 = !DILocation(line: 13, column: 1, scope: !4)

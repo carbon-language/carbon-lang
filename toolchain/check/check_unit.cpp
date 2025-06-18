@@ -65,7 +65,6 @@ CheckUnit::CheckUnit(
       total_ir_count_(tree_and_subtrees_getters.size()),
       fs_(std::move(fs)),
       target_(target),
-      vlog_stream_(vlog_stream),
       emitter_(&unit_and_imports_->err_tracker, tree_and_subtrees_getters,
                unit_and_imports_->unit->sem_ir),
       context_(
@@ -377,7 +376,7 @@ auto CheckUnit::ProcessNodeIds() -> bool {
     const auto& tree = tree_and_subtrees_getter_();
     auto converted = tree.NodeToDiagnosticLoc(node_id, /*token_only=*/false);
     converted.loc.FormatLocation(output);
-    output << "checking " << context_.parse_tree().node_kind(node_id) << "\n";
+    output << "Checking " << context_.parse_tree().node_kind(node_id) << "\n";
     // Crash output has a tab indent; try to indent slightly past that.
     converted.loc.FormatSnippet(output, /*indent=*/10);
   });

@@ -2,6 +2,8 @@
 // Exceptions. See /LICENSE for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
+// INCLUDE-FILE: toolchain/testing/testdata/min_prelude/int.carbon
+//
 // AUTOUPDATE
 // TIP: To test this file alone, run:
 // TIP:   bazel test //toolchain/testing:file_test --test_arg=--file_tests=toolchain/lower/testdata/impl/import_thunk.carbon
@@ -134,11 +136,23 @@ fn Test(a: A) -> C {
 // CHECK:STDOUT:
 // CHECK:STDOUT: define void @_CTest.Main(ptr sret({ i32 }) %return, ptr %a) !dbg !4 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   call void @"_CF:thunk.61ea2aba74ab3bf1:I.Main"(ptr %return, ptr %a), !dbg !7
-// CHECK:STDOUT:   ret void, !dbg !8
+// CHECK:STDOUT:   %.loc7_20.1.temp = alloca { i32 }, align 8, !dbg !7
+// CHECK:STDOUT:   %.loc7_20.2.temp = alloca { i32 }, align 8, !dbg !7
+// CHECK:STDOUT:   %.loc7_19.1.temp = alloca { i32 }, align 8, !dbg !8
+// CHECK:STDOUT:   call void @"_CConvert.A.Main:ImplicitAs.Core"(ptr %.loc7_19.1.temp, ptr %a), !dbg !8
+// CHECK:STDOUT:   call void @"_CF.61ea2aba74ab3bf1:I.Main"(ptr %.loc7_20.2.temp, ptr %.loc7_19.1.temp), !dbg !7
+// CHECK:STDOUT:   %.loc7_21.1.temp = alloca { i32 }, align 8, !dbg !9
+// CHECK:STDOUT:   call void @"_CConvert.B.Main:ImplicitAs.Core"(ptr %.loc7_21.1.temp, ptr %.loc7_20.2.temp), !dbg !9
+// CHECK:STDOUT:   ret void, !dbg !9
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: declare void @"_CF:thunk.61ea2aba74ab3bf1:I.Main"(ptr sret({ i32 }), ptr)
+// CHECK:STDOUT:
+// CHECK:STDOUT: declare void @"_CF.61ea2aba74ab3bf1:I.Main"(ptr sret({ i32 }), ptr)
+// CHECK:STDOUT:
+// CHECK:STDOUT: declare void @"_CConvert.A.Main:ImplicitAs.Core"(ptr sret({ i32 }), ptr)
+// CHECK:STDOUT:
+// CHECK:STDOUT: declare void @"_CConvert.B.Main:ImplicitAs.Core"(ptr sret({ i32 }), ptr)
 // CHECK:STDOUT:
 // CHECK:STDOUT: !llvm.module.flags = !{!0, !1}
 // CHECK:STDOUT: !llvm.dbg.cu = !{!2}
@@ -151,7 +165,8 @@ fn Test(a: A) -> C {
 // CHECK:STDOUT: !5 = !DISubroutineType(types: !6)
 // CHECK:STDOUT: !6 = !{}
 // CHECK:STDOUT: !7 = !DILocation(line: 7, column: 10, scope: !4)
-// CHECK:STDOUT: !8 = !DILocation(line: 7, column: 3, scope: !4)
+// CHECK:STDOUT: !8 = !DILocation(line: 7, column: 19, scope: !4)
+// CHECK:STDOUT: !9 = !DILocation(line: 7, column: 3, scope: !4)
 // CHECK:STDOUT: ; ModuleID = 'thunk_for_imported_interface.carbon'
 // CHECK:STDOUT: source_filename = "thunk_for_imported_interface.carbon"
 // CHECK:STDOUT:
@@ -199,11 +214,23 @@ fn Test(a: A) -> C {
 // CHECK:STDOUT:
 // CHECK:STDOUT: define void @_CTest.Main(ptr sret({ i32 }) %return, ptr %a) !dbg !4 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   call void @"_CF:thunk.X.Main:I.Main"(ptr %return, ptr %a), !dbg !7
-// CHECK:STDOUT:   ret void, !dbg !8
+// CHECK:STDOUT:   %.loc8_19.1.temp = alloca { i32 }, align 8, !dbg !7
+// CHECK:STDOUT:   %.loc8_19.2.temp = alloca { i32 }, align 8, !dbg !7
+// CHECK:STDOUT:   %.loc8_18.1.temp = alloca { i32 }, align 8, !dbg !8
+// CHECK:STDOUT:   call void @"_CConvert.A.Main:ImplicitAs.Core"(ptr %.loc8_18.1.temp, ptr %a), !dbg !8
+// CHECK:STDOUT:   call void @"_CF.X.Main:I.Main"(ptr %.loc8_19.2.temp, ptr %.loc8_18.1.temp), !dbg !7
+// CHECK:STDOUT:   %.loc8_20.1.temp = alloca { i32 }, align 8, !dbg !9
+// CHECK:STDOUT:   call void @"_CConvert.B.Main:ImplicitAs.Core"(ptr %.loc8_20.1.temp, ptr %.loc8_19.2.temp), !dbg !9
+// CHECK:STDOUT:   ret void, !dbg !9
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: declare void @"_CF:thunk.X.Main:I.Main"(ptr sret({ i32 }), ptr)
+// CHECK:STDOUT:
+// CHECK:STDOUT: declare void @"_CF.X.Main:I.Main"(ptr sret({ i32 }), ptr)
+// CHECK:STDOUT:
+// CHECK:STDOUT: declare void @"_CConvert.A.Main:ImplicitAs.Core"(ptr sret({ i32 }), ptr)
+// CHECK:STDOUT:
+// CHECK:STDOUT: declare void @"_CConvert.B.Main:ImplicitAs.Core"(ptr sret({ i32 }), ptr)
 // CHECK:STDOUT:
 // CHECK:STDOUT: !llvm.module.flags = !{!0, !1}
 // CHECK:STDOUT: !llvm.dbg.cu = !{!2}
@@ -216,4 +243,5 @@ fn Test(a: A) -> C {
 // CHECK:STDOUT: !5 = !DISubroutineType(types: !6)
 // CHECK:STDOUT: !6 = !{}
 // CHECK:STDOUT: !7 = !DILocation(line: 8, column: 10, scope: !4)
-// CHECK:STDOUT: !8 = !DILocation(line: 8, column: 3, scope: !4)
+// CHECK:STDOUT: !8 = !DILocation(line: 8, column: 18, scope: !4)
+// CHECK:STDOUT: !9 = !DILocation(line: 8, column: 3, scope: !4)

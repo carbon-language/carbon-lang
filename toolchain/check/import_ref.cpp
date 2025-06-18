@@ -1841,9 +1841,7 @@ static auto MakeFunctionDecl(ImportContext& context,
   function_decl.function_id = context.local_functions().Add(
       {GetIncompleteLocalEntityBase(context, function_decl_id, import_function),
        {.call_params_id = SemIR::InstBlockId::None,
-        .return_slot_pattern_id = SemIR::InstId::None,
-        .special_function_kind = import_function.special_function_kind,
-        .builtin_function_kind = import_function.builtin_function_kind}});
+        .return_slot_pattern_id = SemIR::InstId::None}});
 
   function_decl.type_id = GetFunctionType(
       context.local_context(), function_decl.function_id, specific_id);
@@ -1926,6 +1924,24 @@ static auto TryResolveTypedInst(ImportRefResolver& resolver,
 
   if (import_function.definition_id.has_value()) {
     new_function.definition_id = new_function.first_owning_decl_id;
+  }
+
+  switch (import_function.special_function_kind) {
+    case SemIR::Function::SpecialFunctionKind::None: {
+      break;
+    }
+    case SemIR::Function::SpecialFunctionKind::Builtin: {
+      new_function.SetBuiltinFunction(import_function.builtin_function_kind());
+      break;
+    }
+    case SemIR::Function::SpecialFunctionKind::Thunk: {
+      auto entity_name_id = resolver.local_entity_names().AddCanonical(
+          {.name_id = new_function.name_id,
+           .parent_scope_id = new_function.parent_scope_id});
+      new_function.SetThunk(AddImportRef(
+          resolver, import_function.thunk_decl_id(), entity_name_id));
+      break;
+    }
   }
 
   return ResolveResult::Done(function_const_id, new_function.first_decl_id());

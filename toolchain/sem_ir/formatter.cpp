@@ -487,11 +487,16 @@ auto Formatter::FormatFunction(FunctionId id) -> void {
   FormatParamList(fn.call_params_id, return_type_info.is_valid() &&
                                          return_type_info.has_return_slot());
 
-  if (fn.builtin_function_kind != BuiltinFunctionKind::None) {
+  if (fn.builtin_function_kind() != BuiltinFunctionKind::None) {
     out_ << " = \""
-         << FormatEscaped(fn.builtin_function_kind.name(),
+         << FormatEscaped(fn.builtin_function_kind().name(),
                           /*use_hex_escapes=*/true)
          << "\"";
+  }
+  if (fn.thunk_decl_id().has_value()) {
+    out_ << " [thunk ";
+    FormatArg(fn.thunk_decl_id());
+    out_ << "]";
   }
 
   if (!fn.body_block_ids.empty()) {

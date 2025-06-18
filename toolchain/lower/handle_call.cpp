@@ -512,7 +512,7 @@ auto HandleInst(FunctionContext& context, SemIR::InstId inst_id,
                                       callee_function.function_id,
                                       callee_function.resolved_specific_id);
 
-  if (auto builtin_kind = function.builtin_function_kind;
+  if (auto builtin_kind = function.builtin_function_kind();
       builtin_kind != SemIR::BuiltinFunctionKind::None) {
     HandleBuiltinCall(context, inst_id, builtin_kind, arg_ids);
     return;

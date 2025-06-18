@@ -2,6 +2,8 @@
 // Exceptions. See /LICENSE for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
+// INCLUDE-FILE: toolchain/testing/testdata/min_prelude/primitives.carbon
+//
 // AUTOUPDATE
 // TIP: To test this file alone, run:
 // TIP:   bazel test //toolchain/testing:file_test --test_arg=--file_tests=toolchain/lower/testdata/function/generic/call_specific_in_class.carbon
@@ -56,24 +58,24 @@ fn M() {
 // CHECK:STDOUT:   %var_f64.var = alloca double, align 8, !dbg !11
 // CHECK:STDOUT:   %c.var = alloca {}, align 8, !dbg !12
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(i64 8, ptr %ptr_i32.var), !dbg !7
-// CHECK:STDOUT:   %.loc32 = load ptr, ptr %ptr_i32.var, align 8, !dbg !13
-// CHECK:STDOUT:   %F.call.loc32 = call ptr @_CF.Main.e8193710fd35b608(ptr %.loc32), !dbg !14
+// CHECK:STDOUT:   %.loc34 = load ptr, ptr %ptr_i32.var, align 8, !dbg !13
+// CHECK:STDOUT:   %F.call.loc34 = call ptr @_CF.Main.e8193710fd35b608(ptr %.loc34), !dbg !14
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(i64 8, ptr %ptr_f64.var), !dbg !8
-// CHECK:STDOUT:   %.loc34 = load ptr, ptr %ptr_f64.var, align 8, !dbg !15
-// CHECK:STDOUT:   %F.call.loc34 = call ptr @_CF.Main.e8193710fd35b608(ptr %.loc34), !dbg !16
+// CHECK:STDOUT:   %.loc36 = load ptr, ptr %ptr_f64.var, align 8, !dbg !15
+// CHECK:STDOUT:   %F.call.loc36 = call ptr @_CF.Main.e8193710fd35b608(ptr %.loc36), !dbg !16
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(i64 8, ptr %ptr_i8.var), !dbg !9
-// CHECK:STDOUT:   %.loc36 = load ptr, ptr %ptr_i8.var, align 8, !dbg !17
-// CHECK:STDOUT:   %F.call.loc36 = call ptr @_CF.Main.e8193710fd35b608(ptr %.loc36), !dbg !18
+// CHECK:STDOUT:   %.loc38 = load ptr, ptr %ptr_i8.var, align 8, !dbg !17
+// CHECK:STDOUT:   %F.call.loc38 = call ptr @_CF.Main.e8193710fd35b608(ptr %.loc38), !dbg !18
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(i64 4, ptr %var_i32.var), !dbg !10
 // CHECK:STDOUT:   store i32 0, ptr %var_i32.var, align 4, !dbg !10
-// CHECK:STDOUT:   %.loc38 = load i32, ptr %var_i32.var, align 4, !dbg !19
-// CHECK:STDOUT:   %F.call.loc38 = call i32 @_CF.Main.b88d1103f417c6d4(i32 %.loc38), !dbg !20
+// CHECK:STDOUT:   %.loc40 = load i32, ptr %var_i32.var, align 4, !dbg !19
+// CHECK:STDOUT:   %F.call.loc40 = call i32 @_CF.Main.b88d1103f417c6d4(i32 %.loc40), !dbg !20
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(i64 8, ptr %var_f64.var), !dbg !11
 // CHECK:STDOUT:   store double 0.000000e+00, ptr %var_f64.var, align 8, !dbg !11
-// CHECK:STDOUT:   %.loc40 = load double, ptr %var_f64.var, align 8, !dbg !21
-// CHECK:STDOUT:   %F.call.loc40 = call double @_CF.Main.66be507887ceee78(double %.loc40), !dbg !22
+// CHECK:STDOUT:   %.loc42 = load double, ptr %var_f64.var, align 8, !dbg !21
+// CHECK:STDOUT:   %F.call.loc42 = call double @_CF.Main.66be507887ceee78(double %.loc42), !dbg !22
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(i64 0, ptr %c.var), !dbg !12
-// CHECK:STDOUT:   %F.call.loc42 = call %type @_CF.Main.5754c7a55c7cbe4a(%type zeroinitializer), !dbg !23
+// CHECK:STDOUT:   %F.call.loc44 = call %type @_CF.Main.5754c7a55c7cbe4a(%type zeroinitializer), !dbg !23
 // CHECK:STDOUT:   ret void, !dbg !24
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -169,60 +171,60 @@ fn M() {
 // CHECK:STDOUT: !1 = !{i32 2, !"Debug Info Version", i32 3}
 // CHECK:STDOUT: !2 = distinct !DICompileUnit(language: DW_LANG_C, file: !3, producer: "carbon", isOptimized: false, runtimeVersion: 0, emissionKind: FullDebug)
 // CHECK:STDOUT: !3 = !DIFile(filename: "call_specific_in_class.carbon", directory: "")
-// CHECK:STDOUT: !4 = distinct !DISubprogram(name: "M", linkageName: "_CM.Main", scope: null, file: !3, line: 30, type: !5, spFlags: DISPFlagDefinition, unit: !2)
+// CHECK:STDOUT: !4 = distinct !DISubprogram(name: "M", linkageName: "_CM.Main", scope: null, file: !3, line: 32, type: !5, spFlags: DISPFlagDefinition, unit: !2)
 // CHECK:STDOUT: !5 = !DISubroutineType(types: !6)
 // CHECK:STDOUT: !6 = !{}
-// CHECK:STDOUT: !7 = !DILocation(line: 31, column: 3, scope: !4)
-// CHECK:STDOUT: !8 = !DILocation(line: 33, column: 3, scope: !4)
-// CHECK:STDOUT: !9 = !DILocation(line: 35, column: 3, scope: !4)
-// CHECK:STDOUT: !10 = !DILocation(line: 37, column: 3, scope: !4)
-// CHECK:STDOUT: !11 = !DILocation(line: 39, column: 3, scope: !4)
-// CHECK:STDOUT: !12 = !DILocation(line: 41, column: 3, scope: !4)
-// CHECK:STDOUT: !13 = !DILocation(line: 32, column: 5, scope: !4)
-// CHECK:STDOUT: !14 = !DILocation(line: 32, column: 3, scope: !4)
-// CHECK:STDOUT: !15 = !DILocation(line: 34, column: 5, scope: !4)
-// CHECK:STDOUT: !16 = !DILocation(line: 34, column: 3, scope: !4)
-// CHECK:STDOUT: !17 = !DILocation(line: 36, column: 5, scope: !4)
-// CHECK:STDOUT: !18 = !DILocation(line: 36, column: 3, scope: !4)
-// CHECK:STDOUT: !19 = !DILocation(line: 38, column: 5, scope: !4)
-// CHECK:STDOUT: !20 = !DILocation(line: 38, column: 3, scope: !4)
-// CHECK:STDOUT: !21 = !DILocation(line: 40, column: 5, scope: !4)
-// CHECK:STDOUT: !22 = !DILocation(line: 40, column: 3, scope: !4)
-// CHECK:STDOUT: !23 = !DILocation(line: 42, column: 3, scope: !4)
-// CHECK:STDOUT: !24 = !DILocation(line: 30, column: 1, scope: !4)
-// CHECK:STDOUT: !25 = distinct !DISubprogram(name: "F", linkageName: "_CF.Main.e8193710fd35b608", scope: null, file: !3, line: 26, type: !5, spFlags: DISPFlagDefinition, unit: !2)
-// CHECK:STDOUT: !26 = !DILocation(line: 27, column: 10, scope: !25)
-// CHECK:STDOUT: !27 = !DILocation(line: 27, column: 3, scope: !25)
-// CHECK:STDOUT: !28 = distinct !DISubprogram(name: "F", linkageName: "_CF.Main.b88d1103f417c6d4", scope: null, file: !3, line: 26, type: !5, spFlags: DISPFlagDefinition, unit: !2)
-// CHECK:STDOUT: !29 = !DILocation(line: 27, column: 10, scope: !28)
-// CHECK:STDOUT: !30 = !DILocation(line: 27, column: 3, scope: !28)
-// CHECK:STDOUT: !31 = distinct !DISubprogram(name: "F", linkageName: "_CF.Main.66be507887ceee78", scope: null, file: !3, line: 26, type: !5, spFlags: DISPFlagDefinition, unit: !2)
-// CHECK:STDOUT: !32 = !DILocation(line: 27, column: 10, scope: !31)
-// CHECK:STDOUT: !33 = !DILocation(line: 27, column: 3, scope: !31)
-// CHECK:STDOUT: !34 = distinct !DISubprogram(name: "F", linkageName: "_CF.Main.5754c7a55c7cbe4a", scope: null, file: !3, line: 26, type: !5, spFlags: DISPFlagDefinition, unit: !2)
-// CHECK:STDOUT: !35 = !DILocation(line: 27, column: 10, scope: !34)
-// CHECK:STDOUT: !36 = !DILocation(line: 27, column: 3, scope: !34)
-// CHECK:STDOUT: !37 = distinct !DISubprogram(name: "G", linkageName: "_CG.Main.e8193710fd35b608", scope: null, file: !3, line: 21, type: !5, spFlags: DISPFlagDefinition, unit: !2)
-// CHECK:STDOUT: !38 = !DILocation(line: 22, column: 3, scope: !37)
-// CHECK:STDOUT: !39 = !DILocation(line: 23, column: 10, scope: !37)
-// CHECK:STDOUT: !40 = !DILocation(line: 23, column: 3, scope: !37)
-// CHECK:STDOUT: !41 = distinct !DISubprogram(name: "G", linkageName: "_CG.Main.b88d1103f417c6d4", scope: null, file: !3, line: 21, type: !5, spFlags: DISPFlagDefinition, unit: !2)
-// CHECK:STDOUT: !42 = !DILocation(line: 22, column: 3, scope: !41)
-// CHECK:STDOUT: !43 = !DILocation(line: 23, column: 10, scope: !41)
-// CHECK:STDOUT: !44 = !DILocation(line: 23, column: 3, scope: !41)
-// CHECK:STDOUT: !45 = distinct !DISubprogram(name: "G", linkageName: "_CG.Main.66be507887ceee78", scope: null, file: !3, line: 21, type: !5, spFlags: DISPFlagDefinition, unit: !2)
-// CHECK:STDOUT: !46 = !DILocation(line: 22, column: 3, scope: !45)
-// CHECK:STDOUT: !47 = !DILocation(line: 23, column: 10, scope: !45)
-// CHECK:STDOUT: !48 = !DILocation(line: 23, column: 3, scope: !45)
-// CHECK:STDOUT: !49 = distinct !DISubprogram(name: "G", linkageName: "_CG.Main.5754c7a55c7cbe4a", scope: null, file: !3, line: 21, type: !5, spFlags: DISPFlagDefinition, unit: !2)
-// CHECK:STDOUT: !50 = !DILocation(line: 22, column: 3, scope: !49)
-// CHECK:STDOUT: !51 = !DILocation(line: 23, column: 10, scope: !49)
-// CHECK:STDOUT: !52 = !DILocation(line: 23, column: 3, scope: !49)
-// CHECK:STDOUT: !53 = distinct !DISubprogram(name: "Cfn", linkageName: "_CCfn.C.Main.e8193710fd35b608", scope: null, file: !3, line: 16, type: !5, spFlags: DISPFlagDefinition, unit: !2)
-// CHECK:STDOUT: !54 = !DILocation(line: 17, column: 5, scope: !53)
-// CHECK:STDOUT: !55 = distinct !DISubprogram(name: "Cfn", linkageName: "_CCfn.C.Main.b88d1103f417c6d4", scope: null, file: !3, line: 16, type: !5, spFlags: DISPFlagDefinition, unit: !2)
-// CHECK:STDOUT: !56 = !DILocation(line: 17, column: 5, scope: !55)
-// CHECK:STDOUT: !57 = distinct !DISubprogram(name: "Cfn", linkageName: "_CCfn.C.Main.66be507887ceee78", scope: null, file: !3, line: 16, type: !5, spFlags: DISPFlagDefinition, unit: !2)
-// CHECK:STDOUT: !58 = !DILocation(line: 17, column: 5, scope: !57)
-// CHECK:STDOUT: !59 = distinct !DISubprogram(name: "Cfn", linkageName: "_CCfn.C.Main.5754c7a55c7cbe4a", scope: null, file: !3, line: 16, type: !5, spFlags: DISPFlagDefinition, unit: !2)
-// CHECK:STDOUT: !60 = !DILocation(line: 17, column: 5, scope: !59)
+// CHECK:STDOUT: !7 = !DILocation(line: 33, column: 3, scope: !4)
+// CHECK:STDOUT: !8 = !DILocation(line: 35, column: 3, scope: !4)
+// CHECK:STDOUT: !9 = !DILocation(line: 37, column: 3, scope: !4)
+// CHECK:STDOUT: !10 = !DILocation(line: 39, column: 3, scope: !4)
+// CHECK:STDOUT: !11 = !DILocation(line: 41, column: 3, scope: !4)
+// CHECK:STDOUT: !12 = !DILocation(line: 43, column: 3, scope: !4)
+// CHECK:STDOUT: !13 = !DILocation(line: 34, column: 5, scope: !4)
+// CHECK:STDOUT: !14 = !DILocation(line: 34, column: 3, scope: !4)
+// CHECK:STDOUT: !15 = !DILocation(line: 36, column: 5, scope: !4)
+// CHECK:STDOUT: !16 = !DILocation(line: 36, column: 3, scope: !4)
+// CHECK:STDOUT: !17 = !DILocation(line: 38, column: 5, scope: !4)
+// CHECK:STDOUT: !18 = !DILocation(line: 38, column: 3, scope: !4)
+// CHECK:STDOUT: !19 = !DILocation(line: 40, column: 5, scope: !4)
+// CHECK:STDOUT: !20 = !DILocation(line: 40, column: 3, scope: !4)
+// CHECK:STDOUT: !21 = !DILocation(line: 42, column: 5, scope: !4)
+// CHECK:STDOUT: !22 = !DILocation(line: 42, column: 3, scope: !4)
+// CHECK:STDOUT: !23 = !DILocation(line: 44, column: 3, scope: !4)
+// CHECK:STDOUT: !24 = !DILocation(line: 32, column: 1, scope: !4)
+// CHECK:STDOUT: !25 = distinct !DISubprogram(name: "F", linkageName: "_CF.Main.e8193710fd35b608", scope: null, file: !3, line: 28, type: !5, spFlags: DISPFlagDefinition, unit: !2)
+// CHECK:STDOUT: !26 = !DILocation(line: 29, column: 10, scope: !25)
+// CHECK:STDOUT: !27 = !DILocation(line: 29, column: 3, scope: !25)
+// CHECK:STDOUT: !28 = distinct !DISubprogram(name: "F", linkageName: "_CF.Main.b88d1103f417c6d4", scope: null, file: !3, line: 28, type: !5, spFlags: DISPFlagDefinition, unit: !2)
+// CHECK:STDOUT: !29 = !DILocation(line: 29, column: 10, scope: !28)
+// CHECK:STDOUT: !30 = !DILocation(line: 29, column: 3, scope: !28)
+// CHECK:STDOUT: !31 = distinct !DISubprogram(name: "F", linkageName: "_CF.Main.66be507887ceee78", scope: null, file: !3, line: 28, type: !5, spFlags: DISPFlagDefinition, unit: !2)
+// CHECK:STDOUT: !32 = !DILocation(line: 29, column: 10, scope: !31)
+// CHECK:STDOUT: !33 = !DILocation(line: 29, column: 3, scope: !31)
+// CHECK:STDOUT: !34 = distinct !DISubprogram(name: "F", linkageName: "_CF.Main.5754c7a55c7cbe4a", scope: null, file: !3, line: 28, type: !5, spFlags: DISPFlagDefinition, unit: !2)
+// CHECK:STDOUT: !35 = !DILocation(line: 29, column: 10, scope: !34)
+// CHECK:STDOUT: !36 = !DILocation(line: 29, column: 3, scope: !34)
+// CHECK:STDOUT: !37 = distinct !DISubprogram(name: "G", linkageName: "_CG.Main.e8193710fd35b608", scope: null, file: !3, line: 23, type: !5, spFlags: DISPFlagDefinition, unit: !2)
+// CHECK:STDOUT: !38 = !DILocation(line: 24, column: 3, scope: !37)
+// CHECK:STDOUT: !39 = !DILocation(line: 25, column: 10, scope: !37)
+// CHECK:STDOUT: !40 = !DILocation(line: 25, column: 3, scope: !37)
+// CHECK:STDOUT: !41 = distinct !DISubprogram(name: "G", linkageName: "_CG.Main.b88d1103f417c6d4", scope: null, file: !3, line: 23, type: !5, spFlags: DISPFlagDefinition, unit: !2)
+// CHECK:STDOUT: !42 = !DILocation(line: 24, column: 3, scope: !41)
+// CHECK:STDOUT: !43 = !DILocation(line: 25, column: 10, scope: !41)
+// CHECK:STDOUT: !44 = !DILocation(line: 25, column: 3, scope: !41)
+// CHECK:STDOUT: !45 = distinct !DISubprogram(name: "G", linkageName: "_CG.Main.66be507887ceee78", scope: null, file: !3, line: 23, type: !5, spFlags: DISPFlagDefinition, unit: !2)
+// CHECK:STDOUT: !46 = !DILocation(line: 24, column: 3, scope: !45)
+// CHECK:STDOUT: !47 = !DILocation(line: 25, column: 10, scope: !45)
+// CHECK:STDOUT: !48 = !DILocation(line: 25, column: 3, scope: !45)
+// CHECK:STDOUT: !49 = distinct !DISubprogram(name: "G", linkageName: "_CG.Main.5754c7a55c7cbe4a", scope: null, file: !3, line: 23, type: !5, spFlags: DISPFlagDefinition, unit: !2)
+// CHECK:STDOUT: !50 = !DILocation(line: 24, column: 3, scope: !49)
+// CHECK:STDOUT: !51 = !DILocation(line: 25, column: 10, scope: !49)
+// CHECK:STDOUT: !52 = !DILocation(line: 25, column: 3, scope: !49)
+// CHECK:STDOUT: !53 = distinct !DISubprogram(name: "Cfn", linkageName: "_CCfn.C.Main.e8193710fd35b608", scope: null, file: !3, line: 18, type: !5, spFlags: DISPFlagDefinition, unit: !2)
+// CHECK:STDOUT: !54 = !DILocation(line: 19, column: 5, scope: !53)
+// CHECK:STDOUT: !55 = distinct !DISubprogram(name: "Cfn", linkageName: "_CCfn.C.Main.b88d1103f417c6d4", scope: null, file: !3, line: 18, type: !5, spFlags: DISPFlagDefinition, unit: !2)
+// CHECK:STDOUT: !56 = !DILocation(line: 19, column: 5, scope: !55)
+// CHECK:STDOUT: !57 = distinct !DISubprogram(name: "Cfn", linkageName: "_CCfn.C.Main.66be507887ceee78", scope: null, file: !3, line: 18, type: !5, spFlags: DISPFlagDefinition, unit: !2)
+// CHECK:STDOUT: !58 = !DILocation(line: 19, column: 5, scope: !57)
+// CHECK:STDOUT: !59 = distinct !DISubprogram(name: "Cfn", linkageName: "_CCfn.C.Main.5754c7a55c7cbe4a", scope: null, file: !3, line: 18, type: !5, spFlags: DISPFlagDefinition, unit: !2)
+// CHECK:STDOUT: !60 = !DILocation(line: 19, column: 5, scope: !59)
