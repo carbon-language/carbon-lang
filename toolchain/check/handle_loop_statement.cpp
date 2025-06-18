@@ -119,7 +119,6 @@ auto HandleParseNode(Context& context, Parse::ForHeaderStartId /*node_id*/)
   context.scope_stack().PushForSameRegion();
 
   // Begin an implicit let declaration context for the pattern.
-  // TODO: Share code with handle_let_and_var.cpp.
   context.decl_introducer_state_stack().Push<Lex::TokenKind::Let>();
   context.pattern_block_stack().Push();
   context.full_pattern_stack().PushFullPattern(
@@ -134,6 +133,7 @@ auto HandleParseNode(Context& context, Parse::ForInId node_id) -> bool {
                                   {.pattern_block_id = pattern_block_id});
   context.decl_introducer_state_stack().Pop<Lex::TokenKind::Let>();
   context.full_pattern_stack().StartPatternInitializer();
+  context.node_stack().Push(node_id, pattern_block_id);
   return true;
 }
 
@@ -151,6 +151,7 @@ static auto CallOptionalAccessor(Context& context, Parse::NodeId node_id,
 
 auto HandleParseNode(Context& context, Parse::ForHeaderId node_id) -> bool {
   auto range_id = context.node_stack().PopExpr();
+  auto pattern_block_id = context.node_stack().Pop<Parse::NodeKind::ForIn>();
   auto pattern_id = context.node_stack().PopPattern();
 
   // Convert the range expression to a value or reference so that we can use it
@@ -203,15 +204,8 @@ auto HandleParseNode(Context& context, Parse::ForHeaderId node_id) -> bool {
   context.full_pattern_stack().EndPatternInitializer();
   context.full_pattern_stack().PopFullPattern();
 
-  // TODO: Walk the pattern and create storage for var patterns. Share code with
-  // handle_let_and_var.cpp:
-  //
-  // for (auto inst_id : context.inst_blocks().Get(pattern_block_id)) {
-  //   if (context.insts().Is<SemIR::VarPattern>(inst_id)) {
-  //     context.var_storage_map().Insert(inst_id,
-  //                                      GetOrAddStorage(context, inst_id));
-  //   }
-  // }
+  // Create storage for var patterns now.
+  AddPatternVarStorage(context, pattern_block_id, /*returned=*/false);
 
   // Initialize the pattern from `<element>.Get()`.
   auto element_value_id =

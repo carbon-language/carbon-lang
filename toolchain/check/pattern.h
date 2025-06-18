@@ -42,6 +42,11 @@ auto AddBindingPattern(Context& context, SemIR::LocId name_loc,
                        SemIR::ExprRegionId type_region_id, bool is_generic,
                        bool is_template) -> BindingPatternInfo;
 
+// Creates storage for `var` patterns nested within the given pattern at the
+// current location in the output SemIR.
+auto AddPatternVarStorage(Context& context, SemIR::InstBlockId pattern_block_id,
+                          bool returned) -> void;
+
 }  // namespace Carbon::Check
 
 #endif  // CARBON_TOOLCHAIN_CHECK_PATTERN_H_

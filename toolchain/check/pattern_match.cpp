@@ -553,11 +553,11 @@ auto MatchContext::DoEmitPatternMatch(Context& context,
 
   auto tuple_type_id =
       ExtractScrutineeType(context.sem_ir(), tuple_pattern.type_id);
-  auto converted_scrutinee =
+  auto converted_scrutinee_id =
       ConvertToValueOrRefOfType(context, SemIR::LocId(pattern_inst_id),
                                 entry.scrutinee_id, tuple_type_id);
   if (auto scrutinee_value =
-          context.insts().TryGetAs<SemIR::TupleValue>(converted_scrutinee)) {
+          context.insts().TryGetAs<SemIR::TupleValue>(converted_scrutinee_id)) {
     add_all_subscrutinees(
         context.inst_blocks().Get(scrutinee_value->elements_id));
     return;
@@ -573,7 +573,7 @@ auto MatchContext::DoEmitPatternMatch(Context& context,
     subscrutinee_ids.push_back(
         AddInst<SemIR::TupleAccess>(context, scrutinee.loc_id,
                                     {.type_id = element_type_id,
-                                     .tuple_id = entry.scrutinee_id,
+                                     .tuple_id = converted_scrutinee_id,
                                      .index = SemIR::ElementIndex(i)}));
   }
   add_all_subscrutinees(subscrutinee_ids);
