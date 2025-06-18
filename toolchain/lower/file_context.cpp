@@ -82,6 +82,8 @@ auto FileContext::PrepareToLower() -> void {
     functions_.Set(id, BuildFunctionDecl(id));
   }
 
+  // TODO: Split vtable declaration creation from definition creation to avoid
+  // redundant vtable definitions for imported vtables.
   for (const auto& [id, class_info] : sem_ir_->vtables().enumerate()) {
     if (auto* vtable = BuildVtable(class_info)) {
       vtables_.Insert(id, vtable);
