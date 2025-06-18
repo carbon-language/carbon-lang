@@ -44,7 +44,7 @@ static auto GetAggregateElement(FunctionContext& context,
       CARBON_FATAL("Unexpected expression category for aggregate access");
 
     case SemIR::ExprCategory::Value: {
-      auto aggr_type = context.GetTypeIdOfInstInSpecific(aggr_inst_id);
+      auto aggr_type = context.GetTypeIdOfInst(aggr_inst_id);
       auto value_repr = context.GetValueRepr(aggr_type);
       CARBON_CHECK(
           value_repr.repr.aggregate_kind != SemIR::ValueRepr::NotAggregate,
@@ -72,7 +72,7 @@ static auto GetAggregateElement(FunctionContext& context,
           }
 
           // `elem_ptr` points to a value representation. Load it.
-          auto result_type = context.GetTypeIdOfInstInSpecific(result_inst_id);
+          auto result_type = context.GetTypeIdOfInst(result_inst_id);
           auto result_value_type = context.GetValueRepr(result_type).type();
           return context.builder().CreateLoad(
               context.GetType(result_value_type), elem_ptr, name + ".load");
@@ -86,42 +86,44 @@ static auto GetAggregateElement(FunctionContext& context,
     case SemIR::ExprCategory::DurableRef:
     case SemIR::ExprCategory::EphemeralRef: {
       // Just locate the aggregate element.
-      auto* aggr_type = context.GetTypeOfInstInSpecific(aggr_inst_id);
+      auto* aggr_type = context.GetTypeOfInst(aggr_inst_id);
       return context.builder().CreateStructGEP(aggr_type, aggr_value, idx.index,
                                                name);
     }
   }
 }
 
-static auto GetStructFieldName(const SemIR::File& file,
-                               SemIR::TypeId struct_type_id,
+static auto GetStructFieldName(FunctionContext::TypeInFile struct_type,
                                SemIR::ElementIndex index) -> llvm::StringRef {
-  auto struct_type = file.types().GetAs<SemIR::StructType>(struct_type_id);
-  auto fields = file.struct_type_fields().Get(struct_type.fields_id);
-  return file.names().GetIRBaseName(fields[index.index].name_id);
+  auto struct_type_inst =
+      struct_type.file->types().GetAs<SemIR::StructType>(struct_type.type_id);
+  auto fields =
+      struct_type.file->struct_type_fields().Get(struct_type_inst.fields_id);
+  // We intentionally don't add this to the fingerprint because it's only used
+  // as an instruction name, and so doesn't affect the semantics of the IR.
+  return struct_type.file->names().GetIRBaseName(fields[index.index].name_id);
 }
 
 auto HandleInst(FunctionContext& context, SemIR::InstId inst_id,
                 SemIR::ClassElementAccess inst) -> void {
   // Find the class that we're performing access into.
-  auto [class_file, class_type_id] =
-      context.GetTypeIdOfInstInSpecific(inst.base_id);
-  SemIR::TypeId object_repr_id =
-      class_file->types().GetObjectRepr(class_type_id);
+  auto class_type = context.GetTypeIdOfInst(inst.base_id);
+  auto object_repr = FunctionContext::TypeInFile{
+      .file = class_type.file,
+      .type_id = class_type.file->types().GetObjectRepr(class_type.type_id)};
 
   // Translate the class field access into a struct access on the object
   // representation.
   context.SetLocal(inst_id, GetAggregateElement(
                                 context, inst.base_id, inst.index, inst_id,
-                                GetStructFieldName(*class_file, object_repr_id,
-                                                   inst.index)));
+                                GetStructFieldName(object_repr, inst.index)));
 }
 
 static auto EmitAggregateInitializer(FunctionContext& context,
                                      SemIR::InstId init_inst_id,
                                      SemIR::InstBlockId refs_id,
                                      llvm::Twine name) -> llvm::Value* {
-  auto type = context.GetTypeIdOfInstInSpecific(init_inst_id);
+  auto type = context.GetTypeIdOfInst(init_inst_id);
   auto* llvm_type = context.GetType(type);
   auto refs = context.sem_ir().inst_blocks().Get(refs_id);
 
@@ -149,7 +151,7 @@ static auto EmitAggregateInitializer(FunctionContext& context,
           auto dest_id =
               SemIR::FindReturnSlotArgForInitializer(context.sem_ir(), ref_id);
           auto src_id = ref_id;
-          auto storage_type = context.GetTypeIdOfInstInSpecific(dest_id);
+          auto storage_type = context.GetTypeIdOfInst(dest_id);
           context.FinishInit(storage_type, dest_id, src_id);
         }
       }
@@ -184,12 +186,10 @@ auto HandleInst(FunctionContext& context, SemIR::InstId inst_id,
 
 auto HandleInst(FunctionContext& context, SemIR::InstId inst_id,
                 SemIR::StructAccess inst) -> void {
-  auto [struct_file, struct_type_id] =
-      context.GetTypeIdOfInstInSpecific(inst.struct_id);
+  auto struct_type = context.GetTypeIdOfInst(inst.struct_id);
   context.SetLocal(inst_id, GetAggregateElement(
                                 context, inst.struct_id, inst.index, inst_id,
-                                GetStructFieldName(*struct_file, struct_type_id,
-                                                   inst.index)));
+                                GetStructFieldName(struct_type, inst.index)));
 }
 
 auto HandleInst(FunctionContext& /*context*/, SemIR::InstId /*inst_id*/,
@@ -203,7 +203,7 @@ auto HandleInst(FunctionContext& /*context*/, SemIR::InstId /*inst_id*/,
 static auto EmitAggregateValueRepr(FunctionContext& context,
                                    SemIR::InstId value_inst_id,
                                    SemIR::InstBlockId refs_id) -> llvm::Value* {
-  auto type = context.GetTypeIdOfInstInSpecific(value_inst_id);
+  auto type = context.GetTypeIdOfInst(value_inst_id);
   auto value_repr = context.GetValueRepr(type);
   auto value_type = value_repr.type();
   switch (value_repr.repr.kind) {
@@ -255,7 +255,7 @@ auto HandleInst(FunctionContext& context, SemIR::InstId inst_id,
 
 auto HandleInst(FunctionContext& context, SemIR::InstId inst_id,
                 SemIR::StructValue inst) -> void {
-  auto type = context.GetTypeIdOfInstInSpecific(inst_id);
+  auto type = context.GetTypeIdOfInst(inst_id);
   if (auto fn_type =
           type.file->types().TryGetAs<SemIR::FunctionType>(type.type_id)) {
     context.SetLocal(inst_id, context.GetFileContext(type.file).GetFunction(

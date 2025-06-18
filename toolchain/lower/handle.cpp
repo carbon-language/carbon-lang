@@ -27,8 +27,7 @@ auto HandleInst(FunctionContext& context, SemIR::InstId inst_id,
 auto HandleInst(FunctionContext& context, SemIR::InstId inst_id,
                 SemIR::ArrayIndex inst) -> void {
   auto* array_value = context.GetValue(inst.array_id);
-  auto* llvm_type =
-      context.GetType(context.sem_ir().insts().Get(inst.array_id).type_id());
+  auto* llvm_type = context.GetTypeOfInst(inst.array_id);
 
   // The index in an `ArrayIndex` can be of any integer type, including
   // IntLiteral. If it is an IntLiteral, its value representation is empty, so
@@ -66,8 +65,8 @@ auto HandleInst(FunctionContext& context, SemIR::InstId inst_id,
 
 auto HandleInst(FunctionContext& context, SemIR::InstId /*inst_id*/,
                 SemIR::Assign inst) -> void {
-  context.FinishInit(context.GetTypeIdOfInstInSpecific(inst.lhs_id),
-                     inst.lhs_id, inst.rhs_id);
+  context.FinishInit(context.GetTypeIdOfInst(inst.lhs_id), inst.lhs_id,
+                     inst.rhs_id);
 }
 
 auto HandleInst(FunctionContext& context, SemIR::InstId inst_id,
@@ -102,7 +101,9 @@ auto HandleInst(FunctionContext& context, SemIR::InstId inst_id,
 
 auto HandleInst(FunctionContext& context, SemIR::InstId inst_id,
                 SemIR::BlockArg inst) -> void {
-  context.SetLocal(inst_id, context.GetBlockArg(inst.block_id, inst.type_id));
+  context.SetLocal(
+      inst_id,
+      context.GetBlockArg(inst.block_id, context.GetTypeIdOfInst(inst_id)));
 }
 
 auto HandleInst(FunctionContext& context, SemIR::InstId inst_id,
@@ -138,8 +139,7 @@ auto HandleInst(FunctionContext& context, SemIR::InstId /*inst_id*/,
 auto HandleInst(FunctionContext& context, SemIR::InstId /*inst_id*/,
                 SemIR::BranchWithArg inst) -> void {
   llvm::Value* arg = context.GetValue(inst.arg_id);
-  SemIR::TypeId arg_type_id =
-      context.sem_ir().insts().Get(inst.arg_id).type_id();
+  auto arg_type = context.GetTypeIdOfInst(inst.arg_id);
 
   // Opportunistically avoid creating a BasicBlock that contains just a branch.
   // We only do this for a block that we know will only have a single
@@ -157,7 +157,7 @@ auto HandleInst(FunctionContext& context, SemIR::InstId /*inst_id*/,
     context.builder().CreateBr(context.GetBlock(inst.target_id));
   }
 
-  context.GetBlockArg(inst.target_id, arg_type_id)
+  context.GetBlockArg(inst.target_id, arg_type)
       ->addIncoming(arg, phi_predecessor);
   context.builder().ClearInsertionPoint();
 }
@@ -179,8 +179,8 @@ auto HandleInst(FunctionContext& context, SemIR::InstId inst_id,
 
 auto HandleInst(FunctionContext& context, SemIR::InstId /*inst_id*/,
                 SemIR::InitializeFrom inst) -> void {
-  context.FinishInit(context.GetTypeIdOfInstInSpecific(inst.dest_id),
-                     inst.dest_id, inst.src_id);
+  context.FinishInit(context.GetTypeIdOfInst(inst.dest_id), inst.dest_id,
+                     inst.src_id);
 }
 
 auto HandleInst(FunctionContext& /*context*/, SemIR::InstId /*inst_id*/,
@@ -222,7 +222,7 @@ auto HandleInst(FunctionContext& /*context*/, SemIR::InstId /*inst_id*/,
 
 auto HandleInst(FunctionContext& context, SemIR::InstId inst_id,
                 SemIR::ReturnSlot inst) -> void {
-  if (context.GetInitRepr(context.GetTypeIdOfInstInSpecific(inst_id)).kind ==
+  if (context.GetInitRepr(context.GetTypeIdOfInst(inst_id)).kind ==
       SemIR::InitRepr::InPlace) {
     context.SetLocal(inst_id, context.GetValue(inst.storage_id));
   }
@@ -235,7 +235,7 @@ auto HandleInst(FunctionContext& context, SemIR::InstId /*inst_id*/,
 
 auto HandleInst(FunctionContext& context, SemIR::InstId /*inst_id*/,
                 SemIR::ReturnExpr inst) -> void {
-  auto result_type = context.GetTypeIdOfInstInSpecific(inst.expr_id);
+  auto result_type = context.GetTypeIdOfInst(inst.expr_id);
   switch (context.GetInitRepr(result_type).kind) {
     case SemIR::InitRepr::None:
       // Nothing to return.
@@ -286,7 +286,7 @@ auto HandleInst(FunctionContext& context, SemIR::InstId inst_id,
 
 auto HandleInst(FunctionContext& context, SemIR::InstId inst_id,
                 SemIR::VarStorage /* inst */) -> void {
-  auto* type = context.GetTypeOfInstInSpecific(inst_id);
+  auto* type = context.GetTypeOfInst(inst_id);
 
   // Position the first alloca right before the start of the executable code in
   // the function.

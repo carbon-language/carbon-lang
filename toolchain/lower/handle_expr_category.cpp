@@ -10,7 +10,7 @@ namespace Carbon::Lower {
 
 auto HandleInst(FunctionContext& context, SemIR::InstId inst_id,
                 SemIR::BindValue inst) -> void {
-  auto inst_type = context.GetTypeIdOfInstInSpecific(inst_id);
+  auto inst_type = context.GetTypeIdOfInst(inst_id);
   switch (context.GetValueRepr(inst_type).repr.kind) {
     case SemIR::ValueRepr::Unknown:
       CARBON_FATAL(
@@ -37,14 +37,14 @@ auto HandleInst(FunctionContext& context, SemIR::InstId inst_id,
 
 auto HandleInst(FunctionContext& context, SemIR::InstId inst_id,
                 SemIR::Temporary inst) -> void {
-  context.FinishInit(context.GetTypeIdOfInstInSpecific(inst_id),
-                     inst.storage_id, inst.init_id);
+  context.FinishInit(context.GetTypeIdOfInst(inst_id), inst.storage_id,
+                     inst.init_id);
   context.SetLocal(inst_id, context.GetValue(inst.storage_id));
 }
 
 auto HandleInst(FunctionContext& context, SemIR::InstId inst_id,
                 SemIR::TemporaryStorage /*inst*/) -> void {
-  auto* type = context.GetTypeOfInstInSpecific(inst_id);
+  auto* type = context.GetTypeOfInst(inst_id);
   context.SetLocal(inst_id,
                    context.builder().CreateAlloca(type, nullptr, "temp"));
 }
@@ -53,7 +53,7 @@ auto HandleInst(FunctionContext& context, SemIR::InstId inst_id,
                 SemIR::ValueAsRef inst) -> void {
   CARBON_CHECK(SemIR::GetExprCategory(context.sem_ir(), inst.value_id) ==
                SemIR::ExprCategory::Value);
-  auto inst_type = context.GetTypeIdOfInstInSpecific(inst_id);
+  auto inst_type = context.GetTypeIdOfInst(inst_id);
   auto value_repr = context.GetValueRepr(inst_type);
   CARBON_CHECK(value_repr.repr.kind == SemIR::ValueRepr::Pointer);
   context.SetLocal(inst_id, context.GetValue(inst.value_id));
@@ -63,7 +63,7 @@ auto HandleInst(FunctionContext& context, SemIR::InstId inst_id,
                 SemIR::ValueOfInitializer inst) -> void {
   CARBON_CHECK(SemIR::GetExprCategory(context.sem_ir(), inst.init_id) ==
                SemIR::ExprCategory::Initializing);
-  auto inst_type = context.GetTypeIdOfInstInSpecific(inst_id);
+  auto inst_type = context.GetTypeIdOfInst(inst_id);
   auto value_repr = context.GetValueRepr(inst_type);
   auto init_repr = context.GetInitRepr(inst_type);
   CARBON_CHECK(value_repr.repr.kind == SemIR::ValueRepr::Copy);

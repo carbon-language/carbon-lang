@@ -105,7 +105,7 @@ class FunctionContext {
 
   // Returns a phi node corresponding to the block argument of the given basic
   // block.
-  auto GetBlockArg(SemIR::InstBlockId block_id, SemIR::TypeId type_id)
+  auto GetBlockArg(SemIR::InstBlockId block_id, TypeInFile type)
       -> llvm::PHINode*;
 
   // Returns a value for the given instruction.
@@ -136,11 +136,6 @@ class FunctionContext {
     return file_context_->BuildFunctionTypeInfo(function, specific_id);
   }
 
-  // Returns a lowered type for the given type_id.
-  auto GetType(SemIR::TypeId type_id) -> llvm::Type* {
-    return file_context_->GetType(type_id);
-  }
-
   // Returns a lowered type for the given type_id in the given file. This adds
   // the specified type to the fingerprint.
   auto GetType(TypeInFile type) -> llvm::Type* {
@@ -150,14 +145,12 @@ class FunctionContext {
   }
 
   // Returns the type of the given instruction in the current specific.
-  auto GetTypeOfInstInSpecific(SemIR::InstId inst_id) -> llvm::Type* {
-    return GetType(GetTypeIdOfInstInSpecific(inst_id));
+  auto GetTypeOfInst(SemIR::InstId inst_id) -> llvm::Type* {
+    return GetType(GetTypeIdOfInst(inst_id));
   }
 
   // Returns the type of the given instruction in the current specific.
-  // TODO: Each caller of this should add information to the fingerprint
-  // indicating what information they used from the type.
-  auto GetTypeIdOfInstInSpecific(SemIR::InstId inst_id) -> TypeInFile;
+  auto GetTypeIdOfInst(SemIR::InstId inst_id) -> TypeInFile;
 
   // Returns the value representation of the given type. This adds the kind of
   // value representation, but not the underlying type, to the fingerprint.

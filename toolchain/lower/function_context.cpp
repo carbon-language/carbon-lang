@@ -145,8 +145,8 @@ auto FunctionContext::LowerInst(SemIR::InstId inst_id) -> void {
   builder_.getInserter().SetCurrentInstId(SemIR::InstId::None);
 }
 
-auto FunctionContext::GetBlockArg(SemIR::InstBlockId block_id,
-                                  SemIR::TypeId type_id) -> llvm::PHINode* {
+auto FunctionContext::GetBlockArg(SemIR::InstBlockId block_id, TypeInFile type)
+    -> llvm::PHINode* {
   llvm::BasicBlock* block = GetBlock(block_id);
 
   // Find the existing phi, if any.
@@ -160,7 +160,7 @@ auto FunctionContext::GetBlockArg(SemIR::InstBlockId block_id,
 
   // The number of predecessor slots to reserve.
   static constexpr unsigned NumReservedPredecessors = 2;
-  auto* phi = llvm::PHINode::Create(GetType(type_id), NumReservedPredecessors);
+  auto* phi = llvm::PHINode::Create(GetType(type), NumReservedPredecessors);
   phi->insertInto(block, block->begin());
   return phi;
 }
@@ -238,8 +238,7 @@ auto FunctionContext::FinishInit(TypeInFile type, SemIR::InstId dest_id,
   }
 }
 
-auto FunctionContext::GetTypeIdOfInstInSpecific(SemIR::InstId inst_id)
-    -> TypeInFile {
+auto FunctionContext::GetTypeIdOfInst(SemIR::InstId inst_id) -> TypeInFile {
   auto [file, type_id] = SemIR::GetTypeOfInstInSpecific(
       specific_sem_ir(), specific_id(), sem_ir(), inst_id);
   return {.file = file, .type_id = type_id};
