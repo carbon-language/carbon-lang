@@ -2,6 +2,8 @@
 // Exceptions. See /LICENSE for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
+// INCLUDE-FILE: toolchain/testing/testdata/min_prelude/uint.carbon
+//
 // AUTOUPDATE
 // TIP: To test this file alone, run:
 // TIP:   bazel test //toolchain/testing:file_test --test_arg=--file_tests=toolchain/check/testdata/choice/basic.carbon
@@ -143,20 +145,20 @@ let never: Never = {};
 // CHECK:STDOUT:   %int_0.5c6: Core.IntLiteral = int_value 0 [concrete]
 // CHECK:STDOUT:   %ImplicitAs.type.54b: type = facet_type <@ImplicitAs, @ImplicitAs(%u2)> [concrete]
 // CHECK:STDOUT:   %Convert.type.f0e: type = fn_type @Convert.1, @ImplicitAs(%u2) [concrete]
-// CHECK:STDOUT:   %To.c80: Core.IntLiteral = bind_symbolic_name To, 0 [symbolic]
-// CHECK:STDOUT:   %Convert.type.30e: type = fn_type @Convert.3, @impl.86e(%To.c80) [symbolic]
+// CHECK:STDOUT:   %To: Core.IntLiteral = bind_symbolic_name To, 0 [symbolic]
+// CHECK:STDOUT:   %Convert.type.30e: type = fn_type @Convert.2, @impl.86e(%To) [symbolic]
 // CHECK:STDOUT:   %Convert.d1a: %Convert.type.30e = struct_value () [symbolic]
-// CHECK:STDOUT:   %int_1.5b8: Core.IntLiteral = int_value 1 [concrete]
 // CHECK:STDOUT:   %ImplicitAs.impl_witness.801: <witness> = impl_witness imports.%ImplicitAs.impl_witness_table.bb8, @impl.86e(%int_2.ecc) [concrete]
-// CHECK:STDOUT:   %Convert.type.70b: type = fn_type @Convert.3, @impl.86e(%int_2.ecc) [concrete]
+// CHECK:STDOUT:   %Convert.type.70b: type = fn_type @Convert.2, @impl.86e(%int_2.ecc) [concrete]
 // CHECK:STDOUT:   %Convert.474: %Convert.type.70b = struct_value () [concrete]
-// CHECK:STDOUT:   %ImplicitAs.facet.7cf: %ImplicitAs.type.54b = facet_value Core.IntLiteral, (%ImplicitAs.impl_witness.801) [concrete]
-// CHECK:STDOUT:   %.3e0: type = fn_type_with_self_type %Convert.type.f0e, %ImplicitAs.facet.7cf [concrete]
+// CHECK:STDOUT:   %ImplicitAs.facet: %ImplicitAs.type.54b = facet_value Core.IntLiteral, (%ImplicitAs.impl_witness.801) [concrete]
+// CHECK:STDOUT:   %.3e0: type = fn_type_with_self_type %Convert.type.f0e, %ImplicitAs.facet [concrete]
 // CHECK:STDOUT:   %Convert.bound.5bb: <bound method> = bound_method %int_0.5c6, %Convert.474 [concrete]
-// CHECK:STDOUT:   %Convert.specific_fn: <specific function> = specific_function %Convert.474, @Convert.3(%int_2.ecc) [concrete]
+// CHECK:STDOUT:   %Convert.specific_fn: <specific function> = specific_function %Convert.474, @Convert.2(%int_2.ecc) [concrete]
 // CHECK:STDOUT:   %bound_method.d36: <bound method> = bound_method %int_0.5c6, %Convert.specific_fn [concrete]
 // CHECK:STDOUT:   %int_0.9fd: %u2 = int_value 0 [concrete]
 // CHECK:STDOUT:   %Ordering.val.a29: %Ordering = struct_value (%int_0.9fd) [concrete]
+// CHECK:STDOUT:   %int_1.5b8: Core.IntLiteral = int_value 1 [concrete]
 // CHECK:STDOUT:   %Convert.bound.0dd: <bound method> = bound_method %int_1.5b8, %Convert.474 [concrete]
 // CHECK:STDOUT:   %bound_method.6bf: <bound method> = bound_method %int_1.5b8, %Convert.specific_fn [concrete]
 // CHECK:STDOUT:   %int_1.b2c: %u2 = int_value 1 [concrete]
@@ -174,7 +176,7 @@ let never: Never = {};
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
-// CHECK:STDOUT:   %Core.import_ref.c3d: @impl.86e.%Convert.type (%Convert.type.30e) = import_ref Core//prelude/types/uint, loc20_40, loaded [symbolic = @impl.86e.%Convert (constants.%Convert.d1a)]
+// CHECK:STDOUT:   %Core.import_ref.c3d: @impl.86e.%Convert.type (%Convert.type.30e) = import_ref Core//prelude/parts/uint, loc16_40, loaded [symbolic = @impl.86e.%Convert (constants.%Convert.d1a)]
 // CHECK:STDOUT:   %ImplicitAs.impl_witness_table.bb8 = impl_witness_table (%Core.import_ref.c3d), @impl.86e [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -209,7 +211,7 @@ let never: Never = {};
 // CHECK:STDOUT:   %int_0: Core.IntLiteral = int_value 0 [concrete = constants.%int_0.5c6]
 // CHECK:STDOUT:   %impl.elem0.loc5: %.3e0 = impl_witness_access constants.%ImplicitAs.impl_witness.801, element0 [concrete = constants.%Convert.474]
 // CHECK:STDOUT:   %bound_method.loc5_7.1: <bound method> = bound_method %int_0, %impl.elem0.loc5 [concrete = constants.%Convert.bound.5bb]
-// CHECK:STDOUT:   %specific_fn.loc5: <specific function> = specific_function %impl.elem0.loc5, @Convert.3(constants.%int_2.ecc) [concrete = constants.%Convert.specific_fn]
+// CHECK:STDOUT:   %specific_fn.loc5: <specific function> = specific_function %impl.elem0.loc5, @Convert.2(constants.%int_2.ecc) [concrete = constants.%Convert.specific_fn]
 // CHECK:STDOUT:   %bound_method.loc5_7.2: <bound method> = bound_method %int_0, %specific_fn.loc5 [concrete = constants.%bound_method.d36]
 // CHECK:STDOUT:   %int.convert_checked.loc5: init %u2 = call %bound_method.loc5_7.2(%int_0) [concrete = constants.%int_0.9fd]
 // CHECK:STDOUT:   %.loc5_7.1: %u2 = value_of_initializer %int.convert_checked.loc5 [concrete = constants.%int_0.9fd]
@@ -226,7 +228,7 @@ let never: Never = {};
 // CHECK:STDOUT:   %int_1: Core.IntLiteral = int_value 1 [concrete = constants.%int_1.5b8]
 // CHECK:STDOUT:   %impl.elem0.loc6: %.3e0 = impl_witness_access constants.%ImplicitAs.impl_witness.801, element0 [concrete = constants.%Convert.474]
 // CHECK:STDOUT:   %bound_method.loc6_13.1: <bound method> = bound_method %int_1, %impl.elem0.loc6 [concrete = constants.%Convert.bound.0dd]
-// CHECK:STDOUT:   %specific_fn.loc6: <specific function> = specific_function %impl.elem0.loc6, @Convert.3(constants.%int_2.ecc) [concrete = constants.%Convert.specific_fn]
+// CHECK:STDOUT:   %specific_fn.loc6: <specific function> = specific_function %impl.elem0.loc6, @Convert.2(constants.%int_2.ecc) [concrete = constants.%Convert.specific_fn]
 // CHECK:STDOUT:   %bound_method.loc6_13.2: <bound method> = bound_method %int_1, %specific_fn.loc6 [concrete = constants.%bound_method.6bf]
 // CHECK:STDOUT:   %int.convert_checked.loc6: init %u2 = call %bound_method.loc6_13.2(%int_1) [concrete = constants.%int_1.b2c]
 // CHECK:STDOUT:   %.loc6_13.1: %u2 = value_of_initializer %int.convert_checked.loc6 [concrete = constants.%int_1.b2c]
@@ -243,7 +245,7 @@ let never: Never = {};
 // CHECK:STDOUT:   %int_2.loc7: Core.IntLiteral = int_value 2 [concrete = constants.%int_2.ecc]
 // CHECK:STDOUT:   %impl.elem0.loc7: %.3e0 = impl_witness_access constants.%ImplicitAs.impl_witness.801, element0 [concrete = constants.%Convert.474]
 // CHECK:STDOUT:   %bound_method.loc7_10.1: <bound method> = bound_method %int_2.loc7, %impl.elem0.loc7 [concrete = constants.%Convert.bound.122]
-// CHECK:STDOUT:   %specific_fn.loc7: <specific function> = specific_function %impl.elem0.loc7, @Convert.3(constants.%int_2.ecc) [concrete = constants.%Convert.specific_fn]
+// CHECK:STDOUT:   %specific_fn.loc7: <specific function> = specific_function %impl.elem0.loc7, @Convert.2(constants.%int_2.ecc) [concrete = constants.%Convert.specific_fn]
 // CHECK:STDOUT:   %bound_method.loc7_10.2: <bound method> = bound_method %int_2.loc7, %specific_fn.loc7 [concrete = constants.%bound_method.f7d]
 // CHECK:STDOUT:   %int.convert_checked.loc7: init %u2 = call %bound_method.loc7_10.2(%int_2.loc7) [concrete = constants.%int_2.788]
 // CHECK:STDOUT:   %.loc7_10.1: %u2 = value_of_initializer %int.convert_checked.loc7 [concrete = constants.%int_2.788]
@@ -260,7 +262,7 @@ let never: Never = {};
 // CHECK:STDOUT:   %int_3: Core.IntLiteral = int_value 3 [concrete = constants.%int_3.1ba]
 // CHECK:STDOUT:   %impl.elem0.loc9: %.3e0 = impl_witness_access constants.%ImplicitAs.impl_witness.801, element0 [concrete = constants.%Convert.474]
 // CHECK:STDOUT:   %bound_method.loc9_1.1: <bound method> = bound_method %int_3, %impl.elem0.loc9 [concrete = constants.%Convert.bound.a5c]
-// CHECK:STDOUT:   %specific_fn.loc9: <specific function> = specific_function %impl.elem0.loc9, @Convert.3(constants.%int_2.ecc) [concrete = constants.%Convert.specific_fn]
+// CHECK:STDOUT:   %specific_fn.loc9: <specific function> = specific_function %impl.elem0.loc9, @Convert.2(constants.%int_2.ecc) [concrete = constants.%Convert.specific_fn]
 // CHECK:STDOUT:   %bound_method.loc9_1.2: <bound method> = bound_method %int_3, %specific_fn.loc9 [concrete = constants.%bound_method.c7e]
 // CHECK:STDOUT:   %int.convert_checked.loc9: init %u2 = call %bound_method.loc9_1.2(%int_3) [concrete = constants.%int_3.975]
 // CHECK:STDOUT:   %.loc9_1.1: %u2 = value_of_initializer %int.convert_checked.loc9 [concrete = constants.%int_3.975]

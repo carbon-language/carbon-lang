@@ -2,6 +2,7 @@
 // Exceptions. See /LICENSE for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
+// INCLUDE-FILE: toolchain/testing/testdata/min_prelude/convert.carbon
 // TODO: Add ranges and switch to "--dump-sem-ir-ranges=only".
 // EXTRA-ARGS: --dump-sem-ir-ranges=if-present
 //
@@ -49,10 +50,10 @@ fn Foo.Baz() {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %Foo: <namespace> = namespace [concrete] {
-// CHECK:STDOUT:     .Baz = %Baz.decl.loc16
+// CHECK:STDOUT:     .Baz = %Baz.decl.loc17
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %Baz.decl.loc16: %Baz.type.8987ba.1 = fn_decl @Baz.1 [concrete = constants.%Baz.eb4c34.1] {} {}
-// CHECK:STDOUT:   %Baz.decl.loc26: %Baz.type.8987ba.2 = fn_decl @Baz.2 [concrete = constants.%Baz.eb4c34.2] {} {}
+// CHECK:STDOUT:   %Baz.decl.loc17: %Baz.type.8987ba.1 = fn_decl @Baz.1 [concrete = constants.%Baz.eb4c34.1] {} {}
+// CHECK:STDOUT:   %Baz.decl.loc27: %Baz.type.8987ba.2 = fn_decl @Baz.2 [concrete = constants.%Baz.eb4c34.2] {} {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Baz.1() {

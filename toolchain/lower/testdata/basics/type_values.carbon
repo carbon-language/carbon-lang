@@ -2,6 +2,8 @@
 // Exceptions. See /LICENSE for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
+// INCLUDE-FILE: toolchain/testing/testdata/min_prelude/primitives.carbon
+//
 // AUTOUPDATE
 // TIP: To test this file alone, run:
 // TIP:   bazel test //toolchain/testing:file_test --test_arg=--file_tests=toolchain/lower/testdata/basics/type_values.carbon
@@ -50,11 +52,11 @@ fn F64() -> type {
 // CHECK:STDOUT: !1 = !{i32 2, !"Debug Info Version", i32 3}
 // CHECK:STDOUT: !2 = distinct !DICompileUnit(language: DW_LANG_C, file: !3, producer: "carbon", isOptimized: false, runtimeVersion: 0, emissionKind: FullDebug)
 // CHECK:STDOUT: !3 = !DIFile(filename: "type_values.carbon", directory: "")
-// CHECK:STDOUT: !4 = distinct !DISubprogram(name: "I32", linkageName: "_CI32.Main", scope: null, file: !3, line: 14, type: !5, spFlags: DISPFlagDefinition, unit: !2)
+// CHECK:STDOUT: !4 = distinct !DISubprogram(name: "I32", linkageName: "_CI32.Main", scope: null, file: !3, line: 16, type: !5, spFlags: DISPFlagDefinition, unit: !2)
 // CHECK:STDOUT: !5 = !DISubroutineType(types: !6)
 // CHECK:STDOUT: !6 = !{}
-// CHECK:STDOUT: !7 = !DILocation(line: 15, column: 3, scope: !4)
-// CHECK:STDOUT: !8 = distinct !DISubprogram(name: "I48", linkageName: "_CI48.Main", scope: null, file: !3, line: 18, type: !5, spFlags: DISPFlagDefinition, unit: !2)
-// CHECK:STDOUT: !9 = !DILocation(line: 19, column: 3, scope: !8)
-// CHECK:STDOUT: !10 = distinct !DISubprogram(name: "F64", linkageName: "_CF64.Main", scope: null, file: !3, line: 22, type: !5, spFlags: DISPFlagDefinition, unit: !2)
-// CHECK:STDOUT: !11 = !DILocation(line: 23, column: 3, scope: !10)
+// CHECK:STDOUT: !7 = !DILocation(line: 17, column: 3, scope: !4)
+// CHECK:STDOUT: !8 = distinct !DISubprogram(name: "I48", linkageName: "_CI48.Main", scope: null, file: !3, line: 20, type: !5, spFlags: DISPFlagDefinition, unit: !2)
+// CHECK:STDOUT: !9 = !DILocation(line: 21, column: 3, scope: !8)
+// CHECK:STDOUT: !10 = distinct !DISubprogram(name: "F64", linkageName: "_CF64.Main", scope: null, file: !3, line: 24, type: !5, spFlags: DISPFlagDefinition, unit: !2)
+// CHECK:STDOUT: !11 = !DILocation(line: 25, column: 3, scope: !10)

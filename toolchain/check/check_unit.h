@@ -187,7 +187,6 @@ class CheckUnit {
   int total_ir_count_;
   llvm::IntrusiveRefCntPtr<llvm::vfs::FileSystem> fs_;
   llvm::StringRef target_;
-  llvm::raw_ostream* vlog_stream_;
 
   DiagnosticEmitter emitter_;
   Context context_;

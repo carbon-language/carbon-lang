@@ -206,24 +206,16 @@ fn G(T:! M where .X = () and .Y = ()) {
   F(T);
 }
 
-// --- fail_todo_repeated_with_bitand.carbon
+// --- repeated_with_bitand.carbon
 library "[[@TEST_NAME]]";
 
 interface M { let X:! type; let Y:! type; }
 
-// CHECK:STDERR: fail_todo_repeated_with_bitand.carbon:[[@LINE+4]]:10: error: associated constant `.(M.X)` given two different values `.(M.Y)` and `()` [AssociatedConstantWithDifferentValues]
-// CHECK:STDERR: fn F(T:! (M where .X = .Y) & (M where .X = .Y and .Y = ())) -> T.X {
-// CHECK:STDERR:          ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-// CHECK:STDERR:
-fn F(T:! (M where .X = .Y) & (M where .X = .Y and .Y = ())) -> T.X {
+fn F1(T:! (M where .X = .Y) & (M where .X = .Y and .Y = ())) -> T.X {
   return ();
 }
 
-// CHECK:STDERR: fail_todo_repeated_with_bitand.carbon:[[@LINE+4]]:10: error: associated constant `.(M.X)` given two different values `.(M.Y)` and `()` [AssociatedConstantWithDifferentValues]
-// CHECK:STDERR: fn F(T:! (M where .X = .Y and .Y = ()) & (M where .X = .Y)) -> T.X {
-// CHECK:STDERR:          ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-// CHECK:STDERR:
-fn F(T:! (M where .X = .Y and .Y = ()) & (M where .X = .Y)) -> T.X {
+fn F2(T:! (M where .X = .Y and .Y = ()) & (M where .X = .Y)) -> T.X {
   return ();
 }
 
@@ -359,6 +351,80 @@ interface N {
 // CHECK:STDERR:          ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 // CHECK:STDERR:
 fn F(T:! N where .Y = {.a = {}} and .Y = {.a = ()}) {}
+
+// --- fail_todo_cycle_through_self_reference.carbon
+library "[[@TEST_NAME]]";
+
+interface Z {
+  let T:! type;
+  // TODO: This should not be an error.
+  //
+  // CHECK:STDERR: fail_todo_cycle_through_self_reference.carbon:[[@LINE+7]]:11: error: associated constant has incomplete type `Z` [IncompleteTypeInAssociatedConstantDecl]
+  // CHECK:STDERR:   let U:! Z;
+  // CHECK:STDERR:           ^
+  // CHECK:STDERR: fail_todo_cycle_through_self_reference.carbon:[[@LINE-7]]:1: note: interface is currently being defined [InterfaceIncompleteWithinDefinition]
+  // CHECK:STDERR: interface Z {
+  // CHECK:STDERR: ^~~~~~~~~~~~~
+  // CHECK:STDERR:
+  let U:! Z;
+}
+
+// TODO: Should be diagnosed as a cycle.
+fn F(A:! Z where .T = .U.T and .U = .Self) {}
+
+// --- fail_todo_reference_same_constant_in_different_self.carbon
+library "[[@TEST_NAME]]";
+
+interface Z {
+  let T:! type;
+  // TODO: This should not be an error.
+  //
+  // CHECK:STDERR: fail_todo_reference_same_constant_in_different_self.carbon:[[@LINE+7]]:11: error: associated constant has incomplete type `Z` [IncompleteTypeInAssociatedConstantDecl]
+  // CHECK:STDERR:   let U:! Z;
+  // CHECK:STDERR:           ^
+  // CHECK:STDERR: fail_todo_reference_same_constant_in_different_self.carbon:[[@LINE-7]]:1: note: interface is currently being defined [InterfaceIncompleteWithinDefinition]
+  // CHECK:STDERR: interface Z {
+  // CHECK:STDERR: ^~~~~~~~~~~~~
+  // CHECK:STDERR:
+  let U:! Z;
+}
+
+// TODO: Should not be diagnosed as a cycle, once the incorrect failure above is
+// fixed.
+fn F(A:! Z where .T = (), B:! Z where .T = .U.T and .U = A) {}
+
+// --- fail_todo_non_cycle_with_self_reference.carbon
+library "[[@TEST_NAME]]";
+
+interface Z {
+  // TODO: This should not be an error.
+  //
+  // CHECK:STDERR: fail_todo_non_cycle_with_self_reference.carbon:[[@LINE+7]]:11: error: associated constant has incomplete type `Z` [IncompleteTypeInAssociatedConstantDecl]
+  // CHECK:STDERR:   let T:! Z;
+  // CHECK:STDERR:           ^
+  // CHECK:STDERR: fail_todo_non_cycle_with_self_reference.carbon:[[@LINE-6]]:1: note: interface is currently being defined [InterfaceIncompleteWithinDefinition]
+  // CHECK:STDERR: interface Z {
+  // CHECK:STDERR: ^~~~~~~~~~~~~
+  // CHECK:STDERR:
+  let T:! Z;
+  let U:! type;
+  // TODO: This should not be an error.
+  //
+  // CHECK:STDERR: fail_todo_non_cycle_with_self_reference.carbon:[[@LINE+7]]:11: error: associated constant has incomplete type `Z` [IncompleteTypeInAssociatedConstantDecl]
+  // CHECK:STDERR:   let V:! Z;
+  // CHECK:STDERR:           ^
+  // CHECK:STDERR: fail_todo_non_cycle_with_self_reference.carbon:[[@LINE-17]]:1: note: interface is currently being defined [InterfaceIncompleteWithinDefinition]
+  // CHECK:STDERR: interface Z {
+  // CHECK:STDERR: ^~~~~~~~~~~~~
+  // CHECK:STDERR:
+  let V:! Z;
+}
+
+// TODO: Should not be diagnosed as a cycle, once the incorrect failure above is
+// fixed.
+fn F(A:! Z where .T = .V.U and .V = .Self and .U = ()) -> A.T {
+  return ();
+}
 
 // CHECK:STDOUT: --- fail_cycle.carbon
 // CHECK:STDOUT:

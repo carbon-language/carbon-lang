@@ -2,8 +2,7 @@
 // Exceptions. See /LICENSE for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
-// TODO: Add ranges and switch to "--dump-sem-ir-ranges=only".
-// EXTRA-ARGS: --dump-sem-ir-ranges=if-present
+// INCLUDE-FILE: toolchain/testing/testdata/min_prelude/convert.carbon
 //
 // AUTOUPDATE
 // TIP: To test this file alone, run:
@@ -22,6 +21,3 @@ namespace N;
 // CHECK:STDERR:      ^~~~
 // CHECK:STDERR:
 fn N.base() {}
-
-// CHECK:STDOUT: --- fail_base_as_declared_name.carbon
-// CHECK:STDOUT:

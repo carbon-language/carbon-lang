@@ -16,6 +16,7 @@
 #include "toolchain/check/type.h"
 #include "toolchain/check/type_completion.h"
 #include "toolchain/diagnostics/diagnostic.h"
+#include "toolchain/parse/typed_nodes.h"
 #include "toolchain/sem_ir/expr_info.h"
 #include "toolchain/sem_ir/ids.h"
 #include "toolchain/sem_ir/pattern.h"

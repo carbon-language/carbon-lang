@@ -1,6 +1,7 @@
 // Part of the Carbon Language project, under the Apache License v2.0 with LLVM
 // Exceptions. See /LICENSE for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
+//
 // INCLUDE-FILE: toolchain/testing/testdata/min_prelude/int.carbon
 //
 // AUTOUPDATE
@@ -96,7 +97,7 @@ var b: i32 = 0;
 // CHECK:STDERR: fail_non_deterministic_type.carbon:[[@LINE+11]]:17: error: non-constant call to compile-time-only function [NonConstantCallToCompTimeOnlyFunction]
 // CHECK:STDERR: var c: i32 = a.(b);
 // CHECK:STDERR:                 ^
-// CHECK:STDERR: min_prelude/int.carbon:22:3: note: compile-time-only function declared here [CompTimeOnlyFunctionHere]
+// CHECK:STDERR: min_prelude/parts/int.carbon:20:3: note: compile-time-only function declared here [CompTimeOnlyFunctionHere]
 // CHECK:STDERR:   fn Convert[self: Self]() -> IntLiteral() = "int.convert_checked";
 // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 // CHECK:STDERR:
@@ -242,9 +243,9 @@ var b: i32 = a.({.index = 2}.index);
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
-// CHECK:STDOUT:   %Core.import_ref.85c: @impl.971.%Convert.type (%Convert.type.708) = import_ref Core//prelude, loc22_44, loaded [symbolic = @impl.971.%Convert (constants.%Convert.c68)]
+// CHECK:STDOUT:   %Core.import_ref.85c: @impl.971.%Convert.type (%Convert.type.708) = import_ref Core//prelude/parts/int, loc20_44, loaded [symbolic = @impl.971.%Convert (constants.%Convert.c68)]
 // CHECK:STDOUT:   %ImplicitAs.impl_witness_table.1d9 = impl_witness_table (%Core.import_ref.85c), @impl.971 [concrete]
-// CHECK:STDOUT:   %Core.import_ref.78a: @impl.686.%Convert.type (%Convert.type.062) = import_ref Core//prelude, loc27_39, loaded [symbolic = @impl.686.%Convert (constants.%Convert.527)]
+// CHECK:STDOUT:   %Core.import_ref.78a: @impl.686.%Convert.type (%Convert.type.062) = import_ref Core//prelude/parts/int, loc25_39, loaded [symbolic = @impl.686.%Convert (constants.%Convert.527)]
 // CHECK:STDOUT:   %As.impl_witness_table.eb4 = impl_witness_table (%Core.import_ref.78a), @impl.686 [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

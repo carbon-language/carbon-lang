@@ -2,6 +2,7 @@
 // Exceptions. See /LICENSE for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
+// INCLUDE-FILE: toolchain/testing/testdata/min_prelude/int.carbon
 // TODO: Add ranges and switch to "--dump-sem-ir-ranges=only".
 // EXTRA-ARGS: --dump-sem-ir-ranges=if-present
 //
@@ -40,7 +41,7 @@ class C {
 // CHECK:STDOUT:     import Core//prelude
 // CHECK:STDOUT:     import Core//prelude/...
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %Core.Int: %Int.type = import_ref Core//prelude/types/int, Int, loaded [concrete = constants.%Int.generic]
+// CHECK:STDOUT:   %Core.Int: %Int.type = import_ref Core//prelude/parts/int, Int, loaded [concrete = constants.%Int.generic]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -69,7 +70,7 @@ class C {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %int_32: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
 // CHECK:STDOUT:   %i32: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
-// CHECK:STDOUT:   %.loc17: %C.elem = field_decl a, element0 [concrete]
+// CHECK:STDOUT:   %.loc18: %C.elem = field_decl a, element0 [concrete]
 // CHECK:STDOUT:   %struct_type.a: type = struct_type {.a: %i32} [concrete = constants.%struct_type.a]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %struct_type.a [concrete = constants.%complete_type.fd7]
 // CHECK:STDOUT:   complete_type_witness = %complete_type
@@ -78,15 +79,15 @@ class C {
 // CHECK:STDOUT:   .Self = constants.%C
 // CHECK:STDOUT:   .C = <poisoned>
 // CHECK:STDOUT:   .F = %F.decl
-// CHECK:STDOUT:   .a = %.loc17
+// CHECK:STDOUT:   .a = %.loc18
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F(%c.param: %C) -> %i32 {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %c.ref: %C = name_ref c, %c
-// CHECK:STDOUT:   %a.ref: %C.elem = name_ref a, @C.%.loc17 [concrete = @C.%.loc17]
-// CHECK:STDOUT:   %.loc15_31.1: ref %i32 = class_element_access %c.ref, element0
-// CHECK:STDOUT:   %.loc15_31.2: %i32 = bind_value %.loc15_31.1
-// CHECK:STDOUT:   return %.loc15_31.2
+// CHECK:STDOUT:   %a.ref: %C.elem = name_ref a, @C.%.loc18 [concrete = @C.%.loc18]
+// CHECK:STDOUT:   %.loc16_31.1: ref %i32 = class_element_access %c.ref, element0
+// CHECK:STDOUT:   %.loc16_31.2: %i32 = bind_value %.loc16_31.1
+// CHECK:STDOUT:   return %.loc16_31.2
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
