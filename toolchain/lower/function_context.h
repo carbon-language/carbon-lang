@@ -5,6 +5,8 @@
 #ifndef CARBON_TOOLCHAIN_LOWER_FUNCTION_CONTEXT_H_
 #define CARBON_TOOLCHAIN_LOWER_FUNCTION_CONTEXT_H_
 
+#include <type_traits>
+
 #include "common/map.h"
 #include "common/raw_string_ostream.h"
 #include "llvm/IR/IRBuilder.h"
@@ -53,10 +55,24 @@ class FunctionContext {
   };
 
   // A type in a particular file. This is used when lowering a specific and we
-  // find a type that might be from the specific rather than the generic.
+  // find a type that might be from the specific rather than the generic. By
+  // convention, this represents a type that has not yet been added to the
+  // specific fingerprint.
   struct TypeInFile {
     const SemIR::File* file;
     SemIR::TypeId type_id;
+  };
+
+  // A value representation in a particular file. By convention, this represents
+  // a value representation whose kind has been added to the fingerprint but
+  // whose type has not.
+  struct ValueReprInFile {
+    const SemIR::File* file;
+    SemIR::ValueRepr repr;
+
+    auto type() -> TypeInFile {
+      return {.file = file, .type_id = repr.type_id};
+    }
   };
 
   // Returns a basic block corresponding to the start of the given semantics
@@ -113,7 +129,8 @@ class FunctionContext {
     return file_context_->GetType(type_id);
   }
 
-  // Returns a lowered type for the given type_id in the given file.
+  // Returns a lowered type for the given type_id in the given file. This adds
+  // the specified type to the fingerprint.
   auto GetType(TypeInFile type) -> llvm::Type* {
     auto* llvm_type = GetFileContext(type.file).GetType(type.type_id);
     AddTypeToCurrentFingerprint(llvm_type);
@@ -129,6 +146,14 @@ class FunctionContext {
   // TODO: Each caller of this should add information to the fingerprint
   // indicating what information they used from the type.
   auto GetTypeIdOfInstInSpecific(SemIR::InstId inst_id) -> TypeInFile;
+
+  // Returns the value representation of the given type. This adds the kind of
+  // value representation, but not the underlying type, to the fingerprint.
+  auto GetValueRepr(TypeInFile type) -> ValueReprInFile;
+
+  // Returns the initializing representation of the given type. This adds the
+  // kind of initializing representation to the fingerprint.
+  auto GetInitRepr(TypeInFile type) -> SemIR::InitRepr;
 
   // Returns a lowered value to use for a value of type `type`.
   auto GetTypeAsValue() -> llvm::Value* {
@@ -181,8 +206,15 @@ class FunctionContext {
                                    SemIR::FunctionId function_id,
                                    SemIR::SpecificId specific_id) -> void;
 
-  // When fingerprinting for a specific, adds a string.
-  auto AddStringToCurrentFingerprint(llvm::StringRef string) -> void;
+  // When fingerprinting for a specific, adds an integer.
+  auto AddIntToCurrentFingerprint(uint64_t value) -> void;
+
+  // When fingerprinting for a specific, adds an enumerator value.
+  template <typename T>
+    requires(std::is_enum_v<T>)
+  auto AddEnumToCurrentFingerprint(T value) -> void {
+    AddIntToCurrentFingerprint(static_cast<uint64_t>(value));
+  }
 
   // When fingerprinting for a specific, adds the type.
   auto AddTypeToCurrentFingerprint(llvm::Type* type) -> void;

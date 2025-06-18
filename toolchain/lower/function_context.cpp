@@ -219,12 +219,10 @@ auto FunctionContext::GetDebugLoc(SemIR::InstId inst_id) -> llvm::DebugLoc {
 
 auto FunctionContext::FinishInit(TypeInFile type, SemIR::InstId dest_id,
                                  SemIR::InstId source_id) -> void {
-  switch (SemIR::InitRepr::ForType(*type.file, type.type_id).kind) {
+  switch (GetInitRepr(type).kind) {
     case SemIR::InitRepr::None:
-      AddStringToCurrentFingerprint("Initialization: none");
       break;
     case SemIR::InitRepr::InPlace:
-      AddStringToCurrentFingerprint("Initialization: in place");
       if (sem_ir().constant_values().Get(source_id).is_constant()) {
         // When initializing from a constant, emission of the source doesn't
         // initialize the destination. Copy the constant value instead.
@@ -232,7 +230,6 @@ auto FunctionContext::FinishInit(TypeInFile type, SemIR::InstId dest_id,
       }
       break;
     case SemIR::InitRepr::ByCopy:
-      AddStringToCurrentFingerprint("Initialization: by copy");
       CopyValue(type, source_id, dest_id);
       break;
     case SemIR::InitRepr::Incomplete:
@@ -248,21 +245,32 @@ auto FunctionContext::GetTypeIdOfInstInSpecific(SemIR::InstId inst_id)
   return {.file = file, .type_id = type_id};
 }
 
+auto FunctionContext::GetValueRepr(TypeInFile type) -> ValueReprInFile {
+  auto result = ValueReprInFile{
+      .file = type.file,
+      .repr = SemIR::ValueRepr::ForType(*type.file, type.type_id)};
+  AddEnumToCurrentFingerprint(result.repr.kind);
+  AddEnumToCurrentFingerprint(result.repr.aggregate_kind);
+  return result;
+}
+
+auto FunctionContext::GetInitRepr(TypeInFile type) -> SemIR::InitRepr {
+  auto result = SemIR::InitRepr::ForType(*type.file, type.type_id);
+  AddEnumToCurrentFingerprint(result.kind);
+  return result;
+}
+
 auto FunctionContext::CopyValue(TypeInFile type, SemIR::InstId source_id,
                                 SemIR::InstId dest_id) -> void {
-  switch (auto rep = SemIR::ValueRepr::ForType(*type.file, type.type_id);
-          rep.kind) {
+  switch (GetValueRepr(type).repr.kind) {
     case SemIR::ValueRepr::Unknown:
       CARBON_FATAL("Attempt to copy incomplete type");
     case SemIR::ValueRepr::None:
-      AddStringToCurrentFingerprint("Copy value: no value");
       break;
     case SemIR::ValueRepr::Copy:
-      AddStringToCurrentFingerprint("Copy value: trivial copy");
       builder().CreateStore(GetValue(source_id), GetValue(dest_id));
       break;
     case SemIR::ValueRepr::Pointer:
-      AddStringToCurrentFingerprint("Copy value: object copy");
       CopyObject(type, source_id, dest_id);
       break;
     case SemIR::ValueRepr::Custom:
@@ -324,13 +332,15 @@ auto FunctionContext::AddCallToCurrentFingerprint(SemIR::CheckIRId file_id,
   }
 }
 
-auto FunctionContext::AddStringToCurrentFingerprint(llvm::StringRef string)
-    -> void {
+auto FunctionContext::AddIntToCurrentFingerprint(uint64_t value) -> void {
   if (!function_fingerprint_) {
     return;
   }
 
-  current_fingerprint_.common_fingerprint.update(string);
+  // TODO: Instead just include the raw bytes of the integer?
+  RawStringOstream os;
+  os << value << "\n";
+  current_fingerprint_.common_fingerprint.update(os.TakeStr());
 }
 
 auto FunctionContext::AddTypeToCurrentFingerprint(llvm::Type* type) -> void {

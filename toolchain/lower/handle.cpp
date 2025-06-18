@@ -236,21 +236,17 @@ auto HandleInst(FunctionContext& context, SemIR::InstId /*inst_id*/,
 auto HandleInst(FunctionContext& context, SemIR::InstId /*inst_id*/,
                 SemIR::ReturnExpr inst) -> void {
   auto result_type = context.GetTypeIdOfInstInSpecific(inst.expr_id);
-  switch (
-      SemIR::InitRepr::ForType(*result_type.file, result_type.type_id).kind) {
+  switch (context.GetInitRepr(result_type).kind) {
     case SemIR::InitRepr::None:
       // Nothing to return.
-      context.AddStringToCurrentFingerprint("Return: none");
       context.builder().CreateRetVoid();
       return;
     case SemIR::InitRepr::InPlace:
-      context.AddStringToCurrentFingerprint("Return: in place");
       context.FinishInit(result_type, inst.dest_id, inst.expr_id);
       context.builder().CreateRetVoid();
       return;
     case SemIR::InitRepr::ByCopy:
       // The expression produces the value representation for the type.
-      context.AddStringToCurrentFingerprint("Return: by copy");
       context.builder().CreateRet(context.GetValue(inst.expr_id));
       return;
     case SemIR::InitRepr::Incomplete:

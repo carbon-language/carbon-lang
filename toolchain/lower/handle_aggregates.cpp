@@ -20,6 +20,12 @@ auto HandleInst(FunctionContext& /*context*/, SemIR::InstId /*inst_id*/,
   // No action to perform.
 }
 
+static auto GetPointeeType(FunctionContext::TypeInFile type)
+    -> FunctionContext::TypeInFile {
+  return {.file = type.file,
+          .type_id = type.file->GetPointeeType(type.type_id)};
+}
+
 // Extracts an element of an aggregate, such as a struct, tuple, or class, by
 // index. Depending on the expression category and value representation of the
 // aggregate input, this will either produce a value or a reference.
@@ -38,34 +44,28 @@ static auto GetAggregateElement(FunctionContext& context,
       CARBON_FATAL("Unexpected expression category for aggregate access");
 
     case SemIR::ExprCategory::Value: {
-      auto [aggr_type_file, aggr_type_id] =
-          context.GetTypeIdOfInstInSpecific(aggr_inst_id);
-      auto value_rep = SemIR::ValueRepr::ForType(*aggr_type_file, aggr_type_id);
-      CARBON_CHECK(value_rep.aggregate_kind != SemIR::ValueRepr::NotAggregate,
-                   "aggregate type should have aggregate value representation");
-      switch (value_rep.kind) {
+      auto aggr_type = context.GetTypeIdOfInstInSpecific(aggr_inst_id);
+      auto value_repr = context.GetValueRepr(aggr_type);
+      CARBON_CHECK(
+          value_repr.repr.aggregate_kind != SemIR::ValueRepr::NotAggregate,
+          "aggregate type should have aggregate value representation");
+      switch (value_repr.repr.kind) {
         case SemIR::ValueRepr::Unknown:
           CARBON_FATAL("Lowering access to incomplete aggregate type");
         case SemIR::ValueRepr::None:
-          context.AddStringToCurrentFingerprint("Aggregate element: empty");
           return aggr_value;
         case SemIR::ValueRepr::Copy:
-          context.AddStringToCurrentFingerprint("Aggregate element: copy");
           // We are holding the values of the aggregate directly, elementwise.
           return context.builder().CreateExtractValue(aggr_value, idx.index,
                                                       name);
         case SemIR::ValueRepr::Pointer: {
           // The value representation is a pointer to an aggregate that we want
           // to index into.
-          auto pointee_type_id =
-              aggr_type_file->GetPointeeType(value_rep.type_id);
-          auto* value_type =
-              context.GetFileContext(aggr_type_file).GetType(pointee_type_id);
-          context.AddTypeToCurrentFingerprint(value_type);
+          auto* value_type = context.GetType(GetPointeeType(value_repr.type()));
           auto* elem_ptr = context.builder().CreateStructGEP(
               value_type, aggr_value, idx.index, name);
 
-          if (!value_rep.elements_are_values()) {
+          if (!value_repr.repr.elements_are_values()) {
             // `elem_ptr` points to an object representation, which is our
             // result.
             return elem_ptr;
@@ -73,11 +73,7 @@ static auto GetAggregateElement(FunctionContext& context,
 
           // `elem_ptr` points to a value representation. Load it.
           auto result_type = context.GetTypeIdOfInstInSpecific(result_inst_id);
-          auto result_value_type = FunctionContext::TypeInFile{
-              .file = result_type.file,
-              .type_id = SemIR::ValueRepr::ForType(*result_type.file,
-                                                   result_type.type_id)
-                             .type_id};
+          auto result_value_type = context.GetValueRepr(result_type).type();
           return context.builder().CreateLoad(
               context.GetType(result_value_type), elem_ptr, name + ".load");
         }
@@ -129,15 +125,13 @@ static auto EmitAggregateInitializer(FunctionContext& context,
   auto* llvm_type = context.GetType(type);
   auto refs = context.sem_ir().inst_blocks().Get(refs_id);
 
-  switch (SemIR::InitRepr::ForType(*type.file, type.type_id).kind) {
+  switch (context.GetInitRepr(type).kind) {
     case SemIR::InitRepr::None: {
-      context.AddStringToCurrentFingerprint("Aggregate initializer: empty");
       // TODO: Add a helper to poison a value slot.
       return llvm::PoisonValue::get(llvm_type);
     }
 
     case SemIR::InitRepr::InPlace: {
-      context.AddStringToCurrentFingerprint("Aggregate initializer: in place");
       // Finish initialization of constant fields. We will have skipped this
       // when emitting the initializers because they have constant values.
       //
@@ -164,7 +158,6 @@ static auto EmitAggregateInitializer(FunctionContext& context,
     }
 
     case SemIR::InitRepr::ByCopy: {
-      context.AddStringToCurrentFingerprint("Aggregate initializer: by copy");
       auto refs = context.sem_ir().inst_blocks().Get(refs_id);
       CARBON_CHECK(
           refs.size() == 1,
@@ -211,20 +204,17 @@ static auto EmitAggregateValueRepr(FunctionContext& context,
                                    SemIR::InstId value_inst_id,
                                    SemIR::InstBlockId refs_id) -> llvm::Value* {
   auto type = context.GetTypeIdOfInstInSpecific(value_inst_id);
-  auto value_rep = SemIR::ValueRepr::ForType(*type.file, type.type_id);
-  auto value_type = FunctionContext::TypeInFile{.file = type.file,
-                                                .type_id = value_rep.type_id};
-  switch (value_rep.kind) {
+  auto value_repr = context.GetValueRepr(type);
+  auto value_type = value_repr.type();
+  switch (value_repr.repr.kind) {
     case SemIR::ValueRepr::Unknown:
       CARBON_FATAL("Incomplete aggregate type in lowering");
 
     case SemIR::ValueRepr::None:
-      context.AddStringToCurrentFingerprint("Aggregate value: none");
       // TODO: Add a helper to get a "no value representation" value.
       return llvm::PoisonValue::get(context.GetType(value_type));
 
     case SemIR::ValueRepr::Copy: {
-      context.AddStringToCurrentFingerprint("Aggregate value: copy");
       auto refs = context.sem_ir().inst_blocks().Get(refs_id);
       CARBON_CHECK(
           refs.size() == 1,
@@ -237,11 +227,7 @@ static auto EmitAggregateValueRepr(FunctionContext& context,
     }
 
     case SemIR::ValueRepr::Pointer: {
-      context.AddStringToCurrentFingerprint("Aggregate value: pointer");
-      auto pointee_type = FunctionContext::TypeInFile{
-          .file = value_type.file,
-          .type_id = value_type.file->GetPointeeType(value_type.type_id)};
-      auto* llvm_value_rep_type = context.GetType(pointee_type);
+      auto* llvm_value_rep_type = context.GetType(GetPointeeType(value_type));
 
       // Write the value representation to a local alloca so we can produce a
       // pointer to it as the value representation of the struct or tuple.

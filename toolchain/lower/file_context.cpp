@@ -826,9 +826,8 @@ auto FileContext::BuildFunctionBody(SemIR::FunctionId function_id,
     llvm::Value* param_value;
 
     auto param_type = function_lowering.GetTypeIdOfInstInSpecific(param_id);
-    if (SemIR::ValueRepr::ForType(*param_type.file, param_type.type_id).kind !=
+    if (function_lowering.GetValueRepr(param_type).repr.kind !=
         SemIR::ValueRepr::None) {
-      function_lowering.AddStringToCurrentFingerprint("Empty param");
       param_value = llvm_function->getArg(param_index);
       ++param_index;
     } else {
