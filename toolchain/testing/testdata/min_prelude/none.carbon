@@ -7,4 +7,4 @@
 // --- min_prelude/none.carbon
 
 // A minimal prelude that avoids importing any prelude library at all.
-package Core library "prelude";
+package MinPreludeNone;
