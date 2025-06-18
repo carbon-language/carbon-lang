@@ -210,7 +210,8 @@ In each case, the following steps are performed to resolve the facet type's
 abstract constraints into a set of constraints on `T`:
 
 -   If multiple rewrites are specified for the same associated constant, they
-    are required to be identical, and duplicates are discarded.
+    are required to be identical, and duplicates are discarded. Identical is
+    taken to mean that they resolve to the same value at the time of resolution.
 -   Rewrites are performed on other rewrites in order to find a fixed point,
     where no rewrite applies within any other rewrite. If no fixed point exists,
     the generic parameter declaration or `impl` declaration is invalid.
@@ -219,19 +220,19 @@ abstract constraints into a set of constraints on `T`:
     `.Self` is replaced by `T` throughout the constraint.
 
 ```carbon
-// ✅ `.T` in `.U = .T` is rewritten to `i32` when initially
+// ✅ `.X` in `.Y = .X` is rewritten to `i32` when initially
 // forming the facet type.
 // Nothing to do during constraint resolution.
-fn InOrder[A:! C where .T = i32 and .U = .T]() {}
-// ✅ Facet type has `.T = .U` before constraint resolution.
-// That rewrite is resolved to `.T = i32`.
-fn Reordered[A:! C where .T = .U and .U = i32]() {}
-// ✅ Facet type has `.U = .T` before constraint resolution.
-// That rewrite is resolved to `.U = i32`.
-fn ReorderedIndirect[A:! (C where .T = i32) & (C where .U = .T)]() {}
+fn InOrder[T:! I where .X = i32 and .Y = .X]() {}
+// ✅ Facet type has `.X = .Y` before constraint resolution.
+// That rewrite is resolved to `.X = i32`.
+fn Reordered[T:! I where .X = .Y and .Y = i32]() {}
+// ✅ Facet type has `.Y = .X` before constraint resolution.
+// That rewrite is resolved to `.Y = i32`.
+fn ReorderedIndirect[T:! (I where .X = i32) & (I where .Y = .X)]() {}
 // ❌ Constraint resolution fails because
 // no fixed point of rewrites exists.
-fn Cycle[A:! C where .T = .U and .U = .T]() {}
+fn Cycle[T:! I where .X = .Y and .Y = .X]() {}
 ```
 
 To find a fixed point, we can perform rewrites on other rewrites, cycling
@@ -243,18 +244,36 @@ condition:
 ```carbon
 // ❌ Constraint resolution fails because
 // no fixed point of rewrites exists.
-// If we only expand the right-hand side of `.T`,
-// we find `.U`, then `.U*`, then `.U**`, and so on,
+// If we only expand the right-hand side of `.X`,
+// we find `.Y`, then `.Y**`, then `.Y****`, and so on,
 // and never detect a cycle.
 // If we alternate between them, we find
-// `.T = .U*`, then `.U = .U**`, then `.V = .U***`,
-// then `.T = .U**`, then detect that the `.U` rewrite
+// `.X = .Y*`, then `.Y = .Y**`, then `.Z = .Y***`,
+// then `.X = .Y**`, then detect that the `.Y` rewrite
 // would apply to itself.
-fn IndirectCycle[A:! C where .T = .U and .U = .V* and .V = .U*]();
+fn IndirectCycle[T:! I where .X = .Y and .Y = .Z* and .Z = .Y*]();
 ```
 
 After constraint resolution, no references to rewritten associated constants
 remain in the constraints on `T`.
+
+The following exampls each treat the two assignments of `.X` as being identical,
+though they are written differently:
+
+```carbon
+fn Identical(T:! I where .X = () and .X = .Y and .Y = ()) {}
+
+fn IdenticalNested(T:! (I where .X = ()) where .X = .Y and .Y = ()) {}
+```
+
+The rewrite constraints of the current facet type are all available, so both
+rewrites of `.X` can be seen to be assigning `()`. But the following does not
+have the same information available at the time of resolving the two rewrites of
+`.X`, so the rewrites are invalid:
+
+```carbon
+fn NotIdentical(T:! (I where .X = () and .X = .Y) where .Y = ()) {}
+```
 
 If a facet type is never used to constrain a type, it is never subject to
 constraint resolution, and it is possible for a facet type to be formed for
@@ -263,18 +282,18 @@ which constraint resolution would always fail. For example:
 ```carbon
 package Broken;
 
-interface X {
-  let T:! type;
-  let U:! type;
+interface I {
+  let X:! type;
+  let Y:! type;
 }
-let Bad:! auto = (X where .T = .U) & (X where .U = .T);
+let Bad:! auto = (I where .X = .Y) & (I where .Y = .X);
 // Bad is not used here.
 ```
 
 In such cases, the facet type `Broken.Bad` is not usable: any attempt to use
 that facet type to constrain a type would perform constraint resolution, which
 would always fail because it would discover a cycle between the rewrites for
-`.T` and for `.U`. In order to ensure that such cases are diagnosed, a trial
+`.X` and for `.Y`. In order to ensure that such cases are diagnosed, a trial
 constraint resolution is performed for all facet types. Note that this trial
 resolution can be skipped for facet types that are actually used, which is the
 common case.
