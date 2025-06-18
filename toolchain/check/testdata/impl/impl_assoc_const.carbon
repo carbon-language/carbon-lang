@@ -273,6 +273,21 @@ interface J {
 // CHECK:STDERR:
 impl () as I where .Self impls J and .X1 = .(J.X3) and .X2 = .X1 and .(J.X3) = .X2 {}
 
+// --- fail_cycle_and_conflict.carbon
+library "[[@TEST_NAME]]";
+
+interface M { let X:! type; let Y:! type; }
+
+// CHECK:STDERR: fail_cycle_and_conflict.carbon:[[@LINE+8]]:12: error: found cycle in facet type constraint for `.(M.X)` [FacetTypeConstraintCycle]
+// CHECK:STDERR: impl () as M where .X = .X and .Y = () and .Y = {} {}
+// CHECK:STDERR:            ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+// CHECK:STDERR:
+// CHECK:STDERR: fail_cycle_and_conflict.carbon:[[@LINE+4]]:12: error: associated constant `.(M.Y)` given two different values `()` and `{}` [AssociatedConstantWithDifferentValues]
+// CHECK:STDERR: impl () as M where .X = .X and .Y = () and .Y = {} {}
+// CHECK:STDERR:            ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+// CHECK:STDERR:
+impl () as M where .X = .X and .Y = () and .Y = {} {}
+
 // --- non-type.carbon
 library "[[@TEST_NAME]]";
 

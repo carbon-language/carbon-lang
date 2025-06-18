@@ -409,6 +409,7 @@ class SubstImplWitnessAccessCallbacks : public SubstInstCallbacks {
         } else {
           rhs_inst_id = search_constraint.rhs_id;
         }
+        break;
       }
     }
 
@@ -461,7 +462,14 @@ auto ResolveFacetTypeRewriteConstraints(
                                                     &constraint));
       if (subst_inst_id != constraint.rhs_id) {
         constraint.rhs_id = subst_inst_id;
-        if (constraint.rhs_id != SemIR::ErrorInst::InstId) {
+        if (constraint.rhs_id == SemIR::ErrorInst::InstId) {
+          // An error anywhere in the FacetType will turn the whole FacetType
+          // into an error. The ErrorInst says we have already diagnosed a cycle
+          // so we can stop applying rewrites. We don't return, so that we can
+          // also diagnose conflicting rewrites.
+          applied_rewrite = false;
+          break;
+        } else {
           // If the RHS is replaced with a non-error value, we need to do
           // another pass so that the new RHS value can continue to propagate.
           applied_rewrite = true;
