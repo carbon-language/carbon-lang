@@ -375,69 +375,118 @@ class SubstImplWitnessAccessCallbacks : public SubstInstCallbacks {
       Context* context, SemIR::LocId loc_id,
       llvm::ArrayRef<SemIR::FacetTypeInfo::RewriteConstraint> rewrites,
       const SemIR::FacetTypeInfo::RewriteConstraint* substituting_constraint)
-      : SubstInstCallbacks(context),
-        loc_id_(loc_id),
-        rewrites_(rewrites),
-        substituting_constraint_(substituting_constraint) {}
+      : SubstInstCallbacks(context), loc_id_(loc_id), rewrites_(rewrites) {
+    substs_in_progress_.push_back(
+        {substituting_constraint->lhs_id, false, false});
+  }
 
-  auto Subst(SemIR::InstId& rhs_inst_id) -> bool override {
-    // Only substitute one reference to another associated constant in the RHS
-    // for each pass through the rewrite constraints. This prevents exponential
-    // growth of the RHS while looking for a cycle, allowing the cycle to be
-    // found before expanding everything on the RHS. See
-    // https://github.com/carbon-language/carbon-lang/issues/5672.
-    if (did_substitute_) {
-      return true;
-    }
-
+  auto Subst(SemIR::InstId& rhs_inst_id) -> SubstResult override {
     if (!context().insts().Is<SemIR::ImplWitnessAccess>(rhs_inst_id)) {
-      return context().constant_values().Get(rhs_inst_id).is_concrete();
-    }
-
-    // TODO: We could consider something better than linear search here, such as
-    // a map. However that would probably require heap allocations which may be
-    // worse overall since the number of rewrite constraints is generally low.
-    for (const auto& search_constraint : rewrites_) {
-      if (CompareFacetTypeConstraintValues(context(), search_constraint.lhs_id,
-                                           rhs_inst_id) ==
-          std::weak_ordering::equivalent) {
-        if (&search_constraint == substituting_constraint_) {
-          if (search_constraint.rhs_id != SemIR::ErrorInst::InstId) {
-            CARBON_DIAGNOSTIC(FacetTypeConstraintCycle, Error,
-                              "found cycle in facet type constraint for {0}",
-                              InstIdAsConstant);
-            // TODO: It would be nice to note the places where the values are
-            // assigned but rewrite constraint instructions are from canonical
-            // constant values, and have no locations. We'd need to store a
-            // location along with them in the rewrite constraints, and track
-            // propagation of locations here, which may imply heap allocations.
-            context().emitter().Emit(loc_id_, FacetTypeConstraintCycle,
-                                     substituting_constraint_->lhs_id);
-            rhs_inst_id = SemIR::ErrorInst::InstId;
-          }
-        } else {
-          rhs_inst_id = search_constraint.rhs_id;
-        }
-        did_substitute_ = true;
+      // We only want to substitute ImplWitnessAccesses written directly on the
+      // RHS of the rewrite constraint, not when they are nested inside facet
+      // types that are part of the RHS, like `.X = C as (I where .Y = {})`.
+      if (context().insts().Is<SemIR::FacetType>(rhs_inst_id)) {
+        return SubstResult::FullySubstituted;
+      }
+      if (context().constant_values().Get(rhs_inst_id).is_concrete()) {
+        // There's no ImplWitnessAccess that we care about inside this
+        // instruction.
+        return SubstResult::FullySubstituted;
+      } else {
+        substs_in_progress_.push_back({rhs_inst_id, false, false});
+        return SubstResult::SubstOperands;
       }
     }
 
-    // Never recurse into ImplWitnessAccess, we don't want to substitute into
-    // FacetTypes found within. We only substitute ImplWitnessAccesses that
-    // appear directly on the RHS.
-    return true;
+    auto eq = [](Context& context, SemIR::InstId lhs_inst_id,
+                 SemIR::InstId rhs_inst_id) {
+      return CompareFacetTypeConstraintValues(context, lhs_inst_id,
+                                              rhs_inst_id) ==
+             std::weak_ordering::equivalent;
+    };
+
+    SemIR::InstId orig_inst_id = rhs_inst_id;
+
+    // Finds a cycle if the RHS refers to something that depends on the value of
+    // the RHS.
+    for (auto& [in_progress_inst_id, diagnosed, _] : substs_in_progress_) {
+      if (eq(context(), in_progress_inst_id, rhs_inst_id)) {
+        if (!diagnosed) {
+          CARBON_DIAGNOSTIC(FacetTypeConstraintCycle, Error,
+                            "found cycle in facet type constraint for {0}",
+                            InstIdAsConstant);
+          // TODO: It would be nice to note the places where the values are
+          // assigned but rewrite constraint instructions are from canonical
+          // constant values, and have no locations. We'd need to store a
+          // location along with them in the rewrite constraints, and track
+          // propagation of locations here, which may imply heap
+          // allocations.
+          context().emitter().Emit(loc_id_, FacetTypeConstraintCycle,
+                                   in_progress_inst_id);
+          diagnosed = true;
+        }
+        rhs_inst_id = SemIR::ErrorInst::InstId;
+        return SubstResult::FullySubstituted;
+      }
+    }
+
+    // TODO: We could consider something better than linear search here, such
+    // as a map. However that would probably require heap allocations which
+    // may be worse overall since the number of rewrite constraints is
+    // generally low.
+    for (const auto& search_constraint : rewrites_) {
+      if (eq(context(), search_constraint.lhs_id, rhs_inst_id)) {
+        rhs_inst_id = search_constraint.rhs_id;
+        break;
+      }
+    }
+
+    if (rhs_inst_id == orig_inst_id) {
+      // If the ImplWitnessAccess was not replaced, don't recurse inside it. We
+      // won't rebuild the instruction so don't track it in
+      // `substs_in_progress_`.
+      return SubstResult::FullySubstituted;
+    }
+
+    // Track that we substituted for this ImplWitnessAccess. If we find another
+    // of the same ImplWitnessAccess inside, then it would form a cycle. Once
+    // the replacement of this ImplWitnessAccess completes substitution, we'll
+    // drop the `orig_inst_id` from the list.
+
+    if (!context().insts().Is<SemIR::ImplWitnessAccess>(rhs_inst_id)) {
+      // The ImplWitnessAccess was replaced with some other instruction, which
+      // may constain other ImplWitnessAccesses.
+      substs_in_progress_.push_back({orig_inst_id, false, false});
+      return SubstResult::SubstOperands;
+    }
+
+    // The ImplWitnessAccess was replaced with a different ImplWitnessAccess;
+    // look for further replacements.
+    substs_in_progress_.push_back({orig_inst_id, false, true});
+    return SubstResult::SubstAgain;
   }
 
-  auto Rebuild(SemIR::InstId /*orig_inst_id*/, SemIR::Inst new_inst) const
+  auto Rebuild(SemIR::InstId /*orig_inst_id*/, SemIR::Inst new_inst)
       -> SemIR::InstId override {
+    substs_in_progress_.pop_back();
     return RebuildNewInst(loc_id_, new_inst);
+  }
+
+  auto ReuseUnchanged(SemIR::InstId orig_inst_id) -> SemIR::InstId override {
+    substs_in_progress_.pop_back();
+    while (std::get<2>(substs_in_progress_.back())) {
+      substs_in_progress_.pop_back();
+    }
+    return orig_inst_id;
   }
 
  private:
   SemIR::LocId loc_id_;
   llvm::ArrayRef<SemIR::FacetTypeInfo::RewriteConstraint> rewrites_;
-  const SemIR::FacetTypeInfo::RewriteConstraint* substituting_constraint_;
-  bool did_substitute_ = false;
+  llvm::SmallVector<
+      std::tuple<SemIR::InstId, bool /* diagnosed */, bool /* pop_with_next */>,
+      4>
+      substs_in_progress_;
 };
 
 auto ResolveFacetTypeRewriteConstraints(
@@ -448,41 +497,26 @@ auto ResolveFacetTypeRewriteConstraints(
     return;
   }
 
-  while (true) {
-    bool applied_rewrite = false;
-
-    for (auto& constraint : rewrites) {
-      if (constraint.lhs_id == SemIR::ErrorInst::InstId ||
-          constraint.rhs_id == SemIR::ErrorInst::InstId) {
-        continue;
-      }
-
-      auto lhs_access =
-          context.insts().TryGetAs<SemIR::ImplWitnessAccess>(constraint.lhs_id);
-      if (!lhs_access) {
-        continue;
-      }
-
-      // Replace any `ImplWitnessAccess` in the RHS of this constraint with the
-      // RHS of another constraint that sets the value of the associated
-      // constant being accessed in the RHS.
-      auto replace_witness_callbacks = SubstImplWitnessAccessCallbacks(
-          &context, loc_id, rewrites, &constraint);
-      auto subst_inst_id =
-          SubstInst(context, constraint.rhs_id, replace_witness_callbacks);
-      if (subst_inst_id != constraint.rhs_id) {
-        constraint.rhs_id = subst_inst_id;
-        if (constraint.rhs_id != SemIR::ErrorInst::InstId) {
-          // If the RHS is replaced with a non-error value, we need to do
-          // another pass so that the new RHS value can continue to propagate.
-          applied_rewrite = true;
-        }
-      }
+  for (auto& constraint : rewrites) {
+    if (constraint.lhs_id == SemIR::ErrorInst::InstId ||
+        constraint.rhs_id == SemIR::ErrorInst::InstId) {
+      continue;
     }
 
-    if (!applied_rewrite) {
-      break;
+    auto lhs_access =
+        context.insts().TryGetAs<SemIR::ImplWitnessAccess>(constraint.lhs_id);
+    if (!lhs_access) {
+      continue;
     }
+
+    // Replace any `ImplWitnessAccess` in the RHS of this constraint with the
+    // RHS of another constraint that sets the value of the associated
+    // constant being accessed in the RHS.
+    auto replace_witness_callbacks = SubstImplWitnessAccessCallbacks(
+        &context, loc_id, rewrites, &constraint);
+    auto subst_inst_id =
+        SubstInst(context, constraint.rhs_id, replace_witness_callbacks);
+    constraint.rhs_id = subst_inst_id;
   }
 
   // We sort the constraints so that we can find different values being written

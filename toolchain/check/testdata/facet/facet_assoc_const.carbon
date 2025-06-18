@@ -270,7 +270,7 @@ interface J {
 
 // This fails because it resolves to `.X1 = .X1` which is cyclical.
 //
-// CHECK:STDERR: fail_cycle_between_interfaces.carbon:[[@LINE+4]]:10: error: found cycle in facet type constraint for `.(I.X2)` [FacetTypeConstraintCycle]
+// CHECK:STDERR: fail_cycle_between_interfaces.carbon:[[@LINE+4]]:10: error: found cycle in facet type constraint for `.(I.X1)` [FacetTypeConstraintCycle]
 // CHECK:STDERR: fn G(T:! I & J where .X1 = .X3 and .X2 = .X1 and .X3 = .X2) {}
 // CHECK:STDERR:          ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 // CHECK:STDERR:
@@ -339,7 +339,7 @@ interface Z {
 // constraints looking for a fixed point. This many types is already enough to
 // make the test run for many minutes.
 fn F(
-    // CHECK:STDERR: fail_exponential_large_cycle.carbon:[[@LINE+4]]:9: error: found cycle in facet type constraint for `.(Z.T7)` [FacetTypeConstraintCycle]
+    // CHECK:STDERR: fail_exponential_large_cycle.carbon:[[@LINE+4]]:9: error: found cycle in facet type constraint for `.(Z.T1)` [FacetTypeConstraintCycle]
     // CHECK:STDERR:     T:! Z where
     // CHECK:STDERR:         ^~~~~~~
     // CHECK:STDERR:
