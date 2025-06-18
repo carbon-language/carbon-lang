@@ -237,9 +237,6 @@ static auto CheckCompleteClassType(
         auto canonical_base_vtable_inst_id =
             context.constant_values().GetConstantInstId(
                 base_vtable_ptr_inst_id);
-        if (canonical_base_vtable_inst_id == SemIR::InstId::None) {
-          return SemIR::ErrorInst::InstId;
-        }
         const auto& base_vtable_ptr_inst =
             context.insts().GetAs<SemIR::VtablePtr>(
                 canonical_base_vtable_inst_id);
