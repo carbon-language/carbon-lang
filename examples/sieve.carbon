@@ -3,20 +3,16 @@
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
 import Core library "io";
+import Core library "range";
 
 // Compute and return the number of primes less than 1000.
 
 class Sieve {
   fn Make() -> Sieve {
     returned var s: Sieve;
-
-    // TODO: `for` loop.
-    var n: i32 = 0;
-    while (n < 1000) {
+    for (n: i32 in Core.Range(1000)) {
       s.is_prime[n] = true;
-      ++n;
     }
-
     return var;
   }
 
@@ -35,14 +31,12 @@ fn Run() -> i32 {
   var s: Sieve = Sieve.Make();
 
   var number_of_primes: i32 = 0;
-  var n: i32 = 2;
-  while (n < 1000) {
+  for (n: i32 in Core.InclusiveRange(2, 999)) {
     if (s.is_prime[n]) {
       ++number_of_primes;
       Core.Print(n);
       s.MarkMultiplesNotPrime(n);
     }
-    ++n;
   }
 
   return number_of_primes;

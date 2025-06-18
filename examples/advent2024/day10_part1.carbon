@@ -5,6 +5,7 @@
 // https://adventofcode.com/2024/day/10
 
 import Core library "io";
+import Core library "range";
 
 import library "day10_common";
 import library "io_utils";
@@ -26,27 +27,21 @@ class Reachable {
   fn Make(terrain: Terrain) -> Reachable {
     returned var me: Reachable;
     var next: u256 = 1;
-    var y: i32 = 0;
-    while (y < 43) {
-      var x: i32 = 0;
-      while (x < 43) {
+    for (y: i32 in Core.Range(43)) {
+      for (x: i32 in Core.Range(43)) {
         if (terrain.height[x][y] == 0) {
           me.trailheads[x][y] = next;
           next <<= 1;
         }
-        ++x;
       }
-      ++y;
     }
     return var;
   }
 
   fn AddLevel[addr self: Self*](terrain: Terrain, level: i32) {
     let adj: array((i32, i32), 4) = ((-1, 0), (0, -1), (1, 0), (0, 1));
-    var y: i32 = 0;
-    while (y < 43) {
-      var x: i32 = 0;
-      while (x < 43) {
+    for (y: i32 in Core.Range(43)) {
+      for (x: i32 in Core.Range(43)) {
         if (terrain.height[x][y] == level) {
           var reach: u256 = 0;
           var i: i32 = 0;
@@ -62,24 +57,18 @@ class Reachable {
           }
           self->trailheads[x][y] = reach;
         }
-        ++x;
       }
-      ++y;
     }
   }
 
   fn Count[self: Self](terrain: Terrain, level: i32) -> i32 {
     var total: i32 = 0;
-    var y: i32 = 0;
-    while (y < 43) {
-      var x: i32 = 0;
-      while (x < 43) {
+    for (y: i32 in Core.Range(43)) {
+      for (x: i32 in Core.Range(43)) {
         if (terrain.height[x][y] == level) {
           total += PopCount(self.trailheads[x][y]);
         }
-        ++x;
       }
-      ++y;
     }
     return total;
   }
@@ -90,10 +79,8 @@ class Reachable {
 fn Run() {
   var terrain: Terrain = Terrain.Read();
   var reachable: Reachable = Reachable.Make(terrain);
-  var i: i32 = 1;
-  while (i <= 9) {
+  for (i: i32 in Core.InclusiveRange(1, 9)) {
     reachable.AddLevel(terrain, i);
-    ++i;
   }
   Core.Print(reachable.Count(terrain, 9));
 }
