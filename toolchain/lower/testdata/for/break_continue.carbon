@@ -51,34 +51,34 @@ fn For() {
 // CHECK:STDOUT:   call void @llvm.memcpy.p0.p0.i64(ptr align 1 %r.var, ptr align 1 @EmptyRange.val.loc27_3, i64 0, i1 false), !dbg !7
 // CHECK:STDOUT:   call void @"_CNewCursor.EmptyRange.Main:Iterate.Core.b88d1103f417c6d4"(ptr %r.var), !dbg !8
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(i64 0, ptr %var), !dbg !8
-// CHECK:STDOUT:   br label %.loc28_19.1, !dbg !8
+// CHECK:STDOUT:   br label %for.next, !dbg !8
 // CHECK:STDOUT:
-// CHECK:STDOUT: .loc28_19.1:                                      ; preds = %if.else.loc30, %if.then.loc30, %entry
+// CHECK:STDOUT: for.next:                                         ; preds = %if.else.loc30, %if.then.loc30, %entry
 // CHECK:STDOUT:   %.loc28_19.1.temp = alloca { i1, i32 }, align 8, !dbg !8
 // CHECK:STDOUT:   call void @"_CNext.EmptyRange.Main:Iterate.Core.b88d1103f417c6d4"(ptr %.loc28_19.1.temp, ptr %r.var, ptr %var), !dbg !8
 // CHECK:STDOUT:   %HasValue.call = call i1 @_CHasValue.Optional.Core.b88d1103f417c6d4(ptr %.loc28_19.1.temp), !dbg !8
-// CHECK:STDOUT:   br i1 %HasValue.call, label %.loc28_19.2, label %.loc28_19.3, !dbg !8
+// CHECK:STDOUT:   br i1 %HasValue.call, label %for.body, label %for.done, !dbg !8
 // CHECK:STDOUT:
-// CHECK:STDOUT: .loc28_19.2:                                      ; preds = %.loc28_19.1
+// CHECK:STDOUT: for.body:                                         ; preds = %for.next
 // CHECK:STDOUT:   %Get.call = call i32 @_CGet.Optional.Core.b88d1103f417c6d4(ptr %.loc28_19.1.temp), !dbg !8
 // CHECK:STDOUT:   %F.call = call i1 @_CF.Main(), !dbg !9
 // CHECK:STDOUT:   br i1 %F.call, label %if.then.loc29, label %if.else.loc29, !dbg !10
 // CHECK:STDOUT:
-// CHECK:STDOUT: if.then.loc29:                                    ; preds = %.loc28_19.2
-// CHECK:STDOUT:   br label %.loc28_19.3, !dbg !11
+// CHECK:STDOUT: if.then.loc29:                                    ; preds = %for.body
+// CHECK:STDOUT:   br label %for.done, !dbg !11
 // CHECK:STDOUT:
-// CHECK:STDOUT: if.else.loc29:                                    ; preds = %.loc28_19.2
+// CHECK:STDOUT: if.else.loc29:                                    ; preds = %for.body
 // CHECK:STDOUT:   %G.call = call i1 @_CG.Main(), !dbg !12
 // CHECK:STDOUT:   br i1 %G.call, label %if.then.loc30, label %if.else.loc30, !dbg !13
 // CHECK:STDOUT:
 // CHECK:STDOUT: if.then.loc30:                                    ; preds = %if.else.loc29
-// CHECK:STDOUT:   br label %.loc28_19.1, !dbg !14
+// CHECK:STDOUT:   br label %for.next, !dbg !14
 // CHECK:STDOUT:
 // CHECK:STDOUT: if.else.loc30:                                    ; preds = %if.else.loc29
 // CHECK:STDOUT:   call void @_CH.Main(), !dbg !15
-// CHECK:STDOUT:   br label %.loc28_19.1, !dbg !16
+// CHECK:STDOUT:   br label %for.next, !dbg !16
 // CHECK:STDOUT:
-// CHECK:STDOUT: .loc28_19.3:                                      ; preds = %if.then.loc29, %.loc28_19.1
+// CHECK:STDOUT: for.done:                                         ; preds = %if.then.loc29, %for.next
 // CHECK:STDOUT:   ret void, !dbg !17
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

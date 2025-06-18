@@ -111,7 +111,7 @@ auto HandleParseNode(Context& context, Parse::WhileStatementId node_id)
 // `for`
 // -----
 
-auto HandleParseNode(Context& context, Parse::ForHeaderStartId /*node_id*/)
+auto HandleParseNode(Context& context, Parse::ForHeaderStartId node_id)
     -> bool {
   // Create a nested scope to hold the cursor variable. This is also the lexical
   // scope that names in the pattern are added to, although they get rebound on
@@ -124,6 +124,8 @@ auto HandleParseNode(Context& context, Parse::ForHeaderStartId /*node_id*/)
   context.full_pattern_stack().PushFullPattern(
       FullPatternStack::Kind::NameBindingDecl);
   BeginSubpattern(context);
+
+  context.node_stack().Push(node_id);
   return true;
 }
 
@@ -153,6 +155,8 @@ auto HandleParseNode(Context& context, Parse::ForHeaderId node_id) -> bool {
   auto range_id = context.node_stack().PopExpr();
   auto pattern_block_id = context.node_stack().Pop<Parse::NodeKind::ForIn>();
   auto pattern_id = context.node_stack().PopPattern();
+  auto start_node_id =
+      context.node_stack().PopForSoloNodeId<Parse::NodeKind::ForHeaderStart>();
 
   // Convert the range expression to a value or reference so that we can use it
   // multiple times.
@@ -176,7 +180,7 @@ auto HandleParseNode(Context& context, Parse::ForHeaderId node_id) -> bool {
                          {.lhs_id = cursor_var_id, .rhs_id = init_id});
 
   // Start emitting the loop header block.
-  auto loop_header_id = StartLoopHeader(context, node_id);
+  auto loop_header_id = StartLoopHeader(context, start_node_id);
 
   // Call `<range>.(Iterate.Next)(&cursor)`.
   auto cursor_type_inst_id = context.types().GetInstId(cursor_type_id);

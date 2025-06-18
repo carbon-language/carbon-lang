@@ -45,15 +45,15 @@ fn For() {
 // CHECK:STDOUT:   call void @llvm.memcpy.p0.p0.i64(ptr align 1 %r.var, ptr align 1 @EmptyRange.val.loc25_3, i64 0, i1 false), !dbg !7
 // CHECK:STDOUT:   call void @"_CNewCursor.EmptyRange.Main:Iterate.Core.29d34654e802e24e"(ptr %r.var), !dbg !8
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(i64 0, ptr %var), !dbg !8
-// CHECK:STDOUT:   br label %.loc27_33.1, !dbg !8
+// CHECK:STDOUT:   br label %for.next, !dbg !8
 // CHECK:STDOUT:
-// CHECK:STDOUT: .loc27_33.1:                                      ; preds = %.loc27_33.2, %entry
+// CHECK:STDOUT: for.next:                                         ; preds = %for.body, %entry
 // CHECK:STDOUT:   %.loc27_33.1.temp = alloca { i1, { i32, i32 } }, align 8, !dbg !8
 // CHECK:STDOUT:   call void @"_CNext.EmptyRange.Main:Iterate.Core.29d34654e802e24e"(ptr %.loc27_33.1.temp, ptr %r.var, ptr %var), !dbg !8
 // CHECK:STDOUT:   %HasValue.call = call i1 @_CHasValue.Optional.Core.29d34654e802e24e(ptr %.loc27_33.1.temp), !dbg !8
-// CHECK:STDOUT:   br i1 %HasValue.call, label %.loc27_33.2, label %.loc27_33.3, !dbg !8
+// CHECK:STDOUT:   br i1 %HasValue.call, label %for.body, label %for.done, !dbg !8
 // CHECK:STDOUT:
-// CHECK:STDOUT: .loc27_33.2:                                      ; preds = %.loc27_33.1
+// CHECK:STDOUT: for.body:                                         ; preds = %for.next
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(i64 4, ptr %n.var), !dbg !9
 // CHECK:STDOUT:   %.loc27_33.8.temp = alloca { i32, i32 }, align 8, !dbg !8
 // CHECK:STDOUT:   call void @_CGet.Optional.Core.29d34654e802e24e(ptr %.loc27_33.8.temp, ptr %.loc27_33.1.temp), !dbg !8
@@ -63,9 +63,9 @@ fn For() {
 // CHECK:STDOUT:   %.loc27_33.12 = load i32, ptr %tuple.elem1.tuple.elem, align 4, !dbg !8
 // CHECK:STDOUT:   store i32 %.loc27_33.12, ptr %n.var, align 4, !dbg !9
 // CHECK:STDOUT:   call void @_CF.Main(i32 %.loc27_33.11, ptr %n.var), !dbg !10
-// CHECK:STDOUT:   br label %.loc27_33.1, !dbg !11
+// CHECK:STDOUT:   br label %for.next, !dbg !11
 // CHECK:STDOUT:
-// CHECK:STDOUT: .loc27_33.3:                                      ; preds = %.loc27_33.1
+// CHECK:STDOUT: for.done:                                         ; preds = %for.next
 // CHECK:STDOUT:   ret void, !dbg !12
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

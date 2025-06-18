@@ -415,6 +415,23 @@ auto InstNamer::AddBlockLabel(ScopeId scope_id, LocId loc_id, AnyBranch branch)
   }
   llvm::StringRef name;
   switch (sem_ir_->parse_tree().node_kind(loc_id.node_id())) {
+    case Parse::NodeKind::ForHeaderStart:
+      name = "for.next";
+      break;
+
+    case Parse::NodeKind::ForHeader:
+      switch (branch.kind) {
+        case BranchIf::Kind:
+          name = "for.body";
+          break;
+        case Branch::Kind:
+          name = "for.done";
+          break;
+        default:
+          break;
+      }
+      break;
+
     case Parse::NodeKind::IfExprIf:
       switch (branch.kind) {
         case BranchIf::Kind:

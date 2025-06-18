@@ -683,7 +683,7 @@ struct ForIn {
   Lex::InTokenIndex token;
 };
 
-// The `for (... in ...)` portion of a `for` statement.
+// The `(... in ...)` portion of a `for` statement.
 struct ForHeader {
   static constexpr auto Kind =
       NodeKind::ForHeader.Define({.bracketed_by = ForHeaderStart::Kind});

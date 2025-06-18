@@ -53,20 +53,20 @@ fn For() {
 // CHECK:STDOUT:   call void @_CF.Main(), !dbg !9
 // CHECK:STDOUT:   call void @"_CNewCursor.EmptyRange.Main:Iterate.Core.b88d1103f417c6d4"(ptr %r.var), !dbg !8
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(i64 0, ptr %var), !dbg !8
-// CHECK:STDOUT:   br label %.loc30_19.1, !dbg !8
+// CHECK:STDOUT:   br label %for.next, !dbg !8
 // CHECK:STDOUT:
-// CHECK:STDOUT: .loc30_19.1:                                      ; preds = %.loc30_19.2, %entry
+// CHECK:STDOUT: for.next:                                         ; preds = %for.body, %entry
 // CHECK:STDOUT:   %.loc30_19.1.temp = alloca { i1, i32 }, align 8, !dbg !8
 // CHECK:STDOUT:   call void @"_CNext.EmptyRange.Main:Iterate.Core.b88d1103f417c6d4"(ptr %.loc30_19.1.temp, ptr %r.var, ptr %var), !dbg !8
 // CHECK:STDOUT:   %HasValue.call = call i1 @_CHasValue.Optional.Core.b88d1103f417c6d4(ptr %.loc30_19.1.temp), !dbg !8
-// CHECK:STDOUT:   br i1 %HasValue.call, label %.loc30_19.2, label %.loc30_19.3, !dbg !8
+// CHECK:STDOUT:   br i1 %HasValue.call, label %for.body, label %for.done, !dbg !8
 // CHECK:STDOUT:
-// CHECK:STDOUT: .loc30_19.2:                                      ; preds = %.loc30_19.1
+// CHECK:STDOUT: for.body:                                         ; preds = %for.next
 // CHECK:STDOUT:   %Get.call = call i32 @_CGet.Optional.Core.b88d1103f417c6d4(ptr %.loc30_19.1.temp), !dbg !8
 // CHECK:STDOUT:   call void @_CG.Main(), !dbg !10
-// CHECK:STDOUT:   br label %.loc30_19.1, !dbg !11
+// CHECK:STDOUT:   br label %for.next, !dbg !11
 // CHECK:STDOUT:
-// CHECK:STDOUT: .loc30_19.3:                                      ; preds = %.loc30_19.1
+// CHECK:STDOUT: for.done:                                         ; preds = %for.next
 // CHECK:STDOUT:   call void @_CH.Main(), !dbg !12
 // CHECK:STDOUT:   ret void, !dbg !13
 // CHECK:STDOUT: }

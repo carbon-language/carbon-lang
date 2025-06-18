@@ -451,6 +451,7 @@ class NodeStack {
       case Parse::NodeKind::ExplicitParamListStart:
       case Parse::NodeKind::FieldInitializer:
       case Parse::NodeKind::FieldIntroducer:
+      case Parse::NodeKind::ForHeaderStart:
       case Parse::NodeKind::FunctionIntroducer:
       case Parse::NodeKind::IfStatementElse:
       case Parse::NodeKind::ImplicitParamListStart:
@@ -486,7 +487,6 @@ class NodeStack {
       case Parse::NodeKind::FileEnd:
       case Parse::NodeKind::FileStart:
       case Parse::NodeKind::Forall:
-      case Parse::NodeKind::ForHeaderStart:
       case Parse::NodeKind::IdentifierNameQualifierWithParams:
       case Parse::NodeKind::IdentifierNameQualifierWithoutParams:
       case Parse::NodeKind::IdentifierPackageName:

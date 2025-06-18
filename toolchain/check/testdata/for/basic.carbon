@@ -118,9 +118,9 @@ fn Run() {
 // CHECK:STDOUT:   %NewCursor.call: init %empty_tuple.type = call %NewCursor.bound(%.loc18_20.2)
 // CHECK:STDOUT:   %var: ref %empty_tuple.type = var invalid
 // CHECK:STDOUT:   assign %var, %NewCursor.call
-// CHECK:STDOUT:   br !.loc18_35.1
+// CHECK:STDOUT:   br !for.next
 // CHECK:STDOUT:
-// CHECK:STDOUT: !.loc18_35.1:
+// CHECK:STDOUT: !for.next:
 // CHECK:STDOUT:   %addr: %ptr.843 = addr_of %var
 // CHECK:STDOUT:   %impl.elem3: %.708 = impl_witness_access constants.%Iterate.impl_witness, element3 [concrete = constants.%Next.029]
 // CHECK:STDOUT:   %bound_method.loc18_35.2: <bound method> = bound_method %.loc18_20.1, %impl.elem3
@@ -137,9 +137,9 @@ fn Run() {
 // CHECK:STDOUT:   %HasValue.call: init bool = call %bound_method.loc18_35.3(%.loc18_35.4)
 // CHECK:STDOUT:   %.loc18_35.5: bool = value_of_initializer %HasValue.call
 // CHECK:STDOUT:   %.loc18_35.6: bool = converted %HasValue.call, %.loc18_35.5
-// CHECK:STDOUT:   if %.loc18_35.6 br !.loc18_35.2 else br !.loc18_35.3
+// CHECK:STDOUT:   if %.loc18_35.6 br !for.body else br !for.done
 // CHECK:STDOUT:
-// CHECK:STDOUT: !.loc18_35.2:
+// CHECK:STDOUT: !for.body:
 // CHECK:STDOUT:   %.loc18_35.7: %Get.type.130 = specific_constant imports.%Core.import_ref.4fd, @Optional(constants.%empty_tuple.type) [concrete = constants.%Get.6e8]
 // CHECK:STDOUT:   %Get.ref: %Get.type.130 = name_ref Get, %.loc18_35.7 [concrete = constants.%Get.6e8]
 // CHECK:STDOUT:   %Get.bound: <bound method> = bound_method %.loc18_35.2, %Get.ref
@@ -158,9 +158,9 @@ fn Run() {
 // CHECK:STDOUT:   %_: %empty_tuple.type = bind_name _, %.loc18_35.11
 // CHECK:STDOUT:   %Body.ref: %Body.type = name_ref Body, file.%Body.decl [concrete = constants.%Body]
 // CHECK:STDOUT:   %Body.call: init %empty_tuple.type = call %Body.ref()
-// CHECK:STDOUT:   br !.loc18_35.1
+// CHECK:STDOUT:   br !for.next
 // CHECK:STDOUT:
-// CHECK:STDOUT: !.loc18_35.3:
+// CHECK:STDOUT: !for.done:
 // CHECK:STDOUT:   %AfterLoop.ref: %AfterLoop.type = name_ref AfterLoop, file.%AfterLoop.decl [concrete = constants.%AfterLoop]
 // CHECK:STDOUT:   %AfterLoop.call: init %empty_tuple.type = call %AfterLoop.ref()
 // CHECK:STDOUT:   <elided>

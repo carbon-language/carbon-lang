@@ -201,9 +201,9 @@ fn Run() {
 // CHECK:STDOUT:   %NewCursor.call: init %empty_struct_type = call %bound_method.loc12_36.2(%.loc12_35.3)
 // CHECK:STDOUT:   %var: ref %empty_struct_type = var invalid
 // CHECK:STDOUT:   assign %var, %NewCursor.call
-// CHECK:STDOUT:   br !.loc12_36.1
+// CHECK:STDOUT:   br !for.next
 // CHECK:STDOUT:
-// CHECK:STDOUT: !.loc12_36.1:
+// CHECK:STDOUT: !for.next:
 // CHECK:STDOUT:   %addr: %ptr.c28 = addr_of %var
 // CHECK:STDOUT:   %impl.elem3: %.5d5 = impl_witness_access constants.%Iterate.impl_witness.52a, element3 [concrete = constants.%Next.899]
 // CHECK:STDOUT:   %bound_method.loc12_36.3: <bound method> = bound_method %.loc12_35.2, %impl.elem3
@@ -222,9 +222,9 @@ fn Run() {
 // CHECK:STDOUT:   %HasValue.call: init bool = call %bound_method.loc12_36.5(%.loc12_36.4)
 // CHECK:STDOUT:   %.loc12_36.5: bool = value_of_initializer %HasValue.call
 // CHECK:STDOUT:   %.loc12_36.6: bool = converted %HasValue.call, %.loc12_36.5
-// CHECK:STDOUT:   if %.loc12_36.6 br !.loc12_36.2 else br !.loc12_36.3
+// CHECK:STDOUT:   if %.loc12_36.6 br !for.body else br !for.done
 // CHECK:STDOUT:
-// CHECK:STDOUT: !.loc12_36.2:
+// CHECK:STDOUT: !for.body:
 // CHECK:STDOUT:   %.loc12_36.7: %Get.type.115 = specific_constant imports.%Main.import_ref.d10, @Optional(constants.%C) [concrete = constants.%Get.9c1]
 // CHECK:STDOUT:   %Get.ref: %Get.type.115 = name_ref Get, %.loc12_36.7 [concrete = constants.%Get.9c1]
 // CHECK:STDOUT:   %Get.bound: <bound method> = bound_method %.loc12_36.2, %Get.ref
@@ -240,9 +240,9 @@ fn Run() {
 // CHECK:STDOUT:   %Body.ref: %Body.type = name_ref Body, file.%Body.decl [concrete = constants.%Body]
 // CHECK:STDOUT:   %c.ref: %C = name_ref c, %c
 // CHECK:STDOUT:   %Body.call: init %empty_tuple.type = call %Body.ref(%c.ref)
-// CHECK:STDOUT:   br !.loc12_36.1
+// CHECK:STDOUT:   br !for.next
 // CHECK:STDOUT:
-// CHECK:STDOUT: !.loc12_36.3:
+// CHECK:STDOUT: !for.done:
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -331,9 +331,9 @@ fn Run() {
 // CHECK:STDOUT:   %NewCursor.call: init %empty_struct_type = call %bound_method.loc12_40.2(%.loc12_39.3)
 // CHECK:STDOUT:   %var: ref %empty_struct_type = var invalid
 // CHECK:STDOUT:   assign %var, %NewCursor.call
-// CHECK:STDOUT:   br !.loc12_40.1
+// CHECK:STDOUT:   br !for.next
 // CHECK:STDOUT:
-// CHECK:STDOUT: !.loc12_40.1:
+// CHECK:STDOUT: !for.next:
 // CHECK:STDOUT:   %addr.loc12: %ptr.c28 = addr_of %var
 // CHECK:STDOUT:   %impl.elem3: %.5d5 = impl_witness_access constants.%Iterate.impl_witness.52a, element3 [concrete = constants.%Next.899]
 // CHECK:STDOUT:   %bound_method.loc12_40.3: <bound method> = bound_method %.loc12_39.2, %impl.elem3
@@ -352,9 +352,9 @@ fn Run() {
 // CHECK:STDOUT:   %HasValue.call: init bool = call %bound_method.loc12_40.5(%.loc12_40.4)
 // CHECK:STDOUT:   %.loc12_40.5: bool = value_of_initializer %HasValue.call
 // CHECK:STDOUT:   %.loc12_40.6: bool = converted %HasValue.call, %.loc12_40.5
-// CHECK:STDOUT:   if %.loc12_40.6 br !.loc12_40.2 else br !.loc12_40.3
+// CHECK:STDOUT:   if %.loc12_40.6 br !for.body else br !for.done
 // CHECK:STDOUT:
-// CHECK:STDOUT: !.loc12_40.2:
+// CHECK:STDOUT: !for.body:
 // CHECK:STDOUT:   %c.var: ref %C = var %c.var_patt
 // CHECK:STDOUT:   %.loc12_40.7: %Get.type.115 = specific_constant imports.%Main.import_ref.d10, @Optional(constants.%C) [concrete = constants.%Get.9c1]
 // CHECK:STDOUT:   %Get.ref: %Get.type.115 = name_ref Get, %.loc12_40.7 [concrete = constants.%Get.9c1]
@@ -371,9 +371,9 @@ fn Run() {
 // CHECK:STDOUT:   %c.ref: ref %C = name_ref c, %c
 // CHECK:STDOUT:   %addr.loc13: %ptr.019 = addr_of %c.ref
 // CHECK:STDOUT:   %Body.call: init %empty_tuple.type = call %Body.ref(%addr.loc13)
-// CHECK:STDOUT:   br !.loc12_40.1
+// CHECK:STDOUT:   br !for.next
 // CHECK:STDOUT:
-// CHECK:STDOUT: !.loc12_40.3:
+// CHECK:STDOUT: !for.done:
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -473,9 +473,9 @@ fn Run() {
 // CHECK:STDOUT:   %NewCursor.call: init %empty_struct_type = call %bound_method.loc10_61.2(%.loc10_60.3)
 // CHECK:STDOUT:   %var: ref %empty_struct_type = var invalid
 // CHECK:STDOUT:   assign %var, %NewCursor.call
-// CHECK:STDOUT:   br !.loc10_61.1
+// CHECK:STDOUT:   br !for.next
 // CHECK:STDOUT:
-// CHECK:STDOUT: !.loc10_61.1:
+// CHECK:STDOUT: !for.next:
 // CHECK:STDOUT:   %addr: %ptr.c28 = addr_of %var
 // CHECK:STDOUT:   %impl.elem3: %.6aa = impl_witness_access constants.%Iterate.impl_witness.6db, element3 [concrete = constants.%Next.e60]
 // CHECK:STDOUT:   %bound_method.loc10_61.3: <bound method> = bound_method %.loc10_60.2, %impl.elem3
@@ -494,9 +494,9 @@ fn Run() {
 // CHECK:STDOUT:   %HasValue.call: init bool = call %bound_method.loc10_61.5(%.loc10_61.4)
 // CHECK:STDOUT:   %.loc10_61.5: bool = value_of_initializer %HasValue.call
 // CHECK:STDOUT:   %.loc10_61.6: bool = converted %HasValue.call, %.loc10_61.5
-// CHECK:STDOUT:   if %.loc10_61.6 br !.loc10_61.2 else br !.loc10_61.3
+// CHECK:STDOUT:   if %.loc10_61.6 br !for.body else br !for.done
 // CHECK:STDOUT:
-// CHECK:STDOUT: !.loc10_61.2:
+// CHECK:STDOUT: !for.body:
 // CHECK:STDOUT:   %.loc10_61.7: %Get.type.ebd = specific_constant imports.%Main.import_ref.d10, @Optional(constants.%tuple.type.784) [concrete = constants.%Get.d99]
 // CHECK:STDOUT:   %Get.ref: %Get.type.ebd = name_ref Get, %.loc10_61.7 [concrete = constants.%Get.d99]
 // CHECK:STDOUT:   %Get.bound: <bound method> = bound_method %.loc10_61.2, %Get.ref
@@ -526,9 +526,9 @@ fn Run() {
 // CHECK:STDOUT:   %a.ref: bool = name_ref a, %a
 // CHECK:STDOUT:   %b.ref: bool = name_ref b, %b
 // CHECK:STDOUT:   %Body.call: init %empty_tuple.type = call %Body.ref(%a.ref, %b.ref)
-// CHECK:STDOUT:   br !.loc10_61.1
+// CHECK:STDOUT:   br !for.next
 // CHECK:STDOUT:
-// CHECK:STDOUT: !.loc10_61.3:
+// CHECK:STDOUT: !for.done:
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -623,9 +623,9 @@ fn Run() {
 // CHECK:STDOUT:   %NewCursor.call: init %empty_struct_type = call %bound_method.loc12_49.2(%.loc12_48.3)
 // CHECK:STDOUT:   %var: ref %empty_struct_type = var invalid
 // CHECK:STDOUT:   assign %var, %NewCursor.call
-// CHECK:STDOUT:   br !.loc12_49.1
+// CHECK:STDOUT:   br !for.next
 // CHECK:STDOUT:
-// CHECK:STDOUT: !.loc12_49.1:
+// CHECK:STDOUT: !for.next:
 // CHECK:STDOUT:   %addr: %ptr.c28 = addr_of %var
 // CHECK:STDOUT:   %impl.elem3: %.8d0 = impl_witness_access constants.%Iterate.impl_witness.627, element3 [concrete = constants.%Next.852]
 // CHECK:STDOUT:   %bound_method.loc12_49.3: <bound method> = bound_method %.loc12_48.2, %impl.elem3
@@ -644,9 +644,9 @@ fn Run() {
 // CHECK:STDOUT:   %HasValue.call: init bool = call %bound_method.loc12_49.5(%.loc12_49.4)
 // CHECK:STDOUT:   %.loc12_49.5: bool = value_of_initializer %HasValue.call
 // CHECK:STDOUT:   %.loc12_49.6: bool = converted %HasValue.call, %.loc12_49.5
-// CHECK:STDOUT:   if %.loc12_49.6 br !.loc12_49.2 else br !.loc12_49.3
+// CHECK:STDOUT:   if %.loc12_49.6 br !for.body else br !for.done
 // CHECK:STDOUT:
-// CHECK:STDOUT: !.loc12_49.2:
+// CHECK:STDOUT: !for.body:
 // CHECK:STDOUT:   %.loc12_49.7: %Get.type.4a4 = specific_constant imports.%Main.import_ref.d10, @Optional(constants.%tuple.type.56b) [concrete = constants.%Get.8a7]
 // CHECK:STDOUT:   %Get.ref: %Get.type.4a4 = name_ref Get, %.loc12_49.7 [concrete = constants.%Get.8a7]
 // CHECK:STDOUT:   %Get.bound: <bound method> = bound_method %.loc12_49.2, %Get.ref
@@ -668,9 +668,9 @@ fn Run() {
 // CHECK:STDOUT:   %a.ref: %C = name_ref a, %a
 // CHECK:STDOUT:   %b.ref: %C = name_ref b, %b
 // CHECK:STDOUT:   %Body.call: init %empty_tuple.type = call %Body.ref(%a.ref, %b.ref)
-// CHECK:STDOUT:   br !.loc12_49.1
+// CHECK:STDOUT:   br !for.next
 // CHECK:STDOUT:
-// CHECK:STDOUT: !.loc12_49.3:
+// CHECK:STDOUT: !for.done:
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
