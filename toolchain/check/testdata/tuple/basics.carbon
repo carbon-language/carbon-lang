@@ -92,6 +92,9 @@ var x: ((), ()) = ((), );
 // CHECK:STDOUT:   %empty_tuple: %empty_tuple.type = tuple_value () [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
+// CHECK:STDOUT: imports {
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %x.patt: %pattern_type = binding_pattern x [concrete]
@@ -142,6 +145,9 @@ var x: ((), ()) = ((), );
 // CHECK:STDOUT:   %tuple.d8f: %tuple.type.bcd = tuple_value (%empty_tuple, %empty_tuple) [concrete]
 // CHECK:STDOUT:   %tuple.elem1.df1: ref %empty_tuple.type = tuple_access file.%x.var, element1 [concrete]
 // CHECK:STDOUT:   %tuple.0ca: %tuple.type.6e8 = tuple_value (%tuple.d8f, %empty_tuple) [concrete]
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: imports {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -200,6 +206,9 @@ var x: ((), ()) = ((), );
 // CHECK:STDOUT:   %empty_tuple: %empty_tuple.type = tuple_value () [concrete]
 // CHECK:STDOUT:   %tuple: %tuple.type = tuple_value (%empty_tuple) [concrete]
 // CHECK:STDOUT:   %tuple.elem0.a6d: ref %empty_tuple.type = tuple_access file.%y.var, element0 [concrete]
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: imports {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -262,6 +271,9 @@ var x: ((), ()) = ((), );
 // CHECK:STDOUT:   %tuple.elem1.b37: ref %empty_tuple.type = tuple_access file.%x.var, element1 [concrete]
 // CHECK:STDOUT:   %tuple.elem0.8f2: ref %empty_tuple.type = tuple_access file.%y.var, element0 [concrete]
 // CHECK:STDOUT:   %tuple.elem1.d90: ref %empty_tuple.type = tuple_access file.%y.var, element1 [concrete]
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: imports {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {

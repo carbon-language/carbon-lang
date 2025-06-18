@@ -2,6 +2,7 @@
 // Exceptions. See /LICENSE for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
+// INCLUDE-FILE: toolchain/testing/testdata/min_prelude/primitives.carbon
 // TODO: Add ranges and switch to "--dump-sem-ir-ranges=only".
 // EXTRA-ARGS: --dump-sem-ir-ranges=if-present
 //
@@ -42,8 +43,8 @@ var y: i32 = x.b;
 // CHECK:STDOUT:     import Core//prelude
 // CHECK:STDOUT:     import Core//prelude/...
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %Core.Float: %Float.type = import_ref Core//prelude/types, Float, loaded [concrete = constants.%Float]
-// CHECK:STDOUT:   %Core.Int: %Int.type = import_ref Core//prelude/types/int, Int, loaded [concrete = constants.%Int.generic]
+// CHECK:STDOUT:   %Core.Float: %Float.type = import_ref Core//prelude/parts/float, Float, loaded [concrete = constants.%Float]
+// CHECK:STDOUT:   %Core.Int: %Int.type = import_ref Core//prelude/parts/int, Int, loaded [concrete = constants.%Int.generic]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -58,11 +59,11 @@ var y: i32 = x.b;
 // CHECK:STDOUT:     %x.var_patt: %pattern_type.d08 = var_pattern %x.patt [concrete]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %x.var: ref %struct_type.a = var %x.var_patt [concrete]
-// CHECK:STDOUT:   %.loc14_16: type = splice_block %struct_type.a [concrete = constants.%struct_type.a] {
+// CHECK:STDOUT:   %.loc15_16: type = splice_block %struct_type.a [concrete = constants.%struct_type.a] {
 // CHECK:STDOUT:     %int_64: Core.IntLiteral = int_value 64 [concrete = constants.%int_64]
 // CHECK:STDOUT:     %float.make_type: init type = call constants.%Float(%int_64) [concrete = f64]
-// CHECK:STDOUT:     %.loc14_13.1: type = value_of_initializer %float.make_type [concrete = f64]
-// CHECK:STDOUT:     %.loc14_13.2: type = converted %float.make_type, %.loc14_13.1 [concrete = f64]
+// CHECK:STDOUT:     %.loc15_13.1: type = value_of_initializer %float.make_type [concrete = f64]
+// CHECK:STDOUT:     %.loc15_13.2: type = converted %float.make_type, %.loc15_13.1 [concrete = f64]
 // CHECK:STDOUT:     %struct_type.a: type = struct_type {.a: f64} [concrete = constants.%struct_type.a]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %x: ref %struct_type.a = bind_name x, %x.var [concrete = %x.var]
@@ -71,7 +72,7 @@ var y: i32 = x.b;
 // CHECK:STDOUT:     %y.var_patt: %pattern_type.7ce = var_pattern %y.patt [concrete]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %y.var: ref %i32 = var %y.var_patt [concrete]
-// CHECK:STDOUT:   %.loc19: type = splice_block %i32 [concrete = constants.%i32] {
+// CHECK:STDOUT:   %.loc20: type = splice_block %i32 [concrete = constants.%i32] {
 // CHECK:STDOUT:     %int_32: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
 // CHECK:STDOUT:     %i32: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
 // CHECK:STDOUT:   }
@@ -81,10 +82,10 @@ var y: i32 = x.b;
 // CHECK:STDOUT: fn @__global_init() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %float: f64 = float_literal 4 [concrete = constants.%float]
-// CHECK:STDOUT:   %.loc14_29.1: %struct_type.a = struct_literal (%float)
-// CHECK:STDOUT:   %.loc14_29.2: init %struct_type.a = struct_init (%float) to file.%x.var [concrete = constants.%struct]
-// CHECK:STDOUT:   %.loc14_1: init %struct_type.a = converted %.loc14_29.1, %.loc14_29.2 [concrete = constants.%struct]
-// CHECK:STDOUT:   assign file.%x.var, %.loc14_1
+// CHECK:STDOUT:   %.loc15_29.1: %struct_type.a = struct_literal (%float)
+// CHECK:STDOUT:   %.loc15_29.2: init %struct_type.a = struct_init (%float) to file.%x.var [concrete = constants.%struct]
+// CHECK:STDOUT:   %.loc15_1: init %struct_type.a = converted %.loc15_29.1, %.loc15_29.2 [concrete = constants.%struct]
+// CHECK:STDOUT:   assign file.%x.var, %.loc15_1
 // CHECK:STDOUT:   %x.ref: ref %struct_type.a = name_ref x, file.%x [concrete = file.%x.var]
 // CHECK:STDOUT:   assign file.%y.var, <error>
 // CHECK:STDOUT:   return
