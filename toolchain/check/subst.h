@@ -18,16 +18,30 @@ class SubstInstCallbacks {
 
   auto context() const -> Context& { return *context_; }
 
+  // How further substitution should or should not be applied to the instruction
+  // after Subst is done.
+  //
+  // Rebuild or ReuseUnchaged will always be called when SubstAgain or
+  // SubstOperands is returned, after processing anything inside the instruction
+  // after Subst.
   enum SubstResult {
+    // Don't substitute into the operands of the instruction.
     FullySubstituted,
-    SubstAgain,
+    // Attempt to substitute into the operands of the instruction.
     SubstOperands,
+    // Attempt to substitute again on the resulting instruction, acting like
+    // recursion on the instruction itself.
+    SubstAgain,
   };
 
   // Performs any needed substitution into an instruction. The instruction ID
   // should be updated as necessary to represent the new instruction. Returns
-  // true if the resulting instruction ID is fully-substituted, or false if
-  // substitution may be needed into operands of the instruction.
+  // FullySubstituted if the resulting instruction ID is fully-substituted.
+  // Return SubstOperands if substitution may be needed into operands of the
+  // instruction, or SubstAgain if the replaced instruction itself should have
+  // substitution applied to it again. When SubstOperands or SubstAgain is
+  // returned, it results in a call back to Rebuild or ReuseUnchanged when that
+  // instruction is done being substituted.
   virtual auto Subst(SemIR::InstId& inst_id) -> SubstResult = 0;
 
   // Rebuilds the type of an instruction from the substituted type instruction.

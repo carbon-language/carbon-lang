@@ -376,8 +376,7 @@ class SubstImplWitnessAccessCallbacks : public SubstInstCallbacks {
       llvm::ArrayRef<SemIR::FacetTypeInfo::RewriteConstraint> rewrites,
       const SemIR::FacetTypeInfo::RewriteConstraint* substituting_constraint)
       : SubstInstCallbacks(context), loc_id_(loc_id), rewrites_(rewrites) {
-    substs_in_progress_.push_back(
-        {substituting_constraint->lhs_id, false, false});
+    substs_in_progress_.push_back({substituting_constraint->lhs_id});
   }
 
   auto Subst(SemIR::InstId& rhs_inst_id) -> SubstResult override {
@@ -393,7 +392,10 @@ class SubstImplWitnessAccessCallbacks : public SubstInstCallbacks {
         // instruction.
         return SubstResult::FullySubstituted;
       } else {
-        substs_in_progress_.push_back({rhs_inst_id, false, false});
+        // SubstOperands will result in a Rebuild or ReuseUnchanged callback, so
+        // push the non-ImplWitnessAccess to get proper bracketing, allowing us
+        // to pop it in the paired callback.
+        substs_in_progress_.push_back({rhs_inst_id});
         return SubstResult::SubstOperands;
       }
     }
@@ -409,9 +411,9 @@ class SubstImplWitnessAccessCallbacks : public SubstInstCallbacks {
 
     // Finds a cycle if the RHS refers to something that depends on the value of
     // the RHS.
-    for (auto& [in_progress_inst_id, diagnosed, _] : substs_in_progress_) {
+    for (auto& [in_progress_inst_id, diagnosed_cycle] : substs_in_progress_) {
       if (eq(context(), in_progress_inst_id, rhs_inst_id)) {
-        if (!diagnosed) {
+        if (!diagnosed_cycle) {
           CARBON_DIAGNOSTIC(FacetTypeConstraintCycle, Error,
                             "found cycle in facet type constraint for {0}",
                             InstIdAsConstant);
@@ -423,7 +425,7 @@ class SubstImplWitnessAccessCallbacks : public SubstInstCallbacks {
           // allocations.
           context().emitter().Emit(loc_id_, FacetTypeConstraintCycle,
                                    in_progress_inst_id);
-          diagnosed = true;
+          diagnosed_cycle = true;
         }
         rhs_inst_id = SemIR::ErrorInst::InstId;
         return SubstResult::FullySubstituted;
@@ -443,26 +445,23 @@ class SubstImplWitnessAccessCallbacks : public SubstInstCallbacks {
 
     if (rhs_inst_id == orig_inst_id) {
       // If the ImplWitnessAccess was not replaced, don't recurse inside it. We
-      // won't rebuild the instruction so don't track it in
-      // `substs_in_progress_`.
+      // won't rebuild the instruction, so we don't need to track the associated
+      // constant.
       return SubstResult::FullySubstituted;
     }
 
-    // Track that we substituted for this ImplWitnessAccess. If we find another
-    // of the same ImplWitnessAccess inside, then it would form a cycle. Once
-    // the replacement of this ImplWitnessAccess completes substitution, we'll
-    // drop the `orig_inst_id` from the list.
-
     if (!context().insts().Is<SemIR::ImplWitnessAccess>(rhs_inst_id)) {
       // The ImplWitnessAccess was replaced with some other instruction, which
-      // may constain other ImplWitnessAccesses.
-      substs_in_progress_.push_back({orig_inst_id, false, false});
+      // may contain other ImplWitnessAccesses. Keep track of the associated
+      // constant we are now computing the value of.
+      substs_in_progress_.push_back({orig_inst_id});
       return SubstResult::SubstOperands;
     }
 
     // The ImplWitnessAccess was replaced with a different ImplWitnessAccess;
-    // look for further replacements.
-    substs_in_progress_.push_back({orig_inst_id, false, true});
+    // look for further replacements. Keep track of the associated
+    // constant we are now computing the value of.
+    substs_in_progress_.push_back({orig_inst_id});
     return SubstResult::SubstAgain;
   }
 
@@ -474,19 +473,25 @@ class SubstImplWitnessAccessCallbacks : public SubstInstCallbacks {
 
   auto ReuseUnchanged(SemIR::InstId orig_inst_id) -> SemIR::InstId override {
     substs_in_progress_.pop_back();
-    while (std::get<2>(substs_in_progress_.back())) {
-      substs_in_progress_.pop_back();
-    }
     return orig_inst_id;
   }
 
  private:
+  struct SubstInProgress {
+    // The associated constant whose value is being determined, represented as
+    // an ImplWitnessAccess. Or another instruction that we are recursing
+    // through.
+    SemIR::InstId inst_id;
+    // Whether a cycle has already been diagnosed against the associated
+    // constant.
+    bool diagnosed_cycle = false;
+  };
+
   SemIR::LocId loc_id_;
   llvm::ArrayRef<SemIR::FacetTypeInfo::RewriteConstraint> rewrites_;
-  llvm::SmallVector<
-      std::tuple<SemIR::InstId, bool /* diagnosed */, bool /* pop_with_next */>,
-      4>
-      substs_in_progress_;
+  // Avoid heap allocations in common cases, if there are chains of instructions
+  // in associated constants with a depth at most 16.
+  llvm::SmallVector<SubstInProgress, 16> substs_in_progress_;
 };
 
 auto ResolveFacetTypeRewriteConstraints(

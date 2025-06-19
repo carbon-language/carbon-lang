@@ -312,10 +312,26 @@ auto SubstInst(Context& context, SemIR::InstId inst_id,
   while (index != -1) {
     auto& item = worklist[index];
 
+    if (item.is_repeated) {
+      // Pop the copy of the repeated item when we get back to the repeated
+      // item, and steal any work that was done there so we don't have to
+      // Subst() the repeated item again. The pop does not reallocate the
+      // worklist so does not invalidate `item`.
+      item.inst_id = worklist.Pop();
+    }
+
     if (item.is_expanded) {
       // Rebuild this item if necessary. Note that this might pop items from the
       // worklist but does not reallocate, so does not invalidate `item`.
       item.inst_id = Rebuild(context, worklist, item.inst_id, callbacks);
+      index = item.next_index;
+      continue;
+    }
+
+    if (item.is_repeated) {
+      // When Subst returns SubstAgain, we must call back to Rebuild or
+      // ReuseUnchanged for that work item.
+      item.inst_id = callbacks.ReuseUnchanged(item.inst_id);
       index = item.next_index;
       continue;
     }
@@ -328,14 +344,17 @@ auto SubstInst(Context& context, SemIR::InstId inst_id,
         if (item.inst_id == SemIR::ErrorInst::InstId) {
           return SemIR::ErrorInst::InstId;
         }
-        if (item.is_repeated) {
-          item.inst_id = callbacks.ReuseUnchanged(item.inst_id);
-        }
         index = item.next_index;
         continue;
-      case SubstInstCallbacks::SubstResult::SubstAgain:
+      case SubstInstCallbacks::SubstResult::SubstAgain: {
         item.is_repeated = true;
+
+        // This modifies `worklist` which invalidates `item`.
+        worklist.Push(item.inst_id);
+        worklist.back().next_index = index;
+        index = worklist.size() - 1;
         continue;
+      }
       case SubstInstCallbacks::SubstResult::SubstOperands:
         break;
     }

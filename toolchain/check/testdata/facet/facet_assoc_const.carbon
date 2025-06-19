@@ -458,6 +458,88 @@ fn F(A:! Z where .T = .V.U and .V = .Self and .U = ()) -> A.T {
   return ();
 }
 
+// --- fail_cycle_with_unrelated_associated_constant.carbon
+library "[[@TEST_NAME]]";
+
+interface Z {
+  let T0:! type;
+  let T1:! type;
+  let T2:! type;
+  let T3:! type;
+}
+
+// CHECK:STDERR: fail_cycle_with_unrelated_associated_constant.carbon:[[@LINE+4]]:10: error: found cycle in facet type constraint for `.(Z.T0)` [FacetTypeConstraintCycle]
+// CHECK:STDERR: fn F(T:! Z where .T0 = .T1 and .T1 = .T0 and .T2 = .T3) {}
+// CHECK:STDERR:          ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+// CHECK:STDERR:
+fn F(T:! Z where .T0 = .T1 and .T1 = .T0 and .T2 = .T3) {}
+
+// --- fail_cycle_with_branching_in_rhs.carbon
+library "[[@TEST_NAME]]";
+
+interface Z {
+  let T0:! type;
+  let T1:! type;
+  let T2:! type;
+  let T3:! type;
+  let T4:! type;
+}
+
+// TODO: There should only be one diagnostic here.
+//
+// CHECK:STDERR: fail_cycle_with_branching_in_rhs.carbon:[[@LINE+8]]:10: error: found cycle in facet type constraint for `.(Z.T1)` [FacetTypeConstraintCycle]
+// CHECK:STDERR: fn F(T:! Z where .T0 = .T1 and .T1 = (.T2, .T3) and .T2 = .T4 and .T3 = .T1) {}
+// CHECK:STDERR:          ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+// CHECK:STDERR:
+// CHECK:STDERR: fail_cycle_with_branching_in_rhs.carbon:[[@LINE+4]]:10: error: found cycle in facet type constraint for `.(Z.T1)` [FacetTypeConstraintCycle]
+// CHECK:STDERR: fn F(T:! Z where .T0 = .T1 and .T1 = (.T2, .T3) and .T2 = .T4 and .T3 = .T1) {}
+// CHECK:STDERR:          ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+// CHECK:STDERR:
+fn F(T:! Z where .T0 = .T1 and .T1 = (.T2, .T3) and .T2 = .T4 and .T3 = .T1) {}
+
+// CHECK:STDERR: fail_cycle_with_branching_in_rhs.carbon:[[@LINE+4]]:10: error: found cycle in facet type constraint for `.(Z.T0)` [FacetTypeConstraintCycle]
+// CHECK:STDERR: fn G(T:! Z where .T0 = .T1 and .T1 = (.T2, .T3) and .T2 = .T4 and .T3 = .T0) {}
+// CHECK:STDERR:          ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+// CHECK:STDERR:
+fn G(T:! Z where .T0 = .T1 and .T1 = (.T2, .T3) and .T2 = .T4 and .T3 = .T0) {}
+
+// --- no_cycle_with_branching_in_rhs.carbon
+library "[[@TEST_NAME]]";
+
+interface Z {
+  let T0:! type;
+  let T1:! type;
+  let T2:! type;
+  let T3:! type;
+  let T4:! type;
+  let T5:! type;
+}
+
+// These create misdiagnostics if the resolving algorithms messes up tracking
+// its stack during replacements by leaving either of .T2 or .T3 on the stack
+// (from the RHS of .T1) while resolving the other. Or it can fail to apply the
+// () up the chain correctly.
+
+fn F(T:! Z where .T0 = .T1 and .T1 = (.T2, .T3) and .T2 = .T4 and .T4 = () and .T3 = .T2) -> T.T0 {
+  return ((), ());
+}
+
+fn G(T:! Z where .T0 = .T1 and .T1 = (.T2, .T3) and .T2 = .T4 and .T4 = .T5 and .T5 = () and .T3 = .T2) -> T.T0 {
+  return ((), ());
+}
+
+fn H(T:! Z where .T0 = .T1 and .T1 = (.T2, .T3) and .T2 = (.T4, ()) and .T3 = .T2 and .T4 = {}) -> T.T0 {
+  return (({}, ()), ({}, ()));
+}
+
+fn I(T:! Z where .T0 = .T1 and .T1 = (.T2, .T3) and .T2 = .T4 and .T3 = .T2 and .T4 = ()) -> T.T0 {
+  return ((), ());
+}
+
+fn J(T:! Z where .T0 = .T1 and .T1 = (.T2, .T3) and .T2 = .T4 and .T4 = .T5 and .T3 = .T2 and .T5 = ()) -> T.T0 {
+  return ((), ());
+}
+
 // CHECK:STDOUT: --- fail_cycle.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
