@@ -2,6 +2,8 @@
 // Exceptions. See /LICENSE for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
+// INCLUDE-FILE: toolchain/testing/testdata/min_prelude/primitives.carbon
+//
 // AUTOUPDATE
 // TIP: To test this file alone, run:
 // TIP:   bazel test //toolchain/testing:file_test --test_arg=--file_tests=toolchain/check/testdata/basics/type_literals.carbon
@@ -80,7 +82,7 @@ var test_i1: i1;
 // CHECK:STDERR: var test_i15: i15;
 // CHECK:STDERR:               ^~~
 // CHECK:STDERR:
-// CHECK:STDERR: {{.*}}/prelude/types/int.carbon:13:9: error: integer type width of 1000000000 is greater than the maximum supported width of 8388608 [IntWidthTooLarge]
+// CHECK:STDERR: min_prelude/parts/int.carbon:10:9: error: integer type width of 1000000000 is greater than the maximum supported width of 8388608 [IntWidthTooLarge]
 // CHECK:STDERR:   adapt MakeInt(N);
 // CHECK:STDERR:         ^~~~~~~~~~
 var test_i15: i15;
@@ -117,7 +119,7 @@ var test_u1: u1;
 // CHECK:STDERR: var test_u15: u15;
 // CHECK:STDERR:               ^~~
 // CHECK:STDERR:
-// CHECK:STDERR: {{.*}}/prelude/types/uint.carbon:14:9: error: integer type width of 1000000000 is greater than the maximum supported width of 8388608 [IntWidthTooLarge]
+// CHECK:STDERR: min_prelude/parts/uint.carbon:10:9: error: integer type width of 1000000000 is greater than the maximum supported width of 8388608 [IntWidthTooLarge]
 // CHECK:STDERR:   adapt MakeUInt(N);
 // CHECK:STDERR:         ^~~~~~~~~~~
 var test_u15: u15;

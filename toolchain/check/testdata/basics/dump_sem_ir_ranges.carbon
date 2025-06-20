@@ -2,10 +2,12 @@
 // Exceptions. See /LICENSE for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
+// INCLUDE-FILE: toolchain/testing/testdata/min_prelude/none.carbon
+//
 // The default behavior should be `--dump-sem-ir-ranges=if-present`, although
 // tests set it to `only`. This explicitly tests the default of the toolchain,
 // not of file_test.
-// ARGS: compile --phase=check --no-prelude-import --dump-sem-ir %s
+// ARGS: compile --phase=check --dump-sem-ir %s
 //
 // AUTOUPDATE
 // TIP: To test this file alone, run:
