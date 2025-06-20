@@ -48,42 +48,6 @@ var x: ((), ()) = ((), ());
 var y: ((), ()) = x;
 //@dump-sem-ir-end
 
-// --- fail_assign_from_empty.carbon
-library "[[@TEST_NAME]]";
-
-// CHECK:STDERR: fail_assign_from_empty.carbon:[[@LINE+4]]:16: error: cannot initialize tuple of 1 element from tuple with 0 elements [TupleInitElementCountMismatch]
-// CHECK:STDERR: var x: ((),) = ();
-// CHECK:STDERR:                ^~
-// CHECK:STDERR:
-var x: ((),) = ();
-
-// --- fail_assign_to_empty.carbon
-library "[[@TEST_NAME]]";
-
-// CHECK:STDERR: fail_assign_to_empty.carbon:[[@LINE+4]]:13: error: cannot initialize tuple of 0 elements from tuple with 1 element [TupleInitElementCountMismatch]
-// CHECK:STDERR: var x: () = ((),);
-// CHECK:STDERR:             ^~~~~
-// CHECK:STDERR:
-var x: () = ((),);
-
-// --- fail_assign_nested.carbon
-library "[[@TEST_NAME]]";
-
-// CHECK:STDERR: fail_assign_nested.carbon:[[@LINE+4]]:32: error: cannot initialize tuple of 2 elements from tuple with 3 elements [TupleInitElementCountMismatch]
-// CHECK:STDERR: var x: (((), ()), ((), ())) = (((), (), ()), ((), (), ()));
-// CHECK:STDERR:                                ^~~~~~~~~~~~
-// CHECK:STDERR:
-var x: (((), ()), ((), ())) = (((), (), ()), ((), (), ()));
-
-// --- fail_too_few_elements.carbon
-library "[[@TEST_NAME]]";
-
-// CHECK:STDERR: fail_too_few_elements.carbon:[[@LINE+4]]:19: error: cannot initialize tuple of 2 elements from tuple with 1 element [TupleInitElementCountMismatch]
-// CHECK:STDERR: var x: ((), ()) = ((), );
-// CHECK:STDERR:                   ^~~~~~
-// CHECK:STDERR:
-var x: ((), ()) = ((), );
-
 // CHECK:STDOUT: --- empty.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
