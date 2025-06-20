@@ -321,10 +321,11 @@ class C(T:! type, U:! type);
 // CHECK:STDERR:
 fn F(T:! I where .X1 = C(.X2, .X3) and .X2 = C(.X3, .X1));
 
-// --- fail_exponential_large_cycle.carbon
+// --- exponential_large.carbon
 library "[[@TEST_NAME]]";
 
 interface Z {
+  let T0:! type;
   let T1:! type;
   let T2:! type;
   let T3:! type;
@@ -332,25 +333,64 @@ interface Z {
   let T5:! type;
   let T6:! type;
   let T7:! type;
+  let T8:! type;
+  let T9:! type;
 }
 
-// If you naively substitute all of the RHS for each rewrite rule, you end up
-// making a tuple with exponential growth each time through the rewrite
-// constraints looking for a fixed point. This many types is already enough to
-// make the test run for many minutes.
+// A naive attempt to resolve the rewrite rules will run take minutes to
+// complete, since the resulting RHS values are exponential in size, and a naive
+// approach can recursively rebuild the RHS values from the ground up
+// repeatedly.
 fn F(
-    // CHECK:STDERR: fail_exponential_large_cycle.carbon:[[@LINE+4]]:9: error: found cycle in facet type constraint for `.(Z.T1)` [FacetTypeConstraintCycle]
+    T:! Z where
+      .T0 = (.T1, .T1, .T1, .T1, .T1, .T1, .T1, .T1, .T1, .T1, .T1, .T1) and
+      .T1 = (.T2, .T2, .T2, .T2, .T2, .T2, .T2, .T2, .T2, .T2, .T2, .T2) and
+      .T2 = (.T3, .T3, .T3, .T3, .T3, .T3, .T3, .T3, .T3, .T3, .T3, .T3) and
+      .T3 = (.T4, .T4, .T4, .T4, .T4, .T4, .T4, .T4, .T4, .T4, .T4, .T4) and
+      .T4 = (.T5, .T5, .T5, .T5, .T5, .T5, .T5, .T5, .T5, .T5, .T5, .T5) and
+      .T5 = (.T6, .T6, .T6, .T6, .T6, .T6, .T6, .T6, .T6, .T6, .T6, .T6) and
+      .T6 = (.T7, .T7, .T7, .T7, .T7, .T7, .T7, .T7, .T7, .T7, .T7, .T7) and
+      .T7 = (.T8, .T8, .T8, .T8, .T8, .T8, .T8, .T8, .T8, .T8, .T8, .T8) and
+      .T8 = (.T9, .T9, .T9, .T9, .T9, .T9, .T9, .T9, .T9, .T9, .T9, .T9) and
+      .T9 = ()
+    );
+
+// --- fail_exponential_large_cycle.carbon
+library "[[@TEST_NAME]]";
+
+interface Z {
+  let T0:! type;
+  let T1:! type;
+  let T2:! type;
+  let T3:! type;
+  let T4:! type;
+  let T5:! type;
+  let T6:! type;
+  let T7:! type;
+  let T8:! type;
+  let T9:! type;
+}
+
+// A naive attempt to resolve the rewrite rules will run take minutes to
+// complete, since the resulting RHS values are exponential in size, and a naive
+// approach can recursively rebuild the RHS values from the ground up
+// repeatedly.
+fn F(
+    // CHECK:STDERR: fail_exponential_large_cycle.carbon:[[@LINE+4]]:9: error: found cycle in facet type constraint for `.(Z.T9)` [FacetTypeConstraintCycle]
     // CHECK:STDERR:     T:! Z where
     // CHECK:STDERR:         ^~~~~~~
     // CHECK:STDERR:
     T:! Z where
-      .T1 = (.T2, .T2, .T2) and
-      .T2 = (.T3, .T3, .T3) and
-      .T3 = (.T4, .T4, .T4) and
-      .T4 = (.T5, .T5, .T5) and
-      .T5 = (.T6, .T6, .T6) and
-      .T6 = (.T7, .T7, .T7) and
-      .T7 = (.T1, .T1, .T1)
+      .T9 = .T0 and
+      .T8 = (.T9, .T9, .T9, .T9, .T9, .T9, .T9, .T9, .T9, .T9, .T9, .T9) and
+      .T7 = (.T8, .T8, .T8, .T8, .T8, .T8, .T8, .T8, .T8, .T8, .T8, .T8) and
+      .T6 = (.T7, .T7, .T7, .T7, .T7, .T7, .T7, .T7, .T7, .T7, .T7, .T7) and
+      .T5 = (.T6, .T6, .T6, .T6, .T6, .T6, .T6, .T6, .T6, .T6, .T6, .T6) and
+      .T4 = (.T5, .T5, .T5, .T5, .T5, .T5, .T5, .T5, .T5, .T5, .T5, .T5) and
+      .T3 = (.T4, .T4, .T4, .T4, .T4, .T4, .T4, .T4, .T4, .T4, .T4, .T4) and
+      .T2 = (.T3, .T3, .T3, .T3, .T3, .T3, .T3, .T3, .T3, .T3, .T3, .T3) and
+      .T1 = (.T2, .T2, .T2, .T2, .T2, .T2, .T2, .T2, .T2, .T2, .T2, .T2) and
+      .T0 = (.T1, .T1, .T1, .T1, .T1, .T1, .T1, .T1, .T1, .T1, .T1, .T1)
     );
 
 // --- non-type.carbon

@@ -7,6 +7,7 @@
 #include <compare>
 
 #include "llvm/ADT/ArrayRef.h"
+#include "llvm/ADT/STLExtras.h"
 #include "toolchain/check/convert.h"
 #include "toolchain/check/diagnostic_helpers.h"
 #include "toolchain/check/generic.h"
@@ -365,6 +366,43 @@ static auto SortAndDedupeRewriteConstraints(
 // `ImplWitnessAccess` will not loop infinitely.
 class SubstImplWitnessAccessCallbacks : public SubstInstCallbacks {
  public:
+  class AccessRewriteCache {
+   public:
+    auto Find(SubstImplWitnessAccessCallbacks& callbacks,
+              SemIR::InstId lhs_access_id) -> std::optional<SemIR::InstId> {
+      auto* it =
+          llvm::lower_bound(cache_, lhs_access_id, [&](auto&& a, auto&& b) {
+            return LessAccess(callbacks.context(), a.first, b);
+          });
+      if (it != cache_.end()) {
+        if (EquivalentAccess(callbacks.context(), it->first, lhs_access_id)) {
+          return it->second;
+        }
+      }
+      return std::nullopt;
+    }
+
+    auto Insert(SubstImplWitnessAccessCallbacks& callbacks,
+                SemIR::InstId lhs_access_id, SemIR::InstId inst_id) -> void {
+      auto* it =
+          llvm::lower_bound(cache_, lhs_access_id, [&](auto&& a, auto&& b) {
+            return LessAccess(callbacks.context(), a.first, b);
+          });
+      if (it == cache_.end()) {
+        cache_.push_back({lhs_access_id, inst_id});
+      }
+      if (!EquivalentAccess(callbacks.context(), it->first, lhs_access_id)) {
+        cache_.insert(it, {lhs_access_id, inst_id});
+      }
+    }
+
+   private:
+    // Try avoid heap allocations in the common case where there are a small
+    // number of rewrite rules referring to each other by keeping the first 16
+    // on the stack.
+    llvm::SmallVector<std::pair<SemIR::InstId, SemIR::InstId>, 16> cache_;
+  };
+
   // The `rewrites` is the set of rewrite constraints that are being
   // substituted, and where it looks for rewritten values to substitute from.
   //
@@ -374,8 +412,12 @@ class SubstImplWitnessAccessCallbacks : public SubstInstCallbacks {
   explicit SubstImplWitnessAccessCallbacks(
       Context* context, SemIR::LocId loc_id,
       llvm::ArrayRef<SemIR::FacetTypeInfo::RewriteConstraint> rewrites,
-      const SemIR::FacetTypeInfo::RewriteConstraint* substituting_constraint)
-      : SubstInstCallbacks(context), loc_id_(loc_id), rewrites_(rewrites) {
+      const SemIR::FacetTypeInfo::RewriteConstraint* substituting_constraint,
+      AccessRewriteCache* cache)
+      : SubstInstCallbacks(context),
+        loc_id_(loc_id),
+        rewrites_(rewrites),
+        cache_(cache) {
     substs_in_progress_.push_back({substituting_constraint->lhs_id});
   }
 
@@ -400,19 +442,12 @@ class SubstImplWitnessAccessCallbacks : public SubstInstCallbacks {
       }
     }
 
-    auto eq = [](Context& context, SemIR::InstId lhs_inst_id,
-                 SemIR::InstId rhs_inst_id) {
-      return CompareFacetTypeConstraintValues(context, lhs_inst_id,
-                                              rhs_inst_id) ==
-             std::weak_ordering::equivalent;
-    };
-
     SemIR::InstId orig_inst_id = rhs_inst_id;
 
     // Finds a cycle if the RHS refers to something that depends on the value of
     // the RHS.
     for (auto& [in_progress_inst_id, diagnosed_cycle] : substs_in_progress_) {
-      if (eq(context(), in_progress_inst_id, rhs_inst_id)) {
+      if (EquivalentAccess(context(), in_progress_inst_id, rhs_inst_id)) {
         if (!diagnosed_cycle) {
           CARBON_DIAGNOSTIC(FacetTypeConstraintCycle, Error,
                             "found cycle in facet type constraint for {0}",
@@ -432,12 +467,17 @@ class SubstImplWitnessAccessCallbacks : public SubstInstCallbacks {
       }
     }
 
+    if (auto cached_inst_id = cache_->Find(*this, rhs_inst_id)) {
+      rhs_inst_id = *cached_inst_id;
+      return SubstResult::FullySubstituted;
+    }
+
     // TODO: We could consider something better than linear search here, such
     // as a map. However that would probably require heap allocations which
     // may be worse overall since the number of rewrite constraints is
     // generally low.
     for (const auto& search_constraint : rewrites_) {
-      if (eq(context(), search_constraint.lhs_id, rhs_inst_id)) {
+      if (EquivalentAccess(context(), search_constraint.lhs_id, rhs_inst_id)) {
         rhs_inst_id = search_constraint.rhs_id;
         break;
       }
@@ -467,12 +507,15 @@ class SubstImplWitnessAccessCallbacks : public SubstInstCallbacks {
 
   auto Rebuild(SemIR::InstId /*orig_inst_id*/, SemIR::Inst new_inst)
       -> SemIR::InstId override {
-    substs_in_progress_.pop_back();
-    return RebuildNewInst(loc_id_, new_inst);
+    auto inst_id = RebuildNewInst(loc_id_, new_inst);
+    auto [subst_inst_id, _] = substs_in_progress_.pop_back_val();
+    cache_->Insert(*this, subst_inst_id, inst_id);
+    return inst_id;
   }
 
   auto ReuseUnchanged(SemIR::InstId orig_inst_id) -> SemIR::InstId override {
-    substs_in_progress_.pop_back();
+    auto [subst_inst_id, _] = substs_in_progress_.pop_back_val();
+    cache_->Insert(*this, subst_inst_id, orig_inst_id);
     return orig_inst_id;
   }
 
@@ -487,8 +530,37 @@ class SubstImplWitnessAccessCallbacks : public SubstInstCallbacks {
     bool diagnosed_cycle = false;
   };
 
+  // Returns true if `lhs_inst_id` and `rhs_inst_id` are equivalent, where if
+  // they are both an `ImplWitnessAccess`, equivalency is determined by whether
+  // they are accessing the same associated entity in a facet value.
+  static auto EquivalentAccess(Context& context, SemIR::InstId lhs_inst_id,
+                               SemIR::InstId rhs_inst_id) -> bool {
+    return CompareFacetTypeConstraintValues(context, lhs_inst_id,
+                                            rhs_inst_id) ==
+           std::weak_ordering::equivalent;
+  }
+  // Returns true if `lhs_inst_id` is ordered before `rhs_inst_id`, where if
+  // they are both an `ImplWitnessAccess`, ordering is determined by which
+  // associated entity they are accessing in which facet value. If they are
+  // accessing the same associated entity in the same facet value, they are
+  // ordered equivalently.
+  static auto LessAccess(Context& context, SemIR::InstId lhs_inst_id,
+                         SemIR::InstId rhs_inst_id) -> bool {
+    return CompareFacetTypeConstraintValues(
+               context, lhs_inst_id, rhs_inst_id) == std::weak_ordering::less;
+  }
+
+  // The location of the rewrite constraints as a whole.
   SemIR::LocId loc_id_;
+  // The rewrite constraints for the facet value's facet type being resolved.
   llvm::ArrayRef<SemIR::FacetTypeInfo::RewriteConstraint> rewrites_;
+  // A cache used to avoid redundant work during replacement. Once the value of
+  // an associated constant is determined once, the cache can be used to
+  // immediately replace any other reference to the same associated constant
+  // without substituting through it and rebuilding it again. This avoids
+  // exponential runtime when rewrite rules refer to each other in ways that
+  // create exponential references.
+  AccessRewriteCache* cache_;
   // Avoid heap allocations in common cases, if there are chains of instructions
   // in associated constants with a depth at most 16.
   llvm::SmallVector<SubstInProgress, 16> substs_in_progress_;
@@ -502,6 +574,9 @@ auto ResolveFacetTypeRewriteConstraints(
     return;
   }
 
+  // Apply rewrite constraints to each other, so that for example:
+  // `.X = Y and .Y = ()` becomes `.X = () and .Y = ()`.
+  SubstImplWitnessAccessCallbacks::AccessRewriteCache cache;
   for (auto& constraint : rewrites) {
     if (constraint.lhs_id == SemIR::ErrorInst::InstId ||
         constraint.rhs_id == SemIR::ErrorInst::InstId) {
@@ -514,11 +589,8 @@ auto ResolveFacetTypeRewriteConstraints(
       continue;
     }
 
-    // Replace any `ImplWitnessAccess` in the RHS of this constraint with the
-    // RHS of another constraint that sets the value of the associated
-    // constant being accessed in the RHS.
     auto replace_witness_callbacks = SubstImplWitnessAccessCallbacks(
-        &context, loc_id, rewrites, &constraint);
+        &context, loc_id, rewrites, &constraint, &cache);
     auto subst_inst_id =
         SubstInst(context, constraint.rhs_id, replace_witness_callbacks);
     constraint.rhs_id = subst_inst_id;
