@@ -66,7 +66,7 @@ struct CompileOptions {
   bool prelude_import = false;
   bool include_debug_info = true;
 
-  llvm::StringRef exclude_dump_file_prefix;
+  llvm::SmallVector<llvm::StringRef> exclude_dump_file_prefixes;
 };
 
 // Implements the compile subcommand of the driver.

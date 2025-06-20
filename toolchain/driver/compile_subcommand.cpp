@@ -282,7 +282,7 @@ to be specified in the compile command line.
 Excludes files with the given prefix from dumps.
 )""",
       },
-      [&](auto& arg_b) { arg_b.Set(&exclude_dump_file_prefix); });
+      [&](auto& arg_b) { arg_b.Append(&exclude_dump_file_prefixes); });
   b.AddFlag(
       {
           .name = "debug-info",
@@ -508,12 +508,15 @@ class MultiUnitCache {
  private:
   auto BuildIncludeInDumps() -> void {
     CARBON_CHECK(include_in_dumps_.empty());
-    llvm::append_range(include_in_dumps_,
-                       llvm::map_range(units_, [&](const auto& unit) {
-                         return options_->exclude_dump_file_prefix.empty() ||
-                                !unit->input_filename().starts_with(
-                                    options_->exclude_dump_file_prefix);
-                       }));
+    llvm::append_range(
+        include_in_dumps_, llvm::map_range(units_, [&](const auto& unit) {
+          for (auto prefix : options_->exclude_dump_file_prefixes) {
+            if (unit->input_filename().starts_with(prefix)) {
+              return false;
+            }
+          }
+          return true;
+        }));
   }
 
   auto BuildTreeAndSubtreesGetters() -> void {
