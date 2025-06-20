@@ -45,4 +45,3 @@ library "[[@TEST_NAME]]";
 // CHECK:STDERR:                   ^~~~~~
 // CHECK:STDERR:
 var x: ((), ()) = ((), );
-
