@@ -529,30 +529,30 @@ static auto MapBuiltinType(Context& context, const clang::BuiltinType& type)
 static auto MapRecordType(Context& context, SemIR::LocId loc_id,
                           const clang::RecordType& type) -> TypeExpr {
   auto* record_decl = clang::dyn_cast<clang::CXXRecordDecl>(type.getDecl());
-  if (record_decl && record_decl->isStruct()) {
+  if (record_decl && (record_decl->isStruct() || record_decl->isClass())) {
     auto& clang_decls = context.sem_ir().clang_decls();
-    SemIR::InstId struct_inst_id = SemIR::InstId::None;
-    if (auto struct_clang_decl_id = clang_decls.Lookup(
+    SemIR::InstId record_inst_id = SemIR::InstId::None;
+    if (auto record_clang_decl_id = clang_decls.Lookup(
             {.decl = record_decl, .inst_id = SemIR::InstId::None});
-        struct_clang_decl_id.has_value()) {
-      struct_inst_id = clang_decls.Get(struct_clang_decl_id).inst_id;
+        record_clang_decl_id.has_value()) {
+      record_inst_id = clang_decls.Get(record_clang_decl_id).inst_id;
     } else {
       auto parent_inst_id =
           AsCarbonNamespace(context, record_decl->getDeclContext());
       auto parent_name_scope_id =
           context.insts().GetAs<SemIR::Namespace>(parent_inst_id).name_scope_id;
-      SemIR::NameId struct_name_id =
+      SemIR::NameId record_name_id =
           AddIdentifierName(context, record_decl->getName());
-      struct_inst_id = ImportCXXRecordDecl(
-          context, loc_id, parent_name_scope_id, struct_name_id, record_decl);
-      AddNameToScope(context, parent_name_scope_id, struct_name_id,
-                     struct_inst_id);
+      record_inst_id = ImportCXXRecordDecl(
+          context, loc_id, parent_name_scope_id, record_name_id, record_decl);
+      AddNameToScope(context, parent_name_scope_id, record_name_id,
+                     record_inst_id);
     }
-    SemIR::TypeInstId struct_type_inst_id =
-        context.types().GetAsTypeInstId(struct_inst_id);
+    SemIR::TypeInstId record_type_inst_id =
+        context.types().GetAsTypeInstId(record_inst_id);
     return {
-        .inst_id = struct_type_inst_id,
-        .type_id = context.types().GetTypeIdForTypeInstId(struct_type_inst_id)};
+        .inst_id = record_type_inst_id,
+        .type_id = context.types().GetTypeIdForTypeInstId(record_type_inst_id)};
   }
 
   return {.inst_id = SemIR::ErrorInst::TypeInstId,
