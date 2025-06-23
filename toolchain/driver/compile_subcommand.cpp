@@ -510,12 +510,10 @@ class MultiUnitCache {
     CARBON_CHECK(include_in_dumps_.empty());
     llvm::append_range(
         include_in_dumps_, llvm::map_range(units_, [&](const auto& unit) {
-          for (auto prefix : options_->exclude_dump_file_prefixes) {
-            if (unit->input_filename().starts_with(prefix)) {
-              return false;
-            }
-          }
-          return true;
+          return llvm::none_of(
+              options_->exclude_dump_file_prefixes, [&](auto prefix) {
+                return unit->input_filename().starts_with(prefix);
+              });
         }));
   }
 
