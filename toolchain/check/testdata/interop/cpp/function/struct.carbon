@@ -20,7 +20,7 @@ struct S;
 
 auto foo(S) -> void;
 
-// --- fail_todo_import_decl_value_param_type.carbon
+// --- fail_import_decl_value_param_type.carbon
 
 library "[[@TEST_NAME]]";
 
@@ -28,18 +28,17 @@ import Cpp library "decl_value_param_type.h";
 
 fn F() {
   //@dump-sem-ir-begin
-  // TODO: This should fail on the fact `S` is declared and not defined.
-  // CHECK:STDERR: fail_todo_import_decl_value_param_type.carbon:[[@LINE+14]]:3: error: semantics TODO: `Unsupported: Record declarations without a definition` [SemanticsTodo]
+  // CHECK:STDERR: fail_import_decl_value_param_type.carbon:[[@LINE+14]]:3: error: semantics TODO: `Unsupported: Record declarations without a definition` [SemanticsTodo]
   // CHECK:STDERR:   Cpp.foo({});
   // CHECK:STDERR:   ^~~~~~~
-  // CHECK:STDERR: fail_todo_import_decl_value_param_type.carbon:[[@LINE+11]]:3: note: in `Cpp` name lookup for `foo` [InCppNameLookup]
+  // CHECK:STDERR: fail_import_decl_value_param_type.carbon:[[@LINE+11]]:3: note: in `Cpp` name lookup for `foo` [InCppNameLookup]
   // CHECK:STDERR:   Cpp.foo({});
   // CHECK:STDERR:   ^~~~~~~
   // CHECK:STDERR:
-  // CHECK:STDERR: fail_todo_import_decl_value_param_type.carbon:[[@LINE+7]]:3: error: semantics TODO: `Unsupported: parameter type: struct S` [SemanticsTodo]
+  // CHECK:STDERR: fail_import_decl_value_param_type.carbon:[[@LINE+7]]:3: error: semantics TODO: `Unsupported: parameter type: struct S` [SemanticsTodo]
   // CHECK:STDERR:   Cpp.foo({});
   // CHECK:STDERR:   ^~~~~~~
-  // CHECK:STDERR: fail_todo_import_decl_value_param_type.carbon:[[@LINE+4]]:3: note: in `Cpp` name lookup for `foo` [InCppNameLookup]
+  // CHECK:STDERR: fail_import_decl_value_param_type.carbon:[[@LINE+4]]:3: note: in `Cpp` name lookup for `foo` [InCppNameLookup]
   // CHECK:STDERR:   Cpp.foo({});
   // CHECK:STDERR:   ^~~~~~~
   // CHECK:STDERR:
@@ -388,7 +387,7 @@ fn F() {
   //@dump-sem-ir-end
 }
 
-// CHECK:STDOUT: --- fail_todo_import_decl_value_param_type.carbon
+// CHECK:STDOUT: --- fail_import_decl_value_param_type.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [concrete]
@@ -406,7 +405,7 @@ fn F() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %Cpp.ref: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
 // CHECK:STDOUT:   %foo.ref: <error> = name_ref foo, <error> [concrete = <error>]
-// CHECK:STDOUT:   %.loc23: %empty_struct_type = struct_literal ()
+// CHECK:STDOUT:   %.loc22: %empty_struct_type = struct_literal ()
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
