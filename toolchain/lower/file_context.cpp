@@ -825,6 +825,8 @@ auto FileContext::BuildFunctionBody(SemIR::FunctionId function_id,
     // Get the value of the parameter from the function argument.
     llvm::Value* param_value;
 
+    // The `type_id` of a parameter tracks the parameter's type.
+    CARBON_CHECK(definition_ir.insts().Is<SemIR::AnyParam>(param_id));
     auto param_type = function_lowering.GetTypeIdOfInst(param_id);
     if (function_lowering.GetValueRepr(param_type).repr.kind !=
         SemIR::ValueRepr::None) {
