@@ -245,7 +245,7 @@ auto FunctionContext::GetTypeIdOfInst(SemIR::InstId inst_id) -> TypeInFile {
 }
 
 auto FunctionContext::GetValueRepr(TypeInFile type) -> ValueReprInFile {
-  auto result = ValueReprInFile{
+  ValueReprInFile result = {
       .file = type.file,
       .repr = SemIR::ValueRepr::ForType(*type.file, type.type_id)};
   AddEnumToCurrentFingerprint(result.repr.kind);
@@ -261,7 +261,7 @@ auto FunctionContext::GetInitRepr(TypeInFile type) -> SemIR::InitRepr {
 
 auto FunctionContext::GetReturnTypeInfo(TypeInFile type)
     -> ReturnTypeInfoInFile {
-  auto result = ReturnTypeInfoInFile{
+  ReturnTypeInfoInFile result = {
       .file = type.file,
       .info = SemIR::ReturnTypeInfo::ForType(*type.file, type.type_id)};
   AddEnumToCurrentFingerprint(result.info.init_repr.kind);
