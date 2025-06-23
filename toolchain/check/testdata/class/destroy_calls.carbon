@@ -94,7 +94,7 @@ fn F() {
   var b: Args;
 }
 
-// --- fail_not_breaking_generics.carbon
+// --- not_breaking_generics.carbon
 library "[[@TEST_NAME]]";
 
 class C(template T:! type) {}
@@ -864,7 +864,7 @@ fn G() { F({}); }
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- fail_not_breaking_generics.carbon
+// CHECK:STDOUT: --- not_breaking_generics.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %T.8b3d5d.1: type = bind_symbolic_name T, 0, template [template]
