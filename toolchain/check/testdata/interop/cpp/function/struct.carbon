@@ -288,7 +288,6 @@ import Cpp library "decl_value_return_type.h";
 
 fn F() {
   //@dump-sem-ir-begin
-  // TODO: This should fail on the fact `S` is declared and not defined.
   // CHECK:STDERR: fail_todo_import_decl_value_return_type.carbon:[[@LINE+14]]:3: error: semantics TODO: `Unsupported: Record declarations without a definition` [SemanticsTodo]
   // CHECK:STDERR:   Cpp.foo();
   // CHECK:STDERR:   ^~~~~~~
