@@ -259,10 +259,9 @@ auto FileContext::CoalesceEquivalentSpecifics() -> void {
       }
     }
 
-    // Update equivalent specific llvm::Functions, once all equivalences are
-    // found and the algorithm has converged on a canonical specific.
+    // Once all equivalences are found for a generic, update and delete up
+    // equivalent specifics.
     for (auto specific_id : specifics_to_delete) {
-      UpdateEquivalentSpecific(specific_id);
       UpdateAndDeleteLLVMFunction(specific_id);
     }
   }
@@ -275,9 +274,8 @@ auto FileContext::ProcessSpecificEquivalence(
                "Expected values in equivalence check");
 
   auto get_canon = [&](SemIR::SpecificId specific_id) {
-    return equivalent_specifics_.Get(specific_id).has_value()
-               ? equivalent_specifics_.Get(specific_id)
-               : specific_id;
+    auto equiv_id = equivalent_specifics_.Get(specific_id);
+    return equiv_id.has_value() ? equiv_id : specific_id;
   };
   auto canon_id1 = get_canon(specific_id1);
   auto canon_id2 = get_canon(specific_id2);
@@ -309,28 +307,29 @@ auto FileContext::UpdateEquivalentSpecific(SemIR::SpecificId specific_id)
 
   llvm::SmallVector<SemIR::SpecificId> stack;
   SemIR::SpecificId specific_to_update = specific_id;
-  while (equivalent_specifics_.Get(
-             equivalent_specifics_.Get(specific_to_update)) !=
-         equivalent_specifics_.Get(specific_to_update)) {
+  SemIR::SpecificId equivalent = equivalent_specifics_.Get(specific_to_update);
+  SemIR::SpecificId equivalent_next = equivalent_specifics_.Get(equivalent);
+  while (equivalent != equivalent_next) {
     stack.push_back(specific_to_update);
-    specific_to_update = equivalent_specifics_.Get(specific_to_update);
+    specific_to_update = equivalent;
+    equivalent = equivalent_next;
+    equivalent_next = equivalent_specifics_.Get(equivalent_next);
   }
-  for (auto specific : llvm::reverse(stack)) {
-    equivalent_specifics_.Set(
-        specific,
-        equivalent_specifics_.Get(equivalent_specifics_.Get(specific)));
+
+  for (auto specific : stack) {
+    equivalent_specifics_.Set(specific, equivalent);
   }
 }
 
 auto FileContext::UpdateAndDeleteLLVMFunction(SemIR::SpecificId specific_id)
     -> void {
-  specific_functions_.Get(specific_id)
-      ->replaceAllUsesWith(
-          specific_functions_.Get(equivalent_specifics_.Get(specific_id)));
-  specific_functions_.Get(specific_id)->eraseFromParent();
-  specific_functions_.Set(
-      specific_id,
-      specific_functions_.Get(equivalent_specifics_.Get(specific_id)));
+  UpdateEquivalentSpecific(specific_id);
+  auto* old_function = specific_functions_.Get(specific_id);
+  auto* new_function =
+      specific_functions_.Get(equivalent_specifics_.Get(specific_id));
+  old_function->replaceAllUsesWith(new_function);
+  old_function->eraseFromParent();
+  specific_functions_.Set(specific_id, new_function);
 }
 
 auto FileContext::IsKnownEquivalence(SemIR::SpecificId specific_id1,
