@@ -55,7 +55,7 @@ static auto BranchAndStartLoopBody(Context& context, Parse::NodeId node_id,
   return loop_exit_id;
 }
 
-// Finishes emitting the body for a `while`-like loop. Adds a backedge to the
+// Finishes emitting the body for a `while`-like loop. Adds a back-edge to the
 // loop header, and starts emitting in the loop exit block.
 static auto FinishLoopBody(Context& context, Parse::NodeId node_id,
                            SemIR::InstBlockId loop_header_id,

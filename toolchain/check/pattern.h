@@ -43,7 +43,8 @@ auto AddBindingPattern(Context& context, SemIR::LocId name_loc,
                        bool is_template) -> BindingPatternInfo;
 
 // Creates storage for `var` patterns nested within the given pattern at the
-// current location in the output SemIR.
+// current location in the output SemIR. For a `returned var`, this
+// reuses the function's return slot when present.
 auto AddPatternVarStorage(Context& context, SemIR::InstBlockId pattern_block_id,
                           bool returned) -> void;
 

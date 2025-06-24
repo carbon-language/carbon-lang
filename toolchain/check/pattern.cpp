@@ -124,7 +124,7 @@ auto AddPatternVarStorage(Context& context, SemIR::InstBlockId pattern_block_id,
   // arguments for the initializer. However, we can't emit them when we emit
   // the corresponding `VarPattern`s because they're part of the pattern match,
   // not part of the pattern.
-  // TODO: find a way to do this without walking the whole pattern block.
+  // TODO: Find a way to do this without walking the whole pattern block.
   for (auto inst_id : context.inst_blocks().Get(pattern_block_id)) {
     if (context.insts().Is<SemIR::VarPattern>(inst_id)) {
       context.var_storage_map().Insert(

@@ -38,7 +38,7 @@ static auto GetAggregateElement(FunctionContext& context,
     case SemIR::ExprCategory::Mixed:
       CARBON_FATAL(
           "Unexpected expression category for aggregate access into {0}",
-          context.sem_ir().insts().Get(aggr_inst_id));
+          aggr_inst);
 
     case SemIR::ExprCategory::Value: {
       auto value_rep =
