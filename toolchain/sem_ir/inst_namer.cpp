@@ -473,8 +473,7 @@ auto InstNamer::AddBlockLabel(ScopeId scope_id, LocId loc_id, AnyBranch branch)
   if (loc_id.node_id().has_value()) {
     if (auto names = BranchNames::For(
             sem_ir_->parse_tree().node_kind(loc_id.node_id()))) {
-      if (llvm::StringLiteral suffix = names->GetSuffix(branch.kind);
-          !suffix.empty()) {
+      if (auto suffix = names->GetSuffix(branch.kind); !suffix.empty()) {
         label = llvm::formatv("{0}.{1}", names->prefix, suffix);
       } else {
         label =
