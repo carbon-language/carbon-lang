@@ -404,8 +404,55 @@ auto InstNamer::AddBlockLabel(
                     *this, loc_id_or_fingerprint, std::move(name))};
 }
 
-// For `GetBranchNames` and `AddBlockLabel`.
+// Provides names for `AddBlockLabel`.
 struct BranchNames {
+  // Returns names for a branching parse node, or nullopt if not a branch.
+  static auto For(Parse::NodeKind node_kind) -> std::optional<BranchNames> {
+    switch (node_kind) {
+      case Parse::NodeKind::IfExprIf:
+        return {{.prefix = "if.expr",
+                 .branch_if = "then",
+                 .branch = "else",
+                 .branch_with_arg = "result"}};
+
+      case Parse::NodeKind::IfCondition:
+        return {{.prefix = "if", .branch_if = "then", .branch = "else"}};
+
+      case Parse::NodeKind::IfStatement:
+        return {{.prefix = "if", .branch = "done"}};
+
+      case Parse::NodeKind::ShortCircuitOperandAnd:
+        return {
+            {.prefix = "and", .branch_if = "rhs", .branch_with_arg = "result"}};
+      case Parse::NodeKind::ShortCircuitOperandOr:
+        return {
+            {.prefix = "or", .branch_if = "rhs", .branch_with_arg = "result"}};
+
+      case Parse::NodeKind::WhileConditionStart:
+        return {{.prefix = "while", .branch = "cond"}};
+
+      case Parse::NodeKind::WhileCondition:
+        return {{.prefix = "while", .branch_if = "body", .branch = "done"}};
+
+      default:
+        return std::nullopt;
+    }
+  }
+
+  // Returns the provided suffix for the instruction kind, or an empty string.
+  auto GetSuffix(InstKind inst_kind) -> llvm::StringLiteral {
+    switch (inst_kind) {
+      case BranchIf::Kind:
+        return branch_if;
+      case Branch::Kind:
+        return branch;
+      case BranchWithArg::Kind:
+        return branch_with_arg;
+      default:
+        return "";
+    }
+  }
+
   // The kind of branch, based on the node kind.
   llvm::StringLiteral prefix;
 
@@ -416,40 +463,6 @@ struct BranchNames {
   llvm::StringLiteral branch_with_arg = "";
 };
 
-// Returns names for a branching parse node, or nullopt if not a branch.
-static auto GetBranchNames(Parse::NodeKind node_kind)
-    -> std::optional<BranchNames> {
-  switch (node_kind) {
-    case Parse::NodeKind::IfExprIf:
-      return {{.prefix = "if.expr",
-               .branch_if = "then",
-               .branch = "else",
-               .branch_with_arg = "result"}};
-
-    case Parse::NodeKind::IfCondition:
-      return {{.prefix = "if", .branch_if = "then", .branch = "else"}};
-
-    case Parse::NodeKind::IfStatement:
-      return {{.prefix = "if", .branch = "done"}};
-
-    case Parse::NodeKind::ShortCircuitOperandAnd:
-      return {
-          {.prefix = "and", .branch_if = "rhs", .branch_with_arg = "result"}};
-    case Parse::NodeKind::ShortCircuitOperandOr:
-      return {
-          {.prefix = "or", .branch_if = "rhs", .branch_with_arg = "result"}};
-
-    case Parse::NodeKind::WhileConditionStart:
-      return {{.prefix = "while", .branch = "cond"}};
-
-    case Parse::NodeKind::WhileCondition:
-      return {{.prefix = "while", .branch_if = "body", .branch = "done"}};
-
-    default:
-      return std::nullopt;
-  }
-}
-
 // Finds and adds a suitable block label for the given SemIR instruction that
 // represents some kind of branch.
 auto InstNamer::AddBlockLabel(ScopeId scope_id, LocId loc_id, AnyBranch branch)
@@ -458,28 +471,14 @@ auto InstNamer::AddBlockLabel(ScopeId scope_id, LocId loc_id, AnyBranch branch)
 
   loc_id = sem_ir_->insts().GetCanonicalLocId(loc_id);
   if (loc_id.node_id().has_value()) {
-    std::optional<BranchNames> names =
-        GetBranchNames(sem_ir_->parse_tree().node_kind(loc_id.node_id()));
-    if (names) {
-      llvm::StringLiteral suffix = "";
-      switch (branch.kind) {
-        case BranchIf::Kind:
-          suffix = names->branch_if;
-          break;
-        case Branch::Kind:
-          suffix = names->branch;
-          break;
-        case BranchWithArg::Kind:
-          suffix = names->branch_with_arg;
-          break;
-        default:
-          break;
-      }
-      if (suffix.empty()) {
+    if (auto names = BranchNames::For(
+            sem_ir_->parse_tree().node_kind(loc_id.node_id()))) {
+      if (llvm::StringLiteral suffix = names->GetSuffix(branch.kind);
+          !suffix.empty()) {
+        label = llvm::formatv("{0}.{1}", names->prefix, suffix);
+      } else {
         label =
             llvm::formatv("{0}.<unexpected {1}>", names->prefix, branch.kind);
-      } else {
-        label = llvm::formatv("{0}.{1}", names->prefix, suffix);
       }
     }
   }
