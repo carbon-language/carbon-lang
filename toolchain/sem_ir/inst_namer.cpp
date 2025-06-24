@@ -453,7 +453,7 @@ auto InstNamer::AddBlockLabel(ScopeId scope_id, LocId loc_id, AnyBranch branch)
       break;
 
     case Parse::NodeKind::IfStatement:
-      name = "if.done";
+      name = BranchKindToName("if", branch.kind, {.branch = "done"});
       break;
 
     case Parse::NodeKind::ShortCircuitOperandAnd:
