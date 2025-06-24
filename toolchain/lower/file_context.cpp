@@ -53,7 +53,7 @@ FileContext::FileContext(Context& context, const SemIR::File& sem_ir,
                                                     nullptr)),
       constants_(LoweredConstantStore::MakeWithExplicitSize(
           sem_ir.insts().size(), nullptr)),
-      lowered_specifics_(sem_ir.generics(), {}, ),
+      lowered_specifics_(sem_ir.generics(), {}),
       coalescer(vlog_stream_, sem_ir.specifics()) {
   // Initialization that relies on invariants of the class.
   cpp_code_generator_ = CreateCppCodeGenerator();
