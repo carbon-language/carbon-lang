@@ -127,7 +127,6 @@ class CoalesceSpecifics {
 
   // For specifics that exist in lowered_specifics, a hash of their function
   // type information: return and parameter types.
-  // TODO: Hashing all members of `FunctionTypeInfo` may not be necessary.
   FixedSizeValueStore<SemIR::SpecificId, llvm::BLAKE3Result<32>>
       lowered_specifics_type_fingerprint_;
 

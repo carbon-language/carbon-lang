@@ -6,8 +6,6 @@
 
 #include "common/check.h"
 #include "common/vlog.h"
-#include "llvm/Transforms/Utils/BasicBlockUtils.h"
-#include "llvm/Transforms/Utils/ModuleUtils.h"
 
 namespace Carbon::Lower {
 
