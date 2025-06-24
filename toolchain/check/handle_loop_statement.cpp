@@ -41,8 +41,7 @@ static auto StartLoopHeader(Context& context, Parse::NodeId node_id)
 // the loop exit if it is `false`.
 static auto BranchAndStartLoopBody(Context& context, Parse::NodeId node_id,
                                    SemIR::InstBlockId loop_header_id,
-                                   SemIR::InstId cond_value_id)
-    -> void {
+                                   SemIR::InstId cond_value_id) -> void {
   cond_value_id = ConvertToBoolValue(context, node_id, cond_value_id);
 
   // Branch to either the loop body or the loop exit block.
@@ -167,8 +166,7 @@ auto HandleParseNode(Context& context, Parse::ForHeaderId node_id) -> bool {
   auto cursor_type_id = context.insts().Get(cursor_id).type_id();
   auto cursor_var_id = AddInstWithCleanup<SemIR::VarStorage>(
       context, node_id,
-      {.type_id = cursor_type_id,
-                        .pattern_id = SemIR::AbsoluteInstId::None});
+      {.type_id = cursor_type_id, .pattern_id = SemIR::AbsoluteInstId::None});
   auto init_id = Initialize(context, node_id, cursor_var_id, cursor_id);
   AddInst<SemIR::Assign>(context, node_id,
                          {.lhs_id = cursor_var_id, .rhs_id = init_id});
@@ -181,7 +179,7 @@ auto HandleParseNode(Context& context, Parse::ForHeaderId node_id) -> bool {
   auto cursor_addr_id = AddInst<SemIR::AddrOf>(
       context, node_id,
       {.type_id = GetPointerType(context, cursor_type_inst_id),
-                    .lvalue_id = cursor_var_id});
+       .lvalue_id = cursor_var_id});
   auto element_id = BuildBinaryOperator(
       context, node_id, {.interface_name = "Iterate", .op_name = "Next"},
       range_id, cursor_addr_id);
