@@ -404,8 +404,8 @@ auto InstNamer::AddBlockLabel(
                     *this, loc_id_or_fingerprint, std::move(name))};
 }
 
-// Returns `prefix` suffixed with the appropriate branch instruction based on
-// the kind.
+// Returns `prefix` suffixed with the appropriate label based on the branch
+// instruction kind.
 static auto BranchKindToName(llvm::StringLiteral prefix, InstKind inst_kind,
                              llvm::StringLiteral branch_if,
                              std::optional<const char*> branch,
