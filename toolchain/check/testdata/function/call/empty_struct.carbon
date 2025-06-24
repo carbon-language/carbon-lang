@@ -2,8 +2,9 @@
 // Exceptions. See /LICENSE for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
+// INCLUDE-FILE: toolchain/testing/testdata/min_prelude/none.carbon
 // TODO: Add ranges and switch to "--dump-sem-ir-ranges=only".
-// EXTRA-ARGS: --no-prelude-import --dump-sem-ir-ranges=if-present
+// EXTRA-ARGS: --dump-sem-ir-ranges=if-present
 //
 // AUTOUPDATE
 // TIP: To test this file alone, run:
@@ -42,12 +43,12 @@ fn Main() {
 // CHECK:STDOUT:     %return.patt: %pattern_type = return_slot_pattern [concrete]
 // CHECK:STDOUT:     %return.param_patt: %pattern_type = out_param_pattern %return.patt, call_param1 [concrete]
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %.loc14_20.1: %empty_struct_type = struct_literal ()
-// CHECK:STDOUT:     %.loc14_20.2: type = converted %.loc14_20.1, constants.%empty_struct_type [concrete = constants.%empty_struct_type]
+// CHECK:STDOUT:     %.loc15_20.1: %empty_struct_type = struct_literal ()
+// CHECK:STDOUT:     %.loc15_20.2: type = converted %.loc15_20.1, constants.%empty_struct_type [concrete = constants.%empty_struct_type]
 // CHECK:STDOUT:     %a.param: %empty_struct_type = value_param call_param0
-// CHECK:STDOUT:     %.loc14_13.1: type = splice_block %.loc14_13.3 [concrete = constants.%empty_struct_type] {
-// CHECK:STDOUT:       %.loc14_13.2: %empty_struct_type = struct_literal ()
-// CHECK:STDOUT:       %.loc14_13.3: type = converted %.loc14_13.2, constants.%empty_struct_type [concrete = constants.%empty_struct_type]
+// CHECK:STDOUT:     %.loc15_13.1: type = splice_block %.loc15_13.3 [concrete = constants.%empty_struct_type] {
+// CHECK:STDOUT:       %.loc15_13.2: %empty_struct_type = struct_literal ()
+// CHECK:STDOUT:       %.loc15_13.3: type = converted %.loc15_13.2, constants.%empty_struct_type [concrete = constants.%empty_struct_type]
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %a: %empty_struct_type = bind_name a, %a.param
 // CHECK:STDOUT:     %return.param: ref %empty_struct_type = out_param call_param1
@@ -65,10 +66,10 @@ fn Main() {
 // CHECK:STDOUT: fn @Main() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %Echo.ref: %Echo.type = name_ref Echo, file.%Echo.decl [concrete = constants.%Echo]
-// CHECK:STDOUT:   %.loc19_9.1: %empty_struct_type = struct_literal ()
+// CHECK:STDOUT:   %.loc20_9.1: %empty_struct_type = struct_literal ()
 // CHECK:STDOUT:   %empty_struct: %empty_struct_type = struct_value () [concrete = constants.%empty_struct]
-// CHECK:STDOUT:   %.loc19_9.2: %empty_struct_type = converted %.loc19_9.1, %empty_struct [concrete = constants.%empty_struct]
-// CHECK:STDOUT:   %Echo.call: init %empty_struct_type = call %Echo.ref(%.loc19_9.2)
+// CHECK:STDOUT:   %.loc20_9.2: %empty_struct_type = converted %.loc20_9.1, %empty_struct [concrete = constants.%empty_struct]
+// CHECK:STDOUT:   %Echo.call: init %empty_struct_type = call %Echo.ref(%.loc20_9.2)
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

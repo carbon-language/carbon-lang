@@ -142,6 +142,7 @@ repos:
         additional_dependencies:
           - gql >= 2.0.0, < 3.0.0
           - PyGitHub
+          - rich
         # Exclusions are:
         # - p#### scripts because they're not tested or maintained.
         # - lit.cfg.py because it has multiple copies, breaking mypy.
