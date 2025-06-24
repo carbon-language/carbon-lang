@@ -261,7 +261,7 @@ fn IndirectCycle[T:! I where .X = .Y and .Y = .Z* and .Z = .Y*]();
 After constraint resolution, no references to rewritten associated constants
 remain in the constraints on `T`.
 
-The following exampls each treat the two assignments of `.X` as being identical,
+The following examples each treat the two assignments of `.X` as being identical,
 though they are written differently:
 
 ```carbon
