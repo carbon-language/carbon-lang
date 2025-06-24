@@ -507,7 +507,7 @@ def render_delta(
 ) -> RenderedDelta:
     """Render a delta metric.
 
-    This handles both computing the delta, its statistical significance, and
+    This handles computing the delta, its statistical significance, and
     whether that delta is an improvement or a regression based on the specific
     metric name.
 
@@ -951,7 +951,7 @@ def print_results_table(
     """Builds and prints the main results table.
 
     This function constructs a rich `Table` to display the benchmark results,
-    including deltas, medians, and confidence intervals for each metric. It thin
+    including deltas, medians, and confidence intervals for each metric. It then
     prints this to the provided `console`.
 
     Args:
