@@ -12,6 +12,7 @@
 #include "llvm/IR/IRBuilder.h"
 #include "llvm/IR/LLVMContext.h"
 #include "llvm/IR/Module.h"
+#include "toolchain/lower/coalesce.h"
 #include "toolchain/lower/file_context.h"
 #include "toolchain/sem_ir/file.h"
 #include "toolchain/sem_ir/ids.h"
@@ -27,7 +28,7 @@ class FunctionContext {
   explicit FunctionContext(
       FileContext& file_context, llvm::Function* function,
       FileContext& specific_file_context, SemIR::SpecificId specific_id,
-      FileContext::SpecificFunctionFingerprint* function_fingerprint,
+      CoalesceSpecifics::SpecificFunctionFingerprint* function_fingerprint,
       llvm::DISubprogram* di_subprogram, llvm::raw_ostream* vlog_stream);
 
   // Describes a function's body fingerprint while creating the function body.
@@ -349,7 +350,7 @@ class FunctionContext {
   // The accumulated fingerprint is owned by the FileContext and passed into
   // the FunctionContext. The function fingerprint is currently only built for
   // specific functions, otherwise, this will be nullptr.
-  FileContext::SpecificFunctionFingerprint* function_fingerprint_;
+  CoalesceSpecifics::SpecificFunctionFingerprint* function_fingerprint_;
 
   // Maps a function's SemIR::File blocks to lowered blocks.
   Map<SemIR::InstBlockId, llvm::BasicBlock*> blocks_;

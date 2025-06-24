@@ -28,6 +28,7 @@ cc_library(
 cc_library(
     name = "context",
     srcs = [
+        "coalesce.cpp",
         "constant.cpp",
         "constant.h",
         "context.cpp",
@@ -41,6 +42,7 @@ cc_library(
         "handle*.cpp",
     ]),
     hdrs = [
+        "coalesce.h",
         "context.h",
         "file_context.h",
         "function_context.h",
