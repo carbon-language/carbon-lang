@@ -149,6 +149,11 @@ main capture group will be rendered, with others rendered as comparisons against
 it based on the tag, and with statistical significance to evaluate the
 comparison.
 
+Example regex: `(?P<tag>(?P<main>Carbon)|Abseil|LLVM)HashBench`
+
+This produces three tags, `Carbon`, `Abseil`, and `LLVM`. The main tag is
+`Carbon`.
+
 TODO: This is only currently supported without a base benchmark to provide
 relative comparisons within a single benchmark binary. There are good models for
 handling this and surfacing delta-of-delta information with a base benchmark
@@ -455,7 +460,7 @@ def render_ratio(ratio: float) -> str:
 
 
 def render_metric(
-    alpha: float, times: list[Quantity], is_base: bool = False
+    alpha: float, times: list[Quantity], is_base: bool
 ) -> RenderedMetric:
     """Render a non-delta metric.
 
@@ -540,7 +545,7 @@ def render_delta(
     u_test = sp.stats.mannwhitneyu(base, exp)
     if u_test.pvalue >= alpha:
         return RenderedDelta(
-            DeltaKind.NOISE, "   ~       ", f"p={u_test.pvalue:.3}"
+            DeltaKind.NOISE, "  ??       ", f"p={u_test.pvalue:.3}"
         )
 
     kind = DeltaKind.NEUTRAL
@@ -630,7 +635,7 @@ def render_metric_column(
             t.add_row("", rendered_base.median, "±", rendered_base.conf)
 
         # Now render the experiment metric and add its row.
-        rendered_exp = render_metric(alpha, run.exp)
+        rendered_exp = render_metric(alpha, run.exp, is_base=False)
         t.add_row("", rendered_exp.median, "±", rendered_exp.conf)
 
         # If we have any comparable benchmarks, render each of them as first a
@@ -979,7 +984,7 @@ def print_results_table(
                     f"vs {tag}:"
                     for tag in comp_mapping.name_to_comp_tag.values()
                 ]
-                + ["... experiment:"]
+                + ["experiment:"]
             )
         )
     )
