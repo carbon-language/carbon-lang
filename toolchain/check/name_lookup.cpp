@@ -190,10 +190,8 @@ auto LookupNameInExactScope(Context& context, SemIR::LocId loc_id,
     SemIR::InstId imported_inst_id =
         ImportNameFromCpp(context, loc_id, scope_id, name_id);
     if (imported_inst_id.has_value()) {
-      SemIR::ScopeLookupResult result = SemIR::ScopeLookupResult::MakeFound(
-          imported_inst_id, SemIR::AccessKind::Public);
-      scope.AddRequired({.name_id = name_id, .result = result});
-      return result;
+      return SemIR::ScopeLookupResult::MakeFound(imported_inst_id,
+                                                 SemIR::AccessKind::Public);
     }
   }
 

@@ -236,6 +236,10 @@ considering if they fit your workflow.
         ./scripts/create_compdb.py
         ```
         -   **NOTE**: This assumes you have `python` 3 installed on your system.
+-   [`uv`](https://docs.astral.sh/uv/): A fast Python package manager.
+    -   Notably, `uv` supports automatic management of even complex Python
+        dependencies for scripts: https://docs.astral.sh/uv/guides/scripts/
+    -   Installation: https://docs.astral.sh/uv/getting-started/installation/
 
 #### Using LLDB with VS Code
 

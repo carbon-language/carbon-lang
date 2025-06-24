@@ -2,6 +2,7 @@
 // Exceptions. See /LICENSE for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
+// INCLUDE-FILE: toolchain/testing/testdata/min_prelude/int.carbon
 // TODO: Add ranges and switch to "--dump-sem-ir-ranges=only".
 // EXTRA-ARGS: --dump-sem-ir-ranges=if-present
 //
@@ -41,7 +42,7 @@ fn Six() -> ReturnType() { return 6; }
 // CHECK:STDOUT:     import Core//prelude
 // CHECK:STDOUT:     import Core//prelude/...
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %Core.Int: %Int.type = import_ref Core//prelude/types/int, Int, loaded [concrete = constants.%Int.generic]
+// CHECK:STDOUT:   %Core.Int: %Int.type = import_ref Core//prelude/parts/int, Int, loaded [concrete = constants.%Int.generic]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -64,8 +65,8 @@ fn Six() -> ReturnType() { return 6; }
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %ReturnType.ref: %ReturnType.type = name_ref ReturnType, file.%ReturnType.decl [concrete = constants.%ReturnType]
 // CHECK:STDOUT:     %ReturnType.call: init type = call %ReturnType.ref()
-// CHECK:STDOUT:     %.loc21_24.1: type = value_of_initializer %ReturnType.call
-// CHECK:STDOUT:     %.loc21_24.2: type = converted %ReturnType.call, %.loc21_24.1
+// CHECK:STDOUT:     %.loc22_24.1: type = value_of_initializer %ReturnType.call
+// CHECK:STDOUT:     %.loc22_24.2: type = converted %ReturnType.call, %.loc22_24.1
 // CHECK:STDOUT:     %return.param: ref <error> = out_param call_param0
 // CHECK:STDOUT:     %return: ref <error> = return_slot %return.param
 // CHECK:STDOUT:   }

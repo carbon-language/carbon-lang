@@ -2,6 +2,7 @@
 // Exceptions. See /LICENSE for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
+// INCLUDE-FILE: toolchain/testing/testdata/min_prelude/none.carbon
 // TODO: Add ranges and switch to "--dump-sem-ir-ranges=only".
 // EXTRA-ARGS: --dump-sem-ir-ranges=if-present
 //
@@ -197,22 +198,13 @@ fn P(o: O) {
 // CHECK:STDOUT:   %.521: type = fn_type_with_self_type %G.type.d27, %HasG.facet [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: imports {
-// CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [concrete] {
-// CHECK:STDOUT:     import Core//prelude
-// CHECK:STDOUT:     import Core//prelude/...
-// CHECK:STDOUT:   }
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace [concrete] {
-// CHECK:STDOUT:     .Core = imports.%Core
 // CHECK:STDOUT:     .HasF = %HasF.decl
 // CHECK:STDOUT:     .HasG = %HasG.decl
 // CHECK:STDOUT:     .C = %C.decl
 // CHECK:STDOUT:     .H = %H.decl
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %HasF.decl: type = interface_decl @HasF [concrete = constants.%HasF.type] {} {}
 // CHECK:STDOUT:   %HasG.decl: type = interface_decl @HasG [concrete = constants.%HasG.type] {} {}
 // CHECK:STDOUT:   %C.decl: type = class_decl @C [concrete = constants.%C] {} {}
@@ -372,22 +364,13 @@ fn P(o: O) {
 // CHECK:STDOUT:   %B: %B.type = struct_value () [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: imports {
-// CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [concrete] {
-// CHECK:STDOUT:     import Core//prelude
-// CHECK:STDOUT:     import Core//prelude/...
-// CHECK:STDOUT:   }
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace [concrete] {
-// CHECK:STDOUT:     .Core = imports.%Core
 // CHECK:STDOUT:     .HasA1 = %HasA1.decl
 // CHECK:STDOUT:     .HasA2 = %HasA2.decl
 // CHECK:STDOUT:     .D = %D.decl
 // CHECK:STDOUT:     .B = %B.decl
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %HasA1.decl: type = interface_decl @HasA1 [concrete = constants.%HasA1.type] {} {}
 // CHECK:STDOUT:   %HasA2.decl: type = interface_decl @HasA2 [concrete = constants.%HasA2.type] {} {}
 // CHECK:STDOUT:   %D.decl: type = class_decl @D [concrete = constants.%D] {} {}
@@ -530,22 +513,13 @@ fn P(o: O) {
 // CHECK:STDOUT:   %.06f: type = fn_type_with_self_type %I.type.9bd, %HasI.facet [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: imports {
-// CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [concrete] {
-// CHECK:STDOUT:     import Core//prelude
-// CHECK:STDOUT:     import Core//prelude/...
-// CHECK:STDOUT:   }
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace [concrete] {
-// CHECK:STDOUT:     .Core = imports.%Core
 // CHECK:STDOUT:     .HasI = %HasI.decl
 // CHECK:STDOUT:     .B = %B.decl
 // CHECK:STDOUT:     .E = %E.decl
 // CHECK:STDOUT:     .H = %H.decl
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %HasI.decl: type = interface_decl @HasI [concrete = constants.%HasI.type] {} {}
 // CHECK:STDOUT:   %B.decl: type = class_decl @B [concrete = constants.%B] {} {}
 // CHECK:STDOUT:   %E.decl: type = class_decl @E [concrete = constants.%E] {} {}
@@ -680,22 +654,13 @@ fn P(o: O) {
 // CHECK:STDOUT:   %M: %M.type = struct_value () [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: imports {
-// CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [concrete] {
-// CHECK:STDOUT:     import Core//prelude
-// CHECK:STDOUT:     import Core//prelude/...
-// CHECK:STDOUT:   }
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace [concrete] {
-// CHECK:STDOUT:     .Core = imports.%Core
 // CHECK:STDOUT:     .Base = %Base.decl
 // CHECK:STDOUT:     .HasK = %HasK.decl
 // CHECK:STDOUT:     .L = %L.decl
 // CHECK:STDOUT:     .M = %M.decl
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %Base.decl: type = class_decl @Base [concrete = constants.%Base] {} {}
 // CHECK:STDOUT:   %HasK.decl: type = interface_decl @HasK [concrete = constants.%HasK.type] {} {}
 // CHECK:STDOUT:   %L.decl: type = class_decl @L [concrete = constants.%L] {} {}
@@ -830,23 +795,14 @@ fn P(o: O) {
 // CHECK:STDOUT:   %P: %P.type = struct_value () [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: imports {
-// CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [concrete] {
-// CHECK:STDOUT:     import Core//prelude
-// CHECK:STDOUT:     import Core//prelude/...
-// CHECK:STDOUT:   }
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace [concrete] {
-// CHECK:STDOUT:     .Core = imports.%Core
 // CHECK:STDOUT:     .NBase = %NBase.decl
 // CHECK:STDOUT:     .HasN1 = %HasN1.decl
 // CHECK:STDOUT:     .HasN2 = %HasN2.decl
 // CHECK:STDOUT:     .O = %O.decl
 // CHECK:STDOUT:     .P = %P.decl
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %NBase.decl: type = class_decl @NBase [concrete = constants.%NBase] {} {}
 // CHECK:STDOUT:   %HasN1.decl: type = interface_decl @HasN1 [concrete = constants.%HasN1.type] {} {}
 // CHECK:STDOUT:   %HasN2.decl: type = interface_decl @HasN2 [concrete = constants.%HasN2.type] {} {}

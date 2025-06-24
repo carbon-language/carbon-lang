@@ -152,7 +152,7 @@ auto Mangler::Mangle(SemIR::FunctionId function_id,
   }
   if (function.clang_decl_id.has_value()) {
     return MangleCppClang(llvm::dyn_cast<clang::NamedDecl>(
-        sem_ir().clang_decls().Get(function.clang_decl_id)));
+        sem_ir().clang_decls().Get(function.clang_decl_id).decl));
   }
   RawStringOstream os;
   os << "_C";

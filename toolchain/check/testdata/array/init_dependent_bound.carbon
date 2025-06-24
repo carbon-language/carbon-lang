@@ -2,6 +2,8 @@
 // Exceptions. See /LICENSE for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
+// INCLUDE-FILE: toolchain/testing/testdata/min_prelude/int.carbon
+//
 // AUTOUPDATE
 // TIP: To test this file alone, run:
 // TIP:   bazel test //toolchain/testing:file_test --test_arg=--file_tests=toolchain/check/testdata/array/init_dependent_bound.carbon
@@ -130,33 +132,33 @@ fn H() { G(3); }
 // CHECK:STDOUT:   %tuple.type: type = tuple_type (Core.IntLiteral, Core.IntLiteral, Core.IntLiteral) [concrete]
 // CHECK:STDOUT:   %ImplicitAs.type.2fd: type = facet_type <@ImplicitAs, @ImplicitAs(Core.IntLiteral)> [concrete]
 // CHECK:STDOUT:   %From: Core.IntLiteral = bind_symbolic_name From, 0 [symbolic]
-// CHECK:STDOUT:   %Convert.type.708: type = fn_type @Convert.4, @impl.971(%From) [symbolic]
+// CHECK:STDOUT:   %Convert.type.708: type = fn_type @Convert.3, @impl.971(%From) [symbolic]
 // CHECK:STDOUT:   %Convert.c68: %Convert.type.708 = struct_value () [symbolic]
 // CHECK:STDOUT:   %Convert.type.71e: type = fn_type @Convert.1, @ImplicitAs(Core.IntLiteral) [concrete]
 // CHECK:STDOUT:   %int_3.822: %i32 = int_value 3 [concrete]
 // CHECK:STDOUT:   %ImplicitAs.impl_witness.a11: <witness> = impl_witness imports.%ImplicitAs.impl_witness_table.1d9, @impl.971(%int_32) [concrete]
-// CHECK:STDOUT:   %Convert.type.4ad: type = fn_type @Convert.4, @impl.971(%int_32) [concrete]
+// CHECK:STDOUT:   %Convert.type.4ad: type = fn_type @Convert.3, @impl.971(%int_32) [concrete]
 // CHECK:STDOUT:   %Convert.960: %Convert.type.4ad = struct_value () [concrete]
 // CHECK:STDOUT:   %ImplicitAs.facet.f49: %ImplicitAs.type.2fd = facet_value %i32, (%ImplicitAs.impl_witness.a11) [concrete]
 // CHECK:STDOUT:   %.0ea: type = fn_type_with_self_type %Convert.type.71e, %ImplicitAs.facet.f49 [concrete]
 // CHECK:STDOUT:   %Convert.bound.2d6: <bound method> = bound_method %int_3.822, %Convert.960 [concrete]
-// CHECK:STDOUT:   %Convert.specific_fn.8a8: <specific function> = specific_function %Convert.960, @Convert.4(%int_32) [concrete]
+// CHECK:STDOUT:   %Convert.specific_fn.8a8: <specific function> = specific_function %Convert.960, @Convert.3(%int_32) [concrete]
 // CHECK:STDOUT:   %bound_method.c6f: <bound method> = bound_method %int_3.822, %Convert.specific_fn.8a8 [concrete]
 // CHECK:STDOUT:   %inst.splice_block: <instruction> = inst_value [concrete] {
 // CHECK:STDOUT:     %.df7: Core.IntLiteral = splice_block %.dd0 [concrete = %int_3.1ba] {
 // CHECK:STDOUT:       %impl.elem0.c2d: %.0ea = impl_witness_access %ImplicitAs.impl_witness.a11, element0 [concrete = %Convert.960]
 // CHECK:STDOUT:       %bound_method.8d1: <bound method> = bound_method %int_3.822, %impl.elem0.c2d [concrete = %Convert.bound.2d6]
-// CHECK:STDOUT:       %specific_fn: <specific function> = specific_function %impl.elem0.c2d, @Convert.4(%int_32) [concrete = %Convert.specific_fn.8a8]
+// CHECK:STDOUT:       %specific_fn: <specific function> = specific_function %impl.elem0.c2d, @Convert.3(%int_32) [concrete = %Convert.specific_fn.8a8]
 // CHECK:STDOUT:       %bound_method.9ef: <bound method> = bound_method %int_3.822, %specific_fn [concrete = %bound_method.c6f]
-// CHECK:STDOUT:       %int.convert_checked.367: init Core.IntLiteral = call %bound_method.9ef(%int_3.822) [concrete = %int_3.1ba]
-// CHECK:STDOUT:       %.5d1: Core.IntLiteral = value_of_initializer %int.convert_checked.367 [concrete = %int_3.1ba]
+// CHECK:STDOUT:       %int.convert_checked: init Core.IntLiteral = call %bound_method.9ef(%int_3.822) [concrete = %int_3.1ba]
+// CHECK:STDOUT:       %.5d1: Core.IntLiteral = value_of_initializer %int.convert_checked [concrete = %int_3.1ba]
 // CHECK:STDOUT:       %.dd0: Core.IntLiteral = converted %int_3.822, %.5d1 [concrete = %int_3.1ba]
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
-// CHECK:STDOUT:   %Core.import_ref.85c: @impl.971.%Convert.type (%Convert.type.708) = import_ref Core//prelude/types/int, loc23_44, loaded [symbolic = @impl.971.%Convert (constants.%Convert.c68)]
+// CHECK:STDOUT:   %Core.import_ref.85c: @impl.971.%Convert.type (%Convert.type.708) = import_ref Core//prelude/parts/int, loc20_44, loaded [symbolic = @impl.971.%Convert (constants.%Convert.c68)]
 // CHECK:STDOUT:   %ImplicitAs.impl_witness_table.1d9 = impl_witness_table (%Core.import_ref.85c), @impl.971 [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

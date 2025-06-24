@@ -381,12 +381,8 @@ class SubstImplWitnessAccessCallbacks : public SubstInstCallbacks {
         substituting_constraint_(substituting_constraint) {}
 
   auto Subst(SemIR::InstId& rhs_inst_id) const -> bool override {
-    if (context().constant_values().Get(rhs_inst_id).is_concrete()) {
-      return true;
-    }
-
     if (!context().insts().Is<SemIR::ImplWitnessAccess>(rhs_inst_id)) {
-      return false;
+      return context().constant_values().Get(rhs_inst_id).is_concrete();
     }
 
     // TODO: We could consider something better than linear search here, such as
@@ -413,11 +409,13 @@ class SubstImplWitnessAccessCallbacks : public SubstInstCallbacks {
         } else {
           rhs_inst_id = search_constraint.rhs_id;
         }
-        return true;
       }
     }
 
-    return false;
+    // Never recurse into ImplWitnessAccess, we don't want to substitute into
+    // FacetTypes found within. We only substitute ImplWitnessAccesses that
+    // appear directly on the RHS.
+    return true;
   }
 
   auto Rebuild(SemIR::InstId /*orig_inst_id*/, SemIR::Inst new_inst) const
@@ -437,6 +435,43 @@ auto ResolveFacetTypeRewriteConstraints(
     -> void {
   if (rewrites.empty()) {
     return;
+  }
+
+  while (true) {
+    bool applied_rewrite = false;
+
+    for (auto& constraint : rewrites) {
+      if (constraint.lhs_id == SemIR::ErrorInst::InstId ||
+          constraint.rhs_id == SemIR::ErrorInst::InstId) {
+        continue;
+      }
+
+      auto lhs_access =
+          context.insts().TryGetAs<SemIR::ImplWitnessAccess>(constraint.lhs_id);
+      if (!lhs_access) {
+        continue;
+      }
+
+      // Replace any `ImplWitnessAccess` in the RHS of this constraint with the
+      // RHS of another constraint that sets the value of the associated
+      // constant being accessed in the RHS.
+      auto subst_inst_id =
+          SubstInst(context, constraint.rhs_id,
+                    SubstImplWitnessAccessCallbacks(&context, loc_id, rewrites,
+                                                    &constraint));
+      if (subst_inst_id != constraint.rhs_id) {
+        constraint.rhs_id = subst_inst_id;
+        if (constraint.rhs_id != SemIR::ErrorInst::InstId) {
+          // If the RHS is replaced with a non-error value, we need to do
+          // another pass so that the new RHS value can continue to propagate.
+          applied_rewrite = true;
+        }
+      }
+    }
+
+    if (!applied_rewrite) {
+      break;
+    }
   }
 
   // We sort the constraints so that we can find different values being written
@@ -507,43 +542,6 @@ auto ResolveFacetTypeRewriteConstraints(
       }
       constraint.rhs_id = SemIR::ErrorInst::InstId;
       next.rhs_id = SemIR::ErrorInst::InstId;
-    }
-  }
-
-  while (true) {
-    bool applied_rewrite = false;
-
-    for (auto& constraint : rewrites) {
-      if (constraint.lhs_id == SemIR::ErrorInst::InstId ||
-          constraint.rhs_id == SemIR::ErrorInst::InstId) {
-        continue;
-      }
-
-      auto lhs_access =
-          context.insts().TryGetAs<SemIR::ImplWitnessAccess>(constraint.lhs_id);
-      if (!lhs_access) {
-        continue;
-      }
-
-      // Replace any `ImplWitnessAccess` in the RHS of this constraint with the
-      // RHS of another constraint that sets the value of the associated
-      // constant being accessed in the RHS.
-      auto subst_inst_id =
-          SubstInst(context, constraint.rhs_id,
-                    SubstImplWitnessAccessCallbacks(&context, loc_id, rewrites,
-                                                    &constraint));
-      if (subst_inst_id != constraint.rhs_id) {
-        constraint.rhs_id = subst_inst_id;
-        if (constraint.rhs_id != SemIR::ErrorInst::InstId) {
-          // If the RHS is replaced with a non-error value, we need to do
-          // another pass so that the new RHS value can continue to propagate.
-          applied_rewrite = true;
-        }
-      }
-    }
-
-    if (!applied_rewrite) {
-      break;
     }
   }
 }

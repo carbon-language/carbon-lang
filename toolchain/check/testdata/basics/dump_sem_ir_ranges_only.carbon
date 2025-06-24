@@ -5,7 +5,7 @@
 // This tests `--dump-sem-ir-range=only` behavior, which is set implicitly by
 // file_test.
 //
-// EXTRA-ARGS: --no-prelude-import
+// INCLUDE-FILE: toolchain/testing/testdata/min_prelude/none.carbon
 //
 // AUTOUPDATE
 // TIP: To test this file alone, run:

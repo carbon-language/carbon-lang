@@ -316,6 +316,12 @@ auto SubstInst(Context& context, SemIR::InstId inst_id,
     }
 
     if (callbacks.Subst(item.inst_id)) {
+      // If any instruction is an ErrorInst, combining it into another
+      // instruction will also produce an ErrorInst, so shortcut out here to
+      // save wasted work.
+      if (item.inst_id == SemIR::ErrorInst::InstId) {
+        return SemIR::ErrorInst::InstId;
+      }
       index = item.next_index;
       continue;
     }

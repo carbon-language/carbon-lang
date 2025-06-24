@@ -2,6 +2,7 @@
 // Exceptions. See /LICENSE for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
+// INCLUDE-FILE: toolchain/testing/testdata/min_prelude/int.carbon
 // TODO: Add ranges and switch to "--dump-sem-ir-ranges=only".
 // EXTRA-ARGS: --dump-sem-ir-ranges=if-present
 //
@@ -44,7 +45,7 @@ fn Run() -> i32 {
 // CHECK:STDOUT:     import Core//prelude
 // CHECK:STDOUT:     import Core//prelude/...
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %Core.Int: %Int.type = import_ref Core//prelude/types/int, Int, loaded [concrete = constants.%Int.generic]
+// CHECK:STDOUT:   %Core.Int: %Int.type = import_ref Core//prelude/parts/int, Int, loaded [concrete = constants.%Int.generic]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -101,8 +102,8 @@ fn Run() -> i32 {
 // CHECK:STDOUT:   %c.ref: ref %Class = name_ref c, %c
 // CHECK:STDOUT:   %F.ref: %F.type = name_ref F, @Class.%F.decl [concrete = constants.%F]
 // CHECK:STDOUT:   %F.call: init %i32 = call %F.ref()
-// CHECK:STDOUT:   %.loc20_15.1: %i32 = value_of_initializer %F.call
-// CHECK:STDOUT:   %.loc20_15.2: %i32 = converted %F.call, %.loc20_15.1
-// CHECK:STDOUT:   return %.loc20_15.2
+// CHECK:STDOUT:   %.loc21_15.1: %i32 = value_of_initializer %F.call
+// CHECK:STDOUT:   %.loc21_15.2: %i32 = converted %F.call, %.loc21_15.1
+// CHECK:STDOUT:   return %.loc21_15.2
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

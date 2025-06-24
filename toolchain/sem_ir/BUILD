@@ -58,6 +58,18 @@ cc_test(
 )
 
 cc_library(
+    name = "clang_decl",
+    srcs = ["clang_decl.cpp"],
+    hdrs = ["clang_decl.h"],
+    deps = [
+        ":typed_insts",
+        "//common:hashtable_key_context",
+        "//common:ostream",
+        "@llvm-project//clang:ast",
+    ],
+)
+
+cc_library(
     name = "file",
     srcs = [
         "builtin_function_kind.cpp",
@@ -107,6 +119,7 @@ cc_library(
     ],
     deps = [
         ":block_value_store",
+        ":clang_decl",
         ":typed_insts",
         "//common:check",
         "//common:enum_base",

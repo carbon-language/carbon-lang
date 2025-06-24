@@ -2,6 +2,7 @@
 // Exceptions. See /LICENSE for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
+// INCLUDE-FILE: toolchain/testing/testdata/min_prelude/int.carbon
 // TODO: Add ranges and switch to "--dump-sem-ir-ranges=only".
 // EXTRA-ARGS: --dump-sem-ir-ranges=if-present
 //
@@ -51,7 +52,7 @@ fn Class.F[self: Self]() -> i32 {
 // CHECK:STDOUT:     import Core//prelude
 // CHECK:STDOUT:     import Core//prelude/...
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %Core.Int: %Int.type = import_ref Core//prelude/types/int, Int, loaded [concrete = constants.%Int.generic]
+// CHECK:STDOUT:   %Core.Int: %Int.type = import_ref Core//prelude/parts/int, Int, loaded [concrete = constants.%Int.generic]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -67,13 +68,13 @@ fn Class.F[self: Self]() -> i32 {
 // CHECK:STDOUT:     %return.patt: %pattern_type.7ce = return_slot_pattern [concrete]
 // CHECK:STDOUT:     %return.param_patt: %pattern_type.7ce = out_param_pattern %return.patt, call_param1 [concrete]
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %int_32.loc24: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
-// CHECK:STDOUT:     %i32.loc24: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
-// CHECK:STDOUT:     %self.param.loc24: %Class = value_param call_param0
-// CHECK:STDOUT:     %Self.ref.loc24: type = name_ref Self, constants.%Class [concrete = constants.%Class]
-// CHECK:STDOUT:     %self.loc24: %Class = bind_name self, %self.param.loc24
-// CHECK:STDOUT:     %return.param.loc24: ref %i32 = out_param call_param1
-// CHECK:STDOUT:     %return.loc24: ref %i32 = return_slot %return.param.loc24
+// CHECK:STDOUT:     %int_32.loc25: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
+// CHECK:STDOUT:     %i32.loc25: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
+// CHECK:STDOUT:     %self.param.loc25: %Class = value_param call_param0
+// CHECK:STDOUT:     %Self.ref.loc25: type = name_ref Self, constants.%Class [concrete = constants.%Class]
+// CHECK:STDOUT:     %self.loc25: %Class = bind_name self, %self.param.loc25
+// CHECK:STDOUT:     %return.param.loc25: ref %i32 = out_param call_param1
+// CHECK:STDOUT:     %return.loc25: ref %i32 = return_slot %return.param.loc25
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -84,25 +85,25 @@ fn Class.F[self: Self]() -> i32 {
 // CHECK:STDOUT:     %return.patt: %pattern_type.7ce = return_slot_pattern [concrete]
 // CHECK:STDOUT:     %return.param_patt: %pattern_type.7ce = out_param_pattern %return.patt, call_param1 [concrete]
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %int_32.loc15: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
-// CHECK:STDOUT:     %i32.loc15: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
-// CHECK:STDOUT:     %self.param.loc15: %Class = value_param call_param0
-// CHECK:STDOUT:     %Self.ref.loc15: type = name_ref Self, constants.%Class [concrete = constants.%Class]
-// CHECK:STDOUT:     %self.loc15: %Class = bind_name self, %self.param.loc15
-// CHECK:STDOUT:     %return.param.loc15: ref %i32 = out_param call_param1
-// CHECK:STDOUT:     %return.loc15: ref %i32 = return_slot %return.param.loc15
+// CHECK:STDOUT:     %int_32.loc16: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
+// CHECK:STDOUT:     %i32.loc16: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
+// CHECK:STDOUT:     %self.param.loc16: %Class = value_param call_param0
+// CHECK:STDOUT:     %Self.ref.loc16: type = name_ref Self, constants.%Class [concrete = constants.%Class]
+// CHECK:STDOUT:     %self.loc16: %Class = bind_name self, %self.param.loc16
+// CHECK:STDOUT:     %return.param.loc16: ref %i32 = out_param call_param1
+// CHECK:STDOUT:     %return.loc16: ref %i32 = return_slot %return.param.loc16
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Make.decl: %Make.type = fn_decl @Make [concrete = constants.%Make] {
 // CHECK:STDOUT:     %return.patt: %pattern_type.761 = return_slot_pattern [concrete]
 // CHECK:STDOUT:     %return.param_patt: %pattern_type.761 = out_param_pattern %return.patt, call_param0 [concrete]
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %Self.ref.loc16: type = name_ref Self, constants.%Class [concrete = constants.%Class]
+// CHECK:STDOUT:     %Self.ref.loc17: type = name_ref Self, constants.%Class [concrete = constants.%Class]
 // CHECK:STDOUT:     %return.param: ref %Class = out_param call_param0
 // CHECK:STDOUT:     %return: ref %Class = return_slot %return.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Self.ref: type = name_ref Self, constants.%Class [concrete = constants.%Class]
 // CHECK:STDOUT:   %ptr: type = ptr_type %Self.ref [concrete = constants.%ptr.e71]
-// CHECK:STDOUT:   %.loc21: %Class.elem = field_decl p, element0 [concrete]
+// CHECK:STDOUT:   %.loc22: %Class.elem = field_decl p, element0 [concrete]
 // CHECK:STDOUT:   %struct_type.p: type = struct_type {.p: %ptr.e71} [concrete = constants.%struct_type.p]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %struct_type.p [concrete = constants.%complete_type.56d]
 // CHECK:STDOUT:   complete_type_witness = %complete_type
@@ -111,23 +112,23 @@ fn Class.F[self: Self]() -> i32 {
 // CHECK:STDOUT:   .Self = constants.%Class
 // CHECK:STDOUT:   .F = %F.decl
 // CHECK:STDOUT:   .Make = %Make.decl
-// CHECK:STDOUT:   .p = %.loc21
+// CHECK:STDOUT:   .p = %.loc22
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @F(%self.param.loc24: %Class) -> %i32 {
+// CHECK:STDOUT: fn @F(%self.param.loc25: %Class) -> %i32 {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %self.ref: %Class = name_ref self, %self.loc24
-// CHECK:STDOUT:   %p.ref: %Class.elem = name_ref p, @Class.%.loc21 [concrete = @Class.%.loc21]
-// CHECK:STDOUT:   %.loc25_16.1: ref %ptr.e71 = class_element_access %self.ref, element0
-// CHECK:STDOUT:   %.loc25_16.2: %ptr.e71 = bind_value %.loc25_16.1
-// CHECK:STDOUT:   %.loc25_11.1: ref %Class = deref %.loc25_16.2
+// CHECK:STDOUT:   %self.ref: %Class = name_ref self, %self.loc25
+// CHECK:STDOUT:   %p.ref: %Class.elem = name_ref p, @Class.%.loc22 [concrete = @Class.%.loc22]
+// CHECK:STDOUT:   %.loc26_16.1: ref %ptr.e71 = class_element_access %self.ref, element0
+// CHECK:STDOUT:   %.loc26_16.2: %ptr.e71 = bind_value %.loc26_16.1
+// CHECK:STDOUT:   %.loc26_11.1: ref %Class = deref %.loc26_16.2
 // CHECK:STDOUT:   %F.ref: %F.type = name_ref F, @Class.%F.decl [concrete = constants.%F]
-// CHECK:STDOUT:   %F.bound: <bound method> = bound_method %.loc25_11.1, %F.ref
-// CHECK:STDOUT:   %.loc25_11.2: %Class = bind_value %.loc25_11.1
-// CHECK:STDOUT:   %F.call: init %i32 = call %F.bound(%.loc25_11.2)
-// CHECK:STDOUT:   %.loc25_23.1: %i32 = value_of_initializer %F.call
-// CHECK:STDOUT:   %.loc25_23.2: %i32 = converted %F.call, %.loc25_23.1
-// CHECK:STDOUT:   return %.loc25_23.2
+// CHECK:STDOUT:   %F.bound: <bound method> = bound_method %.loc26_11.1, %F.ref
+// CHECK:STDOUT:   %.loc26_11.2: %Class = bind_value %.loc26_11.1
+// CHECK:STDOUT:   %F.call: init %i32 = call %F.bound(%.loc26_11.2)
+// CHECK:STDOUT:   %.loc26_23.1: %i32 = value_of_initializer %F.call
+// CHECK:STDOUT:   %.loc26_23.2: %i32 = converted %F.call, %.loc26_23.1
+// CHECK:STDOUT:   return %.loc26_23.2
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Make() -> %return.param: %Class {
@@ -136,17 +137,17 @@ fn Class.F[self: Self]() -> i32 {
 // CHECK:STDOUT:     %s.patt: %pattern_type.761 = binding_pattern s [concrete]
 // CHECK:STDOUT:     %s.var_patt: %pattern_type.761 = var_pattern %s.patt [concrete]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %Self.ref.loc17: type = name_ref Self, constants.%Class [concrete = constants.%Class]
+// CHECK:STDOUT:   %Self.ref.loc18: type = name_ref Self, constants.%Class [concrete = constants.%Class]
 // CHECK:STDOUT:   %s: ref %Class = bind_name s, %return
-// CHECK:STDOUT:   %s.ref.loc18_5: ref %Class = name_ref s, %s
-// CHECK:STDOUT:   %s.ref.loc18_16: ref %Class = name_ref s, %s
-// CHECK:STDOUT:   %addr: %ptr.e71 = addr_of %s.ref.loc18_16
-// CHECK:STDOUT:   %.loc18_17.1: %struct_type.p = struct_literal (%addr)
-// CHECK:STDOUT:   %.loc18_17.2: ref %ptr.e71 = class_element_access %s.ref.loc18_5, element0
-// CHECK:STDOUT:   %.loc18_17.3: init %ptr.e71 = initialize_from %addr to %.loc18_17.2
-// CHECK:STDOUT:   %.loc18_17.4: init %Class = class_init (%.loc18_17.3), %s.ref.loc18_5
-// CHECK:STDOUT:   %.loc18_7: init %Class = converted %.loc18_17.1, %.loc18_17.4
-// CHECK:STDOUT:   assign %s.ref.loc18_5, %.loc18_7
+// CHECK:STDOUT:   %s.ref.loc19_5: ref %Class = name_ref s, %s
+// CHECK:STDOUT:   %s.ref.loc19_16: ref %Class = name_ref s, %s
+// CHECK:STDOUT:   %addr: %ptr.e71 = addr_of %s.ref.loc19_16
+// CHECK:STDOUT:   %.loc19_17.1: %struct_type.p = struct_literal (%addr)
+// CHECK:STDOUT:   %.loc19_17.2: ref %ptr.e71 = class_element_access %s.ref.loc19_5, element0
+// CHECK:STDOUT:   %.loc19_17.3: init %ptr.e71 = initialize_from %addr to %.loc19_17.2
+// CHECK:STDOUT:   %.loc19_17.4: init %Class = class_init (%.loc19_17.3), %s.ref.loc19_5
+// CHECK:STDOUT:   %.loc19_7: init %Class = converted %.loc19_17.1, %.loc19_17.4
+// CHECK:STDOUT:   assign %s.ref.loc19_5, %.loc19_7
 // CHECK:STDOUT:   return %s to %return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

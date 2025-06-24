@@ -2,6 +2,8 @@
 // Exceptions. See /LICENSE for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
+// INCLUDE-FILE: toolchain/testing/testdata/min_prelude/int.carbon
+//
 // AUTOUPDATE
 // TIP: To test this file alone, run:
 // TIP:   bazel test //toolchain/testing:file_test --test_arg=--file_tests=toolchain/lower/testdata/function/generic/call_impl_function.carbon
@@ -58,8 +60,8 @@ fn G() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: define linkonce_odr i32 @_CCallGenericMethod.Main.b330a91dfda257ee(i32 %x) !dbg !12 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %.loc34_15 = call i32 @"_CF.ImplsSomeInterface.Main:SomeInterface.Main"(i32 %x), !dbg !13
-// CHECK:STDOUT:   ret i32 %.loc34_15, !dbg !14
+// CHECK:STDOUT:   %.loc36_15 = call i32 @"_CF.ImplsSomeInterface.Main:SomeInterface.Main"(i32 %x), !dbg !13
+// CHECK:STDOUT:   ret i32 %.loc36_15, !dbg !14
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: !llvm.module.flags = !{!0, !1}
@@ -69,14 +71,14 @@ fn G() {
 // CHECK:STDOUT: !1 = !{i32 2, !"Debug Info Version", i32 3}
 // CHECK:STDOUT: !2 = distinct !DICompileUnit(language: DW_LANG_C, file: !3, producer: "carbon", isOptimized: false, runtimeVersion: 0, emissionKind: FullDebug)
 // CHECK:STDOUT: !3 = !DIFile(filename: "call_impl_function.carbon", directory: "")
-// CHECK:STDOUT: !4 = distinct !DISubprogram(name: "F", linkageName: "_CF.ImplsSomeInterface.Main:SomeInterface.Main", scope: null, file: !3, line: 20, type: !5, spFlags: DISPFlagDefinition, unit: !2)
+// CHECK:STDOUT: !4 = distinct !DISubprogram(name: "F", linkageName: "_CF.ImplsSomeInterface.Main:SomeInterface.Main", scope: null, file: !3, line: 22, type: !5, spFlags: DISPFlagDefinition, unit: !2)
 // CHECK:STDOUT: !5 = !DISubroutineType(types: !6)
 // CHECK:STDOUT: !6 = !{}
-// CHECK:STDOUT: !7 = !DILocation(line: 21, column: 12, scope: !4)
-// CHECK:STDOUT: !8 = !DILocation(line: 21, column: 5, scope: !4)
-// CHECK:STDOUT: !9 = distinct !DISubprogram(name: "G", linkageName: "_CG.Main", scope: null, file: !3, line: 37, type: !5, spFlags: DISPFlagDefinition, unit: !2)
-// CHECK:STDOUT: !10 = !DILocation(line: 38, column: 3, scope: !9)
-// CHECK:STDOUT: !11 = !DILocation(line: 37, column: 1, scope: !9)
-// CHECK:STDOUT: !12 = distinct !DISubprogram(name: "CallGenericMethod", linkageName: "_CCallGenericMethod.Main.b330a91dfda257ee", scope: null, file: !3, line: 33, type: !5, spFlags: DISPFlagDefinition, unit: !2)
-// CHECK:STDOUT: !13 = !DILocation(line: 34, column: 10, scope: !12)
-// CHECK:STDOUT: !14 = !DILocation(line: 34, column: 3, scope: !12)
+// CHECK:STDOUT: !7 = !DILocation(line: 23, column: 12, scope: !4)
+// CHECK:STDOUT: !8 = !DILocation(line: 23, column: 5, scope: !4)
+// CHECK:STDOUT: !9 = distinct !DISubprogram(name: "G", linkageName: "_CG.Main", scope: null, file: !3, line: 39, type: !5, spFlags: DISPFlagDefinition, unit: !2)
+// CHECK:STDOUT: !10 = !DILocation(line: 40, column: 3, scope: !9)
+// CHECK:STDOUT: !11 = !DILocation(line: 39, column: 1, scope: !9)
+// CHECK:STDOUT: !12 = distinct !DISubprogram(name: "CallGenericMethod", linkageName: "_CCallGenericMethod.Main.b330a91dfda257ee", scope: null, file: !3, line: 35, type: !5, spFlags: DISPFlagDefinition, unit: !2)
+// CHECK:STDOUT: !13 = !DILocation(line: 36, column: 10, scope: !12)
+// CHECK:STDOUT: !14 = !DILocation(line: 36, column: 3, scope: !12)

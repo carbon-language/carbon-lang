@@ -2,6 +2,7 @@
 // Exceptions. See /LICENSE for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
+// INCLUDE-FILE: toolchain/testing/testdata/min_prelude/convert.carbon
 // TODO: Add ranges and switch to "--dump-sem-ir-ranges=only".
 // EXTRA-ARGS: --dump-sem-ir-ranges=if-present
 //
@@ -63,11 +64,11 @@ fn Foo(ptr: C*) {
 // CHECK:STDOUT:     %ptr.param_patt: %pattern_type.44a = value_param_pattern %ptr.patt, call_param0 [concrete]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %ptr.param: %ptr.019 = value_param call_param0
-// CHECK:STDOUT:     %.loc19: type = splice_block %ptr.loc19_14 [concrete = constants.%ptr.019] {
+// CHECK:STDOUT:     %.loc20: type = splice_block %ptr.loc20_14 [concrete = constants.%ptr.019] {
 // CHECK:STDOUT:       %C.ref: type = name_ref C, file.%C.decl [concrete = constants.%C]
-// CHECK:STDOUT:       %ptr.loc19_14: type = ptr_type %C.ref [concrete = constants.%ptr.019]
+// CHECK:STDOUT:       %ptr.loc20_14: type = ptr_type %C.ref [concrete = constants.%ptr.019]
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %ptr.loc19_8: %ptr.019 = bind_name ptr, %ptr.param
+// CHECK:STDOUT:     %ptr.loc20_8: %ptr.019 = bind_name ptr, %ptr.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -82,7 +83,7 @@ fn Foo(ptr: C*) {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %C.ref: type = name_ref C, file.%C.decl [concrete = constants.%C]
 // CHECK:STDOUT:   %ptr: type = ptr_type %C.ref [concrete = constants.%ptr.019]
-// CHECK:STDOUT:   %.loc16: %C.elem = field_decl field, element0 [concrete]
+// CHECK:STDOUT:   %.loc17: %C.elem = field_decl field, element0 [concrete]
 // CHECK:STDOUT:   %struct_type.field: type = struct_type {.field: %ptr.019} [concrete = constants.%struct_type.field]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %struct_type.field [concrete = constants.%complete_type]
 // CHECK:STDOUT:   complete_type_witness = %complete_type
@@ -91,41 +92,41 @@ fn Foo(ptr: C*) {
 // CHECK:STDOUT:   .Self = constants.%C
 // CHECK:STDOUT:   .Member = %Member.decl
 // CHECK:STDOUT:   .C = <poisoned>
-// CHECK:STDOUT:   .field = %.loc16
+// CHECK:STDOUT:   .field = %.loc17
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Member(%self.param: %C);
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Foo(%ptr.param: %ptr.019) {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %ptr.ref.loc20: %ptr.019 = name_ref ptr, %ptr.loc19_8
-// CHECK:STDOUT:   %.loc20_4.1: ref %C = deref %ptr.ref.loc20
-// CHECK:STDOUT:   %Member.ref.loc20: %Member.type = name_ref Member, @C.%Member.decl [concrete = constants.%Member]
-// CHECK:STDOUT:   %Member.bound.loc20: <bound method> = bound_method %.loc20_4.1, %Member.ref.loc20
-// CHECK:STDOUT:   %.loc20_4.2: %C = bind_value %.loc20_4.1
-// CHECK:STDOUT:   %Member.call.loc20: init %empty_tuple.type = call %Member.bound.loc20(%.loc20_4.2)
-// CHECK:STDOUT:   %ptr.ref.loc21: %ptr.019 = name_ref ptr, %ptr.loc19_8
-// CHECK:STDOUT:   %.loc21_6.1: ref %C = deref %ptr.ref.loc21
+// CHECK:STDOUT:   %ptr.ref.loc21: %ptr.019 = name_ref ptr, %ptr.loc20_8
+// CHECK:STDOUT:   %.loc21_4.1: ref %C = deref %ptr.ref.loc21
 // CHECK:STDOUT:   %Member.ref.loc21: %Member.type = name_ref Member, @C.%Member.decl [concrete = constants.%Member]
-// CHECK:STDOUT:   %Member.bound.loc21: <bound method> = bound_method %.loc21_6.1, %Member.ref.loc21
-// CHECK:STDOUT:   %.loc21_6.2: %C = bind_value %.loc21_6.1
-// CHECK:STDOUT:   %Member.call.loc21: init %empty_tuple.type = call %Member.bound.loc21(%.loc21_6.2)
-// CHECK:STDOUT:   %ptr.ref.loc23: %ptr.019 = name_ref ptr, %ptr.loc19_8
-// CHECK:STDOUT:   %.loc23_4: ref %C = deref %ptr.ref.loc23
-// CHECK:STDOUT:   %field.ref.loc23: %C.elem = name_ref field, @C.%.loc16 [concrete = @C.%.loc16]
-// CHECK:STDOUT:   %.loc23_9: ref %ptr.019 = class_element_access %.loc23_4, element0
-// CHECK:STDOUT:   %ptr.ref.loc24: %ptr.019 = name_ref ptr, %ptr.loc19_8
-// CHECK:STDOUT:   %.loc24_6.1: ref %C = deref %ptr.ref.loc24
-// CHECK:STDOUT:   %field.ref.loc24: %C.elem = name_ref field, @C.%.loc16 [concrete = @C.%.loc16]
-// CHECK:STDOUT:   %.loc24_6.2: ref %ptr.019 = class_element_access %.loc24_6.1, element0
-// CHECK:STDOUT:   %ptr.ref.loc26: %ptr.019 = name_ref ptr, %ptr.loc19_8
-// CHECK:STDOUT:   %.loc26_6.1: ref %C = deref %ptr.ref.loc26
-// CHECK:STDOUT:   %field.ref.loc26_6: %C.elem = name_ref field, @C.%.loc16 [concrete = @C.%.loc16]
-// CHECK:STDOUT:   %.loc26_6.2: ref %ptr.019 = class_element_access %.loc26_6.1, element0
-// CHECK:STDOUT:   %.loc26_6.3: %ptr.019 = bind_value %.loc26_6.2
-// CHECK:STDOUT:   %.loc26_13.1: ref %C = deref %.loc26_6.3
-// CHECK:STDOUT:   %field.ref.loc26_13: %C.elem = name_ref field, @C.%.loc16 [concrete = @C.%.loc16]
-// CHECK:STDOUT:   %.loc26_13.2: ref %ptr.019 = class_element_access %.loc26_13.1, element0
+// CHECK:STDOUT:   %Member.bound.loc21: <bound method> = bound_method %.loc21_4.1, %Member.ref.loc21
+// CHECK:STDOUT:   %.loc21_4.2: %C = bind_value %.loc21_4.1
+// CHECK:STDOUT:   %Member.call.loc21: init %empty_tuple.type = call %Member.bound.loc21(%.loc21_4.2)
+// CHECK:STDOUT:   %ptr.ref.loc22: %ptr.019 = name_ref ptr, %ptr.loc20_8
+// CHECK:STDOUT:   %.loc22_6.1: ref %C = deref %ptr.ref.loc22
+// CHECK:STDOUT:   %Member.ref.loc22: %Member.type = name_ref Member, @C.%Member.decl [concrete = constants.%Member]
+// CHECK:STDOUT:   %Member.bound.loc22: <bound method> = bound_method %.loc22_6.1, %Member.ref.loc22
+// CHECK:STDOUT:   %.loc22_6.2: %C = bind_value %.loc22_6.1
+// CHECK:STDOUT:   %Member.call.loc22: init %empty_tuple.type = call %Member.bound.loc22(%.loc22_6.2)
+// CHECK:STDOUT:   %ptr.ref.loc24: %ptr.019 = name_ref ptr, %ptr.loc20_8
+// CHECK:STDOUT:   %.loc24_4: ref %C = deref %ptr.ref.loc24
+// CHECK:STDOUT:   %field.ref.loc24: %C.elem = name_ref field, @C.%.loc17 [concrete = @C.%.loc17]
+// CHECK:STDOUT:   %.loc24_9: ref %ptr.019 = class_element_access %.loc24_4, element0
+// CHECK:STDOUT:   %ptr.ref.loc25: %ptr.019 = name_ref ptr, %ptr.loc20_8
+// CHECK:STDOUT:   %.loc25_6.1: ref %C = deref %ptr.ref.loc25
+// CHECK:STDOUT:   %field.ref.loc25: %C.elem = name_ref field, @C.%.loc17 [concrete = @C.%.loc17]
+// CHECK:STDOUT:   %.loc25_6.2: ref %ptr.019 = class_element_access %.loc25_6.1, element0
+// CHECK:STDOUT:   %ptr.ref.loc27: %ptr.019 = name_ref ptr, %ptr.loc20_8
+// CHECK:STDOUT:   %.loc27_6.1: ref %C = deref %ptr.ref.loc27
+// CHECK:STDOUT:   %field.ref.loc27_6: %C.elem = name_ref field, @C.%.loc17 [concrete = @C.%.loc17]
+// CHECK:STDOUT:   %.loc27_6.2: ref %ptr.019 = class_element_access %.loc27_6.1, element0
+// CHECK:STDOUT:   %.loc27_6.3: %ptr.019 = bind_value %.loc27_6.2
+// CHECK:STDOUT:   %.loc27_13.1: ref %C = deref %.loc27_6.3
+// CHECK:STDOUT:   %field.ref.loc27_13: %C.elem = name_ref field, @C.%.loc17 [concrete = @C.%.loc17]
+// CHECK:STDOUT:   %.loc27_13.2: ref %ptr.019 = class_element_access %.loc27_13.1, element0
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
