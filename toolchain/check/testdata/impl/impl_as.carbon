@@ -2,6 +2,7 @@
 // Exceptions. See /LICENSE for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
+// INCLUDE-FILE: toolchain/testing/testdata/min_prelude/destroy.carbon
 // TODO: Add ranges and switch to "--dump-sem-ir-ranges=only".
 // EXTRA-ARGS: --dump-sem-ir-ranges=if-present
 //
@@ -62,8 +63,8 @@ class C {
 // CHECK:STDOUT:     import Core//prelude
 // CHECK:STDOUT:     import Core//prelude/...
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %Core.Destroy: type = import_ref Core//prelude/destroy, Destroy, loaded [concrete = constants.%Destroy.type]
-// CHECK:STDOUT:   %Core.import_ref.0b9: @impl.49c.%Op.type (%Op.type.bc9) = import_ref Core//prelude/destroy, loc15_23, loaded [symbolic = @impl.49c.%Op (constants.%Op.46f)]
+// CHECK:STDOUT:   %Core.Destroy: type = import_ref Core//prelude/parts/destroy, Destroy, loaded [concrete = constants.%Destroy.type]
+// CHECK:STDOUT:   %Core.import_ref.0b9: @impl.49c.%Op.type (%Op.type.bc9) = import_ref Core//prelude/parts/destroy, loc8_23, loaded [symbolic = @impl.49c.%Op (constants.%Op.46f)]
 // CHECK:STDOUT:   %Destroy.impl_witness_table = impl_witness_table (%Core.import_ref.0b9), @impl.49c [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -127,17 +128,17 @@ class C {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %c.var: ref %C = var %c.var_patt
 // CHECK:STDOUT:   %impl.elem0: %.b80 = impl_witness_access constants.%Destroy.impl_witness.906, element0 [concrete = constants.%Op.5d7]
-// CHECK:STDOUT:   %bound_method.loc22: <bound method> = bound_method %c.var, %impl.elem0
-// CHECK:STDOUT:   %.loc22_19.1: %empty_struct_type = struct_literal ()
-// CHECK:STDOUT:   %.loc22_19.2: init %C = class_init (), %c.var [concrete = constants.%C.val]
-// CHECK:STDOUT:   %.loc22_7.1: init %C = converted %.loc22_19.1, %.loc22_19.2 [concrete = constants.%C.val]
-// CHECK:STDOUT:   assign %c.var, %.loc22_7.1
+// CHECK:STDOUT:   %bound_method.loc23: <bound method> = bound_method %c.var, %impl.elem0
+// CHECK:STDOUT:   %.loc23_19.1: %empty_struct_type = struct_literal ()
+// CHECK:STDOUT:   %.loc23_19.2: init %C = class_init (), %c.var [concrete = constants.%C.val]
+// CHECK:STDOUT:   %.loc23_7.1: init %C = converted %.loc23_19.1, %.loc23_19.2 [concrete = constants.%C.val]
+// CHECK:STDOUT:   assign %c.var, %.loc23_7.1
 // CHECK:STDOUT:   %C.ref: type = name_ref C, file.%C.decl [concrete = constants.%C]
 // CHECK:STDOUT:   %c: ref %C = bind_name c, %c.var
 // CHECK:STDOUT:   %specific_fn: <specific function> = specific_function %impl.elem0, @Op.2(constants.%C) [concrete = constants.%Op.specific_fn]
 // CHECK:STDOUT:   %bound_method.1: <bound method> = bound_method %c.var, %specific_fn
-// CHECK:STDOUT:   %.loc22_7.2: %C = bind_value %c.var
-// CHECK:STDOUT:   %no_op: init %empty_tuple.type = call %bound_method.1(%.loc22_7.2)
+// CHECK:STDOUT:   %.loc23_7.2: %C = bind_value %c.var
+// CHECK:STDOUT:   %no_op: init %empty_tuple.type = call %bound_method.1(%.loc23_7.2)
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

@@ -675,17 +675,15 @@ struct ReturnStatement {
 using ForHeaderStart =
     LeafNode<NodeKind::ForHeaderStart, Lex::OpenParenTokenIndex>;
 
-// The `var ... in` portion of a `for` statement.
+// The `... in` portion of a `for` statement.
 struct ForIn {
-  static constexpr auto Kind = NodeKind::ForIn.Define(
-      {.bracketed_by = VariableIntroducer::Kind, .child_count = 2});
+  static constexpr auto Kind = NodeKind::ForIn.Define({.child_count = 1});
 
-  VariableIntroducerId introducer;
   AnyPatternId pattern;
   Lex::InTokenIndex token;
 };
 
-// The `for (var ... in ...)` portion of a `for` statement.
+// The `for (... in ...)` portion of a `for` statement.
 struct ForHeader {
   static constexpr auto Kind =
       NodeKind::ForHeader.Define({.bracketed_by = ForHeaderStart::Kind});

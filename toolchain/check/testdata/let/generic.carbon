@@ -2,6 +2,7 @@
 // Exceptions. See /LICENSE for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
+// INCLUDE-FILE: toolchain/testing/testdata/min_prelude/int.carbon
 // TODO: Add ranges and switch to "--dump-sem-ir-ranges=only".
 // EXTRA-ARGS: --dump-sem-ir-ranges=if-present
 //
@@ -53,8 +54,8 @@ fn F() {
 // CHECK:STDOUT:     import Core//prelude
 // CHECK:STDOUT:     import Core//prelude/...
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %Core.Int: %Int.type = import_ref Core//prelude/types/int, Int, loaded [concrete = constants.%Int.generic]
-// CHECK:STDOUT:   %Core.Destroy: type = import_ref Core//prelude/destroy, Destroy, loaded [concrete = constants.%Destroy.type]
+// CHECK:STDOUT:   %Core.Int: %Int.type = import_ref Core//prelude/parts/int, Int, loaded [concrete = constants.%Int.generic]
+// CHECK:STDOUT:   %Core.Destroy: type = import_ref Core//prelude/parts/destroy, Destroy, loaded [concrete = constants.%Destroy.type]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -79,11 +80,11 @@ fn F() {
 // CHECK:STDOUT:     %p.var_patt: %pattern_type.afe = var_pattern %p.patt [concrete]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %p.var: ref %ptr = var %p.var_patt
-// CHECK:STDOUT:   %impl.elem0.loc16: %.ea9 = impl_witness_access constants.%Destroy.lookup_impl_witness.3af, element0 [symbolic = constants.%impl.elem0.63c]
-// CHECK:STDOUT:   %bound_method.loc16: <bound method> = bound_method %p.var, %impl.elem0.loc16
-// CHECK:STDOUT:   %.loc16_11: type = splice_block %ptr [symbolic = constants.%ptr] {
-// CHECK:STDOUT:     %T.ref.loc16: type = name_ref T, %T [symbolic = constants.%T]
-// CHECK:STDOUT:     %ptr: type = ptr_type %T.ref.loc16 [symbolic = constants.%ptr]
+// CHECK:STDOUT:   %impl.elem0.loc17: %.ea9 = impl_witness_access constants.%Destroy.lookup_impl_witness.3af, element0 [symbolic = constants.%impl.elem0.63c]
+// CHECK:STDOUT:   %bound_method.loc17: <bound method> = bound_method %p.var, %impl.elem0.loc17
+// CHECK:STDOUT:   %.loc17_11: type = splice_block %ptr [symbolic = constants.%ptr] {
+// CHECK:STDOUT:     %T.ref.loc17: type = name_ref T, %T [symbolic = constants.%T]
+// CHECK:STDOUT:     %ptr: type = ptr_type %T.ref.loc17 [symbolic = constants.%ptr]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %p: ref %ptr = bind_name p, %p.var
 // CHECK:STDOUT:   name_binding_decl {
@@ -91,23 +92,23 @@ fn F() {
 // CHECK:STDOUT:     %a.var_patt: %pattern_type.7dc = var_pattern %a.patt [concrete]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %a.var: ref %T = var %a.var_patt
-// CHECK:STDOUT:   %impl.elem0.loc17: %.a63 = impl_witness_access constants.%Destroy.lookup_impl_witness.de0, element0 [symbolic = constants.%impl.elem0.538]
-// CHECK:STDOUT:   %bound_method.loc17: <bound method> = bound_method %a.var, %impl.elem0.loc17
+// CHECK:STDOUT:   %impl.elem0.loc18: %.a63 = impl_witness_access constants.%Destroy.lookup_impl_witness.de0, element0 [symbolic = constants.%impl.elem0.538]
+// CHECK:STDOUT:   %bound_method.loc18: <bound method> = bound_method %a.var, %impl.elem0.loc18
 // CHECK:STDOUT:   %p.ref: ref %ptr = name_ref p, %p
-// CHECK:STDOUT:   %.loc17_15: %ptr = bind_value %p.ref
-// CHECK:STDOUT:   %.loc17_14.1: ref %T = deref %.loc17_15
-// CHECK:STDOUT:   %.loc17_14.2: %T = bind_value %.loc17_14.1
-// CHECK:STDOUT:   assign %a.var, %.loc17_14.2
-// CHECK:STDOUT:   %T.ref.loc17: type = name_ref T, %T [symbolic = constants.%T]
+// CHECK:STDOUT:   %.loc18_15: %ptr = bind_value %p.ref
+// CHECK:STDOUT:   %.loc18_14.1: ref %T = deref %.loc18_15
+// CHECK:STDOUT:   %.loc18_14.2: %T = bind_value %.loc18_14.1
+// CHECK:STDOUT:   assign %a.var, %.loc18_14.2
+// CHECK:STDOUT:   %T.ref.loc18: type = name_ref T, %T [symbolic = constants.%T]
 // CHECK:STDOUT:   %a: ref %T = bind_name a, %a.var
-// CHECK:STDOUT:   %specific_impl_fn.loc17: <specific function> = specific_impl_function %impl.elem0.loc17, @Op.1(constants.%Destroy.facet.713) [symbolic = constants.%specific_impl_fn.1af]
-// CHECK:STDOUT:   %bound_method.1: <bound method> = bound_method %a.var, %specific_impl_fn.loc17
-// CHECK:STDOUT:   %.loc17_3: %T = bind_value %a.var
-// CHECK:STDOUT:   %.1: init %empty_tuple.type = call %bound_method.1(%.loc17_3)
-// CHECK:STDOUT:   %specific_impl_fn.loc16: <specific function> = specific_impl_function %impl.elem0.loc16, @Op.1(constants.%Destroy.facet.7d0) [symbolic = constants.%specific_impl_fn.e4a]
-// CHECK:STDOUT:   %bound_method.2: <bound method> = bound_method %p.var, %specific_impl_fn.loc16
-// CHECK:STDOUT:   %.loc16_3: %ptr = bind_value %p.var
-// CHECK:STDOUT:   %.2: init %empty_tuple.type = call %bound_method.2(%.loc16_3)
+// CHECK:STDOUT:   %specific_impl_fn.loc18: <specific function> = specific_impl_function %impl.elem0.loc18, @Op.1(constants.%Destroy.facet.713) [symbolic = constants.%specific_impl_fn.1af]
+// CHECK:STDOUT:   %bound_method.1: <bound method> = bound_method %a.var, %specific_impl_fn.loc18
+// CHECK:STDOUT:   %.loc18_3: %T = bind_value %a.var
+// CHECK:STDOUT:   %.1: init %empty_tuple.type = call %bound_method.1(%.loc18_3)
+// CHECK:STDOUT:   %specific_impl_fn.loc17: <specific function> = specific_impl_function %impl.elem0.loc17, @Op.1(constants.%Destroy.facet.7d0) [symbolic = constants.%specific_impl_fn.e4a]
+// CHECK:STDOUT:   %bound_method.2: <bound method> = bound_method %p.var, %specific_impl_fn.loc17
+// CHECK:STDOUT:   %.loc17_3: %ptr = bind_value %p.var
+// CHECK:STDOUT:   %.2: init %empty_tuple.type = call %bound_method.2(%.loc17_3)
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

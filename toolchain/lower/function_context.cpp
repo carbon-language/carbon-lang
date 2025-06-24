@@ -145,8 +145,8 @@ auto FunctionContext::LowerInst(SemIR::InstId inst_id) -> void {
   builder_.getInserter().SetCurrentInstId(SemIR::InstId::None);
 }
 
-auto FunctionContext::GetBlockArg(SemIR::InstBlockId block_id,
-                                  SemIR::TypeId type_id) -> llvm::PHINode* {
+auto FunctionContext::GetBlockArg(SemIR::InstBlockId block_id, TypeInFile type)
+    -> llvm::PHINode* {
   llvm::BasicBlock* block = GetBlock(block_id);
 
   // Find the existing phi, if any.
@@ -160,7 +160,7 @@ auto FunctionContext::GetBlockArg(SemIR::InstBlockId block_id,
 
   // The number of predecessor slots to reserve.
   static constexpr unsigned NumReservedPredecessors = 2;
-  auto* phi = llvm::PHINode::Create(GetType(type_id), NumReservedPredecessors);
+  auto* phi = llvm::PHINode::Create(GetType(type), NumReservedPredecessors);
   phi->insertInto(block, block->begin());
   return phi;
 }
@@ -217,36 +217,60 @@ auto FunctionContext::GetDebugLoc(SemIR::InstId inst_id) -> llvm::DebugLoc {
                                loc.column_number, di_subprogram_);
 }
 
-auto FunctionContext::FinishInit(SemIR::TypeId type_id, SemIR::InstId dest_id,
+auto FunctionContext::FinishInit(TypeInFile type, SemIR::InstId dest_id,
                                  SemIR::InstId source_id) -> void {
-  switch (SemIR::InitRepr::ForType(sem_ir(), type_id).kind) {
+  switch (GetInitRepr(type).kind) {
     case SemIR::InitRepr::None:
       break;
     case SemIR::InitRepr::InPlace:
       if (sem_ir().constant_values().Get(source_id).is_constant()) {
         // When initializing from a constant, emission of the source doesn't
         // initialize the destination. Copy the constant value instead.
-        CopyValue(type_id, source_id, dest_id);
+        CopyValue(type, source_id, dest_id);
       }
       break;
     case SemIR::InitRepr::ByCopy:
-      CopyValue(type_id, source_id, dest_id);
+      CopyValue(type, source_id, dest_id);
       break;
     case SemIR::InitRepr::Incomplete:
       CARBON_FATAL("Lowering aggregate initialization of incomplete type {0}",
-                   sem_ir().types().GetAsInst(type_id));
+                   type.file->types().GetAsInst(type.type_id));
   }
 }
 
-auto FunctionContext::GetTypeIdOfInstInSpecific(SemIR::InstId inst_id)
-    -> std::pair<const SemIR::File*, SemIR::TypeId> {
-  return SemIR::GetTypeOfInstInSpecific(specific_sem_ir(), specific_id(),
-                                        sem_ir(), inst_id);
+auto FunctionContext::GetTypeIdOfInst(SemIR::InstId inst_id) -> TypeInFile {
+  auto [file, type_id] = SemIR::GetTypeOfInstInSpecific(
+      specific_sem_ir(), specific_id(), sem_ir(), inst_id);
+  return {.file = file, .type_id = type_id};
 }
 
-auto FunctionContext::CopyValue(SemIR::TypeId type_id, SemIR::InstId source_id,
+auto FunctionContext::GetValueRepr(TypeInFile type) -> ValueReprInFile {
+  ValueReprInFile result = {
+      .file = type.file,
+      .repr = SemIR::ValueRepr::ForType(*type.file, type.type_id)};
+  AddEnumToCurrentFingerprint(result.repr.kind);
+  AddEnumToCurrentFingerprint(result.repr.aggregate_kind);
+  return result;
+}
+
+auto FunctionContext::GetInitRepr(TypeInFile type) -> SemIR::InitRepr {
+  auto result = SemIR::InitRepr::ForType(*type.file, type.type_id);
+  AddEnumToCurrentFingerprint(result.kind);
+  return result;
+}
+
+auto FunctionContext::GetReturnTypeInfo(TypeInFile type)
+    -> ReturnTypeInfoInFile {
+  ReturnTypeInfoInFile result = {
+      .file = type.file,
+      .info = SemIR::ReturnTypeInfo::ForType(*type.file, type.type_id)};
+  AddEnumToCurrentFingerprint(result.info.init_repr.kind);
+  return result;
+}
+
+auto FunctionContext::CopyValue(TypeInFile type, SemIR::InstId source_id,
                                 SemIR::InstId dest_id) -> void {
-  switch (auto rep = SemIR::ValueRepr::ForType(sem_ir(), type_id); rep.kind) {
+  switch (GetValueRepr(type).repr.kind) {
     case SemIR::ValueRepr::Unknown:
       CARBON_FATAL("Attempt to copy incomplete type");
     case SemIR::ValueRepr::None:
@@ -255,25 +279,25 @@ auto FunctionContext::CopyValue(SemIR::TypeId type_id, SemIR::InstId source_id,
       builder().CreateStore(GetValue(source_id), GetValue(dest_id));
       break;
     case SemIR::ValueRepr::Pointer:
-      CopyObject(type_id, source_id, dest_id);
+      CopyObject(type, source_id, dest_id);
       break;
     case SemIR::ValueRepr::Custom:
       CARBON_FATAL("TODO: Add support for CopyValue with custom value rep");
   }
 }
 
-auto FunctionContext::CopyObject(SemIR::TypeId type_id, SemIR::InstId source_id,
+auto FunctionContext::CopyObject(TypeInFile type, SemIR::InstId source_id,
                                  SemIR::InstId dest_id) -> void {
   const auto& layout = llvm_module().getDataLayout();
-  auto* type = GetType(type_id);
+  auto* llvm_type = GetType(type);
   // TODO: Compute known alignment of the source and destination, which may
   // be greater than the alignment computed by LLVM.
-  auto align = layout.getABITypeAlign(type);
+  auto align = layout.getABITypeAlign(llvm_type);
 
   // TODO: Attach !tbaa.struct metadata indicating which portions of the
   // type we actually need to copy and which are padding.
   builder().CreateMemCpy(GetValue(dest_id), align, GetValue(source_id), align,
-                         layout.getTypeAllocSize(type));
+                         layout.getTypeAllocSize(llvm_type));
 }
 
 auto FunctionContext::Inserter::InsertHelper(
@@ -314,6 +338,17 @@ auto FunctionContext::AddCallToCurrentFingerprint(SemIR::CheckIRId file_id,
     current_fingerprint_.specific_fingerprint.update(-1);
     function_fingerprint_->calls.push_back(specific_id);
   }
+}
+
+auto FunctionContext::AddIntToCurrentFingerprint(uint64_t value) -> void {
+  if (!function_fingerprint_) {
+    return;
+  }
+
+  // TODO: Instead just include the raw bytes of the integer?
+  RawStringOstream os;
+  os << value << "\n";
+  current_fingerprint_.common_fingerprint.update(os.TakeStr());
 }
 
 auto FunctionContext::AddTypeToCurrentFingerprint(llvm::Type* type) -> void {

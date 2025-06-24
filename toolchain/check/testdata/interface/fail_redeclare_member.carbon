@@ -2,6 +2,7 @@
 // Exceptions. See /LICENSE for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
+// INCLUDE-FILE: toolchain/testing/testdata/min_prelude/convert.carbon
 // TODO: Add ranges and switch to "--dump-sem-ir-ranges=only".
 // EXTRA-ARGS: --no-prelude-import --dump-sem-ir-ranges=if-present
 //
@@ -31,7 +32,7 @@ interface Interface {
 // CHECK:STDOUT:   %F.type.1ad64d.1: type = fn_type @F.1 [concrete]
 // CHECK:STDOUT:   %F.5d382e.1: %F.type.1ad64d.1 = struct_value () [concrete]
 // CHECK:STDOUT:   %Interface.assoc_type: type = assoc_entity_type @Interface [concrete]
-// CHECK:STDOUT:   %assoc0: %Interface.assoc_type = assoc_entity element0, @Interface.%F.decl.loc15 [concrete]
+// CHECK:STDOUT:   %assoc0: %Interface.assoc_type = assoc_entity element0, @Interface.%F.decl.loc16 [concrete]
 // CHECK:STDOUT:   %F.type.1ad64d.2: type = fn_type @F.2 [concrete]
 // CHECK:STDOUT:   %F.5d382e.2: %F.type.1ad64d.2 = struct_value () [concrete]
 // CHECK:STDOUT: }
@@ -45,14 +46,14 @@ interface Interface {
 // CHECK:STDOUT:
 // CHECK:STDOUT: interface @Interface {
 // CHECK:STDOUT:   %Self: %Interface.type = bind_symbolic_name Self, 0 [symbolic = constants.%Self]
-// CHECK:STDOUT:   %F.decl.loc15: %F.type.1ad64d.1 = fn_decl @F.1 [concrete = constants.%F.5d382e.1] {} {}
-// CHECK:STDOUT:   %assoc0: %Interface.assoc_type = assoc_entity element0, %F.decl.loc15 [concrete = constants.%assoc0]
-// CHECK:STDOUT:   %F.decl.loc23: %F.type.1ad64d.2 = fn_decl @F.2 [concrete = constants.%F.5d382e.2] {} {}
+// CHECK:STDOUT:   %F.decl.loc16: %F.type.1ad64d.1 = fn_decl @F.1 [concrete = constants.%F.5d382e.1] {} {}
+// CHECK:STDOUT:   %assoc0: %Interface.assoc_type = assoc_entity element0, %F.decl.loc16 [concrete = constants.%assoc0]
+// CHECK:STDOUT:   %F.decl.loc24: %F.type.1ad64d.2 = fn_decl @F.2 [concrete = constants.%F.5d382e.2] {} {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = %Self
 // CHECK:STDOUT:   .F = %assoc0
-// CHECK:STDOUT:   witness = (%F.decl.loc15)
+// CHECK:STDOUT:   witness = (%F.decl.loc16)
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic fn @F.1(@Interface.%Self: %Interface.type) {

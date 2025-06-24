@@ -43,7 +43,6 @@ fn G() {
 // CHECK:STDOUT:   %Scalar: type = bind_symbolic_name Scalar, 0 [symbolic]
 // CHECK:STDOUT:   %pattern_type.98f: type = pattern_type type [concrete]
 // CHECK:STDOUT:   %Generic.type.c21: type = generic_interface_type @Generic [concrete]
-// CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [concrete]
 // CHECK:STDOUT:   %Generic.generic: %Generic.type.c21 = struct_value () [concrete]
 // CHECK:STDOUT:   %Generic.type.91ccba.1: type = facet_type <@Generic, @Generic(%Scalar)> [symbolic]
 // CHECK:STDOUT:   %Self.dee: %Generic.type.91ccba.1 = bind_symbolic_name Self, 1 [symbolic]
@@ -74,8 +73,6 @@ fn G() {
 // CHECK:STDOUT:   %CallGenericMethod: %CallGenericMethod.type = struct_value () [concrete]
 // CHECK:STDOUT:   %G.type: type = fn_type @G [concrete]
 // CHECK:STDOUT:   %G: %G.type = struct_value () [concrete]
-// CHECK:STDOUT:   %Generic.type.c3b: type = facet_type <@Generic, @Generic(%WrongGenericParam)> [concrete]
-// CHECK:STDOUT:   %pattern_type.7ae: type = pattern_type %Generic.type.c3b [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -213,8 +210,6 @@ fn G() {
 // CHECK:STDOUT:   %CallGenericMethod.ref: %CallGenericMethod.type = name_ref CallGenericMethod, file.%CallGenericMethod.decl [concrete = constants.%CallGenericMethod]
 // CHECK:STDOUT:   %WrongGenericParam.ref: type = name_ref WrongGenericParam, file.%WrongGenericParam.decl [concrete = constants.%WrongGenericParam]
 // CHECK:STDOUT:   %ImplsGeneric.ref: type = name_ref ImplsGeneric, file.%ImplsGeneric.decl [concrete = constants.%ImplsGeneric]
-// CHECK:STDOUT:   %CallGenericMethod.specific_fn: <specific function> = specific_function %CallGenericMethod.ref, @CallGenericMethod(constants.%WrongGenericParam, <error>) [concrete = <error>]
-// CHECK:STDOUT:   %CallGenericMethod.call: init %empty_tuple.type = call %CallGenericMethod.specific_fn() [concrete = <error>]
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -251,12 +246,5 @@ fn G() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Generic(constants.%WrongGenericParam) {
 // CHECK:STDOUT:   %Scalar.loc15_19.2 => constants.%WrongGenericParam
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: specific @CallGenericMethod(constants.%WrongGenericParam, <error>) {
-// CHECK:STDOUT:   %T.loc27_22.2 => constants.%WrongGenericParam
-// CHECK:STDOUT:   %Generic.type.loc27_45.2 => constants.%Generic.type.c3b
-// CHECK:STDOUT:   %U.loc27_32.2 => <error>
-// CHECK:STDOUT:   %pattern_type => constants.%pattern_type.7ae
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

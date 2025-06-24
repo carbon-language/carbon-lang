@@ -52,7 +52,21 @@ static auto GenerateCppIncludesHeaderCode(
   return code;
 }
 
-namespace {
+// Adds the name to the scope with the given `inst_id`, if the `inst_id` is not
+// `None`.
+static auto AddNameToScope(Context& context, SemIR::NameScopeId scope_id,
+                           SemIR::NameId name_id, SemIR::InstId inst_id)
+    -> void {
+  if (inst_id.has_value()) {
+    context.name_scopes().AddRequiredName(scope_id, name_id, inst_id);
+  }
+}
+
+// Maps a Clang name to a Carbon `NameId`.
+static auto AddIdentifierName(Context& context, llvm::StringRef name)
+    -> SemIR::NameId {
+  return SemIR::NameId::ForIdentifier(context.identifiers().Add(name));
+}
 
 // Adds the given source location and an `ImportIRInst` referring to it in
 // `ImportIRId::Cpp`.
@@ -64,6 +78,8 @@ static auto AddImportIRInst(Context& context,
   return context.import_ir_insts().Add(
       SemIR::ImportIRInst(clang_source_loc_id));
 }
+
+namespace {
 
 // Used to convert Clang diagnostics to Carbon diagnostics.
 class CarbonClangDiagnosticConsumer : public clang::DiagnosticConsumer {
@@ -255,7 +271,8 @@ auto ImportCppFiles(Context& context, llvm::StringRef importing_file_path,
   SemIR::NameScope& name_scope = context.name_scopes().Get(name_scope_id);
   name_scope.set_is_closed_import(true);
   name_scope.set_clang_decl_context_id(context.sem_ir().clang_decls().Add(
-      generated_ast->getASTContext().getTranslationUnitDecl()));
+      {.decl = generated_ast->getASTContext().getTranslationUnitDecl(),
+       .inst_id = name_scope.inst_id()}));
 
   if (ast_has_error) {
     name_scope.set_has_error();
@@ -292,16 +309,188 @@ static auto ClangLookup(Context& context, SemIR::NameScopeId scope_id,
   // `TextDiagnosticPrinter` assumes we're processing a C++ source file.
   lookup.suppressDiagnostics();
 
+  auto scope_clang_decl_context_id =
+      context.name_scopes().Get(scope_id).clang_decl_context_id();
   bool found = sema.LookupQualifiedName(
       lookup,
-      clang::dyn_cast<clang::DeclContext>(context.sem_ir().clang_decls().Get(
-          context.name_scopes().Get(scope_id).clang_decl_context_id())));
+      clang::dyn_cast<clang::DeclContext>(context.sem_ir()
+                                              .clang_decls()
+                                              .Get(scope_clang_decl_context_id)
+                                              .decl));
 
   if (!found) {
     return std::nullopt;
   }
 
   return lookup;
+}
+
+// Imports a namespace declaration from Clang to Carbon. If successful, returns
+// the new Carbon namespace declaration `InstId`.
+static auto ImportNamespaceDecl(Context& context,
+                                SemIR::NameScopeId parent_scope_id,
+                                SemIR::NameId name_id,
+                                clang::NamespaceDecl* clang_decl)
+    -> SemIR::InstId {
+  auto result = AddImportNamespace(
+      context, GetSingletonType(context, SemIR::NamespaceType::TypeInstId),
+      name_id, parent_scope_id, /*import_id=*/SemIR::InstId::None);
+  context.name_scopes()
+      .Get(result.name_scope_id)
+      .set_clang_decl_context_id(context.sem_ir().clang_decls().Add(
+          {.decl = clang_decl, .inst_id = result.inst_id}));
+  return result.inst_id;
+}
+
+// Maps a C++ declaration context to a Carbon namespace.
+static auto AsCarbonNamespace(Context& context,
+                              clang::DeclContext* decl_context)
+    -> SemIR::InstId {
+  CARBON_CHECK(decl_context);
+  auto& clang_decls = context.sem_ir().clang_decls();
+
+  // Check if the decl context is already mapped to a Carbon namespace.
+  if (auto context_clang_decl_id = clang_decls.Lookup(
+          {.decl = clang::dyn_cast<clang::Decl>(decl_context),
+           .inst_id = SemIR::InstId::None});
+      context_clang_decl_id.has_value()) {
+    return clang_decls.Get(context_clang_decl_id).inst_id;
+  }
+
+  // We know we have at least one context to map, add all decl contexts we need
+  // to map.
+  llvm::SmallVector<clang::DeclContext*> decl_contexts;
+  auto parent_decl_id = SemIR::ClangDeclId::None;
+  do {
+    decl_contexts.push_back(decl_context);
+    decl_context = decl_context->getParent();
+    parent_decl_id =
+        clang_decls.Lookup({.decl = clang::dyn_cast<clang::Decl>(decl_context),
+                            .inst_id = SemIR::InstId::None});
+  } while (!parent_decl_id.has_value());
+
+  // We know the parent of the last decl context is mapped, map the rest.
+  auto namespace_inst_id = SemIR::InstId::None;
+  do {
+    decl_context = decl_contexts.pop_back_val();
+    auto parent_inst_id = clang_decls.Get(parent_decl_id).inst_id;
+    auto parent_namespace =
+        context.insts().GetAs<SemIR::Namespace>(parent_inst_id);
+    namespace_inst_id = ImportNamespaceDecl(
+        context, parent_namespace.name_scope_id,
+        AddIdentifierName(
+            context, llvm::dyn_cast<clang::NamedDecl>(decl_context)->getName()),
+        clang::dyn_cast<clang::NamespaceDecl>(decl_context));
+    parent_decl_id = clang_decls.Add({
+        .decl = clang::dyn_cast<clang::Decl>(decl_context),
+        .inst_id = namespace_inst_id,
+    });
+  } while (!decl_contexts.empty());
+
+  return namespace_inst_id;
+}
+
+// Creates a class declaration for the given class name in the given scope.
+// Returns the `InstId` for the declaration.
+static auto BuildClassDecl(Context& context, SemIR::NameScopeId parent_scope_id,
+                           SemIR::NameId name_id)
+    -> std::tuple<SemIR::ClassId, SemIR::InstId> {
+  // Add the class declaration.
+  auto class_decl = SemIR::ClassDecl{.type_id = SemIR::TypeType::TypeId,
+                                     .class_id = SemIR::ClassId::None,
+                                     .decl_block_id = SemIR::InstBlockId::None};
+  // TODO: Consider setting a proper location.
+  auto class_decl_id = AddPlaceholderInstInNoBlock(
+      context, SemIR::LocIdAndInst::NoLoc(class_decl));
+  context.imports().push_back(class_decl_id);
+
+  SemIR::Class class_info = {
+      {.name_id = name_id,
+       .parent_scope_id = parent_scope_id,
+       .generic_id = SemIR::GenericId::None,
+       .first_param_node_id = Parse::NodeId::None,
+       .last_param_node_id = Parse::NodeId::None,
+       .pattern_block_id = SemIR::InstBlockId::None,
+       .implicit_param_patterns_id = SemIR::InstBlockId::None,
+       .param_patterns_id = SemIR::InstBlockId::None,
+       .is_extern = false,
+       .extern_library_id = SemIR::LibraryNameId::None,
+       .non_owning_decl_id = SemIR::InstId::None,
+       .first_owning_decl_id = class_decl_id},
+      {// `.self_type_id` depends on the ClassType, so is set below.
+       .self_type_id = SemIR::TypeId::None,
+       // TODO: Support Dynamic classes.
+       // TODO: Support Final classes.
+       .inheritance_kind = SemIR::Class::Base}};
+
+  class_decl.class_id = context.classes().Add(class_info);
+
+  // Write the class ID into the ClassDecl.
+  ReplaceInstBeforeConstantUse(context, class_decl_id, class_decl);
+
+  SetClassSelfType(context, class_decl.class_id);
+
+  return {class_decl.class_id, class_decl_id};
+}
+
+// Creates a class definition for the given class name in the given scope based
+// on the information in the given Clang declaration. Returns the `InstId` for
+// the declaration, which is assumed to be for a class definition. Returns the
+// new class id and instruction id.
+static auto BuildClassDefinition(Context& context,
+                                 SemIR::NameScopeId parent_scope_id,
+                                 SemIR::NameId name_id,
+                                 clang::CXXRecordDecl* clang_decl)
+    -> std::tuple<SemIR::ClassId, SemIR::InstId> {
+  auto [class_id, class_inst_id] =
+      BuildClassDecl(context, parent_scope_id, name_id);
+  auto& class_info = context.classes().Get(class_id);
+  StartClassDefinition(context, class_info, class_inst_id);
+
+  context.name_scopes()
+      .Get(class_info.scope_id)
+      .set_clang_decl_context_id(context.sem_ir().clang_decls().Add(
+          {.decl = clang_decl, .inst_id = class_inst_id}));
+
+  return {class_id, class_inst_id};
+}
+
+// Imports a record declaration from Clang to Carbon. If successful, returns
+// the new Carbon class declaration `InstId`.
+// TODO: Change `clang_decl` to `const &` when lookup is using `clang::DeclID`
+// and we don't need to store the decl for lookup context.
+static auto ImportCXXRecordDecl(Context& context, SemIR::LocId loc_id,
+                                SemIR::NameScopeId parent_scope_id,
+                                SemIR::NameId name_id,
+                                clang::CXXRecordDecl* clang_decl)
+    -> SemIR::InstId {
+  clang::CXXRecordDecl* clang_def = clang_decl->getDefinition();
+  if (!clang_def) {
+    context.TODO(loc_id,
+                 "Unsupported: Record declarations without a definition");
+    return SemIR::ErrorInst::InstId;
+  }
+
+  if (clang_def->isDynamicClass()) {
+    context.TODO(loc_id, "Unsupported: Dynamic Class");
+    return SemIR::ErrorInst::InstId;
+  }
+
+  auto [class_id, class_def_id] =
+      BuildClassDefinition(context, parent_scope_id, name_id, clang_def);
+
+  // The class type is now fully defined. Compute its object representation.
+  ComputeClassObjectRepr(context,
+                         // TODO: Consider having a proper location here.
+                         Parse::ClassDefinitionId::None, class_id,
+                         // TODO: Set fields.
+                         /*field_decls=*/{},
+                         // TODO: Set vtable.
+                         /*vtable_contents=*/{},
+                         // TODO: Set block.
+                         /*body=*/{});
+
+  return class_def_id;
 }
 
 // Creates an integer type of the given size.
@@ -312,29 +501,76 @@ static auto MakeIntType(Context& context, IntId size_id) -> TypeExpr {
   return ExprAsType(context, Parse::NodeId::None, type_inst_id);
 }
 
-// Maps a C++ type to a Carbon type.
-// TODO: Support more types.
-static auto MapType(Context& context, clang::QualType type) -> TypeExpr {
-  const auto* builtin_type = dyn_cast<clang::BuiltinType>(type);
-  if (!builtin_type) {
-    return {.inst_id = SemIR::ErrorInst::TypeInstId,
-            .type_id = SemIR::ErrorInst::TypeId};
-  }
+// Maps a C++ builtin type to a Carbon type.
+// TODO: Support more builtin types.
+static auto MapBuiltinType(Context& context, const clang::BuiltinType& type)
+    -> TypeExpr {
   // TODO: Refactor to avoid duplication.
-  switch (builtin_type->getKind()) {
+  switch (type.getKind()) {
     case clang::BuiltinType::Short:
-      if (context.ast_context().getTypeSize(type) == 16) {
+      if (context.ast_context().getTypeSize(&type) == 16) {
         return MakeIntType(context, context.ints().Add(16));
       }
       break;
     case clang::BuiltinType::Int:
-      if (context.ast_context().getTypeSize(type) == 32) {
+      if (context.ast_context().getTypeSize(&type) == 32) {
         return MakeIntType(context, context.ints().Add(32));
       }
       break;
     default:
       break;
   }
+  return {.inst_id = SemIR::ErrorInst::TypeInstId,
+          .type_id = SemIR::ErrorInst::TypeId};
+}
+
+// Maps a C++ record type to a Carbon type.
+// TODO: Support more record types.
+static auto MapRecordType(Context& context, SemIR::LocId loc_id,
+                          const clang::RecordType& type) -> TypeExpr {
+  auto* record_decl = clang::dyn_cast<clang::CXXRecordDecl>(type.getDecl());
+  if (record_decl && !record_decl->isUnion()) {
+    auto& clang_decls = context.sem_ir().clang_decls();
+    SemIR::InstId record_inst_id = SemIR::InstId::None;
+    if (auto record_clang_decl_id = clang_decls.Lookup(
+            {.decl = record_decl, .inst_id = SemIR::InstId::None});
+        record_clang_decl_id.has_value()) {
+      record_inst_id = clang_decls.Get(record_clang_decl_id).inst_id;
+    } else {
+      auto parent_inst_id =
+          AsCarbonNamespace(context, record_decl->getDeclContext());
+      auto parent_name_scope_id =
+          context.insts().GetAs<SemIR::Namespace>(parent_inst_id).name_scope_id;
+      SemIR::NameId record_name_id =
+          AddIdentifierName(context, record_decl->getName());
+      record_inst_id = ImportCXXRecordDecl(
+          context, loc_id, parent_name_scope_id, record_name_id, record_decl);
+      AddNameToScope(context, parent_name_scope_id, record_name_id,
+                     record_inst_id);
+    }
+    SemIR::TypeInstId record_type_inst_id =
+        context.types().GetAsTypeInstId(record_inst_id);
+    return {
+        .inst_id = record_type_inst_id,
+        .type_id = context.types().GetTypeIdForTypeInstId(record_type_inst_id)};
+  }
+
+  return {.inst_id = SemIR::ErrorInst::TypeInstId,
+          .type_id = SemIR::ErrorInst::TypeId};
+}
+
+// Maps a C++ type to a Carbon type.
+// TODO: Support more types.
+static auto MapType(Context& context, SemIR::LocId loc_id, clang::QualType type)
+    -> TypeExpr {
+  if (const auto* builtin_type = dyn_cast<clang::BuiltinType>(type)) {
+    return MapBuiltinType(context, *builtin_type);
+  }
+
+  if (const auto* record_type = clang::dyn_cast<clang::RecordType>(type)) {
+    return MapRecordType(context, loc_id, *record_type);
+  }
+
   return {.inst_id = SemIR::ErrorInst::TypeInstId,
           .type_id = SemIR::ErrorInst::TypeId};
 }
@@ -359,7 +595,7 @@ static auto MakeParamPatternsBlockId(Context& context, SemIR::LocId loc_id,
     // Mark the start of a region of insts, needed for the type expression
     // created later with the call of `EndSubpatternAsExpr()`.
     BeginSubpattern(context);
-    auto [type_inst_id, type_id] = MapType(context, param_type);
+    auto [type_inst_id, type_id] = MapType(context, loc_id, param_type);
     // Type expression of the binding pattern - a single-entry/single-exit
     // region that allows control flow in the type expression e.g. fn F(x: if C
     // then i32 else i64).
@@ -378,8 +614,7 @@ static auto MakeParamPatternsBlockId(Context& context, SemIR::LocId loc_id,
             // Translate an unnamed parameter to an underscore to
             // match Carbon's naming of unnamed/unused function params.
             ? SemIR::NameId::Underscore
-            : SemIR::NameId::ForIdentifier(
-                  context.sem_ir().identifiers().Add(param_name));
+            : AddIdentifierName(context, param_name);
 
     // TODO: Fix this once templates are supported.
     bool is_template = false;
@@ -413,7 +648,7 @@ static auto GetReturnType(Context& context, SemIR::LocId loc_id,
     return SemIR::InstId::None;
   }
 
-  auto [type_inst_id, type_id] = MapType(context, ret_type);
+  auto [type_inst_id, type_id] = MapType(context, loc_id, ret_type);
   if (type_id == SemIR::ErrorInst::TypeId) {
     context.TODO(loc_id, llvm::formatv("Unsupported: return type: {0}",
                                        ret_type.getAsString()));
@@ -531,7 +766,8 @@ static auto ImportFunctionDecl(Context& context, SemIR::LocId loc_id,
        .return_slot_pattern_id = function_params_insts->return_slot_pattern_id,
        .virtual_modifier = SemIR::FunctionFields::VirtualModifier::None,
        .self_param_id = SemIR::InstId::None,
-       .clang_decl_id = context.sem_ir().clang_decls().Add(clang_decl)}};
+       .clang_decl_id = context.sem_ir().clang_decls().Add(
+           {.decl = clang_decl, .inst_id = decl_id})}};
 
   function_decl.function_id = context.functions().Add(function_info);
 
@@ -542,127 +778,6 @@ static auto ImportFunctionDecl(Context& context, SemIR::LocId loc_id,
 
   return decl_id;
 }
-
-// Imports a namespace declaration from Clang to Carbon. If successful, returns
-// the new Carbon namespace declaration `InstId`.
-static auto ImportNamespaceDecl(Context& context,
-                                SemIR::NameScopeId parent_scope_id,
-                                SemIR::NameId name_id,
-                                clang::NamespaceDecl* clang_decl)
-    -> SemIR::InstId {
-  auto result = AddImportNamespace(
-      context, GetSingletonType(context, SemIR::NamespaceType::TypeInstId),
-      name_id, parent_scope_id, /*import_id=*/SemIR::InstId::None);
-  context.name_scopes()
-      .Get(result.name_scope_id)
-      .set_clang_decl_context_id(
-          context.sem_ir().clang_decls().Add(clang_decl));
-  return result.inst_id;
-}
-
-// Creates a class declaration for the given class name in the given scope.
-// Returns the `InstId` for the declaration.
-static auto BuildClassDecl(Context& context, SemIR::NameScopeId parent_scope_id,
-                           SemIR::NameId name_id)
-    -> std::tuple<SemIR::ClassId, SemIR::InstId> {
-  // Add the class declaration.
-  auto class_decl = SemIR::ClassDecl{.type_id = SemIR::TypeType::TypeId,
-                                     .class_id = SemIR::ClassId::None,
-                                     .decl_block_id = SemIR::InstBlockId::None};
-  // TODO: Consider setting a proper location.
-  auto class_decl_id = AddPlaceholderInstInNoBlock(
-      context, SemIR::LocIdAndInst::NoLoc(class_decl));
-  context.imports().push_back(class_decl_id);
-
-  SemIR::Class class_info = {
-      {.name_id = name_id,
-       .parent_scope_id = parent_scope_id,
-       .generic_id = SemIR::GenericId::None,
-       .first_param_node_id = Parse::NodeId::None,
-       .last_param_node_id = Parse::NodeId::None,
-       .pattern_block_id = SemIR::InstBlockId::None,
-       .implicit_param_patterns_id = SemIR::InstBlockId::None,
-       .param_patterns_id = SemIR::InstBlockId::None,
-       .is_extern = false,
-       .extern_library_id = SemIR::LibraryNameId::None,
-       .non_owning_decl_id = SemIR::InstId::None,
-       .first_owning_decl_id = class_decl_id},
-      {// `.self_type_id` depends on the ClassType, so is set below.
-       .self_type_id = SemIR::TypeId::None,
-       // TODO: Support Dynamic classes.
-       // TODO: Support Final classes.
-       .inheritance_kind = SemIR::Class::Base}};
-
-  class_decl.class_id = context.classes().Add(class_info);
-
-  // Write the class ID into the ClassDecl.
-  ReplaceInstBeforeConstantUse(context, class_decl_id, class_decl);
-
-  SetClassSelfType(context, class_decl.class_id);
-
-  return {class_decl.class_id, class_decl_id};
-}
-
-// Creates a class definition for the given class name in the given scope based
-// on the information in the given Clang declaration. Returns the `InstId` for
-// the declaration, which is assumed to be for a class definition. Returns the
-// new class id and instruction id.
-static auto BuildClassDefinition(Context& context,
-                                 SemIR::NameScopeId parent_scope_id,
-                                 SemIR::NameId name_id,
-                                 clang::CXXRecordDecl* clang_decl)
-    -> std::tuple<SemIR::ClassId, SemIR::InstId> {
-  auto [class_id, class_decl_id] =
-      BuildClassDecl(context, parent_scope_id, name_id);
-  auto& class_info = context.classes().Get(class_id);
-  StartClassDefinition(context, class_info, class_decl_id);
-
-  context.name_scopes()
-      .Get(class_info.scope_id)
-      .set_clang_decl_context_id(
-          context.sem_ir().clang_decls().Add(clang_decl));
-
-  return {class_id, class_decl_id};
-}
-
-// Imports a record declaration from Clang to Carbon. If successful, returns
-// the new Carbon class declaration `InstId`.
-// TODO: Change `clang_decl` to `const &` when lookup is using `clang::DeclID`
-// and we don't need to store the decl for lookup context.
-static auto ImportCXXRecordDecl(Context& context, SemIR::LocId loc_id,
-                                SemIR::NameScopeId parent_scope_id,
-                                SemIR::NameId name_id,
-                                clang::CXXRecordDecl* clang_decl)
-    -> SemIR::InstId {
-  clang::CXXRecordDecl* clang_def = clang_decl->getDefinition();
-  if (!clang_def) {
-    context.TODO(loc_id,
-                 "Unsupported: Record declarations without a definition");
-    return SemIR::ErrorInst::InstId;
-  }
-
-  if (clang_def->isDynamicClass()) {
-    context.TODO(loc_id, "Unsupported: Dynamic Class");
-    return SemIR::ErrorInst::InstId;
-  }
-
-  auto [class_id, class_def_id] =
-      BuildClassDefinition(context, parent_scope_id, name_id, clang_def);
-
-  // The class type is now fully defined. Compute its object representation.
-  ComputeClassObjectRepr(context,
-                         // TODO: Consider having a proper location here.
-                         Parse::ClassDefinitionId::None, class_id,
-                         // TODO: Set fields.
-                         /*field_decls=*/{},
-                         // TODO: Set vtable.
-                         /*vtable_contents=*/{},
-                         // TODO: Set block.
-                         /*body=*/{});
-
-  return class_def_id;
-}
-
 // Imports a declaration from Clang to Carbon. If successful, returns the
 // instruction for the new Carbon declaration.
 static auto ImportNameDecl(Context& context, SemIR::LocId loc_id,
@@ -690,6 +805,19 @@ static auto ImportNameDecl(Context& context, SemIR::LocId loc_id,
   return SemIR::InstId::None;
 }
 
+// Imports a `clang::NamedDecl` into Carbon and adds that name into the
+// `NameScope`.
+static auto ImportNameDeclIntoScope(Context& context, SemIR::LocId loc_id,
+                                    SemIR::NameScopeId scope_id,
+                                    SemIR::NameId name_id,
+                                    clang::NamedDecl* clang_decl)
+    -> SemIR::InstId {
+  SemIR::InstId inst_id =
+      ImportNameDecl(context, loc_id, scope_id, name_id, clang_decl);
+  AddNameToScope(context, scope_id, name_id, inst_id);
+  return inst_id;
+}
+
 auto ImportNameFromCpp(Context& context, SemIR::LocId loc_id,
                        SemIR::NameScopeId scope_id, SemIR::NameId name_id)
     -> SemIR::InstId {
@@ -711,11 +839,13 @@ auto ImportNameFromCpp(Context& context, SemIR::LocId loc_id,
                                "find a single result; LookupResultKind: {0}",
                                static_cast<int>(lookup->getResultKind()))
                      .str());
+    context.name_scopes().AddRequiredName(scope_id, name_id,
+                                          SemIR::ErrorInst::InstId);
     return SemIR::ErrorInst::InstId;
   }
 
-  return ImportNameDecl(context, loc_id, scope_id, name_id,
-                        lookup->getFoundDecl());
+  return ImportNameDeclIntoScope(context, loc_id, scope_id, name_id,
+                                 lookup->getFoundDecl());
 }
 
 }  // namespace Carbon::Check

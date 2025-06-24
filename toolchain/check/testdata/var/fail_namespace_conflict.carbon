@@ -2,6 +2,7 @@
 // Exceptions. See /LICENSE for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
+// INCLUDE-FILE: toolchain/testing/testdata/min_prelude/convert.carbon
 // TODO: Add ranges and switch to "--dump-sem-ir-ranges=only".
 // EXTRA-ARGS: --no-prelude-import --dump-sem-ir-ranges=if-present
 //
@@ -41,37 +42,37 @@ var A: () = ();
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace [concrete] {
-// CHECK:STDOUT:     .A = %A.loc14
+// CHECK:STDOUT:     .A = %A.loc15
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %A.loc14: <namespace> = namespace [concrete] {}
+// CHECK:STDOUT:   %A.loc15: <namespace> = namespace [concrete] {}
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %A.patt.loc23: %pattern_type = binding_pattern A [concrete]
-// CHECK:STDOUT:     %A.var_patt.loc23: %pattern_type = var_pattern %A.patt.loc23 [concrete]
+// CHECK:STDOUT:     %A.patt.loc24: %pattern_type = binding_pattern A [concrete]
+// CHECK:STDOUT:     %A.var_patt.loc24: %pattern_type = var_pattern %A.patt.loc24 [concrete]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %A.var.loc23: ref %empty_tuple.type = var %A.var_patt.loc23 [concrete]
-// CHECK:STDOUT:   %.loc23_9.1: type = splice_block %.loc23_9.3 [concrete = constants.%empty_tuple.type] {
-// CHECK:STDOUT:     %.loc23_9.2: %empty_tuple.type = tuple_literal ()
-// CHECK:STDOUT:     %.loc23_9.3: type = converted %.loc23_9.2, constants.%empty_tuple.type [concrete = constants.%empty_tuple.type]
+// CHECK:STDOUT:   %A.var.loc24: ref %empty_tuple.type = var %A.var_patt.loc24 [concrete]
+// CHECK:STDOUT:   %.loc24_9.1: type = splice_block %.loc24_9.3 [concrete = constants.%empty_tuple.type] {
+// CHECK:STDOUT:     %.loc24_9.2: %empty_tuple.type = tuple_literal ()
+// CHECK:STDOUT:     %.loc24_9.3: type = converted %.loc24_9.2, constants.%empty_tuple.type [concrete = constants.%empty_tuple.type]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %A.loc23: ref %empty_tuple.type = bind_name A, %A.var.loc23 [concrete = %A.var.loc23]
+// CHECK:STDOUT:   %A.loc24: ref %empty_tuple.type = bind_name A, %A.var.loc24 [concrete = %A.var.loc24]
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %A.patt.loc32: %pattern_type = binding_pattern A [concrete]
-// CHECK:STDOUT:     %A.var_patt.loc32: %pattern_type = var_pattern %A.patt.loc32 [concrete]
+// CHECK:STDOUT:     %A.patt.loc33: %pattern_type = binding_pattern A [concrete]
+// CHECK:STDOUT:     %A.var_patt.loc33: %pattern_type = var_pattern %A.patt.loc33 [concrete]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %A.var.loc32: ref %empty_tuple.type = var %A.var_patt.loc32 [concrete]
-// CHECK:STDOUT:   %.loc32_9.1: type = splice_block %.loc32_9.3 [concrete = constants.%empty_tuple.type] {
-// CHECK:STDOUT:     %.loc32_9.2: %empty_tuple.type = tuple_literal ()
-// CHECK:STDOUT:     %.loc32_9.3: type = converted %.loc32_9.2, constants.%empty_tuple.type [concrete = constants.%empty_tuple.type]
+// CHECK:STDOUT:   %A.var.loc33: ref %empty_tuple.type = var %A.var_patt.loc33 [concrete]
+// CHECK:STDOUT:   %.loc33_9.1: type = splice_block %.loc33_9.3 [concrete = constants.%empty_tuple.type] {
+// CHECK:STDOUT:     %.loc33_9.2: %empty_tuple.type = tuple_literal ()
+// CHECK:STDOUT:     %.loc33_9.3: type = converted %.loc33_9.2, constants.%empty_tuple.type [concrete = constants.%empty_tuple.type]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %A.loc32: ref %empty_tuple.type = bind_name A, %A.var.loc32 [concrete = %A.var.loc32]
+// CHECK:STDOUT:   %A.loc33: ref %empty_tuple.type = bind_name A, %A.var.loc33 [concrete = %A.var.loc33]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %.loc32_14.1: %empty_tuple.type = tuple_literal ()
-// CHECK:STDOUT:   %.loc32_14.2: init %empty_tuple.type = tuple_init () to file.%A.var.loc32 [concrete = constants.%empty_tuple]
-// CHECK:STDOUT:   %.loc32_1: init %empty_tuple.type = converted %.loc32_14.1, %.loc32_14.2 [concrete = constants.%empty_tuple]
-// CHECK:STDOUT:   assign file.%A.var.loc32, %.loc32_1
+// CHECK:STDOUT:   %.loc33_14.1: %empty_tuple.type = tuple_literal ()
+// CHECK:STDOUT:   %.loc33_14.2: init %empty_tuple.type = tuple_init () to file.%A.var.loc33 [concrete = constants.%empty_tuple]
+// CHECK:STDOUT:   %.loc33_1: init %empty_tuple.type = converted %.loc33_14.1, %.loc33_14.2 [concrete = constants.%empty_tuple]
+// CHECK:STDOUT:   assign file.%A.var.loc33, %.loc33_1
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

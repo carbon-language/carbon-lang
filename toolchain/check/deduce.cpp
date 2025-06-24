@@ -543,6 +543,12 @@ auto DeductionContext::CheckDeductionIsComplete() -> bool {
                                            binding_type_id)
                     : TryConvertToValueOfType(context(), loc_id_,
                                               deduced_arg_id, binding_type_id);
+      // The conversion of the argument to the parameter type can fail after
+      // applying the enclosing specific, in which case deduction fails.
+      if (converted_arg_id == SemIR::ErrorInst::InstId) {
+        return false;
+      }
+
       // Replace the deduced arg with its value converted to the parameter
       // type. The conversion of the argument type must produce a constant value
       // to be used in deduction.

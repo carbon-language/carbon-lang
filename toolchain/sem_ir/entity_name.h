@@ -24,6 +24,14 @@ struct EntityName : public Printable<EntityName> {
     return std::memcmp(&lhs, &rhs, sizeof(EntityName)) == 0;
   }
 
+  // Hashing for EntityName. See common/hashing.h.
+  friend auto CarbonHashValue(const EntityName& value, uint64_t seed)
+      -> HashCode {
+    Hasher hasher(seed);
+    hasher.HashRaw(value);
+    return static_cast<HashCode>(hasher);
+  }
+
   // The index of the binding, if this is the name of a symbolic binding, or
   // `None` otherwise. This is also `None` for a `.Self` symbolic binding,
   // because such a binding is not assigned an index.
@@ -45,14 +53,6 @@ struct EntityName : public Printable<EntityName> {
   // Whether this binding is a template parameter.
   bool is_template : 1 = false;
 };
-
-// Hashing for EntityName. See common/hashing.h.
-inline auto CarbonHashValue(const EntityName& value, uint64_t seed)
-    -> HashCode {
-  Hasher hasher(seed);
-  hasher.HashRaw(value);
-  return static_cast<HashCode>(hasher);
-}
 
 // Value store for EntityName. In addition to the regular ValueStore
 // functionality, this can provide optional canonical IDs for EntityNames.

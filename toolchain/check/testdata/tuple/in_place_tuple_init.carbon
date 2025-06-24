@@ -1,6 +1,7 @@
 // Part of the Carbon Language project, under the Apache License v2.0 with LLVM
 // Exceptions. See /LICENSE for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
+//
 // INCLUDE-FILE: toolchain/testing/testdata/min_prelude/int.carbon
 //
 // AUTOUPDATE
@@ -60,10 +61,10 @@ fn H() {
 // CHECK:STDOUT:   %Destroy.type: type = facet_type <@Destroy> [concrete]
 // CHECK:STDOUT:   %Op.type.bae: type = fn_type @Op.1 [concrete]
 // CHECK:STDOUT:   %T: type = bind_symbolic_name T, 0 [symbolic]
-// CHECK:STDOUT:   %Op.type.bc9: type = fn_type @Op.2, @impl.49c(%T) [symbolic]
+// CHECK:STDOUT:   %Op.type.bc9: type = fn_type @Op.3, @impl.49c(%T) [symbolic]
 // CHECK:STDOUT:   %Op.46f: %Op.type.bc9 = struct_value () [symbolic]
 // CHECK:STDOUT:   %Destroy.impl_witness.5a7: <witness> = impl_witness imports.%Destroy.impl_witness_table, @impl.49c(%tuple.type.d07) [concrete]
-// CHECK:STDOUT:   %Op.type.a4a: type = fn_type @Op.2, @impl.49c(%tuple.type.d07) [concrete]
+// CHECK:STDOUT:   %Op.type.a4a: type = fn_type @Op.3, @impl.49c(%tuple.type.d07) [concrete]
 // CHECK:STDOUT:   %Op.7c6: %Op.type.a4a = struct_value () [concrete]
 // CHECK:STDOUT:   %Destroy.facet: %Destroy.type = facet_value %tuple.type.d07, (%Destroy.impl_witness.5a7) [concrete]
 // CHECK:STDOUT:   %.b68: type = fn_type_with_self_type %Op.type.bae, %Destroy.facet [concrete]
@@ -146,25 +147,25 @@ fn H() {
 // CHECK:STDOUT:   %Convert.type.0f9: type = fn_type @Convert.2, @impl.4f9(%To) [symbolic]
 // CHECK:STDOUT:   %Convert.f06: %Convert.type.0f9 = struct_value () [symbolic]
 // CHECK:STDOUT:   %T: type = bind_symbolic_name T, 0 [symbolic]
-// CHECK:STDOUT:   %Op.type.bc9: type = fn_type @Op.2, @impl.49c(%T) [symbolic]
+// CHECK:STDOUT:   %Op.type.bc9: type = fn_type @Op.3, @impl.49c(%T) [symbolic]
 // CHECK:STDOUT:   %Op.46f: %Op.type.bc9 = struct_value () [symbolic]
 // CHECK:STDOUT:   %Destroy.impl_witness.2c6: <witness> = impl_witness imports.%Destroy.impl_witness_table, @impl.49c(%tuple.type.99b) [concrete]
-// CHECK:STDOUT:   %Op.type.387: type = fn_type @Op.2, @impl.49c(%tuple.type.99b) [concrete]
+// CHECK:STDOUT:   %Op.type.387: type = fn_type @Op.3, @impl.49c(%tuple.type.99b) [concrete]
 // CHECK:STDOUT:   %Op.b09: %Op.type.387 = struct_value () [concrete]
 // CHECK:STDOUT:   %Destroy.facet.e74: %Destroy.type = facet_value %tuple.type.99b, (%Destroy.impl_witness.2c6) [concrete]
 // CHECK:STDOUT:   %.41d: type = fn_type_with_self_type %Op.type.bae, %Destroy.facet.e74 [concrete]
 // CHECK:STDOUT:   %Destroy.impl_witness.c0f: <witness> = impl_witness imports.%Destroy.impl_witness_table, @impl.49c(%tuple.type.189) [concrete]
-// CHECK:STDOUT:   %Op.type.19f: type = fn_type @Op.2, @impl.49c(%tuple.type.189) [concrete]
+// CHECK:STDOUT:   %Op.type.19f: type = fn_type @Op.3, @impl.49c(%tuple.type.189) [concrete]
 // CHECK:STDOUT:   %Op.672: %Op.type.19f = struct_value () [concrete]
 // CHECK:STDOUT:   %Destroy.facet.ba8: %Destroy.type = facet_value %tuple.type.189, (%Destroy.impl_witness.c0f) [concrete]
 // CHECK:STDOUT:   %.cce: type = fn_type_with_self_type %Op.type.bae, %Destroy.facet.ba8 [concrete]
-// CHECK:STDOUT:   %Op.specific_fn.cf9: <specific function> = specific_function %Op.672, @Op.2(%tuple.type.189) [concrete]
-// CHECK:STDOUT:   %Op.specific_fn.852: <specific function> = specific_function %Op.b09, @Op.2(%tuple.type.99b) [concrete]
+// CHECK:STDOUT:   %Op.specific_fn.cf9: <specific function> = specific_function %Op.672, @Op.3(%tuple.type.189) [concrete]
+// CHECK:STDOUT:   %Op.specific_fn.852: <specific function> = specific_function %Op.b09, @Op.3(%tuple.type.99b) [concrete]
 // CHECK:STDOUT:   %tuple.type.3a3: type = tuple_type (type, %tuple.type.ff9, type) [concrete]
 // CHECK:STDOUT:   %tuple.type.516: type = tuple_type (%i32, %tuple.type.189, %i32) [concrete]
 // CHECK:STDOUT:   %pattern_type.6b5: type = pattern_type %tuple.type.516 [concrete]
 // CHECK:STDOUT:   %Destroy.impl_witness.78c: <witness> = impl_witness imports.%Destroy.impl_witness_table, @impl.49c(%tuple.type.516) [concrete]
-// CHECK:STDOUT:   %Op.type.701: type = fn_type @Op.2, @impl.49c(%tuple.type.516) [concrete]
+// CHECK:STDOUT:   %Op.type.701: type = fn_type @Op.3, @impl.49c(%tuple.type.516) [concrete]
 // CHECK:STDOUT:   %Op.dfb: %Op.type.701 = struct_value () [concrete]
 // CHECK:STDOUT:   %Destroy.facet.d6c: %Destroy.type = facet_value %tuple.type.516, (%Destroy.impl_witness.78c) [concrete]
 // CHECK:STDOUT:   %.1fa: type = fn_type_with_self_type %Op.type.bae, %Destroy.facet.d6c [concrete]
@@ -185,11 +186,11 @@ fn H() {
 // CHECK:STDOUT:   %Convert.bound.ef9: <bound method> = bound_method %int_2.ecc, %Convert.956 [concrete]
 // CHECK:STDOUT:   %bound_method.b92: <bound method> = bound_method %int_2.ecc, %Convert.specific_fn [concrete]
 // CHECK:STDOUT:   %int_2.ef8: %i32 = int_value 2 [concrete]
-// CHECK:STDOUT:   %Op.specific_fn.922: <specific function> = specific_function %Op.dfb, @Op.2(%tuple.type.516) [concrete]
+// CHECK:STDOUT:   %Op.specific_fn.922: <specific function> = specific_function %Op.dfb, @Op.3(%tuple.type.516) [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
-// CHECK:STDOUT:   %Core.import_ref.a5b: @impl.4f9.%Convert.type (%Convert.type.0f9) = import_ref Core//prelude, loc18_39, loaded [symbolic = @impl.4f9.%Convert (constants.%Convert.f06)]
+// CHECK:STDOUT:   %Core.import_ref.a5b: @impl.4f9.%Convert.type (%Convert.type.0f9) = import_ref Core//prelude/parts/int, loc16_39, loaded [symbolic = @impl.4f9.%Convert (constants.%Convert.f06)]
 // CHECK:STDOUT:   %ImplicitAs.impl_witness_table.a2f = impl_witness_table (%Core.import_ref.a5b), @impl.4f9 [concrete]
 // CHECK:STDOUT:   %Core.import_ref.0b9: @impl.49c.%Op.type (%Op.type.bc9) = import_ref Core//prelude/parts/destroy, loc8_23, loaded [symbolic = @impl.49c.%Op (constants.%Op.46f)]
 // CHECK:STDOUT:   %Destroy.impl_witness_table = impl_witness_table (%Core.import_ref.0b9), @impl.49c [concrete]
@@ -239,7 +240,7 @@ fn H() {
 // CHECK:STDOUT:     %.loc7_43.5: type = converted %.loc7_43.2, constants.%tuple.type.99b [concrete = constants.%tuple.type.99b]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %v: ref %tuple.type.99b = bind_name v, %v.var
-// CHECK:STDOUT:   %specific_fn.loc7_55: <specific function> = specific_function %impl.elem0.loc7_55, @Op.2(constants.%tuple.type.189) [concrete = constants.%Op.specific_fn.cf9]
+// CHECK:STDOUT:   %specific_fn.loc7_55: <specific function> = specific_function %impl.elem0.loc7_55, @Op.3(constants.%tuple.type.189) [concrete = constants.%Op.specific_fn.cf9]
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT:   %tuple.elem0.loc7_56.2: ref %i32 = tuple_access %tuple.elem1.loc7_56.1, element0
 // CHECK:STDOUT:   %.loc7_56.3: %i32 = bind_value %tuple.elem0.loc7_56.2
@@ -250,7 +251,7 @@ fn H() {
 // CHECK:STDOUT:   %tuple.loc7_56.1: %tuple.type.189 = tuple_value (%.loc7_56.3, %.loc7_56.4, %.loc7_56.5)
 // CHECK:STDOUT:   %.loc7_56.6: %tuple.type.189 = converted %tuple.elem1.loc7_56.1, %tuple.loc7_56.1
 // CHECK:STDOUT:   <elided>
-// CHECK:STDOUT:   %specific_fn.loc7_50: <specific function> = specific_function %impl.elem0.loc7_50, @Op.2(constants.%tuple.type.189) [concrete = constants.%Op.specific_fn.cf9]
+// CHECK:STDOUT:   %specific_fn.loc7_50: <specific function> = specific_function %impl.elem0.loc7_50, @Op.3(constants.%tuple.type.189) [concrete = constants.%Op.specific_fn.cf9]
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT:   %tuple.elem0.loc7_56.3: ref %i32 = tuple_access %tuple.elem0.loc7_56.1, element0
 // CHECK:STDOUT:   %.loc7_56.7: %i32 = bind_value %tuple.elem0.loc7_56.3
@@ -261,7 +262,7 @@ fn H() {
 // CHECK:STDOUT:   %tuple.loc7_56.2: %tuple.type.189 = tuple_value (%.loc7_56.7, %.loc7_56.8, %.loc7_56.9)
 // CHECK:STDOUT:   %.loc7_56.10: %tuple.type.189 = converted %tuple.elem0.loc7_56.1, %tuple.loc7_56.2
 // CHECK:STDOUT:   <elided>
-// CHECK:STDOUT:   %specific_fn.loc7_3: <specific function> = specific_function %impl.elem0.loc7_3, @Op.2(constants.%tuple.type.99b) [concrete = constants.%Op.specific_fn.852]
+// CHECK:STDOUT:   %specific_fn.loc7_3: <specific function> = specific_function %impl.elem0.loc7_3, @Op.3(constants.%tuple.type.99b) [concrete = constants.%Op.specific_fn.852]
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT:   %tuple.elem0.loc7_3.1: ref %tuple.type.189 = tuple_access %v.var, element0
 // CHECK:STDOUT:   %tuple.elem0.loc7_3.2: ref %i32 = tuple_access %tuple.elem0.loc7_3.1, element0
@@ -339,7 +340,7 @@ fn H() {
 // CHECK:STDOUT:     %.loc13_36.4: type = converted %.loc13_36.2, constants.%tuple.type.516 [concrete = constants.%tuple.type.516]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %v: ref %tuple.type.516 = bind_name v, %v.var
-// CHECK:STDOUT:   %specific_fn.loc13_46: <specific function> = specific_function %impl.elem0.loc13_46, @Op.2(constants.%tuple.type.189) [concrete = constants.%Op.specific_fn.cf9]
+// CHECK:STDOUT:   %specific_fn.loc13_46: <specific function> = specific_function %impl.elem0.loc13_46, @Op.3(constants.%tuple.type.189) [concrete = constants.%Op.specific_fn.cf9]
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT:   %tuple.elem0.loc13_50.2: ref %i32 = tuple_access %tuple.elem1.loc13_50.1, element0
 // CHECK:STDOUT:   %.loc13_50.7: %i32 = bind_value %tuple.elem0.loc13_50.2
@@ -350,7 +351,7 @@ fn H() {
 // CHECK:STDOUT:   %tuple.loc13_50: %tuple.type.189 = tuple_value (%.loc13_50.7, %.loc13_50.8, %.loc13_50.9)
 // CHECK:STDOUT:   %.loc13_50.10: %tuple.type.189 = converted %tuple.elem1.loc13_50.1, %tuple.loc13_50
 // CHECK:STDOUT:   <elided>
-// CHECK:STDOUT:   %specific_fn.loc13_3: <specific function> = specific_function %impl.elem0.loc13_3, @Op.2(constants.%tuple.type.516) [concrete = constants.%Op.specific_fn.922]
+// CHECK:STDOUT:   %specific_fn.loc13_3: <specific function> = specific_function %impl.elem0.loc13_3, @Op.3(constants.%tuple.type.516) [concrete = constants.%Op.specific_fn.922]
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT:   %tuple.elem0.loc13_3.1: ref %i32 = tuple_access %v.var, element0
 // CHECK:STDOUT:   %.loc13_3.2: %i32 = bind_value %tuple.elem0.loc13_3.1

@@ -2,6 +2,7 @@
 // Exceptions. See /LICENSE for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
+// INCLUDE-FILE: toolchain/testing/testdata/min_prelude/int.carbon
 // TODO: Add ranges and switch to "--dump-sem-ir-ranges=only".
 // EXTRA-ARGS: --dump-sem-ir-ranges=if-present
 //
@@ -10,7 +11,7 @@
 // TIP:   bazel test //toolchain/testing:file_test --test_arg=--file_tests=toolchain/check/testdata/function/generic/resolve_used.carbon
 // TIP: To dump output, run:
 // TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/check/testdata/function/generic/resolve_used.carbon
-// CHECK:STDERR: {{.*}}/prelude/types/int.carbon:13:9: error: integer type width of 0 is not positive [IntWidthNotPositive]
+// CHECK:STDERR: min_prelude/parts/int.carbon:10:9: error: integer type width of 0 is not positive [IntWidthNotPositive]
 // CHECK:STDERR:   adapt MakeInt(N);
 // CHECK:STDERR:         ^~~~~~~~~~
 
@@ -54,14 +55,14 @@ fn CallNegative() {
 // CHECK:STDOUT:   %pattern_type.8963eb.1: type = pattern_type %Int.49d0e6.1 [symbolic]
 // CHECK:STDOUT:   %Destroy.type: type = facet_type <@Destroy> [concrete]
 // CHECK:STDOUT:   %Op.type.bae: type = fn_type @Op.1 [concrete]
-// CHECK:STDOUT:   %T.8b3: type = bind_symbolic_name T, 0 [symbolic]
-// CHECK:STDOUT:   %Op.type.bc9: type = fn_type @Op.2, @impl.49c(%T.8b3) [symbolic]
+// CHECK:STDOUT:   %T: type = bind_symbolic_name T, 0 [symbolic]
+// CHECK:STDOUT:   %Op.type.bc9: type = fn_type @Op.3, @impl.49c(%T) [symbolic]
 // CHECK:STDOUT:   %Op.46f: %Op.type.bc9 = struct_value () [symbolic]
 // CHECK:STDOUT:   %Destroy.lookup_impl_witness: <witness> = lookup_impl_witness %Int.49d0e6.1, @Destroy [symbolic]
 // CHECK:STDOUT:   %Destroy.facet.13d: %Destroy.type = facet_value %Int.49d0e6.1, (%Destroy.lookup_impl_witness) [symbolic]
 // CHECK:STDOUT:   %.bbc: type = fn_type_with_self_type %Op.type.bae, %Destroy.facet.13d [symbolic]
 // CHECK:STDOUT:   %impl.elem0.fe8: %.bbc = impl_witness_access %Destroy.lookup_impl_witness, element0 [symbolic]
-// CHECK:STDOUT:   %specific_impl_fn.f4e: <specific function> = specific_impl_function %impl.elem0.fe8, @Op.1(%Destroy.facet.13d) [symbolic]
+// CHECK:STDOUT:   %specific_impl_fn: <specific function> = specific_impl_function %impl.elem0.fe8, @Op.1(%Destroy.facet.13d) [symbolic]
 // CHECK:STDOUT:   %CallNegative.type: type = fn_type @CallNegative [concrete]
 // CHECK:STDOUT:   %CallNegative: %CallNegative.type = struct_value () [concrete]
 // CHECK:STDOUT:   %int_0: Core.IntLiteral = int_value 0 [concrete]
@@ -70,11 +71,11 @@ fn CallNegative() {
 // CHECK:STDOUT:   %complete_type.d94: <witness> = complete_type_witness <error> [concrete]
 // CHECK:STDOUT:   %pattern_type.47b: type = pattern_type %i0 [concrete]
 // CHECK:STDOUT:   %Destroy.impl_witness.404: <witness> = impl_witness imports.%Destroy.impl_witness_table, @impl.49c(%i0) [concrete]
-// CHECK:STDOUT:   %Op.type.1c2: type = fn_type @Op.2, @impl.49c(%i0) [concrete]
+// CHECK:STDOUT:   %Op.type.1c2: type = fn_type @Op.3, @impl.49c(%i0) [concrete]
 // CHECK:STDOUT:   %Op.912: %Op.type.1c2 = struct_value () [concrete]
 // CHECK:STDOUT:   %Destroy.facet.973: %Destroy.type = facet_value %i0, (%Destroy.impl_witness.404) [concrete]
 // CHECK:STDOUT:   %.9ab: type = fn_type_with_self_type %Op.type.bae, %Destroy.facet.973 [concrete]
-// CHECK:STDOUT:   %Op.specific_fn.044: <specific function> = specific_function %Op.912, @Op.2(%i0) [concrete]
+// CHECK:STDOUT:   %Op.specific_fn: <specific function> = specific_function %Op.912, @Op.3(%i0) [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -85,10 +86,10 @@ fn CallNegative() {
 // CHECK:STDOUT:     import Core//prelude
 // CHECK:STDOUT:     import Core//prelude/...
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %Core.IntLiteral: %IntLiteral.type = import_ref Core//prelude/types/int_literal, IntLiteral, loaded [concrete = constants.%IntLiteral]
-// CHECK:STDOUT:   %Core.Int: %Int.type = import_ref Core//prelude/types/int, Int, loaded [concrete = constants.%Int.generic]
-// CHECK:STDOUT:   %Core.Destroy: type = import_ref Core//prelude/destroy, Destroy, loaded [concrete = constants.%Destroy.type]
-// CHECK:STDOUT:   %Core.import_ref.0b9: @impl.49c.%Op.type (%Op.type.bc9) = import_ref Core//prelude/destroy, loc15_23, loaded [symbolic = @impl.49c.%Op (constants.%Op.46f)]
+// CHECK:STDOUT:   %Core.IntLiteral: %IntLiteral.type = import_ref Core//prelude/parts/int_literal, IntLiteral, loaded [concrete = constants.%IntLiteral]
+// CHECK:STDOUT:   %Core.Int: %Int.type = import_ref Core//prelude/parts/int, Int, loaded [concrete = constants.%Int.generic]
+// CHECK:STDOUT:   %Core.Destroy: type = import_ref Core//prelude/parts/destroy, Destroy, loaded [concrete = constants.%Destroy.type]
+// CHECK:STDOUT:   %Core.import_ref.0b9: @impl.49c.%Op.type (%Op.type.bc9) = import_ref Core//prelude/parts/destroy, loc8_23, loaded [symbolic = @impl.49c.%Op (constants.%Op.46f)]
 // CHECK:STDOUT:   %Destroy.impl_witness_table = impl_witness_table (%Core.import_ref.0b9), @impl.49c [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -125,7 +126,7 @@ fn CallNegative() {
 // CHECK:STDOUT:   %Destroy.facet: %Destroy.type = facet_value %Int.loc12_20.2, (%Destroy.lookup_impl_witness) [symbolic = %Destroy.facet (constants.%Destroy.facet.13d)]
 // CHECK:STDOUT:   %.loc12_3.2: type = fn_type_with_self_type constants.%Op.type.bae, %Destroy.facet [symbolic = %.loc12_3.2 (constants.%.bbc)]
 // CHECK:STDOUT:   %impl.elem0.loc12_3.2: @ErrorIfNIsZero.%.loc12_3.2 (%.bbc) = impl_witness_access %Destroy.lookup_impl_witness, element0 [symbolic = %impl.elem0.loc12_3.2 (constants.%impl.elem0.fe8)]
-// CHECK:STDOUT:   %specific_impl_fn.loc12_3.2: <specific function> = specific_impl_function %impl.elem0.loc12_3.2, @Op.1(%Destroy.facet) [symbolic = %specific_impl_fn.loc12_3.2 (constants.%specific_impl_fn.f4e)]
+// CHECK:STDOUT:   %specific_impl_fn.loc12_3.2: <specific function> = specific_impl_function %impl.elem0.loc12_3.2, @Op.1(%Destroy.facet) [symbolic = %specific_impl_fn.loc12_3.2 (constants.%specific_impl_fn)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   fn() {
 // CHECK:STDOUT:   !entry:
@@ -143,7 +144,7 @@ fn CallNegative() {
 // CHECK:STDOUT:       %Int.loc12_20.1: type = class_type @Int, @Int(constants.%N) [symbolic = %Int.loc12_20.2 (constants.%Int.49d0e6.1)]
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %v: ref @ErrorIfNIsZero.%Int.loc12_20.2 (%Int.49d0e6.1) = bind_name v, %v.var
-// CHECK:STDOUT:     %specific_impl_fn.loc12_3.1: <specific function> = specific_impl_function %impl.elem0.loc12_3.1, @Op.1(constants.%Destroy.facet.13d) [symbolic = %specific_impl_fn.loc12_3.2 (constants.%specific_impl_fn.f4e)]
+// CHECK:STDOUT:     %specific_impl_fn.loc12_3.1: <specific function> = specific_impl_function %impl.elem0.loc12_3.1, @Op.1(constants.%Destroy.facet.13d) [symbolic = %specific_impl_fn.loc12_3.2 (constants.%specific_impl_fn)]
 // CHECK:STDOUT:     %bound_method.1: <bound method> = bound_method %v.var, %specific_impl_fn.loc12_3.1
 // CHECK:STDOUT:     %.loc12_3.1: @ErrorIfNIsZero.%Int.loc12_20.2 (%Int.49d0e6.1) = bind_value %v.var
 // CHECK:STDOUT:     %.1: init %empty_tuple.type = call %bound_method.1(%.loc12_3.1)
@@ -175,6 +176,6 @@ fn CallNegative() {
 // CHECK:STDOUT:   %Destroy.facet => constants.%Destroy.facet.973
 // CHECK:STDOUT:   %.loc12_3.2 => constants.%.9ab
 // CHECK:STDOUT:   %impl.elem0.loc12_3.2 => constants.%Op.912
-// CHECK:STDOUT:   %specific_impl_fn.loc12_3.2 => constants.%Op.specific_fn.044
+// CHECK:STDOUT:   %specific_impl_fn.loc12_3.2 => constants.%Op.specific_fn
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

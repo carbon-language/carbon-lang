@@ -2,6 +2,7 @@
 // Exceptions. See /LICENSE for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
+// INCLUDE-FILE: toolchain/testing/testdata/min_prelude/int.carbon
 // TODO: Add ranges and switch to "--dump-sem-ir-ranges=only".
 // EXTRA-ARGS: --dump-sem-ir-ranges=if-present
 //
@@ -53,12 +54,12 @@ fn Main() {
 // CHECK:STDOUT: fn @Main() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %undeclared.ref: <error> = name_ref undeclared, <error> [concrete = <error>]
-// CHECK:STDOUT:   %int_42.loc19: Core.IntLiteral = int_value 42 [concrete = constants.%int_42]
+// CHECK:STDOUT:   %int_42.loc20: Core.IntLiteral = int_value 42 [concrete = constants.%int_42]
 // CHECK:STDOUT:   assign %undeclared.ref, <error>
 // CHECK:STDOUT:   %also_undeclared.ref: <error> = name_ref also_undeclared, <error> [concrete = <error>]
-// CHECK:STDOUT:   %.loc24: ref <error> = deref <error> [concrete = <error>]
-// CHECK:STDOUT:   %int_42.loc24: Core.IntLiteral = int_value 42 [concrete = constants.%int_42]
-// CHECK:STDOUT:   assign %.loc24, <error>
+// CHECK:STDOUT:   %.loc25: ref <error> = deref <error> [concrete = <error>]
+// CHECK:STDOUT:   %int_42.loc25: Core.IntLiteral = int_value 42 [concrete = constants.%int_42]
+// CHECK:STDOUT:   assign %.loc25, <error>
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

@@ -2,6 +2,7 @@
 // Exceptions. See /LICENSE for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
+// INCLUDE-FILE: toolchain/testing/testdata/min_prelude/int.carbon
 // TODO: Add ranges and switch to "--dump-sem-ir-ranges=only".
 // EXTRA-ARGS: --dump-sem-ir-ranges=if-present
 //
@@ -37,28 +38,28 @@ fn Main() {
 // CHECK:STDOUT:   %pattern_type.b74: type = pattern_type %tuple.type.a1c [concrete]
 // CHECK:STDOUT:   %Destroy.type: type = facet_type <@Destroy> [concrete]
 // CHECK:STDOUT:   %Op.type.bae: type = fn_type @Op.1 [concrete]
-// CHECK:STDOUT:   %T.8b3: type = bind_symbolic_name T, 0 [symbolic]
-// CHECK:STDOUT:   %Op.type.bc9: type = fn_type @Op.2, @impl.49c(%T.8b3) [symbolic]
-// CHECK:STDOUT:   %Op.46f: %Op.type.bc9 = struct_value () [symbolic]
-// CHECK:STDOUT:   %To.c80: Core.IntLiteral = bind_symbolic_name To, 0 [symbolic]
+// CHECK:STDOUT:   %To: Core.IntLiteral = bind_symbolic_name To, 0 [symbolic]
 // CHECK:STDOUT:   %ImplicitAs.type.cc7: type = generic_interface_type @ImplicitAs [concrete]
 // CHECK:STDOUT:   %ImplicitAs.generic: %ImplicitAs.type.cc7 = struct_value () [concrete]
-// CHECK:STDOUT:   %Convert.type.0f9: type = fn_type @Convert.2, @impl.4f9(%To.c80) [symbolic]
+// CHECK:STDOUT:   %Convert.type.0f9: type = fn_type @Convert.2, @impl.4f9(%To) [symbolic]
 // CHECK:STDOUT:   %Convert.f06: %Convert.type.0f9 = struct_value () [symbolic]
-// CHECK:STDOUT:   %int_1.5b8: Core.IntLiteral = int_value 1 [concrete]
+// CHECK:STDOUT:   %T: type = bind_symbolic_name T, 0 [symbolic]
+// CHECK:STDOUT:   %Op.type.bc9: type = fn_type @Op.3, @impl.49c(%T) [symbolic]
+// CHECK:STDOUT:   %Op.46f: %Op.type.bc9 = struct_value () [symbolic]
 // CHECK:STDOUT:   %Destroy.impl_witness.088: <witness> = impl_witness imports.%Destroy.impl_witness_table, @impl.49c(%tuple.type.a1c) [concrete]
-// CHECK:STDOUT:   %Op.type.438: type = fn_type @Op.2, @impl.49c(%tuple.type.a1c) [concrete]
+// CHECK:STDOUT:   %Op.type.438: type = fn_type @Op.3, @impl.49c(%tuple.type.a1c) [concrete]
 // CHECK:STDOUT:   %Op.c8e: %Op.type.438 = struct_value () [concrete]
 // CHECK:STDOUT:   %Destroy.facet: %Destroy.type = facet_value %tuple.type.a1c, (%Destroy.impl_witness.088) [concrete]
 // CHECK:STDOUT:   %.6a9: type = fn_type_with_self_type %Op.type.bae, %Destroy.facet [concrete]
+// CHECK:STDOUT:   %int_1.5b8: Core.IntLiteral = int_value 1 [concrete]
 // CHECK:STDOUT:   %tuple.type.985: type = tuple_type (Core.IntLiteral) [concrete]
 // CHECK:STDOUT:   %ImplicitAs.type.205: type = facet_type <@ImplicitAs, @ImplicitAs(%i32)> [concrete]
 // CHECK:STDOUT:   %Convert.type.1b6: type = fn_type @Convert.1, @ImplicitAs(%i32) [concrete]
 // CHECK:STDOUT:   %ImplicitAs.impl_witness.c75: <witness> = impl_witness imports.%ImplicitAs.impl_witness_table.a2f, @impl.4f9(%int_32) [concrete]
 // CHECK:STDOUT:   %Convert.type.035: type = fn_type @Convert.2, @impl.4f9(%int_32) [concrete]
 // CHECK:STDOUT:   %Convert.956: %Convert.type.035 = struct_value () [concrete]
-// CHECK:STDOUT:   %ImplicitAs.facet.921: %ImplicitAs.type.205 = facet_value Core.IntLiteral, (%ImplicitAs.impl_witness.c75) [concrete]
-// CHECK:STDOUT:   %.9c3: type = fn_type_with_self_type %Convert.type.1b6, %ImplicitAs.facet.921 [concrete]
+// CHECK:STDOUT:   %ImplicitAs.facet: %ImplicitAs.type.205 = facet_value Core.IntLiteral, (%ImplicitAs.impl_witness.c75) [concrete]
+// CHECK:STDOUT:   %.9c3: type = fn_type_with_self_type %Convert.type.1b6, %ImplicitAs.facet [concrete]
 // CHECK:STDOUT:   %Convert.bound.ab5: <bound method> = bound_method %int_1.5b8, %Convert.956 [concrete]
 // CHECK:STDOUT:   %Convert.specific_fn: <specific function> = specific_function %Convert.956, @Convert.2(%int_32) [concrete]
 // CHECK:STDOUT:   %bound_method.9a1: <bound method> = bound_method %int_1.5b8, %Convert.specific_fn [concrete]
@@ -69,7 +70,7 @@ fn Main() {
 // CHECK:STDOUT:   %Convert.bound.ce9: <bound method> = bound_method %int_6.462, %Convert.956 [concrete]
 // CHECK:STDOUT:   %bound_method.efa: <bound method> = bound_method %int_6.462, %Convert.specific_fn [concrete]
 // CHECK:STDOUT:   %int_6.e56: %i32 = int_value 6 [concrete]
-// CHECK:STDOUT:   %Op.specific_fn.f94: <specific function> = specific_function %Op.c8e, @Op.2(%tuple.type.a1c) [concrete]
+// CHECK:STDOUT:   %Op.specific_fn: <specific function> = specific_function %Op.c8e, @Op.3(%tuple.type.a1c) [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -80,13 +81,13 @@ fn Main() {
 // CHECK:STDOUT:     import Core//prelude
 // CHECK:STDOUT:     import Core//prelude/...
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %Core.Int: %Int.type = import_ref Core//prelude/types/int, Int, loaded [concrete = constants.%Int.generic]
-// CHECK:STDOUT:   %Core.Destroy: type = import_ref Core//prelude/destroy, Destroy, loaded [concrete = constants.%Destroy.type]
-// CHECK:STDOUT:   %Core.import_ref.0b9: @impl.49c.%Op.type (%Op.type.bc9) = import_ref Core//prelude/destroy, loc15_23, loaded [symbolic = @impl.49c.%Op (constants.%Op.46f)]
-// CHECK:STDOUT:   %Destroy.impl_witness_table = impl_witness_table (%Core.import_ref.0b9), @impl.49c [concrete]
-// CHECK:STDOUT:   %Core.import_ref.a5b: @impl.4f9.%Convert.type (%Convert.type.0f9) = import_ref Core//prelude/types/int, loc19_39, loaded [symbolic = @impl.4f9.%Convert (constants.%Convert.f06)]
+// CHECK:STDOUT:   %Core.Int: %Int.type = import_ref Core//prelude/parts/int, Int, loaded [concrete = constants.%Int.generic]
+// CHECK:STDOUT:   %Core.Destroy: type = import_ref Core//prelude/parts/destroy, Destroy, loaded [concrete = constants.%Destroy.type]
+// CHECK:STDOUT:   %Core.import_ref.a5b: @impl.4f9.%Convert.type (%Convert.type.0f9) = import_ref Core//prelude/parts/int, loc16_39, loaded [symbolic = @impl.4f9.%Convert (constants.%Convert.f06)]
 // CHECK:STDOUT:   %ImplicitAs.impl_witness_table.a2f = impl_witness_table (%Core.import_ref.a5b), @impl.4f9 [concrete]
-// CHECK:STDOUT:   %Core.ImplicitAs: %ImplicitAs.type.cc7 = import_ref Core//prelude/operators/as, ImplicitAs, loaded [concrete = constants.%ImplicitAs.generic]
+// CHECK:STDOUT:   %Core.import_ref.0b9: @impl.49c.%Op.type (%Op.type.bc9) = import_ref Core//prelude/parts/destroy, loc8_23, loaded [symbolic = @impl.49c.%Op (constants.%Op.46f)]
+// CHECK:STDOUT:   %Destroy.impl_witness_table = impl_witness_table (%Core.import_ref.0b9), @impl.49c [concrete]
+// CHECK:STDOUT:   %Core.ImplicitAs: %ImplicitAs.type.cc7 = import_ref Core//prelude/parts/as, ImplicitAs, loaded [concrete = constants.%ImplicitAs.generic]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -103,15 +104,15 @@ fn Main() {
 // CHECK:STDOUT:     %b.param_patt: %pattern_type.7ce = value_param_pattern %b.patt, call_param1 [concrete]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %a.param: %i32 = value_param call_param0
-// CHECK:STDOUT:     %.loc14_11: type = splice_block %i32.loc14_11 [concrete = constants.%i32] {
-// CHECK:STDOUT:       %int_32.loc14_11: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
-// CHECK:STDOUT:       %i32.loc14_11: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
+// CHECK:STDOUT:     %.loc15_11: type = splice_block %i32.loc15_11 [concrete = constants.%i32] {
+// CHECK:STDOUT:       %int_32.loc15_11: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
+// CHECK:STDOUT:       %i32.loc15_11: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %a: %i32 = bind_name a, %a.param
 // CHECK:STDOUT:     %b.param: %i32 = value_param call_param1
-// CHECK:STDOUT:     %.loc14_19: type = splice_block %i32.loc14_19 [concrete = constants.%i32] {
-// CHECK:STDOUT:       %int_32.loc14_19: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
-// CHECK:STDOUT:       %i32.loc14_19: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
+// CHECK:STDOUT:     %.loc15_19: type = splice_block %i32.loc15_19 [concrete = constants.%i32] {
+// CHECK:STDOUT:       %int_32.loc15_19: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
+// CHECK:STDOUT:       %i32.loc15_19: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %b: %i32 = bind_name b, %b.param
 // CHECK:STDOUT:   }
@@ -130,47 +131,47 @@ fn Main() {
 // CHECK:STDOUT:     %x.var_patt: %pattern_type.b74 = var_pattern %x.patt [concrete]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %x.var: ref %tuple.type.a1c = var %x.var_patt
-// CHECK:STDOUT:   %impl.elem0.loc17_3: %.6a9 = impl_witness_access constants.%Destroy.impl_witness.088, element0 [concrete = constants.%Op.c8e]
-// CHECK:STDOUT:   %bound_method.loc17_3: <bound method> = bound_method %x.var, %impl.elem0.loc17_3
+// CHECK:STDOUT:   %impl.elem0.loc18_3: %.6a9 = impl_witness_access constants.%Destroy.impl_witness.088, element0 [concrete = constants.%Op.c8e]
+// CHECK:STDOUT:   %bound_method.loc18_3: <bound method> = bound_method %x.var, %impl.elem0.loc18_3
 // CHECK:STDOUT:   %int_1: Core.IntLiteral = int_value 1 [concrete = constants.%int_1.5b8]
-// CHECK:STDOUT:   %.loc17_22.1: %tuple.type.985 = tuple_literal (%int_1)
-// CHECK:STDOUT:   %impl.elem0.loc17_22: %.9c3 = impl_witness_access constants.%ImplicitAs.impl_witness.c75, element0 [concrete = constants.%Convert.956]
-// CHECK:STDOUT:   %bound_method.loc17_22.1: <bound method> = bound_method %int_1, %impl.elem0.loc17_22 [concrete = constants.%Convert.bound.ab5]
-// CHECK:STDOUT:   %specific_fn.loc17_22: <specific function> = specific_function %impl.elem0.loc17_22, @Convert.2(constants.%int_32) [concrete = constants.%Convert.specific_fn]
-// CHECK:STDOUT:   %bound_method.loc17_22.2: <bound method> = bound_method %int_1, %specific_fn.loc17_22 [concrete = constants.%bound_method.9a1]
-// CHECK:STDOUT:   %int.convert_checked.loc17: init %i32 = call %bound_method.loc17_22.2(%int_1) [concrete = constants.%int_1.5d2]
-// CHECK:STDOUT:   %.loc17_22.2: init %i32 = converted %int_1, %int.convert_checked.loc17 [concrete = constants.%int_1.5d2]
-// CHECK:STDOUT:   %.loc17_22.3: init %tuple.type.a1c = tuple_init (%.loc17_22.2) to %x.var [concrete = constants.%tuple]
-// CHECK:STDOUT:   %.loc17_3.1: init %tuple.type.a1c = converted %.loc17_22.1, %.loc17_22.3 [concrete = constants.%tuple]
-// CHECK:STDOUT:   assign %x.var, %.loc17_3.1
-// CHECK:STDOUT:   %.loc17_15.1: type = splice_block %.loc17_15.3 [concrete = constants.%tuple.type.a1c] {
+// CHECK:STDOUT:   %.loc18_22.1: %tuple.type.985 = tuple_literal (%int_1)
+// CHECK:STDOUT:   %impl.elem0.loc18_22: %.9c3 = impl_witness_access constants.%ImplicitAs.impl_witness.c75, element0 [concrete = constants.%Convert.956]
+// CHECK:STDOUT:   %bound_method.loc18_22.1: <bound method> = bound_method %int_1, %impl.elem0.loc18_22 [concrete = constants.%Convert.bound.ab5]
+// CHECK:STDOUT:   %specific_fn.loc18_22: <specific function> = specific_function %impl.elem0.loc18_22, @Convert.2(constants.%int_32) [concrete = constants.%Convert.specific_fn]
+// CHECK:STDOUT:   %bound_method.loc18_22.2: <bound method> = bound_method %int_1, %specific_fn.loc18_22 [concrete = constants.%bound_method.9a1]
+// CHECK:STDOUT:   %int.convert_checked.loc18: init %i32 = call %bound_method.loc18_22.2(%int_1) [concrete = constants.%int_1.5d2]
+// CHECK:STDOUT:   %.loc18_22.2: init %i32 = converted %int_1, %int.convert_checked.loc18 [concrete = constants.%int_1.5d2]
+// CHECK:STDOUT:   %.loc18_22.3: init %tuple.type.a1c = tuple_init (%.loc18_22.2) to %x.var [concrete = constants.%tuple]
+// CHECK:STDOUT:   %.loc18_3.1: init %tuple.type.a1c = converted %.loc18_22.1, %.loc18_22.3 [concrete = constants.%tuple]
+// CHECK:STDOUT:   assign %x.var, %.loc18_3.1
+// CHECK:STDOUT:   %.loc18_15.1: type = splice_block %.loc18_15.3 [concrete = constants.%tuple.type.a1c] {
 // CHECK:STDOUT:     %int_32: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
 // CHECK:STDOUT:     %i32: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
-// CHECK:STDOUT:     %.loc17_15.2: %tuple.type.85c = tuple_literal (%i32)
-// CHECK:STDOUT:     %.loc17_15.3: type = converted %.loc17_15.2, constants.%tuple.type.a1c [concrete = constants.%tuple.type.a1c]
+// CHECK:STDOUT:     %.loc18_15.2: %tuple.type.85c = tuple_literal (%i32)
+// CHECK:STDOUT:     %.loc18_15.3: type = converted %.loc18_15.2, constants.%tuple.type.a1c [concrete = constants.%tuple.type.a1c]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %x: ref %tuple.type.a1c = bind_name x, %x.var
 // CHECK:STDOUT:   %Foo.ref: %Foo.type = name_ref Foo, file.%Foo.decl [concrete = constants.%Foo]
 // CHECK:STDOUT:   %x.ref: ref %tuple.type.a1c = name_ref x, %x
 // CHECK:STDOUT:   %int_0: Core.IntLiteral = int_value 0 [concrete = constants.%int_0]
-// CHECK:STDOUT:   %tuple.elem0.loc19: ref %i32 = tuple_access %x.ref, element0
+// CHECK:STDOUT:   %tuple.elem0.loc20: ref %i32 = tuple_access %x.ref, element0
 // CHECK:STDOUT:   %int_6: Core.IntLiteral = int_value 6 [concrete = constants.%int_6.462]
-// CHECK:STDOUT:   %.loc19_8: %i32 = bind_value %tuple.elem0.loc19
-// CHECK:STDOUT:   %impl.elem0.loc19: %.9c3 = impl_witness_access constants.%ImplicitAs.impl_witness.c75, element0 [concrete = constants.%Convert.956]
-// CHECK:STDOUT:   %bound_method.loc19_12.1: <bound method> = bound_method %int_6, %impl.elem0.loc19 [concrete = constants.%Convert.bound.ce9]
-// CHECK:STDOUT:   %specific_fn.loc19: <specific function> = specific_function %impl.elem0.loc19, @Convert.2(constants.%int_32) [concrete = constants.%Convert.specific_fn]
-// CHECK:STDOUT:   %bound_method.loc19_12.2: <bound method> = bound_method %int_6, %specific_fn.loc19 [concrete = constants.%bound_method.efa]
-// CHECK:STDOUT:   %int.convert_checked.loc19: init %i32 = call %bound_method.loc19_12.2(%int_6) [concrete = constants.%int_6.e56]
-// CHECK:STDOUT:   %.loc19_12.1: %i32 = value_of_initializer %int.convert_checked.loc19 [concrete = constants.%int_6.e56]
-// CHECK:STDOUT:   %.loc19_12.2: %i32 = converted %int_6, %.loc19_12.1 [concrete = constants.%int_6.e56]
-// CHECK:STDOUT:   %Foo.call: init %empty_tuple.type = call %Foo.ref(%.loc19_8, %.loc19_12.2)
-// CHECK:STDOUT:   %specific_fn.loc17_3: <specific function> = specific_function %impl.elem0.loc17_3, @Op.2(constants.%tuple.type.a1c) [concrete = constants.%Op.specific_fn.f94]
-// CHECK:STDOUT:   %bound_method.1: <bound method> = bound_method %x.var, %specific_fn.loc17_3
-// CHECK:STDOUT:   %tuple.elem0.loc17: ref %i32 = tuple_access %x.var, element0
-// CHECK:STDOUT:   %.loc17_3.2: %i32 = bind_value %tuple.elem0.loc17
-// CHECK:STDOUT:   %tuple: %tuple.type.a1c = tuple_value (%.loc17_3.2)
-// CHECK:STDOUT:   %.loc17_3.3: %tuple.type.a1c = converted %x.var, %tuple
-// CHECK:STDOUT:   %no_op: init %empty_tuple.type = call %bound_method.1(%.loc17_3.3)
+// CHECK:STDOUT:   %.loc20_8: %i32 = bind_value %tuple.elem0.loc20
+// CHECK:STDOUT:   %impl.elem0.loc20: %.9c3 = impl_witness_access constants.%ImplicitAs.impl_witness.c75, element0 [concrete = constants.%Convert.956]
+// CHECK:STDOUT:   %bound_method.loc20_12.1: <bound method> = bound_method %int_6, %impl.elem0.loc20 [concrete = constants.%Convert.bound.ce9]
+// CHECK:STDOUT:   %specific_fn.loc20: <specific function> = specific_function %impl.elem0.loc20, @Convert.2(constants.%int_32) [concrete = constants.%Convert.specific_fn]
+// CHECK:STDOUT:   %bound_method.loc20_12.2: <bound method> = bound_method %int_6, %specific_fn.loc20 [concrete = constants.%bound_method.efa]
+// CHECK:STDOUT:   %int.convert_checked.loc20: init %i32 = call %bound_method.loc20_12.2(%int_6) [concrete = constants.%int_6.e56]
+// CHECK:STDOUT:   %.loc20_12.1: %i32 = value_of_initializer %int.convert_checked.loc20 [concrete = constants.%int_6.e56]
+// CHECK:STDOUT:   %.loc20_12.2: %i32 = converted %int_6, %.loc20_12.1 [concrete = constants.%int_6.e56]
+// CHECK:STDOUT:   %Foo.call: init %empty_tuple.type = call %Foo.ref(%.loc20_8, %.loc20_12.2)
+// CHECK:STDOUT:   %specific_fn.loc18_3: <specific function> = specific_function %impl.elem0.loc18_3, @Op.3(constants.%tuple.type.a1c) [concrete = constants.%Op.specific_fn]
+// CHECK:STDOUT:   %bound_method.1: <bound method> = bound_method %x.var, %specific_fn.loc18_3
+// CHECK:STDOUT:   %tuple.elem0.loc18: ref %i32 = tuple_access %x.var, element0
+// CHECK:STDOUT:   %.loc18_3.2: %i32 = bind_value %tuple.elem0.loc18
+// CHECK:STDOUT:   %tuple: %tuple.type.a1c = tuple_value (%.loc18_3.2)
+// CHECK:STDOUT:   %.loc18_3.3: %tuple.type.a1c = converted %x.var, %tuple
+// CHECK:STDOUT:   %no_op: init %empty_tuple.type = call %bound_method.1(%.loc18_3.3)
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

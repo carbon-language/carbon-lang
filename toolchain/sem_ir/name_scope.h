@@ -7,6 +7,7 @@
 
 #include "clang/AST/DeclBase.h"
 #include "common/map.h"
+#include "toolchain/sem_ir/clang_decl.h"
 #include "toolchain/sem_ir/ids.h"
 #include "toolchain/sem_ir/inst.h"
 

@@ -2,9 +2,9 @@
 // Exceptions. See /LICENSE for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
+// INCLUDE-FILE: toolchain/testing/testdata/min_prelude/destroy.carbon
 // TODO: Add ranges and switch to "--dump-sem-ir-ranges=only".
 // EXTRA-ARGS: --dump-sem-ir-ranges=if-present
-// INCLUDE-FILE: toolchain/testing/testdata/min_prelude/destroy.carbon
 //
 // AUTOUPDATE
 // TIP: To test this file alone, run:
@@ -67,17 +67,17 @@ fn Main() {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %x.var: ref %empty_tuple.type = var %x.var_patt
 // CHECK:STDOUT:   %impl.elem0: %.346 = impl_witness_access constants.%Destroy.impl_witness.1dc, element0 [concrete = constants.%Op.ea3]
-// CHECK:STDOUT:   %bound_method.loc3: <bound method> = bound_method %x.var, %impl.elem0
-// CHECK:STDOUT:   %.loc3_11.1: type = splice_block %.loc3_11.3 [concrete = constants.%empty_tuple.type] {
-// CHECK:STDOUT:     %.loc3_11.2: %empty_tuple.type = tuple_literal ()
-// CHECK:STDOUT:     %.loc3_11.3: type = converted %.loc3_11.2, constants.%empty_tuple.type [concrete = constants.%empty_tuple.type]
+// CHECK:STDOUT:   %bound_method.loc7: <bound method> = bound_method %x.var, %impl.elem0
+// CHECK:STDOUT:   %.loc7_11.1: type = splice_block %.loc7_11.3 [concrete = constants.%empty_tuple.type] {
+// CHECK:STDOUT:     %.loc7_11.2: %empty_tuple.type = tuple_literal ()
+// CHECK:STDOUT:     %.loc7_11.3: type = converted %.loc7_11.2, constants.%empty_tuple.type [concrete = constants.%empty_tuple.type]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %x: ref %empty_tuple.type = bind_name x, %x.var
 // CHECK:STDOUT:   %specific_fn: <specific function> = specific_function %impl.elem0, @Op.2(constants.%empty_tuple.type) [concrete = constants.%Op.specific_fn]
 // CHECK:STDOUT:   %bound_method.1: <bound method> = bound_method %x.var, %specific_fn
 // CHECK:STDOUT:   %tuple: %empty_tuple.type = tuple_value () [concrete = constants.%empty_tuple]
-// CHECK:STDOUT:   %.loc3_3: %empty_tuple.type = converted %x.var, %tuple [concrete = constants.%empty_tuple]
-// CHECK:STDOUT:   %no_op: init %empty_tuple.type = call %bound_method.1(%.loc3_3)
+// CHECK:STDOUT:   %.loc7_3: %empty_tuple.type = converted %x.var, %tuple [concrete = constants.%empty_tuple]
+// CHECK:STDOUT:   %no_op: init %empty_tuple.type = call %bound_method.1(%.loc7_3)
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

@@ -112,7 +112,7 @@ interface Match {
 
   let template Continuation:! type;
   fn Op[self: Self, C:! Continuation](continuation: C*)
-    -> C.(MatchContinuation.ReturnType);
+    -> C.(BaseContinuation.ReturnType);
 }
 ```
 
@@ -170,7 +170,7 @@ look, if it were written in Carbon:
 
 ```carbon
 class __MatchStatementImpl {
-  extend impl as Match(Optional.MatchContinuation) where .ReturnType = () {
+  extend impl as Optional.(Match.Continuation) where .ReturnType = () {
     fn Some(the_value: i32) {
       Print(the_value);
     }

@@ -235,18 +235,26 @@ class FileContext {
           visited_equivalent_specifics) -> bool;
 
   // Given an equivalent pair of specifics, updates the canonical specific to
-  // use for each of the two Specifics found to be equivalent, replaces all
-  // uses of one specific with the canonical one, and adds the non-canonical
-  // specific to specifics_to_delete.
+  // use for each of the two Specifics found to be equivalent.
   auto ProcessSpecificEquivalence(
-      std::pair<SemIR::SpecificId, SemIR::SpecificId> pair,
-      llvm::SmallVector<SemIR::SpecificId>& specifics_to_delete) -> void;
+      std::pair<SemIR::SpecificId, SemIR::SpecificId> pair) -> void;
 
   // Checks if two specific_ids are equivalent and also reduces the equivalence
   // chains/paths. This update ensures the canonical specific is always "one
   // hop away".
   auto IsKnownEquivalence(SemIR::SpecificId specific_id1,
                           SemIR::SpecificId specific_id2) -> bool;
+
+  // Update the tracked equivalent specific for the `SpecificId`. This may
+  // occur a replacement was performed and a chain of such replacements needs
+  // to be followed to discover the canonical specific for the given argument.
+  auto UpdateEquivalentSpecific(SemIR::SpecificId specific_id) -> void;
+
+  // Update the LLVM function to use for a `SpecificId` that has been found to
+  // have another equivalent LLVM function. Replace all uses of the original
+  // LLVM function with the equivalent one found, and delete the previous LLVM
+  // function body.
+  auto UpdateAndDeleteLLVMFunction(SemIR::SpecificId specific_id) -> void;
 
   // Inserts a pair into a set of pairs in canonical form. Also implicitly
   // checks entry already existed if it cannot be inserted.

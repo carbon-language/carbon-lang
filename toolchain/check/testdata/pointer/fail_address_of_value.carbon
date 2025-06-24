@@ -2,6 +2,7 @@
 // Exceptions. See /LICENSE for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
+// INCLUDE-FILE: toolchain/testing/testdata/min_prelude/int.carbon
 // TODO: Add ranges and switch to "--dump-sem-ir-ranges=only".
 // EXTRA-ARGS: --dump-sem-ir-ranges=if-present
 //
@@ -140,8 +141,8 @@ fn AddressOfParam(param: i32) {
 // CHECK:STDOUT:   %false: bool = bool_literal false [concrete]
 // CHECK:STDOUT:   %Destroy.type: type = facet_type <@Destroy> [concrete]
 // CHECK:STDOUT:   %Op.type.bae: type = fn_type @Op.1 [concrete]
-// CHECK:STDOUT:   %T.8b3: type = bind_symbolic_name T, 0 [symbolic]
-// CHECK:STDOUT:   %Op.type.bc9: type = fn_type @Op.2, @impl.49c(%T.8b3) [symbolic]
+// CHECK:STDOUT:   %T: type = bind_symbolic_name T, 0 [symbolic]
+// CHECK:STDOUT:   %Op.type.bc9: type = fn_type @Op.2, @impl.49c(%T) [symbolic]
 // CHECK:STDOUT:   %Op.46f: %Op.type.bc9 = struct_value () [symbolic]
 // CHECK:STDOUT:   %Destroy.impl_witness.6d2: <witness> = impl_witness imports.%Destroy.impl_witness_table, @impl.49c(%struct_type.a.ba9) [concrete]
 // CHECK:STDOUT:   %Op.type.c80: type = fn_type @Op.2, @impl.49c(%struct_type.a.ba9) [concrete]
@@ -178,9 +179,9 @@ fn AddressOfParam(param: i32) {
 // CHECK:STDOUT:     import Core//prelude
 // CHECK:STDOUT:     import Core//prelude/...
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %Core.Int: %Int.type = import_ref Core//prelude/types/int, Int, loaded [concrete = constants.%Int.generic]
-// CHECK:STDOUT:   %Core.Destroy: type = import_ref Core//prelude/destroy, Destroy, loaded [concrete = constants.%Destroy.type]
-// CHECK:STDOUT:   %Core.import_ref.0b9: @impl.49c.%Op.type (%Op.type.bc9) = import_ref Core//prelude/destroy, loc15_23, loaded [symbolic = @impl.49c.%Op (constants.%Op.46f)]
+// CHECK:STDOUT:   %Core.Int: %Int.type = import_ref Core//prelude/parts/int, Int, loaded [concrete = constants.%Int.generic]
+// CHECK:STDOUT:   %Core.Destroy: type = import_ref Core//prelude/parts/destroy, Destroy, loaded [concrete = constants.%Destroy.type]
+// CHECK:STDOUT:   %Core.import_ref.0b9: @impl.49c.%Op.type (%Op.type.bc9) = import_ref Core//prelude/parts/destroy, loc8_23, loaded [symbolic = @impl.49c.%Op (constants.%Op.46f)]
 // CHECK:STDOUT:   %Destroy.impl_witness_table = impl_witness_table (%Core.import_ref.0b9), @impl.49c [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -226,9 +227,9 @@ fn AddressOfParam(param: i32) {
 // CHECK:STDOUT:     %param.param_patt: %pattern_type.7ce = value_param_pattern %param.patt, call_param0 [concrete]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %param.param: %i32 = value_param call_param0
-// CHECK:STDOUT:     %.loc98: type = splice_block %i32.loc98 [concrete = constants.%i32] {
-// CHECK:STDOUT:       %int_32.loc98: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
-// CHECK:STDOUT:       %i32.loc98: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
+// CHECK:STDOUT:     %.loc99: type = splice_block %i32.loc99 [concrete = constants.%i32] {
+// CHECK:STDOUT:       %int_32.loc99: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
+// CHECK:STDOUT:       %i32.loc99: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %param: %i32 = bind_name param, %param.param
 // CHECK:STDOUT:   }
@@ -241,54 +242,54 @@ fn AddressOfParam(param: i32) {
 // CHECK:STDOUT: fn @AddressOfLiteral() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %int_0: Core.IntLiteral = int_value 0 [concrete = constants.%int_0]
-// CHECK:STDOUT:   %addr.loc23: %ptr.1d1 = addr_of <error> [concrete = <error>]
+// CHECK:STDOUT:   %addr.loc24: %ptr.1d1 = addr_of <error> [concrete = <error>]
 // CHECK:STDOUT:   %true: bool = bool_literal true [concrete = constants.%true]
-// CHECK:STDOUT:   %addr.loc28: %ptr.bb2 = addr_of <error> [concrete = <error>]
+// CHECK:STDOUT:   %addr.loc29: %ptr.bb2 = addr_of <error> [concrete = <error>]
 // CHECK:STDOUT:   %float: f64 = float_literal 1 [concrete = constants.%float]
-// CHECK:STDOUT:   %addr.loc33: %ptr.ef1 = addr_of <error> [concrete = <error>]
+// CHECK:STDOUT:   %addr.loc34: %ptr.ef1 = addr_of <error> [concrete = <error>]
 // CHECK:STDOUT:   %str: String = string_literal "Hello" [concrete = constants.%str]
-// CHECK:STDOUT:   %addr.loc38: %ptr.a45 = addr_of <error> [concrete = <error>]
+// CHECK:STDOUT:   %addr.loc39: %ptr.a45 = addr_of <error> [concrete = <error>]
 // CHECK:STDOUT:   %int_1: Core.IntLiteral = int_value 1 [concrete = constants.%int_1]
 // CHECK:STDOUT:   %int_2: Core.IntLiteral = int_value 2 [concrete = constants.%int_2]
-// CHECK:STDOUT:   %.loc43: %tuple.type = tuple_literal (%int_1, %int_2)
-// CHECK:STDOUT:   %addr.loc43: %ptr.b50 = addr_of <error> [concrete = <error>]
+// CHECK:STDOUT:   %.loc44: %tuple.type = tuple_literal (%int_1, %int_2)
+// CHECK:STDOUT:   %addr.loc44: %ptr.b50 = addr_of <error> [concrete = <error>]
 // CHECK:STDOUT:   %int_5: Core.IntLiteral = int_value 5 [concrete = constants.%int_5]
-// CHECK:STDOUT:   %.loc48: %struct_type.a.a6c = struct_literal (%int_5)
-// CHECK:STDOUT:   %addr.loc48: %ptr.4e0 = addr_of <error> [concrete = <error>]
+// CHECK:STDOUT:   %.loc49: %struct_type.a.a6c = struct_literal (%int_5)
+// CHECK:STDOUT:   %addr.loc49: %ptr.4e0 = addr_of <error> [concrete = <error>]
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @AddressOfOperator() {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %true.loc56: bool = bool_literal true [concrete = constants.%true]
-// CHECK:STDOUT:   %false.loc56_10: bool = bool_literal false [concrete = constants.%false]
-// CHECK:STDOUT:   if %true.loc56 br !and.rhs else br !and.result(%false.loc56_10)
+// CHECK:STDOUT:   %true.loc57: bool = bool_literal true [concrete = constants.%true]
+// CHECK:STDOUT:   %false.loc57_10: bool = bool_literal false [concrete = constants.%false]
+// CHECK:STDOUT:   if %true.loc57 br !and.rhs else br !and.result(%false.loc57_10)
 // CHECK:STDOUT:
 // CHECK:STDOUT: !and.rhs:
-// CHECK:STDOUT:   %false.loc56_14: bool = bool_literal false [concrete = constants.%false]
-// CHECK:STDOUT:   br !and.result(%false.loc56_14)
+// CHECK:STDOUT:   %false.loc57_14: bool = bool_literal false [concrete = constants.%false]
+// CHECK:STDOUT:   br !and.result(%false.loc57_14)
 // CHECK:STDOUT:
 // CHECK:STDOUT: !and.result:
-// CHECK:STDOUT:   %.loc56: bool = block_arg !and.result [concrete = constants.%false]
-// CHECK:STDOUT:   %addr.loc56: %ptr.bb2 = addr_of <error> [concrete = <error>]
+// CHECK:STDOUT:   %.loc57: bool = block_arg !and.result [concrete = constants.%false]
+// CHECK:STDOUT:   %addr.loc57: %ptr.bb2 = addr_of <error> [concrete = <error>]
 // CHECK:STDOUT:   %H.ref: %H.type = name_ref H, file.%H.decl [concrete = constants.%H]
 // CHECK:STDOUT:   %H.call: init %struct_type.a.ba9 = call %H.ref()
-// CHECK:STDOUT:   %.loc61_6.1: ref %struct_type.a.ba9 = temporary_storage
+// CHECK:STDOUT:   %.loc62_6.1: ref %struct_type.a.ba9 = temporary_storage
 // CHECK:STDOUT:   %impl.elem0: %.a8f = impl_witness_access constants.%Destroy.impl_witness.6d2, element0 [concrete = constants.%Op.691]
-// CHECK:STDOUT:   %bound_method.loc61: <bound method> = bound_method %.loc61_6.1, %impl.elem0
-// CHECK:STDOUT:   %.loc61_6.2: ref %struct_type.a.ba9 = temporary %.loc61_6.1, %H.call
-// CHECK:STDOUT:   %.loc61_7: ref %i32 = struct_access %.loc61_6.2, element0
-// CHECK:STDOUT:   %addr.loc61: %ptr.235 = addr_of <error> [concrete = <error>]
-// CHECK:STDOUT:   %true.loc66: bool = bool_literal true [concrete = constants.%true]
-// CHECK:STDOUT:   %.loc66: bool = not %true.loc66 [concrete = constants.%false]
-// CHECK:STDOUT:   %addr.loc66: %ptr.bb2 = addr_of <error> [concrete = <error>]
+// CHECK:STDOUT:   %bound_method.loc62: <bound method> = bound_method %.loc62_6.1, %impl.elem0
+// CHECK:STDOUT:   %.loc62_6.2: ref %struct_type.a.ba9 = temporary %.loc62_6.1, %H.call
+// CHECK:STDOUT:   %.loc62_7: ref %i32 = struct_access %.loc62_6.2, element0
+// CHECK:STDOUT:   %addr.loc62: %ptr.235 = addr_of <error> [concrete = <error>]
+// CHECK:STDOUT:   %true.loc67: bool = bool_literal true [concrete = constants.%true]
+// CHECK:STDOUT:   %.loc67: bool = not %true.loc67 [concrete = constants.%false]
+// CHECK:STDOUT:   %addr.loc67: %ptr.bb2 = addr_of <error> [concrete = <error>]
 // CHECK:STDOUT:   %specific_fn: <specific function> = specific_function %impl.elem0, @Op.2(constants.%struct_type.a.ba9) [concrete = constants.%Op.specific_fn.51b]
-// CHECK:STDOUT:   %bound_method.1: <bound method> = bound_method %.loc61_6.1, %specific_fn
-// CHECK:STDOUT:   %.loc61_6.3: ref %i32 = struct_access %.loc61_6.1, element0
-// CHECK:STDOUT:   %.loc61_6.4: %i32 = bind_value %.loc61_6.3
-// CHECK:STDOUT:   %struct: %struct_type.a.ba9 = struct_value (%.loc61_6.4)
-// CHECK:STDOUT:   %.loc61_6.5: %struct_type.a.ba9 = converted %.loc61_6.1, %struct
-// CHECK:STDOUT:   %no_op: init %empty_tuple.type = call %bound_method.1(%.loc61_6.5)
+// CHECK:STDOUT:   %bound_method.1: <bound method> = bound_method %.loc62_6.1, %specific_fn
+// CHECK:STDOUT:   %.loc62_6.3: ref %i32 = struct_access %.loc62_6.1, element0
+// CHECK:STDOUT:   %.loc62_6.4: %i32 = bind_value %.loc62_6.3
+// CHECK:STDOUT:   %struct: %struct_type.a.ba9 = struct_value (%.loc62_6.4)
+// CHECK:STDOUT:   %.loc62_6.5: %struct_type.a.ba9 = converted %.loc62_6.1, %struct
+// CHECK:STDOUT:   %no_op: init %empty_tuple.type = call %bound_method.1(%.loc62_6.5)
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -302,14 +303,14 @@ fn AddressOfParam(param: i32) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @AddressOfType() {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %int_32.loc82: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
-// CHECK:STDOUT:   %i32.loc82: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
-// CHECK:STDOUT:   %addr.loc82: %ptr.db7 = addr_of <error> [concrete = <error>]
-// CHECK:STDOUT:   %int_32.loc87: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
-// CHECK:STDOUT:   %i32.loc87: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
-// CHECK:STDOUT:   %const: type = const_type %i32.loc87 [concrete = constants.%const]
+// CHECK:STDOUT:   %int_32.loc83: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
+// CHECK:STDOUT:   %i32.loc83: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
+// CHECK:STDOUT:   %addr.loc83: %ptr.db7 = addr_of <error> [concrete = <error>]
+// CHECK:STDOUT:   %int_32.loc88: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
+// CHECK:STDOUT:   %i32.loc88: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
+// CHECK:STDOUT:   %const: type = const_type %i32.loc88 [concrete = constants.%const]
 // CHECK:STDOUT:   %ptr: type = ptr_type %const [concrete = constants.%ptr.36b]
-// CHECK:STDOUT:   %addr.loc87: %ptr.db7 = addr_of <error> [concrete = <error>]
+// CHECK:STDOUT:   %addr.loc88: %ptr.db7 = addr_of <error> [concrete = <error>]
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -317,11 +318,11 @@ fn AddressOfParam(param: i32) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %int_1: Core.IntLiteral = int_value 1 [concrete = constants.%int_1]
 // CHECK:STDOUT:   %int_2: Core.IntLiteral = int_value 2 [concrete = constants.%int_2]
-// CHECK:STDOUT:   %.loc95_10.1: %tuple.type = tuple_literal (%int_1, %int_2)
+// CHECK:STDOUT:   %.loc96_10.1: %tuple.type = tuple_literal (%int_1, %int_2)
 // CHECK:STDOUT:   %int_0: Core.IntLiteral = int_value 0 [concrete = constants.%int_0]
 // CHECK:STDOUT:   %tuple: %tuple.type = tuple_value (%int_1, %int_2) [concrete = constants.%tuple]
-// CHECK:STDOUT:   %.loc95_10.2: %tuple.type = converted %.loc95_10.1, %tuple [concrete = constants.%tuple]
-// CHECK:STDOUT:   %tuple.elem0: Core.IntLiteral = tuple_access %.loc95_10.2, element0 [concrete = constants.%int_1]
+// CHECK:STDOUT:   %.loc96_10.2: %tuple.type = converted %.loc96_10.1, %tuple [concrete = constants.%tuple]
+// CHECK:STDOUT:   %tuple.elem0: Core.IntLiteral = tuple_access %.loc96_10.2, element0 [concrete = constants.%int_1]
 // CHECK:STDOUT:   %addr: %ptr.1d1 = addr_of <error> [concrete = <error>]
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
@@ -334,20 +335,20 @@ fn AddressOfParam(param: i32) {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %param_addr.var: ref %ptr.235 = var %param_addr.var_patt
 // CHECK:STDOUT:   %impl.elem0: %.a79 = impl_witness_access constants.%Destroy.impl_witness.711, element0 [concrete = constants.%Op.649]
-// CHECK:STDOUT:   %bound_method.loc103: <bound method> = bound_method %param_addr.var, %impl.elem0
+// CHECK:STDOUT:   %bound_method.loc104: <bound method> = bound_method %param_addr.var, %impl.elem0
 // CHECK:STDOUT:   %param.ref: %i32 = name_ref param, %param
 // CHECK:STDOUT:   %addr: %ptr.235 = addr_of <error> [concrete = <error>]
 // CHECK:STDOUT:   assign %param_addr.var, %addr
-// CHECK:STDOUT:   %.loc103_22: type = splice_block %ptr [concrete = constants.%ptr.235] {
-// CHECK:STDOUT:     %int_32.loc103: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
-// CHECK:STDOUT:     %i32.loc103: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
-// CHECK:STDOUT:     %ptr: type = ptr_type %i32.loc103 [concrete = constants.%ptr.235]
+// CHECK:STDOUT:   %.loc104_22: type = splice_block %ptr [concrete = constants.%ptr.235] {
+// CHECK:STDOUT:     %int_32.loc104: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
+// CHECK:STDOUT:     %i32.loc104: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
+// CHECK:STDOUT:     %ptr: type = ptr_type %i32.loc104 [concrete = constants.%ptr.235]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %param_addr: ref %ptr.235 = bind_name param_addr, %param_addr.var
 // CHECK:STDOUT:   %specific_fn: <specific function> = specific_function %impl.elem0, @Op.2(constants.%ptr.235) [concrete = constants.%Op.specific_fn.829]
 // CHECK:STDOUT:   %bound_method.1: <bound method> = bound_method %param_addr.var, %specific_fn
-// CHECK:STDOUT:   %.loc103_3: %ptr.235 = bind_value %param_addr.var
-// CHECK:STDOUT:   %no_op: init %empty_tuple.type = call %bound_method.1(%.loc103_3)
+// CHECK:STDOUT:   %.loc104_3: %ptr.235 = bind_value %param_addr.var
+// CHECK:STDOUT:   %no_op: init %empty_tuple.type = call %bound_method.1(%.loc104_3)
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

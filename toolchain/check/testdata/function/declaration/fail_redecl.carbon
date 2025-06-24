@@ -2,8 +2,9 @@
 // Exceptions. See /LICENSE for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
+// INCLUDE-FILE: toolchain/testing/testdata/min_prelude/none.carbon
 // TODO: Add ranges and switch to "--dump-sem-ir-ranges=only".
-// EXTRA-ARGS: --no-prelude-import --dump-sem-ir-ranges=if-present
+// EXTRA-ARGS: --dump-sem-ir-ranges=if-present
 //
 // AUTOUPDATE
 // TIP: To test this file alone, run:
@@ -84,57 +85,57 @@ fn E() {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace [concrete] {
-// CHECK:STDOUT:     .A = %A.decl.loc14
-// CHECK:STDOUT:     .B = %B.decl.loc24
-// CHECK:STDOUT:     .C = %C.decl.loc34
-// CHECK:STDOUT:     .D = %D.decl.loc44
-// CHECK:STDOUT:     .E = %E.decl.loc54
+// CHECK:STDOUT:     .A = %A.decl.loc15
+// CHECK:STDOUT:     .B = %B.decl.loc25
+// CHECK:STDOUT:     .C = %C.decl.loc35
+// CHECK:STDOUT:     .D = %D.decl.loc45
+// CHECK:STDOUT:     .E = %E.decl.loc55
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %A.decl.loc14: %A.type = fn_decl @A [concrete = constants.%A] {} {}
-// CHECK:STDOUT:   %A.decl.loc22: %A.type = fn_decl @A [concrete = constants.%A] {} {}
-// CHECK:STDOUT:   %B.decl.loc24: %B.type = fn_decl @B [concrete = constants.%B] {
+// CHECK:STDOUT:   %A.decl.loc15: %A.type = fn_decl @A [concrete = constants.%A] {} {}
+// CHECK:STDOUT:   %A.decl.loc23: %A.type = fn_decl @A [concrete = constants.%A] {} {}
+// CHECK:STDOUT:   %B.decl.loc25: %B.type = fn_decl @B [concrete = constants.%B] {
 // CHECK:STDOUT:     %x.patt: %pattern_type = binding_pattern x [concrete]
 // CHECK:STDOUT:     %x.param_patt: %pattern_type = value_param_pattern %x.patt, call_param0 [concrete]
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %x.param.loc24: %empty_tuple.type = value_param call_param0
-// CHECK:STDOUT:     %.loc24_10.1: type = splice_block %.loc24_10.3 [concrete = constants.%empty_tuple.type] {
-// CHECK:STDOUT:       %.loc24_10.2: %empty_tuple.type = tuple_literal ()
-// CHECK:STDOUT:       %.loc24_10.3: type = converted %.loc24_10.2, constants.%empty_tuple.type [concrete = constants.%empty_tuple.type]
+// CHECK:STDOUT:     %x.param.loc25: %empty_tuple.type = value_param call_param0
+// CHECK:STDOUT:     %.loc25_10.1: type = splice_block %.loc25_10.3 [concrete = constants.%empty_tuple.type] {
+// CHECK:STDOUT:       %.loc25_10.2: %empty_tuple.type = tuple_literal ()
+// CHECK:STDOUT:       %.loc25_10.3: type = converted %.loc25_10.2, constants.%empty_tuple.type [concrete = constants.%empty_tuple.type]
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %x.loc24: %empty_tuple.type = bind_name x, %x.param.loc24
+// CHECK:STDOUT:     %x.loc25: %empty_tuple.type = bind_name x, %x.param.loc25
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %B.decl.loc32: %B.type = fn_decl @B [concrete = constants.%B] {
+// CHECK:STDOUT:   %B.decl.loc33: %B.type = fn_decl @B [concrete = constants.%B] {
 // CHECK:STDOUT:     %x.patt: %pattern_type = binding_pattern x [concrete]
 // CHECK:STDOUT:     %x.param_patt: %pattern_type = value_param_pattern %x.patt, call_param0 [concrete]
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %x.param.loc32: %empty_tuple.type = value_param call_param0
-// CHECK:STDOUT:     %.loc32_10.1: type = splice_block %.loc32_10.3 [concrete = constants.%empty_tuple.type] {
-// CHECK:STDOUT:       %.loc32_10.2: %empty_tuple.type = tuple_literal ()
-// CHECK:STDOUT:       %.loc32_10.3: type = converted %.loc32_10.2, constants.%empty_tuple.type [concrete = constants.%empty_tuple.type]
+// CHECK:STDOUT:     %x.param.loc33: %empty_tuple.type = value_param call_param0
+// CHECK:STDOUT:     %.loc33_10.1: type = splice_block %.loc33_10.3 [concrete = constants.%empty_tuple.type] {
+// CHECK:STDOUT:       %.loc33_10.2: %empty_tuple.type = tuple_literal ()
+// CHECK:STDOUT:       %.loc33_10.3: type = converted %.loc33_10.2, constants.%empty_tuple.type [concrete = constants.%empty_tuple.type]
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %x.loc32: %empty_tuple.type = bind_name x, %x.param.loc32
+// CHECK:STDOUT:     %x.loc33: %empty_tuple.type = bind_name x, %x.param.loc33
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %C.decl.loc34: %C.type.de0bfe.1 = fn_decl @C.1 [concrete = constants.%C.1b0370.1] {} {}
-// CHECK:STDOUT:   %C.decl.loc42: %C.type.de0bfe.2 = fn_decl @C.2 [concrete = constants.%C.1b0370.2] {
+// CHECK:STDOUT:   %C.decl.loc35: %C.type.de0bfe.1 = fn_decl @C.1 [concrete = constants.%C.1b0370.1] {} {}
+// CHECK:STDOUT:   %C.decl.loc43: %C.type.de0bfe.2 = fn_decl @C.2 [concrete = constants.%C.1b0370.2] {
 // CHECK:STDOUT:     %x.patt: %pattern_type = binding_pattern x [concrete]
 // CHECK:STDOUT:     %x.param_patt: %pattern_type = value_param_pattern %x.patt, call_param0 [concrete]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %x.param: %empty_tuple.type = value_param call_param0
-// CHECK:STDOUT:     %.loc42_10.1: type = splice_block %.loc42_10.3 [concrete = constants.%empty_tuple.type] {
-// CHECK:STDOUT:       %.loc42_10.2: %empty_tuple.type = tuple_literal ()
-// CHECK:STDOUT:       %.loc42_10.3: type = converted %.loc42_10.2, constants.%empty_tuple.type [concrete = constants.%empty_tuple.type]
+// CHECK:STDOUT:     %.loc43_10.1: type = splice_block %.loc43_10.3 [concrete = constants.%empty_tuple.type] {
+// CHECK:STDOUT:       %.loc43_10.2: %empty_tuple.type = tuple_literal ()
+// CHECK:STDOUT:       %.loc43_10.3: type = converted %.loc43_10.2, constants.%empty_tuple.type [concrete = constants.%empty_tuple.type]
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %x: %empty_tuple.type = bind_name x, %x.param
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %D.decl.loc44: %D.type = fn_decl @D [concrete = constants.%D] {} {}
-// CHECK:STDOUT:   %D.decl.loc52: %D.type = fn_decl @D [concrete = constants.%D] {} {}
-// CHECK:STDOUT:   %E.decl.loc54: %E.type.851869.1 = fn_decl @E.1 [concrete = constants.%E.237d29.1] {} {}
-// CHECK:STDOUT:   %E.decl.loc62: %E.type.851869.2 = fn_decl @E.2 [concrete = constants.%E.237d29.2] {} {}
+// CHECK:STDOUT:   %D.decl.loc45: %D.type = fn_decl @D [concrete = constants.%D] {} {}
+// CHECK:STDOUT:   %D.decl.loc53: %D.type = fn_decl @D [concrete = constants.%D] {} {}
+// CHECK:STDOUT:   %E.decl.loc55: %E.type.851869.1 = fn_decl @E.1 [concrete = constants.%E.237d29.1] {} {}
+// CHECK:STDOUT:   %E.decl.loc63: %E.type.851869.2 = fn_decl @E.2 [concrete = constants.%E.237d29.2] {} {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @A();
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @B(%x.param.loc24: %empty_tuple.type);
+// CHECK:STDOUT: fn @B(%x.param.loc25: %empty_tuple.type);
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @C.1();
 // CHECK:STDOUT:

@@ -188,12 +188,17 @@ auto FileContext::ContainsPair(
 
 auto FileContext::CoalesceEquivalentSpecifics() -> void {
   for (auto& specifics : lowered_specifics_.values()) {
+    // Collect specifics to delete for each generic. Replace and remove each
+    // after processing all specifics for a generic. Note, we could also
+    // replace and remove all specifics after processing all generics.
+    llvm::SmallVector<SemIR::SpecificId> specifics_to_delete;
     // i cannot be unsigned due to the comparison with a negative number when
     // the specifics vector is empty.
     for (int i = 0; i < static_cast<int>(specifics.size()) - 1; ++i) {
       // This specific was already replaced, skip it.
       if (equivalent_specifics_.Get(specifics[i]).has_value() &&
           equivalent_specifics_.Get(specifics[i]) != specifics[i]) {
+        specifics_to_delete.push_back(specifics[i]);
         specifics[i] = specifics[specifics.size() - 1];
         specifics.pop_back();
         --i;
@@ -205,6 +210,7 @@ auto FileContext::CoalesceEquivalentSpecifics() -> void {
         // When the specific was already replaced, skip it.
         if (equivalent_specifics_.Get(specifics[j]).has_value() &&
             equivalent_specifics_.Get(specifics[j]) != specifics[j]) {
+          specifics_to_delete.push_back(specifics[j]);
           specifics[j] = specifics[specifics.size() - 1];
           specifics.pop_back();
           --j;
@@ -231,26 +237,18 @@ auto FileContext::CoalesceEquivalentSpecifics() -> void {
           // When processing equivalences, we may change the canonical specific
           // multiple times, so we don't delete replaced specifics until the
           // end.
-          llvm::SmallVector<SemIR::SpecificId> specifics_to_delete;
           visited_equivalent_specifics.ForEach(
               [&](std::pair<SemIR::SpecificId, SemIR::SpecificId>
                       equivalent_entry) {
                 CARBON_VLOG("Found equivalent specifics: {0}, {1}",
                             equivalent_entry.first, equivalent_entry.second);
-                ProcessSpecificEquivalence(equivalent_entry,
-                                           specifics_to_delete);
+                ProcessSpecificEquivalence(equivalent_entry);
               });
-
-          // Delete function bodies for already replaced functions.
-          for (auto specific_id : specifics_to_delete) {
-            specific_functions_.Get(specific_id)->eraseFromParent();
-            specific_functions_.Get(specific_id) =
-                specific_functions_.Get(equivalent_specifics_.Get(specific_id));
-          }
 
           // Removed the replaced specific from the list of emitted specifics.
           // Only the top level, since the others are somewhere else in the
           // vector, they will be found and removed during processing.
+          specifics_to_delete.push_back(specifics[j]);
           specifics[j] = specifics[specifics.size() - 1];
           specifics.pop_back();
           --j;
@@ -260,25 +258,27 @@ auto FileContext::CoalesceEquivalentSpecifics() -> void {
         }
       }
     }
+
+    // Once all equivalences are found for a generic, update and delete up
+    // equivalent specifics.
+    for (auto specific_id : specifics_to_delete) {
+      UpdateAndDeleteLLVMFunction(specific_id);
+    }
   }
 }
 
 auto FileContext::ProcessSpecificEquivalence(
-    std::pair<SemIR::SpecificId, SemIR::SpecificId> pair,
-    llvm::SmallVector<SemIR::SpecificId>& specifics_to_delete) -> void {
+    std::pair<SemIR::SpecificId, SemIR::SpecificId> pair) -> void {
   auto [specific_id1, specific_id2] = pair;
   CARBON_CHECK(specific_id1.has_value() && specific_id2.has_value(),
                "Expected values in equivalence check");
 
   auto get_canon = [&](SemIR::SpecificId specific_id) {
-    return equivalent_specifics_.Get(specific_id).has_value()
-               ? std::make_pair(
-                     equivalent_specifics_.Get(specific_id),
-                     (equivalent_specifics_.Get(specific_id) != specific_id))
-               : std::make_pair(specific_id, false);
+    auto equiv_id = equivalent_specifics_.Get(specific_id);
+    return equiv_id.has_value() ? equiv_id : specific_id;
   };
-  auto [canon_id1, replaced_before1] = get_canon(specific_id1);
-  auto [canon_id2, replaced_before2] = get_canon(specific_id2);
+  auto canon_id1 = get_canon(specific_id1);
+  auto canon_id2 = get_canon(specific_id2);
 
   if (canon_id1 == canon_id2) {
     // Already equivalent, there was a previous replacement.
@@ -288,7 +288,6 @@ auto FileContext::ProcessSpecificEquivalence(
   if (canon_id1.index >= canon_id2.index) {
     // Prefer the earlier index for canonical values.
     std::swap(canon_id1, canon_id2);
-    std::swap(replaced_before1, replaced_before2);
   }
 
   // Update equivalent_specifics_ for all. This is used as an indicator that
@@ -296,11 +295,41 @@ auto FileContext::ProcessSpecificEquivalence(
   // chains in `IsKnownEquivalence`.
   equivalent_specifics_.Set(specific_id1, canon_id1);
   equivalent_specifics_.Set(specific_id2, canon_id1);
-  specific_functions_.Get(canon_id2)->replaceAllUsesWith(
-      specific_functions_.Get(canon_id1));
-  if (!replaced_before2) {
-    specifics_to_delete.push_back(canon_id2);
+  equivalent_specifics_.Set(canon_id1, canon_id1);
+  equivalent_specifics_.Set(canon_id2, canon_id1);
+}
+
+auto FileContext::UpdateEquivalentSpecific(SemIR::SpecificId specific_id)
+    -> void {
+  if (!equivalent_specifics_.Get(specific_id).has_value()) {
+    return;
   }
+
+  llvm::SmallVector<SemIR::SpecificId> stack;
+  SemIR::SpecificId specific_to_update = specific_id;
+  SemIR::SpecificId equivalent = equivalent_specifics_.Get(specific_to_update);
+  SemIR::SpecificId equivalent_next = equivalent_specifics_.Get(equivalent);
+  while (equivalent != equivalent_next) {
+    stack.push_back(specific_to_update);
+    specific_to_update = equivalent;
+    equivalent = equivalent_next;
+    equivalent_next = equivalent_specifics_.Get(equivalent_next);
+  }
+
+  for (auto specific : stack) {
+    equivalent_specifics_.Set(specific, equivalent);
+  }
+}
+
+auto FileContext::UpdateAndDeleteLLVMFunction(SemIR::SpecificId specific_id)
+    -> void {
+  UpdateEquivalentSpecific(specific_id);
+  auto* old_function = specific_functions_.Get(specific_id);
+  auto* new_function =
+      specific_functions_.Get(equivalent_specifics_.Get(specific_id));
+  old_function->replaceAllUsesWith(new_function);
+  old_function->eraseFromParent();
+  specific_functions_.Set(specific_id, new_function);
 }
 
 auto FileContext::IsKnownEquivalence(SemIR::SpecificId specific_id1,
@@ -310,24 +339,8 @@ auto FileContext::IsKnownEquivalence(SemIR::SpecificId specific_id1,
     return false;
   }
 
-  auto update_equivalent_specific = [&](SemIR::SpecificId specific_id) {
-    llvm::SmallVector<SemIR::SpecificId> stack;
-    SemIR::SpecificId specific_to_update = specific_id;
-    while (equivalent_specifics_.Get(
-               equivalent_specifics_.Get(specific_to_update)) !=
-           equivalent_specifics_.Get(specific_to_update)) {
-      stack.push_back(specific_to_update);
-      specific_to_update = equivalent_specifics_.Get(specific_to_update);
-    }
-    for (auto specific : llvm::reverse(stack)) {
-      equivalent_specifics_.Set(
-          specific,
-          equivalent_specifics_.Get(equivalent_specifics_.Get(specific)));
-    }
-  };
-
-  update_equivalent_specific(specific_id1);
-  update_equivalent_specific(specific_id2);
+  UpdateEquivalentSpecific(specific_id1);
+  UpdateEquivalentSpecific(specific_id2);
 
   return equivalent_specifics_.Get(specific_id1) ==
          equivalent_specifics_.Get(specific_id2);
@@ -675,7 +688,7 @@ auto FileContext::BuildFunctionDecl(SemIR::FunctionId function_id,
     CARBON_CHECK(!specific_id.has_value(),
                  "Specific functions cannot have C++ definitions");
     HandleReferencedCppFunction(clang::dyn_cast<clang::FunctionDecl>(
-        sem_ir().clang_decls().Get(clang_decl_id)));
+        sem_ir().clang_decls().Get(clang_decl_id).decl));
     // TODO: Check that the signature and mangling generated by Clang and the
     // one we generated are the same.
   }
@@ -823,16 +836,18 @@ auto FileContext::BuildFunctionBody(SemIR::FunctionId function_id,
   // parameter order.
   auto lower_param = [&](SemIR::InstId param_id) {
     // Get the value of the parameter from the function argument.
-    auto param_inst = definition_ir.insts().GetAs<SemIR::AnyParam>(param_id);
     llvm::Value* param_value;
 
-    if (SemIR::ValueRepr::ForType(definition_ir, param_inst.type_id).kind !=
+    // The `type_id` of a parameter tracks the parameter's type.
+    CARBON_CHECK(definition_ir.insts().Is<SemIR::AnyParam>(param_id));
+    auto param_type = function_lowering.GetTypeIdOfInst(param_id);
+    if (function_lowering.GetValueRepr(param_type).repr.kind !=
         SemIR::ValueRepr::None) {
       param_value = llvm_function->getArg(param_index);
       ++param_index;
     } else {
-      param_value = llvm::PoisonValue::get(
-          function_lowering.GetTypeOfInstInSpecific(param_id));
+      param_value =
+          llvm::PoisonValue::get(function_lowering.GetType(param_type));
     }
     // The value of the parameter is the value of the argument.
     function_lowering.SetLocal(param_id, param_value);

@@ -2,7 +2,7 @@
 // Exceptions. See /LICENSE for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
-// EXTRA-ARGS: --no-prelude-import
+// INCLUDE-FILE: toolchain/testing/testdata/min_prelude/none.carbon
 //
 // AUTOUPDATE
 // TIP: To test this file alone, run:
