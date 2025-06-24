@@ -411,18 +411,25 @@ static auto BranchKindToName(llvm::StringLiteral prefix, InstKind inst_kind,
                              std::optional<const char*> branch,
                              std::optional<const char*> branch_with_arg)
     -> std::string {
+  llvm::StringRef arg = "<unexpected>";
   switch (inst_kind) {
     case BranchIf::Kind:
-      return llvm::formatv("{0}.{1}", prefix, branch_if);
+      arg = branch_if;
+      break;
     case Branch::Kind:
-      return llvm::formatv("{0}.{1}", prefix,
-                           branch ? *branch : "<unexpected>");
+      if (branch) {
+        arg = *branch;
+      }
+      break;
     case BranchWithArg::Kind:
-      return llvm::formatv("{0}.{1}", prefix,
-                           branch_with_arg ? *branch_with_arg : "<unexpected>");
+      if (branch_with_arg) {
+        arg = *branch_with_arg;
+      }
+      break;
     default:
-      return llvm::formatv("{0}.<unexpected>", prefix);
+      break;
   }
+  return llvm::formatv("{0}.{1}", prefix, arg);
 }
 
 // Finds and adds a suitable block label for the given SemIR instruction that
