@@ -529,7 +529,7 @@ static auto MapBuiltinType(Context& context, const clang::BuiltinType& type)
 static auto MapRecordType(Context& context, SemIR::LocId loc_id,
                           const clang::RecordType& type) -> TypeExpr {
   auto* record_decl = clang::dyn_cast<clang::CXXRecordDecl>(type.getDecl());
-  if (record_decl && (record_decl->isStruct() || record_decl->isClass())) {
+  if (record_decl && !record_decl->isUnion()) {
     auto& clang_decls = context.sem_ir().clang_decls();
     SemIR::InstId record_inst_id = SemIR::InstId::None;
     if (auto record_clang_decl_id = clang_decls.Lookup(
