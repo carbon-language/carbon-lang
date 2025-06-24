@@ -13,7 +13,7 @@ import library "prelude/types/bool";
 // TODO: Revisit this once we have choice types implemented in the toolchain.
 //
 // TODO: We don't have an approved design for an `Optional` type yet, but it's
-// used by the design for `Iterate`.
+// used by the design for `Iterate`. The API here is a placeholder.
 class Optional(T:! type) {
   fn None() -> Self {
     returned var me: Self;

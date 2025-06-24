@@ -100,8 +100,8 @@ auto AddBindingPattern(Context& context, SemIR::LocId name_loc,
 // is the body of a returned var, this reuses the return slot, and otherwise it
 // adds a new inst.
 static auto GetOrAddVarStorage(Context& context, SemIR::InstId var_pattern_id,
-                               bool returned) -> SemIR::InstId {
-  if (returned) {
+                               bool is_returned_var) -> SemIR::InstId {
+  if (is_returned_var) {
     auto& function = GetCurrentFunctionForReturn(context);
     auto return_info =
         SemIR::ReturnTypeInfo::ForFunction(context.sem_ir(), function);
@@ -119,7 +119,7 @@ static auto GetOrAddVarStorage(Context& context, SemIR::InstId var_pattern_id,
 }
 
 auto AddPatternVarStorage(Context& context, SemIR::InstBlockId pattern_block_id,
-                          bool returned) -> void {
+                          bool is_returned_var) -> void {
   // We need to emit the VarStorage insts early, because they may be output
   // arguments for the initializer. However, we can't emit them when we emit
   // the corresponding `VarPattern`s because they're part of the pattern match,
@@ -128,7 +128,7 @@ auto AddPatternVarStorage(Context& context, SemIR::InstBlockId pattern_block_id,
   for (auto inst_id : context.inst_blocks().Get(pattern_block_id)) {
     if (context.insts().Is<SemIR::VarPattern>(inst_id)) {
       context.var_storage_map().Insert(
-          inst_id, GetOrAddVarStorage(context, inst_id, returned));
+          inst_id, GetOrAddVarStorage(context, inst_id, is_returned_var));
     }
   }
 }

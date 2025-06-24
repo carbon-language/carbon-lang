@@ -46,7 +46,7 @@ auto AddBindingPattern(Context& context, SemIR::LocId name_loc,
 // current location in the output SemIR. For a `returned var`, this
 // reuses the function's return slot when present.
 auto AddPatternVarStorage(Context& context, SemIR::InstBlockId pattern_block_id,
-                          bool returned) -> void;
+                          bool is_returned_var) -> void;
 
 }  // namespace Carbon::Check
 
