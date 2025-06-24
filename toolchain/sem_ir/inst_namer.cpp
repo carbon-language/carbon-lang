@@ -405,18 +405,18 @@ auto InstNamer::AddBlockLabel(
 }
 
 // For labeling branch kinds to `BranchKindToName`. Only expected kinds need
-// labels.
+// a value; the empty string is for unexpected kinds.
 struct BranchNames {
-  llvm::StringLiteral branch_if = "<unexpected>";
-  llvm::StringLiteral branch = "<unexpected>";
-  llvm::StringLiteral branch_with_arg = "<unexpected>";
+  llvm::StringLiteral branch_if = "";
+  llvm::StringLiteral branch = "";
+  llvm::StringLiteral branch_with_arg = "";
 };
 
 // Returns `prefix` suffixed with the appropriate label based on the branch
 // instruction kind.
 static auto BranchKindToName(llvm::StringLiteral prefix, InstKind inst_kind,
                              BranchNames names) -> std::string {
-  llvm::StringLiteral suffix = "<unexpected>";
+  llvm::StringLiteral suffix = "";
   switch (inst_kind) {
     case BranchIf::Kind:
       suffix = names.branch_if;
@@ -429,6 +429,9 @@ static auto BranchKindToName(llvm::StringLiteral prefix, InstKind inst_kind,
       break;
     default:
       break;
+  }
+  if (suffix.empty()) {
+    return llvm::formatv("{0}.<unexpected {1}>", prefix, inst_kind);
   }
   return llvm::formatv("{0}.{1}", prefix, suffix);
 }
