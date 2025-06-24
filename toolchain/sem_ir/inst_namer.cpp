@@ -466,7 +466,7 @@ auto InstNamer::AddBlockLabel(ScopeId scope_id, LocId loc_id, AnyBranch branch)
       break;
 
     case Parse::NodeKind::WhileConditionStart:
-      name = "while.cond";
+      name = BranchKindToName("while", branch.kind, {.branch = "cond"});
       break;
 
     case Parse::NodeKind::WhileCondition:
