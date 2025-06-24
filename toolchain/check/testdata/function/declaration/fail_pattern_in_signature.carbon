@@ -2,8 +2,9 @@
 // Exceptions. See /LICENSE for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
+// INCLUDE-FILE: toolchain/testing/testdata/min_prelude/none.carbon
 // TODO: Add ranges and switch to "--dump-sem-ir-ranges=only".
-// EXTRA-ARGS: --no-prelude-import --dump-sem-ir-ranges=if-present
+// EXTRA-ARGS: --dump-sem-ir-ranges=if-present
 //
 // AUTOUPDATE
 // TIP: To test this file alone, run:
@@ -37,14 +38,14 @@ fn F((a: {}, b: {}), c: {});
 // CHECK:STDOUT:     %a.param_patt: %pattern_type.a96 = value_param_pattern %a.patt, call_param<none> [concrete]
 // CHECK:STDOUT:     %b.patt: %pattern_type.a96 = binding_pattern b [concrete]
 // CHECK:STDOUT:     %b.param_patt: %pattern_type.a96 = value_param_pattern %b.patt, call_param<none> [concrete]
-// CHECK:STDOUT:     %.loc18_19: %pattern_type.de4 = tuple_pattern (%a.param_patt, %b.param_patt) [concrete]
+// CHECK:STDOUT:     %.loc19_19: %pattern_type.de4 = tuple_pattern (%a.param_patt, %b.param_patt) [concrete]
 // CHECK:STDOUT:     %c.patt: %pattern_type.a96 = binding_pattern c [concrete]
 // CHECK:STDOUT:     %c.param_patt: %pattern_type.a96 = value_param_pattern %c.patt, call_param0 [concrete]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %c.param: %empty_struct_type = value_param call_param0
-// CHECK:STDOUT:     %.loc18_26.1: type = splice_block %.loc18_26.3 [concrete = constants.%empty_struct_type] {
-// CHECK:STDOUT:       %.loc18_26.2: %empty_struct_type = struct_literal ()
-// CHECK:STDOUT:       %.loc18_26.3: type = converted %.loc18_26.2, constants.%empty_struct_type [concrete = constants.%empty_struct_type]
+// CHECK:STDOUT:     %.loc19_26.1: type = splice_block %.loc19_26.3 [concrete = constants.%empty_struct_type] {
+// CHECK:STDOUT:       %.loc19_26.2: %empty_struct_type = struct_literal ()
+// CHECK:STDOUT:       %.loc19_26.3: type = converted %.loc19_26.2, constants.%empty_struct_type [concrete = constants.%empty_struct_type]
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %c: %empty_struct_type = bind_name c, %c.param
 // CHECK:STDOUT:   }
