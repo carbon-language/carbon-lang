@@ -419,12 +419,10 @@ class NodeStack {
       case Parse::NodeKind::WhereOperand:
         return Id::KindFor<SemIR::InstId>();
       case Parse::NodeKind::ExplicitParamList:
-      case Parse::NodeKind::ForHeader:
       case Parse::NodeKind::ForIn:
       case Parse::NodeKind::IfCondition:
       case Parse::NodeKind::IfExprIf:
       case Parse::NodeKind::ImplicitParamList:
-      case Parse::NodeKind::WhileCondition:
       case Parse::NodeKind::WhileConditionStart:
         return Id::KindFor<SemIR::InstBlockId>();
       case Parse::NodeKind::FunctionDefinitionStart:
@@ -486,6 +484,7 @@ class NodeStack {
       case Parse::NodeKind::ExportIntroducer:
       case Parse::NodeKind::FileEnd:
       case Parse::NodeKind::FileStart:
+      case Parse::NodeKind::ForHeader:
       case Parse::NodeKind::Forall:
       case Parse::NodeKind::IdentifierNameQualifierWithParams:
       case Parse::NodeKind::IdentifierNameQualifierWithoutParams:
@@ -528,6 +527,7 @@ class NodeStack {
       case Parse::NodeKind::StructFieldDesignator:
       case Parse::NodeKind::StructTypeLiteralComma:
       case Parse::NodeKind::TupleLiteralComma:
+      case Parse::NodeKind::WhileCondition:
         return Id::Kind::Invalid;
       default:
         // In this case, the kind must be determinable from the category, or we

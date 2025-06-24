@@ -6,6 +6,12 @@ package Core library "prelude/types/optional";
 
 import library "prelude/types/bool";
 
+// For now, an `Optional(T)` is stored as a pair of a `bool` and a `T`, with
+// the `T` left uninitialized if the `bool` is `false`. This isn't a viable
+// approach in the longer term, but is the best we can do for now.
+//
+// TODO: Revisit this once we have choice types implemented in the toolchain.
+//
 // TODO: We don't have an approved design for an `Optional` type yet, but it's
 // used by the design for `Iterate`.
 class Optional(T:! type) {
