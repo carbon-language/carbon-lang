@@ -220,6 +220,10 @@ abstract constraints into a set of constraints on `T`:
     `.Self` is replaced by `T` throughout the constraint.
 
 ```carbon
+interface I {
+  let X:! type;
+  let Y:! type;
+}
 // ✅ `.X` in `.Y = .X` is rewritten to `i32` when initially
 // forming the facet type.
 // Nothing to do during constraint resolution.
