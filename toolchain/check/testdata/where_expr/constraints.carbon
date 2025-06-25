@@ -145,7 +145,7 @@ import library "error_in_constraint";
 
 fn F() {
 //@dump-sem-ir-begin
-  WithError(());
+  let x: () = WithError(());
 //@dump-sem-ir-end
 }
 
@@ -362,6 +362,7 @@ fn F() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [concrete]
+// CHECK:STDOUT:   %pattern_type: type = pattern_type %empty_tuple.type [concrete]
 // CHECK:STDOUT:   %WithError.type: type = fn_type @WithError [concrete]
 // CHECK:STDOUT:   %WithError: %WithError.type = struct_value () [concrete]
 // CHECK:STDOUT: }
@@ -372,8 +373,16 @@ fn F() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F() {
 // CHECK:STDOUT: !entry:
+// CHECK:STDOUT:   name_binding_decl {
+// CHECK:STDOUT:     %x.patt: %pattern_type = binding_pattern x [concrete]
+// CHECK:STDOUT:   }
 // CHECK:STDOUT:   %WithError.ref: %WithError.type = name_ref WithError, imports.%Main.WithError [concrete = constants.%WithError]
-// CHECK:STDOUT:   %.loc8: %empty_tuple.type = tuple_literal ()
+// CHECK:STDOUT:   %.loc8_26: %empty_tuple.type = tuple_literal ()
+// CHECK:STDOUT:   %.loc8_11.1: type = splice_block %.loc8_11.3 [concrete = constants.%empty_tuple.type] {
+// CHECK:STDOUT:     %.loc8_11.2: %empty_tuple.type = tuple_literal ()
+// CHECK:STDOUT:     %.loc8_11.3: type = converted %.loc8_11.2, constants.%empty_tuple.type [concrete = constants.%empty_tuple.type]
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %x: %empty_tuple.type = bind_name x, <error> [concrete = <error>]
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
