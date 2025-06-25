@@ -766,10 +766,6 @@ static auto ReplaceAllFieldsWithConstantValues(EvalContext& eval_context,
     -> bool {
   auto arg0 =
       GetConstantValueForArg(eval_context, inst->arg0_and_kind(), phase);
-  if (!IsConstant(*phase)) {
-    return false;
-  }
-
   auto arg1 =
       GetConstantValueForArg(eval_context, inst->arg1_and_kind(), phase);
   if (!IsConstant(*phase)) {
