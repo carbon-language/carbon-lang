@@ -2059,7 +2059,8 @@ auto TryEvalTypedInst<SemIR::WhereExpr>(EvalContext& eval_context,
           auto rhs_inst_id =
               eval_context.constant_values().GetInstId(rhs_const_id);
           if (rhs_inst_id == SemIR::ErrorInst::InstId) {
-            // `.Self impls <error>` -> nothing to do.
+            // `.Self impls <error>`.
+            return SemIR::ErrorInst::ConstantId;
           } else if (rhs_inst_id == SemIR::TypeType::TypeInstId) {
             // `.Self impls type` -> nothing to do.
           } else {
