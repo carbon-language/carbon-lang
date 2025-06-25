@@ -12,6 +12,14 @@
 // Test that when equivalence is found for the specific fingerprint, we don't
 // conclude "equivalent" for all the call graph.
 
+// The two calls to F have the same function type, but the corresponding
+// definitions should not be coalesced. The function bodies of the two
+// specifics of F look mostly identical: same type for the parameters,
+// calling the same A and different specifics of B, with the same function
+// type. The difference is discovered in the call graph inside the two B
+// specifics, where the pointer values are different, and the calls to the
+// two D specifics are to functions with different function types.
+
 fn A[U:! type](x: U) -> U {
   return x;
 }
