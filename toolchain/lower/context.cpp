@@ -59,7 +59,7 @@ auto Context::Finalize() && -> std::unique_ptr<llvm::Module> {
 
   RawStringOstream errs;
   CARBON_CHECK(!llvm::verifyModule(*llvm_module_, &errs),
-               "Verifier errors: {0}", errs.TakeStr());
+               "Verifier errors:\n{0}", errs.TakeStr());
   return std::move(llvm_module_);
 }
 
