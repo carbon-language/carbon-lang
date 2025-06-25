@@ -125,7 +125,6 @@ auto FunctionContext::LowerInst(SemIR::InstId inst_id) -> void {
   builder_.getInserter().SetCurrentInstId(inst_id);
 
   auto debug_loc = GetDebugLoc(inst_id);
-
   if (debug_loc) {
     builder_.SetCurrentDebugLocation(debug_loc);
   }
