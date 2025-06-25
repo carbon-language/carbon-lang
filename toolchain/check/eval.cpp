@@ -1999,32 +1999,17 @@ auto TryEvalTypedInst<SemIR::BindSymbolicName>(EvalContext& eval_context,
   return MakeConstantResult(eval_context.context(), bind, phase);
 }
 
-static auto IsPeriodSelf(EvalContext& eval_context, SemIR::ConstantId const_id)
-    -> bool {
-  // This also rejects the singleton Error value as it's concrete.
-  if (!const_id.is_symbolic()) {
-    return false;
+// Returns whether `inst_id` is the same constant facet value as
+// `facet_value_inst_id`.
+static auto IsSameFacetValue(Context& context, SemIR::InstId inst_id,
+                             SemIR::InstId facet_value_inst_id) -> bool {
+  auto const_id = context.constant_values().Get(inst_id);
+  if (auto facet_access_type = context.insts().TryGetAs<SemIR::FacetAccessType>(
+          context.constant_values().GetInstId(const_id))) {
+    const_id =
+        context.constant_values().Get(facet_access_type->facet_value_inst_id);
   }
-  const auto& symbolic =
-      eval_context.constant_values().GetSymbolicConstant(const_id);
-  // Fast early reject before doing more expensive operations.
-  if (symbolic.dependence != SemIR::ConstantDependence::PeriodSelf) {
-    return false;
-  }
-  auto inst_id = symbolic.inst_id;
-  // Unwrap the `FacetAccessType` instruction, which we get when the `.Self` is
-  // converted to `type`.
-  if (auto facet_access_type =
-          eval_context.insts().TryGetAs<SemIR::FacetAccessType>(inst_id)) {
-    inst_id = facet_access_type->facet_value_inst_id;
-  }
-  if (auto bind_symbolic_name =
-          eval_context.insts().TryGetAs<SemIR::BindSymbolicName>(inst_id)) {
-    const auto& bind_name =
-        eval_context.entity_names().Get(bind_symbolic_name->entity_name_id);
-    return bind_name.name_id == SemIR::NameId::PeriodSelf;
-  }
-  return false;
+  return const_id == context.constant_values().Get(facet_value_inst_id);
 }
 
 // TODO: Convert this to an EvalConstantInst function. This will require
@@ -2066,8 +2051,8 @@ auto TryEvalTypedInst<SemIR::WhereExpr>(EvalContext& eval_context,
       } else if (auto impls =
                      eval_context.insts().TryGetAs<SemIR::RequirementImpls>(
                          inst_id)) {
-        if (IsPeriodSelf(eval_context,
-                         eval_context.constant_values().Get(impls->lhs_id))) {
+        if (IsSameFacetValue(eval_context.context(), impls->lhs_id,
+                             typed_inst.period_self_id)) {
           if (impls->rhs_id == SemIR::TypeType::TypeInstId) {
             // `.Self impls type` -> nothing to do.
           } else if (auto facet_type =
