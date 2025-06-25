@@ -404,79 +404,85 @@ auto InstNamer::AddBlockLabel(
                     *this, loc_id_or_fingerprint, std::move(name))};
 }
 
+// Provides names for `AddBlockLabel`.
+struct BranchNames {
+  // Returns names for a branching parse node, or nullopt if not a branch.
+  static auto For(Parse::NodeKind node_kind) -> std::optional<BranchNames> {
+    switch (node_kind) {
+      case Parse::NodeKind::IfExprIf:
+        return {{.prefix = "if.expr",
+                 .branch_if = "then",
+                 .branch = "else",
+                 .branch_with_arg = "result"}};
+
+      case Parse::NodeKind::IfCondition:
+        return {{.prefix = "if", .branch_if = "then", .branch = "else"}};
+
+      case Parse::NodeKind::IfStatement:
+        return {{.prefix = "if", .branch = "done"}};
+
+      case Parse::NodeKind::ShortCircuitOperandAnd:
+        return {
+            {.prefix = "and", .branch_if = "rhs", .branch_with_arg = "result"}};
+      case Parse::NodeKind::ShortCircuitOperandOr:
+        return {
+            {.prefix = "or", .branch_if = "rhs", .branch_with_arg = "result"}};
+
+      case Parse::NodeKind::WhileConditionStart:
+        return {{.prefix = "while", .branch = "cond"}};
+
+      case Parse::NodeKind::WhileCondition:
+        return {{.prefix = "while", .branch_if = "body", .branch = "done"}};
+
+      default:
+        return std::nullopt;
+    }
+  }
+
+  // Returns the provided suffix for the instruction kind, or an empty string.
+  auto GetSuffix(InstKind inst_kind) -> llvm::StringLiteral {
+    switch (inst_kind) {
+      case BranchIf::Kind:
+        return branch_if;
+      case Branch::Kind:
+        return branch;
+      case BranchWithArg::Kind:
+        return branch_with_arg;
+      default:
+        return "";
+    }
+  }
+
+  // The kind of branch, based on the node kind.
+  llvm::StringLiteral prefix;
+
+  // For labeling branch instruction kinds. Only expected kinds need a value;
+  // the empty string is for unexpected kinds.
+  llvm::StringLiteral branch_if = "";
+  llvm::StringLiteral branch = "";
+  llvm::StringLiteral branch_with_arg = "";
+};
+
 // Finds and adds a suitable block label for the given SemIR instruction that
 // represents some kind of branch.
 auto InstNamer::AddBlockLabel(ScopeId scope_id, LocId loc_id, AnyBranch branch)
     -> void {
+  std::string label;
+
   loc_id = sem_ir_->insts().GetCanonicalLocId(loc_id);
-  if (!loc_id.node_id().has_value()) {
-    AddBlockLabel(scope_id, branch.target_id, "", loc_id);
-    return;
-  }
-  llvm::StringRef name;
-  switch (sem_ir_->parse_tree().node_kind(loc_id.node_id())) {
-    case Parse::NodeKind::IfExprIf:
-      switch (branch.kind) {
-        case BranchIf::Kind:
-          name = "if.expr.then";
-          break;
-        case Branch::Kind:
-          name = "if.expr.else";
-          break;
-        case BranchWithArg::Kind:
-          name = "if.expr.result";
-          break;
-        default:
-          break;
+  if (loc_id.node_id().has_value()) {
+    if (auto names = BranchNames::For(
+            sem_ir_->parse_tree().node_kind(loc_id.node_id()))) {
+      if (auto suffix = names->GetSuffix(branch.kind); !suffix.empty()) {
+        label = llvm::formatv("{0}.{1}", names->prefix, suffix);
+      } else {
+        label =
+            llvm::formatv("{0}.<unexpected {1}>", names->prefix, branch.kind);
       }
-      break;
-
-    case Parse::NodeKind::IfCondition:
-      switch (branch.kind) {
-        case BranchIf::Kind:
-          name = "if.then";
-          break;
-        case Branch::Kind:
-          name = "if.else";
-          break;
-        default:
-          break;
-      }
-      break;
-
-    case Parse::NodeKind::IfStatement:
-      name = "if.done";
-      break;
-
-    case Parse::NodeKind::ShortCircuitOperandAnd:
-      name = branch.kind == BranchIf::Kind ? "and.rhs" : "and.result";
-      break;
-    case Parse::NodeKind::ShortCircuitOperandOr:
-      name = branch.kind == BranchIf::Kind ? "or.rhs" : "or.result";
-      break;
-
-    case Parse::NodeKind::WhileConditionStart:
-      name = "while.cond";
-      break;
-
-    case Parse::NodeKind::WhileCondition:
-      switch (branch.kind) {
-        case BranchIf::Kind:
-          name = "while.body";
-          break;
-        case Branch::Kind:
-          name = "while.done";
-          break;
-        default:
-          break;
-      }
-      break;
-
-    default:
-      break;
+    }
   }
 
-  AddBlockLabel(scope_id, branch.target_id, name.str(), loc_id);
+  AddBlockLabel(scope_id, branch.target_id, label, loc_id);
 }
 
 auto InstNamer::CollectNamesInBlock(ScopeId scope_id, InstBlockId block_id)
