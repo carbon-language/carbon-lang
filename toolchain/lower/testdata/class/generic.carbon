@@ -268,12 +268,13 @@ fn AccessTuple() -> (i32, i32, i32) {
 // CHECK:STDOUT: define void @_CAccessEmpty.Main() !dbg !16 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   %c.var = alloca { i1, {} }, align 8, !dbg !17
+// CHECK:STDOUT:   %.loc30_17.1.temp = alloca {}, align 8, !dbg !18
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(i64 1, ptr %c.var), !dbg !17
-// CHECK:STDOUT:   %.loc29_37.2.v = getelementptr inbounds nuw { i1, {} }, ptr %c.var, i32 0, i32 0, !dbg !18
-// CHECK:STDOUT:   %.loc29_37.4.w = getelementptr inbounds nuw { i1, {} }, ptr %c.var, i32 0, i32 1, !dbg !18
+// CHECK:STDOUT:   %.loc29_37.2.v = getelementptr inbounds nuw { i1, {} }, ptr %c.var, i32 0, i32 0, !dbg !19
+// CHECK:STDOUT:   %.loc29_37.4.w = getelementptr inbounds nuw { i1, {} }, ptr %c.var, i32 0, i32 1, !dbg !19
 // CHECK:STDOUT:   call void @llvm.memcpy.p0.p0.i64(ptr align 1 %c.var, ptr align 1 @C.val.dcc.loc29_3, i64 1, i1 false), !dbg !17
-// CHECK:STDOUT:   call void @_CGetT.C.Main.e43630e9a6c38c3f(ptr %c.var), !dbg !19
-// CHECK:STDOUT:   %.loc30_17.1.temp = alloca {}, align 8, !dbg !19
+// CHECK:STDOUT:   call void @_CGetT.C.Main.e43630e9a6c38c3f(ptr %c.var), !dbg !18
+// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(i64 0, ptr %.loc30_17.1.temp), !dbg !18
 // CHECK:STDOUT:   ret void, !dbg !20
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -324,7 +325,7 @@ fn AccessTuple() -> (i32, i32, i32) {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; uselistorder directives
-// CHECK:STDOUT: uselistorder ptr @llvm.lifetime.start.p0, { 3, 2, 1, 0 }
+// CHECK:STDOUT: uselistorder ptr @llvm.lifetime.start.p0, { 4, 3, 2, 1, 0 }
 // CHECK:STDOUT: uselistorder ptr @llvm.memcpy.p0.p0.i64, { 3, 2, 1, 0 }
 // CHECK:STDOUT:
 // CHECK:STDOUT: attributes #0 = { nocallback nofree nosync nounwind willreturn memory(argmem: readwrite) }
@@ -351,8 +352,8 @@ fn AccessTuple() -> (i32, i32, i32) {
 // CHECK:STDOUT: !15 = !DILocation(line: 25, column: 3, scope: !11)
 // CHECK:STDOUT: !16 = distinct !DISubprogram(name: "AccessEmpty", linkageName: "_CAccessEmpty.Main", scope: null, file: !3, line: 28, type: !5, spFlags: DISPFlagDefinition, unit: !2)
 // CHECK:STDOUT: !17 = !DILocation(line: 29, column: 3, scope: !16)
-// CHECK:STDOUT: !18 = !DILocation(line: 29, column: 18, scope: !16)
-// CHECK:STDOUT: !19 = !DILocation(line: 30, column: 10, scope: !16)
+// CHECK:STDOUT: !18 = !DILocation(line: 30, column: 10, scope: !16)
+// CHECK:STDOUT: !19 = !DILocation(line: 29, column: 18, scope: !16)
 // CHECK:STDOUT: !20 = !DILocation(line: 30, column: 3, scope: !16)
 // CHECK:STDOUT: !21 = distinct !DISubprogram(name: "AccessTuple", linkageName: "_CAccessTuple.Main", scope: null, file: !3, line: 33, type: !5, spFlags: DISPFlagDefinition, unit: !2)
 // CHECK:STDOUT: !22 = !DILocation(line: 34, column: 3, scope: !21)

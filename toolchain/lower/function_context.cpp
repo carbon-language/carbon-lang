@@ -16,7 +16,7 @@ namespace Carbon::Lower {
 FunctionContext::FunctionContext(
     FileContext& file_context, llvm::Function* function,
     FileContext& specific_file_context, SemIR::SpecificId specific_id,
-    FileContext::SpecificFunctionFingerprint* function_fingerprint,
+    SpecificCoalescer::SpecificFunctionFingerprint* function_fingerprint,
     llvm::DISubprogram* di_subprogram, llvm::raw_ostream* vlog_stream)
     : file_context_(&file_context),
       function_(function),
@@ -196,6 +196,50 @@ auto FunctionContext::GetValue(SemIR::InstId inst_id) -> llvm::Value* {
 auto FunctionContext::MakeSyntheticBlock() -> llvm::BasicBlock* {
   synthetic_block_ = llvm::BasicBlock::Create(llvm_context(), "", function_);
   return synthetic_block_;
+}
+
+auto FunctionContext::CreateAlloca(llvm::Type* type, const llvm::Twine& name)
+    -> llvm::AllocaInst* {
+  // Position the first alloca right before the start of the executable code in
+  // the function.
+  llvm::AllocaInst* alloca;
+  {
+    llvm::IRBuilderBase::InsertPointGuard guard(builder());
+
+    auto debug_loc = builder().getCurrentDebugLocation();
+    if (after_allocas_) {
+      builder().SetInsertPoint(after_allocas_);
+    } else {
+      builder().SetInsertPointPastAllocas(&llvm_function());
+    }
+
+    // IRBuilder tramples over our debug location when setting the insert point,
+    // so undo that.
+    builder().SetCurrentDebugLocation(debug_loc);
+
+    // Create an alloca for this variable in the entry block.
+    alloca = builder().CreateAlloca(type, /*ArraySize=*/nullptr, name);
+  }
+
+  // Create a lifetime start intrinsic here to indicate where its scope really
+  // begins.
+  auto size = llvm_module().getDataLayout().getTypeAllocSize(type);
+  builder().CreateLifetimeStart(
+      alloca, llvm::ConstantInt::get(llvm_context(), llvm::APInt(64, size)));
+
+  // If we just created the first alloca, there is now definitely at least one
+  // instruction after it -- there is a lifetime start instruction if nothing
+  // else. Use that instruction as our insert point for all future allocas.
+  if (!after_allocas_) {
+    auto loc = alloca->getIterator();
+    ++loc;
+    after_allocas_ = &*loc;
+  }
+
+  // TODO: Create a matching `@llvm.lifetime.end` intrinsic call when the
+  // variable goes out of scope.
+
+  return alloca;
 }
 
 auto FunctionContext::GetDebugLoc(SemIR::InstId inst_id) -> llvm::DebugLoc {

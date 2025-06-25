@@ -44,9 +44,8 @@ auto HandleInst(FunctionContext& context, SemIR::InstId inst_id,
 
 auto HandleInst(FunctionContext& context, SemIR::InstId inst_id,
                 SemIR::TemporaryStorage /*inst*/) -> void {
-  auto* type = context.GetTypeOfInst(inst_id);
-  context.SetLocal(inst_id,
-                   context.builder().CreateAlloca(type, nullptr, "temp"));
+  context.SetLocal(
+      inst_id, context.CreateAlloca(context.GetTypeOfInst(inst_id), "temp"));
 }
 
 auto HandleInst(FunctionContext& context, SemIR::InstId inst_id,
