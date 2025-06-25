@@ -42,6 +42,7 @@ fn Main() {
 // CHECK:STDOUT: define void @_CMain.Main() !dbg !12 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   %.loc18_21.1.temp = alloca { i32, i32, i32 }, align 8, !dbg !13
+// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(i64 12, ptr %.loc18_21.1.temp), !dbg !13
 // CHECK:STDOUT:   call void @_CF.Main(ptr %.loc18_21.1.temp, { i32 } { i32 1 }, ptr @tuple.11a.loc18_20.6), !dbg !13
 // CHECK:STDOUT:   %tuple.elem0.tuple.elem = getelementptr inbounds nuw { i32, i32, i32 }, ptr %.loc18_21.1.temp, i32 0, i32 0, !dbg !13
 // CHECK:STDOUT:   %.loc18_21.3 = load i32, ptr %tuple.elem0.tuple.elem, align 4, !dbg !13
@@ -58,6 +59,11 @@ fn Main() {
 // CHECK:STDOUT:   store i32 %.loc18_21.5, ptr %tuple.loc18_213, align 4, !dbg !13
 // CHECK:STDOUT:   ret void, !dbg !14
 // CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: ; Function Attrs: nocallback nofree nosync nounwind willreturn memory(argmem: readwrite)
+// CHECK:STDOUT: declare void @llvm.lifetime.start.p0(i64 immarg, ptr captures(none)) #0
+// CHECK:STDOUT:
+// CHECK:STDOUT: attributes #0 = { nocallback nofree nosync nounwind willreturn memory(argmem: readwrite) }
 // CHECK:STDOUT:
 // CHECK:STDOUT: !llvm.module.flags = !{!0, !1}
 // CHECK:STDOUT: !llvm.dbg.cu = !{!2}

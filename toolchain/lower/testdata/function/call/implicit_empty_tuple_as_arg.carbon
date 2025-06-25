@@ -35,15 +35,19 @@ fn Main() {
 // CHECK:STDOUT: define void @_CMain.Main() !dbg !10 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   %x.var = alloca {}, align 8, !dbg !11
+// CHECK:STDOUT:   %.loc19_23.1.temp = alloca {}, align 8, !dbg !12
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(i64 0, ptr %x.var), !dbg !11
 // CHECK:STDOUT:   call void @_CFoo.Main(), !dbg !12
-// CHECK:STDOUT:   %.loc19_23.1.temp = alloca {}, align 8, !dbg !12
+// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(i64 0, ptr %.loc19_23.1.temp), !dbg !12
 // CHECK:STDOUT:   call void @_CBar.Main(), !dbg !13
 // CHECK:STDOUT:   ret void, !dbg !14
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nocallback nofree nosync nounwind willreturn memory(argmem: readwrite)
 // CHECK:STDOUT: declare void @llvm.lifetime.start.p0(i64 immarg, ptr captures(none)) #0
+// CHECK:STDOUT:
+// CHECK:STDOUT: ; uselistorder directives
+// CHECK:STDOUT: uselistorder ptr @llvm.lifetime.start.p0, { 1, 0 }
 // CHECK:STDOUT:
 // CHECK:STDOUT: attributes #0 = { nocallback nofree nosync nounwind willreturn memory(argmem: readwrite) }
 // CHECK:STDOUT:

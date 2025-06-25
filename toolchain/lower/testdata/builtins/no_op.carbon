@@ -51,6 +51,7 @@ fn J() {
 // CHECK:STDOUT: define void @_CH.Main() !dbg !11 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   %.loc27_18.1.temp = alloca {}, align 8, !dbg !12
+// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(i64 0, ptr %.loc27_18.1.temp), !dbg !12
 // CHECK:STDOUT:   ret void, !dbg !13
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -58,13 +59,17 @@ fn J() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: define void @_CJ.Main() !dbg !14 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   call void @_CI.Main(), !dbg !15
 // CHECK:STDOUT:   %.loc33_11.1.temp = alloca {}, align 8, !dbg !15
+// CHECK:STDOUT:   call void @_CI.Main(), !dbg !15
+// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(i64 0, ptr %.loc33_11.1.temp), !dbg !15
 // CHECK:STDOUT:   ret void, !dbg !16
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nocallback nofree nosync nounwind willreturn memory(argmem: readwrite)
 // CHECK:STDOUT: declare void @llvm.lifetime.start.p0(i64 immarg, ptr captures(none)) #0
+// CHECK:STDOUT:
+// CHECK:STDOUT: ; uselistorder directives
+// CHECK:STDOUT: uselistorder ptr @llvm.lifetime.start.p0, { 2, 1, 0 }
 // CHECK:STDOUT:
 // CHECK:STDOUT: attributes #0 = { nocallback nofree nosync nounwind willreturn memory(argmem: readwrite) }
 // CHECK:STDOUT:
