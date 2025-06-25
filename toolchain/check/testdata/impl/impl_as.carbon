@@ -2,6 +2,7 @@
 // Exceptions. See /LICENSE for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
+// INCLUDE-FILE: toolchain/testing/testdata/min_prelude/destroy.carbon
 // TODO: Add ranges and switch to "--dump-sem-ir-ranges=only".
 // EXTRA-ARGS: --dump-sem-ir-ranges=if-present
 //
@@ -47,7 +48,6 @@ class C {
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [concrete] {
 // CHECK:STDOUT:     import Core//prelude
-// CHECK:STDOUT:     import Core//prelude/...
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -110,10 +110,10 @@ class C {
 // CHECK:STDOUT:     %c.var_patt: %pattern_type = var_pattern %c.patt [concrete]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %c.var: ref %C = var %c.var_patt
-// CHECK:STDOUT:   %.loc22_19.1: %empty_struct_type = struct_literal ()
-// CHECK:STDOUT:   %.loc22_19.2: init %C = class_init (), %c.var [concrete = constants.%C.val]
-// CHECK:STDOUT:   %.loc22_7: init %C = converted %.loc22_19.1, %.loc22_19.2 [concrete = constants.%C.val]
-// CHECK:STDOUT:   assign %c.var, %.loc22_7
+// CHECK:STDOUT:   %.loc23_19.1: %empty_struct_type = struct_literal ()
+// CHECK:STDOUT:   %.loc23_19.2: init %C = class_init (), %c.var [concrete = constants.%C.val]
+// CHECK:STDOUT:   %.loc23_7: init %C = converted %.loc23_19.1, %.loc23_19.2 [concrete = constants.%C.val]
+// CHECK:STDOUT:   assign %c.var, %.loc23_7
 // CHECK:STDOUT:   %C.ref: type = name_ref C, file.%C.decl [concrete = constants.%C]
 // CHECK:STDOUT:   %c: ref %C = bind_name c, %c.var
 // CHECK:STDOUT:   return

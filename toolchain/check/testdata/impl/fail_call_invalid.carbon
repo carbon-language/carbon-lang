@@ -2,6 +2,7 @@
 // Exceptions. See /LICENSE for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
+// INCLUDE-FILE: toolchain/testing/testdata/min_prelude/int.carbon
 // TODO: Add ranges and switch to "--dump-sem-ir-ranges=only".
 // EXTRA-ARGS: --dump-sem-ir-ranges=if-present
 //
@@ -61,7 +62,7 @@ fn InstanceCall(n: i32) {
 // CHECK:STDOUT:     import Core//prelude
 // CHECK:STDOUT:     import Core//prelude/...
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %Core.Int: %Int.type = import_ref Core//prelude/types/int, Int, loaded [concrete = constants.%Int.generic]
+// CHECK:STDOUT:   %Core.Int: %Int.type = import_ref Core//prelude/parts/int, Int, loaded [concrete = constants.%Int.generic]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -78,14 +79,14 @@ fn InstanceCall(n: i32) {
 // CHECK:STDOUT:     %i32: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
 // CHECK:STDOUT:     %Simple.ref: type = name_ref Simple, file.%Simple.decl [concrete = constants.%Simple.type]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %Simple.impl_witness_table = impl_witness_table (@impl.006.%G.decl.loc23_27.2), @impl.006 [concrete]
+// CHECK:STDOUT:   %Simple.impl_witness_table = impl_witness_table (@impl.006.%G.decl.loc24_27.2), @impl.006 [concrete]
 // CHECK:STDOUT:   %Simple.impl_witness: <witness> = impl_witness %Simple.impl_witness_table [concrete = constants.%Simple.impl_witness]
 // CHECK:STDOUT:   %InstanceCall.decl: %InstanceCall.type = fn_decl @InstanceCall [concrete = constants.%InstanceCall] {
 // CHECK:STDOUT:     %n.patt: %pattern_type.7ce = binding_pattern n [concrete]
 // CHECK:STDOUT:     %n.param_patt: %pattern_type.7ce = value_param_pattern %n.patt, call_param0 [concrete]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %n.param: %i32 = value_param call_param0
-// CHECK:STDOUT:     %.loc26: type = splice_block %i32 [concrete = constants.%i32] {
+// CHECK:STDOUT:     %.loc27: type = splice_block %i32 [concrete = constants.%i32] {
 // CHECK:STDOUT:       %int_32: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
 // CHECK:STDOUT:       %i32: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
 // CHECK:STDOUT:     }
@@ -99,13 +100,13 @@ fn InstanceCall(n: i32) {
 // CHECK:STDOUT:     %self.patt: @G.1.%pattern_type (%pattern_type.f88) = binding_pattern self [concrete]
 // CHECK:STDOUT:     %self.param_patt: @G.1.%pattern_type (%pattern_type.f88) = value_param_pattern %self.patt, call_param0 [concrete]
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %self.param: @G.1.%Self.as_type.loc15_14.1 (%Self.as_type.716) = value_param call_param0
-// CHECK:STDOUT:     %.loc15_14.1: type = splice_block %.loc15_14.2 [symbolic = %Self.as_type.loc15_14.1 (constants.%Self.as_type.716)] {
+// CHECK:STDOUT:     %self.param: @G.1.%Self.as_type.loc16_14.1 (%Self.as_type.716) = value_param call_param0
+// CHECK:STDOUT:     %.loc16_14.1: type = splice_block %.loc16_14.2 [symbolic = %Self.as_type.loc16_14.1 (constants.%Self.as_type.716)] {
 // CHECK:STDOUT:       %Self.ref: %Simple.type = name_ref Self, @Simple.%Self [symbolic = %Self (constants.%Self.3c9)]
-// CHECK:STDOUT:       %Self.as_type.loc15_14.2: type = facet_access_type %Self.ref [symbolic = %Self.as_type.loc15_14.1 (constants.%Self.as_type.716)]
-// CHECK:STDOUT:       %.loc15_14.2: type = converted %Self.ref, %Self.as_type.loc15_14.2 [symbolic = %Self.as_type.loc15_14.1 (constants.%Self.as_type.716)]
+// CHECK:STDOUT:       %Self.as_type.loc16_14.2: type = facet_access_type %Self.ref [symbolic = %Self.as_type.loc16_14.1 (constants.%Self.as_type.716)]
+// CHECK:STDOUT:       %.loc16_14.2: type = converted %Self.ref, %Self.as_type.loc16_14.2 [symbolic = %Self.as_type.loc16_14.1 (constants.%Self.as_type.716)]
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %self: @G.1.%Self.as_type.loc15_14.1 (%Self.as_type.716) = bind_name self, %self.param
+// CHECK:STDOUT:     %self: @G.1.%Self.as_type.loc16_14.1 (%Self.as_type.716) = bind_name self, %self.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %assoc0: %Simple.assoc_type = assoc_entity element0, %G.decl [concrete = constants.%assoc0.db2]
 // CHECK:STDOUT:
@@ -116,7 +117,7 @@ fn InstanceCall(n: i32) {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: impl @impl.006: %i32 as %Simple.ref {
-// CHECK:STDOUT:   %G.decl.loc23_27.1: %G.type.c9825d.1 = fn_decl @G.2 [concrete = constants.%G.e73e91.1] {
+// CHECK:STDOUT:   %G.decl.loc24_27.1: %G.type.c9825d.1 = fn_decl @G.2 [concrete = constants.%G.e73e91.1] {
 // CHECK:STDOUT:     %self.patt: <error> = binding_pattern self [concrete]
 // CHECK:STDOUT:     %self.param_patt: <error> = value_param_pattern %self.patt, call_param0 [concrete]
 // CHECK:STDOUT:   } {
@@ -124,7 +125,7 @@ fn InstanceCall(n: i32) {
 // CHECK:STDOUT:     %Undeclared.ref: <error> = name_ref Undeclared, <error> [concrete = <error>]
 // CHECK:STDOUT:     %self: <error> = bind_name self, %self.param [concrete = <error>]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %G.decl.loc23_27.2: %G.type.c9825d.2 = fn_decl @G.3 [concrete = constants.%G.e73e91.2] {
+// CHECK:STDOUT:   %G.decl.loc24_27.2: %G.type.c9825d.2 = fn_decl @G.3 [concrete = constants.%G.e73e91.2] {
 // CHECK:STDOUT:     %self.patt: %pattern_type.7ce = binding_pattern self [concrete]
 // CHECK:STDOUT:     %self.param_patt: %pattern_type.7ce = value_param_pattern %self.patt, call_param0 [concrete]
 // CHECK:STDOUT:   } {
@@ -134,23 +135,23 @@ fn InstanceCall(n: i32) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Undeclared = <poisoned>
-// CHECK:STDOUT:   .G = %G.decl.loc23_27.1
+// CHECK:STDOUT:   .G = %G.decl.loc24_27.1
 // CHECK:STDOUT:   witness = file.%Simple.impl_witness
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic fn @G.1(@Simple.%Self: %Simple.type) {
 // CHECK:STDOUT:   %Self: %Simple.type = bind_symbolic_name Self, 0 [symbolic = %Self (constants.%Self.3c9)]
-// CHECK:STDOUT:   %Self.as_type.loc15_14.1: type = facet_access_type %Self [symbolic = %Self.as_type.loc15_14.1 (constants.%Self.as_type.716)]
-// CHECK:STDOUT:   %pattern_type: type = pattern_type %Self.as_type.loc15_14.1 [symbolic = %pattern_type (constants.%pattern_type.f88)]
+// CHECK:STDOUT:   %Self.as_type.loc16_14.1: type = facet_access_type %Self [symbolic = %Self.as_type.loc16_14.1 (constants.%Self.as_type.716)]
+// CHECK:STDOUT:   %pattern_type: type = pattern_type %Self.as_type.loc16_14.1 [symbolic = %pattern_type (constants.%pattern_type.f88)]
 // CHECK:STDOUT:
-// CHECK:STDOUT:   fn(%self.param: @G.1.%Self.as_type.loc15_14.1 (%Self.as_type.716));
+// CHECK:STDOUT:   fn(%self.param: @G.1.%Self.as_type.loc16_14.1 (%Self.as_type.716));
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @G.2(%self.param: <error>);
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @G.3(%self.param: %i32) [thunk @impl.006.%G.decl.loc23_27.1] {
+// CHECK:STDOUT: fn @G.3(%self.param: %i32) [thunk @impl.006.%G.decl.loc24_27.1] {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %G.ref: %G.type.c9825d.1 = name_ref G, @impl.006.%G.decl.loc23_27.1 [concrete = constants.%G.e73e91.1]
+// CHECK:STDOUT:   %G.ref: %G.type.c9825d.1 = name_ref G, @impl.006.%G.decl.loc24_27.1 [concrete = constants.%G.e73e91.1]
 // CHECK:STDOUT:   %self.ref: %i32 = name_ref self, %self.param
 // CHECK:STDOUT:   %G.bound: <bound method> = bound_method %self.ref, %G.ref
 // CHECK:STDOUT:   %G.call: init %empty_tuple.type = call %G.bound(<error>)
@@ -161,24 +162,24 @@ fn InstanceCall(n: i32) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %n.ref: %i32 = name_ref n, %n
 // CHECK:STDOUT:   %Simple.ref: type = name_ref Simple, file.%Simple.decl [concrete = constants.%Simple.type]
-// CHECK:STDOUT:   %G.ref.loc27_12: %Simple.assoc_type = name_ref G, @Simple.%assoc0 [concrete = constants.%assoc0.db2]
+// CHECK:STDOUT:   %G.ref.loc28_12: %Simple.assoc_type = name_ref G, @Simple.%assoc0 [concrete = constants.%assoc0.db2]
 // CHECK:STDOUT:   %impl.elem0: %.8e6 = impl_witness_access constants.%Simple.impl_witness, element0 [concrete = constants.%G.e73e91.2]
 // CHECK:STDOUT:   %bound_method: <bound method> = bound_method %n.ref, %impl.elem0
-// CHECK:STDOUT:   %G.ref.loc27_16: %G.type.c9825d.1 = name_ref G, @impl.006.%G.decl.loc23_27.1 [concrete = constants.%G.e73e91.1]
-// CHECK:STDOUT:   %G.bound: <bound method> = bound_method %n.ref, %G.ref.loc27_16
+// CHECK:STDOUT:   %G.ref.loc28_16: %G.type.c9825d.1 = name_ref G, @impl.006.%G.decl.loc24_27.1 [concrete = constants.%G.e73e91.1]
+// CHECK:STDOUT:   %G.bound: <bound method> = bound_method %n.ref, %G.ref.loc28_16
 // CHECK:STDOUT:   %G.call: init %empty_tuple.type = call %G.bound(<error>)
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @G.1(constants.%Self.3c9) {
 // CHECK:STDOUT:   %Self => constants.%Self.3c9
-// CHECK:STDOUT:   %Self.as_type.loc15_14.1 => constants.%Self.as_type.716
+// CHECK:STDOUT:   %Self.as_type.loc16_14.1 => constants.%Self.as_type.716
 // CHECK:STDOUT:   %pattern_type => constants.%pattern_type.f88
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @G.1(constants.%Simple.facet) {
 // CHECK:STDOUT:   %Self => constants.%Simple.facet
-// CHECK:STDOUT:   %Self.as_type.loc15_14.1 => constants.%i32
+// CHECK:STDOUT:   %Self.as_type.loc16_14.1 => constants.%i32
 // CHECK:STDOUT:   %pattern_type => constants.%pattern_type.7ce
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

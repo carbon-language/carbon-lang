@@ -2,6 +2,7 @@
 // Exceptions. See /LICENSE for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
+// INCLUDE-FILE: toolchain/testing/testdata/min_prelude/primitives.carbon
 // TODO: Add ranges and switch to "--dump-sem-ir-ranges=only".
 // EXTRA-ARGS: --dump-sem-ir-ranges=if-present
 //
@@ -47,8 +48,8 @@ fn Mismatch() -> i32 {
 // CHECK:STDOUT:     import Core//prelude
 // CHECK:STDOUT:     import Core//prelude/...
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %Core.Int: %Int.type = import_ref Core//prelude/types/int, Int, loaded [concrete = constants.%Int.generic]
-// CHECK:STDOUT:   %Core.Float: %Float.type = import_ref Core//prelude/types, Float, loaded [concrete = constants.%Float]
+// CHECK:STDOUT:   %Core.Int: %Int.type = import_ref Core//prelude/parts/int, Int, loaded [concrete = constants.%Int.generic]
+// CHECK:STDOUT:   %Core.Float: %Float.type = import_ref Core//prelude/parts/float, Float, loaded [concrete = constants.%Float]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -77,14 +78,14 @@ fn Mismatch() -> i32 {
 // CHECK:STDOUT:   %v.var: ref f64 = var %v.var_patt
 // CHECK:STDOUT:   %float: f64 = float_literal 0 [concrete = constants.%float]
 // CHECK:STDOUT:   assign %v.var, %float
-// CHECK:STDOUT:   %.loc22_19.1: type = splice_block %.loc22_19.3 [concrete = f64] {
+// CHECK:STDOUT:   %.loc23_19.1: type = splice_block %.loc23_19.3 [concrete = f64] {
 // CHECK:STDOUT:     %int_64: Core.IntLiteral = int_value 64 [concrete = constants.%int_64]
 // CHECK:STDOUT:     %float.make_type: init type = call constants.%Float(%int_64) [concrete = f64]
-// CHECK:STDOUT:     %.loc22_19.2: type = value_of_initializer %float.make_type [concrete = f64]
-// CHECK:STDOUT:     %.loc22_19.3: type = converted %float.make_type, %.loc22_19.2 [concrete = f64]
+// CHECK:STDOUT:     %.loc23_19.2: type = value_of_initializer %float.make_type [concrete = f64]
+// CHECK:STDOUT:     %.loc23_19.3: type = converted %float.make_type, %.loc23_19.2 [concrete = f64]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %v: ref f64 = bind_name v, %v.var
-// CHECK:STDOUT:   %.loc22_16: f64 = bind_value %v
-// CHECK:STDOUT:   return %.loc22_16
+// CHECK:STDOUT:   %.loc23_16: f64 = bind_value %v
+// CHECK:STDOUT:   return %.loc23_16
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

@@ -19,6 +19,17 @@
 
 namespace Carbon::Lower {
 
+// Returns whether this instruction names a namespace.
+static auto IsNamespace(FunctionContext& context, SemIR::InstId inst_id)
+    -> bool {
+  // Note, we don't use context.GetTypeOfInst here. An instruction can't change
+  // from being a non-namespace in a generic to being a namespace in a specific,
+  // because namespace names are not first-class.
+  auto type_inst_id = context.sem_ir().types().GetInstId(
+      context.sem_ir().insts().Get(inst_id).type_id());
+  return type_inst_id == SemIR::NamespaceType::TypeInstId;
+}
+
 auto HandleInst(FunctionContext& context, SemIR::InstId inst_id,
                 SemIR::AddrOf inst) -> void {
   context.SetLocal(inst_id, context.GetValue(inst.lvalue_id));
@@ -27,21 +38,22 @@ auto HandleInst(FunctionContext& context, SemIR::InstId inst_id,
 auto HandleInst(FunctionContext& context, SemIR::InstId inst_id,
                 SemIR::ArrayIndex inst) -> void {
   auto* array_value = context.GetValue(inst.array_id);
-  auto* llvm_type =
-      context.GetType(context.sem_ir().insts().Get(inst.array_id).type_id());
+  auto* llvm_type = context.GetTypeOfInst(inst.array_id);
 
   // The index in an `ArrayIndex` can be of any integer type, including
   // IntLiteral. If it is an IntLiteral, its value representation is empty, so
   // create a ConstantInt from its SemIR value directly.
   llvm::Value* index;
-  if (context.sem_ir().types().GetInstId(
-          context.sem_ir().insts().Get(inst.index_id).type_id()) ==
+  auto index_type = context.GetTypeIdOfInst(inst.index_id);
+  if (index_type.file->types().GetInstId(index_type.type_id) ==
       SemIR::IntLiteralType::TypeInstId) {
     auto value = context.sem_ir().insts().GetAs<SemIR::IntValue>(
         context.sem_ir().constant_values().GetConstantInstId(inst.index_id));
-    index = llvm::ConstantInt::get(context.llvm_context(),
-                                   context.sem_ir().ints().Get(value.int_id));
+    const auto& apint_value = context.sem_ir().ints().Get(value.int_id);
+    context.AddIntToCurrentFingerprint(apint_value.getSExtValue());
+    index = llvm::ConstantInt::get(context.llvm_context(), apint_value);
   } else {
+    context.AddIntToCurrentFingerprint(-1);
     index = context.GetValue(inst.index_id);
   }
 
@@ -66,14 +78,13 @@ auto HandleInst(FunctionContext& context, SemIR::InstId inst_id,
 
 auto HandleInst(FunctionContext& context, SemIR::InstId /*inst_id*/,
                 SemIR::Assign inst) -> void {
-  auto storage_type_id = context.sem_ir().insts().Get(inst.lhs_id).type_id();
-  context.FinishInit(storage_type_id, inst.lhs_id, inst.rhs_id);
+  context.FinishInit(context.GetTypeIdOfInst(inst.lhs_id), inst.lhs_id,
+                     inst.rhs_id);
 }
 
 auto HandleInst(FunctionContext& context, SemIR::InstId inst_id,
                 SemIR::BindAlias inst) -> void {
-  auto type_inst_id = context.sem_ir().types().GetInstId(inst.type_id);
-  if (type_inst_id == SemIR::NamespaceType::TypeInstId) {
+  if (IsNamespace(context, inst_id)) {
     return;
   }
 
@@ -82,8 +93,7 @@ auto HandleInst(FunctionContext& context, SemIR::InstId inst_id,
 
 auto HandleInst(FunctionContext& context, SemIR::InstId inst_id,
                 SemIR::ExportDecl inst) -> void {
-  auto type_inst_id = context.sem_ir().types().GetInstId(inst.type_id);
-  if (type_inst_id == SemIR::NamespaceType::TypeInstId) {
+  if (IsNamespace(context, inst_id)) {
     return;
   }
 
@@ -102,7 +112,9 @@ auto HandleInst(FunctionContext& context, SemIR::InstId inst_id,
 
 auto HandleInst(FunctionContext& context, SemIR::InstId inst_id,
                 SemIR::BlockArg inst) -> void {
-  context.SetLocal(inst_id, context.GetBlockArg(inst.block_id, inst.type_id));
+  context.SetLocal(
+      inst_id,
+      context.GetBlockArg(inst.block_id, context.GetTypeIdOfInst(inst_id)));
 }
 
 auto HandleInst(FunctionContext& context, SemIR::InstId inst_id,
@@ -138,8 +150,7 @@ auto HandleInst(FunctionContext& context, SemIR::InstId /*inst_id*/,
 auto HandleInst(FunctionContext& context, SemIR::InstId /*inst_id*/,
                 SemIR::BranchWithArg inst) -> void {
   llvm::Value* arg = context.GetValue(inst.arg_id);
-  SemIR::TypeId arg_type_id =
-      context.sem_ir().insts().Get(inst.arg_id).type_id();
+  auto arg_type = context.GetTypeIdOfInst(inst.arg_id);
 
   // Opportunistically avoid creating a BasicBlock that contains just a branch.
   // We only do this for a block that we know will only have a single
@@ -157,7 +168,7 @@ auto HandleInst(FunctionContext& context, SemIR::InstId /*inst_id*/,
     context.builder().CreateBr(context.GetBlock(inst.target_id));
   }
 
-  context.GetBlockArg(inst.target_id, arg_type_id)
+  context.GetBlockArg(inst.target_id, arg_type)
       ->addIncoming(arg, phi_predecessor);
   context.builder().ClearInsertionPoint();
 }
@@ -179,8 +190,8 @@ auto HandleInst(FunctionContext& context, SemIR::InstId inst_id,
 
 auto HandleInst(FunctionContext& context, SemIR::InstId /*inst_id*/,
                 SemIR::InitializeFrom inst) -> void {
-  auto storage_type_id = context.sem_ir().insts().Get(inst.dest_id).type_id();
-  context.FinishInit(storage_type_id, inst.dest_id, inst.src_id);
+  context.FinishInit(context.GetTypeIdOfInst(inst.dest_id), inst.dest_id,
+                     inst.src_id);
 }
 
 auto HandleInst(FunctionContext& /*context*/, SemIR::InstId /*inst_id*/,
@@ -190,8 +201,7 @@ auto HandleInst(FunctionContext& /*context*/, SemIR::InstId /*inst_id*/,
 
 auto HandleInst(FunctionContext& context, SemIR::InstId inst_id,
                 SemIR::NameRef inst) -> void {
-  auto type_inst_id = context.sem_ir().types().GetInstId(inst.type_id);
-  if (type_inst_id == SemIR::NamespaceType::TypeInstId) {
+  if (IsNamespace(context, inst_id)) {
     return;
   }
 
@@ -222,7 +232,7 @@ auto HandleInst(FunctionContext& /*context*/, SemIR::InstId /*inst_id*/,
 
 auto HandleInst(FunctionContext& context, SemIR::InstId inst_id,
                 SemIR::ReturnSlot inst) -> void {
-  if (SemIR::InitRepr::ForType(context.sem_ir(), inst.type_id).kind ==
+  if (context.GetInitRepr(context.GetTypeIdOfInst(inst_id)).kind ==
       SemIR::InitRepr::InPlace) {
     context.SetLocal(inst_id, context.GetValue(inst.storage_id));
   }
@@ -235,14 +245,14 @@ auto HandleInst(FunctionContext& context, SemIR::InstId /*inst_id*/,
 
 auto HandleInst(FunctionContext& context, SemIR::InstId /*inst_id*/,
                 SemIR::ReturnExpr inst) -> void {
-  auto result_type_id = context.sem_ir().insts().Get(inst.expr_id).type_id();
-  switch (SemIR::InitRepr::ForType(context.sem_ir(), result_type_id).kind) {
+  auto result_type = context.GetTypeIdOfInst(inst.expr_id);
+  switch (context.GetInitRepr(result_type).kind) {
     case SemIR::InitRepr::None:
       // Nothing to return.
       context.builder().CreateRetVoid();
       return;
     case SemIR::InitRepr::InPlace:
-      context.FinishInit(result_type_id, inst.dest_id, inst.expr_id);
+      context.FinishInit(result_type, inst.dest_id, inst.expr_id);
       context.builder().CreateRetVoid();
       return;
     case SemIR::InitRepr::ByCopy:
@@ -251,7 +261,7 @@ auto HandleInst(FunctionContext& context, SemIR::InstId /*inst_id*/,
       return;
     case SemIR::InitRepr::Incomplete:
       CARBON_FATAL("Lowering return of incomplete type {0}",
-                   context.sem_ir().types().GetAsInst(result_type_id));
+                   result_type.file->types().GetAsInst(result_type.type_id));
   }
 }
 
@@ -286,7 +296,7 @@ auto HandleInst(FunctionContext& context, SemIR::InstId inst_id,
 
 auto HandleInst(FunctionContext& context, SemIR::InstId inst_id,
                 SemIR::VarStorage /* inst */) -> void {
-  auto* type = context.GetTypeOfInstInSpecific(inst_id);
+  auto* type = context.GetTypeOfInst(inst_id);
 
   // Position the first alloca right before the start of the executable code in
   // the function.

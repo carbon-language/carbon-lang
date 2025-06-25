@@ -117,9 +117,36 @@ auto ToolchainFileTest::Run(
     }
   }
 
+  llvm::SmallVector<llvm::StringRef> filtered_test_args;
+  if (component_ == "check" || component_ == "lower") {
+    filtered_test_args.reserve(test_args.size());
+    bool found_prelude_flag = false;
+    for (auto arg : test_args) {
+      bool driver_flag = arg == "--custom-core" || arg == "--no-prelude-import";
+      // A flag specified by a test prelude to indicate the intention to include
+      // the full production prelude.
+      bool full_prelude = arg == "--expect-full-prelude";
+      if (driver_flag || full_prelude) {
+        found_prelude_flag = true;
+      }
+      if (!full_prelude) {
+        filtered_test_args.push_back(arg);
+      }
+    }
+    if (!found_prelude_flag) {
+      // TODO: Enable this error when all check/ and lower/ tests include a
+      // prelude choice explicitly.
+      // return Error(
+      //     "Include a prelude from //toolchain/testing/testdata/min_prelude "
+      //     "to specify what should be imported into the test.");
+    }
+  } else {
+    filtered_test_args = test_args;
+  }
+
   Driver driver(fs, &installation_, input_stream, &output_stream,
                 &error_stream);
-  auto driver_result = driver.RunCommand(test_args);
+  auto driver_result = driver.RunCommand(filtered_test_args);
   // If any diagnostics have been produced, add a trailing newline to make the
   // last diagnostic match intermediate diagnostics (that have a newline
   // separator between them). This reduces churn when adding new diagnostics

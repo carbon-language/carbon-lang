@@ -64,7 +64,7 @@ static auto GetBuiltinFCmpPredicate(SemIR::BuiltinFunctionKind builtin_kind)
 // Returns whether the specified instruction has a signed integer type.
 static auto IsSignedInt(FunctionContext& context, SemIR::InstId int_id)
     -> bool {
-  auto [file, type_id] = context.GetTypeIdOfInstInSpecific(int_id);
+  auto [file, type_id] = context.GetTypeIdOfInst(int_id);
   return file->types().IsSignedInt(type_id);
 }
 
@@ -226,8 +226,7 @@ static auto CreateBinaryOperatorForBuiltin(
       // arithmetic or logical shift.
       auto lhs_id = context.sem_ir().inst_blocks().Get(
           context.sem_ir().insts().GetAs<SemIR::Call>(inst_id).args_id)[0];
-      auto [lhs_type_file, lhs_type_id] =
-          context.GetTypeIdOfInstInSpecific(lhs_id);
+      auto [lhs_type_file, lhs_type_id] = context.GetTypeIdOfInst(lhs_id);
       if (builtin_kind == SemIR::BuiltinFunctionKind::IntRightShiftAssign) {
         lhs_type_id = lhs_type_file->GetPointeeType(lhs_type_id);
       }
@@ -266,11 +265,8 @@ static auto HandleBuiltinCall(FunctionContext& context, SemIR::InstId inst_id,
       auto putchar = context.llvm_module().getOrInsertFunction(
           "putchar", i32_type, i32_type);
       auto* result = context.builder().CreateCall(putchar, {arg_value});
-      context.SetLocal(
-          inst_id,
-          context.builder().CreateSExtOrTrunc(
-              result, context.GetType(
-                          context.sem_ir().insts().Get(inst_id).type_id())));
+      context.SetLocal(inst_id, context.builder().CreateSExtOrTrunc(
+                                    result, context.GetTypeOfInst(inst_id)));
       return;
     }
 
@@ -295,11 +291,8 @@ static auto HandleBuiltinCall(FunctionContext& context, SemIR::InstId inst_id,
       auto getchar =
           context.llvm_module().getOrInsertFunction("getchar", i32_type);
       auto* result = context.builder().CreateCall(getchar, {});
-      context.SetLocal(
-          inst_id,
-          context.builder().CreateSExtOrTrunc(
-              result, context.GetType(
-                          context.sem_ir().insts().Get(inst_id).type_id())));
+      context.SetLocal(inst_id, context.builder().CreateSExtOrTrunc(
+                                    result, context.GetTypeOfInst(inst_id)));
       return;
     }
 
@@ -317,12 +310,10 @@ static auto HandleBuiltinCall(FunctionContext& context, SemIR::InstId inst_id,
       return;
 
     case SemIR::BuiltinFunctionKind::IntConvert: {
-      context.SetLocal(
-          inst_id,
-          CreateExtOrTrunc(
-              context, context.GetValue(arg_ids[0]),
-              context.GetType(context.sem_ir().insts().Get(inst_id).type_id()),
-              IsSignedInt(context, arg_ids[0])));
+      context.SetLocal(inst_id,
+                       CreateExtOrTrunc(context, context.GetValue(arg_ids[0]),
+                                        context.GetTypeOfInst(inst_id),
+                                        IsSignedInt(context, arg_ids[0])));
       return;
     }
 
@@ -392,8 +383,7 @@ static auto HandleBuiltinCall(FunctionContext& context, SemIR::InstId inst_id,
     case SemIR::BuiltinFunctionKind::IntLeftShiftAssign:
     case SemIR::BuiltinFunctionKind::IntRightShiftAssign: {
       auto* lhs_ptr = context.GetValue(arg_ids[0]);
-      auto [lhs_type_file, lhs_type_id] =
-          context.GetTypeIdOfInstInSpecific(arg_ids[0]);
+      auto [lhs_type_file, lhs_type_id] = context.GetTypeIdOfInst(arg_ids[0]);
       auto pointee_type_id = lhs_type_file->GetPointeeType(lhs_type_id);
       // TODO: Factor out the code to create loads and stores, and include alias
       // and alignment information.
@@ -405,8 +395,8 @@ static auto HandleBuiltinCall(FunctionContext& context, SemIR::InstId inst_id,
           context.GetValue(arg_ids[1]));
       context.builder().CreateStore(result, lhs_ptr);
       // TODO: Add a helper to get a "no value representation" value.
-      context.SetLocal(inst_id, llvm::PoisonValue::get(
-                                    context.GetTypeOfInstInSpecific(inst_id)));
+      context.SetLocal(inst_id,
+                       llvm::PoisonValue::get(context.GetTypeOfInst(inst_id)));
       return;
     }
     case SemIR::BuiltinFunctionKind::IntEq:
@@ -520,20 +510,15 @@ auto HandleInst(FunctionContext& context, SemIR::InstId inst_id,
 
   std::vector<llvm::Value*> args;
 
-  auto [inst_type_file, inst_type_id] =
-      context.GetTypeIdOfInstInSpecific(inst_id);
-
-  if (SemIR::ReturnTypeInfo::ForType(*inst_type_file, inst_type_id)
-          .has_return_slot()) {
+  auto inst_type = context.GetTypeIdOfInst(inst_id);
+  if (context.GetReturnTypeInfo(inst_type).info.has_return_slot()) {
     args.push_back(context.GetValue(arg_ids.back()));
     arg_ids = arg_ids.drop_back();
   }
 
   for (auto arg_id : arg_ids) {
-    auto [arg_type_file, arg_type_id] =
-        context.GetTypeIdOfInstInSpecific(arg_id);
-    if (SemIR::ValueRepr::ForType(*arg_type_file, arg_type_id).kind !=
-        SemIR::ValueRepr::None) {
+    auto arg_type = context.GetTypeIdOfInst(arg_id);
+    if (context.GetValueRepr(arg_type).repr.kind != SemIR::ValueRepr::None) {
       args.push_back(context.GetValue(arg_id));
     }
   }
