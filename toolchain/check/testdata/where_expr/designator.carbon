@@ -120,6 +120,17 @@ interface I {
 // See https://docs.carbon-lang.dev/docs/design/generics/details.html#constraints-must-use-a-designator
 fn F(U:! I, T:! type where U impls I and U.X == ()) {}
 
+// --- impls_constraint_does_constrain_self.carbon
+library "[[@TEST_NAME]]";
+
+interface I(T:! type) {}
+
+class C(T:! type);
+
+fn F(T:! type where C(.Self) impls I(())) {}
+
+fn G(T:! type where C(()) impls I(.Self)) {}
+
 // CHECK:STDOUT: --- success.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
