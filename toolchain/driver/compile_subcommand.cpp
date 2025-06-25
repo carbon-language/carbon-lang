@@ -294,6 +294,17 @@ Whether to emit DWARF debug information.
         arg_b.Default(true);
         arg_b.Set(&include_debug_info);
       });
+  b.AddFlag(
+      {
+          .name = "llvm-verifier",
+          .help = R"""(
+Whether to run the LLVM verifier on modules.
+)""",
+      },
+      [&](auto& arg_b) {
+        arg_b.Default(true);
+        arg_b.Set(&run_llvm_verifier);
+      });
 }
 
 static constexpr CommandLine::CommandInfo SubcommandInfo = {
@@ -712,8 +723,9 @@ auto CompilationUnit::RunLower() -> void {
     llvm::ArrayRef<Parse::GetTreeAndSubtreesFn> subtrees =
         cache_->tree_and_subtrees_getters();
     module_ = Lower::LowerToLLVM(
-        *llvm_context_, driver_env_->fs, options_->include_debug_info, subtrees,
-        input_filename_, *sem_ir_, &inst_namer, vlog_stream_);
+        *llvm_context_, driver_env_->fs, options_->run_llvm_verifier,
+        options_->include_debug_info, subtrees, input_filename_, *sem_ir_,
+        &inst_namer, vlog_stream_);
   });
   if (vlog_stream_) {
     CARBON_VLOG("*** llvm::Module ***\n");
