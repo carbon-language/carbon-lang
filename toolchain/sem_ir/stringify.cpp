@@ -420,43 +420,38 @@ class Stringifier {
   auto StringifyInst(InstId /*inst_id*/, ImplWitnessAccess inst) -> void {
     auto witness_inst_id =
         sem_ir_->constant_values().GetConstantInstId(inst.witness_id);
-    bool pushed_specific = false;
-    if (auto specific_interface =
-            TryGetSpecificInterfaceForImplWitness(witness_inst_id)) {
-      const auto& interface =
-          sem_ir_->interfaces().Get(specific_interface->interface_id);
-      if (interface.associated_entities_id.has_value()) {
-        auto entities =
-            sem_ir_->inst_blocks().Get(interface.associated_entities_id);
-        size_t index = inst.index.index;
-        CARBON_CHECK(index < entities.size(), "Access out of bounds.");
-        auto entity_inst_id = entities[index];
-        step_stack_->PushString(")");
-        if (auto associated_const =
-                sem_ir_->insts().TryGetAs<AssociatedConstantDecl>(
-                    entity_inst_id)) {
-          step_stack_->PushNameId(sem_ir_->associated_constants()
-                                      .Get(associated_const->assoc_const_id)
-                                      .name_id);
-        } else if (auto function_decl = sem_ir_->insts().TryGetAs<FunctionDecl>(
-                       entity_inst_id)) {
-          const auto& function =
-              sem_ir_->functions().Get(function_decl->function_id);
-          step_stack_->PushNameId(function.name_id);
-        } else {
-          step_stack_->PushInstId(entity_inst_id);
-        }
-        step_stack_->Push(".(",
-                          StepStack::EntityNameItem{
-                              interface, specific_interface->specific_id},
-                          ".");
-        pushed_specific = true;
+    auto specific_interface =
+        TryGetSpecificInterfaceForImplWitness(witness_inst_id);
+    const auto& interface =
+        sem_ir_->interfaces().Get(specific_interface->interface_id);
+    if (!interface.associated_entities_id.has_value()) {
+      step_stack_->Push(".(TODO: element ", inst.index, " in incomplete ",
+                        witness_inst_id, ")");
+    } else {
+      auto entities =
+          sem_ir_->inst_blocks().Get(interface.associated_entities_id);
+      size_t index = inst.index.index;
+      CARBON_CHECK(index < entities.size(), "Access out of bounds.");
+      auto entity_inst_id = entities[index];
+      step_stack_->PushString(")");
+      if (auto associated_const =
+              sem_ir_->insts().TryGetAs<AssociatedConstantDecl>(
+                  entity_inst_id)) {
+        step_stack_->PushNameId(sem_ir_->associated_constants()
+                                    .Get(associated_const->assoc_const_id)
+                                    .name_id);
+      } else if (auto function_decl =
+                     sem_ir_->insts().TryGetAs<FunctionDecl>(entity_inst_id)) {
+        const auto& function =
+            sem_ir_->functions().Get(function_decl->function_id);
+        step_stack_->PushNameId(function.name_id);
+      } else {
+        step_stack_->PushInstId(entity_inst_id);
       }
-    }
-
-    if (!pushed_specific) {
-      step_stack_->Push(".(TODO: element ", inst.index, " in ", witness_inst_id,
-                        ")");
+      step_stack_->Push(
+          ".(",
+          StepStack::EntityNameItem{interface, specific_interface->specific_id},
+          ".");
     }
 
     if (auto lookup =
