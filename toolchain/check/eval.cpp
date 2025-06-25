@@ -251,8 +251,8 @@ enum class Phase : uint8_t {
 };
 }  // namespace
 
-// Returns whether the specified phase is a constant phase.
-static auto IsConstant(Phase phase) -> bool {
+// Returns whether the specified phase is a constant phase and not an error.
+static auto IsNonErrorConstant(Phase phase) -> bool {
   return phase < Phase::UnknownDueToError;
 }
 
@@ -691,7 +691,7 @@ static auto GetConstantValue(EvalContext& eval_context,
 
 // Replaces the specified field of the given typed instruction with its constant
 // value, if it has constant phase. Returns true on success, false if the value
-// has runtime phase.
+// has error or runtime phase.
 template <typename InstT, typename FieldIdT>
 static auto ReplaceFieldWithConstantValue(EvalContext& eval_context,
                                           InstT* inst, FieldIdT InstT::* field,
@@ -701,7 +701,7 @@ static auto ReplaceFieldWithConstantValue(EvalContext& eval_context,
     return false;
   }
   inst->*field = unwrapped;
-  return true;
+  return IsNonErrorConstant(*phase);
 }
 
 // Function template that can be called with an argument of type `T`. Used below
@@ -766,9 +766,14 @@ static auto ReplaceAllFieldsWithConstantValues(EvalContext& eval_context,
     -> bool {
   auto arg0 =
       GetConstantValueForArg(eval_context, inst->arg0_and_kind(), phase);
+  if (*phase == Phase::Runtime) {
+    // We already know the final value will be runtime (phases can only increase
+    // and runtime is the max), so we can early out.
+    return false;
+  }
   auto arg1 =
       GetConstantValueForArg(eval_context, inst->arg1_and_kind(), phase);
-  if (!IsConstant(*phase)) {
+  if (!IsNonErrorConstant(*phase)) {
     return false;
   }
   inst->SetArgs(arg0, arg1);
@@ -777,13 +782,13 @@ static auto ReplaceAllFieldsWithConstantValues(EvalContext& eval_context,
 
 // Given an instruction and its ID, replaces its type with the corresponding
 // value in this evaluation context. Updates `*phase` to describe the phase of
-// the result, and returns whether `*phase` is a constant phase.
+// the result, and returns whether `*phase` is a non-error constant phase.
 static auto ReplaceTypeWithConstantValue(EvalContext& eval_context,
                                          SemIR::InstId inst_id,
                                          SemIR::Inst* inst, Phase* phase)
     -> bool {
   inst->SetType(GetTypeOfInst(eval_context, inst_id, *inst, phase));
-  return IsConstant(*phase);
+  return IsNonErrorConstant(*phase);
 }
 
 template <typename InstT>
@@ -791,7 +796,7 @@ static auto ReplaceTypeWithConstantValue(EvalContext& eval_context,
                                          SemIR::InstId inst_id, InstT* inst,
                                          Phase* phase) -> bool {
   inst->type_id = GetTypeOfInst(eval_context, inst_id, *inst, phase);
-  return IsConstant(*phase);
+  return IsNonErrorConstant(*phase);
 }
 
 template <typename... Types>
