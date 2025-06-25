@@ -420,10 +420,11 @@ class Stringifier {
   auto StringifyInst(InstId /*inst_id*/, ImplWitnessAccess inst) -> void {
     auto witness_inst_id =
         sem_ir_->constant_values().GetConstantInstId(inst.witness_id);
+    auto lookup = sem_ir_->insts().GetAs<LookupImplWitness>(witness_inst_id);
     auto specific_interface =
-        TryGetSpecificInterfaceForImplWitness(witness_inst_id);
+        sem_ir_->specific_interfaces().Get(lookup.query_specific_interface_id);
     const auto& interface =
-        sem_ir_->interfaces().Get(specific_interface->interface_id);
+        sem_ir_->interfaces().Get(specific_interface.interface_id);
     if (!interface.associated_entities_id.has_value()) {
       step_stack_->Push(".(TODO: element ", inst.index, " in incomplete ",
                         witness_inst_id, ")");
@@ -450,7 +451,7 @@ class Stringifier {
       }
       step_stack_->Push(
           ".(",
-          StepStack::EntityNameItem{interface, specific_interface->specific_id},
+          StepStack::EntityNameItem{interface, specific_interface.specific_id},
           ".");
     }
 
