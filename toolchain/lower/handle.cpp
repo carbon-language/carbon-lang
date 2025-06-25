@@ -296,49 +296,8 @@ auto HandleInst(FunctionContext& context, SemIR::InstId inst_id,
 
 auto HandleInst(FunctionContext& context, SemIR::InstId inst_id,
                 SemIR::VarStorage /* inst */) -> void {
-  auto* type = context.GetTypeOfInst(inst_id);
-
-  // Position the first alloca right before the start of the executable code in
-  // the function.
-  llvm::AllocaInst* alloca;
-  {
-    llvm::IRBuilderBase::InsertPointGuard guard(context.builder());
-
-    auto debug_loc = context.builder().getCurrentDebugLocation();
-    if (auto* after_allocas = context.GetInstructionAfterAllocas()) {
-      context.builder().SetInsertPoint(after_allocas);
-    } else {
-      context.builder().SetInsertPointPastAllocas(&context.llvm_function());
-    }
-
-    // IRBuilder tramples over our debug location when setting the insert point,
-    // so undo that.
-    context.builder().SetCurrentDebugLocation(debug_loc);
-
-    // Create an alloca for this variable in the entry block.
-    alloca = context.builder().CreateAlloca(type);
-  }
-
-  // Create a lifetime start intrinsic here to indicate where its scope really
-  // begins.
-  auto size = context.llvm_module().getDataLayout().getTypeAllocSize(type);
-  context.builder().CreateLifetimeStart(
-      alloca,
-      llvm::ConstantInt::get(context.llvm_context(), llvm::APInt(64, size)));
-
-  // If we just created the first alloca, there is now definitely at least one
-  // instruction after it -- there is a lifetime start instruction if nothing
-  // else. Use that instruction as our insert point for all future allocas.
-  if (!context.GetInstructionAfterAllocas()) {
-    auto loc = alloca->getIterator();
-    ++loc;
-    context.SetInstructionAfterAllocas(&*loc);
-  }
-
-  // TODO: Create a matching `@llvm.lifetime.end` intrinsic call when the
-  // variable goes out of scope.
-
-  context.SetLocal(inst_id, alloca);
+  context.SetLocal(inst_id,
+                   context.CreateAlloca(context.GetTypeOfInst(inst_id)));
 }
 
 auto HandleInst(FunctionContext& context, SemIR::InstId inst_id,

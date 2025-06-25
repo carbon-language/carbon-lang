@@ -174,19 +174,6 @@ class FunctionContext {
     return file_context_->GetIntLiteralAsValue();
   }
 
-  // Returns the instruction immediately after all the existing static allocas.
-  // This is the insert point for future static allocas.
-  auto GetInstructionAfterAllocas() const -> llvm::Instruction* {
-    return after_allocas_;
-  }
-
-  // Sets the instruction after static allocas. This should be called once,
-  // after the first alloca is created.
-  auto SetInstructionAfterAllocas(llvm::Instruction* after_allocas) -> void {
-    CARBON_CHECK(!after_allocas_);
-    after_allocas_ = after_allocas;
-  }
-
   // Create a synthetic block that corresponds to no SemIR::InstBlockId. Such
   // a block should only ever have a single predecessor, and is used when we
   // need multiple `llvm::BasicBlock`s to model the linear control flow in a
@@ -197,6 +184,11 @@ class FunctionContext {
   auto IsCurrentSyntheticBlock(llvm::BasicBlock* block) -> bool {
     return synthetic_block_ == block;
   }
+
+  // Creates an alloca instruction of the given type, adds it to the entry
+  // block, and starts the lifetime of the corresponding storage.
+  auto CreateAlloca(llvm::Type* type, const llvm::Twine& name = llvm::Twine())
+      -> llvm::AllocaInst*;
 
   // Returns the debug location to associate with the specified instruction.
   auto GetDebugLoc(SemIR::InstId inst_id) -> llvm::DebugLoc;
