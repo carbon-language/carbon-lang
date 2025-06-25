@@ -89,6 +89,37 @@ class D {
   fn G() -> .Self { return Self; }
 }
 
+// --- todo_fail_impls_constraint_does_not_constrain_self.carbon
+library "[[@TEST_NAME]]";
+
+interface I {}
+
+// TODO: Diagnose that the `where` on `T` does not refer to `.Self` at all.
+// See https://docs.carbon-lang.dev/docs/design/generics/details.html#constraints-must-use-a-designator
+fn F(U:! type, T:! type where U impls I) {}
+
+// --- todo_fail_equality_constraint_does_not_constrain_self.carbon
+library "[[@TEST_NAME]]";
+
+interface I {
+  let X:! type;
+}
+
+// TODO: Diagnose that the `where` on `T` does not refer to `.Self` at all.
+// See https://docs.carbon-lang.dev/docs/design/generics/details.html#constraints-must-use-a-designator
+fn F(U:! I, T:! type where U.X == ()) {}
+
+// --- todo_fail_combined_constraint_does_not_constrain_self.carbon
+library "[[@TEST_NAME]]";
+
+interface I {
+  let X:! type;
+}
+
+// TODO: Diagnose that the `where` on `T` does not refer to `.Self` at all.
+// See https://docs.carbon-lang.dev/docs/design/generics/details.html#constraints-must-use-a-designator
+fn F(U:! I, T:! type where U impls I and U.X == ()) {}
+
 // CHECK:STDOUT: --- success.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
