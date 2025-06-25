@@ -7,7 +7,6 @@
 #include "common/vlog.h"
 #include "toolchain/base/kind_switch.h"
 #include "toolchain/base/pretty_stack_trace_function.h"
-#include "toolchain/lower/coalesce.h"
 #include "toolchain/sem_ir/diagnostic_loc_converter.h"
 #include "toolchain/sem_ir/file.h"
 #include "toolchain/sem_ir/generic.h"
@@ -17,7 +16,7 @@ namespace Carbon::Lower {
 FunctionContext::FunctionContext(
     FileContext& file_context, llvm::Function* function,
     FileContext& specific_file_context, SemIR::SpecificId specific_id,
-    CoalesceSpecifics::SpecificFunctionFingerprint* function_fingerprint,
+    SpecificCoalescer::SpecificFunctionFingerprint* function_fingerprint,
     llvm::DISubprogram* di_subprogram, llvm::raw_ostream* vlog_stream)
     : file_context_(&file_context),
       function_(function),

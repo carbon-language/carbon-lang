@@ -19,10 +19,10 @@
 #include "llvm/Transforms/Utils/ModuleUtils.h"
 #include "toolchain/base/kind_switch.h"
 #include "toolchain/base/pretty_stack_trace_function.h"
-#include "toolchain/lower/coalesce.h"
 #include "toolchain/lower/constant.h"
 #include "toolchain/lower/function_context.h"
 #include "toolchain/lower/mangler.h"
+#include "toolchain/lower/specific_coalescer.h"
 #include "toolchain/sem_ir/absolute_node_id.h"
 #include "toolchain/sem_ir/diagnostic_loc_converter.h"
 #include "toolchain/sem_ir/entry_point.h"
@@ -54,7 +54,7 @@ FileContext::FileContext(Context& context, const SemIR::File& sem_ir,
       constants_(LoweredConstantStore::MakeWithExplicitSize(
           sem_ir.insts().size(), nullptr)),
       lowered_specifics_(sem_ir.generics(), {}),
-      coalescer(vlog_stream_, sem_ir.specifics()) {
+      coalescer_(vlog_stream_, sem_ir.specifics()) {
   // Initialization that relies on invariants of the class.
   cpp_code_generator_ = CreateCppCodeGenerator();
   CARBON_CHECK(!sem_ir.has_errors(),
@@ -159,8 +159,8 @@ auto FileContext::Finalize() -> void {
 
   // Find equivalent specifics (from the same generic), replace all uses and
   // remove duplicately lowered function definitions.
-  coalescer.CoalesceEquivalentSpecifics(lowered_specifics_,
-                                        specific_functions_);
+  coalescer_.CoalesceEquivalentSpecifics(lowered_specifics_,
+                                         specific_functions_);
 }
 
 auto FileContext::CreateCppCodeGenerator()
@@ -397,7 +397,7 @@ auto FileContext::HandleReferencedSpecificFunction(
   // For now, we compute the function type fingerprint only for specifics,
   // though we might need it for all functions in order to create a canonical
   // fingerprint across translation units.
-  coalescer.CreateTypeFingerprint(specific_id, llvm_type);
+  coalescer_.CreateTypeFingerprint(specific_id, llvm_type);
 }
 
 auto FileContext::BuildFunctionDecl(SemIR::FunctionId function_id,
@@ -575,7 +575,7 @@ auto FileContext::BuildFunctionBody(SemIR::FunctionId function_id,
 
   FunctionContext function_lowering(
       definition_context, llvm_function, *this, specific_id,
-      coalescer.InitializeFingerprintForSpecific(specific_id),
+      coalescer_.InitializeFingerprintForSpecific(specific_id),
       definition_context.BuildDISubprogram(definition_function, llvm_function),
       vlog_stream_);
 

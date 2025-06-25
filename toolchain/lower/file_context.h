@@ -8,8 +8,8 @@
 #include "clang/Basic/CodeGenOptions.h"
 #include "clang/CodeGen/ModuleBuilder.h"
 #include "clang/Lex/PreprocessorOptions.h"
-#include "toolchain/lower/coalesce.h"
 #include "toolchain/lower/context.h"
+#include "toolchain/lower/specific_coalescer.h"
 #include "toolchain/parse/tree_and_subtrees.h"
 #include "toolchain/sem_ir/file.h"
 #include "toolchain/sem_ir/ids.h"
@@ -233,7 +233,7 @@ class FileContext {
   FixedSizeValueStore<SemIR::GenericId, llvm::SmallVector<SemIR::SpecificId>>
       lowered_specifics_;
 
-  CoalesceSpecifics coalescer;
+  SpecificCoalescer coalescer_;
 };
 
 }  // namespace Carbon::Lower
