@@ -200,7 +200,7 @@ auto HandleParseNode(Context& context, Parse::ForHeaderId node_id) -> bool {
   context.full_pattern_stack().PopFullPattern();
 
   // Create storage for var patterns now.
-  AddPatternVarStorage(context, pattern_block_id, /*returned=*/false);
+  AddPatternVarStorage(context, pattern_block_id, /*is_returned_var=*/false);
 
   // Initialize the pattern from `<element>.Get()`.
   auto element_value_id =
