@@ -891,9 +891,9 @@ auto AddImportedConstant(Context& context, SemIR::Inst inst)
                inst.kind());
   Phase phase = GetPhase(context.constant_values(),
                          context.types().GetConstantId(inst.type_id()));
-  if (!ReplaceAllFieldsWithConstantValues(eval_context, &inst, &phase)) {
-    return SemIR::ConstantId::NotConstant;
-  }
+  // We ignore the return value of ReplaceAllFieldsWithConstantValues and just
+  // propagate runtime and error constant values into the resulting ConstantId.
+  ReplaceAllFieldsWithConstantValues(eval_context, &inst, &phase);
   return MakeConstantResult(context, inst, phase);
 }
 

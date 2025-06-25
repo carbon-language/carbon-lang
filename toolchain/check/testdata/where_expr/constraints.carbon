@@ -125,6 +125,30 @@ fn NotEmptyStruct() {
   EmptyStruct(C);
 }
 
+// --- fail_error_in_constraint.carbon
+
+library "[[@TEST_NAME]]";
+
+//@dump-sem-ir-begin
+// CHECK:STDERR: fail_error_in_constraint.carbon:[[@LINE+4]]:41: error: name `I` not found [NameNotFound]
+// CHECK:STDERR: fn WithError(U:! type where .Self impls I);
+// CHECK:STDERR:                                         ^
+// CHECK:STDERR:
+fn WithError(U:! type where .Self impls I);
+//@dump-sem-ir-end
+
+// --- import_error_in_constraint.carbon
+
+library "[[@TEST_NAME]]";
+
+import library "error_in_constraint";
+
+fn F() {
+//@dump-sem-ir-begin
+  WithError(());
+//@dump-sem-ir-end
+}
+
 // CHECK:STDOUT: --- state_constraints.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
@@ -299,5 +323,57 @@ fn NotEmptyStruct() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @AssociatedTypeImpls(constants.%W) {
 // CHECK:STDOUT:   %W.loc12_24.2 => constants.%W
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: --- fail_error_in_constraint.carbon
+// CHECK:STDOUT:
+// CHECK:STDOUT: constants {
+// CHECK:STDOUT:   %.Self: type = bind_symbolic_name .Self [symbolic_self]
+// CHECK:STDOUT:   %WithError.type: type = fn_type @WithError [concrete]
+// CHECK:STDOUT:   %WithError: %WithError.type = struct_value () [concrete]
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: imports {
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: file {
+// CHECK:STDOUT:   %WithError.decl: %WithError.type = fn_decl @WithError [concrete = constants.%WithError] {
+// CHECK:STDOUT:     %U.patt: <error> = symbolic_binding_pattern U, 0 [concrete]
+// CHECK:STDOUT:   } {
+// CHECK:STDOUT:     %.loc9_23.1: type = splice_block %.loc9_23.2 [concrete = <error>] {
+// CHECK:STDOUT:       <elided>
+// CHECK:STDOUT:       %.Self.ref: type = name_ref .Self, %.Self [symbolic_self = constants.%.Self]
+// CHECK:STDOUT:       %I.ref: <error> = name_ref I, <error> [concrete = <error>]
+// CHECK:STDOUT:       %.loc9_23.2: type = where_expr %.Self [concrete = <error>] {
+// CHECK:STDOUT:         requirement_impls %.Self.ref, <error>
+// CHECK:STDOUT:       }
+// CHECK:STDOUT:     }
+// CHECK:STDOUT:     %U: <error> = bind_symbolic_name U, 0 [concrete = <error>]
+// CHECK:STDOUT:   }
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: generic fn @WithError(%U: <error>) {
+// CHECK:STDOUT:   fn();
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: specific @WithError(<error>) {}
+// CHECK:STDOUT:
+// CHECK:STDOUT: --- import_error_in_constraint.carbon
+// CHECK:STDOUT:
+// CHECK:STDOUT: constants {
+// CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [concrete]
+// CHECK:STDOUT:   %WithError.type: type = fn_type @WithError [concrete]
+// CHECK:STDOUT:   %WithError: %WithError.type = struct_value () [concrete]
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: imports {
+// CHECK:STDOUT:   %Main.WithError: %WithError.type = import_ref Main//error_in_constraint, WithError, loaded [concrete = constants.%WithError]
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: fn @F() {
+// CHECK:STDOUT: !entry:
+// CHECK:STDOUT:   %WithError.ref: %WithError.type = name_ref WithError, imports.%Main.WithError [concrete = constants.%WithError]
+// CHECK:STDOUT:   %.loc8: %empty_tuple.type = tuple_literal ()
+// CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
