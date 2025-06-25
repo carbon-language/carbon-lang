@@ -891,9 +891,9 @@ auto AddImportedConstant(Context& context, SemIR::Inst inst)
                inst.kind());
   Phase phase = GetPhase(context.constant_values(),
                          context.types().GetConstantId(inst.type_id()));
-  if (!ReplaceAllFieldsWithConstantValues(eval_context, &inst, &phase)) {
-    return SemIR::ConstantId::NotConstant;
-  }
+  // We ignore the return value of ReplaceAllFieldsWithConstantValues and just
+  // propagate runtime and error constant values into the resulting ConstantId.
+  ReplaceAllFieldsWithConstantValues(eval_context, &inst, &phase);
   return MakeConstantResult(context, inst, phase);
 }
 
@@ -1999,32 +1999,16 @@ auto TryEvalTypedInst<SemIR::BindSymbolicName>(EvalContext& eval_context,
   return MakeConstantResult(eval_context.context(), bind, phase);
 }
 
-static auto IsPeriodSelf(EvalContext& eval_context, SemIR::ConstantId const_id)
-    -> bool {
-  // This also rejects the singleton Error value as it's concrete.
-  if (!const_id.is_symbolic()) {
-    return false;
+// Returns whether `const_id` is the same constant facet value as
+// `facet_value_inst_id`.
+static auto IsSameFacetValue(Context& context, SemIR::ConstantId const_id,
+                             SemIR::InstId facet_value_inst_id) -> bool {
+  if (auto facet_access_type = context.insts().TryGetAs<SemIR::FacetAccessType>(
+          context.constant_values().GetInstId(const_id))) {
+    const_id =
+        context.constant_values().Get(facet_access_type->facet_value_inst_id);
   }
-  const auto& symbolic =
-      eval_context.constant_values().GetSymbolicConstant(const_id);
-  // Fast early reject before doing more expensive operations.
-  if (symbolic.dependence != SemIR::ConstantDependence::PeriodSelf) {
-    return false;
-  }
-  auto inst_id = symbolic.inst_id;
-  // Unwrap the `FacetAccessType` instruction, which we get when the `.Self` is
-  // converted to `type`.
-  if (auto facet_access_type =
-          eval_context.insts().TryGetAs<SemIR::FacetAccessType>(inst_id)) {
-    inst_id = facet_access_type->facet_value_inst_id;
-  }
-  if (auto bind_symbolic_name =
-          eval_context.insts().TryGetAs<SemIR::BindSymbolicName>(inst_id)) {
-    const auto& bind_name =
-        eval_context.entity_names().Get(bind_symbolic_name->entity_name_id);
-    return bind_name.name_id == SemIR::NameId::PeriodSelf;
-  }
-  return false;
+  return const_id == context.constant_values().Get(facet_value_inst_id);
 }
 
 // TODO: Convert this to an EvalConstantInst function. This will require
@@ -2066,16 +2050,24 @@ auto TryEvalTypedInst<SemIR::WhereExpr>(EvalContext& eval_context,
       } else if (auto impls =
                      eval_context.insts().TryGetAs<SemIR::RequirementImpls>(
                          inst_id)) {
-        if (IsPeriodSelf(eval_context,
-                         eval_context.constant_values().Get(impls->lhs_id))) {
-          if (impls->rhs_id == SemIR::TypeType::TypeInstId) {
+        SemIR::ConstantId lhs_const_id =
+            eval_context.GetConstantValue(impls->lhs_id);
+        SemIR::ConstantId rhs_const_id =
+            eval_context.GetConstantValue(impls->rhs_id);
+        if (IsSameFacetValue(eval_context.context(), lhs_const_id,
+                             typed_inst.period_self_id)) {
+          auto rhs_inst_id =
+              eval_context.constant_values().GetInstId(rhs_const_id);
+          if (rhs_inst_id == SemIR::ErrorInst::InstId) {
+            // `.Self impls <error>`.
+            return SemIR::ErrorInst::ConstantId;
+          } else if (rhs_inst_id == SemIR::TypeType::TypeInstId) {
             // `.Self impls type` -> nothing to do.
-          } else if (auto facet_type =
-                         eval_context.insts().TryGetAs<SemIR::FacetType>(
-                             RequireConstantValue(eval_context, impls->rhs_id,
-                                                  &phase))) {
+          } else {
+            auto facet_type = eval_context.insts().GetAs<SemIR::FacetType>(
+                RequireConstantValue(eval_context, impls->rhs_id, &phase));
             const auto& more_info =
-                eval_context.facet_types().Get(facet_type->facet_type_id);
+                eval_context.facet_types().Get(facet_type.facet_type_id);
             // The way to prevent lookup into the interface requirements of a
             // facet type is to put it to the right of a `.Self impls`, which we
             // accomplish by putting them into `self_impls_constraints`.

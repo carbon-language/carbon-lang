@@ -2,8 +2,9 @@
 // Exceptions. See /LICENSE for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
+// INCLUDE-FILE: toolchain/testing/testdata/min_prelude/none.carbon
 // TODO: Add ranges and switch to "--dump-sem-ir-ranges=only".
-// EXTRA-ARGS: --no-prelude-import --dump-sem-ir-ranges=if-present
+// EXTRA-ARGS: --dump-sem-ir-ranges=if-present
 //
 // AUTOUPDATE
 // TIP: To test this file alone, run:
@@ -32,9 +33,9 @@ var y: {} = x;
 // CHECK:STDOUT:     %x.var_patt: %pattern_type = var_pattern %x.patt [concrete]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %x.var: ref %empty_struct_type = var %x.var_patt [concrete]
-// CHECK:STDOUT:   %.loc14_9.1: type = splice_block %.loc14_9.3 [concrete = constants.%empty_struct_type] {
-// CHECK:STDOUT:     %.loc14_9.2: %empty_struct_type = struct_literal ()
-// CHECK:STDOUT:     %.loc14_9.3: type = converted %.loc14_9.2, constants.%empty_struct_type [concrete = constants.%empty_struct_type]
+// CHECK:STDOUT:   %.loc15_9.1: type = splice_block %.loc15_9.3 [concrete = constants.%empty_struct_type] {
+// CHECK:STDOUT:     %.loc15_9.2: %empty_struct_type = struct_literal ()
+// CHECK:STDOUT:     %.loc15_9.3: type = converted %.loc15_9.2, constants.%empty_struct_type [concrete = constants.%empty_struct_type]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %x: ref %empty_struct_type = bind_name x, %x.var [concrete = %x.var]
 // CHECK:STDOUT:   name_binding_decl {
@@ -42,23 +43,23 @@ var y: {} = x;
 // CHECK:STDOUT:     %y.var_patt: %pattern_type = var_pattern %y.patt [concrete]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %y.var: ref %empty_struct_type = var %y.var_patt [concrete]
-// CHECK:STDOUT:   %.loc15_9.1: type = splice_block %.loc15_9.3 [concrete = constants.%empty_struct_type] {
-// CHECK:STDOUT:     %.loc15_9.2: %empty_struct_type = struct_literal ()
-// CHECK:STDOUT:     %.loc15_9.3: type = converted %.loc15_9.2, constants.%empty_struct_type [concrete = constants.%empty_struct_type]
+// CHECK:STDOUT:   %.loc16_9.1: type = splice_block %.loc16_9.3 [concrete = constants.%empty_struct_type] {
+// CHECK:STDOUT:     %.loc16_9.2: %empty_struct_type = struct_literal ()
+// CHECK:STDOUT:     %.loc16_9.3: type = converted %.loc16_9.2, constants.%empty_struct_type [concrete = constants.%empty_struct_type]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %y: ref %empty_struct_type = bind_name y, %y.var [concrete = %y.var]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %.loc14_14.1: %empty_struct_type = struct_literal ()
-// CHECK:STDOUT:   %.loc14_14.2: init %empty_struct_type = struct_init () to file.%x.var [concrete = constants.%empty_struct]
-// CHECK:STDOUT:   %.loc14_1: init %empty_struct_type = converted %.loc14_14.1, %.loc14_14.2 [concrete = constants.%empty_struct]
-// CHECK:STDOUT:   assign file.%x.var, %.loc14_1
+// CHECK:STDOUT:   %.loc15_14.1: %empty_struct_type = struct_literal ()
+// CHECK:STDOUT:   %.loc15_14.2: init %empty_struct_type = struct_init () to file.%x.var [concrete = constants.%empty_struct]
+// CHECK:STDOUT:   %.loc15_1: init %empty_struct_type = converted %.loc15_14.1, %.loc15_14.2 [concrete = constants.%empty_struct]
+// CHECK:STDOUT:   assign file.%x.var, %.loc15_1
 // CHECK:STDOUT:   %x.ref: ref %empty_struct_type = name_ref x, file.%x [concrete = file.%x.var]
-// CHECK:STDOUT:   %.loc15_13: init %empty_struct_type = struct_init () to file.%y.var [concrete = constants.%empty_struct]
-// CHECK:STDOUT:   %.loc15_1: init %empty_struct_type = converted %x.ref, %.loc15_13 [concrete = constants.%empty_struct]
-// CHECK:STDOUT:   assign file.%y.var, %.loc15_1
+// CHECK:STDOUT:   %.loc16_13: init %empty_struct_type = struct_init () to file.%y.var [concrete = constants.%empty_struct]
+// CHECK:STDOUT:   %.loc16_1: init %empty_struct_type = converted %x.ref, %.loc16_13 [concrete = constants.%empty_struct]
+// CHECK:STDOUT:   assign file.%y.var, %.loc16_1
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

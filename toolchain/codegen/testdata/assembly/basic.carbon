@@ -2,7 +2,8 @@
 // Exceptions. See /LICENSE for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
-// EXTRA-ARGS: --no-prelude-import --target=x86_64-unknown-linux-gnu --output=-
+// INCLUDE-FILE: toolchain/testing/testdata/min_prelude/none.carbon
+// EXTRA-ARGS: --target=x86_64-unknown-linux-gnu --output=-
 //
 // To test this file alone, run:
 //   bazel test //toolchain/testing:file_test --test_arg=--file_tests=toolchain/codegen/testdata/assembly/basic.carbon

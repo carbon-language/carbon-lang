@@ -4,7 +4,7 @@
 //
 // INCLUDE-FILE: toolchain/testing/testdata/min_prelude/destroy.carbon
 // TODO: Add ranges and switch to "--dump-sem-ir-ranges=only".
-// EXTRA-ARGS: --no-prelude-import --dump-sem-ir-ranges=if-present
+// EXTRA-ARGS: --dump-sem-ir-ranges=if-present
 //
 // AUTOUPDATE
 // TIP: To test this file alone, run:
@@ -27,10 +27,18 @@ fn Main() {
 // CHECK:STDOUT:   %pattern_type: type = pattern_type %empty_tuple.type [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
+// CHECK:STDOUT: imports {
+// CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [concrete] {
+// CHECK:STDOUT:     import Core//prelude
+// CHECK:STDOUT:   }
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace [concrete] {
+// CHECK:STDOUT:     .Core = imports.%Core
 // CHECK:STDOUT:     .Main = %Main.decl
 // CHECK:STDOUT:   }
+// CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %Main.decl: %Main.type = fn_decl @Main [concrete = constants.%Main] {} {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
