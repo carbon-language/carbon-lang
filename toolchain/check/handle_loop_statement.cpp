@@ -87,7 +87,7 @@ auto HandleParseNode(Context& context, Parse::WhileConditionId node_id)
     -> bool {
   auto cond_value_id = context.node_stack().PopExpr();
   auto loop_header_id =
-      context.node_stack().Peek<Parse::NodeKind::WhileConditionStart>();
+      context.node_stack().Pop<Parse::NodeKind::WhileConditionStart>();
 
   // Branch to either the loop body or the loop exit block, and start emitting
   // the loop body.
