@@ -723,7 +723,8 @@ auto CompilationUnit::RunLower() -> void {
     llvm::ArrayRef<Parse::GetTreeAndSubtreesFn> subtrees =
         cache_->tree_and_subtrees_getters();
     module_ = Lower::LowerToLLVM(
-        *llvm_context_, driver_env_->fs, options_->run_llvm_verifier,
+        *llvm_context_, driver_env_->fs,
+        options_->run_llvm_verifier ? driver_env_->error_stream : nullptr,
         options_->include_debug_info, subtrees, input_filename_, *sem_ir_,
         &inst_namer, vlog_stream_);
   });

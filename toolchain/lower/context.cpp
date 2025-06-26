@@ -52,18 +52,15 @@ auto Context::LowerPendingDefinitions() -> void {
 }
 
 auto Context::Finalize(
-    bool run_llvm_verifier) && -> std::unique_ptr<llvm::Module> {
+    llvm::raw_ostream*
+        llvm_verifier_stream) && -> std::unique_ptr<llvm::Module> {
   LowerPendingDefinitions();
 
   file_contexts_.ForEach(
       [](auto, auto& file_context) { file_context->Finalize(); });
 
-  if (run_llvm_verifier) {
-    RawStringOstream errs;
-    CARBON_CHECK(!llvm::verifyModule(*llvm_module_, &errs),
-                 "Verifier errors (to see full IR, use `--dump-llvm-ir "
-                 "--no-verify-llvm-ir`):\n{0}",
-                 errs.TakeStr());
+  if (llvm_verifier_stream) {
+    CARBON_CHECK(!llvm::verifyModule(*llvm_module_, llvm_verifier_stream));
   }
   return std::move(llvm_module_);
 }
