@@ -1972,6 +1972,9 @@ static auto TryResolveTypedInst(ImportRefResolver& resolver,
                                        .Get(import_vtable.class_id)
                                        .first_owning_decl_id);
 
+  // TODO: Ensure the vtable is only imported once, in eg: if there's distinct
+  // vtable constants (imported from multiple libraries using the vtable) that
+  // refer to the same vtable, the vtable should still be singular.
   auto virtual_functions =
       GetLocalInstBlockContents(resolver, import_vtable.virtual_functions_id);
 
