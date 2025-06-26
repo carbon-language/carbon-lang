@@ -209,12 +209,15 @@ constraints that apply to `T`. This happens:
 In each case, the following steps are performed to resolve the facet type's
 abstract constraints into a set of constraints on `T`:
 
--   If multiple rewrites are specified for the same associated constant, they
-    are required to be identical, and duplicates are discarded. Identical is
-    taken to mean that they resolve to the same value at the time of resolution.
 -   Rewrites are performed on other rewrites in order to find a fixed point,
     where no rewrite applies within any other rewrite. If no fixed point exists,
     the generic parameter declaration or `impl` declaration is invalid.
+    -   Rewrites are resolved in order from left to right.
+    -   The left-most rewrite of a given associated constant is used for
+        rewriting all other rewrite constraints that refer to it.
+-   If multiple rewrites are specified for the same associated constant, they
+    are required to be identical, and duplicates are discarded. Identical is
+    taken to mean that they resolve to the same value at the time of resolution.
 -   Rewrites are performed throughout the other constraints in the facet type --
     that is, in any `==` constraints and `impls` constraints -- and the type
     `.Self` is replaced by `T` throughout the constraint.
@@ -259,7 +262,8 @@ fn IndirectCycle[T:! I where .X = .Y and .Y = .Z* and .Z = .Y*]();
 ```
 
 After constraint resolution, no references to rewritten associated constants
-remain in the constraints on `T`.
+remain in the constraints on `T` and there is at most one rewrite for each
+associated constant.
 
 The following examples each treat the two assignments of `.X` as being
 identical, though they are written differently:
@@ -267,13 +271,18 @@ identical, though they are written differently:
 ```carbon
 fn Identical(T:! I where .X = () and .X = .Y and .Y = ()) {}
 
+fn IdenticalNoCycle(T:! I where .X = () and .X = .Y and .Y = .X) {}
+
 fn IdenticalNested(T:! (I where .X = ()) where .X = .Y and .Y = ()) {}
 ```
 
 The rewrite constraints of the current facet type are all available, so both
-rewrites of `.X` can be seen to be assigning `()`. But the following does not
-have the same information available at the time of resolving the two rewrites of
-`.X`, so the rewrites are invalid:
+rewrites of `.X` can be seen to be assigning `()`. In the second example, the
+value of `.X` is rewritten into `.Y = .X` from the left-most rewrite of `.X`,
+giving `.Y = ()` rather than `.Y = .Y`, so we are able to find a fixed point.
+
+But the following does not have the rewrite of `.Y` available at the time of
+resolving the two rewrites of `.X`, so the rewrites are invalid:
 
 ```carbon
 fn NotIdentical(T:! (I where .X = () and .X = .Y) where .Y = ()) {}
