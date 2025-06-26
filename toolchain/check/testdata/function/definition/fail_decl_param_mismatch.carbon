@@ -153,7 +153,7 @@ fn K() -> {} { return {}; }
 // CHECK:STDOUT:     %x.param_patt: <error> = value_param_pattern %x.patt, call_param0 [concrete]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %x.param: <error> = value_param call_param0
-// CHECK:STDOUT:     %x: <error> = bind_name x, %x.param [concrete = <error>]
+// CHECK:STDOUT:     %x: <error> = bind_name x, %x.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %I.decl.loc42: %I.type.af49c4.1 = fn_decl @I.1 [concrete = constants.%I.58e4ec.1] {} {}
 // CHECK:STDOUT:   %I.decl.loc50: %I.type.af49c4.2 = fn_decl @I.2 [concrete = constants.%I.58e4ec.2] {

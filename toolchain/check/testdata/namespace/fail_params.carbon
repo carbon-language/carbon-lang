@@ -81,7 +81,7 @@ fn D(T:! type).F() {}
 // CHECK:STDOUT:   %F.decl.loc22: %F.type.bd7 = fn_decl @F.1 [concrete = constants.%F.199] {} {}
 // CHECK:STDOUT:   %n.param: <error> = value_param call_param0
 // CHECK:STDOUT:   %int_32: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
-// CHECK:STDOUT:   %n: <error> = bind_name n, %n.param [concrete = <error>]
+// CHECK:STDOUT:   %n: <error> = bind_name n, %n.param
 // CHECK:STDOUT:   %B: <namespace> = namespace [concrete] {}
 // CHECK:STDOUT:   %T: type = bind_symbolic_name T, 0 [symbolic = constants.%T]
 // CHECK:STDOUT:   %x.param: %T = value_param call_param0

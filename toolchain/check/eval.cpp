@@ -251,11 +251,6 @@ enum class Phase : uint8_t {
 };
 }  // namespace
 
-// Returns whether the specified phase is a constant phase and not an error.
-static auto IsNonErrorConstant(Phase phase) -> bool {
-  return phase < Phase::UnknownDueToError;
-}
-
 // Gets the phase in which the value of a constant will become available.
 static auto GetPhase(const SemIR::ConstantValueStore& constant_values,
                      SemIR::ConstantId constant_id) -> Phase {
@@ -691,7 +686,7 @@ static auto GetConstantValue(EvalContext& eval_context,
 
 // Replaces the specified field of the given typed instruction with its constant
 // value, if it has constant phase. Returns true on success, false if the value
-// has error or runtime phase.
+// has runtime phase.
 template <typename InstT, typename FieldIdT>
 static auto ReplaceFieldWithConstantValue(EvalContext& eval_context,
                                           InstT* inst, FieldIdT InstT::* field,
@@ -701,7 +696,7 @@ static auto ReplaceFieldWithConstantValue(EvalContext& eval_context,
     return false;
   }
   inst->*field = unwrapped;
-  return IsNonErrorConstant(*phase);
+  return *phase < Phase::Runtime;
 }
 
 // Function template that can be called with an argument of type `T`. Used below
@@ -767,13 +762,11 @@ static auto ReplaceAllFieldsWithConstantValues(EvalContext& eval_context,
   auto arg0 =
       GetConstantValueForArg(eval_context, inst->arg0_and_kind(), phase);
   if (*phase == Phase::Runtime) {
-    // We already know the final value will be runtime (phases can only increase
-    // and runtime is the max), so we can early out.
     return false;
   }
   auto arg1 =
       GetConstantValueForArg(eval_context, inst->arg1_and_kind(), phase);
-  if (!IsNonErrorConstant(*phase)) {
+  if (*phase == Phase::Runtime) {
     return false;
   }
   inst->SetArgs(arg0, arg1);
@@ -782,13 +775,13 @@ static auto ReplaceAllFieldsWithConstantValues(EvalContext& eval_context,
 
 // Given an instruction and its ID, replaces its type with the corresponding
 // value in this evaluation context. Updates `*phase` to describe the phase of
-// the result, and returns whether `*phase` is a non-error constant phase.
+// the result, and returns whether `*phase` is a constant phase.
 static auto ReplaceTypeWithConstantValue(EvalContext& eval_context,
                                          SemIR::InstId inst_id,
                                          SemIR::Inst* inst, Phase* phase)
     -> bool {
   inst->SetType(GetTypeOfInst(eval_context, inst_id, *inst, phase));
-  return IsNonErrorConstant(*phase);
+  return *phase < Phase::Runtime;
 }
 
 template <typename InstT>
@@ -796,7 +789,7 @@ static auto ReplaceTypeWithConstantValue(EvalContext& eval_context,
                                          SemIR::InstId inst_id, InstT* inst,
                                          Phase* phase) -> bool {
   inst->type_id = GetTypeOfInst(eval_context, inst_id, *inst, phase);
-  return IsNonErrorConstant(*phase);
+  return *phase < Phase::Runtime;
 }
 
 template <typename... Types>
@@ -1892,10 +1885,12 @@ static auto TryEvalTypedInst(EvalContext& eval_context, SemIR::InstId inst_id,
     if (!ReplaceTypeWithConstantValue(eval_context, inst_id, &inst, &phase) ||
         !ReplaceAllFieldsWithConstantValues(eval_context, &inst, &phase)) {
       if constexpr (ConstantKind == SemIR::InstConstantKind::Always) {
-        CARBON_CHECK(phase == Phase::UnknownDueToError,
-                     "{0} should always be constant", InstT::Kind);
+        CARBON_FATAL("{0} should always be constant", InstT::Kind);
       }
-      return MakeNonConstantResult(phase);
+      return SemIR::ConstantId::NotConstant;
+    }
+    if (phase == Phase::UnknownDueToError) {
+      return SemIR::ErrorInst::ConstantId;
     }
 
     // When canonicalizing a SpecificId, we defer resolving the specific's
@@ -1995,8 +1990,9 @@ auto TryEvalTypedInst<SemIR::BindSymbolicName>(EvalContext& eval_context,
       !ReplaceFieldWithConstantValue(eval_context, &bind,
                                      &SemIR::BindSymbolicName::entity_name_id,
                                      &phase)) {
-    return MakeNonConstantResult(phase);
+    return SemIR::ConstantId::NotConstant;
   }
+  // This correctly handles `Phase::UnknownDueToError`.
   return MakeConstantResult(eval_context.context(), bind, phase);
 }
 

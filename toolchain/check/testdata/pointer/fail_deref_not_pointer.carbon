@@ -92,9 +92,9 @@ fn Deref(n: i32) {
 // CHECK:STDOUT: fn @Deref(%n.param: %i32) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %n.ref.loc20: %i32 = name_ref n, %n
-// CHECK:STDOUT:   %.loc20: ref <error> = deref %n.ref.loc20 [concrete = <error>]
+// CHECK:STDOUT:   %.loc20: ref <error> = deref %n.ref.loc20
 // CHECK:STDOUT:   %n.ref.loc25: %i32 = name_ref n, %n
-// CHECK:STDOUT:   %.loc25: ref <error> = deref %n.ref.loc25 [concrete = <error>]
+// CHECK:STDOUT:   %.loc25: ref <error> = deref %n.ref.loc25
 // CHECK:STDOUT:   %foo.ref.loc25: <error> = name_ref foo, <error> [concrete = <error>]
 // CHECK:STDOUT:   %.loc30_5.1: %empty_tuple.type = tuple_literal ()
 // CHECK:STDOUT:   %empty_tuple.loc30: %empty_tuple.type = tuple_value () [concrete = constants.%empty_tuple]

@@ -2370,7 +2370,7 @@ fn F() {
 // CHECK:STDOUT:       %U.ref.loc24_13: %J.assoc_type = name_ref U, @U.%assoc0 [concrete = constants.%assoc0.411]
 // CHECK:STDOUT:       %.loc24_13: type = converted %U.ref.loc24_13, <error> [concrete = <error>]
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %u: <error> = bind_name u, %u.param [concrete = <error>]
+// CHECK:STDOUT:     %u: <error> = bind_name u, %u.param
 // CHECK:STDOUT:     %return.param: ref <error> = out_param call_param1
 // CHECK:STDOUT:     %return: ref <error> = return_slot %return.param
 // CHECK:STDOUT:   }
@@ -2433,7 +2433,7 @@ fn F() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F.2(%u.param: <error>) -> <error> {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %u.ref: <error> = name_ref u, %u [concrete = <error>]
+// CHECK:STDOUT:   %u.ref: <error> = name_ref u, %u
 // CHECK:STDOUT:   return <error>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -2583,7 +2583,7 @@ fn F() {
 // CHECK:STDOUT:     %self: @F.1.%Self.as_type.loc19_14.1 (%Self.as_type) = bind_name self, %self.param
 // CHECK:STDOUT:     %z.param: <error> = value_param call_param1
 // CHECK:STDOUT:     %Self.ref.loc19_23: %J2.type = name_ref Self, @J2.%Self [symbolic = %Self (constants.%Self)]
-// CHECK:STDOUT:     %z: <error> = bind_name z, %z.param [concrete = <error>]
+// CHECK:STDOUT:     %z: <error> = bind_name z, %z.param
 // CHECK:STDOUT:     %return.param: ref <error> = out_param call_param2
 // CHECK:STDOUT:     %return: ref <error> = return_slot %return.param
 // CHECK:STDOUT:   }
@@ -2710,8 +2710,8 @@ fn F() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %F.ref: %F.type.f405c5.1 = name_ref F, @impl.4e9.%F.decl.loc30_33.1 [concrete = constants.%F.214a71.1]
 // CHECK:STDOUT:   %self.ref: %empty_tuple.type = name_ref self, %self.param
-// CHECK:STDOUT:   %.ref: <error> = name_ref <none>, %.param [concrete = <error>]
-// CHECK:STDOUT:   %return.ref: ref <error> = name_ref <return slot>, %return.param [concrete = <error>]
+// CHECK:STDOUT:   %.ref: <error> = name_ref <none>, %.param
+// CHECK:STDOUT:   %return.ref: ref <error> = name_ref <return slot>, %return.param
 // CHECK:STDOUT:   return <error>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -2725,8 +2725,8 @@ fn F() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %F.ref: %F.type.05d6a0.1 = name_ref F, @impl.8b3.%F.decl.loc39_33.1 [concrete = constants.%F.bfa759.1]
 // CHECK:STDOUT:   %self.ref: %C2 = name_ref self, %self.param
-// CHECK:STDOUT:   %.ref: <error> = name_ref <none>, %.param [concrete = <error>]
-// CHECK:STDOUT:   %return.ref: ref <error> = name_ref <return slot>, %return.param [concrete = <error>]
+// CHECK:STDOUT:   %.ref: <error> = name_ref <none>, %.param
+// CHECK:STDOUT:   %return.ref: ref <error> = name_ref <return slot>, %return.param
 // CHECK:STDOUT:   %F.bound: <bound method> = bound_method %self.ref, %F.ref
 // CHECK:STDOUT:   %F.call: init %C2 = call %F.bound(%self.ref, <error>)
 // CHECK:STDOUT:   return <error>
