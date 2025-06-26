@@ -11,6 +11,8 @@
 
 namespace Carbon {
 
+// Calls `fn` as part of LLVM's pretty stack trace support. Implementations
+// should typically have a terminating `\n`.
 class PrettyStackTraceFunction : public llvm::PrettyStackTraceEntry {
  public:
   explicit PrettyStackTraceFunction(

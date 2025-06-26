@@ -9,6 +9,7 @@
 #include <string>
 #include <utility>
 
+#include "common/pretty_stack_trace_function.h"
 #include "llvm/ADT/ScopeExit.h"
 #include "llvm/ADT/SmallVector.h"
 #include "llvm/ADT/StringMap.h"
@@ -89,6 +90,17 @@ static auto DoArgReplacements(llvm::SmallVector<std::string>& test_args,
   return Success();
 }
 
+// Collects captured output when enabled.
+static auto CollectOutputIfCapturing(TestFile& test_file) -> void {
+  if (!test_file.capture_console_output) {
+    return;
+  }
+  // No need to flush stderr.
+  llvm::outs().flush();
+  test_file.actual_stdout += GetCapturedStdout();
+  test_file.actual_stderr += GetCapturedStderr();
+}
+
 auto RunTestFile(const FileTestBase& test_base, bool dump_output,
                  TestFile& test_file) -> ErrorOr<Success> {
   llvm::SmallVector<TestFile::Split*> all_splits;
@@ -164,6 +176,25 @@ auto RunTestFile(const FileTestBase& test_base, bool dump_output,
   llvm::raw_svector_ostream output_stream(test_file.actual_stdout);
   llvm::raw_svector_ostream error_stream(test_file.actual_stderr);
 
+  // Dump any available captured output if `Run` crashes.
+  PrettyStackTraceFunction stack_trace_streams([&](llvm::raw_ostream& out) {
+    CollectOutputIfCapturing(test_file);
+
+    auto dump_stream = [&](llvm::SmallString<16> stream) {
+      if (stream.empty()) {
+        out << " (none)\n";
+      } else {
+        out << "\n" << stream << "\n";
+      }
+    };
+
+    out << "Test stdout:";
+    dump_stream(test_file.actual_stdout);
+
+    out << "\tTest stderr:";
+    dump_stream(test_file.actual_stderr);
+  });
+
   Timer timer;
   ErrorOr<FileTestBase::RunResult> run_result =
       dump_output ? test_base.Run(test_args_ref, fs, input_stream, llvm::outs(),
@@ -172,13 +203,8 @@ auto RunTestFile(const FileTestBase& test_base, bool dump_output,
                                   output_stream, error_stream);
   test_file.run_elapsed_ms = timer.elapsed_ms();
 
-  // Ensure stdout/stderr are always fetched, even when discarded on error.
-  if (test_file.capture_console_output) {
-    // No need to flush stderr.
-    llvm::outs().flush();
-    test_file.actual_stdout += GetCapturedStdout();
-    test_file.actual_stderr += GetCapturedStderr();
-  }
+  // Collect captured stdout/stderr, even when discarded on error.
+  CollectOutputIfCapturing(test_file);
 
   if (!run_result.ok()) {
     return std::move(run_result).error();
