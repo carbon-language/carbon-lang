@@ -31,14 +31,19 @@ struct Unit {
   std::unique_ptr<clang::ASTUnit>* cpp_ast;
 };
 
+struct CheckParseTreesParams {
+  llvm::MutableArrayRef<Unit> units;
+  llvm::ArrayRef<Parse::GetTreeAndSubtreesFn> tree_and_subtrees_getters;
+  bool prelude_import = false;
+  llvm::IntrusiveRefCntPtr<llvm::vfs::FileSystem> fs;
+  llvm::StringRef target;
+  llvm::raw_ostream* vlog_stream = nullptr;
+  bool fuzzing = false;
+};
+
 // Checks a group of parse trees. This will use imports to decide the order of
 // checking.
-auto CheckParseTrees(
-    llvm::MutableArrayRef<Unit> units,
-    llvm::ArrayRef<Parse::GetTreeAndSubtreesFn> tree_and_subtrees_getters,
-    bool prelude_import, llvm::IntrusiveRefCntPtr<llvm::vfs::FileSystem> fs,
-    llvm::StringRef target, llvm::raw_ostream* vlog_stream, bool fuzzing)
-    -> void;
+auto CheckParseTrees(CheckParseTreesParams params) -> void;
 
 }  // namespace Carbon::Check
 

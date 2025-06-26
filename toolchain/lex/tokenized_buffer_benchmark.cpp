@@ -217,13 +217,21 @@ class LexerBenchHelper {
 
   auto Lex() -> TokenizedBuffer {
     Diagnostics::Consumer& consumer = Diagnostics::NullConsumer();
-    return Lex::Lex(value_stores_, source_, consumer);
+    return Lex::Lex({
+        .value_stores = value_stores_,
+        .source = source_,
+        .consumer = consumer,
+    });
   }
 
   auto DiagnoseErrors() -> std::string {
     RawStringOstream result;
     Diagnostics::StreamConsumer consumer(&result);
-    auto buffer = Lex::Lex(value_stores_, source_, consumer);
+    auto buffer = Lex::Lex({
+        .value_stores = value_stores_,
+        .source = source_,
+        .consumer = consumer,
+    });
     consumer.Flush();
     CARBON_CHECK(buffer.has_errors(),
                  "Asked to diagnose errors but none found!");

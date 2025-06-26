@@ -17,11 +17,10 @@ auto HandleInvalid(Context& context) -> void {
                context.PopState());
 }
 
-auto Parse(Lex::TokenizedBuffer& tokens, Diagnostics::Consumer& consumer,
-           llvm::raw_ostream* vlog_stream) -> Tree {
+auto Parse(ParseParams params) -> Tree {
   // Delegate to the parser.
-  Tree tree(tokens);
-  Context context(&tree, &tokens, &consumer, vlog_stream);
+  Tree tree(params.tokens);
+  Context context(&tree, &params.tokens, &params.consumer, params.vlog_stream);
   PrettyStackTraceFunction context_dumper(
       [&](llvm::raw_ostream& output) { context.PrintForStackDump(output); });
 
@@ -44,7 +43,7 @@ auto Parse(Lex::TokenizedBuffer& tokens, Diagnostics::Consumer& consumer,
 
   // Mark the tree as potentially having errors if there were errors coming in
   // from the tokenized buffer or we diagnosed new errors.
-  tree.set_has_errors(tokens.has_errors() || context.has_errors());
+  tree.set_has_errors(params.tokens.has_errors() || context.has_errors());
 
   if (auto verify = tree.Verify(); !verify.ok()) {
     // TODO: This is temporarily printing to stderr directly during development.

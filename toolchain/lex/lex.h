@@ -12,13 +12,17 @@
 
 namespace Carbon::Lex {
 
+struct LexParams {
+  SharedValueStores& value_stores;
+  SourceBuffer& source;
+  Diagnostics::Consumer& consumer;
+};
+
 // Lexes a buffer of source code into a tokenized buffer.
 //
 // The provided source buffer must outlive any returned `TokenizedBuffer`
 // which will refer into the source.
-auto Lex(SharedValueStores& value_stores,
-         SourceBuffer& source [[clang::lifetimebound]],
-         Diagnostics::Consumer& consumer) -> TokenizedBuffer;
+auto Lex(LexParams params) -> TokenizedBuffer;
 
 }  // namespace Carbon::Lex
 

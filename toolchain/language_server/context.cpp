@@ -131,10 +131,16 @@ auto Context::File::SetText(Context& context, std::optional<int64_t> version,
   }
   source_ = std::make_unique<SourceBuffer>(std::move(*source));
   value_stores_ = std::make_unique<SharedValueStores>();
-  tokens_ = std::make_unique<Lex::TokenizedBuffer>(
-      Lex::Lex(*value_stores_, *source_, consumer));
-  tree_ = std::make_unique<Parse::Tree>(
-      Parse::Parse(*tokens_, consumer, context.vlog_stream()));
+  tokens_ = std::make_unique<Lex::TokenizedBuffer>(Lex::Lex({
+      .value_stores = *value_stores_,
+      .source = *source_,
+      .consumer = consumer,
+  }));
+  tree_ = std::make_unique<Parse::Tree>(Parse::Parse({
+      .tokens = *tokens_,
+      .consumer = consumer,
+      .vlog_stream = context.vlog_stream(),
+  }));
   tree_and_subtrees_ =
       std::make_unique<Parse::TreeAndSubtrees>(*tokens_, *tree_);
 
@@ -154,10 +160,14 @@ auto Context::File::SetText(Context& context, std::optional<int64_t> version,
   llvm::IntrusiveRefCntPtr<llvm::vfs::InMemoryFileSystem> fs =
       new llvm::vfs::InMemoryFileSystem;
   // TODO: Include the prelude.
-  Check::CheckParseTrees(
-      units, llvm::ArrayRef<Parse::GetTreeAndSubtreesFn>(getter),
-      /*prelude_import=*/false, fs, llvm::sys::getDefaultTargetTriple(),
-      context.vlog_stream(), /*fuzzing=*/false);
+  Check::CheckParseTrees({
+      .units = units,
+      .tree_and_subtrees_getters =
+          llvm::ArrayRef<Parse::GetTreeAndSubtreesFn>(getter),
+      .fs = fs,
+      .target = llvm::sys::getDefaultTargetTriple(),
+      .vlog_stream = context.vlog_stream(),
+  });
 
   // Note we need to publish diagnostics even when empty.
   // TODO: Consider caching previously published diagnostics and only publishing

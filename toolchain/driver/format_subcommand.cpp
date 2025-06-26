@@ -82,7 +82,11 @@ auto FormatSubcommand::Run(DriverEnv& driver_env) -> DriverResult {
       continue;
     }
     SharedValueStores value_stores;
-    auto tokens = Lex::Lex(value_stores, *source, driver_env.consumer);
+    auto tokens = Lex::Lex({
+        .value_stores = value_stores,
+        .source = *source,
+        .consumer = driver_env.consumer,
+    });
 
     RawStringOstream buffer;
     if (Format::Format(tokens, buffer)) {

@@ -33,14 +33,21 @@ extern "C" int LLVMFuzzerTestOneInput(const unsigned char* data, size_t size) {
 
   // Lex the input.
   SharedValueStores value_stores;
-  auto tokens = Lex::Lex(value_stores, *source, Diagnostics::NullConsumer());
+  auto tokens = Lex::Lex({
+      .value_stores = value_stores,
+      .source = *source,
+      .consumer = Diagnostics::NullConsumer(),
+  });
   if (tokens.has_errors()) {
     return 0;
   }
 
   // Now parse it into a tree. Note that parsing will (when asserts are enabled)
   // walk the entire tree to verify it so we don't have to do that here.
-  Parse::Parse(tokens, Diagnostics::NullConsumer(), /*vlog_stream=*/nullptr);
+  Parse::Parse({
+      .tokens = tokens,
+      .consumer = Diagnostics::NullConsumer(),
+  });
   return 0;
 }
 
