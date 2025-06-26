@@ -7,6 +7,7 @@
 
 package Core library "range";
 
+import library "prelude/destroy";
 import library "prelude/iterate";
 import library "prelude/operators/arithmetic";
 import library "prelude/operators/as";
