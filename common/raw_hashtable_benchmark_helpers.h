@@ -192,8 +192,8 @@ struct CarbonHashDI<int> {
 template <int LowZeroBits>
 struct CarbonHashDI<LowZeroBitInt<LowZeroBits>> {
   using IntT = LowZeroBitInt<LowZeroBits>;
-  static auto getEmptyKey() -> IntT { return -1; }
-  static auto getTombstoneKey() -> IntT { return -2; }
+  static auto getEmptyKey() -> IntT { return IntT(-1); }
+  static auto getTombstoneKey() -> IntT { return IntT(-2); }
   static auto getHashValue(const IntT val) -> unsigned {
     return static_cast<uint64_t>(HashValue(val));
   }
@@ -295,8 +295,8 @@ namespace llvm {
 template <int LowZeroBits>
 struct DenseMapInfo<Carbon::RawHashtable::LowZeroBitInt<LowZeroBits>> {
   using IntT = Carbon::RawHashtable::LowZeroBitInt<LowZeroBits>;
-  static auto getEmptyKey() -> IntT { return -1; }
-  static auto getTombstoneKey() -> IntT { return -2; }
+  static auto getEmptyKey() -> IntT { return IntT(-1); }
+  static auto getTombstoneKey() -> IntT { return IntT(-2); }
   static auto getHashValue(const IntT val) -> unsigned {
     return DenseMapInfo<int64_t>::getHashValue(val.shifted_value);
   }

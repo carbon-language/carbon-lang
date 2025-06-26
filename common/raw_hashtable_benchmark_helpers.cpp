@@ -226,7 +226,7 @@ static absl::NoDestructor<llvm::OwningArrayRef<LowZeroBitInt<LowZeroBits>>>
     raw_low_zero_bit_int_keys{[] {
       llvm::OwningArrayRef<LowZeroBitInt<LowZeroBits>> keys(MaxNumKeys);
       for (auto [index, key] : llvm::enumerate(keys)) {
-        key = index + 1;
+        key = LowZeroBitInt<LowZeroBits>(index + 1);
       }
       return keys;
     }()};
