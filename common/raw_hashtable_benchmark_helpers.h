@@ -64,12 +64,14 @@ template <int LowZeroBits>
 struct LowZeroBitInt {
   int64_t shifted_value = 0;
 
-  constexpr LowZeroBitInt() = default;
-  // NOLINTNEXTLINE(google-explicit-constructor): Ease use in existing code.
-  constexpr LowZeroBitInt(int64_t value)
+  explicit constexpr LowZeroBitInt() = default;
+  explicit constexpr LowZeroBitInt(int64_t value)
       : shifted_value(value << LowZeroBits) {}
-  // NOLINTNEXTLINE(google-explicit-constructor): Ease use in existing code
-  constexpr operator int64_t() const { return shifted_value; }
+
+  friend auto operator<<(llvm::raw_ostream& out,
+                         const LowZeroBitInt& value) -> llvm::raw_ostream& {
+    return out << value.shifted_value;
+  }
 
   constexpr auto operator==(const LowZeroBitInt& rhs) const -> bool = default;
   constexpr auto operator<=>(const LowZeroBitInt& rhs) const
