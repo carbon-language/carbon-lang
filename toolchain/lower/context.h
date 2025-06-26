@@ -62,8 +62,10 @@ class Context {
   }
 
   // Finishes lowering and takes ownership of the LLVM module. The context
-  // cannot be used further after calling this.
-  auto Finalize() && -> std::unique_ptr<llvm::Module>;
+  // cannot be used further after calling this. If `llvm_verifier_stream` is
+  // non-null, verifies the LLVM module before returning it.
+  auto Finalize(llvm::raw_ostream*
+                    llvm_verifier_stream) && -> std::unique_ptr<llvm::Module>;
 
   // Returns location information for use with DebugInfo.
   auto GetLocForDI(SemIR::AbsoluteNodeId abs_node_id) -> LocForDI;

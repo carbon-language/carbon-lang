@@ -2,8 +2,8 @@
 // Exceptions. See /LICENSE for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
-#ifndef CARBON_TOOLCHAIN_BASE_PRETTY_STACK_TRACE_FUNCTION_H_
-#define CARBON_TOOLCHAIN_BASE_PRETTY_STACK_TRACE_FUNCTION_H_
+#ifndef CARBON_COMMON_PRETTY_STACK_TRACE_FUNCTION_H_
+#define CARBON_COMMON_PRETTY_STACK_TRACE_FUNCTION_H_
 
 #include <functional>
 
@@ -11,6 +11,8 @@
 
 namespace Carbon {
 
+// Calls `fn` as part of LLVM's pretty stack trace support. Implementations
+// should typically have a terminating `\n`.
 class PrettyStackTraceFunction : public llvm::PrettyStackTraceEntry {
  public:
   explicit PrettyStackTraceFunction(
@@ -26,4 +28,4 @@ class PrettyStackTraceFunction : public llvm::PrettyStackTraceEntry {
 
 }  // namespace Carbon
 
-#endif  // CARBON_TOOLCHAIN_BASE_PRETTY_STACK_TRACE_FUNCTION_H_
+#endif  // CARBON_COMMON_PRETTY_STACK_TRACE_FUNCTION_H_

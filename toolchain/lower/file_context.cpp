@@ -11,6 +11,7 @@
 
 #include "clang/CodeGen/ModuleBuilder.h"
 #include "common/check.h"
+#include "common/pretty_stack_trace_function.h"
 #include "common/vlog.h"
 #include "llvm/ADT/STLExtras.h"
 #include "llvm/ADT/Sequence.h"
@@ -18,7 +19,6 @@
 #include "llvm/Transforms/Utils/BasicBlockUtils.h"
 #include "llvm/Transforms/Utils/ModuleUtils.h"
 #include "toolchain/base/kind_switch.h"
-#include "toolchain/base/pretty_stack_trace_function.h"
 #include "toolchain/lower/constant.h"
 #include "toolchain/lower/function_context.h"
 #include "toolchain/lower/mangler.h"

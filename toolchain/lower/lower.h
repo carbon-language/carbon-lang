@@ -15,9 +15,13 @@
 namespace Carbon::Lower {
 
 // Lowers SemIR to LLVM IR.
+//
+// `llvm_verifier_stream` should be non-null when verification is desired.
+// TODO: Switch to a struct for parameters.
 auto LowerToLLVM(
     llvm::LLVMContext& llvm_context,
-    llvm::IntrusiveRefCntPtr<llvm::vfs::FileSystem> fs, bool want_debug_info,
+    llvm::IntrusiveRefCntPtr<llvm::vfs::FileSystem> fs,
+    llvm::raw_ostream* llvm_verifier_stream, bool want_debug_info,
     llvm::ArrayRef<Parse::GetTreeAndSubtreesFn> tree_and_subtrees_getters,
     llvm::StringRef module_name, const SemIR::File& sem_ir,
     const SemIR::InstNamer* inst_namer, llvm::raw_ostream* vlog_stream)

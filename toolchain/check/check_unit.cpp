@@ -10,11 +10,11 @@
 #include <utility>
 
 #include "common/growing_range.h"
+#include "common/pretty_stack_trace_function.h"
 #include "llvm/ADT/IntrusiveRefCntPtr.h"
 #include "llvm/ADT/StringRef.h"
 #include "llvm/Support/VirtualFileSystem.h"
 #include "toolchain/base/kind_switch.h"
-#include "toolchain/base/pretty_stack_trace_function.h"
 #include "toolchain/check/diagnostic_helpers.h"
 #include "toolchain/check/generic.h"
 #include "toolchain/check/handle.h"

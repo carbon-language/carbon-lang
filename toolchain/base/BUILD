@@ -46,14 +46,6 @@ cc_test(
 )
 
 cc_library(
-    name = "pretty_stack_trace_function",
-    hdrs = ["pretty_stack_trace_function.h"],
-    deps = [
-        "@llvm-project//llvm:Support",
-    ],
-)
-
-cc_library(
     name = "mem_usage",
     hdrs = ["mem_usage.h"],
     deps = [

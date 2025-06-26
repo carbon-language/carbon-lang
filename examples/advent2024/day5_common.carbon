@@ -6,6 +6,8 @@
 
 library "day5_common";
 
+import Core library "range";
+
 import library "io_utils";
 
 fn PageMask(page: i32) -> Core.UInt(100) {
@@ -16,10 +18,8 @@ fn PageMask(page: i32) -> Core.UInt(100) {
 class Rules {
   fn Read() -> Rules {
     returned var rules: Rules;
-    var i: i32 = 0;
-    while (i < 100) {
+    for (i: i32 in Core.Range(100)) {
       rules.disallowed_before[i] = 0;
-      ++i;
     }
 
     var a: i32;
@@ -68,39 +68,33 @@ class PageList {
 
   fn FollowsRules[self: Self](rules: Rules) -> bool {
     var seen: Core.UInt(100) = 0;
-    var i: i32 = 0;
-    while (i < self.num_pages) {
+    for (i: i32 in Core.Range(self.num_pages)) {
       let page: i32 = self.pages[i];
       if (seen & rules.disallowed_before[page] != 0) {
         return false;
       }
       seen |= PageMask(page);
-      ++i;
     }
     return true;
   }
 
   fn IsPossibleFirstPage[self: Self](rules: Rules, page: i32) -> bool {
-    var i: i32 = 0;
-    while (i < self.num_pages) {
+    for (i: i32 in Core.Range(self.num_pages)) {
       if (not rules.IsValidOrder(page, self.pages[i])) {
         return false;
       }
-      ++i;
     }
     return true;
   }
 
   fn ExtractPossibleFirstPage[addr self: Self*](rules: Rules) -> i32 {
-    var i: i32 = 0;
-    while (i < self->num_pages) {
+    for (i: i32 in Core.Range(self->num_pages)) {
       var page: i32 = self->pages[i];
       if (self->IsPossibleFirstPage(rules, page)) {
         self->pages[i] = self->pages[self->num_pages - 1];
         --self->num_pages;
         return page;
       }
-      ++i;
     }
     // TODO: Assert.
     return 0;

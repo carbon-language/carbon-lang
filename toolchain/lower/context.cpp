@@ -6,7 +6,9 @@
 
 #include "common/check.h"
 #include "common/growing_range.h"
+#include "common/raw_string_ostream.h"
 #include "common/vlog.h"
+#include "llvm/IR/Verifier.h"
 #include "llvm/Transforms/Utils/ModuleUtils.h"
 #include "toolchain/lower/file_context.h"
 #include "toolchain/sem_ir/inst_namer.h"
@@ -49,11 +51,17 @@ auto Context::LowerPendingDefinitions() -> void {
   }
 }
 
-auto Context::Finalize() && -> std::unique_ptr<llvm::Module> {
+auto Context::Finalize(
+    llvm::raw_ostream*
+        llvm_verifier_stream) && -> std::unique_ptr<llvm::Module> {
   LowerPendingDefinitions();
 
   file_contexts_.ForEach(
       [](auto, auto& file_context) { file_context->Finalize(); });
+
+  if (llvm_verifier_stream) {
+    CARBON_CHECK(!llvm::verifyModule(*llvm_module_, llvm_verifier_stream));
+  }
   return std::move(llvm_module_);
 }
 

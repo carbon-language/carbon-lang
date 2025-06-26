@@ -11,10 +11,10 @@
 #include <system_error>
 #include <utility>
 
+#include "common/pretty_stack_trace_function.h"
 #include "common/vlog.h"
 #include "llvm/ADT/STLExtras.h"
 #include "llvm/ADT/ScopeExit.h"
-#include "toolchain/base/pretty_stack_trace_function.h"
 #include "toolchain/base/timings.h"
 #include "toolchain/check/check.h"
 #include "toolchain/codegen/codegen.h"
@@ -293,6 +293,17 @@ Whether to emit DWARF debug information.
       [&](auto& arg_b) {
         arg_b.Default(true);
         arg_b.Set(&include_debug_info);
+      });
+  b.AddFlag(
+      {
+          .name = "verify-llvm-ir",
+          .help = R"""(
+Whether to run the LLVM verifier on modules.
+)""",
+      },
+      [&](auto& arg_b) {
+        arg_b.Default(true);
+        arg_b.Set(&run_llvm_verifier);
       });
 }
 
@@ -712,8 +723,10 @@ auto CompilationUnit::RunLower() -> void {
     llvm::ArrayRef<Parse::GetTreeAndSubtreesFn> subtrees =
         cache_->tree_and_subtrees_getters();
     module_ = Lower::LowerToLLVM(
-        *llvm_context_, driver_env_->fs, options_->include_debug_info, subtrees,
-        input_filename_, *sem_ir_, &inst_namer, vlog_stream_);
+        *llvm_context_, driver_env_->fs,
+        options_->run_llvm_verifier ? driver_env_->error_stream : nullptr,
+        options_->include_debug_info, subtrees, input_filename_, *sem_ir_,
+        &inst_namer, vlog_stream_);
   });
   if (vlog_stream_) {
     CARBON_VLOG("*** llvm::Module ***\n");

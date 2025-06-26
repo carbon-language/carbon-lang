@@ -9,8 +9,8 @@
 #include <optional>
 
 #include "common/command_line.h"
+#include "common/pretty_stack_trace_function.h"
 #include "common/version.h"
-#include "toolchain/base/pretty_stack_trace_function.h"
 #include "toolchain/driver/clang_subcommand.h"
 #include "toolchain/driver/compile_subcommand.h"
 #include "toolchain/driver/format_subcommand.h"

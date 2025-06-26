@@ -106,7 +106,7 @@ cc_library(
         ":tree",
         "//common:check",
         "//common:ostream",
-        "//toolchain/base:pretty_stack_trace_function",
+        "//common:pretty_stack_trace_function",
         "//toolchain/base:shared_value_stores",
         "//toolchain/diagnostics:diagnostic_emitter",
         "//toolchain/diagnostics:format_providers",

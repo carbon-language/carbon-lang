@@ -209,7 +209,7 @@ fn Test(a: A) -> C {
 // CHECK:STDOUT:   %.loc9_19.2.temp = alloca { i32 }, align 8, !dbg !11
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(i64 4, ptr %.loc9_19.1.temp), !dbg !11
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(i64 4, ptr %.2.temp)
-// CHECK:STDOUT:   call void @"_CConvert.A.Main:ImplicitAs.Core"(ptr %.2.temp, ptr %a)
+// CHECK:STDOUT:   call void @"_CConvert.A.Main:ImplicitAs.Core"(ptr %.2.temp, ptr %a), !dbg !12
 // CHECK:STDOUT:   call void @"_CF.X.Main:I.Main"(ptr %.loc9_19.1.temp, ptr %.2.temp), !dbg !11
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(i64 4, ptr %.loc9_19.2.temp), !dbg !11
 // CHECK:STDOUT:   call void @"_CConvert.B.Main:ImplicitAs.Core"(ptr %.loc9_19.2.temp, ptr %.loc9_19.1.temp), !dbg !11
@@ -243,6 +243,7 @@ fn Test(a: A) -> C {
 // CHECK:STDOUT: !9 = !DILocation(line: 9, column: 21, scope: !4)
 // CHECK:STDOUT: !10 = distinct !DISubprogram(name: "F", linkageName: "_CF:thunk.X.Main:I.Main", scope: null, file: !3, line: 9, type: !5, spFlags: DISPFlagDefinition, unit: !2)
 // CHECK:STDOUT: !11 = !DILocation(line: 9, column: 3, scope: !10)
+// CHECK:STDOUT: !12 = !DILocation(line: 4294967295, scope: !10)
 // CHECK:STDOUT: ; ModuleID = 'call_thunk_for_imported_interface.carbon'
 // CHECK:STDOUT: source_filename = "call_thunk_for_imported_interface.carbon"
 // CHECK:STDOUT:
