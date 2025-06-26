@@ -636,11 +636,11 @@ about it. Thus, forms are a generalization of types: what we conventionally call
 "types" are really the types of objects and values, whereas forms are the types
 of expressions and patterns.
 
-A _primitive form_ currently consists of a type, an expression category, an expression
-phase, and optionally a constant value (which is present if and only if the
-expression phase is not "runtime"). When dealing with primitive forms, which is
-the common case, we can treat each of those properties as independent. For
-convenience, in this section we will use the notation `[T, C, P, V]` to
+A _primitive form_ currently consists of a type, an expression category, an
+expression phase, and optionally a constant value (which is present if and only
+if the expression phase is not "runtime"). When dealing with primitive forms,
+which is the common case, we can treat each of those properties as independent.
+For convenience, in this section we will use the notation `[T, C, P, V]` to
 represent a primitive form with type `T`, category `C`, phase `P` and value `V`,
 but this is not Carbon syntax.
 
