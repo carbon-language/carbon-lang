@@ -32,7 +32,7 @@ fn For() {
 // CHECK:STDOUT: ; ModuleID = 'bindings.carbon'
 // CHECK:STDOUT: source_filename = "bindings.carbon"
 // CHECK:STDOUT:
-// CHECK:STDOUT: @EmptyRange.val.loc25_3 = internal constant {} zeroinitializer
+// CHECK:STDOUT: @EmptyRange.val.loc25_3.1 = internal constant {} zeroinitializer
 // CHECK:STDOUT:
 // CHECK:STDOUT: declare void @_CF.Main(i32, ptr)
 // CHECK:STDOUT:
@@ -44,7 +44,7 @@ fn For() {
 // CHECK:STDOUT:   %n.var = alloca i32, align 4, !dbg !9
 // CHECK:STDOUT:   %.loc27_33.8.temp = alloca { i32, i32 }, align 8, !dbg !8
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(i64 0, ptr %r.var), !dbg !7
-// CHECK:STDOUT:   call void @llvm.memcpy.p0.p0.i64(ptr align 1 %r.var, ptr align 1 @EmptyRange.val.loc25_3, i64 0, i1 false), !dbg !7
+// CHECK:STDOUT:   call void @llvm.memcpy.p0.p0.i64(ptr align 1 %r.var, ptr align 1 @EmptyRange.val.loc25_3.1, i64 0, i1 false), !dbg !7
 // CHECK:STDOUT:   call void @"_CNewCursor.EmptyRange.Main:Iterate.Core.29d34654e802e24e"(ptr %r.var), !dbg !8
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(i64 0, ptr %var), !dbg !8
 // CHECK:STDOUT:   br label %for.next, !dbg !8
@@ -59,15 +59,25 @@ fn For() {
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(i64 4, ptr %n.var), !dbg !9
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(i64 8, ptr %.loc27_33.8.temp), !dbg !8
 // CHECK:STDOUT:   call void @_CGet.Optional.Core.29d34654e802e24e(ptr %.loc27_33.8.temp, ptr %.loc27_33.1.temp), !dbg !8
-// CHECK:STDOUT:   %tuple.elem0.tuple.elem = getelementptr inbounds nuw { i32, i32 }, ptr %.loc27_33.8.temp, i32 0, i32 0, !dbg !8
-// CHECK:STDOUT:   %tuple.elem1.tuple.elem = getelementptr inbounds nuw { i32, i32 }, ptr %.loc27_33.8.temp, i32 0, i32 1, !dbg !8
-// CHECK:STDOUT:   %.loc27_33.11 = load i32, ptr %tuple.elem0.tuple.elem, align 4, !dbg !8
-// CHECK:STDOUT:   %.loc27_33.12 = load i32, ptr %tuple.elem1.tuple.elem, align 4, !dbg !8
+// CHECK:STDOUT:   %tuple.elem0.loc27_33.1.tuple.elem = getelementptr inbounds nuw { i32, i32 }, ptr %.loc27_33.8.temp, i32 0, i32 0, !dbg !8
+// CHECK:STDOUT:   %tuple.elem1.loc27_33.1.tuple.elem = getelementptr inbounds nuw { i32, i32 }, ptr %.loc27_33.8.temp, i32 0, i32 1, !dbg !8
+// CHECK:STDOUT:   %.loc27_33.11 = load i32, ptr %tuple.elem0.loc27_33.1.tuple.elem, align 4, !dbg !8
+// CHECK:STDOUT:   %.loc27_33.12 = load i32, ptr %tuple.elem1.loc27_33.1.tuple.elem, align 4, !dbg !8
 // CHECK:STDOUT:   store i32 %.loc27_33.12, ptr %n.var, align 4, !dbg !9
 // CHECK:STDOUT:   call void @_CF.Main(i32 %.loc27_33.11, ptr %n.var), !dbg !10
 // CHECK:STDOUT:   br label %for.next, !dbg !11
 // CHECK:STDOUT:
 // CHECK:STDOUT: for.done:                                         ; preds = %for.next
+// CHECK:STDOUT:   %tuple.elem0.loc27_33.2.tuple.elem = getelementptr inbounds nuw { i32, i32 }, ptr %.loc27_33.8.temp, i32 0, i32 0, !dbg !8
+// CHECK:STDOUT:   %.loc27_33.13 = load i32, ptr %tuple.elem0.loc27_33.2.tuple.elem, align 4, !dbg !8
+// CHECK:STDOUT:   %tuple.elem1.loc27_33.2.tuple.elem = getelementptr inbounds nuw { i32, i32 }, ptr %.loc27_33.8.temp, i32 0, i32 1, !dbg !8
+// CHECK:STDOUT:   %.loc27_33.14 = load i32, ptr %tuple.elem1.loc27_33.2.tuple.elem, align 4, !dbg !8
+// CHECK:STDOUT:   %tuple = alloca { i32, i32 }, align 8, !dbg !8
+// CHECK:STDOUT:   %tuple1 = getelementptr inbounds nuw { i32, i32 }, ptr %tuple, i32 0, i32 0, !dbg !8
+// CHECK:STDOUT:   store i32 %.loc27_33.13, ptr %tuple1, align 4, !dbg !8
+// CHECK:STDOUT:   %tuple2 = getelementptr inbounds nuw { i32, i32 }, ptr %tuple, i32 0, i32 1, !dbg !8
+// CHECK:STDOUT:   store i32 %.loc27_33.14, ptr %tuple2, align 4, !dbg !8
+// CHECK:STDOUT:   %.loc27_17 = load i32, ptr %n.var, align 4, !dbg !9
 // CHECK:STDOUT:   ret void, !dbg !12
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

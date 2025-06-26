@@ -36,7 +36,7 @@ fn For() {
 // CHECK:STDOUT: ; ModuleID = 'for.carbon'
 // CHECK:STDOUT: source_filename = "for.carbon"
 // CHECK:STDOUT:
-// CHECK:STDOUT: @EmptyRange.val.loc27_3 = internal constant {} zeroinitializer
+// CHECK:STDOUT: @EmptyRange.val.loc27_3.1 = internal constant {} zeroinitializer
 // CHECK:STDOUT:
 // CHECK:STDOUT: declare void @_CF.Main()
 // CHECK:STDOUT:
@@ -50,7 +50,7 @@ fn For() {
 // CHECK:STDOUT:   %var = alloca {}, align 8, !dbg !8
 // CHECK:STDOUT:   %.loc30_19.1.temp = alloca { i1, i32 }, align 8, !dbg !8
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(i64 0, ptr %r.var), !dbg !7
-// CHECK:STDOUT:   call void @llvm.memcpy.p0.p0.i64(ptr align 1 %r.var, ptr align 1 @EmptyRange.val.loc27_3, i64 0, i1 false), !dbg !7
+// CHECK:STDOUT:   call void @llvm.memcpy.p0.p0.i64(ptr align 1 %r.var, ptr align 1 @EmptyRange.val.loc27_3.1, i64 0, i1 false), !dbg !7
 // CHECK:STDOUT:   call void @_CF.Main(), !dbg !9
 // CHECK:STDOUT:   call void @"_CNewCursor.EmptyRange.Main:Iterate.Core.b88d1103f417c6d4"(ptr %r.var), !dbg !8
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(i64 0, ptr %var), !dbg !8
