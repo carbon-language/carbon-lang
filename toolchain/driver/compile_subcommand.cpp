@@ -296,7 +296,7 @@ Whether to emit DWARF debug information.
       });
   b.AddFlag(
       {
-          .name = "llvm-verifier",
+          .name = "verify-llvm-ir",
           .help = R"""(
 Whether to run the LLVM verifier on modules.
 )""",

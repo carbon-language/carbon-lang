@@ -62,7 +62,7 @@ auto Context::Finalize(
     RawStringOstream errs;
     CARBON_CHECK(!llvm::verifyModule(*llvm_module_, &errs),
                  "Verifier errors (to see full IR, use `--dump-llvm-ir "
-                 "--no-llvm-verifier`):\n{0}",
+                 "--no-verify-llvm-ir`):\n{0}",
                  errs.TakeStr());
   }
   return std::move(llvm_module_);
