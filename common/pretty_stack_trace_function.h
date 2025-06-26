@@ -2,8 +2,8 @@
 // Exceptions. See /LICENSE for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
-#ifndef CARBON_TOOLCHAIN_BASE_PRETTY_STACK_TRACE_FUNCTION_H_
-#define CARBON_TOOLCHAIN_BASE_PRETTY_STACK_TRACE_FUNCTION_H_
+#ifndef CARBON_COMMON_PRETTY_STACK_TRACE_FUNCTION_H_
+#define CARBON_COMMON_PRETTY_STACK_TRACE_FUNCTION_H_
 
 #include <functional>
 
@@ -26,4 +26,4 @@ class PrettyStackTraceFunction : public llvm::PrettyStackTraceEntry {
 
 }  // namespace Carbon
 
-#endif  // CARBON_TOOLCHAIN_BASE_PRETTY_STACK_TRACE_FUNCTION_H_
+#endif  // CARBON_COMMON_PRETTY_STACK_TRACE_FUNCTION_H_

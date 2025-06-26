@@ -11,10 +11,10 @@
 #include <system_error>
 #include <utility>
 
+#include "common/pretty_stack_trace_function.h"
 #include "common/vlog.h"
 #include "llvm/ADT/STLExtras.h"
 #include "llvm/ADT/ScopeExit.h"
-#include "toolchain/base/pretty_stack_trace_function.h"
 #include "toolchain/base/timings.h"
 #include "toolchain/check/check.h"
 #include "toolchain/codegen/codegen.h"

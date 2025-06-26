@@ -5,7 +5,7 @@
 #include "toolchain/parse/parse.h"
 
 #include "common/check.h"
-#include "toolchain/base/pretty_stack_trace_function.h"
+#include "common/pretty_stack_trace_function.h"
 #include "toolchain/parse/context.h"
 #include "toolchain/parse/handle.h"
 #include "toolchain/parse/node_kind.h"
