@@ -49,6 +49,7 @@ cc_library(
         "//common:init_llvm",
         "//common:ostream",
         "//common:raw_string_ostream",
+        "//common:set",
         "//testing/base:file_helpers",
         "@abseil-cpp//absl/flags:flag",
         "@abseil-cpp//absl/flags:parse",
