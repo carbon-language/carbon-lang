@@ -7,5 +7,6 @@
 package Core library "prelude";
 
 export import library "prelude/destroy";
+export import library "prelude/iterate";
 export import library "prelude/operators";
 export import library "prelude/types";

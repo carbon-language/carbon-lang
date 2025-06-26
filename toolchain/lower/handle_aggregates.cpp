@@ -41,7 +41,9 @@ static auto GetAggregateElement(FunctionContext& context,
     case SemIR::ExprCategory::NotExpr:
     case SemIR::ExprCategory::Initializing:
     case SemIR::ExprCategory::Mixed:
-      CARBON_FATAL("Unexpected expression category for aggregate access");
+      CARBON_FATAL(
+          "Unexpected expression category for aggregate access into {0}",
+          context.sem_ir().insts().Get(aggr_inst_id));
 
     case SemIR::ExprCategory::Value: {
       auto aggr_type = context.GetTypeIdOfInst(aggr_inst_id);

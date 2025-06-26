@@ -409,6 +409,12 @@ struct BranchNames {
   // Returns names for a branching parse node, or nullopt if not a branch.
   static auto For(Parse::NodeKind node_kind) -> std::optional<BranchNames> {
     switch (node_kind) {
+      case Parse::NodeKind::ForHeaderStart:
+        return {{.prefix = "for", .branch = "next"}};
+
+      case Parse::NodeKind::ForHeader:
+        return {{.prefix = "for", .branch_if = "body", .branch = "done"}};
+
       case Parse::NodeKind::IfExprIf:
         return {{.prefix = "if.expr",
                  .branch_if = "then",

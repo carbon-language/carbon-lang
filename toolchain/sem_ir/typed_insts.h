@@ -1745,7 +1745,8 @@ struct VarStorage {
 
   TypeId type_id;
 
-  // If this storage was created for a `var` pattern, the pattern.
+  // If this storage was created for a `var` pattern, the pattern. Otherwise,
+  // such as the implicit storage in `for`, this is `None`.
   AbsoluteInstId pattern_id;
 };
 
