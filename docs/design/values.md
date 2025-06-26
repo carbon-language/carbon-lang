@@ -636,7 +636,7 @@ about it. Thus, forms are a generalization of types: what we conventionally call
 "types" are really the types of objects and values, whereas forms are the types
 of expressions and patterns.
 
-A _primitive form_ consists of a type, an expression category, an expression
+A _primitive form_ currently consists of a type, an expression category, an expression
 phase, and optionally a constant value (which is present if and only if the
 expression phase is not "runtime"). When dealing with primitive forms, which is
 the common case, we can treat each of those properties as independent. For
@@ -662,8 +662,9 @@ The _type component_ of a form is defined as follows:
 -   The type component of a primitive form `[T, C, P, V]` is `T`.
 -   The type component of a tuple form is a tuple of the type components of its
     elements.
--   The type component of a struct form is a struct of the type components of
-    its elements.
+-   The type component of a struct form is a struct whose field names are the
+    field names of the struct form and whose field types are the type components
+    of the corresponding elements.
 
 The type of an expression is the type component of the expression's form.
 

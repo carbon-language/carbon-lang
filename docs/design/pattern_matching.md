@@ -322,7 +322,7 @@ contained _proper-pattern_ is matched directly against the scrutinee. Otherwise,
 the behavior is as follows.
 
 The scrutinee is expected to have a [tuple form](values.md#expression-forms)
-with the same arity as the number of nested _proper_patterns_, and
+with the same arity as the number of nested _proper-patterns_, and
 [form decomposition](values.md#form-conversions) (but no other conversion) is
 applied if necessary to satisfy that. Then, each nested _proper-pattern_ is
 matched against `s.i`, where `s` is the converted scrutinee expression and `i`
