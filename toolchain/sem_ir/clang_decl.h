@@ -20,17 +20,22 @@ class Decl;
 namespace Carbon::SemIR {
 
 // A Clang declaration mapped to a Carbon instruction.
-// Using custom hashing since the declaration is keyed by the `decl` member for
-// lookup.
-// TODO: Avoid custom hashing by either having the data structure support keying
-// or create a dedicated mapping. See
-// https://discord.com/channels/655572317891461132/768530752592805919/1384999468293947537
+//
+// Note that Clang's AST uses address-identity for nodes, which means the
+// pointer is the canonical way to represent a specific AST node and is expected
+// to be sufficient for comparison, hashing, etc.
 struct ClangDecl : public Printable<ClangDecl> {
   auto Print(llvm::raw_ostream& out) const -> void;
 
-  friend auto CarbonHashtableEq(const ClangDecl& lhs, const ClangDecl& rhs)
-      -> bool {
-    return HashtableEq(lhs.decl, rhs.decl);
+  // Equality comparison uses the address-identity property of the Clang AST and
+  // just compares the `decl` pointers. We canonicalize on these to avoid ever
+  // having different instructions for the same declaration.
+  auto operator==(const ClangDecl& rhs) const -> bool {
+    return decl == rhs.decl;
+  }
+  // Support direct comparison with the Clang AST node pointer.
+  auto operator==(const clang::Decl* rhs_decl) const -> bool {
+    return decl == rhs_decl;
   }
 
   // Hashing for ClangDecl. See common/hashing.h.
@@ -45,14 +50,27 @@ struct ClangDecl : public Printable<ClangDecl> {
   clang::Decl* decl = nullptr;
 
   // The instruction the Clang declaration is mapped to.
+  //
+  // This is stored along side the `decl` pointer to avoid having to lookup both
+  // the pointer and the instruction ID in two separate areas of storage.
   InstId inst_id;
 };
 
 // The ID of a `ClangDecl`.
+//
+// These IDs are importantly distinct from the `inst_id` associated with each
+// declaration. These form a dense range of IDs that is used to reference the
+// AST node pointers without storing those pointers directly into SemIR and
+// needing space to hold a full pointer. We can't avoid having these IDs without
+// embedding pointers directly into the storage of SemIR as part of an
+// instruction.
 struct ClangDeclId : public IdBase<ClangDeclId> {
   static constexpr llvm::StringLiteral Label = "clang_decl_id";
 
   using ValueType = ClangDecl;
+
+  // Use the AST node pointer directly when doing `Lookup` to find an ID.
+  using KeyType = clang::Decl*;
 
   using IdBase::IdBase;
 };

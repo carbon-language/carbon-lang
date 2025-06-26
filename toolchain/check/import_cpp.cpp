@@ -350,9 +350,8 @@ static auto AsCarbonNamespace(Context& context,
   auto& clang_decls = context.sem_ir().clang_decls();
 
   // Check if the decl context is already mapped to a Carbon namespace.
-  if (auto context_clang_decl_id = clang_decls.Lookup(
-          {.decl = clang::dyn_cast<clang::Decl>(decl_context),
-           .inst_id = SemIR::InstId::None});
+  if (auto context_clang_decl_id =
+          clang_decls.Lookup(clang::dyn_cast<clang::Decl>(decl_context));
       context_clang_decl_id.has_value()) {
     return clang_decls.Get(context_clang_decl_id).inst_id;
   }
@@ -365,8 +364,7 @@ static auto AsCarbonNamespace(Context& context,
     decl_contexts.push_back(decl_context);
     decl_context = decl_context->getParent();
     parent_decl_id =
-        clang_decls.Lookup({.decl = clang::dyn_cast<clang::Decl>(decl_context),
-                            .inst_id = SemIR::InstId::None});
+        clang_decls.Lookup(clang::dyn_cast<clang::Decl>(decl_context));
   } while (!parent_decl_id.has_value());
 
   // We know the parent of the last decl context is mapped, map the rest.
@@ -532,8 +530,7 @@ static auto MapRecordType(Context& context, SemIR::LocId loc_id,
   if (record_decl && !record_decl->isUnion()) {
     auto& clang_decls = context.sem_ir().clang_decls();
     SemIR::InstId record_inst_id = SemIR::InstId::None;
-    if (auto record_clang_decl_id = clang_decls.Lookup(
-            {.decl = record_decl, .inst_id = SemIR::InstId::None});
+    if (auto record_clang_decl_id = clang_decls.Lookup(record_decl);
         record_clang_decl_id.has_value()) {
       record_inst_id = clang_decls.Get(record_clang_decl_id).inst_id;
     } else {
