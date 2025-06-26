@@ -68,8 +68,8 @@ struct LowZeroBitInt {
   explicit constexpr LowZeroBitInt(int64_t value)
       : shifted_value(value << LowZeroBits) {}
 
-  friend auto operator<<(llvm::raw_ostream& out,
-                         const LowZeroBitInt& value) -> llvm::raw_ostream& {
+  friend auto operator<<(llvm::raw_ostream& out, const LowZeroBitInt& value)
+      -> llvm::raw_ostream& {
     return out << value.shifted_value;
   }
 
