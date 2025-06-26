@@ -288,6 +288,12 @@ resolving the two rewrites of `.X`, so the rewrites are invalid:
 fn NotIdentical(T:! (I where .X = () and .X = .Y) where .Y = ()) {}
 ```
 
+When combining two facet types together with `&`, the rewrite constraints are
+concatenated together for resolution, with the rewrites from the LHS of the `&`
+operator coming first and the rewrite from the RHS coming second:
+`(I where .X = ()) & (I where .Y = ())` is resolved as
+`(I where .X = () and .Y = ())`.
+
 If a facet type is never used to constrain a type, it is never subject to
 constraint resolution, and it is possible for a facet type to be formed for
 which constraint resolution would always fail. For example:
