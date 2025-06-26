@@ -783,8 +783,7 @@ static auto ImportFunctionDecl(Context& context, SemIR::LocId loc_id,
 static auto ImportNameDecl(Context& context, SemIR::LocId loc_id,
                            SemIR::NameScopeId scope_id, SemIR::NameId name_id,
                            clang::NamedDecl* clang_decl) -> SemIR::InstId {
-  if (auto* clang_function_decl =
-          clang::dyn_cast<clang::FunctionDecl>(clang_decl)) {
+  if (auto* clang_function_decl = clang_decl->getAsFunction()) {
     return ImportFunctionDecl(context, loc_id, scope_id, name_id,
                               clang_function_decl);
   }
