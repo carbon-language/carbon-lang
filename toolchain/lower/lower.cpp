@@ -13,10 +13,10 @@
 namespace Carbon::Lower {
 
 auto LowerToLLVM(LowerToLLVMParams params) -> std::unique_ptr<llvm::Module> {
-  Context context(params.llvm_context, std::move(params.fs),
+  Context context(*params.llvm_context, std::move(params.fs),
                   params.want_debug_info, params.tree_and_subtrees_getters,
                   params.module_name, params.vlog_stream);
-  context.GetFileContext(&params.sem_ir, params.inst_namer).LowerDefinitions();
+  context.GetFileContext(params.sem_ir, params.inst_namer).LowerDefinitions();
   return std::move(context).Finalize(params.llvm_verifier_stream);
 }
 

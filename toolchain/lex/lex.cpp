@@ -1694,7 +1694,7 @@ auto Lexer::DiagnoseAndFixMismatchedBrackets() -> void {
 }
 
 auto Lex(LexParams params) -> TokenizedBuffer {
-  return Lexer(params.value_stores, params.source, params.consumer).Lex();
+  return Lexer(*params.value_stores, *params.source, *params.consumer).Lex();
 }
 
 }  // namespace Carbon::Lex

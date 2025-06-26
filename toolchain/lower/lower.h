@@ -15,17 +15,25 @@
 namespace Carbon::Lower {
 
 struct LowerToLLVMParams {
-  llvm::LLVMContext& llvm_context;
+  // Must be non-null.
+  llvm::LLVMContext* llvm_context;
+
   llvm::IntrusiveRefCntPtr<llvm::vfs::FileSystem> fs;
 
-  // Should be non-null when verification is desired.
+  // Optionally provided to enable verification.
   llvm::raw_ostream* llvm_verifier_stream;
 
   bool want_debug_info;
   llvm::ArrayRef<Parse::GetTreeAndSubtreesFn> tree_and_subtrees_getters;
   llvm::StringRef module_name;
-  const SemIR::File& sem_ir;
+
+  // Must be non-null.
+  const SemIR::File* sem_ir;
+
+  // Must be non-null.
   const SemIR::InstNamer* inst_namer;
+
+  // Optionally provided to enable VLOG output.
   llvm::raw_ostream* vlog_stream = nullptr;
 };
 

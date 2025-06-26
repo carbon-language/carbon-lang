@@ -13,9 +13,14 @@
 namespace Carbon::Lex {
 
 struct LexParams {
-  SharedValueStores& value_stores;
-  SourceBuffer& source;
-  Diagnostics::Consumer& consumer;
+  // Must be non-null.
+  SharedValueStores* value_stores;
+
+  // Must be non-null.
+  SourceBuffer* source;
+
+  // Must be non-null.
+  Diagnostics::Consumer* consumer;
 };
 
 // Lexes a buffer of source code into a tokenized buffer.

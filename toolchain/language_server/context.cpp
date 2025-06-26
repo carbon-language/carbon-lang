@@ -132,13 +132,13 @@ auto Context::File::SetText(Context& context, std::optional<int64_t> version,
   source_ = std::make_unique<SourceBuffer>(std::move(*source));
   value_stores_ = std::make_unique<SharedValueStores>();
   tokens_ = std::make_unique<Lex::TokenizedBuffer>(Lex::Lex({
-      .value_stores = *value_stores_,
-      .source = *source_,
-      .consumer = consumer,
+      .value_stores = value_stores_.get(),
+      .source = source_.get(),
+      .consumer = &consumer,
   }));
   tree_ = std::make_unique<Parse::Tree>(Parse::Parse({
-      .tokens = *tokens_,
-      .consumer = consumer,
+      .tokens = tokens_.get(),
+      .consumer = &consumer,
       .vlog_stream = context.vlog_stream(),
   }));
   tree_and_subtrees_ =

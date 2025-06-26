@@ -13,8 +13,13 @@
 namespace Carbon::Parse {
 
 struct ParseParams {
-  Lex::TokenizedBuffer& tokens;
-  Diagnostics::Consumer& consumer;
+  // Must be non-null.
+  Lex::TokenizedBuffer* tokens;
+
+  // Must be non-null.
+  Diagnostics::Consumer* consumer;
+
+  // Optionally provided to enable VLOG output.
   llvm::raw_ostream* vlog_stream = nullptr;
 };
 

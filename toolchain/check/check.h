@@ -34,10 +34,20 @@ struct Unit {
 struct CheckParseTreesParams {
   llvm::MutableArrayRef<Unit> units;
   llvm::ArrayRef<Parse::GetTreeAndSubtreesFn> tree_and_subtrees_getters;
+
+  // Whether to import the prelude.
   bool prelude_import = false;
+
   llvm::IntrusiveRefCntPtr<llvm::vfs::FileSystem> fs;
+
+  // The LLVM target information.
   llvm::StringRef target;
+
+  // Optionally provided to enable VLOG output.
   llvm::raw_ostream* vlog_stream = nullptr;
+
+  // Whether fuzzing is being run. Used to disable features we don't want to
+  // fuzz.
   bool fuzzing = false;
 };
 
