@@ -61,7 +61,7 @@ package Core;
 
 interface IndexWithPrimitive
     [anchor Self:! Form]
-    (in Subscript:! Form) {
+    (implicit_into Subscript:! Form) {
   let out ResultForm:! Form;
   fn Op[bound self:? Self](subscript:? Subscript)
       ->? ResultForm;

@@ -211,7 +211,7 @@ or the `ImplicitAs` named constraint:
 package Core;
 
 interface ImplicitAsPrimitive
-    [in Self:! Form](Dest:! type) {
+    [implicit_into Self:! Form](Dest:! type) {
   final extend impl as AsPrimitive(Dest);
   // Inherited from AsPrimitive(Dest):
   // let out ResultForm:! Form where .type = Dest;

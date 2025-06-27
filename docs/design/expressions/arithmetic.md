@@ -195,7 +195,7 @@ package Core;
 
 // Unary `-`.
 interface NegatePrimitive[anchor Self:! NoRefForm] {
-  default let out ResultForm:! NoRefForm
+  default let implicit_from ResultForm:! NoRefForm
       = form(var Self.type);
   fn Op[bound self:? Self]()
       ->? ResultForm;
@@ -212,8 +212,9 @@ constraint Negate {
 ```
 // Binary `+`.
 interface AddWithPrimitive
-    [in Self:! NoRefForm](in U:! NoRefForm) {
-  default let out ResultForm:! NoRefForm
+    [implicit_into Self:! NoRefForm]
+    (implicit_into U:! NoRefForm) {
+  default let implicit_from ResultForm:! NoRefForm
       = form(var Self.type);
   fn Op[self:? Self](other:? U)
       ->? ResultForm;
@@ -232,8 +233,9 @@ constraint Add {
 ```
 // Binary `-`.
 interface SubWithPrimitive
-    [in Self:! NoRefForm](in U:! NoRefForm) {
-  default let out ResultForm:! NoRefForm
+    [implicit_into Self:! NoRefForm]
+    (implicit_into U:! NoRefForm) {
+  default let implicit_from ResultForm:! NoRefForm
       = form(var Self.type);
   fn Op[self:? Self](other:? U)
       ->? ResultForm;
@@ -252,8 +254,9 @@ constraint Sub {
 ```
 // Binary `*`.
 interface MulWithPrimitive
-    [in Self:! NoRefForm](in U:! NoRefForm) {
-  default let out ResultForm:! NoRefForm
+    [implicit_into Self:! NoRefForm]
+    (implicit_into U:! NoRefForm) {
+  default let implicit_from ResultForm:! NoRefForm
       = form(var Self.type);
   fn Op[self:? Self](other:? U)
       ->? ResultForm;
@@ -272,8 +275,9 @@ constraint Mul {
 ```
 // Binary `/`.
 interface DivWithPrimitive
-    [in Self:! NoRefForm](in U:! NoRefForm) {
-  default let out ResultForm:! NoRefForm
+    [implicit_into Self:! NoRefForm]
+    (implicit_into U:! NoRefForm) {
+  default let implicit_from ResultForm:! NoRefForm
       = form(var Self.type);
   fn Op[self:? Self](other:? U)
       ->? ResultForm;
@@ -292,8 +296,9 @@ constraint Div {
 ```
 // Binary `%`.
 interface ModWithPrimitive
-    [in Self:! NoRefForm](in U:! NoRefForm) {
-  default let out ResultForm:! NoRefForm
+    [implicit_into Self:! NoRefForm]
+    (implicit_into U:! NoRefForm) {
+  default let implicit_from ResultForm:! NoRefForm
       = form(var Self.type);
   fn Op[self:? Self](other:? U)
       ->? ResultForm;

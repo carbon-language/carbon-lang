@@ -200,7 +200,7 @@ package Core;
 // Unary `^`.
 interface BitComplementPrimitive
     [anchor Self:! NoRefForm] {
-  default let out ResultForm:! NoRefForm
+  default let implicit_from ResultForm:! NoRefForm
       = form(var Self.type);
   fn Op[self: Self]() -> Result;
 }
@@ -215,8 +215,9 @@ constraint BitComplement {
 ```
 // Binary `&`.
 interface BitAndWithPrimitive
-    [in Self:! NoRefForm](in U:! NoRefForm) {
-  default let out ResultForm:! NoRefForm
+    [implicit_into Self:! NoRefForm]
+    (implicit_into U:! NoRefForm) {
+  default let implicit_from ResultForm:! NoRefForm
       = form(var Self.type);
   fn Op[self:? Self](other:? U)
       ->? ResultForm;
@@ -235,8 +236,9 @@ constraint BitAnd {
 ```
 // Binary `|`.
 interface BitOrWithPrimitive
-    [in Self:! NoRefForm](in U:! NoRefForm) {
-  default let out ResultForm:! NoRefForm
+    [implicit_into Self:! NoRefForm]
+    (implicit_into U:! NoRefForm) {
+  default let implicit_from ResultForm:! NoRefForm
       = form(var Self.type);
   fn Op[self:? Self](other:? U)
       ->? ResultForm;
@@ -255,8 +257,9 @@ constraint BitOr {
 ```
 // Binary `^`.
 interface BitXorWithPrimitive
-    [in Self:! NoRefForm](in U:! NoRefForm) {
-  default let out ResultForm:! NoRefForm
+    [implicit_into Self:! NoRefForm]
+    (implicit_into U:! NoRefForm) {
+  default let implicit_from ResultForm:! NoRefForm
       = form(var Self.type);
   fn Op[self:? Self](other:? U)
       ->? ResultForm;
@@ -277,8 +280,9 @@ Note that the shift operators anchor on the type of the left argument.
 ```
 // Binary `<<`.
 interface LeftShiftWithPrimitive
-    [anchor Self:! NoRefForm](in U:! NoRefForm) {
-  default let out ResultForm:! NoRefForm
+    [anchor Self:! NoRefForm]
+    (implicit_into U:! NoRefForm) {
+  default let implicit_from ResultForm:! NoRefForm
       = form(var Self.type);
   fn Op[self:? Self](other:? U)
       ->? ResultForm;
@@ -297,8 +301,9 @@ constraint LeftShift {
 ```
 // Binary `>>`.
 interface RightShiftWithPrimitive
-    [anchor Self:! NoRefForm](in U:! NoRefForm) {
-  default let out ResultForm:! NoRefForm
+    [anchor Self:! NoRefForm]
+    (implicit_into U:! NoRefForm) {
+  default let implicit_from ResultForm:! NoRefForm
       = form(var Self.type);
   fn Op[self:? Self](other:? U)
       ->? ResultForm;

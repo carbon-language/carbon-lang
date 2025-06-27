@@ -177,7 +177,7 @@ package Core;
 
 // Simple `=`.
 interface AssignWithPrimitive
-    (in U:! NoRefForm) {
+    (implicit_into U:! NoRefForm) {
   fn Op[ref self: Self](other:? U);
 }
 constraint AssignWith(U:! type) {
@@ -197,7 +197,7 @@ The statement `x = y;` is rewritten to
 ```
 // Compound `+=`.
 interface AddAssignWithPrimitive
-    (in U:! NoRefForm) {
+    (implicit_into U:! NoRefForm) {
   fn Op[ref self: Self](other:? U);
 }
 constraint AddAssignWith(U:! type) {
@@ -212,7 +212,7 @@ constraint AddAssign {
 ```
 // Compound `-=`.
 interface SubAssignWithPrimitive
-    (in U:! NoRefForm) {
+    (implicit_into U:! NoRefForm) {
   fn Op[ref self: Self](other:? U);
 }
 constraint SubAssignWith(U:! type) {
@@ -227,7 +227,7 @@ constraint SubAssign {
 ```
 // Compound `*=`.
 interface MulAssignWithPrimitive
-    (in U:! NoRefForm) {
+    (implicit_into U:! NoRefForm) {
   fn Op[ref self: Self](other:? U);
 }
 constraint MulAssignWith(U:! type) {
@@ -242,7 +242,7 @@ constraint MulAssign {
 ```
 // Compound `/=`.
 interface DivAssignWithPrimitive
-    (in U:! NoRefForm) {
+    (implicit_into U:! NoRefForm) {
   fn Op[ref self: Self](other:? U);
 }
 constraint DivAssignWith(U:! type) {
@@ -257,7 +257,7 @@ constraint DivAssign {
 ```
 // Compound `%=`.
 interface ModAssignWithPrimitive
-    (in U:! NoRefForm) {
+    (implicit_into U:! NoRefForm) {
   fn Op[ref self: Self](other:? U);
 }
 constraint ModAssignWith(U:! type) {
@@ -296,7 +296,7 @@ These assignment statements are rewritten as follows:
 ```
 // Compound `&=`.
 interface BitAndAssignWithPrimitive
-    (in U:! NoRefForm) {
+    (implicit_into U:! NoRefForm) {
   fn Op[ref self: Self](other:? U);
 }
 constraint BitAndAssignWith(U:! type) {
@@ -311,7 +311,7 @@ constraint BitAndAssign {
 ```
 // Compound `|=`.
 interface BitOrAssignWithPrimitive
-    (in U:! NoRefForm) {
+    (implicit_into U:! NoRefForm) {
   fn Op[ref self: Self](other:? U);
 }
 constraint BitOrAssignWith(U:! type) {
@@ -326,7 +326,7 @@ constraint BitOrAssign {
 ```
 // Compound `^=`.
 interface BitXorAssignWithPrimitive
-    (in U:! NoRefForm) {
+    (implicit_into U:! NoRefForm) {
   fn Op[ref self: Self](other:? U);
 }
 constraint BitXorAssignWith(U:! type) {
@@ -341,7 +341,7 @@ constraint BitXorAssign {
 ```
 // Compound `<<=`.
 interface LeftShiftAssignWithPrimitive
-    (in U:! NoRefForm) {
+    (implicit_into U:! NoRefForm) {
   fn Op[ref self: Self](other:? U);
 }
 constraint LeftShiftAssignWith(U:! type) {
@@ -356,7 +356,7 @@ constraint LeftShiftAssign {
 ```
 // Compound `>>=`.
 interface RightShiftAssignWithPrimitive
-    (in U:! NoRefForm) {
+    (implicit_into U:! NoRefForm) {
   fn Op[ref self: Self](other:? U);
 }
 constraint RightShiftAssignWith(U:! type) {

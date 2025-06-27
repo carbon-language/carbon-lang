@@ -181,7 +181,7 @@ Explicit casts can be defined for user-defined types such as
 ```carbon
 package Core;
 
-interface AsPrimitive[in Self:! Form]
+interface AsPrimitive[implicit_into Self:! Form]
     (Dest:! type) {
   let out ResultForm:! Form where .type = Dest;
   fn Convert[bound self:? Self]()
