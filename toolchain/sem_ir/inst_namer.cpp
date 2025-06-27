@@ -723,8 +723,12 @@ auto InstNamer::NamingContext::NameInst() -> void {
     }
     case CARBON_KIND(VtablePtr inst): {
       const auto& vtable = sem_ir().vtables().Get(inst.vtable_id);
-      const auto& class_info = sem_ir().classes().Get(vtable.class_id);
-      AddInstNameId(class_info.name_id, ".vtable_ptr");
+      if (inst_namer_->GetScopeFor(vtable.class_id) == scope_id_) {
+        AddInstName("vtable_ptr");
+      } else {
+        const auto& class_info = sem_ir().classes().Get(vtable.class_id);
+        AddInstNameId(class_info.name_id, ".vtable_ptr");
+      }
       return;
     }
     case ConstType::Kind: {

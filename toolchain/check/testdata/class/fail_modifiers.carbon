@@ -376,11 +376,11 @@ fn AbstractWithDefinition.G[self: Self]() {
 // CHECK:STDOUT:     %Self.ref.loc94: type = name_ref Self, constants.%AbstractWithDefinition [concrete = constants.%AbstractWithDefinition]
 // CHECK:STDOUT:     %self.loc94: %AbstractWithDefinition = bind_name self, %self.param.loc94
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %AbstractWithDefinition.vtable_ptr: ref %ptr.454 = vtable_ptr @AbstractWithDefinition.vtable [concrete = constants.%AbstractWithDefinition.vtable_ptr]
+// CHECK:STDOUT:   %vtable_ptr: ref %ptr.454 = vtable_ptr @AbstractWithDefinition.vtable [concrete = constants.%AbstractWithDefinition.vtable_ptr]
 // CHECK:STDOUT:   %struct_type.vptr: type = struct_type {.<vptr>: %ptr.454} [concrete = constants.%struct_type.vptr]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %struct_type.vptr [concrete = constants.%complete_type.513]
 // CHECK:STDOUT:   complete_type_witness = %complete_type
-// CHECK:STDOUT:   vtable_ptr = %AbstractWithDefinition.vtable_ptr
+// CHECK:STDOUT:   vtable_ptr = %vtable_ptr
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%AbstractWithDefinition
