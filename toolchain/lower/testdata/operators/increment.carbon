@@ -28,6 +28,7 @@ fn IncrSigned() {
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(i64 4, ptr %from.var), !dbg !7
 // CHECK:STDOUT:   store i32 0, ptr %from.var, align 4, !dbg !7
 // CHECK:STDOUT:   call void @"_COp.Int.Core:Inc.Core.be1e879c1ad406d8"(ptr %from.var), !dbg !8
+// CHECK:STDOUT:   %.loc5_3.2 = load i32, ptr %from.var, align 4, !dbg !7
 // CHECK:STDOUT:   ret void, !dbg !9
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -35,11 +36,11 @@ fn IncrSigned() {
 // CHECK:STDOUT: declare void @llvm.lifetime.start.p0(i64 immarg, ptr captures(none)) #0
 // CHECK:STDOUT:
 // CHECK:STDOUT: define linkonce_odr void @"_COp.Int.Core:Inc.Core.be1e879c1ad406d8"(ptr %self) !dbg !10 {
-// CHECK:STDOUT:   call void @"_COp:thunk.Int.Core:AddAssignWith.Core.25a9a5e901f5b032"(ptr %self, i32 1), !dbg !12
+// CHECK:STDOUT:   call void @"_COp:thunk.Int.Core:AddAssignWith.Core.abc639a111145970"(ptr %self, i32 1), !dbg !12
 // CHECK:STDOUT:   ret void, !dbg !13
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: define linkonce_odr void @"_COp:thunk.Int.Core:AddAssignWith.Core.25a9a5e901f5b032"(ptr %self, i32 %other) !dbg !14 {
+// CHECK:STDOUT: define linkonce_odr void @"_COp:thunk.Int.Core:AddAssignWith.Core.abc639a111145970"(ptr %self, i32 %other) !dbg !14 {
 // CHECK:STDOUT:   %1 = call i32 @"_CConvert.8b3d5d6a6c17be04:ImplicitAs.Core.b88d1103f417c6d4"(i32 %other), !dbg !15
 // CHECK:STDOUT:   %2 = load i32, ptr %self, align 4, !dbg !16
 // CHECK:STDOUT:   %3 = add i32 %2, %1, !dbg !16
@@ -70,7 +71,7 @@ fn IncrSigned() {
 // CHECK:STDOUT: !11 = !DIFile(filename: "{{.*}}/prelude/types/int.carbon", directory: "")
 // CHECK:STDOUT: !12 = !DILocation(line: 333, column: 5, scope: !10)
 // CHECK:STDOUT: !13 = !DILocation(line: 331, column: 3, scope: !10)
-// CHECK:STDOUT: !14 = distinct !DISubprogram(name: "Op", linkageName: "_COp:thunk.Int.Core:AddAssignWith.Core.25a9a5e901f5b032", scope: null, file: !11, line: 267, type: !5, spFlags: DISPFlagDefinition, unit: !2)
+// CHECK:STDOUT: !14 = distinct !DISubprogram(name: "Op", linkageName: "_COp:thunk.Int.Core:AddAssignWith.Core.abc639a111145970", scope: null, file: !11, line: 267, type: !5, spFlags: DISPFlagDefinition, unit: !2)
 // CHECK:STDOUT: !15 = !DILocation(line: 4294967295, scope: !14)
 // CHECK:STDOUT: !16 = !DILocation(line: 267, column: 3, scope: !14)
 // CHECK:STDOUT: !17 = distinct !DISubprogram(name: "Convert", linkageName: "_CConvert.8b3d5d6a6c17be04:ImplicitAs.Core.b88d1103f417c6d4", scope: null, file: !18, line: 18, type: !5, spFlags: DISPFlagDefinition, unit: !2)
