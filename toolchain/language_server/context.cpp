@@ -163,9 +163,9 @@ auto Context::File::SetText(Context& context, std::optional<int64_t> version,
   // TODO: Include the prelude.
   Check::CheckParseTreesOptions check_options;
   check_options.vlog_stream = context.vlog_stream();
-  Check::CheckParseTrees(units,
-                         llvm::ArrayRef<Parse::GetTreeAndSubtreesFn>(getter),
-                         fs, check_options);
+  Check::CheckParseTrees(
+      units, llvm::ArrayRef<Parse::GetTreeAndSubtreesFn>(getter), fs,
+      llvm::sys::getDefaultTargetTriple(), check_options);
 
   // Note we need to publish diagnostics even when empty.
   // TODO: Consider caching previously published diagnostics and only publishing

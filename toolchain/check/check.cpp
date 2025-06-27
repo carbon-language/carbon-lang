@@ -9,7 +9,6 @@
 
 #include "common/check.h"
 #include "common/map.h"
-#include "llvm/TargetParser/Host.h"
 #include "toolchain/check/check_unit.h"
 #include "toolchain/check/context.h"
 #include "toolchain/check/diagnostic_emitter.h"
@@ -326,7 +325,7 @@ static auto BuildApiMapAndDiagnosePackaging(
 auto CheckParseTrees(
     llvm::MutableArrayRef<Unit> units,
     llvm::ArrayRef<Parse::GetTreeAndSubtreesFn> tree_and_subtrees_getters,
-    llvm::IntrusiveRefCntPtr<llvm::vfs::FileSystem> fs,
+    llvm::IntrusiveRefCntPtr<llvm::vfs::FileSystem> fs, llvm::StringRef target,
     const CheckParseTreesOptions& options) -> void {
   // UnitAndImports is big due to its SmallVectors, so we default to 0 on the
   // stack.
@@ -376,10 +375,6 @@ auto CheckParseTrees(
       ready_to_check.push_back(&unit_info);
     }
   }
-
-  std::string target = !options.target.empty()
-                           ? options.target.str()
-                           : llvm::sys::getDefaultTargetTriple();
 
   // Check everything with no dependencies. Earlier entries with dependencies
   // will be checked as soon as all their dependencies have been checked.

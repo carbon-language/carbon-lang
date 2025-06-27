@@ -38,9 +38,6 @@ struct CheckParseTreesOptions {
   // Whether to import the prelude.
   bool prelude_import = false;
 
-  // The LLVM target information. Uses LLVM's default if unset.
-  llvm::StringRef target = "";
-
   // If set, enables verbose output.
   llvm::raw_ostream* vlog_stream = nullptr;
 
@@ -54,7 +51,7 @@ struct CheckParseTreesOptions {
 auto CheckParseTrees(
     llvm::MutableArrayRef<Unit> units,
     llvm::ArrayRef<Parse::GetTreeAndSubtreesFn> tree_and_subtrees_getters,
-    llvm::IntrusiveRefCntPtr<llvm::vfs::FileSystem> fs,
+    llvm::IntrusiveRefCntPtr<llvm::vfs::FileSystem> fs, llvm::StringRef target,
     const CheckParseTreesOptions& options) -> void;
 
 }  // namespace Carbon::Check

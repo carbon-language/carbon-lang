@@ -12,7 +12,6 @@
 
 namespace Carbon::Lower {
 
-// TODO: Remove module_name argument.
 auto LowerToLLVM(
     llvm::LLVMContext& llvm_context,
     llvm::IntrusiveRefCntPtr<llvm::vfs::FileSystem> fs,
