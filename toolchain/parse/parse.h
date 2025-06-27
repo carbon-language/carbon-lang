@@ -12,21 +12,21 @@
 
 namespace Carbon::Parse {
 
-struct ParseParams {
-  // Must be non-null.
-  Lex::TokenizedBuffer* tokens;
+struct ParseOptions {
+  // Options must be set individually, not through initialization.
+  explicit ParseOptions() = default;
 
-  // Must be non-null.
-  Diagnostics::Consumer* consumer;
+  // If set, a consumer for diagnostics. Otherwise, diagnostics go to stderr.
+  Diagnostics::Consumer* consumer = nullptr;
 
-  // Optionally provided to enable VLOG output.
+  // If set, enables verbose output.
   llvm::raw_ostream* vlog_stream = nullptr;
 };
 
 // Parses the token buffer into a `Tree`.
 //
 // This is the factory function which is used to build parse trees.
-auto Parse(ParseParams params) -> Tree;
+auto Parse(Lex::TokenizedBuffer& tokens, ParseOptions options) -> Tree;
 
 }  // namespace Carbon::Parse
 

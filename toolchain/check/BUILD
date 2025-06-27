@@ -204,6 +204,7 @@ cc_library(
         "//toolchain/sem_ir:file",
         "//toolchain/sem_ir:typed_insts",
         "@llvm-project//llvm:Support",
+        "@llvm-project//llvm:TargetParser",
     ],
 )
 

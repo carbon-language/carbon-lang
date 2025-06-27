@@ -12,12 +12,23 @@
 
 namespace Carbon::Lower {
 
-auto LowerToLLVM(LowerToLLVMParams params) -> std::unique_ptr<llvm::Module> {
-  Context context(*params.llvm_context, std::move(params.fs),
-                  params.want_debug_info, params.tree_and_subtrees_getters,
-                  params.module_name, params.vlog_stream);
-  context.GetFileContext(params.sem_ir, params.inst_namer).LowerDefinitions();
-  return std::move(context).Finalize(params.llvm_verifier_stream);
+// TODO: Remove module_name argument.
+auto LowerToLLVM(
+    llvm::LLVMContext& llvm_context,
+    llvm::IntrusiveRefCntPtr<llvm::vfs::FileSystem> fs,
+    llvm::ArrayRef<Parse::GetTreeAndSubtreesFn> tree_and_subtrees_getters,
+    const SemIR::File& sem_ir, const LowerToLLVMOptions& options)
+    -> std::unique_ptr<llvm::Module> {
+  Context context(llvm_context, std::move(fs), options.want_debug_info,
+                  tree_and_subtrees_getters, sem_ir.filename(),
+                  options.vlog_stream);
+
+  // TODO: Consider disabling instruction naming by default if we're not
+  // producing textual LLVM IR.
+  SemIR::InstNamer inst_namer(&sem_ir);
+  context.GetFileContext(&sem_ir, &inst_namer).LowerDefinitions();
+
+  return std::move(context).Finalize(options.llvm_verifier_stream);
 }
 
 }  // namespace Carbon::Lower

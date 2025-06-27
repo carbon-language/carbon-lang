@@ -1693,8 +1693,11 @@ auto Lexer::DiagnoseAndFixMismatchedBrackets() -> void {
   fixes.FixTokenCrossReferences();
 }
 
-auto Lex(LexParams params) -> TokenizedBuffer {
-  return Lexer(*params.value_stores, *params.source, *params.consumer).Lex();
+auto Lex(SharedValueStores& value_stores, SourceBuffer& source,
+         LexOptions options) -> TokenizedBuffer {
+  auto* consumer =
+      options.consumer ? options.consumer : &Diagnostics::ConsoleConsumer();
+  return Lexer(value_stores, source, *consumer).Lex();
 }
 
 }  // namespace Carbon::Lex

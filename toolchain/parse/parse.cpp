@@ -17,10 +17,13 @@ auto HandleInvalid(Context& context) -> void {
                context.PopState());
 }
 
-auto Parse(ParseParams params) -> Tree {
+auto Parse(Lex::TokenizedBuffer& tokens, ParseOptions options) -> Tree {
+  auto* consumer =
+      options.consumer ? options.consumer : &Diagnostics::ConsoleConsumer();
+
   // Delegate to the parser.
-  Tree tree(*params.tokens);
-  Context context(&tree, params.tokens, params.consumer, params.vlog_stream);
+  Tree tree(tokens);
+  Context context(&tree, &tokens, consumer, options.vlog_stream);
   PrettyStackTraceFunction context_dumper(
       [&](llvm::raw_ostream& output) { context.PrintForStackDump(output); });
 
@@ -43,7 +46,7 @@ auto Parse(ParseParams params) -> Tree {
 
   // Mark the tree as potentially having errors if there were errors coming in
   // from the tokenized buffer or we diagnosed new errors.
-  tree.set_has_errors(params.tokens->has_errors() || context.has_errors());
+  tree.set_has_errors(tokens.has_errors() || context.has_errors());
 
   if (auto verify = tree.Verify(); !verify.ok()) {
     // TODO: This is temporarily printing to stderr directly during development.

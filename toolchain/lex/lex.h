@@ -12,22 +12,21 @@
 
 namespace Carbon::Lex {
 
-struct LexParams {
-  // Must be non-null.
-  SharedValueStores* value_stores;
+struct LexOptions {
+  // Options must be set individually, not through initialization.
+  explicit LexOptions() = default;
 
-  // Must be non-null.
-  SourceBuffer* source;
-
-  // Must be non-null.
-  Diagnostics::Consumer* consumer;
+  // If set, a consumer for diagnostics. Otherwise, diagnostics go to stderr.
+  Diagnostics::Consumer* consumer = nullptr;
 };
 
 // Lexes a buffer of source code into a tokenized buffer.
 //
 // The provided source buffer must outlive any returned `TokenizedBuffer`
 // which will refer into the source.
-auto Lex(LexParams params) -> TokenizedBuffer;
+auto Lex(SharedValueStores& value_stores,
+         SourceBuffer& source [[clang::lifetimebound]], LexOptions options)
+    -> TokenizedBuffer;
 
 }  // namespace Carbon::Lex
 

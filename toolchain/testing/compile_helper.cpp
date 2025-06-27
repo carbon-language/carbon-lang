@@ -15,11 +15,10 @@ auto CompileHelper::GetTokenizedBuffer(llvm::StringRef text,
   auto& source = GetSourceBuffer(text);
 
   value_store_storage_.emplace_front();
-  token_storage_.push_front(Lex::Lex({
-      .value_stores = &value_store_storage_.front(),
-      .source = &source,
-      .consumer = consumer ? consumer : &consumer_,
-  }));
+  Lex::LexOptions options;
+  options.consumer = consumer ? consumer : &consumer_;
+  token_storage_.push_front(
+      Lex::Lex(value_store_storage_.front(), source, options));
   return token_storage_.front();
 }
 
@@ -32,10 +31,9 @@ auto CompileHelper::GetTokenizedBufferWithSharedValueStore(
 
 auto CompileHelper::GetTree(llvm::StringRef text) -> Parse::Tree& {
   auto& tokens = GetTokenizedBuffer(text);
-  tree_storage_.push_front(Parse::Parse({
-      .tokens = &tokens,
-      .consumer = &consumer_,
-  }));
+  Parse::ParseOptions options;
+  options.consumer = &consumer_;
+  tree_storage_.push_front(Parse::Parse(tokens, options));
   return tree_storage_.front();
 }
 

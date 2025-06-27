@@ -9,6 +9,7 @@
 
 #include "common/check.h"
 #include "common/map.h"
+#include "llvm/TargetParser/Host.h"
 #include "toolchain/check/check_unit.h"
 #include "toolchain/check/context.h"
 #include "toolchain/check/diagnostic_emitter.h"
@@ -322,14 +323,17 @@ static auto BuildApiMapAndDiagnosePackaging(
   return api_map;
 }
 
-auto CheckParseTrees(CheckParseTreesParams params) -> void {
+auto CheckParseTrees(
+    llvm::MutableArrayRef<Unit> units,
+    llvm::ArrayRef<Parse::GetTreeAndSubtreesFn> tree_and_subtrees_getters,
+    llvm::IntrusiveRefCntPtr<llvm::vfs::FileSystem> fs,
+    const CheckParseTreesOptions& options) -> void {
   // UnitAndImports is big due to its SmallVectors, so we default to 0 on the
   // stack.
   llvm::SmallVector<UnitAndImports, 0> unit_infos(
-      llvm::map_range(params.units, [&](Unit& unit) {
+      llvm::map_range(units, [&](Unit& unit) {
         return UnitAndImports(
-            &unit,
-            params.tree_and_subtrees_getters[unit.sem_ir->check_ir_id().index]);
+            &unit, tree_and_subtrees_getters[unit.sem_ir->check_ir_id().index]);
       }));
 
   Map<ImportKey, UnitAndImports*> api_map =
@@ -337,21 +341,21 @@ auto CheckParseTrees(CheckParseTreesParams params) -> void {
 
   // Mark down imports for all files.
   llvm::SmallVector<UnitAndImports*> ready_to_check;
-  ready_to_check.reserve(params.units.size());
+  ready_to_check.reserve(units.size());
   for (auto& unit_info : unit_infos) {
     const auto& packaging = unit_info.parse_tree().packaging_decl();
     if (packaging && packaging->is_impl) {
       // An `impl` has an implicit import of its `api`.
       auto implicit_names = packaging->names;
       implicit_names.package_id = PackageNameId::None;
-      TrackImport(api_map, nullptr, unit_info, implicit_names, params.fuzzing);
+      TrackImport(api_map, nullptr, unit_info, implicit_names, options.fuzzing);
     }
 
     Map<ImportKey, Parse::NodeId> explicit_import_map;
 
     // Add the prelude import. It's added to explicit_import_map so that it can
     // conflict with an explicit import of the prelude.
-    if (params.prelude_import &&
+    if (options.prelude_import &&
         !(packaging && packaging->names.package_id == PackageNameId::Core)) {
       auto prelude_id =
           unit_info.unit->value_stores->string_literal_values().Add("prelude");
@@ -359,12 +363,12 @@ auto CheckParseTrees(CheckParseTreesParams params) -> void {
                   {.node_id = Parse::NoneNodeId(),
                    .package_id = PackageNameId::Core,
                    .library_id = prelude_id},
-                  params.fuzzing);
+                  options.fuzzing);
     }
 
     for (const auto& import : unit_info.parse_tree().imports()) {
       TrackImport(api_map, &explicit_import_map, unit_info, import,
-                  params.fuzzing);
+                  options.fuzzing);
     }
 
     // If there were no imports, mark the file as ready to check for below.
@@ -373,13 +377,17 @@ auto CheckParseTrees(CheckParseTreesParams params) -> void {
     }
   }
 
+  std::string target = !options.target.empty()
+                           ? options.target.str()
+                           : llvm::sys::getDefaultTargetTriple();
+
   // Check everything with no dependencies. Earlier entries with dependencies
   // will be checked as soon as all their dependencies have been checked.
   for (int check_index = 0;
        check_index < static_cast<int>(ready_to_check.size()); ++check_index) {
     auto* unit_info = ready_to_check[check_index];
-    CheckUnit(unit_info, params.tree_and_subtrees_getters, params.fs,
-              params.target, params.vlog_stream)
+    CheckUnit(unit_info, tree_and_subtrees_getters, fs, target,
+              options.vlog_stream)
         .Run();
     for (auto* incoming_import : unit_info->incoming_imports) {
       --incoming_import->imports_remaining;
@@ -427,8 +435,8 @@ auto CheckParseTrees(CheckParseTreesParams params) -> void {
     // incomplete imports.
     for (auto& unit_info : unit_infos) {
       if (unit_info.imports_remaining > 0) {
-        CheckUnit(&unit_info, params.tree_and_subtrees_getters, params.fs,
-                  params.target, params.vlog_stream)
+        CheckUnit(&unit_info, tree_and_subtrees_getters, fs, target,
+                  options.vlog_stream)
             .Run();
       }
     }
