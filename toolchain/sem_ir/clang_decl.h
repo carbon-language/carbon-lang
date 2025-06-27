@@ -28,8 +28,9 @@ struct ClangDecl : public Printable<ClangDecl> {
   auto Print(llvm::raw_ostream& out) const -> void;
 
   // Equality comparison uses the address-identity property of the Clang AST and
-  // just compares the `decl` pointers. We canonicalize on these to avoid ever
-  // having different instructions for the same declaration.
+  // just compares the `decl` pointers. We can disregard `inst_id` because `ClangDecl`s
+  // are only used as entries in `SemIR::clang_decls`, which canonicalizes them to
+  // ensure that the same `decl` can't be associated with more than one `inst_id`.
   auto operator==(const ClangDecl& rhs) const -> bool {
     return decl == rhs.decl;
   }
