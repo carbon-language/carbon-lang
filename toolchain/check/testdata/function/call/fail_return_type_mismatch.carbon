@@ -43,10 +43,10 @@ fn Run() {
 // CHECK:STDOUT:   %Int.generic: %Int.type = struct_value () [concrete]
 // CHECK:STDOUT:   %i32: type = class_type @Int, @Int(%int_32) [concrete]
 // CHECK:STDOUT:   %pattern_type.7ce: type = pattern_type %i32 [concrete]
-// CHECK:STDOUT:   %Destroy.type: type = facet_type <@Destroy> [concrete]
-// CHECK:STDOUT:   %Op.type.bae: type = fn_type @Op.1 [concrete]
 // CHECK:STDOUT:   %ImplicitAs.type.cc7: type = generic_interface_type @ImplicitAs [concrete]
 // CHECK:STDOUT:   %ImplicitAs.generic: %ImplicitAs.type.cc7 = struct_value () [concrete]
+// CHECK:STDOUT:   %Destroy.type: type = facet_type <@Destroy> [concrete]
+// CHECK:STDOUT:   %Op.type.bae: type = fn_type @Op.2 [concrete]
 // CHECK:STDOUT:   %T: type = bind_symbolic_name T, 0 [symbolic]
 // CHECK:STDOUT:   %Op.type.bc9: type = fn_type @Op.3, @impl.49c(%T) [symbolic]
 // CHECK:STDOUT:   %Op.46f: %Op.type.bc9 = struct_value () [symbolic]
@@ -62,17 +62,17 @@ fn Run() {
 // CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [concrete] {
 // CHECK:STDOUT:     .Float = %Core.Float
 // CHECK:STDOUT:     .Int = %Core.Int
-// CHECK:STDOUT:     .Destroy = %Core.Destroy
 // CHECK:STDOUT:     .ImplicitAs = %Core.ImplicitAs
+// CHECK:STDOUT:     .Destroy = %Core.Destroy
 // CHECK:STDOUT:     import Core//prelude
 // CHECK:STDOUT:     import Core//prelude/...
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.Float: %Float.type = import_ref Core//prelude/parts/float, Float, loaded [concrete = constants.%Float]
 // CHECK:STDOUT:   %Core.Int: %Int.type = import_ref Core//prelude/parts/int, Int, loaded [concrete = constants.%Int.generic]
+// CHECK:STDOUT:   %Core.ImplicitAs: %ImplicitAs.type.cc7 = import_ref Core//prelude/parts/as, ImplicitAs, loaded [concrete = constants.%ImplicitAs.generic]
 // CHECK:STDOUT:   %Core.Destroy: type = import_ref Core//prelude/parts/destroy, Destroy, loaded [concrete = constants.%Destroy.type]
 // CHECK:STDOUT:   %Core.import_ref.0b9: @impl.49c.%Op.type (%Op.type.bc9) = import_ref Core//prelude/parts/destroy, loc8_23, loaded [symbolic = @impl.49c.%Op (constants.%Op.46f)]
 // CHECK:STDOUT:   %Destroy.impl_witness_table = impl_witness_table (%Core.import_ref.0b9), @impl.49c [concrete]
-// CHECK:STDOUT:   %Core.ImplicitAs: %ImplicitAs.type.cc7 = import_ref Core//prelude/parts/as, ImplicitAs, loaded [concrete = constants.%ImplicitAs.generic]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -109,8 +109,6 @@ fn Run() {
 // CHECK:STDOUT:     %x.var_patt: %pattern_type.7ce = var_pattern %x.patt [concrete]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %x.var: ref %i32 = var %x.var_patt
-// CHECK:STDOUT:   %impl.elem0: %.ab7 = impl_witness_access constants.%Destroy.impl_witness.64e, element0 [concrete = constants.%Op.e6a]
-// CHECK:STDOUT:   %bound_method.loc25: <bound method> = bound_method %x.var, %impl.elem0
 // CHECK:STDOUT:   %Foo.ref: %Foo.type = name_ref Foo, file.%Foo.decl [concrete = constants.%Foo]
 // CHECK:STDOUT:   %Foo.call: init f64 = call %Foo.ref()
 // CHECK:STDOUT:   %.loc25_3.1: %i32 = converted %Foo.call, <error> [concrete = <error>]
@@ -120,10 +118,12 @@ fn Run() {
 // CHECK:STDOUT:     %i32: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %x: ref %i32 = bind_name x, %x.var
+// CHECK:STDOUT:   %impl.elem0: %.ab7 = impl_witness_access constants.%Destroy.impl_witness.64e, element0 [concrete = constants.%Op.e6a]
+// CHECK:STDOUT:   %bound_method.loc25_3.1: <bound method> = bound_method %x.var, %impl.elem0
 // CHECK:STDOUT:   %specific_fn: <specific function> = specific_function %impl.elem0, @Op.3(constants.%i32) [concrete = constants.%Op.specific_fn]
-// CHECK:STDOUT:   %bound_method.1: <bound method> = bound_method %x.var, %specific_fn
+// CHECK:STDOUT:   %bound_method.loc25_3.2: <bound method> = bound_method %x.var, %specific_fn
 // CHECK:STDOUT:   %.loc25_3.2: %i32 = bind_value %x.var
-// CHECK:STDOUT:   %no_op: init %empty_tuple.type = call %bound_method.1(%.loc25_3.2)
+// CHECK:STDOUT:   %no_op: init %empty_tuple.type = call %bound_method.loc25_3.2(%.loc25_3.2)
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

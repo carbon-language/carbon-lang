@@ -222,6 +222,8 @@ fn F() {
 // CHECK:STDOUT:   %F: %F.type = struct_value () [concrete]
 // CHECK:STDOUT:   %Animal.facet: %Animal.type = facet_value %Goat, (%Animal.impl_witness) [concrete]
 // CHECK:STDOUT:   %pattern_type.ab7: type = pattern_type %Goat [concrete]
+// CHECK:STDOUT:   %Goat.val: %Goat = struct_value () [concrete]
+// CHECK:STDOUT:   %.f6e: type = fn_type_with_self_type %Eat.type.e5d, %Eats.facet [concrete]
 // CHECK:STDOUT:   %Destroy.type: type = facet_type <@Destroy> [concrete]
 // CHECK:STDOUT:   %Op.type.bae: type = fn_type @Op.1 [concrete]
 // CHECK:STDOUT:   %T: type = bind_symbolic_name T, 0 [symbolic]
@@ -232,8 +234,6 @@ fn F() {
 // CHECK:STDOUT:   %Op.55a: %Op.type.e7a = struct_value () [concrete]
 // CHECK:STDOUT:   %Destroy.facet: %Destroy.type = facet_value %Goat, (%Destroy.impl_witness.b14) [concrete]
 // CHECK:STDOUT:   %.095: type = fn_type_with_self_type %Op.type.bae, %Destroy.facet [concrete]
-// CHECK:STDOUT:   %Goat.val: %Goat = struct_value () [concrete]
-// CHECK:STDOUT:   %.f6e: type = fn_type_with_self_type %Eat.type.e5d, %Eats.facet [concrete]
 // CHECK:STDOUT:   %Op.specific_fn: <specific function> = specific_function %Op.55a, @Op.2(%Goat) [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -343,8 +343,6 @@ fn F() {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %.loc22_28.1: %empty_struct_type = struct_literal ()
 // CHECK:STDOUT:   %Goat.ref.loc22_33: type = name_ref Goat, file.%Goat.decl [concrete = constants.%Goat]
-// CHECK:STDOUT:   %impl.elem0.loc22: %.095 = impl_witness_access constants.%Destroy.impl_witness.b14, element0 [concrete = constants.%Op.55a]
-// CHECK:STDOUT:   %bound_method.loc22: <bound method> = bound_method %.loc22_28.2, %impl.elem0.loc22
 // CHECK:STDOUT:   %.loc22_28.2: ref %Goat = temporary_storage
 // CHECK:STDOUT:   %.loc22_28.3: init %Goat = class_init (), %.loc22_28.2 [concrete = constants.%Goat.val]
 // CHECK:STDOUT:   %.loc22_28.4: ref %Goat = temporary %.loc22_28.2, %.loc22_28.3
@@ -368,8 +366,6 @@ fn F() {
 // CHECK:STDOUT:   %Eat.call.loc24: init %empty_tuple.type = call %impl.elem0.loc24()
 // CHECK:STDOUT:   %.loc26_6.1: %empty_struct_type = struct_literal ()
 // CHECK:STDOUT:   %Goat.ref.loc26_11: type = name_ref Goat, file.%Goat.decl [concrete = constants.%Goat]
-// CHECK:STDOUT:   %impl.elem0.loc26: %.095 = impl_witness_access constants.%Destroy.impl_witness.b14, element0 [concrete = constants.%Op.55a]
-// CHECK:STDOUT:   %bound_method.loc26: <bound method> = bound_method %.loc26_6.2, %impl.elem0.loc26
 // CHECK:STDOUT:   %.loc26_6.2: ref %Goat = temporary_storage
 // CHECK:STDOUT:   %.loc26_6.3: init %Goat = class_init (), %.loc26_6.2 [concrete = constants.%Goat.val]
 // CHECK:STDOUT:   %.loc26_6.4: ref %Goat = temporary %.loc26_6.2, %.loc26_6.3
@@ -384,8 +380,6 @@ fn F() {
 // CHECK:STDOUT:   %Bleet.call.loc26: init %empty_tuple.type = call %Bleet.ref.loc26()
 // CHECK:STDOUT:   %.loc27_6.1: %empty_struct_type = struct_literal ()
 // CHECK:STDOUT:   %Goat.ref.loc27_11: type = name_ref Goat, file.%Goat.decl [concrete = constants.%Goat]
-// CHECK:STDOUT:   %impl.elem0.loc27_6: %.095 = impl_witness_access constants.%Destroy.impl_witness.b14, element0 [concrete = constants.%Op.55a]
-// CHECK:STDOUT:   %bound_method.loc27: <bound method> = bound_method %.loc27_6.2, %impl.elem0.loc27_6
 // CHECK:STDOUT:   %.loc27_6.2: ref %Goat = temporary_storage
 // CHECK:STDOUT:   %.loc27_6.3: init %Goat = class_init (), %.loc27_6.2 [concrete = constants.%Goat.val]
 // CHECK:STDOUT:   %.loc27_6.4: ref %Goat = temporary %.loc27_6.2, %.loc27_6.3
@@ -399,18 +393,24 @@ fn F() {
 // CHECK:STDOUT:   %Eat.ref.loc27: %Eats.assoc_type = name_ref Eat, @Eats.%assoc0 [concrete = constants.%assoc0.e43]
 // CHECK:STDOUT:   %impl.elem0.loc27_37: %.f6e = impl_witness_access constants.%Eats.impl_witness, element0 [concrete = constants.%Eat.73e]
 // CHECK:STDOUT:   %Eat.call.loc27: init %empty_tuple.type = call %impl.elem0.loc27_37()
+// CHECK:STDOUT:   %impl.elem0.loc27_6: %.095 = impl_witness_access constants.%Destroy.impl_witness.b14, element0 [concrete = constants.%Op.55a]
+// CHECK:STDOUT:   %bound_method.loc27_6.1: <bound method> = bound_method %.loc27_6.2, %impl.elem0.loc27_6
 // CHECK:STDOUT:   %specific_fn.loc27: <specific function> = specific_function %impl.elem0.loc27_6, @Op.2(constants.%Goat) [concrete = constants.%Op.specific_fn]
-// CHECK:STDOUT:   %bound_method.1: <bound method> = bound_method %.loc27_6.2, %specific_fn.loc27
+// CHECK:STDOUT:   %bound_method.loc27_6.2: <bound method> = bound_method %.loc27_6.2, %specific_fn.loc27
 // CHECK:STDOUT:   %.loc27_6.5: %Goat = bind_value %.loc27_6.2
-// CHECK:STDOUT:   %no_op.1: init %empty_tuple.type = call %bound_method.1(%.loc27_6.5)
+// CHECK:STDOUT:   %no_op.loc27: init %empty_tuple.type = call %bound_method.loc27_6.2(%.loc27_6.5)
+// CHECK:STDOUT:   %impl.elem0.loc26: %.095 = impl_witness_access constants.%Destroy.impl_witness.b14, element0 [concrete = constants.%Op.55a]
+// CHECK:STDOUT:   %bound_method.loc26_6.1: <bound method> = bound_method %.loc26_6.2, %impl.elem0.loc26
 // CHECK:STDOUT:   %specific_fn.loc26: <specific function> = specific_function %impl.elem0.loc26, @Op.2(constants.%Goat) [concrete = constants.%Op.specific_fn]
-// CHECK:STDOUT:   %bound_method.2: <bound method> = bound_method %.loc26_6.2, %specific_fn.loc26
+// CHECK:STDOUT:   %bound_method.loc26_6.2: <bound method> = bound_method %.loc26_6.2, %specific_fn.loc26
 // CHECK:STDOUT:   %.loc26_6.5: %Goat = bind_value %.loc26_6.2
-// CHECK:STDOUT:   %no_op.2: init %empty_tuple.type = call %bound_method.2(%.loc26_6.5)
+// CHECK:STDOUT:   %no_op.loc26: init %empty_tuple.type = call %bound_method.loc26_6.2(%.loc26_6.5)
+// CHECK:STDOUT:   %impl.elem0.loc22: %.095 = impl_witness_access constants.%Destroy.impl_witness.b14, element0 [concrete = constants.%Op.55a]
+// CHECK:STDOUT:   %bound_method.loc22_28.1: <bound method> = bound_method %.loc22_28.2, %impl.elem0.loc22
 // CHECK:STDOUT:   %specific_fn.loc22: <specific function> = specific_function %impl.elem0.loc22, @Op.2(constants.%Goat) [concrete = constants.%Op.specific_fn]
-// CHECK:STDOUT:   %bound_method.3: <bound method> = bound_method %.loc22_28.2, %specific_fn.loc22
+// CHECK:STDOUT:   %bound_method.loc22_28.2: <bound method> = bound_method %.loc22_28.2, %specific_fn.loc22
 // CHECK:STDOUT:   %.loc22_28.5: %Goat = bind_value %.loc22_28.2
-// CHECK:STDOUT:   %no_op.3: init %empty_tuple.type = call %bound_method.3(%.loc22_28.5)
+// CHECK:STDOUT:   %no_op.loc22: init %empty_tuple.type = call %bound_method.loc22_28.2(%.loc22_28.5)
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

@@ -49,29 +49,15 @@ fn MakeOuter() -> Outer {
 // CHECK:STDOUT:   %pattern_type.e74: type = pattern_type %Outer [concrete]
 // CHECK:STDOUT:   %MakeOuter.type: type = fn_type @MakeOuter [concrete]
 // CHECK:STDOUT:   %MakeOuter: %MakeOuter.type = struct_value () [concrete]
-// CHECK:STDOUT:   %Destroy.type: type = facet_type <@Destroy> [concrete]
-// CHECK:STDOUT:   %Op.type.bae: type = fn_type @Op.1 [concrete]
-// CHECK:STDOUT:   %T: type = bind_symbolic_name T, 0 [symbolic]
-// CHECK:STDOUT:   %Op.type.bc9: type = fn_type @Op.2, @impl(%T) [symbolic]
-// CHECK:STDOUT:   %Op.46f: %Op.type.bc9 = struct_value () [symbolic]
-// CHECK:STDOUT:   %Destroy.impl_witness.14c: <witness> = impl_witness imports.%Destroy.impl_witness_table, @impl(%Inner) [concrete]
-// CHECK:STDOUT:   %Op.type.e24: type = fn_type @Op.2, @impl(%Inner) [concrete]
-// CHECK:STDOUT:   %Op.7b1: %Op.type.e24 = struct_value () [concrete]
-// CHECK:STDOUT:   %Destroy.facet: %Destroy.type = facet_value %Inner, (%Destroy.impl_witness.14c) [concrete]
-// CHECK:STDOUT:   %.f61: type = fn_type_with_self_type %Op.type.bae, %Destroy.facet [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [concrete] {
 // CHECK:STDOUT:     .Int = %Core.Int
-// CHECK:STDOUT:     .Destroy = %Core.Destroy
 // CHECK:STDOUT:     import Core//prelude
 // CHECK:STDOUT:     import Core//prelude/...
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.Int: %Int.type = import_ref Core//prelude/parts/int, Int, loaded [concrete = constants.%Int.generic]
-// CHECK:STDOUT:   %Core.Destroy: type = import_ref Core//prelude/parts/destroy, Destroy, loaded [concrete = constants.%Destroy.type]
-// CHECK:STDOUT:   %Core.import_ref.0b9: @impl.%Op.type (%Op.type.bc9) = import_ref Core//prelude/parts/destroy, loc8_23, loaded [symbolic = @impl.%Op (constants.%Op.46f)]
-// CHECK:STDOUT:   %Destroy.impl_witness_table = impl_witness_table (%Core.import_ref.0b9), @impl [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -142,13 +128,9 @@ fn MakeOuter() -> Outer {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %MakeInner.ref.loc28_16: %MakeInner.type = name_ref MakeInner, file.%MakeInner.decl [concrete = constants.%MakeInner]
 // CHECK:STDOUT:   %.loc28_45.1: ref %Inner = class_element_access %return, element0
-// CHECK:STDOUT:   %impl.elem0.loc28_26: %.f61 = impl_witness_access constants.%Destroy.impl_witness.14c, element0 [concrete = constants.%Op.7b1]
-// CHECK:STDOUT:   %bound_method.loc28_26: <bound method> = bound_method %.loc28_45.1, %impl.elem0.loc28_26
 // CHECK:STDOUT:   %MakeInner.call.loc28_26: init %Inner = call %MakeInner.ref.loc28_16() to %.loc28_45.1
 // CHECK:STDOUT:   %MakeInner.ref.loc28_34: %MakeInner.type = name_ref MakeInner, file.%MakeInner.decl [concrete = constants.%MakeInner]
 // CHECK:STDOUT:   %.loc28_45.2: ref %Inner = class_element_access %return, element1
-// CHECK:STDOUT:   %impl.elem0.loc28_44: %.f61 = impl_witness_access constants.%Destroy.impl_witness.14c, element0 [concrete = constants.%Op.7b1]
-// CHECK:STDOUT:   %bound_method.loc28_44: <bound method> = bound_method %.loc28_45.2, %impl.elem0.loc28_44
 // CHECK:STDOUT:   %MakeInner.call.loc28_44: init %Inner = call %MakeInner.ref.loc28_34() to %.loc28_45.2
 // CHECK:STDOUT:   %.loc28_45.3: %struct_type.c.d.dce = struct_literal (%MakeInner.call.loc28_26, %MakeInner.call.loc28_44)
 // CHECK:STDOUT:   %.loc28_45.4: init %Outer = class_init (%MakeInner.call.loc28_26, %MakeInner.call.loc28_44), %return

@@ -148,8 +148,6 @@ fn F(c: Class, p: Class*) {
 // CHECK:STDOUT:   %F.ref.loc32: %F.type.f1b = name_ref F, @Class.%F.decl [concrete = constants.%F.1f2]
 // CHECK:STDOUT:   %F.bound.loc32: <bound method> = bound_method %c.ref.loc32, %F.ref.loc32
 // CHECK:STDOUT:   %.loc32_3.1: ref %Class = temporary_storage
-// CHECK:STDOUT:   %impl.elem0: %.b9f = impl_witness_access constants.%Destroy.impl_witness.fef, element0 [concrete = constants.%Op.d64]
-// CHECK:STDOUT:   %bound_method.loc32: <bound method> = bound_method %.loc32_3.1, %impl.elem0
 // CHECK:STDOUT:   %addr.loc32: %ptr.e71 = addr_of %.loc32_3.1
 // CHECK:STDOUT:   %F.call.loc32: init %empty_tuple.type = call %F.bound.loc32(%addr.loc32)
 // CHECK:STDOUT:   %c.ref.loc34: %Class = name_ref c, %c
@@ -168,10 +166,12 @@ fn F(c: Class, p: Class*) {
 // CHECK:STDOUT:   %G.bound.loc39: <bound method> = bound_method %.loc39_4.1, %G.ref.loc39
 // CHECK:STDOUT:   %.loc39_4.2: %Class = bind_value %.loc39_4.1
 // CHECK:STDOUT:   %G.call.loc39: init %empty_tuple.type = call %G.bound.loc39(%.loc39_4.2)
+// CHECK:STDOUT:   %impl.elem0: %.b9f = impl_witness_access constants.%Destroy.impl_witness.fef, element0 [concrete = constants.%Op.d64]
+// CHECK:STDOUT:   %bound_method.loc32_3.1: <bound method> = bound_method %.loc32_3.1, %impl.elem0
 // CHECK:STDOUT:   %specific_fn: <specific function> = specific_function %impl.elem0, @Op.2(constants.%Class) [concrete = constants.%Op.specific_fn]
-// CHECK:STDOUT:   %bound_method.1: <bound method> = bound_method %.loc32_3.1, %specific_fn
+// CHECK:STDOUT:   %bound_method.loc32_3.2: <bound method> = bound_method %.loc32_3.1, %specific_fn
 // CHECK:STDOUT:   %.loc32_3.2: %Class = bind_value %.loc32_3.1
-// CHECK:STDOUT:   %no_op: init %empty_tuple.type = call %bound_method.1(%.loc32_3.2)
+// CHECK:STDOUT:   %no_op: init %empty_tuple.type = call %bound_method.loc32_3.2(%.loc32_3.2)
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

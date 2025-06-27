@@ -32,18 +32,18 @@ fn F() {
 // CHECK:STDOUT:   %i32: type = class_type @Int, @Int(%int_32) [concrete]
 // CHECK:STDOUT:   %ptr: type = ptr_type %T [symbolic]
 // CHECK:STDOUT:   %pattern_type.afe: type = pattern_type %ptr [symbolic]
+// CHECK:STDOUT:   %pattern_type.7dc: type = pattern_type %T [symbolic]
 // CHECK:STDOUT:   %Destroy.type: type = facet_type <@Destroy> [concrete]
 // CHECK:STDOUT:   %Op.type.bae: type = fn_type @Op.1 [concrete]
-// CHECK:STDOUT:   %pattern_type.7dc: type = pattern_type %T [symbolic]
-// CHECK:STDOUT:   %Destroy.lookup_impl_witness.3af: <witness> = lookup_impl_witness %ptr, @Destroy [symbolic]
-// CHECK:STDOUT:   %Destroy.facet.7d0: %Destroy.type = facet_value %ptr, (%Destroy.lookup_impl_witness.3af) [symbolic]
-// CHECK:STDOUT:   %.ea9: type = fn_type_with_self_type %Op.type.bae, %Destroy.facet.7d0 [symbolic]
-// CHECK:STDOUT:   %impl.elem0.63c: %.ea9 = impl_witness_access %Destroy.lookup_impl_witness.3af, element0 [symbolic]
 // CHECK:STDOUT:   %Destroy.lookup_impl_witness.de0: <witness> = lookup_impl_witness %T, @Destroy [symbolic]
 // CHECK:STDOUT:   %Destroy.facet.713: %Destroy.type = facet_value %T, (%Destroy.lookup_impl_witness.de0) [symbolic]
 // CHECK:STDOUT:   %.a63: type = fn_type_with_self_type %Op.type.bae, %Destroy.facet.713 [symbolic]
 // CHECK:STDOUT:   %impl.elem0.538: %.a63 = impl_witness_access %Destroy.lookup_impl_witness.de0, element0 [symbolic]
 // CHECK:STDOUT:   %specific_impl_fn.1af: <specific function> = specific_impl_function %impl.elem0.538, @Op.1(%Destroy.facet.713) [symbolic]
+// CHECK:STDOUT:   %Destroy.lookup_impl_witness.3af: <witness> = lookup_impl_witness %ptr, @Destroy [symbolic]
+// CHECK:STDOUT:   %Destroy.facet.7d0: %Destroy.type = facet_value %ptr, (%Destroy.lookup_impl_witness.3af) [symbolic]
+// CHECK:STDOUT:   %.ea9: type = fn_type_with_self_type %Op.type.bae, %Destroy.facet.7d0 [symbolic]
+// CHECK:STDOUT:   %impl.elem0.63c: %.ea9 = impl_witness_access %Destroy.lookup_impl_witness.3af, element0 [symbolic]
 // CHECK:STDOUT:   %specific_impl_fn.e4a: <specific function> = specific_impl_function %impl.elem0.63c, @Op.1(%Destroy.facet.7d0) [symbolic]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -80,8 +80,6 @@ fn F() {
 // CHECK:STDOUT:     %p.var_patt: %pattern_type.afe = var_pattern %p.patt [concrete]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %p.var: ref %ptr = var %p.var_patt
-// CHECK:STDOUT:   %impl.elem0.loc17: %.ea9 = impl_witness_access constants.%Destroy.lookup_impl_witness.3af, element0 [symbolic = constants.%impl.elem0.63c]
-// CHECK:STDOUT:   %bound_method.loc17: <bound method> = bound_method %p.var, %impl.elem0.loc17
 // CHECK:STDOUT:   %.loc17_11: type = splice_block %ptr [symbolic = constants.%ptr] {
 // CHECK:STDOUT:     %T.ref.loc17: type = name_ref T, %T [symbolic = constants.%T]
 // CHECK:STDOUT:     %ptr: type = ptr_type %T.ref.loc17 [symbolic = constants.%ptr]
@@ -92,8 +90,6 @@ fn F() {
 // CHECK:STDOUT:     %a.var_patt: %pattern_type.7dc = var_pattern %a.patt [concrete]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %a.var: ref %T = var %a.var_patt
-// CHECK:STDOUT:   %impl.elem0.loc18: %.a63 = impl_witness_access constants.%Destroy.lookup_impl_witness.de0, element0 [symbolic = constants.%impl.elem0.538]
-// CHECK:STDOUT:   %bound_method.loc18: <bound method> = bound_method %a.var, %impl.elem0.loc18
 // CHECK:STDOUT:   %p.ref: ref %ptr = name_ref p, %p
 // CHECK:STDOUT:   %.loc18_15: %ptr = bind_value %p.ref
 // CHECK:STDOUT:   %.loc18_14.1: ref %T = deref %.loc18_15
@@ -101,14 +97,18 @@ fn F() {
 // CHECK:STDOUT:   assign %a.var, %.loc18_14.2
 // CHECK:STDOUT:   %T.ref.loc18: type = name_ref T, %T [symbolic = constants.%T]
 // CHECK:STDOUT:   %a: ref %T = bind_name a, %a.var
+// CHECK:STDOUT:   %impl.elem0.loc18: %.a63 = impl_witness_access constants.%Destroy.lookup_impl_witness.de0, element0 [symbolic = constants.%impl.elem0.538]
+// CHECK:STDOUT:   %bound_method.loc18_3.1: <bound method> = bound_method %a.var, %impl.elem0.loc18
 // CHECK:STDOUT:   %specific_impl_fn.loc18: <specific function> = specific_impl_function %impl.elem0.loc18, @Op.1(constants.%Destroy.facet.713) [symbolic = constants.%specific_impl_fn.1af]
-// CHECK:STDOUT:   %bound_method.1: <bound method> = bound_method %a.var, %specific_impl_fn.loc18
-// CHECK:STDOUT:   %.loc18_3: %T = bind_value %a.var
-// CHECK:STDOUT:   %.1: init %empty_tuple.type = call %bound_method.1(%.loc18_3)
+// CHECK:STDOUT:   %bound_method.loc18_3.2: <bound method> = bound_method %a.var, %specific_impl_fn.loc18
+// CHECK:STDOUT:   %.loc18_3.1: %T = bind_value %a.var
+// CHECK:STDOUT:   %.loc18_3.2: init %empty_tuple.type = call %bound_method.loc18_3.2(%.loc18_3.1)
+// CHECK:STDOUT:   %impl.elem0.loc17: %.ea9 = impl_witness_access constants.%Destroy.lookup_impl_witness.3af, element0 [symbolic = constants.%impl.elem0.63c]
+// CHECK:STDOUT:   %bound_method.loc17_3.1: <bound method> = bound_method %p.var, %impl.elem0.loc17
 // CHECK:STDOUT:   %specific_impl_fn.loc17: <specific function> = specific_impl_function %impl.elem0.loc17, @Op.1(constants.%Destroy.facet.7d0) [symbolic = constants.%specific_impl_fn.e4a]
-// CHECK:STDOUT:   %bound_method.2: <bound method> = bound_method %p.var, %specific_impl_fn.loc17
-// CHECK:STDOUT:   %.loc17_3: %ptr = bind_value %p.var
-// CHECK:STDOUT:   %.2: init %empty_tuple.type = call %bound_method.2(%.loc17_3)
+// CHECK:STDOUT:   %bound_method.loc17_3.2: <bound method> = bound_method %p.var, %specific_impl_fn.loc17
+// CHECK:STDOUT:   %.loc17_3.1: %ptr = bind_value %p.var
+// CHECK:STDOUT:   %.loc17_3.2: init %empty_tuple.type = call %bound_method.loc17_3.2(%.loc17_3.1)
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

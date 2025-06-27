@@ -254,6 +254,8 @@ class X {
 // CHECK:STDOUT:   %F.type: type = fn_type @F [concrete]
 // CHECK:STDOUT:   %F: %F.type = struct_value () [concrete]
 // CHECK:STDOUT:   %.d52: type = fn_type_with_self_type %Zero.type.822, %Z.facet [concrete]
+// CHECK:STDOUT:   %Point.val: %Point = struct_value () [concrete]
+// CHECK:STDOUT:   %.462: type = fn_type_with_self_type %Method.type.f12, %Z.facet [concrete]
 // CHECK:STDOUT:   %Destroy.type: type = facet_type <@Destroy> [concrete]
 // CHECK:STDOUT:   %Op.type.bae: type = fn_type @Op.1 [concrete]
 // CHECK:STDOUT:   %T: type = bind_symbolic_name T, 0 [symbolic]
@@ -264,8 +266,6 @@ class X {
 // CHECK:STDOUT:   %Op.d2d: %Op.type.003 = struct_value () [concrete]
 // CHECK:STDOUT:   %Destroy.facet: %Destroy.type = facet_value %Point, (%Destroy.impl_witness.ea4) [concrete]
 // CHECK:STDOUT:   %.038: type = fn_type_with_self_type %Op.type.bae, %Destroy.facet [concrete]
-// CHECK:STDOUT:   %Point.val: %Point = struct_value () [concrete]
-// CHECK:STDOUT:   %.462: type = fn_type_with_self_type %Method.type.f12, %Z.facet [concrete]
 // CHECK:STDOUT:   %Op.specific_fn: <specific function> = specific_function %Op.d2d, @Op.2(%Point) [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -442,8 +442,6 @@ class X {
 // CHECK:STDOUT:   %Zero.call: init %empty_tuple.type = call %impl.elem0.loc28()
 // CHECK:STDOUT:   %.loc29_5.1: %empty_struct_type = struct_literal ()
 // CHECK:STDOUT:   %Point.ref.loc29: type = name_ref Point, file.%Point.decl [concrete = constants.%Point]
-// CHECK:STDOUT:   %impl.elem0.loc29: %.038 = impl_witness_access constants.%Destroy.impl_witness.ea4, element0 [concrete = constants.%Op.d2d]
-// CHECK:STDOUT:   %bound_method.loc29_5: <bound method> = bound_method %.loc29_5.2, %impl.elem0.loc29
 // CHECK:STDOUT:   %.loc29_5.2: ref %Point = temporary_storage
 // CHECK:STDOUT:   %.loc29_5.3: init %Point = class_init (), %.loc29_5.2 [concrete = constants.%Point.val]
 // CHECK:STDOUT:   %.loc29_5.4: ref %Point = temporary %.loc29_5.2, %.loc29_5.3
@@ -454,10 +452,12 @@ class X {
 // CHECK:STDOUT:   %bound_method.loc29_16: <bound method> = bound_method %.loc29_7.1, %impl.elem1
 // CHECK:STDOUT:   %.loc29_7.2: %Point = bind_value %.loc29_7.1
 // CHECK:STDOUT:   %Method.call: init %empty_tuple.type = call %bound_method.loc29_16(%.loc29_7.2)
+// CHECK:STDOUT:   %impl.elem0.loc29: %.038 = impl_witness_access constants.%Destroy.impl_witness.ea4, element0 [concrete = constants.%Op.d2d]
+// CHECK:STDOUT:   %bound_method.loc29_5.1: <bound method> = bound_method %.loc29_5.2, %impl.elem0.loc29
 // CHECK:STDOUT:   %specific_fn: <specific function> = specific_function %impl.elem0.loc29, @Op.2(constants.%Point) [concrete = constants.%Op.specific_fn]
-// CHECK:STDOUT:   %bound_method.1: <bound method> = bound_method %.loc29_5.2, %specific_fn
+// CHECK:STDOUT:   %bound_method.loc29_5.2: <bound method> = bound_method %.loc29_5.2, %specific_fn
 // CHECK:STDOUT:   %.loc29_5.5: %Point = bind_value %.loc29_5.2
-// CHECK:STDOUT:   %no_op: init %empty_tuple.type = call %bound_method.1(%.loc29_5.5)
+// CHECK:STDOUT:   %no_op: init %empty_tuple.type = call %bound_method.loc29_5.2(%.loc29_5.5)
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

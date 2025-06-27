@@ -38,16 +38,6 @@ fn Mismatch() -> i32 {
 // CHECK:STDOUT:   %Float.type: type = fn_type @Float [concrete]
 // CHECK:STDOUT:   %Float: %Float.type = struct_value () [concrete]
 // CHECK:STDOUT:   %pattern_type.3de: type = pattern_type f64 [concrete]
-// CHECK:STDOUT:   %Destroy.type: type = facet_type <@Destroy> [concrete]
-// CHECK:STDOUT:   %Op.type.bae: type = fn_type @Op.1 [concrete]
-// CHECK:STDOUT:   %T: type = bind_symbolic_name T, 0 [symbolic]
-// CHECK:STDOUT:   %Op.type.bc9: type = fn_type @Op.2, @impl(%T) [symbolic]
-// CHECK:STDOUT:   %Op.46f: %Op.type.bc9 = struct_value () [symbolic]
-// CHECK:STDOUT:   %Destroy.impl_witness.add: <witness> = impl_witness imports.%Destroy.impl_witness_table, @impl(f64) [concrete]
-// CHECK:STDOUT:   %Op.type.3ef: type = fn_type @Op.2, @impl(f64) [concrete]
-// CHECK:STDOUT:   %Op.868: %Op.type.3ef = struct_value () [concrete]
-// CHECK:STDOUT:   %Destroy.facet: %Destroy.type = facet_value f64, (%Destroy.impl_witness.add) [concrete]
-// CHECK:STDOUT:   %.e7e: type = fn_type_with_self_type %Op.type.bae, %Destroy.facet [concrete]
 // CHECK:STDOUT:   %float: f64 = float_literal 0 [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -55,15 +45,11 @@ fn Mismatch() -> i32 {
 // CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [concrete] {
 // CHECK:STDOUT:     .Int = %Core.Int
 // CHECK:STDOUT:     .Float = %Core.Float
-// CHECK:STDOUT:     .Destroy = %Core.Destroy
 // CHECK:STDOUT:     import Core//prelude
 // CHECK:STDOUT:     import Core//prelude/...
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.Int: %Int.type = import_ref Core//prelude/parts/int, Int, loaded [concrete = constants.%Int.generic]
 // CHECK:STDOUT:   %Core.Float: %Float.type = import_ref Core//prelude/parts/float, Float, loaded [concrete = constants.%Float]
-// CHECK:STDOUT:   %Core.Destroy: type = import_ref Core//prelude/parts/destroy, Destroy, loaded [concrete = constants.%Destroy.type]
-// CHECK:STDOUT:   %Core.import_ref.0b9: @impl.%Op.type (%Op.type.bc9) = import_ref Core//prelude/parts/destroy, loc8_23, loaded [symbolic = @impl.%Op (constants.%Op.46f)]
-// CHECK:STDOUT:   %Destroy.impl_witness_table = impl_witness_table (%Core.import_ref.0b9), @impl [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -90,8 +76,6 @@ fn Mismatch() -> i32 {
 // CHECK:STDOUT:     %v.var_patt: %pattern_type.3de = var_pattern %v.patt [concrete]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %v.var: ref f64 = var %v.var_patt
-// CHECK:STDOUT:   %impl.elem0: %.e7e = impl_witness_access constants.%Destroy.impl_witness.add, element0 [concrete = constants.%Op.868]
-// CHECK:STDOUT:   %bound_method: <bound method> = bound_method %v.var, %impl.elem0
 // CHECK:STDOUT:   %float: f64 = float_literal 0 [concrete = constants.%float]
 // CHECK:STDOUT:   assign %v.var, %float
 // CHECK:STDOUT:   %.loc23_19.1: type = splice_block %.loc23_19.3 [concrete = f64] {

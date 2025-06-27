@@ -143,8 +143,6 @@ fn F() {
 // CHECK:STDOUT:     %v.var_patt: %pattern_type.a96 = var_pattern %v.patt [concrete]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %v.var: ref %empty_struct_type = var %v.var_patt
-// CHECK:STDOUT:   %impl.elem0.loc9: %.9da = impl_witness_access constants.%Destroy.impl_witness.eb8, element0 [concrete = constants.%Op.d5a]
-// CHECK:STDOUT:   %bound_method.loc9: <bound method> = bound_method %v.var, %impl.elem0.loc9
 // CHECK:STDOUT:   %.loc9_19.1: type = splice_block %.loc9_19.3 [concrete = constants.%empty_struct_type] {
 // CHECK:STDOUT:     %.loc9_19.2: %empty_struct_type = struct_literal ()
 // CHECK:STDOUT:     %.loc9_19.3: type = converted %.loc9_19.2, constants.%empty_struct_type [concrete = constants.%empty_struct_type]
@@ -155,23 +153,25 @@ fn F() {
 // CHECK:STDOUT:     %w.var_patt: %pattern_type.a96 = var_pattern %w.patt [concrete]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %w.var: ref %empty_struct_type = var %w.var_patt
-// CHECK:STDOUT:   %impl.elem0.loc14: %.9da = impl_witness_access constants.%Destroy.impl_witness.eb8, element0 [concrete = constants.%Op.d5a]
-// CHECK:STDOUT:   %bound_method.loc14: <bound method> = bound_method %w.var, %impl.elem0.loc14
 // CHECK:STDOUT:   %.loc14_21.1: type = splice_block %.loc14_21.3 [concrete = constants.%empty_struct_type] {
 // CHECK:STDOUT:     %.loc14_21.2: %empty_struct_type = struct_literal ()
 // CHECK:STDOUT:     %.loc14_21.3: type = converted %.loc14_21.2, constants.%empty_struct_type [concrete = constants.%empty_struct_type]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %w: ref %empty_struct_type = bind_name w, %w.var
+// CHECK:STDOUT:   %impl.elem0.loc14: %.9da = impl_witness_access constants.%Destroy.impl_witness.eb8, element0 [concrete = constants.%Op.d5a]
+// CHECK:STDOUT:   %bound_method.loc14_13.1: <bound method> = bound_method %w.var, %impl.elem0.loc14
 // CHECK:STDOUT:   %specific_fn.loc14: <specific function> = specific_function %impl.elem0.loc14, @Op.2(constants.%empty_struct_type) [concrete = constants.%Op.specific_fn]
-// CHECK:STDOUT:   %bound_method.1: <bound method> = bound_method %w.var, %specific_fn.loc14
+// CHECK:STDOUT:   %bound_method.loc14_13.2: <bound method> = bound_method %w.var, %specific_fn.loc14
 // CHECK:STDOUT:   %empty_struct.loc14: %empty_struct_type = struct_value () [concrete = constants.%empty_struct]
 // CHECK:STDOUT:   %.loc14_13: %empty_struct_type = converted %w.var, %empty_struct.loc14 [concrete = constants.%empty_struct]
-// CHECK:STDOUT:   %no_op.1: init %empty_tuple.type = call %bound_method.1(%.loc14_13)
+// CHECK:STDOUT:   %no_op.loc14: init %empty_tuple.type = call %bound_method.loc14_13.2(%.loc14_13)
+// CHECK:STDOUT:   %impl.elem0.loc9: %.9da = impl_witness_access constants.%Destroy.impl_witness.eb8, element0 [concrete = constants.%Op.d5a]
+// CHECK:STDOUT:   %bound_method.loc9_11.1: <bound method> = bound_method %v.var, %impl.elem0.loc9
 // CHECK:STDOUT:   %specific_fn.loc9: <specific function> = specific_function %impl.elem0.loc9, @Op.2(constants.%empty_struct_type) [concrete = constants.%Op.specific_fn]
-// CHECK:STDOUT:   %bound_method.2: <bound method> = bound_method %v.var, %specific_fn.loc9
+// CHECK:STDOUT:   %bound_method.loc9_11.2: <bound method> = bound_method %v.var, %specific_fn.loc9
 // CHECK:STDOUT:   %empty_struct.loc9: %empty_struct_type = struct_value () [concrete = constants.%empty_struct]
 // CHECK:STDOUT:   %.loc9_11: %empty_struct_type = converted %v.var, %empty_struct.loc9 [concrete = constants.%empty_struct]
-// CHECK:STDOUT:   %no_op.2: init %empty_tuple.type = call %bound_method.2(%.loc9_11)
+// CHECK:STDOUT:   %no_op.loc9: init %empty_tuple.type = call %bound_method.loc9_11.2(%.loc9_11)
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

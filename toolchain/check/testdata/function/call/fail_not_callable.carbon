@@ -30,6 +30,7 @@ fn Run() {
 // CHECK:STDOUT:   %Int.generic: %Int.type = struct_value () [concrete]
 // CHECK:STDOUT:   %i32: type = class_type @Int, @Int(%int_32) [concrete]
 // CHECK:STDOUT:   %pattern_type.7ce: type = pattern_type %i32 [concrete]
+// CHECK:STDOUT:   %str: String = string_literal "hello" [concrete]
 // CHECK:STDOUT:   %Destroy.type: type = facet_type <@Destroy> [concrete]
 // CHECK:STDOUT:   %Op.type.bae: type = fn_type @Op.1 [concrete]
 // CHECK:STDOUT:   %T.8b3: type = bind_symbolic_name T, 0 [symbolic]
@@ -40,7 +41,6 @@ fn Run() {
 // CHECK:STDOUT:   %Op.e6a: %Op.type.a17 = struct_value () [concrete]
 // CHECK:STDOUT:   %Destroy.facet: %Destroy.type = facet_value %i32, (%Destroy.impl_witness.64e) [concrete]
 // CHECK:STDOUT:   %.ab7: type = fn_type_with_self_type %Op.type.bae, %Destroy.facet [concrete]
-// CHECK:STDOUT:   %str: String = string_literal "hello" [concrete]
 // CHECK:STDOUT:   %Op.specific_fn.014: <specific function> = specific_function %Op.e6a, @Op.2(%i32) [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -73,8 +73,6 @@ fn Run() {
 // CHECK:STDOUT:     %x.var_patt: %pattern_type.7ce = var_pattern %x.patt [concrete]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %x.var: ref %i32 = var %x.var_patt
-// CHECK:STDOUT:   %impl.elem0: %.ab7 = impl_witness_access constants.%Destroy.impl_witness.64e, element0 [concrete = constants.%Op.e6a]
-// CHECK:STDOUT:   %bound_method.loc19: <bound method> = bound_method %x.var, %impl.elem0
 // CHECK:STDOUT:   %str: String = string_literal "hello" [concrete = constants.%str]
 // CHECK:STDOUT:   assign %x.var, <error>
 // CHECK:STDOUT:   %.loc19_10: type = splice_block %i32 [concrete = constants.%i32] {
@@ -82,10 +80,12 @@ fn Run() {
 // CHECK:STDOUT:     %i32: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %x: ref %i32 = bind_name x, %x.var
+// CHECK:STDOUT:   %impl.elem0: %.ab7 = impl_witness_access constants.%Destroy.impl_witness.64e, element0 [concrete = constants.%Op.e6a]
+// CHECK:STDOUT:   %bound_method.loc19_3.1: <bound method> = bound_method %x.var, %impl.elem0
 // CHECK:STDOUT:   %specific_fn: <specific function> = specific_function %impl.elem0, @Op.2(constants.%i32) [concrete = constants.%Op.specific_fn.014]
-// CHECK:STDOUT:   %bound_method.1: <bound method> = bound_method %x.var, %specific_fn
+// CHECK:STDOUT:   %bound_method.loc19_3.2: <bound method> = bound_method %x.var, %specific_fn
 // CHECK:STDOUT:   %.loc19_3: %i32 = bind_value %x.var
-// CHECK:STDOUT:   %no_op: init %empty_tuple.type = call %bound_method.1(%.loc19_3)
+// CHECK:STDOUT:   %no_op: init %empty_tuple.type = call %bound_method.loc19_3.2(%.loc19_3)
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

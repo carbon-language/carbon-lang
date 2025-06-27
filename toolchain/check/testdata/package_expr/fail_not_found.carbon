@@ -74,8 +74,6 @@ fn Main() {
 // CHECK:STDOUT:     %y.var_patt: %pattern_type.7ce = var_pattern %y.patt [concrete]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %y.var: ref %i32 = var %y.var_patt
-// CHECK:STDOUT:   %impl.elem0: %.ab7 = impl_witness_access constants.%Destroy.impl_witness.64e, element0 [concrete = constants.%Op.e6a]
-// CHECK:STDOUT:   %bound_method.loc20: <bound method> = bound_method %y.var, %impl.elem0
 // CHECK:STDOUT:   %package.ref: <namespace> = name_ref package, package [concrete = package]
 // CHECK:STDOUT:   %x.ref: <error> = name_ref x, <error> [concrete = <error>]
 // CHECK:STDOUT:   assign %y.var, <error>
@@ -84,10 +82,12 @@ fn Main() {
 // CHECK:STDOUT:     %i32: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %y: ref %i32 = bind_name y, %y.var
+// CHECK:STDOUT:   %impl.elem0: %.ab7 = impl_witness_access constants.%Destroy.impl_witness.64e, element0 [concrete = constants.%Op.e6a]
+// CHECK:STDOUT:   %bound_method.loc20_3.1: <bound method> = bound_method %y.var, %impl.elem0
 // CHECK:STDOUT:   %specific_fn: <specific function> = specific_function %impl.elem0, @Op.3(constants.%i32) [concrete = constants.%Op.specific_fn]
-// CHECK:STDOUT:   %bound_method.1: <bound method> = bound_method %y.var, %specific_fn
+// CHECK:STDOUT:   %bound_method.loc20_3.2: <bound method> = bound_method %y.var, %specific_fn
 // CHECK:STDOUT:   %.loc20_3: %i32 = bind_value %y.var
-// CHECK:STDOUT:   %no_op: init %empty_tuple.type = call %bound_method.1(%.loc20_3)
+// CHECK:STDOUT:   %no_op: init %empty_tuple.type = call %bound_method.loc20_3.2(%.loc20_3)
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

@@ -33,6 +33,7 @@ fn Main() {
 // CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [concrete]
 // CHECK:STDOUT:   %Main: %Main.type = struct_value () [concrete]
 // CHECK:STDOUT:   %pattern_type.cb1: type = pattern_type %empty_tuple.type [concrete]
+// CHECK:STDOUT:   %empty_tuple: %empty_tuple.type = tuple_value () [concrete]
 // CHECK:STDOUT:   %Destroy.type: type = facet_type <@Destroy> [concrete]
 // CHECK:STDOUT:   %Op.type.bae: type = fn_type @Op.1 [concrete]
 // CHECK:STDOUT:   %T: type = bind_symbolic_name T, 0 [symbolic]
@@ -43,7 +44,6 @@ fn Main() {
 // CHECK:STDOUT:   %Op.ea3: %Op.type.a63 = struct_value () [concrete]
 // CHECK:STDOUT:   %Destroy.facet: %Destroy.type = facet_value %empty_tuple.type, (%Destroy.impl_witness.1dc) [concrete]
 // CHECK:STDOUT:   %.346: type = fn_type_with_self_type %Op.type.bae, %Destroy.facet [concrete]
-// CHECK:STDOUT:   %empty_tuple: %empty_tuple.type = tuple_value () [concrete]
 // CHECK:STDOUT:   %Op.specific_fn: <specific function> = specific_function %Op.ea3, @Op.2(%empty_tuple.type) [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -74,8 +74,6 @@ fn Main() {
 // CHECK:STDOUT:     %x.var_patt.loc3: %pattern_type.cb1 = var_pattern %x.patt.loc3 [concrete]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %x.var.loc3: ref %empty_tuple.type = var %x.var_patt.loc3
-// CHECK:STDOUT:   %impl.elem0.loc3: %.346 = impl_witness_access constants.%Destroy.impl_witness.1dc, element0 [concrete = constants.%Op.ea3]
-// CHECK:STDOUT:   %bound_method.loc3: <bound method> = bound_method %x.var.loc3, %impl.elem0.loc3
 // CHECK:STDOUT:   %.loc3_16.1: %empty_tuple.type = tuple_literal ()
 // CHECK:STDOUT:   %.loc3_16.2: init %empty_tuple.type = tuple_init () to %x.var.loc3 [concrete = constants.%empty_tuple]
 // CHECK:STDOUT:   %.loc3_3.1: init %empty_tuple.type = converted %.loc3_16.1, %.loc3_16.2 [concrete = constants.%empty_tuple]
@@ -90,8 +88,6 @@ fn Main() {
 // CHECK:STDOUT:     %x.var_patt.loc11: %pattern_type.cb1 = var_pattern %x.patt.loc11 [concrete]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %x.var.loc11: ref %empty_tuple.type = var %x.var_patt.loc11
-// CHECK:STDOUT:   %impl.elem0.loc11: %.346 = impl_witness_access constants.%Destroy.impl_witness.1dc, element0 [concrete = constants.%Op.ea3]
-// CHECK:STDOUT:   %bound_method.loc11: <bound method> = bound_method %x.var.loc11, %impl.elem0.loc11
 // CHECK:STDOUT:   %.loc11_16.1: %empty_tuple.type = tuple_literal ()
 // CHECK:STDOUT:   %.loc11_16.2: init %empty_tuple.type = tuple_init () to %x.var.loc11 [concrete = constants.%empty_tuple]
 // CHECK:STDOUT:   %.loc11_3.1: init %empty_tuple.type = converted %.loc11_16.1, %.loc11_16.2 [concrete = constants.%empty_tuple]
@@ -101,16 +97,20 @@ fn Main() {
 // CHECK:STDOUT:     %.loc11_11.3: type = converted %.loc11_11.2, constants.%empty_tuple.type [concrete = constants.%empty_tuple.type]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %x.loc11: ref %empty_tuple.type = bind_name x, %x.var.loc11
+// CHECK:STDOUT:   %impl.elem0.loc11: %.346 = impl_witness_access constants.%Destroy.impl_witness.1dc, element0 [concrete = constants.%Op.ea3]
+// CHECK:STDOUT:   %bound_method.loc11_3.1: <bound method> = bound_method %x.var.loc11, %impl.elem0.loc11
 // CHECK:STDOUT:   %specific_fn.loc11: <specific function> = specific_function %impl.elem0.loc11, @Op.2(constants.%empty_tuple.type) [concrete = constants.%Op.specific_fn]
-// CHECK:STDOUT:   %bound_method.1: <bound method> = bound_method %x.var.loc11, %specific_fn.loc11
+// CHECK:STDOUT:   %bound_method.loc11_3.2: <bound method> = bound_method %x.var.loc11, %specific_fn.loc11
 // CHECK:STDOUT:   %tuple.loc11: %empty_tuple.type = tuple_value () [concrete = constants.%empty_tuple]
 // CHECK:STDOUT:   %.loc11_3.2: %empty_tuple.type = converted %x.var.loc11, %tuple.loc11 [concrete = constants.%empty_tuple]
-// CHECK:STDOUT:   %no_op.1: init %empty_tuple.type = call %bound_method.1(%.loc11_3.2)
+// CHECK:STDOUT:   %no_op.loc11: init %empty_tuple.type = call %bound_method.loc11_3.2(%.loc11_3.2)
+// CHECK:STDOUT:   %impl.elem0.loc3: %.346 = impl_witness_access constants.%Destroy.impl_witness.1dc, element0 [concrete = constants.%Op.ea3]
+// CHECK:STDOUT:   %bound_method.loc3_3.1: <bound method> = bound_method %x.var.loc3, %impl.elem0.loc3
 // CHECK:STDOUT:   %specific_fn.loc3: <specific function> = specific_function %impl.elem0.loc3, @Op.2(constants.%empty_tuple.type) [concrete = constants.%Op.specific_fn]
-// CHECK:STDOUT:   %bound_method.2: <bound method> = bound_method %x.var.loc3, %specific_fn.loc3
+// CHECK:STDOUT:   %bound_method.loc3_3.2: <bound method> = bound_method %x.var.loc3, %specific_fn.loc3
 // CHECK:STDOUT:   %tuple.loc3: %empty_tuple.type = tuple_value () [concrete = constants.%empty_tuple]
 // CHECK:STDOUT:   %.loc3_3.2: %empty_tuple.type = converted %x.var.loc3, %tuple.loc3 [concrete = constants.%empty_tuple]
-// CHECK:STDOUT:   %no_op.2: init %empty_tuple.type = call %bound_method.2(%.loc3_3.2)
+// CHECK:STDOUT:   %no_op.loc3: init %empty_tuple.type = call %bound_method.loc3_3.2(%.loc3_3.2)
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

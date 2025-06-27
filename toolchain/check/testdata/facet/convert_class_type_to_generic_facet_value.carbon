@@ -383,6 +383,10 @@ fn G() {
 // CHECK:STDOUT:   %require_complete: <witness> = require_complete_type %T [symbolic]
 // CHECK:STDOUT:   %G.type: type = fn_type @G [concrete]
 // CHECK:STDOUT:   %G: %G.type = struct_value () [concrete]
+// CHECK:STDOUT:   %GenericParam.val: %GenericParam = struct_value () [concrete]
+// CHECK:STDOUT:   %pattern_type.ded: type = pattern_type %Generic.type.769 [concrete]
+// CHECK:STDOUT:   %pattern_type.589: type = pattern_type %GenericParam [concrete]
+// CHECK:STDOUT:   %CallGenericMethod.specific_fn: <specific function> = specific_function %CallGenericMethod, @CallGenericMethod(%GenericParam, %Generic.facet) [concrete]
 // CHECK:STDOUT:   %Destroy.type: type = facet_type <@Destroy> [concrete]
 // CHECK:STDOUT:   %Op.type.bae: type = fn_type @Op.1 [concrete]
 // CHECK:STDOUT:   %Op.type.bc9: type = fn_type @Op.2, @impl.49c(%T) [symbolic]
@@ -392,10 +396,6 @@ fn G() {
 // CHECK:STDOUT:   %Op.0cc: %Op.type.ae1 = struct_value () [concrete]
 // CHECK:STDOUT:   %Destroy.facet: %Destroy.type = facet_value %GenericParam, (%Destroy.impl_witness.abd) [concrete]
 // CHECK:STDOUT:   %.4c3: type = fn_type_with_self_type %Op.type.bae, %Destroy.facet [concrete]
-// CHECK:STDOUT:   %GenericParam.val: %GenericParam = struct_value () [concrete]
-// CHECK:STDOUT:   %pattern_type.ded: type = pattern_type %Generic.type.769 [concrete]
-// CHECK:STDOUT:   %pattern_type.589: type = pattern_type %GenericParam [concrete]
-// CHECK:STDOUT:   %CallGenericMethod.specific_fn: <specific function> = specific_function %CallGenericMethod, @CallGenericMethod(%GenericParam, %Generic.facet) [concrete]
 // CHECK:STDOUT:   %Op.specific_fn: <specific function> = specific_function %Op.0cc, @Op.2(%GenericParam) [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -535,8 +535,6 @@ fn G() {
 // CHECK:STDOUT:   %ImplsGeneric.ref: type = name_ref ImplsGeneric, file.%ImplsGeneric.decl [concrete = constants.%ImplsGeneric]
 // CHECK:STDOUT:   %.loc18_36.1: %empty_struct_type = struct_literal ()
 // CHECK:STDOUT:   %GenericParam.ref: type = name_ref GenericParam, file.%GenericParam.decl [concrete = constants.%GenericParam]
-// CHECK:STDOUT:   %impl.elem0: %.4c3 = impl_witness_access constants.%Destroy.impl_witness.abd, element0 [concrete = constants.%Op.0cc]
-// CHECK:STDOUT:   %bound_method.loc18: <bound method> = bound_method %.loc18_36.2, %impl.elem0
 // CHECK:STDOUT:   %.loc18_36.2: ref %GenericParam = temporary_storage
 // CHECK:STDOUT:   %.loc18_36.3: init %GenericParam = class_init (), %.loc18_36.2 [concrete = constants.%GenericParam.val]
 // CHECK:STDOUT:   %.loc18_36.4: ref %GenericParam = temporary %.loc18_36.2, %.loc18_36.3
@@ -546,10 +544,12 @@ fn G() {
 // CHECK:STDOUT:   %CallGenericMethod.specific_fn: <specific function> = specific_function %CallGenericMethod.ref, @CallGenericMethod(constants.%GenericParam, constants.%Generic.facet) [concrete = constants.%CallGenericMethod.specific_fn]
 // CHECK:STDOUT:   %.loc18_38.2: %GenericParam = bind_value %.loc18_38.1
 // CHECK:STDOUT:   %CallGenericMethod.call: init %empty_tuple.type = call %CallGenericMethod.specific_fn(%.loc18_38.2)
+// CHECK:STDOUT:   %impl.elem0: %.4c3 = impl_witness_access constants.%Destroy.impl_witness.abd, element0 [concrete = constants.%Op.0cc]
+// CHECK:STDOUT:   %bound_method.loc18_36.1: <bound method> = bound_method %.loc18_36.2, %impl.elem0
 // CHECK:STDOUT:   %specific_fn: <specific function> = specific_function %impl.elem0, @Op.2(constants.%GenericParam) [concrete = constants.%Op.specific_fn]
-// CHECK:STDOUT:   %bound_method.1: <bound method> = bound_method %.loc18_36.2, %specific_fn
+// CHECK:STDOUT:   %bound_method.loc18_36.2: <bound method> = bound_method %.loc18_36.2, %specific_fn
 // CHECK:STDOUT:   %.loc18_36.5: %GenericParam = bind_value %.loc18_36.2
-// CHECK:STDOUT:   %no_op: init %empty_tuple.type = call %bound_method.1(%.loc18_36.5)
+// CHECK:STDOUT:   %no_op: init %empty_tuple.type = call %bound_method.loc18_36.2(%.loc18_36.5)
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

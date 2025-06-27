@@ -321,8 +321,6 @@ class A {
 // CHECK:STDOUT:   %Circle.ref.loc18_24: type = name_ref Circle, file.%Circle.decl [concrete = constants.%Circle]
 // CHECK:STDOUT:   %Make.ref: %Make.type = name_ref Make, @Circle.%Make.decl [concrete = constants.%Make]
 // CHECK:STDOUT:   %.loc18_36.1: ref %Circle = temporary_storage
-// CHECK:STDOUT:   %impl.elem0: %.9b5 = impl_witness_access constants.%Destroy.impl_witness.315, element0 [concrete = constants.%Op.e38]
-// CHECK:STDOUT:   %bound_method.loc18: <bound method> = bound_method %.loc18_36.1, %impl.elem0
 // CHECK:STDOUT:   %Make.call: init %Circle = call %Make.ref() to %.loc18_36.1
 // CHECK:STDOUT:   %Circle.ref.loc18_15: type = name_ref Circle, file.%Circle.decl [concrete = constants.%Circle]
 // CHECK:STDOUT:   %.loc18_36.2: ref %Circle = temporary %.loc18_36.1, %Make.call
@@ -346,10 +344,12 @@ class A {
 // CHECK:STDOUT:   %SOME_INTERNAL_CONSTANT.ref: <error> = name_ref SOME_INTERNAL_CONSTANT, <error> [concrete = <error>]
 // CHECK:STDOUT:   %circle.ref.loc51: %Circle = name_ref circle, %circle
 // CHECK:STDOUT:   %SomeInternalFunction.ref: <error> = name_ref SomeInternalFunction, <error> [concrete = <error>]
+// CHECK:STDOUT:   %impl.elem0: %.9b5 = impl_witness_access constants.%Destroy.impl_witness.315, element0 [concrete = constants.%Op.e38]
+// CHECK:STDOUT:   %bound_method.loc18_36.1: <bound method> = bound_method %.loc18_36.1, %impl.elem0
 // CHECK:STDOUT:   %specific_fn: <specific function> = specific_function %impl.elem0, @Op.3(constants.%Circle) [concrete = constants.%Op.specific_fn]
-// CHECK:STDOUT:   %bound_method.1: <bound method> = bound_method %.loc18_36.1, %specific_fn
+// CHECK:STDOUT:   %bound_method.loc18_36.2: <bound method> = bound_method %.loc18_36.1, %specific_fn
 // CHECK:STDOUT:   %.loc18_36.4: %Circle = bind_value %.loc18_36.1
-// CHECK:STDOUT:   %no_op: init %empty_tuple.type = call %bound_method.1(%.loc18_36.4)
+// CHECK:STDOUT:   %no_op: init %empty_tuple.type = call %bound_method.loc18_36.2(%.loc18_36.4)
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

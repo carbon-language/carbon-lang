@@ -66,23 +66,12 @@ class A {
 // CHECK:STDOUT:   %bound_method: <bound method> = bound_method %int_1.5b8, %Convert.specific_fn [concrete]
 // CHECK:STDOUT:   %int_1.5d2: %i32 = int_value 1 [concrete]
 // CHECK:STDOUT:   %B.val: %B = struct_value (%int_1.5d2) [concrete]
-// CHECK:STDOUT:   %Destroy.type: type = facet_type <@Destroy> [concrete]
-// CHECK:STDOUT:   %Op.type.bae: type = fn_type @Op.2 [concrete]
-// CHECK:STDOUT:   %T: type = bind_symbolic_name T, 0 [symbolic]
-// CHECK:STDOUT:   %Op.type.bc9: type = fn_type @Op.3, @impl.49c(%T) [symbolic]
-// CHECK:STDOUT:   %Op.46f: %Op.type.bc9 = struct_value () [symbolic]
-// CHECK:STDOUT:   %Destroy.impl_witness.8a9: <witness> = impl_witness imports.%Destroy.impl_witness_table, @impl.49c(%B) [concrete]
-// CHECK:STDOUT:   %Op.type.96c: type = fn_type @Op.3, @impl.49c(%B) [concrete]
-// CHECK:STDOUT:   %Op.c53: %Op.type.96c = struct_value () [concrete]
-// CHECK:STDOUT:   %Destroy.facet: %Destroy.type = facet_value %B, (%Destroy.impl_witness.8a9) [concrete]
-// CHECK:STDOUT:   %.f0e: type = fn_type_with_self_type %Op.type.bae, %Destroy.facet [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [concrete] {
 // CHECK:STDOUT:     .Int = %Core.Int
 // CHECK:STDOUT:     .ImplicitAs = %Core.ImplicitAs
-// CHECK:STDOUT:     .Destroy = %Core.Destroy
 // CHECK:STDOUT:     import Core//prelude
 // CHECK:STDOUT:     import Core//prelude/...
 // CHECK:STDOUT:   }
@@ -90,9 +79,6 @@ class A {
 // CHECK:STDOUT:   %Core.ImplicitAs: %ImplicitAs.type.cc7 = import_ref Core//prelude/parts/as, ImplicitAs, loaded [concrete = constants.%ImplicitAs.generic]
 // CHECK:STDOUT:   %Core.import_ref.a5b: @impl.4f9.%Convert.type (%Convert.type.0f9) = import_ref Core//prelude/parts/int, loc16_39, loaded [symbolic = @impl.4f9.%Convert (constants.%Convert.f06)]
 // CHECK:STDOUT:   %ImplicitAs.impl_witness_table.a2f = impl_witness_table (%Core.import_ref.a5b), @impl.4f9 [concrete]
-// CHECK:STDOUT:   %Core.Destroy: type = import_ref Core//prelude/parts/destroy, Destroy, loaded [concrete = constants.%Destroy.type]
-// CHECK:STDOUT:   %Core.import_ref.0b9: @impl.49c.%Op.type (%Op.type.bc9) = import_ref Core//prelude/parts/destroy, loc8_23, loaded [symbolic = @impl.49c.%Op (constants.%Op.46f)]
-// CHECK:STDOUT:   %Destroy.impl_witness_table = impl_witness_table (%Core.import_ref.0b9), @impl.49c [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -151,8 +137,6 @@ class A {
 // CHECK:STDOUT:   %B.ref: type = name_ref B, %B.decl [concrete = constants.%B]
 // CHECK:STDOUT:   %Make.ref: %Make.type = name_ref Make, @B.%Make.decl [concrete = constants.%Make]
 // CHECK:STDOUT:   %.loc26_19.1: ref %B = temporary_storage
-// CHECK:STDOUT:   %impl.elem0: %.f0e = impl_witness_access constants.%Destroy.impl_witness.8a9, element0 [concrete = constants.%Op.c53]
-// CHECK:STDOUT:   %bound_method: <bound method> = bound_method %.loc26_19.1, %impl.elem0
 // CHECK:STDOUT:   %Make.call: init %B = call %Make.ref() to %.loc26_19.1
 // CHECK:STDOUT:   %.loc26_19.2: ref %B = temporary %.loc26_19.1, %Make.call
 // CHECK:STDOUT:   %n.ref: %B.elem = name_ref n, @B.%.loc23 [concrete = @B.%.loc23]

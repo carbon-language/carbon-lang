@@ -144,8 +144,6 @@ fn MemberNamedSelf.F(x: Self, y: r#Self) {}
 // CHECK:STDOUT:     %Self.var_patt: %pattern_type.796 = var_pattern %Self.patt [concrete]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Self.var: ref %ptr.e71 = var %Self.var_patt
-// CHECK:STDOUT:   %impl.elem0.loc17: %.9cd = impl_witness_access constants.%Destroy.impl_witness.a50, element0 [concrete = constants.%Op.5a3]
-// CHECK:STDOUT:   %bound_method.loc17: <bound method> = bound_method %Self.var, %impl.elem0.loc17
 // CHECK:STDOUT:   %.loc17_21: type = splice_block %ptr.loc17 [concrete = constants.%ptr.e71] {
 // CHECK:STDOUT:     %Self.ref.loc17: type = name_ref Self, constants.%Class [concrete = constants.%Class]
 // CHECK:STDOUT:     %ptr.loc17: type = ptr_type %Self.ref.loc17 [concrete = constants.%ptr.e71]
@@ -156,8 +154,6 @@ fn MemberNamedSelf.F(x: Self, y: r#Self) {}
 // CHECK:STDOUT:     %p.var_patt: %pattern_type.796 = var_pattern %p.patt [concrete]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %p.var: ref %ptr.e71 = var %p.var_patt
-// CHECK:STDOUT:   %impl.elem0.loc18: %.9cd = impl_witness_access constants.%Destroy.impl_witness.a50, element0 [concrete = constants.%Op.5a3]
-// CHECK:STDOUT:   %bound_method.loc18: <bound method> = bound_method %p.var, %impl.elem0.loc18
 // CHECK:STDOUT:   %Self.ref.loc18_20: ref %ptr.e71 = name_ref r#Self, %Self
 // CHECK:STDOUT:   %.loc18_20: %ptr.e71 = bind_value %Self.ref.loc18_20
 // CHECK:STDOUT:   assign %p.var, %.loc18_20
@@ -166,14 +162,18 @@ fn MemberNamedSelf.F(x: Self, y: r#Self) {}
 // CHECK:STDOUT:     %ptr.loc18: type = ptr_type %Self.ref.loc18_12 [concrete = constants.%ptr.e71]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %p: ref %ptr.e71 = bind_name p, %p.var
+// CHECK:STDOUT:   %impl.elem0.loc18: %.9cd = impl_witness_access constants.%Destroy.impl_witness.a50, element0 [concrete = constants.%Op.5a3]
+// CHECK:STDOUT:   %bound_method.loc18_5.1: <bound method> = bound_method %p.var, %impl.elem0.loc18
 // CHECK:STDOUT:   %specific_fn.loc18: <specific function> = specific_function %impl.elem0.loc18, @Op.2(constants.%ptr.e71) [concrete = constants.%Op.specific_fn]
-// CHECK:STDOUT:   %bound_method.1: <bound method> = bound_method %p.var, %specific_fn.loc18
+// CHECK:STDOUT:   %bound_method.loc18_5.2: <bound method> = bound_method %p.var, %specific_fn.loc18
 // CHECK:STDOUT:   %.loc18_5: %ptr.e71 = bind_value %p.var
-// CHECK:STDOUT:   %no_op.1: init %empty_tuple.type = call %bound_method.1(%.loc18_5)
+// CHECK:STDOUT:   %no_op.loc18: init %empty_tuple.type = call %bound_method.loc18_5.2(%.loc18_5)
+// CHECK:STDOUT:   %impl.elem0.loc17: %.9cd = impl_witness_access constants.%Destroy.impl_witness.a50, element0 [concrete = constants.%Op.5a3]
+// CHECK:STDOUT:   %bound_method.loc17_5.1: <bound method> = bound_method %Self.var, %impl.elem0.loc17
 // CHECK:STDOUT:   %specific_fn.loc17: <specific function> = specific_function %impl.elem0.loc17, @Op.2(constants.%ptr.e71) [concrete = constants.%Op.specific_fn]
-// CHECK:STDOUT:   %bound_method.2: <bound method> = bound_method %Self.var, %specific_fn.loc17
+// CHECK:STDOUT:   %bound_method.loc17_5.2: <bound method> = bound_method %Self.var, %specific_fn.loc17
 // CHECK:STDOUT:   %.loc17_5: %ptr.e71 = bind_value %Self.var
-// CHECK:STDOUT:   %no_op.2: init %empty_tuple.type = call %bound_method.2(%.loc17_5)
+// CHECK:STDOUT:   %no_op.loc17: init %empty_tuple.type = call %bound_method.loc17_5.2(%.loc17_5)
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

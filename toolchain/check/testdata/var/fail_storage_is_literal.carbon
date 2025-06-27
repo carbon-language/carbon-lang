@@ -61,7 +61,6 @@ fn Main() {
 // CHECK:STDOUT:     %x.var_patt: <error> = var_pattern %x.patt [concrete]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %x.var: ref <error> = var %x.var_patt [concrete = <error>]
-// CHECK:STDOUT:   %impl.elem0: <error> = impl_witness_access <error>, element0 [concrete = <error>]
 // CHECK:STDOUT:   %int_1.loc23_14: Core.IntLiteral = int_value 1 [concrete = constants.%int_1]
 // CHECK:STDOUT:   assign %x.var, <error>
 // CHECK:STDOUT:   %.1: <error> = splice_block <error> [concrete = <error>] {
@@ -69,6 +68,7 @@ fn Main() {
 // CHECK:STDOUT:     %.loc23: type = converted %int_1.loc23_10, <error> [concrete = <error>]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %x: <error> = bind_name x, <error> [concrete = <error>]
+// CHECK:STDOUT:   %impl.elem0: <error> = impl_witness_access <error>, element0 [concrete = <error>]
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

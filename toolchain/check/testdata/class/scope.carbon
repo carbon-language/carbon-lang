@@ -194,8 +194,6 @@ fn Run() {
 // CHECK:STDOUT:     %a.var_patt: %pattern_type.7ce = var_pattern %a.patt [concrete]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %a.var: ref %i32 = var %a.var_patt
-// CHECK:STDOUT:   %impl.elem0.loc30: %.ab7 = impl_witness_access constants.%Destroy.impl_witness.64e, element0 [concrete = constants.%Op.e6a]
-// CHECK:STDOUT:   %bound_method.loc30: <bound method> = bound_method %a.var, %impl.elem0.loc30
 // CHECK:STDOUT:   %F.ref.loc30: %F.type.b25 = name_ref F, file.%F.decl [concrete = constants.%F.c41]
 // CHECK:STDOUT:   %F.call.loc30: init %i32 = call %F.ref.loc30()
 // CHECK:STDOUT:   assign %a.var, %F.call.loc30
@@ -209,8 +207,6 @@ fn Run() {
 // CHECK:STDOUT:     %b.var_patt: %pattern_type.7ce = var_pattern %b.patt [concrete]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %b.var: ref %i32 = var %b.var_patt
-// CHECK:STDOUT:   %impl.elem0.loc31: %.ab7 = impl_witness_access constants.%Destroy.impl_witness.64e, element0 [concrete = constants.%Op.e6a]
-// CHECK:STDOUT:   %bound_method.loc31: <bound method> = bound_method %b.var, %impl.elem0.loc31
 // CHECK:STDOUT:   %Class.ref: type = name_ref Class, file.%Class.decl [concrete = constants.%Class]
 // CHECK:STDOUT:   %F.ref.loc31: %F.type.f1b = name_ref F, @Class.%F.decl [concrete = constants.%F.1f2]
 // CHECK:STDOUT:   %F.call.loc31: init %i32 = call %F.ref.loc31()
@@ -220,14 +216,18 @@ fn Run() {
 // CHECK:STDOUT:     %i32.loc31: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %b: ref %i32 = bind_name b, %b.var
+// CHECK:STDOUT:   %impl.elem0.loc31: %.ab7 = impl_witness_access constants.%Destroy.impl_witness.64e, element0 [concrete = constants.%Op.e6a]
+// CHECK:STDOUT:   %bound_method.loc31_3.1: <bound method> = bound_method %b.var, %impl.elem0.loc31
 // CHECK:STDOUT:   %specific_fn.loc31: <specific function> = specific_function %impl.elem0.loc31, @Op.3(constants.%i32) [concrete = constants.%Op.specific_fn]
-// CHECK:STDOUT:   %bound_method.1: <bound method> = bound_method %b.var, %specific_fn.loc31
+// CHECK:STDOUT:   %bound_method.loc31_3.2: <bound method> = bound_method %b.var, %specific_fn.loc31
 // CHECK:STDOUT:   %.loc31_3: %i32 = bind_value %b.var
-// CHECK:STDOUT:   %no_op.1: init %empty_tuple.type = call %bound_method.1(%.loc31_3)
+// CHECK:STDOUT:   %no_op.loc31: init %empty_tuple.type = call %bound_method.loc31_3.2(%.loc31_3)
+// CHECK:STDOUT:   %impl.elem0.loc30: %.ab7 = impl_witness_access constants.%Destroy.impl_witness.64e, element0 [concrete = constants.%Op.e6a]
+// CHECK:STDOUT:   %bound_method.loc30_3.1: <bound method> = bound_method %a.var, %impl.elem0.loc30
 // CHECK:STDOUT:   %specific_fn.loc30: <specific function> = specific_function %impl.elem0.loc30, @Op.3(constants.%i32) [concrete = constants.%Op.specific_fn]
-// CHECK:STDOUT:   %bound_method.2: <bound method> = bound_method %a.var, %specific_fn.loc30
+// CHECK:STDOUT:   %bound_method.loc30_3.2: <bound method> = bound_method %a.var, %specific_fn.loc30
 // CHECK:STDOUT:   %.loc30_3: %i32 = bind_value %a.var
-// CHECK:STDOUT:   %no_op.2: init %empty_tuple.type = call %bound_method.2(%.loc30_3)
+// CHECK:STDOUT:   %no_op.loc30: init %empty_tuple.type = call %bound_method.loc30_3.2(%.loc30_3)
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

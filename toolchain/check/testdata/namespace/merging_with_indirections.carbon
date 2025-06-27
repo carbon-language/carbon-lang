@@ -197,9 +197,6 @@ fn Run() {
 // CHECK:STDOUT:   %Other.F: %F.type = import_ref Other//b, F, loaded [concrete = constants.%F]
 // CHECK:STDOUT:   %Other.import_ref.8db: <witness> = import_ref Other//b, inst31 [indirect], loaded [concrete = constants.%complete_type]
 // CHECK:STDOUT:   %Other.import_ref.bbd = import_ref Other//b, inst32 [indirect], unloaded
-// CHECK:STDOUT:   %Core.Destroy: type = import_ref Core//prelude/parts/destroy, Destroy, loaded [concrete = constants.%Destroy.type]
-// CHECK:STDOUT:   %Core.import_ref.0b9: @impl.%Op.type (%Op.type.bc9) = import_ref Core//prelude/parts/destroy, loc8_23, loaded [symbolic = @impl.%Op (constants.%Op.46f)]
-// CHECK:STDOUT:   %Destroy.impl_witness_table = impl_witness_table (%Core.import_ref.0b9), @impl [concrete]
 // CHECK:STDOUT:   %Other.NS1: <namespace> = import_ref Other//b, NS1, loaded
 // CHECK:STDOUT:   %NS1.b9a: <namespace> = namespace %Other.NS1, [concrete] {
 // CHECK:STDOUT:     .A = %Other.A
@@ -207,6 +204,9 @@ fn Run() {
 // CHECK:STDOUT:     import Other//a
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Other.A: type = import_ref Other//a, A, loaded [concrete = constants.%A]
+// CHECK:STDOUT:   %Core.Destroy: type = import_ref Core//prelude/parts/destroy, Destroy, loaded [concrete = constants.%Destroy.type]
+// CHECK:STDOUT:   %Core.import_ref.0b9: @impl.%Op.type (%Op.type.bc9) = import_ref Core//prelude/parts/destroy, loc8_23, loaded [symbolic = @impl.%Op (constants.%Op.46f)]
+// CHECK:STDOUT:   %Destroy.impl_witness_table = impl_witness_table (%Core.import_ref.0b9), @impl [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -232,8 +232,6 @@ fn Run() {
 // CHECK:STDOUT:   %Other.ref.loc7: <namespace> = name_ref Other, imports.%Other [concrete = imports.%Other]
 // CHECK:STDOUT:   %F.ref.loc7: %F.type = name_ref F, imports.%Other.F [concrete = constants.%F]
 // CHECK:STDOUT:   %.loc7_11.1: ref %A = temporary_storage
-// CHECK:STDOUT:   %impl.elem0.loc7: %.8ba = impl_witness_access constants.%Destroy.impl_witness.f31, element0 [concrete = constants.%Op.478]
-// CHECK:STDOUT:   %bound_method.loc7: <bound method> = bound_method %.loc7_11.1, %impl.elem0.loc7
 // CHECK:STDOUT:   %F.call.loc7: init %A = call %F.ref.loc7() to %.loc7_11.1
 // CHECK:STDOUT:   %.loc7_11.2: ref %A = temporary %.loc7_11.1, %F.call.loc7
 // CHECK:STDOUT:   name_binding_decl {
@@ -241,8 +239,6 @@ fn Run() {
 // CHECK:STDOUT:     %a.var_patt: %pattern_type.272 = var_pattern %a.patt [concrete]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %a.var: ref %A = var %a.var_patt
-// CHECK:STDOUT:   %impl.elem0.loc10: %.8ba = impl_witness_access constants.%Destroy.impl_witness.f31, element0 [concrete = constants.%Op.478]
-// CHECK:STDOUT:   %bound_method.loc10: <bound method> = bound_method %a.var, %impl.elem0.loc10
 // CHECK:STDOUT:   %.loc10_19: type = splice_block %A.ref [concrete = constants.%A] {
 // CHECK:STDOUT:     %Other.ref.loc10: <namespace> = name_ref Other, imports.%Other [concrete = imports.%Other]
 // CHECK:STDOUT:     %NS1.ref: <namespace> = name_ref NS1, imports.%NS1.b9a [concrete = imports.%NS1.b9a]
@@ -253,22 +249,26 @@ fn Run() {
 // CHECK:STDOUT:   %Other.ref.loc13: <namespace> = name_ref Other, imports.%Other [concrete = imports.%Other]
 // CHECK:STDOUT:   %F.ref.loc13: %F.type = name_ref F, imports.%Other.F [concrete = constants.%F]
 // CHECK:STDOUT:   %.loc13_3.1: ref %A = splice_block %a.ref {}
-// CHECK:STDOUT:   %impl.elem0.loc13: %.8ba = impl_witness_access constants.%Destroy.impl_witness.f31, element0 [concrete = constants.%Op.478]
-// CHECK:STDOUT:   %bound_method.loc13: <bound method> = bound_method %.loc13_3.1, %impl.elem0.loc13
 // CHECK:STDOUT:   %F.call.loc13: init %A = call %F.ref.loc13() to %.loc13_3.1
 // CHECK:STDOUT:   assign %a.ref, %F.call.loc13
+// CHECK:STDOUT:   %impl.elem0.loc13: %.8ba = impl_witness_access constants.%Destroy.impl_witness.f31, element0 [concrete = constants.%Op.478]
+// CHECK:STDOUT:   %bound_method.loc13_3.1: <bound method> = bound_method %.loc13_3.1, %impl.elem0.loc13
 // CHECK:STDOUT:   %specific_fn.loc13: <specific function> = specific_function %impl.elem0.loc13, @Op.2(constants.%A) [concrete = constants.%Op.specific_fn]
-// CHECK:STDOUT:   %bound_method.1: <bound method> = bound_method %.loc13_3.1, %specific_fn.loc13
+// CHECK:STDOUT:   %bound_method.loc13_3.2: <bound method> = bound_method %.loc13_3.1, %specific_fn.loc13
 // CHECK:STDOUT:   %.loc13_3.2: %A = bind_value %.loc13_3.1
-// CHECK:STDOUT:   %no_op.1: init %empty_tuple.type = call %bound_method.1(%.loc13_3.2)
+// CHECK:STDOUT:   %no_op.loc13: init %empty_tuple.type = call %bound_method.loc13_3.2(%.loc13_3.2)
+// CHECK:STDOUT:   %impl.elem0.loc10: %.8ba = impl_witness_access constants.%Destroy.impl_witness.f31, element0 [concrete = constants.%Op.478]
+// CHECK:STDOUT:   %bound_method.loc10_3.1: <bound method> = bound_method %a.var, %impl.elem0.loc10
 // CHECK:STDOUT:   %specific_fn.loc10: <specific function> = specific_function %impl.elem0.loc10, @Op.2(constants.%A) [concrete = constants.%Op.specific_fn]
-// CHECK:STDOUT:   %bound_method.2: <bound method> = bound_method %a.var, %specific_fn.loc10
+// CHECK:STDOUT:   %bound_method.loc10_3.2: <bound method> = bound_method %a.var, %specific_fn.loc10
 // CHECK:STDOUT:   %.loc10_3: %A = bind_value %a.var
-// CHECK:STDOUT:   %no_op.2: init %empty_tuple.type = call %bound_method.2(%.loc10_3)
+// CHECK:STDOUT:   %no_op.loc10: init %empty_tuple.type = call %bound_method.loc10_3.2(%.loc10_3)
+// CHECK:STDOUT:   %impl.elem0.loc7: %.8ba = impl_witness_access constants.%Destroy.impl_witness.f31, element0 [concrete = constants.%Op.478]
+// CHECK:STDOUT:   %bound_method.loc7_11.1: <bound method> = bound_method %.loc7_11.1, %impl.elem0.loc7
 // CHECK:STDOUT:   %specific_fn.loc7: <specific function> = specific_function %impl.elem0.loc7, @Op.2(constants.%A) [concrete = constants.%Op.specific_fn]
-// CHECK:STDOUT:   %bound_method.3: <bound method> = bound_method %.loc7_11.1, %specific_fn.loc7
+// CHECK:STDOUT:   %bound_method.loc7_11.2: <bound method> = bound_method %.loc7_11.1, %specific_fn.loc7
 // CHECK:STDOUT:   %.loc7_11.3: %A = bind_value %.loc7_11.1
-// CHECK:STDOUT:   %no_op.3: init %empty_tuple.type = call %bound_method.3(%.loc7_11.3)
+// CHECK:STDOUT:   %no_op.loc7: init %empty_tuple.type = call %bound_method.loc7_11.2(%.loc7_11.3)
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

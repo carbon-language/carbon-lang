@@ -124,8 +124,8 @@ fn CallNegative() {
 // CHECK:STDOUT:   %pattern_type: type = pattern_type %Int.loc12_20.2 [symbolic = %pattern_type (constants.%pattern_type.8963eb.1)]
 // CHECK:STDOUT:   %Destroy.lookup_impl_witness: <witness> = lookup_impl_witness %Int.loc12_20.2, @Destroy [symbolic = %Destroy.lookup_impl_witness (constants.%Destroy.lookup_impl_witness)]
 // CHECK:STDOUT:   %Destroy.facet: %Destroy.type = facet_value %Int.loc12_20.2, (%Destroy.lookup_impl_witness) [symbolic = %Destroy.facet (constants.%Destroy.facet.13d)]
-// CHECK:STDOUT:   %.loc12_3.2: type = fn_type_with_self_type constants.%Op.type.bae, %Destroy.facet [symbolic = %.loc12_3.2 (constants.%.bbc)]
-// CHECK:STDOUT:   %impl.elem0.loc12_3.2: @ErrorIfNIsZero.%.loc12_3.2 (%.bbc) = impl_witness_access %Destroy.lookup_impl_witness, element0 [symbolic = %impl.elem0.loc12_3.2 (constants.%impl.elem0.fe8)]
+// CHECK:STDOUT:   %.loc12_3.3: type = fn_type_with_self_type constants.%Op.type.bae, %Destroy.facet [symbolic = %.loc12_3.3 (constants.%.bbc)]
+// CHECK:STDOUT:   %impl.elem0.loc12_3.2: @ErrorIfNIsZero.%.loc12_3.3 (%.bbc) = impl_witness_access %Destroy.lookup_impl_witness, element0 [symbolic = %impl.elem0.loc12_3.2 (constants.%impl.elem0.fe8)]
 // CHECK:STDOUT:   %specific_impl_fn.loc12_3.2: <specific function> = specific_impl_function %impl.elem0.loc12_3.2, @Op.1(%Destroy.facet) [symbolic = %specific_impl_fn.loc12_3.2 (constants.%specific_impl_fn)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   fn() {
@@ -135,8 +135,6 @@ fn CallNegative() {
 // CHECK:STDOUT:       %v.var_patt: @ErrorIfNIsZero.%pattern_type (%pattern_type.8963eb.1) = var_pattern %v.patt [concrete]
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %v.var: ref @ErrorIfNIsZero.%Int.loc12_20.2 (%Int.49d0e6.1) = var %v.var_patt
-// CHECK:STDOUT:     %impl.elem0.loc12_3.1: @ErrorIfNIsZero.%.loc12_3.2 (%.bbc) = impl_witness_access constants.%Destroy.lookup_impl_witness, element0 [symbolic = %impl.elem0.loc12_3.2 (constants.%impl.elem0.fe8)]
-// CHECK:STDOUT:     %bound_method.loc12: <bound method> = bound_method %v.var, %impl.elem0.loc12_3.1
 // CHECK:STDOUT:     %.loc12_20: type = splice_block %Int.loc12_20.1 [symbolic = %Int.loc12_20.2 (constants.%Int.49d0e6.1)] {
 // CHECK:STDOUT:       %Core.ref.loc12: <namespace> = name_ref Core, imports.%Core [concrete = imports.%Core]
 // CHECK:STDOUT:       %Int.ref: %Int.type = name_ref Int, imports.%Core.Int [concrete = constants.%Int.generic]
@@ -144,10 +142,12 @@ fn CallNegative() {
 // CHECK:STDOUT:       %Int.loc12_20.1: type = class_type @Int, @Int(constants.%N) [symbolic = %Int.loc12_20.2 (constants.%Int.49d0e6.1)]
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %v: ref @ErrorIfNIsZero.%Int.loc12_20.2 (%Int.49d0e6.1) = bind_name v, %v.var
+// CHECK:STDOUT:     %impl.elem0.loc12_3.1: @ErrorIfNIsZero.%.loc12_3.3 (%.bbc) = impl_witness_access constants.%Destroy.lookup_impl_witness, element0 [symbolic = %impl.elem0.loc12_3.2 (constants.%impl.elem0.fe8)]
+// CHECK:STDOUT:     %bound_method.loc12_3.1: <bound method> = bound_method %v.var, %impl.elem0.loc12_3.1
 // CHECK:STDOUT:     %specific_impl_fn.loc12_3.1: <specific function> = specific_impl_function %impl.elem0.loc12_3.1, @Op.1(constants.%Destroy.facet.13d) [symbolic = %specific_impl_fn.loc12_3.2 (constants.%specific_impl_fn)]
-// CHECK:STDOUT:     %bound_method.1: <bound method> = bound_method %v.var, %specific_impl_fn.loc12_3.1
+// CHECK:STDOUT:     %bound_method.loc12_3.2: <bound method> = bound_method %v.var, %specific_impl_fn.loc12_3.1
 // CHECK:STDOUT:     %.loc12_3.1: @ErrorIfNIsZero.%Int.loc12_20.2 (%Int.49d0e6.1) = bind_value %v.var
-// CHECK:STDOUT:     %.1: init %empty_tuple.type = call %bound_method.1(%.loc12_3.1)
+// CHECK:STDOUT:     %.loc12_3.2: init %empty_tuple.type = call %bound_method.loc12_3.2(%.loc12_3.1)
 // CHECK:STDOUT:     return
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
@@ -174,7 +174,7 @@ fn CallNegative() {
 // CHECK:STDOUT:   %pattern_type => constants.%pattern_type.47b
 // CHECK:STDOUT:   %Destroy.lookup_impl_witness => constants.%Destroy.impl_witness.404
 // CHECK:STDOUT:   %Destroy.facet => constants.%Destroy.facet.973
-// CHECK:STDOUT:   %.loc12_3.2 => constants.%.9ab
+// CHECK:STDOUT:   %.loc12_3.3 => constants.%.9ab
 // CHECK:STDOUT:   %impl.elem0.loc12_3.2 => constants.%Op.912
 // CHECK:STDOUT:   %specific_impl_fn.loc12_3.2 => constants.%Op.specific_fn
 // CHECK:STDOUT: }

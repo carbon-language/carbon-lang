@@ -201,8 +201,6 @@ fn F() -> {} {
 // CHECK:STDOUT:     %_.var_patt: %pattern_type.a96 = var_pattern %_.patt.loc9 [concrete]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %_.var: ref %empty_struct_type = var %_.var_patt
-// CHECK:STDOUT:   %impl.elem0: %.9da = impl_witness_access constants.%Destroy.impl_witness.eb8, element0 [concrete = constants.%Op.d5a]
-// CHECK:STDOUT:   %bound_method.loc9: <bound method> = bound_method %_.var, %impl.elem0
 // CHECK:STDOUT:   %.loc9_16.1: %empty_struct_type = struct_literal ()
 // CHECK:STDOUT:   %.loc9_16.2: init %empty_struct_type = struct_init () to %_.var [concrete = constants.%empty_struct]
 // CHECK:STDOUT:   %.loc9_3.1: init %empty_struct_type = converted %.loc9_16.1, %.loc9_16.2 [concrete = constants.%empty_struct]
@@ -212,11 +210,13 @@ fn F() -> {} {
 // CHECK:STDOUT:     %.loc9_11.3: type = converted %.loc9_11.2, constants.%empty_struct_type [concrete = constants.%empty_struct_type]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %_.loc9: ref %empty_struct_type = bind_name _, %_.var
+// CHECK:STDOUT:   %impl.elem0: %.9da = impl_witness_access constants.%Destroy.impl_witness.eb8, element0 [concrete = constants.%Op.d5a]
+// CHECK:STDOUT:   %bound_method.loc9_3.1: <bound method> = bound_method %_.var, %impl.elem0
 // CHECK:STDOUT:   %specific_fn: <specific function> = specific_function %impl.elem0, @Op.2(constants.%empty_struct_type) [concrete = constants.%Op.specific_fn]
-// CHECK:STDOUT:   %bound_method.1: <bound method> = bound_method %_.var, %specific_fn
+// CHECK:STDOUT:   %bound_method.loc9_3.2: <bound method> = bound_method %_.var, %specific_fn
 // CHECK:STDOUT:   %empty_struct.loc9: %empty_struct_type = struct_value () [concrete = constants.%empty_struct]
 // CHECK:STDOUT:   %.loc9_3.2: %empty_struct_type = converted %_.var, %empty_struct.loc9 [concrete = constants.%empty_struct]
-// CHECK:STDOUT:   %no_op: init %empty_tuple.type = call %bound_method.1(%.loc9_3.2)
+// CHECK:STDOUT:   %no_op: init %empty_tuple.type = call %bound_method.loc9_3.2(%.loc9_3.2)
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

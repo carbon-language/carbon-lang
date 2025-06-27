@@ -42,24 +42,14 @@ fn EnclosingButAfter(b: bool) -> i32 {
 // CHECK:STDOUT:   %UnrelatedScopes.type: type = fn_type @UnrelatedScopes [concrete]
 // CHECK:STDOUT:   %UnrelatedScopes: %UnrelatedScopes.type = struct_value () [concrete]
 // CHECK:STDOUT:   %true: bool = bool_literal true [concrete]
-// CHECK:STDOUT:   %Destroy.type: type = facet_type <@Destroy> [concrete]
-// CHECK:STDOUT:   %Op.type.bae: type = fn_type @Op.1 [concrete]
-// CHECK:STDOUT:   %To: Core.IntLiteral = bind_symbolic_name To, 0 [symbolic]
+// CHECK:STDOUT:   %int_0.5c6: Core.IntLiteral = int_value 0 [concrete]
 // CHECK:STDOUT:   %ImplicitAs.type.cc7: type = generic_interface_type @ImplicitAs [concrete]
 // CHECK:STDOUT:   %ImplicitAs.generic: %ImplicitAs.type.cc7 = struct_value () [concrete]
-// CHECK:STDOUT:   %Convert.type.0f9: type = fn_type @Convert.2, @impl.4f9(%To) [symbolic]
-// CHECK:STDOUT:   %Convert.f06: %Convert.type.0f9 = struct_value () [symbolic]
-// CHECK:STDOUT:   %T: type = bind_symbolic_name T, 0 [symbolic]
-// CHECK:STDOUT:   %Op.type.bc9: type = fn_type @Op.3, @impl.49c(%T) [symbolic]
-// CHECK:STDOUT:   %Op.46f: %Op.type.bc9 = struct_value () [symbolic]
-// CHECK:STDOUT:   %Destroy.impl_witness.64e: <witness> = impl_witness imports.%Destroy.impl_witness_table, @impl.49c(%i32) [concrete]
-// CHECK:STDOUT:   %Op.type.a17: type = fn_type @Op.3, @impl.49c(%i32) [concrete]
-// CHECK:STDOUT:   %Op.e6a: %Op.type.a17 = struct_value () [concrete]
-// CHECK:STDOUT:   %Destroy.facet: %Destroy.type = facet_value %i32, (%Destroy.impl_witness.64e) [concrete]
-// CHECK:STDOUT:   %.ab7: type = fn_type_with_self_type %Op.type.bae, %Destroy.facet [concrete]
-// CHECK:STDOUT:   %int_0.5c6: Core.IntLiteral = int_value 0 [concrete]
 // CHECK:STDOUT:   %ImplicitAs.type.205: type = facet_type <@ImplicitAs, @ImplicitAs(%i32)> [concrete]
 // CHECK:STDOUT:   %Convert.type.1b6: type = fn_type @Convert.1, @ImplicitAs(%i32) [concrete]
+// CHECK:STDOUT:   %To: Core.IntLiteral = bind_symbolic_name To, 0 [symbolic]
+// CHECK:STDOUT:   %Convert.type.0f9: type = fn_type @Convert.2, @impl.4f9(%To) [symbolic]
+// CHECK:STDOUT:   %Convert.f06: %Convert.type.0f9 = struct_value () [symbolic]
 // CHECK:STDOUT:   %ImplicitAs.impl_witness.c75: <witness> = impl_witness imports.%ImplicitAs.impl_witness_table.a2f, @impl.4f9(%int_32) [concrete]
 // CHECK:STDOUT:   %Convert.type.035: type = fn_type @Convert.2, @impl.4f9(%int_32) [concrete]
 // CHECK:STDOUT:   %Convert.956: %Convert.type.035 = struct_value () [concrete]
@@ -83,19 +73,15 @@ fn EnclosingButAfter(b: bool) -> i32 {
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [concrete] {
 // CHECK:STDOUT:     .Int = %Core.Int
-// CHECK:STDOUT:     .Destroy = %Core.Destroy
 // CHECK:STDOUT:     .ImplicitAs = %Core.ImplicitAs
 // CHECK:STDOUT:     .Bool = %Core.Bool
 // CHECK:STDOUT:     import Core//prelude
 // CHECK:STDOUT:     import Core//prelude/...
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.Int: %Int.type = import_ref Core//prelude/parts/int, Int, loaded [concrete = constants.%Int.generic]
-// CHECK:STDOUT:   %Core.Destroy: type = import_ref Core//prelude/parts/destroy, Destroy, loaded [concrete = constants.%Destroy.type]
+// CHECK:STDOUT:   %Core.ImplicitAs: %ImplicitAs.type.cc7 = import_ref Core//prelude/parts/as, ImplicitAs, loaded [concrete = constants.%ImplicitAs.generic]
 // CHECK:STDOUT:   %Core.import_ref.a5b: @impl.4f9.%Convert.type (%Convert.type.0f9) = import_ref Core//prelude/parts/int, loc16_39, loaded [symbolic = @impl.4f9.%Convert (constants.%Convert.f06)]
 // CHECK:STDOUT:   %ImplicitAs.impl_witness_table.a2f = impl_witness_table (%Core.import_ref.a5b), @impl.4f9 [concrete]
-// CHECK:STDOUT:   %Core.import_ref.0b9: @impl.49c.%Op.type (%Op.type.bc9) = import_ref Core//prelude/parts/destroy, loc8_23, loaded [symbolic = @impl.49c.%Op (constants.%Op.46f)]
-// CHECK:STDOUT:   %Destroy.impl_witness_table = impl_witness_table (%Core.import_ref.0b9), @impl.49c [concrete]
-// CHECK:STDOUT:   %Core.ImplicitAs: %ImplicitAs.type.cc7 = import_ref Core//prelude/parts/as, ImplicitAs, loaded [concrete = constants.%ImplicitAs.generic]
 // CHECK:STDOUT:   %Core.Bool: %Bool.type = import_ref Core//prelude/parts/bool, Bool, loaded [concrete = constants.%Bool]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -146,14 +132,12 @@ fn EnclosingButAfter(b: bool) -> i32 {
 // CHECK:STDOUT:     %v.var_patt: %pattern_type.7ce = var_pattern %v.patt [concrete]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %v.var: ref %i32 = var %v.var_patt
-// CHECK:STDOUT:   %impl.elem0.loc17_14.1: %.ab7 = impl_witness_access constants.%Destroy.impl_witness.64e, element0 [concrete = constants.%Op.e6a]
-// CHECK:STDOUT:   %bound_method.loc17_14.1: <bound method> = bound_method %v.var, %impl.elem0.loc17_14.1
 // CHECK:STDOUT:   %int_0.loc17: Core.IntLiteral = int_value 0 [concrete = constants.%int_0.5c6]
-// CHECK:STDOUT:   %impl.elem0.loc17_14.2: %.9c3 = impl_witness_access constants.%ImplicitAs.impl_witness.c75, element0 [concrete = constants.%Convert.956]
-// CHECK:STDOUT:   %bound_method.loc17_14.2: <bound method> = bound_method %int_0.loc17, %impl.elem0.loc17_14.2 [concrete = constants.%Convert.bound.d04]
-// CHECK:STDOUT:   %specific_fn.loc17: <specific function> = specific_function %impl.elem0.loc17_14.2, @Convert.2(constants.%int_32) [concrete = constants.%Convert.specific_fn]
-// CHECK:STDOUT:   %bound_method.loc17_14.3: <bound method> = bound_method %int_0.loc17, %specific_fn.loc17 [concrete = constants.%bound_method.b6e]
-// CHECK:STDOUT:   %int.convert_checked.loc17: init %i32 = call %bound_method.loc17_14.3(%int_0.loc17) [concrete = constants.%int_0.6a9]
+// CHECK:STDOUT:   %impl.elem0.loc17: %.9c3 = impl_witness_access constants.%ImplicitAs.impl_witness.c75, element0 [concrete = constants.%Convert.956]
+// CHECK:STDOUT:   %bound_method.loc17_14.1: <bound method> = bound_method %int_0.loc17, %impl.elem0.loc17 [concrete = constants.%Convert.bound.d04]
+// CHECK:STDOUT:   %specific_fn.loc17: <specific function> = specific_function %impl.elem0.loc17, @Convert.2(constants.%int_32) [concrete = constants.%Convert.specific_fn]
+// CHECK:STDOUT:   %bound_method.loc17_14.2: <bound method> = bound_method %int_0.loc17, %specific_fn.loc17 [concrete = constants.%bound_method.b6e]
+// CHECK:STDOUT:   %int.convert_checked.loc17: init %i32 = call %bound_method.loc17_14.2(%int_0.loc17) [concrete = constants.%int_0.6a9]
 // CHECK:STDOUT:   %.loc17_14: init %i32 = converted %int_0.loc17, %int.convert_checked.loc17 [concrete = constants.%int_0.6a9]
 // CHECK:STDOUT:   assign %v.var, %.loc17_14
 // CHECK:STDOUT:   %.loc17_21: type = splice_block %i32.loc17 [concrete = constants.%i32] {
@@ -173,14 +157,12 @@ fn EnclosingButAfter(b: bool) -> i32 {
 // CHECK:STDOUT:     %w.var_patt: %pattern_type.7ce = var_pattern %w.patt [concrete]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %w.var: ref %i32 = var %w.var_patt
-// CHECK:STDOUT:   %impl.elem0.loc20_14.1: %.ab7 = impl_witness_access constants.%Destroy.impl_witness.64e, element0 [concrete = constants.%Op.e6a]
-// CHECK:STDOUT:   %bound_method.loc20_14.1: <bound method> = bound_method %w.var, %impl.elem0.loc20_14.1
 // CHECK:STDOUT:   %int_1: Core.IntLiteral = int_value 1 [concrete = constants.%int_1.5b8]
-// CHECK:STDOUT:   %impl.elem0.loc20_14.2: %.9c3 = impl_witness_access constants.%ImplicitAs.impl_witness.c75, element0 [concrete = constants.%Convert.956]
-// CHECK:STDOUT:   %bound_method.loc20_14.2: <bound method> = bound_method %int_1, %impl.elem0.loc20_14.2 [concrete = constants.%Convert.bound.ab5]
-// CHECK:STDOUT:   %specific_fn.loc20: <specific function> = specific_function %impl.elem0.loc20_14.2, @Convert.2(constants.%int_32) [concrete = constants.%Convert.specific_fn]
-// CHECK:STDOUT:   %bound_method.loc20_14.3: <bound method> = bound_method %int_1, %specific_fn.loc20 [concrete = constants.%bound_method.9a1]
-// CHECK:STDOUT:   %int.convert_checked.loc20: init %i32 = call %bound_method.loc20_14.3(%int_1) [concrete = constants.%int_1.5d2]
+// CHECK:STDOUT:   %impl.elem0.loc20: %.9c3 = impl_witness_access constants.%ImplicitAs.impl_witness.c75, element0 [concrete = constants.%Convert.956]
+// CHECK:STDOUT:   %bound_method.loc20_14.1: <bound method> = bound_method %int_1, %impl.elem0.loc20 [concrete = constants.%Convert.bound.ab5]
+// CHECK:STDOUT:   %specific_fn.loc20: <specific function> = specific_function %impl.elem0.loc20, @Convert.2(constants.%int_32) [concrete = constants.%Convert.specific_fn]
+// CHECK:STDOUT:   %bound_method.loc20_14.2: <bound method> = bound_method %int_1, %specific_fn.loc20 [concrete = constants.%bound_method.9a1]
+// CHECK:STDOUT:   %int.convert_checked.loc20: init %i32 = call %bound_method.loc20_14.2(%int_1) [concrete = constants.%int_1.5d2]
 // CHECK:STDOUT:   %.loc20_14: init %i32 = converted %int_1, %int.convert_checked.loc20 [concrete = constants.%int_1.5d2]
 // CHECK:STDOUT:   assign %w.var, %.loc20_14
 // CHECK:STDOUT:   %.loc20_21: type = splice_block %i32.loc20 [concrete = constants.%i32] {
@@ -213,14 +195,12 @@ fn EnclosingButAfter(b: bool) -> i32 {
 // CHECK:STDOUT:     %v.var_patt: %pattern_type.7ce = var_pattern %v.patt [concrete]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %v.var: ref %i32 = var %v.var_patt
-// CHECK:STDOUT:   %impl.elem0.loc27_14.1: %.ab7 = impl_witness_access constants.%Destroy.impl_witness.64e, element0 [concrete = constants.%Op.e6a]
-// CHECK:STDOUT:   %bound_method.loc27_14.1: <bound method> = bound_method %v.var, %impl.elem0.loc27_14.1
 // CHECK:STDOUT:   %int_0: Core.IntLiteral = int_value 0 [concrete = constants.%int_0.5c6]
-// CHECK:STDOUT:   %impl.elem0.loc27_14.2: %.9c3 = impl_witness_access constants.%ImplicitAs.impl_witness.c75, element0 [concrete = constants.%Convert.956]
-// CHECK:STDOUT:   %bound_method.loc27_14.2: <bound method> = bound_method %int_0, %impl.elem0.loc27_14.2 [concrete = constants.%Convert.bound.d04]
-// CHECK:STDOUT:   %specific_fn.loc27: <specific function> = specific_function %impl.elem0.loc27_14.2, @Convert.2(constants.%int_32) [concrete = constants.%Convert.specific_fn]
-// CHECK:STDOUT:   %bound_method.loc27_14.3: <bound method> = bound_method %int_0, %specific_fn.loc27 [concrete = constants.%bound_method.b6e]
-// CHECK:STDOUT:   %int.convert_checked.loc27: init %i32 = call %bound_method.loc27_14.3(%int_0) [concrete = constants.%int_0.6a9]
+// CHECK:STDOUT:   %impl.elem0.loc27: %.9c3 = impl_witness_access constants.%ImplicitAs.impl_witness.c75, element0 [concrete = constants.%Convert.956]
+// CHECK:STDOUT:   %bound_method.loc27_14.1: <bound method> = bound_method %int_0, %impl.elem0.loc27 [concrete = constants.%Convert.bound.d04]
+// CHECK:STDOUT:   %specific_fn.loc27: <specific function> = specific_function %impl.elem0.loc27, @Convert.2(constants.%int_32) [concrete = constants.%Convert.specific_fn]
+// CHECK:STDOUT:   %bound_method.loc27_14.2: <bound method> = bound_method %int_0, %specific_fn.loc27 [concrete = constants.%bound_method.b6e]
+// CHECK:STDOUT:   %int.convert_checked.loc27: init %i32 = call %bound_method.loc27_14.2(%int_0) [concrete = constants.%int_0.6a9]
 // CHECK:STDOUT:   %.loc27_14: init %i32 = converted %int_0, %int.convert_checked.loc27 [concrete = constants.%int_0.6a9]
 // CHECK:STDOUT:   assign %v.var, %.loc27_14
 // CHECK:STDOUT:   %.loc27_21: type = splice_block %i32.loc27 [concrete = constants.%i32] {
@@ -237,14 +217,12 @@ fn EnclosingButAfter(b: bool) -> i32 {
 // CHECK:STDOUT:     %w.var_patt: %pattern_type.7ce = var_pattern %w.patt [concrete]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %w.var: ref %i32 = var %w.var_patt
-// CHECK:STDOUT:   %impl.elem0.loc30_12.1: %.ab7 = impl_witness_access constants.%Destroy.impl_witness.64e, element0 [concrete = constants.%Op.e6a]
-// CHECK:STDOUT:   %bound_method.loc30_12.1: <bound method> = bound_method %w.var, %impl.elem0.loc30_12.1
 // CHECK:STDOUT:   %int_1: Core.IntLiteral = int_value 1 [concrete = constants.%int_1.5b8]
-// CHECK:STDOUT:   %impl.elem0.loc30_12.2: %.9c3 = impl_witness_access constants.%ImplicitAs.impl_witness.c75, element0 [concrete = constants.%Convert.956]
-// CHECK:STDOUT:   %bound_method.loc30_12.2: <bound method> = bound_method %int_1, %impl.elem0.loc30_12.2 [concrete = constants.%Convert.bound.ab5]
-// CHECK:STDOUT:   %specific_fn.loc30: <specific function> = specific_function %impl.elem0.loc30_12.2, @Convert.2(constants.%int_32) [concrete = constants.%Convert.specific_fn]
-// CHECK:STDOUT:   %bound_method.loc30_12.3: <bound method> = bound_method %int_1, %specific_fn.loc30 [concrete = constants.%bound_method.9a1]
-// CHECK:STDOUT:   %int.convert_checked.loc30: init %i32 = call %bound_method.loc30_12.3(%int_1) [concrete = constants.%int_1.5d2]
+// CHECK:STDOUT:   %impl.elem0.loc30: %.9c3 = impl_witness_access constants.%ImplicitAs.impl_witness.c75, element0 [concrete = constants.%Convert.956]
+// CHECK:STDOUT:   %bound_method.loc30_12.1: <bound method> = bound_method %int_1, %impl.elem0.loc30 [concrete = constants.%Convert.bound.ab5]
+// CHECK:STDOUT:   %specific_fn.loc30: <specific function> = specific_function %impl.elem0.loc30, @Convert.2(constants.%int_32) [concrete = constants.%Convert.specific_fn]
+// CHECK:STDOUT:   %bound_method.loc30_12.2: <bound method> = bound_method %int_1, %specific_fn.loc30 [concrete = constants.%bound_method.9a1]
+// CHECK:STDOUT:   %int.convert_checked.loc30: init %i32 = call %bound_method.loc30_12.2(%int_1) [concrete = constants.%int_1.5d2]
 // CHECK:STDOUT:   %.loc30_12: init %i32 = converted %int_1, %int.convert_checked.loc30 [concrete = constants.%int_1.5d2]
 // CHECK:STDOUT:   assign %w.var, %.loc30_12
 // CHECK:STDOUT:   %.loc30_19: type = splice_block %i32.loc30 [concrete = constants.%i32] {

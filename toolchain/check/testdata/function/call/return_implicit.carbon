@@ -76,8 +76,6 @@ fn Main() {
 // CHECK:STDOUT:     %b.var_patt: %pattern_type.cb1 = var_pattern %b.patt [concrete]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %b.var: ref %empty_tuple.type = var %b.var_patt
-// CHECK:STDOUT:   %impl.elem0: %.346 = impl_witness_access constants.%Destroy.impl_witness.1dc, element0 [concrete = constants.%Op.ea3]
-// CHECK:STDOUT:   %bound_method.loc19: <bound method> = bound_method %b.var, %impl.elem0
 // CHECK:STDOUT:   %MakeImplicitEmptyTuple.ref: %MakeImplicitEmptyTuple.type = name_ref MakeImplicitEmptyTuple, file.%MakeImplicitEmptyTuple.decl [concrete = constants.%MakeImplicitEmptyTuple]
 // CHECK:STDOUT:   %MakeImplicitEmptyTuple.call: init %empty_tuple.type = call %MakeImplicitEmptyTuple.ref()
 // CHECK:STDOUT:   assign %b.var, %MakeImplicitEmptyTuple.call
@@ -86,11 +84,13 @@ fn Main() {
 // CHECK:STDOUT:     %.loc19_11.3: type = converted %.loc19_11.2, constants.%empty_tuple.type [concrete = constants.%empty_tuple.type]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %b: ref %empty_tuple.type = bind_name b, %b.var
+// CHECK:STDOUT:   %impl.elem0: %.346 = impl_witness_access constants.%Destroy.impl_witness.1dc, element0 [concrete = constants.%Op.ea3]
+// CHECK:STDOUT:   %bound_method.loc19_3.1: <bound method> = bound_method %b.var, %impl.elem0
 // CHECK:STDOUT:   %specific_fn: <specific function> = specific_function %impl.elem0, @Op.2(constants.%empty_tuple.type) [concrete = constants.%Op.specific_fn]
-// CHECK:STDOUT:   %bound_method.1: <bound method> = bound_method %b.var, %specific_fn
+// CHECK:STDOUT:   %bound_method.loc19_3.2: <bound method> = bound_method %b.var, %specific_fn
 // CHECK:STDOUT:   %tuple: %empty_tuple.type = tuple_value () [concrete = constants.%empty_tuple]
 // CHECK:STDOUT:   %.loc19_3: %empty_tuple.type = converted %b.var, %tuple [concrete = constants.%empty_tuple]
-// CHECK:STDOUT:   %no_op: init %empty_tuple.type = call %bound_method.1(%.loc19_3)
+// CHECK:STDOUT:   %no_op: init %empty_tuple.type = call %bound_method.loc19_3.2(%.loc19_3)
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

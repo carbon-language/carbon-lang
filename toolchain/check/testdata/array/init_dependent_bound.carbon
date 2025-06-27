@@ -65,6 +65,7 @@ fn H() { G(3); }
 // CHECK:STDOUT:   %array_type.281: type = array_type %int_0, %T [symbolic]
 // CHECK:STDOUT:   %require_complete.b7f: <witness> = require_complete_type %array_type.281 [symbolic]
 // CHECK:STDOUT:   %pattern_type.d48: type = pattern_type %array_type.281 [symbolic]
+// CHECK:STDOUT:   %array.2ed: %array_type.281 = tuple_value () [symbolic]
 // CHECK:STDOUT:   %Destroy.type: type = facet_type <@Destroy> [concrete]
 // CHECK:STDOUT:   %Op.type.bae: type = fn_type @Op.1 [concrete]
 // CHECK:STDOUT:   %Op.type.bc9: type = fn_type @Op.2, @impl(%T) [symbolic]
@@ -73,18 +74,17 @@ fn H() { G(3); }
 // CHECK:STDOUT:   %Destroy.facet.cdc: %Destroy.type = facet_value %array_type.281, (%Destroy.lookup_impl_witness) [symbolic]
 // CHECK:STDOUT:   %.77e: type = fn_type_with_self_type %Op.type.bae, %Destroy.facet.cdc [symbolic]
 // CHECK:STDOUT:   %impl.elem0: %.77e = impl_witness_access %Destroy.lookup_impl_witness, element0 [symbolic]
-// CHECK:STDOUT:   %array.2ed: %array_type.281 = tuple_value () [symbolic]
 // CHECK:STDOUT:   %specific_impl_fn: <specific function> = specific_impl_function %impl.elem0, @Op.1(%Destroy.facet.cdc) [symbolic]
 // CHECK:STDOUT:   %C: type = class_type @C [concrete]
 // CHECK:STDOUT:   %array_type.6f1: type = array_type %int_0, %C [concrete]
 // CHECK:STDOUT:   %complete_type.ed6: <witness> = complete_type_witness %array_type.6f1 [concrete]
 // CHECK:STDOUT:   %pattern_type.9c8: type = pattern_type %array_type.6f1 [concrete]
+// CHECK:STDOUT:   %array.2e5: %array_type.6f1 = tuple_value () [concrete]
 // CHECK:STDOUT:   %Destroy.impl_witness.8b8: <witness> = impl_witness imports.%Destroy.impl_witness_table, @impl(%array_type.6f1) [concrete]
 // CHECK:STDOUT:   %Op.type.a3e: type = fn_type @Op.2, @impl(%array_type.6f1) [concrete]
 // CHECK:STDOUT:   %Op.dc5: %Op.type.a3e = struct_value () [concrete]
 // CHECK:STDOUT:   %Destroy.facet.da7: %Destroy.type = facet_value %array_type.6f1, (%Destroy.impl_witness.8b8) [concrete]
 // CHECK:STDOUT:   %.a21: type = fn_type_with_self_type %Op.type.bae, %Destroy.facet.da7 [concrete]
-// CHECK:STDOUT:   %array.2e5: %array_type.6f1 = tuple_value () [concrete]
 // CHECK:STDOUT:   %Op.specific_fn: <specific function> = specific_function %Op.dc5, @Op.2(%array_type.6f1) [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -100,11 +100,11 @@ fn H() { G(3); }
 // CHECK:STDOUT:   %array_type.loc7_22.2: type = array_type constants.%int_0, %T.loc4_6.2 [symbolic = %array_type.loc7_22.2 (constants.%array_type.281)]
 // CHECK:STDOUT:   %require_complete: <witness> = require_complete_type %array_type.loc7_22.2 [symbolic = %require_complete (constants.%require_complete.b7f)]
 // CHECK:STDOUT:   %pattern_type: type = pattern_type %array_type.loc7_22.2 [symbolic = %pattern_type (constants.%pattern_type.d48)]
+// CHECK:STDOUT:   %array: @G.%array_type.loc7_22.2 (%array_type.281) = tuple_value () [symbolic = %array (constants.%array.2ed)]
 // CHECK:STDOUT:   %Destroy.lookup_impl_witness: <witness> = lookup_impl_witness %array_type.loc7_22.2, @Destroy [symbolic = %Destroy.lookup_impl_witness (constants.%Destroy.lookup_impl_witness)]
 // CHECK:STDOUT:   %Destroy.facet: %Destroy.type = facet_value %array_type.loc7_22.2, (%Destroy.lookup_impl_witness) [symbolic = %Destroy.facet (constants.%Destroy.facet.cdc)]
-// CHECK:STDOUT:   %.loc7_3.3: type = fn_type_with_self_type constants.%Op.type.bae, %Destroy.facet [symbolic = %.loc7_3.3 (constants.%.77e)]
-// CHECK:STDOUT:   %impl.elem0.loc7_3.2: @G.%.loc7_3.3 (%.77e) = impl_witness_access %Destroy.lookup_impl_witness, element0 [symbolic = %impl.elem0.loc7_3.2 (constants.%impl.elem0)]
-// CHECK:STDOUT:   %array: @G.%array_type.loc7_22.2 (%array_type.281) = tuple_value () [symbolic = %array (constants.%array.2ed)]
+// CHECK:STDOUT:   %.loc7_3.4: type = fn_type_with_self_type constants.%Op.type.bae, %Destroy.facet [symbolic = %.loc7_3.4 (constants.%.77e)]
+// CHECK:STDOUT:   %impl.elem0.loc7_3.2: @G.%.loc7_3.4 (%.77e) = impl_witness_access %Destroy.lookup_impl_witness, element0 [symbolic = %impl.elem0.loc7_3.2 (constants.%impl.elem0)]
 // CHECK:STDOUT:   %specific_impl_fn.loc7_3.2: <specific function> = specific_impl_function %impl.elem0.loc7_3.2, @Op.1(%Destroy.facet) [symbolic = %specific_impl_fn.loc7_3.2 (constants.%specific_impl_fn)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   fn() {
@@ -114,8 +114,6 @@ fn H() { G(3); }
 // CHECK:STDOUT:       %arr.var_patt: @G.%pattern_type (%pattern_type.d48) = var_pattern %arr.patt [concrete]
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %arr.var: ref @G.%array_type.loc7_22.2 (%array_type.281) = var %arr.var_patt
-// CHECK:STDOUT:     %impl.elem0.loc7_3.1: @G.%.loc7_3.3 (%.77e) = impl_witness_access constants.%Destroy.lookup_impl_witness, element0 [symbolic = %impl.elem0.loc7_3.2 (constants.%impl.elem0)]
-// CHECK:STDOUT:     %bound_method.loc7: <bound method> = bound_method %arr.var, %impl.elem0.loc7_3.1
 // CHECK:STDOUT:     %.loc7_27.1: %empty_tuple.type = tuple_literal ()
 // CHECK:STDOUT:     %.loc7_27.2: init @G.%array_type.loc7_22.2 (%array_type.281) = array_init () to %arr.var [symbolic = %array (constants.%array.2ed)]
 // CHECK:STDOUT:     %.loc7_3.1: init @G.%array_type.loc7_22.2 (%array_type.281) = converted %.loc7_27.1, %.loc7_27.2 [symbolic = %array (constants.%array.2ed)]
@@ -126,9 +124,12 @@ fn H() { G(3); }
 // CHECK:STDOUT:       %array_type.loc7_22.1: type = array_type %int_0, %T.ref [symbolic = %array_type.loc7_22.2 (constants.%array_type.281)]
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %arr: ref @G.%array_type.loc7_22.2 (%array_type.281) = bind_name arr, %arr.var
+// CHECK:STDOUT:     %impl.elem0.loc7_3.1: @G.%.loc7_3.4 (%.77e) = impl_witness_access constants.%Destroy.lookup_impl_witness, element0 [symbolic = %impl.elem0.loc7_3.2 (constants.%impl.elem0)]
+// CHECK:STDOUT:     %bound_method.loc7_3.1: <bound method> = bound_method %arr.var, %impl.elem0.loc7_3.1
 // CHECK:STDOUT:     %specific_impl_fn.loc7_3.1: <specific function> = specific_impl_function %impl.elem0.loc7_3.1, @Op.1(constants.%Destroy.facet.cdc) [symbolic = %specific_impl_fn.loc7_3.2 (constants.%specific_impl_fn)]
-// CHECK:STDOUT:     <elided>
+// CHECK:STDOUT:     %bound_method.loc7_3.2: <bound method> = bound_method %arr.var, %specific_impl_fn.loc7_3.1
 // CHECK:STDOUT:     %.loc7_3.2: @G.%array_type.loc7_22.2 (%array_type.281) = bind_value %arr.var
+// CHECK:STDOUT:     %.loc7_3.3: init %empty_tuple.type = call %bound_method.loc7_3.2(%.loc7_3.2)
 // CHECK:STDOUT:     <elided>
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
@@ -144,11 +145,11 @@ fn H() { G(3); }
 // CHECK:STDOUT:   %array_type.loc7_22.2 => constants.%array_type.6f1
 // CHECK:STDOUT:   %require_complete => constants.%complete_type.ed6
 // CHECK:STDOUT:   %pattern_type => constants.%pattern_type.9c8
+// CHECK:STDOUT:   %array => constants.%array.2e5
 // CHECK:STDOUT:   %Destroy.lookup_impl_witness => constants.%Destroy.impl_witness.8b8
 // CHECK:STDOUT:   %Destroy.facet => constants.%Destroy.facet.da7
-// CHECK:STDOUT:   %.loc7_3.3 => constants.%.a21
+// CHECK:STDOUT:   %.loc7_3.4 => constants.%.a21
 // CHECK:STDOUT:   %impl.elem0.loc7_3.2 => constants.%Op.dc5
-// CHECK:STDOUT:   %array => constants.%array.2e5
 // CHECK:STDOUT:   %specific_impl_fn.loc7_3.2 => constants.%Op.specific_fn
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -207,7 +208,6 @@ fn H() { G(3); }
 // CHECK:STDOUT:       %arr.var_patt: <error> = var_pattern %arr.patt [concrete]
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %arr.var: ref <error> = var %arr.var_patt [concrete = <error>]
-// CHECK:STDOUT:     %impl.elem0: <error> = impl_witness_access <error>, element0 [concrete = <error>]
 // CHECK:STDOUT:     %int_1: Core.IntLiteral = int_value 1 [concrete = constants.%int_1]
 // CHECK:STDOUT:     %int_2: Core.IntLiteral = int_value 2 [concrete = constants.%int_2]
 // CHECK:STDOUT:     %int_3: Core.IntLiteral = int_value 3 [concrete = constants.%int_3.1ba]
@@ -215,6 +215,7 @@ fn H() { G(3); }
 // CHECK:STDOUT:     assign %arr.var, <error>
 // CHECK:STDOUT:     <elided>
 // CHECK:STDOUT:     %arr: <error> = bind_name arr, <error> [concrete = <error>]
+// CHECK:STDOUT:     %impl.elem0: <error> = impl_witness_access <error>, element0 [concrete = <error>]
 // CHECK:STDOUT:     <elided>
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }

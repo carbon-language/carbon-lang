@@ -150,17 +150,17 @@ fn G(o: Outer) {
 // CHECK:STDOUT:     %i.var_patt: %pattern_type.906 = var_pattern %i.patt [concrete]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %i.var: ref %Inner = var %i.var_patt
-// CHECK:STDOUT:   %impl.elem0: %.6f6 = impl_witness_access constants.%Destroy.impl_witness.768, element0 [concrete = constants.%Op.754]
-// CHECK:STDOUT:   %bound_method.loc26: <bound method> = bound_method %i.var, %impl.elem0
 // CHECK:STDOUT:   %.loc26_11: type = splice_block %Inner.ref [concrete = constants.%Inner] {
 // CHECK:STDOUT:     %o.ref: %Outer = name_ref o, %o
 // CHECK:STDOUT:     %Inner.ref: type = name_ref Inner, @Outer.%Inner.decl [concrete = constants.%Inner]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %i: ref %Inner = bind_name i, %i.var
+// CHECK:STDOUT:   %impl.elem0: %.6f6 = impl_witness_access constants.%Destroy.impl_witness.768, element0 [concrete = constants.%Op.754]
+// CHECK:STDOUT:   %bound_method.loc26_3.1: <bound method> = bound_method %i.var, %impl.elem0
 // CHECK:STDOUT:   %specific_fn: <specific function> = specific_function %impl.elem0, @Op.2(constants.%Inner) [concrete = constants.%Op.specific_fn]
-// CHECK:STDOUT:   %bound_method.1: <bound method> = bound_method %i.var, %specific_fn
+// CHECK:STDOUT:   %bound_method.loc26_3.2: <bound method> = bound_method %i.var, %specific_fn
 // CHECK:STDOUT:   %.loc26_3: %Inner = bind_value %i.var
-// CHECK:STDOUT:   %no_op: init %empty_tuple.type = call %bound_method.1(%.loc26_3)
+// CHECK:STDOUT:   %no_op: init %empty_tuple.type = call %bound_method.loc26_3.2(%.loc26_3)
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

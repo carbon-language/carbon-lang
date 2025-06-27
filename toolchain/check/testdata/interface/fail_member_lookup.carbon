@@ -147,13 +147,13 @@ fn G(U:! Different) -> U.(Interface.T);
 // CHECK:STDOUT:     %v.var_patt: <error> = var_pattern %v.patt [concrete]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %v.var: ref <error> = var %v.var_patt [concrete = <error>]
-// CHECK:STDOUT:   %impl.elem0: <error> = impl_witness_access <error>, element0 [concrete = <error>]
 // CHECK:STDOUT:   %.1: <error> = splice_block <error> [concrete = <error>] {
 // CHECK:STDOUT:     %Interface.ref.loc23: type = name_ref Interface, file.%Interface.decl [concrete = constants.%Interface.type]
 // CHECK:STDOUT:     %T.ref: %Interface.assoc_type = name_ref T, @T.%assoc1 [concrete = constants.%assoc1]
 // CHECK:STDOUT:     %.loc23: type = converted %T.ref, <error> [concrete = <error>]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %v: <error> = bind_name v, <error> [concrete = <error>]
+// CHECK:STDOUT:   %impl.elem0: <error> = impl_witness_access <error>, element0 [concrete = <error>]
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

@@ -135,17 +135,17 @@ fn Run() {
 // CHECK:STDOUT:     %a.var_patt: %pattern_type.d3d = var_pattern %a.patt [concrete]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %a.var: ref %ptr.257 = var %a.var_patt
-// CHECK:STDOUT:   %impl.elem0: %.dff = impl_witness_access constants.%Destroy.impl_witness.2ce, element0 [concrete = constants.%Op.109]
-// CHECK:STDOUT:   %bound_method.loc7: <bound method> = bound_method %a.var, %impl.elem0
 // CHECK:STDOUT:   %.loc7_15: type = splice_block %ptr [concrete = constants.%ptr.257] {
 // CHECK:STDOUT:     %Cycle.ref: type = name_ref Cycle, imports.%Main.Cycle [concrete = constants.%Cycle]
 // CHECK:STDOUT:     %ptr: type = ptr_type %Cycle.ref [concrete = constants.%ptr.257]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %a: ref %ptr.257 = bind_name a, %a.var
+// CHECK:STDOUT:   %impl.elem0: %.dff = impl_witness_access constants.%Destroy.impl_witness.2ce, element0 [concrete = constants.%Op.109]
+// CHECK:STDOUT:   %bound_method.loc7_3.1: <bound method> = bound_method %a.var, %impl.elem0
 // CHECK:STDOUT:   %specific_fn: <specific function> = specific_function %impl.elem0, @Op.2(constants.%ptr.257) [concrete = constants.%Op.specific_fn]
-// CHECK:STDOUT:   %bound_method.1: <bound method> = bound_method %a.var, %specific_fn
+// CHECK:STDOUT:   %bound_method.loc7_3.2: <bound method> = bound_method %a.var, %specific_fn
 // CHECK:STDOUT:   %.loc7_3: %ptr.257 = bind_value %a.var
-// CHECK:STDOUT:   %no_op: init %empty_tuple.type = call %bound_method.1(%.loc7_3)
+// CHECK:STDOUT:   %no_op: init %empty_tuple.type = call %bound_method.loc7_3.2(%.loc7_3)
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

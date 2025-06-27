@@ -56,8 +56,8 @@ fn ChosenBranchIsNonConstant(t: type) {
 // CHECK:STDOUT:   %Int.type: type = generic_class_type @Int [concrete]
 // CHECK:STDOUT:   %Int.generic: %Int.type = struct_value () [concrete]
 // CHECK:STDOUT:   %i32: type = class_type @Int, @Int(%int_32) [concrete]
-// CHECK:STDOUT:   %Destroy.type: type = facet_type <@Destroy> [concrete]
 // CHECK:STDOUT:   %int_1: Core.IntLiteral = int_value 1 [concrete]
+// CHECK:STDOUT:   %Destroy.type: type = facet_type <@Destroy> [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -100,7 +100,6 @@ fn ChosenBranchIsNonConstant(t: type) {
 // CHECK:STDOUT:     %v.var_patt: <error> = var_pattern %v.patt [concrete]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %v.var: ref <error> = var %v.var_patt [concrete = <error>]
-// CHECK:STDOUT:   %impl.elem0: <error> = impl_witness_access <error>, element0 [concrete = <error>]
 // CHECK:STDOUT:   %int_1: Core.IntLiteral = int_value 1 [concrete = constants.%int_1]
 // CHECK:STDOUT:   assign %v.var, <error>
 // CHECK:STDOUT:   br !.loc12_13
@@ -125,6 +124,7 @@ fn ChosenBranchIsNonConstant(t: type) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: !.loc12_7:
 // CHECK:STDOUT:   %v: <error> = bind_name v, <error> [concrete = <error>]
+// CHECK:STDOUT:   %impl.elem0: <error> = impl_witness_access <error>, element0 [concrete = <error>]
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -139,9 +139,9 @@ fn ChosenBranchIsNonConstant(t: type) {
 // CHECK:STDOUT:   %Int.type: type = generic_class_type @Int [concrete]
 // CHECK:STDOUT:   %Int.generic: %Int.type = struct_value () [concrete]
 // CHECK:STDOUT:   %i32: type = class_type @Int, @Int(%int_32) [concrete]
-// CHECK:STDOUT:   %Destroy.type: type = facet_type <@Destroy> [concrete]
 // CHECK:STDOUT:   %int_1: Core.IntLiteral = int_value 1 [concrete]
 // CHECK:STDOUT:   %false: bool = bool_literal false [concrete]
+// CHECK:STDOUT:   %Destroy.type: type = facet_type <@Destroy> [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -177,7 +177,6 @@ fn ChosenBranchIsNonConstant(t: type) {
 // CHECK:STDOUT:     %v.var_patt: <error> = var_pattern %v.patt [concrete]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %v.var: ref <error> = var %v.var_patt [concrete = <error>]
-// CHECK:STDOUT:   %impl.elem0.loc9: <error> = impl_witness_access <error>, element0 [concrete = <error>]
 // CHECK:STDOUT:   %int_1.loc9: Core.IntLiteral = int_value 1 [concrete = constants.%int_1]
 // CHECK:STDOUT:   assign %v.var, <error>
 // CHECK:STDOUT:   br !.loc9_13
@@ -206,7 +205,6 @@ fn ChosenBranchIsNonConstant(t: type) {
 // CHECK:STDOUT:     %w.var_patt: <error> = var_pattern %w.patt [concrete]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %w.var: ref <error> = var %w.var_patt [concrete = <error>]
-// CHECK:STDOUT:   %impl.elem0.loc14: <error> = impl_witness_access <error>, element0 [concrete = <error>]
 // CHECK:STDOUT:   %int_1.loc14: Core.IntLiteral = int_value 1 [concrete = constants.%int_1]
 // CHECK:STDOUT:   assign %w.var, <error>
 // CHECK:STDOUT:   br !.loc14_13
@@ -230,6 +228,8 @@ fn ChosenBranchIsNonConstant(t: type) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: !.loc14_7:
 // CHECK:STDOUT:   %w: <error> = bind_name w, <error> [concrete = <error>]
+// CHECK:STDOUT:   %impl.elem0.loc14: <error> = impl_witness_access <error>, element0 [concrete = <error>]
+// CHECK:STDOUT:   %impl.elem0.loc9: <error> = impl_witness_access <error>, element0 [concrete = <error>]
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

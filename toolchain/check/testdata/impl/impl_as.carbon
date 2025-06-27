@@ -43,6 +43,7 @@ class C {
 // CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [concrete]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [concrete]
 // CHECK:STDOUT:   %pattern_type.c48: type = pattern_type %C [concrete]
+// CHECK:STDOUT:   %C.val: %C = struct_value () [concrete]
 // CHECK:STDOUT:   %Destroy.type: type = facet_type <@Destroy> [concrete]
 // CHECK:STDOUT:   %Op.type.bae: type = fn_type @Op.1 [concrete]
 // CHECK:STDOUT:   %T: type = bind_symbolic_name T, 0 [symbolic]
@@ -53,7 +54,6 @@ class C {
 // CHECK:STDOUT:   %Op.5d7: %Op.type.153 = struct_value () [concrete]
 // CHECK:STDOUT:   %Destroy.facet: %Destroy.type = facet_value %C, (%Destroy.impl_witness.906) [concrete]
 // CHECK:STDOUT:   %.b80: type = fn_type_with_self_type %Op.type.bae, %Destroy.facet [concrete]
-// CHECK:STDOUT:   %C.val: %C = struct_value () [concrete]
 // CHECK:STDOUT:   %Op.specific_fn: <specific function> = specific_function %Op.5d7, @Op.2(%C) [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -127,18 +127,18 @@ class C {
 // CHECK:STDOUT:     %c.var_patt: %pattern_type.c48 = var_pattern %c.patt [concrete]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %c.var: ref %C = var %c.var_patt
-// CHECK:STDOUT:   %impl.elem0: %.b80 = impl_witness_access constants.%Destroy.impl_witness.906, element0 [concrete = constants.%Op.5d7]
-// CHECK:STDOUT:   %bound_method.loc23: <bound method> = bound_method %c.var, %impl.elem0
 // CHECK:STDOUT:   %.loc23_19.1: %empty_struct_type = struct_literal ()
 // CHECK:STDOUT:   %.loc23_19.2: init %C = class_init (), %c.var [concrete = constants.%C.val]
 // CHECK:STDOUT:   %.loc23_7.1: init %C = converted %.loc23_19.1, %.loc23_19.2 [concrete = constants.%C.val]
 // CHECK:STDOUT:   assign %c.var, %.loc23_7.1
 // CHECK:STDOUT:   %C.ref: type = name_ref C, file.%C.decl [concrete = constants.%C]
 // CHECK:STDOUT:   %c: ref %C = bind_name c, %c.var
+// CHECK:STDOUT:   %impl.elem0: %.b80 = impl_witness_access constants.%Destroy.impl_witness.906, element0 [concrete = constants.%Op.5d7]
+// CHECK:STDOUT:   %bound_method.loc23_7.1: <bound method> = bound_method %c.var, %impl.elem0
 // CHECK:STDOUT:   %specific_fn: <specific function> = specific_function %impl.elem0, @Op.2(constants.%C) [concrete = constants.%Op.specific_fn]
-// CHECK:STDOUT:   %bound_method.1: <bound method> = bound_method %c.var, %specific_fn
+// CHECK:STDOUT:   %bound_method.loc23_7.2: <bound method> = bound_method %c.var, %specific_fn
 // CHECK:STDOUT:   %.loc23_7.2: %C = bind_value %c.var
-// CHECK:STDOUT:   %no_op: init %empty_tuple.type = call %bound_method.1(%.loc23_7.2)
+// CHECK:STDOUT:   %no_op: init %empty_tuple.type = call %bound_method.loc23_7.2(%.loc23_7.2)
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

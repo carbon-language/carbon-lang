@@ -43,8 +43,15 @@ fn TestAssign(a: C*, b: C) {
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %C: type = class_type @C [concrete]
 // CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [concrete]
+// CHECK:STDOUT:   %Other: type = bind_symbolic_name Other, 0 [symbolic]
+// CHECK:STDOUT:   %ModWith.type.bcb: type = facet_type <@ModWith, @ModWith(%Other)> [symbolic]
+// CHECK:STDOUT:   %Self.9cc: %ModWith.type.bcb = bind_symbolic_name Self, 1 [symbolic]
 // CHECK:STDOUT:   %ModWith.type.4d0: type = facet_type <@ModWith, @ModWith(%C)> [concrete]
+// CHECK:STDOUT:   %.Self.d23: %ModWith.type.4d0 = bind_symbolic_name .Self [symbolic_self]
 // CHECK:STDOUT:   %Op.type.140: type = fn_type @Op.1, @ModWith(%C) [concrete]
+// CHECK:STDOUT:   %.Self.as_type: type = facet_access_type %.Self.d23 [symbolic_self]
+// CHECK:STDOUT:   %ModWith.lookup_impl_witness.e42: <witness> = lookup_impl_witness %.Self.d23, @ModWith, @ModWith(%C) [symbolic_self]
+// CHECK:STDOUT:   %ModWith.facet.d9a: %ModWith.type.4d0 = facet_value %.Self.as_type, (%ModWith.lookup_impl_witness.e42) [symbolic_self]
 // CHECK:STDOUT:   %ModWith.impl_witness: <witness> = impl_witness file.%ModWith.impl_witness_table [concrete]
 // CHECK:STDOUT:   %Op.type.0ad: type = fn_type @Op.6 [concrete]
 // CHECK:STDOUT:   %Op.d57: %Op.type.0ad = struct_value () [concrete]
@@ -57,22 +64,10 @@ fn TestAssign(a: C*, b: C) {
 // CHECK:STDOUT:   %Op.4f0: %Op.type.4dd = struct_value () [concrete]
 // CHECK:STDOUT:   %ModAssignWith.facet: %ModAssignWith.type.8eb = facet_value %C, (%ModAssignWith.impl_witness) [concrete]
 // CHECK:STDOUT:   %.f08: type = fn_type_with_self_type %Op.type.140, %ModWith.facet.517 [concrete]
-// CHECK:STDOUT:   %Destroy.type: type = facet_type <@Destroy> [concrete]
-// CHECK:STDOUT:   %Op.type.bae: type = fn_type @Op.9 [concrete]
-// CHECK:STDOUT:   %T: type = bind_symbolic_name T, 0 [symbolic]
-// CHECK:STDOUT:   %Op.type.bc9: type = fn_type @Op.10, @impl.49c(%T) [symbolic]
-// CHECK:STDOUT:   %Op.46f: %Op.type.bc9 = struct_value () [symbolic]
-// CHECK:STDOUT:   %Destroy.impl_witness.906: <witness> = impl_witness imports.%Destroy.impl_witness_table, @impl.49c(%C) [concrete]
-// CHECK:STDOUT:   %Op.type.153: type = fn_type @Op.10, @impl.49c(%C) [concrete]
-// CHECK:STDOUT:   %Op.5d7: %Op.type.153 = struct_value () [concrete]
-// CHECK:STDOUT:   %Destroy.facet: %Destroy.type = facet_value %C, (%Destroy.impl_witness.906) [concrete]
-// CHECK:STDOUT:   %.b80: type = fn_type_with_self_type %Op.type.bae, %Destroy.facet [concrete]
 // CHECK:STDOUT:   %.f3c: type = fn_type_with_self_type %Op.type.dd0, %ModAssignWith.facet [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
-// CHECK:STDOUT:   %Core.import_ref.0b9: @impl.49c.%Op.type (%Op.type.bc9) = import_ref Core//prelude/destroy, loc15_23, loaded [symbolic = @impl.49c.%Op (constants.%Op.46f)]
-// CHECK:STDOUT:   %Destroy.impl_witness_table = impl_witness_table (%Core.import_ref.0b9), @impl.49c [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @TestOp(%a.param: %C, %b.param: %C) -> %return.param: %C {
@@ -80,11 +75,9 @@ fn TestAssign(a: C*, b: C) {
 // CHECK:STDOUT:   %a.ref: %C = name_ref a, %a
 // CHECK:STDOUT:   %b.ref: %C = name_ref b, %b
 // CHECK:STDOUT:   %impl.elem1: %.f08 = impl_witness_access constants.%ModWith.impl_witness, element1 [concrete = constants.%Op.d57]
-// CHECK:STDOUT:   %bound_method.loc31_12.1: <bound method> = bound_method %a.ref, %impl.elem1
+// CHECK:STDOUT:   %bound_method: <bound method> = bound_method %a.ref, %impl.elem1
 // CHECK:STDOUT:   <elided>
-// CHECK:STDOUT:   %impl.elem0: %.b80 = impl_witness_access constants.%Destroy.impl_witness.906, element0 [concrete = constants.%Op.5d7]
-// CHECK:STDOUT:   %bound_method.loc31_12.2: <bound method> = bound_method %.loc29, %impl.elem0
-// CHECK:STDOUT:   %Op.call: init %C = call %bound_method.loc31_12.1(%a.ref, %b.ref) to %.loc29
+// CHECK:STDOUT:   %Op.call: init %C = call %bound_method(%a.ref, %b.ref) to %.loc29
 // CHECK:STDOUT:   return %Op.call to %return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -99,4 +92,8 @@ fn TestAssign(a: C*, b: C) {
 // CHECK:STDOUT:   %Op.call: init %empty_tuple.type = call %bound_method(%addr, %b.ref)
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: specific @Result(constants.%Other, constants.%Self.9cc) {}
+// CHECK:STDOUT:
+// CHECK:STDOUT: specific @Result(constants.%C, constants.%ModWith.facet.d9a) {}
 // CHECK:STDOUT:

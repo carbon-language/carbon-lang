@@ -137,20 +137,13 @@ auto IsCurrentPositionReachable(Context& context) -> bool {
          SemIR::TerminatorKind::Terminator;
 }
 
-auto MaybeAddCleanupForInst(Context& context, SemIR::LocId loc_id,
-                            SemIR::InstId inst_id) -> void {
+auto MaybeAddCleanupForInst(Context& context, SemIR::InstId inst_id) -> void {
   if (!context.scope_stack().IsInFunctionScope()) {
     // Cleanup can only occur in function scopes.
     return;
   }
 
-  // TODO: The resolution to a `SpecificFunction` is done by `PerformCall`,
-  // resulting in destructor resolution to a specific potentially being repeated
-  // across non-shareable cleanups. We might want to refactor so that the
-  // instance binding can be done here, so that it's only the `Call` instruction
-  // that's repeated.
-  auto destroy_id = PerformDestroyOperatorAccess(context, loc_id, inst_id);
-  context.scope_stack().destroy_id_stack().AppendToTop(destroy_id);
+  context.scope_stack().destroy_id_stack().AppendToTop(inst_id);
 }
 
 // Common support for cleanup blocks.
@@ -164,8 +157,11 @@ static auto AddCleanupBlock(Context& context) -> void {
   }
 
   for (auto destroy_id : llvm::reverse(destroy_ids)) {
-    // TODO: Consider what location would be best to associate here.
-    PerformCall(context, SemIR::LocId::None, destroy_id, {});
+    // TODO: This does the `Destroy` lookup and call at every cleanup block.
+    // Control flow can lead to the same variable being destroyed by multiple
+    // cleanup blocks, so we'll want to avoid this in the future.
+    BuildUnaryOperator(context, SemIR::LocId(destroy_id),
+                       {.interface_name = "Destroy"}, destroy_id);
   }
 }
 
