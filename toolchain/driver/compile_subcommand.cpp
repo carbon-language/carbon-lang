@@ -606,8 +606,8 @@ auto CompilationUnit::RunLex() -> void {
     options.consumer = consumer_;
     if (options_->dump_tokens && IncludeInDumps()) {
       options.dump_stream = driver_env_->output_stream;
+      options.omit_file_boundary_tokens = options_->omit_file_boundary_tokens;
     }
-    options.omit_file_boundary_tokens = options_->omit_file_boundary_tokens;
     tokens_ = Lex::Lex(value_stores_, *source_, options);
   });
   if (mem_usage_) {
@@ -625,8 +625,8 @@ auto CompilationUnit::RunParse() -> void {
     options.vlog_stream = vlog_stream_;
     if (options_->dump_parse_tree && IncludeInDumps()) {
       options.dump_stream = driver_env_->output_stream;
+      options.dump_preorder_parse_tree = options_->preorder_parse_tree;
     }
-    options.dump_preorder_parse_tree = options_->preorder_parse_tree;
     parse_tree_ = Parse::Parse(*tokens_, options);
   });
   if (mem_usage_) {
