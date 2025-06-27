@@ -38,7 +38,7 @@ struct CheckParseTreesOptions {
   // Whether to import the prelude.
   bool prelude_import = false;
 
-  // The LLVM target information.
+  // The LLVM target information. Uses LLVM's default if unset.
   llvm::StringRef target = "";
 
   // If set, enables verbose output.
