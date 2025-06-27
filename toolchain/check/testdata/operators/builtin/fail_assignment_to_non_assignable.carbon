@@ -144,7 +144,7 @@ fn Main() {
 // CHECK:STDOUT:   %Core.import_ref.a5b: @impl.4f9.%Convert.type (%Convert.type.0f9) = import_ref Core//prelude/parts/int, loc16_39, loaded [symbolic = @impl.4f9.%Convert (constants.%Convert.f06)]
 // CHECK:STDOUT:   %ImplicitAs.impl_witness_table.a2f = impl_witness_table (%Core.import_ref.a5b), @impl.4f9 [concrete]
 // CHECK:STDOUT:   %Core.Destroy: type = import_ref Core//prelude/parts/destroy, Destroy, loaded [concrete = constants.%Destroy.type]
-// CHECK:STDOUT:   %Core.import_ref.0b9: @impl.49c.%Op.type (%Op.type.bc9) = import_ref Core//prelude/parts/destroy, loc8_23, loaded [symbolic = @impl.49c.%Op (constants.%Op.46f)]
+// CHECK:STDOUT:   %Core.import_ref.0b9: @impl.49c.%Op.type (%Op.type.bc9) = import_ref Core//prelude/parts/destroy, loc8_29, loaded [symbolic = @impl.49c.%Op (constants.%Op.46f)]
 // CHECK:STDOUT:   %Destroy.impl_witness_table = impl_witness_table (%Core.import_ref.0b9), @impl.49c [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -210,8 +210,8 @@ fn Main() {
 // CHECK:STDOUT:   %specific_fn.loc33_3.1: <specific function> = specific_function %impl.elem0.loc33_3.1, @Convert.2(constants.%int_32) [concrete = constants.%Convert.specific_fn]
 // CHECK:STDOUT:   %bound_method.loc33_3.2: <bound method> = bound_method %int_0, %specific_fn.loc33_3.1 [concrete = constants.%bound_method.b6e]
 // CHECK:STDOUT:   %int.convert_checked.loc33: init %i32 = call %bound_method.loc33_3.2(%int_0) [concrete = constants.%int_0.6a9]
-// CHECK:STDOUT:   %.loc33_3.1: init %i32 = converted %int_0, %int.convert_checked.loc33 [concrete = constants.%int_0.6a9]
-// CHECK:STDOUT:   assign %n.var, %.loc33_3.1
+// CHECK:STDOUT:   %.loc33_3: init %i32 = converted %int_0, %int.convert_checked.loc33 [concrete = constants.%int_0.6a9]
+// CHECK:STDOUT:   assign %n.var, %.loc33_3
 // CHECK:STDOUT:   %.loc33_10: type = splice_block %i32.loc33 [concrete = constants.%i32] {
 // CHECK:STDOUT:     %int_32.loc33: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
 // CHECK:STDOUT:     %i32.loc33: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
@@ -309,7 +309,7 @@ fn Main() {
 // CHECK:STDOUT:     %a.var_patt: %pattern_type.7ce = var_pattern %a.patt [concrete]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %a.var: ref %i32 = var %a.var_patt
-// CHECK:STDOUT:   %.loc56_10: type = splice_block %i32.loc56 [concrete = constants.%i32] {
+// CHECK:STDOUT:   %.loc56: type = splice_block %i32.loc56 [concrete = constants.%i32] {
 // CHECK:STDOUT:     %int_32.loc56: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
 // CHECK:STDOUT:     %i32.loc56: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
 // CHECK:STDOUT:   }
@@ -341,14 +341,14 @@ fn Main() {
 // CHECK:STDOUT:   %bound_method.loc56_3.1: <bound method> = bound_method %a.var, %impl.elem0.loc56
 // CHECK:STDOUT:   %specific_fn.loc56: <specific function> = specific_function %impl.elem0.loc56, @Op.3(constants.%i32) [concrete = constants.%Op.specific_fn]
 // CHECK:STDOUT:   %bound_method.loc56_3.2: <bound method> = bound_method %a.var, %specific_fn.loc56
-// CHECK:STDOUT:   %.loc56_3: %i32 = bind_value %a.var
-// CHECK:STDOUT:   %no_op.loc56: init %empty_tuple.type = call %bound_method.loc56_3.2(%.loc56_3)
+// CHECK:STDOUT:   %addr.loc56: %ptr.235 = addr_of %a.var
+// CHECK:STDOUT:   %no_op.loc56: init %empty_tuple.type = call %bound_method.loc56_3.2(%addr.loc56)
 // CHECK:STDOUT:   %impl.elem0.loc33_3.2: %.ab7 = impl_witness_access constants.%Destroy.impl_witness.64e, element0 [concrete = constants.%Op.e6a]
 // CHECK:STDOUT:   %bound_method.loc33_3.3: <bound method> = bound_method %n.var, %impl.elem0.loc33_3.2
 // CHECK:STDOUT:   %specific_fn.loc33_3.2: <specific function> = specific_function %impl.elem0.loc33_3.2, @Op.3(constants.%i32) [concrete = constants.%Op.specific_fn]
 // CHECK:STDOUT:   %bound_method.loc33_3.4: <bound method> = bound_method %n.var, %specific_fn.loc33_3.2
-// CHECK:STDOUT:   %.loc33_3.2: %i32 = bind_value %n.var
-// CHECK:STDOUT:   %no_op.loc33: init %empty_tuple.type = call %bound_method.loc33_3.4(%.loc33_3.2)
+// CHECK:STDOUT:   %addr.loc33: %ptr.235 = addr_of %n.var
+// CHECK:STDOUT:   %no_op.loc33: init %empty_tuple.type = call %bound_method.loc33_3.4(%addr.loc33)
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

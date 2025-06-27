@@ -21,10 +21,10 @@ fn Run() {
 // CHECK:STDOUT: ; ModuleID = 'base.carbon'
 // CHECK:STDOUT: source_filename = "base.carbon"
 // CHECK:STDOUT:
-// CHECK:STDOUT: @array.237.loc14_3.1 = internal constant [1 x i32] [i32 1]
-// CHECK:STDOUT: @array.6a2.loc15_3.1 = internal constant [2 x double] [double 0x4026333333333334, double 2.200000e+00]
-// CHECK:STDOUT: @array.1cb.loc16_3.1 = internal constant [5 x {}] zeroinitializer
-// CHECK:STDOUT: @tuple.loc17_3.1 = internal constant { i32, i32, i32 } { i32 1, i32 2, i32 3 }
+// CHECK:STDOUT: @array.237.loc14_3 = internal constant [1 x i32] [i32 1]
+// CHECK:STDOUT: @array.6a2.loc15_3 = internal constant [2 x double] [double 0x4026333333333334, double 2.200000e+00]
+// CHECK:STDOUT: @array.1cb.loc16_3 = internal constant [5 x {}] zeroinitializer
+// CHECK:STDOUT: @tuple.loc17_3 = internal constant { i32, i32, i32 } { i32 1, i32 2, i32 3 }
 // CHECK:STDOUT:
 // CHECK:STDOUT: define void @main() !dbg !4 {
 // CHECK:STDOUT: entry:
@@ -35,23 +35,23 @@ fn Run() {
 // CHECK:STDOUT:   %e.var = alloca [3 x i32], align 4, !dbg !11
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(i64 4, ptr %a.var), !dbg !7
 // CHECK:STDOUT:   %.loc14_29.3.array.index = getelementptr inbounds [1 x i32], ptr %a.var, i32 0, i64 0, !dbg !12
-// CHECK:STDOUT:   call void @llvm.memcpy.p0.p0.i64(ptr align 4 %a.var, ptr align 4 @array.237.loc14_3.1, i64 4, i1 false), !dbg !7
+// CHECK:STDOUT:   call void @llvm.memcpy.p0.p0.i64(ptr align 4 %a.var, ptr align 4 @array.237.loc14_3, i64 4, i1 false), !dbg !7
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(i64 16, ptr %b.var), !dbg !8
 // CHECK:STDOUT:   %.loc15_37.2.array.index = getelementptr inbounds [2 x double], ptr %b.var, i32 0, i64 0, !dbg !13
 // CHECK:STDOUT:   %.loc15_37.4.array.index = getelementptr inbounds [2 x double], ptr %b.var, i32 0, i64 1, !dbg !13
-// CHECK:STDOUT:   call void @llvm.memcpy.p0.p0.i64(ptr align 8 %b.var, ptr align 8 @array.6a2.loc15_3.1, i64 16, i1 false), !dbg !8
+// CHECK:STDOUT:   call void @llvm.memcpy.p0.p0.i64(ptr align 8 %b.var, ptr align 8 @array.6a2.loc15_3, i64 16, i1 false), !dbg !8
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(i64 0, ptr %c.var), !dbg !9
 // CHECK:STDOUT:   %.loc16_45.2.array.index = getelementptr inbounds [5 x {}], ptr %c.var, i32 0, i64 0, !dbg !14
 // CHECK:STDOUT:   %.loc16_45.4.array.index = getelementptr inbounds [5 x {}], ptr %c.var, i32 0, i64 1, !dbg !14
 // CHECK:STDOUT:   %.loc16_45.6.array.index = getelementptr inbounds [5 x {}], ptr %c.var, i32 0, i64 2, !dbg !14
 // CHECK:STDOUT:   %.loc16_45.8.array.index = getelementptr inbounds [5 x {}], ptr %c.var, i32 0, i64 3, !dbg !14
 // CHECK:STDOUT:   %.loc16_45.10.array.index = getelementptr inbounds [5 x {}], ptr %c.var, i32 0, i64 4, !dbg !14
-// CHECK:STDOUT:   call void @llvm.memcpy.p0.p0.i64(ptr align 1 %c.var, ptr align 1 @array.1cb.loc16_3.1, i64 0, i1 false), !dbg !9
+// CHECK:STDOUT:   call void @llvm.memcpy.p0.p0.i64(ptr align 1 %c.var, ptr align 1 @array.1cb.loc16_3, i64 0, i1 false), !dbg !9
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(i64 12, ptr %d.var), !dbg !10
-// CHECK:STDOUT:   %tuple.elem0.loc17_36.tuple.elem = getelementptr inbounds nuw { i32, i32, i32 }, ptr %d.var, i32 0, i32 0, !dbg !15
-// CHECK:STDOUT:   %tuple.elem1.loc17_36.tuple.elem = getelementptr inbounds nuw { i32, i32, i32 }, ptr %d.var, i32 0, i32 1, !dbg !15
-// CHECK:STDOUT:   %tuple.elem2.loc17_36.tuple.elem = getelementptr inbounds nuw { i32, i32, i32 }, ptr %d.var, i32 0, i32 2, !dbg !15
-// CHECK:STDOUT:   call void @llvm.memcpy.p0.p0.i64(ptr align 4 %d.var, ptr align 4 @tuple.loc17_3.1, i64 12, i1 false), !dbg !10
+// CHECK:STDOUT:   %tuple.elem0.loc17.tuple.elem = getelementptr inbounds nuw { i32, i32, i32 }, ptr %d.var, i32 0, i32 0, !dbg !15
+// CHECK:STDOUT:   %tuple.elem1.loc17.tuple.elem = getelementptr inbounds nuw { i32, i32, i32 }, ptr %d.var, i32 0, i32 1, !dbg !15
+// CHECK:STDOUT:   %tuple.elem2.loc17.tuple.elem = getelementptr inbounds nuw { i32, i32, i32 }, ptr %d.var, i32 0, i32 2, !dbg !15
+// CHECK:STDOUT:   call void @llvm.memcpy.p0.p0.i64(ptr align 4 %d.var, ptr align 4 @tuple.loc17_3, i64 12, i1 false), !dbg !10
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(i64 12, ptr %e.var), !dbg !11
 // CHECK:STDOUT:   %tuple.elem0.loc18.tuple.elem = getelementptr inbounds nuw { i32, i32, i32 }, ptr %d.var, i32 0, i32 0, !dbg !16
 // CHECK:STDOUT:   %.loc18_26.1 = load i32, ptr %tuple.elem0.loc18.tuple.elem, align 4, !dbg !16
@@ -65,19 +65,6 @@ fn Run() {
 // CHECK:STDOUT:   %.loc18_26.7 = load i32, ptr %tuple.elem2.loc18.tuple.elem, align 4, !dbg !16
 // CHECK:STDOUT:   %.loc18_26.8.array.index = getelementptr inbounds [3 x i32], ptr %e.var, i32 0, i64 2, !dbg !16
 // CHECK:STDOUT:   store i32 %.loc18_26.7, ptr %.loc18_26.8.array.index, align 4, !dbg !16
-// CHECK:STDOUT:   %tuple.elem0.loc17_3.tuple.elem = getelementptr inbounds nuw { i32, i32, i32 }, ptr %d.var, i32 0, i32 0, !dbg !10
-// CHECK:STDOUT:   %.loc17_3.2 = load i32, ptr %tuple.elem0.loc17_3.tuple.elem, align 4, !dbg !10
-// CHECK:STDOUT:   %tuple.elem1.loc17_3.tuple.elem = getelementptr inbounds nuw { i32, i32, i32 }, ptr %d.var, i32 0, i32 1, !dbg !10
-// CHECK:STDOUT:   %.loc17_3.3 = load i32, ptr %tuple.elem1.loc17_3.tuple.elem, align 4, !dbg !10
-// CHECK:STDOUT:   %tuple.elem2.loc17_3.tuple.elem = getelementptr inbounds nuw { i32, i32, i32 }, ptr %d.var, i32 0, i32 2, !dbg !10
-// CHECK:STDOUT:   %.loc17_3.4 = load i32, ptr %tuple.elem2.loc17_3.tuple.elem, align 4, !dbg !10
-// CHECK:STDOUT:   %tuple = alloca { i32, i32, i32 }, align 8, !dbg !10
-// CHECK:STDOUT:   %tuple1 = getelementptr inbounds nuw { i32, i32, i32 }, ptr %tuple, i32 0, i32 0, !dbg !10
-// CHECK:STDOUT:   store i32 %.loc17_3.2, ptr %tuple1, align 4, !dbg !10
-// CHECK:STDOUT:   %tuple2 = getelementptr inbounds nuw { i32, i32, i32 }, ptr %tuple, i32 0, i32 1, !dbg !10
-// CHECK:STDOUT:   store i32 %.loc17_3.3, ptr %tuple2, align 4, !dbg !10
-// CHECK:STDOUT:   %tuple3 = getelementptr inbounds nuw { i32, i32, i32 }, ptr %tuple, i32 0, i32 2, !dbg !10
-// CHECK:STDOUT:   store i32 %.loc17_3.4, ptr %tuple3, align 4, !dbg !10
 // CHECK:STDOUT:   ret void, !dbg !17
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

@@ -7,8 +7,8 @@
 package Core library "prelude/parts/destroy";
 
 interface Destroy {
-  fn Op[self: Self]();
+  fn Op[addr self: Self*]();
 }
 impl forall [T:! type] T as Destroy {
-  fn Op[self: Self]() = "no_op";
+  fn Op[addr self: Self*]() = "no_op";
 }

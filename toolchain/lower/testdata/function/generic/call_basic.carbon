@@ -81,10 +81,6 @@ fn M() {
 // CHECK:STDOUT:   %.loc54 = load double, ptr %p.var, align 8, !dbg !18
 // CHECK:STDOUT:   %G.call.loc54 = call double @_CG.Main.66be507887ceee78(double %.loc54), !dbg !19
 // CHECK:STDOUT:   store double %G.call.loc54, ptr %q.var, align 8, !dbg !20
-// CHECK:STDOUT:   %.loc49_3 = load double, ptr %q.var, align 8, !dbg !10
-// CHECK:STDOUT:   %.loc48_3 = load double, ptr %p.var, align 8, !dbg !9
-// CHECK:STDOUT:   %.loc47_3 = load i32, ptr %m.var, align 4, !dbg !8
-// CHECK:STDOUT:   %.loc46_3.2 = load i32, ptr %n.var, align 4, !dbg !7
 // CHECK:STDOUT:   ret void, !dbg !21
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

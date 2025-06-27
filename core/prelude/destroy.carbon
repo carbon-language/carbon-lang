@@ -7,10 +7,10 @@ package Core library "prelude/destroy";
 // Object destruction, including running `fn destroy()`. Note this is distinct
 // from memory deallocation.
 interface Destroy {
-  fn Op[self: Self]();
+  fn Op[addr self: Self*]();
 }
 
 // Provide a default blanket impl for trivial destruction.
 impl forall [T:! type] T as Destroy {
-  fn Op[self: Self]() = "no_op";
+  fn Op[addr self: Self*]() = "no_op";
 }

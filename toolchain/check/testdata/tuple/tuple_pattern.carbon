@@ -137,13 +137,14 @@ let (a: {}, b: {}) = ({}, {}, {});
 // CHECK:STDOUT:   %Destroy.impl_witness.9c2: <witness> = impl_witness imports.%Destroy.impl_witness_table, @impl(%tuple.type.b6b) [concrete]
 // CHECK:STDOUT:   %Op.type.72a: type = fn_type @Op.2, @impl(%tuple.type.b6b) [concrete]
 // CHECK:STDOUT:   %Op.973: %Op.type.72a = struct_value () [concrete]
+// CHECK:STDOUT:   %ptr.8fc: type = ptr_type %tuple.type.b6b [concrete]
 // CHECK:STDOUT:   %Destroy.facet: %Destroy.type = facet_value %tuple.type.b6b, (%Destroy.impl_witness.9c2) [concrete]
 // CHECK:STDOUT:   %.8ce: type = fn_type_with_self_type %Op.type.bae, %Destroy.facet [concrete]
 // CHECK:STDOUT:   %Op.specific_fn: <specific function> = specific_function %Op.973, @Op.2(%tuple.type.b6b) [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
-// CHECK:STDOUT:   %Core.import_ref.0b9: @impl.%Op.type (%Op.type.bc9) = import_ref Core//prelude/parts/destroy, loc8_23, loaded [symbolic = @impl.%Op (constants.%Op.46f)]
+// CHECK:STDOUT:   %Core.import_ref.0b9: @impl.%Op.type (%Op.type.bc9) = import_ref Core//prelude/parts/destroy, loc8_29, loaded [symbolic = @impl.%Op (constants.%Op.46f)]
 // CHECK:STDOUT:   %Destroy.impl_witness_table = impl_witness_table (%Core.import_ref.0b9), @impl [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -178,18 +179,18 @@ let (a: {}, b: {}) = ({}, {}, {});
 // CHECK:STDOUT:     %.var_patt.loc7: %pattern_type.de4 = var_pattern %.loc7_20 [concrete]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %.var.loc7: ref %tuple.type.b6b = var %.var_patt.loc7
-// CHECK:STDOUT:   %tuple.elem0.loc7_3.1: ref %empty_struct_type = tuple_access %.var.loc7, element0
-// CHECK:STDOUT:   %tuple.elem1.loc7_3.1: ref %empty_struct_type = tuple_access %.var.loc7, element1
+// CHECK:STDOUT:   %tuple.elem0.loc7: ref %empty_struct_type = tuple_access %.var.loc7, element0
+// CHECK:STDOUT:   %tuple.elem1.loc7: ref %empty_struct_type = tuple_access %.var.loc7, element1
 // CHECK:STDOUT:   %.loc7_12.1: type = splice_block %.loc7_12.3 [concrete = constants.%empty_struct_type] {
 // CHECK:STDOUT:     %.loc7_12.2: %empty_struct_type = struct_literal ()
 // CHECK:STDOUT:     %.loc7_12.3: type = converted %.loc7_12.2, constants.%empty_struct_type [concrete = constants.%empty_struct_type]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %a: ref %empty_struct_type = bind_name a, %tuple.elem0.loc7_3.1
+// CHECK:STDOUT:   %a: ref %empty_struct_type = bind_name a, %tuple.elem0.loc7
 // CHECK:STDOUT:   %.loc7_19.1: type = splice_block %.loc7_19.3 [concrete = constants.%empty_struct_type] {
 // CHECK:STDOUT:     %.loc7_19.2: %empty_struct_type = struct_literal ()
 // CHECK:STDOUT:     %.loc7_19.3: type = converted %.loc7_19.2, constants.%empty_struct_type [concrete = constants.%empty_struct_type]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %b: ref %empty_struct_type = bind_name b, %tuple.elem1.loc7_3.1
+// CHECK:STDOUT:   %b: ref %empty_struct_type = bind_name b, %tuple.elem1.loc7
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %c.patt: %pattern_type.a96 = binding_pattern c [concrete]
 // CHECK:STDOUT:     %d.patt: %pattern_type.a96 = binding_pattern d [concrete]
@@ -207,46 +208,32 @@ let (a: {}, b: {}) = ({}, {}, {});
 // CHECK:STDOUT:   %.loc8_30.2: init %empty_struct_type = struct_init () to %tuple.elem1.loc8_31 [concrete = constants.%empty_struct]
 // CHECK:STDOUT:   %.loc8_31.3: init %empty_struct_type = converted %.loc8_30.1, %.loc8_30.2 [concrete = constants.%empty_struct]
 // CHECK:STDOUT:   %.loc8_31.4: init %tuple.type.b6b = tuple_init (%.loc8_31.2, %.loc8_31.3) to %.var.loc8 [concrete = constants.%tuple]
-// CHECK:STDOUT:   %.loc8_3.1: init %tuple.type.b6b = converted %.loc8_31.1, %.loc8_31.4 [concrete = constants.%tuple]
-// CHECK:STDOUT:   assign %.var.loc8, %.loc8_3.1
-// CHECK:STDOUT:   %tuple.elem0.loc8_3.1: ref %empty_struct_type = tuple_access %.var.loc8, element0
-// CHECK:STDOUT:   %tuple.elem1.loc8_3.1: ref %empty_struct_type = tuple_access %.var.loc8, element1
+// CHECK:STDOUT:   %.loc8_3: init %tuple.type.b6b = converted %.loc8_31.1, %.loc8_31.4 [concrete = constants.%tuple]
+// CHECK:STDOUT:   assign %.var.loc8, %.loc8_3
+// CHECK:STDOUT:   %tuple.elem0.loc8_3: ref %empty_struct_type = tuple_access %.var.loc8, element0
+// CHECK:STDOUT:   %tuple.elem1.loc8_3: ref %empty_struct_type = tuple_access %.var.loc8, element1
 // CHECK:STDOUT:   %.loc8_12.1: type = splice_block %.loc8_12.3 [concrete = constants.%empty_struct_type] {
 // CHECK:STDOUT:     %.loc8_12.2: %empty_struct_type = struct_literal ()
 // CHECK:STDOUT:     %.loc8_12.3: type = converted %.loc8_12.2, constants.%empty_struct_type [concrete = constants.%empty_struct_type]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %c: ref %empty_struct_type = bind_name c, %tuple.elem0.loc8_3.1
+// CHECK:STDOUT:   %c: ref %empty_struct_type = bind_name c, %tuple.elem0.loc8_3
 // CHECK:STDOUT:   %.loc8_19.1: type = splice_block %.loc8_19.3 [concrete = constants.%empty_struct_type] {
 // CHECK:STDOUT:     %.loc8_19.2: %empty_struct_type = struct_literal ()
 // CHECK:STDOUT:     %.loc8_19.3: type = converted %.loc8_19.2, constants.%empty_struct_type [concrete = constants.%empty_struct_type]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %d: ref %empty_struct_type = bind_name d, %tuple.elem1.loc8_3.1
+// CHECK:STDOUT:   %d: ref %empty_struct_type = bind_name d, %tuple.elem1.loc8_3
 // CHECK:STDOUT:   %impl.elem0.loc8: %.8ce = impl_witness_access constants.%Destroy.impl_witness.9c2, element0 [concrete = constants.%Op.973]
 // CHECK:STDOUT:   %bound_method.loc8_3.1: <bound method> = bound_method %.var.loc8, %impl.elem0.loc8
 // CHECK:STDOUT:   %specific_fn.loc8: <specific function> = specific_function %impl.elem0.loc8, @Op.2(constants.%tuple.type.b6b) [concrete = constants.%Op.specific_fn]
 // CHECK:STDOUT:   %bound_method.loc8_3.2: <bound method> = bound_method %.var.loc8, %specific_fn.loc8
-// CHECK:STDOUT:   %tuple.elem0.loc8_3.2: ref %empty_struct_type = tuple_access %.var.loc8, element0
-// CHECK:STDOUT:   %empty_struct.loc8_3.1: %empty_struct_type = struct_value () [concrete = constants.%empty_struct]
-// CHECK:STDOUT:   %.loc8_3.2: %empty_struct_type = converted %tuple.elem0.loc8_3.2, %empty_struct.loc8_3.1 [concrete = constants.%empty_struct]
-// CHECK:STDOUT:   %tuple.elem1.loc8_3.2: ref %empty_struct_type = tuple_access %.var.loc8, element1
-// CHECK:STDOUT:   %empty_struct.loc8_3.2: %empty_struct_type = struct_value () [concrete = constants.%empty_struct]
-// CHECK:STDOUT:   %.loc8_3.3: %empty_struct_type = converted %tuple.elem1.loc8_3.2, %empty_struct.loc8_3.2 [concrete = constants.%empty_struct]
-// CHECK:STDOUT:   %tuple.loc8: %tuple.type.b6b = tuple_value (%.loc8_3.2, %.loc8_3.3) [concrete = constants.%tuple]
-// CHECK:STDOUT:   %.loc8_3.4: %tuple.type.b6b = converted %.var.loc8, %tuple.loc8 [concrete = constants.%tuple]
-// CHECK:STDOUT:   %no_op.loc8: init %empty_tuple.type = call %bound_method.loc8_3.2(%.loc8_3.4)
+// CHECK:STDOUT:   %addr.loc8: %ptr.8fc = addr_of %.var.loc8
+// CHECK:STDOUT:   %no_op.loc8: init %empty_tuple.type = call %bound_method.loc8_3.2(%addr.loc8)
 // CHECK:STDOUT:   %impl.elem0.loc7: %.8ce = impl_witness_access constants.%Destroy.impl_witness.9c2, element0 [concrete = constants.%Op.973]
 // CHECK:STDOUT:   %bound_method.loc7_3.1: <bound method> = bound_method %.var.loc7, %impl.elem0.loc7
 // CHECK:STDOUT:   %specific_fn.loc7: <specific function> = specific_function %impl.elem0.loc7, @Op.2(constants.%tuple.type.b6b) [concrete = constants.%Op.specific_fn]
 // CHECK:STDOUT:   %bound_method.loc7_3.2: <bound method> = bound_method %.var.loc7, %specific_fn.loc7
-// CHECK:STDOUT:   %tuple.elem0.loc7_3.2: ref %empty_struct_type = tuple_access %.var.loc7, element0
-// CHECK:STDOUT:   %empty_struct.loc7_3.1: %empty_struct_type = struct_value () [concrete = constants.%empty_struct]
-// CHECK:STDOUT:   %.loc7_3.1: %empty_struct_type = converted %tuple.elem0.loc7_3.2, %empty_struct.loc7_3.1 [concrete = constants.%empty_struct]
-// CHECK:STDOUT:   %tuple.elem1.loc7_3.2: ref %empty_struct_type = tuple_access %.var.loc7, element1
-// CHECK:STDOUT:   %empty_struct.loc7_3.2: %empty_struct_type = struct_value () [concrete = constants.%empty_struct]
-// CHECK:STDOUT:   %.loc7_3.2: %empty_struct_type = converted %tuple.elem1.loc7_3.2, %empty_struct.loc7_3.2 [concrete = constants.%empty_struct]
-// CHECK:STDOUT:   %tuple.loc7: %tuple.type.b6b = tuple_value (%.loc7_3.1, %.loc7_3.2) [concrete = constants.%tuple]
-// CHECK:STDOUT:   %.loc7_3.3: %tuple.type.b6b = converted %.var.loc7, %tuple.loc7 [concrete = constants.%tuple]
-// CHECK:STDOUT:   %no_op.loc7: init %empty_tuple.type = call %bound_method.loc7_3.2(%.loc7_3.3)
+// CHECK:STDOUT:   %addr.loc7: %ptr.8fc = addr_of %.var.loc7
+// CHECK:STDOUT:   %no_op.loc7: init %empty_tuple.type = call %bound_method.loc7_3.2(%addr.loc7)
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -268,6 +255,7 @@ let (a: {}, b: {}) = ({}, {}, {});
 // CHECK:STDOUT:   %Destroy.impl_witness.9c2: <witness> = impl_witness imports.%Destroy.impl_witness_table, @impl(%tuple.type.b6b) [concrete]
 // CHECK:STDOUT:   %Op.type.72a: type = fn_type @Op.2, @impl(%tuple.type.b6b) [concrete]
 // CHECK:STDOUT:   %Op.973: %Op.type.72a = struct_value () [concrete]
+// CHECK:STDOUT:   %ptr.8fc: type = ptr_type %tuple.type.b6b [concrete]
 // CHECK:STDOUT:   %Destroy.facet: %Destroy.type = facet_value %tuple.type.b6b, (%Destroy.impl_witness.9c2) [concrete]
 // CHECK:STDOUT:   %.8ce: type = fn_type_with_self_type %Op.type.bae, %Destroy.facet [concrete]
 // CHECK:STDOUT:   %Op.specific_fn: <specific function> = specific_function %Op.973, @Op.2(%tuple.type.b6b) [concrete]
@@ -276,7 +264,7 @@ let (a: {}, b: {}) = ({}, {}, {});
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
-// CHECK:STDOUT:   %Core.import_ref.0b9: @impl.%Op.type (%Op.type.bc9) = import_ref Core//prelude/parts/destroy, loc8_23, loaded [symbolic = @impl.%Op (constants.%Op.46f)]
+// CHECK:STDOUT:   %Core.import_ref.0b9: @impl.%Op.type (%Op.type.bc9) = import_ref Core//prelude/parts/destroy, loc8_29, loaded [symbolic = @impl.%Op (constants.%Op.46f)]
 // CHECK:STDOUT:   %Destroy.impl_witness_table = impl_witness_table (%Core.import_ref.0b9), @impl [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -290,15 +278,15 @@ let (a: {}, b: {}) = ({}, {}, {});
 // CHECK:STDOUT:   %.loc6_27.1: %empty_struct_type = struct_literal ()
 // CHECK:STDOUT:   %.loc6_31.1: %empty_struct_type = struct_literal ()
 // CHECK:STDOUT:   %.loc6_32.1: %tuple.type.b6b = tuple_literal (%.loc6_27.1, %.loc6_31.1)
-// CHECK:STDOUT:   %tuple.elem0.loc6_32: ref %empty_struct_type = tuple_access %tuple.var, element0
-// CHECK:STDOUT:   %.loc6_27.2: init %empty_struct_type = struct_init () to %tuple.elem0.loc6_32 [concrete = constants.%empty_struct]
+// CHECK:STDOUT:   %tuple.elem0.loc6: ref %empty_struct_type = tuple_access %tuple.var, element0
+// CHECK:STDOUT:   %.loc6_27.2: init %empty_struct_type = struct_init () to %tuple.elem0.loc6 [concrete = constants.%empty_struct]
 // CHECK:STDOUT:   %.loc6_32.2: init %empty_struct_type = converted %.loc6_27.1, %.loc6_27.2 [concrete = constants.%empty_struct]
-// CHECK:STDOUT:   %tuple.elem1.loc6_32: ref %empty_struct_type = tuple_access %tuple.var, element1
-// CHECK:STDOUT:   %.loc6_31.2: init %empty_struct_type = struct_init () to %tuple.elem1.loc6_32 [concrete = constants.%empty_struct]
+// CHECK:STDOUT:   %tuple.elem1.loc6: ref %empty_struct_type = tuple_access %tuple.var, element1
+// CHECK:STDOUT:   %.loc6_31.2: init %empty_struct_type = struct_init () to %tuple.elem1.loc6 [concrete = constants.%empty_struct]
 // CHECK:STDOUT:   %.loc6_32.3: init %empty_struct_type = converted %.loc6_31.1, %.loc6_31.2 [concrete = constants.%empty_struct]
 // CHECK:STDOUT:   %.loc6_32.4: init %tuple.type.b6b = tuple_init (%.loc6_32.2, %.loc6_32.3) to %tuple.var [concrete = constants.%tuple]
-// CHECK:STDOUT:   %.loc6_3.1: init %tuple.type.b6b = converted %.loc6_32.1, %.loc6_32.4 [concrete = constants.%tuple]
-// CHECK:STDOUT:   assign %tuple.var, %.loc6_3.1
+// CHECK:STDOUT:   %.loc6_3: init %tuple.type.b6b = converted %.loc6_32.1, %.loc6_32.4 [concrete = constants.%tuple]
+// CHECK:STDOUT:   assign %tuple.var, %.loc6_3
 // CHECK:STDOUT:   %.loc6_21.1: type = splice_block %.loc6_21.5 [concrete = constants.%tuple.type.b6b] {
 // CHECK:STDOUT:     %.loc6_16: %empty_struct_type = struct_literal ()
 // CHECK:STDOUT:     %.loc6_20: %empty_struct_type = struct_literal ()
@@ -307,7 +295,7 @@ let (a: {}, b: {}) = ({}, {}, {});
 // CHECK:STDOUT:     %.loc6_21.4: type = converted %.loc6_20, constants.%empty_struct_type [concrete = constants.%empty_struct_type]
 // CHECK:STDOUT:     %.loc6_21.5: type = converted %.loc6_21.2, constants.%tuple.type.b6b [concrete = constants.%tuple.type.b6b]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %tuple.loc6_7: ref %tuple.type.b6b = bind_name tuple, %tuple.var
+// CHECK:STDOUT:   %tuple: ref %tuple.type.b6b = bind_name tuple, %tuple.var
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %x.patt: %pattern_type.a96 = binding_pattern x [concrete]
 // CHECK:STDOUT:     %y.patt: %pattern_type.a96 = binding_pattern y [concrete]
@@ -315,7 +303,7 @@ let (a: {}, b: {}) = ({}, {}, {});
 // CHECK:STDOUT:     %.var_patt: %pattern_type.de4 = var_pattern %.loc7_20 [concrete]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %.var: ref %tuple.type.b6b = var %.var_patt
-// CHECK:STDOUT:   %tuple.ref: ref %tuple.type.b6b = name_ref tuple, %tuple.loc6_7
+// CHECK:STDOUT:   %tuple.ref: ref %tuple.type.b6b = name_ref tuple, %tuple
 // CHECK:STDOUT:   %tuple.elem0.loc7_24.1: ref %empty_struct_type = tuple_access %tuple.ref, element0
 // CHECK:STDOUT:   %tuple.elem0.loc7_24.2: ref %empty_struct_type = tuple_access %.var, element0
 // CHECK:STDOUT:   %.loc7_24.1: init %empty_struct_type = struct_init () to %tuple.elem0.loc7_24.2 [concrete = constants.%empty_struct]
@@ -325,46 +313,32 @@ let (a: {}, b: {}) = ({}, {}, {});
 // CHECK:STDOUT:   %.loc7_24.3: init %empty_struct_type = struct_init () to %tuple.elem1.loc7_24.2 [concrete = constants.%empty_struct]
 // CHECK:STDOUT:   %.loc7_24.4: init %empty_struct_type = converted %tuple.elem1.loc7_24.1, %.loc7_24.3 [concrete = constants.%empty_struct]
 // CHECK:STDOUT:   %.loc7_24.5: init %tuple.type.b6b = tuple_init (%.loc7_24.2, %.loc7_24.4) to %.var [concrete = constants.%tuple]
-// CHECK:STDOUT:   %.loc7_3.1: init %tuple.type.b6b = converted %tuple.ref, %.loc7_24.5 [concrete = constants.%tuple]
-// CHECK:STDOUT:   assign %.var, %.loc7_3.1
-// CHECK:STDOUT:   %tuple.elem0.loc7_3.1: ref %empty_struct_type = tuple_access %.var, element0
-// CHECK:STDOUT:   %tuple.elem1.loc7_3.1: ref %empty_struct_type = tuple_access %.var, element1
+// CHECK:STDOUT:   %.loc7_3: init %tuple.type.b6b = converted %tuple.ref, %.loc7_24.5 [concrete = constants.%tuple]
+// CHECK:STDOUT:   assign %.var, %.loc7_3
+// CHECK:STDOUT:   %tuple.elem0.loc7_3: ref %empty_struct_type = tuple_access %.var, element0
+// CHECK:STDOUT:   %tuple.elem1.loc7_3: ref %empty_struct_type = tuple_access %.var, element1
 // CHECK:STDOUT:   %.loc7_12.1: type = splice_block %.loc7_12.3 [concrete = constants.%empty_struct_type] {
 // CHECK:STDOUT:     %.loc7_12.2: %empty_struct_type = struct_literal ()
 // CHECK:STDOUT:     %.loc7_12.3: type = converted %.loc7_12.2, constants.%empty_struct_type [concrete = constants.%empty_struct_type]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %x: ref %empty_struct_type = bind_name x, %tuple.elem0.loc7_3.1
+// CHECK:STDOUT:   %x: ref %empty_struct_type = bind_name x, %tuple.elem0.loc7_3
 // CHECK:STDOUT:   %.loc7_19.1: type = splice_block %.loc7_19.3 [concrete = constants.%empty_struct_type] {
 // CHECK:STDOUT:     %.loc7_19.2: %empty_struct_type = struct_literal ()
 // CHECK:STDOUT:     %.loc7_19.3: type = converted %.loc7_19.2, constants.%empty_struct_type [concrete = constants.%empty_struct_type]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %y: ref %empty_struct_type = bind_name y, %tuple.elem1.loc7_3.1
+// CHECK:STDOUT:   %y: ref %empty_struct_type = bind_name y, %tuple.elem1.loc7_3
 // CHECK:STDOUT:   %impl.elem0.loc7: %.8ce = impl_witness_access constants.%Destroy.impl_witness.9c2, element0 [concrete = constants.%Op.973]
 // CHECK:STDOUT:   %bound_method.loc7_3.1: <bound method> = bound_method %.var, %impl.elem0.loc7
 // CHECK:STDOUT:   %specific_fn.loc7: <specific function> = specific_function %impl.elem0.loc7, @Op.2(constants.%tuple.type.b6b) [concrete = constants.%Op.specific_fn]
 // CHECK:STDOUT:   %bound_method.loc7_3.2: <bound method> = bound_method %.var, %specific_fn.loc7
-// CHECK:STDOUT:   %tuple.elem0.loc7_3.2: ref %empty_struct_type = tuple_access %.var, element0
-// CHECK:STDOUT:   %empty_struct.loc7_3.1: %empty_struct_type = struct_value () [concrete = constants.%empty_struct]
-// CHECK:STDOUT:   %.loc7_3.2: %empty_struct_type = converted %tuple.elem0.loc7_3.2, %empty_struct.loc7_3.1 [concrete = constants.%empty_struct]
-// CHECK:STDOUT:   %tuple.elem1.loc7_3.2: ref %empty_struct_type = tuple_access %.var, element1
-// CHECK:STDOUT:   %empty_struct.loc7_3.2: %empty_struct_type = struct_value () [concrete = constants.%empty_struct]
-// CHECK:STDOUT:   %.loc7_3.3: %empty_struct_type = converted %tuple.elem1.loc7_3.2, %empty_struct.loc7_3.2 [concrete = constants.%empty_struct]
-// CHECK:STDOUT:   %tuple.loc7: %tuple.type.b6b = tuple_value (%.loc7_3.2, %.loc7_3.3) [concrete = constants.%tuple]
-// CHECK:STDOUT:   %.loc7_3.4: %tuple.type.b6b = converted %.var, %tuple.loc7 [concrete = constants.%tuple]
-// CHECK:STDOUT:   %no_op.loc7: init %empty_tuple.type = call %bound_method.loc7_3.2(%.loc7_3.4)
+// CHECK:STDOUT:   %addr.loc7: %ptr.8fc = addr_of %.var
+// CHECK:STDOUT:   %no_op.loc7: init %empty_tuple.type = call %bound_method.loc7_3.2(%addr.loc7)
 // CHECK:STDOUT:   %impl.elem0.loc6: %.8ce = impl_witness_access constants.%Destroy.impl_witness.9c2, element0 [concrete = constants.%Op.973]
 // CHECK:STDOUT:   %bound_method.loc6_3.1: <bound method> = bound_method %tuple.var, %impl.elem0.loc6
 // CHECK:STDOUT:   %specific_fn.loc6: <specific function> = specific_function %impl.elem0.loc6, @Op.2(constants.%tuple.type.b6b) [concrete = constants.%Op.specific_fn]
 // CHECK:STDOUT:   %bound_method.loc6_3.2: <bound method> = bound_method %tuple.var, %specific_fn.loc6
-// CHECK:STDOUT:   %tuple.elem0.loc6_3: ref %empty_struct_type = tuple_access %tuple.var, element0
-// CHECK:STDOUT:   %empty_struct.loc6_3.1: %empty_struct_type = struct_value () [concrete = constants.%empty_struct]
-// CHECK:STDOUT:   %.loc6_3.2: %empty_struct_type = converted %tuple.elem0.loc6_3, %empty_struct.loc6_3.1 [concrete = constants.%empty_struct]
-// CHECK:STDOUT:   %tuple.elem1.loc6_3: ref %empty_struct_type = tuple_access %tuple.var, element1
-// CHECK:STDOUT:   %empty_struct.loc6_3.2: %empty_struct_type = struct_value () [concrete = constants.%empty_struct]
-// CHECK:STDOUT:   %.loc6_3.3: %empty_struct_type = converted %tuple.elem1.loc6_3, %empty_struct.loc6_3.2 [concrete = constants.%empty_struct]
-// CHECK:STDOUT:   %tuple.loc6_3: %tuple.type.b6b = tuple_value (%.loc6_3.2, %.loc6_3.3) [concrete = constants.%tuple]
-// CHECK:STDOUT:   %.loc6_3.4: %tuple.type.b6b = converted %tuple.var, %tuple.loc6_3 [concrete = constants.%tuple]
-// CHECK:STDOUT:   %no_op.loc6: init %empty_tuple.type = call %bound_method.loc6_3.2(%.loc6_3.4)
+// CHECK:STDOUT:   %addr.loc6: %ptr.8fc = addr_of %tuple.var
+// CHECK:STDOUT:   %no_op.loc6: init %empty_tuple.type = call %bound_method.loc6_3.2(%addr.loc6)
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -408,33 +382,26 @@ let (a: {}, b: {}) = ({}, {}, {});
 // CHECK:STDOUT:   %.loc14_24.3: init %empty_struct_type = struct_init () to %tuple.elem1.loc14_24.2 [concrete = constants.%empty_struct]
 // CHECK:STDOUT:   %.loc14_24.4: init %empty_struct_type = converted %tuple.elem1.loc14_24.1, %.loc14_24.3 [concrete = constants.%empty_struct]
 // CHECK:STDOUT:   %.loc14_24.5: init %tuple.type.b6b = tuple_init (%.loc14_24.2, %.loc14_24.4) to %.var [concrete = constants.%tuple]
-// CHECK:STDOUT:   %.loc14_3.1: init %tuple.type.b6b = converted %tuple.ref, %.loc14_24.5 [concrete = constants.%tuple]
-// CHECK:STDOUT:   assign %.var, %.loc14_3.1
-// CHECK:STDOUT:   %tuple.elem0.loc14_3.1: ref %empty_struct_type = tuple_access %.var, element0
-// CHECK:STDOUT:   %tuple.elem1.loc14_3.1: ref %empty_struct_type = tuple_access %.var, element1
+// CHECK:STDOUT:   %.loc14_3: init %tuple.type.b6b = converted %tuple.ref, %.loc14_24.5 [concrete = constants.%tuple]
+// CHECK:STDOUT:   assign %.var, %.loc14_3
+// CHECK:STDOUT:   %tuple.elem0.loc14_3: ref %empty_struct_type = tuple_access %.var, element0
+// CHECK:STDOUT:   %tuple.elem1.loc14_3: ref %empty_struct_type = tuple_access %.var, element1
 // CHECK:STDOUT:   %.loc14_12.1: type = splice_block %.loc14_12.3 [concrete = constants.%empty_struct_type] {
 // CHECK:STDOUT:     %.loc14_12.2: %empty_struct_type = struct_literal ()
 // CHECK:STDOUT:     %.loc14_12.3: type = converted %.loc14_12.2, constants.%empty_struct_type [concrete = constants.%empty_struct_type]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %x: ref %empty_struct_type = bind_name x, %tuple.elem0.loc14_3.1
+// CHECK:STDOUT:   %x: ref %empty_struct_type = bind_name x, %tuple.elem0.loc14_3
 // CHECK:STDOUT:   %.loc14_19.1: type = splice_block %.loc14_19.3 [concrete = constants.%empty_struct_type] {
 // CHECK:STDOUT:     %.loc14_19.2: %empty_struct_type = struct_literal ()
 // CHECK:STDOUT:     %.loc14_19.3: type = converted %.loc14_19.2, constants.%empty_struct_type [concrete = constants.%empty_struct_type]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %y: ref %empty_struct_type = bind_name y, %tuple.elem1.loc14_3.1
+// CHECK:STDOUT:   %y: ref %empty_struct_type = bind_name y, %tuple.elem1.loc14_3
 // CHECK:STDOUT:   %impl.elem0: %.8ce = impl_witness_access constants.%Destroy.impl_witness.9c2, element0 [concrete = constants.%Op.973]
 // CHECK:STDOUT:   %bound_method.loc14_3.1: <bound method> = bound_method %.var, %impl.elem0
 // CHECK:STDOUT:   %specific_fn: <specific function> = specific_function %impl.elem0, @Op.2(constants.%tuple.type.b6b) [concrete = constants.%Op.specific_fn]
 // CHECK:STDOUT:   %bound_method.loc14_3.2: <bound method> = bound_method %.var, %specific_fn
-// CHECK:STDOUT:   %tuple.elem0.loc14_3.2: ref %empty_struct_type = tuple_access %.var, element0
-// CHECK:STDOUT:   %empty_struct.loc14_3.1: %empty_struct_type = struct_value () [concrete = constants.%empty_struct]
-// CHECK:STDOUT:   %.loc14_3.2: %empty_struct_type = converted %tuple.elem0.loc14_3.2, %empty_struct.loc14_3.1 [concrete = constants.%empty_struct]
-// CHECK:STDOUT:   %tuple.elem1.loc14_3.2: ref %empty_struct_type = tuple_access %.var, element1
-// CHECK:STDOUT:   %empty_struct.loc14_3.2: %empty_struct_type = struct_value () [concrete = constants.%empty_struct]
-// CHECK:STDOUT:   %.loc14_3.3: %empty_struct_type = converted %tuple.elem1.loc14_3.2, %empty_struct.loc14_3.2 [concrete = constants.%empty_struct]
-// CHECK:STDOUT:   %tuple.loc14: %tuple.type.b6b = tuple_value (%.loc14_3.2, %.loc14_3.3) [concrete = constants.%tuple]
-// CHECK:STDOUT:   %.loc14_3.4: %tuple.type.b6b = converted %.var, %tuple.loc14 [concrete = constants.%tuple]
-// CHECK:STDOUT:   %no_op: init %empty_tuple.type = call %bound_method.loc14_3.2(%.loc14_3.4)
+// CHECK:STDOUT:   %addr: %ptr.8fc = addr_of %.var
+// CHECK:STDOUT:   %no_op: init %empty_tuple.type = call %bound_method.loc14_3.2(%addr)
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -448,47 +415,33 @@ let (a: {}, b: {}) = ({}, {}, {});
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %.var: ref %tuple.type.b6b = var %.var_patt
 // CHECK:STDOUT:   %MakeTuple.ref: %MakeTuple.type = name_ref MakeTuple, file.%MakeTuple.decl [concrete = constants.%MakeTuple]
-// CHECK:STDOUT:   %.loc22_3.1: ref %tuple.type.b6b = splice_block %.var {}
-// CHECK:STDOUT:   %MakeTuple.call: init %tuple.type.b6b = call %MakeTuple.ref() to %.loc22_3.1
+// CHECK:STDOUT:   %.loc22_3: ref %tuple.type.b6b = splice_block %.var {}
+// CHECK:STDOUT:   %MakeTuple.call: init %tuple.type.b6b = call %MakeTuple.ref() to %.loc22_3
 // CHECK:STDOUT:   assign %.var, %MakeTuple.call
-// CHECK:STDOUT:   %tuple.elem0.loc22_3.1: ref %empty_struct_type = tuple_access %.var, element0
-// CHECK:STDOUT:   %tuple.elem1.loc22_3.1: ref %empty_struct_type = tuple_access %.var, element1
+// CHECK:STDOUT:   %tuple.elem0: ref %empty_struct_type = tuple_access %.var, element0
+// CHECK:STDOUT:   %tuple.elem1: ref %empty_struct_type = tuple_access %.var, element1
 // CHECK:STDOUT:   %.loc22_12.1: type = splice_block %.loc22_12.3 [concrete = constants.%empty_struct_type] {
 // CHECK:STDOUT:     %.loc22_12.2: %empty_struct_type = struct_literal ()
 // CHECK:STDOUT:     %.loc22_12.3: type = converted %.loc22_12.2, constants.%empty_struct_type [concrete = constants.%empty_struct_type]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %x: ref %empty_struct_type = bind_name x, %tuple.elem0.loc22_3.1
+// CHECK:STDOUT:   %x: ref %empty_struct_type = bind_name x, %tuple.elem0
 // CHECK:STDOUT:   %.loc22_19.1: type = splice_block %.loc22_19.3 [concrete = constants.%empty_struct_type] {
 // CHECK:STDOUT:     %.loc22_19.2: %empty_struct_type = struct_literal ()
 // CHECK:STDOUT:     %.loc22_19.3: type = converted %.loc22_19.2, constants.%empty_struct_type [concrete = constants.%empty_struct_type]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %y: ref %empty_struct_type = bind_name y, %tuple.elem1.loc22_3.1
+// CHECK:STDOUT:   %y: ref %empty_struct_type = bind_name y, %tuple.elem1
 // CHECK:STDOUT:   %impl.elem0.loc22_3.1: %.8ce = impl_witness_access constants.%Destroy.impl_witness.9c2, element0 [concrete = constants.%Op.973]
-// CHECK:STDOUT:   %bound_method.loc22_3.1: <bound method> = bound_method %.loc22_3.1, %impl.elem0.loc22_3.1
+// CHECK:STDOUT:   %bound_method.loc22_3.1: <bound method> = bound_method %.loc22_3, %impl.elem0.loc22_3.1
 // CHECK:STDOUT:   %specific_fn.loc22_3.1: <specific function> = specific_function %impl.elem0.loc22_3.1, @Op.2(constants.%tuple.type.b6b) [concrete = constants.%Op.specific_fn]
-// CHECK:STDOUT:   %bound_method.loc22_3.2: <bound method> = bound_method %.loc22_3.1, %specific_fn.loc22_3.1
-// CHECK:STDOUT:   %tuple.elem0.loc22_3.2: ref %empty_struct_type = tuple_access %.loc22_3.1, element0
-// CHECK:STDOUT:   %empty_struct.loc22_3.1: %empty_struct_type = struct_value () [concrete = constants.%empty_struct]
-// CHECK:STDOUT:   %.loc22_3.2: %empty_struct_type = converted %tuple.elem0.loc22_3.2, %empty_struct.loc22_3.1 [concrete = constants.%empty_struct]
-// CHECK:STDOUT:   %tuple.elem1.loc22_3.2: ref %empty_struct_type = tuple_access %.loc22_3.1, element1
-// CHECK:STDOUT:   %empty_struct.loc22_3.2: %empty_struct_type = struct_value () [concrete = constants.%empty_struct]
-// CHECK:STDOUT:   %.loc22_3.3: %empty_struct_type = converted %tuple.elem1.loc22_3.2, %empty_struct.loc22_3.2 [concrete = constants.%empty_struct]
-// CHECK:STDOUT:   %tuple.loc22_3.1: %tuple.type.b6b = tuple_value (%.loc22_3.2, %.loc22_3.3) [concrete = constants.%tuple]
-// CHECK:STDOUT:   %.loc22_3.4: %tuple.type.b6b = converted %.loc22_3.1, %tuple.loc22_3.1 [concrete = constants.%tuple]
-// CHECK:STDOUT:   %no_op.loc22_3.1: init %empty_tuple.type = call %bound_method.loc22_3.2(%.loc22_3.4)
+// CHECK:STDOUT:   %bound_method.loc22_3.2: <bound method> = bound_method %.loc22_3, %specific_fn.loc22_3.1
+// CHECK:STDOUT:   %addr.loc22_3.1: %ptr.8fc = addr_of %.loc22_3
+// CHECK:STDOUT:   %no_op.loc22_3.1: init %empty_tuple.type = call %bound_method.loc22_3.2(%addr.loc22_3.1)
 // CHECK:STDOUT:   %impl.elem0.loc22_3.2: %.8ce = impl_witness_access constants.%Destroy.impl_witness.9c2, element0 [concrete = constants.%Op.973]
 // CHECK:STDOUT:   %bound_method.loc22_3.3: <bound method> = bound_method %.var, %impl.elem0.loc22_3.2
 // CHECK:STDOUT:   %specific_fn.loc22_3.2: <specific function> = specific_function %impl.elem0.loc22_3.2, @Op.2(constants.%tuple.type.b6b) [concrete = constants.%Op.specific_fn]
 // CHECK:STDOUT:   %bound_method.loc22_3.4: <bound method> = bound_method %.var, %specific_fn.loc22_3.2
-// CHECK:STDOUT:   %tuple.elem0.loc22_3.3: ref %empty_struct_type = tuple_access %.var, element0
-// CHECK:STDOUT:   %empty_struct.loc22_3.3: %empty_struct_type = struct_value () [concrete = constants.%empty_struct]
-// CHECK:STDOUT:   %.loc22_3.5: %empty_struct_type = converted %tuple.elem0.loc22_3.3, %empty_struct.loc22_3.3 [concrete = constants.%empty_struct]
-// CHECK:STDOUT:   %tuple.elem1.loc22_3.3: ref %empty_struct_type = tuple_access %.var, element1
-// CHECK:STDOUT:   %empty_struct.loc22_3.4: %empty_struct_type = struct_value () [concrete = constants.%empty_struct]
-// CHECK:STDOUT:   %.loc22_3.6: %empty_struct_type = converted %tuple.elem1.loc22_3.3, %empty_struct.loc22_3.4 [concrete = constants.%empty_struct]
-// CHECK:STDOUT:   %tuple.loc22_3.2: %tuple.type.b6b = tuple_value (%.loc22_3.5, %.loc22_3.6) [concrete = constants.%tuple]
-// CHECK:STDOUT:   %.loc22_3.7: %tuple.type.b6b = converted %.var, %tuple.loc22_3.2 [concrete = constants.%tuple]
-// CHECK:STDOUT:   %no_op.loc22_3.2: init %empty_tuple.type = call %bound_method.loc22_3.4(%.loc22_3.7)
+// CHECK:STDOUT:   %addr.loc22_3.2: %ptr.8fc = addr_of %.var
+// CHECK:STDOUT:   %no_op.loc22_3.2: init %empty_tuple.type = call %bound_method.loc22_3.4(%addr.loc22_3.2)
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

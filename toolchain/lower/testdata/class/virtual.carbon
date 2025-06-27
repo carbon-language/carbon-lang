@@ -149,9 +149,9 @@ base class Base(T:! type) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: @"_CIntermediate.Classes.$vtable" = external unnamed_addr constant ptr
 // CHECK:STDOUT: @"_CDerived.Classes.$vtable" = external unnamed_addr constant ptr
-// CHECK:STDOUT: @Base.val.loc7_3.1 = internal constant {} zeroinitializer
-// CHECK:STDOUT: @Intermediate.val.ec2.loc8_3.1 = internal constant { ptr, {} } { ptr @"_CIntermediate.Classes.$vtable", {} zeroinitializer }
-// CHECK:STDOUT: @Derived.val.loc9_3.1 = internal constant { { ptr, {} } } { { ptr, {} } { ptr @"_CDerived.Classes.$vtable", {} zeroinitializer } }
+// CHECK:STDOUT: @Base.val.loc7_3 = internal constant {} zeroinitializer
+// CHECK:STDOUT: @Intermediate.val.ec2.loc8_3 = internal constant { ptr, {} } { ptr @"_CIntermediate.Classes.$vtable", {} zeroinitializer }
+// CHECK:STDOUT: @Derived.val.loc9_3 = internal constant { { ptr, {} } } { { ptr, {} } { ptr @"_CDerived.Classes.$vtable", {} zeroinitializer } }
 // CHECK:STDOUT:
 // CHECK:STDOUT: define void @_CCreate.Create() !dbg !4 {
 // CHECK:STDOUT: entry:
@@ -160,16 +160,16 @@ base class Base(T:! type) {
 // CHECK:STDOUT:   %d.var = alloca { { ptr, {} } }, align 8, !dbg !9
 // CHECK:STDOUT:   %d2.var = alloca { { ptr, {} } }, align 8, !dbg !10
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(i64 0, ptr %b.var), !dbg !7
-// CHECK:STDOUT:   call void @llvm.memcpy.p0.p0.i64(ptr align 1 %b.var, ptr align 1 @Base.val.loc7_3.1, i64 0, i1 false), !dbg !7
+// CHECK:STDOUT:   call void @llvm.memcpy.p0.p0.i64(ptr align 1 %b.var, ptr align 1 @Base.val.loc7_3, i64 0, i1 false), !dbg !7
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(i64 8, ptr %i.var), !dbg !8
 // CHECK:STDOUT:   %.loc8_44.2.vptr = getelementptr inbounds nuw { ptr, {} }, ptr %i.var, i32 0, i32 0, !dbg !11
 // CHECK:STDOUT:   %.loc8_44.4.base = getelementptr inbounds nuw { ptr, {} }, ptr %i.var, i32 0, i32 1, !dbg !11
-// CHECK:STDOUT:   call void @llvm.memcpy.p0.p0.i64(ptr align 8 %i.var, ptr align 8 @Intermediate.val.ec2.loc8_3.1, i64 8, i1 false), !dbg !8
+// CHECK:STDOUT:   call void @llvm.memcpy.p0.p0.i64(ptr align 8 %i.var, ptr align 8 @Intermediate.val.ec2.loc8_3, i64 8, i1 false), !dbg !8
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(i64 8, ptr %d.var), !dbg !9
 // CHECK:STDOUT:   %.loc9_49.2.base = getelementptr inbounds nuw { { ptr, {} } }, ptr %d.var, i32 0, i32 0, !dbg !12
 // CHECK:STDOUT:   %.loc9_48.2.vptr = getelementptr inbounds nuw { ptr, {} }, ptr %.loc9_49.2.base, i32 0, i32 0, !dbg !13
 // CHECK:STDOUT:   %.loc9_48.4.base = getelementptr inbounds nuw { ptr, {} }, ptr %.loc9_49.2.base, i32 0, i32 1, !dbg !13
-// CHECK:STDOUT:   call void @llvm.memcpy.p0.p0.i64(ptr align 8 %d.var, ptr align 8 @Derived.val.loc9_3.1, i64 8, i1 false), !dbg !9
+// CHECK:STDOUT:   call void @llvm.memcpy.p0.p0.i64(ptr align 8 %d.var, ptr align 8 @Derived.val.loc9_3, i64 8, i1 false), !dbg !9
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(i64 8, ptr %d2.var), !dbg !10
 // CHECK:STDOUT:   ret void, !dbg !14
 // CHECK:STDOUT: }
@@ -228,7 +228,7 @@ base class Base(T:! type) {
 // CHECK:STDOUT: source_filename = "member_init.carbon"
 // CHECK:STDOUT:
 // CHECK:STDOUT: @"_CBase.MemberInit.$vtable" = unnamed_addr constant [1 x i32] [i32 trunc (i64 sub (i64 ptrtoint (ptr @_CFn.Base.MemberInit to i64), i64 ptrtoint (ptr @"_CBase.MemberInit.$vtable" to i64)) to i32)]
-// CHECK:STDOUT: @Base.val.loc13_3.1 = internal constant { ptr, i32 } { ptr @"_CBase.MemberInit.$vtable", i32 3 }
+// CHECK:STDOUT: @Base.val.loc13_3 = internal constant { ptr, i32 } { ptr @"_CBase.MemberInit.$vtable", i32 3 }
 // CHECK:STDOUT:
 // CHECK:STDOUT: define void @_CFn.Base.MemberInit(ptr %self) !dbg !4 {
 // CHECK:STDOUT: entry:
@@ -253,8 +253,7 @@ base class Base(T:! type) {
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(i64 16, ptr %u.var), !dbg !11
 // CHECK:STDOUT:   %.loc13_24.2.vptr = getelementptr inbounds nuw { ptr, i32 }, ptr %u.var, i32 0, i32 0, !dbg !15
 // CHECK:STDOUT:   %.loc13_24.5.m = getelementptr inbounds nuw { ptr, i32 }, ptr %u.var, i32 0, i32 1, !dbg !15
-// CHECK:STDOUT:   call void @llvm.memcpy.p0.p0.i64(ptr align 8 %u.var, ptr align 8 @Base.val.loc13_3.1, i64 16, i1 false), !dbg !11
-// CHECK:STDOUT:   %.loc10_3.2 = load i32, ptr %i.var, align 4, !dbg !9
+// CHECK:STDOUT:   call void @llvm.memcpy.p0.p0.i64(ptr align 8 %u.var, ptr align 8 @Base.val.loc13_3, i64 16, i1 false), !dbg !11
 // CHECK:STDOUT:   ret void, !dbg !16
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -295,7 +294,7 @@ base class Base(T:! type) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: @"_CBase.Main.$vtable" = unnamed_addr constant [1 x i32] [i32 trunc (i64 sub (i64 ptrtoint (ptr @_CF.Base.Main to i64), i64 ptrtoint (ptr @"_CBase.Main.$vtable" to i64)) to i32)]
 // CHECK:STDOUT: @"_CDerived.Main.$vtable" = unnamed_addr constant [1 x i32] [i32 trunc (i64 sub (i64 ptrtoint (ptr @_CF.Base.Main to i64), i64 ptrtoint (ptr @"_CDerived.Main.$vtable" to i64)) to i32)]
-// CHECK:STDOUT: @Derived.val.loc13_3.1 = internal constant { { ptr } } { { ptr } { ptr @"_CDerived.Main.$vtable" } }
+// CHECK:STDOUT: @Derived.val.loc13_3 = internal constant { { ptr } } { { ptr } { ptr @"_CDerived.Main.$vtable" } }
 // CHECK:STDOUT:
 // CHECK:STDOUT: declare void @_CF.Base.Main(ptr)
 // CHECK:STDOUT:
@@ -305,7 +304,7 @@ base class Base(T:! type) {
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(i64 8, ptr %v.var), !dbg !7
 // CHECK:STDOUT:   %.loc13_32.2.base = getelementptr inbounds nuw { { ptr } }, ptr %v.var, i32 0, i32 0, !dbg !8
 // CHECK:STDOUT:   %.loc13_31.2.vptr = getelementptr inbounds nuw { ptr }, ptr %.loc13_32.2.base, i32 0, i32 0, !dbg !9
-// CHECK:STDOUT:   call void @llvm.memcpy.p0.p0.i64(ptr align 8 %v.var, ptr align 8 @Derived.val.loc13_3.1, i64 8, i1 false), !dbg !7
+// CHECK:STDOUT:   call void @llvm.memcpy.p0.p0.i64(ptr align 8 %v.var, ptr align 8 @Derived.val.loc13_3, i64 8, i1 false), !dbg !7
 // CHECK:STDOUT:   ret void, !dbg !10
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -369,7 +368,7 @@ base class Base(T:! type) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: @"_CBase.Main.$vtable" = unnamed_addr constant [1 x i32] [i32 trunc (i64 sub (i64 ptrtoint (ptr @_CF.Base.Main to i64), i64 ptrtoint (ptr @"_CBase.Main.$vtable" to i64)) to i32)]
 // CHECK:STDOUT: @"_CDerived.Main.$vtable" = unnamed_addr constant [1 x i32] [i32 trunc (i64 sub (i64 ptrtoint (ptr @_CF.Derived.Main to i64), i64 ptrtoint (ptr @"_CDerived.Main.$vtable" to i64)) to i32)]
-// CHECK:STDOUT: @Derived.val.loc14_3.1 = internal constant { { ptr } } { { ptr } { ptr @"_CDerived.Main.$vtable" } }
+// CHECK:STDOUT: @Derived.val.loc14_3 = internal constant { { ptr } } { { ptr } { ptr @"_CDerived.Main.$vtable" } }
 // CHECK:STDOUT:
 // CHECK:STDOUT: declare void @_CF.Base.Main(ptr)
 // CHECK:STDOUT:
@@ -381,7 +380,7 @@ base class Base(T:! type) {
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(i64 8, ptr %v.var), !dbg !7
 // CHECK:STDOUT:   %.loc14_32.2.base = getelementptr inbounds nuw { { ptr } }, ptr %v.var, i32 0, i32 0, !dbg !8
 // CHECK:STDOUT:   %.loc14_31.2.vptr = getelementptr inbounds nuw { ptr }, ptr %.loc14_32.2.base, i32 0, i32 0, !dbg !9
-// CHECK:STDOUT:   call void @llvm.memcpy.p0.p0.i64(ptr align 8 %v.var, ptr align 8 @Derived.val.loc14_3.1, i64 8, i1 false), !dbg !7
+// CHECK:STDOUT:   call void @llvm.memcpy.p0.p0.i64(ptr align 8 %v.var, ptr align 8 @Derived.val.loc14_3, i64 8, i1 false), !dbg !7
 // CHECK:STDOUT:   %F.call.vtable = load ptr, ptr %v.var, align 8, !dbg !10
 // CHECK:STDOUT:   %F.call = call ptr @llvm.load.relative.i32(ptr %F.call.vtable, i32 0), !dbg !10
 // CHECK:STDOUT:   call void %F.call(ptr %v.var), !dbg !10

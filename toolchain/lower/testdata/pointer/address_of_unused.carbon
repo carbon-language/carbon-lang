@@ -23,7 +23,6 @@ fn F() {
 // CHECK:STDOUT:   %n.var = alloca i32, align 4, !dbg !7
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(i64 4, ptr %n.var), !dbg !7
 // CHECK:STDOUT:   store i32 0, ptr %n.var, align 4, !dbg !7
-// CHECK:STDOUT:   %.loc14_3.2 = load i32, ptr %n.var, align 4, !dbg !7
 // CHECK:STDOUT:   ret void, !dbg !8
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

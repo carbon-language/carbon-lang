@@ -39,6 +39,7 @@ fn Main() {
 // CHECK:STDOUT:   %Destroy.impl_witness.148: <witness> = impl_witness imports.%Destroy.impl_witness_table, @impl(%struct_type.v) [concrete]
 // CHECK:STDOUT:   %Op.type.7e5: type = fn_type @Op.2, @impl(%struct_type.v) [concrete]
 // CHECK:STDOUT:   %Op.477: %Op.type.7e5 = struct_value () [concrete]
+// CHECK:STDOUT:   %ptr.ef9: type = ptr_type %struct_type.v [concrete]
 // CHECK:STDOUT:   %Destroy.facet: %Destroy.type = facet_value %struct_type.v, (%Destroy.impl_witness.148) [concrete]
 // CHECK:STDOUT:   %.d6c: type = fn_type_with_self_type %Op.type.bae, %Destroy.facet [concrete]
 // CHECK:STDOUT:   %Op.specific_fn: <specific function> = specific_function %Op.477, @Op.2(%struct_type.v) [concrete]
@@ -51,7 +52,7 @@ fn Main() {
 // CHECK:STDOUT:     import Core//prelude/...
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.Destroy: type = import_ref Core//prelude/parts/destroy, Destroy, loaded [concrete = constants.%Destroy.type]
-// CHECK:STDOUT:   %Core.import_ref.0b9: @impl.%Op.type (%Op.type.bc9) = import_ref Core//prelude/parts/destroy, loc8_23, loaded [symbolic = @impl.%Op (constants.%Op.46f)]
+// CHECK:STDOUT:   %Core.import_ref.0b9: @impl.%Op.type (%Op.type.bc9) = import_ref Core//prelude/parts/destroy, loc8_29, loaded [symbolic = @impl.%Op (constants.%Op.46f)]
 // CHECK:STDOUT:   %Destroy.impl_witness_table = impl_witness_table (%Core.import_ref.0b9), @impl [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -89,8 +90,8 @@ fn Main() {
 // CHECK:STDOUT:   %.loc5_21.3: init %empty_tuple.type = tuple_init () to %.loc5_21.2 [concrete = constants.%empty_tuple]
 // CHECK:STDOUT:   %.loc5_21.4: init %empty_tuple.type = converted %.loc5_21.1, %.loc5_21.3 [concrete = constants.%empty_tuple]
 // CHECK:STDOUT:   %.loc5_21.5: init %struct_type.v = struct_init (%.loc5_21.4) to %y.var [concrete = constants.%struct]
-// CHECK:STDOUT:   %.loc5_3.1: init %struct_type.v = converted %x.ref, %.loc5_21.5 [concrete = constants.%struct]
-// CHECK:STDOUT:   assign %y.var, %.loc5_3.1
+// CHECK:STDOUT:   %.loc5_3: init %struct_type.v = converted %x.ref, %.loc5_21.5 [concrete = constants.%struct]
+// CHECK:STDOUT:   assign %y.var, %.loc5_3
 // CHECK:STDOUT:   %.loc5_17: type = splice_block %struct_type.v [concrete = constants.%struct_type.v] {
 // CHECK:STDOUT:     %.loc5_16.1: %empty_tuple.type = tuple_literal ()
 // CHECK:STDOUT:     %.loc5_16.2: type = converted %.loc5_16.1, constants.%empty_tuple.type [concrete = constants.%empty_tuple.type]
@@ -101,12 +102,8 @@ fn Main() {
 // CHECK:STDOUT:   %bound_method.loc5_3.1: <bound method> = bound_method %y.var, %impl.elem0
 // CHECK:STDOUT:   %specific_fn: <specific function> = specific_function %impl.elem0, @Op.2(constants.%struct_type.v) [concrete = constants.%Op.specific_fn]
 // CHECK:STDOUT:   %bound_method.loc5_3.2: <bound method> = bound_method %y.var, %specific_fn
-// CHECK:STDOUT:   %.loc5_3.2: ref %empty_tuple.type = struct_access %y.var, element0
-// CHECK:STDOUT:   %tuple: %empty_tuple.type = tuple_value () [concrete = constants.%empty_tuple]
-// CHECK:STDOUT:   %.loc5_3.3: %empty_tuple.type = converted %.loc5_3.2, %tuple [concrete = constants.%empty_tuple]
-// CHECK:STDOUT:   %struct: %struct_type.v = struct_value (%.loc5_3.3) [concrete = constants.%struct]
-// CHECK:STDOUT:   %.loc5_3.4: %struct_type.v = converted %y.var, %struct [concrete = constants.%struct]
-// CHECK:STDOUT:   %no_op: init %empty_tuple.type = call %bound_method.loc5_3.2(%.loc5_3.4)
+// CHECK:STDOUT:   %addr: %ptr.ef9 = addr_of %y.var
+// CHECK:STDOUT:   %no_op: init %empty_tuple.type = call %bound_method.loc5_3.2(%addr)
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

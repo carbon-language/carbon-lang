@@ -69,7 +69,6 @@ fn For() {
 // CHECK:STDOUT:   br label %for.next, !dbg !16
 // CHECK:STDOUT:
 // CHECK:STDOUT: for.done:                                         ; preds = %if.then.loc19, %for.next
-// CHECK:STDOUT:   %.loc18_33.12 = load i32, ptr %var, align 4, !dbg !8
 // CHECK:STDOUT:   ret void, !dbg !17
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

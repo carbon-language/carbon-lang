@@ -53,7 +53,7 @@ fn F(c: Class, p: Class*) {
 // CHECK:STDOUT:   %G.type: type = fn_type @G [concrete]
 // CHECK:STDOUT:   %G: %G.type = struct_value () [concrete]
 // CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [concrete]
-// CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [concrete]
+// CHECK:STDOUT:   %complete_type.357: <witness> = complete_type_witness %empty_struct_type [concrete]
 // CHECK:STDOUT:   %F.type.b25: type = fn_type @F.2 [concrete]
 // CHECK:STDOUT:   %F.c41: %F.type.b25 = struct_value () [concrete]
 // CHECK:STDOUT:   %Destroy.type: type = facet_type <@Destroy> [concrete]
@@ -76,7 +76,7 @@ fn F(c: Class, p: Class*) {
 // CHECK:STDOUT:     import Core//prelude/...
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.Destroy: type = import_ref Core//prelude/parts/destroy, Destroy, loaded [concrete = constants.%Destroy.type]
-// CHECK:STDOUT:   %Core.import_ref.0b9: @impl.%Op.type (%Op.type.bc9) = import_ref Core//prelude/parts/destroy, loc8_23, loaded [symbolic = @impl.%Op (constants.%Op.46f)]
+// CHECK:STDOUT:   %Core.import_ref.0b9: @impl.%Op.type (%Op.type.bc9) = import_ref Core//prelude/parts/destroy, loc8_29, loaded [symbolic = @impl.%Op (constants.%Op.46f)]
 // CHECK:STDOUT:   %Destroy.impl_witness_table = impl_witness_table (%Core.import_ref.0b9), @impl [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -128,7 +128,7 @@ fn F(c: Class, p: Class*) {
 // CHECK:STDOUT:     %self: %Class = bind_name self, %self.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [concrete = constants.%empty_struct_type]
-// CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [concrete = constants.%complete_type]
+// CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [concrete = constants.%complete_type.357]
 // CHECK:STDOUT:   complete_type_witness = %complete_type
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
@@ -147,9 +147,9 @@ fn F(c: Class, p: Class*) {
 // CHECK:STDOUT:   %c.ref.loc32: %Class = name_ref c, %c
 // CHECK:STDOUT:   %F.ref.loc32: %F.type.f1b = name_ref F, @Class.%F.decl [concrete = constants.%F.1f2]
 // CHECK:STDOUT:   %F.bound.loc32: <bound method> = bound_method %c.ref.loc32, %F.ref.loc32
-// CHECK:STDOUT:   %.loc32_3.1: ref %Class = temporary_storage
-// CHECK:STDOUT:   %addr.loc32: %ptr.e71 = addr_of %.loc32_3.1
-// CHECK:STDOUT:   %F.call.loc32: init %empty_tuple.type = call %F.bound.loc32(%addr.loc32)
+// CHECK:STDOUT:   %.loc32: ref %Class = temporary_storage
+// CHECK:STDOUT:   %addr.loc32_3.1: %ptr.e71 = addr_of %.loc32
+// CHECK:STDOUT:   %F.call.loc32: init %empty_tuple.type = call %F.bound.loc32(%addr.loc32_3.1)
 // CHECK:STDOUT:   %c.ref.loc34: %Class = name_ref c, %c
 // CHECK:STDOUT:   %G.ref.loc34: %G.type = name_ref G, @Class.%G.decl [concrete = constants.%G]
 // CHECK:STDOUT:   %G.bound.loc34: <bound method> = bound_method %c.ref.loc34, %G.ref.loc34
@@ -167,11 +167,11 @@ fn F(c: Class, p: Class*) {
 // CHECK:STDOUT:   %.loc39_4.2: %Class = bind_value %.loc39_4.1
 // CHECK:STDOUT:   %G.call.loc39: init %empty_tuple.type = call %G.bound.loc39(%.loc39_4.2)
 // CHECK:STDOUT:   %impl.elem0: %.b9f = impl_witness_access constants.%Destroy.impl_witness.fef, element0 [concrete = constants.%Op.d64]
-// CHECK:STDOUT:   %bound_method.loc32_3.1: <bound method> = bound_method %.loc32_3.1, %impl.elem0
+// CHECK:STDOUT:   %bound_method.loc32_3.1: <bound method> = bound_method %.loc32, %impl.elem0
 // CHECK:STDOUT:   %specific_fn: <specific function> = specific_function %impl.elem0, @Op.2(constants.%Class) [concrete = constants.%Op.specific_fn]
-// CHECK:STDOUT:   %bound_method.loc32_3.2: <bound method> = bound_method %.loc32_3.1, %specific_fn
-// CHECK:STDOUT:   %.loc32_3.2: %Class = bind_value %.loc32_3.1
-// CHECK:STDOUT:   %no_op: init %empty_tuple.type = call %bound_method.loc32_3.2(%.loc32_3.2)
+// CHECK:STDOUT:   %bound_method.loc32_3.2: <bound method> = bound_method %.loc32, %specific_fn
+// CHECK:STDOUT:   %addr.loc32_3.2: %ptr.e71 = addr_of %.loc32
+// CHECK:STDOUT:   %no_op: init %empty_tuple.type = call %bound_method.loc32_3.2(%addr.loc32_3.2)
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

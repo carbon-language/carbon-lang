@@ -28,7 +28,6 @@ fn IncrSigned() {
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(i64 4, ptr %from.var), !dbg !7
 // CHECK:STDOUT:   store i32 0, ptr %from.var, align 4, !dbg !7
 // CHECK:STDOUT:   call void @"_COp.Int.Core:Inc.Core.be1e879c1ad406d8"(ptr %from.var), !dbg !8
-// CHECK:STDOUT:   %.loc5_3.2 = load i32, ptr %from.var, align 4, !dbg !7
 // CHECK:STDOUT:   ret void, !dbg !9
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

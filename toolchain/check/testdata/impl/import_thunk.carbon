@@ -325,7 +325,7 @@ fn G() {
 // CHECK:STDOUT:   %C.type: type = generic_class_type @C [concrete]
 // CHECK:STDOUT:   %C.generic: %C.type = struct_value () [concrete]
 // CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [concrete]
-// CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [concrete]
+// CHECK:STDOUT:   %complete_type.357: <witness> = complete_type_witness %empty_struct_type [concrete]
 // CHECK:STDOUT:   %X: %empty_tuple.type = bind_symbolic_name X, 0 [symbolic]
 // CHECK:STDOUT:   %empty_tuple: %empty_tuple.type = tuple_value () [concrete]
 // CHECK:STDOUT:   %C.607: type = class_type @C, @C(%empty_tuple) [concrete]
@@ -366,6 +366,7 @@ fn G() {
 // CHECK:STDOUT:   %Destroy.impl_witness.94b: <witness> = impl_witness imports.%Destroy.impl_witness_table, @impl.49c(%C.607) [concrete]
 // CHECK:STDOUT:   %Op.type.961: type = fn_type @Op.2, @impl.49c(%C.607) [concrete]
 // CHECK:STDOUT:   %Op.7ef: %Op.type.961 = struct_value () [concrete]
+// CHECK:STDOUT:   %ptr.2ce: type = ptr_type %C.607 [concrete]
 // CHECK:STDOUT:   %Destroy.facet: %Destroy.type = facet_value %C.607, (%Destroy.impl_witness.94b) [concrete]
 // CHECK:STDOUT:   %.bb3: type = fn_type_with_self_type %Op.type.bae, %Destroy.facet [concrete]
 // CHECK:STDOUT:   %Op.specific_fn: <specific function> = specific_function %Op.7ef, @Op.2(%C.607) [concrete]
@@ -380,7 +381,7 @@ fn G() {
 // CHECK:STDOUT:     import Core//prelude/...
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Main.import_ref.eb1c17.1: %empty_tuple.type = import_ref Main//b, loc5_9, loaded [symbolic = @C.%X (constants.%X)]
-// CHECK:STDOUT:   %Main.import_ref.8f2: <witness> = import_ref Main//b, loc5_18, loaded [concrete = constants.%complete_type]
+// CHECK:STDOUT:   %Main.import_ref.8f2: <witness> = import_ref Main//b, loc5_18, loaded [concrete = constants.%complete_type.357]
 // CHECK:STDOUT:   %Main.import_ref.572 = import_ref Main//b, inst31 [no loc], unloaded
 // CHECK:STDOUT:   %Main.import_ref.e5d = import_ref Main//a, inst19 [no loc], unloaded
 // CHECK:STDOUT:   %Main.import_ref.c44: %I.assoc_type = import_ref Main//a, loc5_14, loaded [concrete = constants.%assoc0.3f3]
@@ -397,7 +398,7 @@ fn G() {
 // CHECK:STDOUT:   %Main.import_ref.eb1c17.4: %empty_tuple.type = import_ref Main//b, loc7_14, loaded [symbolic = @impl.22b.%Y (constants.%Y)]
 // CHECK:STDOUT:   %Main.F.5a8: @impl.22b.%F.type.1 (%F.type.0daaa1.1) = import_ref Main//b, F, loaded [symbolic = @impl.22b.%F.1 (constants.%F.49c1ac.1)]
 // CHECK:STDOUT:   %Core.Destroy: type = import_ref Core//prelude/parts/destroy, Destroy, loaded [concrete = constants.%Destroy.type]
-// CHECK:STDOUT:   %Core.import_ref.0b9: @impl.49c.%Op.type (%Op.type.bc9) = import_ref Core//prelude/parts/destroy, loc8_23, loaded [symbolic = @impl.49c.%Op (constants.%Op.46f)]
+// CHECK:STDOUT:   %Core.import_ref.0b9: @impl.49c.%Op.type (%Op.type.bc9) = import_ref Core//prelude/parts/destroy, loc8_29, loaded [symbolic = @impl.49c.%Op (constants.%Op.46f)]
 // CHECK:STDOUT:   %Destroy.impl_witness_table = impl_witness_table (%Core.import_ref.0b9), @impl.49c [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -481,8 +482,8 @@ fn G() {
 // CHECK:STDOUT:   %bound_method.loc7_16.1: <bound method> = bound_method %.loc7_16.3, %impl.elem0.loc7_16
 // CHECK:STDOUT:   %specific_fn.loc7_16: <specific function> = specific_function %impl.elem0.loc7_16, @Op.2(constants.%C.607) [concrete = constants.%Op.specific_fn]
 // CHECK:STDOUT:   %bound_method.loc7_16.2: <bound method> = bound_method %.loc7_16.3, %specific_fn.loc7_16
-// CHECK:STDOUT:   %.loc7_16.8: %C.607 = bind_value %.loc7_16.3
-// CHECK:STDOUT:   %no_op: init %empty_tuple.type = call %bound_method.loc7_16.2(%.loc7_16.8)
+// CHECK:STDOUT:   %addr: %ptr.2ce = addr_of %.loc7_16.3
+// CHECK:STDOUT:   %no_op: init %empty_tuple.type = call %bound_method.loc7_16.2(%addr)
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -574,7 +575,7 @@ fn G() {
 // CHECK:STDOUT:   %F => constants.%F.5fa954.1
 // CHECK:STDOUT:   %F.specific_fn => constants.%F.specific_fn.4832e8.2
 // CHECK:STDOUT:   %C => constants.%C.607
-// CHECK:STDOUT:   %require_complete => constants.%complete_type
+// CHECK:STDOUT:   %require_complete => constants.%complete_type.357
 // CHECK:STDOUT:   %C.val => constants.%C.val.12f
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -584,6 +585,6 @@ fn G() {
 // CHECK:STDOUT:   %pattern_type => constants.%pattern_type.186
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
-// CHECK:STDOUT:   %require_complete => constants.%complete_type
+// CHECK:STDOUT:   %require_complete => constants.%complete_type.357
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

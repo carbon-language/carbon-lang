@@ -41,7 +41,7 @@ class C {
 // CHECK:STDOUT:   %F.c94: %F.type.e4b = struct_value () [concrete]
 // CHECK:STDOUT:   %Simple.facet: %Simple.type = facet_value %C, (%Simple.impl_witness) [concrete]
 // CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [concrete]
-// CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [concrete]
+// CHECK:STDOUT:   %complete_type.357: <witness> = complete_type_witness %empty_struct_type [concrete]
 // CHECK:STDOUT:   %pattern_type.c48: type = pattern_type %C [concrete]
 // CHECK:STDOUT:   %C.val: %C = struct_value () [concrete]
 // CHECK:STDOUT:   %Destroy.type: type = facet_type <@Destroy> [concrete]
@@ -52,6 +52,7 @@ class C {
 // CHECK:STDOUT:   %Destroy.impl_witness.906: <witness> = impl_witness imports.%Destroy.impl_witness_table, @impl.49c(%C) [concrete]
 // CHECK:STDOUT:   %Op.type.153: type = fn_type @Op.2, @impl.49c(%C) [concrete]
 // CHECK:STDOUT:   %Op.5d7: %Op.type.153 = struct_value () [concrete]
+// CHECK:STDOUT:   %ptr.019: type = ptr_type %C [concrete]
 // CHECK:STDOUT:   %Destroy.facet: %Destroy.type = facet_value %C, (%Destroy.impl_witness.906) [concrete]
 // CHECK:STDOUT:   %.b80: type = fn_type_with_self_type %Op.type.bae, %Destroy.facet [concrete]
 // CHECK:STDOUT:   %Op.specific_fn: <specific function> = specific_function %Op.5d7, @Op.2(%C) [concrete]
@@ -64,7 +65,7 @@ class C {
 // CHECK:STDOUT:     import Core//prelude/...
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.Destroy: type = import_ref Core//prelude/parts/destroy, Destroy, loaded [concrete = constants.%Destroy.type]
-// CHECK:STDOUT:   %Core.import_ref.0b9: @impl.49c.%Op.type (%Op.type.bc9) = import_ref Core//prelude/parts/destroy, loc8_23, loaded [symbolic = @impl.49c.%Op (constants.%Op.46f)]
+// CHECK:STDOUT:   %Core.import_ref.0b9: @impl.49c.%Op.type (%Op.type.bc9) = import_ref Core//prelude/parts/destroy, loc8_29, loaded [symbolic = @impl.49c.%Op (constants.%Op.46f)]
 // CHECK:STDOUT:   %Destroy.impl_witness_table = impl_witness_table (%Core.import_ref.0b9), @impl.49c [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -107,7 +108,7 @@ class C {
 // CHECK:STDOUT:   %Simple.impl_witness_table = impl_witness_table (@impl.0ef.%F.decl), @impl.0ef [concrete]
 // CHECK:STDOUT:   %Simple.impl_witness: <witness> = impl_witness %Simple.impl_witness_table [concrete = constants.%Simple.impl_witness]
 // CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [concrete = constants.%empty_struct_type]
-// CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [concrete = constants.%complete_type]
+// CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [concrete = constants.%complete_type.357]
 // CHECK:STDOUT:   complete_type_witness = %complete_type
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
@@ -129,16 +130,16 @@ class C {
 // CHECK:STDOUT:   %c.var: ref %C = var %c.var_patt
 // CHECK:STDOUT:   %.loc23_19.1: %empty_struct_type = struct_literal ()
 // CHECK:STDOUT:   %.loc23_19.2: init %C = class_init (), %c.var [concrete = constants.%C.val]
-// CHECK:STDOUT:   %.loc23_7.1: init %C = converted %.loc23_19.1, %.loc23_19.2 [concrete = constants.%C.val]
-// CHECK:STDOUT:   assign %c.var, %.loc23_7.1
+// CHECK:STDOUT:   %.loc23_7: init %C = converted %.loc23_19.1, %.loc23_19.2 [concrete = constants.%C.val]
+// CHECK:STDOUT:   assign %c.var, %.loc23_7
 // CHECK:STDOUT:   %C.ref: type = name_ref C, file.%C.decl [concrete = constants.%C]
 // CHECK:STDOUT:   %c: ref %C = bind_name c, %c.var
 // CHECK:STDOUT:   %impl.elem0: %.b80 = impl_witness_access constants.%Destroy.impl_witness.906, element0 [concrete = constants.%Op.5d7]
 // CHECK:STDOUT:   %bound_method.loc23_7.1: <bound method> = bound_method %c.var, %impl.elem0
 // CHECK:STDOUT:   %specific_fn: <specific function> = specific_function %impl.elem0, @Op.2(constants.%C) [concrete = constants.%Op.specific_fn]
 // CHECK:STDOUT:   %bound_method.loc23_7.2: <bound method> = bound_method %c.var, %specific_fn
-// CHECK:STDOUT:   %.loc23_7.2: %C = bind_value %c.var
-// CHECK:STDOUT:   %no_op: init %empty_tuple.type = call %bound_method.loc23_7.2(%.loc23_7.2)
+// CHECK:STDOUT:   %addr: %ptr.019 = addr_of %c.var
+// CHECK:STDOUT:   %no_op: init %empty_tuple.type = call %bound_method.loc23_7.2(%addr)
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

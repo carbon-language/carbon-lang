@@ -99,6 +99,7 @@ class C(C:! type) {
 // CHECK:STDOUT:   %Destroy.impl_witness.bcb: <witness> = impl_witness imports.%Destroy.impl_witness_table, @impl.49c(%C.d45) [concrete]
 // CHECK:STDOUT:   %Op.type.39b: type = fn_type @Op.3, @impl.49c(%C.d45) [concrete]
 // CHECK:STDOUT:   %Op.5e9: %Op.type.39b = struct_value () [concrete]
+// CHECK:STDOUT:   %ptr.9c7: type = ptr_type %C.d45 [concrete]
 // CHECK:STDOUT:   %Destroy.facet: %Destroy.type = facet_value %C.d45, (%Destroy.impl_witness.bcb) [concrete]
 // CHECK:STDOUT:   %.f33: type = fn_type_with_self_type %Op.type.bae, %Destroy.facet [concrete]
 // CHECK:STDOUT:   %Op.specific_fn: <specific function> = specific_function %Op.5e9, @Op.3(%C.d45) [concrete]
@@ -117,7 +118,7 @@ class C(C:! type) {
 // CHECK:STDOUT:   %Core.import_ref.a5b: @impl.4f9.%Convert.type (%Convert.type.0f9) = import_ref Core//prelude/parts/int, loc16_39, loaded [symbolic = @impl.4f9.%Convert (constants.%Convert.f06)]
 // CHECK:STDOUT:   %ImplicitAs.impl_witness_table.a2f = impl_witness_table (%Core.import_ref.a5b), @impl.4f9 [concrete]
 // CHECK:STDOUT:   %Core.Destroy: type = import_ref Core//prelude/parts/destroy, Destroy, loaded [concrete = constants.%Destroy.type]
-// CHECK:STDOUT:   %Core.import_ref.0b9: @impl.49c.%Op.type (%Op.type.bc9) = import_ref Core//prelude/parts/destroy, loc8_23, loaded [symbolic = @impl.49c.%Op (constants.%Op.46f)]
+// CHECK:STDOUT:   %Core.import_ref.0b9: @impl.49c.%Op.type (%Op.type.bc9) = import_ref Core//prelude/parts/destroy, loc8_29, loaded [symbolic = @impl.49c.%Op (constants.%Op.46f)]
 // CHECK:STDOUT:   %Destroy.impl_witness_table = impl_witness_table (%Core.import_ref.0b9), @impl.49c [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -177,8 +178,8 @@ class C(C:! type) {
 // CHECK:STDOUT:   %.loc8_26.3: ref %i32 = class_element_access %v.var, element0
 // CHECK:STDOUT:   %.loc8_26.4: init %i32 = initialize_from %.loc8_26.2 to %.loc8_26.3 [concrete = constants.%int_1.5d2]
 // CHECK:STDOUT:   %.loc8_26.5: init %C.d45 = class_init (%.loc8_26.4), %v.var [concrete = constants.%C.val]
-// CHECK:STDOUT:   %.loc8_3.1: init %C.d45 = converted %.loc8_26.1, %.loc8_26.5 [concrete = constants.%C.val]
-// CHECK:STDOUT:   assign %v.var, %.loc8_3.1
+// CHECK:STDOUT:   %.loc8_3: init %C.d45 = converted %.loc8_26.1, %.loc8_26.5 [concrete = constants.%C.val]
+// CHECK:STDOUT:   assign %v.var, %.loc8_3
 // CHECK:STDOUT:   %.loc8_15: type = splice_block %C [concrete = constants.%C.d45] {
 // CHECK:STDOUT:     %C.ref: %C.type = name_ref C, %C.decl [concrete = constants.%C.generic]
 // CHECK:STDOUT:     %int_32: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
@@ -190,8 +191,8 @@ class C(C:! type) {
 // CHECK:STDOUT:   %bound_method.loc8_3.1: <bound method> = bound_method %v.var, %impl.elem0.loc8_3
 // CHECK:STDOUT:   %specific_fn.loc8_3: <specific function> = specific_function %impl.elem0.loc8_3, @Op.3(constants.%C.d45) [concrete = constants.%Op.specific_fn]
 // CHECK:STDOUT:   %bound_method.loc8_3.2: <bound method> = bound_method %v.var, %specific_fn.loc8_3
-// CHECK:STDOUT:   %.loc8_3.2: %C.d45 = bind_value %v.var
-// CHECK:STDOUT:   %no_op: init %empty_tuple.type = call %bound_method.loc8_3.2(%.loc8_3.2)
+// CHECK:STDOUT:   %addr: %ptr.9c7 = addr_of %v.var
+// CHECK:STDOUT:   %no_op: init %empty_tuple.type = call %bound_method.loc8_3.2(%addr)
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

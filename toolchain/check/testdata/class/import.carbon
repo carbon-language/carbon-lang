@@ -224,12 +224,14 @@ fn Run() {
 // CHECK:STDOUT:   %Destroy.impl_witness.0f1: <witness> = impl_witness imports.%Destroy.impl_witness_table, @impl.49c(%ptr.c62) [concrete]
 // CHECK:STDOUT:   %Op.type.7f0: type = fn_type @Op.3, @impl.49c(%ptr.c62) [concrete]
 // CHECK:STDOUT:   %Op.90d: %Op.type.7f0 = struct_value () [concrete]
+// CHECK:STDOUT:   %ptr.c22: type = ptr_type %ptr.c62 [concrete]
 // CHECK:STDOUT:   %Destroy.facet.f98: %Destroy.type = facet_value %ptr.c62, (%Destroy.impl_witness.0f1) [concrete]
 // CHECK:STDOUT:   %.1e9: type = fn_type_with_self_type %Op.type.bae, %Destroy.facet.f98 [concrete]
 // CHECK:STDOUT:   %Op.specific_fn.b24: <specific function> = specific_function %Op.90d, @Op.3(%ptr.c62) [concrete]
 // CHECK:STDOUT:   %Destroy.impl_witness.20e: <witness> = impl_witness imports.%Destroy.impl_witness_table, @impl.49c(%ptr.6cf) [concrete]
 // CHECK:STDOUT:   %Op.type.d2a: type = fn_type @Op.3, @impl.49c(%ptr.6cf) [concrete]
 // CHECK:STDOUT:   %Op.3b0: %Op.type.d2a = struct_value () [concrete]
+// CHECK:STDOUT:   %ptr.df0: type = ptr_type %ptr.6cf [concrete]
 // CHECK:STDOUT:   %Destroy.facet.c42: %Destroy.type = facet_value %ptr.6cf, (%Destroy.impl_witness.20e) [concrete]
 // CHECK:STDOUT:   %.581: type = fn_type_with_self_type %Op.type.bae, %Destroy.facet.c42 [concrete]
 // CHECK:STDOUT:   %Op.specific_fn.3de: <specific function> = specific_function %Op.3b0, @Op.3(%ptr.6cf) [concrete]
@@ -242,12 +244,14 @@ fn Run() {
 // CHECK:STDOUT:   %Destroy.impl_witness.913: <witness> = impl_witness imports.%Destroy.impl_witness_table, @impl.49c(%Field) [concrete]
 // CHECK:STDOUT:   %Op.type.47c: type = fn_type @Op.3, @impl.49c(%Field) [concrete]
 // CHECK:STDOUT:   %Op.576: %Op.type.47c = struct_value () [concrete]
+// CHECK:STDOUT:   %ptr.d8b: type = ptr_type %Field [concrete]
 // CHECK:STDOUT:   %Destroy.facet.30c: %Destroy.type = facet_value %Field, (%Destroy.impl_witness.913) [concrete]
 // CHECK:STDOUT:   %.e41: type = fn_type_with_self_type %Op.type.bae, %Destroy.facet.30c [concrete]
 // CHECK:STDOUT:   %Op.specific_fn.29d: <specific function> = specific_function %Op.576, @Op.3(%Field) [concrete]
 // CHECK:STDOUT:   %Destroy.impl_witness.5ee: <witness> = impl_witness imports.%Destroy.impl_witness_table, @impl.49c(%Empty) [concrete]
 // CHECK:STDOUT:   %Op.type.b74: type = fn_type @Op.3, @impl.49c(%Empty) [concrete]
 // CHECK:STDOUT:   %Op.6e4: %Op.type.b74 = struct_value () [concrete]
+// CHECK:STDOUT:   %ptr.961: type = ptr_type %Empty [concrete]
 // CHECK:STDOUT:   %Destroy.facet.96b: %Destroy.type = facet_value %Empty, (%Destroy.impl_witness.5ee) [concrete]
 // CHECK:STDOUT:   %.98a: type = fn_type_with_self_type %Op.type.bae, %Destroy.facet.96b [concrete]
 // CHECK:STDOUT:   %Op.specific_fn.1a5: <specific function> = specific_function %Op.6e4, @Op.3(%Empty) [concrete]
@@ -282,7 +286,7 @@ fn Run() {
 // CHECK:STDOUT:   %Main.import_ref.42a = import_ref Main//a, loc14_21, unloaded
 // CHECK:STDOUT:   %Main.import_ref.67a = import_ref Main//a, loc15_27, unloaded
 // CHECK:STDOUT:   %Core.Destroy: type = import_ref Core//prelude/parts/destroy, Destroy, loaded [concrete = constants.%Destroy.type]
-// CHECK:STDOUT:   %Core.import_ref.0b9: @impl.49c.%Op.type (%Op.type.bc9) = import_ref Core//prelude/parts/destroy, loc8_23, loaded [symbolic = @impl.49c.%Op (constants.%Op.46f)]
+// CHECK:STDOUT:   %Core.import_ref.0b9: @impl.49c.%Op.type (%Op.type.bc9) = import_ref Core//prelude/parts/destroy, loc8_29, loaded [symbolic = @impl.49c.%Op (constants.%Op.46f)]
 // CHECK:STDOUT:   %Destroy.impl_witness_table = impl_witness_table (%Core.import_ref.0b9), @impl.49c [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -344,8 +348,8 @@ fn Run() {
 // CHECK:STDOUT:   %a.var: ref %Empty = var %a.var_patt
 // CHECK:STDOUT:   %.loc7_19.1: %empty_struct_type = struct_literal ()
 // CHECK:STDOUT:   %.loc7_19.2: init %Empty = class_init (), %a.var [concrete = constants.%Empty.val]
-// CHECK:STDOUT:   %.loc7_3.1: init %Empty = converted %.loc7_19.1, %.loc7_19.2 [concrete = constants.%Empty.val]
-// CHECK:STDOUT:   assign %a.var, %.loc7_3.1
+// CHECK:STDOUT:   %.loc7_3: init %Empty = converted %.loc7_19.1, %.loc7_19.2 [concrete = constants.%Empty.val]
+// CHECK:STDOUT:   assign %a.var, %.loc7_3
 // CHECK:STDOUT:   %Empty.ref: type = name_ref Empty, imports.%Main.Empty [concrete = constants.%Empty]
 // CHECK:STDOUT:   %a: ref %Empty = bind_name a, %a.var
 // CHECK:STDOUT:   name_binding_decl {
@@ -364,8 +368,8 @@ fn Run() {
 // CHECK:STDOUT:   %.loc9_25.3: ref %i32 = class_element_access %b.var, element0
 // CHECK:STDOUT:   %.loc9_25.4: init %i32 = initialize_from %.loc9_25.2 to %.loc9_25.3 [concrete = constants.%int_1.47b]
 // CHECK:STDOUT:   %.loc9_25.5: init %Field = class_init (%.loc9_25.4), %b.var [concrete = constants.%Field.val]
-// CHECK:STDOUT:   %.loc9_3.1: init %Field = converted %.loc9_25.1, %.loc9_25.5 [concrete = constants.%Field.val]
-// CHECK:STDOUT:   assign %b.var, %.loc9_3.1
+// CHECK:STDOUT:   %.loc9_3: init %Field = converted %.loc9_25.1, %.loc9_25.5 [concrete = constants.%Field.val]
+// CHECK:STDOUT:   assign %b.var, %.loc9_3
 // CHECK:STDOUT:   %Field.ref: type = name_ref Field, imports.%Main.Field [concrete = constants.%Field]
 // CHECK:STDOUT:   %b: ref %Field = bind_name b, %b.var
 // CHECK:STDOUT:   %b.ref: ref %Field = name_ref b, %b
@@ -386,8 +390,8 @@ fn Run() {
 // CHECK:STDOUT:   %c.var: ref %ForwardDeclared.7b34f2.1 = var %c.var_patt
 // CHECK:STDOUT:   %.loc12_29.1: %empty_struct_type = struct_literal ()
 // CHECK:STDOUT:   %.loc12_29.2: init %ForwardDeclared.7b34f2.1 = class_init (), %c.var [concrete = constants.%ForwardDeclared.val]
-// CHECK:STDOUT:   %.loc12_3.1: init %ForwardDeclared.7b34f2.1 = converted %.loc12_29.1, %.loc12_29.2 [concrete = constants.%ForwardDeclared.val]
-// CHECK:STDOUT:   assign %c.var, %.loc12_3.1
+// CHECK:STDOUT:   %.loc12_3: init %ForwardDeclared.7b34f2.1 = converted %.loc12_29.1, %.loc12_29.2 [concrete = constants.%ForwardDeclared.val]
+// CHECK:STDOUT:   assign %c.var, %.loc12_3
 // CHECK:STDOUT:   %ForwardDeclared.ref.loc12: type = name_ref ForwardDeclared, imports.%Main.ForwardDeclared [concrete = constants.%ForwardDeclared.7b34f2.1]
 // CHECK:STDOUT:   %c: ref %ForwardDeclared.7b34f2.1 = bind_name c, %c.var
 // CHECK:STDOUT:   %c.ref.loc13: ref %ForwardDeclared.7b34f2.1 = name_ref c, %c
@@ -406,9 +410,9 @@ fn Run() {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %d.var: ref %ptr.6cf = var %d.var_patt
 // CHECK:STDOUT:   %c.ref.loc16: ref %ForwardDeclared.7b34f2.1 = name_ref c, %c
-// CHECK:STDOUT:   %addr.loc16: %ptr.6cf = addr_of %c.ref.loc16
-// CHECK:STDOUT:   assign %d.var, %addr.loc16
-// CHECK:STDOUT:   %.loc16_25: type = splice_block %ptr.loc16 [concrete = constants.%ptr.6cf] {
+// CHECK:STDOUT:   %addr.loc16_29: %ptr.6cf = addr_of %c.ref.loc16
+// CHECK:STDOUT:   assign %d.var, %addr.loc16_29
+// CHECK:STDOUT:   %.loc16: type = splice_block %ptr.loc16 [concrete = constants.%ptr.6cf] {
 // CHECK:STDOUT:     %ForwardDeclared.ref.loc16: type = name_ref ForwardDeclared, imports.%Main.ForwardDeclared [concrete = constants.%ForwardDeclared.7b34f2.1]
 // CHECK:STDOUT:     %ptr.loc16: type = ptr_type %ForwardDeclared.ref.loc16 [concrete = constants.%ptr.6cf]
 // CHECK:STDOUT:   }
@@ -418,7 +422,7 @@ fn Run() {
 // CHECK:STDOUT:     %e.var_patt: %pattern_type.275 = var_pattern %e.patt [concrete]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %e.var: ref %ptr.c62 = var %e.var_patt
-// CHECK:STDOUT:   %.loc18_20: type = splice_block %ptr.loc18 [concrete = constants.%ptr.c62] {
+// CHECK:STDOUT:   %.loc18: type = splice_block %ptr.loc18 [concrete = constants.%ptr.c62] {
 // CHECK:STDOUT:     %Incomplete.ref: type = name_ref Incomplete, imports.%Main.Incomplete [concrete = constants.%Incomplete]
 // CHECK:STDOUT:     %ptr.loc18: type = ptr_type %Incomplete.ref [concrete = constants.%ptr.c62]
 // CHECK:STDOUT:   }
@@ -427,32 +431,32 @@ fn Run() {
 // CHECK:STDOUT:   %bound_method.loc18_3.1: <bound method> = bound_method %e.var, %impl.elem0.loc18
 // CHECK:STDOUT:   %specific_fn.loc18: <specific function> = specific_function %impl.elem0.loc18, @Op.3(constants.%ptr.c62) [concrete = constants.%Op.specific_fn.b24]
 // CHECK:STDOUT:   %bound_method.loc18_3.2: <bound method> = bound_method %e.var, %specific_fn.loc18
-// CHECK:STDOUT:   %.loc18_3: %ptr.c62 = bind_value %e.var
-// CHECK:STDOUT:   %no_op.loc18: init %empty_tuple.type = call %bound_method.loc18_3.2(%.loc18_3)
+// CHECK:STDOUT:   %addr.loc18: %ptr.c22 = addr_of %e.var
+// CHECK:STDOUT:   %no_op.loc18: init %empty_tuple.type = call %bound_method.loc18_3.2(%addr.loc18)
 // CHECK:STDOUT:   %impl.elem0.loc16: %.581 = impl_witness_access constants.%Destroy.impl_witness.20e, element0 [concrete = constants.%Op.3b0]
 // CHECK:STDOUT:   %bound_method.loc16_3.1: <bound method> = bound_method %d.var, %impl.elem0.loc16
 // CHECK:STDOUT:   %specific_fn.loc16: <specific function> = specific_function %impl.elem0.loc16, @Op.3(constants.%ptr.6cf) [concrete = constants.%Op.specific_fn.3de]
 // CHECK:STDOUT:   %bound_method.loc16_3.2: <bound method> = bound_method %d.var, %specific_fn.loc16
-// CHECK:STDOUT:   %.loc16_3: %ptr.6cf = bind_value %d.var
-// CHECK:STDOUT:   %no_op.loc16: init %empty_tuple.type = call %bound_method.loc16_3.2(%.loc16_3)
+// CHECK:STDOUT:   %addr.loc16_3: %ptr.df0 = addr_of %d.var
+// CHECK:STDOUT:   %no_op.loc16: init %empty_tuple.type = call %bound_method.loc16_3.2(%addr.loc16_3)
 // CHECK:STDOUT:   %impl.elem0.loc12: %.21e = impl_witness_access constants.%Destroy.impl_witness.ff6, element0 [concrete = constants.%Op.9e2]
 // CHECK:STDOUT:   %bound_method.loc12_3.1: <bound method> = bound_method %c.var, %impl.elem0.loc12
 // CHECK:STDOUT:   %specific_fn.loc12: <specific function> = specific_function %impl.elem0.loc12, @Op.3(constants.%ForwardDeclared.7b34f2.1) [concrete = constants.%Op.specific_fn.09a]
 // CHECK:STDOUT:   %bound_method.loc12_3.2: <bound method> = bound_method %c.var, %specific_fn.loc12
-// CHECK:STDOUT:   %.loc12_3.2: %ForwardDeclared.7b34f2.1 = bind_value %c.var
-// CHECK:STDOUT:   %no_op.loc12: init %empty_tuple.type = call %bound_method.loc12_3.2(%.loc12_3.2)
+// CHECK:STDOUT:   %addr.loc12: %ptr.6cf = addr_of %c.var
+// CHECK:STDOUT:   %no_op.loc12: init %empty_tuple.type = call %bound_method.loc12_3.2(%addr.loc12)
 // CHECK:STDOUT:   %impl.elem0.loc9_3: %.e41 = impl_witness_access constants.%Destroy.impl_witness.913, element0 [concrete = constants.%Op.576]
 // CHECK:STDOUT:   %bound_method.loc9_3.1: <bound method> = bound_method %b.var, %impl.elem0.loc9_3
 // CHECK:STDOUT:   %specific_fn.loc9_3: <specific function> = specific_function %impl.elem0.loc9_3, @Op.3(constants.%Field) [concrete = constants.%Op.specific_fn.29d]
 // CHECK:STDOUT:   %bound_method.loc9_3.2: <bound method> = bound_method %b.var, %specific_fn.loc9_3
-// CHECK:STDOUT:   %.loc9_3.2: %Field = bind_value %b.var
-// CHECK:STDOUT:   %no_op.loc9: init %empty_tuple.type = call %bound_method.loc9_3.2(%.loc9_3.2)
+// CHECK:STDOUT:   %addr.loc9: %ptr.d8b = addr_of %b.var
+// CHECK:STDOUT:   %no_op.loc9: init %empty_tuple.type = call %bound_method.loc9_3.2(%addr.loc9)
 // CHECK:STDOUT:   %impl.elem0.loc7: %.98a = impl_witness_access constants.%Destroy.impl_witness.5ee, element0 [concrete = constants.%Op.6e4]
 // CHECK:STDOUT:   %bound_method.loc7_3.1: <bound method> = bound_method %a.var, %impl.elem0.loc7
 // CHECK:STDOUT:   %specific_fn.loc7: <specific function> = specific_function %impl.elem0.loc7, @Op.3(constants.%Empty) [concrete = constants.%Op.specific_fn.1a5]
 // CHECK:STDOUT:   %bound_method.loc7_3.2: <bound method> = bound_method %a.var, %specific_fn.loc7
-// CHECK:STDOUT:   %.loc7_3.2: %Empty = bind_value %a.var
-// CHECK:STDOUT:   %no_op.loc7: init %empty_tuple.type = call %bound_method.loc7_3.2(%.loc7_3.2)
+// CHECK:STDOUT:   %addr.loc7: %ptr.961 = addr_of %a.var
+// CHECK:STDOUT:   %no_op.loc7: init %empty_tuple.type = call %bound_method.loc7_3.2(%addr.loc7)
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

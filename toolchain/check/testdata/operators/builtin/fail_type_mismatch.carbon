@@ -42,6 +42,7 @@ fn Main() {
 // CHECK:STDOUT:   %Destroy.impl_witness.862: <witness> = impl_witness imports.%Destroy.impl_witness_table, @impl.49c(bool) [concrete]
 // CHECK:STDOUT:   %Op.type.655: type = fn_type @Op.2, @impl.49c(bool) [concrete]
 // CHECK:STDOUT:   %Op.8b7: %Op.type.655 = struct_value () [concrete]
+// CHECK:STDOUT:   %ptr.bb2: type = ptr_type bool [concrete]
 // CHECK:STDOUT:   %Destroy.facet: %Destroy.type = facet_value bool, (%Destroy.impl_witness.862) [concrete]
 // CHECK:STDOUT:   %.0d4: type = fn_type_with_self_type %Op.type.bae, %Destroy.facet [concrete]
 // CHECK:STDOUT:   %Op.specific_fn: <specific function> = specific_function %Op.8b7, @Op.2(bool) [concrete]
@@ -58,7 +59,7 @@ fn Main() {
 // CHECK:STDOUT:   %Core.Bool: %Bool.type = import_ref Core//prelude/types/bool, Bool, loaded [concrete = constants.%Bool]
 // CHECK:STDOUT:   %Core.ImplicitAs: %ImplicitAs.type.cc7 = import_ref Core//prelude/operators/as, ImplicitAs, loaded [concrete = constants.%ImplicitAs.generic]
 // CHECK:STDOUT:   %Core.Destroy: type = import_ref Core//prelude/destroy, Destroy, loaded [concrete = constants.%Destroy.type]
-// CHECK:STDOUT:   %Core.import_ref.0b9: @impl.49c.%Op.type (%Op.type.bc9) = import_ref Core//prelude/destroy, loc15_23, loaded [symbolic = @impl.49c.%Op (constants.%Op.46f)]
+// CHECK:STDOUT:   %Core.import_ref.0b9: @impl.49c.%Op.type (%Op.type.bc9) = import_ref Core//prelude/destroy, loc15_29, loaded [symbolic = @impl.49c.%Op (constants.%Op.46f)]
 // CHECK:STDOUT:   %Destroy.impl_witness_table = impl_witness_table (%Core.import_ref.0b9), @impl.49c [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -92,8 +93,8 @@ fn Main() {
 // CHECK:STDOUT:   %bound_method.loc22_3.1: <bound method> = bound_method %x.var, %impl.elem0
 // CHECK:STDOUT:   %specific_fn: <specific function> = specific_function %impl.elem0, @Op.2(bool) [concrete = constants.%Op.specific_fn]
 // CHECK:STDOUT:   %bound_method.loc22_3.2: <bound method> = bound_method %x.var, %specific_fn
-// CHECK:STDOUT:   %.loc22_3: bool = bind_value %x.var
-// CHECK:STDOUT:   %no_op: init %empty_tuple.type = call %bound_method.loc22_3.2(%.loc22_3)
+// CHECK:STDOUT:   %addr: %ptr.bb2 = addr_of %x.var
+// CHECK:STDOUT:   %no_op: init %empty_tuple.type = call %bound_method.loc22_3.2(%addr)
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

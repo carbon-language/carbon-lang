@@ -57,7 +57,6 @@ fn For() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: for.done:                                         ; preds = %for.next
 // CHECK:STDOUT:   call void @_CH.Main(), !dbg !12
-// CHECK:STDOUT:   %.loc19_33.12 = load i32, ptr %var, align 4, !dbg !8
 // CHECK:STDOUT:   ret void, !dbg !13
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

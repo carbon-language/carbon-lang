@@ -63,6 +63,7 @@ fn H() { G(3); }
 // CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [concrete]
 // CHECK:STDOUT:   %int_0: Core.IntLiteral = int_value 0 [concrete]
 // CHECK:STDOUT:   %array_type.281: type = array_type %int_0, %T [symbolic]
+// CHECK:STDOUT:   %ptr.e06: type = ptr_type %array_type.281 [symbolic]
 // CHECK:STDOUT:   %require_complete.b7f: <witness> = require_complete_type %array_type.281 [symbolic]
 // CHECK:STDOUT:   %pattern_type.d48: type = pattern_type %array_type.281 [symbolic]
 // CHECK:STDOUT:   %array.2ed: %array_type.281 = tuple_value () [symbolic]
@@ -70,6 +71,7 @@ fn H() { G(3); }
 // CHECK:STDOUT:   %Op.type.bae: type = fn_type @Op.1 [concrete]
 // CHECK:STDOUT:   %Op.type.bc9: type = fn_type @Op.2, @impl(%T) [symbolic]
 // CHECK:STDOUT:   %Op.46f: %Op.type.bc9 = struct_value () [symbolic]
+// CHECK:STDOUT:   %require_complete.662: <witness> = require_complete_type %ptr.e06 [symbolic]
 // CHECK:STDOUT:   %Destroy.lookup_impl_witness: <witness> = lookup_impl_witness %array_type.281, @Destroy [symbolic]
 // CHECK:STDOUT:   %Destroy.facet.cdc: %Destroy.type = facet_value %array_type.281, (%Destroy.lookup_impl_witness) [symbolic]
 // CHECK:STDOUT:   %.77e: type = fn_type_with_self_type %Op.type.bae, %Destroy.facet.cdc [symbolic]
@@ -77,19 +79,21 @@ fn H() { G(3); }
 // CHECK:STDOUT:   %specific_impl_fn: <specific function> = specific_impl_function %impl.elem0, @Op.1(%Destroy.facet.cdc) [symbolic]
 // CHECK:STDOUT:   %C: type = class_type @C [concrete]
 // CHECK:STDOUT:   %array_type.6f1: type = array_type %int_0, %C [concrete]
+// CHECK:STDOUT:   %ptr.cf4: type = ptr_type %array_type.6f1 [concrete]
 // CHECK:STDOUT:   %complete_type.ed6: <witness> = complete_type_witness %array_type.6f1 [concrete]
 // CHECK:STDOUT:   %pattern_type.9c8: type = pattern_type %array_type.6f1 [concrete]
 // CHECK:STDOUT:   %array.2e5: %array_type.6f1 = tuple_value () [concrete]
 // CHECK:STDOUT:   %Destroy.impl_witness.8b8: <witness> = impl_witness imports.%Destroy.impl_witness_table, @impl(%array_type.6f1) [concrete]
 // CHECK:STDOUT:   %Op.type.a3e: type = fn_type @Op.2, @impl(%array_type.6f1) [concrete]
 // CHECK:STDOUT:   %Op.dc5: %Op.type.a3e = struct_value () [concrete]
+// CHECK:STDOUT:   %complete_type.3e1: <witness> = complete_type_witness %ptr.cf4 [concrete]
 // CHECK:STDOUT:   %Destroy.facet.da7: %Destroy.type = facet_value %array_type.6f1, (%Destroy.impl_witness.8b8) [concrete]
 // CHECK:STDOUT:   %.a21: type = fn_type_with_self_type %Op.type.bae, %Destroy.facet.da7 [concrete]
 // CHECK:STDOUT:   %Op.specific_fn: <specific function> = specific_function %Op.dc5, @Op.2(%array_type.6f1) [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
-// CHECK:STDOUT:   %Core.import_ref.0b9: @impl.%Op.type (%Op.type.bc9) = import_ref Core//prelude/parts/destroy, loc8_23, loaded [symbolic = @impl.%Op (constants.%Op.46f)]
+// CHECK:STDOUT:   %Core.import_ref.0b9: @impl.%Op.type (%Op.type.bc9) = import_ref Core//prelude/parts/destroy, loc8_29, loaded [symbolic = @impl.%Op (constants.%Op.46f)]
 // CHECK:STDOUT:   %Destroy.impl_witness_table = impl_witness_table (%Core.import_ref.0b9), @impl [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -98,14 +102,16 @@ fn H() { G(3); }
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %array_type.loc7_22.2: type = array_type constants.%int_0, %T.loc4_6.2 [symbolic = %array_type.loc7_22.2 (constants.%array_type.281)]
-// CHECK:STDOUT:   %require_complete: <witness> = require_complete_type %array_type.loc7_22.2 [symbolic = %require_complete (constants.%require_complete.b7f)]
+// CHECK:STDOUT:   %require_complete.loc7_22: <witness> = require_complete_type %array_type.loc7_22.2 [symbolic = %require_complete.loc7_22 (constants.%require_complete.b7f)]
 // CHECK:STDOUT:   %pattern_type: type = pattern_type %array_type.loc7_22.2 [symbolic = %pattern_type (constants.%pattern_type.d48)]
 // CHECK:STDOUT:   %array: @G.%array_type.loc7_22.2 (%array_type.281) = tuple_value () [symbolic = %array (constants.%array.2ed)]
 // CHECK:STDOUT:   %Destroy.lookup_impl_witness: <witness> = lookup_impl_witness %array_type.loc7_22.2, @Destroy [symbolic = %Destroy.lookup_impl_witness (constants.%Destroy.lookup_impl_witness)]
 // CHECK:STDOUT:   %Destroy.facet: %Destroy.type = facet_value %array_type.loc7_22.2, (%Destroy.lookup_impl_witness) [symbolic = %Destroy.facet (constants.%Destroy.facet.cdc)]
-// CHECK:STDOUT:   %.loc7_3.4: type = fn_type_with_self_type constants.%Op.type.bae, %Destroy.facet [symbolic = %.loc7_3.4 (constants.%.77e)]
-// CHECK:STDOUT:   %impl.elem0.loc7_3.2: @G.%.loc7_3.4 (%.77e) = impl_witness_access %Destroy.lookup_impl_witness, element0 [symbolic = %impl.elem0.loc7_3.2 (constants.%impl.elem0)]
+// CHECK:STDOUT:   %.loc7_3.3: type = fn_type_with_self_type constants.%Op.type.bae, %Destroy.facet [symbolic = %.loc7_3.3 (constants.%.77e)]
+// CHECK:STDOUT:   %impl.elem0.loc7_3.2: @G.%.loc7_3.3 (%.77e) = impl_witness_access %Destroy.lookup_impl_witness, element0 [symbolic = %impl.elem0.loc7_3.2 (constants.%impl.elem0)]
 // CHECK:STDOUT:   %specific_impl_fn.loc7_3.2: <specific function> = specific_impl_function %impl.elem0.loc7_3.2, @Op.1(%Destroy.facet) [symbolic = %specific_impl_fn.loc7_3.2 (constants.%specific_impl_fn)]
+// CHECK:STDOUT:   %ptr: type = ptr_type %array_type.loc7_22.2 [symbolic = %ptr (constants.%ptr.e06)]
+// CHECK:STDOUT:   %require_complete.loc7_3: <witness> = require_complete_type %ptr [symbolic = %require_complete.loc7_3 (constants.%require_complete.662)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   fn() {
 // CHECK:STDOUT:   !entry:
@@ -124,12 +130,12 @@ fn H() { G(3); }
 // CHECK:STDOUT:       %array_type.loc7_22.1: type = array_type %int_0, %T.ref [symbolic = %array_type.loc7_22.2 (constants.%array_type.281)]
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %arr: ref @G.%array_type.loc7_22.2 (%array_type.281) = bind_name arr, %arr.var
-// CHECK:STDOUT:     %impl.elem0.loc7_3.1: @G.%.loc7_3.4 (%.77e) = impl_witness_access constants.%Destroy.lookup_impl_witness, element0 [symbolic = %impl.elem0.loc7_3.2 (constants.%impl.elem0)]
+// CHECK:STDOUT:     %impl.elem0.loc7_3.1: @G.%.loc7_3.3 (%.77e) = impl_witness_access constants.%Destroy.lookup_impl_witness, element0 [symbolic = %impl.elem0.loc7_3.2 (constants.%impl.elem0)]
 // CHECK:STDOUT:     %bound_method.loc7_3.1: <bound method> = bound_method %arr.var, %impl.elem0.loc7_3.1
 // CHECK:STDOUT:     %specific_impl_fn.loc7_3.1: <specific function> = specific_impl_function %impl.elem0.loc7_3.1, @Op.1(constants.%Destroy.facet.cdc) [symbolic = %specific_impl_fn.loc7_3.2 (constants.%specific_impl_fn)]
 // CHECK:STDOUT:     %bound_method.loc7_3.2: <bound method> = bound_method %arr.var, %specific_impl_fn.loc7_3.1
-// CHECK:STDOUT:     %.loc7_3.2: @G.%array_type.loc7_22.2 (%array_type.281) = bind_value %arr.var
-// CHECK:STDOUT:     %.loc7_3.3: init %empty_tuple.type = call %bound_method.loc7_3.2(%.loc7_3.2)
+// CHECK:STDOUT:     %addr: @G.%ptr (%ptr.e06) = addr_of %arr.var
+// CHECK:STDOUT:     %.loc7_3.2: init %empty_tuple.type = call %bound_method.loc7_3.2(%addr)
 // CHECK:STDOUT:     <elided>
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
@@ -143,14 +149,16 @@ fn H() { G(3); }
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %array_type.loc7_22.2 => constants.%array_type.6f1
-// CHECK:STDOUT:   %require_complete => constants.%complete_type.ed6
+// CHECK:STDOUT:   %require_complete.loc7_22 => constants.%complete_type.ed6
 // CHECK:STDOUT:   %pattern_type => constants.%pattern_type.9c8
 // CHECK:STDOUT:   %array => constants.%array.2e5
 // CHECK:STDOUT:   %Destroy.lookup_impl_witness => constants.%Destroy.impl_witness.8b8
 // CHECK:STDOUT:   %Destroy.facet => constants.%Destroy.facet.da7
-// CHECK:STDOUT:   %.loc7_3.4 => constants.%.a21
+// CHECK:STDOUT:   %.loc7_3.3 => constants.%.a21
 // CHECK:STDOUT:   %impl.elem0.loc7_3.2 => constants.%Op.dc5
 // CHECK:STDOUT:   %specific_impl_fn.loc7_3.2 => constants.%Op.specific_fn
+// CHECK:STDOUT:   %ptr => constants.%ptr.cf4
+// CHECK:STDOUT:   %require_complete.loc7_3 => constants.%complete_type.3e1
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- fail_todo_init_template_dependent_bound.carbon

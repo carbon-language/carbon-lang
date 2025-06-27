@@ -32,7 +32,6 @@ fn Main() {
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(i64 4, ptr %b.var), !dbg !9
 // CHECK:STDOUT:   %Echo.call = call i32 @_CEcho.Main(i32 1), !dbg !10
 // CHECK:STDOUT:   store i32 %Echo.call, ptr %b.var, align 4, !dbg !9
-// CHECK:STDOUT:   %.loc18_3 = load i32, ptr %b.var, align 4, !dbg !9
 // CHECK:STDOUT:   ret void, !dbg !11
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
