@@ -17,6 +17,7 @@ cc_library(
     hdrs = ["lower.h"],
     deps = [
         ":context",
+        "//common:vlog",
         "//toolchain/parse:tree",
         "//toolchain/sem_ir:file",
         "//toolchain/sem_ir:inst_namer",

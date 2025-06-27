@@ -26,6 +26,9 @@ struct LowerToLLVMOptions {
 
   // If set, enables verbose output.
   llvm::raw_ostream* vlog_stream = nullptr;
+
+  // If set, LLVM IR will be dumped to this in textual form.
+  llvm::raw_ostream* dump_stream = nullptr;
 };
 
 // Lowers SemIR to LLVM IR.

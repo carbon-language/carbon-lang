@@ -44,6 +44,29 @@ struct CheckParseTreesOptions {
   // Whether fuzzing is being run. Used to disable features we don't want to
   // fuzz.
   bool fuzzing = false;
+
+  // Whether to include each unit in dumps. This is required when dumping
+  // (either of `dump_stream` or `raw_dump_stream`), and must have entries based
+  // on CheckIRId.
+  llvm::ArrayRef<bool> include_in_dumps = {};
+
+  // If set, SemIR will be dumped to this.
+  llvm::raw_ostream* dump_stream = nullptr;
+
+  // When dumping textual SemIR (or printing it to for verbose output), whether
+  // to use ranges.
+  enum class DumpSemIRRanges : int8_t {
+    IfPresent,
+    Only,
+    Ignore,
+  };
+  DumpSemIRRanges dump_sem_ir_ranges = DumpSemIRRanges::IfPresent;
+
+  // If set, raw SemIR will be dumped to this.
+  llvm::raw_ostream* raw_dump_stream = nullptr;
+
+  // When dumping raw SemIR, whether to include builtins.
+  bool dump_raw_sem_ir_builtins = false;
 };
 
 // Checks a group of parse trees. This will use imports to decide the order of

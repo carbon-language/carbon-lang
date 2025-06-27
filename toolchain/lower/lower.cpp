@@ -7,6 +7,8 @@
 #include <memory>
 #include <optional>
 
+#include "common/vlog.h"
+#include "llvm/IR/Verifier.h"
 #include "toolchain/lower/context.h"
 #include "toolchain/lower/file_context.h"
 
@@ -27,7 +29,24 @@ auto LowerToLLVM(
   SemIR::InstNamer inst_namer(&sem_ir);
   context.GetFileContext(&sem_ir, &inst_namer).LowerDefinitions();
 
-  return std::move(context).Finalize(options.llvm_verifier_stream);
+  auto module = std::move(context).Finalize();
+
+  if (options.vlog_stream) {
+    CARBON_VLOG_TO(options.vlog_stream, "*** llvm::Module ***\n");
+    module->print(*options.vlog_stream, /*AAW=*/nullptr,
+                  /*ShouldPreserveUseListOrder=*/false,
+                  /*IsForDebug=*/true);
+  }
+  if (options.dump_stream) {
+    module->print(*options.dump_stream, /*AAW=*/nullptr,
+                  /*ShouldPreserveUseListOrder=*/true);
+  }
+
+  if (options.llvm_verifier_stream) {
+    CARBON_CHECK(!llvm::verifyModule(*module, options.llvm_verifier_stream));
+  }
+
+  return module;
 }
 
 }  // namespace Carbon::Lower

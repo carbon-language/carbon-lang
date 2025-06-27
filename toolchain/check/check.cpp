@@ -19,6 +19,7 @@
 #include "toolchain/parse/node_ids.h"
 #include "toolchain/parse/tree.h"
 #include "toolchain/sem_ir/file.h"
+#include "toolchain/sem_ir/formatter.h"
 #include "toolchain/sem_ir/typed_insts.h"
 
 namespace Carbon::Check {
@@ -322,6 +323,69 @@ static auto BuildApiMapAndDiagnosePackaging(
   return api_map;
 }
 
+// Handles printing of formatted SemIR.
+static auto MaybeDumpFormattedSemIR(
+    const SemIR::File& sem_ir,
+    Parse::GetTreeAndSubtreesFn tree_and_subtrees_getter, bool include_in_dumps,
+    const CheckParseTreesOptions& options) -> void {
+  bool dump = options.dump_stream && include_in_dumps;
+  if (!options.vlog_stream && !dump) {
+    return;
+  }
+
+  bool has_ranges = sem_ir.parse_tree().tokens().has_dump_sem_ir_ranges();
+  if (options.dump_sem_ir_ranges ==
+          CheckParseTreesOptions::DumpSemIRRanges::Only &&
+      !has_ranges) {
+    return;
+  }
+
+  bool use_dump_sem_ir_ranges =
+      options.dump_sem_ir_ranges !=
+          CheckParseTreesOptions::DumpSemIRRanges::Ignore &&
+      has_ranges;
+  SemIR::Formatter formatter(&sem_ir, tree_and_subtrees_getter,
+                             options.include_in_dumps, use_dump_sem_ir_ranges);
+  formatter.Format();
+  if (options.vlog_stream) {
+    CARBON_VLOG_TO(options.vlog_stream, "*** SemIR::File ***\n");
+    formatter.Write(*options.vlog_stream);
+  }
+  if (dump) {
+    formatter.Write(*options.dump_stream);
+  }
+}
+
+// Handles options for dumping SemIR, including verbose output.
+static auto MaybeDumpSemIR(
+    llvm::ArrayRef<Unit> units,
+    llvm::ArrayRef<Parse::GetTreeAndSubtreesFn> tree_and_subtrees_getters,
+    const CheckParseTreesOptions& options) -> void {
+  if (!options.vlog_stream && !options.dump_stream &&
+      !options.raw_dump_stream) {
+    return;
+  }
+
+  // Flush diagnostics before printing.
+  for (const auto& unit : units) {
+    unit.consumer->Flush();
+  }
+
+  for (const auto& unit : units) {
+    bool include_in_dumps =
+        options.include_in_dumps[unit.sem_ir->check_ir_id().index];
+    if (include_in_dumps && options.raw_dump_stream) {
+      unit.sem_ir->Print(*options.raw_dump_stream,
+                         options.dump_raw_sem_ir_builtins);
+    }
+
+    MaybeDumpFormattedSemIR(
+        *unit.sem_ir,
+        tree_and_subtrees_getters[unit.sem_ir->check_ir_id().index],
+        include_in_dumps, options);
+  }
+}
+
 auto CheckParseTrees(
     llvm::MutableArrayRef<Unit> units,
     llvm::ArrayRef<Parse::GetTreeAndSubtreesFn> tree_and_subtrees_getters,
@@ -436,6 +500,8 @@ auto CheckParseTrees(
       }
     }
   }
+
+  MaybeDumpSemIR(units, tree_and_subtrees_getters, options);
 }
 
 }  // namespace Carbon::Check

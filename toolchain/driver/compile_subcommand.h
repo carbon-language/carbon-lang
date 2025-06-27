@@ -10,6 +10,7 @@
 #include "common/ostream.h"
 #include "llvm/ADT/SmallVector.h"
 #include "llvm/ADT/StringRef.h"
+#include "toolchain/check/check.h"
 #include "toolchain/driver/codegen_options.h"
 #include "toolchain/driver/driver_env.h"
 #include "toolchain/driver/driver_subcommand.h"
@@ -28,12 +29,6 @@ struct CompileOptions {
     CodeGen,
   };
 
-  enum class DumpSemIRRanges : int8_t {
-    IfPresent,
-    Only,
-    Ignore,
-  };
-
   friend auto operator<<(llvm::raw_ostream& out, Phase phase)
       -> llvm::raw_ostream&;
 
@@ -42,7 +37,7 @@ struct CompileOptions {
   CodegenOptions codegen_options;
 
   Phase phase;
-  DumpSemIRRanges dump_sem_ir_ranges;
+  Check::CheckParseTreesOptions::DumpSemIRRanges dump_sem_ir_ranges;
 
   llvm::StringRef output_filename;
   llvm::SmallVector<llvm::StringRef> input_filenames;

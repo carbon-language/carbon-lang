@@ -9,6 +9,7 @@
 #include "toolchain/parse/context.h"
 #include "toolchain/parse/handle.h"
 #include "toolchain/parse/node_kind.h"
+#include "toolchain/parse/tree_and_subtrees.h"
 
 namespace Carbon::Parse {
 
@@ -48,14 +49,22 @@ auto Parse(Lex::TokenizedBuffer& tokens, ParseOptions options) -> Tree {
   // from the tokenized buffer or we diagnosed new errors.
   tree.set_has_errors(tokens.has_errors() || context.has_errors());
 
+  if (options.vlog_stream || options.dump_stream) {
+    // Flush diagnostics before printing.
+    consumer->Flush();
+  }
+  CARBON_VLOG_TO(options.vlog_stream, "*** Parse::Tree ***\n{0}", tree);
+  if (options.dump_stream) {
+    Parse::TreeAndSubtrees tree_and_subtrees(tokens, tree);
+    if (options.dump_preorder_parse_tree) {
+      tree_and_subtrees.PrintPreorder(*options.dump_stream);
+    } else {
+      tree_and_subtrees.Print(*options.dump_stream);
+    }
+  }
+
   if (auto verify = tree.Verify(); !verify.ok()) {
-    // TODO: This is temporarily printing to stderr directly during development.
-    // If we can, restrict this to a subtree with the error and add it to the
-    // stack trace (such as with PrettyStackTraceFunction). Otherwise, switch
-    // back to vlog_stream prior to broader distribution so that end users are
-    // hopefully comfortable copy-pasting stderr when there are bugs in tree
-    // construction.
-    tree.Print(llvm::errs());
+    // TODO: Consider printing a subtree as part of the error.
     CARBON_FATAL("Invalid tree returned by Parse(): {0}", verify.error());
   }
   return tree;

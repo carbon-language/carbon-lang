@@ -18,6 +18,15 @@ struct LexOptions {
 
   // If set, a consumer for diagnostics. Otherwise, diagnostics go to stderr.
   Diagnostics::Consumer* consumer = nullptr;
+
+  // If set, enables verbose output.
+  llvm::raw_ostream* vlog_stream = nullptr;
+
+  // If set, tokens will be dumped to this.
+  llvm::raw_ostream* dump_stream = nullptr;
+
+  // When dumping, whether to omit `FileStart` and `FileEnd` in output.
+  bool omit_file_boundary_tokens = false;
 };
 
 // Lexes a buffer of source code into a tokenized buffer.

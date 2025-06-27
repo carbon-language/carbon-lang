@@ -21,6 +21,12 @@ struct ParseOptions {
 
   // If set, enables verbose output.
   llvm::raw_ostream* vlog_stream = nullptr;
+
+  // If set, the parse tree will be dumped to this.
+  llvm::raw_ostream* dump_stream = nullptr;
+
+  // When dumping, whether to dump in preorder; otherwise, postorder is used.
+  bool dump_preorder_parse_tree = false;
 };
 
 // Parses the token buffer into a `Tree`.

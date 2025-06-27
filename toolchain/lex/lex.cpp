@@ -10,6 +10,7 @@
 #include <utility>
 
 #include "common/check.h"
+#include "common/vlog.h"
 #include "llvm/ADT/StringRef.h"
 #include "llvm/ADT/StringSwitch.h"
 #include "llvm/Support/Compiler.h"
@@ -1697,7 +1698,18 @@ auto Lex(SharedValueStores& value_stores, SourceBuffer& source,
          LexOptions options) -> TokenizedBuffer {
   auto* consumer =
       options.consumer ? options.consumer : &Diagnostics::ConsoleConsumer();
-  return Lexer(value_stores, source, *consumer).Lex();
+  auto tokens = Lexer(value_stores, source, *consumer).Lex();
+
+  if (options.vlog_stream || options.dump_stream) {
+    // Flush diagnostics before printing.
+    consumer->Flush();
+  }
+  CARBON_VLOG_TO(options.vlog_stream, "*** Lex::TokenizedBuffer ***\n{0}",
+                 tokens);
+  if (options.dump_stream) {
+    tokens.Print(*options.dump_stream, options.omit_file_boundary_tokens);
+  }
+  return tokens;
 }
 
 }  // namespace Carbon::Lex
