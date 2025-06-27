@@ -43,6 +43,10 @@ template <typename IdT, typename ValueT = IdT::ValueType,
 class ValueStoreTypes {
  public:
   using ValueType = std::decay_t<ValueT>;
+
+  // TODO: Would be a bit cleaner to not have this here as it's only meaningful
+  // to the `CanonicalValueStore`, not to other `ValueStore`s. Planned to fix
+  // with a larger refactoring.
   using KeyType = std::decay_t<KeyT>;
 
   // Typically we want to use `ValueType&` and `const ValueType& to avoid
