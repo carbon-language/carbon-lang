@@ -1855,7 +1855,7 @@ static auto MakeFunctionDecl(ImportContext& context,
       {GetIncompleteLocalEntityBase(context, function_decl_id, import_function),
        {.call_params_id = SemIR::InstBlockId::None,
         .return_slot_pattern_id = SemIR::InstId::None,
-       .virtual_index = import_function.virtual_index}});
+        .virtual_index = import_function.virtual_index}});
 
   function_decl.type_id = GetFunctionType(
       context.local_context(), function_decl.function_id, specific_id);
