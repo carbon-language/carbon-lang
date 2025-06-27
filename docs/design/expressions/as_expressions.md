@@ -154,6 +154,20 @@ The following conversion is supported by `as`:
 -   `T` -> `U` if `T` is
     [compatible](../generics/terminology.md#compatible-types) with `U`.
 
+This conversion preserves category. In this example,
+
+```carbon
+class C {}
+class A {
+  adapt C;
+}
+
+var x: C = {};
+```
+
+since `x` is a reference expression of type `C` and `A` is an adapter for `C`,
+`x as A` is a reference expression as well.
+
 **Future work:** We may need a mechanism to restrict which conversions between
 adapters are permitted and which code can perform them. Some of the conversions
 permitted by this rule may only be allowed in certain contexts.
@@ -164,7 +178,7 @@ Explicit casts can be defined for user-defined types such as
 [classes](../classes.md) by implementing the `AsPrimitive` form interface or
 `As` named constraint:
 
-```
+```carbon
 package Core;
 
 interface AsPrimitive[in Self:! Form]
@@ -180,7 +194,11 @@ namespace As(Dest:! type) {
 }
 ```
 
-The expression `x as U` is rewritten to `x.(AsPrimitive(U).Convert)()`.
+The expression `x as U` is rewritten to `x.(AsPrimitive(U).Convert)()`. Observe
+that the destination type is specified as an input parameter, but the resulting
+form is specified as an associated constant by the `impl` (though it is required
+to have a matching type). This allows
+[conversion between compatible types](#compatible-types) to preserve category.
 
 **Note:** This rewrite causes the expression `U` to be implicitly converted to
 type `type`. The program is invalid if this conversion is not possible.
