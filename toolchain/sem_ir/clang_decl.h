@@ -24,13 +24,18 @@ namespace Carbon::SemIR {
 // Note that Clang's AST uses address-identity for nodes, which means the
 // pointer is the canonical way to represent a specific AST node and is expected
 // to be sufficient for comparison, hashing, etc.
+//
+// This type is specifically designed for use in a `CanonicalValueStore` and
+// provide a single canonical access from SemIR to each `clang::Decl*` used.
+// This also ensures that a given `clang::Decl*` is associated with exactly one
+// instruction, and the `inst_id` here provides access to that instruction from
+// either the `ClangDeclId` or the `clang::Decl*`.
 struct ClangDecl : public Printable<ClangDecl> {
   auto Print(llvm::raw_ostream& out) const -> void;
 
   // Equality comparison uses the address-identity property of the Clang AST and
-  // just compares the `decl` pointers. We can disregard `inst_id` because `ClangDecl`s
-  // are only used as entries in `SemIR::clang_decls`, which canonicalizes them to
-  // ensure that the same `decl` can't be associated with more than one `inst_id`.
+  // just compares the `decl` pointers. The `inst_id` is always the same due to
+  // the canonicalization.
   auto operator==(const ClangDecl& rhs) const -> bool {
     return decl == rhs.decl;
   }
