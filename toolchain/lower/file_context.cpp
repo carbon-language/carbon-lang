@@ -82,18 +82,20 @@ auto FileContext::PrepareToLower() -> void {
     functions_.Set(id, BuildFunctionDecl(id));
   }
 
+  // TODO: Split vtable declaration creation from definition creation to avoid
+  // redundant vtable definitions for imported vtables.
+  for (const auto& [id, class_info] : sem_ir_->vtables().enumerate()) {
+    if (auto* vtable = BuildVtable(class_info)) {
+      vtables_.Insert(id, vtable);
+    }
+  }
+
   // Lower constants.
   LowerConstants(*this, constants_);
 }
 
 // TODO: Move this to lower.cpp.
 auto FileContext::LowerDefinitions() -> void {
-  for (const auto& class_info : sem_ir_->classes().values()) {
-    if (auto* llvm_vtable = BuildVtable(class_info)) {
-      global_variables_.Insert(class_info.vtable_id, llvm_vtable);
-    }
-  }
-
   // Lower global variable definitions.
   // TODO: Storing both a `constants_` array and a separate `global_variables_`
   // map is redundant.
@@ -760,6 +762,12 @@ static auto BuildTypeForInst(FileContext& context, SemIR::ConstType inst)
       context.sem_ir().types().GetTypeIdForTypeInstId(inst.inner_id));
 }
 
+static auto BuildTypeForInst(FileContext& context, SemIR::PartialType inst)
+    -> llvm::Type* {
+  return context.GetType(
+      context.sem_ir().types().GetTypeIdForTypeInstId(inst.inner_id));
+}
+
 static auto BuildTypeForInst(FileContext& context,
                              SemIR::ImplWitnessAssociatedConstant inst)
     -> llvm::Type* {
@@ -914,17 +922,13 @@ auto FileContext::GetLocForDI(SemIR::InstId inst_id) -> Context::LocForDI {
       GetAbsoluteNodeId(sem_ir_, SemIR::LocId(inst_id)).back());
 }
 
-auto FileContext::BuildVtable(const SemIR::Class& class_info)
+auto FileContext::BuildVtable(const SemIR::Vtable& vtable)
     -> llvm::GlobalVariable* {
-  // Bail out if this class is not dynamic (this will account for classes that
-  // are declared-and-not-defined (including extern declarations) as well).
-  if (!class_info.is_dynamic) {
-    return nullptr;
-  }
+  const auto& class_info = sem_ir().classes().Get(vtable.class_id);
 
   // Vtables can't be generated for generics, only for their specifics - and
   // must be done lazily based on the use of those specifics.
-  if (class_info.generic_id != SemIR::GenericId::None) {
+  if (class_info.generic_id.has_value()) {
     return nullptr;
   }
 
@@ -947,14 +951,8 @@ auto FileContext::BuildVtable(const SemIR::Class& class_info)
     return gv;
   }
 
-  auto canonical_vtable_id =
-      sem_ir().constant_values().GetConstantInstId(class_info.vtable_id);
-
   auto vtable_inst_block =
-      sem_ir().inst_blocks().Get(sem_ir()
-                                     .insts()
-                                     .GetAs<SemIR::Vtable>(canonical_vtable_id)
-                                     .virtual_functions_id);
+      sem_ir().inst_blocks().Get(vtable.virtual_functions_id);
 
   auto* entry_type = llvm::IntegerType::getInt32Ty(llvm_context());
   auto* table_type = llvm::ArrayType::get(entry_type, vtable_inst_block.size());

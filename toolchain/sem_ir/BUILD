@@ -113,6 +113,7 @@ cc_library(
         "type.h",
         "type_info.h",
         "type_iterator.h",
+        "vtable.h",
     ],
     textual_hdrs = [
         "builtin_function_kind.def",

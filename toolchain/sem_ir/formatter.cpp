@@ -25,6 +25,7 @@
 #include "toolchain/sem_ir/ids.h"
 #include "toolchain/sem_ir/name_scope.h"
 #include "toolchain/sem_ir/typed_insts.h"
+#include "toolchain/sem_ir/vtable.h"
 
 // TODO: Consider addressing recursion here, although it's not critical because
 // the formatter isn't required to work on arbitrary code. Still, it may help
@@ -88,6 +89,10 @@ auto Formatter::Format() -> void {
 
   for (auto [id, _] : sem_ir_->classes().enumerate()) {
     FormatClass(id);
+  }
+
+  for (auto [id, _] : sem_ir_->vtables().enumerate()) {
+    FormatVtable(id);
   }
 
   for (auto [id, _] : sem_ir_->functions().enumerate()) {
@@ -342,6 +347,12 @@ auto Formatter::FormatClass(ClassId id) -> void {
     out_ << "complete_type_witness = ";
     FormatName(class_info.complete_type_witness_id);
     out_ << "\n";
+    if (class_info.vtable_ptr_id.has_value()) {
+      Indent();
+      out_ << "vtable_ptr = ";
+      FormatName(class_info.vtable_ptr_id);
+      out_ << "\n";
+    }
 
     FormatNameScope(class_info.scope_id, "!members:\n");
     CloseBrace();
@@ -351,6 +362,24 @@ auto Formatter::FormatClass(ClassId id) -> void {
   out_ << '\n';
 
   FormatEntityEnd(class_info.generic_id);
+}
+
+auto Formatter::FormatVtable(VtableId id) -> void {
+  const Vtable& vtable_info = sem_ir_->vtables().Get(id);
+  out_ << '\n';
+  Indent();
+  out_ << "vtable ";
+  FormatName(id);
+  out_ << ' ';
+  OpenBrace();
+  for (auto function_id :
+       sem_ir_->inst_blocks().Get(vtable_info.virtual_functions_id)) {
+    Indent();
+    FormatArg(function_id);
+    out_ << '\n';
+  }
+  CloseBrace();
+  out_ << '\n';
 }
 
 auto Formatter::FormatInterface(InterfaceId id) -> void {

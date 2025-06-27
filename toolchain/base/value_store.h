@@ -5,6 +5,7 @@
 #ifndef CARBON_TOOLCHAIN_BASE_VALUE_STORE_H_
 #define CARBON_TOOLCHAIN_BASE_VALUE_STORE_H_
 
+#include <concepts>
 #include <memory>
 #include <type_traits>
 #include <utility>
@@ -37,10 +38,16 @@ template <class IdT>
 class ValueStoreRange;
 
 // Common calculation for ValueStore types.
-template <typename IdT, typename ValueT = IdT::ValueType>
+template <typename IdT, typename ValueT = IdT::ValueType,
+          typename KeyT = ValueT>
 class ValueStoreTypes {
  public:
   using ValueType = std::decay_t<ValueT>;
+
+  // TODO: Would be a bit cleaner to not have this here as it's only meaningful
+  // to the `CanonicalValueStore`, not to other `ValueStore`s. Planned to fix
+  // with a larger refactoring.
+  using KeyType = std::decay_t<KeyT>;
 
   // Typically we want to use `ValueType&` and `const ValueType& to avoid
   // copies, but when the value type is a `StringRef`, we assume external
@@ -52,6 +59,14 @@ class ValueStoreTypes {
       std::conditional_t<std::same_as<llvm::StringRef, ValueType>,
                          llvm::StringRef, const ValueType&>;
 };
+
+// If `IdT` provides a distinct `IdT::KeyType`, default to that for the key
+// type.
+template <typename IdT>
+  requires(!std::same_as<typename IdT::ValueType, typename IdT::KeyType>)
+class ValueStoreTypes<IdT>
+    : public ValueStoreTypes<IdT, typename IdT::ValueType,
+                             typename IdT::KeyType> {};
 
 // A simple wrapper for accumulating values, providing IDs to later retrieve the
 // value. This does not do deduplication.
@@ -221,11 +236,16 @@ class ValueStoreRange {
 // A wrapper for accumulating immutable values with deduplication, providing IDs
 // to later retrieve the value.
 //
-// IdT::ValueType must represent the type being indexed.
+// `IdT::ValueType` must represent the type being indexed.
+//
+// `IdT::KeyType` can optionally be present, and if so is used for the argument
+// to `Lookup`. It must be valid to use both `KeyType` and `ValueType` as lookup
+// types in the underlying `Set`.
 template <typename IdT>
 class CanonicalValueStore {
  public:
   using ValueType = ValueStoreTypes<IdT>::ValueType;
+  using KeyType = ValueStoreTypes<IdT>::KeyType;
   using RefType = ValueStoreTypes<IdT>::RefType;
   using ConstRefType = ValueStoreTypes<IdT>::ConstRefType;
 
@@ -237,7 +257,7 @@ class CanonicalValueStore {
 
   // Looks up the canonical ID for a value, or returns `None` if not in the
   // store.
-  auto Lookup(ValueType value) const -> IdT;
+  auto Lookup(KeyType key) const -> IdT;
 
   // Reserves space.
   auto Reserve(size_t size) -> void;
@@ -290,8 +310,8 @@ auto CanonicalValueStore<IdT>::Add(ValueType value) -> IdT {
 }
 
 template <typename IdT>
-auto CanonicalValueStore<IdT>::Lookup(ValueType value) const -> IdT {
-  if (auto result = set_.Lookup(value, KeyContext(&values_))) {
+auto CanonicalValueStore<IdT>::Lookup(KeyType key) const -> IdT {
+  if (auto result = set_.Lookup(key, KeyContext(&values_))) {
     return result.key();
   }
   return IdT::None;

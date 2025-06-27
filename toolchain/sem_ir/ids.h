@@ -45,6 +45,7 @@ struct Impl;
 struct Interface;
 struct StructTypeField;
 struct TypeInfo;
+struct Vtable;
 
 // The ID of an instruction.
 struct InstId : public IdBase<InstId> {
@@ -292,6 +293,13 @@ constexpr CheckIRId CheckIRId::Cpp = CheckIRId(NoneIndex - 1);
 struct ClassId : public IdBase<ClassId> {
   static constexpr llvm::StringLiteral Label = "class";
   using ValueType = Class;
+
+  using IdBase::IdBase;
+};
+
+struct VtableId : public IdBase<VtableId> {
+  static constexpr llvm::StringLiteral Label = "vtable";
+  using ValueType = Vtable;
 
   using IdBase::IdBase;
 };

@@ -59,6 +59,10 @@ class ConstantContext {
     return file_context_->GetFunction(function_id);
   }
 
+  auto GetVtable(SemIR::VtableId vtable_id) -> llvm::GlobalVariable* {
+    return file_context_->GetVtable(vtable_id);
+  }
+
   // Returns a lowered type for the given type_id.
   auto GetType(SemIR::TypeId type_id) const -> llvm::Type* {
     return file_context_->GetType(type_id);
@@ -149,6 +153,11 @@ static auto EmitAsConstant(ConstantContext& context, SemIR::AddrOf inst)
   // A constant reference expression is lowered as a pointer, so `AddrOf` is a
   // no-op.
   return context.GetConstant(inst.lvalue_id);
+}
+
+static auto EmitAsConstant(ConstantContext& context, SemIR::VtablePtr inst)
+    -> llvm::Constant* {
+  return context.GetVtable(inst.vtable_id);
 }
 
 static auto EmitAsConstant(ConstantContext& context,

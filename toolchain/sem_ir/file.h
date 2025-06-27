@@ -35,6 +35,7 @@
 #include "toolchain/sem_ir/struct_type_field.h"
 #include "toolchain/sem_ir/type.h"
 #include "toolchain/sem_ir/type_info.h"
+#include "toolchain/sem_ir/vtable.h"
 
 namespace Carbon::SemIR {
 
@@ -224,6 +225,8 @@ class File : public Printable<File> {
   auto types() const -> const TypeStore& { return types_; }
   auto insts() -> InstStore& { return insts_; }
   auto insts() const -> const InstStore& { return insts_; }
+  auto vtables() -> ValueStore<VtableId>& { return vtables_; }
+  auto vtables() const -> const ValueStore<VtableId>& { return vtables_; }
   auto constant_values() -> ConstantValueStore& { return constant_values_; }
   auto constant_values() const -> const ConstantValueStore& {
     return constant_values_;
@@ -343,6 +346,8 @@ class File : public Printable<File> {
   // All instructions. The first entries will always be the singleton
   // instructions.
   InstStore insts_ = InstStore(this);
+
+  ValueStore<VtableId> vtables_;
 
   // Storage for name scopes.
   NameScopeStore name_scopes_ = NameScopeStore(this);

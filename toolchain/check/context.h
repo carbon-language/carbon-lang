@@ -242,6 +242,7 @@ class Context {
     return sem_ir().functions();
   }
   auto classes() -> ValueStore<SemIR::ClassId>& { return sem_ir().classes(); }
+  auto vtables() -> ValueStore<SemIR::VtableId>& { return sem_ir().vtables(); }
   auto interfaces() -> ValueStore<SemIR::InterfaceId>& {
     return sem_ir().interfaces();
   }

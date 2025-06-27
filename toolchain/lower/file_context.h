@@ -82,13 +82,17 @@ class FileContext {
   auto GetConstant(SemIR::ConstantId const_id, SemIR::InstId use_inst_id)
       -> llvm::Value*;
 
+  auto GetVtable(SemIR::VtableId vtable_id) const -> llvm::GlobalVariable* {
+    return *vtables_[vtable_id];
+  }
+
   // Returns the empty LLVM struct type used to represent the type `type`.
   auto GetTypeType() -> llvm::StructType* { return context().GetTypeType(); }
 
   auto context() -> Context& { return *context_; }
   auto llvm_context() -> llvm::LLVMContext& { return context().llvm_context(); }
   auto llvm_module() -> llvm::Module& { return context().llvm_module(); }
-  auto sem_ir() -> const SemIR::File& { return *sem_ir_; }
+  auto sem_ir() const -> const SemIR::File& { return *sem_ir_; }
   auto cpp_ast() -> const clang::ASTUnit* { return sem_ir().cpp_ast(); }
   auto inst_namer() -> const SemIR::InstNamer* { return inst_namer_; }
   auto global_variables() -> const Map<SemIR::InstId, llvm::GlobalVariable*>& {
@@ -176,7 +180,7 @@ class FileContext {
   // the caller.
   auto BuildType(SemIR::InstId inst_id) -> llvm::Type*;
 
-  auto BuildVtable(const SemIR::Class& class_info) -> llvm::GlobalVariable*;
+  auto BuildVtable(const SemIR::Vtable& vtable) -> llvm::GlobalVariable*;
 
   // Records a specific that was lowered for a generic. These are added one
   // by one while lowering their definitions.
@@ -234,6 +238,8 @@ class FileContext {
       lowered_specifics_;
 
   SpecificCoalescer coalescer_;
+
+  Map<SemIR::VtableId, llvm::GlobalVariable*> vtables_;
 };
 
 }  // namespace Carbon::Lower

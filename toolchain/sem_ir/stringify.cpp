@@ -514,6 +514,12 @@ class Stringifier {
                                    name_scope.name_id());
   }
 
+  auto StringifyInst(InstId /*inst_id*/, PartialType inst) -> void {
+    *out_ << "partial ";
+
+    step_stack_->PushInstId(inst.inner_id);
+  }
+
   auto StringifyInst(InstId /*inst_id*/, PatternType inst) -> void {
     *out_ << "<pattern for ";
     step_stack_->Push(inst.scrutinee_type_inst_id, ">");

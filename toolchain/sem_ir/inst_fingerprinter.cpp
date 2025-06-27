@@ -179,6 +179,14 @@ struct Worklist {
     AddEntity(sem_ir->classes().Get(class_id));
   }
 
+  auto Add(VtableId vtable_id) -> void {
+    const auto& vtable = sem_ir->vtables().Get(vtable_id);
+    if (vtable.class_id.has_value()) {
+      Add(vtable.class_id);
+    }
+    Add(vtable.virtual_functions_id);
+  }
+
   auto Add(InterfaceId interface_id) -> void {
     AddEntity(sem_ir->interfaces().Get(interface_id));
   }

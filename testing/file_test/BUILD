@@ -50,6 +50,7 @@ cc_library(
         "//common:ostream",
         "//common:pretty_stack_trace_function",
         "//common:raw_string_ostream",
+        "//common:set",
         "//testing/base:file_helpers",
         "@abseil-cpp//absl/flags:flag",
         "@abseil-cpp//absl/flags:parse",
