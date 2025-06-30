@@ -333,6 +333,16 @@ See the `docs/design` changes in
 [#5606: Keep design documents current](https://github.com/carbon-language/carbon-lang/pull/5606)
 for additional examples of adding those comments.
 
+As an exception, proposals that will have a widespread, pervasive effect on the
+design documents (such as proposals to replace widely-used vocabulary) usually
+shouldn't make those changes as part of the proposal, so that changes during the
+review aren't an excessive burden on the proposal author. Such proposals usually
+shouldn't apply "TODO" comments either, because pervasive "TODO" comments are
+more likely to be disruptive than helpful to the reader. Instead, the proposal
+author should file a GitHub issue to track the need for documentation updates,
+and include a link to it in the proposal document, and then follow up with pull
+requests to make the changes after the proposal is approved by the leads.
+
 #### Open questions
 
 Feel free to factor out open questions in a proposal to issues that you assign
