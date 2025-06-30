@@ -72,7 +72,8 @@ graph BT
                x[y]"}
     click suffixOps "https://github.com/carbon-language/carbon-lang/blob/trunk/docs/design/expressions/README.md#suffix-operators"
 
-    constType["const T"]
+    qualifiedType["const T<br>
+                   partial T"]
     click pointer-type "https://github.com/carbon-language/carbon-lang/blob/trunk/docs/design/expressions/type_operators.md"
 
     pointerType{"T*"}
@@ -157,8 +158,8 @@ graph BT
 
     suffixOps --> top
 
-    constType --> suffixOps
-    pointerType --> constType
+    qualifiedType --> suffixOps
+    pointerType --> qualifiedType
 
     pointer --> suffixOps
     negation & complement & incDec --> pointer
