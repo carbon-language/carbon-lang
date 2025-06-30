@@ -58,9 +58,9 @@ standard library.
 %%{init: {'themeVariables': {'fontFamily': 'monospace'}}}%%
 graph BT
     negation["-x"]
-    multiplication>"x * y<br>
+    multiplication>"x * y
                     x / y"]
-    addition>"x + y<br>
+    addition>"x + y
               x - y"]
     modulo["x % y"]
 
