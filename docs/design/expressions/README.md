@@ -72,7 +72,7 @@ graph BT
                x[y]"}
     click suffixOps "https://github.com/carbon-language/carbon-lang/blob/trunk/docs/design/expressions/README.md#suffix-operators"
 
-    qualifiedType["const T<br>
+    qualifiedType["const T
                    partial T"]
     click pointer-type "https://github.com/carbon-language/carbon-lang/blob/trunk/docs/design/expressions/type_operators.md"
 
