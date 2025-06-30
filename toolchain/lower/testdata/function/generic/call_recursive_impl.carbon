@@ -65,7 +65,7 @@ fn Run() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: declare i32 @printf(ptr, ...)
 // CHECK:STDOUT:
-// CHECK:STDOUT: define i32 @_CG.Main.2c436a64dfc3fd29(i32 %count) !dbg !16 {
+// CHECK:STDOUT: define linkonce_odr i32 @_CG.Main.2c436a64dfc3fd29(i32 %count) !dbg !16 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   call void @"_CF.X.Main:I.Main"(), !dbg !17
 // CHECK:STDOUT:   %int.greater = icmp sgt i32 %count, 0, !dbg !18
@@ -80,7 +80,7 @@ fn Run() {
 // CHECK:STDOUT:   ret i32 %G.call, !dbg !23
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: define i32 @_CG.Main.c124d41ebc08c32b(i32 %count) !dbg !24 {
+// CHECK:STDOUT: define linkonce_odr i32 @_CG.Main.c124d41ebc08c32b(i32 %count) !dbg !24 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   call void @"_CF.Y.Main:I.Main"(), !dbg !25
 // CHECK:STDOUT:   %int.greater = icmp sgt i32 %count, 0, !dbg !26

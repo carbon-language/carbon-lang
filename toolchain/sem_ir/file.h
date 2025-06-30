@@ -35,6 +35,7 @@
 #include "toolchain/sem_ir/struct_type_field.h"
 #include "toolchain/sem_ir/type.h"
 #include "toolchain/sem_ir/type_info.h"
+#include "toolchain/sem_ir/vtable.h"
 
 namespace Carbon::SemIR {
 
@@ -203,6 +204,12 @@ class File : public Printable<File> {
   // pointer in the constructor and remove this function. This is part of
   // https://github.com/carbon-language/carbon-lang/issues/4666
   auto set_cpp_ast(clang::ASTUnit* cpp_ast) -> void { cpp_ast_ = cpp_ast; }
+  auto clang_decls() -> CanonicalValueStore<ClangDeclId>& {
+    return clang_decls_;
+  }
+  auto clang_decls() const -> const CanonicalValueStore<ClangDeclId>& {
+    return clang_decls_;
+  }
   auto names() const -> NameStoreWrapper {
     return NameStoreWrapper(&identifiers());
   }
@@ -218,6 +225,8 @@ class File : public Printable<File> {
   auto types() const -> const TypeStore& { return types_; }
   auto insts() -> InstStore& { return insts_; }
   auto insts() const -> const InstStore& { return insts_; }
+  auto vtables() -> ValueStore<VtableId>& { return vtables_; }
+  auto vtables() const -> const ValueStore<VtableId>& { return vtables_; }
   auto constant_values() -> ConstantValueStore& { return constant_values_; }
   auto constant_values() const -> const ConstantValueStore& {
     return constant_values_;
@@ -329,9 +338,16 @@ class File : public Printable<File> {
   // `Cpp` imports.
   clang::ASTUnit* cpp_ast_ = nullptr;
 
+  // Clang AST declarations pointing to the AST and their mapped Carbon
+  // instructions. When calling `Lookup()`, `inst_id` is ignored. `Add()` will
+  // not add multiple entries with the same `decl` and different `inst_id`.
+  CanonicalValueStore<ClangDeclId> clang_decls_;
+
   // All instructions. The first entries will always be the singleton
   // instructions.
   InstStore insts_ = InstStore(this);
+
+  ValueStore<VtableId> vtables_;
 
   // Storage for name scopes.
   NameScopeStore name_scopes_ = NameScopeStore(this);

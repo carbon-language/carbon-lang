@@ -28,6 +28,12 @@ struct CompileOptions {
     CodeGen,
   };
 
+  enum class DumpSemIRRanges : int8_t {
+    IfPresent,
+    Only,
+    Ignore,
+  };
+
   friend auto operator<<(llvm::raw_ostream& out, Phase phase)
       -> llvm::raw_ostream&;
 
@@ -36,6 +42,7 @@ struct CompileOptions {
   CodegenOptions codegen_options;
 
   Phase phase;
+  DumpSemIRRanges dump_sem_ir_ranges;
 
   llvm::StringRef output_filename;
   llvm::SmallVector<llvm::StringRef> input_filenames;
@@ -58,8 +65,9 @@ struct CompileOptions {
   bool builtin_sem_ir = false;
   bool prelude_import = false;
   bool include_debug_info = true;
+  bool run_llvm_verifier = true;
 
-  llvm::StringRef exclude_dump_file_prefix;
+  llvm::SmallVector<llvm::StringRef> exclude_dump_file_prefixes;
 };
 
 // Implements the compile subcommand of the driver.

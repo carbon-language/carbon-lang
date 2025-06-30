@@ -84,7 +84,7 @@ struct CompleteTypeInfo : public Printable<CompleteTypeInfo> {
 };
 
 // The initializing representation to use when returning by value.
-struct InitRepr {
+struct InitRepr : Printable<InitRepr> {
   // Returns information about the initializing representation to use for a
   // type.
   static auto ForType(const File& file, TypeId type_id) -> InitRepr;
@@ -116,10 +116,29 @@ struct InitRepr {
   // Returns whether the initializing representation is a copy of the object
   // representation of the type. Provided for symmetry with `ValueRepr`.
   auto IsCopyOfObjectRepr() const -> bool { return kind == ByCopy; }
+
+  auto Print(llvm::raw_ostream& out) const -> void {
+    out << "{kind: ";
+    switch (kind) {
+      case None:
+        out << "None";
+        break;
+      case ByCopy:
+        out << "ByCopy";
+        break;
+      case InPlace:
+        out << "InPlace";
+        break;
+      case Incomplete:
+        out << "Incomplete";
+        break;
+    }
+    out << "}";
+  }
 };
 
 // Information about a function's return type.
-struct ReturnTypeInfo {
+struct ReturnTypeInfo : public Printable<ReturnTypeInfo> {
   // Builds return type information for a given declared return type.
   static auto ForType(const File& file, TypeId type_id) -> ReturnTypeInfo {
     return {.type_id = type_id,
@@ -143,6 +162,10 @@ struct ReturnTypeInfo {
   auto has_return_slot() const -> bool {
     CARBON_CHECK(is_valid());
     return init_repr.kind == InitRepr::InPlace;
+  }
+
+  auto Print(llvm::raw_ostream& out) const -> void {
+    out << "{type_id: " << type_id << ", init_repr: " << init_repr << "}";
   }
 
   // The declared return type. `None` if no return type was specified.

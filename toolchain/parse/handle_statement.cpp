@@ -112,29 +112,44 @@ auto HandleStatementForHeader(Context& context) -> void {
   if (open_paren) {
     state.token = *open_paren;
   }
+
   state.kind = StateKind::StatementForHeaderIn;
-
-  if (context.PositionIs(Lex::TokenKind::Var)) {
-    context.PushState(state);
-    context.PushState(StateKind::VarAsFor);
-    context.AddLeafNode(NodeKind::VariableIntroducer, context.Consume());
-  } else {
-    CARBON_DIAGNOSTIC(ExpectedVariableDecl, Error,
-                      "expected `var` declaration");
-    context.emitter().Emit(*context.position(), ExpectedVariableDecl);
-
-    if (auto next_in = context.FindNextOf({Lex::TokenKind::In})) {
-      context.SkipTo(*next_in);
-      context.ConsumeAndDiscard();
-    }
-    state.has_error = true;
-    context.PushState(state);
-  }
+  context.PushState(state);
+  context.PushState(StateKind::Pattern);
 }
 
 auto HandleStatementForHeaderIn(Context& context) -> void {
   auto state = context.PopState();
+
+  auto end_token = state.token;
+  if (context.PositionIs(Lex::TokenKind::In)) {
+    end_token = context.Consume();
+  } else if (context.PositionIs(Lex::TokenKind::Colon)) {
+    CARBON_DIAGNOSTIC(ExpectedInNotColon, Error,
+                      "`:` should be replaced by `in`");
+    context.emitter().Emit(*context.position(), ExpectedInNotColon);
+    state.has_error = true;
+    end_token = context.Consume();
+  } else if (!state.has_error) {
+    CARBON_DIAGNOSTIC(ExpectedIn, Error, "expected `in` after loop pattern");
+    context.emitter().Emit(*context.position(), ExpectedIn);
+    state.has_error = true;
+  }
+
+  context.AddNode(NodeKind::ForIn, end_token, state.has_error);
+
   context.PushState(state, StateKind::StatementForHeaderFinish);
+
+  // If we had a parse error, try to skip to the closing paren rather than
+  // parsing an expression.
+  if (state.has_error) {
+    auto open_token = context.state_stack().back().token;
+    if (context.tokens().GetKind(open_token).is_opening_symbol()) {
+      context.SkipTo(context.tokens().GetMatchedClosingToken(open_token));
+      return;
+    }
+  }
+
   context.PushState(StateKind::Expr);
 }
 

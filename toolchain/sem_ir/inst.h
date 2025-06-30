@@ -24,12 +24,14 @@
 
 namespace Carbon::SemIR {
 
+template <typename... TypedInsts>
+struct CategoryOf;
+
 // InstLikeTypeInfo is an implementation detail, and not public API.
 namespace Internal {
 
 // Information about an instruction-like type, which is a type that an Inst can
-// be converted to and from. The `Enabled` parameter is used to check
-// requirements on the type in the specializations of this template.
+// be converted to and from.
 template <typename InstLikeType>
 struct InstLikeTypeInfo;
 
@@ -67,20 +69,67 @@ struct InstLikeTypeInfo<TypedInst> : InstLikeTypeInfoBase<TypedInst> {
   static auto GetKind(TypedInst /*inst*/) -> InstKind {
     return TypedInst::Kind;
   }
-  static auto IsKind(InstKind kind) -> bool { return kind == TypedInst::Kind; }
+  static constexpr auto IsKind(InstKind kind) -> bool {
+    return kind == TypedInst::Kind;
+  }
   // A name that can be streamed to an llvm::raw_ostream.
   static auto DebugName() -> InstKind { return TypedInst::Kind; }
 };
 
+// If `TypedInst` has an Nth field, validates that `CategoryInst` has a
+// corresponding field with a compatible type.
+template <typename CategoryInst, typename TypedInst, size_t N>
+static consteval auto ValidateCategoryFieldForTypedInst() -> void {
+  if constexpr (InstLikeTypeInfoBase<TypedInst>::NumArgs > N) {
+    if constexpr (!std::is_same_v<typename InstLikeTypeInfoBase<
+                                      CategoryInst>::template ArgType<N>,
+                                  AnyRawId>) {
+      static_assert(
+          std::is_same_v<
+              typename InstLikeTypeInfoBase<CategoryInst>::template ArgType<N>,
+              typename InstLikeTypeInfoBase<TypedInst>::template ArgType<N>>,
+          "Inst category field should be the same type as the "
+          "corresponding fields of its typed insts, or AnyRawId if "
+          "they have different types");
+    }
+  }
+}
+
+// Validates that `CategoryInst` is compatible with `TypedInst`
+template <typename CategoryInst, typename TypedInst>
+static consteval auto ValidateCategoryForTypedInst() -> void {
+  static_assert(Internal::HasKindMemberAsField<CategoryInst>,
+                "Inst category should have an `InstKind` field");
+  static_assert(!HasTypeIdMember<TypedInst> || HasTypeIdMember<CategoryInst>,
+                "Inst category should have a `TypeId` field if any of its "
+                "typed insts do");
+
+  static_assert(InstLikeTypeInfoBase<CategoryInst>::NumArgs >=
+                    InstLikeTypeInfoBase<TypedInst>::NumArgs,
+                "Inst category should have as many fields as any of its typed "
+                "insts");
+
+  ValidateCategoryFieldForTypedInst<CategoryInst, TypedInst, 0>();
+  ValidateCategoryFieldForTypedInst<CategoryInst, TypedInst, 1>();
+}
+
+// Validates that `CategoryInst` is compatible with all of `TypedInsts`.
+// Always returns true; validation failure will cause build errors when
+// instantiating the function.
+template <typename CategoryInst, typename... TypedInsts>
+static consteval auto ValidateCategory(
+    CategoryOf<TypedInsts...> /*category_info*/) -> bool {
+  (ValidateCategoryForTypedInst<CategoryInst, TypedInsts>(), ...);
+  return true;
+}
+
 // An instruction category is instruction-like.
 template <typename InstCat>
-  requires std::same_as<const InstKind&, decltype(InstCat::Kinds[0])>
+  requires requires { typename InstCat::CategoryInfo; }
 struct InstLikeTypeInfo<InstCat> : InstLikeTypeInfoBase<InstCat> {
-  static_assert(HasKindMemberAsField<InstCat>,
-                "Instruction category should have a kind field");
   static auto GetKind(InstCat cat) -> InstKind { return cat.kind; }
-  static auto IsKind(InstKind kind) -> bool {
-    for (InstKind k : InstCat::Kinds) {
+  static constexpr auto IsKind(InstKind kind) -> bool {
+    for (InstKind k : InstCat::CategoryInfo::Kinds) {
       if (k == kind) {
         return true;
       }
@@ -92,13 +141,21 @@ struct InstLikeTypeInfo<InstCat> : InstLikeTypeInfoBase<InstCat> {
     RawStringOstream out;
     out << "{";
     llvm::ListSeparator sep;
-    for (auto kind : InstCat::Kinds) {
+    for (auto kind : InstCat::CategoryInfo::Kinds) {
       out << sep << kind;
     }
     out << "}";
     return out.TakeStr();
   }
+
+ private:
+  // Trigger validation of `InstCat`.
+  static_assert(ValidateCategory<InstCat>(typename InstCat::CategoryInfo()));
 };
+
+// HasInstCategory is true if T::Kind is an element of InstCat::Kinds.
+template <typename InstCat, typename T>
+concept HasInstCategory = InstLikeTypeInfo<InstCat>::IsKind(T::Kind);
 
 // A type is InstLike if InstLikeTypeInfo is defined for it.
 template <typename T>
@@ -383,6 +440,8 @@ struct LocIdAndInst {
 // Provides a ValueStore wrapper for an API specific to instructions.
 class InstStore {
  public:
+  using IdType = InstId;
+
   explicit InstStore(File* file) : file_(file) {}
 
   // Adds an instruction to the instruction list, returning an ID to reference
@@ -457,7 +516,7 @@ class InstStore {
   // instruction and its ID are returned. Otherwise returns {nullopt, None}.
   template <typename InstT, typename InstIdT>
     requires std::derived_from<InstIdT, InstId>
-  auto TryUnwrap(Inst& inst, InstId& inst_id, InstIdT InstT::*member) const
+  auto TryUnwrap(Inst& inst, InstId& inst_id, InstIdT InstT::* member) const
       -> std::pair<std::optional<InstT>, InstId> {
     if (auto wrapped_inst = inst.TryAs<InstT>()) {
       auto wrapped_inst_id = inst_id;
@@ -485,6 +544,15 @@ class InstStore {
   // an unresolved LocId. This skips that step when a resolved LocId is needed.
   auto GetCanonicalLocId(InstId inst_id) const -> LocId {
     return GetCanonicalLocId(GetNonCanonicalLocId(inst_id));
+  }
+
+  // Returns a virtual location to use for the desugaring of the code at the
+  // specified location.
+  auto GetLocIdForDesugaring(LocId loc_id) const -> LocId {
+    return GetCanonicalLocId(loc_id).AsDesugared();
+  }
+  auto GetLocIdForDesugaring(InstId inst_id) const -> LocId {
+    return GetCanonicalLocId(inst_id).AsDesugared();
   }
 
   // Returns the instruction that this instruction was imported from, or
@@ -524,9 +592,13 @@ class InstStore {
     mem_usage.Collect(MemUsage::ConcatLabel(label, "values_"), values_);
   }
 
-  auto array_ref() const -> llvm::ArrayRef<Inst> { return values_.array_ref(); }
+  auto values() const [[clang::lifetimebound]] -> ValueStoreRange<InstId> {
+    return values_.values();
+  }
   auto size() const -> int { return values_.size(); }
-  auto enumerate() const -> auto { return values_.enumerate(); }
+  auto enumerate() const [[clang::lifetimebound]] -> auto {
+    return values_.enumerate();
+  }
 
  private:
   // Given a symbolic type, get the corresponding unattached type.
@@ -554,8 +626,8 @@ class InstBlockStore : public BlockValueStore<InstBlockId> {
       : BaseType(allocator) {
     auto exports_id = AddPlaceholder();
     CARBON_CHECK(exports_id == InstBlockId::Exports);
-    auto import_refs_id = AddPlaceholder();
-    CARBON_CHECK(import_refs_id == InstBlockId::ImportRefs);
+    auto imports_id = AddPlaceholder();
+    CARBON_CHECK(imports_id == InstBlockId::Imports);
     auto global_init_id = AddPlaceholder();
     CARBON_CHECK(global_init_id == InstBlockId::GlobalInit);
   }

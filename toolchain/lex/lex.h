@@ -12,13 +12,21 @@
 
 namespace Carbon::Lex {
 
+struct LexOptions {
+  // Options must be set individually, not through initialization.
+  explicit LexOptions() = default;
+
+  // If set, a consumer for diagnostics. Otherwise, diagnostics go to stderr.
+  Diagnostics::Consumer* consumer = nullptr;
+};
+
 // Lexes a buffer of source code into a tokenized buffer.
 //
 // The provided source buffer must outlive any returned `TokenizedBuffer`
 // which will refer into the source.
 auto Lex(SharedValueStores& value_stores,
-         SourceBuffer& source [[clang::lifetimebound]],
-         Diagnostics::Consumer& consumer) -> TokenizedBuffer;
+         SourceBuffer& source [[clang::lifetimebound]], LexOptions options)
+    -> TokenizedBuffer;
 
 }  // namespace Carbon::Lex
 

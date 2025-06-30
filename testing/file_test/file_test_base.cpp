@@ -37,6 +37,7 @@
 #include "absl/flags/flag.h"
 #include "absl/flags/parse.h"
 #include "absl/strings/str_join.h"
+#include "common/build_data.h"
 #include "common/check.h"
 #include "common/error.h"
 #include "common/exe_path.h"
@@ -138,7 +139,7 @@ static auto CompareFailPrefix(llvm::StringRef filename, bool success) -> void {
 auto FileTestBase::GetBazelCommand(BazelMode mode) -> std::string {
   RawStringOstream args;
   args << "bazel " << ((mode == BazelMode::Test) ? "test" : "run") << " "
-       << GetBazelLabel() << " ";
+       << BuildData::TargetName << " ";
 
   switch (mode) {
     case BazelMode::Autoupdate:
@@ -157,11 +158,6 @@ auto FileTestBase::GetBazelCommand(BazelMode mode) -> std::string {
   args << "--file_tests=";
   args << test_name();
   return args.TakeStr();
-}
-
-auto FileTestBase::GetBazelLabel() -> std::string {
-  const char* target = getenv("TEST_TARGET");
-  return target ? target : "<target>";
 }
 
 // Runs the FileTestAutoupdater, returning the result.
@@ -390,6 +386,9 @@ static auto RunSingleTest(FileTestInfo& test, bool single_threaded,
   if (absl::GetFlag(FLAGS_dump_output)) {
     std::unique_lock<std::mutex> lock(output_mutex);
     llvm::errs() << "\n--- Dumping: " << test.test_name << "\n\n";
+  } else if (single_threaded) {
+    std::unique_lock<std::mutex> lock(output_mutex);
+    llvm::errs() << "\nTEST: " << test.test_name << ' ';
   }
 
   // Load expected output.

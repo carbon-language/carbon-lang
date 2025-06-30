@@ -2,8 +2,6 @@
 // Exceptions. See /LICENSE for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
-// EXTRA-ARGS: --no-dump-sem-ir
-//
 // AUTOUPDATE
 // TIP: To test this file alone, run:
 // TIP:   bazel test //toolchain/testing:file_test --test_arg=--file_tests=toolchain/check/testdata/operators/builtin/bit_and.carbon
@@ -50,7 +48,7 @@ fn F3[T:! J & K](t: T) {}
 library "[[@TEST_NAME]]";
 
 class J { adapt {}; }
-impl J as Core.BitAnd {
+impl J as Core.BitAndWith(J) where .Result = J {
   fn Op[self: Self](other: Self) -> Self { return {} as J; }
 }
 
@@ -68,7 +66,7 @@ class J { adapt {}; }
 fn F() {
   let a: J = {} as J;
   let b: J = {} as J;
-  // CHECK:STDERR: fail_bit_and_values_no_impl.carbon:[[@LINE+4]]:3: error: cannot access member of interface `Core.BitAnd` in type `J` that does not implement that interface [MissingImplInMemberAccess]
+  // CHECK:STDERR: fail_bit_and_values_no_impl.carbon:[[@LINE+4]]:3: error: cannot access member of interface `Core.BitAndWith(J)` in type `J` that does not implement that interface [MissingImplInMemberAccess]
   // CHECK:STDERR:   a & b;
   // CHECK:STDERR:   ^~~~~
   // CHECK:STDERR:

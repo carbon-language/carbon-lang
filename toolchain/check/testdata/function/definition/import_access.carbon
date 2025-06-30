@@ -2,6 +2,10 @@
 // Exceptions. See /LICENSE for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
+// INCLUDE-FILE: toolchain/testing/testdata/min_prelude/none.carbon
+// TODO: Add ranges and switch to "--dump-sem-ir-ranges=only".
+// EXTRA-ARGS: --dump-sem-ir-ranges=if-present
+//
 // AUTOUPDATE
 // TIP: To test this file alone, run:
 // TIP:   bazel test //toolchain/testing:file_test --test_arg=--file_tests=toolchain/check/testdata/function/definition/import_access.carbon
@@ -143,19 +147,10 @@ private fn Redecl() {}
 // CHECK:STDOUT:   %Def: %Def.type = struct_value () [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: imports {
-// CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [concrete] {
-// CHECK:STDOUT:     import Core//prelude
-// CHECK:STDOUT:     import Core//prelude/...
-// CHECK:STDOUT:   }
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace [concrete] {
-// CHECK:STDOUT:     .Core = imports.%Core
 // CHECK:STDOUT:     .Def [private] = %Def.decl
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %Def.decl: %Def.type = fn_decl @Def [concrete = constants.%Def] {} {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -171,19 +166,10 @@ private fn Redecl() {}
 // CHECK:STDOUT:   %ForwardWithDef: %ForwardWithDef.type = struct_value () [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: imports {
-// CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [concrete] {
-// CHECK:STDOUT:     import Core//prelude
-// CHECK:STDOUT:     import Core//prelude/...
-// CHECK:STDOUT:   }
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace [concrete] {
-// CHECK:STDOUT:     .Core = imports.%Core
 // CHECK:STDOUT:     .ForwardWithDef [private] = %ForwardWithDef.decl.loc4
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %ForwardWithDef.decl.loc4: %ForwardWithDef.type = fn_decl @ForwardWithDef [concrete = constants.%ForwardWithDef] {} {}
 // CHECK:STDOUT:   %ForwardWithDef.decl.loc6: %ForwardWithDef.type = fn_decl @ForwardWithDef [concrete = constants.%ForwardWithDef] {} {}
 // CHECK:STDOUT: }
@@ -200,19 +186,10 @@ private fn Redecl() {}
 // CHECK:STDOUT:   %Forward: %Forward.type = struct_value () [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: imports {
-// CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [concrete] {
-// CHECK:STDOUT:     import Core//prelude
-// CHECK:STDOUT:     import Core//prelude/...
-// CHECK:STDOUT:   }
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace [concrete] {
-// CHECK:STDOUT:     .Core = imports.%Core
 // CHECK:STDOUT:     .Forward [private] = %Forward.decl
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %Forward.decl: %Forward.type = fn_decl @Forward [concrete = constants.%Forward] {} {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -229,31 +206,25 @@ private fn Redecl() {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT:   %Test.Def: %Def.type = import_ref Test//def, Def, loaded [concrete = constants.%Def]
-// CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [concrete] {
-// CHECK:STDOUT:     import Core//prelude
-// CHECK:STDOUT:     import Core//prelude/...
-// CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace [concrete] {
 // CHECK:STDOUT:     .Def [private] = imports.%Test.Def
-// CHECK:STDOUT:     .Core = imports.%Core
 // CHECK:STDOUT:     .f = %f
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Test.import = import Test
 // CHECK:STDOUT:   %default.import = import <none>
-// CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %f.patt: %pattern_type = binding_pattern f [concrete]
-// CHECK:STDOUT:     %.loc4_1: %pattern_type = var_pattern %f.patt [concrete]
+// CHECK:STDOUT:     %f.var_patt: %pattern_type = var_pattern %f.patt [concrete]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %f.var: ref %empty_tuple.type = var f
+// CHECK:STDOUT:   %f.var: ref %empty_tuple.type = var %f.var_patt [concrete]
 // CHECK:STDOUT:   %.loc4_9.1: type = splice_block %.loc4_9.3 [concrete = constants.%empty_tuple.type] {
 // CHECK:STDOUT:     %.loc4_9.2: %empty_tuple.type = tuple_literal ()
 // CHECK:STDOUT:     %.loc4_9.3: type = converted %.loc4_9.2, constants.%empty_tuple.type [concrete = constants.%empty_tuple.type]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %f: ref %empty_tuple.type = bind_name f, %f.var
+// CHECK:STDOUT:   %f: ref %empty_tuple.type = bind_name f, %f.var [concrete = %f.var]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Def [from "def.carbon"];
@@ -273,31 +244,22 @@ private fn Redecl() {}
 // CHECK:STDOUT:   %pattern_type: type = pattern_type %empty_tuple.type [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: imports {
-// CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [concrete] {
-// CHECK:STDOUT:     import Core//prelude
-// CHECK:STDOUT:     import Core//prelude/...
-// CHECK:STDOUT:   }
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace [concrete] {
-// CHECK:STDOUT:     .Core = imports.%Core
 // CHECK:STDOUT:     .f = %f
 // CHECK:STDOUT:     .Def = <poisoned>
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %default.import = import <none>
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %f.patt: %pattern_type = binding_pattern f [concrete]
-// CHECK:STDOUT:     %.loc10_1: %pattern_type = var_pattern %f.patt [concrete]
+// CHECK:STDOUT:     %f.var_patt: %pattern_type = var_pattern %f.patt [concrete]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %f.var: ref %empty_tuple.type = var f
+// CHECK:STDOUT:   %f.var: ref %empty_tuple.type = var %f.var_patt [concrete]
 // CHECK:STDOUT:   %.loc10_9.1: type = splice_block %.loc10_9.3 [concrete = constants.%empty_tuple.type] {
 // CHECK:STDOUT:     %.loc10_9.2: %empty_tuple.type = tuple_literal ()
 // CHECK:STDOUT:     %.loc10_9.3: type = converted %.loc10_9.2, constants.%empty_tuple.type [concrete = constants.%empty_tuple.type]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %f: ref %empty_tuple.type = bind_name f, %f.var
+// CHECK:STDOUT:   %f: ref %empty_tuple.type = bind_name f, %f.var [concrete = %f.var]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {
@@ -315,10 +277,6 @@ private fn Redecl() {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
-// CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [concrete] {
-// CHECK:STDOUT:     import Core//prelude
-// CHECK:STDOUT:     import Core//prelude/...
-// CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Test: <namespace> = namespace file.%Test.import, [concrete] {
 // CHECK:STDOUT:     .Def = <poisoned>
 // CHECK:STDOUT:     import Test//def
@@ -327,22 +285,20 @@ private fn Redecl() {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace [concrete] {
-// CHECK:STDOUT:     .Core = imports.%Core
 // CHECK:STDOUT:     .Test = imports.%Test
 // CHECK:STDOUT:     .f = %f
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %Test.import = import Test
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %f.patt: %pattern_type = binding_pattern f [concrete]
-// CHECK:STDOUT:     %.loc10_1: %pattern_type = var_pattern %f.patt [concrete]
+// CHECK:STDOUT:     %f.var_patt: %pattern_type = var_pattern %f.patt [concrete]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %f.var: ref %empty_tuple.type = var f
+// CHECK:STDOUT:   %f.var: ref %empty_tuple.type = var %f.var_patt [concrete]
 // CHECK:STDOUT:   %.loc10_9.1: type = splice_block %.loc10_9.3 [concrete = constants.%empty_tuple.type] {
 // CHECK:STDOUT:     %.loc10_9.2: %empty_tuple.type = tuple_literal ()
 // CHECK:STDOUT:     %.loc10_9.3: type = converted %.loc10_9.2, constants.%empty_tuple.type [concrete = constants.%empty_tuple.type]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %f: ref %empty_tuple.type = bind_name f, %f.var
+// CHECK:STDOUT:   %f: ref %empty_tuple.type = bind_name f, %f.var [concrete = %f.var]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {
@@ -364,31 +320,25 @@ private fn Redecl() {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT:   %Test.ForwardWithDef: %ForwardWithDef.type = import_ref Test//forward_with_def, ForwardWithDef, loaded [concrete = constants.%ForwardWithDef]
-// CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [concrete] {
-// CHECK:STDOUT:     import Core//prelude
-// CHECK:STDOUT:     import Core//prelude/...
-// CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace [concrete] {
 // CHECK:STDOUT:     .ForwardWithDef [private] = imports.%Test.ForwardWithDef
-// CHECK:STDOUT:     .Core = imports.%Core
 // CHECK:STDOUT:     .f = %f
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Test.import = import Test
 // CHECK:STDOUT:   %default.import = import <none>
-// CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %f.patt: %pattern_type = binding_pattern f [concrete]
-// CHECK:STDOUT:     %.loc4_1: %pattern_type = var_pattern %f.patt [concrete]
+// CHECK:STDOUT:     %f.var_patt: %pattern_type = var_pattern %f.patt [concrete]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %f.var: ref %empty_tuple.type = var f
+// CHECK:STDOUT:   %f.var: ref %empty_tuple.type = var %f.var_patt [concrete]
 // CHECK:STDOUT:   %.loc4_9.1: type = splice_block %.loc4_9.3 [concrete = constants.%empty_tuple.type] {
 // CHECK:STDOUT:     %.loc4_9.2: %empty_tuple.type = tuple_literal ()
 // CHECK:STDOUT:     %.loc4_9.3: type = converted %.loc4_9.2, constants.%empty_tuple.type [concrete = constants.%empty_tuple.type]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %f: ref %empty_tuple.type = bind_name f, %f.var
+// CHECK:STDOUT:   %f: ref %empty_tuple.type = bind_name f, %f.var [concrete = %f.var]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @ForwardWithDef [from "forward_with_def.carbon"];
@@ -408,31 +358,22 @@ private fn Redecl() {}
 // CHECK:STDOUT:   %pattern_type: type = pattern_type %empty_tuple.type [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: imports {
-// CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [concrete] {
-// CHECK:STDOUT:     import Core//prelude
-// CHECK:STDOUT:     import Core//prelude/...
-// CHECK:STDOUT:   }
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace [concrete] {
-// CHECK:STDOUT:     .Core = imports.%Core
 // CHECK:STDOUT:     .f = %f
 // CHECK:STDOUT:     .ForwardWithDef = <poisoned>
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %default.import = import <none>
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %f.patt: %pattern_type = binding_pattern f [concrete]
-// CHECK:STDOUT:     %.loc10_1: %pattern_type = var_pattern %f.patt [concrete]
+// CHECK:STDOUT:     %f.var_patt: %pattern_type = var_pattern %f.patt [concrete]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %f.var: ref %empty_tuple.type = var f
+// CHECK:STDOUT:   %f.var: ref %empty_tuple.type = var %f.var_patt [concrete]
 // CHECK:STDOUT:   %.loc10_9.1: type = splice_block %.loc10_9.3 [concrete = constants.%empty_tuple.type] {
 // CHECK:STDOUT:     %.loc10_9.2: %empty_tuple.type = tuple_literal ()
 // CHECK:STDOUT:     %.loc10_9.3: type = converted %.loc10_9.2, constants.%empty_tuple.type [concrete = constants.%empty_tuple.type]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %f: ref %empty_tuple.type = bind_name f, %f.var
+// CHECK:STDOUT:   %f: ref %empty_tuple.type = bind_name f, %f.var [concrete = %f.var]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {
@@ -450,10 +391,6 @@ private fn Redecl() {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
-// CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [concrete] {
-// CHECK:STDOUT:     import Core//prelude
-// CHECK:STDOUT:     import Core//prelude/...
-// CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Test: <namespace> = namespace file.%Test.import, [concrete] {
 // CHECK:STDOUT:     .ForwardWithDef = <poisoned>
 // CHECK:STDOUT:     import Test//forward_with_def
@@ -462,22 +399,20 @@ private fn Redecl() {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace [concrete] {
-// CHECK:STDOUT:     .Core = imports.%Core
 // CHECK:STDOUT:     .Test = imports.%Test
 // CHECK:STDOUT:     .f = %f
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %Test.import = import Test
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %f.patt: %pattern_type = binding_pattern f [concrete]
-// CHECK:STDOUT:     %.loc10_1: %pattern_type = var_pattern %f.patt [concrete]
+// CHECK:STDOUT:     %f.var_patt: %pattern_type = var_pattern %f.patt [concrete]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %f.var: ref %empty_tuple.type = var f
+// CHECK:STDOUT:   %f.var: ref %empty_tuple.type = var %f.var_patt [concrete]
 // CHECK:STDOUT:   %.loc10_9.1: type = splice_block %.loc10_9.3 [concrete = constants.%empty_tuple.type] {
 // CHECK:STDOUT:     %.loc10_9.2: %empty_tuple.type = tuple_literal ()
 // CHECK:STDOUT:     %.loc10_9.3: type = converted %.loc10_9.2, constants.%empty_tuple.type [concrete = constants.%empty_tuple.type]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %f: ref %empty_tuple.type = bind_name f, %f.var
+// CHECK:STDOUT:   %f: ref %empty_tuple.type = bind_name f, %f.var [concrete = %f.var]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {
@@ -499,31 +434,25 @@ private fn Redecl() {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT:   %Test.Forward: %Forward.type = import_ref Test//forward, Forward, loaded [concrete = constants.%Forward]
-// CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [concrete] {
-// CHECK:STDOUT:     import Core//prelude
-// CHECK:STDOUT:     import Core//prelude/...
-// CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace [concrete] {
 // CHECK:STDOUT:     .Forward [private] = %Forward.decl
-// CHECK:STDOUT:     .Core = imports.%Core
 // CHECK:STDOUT:     .f = %f
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Test.import = import Test
 // CHECK:STDOUT:   %default.import = import <none>
-// CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %f.patt: %pattern_type = binding_pattern f [concrete]
-// CHECK:STDOUT:     %.loc4_1: %pattern_type = var_pattern %f.patt [concrete]
+// CHECK:STDOUT:     %f.var_patt: %pattern_type = var_pattern %f.patt [concrete]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %f.var: ref %empty_tuple.type = var f
+// CHECK:STDOUT:   %f.var: ref %empty_tuple.type = var %f.var_patt [concrete]
 // CHECK:STDOUT:   %.loc4_9.1: type = splice_block %.loc4_9.3 [concrete = constants.%empty_tuple.type] {
 // CHECK:STDOUT:     %.loc4_9.2: %empty_tuple.type = tuple_literal ()
 // CHECK:STDOUT:     %.loc4_9.3: type = converted %.loc4_9.2, constants.%empty_tuple.type [concrete = constants.%empty_tuple.type]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %f: ref %empty_tuple.type = bind_name f, %f.var
+// CHECK:STDOUT:   %f: ref %empty_tuple.type = bind_name f, %f.var [concrete = %f.var]
 // CHECK:STDOUT:   %Forward.decl: %Forward.type = fn_decl @Forward [concrete = constants.%Forward] {} {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -547,31 +476,22 @@ private fn Redecl() {}
 // CHECK:STDOUT:   %pattern_type: type = pattern_type %empty_tuple.type [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: imports {
-// CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [concrete] {
-// CHECK:STDOUT:     import Core//prelude
-// CHECK:STDOUT:     import Core//prelude/...
-// CHECK:STDOUT:   }
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace [concrete] {
-// CHECK:STDOUT:     .Core = imports.%Core
 // CHECK:STDOUT:     .f = %f
 // CHECK:STDOUT:     .Forward = <poisoned>
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %default.import = import <none>
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %f.patt: %pattern_type = binding_pattern f [concrete]
-// CHECK:STDOUT:     %.loc10_1: %pattern_type = var_pattern %f.patt [concrete]
+// CHECK:STDOUT:     %f.var_patt: %pattern_type = var_pattern %f.patt [concrete]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %f.var: ref %empty_tuple.type = var f
+// CHECK:STDOUT:   %f.var: ref %empty_tuple.type = var %f.var_patt [concrete]
 // CHECK:STDOUT:   %.loc10_9.1: type = splice_block %.loc10_9.3 [concrete = constants.%empty_tuple.type] {
 // CHECK:STDOUT:     %.loc10_9.2: %empty_tuple.type = tuple_literal ()
 // CHECK:STDOUT:     %.loc10_9.3: type = converted %.loc10_9.2, constants.%empty_tuple.type [concrete = constants.%empty_tuple.type]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %f: ref %empty_tuple.type = bind_name f, %f.var
+// CHECK:STDOUT:   %f: ref %empty_tuple.type = bind_name f, %f.var [concrete = %f.var]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {
@@ -589,10 +509,6 @@ private fn Redecl() {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
-// CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [concrete] {
-// CHECK:STDOUT:     import Core//prelude
-// CHECK:STDOUT:     import Core//prelude/...
-// CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Test: <namespace> = namespace file.%Test.import, [concrete] {
 // CHECK:STDOUT:     .Forward = <poisoned>
 // CHECK:STDOUT:     import Test//forward
@@ -601,22 +517,20 @@ private fn Redecl() {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace [concrete] {
-// CHECK:STDOUT:     .Core = imports.%Core
 // CHECK:STDOUT:     .Test = imports.%Test
 // CHECK:STDOUT:     .f = %f
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %Test.import = import Test
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %f.patt: %pattern_type = binding_pattern f [concrete]
-// CHECK:STDOUT:     %.loc10_1: %pattern_type = var_pattern %f.patt [concrete]
+// CHECK:STDOUT:     %f.var_patt: %pattern_type = var_pattern %f.patt [concrete]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %f.var: ref %empty_tuple.type = var f
+// CHECK:STDOUT:   %f.var: ref %empty_tuple.type = var %f.var_patt [concrete]
 // CHECK:STDOUT:   %.loc10_9.1: type = splice_block %.loc10_9.3 [concrete = constants.%empty_tuple.type] {
 // CHECK:STDOUT:     %.loc10_9.2: %empty_tuple.type = tuple_literal ()
 // CHECK:STDOUT:     %.loc10_9.3: type = converted %.loc10_9.2, constants.%empty_tuple.type [concrete = constants.%empty_tuple.type]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %f: ref %empty_tuple.type = bind_name f, %f.var
+// CHECK:STDOUT:   %f: ref %empty_tuple.type = bind_name f, %f.var [concrete = %f.var]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {
@@ -634,19 +548,10 @@ private fn Redecl() {}
 // CHECK:STDOUT:   %Redecl: %Redecl.type = struct_value () [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: imports {
-// CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [concrete] {
-// CHECK:STDOUT:     import Core//prelude
-// CHECK:STDOUT:     import Core//prelude/...
-// CHECK:STDOUT:   }
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace [concrete] {
-// CHECK:STDOUT:     .Core = imports.%Core
 // CHECK:STDOUT:     .Redecl [private] = %Redecl.decl.loc4
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %Redecl.decl.loc4: %Redecl.type = fn_decl @Redecl [concrete = constants.%Redecl] {} {}
 // CHECK:STDOUT:   %Redecl.decl.loc6: %Redecl.type = fn_decl @Redecl [concrete = constants.%Redecl] {} {}
 // CHECK:STDOUT: }

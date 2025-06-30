@@ -7,6 +7,7 @@
 
 #include "clang/AST/DeclBase.h"
 #include "common/map.h"
+#include "toolchain/sem_ir/clang_decl.h"
 #include "toolchain/sem_ir/ids.h"
 #include "toolchain/sem_ir/inst.h"
 
@@ -151,9 +152,6 @@ class NameScope : public Printable<NameScope> {
   auto entries() const -> llvm::ArrayRef<Entry> { return names_; }
 
   // Get a specific Name entry based on an EntryId that return from a lookup.
-  //
-  // The Entry could become invalidated if the scope object is invalidated or if
-  // a name is added.
   auto GetEntry(EntryId entry_id) const -> const Entry& {
     return names_[entry_id.index];
   }
@@ -195,6 +193,12 @@ class NameScope : public Printable<NameScope> {
     extended_scopes_.push_back(extended_scope);
   }
 
+  auto Set(InstId inst_id, NameId name_id, NameScopeId parent_scope_id) {
+    inst_id_ = inst_id;
+    name_id_ = name_id;
+    parent_scope_id_ = parent_scope_id;
+  }
+
   auto inst_id() const -> InstId { return inst_id_; }
 
   auto name_id() const -> NameId { return name_id_; }
@@ -213,15 +217,16 @@ class NameScope : public Printable<NameScope> {
     is_closed_import_ = is_closed_import;
   }
 
-  auto is_cpp_scope() const -> bool { return cpp_decl_context(); }
-
-  auto cpp_decl_context() const -> const clang::DeclContext* {
-    return cpp_decl_context_;
+  auto is_cpp_scope() const -> bool {
+    return clang_decl_context_id().has_value();
   }
-  auto cpp_decl_context() -> clang::DeclContext* { return cpp_decl_context_; }
 
-  auto set_cpp_decl_context(clang::DeclContext* cpp_decl_context) -> void {
-    cpp_decl_context_ = cpp_decl_context;
+  auto clang_decl_context_id() const -> ClangDeclId {
+    return clang_decl_context_id_;
+  }
+
+  auto set_clang_decl_context_id(ClangDeclId clang_decl_context_id) -> void {
+    clang_decl_context_id_ = clang_decl_context_id;
   }
 
   // Returns true if this name scope describes an imported package.
@@ -251,9 +256,6 @@ class NameScope : public Printable<NameScope> {
 
  private:
   // Names in the scope, including poisoned names.
-  //
-  // Entries could become invalidated if the scope object is invalidated or if a
-  // name is added.
   //
   // We store both an insertion-ordered vector for iterating
   // and a map from `NameId` to the index of that vector for name lookup.
@@ -295,12 +297,8 @@ class NameScope : public Printable<NameScope> {
   bool is_closed_import_ = false;
 
   // Set if this is the `Cpp` scope or a scope inside `Cpp`. Points to the
-  // matching Clang declaration context to look for names. This is mutable since
-  // `clang::Sema::LookupQualifiedName()` requires a mutable `DeclContext`.
-  // TODO: Ensure we can easily serialize/deserialize this. Consider decl ID to
-  // point into the AST. This is related to:
-  // https://github.com/carbon-language/carbon-lang/issues/4666.
-  clang::DeclContext* cpp_decl_context_ = nullptr;
+  // matching Clang declaration context to look for names.
+  ClangDeclId clang_decl_context_id_ = ClangDeclId::None;
 
   // True if this is the scope of an interface definition, where associated
   // entities will be bound to the interface's `Self` symbolic type.

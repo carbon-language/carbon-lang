@@ -141,21 +141,26 @@ class TypeCompleter {
       -> SemIR::CompleteTypeInfo;
 
   auto BuildInfoForInst(SemIR::TypeId /*type_id*/,
+                        SemIR::PartialType inst) const
+      -> SemIR::CompleteTypeInfo;
+
+  auto BuildInfoForInst(SemIR::TypeId /*type_id*/,
                         SemIR::ImplWitnessAssociatedConstant inst) const
       -> SemIR::CompleteTypeInfo;
 
   template <typename InstT>
-    requires(InstT::Kind.constant_kind() ==
-                 SemIR::InstConstantKind::SymbolicOnly ||
-             InstT::Kind.is_type() == SemIR::InstIsType::Never)
-  auto BuildInfoForInst(SemIR::TypeId type_id, InstT inst) const
+    requires(InstT::Kind.is_type() == SemIR::InstIsType::Never)
+  auto BuildInfoForInst(SemIR::TypeId /*type_id*/, InstT inst) const
       -> SemIR::CompleteTypeInfo {
-    if constexpr (InstT::Kind.is_type() == SemIR::InstIsType::Never) {
-      CARBON_FATAL("Type refers to non-type inst {0}", inst);
-    } else {
-      // For symbolic types, we arbitrarily pick a copy representation.
-      return {.value_repr = MakeCopyValueRepr(type_id)};
-    }
+    CARBON_FATAL("Type refers to non-type inst {0}", inst);
+  }
+
+  template <typename InstT>
+    requires(InstT::Kind.is_symbolic_when_type())
+  auto BuildInfoForInst(SemIR::TypeId type_id, InstT /*inst*/) const
+      -> SemIR::CompleteTypeInfo {
+    // For symbolic types, we arbitrarily pick a copy representation.
+    return {.value_repr = MakeCopyValueRepr(type_id)};
   }
 
   // Builds and returns the `CompleteTypeInfo` for the given type. All nested
@@ -286,6 +291,10 @@ auto TypeCompleter::AddNestedIncompleteTypes(SemIR::Inst type_inst) -> bool {
       break;
     }
     case CARBON_KIND(SemIR::ConstType inst): {
+      Push(context_->types().GetTypeIdForTypeInstId(inst.inner_id));
+      break;
+    }
+    case CARBON_KIND(SemIR::PartialType inst): {
       Push(context_->types().GetTypeIdForTypeInstId(inst.inner_id));
       break;
     }
@@ -507,6 +516,14 @@ auto TypeCompleter::BuildInfoForInst(SemIR::TypeId /*type_id*/,
                                      SemIR::ConstType inst) const
     -> SemIR::CompleteTypeInfo {
   // The value representation of `const T` is the same as that of `T`.
+  // Objects are not modifiable through their value representations.
+  return GetNestedInfo(context_->types().GetTypeIdForTypeInstId(inst.inner_id));
+}
+
+auto TypeCompleter::BuildInfoForInst(SemIR::TypeId /*type_id*/,
+                                     SemIR::PartialType inst) const
+    -> SemIR::CompleteTypeInfo {
+  // The value representation of `partial T` is the same as that of `T`.
   // Objects are not modifiable through their value representations.
   return GetNestedInfo(context_->types().GetTypeIdForTypeInstId(inst.inner_id));
 }

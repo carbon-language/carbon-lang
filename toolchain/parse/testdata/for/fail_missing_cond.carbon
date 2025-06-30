@@ -13,7 +13,7 @@ fn F() {
   // CHECK:STDERR:   for {
   // CHECK:STDERR:       ^
   // CHECK:STDERR:
-  // CHECK:STDERR: fail_missing_cond.carbon:[[@LINE+4]]:7: error: expected `var` declaration [ExpectedVariableDecl]
+  // CHECK:STDERR: fail_missing_cond.carbon:[[@LINE+4]]:7: error: expected name in binding pattern [ExpectedBindingPattern]
   // CHECK:STDERR:   for {
   // CHECK:STDERR:       ^
   // CHECK:STDERR:
@@ -38,14 +38,18 @@ fn F() {
 // CHECK:STDOUT:         {kind: 'ExplicitParamList', text: ')', subtree_size: 2},
 // CHECK:STDOUT:       {kind: 'FunctionDefinitionStart', text: '{', subtree_size: 5},
 // CHECK:STDOUT:           {kind: 'ForHeaderStart', text: 'for', has_error: yes},
+// CHECK:STDOUT:               {kind: 'IdentifierNameNotBeforeParams', text: '{', has_error: yes},
+// CHECK:STDOUT:               {kind: 'InvalidParse', text: '{', has_error: yes},
+// CHECK:STDOUT:             {kind: 'LetBindingPattern', text: '{', has_error: yes, subtree_size: 3},
+// CHECK:STDOUT:           {kind: 'ForIn', text: 'for', has_error: yes, subtree_size: 4},
 // CHECK:STDOUT:             {kind: 'StructLiteralStart', text: '{'},
 // CHECK:STDOUT:           {kind: 'StructLiteral', text: '}', subtree_size: 2},
-// CHECK:STDOUT:         {kind: 'ForHeader', text: 'for', has_error: yes, subtree_size: 4},
+// CHECK:STDOUT:         {kind: 'ForHeader', text: 'for', has_error: yes, subtree_size: 8},
 // CHECK:STDOUT:           {kind: 'CodeBlockStart', text: '}', has_error: yes},
 // CHECK:STDOUT:             {kind: 'InvalidParse', text: '}', has_error: yes},
 // CHECK:STDOUT:           {kind: 'ExprStatement', text: '}', has_error: yes, subtree_size: 2},
 // CHECK:STDOUT:         {kind: 'CodeBlock', text: '}', has_error: yes, subtree_size: 4},
-// CHECK:STDOUT:       {kind: 'ForStatement', text: 'for', subtree_size: 9},
-// CHECK:STDOUT:     {kind: 'FunctionDefinition', text: '}', subtree_size: 15},
+// CHECK:STDOUT:       {kind: 'ForStatement', text: 'for', subtree_size: 13},
+// CHECK:STDOUT:     {kind: 'FunctionDefinition', text: '}', subtree_size: 19},
 // CHECK:STDOUT:     {kind: 'FileEnd', text: ''},
 // CHECK:STDOUT:   ]

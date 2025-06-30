@@ -6,85 +6,103 @@ package Core library "prelude/operators/bitwise";
 
 import library "prelude/types/int_literal";
 
+// TODO: Per the design, the associated type `Result` in each of these
+// interfaces should have a default value of `Self`:
+//
+//   default let Result:! type = Self;
+
+// TODO: Per the design, for each *With interface there should also be a
+// non-With named constraint, such as:
+//
+//   constraint BitAnd {
+//     extend require impls BitAndWith(Self) where .Result = Self;
+//   }
+
 // Bit complement: `^a`.
 interface BitComplement {
-  fn Op[self: Self]() -> Self;
+  let Result:! type;
+  fn Op[self: Self]() -> Result;
 }
 
 // Bitwise AND: `a & b`.
-interface BitAnd {
-  fn Op[self: Self](other: Self) -> Self;
+interface BitAndWith(Other:! type) {
+  let Result:! type;
+  fn Op[self: Self](other: Other) -> Result;
 }
 
 // Bitwise AND with assignment: `a &= b`.
-interface BitAndAssign {
-  fn Op[addr self: Self*](other: Self);
+interface BitAndAssignWith(Other:! type) {
+  fn Op[addr self: Self*](other: Other);
 }
 
 // Bitwise OR: `a | b`.
-interface BitOr {
-  fn Op[self: Self](other: Self) -> Self;
+interface BitOrWith(Other:! type) {
+  let Result:! type;
+  fn Op[self: Self](other: Other) -> Result;
 }
 
 // Bitwise OR with assignment: `a |= b`.
-interface BitOrAssign {
-  fn Op[addr self: Self*](other: Self);
+interface BitOrAssignWith(Other:! type) {
+  fn Op[addr self: Self*](other: Other);
 }
 
 // Bitwise XOR: `a ^ b`.
-interface BitXor {
-  fn Op[self: Self](other: Self) -> Self;
+interface BitXorWith(Other:! type) {
+  let Result:! type;
+  fn Op[self: Self](other: Other) -> Result;
 }
 
 // Bitwise XOR with assignment: `a ^= b`.
-interface BitXorAssign {
-  fn Op[addr self: Self*](other: Self);
+interface BitXorAssignWith(Other:! type) {
+  fn Op[addr self: Self*](other: Other);
 }
 
 // Left shift: `a << b`.
-interface LeftShift {
-  fn Op[self: Self](other: Self) -> Self;
+interface LeftShiftWith(Other:! type) {
+  let Result:! type;
+  fn Op[self: Self](other: Other) -> Result;
 }
 
 // Left shift with assignment: `a <<= b`.
-interface LeftShiftAssign {
-  fn Op[addr self: Self*](other: Self);
+interface LeftShiftAssignWith(Other:! type) {
+  fn Op[addr self: Self*](other: Other);
 }
 
 // Right shift: `a >> b`.
-interface RightShift {
-  fn Op[self: Self](other: Self) -> Self;
+interface RightShiftWith(Other:! type) {
+  let Result:! type;
+  fn Op[self: Self](other: Other) -> Result;
 }
 
 // Right shift with assignment: `a >>= b`.
-interface RightShiftAssign {
-  fn Op[addr self: Self*](other: Self);
+interface RightShiftAssignWith(Other:! type) {
+  fn Op[addr self: Self*](other: Other);
 }
 
 
 // Operations for IntLiteral. These need to be here because IntLiteral has no
 // associated library of its own.
-impl IntLiteral() as BitAnd {
+impl IntLiteral() as BitAndWith(Self) where .Result = Self {
   fn Op[self: Self](other: Self) -> Self = "int.and";
 }
 
-impl IntLiteral() as BitComplement {
+impl IntLiteral() as BitComplement where .Result = Self {
   fn Op[self: Self]() -> Self = "int.complement";
 }
 
-impl IntLiteral() as BitOr {
+impl IntLiteral() as BitOrWith(Self) where .Result = Self {
   fn Op[self: Self](other: Self) -> Self = "int.or";
 }
 
-impl IntLiteral() as BitXor {
+impl IntLiteral() as BitXorWith(Self) where .Result = Self {
   fn Op[self: Self](other: Self) -> Self = "int.xor";
 }
 
-impl IntLiteral() as LeftShift {
+impl IntLiteral() as LeftShiftWith(Self) where .Result = Self {
   fn Op[self: Self](other: Self) -> Self = "int.left_shift";
 }
 
-impl IntLiteral() as RightShift {
+impl IntLiteral() as RightShiftWith(Self) where .Result = Self {
   fn Op[self: Self](other: Self) -> Self = "int.right_shift";
 }
 
@@ -92,6 +110,6 @@ impl IntLiteral() as RightShift {
 // associated library of its own.
 
 // Facet type combination.
-impl type as BitAnd {
+impl type as BitAndWith(Self) where .Result = Self {
   fn Op[self: Self](other: Self) -> Self = "type.and";
 }

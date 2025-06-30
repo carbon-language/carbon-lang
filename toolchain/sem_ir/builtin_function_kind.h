@@ -27,6 +27,9 @@ class BuiltinFunctionKind : public CARBON_ENUM_BASE(BuiltinFunctionKind) {
   CARBON_ENUM_CONSTANT_DECL(Name)
 #include "toolchain/sem_ir/builtin_function_kind.def"
 
+  using EnumBase::AsInt;
+  using EnumBase::FromInt;
+
   // Returns the builtin function kind with the given name, or None if the name
   // is unknown.
   static auto ForBuiltinName(llvm::StringRef name) -> BuiltinFunctionKind;

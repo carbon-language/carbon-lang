@@ -346,8 +346,8 @@ class IntStore {
   // into the ID space.
   auto OutputYaml() const -> Yaml::OutputMapping;
 
-  auto array_ref() const -> llvm::ArrayRef<llvm::APInt> {
-    return values_.array_ref();
+  auto values() const [[clang::lifetimebound]] -> auto {
+    return values_.values();
   }
   auto size() const -> size_t { return values_.size(); }
 

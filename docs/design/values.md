@@ -139,11 +139,11 @@ a value afterward.
 
 ## Binding patterns and local variables with `let` and `var`
 
-[_Binding patterns_](/docs/design/README.md#binding-patterns) introduce names
-that are [_value expressions_](#value-expressions) by default and are called
-_value bindings_. This is the desired default for many pattern contexts,
-especially function parameters. Values are a good model for "input" function
-parameters which are the dominant and default style of function parameters:
+A [_value binding pattern_](/docs/design/README.md#binding-patterns) introduces
+a name that is a [_value expression_](#value-expressions) and is called a _value
+binding_. This is the desired default for many pattern contexts, especially
+function parameters. Values are a good model for "input" function parameters
+which are the dominant and default style of function parameters:
 
 ```carbon
 fn Sum(x: i32, y: i32) -> i32 {
@@ -156,22 +156,23 @@ fn Sum(x: i32, y: i32) -> i32 {
 Value bindings require the matched expression to be a _value expression_,
 converting it into one as necessary.
 
-A _variable pattern_ can be introduced with the `var` keyword to create an
-object with storage when matched. Every binding pattern name introduced within a
-variable pattern is called a _variable binding_ and forms a
-[_durable reference expression_](#durable-reference-expressions) to an object
-within the variable pattern's storage when used. Variable patterns require their
-matched expression to be an _initializing expression_ and provide their storage
-to it to be initialized.
+A _variable pattern_ is introduced with the `var` keyword. It declares storage
+for a new object, and initializes it from the matched expression, which must be
+an initializing expression.
+
+A _reference binding pattern_ is a binding pattern that is nested under a `var`
+pattern. It introduces a name called a _reference binding_ that is a
+[durable reference expression](#durable-reference-expressions) to an object
+within the variable pattern's storage.
 
 ```carbon
 fn MutateThing(ptr: i64*);
 
 fn Example() {
-  // `1` starts as a value expression, which is what a `let` binding expects.
+  // `1` starts as a value expression, which is what a value binding expects.
   let x: i64 = 1;
 
-  // `2` also starts as a value expression, but the variable binding requires it
+  // `2` also starts as a value expression, but the variable pattern requires it
   // to be converted to an initializing expression by using the value `2` to
   // initialize the provided variable storage that `y` will refer to.
   var y: i64 = 2;
@@ -211,7 +212,7 @@ inner `var` pattern here:
 ```carbon
 fn DestructuringExample() {
   // Both `1` and `2` start as value expressions. The `x` binding directly
-  // matches `1`. For `2`, the variable binding requires it to be converted to
+  // matches `1`. For `2`, the variable pattern requires it to be converted to
   // an initializing expression by using the value `2` to initialize the
   // provided variable storage that `y` will refer to.
   let (x: i64, var y: i64) = (1, 2);
@@ -290,7 +291,7 @@ There are several kinds of expressions that produce durable references in
 Carbon:
 
 -   Names of objects introduced with a
-    [variable binding](#binding-patterns-and-local-variables-with-let-and-var):
+    [reference binding](#binding-patterns-and-local-variables-with-let-and-var):
     `x`
 -   Dereferenced [pointers](#pointers): `*p`
 -   Names of subobjects through member access to some other durable reference
@@ -543,6 +544,10 @@ var x: MyType = CreateMyObject();
 
 The `<return-expression>` in the `return` statement actually initializes the
 storage provided for `x`. There is no "copy" or other step.
+
+> **Future work:** Extend this to also apply when a variable pattern is
+> initialized from a tuple/struct literal, or a tuple/struct pattern with
+> variable subpatterns is initialized from a single function call.
 
 All `return` statement expressions are required to be initializing expressions
 and in fact initialize the storage provided to the function's call expression.
@@ -905,7 +910,7 @@ set of heuristics. Some examples:
 
 When a custom type is provided, it must not be `Self`, `const Self`, or a
 pointer to either. The type provided will be used on function call boundaries
-and as the implementation representation for `let` bindings and other value
+and as the implementation representation for value bindings and other value
 expressions referencing an object of the type. A specifier of `value_rep = T;`
 will require that the type containing that specifier satisfies the constraint
 `impls ReferenceImplicitAs where .T = T` using the following interface:

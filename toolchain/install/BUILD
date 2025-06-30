@@ -78,9 +78,11 @@ cc_library(
 
 cc_library(
     name = "busybox_info",
+    srcs = ["busybox_info.cpp"],
     hdrs = ["busybox_info.h"],
     deps = [
         "//common:error",
+        "//common:exe_path",
         "@llvm-project//llvm:Support",
     ],
 )

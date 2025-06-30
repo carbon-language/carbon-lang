@@ -42,6 +42,11 @@ enum class ExprCategory : int8_t {
 // Returns the expression category for an instruction.
 auto GetExprCategory(const File& file, InstId inst_id) -> ExprCategory;
 
+// Returns whether the given expression category is for a reference expression.
+inline auto IsRefCategory(ExprCategory cat) -> bool {
+  return cat == ExprCategory::DurableRef || cat == ExprCategory::EphemeralRef;
+}
+
 // Given an initializing expression, find its return slot argument. Returns
 // `None` if there is no return slot, because the initialization is not
 // performed in place.

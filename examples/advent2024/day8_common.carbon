@@ -7,20 +7,17 @@
 library "day8_common";
 
 import Core library "io";
+import Core library "range";
 import library "io_utils";
 
 class Grid {
   fn Read() -> Grid {
     returned var me: Grid;
-    var y: i32 = 0;
-    while (y < 50) {
-      var x: i32 = 0;
-      while (x < 50) {
+    for (y: i32 in Core.Range(50)) {
+      for (x: i32 in Core.Range(50)) {
         me.data[x][y] = ReadChar();
-        ++x;
       }
       SkipNewline();
-      ++y;
     }
     return var;
   }

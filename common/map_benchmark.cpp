@@ -19,6 +19,7 @@ using RawHashtable::CarbonHashDI;
 using RawHashtable::GetKeysAndHitKeys;
 using RawHashtable::GetKeysAndMissKeys;
 using RawHashtable::HitArgs;
+using RawHashtable::LowZeroBitInt;
 using RawHashtable::ReportTableMetrics;
 using RawHashtable::SizeArgs;
 using RawHashtable::ValueToBool;
@@ -327,6 +328,22 @@ static void BM_MapLookupHit(benchmark::State& state) {
   ReportMetrics(m, state);
 }
 MAP_BENCHMARK_ONE_OP(BM_MapLookupHit, HitArgs);
+
+// We also do some minimal benchmarking with integers that have a
+// large number of low zero bits shifted into them. These present particular
+// challenges to the hashing strategy Carbon's hash tables use and so they help
+// form stress tests and benchmark to make sure the hash function quality
+// remains reasonable even under adverse conditions. We can't go past a certain
+// limit here without our hash tables becoming impossibly slow due to complete
+// collapse of the hash functions -- if we ever need to hash integers with more
+// than 32 low zero bits, we'll ask that code to use a custom hash algorithm.
+//
+// We don't benchmark these everywhere as they only provide marginal information
+// beyond the core types, and checking just this operation covers that
+// sufficiently.
+MAP_BENCHMARK_ONE_OP_SIZE(BM_MapLookupHit, HitArgs, LowZeroBitInt<12>, int);
+MAP_BENCHMARK_ONE_OP_SIZE(BM_MapLookupHit, HitArgs, LowZeroBitInt<24>, int);
+MAP_BENCHMARK_ONE_OP_SIZE(BM_MapLookupHit, HitArgs, LowZeroBitInt<32>, int);
 
 // This is an update throughput benchmark in practice. While whether the key was
 // a hit is kept in the critical path, we only use keys that are hits and so

@@ -2,6 +2,8 @@
 // Exceptions. See /LICENSE for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
+// INCLUDE-FILE: toolchain/testing/testdata/min_prelude/int.carbon
+//
 // AUTOUPDATE
 // TIP: To test this file alone, run:
 // TIP:   bazel test //toolchain/testing:file_test --test_arg=--file_tests=toolchain/lower/testdata/class/method.carbon
@@ -30,11 +32,8 @@ fn F(p: C*) {
 // CHECK:STDOUT: define void @_CF.Main(ptr %p) !dbg !4 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   %Get.call = call i32 @_CGet.C.Main(ptr %p), !dbg !7
-// CHECK:STDOUT:   %.loc19_25.1.temp = alloca i32, align 4, !dbg !7
-// CHECK:STDOUT:   store i32 %Get.call, ptr %.loc19_25.1.temp, align 4, !dbg !7
-// CHECK:STDOUT:   %.loc20_12 = load i32, ptr %.loc19_25.1.temp, align 4, !dbg !8
-// CHECK:STDOUT:   call void @_CSet.C.Main(ptr %p, i32 %.loc20_12), !dbg !9
-// CHECK:STDOUT:   ret void, !dbg !10
+// CHECK:STDOUT:   call void @_CSet.C.Main(ptr %p, i32 %Get.call), !dbg !8
+// CHECK:STDOUT:   ret void, !dbg !9
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: !llvm.module.flags = !{!0, !1}
@@ -44,10 +43,9 @@ fn F(p: C*) {
 // CHECK:STDOUT: !1 = !{i32 2, !"Debug Info Version", i32 3}
 // CHECK:STDOUT: !2 = distinct !DICompileUnit(language: DW_LANG_C, file: !3, producer: "carbon", isOptimized: false, runtimeVersion: 0, emissionKind: FullDebug)
 // CHECK:STDOUT: !3 = !DIFile(filename: "method.carbon", directory: "")
-// CHECK:STDOUT: !4 = distinct !DISubprogram(name: "F", linkageName: "_CF.Main", scope: null, file: !3, line: 18, type: !5, spFlags: DISPFlagDefinition, unit: !2)
+// CHECK:STDOUT: !4 = distinct !DISubprogram(name: "F", linkageName: "_CF.Main", scope: null, file: !3, line: 20, type: !5, spFlags: DISPFlagDefinition, unit: !2)
 // CHECK:STDOUT: !5 = !DISubroutineType(types: !6)
 // CHECK:STDOUT: !6 = !{}
-// CHECK:STDOUT: !7 = !DILocation(line: 19, column: 16, scope: !4)
-// CHECK:STDOUT: !8 = !DILocation(line: 20, column: 12, scope: !4)
-// CHECK:STDOUT: !9 = !DILocation(line: 20, column: 3, scope: !4)
-// CHECK:STDOUT: !10 = !DILocation(line: 18, column: 1, scope: !4)
+// CHECK:STDOUT: !7 = !DILocation(line: 21, column: 16, scope: !4)
+// CHECK:STDOUT: !8 = !DILocation(line: 22, column: 3, scope: !4)
+// CHECK:STDOUT: !9 = !DILocation(line: 20, column: 1, scope: !4)

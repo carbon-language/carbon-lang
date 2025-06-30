@@ -19,12 +19,14 @@ using ::testing::Pair;
 
 auto MatchSharedValues(testing::Matcher<Yaml::MappingValue> ints,
                        testing::Matcher<Yaml::MappingValue> reals,
+                       testing::Matcher<Yaml::MappingValue> floats,
                        testing::Matcher<Yaml::MappingValue> identifiers,
                        testing::Matcher<Yaml::MappingValue> strings) -> auto {
   return Yaml::IsYaml(Yaml::Sequence(ElementsAre(Yaml::Mapping(ElementsAre(Pair(
       "shared_values",
       Yaml::Mapping(ElementsAre(Pair("ints", Yaml::Mapping(ints)),
                                 Pair("reals", Yaml::Mapping(reals)),
+                                Pair("floats", Yaml::Mapping(floats)),
                                 Pair("identifiers", Yaml::Mapping(identifiers)),
                                 Pair("strings", Yaml::Mapping(strings))))))))));
 }
@@ -33,8 +35,9 @@ TEST(SharedValueStores, PrintEmpty) {
   SharedValueStores value_stores;
   RawStringOstream out;
   value_stores.Print(out);
-  EXPECT_THAT(Yaml::Value::FromText(out.TakeStr()),
-              MatchSharedValues(IsEmpty(), IsEmpty(), IsEmpty(), IsEmpty()));
+  EXPECT_THAT(
+      Yaml::Value::FromText(out.TakeStr()),
+      MatchSharedValues(IsEmpty(), IsEmpty(), IsEmpty(), IsEmpty(), IsEmpty()));
 }
 
 TEST(SharedValueStores, PrintVals) {
@@ -52,7 +55,7 @@ TEST(SharedValueStores, PrintVals) {
   EXPECT_THAT(Yaml::Value::FromText(out.TakeStr()),
               MatchSharedValues(
                   ElementsAre(Pair("ap_int0", Yaml::Scalar("999999999999"))),
-                  ElementsAre(Pair("real0", Yaml::Scalar("8*10^8"))),
+                  ElementsAre(Pair("real0", Yaml::Scalar("8*10^8"))), IsEmpty(),
                   ElementsAre(Pair("identifier0", Yaml::Scalar("a"))),
                   ElementsAre(Pair("string0", Yaml::Scalar("foo'\"baz")))));
 }

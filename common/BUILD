@@ -37,6 +37,29 @@ cc_library(
 )
 
 cc_library(
+    name = "build_data",
+    srcs = [
+        "build_data.cpp",
+        "build_data_linkstamp.h",
+    ],
+    hdrs = ["build_data.h"],
+    linkstamp = "build_data_linkstamp.cpp",
+    deps = ["@llvm-project//llvm:Support"],
+)
+
+cc_test(
+    name = "build_data_test",
+    size = "small",
+    srcs = ["build_data_test.cpp"],
+    deps = [
+        ":build_data",
+        ":ostream",
+        "//testing/base:gtest_main",
+        "@googletest//:gtest",
+    ],
+)
+
+cc_library(
     name = "command_line",
     srcs = ["command_line.cpp"],
     hdrs = ["command_line.h"],
@@ -83,6 +106,26 @@ cc_test(
     srcs = ["check_test.cpp"],
     deps = [
         ":check",
+        "//testing/base:gtest_main",
+        "@googletest//:gtest",
+    ],
+)
+
+cc_library(
+    name = "concepts",
+    hdrs = ["concepts.h"],
+)
+
+cc_library(
+    name = "emplace_by_calling",
+    hdrs = ["emplace_by_calling.h"],
+)
+
+cc_test(
+    name = "emplace_by_calling_test",
+    srcs = ["emplace_by_calling_test.cpp"],
+    deps = [
+        ":emplace_by_calling",
         "//testing/base:gtest_main",
         "@googletest//:gtest",
     ],
@@ -194,6 +237,22 @@ cc_test(
 )
 
 cc_library(
+    name = "growing_range",
+    hdrs = ["growing_range.h"],
+)
+
+cc_test(
+    name = "growing_range_test",
+    size = "small",
+    srcs = ["growing_range_test.cpp"],
+    deps = [
+        ":growing_range",
+        "//testing/base:gtest_main",
+        "@googletest//:gtest",
+    ],
+)
+
+cc_library(
     name = "hashing",
     srcs = ["hashing.cpp"],
     hdrs = ["hashing.h"],
@@ -284,6 +343,7 @@ cc_library(
     hdrs = ["map.h"],
     deps = [
         ":check",
+        ":concepts",
         ":hashtable_key_context",
         ":raw_hashtable",
         "@llvm-project//llvm:Support",
@@ -346,11 +406,20 @@ cc_library(
 )
 
 cc_library(
+    name = "pretty_stack_trace_function",
+    hdrs = ["pretty_stack_trace_function.h"],
+    deps = [
+        "@llvm-project//llvm:Support",
+    ],
+)
+
+cc_library(
     name = "raw_hashtable",
     srcs = ["raw_hashtable.cpp"],
     hdrs = ["raw_hashtable.h"],
     deps = [
         ":check",
+        ":concepts",
         ":hashing",
         ":hashtable_key_context",
         ":raw_hashtable_metadata_group",
@@ -407,6 +476,7 @@ cc_library(
         "@abseil-cpp//absl/base:no_destructor",
         "@abseil-cpp//absl/hash",
         "@abseil-cpp//absl/random",
+        "@boost_unordered",
         "@google_benchmark//:benchmark",
         "@llvm-project//llvm:Support",
     ],
@@ -554,12 +624,9 @@ cc_test(
 )
 
 cc_library(
-    name = "variant_helpers",
-    hdrs = ["variant_helpers.h"],
-    deps = [
-        ":error",
-        "@llvm-project//llvm:Support",
-    ],
+    name = "type_enum",
+    hdrs = ["type_enum.h"],
+    deps = [":ostream"],
 )
 
 # The base version source file only uses non-stamped parts of the version

@@ -15,6 +15,7 @@
 #include <utility>
 
 #include "common/check.h"
+#include "common/concepts.h"
 #include "common/hashing.h"
 #include "common/raw_hashtable_metadata_group.h"
 #include "llvm/Support/Compiler.h"
@@ -374,10 +375,8 @@ class ViewImpl {
   template <typename OtherKeyT, typename OtherValueT>
   // NOLINTNEXTLINE(google-explicit-constructor)
   ViewImpl(ViewImpl<OtherKeyT, OtherValueT, KeyContextT> other_view)
-    requires(std::same_as<KeyT, OtherKeyT> ||
-             std::same_as<KeyT, const OtherKeyT>) &&
-                (std::same_as<ValueT, OtherValueT> ||
-                 std::same_as<ValueT, const OtherValueT>)
+    requires(SameAsOneOf<KeyT, OtherKeyT, const OtherKeyT> &&
+             SameAsOneOf<ValueT, OtherValueT, const OtherValueT>)
       : alloc_size_(other_view.alloc_size_), storage_(other_view.storage_) {}
 
   // Looks up an entry in the hashtable and returns its address or null if not

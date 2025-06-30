@@ -17,7 +17,7 @@ namespace Carbon::Check {
 // Returns the `Op` function for the specified operator.
 static auto GetOperatorOpFunction(Context& context, SemIR::LocId loc_id,
                                   Operator op) -> SemIR::InstId {
-  auto implicit_loc_id = context.insts().GetCanonicalLocId(loc_id).ToImplicit();
+  auto implicit_loc_id = context.insts().GetLocIdForDesugaring(loc_id);
 
   // Look up the interface, and pass it any generic arguments.
   auto interface_id =

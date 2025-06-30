@@ -121,8 +121,8 @@ auto InstBlockId::Print(llvm::raw_ostream& out) const -> void {
     out << Label << "_empty";
   } else if (*this == Exports) {
     out << "exports";
-  } else if (*this == ImportRefs) {
-    out << "import_refs";
+  } else if (*this == Imports) {
+    out << "imports";
   } else if (*this == GlobalInit) {
     out << "global_init";
   } else {
@@ -178,6 +178,9 @@ auto LocId::Print(llvm::raw_ostream& out) const -> void {
       break;
     case Kind::NodeId:
       out << Label << "_" << node_id();
+      if (is_desugared()) {
+        out << "_desugared";
+      }
       break;
   }
 }

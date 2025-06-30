@@ -192,9 +192,13 @@ class ImplStore {
     mem_usage.Collect(MemUsage::ConcatLabel(label, "lookup_"), lookup_);
   }
 
-  auto array_ref() const -> llvm::ArrayRef<Impl> { return values_.array_ref(); }
+  auto values() const [[clang::lifetimebound]] -> ValueStoreRange<ImplId> {
+    return values_.values();
+  }
   auto size() const -> size_t { return values_.size(); }
-  auto enumerate() const -> auto { return values_.enumerate(); }
+  auto enumerate() const [[clang::lifetimebound]] -> auto {
+    return values_.enumerate();
+  }
 
  private:
   File& sem_ir_;

@@ -8,6 +8,14 @@ load("llvm_tools.bzl", "LLVM_MAIN_TOOLS", "generate_llvm_tools_def")
 package(default_visibility = ["//visibility:public"])
 
 cc_library(
+    name = "for_each_macro",
+    hdrs = ["for_each_macro.h"],
+    deps = [
+        "@llvm-project//llvm:Support",
+    ],
+)
+
+cc_library(
     name = "index_base",
     hdrs = ["index_base.h"],
     deps = [
@@ -20,15 +28,20 @@ cc_library(
     name = "kind_switch",
     hdrs = ["kind_switch.h"],
     deps = [
+        ":for_each_macro",
         "@llvm-project//llvm:Support",
     ],
 )
 
-cc_library(
-    name = "pretty_stack_trace_function",
-    hdrs = ["pretty_stack_trace_function.h"],
+cc_test(
+    name = "kind_switch_test",
+    size = "small",
+    srcs = ["kind_switch_test.cpp"],
     deps = [
-        "@llvm-project//llvm:Support",
+        ":kind_switch",
+        "//common:raw_string_ostream",
+        "//testing/base:gtest_main",
+        "@googletest//:gtest",
     ],
 )
 
@@ -64,8 +77,23 @@ cc_library(
 )
 
 cc_library(
+    name = "fixed_size_value_store",
+    hdrs = ["fixed_size_value_store.h"],
+    deps = [
+        ":mem_usage",
+        ":value_store",
+        "//common:check",
+        "//common:move_only",
+        "@llvm-project//llvm:Support",
+    ],
+)
+
+cc_library(
     name = "value_store",
-    hdrs = ["value_store.h"],
+    hdrs = [
+        "value_store.h",
+        "value_store_chunk.h",
+    ],
     deps = [
         ":mem_usage",
         ":yaml",

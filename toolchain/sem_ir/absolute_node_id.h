@@ -15,7 +15,7 @@ namespace Carbon::SemIR {
 // within imported C++ code.
 class AbsoluteNodeId {
  public:
-  // A speicifc node location in a file.
+  // A specific node location in a file.
   explicit AbsoluteNodeId(CheckIRId check_ir_id, Parse::NodeId node_id)
       : check_ir_id_(check_ir_id), node_id_(node_id) {
     CARBON_CHECK(check_ir_id != CheckIRId::Cpp);

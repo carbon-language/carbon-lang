@@ -2,6 +2,10 @@
 // Exceptions. See /LICENSE for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
+// INCLUDE-FILE: toolchain/testing/testdata/min_prelude/convert.carbon
+// TODO: Add ranges and switch to "--dump-sem-ir-ranges=only".
+// EXTRA-ARGS: --dump-sem-ir-ranges=if-present
+//
 // AUTOUPDATE
 // TIP: To test this file alone, run:
 // TIP:   bazel test //toolchain/testing:file_test --test_arg=--file_tests=toolchain/check/testdata/pointer/fail_address_of_error.carbon
@@ -51,11 +55,11 @@ fn Test() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Test() {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %undeclared.ref.loc16: <error> = name_ref undeclared, <error> [concrete = <error>]
-// CHECK:STDOUT:   %addr.loc16: <error> = addr_of %undeclared.ref.loc16 [concrete = <error>]
-// CHECK:STDOUT:   %undeclared.ref.loc25: <error> = name_ref undeclared, <error> [concrete = <error>]
-// CHECK:STDOUT:   %addr.loc25_5: <error> = addr_of %undeclared.ref.loc25 [concrete = <error>]
-// CHECK:STDOUT:   %addr.loc25_3: <error> = addr_of <error> [concrete = <error>]
+// CHECK:STDOUT:   %undeclared.ref.loc20: <error> = name_ref undeclared, <error> [concrete = <error>]
+// CHECK:STDOUT:   %addr.loc20: <error> = addr_of %undeclared.ref.loc20 [concrete = <error>]
+// CHECK:STDOUT:   %undeclared.ref.loc29: <error> = name_ref undeclared, <error> [concrete = <error>]
+// CHECK:STDOUT:   %addr.loc29_5: <error> = addr_of %undeclared.ref.loc29 [concrete = <error>]
+// CHECK:STDOUT:   %addr.loc29_3: <error> = addr_of <error> [concrete = <error>]
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

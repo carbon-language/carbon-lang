@@ -2,6 +2,10 @@
 // Exceptions. See /LICENSE for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
+// INCLUDE-FILE: toolchain/testing/testdata/min_prelude/int.carbon
+// TODO: Add ranges and switch to "--dump-sem-ir-ranges=only".
+// EXTRA-ARGS: --dump-sem-ir-ranges=if-present
+//
 // AUTOUPDATE
 // TIP: To test this file alone, run:
 // TIP:   bazel test //toolchain/testing:file_test --test_arg=--file_tests=toolchain/check/testdata/generic/template/convert.carbon
@@ -102,8 +106,8 @@ fn Test(d: D) -> i32 {
 // CHECK:STDOUT:   %.2ce: type = fn_type_with_self_type %Convert.type.1b6, %ImplicitAs.facet [concrete]
 // CHECK:STDOUT:   %inst.splice_block.1fd: <instruction> = inst_value [concrete] {
 // CHECK:STDOUT:     %.96d: %i32 = splice_block %.521 {
-// CHECK:STDOUT:       %impl.elem0: %.2ce = impl_witness_access %ImplicitAs.impl_witness.96d, element0 [concrete = %Convert.937]
-// CHECK:STDOUT:       %bound_method: <bound method> = bound_method %.fbe, %impl.elem0
+// CHECK:STDOUT:       %impl.elem0.2ce: %.2ce = impl_witness_access %ImplicitAs.impl_witness.96d, element0 [concrete = %Convert.937]
+// CHECK:STDOUT:       %bound_method: <bound method> = bound_method %.fbe, %impl.elem0.2ce
 // CHECK:STDOUT:       %Convert.call: init %i32 = call %bound_method(%.fbe)
 // CHECK:STDOUT:       %.fa7: %i32 = value_of_initializer %Convert.call
 // CHECK:STDOUT:       %.521: %i32 = converted %.fbe, %.fa7
@@ -118,8 +122,8 @@ fn Test(d: D) -> i32 {
 // CHECK:STDOUT:     import Core//prelude
 // CHECK:STDOUT:     import Core//prelude/...
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %Core.Int: %Int.type = import_ref Core//prelude/types/int, Int, loaded [concrete = constants.%Int.generic]
-// CHECK:STDOUT:   %Core.ImplicitAs: %ImplicitAs.type.cc7 = import_ref Core//prelude/operators/as, ImplicitAs, loaded [concrete = constants.%ImplicitAs.generic]
+// CHECK:STDOUT:   %Core.Int: %Int.type = import_ref Core//prelude/parts/int, Int, loaded [concrete = constants.%Int.generic]
+// CHECK:STDOUT:   %Core.ImplicitAs: %ImplicitAs.type.cc7 = import_ref Core//prelude/parts/as, ImplicitAs, loaded [concrete = constants.%ImplicitAs.generic]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -339,8 +343,8 @@ fn Test(d: D) -> i32 {
 // CHECK:STDOUT:     import Core//prelude
 // CHECK:STDOUT:     import Core//prelude/...
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %Core.Int: %Int.type = import_ref Core//prelude/types/int, Int, loaded [concrete = constants.%Int.generic]
-// CHECK:STDOUT:   %Core.ImplicitAs: %ImplicitAs.type.cc7 = import_ref Core//prelude/operators/as, ImplicitAs, loaded [concrete = constants.%ImplicitAs.generic]
+// CHECK:STDOUT:   %Core.Int: %Int.type = import_ref Core//prelude/parts/int, Int, loaded [concrete = constants.%Int.generic]
+// CHECK:STDOUT:   %Core.ImplicitAs: %ImplicitAs.type.cc7 = import_ref Core//prelude/parts/as, ImplicitAs, loaded [concrete = constants.%ImplicitAs.generic]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {

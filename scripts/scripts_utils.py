@@ -35,18 +35,18 @@ class ReleaseInfo(NamedTuple):
 
 
 _BAZEL_TOOLS_URL = (
-    "https://github.com/bazelbuild/buildtools/releases/download/v7.3.1/"
+    "https://github.com/bazelbuild/buildtools/releases/download/v8.2.0/"
 )
 
 # Structured information per release tool.
 _RELEASES = {
     Release.BAZELISK: ReleaseInfo(
-        "https://github.com/bazelbuild/bazelisk/releases/download/v1.25.0/", "-"
+        "https://github.com/bazelbuild/bazelisk/releases/download/v1.26.0/", "-"
     ),
     Release.BUILDIFIER: ReleaseInfo(_BAZEL_TOOLS_URL, "-"),
     Release.BUILDOZER: ReleaseInfo(_BAZEL_TOOLS_URL, "-"),
     Release.TARGET_DETERMINATOR: ReleaseInfo(
-        "https://github.com/bazel-contrib/target-determinator/releases/download/v0.30.0/",  # noqa: E501
+        "https://github.com/bazel-contrib/target-determinator/releases/download/v0.30.3/",  # noqa: E501
         ".",
     ),
 }
@@ -59,32 +59,32 @@ _RELEASES = {
 # to make copy-paste updates simpler.
 _RELEASE_SHAS = {
     Release.BAZELISK: {
-        "darwin-amd64": "0af019eeb642fa70744419d02aa32df55e6e7a084105d49fb26801a660aa56d3",  # noqa: E501
-        "darwin-arm64": "b13dd89c6ecd90944ca3539f5a2c715a18f69b7458878c471a902a8e482ceb4b",  # noqa: E501
-        "linux-amd64": "fd8fdff418a1758887520fa42da7e6ae39aefc788cf5e7f7bb8db6934d279fc4",  # noqa: E501
-        "linux-arm64": "4c8d966e40ac2c4efcc7f1a5a5cceef2c0a2f16b957e791fa7a867cce31e8fcb",  # noqa: E501
-        "windows-amd64.exe": "641a3dfebd717703675f912917735c44b45cf6300bfdfb924537f3cfbffcdd92",  # noqa: E501
+        "darwin-amd64": "5c77f33f91dd3df119d192175100cb5b50302eb7ee37859cbab79e10a76ccce8",  # noqa: E501
+        "darwin-arm64": "d1ca9911cc19e1f17483f93956908334f2b7f3dd13f20853417b68fc3c3eb370",  # noqa: E501
+        "linux-amd64": "6539c12842ad76966f3d493e8f80d67caa84ec4a000e220d5459833c967c12bc",  # noqa: E501
+        "linux-arm64": "54f85ef4c23393f835252cc882e5fea596e8ef3c4c2056b059f8067cd19f0351",  # noqa: E501
+        "windows-amd64.exe": "023734f33ed6b9c6d65468fe20bb2c5fb32473ccb8aca2fc5bf1521e61ce1622",  # noqa: E501
     },
     Release.BUILDIFIER: {
-        "darwin-amd64": "375f823103d01620aaec20a0c29c6cbca99f4fd0725ae30b93655c6704f44d71",  # noqa: E501
-        "darwin-arm64": "5a6afc6ac7a09f5455ba0b89bd99d5ae23b4174dc5dc9d6c0ed5ce8caac3f813",  # noqa: E501
-        "linux-amd64": "5474cc5128a74e806783d54081f581662c4be8ae65022f557e9281ed5dc88009",  # noqa: E501
-        "linux-arm64": "0bf86c4bfffaf4f08eed77bde5b2082e4ae5039a11e2e8b03984c173c34a561c",  # noqa: E501
-        "windows-amd64.exe": "370cd576075ad29930a82f5de132f1a1de4084c784a82514bd4da80c85acf4a8",  # noqa: E501
+        "darwin-amd64": "309b3c3bfcc4b1533d5f7f796adbd266235cfb6f01450f3e37423527d209a309",  # noqa: E501
+        "darwin-arm64": "e08381a3ed1d59c0a17d1cee1d4e7684c6ce1fc3b5cfa1bd92a5fe978b38b47d",  # noqa: E501
+        "linux-amd64": "3e79e6c0401b5f36f8df4dfc686127255d25c7eddc9599b8779b97b7ef4cdda7",  # noqa: E501
+        "linux-arm64": "c624a833bfa64d3a457ef0235eef0dbda03694768aab33f717a7ffd3f803d272",  # noqa: E501
+        "windows-amd64.exe": "a27fcf7521414f8214787989dcfb2ac7d3f7c28b56e44384e5fa06109953c2f1",  # noqa: E501
     },
     Release.BUILDOZER: {
-        "darwin-amd64": "854c9583efc166602276802658cef3f224d60898cfaa60630b33d328db3b0de2",  # noqa: E501
-        "darwin-arm64": "31b1bfe20d7d5444be217af78f94c5c43799cdf847c6ce69794b7bf3319c5364",  # noqa: E501
-        "linux-amd64": "3305e287b3fcc68b9a35fd8515ee617452cd4e018f9e6886b6c7cdbcba8710d4",  # noqa: E501
-        "linux-arm64": "0b5a2a717ac4fc911e1fec8d92af71dbb4fe95b10e5213da0cc3d56cea64a328",  # noqa: E501
-        "windows-amd64.exe": "58d41ce53257c5594c9bc86d769f580909269f68de114297f46284fbb9023dcf",  # noqa: E501
+        "darwin-amd64": "b7bd7189a9d4de22c10fd94b7d1d77c68712db9bdd27150187bc677e8c22960e",  # noqa: E501
+        "darwin-arm64": "781527c5337dadba5a0611c01409c669852b73b72458650cc7c5f31473f7ae3f",  # noqa: E501
+        "linux-amd64": "0e54770aa6148384d1edde39ef20e10d2c57e8c09dd42f525e100f51b0b77ae1",  # noqa: E501
+        "linux-arm64": "a9f38f2781de41526ce934866cb79b8b5b59871c96853dc5a1aee26f4c5976bb",  # noqa: E501
+        "windows-amd64.exe": "8ce5a9a064b01551ffb8d441fa9ef4dd42c9eeeed6bc71a89f917b3474fd65f6",  # noqa: E501
     },
     Release.TARGET_DETERMINATOR: {
-        "darwin.amd64": "faa79bed4f3b516e64532beafabf4c340aa0f67c52770d9e74782b8d32033b8c",  # noqa: E501
-        "darwin.arm64": "0536158d45ac9d59e5fb5fd9f061a407f28e9e3d9d95ccaa4832583ed4cf13b8",  # noqa: E501
-        "linux.amd64": "2c75ff991eb5fe46d6df3f6266cac8fb8f3abf4037be486e4c5dc871bd6c4d64",  # noqa: E501
-        "linux.arm64": "5ec31448c87a972583e0213028e83fefe7f566ccc9d64412e333ed12390573c5",  # noqa: E501
-        "windows.amd64.exe": "11449d0388deae5b04372be35e4b480f3beeffa8b954e707d60ebd15d3ebe428",  # noqa: E501
+        "darwin.amd64": "04adf78f763e622467181669fdf275e01edc1ec3d79940e78040127a15b7c8b2",  # noqa: E501
+        "darwin.arm64": "f59ee18404577a704bc1399907c35b546fd66ffd5a1e145e7955a3d3e57a2a13",  # noqa: E501
+        "linux.amd64": "6eaa8921e6c614c309536af3dc7ca23f52e5ced30b9032e6443bbe0d41a8ae33",  # noqa: E501
+        "linux.arm64": "1c7216426d4e2ca63b912fe2be2ab8f3f9ccbe2aefa174e2a22e7f19f5f36065",  # noqa: E501
+        "windows.amd64.exe": "53d377274c40b1a0e37db96c20fa4b701d1e5e2650af14517c49e170b2564736",  # noqa: E501
     },
 }
 

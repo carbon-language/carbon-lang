@@ -64,7 +64,9 @@ auto HandleParseNode(Context& context, Parse::ReturnTypeId node_id) -> bool {
   // not on the pattern stacks yet. They are only needed in that case if we have
   // a return type, which we now know that we do.
   if (context.node_stack().PeekNodeKind() ==
-      Parse::NodeKind::IdentifierNameNotBeforeParams) {
+          Parse::NodeKind::IdentifierNameNotBeforeParams ||
+      context.node_stack().PeekNodeKind() ==
+          Parse::NodeKind::KeywordNameNotBeforeParams) {
     context.pattern_block_stack().Push();
     context.full_pattern_stack().PushFullPattern(
         FullPatternStack::Kind::ExplicitParamList);
@@ -539,7 +541,7 @@ static auto BuildFunctionDecl(Context& context,
           SemIR::Function::VirtualModifier::Abstract) {
     CARBON_DIAGNOSTIC(DefinedAbstractFunction, Error,
                       "definition of `abstract` function");
-    context.emitter().Emit(SemIR::LocId(node_id).ToTokenOnly(),
+    context.emitter().Emit(LocIdForDiagnostics::TokenOnly(node_id),
                            DefinedAbstractFunction);
   }
 
@@ -583,7 +585,7 @@ static auto HandleFunctionDefinitionAfterSignature(
 
 auto HandleFunctionDefinitionSuspend(Context& context,
                                      Parse::FunctionDefinitionStartId node_id)
-    -> SuspendedFunction {
+    -> DeferredDefinitionWorklist::SuspendedFunction {
   // Process the declaration portion of the function.
   auto [function_id, decl_id] =
       BuildFunctionDecl(context, node_id, /*is_definition=*/true);
@@ -592,9 +594,9 @@ auto HandleFunctionDefinitionSuspend(Context& context,
           .saved_name_state = context.decl_name_stack().Suspend()};
 }
 
-auto HandleFunctionDefinitionResume(Context& context,
-                                    Parse::FunctionDefinitionStartId node_id,
-                                    SuspendedFunction&& suspended_fn) -> void {
+auto HandleFunctionDefinitionResume(
+    Context& context, Parse::FunctionDefinitionStartId node_id,
+    DeferredDefinitionWorklist::SuspendedFunction&& suspended_fn) -> void {
   context.decl_name_stack().Restore(std::move(suspended_fn.saved_name_state));
   HandleFunctionDefinitionAfterSignature(
       context, node_id, suspended_fn.function_id, suspended_fn.decl_id);
@@ -624,7 +626,7 @@ auto HandleParseNode(Context& context, Parse::FunctionDefinitionId node_id)
       CARBON_DIAGNOSTIC(
           MissingReturnStatement, Error,
           "missing `return` at end of function with declared return type");
-      context.emitter().Emit(SemIR::LocId(node_id).ToTokenOnly(),
+      context.emitter().Emit(LocIdForDiagnostics::TokenOnly(node_id),
                              MissingReturnStatement);
     } else {
       AddReturnCleanupBlock(context, node_id);
@@ -725,7 +727,7 @@ auto HandleParseNode(Context& context,
 
     auto& function = context.functions().Get(function_id);
     if (IsValidBuiltinDeclaration(context, function, builtin_kind)) {
-      function.builtin_function_kind = builtin_kind;
+      function.SetBuiltinFunction(builtin_kind);
       // Build an empty generic definition if this is a generic builtin.
       StartGenericDefinition(context, function.generic_id);
       FinishGenericDefinition(context, function.generic_id);

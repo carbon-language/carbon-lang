@@ -77,6 +77,7 @@ auto TypeStore::GetUnqualifiedType(TypeId type_id) const -> TypeId {
   if (auto const_type = TryGetAs<ConstType>(type_id)) {
     return file_->types().GetTypeIdForTypeInstId(const_type->inner_id);
   }
+  // TODO: Look through PartialType when this is reachable/testable
   return type_id;
 }
 

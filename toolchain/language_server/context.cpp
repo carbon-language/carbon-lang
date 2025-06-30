@@ -10,6 +10,7 @@
 
 #include "common/check.h"
 #include "common/raw_string_ostream.h"
+#include "llvm/TargetParser/Host.h"
 #include "toolchain/base/shared_value_stores.h"
 #include "toolchain/check/check.h"
 #include "toolchain/diagnostics/diagnostic.h"
@@ -130,29 +131,41 @@ auto Context::File::SetText(Context& context, std::optional<int64_t> version,
   }
   source_ = std::make_unique<SourceBuffer>(std::move(*source));
   value_stores_ = std::make_unique<SharedValueStores>();
+
+  Lex::LexOptions lex_options;
+  lex_options.consumer = &consumer;
   tokens_ = std::make_unique<Lex::TokenizedBuffer>(
-      Lex::Lex(*value_stores_, *source_, consumer));
-  tree_ = std::make_unique<Parse::Tree>(
-      Parse::Parse(*tokens_, consumer, context.vlog_stream()));
+      Lex::Lex(*value_stores_, *source_, lex_options));
+
+  Parse::ParseOptions parse_options;
+  parse_options.consumer = &consumer;
+  parse_options.vlog_stream = context.vlog_stream();
+  tree_ = std::make_unique<Parse::Tree>(Parse::Parse(*tokens_, parse_options));
   tree_and_subtrees_ =
       std::make_unique<Parse::TreeAndSubtrees>(*tokens_, *tree_);
 
   SemIR::File sem_ir(tree_.get(), SemIR::CheckIRId(0), tree_->packaging_decl(),
                      *value_stores_, uri_.file().str());
-  auto getter = [this]() -> const Parse::TreeAndSubtrees& {
-    return *tree_and_subtrees_;
-  };
+  std::unique_ptr<clang::ASTUnit> cpp_ast;
   // TODO: Support cross-file checking when multiple files have edits.
   llvm::SmallVector<Check::Unit> units = {{{.consumer = &consumer,
                                             .value_stores = value_stores_.get(),
                                             .timings = nullptr,
-                                            .sem_ir = &sem_ir}}};
+                                            .sem_ir = &sem_ir,
+                                            .cpp_ast = &cpp_ast}}};
+
+  auto getter = [this]() -> const Parse::TreeAndSubtrees& {
+    return *tree_and_subtrees_;
+  };
   llvm::IntrusiveRefCntPtr<llvm::vfs::InMemoryFileSystem> fs =
       new llvm::vfs::InMemoryFileSystem;
+
   // TODO: Include the prelude.
+  Check::CheckParseTreesOptions check_options;
+  check_options.vlog_stream = context.vlog_stream();
   Check::CheckParseTrees(
-      units, llvm::ArrayRef<Parse::GetTreeAndSubtreesFn>(getter),
-      /*prelude_import=*/false, fs, context.vlog_stream(), /*fuzzing=*/false);
+      units, llvm::ArrayRef<Parse::GetTreeAndSubtreesFn>(getter), fs,
+      llvm::sys::getDefaultTargetTriple(), check_options);
 
   // Note we need to publish diagnostics even when empty.
   // TODO: Consider caching previously published diagnostics and only publishing

@@ -10,8 +10,8 @@ namespace Carbon::Lower {
 
 auto HandleInst(FunctionContext& context, SemIR::InstId inst_id,
                 SemIR::BindValue inst) -> void {
-  switch (auto rep = SemIR::ValueRepr::ForType(context.sem_ir(), inst.type_id);
-          rep.kind) {
+  auto inst_type = context.GetTypeIdOfInst(inst_id);
+  switch (context.GetValueRepr(inst_type).repr.kind) {
     case SemIR::ValueRepr::Unknown:
       CARBON_FATAL(
           "Value binding for type with incomplete value representation");
@@ -20,13 +20,13 @@ auto HandleInst(FunctionContext& context, SemIR::InstId inst_id,
       // propagate.
       // TODO: Remove this now the StubRefs are gone.
       context.SetLocal(inst_id,
-                       llvm::PoisonValue::get(context.GetType(inst.type_id)));
+                       llvm::PoisonValue::get(context.GetType(inst_type)));
       break;
-    case SemIR::ValueRepr::Copy:
+    case SemIR::ValueRepr::Copy: {
+      auto* type = context.GetType(inst_type);
       context.SetLocal(inst_id, context.builder().CreateLoad(
-                                    context.GetType(inst.type_id),
-                                    context.GetValue(inst.value_id)));
-      break;
+                                    type, context.GetValue(inst.value_id)));
+    } break;
     case SemIR::ValueRepr::Pointer:
       context.SetLocal(inst_id, context.GetValue(inst.value_id));
       break;
@@ -37,23 +37,24 @@ auto HandleInst(FunctionContext& context, SemIR::InstId inst_id,
 
 auto HandleInst(FunctionContext& context, SemIR::InstId inst_id,
                 SemIR::Temporary inst) -> void {
-  context.FinishInit(inst.type_id, inst.storage_id, inst.init_id);
+  context.FinishInit(context.GetTypeIdOfInst(inst_id), inst.storage_id,
+                     inst.init_id);
   context.SetLocal(inst_id, context.GetValue(inst.storage_id));
 }
 
 auto HandleInst(FunctionContext& context, SemIR::InstId inst_id,
-                SemIR::TemporaryStorage inst) -> void {
-  context.SetLocal(inst_id,
-                   context.builder().CreateAlloca(context.GetType(inst.type_id),
-                                                  nullptr, "temp"));
+                SemIR::TemporaryStorage /*inst*/) -> void {
+  context.SetLocal(
+      inst_id, context.CreateAlloca(context.GetTypeOfInst(inst_id), "temp"));
 }
 
 auto HandleInst(FunctionContext& context, SemIR::InstId inst_id,
                 SemIR::ValueAsRef inst) -> void {
   CARBON_CHECK(SemIR::GetExprCategory(context.sem_ir(), inst.value_id) ==
                SemIR::ExprCategory::Value);
-  CARBON_CHECK(SemIR::ValueRepr::ForType(context.sem_ir(), inst.type_id).kind ==
-               SemIR::ValueRepr::Pointer);
+  auto inst_type = context.GetTypeIdOfInst(inst_id);
+  auto value_repr = context.GetValueRepr(inst_type);
+  CARBON_CHECK(value_repr.repr.kind == SemIR::ValueRepr::Pointer);
   context.SetLocal(inst_id, context.GetValue(inst.value_id));
 }
 
@@ -61,10 +62,11 @@ auto HandleInst(FunctionContext& context, SemIR::InstId inst_id,
                 SemIR::ValueOfInitializer inst) -> void {
   CARBON_CHECK(SemIR::GetExprCategory(context.sem_ir(), inst.init_id) ==
                SemIR::ExprCategory::Initializing);
-  CARBON_CHECK(SemIR::ValueRepr::ForType(context.sem_ir(), inst.type_id).kind ==
-               SemIR::ValueRepr::Copy);
-  CARBON_CHECK(SemIR::InitRepr::ForType(context.sem_ir(), inst.type_id).kind ==
-               SemIR::InitRepr::ByCopy);
+  auto inst_type = context.GetTypeIdOfInst(inst_id);
+  auto value_repr = context.GetValueRepr(inst_type);
+  auto init_repr = context.GetInitRepr(inst_type);
+  CARBON_CHECK(value_repr.repr.kind == SemIR::ValueRepr::Copy);
+  CARBON_CHECK(init_repr.kind == SemIR::InitRepr::ByCopy);
   context.SetLocal(inst_id, context.GetValue(inst.init_id));
 }
 

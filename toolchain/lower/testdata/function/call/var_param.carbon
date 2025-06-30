@@ -2,6 +2,8 @@
 // Exceptions. See /LICENSE for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
+// INCLUDE-FILE: toolchain/testing/testdata/min_prelude/int.carbon
+//
 // AUTOUPDATE
 // TIP: To test this file alone, run:
 // TIP:   bazel test //toolchain/testing:file_test --test_arg=--file_tests=toolchain/lower/testdata/function/call/var_param.carbon
@@ -28,8 +30,8 @@ fn Main() {
 // CHECK:STDOUT:   %a.var = alloca i32, align 4, !dbg !9
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(i64 4, ptr %a.var), !dbg !9
 // CHECK:STDOUT:   store i32 0, ptr %a.var, align 4, !dbg !9
-// CHECK:STDOUT:   %.loc15 = load i32, ptr %a.var, align 4, !dbg !10
-// CHECK:STDOUT:   call void @_CDoNothing.Main(i32 %.loc15), !dbg !11
+// CHECK:STDOUT:   %.loc17 = load i32, ptr %a.var, align 4, !dbg !10
+// CHECK:STDOUT:   call void @_CDoNothing.Main(i32 %.loc17), !dbg !11
 // CHECK:STDOUT:   ret void, !dbg !12
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -45,12 +47,12 @@ fn Main() {
 // CHECK:STDOUT: !1 = !{i32 2, !"Debug Info Version", i32 3}
 // CHECK:STDOUT: !2 = distinct !DICompileUnit(language: DW_LANG_C, file: !3, producer: "carbon", isOptimized: false, runtimeVersion: 0, emissionKind: FullDebug)
 // CHECK:STDOUT: !3 = !DIFile(filename: "var_param.carbon", directory: "")
-// CHECK:STDOUT: !4 = distinct !DISubprogram(name: "DoNothing", linkageName: "_CDoNothing.Main", scope: null, file: !3, line: 11, type: !5, spFlags: DISPFlagDefinition, unit: !2)
+// CHECK:STDOUT: !4 = distinct !DISubprogram(name: "DoNothing", linkageName: "_CDoNothing.Main", scope: null, file: !3, line: 13, type: !5, spFlags: DISPFlagDefinition, unit: !2)
 // CHECK:STDOUT: !5 = !DISubroutineType(types: !6)
 // CHECK:STDOUT: !6 = !{}
-// CHECK:STDOUT: !7 = !DILocation(line: 11, column: 1, scope: !4)
-// CHECK:STDOUT: !8 = distinct !DISubprogram(name: "Main", linkageName: "_CMain.Main", scope: null, file: !3, line: 13, type: !5, spFlags: DISPFlagDefinition, unit: !2)
-// CHECK:STDOUT: !9 = !DILocation(line: 14, column: 3, scope: !8)
-// CHECK:STDOUT: !10 = !DILocation(line: 15, column: 13, scope: !8)
-// CHECK:STDOUT: !11 = !DILocation(line: 15, column: 3, scope: !8)
-// CHECK:STDOUT: !12 = !DILocation(line: 13, column: 1, scope: !8)
+// CHECK:STDOUT: !7 = !DILocation(line: 13, column: 1, scope: !4)
+// CHECK:STDOUT: !8 = distinct !DISubprogram(name: "Main", linkageName: "_CMain.Main", scope: null, file: !3, line: 15, type: !5, spFlags: DISPFlagDefinition, unit: !2)
+// CHECK:STDOUT: !9 = !DILocation(line: 16, column: 3, scope: !8)
+// CHECK:STDOUT: !10 = !DILocation(line: 17, column: 13, scope: !8)
+// CHECK:STDOUT: !11 = !DILocation(line: 17, column: 3, scope: !8)
+// CHECK:STDOUT: !12 = !DILocation(line: 15, column: 1, scope: !8)

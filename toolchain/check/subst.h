@@ -45,6 +45,12 @@ class SubstInstCallbacks {
     return orig_inst_id;
   }
 
+  // Builds a new constant by evaluating `new_inst`, and returns its `InstId`.
+  //
+  // This can be used to implement `Rebuild` in straightforward cases.
+  auto RebuildNewInst(SemIR::LocId loc_id, SemIR::Inst new_inst) const
+      -> SemIR::InstId;
+
  private:
   Context* context_;
 };
@@ -73,8 +79,9 @@ using Substitutions = llvm::ArrayRef<Substitution>;
 
 // Replaces the `BindSymbolicName` instruction `bind_id` with `replacement_id`
 // throughout the constant `const_id`, and returns the substituted value.
-auto SubstConstant(Context& context, SemIR::ConstantId const_id,
-                   Substitutions substitutions) -> SemIR::ConstantId;
+auto SubstConstant(Context& context, SemIR::LocId loc_id,
+                   SemIR::ConstantId const_id, Substitutions substitutions)
+    -> SemIR::ConstantId;
 
 }  // namespace Carbon::Check
 
