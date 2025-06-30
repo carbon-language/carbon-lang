@@ -36,7 +36,7 @@ class C { }
 //@dump-sem-ir-begin
 // CHECK:STDERR: fail_partial_nondynamic.carbon:[[@LINE+4]]:9: error: `partial` applied to final type `C` [PartialOnFinal]
 // CHECK:STDERR: fn G(p: partial C);
-// CHECK:STDERR:         ^~~~~~~
+// CHECK:STDERR:         ^~~~~~~~~
 // CHECK:STDERR:
 fn G(p: partial C);
 //@dump-sem-ir-end
@@ -52,7 +52,7 @@ class Derived {
 //@dump-sem-ir-begin
 // CHECK:STDERR: fail_partial_final.carbon:[[@LINE+4]]:9: error: `partial` applied to final type `Derived` [PartialOnFinal]
 // CHECK:STDERR: fn G(p: partial Derived);
-// CHECK:STDERR:         ^~~~~~~
+// CHECK:STDERR:         ^~~~~~~~~~~~~~~
 // CHECK:STDERR:
 fn G(p: partial Derived);
 //@dump-sem-ir-end
@@ -68,7 +68,7 @@ class C;
 // applied to final type `C` [PartialOnFinal] CHECK:STDERR: fn G(p: partial C);
 // CHECK:STDERR: fail_partial_decl.carbon:[[@LINE+4]]:9: error: `partial` applied to final type `C` [PartialOnFinal]
 // CHECK:STDERR: fn G(p: partial C);
-// CHECK:STDERR:         ^~~~~~~
+// CHECK:STDERR:         ^~~~~~~~~
 // CHECK:STDERR:
 fn G(p: partial C);
 //@dump-sem-ir-end
@@ -81,7 +81,7 @@ class C;
 //@dump-sem-ir-begin
 // CHECK:STDERR: fail_partial_tuple.carbon:[[@LINE+4]]:9: error: `partial` applied to final type `(C, C)` [PartialOnFinal]
 // CHECK:STDERR: fn G(p: partial (C, C));
-// CHECK:STDERR:         ^~~~~~~
+// CHECK:STDERR:         ^~~~~~~~~~~~~~
 // CHECK:STDERR:
 fn G(p: partial (C, C));
 //@dump-sem-ir-end
@@ -94,7 +94,7 @@ class C;
 //@dump-sem-ir-begin
 // CHECK:STDERR: fail_partial_struct.carbon:[[@LINE+4]]:9: error: `partial` applied to final type `{.x: C}` [PartialOnFinal]
 // CHECK:STDERR: fn G(p: partial {.x: C});
-// CHECK:STDERR:         ^~~~~~~
+// CHECK:STDERR:         ^~~~~~~~~~~~~~~
 // CHECK:STDERR:
 fn G(p: partial {.x: C});
 //@dump-sem-ir-end
@@ -107,7 +107,7 @@ base class C { }
 //@dump-sem-ir-begin
 // CHECK:STDERR: fail_duplicate.carbon:[[@LINE+4]]:9: error: `partial` applied to final type `partial C` [PartialOnFinal]
 // CHECK:STDERR: fn F(p: partial (partial C));
-// CHECK:STDERR:         ^~~~~~~
+// CHECK:STDERR:         ^~~~~~~~~~~~~~~~~~~
 // CHECK:STDERR:
 fn F(p: partial (partial C));
 //@dump-sem-ir-end
@@ -149,7 +149,7 @@ library "[[@TEST_NAME]]";
 
 // CHECK:STDERR: fail_todo_partial_template_dependent.carbon:[[@LINE+4]]:28: error: `partial` applied to final type `T` [PartialOnFinal]
 // CHECK:STDERR: fn G[template T:! type](p: partial T*);
-// CHECK:STDERR:                            ^~~~~~~
+// CHECK:STDERR:                            ^~~~~~~~~
 // CHECK:STDERR:
 fn G[template T:! type](p: partial T*);
 
@@ -162,7 +162,7 @@ library "[[@TEST_NAME]]";
 
 // CHECK:STDERR: fail_partial_generic.carbon:[[@LINE+4]]:19: error: `partial` applied to final type `T` [PartialOnFinal]
 // CHECK:STDERR: fn F[T:! type](p: partial T*);
-// CHECK:STDERR:                   ^~~~~~~
+// CHECK:STDERR:                   ^~~~~~~~~
 // CHECK:STDERR:
 fn F[T:! type](p: partial T*);
 
