@@ -32,8 +32,6 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
         -   [Deferred initialization from values and references](#deferred-initialization-from-values-and-references)
         -   [Declared `returned` variable](#declared-returned-variable)
     -   [Expression forms](#expression-forms)
-        -   [Form conversions](#form-conversions)
-        -   [Form semantics](#form-semantics)
 -   [Pointers](#pointers)
     -   [Reference types](#reference-types)
     -   [Pointer syntax](#pointer-syntax)
@@ -668,99 +666,36 @@ The _type component_ of a form is defined as follows:
 
 The type of an expression is the type component of the expression's form.
 
-#### Form conversions
-
-An expression with a primitive form can be converted to another primitive form
-with the same type by applying a phase conversion followed by a category
-conversion. An expression with a primitive form can be converted to a primitive
-form with a different type by first selecting a suitable
-[implicit type conversion](/docs/design/expressions/implicit_conversions.md) for
-the two types, and then applying phase and category conversions to its input and
-output as needed.
-
-Form conversions can be applied to different elements of a composite form
-independently.
-
-_Form composition_ converts a composite form with consistent category and phase
-to a primitive form as follows:
-
--   A tuple form `([T1, C, P, V1], [T2, C, P, V2], ... [TN, C, P, VN])` can be
-    converted to a primitive form `[(T1, T2, ..., TN), C, P, (V1, V2, ... VN)]`.
--   A struct form
-    `{.a = [Ta, C, P, Va], .b = [Tb, C, P, Vb], ... .z = [Tz, C, P, Vz]}` can be
-    converted to a primitive form
-    `[{.a = Ta, .b = Tb, ... .z = Tz}, C, P, {.a = Va, .b = Vb, ... .z = Vz}]`.
-
-In both cases, `C` cannot be "reference", because an aggregate of references to
-independent objects can't necessarily be replaced by a reference to a single
-aggregate object.
-
-_Form decomposition_ is the inverse of form composition. It converts a primitive
-form to a composite form as follows:
-
--   A primitive form `[(T1, T2, ..., TN), C, P, V]` can be converted to a tuple
-    form `([T1, C, P, V.1], [T2, C, P, V.2], ... [TN, C, P, V.(N)])`.
--   A primitive form `[{.a = Ta, .b = Tb, ... .z = Tz}, C, P, V]` can be
-    converted to a struct form
-    `{.a = [Ta, C, P, V.a], .b = [Tb, C, P, V.b], ... .z = [Tz, C, P, V.z]}`.
-
-In both cases, if `C` is "initializing", the expression is first converted to an
-ephemeral reference by materialization, because an initializer for a single
-object of an aggregate type can't necessarily be used to initialize independent
-objects of the element types.
-
-In all of the above definitions, if `P` is runtime, the constant-value
-components are omitted.
-
-> **Note:** Form composition is always semantics-preserving, meaning that any
-> language rule that treats primitive and composite forms as separate cases will
-> nevertheless give the same result for the initial composite form as for the
-> resulting primitive form. Similarly, form decomposition is
-> semantics-preserving except when `C` is "initializing".
-
-#### Form semantics
-
 Almost all operations expect their expression operands to have a primitive form
 with a particular expression category, and possibly a particular phase and/or
-type. Operands are converted to a suitable primitive form as follows:
+type. When an expression is used in such an operand position, it is implicitly
+converted to the expected type, if a suitable conversion is available. Note that
+this conversion takes place even if the expression already has the expected
+type, because the conversion can still change the expression's form. If the
+result of the conversion has a composite form, it is converted to the expected
+type again (this second conversion is guaranteed to exist, and have a primitive
+form). Finally, category and phase conversions are applied as needed to satisfy
+the expected category and phase.
 
-1. If the target expression category is "reference", or a type conversion will
-   be applied in step 5 below, we treat the target expression category as
-   "initializing".
-2. The categories of all primitive sub-forms are converted to the target
-   category.
-3. The phases of all primitive sub-forms are converted to a single common phase:
-   "runtime" if any of them are "runtime", or else "symbolic" if any of them are
-   "symbolic", or else "template".
-4. The operand is converted to a primitive form by form composition.
-5. If the operand is expected to have a particular type, implicit type
-   conversions are applied as needed. Note that this is the only step that can
-   change the type component of the form.
-6. If the target category was changed in step 1, the operand is converted to the
-   original target category.
-7. If the operand is expected to have a particular phase, it is converted to
-   that phase.
+> **TODO:** This presupposes that implicit conversions can take arbitrary source
+> forms, which is expected in a forthcoming proposal.
 
 In some cases, such as when matching an
 [unused binding pattern](pattern_matching.md#unused-bindings), the operand's
-value is known to be unused. In those cases, the conversions described above may
-not actually be performed in the generated code, but the Carbon code is still
-typechecked as if they were.
+value is known to be unused. In those cases, the conversions may not actually be
+performed in the generated code, but the Carbon code is still typechecked as if
+they were.
 
-A few operations expect operands that have composite forms:
+A few operations are "overloaded" for multiple operand forms:
 
--   A struct member access expression expects its first operand to have struct
-    form. The form of the member access expression is given by the corresponding
-    element of the struct form.
--   A tuple indexing expression expects its first operand to have tuple form.
-    The form of the member access expression is given by the corresponding
-    element of the tuple form.
--   A tuple or struct pattern expects its scrutinee to have tuple or struct form
-    (respectively). In either case, the subpattern scrutinees are member access
-    expressions, and their forms are determined using the above rule.
+-   [Member access](expressions/member_access.md#instance-binding) for structs
+    and tuples.
+-   [Tuple](pattern_matching.md#tuple-patterns) and
+    [struct](pattern_matching.md#struct-patterns) pattern matching.
 
-If an operand with a primitive form is used where a composite form is expected,
-it is converted to the expected form kind by decomposition, if possible.
+In these cases, the individual operations specify what forms they accept, what
+conversions they apply (if any), and how the form affects the operation's
+behavior.
 
 ## Pointers
 

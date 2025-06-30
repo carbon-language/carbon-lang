@@ -121,17 +121,17 @@ A member access expression is processed using the following steps:
 The process of _member resolution_ determines which member `M` a member access
 expression is referring to.
 
-For a simple member access, if the first operand is a type, facet, package, or
-namespace, a search for the member name is performed in the first operand. If
-the first operand is a form, the search is performed in its
+For a simple member access, if the first operand is a type, form, facet,
+package, or namespace, a search for the member name is performed in the first
+operand. If the first operand is a form, the search is performed in its
 [type component](/docs/design/values.md#expression-forms). Otherwise, a search
 for the member name is performed in the type of the first operand. In either
 case, the search must succeed. In the latter case, if the result is an instance
 member, then [instance binding](#instance-binding) is performed on the first
 operand.
 
-Note that this means that forms never participate in simple member access,
-except through their type components.
+Note that this means that the form of an expression never affects simple member
+access into that expression, except through its type component.
 
 For a compound member access, the second operand is evaluated as a compile-time
 constant to determine the member being accessed. The evaluation is required to
@@ -193,8 +193,7 @@ class Bar {
 If the first operand is a type, form, or facet, it must be a compile-time
 constant. This disallows member access into a type except during compile-time,
 see leads issue
-[#1293](https://github.com/carbon-language/carbon-lang/issues/1293). If the
-first operand is a form, lookup searches in its type component.
+[#1293](https://github.com/carbon-language/carbon-lang/issues/1293).
 
 Like the previous case, types (including
 [facet types](/docs/design/generics/terminology.md#facet-type)) have member
@@ -228,6 +227,9 @@ class Avatar {
 
 Simple member access `(Avatar as Cowboy).Draw` finds the `Cowboy.Draw`
 implementation for `Avatar`, ignoring `Renderable.Draw`.
+
+Similarly, a form has members, specifically the members of the form's type
+component.
 
 ### Tuple indexing
 
@@ -736,19 +738,27 @@ If instance binding is to be performed, the result of instance binding depends
 on what instance member `M` was found:
 
 -   For a field member of a struct type, `x` is required to have that struct
-    type, and it is converted to an expression with
-    [struct form](/docs/design/values.md#expression-forms) by applying
-    [form decomposition](/docs/design/values.md#form-conversions) (if it doesn't
-    have a struct form already). Then, the form of `x.f` is the value of the
-    corresponding field of the struct form, and `x.f` evaluates to the
-    corresponding field of `x`.
+    type, and `x.f` evaluates to the corresponding field of `x`. If `x` has a
+    [struct form](/docs/design/values.md#expression-forms), the form of `x.f` is
+    the value of the corresponding field of the struct form. Otherwise, `x` must
+    have a primitive form, and `x.f` has a primitive form as well. If `x` is an
+    [initializing expression](/docs/design/values.md#initializing-expressions),
+    then a
+    [temporary is materialized](/docs/design/values.md#temporary-materialization)
+    for `x`. The result of `x.f` has the same
+    [expression category](/docs/design/values.md#expression-categories) as the
+    possibly materialized `x`. The type of `x.f` is the declared type of the
+    field, and it has the same expression phase as `x`.
 -   For an element member of a tuple type, `x` is required to have that tuple
-    type, and it is converted to a
-    [tuple form](/docs/design/values.md#expression-forms) by applying
-    [form decomposition](/docs/design/values.md#form-conversions) (if it doesn't
-    have a tuple form already). Then, the form of `x.f` is the value of the
-    corresponding element of the tuple form, and `x.f` evaluates to the
-    corresponding element of `x`.
+    type, and `x.f` evaluates to the corresponding element of `x` and `x.f` has
+    a primitive form as well. If `x` is an
+    [initializing expression](/docs/design/values.md#initializing-expressions),
+    then a
+    [temporary is materialized](/docs/design/values.md#temporary-materialization)
+    for `x`. The result of `x.f` has the same
+    [expression category](/docs/design/values.md#expression-categories) as the
+    possibly materialized `x`. The type of `x.f` is the declared type of the
+    element, and it has the same expression phase as `x`.
 -   For a field member in class `C`, `x` is required to be of type `C` or of a
     type derived from `C`. The result is the corresponding subobject within `x`.
     If `x` is an

@@ -604,15 +604,19 @@ Initialization and assignment occur field-by-field. The order of fields is
 determined from the target on the left side of the `=`. This rule matches what
 we expect for classes with encapsulation more generally.
 
+More precisely, if `source` is an expression whose type `Source` is a struct
+type, when `source` is converted to a struct or class type `Dest` that has the
+same set of field names, the conversion is an initializing expression of type
+`Dest` that initializes each field `field` from a
+[member access](expressions/member_access.md) `source.field`, in `Dest`'s field
+order.
+
 **Open question:** What operations and in what order happen for assignment and
 initialization?
 
 -   Is assignment just destruction followed by initialization? Is that
     destruction completed for the whole object before initializing, or is it
     interleaved field-by-field?
--   When initializing to a literal value, is a temporary containing the literal
-    value constructed first or are the fields initialized directly? The latter
-    approach supports types that can't be moved or copied, such as mutex.
 -   Perhaps some operations are _not_ ordered with respect to each other?
 
 ### Operations performed field-wise

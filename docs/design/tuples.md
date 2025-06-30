@@ -12,6 +12,7 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
 -   [Overview](#overview)
 -   [Element access](#element-access)
+-   [Initialization](#initialization)
     -   [Empty tuples](#empty-tuples)
     -   [Trailing commas and single-element tuples](#trailing-commas-and-single-element-tuples)
     -   [Tuple of types and tuple types](#tuple-of-types-and-tuple-types)
@@ -63,6 +64,14 @@ fn Choose(template N:! i32) -> i32 {
   return (1, 2, 3).(N % 3);
 }
 ```
+
+## Initialization
+
+If `source` is an expression whose type `Source` is a tuple type, when `source`
+is converted to a tuple or array type `Dest` that has the same arity, the
+conversion is an initializing expression of type `Dest` that initializes each
+element `.i` from a [member access](expressions/member_access.md) `source.i`, in
+numerical order.
 
 ### Empty tuples
 

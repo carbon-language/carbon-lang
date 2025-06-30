@@ -148,8 +148,7 @@ with `template`.
 
 The scrutinee expression is expected to have a
 [primitive form](values.md#expression-forms) with the following components, and
-its form is [converted](values.md#form-conversions) as needed to satisfy that
-expectation:
+is converted as needed to satisfy that expectation:
 
 -   The type is expected to be _expression_.
 -   The category is expected to be "value" if the pattern is a value binding
@@ -157,8 +156,12 @@ expectation:
 -   The phase is expected to be "runtime", "symbolic", or "template" depending
     on whether the pattern is a runtime, symbolic, or template binding pattern.
 
-The binding is _bound_ to the converted scrutinee expression, which makes the
-binding an alias for it, with the same form and value.
+The binding is _bound_ to the result of these conversions. This makes a runtime
+or template binding an alias for the converted scrutinee expression, with the
+same form and value. Symbolic bindings are more complex: the binding will have
+the same type, category, and phase as the converted scrutinee expression, but
+its constant value is an opaque symbol introduced by the binding, which the type
+system knows to be equal to the converted scrutinee expression.
 
 ```carbon
 fn F() -> i32 {
@@ -321,13 +324,22 @@ A _tuple-pattern_ containing no commas is treated as grouping parens: the
 contained _proper-pattern_ is matched directly against the scrutinee. Otherwise,
 the behavior is as follows.
 
-The scrutinee is expected to have a [tuple form](values.md#expression-forms)
-with the same arity as the number of nested _proper-patterns_, and
-[form decomposition](values.md#form-conversions) (but no other conversion) is
-applied if necessary to satisfy that. Then, each nested _proper-pattern_ is
-matched against `s.i`, where `s` is the converted scrutinee expression and `i`
-is the 0-based index of the nested pattern within the tuple pattern. The tuple
-pattern matches if all of these sub-matches succeed.
+The scrutinee is required to be of tuple type, with the same arity as the number
+of nested _proper-patterns_. If the scrutinee is an
+[initializing expression](/docs/design/values.md#initializing-expressions), then
+a [temporary is materialized](/docs/design/values.md#temporary-materialization)
+for it. Then, each nested _proper-pattern_ is matched against `s.i`, where `s`
+is the possibly materialized scrutinee expression and `i` is the 0-based index
+of the nested pattern within the tuple pattern. The tuple pattern matches if all
+of these sub-matches succeed.
+
+Note that `s` will have the same [form](/docs/design/values.md#expression-forms)
+as the scrutinee, unless a temporary was materialized, which will affect the
+form of `s.i`.
+
+> **Future work:** Find a way to defer the temporary materialization, so that
+> code like `(var x: i32, var y: i32) = F();` doesn't need to perform copy
+> initialization. See also [here](values.md#function-calls-and-returns).
 
 Note that a tuple pattern must contain at least one _proper-pattern_. Otherwise,
 it is a tuple-valued expression. However, a tuple pattern and a corresponding
@@ -360,17 +372,25 @@ match ({.a = 1, .b = 2}) {
 }
 ```
 
-The scrutinee is expected to have a [struct form](values.md#expression-forms)
-with the same set of field names as the pattern, and
-[form decomposition](values.md#form-conversions) (but no other conversion) is
-applied if necessary to satisfy that. Then, for each subpattern of the struct
-pattern in left-to-right order, the subpattern is matched with `s.f`, where `s`
-is the converted scrutinee expression and `f` is the field name associated with
-the subpattern. The struct pattern matches if all of these sub-matches succeed.
-Note that the left-to-right order is consistent with the behavior of matching
-against a struct-valued expression, where the expression pattern becomes the
-left operand of the `==` and so determines the order in which `==` comparisons
-for fields are performed.
+The scrutinee is required to be of struct type, with the same set of field names
+as the pattern. If the scrutinee is an
+[initializing expression](/docs/design/values.md#initializing-expressions), then
+a [temporary is materialized](/docs/design/values.md#temporary-materialization)
+for it. Then, for each subpattern of the struct pattern in left-to-right order,
+the subpattern is matched with `s.f`, where `s` is the possibly materialized
+scrutinee expression and `f` is the field name associated with the subpattern.
+The struct pattern matches if all of these sub-matches succeed.
+
+Note that `s` will have the same [form](/docs/design/values.md#expression-forms)
+as the scrutinee, unless a temporary was materialized, which will affect the
+form of `s.f`. Note also that the left-to-right order is consistent with the
+behavior of matching against a struct-valued expression, where the expression
+pattern becomes the left operand of the `==` and so determines the order in
+which `==` comparisons for fields are performed.
+
+> **Future work:** Find a way to defer the temporary materialization, so that
+> code like `{var x: i32, var y: i32} = F();` doesn't need to perform copy
+> initialization. See also [here](values.md#function-calls-and-returns).
 
 In the case where a field will be bound to an identifier with the same name, a
 shorthand syntax is available: `a: T` is synonymous with `.a = a: T`.
