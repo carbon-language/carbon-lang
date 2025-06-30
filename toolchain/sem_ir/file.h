@@ -62,7 +62,8 @@ struct ExprRegion {
 class File : public Printable<File> {
  public:
   using IdentifiedFacetTypeStore =
-      RelationalValueStore<FacetTypeId, IdentifiedFacetTypeId>;
+      RelationalValueStore<FacetTypeId, IdentifiedFacetTypeId,
+                           IdentifiedFacetType>;
 
   // Starts a new file for Check::CheckParseTree.
   explicit File(const Parse::Tree* parse_tree, CheckIRId check_ir_id,

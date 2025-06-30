@@ -30,11 +30,11 @@ namespace Carbon {
 // requires storing a bit for presence of each `RelatedIdT`. And it allocates
 // memory for values for all IDs up largest ID present in the store, even if
 // they are not yet used.
-template <typename RelatedIdT, typename IdT>
+template <typename RelatedIdT, typename IdT, typename ValueT>
 class RelationalValueStore {
  public:
-  using ValueType = ValueStoreTypes<IdT>::ValueType;
-  using ConstRefType = ValueStoreTypes<IdT>::ConstRefType;
+  using ValueType = ValueStoreTypes<IdT, ValueT>::ValueType;
+  using ConstRefType = ValueStoreTypes<IdT, ValueT>::ConstRefType;
 
   // Given the related ID and a value, stores the value and returns a mapped ID
   // to reference it in the store.

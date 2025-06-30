@@ -36,7 +36,6 @@ struct ExprRegion;
 struct FacetTypeInfo;
 struct Function;
 struct Generic;
-struct IdentifiedFacetType;
 struct Specific;
 struct SpecificInterface;
 struct ImportCpp;
@@ -331,7 +330,6 @@ struct FacetTypeId : public IdBase<FacetTypeId> {
 // The ID of an resolved facet type value.
 struct IdentifiedFacetTypeId : public IdBase<IdentifiedFacetTypeId> {
   static constexpr llvm::StringLiteral Label = "identified_facet_type";
-  using ValueType = IdentifiedFacetType;
 
   using IdBase::IdBase;
 };
