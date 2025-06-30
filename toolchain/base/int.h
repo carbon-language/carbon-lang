@@ -8,6 +8,7 @@
 #include "common/check.h"
 #include "llvm/ADT/APInt.h"
 #include "llvm/ADT/SmallVector.h"
+#include "toolchain/base/canonical_value_store.h"
 #include "toolchain/base/index_base.h"
 #include "toolchain/base/mem_usage.h"
 #include "toolchain/base/value_store.h"

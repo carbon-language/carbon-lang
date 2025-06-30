@@ -5,23 +5,18 @@
 #ifndef CARBON_TOOLCHAIN_BASE_VALUE_STORE_H_
 #define CARBON_TOOLCHAIN_BASE_VALUE_STORE_H_
 
-#include <concepts>
-#include <memory>
+#include <limits>
 #include <type_traits>
 #include <utility>
 
 #include "common/check.h"
-#include "common/hashtable_key_context.h"
 #include "common/ostream.h"
-#include "common/set.h"
 #include "llvm/ADT/STLExtras.h"
 #include "llvm/ADT/Sequence.h"
 #include "llvm/ADT/SmallVector.h"
-#include "llvm/ADT/StringRef.h"
-#include "llvm/ADT/iterator_range.h"
-#include "llvm/Support/Compiler.h"
 #include "toolchain/base/mem_usage.h"
 #include "toolchain/base/value_store_chunk.h"
+#include "toolchain/base/value_store_types.h"
 #include "toolchain/base/yaml.h"
 
 namespace Carbon {
@@ -36,37 +31,6 @@ class ValueStoreNotPrintable {};
 
 template <class IdT>
 class ValueStoreRange;
-
-// Common calculation for ValueStore types.
-template <typename IdT, typename ValueT = IdT::ValueType,
-          typename KeyT = ValueT>
-class ValueStoreTypes {
- public:
-  using ValueType = std::decay_t<ValueT>;
-
-  // TODO: Would be a bit cleaner to not have this here as it's only meaningful
-  // to the `CanonicalValueStore`, not to other `ValueStore`s. Planned to fix
-  // with a larger refactoring.
-  using KeyType = std::decay_t<KeyT>;
-
-  // Typically we want to use `ValueType&` and `const ValueType& to avoid
-  // copies, but when the value type is a `StringRef`, we assume external
-  // storage for the string data and both our value type and ref type will be
-  // `StringRef`. This will preclude mutation of the string data.
-  using RefType = std::conditional_t<std::same_as<llvm::StringRef, ValueType>,
-                                     llvm::StringRef, ValueType&>;
-  using ConstRefType =
-      std::conditional_t<std::same_as<llvm::StringRef, ValueType>,
-                         llvm::StringRef, const ValueType&>;
-};
-
-// If `IdT` provides a distinct `IdT::KeyType`, default to that for the key
-// type.
-template <typename IdT>
-  requires(!std::same_as<typename IdT::ValueType, typename IdT::KeyType>)
-class ValueStoreTypes<IdT>
-    : public ValueStoreTypes<IdT, typename IdT::ValueType,
-                             typename IdT::KeyType> {};
 
 // A simple wrapper for accumulating values, providing IDs to later retrieve the
 // value. This does not do deduplication.
@@ -231,164 +195,6 @@ class ValueStoreRange {
   using FlattenedRangeType =
       decltype(MakeFlattenedRange(std::declval<const ValueStore<IdT>&>()));
   FlattenedRangeType flattened_range_;
-};
-
-// A wrapper for accumulating immutable values with deduplication, providing IDs
-// to later retrieve the value.
-//
-// `IdT::ValueType` must represent the type being indexed.
-//
-// `IdT::KeyType` can optionally be present, and if so is used for the argument
-// to `Lookup`. It must be valid to use both `KeyType` and `ValueType` as lookup
-// types in the underlying `Set`.
-template <typename IdT>
-class CanonicalValueStore {
- public:
-  using ValueType = ValueStoreTypes<IdT>::ValueType;
-  using KeyType = ValueStoreTypes<IdT>::KeyType;
-  using RefType = ValueStoreTypes<IdT>::RefType;
-  using ConstRefType = ValueStoreTypes<IdT>::ConstRefType;
-
-  // Stores a canonical copy of the value and returns an ID to reference it.
-  auto Add(ValueType value) -> IdT;
-
-  // Returns the value for an ID.
-  auto Get(IdT id) const -> ConstRefType { return values_.Get(id); }
-
-  // Looks up the canonical ID for a value, or returns `None` if not in the
-  // store.
-  auto Lookup(KeyType key) const -> IdT;
-
-  // Reserves space.
-  auto Reserve(size_t size) -> void;
-
-  // These are to support printable structures, and are not guaranteed.
-  auto OutputYaml() const -> Yaml::OutputMapping {
-    return values_.OutputYaml();
-  }
-
-  auto values() const [[clang::lifetimebound]] -> ValueStoreRange<IdT> {
-    return values_.values();
-  }
-  auto size() const -> size_t { return values_.size(); }
-
-  // Collects memory usage of the values and deduplication set.
-  auto CollectMemUsage(MemUsage& mem_usage, llvm::StringRef label) const
-      -> void {
-    mem_usage.Collect(MemUsage::ConcatLabel(label, "values_"), values_);
-    auto bytes = set_.ComputeMetrics(KeyContext(&values_)).storage_bytes;
-    mem_usage.Add(MemUsage::ConcatLabel(label, "set_"), bytes, bytes);
-  }
-
- private:
-  class KeyContext;
-
-  ValueStore<IdT> values_;
-  Set<IdT, /*SmallSize=*/0, KeyContext> set_;
-};
-
-template <typename IdT>
-class CanonicalValueStore<IdT>::KeyContext
-    : public TranslatingKeyContext<KeyContext> {
- public:
-  explicit KeyContext(const ValueStore<IdT>* values) : values_(values) {}
-
-  // Note that it is safe to return a `const` reference here as the underlying
-  // object's lifetime is provided by the `ValueStore`.
-  auto TranslateKey(IdT id) const -> ValueStore<IdT>::ConstRefType {
-    return values_->Get(id);
-  }
-
- private:
-  const ValueStore<IdT>* values_;
-};
-
-template <typename IdT>
-auto CanonicalValueStore<IdT>::Add(ValueType value) -> IdT {
-  auto make_key = [&] { return IdT(values_.Add(std::move(value))); };
-  return set_.Insert(value, make_key, KeyContext(&values_)).key();
-}
-
-template <typename IdT>
-auto CanonicalValueStore<IdT>::Lookup(KeyType key) const -> IdT {
-  if (auto result = set_.Lookup(key, KeyContext(&values_))) {
-    return result.key();
-  }
-  return IdT::None;
-}
-
-template <typename IdT>
-auto CanonicalValueStore<IdT>::Reserve(size_t size) -> void {
-  // Compute the resulting new insert count using the size of values -- the
-  // set doesn't have a fast to compute current size.
-  if (size > values_.size()) {
-    set_.GrowForInsertCount(size - values_.size(), KeyContext(&values_));
-  }
-  values_.Reserve(size);
-}
-
-// A ValueStore that builds a 1:1 relationship between two IDs.
-// * `RelatedIdT` represents a related ID that can be used to find values in the
-//   store.
-// * `IdT` is the actual ID of values in this store, and `IdT::ValueType` is the
-//   value type being stored.
-//
-// The value store builds a mapping so that either ID can be used later to find
-// a value. And the user can query if a related `RelatedIdT` has been used to
-// add a value to the store or not.
-//
-// When adding to the store, the user provides the related `RelatedIdT` along
-// with the value being stored, and gets back the ID of the value in the store.
-//
-// This store requires more storage space than normal ValueStore does, as it
-// requires storing a bit for presence of each `RelatedIdT`. And it allocates
-// memory for values for all IDs up largest ID present in the store, even if
-// they are not yet used.
-template <typename RelatedIdT, typename IdT>
-class RelationalValueStore {
- public:
-  using ValueType = ValueStoreTypes<IdT>::ValueType;
-  using ConstRefType = ValueStoreTypes<IdT>::ConstRefType;
-
-  // Given the related ID and a value, stores the value and returns a mapped ID
-  // to reference it in the store.
-  auto Add(RelatedIdT related_id, ValueType value) -> IdT {
-    CARBON_DCHECK(related_id.index >= 0, "{0}", related_id);
-    IdT id(related_id.index);
-    if (static_cast<size_t>(id.index) >= values_.size()) {
-      values_.resize(id.index + 1);
-    }
-    auto& opt = values_[id.index];
-    CARBON_CHECK(!opt.has_value(),
-                 "Add with `related_id` that was already added to the store");
-    opt.emplace(std::move(value));
-    return id;
-  }
-
-  // Returns the ID of a value in the store if the `related_id` was previously
-  // used to add a value to the store, or None.
-  auto TryGetId(RelatedIdT related_id) const -> IdT {
-    CARBON_DCHECK(related_id.index >= 0, "{0}", related_id);
-    if (static_cast<size_t>(related_id.index) >= values_.size()) {
-      return IdT::None;
-    }
-    auto& opt = values_[related_id.index];
-    if (!opt.has_value()) {
-      return IdT::None;
-    }
-    return IdT(related_id.index);
-  }
-
-  // Returns a value for an ID.
-  auto Get(IdT id) const -> ConstRefType {
-    CARBON_DCHECK(id.index >= 0, "{0}", id);
-    return *values_[id.index];
-  }
-
- private:
-  // Set inline size to 0 because these will typically be too large for the
-  // stack, while this does make File smaller.
-  llvm::SmallVector<std::optional<std::decay_t<ValueType>>, 0> values_;
 };
 
 }  // namespace Carbon

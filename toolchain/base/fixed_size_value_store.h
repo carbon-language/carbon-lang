@@ -6,12 +6,11 @@
 #define CARBON_TOOLCHAIN_BASE_FIXED_SIZE_VALUE_STORE_H_
 
 #include "common/check.h"
-#include "common/move_only.h"
 #include "llvm/ADT/SmallVector.h"
 #include "llvm/ADT/StringRef.h"
+#include "llvm/ADT/iterator_range.h"
 #include "toolchain/base/mem_usage.h"
-#include "toolchain/base/value_store.h"
-#include "toolchain/base/value_store_chunk.h"
+#include "toolchain/base/value_store_types.h"
 
 namespace Carbon {
 

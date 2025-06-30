@@ -8,6 +8,42 @@ load("llvm_tools.bzl", "LLVM_MAIN_TOOLS", "generate_llvm_tools_def")
 package(default_visibility = ["//visibility:public"])
 
 cc_library(
+    name = "canonical_value_store",
+    hdrs = ["canonical_value_store.h"],
+    deps = [
+        ":mem_usage",
+        ":value_store",
+        ":value_store_types",
+        ":yaml",
+        "//common:hashtable_key_context",
+        "//common:set",
+    ],
+)
+
+cc_test(
+    name = "canonical_value_store_test",
+    size = "small",
+    srcs = ["canonical_value_store_test.cpp"],
+    deps = [
+        ":canonical_value_store",
+        ":value_ids",
+        "//testing/base:gtest_main",
+        "@googletest//:gtest",
+    ],
+)
+
+cc_library(
+    name = "fixed_size_value_store",
+    hdrs = ["fixed_size_value_store.h"],
+    deps = [
+        ":mem_usage",
+        ":value_store_types",
+        "//common:check",
+        "@llvm-project//llvm:Support",
+    ],
+)
+
+cc_library(
     name = "for_each_macro",
     hdrs = ["for_each_macro.h"],
     deps = [
@@ -57,6 +93,16 @@ cc_library(
 )
 
 cc_library(
+    name = "relational_value_store",
+    hdrs = ["relational_value_store.h"],
+    deps = [
+        ":value_store_types",
+        "//common:check",
+        "@llvm-project//llvm:Support",
+    ],
+)
+
+cc_library(
     name = "timings",
     hdrs = ["timings.h"],
     deps = [
@@ -77,18 +123,6 @@ cc_library(
 )
 
 cc_library(
-    name = "fixed_size_value_store",
-    hdrs = ["fixed_size_value_store.h"],
-    deps = [
-        ":mem_usage",
-        ":value_store",
-        "//common:check",
-        "//common:move_only",
-        "@llvm-project//llvm:Support",
-    ],
-)
-
-cc_library(
     name = "value_store",
     hdrs = [
         "value_store.h",
@@ -96,6 +130,7 @@ cc_library(
     ],
     deps = [
         ":mem_usage",
+        ":value_store_types",
         ":yaml",
         "//common:check",
         "//common:hashtable_key_context",
@@ -114,8 +149,15 @@ cc_test(
         ":value_store",
         "//common:raw_string_ostream",
         "//testing/base:gtest_main",
-        "//toolchain/testing:yaml_test_helpers",
         "@googletest//:gtest",
+    ],
+)
+
+cc_library(
+    name = "value_store_types",
+    hdrs = ["value_store_types.h"],
+    deps = [
+        "@llvm-project//llvm:Support",
     ],
 )
 
@@ -124,6 +166,7 @@ cc_library(
     srcs = ["int.cpp"],
     hdrs = ["int.h"],
     deps = [
+        ":canonical_value_store",
         ":index_base",
         ":mem_usage",
         ":value_store",
@@ -184,6 +227,7 @@ cc_library(
     name = "shared_value_stores",
     hdrs = ["shared_value_stores.h"],
     deps = [
+        ":canonical_value_store",
         ":int",
         ":mem_usage",
         ":value_ids",
