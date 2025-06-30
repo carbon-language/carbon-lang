@@ -325,8 +325,8 @@ readers of the design documentation know when what they're reading is out of
 date, and can easily find out what has changed. For example:
 
 ```md
-**TODO:** Document the redeclaration syntax `impl C.(as I)` adopted in
-[p5366](/proposals/p5366.md).
+> **TODO:** Document the redeclaration syntax `impl C.(as I)` adopted in
+> [p5366](/proposals/p5366.md).
 ```
 
 See the `docs/design` changes in
