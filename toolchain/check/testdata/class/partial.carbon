@@ -28,20 +28,20 @@ abstract class C { }
 fn A(p: partial C);
 //@dump-sem-ir-end
 
-// --- todo_fail_partial_nondynamic.carbon
+// --- fail_partial_nondynamic.carbon
 library "[[@TEST_NAME]]";
 
 class C { }
 
 //@dump-sem-ir-begin
-// CHECK:STDERR: todo_fail_partial_nondynamic.carbon:[[@LINE+4]]:9: error: `partial` applied to final type `C` [PartialOnFinal]
+// CHECK:STDERR: fail_partial_nondynamic.carbon:[[@LINE+4]]:9: error: `partial` applied to final type `C` [PartialOnFinal]
 // CHECK:STDERR: fn G(p: partial C);
 // CHECK:STDERR:         ^~~~~~~
 // CHECK:STDERR:
 fn G(p: partial C);
 //@dump-sem-ir-end
 
-// --- todo_fail_partial_final.carbon
+// --- fail_partial_final.carbon
 library "[[@TEST_NAME]]";
 
 base class Base { }
@@ -50,60 +50,62 @@ class Derived {
 }
 
 //@dump-sem-ir-begin
-// CHECK:STDERR: todo_fail_partial_final.carbon:[[@LINE+4]]:9: error: `partial` applied to final type `Derived` [PartialOnFinal]
+// CHECK:STDERR: fail_partial_final.carbon:[[@LINE+4]]:9: error: `partial` applied to final type `Derived` [PartialOnFinal]
 // CHECK:STDERR: fn G(p: partial Derived);
 // CHECK:STDERR:         ^~~~~~~
 // CHECK:STDERR:
 fn G(p: partial Derived);
 //@dump-sem-ir-end
 
-// --- todo_fail_partial_decl.carbon
+// --- fail_partial_decl.carbon
 library "[[@TEST_NAME]]";
 
 class C;
 
-// This diagnostic could be more specific - the type might be non-final, but since we only have a declaration, we don't know.
+// TODO: This diagnostic could be more specific - the type might be non-final,
+// but since we only have a declaration, we don't know.
 //@dump-sem-ir-begin
-// CHECK:STDERR: todo_fail_partial_decl.carbon:[[@LINE+4]]:9: error: `partial` applied to final type `C` [PartialOnFinal]
+// applied to final type `C` [PartialOnFinal] CHECK:STDERR: fn G(p: partial C);
+// CHECK:STDERR: fail_partial_decl.carbon:[[@LINE+4]]:9: error: `partial` applied to final type `C` [PartialOnFinal]
 // CHECK:STDERR: fn G(p: partial C);
 // CHECK:STDERR:         ^~~~~~~
 // CHECK:STDERR:
 fn G(p: partial C);
 //@dump-sem-ir-end
 
-// --- todo_fail_partial_tuple.carbon
+// --- fail_partial_tuple.carbon
 library "[[@TEST_NAME]]";
 
 class C;
 
 //@dump-sem-ir-begin
-// CHECK:STDERR: todo_fail_partial_tuple.carbon:[[@LINE+4]]:9: error: `partial` applied to final type `(C, C)` [PartialOnFinal]
+// CHECK:STDERR: fail_partial_tuple.carbon:[[@LINE+4]]:9: error: `partial` applied to final type `(C, C)` [PartialOnFinal]
 // CHECK:STDERR: fn G(p: partial (C, C));
 // CHECK:STDERR:         ^~~~~~~
 // CHECK:STDERR:
 fn G(p: partial (C, C));
 //@dump-sem-ir-end
 
-// --- todo_fail_partial_struct.carbon
+// --- fail_partial_struct.carbon
 library "[[@TEST_NAME]]";
 
 class C;
 
 //@dump-sem-ir-begin
-// CHECK:STDERR: todo_fail_partial_struct.carbon:[[@LINE+4]]:9: error: `partial` applied to final type `{.x: C}` [PartialOnFinal]
+// CHECK:STDERR: fail_partial_struct.carbon:[[@LINE+4]]:9: error: `partial` applied to final type `{.x: C}` [PartialOnFinal]
 // CHECK:STDERR: fn G(p: partial {.x: C});
 // CHECK:STDERR:         ^~~~~~~
 // CHECK:STDERR:
 fn G(p: partial {.x: C});
 //@dump-sem-ir-end
 
-// --- todo_fail_duplicate.carbon
+// --- fail_duplicate.carbon
 library "[[@TEST_NAME]]";
 
 base class C { }
 
 //@dump-sem-ir-begin
-// CHECK:STDERR: todo_fail_duplicate.carbon:[[@LINE+4]]:9: error: `partial` applied to final type `partial C` [PartialOnFinal]
+// CHECK:STDERR: fail_duplicate.carbon:[[@LINE+4]]:9: error: `partial` applied to final type `partial C` [PartialOnFinal]
 // CHECK:STDERR: fn F(p: partial (partial C));
 // CHECK:STDERR:         ^~~~~~~
 // CHECK:STDERR:
@@ -125,6 +127,44 @@ fn G(p: partial C*) -> C* {
   // CHECK:STDERR:
   return p;
 }
+
+// --- fail_derive_from_partial.carbon
+library "[[@TEST_NAME]]";
+
+base class C { }
+
+class Derived {
+  // CHECK:STDERR: fail_derive_from_partial.carbon:[[@LINE+4]]:16: error: deriving from final type `partial C`; base type must be an `abstract` or `base` class [BaseIsFinal]
+  // CHECK:STDERR:   extend base: partial C;
+  // CHECK:STDERR:                ^~~~~~~~~
+  // CHECK:STDERR:
+  extend base: partial C;
+}
+
+// --- fail_todo_partial_template_dependent.carbon
+library "[[@TEST_NAME]]";
+
+// TODO: This should be accepted because `T` might be final once we know what it
+// is.
+
+// CHECK:STDERR: fail_todo_partial_template_dependent.carbon:[[@LINE+4]]:28: error: `partial` applied to final type `T` [PartialOnFinal]
+// CHECK:STDERR: fn G[template T:! type](p: partial T*);
+// CHECK:STDERR:                            ^~~~~~~
+// CHECK:STDERR:
+fn G[template T:! type](p: partial T*);
+
+// --- fail_partial_generic.carbon
+library "[[@TEST_NAME]]";
+
+// TODO: Maybe rephrase this to use some common/generic phrasing to refer to the
+// generic type and its requirements, as distinct from the concrete type that
+// might be used here in any specific.
+
+// CHECK:STDERR: fail_partial_generic.carbon:[[@LINE+4]]:19: error: `partial` applied to final type `T` [PartialOnFinal]
+// CHECK:STDERR: fn F[T:! type](p: partial T*);
+// CHECK:STDERR:                   ^~~~~~~
+// CHECK:STDERR:
+fn F[T:! type](p: partial T*);
 
 // CHECK:STDOUT: --- base.carbon
 // CHECK:STDOUT:
@@ -184,7 +224,7 @@ fn G(p: partial C*) -> C* {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @A(%p.param: %.43f);
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- todo_fail_partial_nondynamic.carbon
+// CHECK:STDOUT: --- fail_partial_nondynamic.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %C: type = class_type @C [concrete]
@@ -213,7 +253,7 @@ fn G(p: partial C*) -> C* {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @G(%p.param: %.43f);
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- todo_fail_partial_final.carbon
+// CHECK:STDOUT: --- fail_partial_final.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %Derived: type = class_type @Derived [concrete]
@@ -242,7 +282,7 @@ fn G(p: partial C*) -> C* {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @G(%p.param: %.604);
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- todo_fail_partial_decl.carbon
+// CHECK:STDOUT: --- fail_partial_decl.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %C: type = class_type @C [concrete]
@@ -261,9 +301,9 @@ fn G(p: partial C*) -> C* {
 // CHECK:STDOUT:     %p.param_patt: %pattern_type = value_param_pattern %p.patt, call_param0 [concrete]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %p.param: %.43f = value_param call_param0
-// CHECK:STDOUT:     %.loc10_9.1: type = splice_block %.loc10_9.2 [concrete = constants.%.43f] {
+// CHECK:STDOUT:     %.loc13_9.1: type = splice_block %.loc13_9.2 [concrete = constants.%.43f] {
 // CHECK:STDOUT:       %C.ref: type = name_ref C, file.%C.decl [concrete = constants.%C]
-// CHECK:STDOUT:       %.loc10_9.2: type = partial_type %C.ref [concrete = constants.%.43f]
+// CHECK:STDOUT:       %.loc13_9.2: type = partial_type %C.ref [concrete = constants.%.43f]
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %p: %.43f = bind_name p, %p.param
 // CHECK:STDOUT:   }
@@ -271,7 +311,7 @@ fn G(p: partial C*) -> C* {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @G(%p.param: %.43f);
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- todo_fail_partial_tuple.carbon
+// CHECK:STDOUT: --- fail_partial_tuple.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %C: type = class_type @C [concrete]
@@ -305,7 +345,7 @@ fn G(p: partial C*) -> C* {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @G(%p.param: %.62c);
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- todo_fail_partial_struct.carbon
+// CHECK:STDOUT: --- fail_partial_struct.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %C: type = class_type @C [concrete]
@@ -336,7 +376,7 @@ fn G(p: partial C*) -> C* {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @G(%p.param: %.1ed);
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- todo_fail_duplicate.carbon
+// CHECK:STDOUT: --- fail_duplicate.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %C: type = class_type @C [concrete]
