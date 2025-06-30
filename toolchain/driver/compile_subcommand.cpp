@@ -604,6 +604,7 @@ auto CompilationUnit::RunLex() -> void {
   LogCall("Lex::Lex", "lex", [&] {
     Lex::LexOptions options;
     options.consumer = consumer_;
+    options.vlog_stream = vlog_stream_;
     if (options_->dump_tokens && IncludeInDumps()) {
       options.dump_stream = driver_env_->output_stream;
       options.omit_file_boundary_tokens = options_->omit_file_boundary_tokens;

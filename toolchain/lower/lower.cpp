@@ -29,7 +29,7 @@ auto LowerToLLVM(
   SemIR::InstNamer inst_namer(&sem_ir);
   context.GetFileContext(&sem_ir, &inst_namer).LowerDefinitions();
 
-  auto module = std::move(context).Finalize();
+  std::unique_ptr<llvm::Module> module = std::move(context).Finalize();
 
   if (options.vlog_stream) {
     CARBON_VLOG_TO(options.vlog_stream, "*** llvm::Module ***\n");
