@@ -33,7 +33,6 @@
 // CHECK:STDERR: *** Lower::LowerToLLVM done ***
 // CHECK:STDERR: *** CodeGen: empty.carbon ***
 // CHECK:STDERR: *** Assembly ***
-// CHECK:STDERR: {{\t}}.file{{\t}}"empty.carbon"
 // CHECK:STDERR: *** CodeGen done ***
 
 // --- empty.carbon
