@@ -28,16 +28,20 @@ abstract class C { }
 fn A(p: partial C);
 //@dump-sem-ir-end
 
-// --- todo_fail_partial_nondynamic.carbon
+// --- fail_partial_nondynamic.carbon
 library "[[@TEST_NAME]]";
 
 class C { }
 
 //@dump-sem-ir-begin
+// CHECK:STDERR: fail_partial_nondynamic.carbon:[[@LINE+4]]:9: error: `partial` applied to final type `C` [PartialOnFinal]
+// CHECK:STDERR: fn G(p: partial C);
+// CHECK:STDERR:         ^~~~~~~~~
+// CHECK:STDERR:
 fn G(p: partial C);
 //@dump-sem-ir-end
 
-// --- todo_fail_partial_final.carbon
+// --- fail_partial_final.carbon
 library "[[@TEST_NAME]]";
 
 base class Base { }
@@ -46,42 +50,65 @@ class Derived {
 }
 
 //@dump-sem-ir-begin
+// CHECK:STDERR: fail_partial_final.carbon:[[@LINE+4]]:9: error: `partial` applied to final type `Derived` [PartialOnFinal]
+// CHECK:STDERR: fn G(p: partial Derived);
+// CHECK:STDERR:         ^~~~~~~~~~~~~~~
+// CHECK:STDERR:
 fn G(p: partial Derived);
 //@dump-sem-ir-end
 
-// --- todo_fail_partial_decl.carbon
+// --- fail_partial_decl.carbon
 library "[[@TEST_NAME]]";
 
 class C;
 
+// TODO: This diagnostic could be more specific - the type might be non-final,
+// but since we only have a declaration, we don't know.
 //@dump-sem-ir-begin
+// applied to final type `C` [PartialOnFinal] CHECK:STDERR: fn G(p: partial C);
+// CHECK:STDERR: fail_partial_decl.carbon:[[@LINE+4]]:9: error: `partial` applied to final type `C` [PartialOnFinal]
+// CHECK:STDERR: fn G(p: partial C);
+// CHECK:STDERR:         ^~~~~~~~~
+// CHECK:STDERR:
 fn G(p: partial C);
 //@dump-sem-ir-end
 
-// --- todo_fail_partial_tuple.carbon
+// --- fail_partial_tuple.carbon
 library "[[@TEST_NAME]]";
 
 class C;
 
 //@dump-sem-ir-begin
+// CHECK:STDERR: fail_partial_tuple.carbon:[[@LINE+4]]:9: error: `partial` applied to final type `(C, C)` [PartialOnFinal]
+// CHECK:STDERR: fn G(p: partial (C, C));
+// CHECK:STDERR:         ^~~~~~~~~~~~~~
+// CHECK:STDERR:
 fn G(p: partial (C, C));
 //@dump-sem-ir-end
 
-// --- todo_fail_partial_struct.carbon
+// --- fail_partial_struct.carbon
 library "[[@TEST_NAME]]";
 
 class C;
 
 //@dump-sem-ir-begin
+// CHECK:STDERR: fail_partial_struct.carbon:[[@LINE+4]]:9: error: `partial` applied to final type `{.x: C}` [PartialOnFinal]
+// CHECK:STDERR: fn G(p: partial {.x: C});
+// CHECK:STDERR:         ^~~~~~~~~~~~~~~
+// CHECK:STDERR:
 fn G(p: partial {.x: C});
 //@dump-sem-ir-end
 
-// --- todo_fail_duplicate.carbon
+// --- fail_duplicate.carbon
 library "[[@TEST_NAME]]";
 
 base class C { }
 
 //@dump-sem-ir-begin
+// CHECK:STDERR: fail_duplicate.carbon:[[@LINE+4]]:9: error: `partial` applied to final type `partial C` [PartialOnFinal]
+// CHECK:STDERR: fn F(p: partial (partial C));
+// CHECK:STDERR:         ^~~~~~~~~~~~~~~~~~~
+// CHECK:STDERR:
 fn F(p: partial (partial C));
 //@dump-sem-ir-end
 
@@ -100,6 +127,44 @@ fn G(p: partial C*) -> C* {
   // CHECK:STDERR:
   return p;
 }
+
+// --- fail_derive_from_partial.carbon
+library "[[@TEST_NAME]]";
+
+base class C { }
+
+class Derived {
+  // CHECK:STDERR: fail_derive_from_partial.carbon:[[@LINE+4]]:16: error: deriving from final type `partial C`; base type must be an `abstract` or `base` class [BaseIsFinal]
+  // CHECK:STDERR:   extend base: partial C;
+  // CHECK:STDERR:                ^~~~~~~~~
+  // CHECK:STDERR:
+  extend base: partial C;
+}
+
+// --- fail_todo_partial_template_dependent.carbon
+library "[[@TEST_NAME]]";
+
+// TODO: This should be accepted because `T` might be final once we know what it
+// is.
+
+// CHECK:STDERR: fail_todo_partial_template_dependent.carbon:[[@LINE+4]]:28: error: `partial` applied to final type `T` [PartialOnFinal]
+// CHECK:STDERR: fn G[template T:! type](p: partial T*);
+// CHECK:STDERR:                            ^~~~~~~~~
+// CHECK:STDERR:
+fn G[template T:! type](p: partial T*);
+
+// --- fail_partial_generic.carbon
+library "[[@TEST_NAME]]";
+
+// TODO: Maybe rephrase this to use some common/generic phrasing to refer to the
+// generic type and its requirements, as distinct from the concrete type that
+// might be used here in any specific.
+
+// CHECK:STDERR: fail_partial_generic.carbon:[[@LINE+4]]:19: error: `partial` applied to final type `T` [PartialOnFinal]
+// CHECK:STDERR: fn F[T:! type](p: partial T*);
+// CHECK:STDERR:                   ^~~~~~~~~
+// CHECK:STDERR:
+fn F[T:! type](p: partial T*);
 
 // CHECK:STDOUT: --- base.carbon
 // CHECK:STDOUT:
@@ -159,7 +224,7 @@ fn G(p: partial C*) -> C* {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @A(%p.param: %.43f);
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- todo_fail_partial_nondynamic.carbon
+// CHECK:STDOUT: --- fail_partial_nondynamic.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %C: type = class_type @C [concrete]
@@ -178,9 +243,9 @@ fn G(p: partial C*) -> C* {
 // CHECK:STDOUT:     %p.param_patt: %pattern_type = value_param_pattern %p.patt, call_param0 [concrete]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %p.param: %.43f = value_param call_param0
-// CHECK:STDOUT:     %.loc6_9.1: type = splice_block %.loc6_9.2 [concrete = constants.%.43f] {
+// CHECK:STDOUT:     %.loc10_9.1: type = splice_block %.loc10_9.2 [concrete = constants.%.43f] {
 // CHECK:STDOUT:       %C.ref: type = name_ref C, file.%C.decl [concrete = constants.%C]
-// CHECK:STDOUT:       %.loc6_9.2: type = partial_type %C.ref [concrete = constants.%.43f]
+// CHECK:STDOUT:       %.loc10_9.2: type = partial_type %C.ref [concrete = constants.%.43f]
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %p: %.43f = bind_name p, %p.param
 // CHECK:STDOUT:   }
@@ -188,7 +253,7 @@ fn G(p: partial C*) -> C* {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @G(%p.param: %.43f);
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- todo_fail_partial_final.carbon
+// CHECK:STDOUT: --- fail_partial_final.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %Derived: type = class_type @Derived [concrete]
@@ -207,9 +272,9 @@ fn G(p: partial C*) -> C* {
 // CHECK:STDOUT:     %p.param_patt: %pattern_type = value_param_pattern %p.patt, call_param0 [concrete]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %p.param: %.604 = value_param call_param0
-// CHECK:STDOUT:     %.loc9_9.1: type = splice_block %.loc9_9.2 [concrete = constants.%.604] {
+// CHECK:STDOUT:     %.loc13_9.1: type = splice_block %.loc13_9.2 [concrete = constants.%.604] {
 // CHECK:STDOUT:       %Derived.ref: type = name_ref Derived, file.%Derived.decl [concrete = constants.%Derived]
-// CHECK:STDOUT:       %.loc9_9.2: type = partial_type %Derived.ref [concrete = constants.%.604]
+// CHECK:STDOUT:       %.loc13_9.2: type = partial_type %Derived.ref [concrete = constants.%.604]
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %p: %.604 = bind_name p, %p.param
 // CHECK:STDOUT:   }
@@ -217,7 +282,7 @@ fn G(p: partial C*) -> C* {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @G(%p.param: %.604);
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- todo_fail_partial_decl.carbon
+// CHECK:STDOUT: --- fail_partial_decl.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %C: type = class_type @C [concrete]
@@ -236,9 +301,9 @@ fn G(p: partial C*) -> C* {
 // CHECK:STDOUT:     %p.param_patt: %pattern_type = value_param_pattern %p.patt, call_param0 [concrete]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %p.param: %.43f = value_param call_param0
-// CHECK:STDOUT:     %.loc6_9.1: type = splice_block %.loc6_9.2 [concrete = constants.%.43f] {
+// CHECK:STDOUT:     %.loc13_9.1: type = splice_block %.loc13_9.2 [concrete = constants.%.43f] {
 // CHECK:STDOUT:       %C.ref: type = name_ref C, file.%C.decl [concrete = constants.%C]
-// CHECK:STDOUT:       %.loc6_9.2: type = partial_type %C.ref [concrete = constants.%.43f]
+// CHECK:STDOUT:       %.loc13_9.2: type = partial_type %C.ref [concrete = constants.%.43f]
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %p: %.43f = bind_name p, %p.param
 // CHECK:STDOUT:   }
@@ -246,7 +311,7 @@ fn G(p: partial C*) -> C* {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @G(%p.param: %.43f);
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- todo_fail_partial_tuple.carbon
+// CHECK:STDOUT: --- fail_partial_tuple.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %C: type = class_type @C [concrete]
@@ -267,12 +332,12 @@ fn G(p: partial C*) -> C* {
 // CHECK:STDOUT:     %p.param_patt: %pattern_type = value_param_pattern %p.patt, call_param0 [concrete]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %p.param: %.62c = value_param call_param0
-// CHECK:STDOUT:     %.loc6_9.1: type = splice_block %.loc6_9.3 [concrete = constants.%.62c] {
-// CHECK:STDOUT:       %C.ref.loc6_18: type = name_ref C, file.%C.decl [concrete = constants.%C]
-// CHECK:STDOUT:       %C.ref.loc6_21: type = name_ref C, file.%C.decl [concrete = constants.%C]
-// CHECK:STDOUT:       %.loc6_22: %tuple.type.24b = tuple_literal (%C.ref.loc6_18, %C.ref.loc6_21)
-// CHECK:STDOUT:       %.loc6_9.2: type = converted %.loc6_22, constants.%tuple.type.56b [concrete = constants.%tuple.type.56b]
-// CHECK:STDOUT:       %.loc6_9.3: type = partial_type %.loc6_9.2 [concrete = constants.%.62c]
+// CHECK:STDOUT:     %.loc10_9.1: type = splice_block %.loc10_9.3 [concrete = constants.%.62c] {
+// CHECK:STDOUT:       %C.ref.loc10_18: type = name_ref C, file.%C.decl [concrete = constants.%C]
+// CHECK:STDOUT:       %C.ref.loc10_21: type = name_ref C, file.%C.decl [concrete = constants.%C]
+// CHECK:STDOUT:       %.loc10_22: %tuple.type.24b = tuple_literal (%C.ref.loc10_18, %C.ref.loc10_21)
+// CHECK:STDOUT:       %.loc10_9.2: type = converted %.loc10_22, constants.%tuple.type.56b [concrete = constants.%tuple.type.56b]
+// CHECK:STDOUT:       %.loc10_9.3: type = partial_type %.loc10_9.2 [concrete = constants.%.62c]
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %p: %.62c = bind_name p, %p.param
 // CHECK:STDOUT:   }
@@ -280,7 +345,7 @@ fn G(p: partial C*) -> C* {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @G(%p.param: %.62c);
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- todo_fail_partial_struct.carbon
+// CHECK:STDOUT: --- fail_partial_struct.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %C: type = class_type @C [concrete]
@@ -300,10 +365,10 @@ fn G(p: partial C*) -> C* {
 // CHECK:STDOUT:     %p.param_patt: %pattern_type = value_param_pattern %p.patt, call_param0 [concrete]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %p.param: %.1ed = value_param call_param0
-// CHECK:STDOUT:     %.loc6_9.1: type = splice_block %.loc6_9.2 [concrete = constants.%.1ed] {
+// CHECK:STDOUT:     %.loc10_9.1: type = splice_block %.loc10_9.2 [concrete = constants.%.1ed] {
 // CHECK:STDOUT:       %C.ref: type = name_ref C, file.%C.decl [concrete = constants.%C]
 // CHECK:STDOUT:       %struct_type.x: type = struct_type {.x: %C} [concrete = constants.%struct_type.x]
-// CHECK:STDOUT:       %.loc6_9.2: type = partial_type %struct_type.x [concrete = constants.%.1ed]
+// CHECK:STDOUT:       %.loc10_9.2: type = partial_type %struct_type.x [concrete = constants.%.1ed]
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %p: %.1ed = bind_name p, %p.param
 // CHECK:STDOUT:   }
@@ -311,7 +376,7 @@ fn G(p: partial C*) -> C* {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @G(%p.param: %.1ed);
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- todo_fail_duplicate.carbon
+// CHECK:STDOUT: --- fail_duplicate.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %C: type = class_type @C [concrete]
@@ -331,10 +396,10 @@ fn G(p: partial C*) -> C* {
 // CHECK:STDOUT:     %p.param_patt: %pattern_type = value_param_pattern %p.patt, call_param0 [concrete]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %p.param: %.a34 = value_param call_param0
-// CHECK:STDOUT:     %.loc6_9.1: type = splice_block %.loc6_9.2 [concrete = constants.%.a34] {
+// CHECK:STDOUT:     %.loc10_9.1: type = splice_block %.loc10_9.2 [concrete = constants.%.a34] {
 // CHECK:STDOUT:       %C.ref: type = name_ref C, file.%C.decl [concrete = constants.%C]
-// CHECK:STDOUT:       %.loc6_18: type = partial_type %C.ref [concrete = constants.%.43f]
-// CHECK:STDOUT:       %.loc6_9.2: type = partial_type %.loc6_18 [concrete = constants.%.a34]
+// CHECK:STDOUT:       %.loc10_18: type = partial_type %C.ref [concrete = constants.%.43f]
+// CHECK:STDOUT:       %.loc10_9.2: type = partial_type %.loc10_18 [concrete = constants.%.a34]
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %p: %.a34 = bind_name p, %p.param
 // CHECK:STDOUT:   }

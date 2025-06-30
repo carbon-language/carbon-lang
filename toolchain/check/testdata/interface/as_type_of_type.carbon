@@ -33,6 +33,8 @@ fn F(T:! Empty) {
 // CHECK:STDOUT:   %pattern_type.dad: type = pattern_type %T.as_type [symbolic]
 // CHECK:STDOUT:   %Destroy.type: type = facet_type <@Destroy> [concrete]
 // CHECK:STDOUT:   %Op.type.bae: type = fn_type @Op.1 [concrete]
+// CHECK:STDOUT:   %ptr.5e1: type = ptr_type %T.as_type [symbolic]
+// CHECK:STDOUT:   %require_complete.149: <witness> = require_complete_type %ptr.5e1 [symbolic]
 // CHECK:STDOUT:   %Destroy.lookup_impl_witness: <witness> = lookup_impl_witness %T.193, @Destroy [symbolic]
 // CHECK:STDOUT:   %Destroy.facet: %Destroy.type = facet_value %T.as_type, (%Destroy.lookup_impl_witness) [symbolic]
 // CHECK:STDOUT:   %.868: type = fn_type_with_self_type %Op.type.bae, %Destroy.facet [symbolic]
@@ -78,13 +80,15 @@ fn F(T:! Empty) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %T.as_type.loc18_10.2: type = facet_access_type %T.loc17_6.2 [symbolic = %T.as_type.loc18_10.2 (constants.%T.as_type)]
-// CHECK:STDOUT:   %require_complete: <witness> = require_complete_type %T.as_type.loc18_10.2 [symbolic = %require_complete (constants.%require_complete.449)]
+// CHECK:STDOUT:   %require_complete.loc18_10: <witness> = require_complete_type %T.as_type.loc18_10.2 [symbolic = %require_complete.loc18_10 (constants.%require_complete.449)]
 // CHECK:STDOUT:   %pattern_type: type = pattern_type %T.as_type.loc18_10.2 [symbolic = %pattern_type (constants.%pattern_type.dad)]
 // CHECK:STDOUT:   %Destroy.lookup_impl_witness: <witness> = lookup_impl_witness %T.loc17_6.2, @Destroy [symbolic = %Destroy.lookup_impl_witness (constants.%Destroy.lookup_impl_witness)]
 // CHECK:STDOUT:   %Destroy.facet: %Destroy.type = facet_value %T.as_type.loc18_10.2, (%Destroy.lookup_impl_witness) [symbolic = %Destroy.facet (constants.%Destroy.facet)]
-// CHECK:STDOUT:   %.loc18_3.4: type = fn_type_with_self_type constants.%Op.type.bae, %Destroy.facet [symbolic = %.loc18_3.4 (constants.%.868)]
-// CHECK:STDOUT:   %impl.elem0.loc18_3.2: @F.%.loc18_3.4 (%.868) = impl_witness_access %Destroy.lookup_impl_witness, element0 [symbolic = %impl.elem0.loc18_3.2 (constants.%impl.elem0)]
+// CHECK:STDOUT:   %.loc18_3.3: type = fn_type_with_self_type constants.%Op.type.bae, %Destroy.facet [symbolic = %.loc18_3.3 (constants.%.868)]
+// CHECK:STDOUT:   %impl.elem0.loc18_3.2: @F.%.loc18_3.3 (%.868) = impl_witness_access %Destroy.lookup_impl_witness, element0 [symbolic = %impl.elem0.loc18_3.2 (constants.%impl.elem0)]
 // CHECK:STDOUT:   %specific_impl_fn.loc18_3.2: <specific function> = specific_impl_function %impl.elem0.loc18_3.2, @Op.1(%Destroy.facet) [symbolic = %specific_impl_fn.loc18_3.2 (constants.%specific_impl_fn)]
+// CHECK:STDOUT:   %ptr: type = ptr_type %T.as_type.loc18_10.2 [symbolic = %ptr (constants.%ptr.5e1)]
+// CHECK:STDOUT:   %require_complete.loc18_3: <witness> = require_complete_type %ptr [symbolic = %require_complete.loc18_3 (constants.%require_complete.149)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   fn() {
 // CHECK:STDOUT:   !entry:
@@ -101,12 +105,12 @@ fn F(T:! Empty) {
 // CHECK:STDOUT:     %x: ref @F.%T.as_type.loc18_10.2 (%T.as_type) = bind_name x, %x.var
 // CHECK:STDOUT:     %T.as_type.loc18_3: type = facet_access_type constants.%T.193 [symbolic = %T.as_type.loc18_10.2 (constants.%T.as_type)]
 // CHECK:STDOUT:     %.loc18_3.1: type = converted constants.%T.193, %T.as_type.loc18_3 [symbolic = %T.as_type.loc18_10.2 (constants.%T.as_type)]
-// CHECK:STDOUT:     %impl.elem0.loc18_3.1: @F.%.loc18_3.4 (%.868) = impl_witness_access constants.%Destroy.lookup_impl_witness, element0 [symbolic = %impl.elem0.loc18_3.2 (constants.%impl.elem0)]
+// CHECK:STDOUT:     %impl.elem0.loc18_3.1: @F.%.loc18_3.3 (%.868) = impl_witness_access constants.%Destroy.lookup_impl_witness, element0 [symbolic = %impl.elem0.loc18_3.2 (constants.%impl.elem0)]
 // CHECK:STDOUT:     %bound_method.loc18_3.1: <bound method> = bound_method %x.var, %impl.elem0.loc18_3.1
 // CHECK:STDOUT:     %specific_impl_fn.loc18_3.1: <specific function> = specific_impl_function %impl.elem0.loc18_3.1, @Op.1(constants.%Destroy.facet) [symbolic = %specific_impl_fn.loc18_3.2 (constants.%specific_impl_fn)]
 // CHECK:STDOUT:     %bound_method.loc18_3.2: <bound method> = bound_method %x.var, %specific_impl_fn.loc18_3.1
-// CHECK:STDOUT:     %.loc18_3.2: @F.%T.as_type.loc18_10.2 (%T.as_type) = bind_value %x.var
-// CHECK:STDOUT:     %.loc18_3.3: init %empty_tuple.type = call %bound_method.loc18_3.2(%.loc18_3.2)
+// CHECK:STDOUT:     %addr: @F.%ptr (%ptr.5e1) = addr_of %x.var
+// CHECK:STDOUT:     %.loc18_3.2: init %empty_tuple.type = call %bound_method.loc18_3.2(%addr)
 // CHECK:STDOUT:     return
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }

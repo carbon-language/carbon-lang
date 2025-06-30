@@ -36,6 +36,7 @@ fn F(cond: bool) {
 // CHECK:STDOUT:   %pattern_type.831: type = pattern_type bool [concrete]
 // CHECK:STDOUT:   %F.type: type = fn_type @F [concrete]
 // CHECK:STDOUT:   %F: %F.type = struct_value () [concrete]
+// CHECK:STDOUT:   %ptr.3ee: type = ptr_type %struct_type.a.b.501 [concrete]
 // CHECK:STDOUT:   %int_1.5b8: Core.IntLiteral = int_value 1 [concrete]
 // CHECK:STDOUT:   %int_2.ecc: Core.IntLiteral = int_value 2 [concrete]
 // CHECK:STDOUT:   %struct_type.a.b.cfd: type = struct_type {.a: Core.IntLiteral, .b: Core.IntLiteral} [concrete]
@@ -87,7 +88,7 @@ fn F(cond: bool) {
 // CHECK:STDOUT:   %Core.import_ref.a5b: @impl.4f9.%Convert.type (%Convert.type.0f9) = import_ref Core//prelude/parts/int, loc16_39, loaded [symbolic = @impl.4f9.%Convert (constants.%Convert.f06)]
 // CHECK:STDOUT:   %ImplicitAs.impl_witness_table.a2f = impl_witness_table (%Core.import_ref.a5b), @impl.4f9 [concrete]
 // CHECK:STDOUT:   %Core.Destroy: type = import_ref Core//prelude/parts/destroy, Destroy, loaded [concrete = constants.%Destroy.type]
-// CHECK:STDOUT:   %Core.import_ref.0b9: @impl.49c.%Op.type (%Op.type.bc9) = import_ref Core//prelude/parts/destroy, loc8_23, loaded [symbolic = @impl.49c.%Op (constants.%Op.46f)]
+// CHECK:STDOUT:   %Core.import_ref.0b9: @impl.49c.%Op.type (%Op.type.bc9) = import_ref Core//prelude/parts/destroy, loc8_29, loaded [symbolic = @impl.49c.%Op (constants.%Op.46f)]
 // CHECK:STDOUT:   %Destroy.impl_witness_table = impl_witness_table (%Core.import_ref.0b9), @impl.49c [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -155,8 +156,8 @@ fn F(cond: bool) {
 // CHECK:STDOUT:   %.loc18_46.6: ref %i32 = struct_access %a.var, element1
 // CHECK:STDOUT:   %.loc18_46.7: init %i32 = initialize_from %.loc18_46.5 to %.loc18_46.6 [concrete = constants.%int_2.ef8]
 // CHECK:STDOUT:   %.loc18_46.8: init %struct_type.a.b.501 = struct_init (%.loc18_46.4, %.loc18_46.7) to %a.var [concrete = constants.%struct]
-// CHECK:STDOUT:   %.loc18_3.1: init %struct_type.a.b.501 = converted %.loc18_46.1, %.loc18_46.8 [concrete = constants.%struct]
-// CHECK:STDOUT:   assign %a.var, %.loc18_3.1
+// CHECK:STDOUT:   %.loc18_3: init %struct_type.a.b.501 = converted %.loc18_46.1, %.loc18_46.8 [concrete = constants.%struct]
+// CHECK:STDOUT:   assign %a.var, %.loc18_3
 // CHECK:STDOUT:   %.loc18_27: type = splice_block %struct_type.a.b [concrete = constants.%struct_type.a.b.501] {
 // CHECK:STDOUT:     %int_32.loc18_15: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
 // CHECK:STDOUT:     %i32.loc18_15: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
@@ -196,13 +197,8 @@ fn F(cond: bool) {
 // CHECK:STDOUT:   %bound_method.loc18_3.1: <bound method> = bound_method %a.var, %impl.elem0.loc18_3
 // CHECK:STDOUT:   %specific_fn.loc18_3: <specific function> = specific_function %impl.elem0.loc18_3, @Op.3(constants.%struct_type.a.b.501) [concrete = constants.%Op.specific_fn]
 // CHECK:STDOUT:   %bound_method.loc18_3.2: <bound method> = bound_method %a.var, %specific_fn.loc18_3
-// CHECK:STDOUT:   %.loc18_3.2: ref %i32 = struct_access %a.var, element0
-// CHECK:STDOUT:   %.loc18_3.3: %i32 = bind_value %.loc18_3.2
-// CHECK:STDOUT:   %.loc18_3.4: ref %i32 = struct_access %a.var, element1
-// CHECK:STDOUT:   %.loc18_3.5: %i32 = bind_value %.loc18_3.4
-// CHECK:STDOUT:   %struct.loc18: %struct_type.a.b.501 = struct_value (%.loc18_3.3, %.loc18_3.5)
-// CHECK:STDOUT:   %.loc18_3.6: %struct_type.a.b.501 = converted %a.var, %struct.loc18
-// CHECK:STDOUT:   %no_op: init %empty_tuple.type = call %bound_method.loc18_3.2(%.loc18_3.6)
+// CHECK:STDOUT:   %addr: %ptr.3ee = addr_of %a.var
+// CHECK:STDOUT:   %no_op: init %empty_tuple.type = call %bound_method.loc18_3.2(%addr)
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

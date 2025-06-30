@@ -807,6 +807,7 @@ fn Read() {
 // CHECK:STDOUT:   %Destroy.impl_witness.eb8: <witness> = impl_witness imports.%Destroy.impl_witness_table, @impl.49c(%IntRange.365) [concrete]
 // CHECK:STDOUT:   %Op.type.2d1: type = fn_type @Op.97, @impl.49c(%IntRange.365) [concrete]
 // CHECK:STDOUT:   %Op.fa8: %Op.type.2d1 = struct_value () [concrete]
+// CHECK:STDOUT:   %ptr.049: type = ptr_type %IntRange.365 [concrete]
 // CHECK:STDOUT:   %Destroy.facet: %Destroy.type = facet_value %IntRange.365, (%Destroy.impl_witness.eb8) [concrete]
 // CHECK:STDOUT:   %.cb4: type = fn_type_with_self_type %Op.type.bae, %Destroy.facet [concrete]
 // CHECK:STDOUT:   %Op.specific_fn.df8: <specific function> = specific_function %Op.fa8, @Op.97(%IntRange.365) [concrete]
@@ -851,7 +852,7 @@ fn Read() {
 // CHECK:STDOUT:   %Main.import_ref.f1e294.4: Core.IntLiteral = import_ref Main//lib, loc4_16, loaded [symbolic = @IntRange.%N (constants.%N)]
 // CHECK:STDOUT:   %Main.import_ref.f1e294.5: Core.IntLiteral = import_ref Main//lib, loc4_16, loaded [symbolic = @IntRange.%N (constants.%N)]
 // CHECK:STDOUT:   %Main.import_ref.014 = import_ref Main//lib, inst519 [indirect], unloaded
-// CHECK:STDOUT:   %Core.import_ref.0b9: @impl.49c.%Op.type (%Op.type.bc9) = import_ref Core//prelude/destroy, loc15_23, loaded [symbolic = @impl.49c.%Op (constants.%Op.46f)]
+// CHECK:STDOUT:   %Core.import_ref.0b9: @impl.49c.%Op.type (%Op.type.bc9) = import_ref Core//prelude/destroy, loc15_29, loaded [symbolic = @impl.49c.%Op (constants.%Op.46f)]
 // CHECK:STDOUT:   %Destroy.impl_witness_table = impl_witness_table (%Core.import_ref.0b9), @impl.49c [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -932,7 +933,7 @@ fn Read() {
 // CHECK:STDOUT:   %x.var: ref %IntRange.365 = var %x.var_patt
 // CHECK:STDOUT:   %Range.ref: %Range.type = name_ref Range, imports.%Main.Range [concrete = constants.%Range]
 // CHECK:STDOUT:   %y.ref: Core.IntLiteral = name_ref y, %y [symbolic = constants.%y]
-// CHECK:STDOUT:   %.loc6_3.1: ref %IntRange.365 = splice_block %x.var {}
+// CHECK:STDOUT:   %.loc6_3: ref %IntRange.365 = splice_block %x.var {}
 // CHECK:STDOUT:   %impl.elem0.loc6_31: %.d6a = impl_witness_access constants.%ImplicitAs.impl_witness.e34, element0 [concrete = constants.%Convert.16d]
 // CHECK:STDOUT:   %bound_method.loc6_31.1: <bound method> = bound_method %y.ref, %impl.elem0.loc6_31 [symbolic = constants.%Convert.bound]
 // CHECK:STDOUT:   %specific_fn.loc6_31: <specific function> = specific_function %impl.elem0.loc6_31, @Convert.3(constants.%int_32) [concrete = constants.%Convert.specific_fn]
@@ -940,7 +941,7 @@ fn Read() {
 // CHECK:STDOUT:   %int.convert_checked: init %i32 = call %bound_method.loc6_31.2(%y.ref) [symbolic = constants.%int.convert_checked.58b]
 // CHECK:STDOUT:   %.loc6_31.1: %i32 = value_of_initializer %int.convert_checked [symbolic = constants.%int.convert_checked.58b]
 // CHECK:STDOUT:   %.loc6_31.2: %i32 = converted %y.ref, %.loc6_31.1 [symbolic = constants.%int.convert_checked.58b]
-// CHECK:STDOUT:   %Range.call: init %IntRange.365 = call %Range.ref(%.loc6_31.2) to %.loc6_3.1
+// CHECK:STDOUT:   %Range.call: init %IntRange.365 = call %Range.ref(%.loc6_31.2) to %.loc6_3
 // CHECK:STDOUT:   assign %x.var, %Range.call
 // CHECK:STDOUT:   %.loc6_21: type = splice_block %IntRange [concrete = constants.%IntRange.365] {
 // CHECK:STDOUT:     %IntRange.ref: %IntRange.type = name_ref IntRange, imports.%Main.IntRange [concrete = constants.%IntRange.generic]
@@ -949,17 +950,17 @@ fn Read() {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %x: ref %IntRange.365 = bind_name x, %x.var
 // CHECK:STDOUT:   %impl.elem0.loc6_3.1: %.cb4 = impl_witness_access constants.%Destroy.impl_witness.eb8, element0 [concrete = constants.%Op.fa8]
-// CHECK:STDOUT:   %bound_method.loc6_3.1: <bound method> = bound_method %.loc6_3.1, %impl.elem0.loc6_3.1
+// CHECK:STDOUT:   %bound_method.loc6_3.1: <bound method> = bound_method %.loc6_3, %impl.elem0.loc6_3.1
 // CHECK:STDOUT:   %specific_fn.loc6_3.1: <specific function> = specific_function %impl.elem0.loc6_3.1, @Op.97(constants.%IntRange.365) [concrete = constants.%Op.specific_fn.df8]
-// CHECK:STDOUT:   %bound_method.loc6_3.2: <bound method> = bound_method %.loc6_3.1, %specific_fn.loc6_3.1
-// CHECK:STDOUT:   %.loc6_3.2: %IntRange.365 = bind_value %.loc6_3.1
-// CHECK:STDOUT:   %no_op.loc6_3.1: init %empty_tuple.type = call %bound_method.loc6_3.2(%.loc6_3.2)
+// CHECK:STDOUT:   %bound_method.loc6_3.2: <bound method> = bound_method %.loc6_3, %specific_fn.loc6_3.1
+// CHECK:STDOUT:   %addr.loc6_3.1: %ptr.049 = addr_of %.loc6_3
+// CHECK:STDOUT:   %no_op.loc6_3.1: init %empty_tuple.type = call %bound_method.loc6_3.2(%addr.loc6_3.1)
 // CHECK:STDOUT:   %impl.elem0.loc6_3.2: %.cb4 = impl_witness_access constants.%Destroy.impl_witness.eb8, element0 [concrete = constants.%Op.fa8]
 // CHECK:STDOUT:   %bound_method.loc6_3.3: <bound method> = bound_method %x.var, %impl.elem0.loc6_3.2
 // CHECK:STDOUT:   %specific_fn.loc6_3.2: <specific function> = specific_function %impl.elem0.loc6_3.2, @Op.97(constants.%IntRange.365) [concrete = constants.%Op.specific_fn.df8]
 // CHECK:STDOUT:   %bound_method.loc6_3.4: <bound method> = bound_method %x.var, %specific_fn.loc6_3.2
-// CHECK:STDOUT:   %.loc6_3.3: %IntRange.365 = bind_value %x.var
-// CHECK:STDOUT:   %no_op.loc6_3.2: init %empty_tuple.type = call %bound_method.loc6_3.4(%.loc6_3.3)
+// CHECK:STDOUT:   %addr.loc6_3.2: %ptr.049 = addr_of %x.var
+// CHECK:STDOUT:   %no_op.loc6_3.2: init %empty_tuple.type = call %bound_method.loc6_3.4(%addr.loc6_3.2)
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

@@ -76,11 +76,6 @@ fn M() {
 // CHECK:STDOUT:   %F.call.loc42 = call double @_CF.Main.66be507887ceee78(double %.loc42), !dbg !22
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(i64 0, ptr %c.var), !dbg !12
 // CHECK:STDOUT:   %F.call.loc44 = call %type @_CF.Main.5754c7a55c7cbe4a(%type zeroinitializer), !dbg !23
-// CHECK:STDOUT:   %.loc41_3 = load double, ptr %var_f64.var, align 8, !dbg !11
-// CHECK:STDOUT:   %.loc39_3.2 = load i32, ptr %var_i32.var, align 4, !dbg !10
-// CHECK:STDOUT:   %.loc37_3 = load ptr, ptr %ptr_i8.var, align 8, !dbg !9
-// CHECK:STDOUT:   %.loc35_3 = load ptr, ptr %ptr_f64.var, align 8, !dbg !8
-// CHECK:STDOUT:   %.loc33_3 = load ptr, ptr %ptr_i32.var, align 8, !dbg !7
 // CHECK:STDOUT:   ret void, !dbg !24
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

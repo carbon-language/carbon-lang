@@ -3648,6 +3648,7 @@ fn F() {
 // CHECK:STDOUT:   %Destroy.impl_witness.ee0: <witness> = impl_witness imports.%Destroy.impl_witness_table, @impl.49c(%C.131) [concrete]
 // CHECK:STDOUT:   %Op.type.b84: type = fn_type @Op.2, @impl.49c(%C.131) [concrete]
 // CHECK:STDOUT:   %Op.e16: %Op.type.b84 = struct_value () [concrete]
+// CHECK:STDOUT:   %ptr.aaa: type = ptr_type %C.131 [concrete]
 // CHECK:STDOUT:   %Destroy.facet: %Destroy.type = facet_value %C.131, (%Destroy.impl_witness.ee0) [concrete]
 // CHECK:STDOUT:   %.04b: type = fn_type_with_self_type %Op.type.bae, %Destroy.facet [concrete]
 // CHECK:STDOUT:   %Op.specific_fn: <specific function> = specific_function %Op.e16, @Op.2(%C.131) [concrete]
@@ -3660,7 +3661,7 @@ fn F() {
 // CHECK:STDOUT:     import Core//prelude/...
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.Destroy: type = import_ref Core//prelude/parts/destroy, Destroy, loaded [concrete = constants.%Destroy.type]
-// CHECK:STDOUT:   %Core.import_ref.0b9: @impl.49c.%Op.type (%Op.type.bc9) = import_ref Core//prelude/parts/destroy, loc8_23, loaded [symbolic = @impl.49c.%Op (constants.%Op.46f)]
+// CHECK:STDOUT:   %Core.import_ref.0b9: @impl.49c.%Op.type (%Op.type.bc9) = import_ref Core//prelude/parts/destroy, loc8_29, loaded [symbolic = @impl.49c.%Op (constants.%Op.46f)]
 // CHECK:STDOUT:   %Destroy.impl_witness_table = impl_witness_table (%Core.import_ref.0b9), @impl.49c [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -3787,8 +3788,8 @@ fn F() {
 // CHECK:STDOUT:   %bound_method.loc12_21.1: <bound method> = bound_method %.loc12_21.2, %impl.elem0.loc12_21
 // CHECK:STDOUT:   %specific_fn: <specific function> = specific_function %impl.elem0.loc12_21, @Op.2(constants.%C.131) [concrete = constants.%Op.specific_fn]
 // CHECK:STDOUT:   %bound_method.loc12_21.2: <bound method> = bound_method %.loc12_21.2, %specific_fn
-// CHECK:STDOUT:   %.loc12_21.5: %C.131 = bind_value %.loc12_21.2
-// CHECK:STDOUT:   %no_op: init %empty_tuple.type = call %bound_method.loc12_21.2(%.loc12_21.5)
+// CHECK:STDOUT:   %addr: %ptr.aaa = addr_of %.loc12_21.2
+// CHECK:STDOUT:   %no_op: init %empty_tuple.type = call %bound_method.loc12_21.2(%addr)
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

@@ -36,19 +36,9 @@ fn Run() {
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(i64 4, ptr %t.var), !dbg !10
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(i64 8, ptr %.loc16_18.1.temp), !dbg !11
 // CHECK:STDOUT:   call void @_CF.Main(ptr %.loc16_18.1.temp), !dbg !11
-// CHECK:STDOUT:   %tuple.elem1.loc16_19.tuple.elem = getelementptr inbounds nuw { i32, i32 }, ptr %.loc16_18.1.temp, i32 0, i32 1, !dbg !11
-// CHECK:STDOUT:   %.loc16_19 = load i32, ptr %tuple.elem1.loc16_19.tuple.elem, align 4, !dbg !11
+// CHECK:STDOUT:   %tuple.elem1.tuple.elem = getelementptr inbounds nuw { i32, i32 }, ptr %.loc16_18.1.temp, i32 0, i32 1, !dbg !11
+// CHECK:STDOUT:   %.loc16_19 = load i32, ptr %tuple.elem1.tuple.elem, align 4, !dbg !11
 // CHECK:STDOUT:   store i32 %.loc16_19, ptr %t.var, align 4, !dbg !10
-// CHECK:STDOUT:   %tuple.elem0.tuple.elem = getelementptr inbounds nuw { i32, i32 }, ptr %.loc16_18.1.temp, i32 0, i32 0, !dbg !11
-// CHECK:STDOUT:   %.loc16_18.3 = load i32, ptr %tuple.elem0.tuple.elem, align 4, !dbg !11
-// CHECK:STDOUT:   %tuple.elem1.loc16_18.tuple.elem = getelementptr inbounds nuw { i32, i32 }, ptr %.loc16_18.1.temp, i32 0, i32 1, !dbg !11
-// CHECK:STDOUT:   %.loc16_18.4 = load i32, ptr %tuple.elem1.loc16_18.tuple.elem, align 4, !dbg !11
-// CHECK:STDOUT:   %tuple = alloca { i32, i32 }, align 8, !dbg !11
-// CHECK:STDOUT:   %tuple1 = getelementptr inbounds nuw { i32, i32 }, ptr %tuple, i32 0, i32 0, !dbg !11
-// CHECK:STDOUT:   store i32 %.loc16_18.3, ptr %tuple1, align 4, !dbg !11
-// CHECK:STDOUT:   %tuple2 = getelementptr inbounds nuw { i32, i32 }, ptr %tuple, i32 0, i32 1, !dbg !11
-// CHECK:STDOUT:   store i32 %.loc16_18.4, ptr %tuple2, align 4, !dbg !11
-// CHECK:STDOUT:   %.loc16_3 = load i32, ptr %t.var, align 4, !dbg !10
 // CHECK:STDOUT:   ret void, !dbg !12
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

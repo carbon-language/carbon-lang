@@ -89,6 +89,7 @@ fn Run() {
 // CHECK:STDOUT:   %Destroy.impl_witness.2ce: <witness> = impl_witness imports.%Destroy.impl_witness_table, @impl(%ptr.257) [concrete]
 // CHECK:STDOUT:   %Op.type.a45: type = fn_type @Op.2, @impl(%ptr.257) [concrete]
 // CHECK:STDOUT:   %Op.109: %Op.type.a45 = struct_value () [concrete]
+// CHECK:STDOUT:   %ptr.d80: type = ptr_type %ptr.257 [concrete]
 // CHECK:STDOUT:   %Destroy.facet: %Destroy.type = facet_value %ptr.257, (%Destroy.impl_witness.2ce) [concrete]
 // CHECK:STDOUT:   %.dff: type = fn_type_with_self_type %Op.type.bae, %Destroy.facet [concrete]
 // CHECK:STDOUT:   %Op.specific_fn: <specific function> = specific_function %Op.109, @Op.2(%ptr.257) [concrete]
@@ -105,7 +106,7 @@ fn Run() {
 // CHECK:STDOUT:   %Main.import_ref.3a6 = import_ref Main//a, inst18 [no loc], unloaded
 // CHECK:STDOUT:   %Main.import_ref.4e0 = import_ref Main//a, loc5_8, unloaded
 // CHECK:STDOUT:   %Core.Destroy: type = import_ref Core//prelude/parts/destroy, Destroy, loaded [concrete = constants.%Destroy.type]
-// CHECK:STDOUT:   %Core.import_ref.0b9: @impl.%Op.type (%Op.type.bc9) = import_ref Core//prelude/parts/destroy, loc8_23, loaded [symbolic = @impl.%Op (constants.%Op.46f)]
+// CHECK:STDOUT:   %Core.import_ref.0b9: @impl.%Op.type (%Op.type.bc9) = import_ref Core//prelude/parts/destroy, loc8_29, loaded [symbolic = @impl.%Op (constants.%Op.46f)]
 // CHECK:STDOUT:   %Destroy.impl_witness_table = impl_witness_table (%Core.import_ref.0b9), @impl [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -135,7 +136,7 @@ fn Run() {
 // CHECK:STDOUT:     %a.var_patt: %pattern_type.d3d = var_pattern %a.patt [concrete]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %a.var: ref %ptr.257 = var %a.var_patt
-// CHECK:STDOUT:   %.loc7_15: type = splice_block %ptr [concrete = constants.%ptr.257] {
+// CHECK:STDOUT:   %.loc7: type = splice_block %ptr [concrete = constants.%ptr.257] {
 // CHECK:STDOUT:     %Cycle.ref: type = name_ref Cycle, imports.%Main.Cycle [concrete = constants.%Cycle]
 // CHECK:STDOUT:     %ptr: type = ptr_type %Cycle.ref [concrete = constants.%ptr.257]
 // CHECK:STDOUT:   }
@@ -144,8 +145,8 @@ fn Run() {
 // CHECK:STDOUT:   %bound_method.loc7_3.1: <bound method> = bound_method %a.var, %impl.elem0
 // CHECK:STDOUT:   %specific_fn: <specific function> = specific_function %impl.elem0, @Op.2(constants.%ptr.257) [concrete = constants.%Op.specific_fn]
 // CHECK:STDOUT:   %bound_method.loc7_3.2: <bound method> = bound_method %a.var, %specific_fn
-// CHECK:STDOUT:   %.loc7_3: %ptr.257 = bind_value %a.var
-// CHECK:STDOUT:   %no_op: init %empty_tuple.type = call %bound_method.loc7_3.2(%.loc7_3)
+// CHECK:STDOUT:   %addr: %ptr.d80 = addr_of %a.var
+// CHECK:STDOUT:   %no_op: init %empty_tuple.type = call %bound_method.loc7_3.2(%addr)
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

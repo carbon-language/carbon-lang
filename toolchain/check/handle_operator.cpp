@@ -314,6 +314,17 @@ auto HandleParseNode(Context& context, Parse::PrefixOperatorPartialId node_id)
     -> bool {
   auto value_id = context.node_stack().PopExpr();
   auto inner_type = ExprAsType(context, node_id, value_id);
+  auto class_type =
+      context.types().TryGetAs<SemIR::ClassType>(inner_type.type_id);
+
+  if (!class_type ||
+      context.classes().Get(class_type->class_id).inheritance_kind ==
+          SemIR::Class::InheritanceKind::Final) {
+    CARBON_DIAGNOSTIC(PartialOnFinal, Error,
+                      "`partial` applied to final type {0}", SemIR::TypeId);
+    context.emitter().Emit(node_id, PartialOnFinal, inner_type.type_id);
+  }
+
   // TODO: Add diagnostics for partial applied to non-base/abstract types.
   AddInstAndPush<SemIR::PartialType>(
       context, node_id,

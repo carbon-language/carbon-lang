@@ -217,7 +217,7 @@ fn F() {
 // CHECK:STDOUT:   %Eat.73e: %Eat.type.1b3 = struct_value () [concrete]
 // CHECK:STDOUT:   %Eats.facet: %Eats.type = facet_value %Goat, (%Eats.impl_witness) [concrete]
 // CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [concrete]
-// CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [concrete]
+// CHECK:STDOUT:   %complete_type.357: <witness> = complete_type_witness %empty_struct_type [concrete]
 // CHECK:STDOUT:   %F.type: type = fn_type @F [concrete]
 // CHECK:STDOUT:   %F: %F.type = struct_value () [concrete]
 // CHECK:STDOUT:   %Animal.facet: %Animal.type = facet_value %Goat, (%Animal.impl_witness) [concrete]
@@ -232,6 +232,7 @@ fn F() {
 // CHECK:STDOUT:   %Destroy.impl_witness.b14: <witness> = impl_witness imports.%Destroy.impl_witness_table, @impl.49c(%Goat) [concrete]
 // CHECK:STDOUT:   %Op.type.e7a: type = fn_type @Op.2, @impl.49c(%Goat) [concrete]
 // CHECK:STDOUT:   %Op.55a: %Op.type.e7a = struct_value () [concrete]
+// CHECK:STDOUT:   %ptr.940: type = ptr_type %Goat [concrete]
 // CHECK:STDOUT:   %Destroy.facet: %Destroy.type = facet_value %Goat, (%Destroy.impl_witness.b14) [concrete]
 // CHECK:STDOUT:   %.095: type = fn_type_with_self_type %Op.type.bae, %Destroy.facet [concrete]
 // CHECK:STDOUT:   %Op.specific_fn: <specific function> = specific_function %Op.55a, @Op.2(%Goat) [concrete]
@@ -244,7 +245,7 @@ fn F() {
 // CHECK:STDOUT:     import Core//prelude/...
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.Destroy: type = import_ref Core//prelude/parts/destroy, Destroy, loaded [concrete = constants.%Destroy.type]
-// CHECK:STDOUT:   %Core.import_ref.0b9: @impl.49c.%Op.type (%Op.type.bc9) = import_ref Core//prelude/parts/destroy, loc8_23, loaded [symbolic = @impl.49c.%Op (constants.%Op.46f)]
+// CHECK:STDOUT:   %Core.import_ref.0b9: @impl.49c.%Op.type (%Op.type.bc9) = import_ref Core//prelude/parts/destroy, loc8_29, loaded [symbolic = @impl.49c.%Op (constants.%Op.46f)]
 // CHECK:STDOUT:   %Destroy.impl_witness_table = impl_witness_table (%Core.import_ref.0b9), @impl.49c [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -310,7 +311,7 @@ fn F() {
 // CHECK:STDOUT:   %Eats.impl_witness_table = impl_witness_table (@impl.626.%Eat.decl), @impl.626 [concrete]
 // CHECK:STDOUT:   %Eats.impl_witness: <witness> = impl_witness %Eats.impl_witness_table [concrete = constants.%Eats.impl_witness]
 // CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [concrete = constants.%empty_struct_type]
-// CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [concrete = constants.%complete_type]
+// CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [concrete = constants.%complete_type.357]
 // CHECK:STDOUT:   complete_type_witness = %complete_type
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
@@ -397,20 +398,20 @@ fn F() {
 // CHECK:STDOUT:   %bound_method.loc27_6.1: <bound method> = bound_method %.loc27_6.2, %impl.elem0.loc27_6
 // CHECK:STDOUT:   %specific_fn.loc27: <specific function> = specific_function %impl.elem0.loc27_6, @Op.2(constants.%Goat) [concrete = constants.%Op.specific_fn]
 // CHECK:STDOUT:   %bound_method.loc27_6.2: <bound method> = bound_method %.loc27_6.2, %specific_fn.loc27
-// CHECK:STDOUT:   %.loc27_6.5: %Goat = bind_value %.loc27_6.2
-// CHECK:STDOUT:   %no_op.loc27: init %empty_tuple.type = call %bound_method.loc27_6.2(%.loc27_6.5)
+// CHECK:STDOUT:   %addr.loc27: %ptr.940 = addr_of %.loc27_6.2
+// CHECK:STDOUT:   %no_op.loc27: init %empty_tuple.type = call %bound_method.loc27_6.2(%addr.loc27)
 // CHECK:STDOUT:   %impl.elem0.loc26: %.095 = impl_witness_access constants.%Destroy.impl_witness.b14, element0 [concrete = constants.%Op.55a]
 // CHECK:STDOUT:   %bound_method.loc26_6.1: <bound method> = bound_method %.loc26_6.2, %impl.elem0.loc26
 // CHECK:STDOUT:   %specific_fn.loc26: <specific function> = specific_function %impl.elem0.loc26, @Op.2(constants.%Goat) [concrete = constants.%Op.specific_fn]
 // CHECK:STDOUT:   %bound_method.loc26_6.2: <bound method> = bound_method %.loc26_6.2, %specific_fn.loc26
-// CHECK:STDOUT:   %.loc26_6.5: %Goat = bind_value %.loc26_6.2
-// CHECK:STDOUT:   %no_op.loc26: init %empty_tuple.type = call %bound_method.loc26_6.2(%.loc26_6.5)
+// CHECK:STDOUT:   %addr.loc26: %ptr.940 = addr_of %.loc26_6.2
+// CHECK:STDOUT:   %no_op.loc26: init %empty_tuple.type = call %bound_method.loc26_6.2(%addr.loc26)
 // CHECK:STDOUT:   %impl.elem0.loc22: %.095 = impl_witness_access constants.%Destroy.impl_witness.b14, element0 [concrete = constants.%Op.55a]
 // CHECK:STDOUT:   %bound_method.loc22_28.1: <bound method> = bound_method %.loc22_28.2, %impl.elem0.loc22
 // CHECK:STDOUT:   %specific_fn.loc22: <specific function> = specific_function %impl.elem0.loc22, @Op.2(constants.%Goat) [concrete = constants.%Op.specific_fn]
 // CHECK:STDOUT:   %bound_method.loc22_28.2: <bound method> = bound_method %.loc22_28.2, %specific_fn.loc22
-// CHECK:STDOUT:   %.loc22_28.5: %Goat = bind_value %.loc22_28.2
-// CHECK:STDOUT:   %no_op.loc22: init %empty_tuple.type = call %bound_method.loc22_28.2(%.loc22_28.5)
+// CHECK:STDOUT:   %addr.loc22: %ptr.940 = addr_of %.loc22_28.2
+// CHECK:STDOUT:   %no_op.loc22: init %empty_tuple.type = call %bound_method.loc22_28.2(%addr.loc22)
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

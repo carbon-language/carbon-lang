@@ -46,6 +46,7 @@ fn MemberNamedSelf.F(x: Self, y: r#Self) {}
 // CHECK:STDOUT:   %Destroy.impl_witness.a50: <witness> = impl_witness imports.%Destroy.impl_witness_table, @impl(%ptr.e71) [concrete]
 // CHECK:STDOUT:   %Op.type.faa: type = fn_type @Op.2, @impl(%ptr.e71) [concrete]
 // CHECK:STDOUT:   %Op.5a3: %Op.type.faa = struct_value () [concrete]
+// CHECK:STDOUT:   %ptr.0dd: type = ptr_type %ptr.e71 [concrete]
 // CHECK:STDOUT:   %Destroy.facet: %Destroy.type = facet_value %ptr.e71, (%Destroy.impl_witness.a50) [concrete]
 // CHECK:STDOUT:   %.9cd: type = fn_type_with_self_type %Op.type.bae, %Destroy.facet [concrete]
 // CHECK:STDOUT:   %Op.specific_fn: <specific function> = specific_function %Op.5a3, @Op.2(%ptr.e71) [concrete]
@@ -64,7 +65,7 @@ fn MemberNamedSelf.F(x: Self, y: r#Self) {}
 // CHECK:STDOUT:     import Core//prelude/...
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.Destroy: type = import_ref Core//prelude/parts/destroy, Destroy, loaded [concrete = constants.%Destroy.type]
-// CHECK:STDOUT:   %Core.import_ref.0b9: @impl.%Op.type (%Op.type.bc9) = import_ref Core//prelude/parts/destroy, loc8_23, loaded [symbolic = @impl.%Op (constants.%Op.46f)]
+// CHECK:STDOUT:   %Core.import_ref.0b9: @impl.%Op.type (%Op.type.bc9) = import_ref Core//prelude/parts/destroy, loc8_29, loaded [symbolic = @impl.%Op (constants.%Op.46f)]
 // CHECK:STDOUT:   %Destroy.impl_witness_table = impl_witness_table (%Core.import_ref.0b9), @impl [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -144,7 +145,7 @@ fn MemberNamedSelf.F(x: Self, y: r#Self) {}
 // CHECK:STDOUT:     %Self.var_patt: %pattern_type.796 = var_pattern %Self.patt [concrete]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Self.var: ref %ptr.e71 = var %Self.var_patt
-// CHECK:STDOUT:   %.loc17_21: type = splice_block %ptr.loc17 [concrete = constants.%ptr.e71] {
+// CHECK:STDOUT:   %.loc17: type = splice_block %ptr.loc17 [concrete = constants.%ptr.e71] {
 // CHECK:STDOUT:     %Self.ref.loc17: type = name_ref Self, constants.%Class [concrete = constants.%Class]
 // CHECK:STDOUT:     %ptr.loc17: type = ptr_type %Self.ref.loc17 [concrete = constants.%ptr.e71]
 // CHECK:STDOUT:   }
@@ -166,14 +167,14 @@ fn MemberNamedSelf.F(x: Self, y: r#Self) {}
 // CHECK:STDOUT:   %bound_method.loc18_5.1: <bound method> = bound_method %p.var, %impl.elem0.loc18
 // CHECK:STDOUT:   %specific_fn.loc18: <specific function> = specific_function %impl.elem0.loc18, @Op.2(constants.%ptr.e71) [concrete = constants.%Op.specific_fn]
 // CHECK:STDOUT:   %bound_method.loc18_5.2: <bound method> = bound_method %p.var, %specific_fn.loc18
-// CHECK:STDOUT:   %.loc18_5: %ptr.e71 = bind_value %p.var
-// CHECK:STDOUT:   %no_op.loc18: init %empty_tuple.type = call %bound_method.loc18_5.2(%.loc18_5)
+// CHECK:STDOUT:   %addr.loc18: %ptr.0dd = addr_of %p.var
+// CHECK:STDOUT:   %no_op.loc18: init %empty_tuple.type = call %bound_method.loc18_5.2(%addr.loc18)
 // CHECK:STDOUT:   %impl.elem0.loc17: %.9cd = impl_witness_access constants.%Destroy.impl_witness.a50, element0 [concrete = constants.%Op.5a3]
 // CHECK:STDOUT:   %bound_method.loc17_5.1: <bound method> = bound_method %Self.var, %impl.elem0.loc17
 // CHECK:STDOUT:   %specific_fn.loc17: <specific function> = specific_function %impl.elem0.loc17, @Op.2(constants.%ptr.e71) [concrete = constants.%Op.specific_fn]
 // CHECK:STDOUT:   %bound_method.loc17_5.2: <bound method> = bound_method %Self.var, %specific_fn.loc17
-// CHECK:STDOUT:   %.loc17_5: %ptr.e71 = bind_value %Self.var
-// CHECK:STDOUT:   %no_op.loc17: init %empty_tuple.type = call %bound_method.loc17_5.2(%.loc17_5)
+// CHECK:STDOUT:   %addr.loc17: %ptr.0dd = addr_of %Self.var
+// CHECK:STDOUT:   %no_op.loc17: init %empty_tuple.type = call %bound_method.loc17_5.2(%addr.loc17)
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

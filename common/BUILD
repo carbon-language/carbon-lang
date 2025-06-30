@@ -476,6 +476,7 @@ cc_library(
         "@abseil-cpp//absl/base:no_destructor",
         "@abseil-cpp//absl/hash",
         "@abseil-cpp//absl/random",
+        "@boost_unordered",
         "@google_benchmark//:benchmark",
         "@llvm-project//llvm:Support",
     ],
