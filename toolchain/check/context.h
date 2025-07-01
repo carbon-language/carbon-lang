@@ -28,11 +28,13 @@
 #include "toolchain/parse/node_ids.h"
 #include "toolchain/parse/tree.h"
 #include "toolchain/parse/tree_and_subtrees.h"
+#include "toolchain/sem_ir/facet_type_info.h"
 #include "toolchain/sem_ir/file.h"
 #include "toolchain/sem_ir/ids.h"
 #include "toolchain/sem_ir/import_ir.h"
 #include "toolchain/sem_ir/inst.h"
 #include "toolchain/sem_ir/name_scope.h"
+#include "toolchain/sem_ir/specific_interface.h"
 #include "toolchain/sem_ir/typed_insts.h"
 
 namespace Carbon::Check {
@@ -246,15 +248,14 @@ class Context {
   auto associated_constants() -> SemIR::AssociatedConstantStore& {
     return sem_ir().associated_constants();
   }
-  auto facet_types() -> CanonicalValueStore<SemIR::FacetTypeId>& {
+  auto facet_types() -> SemIR::FacetTypeInfoStore& {
     return sem_ir().facet_types();
   }
   auto identified_facet_types() -> SemIR::File::IdentifiedFacetTypeStore& {
     return sem_ir().identified_facet_types();
   }
   auto impls() -> SemIR::ImplStore& { return sem_ir().impls(); }
-  auto specific_interfaces()
-      -> CanonicalValueStore<SemIR::SpecificInterfaceId>& {
+  auto specific_interfaces() -> SemIR::SpecificInterfaceStore& {
     return sem_ir().specific_interfaces();
   }
   auto generics() -> SemIR::GenericStore& { return sem_ir().generics(); }

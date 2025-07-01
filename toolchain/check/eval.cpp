@@ -24,6 +24,7 @@
 #include "toolchain/diagnostics/format_providers.h"
 #include "toolchain/sem_ir/builtin_function_kind.h"
 #include "toolchain/sem_ir/constant.h"
+#include "toolchain/sem_ir/facet_type_info.h"
 #include "toolchain/sem_ir/function.h"
 #include "toolchain/sem_ir/generic.h"
 #include "toolchain/sem_ir/id_kind.h"
@@ -175,11 +176,10 @@ class EvalContext {
   auto interfaces() -> const SemIR::InterfaceStore& {
     return sem_ir().interfaces();
   }
-  auto specific_interfaces()
-      -> CanonicalValueStore<SemIR::SpecificInterfaceId>& {
+  auto specific_interfaces() -> SemIR::SpecificInterfaceStore& {
     return sem_ir().specific_interfaces();
   }
-  auto facet_types() -> CanonicalValueStore<SemIR::FacetTypeId>& {
+  auto facet_types() -> SemIR::FacetTypeInfoStore& {
     return sem_ir().facet_types();
   }
   auto generics() -> const SemIR::GenericStore& { return sem_ir().generics(); }

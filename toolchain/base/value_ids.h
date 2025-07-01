@@ -7,7 +7,6 @@
 
 #include "common/check.h"
 #include "common/ostream.h"
-#include "llvm/ADT/APFloat.h"
 #include "llvm/ADT/APInt.h"
 #include "llvm/ADT/StringExtras.h"
 #include "llvm/Support/YAMLParser.h"
@@ -45,7 +44,6 @@ struct Real : public Printable<Real> {
 // floating-point values in SemIR.
 struct FloatId : public IdBase<FloatId> {
   static constexpr llvm::StringLiteral Label = "float";
-  using ValueType = llvm::APFloat;
   static const FloatId None;
   using IdBase::IdBase;
 };
@@ -65,7 +63,6 @@ constexpr RealId RealId::None(RealId::NoneIndex);
 // non-negative.
 struct IdentifierId : public IdBase<IdentifierId> {
   static constexpr llvm::StringLiteral Label = "identifier";
-  using ValueType = llvm::StringRef;
   static const IdentifierId None;
   using IdBase::IdBase;
 };
@@ -111,7 +108,6 @@ constexpr PackageNameId PackageNameId::Core(PackageNameId::NoneIndex - 1);
 // Corresponds to StringRefs for string literals.
 struct StringLiteralValueId : public IdBase<StringLiteralValueId> {
   static constexpr llvm::StringLiteral Label = "string";
-  using ValueType = llvm::StringRef;
   static const StringLiteralValueId None;
   using IdBase::IdBase;
 };

@@ -32,6 +32,7 @@ cc_library(
         "inst_categories.h",
         "inst_kind.h",
         "singleton_insts.h",
+        "specific_interface.h",
         "typed_insts.h",
     ],
     textual_hdrs = ["inst_kind.def"],
@@ -40,6 +41,7 @@ cc_library(
         "//common:enum_base",
         "//common:ostream",
         "//common:type_enum",
+        "//toolchain/base:canonical_value_store",
         "//toolchain/base:index_base",
         "//toolchain/base:int",
         "//toolchain/base:value_ids",
@@ -67,6 +69,7 @@ cc_library(
         ":typed_insts",
         "//common:hashtable_key_context",
         "//common:ostream",
+        "//toolchain/base:canonical_value_store",
         "@llvm-project//clang:ast",
     ],
 )

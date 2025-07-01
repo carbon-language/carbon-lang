@@ -34,6 +34,7 @@
 #include "toolchain/sem_ir/name.h"
 #include "toolchain/sem_ir/name_scope.h"
 #include "toolchain/sem_ir/singleton_insts.h"
+#include "toolchain/sem_ir/specific_interface.h"
 #include "toolchain/sem_ir/struct_type_field.h"
 #include "toolchain/sem_ir/type.h"
 #include "toolchain/sem_ir/type_info.h"
@@ -162,12 +163,8 @@ class File : public Printable<File> {
     return associated_constants_;
   }
   // TODO: Rename these to `facet_type_infos`.
-  auto facet_types() -> CanonicalValueStore<FacetTypeId>& {
-    return facet_types_;
-  }
-  auto facet_types() const -> const CanonicalValueStore<FacetTypeId>& {
-    return facet_types_;
-  }
+  auto facet_types() -> FacetTypeInfoStore& { return facet_types_; }
+  auto facet_types() const -> const FacetTypeInfoStore& { return facet_types_; }
   auto identified_facet_types() -> IdentifiedFacetTypeStore& {
     return identified_facet_types_;
   }
@@ -176,11 +173,10 @@ class File : public Printable<File> {
   }
   auto impls() -> ImplStore& { return impls_; }
   auto impls() const -> const ImplStore& { return impls_; }
-  auto specific_interfaces() -> CanonicalValueStore<SpecificInterfaceId>& {
+  auto specific_interfaces() -> SpecificInterfaceStore& {
     return specific_interfaces_;
   }
-  auto specific_interfaces() const
-      -> const CanonicalValueStore<SpecificInterfaceId>& {
+  auto specific_interfaces() const -> const SpecificInterfaceStore& {
     return specific_interfaces_;
   }
   auto generics() -> GenericStore& { return generics_; }
@@ -201,12 +197,8 @@ class File : public Printable<File> {
   // pointer in the constructor and remove this function. This is part of
   // https://github.com/carbon-language/carbon-lang/issues/4666
   auto set_cpp_ast(clang::ASTUnit* cpp_ast) -> void { cpp_ast_ = cpp_ast; }
-  auto clang_decls() -> CanonicalValueStore<ClangDeclId>& {
-    return clang_decls_;
-  }
-  auto clang_decls() const -> const CanonicalValueStore<ClangDeclId>& {
-    return clang_decls_;
-  }
+  auto clang_decls() -> ClangDeclStore& { return clang_decls_; }
+  auto clang_decls() const -> const ClangDeclStore& { return clang_decls_; }
   auto names() const -> NameStoreWrapper {
     return NameStoreWrapper(&identifiers());
   }
@@ -303,7 +295,7 @@ class File : public Printable<File> {
   AssociatedConstantStore associated_constants_;
 
   // Storage for facet types.
-  CanonicalValueStore<FacetTypeId> facet_types_;
+  FacetTypeInfoStore facet_types_;
 
   // Storage for identified facet types.
   IdentifiedFacetTypeStore identified_facet_types_;
@@ -313,7 +305,7 @@ class File : public Printable<File> {
 
   // Storage for specific interfaces, which are an individual unit of impl
   // lookup for a single interface.
-  CanonicalValueStore<SpecificInterfaceId> specific_interfaces_;
+  SpecificInterfaceStore specific_interfaces_;
 
   // Storage for generics.
   GenericStore generics_;
@@ -338,7 +330,7 @@ class File : public Printable<File> {
   // Clang AST declarations pointing to the AST and their mapped Carbon
   // instructions. When calling `Lookup()`, `inst_id` is ignored. `Add()` will
   // not add multiple entries with the same `decl` and different `inst_id`.
-  CanonicalValueStore<ClangDeclId> clang_decls_;
+  ClangDeclStore clang_decls_;
 
   // All instructions. The first entries will always be the singleton
   // instructions.

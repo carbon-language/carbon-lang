@@ -9,6 +9,7 @@
 #include "llvm/ADT/StringExtras.h"
 #include "toolchain/base/canonical_value_store.h"
 #include "toolchain/sem_ir/ids.h"
+#include "toolchain/sem_ir/specific_interface.h"
 
 namespace Carbon::SemIR {
 
@@ -85,6 +86,8 @@ struct FacetTypeInfo : Printable<FacetTypeInfo> {
 constexpr FacetTypeInfo::RewriteConstraint
     FacetTypeInfo::RewriteConstraint::None = {.lhs_id = InstId::None,
                                               .rhs_id = InstId::None};
+
+using FacetTypeInfoStore = CanonicalValueStore<FacetTypeId, FacetTypeInfo>;
 
 struct IdentifiedFacetType {
   using RequiredInterface = SpecificInterface;

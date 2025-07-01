@@ -7,6 +7,7 @@
 
 #include "common/hashtable_key_context.h"
 #include "common/ostream.h"
+#include "toolchain/base/canonical_value_store.h"
 #include "toolchain/sem_ir/ids.h"
 
 // NOLINTNEXTLINE(readability-identifier-naming)
@@ -73,13 +74,12 @@ struct ClangDecl : public Printable<ClangDecl> {
 struct ClangDeclId : public IdBase<ClangDeclId> {
   static constexpr llvm::StringLiteral Label = "clang_decl_id";
 
-  using ValueType = ClangDecl;
-
-  // Use the AST node pointer directly when doing `Lookup` to find an ID.
-  using KeyType = clang::Decl*;
-
   using IdBase::IdBase;
 };
+
+// Use the AST node pointer directly when doing `Lookup` to find an ID.
+using ClangDeclStore =
+    CanonicalValueStore<ClangDeclId, clang::Decl*, ClangDecl>;
 
 }  // namespace Carbon::SemIR
 

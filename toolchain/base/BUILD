@@ -29,6 +29,7 @@ cc_test(
         ":value_ids",
         "//testing/base:gtest_main",
         "@googletest//:gtest",
+        "@llvm-project//llvm:Support",
     ],
 )
 
@@ -230,6 +231,7 @@ cc_library(
         ":value_ids",
         ":value_store",
         ":yaml",
+        "@llvm-project//llvm:Support",
     ],
 )
 

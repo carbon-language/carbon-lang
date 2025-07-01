@@ -54,7 +54,6 @@ struct IntStoreTestPeer;
 class IntId : public Printable<IntId> {
  public:
   static constexpr llvm::StringLiteral Label = "int";
-  using ValueType = llvm::APInt;
 
   // The encoding of integer IDs ensures that IDs associated with tokens during
   // lexing can fit into a compressed storage space. We arrange for
@@ -362,7 +361,6 @@ class IntStore {
   // Used for `values_`; tracked using `IntId`'s index range.
   struct APIntId : IdBase<APIntId> {
     static constexpr llvm::StringLiteral Label = "ap_int";
-    using ValueType = llvm::APInt;
     static const APIntId None;
     using IdBase::IdBase;
   };
@@ -422,7 +420,7 @@ class IntStore {
   auto LookupSignedLarge(llvm::APInt value) const -> IntId;
 
   // Stores values which don't fit in an IntId. These are always signed.
-  CanonicalValueStore<APIntId> values_;
+  CanonicalValueStore<APIntId, llvm::APInt> values_;
 };
 
 constexpr IntStore::APIntId IntStore::APIntId::None(IntId::None.AsIndex());

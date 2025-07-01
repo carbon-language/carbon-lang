@@ -9,6 +9,8 @@
 
 #include <string>
 
+#include "llvm/ADT/APFloat.h"
+#include "llvm/ADT/StringRef.h"
 #include "toolchain/base/value_ids.h"
 
 namespace Carbon::Testing {
@@ -21,7 +23,7 @@ TEST(CanonicalValueStore, Float) {
   llvm::APFloat float1(1.0);
   llvm::APFloat float2(2.0);
 
-  CanonicalValueStore<FloatId> floats;
+  CanonicalValueStore<FloatId, llvm::APFloat> floats;
   FloatId id1 = floats.Add(float1);
   FloatId id2 = floats.Add(float2);
 
@@ -36,7 +38,7 @@ TEST(CanonicalValueStore, Float) {
 TEST(CanonicalValueStore, Identifiers) {
   std::string a = "a";
   std::string b = "b";
-  CanonicalValueStore<IdentifierId> identifiers;
+  CanonicalValueStore<IdentifierId, llvm::StringRef> identifiers;
 
   // Make sure reserve works, we use it with identifiers.
   identifiers.Reserve(100);
@@ -58,7 +60,7 @@ TEST(CanonicalValueStore, Identifiers) {
 TEST(CanonicalValueStore, StringLiterals) {
   std::string a = "a";
   std::string b = "b";
-  CanonicalValueStore<StringLiteralValueId> string_literals;
+  CanonicalValueStore<StringLiteralValueId, llvm::StringRef> string_literals;
 
   auto a_id = string_literals.Add(a);
   auto b_id = string_literals.Add(b);
