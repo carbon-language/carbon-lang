@@ -640,6 +640,9 @@ specialized constructs given the specialized nature of these operations.
 
 ### Reference types
 
+TODO: This section needs to be updated to reflect
+[proposal #5434](/proposals/p5434.md).
+
 Unlike C++, Carbon does not currently have reference types. The only form of
 indirect access are pointers. There are a few aspects to this decision that need
 to be separated carefully from each other as the motivations and considerations
@@ -883,8 +886,8 @@ keyword. It isn't final at all and likely will need to change to read well.
 The provided representation type must be one of the following:
 
 -   `const Self` -- this forces the use of a _copy_ of the object.
--   `const Self *` -- this forces the use of a [_pointer_](#pointers) to the
-    original object.
+-   `ref` -- this forces the use of a [_pointer_](#pointers) to the original
+    object.
 -   A custom type that is not `Self`, `const Self`, or a pointer to either.
 
 If the representation is `const Self` or `const Self *`, then the type fields
