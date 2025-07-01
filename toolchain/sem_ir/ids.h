@@ -20,7 +20,6 @@ namespace Carbon::SemIR {
 class File;
 struct FacetTypeInfo;
 struct SpecificInterface;
-struct StructTypeField;
 
 // The ID of an `Inst`.
 struct InstId : public IdBase<InstId> {
@@ -582,9 +581,6 @@ constexpr NameScopeId NameScopeId::Package = NameScopeId(0);
 // The ID of an instruction block.
 struct InstBlockId : public IdBase<InstBlockId> {
   static constexpr llvm::StringLiteral Label = "inst_block";
-  // Types for BlockValueStore<InstBlockId>.
-  using ElementType = InstId;
-  using ValueType = llvm::MutableArrayRef<ElementType>;
 
   // The canonical empty block, reused to avoid allocating empty vectors. Always
   // the 0-index block.
@@ -717,9 +713,6 @@ struct ExprRegionId : public IdBase<ExprRegionId> {
 // The ID of a struct type field block.
 struct StructTypeFieldsId : public IdBase<StructTypeFieldsId> {
   static constexpr llvm::StringLiteral Label = "struct_type_fields";
-  // Types for BlockValueStore<StructTypeFieldsId>.
-  using ElementType = StructTypeField;
-  using ValueType = llvm::MutableArrayRef<StructTypeField>;
 
   // The canonical empty block, reused to avoid allocating empty vectors. Always
   // the 0-index block.

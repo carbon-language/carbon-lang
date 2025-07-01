@@ -619,9 +619,9 @@ class InstStore {
 };
 
 // Adapts BlockValueStore for instruction blocks.
-class InstBlockStore : public BlockValueStore<InstBlockId> {
+class InstBlockStore : public BlockValueStore<InstBlockId, InstId> {
  public:
-  using BaseType = BlockValueStore<InstBlockId>;
+  using BaseType = BlockValueStore<InstBlockId, InstId>;
 
   explicit InstBlockStore(llvm::BumpPtrAllocator& allocator)
       : BaseType(allocator) {
@@ -642,7 +642,7 @@ class InstBlockStore : public BlockValueStore<InstBlockId> {
   // Reserves and returns a block ID. The contents of the block should be
   // specified by calling ReplacePlaceholder.
   auto AddPlaceholder() -> InstBlockId {
-    return values().Add(llvm::MutableArrayRef<ElementType>());
+    return values().Add(llvm::MutableArrayRef<InstId>());
   }
 
   // Sets the contents of a placeholder block to the given content.
