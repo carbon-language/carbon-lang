@@ -7,6 +7,7 @@
 
 #include "common/hashing.h"
 #include "llvm/ADT/StringExtras.h"
+#include "toolchain/base/canonical_value_store.h"
 #include "toolchain/sem_ir/ids.h"
 
 namespace Carbon::SemIR {

@@ -14,42 +14,17 @@
 #include "toolchain/diagnostics/diagnostic_emitter.h"
 #include "toolchain/parse/node_ids.h"
 
-// NOLINTNEXTLINE(readability-identifier-naming)
-namespace clang {
-
-// Forward declare indexed types, for integration with ValueStore.
-class SourceLocation;
-
-}  // namespace clang
-
 namespace Carbon::SemIR {
 
 // Forward declare indexed types, for integration with ValueStore.
 class File;
-class ImportIRInst;
-class Inst;
-class NameScope;
-struct AssociatedConstant;
-struct Class;
-struct EntityName;
-struct ExprRegion;
 struct FacetTypeInfo;
-struct Function;
-struct Generic;
-struct Specific;
 struct SpecificInterface;
-struct ImportCpp;
-struct ImportIR;
-struct Impl;
-struct Interface;
 struct StructTypeField;
-struct TypeInfo;
-struct Vtable;
 
 // The ID of an instruction.
 struct InstId : public IdBase<InstId> {
   static constexpr llvm::StringLiteral Label = "inst";
-  using ValueType = Inst;
 
   // The maximum ID, inclusive.
   static constexpr int Max = std::numeric_limits<int32_t>::max();
@@ -242,7 +217,6 @@ constexpr ConstantId ConstantId::NotConstant = ConstantId(NotConstantIndex);
 // The ID of a EntityName.
 struct EntityNameId : public IdBase<EntityNameId> {
   static constexpr llvm::StringLiteral Label = "entity_name";
-  using ValueType = EntityName;
 
   using IdBase::IdBase;
 };
@@ -270,7 +244,6 @@ struct CallParamIndex : public IndexBase<CallParamIndex> {
 // The ID of a function.
 struct FunctionId : public IdBase<FunctionId> {
   static constexpr llvm::StringLiteral Label = "function";
-  using ValueType = Function;
 
   using IdBase::IdBase;
 };
@@ -291,14 +264,12 @@ constexpr CheckIRId CheckIRId::Cpp = CheckIRId(NoneIndex - 1);
 // The ID of a class.
 struct ClassId : public IdBase<ClassId> {
   static constexpr llvm::StringLiteral Label = "class";
-  using ValueType = Class;
 
   using IdBase::IdBase;
 };
 
 struct VtableId : public IdBase<VtableId> {
   static constexpr llvm::StringLiteral Label = "vtable";
-  using ValueType = Vtable;
 
   using IdBase::IdBase;
 };
@@ -306,7 +277,6 @@ struct VtableId : public IdBase<VtableId> {
 // The ID of an interface.
 struct InterfaceId : public IdBase<InterfaceId> {
   static constexpr llvm::StringLiteral Label = "interface";
-  using ValueType = Interface;
 
   using IdBase::IdBase;
 };
@@ -314,7 +284,6 @@ struct InterfaceId : public IdBase<InterfaceId> {
 // The ID of an associated constant.
 struct AssociatedConstantId : public IdBase<AssociatedConstantId> {
   static constexpr llvm::StringLiteral Label = "assoc_const";
-  using ValueType = AssociatedConstant;
 
   using IdBase::IdBase;
 };
@@ -339,7 +308,6 @@ struct ImplId : public IdBase<ImplId> {
   using DiagnosticType = Diagnostics::TypeInfo<std::string>;
 
   static constexpr llvm::StringLiteral Label = "impl";
-  using ValueType = Impl;
 
   using IdBase::IdBase;
 };
@@ -347,7 +315,6 @@ struct ImplId : public IdBase<ImplId> {
 // The ID of a generic.
 struct GenericId : public IdBase<GenericId> {
   static constexpr llvm::StringLiteral Label = "generic";
-  using ValueType = Generic;
 
   using IdBase::IdBase;
 };
@@ -358,7 +325,6 @@ struct SpecificId : public IdBase<SpecificId> {
   using DiagnosticType = Diagnostics::TypeInfo<std::string>;
 
   static constexpr llvm::StringLiteral Label = "specific";
-  using ValueType = Specific;
 
   using IdBase::IdBase;
 };
@@ -425,7 +391,6 @@ constexpr GenericInstIndex GenericInstIndex::None =
 
 struct ImportCppId : public IdBase<ImportCppId> {
   static constexpr llvm::StringLiteral Label = "import_cpp";
-  using ValueType = ImportCpp;
 
   using IdBase::IdBase;
 };
@@ -433,7 +398,6 @@ struct ImportCppId : public IdBase<ImportCppId> {
 // The ID of an IR within the set of imported IRs, both direct and indirect.
 struct ImportIRId : public IdBase<ImportIRId> {
   static constexpr llvm::StringLiteral Label = "ir";
-  using ValueType = ImportIR;
 
   // The implicit `api` import, for an `impl` file. A null entry is added if
   // there is none, as in an `api`, in which case this ID should not show up in
@@ -603,7 +567,6 @@ constexpr int NameId::NonIndexValueCount =
 // The ID of a name scope.
 struct NameScopeId : public IdBase<NameScopeId> {
   static constexpr llvm::StringLiteral Label = "name_scope";
-  using ValueType = NameScope;
 
   // The package (or file) name scope, guaranteed to be the first added.
   static const NameScopeId Package;
@@ -743,7 +706,6 @@ class LabelId : public InstBlockId {
 // in the SemIR for expression patterns.
 struct ExprRegionId : public IdBase<ExprRegionId> {
   static constexpr llvm::StringLiteral Label = "region";
-  using ValueType = ExprRegion;
 
   using IdBase::IdBase;
 };
@@ -796,7 +758,6 @@ struct TypeId : public IdBase<TypeId> {
 // The ID of a Clang Source Location.
 struct ClangSourceLocId : public IdBase<ClangSourceLocId> {
   static constexpr llvm::StringLiteral Label = "clang_source_loc";
-  using ValueType = clang::SourceLocation;
 
   using IdBase::IdBase;
 };
@@ -838,7 +799,6 @@ constexpr LibraryNameId LibraryNameId::Error = LibraryNameId(NoneIndex - 2);
 // The ID of an ImportIRInst.
 struct ImportIRInstId : public IdBase<ImportIRInstId> {
   static constexpr llvm::StringLiteral Label = "import_ir_inst";
-  using ValueType = ImportIRInst;
 
   // The maximum ID, non-inclusive. This is constrained to fit inside LocId.
   static constexpr int Max =

@@ -5,6 +5,7 @@
 #ifndef CARBON_TOOLCHAIN_SEM_IR_CLASS_H_
 #define CARBON_TOOLCHAIN_SEM_IR_CLASS_H_
 
+#include "toolchain/base/value_store.h"
 #include "toolchain/sem_ir/entity_with_params_base.h"
 #include "toolchain/sem_ir/ids.h"
 
@@ -114,6 +115,8 @@ struct Class : public EntityWithParamsBase,
   // is not yet defined.
   auto GetObjectRepr(const File& file, SpecificId specific_id) const -> TypeId;
 };
+
+using ClassStore = ValueStore<ClassId, Class>;
 
 }  // namespace Carbon::SemIR
 

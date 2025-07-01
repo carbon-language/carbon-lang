@@ -5,6 +5,7 @@
 #ifndef CARBON_TOOLCHAIN_SEM_IR_VTABLE_H_
 #define CARBON_TOOLCHAIN_SEM_IR_VTABLE_H_
 
+#include "toolchain/base/value_store.h"
 #include "toolchain/sem_ir/ids.h"
 
 namespace Carbon::SemIR {
@@ -27,6 +28,8 @@ struct Vtable : public VtableFields, public Printable<Vtable> {
     out << "}}";
   }
 };
+
+using VtableStore = ValueStore<VtableId, Vtable>;
 
 }  // namespace Carbon::SemIR
 

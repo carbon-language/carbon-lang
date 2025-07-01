@@ -271,6 +271,7 @@ cc_library(
         "//common:vlog",
         "//toolchain/base:canonical_value_store",
         "//toolchain/base:index_base",
+        "//toolchain/base:shared_value_stores",
         "//toolchain/base:value_ids",
         "//toolchain/base:value_store",
         "//toolchain/sem_ir:file",

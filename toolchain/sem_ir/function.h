@@ -6,6 +6,7 @@
 #define CARBON_TOOLCHAIN_SEM_IR_FUNCTION_H_
 
 #include "clang/AST/Decl.h"
+#include "toolchain/base/value_store.h"
 #include "toolchain/sem_ir/builtin_function_kind.h"
 #include "toolchain/sem_ir/clang_decl.h"
 #include "toolchain/sem_ir/entity_with_params_base.h"
@@ -156,6 +157,8 @@ struct Function : public EntityWithParamsBase,
     special_function_kind_data = AnyRawId(decl_id.index);
   }
 };
+
+using FunctionStore = ValueStore<FunctionId, Function>;
 
 class File;
 

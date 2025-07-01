@@ -1552,7 +1552,7 @@ class Lexer::ErrorRecoveryBuffer {
 
   // Merge the recovery tokens into the token list of the tokenized buffer.
   auto Apply() -> void {
-    ValueStore<TokenIndex> old_tokens =
+    ValueStore<TokenIndex, TokenInfo> old_tokens =
         std::exchange(buffer_->token_infos_, {});
     int new_size = old_tokens.size() + new_tokens_.size();
     buffer_->token_infos_.Reserve(new_size);

@@ -7,6 +7,7 @@
 #define CARBON_TOOLCHAIN_CHECK_LEXICAL_LOOKUP_H_
 
 #include "toolchain/base/canonical_value_store.h"
+#include "toolchain/base/shared_value_stores.h"
 #include "toolchain/base/value_ids.h"
 #include "toolchain/check/scope_index.h"
 #include "toolchain/sem_ir/ids.h"
@@ -39,7 +40,7 @@ class LexicalLookup {
     SemIR::InstId inst_id;
   };
 
-  explicit LexicalLookup(const CanonicalValueStore<IdentifierId>& identifiers)
+  explicit LexicalLookup(const SharedValueStores::IdentifierStore& identifiers)
       : lookup_(identifiers.size() + SemIR::NameId::NonIndexValueCount) {}
 
   // Returns the lexical lookup results for a name.

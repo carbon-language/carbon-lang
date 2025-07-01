@@ -192,7 +192,8 @@ class ImplStore {
     mem_usage.Collect(MemUsage::ConcatLabel(label, "lookup_"), lookup_);
   }
 
-  auto values() const [[clang::lifetimebound]] -> ValueStore<ImplId>::Range {
+  auto values() const [[clang::lifetimebound]]
+  -> ValueStore<ImplId, Impl>::Range {
     return values_.values();
   }
   auto size() const -> size_t { return values_.size(); }
@@ -202,7 +203,7 @@ class ImplStore {
 
  private:
   File& sem_ir_;
-  ValueStore<ImplId> values_;
+  ValueStore<ImplId, Impl> values_;
   Map<std::tuple<InstId, InterfaceId, SpecificId>, ImplOrLookupBucketId>
       lookup_;
   // Buckets with at least 2 entries, which will be rare; see LookupBucketRef.

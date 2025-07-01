@@ -25,7 +25,7 @@ TEST(ValueStore, Real) {
              .exponent = llvm::APInt(64, 22),
              .is_decimal = false};
 
-  ValueStore<RealId> reals;
+  ValueStore<RealId, Real> reals;
   RealId id1 = reals.Add(real1);
   RealId id2 = reals.Add(real2);
 

@@ -149,21 +149,18 @@ The indices typically use `IdBase`.
     constant reference).
 -   Other vector-like functionality, including `size` or `Reserve`
 
-ValueStores should be named after the type they contain. The index type used on
-the value store should have a `using ValueType...` which indicates the stored
-type. When taking a return of one of these functions, it's common to use `auto`
-and rely on the name of the storage type to imply the returned type.
+Each `ValueStore` instance should be named after its value type. When taking a
+return of one of these functions, it's common to use `auto` and rely on the name
+of the storage type to imply the returned type.
 
 Some name mirroring examples are:
 
--   `ints` is a `ValueStore<IntId>`, which has an index type of `IntId` and a
-    value type of `llvm::APInt`.
-
--   `functions` is a `ValueStore<SemIR::FunctionId>`, which has an index type of
-    `SemIR::FunctionId` and a value type of `SemIR::` `Function`.
-
--   `strings` is a `ValueStore<StringId>`, which has an index type of
-    `StringId`, but for copy-related reasons, uses `llvm::StringRef` for values.
+-   `ints` is a `ValueStore<IntId, llvm::APInt>`; values are integers.
+-   `functions` is a `ValueStore<SemIR::FunctionId, SemIR::Function>`; values
+    are functions.
+-   `string_literals` is a `ValueStore<StringLiteralValueId, llvm::StringRef>`;
+    values are string literals.
+    -   A reference is used in order to avoid string copies.
 
 There are also a number of wrappers around `ValueStore` that provide some
 additional functionality and which are named with the `Store` suffix, such as

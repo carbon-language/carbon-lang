@@ -239,15 +239,11 @@ class Context {
   auto entity_names() -> SemIR::EntityNameStore& {
     return sem_ir().entity_names();
   }
-  auto functions() -> ValueStore<SemIR::FunctionId>& {
-    return sem_ir().functions();
-  }
-  auto classes() -> ValueStore<SemIR::ClassId>& { return sem_ir().classes(); }
-  auto vtables() -> ValueStore<SemIR::VtableId>& { return sem_ir().vtables(); }
-  auto interfaces() -> ValueStore<SemIR::InterfaceId>& {
-    return sem_ir().interfaces();
-  }
-  auto associated_constants() -> ValueStore<SemIR::AssociatedConstantId>& {
+  auto functions() -> SemIR::FunctionStore& { return sem_ir().functions(); }
+  auto classes() -> SemIR::ClassStore& { return sem_ir().classes(); }
+  auto vtables() -> SemIR::VtableStore& { return sem_ir().vtables(); }
+  auto interfaces() -> SemIR::InterfaceStore& { return sem_ir().interfaces(); }
+  auto associated_constants() -> SemIR::AssociatedConstantStore& {
     return sem_ir().associated_constants();
   }
   auto facet_types() -> CanonicalValueStore<SemIR::FacetTypeId>& {
@@ -263,10 +259,8 @@ class Context {
   }
   auto generics() -> SemIR::GenericStore& { return sem_ir().generics(); }
   auto specifics() -> SemIR::SpecificStore& { return sem_ir().specifics(); }
-  auto import_irs() -> ValueStore<SemIR::ImportIRId>& {
-    return sem_ir().import_irs();
-  }
-  auto import_ir_insts() -> ValueStore<SemIR::ImportIRInstId>& {
+  auto import_irs() -> SemIR::ImportIRStore& { return sem_ir().import_irs(); }
+  auto import_ir_insts() -> SemIR::ImportIRInstStore& {
     return sem_ir().import_ir_insts();
   }
   auto ast_context() -> clang::ASTContext& {

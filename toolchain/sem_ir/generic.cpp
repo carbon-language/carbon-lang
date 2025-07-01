@@ -19,7 +19,7 @@ class SpecificStore::KeyContext : public TranslatingKeyContext<KeyContext> {
     friend auto operator==(const Key&, const Key&) -> bool = default;
   };
 
-  explicit KeyContext(const ValueStore<SpecificId>* specifics)
+  explicit KeyContext(const ValueStore<SpecificId, Specific>* specifics)
       : specifics_(specifics) {}
 
   auto TranslateKey(SpecificId id) const -> Key {
@@ -28,7 +28,7 @@ class SpecificStore::KeyContext : public TranslatingKeyContext<KeyContext> {
   }
 
  private:
-  const ValueStore<SpecificId>* specifics_;
+  const ValueStore<SpecificId, Specific>* specifics_;
 };
 
 auto SpecificStore::GetOrAdd(GenericId generic_id, InstBlockId args_id)

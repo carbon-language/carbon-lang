@@ -168,13 +168,11 @@ class EvalContext {
   auto entity_names() -> SemIR::EntityNameStore& {
     return sem_ir().entity_names();
   }
-  auto functions() -> const ValueStore<SemIR::FunctionId>& {
+  auto functions() -> const SemIR::FunctionStore& {
     return sem_ir().functions();
   }
-  auto classes() -> const ValueStore<SemIR::ClassId>& {
-    return sem_ir().classes();
-  }
-  auto interfaces() -> const ValueStore<SemIR::InterfaceId>& {
+  auto classes() -> const SemIR::ClassStore& { return sem_ir().classes(); }
+  auto interfaces() -> const SemIR::InterfaceStore& {
     return sem_ir().interfaces();
   }
   auto specific_interfaces()

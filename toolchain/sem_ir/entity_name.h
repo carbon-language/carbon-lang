@@ -56,7 +56,7 @@ struct EntityName : public Printable<EntityName> {
 
 // Value store for EntityName. In addition to the regular ValueStore
 // functionality, this can provide optional canonical IDs for EntityNames.
-struct EntityNameStore : public ValueStore<EntityNameId> {
+struct EntityNameStore : public ValueStore<EntityNameId, EntityName> {
  public:
   // Adds an entity name for a symbolic binding.
   auto AddSymbolicBindingName(NameId name_id, NameScopeId parent_scope_id,

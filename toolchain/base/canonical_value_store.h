@@ -48,7 +48,8 @@ class CanonicalValueStore {
     return values_.OutputYaml();
   }
 
-  auto values() const [[clang::lifetimebound]] -> ValueStore<IdT>::Range {
+  auto values() const [[clang::lifetimebound]]
+  -> ValueStore<IdT, ValueType>::Range {
     return values_.values();
   }
   auto size() const -> size_t { return values_.size(); }
@@ -64,7 +65,7 @@ class CanonicalValueStore {
  private:
   class KeyContext;
 
-  ValueStore<IdT> values_;
+  ValueStore<IdT, ValueType> values_;
   Set<IdT, /*SmallSize=*/0, KeyContext> set_;
 };
 
@@ -72,16 +73,15 @@ template <typename IdT>
 class CanonicalValueStore<IdT>::KeyContext
     : public TranslatingKeyContext<KeyContext> {
  public:
-  explicit KeyContext(const ValueStore<IdT>* values) : values_(values) {}
+  explicit KeyContext(const ValueStore<IdT, ValueType>* values)
+      : values_(values) {}
 
   // Note that it is safe to return a `const` reference here as the underlying
   // object's lifetime is provided by the `ValueStore`.
-  auto TranslateKey(IdT id) const -> ValueStore<IdT>::ConstRefType {
-    return values_->Get(id);
-  }
+  auto TranslateKey(IdT id) const -> ConstRefType { return values_->Get(id); }
 
  private:
-  const ValueStore<IdT>* values_;
+  const ValueStore<IdT, ValueType>* values_;
 };
 
 template <typename IdT>

@@ -54,7 +54,6 @@ constexpr FloatId FloatId::None(FloatId::NoneIndex);
 // Corresponds to a Real value.
 struct RealId : public IdBase<RealId> {
   static constexpr llvm::StringLiteral Label = "real";
-  using ValueType = Real;
   static const RealId None;
   using IdBase::IdBase;
 };

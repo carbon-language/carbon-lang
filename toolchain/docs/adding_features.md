@@ -274,7 +274,7 @@ If the resulting SemIR needs a new instruction:
 
         // 0-2 id fields, with types from sem_ir/ids.h or
         // sem_ir/builtin_kind.h. For example, fields would look like:
-        StringId name_id;
+        NameId name_id;
         InstId value_id;
     };
     ```

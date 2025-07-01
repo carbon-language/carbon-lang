@@ -5,7 +5,7 @@
 #ifndef CARBON_TOOLCHAIN_SEM_IR_NAME_H_
 #define CARBON_TOOLCHAIN_SEM_IR_NAME_H_
 
-#include "toolchain/base/canonical_value_store.h"
+#include "toolchain/base/shared_value_stores.h"
 #include "toolchain/base/value_ids.h"
 #include "toolchain/sem_ir/ids.h"
 
@@ -26,7 +26,7 @@ namespace Carbon::SemIR {
 class NameStoreWrapper {
  public:
   explicit NameStoreWrapper(
-      const CanonicalValueStore<IdentifierId>* identifiers)
+      const SharedValueStores::IdentifierStore* identifiers)
       : identifiers_(identifiers) {}
 
   // Returns the requested name as a string, if it is an identifier name. This
@@ -51,7 +51,7 @@ class NameStoreWrapper {
   auto GetIRBaseName(NameId name_id) const -> llvm::StringRef;
 
  private:
-  const CanonicalValueStore<IdentifierId>* identifiers_;
+  const SharedValueStores::IdentifierStore* identifiers_;
 };
 
 }  // namespace Carbon::SemIR

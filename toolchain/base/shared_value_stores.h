@@ -20,7 +20,7 @@ class SharedValueStores : public Yaml::Printable<SharedValueStores> {
  public:
   // Provide types that can be used by APIs to forward access to these stores.
   using IntStore = IntStore;
-  using RealStore = ValueStore<RealId>;
+  using RealStore = ValueStore<RealId, Real>;
   using FloatStore = CanonicalValueStore<FloatId>;
   using IdentifierStore = CanonicalValueStore<IdentifierId>;
   using StringLiteralStore = CanonicalValueStore<StringLiteralValueId>;

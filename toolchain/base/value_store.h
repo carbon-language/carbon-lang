@@ -33,20 +33,16 @@ class ValueStoreNotPrintable {};
 
 // A simple wrapper for accumulating values, providing IDs to later retrieve the
 // value. This does not do deduplication.
-//
-// IdT::ValueType must represent the type being indexed.
-template <typename IdT>
-  requires(requires { typename IdT::ValueType; })
+template <typename IdT, typename ValueT>
 class ValueStore
-    : public std::conditional<
-          std::is_base_of_v<Printable<typename IdT::ValueType>,
-                            typename IdT::ValueType>,
-          Yaml::Printable<ValueStore<IdT>>, Internal::ValueStoreNotPrintable> {
+    : public std::conditional<std::is_base_of_v<Printable<ValueT>, ValueT>,
+                              Yaml::Printable<ValueStore<IdT, ValueT>>,
+                              Internal::ValueStoreNotPrintable> {
  public:
   using IdType = IdT;
-  using ValueType = ValueStoreTypes<IdT>::ValueType;
-  using RefType = ValueStoreTypes<IdT>::RefType;
-  using ConstRefType = ValueStoreTypes<IdT>::ConstRefType;
+  using ValueType = ValueStoreTypes<IdT, ValueT>::ValueType;
+  using RefType = ValueStoreTypes<IdT, ValueT>::RefType;
+  using ConstRefType = ValueStoreTypes<IdT, ValueT>::ConstRefType;
 
   // A range over references to the values in a ValueStore, returned from
   // `ValueStore::values()`. Hides the complex type name of the iterator
@@ -68,7 +64,7 @@ class ValueStore
       // can use llvm::seq to walk all indices in the store.
       return llvm::map_range(
           llvm::seq(store.size_),
-          [&](int32_t i) -> ConstRefType { return store.Get(IdT(i)); });
+          [&](int32_t i) -> ConstRefType { return store.Get(IdType(i)); });
     }
 
     using FlattenedRangeType =
@@ -79,13 +75,13 @@ class ValueStore
   ValueStore() = default;
 
   // Stores the value and returns an ID to reference it.
-  auto Add(ValueType value) -> IdT {
+  auto Add(ValueType value) -> IdType {
     // This routine is especially hot and the check here relatively expensive
     // for the value provided, so only do this in non-optimized builds to make
     // tracking down issues easier.
     CARBON_DCHECK(size_ < std::numeric_limits<int32_t>::max(), "Id overflow");
 
-    IdT id(size_);
+    IdType id(size_);
     auto [chunk_index, pos] = IdToChunkIndices(id);
     ++size_;
 
@@ -101,7 +97,7 @@ class ValueStore
   }
 
   // Returns a mutable value for an ID.
-  auto Get(IdT id) -> RefType {
+  auto Get(IdType id) -> RefType {
     CARBON_DCHECK(id.index >= 0, "{0}", id);
     CARBON_DCHECK(id.index < size_, "{0}", id);
     auto [chunk_index, pos] = IdToChunkIndices(id);
@@ -109,7 +105,7 @@ class ValueStore
   }
 
   // Returns the value for an ID.
-  auto Get(IdT id) const -> ConstRefType {
+  auto Get(IdType id) const -> ConstRefType {
     CARBON_DCHECK(id.index >= 0, "{0}", id);
     CARBON_DCHECK(id.index < size_, "{0}", id);
     auto [chunk_index, pos] = IdToChunkIndices(id);
@@ -163,8 +159,8 @@ class ValueStore
     // For `it->val`, writing `const std::pair` is required; otherwise
     // `mapped_iterator` incorrectly infers the pointer type for `PointerProxy`.
     // NOLINTNEXTLINE(readability-const-return-type)
-    auto index_to_id = [&](int32_t i) -> const std::pair<IdT, ConstRefType> {
-      return std::pair<IdT, ConstRefType>(IdT(i), Get(IdT(i)));
+    auto index_to_id = [&](int32_t i) -> const std::pair<IdType, ConstRefType> {
+      return std::pair<IdType, ConstRefType>(IdType(i), Get(IdType(i)));
     };
     // Because indices into `ValueStore` are all sequential values from 0, we
     // can use llvm::seq to walk all indices in the store.
@@ -277,7 +273,7 @@ class ValueStore
 
   // Converts an id into an index into the set of chunks, and an offset into
   // that specific chunk. Looks for index overflow in non-optimized builds.
-  static auto IdToChunkIndices(IdT id) -> std::pair<int32_t, int32_t> {
+  static auto IdToChunkIndices(IdType id) -> std::pair<int32_t, int32_t> {
     constexpr auto LowBits = Chunk::IndexBits();
 
     // Verify there are no unused bits when indexing up to the `Capacity`. This

@@ -134,13 +134,13 @@ class BlockValueStore : public Yaml::Printable<BlockValueStore<IdT>> {
   }
 
   // Allow children to have more complex value handling.
-  auto values() -> ValueStore<IdT>& { return values_; }
+  auto values() -> ValueStore<IdT, typename IdT::ValueType>& { return values_; }
 
  private:
   class KeyContext;
 
   llvm::BumpPtrAllocator* allocator_;
-  ValueStore<IdT> values_;
+  ValueStore<IdT, typename IdT::ValueType> values_;
   Set<IdT, /*SmallSize=*/0, KeyContext> canonical_blocks_;
 };
 

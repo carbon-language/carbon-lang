@@ -26,8 +26,6 @@ class TokenInfo;
 //
 // All other APIs to query a `TokenIndex` are on the `TokenizedBuffer`.
 struct TokenIndex : public IndexBase<TokenIndex> {
-  using ValueType = TokenInfo;
-
   // The number of bits which must be allotted for `TokenIndex`.
   static constexpr int Bits = 23;
   // The maximum number of tokens that can be stored, including the FileStart

@@ -53,7 +53,7 @@ struct Generic : public Printable<Generic> {
 };
 
 // Provides storage for generics.
-class GenericStore : public ValueStore<GenericId> {
+class GenericStore : public ValueStore<GenericId, Generic> {
  public:
   // Get the self specific for a generic, or `None` if the `id` is `None`.
   auto GetSelfSpecific(GenericId id) const -> SpecificId {
@@ -139,7 +139,7 @@ class SpecificStore : public Yaml::Printable<SpecificStore> {
       -> void;
 
   auto values() const [[clang::lifetimebound]]
-  -> ValueStore<SpecificId>::Range {
+  -> ValueStore<SpecificId, Specific>::Range {
     return specifics_.values();
   }
   auto size() const -> size_t { return specifics_.size(); }
@@ -151,7 +151,7 @@ class SpecificStore : public Yaml::Printable<SpecificStore> {
   // Context for hashing keys.
   class KeyContext;
 
-  ValueStore<SpecificId> specifics_;
+  ValueStore<SpecificId, Specific> specifics_;
   Carbon::Set<SpecificId, 0, KeyContext> lookup_table_;
 };
 

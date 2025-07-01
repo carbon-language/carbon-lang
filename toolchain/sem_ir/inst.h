@@ -592,7 +592,8 @@ class InstStore {
     mem_usage.Collect(MemUsage::ConcatLabel(label, "values_"), values_);
   }
 
-  auto values() const [[clang::lifetimebound]] -> ValueStore<InstId>::Range {
+  auto values() const [[clang::lifetimebound]]
+  -> ValueStore<InstId, Inst>::Range {
     return values_.values();
   }
   auto size() const -> int { return values_.size(); }
@@ -614,7 +615,7 @@ class InstStore {
 
   File* file_;
   llvm::SmallVector<LocId> loc_ids_;
-  ValueStore<InstId> values_;
+  ValueStore<InstId, Inst> values_;
 };
 
 // Adapts BlockValueStore for instruction blocks.
