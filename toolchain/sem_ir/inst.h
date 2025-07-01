@@ -592,7 +592,7 @@ class InstStore {
     mem_usage.Collect(MemUsage::ConcatLabel(label, "values_"), values_);
   }
 
-  auto values() const [[clang::lifetimebound]] -> ValueStoreRange<InstId> {
+  auto values() const [[clang::lifetimebound]] -> ValueStore<InstId>::Range {
     return values_.values();
   }
   auto size() const -> int { return values_.size(); }

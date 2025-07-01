@@ -48,7 +48,7 @@ class CanonicalValueStore {
     return values_.OutputYaml();
   }
 
-  auto values() const [[clang::lifetimebound]] -> ValueStoreRange<IdT> {
+  auto values() const [[clang::lifetimebound]] -> ValueStore<IdT>::Range {
     return values_.values();
   }
   auto size() const -> size_t { return values_.size(); }

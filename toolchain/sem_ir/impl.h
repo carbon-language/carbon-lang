@@ -192,7 +192,7 @@ class ImplStore {
     mem_usage.Collect(MemUsage::ConcatLabel(label, "lookup_"), lookup_);
   }
 
-  auto values() const [[clang::lifetimebound]] -> ValueStoreRange<ImplId> {
+  auto values() const [[clang::lifetimebound]] -> ValueStore<ImplId>::Range {
     return values_.values();
   }
   auto size() const -> size_t { return values_.size(); }

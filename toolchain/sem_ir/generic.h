@@ -138,7 +138,8 @@ class SpecificStore : public Yaml::Printable<SpecificStore> {
   auto CollectMemUsage(MemUsage& mem_usage, llvm::StringRef label) const
       -> void;
 
-  auto values() const [[clang::lifetimebound]] -> ValueStoreRange<SpecificId> {
+  auto values() const [[clang::lifetimebound]]
+  -> ValueStore<SpecificId>::Range {
     return specifics_.values();
   }
   auto size() const -> size_t { return specifics_.size(); }

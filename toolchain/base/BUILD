@@ -124,10 +124,7 @@ cc_library(
 
 cc_library(
     name = "value_store",
-    hdrs = [
-        "value_store.h",
-        "value_store_chunk.h",
-    ],
+    hdrs = ["value_store.h"],
     deps = [
         ":mem_usage",
         ":value_store_types",
