@@ -2,7 +2,7 @@
 # Exceptions. See /LICENSE for license information.
 # SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
-name: 'Clang Tidy'
+name: 'Clang Tidy (clangd)'
 
 on:
   push:
@@ -48,33 +48,35 @@ jobs:
 
       - uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4.1.1
 
-      - id: test-setup
-        uses: ./.github/actions/test-setup
+      - id: filter
+        uses: dorny/paths-filter@de90cc6fb38fc0963ad72b210f1f284cd68cea36 # v3.0.2
+        with:
+          filters: |
+            has_cpp_files:
+              - '{**/*.cpp,**/*.h}'
+
+      - uses: ./.github/actions/build-setup-common
+        if: steps.filter.outputs.has_cpp_files == 'true'
         with:
           matrix_runner: 'ubuntu-22.04'
-          base_sha:
+          remote_cache_upload: '--remote_upload_local_results=false'
+
+      - name: Create compile commands
+        if: steps.filter.outputs.has_cpp_files == 'true'
+        run: ./scripts/create_compdb.py
+
+      - name: Install clangd-tidy
+        if: steps.filter.outputs.has_cpp_files == 'true'
+        run: pip install clangd-tidy==1.1.0.post2
+
+      - name: Run clangd-tidy
+        if: steps.filter.outputs.has_cpp_files == 'true'
+        env:
+          TARGETS_FILE: ${{ runner.temp }}/targets
+          GIT_BASE_SHA:
             ${{ github.event_name == 'pull_request' &&
             github.event.pull_request.base.sha ||
             github.event.merge_group.base_sha }}
-          remote_cache_key: ${{ secrets.CARBON_BUILDS_GITHUB }}
-          targets_file: ${{ runner.temp }}/targets
-          use_direct_targets: true
-
-      # Run in the clang-tidy config. This is done as part of tests so that we
-      # aren't duplicating bazel/llvm setup.
-      #
-      # The `-k` flag is used to print all clang-tidy errors.
-      - name: clang-tidy
-        if: steps.test-setup.outputs.has_code == 'true'
-        env:
-          TARGETS_FILE: ${{ runner.temp }}/targets
         run: |
-          ./scripts/run_bazel.py \
-              --attempts=5 \
-              build --config=clang-tidy -k \
-              --target_pattern_file=$TARGETS_FILE
-
-      # See "Disk space before build" in `test-setup`.
-      - name: Disk space after build
-        if: steps.test-setup.outputs.has_code == 'true'
-        run: df -h
+          clangd-tidy -p . $(git diff --name-only --diff-filter=d \
+                               $GIT_BASE_SHA -- '**/*.cpp' '**/*.h')
