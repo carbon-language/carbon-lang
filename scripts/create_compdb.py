@@ -61,10 +61,9 @@ def _build_generated_files(bazel: str, logtostderr: bool) -> None:
     subprocess.check_call(
         [bazel, "build", "--keep_going"] + generated_file_labels
     )
-    subprocess.check_call(["ls", "bazel-out/"])
-    subprocess.check_call(["ls", "bazel-out/k8-fastbuild/"])
-    subprocess.check_call(["ls", "bazel-out/k8-fastbuild/bin/"])
-    subprocess.check_call(["ls", "bazel-out/k8-fastbuild/bin/common/"])
+    subprocess.check_call(
+        [bazel, "build", "--keep_going", "//common:version.cpp"]
+    )
     subprocess.check_call(["ls", "bazel-out/k8-fastbuild/bin/common/version.cpp"])
 
 
