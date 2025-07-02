@@ -56,7 +56,7 @@ jobs:
               - '{**/*.cpp,**/*.h}'
 
       - uses: ./.github/actions/build-setup-common
-        if: steps.filter.outputs.has_code == 'true'
+        if: steps.filter.outputs.has_cpp_files == 'true'
         with:
           matrix_runner: 'ubuntu-22.04'
           remote_cache_upload: '--remote_upload_local_results=false'
