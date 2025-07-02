@@ -17,7 +17,7 @@ namespace Carbon {
 // A wrapper for accumulating immutable values with deduplication, providing IDs
 // to later retrieve the value.
 //
-// `ValueT` must represent the type being indexed.
+// `ValueT` represents the type being stored.
 //
 // `KeyT` can optionally be different from `ValueT`, and if so is used for the
 // argument to `Lookup`. It must be valid to use both `KeyT` and `ValueT` as
