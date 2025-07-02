@@ -37,9 +37,10 @@ def _build_generated_files(bazel: str, logtostderr: bool) -> None:
     kinds_query = (
         "filter("
         ' ".*\\.(h|cpp|cc|c|cxx|def|inc)$",'
+        ' kind("(generated file|manifest_as_cpp)",'
         # tree_sitter is excluded here because it causes the query to failure on
         # `@platforms`.
-        ' kind("generated file", deps(//... except //utils/tree_sitter/...))'
+        '      deps(//... except //utils/tree_sitter/...))'
         ")"
     )
     log_to = None
@@ -50,6 +51,8 @@ def _build_generated_files(bazel: str, logtostderr: bool) -> None:
         stderr=log_to,
         encoding="utf-8",
     ).splitlines()
+    for x in generated_file_labels:
+      print(x)
     print(f"Found {len(generated_file_labels)} generated files...")
 
     # Directly build these labels so that indexing can find them. Allow this to
