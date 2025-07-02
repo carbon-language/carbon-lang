@@ -51,43 +51,38 @@ jobs:
       - id: filter
         uses: dorny/paths-filter@de90cc6fb38fc0963ad72b210f1f284cd68cea36 # v3.0.2
         with:
+          base: ${{ github.event_name == 'pull_request' &&
+            github.event.pull_request.base.sha || (github.event_name == 'merge_group' &&
+            github.event.merge_group.base_sha || github.event.push.before ) }}
           filters: |
-            has_cpp_files:
+            has_cpp:
               - '{**/*.cpp,**/*.h}'
+          list-files: 'shell'
 
       - name: diff
-        if: steps.filter.outputs.has_cpp_files == 'true'
+        if: steps.filter.outputs.has_cpp == 'true'
         env:
-          GIT_BASE_SHA:
-            ${{ github.event_name == 'pull_request' &&
-            github.event.pull_request.base.sha ||
-            github.event.merge_group.base_sha }}
+          FILTER_FILES: ${{ steps.filter.outputs.has_cpp_files }}
         run: |
-          git fetch --depth=1 origin $GIT_BASE_SHA
-          git diff --name-only --diff-filter=d $GIT_BASE_SHA -- '*.cpp' '*.h'
+          echo $FILTER_FILES
 
       - uses: ./.github/actions/build-setup-common
-        if: steps.filter.outputs.has_cpp_files == 'true' || github.event_name == 'push'
+        if: steps.filter.outputs.has_cpp == 'true'
         with:
           matrix_runner: 'ubuntu-22.04'
           remote_cache_upload: '--remote_upload_local_results=false'
 
       - name: Create compile commands
-        if: steps.filter.outputs.has_cpp_files == 'true' || github.event_name == 'push'
+        if: steps.filter.outputs.has_cpp == 'true'
         run: ./scripts/create_compdb.py
 
       - name: Install clangd-tidy
-        if: steps.filter.outputs.has_cpp_files == 'true' || github.event_name == 'push'
+        if: steps.filter.outputs.has_cpp == 'true'
         run: pip install clangd-tidy==1.1.0.post2
 
       - name: Run clangd-tidy
-        if: steps.filter.outputs.has_cpp_files == 'true'
+        if: steps.filter.outputs.has_cpp == 'true'
         env:
-          GIT_BASE_SHA:
-            ${{ github.event_name == 'pull_request' &&
-            github.event.pull_request.base.sha || (github.event_name == 'merge_group' &&
-            github.event.merge_group.base_sha || github.event.push.before ) }}
+          FILTER_FILES: ${{ steps.filter.outputs.has_cpp_files }}
         run: |
-          git fetch --depth=1 origin $GIT_BASE_SHA
-          clangd-tidy -p . $(git diff --name-only --diff-filter=d \
-                               $GIT_BASE_SHA -- '*.cpp' '*.h')
+          clangd-tidy -p . $FILTER_FILES
