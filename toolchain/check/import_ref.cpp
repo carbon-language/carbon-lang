@@ -1717,8 +1717,8 @@ static auto TryResolveTypedInst(ImportRefResolver& resolver,
   // it's needed, not for every use of the class.
   auto vtable_ptr_const_id =
       import_class.vtable_ptr_id.has_value()
-          ? GetLocalConstantId(resolver, import_class.vtable_ptr_id)
-          : SemIR::ConstantId::None;
+          ? AddImportRef(resolver, import_class.vtable_ptr_id)
+          : SemIR::InstId::None;
 
   if (resolver.HasNewWork()) {
     return ResolveResult::Retry(class_const_id, new_class.first_decl_id());
@@ -1742,17 +1742,9 @@ static auto TryResolveTypedInst(ImportRefResolver& resolver,
         GetSingletonType(resolver.local_context(),
                          SemIR::WitnessType::TypeInstId),
         import_class.complete_type_witness_id, complete_type_witness_const_id);
-    auto vtable_ptr_id =
-        vtable_ptr_const_id.has_value()
-            ? AddLoadedImportRef(
-                  resolver,
-                  GetSingletonType(resolver.local_context(),
-                                   SemIR::WitnessType::TypeInstId),
-                  import_class.vtable_ptr_id, vtable_ptr_const_id)
-            : SemIR::InstId::None;
     AddClassDefinition(resolver, import_class, new_class,
                        complete_type_witness_id, base_id, adapt_id,
-                       vtable_ptr_id);
+                       vtable_ptr_const_id);
   }
 
   return ResolveResult::Done(class_const_id, new_class.first_decl_id());

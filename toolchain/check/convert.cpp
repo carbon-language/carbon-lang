@@ -18,6 +18,7 @@
 #include "toolchain/check/diagnostic_helpers.h"
 #include "toolchain/check/eval.h"
 #include "toolchain/check/impl_lookup.h"
+#include "toolchain/check/import_ref.h"
 #include "toolchain/check/inst.h"
 #include "toolchain/check/operator.h"
 #include "toolchain/check/pattern_match.h"
@@ -586,12 +587,19 @@ static auto ConvertStructToClass(
         SemIR::LocId(value_id), {.type_id = target.type_id});
   }
 
+  if (!dest_vtable_ptr_inst_id.has_value()) {
+    dest_vtable_ptr_inst_id = dest_class_info.vtable_ptr_id;
+  }
+
+  if (dest_vtable_ptr_inst_id.has_value()) {
+    LoadImportRef(context, dest_vtable_ptr_inst_id);
+  }
+
   auto result_id = ConvertStructToStructOrClass<SemIR::ClassElementAccess>(
       context, src_type, dest_struct_type, value_id, target,
       // TODO: Pass down the specific_id of the passed in
       // dest_vtable_ptr_inst_id, or from the dest_type.specific_id.
-      dest_vtable_ptr_inst_id.has_value() ? dest_vtable_ptr_inst_id
-                                          : dest_class_info.vtable_ptr_id);
+      dest_vtable_ptr_inst_id);
 
   if (need_temporary) {
     target_block.InsertHere();
