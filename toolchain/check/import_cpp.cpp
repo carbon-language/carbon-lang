@@ -10,9 +10,11 @@
 #include <tuple>
 #include <utility>
 
+#include "clang/Frontend/ASTUnit.h"
+#include "clang/Frontend/CompilerInstance.h"
+#include "clang/Frontend/CompilerInvocation.h"
 #include "clang/Frontend/TextDiagnostic.h"
 #include "clang/Sema/Lookup.h"
-#include "clang/Tooling/Tooling.h"
 #include "common/raw_string_ostream.h"
 #include "llvm/ADT/IntrusiveRefCntPtr.h"
 #include "llvm/ADT/StringRef.h"
@@ -100,6 +102,17 @@ class CarbonClangDiagnosticConsumer : public clang::DiagnosticConsumer {
 
     llvm::SmallString<256> message;
     info.FormatDiagnostic(message);
+
+    if (!info.hasSourceManager()) {
+      // If we don't have a source manager, we haven't actually started
+      // compiling yet, and this is an error from the driver or early in the
+      // frontend. Pass it on directly.
+      CARBON_CHECK(info.getLocation().isInvalid());
+      diagnostic_infos_.push_back({.level = diag_level,
+                                   .import_ir_inst_id = clang_import_ir_inst_id,
+                                   .message = message.str().str()});
+      return;
+    }
 
     RawStringOstream diagnostics_stream;
     // TODO: Consider allowing setting `LangOptions` or use
@@ -189,28 +202,54 @@ class CarbonClangDiagnosticConsumer : public clang::DiagnosticConsumer {
 static auto GenerateAst(Context& context, llvm::StringRef importing_file_path,
                         llvm::ArrayRef<Parse::Tree::PackagingNames> imports,
                         llvm::IntrusiveRefCntPtr<llvm::vfs::FileSystem> fs,
-                        llvm::StringRef target)
+                        const std::string& target)
     -> std::pair<std::unique_ptr<clang::ASTUnit>, bool> {
   CarbonClangDiagnosticConsumer diagnostics_consumer(&context);
 
-  // TODO: Share compilation flags with ClangRunner.
-  auto ast = clang::tooling::buildASTFromCodeWithArgs(
-      GenerateCppIncludesHeaderCode(context, imports),
-      // Parse C++ (and not C).
-      {
-          "-x",
-          "c++",
-          // Propagate the target to Clang.
-          "-target",
-          target.str(),
-          // Require PIE. Note its default is configurable in Clang.
-          "-fPIE",
-      },
-      (importing_file_path + ".generated.cpp_imports.h").str(), "clang-tool",
-      std::make_shared<clang::PCHContainerOperations>(),
-      clang::tooling::getClangStripDependencyFileAdjuster(),
-      clang::tooling::FileContentMappings(), &diagnostics_consumer, fs);
-  // Remove link to the diagnostics consumer before its deletion.
+  std::string includes_file =
+      (importing_file_path + ".generated.cpp_imports.h").str();
+
+  const char* driver_args[] = {
+      "clang++",
+      // Parse as a C++ (not C) header.
+      "-x",
+      "c++",
+      // TODO: ResourceFilesPath parameter to LoadFromCommandLine does not work.
+      "-resource-dir",
+      "/usr/local/google/home/richardsmith/carbon-lang/bazel-bin/toolchain/carbon.runfiles/_main/toolchain/install/prefix_root/lib/carbon/llvm/lib/clang/21",
+      // Propagate the target to Clang.
+      "-target",
+      target.c_str(),
+      // Require PIE. Note its default is configurable in Clang.
+      "-fPIE",
+      includes_file.c_str(),
+  };
+
+  std::string includes = GenerateCppIncludesHeaderCode(context, imports);
+  auto includes_buffer =
+      llvm::MemoryBuffer::getMemBuffer(includes, includes_file);
+
+  // Remap the imports file name to the corresponding `#include`s. The AST unit
+  // takes ownership of the buffer.
+  clang::ASTUnit::RemappedFile remapped_files[] = {
+      {includes_file, includes_buffer.release()}};
+
+  auto diag_opts = std::make_shared<clang::DiagnosticOptions>();
+  llvm::IntrusiveRefCntPtr<clang::DiagnosticsEngine> diags(
+      clang::CompilerInstance::createDiagnostics(
+          *fs, *diag_opts, &diagnostics_consumer, /*ShouldOwnClient=*/false));
+
+  auto ast = clang::ASTUnit::LoadFromCommandLine(
+      std::begin(driver_args), std::end(driver_args),
+      std::make_shared<clang::PCHContainerOperations>(), diag_opts, diags,
+      /*ResourceFilesPath=*/"/usr/local/google/home/richardsmith/carbon-lang/bazel-bin/toolchain/carbon.runfiles/_main/toolchain/install/prefix_root/lib/carbon/llvm/lib/clang/21",
+      false, llvm::StringRef(), false,
+      clang::CaptureDiagsKind::None, remapped_files, true, 0,
+      clang::TU_Complete, false, false, false,
+      clang::SkipFunctionBodiesScope::None, false, false, false, false,
+      std::nullopt, nullptr, fs);
+
+  // Remove link to the diagnostics consumer before its destruction.
   ast->getDiagnostics().setClient(nullptr);
 
   // In order to emit diagnostics, we need the AST.
@@ -266,7 +305,7 @@ auto ImportCppFiles(Context& context, llvm::StringRef importing_file_path,
   auto name_scope_id = AddNamespace(context, package_id, imports);
 
   auto [generated_ast, ast_has_error] =
-      GenerateAst(context, importing_file_path, imports, fs, target);
+      GenerateAst(context, importing_file_path, imports, fs, target.str());
 
   SemIR::NameScope& name_scope = context.name_scopes().Get(name_scope_id);
   name_scope.set_is_closed_import(true);
