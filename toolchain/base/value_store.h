@@ -40,9 +40,9 @@ class ValueStore
                               Internal::ValueStoreNotPrintable> {
  public:
   using IdType = IdT;
-  using ValueType = ValueStoreTypes<IdT, ValueT>::ValueType;
-  using RefType = ValueStoreTypes<IdT, ValueT>::RefType;
-  using ConstRefType = ValueStoreTypes<IdT, ValueT>::ConstRefType;
+  using ValueType = ValueStoreTypes<ValueT>::ValueType;
+  using RefType = ValueStoreTypes<ValueT>::RefType;
+  using ConstRefType = ValueStoreTypes<ValueT>::ConstRefType;
 
   // A range over references to the values in a ValueStore, returned from
   // `ValueStore::values()`. Hides the complex type name of the iterator

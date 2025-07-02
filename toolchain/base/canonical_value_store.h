@@ -26,9 +26,9 @@ template <typename IdT, typename KeyT, typename ValueT = KeyT>
 class CanonicalValueStore {
  public:
   using KeyType = std::remove_cvref_t<KeyT>;
-  using ValueType = ValueStoreTypes<IdT, ValueT>::ValueType;
-  using RefType = ValueStoreTypes<IdT, ValueT>::RefType;
-  using ConstRefType = ValueStoreTypes<IdT, ValueT>::ConstRefType;
+  using ValueType = ValueStoreTypes<ValueT>::ValueType;
+  using RefType = ValueStoreTypes<ValueT>::RefType;
+  using ConstRefType = ValueStoreTypes<ValueT>::ConstRefType;
 
   // Stores a canonical copy of the value and returns an ID to reference it.
   auto Add(ValueType value) -> IdT;

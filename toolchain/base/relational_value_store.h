@@ -33,8 +33,8 @@ namespace Carbon {
 template <typename RelatedIdT, typename IdT, typename ValueT>
 class RelationalValueStore {
  public:
-  using ValueType = ValueStoreTypes<IdT, ValueT>::ValueType;
-  using ConstRefType = ValueStoreTypes<IdT, ValueT>::ConstRefType;
+  using ValueType = ValueStoreTypes<ValueT>::ValueType;
+  using ConstRefType = ValueStoreTypes<ValueT>::ConstRefType;
 
   // Given the related ID and a value, stores the value and returns a mapped ID
   // to reference it in the store.

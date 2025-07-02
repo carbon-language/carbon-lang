@@ -13,7 +13,7 @@
 namespace Carbon {
 
 // Common calculation for ValueStore types.
-template <typename IdT, typename ValueT = IdT::ValueType>
+template <typename ValueT>
 class ValueStoreTypes {
  public:
   using ValueType = std::remove_cvref_t<ValueT>;

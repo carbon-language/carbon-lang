@@ -19,9 +19,9 @@ template <typename IdT, typename ValueT>
 class FixedSizeValueStore {
  public:
   using IdType = IdT;
-  using ValueType = ValueStoreTypes<IdT, ValueT>::ValueType;
-  using RefType = ValueStoreTypes<IdT, ValueT>::RefType;
-  using ConstRefType = ValueStoreTypes<IdT, ValueT>::ConstRefType;
+  using ValueType = ValueStoreTypes<ValueT>::ValueType;
+  using RefType = ValueStoreTypes<ValueT>::RefType;
+  using ConstRefType = ValueStoreTypes<ValueT>::ConstRefType;
 
   // Makes a ValueStore of the specified size, but without initializing values.
   // Entries must be set before reading.
