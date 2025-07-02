@@ -57,7 +57,7 @@ def _build_generated_files(bazel: str, logtostderr: bool) -> None:
     # fail in case there are build errors in the client, and just warn the user
     # that they may be missing generated files.
     subprocess.check_call(
-        [bazel, "build", "--keep_going", "--noremote_download_minimal"]
+        [bazel, "build", "--keep_going", "--remote_download_outputs=toplevel"]
         + generated_file_labels
     )
 
