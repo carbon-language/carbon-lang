@@ -51,30 +51,15 @@ def _build_generated_files(bazel: str, logtostderr: bool) -> None:
         stderr=log_to,
         encoding="utf-8",
     ).splitlines()
-    for x in generated_file_labels:
-        print(x)
     print(f"Found {len(generated_file_labels)} generated files...", flush=True)
 
     # Directly build these labels so that indexing can find them. Allow this to
     # fail in case there are build errors in the client, and just warn the user
     # that they may be missing generated files.
     subprocess.check_call(
-        [bazel, "build", "--keep_going"] + generated_file_labels
+        [bazel, "build", "--keep_going", "--noremote_download_minimal"]
+        + generated_file_labels
     )
-    subprocess.check_call(
-        [bazel, "build", "--keep_going", "//common:version.cpp"]
-    )
-    for f in (
-        "bazel-bin",
-        "bazel-bin/common",
-        "bazel-out",
-        "bazel-out/k8-fastbuild",
-        "bazel-out/k8-fastbuild/bin",
-        "bazel-out/k8-fastbuild/bin/common",
-        "bazel-out/k8-fastbuild/bin/common/version.cpp",
-    ):
-        print(f, flush=True)
-        subprocess.check_call(["ls", "-ld", f])
 
 
 def main() -> None:
