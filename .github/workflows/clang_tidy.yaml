@@ -60,21 +60,22 @@ jobs:
           targets_file: ${{ runner.temp }}/targets
           use_direct_targets: true
 
-      # Run in the clang-tidy config. This is done as part of tests so that we
-      # aren't duplicating bazel/llvm setup.
-      #
-      # The `-k` flag is used to print all clang-tidy errors.
-      - name: clang-tidy
-        if: steps.test-setup.outputs.has_code == 'true'
+      - name: Create compile commands
+        if: steps.test-setup.outputs.has_cpp_files == 'true'
+        run: ./scripts/create_compdb.py
+
+      - name: Install clangd-tidy
+        if: steps.test-setup.outputs.has_cpp_files == 'true'
+        run: pip install clangd-tidy==1.1.0.post2
+
+      - name: Run clangd-tidy
+        if: steps.test-setup.outputs.has_cpp_files == 'true'
         env:
           TARGETS_FILE: ${{ runner.temp }}/targets
+          GIT_BASE_SHA:
+            ${{ github.event_name == 'pull_request' &&
+            github.event.pull_request.base.sha ||
+            github.event.merge_group.base_sha }}
         run: |
-          ./scripts/run_bazel.py \
-              --attempts=5 \
-              build --config=clang-tidy -k \
-              --target_pattern_file=$TARGETS_FILE
-
-      # See "Disk space before build" in `test-setup`.
-      - name: Disk space after build
-        if: steps.test-setup.outputs.has_code == 'true'
-        run: df -h
+          clangd-tidy -p . $(git diff --name-only --diff-filter=d \
+                               $GIT_BASE_SHA -- '**/*.cpp' '**/*.h')
