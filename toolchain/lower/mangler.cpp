@@ -210,11 +210,9 @@ auto Mangler::MangleGlobalVariable(SemIR::InstId pattern_id) -> std::string {
 }
 
 auto Mangler::MangleCppClang(const clang::NamedDecl* decl) -> std::string {
-  auto* cpp_code_generator = file_context_.cpp_code_generator();
-  CARBON_CHECK(
-      cpp_code_generator,
-      "Mangling of a C++ imported declaration without a Clang `CodeGenerator`");
-  return cpp_code_generator->GetMangledName(clang::GlobalDecl(decl)).str();
+  return file_context_.cpp_code_generator()
+      .GetMangledName(clang::GlobalDecl(decl))
+      .str();
 }
 
 auto Mangler::MangleVTable(const SemIR::Class& class_info) -> std::string {
