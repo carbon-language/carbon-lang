@@ -142,7 +142,7 @@ class CarbonClangDriverDiagnosticConsumer : public clang::DiagnosticConsumer {
   Diagnostics::NoLocEmitter* emitter_;
 };
 
-}
+}  // namespace
 
 // Builds a clang `CompilerInvocation` describing the options to use to build an
 // imported C++ AST.
