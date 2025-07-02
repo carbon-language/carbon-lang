@@ -22,7 +22,7 @@ struct FacetTypeInfo;
 struct SpecificInterface;
 struct StructTypeField;
 
-// The ID of an instruction.
+// The ID of an `Inst`.
 struct InstId : public IdBase<InstId> {
   static constexpr llvm::StringLiteral Label = "inst";
 
@@ -40,7 +40,7 @@ struct InstId : public IdBase<InstId> {
 
 constexpr InstId InstId::InitTombstone = InstId(NoneIndex - 1);
 
-// And InstId whose value is a type. The fact it's a type is CHECKed on
+// An InstId whose value is a type. The fact it's a type is CHECKed on
 // construction, and this allows that check to be represented in the type
 // system.
 struct TypeInstId : public InstId {
@@ -214,7 +214,7 @@ struct ConstantId : public IdBase<ConstantId> {
 
 constexpr ConstantId ConstantId::NotConstant = ConstantId(NotConstantIndex);
 
-// The ID of a EntityName.
+// The ID of a `EntityName`.
 struct EntityNameId : public IdBase<EntityNameId> {
   static constexpr llvm::StringLiteral Label = "entity_name";
 
@@ -241,7 +241,7 @@ struct CallParamIndex : public IndexBase<CallParamIndex> {
   using IndexBase::IndexBase;
 };
 
-// The ID of a function.
+// The ID of a `Function`.
 struct FunctionId : public IdBase<FunctionId> {
   static constexpr llvm::StringLiteral Label = "function";
 
@@ -261,27 +261,28 @@ struct CheckIRId : public IdBase<CheckIRId> {
 
 constexpr CheckIRId CheckIRId::Cpp = CheckIRId(NoneIndex - 1);
 
-// The ID of a class.
+// The ID of a `Class`.
 struct ClassId : public IdBase<ClassId> {
   static constexpr llvm::StringLiteral Label = "class";
 
   using IdBase::IdBase;
 };
 
+// The ID of a `Vtable`.
 struct VtableId : public IdBase<VtableId> {
   static constexpr llvm::StringLiteral Label = "vtable";
 
   using IdBase::IdBase;
 };
 
-// The ID of an interface.
+// The ID of an `Interface`.
 struct InterfaceId : public IdBase<InterfaceId> {
   static constexpr llvm::StringLiteral Label = "interface";
 
   using IdBase::IdBase;
 };
 
-// The ID of an associated constant.
+// The ID of an `AssociatedConstant`.
 struct AssociatedConstantId : public IdBase<AssociatedConstantId> {
   static constexpr llvm::StringLiteral Label = "assoc_const";
 
@@ -303,7 +304,7 @@ struct IdentifiedFacetTypeId : public IdBase<IdentifiedFacetTypeId> {
   using IdBase::IdBase;
 };
 
-// The ID of an impl.
+// The ID of an `Impl`.
 struct ImplId : public IdBase<ImplId> {
   using DiagnosticType = Diagnostics::TypeInfo<std::string>;
 
@@ -312,15 +313,15 @@ struct ImplId : public IdBase<ImplId> {
   using IdBase::IdBase;
 };
 
-// The ID of a generic.
+// The ID of a `Generic`.
 struct GenericId : public IdBase<GenericId> {
   static constexpr llvm::StringLiteral Label = "generic";
 
   using IdBase::IdBase;
 };
 
-// The ID of a specific, which is the result of specifying the generic arguments
-// for a generic.
+// The ID of a `Specific`, which is the result of specifying the generic
+// arguments for a generic.
 struct SpecificId : public IdBase<SpecificId> {
   using DiagnosticType = Diagnostics::TypeInfo<std::string>;
 
@@ -389,13 +390,15 @@ struct GenericInstIndex : public IndexBase<GenericInstIndex> {
 constexpr GenericInstIndex GenericInstIndex::None =
     GenericInstIndex::MakeNone();
 
+// The ID of an `ImportCpp`.
 struct ImportCppId : public IdBase<ImportCppId> {
   static constexpr llvm::StringLiteral Label = "import_cpp";
 
   using IdBase::IdBase;
 };
 
-// The ID of an IR within the set of imported IRs, both direct and indirect.
+// The ID of an `ImportIR` within the set of imported IRs, both direct and
+// indirect.
 struct ImportIRId : public IdBase<ImportIRId> {
   static constexpr llvm::StringLiteral Label = "ir";
 
@@ -564,7 +567,7 @@ constexpr int NameId::NonIndexValueCount =
     1 CARBON_SPECIAL_NAME_ID(CARBON_SPECIAL_NAME_ID_FOR_COUNT);
 #undef CARBON_SPECIAL_NAME_ID_FOR_COUNT
 
-// The ID of a name scope.
+// The ID of a `NameScope`.
 struct NameScopeId : public IdBase<NameScopeId> {
   static constexpr llvm::StringLiteral Label = "name_scope";
 
@@ -702,6 +705,7 @@ class LabelId : public InstBlockId {
   using InstBlockId::InstBlockId;
 };
 
+// The ID of an `ExprRegion`.
 // TODO: Move this out of sem_ir and into check, if we don't wind up using it
 // in the SemIR for expression patterns.
 struct ExprRegionId : public IdBase<ExprRegionId> {
@@ -755,7 +759,7 @@ struct TypeId : public IdBase<TypeId> {
   auto Print(llvm::raw_ostream& out) const -> void;
 };
 
-// The ID of a Clang Source Location.
+// The ID of a `clang::SourceLocation`.
 struct ClangSourceLocId : public IdBase<ClangSourceLocId> {
   static constexpr llvm::StringLiteral Label = "clang_source_loc";
 
@@ -796,7 +800,7 @@ struct LibraryNameId : public IdBase<LibraryNameId> {
 constexpr LibraryNameId LibraryNameId::Default = LibraryNameId(NoneIndex - 1);
 constexpr LibraryNameId LibraryNameId::Error = LibraryNameId(NoneIndex - 2);
 
-// The ID of an ImportIRInst.
+// The ID of an `ImportIRInst`.
 struct ImportIRInstId : public IdBase<ImportIRInstId> {
   static constexpr llvm::StringLiteral Label = "import_ir_inst";
 

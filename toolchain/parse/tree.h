@@ -23,8 +23,7 @@ namespace Carbon::Parse {
 
 struct DeferredDefinition;
 
-// The index of a deferred function definition within the parse tree's deferred
-// definition store.
+// The index of a `DeferredDefinition` within the parse tree.
 struct DeferredDefinitionIndex : public IndexBase<DeferredDefinitionIndex> {
   static constexpr llvm::StringLiteral Label = "deferred_def";
 

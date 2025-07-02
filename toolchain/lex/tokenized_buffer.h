@@ -39,7 +39,7 @@ struct LineInfo {
   int32_t indent;
 };
 
-// A lightweight handle to a lexed line in a `TokenizedBuffer`.
+// A lightweight handle to a lexed `LineInfo` in a `TokenizedBuffer`.
 //
 // `LineIndex` objects are designed to be passed by value, not reference or
 // pointer. They are also designed to be small and efficient to store in data
@@ -72,7 +72,7 @@ struct CommentData {
   int32_t length;
 };
 
-// Indices for comments within the buffer.
+// Indices for `CommentData` within the buffer.
 struct CommentIndex : public IndexBase<CommentIndex> {
   static constexpr llvm::StringLiteral Label = "comment";
   static const CommentIndex None;
