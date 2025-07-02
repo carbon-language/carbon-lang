@@ -286,7 +286,7 @@ struct AssociatedConstantId : public IdBase<AssociatedConstantId> {
   using IdBase::IdBase;
 };
 
-// The ID of an facet type value.
+// The ID of a `FacetTypeInfo`.
 struct FacetTypeId : public IdBase<FacetTypeId> {
   static constexpr llvm::StringLiteral Label = "facet_type";
 
@@ -326,7 +326,7 @@ struct SpecificId : public IdBase<SpecificId> {
   using IdBase::IdBase;
 };
 
-// The ID of a SpecificInterface, which is an interface and a specific pair.
+// The ID of a `SpecificInterface`, which is an interface and a specific pair.
 struct SpecificInterfaceId : public IdBase<SpecificInterfaceId> {
   using DiagnosticType = Diagnostics::TypeInfo<std::string>;
 
