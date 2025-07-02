@@ -253,7 +253,7 @@ enum class Phase : uint8_t {
 }  // namespace
 
 static auto IsConstantOrError(Phase phase) -> bool {
-  return phase < Phase::Runtime;
+  return phase != Phase::Runtime;
 }
 
 // Gets the phase in which the value of a constant will become available.
@@ -766,12 +766,12 @@ static auto ReplaceAllFieldsWithConstantValues(EvalContext& eval_context,
     -> bool {
   auto arg0 =
       GetConstantValueForArg(eval_context, inst->arg0_and_kind(), phase);
-  if (*phase == Phase::Runtime) {
+  if (!IsConstantOrError(*phase)) {
     return false;
   }
   auto arg1 =
       GetConstantValueForArg(eval_context, inst->arg1_and_kind(), phase);
-  if (*phase == Phase::Runtime) {
+  if (!IsConstantOrError(*phase)) {
     return false;
   }
   inst->SetArgs(arg0, arg1);
@@ -1835,7 +1835,7 @@ static auto ComputeInstPhase(Context& context, SemIR::Inst inst) -> Phase {
                         context.types().GetConstantId(inst.type_id()));
   GetConstantValueForArg(eval_context, inst.arg0_and_kind(), &phase);
   GetConstantValueForArg(eval_context, inst.arg1_and_kind(), &phase);
-  CARBON_CHECK(phase != Phase::Runtime);
+  CARBON_CHECK(IsConstantOrError(phase));
   return phase;
 }
 
