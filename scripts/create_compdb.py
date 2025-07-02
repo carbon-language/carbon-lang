@@ -40,7 +40,7 @@ def _build_generated_files(bazel: str, logtostderr: bool) -> None:
         ' kind("(generated file|manifest_as_cpp)",'
         # tree_sitter is excluded here because it causes the query to failure on
         # `@platforms`.
-        '      deps(//... except //utils/tree_sitter/...))'
+        "      deps(//... except //utils/tree_sitter/...))"
         ")"
     )
     log_to = None
@@ -52,8 +52,8 @@ def _build_generated_files(bazel: str, logtostderr: bool) -> None:
         encoding="utf-8",
     ).splitlines()
     for x in generated_file_labels:
-      print(x)
-    print(f"Found {len(generated_file_labels)} generated files...")
+        print(x)
+    print(f"Found {len(generated_file_labels)} generated files...", flush=True)
 
     # Directly build these labels so that indexing can find them. Allow this to
     # fail in case there are build errors in the client, and just warn the user
@@ -80,7 +80,10 @@ def main() -> None:
 
     _build_generated_files(bazel, args.alsologtostderr)
 
-    print("Generating compile_commands.json (may take a few minutes)...")
+    print(
+        "Generating compile_commands.json (may take a few minutes)...",
+        flush=True,
+    )
     subprocess.run([bazel, "run", "@hedron_compile_commands//:refresh_all"])
 
 
