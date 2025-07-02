@@ -39,6 +39,7 @@
 #include "toolchain/sem_ir/type_info.h"
 #include "toolchain/sem_ir/vtable.h"
 
+
 namespace Carbon::SemIR {
 
 // An expression that may contain control flow, represented as a
