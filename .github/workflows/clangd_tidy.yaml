@@ -67,17 +67,17 @@ jobs:
           git diff --name-only --diff-filter=d $GIT_BASE_SHA -- '*.cpp' '*.h'
 
       - uses: ./.github/actions/build-setup-common
-        if: steps.filter.outputs.has_cpp_files == 'true'
+        if: steps.filter.outputs.has_cpp_files == 'true' || github.event_name == 'push'
         with:
           matrix_runner: 'ubuntu-22.04'
           remote_cache_upload: '--remote_upload_local_results=false'
 
       - name: Create compile commands
-        if: steps.filter.outputs.has_cpp_files == 'true'
+        if: steps.filter.outputs.has_cpp_files == 'true' || github.event_name == 'push'
         run: ./scripts/create_compdb.py
 
       - name: Install clangd-tidy
-        if: steps.filter.outputs.has_cpp_files == 'true'
+        if: steps.filter.outputs.has_cpp_files == 'true' || github.event_name == 'push'
         run: pip install clangd-tidy==1.1.0.post2
 
       - name: Run clangd-tidy
@@ -85,8 +85,8 @@ jobs:
         env:
           GIT_BASE_SHA:
             ${{ github.event_name == 'pull_request' &&
-            github.event.pull_request.base.sha ||
-            github.event.merge_group.base_sha }}
+            github.event.pull_request.base.sha || (github.event_name == 'merge_group' &&
+            github.event.merge_group.base_sha || github.event.push.before ) }}
         run: |
           git fetch --depth=1 origin $GIT_BASE_SHA
           clangd-tidy -p . $(git diff --name-only --diff-filter=d \
