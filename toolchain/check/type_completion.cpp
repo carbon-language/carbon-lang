@@ -141,6 +141,10 @@ class TypeCompleter {
       -> SemIR::CompleteTypeInfo;
 
   auto BuildInfoForInst(SemIR::TypeId /*type_id*/,
+                        SemIR::PartialType inst) const
+      -> SemIR::CompleteTypeInfo;
+
+  auto BuildInfoForInst(SemIR::TypeId /*type_id*/,
                         SemIR::ImplWitnessAssociatedConstant inst) const
       -> SemIR::CompleteTypeInfo;
 
@@ -287,6 +291,10 @@ auto TypeCompleter::AddNestedIncompleteTypes(SemIR::Inst type_inst) -> bool {
       break;
     }
     case CARBON_KIND(SemIR::ConstType inst): {
+      Push(context_->types().GetTypeIdForTypeInstId(inst.inner_id));
+      break;
+    }
+    case CARBON_KIND(SemIR::PartialType inst): {
       Push(context_->types().GetTypeIdForTypeInstId(inst.inner_id));
       break;
     }
@@ -508,6 +516,14 @@ auto TypeCompleter::BuildInfoForInst(SemIR::TypeId /*type_id*/,
                                      SemIR::ConstType inst) const
     -> SemIR::CompleteTypeInfo {
   // The value representation of `const T` is the same as that of `T`.
+  // Objects are not modifiable through their value representations.
+  return GetNestedInfo(context_->types().GetTypeIdForTypeInstId(inst.inner_id));
+}
+
+auto TypeCompleter::BuildInfoForInst(SemIR::TypeId /*type_id*/,
+                                     SemIR::PartialType inst) const
+    -> SemIR::CompleteTypeInfo {
+  // The value representation of `partial T` is the same as that of `T`.
   // Objects are not modifiable through their value representations.
   return GetNestedInfo(context_->types().GetTypeIdForTypeInstId(inst.inner_id));
 }

@@ -59,7 +59,6 @@
 // CHECK:STDOUT:     inst_block4:
 // CHECK:STDOUT:       0:               inst14
 // CHECK:STDOUT: ...
-// CHECK:STDOUT:
 // CHECK:STDOUT: --- -
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {

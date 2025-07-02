@@ -6,6 +6,7 @@
 
 #include "common/check.h"
 #include "common/growing_range.h"
+#include "common/raw_string_ostream.h"
 #include "common/vlog.h"
 #include "llvm/Transforms/Utils/ModuleUtils.h"
 #include "toolchain/lower/file_context.h"
@@ -54,6 +55,7 @@ auto Context::Finalize() && -> std::unique_ptr<llvm::Module> {
 
   file_contexts_.ForEach(
       [](auto, auto& file_context) { file_context->Finalize(); });
+
   return std::move(llvm_module_);
 }
 

@@ -300,9 +300,9 @@ auto HandleInst(FunctionContext& context, SemIR::InstId inst_id,
                    context.CreateAlloca(context.GetTypeOfInst(inst_id)));
 }
 
-auto HandleInst(FunctionContext& context, SemIR::InstId inst_id,
-                SemIR::VtablePtr inst) -> void {
-  context.SetLocal(inst_id, context.GetValue(inst.vtable_id));
+auto HandleInst(FunctionContext& /*context*/, SemIR::InstId /*inst_id*/,
+                SemIR::VtablePtr /*inst*/) -> void {
+  CARBON_FATAL("`VtablePtr` insts should always be constant");
 }
 
 }  // namespace Carbon::Lower

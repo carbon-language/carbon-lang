@@ -150,6 +150,9 @@ class Formatter {
   // Formats a full class.
   auto FormatClass(ClassId id) -> void;
 
+  // Formats a full vtable.
+  auto FormatVtable(VtableId id) -> void;
+
   // Formats a full interface.
   auto FormatInterface(InterfaceId id) -> void;
 

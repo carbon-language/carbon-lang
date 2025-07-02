@@ -109,6 +109,7 @@ fn AddressOfParam(param: i32) {
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %int_32: Core.IntLiteral = int_value 32 [concrete]
 // CHECK:STDOUT:   %Int.type: type = generic_class_type @Int [concrete]
+// CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [concrete]
 // CHECK:STDOUT:   %Int.generic: %Int.type = struct_value () [concrete]
 // CHECK:STDOUT:   %i32: type = class_type @Int, @Int(%int_32) [concrete]
 // CHECK:STDOUT:   %pattern_type.7ce: type = pattern_type %i32 [concrete]
@@ -139,6 +140,18 @@ fn AddressOfParam(param: i32) {
 // CHECK:STDOUT:   %AddressOfOperator: %AddressOfOperator.type = struct_value () [concrete]
 // CHECK:STDOUT:   %false: bool = bool_literal false [concrete]
 // CHECK:STDOUT:   %ptr.235: type = ptr_type %i32 [concrete]
+// CHECK:STDOUT:   %Destroy.type: type = facet_type <@Destroy> [concrete]
+// CHECK:STDOUT:   %Op.type.bae: type = fn_type @Op.1 [concrete]
+// CHECK:STDOUT:   %T: type = bind_symbolic_name T, 0 [symbolic]
+// CHECK:STDOUT:   %Op.type.bc9: type = fn_type @Op.2, @impl.49c(%T) [symbolic]
+// CHECK:STDOUT:   %Op.46f: %Op.type.bc9 = struct_value () [symbolic]
+// CHECK:STDOUT:   %Destroy.impl_witness.6d2: <witness> = impl_witness imports.%Destroy.impl_witness_table, @impl.49c(%struct_type.a.ba9) [concrete]
+// CHECK:STDOUT:   %Op.type.c80: type = fn_type @Op.2, @impl.49c(%struct_type.a.ba9) [concrete]
+// CHECK:STDOUT:   %Op.691: %Op.type.c80 = struct_value () [concrete]
+// CHECK:STDOUT:   %ptr.1bb: type = ptr_type %struct_type.a.ba9 [concrete]
+// CHECK:STDOUT:   %Destroy.facet.16e: %Destroy.type = facet_value %struct_type.a.ba9, (%Destroy.impl_witness.6d2) [concrete]
+// CHECK:STDOUT:   %.a8f: type = fn_type_with_self_type %Op.type.bae, %Destroy.facet.16e [concrete]
+// CHECK:STDOUT:   %Op.specific_fn.51b: <specific function> = specific_function %Op.691, @Op.2(%struct_type.a.ba9) [concrete]
 // CHECK:STDOUT:   %AddressOfCall.type: type = fn_type @AddressOfCall [concrete]
 // CHECK:STDOUT:   %AddressOfCall: %AddressOfCall.type = struct_value () [concrete]
 // CHECK:STDOUT:   %AddressOfType.type: type = fn_type @AddressOfType [concrete]
@@ -152,15 +165,26 @@ fn AddressOfParam(param: i32) {
 // CHECK:STDOUT:   %AddressOfParam.type: type = fn_type @AddressOfParam [concrete]
 // CHECK:STDOUT:   %AddressOfParam: %AddressOfParam.type = struct_value () [concrete]
 // CHECK:STDOUT:   %pattern_type.fe8: type = pattern_type %ptr.235 [concrete]
+// CHECK:STDOUT:   %Destroy.impl_witness.711: <witness> = impl_witness imports.%Destroy.impl_witness_table, @impl.49c(%ptr.235) [concrete]
+// CHECK:STDOUT:   %Op.type.ba2: type = fn_type @Op.2, @impl.49c(%ptr.235) [concrete]
+// CHECK:STDOUT:   %Op.649: %Op.type.ba2 = struct_value () [concrete]
+// CHECK:STDOUT:   %ptr.5d5: type = ptr_type %ptr.235 [concrete]
+// CHECK:STDOUT:   %Destroy.facet.2bf: %Destroy.type = facet_value %ptr.235, (%Destroy.impl_witness.711) [concrete]
+// CHECK:STDOUT:   %.a79: type = fn_type_with_self_type %Op.type.bae, %Destroy.facet.2bf [concrete]
+// CHECK:STDOUT:   %Op.specific_fn.829: <specific function> = specific_function %Op.649, @Op.2(%ptr.235) [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [concrete] {
 // CHECK:STDOUT:     .Int = %Core.Int
+// CHECK:STDOUT:     .Destroy = %Core.Destroy
 // CHECK:STDOUT:     import Core//prelude
 // CHECK:STDOUT:     import Core//prelude/...
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.Int: %Int.type = import_ref Core//prelude/parts/int, Int, loaded [concrete = constants.%Int.generic]
+// CHECK:STDOUT:   %Core.Destroy: type = import_ref Core//prelude/parts/destroy, Destroy, loaded [concrete = constants.%Destroy.type]
+// CHECK:STDOUT:   %Core.import_ref.0b9: @impl.49c.%Op.type (%Op.type.bc9) = import_ref Core//prelude/parts/destroy, loc8_29, loaded [symbolic = @impl.49c.%Op (constants.%Op.46f)]
+// CHECK:STDOUT:   %Destroy.impl_witness_table = impl_witness_table (%Core.import_ref.0b9), @impl.49c [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -255,10 +279,16 @@ fn AddressOfParam(param: i32) {
 // CHECK:STDOUT:   %.loc62_6.1: ref %struct_type.a.ba9 = temporary_storage
 // CHECK:STDOUT:   %.loc62_6.2: ref %struct_type.a.ba9 = temporary %.loc62_6.1, %H.call
 // CHECK:STDOUT:   %.loc62_7: ref %i32 = struct_access %.loc62_6.2, element0
-// CHECK:STDOUT:   %addr.loc62: %ptr.235 = addr_of <error> [concrete = <error>]
+// CHECK:STDOUT:   %addr.loc62_3: %ptr.235 = addr_of <error> [concrete = <error>]
 // CHECK:STDOUT:   %true.loc67: bool = bool_literal true [concrete = constants.%true]
 // CHECK:STDOUT:   %.loc67: bool = not %true.loc67 [concrete = constants.%false]
 // CHECK:STDOUT:   %addr.loc67: %ptr.bb2 = addr_of <error> [concrete = <error>]
+// CHECK:STDOUT:   %impl.elem0: %.a8f = impl_witness_access constants.%Destroy.impl_witness.6d2, element0 [concrete = constants.%Op.691]
+// CHECK:STDOUT:   %bound_method.loc62_6.1: <bound method> = bound_method %.loc62_6.1, %impl.elem0
+// CHECK:STDOUT:   %specific_fn: <specific function> = specific_function %impl.elem0, @Op.2(constants.%struct_type.a.ba9) [concrete = constants.%Op.specific_fn.51b]
+// CHECK:STDOUT:   %bound_method.loc62_6.2: <bound method> = bound_method %.loc62_6.1, %specific_fn
+// CHECK:STDOUT:   %addr.loc62_6: %ptr.1bb = addr_of %.loc62_6.1
+// CHECK:STDOUT:   %no_op: init %empty_tuple.type = call %bound_method.loc62_6.2(%addr.loc62_6)
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -304,14 +334,20 @@ fn AddressOfParam(param: i32) {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %param_addr.var: ref %ptr.235 = var %param_addr.var_patt
 // CHECK:STDOUT:   %param.ref: %i32 = name_ref param, %param
-// CHECK:STDOUT:   %addr: %ptr.235 = addr_of <error> [concrete = <error>]
-// CHECK:STDOUT:   assign %param_addr.var, %addr
+// CHECK:STDOUT:   %addr.loc104_26: %ptr.235 = addr_of <error> [concrete = <error>]
+// CHECK:STDOUT:   assign %param_addr.var, %addr.loc104_26
 // CHECK:STDOUT:   %.loc104: type = splice_block %ptr [concrete = constants.%ptr.235] {
 // CHECK:STDOUT:     %int_32.loc104: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
 // CHECK:STDOUT:     %i32.loc104: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
 // CHECK:STDOUT:     %ptr: type = ptr_type %i32.loc104 [concrete = constants.%ptr.235]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %param_addr: ref %ptr.235 = bind_name param_addr, %param_addr.var
+// CHECK:STDOUT:   %impl.elem0: %.a79 = impl_witness_access constants.%Destroy.impl_witness.711, element0 [concrete = constants.%Op.649]
+// CHECK:STDOUT:   %bound_method.loc104_3.1: <bound method> = bound_method %param_addr.var, %impl.elem0
+// CHECK:STDOUT:   %specific_fn: <specific function> = specific_function %impl.elem0, @Op.2(constants.%ptr.235) [concrete = constants.%Op.specific_fn.829]
+// CHECK:STDOUT:   %bound_method.loc104_3.2: <bound method> = bound_method %param_addr.var, %specific_fn
+// CHECK:STDOUT:   %addr.loc104_3: %ptr.5d5 = addr_of %param_addr.var
+// CHECK:STDOUT:   %no_op: init %empty_tuple.type = call %bound_method.loc104_3.2(%addr.loc104_3)
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

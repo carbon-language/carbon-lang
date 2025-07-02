@@ -129,6 +129,19 @@ InstNamer::InstNamer(const File* sem_ir) : sem_ir_(sem_ir) {
     CollectNamesInGeneric(class_scope, class_info.generic_id);
   }
 
+  // Build each vtable scope.
+  for (auto [vtable_id, vtable_info] : sem_ir->vtables().enumerate()) {
+    auto vtable_scope = GetScopeFor(vtable_id);
+    // TODO: Provide a location for the vtable for use as a disambiguator.
+    auto vtable_loc = Parse::NodeId::None;
+    auto class_info = sem_ir->classes().Get(vtable_info.class_id);
+    GetScopeInfo(vtable_scope).name = globals_.AllocateName(
+        *this, vtable_loc,
+        sem_ir->names().GetIRBaseName(class_info.name_id).str() + ".vtable");
+    // TODO: Add support for generic vtables here and elsewhere.
+    // CollectNamesInGeneric(vtable_scope, vtable_info.generic_id);
+  }
+
   // Build each interface scope.
   for (auto [interface_id, interface_info] : sem_ir->interfaces().enumerate()) {
     auto interface_scope = GetScopeFor(interface_id);
@@ -184,6 +197,9 @@ auto InstNamer::GetScopeIdOffset(ScopeIdTypeEnum id_enum) const -> int {
       offset += sem_ir_->classes().size();
       [[fallthrough]];
     case ScopeIdTypeEnum::For<ClassId>:
+      offset += sem_ir_->vtables().size();
+      [[fallthrough]];
+    case ScopeIdTypeEnum::For<VtableId>:
       offset += sem_ir_->functions().size();
       [[fallthrough]];
     case ScopeIdTypeEnum::For<FunctionId>:
@@ -703,6 +719,16 @@ auto InstNamer::NamingContext::NameInst() -> void {
     case CompleteTypeWitness::Kind: {
       // TODO: Can we figure out the name of the type this is a witness for?
       AddInstName("complete_type");
+      return;
+    }
+    case CARBON_KIND(VtablePtr inst): {
+      const auto& vtable = sem_ir().vtables().Get(inst.vtable_id);
+      if (inst_namer_->GetScopeFor(vtable.class_id) == scope_id_) {
+        AddInstName("vtable_ptr");
+      } else {
+        const auto& class_info = sem_ir().classes().Get(vtable.class_id);
+        AddInstNameId(class_info.name_id, ".vtable_ptr");
+      }
       return;
     }
     case ConstType::Kind: {

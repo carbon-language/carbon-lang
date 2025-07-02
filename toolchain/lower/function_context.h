@@ -268,6 +268,10 @@ class FunctionContext {
     return format_string;
   }
 
+  auto GetVtable(SemIR::VtableId vtable_id) const -> llvm::GlobalVariable* {
+    return file_context_->GetVtable(vtable_id);
+  }
+
  private:
   // Custom instruction inserter for our IR builder. Automatically names
   // instructions.

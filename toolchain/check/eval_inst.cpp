@@ -17,6 +17,7 @@
 #include "toolchain/check/type_completion.h"
 #include "toolchain/diagnostics/diagnostic.h"
 #include "toolchain/parse/typed_nodes.h"
+#include "toolchain/sem_ir/builtin_function_kind.h"
 #include "toolchain/sem_ir/expr_info.h"
 #include "toolchain/sem_ir/ids.h"
 #include "toolchain/sem_ir/pattern.h"
@@ -164,6 +165,11 @@ auto EvalConstantInst(Context& context, SemIR::ConstType inst)
         context.constant_values().Get(inst.inner_id));
   }
   // Otherwise, `const T` evaluates to itself.
+  return ConstantEvalResult::NewSamePhase(inst);
+}
+
+auto EvalConstantInst(Context& /*context*/, SemIR::PartialType inst)
+    -> ConstantEvalResult {
   return ConstantEvalResult::NewSamePhase(inst);
 }
 
@@ -479,8 +485,12 @@ auto EvalConstantInst(Context& context, SemIR::InstId inst_id,
 
 auto EvalConstantInst(Context& context, SemIR::InstId inst_id,
                       SemIR::SpecificFunction inst) -> ConstantEvalResult {
-  if (!SemIR::GetCalleeFunction(context.sem_ir(), inst.callee_id)
-           .self_type_id.has_value()) {
+  if (auto callee_function =
+          SemIR::GetCalleeFunction(context.sem_ir(), inst.callee_id);
+      !callee_function.self_type_id.has_value() &&
+      context.functions()
+              .Get(callee_function.function_id)
+              .builtin_function_kind() != SemIR::BuiltinFunctionKind::NoOp) {
     // This is not an associated function. Those will be required to be defined
     // as part of checking that the impl is complete.
     context.definitions_required_by_use().push_back(

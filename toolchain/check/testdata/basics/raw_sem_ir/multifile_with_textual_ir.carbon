@@ -82,7 +82,6 @@ fn B() {
 // CHECK:STDOUT:       0:               inst14
 // CHECK:STDOUT:       1:               inst15
 // CHECK:STDOUT: ...
-// CHECK:STDOUT:
 // CHECK:STDOUT: --- a.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
@@ -188,7 +187,6 @@ fn B() {
 // CHECK:STDOUT:       1:               inst15
 // CHECK:STDOUT:       2:               inst17
 // CHECK:STDOUT: ...
-// CHECK:STDOUT:
 // CHECK:STDOUT: --- b.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {

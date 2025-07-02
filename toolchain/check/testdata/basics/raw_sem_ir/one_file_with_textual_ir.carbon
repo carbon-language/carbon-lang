@@ -186,7 +186,6 @@ fn Foo(n: ()) -> ((), ()) {
 // CHECK:STDOUT:       0:               inst14
 // CHECK:STDOUT:       1:               inst36
 // CHECK:STDOUT: ...
-// CHECK:STDOUT:
 // CHECK:STDOUT: --- one_file_with_textual_ir.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {

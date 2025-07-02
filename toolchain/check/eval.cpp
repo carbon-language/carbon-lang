@@ -9,6 +9,7 @@
 #include <optional>
 #include <utility>
 
+#include "toolchain/base/canonical_value_store.h"
 #include "toolchain/base/kind_switch.h"
 #include "toolchain/check/action.h"
 #include "toolchain/check/diagnostic_helpers.h"

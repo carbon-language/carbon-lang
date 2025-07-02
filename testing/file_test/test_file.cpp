@@ -13,6 +13,7 @@
 #include "common/error.h"
 #include "common/find.h"
 #include "common/raw_string_ostream.h"
+#include "common/set.h"
 #include "llvm/ADT/StringExtras.h"
 #include "llvm/Support/JSON.h"
 #include "testing/base/file_helpers.h"
@@ -835,8 +836,14 @@ auto ProcessTestFile(llvm::StringRef test_name, bool running_autoupdate)
   }
 
   // Process includes. This can add entries to `include_files`.
+  Set<std::string> processed_includes;
   for (size_t i = 0; i < include_files.size(); ++i) {
     const auto& filename = include_files[i];
+    if (!processed_includes.Insert(filename).is_inserted()) {
+      // Ignore repeated includes, mainly so that included files can include the
+      // same file (i.e., repeated indirectly).
+      continue;
+    }
     CARBON_ASSIGN_OR_RETURN(std::string content, ReadFile(filename));
     // Note autoupdate never touches included files.
     CARBON_RETURN_IF_ERROR(ProcessFileContent(

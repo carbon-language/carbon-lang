@@ -36,7 +36,6 @@ struct ExprRegion;
 struct FacetTypeInfo;
 struct Function;
 struct Generic;
-struct IdentifiedFacetType;
 struct Specific;
 struct SpecificInterface;
 struct ImportCpp;
@@ -45,6 +44,7 @@ struct Impl;
 struct Interface;
 struct StructTypeField;
 struct TypeInfo;
+struct Vtable;
 
 // The ID of an instruction.
 struct InstId : public IdBase<InstId> {
@@ -296,6 +296,13 @@ struct ClassId : public IdBase<ClassId> {
   using IdBase::IdBase;
 };
 
+struct VtableId : public IdBase<VtableId> {
+  static constexpr llvm::StringLiteral Label = "vtable";
+  using ValueType = Vtable;
+
+  using IdBase::IdBase;
+};
+
 // The ID of an interface.
 struct InterfaceId : public IdBase<InterfaceId> {
   static constexpr llvm::StringLiteral Label = "interface";
@@ -323,7 +330,6 @@ struct FacetTypeId : public IdBase<FacetTypeId> {
 // The ID of an resolved facet type value.
 struct IdentifiedFacetTypeId : public IdBase<IdentifiedFacetTypeId> {
   static constexpr llvm::StringLiteral Label = "identified_facet_type";
-  using ValueType = IdentifiedFacetType;
 
   using IdBase::IdBase;
 };

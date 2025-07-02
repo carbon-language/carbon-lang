@@ -420,10 +420,15 @@ class Stringifier {
   auto StringifyInst(InstId /*inst_id*/, ImplWitnessAccess inst) -> void {
     auto witness_inst_id =
         sem_ir_->constant_values().GetConstantInstId(inst.witness_id);
-    if (auto specific_interface =
-            TryGetSpecificInterfaceForImplWitness(witness_inst_id)) {
-      const auto& interface =
-          sem_ir_->interfaces().Get(specific_interface->interface_id);
+    auto lookup = sem_ir_->insts().GetAs<LookupImplWitness>(witness_inst_id);
+    auto specific_interface =
+        sem_ir_->specific_interfaces().Get(lookup.query_specific_interface_id);
+    const auto& interface =
+        sem_ir_->interfaces().Get(specific_interface.interface_id);
+    if (!interface.associated_entities_id.has_value()) {
+      step_stack_->Push(".(TODO: element ", inst.index, " in incomplete ",
+                        witness_inst_id, ")");
+    } else {
       auto entities =
           sem_ir_->inst_blocks().Get(interface.associated_entities_id);
       size_t index = inst.index.index;
@@ -446,11 +451,8 @@ class Stringifier {
       }
       step_stack_->Push(
           ".(",
-          StepStack::EntityNameItem{interface, specific_interface->specific_id},
+          StepStack::EntityNameItem{interface, specific_interface.specific_id},
           ".");
-    } else {
-      step_stack_->Push(".(TODO: element ", inst.index, " in ", witness_inst_id,
-                        ")");
     }
 
     if (auto lookup =
@@ -510,6 +512,12 @@ class Stringifier {
     const auto& name_scope = sem_ir_->name_scopes().Get(inst.name_scope_id);
     step_stack_->PushQualifiedName(name_scope.parent_scope_id(),
                                    name_scope.name_id());
+  }
+
+  auto StringifyInst(InstId /*inst_id*/, PartialType inst) -> void {
+    *out_ << "partial ";
+
+    step_stack_->PushInstId(inst.inner_id);
   }
 
   auto StringifyInst(InstId /*inst_id*/, PatternType inst) -> void {

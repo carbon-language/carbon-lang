@@ -11,7 +11,9 @@
 #include "llvm/ADT/iterator_range.h"
 #include "llvm/Support/Allocator.h"
 #include "llvm/Support/FormatVariadic.h"
+#include "toolchain/base/canonical_value_store.h"
 #include "toolchain/base/int.h"
+#include "toolchain/base/relational_value_store.h"
 #include "toolchain/base/shared_value_stores.h"
 #include "toolchain/base/value_store.h"
 #include "toolchain/base/yaml.h"
@@ -35,6 +37,7 @@
 #include "toolchain/sem_ir/struct_type_field.h"
 #include "toolchain/sem_ir/type.h"
 #include "toolchain/sem_ir/type_info.h"
+#include "toolchain/sem_ir/vtable.h"
 
 namespace Carbon::SemIR {
 
@@ -59,7 +62,8 @@ struct ExprRegion {
 class File : public Printable<File> {
  public:
   using IdentifiedFacetTypeStore =
-      RelationalValueStore<FacetTypeId, IdentifiedFacetTypeId>;
+      RelationalValueStore<FacetTypeId, IdentifiedFacetTypeId,
+                           IdentifiedFacetType>;
 
   // Starts a new file for Check::CheckParseTree.
   explicit File(const Parse::Tree* parse_tree, CheckIRId check_ir_id,
@@ -224,6 +228,8 @@ class File : public Printable<File> {
   auto types() const -> const TypeStore& { return types_; }
   auto insts() -> InstStore& { return insts_; }
   auto insts() const -> const InstStore& { return insts_; }
+  auto vtables() -> ValueStore<VtableId>& { return vtables_; }
+  auto vtables() const -> const ValueStore<VtableId>& { return vtables_; }
   auto constant_values() -> ConstantValueStore& { return constant_values_; }
   auto constant_values() const -> const ConstantValueStore& {
     return constant_values_;
@@ -343,6 +349,8 @@ class File : public Printable<File> {
   // All instructions. The first entries will always be the singleton
   // instructions.
   InstStore insts_ = InstStore(this);
+
+  ValueStore<VtableId> vtables_;
 
   // Storage for name scopes.
   NameScopeStore name_scopes_ = NameScopeStore(this);

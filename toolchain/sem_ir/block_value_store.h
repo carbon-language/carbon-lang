@@ -7,7 +7,10 @@
 
 #include <type_traits>
 
+#include "common/check.h"
 #include "common/set.h"
+#include "llvm/Support/Allocator.h"
+#include "toolchain/base/mem_usage.h"
 #include "toolchain/base/value_store.h"
 #include "toolchain/base/yaml.h"
 

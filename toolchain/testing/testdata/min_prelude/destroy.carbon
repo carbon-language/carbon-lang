@@ -3,16 +3,11 @@
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
 // EXTRA-ARGS: --custom-core --exclude-dump-file-prefix=min_prelude/
+// INCLUDE-FILE: toolchain/testing/testdata/min_prelude/parts/destroy.carbon
 
 // --- min_prelude/destroy.carbon
 
 // A minimal prelude for tests that require destruction.
 package Core library "prelude";
 
-// TODO: Uncomment once the interface is used.
-// interface Destroy {
-//   fn Op[self: Self]();
-// }
-// impl forall [T:! type] T as Destroy {
-//   fn Op[self: Self]() = "no_op";
-// }
+export import library "prelude/parts/destroy";

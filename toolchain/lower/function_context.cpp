@@ -4,9 +4,9 @@
 
 #include "toolchain/lower/function_context.h"
 
+#include "common/pretty_stack_trace_function.h"
 #include "common/vlog.h"
 #include "toolchain/base/kind_switch.h"
-#include "toolchain/base/pretty_stack_trace_function.h"
 #include "toolchain/sem_ir/diagnostic_loc_converter.h"
 #include "toolchain/sem_ir/file.h"
 #include "toolchain/sem_ir/generic.h"
@@ -255,6 +255,12 @@ auto FunctionContext::GetDebugLoc(SemIR::InstId inst_id) -> llvm::DebugLoc {
     // duplicated from the original signature.
     //
     // TODO: Handle this case better.
+    if (sem_ir().insts().Is<SemIR::Call>(inst_id)) {
+      // Return a stub location for calls, because they may be inlineable (an
+      // LLVM verifier issue).
+      return llvm::DILocation::get(builder_.getContext(), -1, -1,
+                                   di_subprogram_);
+    }
     return llvm::DebugLoc();
   }
   return llvm::DILocation::get(builder_.getContext(), loc.line_number,

@@ -32,8 +32,9 @@ class InstNamer {
   static_assert(sizeof(ScopeId) == sizeof(AnyIdBase));
 
   // Entities whose scopes get entries from `ScopeId`.
-  using ScopeIdTypeEnum = TypeEnum<AssociatedConstantId, ClassId, FunctionId,
-                                   ImplId, InterfaceId, SpecificInterfaceId>;
+  using ScopeIdTypeEnum =
+      TypeEnum<AssociatedConstantId, ClassId, VtableId, FunctionId, ImplId,
+               InterfaceId, SpecificInterfaceId>;
 
   // Construct the instruction namer, and assign names to all instructions in
   // the provided file.

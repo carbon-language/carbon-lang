@@ -33,7 +33,7 @@ TEST(SemIRTest, Yaml) {
       new llvm::vfs::InMemoryFileSystem;
   CARBON_CHECK(fs->addFile(
       "test.carbon", /*ModificationTime=*/0,
-      llvm::MemoryBuffer::getMemBuffer("fn F() { var x: () = (); return; }")));
+      llvm::MemoryBuffer::getMemBuffer("fn F() { let x: () = (); return; }")));
   const auto install_paths =
       InstallPaths::MakeForBazelRunfiles(Testing::GetExePath());
   RawStringOstream print_stream;
@@ -66,24 +66,25 @@ TEST(SemIRTest, Yaml) {
       Pair("specifics", Yaml::Mapping(SizeIs(0))),
       Pair("struct_type_fields", Yaml::Mapping(SizeIs(1))),
       Pair("types", Yaml::Mapping(Each(type_builtin))),
-      Pair("insts",
-           Yaml::Mapping(AllOf(
-               Each(Key(inst_id)),
-               // kind is required, other parts are optional.
-               Each(Pair(_, Yaml::Mapping(Contains(Pair("kind", _))))),
-               // A 0-arg instruction.
-               Contains(
-                   Pair(_, Yaml::Mapping(ElementsAre(Pair("kind", "Return"))))),
-               // A 1-arg instruction.
-               Contains(Pair(_, Yaml::Mapping(ElementsAre(
-                                    Pair("kind", "TupleType"),
-                                    Pair("arg0", inst_block_id),
-                                    Pair("type", "type(TypeType)"))))),
-               // A 2-arg instruction.
-               Contains(Pair(
-                   _, Yaml::Mapping(ElementsAre(Pair("kind", "Assign"),
-                                                Pair("arg0", inst_id),
-                                                Pair("arg1", inst_id)))))))),
+      Pair("insts", Yaml::Mapping(AllOf(
+                        Each(Key(inst_id)),
+                        // kind is required, other parts are optional.
+                        Each(Pair(_, Yaml::Mapping(Contains(Pair("kind", _))))),
+                        // A 0-arg instruction.
+                        Contains(Pair(_, Yaml::Mapping(ElementsAre(
+                                             Pair("kind", "Return"))))),
+                        // A 1-arg instruction.
+                        Contains(Pair(_, Yaml::Mapping(ElementsAre(
+                                             Pair("kind", "TupleType"),
+                                             Pair("arg0", inst_block_id),
+                                             Pair("type", "type(TypeType)"))))),
+                        // A 2-arg instruction.
+                        Contains(Pair(_, Yaml::Mapping(ElementsAre(
+
+                                             Pair("kind", "FunctionDecl"),
+                                             Pair("arg0", "function0"),
+                                             Pair("arg1", "inst_block_empty"),
+                                             Pair("type", type_id)))))))),
       Pair("constant_values",
            Yaml::Mapping(AllOf(Each(Pair(inst_id, constant_id))))),
       Pair("symbolic_constants", Yaml::Mapping(SizeIs(0))),

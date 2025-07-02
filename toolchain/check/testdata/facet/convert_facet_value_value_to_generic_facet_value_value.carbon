@@ -101,6 +101,25 @@ fn F() {
 // CHECK:STDOUT:   %pattern_type.ab7: type = pattern_type %Goat [concrete]
 // CHECK:STDOUT:   %pattern_type.aff: type = pattern_type %Grass [concrete]
 // CHECK:STDOUT:   %HandleAnimal.specific_fn: <specific function> = specific_function %HandleAnimal, @HandleAnimal(%Animal.facet, %Edible.facet) [concrete]
+// CHECK:STDOUT:   %Destroy.type: type = facet_type <@Destroy> [concrete]
+// CHECK:STDOUT:   %Op.type.bae: type = fn_type @Op.1 [concrete]
+// CHECK:STDOUT:   %T.8b3: type = bind_symbolic_name T, 0 [symbolic]
+// CHECK:STDOUT:   %Op.type.bc9: type = fn_type @Op.2, @impl.49c(%T.8b3) [symbolic]
+// CHECK:STDOUT:   %Op.46f: %Op.type.bc9 = struct_value () [symbolic]
+// CHECK:STDOUT:   %Destroy.impl_witness.fd6: <witness> = impl_witness imports.%Destroy.impl_witness_table, @impl.49c(%Grass) [concrete]
+// CHECK:STDOUT:   %Op.type.7fb: type = fn_type @Op.2, @impl.49c(%Grass) [concrete]
+// CHECK:STDOUT:   %Op.d66: %Op.type.7fb = struct_value () [concrete]
+// CHECK:STDOUT:   %ptr.2bd: type = ptr_type %Grass [concrete]
+// CHECK:STDOUT:   %Destroy.facet.049: %Destroy.type = facet_value %Grass, (%Destroy.impl_witness.fd6) [concrete]
+// CHECK:STDOUT:   %.cd1: type = fn_type_with_self_type %Op.type.bae, %Destroy.facet.049 [concrete]
+// CHECK:STDOUT:   %Op.specific_fn.9e2: <specific function> = specific_function %Op.d66, @Op.2(%Grass) [concrete]
+// CHECK:STDOUT:   %Destroy.impl_witness.b14: <witness> = impl_witness imports.%Destroy.impl_witness_table, @impl.49c(%Goat) [concrete]
+// CHECK:STDOUT:   %Op.type.e7a: type = fn_type @Op.2, @impl.49c(%Goat) [concrete]
+// CHECK:STDOUT:   %Op.55a: %Op.type.e7a = struct_value () [concrete]
+// CHECK:STDOUT:   %ptr.940: type = ptr_type %Goat [concrete]
+// CHECK:STDOUT:   %Destroy.facet.cfd: %Destroy.type = facet_value %Goat, (%Destroy.impl_witness.b14) [concrete]
+// CHECK:STDOUT:   %.095: type = fn_type_with_self_type %Op.type.bae, %Destroy.facet.cfd [concrete]
+// CHECK:STDOUT:   %Op.specific_fn.d9f: <specific function> = specific_function %Op.55a, @Op.2(%Goat) [concrete]
 // CHECK:STDOUT:   %Eats.type.1ae: type = facet_type <@Eats, @Eats(%Grass)> [concrete]
 // CHECK:STDOUT:   %Self.016: %Eats.type.1ae = bind_symbolic_name Self, 1 [symbolic]
 // CHECK:STDOUT:   %complete_type.004: <witness> = complete_type_witness %Eats.type.1ae [concrete]
@@ -112,9 +131,13 @@ fn F() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [concrete] {
+// CHECK:STDOUT:     .Destroy = %Core.Destroy
 // CHECK:STDOUT:     import Core//prelude
 // CHECK:STDOUT:     import Core//prelude/...
 // CHECK:STDOUT:   }
+// CHECK:STDOUT:   %Core.Destroy: type = import_ref Core//prelude/parts/destroy, Destroy, loaded [concrete = constants.%Destroy.type]
+// CHECK:STDOUT:   %Core.import_ref.0b9: @impl.49c.%Op.type (%Op.type.bc9) = import_ref Core//prelude/parts/destroy, loc8_29, loaded [symbolic = @impl.49c.%Op (constants.%Op.46f)]
+// CHECK:STDOUT:   %Destroy.impl_witness_table = impl_witness_table (%Core.import_ref.0b9), @impl.49c [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -396,6 +419,18 @@ fn F() {
 // CHECK:STDOUT:   %.loc35_19.2: %Goat = bind_value %.loc35_19.1
 // CHECK:STDOUT:   %.loc35_31.2: %Grass = bind_value %.loc35_31.1
 // CHECK:STDOUT:   %HandleAnimal.call: init %empty_tuple.type = call %HandleAnimal.specific_fn(%.loc35_19.2, %.loc35_31.2)
+// CHECK:STDOUT:   %impl.elem0.loc35_29: %.cd1 = impl_witness_access constants.%Destroy.impl_witness.fd6, element0 [concrete = constants.%Op.d66]
+// CHECK:STDOUT:   %bound_method.loc35_29.1: <bound method> = bound_method %.loc35_29.2, %impl.elem0.loc35_29
+// CHECK:STDOUT:   %specific_fn.loc35_29: <specific function> = specific_function %impl.elem0.loc35_29, @Op.2(constants.%Grass) [concrete = constants.%Op.specific_fn.9e2]
+// CHECK:STDOUT:   %bound_method.loc35_29.2: <bound method> = bound_method %.loc35_29.2, %specific_fn.loc35_29
+// CHECK:STDOUT:   %addr.loc35_29: %ptr.2bd = addr_of %.loc35_29.2
+// CHECK:STDOUT:   %no_op.loc35_29: init %empty_tuple.type = call %bound_method.loc35_29.2(%addr.loc35_29)
+// CHECK:STDOUT:   %impl.elem0.loc35_17: %.095 = impl_witness_access constants.%Destroy.impl_witness.b14, element0 [concrete = constants.%Op.55a]
+// CHECK:STDOUT:   %bound_method.loc35_17.1: <bound method> = bound_method %.loc35_17.2, %impl.elem0.loc35_17
+// CHECK:STDOUT:   %specific_fn.loc35_17: <specific function> = specific_function %impl.elem0.loc35_17, @Op.2(constants.%Goat) [concrete = constants.%Op.specific_fn.d9f]
+// CHECK:STDOUT:   %bound_method.loc35_17.2: <bound method> = bound_method %.loc35_17.2, %specific_fn.loc35_17
+// CHECK:STDOUT:   %addr.loc35_17: %ptr.940 = addr_of %.loc35_17.2
+// CHECK:STDOUT:   %no_op.loc35_17: init %empty_tuple.type = call %bound_method.loc35_17.2(%addr.loc35_17)
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

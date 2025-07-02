@@ -46,6 +46,9 @@ auto GetClassType(Context& context, SemIR::ClassId class_id,
 auto GetFunctionType(Context& context, SemIR::FunctionId fn_id,
                      SemIR::SpecificId specific_id) -> SemIR::TypeId;
 
+auto GetVtableType(Context& context, SemIR::VtableId vtable_id)
+    -> SemIR::TypeId;
+
 // Gets the type of an associated function with the `Self` parameter bound to
 // a particular value. The returned type will be complete.
 auto GetFunctionTypeWithSelfType(Context& context,

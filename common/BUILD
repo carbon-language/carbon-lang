@@ -406,6 +406,14 @@ cc_library(
 )
 
 cc_library(
+    name = "pretty_stack_trace_function",
+    hdrs = ["pretty_stack_trace_function.h"],
+    deps = [
+        "@llvm-project//llvm:Support",
+    ],
+)
+
+cc_library(
     name = "raw_hashtable",
     srcs = ["raw_hashtable.cpp"],
     hdrs = ["raw_hashtable.h"],
@@ -468,6 +476,7 @@ cc_library(
         "@abseil-cpp//absl/base:no_destructor",
         "@abseil-cpp//absl/hash",
         "@abseil-cpp//absl/random",
+        "@boost_unordered",
         "@google_benchmark//:benchmark",
         "@llvm-project//llvm:Support",
     ],
