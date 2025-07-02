@@ -32,10 +32,6 @@
 #include "toolchain/sem_ir/inst.h"
 #include "toolchain/sem_ir/typed_insts.h"
 
-// TODO: This contains a lot of recursion. Consider removing it in order to
-// prevent accidents.
-// NOLINTBEGIN(misc-no-recursion)
-
 namespace Carbon::Check {
 
 // Marks the initializer `init_id` as initializing `target_id`.
@@ -1535,5 +1531,3 @@ auto DiscardExpr(Context& context, SemIR::InstId expr_id) -> void {
 }
 
 }  // namespace Carbon::Check
-
-// NOLINTEND(misc-no-recursion)
