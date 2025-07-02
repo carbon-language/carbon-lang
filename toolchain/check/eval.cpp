@@ -252,6 +252,10 @@ enum class Phase : uint8_t {
 };
 }  // namespace
 
+static auto IsConstantOrError(Phase phase) -> bool {
+  return phase < Phase::Runtime;
+}
+
 // Gets the phase in which the value of a constant will become available.
 static auto GetPhase(const SemIR::ConstantValueStore& constant_values,
                      SemIR::ConstantId constant_id) -> Phase {
@@ -697,7 +701,7 @@ static auto ReplaceFieldWithConstantValue(EvalContext& eval_context,
     return false;
   }
   inst->*field = unwrapped;
-  return *phase < Phase::Runtime;
+  return IsConstantOrError(*phase);
 }
 
 // Function template that can be called with an argument of type `T`. Used below
@@ -782,7 +786,7 @@ static auto ReplaceTypeWithConstantValue(EvalContext& eval_context,
                                          SemIR::Inst* inst, Phase* phase)
     -> bool {
   inst->SetType(GetTypeOfInst(eval_context, inst_id, *inst, phase));
-  return *phase < Phase::Runtime;
+  return IsConstantOrError(*phase);
 }
 
 template <typename InstT>
@@ -790,7 +794,7 @@ static auto ReplaceTypeWithConstantValue(EvalContext& eval_context,
                                          SemIR::InstId inst_id, InstT* inst,
                                          Phase* phase) -> bool {
   inst->type_id = GetTypeOfInst(eval_context, inst_id, *inst, phase);
-  return *phase < Phase::Runtime;
+  return IsConstantOrError(*phase);
 }
 
 template <typename... Types>
@@ -1890,6 +1894,8 @@ static auto TryEvalTypedInst(EvalContext& eval_context, SemIR::InstId inst_id,
       }
       return SemIR::ConstantId::NotConstant;
     }
+    // If any operand of the instruction has an error in it, the instruction
+    // itself evaluates to an error.
     if (phase == Phase::UnknownDueToError) {
       return SemIR::ErrorInst::ConstantId;
     }
