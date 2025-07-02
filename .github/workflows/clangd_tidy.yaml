@@ -62,7 +62,7 @@ jobs:
             ${{ github.event_name == 'pull_request' &&
             github.event.pull_request.base.sha ||
             github.event.merge_group.base_sha }}
-        run: git diff --name-only --diff-filter=d $GIT_BASE_SHA -- '**/*.cpp' '**/*.h'
+        run: git diff --name-only --diff-filter=d $GIT_BASE_SHA -- '*.cpp' '*.h'
 
       - uses: ./.github/actions/build-setup-common
         if: steps.filter.outputs.has_cpp_files == 'true'
@@ -87,4 +87,4 @@ jobs:
             github.event.merge_group.base_sha }}
         run: |
           clangd-tidy -p . $(git diff --name-only --diff-filter=d \
-                               $GIT_BASE_SHA -- '**/*.cpp' '**/*.h')
+                               $GIT_BASE_SHA -- '*.cpp' '*.h')
