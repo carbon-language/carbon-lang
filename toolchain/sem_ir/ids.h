@@ -16,7 +16,7 @@
 
 namespace Carbon::SemIR {
 
-// Forward declare indexed types, for integration with ValueStore.
+// TODO: This is in use, but not here.
 class File;
 
 // The ID of an `Inst`.
