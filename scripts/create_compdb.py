@@ -61,7 +61,7 @@ def _build_generated_files(bazel: str, logtostderr: bool) -> None:
     subprocess.check_call(
         [bazel, "build", "--keep_going"] + generated_file_labels
     )
-    subprocess.check_call("ls", "bazel-out/k8-fastbuild/bin/common/version.cpp")
+    subprocess.check_call(["ls", "bazel-out/k8-fastbuild/bin/common/version.cpp"])
 
 
 def main() -> None:
