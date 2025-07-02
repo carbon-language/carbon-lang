@@ -78,4 +78,4 @@ jobs:
         env:
           FILTER_FILES: ${{ steps.filter.outputs.has_cpp_files }}
         run: |
-          clangd-tidy -p . $FILTER_FILES
+          clangd-tidy -p . -j 10 $FILTER_FILES
