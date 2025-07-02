@@ -74,7 +74,8 @@ struct CheckParseTreesOptions {
 auto CheckParseTrees(
     llvm::MutableArrayRef<Unit> units,
     llvm::ArrayRef<Parse::GetTreeAndSubtreesFn> tree_and_subtrees_getters,
-    llvm::IntrusiveRefCntPtr<llvm::vfs::FileSystem> fs, llvm::StringRef target,
+    llvm::IntrusiveRefCntPtr<llvm::vfs::FileSystem> fs,
+    llvm::StringRef clang_path, llvm::StringRef target,
     const CheckParseTreesOptions& options) -> void;
 
 }  // namespace Carbon::Check
