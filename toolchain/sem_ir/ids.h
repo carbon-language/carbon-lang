@@ -578,7 +578,7 @@ struct NameScopeId : public IdBase<NameScopeId> {
 
 constexpr NameScopeId NameScopeId::Package = NameScopeId(0);
 
-// The ID of an `Inst` block.
+// The ID of an `InstId` block.
 struct InstBlockId : public IdBase<InstBlockId> {
   static constexpr llvm::StringLiteral Label = "inst_block";
 
