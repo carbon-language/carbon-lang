@@ -117,6 +117,7 @@ struct RandValues<std::pair<T, U>> {
     // the size incorrect.
     // NOLINTNEXTLINE(bugprone-multi-level-implicit-pointer-conversion)
     memcpy(&result0, &entropy_bytes[x % EntropySize], sizeof(T));
+    // NOLINTNEXTLINE(bugprone-multi-level-implicit-pointer-conversion)
     memcpy(&result1, &entropy_bytes[x % EntropySize] + sizeof(T), sizeof(U));
     return {result0, result1};
   }

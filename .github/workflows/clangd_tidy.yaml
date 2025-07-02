@@ -59,13 +59,6 @@ jobs:
               - '{**/*.cpp,**/*.h}'
           list-files: 'shell'
 
-      - name: diff
-        if: steps.filter.outputs.has_cpp == 'true'
-        env:
-          FILTER_FILES: ${{ steps.filter.outputs.has_cpp_files }}
-        run: |
-          echo $FILTER_FILES
-
       - uses: ./.github/actions/build-setup-common
         if: steps.filter.outputs.has_cpp == 'true'
         with:
