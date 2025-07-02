@@ -578,7 +578,7 @@ struct NameScopeId : public IdBase<NameScopeId> {
 
 constexpr NameScopeId NameScopeId::Package = NameScopeId(0);
 
-// The ID of an instruction block.
+// The ID of an `Inst` block.
 struct InstBlockId : public IdBase<InstBlockId> {
   static constexpr llvm::StringLiteral Label = "inst_block";
 
@@ -710,7 +710,7 @@ struct ExprRegionId : public IdBase<ExprRegionId> {
   using IdBase::IdBase;
 };
 
-// The ID of a struct type field block.
+// The ID of a `StructTypeField` block.
 struct StructTypeFieldsId : public IdBase<StructTypeFieldsId> {
   static constexpr llvm::StringLiteral Label = "struct_type_fields";
 
