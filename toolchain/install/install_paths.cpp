@@ -92,19 +92,32 @@ auto InstallPaths::Make(llvm::StringRef install_prefix) -> InstallPaths {
 
 auto InstallPaths::ReadPreludeManifest() const
     -> ErrorOr<llvm::SmallVector<std::string>> {
+  return ReadManifest(core_package(), "prelude_manifest.txt");
+}
+
+auto InstallPaths::ReadClangHeadersManifest() const
+    -> ErrorOr<llvm::SmallVector<std::string>> {
+  llvm::SmallString<256> manifest_path(prefix_);
+  llvm::sys::path::append(manifest_path, llvm::sys::path::Style::posix, "..");
+  return ReadManifest(manifest_path, "clang_headers_manifest.txt");
+}
+
+auto InstallPaths::ReadManifest(llvm::StringRef manifest_path,
+                                llvm::StringRef manifest_file) const
+    -> ErrorOr<llvm::SmallVector<std::string>> {
   // This is structured to avoid a vector copy on success.
   ErrorOr<llvm::SmallVector<std::string>> result =
       llvm::SmallVector<std::string>();
 
   llvm::SmallString<256> manifest;
   llvm::sys::path::append(manifest, llvm::sys::path::Style::posix,
-                          core_package(), "prelude_manifest.txt");
+                          manifest_path, manifest_file);
 
   auto fs = llvm::vfs::getRealFileSystem();
   llvm::ErrorOr<std::unique_ptr<llvm::MemoryBuffer>> file =
       fs->getBufferForFile(manifest);
   if (!file) {
-    result = ErrorBuilder() << "Loading prelude manifest `" << manifest
+    result = ErrorBuilder() << "Loading manifest `" << manifest
                             << "`: " << file.getError().message();
     return result;
   }
@@ -117,14 +130,14 @@ auto InstallPaths::ReadPreludeManifest() const
       break;
     }
     llvm::SmallString<256> path;
-    llvm::sys::path::append(path, llvm::sys::path::Style::posix, core_package(),
+    llvm::sys::path::append(path, llvm::sys::path::Style::posix, manifest_path,
                             token);
     result->push_back(path.str().str());
     buffer = remainder;
   }
 
   if (result->empty()) {
-    result = ErrorBuilder() << "Prelude manifest `" << manifest << "` is empty";
+    result = ErrorBuilder() << "Manifest `" << manifest << "` is empty";
   }
   return result;
 }

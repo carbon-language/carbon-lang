@@ -14,8 +14,11 @@ def _get_files(ctx):
         ])
 
     if ctx.attr.strip_package_dir:
+        # Files may or may not be prefixed with the bin directory, and then
+        # may or may not be prefixed with the package directory. Strip both.
+        bin_dir = ctx.bin_dir.path + "/"
         package_dir = ctx.label.package + "/"
-        files_stripped = [f.removeprefix(package_dir) for f in files]
+        files_stripped = [f.removeprefix(bin_dir).removeprefix(package_dir) for f in files]
     else:
         files_stripped = files
 

@@ -205,6 +205,14 @@ manifest(
     srcs = [":install_data"],
 )
 
+# A list of clang's installed builtin header files.
+# This is consumed by //toolchain/testing:file_test.
+manifest(
+    name = "clang_headers_manifest.txt",
+    srcs = [":lib/carbon/llvm/lib/clang/" + LLVM_VERSION_MAJOR + "/include.pkg"],
+    strip_package_dir = True,
+)
+
 pkg_naming_variables(
     name = "packaging_variables",
 )
