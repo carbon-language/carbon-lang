@@ -205,8 +205,8 @@ import Math;
 
 imports the default library from package `Math`. The names from this library are
 accessible as members of `Math`, like `Math.Sqrt`. The `Core.Print` function
-comes from the `Core` package's `io`. Unlike C++, the namespaces of different
-packages are kept separate, so there are no name conflicts.
+comes from the `Core` package's `io` library. Unlike C++, the namespaces of
+different packages are kept separate, so there are no name conflicts.
 
 Carbon [comments](#code-and-comments) must be on a line by themselves starting
 with `//`:
