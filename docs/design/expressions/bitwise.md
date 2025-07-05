@@ -348,3 +348,5 @@ to give the semantics described above.
 
 -   Proposal
     [#1191: bitwise and shift operators](https://github.com/carbon-language/carbon-lang/pull/1191).
+-   Proposal
+    [#5389: Generic across forms](https://github.com/carbon-language/carbon-lang/pull/5389)

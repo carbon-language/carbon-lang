@@ -62,7 +62,7 @@ package Core;
 interface IndexWithPrimitive
     [anchor Self:! Form]
     (implicit_into Subscript:! Form) {
-  let out ResultForm:! Form;
+  let implicit_from ResultForm:! Form;
   fn Op[bound self:? Self](subscript:? Subscript)
       ->? ResultForm;
 }
@@ -225,3 +225,5 @@ class Span(T:! type) {
     [#2274: Subscript syntax and semantics](https://github.com/carbon-language/carbon-lang/pull/2274)
 -   Proposal
     [#2006: Values, variables, and pointers](https://github.com/carbon-language/carbon-lang/pull/2006)
+-   Proposal
+    [#5389: Generic across forms](https://github.com/carbon-language/carbon-lang/pull/5389)

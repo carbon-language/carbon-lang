@@ -210,11 +210,14 @@ or the `ImplicitAs` named constraint:
 ```
 package Core;
 
+// FIXME: `implicit_into` is concerning here, since we
+// generally only want to perform a single implicit
+// type conversion. Perhaps it should have `anchor`?
 interface ImplicitAsPrimitive
     [implicit_into Self:! Form](Dest:! type) {
   final extend impl as AsPrimitive(Dest);
   // Inherited from AsPrimitive(Dest):
-  // let out ResultForm:! Form where .type = Dest;
+  // let implicit_from ResultForm:! Form where .type = Dest;
   // fn Convert[bound self:? Self]()
   //     ->? ResultForm;
 }
@@ -250,3 +253,5 @@ types.
     [#820: Implicit conversions](https://github.com/carbon-language/carbon-lang/pull/820).
 -   Proposal
     [#866: Allow ties in floating literals](https://github.com/carbon-language/carbon-lang/pull/866).
+-   Proposal
+    [#5389: Generic across forms](https://github.com/carbon-language/carbon-lang/pull/5389)

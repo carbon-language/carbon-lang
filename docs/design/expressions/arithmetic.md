@@ -355,3 +355,5 @@ to give the semantics described above.
     [#1083: Arithmetic](https://github.com/carbon-language/carbon-lang/pull/1083)
 -   Proposal
     [#1178: Rework operator interfaces](https://github.com/carbon-language/carbon-lang/pull/1178)
+-   Proposal
+    [#5389: Generic across forms](https://github.com/carbon-language/carbon-lang/pull/5389)

@@ -183,7 +183,9 @@ package Core;
 
 interface AsPrimitive[implicit_into Self:! Form]
     (Dest:! type) {
-  let out ResultForm:! Form where .type = Dest;
+  // FIXME: Need to get the unqualified version
+  // of `Dest` without `const`/`partial` here.
+  let implicit_from ResultForm:! Form where .type = Dest;
   fn Convert[bound self:? Self]()
       ->? ResultForm;
 }
@@ -216,3 +218,5 @@ type `type`. The program is invalid if this conversion is not possible.
 -   [Implicit conversions in C++](https://en.cppreference.com/w/cpp/language/implicit_conversion)
 -   Proposal
     [#845: `as` expressions](https://github.com/carbon-language/carbon-lang/pull/845).
+-   Proposal
+    [#5389: Generic across forms](https://github.com/carbon-language/carbon-lang/pull/5389)

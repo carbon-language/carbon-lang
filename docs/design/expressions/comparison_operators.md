@@ -552,3 +552,5 @@ in general. That decision is left to a future proposal.
     [#1178: Rework operator interfaces](https://github.com/carbon-language/carbon-lang/pull/1178)
 -   Issue
     [#710: Default comparison for data classes](https://github.com/carbon-language/carbon-lang/issues/710)
+-   Proposal
+    [#5389: Generic across forms](https://github.com/carbon-language/carbon-lang/pull/5389)
