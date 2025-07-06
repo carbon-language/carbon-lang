@@ -36,7 +36,7 @@ fn F() {
   extend impl as I;
   namespace N;
   default fn F();
-  impl fn G();
+  override fn G();
   virtual fn H();
   private var v: i32;
   protected var v: i32;

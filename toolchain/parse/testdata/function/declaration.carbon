@@ -58,8 +58,8 @@ fn destroy[self: Self]().Foo() {}
 
 // --- impl_fn.carbon
 
-impl fn F();
-abstract impl fn G();
+override fn F();
+abstract override fn G();
 impl abstract fn H();
 private impl default fn I();
 

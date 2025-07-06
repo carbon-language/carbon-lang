@@ -22,7 +22,7 @@ struct FunctionFields {
   enum class SpecialFunctionKind : uint8_t { None, Builtin, Thunk };
 
   // Kinds of virtual modifiers that can apply to functions.
-  enum class VirtualModifier : uint8_t { None, Virtual, Abstract, Impl };
+  enum class VirtualModifier : uint8_t { None, Virtual, Abstract, Override };
 
   // The following members always have values, and do not change throughout the
   // lifetime of the function.

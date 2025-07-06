@@ -128,7 +128,7 @@ static auto GetVirtualModifier(const KeywordModifierSet& modifier_set)
             SemIR::Function::VirtualModifier::Virtual)
       .Case(KeywordModifierSet::Abstract,
             SemIR::Function::VirtualModifier::Abstract)
-      .Case(KeywordModifierSet::Impl, SemIR::Function::VirtualModifier::Impl)
+              .Case(KeywordModifierSet::Override, SemIR::Function::VirtualModifier::Override)
       .Default(SemIR::Function::VirtualModifier::None);
 }
 
@@ -342,9 +342,9 @@ static auto RequestVtableIfVirtual(
   }
 
   auto& class_info = context.classes().Get(class_decl->class_id);
-  if (virtual_modifier == SemIR::Function::VirtualModifier::Impl &&
+  if (virtual_modifier == SemIR::Function::VirtualModifier::Override &&
       !class_info.base_id.has_value()) {
-    CARBON_DIAGNOSTIC(ImplWithoutBase, Error, "impl without base class");
+          CARBON_DIAGNOSTIC(ImplWithoutBase, Error, "override without base class");
     context.emitter().Emit(node_id, ImplWithoutBase);
   }
 

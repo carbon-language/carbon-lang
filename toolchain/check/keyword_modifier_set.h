@@ -44,14 +44,14 @@ class KeywordModifierSet {
     Default = 1 << 6,
     Export = 1 << 7,
     Final = 1 << 8,
-    Impl = 1 << 9,
+    Override = 1 << 9,
     Virtual = 1 << 10,
     Returned = 1 << 11,
 
     // Sets of modifiers:
     Access = Private | Protected,
     Class = Abstract | Base,
-    Method = Abstract | Impl | Virtual,
+    Method = Abstract | Override | Virtual,
     ImplDecl = Extend | Final,
     Interface = Default | Final,
     Decl = Class | Method | Interface | Export | Returned,
