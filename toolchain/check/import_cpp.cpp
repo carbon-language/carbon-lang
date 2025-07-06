@@ -568,6 +568,21 @@ static auto MapType(Context& context, SemIR::LocId loc_id, clang::QualType type)
     return MapRecordType(context, loc_id, *record_type);
   }
 
+  if (const auto* pointer_type = clang::dyn_cast<clang::PointerType>(type)) {
+    clang::QualType pointee_type = pointer_type->getPointeeType();
+    auto [pointee_type_inst_id, pointee_type_id] = 
+        MapType(context, loc_id, pointee_type);
+    
+    if (pointee_type_id == SemIR::ErrorInst::TypeId) {
+      return {.inst_id = SemIR::ErrorInst::TypeInstId,
+              .type_id = SemIR::ErrorInst::TypeId};
+    }
+    
+    auto pointer_type_id = GetPointerType(context, pointee_type_inst_id);
+    return {.inst_id = context.types().GetInstId(pointer_type_id),
+            .type_id = pointer_type_id};
+  }
+
   return {.inst_id = SemIR::ErrorInst::TypeInstId,
           .type_id = SemIR::ErrorInst::TypeId};
 }
