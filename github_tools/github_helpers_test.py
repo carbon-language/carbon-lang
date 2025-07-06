@@ -175,6 +175,63 @@ class TestGithubHelpers(unittest.TestCase):
             ["foo", "bar"],
         )
         self.client.execute.assert_called_once_with(_EXP_QUERY_SECOND_PAGE)
+    
+
+    def test_execute_and_paginate_invalid_nodes_type(self):
+        invalid_result = {
+            "top": {
+                "child": {
+                    "nodes": "not-a-list",  # Should be a list
+                    "pageInfo": {
+                        "hasNextPage": False,
+                        "endCursor": None,
+                    },
+                    "totalCount": 1,
+                }
+            }
+        }
+        self.client.execute = mock.MagicMock(return_value=invalid_result)
+        with self.assertRaises(TypeError):
+            list(self.client.execute_and_paginate(_TEST_QUERY, _TEST_QUERY_PATH))
+
+    def test_execute_and_paginate_api_failure(self):
+        self.client.execute = mock.MagicMock(side_effect=RuntimeError("API down"))
+        with self.assertRaises(RuntimeError):
+            list(self.client.execute_and_paginate(_TEST_QUERY, _TEST_QUERY_PATH))
+
+    def test_execute_and_paginate_large_pagination(self):
+        def paging(query):
+            if query == _EXP_QUERY_FIRST_PAGE:
+                return self.mock_result(
+                    [f"user{i}" for i in range(100)],
+                    total_count=150,
+                    has_next_page=True,
+                )
+            elif query == _EXP_QUERY_SECOND_PAGE:
+                return self.mock_result([f"user{i}" for i in range(100, 150)])
+        self.client.execute = mock.MagicMock(side_effect=paging)
+        result = list(self.client.execute_and_paginate(_TEST_QUERY, _TEST_QUERY_PATH))
+        self.assertEqual(len(result), 150)
+
+    def test_execute_and_paginate_missing_cursor_with_has_next(self):
+        bad_result = {
+            "top": {
+                "child": {
+                    "nodes": ["foo"],
+                    "pageInfo": {
+                        "hasNextPage": True,
+                        "endCursor": None,
+                    },
+                    "totalCount": 2,
+                }
+            }
+        }
+        self.client.execute = mock.MagicMock(return_value=bad_result)
+        with self.assertRaises(Exception):
+            list(self.client.execute_and_paginate(_TEST_QUERY, _TEST_QUERY_PATH))
+
+    
+        
 
 
 if __name__ == "__main__":
