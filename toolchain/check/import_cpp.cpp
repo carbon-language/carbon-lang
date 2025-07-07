@@ -829,10 +829,12 @@ static auto CreateFunctionParamsInsts(Context& context, SemIR::LocId loc_id,
   if (SemIR::ErrorInst::InstId == return_slot_pattern_id) {
     return std::nullopt;
   }
+
   // TODO: Add support for implicit parameters.
   auto call_params_id = CalleePatternMatch(
       context, /*implicit_param_patterns_id=*/SemIR::InstBlockId::None,
       param_patterns_id, return_slot_pattern_id);
+
   return {{.param_patterns_id = param_patterns_id,
            .return_slot_pattern_id = return_slot_pattern_id,
            .call_params_id = call_params_id}};
@@ -858,6 +860,7 @@ static auto ImportFunctionDecl(Context& context, SemIR::LocId loc_id,
     return SemIR::ErrorInst::InstId;
   }
 
+  context.scope_stack().PushForDeclName();
   context.inst_block_stack().Push();
   context.pattern_block_stack().Push();
 
@@ -866,6 +869,7 @@ static auto ImportFunctionDecl(Context& context, SemIR::LocId loc_id,
 
   auto pattern_block_id = context.pattern_block_stack().Pop();
   auto decl_block_id = context.inst_block_stack().Pop();
+  context.scope_stack().Pop();
 
   if (!function_params_insts.has_value()) {
     return SemIR::ErrorInst::InstId;

@@ -92,6 +92,10 @@ class FileContext {
   auto context() -> Context& { return *context_; }
   auto llvm_context() -> llvm::LLVMContext& { return context().llvm_context(); }
   auto llvm_module() -> llvm::Module& { return context().llvm_module(); }
+  auto cpp_code_generator() -> clang::CodeGenerator& {
+    CARBON_CHECK(cpp_code_generator_);
+    return *cpp_code_generator_;
+  }
   auto sem_ir() const -> const SemIR::File& { return *sem_ir_; }
   auto cpp_ast() -> const clang::ASTUnit* { return sem_ir().cpp_ast(); }
   auto inst_namer() -> const SemIR::InstNamer* { return inst_namer_; }
