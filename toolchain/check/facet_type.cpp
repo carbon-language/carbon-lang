@@ -257,6 +257,47 @@ auto AllocateFacetTypeImplWitness(Context& context,
   context.inst_blocks().ReplacePlaceholder(witness_id, empty_table);
 }
 
+namespace {
+struct FacetTypeConstraintValue {
+  SemIR::EntityNameId entity_name_id;
+  SemIR::ElementIndex access_index;
+  SemIR::SpecificInterfaceId specific_interface_id;
+
+  friend auto operator<=>(const FacetTypeConstraintValue& lhs,
+                          const FacetTypeConstraintValue& rhs)
+      -> std::weak_ordering {
+    if (lhs.entity_name_id != rhs.entity_name_id) {
+      return lhs.entity_name_id.index <=> rhs.entity_name_id.index;
+    }
+    if (lhs.access_index != rhs.access_index) {
+      return lhs.access_index.index <=> rhs.access_index.index;
+    }
+    return lhs.specific_interface_id.index <=> rhs.specific_interface_id.index;
+  }
+
+  friend auto operator==(const FacetTypeConstraintValue& lhs,
+                         const FacetTypeConstraintValue& rhs) -> bool = default;
+};
+}  // namespace
+
+static auto GetFacetTypeConstraintValue(Context& context,
+                                        SemIR::ImplWitnessAccess access)
+    -> std::optional<FacetTypeConstraintValue> {
+  auto lookup =
+      context.insts().TryGetAs<SemIR::LookupImplWitness>(access.witness_id);
+  if (lookup) {
+    auto self = context.insts().TryGetAs<SemIR::BindSymbolicName>(
+        context.constant_values().GetConstantInstId(
+            lookup->query_self_inst_id));
+    if (self) {
+      return {{.entity_name_id = self->entity_name_id,
+               .access_index = access.index,
+               .specific_interface_id = lookup->query_specific_interface_id}};
+    }
+  }
+  return std::nullopt;
+}
+
 // Returns an ordering between two values in a rewrite constraint. Two
 // `ImplWitnessAccess` instructions that refer to the same associated constant
 // through the same facet value are treated as equivalent. Otherwise, the
@@ -273,28 +314,10 @@ static auto CompareFacetTypeConstraintValues(Context& context,
   auto lhs_access = context.insts().TryGetAs<SemIR::ImplWitnessAccess>(lhs_id);
   auto rhs_access = context.insts().TryGetAs<SemIR::ImplWitnessAccess>(rhs_id);
   if (lhs_access && rhs_access) {
-    auto lhs_lookup = context.insts().TryGetAs<SemIR::LookupImplWitness>(
-        lhs_access->witness_id);
-    auto rhs_lookup = context.insts().TryGetAs<SemIR::LookupImplWitness>(
-        rhs_access->witness_id);
-    if (lhs_lookup && rhs_lookup) {
-      auto lhs_self = context.insts().TryGetAs<SemIR::BindSymbolicName>(
-          context.constant_values().GetConstantInstId(
-              lhs_lookup->query_self_inst_id));
-      auto rhs_self = context.insts().TryGetAs<SemIR::BindSymbolicName>(
-          context.constant_values().GetConstantInstId(
-              rhs_lookup->query_self_inst_id));
-      if (lhs_self && rhs_self) {
-        if (lhs_self->entity_name_id != rhs_self->entity_name_id) {
-          return lhs_self->entity_name_id.index <=>
-                 rhs_self->entity_name_id.index;
-        }
-        if (lhs_access->index != rhs_access->index) {
-          return lhs_access->index <=> rhs_access->index;
-        }
-        return lhs_lookup->query_specific_interface_id.index <=>
-               rhs_lookup->query_specific_interface_id.index;
-      }
+    auto lhs_access_value = GetFacetTypeConstraintValue(context, *lhs_access);
+    auto rhs_access_value = GetFacetTypeConstraintValue(context, *rhs_access);
+    if (lhs_access_value && rhs_access_value) {
+      return *lhs_access_value <=> *rhs_access_value;
     }
 
     // We do *not* want to get the evaluated result of `ImplWitnessAccess` here,
@@ -368,62 +391,84 @@ class SubstImplWitnessAccessCallbacks : public SubstInstCallbacks {
  public:
   class AccessRewriteCache {
    public:
-    auto Find(SemIR::InstId lhs_access_id) -> std::optional<SemIR::InstId> {
-      auto it = cache_.find_as(lhs_access_id);
+    enum State {
+      BeingRewritten,
+      FullyRewritten,
+    };
+    struct Value {
+      State state;
+      SemIR::InstId inst_id;
+    };
+
+    auto Find(Context& context, SemIR::ImplWitnessAccess access)
+        -> std::optional<Value> {
+      auto it = cache_.find(GetKey(context, access));
       if (it == cache_.end()) {
         return std::nullopt;
       }
       return it->second;
     }
 
-    auto Insert(Context& context, SemIR::InstId lhs_access_id,
+    auto InsertBeingRewritten(Context& context, SemIR::ImplWitnessAccess access)
+        -> void {
+      auto [it, _] = cache_.insert(
+          {GetKey(context, access), {BeingRewritten, SemIR::InstId::None}});
+      it->second.state = BeingRewritten;
+    }
+
+    auto Insert(Context& context, SemIR::ImplWitnessAccess access,
                 SemIR::InstId inst_id) -> void {
-      auto [it, _] = cache_.insert({{&context, lhs_access_id}, inst_id});
-      CARBON_CHECK(it->second == inst_id);
+      auto [it, inserted] =
+          cache_.insert({GetKey(context, access), {FullyRewritten, inst_id}});
+      if (!inserted) {
+        CARBON_CHECK(it->second.state == BeingRewritten ||
+                     it->second.inst_id == inst_id);
+        it->second = {FullyRewritten, inst_id};
+      }
     }
 
    private:
-    struct Key {
-      Context* context;
-      SemIR::InstId inst_id;
-    };
+    using Key = FacetTypeConstraintValue;
     struct KeyInfo {
       static auto getEmptyKey() -> Key {
-        return {.context = nullptr, .inst_id = SemIR::InstId::None};
+        return {
+            .entity_name_id = SemIR::EntityNameId::None,
+            .access_index = SemIR::ElementIndex(-1),
+            .specific_interface_id = SemIR::SpecificInterfaceId::None,
+        };
       }
       static auto getTombstoneKey() -> Key {
-        return {.context = nullptr, .inst_id = SemIR::ErrorInst::InstId};
+        return {
+            .entity_name_id = SemIR::EntityNameId::None,
+            .access_index = SemIR::ElementIndex(-2),
+            .specific_interface_id = SemIR::SpecificInterfaceId::None,
+        };
       }
       static auto getHashValue(Key key) -> unsigned {
-        return key.inst_id.index;
+        // This hash produces the same value if two ImplWitnessAccess are
+        // pointing to the same associated constant, even if they are different
+        // instruction ids.
+        //
+        // TODO: This truncates the high bits of the hash code which does not
+        // make for a good hash function.
+        return static_cast<unsigned>(static_cast<uint64_t>(HashValue(key)));
       }
       static auto isEqual(Key lhs, Key rhs) -> bool {
-        if (rhs.context == nullptr) {
-          return lhs.context == nullptr && lhs.inst_id == rhs.inst_id;
-        }
-        return CompareFacetTypeConstraintValues(*rhs.context, lhs.inst_id,
-                                                rhs.inst_id) ==
-               std::weak_ordering::equivalent;
-      }
-
-      // Support find_as() with the `InstId` directly.
-      static auto getHashValue(SemIR::InstId inst_id) -> unsigned {
-        return inst_id.index;
-      }
-      static auto isEqual(SemIR::InstId lhs_inst_id, Key rhs) -> bool {
-        if (rhs.context == nullptr) {
-          return false;
-        }
-        return CompareFacetTypeConstraintValues(*rhs.context, lhs_inst_id,
-                                                rhs.inst_id) ==
-               std::weak_ordering::equivalent;
+        // This comparison is true if the two ImplWitnessAccess are pointing to
+        // the same associated constant, even if they are different instruction
+        // ids.
+        return lhs == rhs;
       }
     };
+
+    auto GetKey(Context& context, SemIR::ImplWitnessAccess access) -> Key {
+      return {*GetFacetTypeConstraintValue(context, access)};
+    }
 
     // Try avoid heap allocations in the common case where there are a small
     // number of rewrite rules referring to each other by keeping up to 16 on
     // the stack.
-    llvm::SmallDenseMap<Key, SemIR::InstId, 16, KeyInfo> cache_;
+    llvm::SmallDenseMap<Key, Value, 16, KeyInfo> cache_;
   };
 
   // The `rewrites` is the set of rewrite constraints that are being
@@ -435,19 +480,16 @@ class SubstImplWitnessAccessCallbacks : public SubstInstCallbacks {
   explicit SubstImplWitnessAccessCallbacks(
       Context* context, SemIR::LocId loc_id,
       llvm::ArrayRef<SemIR::FacetTypeInfo::RewriteConstraint> rewrites,
-      const SemIR::FacetTypeInfo::RewriteConstraint* substituting_constraint,
       AccessRewriteCache* cache)
       : SubstInstCallbacks(context),
         loc_id_(loc_id),
         rewrites_(rewrites),
-        cache_(cache) {
-    // The LHS of a rewrite constraint is the first associated constant whose
-    // value is being determined.
-    substs_in_progress_.push_back(substituting_constraint->lhs_id);
-  }
+        cache_(cache) {}
 
   auto Subst(SemIR::InstId& rhs_inst_id) -> SubstResult override {
-    if (!context().insts().Is<SemIR::ImplWitnessAccess>(rhs_inst_id)) {
+    auto rhs_access =
+        context().insts().TryGetAs<SemIR::ImplWitnessAccess>(rhs_inst_id);
+    if (!rhs_access) {
       // We only want to substitute ImplWitnessAccesses written directly on the
       // RHS of the rewrite constraint, not when they are nested inside facet
       // types that are part of the RHS, like `.X = C as (I where .Y = {})`.
@@ -469,28 +511,24 @@ class SubstImplWitnessAccessCallbacks : public SubstInstCallbacks {
 
     SemIR::InstId orig_inst_id = rhs_inst_id;
 
-    // Finds a cycle if the RHS refers to something that depends on the value of
-    // the RHS.
-    for (auto in_progress_inst_id : substs_in_progress_) {
-      if (EquivalentAccess(context(), in_progress_inst_id, rhs_inst_id)) {
+    if (auto cached_value = cache_->Find(context(), *rhs_access)) {
+      // Finds a cycle if the RHS refers to something that depends on the value
+      // of the RHS.
+      if (cached_value->state == AccessRewriteCache::BeingRewritten) {
         CARBON_DIAGNOSTIC(FacetTypeConstraintCycle, Error,
                           "found cycle in facet type constraint for {0}",
                           InstIdAsConstant);
         // TODO: It would be nice to note the places where the values are
         // assigned but rewrite constraint instructions are from canonical
-        // constant values, and have no locations. We'd need to store a
-        // location along with them in the rewrite constraints, and track
-        // propagation of locations here, which may imply heap
-        // allocations.
+        // constant values, and have no locations. We'd need to store a location
+        // along with them in the rewrite constraints, and track propagation of
+        // locations here, which may imply heap allocations.
         context().emitter().Emit(loc_id_, FacetTypeConstraintCycle,
-                                 in_progress_inst_id);
+                                 rhs_inst_id);
         rhs_inst_id = SemIR::ErrorInst::InstId;
-        return SubstResult::FullySubstituted;
+      } else {
+        rhs_inst_id = cached_value->inst_id;
       }
-    }
-
-    if (auto cached_inst_id = cache_->Find(rhs_inst_id)) {
-      rhs_inst_id = *cached_inst_id;
       return SubstResult::FullySubstituted;
     }
 
@@ -512,6 +550,8 @@ class SubstImplWitnessAccessCallbacks : public SubstInstCallbacks {
       return SubstResult::FullySubstituted;
     }
 
+    cache_->InsertBeingRewritten(context(), *rhs_access);
+
     if (!context().insts().Is<SemIR::ImplWitnessAccess>(rhs_inst_id)) {
       // The ImplWitnessAccess was replaced with some other instruction, which
       // may contain other ImplWitnessAccesses. Keep track of the associated
@@ -531,16 +571,18 @@ class SubstImplWitnessAccessCallbacks : public SubstInstCallbacks {
       -> SemIR::InstId override {
     auto inst_id = RebuildNewInst(loc_id_, new_inst);
     auto subst_inst_id = substs_in_progress_.pop_back_val();
-    if (context().insts().Is<SemIR::ImplWitnessAccess>(subst_inst_id)) {
-      cache_->Insert(context(), subst_inst_id, inst_id);
+    if (auto access = context().insts().TryGetAs<SemIR::ImplWitnessAccess>(
+            subst_inst_id)) {
+      cache_->Insert(context(), *access, inst_id);
     }
     return inst_id;
   }
 
   auto ReuseUnchanged(SemIR::InstId orig_inst_id) -> SemIR::InstId override {
     auto subst_inst_id = substs_in_progress_.pop_back_val();
-    if (context().insts().Is<SemIR::ImplWitnessAccess>(subst_inst_id)) {
-      cache_->Insert(context(), subst_inst_id, orig_inst_id);
+    if (auto access = context().insts().TryGetAs<SemIR::ImplWitnessAccess>(
+            subst_inst_id)) {
+      cache_->Insert(context(), *access, orig_inst_id);
     }
     return orig_inst_id;
   }
@@ -616,14 +658,18 @@ auto ResolveFacetTypeRewriteConstraints(
       continue;
     }
 
-    auto replace_witness_callbacks = SubstImplWitnessAccessCallbacks(
-        &context, loc_id, rewrites, &constraint, &cache);
+    cache.InsertBeingRewritten(context, *lhs_access);
+
+    auto replace_witness_callbacks =
+        SubstImplWitnessAccessCallbacks(&context, loc_id, rewrites, &cache);
     auto subst_inst_id =
         SubstInst(context, constraint.rhs_id, replace_witness_callbacks);
     constraint.rhs_id = subst_inst_id;
     if (constraint.rhs_id == SemIR::ErrorInst::InstId) {
       return false;
     }
+
+    cache.Insert(context, *lhs_access, subst_inst_id);
   }
 
   // We sort the constraints so that we can find different values being written

@@ -244,6 +244,17 @@ interface M { let X:! type; let Y:! type; let Z:! type; }
 impl () as M where .X = .Y and .Y = .X and .Z = () {}
 //@dump-sem-ir-end
 
+// --- fail_cycle_in_second_rule.carbon
+library "[[@TEST_NAME]]";
+
+interface M { let X:! type; }
+
+// CHECK:STDERR: fail_cycle_in_second_rule.carbon:[[@LINE+4]]:12: error: found cycle in facet type constraint for `.(M.X)` [FacetTypeConstraintCycle]
+// CHECK:STDERR: impl () as M where .X = () and .X = .X {}
+// CHECK:STDERR:            ^~~~~~~~~~~~~~~~~~~~~~~~~~~
+// CHECK:STDERR:
+impl () as M where .X = () and .X = .X {}
+
 // --- fail_todo_cycle_between_interfaces.carbon
 library "[[@TEST_NAME]]";
 
