@@ -2,8 +2,8 @@
 // Exceptions. See /LICENSE for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
-#ifndef CARBON_TOOLCHAIN_SEM_IR_BLOCK_VALUE_STORE_H_
-#define CARBON_TOOLCHAIN_SEM_IR_BLOCK_VALUE_STORE_H_
+#ifndef CARBON_TOOLCHAIN_BASE_BLOCK_VALUE_STORE_H_
+#define CARBON_TOOLCHAIN_BASE_BLOCK_VALUE_STORE_H_
 
 #include <type_traits>
 
@@ -150,4 +150,4 @@ class BlockValueStore<IdT, ElementT>::KeyContext
 
 }  // namespace Carbon::SemIR
 
-#endif  // CARBON_TOOLCHAIN_SEM_IR_BLOCK_VALUE_STORE_H_
+#endif  // CARBON_TOOLCHAIN_BASE_BLOCK_VALUE_STORE_H_
