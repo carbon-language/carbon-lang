@@ -368,42 +368,62 @@ class SubstImplWitnessAccessCallbacks : public SubstInstCallbacks {
  public:
   class AccessRewriteCache {
    public:
-    auto Find(SubstImplWitnessAccessCallbacks& callbacks,
-              SemIR::InstId lhs_access_id) -> std::optional<SemIR::InstId> {
-      auto* it =
-          llvm::lower_bound(cache_, lhs_access_id, [&](auto&& a, auto&& b) {
-            return LessAccess(callbacks.context(), a.first, b);
-          });
-      if (it != cache_.end()) {
-        if (EquivalentAccess(callbacks.context(), it->first, lhs_access_id)) {
-          return it->second;
-        }
+    auto Find(SemIR::InstId lhs_access_id) -> std::optional<SemIR::InstId> {
+      auto it = cache_.find_as(lhs_access_id);
+      if (it == cache_.end()) {
+        return std::nullopt;
       }
-      return std::nullopt;
+      return it->second;
     }
 
-    auto Insert(SubstImplWitnessAccessCallbacks& callbacks,
-                SemIR::InstId lhs_access_id, SemIR::InstId inst_id) -> void {
-      auto* it =
-          llvm::lower_bound(cache_, lhs_access_id, [&](auto&& a, auto&& b) {
-            return LessAccess(callbacks.context(), a.first, b);
-          });
-      if (it == cache_.end()) {
-        cache_.push_back({lhs_access_id, inst_id});
-        return;
-      }
-      if (!EquivalentAccess(callbacks.context(), it->first, lhs_access_id)) {
-        cache_.insert(it, {lhs_access_id, inst_id});
-        return;
-      }
+    auto Insert(Context& context, SemIR::InstId lhs_access_id,
+                SemIR::InstId inst_id) -> void {
+      auto [it, _] = cache_.insert({{&context, lhs_access_id}, inst_id});
       CARBON_CHECK(it->second == inst_id);
     }
 
    private:
+    struct Key {
+      Context* context;
+      SemIR::InstId inst_id;
+    };
+    struct KeyInfo {
+      static auto getEmptyKey() -> Key {
+        return {.context = nullptr, .inst_id = SemIR::InstId::None};
+      }
+      static auto getTombstoneKey() -> Key {
+        return {.context = nullptr, .inst_id = SemIR::ErrorInst::InstId};
+      }
+      static auto getHashValue(Key key) -> unsigned {
+        return key.inst_id.index;
+      }
+      static auto isEqual(Key lhs, Key rhs) -> bool {
+        if (rhs.context == nullptr) {
+          return lhs.context == nullptr && lhs.inst_id == rhs.inst_id;
+        }
+        return CompareFacetTypeConstraintValues(*rhs.context, lhs.inst_id,
+                                                rhs.inst_id) ==
+               std::weak_ordering::equivalent;
+      }
+
+      // Support find_as() with the `InstId` directly.
+      static auto getHashValue(SemIR::InstId inst_id) -> unsigned {
+        return inst_id.index;
+      }
+      static auto isEqual(SemIR::InstId lhs_inst_id, Key rhs) -> bool {
+        if (rhs.context == nullptr) {
+          return false;
+        }
+        return CompareFacetTypeConstraintValues(*rhs.context, lhs_inst_id,
+                                                rhs.inst_id) ==
+               std::weak_ordering::equivalent;
+      }
+    };
+
     // Try avoid heap allocations in the common case where there are a small
-    // number of rewrite rules referring to each other by keeping the first 16
-    // on the stack.
-    llvm::SmallVector<std::pair<SemIR::InstId, SemIR::InstId>, 16> cache_;
+    // number of rewrite rules referring to each other by keeping up to 16 on
+    // the stack.
+    llvm::SmallDenseMap<Key, SemIR::InstId, 16, KeyInfo> cache_;
   };
 
   // The `rewrites` is the set of rewrite constraints that are being
@@ -469,7 +489,7 @@ class SubstImplWitnessAccessCallbacks : public SubstInstCallbacks {
       }
     }
 
-    if (auto cached_inst_id = cache_->Find(*this, rhs_inst_id)) {
+    if (auto cached_inst_id = cache_->Find(rhs_inst_id)) {
       rhs_inst_id = *cached_inst_id;
       return SubstResult::FullySubstituted;
     }
@@ -512,7 +532,7 @@ class SubstImplWitnessAccessCallbacks : public SubstInstCallbacks {
     auto inst_id = RebuildNewInst(loc_id_, new_inst);
     auto subst_inst_id = substs_in_progress_.pop_back_val();
     if (context().insts().Is<SemIR::ImplWitnessAccess>(subst_inst_id)) {
-      cache_->Insert(*this, subst_inst_id, inst_id);
+      cache_->Insert(context(), subst_inst_id, inst_id);
     }
     return inst_id;
   }
@@ -520,7 +540,7 @@ class SubstImplWitnessAccessCallbacks : public SubstInstCallbacks {
   auto ReuseUnchanged(SemIR::InstId orig_inst_id) -> SemIR::InstId override {
     auto subst_inst_id = substs_in_progress_.pop_back_val();
     if (context().insts().Is<SemIR::ImplWitnessAccess>(subst_inst_id)) {
-      cache_->Insert(*this, subst_inst_id, orig_inst_id);
+      cache_->Insert(context(), subst_inst_id, orig_inst_id);
     }
     return orig_inst_id;
   }
