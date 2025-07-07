@@ -82,8 +82,17 @@ class FileContext {
   auto GetConstant(SemIR::ConstantId const_id, SemIR::InstId use_inst_id)
       -> llvm::Value*;
 
-  auto GetVtable(SemIR::VtableId vtable_id) const -> llvm::GlobalVariable* {
-    return *vtables_[vtable_id];
+  auto GetVtable(SemIR::VtableId vtable_id, SemIR::SpecificId specific_id)
+      -> llvm::GlobalVariable* {
+    if (!specific_id.has_value()) {
+      return vtables_.Get(vtable_id);
+    }
+    auto*& specific_vtable = specific_vtables_.Get(specific_id);
+    if (!specific_vtable) {
+      specific_vtable =
+          BuildVtable(sem_ir().vtables().Get(vtable_id), specific_id);
+    }
+    return specific_vtable;
   }
 
   // Returns the empty LLVM struct type used to represent the type `type`.
@@ -184,7 +193,8 @@ class FileContext {
   // the caller.
   auto BuildType(SemIR::InstId inst_id) -> llvm::Type*;
 
-  auto BuildVtable(const SemIR::Vtable& vtable) -> llvm::GlobalVariable*;
+  auto BuildVtable(const SemIR::Vtable& vtable, SemIR::SpecificId specific_id)
+      -> llvm::GlobalVariable*;
 
   // Records a specific that was lowered for a generic. These are added one
   // by one while lowering their definitions.
@@ -243,7 +253,9 @@ class FileContext {
 
   SpecificCoalescer coalescer_;
 
-  Map<SemIR::VtableId, llvm::GlobalVariable*> vtables_;
+  FixedSizeValueStore<SemIR::VtableId, llvm::GlobalVariable*> vtables_;
+  FixedSizeValueStore<SemIR::SpecificId, llvm::GlobalVariable*>
+      specific_vtables_;
 };
 
 }  // namespace Carbon::Lower
