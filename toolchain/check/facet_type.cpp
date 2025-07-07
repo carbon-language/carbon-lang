@@ -576,9 +576,9 @@ class SubstImplWitnessAccessCallbacks : public SubstInstCallbacks {
 auto ResolveFacetTypeRewriteConstraints(
     Context& context, SemIR::LocId loc_id,
     llvm::SmallVector<SemIR::FacetTypeInfo::RewriteConstraint>& rewrites)
-    -> void {
+    -> bool {
   if (rewrites.empty()) {
-    return;
+    return true;
   }
 
   // Apply rewrite constraints to each other, so that for example:
@@ -602,7 +602,7 @@ auto ResolveFacetTypeRewriteConstraints(
         SubstInst(context, constraint.rhs_id, replace_witness_callbacks);
     constraint.rhs_id = subst_inst_id;
     if (constraint.rhs_id == SemIR::ErrorInst::InstId) {
-      return;
+      return false;
     }
   }
 
@@ -674,9 +674,11 @@ auto ResolveFacetTypeRewriteConstraints(
       }
       constraint.rhs_id = SemIR::ErrorInst::InstId;
       next.rhs_id = SemIR::ErrorInst::InstId;
-      return;
+      return false;
     }
   }
+
+  return true;
 }
 
 }  // namespace Carbon::Check

@@ -640,8 +640,10 @@ static auto GetConstantFacetTypeInfo(EvalContext& eval_context,
   // GetConstantValueIgnoringPeriodSelf() which will update the phase
   // accordingly.
   info.rewrite_constraints = orig.rewrite_constraints;
-  ResolveFacetTypeRewriteConstraints(eval_context.context(), loc_id,
-                                     info.rewrite_constraints);
+  if (!ResolveFacetTypeRewriteConstraints(eval_context.context(), loc_id,
+                                          info.rewrite_constraints)) {
+    *phase = Phase::UnknownDueToError;
+  }
 
   for (auto& rewrite : info.rewrite_constraints) {
     // `where` requirements using `.Self` should not be considered symbolic.
@@ -1582,18 +1584,10 @@ static auto MakeConstantForBuiltinCall(EvalContext& eval_context,
       auto combined_info = SemIR::FacetTypeInfo::Combine(
           context.facet_types().Get(lhs_facet_type_id),
           context.facet_types().Get(rhs_facet_type_id));
-      // TODO: The instructions in the rewrite constraints have already been
-      // canonicalized before coming here, and it leads to incorrect diagnostics
-      // in resolve when assigning the same thing to an associated constant
-      // in both facet types being combined.
-      ResolveFacetTypeRewriteConstraints(eval_context.context(), loc_id,
-                                         combined_info.rewrite_constraints);
-      for (auto& rewrite : combined_info.rewrite_constraints) {
-        if (rewrite.lhs_id == SemIR::ErrorInst::InstId ||
-            rewrite.rhs_id == SemIR::ErrorInst::InstId) {
-          phase = Phase::UnknownDueToError;
-          break;
-        }
+      if (!ResolveFacetTypeRewriteConstraints(
+              eval_context.context(), loc_id,
+              combined_info.rewrite_constraints)) {
+        phase = Phase::UnknownDueToError;
       }
       combined_info.Canonicalize();
       return MakeFacetTypeResult(eval_context.context(), combined_info, phase);
