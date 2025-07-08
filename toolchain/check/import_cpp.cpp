@@ -53,17 +53,12 @@ static auto GenerateCppIncludesHeaderCode(
 }
 
 // Adds the name to the scope with the given `inst_id`, if the `inst_id` is not
-// `None`. For `ErrorInst`, add the `decl` to `clang_decls` to make sure import
-// failure declarations are mapped.
+// `None`.
 static auto AddNameToScope(Context& context, SemIR::NameScopeId scope_id,
-                           SemIR::NameId name_id, SemIR::InstId inst_id,
-                           clang::Decl* decl) -> void {
+                           SemIR::NameId name_id, SemIR::InstId inst_id)
+    -> void {
   if (inst_id.has_value()) {
     context.name_scopes().AddRequiredName(scope_id, name_id, inst_id);
-    if (inst_id == SemIR::ErrorInst::InstId) {
-      context.sem_ir().clang_decls().Add(
-          {.decl = decl, .inst_id = SemIR::ErrorInst::InstId});
-    }
   }
 }
 
@@ -458,6 +453,12 @@ static auto BuildClassDefinition(Context& context,
   return {class_id, class_inst_id};
 }
 
+// Mark the given `Decl` as failed in `clang_decls`.
+static auto MarkFailedDecl(Context& context, clang::Decl* clang_decl) {
+  context.sem_ir().clang_decls().Add(
+      {.decl = clang_decl, .inst_id = SemIR::ErrorInst::InstId});
+}
+
 // Imports a record declaration from Clang to Carbon. If successful, returns
 // the new Carbon class declaration `InstId`.
 // TODO: Change `clang_decl` to `const &` when lookup is using `clang::DeclID`
@@ -471,11 +472,13 @@ static auto ImportCXXRecordDecl(Context& context, SemIR::LocId loc_id,
   if (!clang_def) {
     context.TODO(loc_id,
                  "Unsupported: Record declarations without a definition");
+    MarkFailedDecl(context, clang_decl);
     return SemIR::ErrorInst::InstId;
   }
 
   if (clang_def->isDynamicClass()) {
     context.TODO(loc_id, "Unsupported: Dynamic Class");
+    MarkFailedDecl(context, clang_decl);
     return SemIR::ErrorInst::InstId;
   }
 
@@ -548,7 +551,7 @@ static auto MapRecordType(Context& context, SemIR::LocId loc_id,
       record_inst_id = ImportCXXRecordDecl(
           context, loc_id, parent_name_scope_id, record_name_id, record_decl);
       AddNameToScope(context, parent_name_scope_id, record_name_id,
-                     record_inst_id, record_decl);
+                     record_inst_id);
     }
     SemIR::TypeInstId record_type_inst_id =
         context.types().GetAsTypeInstId(record_inst_id);
@@ -720,14 +723,17 @@ static auto ImportFunctionDecl(Context& context, SemIR::LocId loc_id,
     -> SemIR::InstId {
   if (clang_decl->isVariadic()) {
     context.TODO(loc_id, "Unsupported: Variadic function");
+    MarkFailedDecl(context, clang_decl);
     return SemIR::ErrorInst::InstId;
   }
   if (!clang_decl->isGlobal()) {
     context.TODO(loc_id, "Unsupported: Non-global function");
+    MarkFailedDecl(context, clang_decl);
     return SemIR::ErrorInst::InstId;
   }
   if (clang_decl->getTemplatedKind() != clang::FunctionDecl::TK_NonTemplate) {
     context.TODO(loc_id, "Unsupported: Template function");
+    MarkFailedDecl(context, clang_decl);
     return SemIR::ErrorInst::InstId;
   }
 
@@ -741,6 +747,7 @@ static auto ImportFunctionDecl(Context& context, SemIR::LocId loc_id,
   auto decl_block_id = context.inst_block_stack().Pop();
 
   if (!function_params_insts.has_value()) {
+    MarkFailedDecl(context, clang_decl);
     return SemIR::ErrorInst::InstId;
   }
 
@@ -815,7 +822,7 @@ static auto ImportNameDeclIntoScope(Context& context, SemIR::LocId loc_id,
     -> SemIR::InstId {
   SemIR::InstId inst_id =
       ImportNameDecl(context, loc_id, scope_id, name_id, clang_decl);
-  AddNameToScope(context, scope_id, name_id, inst_id, clang_decl);
+  AddNameToScope(context, scope_id, name_id, inst_id);
   return inst_id;
 }
 
