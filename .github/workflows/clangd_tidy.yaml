@@ -8,7 +8,8 @@ on:
   push:
     branches: [trunk, action-test]
   pull_request:
-  merge_group:
+  # TODO: Don't run in merge_group until we're ready to replace clang-tidy.
+  # merge_group:
 
 permissions:
   contents: read # For actions/checkout.
@@ -58,7 +59,7 @@ jobs:
             github.event.push.before ) }}
           filters: |
             has_cpp:
-              - '{**/*.cpp,**/*.h}'
+              - added|modified: '{**/*.cpp,**/*.h}'
           list-files: 'shell'
 
       - uses: ./.github/actions/build-setup-common
