@@ -886,8 +886,8 @@ keyword. It isn't final at all and likely will need to change to read well.
 The provided representation type must be one of the following:
 
 -   `const Self` -- this forces the use of a _copy_ of the object.
--   `ref` -- this forces the use of a [_pointer_](#pointers) to the original
-    object.
+-   `const ref` -- this forces the use of a [_pointer_](#pointers) to the
+    original object, but with the `const` API subset.
 -   A custom type that is not `Self`, `const Self`, or a pointer to either.
 
 If the representation is `const Self` or `const Self *`, then the type fields

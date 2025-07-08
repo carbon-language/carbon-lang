@@ -54,7 +54,7 @@ Its semantics are defined in terms of the following interfaces:
 ```
 interface IndexWith(SubscriptType:! type) {
   let ElementType:! type;
-  fn At[bound self: Self](subscript: SubscriptType) -> let ElementType;
+  fn At[bound self: Self](subscript: SubscriptType) -> val ElementType;
   fn Ref[bound ref self: Self](subscript: SubscriptType) -> ref ElementType;
 }
 
@@ -84,7 +84,7 @@ final impl forall
     [SubscriptType:! type, T:! IndirectIndexWith(SubscriptType)]
     T as IndexWith(SubscriptType) {
   where ElementType = T.(IndirectIndexWith(SubscriptType).ElementType);
-  fn At[bound self: Self](subscript: SubscriptType) -> let ElementType {
+  fn At[bound self: Self](subscript: SubscriptType) -> val ElementType {
     return self.(IndirectIndexWith(SubscriptType).Ref)(index);
   }
   fn Ref[bound ref self: Self](subscript: SubscriptType) -> ref ElementType {
@@ -104,7 +104,7 @@ An array type could implement subscripting like so:
 class Array(template T:! type) {
   impl as IndexWith(like i64) {
     let ElementType:! type = T;
-    fn At[bound self: Self](subscript: i64) -> let T;
+    fn At[bound self: Self](subscript: i64) -> val T;
     fn Ref[bound ref self: Self](subscript: i64) -> ref T;
   }
 }
