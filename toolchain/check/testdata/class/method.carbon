@@ -69,6 +69,7 @@ fn CallGOnInitializingExpr() -> i32 {
 // CHECK:STDOUT:   %pattern_type.761: type = pattern_type %Class [concrete]
 // CHECK:STDOUT:   %int_32: Core.IntLiteral = int_value 32 [concrete]
 // CHECK:STDOUT:   %Int.type: type = generic_class_type @Int [concrete]
+// CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [concrete]
 // CHECK:STDOUT:   %Int.generic: %Int.type = struct_value () [concrete]
 // CHECK:STDOUT:   %i32: type = class_type @Int, @Int(%int_32) [concrete]
 // CHECK:STDOUT:   %pattern_type.7ce: type = pattern_type %i32 [concrete]
@@ -107,6 +108,17 @@ fn CallGOnInitializingExpr() -> i32 {
 // CHECK:STDOUT:   %bound_method: <bound method> = bound_method %int_1.5b8, %Convert.specific_fn [concrete]
 // CHECK:STDOUT:   %int_1.5d2: %i32 = int_value 1 [concrete]
 // CHECK:STDOUT:   %Class.val: %Class = struct_value (%int_1.5d2) [concrete]
+// CHECK:STDOUT:   %Destroy.type: type = facet_type <@Destroy> [concrete]
+// CHECK:STDOUT:   %Op.type.bae: type = fn_type @Op.2 [concrete]
+// CHECK:STDOUT:   %T: type = bind_symbolic_name T, 0 [symbolic]
+// CHECK:STDOUT:   %Op.type.bc9: type = fn_type @Op.3, @impl.49c(%T) [symbolic]
+// CHECK:STDOUT:   %Op.46f: %Op.type.bc9 = struct_value () [symbolic]
+// CHECK:STDOUT:   %Destroy.impl_witness.fef: <witness> = impl_witness imports.%Destroy.impl_witness_table, @impl.49c(%Class) [concrete]
+// CHECK:STDOUT:   %Op.type.7de: type = fn_type @Op.3, @impl.49c(%Class) [concrete]
+// CHECK:STDOUT:   %Op.d64: %Op.type.7de = struct_value () [concrete]
+// CHECK:STDOUT:   %Destroy.facet: %Destroy.type = facet_value %Class, (%Destroy.impl_witness.fef) [concrete]
+// CHECK:STDOUT:   %.b9f: type = fn_type_with_self_type %Op.type.bae, %Destroy.facet [concrete]
+// CHECK:STDOUT:   %Op.specific_fn: <specific function> = specific_function %Op.d64, @Op.3(%Class) [concrete]
 // CHECK:STDOUT:   %CallWithAddr.type: type = fn_type @CallWithAddr [concrete]
 // CHECK:STDOUT:   %CallWithAddr: %CallWithAddr.type = struct_value () [concrete]
 // CHECK:STDOUT:   %CallFThroughPointer.type: type = fn_type @CallFThroughPointer [concrete]
@@ -125,6 +137,7 @@ fn CallGOnInitializingExpr() -> i32 {
 // CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [concrete] {
 // CHECK:STDOUT:     .Int = %Core.Int
 // CHECK:STDOUT:     .ImplicitAs = %Core.ImplicitAs
+// CHECK:STDOUT:     .Destroy = %Core.Destroy
 // CHECK:STDOUT:     import Core//prelude
 // CHECK:STDOUT:     import Core//prelude/...
 // CHECK:STDOUT:   }
@@ -132,6 +145,9 @@ fn CallGOnInitializingExpr() -> i32 {
 // CHECK:STDOUT:   %Core.ImplicitAs: %ImplicitAs.type.cc7 = import_ref Core//prelude/parts/as, ImplicitAs, loaded [concrete = constants.%ImplicitAs.generic]
 // CHECK:STDOUT:   %Core.import_ref.a5b: @impl.4f9.%Convert.type (%Convert.type.0f9) = import_ref Core//prelude/parts/int, loc16_39, loaded [symbolic = @impl.4f9.%Convert (constants.%Convert.f06)]
 // CHECK:STDOUT:   %ImplicitAs.impl_witness_table.a2f = impl_witness_table (%Core.import_ref.a5b), @impl.4f9 [concrete]
+// CHECK:STDOUT:   %Core.Destroy: type = import_ref Core//prelude/parts/destroy, Destroy, loaded [concrete = constants.%Destroy.type]
+// CHECK:STDOUT:   %Core.import_ref.0b9: @impl.49c.%Op.type (%Op.type.bc9) = import_ref Core//prelude/parts/destroy, loc8_29, loaded [symbolic = @impl.49c.%Op (constants.%Op.46f)]
+// CHECK:STDOUT:   %Destroy.impl_witness_table = impl_witness_table (%Core.import_ref.0b9), @impl.49c [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -360,10 +376,10 @@ fn CallGOnInitializingExpr() -> i32 {
 // CHECK:STDOUT:   %int_1: Core.IntLiteral = int_value 1 [concrete = constants.%int_1.5b8]
 // CHECK:STDOUT:   %.loc39_18.1: %struct_type.k.240 = struct_literal (%int_1)
 // CHECK:STDOUT:   %Class.ref: type = name_ref Class, file.%Class.decl [concrete = constants.%Class]
-// CHECK:STDOUT:   %impl.elem0: %.9c3 = impl_witness_access constants.%ImplicitAs.impl_witness.c75, element0 [concrete = constants.%Convert.956]
-// CHECK:STDOUT:   %bound_method.loc39_18.1: <bound method> = bound_method %int_1, %impl.elem0 [concrete = constants.%Convert.bound]
-// CHECK:STDOUT:   %specific_fn: <specific function> = specific_function %impl.elem0, @Convert.2(constants.%int_32) [concrete = constants.%Convert.specific_fn]
-// CHECK:STDOUT:   %bound_method.loc39_18.2: <bound method> = bound_method %int_1, %specific_fn [concrete = constants.%bound_method]
+// CHECK:STDOUT:   %impl.elem0.loc39_18.1: %.9c3 = impl_witness_access constants.%ImplicitAs.impl_witness.c75, element0 [concrete = constants.%Convert.956]
+// CHECK:STDOUT:   %bound_method.loc39_18.1: <bound method> = bound_method %int_1, %impl.elem0.loc39_18.1 [concrete = constants.%Convert.bound]
+// CHECK:STDOUT:   %specific_fn.loc39_18.1: <specific function> = specific_function %impl.elem0.loc39_18.1, @Convert.2(constants.%int_32) [concrete = constants.%Convert.specific_fn]
+// CHECK:STDOUT:   %bound_method.loc39_18.2: <bound method> = bound_method %int_1, %specific_fn.loc39_18.1 [concrete = constants.%bound_method]
 // CHECK:STDOUT:   %int.convert_checked: init %i32 = call %bound_method.loc39_18.2(%int_1) [concrete = constants.%int_1.5d2]
 // CHECK:STDOUT:   %.loc39_18.2: init %i32 = converted %int_1, %int.convert_checked [concrete = constants.%int_1.5d2]
 // CHECK:STDOUT:   %.loc39_18.3: ref %Class = temporary_storage
@@ -378,6 +394,12 @@ fn CallGOnInitializingExpr() -> i32 {
 // CHECK:STDOUT:   %F.call: init %i32 = call %F.bound(%.loc39_20.2)
 // CHECK:STDOUT:   %.loc39_33.1: %i32 = value_of_initializer %F.call
 // CHECK:STDOUT:   %.loc39_33.2: %i32 = converted %F.call, %.loc39_33.1
+// CHECK:STDOUT:   %impl.elem0.loc39_18.2: %.b9f = impl_witness_access constants.%Destroy.impl_witness.fef, element0 [concrete = constants.%Op.d64]
+// CHECK:STDOUT:   %bound_method.loc39_18.3: <bound method> = bound_method %.loc39_18.3, %impl.elem0.loc39_18.2
+// CHECK:STDOUT:   %specific_fn.loc39_18.2: <specific function> = specific_function %impl.elem0.loc39_18.2, @Op.3(constants.%Class) [concrete = constants.%Op.specific_fn]
+// CHECK:STDOUT:   %bound_method.loc39_18.4: <bound method> = bound_method %.loc39_18.3, %specific_fn.loc39_18.2
+// CHECK:STDOUT:   %addr: %ptr.e71 = addr_of %.loc39_18.3
+// CHECK:STDOUT:   %no_op: init %empty_tuple.type = call %bound_method.loc39_18.4(%addr)
 // CHECK:STDOUT:   return %.loc39_33.2
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -393,10 +415,16 @@ fn CallGOnInitializingExpr() -> i32 {
 // CHECK:STDOUT:   %c.ref: ref %Class = name_ref c, %c
 // CHECK:STDOUT:   %G.ref: %G.type = name_ref G, @Class.%G.decl [concrete = constants.%G]
 // CHECK:STDOUT:   %G.bound: <bound method> = bound_method %c.ref, %G.ref
-// CHECK:STDOUT:   %addr: %ptr.e71 = addr_of %c.ref
-// CHECK:STDOUT:   %G.call: init %i32 = call %G.bound(%addr)
+// CHECK:STDOUT:   %addr.loc44: %ptr.e71 = addr_of %c.ref
+// CHECK:STDOUT:   %G.call: init %i32 = call %G.bound(%addr.loc44)
 // CHECK:STDOUT:   %.loc44_15.1: %i32 = value_of_initializer %G.call
 // CHECK:STDOUT:   %.loc44_15.2: %i32 = converted %G.call, %.loc44_15.1
+// CHECK:STDOUT:   %impl.elem0: %.b9f = impl_witness_access constants.%Destroy.impl_witness.fef, element0 [concrete = constants.%Op.d64]
+// CHECK:STDOUT:   %bound_method.loc43_3.1: <bound method> = bound_method %c.var, %impl.elem0
+// CHECK:STDOUT:   %specific_fn: <specific function> = specific_function %impl.elem0, @Op.3(constants.%Class) [concrete = constants.%Op.specific_fn]
+// CHECK:STDOUT:   %bound_method.loc43_3.2: <bound method> = bound_method %c.var, %specific_fn
+// CHECK:STDOUT:   %addr.loc43: %ptr.e71 = addr_of %c.var
+// CHECK:STDOUT:   %no_op: init %empty_tuple.type = call %bound_method.loc43_3.2(%addr.loc43)
 // CHECK:STDOUT:   return %.loc44_15.2
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -440,6 +468,12 @@ fn CallGOnInitializingExpr() -> i32 {
 // CHECK:STDOUT:   %F.call: init %i32 = call %F.bound(%.loc58_15.3)
 // CHECK:STDOUT:   %.loc58_20.1: %i32 = value_of_initializer %F.call
 // CHECK:STDOUT:   %.loc58_20.2: %i32 = converted %F.call, %.loc58_20.1
+// CHECK:STDOUT:   %impl.elem0: %.b9f = impl_witness_access constants.%Destroy.impl_witness.fef, element0 [concrete = constants.%Op.d64]
+// CHECK:STDOUT:   %bound_method.loc58_15.1: <bound method> = bound_method %.loc58_15.1, %impl.elem0
+// CHECK:STDOUT:   %specific_fn: <specific function> = specific_function %impl.elem0, @Op.3(constants.%Class) [concrete = constants.%Op.specific_fn]
+// CHECK:STDOUT:   %bound_method.loc58_15.2: <bound method> = bound_method %.loc58_15.1, %specific_fn
+// CHECK:STDOUT:   %addr: %ptr.e71 = addr_of %.loc58_15.1
+// CHECK:STDOUT:   %no_op: init %empty_tuple.type = call %bound_method.loc58_15.2(%addr)
 // CHECK:STDOUT:   return %.loc58_20.2
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -451,10 +485,16 @@ fn CallGOnInitializingExpr() -> i32 {
 // CHECK:STDOUT:   %.loc62_15.2: ref %Class = temporary %.loc62_15.1, %Make.call
 // CHECK:STDOUT:   %G.ref: %G.type = name_ref G, @Class.%G.decl [concrete = constants.%G]
 // CHECK:STDOUT:   %G.bound: <bound method> = bound_method %.loc62_15.2, %G.ref
-// CHECK:STDOUT:   %addr: %ptr.e71 = addr_of %.loc62_15.2
-// CHECK:STDOUT:   %G.call: init %i32 = call %G.bound(%addr)
+// CHECK:STDOUT:   %addr.loc62_15.1: %ptr.e71 = addr_of %.loc62_15.2
+// CHECK:STDOUT:   %G.call: init %i32 = call %G.bound(%addr.loc62_15.1)
 // CHECK:STDOUT:   %.loc62_20.1: %i32 = value_of_initializer %G.call
 // CHECK:STDOUT:   %.loc62_20.2: %i32 = converted %G.call, %.loc62_20.1
+// CHECK:STDOUT:   %impl.elem0: %.b9f = impl_witness_access constants.%Destroy.impl_witness.fef, element0 [concrete = constants.%Op.d64]
+// CHECK:STDOUT:   %bound_method.loc62_15.1: <bound method> = bound_method %.loc62_15.1, %impl.elem0
+// CHECK:STDOUT:   %specific_fn: <specific function> = specific_function %impl.elem0, @Op.3(constants.%Class) [concrete = constants.%Op.specific_fn]
+// CHECK:STDOUT:   %bound_method.loc62_15.2: <bound method> = bound_method %.loc62_15.1, %specific_fn
+// CHECK:STDOUT:   %addr.loc62_15.2: %ptr.e71 = addr_of %.loc62_15.1
+// CHECK:STDOUT:   %no_op: init %empty_tuple.type = call %bound_method.loc62_15.2(%addr.loc62_15.2)
 // CHECK:STDOUT:   return %.loc62_20.2
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

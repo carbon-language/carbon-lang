@@ -43,6 +43,7 @@ fn TestSpecific(a: A({})) -> {} {
 // CHECK:STDOUT:   %T: type = bind_symbolic_name T, 0 [symbolic]
 // CHECK:STDOUT:   %pattern_type.98f: type = pattern_type type [concrete]
 // CHECK:STDOUT:   %A.type: type = generic_class_type @A [concrete]
+// CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [concrete]
 // CHECK:STDOUT:   %A.generic: %A.type = struct_value () [concrete]
 // CHECK:STDOUT:   %A.13025a.1: type = class_type @A, @A(%T) [symbolic]
 // CHECK:STDOUT:   %require_complete.4aeca8.1: <witness> = require_complete_type %T [symbolic]
@@ -54,8 +55,8 @@ fn TestSpecific(a: A({})) -> {} {
 // CHECK:STDOUT:   %I.generic: %I.type.dac = struct_value () [concrete]
 // CHECK:STDOUT:   %I.type.325e65.1: type = facet_type <@I, @I(%U)> [symbolic]
 // CHECK:STDOUT:   %Self.209206.1: %I.type.325e65.1 = bind_symbolic_name Self, 1 [symbolic]
-// CHECK:STDOUT:   %Self.as_type: type = facet_access_type %Self.209206.1 [symbolic]
-// CHECK:STDOUT:   %pattern_type.4be: type = pattern_type %Self.as_type [symbolic]
+// CHECK:STDOUT:   %Self.as_type.928: type = facet_access_type %Self.209206.1 [symbolic]
+// CHECK:STDOUT:   %pattern_type.4be: type = pattern_type %Self.as_type.928 [symbolic]
 // CHECK:STDOUT:   %pattern_type.7dcd0a.1: type = pattern_type %U [symbolic]
 // CHECK:STDOUT:   %F.type.2aef59.1: type = fn_type @F.1, @I(%U) [symbolic]
 // CHECK:STDOUT:   %F.bb2dd4.1: %F.type.2aef59.1 = struct_value () [symbolic]
@@ -70,10 +71,10 @@ fn TestSpecific(a: A({})) -> {} {
 // CHECK:STDOUT:   %I.assoc_type.1e5078.2: type = assoc_entity_type @I, @I(%V) [symbolic]
 // CHECK:STDOUT:   %assoc0.8f0422.2: %I.assoc_type.1e5078.2 = assoc_entity element0, @I.%F.decl [symbolic]
 // CHECK:STDOUT:   %require_complete.cfebb2.1: <witness> = require_complete_type %I.type.325e65.2 [symbolic]
-// CHECK:STDOUT:   %I.impl_witness.40ab31.1: <witness> = impl_witness file.%I.impl_witness_table, @impl(%V) [symbolic]
+// CHECK:STDOUT:   %I.impl_witness.40ab31.1: <witness> = impl_witness file.%I.impl_witness_table, @impl.27e(%V) [symbolic]
 // CHECK:STDOUT:   %pattern_type.68d8d3.1: type = pattern_type %A.13025a.2 [symbolic]
 // CHECK:STDOUT:   %pattern_type.7dcd0a.2: type = pattern_type %V [symbolic]
-// CHECK:STDOUT:   %F.type.0fea45.1: type = fn_type @F.2, @impl(%V) [symbolic]
+// CHECK:STDOUT:   %F.type.0fea45.1: type = fn_type @F.2, @impl.27e(%V) [symbolic]
 // CHECK:STDOUT:   %F.d6ae34.1: %F.type.0fea45.1 = struct_value () [symbolic]
 // CHECK:STDOUT:   %I.facet.de3: %I.type.325e65.2 = facet_value %A.13025a.2, (%I.impl_witness.40ab31.1) [symbolic]
 // CHECK:STDOUT:   %require_complete.4aeca8.2: <witness> = require_complete_type %V [symbolic]
@@ -99,8 +100,8 @@ fn TestSpecific(a: A({})) -> {} {
 // CHECK:STDOUT:   %I.assoc_type.1e5078.3: type = assoc_entity_type @I, @I(%W) [symbolic]
 // CHECK:STDOUT:   %assoc0.8f0422.3: %I.assoc_type.1e5078.3 = assoc_entity element0, @I.%F.decl [symbolic]
 // CHECK:STDOUT:   %require_complete.cfebb2.2: <witness> = require_complete_type %I.type.325e65.3 [symbolic]
-// CHECK:STDOUT:   %I.impl_witness.40ab31.2: <witness> = impl_witness file.%I.impl_witness_table, @impl(%W) [symbolic]
-// CHECK:STDOUT:   %F.type.0fea45.2: type = fn_type @F.2, @impl(%W) [symbolic]
+// CHECK:STDOUT:   %I.impl_witness.40ab31.2: <witness> = impl_witness file.%I.impl_witness_table, @impl.27e(%W) [symbolic]
+// CHECK:STDOUT:   %F.type.0fea45.2: type = fn_type @F.2, @impl.27e(%W) [symbolic]
 // CHECK:STDOUT:   %F.d6ae34.2: %F.type.0fea45.2 = struct_value () [symbolic]
 // CHECK:STDOUT:   %I.lookup_impl_witness: <witness> = lookup_impl_witness %A.13025a.3, @I, @I(%W) [symbolic]
 // CHECK:STDOUT:   %I.facet.6d2: %I.type.325e65.3 = facet_value %A.13025a.3, (%I.lookup_impl_witness) [symbolic]
@@ -124,20 +125,35 @@ fn TestSpecific(a: A({})) -> {} {
 // CHECK:STDOUT:   %I.assoc_type.22c: type = assoc_entity_type @I, @I(%empty_struct_type) [concrete]
 // CHECK:STDOUT:   %assoc0.722: %I.assoc_type.22c = assoc_entity element0, @I.%F.decl [concrete]
 // CHECK:STDOUT:   %complete_type.788: <witness> = complete_type_witness %I.type.885 [concrete]
-// CHECK:STDOUT:   %I.impl_witness.0f2: <witness> = impl_witness file.%I.impl_witness_table, @impl(%empty_struct_type) [concrete]
-// CHECK:STDOUT:   %F.type.875: type = fn_type @F.2, @impl(%empty_struct_type) [concrete]
+// CHECK:STDOUT:   %I.impl_witness.0f2: <witness> = impl_witness file.%I.impl_witness_table, @impl.27e(%empty_struct_type) [concrete]
+// CHECK:STDOUT:   %F.type.875: type = fn_type @F.2, @impl.27e(%empty_struct_type) [concrete]
 // CHECK:STDOUT:   %F.158: %F.type.875 = struct_value () [concrete]
 // CHECK:STDOUT:   %I.facet.bd5: %I.type.885 = facet_value %A.235, (%I.impl_witness.0f2) [concrete]
 // CHECK:STDOUT:   %.8fd: type = fn_type_with_self_type %F.type.684, %I.facet.bd5 [concrete]
 // CHECK:STDOUT:   %F.specific_fn: <specific function> = specific_function %F.158, @F.2(%empty_struct_type) [concrete]
 // CHECK:STDOUT:   %empty_struct: %empty_struct_type = struct_value () [concrete]
+// CHECK:STDOUT:   %Destroy.type: type = facet_type <@Destroy> [concrete]
+// CHECK:STDOUT:   %Op.type.bae: type = fn_type @Op.1 [concrete]
+// CHECK:STDOUT:   %Op.type.bc9: type = fn_type @Op.2, @impl.49c(%T) [symbolic]
+// CHECK:STDOUT:   %Op.46f: %Op.type.bc9 = struct_value () [symbolic]
+// CHECK:STDOUT:   %Destroy.impl_witness.eb8: <witness> = impl_witness imports.%Destroy.impl_witness_table, @impl.49c(%empty_struct_type) [concrete]
+// CHECK:STDOUT:   %Op.type.069: type = fn_type @Op.2, @impl.49c(%empty_struct_type) [concrete]
+// CHECK:STDOUT:   %Op.d5a: %Op.type.069 = struct_value () [concrete]
+// CHECK:STDOUT:   %ptr.c28: type = ptr_type %empty_struct_type [concrete]
+// CHECK:STDOUT:   %Destroy.facet: %Destroy.type = facet_value %empty_struct_type, (%Destroy.impl_witness.eb8) [concrete]
+// CHECK:STDOUT:   %.9da: type = fn_type_with_self_type %Op.type.bae, %Destroy.facet [concrete]
+// CHECK:STDOUT:   %Op.specific_fn: <specific function> = specific_function %Op.d5a, @Op.2(%empty_struct_type) [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [concrete] {
+// CHECK:STDOUT:     .Destroy = %Core.Destroy
 // CHECK:STDOUT:     import Core//prelude
 // CHECK:STDOUT:     import Core//prelude/...
 // CHECK:STDOUT:   }
+// CHECK:STDOUT:   %Core.Destroy: type = import_ref Core//prelude/parts/destroy, Destroy, loaded [concrete = constants.%Destroy.type]
+// CHECK:STDOUT:   %Core.import_ref.0b9: @impl.49c.%Op.type (%Op.type.bc9) = import_ref Core//prelude/parts/destroy, loc8_29, loaded [symbolic = @impl.49c.%Op (constants.%Op.46f)]
+// CHECK:STDOUT:   %Destroy.impl_witness_table = impl_witness_table (%Core.import_ref.0b9), @impl.49c [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -159,7 +175,7 @@ fn TestSpecific(a: A({})) -> {} {
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %U.loc7_13.1: type = bind_symbolic_name U, 0 [symbolic = %U.loc7_13.2 (constants.%U)]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   impl_decl @impl [concrete] {
+// CHECK:STDOUT:   impl_decl @impl.27e [concrete] {
 // CHECK:STDOUT:     %V.patt: %pattern_type.98f = symbolic_binding_pattern V, 0 [concrete]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %A.ref: %A.type = name_ref A, file.%A.decl [concrete = constants.%A.generic]
@@ -170,8 +186,8 @@ fn TestSpecific(a: A({})) -> {} {
 // CHECK:STDOUT:     %I.type.loc11_35.1: type = facet_type <@I, @I(constants.%V)> [symbolic = %I.type.loc11_35.2 (constants.%I.type.325e65.2)]
 // CHECK:STDOUT:     %V.loc11_14.1: type = bind_symbolic_name V, 0 [symbolic = %V.loc11_14.2 (constants.%V)]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %I.impl_witness_table = impl_witness_table (@impl.%F.decl), @impl [concrete]
-// CHECK:STDOUT:   %I.impl_witness: <witness> = impl_witness %I.impl_witness_table, @impl(constants.%V) [symbolic = @impl.%I.impl_witness (constants.%I.impl_witness.40ab31.1)]
+// CHECK:STDOUT:   %I.impl_witness_table = impl_witness_table (@impl.27e.%F.decl), @impl.27e [concrete]
+// CHECK:STDOUT:   %I.impl_witness: <witness> = impl_witness %I.impl_witness_table, @impl.27e(constants.%V) [symbolic = @impl.27e.%I.impl_witness (constants.%I.impl_witness.40ab31.1)]
 // CHECK:STDOUT:   %TestGeneric.decl: %TestGeneric.type = fn_decl @TestGeneric [concrete = constants.%TestGeneric] {
 // CHECK:STDOUT:     %W.patt: %pattern_type.98f = symbolic_binding_pattern W, 0 [concrete]
 // CHECK:STDOUT:     %a.patt: @TestGeneric.%pattern_type.loc17_26 (%pattern_type.68d8d3.2) = binding_pattern a [concrete]
@@ -232,14 +248,14 @@ fn TestSpecific(a: A({})) -> {} {
 // CHECK:STDOUT:       %return.param_patt: @F.1.%pattern_type.loc8_22 (%pattern_type.7dcd0a.1) = out_param_pattern %return.patt, call_param1 [concrete]
 // CHECK:STDOUT:     } {
 // CHECK:STDOUT:       %U.ref: type = name_ref U, @I.%U.loc7_13.1 [symbolic = %U (constants.%U)]
-// CHECK:STDOUT:       %self.param: @F.1.%Self.as_type.loc8_14.1 (%Self.as_type) = value_param call_param0
-// CHECK:STDOUT:       %.loc8_14.1: type = splice_block %.loc8_14.3 [symbolic = %Self.as_type.loc8_14.1 (constants.%Self.as_type)] {
+// CHECK:STDOUT:       %self.param: @F.1.%Self.as_type.loc8_14.1 (%Self.as_type.928) = value_param call_param0
+// CHECK:STDOUT:       %.loc8_14.1: type = splice_block %.loc8_14.3 [symbolic = %Self.as_type.loc8_14.1 (constants.%Self.as_type.928)] {
 // CHECK:STDOUT:         %.loc8_14.2: @F.1.%I.type (%I.type.325e65.1) = specific_constant @I.%Self.1, @I(constants.%U) [symbolic = %Self (constants.%Self.209206.1)]
 // CHECK:STDOUT:         %Self.ref: @F.1.%I.type (%I.type.325e65.1) = name_ref Self, %.loc8_14.2 [symbolic = %Self (constants.%Self.209206.1)]
-// CHECK:STDOUT:         %Self.as_type.loc8_14.2: type = facet_access_type %Self.ref [symbolic = %Self.as_type.loc8_14.1 (constants.%Self.as_type)]
-// CHECK:STDOUT:         %.loc8_14.3: type = converted %Self.ref, %Self.as_type.loc8_14.2 [symbolic = %Self.as_type.loc8_14.1 (constants.%Self.as_type)]
+// CHECK:STDOUT:         %Self.as_type.loc8_14.2: type = facet_access_type %Self.ref [symbolic = %Self.as_type.loc8_14.1 (constants.%Self.as_type.928)]
+// CHECK:STDOUT:         %.loc8_14.3: type = converted %Self.ref, %Self.as_type.loc8_14.2 [symbolic = %Self.as_type.loc8_14.1 (constants.%Self.as_type.928)]
 // CHECK:STDOUT:       }
-// CHECK:STDOUT:       %self: @F.1.%Self.as_type.loc8_14.1 (%Self.as_type) = bind_name self, %self.param
+// CHECK:STDOUT:       %self: @F.1.%Self.as_type.loc8_14.1 (%Self.as_type.928) = bind_name self, %self.param
 // CHECK:STDOUT:       %return.param: ref @F.1.%U (%U) = out_param call_param1
 // CHECK:STDOUT:       %return: ref @F.1.%U (%U) = return_slot %return.param
 // CHECK:STDOUT:     }
@@ -253,27 +269,27 @@ fn TestSpecific(a: A({})) -> {} {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic impl @impl(%V.loc11_14.1: type) {
+// CHECK:STDOUT: generic impl @impl.27e(%V.loc11_14.1: type) {
 // CHECK:STDOUT:   %V.loc11_14.2: type = bind_symbolic_name V, 0 [symbolic = %V.loc11_14.2 (constants.%V)]
 // CHECK:STDOUT:   %A.loc11_27.2: type = class_type @A, @A(%V.loc11_14.2) [symbolic = %A.loc11_27.2 (constants.%A.13025a.2)]
 // CHECK:STDOUT:   %I.type.loc11_35.2: type = facet_type <@I, @I(%V.loc11_14.2)> [symbolic = %I.type.loc11_35.2 (constants.%I.type.325e65.2)]
 // CHECK:STDOUT:   %require_complete: <witness> = require_complete_type %I.type.loc11_35.2 [symbolic = %require_complete (constants.%require_complete.cfebb2.1)]
-// CHECK:STDOUT:   %I.impl_witness: <witness> = impl_witness file.%I.impl_witness_table, @impl(%V.loc11_14.2) [symbolic = %I.impl_witness (constants.%I.impl_witness.40ab31.1)]
+// CHECK:STDOUT:   %I.impl_witness: <witness> = impl_witness file.%I.impl_witness_table, @impl.27e(%V.loc11_14.2) [symbolic = %I.impl_witness (constants.%I.impl_witness.40ab31.1)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
-// CHECK:STDOUT:   %F.type: type = fn_type @F.2, @impl(%V.loc11_14.2) [symbolic = %F.type (constants.%F.type.0fea45.1)]
-// CHECK:STDOUT:   %F: @impl.%F.type (%F.type.0fea45.1) = struct_value () [symbolic = %F (constants.%F.d6ae34.1)]
+// CHECK:STDOUT:   %F.type: type = fn_type @F.2, @impl.27e(%V.loc11_14.2) [symbolic = %F.type (constants.%F.type.0fea45.1)]
+// CHECK:STDOUT:   %F: @impl.27e.%F.type (%F.type.0fea45.1) = struct_value () [symbolic = %F (constants.%F.d6ae34.1)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   impl: %A.loc11_27.1 as %I.type.loc11_35.1 {
-// CHECK:STDOUT:     %F.decl: @impl.%F.type (%F.type.0fea45.1) = fn_decl @F.2 [symbolic = @impl.%F (constants.%F.d6ae34.1)] {
+// CHECK:STDOUT:     %F.decl: @impl.27e.%F.type (%F.type.0fea45.1) = fn_decl @F.2 [symbolic = @impl.27e.%F (constants.%F.d6ae34.1)] {
 // CHECK:STDOUT:       %self.patt: @F.2.%pattern_type.loc12_8 (%pattern_type.68d8d3.1) = binding_pattern self [concrete]
 // CHECK:STDOUT:       %self.param_patt: @F.2.%pattern_type.loc12_8 (%pattern_type.68d8d3.1) = value_param_pattern %self.patt, call_param0 [concrete]
 // CHECK:STDOUT:       %return.patt: @F.2.%pattern_type.loc12_22 (%pattern_type.7dcd0a.2) = return_slot_pattern [concrete]
 // CHECK:STDOUT:       %return.param_patt: @F.2.%pattern_type.loc12_22 (%pattern_type.7dcd0a.2) = out_param_pattern %return.patt, call_param1 [concrete]
 // CHECK:STDOUT:     } {
-// CHECK:STDOUT:       %V.ref: type = name_ref V, @impl.%V.loc11_14.1 [symbolic = %V (constants.%V)]
+// CHECK:STDOUT:       %V.ref: type = name_ref V, @impl.27e.%V.loc11_14.1 [symbolic = %V (constants.%V)]
 // CHECK:STDOUT:       %self.param: @F.2.%A (%A.13025a.2) = value_param call_param0
-// CHECK:STDOUT:       %Self.ref: type = name_ref Self, @impl.%A.loc11_27.1 [symbolic = %A (constants.%A.13025a.2)]
+// CHECK:STDOUT:       %Self.ref: type = name_ref Self, @impl.27e.%A.loc11_27.1 [symbolic = %A (constants.%A.13025a.2)]
 // CHECK:STDOUT:       %self: @F.2.%A (%A.13025a.2) = bind_name self, %self.param
 // CHECK:STDOUT:       %return.param: ref @F.2.%V (%V) = out_param call_param1
 // CHECK:STDOUT:       %return: ref @F.2.%V (%V) = return_slot %return.param
@@ -314,14 +330,14 @@ fn TestSpecific(a: A({})) -> {} {
 // CHECK:STDOUT:   %U: type = bind_symbolic_name U, 0 [symbolic = %U (constants.%U)]
 // CHECK:STDOUT:   %I.type: type = facet_type <@I, @I(%U)> [symbolic = %I.type (constants.%I.type.325e65.1)]
 // CHECK:STDOUT:   %Self: @F.1.%I.type (%I.type.325e65.1) = bind_symbolic_name Self, 1 [symbolic = %Self (constants.%Self.209206.1)]
-// CHECK:STDOUT:   %Self.as_type.loc8_14.1: type = facet_access_type %Self [symbolic = %Self.as_type.loc8_14.1 (constants.%Self.as_type)]
+// CHECK:STDOUT:   %Self.as_type.loc8_14.1: type = facet_access_type %Self [symbolic = %Self.as_type.loc8_14.1 (constants.%Self.as_type.928)]
 // CHECK:STDOUT:   %pattern_type.loc8_8: type = pattern_type %Self.as_type.loc8_14.1 [symbolic = %pattern_type.loc8_8 (constants.%pattern_type.4be)]
 // CHECK:STDOUT:   %pattern_type.loc8_22: type = pattern_type %U [symbolic = %pattern_type.loc8_22 (constants.%pattern_type.7dcd0a.1)]
 // CHECK:STDOUT:
-// CHECK:STDOUT:   fn(%self.param: @F.1.%Self.as_type.loc8_14.1 (%Self.as_type)) -> @F.1.%U (%U);
+// CHECK:STDOUT:   fn(%self.param: @F.1.%Self.as_type.loc8_14.1 (%Self.as_type.928)) -> @F.1.%U (%U);
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic fn @F.2(@impl.%V.loc11_14.1: type) {
+// CHECK:STDOUT: generic fn @F.2(@impl.27e.%V.loc11_14.1: type) {
 // CHECK:STDOUT:   %V: type = bind_symbolic_name V, 0 [symbolic = %V (constants.%V)]
 // CHECK:STDOUT:   %A: type = class_type @A, @A(%V) [symbolic = %A (constants.%A.13025a.2)]
 // CHECK:STDOUT:   %pattern_type.loc12_8: type = pattern_type %A [symbolic = %pattern_type.loc12_8 (constants.%pattern_type.68d8d3.1)]
@@ -390,15 +406,21 @@ fn TestSpecific(a: A({})) -> {} {
 // CHECK:STDOUT:   %I.type: type = facet_type <@I, @I(constants.%empty_struct_type)> [concrete = constants.%I.type.885]
 // CHECK:STDOUT:   %.loc22_18: %I.assoc_type.22c = specific_constant @I.%assoc0.loc8_26.1, @I(constants.%empty_struct_type) [concrete = constants.%assoc0.722]
 // CHECK:STDOUT:   %F.ref: %I.assoc_type.22c = name_ref F, %.loc22_18 [concrete = constants.%assoc0.722]
-// CHECK:STDOUT:   %impl.elem0: %.8fd = impl_witness_access constants.%I.impl_witness.0f2, element0 [concrete = constants.%F.158]
-// CHECK:STDOUT:   %bound_method.loc22_11: <bound method> = bound_method %a.ref, %impl.elem0
-// CHECK:STDOUT:   %specific_fn: <specific function> = specific_function %impl.elem0, @F.2(constants.%empty_struct_type) [concrete = constants.%F.specific_fn]
-// CHECK:STDOUT:   %bound_method.loc22_22: <bound method> = bound_method %a.ref, %specific_fn
-// CHECK:STDOUT:   %F.call: init %empty_struct_type = call %bound_method.loc22_22(%a.ref)
+// CHECK:STDOUT:   %impl.elem0.loc22_11: %.8fd = impl_witness_access constants.%I.impl_witness.0f2, element0 [concrete = constants.%F.158]
+// CHECK:STDOUT:   %bound_method.loc22_11: <bound method> = bound_method %a.ref, %impl.elem0.loc22_11
+// CHECK:STDOUT:   %specific_fn.loc22_11: <specific function> = specific_function %impl.elem0.loc22_11, @F.2(constants.%empty_struct_type) [concrete = constants.%F.specific_fn]
+// CHECK:STDOUT:   %bound_method.loc22_22.1: <bound method> = bound_method %a.ref, %specific_fn.loc22_11
+// CHECK:STDOUT:   %F.call: init %empty_struct_type = call %bound_method.loc22_22.1(%a.ref)
 // CHECK:STDOUT:   %.loc22_22.1: ref %empty_struct_type = temporary_storage
 // CHECK:STDOUT:   %.loc22_22.2: ref %empty_struct_type = temporary %.loc22_22.1, %F.call
 // CHECK:STDOUT:   %empty_struct: %empty_struct_type = struct_value () [concrete = constants.%empty_struct]
 // CHECK:STDOUT:   %.loc22_23: %empty_struct_type = converted %F.call, %empty_struct [concrete = constants.%empty_struct]
+// CHECK:STDOUT:   %impl.elem0.loc22_22: %.9da = impl_witness_access constants.%Destroy.impl_witness.eb8, element0 [concrete = constants.%Op.d5a]
+// CHECK:STDOUT:   %bound_method.loc22_22.2: <bound method> = bound_method %.loc22_22.1, %impl.elem0.loc22_22
+// CHECK:STDOUT:   %specific_fn.loc22_22: <specific function> = specific_function %impl.elem0.loc22_22, @Op.2(constants.%empty_struct_type) [concrete = constants.%Op.specific_fn]
+// CHECK:STDOUT:   %bound_method.loc22_22.3: <bound method> = bound_method %.loc22_22.1, %specific_fn.loc22_22
+// CHECK:STDOUT:   %addr: %ptr.c28 = addr_of %.loc22_22.1
+// CHECK:STDOUT:   %no_op: init %empty_tuple.type = call %bound_method.loc22_22.3(%addr)
 // CHECK:STDOUT:   return %.loc22_23
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -414,7 +436,7 @@ fn TestSpecific(a: A({})) -> {} {
 // CHECK:STDOUT:   %U => constants.%U
 // CHECK:STDOUT:   %I.type => constants.%I.type.325e65.1
 // CHECK:STDOUT:   %Self => constants.%Self.209206.1
-// CHECK:STDOUT:   %Self.as_type.loc8_14.1 => constants.%Self.as_type
+// CHECK:STDOUT:   %Self.as_type.loc8_14.1 => constants.%Self.as_type.928
 // CHECK:STDOUT:   %pattern_type.loc8_8 => constants.%pattern_type.4be
 // CHECK:STDOUT:   %pattern_type.loc8_22 => constants.%pattern_type.7dcd0a.1
 // CHECK:STDOUT: }
@@ -442,7 +464,7 @@ fn TestSpecific(a: A({})) -> {} {
 // CHECK:STDOUT:   %assoc0.loc8_26.2 => constants.%assoc0.8f0422.2
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @impl(constants.%V) {
+// CHECK:STDOUT: specific @impl.27e(constants.%V) {
 // CHECK:STDOUT:   %V.loc11_14.2 => constants.%V
 // CHECK:STDOUT:   %A.loc11_27.2 => constants.%A.13025a.2
 // CHECK:STDOUT:   %I.type.loc11_35.2 => constants.%I.type.325e65.2
@@ -500,7 +522,7 @@ fn TestSpecific(a: A({})) -> {} {
 // CHECK:STDOUT:   %assoc0.loc8_26.2 => constants.%assoc0.8f0422.3
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @impl(constants.%W) {
+// CHECK:STDOUT: specific @impl.27e(constants.%W) {
 // CHECK:STDOUT:   %V.loc11_14.2 => constants.%W
 // CHECK:STDOUT:   %A.loc11_27.2 => constants.%A.13025a.3
 // CHECK:STDOUT:   %I.type.loc11_35.2 => constants.%I.type.325e65.3
@@ -544,7 +566,7 @@ fn TestSpecific(a: A({})) -> {} {
 // CHECK:STDOUT:   %assoc0.loc8_26.2 => constants.%assoc0.722
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @impl(constants.%empty_struct_type) {
+// CHECK:STDOUT: specific @impl.27e(constants.%empty_struct_type) {
 // CHECK:STDOUT:   %V.loc11_14.2 => constants.%empty_struct_type
 // CHECK:STDOUT:   %A.loc11_27.2 => constants.%A.235
 // CHECK:STDOUT:   %I.type.loc11_35.2 => constants.%I.type.885
