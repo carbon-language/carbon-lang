@@ -40,6 +40,71 @@ fn F() {
   //@dump-sem-ir-end
 }
 
+// --- fail_todo_import_decl_value_param_type_previously_imported.carbon
+
+library "[[@TEST_NAME]]";
+
+import Cpp library "decl_value_param_type.h";
+
+fn F() {
+  // CHECK:STDERR: fail_todo_import_decl_value_param_type_previously_imported.carbon:[[@LINE+11]]:10: error: semantics TODO: `Unsupported: Record declarations without a definition` [SemanticsTodo]
+  // CHECK:STDERR:   let u: Cpp.U;
+  // CHECK:STDERR:          ^~~~~
+  // CHECK:STDERR: fail_todo_import_decl_value_param_type_previously_imported.carbon:[[@LINE+8]]:10: note: in `Cpp` name lookup for `U` [InCppNameLookup]
+  // CHECK:STDERR:   let u: Cpp.U;
+  // CHECK:STDERR:          ^~~~~
+  // CHECK:STDERR:
+  // CHECK:STDERR: fail_todo_import_decl_value_param_type_previously_imported.carbon:[[@LINE+4]]:15: error: expected `=`; `let` declaration must have an initializer [ExpectedInitializerAfterLet]
+  // CHECK:STDERR:   let u: Cpp.U;
+  // CHECK:STDERR:               ^
+  // CHECK:STDERR:
+  let u: Cpp.U;
+  // CHECK:STDERR: fail_todo_import_decl_value_param_type_previously_imported.carbon:[[@LINE+7]]:3: error: semantics TODO: `Unsupported: parameter type: union U` [SemanticsTodo]
+  // CHECK:STDERR:   Cpp.foo(u);
+  // CHECK:STDERR:   ^~~~~~~
+  // CHECK:STDERR: fail_todo_import_decl_value_param_type_previously_imported.carbon:[[@LINE+4]]:3: note: in `Cpp` name lookup for `foo` [InCppNameLookup]
+  // CHECK:STDERR:   Cpp.foo(u);
+  // CHECK:STDERR:   ^~~~~~~
+  // CHECK:STDERR:
+  Cpp.foo(u);
+}
+
+// ============================================================================
+// Forward-declared union as parameter type imported twice
+// ============================================================================
+
+// --- double_decl_value_param_type.h
+
+union U;
+
+auto foo1(U) -> void;
+auto foo2(U) -> void;
+
+// --- fail_todo_import_double_decl_value_param_type.carbon
+
+library "[[@TEST_NAME]]";
+
+import Cpp library "double_decl_value_param_type.h";
+
+fn F() {
+  // CHECK:STDERR: fail_todo_import_double_decl_value_param_type.carbon:[[@LINE+7]]:3: error: semantics TODO: `Unsupported: parameter type: union U` [SemanticsTodo]
+  // CHECK:STDERR:   Cpp.foo1({});
+  // CHECK:STDERR:   ^~~~~~~~
+  // CHECK:STDERR: fail_todo_import_double_decl_value_param_type.carbon:[[@LINE+4]]:3: note: in `Cpp` name lookup for `foo1` [InCppNameLookup]
+  // CHECK:STDERR:   Cpp.foo1({});
+  // CHECK:STDERR:   ^~~~~~~~
+  // CHECK:STDERR:
+  Cpp.foo1({});
+  // CHECK:STDERR: fail_todo_import_double_decl_value_param_type.carbon:[[@LINE+7]]:3: error: semantics TODO: `Unsupported: parameter type: union U` [SemanticsTodo]
+  // CHECK:STDERR:   Cpp.foo2({});
+  // CHECK:STDERR:   ^~~~~~~~
+  // CHECK:STDERR: fail_todo_import_double_decl_value_param_type.carbon:[[@LINE+4]]:3: note: in `Cpp` name lookup for `foo2` [InCppNameLookup]
+  // CHECK:STDERR:   Cpp.foo2({});
+  // CHECK:STDERR:   ^~~~~~~~
+  // CHECK:STDERR:
+  Cpp.foo2({});
+}
+
 // ============================================================================
 // Defined union without data members as parameter type
 // ============================================================================

@@ -37,9 +37,10 @@ def _build_generated_files(bazel: str, logtostderr: bool) -> None:
     kinds_query = (
         "filter("
         ' ".*\\.(h|cpp|cc|c|cxx|def|inc)$",'
+        ' kind("(generated file|manifest_as_cpp)",'
         # tree_sitter is excluded here because it causes the query to failure on
         # `@platforms`.
-        ' kind("generated file", deps(//... except //utils/tree_sitter/...))'
+        "      deps(//... except //utils/tree_sitter/...))"
         ")"
     )
     log_to = None
@@ -50,13 +51,14 @@ def _build_generated_files(bazel: str, logtostderr: bool) -> None:
         stderr=log_to,
         encoding="utf-8",
     ).splitlines()
-    print(f"Found {len(generated_file_labels)} generated files...")
+    print(f"Found {len(generated_file_labels)} generated files...", flush=True)
 
     # Directly build these labels so that indexing can find them. Allow this to
     # fail in case there are build errors in the client, and just warn the user
     # that they may be missing generated files.
     subprocess.check_call(
-        [bazel, "build", "--keep_going"] + generated_file_labels
+        [bazel, "build", "--keep_going", "--remote_download_outputs=toplevel"]
+        + generated_file_labels
     )
 
 
@@ -77,7 +79,10 @@ def main() -> None:
 
     _build_generated_files(bazel, args.alsologtostderr)
 
-    print("Generating compile_commands.json (may take a few minutes)...")
+    print(
+        "Generating compile_commands.json (may take a few minutes)...",
+        flush=True,
+    )
     subprocess.run([bazel, "run", "@hedron_compile_commands//:refresh_all"])
 
 

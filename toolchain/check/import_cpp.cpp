@@ -453,6 +453,12 @@ static auto BuildClassDefinition(Context& context,
   return {class_id, class_inst_id};
 }
 
+// Mark the given `Decl` as failed in `clang_decls`.
+static auto MarkFailedDecl(Context& context, clang::Decl* clang_decl) {
+  context.sem_ir().clang_decls().Add(
+      {.decl = clang_decl, .inst_id = SemIR::ErrorInst::InstId});
+}
+
 // Imports a record declaration from Clang to Carbon. If successful, returns
 // the new Carbon class declaration `InstId`.
 // TODO: Change `clang_decl` to `const &` when lookup is using `clang::DeclID`
@@ -466,11 +472,13 @@ static auto ImportCXXRecordDecl(Context& context, SemIR::LocId loc_id,
   if (!clang_def) {
     context.TODO(loc_id,
                  "Unsupported: Record declarations without a definition");
+    MarkFailedDecl(context, clang_decl);
     return SemIR::ErrorInst::InstId;
   }
 
   if (clang_def->isDynamicClass()) {
     context.TODO(loc_id, "Unsupported: Dynamic Class");
+    MarkFailedDecl(context, clang_decl);
     return SemIR::ErrorInst::InstId;
   }
 
@@ -697,10 +705,12 @@ static auto CreateFunctionParamsInsts(Context& context, SemIR::LocId loc_id,
   if (SemIR::ErrorInst::InstId == return_slot_pattern_id) {
     return std::nullopt;
   }
+
   // TODO: Add support for implicit parameters.
   auto call_params_id = CalleePatternMatch(
       context, /*implicit_param_patterns_id=*/SemIR::InstBlockId::None,
       param_patterns_id, return_slot_pattern_id);
+
   return {{.param_patterns_id = param_patterns_id,
            .return_slot_pattern_id = return_slot_pattern_id,
            .call_params_id = call_params_id}};
@@ -715,17 +725,21 @@ static auto ImportFunctionDecl(Context& context, SemIR::LocId loc_id,
     -> SemIR::InstId {
   if (clang_decl->isVariadic()) {
     context.TODO(loc_id, "Unsupported: Variadic function");
+    MarkFailedDecl(context, clang_decl);
     return SemIR::ErrorInst::InstId;
   }
   if (!clang_decl->isGlobal()) {
     context.TODO(loc_id, "Unsupported: Non-global function");
+    MarkFailedDecl(context, clang_decl);
     return SemIR::ErrorInst::InstId;
   }
   if (clang_decl->getTemplatedKind() != clang::FunctionDecl::TK_NonTemplate) {
     context.TODO(loc_id, "Unsupported: Template function");
+    MarkFailedDecl(context, clang_decl);
     return SemIR::ErrorInst::InstId;
   }
 
+  context.scope_stack().PushForDeclName();
   context.inst_block_stack().Push();
   context.pattern_block_stack().Push();
 
@@ -734,8 +748,10 @@ static auto ImportFunctionDecl(Context& context, SemIR::LocId loc_id,
 
   auto pattern_block_id = context.pattern_block_stack().Pop();
   auto decl_block_id = context.inst_block_stack().Pop();
+  context.scope_stack().Pop();
 
   if (!function_params_insts.has_value()) {
+    MarkFailedDecl(context, clang_decl);
     return SemIR::ErrorInst::InstId;
   }
 
