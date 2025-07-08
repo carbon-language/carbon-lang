@@ -117,11 +117,12 @@ class TestGithubHelpers(unittest.TestCase):
         self.client.execute = mock.MagicMock(
             return_value=self.mock_result(["foo"], total_count=2),
         )
-        self.assertRaises(
-            AssertionError,
-            list,
-            self.client.execute_and_paginate(_TEST_QUERY, _TEST_QUERY_PATH),
-        )
+        with self.assertRaises(AssertionError):
+            list(
+                self.client.execute_and_paginate(
+                    _TEST_QUERY, _TEST_QUERY_PATH
+                )
+            )
         self.client.execute.assert_called_once_with(_EXP_QUERY_FIRST_PAGE)
 
     def test_execute_and_paginate_two_page(self):
@@ -175,13 +176,12 @@ class TestGithubHelpers(unittest.TestCase):
             ["foo", "bar"],
         )
         self.client.execute.assert_called_once_with(_EXP_QUERY_SECOND_PAGE)
-    
 
     def test_execute_and_paginate_invalid_nodes_type(self):
         invalid_result = {
             "top": {
                 "child": {
-                    "nodes": "not-a-list",  # Should be a list
+                    "nodes": "not-a-list",
                     "pageInfo": {
                         "hasNextPage": False,
                         "endCursor": None,
@@ -192,12 +192,22 @@ class TestGithubHelpers(unittest.TestCase):
         }
         self.client.execute = mock.MagicMock(return_value=invalid_result)
         with self.assertRaises(TypeError):
-            list(self.client.execute_and_paginate(_TEST_QUERY, _TEST_QUERY_PATH))
+            list(
+                self.client.execute_and_paginate(
+                    _TEST_QUERY, _TEST_QUERY_PATH
+                )
+            )
 
     def test_execute_and_paginate_api_failure(self):
-        self.client.execute = mock.MagicMock(side_effect=RuntimeError("API down"))
+        self.client.execute = mock.MagicMock(
+            side_effect=RuntimeError("API down")
+        )
         with self.assertRaises(RuntimeError):
-            list(self.client.execute_and_paginate(_TEST_QUERY, _TEST_QUERY_PATH))
+            list(
+                self.client.execute_and_paginate(
+                    _TEST_QUERY, _TEST_QUERY_PATH
+                )
+            )
 
     def test_execute_and_paginate_large_pagination(self):
         def paging(query):
@@ -209,8 +219,13 @@ class TestGithubHelpers(unittest.TestCase):
                 )
             elif query == _EXP_QUERY_SECOND_PAGE:
                 return self.mock_result([f"user{i}" for i in range(100, 150)])
-        self.client.execute = mock.MagicMock(side_effect=paging)
-        result = list(self.client.execute_and_paginate(_TEST_QUERY, _TEST_QUERY_PATH))
+
+        self.client.execute = mock.MagicMock(
+            side_effect=paging
+        )
+        result = list(
+            self.client.execute_and_paginate(_TEST_QUERY, _TEST_QUERY_PATH)
+        )
         self.assertEqual(len(result), 150)
 
     def test_execute_and_paginate_missing_cursor_with_has_next(self):
@@ -228,10 +243,11 @@ class TestGithubHelpers(unittest.TestCase):
         }
         self.client.execute = mock.MagicMock(return_value=bad_result)
         with self.assertRaises(Exception):
-            list(self.client.execute_and_paginate(_TEST_QUERY, _TEST_QUERY_PATH))
-
-    
-        
+            list(
+                self.client.execute_and_paginate(
+                    _TEST_QUERY, _TEST_QUERY_PATH
+                )
+            )
 
 
 if __name__ == "__main__":
