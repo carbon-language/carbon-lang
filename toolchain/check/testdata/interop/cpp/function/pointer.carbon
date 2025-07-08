@@ -1,0 +1,469 @@
+// Part of the Carbon Language project, under the Apache License v2.0 with LLVM
+// Exceptions. See /LICENSE for license information.
+// SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
+//
+// INCLUDE-FILE: toolchain/testing/testdata/min_prelude/destroy.carbon
+//
+// AUTOUPDATE
+// TIP: To test this file alone, run:
+// TIP:   bazel test //toolchain/testing:file_test --test_arg=--file_tests=toolchain/check/testdata/interop/cpp/function/pointer.carbon
+// TIP: To dump output, run:
+// TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/check/testdata/interop/cpp/function/pointer.carbon
+
+// ============================================================================
+// Pointer as a parameter type
+// ============================================================================
+
+// --- pointer_param.h
+
+struct S {};
+
+auto foo(S* _Nonnull) -> void;
+
+// --- import_pointer_param.carbon
+
+library "[[@TEST_NAME]]";
+
+import Cpp library "pointer_param.h";
+
+fn F() {
+  //@dump-sem-ir-begin
+  var s: Cpp.S = {};
+  Cpp.foo(&s);
+  //@dump-sem-ir-end
+}
+
+// ============================================================================
+// Double pointer as a parameter type
+// ============================================================================
+
+// --- double_pointer_param.h
+
+struct S {};
+
+auto foo(S* _Nonnull * _Nonnull) -> void;
+
+// --- fail_todo_import_double_pointer_param.carbon
+
+library "[[@TEST_NAME]]";
+
+import Cpp library "double_pointer_param.h";
+
+fn F() {
+  //@dump-sem-ir-begin
+  var s: Cpp.S = {};
+  var p: Cpp.S* = &s;
+  // CHECK:STDERR: fail_todo_import_double_pointer_param.carbon:[[@LINE+14]]:3: error: semantics TODO: `Unsupported: pointer to pointer type: S * _Nonnull` [SemanticsTodo]
+  // CHECK:STDERR:   Cpp.foo(&p);
+  // CHECK:STDERR:   ^~~~~~~
+  // CHECK:STDERR: fail_todo_import_double_pointer_param.carbon:[[@LINE+11]]:3: note: in `Cpp` name lookup for `foo` [InCppNameLookup]
+  // CHECK:STDERR:   Cpp.foo(&p);
+  // CHECK:STDERR:   ^~~~~~~
+  // CHECK:STDERR:
+  // CHECK:STDERR: fail_todo_import_double_pointer_param.carbon:[[@LINE+7]]:3: error: semantics TODO: `Unsupported: parameter type: S * _Nonnull * _Nonnull` [SemanticsTodo]
+  // CHECK:STDERR:   Cpp.foo(&p);
+  // CHECK:STDERR:   ^~~~~~~
+  // CHECK:STDERR: fail_todo_import_double_pointer_param.carbon:[[@LINE+4]]:3: note: in `Cpp` name lookup for `foo` [InCppNameLookup]
+  // CHECK:STDERR:   Cpp.foo(&p);
+  // CHECK:STDERR:   ^~~~~~~
+  // CHECK:STDERR:
+  Cpp.foo(&p);
+  //@dump-sem-ir-end
+}
+
+// ============================================================================
+// Pointer as a return value
+// ============================================================================
+
+// --- pointer_return.h
+
+struct S {};
+
+auto foo() -> S* _Nonnull;
+
+// --- import_pointer_return.carbon
+
+library "[[@TEST_NAME]]";
+
+import Cpp library "pointer_return.h";
+
+fn IngestDoublePointer(s: Cpp.S*);
+
+fn F() {
+  //@dump-sem-ir-begin
+  IngestDoublePointer(Cpp.foo());
+  Cpp.foo();
+  //@dump-sem-ir-end
+}
+
+// ============================================================================
+// Double pointer as a return value
+// ============================================================================
+
+// --- double_pointer_return.h
+
+struct S {};
+
+auto foo() -> S* _Nonnull * _Nonnull;
+
+// --- fail_todo_import_double_pointer_return.carbon
+
+library "[[@TEST_NAME]]";
+
+import Cpp library "double_pointer_return.h";
+
+fn IngestDoublePointer(s: Cpp.S**);
+
+fn F() {
+  //@dump-sem-ir-begin
+  // CHECK:STDERR: fail_todo_import_double_pointer_return.carbon:[[@LINE+14]]:23: error: semantics TODO: `Unsupported: pointer to pointer type: S * _Nonnull` [SemanticsTodo]
+  // CHECK:STDERR:   IngestDoublePointer(Cpp.foo());
+  // CHECK:STDERR:                       ^~~~~~~
+  // CHECK:STDERR: fail_todo_import_double_pointer_return.carbon:[[@LINE+11]]:23: note: in `Cpp` name lookup for `foo` [InCppNameLookup]
+  // CHECK:STDERR:   IngestDoublePointer(Cpp.foo());
+  // CHECK:STDERR:                       ^~~~~~~
+  // CHECK:STDERR:
+  // CHECK:STDERR: fail_todo_import_double_pointer_return.carbon:[[@LINE+7]]:23: error: semantics TODO: `Unsupported: return type: S * _Nonnull * _Nonnull` [SemanticsTodo]
+  // CHECK:STDERR:   IngestDoublePointer(Cpp.foo());
+  // CHECK:STDERR:                       ^~~~~~~
+  // CHECK:STDERR: fail_todo_import_double_pointer_return.carbon:[[@LINE+4]]:23: note: in `Cpp` name lookup for `foo` [InCppNameLookup]
+  // CHECK:STDERR:   IngestDoublePointer(Cpp.foo());
+  // CHECK:STDERR:                       ^~~~~~~
+  // CHECK:STDERR:
+  IngestDoublePointer(Cpp.foo());
+  Cpp.foo();
+  //@dump-sem-ir-end
+}
+
+// ============================================================================
+// Nullable pointer
+// ============================================================================
+
+// --- nullable_pointer_param.h
+
+struct S {};
+
+auto foo(S*) -> void;
+
+// --- fail_todo_import_nullable_pointer_param.carbon
+
+library "[[@TEST_NAME]]";
+
+import Cpp library "nullable_pointer_param.h";
+
+fn F() {
+  //@dump-sem-ir-begin
+  var s: Cpp.S = {};
+  // CHECK:STDERR: fail_todo_import_nullable_pointer_param.carbon:[[@LINE+14]]:3: error: semantics TODO: `Unsupported: nullable pointer: S *` [SemanticsTodo]
+  // CHECK:STDERR:   Cpp.foo(&s);
+  // CHECK:STDERR:   ^~~~~~~
+  // CHECK:STDERR: fail_todo_import_nullable_pointer_param.carbon:[[@LINE+11]]:3: note: in `Cpp` name lookup for `foo` [InCppNameLookup]
+  // CHECK:STDERR:   Cpp.foo(&s);
+  // CHECK:STDERR:   ^~~~~~~
+  // CHECK:STDERR:
+  // CHECK:STDERR: fail_todo_import_nullable_pointer_param.carbon:[[@LINE+7]]:3: error: semantics TODO: `Unsupported: parameter type: S *` [SemanticsTodo]
+  // CHECK:STDERR:   Cpp.foo(&s);
+  // CHECK:STDERR:   ^~~~~~~
+  // CHECK:STDERR: fail_todo_import_nullable_pointer_param.carbon:[[@LINE+4]]:3: note: in `Cpp` name lookup for `foo` [InCppNameLookup]
+  // CHECK:STDERR:   Cpp.foo(&s);
+  // CHECK:STDERR:   ^~~~~~~
+  // CHECK:STDERR:
+  Cpp.foo(&s);
+  //@dump-sem-ir-end
+}
+
+// CHECK:STDOUT: --- import_pointer_param.carbon
+// CHECK:STDOUT:
+// CHECK:STDOUT: constants {
+// CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [concrete]
+// CHECK:STDOUT:   %S: type = class_type @S [concrete]
+// CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [concrete]
+// CHECK:STDOUT:   %pattern_type.7da: type = pattern_type %S [concrete]
+// CHECK:STDOUT:   %S.val: %S = struct_value () [concrete]
+// CHECK:STDOUT:   %ptr.5c7: type = ptr_type %S [concrete]
+// CHECK:STDOUT:   %foo.type: type = fn_type @foo [concrete]
+// CHECK:STDOUT:   %foo: %foo.type = struct_value () [concrete]
+// CHECK:STDOUT:   %Destroy.type: type = facet_type <@Destroy> [concrete]
+// CHECK:STDOUT:   %Op.type.bae: type = fn_type @Op.1 [concrete]
+// CHECK:STDOUT:   %T: type = bind_symbolic_name T, 0 [symbolic]
+// CHECK:STDOUT:   %Op.type.bc9: type = fn_type @Op.2, @impl(%T) [symbolic]
+// CHECK:STDOUT:   %Op.46f: %Op.type.bc9 = struct_value () [symbolic]
+// CHECK:STDOUT:   %Destroy.impl_witness.2d2: <witness> = impl_witness imports.%Destroy.impl_witness_table, @impl(%S) [concrete]
+// CHECK:STDOUT:   %Op.type.642: type = fn_type @Op.2, @impl(%S) [concrete]
+// CHECK:STDOUT:   %Op.ab5: %Op.type.642 = struct_value () [concrete]
+// CHECK:STDOUT:   %Destroy.facet: %Destroy.type = facet_value %S, (%Destroy.impl_witness.2d2) [concrete]
+// CHECK:STDOUT:   %.271: type = fn_type_with_self_type %Op.type.bae, %Destroy.facet [concrete]
+// CHECK:STDOUT:   %Op.specific_fn: <specific function> = specific_function %Op.ab5, @Op.2(%S) [concrete]
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: imports {
+// CHECK:STDOUT:   %Cpp: <namespace> = namespace file.%Cpp.import_cpp, [concrete] {
+// CHECK:STDOUT:     .S = %S.decl
+// CHECK:STDOUT:     .foo = %foo.decl
+// CHECK:STDOUT:     import Cpp//...
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %S.decl: type = class_decl @S [concrete = constants.%S] {} {}
+// CHECK:STDOUT:   %foo.decl: %foo.type = fn_decl @foo [concrete = constants.%foo] {
+// CHECK:STDOUT:     <elided>
+// CHECK:STDOUT:   } {
+// CHECK:STDOUT:     <elided>
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %Core.import_ref.0b9: @impl.%Op.type (%Op.type.bc9) = import_ref Core//prelude/parts/destroy, loc8_29, loaded [symbolic = @impl.%Op (constants.%Op.46f)]
+// CHECK:STDOUT:   %Destroy.impl_witness_table = impl_witness_table (%Core.import_ref.0b9), @impl [concrete]
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: fn @F() {
+// CHECK:STDOUT: !entry:
+// CHECK:STDOUT:   name_binding_decl {
+// CHECK:STDOUT:     %s.patt: %pattern_type.7da = binding_pattern s [concrete]
+// CHECK:STDOUT:     %s.var_patt: %pattern_type.7da = var_pattern %s.patt [concrete]
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %s.var: ref %S = var %s.var_patt
+// CHECK:STDOUT:   %.loc8_19.1: %empty_struct_type = struct_literal ()
+// CHECK:STDOUT:   %.loc8_19.2: init %S = class_init (), %s.var [concrete = constants.%S.val]
+// CHECK:STDOUT:   %.loc8_3: init %S = converted %.loc8_19.1, %.loc8_19.2 [concrete = constants.%S.val]
+// CHECK:STDOUT:   assign %s.var, %.loc8_3
+// CHECK:STDOUT:   %.loc8_13: type = splice_block %S.ref [concrete = constants.%S] {
+// CHECK:STDOUT:     %Cpp.ref.loc8: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
+// CHECK:STDOUT:     <elided>
+// CHECK:STDOUT:     %S.ref: type = name_ref S, imports.%S.decl [concrete = constants.%S]
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %s: ref %S = bind_name s, %s.var
+// CHECK:STDOUT:   %Cpp.ref.loc9: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
+// CHECK:STDOUT:   %foo.ref: %foo.type = name_ref foo, imports.%foo.decl [concrete = constants.%foo]
+// CHECK:STDOUT:   %s.ref: ref %S = name_ref s, %s
+// CHECK:STDOUT:   %addr.loc9: %ptr.5c7 = addr_of %s.ref
+// CHECK:STDOUT:   %foo.call: init %empty_tuple.type = call %foo.ref(%addr.loc9)
+// CHECK:STDOUT:   %impl.elem0: %.271 = impl_witness_access constants.%Destroy.impl_witness.2d2, element0 [concrete = constants.%Op.ab5]
+// CHECK:STDOUT:   %bound_method.loc8_3.1: <bound method> = bound_method %s.var, %impl.elem0
+// CHECK:STDOUT:   %specific_fn: <specific function> = specific_function %impl.elem0, @Op.2(constants.%S) [concrete = constants.%Op.specific_fn]
+// CHECK:STDOUT:   %bound_method.loc8_3.2: <bound method> = bound_method %s.var, %specific_fn
+// CHECK:STDOUT:   %addr.loc8: %ptr.5c7 = addr_of %s.var
+// CHECK:STDOUT:   %no_op: init %empty_tuple.type = call %bound_method.loc8_3.2(%addr.loc8)
+// CHECK:STDOUT:   <elided>
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: --- fail_todo_import_double_pointer_param.carbon
+// CHECK:STDOUT:
+// CHECK:STDOUT: constants {
+// CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [concrete]
+// CHECK:STDOUT:   %S: type = class_type @S [concrete]
+// CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [concrete]
+// CHECK:STDOUT:   %pattern_type.7da: type = pattern_type %S [concrete]
+// CHECK:STDOUT:   %S.val: %S = struct_value () [concrete]
+// CHECK:STDOUT:   %ptr.5c7: type = ptr_type %S [concrete]
+// CHECK:STDOUT:   %pattern_type.259: type = pattern_type %ptr.5c7 [concrete]
+// CHECK:STDOUT:   %ptr.dfe: type = ptr_type %ptr.5c7 [concrete]
+// CHECK:STDOUT:   %Destroy.type: type = facet_type <@Destroy> [concrete]
+// CHECK:STDOUT:   %Op.type.bae: type = fn_type @Op.1 [concrete]
+// CHECK:STDOUT:   %T: type = bind_symbolic_name T, 0 [symbolic]
+// CHECK:STDOUT:   %Op.type.bc9: type = fn_type @Op.2, @impl(%T) [symbolic]
+// CHECK:STDOUT:   %Op.46f: %Op.type.bc9 = struct_value () [symbolic]
+// CHECK:STDOUT:   %Destroy.impl_witness.79a: <witness> = impl_witness imports.%Destroy.impl_witness_table, @impl(%ptr.5c7) [concrete]
+// CHECK:STDOUT:   %Op.type.c07: type = fn_type @Op.2, @impl(%ptr.5c7) [concrete]
+// CHECK:STDOUT:   %Op.64b: %Op.type.c07 = struct_value () [concrete]
+// CHECK:STDOUT:   %Destroy.facet.a4e: %Destroy.type = facet_value %ptr.5c7, (%Destroy.impl_witness.79a) [concrete]
+// CHECK:STDOUT:   %.33b: type = fn_type_with_self_type %Op.type.bae, %Destroy.facet.a4e [concrete]
+// CHECK:STDOUT:   %Op.specific_fn.131: <specific function> = specific_function %Op.64b, @Op.2(%ptr.5c7) [concrete]
+// CHECK:STDOUT:   %Destroy.impl_witness.2d2: <witness> = impl_witness imports.%Destroy.impl_witness_table, @impl(%S) [concrete]
+// CHECK:STDOUT:   %Op.type.642: type = fn_type @Op.2, @impl(%S) [concrete]
+// CHECK:STDOUT:   %Op.ab5: %Op.type.642 = struct_value () [concrete]
+// CHECK:STDOUT:   %Destroy.facet.556: %Destroy.type = facet_value %S, (%Destroy.impl_witness.2d2) [concrete]
+// CHECK:STDOUT:   %.271: type = fn_type_with_self_type %Op.type.bae, %Destroy.facet.556 [concrete]
+// CHECK:STDOUT:   %Op.specific_fn.4ce: <specific function> = specific_function %Op.ab5, @Op.2(%S) [concrete]
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: imports {
+// CHECK:STDOUT:   %Cpp: <namespace> = namespace file.%Cpp.import_cpp, [concrete] {
+// CHECK:STDOUT:     .S = %S.decl
+// CHECK:STDOUT:     .foo = <error>
+// CHECK:STDOUT:     import Cpp//...
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %S.decl: type = class_decl @S [concrete = constants.%S] {} {}
+// CHECK:STDOUT:   %Core.import_ref.0b9: @impl.%Op.type (%Op.type.bc9) = import_ref Core//prelude/parts/destroy, loc8_29, loaded [symbolic = @impl.%Op (constants.%Op.46f)]
+// CHECK:STDOUT:   %Destroy.impl_witness_table = impl_witness_table (%Core.import_ref.0b9), @impl [concrete]
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: fn @F() {
+// CHECK:STDOUT: !entry:
+// CHECK:STDOUT:   name_binding_decl {
+// CHECK:STDOUT:     %s.patt: %pattern_type.7da = binding_pattern s [concrete]
+// CHECK:STDOUT:     %s.var_patt: %pattern_type.7da = var_pattern %s.patt [concrete]
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %s.var: ref %S = var %s.var_patt
+// CHECK:STDOUT:   %.loc8_19.1: %empty_struct_type = struct_literal ()
+// CHECK:STDOUT:   %.loc8_19.2: init %S = class_init (), %s.var [concrete = constants.%S.val]
+// CHECK:STDOUT:   %.loc8_3: init %S = converted %.loc8_19.1, %.loc8_19.2 [concrete = constants.%S.val]
+// CHECK:STDOUT:   assign %s.var, %.loc8_3
+// CHECK:STDOUT:   %.loc8_13: type = splice_block %S.ref.loc8 [concrete = constants.%S] {
+// CHECK:STDOUT:     %Cpp.ref.loc8: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
+// CHECK:STDOUT:     <elided>
+// CHECK:STDOUT:     %S.ref.loc8: type = name_ref S, imports.%S.decl [concrete = constants.%S]
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %s: ref %S = bind_name s, %s.var
+// CHECK:STDOUT:   name_binding_decl {
+// CHECK:STDOUT:     %p.patt: %pattern_type.259 = binding_pattern p [concrete]
+// CHECK:STDOUT:     %p.var_patt: %pattern_type.259 = var_pattern %p.patt [concrete]
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %p.var: ref %ptr.5c7 = var %p.var_patt
+// CHECK:STDOUT:   %s.ref: ref %S = name_ref s, %s
+// CHECK:STDOUT:   %addr.loc9_19: %ptr.5c7 = addr_of %s.ref
+// CHECK:STDOUT:   assign %p.var, %addr.loc9_19
+// CHECK:STDOUT:   %.loc9: type = splice_block %ptr [concrete = constants.%ptr.5c7] {
+// CHECK:STDOUT:     %Cpp.ref.loc9: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
+// CHECK:STDOUT:     %S.ref.loc9: type = name_ref S, imports.%S.decl [concrete = constants.%S]
+// CHECK:STDOUT:     %ptr: type = ptr_type %S.ref.loc9 [concrete = constants.%ptr.5c7]
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %p: ref %ptr.5c7 = bind_name p, %p.var
+// CHECK:STDOUT:   %Cpp.ref.loc24: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
+// CHECK:STDOUT:   %foo.ref: <error> = name_ref foo, <error> [concrete = <error>]
+// CHECK:STDOUT:   %p.ref: ref %ptr.5c7 = name_ref p, %p
+// CHECK:STDOUT:   %addr.loc24: %ptr.dfe = addr_of %p.ref
+// CHECK:STDOUT:   %impl.elem0.loc9: %.33b = impl_witness_access constants.%Destroy.impl_witness.79a, element0 [concrete = constants.%Op.64b]
+// CHECK:STDOUT:   %bound_method.loc9_3.1: <bound method> = bound_method %p.var, %impl.elem0.loc9
+// CHECK:STDOUT:   %specific_fn.loc9: <specific function> = specific_function %impl.elem0.loc9, @Op.2(constants.%ptr.5c7) [concrete = constants.%Op.specific_fn.131]
+// CHECK:STDOUT:   %bound_method.loc9_3.2: <bound method> = bound_method %p.var, %specific_fn.loc9
+// CHECK:STDOUT:   %addr.loc9_3: %ptr.dfe = addr_of %p.var
+// CHECK:STDOUT:   %no_op.loc9: init %empty_tuple.type = call %bound_method.loc9_3.2(%addr.loc9_3)
+// CHECK:STDOUT:   %impl.elem0.loc8: %.271 = impl_witness_access constants.%Destroy.impl_witness.2d2, element0 [concrete = constants.%Op.ab5]
+// CHECK:STDOUT:   %bound_method.loc8_3.1: <bound method> = bound_method %s.var, %impl.elem0.loc8
+// CHECK:STDOUT:   %specific_fn.loc8: <specific function> = specific_function %impl.elem0.loc8, @Op.2(constants.%S) [concrete = constants.%Op.specific_fn.4ce]
+// CHECK:STDOUT:   %bound_method.loc8_3.2: <bound method> = bound_method %s.var, %specific_fn.loc8
+// CHECK:STDOUT:   %addr.loc8: %ptr.5c7 = addr_of %s.var
+// CHECK:STDOUT:   %no_op.loc8: init %empty_tuple.type = call %bound_method.loc8_3.2(%addr.loc8)
+// CHECK:STDOUT:   <elided>
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: --- import_pointer_return.carbon
+// CHECK:STDOUT:
+// CHECK:STDOUT: constants {
+// CHECK:STDOUT:   %S: type = class_type @S [concrete]
+// CHECK:STDOUT:   %ptr: type = ptr_type %S [concrete]
+// CHECK:STDOUT:   %IngestDoublePointer.type: type = fn_type @IngestDoublePointer [concrete]
+// CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [concrete]
+// CHECK:STDOUT:   %IngestDoublePointer: %IngestDoublePointer.type = struct_value () [concrete]
+// CHECK:STDOUT:   %foo.type: type = fn_type @foo [concrete]
+// CHECK:STDOUT:   %foo: %foo.type = struct_value () [concrete]
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: imports {
+// CHECK:STDOUT:   %Cpp: <namespace> = namespace file.%Cpp.import_cpp, [concrete] {
+// CHECK:STDOUT:     .S = %S.decl
+// CHECK:STDOUT:     .foo = %foo.decl
+// CHECK:STDOUT:     import Cpp//...
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %S.decl: type = class_decl @S [concrete = constants.%S] {} {}
+// CHECK:STDOUT:   %foo.decl: %foo.type = fn_decl @foo [concrete = constants.%foo] {
+// CHECK:STDOUT:     <elided>
+// CHECK:STDOUT:   } {
+// CHECK:STDOUT:     <elided>
+// CHECK:STDOUT:   }
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: fn @F() {
+// CHECK:STDOUT: !entry:
+// CHECK:STDOUT:   %IngestDoublePointer.ref: %IngestDoublePointer.type = name_ref IngestDoublePointer, file.%IngestDoublePointer.decl [concrete = constants.%IngestDoublePointer]
+// CHECK:STDOUT:   %Cpp.ref.loc10: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
+// CHECK:STDOUT:   %foo.ref.loc10: %foo.type = name_ref foo, imports.%foo.decl [concrete = constants.%foo]
+// CHECK:STDOUT:   %foo.call.loc10: init %ptr = call %foo.ref.loc10()
+// CHECK:STDOUT:   %.loc10_31.1: %ptr = value_of_initializer %foo.call.loc10
+// CHECK:STDOUT:   %.loc10_31.2: %ptr = converted %foo.call.loc10, %.loc10_31.1
+// CHECK:STDOUT:   %IngestDoublePointer.call: init %empty_tuple.type = call %IngestDoublePointer.ref(%.loc10_31.2)
+// CHECK:STDOUT:   %Cpp.ref.loc11: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
+// CHECK:STDOUT:   %foo.ref.loc11: %foo.type = name_ref foo, imports.%foo.decl [concrete = constants.%foo]
+// CHECK:STDOUT:   %foo.call.loc11: init %ptr = call %foo.ref.loc11()
+// CHECK:STDOUT:   <elided>
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: --- fail_todo_import_double_pointer_return.carbon
+// CHECK:STDOUT:
+// CHECK:STDOUT: constants {
+// CHECK:STDOUT:   %S: type = class_type @S [concrete]
+// CHECK:STDOUT:   %IngestDoublePointer.type: type = fn_type @IngestDoublePointer [concrete]
+// CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [concrete]
+// CHECK:STDOUT:   %IngestDoublePointer: %IngestDoublePointer.type = struct_value () [concrete]
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: imports {
+// CHECK:STDOUT:   %Cpp: <namespace> = namespace file.%Cpp.import_cpp, [concrete] {
+// CHECK:STDOUT:     .S = %S.decl
+// CHECK:STDOUT:     .foo = <error>
+// CHECK:STDOUT:     import Cpp//...
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %S.decl: type = class_decl @S [concrete = constants.%S] {} {}
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: fn @F() {
+// CHECK:STDOUT: !entry:
+// CHECK:STDOUT:   %IngestDoublePointer.ref: %IngestDoublePointer.type = name_ref IngestDoublePointer, file.%IngestDoublePointer.decl [concrete = constants.%IngestDoublePointer]
+// CHECK:STDOUT:   %Cpp.ref.loc24: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
+// CHECK:STDOUT:   %foo.ref.loc24: <error> = name_ref foo, <error> [concrete = <error>]
+// CHECK:STDOUT:   %IngestDoublePointer.call: init %empty_tuple.type = call %IngestDoublePointer.ref(<error>)
+// CHECK:STDOUT:   %Cpp.ref.loc25: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
+// CHECK:STDOUT:   %foo.ref.loc25: <error> = name_ref foo, <error> [concrete = <error>]
+// CHECK:STDOUT:   <elided>
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: --- fail_todo_import_nullable_pointer_param.carbon
+// CHECK:STDOUT:
+// CHECK:STDOUT: constants {
+// CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [concrete]
+// CHECK:STDOUT:   %S: type = class_type @S [concrete]
+// CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [concrete]
+// CHECK:STDOUT:   %pattern_type.7da: type = pattern_type %S [concrete]
+// CHECK:STDOUT:   %S.val: %S = struct_value () [concrete]
+// CHECK:STDOUT:   %ptr.5c7: type = ptr_type %S [concrete]
+// CHECK:STDOUT:   %Destroy.type: type = facet_type <@Destroy> [concrete]
+// CHECK:STDOUT:   %Op.type.bae: type = fn_type @Op.1 [concrete]
+// CHECK:STDOUT:   %T: type = bind_symbolic_name T, 0 [symbolic]
+// CHECK:STDOUT:   %Op.type.bc9: type = fn_type @Op.2, @impl(%T) [symbolic]
+// CHECK:STDOUT:   %Op.46f: %Op.type.bc9 = struct_value () [symbolic]
+// CHECK:STDOUT:   %Destroy.impl_witness.2d2: <witness> = impl_witness imports.%Destroy.impl_witness_table, @impl(%S) [concrete]
+// CHECK:STDOUT:   %Op.type.642: type = fn_type @Op.2, @impl(%S) [concrete]
+// CHECK:STDOUT:   %Op.ab5: %Op.type.642 = struct_value () [concrete]
+// CHECK:STDOUT:   %Destroy.facet: %Destroy.type = facet_value %S, (%Destroy.impl_witness.2d2) [concrete]
+// CHECK:STDOUT:   %.271: type = fn_type_with_self_type %Op.type.bae, %Destroy.facet [concrete]
+// CHECK:STDOUT:   %Op.specific_fn: <specific function> = specific_function %Op.ab5, @Op.2(%S) [concrete]
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: imports {
+// CHECK:STDOUT:   %Cpp: <namespace> = namespace file.%Cpp.import_cpp, [concrete] {
+// CHECK:STDOUT:     .S = %S.decl
+// CHECK:STDOUT:     .foo = <error>
+// CHECK:STDOUT:     import Cpp//...
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %S.decl: type = class_decl @S [concrete = constants.%S] {} {}
+// CHECK:STDOUT:   %Core.import_ref.0b9: @impl.%Op.type (%Op.type.bc9) = import_ref Core//prelude/parts/destroy, loc8_29, loaded [symbolic = @impl.%Op (constants.%Op.46f)]
+// CHECK:STDOUT:   %Destroy.impl_witness_table = impl_witness_table (%Core.import_ref.0b9), @impl [concrete]
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: fn @F() {
+// CHECK:STDOUT: !entry:
+// CHECK:STDOUT:   name_binding_decl {
+// CHECK:STDOUT:     %s.patt: %pattern_type.7da = binding_pattern s [concrete]
+// CHECK:STDOUT:     %s.var_patt: %pattern_type.7da = var_pattern %s.patt [concrete]
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %s.var: ref %S = var %s.var_patt
+// CHECK:STDOUT:   %.loc8_19.1: %empty_struct_type = struct_literal ()
+// CHECK:STDOUT:   %.loc8_19.2: init %S = class_init (), %s.var [concrete = constants.%S.val]
+// CHECK:STDOUT:   %.loc8_3: init %S = converted %.loc8_19.1, %.loc8_19.2 [concrete = constants.%S.val]
+// CHECK:STDOUT:   assign %s.var, %.loc8_3
+// CHECK:STDOUT:   %.loc8_13: type = splice_block %S.ref [concrete = constants.%S] {
+// CHECK:STDOUT:     %Cpp.ref.loc8: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
+// CHECK:STDOUT:     <elided>
+// CHECK:STDOUT:     %S.ref: type = name_ref S, imports.%S.decl [concrete = constants.%S]
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %s: ref %S = bind_name s, %s.var
+// CHECK:STDOUT:   %Cpp.ref.loc23: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
+// CHECK:STDOUT:   %foo.ref: <error> = name_ref foo, <error> [concrete = <error>]
+// CHECK:STDOUT:   %s.ref: ref %S = name_ref s, %s
+// CHECK:STDOUT:   %addr.loc23: %ptr.5c7 = addr_of %s.ref
+// CHECK:STDOUT:   %impl.elem0: %.271 = impl_witness_access constants.%Destroy.impl_witness.2d2, element0 [concrete = constants.%Op.ab5]
+// CHECK:STDOUT:   %bound_method.loc8_3.1: <bound method> = bound_method %s.var, %impl.elem0
+// CHECK:STDOUT:   %specific_fn: <specific function> = specific_function %impl.elem0, @Op.2(constants.%S) [concrete = constants.%Op.specific_fn]
+// CHECK:STDOUT:   %bound_method.loc8_3.2: <bound method> = bound_method %s.var, %specific_fn
+// CHECK:STDOUT:   %addr.loc8: %ptr.5c7 = addr_of %s.var
+// CHECK:STDOUT:   %no_op: init %empty_tuple.type = call %bound_method.loc8_3.2(%addr.loc8)
+// CHECK:STDOUT:   <elided>
+// CHECK:STDOUT: }
+// CHECK:STDOUT:

@@ -329,9 +329,9 @@ fn F() {
 
 // --- int_pointer.h
 
-auto foo(int* a) -> void;
+auto foo(int* _Nonnull a) -> void;
 
-// --- fail_todo_import_int_pointer.carbon
+// --- import_int_pointer.carbon
 
 library "[[@TEST_NAME]]";
 
@@ -340,13 +340,6 @@ import Cpp library "int_pointer.h";
 fn F() {
   var a: i32 = 1;
   //@dump-sem-ir-begin
-  // CHECK:STDERR: fail_todo_import_int_pointer.carbon:[[@LINE+7]]:3: error: semantics TODO: `Unsupported: parameter type: int *` [SemanticsTodo]
-  // CHECK:STDERR:   Cpp.foo(&a);
-  // CHECK:STDERR:   ^~~~~~~
-  // CHECK:STDERR: fail_todo_import_int_pointer.carbon:[[@LINE+4]]:3: note: in `Cpp` name lookup for `foo` [InCppNameLookup]
-  // CHECK:STDERR:   Cpp.foo(&a);
-  // CHECK:STDERR:   ^~~~~~~
-  // CHECK:STDERR:
   Cpp.foo(&a);
   //@dump-sem-ir-end
 }
@@ -357,9 +350,9 @@ fn F() {
 
 // --- const_int_pointer.h
 
-auto foo(const int* a) -> int;
+auto foo(const int* _Nonnull a) -> int;
 
-// --- fail_todo_import_const_int_pointer.carbon
+// --- import_const_int_pointer.carbon
 
 library "[[@TEST_NAME]]";
 
@@ -368,13 +361,6 @@ import Cpp library "const_int_pointer.h";
 fn F() {
   var a : i32 = 1;
   //@dump-sem-ir-begin
-  // CHECK:STDERR: fail_todo_import_const_int_pointer.carbon:[[@LINE+7]]:3: error: semantics TODO: `Unsupported: parameter type: const int *` [SemanticsTodo]
-  // CHECK:STDERR:   Cpp.foo(&a);
-  // CHECK:STDERR:   ^~~~~~~
-  // CHECK:STDERR: fail_todo_import_const_int_pointer.carbon:[[@LINE+4]]:3: note: in `Cpp` name lookup for `foo` [InCppNameLookup]
-  // CHECK:STDERR:   Cpp.foo(&a);
-  // CHECK:STDERR:   ^~~~~~~
-  // CHECK:STDERR:
   Cpp.foo(&a);
   //@dump-sem-ir-end
 }
@@ -1077,18 +1063,26 @@ fn F() {
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- fail_todo_import_int_pointer.carbon
+// CHECK:STDOUT: --- import_int_pointer.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
+// CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [concrete]
 // CHECK:STDOUT:   %int_32: Core.IntLiteral = int_value 32 [concrete]
 // CHECK:STDOUT:   %i32: type = class_type @Int, @Int(%int_32) [concrete]
 // CHECK:STDOUT:   %ptr.235: type = ptr_type %i32 [concrete]
+// CHECK:STDOUT:   %foo.type: type = fn_type @foo [concrete]
+// CHECK:STDOUT:   %foo: %foo.type = struct_value () [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT:   %Cpp: <namespace> = namespace file.%Cpp.import_cpp, [concrete] {
-// CHECK:STDOUT:     .foo = <error>
+// CHECK:STDOUT:     .foo = %foo.decl
 // CHECK:STDOUT:     import Cpp//...
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %foo.decl: %foo.type = fn_decl @foo [concrete = constants.%foo] {
+// CHECK:STDOUT:     <elided>
+// CHECK:STDOUT:   } {
+// CHECK:STDOUT:     <elided>
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -1096,24 +1090,32 @@ fn F() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT:   %Cpp.ref: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
-// CHECK:STDOUT:   %foo.ref: <error> = name_ref foo, <error> [concrete = <error>]
+// CHECK:STDOUT:   %foo.ref: %foo.type = name_ref foo, imports.%foo.decl [concrete = constants.%foo]
 // CHECK:STDOUT:   %a.ref: ref %i32 = name_ref a, %a
-// CHECK:STDOUT:   %addr.loc16: %ptr.235 = addr_of %a.ref
+// CHECK:STDOUT:   %addr.loc9: %ptr.235 = addr_of %a.ref
+// CHECK:STDOUT:   %foo.call: init %empty_tuple.type = call %foo.ref(%addr.loc9)
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- fail_todo_import_const_int_pointer.carbon
+// CHECK:STDOUT: --- import_const_int_pointer.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %int_32: Core.IntLiteral = int_value 32 [concrete]
 // CHECK:STDOUT:   %i32: type = class_type @Int, @Int(%int_32) [concrete]
 // CHECK:STDOUT:   %ptr.235: type = ptr_type %i32 [concrete]
+// CHECK:STDOUT:   %foo.type: type = fn_type @foo [concrete]
+// CHECK:STDOUT:   %foo: %foo.type = struct_value () [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT:   %Cpp: <namespace> = namespace file.%Cpp.import_cpp, [concrete] {
-// CHECK:STDOUT:     .foo = <error>
+// CHECK:STDOUT:     .foo = %foo.decl
 // CHECK:STDOUT:     import Cpp//...
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %foo.decl: %foo.type = fn_decl @foo [concrete = constants.%foo] {
+// CHECK:STDOUT:     <elided>
+// CHECK:STDOUT:   } {
+// CHECK:STDOUT:     <elided>
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -1121,9 +1123,10 @@ fn F() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT:   %Cpp.ref: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
-// CHECK:STDOUT:   %foo.ref: <error> = name_ref foo, <error> [concrete = <error>]
+// CHECK:STDOUT:   %foo.ref: %foo.type = name_ref foo, imports.%foo.decl [concrete = constants.%foo]
 // CHECK:STDOUT:   %a.ref: ref %i32 = name_ref a, %a
-// CHECK:STDOUT:   %addr.loc16: %ptr.235 = addr_of %a.ref
+// CHECK:STDOUT:   %addr.loc9: %ptr.235 = addr_of %a.ref
+// CHECK:STDOUT:   %foo.call: init %i32 = call %foo.ref(%addr.loc9)
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
