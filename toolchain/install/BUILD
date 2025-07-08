@@ -181,7 +181,12 @@ install_dirs = {
         is_driver = True,
     ) for name in llvm_binaries],
     "lib/carbon/llvm/lib/clang/" + LLVM_VERSION_MAJOR: [
-        install_filegroup("include", ":clang_headers", "staging/include/"),
+        install_filegroup(
+            "include",
+            ":clang_headers",
+            "staging/include/",
+            label = "installed_clang_headers",
+        ),
     ],
 }
 
@@ -209,7 +214,7 @@ manifest(
 # This is consumed by //toolchain/testing:file_test.
 manifest(
     name = "clang_headers_manifest.txt",
-    srcs = [":lib/carbon/llvm/lib/clang/" + LLVM_VERSION_MAJOR + "/include.pkg"],
+    srcs = [":installed_clang_headers"],
     strip_package_dir = True,
 )
 

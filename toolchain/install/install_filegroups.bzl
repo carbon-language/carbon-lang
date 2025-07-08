@@ -7,7 +7,7 @@
 load("@rules_pkg//pkg:mappings.bzl", "pkg_attributes", "pkg_filegroup", "pkg_files", "pkg_mklink", "strip_prefix")
 load("symlink_helpers.bzl", "symlink_file", "symlink_filegroup")
 
-def install_filegroup(name, filegroup_target, remove_prefix = ""):
+def install_filegroup(name, filegroup_target, remove_prefix = "", label = None):
     """Adds a filegroup for install.
 
     Used in the `install_dirs` dict.
@@ -15,10 +15,15 @@ def install_filegroup(name, filegroup_target, remove_prefix = ""):
     Args:
       name: The base directory for the filegroup.
       filegroup_target: The bazel filegroup target to install.
+      remove_prefix: A prefix to remove from the name of each source file when
+        determining the name of the corresponding installed file.
+      label: A custom label to assign to the filegroup containing the
+        installed files.
     """
     return {
         "filegroup": filegroup_target,
         "is_driver": False,
+        "label": label,
         "name": name,
         "remove_prefix": remove_prefix,
     }
@@ -85,7 +90,7 @@ def make_install_filegroups(name, no_driver_name, pkg_name, install_dirs, prefix
             if not entry["is_driver"]:
                 no_driver_srcs.append(prefixed_path)
 
-            pkg_path = path + ".pkg"
+            pkg_path = entry.get("label") or path + ".pkg"
             pkg_srcs.append(pkg_path)
 
             if "target" in entry:

@@ -53,9 +53,9 @@ struct SharedTestData {
 
 static auto GetSharedTestData(llvm::StringRef exe_path)
     -> const SharedTestData* {
-  static SharedTestData data = {
-      .installation = InstallPaths::MakeForBazelRunfiles(exe_path)};
-  static ErrorOr<bool> init = [&]() -> ErrorOr<bool> {
+  static ErrorOr<SharedTestData> data = [&]() -> ErrorOr<SharedTestData> {
+    SharedTestData data = {.installation =
+                               InstallPaths::MakeForBazelRunfiles(exe_path)};
     CARBON_ASSIGN_OR_RETURN(data.prelude_files,
                             data.installation.ReadPreludeManifest());
     for (const auto& file : data.prelude_files) {
@@ -68,10 +68,10 @@ static auto GetSharedTestData(llvm::StringRef exe_path)
     for (const auto& file : clang_header_files) {
       CARBON_RETURN_IF_ERROR(AddFile(*data.file_system, file));
     }
-    return true;
+    return data;
   }();
-  CARBON_CHECK(init.ok(), "{0}", init.error());
-  return &data;
+  CARBON_CHECK(data.ok(), "{0}", data.error());
+  return &*data;
 }
 
 // Provides common test support for the driver. This is used by file tests in

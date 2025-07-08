@@ -148,7 +148,9 @@ class CarbonClangDriverDiagnosticConsumer : public clang::DiagnosticConsumer {
 // imported C++ AST.
 // TODO: Cache the compiler invocation created here and reuse it if building
 // multiple AST units. Consider building the `CompilerInvocation` from the
-// driver and passing it into check.
+// driver and passing it into check. This would also allow us to have a shared
+// set of defaults between the Clang invocation we use for imports and the
+// invocation we use for `carbon clang`.
 static auto BuildCompilerInvocation(
     Context& context, llvm::IntrusiveRefCntPtr<llvm::vfs::FileSystem> fs,
     const std::string& clang_path, const std::string& target)
