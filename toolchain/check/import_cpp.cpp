@@ -13,6 +13,7 @@
 #include "clang/Frontend/TextDiagnostic.h"
 #include "clang/Sema/Lookup.h"
 #include "clang/Tooling/Tooling.h"
+#include "common/ostream.h"
 #include "common/raw_string_ostream.h"
 #include "llvm/ADT/IntrusiveRefCntPtr.h"
 #include "llvm/ADT/StringRef.h"
@@ -48,11 +49,10 @@ static auto GenerateCppIncludesHeaderCode(
     // declaration in the Carbon source file. This will cause Clang's
     // diagnostics machinery to track and report the location in Carbon code
     // where the import was written.
-    auto import_loc = context.tokens().TokenToDiagnosticLoc(
-        context.parse_tree().node_token(import.node_id));
-    code_stream << "# " << import_loc.loc.line_number << " \"";
-    code_stream.write_escaped(import_loc.loc.filename);
-    code_stream << "\"\n";
+    auto token = context.parse_tree().node_token(import.node_id);
+    code_stream << "# " << context.tokens().GetLineNumber(token) << " \""
+                << FormatEscaped(context.tokens().source().filename())
+                << "\"\n";
 
     code_stream << "#include \""
                 << FormatEscaped(
