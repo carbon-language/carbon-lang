@@ -124,7 +124,8 @@ class CheckUnit {
       UnitAndImports* unit_and_imports,
       llvm::ArrayRef<Parse::GetTreeAndSubtreesFn> tree_and_subtrees_getters,
       llvm::IntrusiveRefCntPtr<llvm::vfs::FileSystem> fs,
-      llvm::StringRef target, llvm::raw_ostream* vlog_stream);
+      llvm::StringRef clang_path, llvm::StringRef target,
+      llvm::raw_ostream* vlog_stream);
 
   // Produces and checks the IR for the provided unit.
   auto Run() -> void;
@@ -186,6 +187,7 @@ class CheckUnit {
   // The number of IRs being checked in total.
   int total_ir_count_;
   llvm::IntrusiveRefCntPtr<llvm::vfs::FileSystem> fs_;
+  llvm::StringRef clang_path_;
   llvm::StringRef target_;
 
   DiagnosticEmitter emitter_;

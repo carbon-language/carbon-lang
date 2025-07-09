@@ -65,6 +65,9 @@ auto DiagnosticLocConverter::ConvertImpl(
   CARBON_CHECK(sem_ir_->cpp_ast());
   clang::PresumedLoc presumed_loc =
       sem_ir_->cpp_ast()->getSourceManager().getPresumedLoc(clang_loc);
+  if (presumed_loc.isInvalid()) {
+    return Diagnostics::ConvertedLoc();
+  }
   unsigned offset =
       sem_ir_->cpp_ast()->getSourceManager().getDecomposedLoc(clang_loc).second;
 

@@ -389,7 +389,8 @@ static auto MaybeDumpSemIR(
 auto CheckParseTrees(
     llvm::MutableArrayRef<Unit> units,
     llvm::ArrayRef<Parse::GetTreeAndSubtreesFn> tree_and_subtrees_getters,
-    llvm::IntrusiveRefCntPtr<llvm::vfs::FileSystem> fs, llvm::StringRef target,
+    llvm::IntrusiveRefCntPtr<llvm::vfs::FileSystem> fs,
+    llvm::StringRef clang_path, llvm::StringRef target,
     const CheckParseTreesOptions& options) -> void {
   // UnitAndImports is big due to its SmallVectors, so we default to 0 on the
   // stack.
@@ -445,7 +446,7 @@ auto CheckParseTrees(
   for (int check_index = 0;
        check_index < static_cast<int>(ready_to_check.size()); ++check_index) {
     auto* unit_info = ready_to_check[check_index];
-    CheckUnit(unit_info, tree_and_subtrees_getters, fs, target,
+    CheckUnit(unit_info, tree_and_subtrees_getters, fs, clang_path, target,
               options.vlog_stream)
         .Run();
     for (auto* incoming_import : unit_info->incoming_imports) {
@@ -494,7 +495,7 @@ auto CheckParseTrees(
     // incomplete imports.
     for (auto& unit_info : unit_infos) {
       if (unit_info.imports_remaining > 0) {
-        CheckUnit(&unit_info, tree_and_subtrees_getters, fs, target,
+        CheckUnit(&unit_info, tree_and_subtrees_getters, fs, clang_path, target,
                   options.vlog_stream)
             .Run();
       }

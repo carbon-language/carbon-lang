@@ -14,10 +14,11 @@ namespace Carbon::Check {
 // Generates a C++ header that includes the imported cpp files, parses it,
 // generates the AST from it and links `SemIR::File` to it. Report C++ errors
 // and warnings. If successful, adds a `Cpp` namespace and returns the AST.
-auto ImportCppFiles(Context& context, llvm::StringRef importing_file_path,
+auto ImportCppFiles(Context& context,
                     llvm::ArrayRef<Parse::Tree::PackagingNames> imports,
                     llvm::IntrusiveRefCntPtr<llvm::vfs::FileSystem> fs,
-                    llvm::StringRef target) -> std::unique_ptr<clang::ASTUnit>;
+                    llvm::StringRef clang_path, llvm::StringRef target)
+    -> std::unique_ptr<clang::ASTUnit>;
 
 // Looks up the given name in the Clang AST generated when importing C++ code.
 // If successful, generates the instruction and returns the new `InstId`.

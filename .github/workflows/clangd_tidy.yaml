@@ -8,7 +8,8 @@ on:
   push:
     branches: [trunk, action-test]
   pull_request:
-  merge_group:
+  # TODO: Don't run in merge_group until we're ready to replace clang-tidy.
+  # merge_group:
 
 permissions:
   contents: read # For actions/checkout.
@@ -21,7 +22,7 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  clang-tidy:
+  clangd-tidy:
     runs-on: ubuntu-22.04
 
     steps:
@@ -51,14 +52,9 @@ jobs:
       - id: filter
         uses: dorny/paths-filter@de90cc6fb38fc0963ad72b210f1f284cd68cea36 # v3.0.2
         with:
-          base:
-            ${{ github.event_name == 'pull_request' &&
-            github.event.pull_request.base.sha || (github.event_name ==
-            'merge_group' && github.event.merge_group.base_sha ||
-            github.event.push.before ) }}
           filters: |
             has_cpp:
-              - '{**/*.cpp,**/*.h}'
+              - added|modified: '{**/*.cpp,**/*.h}'
           list-files: 'shell'
 
       - uses: ./.github/actions/build-setup-common

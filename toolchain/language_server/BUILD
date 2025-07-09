@@ -22,6 +22,7 @@ cc_library(
         "//common:ostream",
         "//common:raw_string_ostream",
         "//toolchain/diagnostics:diagnostic_emitter",
+        "//toolchain/install:install_paths",
         "@llvm-project//clang-tools-extra/clangd:ClangDaemon",
     ],
 )
@@ -38,6 +39,7 @@ cc_library(
         "//toolchain/check",
         "//toolchain/diagnostics:diagnostic_emitter",
         "//toolchain/diagnostics:file_diagnostics",
+        "//toolchain/install:install_paths",
         "//toolchain/lex",
         "//toolchain/lex:tokenized_buffer",
         "//toolchain/parse",

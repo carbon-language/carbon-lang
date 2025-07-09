@@ -7,6 +7,7 @@
 
 #include "common/ostream.h"
 #include "toolchain/diagnostics/diagnostic_consumer.h"
+#include "toolchain/install/install_paths.h"
 
 namespace Carbon::LanguageServer {
 
@@ -15,9 +16,10 @@ namespace Carbon::LanguageServer {
 // the server cleanly exits.
 //
 // This is thread-hostile because `clangd::LoggingSession` relies on a global.
-auto Run(FILE* input_stream, llvm::raw_ostream& output_stream,
-         llvm::raw_ostream& error_stream, llvm::raw_ostream* vlog_stream,
-         Diagnostics::Consumer& consumer) -> bool;
+auto Run(const InstallPaths& installation, FILE* input_stream,
+         llvm::raw_ostream& output_stream, llvm::raw_ostream& error_stream,
+         llvm::raw_ostream* vlog_stream, Diagnostics::Consumer& consumer)
+    -> bool;
 
 }  // namespace Carbon::LanguageServer
 
