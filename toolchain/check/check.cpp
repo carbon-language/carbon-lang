@@ -13,6 +13,7 @@
 #include "toolchain/check/context.h"
 #include "toolchain/check/diagnostic_emitter.h"
 #include "toolchain/check/diagnostic_helpers.h"
+#include "toolchain/check/import_cpp.h"
 #include "toolchain/diagnostics/diagnostic.h"
 #include "toolchain/diagnostics/format_providers.h"
 #include "toolchain/lex/token_kind.h"
@@ -23,6 +24,15 @@
 #include "toolchain/sem_ir/typed_insts.h"
 
 namespace Carbon::Check {
+
+auto BuildClangInvocation(Diagnostics::Consumer& consumer,
+                          llvm::IntrusiveRefCntPtr<llvm::vfs::FileSystem> fs,
+                          llvm::ArrayRef<std::string> clang_path_and_args)
+    -> std::unique_ptr<clang::CompilerInvocation> {
+  Diagnostics::NoLocEmitter emitter(&consumer);
+  // Forward to the implementation to avoid exposing `import_cpp` outside check.
+  return BuildClangInvocationImpl(emitter, fs, clang_path_and_args);
+}
 
 // The package and library names, used as map keys.
 using ImportKey = std::pair<llvm::StringRef, llvm::StringRef>;
@@ -390,8 +400,8 @@ auto CheckParseTrees(
     llvm::MutableArrayRef<Unit> units,
     llvm::ArrayRef<Parse::GetTreeAndSubtreesFn> tree_and_subtrees_getters,
     llvm::IntrusiveRefCntPtr<llvm::vfs::FileSystem> fs,
-    llvm::StringRef clang_path, llvm::StringRef target,
-    const CheckParseTreesOptions& options) -> void {
+    const CheckParseTreesOptions& options,
+    std::shared_ptr<clang::CompilerInvocation> clang_invocation) -> void {
   // UnitAndImports is big due to its SmallVectors, so we default to 0 on the
   // stack.
   llvm::SmallVector<UnitAndImports, 0> unit_infos(
@@ -446,7 +456,7 @@ auto CheckParseTrees(
   for (int check_index = 0;
        check_index < static_cast<int>(ready_to_check.size()); ++check_index) {
     auto* unit_info = ready_to_check[check_index];
-    CheckUnit(unit_info, tree_and_subtrees_getters, fs, clang_path, target,
+    CheckUnit(unit_info, tree_and_subtrees_getters, fs, clang_invocation,
               options.vlog_stream)
         .Run();
     for (auto* incoming_import : unit_info->incoming_imports) {
@@ -495,7 +505,7 @@ auto CheckParseTrees(
     // incomplete imports.
     for (auto& unit_info : unit_infos) {
       if (unit_info.imports_remaining > 0) {
-        CheckUnit(&unit_info, tree_and_subtrees_getters, fs, clang_path, target,
+        CheckUnit(&unit_info, tree_and_subtrees_getters, fs, clang_invocation,
                   options.vlog_stream)
             .Run();
       }

@@ -5,6 +5,7 @@
 #ifndef CARBON_TOOLCHAIN_CHECK_CHECK_H_
 #define CARBON_TOOLCHAIN_CHECK_CHECK_H_
 
+#include "clang/Frontend/CompilerInvocation.h"
 #include "common/ostream.h"
 #include "toolchain/base/shared_value_stores.h"
 #include "toolchain/base/timings.h"
@@ -69,14 +70,22 @@ struct CheckParseTreesOptions {
   bool dump_raw_sem_ir_builtins = false;
 };
 
+// Builds and returns a clang `CompilerInvocation` to use when building code for
+// interop, from a list of clang driver arguments. Emits diagnostics to
+// `consumer` if the arguments are invalid.
+auto BuildClangInvocation(Diagnostics::Consumer& consumer,
+                          llvm::IntrusiveRefCntPtr<llvm::vfs::FileSystem> fs,
+                          llvm::ArrayRef<std::string> clang_path_and_args)
+    -> std::unique_ptr<clang::CompilerInvocation>;
+
 // Checks a group of parse trees. This will use imports to decide the order of
 // checking.
 auto CheckParseTrees(
     llvm::MutableArrayRef<Unit> units,
     llvm::ArrayRef<Parse::GetTreeAndSubtreesFn> tree_and_subtrees_getters,
     llvm::IntrusiveRefCntPtr<llvm::vfs::FileSystem> fs,
-    llvm::StringRef clang_path, llvm::StringRef target,
-    const CheckParseTreesOptions& options) -> void;
+    const CheckParseTreesOptions& options,
+    std::shared_ptr<clang::CompilerInvocation> clang_invocation) -> void;
 
 }  // namespace Carbon::Check
 

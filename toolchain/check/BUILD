@@ -207,6 +207,7 @@ cc_library(
         "//toolchain/sem_ir:file",
         "//toolchain/sem_ir:formatter",
         "//toolchain/sem_ir:typed_insts",
+        "@llvm-project//clang:frontend",
         "@llvm-project//llvm:Support",
     ],
 )
