@@ -107,7 +107,7 @@ def make_install_filegroups(name, no_driver_name, pkg_name, install_dirs, prefix
                     )
                     mode = "0644"
                 pkg_files(
-                    name = pkg_path,
+                    name = pkg_label,
                     srcs = [entry["target"]],
                     attributes = pkg_attributes(mode = mode),
                     renames = {entry["target"]: path},
@@ -120,7 +120,7 @@ def make_install_filegroups(name, no_driver_name, pkg_name, install_dirs, prefix
                     remove_prefix = entry["remove_prefix"],
                 )
                 pkg_files(
-                    name = pkg_path,
+                    name = pkg_label,
                     srcs = [prefixed_path],
                     strip_prefix = strip_prefix.from_pkg(prefix),
                 )
@@ -144,7 +144,7 @@ def make_install_filegroups(name, no_driver_name, pkg_name, install_dirs, prefix
 
                 # For the distributed package, we retain relative symlinks.
                 pkg_mklink(
-                    name = pkg_path,
+                    name = pkg_label,
                     link_name = path,
                     target = entry["symlink"],
                 )
