@@ -90,8 +90,8 @@ def make_install_filegroups(name, no_driver_name, pkg_name, install_dirs, prefix
             if not entry["is_driver"]:
                 no_driver_srcs.append(prefixed_path)
 
-            pkg_path = entry.get("label") or path + ".pkg"
-            pkg_srcs.append(pkg_path)
+            pkg_label = entry.get("label") or path + ".pkg"
+            pkg_srcs.append(pkg_label)
 
             if "target" in entry:
                 if entry["executable"]:
