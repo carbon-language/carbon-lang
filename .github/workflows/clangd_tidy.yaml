@@ -1,0 +1,83 @@
+# Part of the Carbon Language project, under the Apache License v2.0 with LLVM
+# Exceptions. See /LICENSE for license information.
+# SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
+
+name: 'Clang Tidy (clangd)'
+
+on:
+  push:
+    branches: [trunk, action-test]
+  pull_request:
+  merge_group:
+
+permissions:
+  contents: read # For actions/checkout.
+  pull-requests: read # For dorny/paths-filter to read pull requests.
+
+# Cancel previous workflows on the PR when there are multiple fast commits.
+# https://docs.github.com/en/actions/using-workflows/workflow-syntax-for-github-actions#concurrency
+concurrency:
+  group: ${{ github.workflow }}-${{ github.head_ref || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  clang-tidy:
+    runs-on: ubuntu-22.04
+
+    steps:
+      - name: Harden Runner
+        uses: step-security/harden-runner@17d0e2bd7d51742c71671bd19fa12bdc9d40a3d6 # v2.8.1
+        with:
+          egress-policy: block
+          # When adding endpoints, see README.md.
+          # prettier-ignore
+          allowed-endpoints: >
+            *.dl.sourceforge.net:443
+            api.github.com:443
+            bcr.bazel.build:443
+            downloads.sourceforge.net:443
+            github.com:443
+            mirrors.kernel.org:443
+            nodejs.org:443
+            oauth2.googleapis.com:443
+            objects.githubusercontent.com:443
+            pypi.org:443
+            releases.bazel.build:443
+            sourceforge.net:443
+            storage.googleapis.com:443
+
+      - uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4.1.1
+
+      - id: filter
+        uses: dorny/paths-filter@de90cc6fb38fc0963ad72b210f1f284cd68cea36 # v3.0.2
+        with:
+          base:
+            ${{ github.event_name == 'pull_request' &&
+            github.event.pull_request.base.sha || (github.event_name ==
+            'merge_group' && github.event.merge_group.base_sha ||
+            github.event.push.before ) }}
+          filters: |
+            has_cpp:
+              - '{**/*.cpp,**/*.h}'
+          list-files: 'shell'
+
+      - uses: ./.github/actions/build-setup-common
+        if: steps.filter.outputs.has_cpp == 'true'
+        with:
+          matrix_runner: 'ubuntu-22.04'
+          remote_cache_upload: '--remote_upload_local_results=false'
+
+      - name: Create compile commands
+        if: steps.filter.outputs.has_cpp == 'true'
+        run: ./scripts/create_compdb.py
+
+      - name: Install clangd-tidy
+        if: steps.filter.outputs.has_cpp == 'true'
+        run: pip install clangd-tidy==1.1.0.post2
+
+      - name: Run clangd-tidy
+        if: steps.filter.outputs.has_cpp == 'true'
+        env:
+          FILTER_FILES: ${{ steps.filter.outputs.has_cpp_files }}
+        run: |
+          clangd-tidy -p . -j 10 $FILTER_FILES

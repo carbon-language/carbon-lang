@@ -17,6 +17,7 @@
 #include "clang/Frontend/TextDiagnostic.h"
 #include "clang/Lex/PreprocessorOptions.h"
 #include "clang/Sema/Lookup.h"
+#include "common/ostream.h"
 #include "common/raw_string_ostream.h"
 #include "llvm/ADT/IntrusiveRefCntPtr.h"
 #include "llvm/ADT/StringRef.h"
@@ -53,12 +54,13 @@ static auto GenerateCppIncludesHeaderCode(
   llvm::raw_string_ostream code_stream(code);
   for (const Parse::Tree::PackagingNames& import : imports) {
     // Add a line marker directive pointing at the location of the `import Cpp`
-    // declaration in the Carbon source file.
-    auto import_loc = context.tokens().TokenToDiagnosticLoc(
-        context.parse_tree().node_token(import.node_id));
-    code_stream << "# " << import_loc.loc.line_number << " \"";
-    code_stream.write_escaped(import_loc.loc.filename);
-    code_stream << "\"\n";
+    // declaration in the Carbon source file. This will cause Clang's
+    // diagnostics machinery to track and report the location in Carbon code
+    // where the import was written.
+    auto token = context.parse_tree().node_token(import.node_id);
+    code_stream << "# " << context.tokens().GetLineNumber(token) << " \""
+                << FormatEscaped(context.tokens().source().filename())
+                << "\"\n";
 
     code_stream << "#include \""
                 << FormatEscaped(
@@ -587,6 +589,12 @@ static auto BuildClassDefinition(Context& context,
   return {class_id, class_inst_id};
 }
 
+// Mark the given `Decl` as failed in `clang_decls`.
+static auto MarkFailedDecl(Context& context, clang::Decl* clang_decl) {
+  context.sem_ir().clang_decls().Add(
+      {.decl = clang_decl, .inst_id = SemIR::ErrorInst::InstId});
+}
+
 // Imports a record declaration from Clang to Carbon. If successful, returns
 // the new Carbon class declaration `InstId`.
 // TODO: Change `clang_decl` to `const &` when lookup is using `clang::DeclID`
@@ -600,11 +608,13 @@ static auto ImportCXXRecordDecl(Context& context, SemIR::LocId loc_id,
   if (!clang_def) {
     context.TODO(loc_id,
                  "Unsupported: Record declarations without a definition");
+    MarkFailedDecl(context, clang_decl);
     return SemIR::ErrorInst::InstId;
   }
 
   if (clang_def->isDynamicClass()) {
     context.TODO(loc_id, "Unsupported: Dynamic Class");
+    MarkFailedDecl(context, clang_decl);
     return SemIR::ErrorInst::InstId;
   }
 
@@ -851,14 +861,17 @@ static auto ImportFunctionDecl(Context& context, SemIR::LocId loc_id,
     -> SemIR::InstId {
   if (clang_decl->isVariadic()) {
     context.TODO(loc_id, "Unsupported: Variadic function");
+    MarkFailedDecl(context, clang_decl);
     return SemIR::ErrorInst::InstId;
   }
   if (!clang_decl->isGlobal()) {
     context.TODO(loc_id, "Unsupported: Non-global function");
+    MarkFailedDecl(context, clang_decl);
     return SemIR::ErrorInst::InstId;
   }
   if (clang_decl->getTemplatedKind() != clang::FunctionDecl::TK_NonTemplate) {
     context.TODO(loc_id, "Unsupported: Template function");
+    MarkFailedDecl(context, clang_decl);
     return SemIR::ErrorInst::InstId;
   }
 
@@ -874,6 +887,7 @@ static auto ImportFunctionDecl(Context& context, SemIR::LocId loc_id,
   context.scope_stack().Pop();
 
   if (!function_params_insts.has_value()) {
+    MarkFailedDecl(context, clang_decl);
     return SemIR::ErrorInst::InstId;
   }
 

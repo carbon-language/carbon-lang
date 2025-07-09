@@ -19,6 +19,8 @@ inputs:
 outputs:
   has_code:
     value: ${{ steps.filter.outputs.has_code}}
+  has_cpp_files:
+    value: ${{ steps.filter.outputs.has_cpp_files}}
 
 runs:
   using: composite
@@ -32,6 +34,8 @@ runs:
         filters: |
           has_code:
             - '!{**/*.md,LICENSE,CODEOWNERS,.git*}'
+          has_cpp_files:
+            - '{**/*.cpp,**/*.h}'
 
     # Disable uploads when the remote cache is read-only.
     - name: Set up remote cache access (read-only)
