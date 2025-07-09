@@ -620,7 +620,9 @@ static auto MapPointerType(Context& context, SemIR::LocId loc_id,
           .type_id = pointer_type_id};
 }
 
-// Maps a C++ type to a Carbon type.
+// Maps a C++ type to a Carbon type. `type` should not be canonicalized because
+// we check for pointer nullability and nullability will be lost by
+// canonicalization.
 static auto MapType(Context& context, SemIR::LocId loc_id, clang::QualType type)
     -> TypeExpr {
   if (type->isPointerType()) {
