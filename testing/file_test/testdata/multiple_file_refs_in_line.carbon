@@ -10,11 +10,15 @@
 // CHECK:STDOUT: 3 args: `default_args`, `a.carbon`, `b.carbon`
 
 // --- a.carbon
-a.carbon:1: b.carbon:2: a.carbon:3: hello
-// CHECK:STDOUT: a.carbon:[[@LINE-1]]: a.carbon:[[@LINE-1]]: b.carbon:2: a.carbon:[[@LINE+1]]: hello
-
-
+a.carbon:1: b.carbon:3: a.carbon:3: hello
+// CHECK:STDOUT: a.carbon:[[@LINE-1]]: a.carbon:[[@LINE-1]]: b.carbon:3: a.carbon:[[@LINE+1]]: hello
 
 // --- b.carbon
-a.carbon:1: b.carbon:2: a.carbon:3: hello
-// CHECK:STDOUT: b.carbon:[[@LINE-1]]: a.carbon:1: b.carbon:[[@LINE+0]]: a.carbon:3: hello
+
+
+a.carbon:1: b.carbon:3: a.carbon:3: hello
+// CHECK:STDOUT: b.carbon:[[@LINE-1]]: a.carbon:1: b.carbon:[[@LINE-1]]: a.carbon:3: hello
+a.carbon:1: b.carbon:5: a.carbon:3: hello
+// CHECK:STDOUT: b.carbon:[[@LINE-1]]: a.carbon:1: b.carbon:[[@LINE-1]]: a.carbon:3: hello
+a.carbon:1: b.carbon:7: a.carbon:3: hello
+// CHECK:STDOUT: b.carbon:[[@LINE-1]]: a.carbon:1: b.carbon:[[@LINE-1]]: a.carbon:3: hello

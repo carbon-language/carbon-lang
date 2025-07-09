@@ -246,7 +246,8 @@ auto FileTestAutoupdater::AddTips() -> void {
 
 auto FileTestAutoupdater::ShouldAddCheckLine(const CheckLines& check_lines,
                                              bool to_file_end) const -> bool {
-  return !autoupdate_split_ && check_lines.cursor != check_lines.lines.end() &&
+  return !autoupdate_split_file_ &&
+         check_lines.cursor != check_lines.lines.end() &&
          (check_lines.cursor->file_number() < output_file_number_ ||
           (check_lines.cursor->file_number() == output_file_number_ &&
            (to_file_end || check_lines.cursor->line_number() <=
@@ -323,7 +324,7 @@ auto FileTestAutoupdater::Run(bool dry_run) -> bool {
   // lines after AUTOUPDATE.
   AddRemappedNonCheckLine();
   AddTips();
-  if (!autoupdate_split_) {
+  if (!autoupdate_split_file_) {
     AddCheckLines(stderr_, /*to_file_end=*/false);
     if (any_attached_stdout_lines_) {
       AddCheckLines(stdout_, /*to_file_end=*/false);
@@ -336,7 +337,7 @@ auto FileTestAutoupdater::Run(bool dry_run) -> bool {
     if (output_file_number_ < non_check_line_->file_number()) {
       FinishFile(/*is_last_file=*/false);
       StartSplitFile();
-      if (autoupdate_split_ && output_file_number_ == autoupdate_split_file_) {
+      if (output_file_number_ == autoupdate_split_file_) {
         break;
       }
       continue;
@@ -357,10 +358,12 @@ auto FileTestAutoupdater::Run(bool dry_run) -> bool {
     ++non_check_line_;
   }
 
-  // When autoupdate_split_ was true, this will result in all check lines (and
-  // only check lines) being added to the split by FinishFile. We don't use
-  // autoupdate_split_ past this point.
-  autoupdate_split_ = false;
+  // Clear out the autoupdate split, which would otherwise prevent check lines
+  // being written to the autoupdate file. When autoupdate_split_file_ was set,
+  // this will result in all check lines (and only check lines) being added to
+  // the split by FinishFile. We don't use autoupdate_split_file_ past this
+  // point.
+  autoupdate_split_file_ = std::nullopt;
 
   FinishFile(/*is_last_file=*/true);
 

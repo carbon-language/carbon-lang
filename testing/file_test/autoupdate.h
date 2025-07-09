@@ -48,12 +48,12 @@ class FileTestAutoupdater {
         dump_command_(std::move(dump_command)),
         input_content_(input_content),
         autoupdate_line_number_(autoupdate_line_number),
-        autoupdate_split_(autoupdate_split),
         non_check_lines_(non_check_lines),
         default_file_re_(default_file_re),
         line_number_replacements_(line_number_replacements),
         do_extra_check_replacements_(std::move(do_extra_check_replacements)),
-        autoupdate_split_file_(filenames.size()),
+        autoupdate_split_file_(
+            autoupdate_split ? std::optional(filenames.size()) : std::nullopt),
         file_to_number_map_(BuildFileToNumberMap(filenames)),
         // BuildCheckLines should only be called after other member
         // initialization.
@@ -210,15 +210,14 @@ class FileTestAutoupdater {
   std::string dump_command_;
   llvm::StringRef input_content_;
   int autoupdate_line_number_;
-  bool autoupdate_split_;
   const llvm::SmallVector<FileTestLine>& non_check_lines_;
   const std::optional<RE2>& default_file_re_;
   const llvm::SmallVector<LineNumberReplacement>& line_number_replacements_;
   std::function<auto(std::string&)->void> do_extra_check_replacements_;
 
-  // If `autoupdate_split_` is true, the file number of the autoupdate split.
-  // Otherwise, meaningless.
-  int autoupdate_split_file_;
+  // If we have an autoupdate split that still needs to be processed, the file
+  // number of the autoupdate split. Otherwise, this is nullopt.
+  std::optional<int> autoupdate_split_file_;
 
   // Generated TIP lines, from AddTips.
   llvm::SmallVector<TipLine> tips_;
