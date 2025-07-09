@@ -124,13 +124,12 @@ auto AddReturnCleanupBlock(Context& context,
 
 template <typename LocT>
 auto AddReturnCleanupBlock(Context& context, LocT loc) -> void {
-  return AddReturnCleanupBlock(context,
-                               SemIR::LocIdAndInst(loc, SemIR::Return{}));
+  AddReturnCleanupBlock(context, SemIR::LocIdAndInst(loc, SemIR::Return{}));
 }
 template <typename LocT>
 auto AddReturnCleanupBlockWithExpr(Context& context, LocT loc,
                                    SemIR::ReturnExpr inst) -> void {
-  return AddReturnCleanupBlock(context, SemIR::LocIdAndInst(loc, inst));
+  AddReturnCleanupBlock(context, SemIR::LocIdAndInst(loc, inst));
 }
 
 }  // namespace Carbon::Check
