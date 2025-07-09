@@ -849,6 +849,8 @@ auto CompileSubcommand::Run(DriverEnv& driver_env) -> DriverResult {
   // check, because this is essentially performing further option validation,
   // and we generally validate all options even if we're not using them for the
   // selected phases of compilation.
+  // TODO: Share any arguments we specify here with the `carbon clang`
+  // subcommand.
   {
     llvm::SmallVector<std::string> clang_path_and_args = {
         driver_env.installation->clang_path(),
@@ -858,8 +860,7 @@ auto CompileSubcommand::Run(DriverEnv& driver_env) -> DriverResult {
         // Enable PIE by default, but allow it to be overridden by Clang
         // arguments. Clang's default is configurable, but we'd like our
         // defaults to be more stable.
-        // TODO: Decide if we want this. Either way, `carbon clang` should have
-        // the same behavior.
+        // TODO: Decide if we want this.
         "-fPIE",
     };
     for (auto str : options_.clang_args) {
