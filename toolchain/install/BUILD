@@ -184,8 +184,8 @@ install_dirs = {
         install_filegroup(
             "include",
             ":clang_headers",
-            remove_prefix = "staging/include/",
             label = "installed_clang_headers",
+            remove_prefix = "staging/include/",
         ),
     ],
 }
