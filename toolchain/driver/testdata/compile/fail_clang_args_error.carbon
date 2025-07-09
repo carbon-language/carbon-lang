@@ -4,7 +4,6 @@
 //
 // ARGS: --include-diagnostic-kind compile --clang-arg=-fclang-flag-that-doesnt-exist foo.carbon
 //
-// SET-CAPTURE-CONSOLE-OUTPUT
 // AUTOUPDATE
 // TIP: To test this file alone, run:
 // TIP:   bazel test //toolchain/testing:file_test --test_arg=--file_tests=toolchain/driver/testdata/compile/fail_clang_args_error.carbon

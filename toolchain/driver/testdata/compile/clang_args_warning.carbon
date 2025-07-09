@@ -4,7 +4,6 @@
 //
 // ARGS: --include-diagnostic-kind compile --clang-arg=-L/usr/lib foo.carbon
 //
-// SET-CAPTURE-CONSOLE-OUTPUT
 // AUTOUPDATE
 // TIP: To test this file alone, run:
 // TIP:   bazel test //toolchain/testing:file_test --test_arg=--file_tests=toolchain/driver/testdata/compile/clang_args_warning.carbon
