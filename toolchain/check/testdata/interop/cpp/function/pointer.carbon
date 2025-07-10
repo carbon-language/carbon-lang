@@ -2,7 +2,7 @@
 // Exceptions. See /LICENSE for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
-// INCLUDE-FILE: toolchain/testing/testdata/min_prelude/destroy.carbon
+// INCLUDE-FILE: toolchain/testing/testdata/min_prelude/convert.carbon
 //
 // AUTOUPDATE
 // TIP: To test this file alone, run:
@@ -92,7 +92,10 @@ fn G() -> const Cpp.S;
 fn F() {
   //@dump-sem-ir-begin
   var s: const Cpp.S = G();
-  // CHECK:STDERR: fail_todo_import_const_pointer_param.carbon:[[@LINE+5]]:11: error: name `Core.ImplicitAs` implicitly referenced here, but not found [CoreNameNotFound]
+  // CHECK:STDERR: fail_todo_import_const_pointer_param.carbon:[[@LINE+8]]:11: error: cannot implicitly convert expression of type `const Cpp.S*` to `Cpp.S*` [ConversionFailure]
+  // CHECK:STDERR:   Cpp.foo(&s);
+  // CHECK:STDERR:           ^~
+  // CHECK:STDERR: fail_todo_import_const_pointer_param.carbon:[[@LINE+5]]:11: note: type `const Cpp.S*` does not implement interface `Core.ImplicitAs(Cpp.S*)` [MissingImplInMemberAccessNote]
   // CHECK:STDERR:   Cpp.foo(&s);
   // CHECK:STDERR:           ^~
   // CHECK:STDERR: fail_todo_import_const_pointer_param.carbon: note: initializing function parameter [InCallToFunctionParam]
@@ -423,11 +426,11 @@ fn F() {
 // CHECK:STDOUT:     %const: type = const_type %S.ref [concrete = constants.%const]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %s: ref %const = bind_name s, %s.var
-// CHECK:STDOUT:   %Cpp.ref.loc16: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
+// CHECK:STDOUT:   %Cpp.ref.loc19: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
 // CHECK:STDOUT:   %foo.ref: %foo.type = name_ref foo, imports.%foo.decl [concrete = constants.%foo]
 // CHECK:STDOUT:   %s.ref: ref %const = name_ref s, %s
-// CHECK:STDOUT:   %addr.loc16: %ptr.ff5 = addr_of %s.ref
-// CHECK:STDOUT:   %.loc16: %ptr.5c7 = converted %addr.loc16, <error> [concrete = <error>]
+// CHECK:STDOUT:   %addr.loc19: %ptr.ff5 = addr_of %s.ref
+// CHECK:STDOUT:   %.loc19: %ptr.5c7 = converted %addr.loc19, <error> [concrete = <error>]
 // CHECK:STDOUT:   %foo.call: init %empty_tuple.type = call %foo.ref(<error>)
 // CHECK:STDOUT:   %impl.elem0.loc10_3.1: %.af2 = impl_witness_access constants.%Destroy.impl_witness.4d8, element0 [concrete = constants.%Op.af7]
 // CHECK:STDOUT:   %bound_method.loc10_3.1: <bound method> = bound_method %.loc10_3, %impl.elem0.loc10_3.1
