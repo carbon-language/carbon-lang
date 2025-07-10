@@ -169,6 +169,41 @@ fn F() {
 }
 
 // ============================================================================
+// Const pointer as a return value
+// ============================================================================
+
+// --- const_pointer_return.h
+
+struct S {};
+
+auto foo() -> const S* _Nonnull;
+
+// --- fail_todo_import_const_pointer_return.carbon
+
+library "[[@TEST_NAME]]";
+
+import Cpp library "const_pointer_return.h";
+
+fn IngestConstPointer(s: const Cpp.S*);
+
+fn F() {
+  //@dump-sem-ir-begin
+  // CHECK:STDERR: fail_todo_import_const_pointer_return.carbon:[[@LINE+10]]:22: error: cannot implicitly convert expression of type `Cpp.S*` to `const Cpp.S*` [ConversionFailure]
+  // CHECK:STDERR:   IngestConstPointer(Cpp.foo());
+  // CHECK:STDERR:                      ^~~~~~~~~
+  // CHECK:STDERR: fail_todo_import_const_pointer_return.carbon:[[@LINE+7]]:22: note: type `Cpp.S*` does not implement interface `Core.ImplicitAs(const Cpp.S*)` [MissingImplInMemberAccessNote]
+  // CHECK:STDERR:   IngestConstPointer(Cpp.foo());
+  // CHECK:STDERR:                      ^~~~~~~~~
+  // CHECK:STDERR: fail_todo_import_const_pointer_return.carbon:[[@LINE-10]]:23: note: initializing function parameter [InCallToFunctionParam]
+  // CHECK:STDERR: fn IngestConstPointer(s: const Cpp.S*);
+  // CHECK:STDERR:                       ^~~~~~~~~~~~~~~
+  // CHECK:STDERR:
+  IngestConstPointer(Cpp.foo());
+  Cpp.foo();
+  //@dump-sem-ir-end
+}
+
+// ============================================================================
 // Nullable pointer
 // ============================================================================
 
@@ -514,6 +549,48 @@ fn F() {
 // CHECK:STDOUT:   %IngestDoublePointer.call: init %empty_tuple.type = call %IngestDoublePointer.ref(<error>)
 // CHECK:STDOUT:   %Cpp.ref.loc25: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
 // CHECK:STDOUT:   %foo.ref.loc25: <error> = name_ref foo, <error> [concrete = <error>]
+// CHECK:STDOUT:   <elided>
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: --- fail_todo_import_const_pointer_return.carbon
+// CHECK:STDOUT:
+// CHECK:STDOUT: constants {
+// CHECK:STDOUT:   %S: type = class_type @S [concrete]
+// CHECK:STDOUT:   %const: type = const_type %S [concrete]
+// CHECK:STDOUT:   %ptr.ff5: type = ptr_type %const [concrete]
+// CHECK:STDOUT:   %IngestConstPointer.type: type = fn_type @IngestConstPointer [concrete]
+// CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [concrete]
+// CHECK:STDOUT:   %IngestConstPointer: %IngestConstPointer.type = struct_value () [concrete]
+// CHECK:STDOUT:   %ptr.5c7: type = ptr_type %S [concrete]
+// CHECK:STDOUT:   %foo.type: type = fn_type @foo [concrete]
+// CHECK:STDOUT:   %foo: %foo.type = struct_value () [concrete]
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: imports {
+// CHECK:STDOUT:   %Cpp: <namespace> = namespace file.%Cpp.import_cpp, [concrete] {
+// CHECK:STDOUT:     .S = %S.decl
+// CHECK:STDOUT:     .foo = %foo.decl
+// CHECK:STDOUT:     import Cpp//...
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %S.decl: type = class_decl @S [concrete = constants.%S] {} {}
+// CHECK:STDOUT:   %foo.decl: %foo.type = fn_decl @foo [concrete = constants.%foo] {
+// CHECK:STDOUT:     <elided>
+// CHECK:STDOUT:   } {
+// CHECK:STDOUT:     <elided>
+// CHECK:STDOUT:   }
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: fn @F() {
+// CHECK:STDOUT: !entry:
+// CHECK:STDOUT:   %IngestConstPointer.ref: %IngestConstPointer.type = name_ref IngestConstPointer, file.%IngestConstPointer.decl [concrete = constants.%IngestConstPointer]
+// CHECK:STDOUT:   %Cpp.ref.loc20: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
+// CHECK:STDOUT:   %foo.ref.loc20: %foo.type = name_ref foo, imports.%foo.decl [concrete = constants.%foo]
+// CHECK:STDOUT:   %foo.call.loc20: init %ptr.5c7 = call %foo.ref.loc20()
+// CHECK:STDOUT:   %.loc20: %ptr.ff5 = converted %foo.call.loc20, <error> [concrete = <error>]
+// CHECK:STDOUT:   %IngestConstPointer.call: init %empty_tuple.type = call %IngestConstPointer.ref(<error>)
+// CHECK:STDOUT:   %Cpp.ref.loc21: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
+// CHECK:STDOUT:   %foo.ref.loc21: %foo.type = name_ref foo, imports.%foo.decl [concrete = constants.%foo]
+// CHECK:STDOUT:   %foo.call.loc21: init %ptr.5c7 = call %foo.ref.loc21()
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
