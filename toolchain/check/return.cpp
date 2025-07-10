@@ -5,6 +5,7 @@
 #include "toolchain/check/return.h"
 
 #include "toolchain/check/context.h"
+#include "toolchain/check/control_flow.h"
 #include "toolchain/check/convert.h"
 #include "toolchain/check/inst.h"
 
@@ -125,7 +126,7 @@ auto BuildReturnWithNoExpr(Context& context, SemIR::LocId loc_id) -> void {
     diag.Emit();
   }
 
-  AddInst<SemIR::Return>(context, loc_id, {});
+  AddReturnCleanupBlock(context, loc_id);
 }
 
 auto BuildReturnWithExpr(Context& context, SemIR::LocId loc_id,
@@ -165,8 +166,8 @@ auto BuildReturnWithExpr(Context& context, SemIR::LocId loc_id,
         ConvertToValueOfType(context, loc_id, expr_id, return_info.type_id);
   }
 
-  AddInst<SemIR::ReturnExpr>(context, loc_id,
-                             {.expr_id = expr_id, .dest_id = return_slot_id});
+  AddReturnCleanupBlockWithExpr(
+      context, loc_id, {.expr_id = expr_id, .dest_id = return_slot_id});
 }
 
 auto BuildReturnVar(Context& context, Parse::ReturnStatementId node_id)
@@ -190,7 +191,7 @@ auto BuildReturnVar(Context& context, Parse::ReturnStatementId node_id)
     return_slot_id = SemIR::InstId::None;
   }
 
-  AddInst<SemIR::ReturnExpr>(
+  AddReturnCleanupBlockWithExpr(
       context, node_id,
       {.expr_id = returned_var_id, .dest_id = return_slot_id});
 }

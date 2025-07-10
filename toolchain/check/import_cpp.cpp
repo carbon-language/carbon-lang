@@ -702,14 +702,16 @@ static auto MapRecordType(Context& context, SemIR::LocId loc_id,
       .type_id = context.types().GetTypeIdForTypeInstId(record_type_inst_id)};
 }
 
-// Maps a C++ type to a Carbon type.
+// Maps a C++ non-pointer type to a Carbon type.
 // TODO: Support more types.
-static auto MapType(Context& context, SemIR::LocId loc_id, clang::QualType type)
-    -> TypeExpr {
+static auto MapNonPointerType(Context& context, SemIR::LocId loc_id,
+                              clang::QualType type) -> TypeExpr {
   if (type.hasQualifiers()) {
     // TODO: Support type qualifiers.
     return {.inst_id = SemIR::TypeInstId::None, .type_id = SemIR::TypeId::None};
   }
+
+  CARBON_CHECK(!type->isPointerType());
 
   if (const auto* builtin_type = type->getAs<clang::BuiltinType>()) {
     return MapBuiltinType(context, *builtin_type);
@@ -720,6 +722,52 @@ static auto MapType(Context& context, SemIR::LocId loc_id, clang::QualType type)
   }
 
   return {.inst_id = SemIR::TypeInstId::None, .type_id = SemIR::TypeId::None};
+}
+
+// Maps a C++ pointer type to a Carbon pointer type.
+static auto MapPointerType(Context& context, SemIR::LocId loc_id,
+                           clang::QualType type) -> TypeExpr {
+  CARBON_CHECK(type->isPointerType());
+
+  if (auto nullability = type->getNullability();
+      !nullability.has_value() ||
+      *nullability != clang::NullabilityKind::NonNull) {
+    context.TODO(loc_id, llvm::formatv("Unsupported: nullable pointer: {0}",
+                                       type.getAsString()));
+    return {.inst_id = SemIR::ErrorInst::TypeInstId,
+            .type_id = SemIR::ErrorInst::TypeId};
+  }
+
+  clang::QualType pointee_type = type->getPointeeType();
+
+  if (pointee_type->isAnyPointerType()) {
+    context.TODO(loc_id,
+                 llvm::formatv("Unsupported: pointer to pointer type: {0}",
+                               pointee_type.getAsString()));
+    return {.inst_id = SemIR::ErrorInst::TypeInstId,
+            .type_id = SemIR::ErrorInst::TypeId};
+  }
+
+  TypeExpr pointee_type_expr = MapNonPointerType(context, loc_id, pointee_type);
+  if (!pointee_type_expr.inst_id.has_value()) {
+    return {.inst_id = SemIR::TypeInstId::None, .type_id = SemIR::TypeId::None};
+  }
+
+  SemIR::TypeId pointer_type_id =
+      GetPointerType(context, pointee_type_expr.inst_id);
+  return {.inst_id = context.types().GetInstId(pointer_type_id),
+          .type_id = pointer_type_id};
+}
+
+// Maps a C++ type to a Carbon type. `type` should not be canonicalized because
+// we check for pointer nullability and nullability will be lost by
+// canonicalization.
+static auto MapType(Context& context, SemIR::LocId loc_id, clang::QualType type)
+    -> TypeExpr {
+  if (type->isPointerType()) {
+    return MapPointerType(context, loc_id, type);
+  }
+  return MapNonPointerType(context, loc_id, type);
 }
 
 // Returns a block id for the explicit parameters of the given function
@@ -737,7 +785,7 @@ static auto MakeParamPatternsBlockId(Context& context, SemIR::LocId loc_id,
   llvm::SmallVector<SemIR::InstId> params;
   params.reserve(clang_decl.parameters().size());
   for (const clang::ParmVarDecl* param : clang_decl.parameters()) {
-    clang::QualType param_type = param->getType().getCanonicalType();
+    clang::QualType param_type = param->getType();
 
     // Mark the start of a region of insts, needed for the type expression
     // created later with the call of `EndSubpatternAsExpr()`.
@@ -791,7 +839,7 @@ static auto MakeParamPatternsBlockId(Context& context, SemIR::LocId loc_id,
 static auto GetReturnType(Context& context, SemIR::LocId loc_id,
                           const clang::FunctionDecl* clang_decl)
     -> SemIR::InstId {
-  clang::QualType ret_type = clang_decl->getReturnType().getCanonicalType();
+  clang::QualType ret_type = clang_decl->getReturnType();
   if (ret_type->isVoidType()) {
     return SemIR::InstId::None;
   }

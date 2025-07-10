@@ -165,11 +165,10 @@ static auto AddCleanupBlock(Context& context) -> void {
   }
 }
 
-auto AddReturnCleanupBlock(
-    Context& context,
-    typename decltype(SemIR::Return::Kind)::TypedNodeId node_id) -> void {
+auto AddReturnCleanupBlock(Context& context,
+                           SemIR::LocIdAndInst loc_id_and_inst) -> void {
   AddCleanupBlock(context);
-  AddInst(context, node_id, SemIR::Return{});
+  AddInst(context, loc_id_and_inst);
 }
 
 }  // namespace Carbon::Check
