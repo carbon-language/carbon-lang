@@ -195,7 +195,7 @@ fn F() {
 
 auto foo(const short a) -> void;
 
-// --- import_const_short.carbon
+// --- fail_todo_import_const_short.carbon
 
 library "[[@TEST_NAME]]";
 
@@ -203,6 +203,13 @@ import Cpp library "const_short.h";
 
 fn F() {
   //@dump-sem-ir-begin
+  // CHECK:STDERR: fail_todo_import_const_short.carbon:[[@LINE+7]]:3: error: semantics TODO: `Unsupported: parameter type: const short` [SemanticsTodo]
+  // CHECK:STDERR:   Cpp.foo(1 as i16);
+  // CHECK:STDERR:   ^~~~~~~
+  // CHECK:STDERR: fail_todo_import_const_short.carbon:[[@LINE+4]]:3: note: in `Cpp` name lookup for `foo` [InCppNameLookup]
+  // CHECK:STDERR:   Cpp.foo(1 as i16);
+  // CHECK:STDERR:   ^~~~~~~
+  // CHECK:STDERR:
   Cpp.foo(1 as i16);
   //@dump-sem-ir-end
 }
@@ -731,15 +738,12 @@ fn F() {
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- import_const_short.carbon
+// CHECK:STDOUT: --- fail_todo_import_const_short.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
-// CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [concrete]
+// CHECK:STDOUT:   %int_1.5b8: Core.IntLiteral = int_value 1 [concrete]
 // CHECK:STDOUT:   %int_16: Core.IntLiteral = int_value 16 [concrete]
 // CHECK:STDOUT:   %i16: type = class_type @Int, @Int(%int_16) [concrete]
-// CHECK:STDOUT:   %foo.type: type = fn_type @foo [concrete]
-// CHECK:STDOUT:   %foo: %foo.type = struct_value () [concrete]
-// CHECK:STDOUT:   %int_1.5b8: Core.IntLiteral = int_value 1 [concrete]
 // CHECK:STDOUT:   %As.type.a96: type = facet_type <@As, @As(%i16)> [concrete]
 // CHECK:STDOUT:   %Convert.type.be5: type = fn_type @Convert.1, @As(%i16) [concrete]
 // CHECK:STDOUT:   %To: Core.IntLiteral = bind_symbolic_name To, 0 [symbolic]
@@ -758,13 +762,8 @@ fn F() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT:   %Cpp: <namespace> = namespace file.%Cpp.import_cpp, [concrete] {
-// CHECK:STDOUT:     .foo = %foo.decl
+// CHECK:STDOUT:     .foo = <error>
 // CHECK:STDOUT:     import Cpp//...
-// CHECK:STDOUT:   }
-// CHECK:STDOUT:   %foo.decl: %foo.type = fn_decl @foo [concrete = constants.%foo] {
-// CHECK:STDOUT:     <elided>
-// CHECK:STDOUT:   } {
-// CHECK:STDOUT:     <elided>
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import_ref.78a: @impl.686.%Convert.type (%Convert.type.062) = import_ref Core//prelude/parts/int, loc25_39, loaded [symbolic = @impl.686.%Convert (constants.%Convert.527)]
 // CHECK:STDOUT:   %As.impl_witness_table.eb4 = impl_witness_table (%Core.import_ref.78a), @impl.686 [concrete]
@@ -773,18 +772,17 @@ fn F() {
 // CHECK:STDOUT: fn @F() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %Cpp.ref: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
-// CHECK:STDOUT:   %foo.ref: %foo.type = name_ref foo, imports.%foo.decl [concrete = constants.%foo]
+// CHECK:STDOUT:   %foo.ref: <error> = name_ref foo, <error> [concrete = <error>]
 // CHECK:STDOUT:   %int_1: Core.IntLiteral = int_value 1 [concrete = constants.%int_1.5b8]
 // CHECK:STDOUT:   %int_16: Core.IntLiteral = int_value 16 [concrete = constants.%int_16]
 // CHECK:STDOUT:   %i16: type = class_type @Int, @Int(constants.%int_16) [concrete = constants.%i16]
 // CHECK:STDOUT:   %impl.elem0: %.91d = impl_witness_access constants.%As.impl_witness.0ef, element0 [concrete = constants.%Convert.489]
-// CHECK:STDOUT:   %bound_method.loc8_13.1: <bound method> = bound_method %int_1, %impl.elem0 [concrete = constants.%Convert.bound]
+// CHECK:STDOUT:   %bound_method.loc15_13.1: <bound method> = bound_method %int_1, %impl.elem0 [concrete = constants.%Convert.bound]
 // CHECK:STDOUT:   %specific_fn: <specific function> = specific_function %impl.elem0, @Convert.5(constants.%int_16) [concrete = constants.%Convert.specific_fn]
-// CHECK:STDOUT:   %bound_method.loc8_13.2: <bound method> = bound_method %int_1, %specific_fn [concrete = constants.%bound_method]
-// CHECK:STDOUT:   %int.convert_checked: init %i16 = call %bound_method.loc8_13.2(%int_1) [concrete = constants.%int_1.f90]
-// CHECK:STDOUT:   %.loc8_13.1: %i16 = value_of_initializer %int.convert_checked [concrete = constants.%int_1.f90]
-// CHECK:STDOUT:   %.loc8_13.2: %i16 = converted %int_1, %.loc8_13.1 [concrete = constants.%int_1.f90]
-// CHECK:STDOUT:   %foo.call: init %empty_tuple.type = call %foo.ref(%.loc8_13.2)
+// CHECK:STDOUT:   %bound_method.loc15_13.2: <bound method> = bound_method %int_1, %specific_fn [concrete = constants.%bound_method]
+// CHECK:STDOUT:   %int.convert_checked: init %i16 = call %bound_method.loc15_13.2(%int_1) [concrete = constants.%int_1.f90]
+// CHECK:STDOUT:   %.loc15_13.1: %i16 = value_of_initializer %int.convert_checked [concrete = constants.%int_1.f90]
+// CHECK:STDOUT:   %.loc15_13.2: %i16 = converted %int_1, %.loc15_13.1 [concrete = constants.%int_1.f90]
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

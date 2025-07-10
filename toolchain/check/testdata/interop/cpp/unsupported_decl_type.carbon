@@ -2,7 +2,7 @@
 // Exceptions. See /LICENSE for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
-// INCLUDE-FILE: toolchain/testing/testdata/min_prelude/none.carbon
+// INCLUDE-FILE: toolchain/testing/testdata/min_prelude/destroy.carbon
 //
 // AUTOUPDATE
 // TIP: To test this file alone, run:
@@ -10,49 +10,44 @@
 // TIP: To dump output, run:
 // TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/check/testdata/interop/cpp/unsupported_decl_type.carbon
 
-// --- unsupported_decl.h
+// --- template.h
 
-typedef int foo;
+template<typename T> class C {};
 
-// --- fail_todo_import_unsupported_decl.carbon
+// --- fail_todo_use_template.carbon
 
 library "[[@TEST_NAME]]";
 
-import Cpp library "unsupported_decl.h";
+import Cpp library "template.h";
 
 fn F() {
   //@dump-sem-ir-begin
-  // CHECK:STDERR: fail_todo_import_unsupported_decl.carbon:[[@LINE+11]]:3: error: semantics TODO: `Unsupported: Declaration type Typedef` [SemanticsTodo]
-  // CHECK:STDERR:   Cpp.foo();
-  // CHECK:STDERR:   ^~~~~~~
-  // CHECK:STDERR: fail_todo_import_unsupported_decl.carbon:[[@LINE+8]]:3: note: in `Cpp` name lookup for `foo` [InCppNameLookup]
-  // CHECK:STDERR:   Cpp.foo();
-  // CHECK:STDERR:   ^~~~~~~
+  // CHECK:STDERR: fail_todo_use_template.carbon:[[@LINE+4]]:10: error: name `C` not found [NameNotFound]
+  // CHECK:STDERR:   var c: C({});
+  // CHECK:STDERR:          ^
   // CHECK:STDERR:
-  // CHECK:STDERR: fail_todo_import_unsupported_decl.carbon:[[@LINE+4]]:3: error: member name `foo` not found in `Cpp` [MemberNameNotFoundInInstScope]
-  // CHECK:STDERR:   Cpp.foo();
-  // CHECK:STDERR:   ^~~~~~~
-  // CHECK:STDERR:
-  Cpp.foo();
+  var c: C({});
   //@dump-sem-ir-end
 }
 
-// CHECK:STDOUT: --- fail_todo_import_unsupported_decl.carbon
+// CHECK:STDOUT: --- fail_todo_use_template.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
-// CHECK:STDOUT:   %Cpp: <namespace> = namespace file.%Cpp.import_cpp, [concrete] {
-// CHECK:STDOUT:     .foo = <poisoned>
-// CHECK:STDOUT:     import Cpp//...
-// CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F() {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %Cpp.ref: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
-// CHECK:STDOUT:   %foo.ref: <error> = name_ref foo, <error> [concrete = <error>]
+// CHECK:STDOUT:   name_binding_decl {
+// CHECK:STDOUT:     %c.patt: <error> = binding_pattern c [concrete]
+// CHECK:STDOUT:     %c.var_patt: <error> = var_pattern %c.patt [concrete]
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %c.var: ref <error> = var %c.var_patt [concrete = <error>]
+// CHECK:STDOUT:   <elided>
+// CHECK:STDOUT:   %c: <error> = bind_name c, <error> [concrete = <error>]
+// CHECK:STDOUT:   %impl.elem0: <error> = impl_witness_access <error>, element0 [concrete = <error>]
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

@@ -38,16 +38,12 @@ library "[[@TEST_NAME]]";
 
 import Cpp library "stddef.h";
 
-// TODO: Once we can import typedefs, this should work.
-// CHECK:STDERR: fail_todo_import_stddef_directly.carbon:[[@LINE+11]]:8: error: semantics TODO: `Unsupported: Declaration type Typedef` [SemanticsTodo]
-// CHECK:STDERR: var n: Cpp.size_t;
+// TODO: Once we can import `unsigned long` / `unsigned long long`, this should work.
+// CHECK:STDERR: fail_todo_import_stddef_directly.carbon:[[@LINE+7]]:8: error: semantics TODO: `Unsupported: Type declaration: size_t` [SemanticsTodo]
+// CHECK:STDERR: var n: Cpp.size_t = 42;
 // CHECK:STDERR:        ^~~~~~~~~~
-// CHECK:STDERR: fail_todo_import_stddef_directly.carbon:[[@LINE+8]]:8: note: in `Cpp` name lookup for `size_t` [InCppNameLookup]
-// CHECK:STDERR: var n: Cpp.size_t;
-// CHECK:STDERR:        ^~~~~~~~~~
-// CHECK:STDERR:
-// CHECK:STDERR: fail_todo_import_stddef_directly.carbon:[[@LINE+4]]:8: error: member name `size_t` not found in `Cpp` [MemberNameNotFoundInInstScope]
-// CHECK:STDERR: var n: Cpp.size_t;
+// CHECK:STDERR: fail_todo_import_stddef_directly.carbon:[[@LINE+4]]:8: note: in `Cpp` name lookup for `size_t` [InCppNameLookup]
+// CHECK:STDERR: var n: Cpp.size_t = 42;
 // CHECK:STDERR:        ^~~~~~~~~~
 // CHECK:STDERR:
-var n: Cpp.size_t;
+var n: Cpp.size_t = 42;
