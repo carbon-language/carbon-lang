@@ -14,14 +14,6 @@
 
 namespace Carbon::Check {
 
-auto TryGetAsClass(Context& context, SemIR::TypeId type_id) -> SemIR::Class* {
-  auto class_type = context.types().TryGetAs<SemIR::ClassType>(type_id);
-  if (!class_type) {
-    return nullptr;
-  }
-  return &context.classes().Get(class_type->class_id);
-}
-
 auto SetClassSelfType(Context& context, SemIR::ClassId class_id) -> void {
   auto& class_info = context.classes().Get(class_id);
   auto specific_id = context.generics().GetSelfSpecific(class_info.generic_id);
