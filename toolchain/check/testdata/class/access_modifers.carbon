@@ -194,16 +194,9 @@ class A {
 // CHECK:STDOUT:   %Run.type: type = fn_type @Run [concrete]
 // CHECK:STDOUT:   %Run: %Run.type = struct_value () [concrete]
 // CHECK:STDOUT:   %Destroy.type: type = facet_type <@Destroy> [concrete]
-// CHECK:STDOUT:   %Op.type.bae: type = fn_type @Op.2 [concrete]
-// CHECK:STDOUT:   %T: type = bind_symbolic_name T, 0 [symbolic]
-// CHECK:STDOUT:   %Op.type.bc9: type = fn_type @Op.3, @impl.49c(%T) [symbolic]
-// CHECK:STDOUT:   %Op.46f: %Op.type.bc9 = struct_value () [symbolic]
-// CHECK:STDOUT:   %Destroy.impl_witness.315: <witness> = impl_witness imports.%Destroy.impl_witness_table, @impl.49c(%Circle) [concrete]
 // CHECK:STDOUT:   %Op.type.6cf: type = fn_type @Op.3, @impl.49c(%Circle) [concrete]
 // CHECK:STDOUT:   %Op.e38: %Op.type.6cf = struct_value () [concrete]
 // CHECK:STDOUT:   %ptr.54d: type = ptr_type %Circle [concrete]
-// CHECK:STDOUT:   %Destroy.facet: %Destroy.type = facet_value %Circle, (%Destroy.impl_witness.315) [concrete]
-// CHECK:STDOUT:   %.9b5: type = fn_type_with_self_type %Op.type.bae, %Destroy.facet [concrete]
 // CHECK:STDOUT:   %Op.specific_fn: <specific function> = specific_function %Op.e38, @Op.3(%Circle) [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -220,8 +213,6 @@ class A {
 // CHECK:STDOUT:   %Core.import_ref.a5b: @impl.4f9.%Convert.type (%Convert.type.0f9) = import_ref Core//prelude/parts/int, loc16_39, loaded [symbolic = @impl.4f9.%Convert (constants.%Convert.f06)]
 // CHECK:STDOUT:   %ImplicitAs.impl_witness_table.a2f = impl_witness_table (%Core.import_ref.a5b), @impl.4f9 [concrete]
 // CHECK:STDOUT:   %Core.Destroy: type = import_ref Core//prelude/parts/destroy, Destroy, loaded [concrete = constants.%Destroy.type]
-// CHECK:STDOUT:   %Core.import_ref.0b9: @impl.49c.%Op.type (%Op.type.bc9) = import_ref Core//prelude/parts/destroy, loc8_29, loaded [symbolic = @impl.49c.%Op (constants.%Op.46f)]
-// CHECK:STDOUT:   %Destroy.impl_witness_table = impl_witness_table (%Core.import_ref.0b9), @impl.49c [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -345,12 +336,11 @@ class A {
 // CHECK:STDOUT:   %SOME_INTERNAL_CONSTANT.ref: <error> = name_ref SOME_INTERNAL_CONSTANT, <error> [concrete = <error>]
 // CHECK:STDOUT:   %circle.ref.loc51: %Circle = name_ref circle, %circle
 // CHECK:STDOUT:   %SomeInternalFunction.ref: <error> = name_ref SomeInternalFunction, <error> [concrete = <error>]
-// CHECK:STDOUT:   %impl.elem0: %.9b5 = impl_witness_access constants.%Destroy.impl_witness.315, element0 [concrete = constants.%Op.e38]
-// CHECK:STDOUT:   %bound_method.loc18_36.1: <bound method> = bound_method %.loc18_36.1, %impl.elem0
-// CHECK:STDOUT:   %specific_fn: <specific function> = specific_function %impl.elem0, @Op.3(constants.%Circle) [concrete = constants.%Op.specific_fn]
-// CHECK:STDOUT:   %bound_method.loc18_36.2: <bound method> = bound_method %.loc18_36.1, %specific_fn
+// CHECK:STDOUT:   %Op.bound: <bound method> = bound_method %.loc18_36.1, constants.%Op.e38
+// CHECK:STDOUT:   %Op.specific_fn: <specific function> = specific_function constants.%Op.e38, @Op.3(constants.%Circle) [concrete = constants.%Op.specific_fn]
+// CHECK:STDOUT:   %bound_method: <bound method> = bound_method %.loc18_36.1, %Op.specific_fn
 // CHECK:STDOUT:   %addr: %ptr.54d = addr_of %.loc18_36.1
-// CHECK:STDOUT:   %no_op: init %empty_tuple.type = call %bound_method.loc18_36.2(%addr)
+// CHECK:STDOUT:   %no_op: init %empty_tuple.type = call %bound_method(%addr)
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

@@ -66,8 +66,6 @@ fn InitFromAdaptedSpecific(x: i32) -> i32 {
 // CHECK:STDOUT:   %pattern_type.3c1: type = pattern_type %Class.fe1 [symbolic]
 // CHECK:STDOUT:   %Destroy.type: type = facet_type <@Destroy> [concrete]
 // CHECK:STDOUT:   %Op.type.bae: type = fn_type @Op.1 [concrete]
-// CHECK:STDOUT:   %Op.type.bc9: type = fn_type @Op.2, @impl.49c(%T) [symbolic]
-// CHECK:STDOUT:   %Op.46f: %Op.type.bc9 = struct_value () [symbolic]
 // CHECK:STDOUT:   %ptr.955: type = ptr_type %Class.fe1 [symbolic]
 // CHECK:STDOUT:   %require_complete.2ae: <witness> = require_complete_type %ptr.955 [symbolic]
 // CHECK:STDOUT:   %Destroy.lookup_impl_witness: <witness> = lookup_impl_witness %Class.fe1, @Destroy [symbolic]
@@ -89,12 +87,9 @@ fn InitFromAdaptedSpecific(x: i32) -> i32 {
 // CHECK:STDOUT:   %struct_type.k.0bf: type = struct_type {.k: %i32} [concrete]
 // CHECK:STDOUT:   %complete_type.954: <witness> = complete_type_witness %struct_type.k.0bf [concrete]
 // CHECK:STDOUT:   %pattern_type.0fa: type = pattern_type %Class.247 [concrete]
-// CHECK:STDOUT:   %Destroy.impl_witness.5f0: <witness> = impl_witness imports.%Destroy.impl_witness_table, @impl.49c(%Class.247) [concrete]
 // CHECK:STDOUT:   %Op.type.fdc: type = fn_type @Op.2, @impl.49c(%Class.247) [concrete]
 // CHECK:STDOUT:   %Op.af5: %Op.type.fdc = struct_value () [concrete]
 // CHECK:STDOUT:   %ptr.f7c: type = ptr_type %Class.247 [concrete]
-// CHECK:STDOUT:   %Destroy.facet.c29: %Destroy.type = facet_value %Class.247, (%Destroy.impl_witness.5f0) [concrete]
-// CHECK:STDOUT:   %.9ad: type = fn_type_with_self_type %Op.type.bae, %Destroy.facet.c29 [concrete]
 // CHECK:STDOUT:   %Op.specific_fn: <specific function> = specific_function %Op.af5, @Op.2(%Class.247) [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -106,8 +101,6 @@ fn InitFromAdaptedSpecific(x: i32) -> i32 {
 // CHECK:STDOUT:     import Core//prelude/...
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.Destroy: type = import_ref Core//prelude/parts/destroy, Destroy, loaded [concrete = constants.%Destroy.type]
-// CHECK:STDOUT:   %Core.import_ref.0b9: @impl.49c.%Op.type (%Op.type.bc9) = import_ref Core//prelude/parts/destroy, loc8_29, loaded [symbolic = @impl.49c.%Op (constants.%Op.46f)]
-// CHECK:STDOUT:   %Destroy.impl_witness_table = impl_witness_table (%Core.import_ref.0b9), @impl.49c [concrete]
 // CHECK:STDOUT:   %Core.Int: %Int.type = import_ref Core//prelude/parts/int, Int, loaded [concrete = constants.%Int.generic]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -260,12 +253,11 @@ fn InitFromAdaptedSpecific(x: i32) -> i32 {
 // CHECK:STDOUT:   %k.ref: %Class.elem.2d8 = name_ref k, @Class.%.loc5 [concrete = @Class.%.loc5]
 // CHECK:STDOUT:   %.loc15_11.1: ref %i32 = class_element_access %v.ref, element0
 // CHECK:STDOUT:   %.loc15_11.2: %i32 = bind_value %.loc15_11.1
-// CHECK:STDOUT:   %impl.elem0: %.9ad = impl_witness_access constants.%Destroy.impl_witness.5f0, element0 [concrete = constants.%Op.af5]
-// CHECK:STDOUT:   %bound_method.loc14_3.1: <bound method> = bound_method %v.var, %impl.elem0
-// CHECK:STDOUT:   %specific_fn: <specific function> = specific_function %impl.elem0, @Op.2(constants.%Class.247) [concrete = constants.%Op.specific_fn]
-// CHECK:STDOUT:   %bound_method.loc14_3.2: <bound method> = bound_method %v.var, %specific_fn
+// CHECK:STDOUT:   %Op.bound: <bound method> = bound_method %v.var, constants.%Op.af5
+// CHECK:STDOUT:   %Op.specific_fn: <specific function> = specific_function constants.%Op.af5, @Op.2(constants.%Class.247) [concrete = constants.%Op.specific_fn]
+// CHECK:STDOUT:   %bound_method: <bound method> = bound_method %v.var, %Op.specific_fn
 // CHECK:STDOUT:   %addr: %ptr.f7c = addr_of %v.var
-// CHECK:STDOUT:   %no_op: init %empty_tuple.type = call %bound_method.loc14_3.2(%addr)
+// CHECK:STDOUT:   %no_op: init %empty_tuple.type = call %bound_method(%addr)
 // CHECK:STDOUT:   return %.loc15_11.2
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

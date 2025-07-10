@@ -89,12 +89,9 @@ fn CallGenericMethodWithNonDeducedParam(c: Class(A)) -> (A, B) {
 // CHECK:STDOUT:   %pattern_type.c10: type = pattern_type %A [concrete]
 // CHECK:STDOUT:   %GetNoDeduce.specific_fn.438: <specific function> = specific_function %GetNoDeduce.162, @GetNoDeduce(%A, %B) [concrete]
 // CHECK:STDOUT:   %A.val: %A = struct_value () [concrete]
-// CHECK:STDOUT:   %Destroy.impl_witness.b6e: <witness> = impl_witness imports.%Destroy.impl_witness_table, @impl(%A) [concrete]
 // CHECK:STDOUT:   %Op.type.b96: type = fn_type @Op.2, @impl(%A) [concrete]
 // CHECK:STDOUT:   %Op.885: %Op.type.b96 = struct_value () [concrete]
 // CHECK:STDOUT:   %ptr.6db: type = ptr_type %A [concrete]
-// CHECK:STDOUT:   %Destroy.facet.4a1: %Destroy.type = facet_value %A, (%Destroy.impl_witness.b6e) [concrete]
-// CHECK:STDOUT:   %.af1: type = fn_type_with_self_type %Op.type.bae, %Destroy.facet.4a1 [concrete]
 // CHECK:STDOUT:   %Op.specific_fn.716: <specific function> = specific_function %Op.885, @Op.2(%A) [concrete]
 // CHECK:STDOUT:   %complete_type.56a: <witness> = complete_type_witness %tuple.type.cc6 [concrete]
 // CHECK:STDOUT: }
@@ -326,12 +323,11 @@ fn CallGenericMethodWithNonDeducedParam(c: Class(A)) -> (A, B) {
 // CHECK:STDOUT:   %Get.specific_fn: <specific function> = specific_function %Get.ref, @Get(constants.%A, constants.%B) [concrete = constants.%Get.specific_fn.213]
 // CHECK:STDOUT:   %.loc23_35: ref %tuple.type.cc6 = splice_block %return {}
 // CHECK:STDOUT:   %Get.call: init %tuple.type.cc6 = call %Get.specific_fn() to %.loc23_35
-// CHECK:STDOUT:   %impl.elem0: %.c9f = impl_witness_access constants.%Destroy.impl_witness.ae3, element0 [concrete = constants.%Op.f13]
-// CHECK:STDOUT:   %bound_method.loc23_35.1: <bound method> = bound_method %.loc23_35, %impl.elem0
-// CHECK:STDOUT:   %specific_fn: <specific function> = specific_function %impl.elem0, @Op.2(constants.%tuple.type.cc6) [concrete = constants.%Op.specific_fn.8d7]
-// CHECK:STDOUT:   %bound_method.loc23_35.2: <bound method> = bound_method %.loc23_35, %specific_fn
+// CHECK:STDOUT:   %Op.bound: <bound method> = bound_method %.loc23_35, constants.%Op.f13
+// CHECK:STDOUT:   %Op.specific_fn: <specific function> = specific_function constants.%Op.f13, @Op.2(constants.%tuple.type.cc6) [concrete = constants.%Op.specific_fn.8d7]
+// CHECK:STDOUT:   %bound_method: <bound method> = bound_method %.loc23_35, %Op.specific_fn
 // CHECK:STDOUT:   %addr: %ptr.3b5 = addr_of %.loc23_35
-// CHECK:STDOUT:   %no_op: init %empty_tuple.type = call %bound_method.loc23_35.2(%addr)
+// CHECK:STDOUT:   %no_op: init %empty_tuple.type = call %bound_method(%addr)
 // CHECK:STDOUT:   return %Get.call to %return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -350,18 +346,16 @@ fn CallGenericMethodWithNonDeducedParam(c: Class(A)) -> (A, B) {
 // CHECK:STDOUT:   %.loc28_25.5: ref %A = converted %.loc28_25.1, %.loc28_25.4
 // CHECK:STDOUT:   %.loc28_25.6: %A = bind_value %.loc28_25.5
 // CHECK:STDOUT:   %GetNoDeduce.call: init %tuple.type.cc6 = call %GetNoDeduce.specific_fn(%.loc28_25.6) to %.loc27_54
-// CHECK:STDOUT:   %impl.elem0.loc28: %.af1 = impl_witness_access constants.%Destroy.impl_witness.b6e, element0 [concrete = constants.%Op.885]
-// CHECK:STDOUT:   %bound_method.loc28_25.1: <bound method> = bound_method %.loc28_25.2, %impl.elem0.loc28
-// CHECK:STDOUT:   %specific_fn.loc28: <specific function> = specific_function %impl.elem0.loc28, @Op.2(constants.%A) [concrete = constants.%Op.specific_fn.716]
-// CHECK:STDOUT:   %bound_method.loc28_25.2: <bound method> = bound_method %.loc28_25.2, %specific_fn.loc28
+// CHECK:STDOUT:   %Op.bound.loc28: <bound method> = bound_method %.loc28_25.2, constants.%Op.885
+// CHECK:STDOUT:   %Op.specific_fn.1: <specific function> = specific_function constants.%Op.885, @Op.2(constants.%A) [concrete = constants.%Op.specific_fn.716]
+// CHECK:STDOUT:   %bound_method.loc28: <bound method> = bound_method %.loc28_25.2, %Op.specific_fn.1
 // CHECK:STDOUT:   %addr.loc28: %ptr.6db = addr_of %.loc28_25.2
-// CHECK:STDOUT:   %no_op.loc28: init %empty_tuple.type = call %bound_method.loc28_25.2(%addr.loc28)
-// CHECK:STDOUT:   %impl.elem0.loc27: %.c9f = impl_witness_access constants.%Destroy.impl_witness.ae3, element0 [concrete = constants.%Op.f13]
-// CHECK:STDOUT:   %bound_method.loc27_54.1: <bound method> = bound_method %.loc27_54, %impl.elem0.loc27
-// CHECK:STDOUT:   %specific_fn.loc27: <specific function> = specific_function %impl.elem0.loc27, @Op.2(constants.%tuple.type.cc6) [concrete = constants.%Op.specific_fn.8d7]
-// CHECK:STDOUT:   %bound_method.loc27_54.2: <bound method> = bound_method %.loc27_54, %specific_fn.loc27
+// CHECK:STDOUT:   %no_op.loc28: init %empty_tuple.type = call %bound_method.loc28(%addr.loc28)
+// CHECK:STDOUT:   %Op.bound.loc27: <bound method> = bound_method %.loc27_54, constants.%Op.f13
+// CHECK:STDOUT:   %Op.specific_fn.2: <specific function> = specific_function constants.%Op.f13, @Op.2(constants.%tuple.type.cc6) [concrete = constants.%Op.specific_fn.8d7]
+// CHECK:STDOUT:   %bound_method.loc27: <bound method> = bound_method %.loc27_54, %Op.specific_fn.2
 // CHECK:STDOUT:   %addr.loc27: %ptr.3b5 = addr_of %.loc27_54
-// CHECK:STDOUT:   %no_op.loc27: init %empty_tuple.type = call %bound_method.loc27_54.2(%addr.loc27)
+// CHECK:STDOUT:   %no_op.loc27: init %empty_tuple.type = call %bound_method.loc27(%addr.loc27)
 // CHECK:STDOUT:   return %GetNoDeduce.call to %return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

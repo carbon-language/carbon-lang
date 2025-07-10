@@ -500,11 +500,11 @@ fn G() {
 // CHECK:STDOUT:   %F.ref.loc7_11: %I.assoc_type = name_ref F, imports.%Main.import_ref.c44 [concrete = constants.%assoc0.3f3]
 // CHECK:STDOUT:   %I.facet: %I.type = facet_value constants.%C.607, (constants.%I.impl_witness.02b) [concrete = constants.%I.facet]
 // CHECK:STDOUT:   %.loc7_8: %I.type = converted %C, %I.facet [concrete = constants.%I.facet]
-// CHECK:STDOUT:   %impl.elem0.loc7_8: %.885 = impl_witness_access constants.%I.impl_witness.02b, element0 [concrete = constants.%F.5fa954.2]
+// CHECK:STDOUT:   %impl.elem0: %.885 = impl_witness_access constants.%I.impl_witness.02b, element0 [concrete = constants.%F.5fa954.2]
 // CHECK:STDOUT:   %.loc7_16.1: %empty_struct_type = struct_literal ()
 // CHECK:STDOUT:   %empty_struct.loc7_16.1: %empty_struct_type = struct_value () [concrete = constants.%empty_struct]
 // CHECK:STDOUT:   %.loc7_17.1: %empty_struct_type = converted %.loc7_16.1, %empty_struct.loc7_16.1 [concrete = constants.%empty_struct]
-// CHECK:STDOUT:   %specific_fn.loc7_8: <specific function> = specific_function %impl.elem0.loc7_8, @F.3(constants.%empty_tuple) [concrete = constants.%F.specific_fn.4832e8.1]
+// CHECK:STDOUT:   %specific_fn: <specific function> = specific_function %impl.elem0, @F.3(constants.%empty_tuple) [concrete = constants.%F.specific_fn.4832e8.1]
 // CHECK:STDOUT:   %empty_struct.loc7_16.2: %empty_struct_type = struct_value () [concrete = constants.%empty_struct]
 // CHECK:STDOUT:   %.loc7_16.2: %empty_struct_type = converted %.loc7_16.1, %empty_struct.loc7_16.2 [concrete = constants.%empty_struct]
 // CHECK:STDOUT:   %.loc7_17.2: %F.type.af4856.1 = specific_constant imports.%Main.F.5a8, @impl.22b(constants.%empty_tuple) [concrete = constants.%F.5fa954.1]
@@ -516,12 +516,11 @@ fn G() {
 // CHECK:STDOUT:   %.loc7_16.6: ref %C.607 = converted %.loc7_16.2, %.loc7_16.5
 // CHECK:STDOUT:   %.loc7_16.7: %C.607 = bind_value %.loc7_16.6
 // CHECK:STDOUT:   %F.call: init %empty_tuple.type = call %F.specific_fn(%.loc7_16.7)
-// CHECK:STDOUT:   %impl.elem0.loc7_16: %.69e = impl_witness_access constants.%Destroy.impl_witness.ce0, element0 [concrete = constants.%Op.ac0]
-// CHECK:STDOUT:   %bound_method.loc7_16.1: <bound method> = bound_method %.loc7_16.3, %impl.elem0.loc7_16
-// CHECK:STDOUT:   %specific_fn.loc7_16: <specific function> = specific_function %impl.elem0.loc7_16, @Op.2(constants.%C.607) [concrete = constants.%Op.specific_fn]
-// CHECK:STDOUT:   %bound_method.loc7_16.2: <bound method> = bound_method %.loc7_16.3, %specific_fn.loc7_16
+// CHECK:STDOUT:   %Op.bound: <bound method> = bound_method %.loc7_16.3, constants.%Op.ac0
+// CHECK:STDOUT:   %Op.specific_fn: <specific function> = specific_function constants.%Op.ac0, @Op.2(constants.%C.607) [concrete = constants.%Op.specific_fn]
+// CHECK:STDOUT:   %bound_method: <bound method> = bound_method %.loc7_16.3, %Op.specific_fn
 // CHECK:STDOUT:   %addr: %ptr.2ce = addr_of %.loc7_16.3
-// CHECK:STDOUT:   %no_op: init %empty_tuple.type = call %bound_method.loc7_16.2(%addr)
+// CHECK:STDOUT:   %no_op: init %empty_tuple.type = call %bound_method(%addr)
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

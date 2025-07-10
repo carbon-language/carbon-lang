@@ -1545,15 +1545,9 @@ fn Test(c: HasExtraInterfaces.C(type)) {
 // CHECK:STDOUT:   %assoc0.494: %Y.assoc_type = assoc_entity element0, imports.%PackageHasParam.import_ref.ce2 [concrete]
 // CHECK:STDOUT:   %.0fb: type = fn_type_with_self_type %K.type.311, %Y.facet [concrete]
 // CHECK:STDOUT:   %Destroy.type: type = facet_type <@Destroy> [concrete]
-// CHECK:STDOUT:   %Op.type.bae: type = fn_type @Op.1 [concrete]
-// CHECK:STDOUT:   %Op.type.bc9: type = fn_type @Op.2, @impl.49c(%T) [symbolic]
-// CHECK:STDOUT:   %Op.46f: %Op.type.bc9 = struct_value () [symbolic]
-// CHECK:STDOUT:   %Destroy.impl_witness.98b: <witness> = impl_witness imports.%Destroy.impl_witness_table, @impl.49c(%AnyParam.241) [concrete]
 // CHECK:STDOUT:   %Op.type.5fc: type = fn_type @Op.2, @impl.49c(%AnyParam.241) [concrete]
 // CHECK:STDOUT:   %Op.6f3: %Op.type.5fc = struct_value () [concrete]
 // CHECK:STDOUT:   %ptr.301: type = ptr_type %AnyParam.241 [concrete]
-// CHECK:STDOUT:   %Destroy.facet: %Destroy.type = facet_value %AnyParam.241, (%Destroy.impl_witness.98b) [concrete]
-// CHECK:STDOUT:   %.644: type = fn_type_with_self_type %Op.type.bae, %Destroy.facet [concrete]
 // CHECK:STDOUT:   %Op.specific_fn: <specific function> = specific_function %Op.6f3, @Op.2(%AnyParam.241) [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -1580,8 +1574,6 @@ fn Test(c: HasExtraInterfaces.C(type)) {
 // CHECK:STDOUT:   %PackageHasParam.import_ref.292: %Y.type = import_ref PackageHasParam//default, inst40 [no loc], loaded [symbolic = constants.%Self.f64]
 // CHECK:STDOUT:   %PackageHasParam.import_ref.ce2: %K.type.311 = import_ref PackageHasParam//default, loc7_22, loaded [concrete = constants.%K.7a1]
 // CHECK:STDOUT:   %Core.Destroy: type = import_ref Core//prelude/parts/destroy, Destroy, loaded [concrete = constants.%Destroy.type]
-// CHECK:STDOUT:   %Core.import_ref.0b9: @impl.49c.%Op.type (%Op.type.bc9) = import_ref Core//prelude/parts/destroy, loc8_29, loaded [symbolic = @impl.49c.%Op (constants.%Op.46f)]
-// CHECK:STDOUT:   %Destroy.impl_witness_table = impl_witness_table (%Core.import_ref.0b9), @impl.49c [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -1702,16 +1694,15 @@ fn Test(c: HasExtraInterfaces.C(type)) {
 // CHECK:STDOUT:   %PackageHasParam.ref.loc14: <namespace> = name_ref PackageHasParam, imports.%PackageHasParam [concrete = imports.%PackageHasParam]
 // CHECK:STDOUT:   %Y.ref: type = name_ref Y, imports.%PackageHasParam.Y [concrete = constants.%Y.type]
 // CHECK:STDOUT:   %K.ref: %Y.assoc_type = name_ref K, imports.%PackageHasParam.import_ref.f69 [concrete = constants.%assoc0.494]
-// CHECK:STDOUT:   %impl.elem0.loc14: %.0fb = impl_witness_access constants.%Y.impl_witness, element0 [concrete = constants.%K.2e9]
-// CHECK:STDOUT:   %bound_method.loc14: <bound method> = bound_method %obj.ref, %impl.elem0.loc14
+// CHECK:STDOUT:   %impl.elem0: %.0fb = impl_witness_access constants.%Y.impl_witness, element0 [concrete = constants.%K.2e9]
+// CHECK:STDOUT:   %bound_method.loc14: <bound method> = bound_method %obj.ref, %impl.elem0
 // CHECK:STDOUT:   %.loc14: %AnyParam.241 = bind_value %obj.ref
 // CHECK:STDOUT:   %K.call: init %empty_tuple.type = call %bound_method.loc14(%.loc14)
-// CHECK:STDOUT:   %impl.elem0.loc13: %.644 = impl_witness_access constants.%Destroy.impl_witness.98b, element0 [concrete = constants.%Op.6f3]
-// CHECK:STDOUT:   %bound_method.loc13_3.1: <bound method> = bound_method %obj.var, %impl.elem0.loc13
-// CHECK:STDOUT:   %specific_fn: <specific function> = specific_function %impl.elem0.loc13, @Op.2(constants.%AnyParam.241) [concrete = constants.%Op.specific_fn]
-// CHECK:STDOUT:   %bound_method.loc13_3.2: <bound method> = bound_method %obj.var, %specific_fn
+// CHECK:STDOUT:   %Op.bound: <bound method> = bound_method %obj.var, constants.%Op.6f3
+// CHECK:STDOUT:   %Op.specific_fn: <specific function> = specific_function constants.%Op.6f3, @Op.2(constants.%AnyParam.241) [concrete = constants.%Op.specific_fn]
+// CHECK:STDOUT:   %bound_method.loc13: <bound method> = bound_method %obj.var, %Op.specific_fn
 // CHECK:STDOUT:   %addr: %ptr.301 = addr_of %obj.var
-// CHECK:STDOUT:   %no_op: init %empty_tuple.type = call %bound_method.loc13_3.2(%addr)
+// CHECK:STDOUT:   %no_op: init %empty_tuple.type = call %bound_method.loc13(%addr)
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -1777,20 +1768,14 @@ fn Test(c: HasExtraInterfaces.C(type)) {
 // CHECK:STDOUT:   %pattern_type.cb4: type = pattern_type %Self.as_type.61d [symbolic]
 // CHECK:STDOUT:   %require_complete.b14: <witness> = require_complete_type %Self.as_type.61d [symbolic]
 // CHECK:STDOUT:   %Destroy.type: type = facet_type <@Destroy> [concrete]
-// CHECK:STDOUT:   %Op.type.92c: type = fn_type @Op.1, @impl.4b5(%T) [symbolic]
-// CHECK:STDOUT:   %Op.b8f: %Op.type.92c = struct_value () [symbolic]
 // CHECK:STDOUT:   %Y.impl_witness: <witness> = impl_witness imports.%Y.impl_witness_table [concrete]
 // CHECK:STDOUT:   %Y.facet: %Y.type = facet_value %AnyParam.861, (%Y.impl_witness) [concrete]
 // CHECK:STDOUT:   %.e17: type = fn_type_with_self_type %K.type.311, %Y.facet [concrete]
 // CHECK:STDOUT:   %K.type.7f9: type = fn_type @K.2 [concrete]
 // CHECK:STDOUT:   %K.c3c: %K.type.7f9 = struct_value () [concrete]
-// CHECK:STDOUT:   %Op.type.f00: type = fn_type @Op.2 [concrete]
-// CHECK:STDOUT:   %Destroy.impl_witness.c49: <witness> = impl_witness imports.%Destroy.impl_witness_table, @impl.4b5(%AnyParam.861) [concrete]
 // CHECK:STDOUT:   %Op.type.77e: type = fn_type @Op.1, @impl.4b5(%AnyParam.861) [concrete]
 // CHECK:STDOUT:   %Op.49f: %Op.type.77e = struct_value () [concrete]
 // CHECK:STDOUT:   %ptr.1ef: type = ptr_type %AnyParam.861 [concrete]
-// CHECK:STDOUT:   %Destroy.facet: %Destroy.type = facet_value %AnyParam.861, (%Destroy.impl_witness.c49) [concrete]
-// CHECK:STDOUT:   %.a90: type = fn_type_with_self_type %Op.type.f00, %Destroy.facet [concrete]
 // CHECK:STDOUT:   %Op.specific_fn: <specific function> = specific_function %Op.49f, @Op.1(%AnyParam.861) [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -1826,8 +1811,6 @@ fn Test(c: HasExtraInterfaces.C(type)) {
 // CHECK:STDOUT:   %PackageGenericInterface.import_ref.53c: <witness> = import_ref PackageGenericInterface//default, loc8_70, loaded [concrete = constants.%Y.impl_witness]
 // CHECK:STDOUT:   %PackageGenericInterface.import_ref.321: type = import_ref PackageGenericInterface//default, loc8_47, loaded [concrete = constants.%AnyParam.861]
 // CHECK:STDOUT:   %PackageGenericInterface.import_ref.ca6: type = import_ref PackageGenericInterface//default, loc8_67, loaded [concrete = constants.%Y.type]
-// CHECK:STDOUT:   %PackageGenericInterface.import_ref.01e: @impl.4b5.%Op.type (%Op.type.92c) = import_ref PackageGenericInterface//default, inst158 [indirect], loaded [symbolic = @impl.4b5.%Op (constants.%Op.b8f)]
-// CHECK:STDOUT:   %Destroy.impl_witness_table = impl_witness_table (%PackageGenericInterface.import_ref.01e), @impl.4b5 [concrete]
 // CHECK:STDOUT:   %PackageGenericInterface.import_ref.456: %K.type.7f9 = import_ref PackageGenericInterface//default, loc9_22, loaded [concrete = constants.%K.c3c]
 // CHECK:STDOUT:   %Y.impl_witness_table = impl_witness_table (%PackageGenericInterface.import_ref.456), @impl.02a [concrete]
 // CHECK:STDOUT:   %Core.Destroy: type = import_ref Core//prelude/parts/destroy, Destroy, loaded [concrete = constants.%Destroy.type]
@@ -1910,16 +1893,15 @@ fn Test(c: HasExtraInterfaces.C(type)) {
 // CHECK:STDOUT:   %PackageHasParam.ref.loc10: <namespace> = name_ref PackageHasParam, imports.%PackageHasParam [concrete = imports.%PackageHasParam]
 // CHECK:STDOUT:   %Y.ref: type = name_ref Y, imports.%PackageHasParam.Y [concrete = constants.%Y.type]
 // CHECK:STDOUT:   %K.ref: %Y.assoc_type = name_ref K, imports.%PackageHasParam.import_ref.f69 [concrete = constants.%assoc0.494]
-// CHECK:STDOUT:   %impl.elem0.loc10: %.e17 = impl_witness_access constants.%Y.impl_witness, element0 [concrete = constants.%K.c3c]
-// CHECK:STDOUT:   %bound_method.loc10: <bound method> = bound_method %obj.ref, %impl.elem0.loc10
+// CHECK:STDOUT:   %impl.elem0: %.e17 = impl_witness_access constants.%Y.impl_witness, element0 [concrete = constants.%K.c3c]
+// CHECK:STDOUT:   %bound_method.loc10: <bound method> = bound_method %obj.ref, %impl.elem0
 // CHECK:STDOUT:   %.loc10: %AnyParam.861 = bind_value %obj.ref
 // CHECK:STDOUT:   %K.call: init %empty_tuple.type = call %bound_method.loc10(%.loc10)
-// CHECK:STDOUT:   %impl.elem0.loc8: %.a90 = impl_witness_access constants.%Destroy.impl_witness.c49, element0 [concrete = constants.%Op.49f]
-// CHECK:STDOUT:   %bound_method.loc8_3.1: <bound method> = bound_method %obj.var, %impl.elem0.loc8
-// CHECK:STDOUT:   %specific_fn: <specific function> = specific_function %impl.elem0.loc8, @Op.1(constants.%AnyParam.861) [concrete = constants.%Op.specific_fn]
-// CHECK:STDOUT:   %bound_method.loc8_3.2: <bound method> = bound_method %obj.var, %specific_fn
+// CHECK:STDOUT:   %Op.bound: <bound method> = bound_method %obj.var, constants.%Op.49f
+// CHECK:STDOUT:   %Op.specific_fn: <specific function> = specific_function constants.%Op.49f, @Op.1(constants.%AnyParam.861) [concrete = constants.%Op.specific_fn]
+// CHECK:STDOUT:   %bound_method.loc8: <bound method> = bound_method %obj.var, %Op.specific_fn
 // CHECK:STDOUT:   %addr: %ptr.1ef = addr_of %obj.var
-// CHECK:STDOUT:   %no_op: init %empty_tuple.type = call %bound_method.loc8_3.2(%addr)
+// CHECK:STDOUT:   %no_op: init %empty_tuple.type = call %bound_method.loc8(%addr)
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -1997,15 +1979,9 @@ fn Test(c: HasExtraInterfaces.C(type)) {
 // CHECK:STDOUT:   %assoc0.494: %Y.assoc_type = assoc_entity element0, imports.%PackageHasParam.import_ref.ce2 [concrete]
 // CHECK:STDOUT:   %.701: type = fn_type_with_self_type %K.type.311, %Y.facet [concrete]
 // CHECK:STDOUT:   %Destroy.type: type = facet_type <@Destroy> [concrete]
-// CHECK:STDOUT:   %Op.type.bae: type = fn_type @Op.1 [concrete]
-// CHECK:STDOUT:   %Op.type.bc9: type = fn_type @Op.2, @impl.49c(%T) [symbolic]
-// CHECK:STDOUT:   %Op.46f: %Op.type.bc9 = struct_value () [symbolic]
-// CHECK:STDOUT:   %Destroy.impl_witness.418: <witness> = impl_witness imports.%Destroy.impl_witness_table, @impl.49c(%AnyParam.0dd) [concrete]
 // CHECK:STDOUT:   %Op.type.f56: type = fn_type @Op.2, @impl.49c(%AnyParam.0dd) [concrete]
 // CHECK:STDOUT:   %Op.1fa: %Op.type.f56 = struct_value () [concrete]
 // CHECK:STDOUT:   %ptr.d96: type = ptr_type %AnyParam.0dd [concrete]
-// CHECK:STDOUT:   %Destroy.facet: %Destroy.type = facet_value %AnyParam.0dd, (%Destroy.impl_witness.418) [concrete]
-// CHECK:STDOUT:   %.94f: type = fn_type_with_self_type %Op.type.bae, %Destroy.facet [concrete]
 // CHECK:STDOUT:   %Op.specific_fn: <specific function> = specific_function %Op.1fa, @Op.2(%AnyParam.0dd) [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -2032,8 +2008,6 @@ fn Test(c: HasExtraInterfaces.C(type)) {
 // CHECK:STDOUT:   %PackageHasParam.import_ref.292: %Y.type = import_ref PackageHasParam//default, inst40 [no loc], loaded [symbolic = constants.%Self.f64]
 // CHECK:STDOUT:   %PackageHasParam.import_ref.ce2: %K.type.311 = import_ref PackageHasParam//default, loc7_22, loaded [concrete = constants.%K.7a1]
 // CHECK:STDOUT:   %Core.Destroy: type = import_ref Core//prelude/parts/destroy, Destroy, loaded [concrete = constants.%Destroy.type]
-// CHECK:STDOUT:   %Core.import_ref.0b9: @impl.49c.%Op.type (%Op.type.bc9) = import_ref Core//prelude/parts/destroy, loc8_29, loaded [symbolic = @impl.49c.%Op (constants.%Op.46f)]
-// CHECK:STDOUT:   %Destroy.impl_witness_table = impl_witness_table (%Core.import_ref.0b9), @impl.49c [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -2153,16 +2127,15 @@ fn Test(c: HasExtraInterfaces.C(type)) {
 // CHECK:STDOUT:   %PackageHasParam.ref.loc14: <namespace> = name_ref PackageHasParam, imports.%PackageHasParam [concrete = imports.%PackageHasParam]
 // CHECK:STDOUT:   %Y.ref: type = name_ref Y, imports.%PackageHasParam.Y [concrete = constants.%Y.type]
 // CHECK:STDOUT:   %K.ref: %Y.assoc_type = name_ref K, imports.%PackageHasParam.import_ref.f69 [concrete = constants.%assoc0.494]
-// CHECK:STDOUT:   %impl.elem0.loc14: %.701 = impl_witness_access constants.%Y.impl_witness, element0 [concrete = constants.%K.5a9]
-// CHECK:STDOUT:   %bound_method.loc14: <bound method> = bound_method %obj.ref, %impl.elem0.loc14
+// CHECK:STDOUT:   %impl.elem0: %.701 = impl_witness_access constants.%Y.impl_witness, element0 [concrete = constants.%K.5a9]
+// CHECK:STDOUT:   %bound_method.loc14: <bound method> = bound_method %obj.ref, %impl.elem0
 // CHECK:STDOUT:   %.loc14: %AnyParam.0dd = bind_value %obj.ref
 // CHECK:STDOUT:   %K.call: init %empty_tuple.type = call %bound_method.loc14(%.loc14)
-// CHECK:STDOUT:   %impl.elem0.loc13: %.94f = impl_witness_access constants.%Destroy.impl_witness.418, element0 [concrete = constants.%Op.1fa]
-// CHECK:STDOUT:   %bound_method.loc13_3.1: <bound method> = bound_method %obj.var, %impl.elem0.loc13
-// CHECK:STDOUT:   %specific_fn: <specific function> = specific_function %impl.elem0.loc13, @Op.2(constants.%AnyParam.0dd) [concrete = constants.%Op.specific_fn]
-// CHECK:STDOUT:   %bound_method.loc13_3.2: <bound method> = bound_method %obj.var, %specific_fn
+// CHECK:STDOUT:   %Op.bound: <bound method> = bound_method %obj.var, constants.%Op.1fa
+// CHECK:STDOUT:   %Op.specific_fn: <specific function> = specific_function constants.%Op.1fa, @Op.2(constants.%AnyParam.0dd) [concrete = constants.%Op.specific_fn]
+// CHECK:STDOUT:   %bound_method.loc13: <bound method> = bound_method %obj.var, %Op.specific_fn
 // CHECK:STDOUT:   %addr: %ptr.d96 = addr_of %obj.var
-// CHECK:STDOUT:   %no_op: init %empty_tuple.type = call %bound_method.loc13_3.2(%addr)
+// CHECK:STDOUT:   %no_op: init %empty_tuple.type = call %bound_method.loc13(%addr)
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -2226,20 +2199,14 @@ fn Test(c: HasExtraInterfaces.C(type)) {
 // CHECK:STDOUT:   %pattern_type.cb4: type = pattern_type %Self.as_type.61d [symbolic]
 // CHECK:STDOUT:   %require_complete.b14: <witness> = require_complete_type %Self.as_type.61d [symbolic]
 // CHECK:STDOUT:   %Destroy.type: type = facet_type <@Destroy> [concrete]
-// CHECK:STDOUT:   %Op.type.5d4: type = fn_type @Op.1, @impl.1d2(%T) [symbolic]
-// CHECK:STDOUT:   %Op.ab3: %Op.type.5d4 = struct_value () [symbolic]
 // CHECK:STDOUT:   %Y.impl_witness: <witness> = impl_witness imports.%Y.impl_witness_table [concrete]
 // CHECK:STDOUT:   %Y.facet: %Y.type = facet_value %AnyParam.d71, (%Y.impl_witness) [concrete]
 // CHECK:STDOUT:   %.0dd: type = fn_type_with_self_type %K.type.311, %Y.facet [concrete]
 // CHECK:STDOUT:   %K.type.9cf: type = fn_type @K.2 [concrete]
 // CHECK:STDOUT:   %K.039: %K.type.9cf = struct_value () [concrete]
-// CHECK:STDOUT:   %Op.type.0fd: type = fn_type @Op.2 [concrete]
-// CHECK:STDOUT:   %Destroy.impl_witness.ea7: <witness> = impl_witness imports.%Destroy.impl_witness_table, @impl.1d2(%AnyParam.d71) [concrete]
 // CHECK:STDOUT:   %Op.type.051: type = fn_type @Op.1, @impl.1d2(%AnyParam.d71) [concrete]
 // CHECK:STDOUT:   %Op.d0b: %Op.type.051 = struct_value () [concrete]
 // CHECK:STDOUT:   %ptr.8ee: type = ptr_type %AnyParam.d71 [concrete]
-// CHECK:STDOUT:   %Destroy.facet: %Destroy.type = facet_value %AnyParam.d71, (%Destroy.impl_witness.ea7) [concrete]
-// CHECK:STDOUT:   %.275: type = fn_type_with_self_type %Op.type.0fd, %Destroy.facet [concrete]
 // CHECK:STDOUT:   %Op.specific_fn: <specific function> = specific_function %Op.d0b, @Op.1(%AnyParam.d71) [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -2276,8 +2243,6 @@ fn Test(c: HasExtraInterfaces.C(type)) {
 // CHECK:STDOUT:   %PackageGenericClass.import_ref.246: <witness> = import_ref PackageGenericClass//default, loc8_66, loaded [concrete = constants.%Y.impl_witness]
 // CHECK:STDOUT:   %PackageGenericClass.import_ref.a0e: type = import_ref PackageGenericClass//default, loc8_43, loaded [concrete = constants.%AnyParam.d71]
 // CHECK:STDOUT:   %PackageGenericClass.import_ref.ca6: type = import_ref PackageGenericClass//default, loc8_63, loaded [concrete = constants.%Y.type]
-// CHECK:STDOUT:   %PackageGenericClass.import_ref.9fa: @impl.1d2.%Op.type (%Op.type.5d4) = import_ref PackageGenericClass//default, inst156 [indirect], loaded [symbolic = @impl.1d2.%Op (constants.%Op.ab3)]
-// CHECK:STDOUT:   %Destroy.impl_witness_table = impl_witness_table (%PackageGenericClass.import_ref.9fa), @impl.1d2 [concrete]
 // CHECK:STDOUT:   %PackageGenericClass.import_ref.fbf: %K.type.9cf = import_ref PackageGenericClass//default, loc9_22, loaded [concrete = constants.%K.039]
 // CHECK:STDOUT:   %Y.impl_witness_table = impl_witness_table (%PackageGenericClass.import_ref.fbf), @impl.421 [concrete]
 // CHECK:STDOUT:   %Core.Destroy: type = import_ref Core//prelude/parts/destroy, Destroy, loaded [concrete = constants.%Destroy.type]
@@ -2359,16 +2324,15 @@ fn Test(c: HasExtraInterfaces.C(type)) {
 // CHECK:STDOUT:   %PackageHasParam.ref.loc9: <namespace> = name_ref PackageHasParam, imports.%PackageHasParam [concrete = imports.%PackageHasParam]
 // CHECK:STDOUT:   %Y.ref: type = name_ref Y, imports.%PackageHasParam.Y [concrete = constants.%Y.type]
 // CHECK:STDOUT:   %K.ref: %Y.assoc_type = name_ref K, imports.%PackageHasParam.import_ref.f69 [concrete = constants.%assoc0.494]
-// CHECK:STDOUT:   %impl.elem0.loc9: %.0dd = impl_witness_access constants.%Y.impl_witness, element0 [concrete = constants.%K.039]
-// CHECK:STDOUT:   %bound_method.loc9: <bound method> = bound_method %obj.ref, %impl.elem0.loc9
+// CHECK:STDOUT:   %impl.elem0: %.0dd = impl_witness_access constants.%Y.impl_witness, element0 [concrete = constants.%K.039]
+// CHECK:STDOUT:   %bound_method.loc9: <bound method> = bound_method %obj.ref, %impl.elem0
 // CHECK:STDOUT:   %.loc9: %AnyParam.d71 = bind_value %obj.ref
 // CHECK:STDOUT:   %K.call: init %empty_tuple.type = call %bound_method.loc9(%.loc9)
-// CHECK:STDOUT:   %impl.elem0.loc8: %.275 = impl_witness_access constants.%Destroy.impl_witness.ea7, element0 [concrete = constants.%Op.d0b]
-// CHECK:STDOUT:   %bound_method.loc8_3.1: <bound method> = bound_method %obj.var, %impl.elem0.loc8
-// CHECK:STDOUT:   %specific_fn: <specific function> = specific_function %impl.elem0.loc8, @Op.1(constants.%AnyParam.d71) [concrete = constants.%Op.specific_fn]
-// CHECK:STDOUT:   %bound_method.loc8_3.2: <bound method> = bound_method %obj.var, %specific_fn
+// CHECK:STDOUT:   %Op.bound: <bound method> = bound_method %obj.var, constants.%Op.d0b
+// CHECK:STDOUT:   %Op.specific_fn: <specific function> = specific_function constants.%Op.d0b, @Op.1(constants.%AnyParam.d71) [concrete = constants.%Op.specific_fn]
+// CHECK:STDOUT:   %bound_method.loc8: <bound method> = bound_method %obj.var, %Op.specific_fn
 // CHECK:STDOUT:   %addr: %ptr.8ee = addr_of %obj.var
-// CHECK:STDOUT:   %no_op: init %empty_tuple.type = call %bound_method.loc8_3.2(%addr)
+// CHECK:STDOUT:   %no_op: init %empty_tuple.type = call %bound_method.loc8(%addr)
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
