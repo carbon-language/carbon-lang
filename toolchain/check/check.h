@@ -40,6 +40,11 @@ struct CheckParseTreesOptions {
   // Whether to import the prelude.
   bool prelude_import = false;
 
+  // Whether to generate standard `impl`s for types, such as `Core.Destroy`.
+  // This only controls generation of the `impl`; code which expects the `impl`
+  // is expected to fail.
+  bool gen_implicit_type_impls = true;
+
   // If set, enables verbose output.
   llvm::raw_ostream* vlog_stream = nullptr;
 

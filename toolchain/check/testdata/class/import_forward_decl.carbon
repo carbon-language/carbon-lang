@@ -55,13 +55,22 @@ class ForwardDecl {
 // CHECK:STDOUT:   %ForwardDecl: type = class_type @ForwardDecl [concrete]
 // CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [concrete]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [concrete]
+// CHECK:STDOUT:   %Destroy.type: type = facet_type <@Destroy> [concrete]
+// CHECK:STDOUT:   %pattern_type.f6d: type = pattern_type auto [concrete]
+// CHECK:STDOUT:   %Destroy.impl_witness: <witness> = impl_witness file.%Destroy.impl_witness_table [concrete]
+// CHECK:STDOUT:   %ptr.83c: type = ptr_type %ForwardDecl [concrete]
+// CHECK:STDOUT:   %pattern_type.fd7: type = pattern_type %ptr.83c [concrete]
+// CHECK:STDOUT:   %ForwardDecl.as.Destroy.impl.Op.type: type = fn_type @ForwardDecl.as.Destroy.impl.Op [concrete]
+// CHECK:STDOUT:   %ForwardDecl.as.Destroy.impl.Op: %ForwardDecl.as.Destroy.impl.Op.type = struct_value () [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [concrete] {
+// CHECK:STDOUT:     .Destroy = %Core.Destroy
 // CHECK:STDOUT:     import Core//prelude
 // CHECK:STDOUT:     import Core//prelude/...
 // CHECK:STDOUT:   }
+// CHECK:STDOUT:   %Core.Destroy: type = import_ref Core//prelude/parts/destroy, Destroy, loaded [concrete = constants.%Destroy.type]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -73,6 +82,25 @@ class ForwardDecl {
 // CHECK:STDOUT:   %default.import.loc2_17.2 = import <none>
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %ForwardDecl.decl: type = class_decl @ForwardDecl [concrete = constants.%ForwardDecl] {} {}
+// CHECK:STDOUT:   impl_decl @ForwardDecl.as.Destroy.impl [concrete] {} {}
+// CHECK:STDOUT:   %Destroy.impl_witness_table = impl_witness_table (@ForwardDecl.as.Destroy.impl.%ForwardDecl.as.Destroy.impl.Op.decl), @ForwardDecl.as.Destroy.impl [concrete]
+// CHECK:STDOUT:   %Destroy.impl_witness: <witness> = impl_witness %Destroy.impl_witness_table [concrete = constants.%Destroy.impl_witness]
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: impl @ForwardDecl.as.Destroy.impl: constants.%ForwardDecl as constants.%Destroy.type {
+// CHECK:STDOUT:   %ForwardDecl.as.Destroy.impl.Op.decl: %ForwardDecl.as.Destroy.impl.Op.type = fn_decl @ForwardDecl.as.Destroy.impl.Op [concrete = constants.%ForwardDecl.as.Destroy.impl.Op] {
+// CHECK:STDOUT:     %self.patt: %pattern_type.fd7 = binding_pattern self [concrete]
+// CHECK:STDOUT:     %self.param_patt: %pattern_type.fd7 = value_param_pattern %self.patt, call_param0 [concrete]
+// CHECK:STDOUT:     %.loc4: %pattern_type.f6d = addr_pattern %self.param_patt [concrete]
+// CHECK:STDOUT:   } {
+// CHECK:STDOUT:     %self.param: %ptr.83c = value_param call_param0
+// CHECK:STDOUT:     %Self.ref: type = name_ref Self, constants.%ForwardDecl [concrete = constants.%ForwardDecl]
+// CHECK:STDOUT:     %self: %ptr.83c = bind_name self, %self.param
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:
+// CHECK:STDOUT: !members:
+// CHECK:STDOUT:   .Op = %ForwardDecl.as.Destroy.impl.Op.decl
+// CHECK:STDOUT:   witness = file.%Destroy.impl_witness
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @ForwardDecl {
@@ -83,4 +111,6 @@ class ForwardDecl {
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%ForwardDecl
 // CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: fn @ForwardDecl.as.Destroy.impl.Op(%self.param: %ptr.83c) = "no_op";
 // CHECK:STDOUT:

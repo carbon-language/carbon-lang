@@ -40,8 +40,8 @@ fn F(N:! i32, a: array(i32, N)*);
 // CHECK:STDOUT:   %bound_method: <bound method> = bound_method %N.51e, %Int.as.ImplicitAs.impl.Convert.specific_fn [symbolic]
 // CHECK:STDOUT:   %Int.as.ImplicitAs.impl.Convert.call: init Core.IntLiteral = call %bound_method(%N.51e) [symbolic]
 // CHECK:STDOUT:   %array_type: type = array_type %Int.as.ImplicitAs.impl.Convert.call, %i32 [symbolic]
-// CHECK:STDOUT:   %ptr: type = ptr_type %array_type [symbolic]
-// CHECK:STDOUT:   %pattern_type.c7e: type = pattern_type %ptr [symbolic]
+// CHECK:STDOUT:   %ptr.0ad: type = ptr_type %array_type [symbolic]
+// CHECK:STDOUT:   %pattern_type.c7e: type = pattern_type %ptr.0ad [symbolic]
 // CHECK:STDOUT:   %F.type: type = fn_type @F [concrete]
 // CHECK:STDOUT:   %F: %F.type = struct_value () [concrete]
 // CHECK:STDOUT: }
@@ -75,8 +75,8 @@ fn F(N:! i32, a: array(i32, N)*);
 // CHECK:STDOUT:       %i32.loc15_10: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %N.loc15_6.2: %i32 = bind_symbolic_name N, 0 [symbolic = %N.loc15_6.1 (constants.%N.51e)]
-// CHECK:STDOUT:     %a.param: @F.%ptr.loc15_31.1 (%ptr) = value_param call_param0
-// CHECK:STDOUT:     %.loc15_31: type = splice_block %ptr.loc15_31.2 [symbolic = %ptr.loc15_31.1 (constants.%ptr)] {
+// CHECK:STDOUT:     %a.param: @F.%ptr.loc15_31.1 (%ptr.0ad) = value_param call_param0
+// CHECK:STDOUT:     %.loc15_31: type = splice_block %ptr.loc15_31.2 [symbolic = %ptr.loc15_31.1 (constants.%ptr.0ad)] {
 // CHECK:STDOUT:       %int_32.loc15_24: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
 // CHECK:STDOUT:       %i32.loc15_24: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
 // CHECK:STDOUT:       %N.ref: %i32 = name_ref N, %N.loc15_6.2 [symbolic = %N.loc15_6.1 (constants.%N.51e)]
@@ -88,9 +88,9 @@ fn F(N:! i32, a: array(i32, N)*);
 // CHECK:STDOUT:       %.loc15_29.1: Core.IntLiteral = value_of_initializer %Int.as.ImplicitAs.impl.Convert.call.loc15_29.2 [symbolic = %Int.as.ImplicitAs.impl.Convert.call.loc15_29.1 (constants.%Int.as.ImplicitAs.impl.Convert.call)]
 // CHECK:STDOUT:       %.loc15_29.2: Core.IntLiteral = converted %N.ref, %.loc15_29.1 [symbolic = %Int.as.ImplicitAs.impl.Convert.call.loc15_29.1 (constants.%Int.as.ImplicitAs.impl.Convert.call)]
 // CHECK:STDOUT:       %array_type.loc15_30.2: type = array_type %.loc15_29.2, %i32.loc15_24 [symbolic = %array_type.loc15_30.1 (constants.%array_type)]
-// CHECK:STDOUT:       %ptr.loc15_31.2: type = ptr_type %array_type.loc15_30.2 [symbolic = %ptr.loc15_31.1 (constants.%ptr)]
+// CHECK:STDOUT:       %ptr.loc15_31.2: type = ptr_type %array_type.loc15_30.2 [symbolic = %ptr.loc15_31.1 (constants.%ptr.0ad)]
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %a: @F.%ptr.loc15_31.1 (%ptr) = bind_name a, %a.param
+// CHECK:STDOUT:     %a: @F.%ptr.loc15_31.1 (%ptr.0ad) = bind_name a, %a.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -100,10 +100,10 @@ fn F(N:! i32, a: array(i32, N)*);
 // CHECK:STDOUT:   %bound_method.loc15_29.1: <bound method> = bound_method %N.loc15_6.1, constants.%Int.as.ImplicitAs.impl.Convert.specific_fn [symbolic = %bound_method.loc15_29.1 (constants.%bound_method)]
 // CHECK:STDOUT:   %Int.as.ImplicitAs.impl.Convert.call.loc15_29.1: init Core.IntLiteral = call %bound_method.loc15_29.1(%N.loc15_6.1) [symbolic = %Int.as.ImplicitAs.impl.Convert.call.loc15_29.1 (constants.%Int.as.ImplicitAs.impl.Convert.call)]
 // CHECK:STDOUT:   %array_type.loc15_30.1: type = array_type %Int.as.ImplicitAs.impl.Convert.call.loc15_29.1, constants.%i32 [symbolic = %array_type.loc15_30.1 (constants.%array_type)]
-// CHECK:STDOUT:   %ptr.loc15_31.1: type = ptr_type %array_type.loc15_30.1 [symbolic = %ptr.loc15_31.1 (constants.%ptr)]
+// CHECK:STDOUT:   %ptr.loc15_31.1: type = ptr_type %array_type.loc15_30.1 [symbolic = %ptr.loc15_31.1 (constants.%ptr.0ad)]
 // CHECK:STDOUT:   %pattern_type: type = pattern_type %ptr.loc15_31.1 [symbolic = %pattern_type (constants.%pattern_type.c7e)]
 // CHECK:STDOUT:
-// CHECK:STDOUT:   fn(%a.param: @F.%ptr.loc15_31.1 (%ptr));
+// CHECK:STDOUT:   fn(%a.param: @F.%ptr.loc15_31.1 (%ptr.0ad));
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @F(constants.%N.51e) {
@@ -112,7 +112,7 @@ fn F(N:! i32, a: array(i32, N)*);
 // CHECK:STDOUT:   %bound_method.loc15_29.1 => constants.%bound_method
 // CHECK:STDOUT:   %Int.as.ImplicitAs.impl.Convert.call.loc15_29.1 => constants.%Int.as.ImplicitAs.impl.Convert.call
 // CHECK:STDOUT:   %array_type.loc15_30.1 => constants.%array_type
-// CHECK:STDOUT:   %ptr.loc15_31.1 => constants.%ptr
+// CHECK:STDOUT:   %ptr.loc15_31.1 => constants.%ptr.0ad
 // CHECK:STDOUT:   %pattern_type => constants.%pattern_type.c7e
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

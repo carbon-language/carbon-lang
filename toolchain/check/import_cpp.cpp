@@ -947,32 +947,12 @@ static auto MakeImplicitParamPatternsBlockId(
     return SemIR::InstBlockId::None;
   }
 
-  if (addr_self) {
-    type_id = GetPointerType(context, type_inst_id);
-  }
-
-  SemIR::InstId pattern_id =
-      // TODO: Fill in a location once available.
-      AddBindingPattern(context, SemIR::LocId::None, SemIR::NameId::SelfValue,
-                        type_id, type_expr_region_id, /*is_generic*/ false,
-                        /*is_template*/ false)
-          .pattern_id;
-
   // TODO: Fill in a location once available.
-  pattern_id = AddPatternInst<SemIR::ValueParamPattern>(
-      context, SemIR::LocId::None,
-      {.type_id = context.insts().Get(pattern_id).type_id(),
-       .subpattern_id = pattern_id,
-       .index = SemIR::CallParamIndex::None});
-
-  // If we're building `addr self: Self*`, do that now.
-  if (addr_self) {
-    // TODO: Fill in a location once available.
-    pattern_id = AddPatternInst<SemIR::AddrPattern>(
-        context, SemIR::LocId::None,
-        {.type_id = GetPatternType(context, SemIR::AutoType::TypeId),
-         .inner_id = pattern_id});
-  }
+  auto pattern_id =
+      addr_self ? AddAddrSelfParamPattern(context, SemIR::LocId::None,
+                                          type_expr_region_id, type_inst_id)
+                : AddSelfParamPattern(context, SemIR::LocId::None,
+                                      type_expr_region_id, type_id);
 
   return context.inst_blocks().Add({pattern_id});
 }

@@ -14,6 +14,8 @@
 #include "toolchain/check/eval.h"
 #include "toolchain/check/generic.h"
 #include "toolchain/check/handle.h"
+#include "toolchain/check/impl.h"
+#include "toolchain/check/implicit_type_impls.h"
 #include "toolchain/check/import.h"
 #include "toolchain/check/import_ref.h"
 #include "toolchain/check/inst.h"
@@ -576,6 +578,8 @@ auto HandleParseNode(Context& context, Parse::ClassDefinitionId node_id)
   context.vtable_stack().Pop();
 
   FinishGenericDefinition(context, context.classes().Get(class_id).generic_id);
+
+  MakeClassDestroyImpl(context, class_id);
 
   // The decl_name_stack and scopes are popped by `ProcessNodeIds`.
   return true;

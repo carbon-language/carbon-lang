@@ -29,13 +29,29 @@ class A {
 
 // --- AUTOUPDATE-SPLIT
 
-// CHECK:STDOUT: Content-Length: 145{{\r}}
+// CHECK:STDOUT: Content-Length: 506{{\r}}
 // CHECK:STDOUT: {{\r}}
 // CHECK:STDOUT: {
 // CHECK:STDOUT:   "jsonrpc": "2.0",
 // CHECK:STDOUT:   "method": "textDocument/publishDiagnostics",
 // CHECK:STDOUT:   "params": {
-// CHECK:STDOUT:     "diagnostics": [],
+// CHECK:STDOUT:     "diagnostics": [
+// CHECK:STDOUT:       {
+// CHECK:STDOUT:         "message": "`Core.Destroy` implicitly referenced here, but package `Core` not found",
+// CHECK:STDOUT:         "range": {
+// CHECK:STDOUT:           "end": {
+// CHECK:STDOUT:             "character": 10,
+// CHECK:STDOUT:             "line": 1
+// CHECK:STDOUT:           },
+// CHECK:STDOUT:           "start": {
+// CHECK:STDOUT:             "character": 0,
+// CHECK:STDOUT:             "line": 0
+// CHECK:STDOUT:           }
+// CHECK:STDOUT:         },
+// CHECK:STDOUT:         "severity": 1,
+// CHECK:STDOUT:         "source": "carbon"
+// CHECK:STDOUT:       }
+// CHECK:STDOUT:     ],
 // CHECK:STDOUT:     "uri": "file:///class.carbon"
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }Content-Length: 1495{{\r}}
