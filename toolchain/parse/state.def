@@ -285,7 +285,7 @@ CARBON_PARSE_STATE(DeclNameAndParamsAfterParams)
 // ^~~~~~
 // final
 // ^~~~~
-// impl fn
+// override fn
 // ^~~~
 // private
 // ^~~~~~~

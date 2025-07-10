@@ -34,7 +34,7 @@ import Modifiers;
 
 class Derived {
   extend base: Modifiers.Base;
-  impl fn H[self: Self]();
+  override fn H[self: Self]();
 }
 
 fn Use() {
@@ -72,7 +72,7 @@ abstract class A1 {
 
 abstract class A2 {
   extend base: A1;
-  impl fn F[self: Self]();
+  override fn F[self: Self]();
 }
 
 // --- impl_base.carbon
@@ -85,12 +85,12 @@ base class B1 {
 
 base class B2 {
   extend base: B1;
-  impl fn F[self: Self]();
+  override fn F[self: Self]();
 }
 
 class C {
   extend base: B2;
-  impl fn F[self: Self]();
+  override fn F[self: Self]();
 }
 
 fn Use() {
@@ -104,11 +104,11 @@ fn Use() {
 library "[[@TEST_NAME]]";
 
 class C {
-  // CHECK:STDERR: fail_modifiers.carbon:[[@LINE+4]]:3: error: impl without base class [ImplWithoutBase]
-  // CHECK:STDERR:   impl fn F[self: Self]();
-  // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~~~~~
+  // CHECK:STDERR: fail_modifiers.carbon:[[@LINE+4]]:3: error: override without base class [ImplWithoutBase]
+  // CHECK:STDERR:   override fn F[self: Self]();
+  // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~~~~~~~~~
   // CHECK:STDERR:
-  impl fn F[self: Self]();
+  override fn F[self: Self]();
 }
 
 // --- init_members.carbon
@@ -141,7 +141,7 @@ base class Base {
 
 class Derived {
   extend base: Base;
-  impl fn F[self: Self]();
+  override fn F[self: Self]();
 }
 
 // --- abstract_impl.carbon
@@ -158,7 +158,7 @@ abstract class AbstractIntermediate {
 
 class Derived {
   extend base: AbstractIntermediate;
-  impl fn F[self: Self]();
+  override fn F[self: Self]();
 }
 
 // --- virtual_impl.carbon
@@ -175,7 +175,7 @@ base class VirtualIntermediate {
 
 class Derived {
   extend base: VirtualIntermediate;
-  impl fn F[self: Self]();
+  override fn F[self: Self]();
 }
 
 // --- fail_impl_mismatch.carbon
@@ -189,13 +189,13 @@ base class Base {
 class Derived {
   extend base: Base;
   // CHECK:STDERR: fail_impl_mismatch.carbon:[[@LINE+7]]:3: error: redeclaration differs because of parameter count of 1 [RedeclParamCountDiffers]
-  // CHECK:STDERR:   impl fn F[self: Self](v: i32);
-  // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+  // CHECK:STDERR:   override fn F[self: Self](v: i32);
+  // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
   // CHECK:STDERR: fail_impl_mismatch.carbon:[[@LINE-8]]:3: note: previously declared with parameter count of 0 [RedeclParamCountPrevious]
   // CHECK:STDERR:   virtual fn F[self: Self]();
   // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~~~~~~~~
   // CHECK:STDERR:
-  impl fn F[self: Self](v: i32);
+  override fn F[self: Self](v: i32);
 }
 
 // --- fail_todo_impl_conversion.carbon
@@ -221,13 +221,13 @@ base class Base {
 class Derived {
   extend base: Base;
   // CHECK:STDERR: fail_todo_impl_conversion.carbon:[[@LINE+7]]:3: error: function redeclaration differs because return type is `T2` [FunctionRedeclReturnTypeDiffers]
-  // CHECK:STDERR:   impl fn F[self: Self]() -> T2;
-  // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+  // CHECK:STDERR:   override fn F[self: Self]() -> T2;
+  // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
   // CHECK:STDERR: fail_todo_impl_conversion.carbon:[[@LINE-8]]:3: note: previously declared with return type `T1` [FunctionRedeclReturnTypePrevious]
   // CHECK:STDERR:   virtual fn F[self: Self]() -> T1;
   // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
   // CHECK:STDERR:
-  impl fn F[self: Self]() -> T2;
+  override fn F[self: Self]() -> T2;
 }
 
 // --- fail_todo_impl_generic_base.carbon
@@ -243,14 +243,14 @@ base class Base(T:! type) {
 
 class Derived {
   extend base: Base(T1);
-  // CHECK:STDERR: fail_todo_impl_generic_base.carbon:[[@LINE+7]]:25: error: type `<pattern for T1>` of parameter 1 in redeclaration differs from previous parameter type `<pattern for T>` [RedeclParamDiffersType]
-  // CHECK:STDERR:   impl fn F[self: Self](t: T1);
-  // CHECK:STDERR:                         ^~~~~
+  // CHECK:STDERR: fail_todo_impl_generic_base.carbon:[[@LINE+7]]:29: error: type `<pattern for T1>` of parameter 1 in redeclaration differs from previous parameter type `<pattern for T>` [RedeclParamDiffersType]
+  // CHECK:STDERR:   override fn F[self: Self](t: T1);
+  // CHECK:STDERR:                             ^~~~~
   // CHECK:STDERR: fail_todo_impl_generic_base.carbon:[[@LINE-8]]:28: note: previous declaration's corresponding parameter here [RedeclParamPrevious]
   // CHECK:STDERR:   virtual fn F[self: Self](t: T);
   // CHECK:STDERR:                            ^~~~
   // CHECK:STDERR:
-  impl fn F[self: Self](t: T1);
+  override fn F[self: Self](t: T1);
 }
 
 // --- fail_virtual_without_self.carbon
@@ -273,10 +273,10 @@ abstract class T1 {
 class T2 {
   extend base: T1;
   // CHECK:STDERR: fail_virtual_without_self.carbon:[[@LINE+4]]:3: error: virtual class function [VirtualWithoutSelf]
-  // CHECK:STDERR:   impl fn F();
-  // CHECK:STDERR:   ^~~~~~~~~~~~
+  // CHECK:STDERR:   override fn F();
+  // CHECK:STDERR:   ^~~~~~~~~~~~~~~~
   // CHECK:STDERR:
-  impl fn F();
+  override fn F();
 }
 
 // --- fail_addr_self_mismatch.carbon
@@ -289,14 +289,14 @@ base class T1 {
 
 class T2 {
   extend base: T1;
-  // CHECK:STDERR: fail_addr_self_mismatch.carbon:[[@LINE+7]]:14: error: redeclaration differs at implicit parameter 1 [RedeclParamDiffers]
-  // CHECK:STDERR:   impl fn F1[addr self: Self*]();
-  // CHECK:STDERR:              ^~~~~~~~~~~~~~~~
+  // CHECK:STDERR: fail_addr_self_mismatch.carbon:[[@LINE+7]]:18: error: redeclaration differs at implicit parameter 1 [RedeclParamDiffers]
+  // CHECK:STDERR:   override fn F1[addr self: Self*]();
+  // CHECK:STDERR:                  ^~~~~~~~~~~~~~~~
   // CHECK:STDERR: fail_addr_self_mismatch.carbon:[[@LINE-8]]:17: note: previous declaration's corresponding implicit parameter here [RedeclParamPrevious]
   // CHECK:STDERR:   virtual fn F1[self: Self*]();
   // CHECK:STDERR:                 ^~~~~~~~~~~
   // CHECK:STDERR:
-  impl fn F1[addr self: Self*]();
+  override fn F1[addr self: Self*]();
 }
 
 // --- fail_generic_virtual.carbon
@@ -565,7 +565,7 @@ fn F(b: Modifiers.Base);
 // CHECK:STDOUT:   @Derived.%H.decl
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: impl fn @H.1(%self.param: %Derived);
+// CHECK:STDOUT: override fn @H.1(%self.param: %Derived);
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @H.2 [from "modifiers.carbon"];
 // CHECK:STDOUT:
@@ -889,7 +889,7 @@ fn F(b: Modifiers.Base);
 // CHECK:STDOUT:
 // CHECK:STDOUT: virtual fn @F.1(%self.param: %A1);
 // CHECK:STDOUT:
-// CHECK:STDOUT: impl fn @F.2(%self.param: %A2);
+// CHECK:STDOUT: override fn @F.2(%self.param: %A2);
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- impl_base.carbon
 // CHECK:STDOUT:
@@ -1068,9 +1068,9 @@ fn F(b: Modifiers.Base);
 // CHECK:STDOUT:
 // CHECK:STDOUT: virtual fn @F.1(%self.param: %B1);
 // CHECK:STDOUT:
-// CHECK:STDOUT: impl fn @F.2(%self.param: %B2);
+// CHECK:STDOUT: override fn @F.2(%self.param: %B2);
 // CHECK:STDOUT:
-// CHECK:STDOUT: impl fn @F.3(%self.param: %C);
+// CHECK:STDOUT: override fn @F.3(%self.param: %C);
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Use() {
 // CHECK:STDOUT: !entry:
@@ -1197,7 +1197,7 @@ fn F(b: Modifiers.Base);
 // CHECK:STDOUT:
 // CHECK:STDOUT: vtable @C.vtable {}
 // CHECK:STDOUT:
-// CHECK:STDOUT: impl fn @F(%self.param: %C);
+// CHECK:STDOUT: override fn @F(%self.param: %C);
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- init_members.carbon
 // CHECK:STDOUT:
@@ -1505,7 +1505,7 @@ fn F(b: Modifiers.Base);
 // CHECK:STDOUT:
 // CHECK:STDOUT: vtable @Derived.vtable {}
 // CHECK:STDOUT:
-// CHECK:STDOUT: impl fn @F(%self.param: %Derived);
+// CHECK:STDOUT: override fn @F(%self.param: %Derived);
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- abstract_impl.carbon
 // CHECK:STDOUT:
@@ -1628,7 +1628,7 @@ fn F(b: Modifiers.Base);
 // CHECK:STDOUT:
 // CHECK:STDOUT: abstract fn @F.1(%self.param: %AbstractBase);
 // CHECK:STDOUT:
-// CHECK:STDOUT: impl fn @F.2(%self.param: %Derived);
+// CHECK:STDOUT: override fn @F.2(%self.param: %Derived);
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- virtual_impl.carbon
 // CHECK:STDOUT:
@@ -1751,7 +1751,7 @@ fn F(b: Modifiers.Base);
 // CHECK:STDOUT:
 // CHECK:STDOUT: virtual fn @F.1(%self.param: %VirtualBase);
 // CHECK:STDOUT:
-// CHECK:STDOUT: impl fn @F.2(%self.param: %Derived);
+// CHECK:STDOUT: override fn @F.2(%self.param: %Derived);
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- fail_impl_mismatch.carbon
 // CHECK:STDOUT:
@@ -1862,7 +1862,7 @@ fn F(b: Modifiers.Base);
 // CHECK:STDOUT:
 // CHECK:STDOUT: virtual fn @F.1(%self.param: %Base);
 // CHECK:STDOUT:
-// CHECK:STDOUT: impl fn @F.2(%self.param: %Derived, %v.param: %i32);
+// CHECK:STDOUT: override fn @F.2(%self.param: %Derived, %v.param: %i32);
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- fail_todo_impl_conversion.carbon
 // CHECK:STDOUT:
@@ -2046,7 +2046,7 @@ fn F(b: Modifiers.Base);
 // CHECK:STDOUT:
 // CHECK:STDOUT: virtual fn @F.1(%self.param: %Base) -> %return.param: %T1;
 // CHECK:STDOUT:
-// CHECK:STDOUT: impl fn @F.2(%self.param: %Derived) -> %return.param: %T2;
+// CHECK:STDOUT: override fn @F.2(%self.param: %Derived) -> %return.param: %T2;
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- fail_todo_impl_generic_base.carbon
 // CHECK:STDOUT:
@@ -2202,7 +2202,7 @@ fn F(b: Modifiers.Base);
 // CHECK:STDOUT:   virtual fn(%self.param: @F.1.%Base (%Base.370), %t.param: @F.1.%T (%T));
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: impl fn @F.2(%self.param: %Derived, %t.param: %T1);
+// CHECK:STDOUT: override fn @F.2(%self.param: %Derived, %t.param: %T1);
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Base(constants.%T) {
 // CHECK:STDOUT:   %T.loc7_17.2 => constants.%T
@@ -2398,7 +2398,7 @@ fn F(b: Modifiers.Base);
 // CHECK:STDOUT:
 // CHECK:STDOUT: virtual fn @F1.1(%self.param: %ptr.87b);
 // CHECK:STDOUT:
-// CHECK:STDOUT: impl fn @F1.2(%self.param: %ptr.63e);
+// CHECK:STDOUT: override fn @F1.2(%self.param: %ptr.63e);
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- fail_generic_virtual.carbon
 // CHECK:STDOUT:

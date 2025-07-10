@@ -22,11 +22,11 @@ fn F() {
   // CHECK:STDERR:   ^~~~~~~
   // CHECK:STDERR:
   default fn F();
-  // CHECK:STDERR: fail_virtual.carbon:[[@LINE+4]]:3: error: `impl` not allowed; requires class scope [ModifierRequiresClass]
-  // CHECK:STDERR:   impl fn G();
-  // CHECK:STDERR:   ^~~~
+  // CHECK:STDERR: fail_virtual.carbon:[[@LINE+4]]:3: error: `override` not allowed; requires class scope [ModifierRequiresClass]
+  // CHECK:STDERR:   override fn G();
+  // CHECK:STDERR:   ^~~~~~~~
   // CHECK:STDERR:
-  impl fn G();
+  override fn G();
   // CHECK:STDERR: fail_virtual.carbon:[[@LINE+4]]:3: error: `virtual` not allowed; requires class scope [ModifierRequiresClass]
   // CHECK:STDERR:   virtual fn H();
   // CHECK:STDERR:   ^~~~~~~

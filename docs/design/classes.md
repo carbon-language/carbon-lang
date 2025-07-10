@@ -1237,21 +1237,22 @@ There are three virtual modifier keywords:
     virtual" but is called
     ["pure virtual" in C++](https://en.wikipedia.org/wiki/Virtual_function#Abstract_classes_and_pure_virtual_functions).
     Only abstract classes may have unimplemented abstract methods.
--   `impl` - This marks a method that overrides a method marked `virtual` or
+-   `override` - This marks a method that overrides a method marked `virtual` or
     `abstract` in the base class with an implementation specific to -- and
     defined within -- this class. The method is still virtual and may be
     overridden again in subsequent derived classes if this is a base class. See
     [method overriding in Wikipedia](https://en.wikipedia.org/wiki/Method_overriding).
     Requiring a keyword when overriding allows the compiler to diagnose when the
     derived class accidentally uses the wrong signature or spelling and so
-    doesn't match the base class. We intentionally use the same keyword here as
-    for implementing interfaces, to emphasize that they are similar operations.
+    doesn't match the base class. This keyword provides clear separation from
+    interface implementation and follows established conventions from languages
+    like C++.
 
 | Keyword on<br />method in `C` | Allowed in<br />`abstract class C` | Allowed in<br />`base class C` | Allowed in<br />final `class C` | in `B` where<br />`C` extends `B`                        | in `D` where<br />`D` extends `C`                                                |
 | ----------------------------- | ---------------------------------- | ------------------------------ | ------------------------------- | -------------------------------------------------------- | -------------------------------------------------------------------------------- |
-| `virtual`                     | ✅                                 | ✅                             | ❌                              | _not present_                                            | `abstract`<br />`impl`<br />_not mentioned_                                      |
-| `abstract`                    | ✅                                 | ❌                             | ❌                              | _not present_<br />`virtual`<br />`abstract`<br />`impl` | `abstract`<br />`impl`<br />_may not be<br />mentioned if<br />`D` is not final_ |
-| `impl`                        | ✅                                 | ✅                             | ✅                              | `virtual`<br />`abstract`<br />`impl`                    | `abstract`<br />`impl`                                                           |
+| `virtual`                     | ✅                                 | ✅                             | ❌                              | _not present_                                            | `abstract`<br />`override`<br />_not mentioned_                                      |
+| `abstract`                    | ✅                                 | ❌                             | ❌                              | _not present_<br />`virtual`<br />`abstract`<br />`override` | `abstract`<br />`override`<br />_may not be<br />mentioned if<br />`D` is not final_ |
+| `override`                        | ✅                                 | ✅                             | ✅                              | `virtual`<br />`abstract`<br />`override`                    | `abstract`<br />`override`                                                           |
 
 Since validating a method with a virtual modifier keyword involves looking for
 methods with the same name in the base class, virtual methods must be declared
@@ -1315,15 +1316,15 @@ base class B1 {
 class D1 {
   extend base: B1;
   // ❌ Illegal:
-  //   impl fn F[self: Self](x: Self) -> Self;
+  //   override fn F[self: Self](x: Self) -> Self;
   // since that would mean the same thing as:
-  //   impl fn F[self: Self](x: D1) -> D1;
+  //   override fn F[self: Self](x: D1) -> D1;
   // and `D1` is a different type than `B1`.
 
   // ✅ Allowed: Parameter and return types
   //  of `F` match declaration in `B1`.
-  impl fn F[self: Self](x: B1) -> B1;
-  // Or: impl fn F[self: D1](x: B1) -> B1;
+  override fn F[self: Self](x: B1) -> B1;
+  // Or: override fn F[self: D1](x: B1) -> B1;
 }
 ```
 
@@ -1341,9 +1342,9 @@ base class B2 {
 class D2 {
   extend base: B2;
   // ✅ Allowed
-  impl fn Clone[self: Self]() -> Self*;
+  override fn Clone[self: Self]() -> Self*;
   // Means the same thing as:
-  //   impl fn Clone[self: D2]() -> D2*;
+  //   override fn Clone[self: D2]() -> D2*;
   // which is allowed since `D2*` is a
   // subtype of `B2*`.
 }
@@ -1615,7 +1616,7 @@ of its base classes unless it has a
 [virtual destructor](https://en.wikipedia.org/wiki/Virtual_function#Virtual_destructors).
 An abstract or base class' destructor may be declared virtual using the
 `virtual` introducer, in which case any derived class destructor declaration
-must be `impl`:
+must be `override`:
 
 ```carbon
 base class MyBaseClass {
@@ -1624,7 +1625,7 @@ base class MyBaseClass {
 
 class MyDerivedClass {
   extend base: MyBaseClass;
-  impl fn destroy[addr self: Self*]() { ... }
+  override fn destroy[addr self: Self*]() { ... }
 }
 ```
 

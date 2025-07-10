@@ -24,7 +24,7 @@ base class Intermediate {
 
 class Derived {
   extend base: Intermediate;
-  impl fn Fn[self: Self]() { }
+  override fn Fn[self: Self]() { }
 }
 
 // --- create.carbon
@@ -99,7 +99,7 @@ base class Base {
 
 class Derived {
   extend base: Base;
-  impl fn F[self: Self]();
+  override fn F[self: Self]();
 }
 
 fn Use() {

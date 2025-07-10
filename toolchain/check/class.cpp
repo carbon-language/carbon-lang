@@ -150,7 +150,7 @@ static auto BuildVtable(Context& context, SemIR::ClassId class_id,
         auto& override_fn =
             context.functions().Get(override_fn_decl.function_id);
         if (override_fn.virtual_modifier ==
-                SemIR::FunctionFields::VirtualModifier::Impl &&
+                SemIR::FunctionFields::VirtualModifier::Override &&
             override_fn.name_id == fn.name_id) {
           // TODO: Support generic base classes, rather than passing
           // `SpecificId::None`.
@@ -171,7 +171,7 @@ static auto BuildVtable(Context& context, SemIR::ClassId class_id,
   for (auto inst_id : vtable_contents) {
     auto fn_decl = context.insts().GetAs<SemIR::FunctionDecl>(inst_id);
     auto& fn = context.functions().Get(fn_decl.function_id);
-    if (fn.virtual_modifier != SemIR::FunctionFields::VirtualModifier::Impl) {
+          if (fn.virtual_modifier != SemIR::FunctionFields::VirtualModifier::Override) {
       fn.virtual_index = vtable.size();
       vtable.push_back(inst_id);
     }
