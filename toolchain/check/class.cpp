@@ -139,7 +139,7 @@ static auto BuildVtable(Context& context, Parse::ClassDefinitionId node_id,
   auto base_vtable_id = SemIR::VtableId::None;
   auto base_class_specific_id = SemIR::SpecificId::None;
 
-  // Get some base class/type/specific info
+  // Get some base class/type/specific info.
   if (base_class_type) {
     auto& base_class_info = context.classes().Get(base_class_type->class_id);
     auto base_vtable_ptr_inst_id = base_class_info.vtable_ptr_id;
