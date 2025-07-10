@@ -199,7 +199,8 @@ static auto BuildVtable(Context& context, Parse::ClassDefinitionId node_id,
         auto& override_fn = context.functions().Get(
             context.insts().GetAs<SemIR::FunctionDecl>(*i).function_id);
         // TODO: Support generic base classes, rather than passing
-        // `SpecificId::None`.
+        // `SpecificId::None`. This'll need to `GetConstantValueInSpecific` for
+        // the base function, then extract the specific from that for use here.
         CheckFunctionTypeMatches(context, override_fn, fn,
                                  SemIR::SpecificId::None,
                                  /*check_syntax=*/false,
