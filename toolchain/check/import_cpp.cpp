@@ -618,6 +618,12 @@ static auto ImportCXXRecordDecl(Context& context, SemIR::LocId loc_id,
     return SemIR::ErrorInst::InstId;
   }
 
+  if (clang_def->isUnion() && !clang_def->fields().empty()) {
+    context.TODO(loc_id, "Unsupported: Non-empty union");
+    MarkFailedDecl(context, clang_decl);
+    return SemIR::ErrorInst::InstId;
+  }
+
   auto [class_id, class_def_id] =
       BuildClassDefinition(context, parent_scope_id, name_id, clang_def);
 
