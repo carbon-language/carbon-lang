@@ -185,7 +185,7 @@ static auto BuildVtable(Context& context, Parse::ClassDefinitionId node_id,
     for (auto fn_decl_id : base_vtable_inst_block) {
       auto fn_decl = GetCalleeFunction(context.sem_ir(), fn_decl_id);
       const auto& fn = context.functions().Get(fn_decl.function_id);
-      auto i = llvm::find_if(
+      const auto* i = llvm::find_if(
           vtable_contents, [&](SemIR::InstId override_fn_decl_id) -> bool {
             const auto& override_fn = context.functions().Get(
                 context.insts()
