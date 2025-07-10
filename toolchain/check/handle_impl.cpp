@@ -138,8 +138,7 @@ static auto DiagnoseExtendImplOutsideClass(Context& context,
 // `impl`'s scope.
 static auto ExtendImpl(Context& context, Parse::NodeId extend_node,
                        Parse::AnyImplDeclId node_id, SemIR::ImplId impl_id,
-                       Parse::NodeId self_type_node,
-                       SemIR::TypeInstId self_type_inst_id,
+                       Parse::NodeId self_type_node, SemIR::TypeId self_type_id,
                        Parse::NodeId params_node,
                        SemIR::TypeInstId constraint_type_inst_id,
                        SemIR::TypeId constraint_type_id) -> bool {
@@ -171,8 +170,7 @@ static auto ExtendImpl(Context& context, Parse::NodeId extend_node,
     auto diag = context.emitter().Build(extend_node, ExtendImplSelfAs);
 
     // If the explicit self type is not the default, just bail out.
-    if (context.types().GetTypeIdForTypeInstId(self_type_inst_id) !=
-        GetDefaultSelfType(context)) {
+    if (self_type_id != GetDefaultSelfType(context)) {
       diag.Emit();
       parent_scope.set_has_error();
       return false;
@@ -505,25 +503,26 @@ static auto BuildImplDecl(Context& context, Parse::AnyImplDeclId node_id,
   ReplaceInstBeforeConstantUse(context, impl_decl_id, impl_decl);
 
   // For an `extend impl` declaration, mark the impl as extending this `impl`.
-  if (self_type_inst_id != SemIR::ErrorInst::TypeInstId &&
-      introducer.modifier_set.HasAnyOf(KeywordModifierSet::Extend)) {
+  if (introducer.modifier_set.HasAnyOf(KeywordModifierSet::Extend)) {
     auto& stored_impl_info = context.impls().Get(impl_decl.impl_id);
-
-    auto extend_node = introducer.modifier_node_id(ModifierOrder::Extend);
-    if (stored_impl_info.generic_id.has_value()) {
-      constraint_type_inst_id = AddTypeInst<SemIR::SpecificConstant>(
-          context, SemIR::LocId(constraint_type_inst_id),
-          {.type_id = SemIR::TypeType::TypeId,
-           .inst_id = constraint_type_inst_id,
-           .specific_id = context.generics().GetSelfSpecific(
-               stored_impl_info.generic_id)});
-    }
-    if (!ExtendImpl(context, extend_node, node_id, impl_decl.impl_id,
-                    self_type_node, stored_impl_info.self_id,
-                    name.implicit_params_loc_id, constraint_type_inst_id,
-                    constraint_type_id)) {
-      // Don't allow the invalid impl to be used.
-      FillImplWitnessWithErrors(context, stored_impl_info);
+    auto self_type_id =
+        context.types().GetTypeIdForTypeInstId(stored_impl_info.self_id);
+    if (self_type_id != SemIR::ErrorInst::TypeId) {
+      auto extend_node = introducer.modifier_node_id(ModifierOrder::Extend);
+      if (stored_impl_info.generic_id.has_value()) {
+        constraint_type_inst_id = AddTypeInst<SemIR::SpecificConstant>(
+            context, SemIR::LocId(constraint_type_inst_id),
+            {.type_id = SemIR::TypeType::TypeId,
+             .inst_id = constraint_type_inst_id,
+             .specific_id = context.generics().GetSelfSpecific(
+                 stored_impl_info.generic_id)});
+      }
+      if (!ExtendImpl(context, extend_node, node_id, impl_decl.impl_id,
+                      self_type_node, self_type_id, name.implicit_params_loc_id,
+                      constraint_type_inst_id, constraint_type_id)) {
+        // Don't allow the invalid impl to be used.
+        FillImplWitnessWithErrors(context, stored_impl_info);
+      }
     }
   }
 
