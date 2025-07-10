@@ -466,10 +466,10 @@ fn Make() {
 // CHECK:STDOUT: ; ModuleID = 'generic_use.carbon'
 // CHECK:STDOUT: source_filename = "generic_use.carbon"
 // CHECK:STDOUT:
-// CHECK:STDOUT: @"_CBase.Main.$vtable" = unnamed_addr constant [1 x i32] [i32 trunc (i64 sub (i64 ptrtoint (ptr @_CF.Base.Main.4d2ffa01ebfb7a1d to i64), i64 ptrtoint (ptr @"_CBase.Main.$vtable" to i64)) to i32)]
-// CHECK:STDOUT: @"_CBase.Main.$vtable.1" = unnamed_addr constant [1 x i32] [i32 trunc (i64 sub (i64 ptrtoint (ptr @_CF.Base.Main.4f4310253a4de9ab to i64), i64 ptrtoint (ptr @"_CBase.Main.$vtable.1" to i64)) to i32)]
-// CHECK:STDOUT: @Base.val.20a.loc16_3 = internal constant { ptr } { ptr @"_CBase.Main.$vtable" }
-// CHECK:STDOUT: @Base.val.f56.loc17_3 = internal constant { ptr } { ptr @"_CBase.Main.$vtable.1" }
+// CHECK:STDOUT: @"_CBase.Main.$vtable.4d2ffa01ebfb7a1d" = unnamed_addr constant [1 x i32] [i32 trunc (i64 sub (i64 ptrtoint (ptr @_CF.Base.Main.4d2ffa01ebfb7a1d to i64), i64 ptrtoint (ptr @"_CBase.Main.$vtable.4d2ffa01ebfb7a1d" to i64)) to i32)]
+// CHECK:STDOUT: @"_CBase.Main.$vtable.4f4310253a4de9ab" = unnamed_addr constant [1 x i32] [i32 trunc (i64 sub (i64 ptrtoint (ptr @_CF.Base.Main.4f4310253a4de9ab to i64), i64 ptrtoint (ptr @"_CBase.Main.$vtable.4f4310253a4de9ab" to i64)) to i32)]
+// CHECK:STDOUT: @Base.val.20a.loc16_3 = internal constant { ptr } { ptr @"_CBase.Main.$vtable.4d2ffa01ebfb7a1d" }
+// CHECK:STDOUT: @Base.val.f56.loc17_3 = internal constant { ptr } { ptr @"_CBase.Main.$vtable.4f4310253a4de9ab" }
 // CHECK:STDOUT:
 // CHECK:STDOUT: define void @_CF.Main() !dbg !4 {
 // CHECK:STDOUT: entry:
@@ -536,7 +536,7 @@ fn Make() {
 // CHECK:STDOUT: source_filename = "generic_base.carbon"
 // CHECK:STDOUT:
 // CHECK:STDOUT: @"_CDerived.Main.$vtable" = unnamed_addr constant [1 x i32] [i32 trunc (i64 sub (i64 ptrtoint (ptr @_CF.Base.Main.4d2ffa01ebfb7a1d to i64), i64 ptrtoint (ptr @"_CDerived.Main.$vtable" to i64)) to i32)]
-// CHECK:STDOUT: @"_CBase.Main.$vtable" = unnamed_addr constant [1 x i32] [i32 trunc (i64 sub (i64 ptrtoint (ptr @_CF.Base.Main.4d2ffa01ebfb7a1d to i64), i64 ptrtoint (ptr @"_CBase.Main.$vtable" to i64)) to i32)]
+// CHECK:STDOUT: @"_CBase.Main.$vtable.4d2ffa01ebfb7a1d" = unnamed_addr constant [1 x i32] [i32 trunc (i64 sub (i64 ptrtoint (ptr @_CF.Base.Main.4d2ffa01ebfb7a1d to i64), i64 ptrtoint (ptr @"_CBase.Main.$vtable.4d2ffa01ebfb7a1d" to i64)) to i32)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: define void @_CMake.Main() !dbg !4 {
 // CHECK:STDOUT: entry:

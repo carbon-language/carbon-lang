@@ -933,7 +933,7 @@ auto FileContext::BuildVtable(const SemIR::Vtable& vtable,
   const auto& class_info = sem_ir().classes().Get(vtable.class_id);
 
   Mangler m(*this);
-  std::string mangled_name = m.MangleVTable(class_info);
+  std::string mangled_name = m.MangleVTable(class_info, specific_id);
 
   if (sem_ir()
           .insts()
