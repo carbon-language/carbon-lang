@@ -64,7 +64,7 @@ auto AddInstInNoBlock(Context& context, LocT loc, InstT inst) -> SemIR::InstId {
   return AddInstInNoBlock(context, SemIR::LocIdAndInst(loc, inst));
 }
 
-// If the instruction has an implicit location and a constant value, returns
+// If the instruction has a desugared location and a constant value, returns
 // the constant value's instruction ID. Otherwise, same as AddInst.
 auto GetOrAddInst(Context& context, SemIR::LocIdAndInst loc_id_and_inst)
     -> SemIR::InstId;
