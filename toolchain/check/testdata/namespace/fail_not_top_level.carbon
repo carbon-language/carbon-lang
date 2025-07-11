@@ -42,18 +42,18 @@ interface I {
 // CHECK:STDOUT: --- fail_not_top_level.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
-// CHECK:STDOUT:   %F.type.b25: type = fn_type @F.1 [concrete]
+// CHECK:STDOUT:   %F.type.b25: type = fn_type @F.loc15 [concrete]
 // CHECK:STDOUT:   %F.c41: %F.type.b25 = struct_value () [concrete]
-// CHECK:STDOUT:   %F.type.bee: type = fn_type @F.2 [concrete]
+// CHECK:STDOUT:   %F.type.bee: type = fn_type @F.loc21 [concrete]
 // CHECK:STDOUT:   %F.39e: %F.type.bee = struct_value () [concrete]
 // CHECK:STDOUT:   %C: type = class_type @C [concrete]
-// CHECK:STDOUT:   %F.type.1cc: type = fn_type @F.3 [concrete]
+// CHECK:STDOUT:   %F.type.1cc: type = fn_type @F.loc30 [concrete]
 // CHECK:STDOUT:   %F.f49: %F.type.1cc = struct_value () [concrete]
 // CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [concrete]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [concrete]
-// CHECK:STDOUT:   %I.type.733: type = facet_type <@I.2> [concrete]
+// CHECK:STDOUT:   %I.type.733: type = facet_type <@I.loc33> [concrete]
 // CHECK:STDOUT:   %Self: %I.type.733 = bind_symbolic_name Self, 0 [symbolic]
-// CHECK:STDOUT:   %I.type.d37: type = fn_type @I.1 [concrete]
+// CHECK:STDOUT:   %I.type.d37: type = fn_type @I.loc39 [concrete]
 // CHECK:STDOUT:   %I: %I.type.d37 = struct_value () [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -72,17 +72,17 @@ interface I {
 // CHECK:STDOUT:     .I = %I.decl
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import = import Core
-// CHECK:STDOUT:   %F.decl: %F.type.b25 = fn_decl @F.1 [concrete = constants.%F.c41] {} {}
+// CHECK:STDOUT:   %F.decl: %F.type.b25 = fn_decl @F.loc15 [concrete = constants.%F.c41] {} {}
 // CHECK:STDOUT:   %C.decl: type = class_decl @C [concrete = constants.%C] {} {}
-// CHECK:STDOUT:   %I.decl: type = interface_decl @I.2 [concrete = constants.%I.type.733] {} {}
+// CHECK:STDOUT:   %I.decl: type = interface_decl @I.loc33 [concrete = constants.%I.type.733] {} {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: interface @I.2 {
+// CHECK:STDOUT: interface @I.loc33 {
 // CHECK:STDOUT:   %Self: %I.type.733 = bind_symbolic_name Self, 0 [symbolic = constants.%Self]
 // CHECK:STDOUT:   %N: <namespace> = namespace [concrete] {
 // CHECK:STDOUT:     .I = %I.decl
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %I.decl: %I.type.d37 = fn_decl @I.1 [concrete = constants.%I] {} {}
+// CHECK:STDOUT:   %I.decl: %I.type.d37 = fn_decl @I.loc39 [concrete = constants.%I] {} {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = %Self
@@ -94,7 +94,7 @@ interface I {
 // CHECK:STDOUT:   %N: <namespace> = namespace [concrete] {
 // CHECK:STDOUT:     .F = %F.decl
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %F.decl: %F.type.1cc = fn_decl @F.3 [concrete = constants.%F.f49] {} {}
+// CHECK:STDOUT:   %F.decl: %F.type.1cc = fn_decl @F.loc30 [concrete = constants.%F.f49] {} {}
 // CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [concrete = constants.%empty_struct_type]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [concrete = constants.%complete_type]
 // CHECK:STDOUT:   complete_type_witness = %complete_type
@@ -104,26 +104,26 @@ interface I {
 // CHECK:STDOUT:   .N = %N
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @F.1() {
+// CHECK:STDOUT: fn @F.loc15() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %N: <namespace> = namespace [concrete] {
 // CHECK:STDOUT:     .F = %F.decl
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %F.decl: %F.type.bee = fn_decl @F.2 [concrete = constants.%F.39e] {} {}
+// CHECK:STDOUT:   %F.decl: %F.type.bee = fn_decl @F.loc21 [concrete = constants.%F.39e] {} {}
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @F.2() {
+// CHECK:STDOUT: fn @F.loc21() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @F.3() {
+// CHECK:STDOUT: fn @F.loc30() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic fn @I.1(@I.2.%Self: %I.type.733) {
+// CHECK:STDOUT: generic fn @I.loc39(@I.loc33.%Self: %I.type.733) {
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:
 // CHECK:STDOUT:   fn() {
@@ -132,5 +132,5 @@ interface I {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @I.1(constants.%Self) {}
+// CHECK:STDOUT: specific @I.loc39(constants.%Self) {}
 // CHECK:STDOUT:

@@ -96,9 +96,9 @@ fn TestLhsBad(a: D, b: C) -> bool {
 // CHECK:STDOUT:   %pattern_type.c48: type = pattern_type %C [concrete]
 // CHECK:STDOUT:   %Bool.type: type = fn_type @Bool [concrete]
 // CHECK:STDOUT:   %Bool: %Bool.type = struct_value () [concrete]
-// CHECK:STDOUT:   %Equal.type.86d: type = fn_type @Equal.2 [concrete]
+// CHECK:STDOUT:   %Equal.type.86d: type = fn_type @Equal.loc7 [concrete]
 // CHECK:STDOUT:   %Equal.fdb: %Equal.type.86d = struct_value () [concrete]
-// CHECK:STDOUT:   %NotEqual.type.0f4: type = fn_type @NotEqual.2 [concrete]
+// CHECK:STDOUT:   %NotEqual.type.0f4: type = fn_type @NotEqual.loc8 [concrete]
 // CHECK:STDOUT:   %NotEqual.133: %NotEqual.type.0f4 = struct_value () [concrete]
 // CHECK:STDOUT:   %EqWith.facet: %EqWith.type.04e = facet_value %C, (%EqWith.impl_witness) [concrete]
 // CHECK:STDOUT:   %TestEqual.type: type = fn_type @TestEqual [concrete]
@@ -181,7 +181,7 @@ fn TestLhsBad(a: D, b: C) -> bool {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: impl @EqWith.impl.cac: %C.ref.loc6_6 as %EqWith.type {
-// CHECK:STDOUT:   %Equal.decl: %Equal.type.86d = fn_decl @Equal.2 [concrete = constants.%Equal.fdb] {
+// CHECK:STDOUT:   %Equal.decl: %Equal.type.86d = fn_decl @Equal.loc7 [concrete = constants.%Equal.fdb] {
 // CHECK:STDOUT:     %self.patt: %pattern_type.c48 = binding_pattern self [concrete]
 // CHECK:STDOUT:     %self.param_patt: %pattern_type.c48 = value_param_pattern %self.patt, call_param0 [concrete]
 // CHECK:STDOUT:     %other.patt: %pattern_type.c48 = binding_pattern other [concrete]
@@ -201,7 +201,7 @@ fn TestLhsBad(a: D, b: C) -> bool {
 // CHECK:STDOUT:     %return.param: ref bool = out_param call_param2
 // CHECK:STDOUT:     %return: ref bool = return_slot %return.param
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %NotEqual.decl: %NotEqual.type.0f4 = fn_decl @NotEqual.2 [concrete = constants.%NotEqual.133] {
+// CHECK:STDOUT:   %NotEqual.decl: %NotEqual.type.0f4 = fn_decl @NotEqual.loc8 [concrete = constants.%NotEqual.133] {
 // CHECK:STDOUT:     %self.patt: %pattern_type.c48 = binding_pattern self [concrete]
 // CHECK:STDOUT:     %self.param_patt: %pattern_type.c48 = value_param_pattern %self.patt, call_param0 [concrete]
 // CHECK:STDOUT:     %other.patt: %pattern_type.c48 = binding_pattern other [concrete]
@@ -238,9 +238,9 @@ fn TestLhsBad(a: D, b: C) -> bool {
 // CHECK:STDOUT:   .Self = constants.%C
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Equal.2(%self.param: %C, %other.param: %C) -> bool;
+// CHECK:STDOUT: fn @Equal.loc7(%self.param: %C, %other.param: %C) -> bool;
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @NotEqual.2(%self.param: %C, %other.param: %C) -> bool;
+// CHECK:STDOUT: fn @NotEqual.loc8(%self.param: %C, %other.param: %C) -> bool;
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @TestEqual(%a.param: %C, %b.param: %C) -> bool {
 // CHECK:STDOUT: !entry:
@@ -384,9 +384,9 @@ fn TestLhsBad(a: D, b: C) -> bool {
 // CHECK:STDOUT:   %pattern_type.c48: type = pattern_type %C [concrete]
 // CHECK:STDOUT:   %Bool.type: type = fn_type @Bool [concrete]
 // CHECK:STDOUT:   %Bool: %Bool.type = struct_value () [concrete]
-// CHECK:STDOUT:   %Equal.type.86d: type = fn_type @Equal.2 [concrete]
+// CHECK:STDOUT:   %Equal.type.86d: type = fn_type @Equal.loc8 [concrete]
 // CHECK:STDOUT:   %Equal.fdb: %Equal.type.86d = struct_value () [concrete]
-// CHECK:STDOUT:   %NotEqual.type.0f4: type = fn_type @NotEqual.2 [concrete]
+// CHECK:STDOUT:   %NotEqual.type.0f4: type = fn_type @NotEqual.loc9 [concrete]
 // CHECK:STDOUT:   %NotEqual.133: %NotEqual.type.0f4 = struct_value () [concrete]
 // CHECK:STDOUT:   %pattern_type.510: type = pattern_type %D [concrete]
 // CHECK:STDOUT:   %TestRhsBad.type: type = fn_type @TestRhsBad [concrete]
@@ -469,7 +469,7 @@ fn TestLhsBad(a: D, b: C) -> bool {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: impl @EqWith.impl.cac: %C.ref.loc7_6 as %EqWith.type {
-// CHECK:STDOUT:   %Equal.decl: %Equal.type.86d = fn_decl @Equal.2 [concrete = constants.%Equal.fdb] {
+// CHECK:STDOUT:   %Equal.decl: %Equal.type.86d = fn_decl @Equal.loc8 [concrete = constants.%Equal.fdb] {
 // CHECK:STDOUT:     %self.patt: %pattern_type.c48 = binding_pattern self [concrete]
 // CHECK:STDOUT:     %self.param_patt: %pattern_type.c48 = value_param_pattern %self.patt, call_param0 [concrete]
 // CHECK:STDOUT:     %other.patt: %pattern_type.c48 = binding_pattern other [concrete]
@@ -489,7 +489,7 @@ fn TestLhsBad(a: D, b: C) -> bool {
 // CHECK:STDOUT:     %return.param: ref bool = out_param call_param2
 // CHECK:STDOUT:     %return: ref bool = return_slot %return.param
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %NotEqual.decl: %NotEqual.type.0f4 = fn_decl @NotEqual.2 [concrete = constants.%NotEqual.133] {
+// CHECK:STDOUT:   %NotEqual.decl: %NotEqual.type.0f4 = fn_decl @NotEqual.loc9 [concrete = constants.%NotEqual.133] {
 // CHECK:STDOUT:     %self.patt: %pattern_type.c48 = binding_pattern self [concrete]
 // CHECK:STDOUT:     %self.param_patt: %pattern_type.c48 = value_param_pattern %self.patt, call_param0 [concrete]
 // CHECK:STDOUT:     %other.patt: %pattern_type.c48 = binding_pattern other [concrete]
@@ -535,9 +535,9 @@ fn TestLhsBad(a: D, b: C) -> bool {
 // CHECK:STDOUT:   .Self = constants.%D
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Equal.2(%self.param: %C, %other.param: %C) -> bool;
+// CHECK:STDOUT: fn @Equal.loc8(%self.param: %C, %other.param: %C) -> bool;
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @NotEqual.2(%self.param: %C, %other.param: %C) -> bool;
+// CHECK:STDOUT: fn @NotEqual.loc9(%self.param: %C, %other.param: %C) -> bool;
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @TestRhsBad(%a.param: %C, %b.param: %D) -> bool {
 // CHECK:STDOUT: !entry:

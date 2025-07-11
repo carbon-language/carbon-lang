@@ -125,7 +125,7 @@ fn Call() {
 // CHECK:STDOUT:   %pattern_type.6de: type = pattern_type %Self.as_type [symbolic]
 // CHECK:STDOUT:   %I.impl_witness: <witness> = impl_witness file.%I.impl_witness_table [concrete]
 // CHECK:STDOUT:   %pattern_type.c48: type = pattern_type %C [concrete]
-// CHECK:STDOUT:   %F.type.5d6: type = fn_type @F.2 [concrete]
+// CHECK:STDOUT:   %F.type.5d6: type = fn_type @F.loc7 [concrete]
 // CHECK:STDOUT:   %F.a2e: %F.type.5d6 = struct_value () [concrete]
 // CHECK:STDOUT:   %I.facet: %I.type = facet_value %C, (%I.impl_witness) [concrete]
 // CHECK:STDOUT: }
@@ -167,7 +167,7 @@ fn Call() {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: impl @I.impl: %C.ref as %I.ref {
-// CHECK:STDOUT:   %F.decl: %F.type.5d6 = fn_decl @F.2 [concrete = constants.%F.a2e] {
+// CHECK:STDOUT:   %F.decl: %F.type.5d6 = fn_decl @F.loc7 [concrete = constants.%F.a2e] {
 // CHECK:STDOUT:     %self.patt: %pattern_type.c48 = binding_pattern self [concrete]
 // CHECK:STDOUT:     %self.param_patt: %pattern_type.c48 = value_param_pattern %self.patt, call_param0 [concrete]
 // CHECK:STDOUT:   } {
@@ -198,7 +198,7 @@ fn Call() {
 // CHECK:STDOUT:   fn;
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @F.2(%self.param: %C) {
+// CHECK:STDOUT: fn @F.loc7(%self.param: %C) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }

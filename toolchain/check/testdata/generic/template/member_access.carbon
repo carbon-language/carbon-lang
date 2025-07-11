@@ -423,11 +423,11 @@ fn Test(e: E) {
 // CHECK:STDOUT:   %Int.generic: %Int.type = struct_value () [concrete]
 // CHECK:STDOUT:   %i32: type = class_type @Int, @Int(%int_32) [concrete]
 // CHECK:STDOUT:   %pattern_type.7ce: type = pattern_type %i32 [concrete]
-// CHECK:STDOUT:   %F.type: type = fn_type @F.1 [concrete]
+// CHECK:STDOUT:   %F.type: type = fn_type @F.loc4 [concrete]
 // CHECK:STDOUT:   %F.c41: %F.type = struct_value () [concrete]
 // CHECK:STDOUT:   %require_complete.4ae: <witness> = require_complete_type %T [template]
 // CHECK:STDOUT:   %E: type = class_type @E [concrete]
-// CHECK:STDOUT:   %F.a8a: type = class_type @F.2 [concrete]
+// CHECK:STDOUT:   %F.a8a: type = class_type @F.loc15 [concrete]
 // CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [concrete]
 // CHECK:STDOUT:   %complete_type.357: <witness> = complete_type_witness %empty_struct_type [concrete]
 // CHECK:STDOUT:   %E.elem: type = unbound_element_type %E, %F.a8a [concrete]
@@ -436,9 +436,9 @@ fn Test(e: E) {
 // CHECK:STDOUT:   %pattern_type.a4a: type = pattern_type %E [concrete]
 // CHECK:STDOUT:   %Test.type: type = fn_type @Test [concrete]
 // CHECK:STDOUT:   %Test: %Test.type = struct_value () [concrete]
-// CHECK:STDOUT:   %F.specific_fn: <specific function> = specific_function %F.c41, @F.1(%E) [concrete]
+// CHECK:STDOUT:   %F.specific_fn: <specific function> = specific_function %F.c41, @F.loc4(%E) [concrete]
 // CHECK:STDOUT:   %inst.as_compatible: <instruction> = inst_value [concrete] {
-// CHECK:STDOUT:     %.a66: %E = as_compatible @F.1.%x.ref
+// CHECK:STDOUT:     %.a66: %E = as_compatible @F.loc4.%x.ref
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %inst.splice_block.2a2: <instruction> = inst_value [concrete] {
 // CHECK:STDOUT:     %.6c9: %F.a8a = splice_block %.e29 {
@@ -475,19 +475,19 @@ fn Test(e: E) {
 // CHECK:STDOUT:     .Test = %Test.decl
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import = import Core
-// CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F.1 [concrete = constants.%F.c41] {
+// CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F.loc4 [concrete = constants.%F.c41] {
 // CHECK:STDOUT:     %T.patt: %pattern_type.98f = symbolic_binding_pattern T, 0, template [concrete]
-// CHECK:STDOUT:     %x.patt: @F.1.%pattern_type (%pattern_type.7dcd0a.1) = binding_pattern x [concrete]
-// CHECK:STDOUT:     %x.param_patt: @F.1.%pattern_type (%pattern_type.7dcd0a.1) = value_param_pattern %x.patt, call_param0 [concrete]
+// CHECK:STDOUT:     %x.patt: @F.loc4.%pattern_type (%pattern_type.7dcd0a.1) = binding_pattern x [concrete]
+// CHECK:STDOUT:     %x.param_patt: @F.loc4.%pattern_type (%pattern_type.7dcd0a.1) = value_param_pattern %x.patt, call_param0 [concrete]
 // CHECK:STDOUT:     %return.patt: %pattern_type.7ce = return_slot_pattern [concrete]
 // CHECK:STDOUT:     %return.param_patt: %pattern_type.7ce = out_param_pattern %return.patt, call_param1 [concrete]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %int_32: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
 // CHECK:STDOUT:     %i32: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
 // CHECK:STDOUT:     %T.loc4_15.1: type = bind_symbolic_name T, 0, template [template = %T.loc4_15.2 (constants.%T)]
-// CHECK:STDOUT:     %x.param: @F.1.%T.loc4_15.2 (%T) = value_param call_param0
+// CHECK:STDOUT:     %x.param: @F.loc4.%T.loc4_15.2 (%T) = value_param call_param0
 // CHECK:STDOUT:     %T.ref: type = name_ref T, %T.loc4_15.1 [template = %T.loc4_15.2 (constants.%T)]
-// CHECK:STDOUT:     %x: @F.1.%T.loc4_15.2 (%T) = bind_name x, %x.param
+// CHECK:STDOUT:     %x: @F.loc4.%T.loc4_15.2 (%T) = bind_name x, %x.param
 // CHECK:STDOUT:     %return.param: ref %i32 = out_param call_param1
 // CHECK:STDOUT:     %return: ref %i32 = return_slot %return.param
 // CHECK:STDOUT:   }
@@ -503,7 +503,7 @@ fn Test(e: E) {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @E {
-// CHECK:STDOUT:   %F.decl: type = class_decl @F.2 [concrete = constants.%F.a8a] {} {}
+// CHECK:STDOUT:   %F.decl: type = class_decl @F.loc15 [concrete = constants.%F.a8a] {} {}
 // CHECK:STDOUT:   %F.ref: type = name_ref F, %F.decl [concrete = constants.%F.a8a]
 // CHECK:STDOUT:   %.loc16: %E.elem = field_decl n, element0 [concrete]
 // CHECK:STDOUT:   %struct_type.n: type = struct_type {.n: %F.a8a} [concrete = constants.%struct_type.n.e4c]
@@ -516,7 +516,7 @@ fn Test(e: E) {
 // CHECK:STDOUT:   .n = %.loc16
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: class @F.2 {
+// CHECK:STDOUT: class @F.loc15 {
 // CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [concrete = constants.%empty_struct_type]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [concrete = constants.%complete_type.357]
 // CHECK:STDOUT:   complete_type_witness = %complete_type
@@ -525,7 +525,7 @@ fn Test(e: E) {
 // CHECK:STDOUT:   .Self = constants.%F.a8a
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic fn @F.1(%T.loc4_15.1: type) {
+// CHECK:STDOUT: generic fn @F.loc4(%T.loc4_15.1: type) {
 // CHECK:STDOUT:   %T.loc4_15.2: type = bind_symbolic_name T, 0, template [template = %T.loc4_15.2 (constants.%T)]
 // CHECK:STDOUT:   %pattern_type: type = pattern_type %T.loc4_15.2 [template = %pattern_type (constants.%pattern_type.7dcd0a.1)]
 // CHECK:STDOUT:
@@ -536,11 +536,11 @@ fn Test(e: E) {
 // CHECK:STDOUT:   %.loc11_11.5: type = type_of_inst %.loc11_11.4 [template]
 // CHECK:STDOUT:   %.loc11_13.2: <instruction> = convert_to_value_action %.loc11_11.2, constants.%i32 [template]
 // CHECK:STDOUT:
-// CHECK:STDOUT:   fn(%x.param: @F.1.%T.loc4_15.2 (%T)) -> %i32 {
+// CHECK:STDOUT:   fn(%x.param: @F.loc4.%T.loc4_15.2 (%T)) -> %i32 {
 // CHECK:STDOUT:   !entry:
-// CHECK:STDOUT:     %x.ref: @F.1.%T.loc4_15.2 (%T) = name_ref x, %x
-// CHECK:STDOUT:     %.loc11_11.1: @F.1.%T.loc4_15.2 (%T) = splice_inst %.loc11_11.3
-// CHECK:STDOUT:     %.loc11_11.2: @F.1.%.loc11_11.5 (@F.1.%.loc11_11.5) = splice_inst %.loc11_11.4
+// CHECK:STDOUT:     %x.ref: @F.loc4.%T.loc4_15.2 (%T) = name_ref x, %x
+// CHECK:STDOUT:     %.loc11_11.1: @F.loc4.%T.loc4_15.2 (%T) = splice_inst %.loc11_11.3
+// CHECK:STDOUT:     %.loc11_11.2: @F.loc4.%.loc11_11.5 (@F.loc4.%.loc11_11.5) = splice_inst %.loc11_11.4
 // CHECK:STDOUT:     %.loc11_13.1: %i32 = splice_inst %.loc11_13.2
 // CHECK:STDOUT:     return %.loc11_13.1
 // CHECK:STDOUT:   }
@@ -550,17 +550,17 @@ fn Test(e: E) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %F.ref: %F.type = name_ref F, file.%F.decl [concrete = constants.%F.c41]
 // CHECK:STDOUT:   %e.ref: %E = name_ref e, %e
-// CHECK:STDOUT:   %F.specific_fn: <specific function> = specific_function %F.ref, @F.1(constants.%E) [concrete = constants.%F.specific_fn]
+// CHECK:STDOUT:   %F.specific_fn: <specific function> = specific_function %F.ref, @F.loc4(constants.%E) [concrete = constants.%F.specific_fn]
 // CHECK:STDOUT:   %F.call: init %i32 = call %F.specific_fn(%e.ref)
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @F.1(constants.%T) {
+// CHECK:STDOUT: specific @F.loc4(constants.%T) {
 // CHECK:STDOUT:   %T.loc4_15.2 => constants.%T
 // CHECK:STDOUT:   %pattern_type => constants.%pattern_type.7dcd0a.1
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @F.1(constants.%E) {
+// CHECK:STDOUT: specific @F.loc4(constants.%E) {
 // CHECK:STDOUT:   %T.loc4_15.2 => constants.%E
 // CHECK:STDOUT:   %pattern_type => constants.%pattern_type.a4a
 // CHECK:STDOUT:

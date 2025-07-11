@@ -208,7 +208,7 @@ fn H(c: C(InClassArgs)) { c.(I(X).F)(); }
 // CHECK:STDOUT:   %assoc0.676: %I.assoc_type.521 = assoc_entity element0, imports.%Main.import_ref.479 [concrete]
 // CHECK:STDOUT:   %I.impl_witness: <witness> = impl_witness file.%I.impl_witness_table [concrete]
 // CHECK:STDOUT:   %pattern_type.019: type = pattern_type %X [concrete]
-// CHECK:STDOUT:   %F.type.b63: type = fn_type @F.2 [concrete]
+// CHECK:STDOUT:   %F.type.b63: type = fn_type @F.loc7 [concrete]
 // CHECK:STDOUT:   %F.d5f: %F.type.b63 = struct_value () [concrete]
 // CHECK:STDOUT:   %I.facet: %I.type.e45 = facet_value %X, (%I.impl_witness) [concrete]
 // CHECK:STDOUT: }
@@ -267,7 +267,7 @@ fn H(c: C(InClassArgs)) { c.(I(X).F)(); }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: impl @I.impl: %X.ref as %I.type {
-// CHECK:STDOUT:   %F.decl: %F.type.b63 = fn_decl @F.2 [concrete = constants.%F.d5f] {
+// CHECK:STDOUT:   %F.decl: %F.type.b63 = fn_decl @F.loc7 [concrete = constants.%F.d5f] {
 // CHECK:STDOUT:     %self.patt: %pattern_type.019 = binding_pattern self [concrete]
 // CHECK:STDOUT:     %self.param_patt: %pattern_type.019 = value_param_pattern %self.patt, call_param0 [concrete]
 // CHECK:STDOUT:   } {
@@ -307,7 +307,7 @@ fn H(c: C(InClassArgs)) { c.(I(X).F)(); }
 // CHECK:STDOUT:   fn;
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @F.2(%self.param: %X) {
+// CHECK:STDOUT: fn @F.loc7(%self.param: %X) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
@@ -540,7 +540,7 @@ fn H(c: C(InClassArgs)) { c.(I(X).F)(); }
 // CHECK:STDOUT:   %assoc0.8c1: %I.assoc_type.2db = assoc_entity element0, imports.%Main.import_ref.479 [concrete]
 // CHECK:STDOUT:   %I.impl_witness: <witness> = impl_witness file.%I.impl_witness_table [concrete]
 // CHECK:STDOUT:   %pattern_type.e06: type = pattern_type %C.23b [concrete]
-// CHECK:STDOUT:   %F.type.fab: type = fn_type @F.2 [concrete]
+// CHECK:STDOUT:   %F.type.fab: type = fn_type @F.loc7 [concrete]
 // CHECK:STDOUT:   %F.7ab: %F.type.fab = struct_value () [concrete]
 // CHECK:STDOUT:   %I.facet: %I.type.45c = facet_value %C.23b, (%I.impl_witness) [concrete]
 // CHECK:STDOUT: }
@@ -604,7 +604,7 @@ fn H(c: C(InClassArgs)) { c.(I(X).F)(); }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: impl @I.impl: %C as %I.type {
-// CHECK:STDOUT:   %F.decl: %F.type.fab = fn_decl @F.2 [concrete = constants.%F.7ab] {
+// CHECK:STDOUT:   %F.decl: %F.type.fab = fn_decl @F.loc7 [concrete = constants.%F.7ab] {
 // CHECK:STDOUT:     %self.patt: %pattern_type.e06 = binding_pattern self [concrete]
 // CHECK:STDOUT:     %self.param_patt: %pattern_type.e06 = value_param_pattern %self.patt, call_param0 [concrete]
 // CHECK:STDOUT:   } {
@@ -657,7 +657,7 @@ fn H(c: C(InClassArgs)) { c.(I(X).F)(); }
 // CHECK:STDOUT:   fn;
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @F.2(%self.param: %C.23b) {
+// CHECK:STDOUT: fn @F.loc7(%self.param: %C.23b) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }

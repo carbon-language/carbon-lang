@@ -96,13 +96,13 @@ fn TestGreaterEqual(a: D, b: D) -> bool {
 // CHECK:STDOUT:   %pattern_type.c48: type = pattern_type %C [concrete]
 // CHECK:STDOUT:   %Bool.type: type = fn_type @Bool [concrete]
 // CHECK:STDOUT:   %Bool: %Bool.type = struct_value () [concrete]
-// CHECK:STDOUT:   %Less.type.e31: type = fn_type @Less.2 [concrete]
+// CHECK:STDOUT:   %Less.type.e31: type = fn_type @Less.loc7 [concrete]
 // CHECK:STDOUT:   %Less.076: %Less.type.e31 = struct_value () [concrete]
-// CHECK:STDOUT:   %LessOrEquivalent.type.873: type = fn_type @LessOrEquivalent.2 [concrete]
+// CHECK:STDOUT:   %LessOrEquivalent.type.873: type = fn_type @LessOrEquivalent.loc8 [concrete]
 // CHECK:STDOUT:   %LessOrEquivalent.4d6: %LessOrEquivalent.type.873 = struct_value () [concrete]
-// CHECK:STDOUT:   %Greater.type.54b: type = fn_type @Greater.2 [concrete]
+// CHECK:STDOUT:   %Greater.type.54b: type = fn_type @Greater.loc9 [concrete]
 // CHECK:STDOUT:   %Greater.548: %Greater.type.54b = struct_value () [concrete]
-// CHECK:STDOUT:   %GreaterOrEquivalent.type.311: type = fn_type @GreaterOrEquivalent.2 [concrete]
+// CHECK:STDOUT:   %GreaterOrEquivalent.type.311: type = fn_type @GreaterOrEquivalent.loc10 [concrete]
 // CHECK:STDOUT:   %GreaterOrEquivalent.1b2: %GreaterOrEquivalent.type.311 = struct_value () [concrete]
 // CHECK:STDOUT:   %OrderedWith.facet: %OrderedWith.type.914 = facet_value %C, (%OrderedWith.impl_witness) [concrete]
 // CHECK:STDOUT:   %TestLess.type: type = fn_type @TestLess [concrete]
@@ -233,7 +233,7 @@ fn TestGreaterEqual(a: D, b: D) -> bool {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: impl @OrderedWith.impl.ecd: %C.ref.loc6_6 as %OrderedWith.type {
-// CHECK:STDOUT:   %Less.decl: %Less.type.e31 = fn_decl @Less.2 [concrete = constants.%Less.076] {
+// CHECK:STDOUT:   %Less.decl: %Less.type.e31 = fn_decl @Less.loc7 [concrete = constants.%Less.076] {
 // CHECK:STDOUT:     %self.patt: %pattern_type.c48 = binding_pattern self [concrete]
 // CHECK:STDOUT:     %self.param_patt: %pattern_type.c48 = value_param_pattern %self.patt, call_param0 [concrete]
 // CHECK:STDOUT:     %other.patt: %pattern_type.c48 = binding_pattern other [concrete]
@@ -253,7 +253,7 @@ fn TestGreaterEqual(a: D, b: D) -> bool {
 // CHECK:STDOUT:     %return.param: ref bool = out_param call_param2
 // CHECK:STDOUT:     %return: ref bool = return_slot %return.param
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %LessOrEquivalent.decl: %LessOrEquivalent.type.873 = fn_decl @LessOrEquivalent.2 [concrete = constants.%LessOrEquivalent.4d6] {
+// CHECK:STDOUT:   %LessOrEquivalent.decl: %LessOrEquivalent.type.873 = fn_decl @LessOrEquivalent.loc8 [concrete = constants.%LessOrEquivalent.4d6] {
 // CHECK:STDOUT:     %self.patt: %pattern_type.c48 = binding_pattern self [concrete]
 // CHECK:STDOUT:     %self.param_patt: %pattern_type.c48 = value_param_pattern %self.patt, call_param0 [concrete]
 // CHECK:STDOUT:     %other.patt: %pattern_type.c48 = binding_pattern other [concrete]
@@ -273,7 +273,7 @@ fn TestGreaterEqual(a: D, b: D) -> bool {
 // CHECK:STDOUT:     %return.param: ref bool = out_param call_param2
 // CHECK:STDOUT:     %return: ref bool = return_slot %return.param
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %Greater.decl: %Greater.type.54b = fn_decl @Greater.2 [concrete = constants.%Greater.548] {
+// CHECK:STDOUT:   %Greater.decl: %Greater.type.54b = fn_decl @Greater.loc9 [concrete = constants.%Greater.548] {
 // CHECK:STDOUT:     %self.patt: %pattern_type.c48 = binding_pattern self [concrete]
 // CHECK:STDOUT:     %self.param_patt: %pattern_type.c48 = value_param_pattern %self.patt, call_param0 [concrete]
 // CHECK:STDOUT:     %other.patt: %pattern_type.c48 = binding_pattern other [concrete]
@@ -293,7 +293,7 @@ fn TestGreaterEqual(a: D, b: D) -> bool {
 // CHECK:STDOUT:     %return.param: ref bool = out_param call_param2
 // CHECK:STDOUT:     %return: ref bool = return_slot %return.param
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %GreaterOrEquivalent.decl: %GreaterOrEquivalent.type.311 = fn_decl @GreaterOrEquivalent.2 [concrete = constants.%GreaterOrEquivalent.1b2] {
+// CHECK:STDOUT:   %GreaterOrEquivalent.decl: %GreaterOrEquivalent.type.311 = fn_decl @GreaterOrEquivalent.loc10 [concrete = constants.%GreaterOrEquivalent.1b2] {
 // CHECK:STDOUT:     %self.patt: %pattern_type.c48 = binding_pattern self [concrete]
 // CHECK:STDOUT:     %self.param_patt: %pattern_type.c48 = value_param_pattern %self.patt, call_param0 [concrete]
 // CHECK:STDOUT:     %other.patt: %pattern_type.c48 = binding_pattern other [concrete]
@@ -332,13 +332,13 @@ fn TestGreaterEqual(a: D, b: D) -> bool {
 // CHECK:STDOUT:   .Self = constants.%C
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Less.2(%self.param: %C, %other.param: %C) -> bool;
+// CHECK:STDOUT: fn @Less.loc7(%self.param: %C, %other.param: %C) -> bool;
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @LessOrEquivalent.2(%self.param: %C, %other.param: %C) -> bool;
+// CHECK:STDOUT: fn @LessOrEquivalent.loc8(%self.param: %C, %other.param: %C) -> bool;
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Greater.2(%self.param: %C, %other.param: %C) -> bool;
+// CHECK:STDOUT: fn @Greater.loc9(%self.param: %C, %other.param: %C) -> bool;
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @GreaterOrEquivalent.2(%self.param: %C, %other.param: %C) -> bool;
+// CHECK:STDOUT: fn @GreaterOrEquivalent.loc10(%self.param: %C, %other.param: %C) -> bool;
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @TestLess(%a.param: %C, %b.param: %C) -> bool {
 // CHECK:STDOUT: !entry:

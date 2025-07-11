@@ -212,7 +212,7 @@ class B {}
 // CHECK:STDOUT:   %C.f794a0.1: type = class_type @C.1 [concrete]
 // CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [concrete]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [concrete]
-// CHECK:STDOUT:   %C.f794a0.2: type = class_type @C.2 [concrete]
+// CHECK:STDOUT:   %C.f794a0.2: type = class_type @C.loc12 [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -227,7 +227,7 @@ class B {}
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %default.import.loc2_31.1 = import <none>
 // CHECK:STDOUT:   %default.import.loc2_31.2 = import <none>
-// CHECK:STDOUT:   %C.decl: type = class_decl @C.2 [concrete = constants.%C.f794a0.2] {} {}
+// CHECK:STDOUT:   %C.decl: type = class_decl @C.loc12 [concrete = constants.%C.f794a0.2] {} {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @C.1 [from "redef_after_def.carbon"] {
@@ -237,7 +237,7 @@ class B {}
 // CHECK:STDOUT:   .Self = imports.%Main.import_ref.2c4
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: class @C.2 {
+// CHECK:STDOUT: class @C.loc12 {
 // CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [concrete = constants.%empty_struct_type]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [concrete = constants.%complete_type]
 // CHECK:STDOUT:   complete_type_witness = %complete_type

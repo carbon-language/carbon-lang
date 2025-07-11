@@ -30,13 +30,13 @@ class X {
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %A.type: type = facet_type <@A> [concrete]
 // CHECK:STDOUT:   %Self: %A.type = bind_symbolic_name Self, 0 [symbolic]
-// CHECK:STDOUT:   %B.type.1c3: type = fn_type @B.1 [concrete]
+// CHECK:STDOUT:   %B.type.1c3: type = fn_type @B.loc16 [concrete]
 // CHECK:STDOUT:   %B.b08: %B.type.1c3 = struct_value () [concrete]
 // CHECK:STDOUT:   %A.assoc_type: type = assoc_entity_type @A [concrete]
 // CHECK:STDOUT:   %assoc0: %A.assoc_type = assoc_entity element0, @A.%B.decl [concrete]
 // CHECK:STDOUT:   %X: type = class_type @X [concrete]
 // CHECK:STDOUT:   %A.impl_witness: <witness> = impl_witness @X.%A.impl_witness_table [concrete]
-// CHECK:STDOUT:   %B.type.d47: type = fn_type @B.2 [concrete]
+// CHECK:STDOUT:   %B.type.d47: type = fn_type @B.loc21 [concrete]
 // CHECK:STDOUT:   %B.4af: %B.type.d47 = struct_value () [concrete]
 // CHECK:STDOUT:   %F.type: type = fn_type @F [concrete]
 // CHECK:STDOUT:   %F: %F.type = struct_value () [concrete]
@@ -56,7 +56,7 @@ class X {
 // CHECK:STDOUT:
 // CHECK:STDOUT: interface @A {
 // CHECK:STDOUT:   %Self: %A.type = bind_symbolic_name Self, 0 [symbolic = constants.%Self]
-// CHECK:STDOUT:   %B.decl: %B.type.1c3 = fn_decl @B.1 [concrete = constants.%B.b08] {} {}
+// CHECK:STDOUT:   %B.decl: %B.type.1c3 = fn_decl @B.loc16 [concrete = constants.%B.b08] {} {}
 // CHECK:STDOUT:   %assoc0: %A.assoc_type = assoc_entity element0, %B.decl [concrete = constants.%assoc0]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
@@ -66,7 +66,7 @@ class X {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: impl @A.impl: %Self.ref as %A.ref {
-// CHECK:STDOUT:   %B.decl: %B.type.d47 = fn_decl @B.2 [concrete = constants.%B.4af] {} {}
+// CHECK:STDOUT:   %B.decl: %B.type.d47 = fn_decl @B.loc21 [concrete = constants.%B.4af] {} {}
 // CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [concrete = constants.%F] {} {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
@@ -91,11 +91,11 @@ class X {
 // CHECK:STDOUT:   .A = <poisoned>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic fn @B.1(@A.%Self: %A.type) {
+// CHECK:STDOUT: generic fn @B.loc16(@A.%Self: %A.type) {
 // CHECK:STDOUT:   fn();
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @B.2() {
+// CHECK:STDOUT: fn @B.loc21() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
@@ -105,7 +105,7 @@ class X {
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @B.1(constants.%Self) {}
+// CHECK:STDOUT: specific @B.loc16(constants.%Self) {}
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @B.1(constants.%A.facet) {}
+// CHECK:STDOUT: specific @B.loc16(constants.%A.facet) {}
 // CHECK:STDOUT:

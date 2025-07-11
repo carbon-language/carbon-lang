@@ -337,11 +337,11 @@ interface I {
 // CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [concrete]
 // CHECK:STDOUT:   %I.impl_witness: <witness> = impl_witness file.%I.impl_witness_table [concrete]
 // CHECK:STDOUT:   %Self: %I.type = bind_symbolic_name Self, 0 [symbolic]
-// CHECK:STDOUT:   %G.type.ccd: type = fn_type @G.1 [concrete]
+// CHECK:STDOUT:   %G.type.ccd: type = fn_type @G.loc7 [concrete]
 // CHECK:STDOUT:   %G.600: %G.type.ccd = struct_value () [concrete]
 // CHECK:STDOUT:   %I.assoc_type: type = assoc_entity_type @I [concrete]
 // CHECK:STDOUT:   %assoc0: %I.assoc_type = assoc_entity element0, @I.%G.decl [concrete]
-// CHECK:STDOUT:   %G.type.d6f: type = fn_type @G.2 [concrete]
+// CHECK:STDOUT:   %G.type.d6f: type = fn_type @G.loc10 [concrete]
 // CHECK:STDOUT:   %G.d07: %G.type.d6f = struct_value () [concrete]
 // CHECK:STDOUT:   %I.facet: %I.type = facet_value %empty_struct_type, (%I.impl_witness) [concrete]
 // CHECK:STDOUT: }
@@ -377,7 +377,7 @@ interface I {
 // CHECK:STDOUT:
 // CHECK:STDOUT: interface @I {
 // CHECK:STDOUT:   %Self: %I.type = bind_symbolic_name Self, 0 [symbolic = constants.%Self]
-// CHECK:STDOUT:   %G.decl: %G.type.ccd = fn_decl @G.1 [concrete = constants.%G.600] {} {}
+// CHECK:STDOUT:   %G.decl: %G.type.ccd = fn_decl @G.loc7 [concrete = constants.%G.600] {} {}
 // CHECK:STDOUT:   %assoc0: %I.assoc_type = assoc_entity element0, %G.decl [concrete = constants.%assoc0]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
@@ -387,25 +387,25 @@ interface I {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: impl @I.impl: %.loc4_7.2 as %I.ref.loc4 {
-// CHECK:STDOUT:   %G.decl: %G.type.d6f = fn_decl @G.2 [concrete = constants.%G.d07] {} {}
+// CHECK:STDOUT:   %G.decl: %G.type.d6f = fn_decl @G.loc10 [concrete = constants.%G.d07] {} {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .G = %G.decl
 // CHECK:STDOUT:   witness = file.%I.impl_witness
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic fn @G.1(@I.%Self: %I.type) {
+// CHECK:STDOUT: generic fn @G.loc7(@I.%Self: %I.type) {
 // CHECK:STDOUT:   fn();
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @G.2() {
+// CHECK:STDOUT: fn @G.loc10() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @G.1(constants.%Self) {}
+// CHECK:STDOUT: specific @G.loc7(constants.%Self) {}
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @G.1(constants.%I.facet) {}
+// CHECK:STDOUT: specific @G.loc7(constants.%I.facet) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- combine.carbon
 // CHECK:STDOUT:
