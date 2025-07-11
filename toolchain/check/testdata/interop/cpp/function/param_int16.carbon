@@ -331,10 +331,10 @@ fn F() {
 // CHECK:STDOUT:   %As.type.a96: type = facet_type <@As, @As(%i16)> [concrete]
 // CHECK:STDOUT:   %Convert.type.be5: type = fn_type @Convert.1, @As(%i16) [concrete]
 // CHECK:STDOUT:   %To: Core.IntLiteral = bind_symbolic_name To, 0 [symbolic]
-// CHECK:STDOUT:   %Convert.type.062: type = fn_type @Convert.5, @impl.686(%To) [symbolic]
+// CHECK:STDOUT:   %Convert.type.062: type = fn_type @Convert.5, @As.impl.686(%To) [symbolic]
 // CHECK:STDOUT:   %Convert.527: %Convert.type.062 = struct_value () [symbolic]
-// CHECK:STDOUT:   %As.impl_witness.0ef: <witness> = impl_witness imports.%As.impl_witness_table.eb4, @impl.686(%int_16) [concrete]
-// CHECK:STDOUT:   %Convert.type.172: type = fn_type @Convert.5, @impl.686(%int_16) [concrete]
+// CHECK:STDOUT:   %As.impl_witness.0ef: <witness> = impl_witness imports.%As.impl_witness_table.eb4, @As.impl.686(%int_16) [concrete]
+// CHECK:STDOUT:   %Convert.type.172: type = fn_type @Convert.5, @As.impl.686(%int_16) [concrete]
 // CHECK:STDOUT:   %Convert.489: %Convert.type.172 = struct_value () [concrete]
 // CHECK:STDOUT:   %As.facet: %As.type.a96 = facet_value Core.IntLiteral, (%As.impl_witness.0ef) [concrete]
 // CHECK:STDOUT:   %.91d: type = fn_type_with_self_type %Convert.type.be5, %As.facet [concrete]
@@ -354,8 +354,8 @@ fn F() {
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     <elided>
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %Core.import_ref.78a: @impl.686.%Convert.type (%Convert.type.062) = import_ref Core//prelude/parts/int, loc25_39, loaded [symbolic = @impl.686.%Convert (constants.%Convert.527)]
-// CHECK:STDOUT:   %As.impl_witness_table.eb4 = impl_witness_table (%Core.import_ref.78a), @impl.686 [concrete]
+// CHECK:STDOUT:   %Core.import_ref.78a: @As.impl.686.%Convert.type (%Convert.type.062) = import_ref Core//prelude/parts/int, loc25_39, loaded [symbolic = @As.impl.686.%Convert (constants.%Convert.527)]
+// CHECK:STDOUT:   %As.impl_witness_table.eb4 = impl_witness_table (%Core.import_ref.78a), @As.impl.686 [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F() {
@@ -388,10 +388,10 @@ fn F() {
 // CHECK:STDOUT:   %ImplicitAs.type.adb: type = facet_type <@ImplicitAs, @ImplicitAs(%i16)> [concrete]
 // CHECK:STDOUT:   %Convert.type.fa6: type = fn_type @Convert.1, @ImplicitAs(%i16) [concrete]
 // CHECK:STDOUT:   %To: Core.IntLiteral = bind_symbolic_name To, 0 [symbolic]
-// CHECK:STDOUT:   %Convert.type.0f9: type = fn_type @Convert.2, @impl.4f9(%To) [symbolic]
+// CHECK:STDOUT:   %Convert.type.0f9: type = fn_type @Convert.2, @ImplicitAs.impl.4f9(%To) [symbolic]
 // CHECK:STDOUT:   %Convert.f06: %Convert.type.0f9 = struct_value () [symbolic]
-// CHECK:STDOUT:   %ImplicitAs.impl_witness.97b: <witness> = impl_witness imports.%ImplicitAs.impl_witness_table.a2f, @impl.4f9(%int_16) [concrete]
-// CHECK:STDOUT:   %Convert.type.33c: type = fn_type @Convert.2, @impl.4f9(%int_16) [concrete]
+// CHECK:STDOUT:   %ImplicitAs.impl_witness.97b: <witness> = impl_witness imports.%ImplicitAs.impl_witness_table.a2f, @ImplicitAs.impl.4f9(%int_16) [concrete]
+// CHECK:STDOUT:   %Convert.type.33c: type = fn_type @Convert.2, @ImplicitAs.impl.4f9(%int_16) [concrete]
 // CHECK:STDOUT:   %Convert.d0a: %Convert.type.33c = struct_value () [concrete]
 // CHECK:STDOUT:   %ImplicitAs.facet: %ImplicitAs.type.adb = facet_value Core.IntLiteral, (%ImplicitAs.impl_witness.97b) [concrete]
 // CHECK:STDOUT:   %.236: type = fn_type_with_self_type %Convert.type.fa6, %ImplicitAs.facet [concrete]
@@ -411,8 +411,8 @@ fn F() {
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     <elided>
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %Core.import_ref.a5b: @impl.4f9.%Convert.type (%Convert.type.0f9) = import_ref Core//prelude/parts/int, loc16_39, loaded [symbolic = @impl.4f9.%Convert (constants.%Convert.f06)]
-// CHECK:STDOUT:   %ImplicitAs.impl_witness_table.a2f = impl_witness_table (%Core.import_ref.a5b), @impl.4f9 [concrete]
+// CHECK:STDOUT:   %Core.import_ref.a5b: @ImplicitAs.impl.4f9.%Convert.type (%Convert.type.0f9) = import_ref Core//prelude/parts/int, loc16_39, loaded [symbolic = @ImplicitAs.impl.4f9.%Convert (constants.%Convert.f06)]
+// CHECK:STDOUT:   %ImplicitAs.impl_witness_table.a2f = impl_witness_table (%Core.import_ref.a5b), @ImplicitAs.impl.4f9 [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F() {
@@ -452,10 +452,10 @@ fn F() {
 // CHECK:STDOUT:   %ImplicitAs.type.adb: type = facet_type <@ImplicitAs, @ImplicitAs(%i16)> [concrete]
 // CHECK:STDOUT:   %Convert.type.fa6: type = fn_type @Convert.1, @ImplicitAs(%i16) [concrete]
 // CHECK:STDOUT:   %To: Core.IntLiteral = bind_symbolic_name To, 0 [symbolic]
-// CHECK:STDOUT:   %Convert.type.0f9: type = fn_type @Convert.2, @impl.4f9(%To) [symbolic]
+// CHECK:STDOUT:   %Convert.type.0f9: type = fn_type @Convert.2, @ImplicitAs.impl.4f9(%To) [symbolic]
 // CHECK:STDOUT:   %Convert.f06: %Convert.type.0f9 = struct_value () [symbolic]
-// CHECK:STDOUT:   %ImplicitAs.impl_witness.97b: <witness> = impl_witness imports.%ImplicitAs.impl_witness_table.a2f, @impl.4f9(%int_16) [concrete]
-// CHECK:STDOUT:   %Convert.type.33c: type = fn_type @Convert.2, @impl.4f9(%int_16) [concrete]
+// CHECK:STDOUT:   %ImplicitAs.impl_witness.97b: <witness> = impl_witness imports.%ImplicitAs.impl_witness_table.a2f, @ImplicitAs.impl.4f9(%int_16) [concrete]
+// CHECK:STDOUT:   %Convert.type.33c: type = fn_type @Convert.2, @ImplicitAs.impl.4f9(%int_16) [concrete]
 // CHECK:STDOUT:   %Convert.d0a: %Convert.type.33c = struct_value () [concrete]
 // CHECK:STDOUT:   %ImplicitAs.facet: %ImplicitAs.type.adb = facet_value Core.IntLiteral, (%ImplicitAs.impl_witness.97b) [concrete]
 // CHECK:STDOUT:   %.236: type = fn_type_with_self_type %Convert.type.fa6, %ImplicitAs.facet [concrete]
@@ -477,9 +477,9 @@ fn F() {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import_ref.abd = import_ref Core//prelude/parts/int_literal, loc13_50, unloaded
 // CHECK:STDOUT:   %Core.import_ref.5e6: %Op.type.18a = import_ref Core//prelude/parts/int_literal, loc14_31, loaded [concrete = constants.%Op.99f]
-// CHECK:STDOUT:   %Negate.impl_witness_table.b22 = impl_witness_table (%Core.import_ref.abd, %Core.import_ref.5e6), @impl.0ef [concrete]
-// CHECK:STDOUT:   %Core.import_ref.a5b: @impl.4f9.%Convert.type (%Convert.type.0f9) = import_ref Core//prelude/parts/int, loc16_39, loaded [symbolic = @impl.4f9.%Convert (constants.%Convert.f06)]
-// CHECK:STDOUT:   %ImplicitAs.impl_witness_table.a2f = impl_witness_table (%Core.import_ref.a5b), @impl.4f9 [concrete]
+// CHECK:STDOUT:   %Negate.impl_witness_table.b22 = impl_witness_table (%Core.import_ref.abd, %Core.import_ref.5e6), @Negate.impl.0ef [concrete]
+// CHECK:STDOUT:   %Core.import_ref.a5b: @ImplicitAs.impl.4f9.%Convert.type (%Convert.type.0f9) = import_ref Core//prelude/parts/int, loc16_39, loaded [symbolic = @ImplicitAs.impl.4f9.%Convert (constants.%Convert.f06)]
+// CHECK:STDOUT:   %ImplicitAs.impl_witness_table.a2f = impl_witness_table (%Core.import_ref.a5b), @ImplicitAs.impl.4f9 [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F() {
@@ -515,10 +515,10 @@ fn F() {
 // CHECK:STDOUT:   %As.type.a96: type = facet_type <@As, @As(%i16)> [concrete]
 // CHECK:STDOUT:   %Convert.type.be5: type = fn_type @Convert.1, @As(%i16) [concrete]
 // CHECK:STDOUT:   %To: Core.IntLiteral = bind_symbolic_name To, 0 [symbolic]
-// CHECK:STDOUT:   %Convert.type.062: type = fn_type @Convert.5, @impl.686(%To) [symbolic]
+// CHECK:STDOUT:   %Convert.type.062: type = fn_type @Convert.5, @As.impl.686(%To) [symbolic]
 // CHECK:STDOUT:   %Convert.527: %Convert.type.062 = struct_value () [symbolic]
-// CHECK:STDOUT:   %As.impl_witness.0ef: <witness> = impl_witness imports.%As.impl_witness_table.eb4, @impl.686(%int_16) [concrete]
-// CHECK:STDOUT:   %Convert.type.172: type = fn_type @Convert.5, @impl.686(%int_16) [concrete]
+// CHECK:STDOUT:   %As.impl_witness.0ef: <witness> = impl_witness imports.%As.impl_witness_table.eb4, @As.impl.686(%int_16) [concrete]
+// CHECK:STDOUT:   %Convert.type.172: type = fn_type @Convert.5, @As.impl.686(%int_16) [concrete]
 // CHECK:STDOUT:   %Convert.489: %Convert.type.172 = struct_value () [concrete]
 // CHECK:STDOUT:   %As.facet: %As.type.a96 = facet_value Core.IntLiteral, (%As.impl_witness.0ef) [concrete]
 // CHECK:STDOUT:   %.91d: type = fn_type_with_self_type %Convert.type.be5, %As.facet [concrete]
@@ -538,8 +538,8 @@ fn F() {
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     <elided>
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %Core.import_ref.78a: @impl.686.%Convert.type (%Convert.type.062) = import_ref Core//prelude/parts/int, loc25_39, loaded [symbolic = @impl.686.%Convert (constants.%Convert.527)]
-// CHECK:STDOUT:   %As.impl_witness_table.eb4 = impl_witness_table (%Core.import_ref.78a), @impl.686 [concrete]
+// CHECK:STDOUT:   %Core.import_ref.78a: @As.impl.686.%Convert.type (%Convert.type.062) = import_ref Core//prelude/parts/int, loc25_39, loaded [symbolic = @As.impl.686.%Convert (constants.%Convert.527)]
+// CHECK:STDOUT:   %As.impl_witness_table.eb4 = impl_witness_table (%Core.import_ref.78a), @As.impl.686 [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F() {
@@ -572,10 +572,10 @@ fn F() {
 // CHECK:STDOUT:   %As.type.a96: type = facet_type <@As, @As(%i16)> [concrete]
 // CHECK:STDOUT:   %Convert.type.be5: type = fn_type @Convert.1, @As(%i16) [concrete]
 // CHECK:STDOUT:   %To: Core.IntLiteral = bind_symbolic_name To, 0 [symbolic]
-// CHECK:STDOUT:   %Convert.type.062: type = fn_type @Convert.5, @impl.686(%To) [symbolic]
+// CHECK:STDOUT:   %Convert.type.062: type = fn_type @Convert.5, @As.impl.686(%To) [symbolic]
 // CHECK:STDOUT:   %Convert.527: %Convert.type.062 = struct_value () [symbolic]
-// CHECK:STDOUT:   %As.impl_witness.0ef: <witness> = impl_witness imports.%As.impl_witness_table.eb4, @impl.686(%int_16) [concrete]
-// CHECK:STDOUT:   %Convert.type.172: type = fn_type @Convert.5, @impl.686(%int_16) [concrete]
+// CHECK:STDOUT:   %As.impl_witness.0ef: <witness> = impl_witness imports.%As.impl_witness_table.eb4, @As.impl.686(%int_16) [concrete]
+// CHECK:STDOUT:   %Convert.type.172: type = fn_type @Convert.5, @As.impl.686(%int_16) [concrete]
 // CHECK:STDOUT:   %Convert.489: %Convert.type.172 = struct_value () [concrete]
 // CHECK:STDOUT:   %As.facet: %As.type.a96 = facet_value Core.IntLiteral, (%As.impl_witness.0ef) [concrete]
 // CHECK:STDOUT:   %.91d: type = fn_type_with_self_type %Convert.type.be5, %As.facet [concrete]
@@ -595,8 +595,8 @@ fn F() {
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     <elided>
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %Core.import_ref.78a: @impl.686.%Convert.type (%Convert.type.062) = import_ref Core//prelude/parts/int, loc25_39, loaded [symbolic = @impl.686.%Convert (constants.%Convert.527)]
-// CHECK:STDOUT:   %As.impl_witness_table.eb4 = impl_witness_table (%Core.import_ref.78a), @impl.686 [concrete]
+// CHECK:STDOUT:   %Core.import_ref.78a: @As.impl.686.%Convert.type (%Convert.type.062) = import_ref Core//prelude/parts/int, loc25_39, loaded [symbolic = @As.impl.686.%Convert (constants.%Convert.527)]
+// CHECK:STDOUT:   %As.impl_witness_table.eb4 = impl_witness_table (%Core.import_ref.78a), @As.impl.686 [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F() {
@@ -629,10 +629,10 @@ fn F() {
 // CHECK:STDOUT:   %As.type.a96: type = facet_type <@As, @As(%i16)> [concrete]
 // CHECK:STDOUT:   %Convert.type.be5: type = fn_type @Convert.1, @As(%i16) [concrete]
 // CHECK:STDOUT:   %To: Core.IntLiteral = bind_symbolic_name To, 0 [symbolic]
-// CHECK:STDOUT:   %Convert.type.062: type = fn_type @Convert.5, @impl.686(%To) [symbolic]
+// CHECK:STDOUT:   %Convert.type.062: type = fn_type @Convert.5, @As.impl.686(%To) [symbolic]
 // CHECK:STDOUT:   %Convert.527: %Convert.type.062 = struct_value () [symbolic]
-// CHECK:STDOUT:   %As.impl_witness.0ef: <witness> = impl_witness imports.%As.impl_witness_table.eb4, @impl.686(%int_16) [concrete]
-// CHECK:STDOUT:   %Convert.type.172: type = fn_type @Convert.5, @impl.686(%int_16) [concrete]
+// CHECK:STDOUT:   %As.impl_witness.0ef: <witness> = impl_witness imports.%As.impl_witness_table.eb4, @As.impl.686(%int_16) [concrete]
+// CHECK:STDOUT:   %Convert.type.172: type = fn_type @Convert.5, @As.impl.686(%int_16) [concrete]
 // CHECK:STDOUT:   %Convert.489: %Convert.type.172 = struct_value () [concrete]
 // CHECK:STDOUT:   %As.facet: %As.type.a96 = facet_value Core.IntLiteral, (%As.impl_witness.0ef) [concrete]
 // CHECK:STDOUT:   %.91d: type = fn_type_with_self_type %Convert.type.be5, %As.facet [concrete]
@@ -652,8 +652,8 @@ fn F() {
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     <elided>
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %Core.import_ref.78a: @impl.686.%Convert.type (%Convert.type.062) = import_ref Core//prelude/parts/int, loc25_39, loaded [symbolic = @impl.686.%Convert (constants.%Convert.527)]
-// CHECK:STDOUT:   %As.impl_witness_table.eb4 = impl_witness_table (%Core.import_ref.78a), @impl.686 [concrete]
+// CHECK:STDOUT:   %Core.import_ref.78a: @As.impl.686.%Convert.type (%Convert.type.062) = import_ref Core//prelude/parts/int, loc25_39, loaded [symbolic = @As.impl.686.%Convert (constants.%Convert.527)]
+// CHECK:STDOUT:   %As.impl_witness_table.eb4 = impl_witness_table (%Core.import_ref.78a), @As.impl.686 [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F() {
@@ -686,10 +686,10 @@ fn F() {
 // CHECK:STDOUT:   %As.type.a96: type = facet_type <@As, @As(%i16)> [concrete]
 // CHECK:STDOUT:   %Convert.type.be5: type = fn_type @Convert.1, @As(%i16) [concrete]
 // CHECK:STDOUT:   %To: Core.IntLiteral = bind_symbolic_name To, 0 [symbolic]
-// CHECK:STDOUT:   %Convert.type.062: type = fn_type @Convert.5, @impl.686(%To) [symbolic]
+// CHECK:STDOUT:   %Convert.type.062: type = fn_type @Convert.5, @As.impl.686(%To) [symbolic]
 // CHECK:STDOUT:   %Convert.527: %Convert.type.062 = struct_value () [symbolic]
-// CHECK:STDOUT:   %As.impl_witness.0ef: <witness> = impl_witness imports.%As.impl_witness_table.eb4, @impl.686(%int_16) [concrete]
-// CHECK:STDOUT:   %Convert.type.172: type = fn_type @Convert.5, @impl.686(%int_16) [concrete]
+// CHECK:STDOUT:   %As.impl_witness.0ef: <witness> = impl_witness imports.%As.impl_witness_table.eb4, @As.impl.686(%int_16) [concrete]
+// CHECK:STDOUT:   %Convert.type.172: type = fn_type @Convert.5, @As.impl.686(%int_16) [concrete]
 // CHECK:STDOUT:   %Convert.489: %Convert.type.172 = struct_value () [concrete]
 // CHECK:STDOUT:   %As.facet: %As.type.a96 = facet_value Core.IntLiteral, (%As.impl_witness.0ef) [concrete]
 // CHECK:STDOUT:   %.91d: type = fn_type_with_self_type %Convert.type.be5, %As.facet [concrete]
@@ -709,8 +709,8 @@ fn F() {
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     <elided>
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %Core.import_ref.78a: @impl.686.%Convert.type (%Convert.type.062) = import_ref Core//prelude/parts/int, loc25_39, loaded [symbolic = @impl.686.%Convert (constants.%Convert.527)]
-// CHECK:STDOUT:   %As.impl_witness_table.eb4 = impl_witness_table (%Core.import_ref.78a), @impl.686 [concrete]
+// CHECK:STDOUT:   %Core.import_ref.78a: @As.impl.686.%Convert.type (%Convert.type.062) = import_ref Core//prelude/parts/int, loc25_39, loaded [symbolic = @As.impl.686.%Convert (constants.%Convert.527)]
+// CHECK:STDOUT:   %As.impl_witness_table.eb4 = impl_witness_table (%Core.import_ref.78a), @As.impl.686 [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F() {
@@ -740,10 +740,10 @@ fn F() {
 // CHECK:STDOUT:   %As.type.a96: type = facet_type <@As, @As(%i16)> [concrete]
 // CHECK:STDOUT:   %Convert.type.be5: type = fn_type @Convert.1, @As(%i16) [concrete]
 // CHECK:STDOUT:   %To: Core.IntLiteral = bind_symbolic_name To, 0 [symbolic]
-// CHECK:STDOUT:   %Convert.type.062: type = fn_type @Convert.5, @impl.686(%To) [symbolic]
+// CHECK:STDOUT:   %Convert.type.062: type = fn_type @Convert.5, @As.impl.686(%To) [symbolic]
 // CHECK:STDOUT:   %Convert.527: %Convert.type.062 = struct_value () [symbolic]
-// CHECK:STDOUT:   %As.impl_witness.0ef: <witness> = impl_witness imports.%As.impl_witness_table.eb4, @impl.686(%int_16) [concrete]
-// CHECK:STDOUT:   %Convert.type.172: type = fn_type @Convert.5, @impl.686(%int_16) [concrete]
+// CHECK:STDOUT:   %As.impl_witness.0ef: <witness> = impl_witness imports.%As.impl_witness_table.eb4, @As.impl.686(%int_16) [concrete]
+// CHECK:STDOUT:   %Convert.type.172: type = fn_type @Convert.5, @As.impl.686(%int_16) [concrete]
 // CHECK:STDOUT:   %Convert.489: %Convert.type.172 = struct_value () [concrete]
 // CHECK:STDOUT:   %As.facet: %As.type.a96 = facet_value Core.IntLiteral, (%As.impl_witness.0ef) [concrete]
 // CHECK:STDOUT:   %.91d: type = fn_type_with_self_type %Convert.type.be5, %As.facet [concrete]
@@ -758,8 +758,8 @@ fn F() {
 // CHECK:STDOUT:     .foo = <error>
 // CHECK:STDOUT:     import Cpp//...
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %Core.import_ref.78a: @impl.686.%Convert.type (%Convert.type.062) = import_ref Core//prelude/parts/int, loc25_39, loaded [symbolic = @impl.686.%Convert (constants.%Convert.527)]
-// CHECK:STDOUT:   %As.impl_witness_table.eb4 = impl_witness_table (%Core.import_ref.78a), @impl.686 [concrete]
+// CHECK:STDOUT:   %Core.import_ref.78a: @As.impl.686.%Convert.type (%Convert.type.062) = import_ref Core//prelude/parts/int, loc25_39, loaded [symbolic = @As.impl.686.%Convert (constants.%Convert.527)]
+// CHECK:STDOUT:   %As.impl_witness_table.eb4 = impl_witness_table (%Core.import_ref.78a), @As.impl.686 [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F() {

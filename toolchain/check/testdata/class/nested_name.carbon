@@ -49,7 +49,7 @@ fn G(o: Outer) {
 // CHECK:STDOUT:   %G.type: type = fn_type @G [concrete]
 // CHECK:STDOUT:   %G: %G.type = struct_value () [concrete]
 // CHECK:STDOUT:   %Destroy.type: type = facet_type <@Destroy> [concrete]
-// CHECK:STDOUT:   %Op.type.9bc: type = fn_type @Op.2, @impl(%Inner) [concrete]
+// CHECK:STDOUT:   %Op.type.9bc: type = fn_type @Op.2, @Destroy.impl(%Inner) [concrete]
 // CHECK:STDOUT:   %Op.754: %Op.type.9bc = struct_value () [concrete]
 // CHECK:STDOUT:   %ptr.36a: type = ptr_type %Inner [concrete]
 // CHECK:STDOUT:   %Op.specific_fn: <specific function> = specific_function %Op.754, @Op.2(%Inner) [concrete]

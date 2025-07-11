@@ -74,12 +74,12 @@ impl library "[[@TEST_NAME]]";
 // CHECK:STDOUT:     .B = %B.decl
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %B.decl: type = interface_decl @B [concrete = constants.%B.type] {} {}
-// CHECK:STDOUT:   impl_decl @impl [concrete] {} {
+// CHECK:STDOUT:   impl_decl @B.impl [concrete] {} {
 // CHECK:STDOUT:     %.loc7_7.1: %empty_tuple.type = tuple_literal ()
 // CHECK:STDOUT:     %.loc7_7.2: type = converted %.loc7_7.1, constants.%empty_tuple.type [concrete = constants.%empty_tuple.type]
 // CHECK:STDOUT:     %B.ref: type = name_ref B, file.%B.decl [concrete = constants.%B.type]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %B.impl_witness_table = impl_witness_table (), @impl [concrete]
+// CHECK:STDOUT:   %B.impl_witness_table = impl_witness_table (), @B.impl [concrete]
 // CHECK:STDOUT:   %B.impl_witness: <witness> = impl_witness %B.impl_witness_table [concrete = constants.%B.impl_witness]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -91,7 +91,7 @@ impl library "[[@TEST_NAME]]";
 // CHECK:STDOUT:   witness = ()
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: impl @impl: %.loc7_7.2 as %B.ref;
+// CHECK:STDOUT: impl @B.impl: %.loc7_7.2 as %B.ref;
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- b.impl.carbon
 // CHECK:STDOUT:
@@ -121,5 +121,5 @@ impl library "[[@TEST_NAME]]";
 // CHECK:STDOUT:   witness = ()
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: impl @impl: imports.%Main.import_ref.e5c as imports.%Main.import_ref.171 [from "fail_b.carbon"];
+// CHECK:STDOUT: impl @B.impl: imports.%Main.import_ref.e5c as imports.%Main.import_ref.171 [from "fail_b.carbon"];
 // CHECK:STDOUT:

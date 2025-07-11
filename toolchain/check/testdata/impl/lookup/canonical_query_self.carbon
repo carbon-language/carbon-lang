@@ -110,7 +110,7 @@ fn G() {
 // CHECK:STDOUT:   %facet_value: %facet_type = facet_value %C, (%I.impl_witness, %J.impl_witness) [concrete]
 // CHECK:STDOUT:   %F.specific_fn: <specific function> = specific_function %F, @F(%facet_value) [concrete]
 // CHECK:STDOUT:   %Destroy.type: type = facet_type <@Destroy> [concrete]
-// CHECK:STDOUT:   %Op.type.8e9: type = fn_type @Op.4, @impl.49c(%C) [concrete]
+// CHECK:STDOUT:   %Op.type.8e9: type = fn_type @Op.4, @Destroy.impl(%C) [concrete]
 // CHECK:STDOUT:   %Op.ddb: %Op.type.8e9 = struct_value () [concrete]
 // CHECK:STDOUT:   %ptr.8e6: type = ptr_type %C [concrete]
 // CHECK:STDOUT:   %Op.specific_fn: <specific function> = specific_function %Op.ddb, @Op.4(%C) [concrete]
@@ -125,7 +125,7 @@ fn G() {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.BitAndWith: %BitAndWith.type.f2e = import_ref Core//prelude, BitAndWith, loaded [concrete = constants.%BitAndWith.generic]
 // CHECK:STDOUT:   %Core.import_ref.012: %Op.type.1cc = import_ref Core//prelude, loc13_42, loaded [concrete = constants.%Op.ff4]
-// CHECK:STDOUT:   %BitAndWith.impl_witness_table = impl_witness_table (%Core.import_ref.012), @impl.865 [concrete]
+// CHECK:STDOUT:   %BitAndWith.impl_witness_table = impl_witness_table (%Core.import_ref.012), @BitAndWith.impl [concrete]
 // CHECK:STDOUT:   %Core.Destroy: type = import_ref Core//prelude/parts/destroy, Destroy, loaded [concrete = constants.%Destroy.type]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -212,7 +212,7 @@ fn G() {
 // CHECK:STDOUT:   witness = (%JJ.decl)
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: impl @impl.093: %Self.ref as %I.ref {
+// CHECK:STDOUT: impl @I.impl: %Self.ref as %I.ref {
 // CHECK:STDOUT:   %II.decl: %II.type.f11 = fn_decl @II.2 [concrete = constants.%II.b71] {
 // CHECK:STDOUT:     %self.patt: %pattern_type.893 = binding_pattern self [concrete]
 // CHECK:STDOUT:     %self.param_patt: %pattern_type.893 = value_param_pattern %self.patt, call_param0 [concrete]
@@ -227,7 +227,7 @@ fn G() {
 // CHECK:STDOUT:   witness = @C.%I.impl_witness
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: impl @impl.023: %Self.ref as %J.ref {
+// CHECK:STDOUT: impl @J.impl: %Self.ref as %J.ref {
 // CHECK:STDOUT:   %JJ.decl: %JJ.type.811 = fn_decl @JJ.2 [concrete = constants.%JJ.9c9] {
 // CHECK:STDOUT:     %self.patt: %pattern_type.893 = binding_pattern self [concrete]
 // CHECK:STDOUT:     %self.param_patt: %pattern_type.893 = value_param_pattern %self.patt, call_param0 [concrete]
@@ -243,17 +243,17 @@ fn G() {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @C {
-// CHECK:STDOUT:   impl_decl @impl.093 [concrete] {} {
+// CHECK:STDOUT:   impl_decl @I.impl [concrete] {} {
 // CHECK:STDOUT:     %Self.ref: type = name_ref Self, constants.%C [concrete = constants.%C]
 // CHECK:STDOUT:     %I.ref: type = name_ref I, file.%I.decl [concrete = constants.%I.type]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %I.impl_witness_table = impl_witness_table (@impl.093.%II.decl), @impl.093 [concrete]
+// CHECK:STDOUT:   %I.impl_witness_table = impl_witness_table (@I.impl.%II.decl), @I.impl [concrete]
 // CHECK:STDOUT:   %I.impl_witness: <witness> = impl_witness %I.impl_witness_table [concrete = constants.%I.impl_witness]
-// CHECK:STDOUT:   impl_decl @impl.023 [concrete] {} {
+// CHECK:STDOUT:   impl_decl @J.impl [concrete] {} {
 // CHECK:STDOUT:     %Self.ref: type = name_ref Self, constants.%C [concrete = constants.%C]
 // CHECK:STDOUT:     %J.ref: type = name_ref J, file.%J.decl [concrete = constants.%J.type]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %J.impl_witness_table = impl_witness_table (@impl.023.%JJ.decl), @impl.023 [concrete]
+// CHECK:STDOUT:   %J.impl_witness_table = impl_witness_table (@J.impl.%JJ.decl), @J.impl [concrete]
 // CHECK:STDOUT:   %J.impl_witness: <witness> = impl_witness %J.impl_witness_table [concrete = constants.%J.impl_witness]
 // CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [concrete = constants.%empty_struct_type]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [concrete = constants.%complete_type.357]
@@ -264,8 +264,8 @@ fn G() {
 // CHECK:STDOUT:   .I = <poisoned>
 // CHECK:STDOUT:   .J = <poisoned>
 // CHECK:STDOUT:   .JJ = <poisoned>
-// CHECK:STDOUT:   extend @impl.093.%I.ref
-// CHECK:STDOUT:   extend @impl.023.%J.ref
+// CHECK:STDOUT:   extend @I.impl.%I.ref
+// CHECK:STDOUT:   extend @J.impl.%J.ref
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic fn @II.1(@I.%Self: %I.type) {

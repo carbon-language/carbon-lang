@@ -87,12 +87,12 @@ fn F() {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %I.decl: type = interface_decl @I [concrete = constants.%I.type] {} {}
-// CHECK:STDOUT:   impl_decl @impl [concrete] {} {
+// CHECK:STDOUT:   impl_decl @I.impl [concrete] {} {
 // CHECK:STDOUT:     %.loc9_14.1: %empty_tuple.type = tuple_literal ()
 // CHECK:STDOUT:     %.loc9_14.2: type = converted %.loc9_14.1, constants.%empty_tuple.type [concrete = constants.%empty_tuple.type]
 // CHECK:STDOUT:     %I.ref: type = name_ref I, file.%I.decl [concrete = constants.%I.type]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %I.impl_witness_table = impl_witness_table (), @impl [concrete]
+// CHECK:STDOUT:   %I.impl_witness_table = impl_witness_table (), @I.impl [concrete]
 // CHECK:STDOUT:   %I.impl_witness: <witness> = impl_witness %I.impl_witness_table [concrete = constants.%I.impl_witness]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -104,7 +104,7 @@ fn F() {
 // CHECK:STDOUT:   witness = ()
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: impl @impl: %.loc9_14.2 as %I.ref {
+// CHECK:STDOUT: impl @I.impl: %.loc9_14.2 as %I.ref {
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   witness = <error>
 // CHECK:STDOUT: }
@@ -146,19 +146,19 @@ fn F() {
 // CHECK:STDOUT:   witness = ()
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: impl @impl: %.loc10_16.2 as %J.ref {
+// CHECK:STDOUT: impl @J.impl: %.loc10_16.2 as %J.ref {
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   witness = <error>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F() {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   impl_decl @impl [concrete] {} {
+// CHECK:STDOUT:   impl_decl @J.impl [concrete] {} {
 // CHECK:STDOUT:     %.loc10_16.1: %empty_struct_type = struct_literal ()
 // CHECK:STDOUT:     %.loc10_16.2: type = converted %.loc10_16.1, constants.%empty_struct_type [concrete = constants.%empty_struct_type]
 // CHECK:STDOUT:     %J.ref: type = name_ref J, file.%J.decl [concrete = constants.%J.type]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %J.impl_witness_table = impl_witness_table (), @impl [concrete]
+// CHECK:STDOUT:   %J.impl_witness_table = impl_witness_table (), @J.impl [concrete]
 // CHECK:STDOUT:   %J.impl_witness: <witness> = impl_witness %J.impl_witness_table [concrete = constants.%J.impl_witness]
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
@@ -173,7 +173,7 @@ fn F() {
 // CHECK:STDOUT:   %Zero.d14: %Zero.type.822 = struct_value () [concrete]
 // CHECK:STDOUT:   %Z.assoc_type: type = assoc_entity_type @Z [concrete]
 // CHECK:STDOUT:   %assoc0.534: %Z.assoc_type = assoc_entity element0, @Z.%Zero.decl [concrete]
-// CHECK:STDOUT:   %Zero.type.db4: type = fn_type @Zero.2, @impl.6b5(%Self.6e6) [symbolic]
+// CHECK:STDOUT:   %Zero.type.db4: type = fn_type @Zero.2, @Z.impl.6b5(%Self.6e6) [symbolic]
 // CHECK:STDOUT:   %Zero.8fb: %Zero.type.db4 = struct_value () [symbolic]
 // CHECK:STDOUT:   %Point: type = class_type @Point [concrete]
 // CHECK:STDOUT:   %Z.impl_witness: <witness> = impl_witness @Point.%Z.impl_witness_table [concrete]
@@ -187,7 +187,7 @@ fn F() {
 // CHECK:STDOUT:   %Point.val: %Point = struct_value () [concrete]
 // CHECK:STDOUT:   %.766: type = fn_type_with_self_type %Zero.type.822, %Z.facet [concrete]
 // CHECK:STDOUT:   %Destroy.type: type = facet_type <@Destroy> [concrete]
-// CHECK:STDOUT:   %Op.type.003: type = fn_type @Op.2, @impl.49c(%Point) [concrete]
+// CHECK:STDOUT:   %Op.type.003: type = fn_type @Op.2, @Destroy.impl(%Point) [concrete]
 // CHECK:STDOUT:   %Op.d2d: %Op.type.003 = struct_value () [concrete]
 // CHECK:STDOUT:   %ptr.536: type = ptr_type %Point [concrete]
 // CHECK:STDOUT:   %Op.specific_fn: <specific function> = specific_function %Op.d2d, @Op.2(%Point) [concrete]
@@ -219,7 +219,7 @@ fn F() {
 // CHECK:STDOUT:   %Self: %Z.type = bind_symbolic_name Self, 0 [symbolic = constants.%Self.6e6]
 // CHECK:STDOUT:   %Zero.decl: %Zero.type.822 = fn_decl @Zero.1 [concrete = constants.%Zero.d14] {} {}
 // CHECK:STDOUT:   %assoc0: %Z.assoc_type = assoc_entity element0, %Zero.decl [concrete = constants.%assoc0.534]
-// CHECK:STDOUT:   impl_decl @impl.6b5 [concrete] {} {
+// CHECK:STDOUT:   impl_decl @Z.impl.6b5 [concrete] {} {
 // CHECK:STDOUT:     %Z.ref: type = name_ref Z, file.%Z.decl [concrete = constants.%Z.type]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:
@@ -230,14 +230,14 @@ fn F() {
 // CHECK:STDOUT:   witness = (%Zero.decl)
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic impl @impl.6b5(@Z.%Self: %Z.type) {
+// CHECK:STDOUT: generic impl @Z.impl.6b5(@Z.%Self: %Z.type) {
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %Self: %Z.type = bind_symbolic_name Self, 0 [symbolic = %Self (constants.%Self.6e6)]
-// CHECK:STDOUT:   %Zero.type: type = fn_type @Zero.2, @impl.6b5(%Self) [symbolic = %Zero.type (constants.%Zero.type.db4)]
-// CHECK:STDOUT:   %Zero: @impl.6b5.%Zero.type (%Zero.type.db4) = struct_value () [symbolic = %Zero (constants.%Zero.8fb)]
+// CHECK:STDOUT:   %Zero.type: type = fn_type @Zero.2, @Z.impl.6b5(%Self) [symbolic = %Zero.type (constants.%Zero.type.db4)]
+// CHECK:STDOUT:   %Zero: @Z.impl.6b5.%Zero.type (%Zero.type.db4) = struct_value () [symbolic = %Zero (constants.%Zero.8fb)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   impl: <error> as %Z.ref {
-// CHECK:STDOUT:     %Zero.decl: @impl.6b5.%Zero.type (%Zero.type.db4) = fn_decl @Zero.2 [symbolic = @impl.6b5.%Zero (constants.%Zero.8fb)] {} {}
+// CHECK:STDOUT:     %Zero.decl: @Z.impl.6b5.%Zero.type (%Zero.type.db4) = fn_decl @Zero.2 [symbolic = @Z.impl.6b5.%Zero (constants.%Zero.8fb)] {} {}
 // CHECK:STDOUT:
 // CHECK:STDOUT:   !members:
 // CHECK:STDOUT:     .Zero = %Zero.decl
@@ -245,7 +245,7 @@ fn F() {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: impl @impl.c94: %Self.ref as %Z.ref {
+// CHECK:STDOUT: impl @Z.impl.c94: %Self.ref as %Z.ref {
 // CHECK:STDOUT:   %Zero.decl: %Zero.type.e33 = fn_decl @Zero.3 [concrete = constants.%Zero.dec] {} {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
@@ -254,11 +254,11 @@ fn F() {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @Point {
-// CHECK:STDOUT:   impl_decl @impl.c94 [concrete] {} {
+// CHECK:STDOUT:   impl_decl @Z.impl.c94 [concrete] {} {
 // CHECK:STDOUT:     %Self.ref: type = name_ref Self, constants.%Point [concrete = constants.%Point]
 // CHECK:STDOUT:     %Z.ref: type = name_ref Z, file.%Z.decl [concrete = constants.%Z.type]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %Z.impl_witness_table = impl_witness_table (@impl.c94.%Zero.decl), @impl.c94 [concrete]
+// CHECK:STDOUT:   %Z.impl_witness_table = impl_witness_table (@Z.impl.c94.%Zero.decl), @Z.impl.c94 [concrete]
 // CHECK:STDOUT:   %Z.impl_witness: <witness> = impl_witness %Z.impl_witness_table [concrete = constants.%Z.impl_witness]
 // CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [concrete = constants.%empty_struct_type]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [concrete = constants.%complete_type.357]
@@ -268,7 +268,7 @@ fn F() {
 // CHECK:STDOUT:   .Self = constants.%Point
 // CHECK:STDOUT:   .Z = <poisoned>
 // CHECK:STDOUT:   .Zero = <poisoned>
-// CHECK:STDOUT:   extend @impl.c94.%Z.ref
+// CHECK:STDOUT:   extend @Z.impl.c94.%Z.ref
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic fn @Zero.1(@Z.%Self: %Z.type) {
@@ -310,7 +310,7 @@ fn F() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Zero.1(constants.%Self.6e6) {}
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @impl.6b5(constants.%Self.6e6) {
+// CHECK:STDOUT: specific @Z.impl.6b5(constants.%Self.6e6) {
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %Self => constants.%Self.6e6
 // CHECK:STDOUT:   %Zero.type => constants.%Zero.type.db4

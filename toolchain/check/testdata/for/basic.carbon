@@ -82,11 +82,11 @@ fn Run() {
 // CHECK:STDOUT:   %HasValue.ada: %HasValue.type.b7a = struct_value () [concrete]
 // CHECK:STDOUT:   %Get.type.130: type = fn_type @Get, @Optional(%empty_tuple.type) [concrete]
 // CHECK:STDOUT:   %Get.6e8: %Get.type.130 = struct_value () [concrete]
-// CHECK:STDOUT:   %Op.type.7e4: type = fn_type @Op.2, @impl.49c(%Optional.f9a) [concrete]
+// CHECK:STDOUT:   %Op.type.7e4: type = fn_type @Op.2, @Destroy.impl(%Optional.f9a) [concrete]
 // CHECK:STDOUT:   %Op.466: %Op.type.7e4 = struct_value () [concrete]
 // CHECK:STDOUT:   %ptr.511: type = ptr_type %Optional.f9a [concrete]
 // CHECK:STDOUT:   %empty_tuple: %empty_tuple.type = tuple_value () [concrete]
-// CHECK:STDOUT:   %Op.type.a63: type = fn_type @Op.2, @impl.49c(%empty_tuple.type) [concrete]
+// CHECK:STDOUT:   %Op.type.a63: type = fn_type @Op.2, @Destroy.impl(%empty_tuple.type) [concrete]
 // CHECK:STDOUT:   %Op.ea3: %Op.type.a63 = struct_value () [concrete]
 // CHECK:STDOUT:   %Body.type: type = fn_type @Body [concrete]
 // CHECK:STDOUT:   %Body: %Body.type = struct_value () [concrete]
@@ -97,7 +97,7 @@ fn Run() {
 // CHECK:STDOUT:   %.708: type = fn_type_with_self_type %Next.type.941, %Iterate.facet.d50 [concrete]
 // CHECK:STDOUT:   %HasValue.specific_fn: <specific function> = specific_function %HasValue.ada, @HasValue(%empty_tuple.type) [concrete]
 // CHECK:STDOUT:   %Get.specific_fn: <specific function> = specific_function %Get.6e8, @Get(%empty_tuple.type) [concrete]
-// CHECK:STDOUT:   %Op.type.8d6: type = fn_type @Op.2, @impl.49c(%TrivialRange) [concrete]
+// CHECK:STDOUT:   %Op.type.8d6: type = fn_type @Op.2, @Destroy.impl(%TrivialRange) [concrete]
 // CHECK:STDOUT:   %Op.90d: %Op.type.8d6 = struct_value () [concrete]
 // CHECK:STDOUT:   %ptr.41d: type = ptr_type %TrivialRange [concrete]
 // CHECK:STDOUT: }
@@ -121,7 +121,7 @@ fn Run() {
 // CHECK:STDOUT:   %impl.elem2: %.510 = impl_witness_access constants.%Iterate.impl_witness, element2 [concrete = constants.%NewCursor.c20a1c.2]
 // CHECK:STDOUT:   %bound_method.loc18_35.1: <bound method> = bound_method %.loc18_20.1, %impl.elem2
 // CHECK:STDOUT:   %.loc18_20.2: %TrivialRange = bind_value %.loc18_20.1
-// CHECK:STDOUT:   %NewCursor.ref: %NewCursor.type.bd2331.1 = name_ref NewCursor, @impl.f4d.%NewCursor.decl.loc6_32.1 [concrete = constants.%NewCursor.c20a1c.1]
+// CHECK:STDOUT:   %NewCursor.ref: %NewCursor.type.bd2331.1 = name_ref NewCursor, @Iterate.impl.%NewCursor.decl.loc6_32.1 [concrete = constants.%NewCursor.c20a1c.1]
 // CHECK:STDOUT:   %NewCursor.bound: <bound method> = bound_method %.loc18_20.2, %NewCursor.ref
 // CHECK:STDOUT:   %NewCursor.call: init %empty_tuple.type = call %NewCursor.bound(%.loc18_20.2)
 // CHECK:STDOUT:   %var: ref %empty_tuple.type = var invalid

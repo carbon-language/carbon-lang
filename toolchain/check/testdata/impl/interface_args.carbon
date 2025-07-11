@@ -263,13 +263,13 @@ fn InstanceC(a: A) -> C {
 // CHECK:STDOUT:   %A.decl: type = class_decl @A [concrete = constants.%A] {} {}
 // CHECK:STDOUT:   %B.decl: type = class_decl @B [concrete = constants.%B] {} {}
 // CHECK:STDOUT:   %C.decl: type = class_decl @C [concrete = constants.%C] {} {}
-// CHECK:STDOUT:   impl_decl @impl [concrete] {} {
+// CHECK:STDOUT:   impl_decl @Action.impl [concrete] {} {
 // CHECK:STDOUT:     %A.ref: type = name_ref A, file.%A.decl [concrete = constants.%A]
 // CHECK:STDOUT:     %Action.ref: %Action.type.29c = name_ref Action, file.%Action.decl [concrete = constants.%Action.generic]
 // CHECK:STDOUT:     %B.ref: type = name_ref B, file.%B.decl [concrete = constants.%B]
 // CHECK:STDOUT:     %Action.type: type = facet_type <@Action, @Action(constants.%B)> [concrete = constants.%Action.type.cb0]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %Action.impl_witness_table = impl_witness_table (@impl.%Op.decl), @impl [concrete]
+// CHECK:STDOUT:   %Action.impl_witness_table = impl_witness_table (@Action.impl.%Op.decl), @Action.impl [concrete]
 // CHECK:STDOUT:   %Action.impl_witness: <witness> = impl_witness %Action.impl_witness_table [concrete = constants.%Action.impl_witness]
 // CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [concrete = constants.%F] {
 // CHECK:STDOUT:     %a.patt: %pattern_type.c10 = binding_pattern a [concrete]
@@ -316,13 +316,13 @@ fn InstanceC(a: A) -> C {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: impl @impl: %A.ref as %Action.type {
+// CHECK:STDOUT: impl @Action.impl: %A.ref as %Action.type {
 // CHECK:STDOUT:   %Op.decl: %Op.type.4b4 = fn_decl @Op.2 [concrete = constants.%Op.40d] {
 // CHECK:STDOUT:     %self.patt: %pattern_type.c10 = binding_pattern self [concrete]
 // CHECK:STDOUT:     %self.param_patt: %pattern_type.c10 = value_param_pattern %self.patt, call_param0 [concrete]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %self.param: %A = value_param call_param0
-// CHECK:STDOUT:     %Self.ref: type = name_ref Self, @impl.%A.ref [concrete = constants.%A]
+// CHECK:STDOUT:     %Self.ref: type = name_ref Self, @Action.impl.%A.ref [concrete = constants.%A]
 // CHECK:STDOUT:     %self: %A = bind_name self, %self.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:
@@ -483,7 +483,7 @@ fn InstanceC(a: A) -> C {
 // CHECK:STDOUT:   %Main.import_ref.1f6: @Action.%Op.type (%Op.type.036) = import_ref Main//action, loc5_22, loaded [symbolic = @Action.%Op (constants.%Op.6ed)]
 // CHECK:STDOUT:   %Main.import_ref.0e3753.2 = import_ref Main//action, loc5_22, unloaded
 // CHECK:STDOUT:   %Main.import_ref.d0b: %Op.type.4b4 = import_ref Main//action, loc13_23, loaded [concrete = constants.%Op.40d]
-// CHECK:STDOUT:   %Action.impl_witness_table = impl_witness_table (%Main.import_ref.d0b), @impl [concrete]
+// CHECK:STDOUT:   %Action.impl_witness_table = impl_witness_table (%Main.import_ref.d0b), @Action.impl [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -528,7 +528,7 @@ fn InstanceC(a: A) -> C {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: impl @impl: imports.%Main.import_ref.984 as imports.%Main.import_ref.bb2 [from "action.carbon"] {
+// CHECK:STDOUT: impl @Action.impl: imports.%Main.import_ref.984 as imports.%Main.import_ref.bb2 [from "action.carbon"] {
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Op = imports.%Main.import_ref.7b5
 // CHECK:STDOUT:   witness = imports.%Main.import_ref.995
@@ -708,7 +708,7 @@ fn InstanceC(a: A) -> C {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: impl @impl: imports.%Main.import_ref.984 as imports.%Main.import_ref.bb2 [from "action.carbon"] {
+// CHECK:STDOUT: impl @Action.impl: imports.%Main.import_ref.984 as imports.%Main.import_ref.bb2 [from "action.carbon"] {
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Op = imports.%Main.import_ref.7b5
 // CHECK:STDOUT:   witness = imports.%Main.import_ref.19c
@@ -856,13 +856,13 @@ fn InstanceC(a: A) -> C {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %A.decl: type = class_decl @A [concrete = constants.%A] {} {}
 // CHECK:STDOUT:   %B.decl: type = class_decl @B [concrete = constants.%B] {} {}
-// CHECK:STDOUT:   impl_decl @impl [concrete] {} {
+// CHECK:STDOUT:   impl_decl @Factory.impl [concrete] {} {
 // CHECK:STDOUT:     %A.ref: type = name_ref A, file.%A.decl [concrete = constants.%A]
 // CHECK:STDOUT:     %Factory.ref: %Factory.type.1a8 = name_ref Factory, file.%Factory.decl [concrete = constants.%Factory.generic]
 // CHECK:STDOUT:     %B.ref: type = name_ref B, file.%B.decl [concrete = constants.%B]
 // CHECK:STDOUT:     %Factory.type: type = facet_type <@Factory, @Factory(constants.%B)> [concrete = constants.%Factory.type.a5d]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %Factory.impl_witness_table = impl_witness_table (@impl.%Make.decl, @impl.%Method.decl), @impl [concrete]
+// CHECK:STDOUT:   %Factory.impl_witness_table = impl_witness_table (@Factory.impl.%Make.decl, @Factory.impl.%Method.decl), @Factory.impl [concrete]
 // CHECK:STDOUT:   %Factory.impl_witness: <witness> = impl_witness %Factory.impl_witness_table [concrete = constants.%Factory.impl_witness]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -920,7 +920,7 @@ fn InstanceC(a: A) -> C {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: impl @impl: %A.ref as %Factory.type {
+// CHECK:STDOUT: impl @Factory.impl: %A.ref as %Factory.type {
 // CHECK:STDOUT:   %Make.decl: %Make.type.ec4 = fn_decl @Make.2 [concrete = constants.%Make.377] {
 // CHECK:STDOUT:     %return.patt: %pattern_type.049 = return_slot_pattern [concrete]
 // CHECK:STDOUT:     %return.param_patt: %pattern_type.049 = out_param_pattern %return.patt, call_param0 [concrete]
@@ -937,7 +937,7 @@ fn InstanceC(a: A) -> C {
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %B.ref: type = name_ref B, file.%B.decl [concrete = constants.%B]
 // CHECK:STDOUT:     %self.param: %A = value_param call_param0
-// CHECK:STDOUT:     %Self.ref: type = name_ref Self, @impl.%A.ref [concrete = constants.%A]
+// CHECK:STDOUT:     %Self.ref: type = name_ref Self, @Factory.impl.%A.ref [concrete = constants.%A]
 // CHECK:STDOUT:     %self: %A = bind_name self, %self.param
 // CHECK:STDOUT:     %return.param: ref %B = out_param call_param1
 // CHECK:STDOUT:     %return: ref %B = return_slot %return.param
@@ -1079,7 +1079,7 @@ fn InstanceC(a: A) -> C {
 // CHECK:STDOUT:   %Make.type.ec4: type = fn_type @Make.2 [concrete]
 // CHECK:STDOUT:   %Make.377: %Make.type.ec4 = struct_value () [concrete]
 // CHECK:STDOUT:   %Destroy.type: type = facet_type <@Destroy> [concrete]
-// CHECK:STDOUT:   %Op.type.1a6: type = fn_type @Op.2, @impl.49c(%B) [concrete]
+// CHECK:STDOUT:   %Op.type.1a6: type = fn_type @Op.2, @Destroy.impl(%B) [concrete]
 // CHECK:STDOUT:   %Op.3c2: %Op.type.1a6 = struct_value () [concrete]
 // CHECK:STDOUT:   %ptr.e79: type = ptr_type %B [concrete]
 // CHECK:STDOUT:   %Op.specific_fn: <specific function> = specific_function %Op.3c2, @Op.2(%B) [concrete]
@@ -1127,7 +1127,7 @@ fn InstanceC(a: A) -> C {
 // CHECK:STDOUT:   %Main.import_ref.21018a.2 = import_ref Main//factory, loc6_17, unloaded
 // CHECK:STDOUT:   %Main.import_ref.9ec: %Make.type.ec4 = import_ref Main//factory, loc15_17, loaded [concrete = constants.%Make.377]
 // CHECK:STDOUT:   %Main.import_ref.7dd: %Method.type.af5 = import_ref Main//factory, loc16_31, loaded [concrete = constants.%Method.3d4]
-// CHECK:STDOUT:   %Factory.impl_witness_table = impl_witness_table (%Main.import_ref.9ec, %Main.import_ref.7dd), @impl.ba3 [concrete]
+// CHECK:STDOUT:   %Factory.impl_witness_table = impl_witness_table (%Main.import_ref.9ec, %Main.import_ref.7dd), @Factory.impl [concrete]
 // CHECK:STDOUT:   %Core.Destroy: type = import_ref Core//prelude/parts/destroy, Destroy, loaded [concrete = constants.%Destroy.type]
 // CHECK:STDOUT:   %Main.import_ref.46fc3c.2 = import_ref Main//factory, loc8_31, unloaded
 // CHECK:STDOUT: }
@@ -1190,7 +1190,7 @@ fn InstanceC(a: A) -> C {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: impl @impl.ba3: imports.%Main.import_ref.984 as imports.%Main.import_ref.bd2 [from "factory.carbon"] {
+// CHECK:STDOUT: impl @Factory.impl: imports.%Main.import_ref.984 as imports.%Main.import_ref.bd2 [from "factory.carbon"] {
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Make = imports.%Main.import_ref.a27
 // CHECK:STDOUT:   .Method = imports.%Main.import_ref.163
@@ -1454,7 +1454,7 @@ fn InstanceC(a: A) -> C {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: impl @impl: imports.%Main.import_ref.984 as imports.%Main.import_ref.bd2 [from "factory.carbon"] {
+// CHECK:STDOUT: impl @Factory.impl: imports.%Main.import_ref.984 as imports.%Main.import_ref.bd2 [from "factory.carbon"] {
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Make = imports.%Main.import_ref.a27
 // CHECK:STDOUT:   .Method = imports.%Main.import_ref.163

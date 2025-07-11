@@ -73,7 +73,7 @@ fn TestAddAssignNonRef(a: C, b: C) {
 // CHECK:STDOUT:   %TestIncNonRef: %TestIncNonRef.type = struct_value () [concrete]
 // CHECK:STDOUT:   %.bc7: type = fn_type_with_self_type %Op.type.e3a, %Inc.facet [concrete]
 // CHECK:STDOUT:   %Destroy.type: type = facet_type <@Destroy> [concrete]
-// CHECK:STDOUT:   %Op.type.153: type = fn_type @Op.11, @impl.49c(%C) [concrete]
+// CHECK:STDOUT:   %Op.type.153: type = fn_type @Op.11, @Destroy.impl(%C) [concrete]
 // CHECK:STDOUT:   %Op.5d7: %Op.type.153 = struct_value () [concrete]
 // CHECK:STDOUT:   %Op.specific_fn: <specific function> = specific_function %Op.5d7, @Op.11(%C) [concrete]
 // CHECK:STDOUT:   %TestAddAssignNonRef.type: type = fn_type @TestAddAssignNonRef [concrete]
@@ -103,21 +103,21 @@ fn TestAddAssignNonRef(a: C, b: C) {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %C.decl: type = class_decl @C [concrete = constants.%C] {} {}
-// CHECK:STDOUT:   impl_decl @impl.c51 [concrete] {} {
+// CHECK:STDOUT:   impl_decl @Inc.impl [concrete] {} {
 // CHECK:STDOUT:     %C.ref: type = name_ref C, file.%C.decl [concrete = constants.%C]
 // CHECK:STDOUT:     %Core.ref: <namespace> = name_ref Core, imports.%Core [concrete = imports.%Core]
 // CHECK:STDOUT:     %Inc.ref: type = name_ref Inc, imports.%Core.Inc [concrete = constants.%Inc.type]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %Inc.impl_witness_table = impl_witness_table (@impl.c51.%Op.decl), @impl.c51 [concrete]
+// CHECK:STDOUT:   %Inc.impl_witness_table = impl_witness_table (@Inc.impl.%Op.decl), @Inc.impl [concrete]
 // CHECK:STDOUT:   %Inc.impl_witness: <witness> = impl_witness %Inc.impl_witness_table [concrete = constants.%Inc.impl_witness]
-// CHECK:STDOUT:   impl_decl @impl.a95 [concrete] {} {
+// CHECK:STDOUT:   impl_decl @AddAssignWith.impl [concrete] {} {
 // CHECK:STDOUT:     %C.ref.loc21_6: type = name_ref C, file.%C.decl [concrete = constants.%C]
 // CHECK:STDOUT:     %Core.ref: <namespace> = name_ref Core, imports.%Core [concrete = imports.%Core]
 // CHECK:STDOUT:     %AddAssignWith.ref: %AddAssignWith.type.fc6 = name_ref AddAssignWith, imports.%Core.AddAssignWith [concrete = constants.%AddAssignWith.generic]
 // CHECK:STDOUT:     %C.ref.loc21_30: type = name_ref C, file.%C.decl [concrete = constants.%C]
 // CHECK:STDOUT:     %AddAssignWith.type: type = facet_type <@AddAssignWith, @AddAssignWith(constants.%C)> [concrete = constants.%AddAssignWith.type.393]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %AddAssignWith.impl_witness_table = impl_witness_table (@impl.a95.%Op.decl), @impl.a95 [concrete]
+// CHECK:STDOUT:   %AddAssignWith.impl_witness_table = impl_witness_table (@AddAssignWith.impl.%Op.decl), @AddAssignWith.impl [concrete]
 // CHECK:STDOUT:   %AddAssignWith.impl_witness: <witness> = impl_witness %AddAssignWith.impl_witness_table [concrete = constants.%AddAssignWith.impl_witness]
 // CHECK:STDOUT:   %TestIncNonRef.decl: %TestIncNonRef.type = fn_decl @TestIncNonRef [concrete = constants.%TestIncNonRef] {
 // CHECK:STDOUT:     %a.patt: %pattern_type.c48 = binding_pattern a [concrete]
@@ -142,7 +142,7 @@ fn TestAddAssignNonRef(a: C, b: C) {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: impl @impl.c51: %C.ref as %Inc.ref {
+// CHECK:STDOUT: impl @Inc.impl: %C.ref as %Inc.ref {
 // CHECK:STDOUT:   %Op.decl: %Op.type.73a = fn_decl @Op.2 [concrete = constants.%Op.0c9] {
 // CHECK:STDOUT:     %self.patt: %pattern_type.44a = binding_pattern self [concrete]
 // CHECK:STDOUT:     %self.param_patt: %pattern_type.44a = value_param_pattern %self.patt, call_param0 [concrete]
@@ -162,7 +162,7 @@ fn TestAddAssignNonRef(a: C, b: C) {
 // CHECK:STDOUT:   witness = file.%Inc.impl_witness
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: impl @impl.a95: %C.ref.loc21_6 as %AddAssignWith.type {
+// CHECK:STDOUT: impl @AddAssignWith.impl: %C.ref.loc21_6 as %AddAssignWith.type {
 // CHECK:STDOUT:   %Op.decl: %Op.type.0d7 = fn_decl @Op.4 [concrete = constants.%Op.572] {
 // CHECK:STDOUT:     %self.patt: %pattern_type.44a = binding_pattern self [concrete]
 // CHECK:STDOUT:     %self.param_patt: %pattern_type.44a = value_param_pattern %self.patt, call_param0 [concrete]

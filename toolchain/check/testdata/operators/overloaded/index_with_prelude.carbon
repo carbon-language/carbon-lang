@@ -128,7 +128,7 @@ let x: i32 = c[0];
 // CHECK:STDOUT:   %C.decl: type = class_decl @C [concrete = constants.%C] {} {}
 // CHECK:STDOUT:   %ElementType.decl: type = class_decl @ElementType [concrete = constants.%ElementType.e6b] {} {}
 // CHECK:STDOUT:   %SubscriptType.decl: type = class_decl @SubscriptType [concrete = constants.%SubscriptType.8ee] {} {}
-// CHECK:STDOUT:   impl_decl @impl [concrete] {} {
+// CHECK:STDOUT:   impl_decl @IndexWith.impl [concrete] {} {
 // CHECK:STDOUT:     %C.ref: type = name_ref C, file.%C.decl [concrete = constants.%C]
 // CHECK:STDOUT:     %Core.ref: <namespace> = name_ref Core, imports.%Core [concrete = imports.%Core]
 // CHECK:STDOUT:     %IndexWith.ref: %IndexWith.type.504 = name_ref IndexWith, imports.%Core.IndexWith [concrete = constants.%IndexWith.generic]
@@ -136,7 +136,7 @@ let x: i32 = c[0];
 // CHECK:STDOUT:     %ElementType.ref: type = name_ref ElementType, file.%ElementType.decl [concrete = constants.%ElementType.e6b]
 // CHECK:STDOUT:     %IndexWith.type: type = facet_type <@IndexWith, @IndexWith(constants.%SubscriptType.8ee, constants.%ElementType.e6b)> [concrete = constants.%IndexWith.type.e80]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %IndexWith.impl_witness_table = impl_witness_table (@impl.%At.decl), @impl [concrete]
+// CHECK:STDOUT:   %IndexWith.impl_witness_table = impl_witness_table (@IndexWith.impl.%At.decl), @IndexWith.impl [concrete]
 // CHECK:STDOUT:   %IndexWith.impl_witness: <witness> = impl_witness %IndexWith.impl_witness_table [concrete = constants.%IndexWith.impl_witness]
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %s.patt: %pattern_type.df7 = binding_pattern s [concrete]
@@ -167,7 +167,7 @@ let x: i32 = c[0];
 // CHECK:STDOUT:   %x: %ElementType.e6b = bind_name x, %.loc16_25.2
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: impl @impl: %C.ref as %IndexWith.type {
+// CHECK:STDOUT: impl @IndexWith.impl: %C.ref as %IndexWith.type {
 // CHECK:STDOUT:   %At.decl: %At.type.178 = fn_decl @At.2 [concrete = constants.%At.d43] {
 // CHECK:STDOUT:     %self.patt: %pattern_type.c48 = binding_pattern self [concrete]
 // CHECK:STDOUT:     %self.param_patt: %pattern_type.c48 = value_param_pattern %self.patt, call_param0 [concrete]
@@ -178,7 +178,7 @@ let x: i32 = c[0];
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %ElementType.ref: type = name_ref ElementType, file.%ElementType.decl [concrete = constants.%ElementType.e6b]
 // CHECK:STDOUT:     %self.param: %C = value_param call_param0
-// CHECK:STDOUT:     %Self.ref: type = name_ref Self, @impl.%C.ref [concrete = constants.%C]
+// CHECK:STDOUT:     %Self.ref: type = name_ref Self, @IndexWith.impl.%C.ref [concrete = constants.%C]
 // CHECK:STDOUT:     %self: %C = bind_name self, %self.param
 // CHECK:STDOUT:     %subscript.param: %SubscriptType.8ee = value_param call_param1
 // CHECK:STDOUT:     %SubscriptType.ref: type = name_ref SubscriptType, file.%SubscriptType.decl [concrete = constants.%SubscriptType.8ee]
@@ -270,10 +270,10 @@ let x: i32 = c[0];
 // CHECK:STDOUT:   %ImplicitAs.type.205: type = facet_type <@ImplicitAs, @ImplicitAs(%i32)> [concrete]
 // CHECK:STDOUT:   %Convert.type.1b6: type = fn_type @Convert.1, @ImplicitAs(%i32) [concrete]
 // CHECK:STDOUT:   %To.c80: Core.IntLiteral = bind_symbolic_name To, 0 [symbolic]
-// CHECK:STDOUT:   %Convert.type.0f9: type = fn_type @Convert.3, @impl.4f9(%To.c80) [symbolic]
+// CHECK:STDOUT:   %Convert.type.0f9: type = fn_type @Convert.3, @ImplicitAs.impl.4f9(%To.c80) [symbolic]
 // CHECK:STDOUT:   %Convert.f06: %Convert.type.0f9 = struct_value () [symbolic]
-// CHECK:STDOUT:   %ImplicitAs.impl_witness.c75: <witness> = impl_witness imports.%ImplicitAs.impl_witness_table.a2f, @impl.4f9(%int_32) [concrete]
-// CHECK:STDOUT:   %Convert.type.035: type = fn_type @Convert.3, @impl.4f9(%int_32) [concrete]
+// CHECK:STDOUT:   %ImplicitAs.impl_witness.c75: <witness> = impl_witness imports.%ImplicitAs.impl_witness_table.a2f, @ImplicitAs.impl.4f9(%int_32) [concrete]
+// CHECK:STDOUT:   %Convert.type.035: type = fn_type @Convert.3, @ImplicitAs.impl.4f9(%int_32) [concrete]
 // CHECK:STDOUT:   %Convert.956: %Convert.type.035 = struct_value () [concrete]
 // CHECK:STDOUT:   %ImplicitAs.facet.921: %ImplicitAs.type.205 = facet_value Core.IntLiteral, (%ImplicitAs.impl_witness.c75) [concrete]
 // CHECK:STDOUT:   %.9c3: type = fn_type_with_self_type %Convert.type.1b6, %ImplicitAs.facet.921 [concrete]
@@ -302,8 +302,8 @@ let x: i32 = c[0];
 // CHECK:STDOUT:   %Core.Int: %Int.type = import_ref Core//prelude/types/int, Int, loaded [concrete = constants.%Int.generic]
 // CHECK:STDOUT:   %Core.IndexWith: %IndexWith.type.504 = import_ref Core//prelude/operators/index, IndexWith, loaded [concrete = constants.%IndexWith.generic]
 // CHECK:STDOUT:   %Core.ImplicitAs: %ImplicitAs.type.cc7 = import_ref Core//prelude/operators/as, ImplicitAs, loaded [concrete = constants.%ImplicitAs.generic]
-// CHECK:STDOUT:   %Core.import_ref.a5b: @impl.4f9.%Convert.type (%Convert.type.0f9) = import_ref Core//prelude/types/int, loc19_39, loaded [symbolic = @impl.4f9.%Convert (constants.%Convert.f06)]
-// CHECK:STDOUT:   %ImplicitAs.impl_witness_table.a2f = impl_witness_table (%Core.import_ref.a5b), @impl.4f9 [concrete]
+// CHECK:STDOUT:   %Core.import_ref.a5b: @ImplicitAs.impl.4f9.%Convert.type (%Convert.type.0f9) = import_ref Core//prelude/types/int, loc19_39, loaded [symbolic = @ImplicitAs.impl.4f9.%Convert (constants.%Convert.f06)]
+// CHECK:STDOUT:   %ImplicitAs.impl_witness_table.a2f = impl_witness_table (%Core.import_ref.a5b), @ImplicitAs.impl.4f9 [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -313,7 +313,7 @@ let x: i32 = c[0];
 // CHECK:STDOUT:     .e = %e
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import = import Core
-// CHECK:STDOUT:   impl_decl @impl.18b [concrete] {} {
+// CHECK:STDOUT:   impl_decl @IndexWith.impl [concrete] {} {
 // CHECK:STDOUT:     %int_32.loc4_7: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
 // CHECK:STDOUT:     %i32.loc4_7: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
 // CHECK:STDOUT:     %int_32.loc4_12: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
@@ -328,7 +328,7 @@ let x: i32 = c[0];
 // CHECK:STDOUT:     %i32.loc4_40: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
 // CHECK:STDOUT:     %IndexWith.type: type = facet_type <@IndexWith, @IndexWith(constants.%i32, constants.%i32)> [concrete = constants.%IndexWith.type.917]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %IndexWith.impl_witness_table = impl_witness_table (@impl.18b.%At.decl), @impl.18b [concrete]
+// CHECK:STDOUT:   %IndexWith.impl_witness_table = impl_witness_table (@IndexWith.impl.%At.decl), @IndexWith.impl [concrete]
 // CHECK:STDOUT:   %IndexWith.impl_witness: <witness> = impl_witness %IndexWith.impl_witness_table [concrete = constants.%IndexWith.impl_witness]
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %s.patt: %pattern_type.511 = binding_pattern s [concrete]
@@ -370,7 +370,7 @@ let x: i32 = c[0];
 // CHECK:STDOUT:   %e: %i32 = bind_name e, %.loc11_17.2
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: impl @impl.18b: %.loc4_15.2 as %IndexWith.type {
+// CHECK:STDOUT: impl @IndexWith.impl: %.loc4_15.2 as %IndexWith.type {
 // CHECK:STDOUT:   %At.decl: %At.type.9ac = fn_decl @At.2 [concrete = constants.%At.642] {
 // CHECK:STDOUT:     %self.patt: %pattern_type.511 = binding_pattern self [concrete]
 // CHECK:STDOUT:     %self.param_patt: %pattern_type.511 = value_param_pattern %self.patt, call_param0 [concrete]
@@ -382,7 +382,7 @@ let x: i32 = c[0];
 // CHECK:STDOUT:     %int_32.loc5_40: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
 // CHECK:STDOUT:     %i32.loc5_40: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
 // CHECK:STDOUT:     %self.param: %tuple.type.d07 = value_param call_param0
-// CHECK:STDOUT:     %Self.ref: type = name_ref Self, @impl.18b.%.loc4_15.2 [concrete = constants.%tuple.type.d07]
+// CHECK:STDOUT:     %Self.ref: type = name_ref Self, @IndexWith.impl.%.loc4_15.2 [concrete = constants.%tuple.type.d07]
 // CHECK:STDOUT:     %self: %tuple.type.d07 = bind_name self, %self.param
 // CHECK:STDOUT:     %subscript.param: %i32 = value_param call_param1
 // CHECK:STDOUT:     %.loc5: type = splice_block %i32.loc5_32 [concrete = constants.%i32] {
@@ -478,7 +478,7 @@ let x: i32 = c[0];
 // CHECK:STDOUT:   %C.decl: type = class_decl @C [concrete = constants.%C] {} {}
 // CHECK:STDOUT:   %ElementType.decl: type = class_decl @ElementType [concrete = constants.%ElementType.e6b] {} {}
 // CHECK:STDOUT:   %SubscriptType.decl: type = class_decl @SubscriptType [concrete = constants.%SubscriptType.8ee] {} {}
-// CHECK:STDOUT:   impl_decl @impl.066 [concrete] {} {
+// CHECK:STDOUT:   impl_decl @IndexWith.impl [concrete] {} {
 // CHECK:STDOUT:     %C.ref: type = name_ref C, file.%C.decl [concrete = constants.%C]
 // CHECK:STDOUT:     %Core.ref: <namespace> = name_ref Core, imports.%Core [concrete = imports.%Core]
 // CHECK:STDOUT:     %IndexWith.ref: %IndexWith.type.504 = name_ref IndexWith, imports.%Core.IndexWith [concrete = constants.%IndexWith.generic]
@@ -486,7 +486,7 @@ let x: i32 = c[0];
 // CHECK:STDOUT:     %ElementType.ref: type = name_ref ElementType, file.%ElementType.decl [concrete = constants.%ElementType.e6b]
 // CHECK:STDOUT:     %IndexWith.type: type = facet_type <@IndexWith, @IndexWith(constants.%SubscriptType.8ee, constants.%ElementType.e6b)> [concrete = constants.%IndexWith.type.e80]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %IndexWith.impl_witness_table = impl_witness_table (@impl.066.%At.decl), @impl.066 [concrete]
+// CHECK:STDOUT:   %IndexWith.impl_witness_table = impl_witness_table (@IndexWith.impl.%At.decl), @IndexWith.impl [concrete]
 // CHECK:STDOUT:   %IndexWith.impl_witness: <witness> = impl_witness %IndexWith.impl_witness_table [concrete = constants.%IndexWith.impl_witness]
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %c.patt: %pattern_type.c48 = binding_pattern c [concrete]
@@ -507,7 +507,7 @@ let x: i32 = c[0];
 // CHECK:STDOUT:   %x: %ElementType.e6b = bind_name x, %.loc22_25.2
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: impl @impl.066: %C.ref as %IndexWith.type {
+// CHECK:STDOUT: impl @IndexWith.impl: %C.ref as %IndexWith.type {
 // CHECK:STDOUT:   %At.decl: %At.type.178 = fn_decl @At.2 [concrete = constants.%At.d43] {
 // CHECK:STDOUT:     %self.patt: %pattern_type.c48 = binding_pattern self [concrete]
 // CHECK:STDOUT:     %self.param_patt: %pattern_type.c48 = value_param_pattern %self.patt, call_param0 [concrete]
@@ -518,7 +518,7 @@ let x: i32 = c[0];
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %ElementType.ref: type = name_ref ElementType, file.%ElementType.decl [concrete = constants.%ElementType.e6b]
 // CHECK:STDOUT:     %self.param: %C = value_param call_param0
-// CHECK:STDOUT:     %Self.ref: type = name_ref Self, @impl.066.%C.ref [concrete = constants.%C]
+// CHECK:STDOUT:     %Self.ref: type = name_ref Self, @IndexWith.impl.%C.ref [concrete = constants.%C]
 // CHECK:STDOUT:     %self: %C = bind_name self, %self.param
 // CHECK:STDOUT:     %subscript.param: %SubscriptType.8ee = value_param call_param1
 // CHECK:STDOUT:     %SubscriptType.ref: type = name_ref SubscriptType, file.%SubscriptType.decl [concrete = constants.%SubscriptType.8ee]

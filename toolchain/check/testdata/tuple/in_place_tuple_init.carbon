@@ -60,7 +60,7 @@ fn H() {
 // CHECK:STDOUT:   %G.type: type = fn_type @G [concrete]
 // CHECK:STDOUT:   %G: %G.type = struct_value () [concrete]
 // CHECK:STDOUT:   %ptr.261: type = ptr_type %tuple.type.d07 [concrete]
-// CHECK:STDOUT:   %Op.type.a4a: type = fn_type @Op.3, @impl.49c(%tuple.type.d07) [concrete]
+// CHECK:STDOUT:   %Op.type.a4a: type = fn_type @Op.3, @Destroy.impl(%tuple.type.d07) [concrete]
 // CHECK:STDOUT:   %Op.7c6: %Op.type.a4a = struct_value () [concrete]
 // CHECK:STDOUT:   %int_0: Core.IntLiteral = int_value 0 [concrete]
 // CHECK:STDOUT: }
@@ -147,11 +147,11 @@ fn H() {
 // CHECK:STDOUT:   %ptr.7ae: type = ptr_type %tuple.type.189 [concrete]
 // CHECK:STDOUT:   %pattern_type.d88: type = pattern_type %tuple.type.99b [concrete]
 // CHECK:STDOUT:   %To: Core.IntLiteral = bind_symbolic_name To, 0 [symbolic]
-// CHECK:STDOUT:   %Convert.type.0f9: type = fn_type @Convert.2, @impl.4f9(%To) [symbolic]
+// CHECK:STDOUT:   %Convert.type.0f9: type = fn_type @Convert.2, @ImplicitAs.impl.4f9(%To) [symbolic]
 // CHECK:STDOUT:   %Convert.f06: %Convert.type.0f9 = struct_value () [symbolic]
-// CHECK:STDOUT:   %Op.type.19f: type = fn_type @Op.3, @impl.49c(%tuple.type.189) [concrete]
+// CHECK:STDOUT:   %Op.type.19f: type = fn_type @Op.3, @Destroy.impl(%tuple.type.189) [concrete]
 // CHECK:STDOUT:   %Op.672: %Op.type.19f = struct_value () [concrete]
-// CHECK:STDOUT:   %Op.type.387: type = fn_type @Op.3, @impl.49c(%tuple.type.99b) [concrete]
+// CHECK:STDOUT:   %Op.type.387: type = fn_type @Op.3, @Destroy.impl(%tuple.type.99b) [concrete]
 // CHECK:STDOUT:   %Op.b09: %Op.type.387 = struct_value () [concrete]
 // CHECK:STDOUT:   %ptr.8bc: type = ptr_type %tuple.type.99b [concrete]
 // CHECK:STDOUT:   %tuple.type.3a3: type = tuple_type (type, %tuple.type.ff9, type) [concrete]
@@ -162,8 +162,8 @@ fn H() {
 // CHECK:STDOUT:   %tuple.type.667: type = tuple_type (Core.IntLiteral, %tuple.type.189, Core.IntLiteral) [concrete]
 // CHECK:STDOUT:   %ImplicitAs.type.205: type = facet_type <@ImplicitAs, @ImplicitAs(%i32)> [concrete]
 // CHECK:STDOUT:   %Convert.type.1b6: type = fn_type @Convert.1, @ImplicitAs(%i32) [concrete]
-// CHECK:STDOUT:   %ImplicitAs.impl_witness.c75: <witness> = impl_witness imports.%ImplicitAs.impl_witness_table.a2f, @impl.4f9(%int_32) [concrete]
-// CHECK:STDOUT:   %Convert.type.035: type = fn_type @Convert.2, @impl.4f9(%int_32) [concrete]
+// CHECK:STDOUT:   %ImplicitAs.impl_witness.c75: <witness> = impl_witness imports.%ImplicitAs.impl_witness_table.a2f, @ImplicitAs.impl.4f9(%int_32) [concrete]
+// CHECK:STDOUT:   %Convert.type.035: type = fn_type @Convert.2, @ImplicitAs.impl.4f9(%int_32) [concrete]
 // CHECK:STDOUT:   %Convert.956: %Convert.type.035 = struct_value () [concrete]
 // CHECK:STDOUT:   %ImplicitAs.facet: %ImplicitAs.type.205 = facet_value Core.IntLiteral, (%ImplicitAs.impl_witness.c75) [concrete]
 // CHECK:STDOUT:   %.9c3: type = fn_type_with_self_type %Convert.type.1b6, %ImplicitAs.facet [concrete]
@@ -174,14 +174,14 @@ fn H() {
 // CHECK:STDOUT:   %Convert.bound.ef9: <bound method> = bound_method %int_2.ecc, %Convert.956 [concrete]
 // CHECK:STDOUT:   %bound_method.b92: <bound method> = bound_method %int_2.ecc, %Convert.specific_fn [concrete]
 // CHECK:STDOUT:   %int_2.ef8: %i32 = int_value 2 [concrete]
-// CHECK:STDOUT:   %Op.type.701: type = fn_type @Op.3, @impl.49c(%tuple.type.516) [concrete]
+// CHECK:STDOUT:   %Op.type.701: type = fn_type @Op.3, @Destroy.impl(%tuple.type.516) [concrete]
 // CHECK:STDOUT:   %Op.dfb: %Op.type.701 = struct_value () [concrete]
 // CHECK:STDOUT:   %ptr.12e: type = ptr_type %tuple.type.516 [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
-// CHECK:STDOUT:   %Core.import_ref.a5b: @impl.4f9.%Convert.type (%Convert.type.0f9) = import_ref Core//prelude/parts/int, loc16_39, loaded [symbolic = @impl.4f9.%Convert (constants.%Convert.f06)]
-// CHECK:STDOUT:   %ImplicitAs.impl_witness_table.a2f = impl_witness_table (%Core.import_ref.a5b), @impl.4f9 [concrete]
+// CHECK:STDOUT:   %Core.import_ref.a5b: @ImplicitAs.impl.4f9.%Convert.type (%Convert.type.0f9) = import_ref Core//prelude/parts/int, loc16_39, loaded [symbolic = @ImplicitAs.impl.4f9.%Convert (constants.%Convert.f06)]
+// CHECK:STDOUT:   %ImplicitAs.impl_witness_table.a2f = impl_witness_table (%Core.import_ref.a5b), @ImplicitAs.impl.4f9 [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @G() {

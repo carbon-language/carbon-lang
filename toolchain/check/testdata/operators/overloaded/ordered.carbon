@@ -141,14 +141,14 @@ fn TestGreaterEqual(a: D, b: D) -> bool {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %C.decl: type = class_decl @C [concrete = constants.%C] {} {}
-// CHECK:STDOUT:   impl_decl @impl.ecd [concrete] {} {
+// CHECK:STDOUT:   impl_decl @OrderedWith.impl.ecd [concrete] {} {
 // CHECK:STDOUT:     %C.ref.loc6_6: type = name_ref C, file.%C.decl [concrete = constants.%C]
 // CHECK:STDOUT:     %Core.ref: <namespace> = name_ref Core, imports.%Core [concrete = imports.%Core]
 // CHECK:STDOUT:     %OrderedWith.ref: %OrderedWith.type.270 = name_ref OrderedWith, imports.%Core.OrderedWith [concrete = constants.%OrderedWith.generic]
 // CHECK:STDOUT:     %C.ref.loc6_28: type = name_ref C, file.%C.decl [concrete = constants.%C]
 // CHECK:STDOUT:     %OrderedWith.type: type = facet_type <@OrderedWith, @OrderedWith(constants.%C)> [concrete = constants.%OrderedWith.type.914]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %OrderedWith.impl_witness_table = impl_witness_table (@impl.ecd.%Less.decl, @impl.ecd.%LessOrEquivalent.decl, @impl.ecd.%Greater.decl, @impl.ecd.%GreaterOrEquivalent.decl), @impl.ecd [concrete]
+// CHECK:STDOUT:   %OrderedWith.impl_witness_table = impl_witness_table (@OrderedWith.impl.ecd.%Less.decl, @OrderedWith.impl.ecd.%LessOrEquivalent.decl, @OrderedWith.impl.ecd.%Greater.decl, @OrderedWith.impl.ecd.%GreaterOrEquivalent.decl), @OrderedWith.impl.ecd [concrete]
 // CHECK:STDOUT:   %OrderedWith.impl_witness: <witness> = impl_witness %OrderedWith.impl_witness_table [concrete = constants.%OrderedWith.impl_witness]
 // CHECK:STDOUT:   %TestLess.decl: %TestLess.type = fn_decl @TestLess [concrete = constants.%TestLess] {
 // CHECK:STDOUT:     %a.patt: %pattern_type.c48 = binding_pattern a [concrete]
@@ -232,7 +232,7 @@ fn TestGreaterEqual(a: D, b: D) -> bool {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: impl @impl.ecd: %C.ref.loc6_6 as %OrderedWith.type {
+// CHECK:STDOUT: impl @OrderedWith.impl.ecd: %C.ref.loc6_6 as %OrderedWith.type {
 // CHECK:STDOUT:   %Less.decl: %Less.type.e31 = fn_decl @Less.2 [concrete = constants.%Less.076] {
 // CHECK:STDOUT:     %self.patt: %pattern_type.c48 = binding_pattern self [concrete]
 // CHECK:STDOUT:     %self.param_patt: %pattern_type.c48 = value_param_pattern %self.patt, call_param0 [concrete]

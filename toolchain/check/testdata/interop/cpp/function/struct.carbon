@@ -407,7 +407,7 @@ fn F() {
 // CHECK:STDOUT:   %foo.type: type = fn_type @foo [concrete]
 // CHECK:STDOUT:   %foo: %foo.type = struct_value () [concrete]
 // CHECK:STDOUT:   %S.val: %S = struct_value () [concrete]
-// CHECK:STDOUT:   %Op.type.642: type = fn_type @Op.2, @impl(%S) [concrete]
+// CHECK:STDOUT:   %Op.type.642: type = fn_type @Op.2, @Destroy.impl(%S) [concrete]
 // CHECK:STDOUT:   %Op.ab5: %Op.type.642 = struct_value () [concrete]
 // CHECK:STDOUT:   %ptr.5c7: type = ptr_type %S [concrete]
 // CHECK:STDOUT: }
@@ -452,7 +452,7 @@ fn F() {
 // CHECK:STDOUT:   %foo.type: type = fn_type @foo [concrete]
 // CHECK:STDOUT:   %foo: %foo.type = struct_value () [concrete]
 // CHECK:STDOUT:   %S.val: %S = struct_value () [concrete]
-// CHECK:STDOUT:   %Op.type.642: type = fn_type @Op.2, @impl(%S) [concrete]
+// CHECK:STDOUT:   %Op.type.642: type = fn_type @Op.2, @Destroy.impl(%S) [concrete]
 // CHECK:STDOUT:   %Op.ab5: %Op.type.642 = struct_value () [concrete]
 // CHECK:STDOUT:   %ptr.5c7: type = ptr_type %S [concrete]
 // CHECK:STDOUT: }
@@ -497,7 +497,7 @@ fn F() {
 // CHECK:STDOUT:   %foo.type: type = fn_type @foo [concrete]
 // CHECK:STDOUT:   %foo: %foo.type = struct_value () [concrete]
 // CHECK:STDOUT:   %S.val: %S = struct_value () [concrete]
-// CHECK:STDOUT:   %Op.type.642: type = fn_type @Op.2, @impl(%S) [concrete]
+// CHECK:STDOUT:   %Op.type.642: type = fn_type @Op.2, @Destroy.impl(%S) [concrete]
 // CHECK:STDOUT:   %Op.ab5: %Op.type.642 = struct_value () [concrete]
 // CHECK:STDOUT:   %ptr.5c7: type = ptr_type %S [concrete]
 // CHECK:STDOUT: }
@@ -542,7 +542,7 @@ fn F() {
 // CHECK:STDOUT:   %foo.type: type = fn_type @foo [concrete]
 // CHECK:STDOUT:   %foo: %foo.type = struct_value () [concrete]
 // CHECK:STDOUT:   %S.val: %S = struct_value () [concrete]
-// CHECK:STDOUT:   %Op.type.2b5: type = fn_type @Op.2, @impl(%S) [concrete]
+// CHECK:STDOUT:   %Op.type.2b5: type = fn_type @Op.2, @Destroy.impl(%S) [concrete]
 // CHECK:STDOUT:   %Op.9b3: %Op.type.2b5 = struct_value () [concrete]
 // CHECK:STDOUT:   %ptr.edf: type = ptr_type %S [concrete]
 // CHECK:STDOUT: }
@@ -587,7 +587,7 @@ fn F() {
 // CHECK:STDOUT:   %foo.type: type = fn_type @foo [concrete]
 // CHECK:STDOUT:   %foo: %foo.type = struct_value () [concrete]
 // CHECK:STDOUT:   %S.val: %S = struct_value () [concrete]
-// CHECK:STDOUT:   %Op.type.17f: type = fn_type @Op.2, @impl(%S) [concrete]
+// CHECK:STDOUT:   %Op.type.17f: type = fn_type @Op.2, @Destroy.impl(%S) [concrete]
 // CHECK:STDOUT:   %Op.463: %Op.type.17f = struct_value () [concrete]
 // CHECK:STDOUT:   %ptr.887: type = ptr_type %S [concrete]
 // CHECK:STDOUT: }
@@ -639,7 +639,7 @@ fn F() {
 // CHECK:STDOUT:   %foo.type: type = fn_type @foo [concrete]
 // CHECK:STDOUT:   %foo: %foo.type = struct_value () [concrete]
 // CHECK:STDOUT:   %S.val: %S = struct_value () [concrete]
-// CHECK:STDOUT:   %Op.type.642: type = fn_type @Op.2, @impl(%S) [concrete]
+// CHECK:STDOUT:   %Op.type.642: type = fn_type @Op.2, @Destroy.impl(%S) [concrete]
 // CHECK:STDOUT:   %Op.ab5: %Op.type.642 = struct_value () [concrete]
 // CHECK:STDOUT:   %ptr.5c7: type = ptr_type %S [concrete]
 // CHECK:STDOUT: }
@@ -694,7 +694,7 @@ fn F() {
 // CHECK:STDOUT:   %S.val: %S = struct_value () [concrete]
 // CHECK:STDOUT:   %bar.type: type = fn_type @bar [concrete]
 // CHECK:STDOUT:   %bar: %bar.type = struct_value () [concrete]
-// CHECK:STDOUT:   %Op.type.642: type = fn_type @Op.2, @impl(%S) [concrete]
+// CHECK:STDOUT:   %Op.type.642: type = fn_type @Op.2, @Destroy.impl(%S) [concrete]
 // CHECK:STDOUT:   %Op.ab5: %Op.type.642 = struct_value () [concrete]
 // CHECK:STDOUT:   %ptr.5c7: type = ptr_type %S [concrete]
 // CHECK:STDOUT: }
@@ -807,7 +807,7 @@ fn F() {
 // CHECK:STDOUT:   %S: type = class_type @S [concrete]
 // CHECK:STDOUT:   %foo.type: type = fn_type @foo [concrete]
 // CHECK:STDOUT:   %foo: %foo.type = struct_value () [concrete]
-// CHECK:STDOUT:   %Op.type.642: type = fn_type @Op.2, @impl(%S) [concrete]
+// CHECK:STDOUT:   %Op.type.642: type = fn_type @Op.2, @Destroy.impl(%S) [concrete]
 // CHECK:STDOUT:   %Op.ab5: %Op.type.642 = struct_value () [concrete]
 // CHECK:STDOUT:   %ptr.5c7: type = ptr_type %S [concrete]
 // CHECK:STDOUT: }

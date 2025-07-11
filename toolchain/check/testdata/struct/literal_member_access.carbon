@@ -38,7 +38,7 @@ fn F() -> i32 {
 // CHECK:STDOUT:   %int_3: Core.IntLiteral = int_value 3 [concrete]
 // CHECK:STDOUT:   %struct_type.a.b.c.4ca: type = struct_type {.a: Core.IntLiteral, .b: %struct_type.x.y.z, .c: Core.IntLiteral} [concrete]
 // CHECK:STDOUT:   %Destroy.type: type = facet_type <@Destroy> [concrete]
-// CHECK:STDOUT:   %Op.type.f60: type = fn_type @Op.2, @impl(%struct_type.x.y.z) [concrete]
+// CHECK:STDOUT:   %Op.type.f60: type = fn_type @Op.2, @Destroy.impl(%struct_type.x.y.z) [concrete]
 // CHECK:STDOUT:   %Op.1a4: %Op.type.f60 = struct_value () [concrete]
 // CHECK:STDOUT:   %Op.specific_fn: <specific function> = specific_function %Op.1a4, @Op.2(%struct_type.x.y.z) [concrete]
 // CHECK:STDOUT: }

@@ -39,7 +39,7 @@ fn MemberNamedSelf.F(x: Self, y: r#Self) {}
 // CHECK:STDOUT:   %ptr.e71: type = ptr_type %Class [concrete]
 // CHECK:STDOUT:   %pattern_type.796: type = pattern_type %ptr.e71 [concrete]
 // CHECK:STDOUT:   %Destroy.type: type = facet_type <@Destroy> [concrete]
-// CHECK:STDOUT:   %Op.type.faa: type = fn_type @Op.2, @impl(%ptr.e71) [concrete]
+// CHECK:STDOUT:   %Op.type.faa: type = fn_type @Op.2, @Destroy.impl(%ptr.e71) [concrete]
 // CHECK:STDOUT:   %Op.5a3: %Op.type.faa = struct_value () [concrete]
 // CHECK:STDOUT:   %ptr.0dd: type = ptr_type %ptr.e71 [concrete]
 // CHECK:STDOUT:   %Op.specific_fn: <specific function> = specific_function %Op.5a3, @Op.2(%ptr.e71) [concrete]

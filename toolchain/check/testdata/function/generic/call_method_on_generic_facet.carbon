@@ -127,20 +127,20 @@ fn G() {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %GenericParam.decl: type = class_decl @GenericParam [concrete = constants.%GenericParam] {} {}
 // CHECK:STDOUT:   %ImplsGeneric.decl: type = class_decl @ImplsGeneric [concrete = constants.%ImplsGeneric] {} {}
-// CHECK:STDOUT:   impl_decl @impl.046 [concrete] {} {
+// CHECK:STDOUT:   impl_decl @Generic.impl [concrete] {} {
 // CHECK:STDOUT:     %ImplsGeneric.ref: type = name_ref ImplsGeneric, file.%ImplsGeneric.decl [concrete = constants.%ImplsGeneric]
 // CHECK:STDOUT:     %Generic.ref: %Generic.type.c21 = name_ref Generic, file.%Generic.decl [concrete = constants.%Generic.generic]
 // CHECK:STDOUT:     %GenericParam.ref: type = name_ref GenericParam, file.%GenericParam.decl [concrete = constants.%GenericParam]
 // CHECK:STDOUT:     %Generic.type: type = facet_type <@Generic, @Generic(constants.%GenericParam)> [concrete = constants.%Generic.type.769]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %Generic.impl_witness_table = impl_witness_table (@impl.046.%F.decl), @impl.046 [concrete]
+// CHECK:STDOUT:   %Generic.impl_witness_table = impl_witness_table (@Generic.impl.%F.decl), @Generic.impl [concrete]
 // CHECK:STDOUT:   %Generic.impl_witness: <witness> = impl_witness %Generic.impl_witness_table [concrete = constants.%Generic.impl_witness]
 // CHECK:STDOUT:   %Other.decl: type = interface_decl @Other [concrete = constants.%Other.type] {} {}
-// CHECK:STDOUT:   impl_decl @impl.728 [concrete] {} {
+// CHECK:STDOUT:   impl_decl @Other.impl [concrete] {} {
 // CHECK:STDOUT:     %ImplsGeneric.ref: type = name_ref ImplsGeneric, file.%ImplsGeneric.decl [concrete = constants.%ImplsGeneric]
 // CHECK:STDOUT:     %Other.ref: type = name_ref Other, file.%Other.decl [concrete = constants.%Other.type]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %Other.impl_witness_table = impl_witness_table (@impl.728.%G.decl), @impl.728 [concrete]
+// CHECK:STDOUT:   %Other.impl_witness_table = impl_witness_table (@Other.impl.%G.decl), @Other.impl [concrete]
 // CHECK:STDOUT:   %Other.impl_witness: <witness> = impl_witness %Other.impl_witness_table [concrete = constants.%Other.impl_witness]
 // CHECK:STDOUT:   %CallGenericMethod.decl: %CallGenericMethod.type = fn_decl @CallGenericMethod [concrete = constants.%CallGenericMethod] {
 // CHECK:STDOUT:     %T.patt: %pattern_type.98f = symbolic_binding_pattern T, 0 [concrete]
@@ -191,7 +191,7 @@ fn G() {
 // CHECK:STDOUT:   witness = (%G.decl)
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: impl @impl.046: %ImplsGeneric.ref as %Generic.type {
+// CHECK:STDOUT: impl @Generic.impl: %ImplsGeneric.ref as %Generic.type {
 // CHECK:STDOUT:   %F.decl: %F.type.17b = fn_decl @F.2 [concrete = constants.%F.a56] {} {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
@@ -199,7 +199,7 @@ fn G() {
 // CHECK:STDOUT:   witness = file.%Generic.impl_witness
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: impl @impl.728: %ImplsGeneric.ref as %Other.ref {
+// CHECK:STDOUT: impl @Other.impl: %ImplsGeneric.ref as %Other.ref {
 // CHECK:STDOUT:   %G.decl: %G.type.58d = fn_decl @G.2 [concrete = constants.%G.b67] {} {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:

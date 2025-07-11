@@ -37,7 +37,7 @@ fn G(n: i32) -> i32 {
 // CHECK:STDOUT:   %int_42: Core.IntLiteral = int_value 42 [concrete]
 // CHECK:STDOUT:   %array_type: type = array_type %int_42, %i32 [concrete]
 // CHECK:STDOUT:   %ptr.830: type = ptr_type %array_type [concrete]
-// CHECK:STDOUT:   %Op.type.b8c: type = fn_type @Op.3, @impl.49c(%array_type) [concrete]
+// CHECK:STDOUT:   %Op.type.b8c: type = fn_type @Op.3, @Destroy.impl(%array_type) [concrete]
 // CHECK:STDOUT:   %Op.552: %Op.type.b8c = struct_value () [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

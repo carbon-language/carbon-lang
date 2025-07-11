@@ -226,7 +226,7 @@ fn F() {
 // CHECK:STDOUT:   %ptr.5c7: type = ptr_type %S [concrete]
 // CHECK:STDOUT:   %foo.type: type = fn_type @foo [concrete]
 // CHECK:STDOUT:   %foo: %foo.type = struct_value () [concrete]
-// CHECK:STDOUT:   %Op.type.642: type = fn_type @Op.2, @impl(%S) [concrete]
+// CHECK:STDOUT:   %Op.type.642: type = fn_type @Op.2, @Destroy.impl(%S) [concrete]
 // CHECK:STDOUT:   %Op.ab5: %Op.type.642 = struct_value () [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -287,9 +287,9 @@ fn F() {
 // CHECK:STDOUT:   %foo.type: type = fn_type @foo [concrete]
 // CHECK:STDOUT:   %foo: %foo.type = struct_value () [concrete]
 // CHECK:STDOUT:   %ptr.dfe: type = ptr_type %ptr.5c7 [concrete]
-// CHECK:STDOUT:   %Op.type.c07: type = fn_type @Op.2, @impl(%ptr.5c7) [concrete]
+// CHECK:STDOUT:   %Op.type.c07: type = fn_type @Op.2, @Destroy.impl(%ptr.5c7) [concrete]
 // CHECK:STDOUT:   %Op.64b: %Op.type.c07 = struct_value () [concrete]
-// CHECK:STDOUT:   %Op.type.642: type = fn_type @Op.2, @impl(%S) [concrete]
+// CHECK:STDOUT:   %Op.type.642: type = fn_type @Op.2, @Destroy.impl(%S) [concrete]
 // CHECK:STDOUT:   %Op.ab5: %Op.type.642 = struct_value () [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -366,7 +366,7 @@ fn F() {
 // CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [concrete]
 // CHECK:STDOUT:   %G: %G.type = struct_value () [concrete]
 // CHECK:STDOUT:   %ptr.ff5: type = ptr_type %const [concrete]
-// CHECK:STDOUT:   %Op.type.372: type = fn_type @Op.2, @impl(%const) [concrete]
+// CHECK:STDOUT:   %Op.type.372: type = fn_type @Op.2, @Destroy.impl(%const) [concrete]
 // CHECK:STDOUT:   %Op.af7: %Op.type.372 = struct_value () [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -532,7 +532,7 @@ fn F() {
 // CHECK:STDOUT:   %foo.type: type = fn_type @foo [concrete]
 // CHECK:STDOUT:   %foo: %foo.type = struct_value () [concrete]
 // CHECK:STDOUT:   %ptr.5c7: type = ptr_type %S [concrete]
-// CHECK:STDOUT:   %Op.type.642: type = fn_type @Op.2, @impl(%S) [concrete]
+// CHECK:STDOUT:   %Op.type.642: type = fn_type @Op.2, @Destroy.impl(%S) [concrete]
 // CHECK:STDOUT:   %Op.ab5: %Op.type.642 = struct_value () [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

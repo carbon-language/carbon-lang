@@ -329,7 +329,7 @@ impl () as I({}) {
 // CHECK:STDOUT:   %empty_tuple: %empty_tuple.type = tuple_value () [concrete]
 // CHECK:STDOUT:   %empty_struct: %empty_struct_type = struct_value () [concrete]
 // CHECK:STDOUT:   %struct: %struct_type.c.d.15a = struct_value (%empty_tuple, %empty_struct) [concrete]
-// CHECK:STDOUT:   %Op.type.afe: type = fn_type @Op.2, @impl.49c(%struct_type.d.c.b36) [concrete]
+// CHECK:STDOUT:   %Op.type.afe: type = fn_type @Op.2, @Destroy.impl(%struct_type.d.c.b36) [concrete]
 // CHECK:STDOUT:   %Op.742: %Op.type.afe = struct_value () [concrete]
 // CHECK:STDOUT:   %ptr.eab: type = ptr_type %struct_type.d.c.b36 [concrete]
 // CHECK:STDOUT: }
@@ -337,7 +337,7 @@ impl () as I({}) {
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: impl @impl.4ab: %.loc8_7.2 as %I.ref {
+// CHECK:STDOUT: impl @I.impl: %.loc8_7.2 as %I.ref {
 // CHECK:STDOUT:   %F.decl.loc10_48.1: %F.type.39e918.1 = fn_decl @F.2 [concrete = constants.%F.c04b92.1] {
 // CHECK:STDOUT:     %y.patt: %pattern_type.231 = binding_pattern y [concrete]
 // CHECK:STDOUT:     %y.param_patt: %pattern_type.231 = value_param_pattern %y.patt, call_param0 [concrete]
@@ -374,9 +374,9 @@ impl () as I({}) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F.2(%y.param: %struct_type.b.a.40c) -> %return.param: %struct_type.d.c.b36;
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @F.3(%x.param: %struct_type.a.b.391) -> %return.param: %struct_type.c.d.15a [thunk @impl.4ab.%F.decl.loc10_48.1] {
+// CHECK:STDOUT: fn @F.3(%x.param: %struct_type.a.b.391) -> %return.param: %struct_type.c.d.15a [thunk @I.impl.%F.decl.loc10_48.1] {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %F.ref: %F.type.39e918.1 = name_ref F, @impl.4ab.%F.decl.loc10_48.1 [concrete = constants.%F.c04b92.1]
+// CHECK:STDOUT:   %F.ref: %F.type.39e918.1 = name_ref F, @I.impl.%F.decl.loc10_48.1 [concrete = constants.%F.c04b92.1]
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT:   %.loc10_48.1: ref %struct_type.d.c.b36 = temporary_storage
 // CHECK:STDOUT:   <elided>
@@ -421,7 +421,7 @@ impl () as I({}) {
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: impl @impl: %B.ref as %X.ref {
+// CHECK:STDOUT: impl @X.impl: %B.ref as %X.ref {
 // CHECK:STDOUT:   %F.decl.loc14_39.1: %F.type.f1b0b1.1 = fn_decl @F.2 [concrete = constants.%F.5161e9.1] {
 // CHECK:STDOUT:     %self.patt: %pattern_type.5f8 = binding_pattern self [concrete]
 // CHECK:STDOUT:     %self.param_patt: %pattern_type.5f8 = value_param_pattern %self.patt, call_param0 [concrete]
@@ -463,9 +463,9 @@ impl () as I({}) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F.2(%self.param: %ptr.6db, %other.param: %ptr.6db) -> %ptr.019;
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @F.3(%self.param: %ptr.e79, %other.param: %ptr.e79) -> %ptr.e79 [thunk @impl.%F.decl.loc14_39.1] {
+// CHECK:STDOUT: fn @F.3(%self.param: %ptr.e79, %other.param: %ptr.e79) -> %ptr.e79 [thunk @X.impl.%F.decl.loc14_39.1] {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %F.ref: %F.type.f1b0b1.1 = name_ref F, @impl.%F.decl.loc14_39.1 [concrete = constants.%F.5161e9.1]
+// CHECK:STDOUT:   %F.ref: %F.type.f1b0b1.1 = name_ref F, @X.impl.%F.decl.loc14_39.1 [concrete = constants.%F.5161e9.1]
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT:   %F.bound: <bound method> = bound_method %.loc9_17.1, %F.ref
 // CHECK:STDOUT:   <elided>
@@ -495,7 +495,7 @@ impl () as I({}) {
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: impl @impl: %B.ref as %X.ref {
+// CHECK:STDOUT: impl @X.impl: %B.ref as %X.ref {
 // CHECK:STDOUT:   %F.decl.loc13_26.1: %F.type.f1b0b1.1 = fn_decl @F.2 [concrete = constants.%F.5161e9.1] {
 // CHECK:STDOUT:     %self.patt: %pattern_type.c10 = binding_pattern self [concrete]
 // CHECK:STDOUT:     %self.param_patt: %pattern_type.c10 = value_param_pattern %self.patt, call_param0 [concrete]
@@ -523,9 +523,9 @@ impl () as I({}) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F.2(%self.param: %A, %other.param: %A);
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @F.3(%self.param: %B, %other.param: %B) [thunk @impl.%F.decl.loc13_26.1] {
+// CHECK:STDOUT: fn @F.3(%self.param: %B, %other.param: %B) [thunk @X.impl.%F.decl.loc13_26.1] {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %F.ref: %F.type.f1b0b1.1 = name_ref F, @impl.%F.decl.loc13_26.1 [concrete = constants.%F.5161e9.1]
+// CHECK:STDOUT:   %F.ref: %F.type.f1b0b1.1 = name_ref F, @X.impl.%F.decl.loc13_26.1 [concrete = constants.%F.5161e9.1]
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT:   %F.bound: <bound method> = bound_method %self.ref, %F.ref
 // CHECK:STDOUT:   <elided>
@@ -554,7 +554,7 @@ impl () as I({}) {
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: impl @impl: %B.ref as %X.ref {
+// CHECK:STDOUT: impl @X.impl: %B.ref as %X.ref {
 // CHECK:STDOUT:   %F.decl.loc14_39.1: %F.type.f1b0b1.1 = fn_decl @F.2 [concrete = constants.%F.5161e9.1] {
 // CHECK:STDOUT:     %self.patt: %pattern_type.5f8 = binding_pattern self [concrete]
 // CHECK:STDOUT:     %self.param_patt: %pattern_type.5f8 = value_param_pattern %self.patt, call_param0 [concrete]
@@ -596,9 +596,9 @@ impl () as I({}) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F.2(%self.param: %ptr.6db, %other.param: %ptr.6db) -> %ptr.019;
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @F.3(%self.param: %ptr.e79, %other.param: %ptr.e79) -> %ptr.e79 [thunk @impl.%F.decl.loc14_39.1] {
+// CHECK:STDOUT: fn @F.3(%self.param: %ptr.e79, %other.param: %ptr.e79) -> %ptr.e79 [thunk @X.impl.%F.decl.loc14_39.1] {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %F.ref: %F.type.f1b0b1.1 = name_ref F, @impl.%F.decl.loc14_39.1 [concrete = constants.%F.5161e9.1]
+// CHECK:STDOUT:   %F.ref: %F.type.f1b0b1.1 = name_ref F, @X.impl.%F.decl.loc14_39.1 [concrete = constants.%F.5161e9.1]
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT:   %F.bound: <bound method> = bound_method %.loc9_17.1, %F.ref
 // CHECK:STDOUT:   <elided>
@@ -623,7 +623,7 @@ impl () as I({}) {
 // CHECK:STDOUT:   %F.77e9d5.1: %F.type.b24d6f.1 = struct_value () [concrete]
 // CHECK:STDOUT:   %F.type.b24d6f.2: type = fn_type @F.3 [concrete]
 // CHECK:STDOUT:   %F.77e9d5.2: %F.type.b24d6f.2 = struct_value () [concrete]
-// CHECK:STDOUT:   %Op.type.1a6: type = fn_type @Op.2, @impl.49c(%B) [concrete]
+// CHECK:STDOUT:   %Op.type.1a6: type = fn_type @Op.2, @Destroy.impl(%B) [concrete]
 // CHECK:STDOUT:   %Op.3c2: %Op.type.1a6 = struct_value () [concrete]
 // CHECK:STDOUT:   %ptr.e79: type = ptr_type %B [concrete]
 // CHECK:STDOUT: }
@@ -631,7 +631,7 @@ impl () as I({}) {
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: impl @impl.3d2: %A.ref as %X.ref {
+// CHECK:STDOUT: impl @X.impl: %A.ref as %X.ref {
 // CHECK:STDOUT:   %F.decl.loc20_14.1: %F.type.b24d6f.1 = fn_decl @F.2 [concrete = constants.%F.77e9d5.1] {
 // CHECK:STDOUT:     %return.patt: %pattern_type.049 = return_slot_pattern [concrete]
 // CHECK:STDOUT:     %return.param_patt: %pattern_type.049 = out_param_pattern %return.patt, call_param0 [concrete]
@@ -654,9 +654,9 @@ impl () as I({}) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F.2() -> %return.param: %B;
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @F.3() -> %return.param: %A [thunk @impl.3d2.%F.decl.loc20_14.1] {
+// CHECK:STDOUT: fn @F.3() -> %return.param: %A [thunk @X.impl.%F.decl.loc20_14.1] {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %F.ref: %F.type.b24d6f.1 = name_ref F, @impl.3d2.%F.decl.loc20_14.1 [concrete = constants.%F.77e9d5.1]
+// CHECK:STDOUT:   %F.ref: %F.type.b24d6f.1 = name_ref F, @X.impl.%F.decl.loc20_14.1 [concrete = constants.%F.77e9d5.1]
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT:   %.loc20_14.1: ref %B = temporary_storage
 // CHECK:STDOUT:   %F.call: init %B = call %F.ref() to %.loc20_14.1
@@ -693,7 +693,7 @@ impl () as I({}) {
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: impl @impl: %.loc8_7.2 as %I.ref {
+// CHECK:STDOUT: impl @I.impl: %.loc8_7.2 as %I.ref {
 // CHECK:STDOUT:   %F.decl.loc10_29.1: %F.type.39e918.1 = fn_decl @F.2 [concrete = constants.%F.c04b92.1] {
 // CHECK:STDOUT:     %U.patt: %pattern_type.98f = symbolic_binding_pattern U, 0 [concrete]
 // CHECK:STDOUT:     %x.patt: @F.2.%pattern_type (%pattern_type.7dc) = binding_pattern x [concrete]
@@ -741,9 +741,9 @@ impl () as I({}) {
 // CHECK:STDOUT:   %F.specific_fn.loc10_29.2: <specific function> = specific_function constants.%F.c04b92.1, @F.2(%ptr) [symbolic = %F.specific_fn.loc10_29.2 (constants.%F.specific_fn)]
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT:
-// CHECK:STDOUT:   fn(%x.param: @F.3.%ptr (%ptr.79f)) -> @F.3.%ptr (%ptr.79f) [thunk @impl.%F.decl.loc10_29.1] {
+// CHECK:STDOUT:   fn(%x.param: @F.3.%ptr (%ptr.79f)) -> @F.3.%ptr (%ptr.79f) [thunk @I.impl.%F.decl.loc10_29.1] {
 // CHECK:STDOUT:   !entry:
-// CHECK:STDOUT:     %F.ref: %F.type.39e918.1 = name_ref F, @impl.%F.decl.loc10_29.1 [concrete = constants.%F.c04b92.1]
+// CHECK:STDOUT:     %F.ref: %F.type.39e918.1 = name_ref F, @I.impl.%F.decl.loc10_29.1 [concrete = constants.%F.c04b92.1]
 // CHECK:STDOUT:     <elided>
 // CHECK:STDOUT:     %F.specific_fn.loc10_29.1: <specific function> = specific_function %F.ref, @F.2(constants.%ptr.79f) [symbolic = %F.specific_fn.loc10_29.2 (constants.%F.specific_fn)]
 // CHECK:STDOUT:     %F.call: init @F.3.%ptr (%ptr.79f) = call %F.specific_fn.loc10_29.1(%x.ref)
@@ -793,7 +793,7 @@ impl () as I({}) {
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: impl @impl: %.loc10_7.2 as %I.ref {
+// CHECK:STDOUT: impl @I.impl: %.loc10_7.2 as %I.ref {
 // CHECK:STDOUT:   %F.decl.loc19_39.1: %F.type.39e918.1 = fn_decl @F.2 [concrete = constants.%F.c04b92.1] {
 // CHECK:STDOUT:     %self.patt: %pattern_type.cb1 = binding_pattern self [concrete]
 // CHECK:STDOUT:     %self.param_patt: %pattern_type.cb1 = value_param_pattern %self.patt, call_param0 [concrete]
@@ -847,9 +847,9 @@ impl () as I({}) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:
-// CHECK:STDOUT:   fn(%self.param: %empty_tuple.type, %x.param: @F.3.%ptr (%ptr.79f)) -> @F.3.%ptr (%ptr.79f) [thunk @impl.%F.decl.loc19_39.1] {
+// CHECK:STDOUT:   fn(%self.param: %empty_tuple.type, %x.param: @F.3.%ptr (%ptr.79f)) -> @F.3.%ptr (%ptr.79f) [thunk @I.impl.%F.decl.loc19_39.1] {
 // CHECK:STDOUT:   !entry:
-// CHECK:STDOUT:     %F.ref: %F.type.39e918.1 = name_ref F, @impl.%F.decl.loc19_39.1 [concrete = constants.%F.c04b92.1]
+// CHECK:STDOUT:     %F.ref: %F.type.39e918.1 = name_ref F, @I.impl.%F.decl.loc19_39.1 [concrete = constants.%F.c04b92.1]
 // CHECK:STDOUT:     <elided>
 // CHECK:STDOUT:     return <error>
 // CHECK:STDOUT:   }
@@ -880,7 +880,7 @@ impl () as I({}) {
 // CHECK:STDOUT:   %F.975709.2: %F.type.29ab63.2 = struct_value () [concrete]
 // CHECK:STDOUT:   %empty_struct: %empty_struct_type = struct_value () [concrete]
 // CHECK:STDOUT:   %struct: %struct_type.a.b.f95 = struct_value (%empty_struct, %empty_struct) [concrete]
-// CHECK:STDOUT:   %Op.type.f20: type = fn_type @Op.2, @impl.49c(%struct_type.b.a.1b0) [concrete]
+// CHECK:STDOUT:   %Op.type.f20: type = fn_type @Op.2, @Destroy.impl(%struct_type.b.a.1b0) [concrete]
 // CHECK:STDOUT:   %Op.eab: %Op.type.f20 = struct_value () [concrete]
 // CHECK:STDOUT:   %ptr.30d: type = ptr_type %struct_type.b.a.1b0 [concrete]
 // CHECK:STDOUT: }
@@ -888,7 +888,7 @@ impl () as I({}) {
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: impl @impl.50b: %.loc8_7.2 as %I.type {
+// CHECK:STDOUT: impl @I.impl: %.loc8_7.2 as %I.type {
 // CHECK:STDOUT:   %F.decl.loc10_29.1: %F.type.29ab63.1 = fn_decl @F.2 [concrete = constants.%F.975709.1] {
 // CHECK:STDOUT:     %return.patt: %pattern_type.914 = return_slot_pattern [concrete]
 // CHECK:STDOUT:     %return.param_patt: %pattern_type.914 = out_param_pattern %return.patt, call_param0 [concrete]
@@ -914,9 +914,9 @@ impl () as I({}) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F.2() -> %return.param: %struct_type.b.a.1b0;
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @F.3() -> %return.param: %struct_type.a.b.f95 [thunk @impl.50b.%F.decl.loc10_29.1] {
+// CHECK:STDOUT: fn @F.3() -> %return.param: %struct_type.a.b.f95 [thunk @I.impl.%F.decl.loc10_29.1] {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %F.ref: %F.type.29ab63.1 = name_ref F, @impl.50b.%F.decl.loc10_29.1 [concrete = constants.%F.975709.1]
+// CHECK:STDOUT:   %F.ref: %F.type.29ab63.1 = name_ref F, @I.impl.%F.decl.loc10_29.1 [concrete = constants.%F.975709.1]
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT:   %.loc10_29.1: ref %struct_type.b.a.1b0 = temporary_storage
 // CHECK:STDOUT:   %F.call: init %struct_type.b.a.1b0 = call %F.ref() to %.loc10_29.1

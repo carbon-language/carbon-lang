@@ -87,14 +87,14 @@ fn Read() {
 // CHECK:STDOUT:   %None.fd6: %None.type.ef2 = struct_value () [symbolic]
 // CHECK:STDOUT:   %Some.type.b2c: type = fn_type @Some, @Optional(%T.8b3) [symbolic]
 // CHECK:STDOUT:   %Some.d0d: %Some.type.b2c = struct_value () [symbolic]
-// CHECK:STDOUT:   %Iterate.impl_witness: <witness> = impl_witness @IntRange.%Iterate.impl_witness_table, @impl.7a3(%N) [symbolic]
-// CHECK:STDOUT:   %NewCursor.type.b02: type = fn_type @NewCursor.2, @impl.7a3(%N) [symbolic]
+// CHECK:STDOUT:   %Iterate.impl_witness: <witness> = impl_witness @IntRange.%Iterate.impl_witness_table, @Iterate.impl(%N) [symbolic]
+// CHECK:STDOUT:   %NewCursor.type.b02: type = fn_type @NewCursor.2, @Iterate.impl(%N) [symbolic]
 // CHECK:STDOUT:   %NewCursor.f32: %NewCursor.type.b02 = struct_value () [symbolic]
 // CHECK:STDOUT:   %ptr.784: type = ptr_type %Int.49d0e6.1 [symbolic]
 // CHECK:STDOUT:   %pattern_type.4dc: type = pattern_type %ptr.784 [symbolic]
 // CHECK:STDOUT:   %Optional.708: type = class_type @Optional, @Optional(%Int.49d0e6.1) [symbolic]
 // CHECK:STDOUT:   %pattern_type.4b1: type = pattern_type %Optional.708 [symbolic]
-// CHECK:STDOUT:   %Next.type.2c8: type = fn_type @Next.2, @impl.7a3(%N) [symbolic]
+// CHECK:STDOUT:   %Next.type.2c8: type = fn_type @Next.2, @Iterate.impl(%N) [symbolic]
 // CHECK:STDOUT:   %Next.259: %Next.type.2c8 = struct_value () [symbolic]
 // CHECK:STDOUT:   %require_complete.b4f426.1: <witness> = require_complete_type %Int.49d0e6.1 [symbolic]
 // CHECK:STDOUT:   %IntRange.elem.e7c: type = unbound_element_type %IntRange.349, %Int.49d0e6.1 [symbolic]
@@ -122,14 +122,14 @@ fn Read() {
 // CHECK:STDOUT:   %To.c80: Core.IntLiteral = bind_symbolic_name To, 0 [symbolic]
 // CHECK:STDOUT:   %ImplicitAs.type.cc7: type = generic_interface_type @ImplicitAs [concrete]
 // CHECK:STDOUT:   %ImplicitAs.generic: %ImplicitAs.type.cc7 = struct_value () [concrete]
-// CHECK:STDOUT:   %Convert.type.0f9: type = fn_type @Convert.2, @impl.4f9(%To.c80) [symbolic]
+// CHECK:STDOUT:   %Convert.type.0f9: type = fn_type @Convert.2, @ImplicitAs.impl.4f9(%To.c80) [symbolic]
 // CHECK:STDOUT:   %Convert.f06: %Convert.type.0f9 = struct_value () [symbolic]
 // CHECK:STDOUT:   %M: Core.IntLiteral = bind_symbolic_name M, 1 [symbolic]
-// CHECK:STDOUT:   %Less.type.2c7: type = fn_type @Less.2, @impl.db3(%N, %M) [symbolic]
+// CHECK:STDOUT:   %Less.type.2c7: type = fn_type @Less.2, @OrderedWith.impl.db3(%N, %M) [symbolic]
 // CHECK:STDOUT:   %Less.a5a: %Less.type.2c7 = struct_value () [symbolic]
 // CHECK:STDOUT:   %Inc.type: type = facet_type <@Inc> [concrete]
-// CHECK:STDOUT:   %OrderedWith.impl_witness.df5: <witness> = impl_witness imports.%OrderedWith.impl_witness_table.2b2, @impl.db3(%N, %N) [symbolic]
-// CHECK:STDOUT:   %Less.type.98c: type = fn_type @Less.2, @impl.db3(%N, %N) [symbolic]
+// CHECK:STDOUT:   %OrderedWith.impl_witness.df5: <witness> = impl_witness imports.%OrderedWith.impl_witness_table.2b2, @OrderedWith.impl.db3(%N, %N) [symbolic]
+// CHECK:STDOUT:   %Less.type.98c: type = fn_type @Less.2, @OrderedWith.impl.db3(%N, %N) [symbolic]
 // CHECK:STDOUT:   %Less.4be: %Less.type.98c = struct_value () [symbolic]
 // CHECK:STDOUT:   %OrderedWith.facet: %OrderedWith.type.872 = facet_value %Int.49d0e6.1, (%OrderedWith.impl_witness.df5) [symbolic]
 // CHECK:STDOUT:   %.99c: type = fn_type_with_self_type %Less.type.8fe, %OrderedWith.facet [symbolic]
@@ -174,8 +174,8 @@ fn Read() {
 // CHECK:STDOUT:   %Make.specific_fn: <specific function> = specific_function %Make.0dc, @Make(%int_32) [concrete]
 // CHECK:STDOUT:   %ImplicitAs.type.205: type = facet_type <@ImplicitAs, @ImplicitAs(%i32)> [concrete]
 // CHECK:STDOUT:   %Convert.type.1b6: type = fn_type @Convert.1, @ImplicitAs(%i32) [concrete]
-// CHECK:STDOUT:   %ImplicitAs.impl_witness.c75: <witness> = impl_witness imports.%ImplicitAs.impl_witness_table.a2f, @impl.4f9(%int_32) [concrete]
-// CHECK:STDOUT:   %Convert.type.035: type = fn_type @Convert.2, @impl.4f9(%int_32) [concrete]
+// CHECK:STDOUT:   %ImplicitAs.impl_witness.c75: <witness> = impl_witness imports.%ImplicitAs.impl_witness_table.a2f, @ImplicitAs.impl.4f9(%int_32) [concrete]
+// CHECK:STDOUT:   %Convert.type.035: type = fn_type @Convert.2, @ImplicitAs.impl.4f9(%int_32) [concrete]
 // CHECK:STDOUT:   %Convert.956: %Convert.type.035 = struct_value () [concrete]
 // CHECK:STDOUT:   %ImplicitAs.facet.921: %ImplicitAs.type.205 = facet_value Core.IntLiteral, (%ImplicitAs.impl_witness.c75) [concrete]
 // CHECK:STDOUT:   %.9c3: type = fn_type_with_self_type %Convert.type.1b6, %ImplicitAs.facet.921 [concrete]
@@ -183,7 +183,7 @@ fn Read() {
 // CHECK:STDOUT:   %Convert.specific_fn: <specific function> = specific_function %Convert.956, @Convert.2(%int_32) [concrete]
 // CHECK:STDOUT:   %bound_method: <bound method> = bound_method %int_0.5c6, %Convert.specific_fn [concrete]
 // CHECK:STDOUT:   %int_0.6a9: %i32 = int_value 0 [concrete]
-// CHECK:STDOUT:   %Op.type.2d1: type = fn_type @Op.97, @impl.49c(%IntRange.365) [concrete]
+// CHECK:STDOUT:   %Op.type.2d1: type = fn_type @Op.97, @Destroy.impl(%IntRange.365) [concrete]
 // CHECK:STDOUT:   %Op.fa8: %Op.type.2d1 = struct_value () [concrete]
 // CHECK:STDOUT:   %ptr.049: type = ptr_type %IntRange.365 [concrete]
 // CHECK:STDOUT:   %Op.specific_fn.df8: <specific function> = specific_function %Op.fa8, @Op.97(%IntRange.365) [concrete]
@@ -218,13 +218,13 @@ fn Read() {
 // CHECK:STDOUT:   %Core.import_ref.1cc: @OrderedWith.%OrderedWith.assoc_type (%OrderedWith.assoc_type.03c) = import_ref Core//prelude/operators/comparison, loc26_44, loaded [symbolic = @OrderedWith.%assoc0 (constants.%assoc0.3c6)]
 // CHECK:STDOUT:   %Core.import_ref.910: @OrderedWith.%Less.type (%Less.type.f19) = import_ref Core//prelude/operators/comparison, loc26_44, loaded [symbolic = @OrderedWith.%Less (constants.%Less.02e)]
 // CHECK:STDOUT:   %Core.import_ref.146ebd.1 = import_ref Core//prelude/operators/comparison, loc26_44, unloaded
-// CHECK:STDOUT:   %Core.import_ref.a5b: @impl.4f9.%Convert.type (%Convert.type.0f9) = import_ref Core//prelude/types/int, loc19_39, loaded [symbolic = @impl.4f9.%Convert (constants.%Convert.f06)]
-// CHECK:STDOUT:   %ImplicitAs.impl_witness_table.a2f = impl_witness_table (%Core.import_ref.a5b), @impl.4f9 [concrete]
-// CHECK:STDOUT:   %Core.import_ref.a5f: @impl.db3.%Less.type (%Less.type.2c7) = import_ref Core//prelude/types/int, loc51_46, loaded [symbolic = @impl.db3.%Less (constants.%Less.a5a)]
+// CHECK:STDOUT:   %Core.import_ref.a5b: @ImplicitAs.impl.4f9.%Convert.type (%Convert.type.0f9) = import_ref Core//prelude/types/int, loc19_39, loaded [symbolic = @ImplicitAs.impl.4f9.%Convert (constants.%Convert.f06)]
+// CHECK:STDOUT:   %ImplicitAs.impl_witness_table.a2f = impl_witness_table (%Core.import_ref.a5b), @ImplicitAs.impl.4f9 [concrete]
+// CHECK:STDOUT:   %Core.import_ref.a5f: @OrderedWith.impl.db3.%Less.type (%Less.type.2c7) = import_ref Core//prelude/types/int, loc51_46, loaded [symbolic = @OrderedWith.impl.db3.%Less (constants.%Less.a5a)]
 // CHECK:STDOUT:   %Core.import_ref.a58 = import_ref Core//prelude/types/int, loc52_58, unloaded
 // CHECK:STDOUT:   %Core.import_ref.a39 = import_ref Core//prelude/types/int, loc53_49, unloaded
 // CHECK:STDOUT:   %Core.import_ref.c4c = import_ref Core//prelude/types/int, loc54_61, unloaded
-// CHECK:STDOUT:   %OrderedWith.impl_witness_table.2b2 = impl_witness_table (%Core.import_ref.a5f, %Core.import_ref.a58, %Core.import_ref.a39, %Core.import_ref.c4c), @impl.db3 [concrete]
+// CHECK:STDOUT:   %OrderedWith.impl_witness_table.2b2 = impl_witness_table (%Core.import_ref.a5f, %Core.import_ref.a58, %Core.import_ref.a39, %Core.import_ref.c4c), @OrderedWith.impl.db3 [concrete]
 // CHECK:STDOUT:   %Core.Inc: type = import_ref Core//prelude/operators/arithmetic, Inc, loaded [concrete = constants.%Inc.type]
 // CHECK:STDOUT:   %Core.Destroy: type = import_ref Core//prelude/destroy, Destroy, loaded [concrete = constants.%Destroy.type]
 // CHECK:STDOUT:   %Core.ImplicitAs: %ImplicitAs.type.cc7 = import_ref Core//prelude/operators/as, ImplicitAs, loaded [concrete = constants.%ImplicitAs.generic]
@@ -269,22 +269,22 @@ fn Read() {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic impl @impl.7a3(@IntRange.%N.loc4_16.1: Core.IntLiteral) {
+// CHECK:STDOUT: generic impl @Iterate.impl(@IntRange.%N.loc4_16.1: Core.IntLiteral) {
 // CHECK:STDOUT:   %N: Core.IntLiteral = bind_symbolic_name N, 0 [symbolic = %N (constants.%N)]
 // CHECK:STDOUT:   %IntRange: type = class_type @IntRange, @IntRange(%N) [symbolic = %IntRange (constants.%IntRange.349)]
 // CHECK:STDOUT:   %Int.loc9_54.2: type = class_type @Int, @Int(%N) [symbolic = %Int.loc9_54.2 (constants.%Int.49d0e6.1)]
 // CHECK:STDOUT:   %Iterate_where.type: type = facet_type <@Iterate where constants.%impl.elem1.164 = %Int.loc9_54.2 and constants.%impl.elem0.19f = %Int.loc9_54.2> [symbolic = %Iterate_where.type (constants.%Iterate_where.type)]
 // CHECK:STDOUT:   %require_complete: <witness> = require_complete_type %Iterate_where.type [symbolic = %require_complete (constants.%require_complete.d96)]
-// CHECK:STDOUT:   %Iterate.impl_witness: <witness> = impl_witness @IntRange.%Iterate.impl_witness_table, @impl.7a3(%N) [symbolic = %Iterate.impl_witness (constants.%Iterate.impl_witness)]
+// CHECK:STDOUT:   %Iterate.impl_witness: <witness> = impl_witness @IntRange.%Iterate.impl_witness_table, @Iterate.impl(%N) [symbolic = %Iterate.impl_witness (constants.%Iterate.impl_witness)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
-// CHECK:STDOUT:   %NewCursor.type: type = fn_type @NewCursor.2, @impl.7a3(%N) [symbolic = %NewCursor.type (constants.%NewCursor.type.b02)]
-// CHECK:STDOUT:   %NewCursor: @impl.7a3.%NewCursor.type (%NewCursor.type.b02) = struct_value () [symbolic = %NewCursor (constants.%NewCursor.f32)]
-// CHECK:STDOUT:   %Next.type: type = fn_type @Next.2, @impl.7a3(%N) [symbolic = %Next.type (constants.%Next.type.2c8)]
-// CHECK:STDOUT:   %Next: @impl.7a3.%Next.type (%Next.type.2c8) = struct_value () [symbolic = %Next (constants.%Next.259)]
+// CHECK:STDOUT:   %NewCursor.type: type = fn_type @NewCursor.2, @Iterate.impl(%N) [symbolic = %NewCursor.type (constants.%NewCursor.type.b02)]
+// CHECK:STDOUT:   %NewCursor: @Iterate.impl.%NewCursor.type (%NewCursor.type.b02) = struct_value () [symbolic = %NewCursor (constants.%NewCursor.f32)]
+// CHECK:STDOUT:   %Next.type: type = fn_type @Next.2, @Iterate.impl(%N) [symbolic = %Next.type (constants.%Next.type.2c8)]
+// CHECK:STDOUT:   %Next: @Iterate.impl.%Next.type (%Next.type.2c8) = struct_value () [symbolic = %Next (constants.%Next.259)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   impl: %Self.ref as %.loc9_24 {
-// CHECK:STDOUT:     %NewCursor.decl: @impl.7a3.%NewCursor.type (%NewCursor.type.b02) = fn_decl @NewCursor.2 [symbolic = @impl.7a3.%NewCursor (constants.%NewCursor.f32)] {
+// CHECK:STDOUT:     %NewCursor.decl: @Iterate.impl.%NewCursor.type (%NewCursor.type.b02) = fn_decl @NewCursor.2 [symbolic = @Iterate.impl.%NewCursor (constants.%NewCursor.f32)] {
 // CHECK:STDOUT:       %self.patt: @NewCursor.2.%pattern_type.loc10_18 (%pattern_type.dcd) = binding_pattern self [concrete]
 // CHECK:STDOUT:       %self.param_patt: @NewCursor.2.%pattern_type.loc10_18 (%pattern_type.dcd) = value_param_pattern %self.patt, call_param0 [concrete]
 // CHECK:STDOUT:       %return.patt: @NewCursor.2.%pattern_type.loc10_32 (%pattern_type.8963eb.1) = return_slot_pattern [concrete]
@@ -303,7 +303,7 @@ fn Read() {
 // CHECK:STDOUT:       %return.param: ref @NewCursor.2.%Int.loc10_45.1 (%Int.49d0e6.1) = out_param call_param1
 // CHECK:STDOUT:       %return: ref @NewCursor.2.%Int.loc10_45.1 (%Int.49d0e6.1) = return_slot %return.param
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %Next.decl: @impl.7a3.%Next.type (%Next.type.2c8) = fn_decl @Next.2 [symbolic = @impl.7a3.%Next (constants.%Next.259)] {
+// CHECK:STDOUT:     %Next.decl: @Iterate.impl.%Next.type (%Next.type.2c8) = fn_decl @Next.2 [symbolic = @Iterate.impl.%Next (constants.%Next.259)] {
 // CHECK:STDOUT:       %self.patt: @Next.2.%pattern_type.loc11_13 (%pattern_type.dcd) = binding_pattern self [concrete]
 // CHECK:STDOUT:       %self.param_patt: @Next.2.%pattern_type.loc11_13 (%pattern_type.dcd) = value_param_pattern %self.patt, call_param0 [concrete]
 // CHECK:STDOUT:       %cursor.patt: @Next.2.%pattern_type.loc11_25 (%pattern_type.4dc) = binding_pattern cursor [concrete]
@@ -388,7 +388,7 @@ fn Read() {
 // CHECK:STDOUT:       %return.param: ref @Make.%IntRange (%IntRange.349) = out_param call_param2
 // CHECK:STDOUT:       %return: ref @Make.%IntRange (%IntRange.349) = return_slot %return.param
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     impl_decl @impl.7a3 [concrete] {} {
+// CHECK:STDOUT:     impl_decl @Iterate.impl [concrete] {} {
 // CHECK:STDOUT:       %Self.ref: type = name_ref Self, constants.%IntRange.349 [symbolic = %IntRange (constants.%IntRange.349)]
 // CHECK:STDOUT:       %Core.ref.loc9_11: <namespace> = name_ref Core, imports.%Core [concrete = imports.%Core]
 // CHECK:STDOUT:       %Iterate.ref: type = name_ref Iterate, imports.%Core.Iterate [concrete = constants.%Iterate.type]
@@ -416,10 +416,10 @@ fn Read() {
 // CHECK:STDOUT:         requirement_rewrite %impl.elem0, %Int.loc9_85
 // CHECK:STDOUT:       }
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %Iterate.impl_witness_table = impl_witness_table (%impl_witness_assoc_constant.loc9_87.2, %impl_witness_assoc_constant.loc9_87.1, @impl.7a3.%NewCursor.decl, @impl.7a3.%Next.decl), @impl.7a3 [concrete]
-// CHECK:STDOUT:     %Iterate.impl_witness: <witness> = impl_witness %Iterate.impl_witness_table, @impl.7a3(constants.%N) [symbolic = @impl.7a3.%Iterate.impl_witness (constants.%Iterate.impl_witness)]
-// CHECK:STDOUT:     %impl_witness_assoc_constant.loc9_87.1: type = impl_witness_assoc_constant constants.%Int.49d0e6.1 [symbolic = @impl.7a3.%Int.loc9_54.2 (constants.%Int.49d0e6.1)]
-// CHECK:STDOUT:     %impl_witness_assoc_constant.loc9_87.2: type = impl_witness_assoc_constant constants.%Int.49d0e6.1 [symbolic = @impl.7a3.%Int.loc9_54.2 (constants.%Int.49d0e6.1)]
+// CHECK:STDOUT:     %Iterate.impl_witness_table = impl_witness_table (%impl_witness_assoc_constant.loc9_87.2, %impl_witness_assoc_constant.loc9_87.1, @Iterate.impl.%NewCursor.decl, @Iterate.impl.%Next.decl), @Iterate.impl [concrete]
+// CHECK:STDOUT:     %Iterate.impl_witness: <witness> = impl_witness %Iterate.impl_witness_table, @Iterate.impl(constants.%N) [symbolic = @Iterate.impl.%Iterate.impl_witness (constants.%Iterate.impl_witness)]
+// CHECK:STDOUT:     %impl_witness_assoc_constant.loc9_87.1: type = impl_witness_assoc_constant constants.%Int.49d0e6.1 [symbolic = @Iterate.impl.%Int.loc9_54.2 (constants.%Int.49d0e6.1)]
+// CHECK:STDOUT:     %impl_witness_assoc_constant.loc9_87.2: type = impl_witness_assoc_constant constants.%Int.49d0e6.1 [symbolic = @Iterate.impl.%Int.loc9_54.2 (constants.%Int.49d0e6.1)]
 // CHECK:STDOUT:     %Core.ref.loc22: <namespace> = name_ref Core, imports.%Core [concrete = imports.%Core]
 // CHECK:STDOUT:     %Int.ref.loc22: %Int.type = name_ref Int, imports.%Core.Int [concrete = constants.%Int.generic]
 // CHECK:STDOUT:     %N.ref.loc22: Core.IntLiteral = name_ref N, %N.loc4_16.1 [symbolic = %N.loc4_16.2 (constants.%N)]
@@ -513,11 +513,11 @@ fn Read() {
 // CHECK:STDOUT:   %require_complete.loc13: <witness> = require_complete_type %OrderedWith.type.loc13_17.2 [symbolic = %require_complete.loc13 (constants.%require_complete.66b6)]
 // CHECK:STDOUT:   %OrderedWith.assoc_type: type = assoc_entity_type @OrderedWith, @OrderedWith(%Int.loc11_43.1) [symbolic = %OrderedWith.assoc_type (constants.%OrderedWith.assoc_type.d92)]
 // CHECK:STDOUT:   %assoc0: @Next.2.%OrderedWith.assoc_type (%OrderedWith.assoc_type.d92) = assoc_entity element0, imports.%Core.import_ref.910 [symbolic = %assoc0 (constants.%assoc0.2ae)]
-// CHECK:STDOUT:   %OrderedWith.impl_witness: <witness> = impl_witness imports.%OrderedWith.impl_witness_table.2b2, @impl.db3(%N, %N) [symbolic = %OrderedWith.impl_witness (constants.%OrderedWith.impl_witness.df5)]
+// CHECK:STDOUT:   %OrderedWith.impl_witness: <witness> = impl_witness imports.%OrderedWith.impl_witness_table.2b2, @OrderedWith.impl.db3(%N, %N) [symbolic = %OrderedWith.impl_witness (constants.%OrderedWith.impl_witness.df5)]
 // CHECK:STDOUT:   %Less.type.loc13_17.1: type = fn_type @Less.1, @OrderedWith(%Int.loc11_43.1) [symbolic = %Less.type.loc13_17.1 (constants.%Less.type.8fe)]
 // CHECK:STDOUT:   %OrderedWith.facet: @Next.2.%OrderedWith.type.loc13_17.2 (%OrderedWith.type.872) = facet_value %Int.loc11_43.1, (%OrderedWith.impl_witness) [symbolic = %OrderedWith.facet (constants.%OrderedWith.facet)]
 // CHECK:STDOUT:   %.loc13_17.2: type = fn_type_with_self_type %Less.type.loc13_17.1, %OrderedWith.facet [symbolic = %.loc13_17.2 (constants.%.99c)]
-// CHECK:STDOUT:   %Less.type.loc13_17.2: type = fn_type @Less.2, @impl.db3(%N, %N) [symbolic = %Less.type.loc13_17.2 (constants.%Less.type.98c)]
+// CHECK:STDOUT:   %Less.type.loc13_17.2: type = fn_type @Less.2, @OrderedWith.impl.db3(%N, %N) [symbolic = %Less.type.loc13_17.2 (constants.%Less.type.98c)]
 // CHECK:STDOUT:   %Less: @Next.2.%Less.type.loc13_17.2 (%Less.type.98c) = struct_value () [symbolic = %Less (constants.%Less.4be)]
 // CHECK:STDOUT:   %Less.specific_fn: <specific function> = specific_function %Less, @Less.2(%N, %N) [symbolic = %Less.specific_fn (constants.%Less.specific_fn.bb3)]
 // CHECK:STDOUT:   %Inc.lookup_impl_witness: <witness> = lookup_impl_witness %Int.loc11_43.1, @Inc [symbolic = %Inc.lookup_impl_witness (constants.%Inc.lookup_impl_witness)]
@@ -709,7 +709,7 @@ fn Read() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @ElementType(constants.%Iterate.facet.7f1) {}
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @impl.7a3(constants.%N) {
+// CHECK:STDOUT: specific @Iterate.impl(constants.%N) {
 // CHECK:STDOUT:   %N => constants.%N
 // CHECK:STDOUT:   %IntRange => constants.%IntRange.349
 // CHECK:STDOUT:   %Int.loc9_54.2 => constants.%Int.49d0e6.1
@@ -813,7 +813,7 @@ fn Read() {
 // CHECK:STDOUT:   %ImplicitAs.type.9ba: type = facet_type <@ImplicitAs, @ImplicitAs(%i32)> [concrete]
 // CHECK:STDOUT:   %Convert.type.6da: type = fn_type @Convert.1, @ImplicitAs(%i32) [concrete]
 // CHECK:STDOUT:   %To.c80: Core.IntLiteral = bind_symbolic_name To, 0 [symbolic]
-// CHECK:STDOUT:   %Convert.type.0b2: type = fn_type @Convert.3, @impl.c81(%To.c80) [symbolic]
+// CHECK:STDOUT:   %Convert.type.0b2: type = fn_type @Convert.3, @ImplicitAs.impl.c81(%To.c80) [symbolic]
 // CHECK:STDOUT:   %Convert.6d7: %Convert.type.0b2 = struct_value () [symbolic]
 // CHECK:STDOUT:   %OrderedWith.type.256: type = facet_type <@OrderedWith, @OrderedWith(%Int.7ff11f.1)> [symbolic]
 // CHECK:STDOUT:   %require_complete.10b: <witness> = require_complete_type %OrderedWith.type.256 [symbolic]
@@ -823,8 +823,8 @@ fn Read() {
 // CHECK:STDOUT:   %pattern_type.6d0: type = pattern_type %ptr.58a [symbolic]
 // CHECK:STDOUT:   %require_complete.656: <witness> = require_complete_type %ptr.58a [symbolic]
 // CHECK:STDOUT:   %Inc.type: type = facet_type <@Inc> [concrete]
-// CHECK:STDOUT:   %ImplicitAs.impl_witness.e34: <witness> = impl_witness imports.%ImplicitAs.impl_witness_table.e36, @impl.c81(%int_32) [concrete]
-// CHECK:STDOUT:   %Convert.type.ed5: type = fn_type @Convert.3, @impl.c81(%int_32) [concrete]
+// CHECK:STDOUT:   %ImplicitAs.impl_witness.e34: <witness> = impl_witness imports.%ImplicitAs.impl_witness_table.e36, @ImplicitAs.impl.c81(%int_32) [concrete]
+// CHECK:STDOUT:   %Convert.type.ed5: type = fn_type @Convert.3, @ImplicitAs.impl.c81(%int_32) [concrete]
 // CHECK:STDOUT:   %Convert.16d: %Convert.type.ed5 = struct_value () [concrete]
 // CHECK:STDOUT:   %ImplicitAs.facet.2e7: %ImplicitAs.type.9ba = facet_value Core.IntLiteral, (%ImplicitAs.impl_witness.e34) [concrete]
 // CHECK:STDOUT:   %.d6a: type = fn_type_with_self_type %Convert.type.6da, %ImplicitAs.facet.2e7 [concrete]
@@ -841,19 +841,19 @@ fn Read() {
 // CHECK:STDOUT:   %impl.elem1: type = impl_witness_access %Iterate.lookup_impl_witness, element1 [symbolic_self]
 // CHECK:STDOUT:   %Iterate_where.type: type = facet_type <@Iterate where %impl.elem0.a12 = %Int.7ff11f.1 and %impl.elem1 = %Int.7ff11f.1> [symbolic]
 // CHECK:STDOUT:   %require_complete.6f5: <witness> = require_complete_type %Iterate_where.type [symbolic]
-// CHECK:STDOUT:   %Iterate.impl_witness: <witness> = impl_witness imports.%Iterate.impl_witness_table, @impl.e7f(%N) [symbolic]
-// CHECK:STDOUT:   %NewCursor.type: type = fn_type @NewCursor, @impl.e7f(%N) [symbolic]
+// CHECK:STDOUT:   %Iterate.impl_witness: <witness> = impl_witness imports.%Iterate.impl_witness_table, @Iterate.impl(%N) [symbolic]
+// CHECK:STDOUT:   %NewCursor.type: type = fn_type @NewCursor, @Iterate.impl(%N) [symbolic]
 // CHECK:STDOUT:   %NewCursor: %NewCursor.type = struct_value () [symbolic]
-// CHECK:STDOUT:   %Next.type: type = fn_type @Next, @impl.e7f(%N) [symbolic]
+// CHECK:STDOUT:   %Next.type: type = fn_type @Next, @Iterate.impl(%N) [symbolic]
 // CHECK:STDOUT:   %Next: %Next.type = struct_value () [symbolic]
 // CHECK:STDOUT:   %Optional.e9f: type = class_type @Optional, @Optional(%Int.7ff11f.1) [symbolic]
 // CHECK:STDOUT:   %pattern_type.fd8: type = pattern_type %Optional.e9f [symbolic]
 // CHECK:STDOUT:   %require_complete.5a1: <witness> = require_complete_type %Optional.e9f [symbolic]
 // CHECK:STDOUT:   %assoc0.d1b: %OrderedWith.assoc_type.e53 = assoc_entity element0, imports.%Main.import_ref.014 [symbolic]
-// CHECK:STDOUT:   %OrderedWith.impl_witness.350: <witness> = impl_witness imports.%OrderedWith.impl_witness_table.0e1, @impl.5b6(%N, %N) [symbolic]
+// CHECK:STDOUT:   %OrderedWith.impl_witness.350: <witness> = impl_witness imports.%OrderedWith.impl_witness_table.0e1, @OrderedWith.impl.5b6(%N, %N) [symbolic]
 // CHECK:STDOUT:   %OrderedWith.facet: %OrderedWith.type.256 = facet_value %Int.7ff11f.1, (%OrderedWith.impl_witness.350) [symbolic]
 // CHECK:STDOUT:   %.3bd: type = fn_type_with_self_type %Less.type.016, %OrderedWith.facet [symbolic]
-// CHECK:STDOUT:   %Less.type.4f5: type = fn_type @Less.2, @impl.5b6(%N, %N) [symbolic]
+// CHECK:STDOUT:   %Less.type.4f5: type = fn_type @Less.2, @OrderedWith.impl.5b6(%N, %N) [symbolic]
 // CHECK:STDOUT:   %Less.3b5: %Less.type.4f5 = struct_value () [symbolic]
 // CHECK:STDOUT:   %Less.specific_fn.5e2: <specific function> = specific_function %Less.3b5, @Less.2(%N, %N) [symbolic]
 // CHECK:STDOUT:   %Inc.lookup_impl_witness: <witness> = lookup_impl_witness %Int.7ff11f.1, @Inc [symbolic]
@@ -880,7 +880,7 @@ fn Read() {
 // CHECK:STDOUT:   %None.type.8c4: type = fn_type @None, @Optional(%Int.7ff11f.1) [symbolic]
 // CHECK:STDOUT:   %None.7a7: %None.type.8c4 = struct_value () [symbolic]
 // CHECK:STDOUT:   %None.specific_fn: <specific function> = specific_function %None.7a7, @None(%Int.7ff11f.1) [symbolic]
-// CHECK:STDOUT:   %Op.type.2d1: type = fn_type @Op.97, @impl.49c(%IntRange.365) [concrete]
+// CHECK:STDOUT:   %Op.type.2d1: type = fn_type @Op.97, @Destroy.impl(%IntRange.365) [concrete]
 // CHECK:STDOUT:   %Op.fa8: %Op.type.2d1 = struct_value () [concrete]
 // CHECK:STDOUT:   %ptr.049: type = ptr_type %IntRange.365 [concrete]
 // CHECK:STDOUT:   %Op.specific_fn.df8: <specific function> = specific_function %Op.fa8, @Op.97(%IntRange.365) [concrete]
@@ -905,23 +905,23 @@ fn Read() {
 // CHECK:STDOUT:   %Main.import_ref.261 = import_ref Main//lib, loc23_18, unloaded
 // CHECK:STDOUT:   %Main.import_ref.f1e294.2: Core.IntLiteral = import_ref Main//lib, loc4_16, loaded [symbolic = @IntRange.%N (constants.%N)]
 // CHECK:STDOUT:   %Core.ImplicitAs: %ImplicitAs.type.cc7 = import_ref Core//prelude/operators/as, ImplicitAs, loaded [concrete = constants.%ImplicitAs.generic]
-// CHECK:STDOUT:   %Core.import_ref.a86: @impl.c81.%Convert.type (%Convert.type.0b2) = import_ref Core//prelude/types/int, loc19_39, loaded [symbolic = @impl.c81.%Convert (constants.%Convert.6d7)]
-// CHECK:STDOUT:   %ImplicitAs.impl_witness_table.e36 = impl_witness_table (%Core.import_ref.a86), @impl.c81 [concrete]
+// CHECK:STDOUT:   %Core.import_ref.a86: @ImplicitAs.impl.c81.%Convert.type (%Convert.type.0b2) = import_ref Core//prelude/types/int, loc19_39, loaded [symbolic = @ImplicitAs.impl.c81.%Convert (constants.%Convert.6d7)]
+// CHECK:STDOUT:   %ImplicitAs.impl_witness_table.e36 = impl_witness_table (%Core.import_ref.a86), @ImplicitAs.impl.c81 [concrete]
 // CHECK:STDOUT:   %Core.import_ref.e33 = import_ref Core//prelude/types/int, loc51_46, unloaded
 // CHECK:STDOUT:   %Core.import_ref.a58 = import_ref Core//prelude/types/int, loc52_58, unloaded
 // CHECK:STDOUT:   %Core.import_ref.a39 = import_ref Core//prelude/types/int, loc53_49, unloaded
 // CHECK:STDOUT:   %Core.import_ref.c4c = import_ref Core//prelude/types/int, loc54_61, unloaded
-// CHECK:STDOUT:   %OrderedWith.impl_witness_table.0e1 = impl_witness_table (%Core.import_ref.e33, %Core.import_ref.a58, %Core.import_ref.a39, %Core.import_ref.c4c), @impl.5b6 [concrete]
+// CHECK:STDOUT:   %OrderedWith.impl_witness_table.0e1 = impl_witness_table (%Core.import_ref.e33, %Core.import_ref.a58, %Core.import_ref.a39, %Core.import_ref.c4c), @OrderedWith.impl.5b6 [concrete]
 // CHECK:STDOUT:   %Core.Destroy: type = import_ref Core//prelude/destroy, Destroy, loaded [concrete = constants.%Destroy.type]
 // CHECK:STDOUT:   %Main.import_ref.0c8 = import_ref Main//lib, loc9_87, unloaded
 // CHECK:STDOUT:   %Main.import_ref.f1e294.3: Core.IntLiteral = import_ref Main//lib, loc4_16, loaded [symbolic = @IntRange.%N (constants.%N)]
-// CHECK:STDOUT:   %Main.import_ref.dae: type = import_ref Main//lib, loc9_8, loaded [symbolic = @impl.e7f.%IntRange (constants.%IntRange.349)]
-// CHECK:STDOUT:   %Main.import_ref.35b: type = import_ref Main//lib, loc9_24, loaded [symbolic = @impl.e7f.%Iterate_where.type (constants.%Iterate_where.type)]
+// CHECK:STDOUT:   %Main.import_ref.dae: type = import_ref Main//lib, loc9_8, loaded [symbolic = @Iterate.impl.%IntRange (constants.%IntRange.349)]
+// CHECK:STDOUT:   %Main.import_ref.35b: type = import_ref Main//lib, loc9_24, loaded [symbolic = @Iterate.impl.%Iterate_where.type (constants.%Iterate_where.type)]
 // CHECK:STDOUT:   %Main.import_ref.e3faa9.1 = import_ref Main//lib, loc9_87, unloaded
 // CHECK:STDOUT:   %Main.import_ref.e3faa9.2 = import_ref Main//lib, loc9_87, unloaded
 // CHECK:STDOUT:   %Main.import_ref.11c = import_ref Main//lib, loc10_47, unloaded
 // CHECK:STDOUT:   %Main.import_ref.f97 = import_ref Main//lib, loc11_77, unloaded
-// CHECK:STDOUT:   %Iterate.impl_witness_table = impl_witness_table (%Main.import_ref.e3faa9.1, %Main.import_ref.e3faa9.2, %Main.import_ref.11c, %Main.import_ref.f97), @impl.e7f [concrete]
+// CHECK:STDOUT:   %Iterate.impl_witness_table = impl_witness_table (%Main.import_ref.e3faa9.1, %Main.import_ref.e3faa9.2, %Main.import_ref.11c, %Main.import_ref.f97), @Iterate.impl [concrete]
 // CHECK:STDOUT:   %Main.import_ref.f1e294.4: Core.IntLiteral = import_ref Main//lib, loc4_16, loaded [symbolic = @IntRange.%N (constants.%N)]
 // CHECK:STDOUT:   %Main.import_ref.f1e294.5: Core.IntLiteral = import_ref Main//lib, loc4_16, loaded [symbolic = @IntRange.%N (constants.%N)]
 // CHECK:STDOUT:   %Main.import_ref.014 = import_ref Main//lib, inst519 [indirect], unloaded
@@ -939,19 +939,19 @@ fn Read() {
 // CHECK:STDOUT:   %Read.decl: %Read.type = fn_decl @Read [concrete = constants.%Read] {} {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic impl @impl.e7f(imports.%Main.import_ref.f1e294.3: Core.IntLiteral) [from "lib.carbon"] {
+// CHECK:STDOUT: generic impl @Iterate.impl(imports.%Main.import_ref.f1e294.3: Core.IntLiteral) [from "lib.carbon"] {
 // CHECK:STDOUT:   %N: Core.IntLiteral = bind_symbolic_name N, 0 [symbolic = %N (constants.%N)]
 // CHECK:STDOUT:   %IntRange: type = class_type @IntRange, @IntRange(%N) [symbolic = %IntRange (constants.%IntRange.349)]
 // CHECK:STDOUT:   %Int: type = class_type @Int, @Int(%N) [symbolic = %Int (constants.%Int.7ff11f.1)]
 // CHECK:STDOUT:   %Iterate_where.type: type = facet_type <@Iterate where constants.%impl.elem0.a12 = %Int and constants.%impl.elem1 = %Int> [symbolic = %Iterate_where.type (constants.%Iterate_where.type)]
 // CHECK:STDOUT:   %require_complete: <witness> = require_complete_type %Iterate_where.type [symbolic = %require_complete (constants.%require_complete.6f5)]
-// CHECK:STDOUT:   %Iterate.impl_witness: <witness> = impl_witness imports.%Iterate.impl_witness_table, @impl.e7f(%N) [symbolic = %Iterate.impl_witness (constants.%Iterate.impl_witness)]
+// CHECK:STDOUT:   %Iterate.impl_witness: <witness> = impl_witness imports.%Iterate.impl_witness_table, @Iterate.impl(%N) [symbolic = %Iterate.impl_witness (constants.%Iterate.impl_witness)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
-// CHECK:STDOUT:   %NewCursor.type: type = fn_type @NewCursor, @impl.e7f(%N) [symbolic = %NewCursor.type (constants.%NewCursor.type)]
-// CHECK:STDOUT:   %NewCursor: @impl.e7f.%NewCursor.type (%NewCursor.type) = struct_value () [symbolic = %NewCursor (constants.%NewCursor)]
-// CHECK:STDOUT:   %Next.type: type = fn_type @Next, @impl.e7f(%N) [symbolic = %Next.type (constants.%Next.type)]
-// CHECK:STDOUT:   %Next: @impl.e7f.%Next.type (%Next.type) = struct_value () [symbolic = %Next (constants.%Next)]
+// CHECK:STDOUT:   %NewCursor.type: type = fn_type @NewCursor, @Iterate.impl(%N) [symbolic = %NewCursor.type (constants.%NewCursor.type)]
+// CHECK:STDOUT:   %NewCursor: @Iterate.impl.%NewCursor.type (%NewCursor.type) = struct_value () [symbolic = %NewCursor (constants.%NewCursor)]
+// CHECK:STDOUT:   %Next.type: type = fn_type @Next, @Iterate.impl(%N) [symbolic = %Next.type (constants.%Next.type)]
+// CHECK:STDOUT:   %Next: @Iterate.impl.%Next.type (%Next.type) = struct_value () [symbolic = %Next (constants.%Next)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   impl: imports.%Main.import_ref.dae as imports.%Main.import_ref.35b {
 // CHECK:STDOUT:   !members:
@@ -1086,11 +1086,11 @@ fn Read() {
 // CHECK:STDOUT:   %require_complete.5: <witness> = require_complete_type %OrderedWith.type [symbolic = %require_complete.5 (constants.%require_complete.10b)]
 // CHECK:STDOUT:   %OrderedWith.assoc_type: type = assoc_entity_type @OrderedWith, @OrderedWith(%Int) [symbolic = %OrderedWith.assoc_type (constants.%OrderedWith.assoc_type.e53)]
 // CHECK:STDOUT:   %assoc0: @Next.%OrderedWith.assoc_type (%OrderedWith.assoc_type.e53) = assoc_entity element0, imports.%Main.import_ref.014 [symbolic = %assoc0 (constants.%assoc0.d1b)]
-// CHECK:STDOUT:   %OrderedWith.impl_witness: <witness> = impl_witness imports.%OrderedWith.impl_witness_table.0e1, @impl.5b6(%N, %N) [symbolic = %OrderedWith.impl_witness (constants.%OrderedWith.impl_witness.350)]
+// CHECK:STDOUT:   %OrderedWith.impl_witness: <witness> = impl_witness imports.%OrderedWith.impl_witness_table.0e1, @OrderedWith.impl.5b6(%N, %N) [symbolic = %OrderedWith.impl_witness (constants.%OrderedWith.impl_witness.350)]
 // CHECK:STDOUT:   %Less.type.1: type = fn_type @Less.1, @OrderedWith(%Int) [symbolic = %Less.type.1 (constants.%Less.type.016)]
 // CHECK:STDOUT:   %OrderedWith.facet: @Next.%OrderedWith.type (%OrderedWith.type.256) = facet_value %Int, (%OrderedWith.impl_witness) [symbolic = %OrderedWith.facet (constants.%OrderedWith.facet)]
 // CHECK:STDOUT:   %.1: type = fn_type_with_self_type %Less.type.1, %OrderedWith.facet [symbolic = %.1 (constants.%.3bd)]
-// CHECK:STDOUT:   %Less.type.2: type = fn_type @Less.2, @impl.5b6(%N, %N) [symbolic = %Less.type.2 (constants.%Less.type.4f5)]
+// CHECK:STDOUT:   %Less.type.2: type = fn_type @Less.2, @OrderedWith.impl.5b6(%N, %N) [symbolic = %Less.type.2 (constants.%Less.type.4f5)]
 // CHECK:STDOUT:   %Less: @Next.%Less.type.2 (%Less.type.4f5) = struct_value () [symbolic = %Less (constants.%Less.3b5)]
 // CHECK:STDOUT:   %Less.specific_fn: <specific function> = specific_function %Less, @Less.2(%N, %N) [symbolic = %Less.specific_fn (constants.%Less.specific_fn.5e2)]
 // CHECK:STDOUT:   %Inc.lookup_impl_witness: <witness> = lookup_impl_witness %Int, @Inc [symbolic = %Inc.lookup_impl_witness (constants.%Inc.lookup_impl_witness)]
@@ -1156,7 +1156,7 @@ fn Read() {
 // CHECK:STDOUT:   %complete_type => constants.%complete_type.a43
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @impl.e7f(constants.%N) {
+// CHECK:STDOUT: specific @Iterate.impl(constants.%N) {
 // CHECK:STDOUT:   %N => constants.%N
 // CHECK:STDOUT:   %IntRange => constants.%IntRange.349
 // CHECK:STDOUT:   %Int => constants.%Int.7ff11f.1
