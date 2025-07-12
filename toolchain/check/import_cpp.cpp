@@ -715,6 +715,9 @@ static auto MapNonWrapperType(Context& context, SemIR::LocId loc_id,
     return MapRecordType(context, loc_id, *record_type);
   }
 
+  CARBON_CHECK(!type.hasQualifiers() && !type->isPointerType(),
+               "Should not see wrapper types here");
+
   return {.inst_id = SemIR::TypeInstId::None, .type_id = SemIR::TypeId::None};
 }
 
