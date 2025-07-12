@@ -817,6 +817,11 @@ static auto MakeParamPatternsBlockId(Context& context, SemIR::LocId loc_id,
   llvm::SmallVector<SemIR::InstId> params;
   params.reserve(clang_decl.parameters().size());
   for (const clang::ParmVarDecl* param : clang_decl.parameters()) {
+    // TODO: Get the parameter type from the function, not from the
+    // `ParmVarDecl`. The type of the `ParmVarDecl` is the type within the
+    // function, and isn't in general the same as the type that's exposed to
+    // callers. In particular, the parameter type exposed to callers will never
+    // be cv-qualified.
     clang::QualType param_type = param->getType();
 
     // Mark the start of a region of insts, needed for the type expression
