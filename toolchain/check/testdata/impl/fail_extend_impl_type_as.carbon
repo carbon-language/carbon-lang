@@ -99,25 +99,25 @@ class E {
 // CHECK:STDOUT:   witness = ()
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: impl @impl.154: %i32 as %I.ref {
+// CHECK:STDOUT: impl @I.impl.154: %i32 as %I.ref {
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   witness = <error>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: impl @impl.ca7: %D.ref as %I.ref;
+// CHECK:STDOUT: impl @I.impl.ca7: %D.ref as %I.ref;
 // CHECK:STDOUT:
-// CHECK:STDOUT: impl @impl.c98: %Self.ref as %I.ref {
+// CHECK:STDOUT: impl @I.impl.c98: %Self.ref as %I.ref {
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   witness = @E.%I.impl_witness
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @C {
-// CHECK:STDOUT:   impl_decl @impl.154 [concrete] {} {
+// CHECK:STDOUT:   impl_decl @I.impl.154 [concrete] {} {
 // CHECK:STDOUT:     %int_32: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
 // CHECK:STDOUT:     %i32: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
 // CHECK:STDOUT:     %I.ref: type = name_ref I, file.%I.decl [concrete = constants.%I.type]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %I.impl_witness_table = impl_witness_table (), @impl.154 [concrete]
+// CHECK:STDOUT:   %I.impl_witness_table = impl_witness_table (), @I.impl.154 [concrete]
 // CHECK:STDOUT:   %I.impl_witness: <witness> = impl_witness %I.impl_witness_table [concrete = constants.%I.impl_witness.bf7]
 // CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [concrete = constants.%empty_struct_type]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [concrete = constants.%complete_type.357]
@@ -130,11 +130,11 @@ class E {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @D {
-// CHECK:STDOUT:   impl_decl @impl.ca7 [concrete] {} {
+// CHECK:STDOUT:   impl_decl @I.impl.ca7 [concrete] {} {
 // CHECK:STDOUT:     %D.ref: type = name_ref D, file.%D.decl [concrete = constants.%D]
 // CHECK:STDOUT:     %I.ref: type = name_ref I, file.%I.decl [concrete = constants.%I.type]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %I.impl_witness_table = impl_witness_table (), @impl.ca7 [concrete]
+// CHECK:STDOUT:   %I.impl_witness_table = impl_witness_table (), @I.impl.ca7 [concrete]
 // CHECK:STDOUT:   %I.impl_witness: <witness> = impl_witness %I.impl_witness_table [concrete = constants.%I.impl_witness.fa5]
 // CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [concrete = constants.%empty_struct_type]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [concrete = constants.%complete_type.357]
@@ -144,15 +144,15 @@ class E {
 // CHECK:STDOUT:   .Self = constants.%D
 // CHECK:STDOUT:   .D = <poisoned>
 // CHECK:STDOUT:   .I = <poisoned>
-// CHECK:STDOUT:   extend @impl.ca7.%I.ref
+// CHECK:STDOUT:   extend @I.impl.ca7.%I.ref
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @E {
-// CHECK:STDOUT:   impl_decl @impl.c98 [concrete] {} {
+// CHECK:STDOUT:   impl_decl @I.impl.c98 [concrete] {} {
 // CHECK:STDOUT:     %Self.ref: type = name_ref Self, constants.%E [concrete = constants.%E]
 // CHECK:STDOUT:     %I.ref: type = name_ref I, file.%I.decl [concrete = constants.%I.type]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %I.impl_witness_table = impl_witness_table (), @impl.c98 [concrete]
+// CHECK:STDOUT:   %I.impl_witness_table = impl_witness_table (), @I.impl.c98 [concrete]
 // CHECK:STDOUT:   %I.impl_witness: <witness> = impl_witness %I.impl_witness_table [concrete = constants.%I.impl_witness.7f3]
 // CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [concrete = constants.%empty_struct_type]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [concrete = constants.%complete_type.357]
@@ -161,6 +161,6 @@ class E {
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%E
 // CHECK:STDOUT:   .I = <poisoned>
-// CHECK:STDOUT:   extend @impl.c98.%I.ref
+// CHECK:STDOUT:   extend @I.impl.c98.%I.ref
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

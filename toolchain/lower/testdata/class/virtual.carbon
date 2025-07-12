@@ -112,7 +112,45 @@ fn Use() {
 library "[[@TEST_NAME]]";
 
 base class Base(T:! type) {
-  virtual fn F[self: Self]();
+  virtual fn F[self: Self]() { }
+}
+
+// --- generic_use.carbon
+
+library "[[@TEST_NAME]]";
+
+base class Base(T:! type) {
+  virtual fn F[self: Self]() {
+    var v: T;
+  }
+}
+
+class T1 { }
+class T2 {
+  var v: T1;
+}
+
+fn F() {
+  var t1: Base(T1) = {};
+  var t2: Base(T2) = {};
+}
+
+// --- generic_base.carbon
+
+library "[[@TEST_NAME]]";
+
+base class Base(T:! type) {
+  virtual fn F[self: Self]() { }
+}
+
+class T1;
+
+class Derived {
+  extend base: Base(T1);
+}
+
+fn Make() {
+  var v: Derived;
 }
 
 // CHECK:STDOUT: ; ModuleID = 'classes.carbon'
@@ -425,3 +463,109 @@ base class Base(T:! type) {
 // CHECK:STDOUT: !1 = !{i32 2, !"Debug Info Version", i32 3}
 // CHECK:STDOUT: !2 = distinct !DICompileUnit(language: DW_LANG_C, file: !3, producer: "carbon", isOptimized: false, runtimeVersion: 0, emissionKind: FullDebug)
 // CHECK:STDOUT: !3 = !DIFile(filename: "generic_noop.carbon", directory: "")
+// CHECK:STDOUT: ; ModuleID = 'generic_use.carbon'
+// CHECK:STDOUT: source_filename = "generic_use.carbon"
+// CHECK:STDOUT:
+// CHECK:STDOUT: @"_CBase.Main.$vtable.4d2ffa01ebfb7a1d" = unnamed_addr constant [1 x i32] [i32 trunc (i64 sub (i64 ptrtoint (ptr @_CF.Base.Main.4d2ffa01ebfb7a1d to i64), i64 ptrtoint (ptr @"_CBase.Main.$vtable.4d2ffa01ebfb7a1d" to i64)) to i32)]
+// CHECK:STDOUT: @"_CBase.Main.$vtable.4f4310253a4de9ab" = unnamed_addr constant [1 x i32] [i32 trunc (i64 sub (i64 ptrtoint (ptr @_CF.Base.Main.4f4310253a4de9ab to i64), i64 ptrtoint (ptr @"_CBase.Main.$vtable.4f4310253a4de9ab" to i64)) to i32)]
+// CHECK:STDOUT: @Base.val.20a.loc16_3 = internal constant { ptr } { ptr @"_CBase.Main.$vtable.4d2ffa01ebfb7a1d" }
+// CHECK:STDOUT: @Base.val.f56.loc17_3 = internal constant { ptr } { ptr @"_CBase.Main.$vtable.4f4310253a4de9ab" }
+// CHECK:STDOUT:
+// CHECK:STDOUT: define void @_CF.Main() !dbg !4 {
+// CHECK:STDOUT: entry:
+// CHECK:STDOUT:   %t1.var = alloca { ptr }, align 8, !dbg !7
+// CHECK:STDOUT:   %t2.var = alloca { ptr }, align 8, !dbg !8
+// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(i64 8, ptr %t1.var), !dbg !7
+// CHECK:STDOUT:   %.loc16_23.2.vptr = getelementptr inbounds nuw { ptr }, ptr %t1.var, i32 0, i32 0, !dbg !9
+// CHECK:STDOUT:   call void @llvm.memcpy.p0.p0.i64(ptr align 8 %t1.var, ptr align 8 @Base.val.20a.loc16_3, i64 8, i1 false), !dbg !7
+// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(i64 8, ptr %t2.var), !dbg !8
+// CHECK:STDOUT:   %.loc17_23.2.vptr = getelementptr inbounds nuw { ptr }, ptr %t2.var, i32 0, i32 0, !dbg !10
+// CHECK:STDOUT:   call void @llvm.memcpy.p0.p0.i64(ptr align 8 %t2.var, ptr align 8 @Base.val.f56.loc17_3, i64 8, i1 false), !dbg !8
+// CHECK:STDOUT:   ret void, !dbg !11
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: define linkonce_odr void @_CF.Base.Main.4d2ffa01ebfb7a1d(ptr %self) !dbg !12 {
+// CHECK:STDOUT: entry:
+// CHECK:STDOUT:   %v.var = alloca {}, align 8, !dbg !13
+// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(i64 0, ptr %v.var), !dbg !13
+// CHECK:STDOUT:   ret void, !dbg !14
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: define linkonce_odr void @_CF.Base.Main.4f4310253a4de9ab(ptr %self) !dbg !15 {
+// CHECK:STDOUT: entry:
+// CHECK:STDOUT:   %v.var = alloca { {} }, align 8, !dbg !16
+// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(i64 0, ptr %v.var), !dbg !16
+// CHECK:STDOUT:   ret void, !dbg !17
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: ; Function Attrs: nocallback nofree nosync nounwind willreturn memory(argmem: readwrite)
+// CHECK:STDOUT: declare void @llvm.lifetime.start.p0(i64 immarg, ptr captures(none)) #0
+// CHECK:STDOUT:
+// CHECK:STDOUT: ; Function Attrs: nocallback nofree nounwind willreturn memory(argmem: readwrite)
+// CHECK:STDOUT: declare void @llvm.memcpy.p0.p0.i64(ptr noalias writeonly captures(none), ptr noalias readonly captures(none), i64, i1 immarg) #1
+// CHECK:STDOUT:
+// CHECK:STDOUT: ; uselistorder directives
+// CHECK:STDOUT: uselistorder ptr @llvm.lifetime.start.p0, { 3, 2, 1, 0 }
+// CHECK:STDOUT: uselistorder ptr @llvm.memcpy.p0.p0.i64, { 1, 0 }
+// CHECK:STDOUT:
+// CHECK:STDOUT: attributes #0 = { nocallback nofree nosync nounwind willreturn memory(argmem: readwrite) }
+// CHECK:STDOUT: attributes #1 = { nocallback nofree nounwind willreturn memory(argmem: readwrite) }
+// CHECK:STDOUT:
+// CHECK:STDOUT: !llvm.module.flags = !{!0, !1}
+// CHECK:STDOUT: !llvm.dbg.cu = !{!2}
+// CHECK:STDOUT:
+// CHECK:STDOUT: !0 = !{i32 7, !"Dwarf Version", i32 5}
+// CHECK:STDOUT: !1 = !{i32 2, !"Debug Info Version", i32 3}
+// CHECK:STDOUT: !2 = distinct !DICompileUnit(language: DW_LANG_C, file: !3, producer: "carbon", isOptimized: false, runtimeVersion: 0, emissionKind: FullDebug)
+// CHECK:STDOUT: !3 = !DIFile(filename: "generic_use.carbon", directory: "")
+// CHECK:STDOUT: !4 = distinct !DISubprogram(name: "F", linkageName: "_CF.Main", scope: null, file: !3, line: 15, type: !5, spFlags: DISPFlagDefinition, unit: !2)
+// CHECK:STDOUT: !5 = !DISubroutineType(types: !6)
+// CHECK:STDOUT: !6 = !{}
+// CHECK:STDOUT: !7 = !DILocation(line: 16, column: 3, scope: !4)
+// CHECK:STDOUT: !8 = !DILocation(line: 17, column: 3, scope: !4)
+// CHECK:STDOUT: !9 = !DILocation(line: 16, column: 22, scope: !4)
+// CHECK:STDOUT: !10 = !DILocation(line: 17, column: 22, scope: !4)
+// CHECK:STDOUT: !11 = !DILocation(line: 15, column: 1, scope: !4)
+// CHECK:STDOUT: !12 = distinct !DISubprogram(name: "F", linkageName: "_CF.Base.Main.4d2ffa01ebfb7a1d", scope: null, file: !3, line: 5, type: !5, spFlags: DISPFlagDefinition, unit: !2)
+// CHECK:STDOUT: !13 = !DILocation(line: 6, column: 5, scope: !12)
+// CHECK:STDOUT: !14 = !DILocation(line: 5, column: 3, scope: !12)
+// CHECK:STDOUT: !15 = distinct !DISubprogram(name: "F", linkageName: "_CF.Base.Main.4f4310253a4de9ab", scope: null, file: !3, line: 5, type: !5, spFlags: DISPFlagDefinition, unit: !2)
+// CHECK:STDOUT: !16 = !DILocation(line: 6, column: 5, scope: !15)
+// CHECK:STDOUT: !17 = !DILocation(line: 5, column: 3, scope: !15)
+// CHECK:STDOUT: ; ModuleID = 'generic_base.carbon'
+// CHECK:STDOUT: source_filename = "generic_base.carbon"
+// CHECK:STDOUT:
+// CHECK:STDOUT: @"_CDerived.Main.$vtable" = unnamed_addr constant [1 x i32] [i32 trunc (i64 sub (i64 ptrtoint (ptr @_CF.Base.Main.4d2ffa01ebfb7a1d to i64), i64 ptrtoint (ptr @"_CDerived.Main.$vtable" to i64)) to i32)]
+// CHECK:STDOUT: @"_CBase.Main.$vtable.4d2ffa01ebfb7a1d" = unnamed_addr constant [1 x i32] [i32 trunc (i64 sub (i64 ptrtoint (ptr @_CF.Base.Main.4d2ffa01ebfb7a1d to i64), i64 ptrtoint (ptr @"_CBase.Main.$vtable.4d2ffa01ebfb7a1d" to i64)) to i32)]
+// CHECK:STDOUT:
+// CHECK:STDOUT: define void @_CMake.Main() !dbg !4 {
+// CHECK:STDOUT: entry:
+// CHECK:STDOUT:   %v.var = alloca { { ptr } }, align 8, !dbg !7
+// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(i64 8, ptr %v.var), !dbg !7
+// CHECK:STDOUT:   ret void, !dbg !8
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: define linkonce_odr void @_CF.Base.Main.4d2ffa01ebfb7a1d(ptr %self) !dbg !9 {
+// CHECK:STDOUT: entry:
+// CHECK:STDOUT:   ret void, !dbg !10
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: ; Function Attrs: nocallback nofree nosync nounwind willreturn memory(argmem: readwrite)
+// CHECK:STDOUT: declare void @llvm.lifetime.start.p0(i64 immarg, ptr captures(none)) #0
+// CHECK:STDOUT:
+// CHECK:STDOUT: attributes #0 = { nocallback nofree nosync nounwind willreturn memory(argmem: readwrite) }
+// CHECK:STDOUT:
+// CHECK:STDOUT: !llvm.module.flags = !{!0, !1}
+// CHECK:STDOUT: !llvm.dbg.cu = !{!2}
+// CHECK:STDOUT:
+// CHECK:STDOUT: !0 = !{i32 7, !"Dwarf Version", i32 5}
+// CHECK:STDOUT: !1 = !{i32 2, !"Debug Info Version", i32 3}
+// CHECK:STDOUT: !2 = distinct !DICompileUnit(language: DW_LANG_C, file: !3, producer: "carbon", isOptimized: false, runtimeVersion: 0, emissionKind: FullDebug)
+// CHECK:STDOUT: !3 = !DIFile(filename: "generic_base.carbon", directory: "")
+// CHECK:STDOUT: !4 = distinct !DISubprogram(name: "Make", linkageName: "_CMake.Main", scope: null, file: !3, line: 14, type: !5, spFlags: DISPFlagDefinition, unit: !2)
+// CHECK:STDOUT: !5 = !DISubroutineType(types: !6)
+// CHECK:STDOUT: !6 = !{}
+// CHECK:STDOUT: !7 = !DILocation(line: 15, column: 3, scope: !4)
+// CHECK:STDOUT: !8 = !DILocation(line: 14, column: 1, scope: !4)
+// CHECK:STDOUT: !9 = distinct !DISubprogram(name: "F", linkageName: "_CF.Base.Main.4d2ffa01ebfb7a1d", scope: null, file: !3, line: 5, type: !5, spFlags: DISPFlagDefinition, unit: !2)
+// CHECK:STDOUT: !10 = !DILocation(line: 5, column: 3, scope: !9)

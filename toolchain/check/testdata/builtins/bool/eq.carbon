@@ -110,7 +110,7 @@ var d: C(false == false) = True();
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT:   %Core.import_ref.9cf: %Equal.type.f5c = import_ref Core//prelude/operators/comparison, loc36_45, loaded [concrete = constants.%Equal.4ef]
 // CHECK:STDOUT:   %Core.import_ref.f59 = import_ref Core//prelude/operators/comparison, loc37_48, unloaded
-// CHECK:STDOUT:   %EqWith.impl_witness_table = impl_witness_table (%Core.import_ref.9cf, %Core.import_ref.f59), @impl.4e5 [concrete]
+// CHECK:STDOUT:   %EqWith.impl_witness_table = impl_witness_table (%Core.import_ref.9cf, %Core.import_ref.f59), @EqWith.impl.4e5 [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {

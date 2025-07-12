@@ -240,13 +240,13 @@ fn InstanceCallFail() {
 // CHECK:STDOUT:     .NonInstanceCall1 = %NonInstanceCall1.decl
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %NonInstance1.decl: type = interface_decl @NonInstance1 [concrete = constants.%NonInstance1.type] {} {}
-// CHECK:STDOUT:   impl_decl @impl [concrete] {} {
+// CHECK:STDOUT:   impl_decl @NonInstance1.impl [concrete] {} {
 // CHECK:STDOUT:     %.loc7_12.1: %empty_tuple.type = tuple_literal ()
 // CHECK:STDOUT:     %.loc7_12.2: type = converted %.loc7_12.1, constants.%empty_tuple.type [concrete = constants.%empty_tuple.type]
 // CHECK:STDOUT:     %struct_type.a: type = struct_type {.a: %empty_tuple.type} [concrete = constants.%struct_type.a]
 // CHECK:STDOUT:     %NonInstance1.ref: type = name_ref NonInstance1, file.%NonInstance1.decl [concrete = constants.%NonInstance1.type]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %NonInstance1.impl_witness_table = impl_witness_table (@impl.%F1.decl), @impl [concrete]
+// CHECK:STDOUT:   %NonInstance1.impl_witness_table = impl_witness_table (@NonInstance1.impl.%F1.decl), @NonInstance1.impl [concrete]
 // CHECK:STDOUT:   %NonInstance1.impl_witness: <witness> = impl_witness %NonInstance1.impl_witness_table [concrete = constants.%NonInstance1.impl_witness]
 // CHECK:STDOUT:   %NonInstanceCall1.decl: %NonInstanceCall1.type = fn_decl @NonInstanceCall1 [concrete = constants.%NonInstanceCall1] {} {}
 // CHECK:STDOUT: }
@@ -262,7 +262,7 @@ fn InstanceCallFail() {
 // CHECK:STDOUT:   witness = (%F1.decl)
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: impl @impl: %struct_type.a as %NonInstance1.ref {
+// CHECK:STDOUT: impl @NonInstance1.impl: %struct_type.a as %NonInstance1.ref {
 // CHECK:STDOUT:   %F1.decl: %F1.type.d4a = fn_decl @F1.2 [concrete = constants.%F1.c75] {} {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
@@ -360,13 +360,13 @@ fn InstanceCallFail() {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %NonInstance2.decl: type = interface_decl @NonInstance2 [concrete = constants.%NonInstance2.type] {} {}
-// CHECK:STDOUT:   impl_decl @impl [concrete] {} {
+// CHECK:STDOUT:   impl_decl @NonInstance2.impl [concrete] {} {
 // CHECK:STDOUT:     %.loc9_12.1: %empty_tuple.type = tuple_literal ()
 // CHECK:STDOUT:     %.loc9_12.2: type = converted %.loc9_12.1, constants.%empty_tuple.type [concrete = constants.%empty_tuple.type]
 // CHECK:STDOUT:     %struct_type.b: type = struct_type {.b: %empty_tuple.type} [concrete = constants.%struct_type.b]
 // CHECK:STDOUT:     %NonInstance2.ref: type = name_ref NonInstance2, file.%NonInstance2.decl [concrete = constants.%NonInstance2.type]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %NonInstance2.impl_witness_table = impl_witness_table (@impl.%F2.decl), @impl [concrete]
+// CHECK:STDOUT:   %NonInstance2.impl_witness_table = impl_witness_table (@NonInstance2.impl.%F2.decl), @NonInstance2.impl [concrete]
 // CHECK:STDOUT:   %NonInstance2.impl_witness: <witness> = impl_witness %NonInstance2.impl_witness_table [concrete = constants.%NonInstance2.impl_witness]
 // CHECK:STDOUT:   %NonInstanceCall2.decl: %NonInstanceCall2.type = fn_decl @NonInstanceCall2 [concrete = constants.%NonInstanceCall2] {
 // CHECK:STDOUT:     %n.patt: %pattern_type.d5c = binding_pattern n [concrete]
@@ -412,7 +412,7 @@ fn InstanceCallFail() {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: impl @impl: %struct_type.b as %NonInstance2.ref {
+// CHECK:STDOUT: impl @NonInstance2.impl: %struct_type.b as %NonInstance2.ref {
 // CHECK:STDOUT:   %F2.decl: %F2.type.1ec = fn_decl @F2.2 [concrete = constants.%F2.941] {} {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
@@ -542,13 +542,13 @@ fn InstanceCallFail() {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %NonInstance3.decl: type = interface_decl @NonInstance3 [concrete = constants.%NonInstance3.type] {} {}
-// CHECK:STDOUT:   impl_decl @impl [concrete] {} {
+// CHECK:STDOUT:   impl_decl @NonInstance3.impl [concrete] {} {
 // CHECK:STDOUT:     %.loc9_12.1: %empty_tuple.type = tuple_literal ()
 // CHECK:STDOUT:     %.loc9_12.2: type = converted %.loc9_12.1, constants.%empty_tuple.type [concrete = constants.%empty_tuple.type]
 // CHECK:STDOUT:     %struct_type.c: type = struct_type {.c: %empty_tuple.type} [concrete = constants.%struct_type.c]
 // CHECK:STDOUT:     %NonInstance3.ref: type = name_ref NonInstance3, file.%NonInstance3.decl [concrete = constants.%NonInstance3.type]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %NonInstance3.impl_witness_table = impl_witness_table (@impl.%F3.decl), @impl [concrete]
+// CHECK:STDOUT:   %NonInstance3.impl_witness_table = impl_witness_table (@NonInstance3.impl.%F3.decl), @NonInstance3.impl [concrete]
 // CHECK:STDOUT:   %NonInstance3.impl_witness: <witness> = impl_witness %NonInstance3.impl_witness_table [concrete = constants.%NonInstance3.impl_witness]
 // CHECK:STDOUT:   %NonInstanceCallIndirect.decl: %NonInstanceCallIndirect.type = fn_decl @NonInstanceCallIndirect [concrete = constants.%NonInstanceCallIndirect] {
 // CHECK:STDOUT:     %p.patt: %pattern_type.5f5 = binding_pattern p [concrete]
@@ -595,7 +595,7 @@ fn InstanceCallFail() {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: impl @impl: %struct_type.c as %NonInstance3.ref {
+// CHECK:STDOUT: impl @NonInstance3.impl: %struct_type.c as %NonInstance3.ref {
 // CHECK:STDOUT:   %F3.decl: %F3.type.1c2 = fn_decl @F3.2 [concrete = constants.%F3.1d3] {} {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
@@ -698,13 +698,13 @@ fn InstanceCallFail() {
 // CHECK:STDOUT:     .InstanceCallIndirect = %InstanceCallIndirect.decl
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Instance1.decl: type = interface_decl @Instance1 [concrete = constants.%Instance1.type] {} {}
-// CHECK:STDOUT:   impl_decl @impl [concrete] {} {
+// CHECK:STDOUT:   impl_decl @Instance1.impl [concrete] {} {
 // CHECK:STDOUT:     %.loc7_12.1: %empty_tuple.type = tuple_literal ()
 // CHECK:STDOUT:     %.loc7_12.2: type = converted %.loc7_12.1, constants.%empty_tuple.type [concrete = constants.%empty_tuple.type]
 // CHECK:STDOUT:     %struct_type.d: type = struct_type {.d: %empty_tuple.type} [concrete = constants.%struct_type.d]
 // CHECK:STDOUT:     %Instance1.ref: type = name_ref Instance1, file.%Instance1.decl [concrete = constants.%Instance1.type]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %Instance1.impl_witness_table = impl_witness_table (@impl.%G1.decl), @impl [concrete]
+// CHECK:STDOUT:   %Instance1.impl_witness_table = impl_witness_table (@Instance1.impl.%G1.decl), @Instance1.impl [concrete]
 // CHECK:STDOUT:   %Instance1.impl_witness: <witness> = impl_witness %Instance1.impl_witness_table [concrete = constants.%Instance1.impl_witness]
 // CHECK:STDOUT:   %InstanceCall.decl: %InstanceCall.type = fn_decl @InstanceCall [concrete = constants.%InstanceCall] {
 // CHECK:STDOUT:     %n.patt: %pattern_type.515 = binding_pattern n [concrete]
@@ -755,13 +755,13 @@ fn InstanceCallFail() {
 // CHECK:STDOUT:   witness = (%G1.decl)
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: impl @impl: %struct_type.d as %Instance1.ref {
+// CHECK:STDOUT: impl @Instance1.impl: %struct_type.d as %Instance1.ref {
 // CHECK:STDOUT:   %G1.decl: %G1.type.c50 = fn_decl @G1.2 [concrete = constants.%G1.fee] {
 // CHECK:STDOUT:     %self.patt: %pattern_type.515 = binding_pattern self [concrete]
 // CHECK:STDOUT:     %self.param_patt: %pattern_type.515 = value_param_pattern %self.patt, call_param0 [concrete]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %self.param: %struct_type.d = value_param call_param0
-// CHECK:STDOUT:     %Self.ref: type = name_ref Self, @impl.%struct_type.d [concrete = constants.%struct_type.d]
+// CHECK:STDOUT:     %Self.ref: type = name_ref Self, @Instance1.impl.%struct_type.d [concrete = constants.%struct_type.d]
 // CHECK:STDOUT:     %self: %struct_type.d = bind_name self, %self.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:
@@ -851,13 +851,13 @@ fn InstanceCallFail() {
 // CHECK:STDOUT:     .InstanceCallFail = %InstanceCallFail.decl
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Instance2.decl: type = interface_decl @Instance2 [concrete = constants.%Instance2.type] {} {}
-// CHECK:STDOUT:   impl_decl @impl [concrete] {} {
+// CHECK:STDOUT:   impl_decl @Instance2.impl [concrete] {} {
 // CHECK:STDOUT:     %.loc7_12.1: %empty_tuple.type = tuple_literal ()
 // CHECK:STDOUT:     %.loc7_12.2: type = converted %.loc7_12.1, constants.%empty_tuple.type [concrete = constants.%empty_tuple.type]
 // CHECK:STDOUT:     %struct_type.e: type = struct_type {.e: %empty_tuple.type} [concrete = constants.%struct_type.e]
 // CHECK:STDOUT:     %Instance2.ref: type = name_ref Instance2, file.%Instance2.decl [concrete = constants.%Instance2.type]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %Instance2.impl_witness_table = impl_witness_table (@impl.%G2.decl), @impl [concrete]
+// CHECK:STDOUT:   %Instance2.impl_witness_table = impl_witness_table (@Instance2.impl.%G2.decl), @Instance2.impl [concrete]
 // CHECK:STDOUT:   %Instance2.impl_witness: <witness> = impl_witness %Instance2.impl_witness_table [concrete = constants.%Instance2.impl_witness]
 // CHECK:STDOUT:   %InstanceCallFail.decl: %InstanceCallFail.type = fn_decl @InstanceCallFail [concrete = constants.%InstanceCallFail] {} {}
 // CHECK:STDOUT: }
@@ -884,13 +884,13 @@ fn InstanceCallFail() {
 // CHECK:STDOUT:   witness = (%G2.decl)
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: impl @impl: %struct_type.e as %Instance2.ref {
+// CHECK:STDOUT: impl @Instance2.impl: %struct_type.e as %Instance2.ref {
 // CHECK:STDOUT:   %G2.decl: %G2.type.50c = fn_decl @G2.2 [concrete = constants.%G2.707] {
 // CHECK:STDOUT:     %self.patt: %pattern_type.efd = binding_pattern self [concrete]
 // CHECK:STDOUT:     %self.param_patt: %pattern_type.efd = value_param_pattern %self.patt, call_param0 [concrete]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %self.param: %struct_type.e = value_param call_param0
-// CHECK:STDOUT:     %Self.ref: type = name_ref Self, @impl.%struct_type.e [concrete = constants.%struct_type.e]
+// CHECK:STDOUT:     %Self.ref: type = name_ref Self, @Instance2.impl.%struct_type.e [concrete = constants.%struct_type.e]
 // CHECK:STDOUT:     %self: %struct_type.e = bind_name self, %self.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:
