@@ -27,10 +27,14 @@ TEST(IdsTest, LocIdValues) {
   auto min_node_id = static_cast<LocId>(Parse::NodeId(0));
   EXPECT_THAT(min_node_id.index, Eq(-2));
   EXPECT_THAT(min_node_id.AsDesugared().index, Eq(-2 - (1 << 24)));
+  EXPECT_THAT(min_node_id.AsDesugared().index,
+              Eq(min_node_id.AsDesugared().AsDesugared().index));
 
   auto max_node_id = static_cast<LocId>(Parse::NodeId(Parse::NodeId::Max - 1));
   EXPECT_THAT(max_node_id.index, Eq(-2 - (1 << 24) + 1));
   EXPECT_THAT(max_node_id.AsDesugared().index, Eq(-2 - (1 << 25) + 1));
+  EXPECT_THAT(max_node_id.AsDesugared().index,
+              Eq(max_node_id.AsDesugared().AsDesugared().index));
 
   EXPECT_THAT(static_cast<LocId>(ImportIRInstId(0)).index, Eq(-2 - (1 << 25)));
   EXPECT_THAT(static_cast<LocId>(ImportIRInstId(ImportIRInstId::Max - 1)).index,

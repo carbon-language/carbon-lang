@@ -120,20 +120,20 @@ impl i32 as I {
 // CHECK:STDOUT:     %X.loc15_19.1: @C.%T.loc15_9.2 (%T) = bind_symbolic_name X, 1 [symbolic = %X.loc15_19.2 (constants.%X)]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %I.decl: type = interface_decl @I [concrete = constants.%I.type] {} {}
-// CHECK:STDOUT:   impl_decl @impl.049 [concrete] {} {
+// CHECK:STDOUT:   impl_decl @I.impl.049 [concrete] {} {
 // CHECK:STDOUT:     %bool.make_type: init type = call constants.%Bool() [concrete = bool]
 // CHECK:STDOUT:     %.loc28_6.1: type = value_of_initializer %bool.make_type [concrete = bool]
 // CHECK:STDOUT:     %.loc28_6.2: type = converted %bool.make_type, %.loc28_6.1 [concrete = bool]
 // CHECK:STDOUT:     %I.ref: type = name_ref I, file.%I.decl [concrete = constants.%I.type]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %I.impl_witness_table.loc28 = impl_witness_table (@impl.049.%F.decl), @impl.049 [concrete]
+// CHECK:STDOUT:   %I.impl_witness_table.loc28 = impl_witness_table (@I.impl.049.%F.decl), @I.impl.049 [concrete]
 // CHECK:STDOUT:   %I.impl_witness.loc28: <witness> = impl_witness %I.impl_witness_table.loc28 [concrete = constants.%I.impl_witness.c21]
-// CHECK:STDOUT:   impl_decl @impl.a9a [concrete] {} {
+// CHECK:STDOUT:   impl_decl @I.impl.a9a [concrete] {} {
 // CHECK:STDOUT:     %int_32: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
 // CHECK:STDOUT:     %i32: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
 // CHECK:STDOUT:     %I.ref: type = name_ref I, file.%I.decl [concrete = constants.%I.type]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %I.impl_witness_table.loc35 = impl_witness_table (@impl.a9a.%F.decl.loc43_18.2), @impl.a9a [concrete]
+// CHECK:STDOUT:   %I.impl_witness_table.loc35 = impl_witness_table (@I.impl.a9a.%F.decl.loc43_18.2), @I.impl.a9a [concrete]
 // CHECK:STDOUT:   %I.impl_witness.loc35: <witness> = impl_witness %I.impl_witness_table.loc35 [concrete = constants.%I.impl_witness.863]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -160,7 +160,7 @@ impl i32 as I {
 // CHECK:STDOUT:   witness = (%F.decl)
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: impl @impl.049: %.loc28_6.2 as %I.ref {
+// CHECK:STDOUT: impl @I.impl.049: %.loc28_6.2 as %I.ref {
 // CHECK:STDOUT:   %F.decl: %F.type.8ba = fn_decl @F.2 [concrete = constants.%F.2cf] {
 // CHECK:STDOUT:     %c.patt: %pattern_type.225 = binding_pattern c [concrete]
 // CHECK:STDOUT:     %c.param_patt: %pattern_type.225 = value_param_pattern %c.patt, call_param0 [concrete]
@@ -184,7 +184,7 @@ impl i32 as I {
 // CHECK:STDOUT:   witness = file.%I.impl_witness.loc28
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: impl @impl.a9a: %i32 as %I.ref {
+// CHECK:STDOUT: impl @I.impl.a9a: %i32 as %I.ref {
 // CHECK:STDOUT:   %F.decl.loc43_18.1: %F.type.066a53.1 = fn_decl @F.3 [concrete = constants.%F.9ec58f.1] {
 // CHECK:STDOUT:     %c.patt: %pattern_type.52b = binding_pattern c [concrete]
 // CHECK:STDOUT:     %c.param_patt: %pattern_type.52b = value_param_pattern %c.patt, call_param0 [concrete]
@@ -241,9 +241,9 @@ impl i32 as I {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F.3(%c.param: %C.6fb);
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @F.4(%c.param: %C.d88) [thunk @impl.a9a.%F.decl.loc43_18.1] {
+// CHECK:STDOUT: fn @F.4(%c.param: %C.d88) [thunk @I.impl.a9a.%F.decl.loc43_18.1] {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %F.ref: %F.type.066a53.1 = name_ref F, @impl.a9a.%F.decl.loc43_18.1 [concrete = constants.%F.9ec58f.1]
+// CHECK:STDOUT:   %F.ref: %F.type.066a53.1 = name_ref F, @I.impl.a9a.%F.decl.loc43_18.1 [concrete = constants.%F.9ec58f.1]
 // CHECK:STDOUT:   %c.ref: %C.d88 = name_ref c, %c.param
 // CHECK:STDOUT:   %.loc25: %C.6fb = converted %c.ref, <error> [concrete = <error>]
 // CHECK:STDOUT:   %F.call: init %empty_tuple.type = call %F.ref(<error>)

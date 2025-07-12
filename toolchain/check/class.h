@@ -9,10 +9,6 @@
 
 namespace Carbon::Check {
 
-// If `type_id` is a class type, get its corresponding `SemIR::Class` object.
-// Otherwise returns `nullptr`.
-auto TryGetAsClass(Context& context, SemIR::TypeId type_id) -> SemIR::Class*;
-
 // Sets the `Self` type for the class.
 auto SetClassSelfType(Context& context, SemIR::ClassId class_id) -> void;
 

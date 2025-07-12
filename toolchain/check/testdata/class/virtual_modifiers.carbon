@@ -230,6 +230,22 @@ class Derived {
   impl fn F[self: Self]() -> T2;
 }
 
+// --- fail_generic_virtual_decl.carbon
+
+library "[[@TEST_NAME]]";
+
+// CHECK:STDERR: fail_generic_virtual_decl.carbon:[[@LINE+3]]:1: error: use of undefined generic function [MissingGenericFunctionDefinition]
+// CHECK:STDERR: base class Base(T:! type) {
+// CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~
+base class Base(T:! type) {
+  // CHECK:STDERR: fail_generic_virtual_decl.carbon:[[@LINE+4]]:3: note: generic function declared here [MissingGenericFunctionDefinitionHere]
+  // CHECK:STDERR:   virtual fn F[self: Self]();
+  // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~~~~~~~~
+  // CHECK:STDERR:
+  virtual fn F[self: Self]();
+}
+
+
 // --- fail_todo_impl_generic_base.carbon
 
 library "[[@TEST_NAME]]";
@@ -238,19 +254,19 @@ class T1 {
 }
 
 base class Base(T:! type) {
-  virtual fn F[self: Self](t: T);
+  virtual fn F[self: Self](t: T) { }
 }
 
 class Derived {
   extend base: Base(T1);
   // CHECK:STDERR: fail_todo_impl_generic_base.carbon:[[@LINE+7]]:25: error: type `<pattern for T1>` of parameter 1 in redeclaration differs from previous parameter type `<pattern for T>` [RedeclParamDiffersType]
-  // CHECK:STDERR:   impl fn F[self: Self](t: T1);
+  // CHECK:STDERR:   impl fn F[self: Self](t: T1) { }
   // CHECK:STDERR:                         ^~~~~
   // CHECK:STDERR: fail_todo_impl_generic_base.carbon:[[@LINE-8]]:28: note: previous declaration's corresponding parameter here [RedeclParamPrevious]
-  // CHECK:STDERR:   virtual fn F[self: Self](t: T);
+  // CHECK:STDERR:   virtual fn F[self: Self](t: T) { }
   // CHECK:STDERR:                            ^~~~
   // CHECK:STDERR:
-  impl fn F[self: Self](t: T1);
+  impl fn F[self: Self](t: T1) { }
 }
 
 // --- fail_virtual_without_self.carbon
@@ -328,7 +344,7 @@ base class T1(T:! type) {
 library "[[@TEST_NAME]]";
 
 base class T1(T:! type) {
-  virtual fn F[self: Self]();
+  virtual fn F[self: Self]() { }
 }
 
 // --- with_dependent_arg.carbon
@@ -336,7 +352,7 @@ base class T1(T:! type) {
 library "[[@TEST_NAME]]";
 
 base class T1(T:! type) {
-  virtual fn F[self: Self](t: T);
+  virtual fn F[self: Self](t: T) { }
 }
 
 // --- vtable_import_unneeded.carbon
@@ -347,6 +363,37 @@ import Modifiers;
 
 fn F(b: Modifiers.Base);
 
+// --- generic_derived_from_nongeneric.carbon
+
+library "[[@TEST_NAME]]";
+
+base class NonGenericBase {
+  virtual fn F1[self: Self]() { }
+  virtual fn F2[self: Self]() { }
+}
+
+base class GenericDerived(T:! type) {
+  extend base: NonGenericBase;
+  impl fn F2[self: Self]() { }
+  virtual fn F3[self: Self]() { }
+}
+
+// --- nongeneric_derived_from_generic.carbon
+
+library "[[@TEST_NAME]]";
+
+base class GenericBase(T:! type) {
+  virtual fn F1[self: Self]() { }
+  virtual fn F2[self: Self]() { }
+}
+
+class T1;
+
+base class NonGenericDerived {
+  extend base: GenericBase(T1);
+  impl fn F2[self: Self]() { }
+  virtual fn F3[self: Self]() { }
+}
 
 // CHECK:STDOUT: --- modifiers.carbon
 // CHECK:STDOUT:
@@ -476,16 +523,9 @@ fn F(b: Modifiers.Base);
 // CHECK:STDOUT:   %Base.val: %Base = struct_value (%Derived.vtable_ptr) [concrete]
 // CHECK:STDOUT:   %Derived.val: %Derived = struct_value (%Base.val) [concrete]
 // CHECK:STDOUT:   %Destroy.type: type = facet_type <@Destroy> [concrete]
-// CHECK:STDOUT:   %Op.type.bae: type = fn_type @Op.1 [concrete]
-// CHECK:STDOUT:   %T: type = bind_symbolic_name T, 0 [symbolic]
-// CHECK:STDOUT:   %Op.type.bc9: type = fn_type @Op.2, @impl(%T) [symbolic]
-// CHECK:STDOUT:   %Op.46f: %Op.type.bc9 = struct_value () [symbolic]
-// CHECK:STDOUT:   %Destroy.impl_witness.ff9: <witness> = impl_witness imports.%Destroy.impl_witness_table, @impl(%Derived) [concrete]
-// CHECK:STDOUT:   %Op.type.102: type = fn_type @Op.2, @impl(%Derived) [concrete]
+// CHECK:STDOUT:   %Op.type.102: type = fn_type @Op.2, @Destroy.impl(%Derived) [concrete]
 // CHECK:STDOUT:   %Op.539: %Op.type.102 = struct_value () [concrete]
 // CHECK:STDOUT:   %ptr.404: type = ptr_type %Derived [concrete]
-// CHECK:STDOUT:   %Destroy.facet: %Destroy.type = facet_value %Derived, (%Destroy.impl_witness.ff9) [concrete]
-// CHECK:STDOUT:   %.3cb: type = fn_type_with_self_type %Op.type.bae, %Destroy.facet [concrete]
 // CHECK:STDOUT:   %Op.specific_fn: <specific function> = specific_function %Op.539, @Op.2(%Derived) [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -505,8 +545,6 @@ fn F(b: Modifiers.Base);
 // CHECK:STDOUT:   %Modifiers.import_ref.1f3 = import_ref Modifiers//default, inst18 [no loc], unloaded
 // CHECK:STDOUT:   %Modifiers.import_ref.2cc = import_ref Modifiers//default, loc5_29, unloaded
 // CHECK:STDOUT:   %Core.Destroy: type = import_ref Core//prelude/parts/destroy, Destroy, loaded [concrete = constants.%Destroy.type]
-// CHECK:STDOUT:   %Core.import_ref.0b9: @impl.%Op.type (%Op.type.bc9) = import_ref Core//prelude/parts/destroy, loc8_29, loaded [symbolic = @impl.%Op (constants.%Op.46f)]
-// CHECK:STDOUT:   %Destroy.impl_witness_table = impl_witness_table (%Core.import_ref.0b9), @impl [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -588,12 +626,11 @@ fn F(b: Modifiers.Base);
 // CHECK:STDOUT:   assign %d.var, %.loc12_3
 // CHECK:STDOUT:   %Derived.ref: type = name_ref Derived, file.%Derived.decl [concrete = constants.%Derived]
 // CHECK:STDOUT:   %d: ref %Derived = bind_name d, %d.var
-// CHECK:STDOUT:   %impl.elem0: %.3cb = impl_witness_access constants.%Destroy.impl_witness.ff9, element0 [concrete = constants.%Op.539]
-// CHECK:STDOUT:   %bound_method.loc12_3.1: <bound method> = bound_method %d.var, %impl.elem0
-// CHECK:STDOUT:   %specific_fn: <specific function> = specific_function %impl.elem0, @Op.2(constants.%Derived) [concrete = constants.%Op.specific_fn]
-// CHECK:STDOUT:   %bound_method.loc12_3.2: <bound method> = bound_method %d.var, %specific_fn
+// CHECK:STDOUT:   %Op.bound: <bound method> = bound_method %d.var, constants.%Op.539
+// CHECK:STDOUT:   %Op.specific_fn: <specific function> = specific_function constants.%Op.539, @Op.2(constants.%Derived) [concrete = constants.%Op.specific_fn]
+// CHECK:STDOUT:   %bound_method: <bound method> = bound_method %d.var, %Op.specific_fn
 // CHECK:STDOUT:   %addr: %ptr.404 = addr_of %d.var
-// CHECK:STDOUT:   %no_op: init %empty_tuple.type = call %bound_method.loc12_3.2(%addr)
+// CHECK:STDOUT:   %no_op: init %empty_tuple.type = call %bound_method(%addr)
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -709,16 +746,9 @@ fn F(b: Modifiers.Base);
 // CHECK:STDOUT:   %Base.vtable_ptr: ref %ptr.454 = vtable_ptr @Base.vtable [concrete]
 // CHECK:STDOUT:   %Base.val: %Base = struct_value (%Base.vtable_ptr) [concrete]
 // CHECK:STDOUT:   %Destroy.type: type = facet_type <@Destroy> [concrete]
-// CHECK:STDOUT:   %Op.type.bae: type = fn_type @Op.1 [concrete]
-// CHECK:STDOUT:   %T: type = bind_symbolic_name T, 0 [symbolic]
-// CHECK:STDOUT:   %Op.type.bc9: type = fn_type @Op.2, @impl(%T) [symbolic]
-// CHECK:STDOUT:   %Op.46f: %Op.type.bc9 = struct_value () [symbolic]
-// CHECK:STDOUT:   %Destroy.impl_witness.cec: <witness> = impl_witness imports.%Destroy.impl_witness_table, @impl(%Base) [concrete]
-// CHECK:STDOUT:   %Op.type.47e: type = fn_type @Op.2, @impl(%Base) [concrete]
+// CHECK:STDOUT:   %Op.type.47e: type = fn_type @Op.2, @Destroy.impl(%Base) [concrete]
 // CHECK:STDOUT:   %Op.033: %Op.type.47e = struct_value () [concrete]
 // CHECK:STDOUT:   %ptr.f03: type = ptr_type %Base [concrete]
-// CHECK:STDOUT:   %Destroy.facet: %Destroy.type = facet_value %Base, (%Destroy.impl_witness.cec) [concrete]
-// CHECK:STDOUT:   %.3f1: type = fn_type_with_self_type %Op.type.bae, %Destroy.facet [concrete]
 // CHECK:STDOUT:   %Op.specific_fn: <specific function> = specific_function %Op.033, @Op.2(%Base) [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -738,8 +768,6 @@ fn F(b: Modifiers.Base);
 // CHECK:STDOUT:   %Modifiers.import_ref.1f3 = import_ref Modifiers//default, inst18 [no loc], unloaded
 // CHECK:STDOUT:   %Modifiers.import_ref.2cc = import_ref Modifiers//default, loc5_29, unloaded
 // CHECK:STDOUT:   %Core.Destroy: type = import_ref Core//prelude/parts/destroy, Destroy, loaded [concrete = constants.%Destroy.type]
-// CHECK:STDOUT:   %Core.import_ref.0b9: @impl.%Op.type (%Op.type.bc9) = import_ref Core//prelude/parts/destroy, loc8_29, loaded [symbolic = @impl.%Op (constants.%Op.46f)]
-// CHECK:STDOUT:   %Destroy.impl_witness_table = impl_witness_table (%Core.import_ref.0b9), @impl [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -784,12 +812,11 @@ fn F(b: Modifiers.Base);
 // CHECK:STDOUT:     %Base.ref: type = name_ref Base, imports.%Modifiers.Base [concrete = constants.%Base]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %v: ref %Base = bind_name v, %v.var
-// CHECK:STDOUT:   %impl.elem0: %.3f1 = impl_witness_access constants.%Destroy.impl_witness.cec, element0 [concrete = constants.%Op.033]
-// CHECK:STDOUT:   %bound_method.loc7_3.1: <bound method> = bound_method %v.var, %impl.elem0
-// CHECK:STDOUT:   %specific_fn: <specific function> = specific_function %impl.elem0, @Op.2(constants.%Base) [concrete = constants.%Op.specific_fn]
-// CHECK:STDOUT:   %bound_method.loc7_3.2: <bound method> = bound_method %v.var, %specific_fn
+// CHECK:STDOUT:   %Op.bound: <bound method> = bound_method %v.var, constants.%Op.033
+// CHECK:STDOUT:   %Op.specific_fn: <specific function> = specific_function constants.%Op.033, @Op.2(constants.%Base) [concrete = constants.%Op.specific_fn]
+// CHECK:STDOUT:   %bound_method: <bound method> = bound_method %v.var, %Op.specific_fn
 // CHECK:STDOUT:   %addr: %ptr.f03 = addr_of %v.var
-// CHECK:STDOUT:   %no_op: init %empty_tuple.type = call %bound_method.loc7_3.2(%addr)
+// CHECK:STDOUT:   %no_op: init %empty_tuple.type = call %bound_method(%addr)
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -931,30 +958,17 @@ fn F(b: Modifiers.Base);
 // CHECK:STDOUT:   %B2.val.426: %B2 = struct_value (%B1.val.b9d) [concrete]
 // CHECK:STDOUT:   %C.val: %C = struct_value (%B2.val.426) [concrete]
 // CHECK:STDOUT:   %Destroy.type: type = facet_type <@Destroy> [concrete]
-// CHECK:STDOUT:   %Op.type.bae: type = fn_type @Op.1 [concrete]
-// CHECK:STDOUT:   %T: type = bind_symbolic_name T, 0 [symbolic]
-// CHECK:STDOUT:   %Op.type.bc9: type = fn_type @Op.2, @impl(%T) [symbolic]
-// CHECK:STDOUT:   %Op.46f: %Op.type.bc9 = struct_value () [symbolic]
-// CHECK:STDOUT:   %Destroy.impl_witness.906: <witness> = impl_witness imports.%Destroy.impl_witness_table, @impl(%C) [concrete]
-// CHECK:STDOUT:   %Op.type.153: type = fn_type @Op.2, @impl(%C) [concrete]
+// CHECK:STDOUT:   %Op.type.153: type = fn_type @Op.2, @Destroy.impl(%C) [concrete]
 // CHECK:STDOUT:   %Op.5d7: %Op.type.153 = struct_value () [concrete]
 // CHECK:STDOUT:   %ptr.019: type = ptr_type %C [concrete]
-// CHECK:STDOUT:   %Destroy.facet.494: %Destroy.type = facet_value %C, (%Destroy.impl_witness.906) [concrete]
-// CHECK:STDOUT:   %.b80: type = fn_type_with_self_type %Op.type.bae, %Destroy.facet.494 [concrete]
 // CHECK:STDOUT:   %Op.specific_fn.6eb: <specific function> = specific_function %Op.5d7, @Op.2(%C) [concrete]
-// CHECK:STDOUT:   %Destroy.impl_witness.453: <witness> = impl_witness imports.%Destroy.impl_witness_table, @impl(%B2) [concrete]
-// CHECK:STDOUT:   %Op.type.49c: type = fn_type @Op.2, @impl(%B2) [concrete]
+// CHECK:STDOUT:   %Op.type.49c: type = fn_type @Op.2, @Destroy.impl(%B2) [concrete]
 // CHECK:STDOUT:   %Op.bb0: %Op.type.49c = struct_value () [concrete]
 // CHECK:STDOUT:   %ptr.afe: type = ptr_type %B2 [concrete]
-// CHECK:STDOUT:   %Destroy.facet.0c6: %Destroy.type = facet_value %B2, (%Destroy.impl_witness.453) [concrete]
-// CHECK:STDOUT:   %.65f: type = fn_type_with_self_type %Op.type.bae, %Destroy.facet.0c6 [concrete]
 // CHECK:STDOUT:   %Op.specific_fn.a6f: <specific function> = specific_function %Op.bb0, @Op.2(%B2) [concrete]
-// CHECK:STDOUT:   %Destroy.impl_witness.67b: <witness> = impl_witness imports.%Destroy.impl_witness_table, @impl(%B1) [concrete]
-// CHECK:STDOUT:   %Op.type.5ba: type = fn_type @Op.2, @impl(%B1) [concrete]
+// CHECK:STDOUT:   %Op.type.5ba: type = fn_type @Op.2, @Destroy.impl(%B1) [concrete]
 // CHECK:STDOUT:   %Op.a5c: %Op.type.5ba = struct_value () [concrete]
 // CHECK:STDOUT:   %ptr.890: type = ptr_type %B1 [concrete]
-// CHECK:STDOUT:   %Destroy.facet.7f9: %Destroy.type = facet_value %B1, (%Destroy.impl_witness.67b) [concrete]
-// CHECK:STDOUT:   %.3cf: type = fn_type_with_self_type %Op.type.bae, %Destroy.facet.7f9 [concrete]
 // CHECK:STDOUT:   %Op.specific_fn.075: <specific function> = specific_function %Op.a5c, @Op.2(%B1) [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -965,8 +979,6 @@ fn F(b: Modifiers.Base);
 // CHECK:STDOUT:     import Core//prelude/...
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.Destroy: type = import_ref Core//prelude/parts/destroy, Destroy, loaded [concrete = constants.%Destroy.type]
-// CHECK:STDOUT:   %Core.import_ref.0b9: @impl.%Op.type (%Op.type.bc9) = import_ref Core//prelude/parts/destroy, loc8_29, loaded [symbolic = @impl.%Op (constants.%Op.46f)]
-// CHECK:STDOUT:   %Destroy.impl_witness_table = impl_witness_table (%Core.import_ref.0b9), @impl [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -1125,24 +1137,21 @@ fn F(b: Modifiers.Base);
 // CHECK:STDOUT:   assign %c.var, %.loc21_3
 // CHECK:STDOUT:   %C.ref: type = name_ref C, file.%C.decl [concrete = constants.%C]
 // CHECK:STDOUT:   %c: ref %C = bind_name c, %c.var
-// CHECK:STDOUT:   %impl.elem0.loc21: %.b80 = impl_witness_access constants.%Destroy.impl_witness.906, element0 [concrete = constants.%Op.5d7]
-// CHECK:STDOUT:   %bound_method.loc21_3.1: <bound method> = bound_method %c.var, %impl.elem0.loc21
-// CHECK:STDOUT:   %specific_fn.loc21: <specific function> = specific_function %impl.elem0.loc21, @Op.2(constants.%C) [concrete = constants.%Op.specific_fn.6eb]
-// CHECK:STDOUT:   %bound_method.loc21_3.2: <bound method> = bound_method %c.var, %specific_fn.loc21
+// CHECK:STDOUT:   %Op.bound.loc21: <bound method> = bound_method %c.var, constants.%Op.5d7
+// CHECK:STDOUT:   %Op.specific_fn.1: <specific function> = specific_function constants.%Op.5d7, @Op.2(constants.%C) [concrete = constants.%Op.specific_fn.6eb]
+// CHECK:STDOUT:   %bound_method.loc21: <bound method> = bound_method %c.var, %Op.specific_fn.1
 // CHECK:STDOUT:   %addr.loc21: %ptr.019 = addr_of %c.var
-// CHECK:STDOUT:   %no_op.loc21: init %empty_tuple.type = call %bound_method.loc21_3.2(%addr.loc21)
-// CHECK:STDOUT:   %impl.elem0.loc20: %.65f = impl_witness_access constants.%Destroy.impl_witness.453, element0 [concrete = constants.%Op.bb0]
-// CHECK:STDOUT:   %bound_method.loc20_3.1: <bound method> = bound_method %b2.var, %impl.elem0.loc20
-// CHECK:STDOUT:   %specific_fn.loc20: <specific function> = specific_function %impl.elem0.loc20, @Op.2(constants.%B2) [concrete = constants.%Op.specific_fn.a6f]
-// CHECK:STDOUT:   %bound_method.loc20_3.2: <bound method> = bound_method %b2.var, %specific_fn.loc20
+// CHECK:STDOUT:   %no_op.loc21: init %empty_tuple.type = call %bound_method.loc21(%addr.loc21)
+// CHECK:STDOUT:   %Op.bound.loc20: <bound method> = bound_method %b2.var, constants.%Op.bb0
+// CHECK:STDOUT:   %Op.specific_fn.2: <specific function> = specific_function constants.%Op.bb0, @Op.2(constants.%B2) [concrete = constants.%Op.specific_fn.a6f]
+// CHECK:STDOUT:   %bound_method.loc20: <bound method> = bound_method %b2.var, %Op.specific_fn.2
 // CHECK:STDOUT:   %addr.loc20: %ptr.afe = addr_of %b2.var
-// CHECK:STDOUT:   %no_op.loc20: init %empty_tuple.type = call %bound_method.loc20_3.2(%addr.loc20)
-// CHECK:STDOUT:   %impl.elem0.loc19: %.3cf = impl_witness_access constants.%Destroy.impl_witness.67b, element0 [concrete = constants.%Op.a5c]
-// CHECK:STDOUT:   %bound_method.loc19_3.1: <bound method> = bound_method %b1.var, %impl.elem0.loc19
-// CHECK:STDOUT:   %specific_fn.loc19: <specific function> = specific_function %impl.elem0.loc19, @Op.2(constants.%B1) [concrete = constants.%Op.specific_fn.075]
-// CHECK:STDOUT:   %bound_method.loc19_3.2: <bound method> = bound_method %b1.var, %specific_fn.loc19
+// CHECK:STDOUT:   %no_op.loc20: init %empty_tuple.type = call %bound_method.loc20(%addr.loc20)
+// CHECK:STDOUT:   %Op.bound.loc19: <bound method> = bound_method %b1.var, constants.%Op.a5c
+// CHECK:STDOUT:   %Op.specific_fn.3: <specific function> = specific_function constants.%Op.a5c, @Op.2(constants.%B1) [concrete = constants.%Op.specific_fn.075]
+// CHECK:STDOUT:   %bound_method.loc19: <bound method> = bound_method %b1.var, %Op.specific_fn.3
 // CHECK:STDOUT:   %addr.loc19: %ptr.890 = addr_of %b1.var
-// CHECK:STDOUT:   %no_op.loc19: init %empty_tuple.type = call %bound_method.loc19_3.2(%addr.loc19)
+// CHECK:STDOUT:   %no_op.loc19: init %empty_tuple.type = call %bound_method.loc19(%addr.loc19)
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -1225,10 +1234,10 @@ fn F(b: Modifiers.Base);
 // CHECK:STDOUT:   %ImplicitAs.type.205: type = facet_type <@ImplicitAs, @ImplicitAs(%i32)> [concrete]
 // CHECK:STDOUT:   %Convert.type.1b6: type = fn_type @Convert.1, @ImplicitAs(%i32) [concrete]
 // CHECK:STDOUT:   %To: Core.IntLiteral = bind_symbolic_name To, 0 [symbolic]
-// CHECK:STDOUT:   %Convert.type.0f9: type = fn_type @Convert.2, @impl.4f9(%To) [symbolic]
+// CHECK:STDOUT:   %Convert.type.0f9: type = fn_type @Convert.2, @ImplicitAs.impl.4f9(%To) [symbolic]
 // CHECK:STDOUT:   %Convert.f06: %Convert.type.0f9 = struct_value () [symbolic]
-// CHECK:STDOUT:   %ImplicitAs.impl_witness.c75: <witness> = impl_witness imports.%ImplicitAs.impl_witness_table.a2f, @impl.4f9(%int_32) [concrete]
-// CHECK:STDOUT:   %Convert.type.035: type = fn_type @Convert.2, @impl.4f9(%int_32) [concrete]
+// CHECK:STDOUT:   %ImplicitAs.impl_witness.c75: <witness> = impl_witness imports.%ImplicitAs.impl_witness_table.a2f, @ImplicitAs.impl.4f9(%int_32) [concrete]
+// CHECK:STDOUT:   %Convert.type.035: type = fn_type @Convert.2, @ImplicitAs.impl.4f9(%int_32) [concrete]
 // CHECK:STDOUT:   %Convert.956: %Convert.type.035 = struct_value () [concrete]
 // CHECK:STDOUT:   %ImplicitAs.facet: %ImplicitAs.type.205 = facet_value Core.IntLiteral, (%ImplicitAs.impl_witness.c75) [concrete]
 // CHECK:STDOUT:   %.9c3: type = fn_type_with_self_type %Convert.type.1b6, %ImplicitAs.facet [concrete]
@@ -1248,23 +1257,13 @@ fn F(b: Modifiers.Base);
 // CHECK:STDOUT:   %bound_method.1da: <bound method> = bound_method %int_4.0c1, %Convert.specific_fn [concrete]
 // CHECK:STDOUT:   %int_4.940: %i32 = int_value 4 [concrete]
 // CHECK:STDOUT:   %Destroy.type: type = facet_type <@Destroy> [concrete]
-// CHECK:STDOUT:   %Op.type.bae: type = fn_type @Op.2 [concrete]
-// CHECK:STDOUT:   %T: type = bind_symbolic_name T, 0 [symbolic]
-// CHECK:STDOUT:   %Op.type.bc9: type = fn_type @Op.3, @impl.49c(%T) [symbolic]
-// CHECK:STDOUT:   %Op.46f: %Op.type.bc9 = struct_value () [symbolic]
-// CHECK:STDOUT:   %Destroy.impl_witness.dfd: <witness> = impl_witness imports.%Destroy.impl_witness_table, @impl.49c(%Base) [concrete]
-// CHECK:STDOUT:   %Op.type.193: type = fn_type @Op.3, @impl.49c(%Base) [concrete]
+// CHECK:STDOUT:   %Op.type.193: type = fn_type @Op.3, @Destroy.impl(%Base) [concrete]
 // CHECK:STDOUT:   %Op.345: %Op.type.193 = struct_value () [concrete]
 // CHECK:STDOUT:   %ptr.11f: type = ptr_type %Base [concrete]
-// CHECK:STDOUT:   %Destroy.facet.055: %Destroy.type = facet_value %Base, (%Destroy.impl_witness.dfd) [concrete]
-// CHECK:STDOUT:   %.097: type = fn_type_with_self_type %Op.type.bae, %Destroy.facet.055 [concrete]
 // CHECK:STDOUT:   %Op.specific_fn.083: <specific function> = specific_function %Op.345, @Op.3(%Base) [concrete]
-// CHECK:STDOUT:   %Destroy.impl_witness.64e: <witness> = impl_witness imports.%Destroy.impl_witness_table, @impl.49c(%i32) [concrete]
-// CHECK:STDOUT:   %Op.type.a17: type = fn_type @Op.3, @impl.49c(%i32) [concrete]
+// CHECK:STDOUT:   %Op.type.a17: type = fn_type @Op.3, @Destroy.impl(%i32) [concrete]
 // CHECK:STDOUT:   %Op.e6a: %Op.type.a17 = struct_value () [concrete]
 // CHECK:STDOUT:   %ptr.235: type = ptr_type %i32 [concrete]
-// CHECK:STDOUT:   %Destroy.facet.5f7: %Destroy.type = facet_value %i32, (%Destroy.impl_witness.64e) [concrete]
-// CHECK:STDOUT:   %.ab7: type = fn_type_with_self_type %Op.type.bae, %Destroy.facet.5f7 [concrete]
 // CHECK:STDOUT:   %Op.specific_fn.014: <specific function> = specific_function %Op.e6a, @Op.3(%i32) [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -1278,11 +1277,9 @@ fn F(b: Modifiers.Base);
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.Int: %Int.type = import_ref Core//prelude/parts/int, Int, loaded [concrete = constants.%Int.generic]
 // CHECK:STDOUT:   %Core.ImplicitAs: %ImplicitAs.type.cc7 = import_ref Core//prelude/parts/as, ImplicitAs, loaded [concrete = constants.%ImplicitAs.generic]
-// CHECK:STDOUT:   %Core.import_ref.a5b: @impl.4f9.%Convert.type (%Convert.type.0f9) = import_ref Core//prelude/parts/int, loc16_39, loaded [symbolic = @impl.4f9.%Convert (constants.%Convert.f06)]
-// CHECK:STDOUT:   %ImplicitAs.impl_witness_table.a2f = impl_witness_table (%Core.import_ref.a5b), @impl.4f9 [concrete]
+// CHECK:STDOUT:   %Core.import_ref.a5b: @ImplicitAs.impl.4f9.%Convert.type (%Convert.type.0f9) = import_ref Core//prelude/parts/int, loc16_39, loaded [symbolic = @ImplicitAs.impl.4f9.%Convert (constants.%Convert.f06)]
+// CHECK:STDOUT:   %ImplicitAs.impl_witness_table.a2f = impl_witness_table (%Core.import_ref.a5b), @ImplicitAs.impl.4f9 [concrete]
 // CHECK:STDOUT:   %Core.Destroy: type = import_ref Core//prelude/parts/destroy, Destroy, loaded [concrete = constants.%Destroy.type]
-// CHECK:STDOUT:   %Core.import_ref.0b9: @impl.49c.%Op.type (%Op.type.bc9) = import_ref Core//prelude/parts/destroy, loc8_29, loaded [symbolic = @impl.49c.%Op (constants.%Op.46f)]
-// CHECK:STDOUT:   %Destroy.impl_witness_table = impl_witness_table (%Core.import_ref.0b9), @impl.49c [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -1338,10 +1335,10 @@ fn F(b: Modifiers.Base);
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %i.var: ref %i32 = var %i.var_patt
 // CHECK:STDOUT:   %int_3.loc12: Core.IntLiteral = int_value 3 [concrete = constants.%int_3.1ba]
-// CHECK:STDOUT:   %impl.elem0.loc12_3.1: %.9c3 = impl_witness_access constants.%ImplicitAs.impl_witness.c75, element0 [concrete = constants.%Convert.956]
-// CHECK:STDOUT:   %bound_method.loc12_3.1: <bound method> = bound_method %int_3.loc12, %impl.elem0.loc12_3.1 [concrete = constants.%Convert.bound.b30]
-// CHECK:STDOUT:   %specific_fn.loc12_3.1: <specific function> = specific_function %impl.elem0.loc12_3.1, @Convert.2(constants.%int_32) [concrete = constants.%Convert.specific_fn]
-// CHECK:STDOUT:   %bound_method.loc12_3.2: <bound method> = bound_method %int_3.loc12, %specific_fn.loc12_3.1 [concrete = constants.%bound_method.047]
+// CHECK:STDOUT:   %impl.elem0.loc12: %.9c3 = impl_witness_access constants.%ImplicitAs.impl_witness.c75, element0 [concrete = constants.%Convert.956]
+// CHECK:STDOUT:   %bound_method.loc12_3.1: <bound method> = bound_method %int_3.loc12, %impl.elem0.loc12 [concrete = constants.%Convert.bound.b30]
+// CHECK:STDOUT:   %specific_fn.loc12: <specific function> = specific_function %impl.elem0.loc12, @Convert.2(constants.%int_32) [concrete = constants.%Convert.specific_fn]
+// CHECK:STDOUT:   %bound_method.loc12_3.2: <bound method> = bound_method %int_3.loc12, %specific_fn.loc12 [concrete = constants.%bound_method.047]
 // CHECK:STDOUT:   %int.convert_checked.loc12: init %i32 = call %bound_method.loc12_3.2(%int_3.loc12) [concrete = constants.%int_3.822]
 // CHECK:STDOUT:   %.loc12_3: init %i32 = converted %int_3.loc12, %int.convert_checked.loc12 [concrete = constants.%int_3.822]
 // CHECK:STDOUT:   assign %i.var, %.loc12_3
@@ -1413,24 +1410,21 @@ fn F(b: Modifiers.Base);
 // CHECK:STDOUT:   %int.convert_checked.loc18: init %i32 = call %bound_method.loc18_9.2(%int_4) [concrete = constants.%int_4.940]
 // CHECK:STDOUT:   %.loc18_9: init %i32 = converted %int_4, %int.convert_checked.loc18 [concrete = constants.%int_4.940]
 // CHECK:STDOUT:   assign %.loc18_5, %.loc18_9
-// CHECK:STDOUT:   %impl.elem0.loc15_3: %.097 = impl_witness_access constants.%Destroy.impl_witness.dfd, element0 [concrete = constants.%Op.345]
-// CHECK:STDOUT:   %bound_method.loc15_3.1: <bound method> = bound_method %b2.var, %impl.elem0.loc15_3
-// CHECK:STDOUT:   %specific_fn.loc15_3: <specific function> = specific_function %impl.elem0.loc15_3, @Op.3(constants.%Base) [concrete = constants.%Op.specific_fn.083]
-// CHECK:STDOUT:   %bound_method.loc15_3.2: <bound method> = bound_method %b2.var, %specific_fn.loc15_3
+// CHECK:STDOUT:   %Op.bound.loc15: <bound method> = bound_method %b2.var, constants.%Op.345
+// CHECK:STDOUT:   %Op.specific_fn.1: <specific function> = specific_function constants.%Op.345, @Op.3(constants.%Base) [concrete = constants.%Op.specific_fn.083]
+// CHECK:STDOUT:   %bound_method.loc15_3: <bound method> = bound_method %b2.var, %Op.specific_fn.1
 // CHECK:STDOUT:   %addr.loc15: %ptr.11f = addr_of %b2.var
-// CHECK:STDOUT:   %no_op.loc15: init %empty_tuple.type = call %bound_method.loc15_3.2(%addr.loc15)
-// CHECK:STDOUT:   %impl.elem0.loc14: %.097 = impl_witness_access constants.%Destroy.impl_witness.dfd, element0 [concrete = constants.%Op.345]
-// CHECK:STDOUT:   %bound_method.loc14_3.1: <bound method> = bound_method %b1.var, %impl.elem0.loc14
-// CHECK:STDOUT:   %specific_fn.loc14: <specific function> = specific_function %impl.elem0.loc14, @Op.3(constants.%Base) [concrete = constants.%Op.specific_fn.083]
-// CHECK:STDOUT:   %bound_method.loc14_3.2: <bound method> = bound_method %b1.var, %specific_fn.loc14
+// CHECK:STDOUT:   %no_op.loc15: init %empty_tuple.type = call %bound_method.loc15_3(%addr.loc15)
+// CHECK:STDOUT:   %Op.bound.loc14: <bound method> = bound_method %b1.var, constants.%Op.345
+// CHECK:STDOUT:   %Op.specific_fn.2: <specific function> = specific_function constants.%Op.345, @Op.3(constants.%Base) [concrete = constants.%Op.specific_fn.083]
+// CHECK:STDOUT:   %bound_method.loc14: <bound method> = bound_method %b1.var, %Op.specific_fn.2
 // CHECK:STDOUT:   %addr.loc14: %ptr.11f = addr_of %b1.var
-// CHECK:STDOUT:   %no_op.loc14: init %empty_tuple.type = call %bound_method.loc14_3.2(%addr.loc14)
-// CHECK:STDOUT:   %impl.elem0.loc12_3.2: %.ab7 = impl_witness_access constants.%Destroy.impl_witness.64e, element0 [concrete = constants.%Op.e6a]
-// CHECK:STDOUT:   %bound_method.loc12_3.3: <bound method> = bound_method %i.var, %impl.elem0.loc12_3.2
-// CHECK:STDOUT:   %specific_fn.loc12_3.2: <specific function> = specific_function %impl.elem0.loc12_3.2, @Op.3(constants.%i32) [concrete = constants.%Op.specific_fn.014]
-// CHECK:STDOUT:   %bound_method.loc12_3.4: <bound method> = bound_method %i.var, %specific_fn.loc12_3.2
+// CHECK:STDOUT:   %no_op.loc14: init %empty_tuple.type = call %bound_method.loc14(%addr.loc14)
+// CHECK:STDOUT:   %Op.bound.loc12: <bound method> = bound_method %i.var, constants.%Op.e6a
+// CHECK:STDOUT:   %Op.specific_fn.3: <specific function> = specific_function constants.%Op.e6a, @Op.3(constants.%i32) [concrete = constants.%Op.specific_fn.014]
+// CHECK:STDOUT:   %bound_method.loc12_3.3: <bound method> = bound_method %i.var, %Op.specific_fn.3
 // CHECK:STDOUT:   %addr.loc12: %ptr.235 = addr_of %i.var
-// CHECK:STDOUT:   %no_op.loc12: init %empty_tuple.type = call %bound_method.loc12_3.4(%addr.loc12)
+// CHECK:STDOUT:   %no_op.loc12: init %empty_tuple.type = call %bound_method.loc12_3.3(%addr.loc12)
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -1619,7 +1613,7 @@ fn F(b: Modifiers.Base);
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: vtable @AbstractIntermediate.vtable {
-// CHECK:STDOUT:   @AbstractBase.%F.decl
+// CHECK:STDOUT:   constants.%F.6e9
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: vtable @Derived.vtable {
@@ -1742,7 +1736,7 @@ fn F(b: Modifiers.Base);
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: vtable @VirtualIntermediate.vtable {
-// CHECK:STDOUT:   @VirtualBase.%F.decl
+// CHECK:STDOUT:   constants.%F.3e7
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: vtable @Derived.vtable {
@@ -1918,20 +1912,20 @@ fn F(b: Modifiers.Base);
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %T1.decl: type = class_decl @T1 [concrete = constants.%T1] {} {}
 // CHECK:STDOUT:   %T2.decl: type = class_decl @T2 [concrete = constants.%T2] {} {}
-// CHECK:STDOUT:   impl_decl @impl [concrete] {} {
+// CHECK:STDOUT:   impl_decl @ImplicitAs.impl [concrete] {} {
 // CHECK:STDOUT:     %T2.ref: type = name_ref T2, file.%T2.decl [concrete = constants.%T2]
 // CHECK:STDOUT:     %Core.ref: <namespace> = name_ref Core, imports.%Core [concrete = imports.%Core]
 // CHECK:STDOUT:     %ImplicitAs.ref: %ImplicitAs.type.cc7 = name_ref ImplicitAs, imports.%Core.ImplicitAs [concrete = constants.%ImplicitAs.generic]
 // CHECK:STDOUT:     %T1.ref: type = name_ref T1, file.%T1.decl [concrete = constants.%T1]
 // CHECK:STDOUT:     %ImplicitAs.type: type = facet_type <@ImplicitAs, @ImplicitAs(constants.%T1)> [concrete = constants.%ImplicitAs.type.e40]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %ImplicitAs.impl_witness_table = impl_witness_table (@impl.%Convert.decl), @impl [concrete]
+// CHECK:STDOUT:   %ImplicitAs.impl_witness_table = impl_witness_table (@ImplicitAs.impl.%Convert.decl), @ImplicitAs.impl [concrete]
 // CHECK:STDOUT:   %ImplicitAs.impl_witness: <witness> = impl_witness %ImplicitAs.impl_witness_table [concrete = constants.%ImplicitAs.impl_witness]
 // CHECK:STDOUT:   %Base.decl: type = class_decl @Base [concrete = constants.%Base] {} {}
 // CHECK:STDOUT:   %Derived.decl: type = class_decl @Derived [concrete = constants.%Derived] {} {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: impl @impl: %T2.ref as %ImplicitAs.type {
+// CHECK:STDOUT: impl @ImplicitAs.impl: %T2.ref as %ImplicitAs.type {
 // CHECK:STDOUT:   %Convert.decl: %Convert.type.c41 = fn_decl @Convert.2 [concrete = constants.%Convert.f35] {
 // CHECK:STDOUT:     %self.patt: %pattern_type.682 = binding_pattern self [concrete]
 // CHECK:STDOUT:     %self.param_patt: %pattern_type.682 = value_param_pattern %self.patt, call_param0 [concrete]
@@ -1940,7 +1934,7 @@ fn F(b: Modifiers.Base);
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %T1.ref: type = name_ref T1, file.%T1.decl [concrete = constants.%T1]
 // CHECK:STDOUT:     %self.param: %T2 = value_param call_param0
-// CHECK:STDOUT:     %Self.ref: type = name_ref Self, @impl.%T2.ref [concrete = constants.%T2]
+// CHECK:STDOUT:     %Self.ref: type = name_ref Self, @ImplicitAs.impl.%T2.ref [concrete = constants.%T2]
 // CHECK:STDOUT:     %self: %T2 = bind_name self, %self.param
 // CHECK:STDOUT:     %return.param: ref %T1 = out_param call_param1
 // CHECK:STDOUT:     %return: ref %T1 = return_slot %return.param
@@ -2048,6 +2042,100 @@ fn F(b: Modifiers.Base);
 // CHECK:STDOUT:
 // CHECK:STDOUT: impl fn @F.2(%self.param: %Derived) -> %return.param: %T2;
 // CHECK:STDOUT:
+// CHECK:STDOUT: --- fail_generic_virtual_decl.carbon
+// CHECK:STDOUT:
+// CHECK:STDOUT: constants {
+// CHECK:STDOUT:   %T: type = bind_symbolic_name T, 0 [symbolic]
+// CHECK:STDOUT:   %pattern_type.98f: type = pattern_type type [concrete]
+// CHECK:STDOUT:   %Base.type: type = generic_class_type @Base [concrete]
+// CHECK:STDOUT:   %Base.generic: %Base.type = struct_value () [concrete]
+// CHECK:STDOUT:   %Base: type = class_type @Base, @Base(%T) [symbolic]
+// CHECK:STDOUT:   %pattern_type.9f7: type = pattern_type %Base [symbolic]
+// CHECK:STDOUT:   %F.type: type = fn_type @F, @Base(%T) [symbolic]
+// CHECK:STDOUT:   %F: %F.type = struct_value () [symbolic]
+// CHECK:STDOUT:   %ptr: type = ptr_type <vtable> [concrete]
+// CHECK:STDOUT:   %F.specific_fn: <specific function> = specific_function %F, @F(%T) [symbolic]
+// CHECK:STDOUT:   %Base.vtable_ptr: ref %ptr = vtable_ptr @Base.vtable, @Base(%T) [symbolic]
+// CHECK:STDOUT:   %struct_type.vptr: type = struct_type {.<vptr>: %ptr} [concrete]
+// CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %struct_type.vptr [concrete]
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: imports {
+// CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [concrete] {
+// CHECK:STDOUT:     import Core//prelude
+// CHECK:STDOUT:     import Core//prelude/...
+// CHECK:STDOUT:   }
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: file {
+// CHECK:STDOUT:   package: <namespace> = namespace [concrete] {
+// CHECK:STDOUT:     .Core = imports.%Core
+// CHECK:STDOUT:     .Base = %Base.decl
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %Core.import = import Core
+// CHECK:STDOUT:   %Base.decl: %Base.type = class_decl @Base [concrete = constants.%Base.generic] {
+// CHECK:STDOUT:     %T.patt: %pattern_type.98f = symbolic_binding_pattern T, 0 [concrete]
+// CHECK:STDOUT:   } {
+// CHECK:STDOUT:     %T.loc7_17.1: type = bind_symbolic_name T, 0 [symbolic = %T.loc7_17.2 (constants.%T)]
+// CHECK:STDOUT:   }
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: generic class @Base(%T.loc7_17.1: type) {
+// CHECK:STDOUT:   %T.loc7_17.2: type = bind_symbolic_name T, 0 [symbolic = %T.loc7_17.2 (constants.%T)]
+// CHECK:STDOUT:
+// CHECK:STDOUT: !definition:
+// CHECK:STDOUT:   %F.type: type = fn_type @F, @Base(%T.loc7_17.2) [symbolic = %F.type (constants.%F.type)]
+// CHECK:STDOUT:   %F: @Base.%F.type (%F.type) = struct_value () [symbolic = %F (constants.%F)]
+// CHECK:STDOUT:   %F.specific_fn.loc13_1.2: <specific function> = specific_function %F, @F(%T.loc7_17.2) [symbolic = %F.specific_fn.loc13_1.2 (constants.%F.specific_fn)]
+// CHECK:STDOUT:   %vtable_ptr.loc13_1.2: ref %ptr = vtable_ptr @Base.vtable, @Base(%T.loc7_17.2) [symbolic = %vtable_ptr.loc13_1.2 (constants.%Base.vtable_ptr)]
+// CHECK:STDOUT:
+// CHECK:STDOUT:   class {
+// CHECK:STDOUT:     %F.decl: @Base.%F.type (%F.type) = fn_decl @F [symbolic = @Base.%F (constants.%F)] {
+// CHECK:STDOUT:       %self.patt: @F.%pattern_type (%pattern_type.9f7) = binding_pattern self [concrete]
+// CHECK:STDOUT:       %self.param_patt: @F.%pattern_type (%pattern_type.9f7) = value_param_pattern %self.patt, call_param0 [concrete]
+// CHECK:STDOUT:     } {
+// CHECK:STDOUT:       %self.param: @F.%Base (%Base) = value_param call_param0
+// CHECK:STDOUT:       %.loc12_22.1: type = splice_block %Self.ref [symbolic = %Base (constants.%Base)] {
+// CHECK:STDOUT:         %.loc12_22.2: type = specific_constant constants.%Base, @Base(constants.%T) [symbolic = %Base (constants.%Base)]
+// CHECK:STDOUT:         %Self.ref: type = name_ref Self, %.loc12_22.2 [symbolic = %Base (constants.%Base)]
+// CHECK:STDOUT:       }
+// CHECK:STDOUT:       %self: @F.%Base (%Base) = bind_name self, %self.param
+// CHECK:STDOUT:     }
+// CHECK:STDOUT:     %F.specific_fn.loc13_1.1: <specific function> = specific_function %F.decl, @F(constants.%T) [symbolic = %F.specific_fn.loc13_1.2 (constants.%F.specific_fn)]
+// CHECK:STDOUT:     %vtable_ptr.loc13_1.1: ref %ptr = vtable_ptr @Base.vtable, @Base(constants.%T) [symbolic = %vtable_ptr.loc13_1.2 (constants.%Base.vtable_ptr)]
+// CHECK:STDOUT:     %struct_type.vptr: type = struct_type {.<vptr>: %ptr} [concrete = constants.%struct_type.vptr]
+// CHECK:STDOUT:     %complete_type: <witness> = complete_type_witness %struct_type.vptr [concrete = constants.%complete_type]
+// CHECK:STDOUT:     complete_type_witness = %complete_type
+// CHECK:STDOUT:     vtable_ptr = %vtable_ptr.loc13_1.1
+// CHECK:STDOUT:
+// CHECK:STDOUT:   !members:
+// CHECK:STDOUT:     .Self = constants.%Base
+// CHECK:STDOUT:     .F = %F.decl
+// CHECK:STDOUT:   }
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: vtable @Base.vtable {
+// CHECK:STDOUT:   @Base.%F.specific_fn.loc13_1.1
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: generic virtual fn @F(@Base.%T.loc7_17.1: type) {
+// CHECK:STDOUT:   %T: type = bind_symbolic_name T, 0 [symbolic = %T (constants.%T)]
+// CHECK:STDOUT:   %Base: type = class_type @Base, @Base(%T) [symbolic = %Base (constants.%Base)]
+// CHECK:STDOUT:   %pattern_type: type = pattern_type %Base [symbolic = %pattern_type (constants.%pattern_type.9f7)]
+// CHECK:STDOUT:
+// CHECK:STDOUT:   virtual fn(%self.param: @F.%Base (%Base));
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: specific @Base(constants.%T) {
+// CHECK:STDOUT:   %T.loc7_17.2 => constants.%T
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: specific @F(constants.%T) {
+// CHECK:STDOUT:   %T => constants.%T
+// CHECK:STDOUT:   %Base => constants.%Base
+// CHECK:STDOUT:   %pattern_type => constants.%pattern_type.9f7
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
 // CHECK:STDOUT: --- fail_todo_impl_generic_base.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
@@ -2064,21 +2152,27 @@ fn F(b: Modifiers.Base);
 // CHECK:STDOUT:   %F.type.f17: type = fn_type @F.1, @Base(%T) [symbolic]
 // CHECK:STDOUT:   %F.e26: %F.type.f17 = struct_value () [symbolic]
 // CHECK:STDOUT:   %ptr.454: type = ptr_type <vtable> [concrete]
-// CHECK:STDOUT:   %Base.vtable_ptr: ref %ptr.454 = vtable_ptr @Base.vtable [concrete]
+// CHECK:STDOUT:   %F.specific_fn.892: <specific function> = specific_function %F.e26, @F.1(%T) [symbolic]
+// CHECK:STDOUT:   %Base.vtable_ptr.573: ref %ptr.454 = vtable_ptr @Base.vtable, @Base(%T) [symbolic]
 // CHECK:STDOUT:   %struct_type.vptr: type = struct_type {.<vptr>: %ptr.454} [concrete]
 // CHECK:STDOUT:   %complete_type.513: <witness> = complete_type_witness %struct_type.vptr [concrete]
+// CHECK:STDOUT:   %require_complete.97d: <witness> = require_complete_type %Base.370 [symbolic]
+// CHECK:STDOUT:   %require_complete.4ae: <witness> = require_complete_type %T [symbolic]
 // CHECK:STDOUT:   %Derived: type = class_type @Derived [concrete]
 // CHECK:STDOUT:   %Base.ea5: type = class_type @Base, @Base(%T1) [concrete]
 // CHECK:STDOUT:   %F.type.d82: type = fn_type @F.1, @Base(%T1) [concrete]
 // CHECK:STDOUT:   %F.d25: %F.type.d82 = struct_value () [concrete]
+// CHECK:STDOUT:   %pattern_type.3bf: type = pattern_type %Base.ea5 [concrete]
+// CHECK:STDOUT:   %pattern_type.28b: type = pattern_type %T1 [concrete]
+// CHECK:STDOUT:   %F.specific_fn.210: <specific function> = specific_function %F.d25, @F.1(%T1) [concrete]
+// CHECK:STDOUT:   %Base.vtable_ptr.bfe: ref %ptr.454 = vtable_ptr @Base.vtable, @Base(%T1) [concrete]
 // CHECK:STDOUT:   %Derived.elem: type = unbound_element_type %Derived, %Base.ea5 [concrete]
 // CHECK:STDOUT:   %pattern_type.fb9: type = pattern_type %Derived [concrete]
-// CHECK:STDOUT:   %pattern_type.28b: type = pattern_type %T1 [concrete]
 // CHECK:STDOUT:   %F.type.5da: type = fn_type @F.2 [concrete]
 // CHECK:STDOUT:   %F.fa3: %F.type.5da = struct_value () [concrete]
 // CHECK:STDOUT:   %Derived.vtable_ptr: ref %ptr.454 = vtable_ptr @Derived.vtable [concrete]
-// CHECK:STDOUT:   %struct_type.base: type = struct_type {.base: %Base.ea5} [concrete]
-// CHECK:STDOUT:   %complete_type.65a: <witness> = complete_type_witness %struct_type.base [concrete]
+// CHECK:STDOUT:   %struct_type.base.fda: type = struct_type {.base: %Base.ea5} [concrete]
+// CHECK:STDOUT:   %complete_type.65a: <witness> = complete_type_witness %struct_type.base.fda [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -2120,6 +2214,8 @@ fn F(b: Modifiers.Base);
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %F.type: type = fn_type @F.1, @Base(%T.loc7_17.2) [symbolic = %F.type (constants.%F.type.f17)]
 // CHECK:STDOUT:   %F: @Base.%F.type (%F.type.f17) = struct_value () [symbolic = %F (constants.%F.e26)]
+// CHECK:STDOUT:   %F.specific_fn.loc9_1.2: <specific function> = specific_function %F, @F.1(%T.loc7_17.2) [symbolic = %F.specific_fn.loc9_1.2 (constants.%F.specific_fn.892)]
+// CHECK:STDOUT:   %vtable_ptr.loc9_1.2: ref %ptr.454 = vtable_ptr @Base.vtable, @Base(%T.loc7_17.2) [symbolic = %vtable_ptr.loc9_1.2 (constants.%Base.vtable_ptr.573)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   class {
 // CHECK:STDOUT:     %F.decl: @Base.%F.type (%F.type.f17) = fn_decl @F.1 [symbolic = @Base.%F (constants.%F.e26)] {
@@ -2138,11 +2234,12 @@ fn F(b: Modifiers.Base);
 // CHECK:STDOUT:       %T.ref: type = name_ref T, @Base.%T.loc7_17.1 [symbolic = %T (constants.%T)]
 // CHECK:STDOUT:       %t: @F.1.%T (%T) = bind_name t, %t.param
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %vtable_ptr: ref %ptr.454 = vtable_ptr @Base.vtable [concrete = constants.%Base.vtable_ptr]
+// CHECK:STDOUT:     %F.specific_fn.loc9_1.1: <specific function> = specific_function %F.decl, @F.1(constants.%T) [symbolic = %F.specific_fn.loc9_1.2 (constants.%F.specific_fn.892)]
+// CHECK:STDOUT:     %vtable_ptr.loc9_1.1: ref %ptr.454 = vtable_ptr @Base.vtable, @Base(constants.%T) [symbolic = %vtable_ptr.loc9_1.2 (constants.%Base.vtable_ptr.573)]
 // CHECK:STDOUT:     %struct_type.vptr: type = struct_type {.<vptr>: %ptr.454} [concrete = constants.%struct_type.vptr]
 // CHECK:STDOUT:     %complete_type: <witness> = complete_type_witness %struct_type.vptr [concrete = constants.%complete_type.513]
 // CHECK:STDOUT:     complete_type_witness = %complete_type
-// CHECK:STDOUT:     vtable_ptr = %vtable_ptr
+// CHECK:STDOUT:     vtable_ptr = %vtable_ptr.loc9_1.1
 // CHECK:STDOUT:
 // CHECK:STDOUT:   !members:
 // CHECK:STDOUT:     .Self = constants.%Base.370
@@ -2171,7 +2268,7 @@ fn F(b: Modifiers.Base);
 // CHECK:STDOUT:     %t: %T1 = bind_name t, %t.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %vtable_ptr: ref %ptr.454 = vtable_ptr @Derived.vtable [concrete = constants.%Derived.vtable_ptr]
-// CHECK:STDOUT:   %struct_type.base: type = struct_type {.base: %Base.ea5} [concrete = constants.%struct_type.base]
+// CHECK:STDOUT:   %struct_type.base: type = struct_type {.base: %Base.ea5} [concrete = constants.%struct_type.base.fda]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %struct_type.base [concrete = constants.%complete_type.65a]
 // CHECK:STDOUT:   complete_type_witness = %complete_type
 // CHECK:STDOUT:   vtable_ptr = %vtable_ptr
@@ -2186,7 +2283,7 @@ fn F(b: Modifiers.Base);
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: vtable @Base.vtable {
-// CHECK:STDOUT:   @Base.%F.decl
+// CHECK:STDOUT:   @Base.%F.specific_fn.loc9_1.1
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: vtable @Derived.vtable {
@@ -2199,13 +2296,29 @@ fn F(b: Modifiers.Base);
 // CHECK:STDOUT:   %pattern_type.loc8_16: type = pattern_type %Base [symbolic = %pattern_type.loc8_16 (constants.%pattern_type.9f7)]
 // CHECK:STDOUT:   %pattern_type.loc8_28: type = pattern_type %T [symbolic = %pattern_type.loc8_28 (constants.%pattern_type.7dc)]
 // CHECK:STDOUT:
-// CHECK:STDOUT:   virtual fn(%self.param: @F.1.%Base (%Base.370), %t.param: @F.1.%T (%T));
+// CHECK:STDOUT: !definition:
+// CHECK:STDOUT:   %require_complete.loc8_20: <witness> = require_complete_type %Base [symbolic = %require_complete.loc8_20 (constants.%require_complete.97d)]
+// CHECK:STDOUT:   %require_complete.loc8_29: <witness> = require_complete_type %T [symbolic = %require_complete.loc8_29 (constants.%require_complete.4ae)]
+// CHECK:STDOUT:
+// CHECK:STDOUT:   virtual fn(%self.param: @F.1.%Base (%Base.370), %t.param: @F.1.%T (%T)) {
+// CHECK:STDOUT:   !entry:
+// CHECK:STDOUT:     return
+// CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: impl fn @F.2(%self.param: %Derived, %t.param: %T1);
+// CHECK:STDOUT: impl fn @F.2(%self.param: %Derived, %t.param: %T1) {
+// CHECK:STDOUT: !entry:
+// CHECK:STDOUT:   return
+// CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Base(constants.%T) {
 // CHECK:STDOUT:   %T.loc7_17.2 => constants.%T
+// CHECK:STDOUT:
+// CHECK:STDOUT: !definition:
+// CHECK:STDOUT:   %F.type => constants.%F.type.f17
+// CHECK:STDOUT:   %F => constants.%F.e26
+// CHECK:STDOUT:   %F.specific_fn.loc9_1.2 => constants.%F.specific_fn.892
+// CHECK:STDOUT:   %vtable_ptr.loc9_1.2 => constants.%Base.vtable_ptr.573
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @F.1(constants.%T) {
@@ -2213,6 +2326,10 @@ fn F(b: Modifiers.Base);
 // CHECK:STDOUT:   %Base => constants.%Base.370
 // CHECK:STDOUT:   %pattern_type.loc8_16 => constants.%pattern_type.9f7
 // CHECK:STDOUT:   %pattern_type.loc8_28 => constants.%pattern_type.7dc
+// CHECK:STDOUT:
+// CHECK:STDOUT: !definition:
+// CHECK:STDOUT:   %require_complete.loc8_20 => constants.%require_complete.97d
+// CHECK:STDOUT:   %require_complete.loc8_29 => constants.%require_complete.4ae
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Base(constants.%T1) {
@@ -2221,6 +2338,19 @@ fn F(b: Modifiers.Base);
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %F.type => constants.%F.type.d82
 // CHECK:STDOUT:   %F => constants.%F.d25
+// CHECK:STDOUT:   %F.specific_fn.loc9_1.2 => constants.%F.specific_fn.210
+// CHECK:STDOUT:   %vtable_ptr.loc9_1.2 => constants.%Base.vtable_ptr.bfe
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: specific @F.1(constants.%T1) {
+// CHECK:STDOUT:   %T => constants.%T1
+// CHECK:STDOUT:   %Base => constants.%Base.ea5
+// CHECK:STDOUT:   %pattern_type.loc8_16 => constants.%pattern_type.3bf
+// CHECK:STDOUT:   %pattern_type.loc8_28 => constants.%pattern_type.28b
+// CHECK:STDOUT:
+// CHECK:STDOUT: !definition:
+// CHECK:STDOUT:   %require_complete.loc8_20 => constants.%complete_type.513
+// CHECK:STDOUT:   %require_complete.loc8_29 => constants.%complete_type.357
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- fail_virtual_without_self.carbon
@@ -2557,10 +2687,12 @@ fn F(b: Modifiers.Base);
 // CHECK:STDOUT:   %pattern_type.48e: type = pattern_type %T1 [symbolic]
 // CHECK:STDOUT:   %F.type: type = fn_type @F, @T1(%T) [symbolic]
 // CHECK:STDOUT:   %F: %F.type = struct_value () [symbolic]
-// CHECK:STDOUT:   %ptr: type = ptr_type <vtable> [concrete]
-// CHECK:STDOUT:   %T1.vtable_ptr: ref %ptr = vtable_ptr @T1.vtable [concrete]
-// CHECK:STDOUT:   %struct_type.vptr: type = struct_type {.<vptr>: %ptr} [concrete]
+// CHECK:STDOUT:   %ptr.454: type = ptr_type <vtable> [concrete]
+// CHECK:STDOUT:   %F.specific_fn: <specific function> = specific_function %F, @F(%T) [symbolic]
+// CHECK:STDOUT:   %T1.vtable_ptr: ref %ptr.454 = vtable_ptr @T1.vtable, @T1(%T) [symbolic]
+// CHECK:STDOUT:   %struct_type.vptr: type = struct_type {.<vptr>: %ptr.454} [concrete]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %struct_type.vptr [concrete]
+// CHECK:STDOUT:   %require_complete: <witness> = require_complete_type %T1 [symbolic]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -2589,6 +2721,8 @@ fn F(b: Modifiers.Base);
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %F.type: type = fn_type @F, @T1(%T.loc4_15.2) [symbolic = %F.type (constants.%F.type)]
 // CHECK:STDOUT:   %F: @T1.%F.type (%F.type) = struct_value () [symbolic = %F (constants.%F)]
+// CHECK:STDOUT:   %F.specific_fn.loc6_1.2: <specific function> = specific_function %F, @F(%T.loc4_15.2) [symbolic = %F.specific_fn.loc6_1.2 (constants.%F.specific_fn)]
+// CHECK:STDOUT:   %vtable_ptr.loc6_1.2: ref %ptr.454 = vtable_ptr @T1.vtable, @T1(%T.loc4_15.2) [symbolic = %vtable_ptr.loc6_1.2 (constants.%T1.vtable_ptr)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   class {
 // CHECK:STDOUT:     %F.decl: @T1.%F.type (%F.type) = fn_decl @F [symbolic = @T1.%F (constants.%F)] {
@@ -2602,11 +2736,12 @@ fn F(b: Modifiers.Base);
 // CHECK:STDOUT:       }
 // CHECK:STDOUT:       %self: @F.%T1 (%T1) = bind_name self, %self.param
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %vtable_ptr: ref %ptr = vtable_ptr @T1.vtable [concrete = constants.%T1.vtable_ptr]
-// CHECK:STDOUT:     %struct_type.vptr: type = struct_type {.<vptr>: %ptr} [concrete = constants.%struct_type.vptr]
+// CHECK:STDOUT:     %F.specific_fn.loc6_1.1: <specific function> = specific_function %F.decl, @F(constants.%T) [symbolic = %F.specific_fn.loc6_1.2 (constants.%F.specific_fn)]
+// CHECK:STDOUT:     %vtable_ptr.loc6_1.1: ref %ptr.454 = vtable_ptr @T1.vtable, @T1(constants.%T) [symbolic = %vtable_ptr.loc6_1.2 (constants.%T1.vtable_ptr)]
+// CHECK:STDOUT:     %struct_type.vptr: type = struct_type {.<vptr>: %ptr.454} [concrete = constants.%struct_type.vptr]
 // CHECK:STDOUT:     %complete_type: <witness> = complete_type_witness %struct_type.vptr [concrete = constants.%complete_type]
 // CHECK:STDOUT:     complete_type_witness = %complete_type
-// CHECK:STDOUT:     vtable_ptr = %vtable_ptr
+// CHECK:STDOUT:     vtable_ptr = %vtable_ptr.loc6_1.1
 // CHECK:STDOUT:
 // CHECK:STDOUT:   !members:
 // CHECK:STDOUT:     .Self = constants.%T1
@@ -2615,7 +2750,7 @@ fn F(b: Modifiers.Base);
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: vtable @T1.vtable {
-// CHECK:STDOUT:   @T1.%F.decl
+// CHECK:STDOUT:   @T1.%F.specific_fn.loc6_1.1
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic virtual fn @F(@T1.%T.loc4_15.1: type) {
@@ -2623,17 +2758,32 @@ fn F(b: Modifiers.Base);
 // CHECK:STDOUT:   %T1: type = class_type @T1, @T1(%T) [symbolic = %T1 (constants.%T1)]
 // CHECK:STDOUT:   %pattern_type: type = pattern_type %T1 [symbolic = %pattern_type (constants.%pattern_type.48e)]
 // CHECK:STDOUT:
-// CHECK:STDOUT:   virtual fn(%self.param: @F.%T1 (%T1));
+// CHECK:STDOUT: !definition:
+// CHECK:STDOUT:   %require_complete: <witness> = require_complete_type %T1 [symbolic = %require_complete (constants.%require_complete)]
+// CHECK:STDOUT:
+// CHECK:STDOUT:   virtual fn(%self.param: @F.%T1 (%T1)) {
+// CHECK:STDOUT:   !entry:
+// CHECK:STDOUT:     return
+// CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @T1(constants.%T) {
 // CHECK:STDOUT:   %T.loc4_15.2 => constants.%T
+// CHECK:STDOUT:
+// CHECK:STDOUT: !definition:
+// CHECK:STDOUT:   %F.type => constants.%F.type
+// CHECK:STDOUT:   %F => constants.%F
+// CHECK:STDOUT:   %F.specific_fn.loc6_1.2 => constants.%F.specific_fn
+// CHECK:STDOUT:   %vtable_ptr.loc6_1.2 => constants.%T1.vtable_ptr
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @F(constants.%T) {
 // CHECK:STDOUT:   %T => constants.%T
 // CHECK:STDOUT:   %T1 => constants.%T1
 // CHECK:STDOUT:   %pattern_type => constants.%pattern_type.48e
+// CHECK:STDOUT:
+// CHECK:STDOUT: !definition:
+// CHECK:STDOUT:   %require_complete => constants.%require_complete
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- with_dependent_arg.carbon
@@ -2648,10 +2798,13 @@ fn F(b: Modifiers.Base);
 // CHECK:STDOUT:   %pattern_type.7dc: type = pattern_type %T [symbolic]
 // CHECK:STDOUT:   %F.type: type = fn_type @F, @T1(%T) [symbolic]
 // CHECK:STDOUT:   %F: %F.type = struct_value () [symbolic]
-// CHECK:STDOUT:   %ptr: type = ptr_type <vtable> [concrete]
-// CHECK:STDOUT:   %T1.vtable_ptr: ref %ptr = vtable_ptr @T1.vtable [concrete]
-// CHECK:STDOUT:   %struct_type.vptr: type = struct_type {.<vptr>: %ptr} [concrete]
+// CHECK:STDOUT:   %ptr.454: type = ptr_type <vtable> [concrete]
+// CHECK:STDOUT:   %F.specific_fn: <specific function> = specific_function %F, @F(%T) [symbolic]
+// CHECK:STDOUT:   %T1.vtable_ptr: ref %ptr.454 = vtable_ptr @T1.vtable, @T1(%T) [symbolic]
+// CHECK:STDOUT:   %struct_type.vptr: type = struct_type {.<vptr>: %ptr.454} [concrete]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %struct_type.vptr [concrete]
+// CHECK:STDOUT:   %require_complete.86d: <witness> = require_complete_type %T1 [symbolic]
+// CHECK:STDOUT:   %require_complete.4ae: <witness> = require_complete_type %T [symbolic]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -2680,6 +2833,8 @@ fn F(b: Modifiers.Base);
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %F.type: type = fn_type @F, @T1(%T.loc4_15.2) [symbolic = %F.type (constants.%F.type)]
 // CHECK:STDOUT:   %F: @T1.%F.type (%F.type) = struct_value () [symbolic = %F (constants.%F)]
+// CHECK:STDOUT:   %F.specific_fn.loc6_1.2: <specific function> = specific_function %F, @F(%T.loc4_15.2) [symbolic = %F.specific_fn.loc6_1.2 (constants.%F.specific_fn)]
+// CHECK:STDOUT:   %vtable_ptr.loc6_1.2: ref %ptr.454 = vtable_ptr @T1.vtable, @T1(%T.loc4_15.2) [symbolic = %vtable_ptr.loc6_1.2 (constants.%T1.vtable_ptr)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   class {
 // CHECK:STDOUT:     %F.decl: @T1.%F.type (%F.type) = fn_decl @F [symbolic = @T1.%F (constants.%F)] {
@@ -2698,11 +2853,12 @@ fn F(b: Modifiers.Base);
 // CHECK:STDOUT:       %T.ref: type = name_ref T, @T1.%T.loc4_15.1 [symbolic = %T (constants.%T)]
 // CHECK:STDOUT:       %t: @F.%T (%T) = bind_name t, %t.param
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %vtable_ptr: ref %ptr = vtable_ptr @T1.vtable [concrete = constants.%T1.vtable_ptr]
-// CHECK:STDOUT:     %struct_type.vptr: type = struct_type {.<vptr>: %ptr} [concrete = constants.%struct_type.vptr]
+// CHECK:STDOUT:     %F.specific_fn.loc6_1.1: <specific function> = specific_function %F.decl, @F(constants.%T) [symbolic = %F.specific_fn.loc6_1.2 (constants.%F.specific_fn)]
+// CHECK:STDOUT:     %vtable_ptr.loc6_1.1: ref %ptr.454 = vtable_ptr @T1.vtable, @T1(constants.%T) [symbolic = %vtable_ptr.loc6_1.2 (constants.%T1.vtable_ptr)]
+// CHECK:STDOUT:     %struct_type.vptr: type = struct_type {.<vptr>: %ptr.454} [concrete = constants.%struct_type.vptr]
 // CHECK:STDOUT:     %complete_type: <witness> = complete_type_witness %struct_type.vptr [concrete = constants.%complete_type]
 // CHECK:STDOUT:     complete_type_witness = %complete_type
-// CHECK:STDOUT:     vtable_ptr = %vtable_ptr
+// CHECK:STDOUT:     vtable_ptr = %vtable_ptr.loc6_1.1
 // CHECK:STDOUT:
 // CHECK:STDOUT:   !members:
 // CHECK:STDOUT:     .Self = constants.%T1
@@ -2712,7 +2868,7 @@ fn F(b: Modifiers.Base);
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: vtable @T1.vtable {
-// CHECK:STDOUT:   @T1.%F.decl
+// CHECK:STDOUT:   @T1.%F.specific_fn.loc6_1.1
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic virtual fn @F(@T1.%T.loc4_15.1: type) {
@@ -2721,11 +2877,24 @@ fn F(b: Modifiers.Base);
 // CHECK:STDOUT:   %pattern_type.loc5_16: type = pattern_type %T1 [symbolic = %pattern_type.loc5_16 (constants.%pattern_type.48e)]
 // CHECK:STDOUT:   %pattern_type.loc5_28: type = pattern_type %T [symbolic = %pattern_type.loc5_28 (constants.%pattern_type.7dc)]
 // CHECK:STDOUT:
-// CHECK:STDOUT:   virtual fn(%self.param: @F.%T1 (%T1), %t.param: @F.%T (%T));
+// CHECK:STDOUT: !definition:
+// CHECK:STDOUT:   %require_complete.loc5_20: <witness> = require_complete_type %T1 [symbolic = %require_complete.loc5_20 (constants.%require_complete.86d)]
+// CHECK:STDOUT:   %require_complete.loc5_29: <witness> = require_complete_type %T [symbolic = %require_complete.loc5_29 (constants.%require_complete.4ae)]
+// CHECK:STDOUT:
+// CHECK:STDOUT:   virtual fn(%self.param: @F.%T1 (%T1), %t.param: @F.%T (%T)) {
+// CHECK:STDOUT:   !entry:
+// CHECK:STDOUT:     return
+// CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @T1(constants.%T) {
 // CHECK:STDOUT:   %T.loc4_15.2 => constants.%T
+// CHECK:STDOUT:
+// CHECK:STDOUT: !definition:
+// CHECK:STDOUT:   %F.type => constants.%F.type
+// CHECK:STDOUT:   %F => constants.%F
+// CHECK:STDOUT:   %F.specific_fn.loc6_1.2 => constants.%F.specific_fn
+// CHECK:STDOUT:   %vtable_ptr.loc6_1.2 => constants.%T1.vtable_ptr
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @F(constants.%T) {
@@ -2733,6 +2902,10 @@ fn F(b: Modifiers.Base);
 // CHECK:STDOUT:   %T1 => constants.%T1
 // CHECK:STDOUT:   %pattern_type.loc5_16 => constants.%pattern_type.48e
 // CHECK:STDOUT:   %pattern_type.loc5_28 => constants.%pattern_type.7dc
+// CHECK:STDOUT:
+// CHECK:STDOUT: !definition:
+// CHECK:STDOUT:   %require_complete.loc5_20 => constants.%require_complete.86d
+// CHECK:STDOUT:   %require_complete.loc5_29 => constants.%require_complete.4ae
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- vtable_import_unneeded.carbon
@@ -2794,4 +2967,492 @@ fn F(b: Modifiers.Base);
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F(%b.param: %Base);
+// CHECK:STDOUT:
+// CHECK:STDOUT: --- generic_derived_from_nongeneric.carbon
+// CHECK:STDOUT:
+// CHECK:STDOUT: constants {
+// CHECK:STDOUT:   %NonGenericBase: type = class_type @NonGenericBase [concrete]
+// CHECK:STDOUT:   %pattern_type.0b8: type = pattern_type %NonGenericBase [concrete]
+// CHECK:STDOUT:   %F1.type: type = fn_type @F1 [concrete]
+// CHECK:STDOUT:   %F1: %F1.type = struct_value () [concrete]
+// CHECK:STDOUT:   %F2.type.809: type = fn_type @F2.1 [concrete]
+// CHECK:STDOUT:   %F2.053: %F2.type.809 = struct_value () [concrete]
+// CHECK:STDOUT:   %ptr.454: type = ptr_type <vtable> [concrete]
+// CHECK:STDOUT:   %NonGenericBase.vtable_ptr: ref %ptr.454 = vtable_ptr @NonGenericBase.vtable [concrete]
+// CHECK:STDOUT:   %struct_type.vptr: type = struct_type {.<vptr>: %ptr.454} [concrete]
+// CHECK:STDOUT:   %complete_type.513: <witness> = complete_type_witness %struct_type.vptr [concrete]
+// CHECK:STDOUT:   %T: type = bind_symbolic_name T, 0 [symbolic]
+// CHECK:STDOUT:   %pattern_type.98f: type = pattern_type type [concrete]
+// CHECK:STDOUT:   %GenericDerived.type: type = generic_class_type @GenericDerived [concrete]
+// CHECK:STDOUT:   %GenericDerived.generic: %GenericDerived.type = struct_value () [concrete]
+// CHECK:STDOUT:   %GenericDerived: type = class_type @GenericDerived, @GenericDerived(%T) [symbolic]
+// CHECK:STDOUT:   %GenericDerived.elem: type = unbound_element_type %GenericDerived, %NonGenericBase [symbolic]
+// CHECK:STDOUT:   %pattern_type.061: type = pattern_type %GenericDerived [symbolic]
+// CHECK:STDOUT:   %F2.type.e6e: type = fn_type @F2.2, @GenericDerived(%T) [symbolic]
+// CHECK:STDOUT:   %F2.5da: %F2.type.e6e = struct_value () [symbolic]
+// CHECK:STDOUT:   %F3.type: type = fn_type @F3, @GenericDerived(%T) [symbolic]
+// CHECK:STDOUT:   %F3: %F3.type = struct_value () [symbolic]
+// CHECK:STDOUT:   %F2.specific_fn: <specific function> = specific_function %F2.5da, @F2.2(%T) [symbolic]
+// CHECK:STDOUT:   %F3.specific_fn: <specific function> = specific_function %F3, @F3(%T) [symbolic]
+// CHECK:STDOUT:   %GenericDerived.vtable_ptr: ref %ptr.454 = vtable_ptr @GenericDerived.vtable, @GenericDerived(%T) [symbolic]
+// CHECK:STDOUT:   %struct_type.base.432: type = struct_type {.base: %NonGenericBase} [concrete]
+// CHECK:STDOUT:   %complete_type.099: <witness> = complete_type_witness %struct_type.base.432 [concrete]
+// CHECK:STDOUT:   %require_complete: <witness> = require_complete_type %GenericDerived [symbolic]
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: imports {
+// CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [concrete] {
+// CHECK:STDOUT:     import Core//prelude
+// CHECK:STDOUT:     import Core//prelude/...
+// CHECK:STDOUT:   }
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: file {
+// CHECK:STDOUT:   package: <namespace> = namespace [concrete] {
+// CHECK:STDOUT:     .Core = imports.%Core
+// CHECK:STDOUT:     .NonGenericBase = %NonGenericBase.decl
+// CHECK:STDOUT:     .GenericDerived = %GenericDerived.decl
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %Core.import = import Core
+// CHECK:STDOUT:   %NonGenericBase.decl: type = class_decl @NonGenericBase [concrete = constants.%NonGenericBase] {} {}
+// CHECK:STDOUT:   %GenericDerived.decl: %GenericDerived.type = class_decl @GenericDerived [concrete = constants.%GenericDerived.generic] {
+// CHECK:STDOUT:     %T.patt: %pattern_type.98f = symbolic_binding_pattern T, 0 [concrete]
+// CHECK:STDOUT:   } {
+// CHECK:STDOUT:     %T.loc9_27.1: type = bind_symbolic_name T, 0 [symbolic = %T.loc9_27.2 (constants.%T)]
+// CHECK:STDOUT:   }
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: class @NonGenericBase {
+// CHECK:STDOUT:   %F1.decl: %F1.type = fn_decl @F1 [concrete = constants.%F1] {
+// CHECK:STDOUT:     %self.patt: %pattern_type.0b8 = binding_pattern self [concrete]
+// CHECK:STDOUT:     %self.param_patt: %pattern_type.0b8 = value_param_pattern %self.patt, call_param0 [concrete]
+// CHECK:STDOUT:   } {
+// CHECK:STDOUT:     %self.param: %NonGenericBase = value_param call_param0
+// CHECK:STDOUT:     %Self.ref: type = name_ref Self, constants.%NonGenericBase [concrete = constants.%NonGenericBase]
+// CHECK:STDOUT:     %self: %NonGenericBase = bind_name self, %self.param
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %F2.decl: %F2.type.809 = fn_decl @F2.1 [concrete = constants.%F2.053] {
+// CHECK:STDOUT:     %self.patt: %pattern_type.0b8 = binding_pattern self [concrete]
+// CHECK:STDOUT:     %self.param_patt: %pattern_type.0b8 = value_param_pattern %self.patt, call_param0 [concrete]
+// CHECK:STDOUT:   } {
+// CHECK:STDOUT:     %self.param: %NonGenericBase = value_param call_param0
+// CHECK:STDOUT:     %Self.ref: type = name_ref Self, constants.%NonGenericBase [concrete = constants.%NonGenericBase]
+// CHECK:STDOUT:     %self: %NonGenericBase = bind_name self, %self.param
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %vtable_ptr: ref %ptr.454 = vtable_ptr @NonGenericBase.vtable [concrete = constants.%NonGenericBase.vtable_ptr]
+// CHECK:STDOUT:   %struct_type.vptr: type = struct_type {.<vptr>: %ptr.454} [concrete = constants.%struct_type.vptr]
+// CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %struct_type.vptr [concrete = constants.%complete_type.513]
+// CHECK:STDOUT:   complete_type_witness = %complete_type
+// CHECK:STDOUT:   vtable_ptr = %vtable_ptr
+// CHECK:STDOUT:
+// CHECK:STDOUT: !members:
+// CHECK:STDOUT:   .Self = constants.%NonGenericBase
+// CHECK:STDOUT:   .F1 = %F1.decl
+// CHECK:STDOUT:   .F2 = %F2.decl
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: generic class @GenericDerived(%T.loc9_27.1: type) {
+// CHECK:STDOUT:   %T.loc9_27.2: type = bind_symbolic_name T, 0 [symbolic = %T.loc9_27.2 (constants.%T)]
+// CHECK:STDOUT:
+// CHECK:STDOUT: !definition:
+// CHECK:STDOUT:   %GenericDerived: type = class_type @GenericDerived, @GenericDerived(%T.loc9_27.2) [symbolic = %GenericDerived (constants.%GenericDerived)]
+// CHECK:STDOUT:   %GenericDerived.elem: type = unbound_element_type %GenericDerived, constants.%NonGenericBase [symbolic = %GenericDerived.elem (constants.%GenericDerived.elem)]
+// CHECK:STDOUT:   %F2.type: type = fn_type @F2.2, @GenericDerived(%T.loc9_27.2) [symbolic = %F2.type (constants.%F2.type.e6e)]
+// CHECK:STDOUT:   %F2: @GenericDerived.%F2.type (%F2.type.e6e) = struct_value () [symbolic = %F2 (constants.%F2.5da)]
+// CHECK:STDOUT:   %F3.type: type = fn_type @F3, @GenericDerived(%T.loc9_27.2) [symbolic = %F3.type (constants.%F3.type)]
+// CHECK:STDOUT:   %F3: @GenericDerived.%F3.type (%F3.type) = struct_value () [symbolic = %F3 (constants.%F3)]
+// CHECK:STDOUT:   %F2.specific_fn.loc13_1.2: <specific function> = specific_function %F2, @F2.2(%T.loc9_27.2) [symbolic = %F2.specific_fn.loc13_1.2 (constants.%F2.specific_fn)]
+// CHECK:STDOUT:   %F3.specific_fn.loc13_1.2: <specific function> = specific_function %F3, @F3(%T.loc9_27.2) [symbolic = %F3.specific_fn.loc13_1.2 (constants.%F3.specific_fn)]
+// CHECK:STDOUT:   %vtable_ptr.loc13_1.2: ref %ptr.454 = vtable_ptr @GenericDerived.vtable, @GenericDerived(%T.loc9_27.2) [symbolic = %vtable_ptr.loc13_1.2 (constants.%GenericDerived.vtable_ptr)]
+// CHECK:STDOUT:
+// CHECK:STDOUT:   class {
+// CHECK:STDOUT:     %NonGenericBase.ref: type = name_ref NonGenericBase, file.%NonGenericBase.decl [concrete = constants.%NonGenericBase]
+// CHECK:STDOUT:     %.loc10: @GenericDerived.%GenericDerived.elem (%GenericDerived.elem) = base_decl %NonGenericBase.ref, element0 [concrete]
+// CHECK:STDOUT:     %F2.decl: @GenericDerived.%F2.type (%F2.type.e6e) = fn_decl @F2.2 [symbolic = @GenericDerived.%F2 (constants.%F2.5da)] {
+// CHECK:STDOUT:       %self.patt: @F2.2.%pattern_type (%pattern_type.061) = binding_pattern self [concrete]
+// CHECK:STDOUT:       %self.param_patt: @F2.2.%pattern_type (%pattern_type.061) = value_param_pattern %self.patt, call_param0 [concrete]
+// CHECK:STDOUT:     } {
+// CHECK:STDOUT:       %self.param: @F2.2.%GenericDerived (%GenericDerived) = value_param call_param0
+// CHECK:STDOUT:       %.loc11_20.1: type = splice_block %Self.ref [symbolic = %GenericDerived (constants.%GenericDerived)] {
+// CHECK:STDOUT:         %.loc11_20.2: type = specific_constant constants.%GenericDerived, @GenericDerived(constants.%T) [symbolic = %GenericDerived (constants.%GenericDerived)]
+// CHECK:STDOUT:         %Self.ref: type = name_ref Self, %.loc11_20.2 [symbolic = %GenericDerived (constants.%GenericDerived)]
+// CHECK:STDOUT:       }
+// CHECK:STDOUT:       %self: @F2.2.%GenericDerived (%GenericDerived) = bind_name self, %self.param
+// CHECK:STDOUT:     }
+// CHECK:STDOUT:     %F3.decl: @GenericDerived.%F3.type (%F3.type) = fn_decl @F3 [symbolic = @GenericDerived.%F3 (constants.%F3)] {
+// CHECK:STDOUT:       %self.patt: @F3.%pattern_type (%pattern_type.061) = binding_pattern self [concrete]
+// CHECK:STDOUT:       %self.param_patt: @F3.%pattern_type (%pattern_type.061) = value_param_pattern %self.patt, call_param0 [concrete]
+// CHECK:STDOUT:     } {
+// CHECK:STDOUT:       %self.param: @F3.%GenericDerived (%GenericDerived) = value_param call_param0
+// CHECK:STDOUT:       %.loc12_23.1: type = splice_block %Self.ref [symbolic = %GenericDerived (constants.%GenericDerived)] {
+// CHECK:STDOUT:         %.loc12_23.2: type = specific_constant constants.%GenericDerived, @GenericDerived(constants.%T) [symbolic = %GenericDerived (constants.%GenericDerived)]
+// CHECK:STDOUT:         %Self.ref: type = name_ref Self, %.loc12_23.2 [symbolic = %GenericDerived (constants.%GenericDerived)]
+// CHECK:STDOUT:       }
+// CHECK:STDOUT:       %self: @F3.%GenericDerived (%GenericDerived) = bind_name self, %self.param
+// CHECK:STDOUT:     }
+// CHECK:STDOUT:     %F2.specific_fn.loc13_1.1: <specific function> = specific_function %F2.decl, @F2.2(constants.%T) [symbolic = %F2.specific_fn.loc13_1.2 (constants.%F2.specific_fn)]
+// CHECK:STDOUT:     %F3.specific_fn.loc13_1.1: <specific function> = specific_function %F3.decl, @F3(constants.%T) [symbolic = %F3.specific_fn.loc13_1.2 (constants.%F3.specific_fn)]
+// CHECK:STDOUT:     %vtable_ptr.loc13_1.1: ref %ptr.454 = vtable_ptr @GenericDerived.vtable, @GenericDerived(constants.%T) [symbolic = %vtable_ptr.loc13_1.2 (constants.%GenericDerived.vtable_ptr)]
+// CHECK:STDOUT:     %struct_type.base: type = struct_type {.base: %NonGenericBase} [concrete = constants.%struct_type.base.432]
+// CHECK:STDOUT:     %complete_type: <witness> = complete_type_witness %struct_type.base [concrete = constants.%complete_type.099]
+// CHECK:STDOUT:     complete_type_witness = %complete_type
+// CHECK:STDOUT:     vtable_ptr = %vtable_ptr.loc13_1.1
+// CHECK:STDOUT:
+// CHECK:STDOUT:   !members:
+// CHECK:STDOUT:     .Self = constants.%GenericDerived
+// CHECK:STDOUT:     .NonGenericBase = <poisoned>
+// CHECK:STDOUT:     .base = %.loc10
+// CHECK:STDOUT:     .F2 = %F2.decl
+// CHECK:STDOUT:     .F3 = %F3.decl
+// CHECK:STDOUT:     extend %NonGenericBase.ref
+// CHECK:STDOUT:   }
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: vtable @NonGenericBase.vtable {
+// CHECK:STDOUT:   @NonGenericBase.%F1.decl
+// CHECK:STDOUT:   @NonGenericBase.%F2.decl
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: vtable @GenericDerived.vtable {
+// CHECK:STDOUT:   constants.%F1
+// CHECK:STDOUT:   @GenericDerived.%F2.specific_fn.loc13_1.1
+// CHECK:STDOUT:   @GenericDerived.%F3.specific_fn.loc13_1.1
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: virtual fn @F1(%self.param: %NonGenericBase) {
+// CHECK:STDOUT: !entry:
+// CHECK:STDOUT:   return
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: virtual fn @F2.1(%self.param: %NonGenericBase) {
+// CHECK:STDOUT: !entry:
+// CHECK:STDOUT:   return
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: generic impl fn @F2.2(@GenericDerived.%T.loc9_27.1: type) {
+// CHECK:STDOUT:   %T: type = bind_symbolic_name T, 0 [symbolic = %T (constants.%T)]
+// CHECK:STDOUT:   %GenericDerived: type = class_type @GenericDerived, @GenericDerived(%T) [symbolic = %GenericDerived (constants.%GenericDerived)]
+// CHECK:STDOUT:   %pattern_type: type = pattern_type %GenericDerived [symbolic = %pattern_type (constants.%pattern_type.061)]
+// CHECK:STDOUT:
+// CHECK:STDOUT: !definition:
+// CHECK:STDOUT:   %require_complete: <witness> = require_complete_type %GenericDerived [symbolic = %require_complete (constants.%require_complete)]
+// CHECK:STDOUT:
+// CHECK:STDOUT:   impl fn(%self.param: @F2.2.%GenericDerived (%GenericDerived)) {
+// CHECK:STDOUT:   !entry:
+// CHECK:STDOUT:     return
+// CHECK:STDOUT:   }
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: generic virtual fn @F3(@GenericDerived.%T.loc9_27.1: type) {
+// CHECK:STDOUT:   %T: type = bind_symbolic_name T, 0 [symbolic = %T (constants.%T)]
+// CHECK:STDOUT:   %GenericDerived: type = class_type @GenericDerived, @GenericDerived(%T) [symbolic = %GenericDerived (constants.%GenericDerived)]
+// CHECK:STDOUT:   %pattern_type: type = pattern_type %GenericDerived [symbolic = %pattern_type (constants.%pattern_type.061)]
+// CHECK:STDOUT:
+// CHECK:STDOUT: !definition:
+// CHECK:STDOUT:   %require_complete: <witness> = require_complete_type %GenericDerived [symbolic = %require_complete (constants.%require_complete)]
+// CHECK:STDOUT:
+// CHECK:STDOUT:   virtual fn(%self.param: @F3.%GenericDerived (%GenericDerived)) {
+// CHECK:STDOUT:   !entry:
+// CHECK:STDOUT:     return
+// CHECK:STDOUT:   }
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: specific @GenericDerived(constants.%T) {
+// CHECK:STDOUT:   %T.loc9_27.2 => constants.%T
+// CHECK:STDOUT:
+// CHECK:STDOUT: !definition:
+// CHECK:STDOUT:   %GenericDerived => constants.%GenericDerived
+// CHECK:STDOUT:   %GenericDerived.elem => constants.%GenericDerived.elem
+// CHECK:STDOUT:   %F2.type => constants.%F2.type.e6e
+// CHECK:STDOUT:   %F2 => constants.%F2.5da
+// CHECK:STDOUT:   %F3.type => constants.%F3.type
+// CHECK:STDOUT:   %F3 => constants.%F3
+// CHECK:STDOUT:   %F2.specific_fn.loc13_1.2 => constants.%F2.specific_fn
+// CHECK:STDOUT:   %F3.specific_fn.loc13_1.2 => constants.%F3.specific_fn
+// CHECK:STDOUT:   %vtable_ptr.loc13_1.2 => constants.%GenericDerived.vtable_ptr
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: specific @F2.2(constants.%T) {
+// CHECK:STDOUT:   %T => constants.%T
+// CHECK:STDOUT:   %GenericDerived => constants.%GenericDerived
+// CHECK:STDOUT:   %pattern_type => constants.%pattern_type.061
+// CHECK:STDOUT:
+// CHECK:STDOUT: !definition:
+// CHECK:STDOUT:   %require_complete => constants.%require_complete
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: specific @F3(constants.%T) {
+// CHECK:STDOUT:   %T => constants.%T
+// CHECK:STDOUT:   %GenericDerived => constants.%GenericDerived
+// CHECK:STDOUT:   %pattern_type => constants.%pattern_type.061
+// CHECK:STDOUT:
+// CHECK:STDOUT: !definition:
+// CHECK:STDOUT:   %require_complete => constants.%require_complete
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: --- nongeneric_derived_from_generic.carbon
+// CHECK:STDOUT:
+// CHECK:STDOUT: constants {
+// CHECK:STDOUT:   %T: type = bind_symbolic_name T, 0 [symbolic]
+// CHECK:STDOUT:   %pattern_type.98f: type = pattern_type type [concrete]
+// CHECK:STDOUT:   %GenericBase.type: type = generic_class_type @GenericBase [concrete]
+// CHECK:STDOUT:   %GenericBase.generic: %GenericBase.type = struct_value () [concrete]
+// CHECK:STDOUT:   %GenericBase.018: type = class_type @GenericBase, @GenericBase(%T) [symbolic]
+// CHECK:STDOUT:   %pattern_type.34e: type = pattern_type %GenericBase.018 [symbolic]
+// CHECK:STDOUT:   %F1.type.2af: type = fn_type @F1, @GenericBase(%T) [symbolic]
+// CHECK:STDOUT:   %F1.80a: %F1.type.2af = struct_value () [symbolic]
+// CHECK:STDOUT:   %F2.type.2ca: type = fn_type @F2.1, @GenericBase(%T) [symbolic]
+// CHECK:STDOUT:   %F2.414: %F2.type.2ca = struct_value () [symbolic]
+// CHECK:STDOUT:   %ptr.454: type = ptr_type <vtable> [concrete]
+// CHECK:STDOUT:   %F1.specific_fn.aea: <specific function> = specific_function %F1.80a, @F1(%T) [symbolic]
+// CHECK:STDOUT:   %F2.specific_fn.758: <specific function> = specific_function %F2.414, @F2.1(%T) [symbolic]
+// CHECK:STDOUT:   %GenericBase.vtable_ptr.e41: ref %ptr.454 = vtable_ptr @GenericBase.vtable, @GenericBase(%T) [symbolic]
+// CHECK:STDOUT:   %struct_type.vptr: type = struct_type {.<vptr>: %ptr.454} [concrete]
+// CHECK:STDOUT:   %complete_type.513: <witness> = complete_type_witness %struct_type.vptr [concrete]
+// CHECK:STDOUT:   %require_complete: <witness> = require_complete_type %GenericBase.018 [symbolic]
+// CHECK:STDOUT:   %T1: type = class_type @T1 [concrete]
+// CHECK:STDOUT:   %NonGenericDerived: type = class_type @NonGenericDerived [concrete]
+// CHECK:STDOUT:   %GenericBase.f84: type = class_type @GenericBase, @GenericBase(%T1) [concrete]
+// CHECK:STDOUT:   %F1.type.648: type = fn_type @F1, @GenericBase(%T1) [concrete]
+// CHECK:STDOUT:   %F1.4d3: %F1.type.648 = struct_value () [concrete]
+// CHECK:STDOUT:   %F2.type.d79: type = fn_type @F2.1, @GenericBase(%T1) [concrete]
+// CHECK:STDOUT:   %F2.d59: %F2.type.d79 = struct_value () [concrete]
+// CHECK:STDOUT:   %pattern_type.7a9: type = pattern_type %GenericBase.f84 [concrete]
+// CHECK:STDOUT:   %F1.specific_fn.094: <specific function> = specific_function %F1.4d3, @F1(%T1) [concrete]
+// CHECK:STDOUT:   %F2.specific_fn.b8b: <specific function> = specific_function %F2.d59, @F2.1(%T1) [concrete]
+// CHECK:STDOUT:   %GenericBase.vtable_ptr.d41: ref %ptr.454 = vtable_ptr @GenericBase.vtable, @GenericBase(%T1) [concrete]
+// CHECK:STDOUT:   %NonGenericDerived.elem: type = unbound_element_type %NonGenericDerived, %GenericBase.f84 [concrete]
+// CHECK:STDOUT:   %pattern_type.5fc: type = pattern_type %NonGenericDerived [concrete]
+// CHECK:STDOUT:   %F2.type.c10: type = fn_type @F2.2 [concrete]
+// CHECK:STDOUT:   %F2.deb: %F2.type.c10 = struct_value () [concrete]
+// CHECK:STDOUT:   %F3.type: type = fn_type @F3 [concrete]
+// CHECK:STDOUT:   %F3: %F3.type = struct_value () [concrete]
+// CHECK:STDOUT:   %NonGenericDerived.vtable_ptr: ref %ptr.454 = vtable_ptr @NonGenericDerived.vtable [concrete]
+// CHECK:STDOUT:   %struct_type.base.29a: type = struct_type {.base: %GenericBase.f84} [concrete]
+// CHECK:STDOUT:   %complete_type.b6e: <witness> = complete_type_witness %struct_type.base.29a [concrete]
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: imports {
+// CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [concrete] {
+// CHECK:STDOUT:     import Core//prelude
+// CHECK:STDOUT:     import Core//prelude/...
+// CHECK:STDOUT:   }
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: file {
+// CHECK:STDOUT:   package: <namespace> = namespace [concrete] {
+// CHECK:STDOUT:     .Core = imports.%Core
+// CHECK:STDOUT:     .GenericBase = %GenericBase.decl
+// CHECK:STDOUT:     .T1 = %T1.decl
+// CHECK:STDOUT:     .NonGenericDerived = %NonGenericDerived.decl
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %Core.import = import Core
+// CHECK:STDOUT:   %GenericBase.decl: %GenericBase.type = class_decl @GenericBase [concrete = constants.%GenericBase.generic] {
+// CHECK:STDOUT:     %T.patt: %pattern_type.98f = symbolic_binding_pattern T, 0 [concrete]
+// CHECK:STDOUT:   } {
+// CHECK:STDOUT:     %T.loc4_24.1: type = bind_symbolic_name T, 0 [symbolic = %T.loc4_24.2 (constants.%T)]
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %T1.decl: type = class_decl @T1 [concrete = constants.%T1] {} {}
+// CHECK:STDOUT:   %NonGenericDerived.decl: type = class_decl @NonGenericDerived [concrete = constants.%NonGenericDerived] {} {}
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: generic class @GenericBase(%T.loc4_24.1: type) {
+// CHECK:STDOUT:   %T.loc4_24.2: type = bind_symbolic_name T, 0 [symbolic = %T.loc4_24.2 (constants.%T)]
+// CHECK:STDOUT:
+// CHECK:STDOUT: !definition:
+// CHECK:STDOUT:   %F1.type: type = fn_type @F1, @GenericBase(%T.loc4_24.2) [symbolic = %F1.type (constants.%F1.type.2af)]
+// CHECK:STDOUT:   %F1: @GenericBase.%F1.type (%F1.type.2af) = struct_value () [symbolic = %F1 (constants.%F1.80a)]
+// CHECK:STDOUT:   %F2.type: type = fn_type @F2.1, @GenericBase(%T.loc4_24.2) [symbolic = %F2.type (constants.%F2.type.2ca)]
+// CHECK:STDOUT:   %F2: @GenericBase.%F2.type (%F2.type.2ca) = struct_value () [symbolic = %F2 (constants.%F2.414)]
+// CHECK:STDOUT:   %F1.specific_fn.loc7_1.2: <specific function> = specific_function %F1, @F1(%T.loc4_24.2) [symbolic = %F1.specific_fn.loc7_1.2 (constants.%F1.specific_fn.aea)]
+// CHECK:STDOUT:   %F2.specific_fn.loc7_1.2: <specific function> = specific_function %F2, @F2.1(%T.loc4_24.2) [symbolic = %F2.specific_fn.loc7_1.2 (constants.%F2.specific_fn.758)]
+// CHECK:STDOUT:   %vtable_ptr.loc7_1.2: ref %ptr.454 = vtable_ptr @GenericBase.vtable, @GenericBase(%T.loc4_24.2) [symbolic = %vtable_ptr.loc7_1.2 (constants.%GenericBase.vtable_ptr.e41)]
+// CHECK:STDOUT:
+// CHECK:STDOUT:   class {
+// CHECK:STDOUT:     %F1.decl: @GenericBase.%F1.type (%F1.type.2af) = fn_decl @F1 [symbolic = @GenericBase.%F1 (constants.%F1.80a)] {
+// CHECK:STDOUT:       %self.patt: @F1.%pattern_type (%pattern_type.34e) = binding_pattern self [concrete]
+// CHECK:STDOUT:       %self.param_patt: @F1.%pattern_type (%pattern_type.34e) = value_param_pattern %self.patt, call_param0 [concrete]
+// CHECK:STDOUT:     } {
+// CHECK:STDOUT:       %self.param: @F1.%GenericBase (%GenericBase.018) = value_param call_param0
+// CHECK:STDOUT:       %.loc5_23.1: type = splice_block %Self.ref [symbolic = %GenericBase (constants.%GenericBase.018)] {
+// CHECK:STDOUT:         %.loc5_23.2: type = specific_constant constants.%GenericBase.018, @GenericBase(constants.%T) [symbolic = %GenericBase (constants.%GenericBase.018)]
+// CHECK:STDOUT:         %Self.ref: type = name_ref Self, %.loc5_23.2 [symbolic = %GenericBase (constants.%GenericBase.018)]
+// CHECK:STDOUT:       }
+// CHECK:STDOUT:       %self: @F1.%GenericBase (%GenericBase.018) = bind_name self, %self.param
+// CHECK:STDOUT:     }
+// CHECK:STDOUT:     %F2.decl: @GenericBase.%F2.type (%F2.type.2ca) = fn_decl @F2.1 [symbolic = @GenericBase.%F2 (constants.%F2.414)] {
+// CHECK:STDOUT:       %self.patt: @F2.1.%pattern_type (%pattern_type.34e) = binding_pattern self [concrete]
+// CHECK:STDOUT:       %self.param_patt: @F2.1.%pattern_type (%pattern_type.34e) = value_param_pattern %self.patt, call_param0 [concrete]
+// CHECK:STDOUT:     } {
+// CHECK:STDOUT:       %self.param: @F2.1.%GenericBase (%GenericBase.018) = value_param call_param0
+// CHECK:STDOUT:       %.loc6_23.1: type = splice_block %Self.ref [symbolic = %GenericBase (constants.%GenericBase.018)] {
+// CHECK:STDOUT:         %.loc6_23.2: type = specific_constant constants.%GenericBase.018, @GenericBase(constants.%T) [symbolic = %GenericBase (constants.%GenericBase.018)]
+// CHECK:STDOUT:         %Self.ref: type = name_ref Self, %.loc6_23.2 [symbolic = %GenericBase (constants.%GenericBase.018)]
+// CHECK:STDOUT:       }
+// CHECK:STDOUT:       %self: @F2.1.%GenericBase (%GenericBase.018) = bind_name self, %self.param
+// CHECK:STDOUT:     }
+// CHECK:STDOUT:     %F1.specific_fn.loc7_1.1: <specific function> = specific_function %F1.decl, @F1(constants.%T) [symbolic = %F1.specific_fn.loc7_1.2 (constants.%F1.specific_fn.aea)]
+// CHECK:STDOUT:     %F2.specific_fn.loc7_1.1: <specific function> = specific_function %F2.decl, @F2.1(constants.%T) [symbolic = %F2.specific_fn.loc7_1.2 (constants.%F2.specific_fn.758)]
+// CHECK:STDOUT:     %vtable_ptr.loc7_1.1: ref %ptr.454 = vtable_ptr @GenericBase.vtable, @GenericBase(constants.%T) [symbolic = %vtable_ptr.loc7_1.2 (constants.%GenericBase.vtable_ptr.e41)]
+// CHECK:STDOUT:     %struct_type.vptr: type = struct_type {.<vptr>: %ptr.454} [concrete = constants.%struct_type.vptr]
+// CHECK:STDOUT:     %complete_type: <witness> = complete_type_witness %struct_type.vptr [concrete = constants.%complete_type.513]
+// CHECK:STDOUT:     complete_type_witness = %complete_type
+// CHECK:STDOUT:     vtable_ptr = %vtable_ptr.loc7_1.1
+// CHECK:STDOUT:
+// CHECK:STDOUT:   !members:
+// CHECK:STDOUT:     .Self = constants.%GenericBase.018
+// CHECK:STDOUT:     .F1 = %F1.decl
+// CHECK:STDOUT:     .F2 = %F2.decl
+// CHECK:STDOUT:   }
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: class @T1;
+// CHECK:STDOUT:
+// CHECK:STDOUT: class @NonGenericDerived {
+// CHECK:STDOUT:   %GenericBase.ref: %GenericBase.type = name_ref GenericBase, file.%GenericBase.decl [concrete = constants.%GenericBase.generic]
+// CHECK:STDOUT:   %T1.ref: type = name_ref T1, file.%T1.decl [concrete = constants.%T1]
+// CHECK:STDOUT:   %GenericBase: type = class_type @GenericBase, @GenericBase(constants.%T1) [concrete = constants.%GenericBase.f84]
+// CHECK:STDOUT:   %.loc12: %NonGenericDerived.elem = base_decl %GenericBase, element0 [concrete]
+// CHECK:STDOUT:   %F2.decl: %F2.type.c10 = fn_decl @F2.2 [concrete = constants.%F2.deb] {
+// CHECK:STDOUT:     %self.patt: %pattern_type.5fc = binding_pattern self [concrete]
+// CHECK:STDOUT:     %self.param_patt: %pattern_type.5fc = value_param_pattern %self.patt, call_param0 [concrete]
+// CHECK:STDOUT:   } {
+// CHECK:STDOUT:     %self.param: %NonGenericDerived = value_param call_param0
+// CHECK:STDOUT:     %Self.ref: type = name_ref Self, constants.%NonGenericDerived [concrete = constants.%NonGenericDerived]
+// CHECK:STDOUT:     %self: %NonGenericDerived = bind_name self, %self.param
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %F3.decl: %F3.type = fn_decl @F3 [concrete = constants.%F3] {
+// CHECK:STDOUT:     %self.patt: %pattern_type.5fc = binding_pattern self [concrete]
+// CHECK:STDOUT:     %self.param_patt: %pattern_type.5fc = value_param_pattern %self.patt, call_param0 [concrete]
+// CHECK:STDOUT:   } {
+// CHECK:STDOUT:     %self.param: %NonGenericDerived = value_param call_param0
+// CHECK:STDOUT:     %Self.ref: type = name_ref Self, constants.%NonGenericDerived [concrete = constants.%NonGenericDerived]
+// CHECK:STDOUT:     %self: %NonGenericDerived = bind_name self, %self.param
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %vtable_ptr: ref %ptr.454 = vtable_ptr @NonGenericDerived.vtable [concrete = constants.%NonGenericDerived.vtable_ptr]
+// CHECK:STDOUT:   %struct_type.base: type = struct_type {.base: %GenericBase.f84} [concrete = constants.%struct_type.base.29a]
+// CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %struct_type.base [concrete = constants.%complete_type.b6e]
+// CHECK:STDOUT:   complete_type_witness = %complete_type
+// CHECK:STDOUT:   vtable_ptr = %vtable_ptr
+// CHECK:STDOUT:
+// CHECK:STDOUT: !members:
+// CHECK:STDOUT:   .Self = constants.%NonGenericDerived
+// CHECK:STDOUT:   .GenericBase = <poisoned>
+// CHECK:STDOUT:   .T1 = <poisoned>
+// CHECK:STDOUT:   .base = %.loc12
+// CHECK:STDOUT:   .F2 = %F2.decl
+// CHECK:STDOUT:   .F3 = %F3.decl
+// CHECK:STDOUT:   extend %GenericBase
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: vtable @GenericBase.vtable {
+// CHECK:STDOUT:   @GenericBase.%F1.specific_fn.loc7_1.1
+// CHECK:STDOUT:   @GenericBase.%F2.specific_fn.loc7_1.1
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: vtable @NonGenericDerived.vtable {
+// CHECK:STDOUT:   constants.%F1.specific_fn.094
+// CHECK:STDOUT:   @NonGenericDerived.%F2.decl
+// CHECK:STDOUT:   @NonGenericDerived.%F3.decl
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: generic virtual fn @F1(@GenericBase.%T.loc4_24.1: type) {
+// CHECK:STDOUT:   %T: type = bind_symbolic_name T, 0 [symbolic = %T (constants.%T)]
+// CHECK:STDOUT:   %GenericBase: type = class_type @GenericBase, @GenericBase(%T) [symbolic = %GenericBase (constants.%GenericBase.018)]
+// CHECK:STDOUT:   %pattern_type: type = pattern_type %GenericBase [symbolic = %pattern_type (constants.%pattern_type.34e)]
+// CHECK:STDOUT:
+// CHECK:STDOUT: !definition:
+// CHECK:STDOUT:   %require_complete: <witness> = require_complete_type %GenericBase [symbolic = %require_complete (constants.%require_complete)]
+// CHECK:STDOUT:
+// CHECK:STDOUT:   virtual fn(%self.param: @F1.%GenericBase (%GenericBase.018)) {
+// CHECK:STDOUT:   !entry:
+// CHECK:STDOUT:     return
+// CHECK:STDOUT:   }
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: generic virtual fn @F2.1(@GenericBase.%T.loc4_24.1: type) {
+// CHECK:STDOUT:   %T: type = bind_symbolic_name T, 0 [symbolic = %T (constants.%T)]
+// CHECK:STDOUT:   %GenericBase: type = class_type @GenericBase, @GenericBase(%T) [symbolic = %GenericBase (constants.%GenericBase.018)]
+// CHECK:STDOUT:   %pattern_type: type = pattern_type %GenericBase [symbolic = %pattern_type (constants.%pattern_type.34e)]
+// CHECK:STDOUT:
+// CHECK:STDOUT: !definition:
+// CHECK:STDOUT:   %require_complete: <witness> = require_complete_type %GenericBase [symbolic = %require_complete (constants.%require_complete)]
+// CHECK:STDOUT:
+// CHECK:STDOUT:   virtual fn(%self.param: @F2.1.%GenericBase (%GenericBase.018)) {
+// CHECK:STDOUT:   !entry:
+// CHECK:STDOUT:     return
+// CHECK:STDOUT:   }
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: impl fn @F2.2(%self.param: %NonGenericDerived) {
+// CHECK:STDOUT: !entry:
+// CHECK:STDOUT:   return
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: virtual fn @F3(%self.param: %NonGenericDerived) {
+// CHECK:STDOUT: !entry:
+// CHECK:STDOUT:   return
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: specific @GenericBase(constants.%T) {
+// CHECK:STDOUT:   %T.loc4_24.2 => constants.%T
+// CHECK:STDOUT:
+// CHECK:STDOUT: !definition:
+// CHECK:STDOUT:   %F1.type => constants.%F1.type.2af
+// CHECK:STDOUT:   %F1 => constants.%F1.80a
+// CHECK:STDOUT:   %F2.type => constants.%F2.type.2ca
+// CHECK:STDOUT:   %F2 => constants.%F2.414
+// CHECK:STDOUT:   %F1.specific_fn.loc7_1.2 => constants.%F1.specific_fn.aea
+// CHECK:STDOUT:   %F2.specific_fn.loc7_1.2 => constants.%F2.specific_fn.758
+// CHECK:STDOUT:   %vtable_ptr.loc7_1.2 => constants.%GenericBase.vtable_ptr.e41
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: specific @F1(constants.%T) {
+// CHECK:STDOUT:   %T => constants.%T
+// CHECK:STDOUT:   %GenericBase => constants.%GenericBase.018
+// CHECK:STDOUT:   %pattern_type => constants.%pattern_type.34e
+// CHECK:STDOUT:
+// CHECK:STDOUT: !definition:
+// CHECK:STDOUT:   %require_complete => constants.%require_complete
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: specific @F2.1(constants.%T) {
+// CHECK:STDOUT:   %T => constants.%T
+// CHECK:STDOUT:   %GenericBase => constants.%GenericBase.018
+// CHECK:STDOUT:   %pattern_type => constants.%pattern_type.34e
+// CHECK:STDOUT:
+// CHECK:STDOUT: !definition:
+// CHECK:STDOUT:   %require_complete => constants.%require_complete
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: specific @GenericBase(constants.%T1) {
+// CHECK:STDOUT:   %T.loc4_24.2 => constants.%T1
+// CHECK:STDOUT:
+// CHECK:STDOUT: !definition:
+// CHECK:STDOUT:   %F1.type => constants.%F1.type.648
+// CHECK:STDOUT:   %F1 => constants.%F1.4d3
+// CHECK:STDOUT:   %F2.type => constants.%F2.type.d79
+// CHECK:STDOUT:   %F2 => constants.%F2.d59
+// CHECK:STDOUT:   %F1.specific_fn.loc7_1.2 => constants.%F1.specific_fn.094
+// CHECK:STDOUT:   %F2.specific_fn.loc7_1.2 => constants.%F2.specific_fn.b8b
+// CHECK:STDOUT:   %vtable_ptr.loc7_1.2 => constants.%GenericBase.vtable_ptr.d41
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: specific @F1(constants.%T1) {
+// CHECK:STDOUT:   %T => constants.%T1
+// CHECK:STDOUT:   %GenericBase => constants.%GenericBase.f84
+// CHECK:STDOUT:   %pattern_type => constants.%pattern_type.7a9
+// CHECK:STDOUT:
+// CHECK:STDOUT: !definition:
+// CHECK:STDOUT:   %require_complete => constants.%complete_type.513
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: specific @F2.1(constants.%T1) {
+// CHECK:STDOUT:   %T => constants.%T1
+// CHECK:STDOUT:   %GenericBase => constants.%GenericBase.f84
+// CHECK:STDOUT:   %pattern_type => constants.%pattern_type.7a9
+// CHECK:STDOUT:
+// CHECK:STDOUT: !definition:
+// CHECK:STDOUT:   %require_complete => constants.%complete_type.513
+// CHECK:STDOUT: }
 // CHECK:STDOUT:
