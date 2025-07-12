@@ -801,6 +801,8 @@ static auto MakeImplicitParamPatternsBlockId(
   if (param_type->isLValueReferenceType()) {
     param_type = param_type.getNonReferenceType();
     if (param_type.isConstQualified()) {
+      // TODO: Consider only doing this if `const` is the only qualifier. For
+      // now, any other qualifier will fail when mapping the type.
       auto split_type = param_type.getSplitUnqualifiedType();
       split_type.Quals.removeConst();
       param_type = method_decl->getASTContext().getQualifiedType(split_type);
