@@ -121,7 +121,7 @@ fn Call() -> Int(32) {
 // CHECK:STDOUT:   %Convert.52c: %Convert.type.1dd = struct_value () [concrete]
 // CHECK:STDOUT:   %ImplicitAs.facet.54f: %ImplicitAs.type.61e = facet_value Core.IntLiteral, (%ImplicitAs.impl_witness) [concrete]
 // CHECK:STDOUT:   %.f22: type = fn_type_with_self_type %Convert.type.059, %ImplicitAs.facet.54f [concrete]
-// CHECK:STDOUT:   %Op.type.049d3a.1: type = fn_type @Op.2, @impl.797(%ImplicitAs.facet.54f) [concrete]
+// CHECK:STDOUT:   %Op.type.049d3a.1: type = fn_type @Op.2, @Add.impl(%ImplicitAs.facet.54f) [concrete]
 // CHECK:STDOUT:   %Op.1fb3b5.1: %Op.type.049d3a.1 = struct_value () [concrete]
 // CHECK:STDOUT:   %int_2.ecc: Core.IntLiteral = int_value 2 [concrete]
 // CHECK:STDOUT:   %Convert.bound.713: <bound method> = bound_method %int_2.ecc, %Convert.52c [concrete]
@@ -142,7 +142,7 @@ fn Call() -> Int(32) {
 // CHECK:STDOUT:   %ImplicitAs.facet.loc25_14.2: %ImplicitAs.type.61e = facet_value Core.IntLiteral, (constants.%ImplicitAs.impl_witness) [concrete = constants.%ImplicitAs.facet.54f]
 // CHECK:STDOUT:   %.loc25_14.2: %ImplicitAs.type.61e = converted Core.IntLiteral, %ImplicitAs.facet.loc25_14.2 [concrete = constants.%ImplicitAs.facet.54f]
 // CHECK:STDOUT:   <elided>
-// CHECK:STDOUT:   %.loc25_14.3: %Op.type.049d3a.1 = specific_constant @impl.797.%Op.decl.loc15_35.1, @impl.797(constants.%ImplicitAs.facet.54f) [concrete = constants.%Op.1fb3b5.1]
+// CHECK:STDOUT:   %.loc25_14.3: %Op.type.049d3a.1 = specific_constant @Add.impl.%Op.decl.loc15_35.1, @Add.impl(constants.%ImplicitAs.facet.54f) [concrete = constants.%Op.1fb3b5.1]
 // CHECK:STDOUT:   %Op.ref.loc25: %Op.type.049d3a.1 = name_ref Op, %.loc25_14.3 [concrete = constants.%Op.1fb3b5.1]
 // CHECK:STDOUT:   %impl.elem0.loc25_14: %.f22 = impl_witness_access constants.%ImplicitAs.impl_witness, element0 [concrete = constants.%Convert.52c]
 // CHECK:STDOUT:   %bound_method.loc25_14: <bound method> = bound_method %int_2, %impl.elem0.loc25_14 [concrete = constants.%Convert.bound.713]

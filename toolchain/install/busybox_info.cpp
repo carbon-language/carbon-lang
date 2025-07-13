@@ -35,22 +35,23 @@ auto GetBusyboxInfo(const char* argv0) -> ErrorOr<BusyboxInfo> {
   BusyboxInfo info = {.bin_path = FindExecutablePath(argv0_path.c_str()),
                       .mode = GetMode(argv0_path)};
 
-  if (info.bin_path.filename() == "carbon-busybox") {
-    // Check for bazel structure. For example, this makes work:
-    //   /bin/sh -c "exec -a carbon ./bazel-bin/toolchain/carbon"
-    //   /bin/sh -c "exec -a llvm-symbolizer ./bazel-bin/toolchain/carbon"
-    if (std::filesystem::exists(info.bin_path.string() + ".runfiles")) {
+  // Now search through any symlinks to locate the installed busybox binary.
+  while (true) {
+    if (info.bin_path.filename() == "carbon-busybox") {
+      // Check for bazel structure. For example, this makes work:
+      //   /bin/sh -c "exec -a carbon ./bazel-bin/toolchain/carbon"
+      //   /bin/sh -c "exec -a llvm-symbolizer ./bazel-bin/toolchain/carbon"
+      //
+      // This will never occur in a "bin" subdirectory, so doesn't need to be
+      // handled in the other return path.
       std::string prefix_root = info.bin_path.parent_path().string() +
                                 "/prefix_root/lib/carbon/carbon-busybox";
       if (std::filesystem::exists(prefix_root)) {
         info.bin_path = prefix_root;
       }
+      return info;
     }
-    return info;
-  }
 
-  // Now search through any symlinks to locate the installed busybox binary.
-  while (true) {
     // If we've not already reached the busybox, look for it relative to the
     // current binary path. This can help more immediately locate an
     // installation tree, and avoids walking through a final layer of symlinks
@@ -92,9 +93,6 @@ auto GetBusyboxInfo(const char* argv0) -> ErrorOr<BusyboxInfo> {
 
     // Do a path join, to handle relative symlinks.
     info.bin_path = parent_path / symlink_target;
-    if (info.bin_path.filename() == "carbon-busybox") {
-      return info;
-    }
   }
 }
 

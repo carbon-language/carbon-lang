@@ -171,9 +171,21 @@ InstNamer::InstNamer(const File* sem_ir) : sem_ir_(sem_ir) {
   for (auto [impl_id, impl_info] : sem_ir->impls().enumerate()) {
     auto impl_scope = GetScopeFor(impl_id);
     auto impl_fingerprint = fingerprinter_.GetOrCompute(sem_ir_, impl_id);
+
     // TODO: Invent a name based on the self and constraint types.
+    std::string impl_name;
+    if (auto interface_id = sem_ir->impls().Get(impl_id).interface.interface_id;
+        interface_id.has_value()) {
+      auto interface_info = sem_ir->interfaces().Get(interface_id);
+      impl_name = llvm::formatv(
+          "{0}.impl",
+          sem_ir->names().GetIRBaseName(interface_info.name_id).str());
+    } else {
+      impl_name = "impl";
+    }
     GetScopeInfo(impl_scope).name =
-        globals_.AllocateName(*this, impl_fingerprint, "impl");
+        globals_.AllocateName(*this, impl_fingerprint, impl_name);
+
     CollectNamesInBlock(impl_scope, impl_info.pattern_block_id);
     AddBlockLabel(impl_scope, impl_info.body_block_id, "impl",
                   impl_fingerprint);

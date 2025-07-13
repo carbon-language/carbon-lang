@@ -618,6 +618,12 @@ static auto ImportCXXRecordDecl(Context& context, SemIR::LocId loc_id,
     return SemIR::ErrorInst::InstId;
   }
 
+  if (clang_def->isUnion() && !clang_def->fields().empty()) {
+    context.TODO(loc_id, "Unsupported: Non-empty union");
+    MarkFailedDecl(context, clang_decl);
+    return SemIR::ErrorInst::InstId;
+  }
+
   auto [class_id, class_def_id] =
       BuildClassDefinition(context, parent_scope_id, name_id, clang_def);
 
@@ -662,8 +668,7 @@ static auto MapBuiltinType(Context& context, const clang::BuiltinType& type)
     default:
       break;
   }
-  return {.inst_id = SemIR::ErrorInst::TypeInstId,
-          .type_id = SemIR::ErrorInst::TypeId};
+  return {.inst_id = SemIR::TypeInstId::None, .type_id = SemIR::TypeId::None};
 }
 
 // Maps a C++ record type to a Carbon type.
@@ -671,55 +676,139 @@ static auto MapBuiltinType(Context& context, const clang::BuiltinType& type)
 static auto MapRecordType(Context& context, SemIR::LocId loc_id,
                           const clang::RecordType& type) -> TypeExpr {
   auto* record_decl = clang::dyn_cast<clang::CXXRecordDecl>(type.getDecl());
-  if (record_decl && !record_decl->isUnion()) {
-    auto& clang_decls = context.sem_ir().clang_decls();
-    SemIR::InstId record_inst_id = SemIR::InstId::None;
-    if (auto record_clang_decl_id = clang_decls.Lookup(record_decl);
-        record_clang_decl_id.has_value()) {
-      record_inst_id = clang_decls.Get(record_clang_decl_id).inst_id;
-    } else {
-      auto parent_inst_id =
-          AsCarbonNamespace(context, record_decl->getDeclContext());
-      auto parent_name_scope_id =
-          context.insts().GetAs<SemIR::Namespace>(parent_inst_id).name_scope_id;
-      SemIR::NameId record_name_id =
-          AddIdentifierName(context, record_decl->getName());
-      record_inst_id = ImportCXXRecordDecl(
-          context, loc_id, parent_name_scope_id, record_name_id, record_decl);
-      AddNameToScope(context, parent_name_scope_id, record_name_id,
-                     record_inst_id);
-    }
-    SemIR::TypeInstId record_type_inst_id =
-        context.types().GetAsTypeInstId(record_inst_id);
-    return {
-        .inst_id = record_type_inst_id,
-        .type_id = context.types().GetTypeIdForTypeInstId(record_type_inst_id)};
+  if (!record_decl) {
+    return {.inst_id = SemIR::TypeInstId::None, .type_id = SemIR::TypeId::None};
   }
 
-  return {.inst_id = SemIR::ErrorInst::TypeInstId,
-          .type_id = SemIR::ErrorInst::TypeId};
+  auto& clang_decls = context.sem_ir().clang_decls();
+  SemIR::InstId record_inst_id = SemIR::InstId::None;
+  if (auto record_clang_decl_id = clang_decls.Lookup(record_decl);
+      record_clang_decl_id.has_value()) {
+    record_inst_id = clang_decls.Get(record_clang_decl_id).inst_id;
+  } else {
+    auto parent_inst_id =
+        AsCarbonNamespace(context, record_decl->getDeclContext());
+    auto parent_name_scope_id =
+        context.insts().GetAs<SemIR::Namespace>(parent_inst_id).name_scope_id;
+    SemIR::NameId record_name_id =
+        AddIdentifierName(context, record_decl->getName());
+    record_inst_id = ImportCXXRecordDecl(context, loc_id, parent_name_scope_id,
+                                         record_name_id, record_decl);
+  }
+  SemIR::TypeInstId record_type_inst_id =
+      context.types().GetAsTypeInstId(record_inst_id);
+  return {
+      .inst_id = record_type_inst_id,
+      .type_id = context.types().GetTypeIdForTypeInstId(record_type_inst_id)};
 }
 
-// Maps a C++ type to a Carbon type.
+// Maps a C++ type that is not a wrapper type such as a pointer to a Carbon
+// type.
 // TODO: Support more types.
-static auto MapType(Context& context, SemIR::LocId loc_id, clang::QualType type)
-    -> TypeExpr {
-  if (const auto* builtin_type = dyn_cast<clang::BuiltinType>(type)) {
+static auto MapNonWrapperType(Context& context, SemIR::LocId loc_id,
+                              clang::QualType type) -> TypeExpr {
+  if (const auto* builtin_type = type->getAs<clang::BuiltinType>()) {
     return MapBuiltinType(context, *builtin_type);
   }
 
-  if (const auto* record_type = clang::dyn_cast<clang::RecordType>(type)) {
+  if (const auto* record_type = type->getAs<clang::RecordType>()) {
     return MapRecordType(context, loc_id, *record_type);
   }
 
-  return {.inst_id = SemIR::ErrorInst::TypeInstId,
-          .type_id = SemIR::ErrorInst::TypeId};
+  CARBON_CHECK(!type.hasQualifiers() && !type->isPointerType(),
+               "Should not see wrapper types here");
+
+  return {.inst_id = SemIR::TypeInstId::None, .type_id = SemIR::TypeId::None};
+}
+
+// Maps a qualified C++ type to a Carbon type.
+static auto MapQualifiedType(Context& context, SemIR::LocId loc_id,
+                             clang::QualType type, TypeExpr type_expr)
+    -> TypeExpr {
+  auto quals = type.getQualifiers();
+
+  if (quals.hasConst()) {
+    auto type_id = GetConstType(context, type_expr.inst_id);
+    type_expr = {.inst_id = context.types().GetInstId(type_id),
+                 .type_id = type_id};
+    quals.removeConst();
+  }
+
+  // TODO: Support other qualifiers.
+  if (!quals.empty()) {
+    context.TODO(loc_id, llvm::formatv("Unsupported: qualified type: {0}",
+                                       type.getAsString()));
+    return {.inst_id = SemIR::ErrorInst::TypeInstId,
+            .type_id = SemIR::ErrorInst::TypeId};
+  }
+
+  return type_expr;
+}
+
+// Maps a C++ pointer type to a Carbon pointer type.
+static auto MapPointerType(Context& context, SemIR::LocId loc_id,
+                           clang::QualType type, TypeExpr pointee_type_expr)
+    -> TypeExpr {
+  CARBON_CHECK(type->isPointerType());
+
+  if (auto nullability = type->getNullability();
+      !nullability.has_value() ||
+      *nullability != clang::NullabilityKind::NonNull) {
+    context.TODO(loc_id, llvm::formatv("Unsupported: nullable pointer: {0}",
+                                       type.getAsString()));
+    return {.inst_id = SemIR::ErrorInst::TypeInstId,
+            .type_id = SemIR::ErrorInst::TypeId};
+  }
+
+  SemIR::TypeId pointer_type_id =
+      GetPointerType(context, pointee_type_expr.inst_id);
+  return {.inst_id = context.types().GetInstId(pointer_type_id),
+          .type_id = pointer_type_id};
+}
+
+// Maps a C++ type to a Carbon type. `type` should not be canonicalized because
+// we check for pointer nullability and nullability will be lost by
+// canonicalization.
+static auto MapType(Context& context, SemIR::LocId loc_id, clang::QualType type)
+    -> TypeExpr {
+  // Unwrap any type modifiers and wrappers.
+  llvm::SmallVector<clang::QualType> wrapper_types;
+  while (true) {
+    clang::QualType orig_type = type;
+    if (type.hasQualifiers()) {
+      type = type.getUnqualifiedType();
+    } else if (type->isPointerType()) {
+      type = type->getPointeeType();
+    } else {
+      break;
+    }
+    wrapper_types.push_back(orig_type);
+  }
+
+  auto mapped = MapNonWrapperType(context, loc_id, type);
+
+  for (auto wrapper : llvm::reverse(wrapper_types)) {
+    if (!mapped.inst_id.has_value() ||
+        mapped.type_id == SemIR::ErrorInst::TypeId) {
+      break;
+    }
+
+    if (wrapper.hasQualifiers()) {
+      mapped = MapQualifiedType(context, loc_id, wrapper, mapped);
+    } else if (wrapper->isPointerType()) {
+      mapped = MapPointerType(context, loc_id, wrapper, mapped);
+    } else {
+      CARBON_FATAL("Unexpected wrapper type {0}", wrapper.getAsString());
+    }
+  }
+
+  return mapped;
 }
 
 // Returns a block id for the explicit parameters of the given function
 // declaration. If the function declaration has no parameters, it returns
 // `SemIR::InstBlockId::Empty`. In the case of an unsupported parameter type, it
-// returns `SemIR::InstBlockId::None`.
+// produces an error and returns `SemIR::InstBlockId::None`.
 // TODO: Consider refactoring to extract and reuse more logic from
 // `HandleAnyBindingPattern()`.
 static auto MakeParamPatternsBlockId(Context& context, SemIR::LocId loc_id,
@@ -731,7 +820,12 @@ static auto MakeParamPatternsBlockId(Context& context, SemIR::LocId loc_id,
   llvm::SmallVector<SemIR::InstId> params;
   params.reserve(clang_decl.parameters().size());
   for (const clang::ParmVarDecl* param : clang_decl.parameters()) {
-    clang::QualType param_type = param->getType().getCanonicalType();
+    // TODO: Get the parameter type from the function, not from the
+    // `ParmVarDecl`. The type of the `ParmVarDecl` is the type within the
+    // function, and isn't in general the same as the type that's exposed to
+    // callers. In particular, the parameter type exposed to callers will never
+    // be cv-qualified.
+    clang::QualType param_type = param->getType();
 
     // Mark the start of a region of insts, needed for the type expression
     // created later with the call of `EndSubpatternAsExpr()`.
@@ -743,7 +837,7 @@ static auto MakeParamPatternsBlockId(Context& context, SemIR::LocId loc_id,
     SemIR::ExprRegionId type_expr_region_id =
         EndSubpatternAsExpr(context, type_inst_id);
 
-    if (type_id == SemIR::ErrorInst::TypeId) {
+    if (!type_id.has_value()) {
       context.TODO(loc_id, llvm::formatv("Unsupported: parameter type: {0}",
                                          param_type.getAsString()));
       return SemIR::InstBlockId::None;
@@ -779,18 +873,19 @@ static auto MakeParamPatternsBlockId(Context& context, SemIR::LocId loc_id,
 }
 
 // Returns the return type of the given function declaration. In case of an
-// unsupported return type, it returns `SemIR::ErrorInst::InstId`.
+// unsupported return type, it produces a diagnostic and returns
+// `SemIR::ErrorInst::InstId`.
 // TODO: Support more return types.
 static auto GetReturnType(Context& context, SemIR::LocId loc_id,
                           const clang::FunctionDecl* clang_decl)
     -> SemIR::InstId {
-  clang::QualType ret_type = clang_decl->getReturnType().getCanonicalType();
+  clang::QualType ret_type = clang_decl->getReturnType();
   if (ret_type->isVoidType()) {
     return SemIR::InstId::None;
   }
 
   auto [type_inst_id, type_id] = MapType(context, loc_id, ret_type);
-  if (type_id == SemIR::ErrorInst::TypeId) {
+  if (!type_inst_id.has_value()) {
     context.TODO(loc_id, llvm::formatv("Unsupported: return type: {0}",
                                        ret_type.getAsString()));
     return SemIR::ErrorInst::InstId;
@@ -827,8 +922,8 @@ struct FunctionParamsInsts {
 // to create the Call parameters instructions block. Currently the implicit
 // parameter patterns are not taken into account. Returns the parameter patterns
 // block id, the return slot pattern id, and the call parameters block id.
-// Returns `std::nullopt` if the function declaration has an unsupported
-// parameter type.
+// Produces a diagnostic and returns `std::nullopt` if the function declaration
+// has an unsupported parameter type.
 static auto CreateFunctionParamsInsts(Context& context, SemIR::LocId loc_id,
                                       const clang::FunctionDecl* clang_decl)
     -> std::optional<FunctionParamsInsts> {
@@ -941,10 +1036,15 @@ static auto ImportNameDecl(Context& context, SemIR::LocId loc_id,
     return ImportNamespaceDecl(context, scope_id, name_id,
                                clang_namespace_decl);
   }
-  if (auto* clang_record_decl =
-          clang::dyn_cast<clang::CXXRecordDecl>(clang_decl)) {
-    return ImportCXXRecordDecl(context, loc_id, scope_id, name_id,
-                               clang_record_decl);
+  if (auto* type_decl = clang::dyn_cast<clang::TypeDecl>(clang_decl)) {
+    auto type = type_decl->getASTContext().getTypeDeclType(type_decl);
+    auto type_inst_id = MapType(context, loc_id, type).inst_id;
+    if (!type_inst_id.has_value()) {
+      context.TODO(loc_id, llvm::formatv("Unsupported: Type declaration: {0}",
+                                         type.getAsString()));
+      return SemIR::ErrorInst::InstId;
+    }
+    return type_inst_id;
   }
 
   context.TODO(loc_id, llvm::formatv("Unsupported: Declaration type {0}",

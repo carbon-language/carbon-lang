@@ -459,10 +459,10 @@ static auto CheckBaseType(Context& context, Parse::NodeId node_id,
     return BaseInfo::Error;
   }
 
-  auto* base_class_info = TryGetAsClass(context, base_type_id);
+  auto class_type = context.types().TryGetAs<SemIR::ClassType>(base_type_id);
 
   // The base must not be a final class.
-  if (!base_class_info) {
+  if (!class_type) {
     // For now, we treat all types that aren't introduced by a `class`
     // declaration as being final classes.
     // TODO: Once we have a better idea of which types are considered to be
@@ -470,14 +470,17 @@ static auto CheckBaseType(Context& context, Parse::NodeId node_id,
     DiagnoseBaseIsFinal(context, node_id, base_type_inst_id);
     return BaseInfo::Error;
   }
-  if (base_class_info->inheritance_kind == SemIR::Class::Final) {
+
+  const auto& base_class_info = context.classes().Get(class_type->class_id);
+
+  if (base_class_info.inheritance_kind == SemIR::Class::Final) {
     DiagnoseBaseIsFinal(context, node_id, base_type_inst_id);
   }
 
-  CARBON_CHECK(base_class_info->scope_id.has_value(),
+  CARBON_CHECK(base_class_info.scope_id.has_value(),
                "Complete class should have a scope");
   return {.type_id = base_type_id,
-          .scope_id = base_class_info->scope_id,
+          .scope_id = base_class_info.scope_id,
           .inst_id = base_type_inst_id};
 }
 
