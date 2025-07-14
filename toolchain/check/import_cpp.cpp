@@ -482,13 +482,6 @@ static auto ImportNamespaceDecl(Context& context,
                                 SemIR::NameId name_id,
                                 clang::NamespaceDecl* clang_decl)
     -> SemIR::InstId {
-  // Check if the declaration is already mapped.
-  if (SemIR::InstId existing_inst_id =
-          LookupClangDeclInstId(context, clang_decl);
-      existing_inst_id.has_value()) {
-    return existing_inst_id;
-  }
-
   auto result = AddImportNamespace(
       context, GetSingletonType(context, SemIR::NamespaceType::TypeInstId),
       name_id, parent_scope_id, /*import_id=*/SemIR::InstId::None);
@@ -1019,8 +1012,8 @@ static auto ImportNameDecl(Context& context, SemIR::LocId loc_id,
   }
   if (auto* clang_namespace_decl =
           clang::dyn_cast<clang::NamespaceDecl>(clang_decl)) {
-    return ImportNamespaceDecl(context, scope_id, name_id,
-                               clang_namespace_decl);
+    return AsCarbonNamespace(
+        context, llvm::dyn_cast<clang::DeclContext>(clang_namespace_decl));
   }
   if (auto* type_decl = clang::dyn_cast<clang::TypeDecl>(clang_decl)) {
     auto type = type_decl->getASTContext().getTypeDeclType(type_decl);
