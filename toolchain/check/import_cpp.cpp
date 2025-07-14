@@ -482,7 +482,7 @@ static auto ImportNamespaceDecl(Context& context,
                                 SemIR::NameId name_id,
                                 clang::NamespaceDecl* clang_decl)
     -> SemIR::InstId {
-  // Check if the decl is already mapped.
+  // Check if the declaration is already mapped.
   if (SemIR::InstId existing_inst_id =
           LookupClangDeclInstId(context, clang_decl);
       existing_inst_id.has_value()) {
@@ -504,7 +504,7 @@ static auto AsCarbonNamespace(Context& context,
                               clang::DeclContext* decl_context)
     -> SemIR::InstId {
   CARBON_CHECK(decl_context);
-  // Check if the decl is already mapped.
+  // Check if the declaration is already mapped.
   if (SemIR::InstId existing_inst_id = LookupClangDeclInstId(
           context, clang::dyn_cast<clang::Decl>(decl_context));
       existing_inst_id.has_value()) {
@@ -701,7 +701,7 @@ static auto MapRecordType(Context& context, SemIR::LocId loc_id,
     return {.inst_id = SemIR::TypeInstId::None, .type_id = SemIR::TypeId::None};
   }
 
-  // Check if the decl is already mapped.
+  // Check if the declaration is already mapped.
   SemIR::InstId record_inst_id = LookupClangDeclInstId(context, record_decl);
   if (!record_inst_id.has_value()) {
     auto parent_inst_id =
@@ -933,7 +933,7 @@ static auto ImportFunctionDecl(Context& context, SemIR::LocId loc_id,
                                SemIR::NameId name_id,
                                clang::FunctionDecl* clang_decl)
     -> SemIR::InstId {
-  // Check if the decl is already mapped.
+  // Check if the declaration is already mapped.
   if (SemIR::InstId existing_inst_id =
           LookupClangDeclInstId(context, clang_decl);
       existing_inst_id.has_value()) {
