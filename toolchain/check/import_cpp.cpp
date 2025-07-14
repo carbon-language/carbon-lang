@@ -462,6 +462,18 @@ static auto ClangLookup(Context& context, SemIR::NameScopeId scope_id,
   return lookup;
 }
 
+// If `decl` already mapped to an instruction, returns that instruction.
+// Otherwise returns `None`.
+static auto LookupClangDeclInstId(Context& context, clang::Decl* decl)
+    -> SemIR::InstId {
+  auto& clang_decls = context.sem_ir().clang_decls();
+  if (auto context_clang_decl_id = clang_decls.Lookup(decl);
+      context_clang_decl_id.has_value()) {
+    return clang_decls.Get(context_clang_decl_id).inst_id;
+  }
+  return SemIR::InstId::None;
+}
+
 // Imports a namespace declaration from Clang to Carbon. If successful, returns
 // the new Carbon namespace declaration `InstId`. If the declaration was already
 // imported, returns the mapped instruction.
@@ -470,12 +482,11 @@ static auto ImportNamespaceDecl(Context& context,
                                 SemIR::NameId name_id,
                                 clang::NamespaceDecl* clang_decl)
     -> SemIR::InstId {
-  auto& clang_decls = context.sem_ir().clang_decls();
-
-  // Check if the decl context is already mapped to a Carbon namespace.
-  if (auto context_clang_decl_id = clang_decls.Lookup(clang_decl);
-      context_clang_decl_id.has_value()) {
-    return clang_decls.Get(context_clang_decl_id).inst_id;
+  // Check if the decl is already mapped.
+  if (SemIR::InstId existing_inst_id =
+          LookupClangDeclInstId(context, clang_decl);
+      existing_inst_id.has_value()) {
+    return existing_inst_id;
   }
 
   auto result = AddImportNamespace(
@@ -483,8 +494,8 @@ static auto ImportNamespaceDecl(Context& context,
       name_id, parent_scope_id, /*import_id=*/SemIR::InstId::None);
   context.name_scopes()
       .Get(result.name_scope_id)
-      .set_clang_decl_context_id(
-          clang_decls.Add({.decl = clang_decl, .inst_id = result.inst_id}));
+      .set_clang_decl_context_id(context.sem_ir().clang_decls().Add(
+          {.decl = clang_decl, .inst_id = result.inst_id}));
   return result.inst_id;
 }
 
@@ -493,14 +504,14 @@ static auto AsCarbonNamespace(Context& context,
                               clang::DeclContext* decl_context)
     -> SemIR::InstId {
   CARBON_CHECK(decl_context);
-  auto& clang_decls = context.sem_ir().clang_decls();
-
-  // Check if the decl context is already mapped to a Carbon namespace.
-  if (auto context_clang_decl_id =
-          clang_decls.Lookup(clang::dyn_cast<clang::Decl>(decl_context));
-      context_clang_decl_id.has_value()) {
-    return clang_decls.Get(context_clang_decl_id).inst_id;
+  // Check if the decl is already mapped.
+  if (SemIR::InstId existing_inst_id = LookupClangDeclInstId(
+          context, clang::dyn_cast<clang::Decl>(decl_context));
+      existing_inst_id.has_value()) {
+    return existing_inst_id;
   }
+
+  auto& clang_decls = context.sem_ir().clang_decls();
 
   // We know we have at least one context to map, add all decl contexts we need
   // to map.
@@ -690,12 +701,9 @@ static auto MapRecordType(Context& context, SemIR::LocId loc_id,
     return {.inst_id = SemIR::TypeInstId::None, .type_id = SemIR::TypeId::None};
   }
 
-  auto& clang_decls = context.sem_ir().clang_decls();
-  SemIR::InstId record_inst_id = SemIR::InstId::None;
-  if (auto record_clang_decl_id = clang_decls.Lookup(record_decl);
-      record_clang_decl_id.has_value()) {
-    record_inst_id = clang_decls.Get(record_clang_decl_id).inst_id;
-  } else {
+  // Check if the decl is already mapped.
+  SemIR::InstId record_inst_id = LookupClangDeclInstId(context, record_decl);
+  if (!record_inst_id.has_value()) {
     auto parent_inst_id =
         AsCarbonNamespace(context, record_decl->getDeclContext());
     auto parent_name_scope_id =
@@ -925,12 +933,11 @@ static auto ImportFunctionDecl(Context& context, SemIR::LocId loc_id,
                                SemIR::NameId name_id,
                                clang::FunctionDecl* clang_decl)
     -> SemIR::InstId {
-  auto& clang_decls = context.sem_ir().clang_decls();
-
-  // Check if the decl context is already mapped to a Carbon namespace.
-  if (auto context_clang_decl_id = clang_decls.Lookup(clang_decl);
-      context_clang_decl_id.has_value()) {
-    return clang_decls.Get(context_clang_decl_id).inst_id;
+  // Check if the decl is already mapped.
+  if (SemIR::InstId existing_inst_id =
+          LookupClangDeclInstId(context, clang_decl);
+      existing_inst_id.has_value()) {
+    return existing_inst_id;
   }
 
   if (clang_decl->isVariadic()) {
@@ -989,8 +996,8 @@ static auto ImportFunctionDecl(Context& context, SemIR::LocId loc_id,
        .return_slot_pattern_id = function_params_insts->return_slot_pattern_id,
        .virtual_modifier = SemIR::FunctionFields::VirtualModifier::None,
        .self_param_id = SemIR::InstId::None,
-       .clang_decl_id =
-           clang_decls.Add({.decl = clang_decl, .inst_id = decl_id})}};
+       .clang_decl_id = context.sem_ir().clang_decls().Add(
+           {.decl = clang_decl, .inst_id = decl_id})}};
 
   function_decl.function_id = context.functions().Add(function_info);
 
