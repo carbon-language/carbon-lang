@@ -702,17 +702,11 @@ static auto MapRecordType(Context& context, SemIR::LocId loc_id,
       .type_id = context.types().GetTypeIdForTypeInstId(record_type_inst_id)};
 }
 
-// Maps a C++ non-pointer type to a Carbon type.
+// Maps a C++ type that is not a wrapper type such as a pointer to a Carbon
+// type.
 // TODO: Support more types.
-static auto MapNonPointerType(Context& context, SemIR::LocId loc_id,
+static auto MapNonWrapperType(Context& context, SemIR::LocId loc_id,
                               clang::QualType type) -> TypeExpr {
-  if (type.hasQualifiers()) {
-    // TODO: Support type qualifiers.
-    return {.inst_id = SemIR::TypeInstId::None, .type_id = SemIR::TypeId::None};
-  }
-
-  CARBON_CHECK(!type->isPointerType());
-
   if (const auto* builtin_type = type->getAs<clang::BuiltinType>()) {
     return MapBuiltinType(context, *builtin_type);
   }
@@ -721,12 +715,40 @@ static auto MapNonPointerType(Context& context, SemIR::LocId loc_id,
     return MapRecordType(context, loc_id, *record_type);
   }
 
+  CARBON_CHECK(!type.hasQualifiers() && !type->isPointerType(),
+               "Should not see wrapper types here");
+
   return {.inst_id = SemIR::TypeInstId::None, .type_id = SemIR::TypeId::None};
+}
+
+// Maps a qualified C++ type to a Carbon type.
+static auto MapQualifiedType(Context& context, SemIR::LocId loc_id,
+                             clang::QualType type, TypeExpr type_expr)
+    -> TypeExpr {
+  auto quals = type.getQualifiers();
+
+  if (quals.hasConst()) {
+    auto type_id = GetConstType(context, type_expr.inst_id);
+    type_expr = {.inst_id = context.types().GetInstId(type_id),
+                 .type_id = type_id};
+    quals.removeConst();
+  }
+
+  // TODO: Support other qualifiers.
+  if (!quals.empty()) {
+    context.TODO(loc_id, llvm::formatv("Unsupported: qualified type: {0}",
+                                       type.getAsString()));
+    return {.inst_id = SemIR::ErrorInst::TypeInstId,
+            .type_id = SemIR::ErrorInst::TypeId};
+  }
+
+  return type_expr;
 }
 
 // Maps a C++ pointer type to a Carbon pointer type.
 static auto MapPointerType(Context& context, SemIR::LocId loc_id,
-                           clang::QualType type) -> TypeExpr {
+                           clang::QualType type, TypeExpr pointee_type_expr)
+    -> TypeExpr {
   CARBON_CHECK(type->isPointerType());
 
   if (auto nullability = type->getNullability();
@@ -736,21 +758,6 @@ static auto MapPointerType(Context& context, SemIR::LocId loc_id,
                                        type.getAsString()));
     return {.inst_id = SemIR::ErrorInst::TypeInstId,
             .type_id = SemIR::ErrorInst::TypeId};
-  }
-
-  clang::QualType pointee_type = type->getPointeeType();
-
-  if (pointee_type->isAnyPointerType()) {
-    context.TODO(loc_id,
-                 llvm::formatv("Unsupported: pointer to pointer type: {0}",
-                               pointee_type.getAsString()));
-    return {.inst_id = SemIR::ErrorInst::TypeInstId,
-            .type_id = SemIR::ErrorInst::TypeId};
-  }
-
-  TypeExpr pointee_type_expr = MapNonPointerType(context, loc_id, pointee_type);
-  if (!pointee_type_expr.inst_id.has_value()) {
-    return {.inst_id = SemIR::TypeInstId::None, .type_id = SemIR::TypeId::None};
   }
 
   SemIR::TypeId pointer_type_id =
@@ -764,10 +771,38 @@ static auto MapPointerType(Context& context, SemIR::LocId loc_id,
 // canonicalization.
 static auto MapType(Context& context, SemIR::LocId loc_id, clang::QualType type)
     -> TypeExpr {
-  if (type->isPointerType()) {
-    return MapPointerType(context, loc_id, type);
+  // Unwrap any type modifiers and wrappers.
+  llvm::SmallVector<clang::QualType> wrapper_types;
+  while (true) {
+    clang::QualType orig_type = type;
+    if (type.hasQualifiers()) {
+      type = type.getUnqualifiedType();
+    } else if (type->isPointerType()) {
+      type = type->getPointeeType();
+    } else {
+      break;
+    }
+    wrapper_types.push_back(orig_type);
   }
-  return MapNonPointerType(context, loc_id, type);
+
+  auto mapped = MapNonWrapperType(context, loc_id, type);
+
+  for (auto wrapper : llvm::reverse(wrapper_types)) {
+    if (!mapped.inst_id.has_value() ||
+        mapped.type_id == SemIR::ErrorInst::TypeId) {
+      break;
+    }
+
+    if (wrapper.hasQualifiers()) {
+      mapped = MapQualifiedType(context, loc_id, wrapper, mapped);
+    } else if (wrapper->isPointerType()) {
+      mapped = MapPointerType(context, loc_id, wrapper, mapped);
+    } else {
+      CARBON_FATAL("Unexpected wrapper type {0}", wrapper.getAsString());
+    }
+  }
+
+  return mapped;
 }
 
 // Returns a block id for the explicit parameters of the given function
@@ -785,6 +820,11 @@ static auto MakeParamPatternsBlockId(Context& context, SemIR::LocId loc_id,
   llvm::SmallVector<SemIR::InstId> params;
   params.reserve(clang_decl.parameters().size());
   for (const clang::ParmVarDecl* param : clang_decl.parameters()) {
+    // TODO: Get the parameter type from the function, not from the
+    // `ParmVarDecl`. The type of the `ParmVarDecl` is the type within the
+    // function, and isn't in general the same as the type that's exposed to
+    // callers. In particular, the parameter type exposed to callers will never
+    // be cv-qualified.
     clang::QualType param_type = param->getType();
 
     // Mark the start of a region of insts, needed for the type expression
