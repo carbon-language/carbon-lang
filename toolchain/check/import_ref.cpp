@@ -1713,8 +1713,6 @@ static auto TryResolveTypedInst(ImportRefResolver& resolver,
                       ? GetLocalConstantInstId(resolver, import_class.adapt_id)
                       : SemIR::InstId::None;
   auto& new_class = resolver.local_classes().Get(class_id);
-  // TODO: Make vtable_ptr_id lazily loaded, so we pull in the vtable only when
-  // it's needed, not for every use of the class.
   auto vtable_ptr_const_id =
       import_class.vtable_ptr_id.has_value()
           ? AddImportRef(resolver, import_class.vtable_ptr_id)
