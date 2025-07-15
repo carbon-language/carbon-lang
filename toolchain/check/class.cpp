@@ -175,6 +175,12 @@ static auto BuildVtable(Context& context, Parse::ClassDefinitionId node_id,
     // TODO: Avoid quadratic search. Perhaps build a map from `NameId` to the
     // elements of the top of `vtable_stack`.
     for (auto fn_decl_id : base_vtable_inst_block) {
+      // Remap the base's vtable entry to the appropriate constant usable in
+      // the context of the derived class (for the specific for the base
+      // class, for instance).
+      fn_decl_id = context.sem_ir().constant_values().GetInstId(
+          GetConstantValueInSpecific(context.sem_ir(), base_class_specific_id,
+                                     fn_decl_id));
       auto fn_decl = GetCalleeFunction(context.sem_ir(), fn_decl_id);
       const auto& fn = context.functions().Get(fn_decl.function_id);
       const auto* i = llvm::find_if(
@@ -187,20 +193,13 @@ static auto BuildVtable(Context& context, Parse::ClassDefinitionId node_id,
                        SemIR::FunctionFields::VirtualModifier::Impl &&
                    override_fn.name_id == fn.name_id;
           });
-      // Remap the base's vtable entry to the appropriate constant usable in
-      // the context of the derived class (for the specific for the base
-      // class, for instance).
-      fn_decl_id = context.sem_ir().constant_values().GetInstId(
-          GetConstantValueInSpecific(context.sem_ir(), base_class_specific_id,
-                                     fn_decl_id));
       if (i != vtable_contents.end()) {
         auto& override_fn = context.functions().Get(
             context.insts().GetAs<SemIR::FunctionDecl>(*i).function_id);
-        auto callee_function = GetCalleeFunction(context.sem_ir(), fn_decl_id);
         CheckFunctionTypeMatches(
             context, override_fn,
-            context.sem_ir().functions().Get(callee_function.function_id),
-            callee_function.resolved_specific_id,
+            context.sem_ir().functions().Get(fn_decl.function_id),
+            fn_decl.resolved_specific_id,
             /*check_syntax=*/false,
             /*check_self=*/false);
         fn_decl_id = build_specific_function(*i);
