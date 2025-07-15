@@ -311,8 +311,8 @@ fn MyF() {
 // CHECK:STDOUT:   %X: type = class_type @X [concrete]
 // CHECK:STDOUT:   %foo.type: type = fn_type @foo [concrete]
 // CHECK:STDOUT:   %foo: %foo.type = struct_value () [concrete]
-// CHECK:STDOUT:   %Op.type.0e5: type = fn_type @Op.1, @Destroy.impl(%X) [concrete]
-// CHECK:STDOUT:   %Op.cbf: %Op.type.0e5 = struct_value () [concrete]
+// CHECK:STDOUT:   %T.as.Destroy.impl.Op.type.0e5: type = fn_type @T.as.Destroy.impl.Op, @T.as.Destroy.impl(%X) [concrete]
+// CHECK:STDOUT:   %T.as.Destroy.impl.Op.cbf: %T.as.Destroy.impl.Op.type.0e5 = struct_value () [concrete]
 // CHECK:STDOUT:   %ptr.13d: type = ptr_type %X [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -336,11 +336,11 @@ fn MyF() {
 // CHECK:STDOUT:   %.loc8_11.1: ref %X = temporary_storage
 // CHECK:STDOUT:   %foo.call: init %X = call %foo.ref() to %.loc8_11.1
 // CHECK:STDOUT:   %.loc8_11.2: ref %X = temporary %.loc8_11.1, %foo.call
-// CHECK:STDOUT:   %Op.bound: <bound method> = bound_method %.loc8_11.1, constants.%Op.cbf
+// CHECK:STDOUT:   %T.as.Destroy.impl.Op.bound: <bound method> = bound_method %.loc8_11.1, constants.%T.as.Destroy.impl.Op.cbf
 // CHECK:STDOUT:   <elided>
-// CHECK:STDOUT:   %bound_method: <bound method> = bound_method %.loc8_11.1, %Op.specific_fn
+// CHECK:STDOUT:   %bound_method: <bound method> = bound_method %.loc8_11.1, %T.as.Destroy.impl.Op.specific_fn
 // CHECK:STDOUT:   %addr: %ptr.13d = addr_of %.loc8_11.1
-// CHECK:STDOUT:   %no_op: init %empty_tuple.type = call %bound_method(%addr)
+// CHECK:STDOUT:   %T.as.Destroy.impl.Op.call: init %empty_tuple.type = call %bound_method(%addr)
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

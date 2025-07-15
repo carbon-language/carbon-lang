@@ -34,14 +34,14 @@ fn TestOp() {
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %C: type = class_type @C [concrete]
 // CHECK:STDOUT:   %Dec.type: type = facet_type <@Dec> [concrete]
-// CHECK:STDOUT:   %Op.type.633: type = fn_type @Op.1 [concrete]
+// CHECK:STDOUT:   %Dec.Op.type: type = fn_type @Dec.Op [concrete]
 // CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [concrete]
 // CHECK:STDOUT:   %Dec.impl_witness: <witness> = impl_witness file.%Dec.impl_witness_table [concrete]
 // CHECK:STDOUT:   %ptr.019: type = ptr_type %C [concrete]
-// CHECK:STDOUT:   %Op.type.9e0: type = fn_type @Op.loc22 [concrete]
-// CHECK:STDOUT:   %Op.cf9: %Op.type.9e0 = struct_value () [concrete]
+// CHECK:STDOUT:   %C.as.Dec.impl.Op.type: type = fn_type @C.as.Dec.impl.Op [concrete]
+// CHECK:STDOUT:   %C.as.Dec.impl.Op: %C.as.Dec.impl.Op.type = struct_value () [concrete]
 // CHECK:STDOUT:   %Dec.facet: %Dec.type = facet_value %C, (%Dec.impl_witness) [concrete]
-// CHECK:STDOUT:   %.859: type = fn_type_with_self_type %Op.type.633, %Dec.facet [concrete]
+// CHECK:STDOUT:   %.859: type = fn_type_with_self_type %Dec.Op.type, %Dec.facet [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -51,10 +51,10 @@ fn TestOp() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT:   %c.ref: ref %C = name_ref c, %c
-// CHECK:STDOUT:   %impl.elem0: %.859 = impl_witness_access constants.%Dec.impl_witness, element0 [concrete = constants.%Op.cf9]
+// CHECK:STDOUT:   %impl.elem0: %.859 = impl_witness_access constants.%Dec.impl_witness, element0 [concrete = constants.%C.as.Dec.impl.Op]
 // CHECK:STDOUT:   %bound_method.loc28: <bound method> = bound_method %c.ref, %impl.elem0
 // CHECK:STDOUT:   %addr.loc28: %ptr.019 = addr_of %c.ref
-// CHECK:STDOUT:   %Op.call: init %empty_tuple.type = call %bound_method.loc28(%addr.loc28)
+// CHECK:STDOUT:   %C.as.Dec.impl.Op.call: init %empty_tuple.type = call %bound_method.loc28(%addr.loc28)
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

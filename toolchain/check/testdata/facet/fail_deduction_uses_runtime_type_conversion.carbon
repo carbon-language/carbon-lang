@@ -58,12 +58,12 @@ fn G(holds_to: HoldsType((RuntimeConvertTo, ))) {
 // CHECK:STDOUT:   %ImplicitAs.type.cc7: type = generic_interface_type @ImplicitAs [concrete]
 // CHECK:STDOUT:   %ImplicitAs.generic: %ImplicitAs.type.cc7 = struct_value () [concrete]
 // CHECK:STDOUT:   %ImplicitAs.type.580: type = facet_type <@ImplicitAs, @ImplicitAs(%RuntimeConvertTo)> [concrete]
-// CHECK:STDOUT:   %Convert.type.50a: type = fn_type @Convert.1, @ImplicitAs(%RuntimeConvertTo) [concrete]
+// CHECK:STDOUT:   %ImplicitAs.Convert.type.50a: type = fn_type @ImplicitAs.Convert, @ImplicitAs(%RuntimeConvertTo) [concrete]
 // CHECK:STDOUT:   %ImplicitAs.impl_witness: <witness> = impl_witness file.%ImplicitAs.impl_witness_table [concrete]
 // CHECK:STDOUT:   %pattern_type.f64: type = pattern_type %RuntimeConvertFrom [concrete]
 // CHECK:STDOUT:   %pattern_type.109: type = pattern_type %RuntimeConvertTo [concrete]
-// CHECK:STDOUT:   %Convert.type.e8b: type = fn_type @Convert.loc24 [concrete]
-// CHECK:STDOUT:   %Convert.e81: %Convert.type.e8b = struct_value () [concrete]
+// CHECK:STDOUT:   %RuntimeConvertFrom.as.ImplicitAs.impl.Convert.type: type = fn_type @RuntimeConvertFrom.as.ImplicitAs.impl.Convert [concrete]
+// CHECK:STDOUT:   %RuntimeConvertFrom.as.ImplicitAs.impl.Convert: %RuntimeConvertFrom.as.ImplicitAs.impl.Convert.type = struct_value () [concrete]
 // CHECK:STDOUT:   %ImplicitAs.facet: %ImplicitAs.type.580 = facet_value %RuntimeConvertFrom, (%ImplicitAs.impl_witness) [concrete]
 // CHECK:STDOUT:   %RuntimeConvertTo.val: %RuntimeConvertTo = struct_value () [concrete]
 // CHECK:STDOUT:   %int_0: Core.IntLiteral = int_value 0 [concrete]
@@ -81,17 +81,17 @@ fn G(holds_to: HoldsType((RuntimeConvertTo, ))) {
 // CHECK:STDOUT:   %G: %G.type = struct_value () [concrete]
 // CHECK:STDOUT:   %from: %RuntimeConvertFrom = bind_symbolic_name from, 0 [symbolic]
 // CHECK:STDOUT:   %RuntimeConvertFrom.val: %RuntimeConvertFrom = struct_value () [concrete]
-// CHECK:STDOUT:   %.f4e: type = fn_type_with_self_type %Convert.type.50a, %ImplicitAs.facet [concrete]
-// CHECK:STDOUT:   %Convert.bound: <bound method> = bound_method %from, %Convert.e81 [symbolic]
+// CHECK:STDOUT:   %.f4e: type = fn_type_with_self_type %ImplicitAs.Convert.type.50a, %ImplicitAs.facet [concrete]
+// CHECK:STDOUT:   %RuntimeConvertFrom.as.ImplicitAs.impl.Convert.bound: <bound method> = bound_method %from, %RuntimeConvertFrom.as.ImplicitAs.impl.Convert [symbolic]
 // CHECK:STDOUT:   %Destroy.type: type = facet_type <@Destroy> [concrete]
-// CHECK:STDOUT:   %Op.type.139: type = fn_type @Op.1, @Destroy.impl(%RuntimeConvertTo) [concrete]
-// CHECK:STDOUT:   %Op.d2d: %Op.type.139 = struct_value () [concrete]
+// CHECK:STDOUT:   %T.as.Destroy.impl.Op.type.139: type = fn_type @T.as.Destroy.impl.Op, @T.as.Destroy.impl(%RuntimeConvertTo) [concrete]
+// CHECK:STDOUT:   %T.as.Destroy.impl.Op.d2d: %T.as.Destroy.impl.Op.type.139 = struct_value () [concrete]
 // CHECK:STDOUT:   %ptr.339: type = ptr_type %RuntimeConvertTo [concrete]
-// CHECK:STDOUT:   %Op.specific_fn.373: <specific function> = specific_function %Op.d2d, @Op.1(%RuntimeConvertTo) [concrete]
-// CHECK:STDOUT:   %Op.type.147: type = fn_type @Op.1, @Destroy.impl(%RuntimeConvertFrom) [concrete]
-// CHECK:STDOUT:   %Op.3f3: %Op.type.147 = struct_value () [concrete]
+// CHECK:STDOUT:   %T.as.Destroy.impl.Op.specific_fn.373: <specific function> = specific_function %T.as.Destroy.impl.Op.d2d, @T.as.Destroy.impl.Op(%RuntimeConvertTo) [concrete]
+// CHECK:STDOUT:   %T.as.Destroy.impl.Op.type.147: type = fn_type @T.as.Destroy.impl.Op, @T.as.Destroy.impl(%RuntimeConvertFrom) [concrete]
+// CHECK:STDOUT:   %T.as.Destroy.impl.Op.3f3: %T.as.Destroy.impl.Op.type.147 = struct_value () [concrete]
 // CHECK:STDOUT:   %ptr.415: type = ptr_type %RuntimeConvertFrom [concrete]
-// CHECK:STDOUT:   %Op.specific_fn.5db: <specific function> = specific_function %Op.3f3, @Op.1(%RuntimeConvertFrom) [concrete]
+// CHECK:STDOUT:   %T.as.Destroy.impl.Op.specific_fn.5db: <specific function> = specific_function %T.as.Destroy.impl.Op.3f3, @T.as.Destroy.impl.Op(%RuntimeConvertFrom) [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -126,14 +126,14 @@ fn G(holds_to: HoldsType((RuntimeConvertTo, ))) {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %RuntimeConvertFrom.decl: type = class_decl @RuntimeConvertFrom [concrete = constants.%RuntimeConvertFrom] {} {}
 // CHECK:STDOUT:   %RuntimeConvertTo.decl: type = class_decl @RuntimeConvertTo [concrete = constants.%RuntimeConvertTo] {} {}
-// CHECK:STDOUT:   impl_decl @ImplicitAs.impl [concrete] {} {
+// CHECK:STDOUT:   impl_decl @RuntimeConvertFrom.as.ImplicitAs.impl [concrete] {} {
 // CHECK:STDOUT:     %RuntimeConvertFrom.ref: type = name_ref RuntimeConvertFrom, file.%RuntimeConvertFrom.decl [concrete = constants.%RuntimeConvertFrom]
 // CHECK:STDOUT:     %Core.ref: <namespace> = name_ref Core, imports.%Core [concrete = imports.%Core]
 // CHECK:STDOUT:     %ImplicitAs.ref: %ImplicitAs.type.cc7 = name_ref ImplicitAs, imports.%Core.ImplicitAs [concrete = constants.%ImplicitAs.generic]
 // CHECK:STDOUT:     %RuntimeConvertTo.ref: type = name_ref RuntimeConvertTo, file.%RuntimeConvertTo.decl [concrete = constants.%RuntimeConvertTo]
 // CHECK:STDOUT:     %ImplicitAs.type: type = facet_type <@ImplicitAs, @ImplicitAs(constants.%RuntimeConvertTo)> [concrete = constants.%ImplicitAs.type.580]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %ImplicitAs.impl_witness_table = impl_witness_table (@ImplicitAs.impl.%Convert.decl), @ImplicitAs.impl [concrete]
+// CHECK:STDOUT:   %ImplicitAs.impl_witness_table = impl_witness_table (@RuntimeConvertFrom.as.ImplicitAs.impl.%RuntimeConvertFrom.as.ImplicitAs.impl.Convert.decl), @RuntimeConvertFrom.as.ImplicitAs.impl [concrete]
 // CHECK:STDOUT:   %ImplicitAs.impl_witness: <witness> = impl_witness %ImplicitAs.impl_witness_table [concrete = constants.%ImplicitAs.impl_witness]
 // CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [concrete = constants.%F] {
 // CHECK:STDOUT:     %T.patt: %pattern_type.f1e = symbolic_binding_pattern T, 0 [concrete]
@@ -177,8 +177,8 @@ fn G(holds_to: HoldsType((RuntimeConvertTo, ))) {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: impl @ImplicitAs.impl: %RuntimeConvertFrom.ref as %ImplicitAs.type {
-// CHECK:STDOUT:   %Convert.decl: %Convert.type.e8b = fn_decl @Convert.loc24 [concrete = constants.%Convert.e81] {
+// CHECK:STDOUT: impl @RuntimeConvertFrom.as.ImplicitAs.impl: %RuntimeConvertFrom.ref as %ImplicitAs.type {
+// CHECK:STDOUT:   %RuntimeConvertFrom.as.ImplicitAs.impl.Convert.decl: %RuntimeConvertFrom.as.ImplicitAs.impl.Convert.type = fn_decl @RuntimeConvertFrom.as.ImplicitAs.impl.Convert [concrete = constants.%RuntimeConvertFrom.as.ImplicitAs.impl.Convert] {
 // CHECK:STDOUT:     %self.patt: %pattern_type.f64 = binding_pattern self [concrete]
 // CHECK:STDOUT:     %self.param_patt: %pattern_type.f64 = value_param_pattern %self.patt, call_param0 [concrete]
 // CHECK:STDOUT:     %return.patt: %pattern_type.109 = return_slot_pattern [concrete]
@@ -186,7 +186,7 @@ fn G(holds_to: HoldsType((RuntimeConvertTo, ))) {
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %RuntimeConvertTo.ref: type = name_ref RuntimeConvertTo, file.%RuntimeConvertTo.decl [concrete = constants.%RuntimeConvertTo]
 // CHECK:STDOUT:     %self.param: %RuntimeConvertFrom = value_param call_param0
-// CHECK:STDOUT:     %Self.ref: type = name_ref Self, @ImplicitAs.impl.%RuntimeConvertFrom.ref [concrete = constants.%RuntimeConvertFrom]
+// CHECK:STDOUT:     %Self.ref: type = name_ref Self, @RuntimeConvertFrom.as.ImplicitAs.impl.%RuntimeConvertFrom.ref [concrete = constants.%RuntimeConvertFrom]
 // CHECK:STDOUT:     %self: %RuntimeConvertFrom = bind_name self, %self.param
 // CHECK:STDOUT:     %return.param: ref %RuntimeConvertTo = out_param call_param1
 // CHECK:STDOUT:     %return: ref %RuntimeConvertTo = return_slot %return.param
@@ -194,7 +194,7 @@ fn G(holds_to: HoldsType((RuntimeConvertTo, ))) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .RuntimeConvertTo = <poisoned>
-// CHECK:STDOUT:   .Convert = %Convert.decl
+// CHECK:STDOUT:   .Convert = %RuntimeConvertFrom.as.ImplicitAs.impl.Convert.decl
 // CHECK:STDOUT:   witness = file.%ImplicitAs.impl_witness
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -231,7 +231,7 @@ fn G(holds_to: HoldsType((RuntimeConvertTo, ))) {
 // CHECK:STDOUT:   .Self = constants.%RuntimeConvertTo
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Convert.loc24(%self.param: %RuntimeConvertFrom) -> %return.param: %RuntimeConvertTo {
+// CHECK:STDOUT: fn @RuntimeConvertFrom.as.ImplicitAs.impl.Convert(%self.param: %RuntimeConvertFrom) -> %return.param: %RuntimeConvertTo {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %.loc24_58.1: %empty_struct_type = struct_literal ()
 // CHECK:STDOUT:   %.loc24_58.2: init %RuntimeConvertTo = class_init (), %return [concrete = constants.%RuntimeConvertTo.val]
@@ -273,25 +273,25 @@ fn G(holds_to: HoldsType((RuntimeConvertTo, ))) {
 // CHECK:STDOUT:   %F.ref: %F.type = name_ref F, file.%F.decl [concrete = constants.%F]
 // CHECK:STDOUT:   %from.ref: %RuntimeConvertFrom = name_ref from, %from [symbolic = constants.%from]
 // CHECK:STDOUT:   %holds_to.ref: %HoldsType.066 = name_ref holds_to, %holds_to
-// CHECK:STDOUT:   %impl.elem0: %.f4e = impl_witness_access constants.%ImplicitAs.impl_witness, element0 [concrete = constants.%Convert.e81]
-// CHECK:STDOUT:   %bound_method.loc41_19.1: <bound method> = bound_method constants.%from, %impl.elem0 [symbolic = constants.%Convert.bound]
+// CHECK:STDOUT:   %impl.elem0: %.f4e = impl_witness_access constants.%ImplicitAs.impl_witness, element0 [concrete = constants.%RuntimeConvertFrom.as.ImplicitAs.impl.Convert]
+// CHECK:STDOUT:   %bound_method.loc41_19.1: <bound method> = bound_method constants.%from, %impl.elem0 [symbolic = constants.%RuntimeConvertFrom.as.ImplicitAs.impl.Convert.bound]
 // CHECK:STDOUT:   %.loc41_19.1: ref %RuntimeConvertTo = temporary_storage
-// CHECK:STDOUT:   %Convert.call: init %RuntimeConvertTo = call %bound_method.loc41_19.1(constants.%from) to %.loc41_19.1
-// CHECK:STDOUT:   %.loc41_19.2: init %RuntimeConvertTo = converted constants.%from, %Convert.call
+// CHECK:STDOUT:   %RuntimeConvertFrom.as.ImplicitAs.impl.Convert.call: init %RuntimeConvertTo = call %bound_method.loc41_19.1(constants.%from) to %.loc41_19.1
+// CHECK:STDOUT:   %.loc41_19.2: init %RuntimeConvertTo = converted constants.%from, %RuntimeConvertFrom.as.ImplicitAs.impl.Convert.call
 // CHECK:STDOUT:   %.loc41_19.3: ref %RuntimeConvertTo = temporary %.loc41_19.1, %.loc41_19.2
 // CHECK:STDOUT:   %.loc41_19.4: %RuntimeConvertTo = bind_value %.loc41_19.3
 // CHECK:STDOUT:   %F.specific_fn: <specific function> = specific_function %F.ref, @F(constants.%tuple, <error>) [concrete = <error>]
 // CHECK:STDOUT:   %F.call: init %empty_tuple.type = call %F.specific_fn(%holds_to.ref)
-// CHECK:STDOUT:   %Op.bound.loc41: <bound method> = bound_method %.loc41_19.1, constants.%Op.d2d
-// CHECK:STDOUT:   %Op.specific_fn.1: <specific function> = specific_function constants.%Op.d2d, @Op.1(constants.%RuntimeConvertTo) [concrete = constants.%Op.specific_fn.373]
-// CHECK:STDOUT:   %bound_method.loc41_19.2: <bound method> = bound_method %.loc41_19.1, %Op.specific_fn.1
+// CHECK:STDOUT:   %T.as.Destroy.impl.Op.bound.loc41: <bound method> = bound_method %.loc41_19.1, constants.%T.as.Destroy.impl.Op.d2d
+// CHECK:STDOUT:   %T.as.Destroy.impl.Op.specific_fn.1: <specific function> = specific_function constants.%T.as.Destroy.impl.Op.d2d, @T.as.Destroy.impl.Op(constants.%RuntimeConvertTo) [concrete = constants.%T.as.Destroy.impl.Op.specific_fn.373]
+// CHECK:STDOUT:   %bound_method.loc41_19.2: <bound method> = bound_method %.loc41_19.1, %T.as.Destroy.impl.Op.specific_fn.1
 // CHECK:STDOUT:   %addr.loc41: %ptr.339 = addr_of %.loc41_19.1
-// CHECK:STDOUT:   %no_op.loc41: init %empty_tuple.type = call %bound_method.loc41_19.2(%addr.loc41)
-// CHECK:STDOUT:   %Op.bound.loc30: <bound method> = bound_method %.loc30_36.2, constants.%Op.3f3
-// CHECK:STDOUT:   %Op.specific_fn.2: <specific function> = specific_function constants.%Op.3f3, @Op.1(constants.%RuntimeConvertFrom) [concrete = constants.%Op.specific_fn.5db]
-// CHECK:STDOUT:   %bound_method.loc30: <bound method> = bound_method %.loc30_36.2, %Op.specific_fn.2
+// CHECK:STDOUT:   %T.as.Destroy.impl.Op.call.loc41: init %empty_tuple.type = call %bound_method.loc41_19.2(%addr.loc41)
+// CHECK:STDOUT:   %T.as.Destroy.impl.Op.bound.loc30: <bound method> = bound_method %.loc30_36.2, constants.%T.as.Destroy.impl.Op.3f3
+// CHECK:STDOUT:   %T.as.Destroy.impl.Op.specific_fn.2: <specific function> = specific_function constants.%T.as.Destroy.impl.Op.3f3, @T.as.Destroy.impl.Op(constants.%RuntimeConvertFrom) [concrete = constants.%T.as.Destroy.impl.Op.specific_fn.5db]
+// CHECK:STDOUT:   %bound_method.loc30: <bound method> = bound_method %.loc30_36.2, %T.as.Destroy.impl.Op.specific_fn.2
 // CHECK:STDOUT:   %addr.loc30: %ptr.415 = addr_of %.loc30_36.2
-// CHECK:STDOUT:   %no_op.loc30: init %empty_tuple.type = call %bound_method.loc30(%addr.loc30)
+// CHECK:STDOUT:   %T.as.Destroy.impl.Op.call.loc30: init %empty_tuple.type = call %bound_method.loc30(%addr.loc30)
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

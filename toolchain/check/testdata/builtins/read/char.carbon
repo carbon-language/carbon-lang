@@ -55,26 +55,26 @@ fn Main() {
 // CHECK:STDOUT:     %n.patt: %pattern_type.7ce = binding_pattern n [concrete]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %ReadChar.ref.loc8: %ReadChar.type.fa8 = name_ref ReadChar, file.%ReadChar.decl [concrete = constants.%ReadChar.7f4]
-// CHECK:STDOUT:   %read.char.loc8: init %i32 = call %ReadChar.ref.loc8()
+// CHECK:STDOUT:   %ReadChar.call.loc8: init %i32 = call %ReadChar.ref.loc8()
 // CHECK:STDOUT:   %.loc8_10: type = splice_block %i32.loc8 [concrete = constants.%i32] {
 // CHECK:STDOUT:     %int_32.loc8: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
 // CHECK:STDOUT:     %i32.loc8: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %.loc8_25.1: %i32 = value_of_initializer %read.char.loc8
-// CHECK:STDOUT:   %.loc8_25.2: %i32 = converted %read.char.loc8, %.loc8_25.1
+// CHECK:STDOUT:   %.loc8_25.1: %i32 = value_of_initializer %ReadChar.call.loc8
+// CHECK:STDOUT:   %.loc8_25.2: %i32 = converted %ReadChar.call.loc8, %.loc8_25.1
 // CHECK:STDOUT:   %n: %i32 = bind_name n, %.loc8_25.2
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %m.patt: %pattern_type.7ce = binding_pattern m [concrete]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.ref: <namespace> = name_ref Core, imports.%Core [concrete = imports.%Core]
 // CHECK:STDOUT:   %ReadChar.ref.loc9: %ReadChar.type.9f3 = name_ref ReadChar, imports.%Core.ReadChar [concrete = constants.%ReadChar.01f]
-// CHECK:STDOUT:   %read.char.loc9: init %i32 = call %ReadChar.ref.loc9()
+// CHECK:STDOUT:   %ReadChar.call.loc9: init %i32 = call %ReadChar.ref.loc9()
 // CHECK:STDOUT:   %.loc9_10: type = splice_block %i32.loc9 [concrete = constants.%i32] {
 // CHECK:STDOUT:     %int_32.loc9: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
 // CHECK:STDOUT:     %i32.loc9: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %.loc9_30.1: %i32 = value_of_initializer %read.char.loc9
-// CHECK:STDOUT:   %.loc9_30.2: %i32 = converted %read.char.loc9, %.loc9_30.1
+// CHECK:STDOUT:   %.loc9_30.1: %i32 = value_of_initializer %ReadChar.call.loc9
+// CHECK:STDOUT:   %.loc9_30.2: %i32 = converted %ReadChar.call.loc9, %.loc9_30.1
 // CHECK:STDOUT:   %m: %i32 = bind_name m, %.loc9_30.2
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }

@@ -87,9 +87,9 @@ fn F() {
 // CHECK:STDOUT:   %GreaterEq.ref: %GreaterEq.type = name_ref GreaterEq, file.%GreaterEq.decl [concrete = constants.%GreaterEq]
 // CHECK:STDOUT:   %a.ref: %i32 = name_ref a, %a
 // CHECK:STDOUT:   %b.ref: %i32 = name_ref b, %b
-// CHECK:STDOUT:   %int.greater_eq: init bool = call %GreaterEq.ref(%a.ref, %b.ref)
-// CHECK:STDOUT:   %.loc20_25.1: bool = value_of_initializer %int.greater_eq
-// CHECK:STDOUT:   %.loc20_25.2: bool = converted %int.greater_eq, %.loc20_25.1
+// CHECK:STDOUT:   %GreaterEq.call: init bool = call %GreaterEq.ref(%a.ref, %b.ref)
+// CHECK:STDOUT:   %.loc20_25.1: bool = value_of_initializer %GreaterEq.call
+// CHECK:STDOUT:   %.loc20_25.2: bool = converted %GreaterEq.call, %.loc20_25.1
 // CHECK:STDOUT:   return %.loc20_25.2
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

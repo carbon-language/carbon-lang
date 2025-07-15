@@ -41,19 +41,19 @@ fn For() {
 // CHECK:STDOUT:   call void @_CF.Main(), !dbg !9
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(i64 8, ptr %.loc21_32.1.temp), !dbg !7
 // CHECK:STDOUT:   call void @_CRange.Core(ptr %.loc21_32.1.temp, i32 100), !dbg !7
-// CHECK:STDOUT:   %NewCursor.call = call i32 @"_CNewCursor.IntRange.Core:Iterate.Core.be1e879c1ad406d8"(ptr %.loc21_32.1.temp), !dbg !8
+// CHECK:STDOUT:   %IntRange.as.Iterate.impl.NewCursor.call = call i32 @"_CNewCursor.IntRange.Core:Iterate.Core.be1e879c1ad406d8"(ptr %.loc21_32.1.temp), !dbg !8
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(i64 4, ptr %var), !dbg !8
-// CHECK:STDOUT:   store i32 %NewCursor.call, ptr %var, align 4, !dbg !8
+// CHECK:STDOUT:   store i32 %IntRange.as.Iterate.impl.NewCursor.call, ptr %var, align 4, !dbg !8
 // CHECK:STDOUT:   br label %for.next, !dbg !8
 // CHECK:STDOUT:
 // CHECK:STDOUT: for.next:                                         ; preds = %for.body, %entry
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(i64 8, ptr %.loc21_33.1.temp), !dbg !8
 // CHECK:STDOUT:   call void @"_CNext.IntRange.Core:Iterate.Core.be1e879c1ad406d8"(ptr %.loc21_33.1.temp, ptr %.loc21_32.1.temp, ptr %var), !dbg !8
-// CHECK:STDOUT:   %HasValue.call = call i1 @_CHasValue.Optional.Core.b88d1103f417c6d4(ptr %.loc21_33.1.temp), !dbg !8
-// CHECK:STDOUT:   br i1 %HasValue.call, label %for.body, label %for.done, !dbg !8
+// CHECK:STDOUT:   %Optional.HasValue.call = call i1 @_CHasValue.Optional.Core.b88d1103f417c6d4(ptr %.loc21_33.1.temp), !dbg !8
+// CHECK:STDOUT:   br i1 %Optional.HasValue.call, label %for.body, label %for.done, !dbg !8
 // CHECK:STDOUT:
 // CHECK:STDOUT: for.body:                                         ; preds = %for.next
-// CHECK:STDOUT:   %Get.call = call i32 @_CGet.Optional.Core.b88d1103f417c6d4(ptr %.loc21_33.1.temp), !dbg !8
+// CHECK:STDOUT:   %Optional.Get.call = call i32 @_CGet.Optional.Core.b88d1103f417c6d4(ptr %.loc21_33.1.temp), !dbg !8
 // CHECK:STDOUT:   call void @_CG.Main(), !dbg !10
 // CHECK:STDOUT:   br label %for.next, !dbg !11
 // CHECK:STDOUT:

@@ -54,8 +54,8 @@ fn For() {
 // CHECK:STDOUT: for.next:                                         ; preds = %for.body, %entry
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(i64 12, ptr %.loc29_33.1.temp), !dbg !8
 // CHECK:STDOUT:   call void @"_CNext.EmptyRange.Main:Iterate.Core.29d34654e802e24e"(ptr %.loc29_33.1.temp, ptr %r.var, ptr %var), !dbg !8
-// CHECK:STDOUT:   %HasValue.call = call i1 @_CHasValue.Optional.Core.29d34654e802e24e(ptr %.loc29_33.1.temp), !dbg !8
-// CHECK:STDOUT:   br i1 %HasValue.call, label %for.body, label %for.done, !dbg !8
+// CHECK:STDOUT:   %Optional.HasValue.call = call i1 @_CHasValue.Optional.Core.29d34654e802e24e(ptr %.loc29_33.1.temp), !dbg !8
+// CHECK:STDOUT:   br i1 %Optional.HasValue.call, label %for.body, label %for.done, !dbg !8
 // CHECK:STDOUT:
 // CHECK:STDOUT: for.body:                                         ; preds = %for.next
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(i64 4, ptr %n.var), !dbg !9

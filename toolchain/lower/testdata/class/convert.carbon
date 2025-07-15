@@ -48,8 +48,8 @@ fn DoIt() {
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(i64 4, ptr %w.var), !dbg !12
 // CHECK:STDOUT:   %.loc24_31.3.n = getelementptr inbounds nuw { i32 }, ptr %w.var, i32 0, i32 0, !dbg !13
 // CHECK:STDOUT:   call void @llvm.memcpy.p0.p0.i64(ptr align 4 %w.var, ptr align 4 @IntWrapper.val.loc24_3, i64 4, i1 false), !dbg !12
-// CHECK:STDOUT:   %Convert.call = call i32 @"_CConvert.IntWrapper.Main:ImplicitAs.Core"(ptr %w.var), !dbg !14
-// CHECK:STDOUT:   call void @_CConsume.Main(i32 %Convert.call), !dbg !15
+// CHECK:STDOUT:   %IntWrapper.as.ImplicitAs.impl.Convert.call = call i32 @"_CConvert.IntWrapper.Main:ImplicitAs.Core"(ptr %w.var), !dbg !14
+// CHECK:STDOUT:   call void @_CConsume.Main(i32 %IntWrapper.as.ImplicitAs.impl.Convert.call), !dbg !15
 // CHECK:STDOUT:   ret void, !dbg !16
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

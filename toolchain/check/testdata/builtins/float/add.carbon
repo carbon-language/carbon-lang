@@ -72,9 +72,9 @@ fn RuntimeCallIsValidBadReturnType(a: f64, b: f64) -> bool {
 // CHECK:STDOUT:   %Add.ref: %Add.type = name_ref Add, file.%Add.decl [concrete = constants.%Add]
 // CHECK:STDOUT:   %a.ref: f64 = name_ref a, %a
 // CHECK:STDOUT:   %b.ref: f64 = name_ref b, %b
-// CHECK:STDOUT:   %float.add: init f64 = call %Add.ref(%a.ref, %b.ref)
-// CHECK:STDOUT:   %.loc8_19.1: f64 = value_of_initializer %float.add
-// CHECK:STDOUT:   %.loc8_19.2: f64 = converted %float.add, %.loc8_19.1
+// CHECK:STDOUT:   %Add.call: init f64 = call %Add.ref(%a.ref, %b.ref)
+// CHECK:STDOUT:   %.loc8_19.1: f64 = value_of_initializer %Add.call
+// CHECK:STDOUT:   %.loc8_19.2: f64 = converted %Add.call, %.loc8_19.1
 // CHECK:STDOUT:   return %.loc8_19.2
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

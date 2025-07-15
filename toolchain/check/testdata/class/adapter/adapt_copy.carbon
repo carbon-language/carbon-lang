@@ -139,10 +139,10 @@ fn InTuple(c: (AdaptStruct, u32)) -> (AdaptStruct, u32) {
 // CHECK:STDOUT:   %F.type: type = fn_type @F [concrete]
 // CHECK:STDOUT:   %F: %F.type = struct_value () [concrete]
 // CHECK:STDOUT:   %Destroy.type: type = facet_type <@Destroy> [concrete]
-// CHECK:STDOUT:   %Op.type.b65: type = fn_type @Op.1, @Destroy.impl(%AdaptCopyable) [concrete]
-// CHECK:STDOUT:   %Op.f60: %Op.type.b65 = struct_value () [concrete]
+// CHECK:STDOUT:   %T.as.Destroy.impl.Op.type.b65: type = fn_type @T.as.Destroy.impl.Op, @T.as.Destroy.impl(%AdaptCopyable) [concrete]
+// CHECK:STDOUT:   %T.as.Destroy.impl.Op.f60: %T.as.Destroy.impl.Op.type.b65 = struct_value () [concrete]
 // CHECK:STDOUT:   %ptr.4c1: type = ptr_type %AdaptCopyable [concrete]
-// CHECK:STDOUT:   %Op.specific_fn.e4c: <specific function> = specific_function %Op.f60, @Op.1(%AdaptCopyable) [concrete]
+// CHECK:STDOUT:   %T.as.Destroy.impl.Op.specific_fn.e4c: <specific function> = specific_function %T.as.Destroy.impl.Op.f60, @T.as.Destroy.impl.Op(%AdaptCopyable) [concrete]
 // CHECK:STDOUT:   %UInt.type: type = generic_class_type @UInt [concrete]
 // CHECK:STDOUT:   %UInt.generic: %UInt.type = struct_value () [concrete]
 // CHECK:STDOUT:   %u32: type = class_type @UInt, @UInt(%int_32) [concrete]
@@ -152,9 +152,9 @@ fn InTuple(c: (AdaptStruct, u32)) -> (AdaptStruct, u32) {
 // CHECK:STDOUT:   %InTuple.type: type = fn_type @InTuple [concrete]
 // CHECK:STDOUT:   %InTuple: %InTuple.type = struct_value () [concrete]
 // CHECK:STDOUT:   %ptr.c30: type = ptr_type %tuple.type.2a3 [concrete]
-// CHECK:STDOUT:   %Op.type.f33: type = fn_type @Op.1, @Destroy.impl(%tuple.type.2a3) [concrete]
-// CHECK:STDOUT:   %Op.f7d: %Op.type.f33 = struct_value () [concrete]
-// CHECK:STDOUT:   %Op.specific_fn.2af: <specific function> = specific_function %Op.f7d, @Op.1(%tuple.type.2a3) [concrete]
+// CHECK:STDOUT:   %T.as.Destroy.impl.Op.type.f33: type = fn_type @T.as.Destroy.impl.Op, @T.as.Destroy.impl(%tuple.type.2a3) [concrete]
+// CHECK:STDOUT:   %T.as.Destroy.impl.Op.f7d: %T.as.Destroy.impl.Op.type.f33 = struct_value () [concrete]
+// CHECK:STDOUT:   %T.as.Destroy.impl.Op.specific_fn.2af: <specific function> = specific_function %T.as.Destroy.impl.Op.f7d, @T.as.Destroy.impl.Op(%tuple.type.2a3) [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -241,11 +241,11 @@ fn InTuple(c: (AdaptStruct, u32)) -> (AdaptStruct, u32) {
 // CHECK:STDOUT:   %d: ref %AdaptCopyable = bind_name d, %d.var
 // CHECK:STDOUT:   %d.ref: ref %AdaptCopyable = name_ref d, %d
 // CHECK:STDOUT:   %.loc12: %AdaptCopyable = bind_value %d.ref
-// CHECK:STDOUT:   %Op.bound: <bound method> = bound_method %d.var, constants.%Op.f60
-// CHECK:STDOUT:   %Op.specific_fn: <specific function> = specific_function constants.%Op.f60, @Op.1(constants.%AdaptCopyable) [concrete = constants.%Op.specific_fn.e4c]
-// CHECK:STDOUT:   %bound_method: <bound method> = bound_method %d.var, %Op.specific_fn
+// CHECK:STDOUT:   %T.as.Destroy.impl.Op.bound: <bound method> = bound_method %d.var, constants.%T.as.Destroy.impl.Op.f60
+// CHECK:STDOUT:   %T.as.Destroy.impl.Op.specific_fn: <specific function> = specific_function constants.%T.as.Destroy.impl.Op.f60, @T.as.Destroy.impl.Op(constants.%AdaptCopyable) [concrete = constants.%T.as.Destroy.impl.Op.specific_fn.e4c]
+// CHECK:STDOUT:   %bound_method: <bound method> = bound_method %d.var, %T.as.Destroy.impl.Op.specific_fn
 // CHECK:STDOUT:   %addr: %ptr.4c1 = addr_of %d.var
-// CHECK:STDOUT:   %no_op: init %empty_tuple.type = call %bound_method(%addr)
+// CHECK:STDOUT:   %T.as.Destroy.impl.Op.call: init %empty_tuple.type = call %bound_method(%addr)
 // CHECK:STDOUT:   return %.loc12
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -285,11 +285,11 @@ fn InTuple(c: (AdaptStruct, u32)) -> (AdaptStruct, u32) {
 // CHECK:STDOUT:   %.loc17_10.4: init %u32 = initialize_from %.loc17_10.3 to %tuple.elem1.loc17_10.2
 // CHECK:STDOUT:   %.loc17_10.5: init %tuple.type.2a3 = tuple_init (%.loc17_10.2, %.loc17_10.4) to %return
 // CHECK:STDOUT:   %.loc17_11: init %tuple.type.2a3 = converted %d.ref, %.loc17_10.5
-// CHECK:STDOUT:   %Op.bound: <bound method> = bound_method %d.var, constants.%Op.f7d
-// CHECK:STDOUT:   %Op.specific_fn: <specific function> = specific_function constants.%Op.f7d, @Op.1(constants.%tuple.type.2a3) [concrete = constants.%Op.specific_fn.2af]
-// CHECK:STDOUT:   %bound_method: <bound method> = bound_method %d.var, %Op.specific_fn
+// CHECK:STDOUT:   %T.as.Destroy.impl.Op.bound: <bound method> = bound_method %d.var, constants.%T.as.Destroy.impl.Op.f7d
+// CHECK:STDOUT:   %T.as.Destroy.impl.Op.specific_fn: <specific function> = specific_function constants.%T.as.Destroy.impl.Op.f7d, @T.as.Destroy.impl.Op(constants.%tuple.type.2a3) [concrete = constants.%T.as.Destroy.impl.Op.specific_fn.2af]
+// CHECK:STDOUT:   %bound_method: <bound method> = bound_method %d.var, %T.as.Destroy.impl.Op.specific_fn
 // CHECK:STDOUT:   %addr: %ptr.c30 = addr_of %d.var
-// CHECK:STDOUT:   %no_op: init %empty_tuple.type = call %bound_method(%addr)
+// CHECK:STDOUT:   %T.as.Destroy.impl.Op.call: init %empty_tuple.type = call %bound_method(%addr)
 // CHECK:STDOUT:   return %.loc17_11 to %return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -309,10 +309,10 @@ fn InTuple(c: (AdaptStruct, u32)) -> (AdaptStruct, u32) {
 // CHECK:STDOUT:   %F.type: type = fn_type @F [concrete]
 // CHECK:STDOUT:   %F: %F.type = struct_value () [concrete]
 // CHECK:STDOUT:   %Destroy.type: type = facet_type <@Destroy> [concrete]
-// CHECK:STDOUT:   %Op.type.0f1: type = fn_type @Op.1, @Destroy.impl(%AdaptTuple) [concrete]
-// CHECK:STDOUT:   %Op.621: %Op.type.0f1 = struct_value () [concrete]
+// CHECK:STDOUT:   %T.as.Destroy.impl.Op.type.0f1: type = fn_type @T.as.Destroy.impl.Op, @T.as.Destroy.impl(%AdaptTuple) [concrete]
+// CHECK:STDOUT:   %T.as.Destroy.impl.Op.621: %T.as.Destroy.impl.Op.type.0f1 = struct_value () [concrete]
 // CHECK:STDOUT:   %ptr.ca3: type = ptr_type %AdaptTuple [concrete]
-// CHECK:STDOUT:   %Op.specific_fn.283: <specific function> = specific_function %Op.621, @Op.1(%AdaptTuple) [concrete]
+// CHECK:STDOUT:   %T.as.Destroy.impl.Op.specific_fn.283: <specific function> = specific_function %T.as.Destroy.impl.Op.621, @T.as.Destroy.impl.Op(%AdaptTuple) [concrete]
 // CHECK:STDOUT:   %UInt.type: type = generic_class_type @UInt [concrete]
 // CHECK:STDOUT:   %UInt.generic: %UInt.type = struct_value () [concrete]
 // CHECK:STDOUT:   %u32: type = class_type @UInt, @UInt(%int_32) [concrete]
@@ -320,10 +320,10 @@ fn InTuple(c: (AdaptStruct, u32)) -> (AdaptStruct, u32) {
 // CHECK:STDOUT:   %pattern_type.c9e: type = pattern_type %tuple.type.f69 [concrete]
 // CHECK:STDOUT:   %InTuple.type: type = fn_type @InTuple [concrete]
 // CHECK:STDOUT:   %InTuple: %InTuple.type = struct_value () [concrete]
-// CHECK:STDOUT:   %Op.type.390: type = fn_type @Op.1, @Destroy.impl(%tuple.type.f69) [concrete]
-// CHECK:STDOUT:   %Op.d9f: %Op.type.390 = struct_value () [concrete]
+// CHECK:STDOUT:   %T.as.Destroy.impl.Op.type.390: type = fn_type @T.as.Destroy.impl.Op, @T.as.Destroy.impl(%tuple.type.f69) [concrete]
+// CHECK:STDOUT:   %T.as.Destroy.impl.Op.d9f: %T.as.Destroy.impl.Op.type.390 = struct_value () [concrete]
 // CHECK:STDOUT:   %ptr.ed5: type = ptr_type %tuple.type.f69 [concrete]
-// CHECK:STDOUT:   %Op.specific_fn.20d: <specific function> = specific_function %Op.d9f, @Op.1(%tuple.type.f69) [concrete]
+// CHECK:STDOUT:   %T.as.Destroy.impl.Op.specific_fn.20d: <specific function> = specific_function %T.as.Destroy.impl.Op.d9f, @T.as.Destroy.impl.Op(%tuple.type.f69) [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -437,11 +437,11 @@ fn InTuple(c: (AdaptStruct, u32)) -> (AdaptStruct, u32) {
 // CHECK:STDOUT:   %.loc10_11.7: init %tuple.type.d07 = tuple_init (%.loc10_11.4, %.loc10_11.6) to %.loc10_11.3
 // CHECK:STDOUT:   %.loc10_11.8: init %AdaptTuple = as_compatible %.loc10_11.7
 // CHECK:STDOUT:   %.loc10_11.9: init %AdaptTuple = converted %d.ref, %.loc10_11.8
-// CHECK:STDOUT:   %Op.bound: <bound method> = bound_method %d.var, constants.%Op.621
-// CHECK:STDOUT:   %Op.specific_fn: <specific function> = specific_function constants.%Op.621, @Op.1(constants.%AdaptTuple) [concrete = constants.%Op.specific_fn.283]
-// CHECK:STDOUT:   %bound_method: <bound method> = bound_method %d.var, %Op.specific_fn
+// CHECK:STDOUT:   %T.as.Destroy.impl.Op.bound: <bound method> = bound_method %d.var, constants.%T.as.Destroy.impl.Op.621
+// CHECK:STDOUT:   %T.as.Destroy.impl.Op.specific_fn: <specific function> = specific_function constants.%T.as.Destroy.impl.Op.621, @T.as.Destroy.impl.Op(constants.%AdaptTuple) [concrete = constants.%T.as.Destroy.impl.Op.specific_fn.283]
+// CHECK:STDOUT:   %bound_method: <bound method> = bound_method %d.var, %T.as.Destroy.impl.Op.specific_fn
 // CHECK:STDOUT:   %addr: %ptr.ca3 = addr_of %d.var
-// CHECK:STDOUT:   %no_op: init %empty_tuple.type = call %bound_method(%addr)
+// CHECK:STDOUT:   %T.as.Destroy.impl.Op.call: init %empty_tuple.type = call %bound_method(%addr)
 // CHECK:STDOUT:   return %.loc10_11.9 to %return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -502,11 +502,11 @@ fn InTuple(c: (AdaptStruct, u32)) -> (AdaptStruct, u32) {
 // CHECK:STDOUT:   %.loc15_10.11: init %u32 = initialize_from %.loc15_10.10 to %tuple.elem1.loc15_10.4
 // CHECK:STDOUT:   %.loc15_10.12: init %tuple.type.f69 = tuple_init (%.loc15_10.9, %.loc15_10.11) to %return
 // CHECK:STDOUT:   %.loc15_11: init %tuple.type.f69 = converted %d.ref, %.loc15_10.12
-// CHECK:STDOUT:   %Op.bound: <bound method> = bound_method %d.var, constants.%Op.d9f
-// CHECK:STDOUT:   %Op.specific_fn: <specific function> = specific_function constants.%Op.d9f, @Op.1(constants.%tuple.type.f69) [concrete = constants.%Op.specific_fn.20d]
-// CHECK:STDOUT:   %bound_method: <bound method> = bound_method %d.var, %Op.specific_fn
+// CHECK:STDOUT:   %T.as.Destroy.impl.Op.bound: <bound method> = bound_method %d.var, constants.%T.as.Destroy.impl.Op.d9f
+// CHECK:STDOUT:   %T.as.Destroy.impl.Op.specific_fn: <specific function> = specific_function constants.%T.as.Destroy.impl.Op.d9f, @T.as.Destroy.impl.Op(constants.%tuple.type.f69) [concrete = constants.%T.as.Destroy.impl.Op.specific_fn.20d]
+// CHECK:STDOUT:   %bound_method: <bound method> = bound_method %d.var, %T.as.Destroy.impl.Op.specific_fn
 // CHECK:STDOUT:   %addr: %ptr.ed5 = addr_of %d.var
-// CHECK:STDOUT:   %no_op: init %empty_tuple.type = call %bound_method(%addr)
+// CHECK:STDOUT:   %T.as.Destroy.impl.Op.call: init %empty_tuple.type = call %bound_method(%addr)
 // CHECK:STDOUT:   return %.loc15_11 to %return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -522,10 +522,10 @@ fn InTuple(c: (AdaptStruct, u32)) -> (AdaptStruct, u32) {
 // CHECK:STDOUT:   %G.type: type = fn_type @G [concrete]
 // CHECK:STDOUT:   %G: %G.type = struct_value () [concrete]
 // CHECK:STDOUT:   %Destroy.type: type = facet_type <@Destroy> [concrete]
-// CHECK:STDOUT:   %Op.type.b79: type = fn_type @Op.1, @Destroy.impl(%AdaptNoncopyable) [concrete]
-// CHECK:STDOUT:   %Op.77f: %Op.type.b79 = struct_value () [concrete]
+// CHECK:STDOUT:   %T.as.Destroy.impl.Op.type.b79: type = fn_type @T.as.Destroy.impl.Op, @T.as.Destroy.impl(%AdaptNoncopyable) [concrete]
+// CHECK:STDOUT:   %T.as.Destroy.impl.Op.77f: %T.as.Destroy.impl.Op.type.b79 = struct_value () [concrete]
 // CHECK:STDOUT:   %ptr.ed9: type = ptr_type %AdaptNoncopyable [concrete]
-// CHECK:STDOUT:   %Op.specific_fn: <specific function> = specific_function %Op.77f, @Op.1(%AdaptNoncopyable) [concrete]
+// CHECK:STDOUT:   %T.as.Destroy.impl.Op.specific_fn: <specific function> = specific_function %T.as.Destroy.impl.Op.77f, @T.as.Destroy.impl.Op(%AdaptNoncopyable) [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -595,11 +595,11 @@ fn InTuple(c: (AdaptStruct, u32)) -> (AdaptStruct, u32) {
 // CHECK:STDOUT:   %b: ref %AdaptNoncopyable = bind_name b, %b.var
 // CHECK:STDOUT:   %b.ref: ref %AdaptNoncopyable = name_ref b, %b
 // CHECK:STDOUT:   %.loc22: %AdaptNoncopyable = bind_value %b.ref
-// CHECK:STDOUT:   %Op.bound: <bound method> = bound_method %b.var, constants.%Op.77f
-// CHECK:STDOUT:   %Op.specific_fn: <specific function> = specific_function constants.%Op.77f, @Op.1(constants.%AdaptNoncopyable) [concrete = constants.%Op.specific_fn]
-// CHECK:STDOUT:   %bound_method: <bound method> = bound_method %b.var, %Op.specific_fn
+// CHECK:STDOUT:   %T.as.Destroy.impl.Op.bound: <bound method> = bound_method %b.var, constants.%T.as.Destroy.impl.Op.77f
+// CHECK:STDOUT:   %T.as.Destroy.impl.Op.specific_fn: <specific function> = specific_function constants.%T.as.Destroy.impl.Op.77f, @T.as.Destroy.impl.Op(constants.%AdaptNoncopyable) [concrete = constants.%T.as.Destroy.impl.Op.specific_fn]
+// CHECK:STDOUT:   %bound_method: <bound method> = bound_method %b.var, %T.as.Destroy.impl.Op.specific_fn
 // CHECK:STDOUT:   %addr: %ptr.ed9 = addr_of %b.var
-// CHECK:STDOUT:   %no_op: init %empty_tuple.type = call %bound_method(%addr)
+// CHECK:STDOUT:   %T.as.Destroy.impl.Op.call: init %empty_tuple.type = call %bound_method(%addr)
 // CHECK:STDOUT:   return <error> to %return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -622,10 +622,10 @@ fn InTuple(c: (AdaptStruct, u32)) -> (AdaptStruct, u32) {
 // CHECK:STDOUT:   %H.type: type = fn_type @H [concrete]
 // CHECK:STDOUT:   %H: %H.type = struct_value () [concrete]
 // CHECK:STDOUT:   %Destroy.type: type = facet_type <@Destroy> [concrete]
-// CHECK:STDOUT:   %Op.type.b45: type = fn_type @Op.1, @Destroy.impl(%AdaptNoncopyableIndirect) [concrete]
-// CHECK:STDOUT:   %Op.003: %Op.type.b45 = struct_value () [concrete]
+// CHECK:STDOUT:   %T.as.Destroy.impl.Op.type.b45: type = fn_type @T.as.Destroy.impl.Op, @T.as.Destroy.impl(%AdaptNoncopyableIndirect) [concrete]
+// CHECK:STDOUT:   %T.as.Destroy.impl.Op.003: %T.as.Destroy.impl.Op.type.b45 = struct_value () [concrete]
 // CHECK:STDOUT:   %ptr.921: type = ptr_type %AdaptNoncopyableIndirect [concrete]
-// CHECK:STDOUT:   %Op.specific_fn: <specific function> = specific_function %Op.003, @Op.1(%AdaptNoncopyableIndirect) [concrete]
+// CHECK:STDOUT:   %T.as.Destroy.impl.Op.specific_fn: <specific function> = specific_function %T.as.Destroy.impl.Op.003, @T.as.Destroy.impl.Op(%AdaptNoncopyableIndirect) [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -716,11 +716,11 @@ fn InTuple(c: (AdaptStruct, u32)) -> (AdaptStruct, u32) {
 // CHECK:STDOUT:   %.loc28_11.4: init %i32 = initialize_from %.loc28_11.2 to %tuple.elem0.loc28_11.2
 // CHECK:STDOUT:   %tuple.elem1.loc28: ref %Noncopyable = tuple_access %.loc28_11.1, element1
 // CHECK:STDOUT:   %.loc28_11.5: %Noncopyable = bind_value %tuple.elem1.loc28
-// CHECK:STDOUT:   %Op.bound: <bound method> = bound_method %b.var, constants.%Op.003
-// CHECK:STDOUT:   %Op.specific_fn: <specific function> = specific_function constants.%Op.003, @Op.1(constants.%AdaptNoncopyableIndirect) [concrete = constants.%Op.specific_fn]
-// CHECK:STDOUT:   %bound_method: <bound method> = bound_method %b.var, %Op.specific_fn
+// CHECK:STDOUT:   %T.as.Destroy.impl.Op.bound: <bound method> = bound_method %b.var, constants.%T.as.Destroy.impl.Op.003
+// CHECK:STDOUT:   %T.as.Destroy.impl.Op.specific_fn: <specific function> = specific_function constants.%T.as.Destroy.impl.Op.003, @T.as.Destroy.impl.Op(constants.%AdaptNoncopyableIndirect) [concrete = constants.%T.as.Destroy.impl.Op.specific_fn]
+// CHECK:STDOUT:   %bound_method: <bound method> = bound_method %b.var, %T.as.Destroy.impl.Op.specific_fn
 // CHECK:STDOUT:   %addr: %ptr.921 = addr_of %b.var
-// CHECK:STDOUT:   %no_op: init %empty_tuple.type = call %bound_method(%addr)
+// CHECK:STDOUT:   %T.as.Destroy.impl.Op.call: init %empty_tuple.type = call %bound_method(%addr)
 // CHECK:STDOUT:   return <error> to %return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -739,10 +739,10 @@ fn InTuple(c: (AdaptStruct, u32)) -> (AdaptStruct, u32) {
 // CHECK:STDOUT:   %I.type: type = fn_type @I [concrete]
 // CHECK:STDOUT:   %I: %I.type = struct_value () [concrete]
 // CHECK:STDOUT:   %Destroy.type: type = facet_type <@Destroy> [concrete]
-// CHECK:STDOUT:   %Op.type.38c: type = fn_type @Op.1, @Destroy.impl(%AdaptStruct) [concrete]
-// CHECK:STDOUT:   %Op.d16: %Op.type.38c = struct_value () [concrete]
+// CHECK:STDOUT:   %T.as.Destroy.impl.Op.type.38c: type = fn_type @T.as.Destroy.impl.Op, @T.as.Destroy.impl(%AdaptStruct) [concrete]
+// CHECK:STDOUT:   %T.as.Destroy.impl.Op.d16: %T.as.Destroy.impl.Op.type.38c = struct_value () [concrete]
 // CHECK:STDOUT:   %ptr.e10: type = ptr_type %AdaptStruct [concrete]
-// CHECK:STDOUT:   %Op.specific_fn.ad6: <specific function> = specific_function %Op.d16, @Op.1(%AdaptStruct) [concrete]
+// CHECK:STDOUT:   %T.as.Destroy.impl.Op.specific_fn.ad6: <specific function> = specific_function %T.as.Destroy.impl.Op.d16, @T.as.Destroy.impl.Op(%AdaptStruct) [concrete]
 // CHECK:STDOUT:   %UInt.type: type = generic_class_type @UInt [concrete]
 // CHECK:STDOUT:   %UInt.generic: %UInt.type = struct_value () [concrete]
 // CHECK:STDOUT:   %u32: type = class_type @UInt, @UInt(%int_32) [concrete]
@@ -751,10 +751,10 @@ fn InTuple(c: (AdaptStruct, u32)) -> (AdaptStruct, u32) {
 // CHECK:STDOUT:   %pattern_type.31d: type = pattern_type %tuple.type.80b [concrete]
 // CHECK:STDOUT:   %InTuple.type: type = fn_type @InTuple [concrete]
 // CHECK:STDOUT:   %InTuple: %InTuple.type = struct_value () [concrete]
-// CHECK:STDOUT:   %Op.type.628: type = fn_type @Op.1, @Destroy.impl(%tuple.type.80b) [concrete]
-// CHECK:STDOUT:   %Op.8ff: %Op.type.628 = struct_value () [concrete]
+// CHECK:STDOUT:   %T.as.Destroy.impl.Op.type.628: type = fn_type @T.as.Destroy.impl.Op, @T.as.Destroy.impl(%tuple.type.80b) [concrete]
+// CHECK:STDOUT:   %T.as.Destroy.impl.Op.8ff: %T.as.Destroy.impl.Op.type.628 = struct_value () [concrete]
 // CHECK:STDOUT:   %ptr.b09: type = ptr_type %tuple.type.80b [concrete]
-// CHECK:STDOUT:   %Op.specific_fn.301: <specific function> = specific_function %Op.8ff, @Op.1(%tuple.type.80b) [concrete]
+// CHECK:STDOUT:   %T.as.Destroy.impl.Op.specific_fn.301: <specific function> = specific_function %T.as.Destroy.impl.Op.8ff, @T.as.Destroy.impl.Op(%tuple.type.80b) [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -867,11 +867,11 @@ fn InTuple(c: (AdaptStruct, u32)) -> (AdaptStruct, u32) {
 // CHECK:STDOUT:   %.loc10_11.11: init %struct_type.e.f = struct_init (%.loc10_11.6, %.loc10_11.10) to %.loc10_11.4
 // CHECK:STDOUT:   %.loc10_11.12: init %AdaptStruct = as_compatible %.loc10_11.11
 // CHECK:STDOUT:   %.loc10_11.13: init %AdaptStruct = converted %h.ref, %.loc10_11.12
-// CHECK:STDOUT:   %Op.bound: <bound method> = bound_method %h.var, constants.%Op.d16
-// CHECK:STDOUT:   %Op.specific_fn: <specific function> = specific_function constants.%Op.d16, @Op.1(constants.%AdaptStruct) [concrete = constants.%Op.specific_fn.ad6]
-// CHECK:STDOUT:   %bound_method: <bound method> = bound_method %h.var, %Op.specific_fn
+// CHECK:STDOUT:   %T.as.Destroy.impl.Op.bound: <bound method> = bound_method %h.var, constants.%T.as.Destroy.impl.Op.d16
+// CHECK:STDOUT:   %T.as.Destroy.impl.Op.specific_fn: <specific function> = specific_function constants.%T.as.Destroy.impl.Op.d16, @T.as.Destroy.impl.Op(constants.%AdaptStruct) [concrete = constants.%T.as.Destroy.impl.Op.specific_fn.ad6]
+// CHECK:STDOUT:   %bound_method: <bound method> = bound_method %h.var, %T.as.Destroy.impl.Op.specific_fn
 // CHECK:STDOUT:   %addr: %ptr.e10 = addr_of %h.var
-// CHECK:STDOUT:   %no_op: init %empty_tuple.type = call %bound_method(%addr)
+// CHECK:STDOUT:   %T.as.Destroy.impl.Op.call: init %empty_tuple.type = call %bound_method(%addr)
 // CHECK:STDOUT:   return %.loc10_11.13 to %return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -932,11 +932,11 @@ fn InTuple(c: (AdaptStruct, u32)) -> (AdaptStruct, u32) {
 // CHECK:STDOUT:   %.loc15_10.15: init %u32 = initialize_from %.loc15_10.14 to %tuple.elem1.loc15_10.2
 // CHECK:STDOUT:   %.loc15_10.16: init %tuple.type.80b = tuple_init (%.loc15_10.13, %.loc15_10.15) to %return
 // CHECK:STDOUT:   %.loc15_11: init %tuple.type.80b = converted %d.ref, %.loc15_10.16
-// CHECK:STDOUT:   %Op.bound: <bound method> = bound_method %d.var, constants.%Op.8ff
-// CHECK:STDOUT:   %Op.specific_fn: <specific function> = specific_function constants.%Op.8ff, @Op.1(constants.%tuple.type.80b) [concrete = constants.%Op.specific_fn.301]
-// CHECK:STDOUT:   %bound_method: <bound method> = bound_method %d.var, %Op.specific_fn
+// CHECK:STDOUT:   %T.as.Destroy.impl.Op.bound: <bound method> = bound_method %d.var, constants.%T.as.Destroy.impl.Op.8ff
+// CHECK:STDOUT:   %T.as.Destroy.impl.Op.specific_fn: <specific function> = specific_function constants.%T.as.Destroy.impl.Op.8ff, @T.as.Destroy.impl.Op(constants.%tuple.type.80b) [concrete = constants.%T.as.Destroy.impl.Op.specific_fn.301]
+// CHECK:STDOUT:   %bound_method: <bound method> = bound_method %d.var, %T.as.Destroy.impl.Op.specific_fn
 // CHECK:STDOUT:   %addr: %ptr.b09 = addr_of %d.var
-// CHECK:STDOUT:   %no_op: init %empty_tuple.type = call %bound_method(%addr)
+// CHECK:STDOUT:   %T.as.Destroy.impl.Op.call: init %empty_tuple.type = call %bound_method(%addr)
 // CHECK:STDOUT:   return %.loc15_11 to %return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

@@ -109,9 +109,9 @@ fn F() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: !if.expr.else:
 // CHECK:STDOUT:   %int_64: Core.IntLiteral = int_value 64 [concrete = constants.%int_64]
-// CHECK:STDOUT:   %float.make_type: init type = call constants.%Float(%int_64) [concrete = f64]
-// CHECK:STDOUT:   %.loc6_24.1: type = value_of_initializer %float.make_type [concrete = f64]
-// CHECK:STDOUT:   %.loc6_24.2: type = converted %float.make_type, %.loc6_24.1 [concrete = f64]
+// CHECK:STDOUT:   %Float.call: init type = call constants.%Float(%int_64) [concrete = f64]
+// CHECK:STDOUT:   %.loc6_24.1: type = value_of_initializer %Float.call [concrete = f64]
+// CHECK:STDOUT:   %.loc6_24.2: type = converted %Float.call, %.loc6_24.1 [concrete = f64]
 // CHECK:STDOUT:   br !if.expr.result(%.loc6_24.2)
 // CHECK:STDOUT:
 // CHECK:STDOUT: !if.expr.result:
@@ -146,9 +146,9 @@ fn F() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: !if.expr.else:
 // CHECK:STDOUT:   %int_64: Core.IntLiteral = int_value 64 [concrete = constants.%int_64]
-// CHECK:STDOUT:   %float.make_type: init type = call constants.%Float(%int_64) [concrete = f64]
-// CHECK:STDOUT:   %.loc6_24.1: type = value_of_initializer %float.make_type [concrete = f64]
-// CHECK:STDOUT:   %.loc6_24.2: type = converted %float.make_type, %.loc6_24.1 [concrete = f64]
+// CHECK:STDOUT:   %Float.call: init type = call constants.%Float(%int_64) [concrete = f64]
+// CHECK:STDOUT:   %.loc6_24.1: type = value_of_initializer %Float.call [concrete = f64]
+// CHECK:STDOUT:   %.loc6_24.2: type = converted %Float.call, %.loc6_24.1 [concrete = f64]
 // CHECK:STDOUT:   br !if.expr.result(%.loc6_24.2)
 // CHECK:STDOUT:
 // CHECK:STDOUT: !if.expr.result:

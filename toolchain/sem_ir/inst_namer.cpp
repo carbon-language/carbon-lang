@@ -18,7 +18,6 @@
 #include "toolchain/base/value_ids.h"
 #include "toolchain/lex/tokenized_buffer.h"
 #include "toolchain/parse/tree.h"
-#include "toolchain/sem_ir/builtin_function_kind.h"
 #include "toolchain/sem_ir/entity_with_params_base.h"
 #include "toolchain/sem_ir/function.h"
 #include "toolchain/sem_ir/ids.h"
@@ -88,10 +87,16 @@ InstNamer::InstNamer(const File* sem_ir) : sem_ir_(sem_ir) {
   // We process the stack between each large block in order to reduce the
   // temporary size of the stack.
   auto process_stack = [&] {
-    while (!stack_.empty()) {
-      auto [scope_id, inst_id] = stack_.pop_back_val();
-      NamingContext context(this, scope_id, inst_id);
-      context.NameInst();
+    while (!inst_stack_.empty() || !inst_block_stack_.empty()) {
+      if (inst_stack_.empty()) {
+        auto [scope_id, block_id] = inst_block_stack_.pop_back_val();
+        PushBlockInsts(scope_id, sem_ir_->inst_blocks().Get(block_id));
+      }
+      while (!inst_stack_.empty()) {
+        auto [scope_id, inst_id] = inst_stack_.pop_back_val();
+        NamingContext context(this, scope_id, inst_id);
+        context.NameInst();
+      }
     }
   };
 
@@ -175,6 +180,9 @@ auto InstNamer::GetScopeName(ScopeId scope) const -> std::string {
 auto InstNamer::GetUnscopedNameFor(InstId inst_id) const -> llvm::StringRef {
   if (!inst_id.has_value()) {
     return "";
+  }
+  if (IsSingletonInstId(inst_id)) {
+    return sem_ir_->insts().Get(inst_id).kind().ir_name();
   }
   const auto& inst_name = insts_[inst_id.index].second;
   return inst_name ? inst_name.GetFullName() : "";
@@ -452,7 +460,7 @@ auto InstNamer::AddBlockLabel(ScopeId scope_id, LocId loc_id, AnyBranch branch)
 
 auto InstNamer::PushBlockId(ScopeId scope_id, InstBlockId block_id) -> void {
   if (block_id.has_value()) {
-    PushBlockInsts(scope_id, sem_ir_->inst_blocks().Get(block_id));
+    inst_block_stack_.push_back({scope_id, block_id});
   }
 }
 
@@ -460,7 +468,7 @@ auto InstNamer::PushBlockInsts(ScopeId scope_id,
                                llvm::ArrayRef<InstId> inst_ids) -> void {
   for (auto inst_id : llvm::reverse(inst_ids)) {
     if (inst_id.has_value() && !IsSingletonInstId(inst_id)) {
-      stack_.push_back(std::make_pair(scope_id, inst_id));
+      inst_stack_.push_back(std::make_pair(scope_id, inst_id));
     }
   }
 }
@@ -504,12 +512,45 @@ auto InstNamer::PushEntity(ClassId class_id, ScopeId scope_id, Scope& scope)
   PushBlockId(scope_id, class_info.pattern_block_id);
 }
 
+auto InstNamer::GetNameForParentNameScope(NameScopeId name_scope_id)
+    -> llvm::StringRef {
+  if (!name_scope_id.has_value()) {
+    return "";
+  }
+
+  auto scope_inst =
+      sem_ir_->insts().Get(sem_ir_->name_scopes().Get(name_scope_id).inst_id());
+  CARBON_KIND_SWITCH(scope_inst) {
+    case CARBON_KIND(ClassDecl class_decl): {
+      return MaybePushEntity(class_decl.class_id);
+    }
+    case CARBON_KIND(ImplDecl impl): {
+      return MaybePushEntity(impl.impl_id);
+    }
+    case CARBON_KIND(InterfaceDecl interface): {
+      return MaybePushEntity(interface.interface_id);
+    }
+    case SemIR::Namespace::Kind: {
+      // Only prefix type scopes.
+      return "";
+    }
+    default: {
+      return "<unsupported scope>";
+    }
+  }
+}
+
 auto InstNamer::PushEntity(FunctionId function_id, ScopeId scope_id,
                            Scope& scope) -> void {
   const auto& fn = sem_ir_->functions().Get(function_id);
   LocId fn_loc(fn.latest_decl_id());
+
+  auto scope_prefix = GetNameForParentNameScope(fn.parent_scope_id);
+
   scope.name = globals_.AllocateName(
-      *this, fn_loc, sem_ir_->names().GetIRBaseName(fn.name_id).str());
+      *this, fn_loc,
+      llvm::formatv("{0}{1}{2}", scope_prefix, scope_prefix.empty() ? "" : ".",
+                    sem_ir_->names().GetIRBaseName(fn.name_id)));
   if (!fn.body_block_ids.empty()) {
     AddBlockLabel(scope_id, fn.body_block_ids.front(), "entry", fn_loc);
   }
@@ -528,18 +569,27 @@ auto InstNamer::PushEntity(ImplId impl_id, ScopeId scope_id, Scope& scope)
   const auto& impl = sem_ir_->impls().Get(impl_id);
   auto impl_fingerprint = fingerprinter_.GetOrCompute(sem_ir_, impl_id);
 
-  // TODO: Invent a name based on the self and constraint types.
-  std::string impl_name;
-  if (auto interface_id = impl.interface.interface_id;
-      interface_id.has_value()) {
-    auto interface_info = sem_ir_->interfaces().Get(interface_id);
-    impl_name = llvm::formatv(
-        "{0}.impl",
-        sem_ir_->names().GetIRBaseName(interface_info.name_id).str());
+  llvm::StringRef self_name;
+  auto self_const_id =
+      sem_ir_->constant_values().GetConstantInstId(impl.self_id);
+  if (IsSingletonInstId(self_const_id)) {
+    self_name = sem_ir_->insts().Get(self_const_id).kind().ir_name();
+  } else if (const auto& inst_name = insts_[self_const_id.index].second) {
+    self_name = inst_name.GetBaseName();
   } else {
-    impl_name = "impl";
+    self_name = "<unexpected self>";
   }
-  scope.name = globals_.AllocateName(*this, impl_fingerprint, impl_name);
+
+  llvm::StringRef interface_name;
+  if (impl.interface.interface_id.has_value()) {
+    interface_name = MaybePushEntity(impl.interface.interface_id);
+  } else {
+    interface_name = "<error>";
+  }
+
+  scope.name = globals_.AllocateName(
+      *this, impl_fingerprint,
+      llvm::formatv("{0}.as.{1}.impl", self_name, interface_name));
   AddBlockLabel(scope_id, impl.body_block_id, "impl", impl_fingerprint);
 
   // Push blocks in reverse order.
@@ -571,6 +621,8 @@ auto InstNamer::PushEntity(VtableId vtable_id, ScopeId /*scope_id*/,
   scope.name = globals_.AllocateName(
       *this, vtable_loc,
       sem_ir_->names().GetIRBaseName(class_info.name_id).str() + ".vtable");
+  // TODO: Add support for generic vtables here and elsewhere.
+  // PushGeneric(scope_id, vtable_info.generic_id);
 }
 
 InstNamer::NamingContext::NamingContext(InstNamer* inst_namer,
@@ -708,19 +760,7 @@ auto InstNamer::NamingContext::NameInst() -> void {
         AddInstName("");
         return;
       }
-      const auto& function =
-          sem_ir().functions().Get(callee_function.function_id);
-      auto function_name =
-          inst_namer_->MaybePushEntity(callee_function.function_id);
-      // Name the call's result based on the callee.
-      if (function.builtin_function_kind() != BuiltinFunctionKind::None) {
-        // For a builtin, use the builtin name. Otherwise, we'd typically pick
-        // the name `Op` below, which is probably not very useful.
-        AddInstName(function.builtin_function_kind().name().str());
-        return;
-      }
-
-      AddInstName((function_name + ".call").str());
+      AddEntityNameAndMaybePush(callee_function.function_id, ".call");
       return;
     }
     case CARBON_KIND(ClassDecl inst): {
@@ -910,8 +950,7 @@ auto InstNamer::NamingContext::NameInst() -> void {
       if (const_id.has_value() && const_id.is_concrete()) {
         auto const_inst_id = sem_ir().constant_values().GetInstId(const_id);
         if (!inst_namer_->insts_[const_inst_id.index].second) {
-          inst_namer_->PushBlockInsts(ScopeId::Imports,
-                                      llvm::ArrayRef(const_inst_id));
+          inst_namer_->PushBlockInsts(ScopeId::Imports, const_inst_id);
         }
       }
       return;

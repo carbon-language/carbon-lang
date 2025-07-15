@@ -49,10 +49,10 @@ fn G(o: Outer) {
 // CHECK:STDOUT:   %G.type: type = fn_type @G [concrete]
 // CHECK:STDOUT:   %G: %G.type = struct_value () [concrete]
 // CHECK:STDOUT:   %Destroy.type: type = facet_type <@Destroy> [concrete]
-// CHECK:STDOUT:   %Op.type.9bc: type = fn_type @Op.1, @Destroy.impl(%Inner) [concrete]
-// CHECK:STDOUT:   %Op.754: %Op.type.9bc = struct_value () [concrete]
+// CHECK:STDOUT:   %T.as.Destroy.impl.Op.type.9bc: type = fn_type @T.as.Destroy.impl.Op, @T.as.Destroy.impl(%Inner) [concrete]
+// CHECK:STDOUT:   %T.as.Destroy.impl.Op.754: %T.as.Destroy.impl.Op.type.9bc = struct_value () [concrete]
 // CHECK:STDOUT:   %ptr.36a: type = ptr_type %Inner [concrete]
-// CHECK:STDOUT:   %Op.specific_fn: <specific function> = specific_function %Op.754, @Op.1(%Inner) [concrete]
+// CHECK:STDOUT:   %T.as.Destroy.impl.Op.specific_fn: <specific function> = specific_function %T.as.Destroy.impl.Op.754, @T.as.Destroy.impl.Op(%Inner) [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -147,11 +147,11 @@ fn G(o: Outer) {
 // CHECK:STDOUT:     %Inner.ref: type = name_ref Inner, @Outer.%Inner.decl [concrete = constants.%Inner]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %i: ref %Inner = bind_name i, %i.var
-// CHECK:STDOUT:   %Op.bound: <bound method> = bound_method %i.var, constants.%Op.754
-// CHECK:STDOUT:   %Op.specific_fn: <specific function> = specific_function constants.%Op.754, @Op.1(constants.%Inner) [concrete = constants.%Op.specific_fn]
-// CHECK:STDOUT:   %bound_method: <bound method> = bound_method %i.var, %Op.specific_fn
+// CHECK:STDOUT:   %T.as.Destroy.impl.Op.bound: <bound method> = bound_method %i.var, constants.%T.as.Destroy.impl.Op.754
+// CHECK:STDOUT:   %T.as.Destroy.impl.Op.specific_fn: <specific function> = specific_function constants.%T.as.Destroy.impl.Op.754, @T.as.Destroy.impl.Op(constants.%Inner) [concrete = constants.%T.as.Destroy.impl.Op.specific_fn]
+// CHECK:STDOUT:   %bound_method: <bound method> = bound_method %i.var, %T.as.Destroy.impl.Op.specific_fn
 // CHECK:STDOUT:   %addr: %ptr.36a = addr_of %i.var
-// CHECK:STDOUT:   %no_op: init %empty_tuple.type = call %bound_method(%addr)
+// CHECK:STDOUT:   %T.as.Destroy.impl.Op.call: init %empty_tuple.type = call %bound_method(%addr)
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

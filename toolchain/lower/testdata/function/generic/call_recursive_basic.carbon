@@ -70,43 +70,43 @@ fn M() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: define linkonce_odr i32 @_CF.Main.b88d1103f417c6d4(i32 %x, i32 %count) !dbg !20 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %int.greater = icmp sgt i32 %count, 0, !dbg !21
-// CHECK:STDOUT:   br i1 %int.greater, label %if.then, label %if.else, !dbg !22
+// CHECK:STDOUT:   %Int.as.OrderedWith.impl.Greater.call = icmp sgt i32 %count, 0, !dbg !21
+// CHECK:STDOUT:   br i1 %Int.as.OrderedWith.impl.Greater.call, label %if.then, label %if.else, !dbg !22
 // CHECK:STDOUT:
 // CHECK:STDOUT: if.then:                                          ; preds = %entry
 // CHECK:STDOUT:   ret i32 %x, !dbg !23
 // CHECK:STDOUT:
 // CHECK:STDOUT: if.else:                                          ; preds = %entry
-// CHECK:STDOUT:   %int.sadd = add i32 %count, 1, !dbg !24
-// CHECK:STDOUT:   %F.call = call i32 @_CF.Main.b88d1103f417c6d4(i32 %x, i32 %int.sadd), !dbg !25
+// CHECK:STDOUT:   %Int.as.AddWith.impl.Op.call = add i32 %count, 1, !dbg !24
+// CHECK:STDOUT:   %F.call = call i32 @_CF.Main.b88d1103f417c6d4(i32 %x, i32 %Int.as.AddWith.impl.Op.call), !dbg !25
 // CHECK:STDOUT:   ret i32 %F.call, !dbg !26
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: define linkonce_odr double @_CF.Main.66be507887ceee78(double %x, i32 %count) !dbg !27 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %int.greater = icmp sgt i32 %count, 0, !dbg !28
-// CHECK:STDOUT:   br i1 %int.greater, label %if.then, label %if.else, !dbg !29
+// CHECK:STDOUT:   %Int.as.OrderedWith.impl.Greater.call = icmp sgt i32 %count, 0, !dbg !28
+// CHECK:STDOUT:   br i1 %Int.as.OrderedWith.impl.Greater.call, label %if.then, label %if.else, !dbg !29
 // CHECK:STDOUT:
 // CHECK:STDOUT: if.then:                                          ; preds = %entry
 // CHECK:STDOUT:   ret double %x, !dbg !30
 // CHECK:STDOUT:
 // CHECK:STDOUT: if.else:                                          ; preds = %entry
-// CHECK:STDOUT:   %int.sadd = add i32 %count, 1, !dbg !31
-// CHECK:STDOUT:   %F.call = call double @_CF.Main.66be507887ceee78(double %x, i32 %int.sadd), !dbg !32
+// CHECK:STDOUT:   %Int.as.AddWith.impl.Op.call = add i32 %count, 1, !dbg !31
+// CHECK:STDOUT:   %F.call = call double @_CF.Main.66be507887ceee78(double %x, i32 %Int.as.AddWith.impl.Op.call), !dbg !32
 // CHECK:STDOUT:   ret double %F.call, !dbg !33
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: define linkonce_odr ptr @_CF.Main.e8193710fd35b608(ptr %x, i32 %count) !dbg !34 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %int.greater = icmp sgt i32 %count, 0, !dbg !35
-// CHECK:STDOUT:   br i1 %int.greater, label %if.then, label %if.else, !dbg !36
+// CHECK:STDOUT:   %Int.as.OrderedWith.impl.Greater.call = icmp sgt i32 %count, 0, !dbg !35
+// CHECK:STDOUT:   br i1 %Int.as.OrderedWith.impl.Greater.call, label %if.then, label %if.else, !dbg !36
 // CHECK:STDOUT:
 // CHECK:STDOUT: if.then:                                          ; preds = %entry
 // CHECK:STDOUT:   ret ptr %x, !dbg !37
 // CHECK:STDOUT:
 // CHECK:STDOUT: if.else:                                          ; preds = %entry
-// CHECK:STDOUT:   %int.sadd = add i32 %count, 1, !dbg !38
-// CHECK:STDOUT:   %F.call = call ptr @_CF.Main.e8193710fd35b608(ptr %x, i32 %int.sadd), !dbg !39
+// CHECK:STDOUT:   %Int.as.AddWith.impl.Op.call = add i32 %count, 1, !dbg !38
+// CHECK:STDOUT:   %F.call = call ptr @_CF.Main.e8193710fd35b608(ptr %x, i32 %Int.as.AddWith.impl.Op.call), !dbg !39
 // CHECK:STDOUT:   ret ptr %F.call, !dbg !40
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

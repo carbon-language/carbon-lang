@@ -32,10 +32,10 @@ fn Main() {
 // CHECK:STDOUT:   %Main.type: type = fn_type @Main [concrete]
 // CHECK:STDOUT:   %Main: %Main.type = struct_value () [concrete]
 // CHECK:STDOUT:   %Destroy.type: type = facet_type <@Destroy> [concrete]
-// CHECK:STDOUT:   %Op.type.7e5: type = fn_type @Op.1, @Destroy.impl(%struct_type.v) [concrete]
-// CHECK:STDOUT:   %Op.477: %Op.type.7e5 = struct_value () [concrete]
+// CHECK:STDOUT:   %T.as.Destroy.impl.Op.type.7e5: type = fn_type @T.as.Destroy.impl.Op, @T.as.Destroy.impl(%struct_type.v) [concrete]
+// CHECK:STDOUT:   %T.as.Destroy.impl.Op.477: %T.as.Destroy.impl.Op.type.7e5 = struct_value () [concrete]
 // CHECK:STDOUT:   %ptr.ef9: type = ptr_type %struct_type.v [concrete]
-// CHECK:STDOUT:   %Op.specific_fn: <specific function> = specific_function %Op.477, @Op.1(%struct_type.v) [concrete]
+// CHECK:STDOUT:   %T.as.Destroy.impl.Op.specific_fn: <specific function> = specific_function %T.as.Destroy.impl.Op.477, @T.as.Destroy.impl.Op(%struct_type.v) [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -89,11 +89,11 @@ fn Main() {
 // CHECK:STDOUT:     %struct_type.v: type = struct_type {.v: %empty_tuple.type} [concrete = constants.%struct_type.v]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %y: ref %struct_type.v = bind_name y, %y.var
-// CHECK:STDOUT:   %Op.bound: <bound method> = bound_method %y.var, constants.%Op.477
-// CHECK:STDOUT:   %Op.specific_fn: <specific function> = specific_function constants.%Op.477, @Op.1(constants.%struct_type.v) [concrete = constants.%Op.specific_fn]
-// CHECK:STDOUT:   %bound_method: <bound method> = bound_method %y.var, %Op.specific_fn
+// CHECK:STDOUT:   %T.as.Destroy.impl.Op.bound: <bound method> = bound_method %y.var, constants.%T.as.Destroy.impl.Op.477
+// CHECK:STDOUT:   %T.as.Destroy.impl.Op.specific_fn: <specific function> = specific_function constants.%T.as.Destroy.impl.Op.477, @T.as.Destroy.impl.Op(constants.%struct_type.v) [concrete = constants.%T.as.Destroy.impl.Op.specific_fn]
+// CHECK:STDOUT:   %bound_method: <bound method> = bound_method %y.var, %T.as.Destroy.impl.Op.specific_fn
 // CHECK:STDOUT:   %addr: %ptr.ef9 = addr_of %y.var
-// CHECK:STDOUT:   %no_op: init %empty_tuple.type = call %bound_method(%addr)
+// CHECK:STDOUT:   %T.as.Destroy.impl.Op.call: init %empty_tuple.type = call %bound_method(%addr)
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

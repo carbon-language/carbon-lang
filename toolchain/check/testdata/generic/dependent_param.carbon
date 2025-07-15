@@ -37,8 +37,8 @@ var n: i32 = Outer(i32).Inner(42).Get();
 // CHECK:STDOUT:   %Inner.type.eae: type = generic_class_type @Inner, @Outer(%T) [symbolic]
 // CHECK:STDOUT:   %Inner.generic.137: %Inner.type.eae = struct_value () [symbolic]
 // CHECK:STDOUT:   %Inner.879: type = class_type @Inner, @Inner(%T, %U) [symbolic]
-// CHECK:STDOUT:   %Get.type.889: type = fn_type @Get, @Inner(%T, %U) [symbolic]
-// CHECK:STDOUT:   %Get.118: %Get.type.889 = struct_value () [symbolic]
+// CHECK:STDOUT:   %Inner.Get.type.889: type = fn_type @Inner.Get, @Inner(%T, %U) [symbolic]
+// CHECK:STDOUT:   %Inner.Get.118: %Inner.Get.type.889 = struct_value () [symbolic]
 // CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [concrete]
 // CHECK:STDOUT:   %complete_type.357: <witness> = complete_type_witness %empty_struct_type [concrete]
 // CHECK:STDOUT:   %require_complete.4ae: <witness> = require_complete_type %T [symbolic]
@@ -56,23 +56,23 @@ var n: i32 = Outer(i32).Inner(42).Get();
 // CHECK:STDOUT:   %ImplicitAs.type.cc7: type = generic_interface_type @ImplicitAs [concrete]
 // CHECK:STDOUT:   %ImplicitAs.generic: %ImplicitAs.type.cc7 = struct_value () [concrete]
 // CHECK:STDOUT:   %ImplicitAs.type.205: type = facet_type <@ImplicitAs, @ImplicitAs(%i32)> [concrete]
-// CHECK:STDOUT:   %Convert.type.1b6: type = fn_type @Convert.1, @ImplicitAs(%i32) [concrete]
+// CHECK:STDOUT:   %ImplicitAs.Convert.type.1b6: type = fn_type @ImplicitAs.Convert, @ImplicitAs(%i32) [concrete]
 // CHECK:STDOUT:   %To: Core.IntLiteral = bind_symbolic_name To, 0 [symbolic]
-// CHECK:STDOUT:   %Convert.type.0f9: type = fn_type @Convert.2, @ImplicitAs.impl.4f9(%To) [symbolic]
-// CHECK:STDOUT:   %Convert.f06: %Convert.type.0f9 = struct_value () [symbolic]
-// CHECK:STDOUT:   %ImplicitAs.impl_witness.c75: <witness> = impl_witness imports.%ImplicitAs.impl_witness_table.a2f, @ImplicitAs.impl.4f9(%int_32) [concrete]
-// CHECK:STDOUT:   %Convert.type.035: type = fn_type @Convert.2, @ImplicitAs.impl.4f9(%int_32) [concrete]
-// CHECK:STDOUT:   %Convert.956: %Convert.type.035 = struct_value () [concrete]
+// CHECK:STDOUT:   %Core.IntLiteral.as.ImplicitAs.impl.Convert.type.0f9: type = fn_type @Core.IntLiteral.as.ImplicitAs.impl.Convert, @Core.IntLiteral.as.ImplicitAs.impl(%To) [symbolic]
+// CHECK:STDOUT:   %Core.IntLiteral.as.ImplicitAs.impl.Convert.f06: %Core.IntLiteral.as.ImplicitAs.impl.Convert.type.0f9 = struct_value () [symbolic]
+// CHECK:STDOUT:   %ImplicitAs.impl_witness.c75: <witness> = impl_witness imports.%ImplicitAs.impl_witness_table.a2f, @Core.IntLiteral.as.ImplicitAs.impl(%int_32) [concrete]
+// CHECK:STDOUT:   %Core.IntLiteral.as.ImplicitAs.impl.Convert.type.035: type = fn_type @Core.IntLiteral.as.ImplicitAs.impl.Convert, @Core.IntLiteral.as.ImplicitAs.impl(%int_32) [concrete]
+// CHECK:STDOUT:   %Core.IntLiteral.as.ImplicitAs.impl.Convert.956: %Core.IntLiteral.as.ImplicitAs.impl.Convert.type.035 = struct_value () [concrete]
 // CHECK:STDOUT:   %ImplicitAs.facet: %ImplicitAs.type.205 = facet_value Core.IntLiteral, (%ImplicitAs.impl_witness.c75) [concrete]
-// CHECK:STDOUT:   %.9c3: type = fn_type_with_self_type %Convert.type.1b6, %ImplicitAs.facet [concrete]
-// CHECK:STDOUT:   %Convert.bound: <bound method> = bound_method %int_42.20e, %Convert.956 [concrete]
-// CHECK:STDOUT:   %Convert.specific_fn: <specific function> = specific_function %Convert.956, @Convert.2(%int_32) [concrete]
-// CHECK:STDOUT:   %bound_method: <bound method> = bound_method %int_42.20e, %Convert.specific_fn [concrete]
+// CHECK:STDOUT:   %.9c3: type = fn_type_with_self_type %ImplicitAs.Convert.type.1b6, %ImplicitAs.facet [concrete]
+// CHECK:STDOUT:   %Core.IntLiteral.as.ImplicitAs.impl.Convert.bound: <bound method> = bound_method %int_42.20e, %Core.IntLiteral.as.ImplicitAs.impl.Convert.956 [concrete]
+// CHECK:STDOUT:   %Core.IntLiteral.as.ImplicitAs.impl.Convert.specific_fn: <specific function> = specific_function %Core.IntLiteral.as.ImplicitAs.impl.Convert.956, @Core.IntLiteral.as.ImplicitAs.impl.Convert(%int_32) [concrete]
+// CHECK:STDOUT:   %bound_method: <bound method> = bound_method %int_42.20e, %Core.IntLiteral.as.ImplicitAs.impl.Convert.specific_fn [concrete]
 // CHECK:STDOUT:   %int_42.c68: %i32 = int_value 42 [concrete]
 // CHECK:STDOUT:   %Inner.025: type = class_type @Inner, @Inner(%i32, %int_42.c68) [concrete]
-// CHECK:STDOUT:   %Get.type.512: type = fn_type @Get, @Inner(%i32, %int_42.c68) [concrete]
-// CHECK:STDOUT:   %Get.18c: %Get.type.512 = struct_value () [concrete]
-// CHECK:STDOUT:   %Get.specific_fn: <specific function> = specific_function %Get.18c, @Get(%i32, %int_42.c68) [concrete]
+// CHECK:STDOUT:   %Inner.Get.type.512: type = fn_type @Inner.Get, @Inner(%i32, %int_42.c68) [concrete]
+// CHECK:STDOUT:   %Inner.Get.18c: %Inner.Get.type.512 = struct_value () [concrete]
+// CHECK:STDOUT:   %Inner.Get.specific_fn: <specific function> = specific_function %Inner.Get.18c, @Inner.Get(%i32, %int_42.c68) [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -84,8 +84,8 @@ var n: i32 = Outer(i32).Inner(42).Get();
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.Int: %Int.type = import_ref Core//prelude/parts/int, Int, loaded [concrete = constants.%Int.generic]
 // CHECK:STDOUT:   %Core.ImplicitAs: %ImplicitAs.type.cc7 = import_ref Core//prelude/parts/as, ImplicitAs, loaded [concrete = constants.%ImplicitAs.generic]
-// CHECK:STDOUT:   %Core.import_ref.a5b: @ImplicitAs.impl.4f9.%Convert.type (%Convert.type.0f9) = import_ref Core//prelude/parts/int, loc16_39, loaded [symbolic = @ImplicitAs.impl.4f9.%Convert (constants.%Convert.f06)]
-// CHECK:STDOUT:   %ImplicitAs.impl_witness_table.a2f = impl_witness_table (%Core.import_ref.a5b), @ImplicitAs.impl.4f9 [concrete]
+// CHECK:STDOUT:   %Core.import_ref.a5b: @Core.IntLiteral.as.ImplicitAs.impl.%Core.IntLiteral.as.ImplicitAs.impl.Convert.type (%Core.IntLiteral.as.ImplicitAs.impl.Convert.type.0f9) = import_ref Core//prelude/parts/int, loc16_39, loaded [symbolic = @Core.IntLiteral.as.ImplicitAs.impl.%Core.IntLiteral.as.ImplicitAs.impl.Convert (constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.f06)]
+// CHECK:STDOUT:   %ImplicitAs.impl_witness_table.a2f = impl_witness_table (%Core.import_ref.a5b), @Core.IntLiteral.as.ImplicitAs.impl [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -124,7 +124,7 @@ var n: i32 = Outer(i32).Inner(42).Get();
 // CHECK:STDOUT:       %U.patt: @Inner.%pattern_type (%pattern_type.7dcd0a.1) = symbolic_binding_pattern U, 1 [concrete]
 // CHECK:STDOUT:     } {
 // CHECK:STDOUT:       %T.ref: type = name_ref T, @Outer.%T.loc4_13.2 [symbolic = %T (constants.%T)]
-// CHECK:STDOUT:       %U.loc5_15.1: @Inner.%T (%T) = bind_symbolic_name U, 1 [symbolic = %U.loc5_15.2 (constants.%U)]
+// CHECK:STDOUT:       %U.loc5_15.2: @Inner.%T (%T) = bind_symbolic_name U, 1 [symbolic = %U.loc5_15.1 (constants.%U)]
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %empty_struct_type: type = struct_type {} [concrete = constants.%empty_struct_type]
 // CHECK:STDOUT:     %complete_type: <witness> = complete_type_witness %empty_struct_type [concrete = constants.%complete_type.357]
@@ -137,23 +137,23 @@ var n: i32 = Outer(i32).Inner(42).Get();
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic class @Inner(@Outer.%T.loc4_13.2: type, %U.loc5_15.1: @Inner.%T (%T)) {
+// CHECK:STDOUT: generic class @Inner(@Outer.%T.loc4_13.2: type, %U.loc5_15.2: @Inner.%T (%T)) {
 // CHECK:STDOUT:   %T: type = bind_symbolic_name T, 0 [symbolic = %T (constants.%T)]
-// CHECK:STDOUT:   %U.loc5_15.2: @Inner.%T (%T) = bind_symbolic_name U, 1 [symbolic = %U.loc5_15.2 (constants.%U)]
+// CHECK:STDOUT:   %U.loc5_15.1: @Inner.%T (%T) = bind_symbolic_name U, 1 [symbolic = %U.loc5_15.1 (constants.%U)]
 // CHECK:STDOUT:   %pattern_type: type = pattern_type %T [symbolic = %pattern_type (constants.%pattern_type.7dcd0a.1)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
-// CHECK:STDOUT:   %Get.type: type = fn_type @Get, @Inner(%T, %U.loc5_15.2) [symbolic = %Get.type (constants.%Get.type.889)]
-// CHECK:STDOUT:   %Get: @Inner.%Get.type (%Get.type.889) = struct_value () [symbolic = %Get (constants.%Get.118)]
+// CHECK:STDOUT:   %Inner.Get.type: type = fn_type @Inner.Get, @Inner(%T, %U.loc5_15.1) [symbolic = %Inner.Get.type (constants.%Inner.Get.type.889)]
+// CHECK:STDOUT:   %Inner.Get: @Inner.%Inner.Get.type (%Inner.Get.type.889) = struct_value () [symbolic = %Inner.Get (constants.%Inner.Get.118)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   class {
-// CHECK:STDOUT:     %Get.decl: @Inner.%Get.type (%Get.type.889) = fn_decl @Get [symbolic = @Inner.%Get (constants.%Get.118)] {
-// CHECK:STDOUT:       %return.patt: @Get.%pattern_type (%pattern_type.7dcd0a.1) = return_slot_pattern [concrete]
-// CHECK:STDOUT:       %return.param_patt: @Get.%pattern_type (%pattern_type.7dcd0a.1) = out_param_pattern %return.patt, call_param0 [concrete]
+// CHECK:STDOUT:     %Inner.Get.decl: @Inner.%Inner.Get.type (%Inner.Get.type.889) = fn_decl @Inner.Get [symbolic = @Inner.%Inner.Get (constants.%Inner.Get.118)] {
+// CHECK:STDOUT:       %return.patt: @Inner.Get.%pattern_type (%pattern_type.7dcd0a.1) = return_slot_pattern [concrete]
+// CHECK:STDOUT:       %return.param_patt: @Inner.Get.%pattern_type (%pattern_type.7dcd0a.1) = out_param_pattern %return.patt, call_param0 [concrete]
 // CHECK:STDOUT:     } {
 // CHECK:STDOUT:       %T.ref: type = name_ref T, @Outer.%T.loc4_13.2 [symbolic = %T (constants.%T)]
-// CHECK:STDOUT:       %return.param: ref @Get.%T (%T) = out_param call_param0
-// CHECK:STDOUT:       %return: ref @Get.%T (%T) = return_slot %return.param
+// CHECK:STDOUT:       %return.param: ref @Inner.Get.%T (%T) = out_param call_param0
+// CHECK:STDOUT:       %return: ref @Inner.Get.%T (%T) = return_slot %return.param
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %empty_struct_type: type = struct_type {} [concrete = constants.%empty_struct_type]
 // CHECK:STDOUT:     %complete_type: <witness> = complete_type_witness %empty_struct_type [concrete = constants.%complete_type.357]
@@ -162,22 +162,22 @@ var n: i32 = Outer(i32).Inner(42).Get();
 // CHECK:STDOUT:   !members:
 // CHECK:STDOUT:     .Self = constants.%Inner.879
 // CHECK:STDOUT:     .T = <poisoned>
-// CHECK:STDOUT:     .Get = %Get.decl
+// CHECK:STDOUT:     .Get = %Inner.Get.decl
 // CHECK:STDOUT:     .U = <poisoned>
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic fn @Get(@Outer.%T.loc4_13.2: type, @Inner.%U.loc5_15.1: @Inner.%T (%T)) {
+// CHECK:STDOUT: generic fn @Inner.Get(@Outer.%T.loc4_13.2: type, @Inner.%U.loc5_15.2: @Inner.%T (%T)) {
 // CHECK:STDOUT:   %T: type = bind_symbolic_name T, 0 [symbolic = %T (constants.%T)]
 // CHECK:STDOUT:   %pattern_type: type = pattern_type %T [symbolic = %pattern_type (constants.%pattern_type.7dcd0a.1)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %require_complete: <witness> = require_complete_type %T [symbolic = %require_complete (constants.%require_complete.4ae)]
-// CHECK:STDOUT:   %U: @Get.%T (%T) = bind_symbolic_name U, 1 [symbolic = %U (constants.%U)]
+// CHECK:STDOUT:   %U: @Inner.Get.%T (%T) = bind_symbolic_name U, 1 [symbolic = %U (constants.%U)]
 // CHECK:STDOUT:
-// CHECK:STDOUT:   fn() -> @Get.%T (%T) {
+// CHECK:STDOUT:   fn() -> @Inner.Get.%T (%T) {
 // CHECK:STDOUT:   !entry:
-// CHECK:STDOUT:     %U.ref: @Get.%T (%T) = name_ref U, @Inner.%U.loc5_15.1 [symbolic = %U (constants.%U)]
+// CHECK:STDOUT:     %U.ref: @Inner.Get.%T (%T) = name_ref U, @Inner.%U.loc5_15.2 [symbolic = %U (constants.%U)]
 // CHECK:STDOUT:     return %U.ref
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
@@ -191,19 +191,19 @@ var n: i32 = Outer(i32).Inner(42).Get();
 // CHECK:STDOUT:   %.loc10_24: %Inner.type.bac = specific_constant @Outer.%Inner.decl, @Outer(constants.%i32) [concrete = constants.%Inner.generic.ba0]
 // CHECK:STDOUT:   %Inner.ref: %Inner.type.bac = name_ref Inner, %.loc10_24 [concrete = constants.%Inner.generic.ba0]
 // CHECK:STDOUT:   %int_42: Core.IntLiteral = int_value 42 [concrete = constants.%int_42.20e]
-// CHECK:STDOUT:   %impl.elem0: %.9c3 = impl_witness_access constants.%ImplicitAs.impl_witness.c75, element0 [concrete = constants.%Convert.956]
-// CHECK:STDOUT:   %bound_method.loc10_33.1: <bound method> = bound_method constants.%int_42.20e, %impl.elem0 [concrete = constants.%Convert.bound]
-// CHECK:STDOUT:   %specific_fn: <specific function> = specific_function %impl.elem0, @Convert.2(constants.%int_32) [concrete = constants.%Convert.specific_fn]
+// CHECK:STDOUT:   %impl.elem0: %.9c3 = impl_witness_access constants.%ImplicitAs.impl_witness.c75, element0 [concrete = constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.956]
+// CHECK:STDOUT:   %bound_method.loc10_33.1: <bound method> = bound_method constants.%int_42.20e, %impl.elem0 [concrete = constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.bound]
+// CHECK:STDOUT:   %specific_fn: <specific function> = specific_function %impl.elem0, @Core.IntLiteral.as.ImplicitAs.impl.Convert(constants.%int_32) [concrete = constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.specific_fn]
 // CHECK:STDOUT:   %bound_method.loc10_33.2: <bound method> = bound_method constants.%int_42.20e, %specific_fn [concrete = constants.%bound_method]
-// CHECK:STDOUT:   %int.convert_checked: init %i32 = call %bound_method.loc10_33.2(constants.%int_42.20e) [concrete = constants.%int_42.c68]
-// CHECK:STDOUT:   %.loc10_33.1: %i32 = value_of_initializer %int.convert_checked [concrete = constants.%int_42.c68]
+// CHECK:STDOUT:   %Core.IntLiteral.as.ImplicitAs.impl.Convert.call: init %i32 = call %bound_method.loc10_33.2(constants.%int_42.20e) [concrete = constants.%int_42.c68]
+// CHECK:STDOUT:   %.loc10_33.1: %i32 = value_of_initializer %Core.IntLiteral.as.ImplicitAs.impl.Convert.call [concrete = constants.%int_42.c68]
 // CHECK:STDOUT:   %.loc10_33.2: %i32 = converted constants.%int_42.20e, %.loc10_33.1 [concrete = constants.%int_42.c68]
 // CHECK:STDOUT:   %Inner: type = class_type @Inner, @Inner(constants.%i32, constants.%int_42.c68) [concrete = constants.%Inner.025]
-// CHECK:STDOUT:   %.loc10_34: %Get.type.512 = specific_constant @Inner.%Get.decl, @Inner(constants.%i32, constants.%int_42.c68) [concrete = constants.%Get.18c]
-// CHECK:STDOUT:   %Get.ref: %Get.type.512 = name_ref Get, %.loc10_34 [concrete = constants.%Get.18c]
-// CHECK:STDOUT:   %Get.specific_fn: <specific function> = specific_function %Get.ref, @Get(constants.%i32, constants.%int_42.c68) [concrete = constants.%Get.specific_fn]
-// CHECK:STDOUT:   %Get.call: init %i32 = call %Get.specific_fn()
-// CHECK:STDOUT:   assign file.%n.var, %Get.call
+// CHECK:STDOUT:   %.loc10_34: %Inner.Get.type.512 = specific_constant @Inner.%Inner.Get.decl, @Inner(constants.%i32, constants.%int_42.c68) [concrete = constants.%Inner.Get.18c]
+// CHECK:STDOUT:   %Get.ref: %Inner.Get.type.512 = name_ref Get, %.loc10_34 [concrete = constants.%Inner.Get.18c]
+// CHECK:STDOUT:   %Inner.Get.specific_fn: <specific function> = specific_function %Get.ref, @Inner.Get(constants.%i32, constants.%int_42.c68) [concrete = constants.%Inner.Get.specific_fn]
+// CHECK:STDOUT:   %Inner.Get.call: init %i32 = call %Inner.Get.specific_fn()
+// CHECK:STDOUT:   assign file.%n.var, %Inner.Get.call
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -217,15 +217,15 @@ var n: i32 = Outer(i32).Inner(42).Get();
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Inner(constants.%T, constants.%U) {
 // CHECK:STDOUT:   %T => constants.%T
-// CHECK:STDOUT:   %U.loc5_15.2 => constants.%U
+// CHECK:STDOUT:   %U.loc5_15.1 => constants.%U
 // CHECK:STDOUT:   %pattern_type => constants.%pattern_type.7dcd0a.1
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
-// CHECK:STDOUT:   %Get.type => constants.%Get.type.889
-// CHECK:STDOUT:   %Get => constants.%Get.118
+// CHECK:STDOUT:   %Inner.Get.type => constants.%Inner.Get.type.889
+// CHECK:STDOUT:   %Inner.Get => constants.%Inner.Get.118
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @Get(constants.%T, constants.%U) {
+// CHECK:STDOUT: specific @Inner.Get(constants.%T, constants.%U) {
 // CHECK:STDOUT:   %T => constants.%T
 // CHECK:STDOUT:   %pattern_type => constants.%pattern_type.7dcd0a.1
 // CHECK:STDOUT: }
@@ -240,15 +240,15 @@ var n: i32 = Outer(i32).Inner(42).Get();
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Inner(constants.%i32, constants.%int_42.c68) {
 // CHECK:STDOUT:   %T => constants.%i32
-// CHECK:STDOUT:   %U.loc5_15.2 => constants.%int_42.c68
+// CHECK:STDOUT:   %U.loc5_15.1 => constants.%int_42.c68
 // CHECK:STDOUT:   %pattern_type => constants.%pattern_type.7ce
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
-// CHECK:STDOUT:   %Get.type => constants.%Get.type.512
-// CHECK:STDOUT:   %Get => constants.%Get.18c
+// CHECK:STDOUT:   %Inner.Get.type => constants.%Inner.Get.type.512
+// CHECK:STDOUT:   %Inner.Get => constants.%Inner.Get.18c
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @Get(constants.%i32, constants.%int_42.c68) {
+// CHECK:STDOUT: specific @Inner.Get(constants.%i32, constants.%int_42.c68) {
 // CHECK:STDOUT:   %T => constants.%i32
 // CHECK:STDOUT:   %pattern_type => constants.%pattern_type.7ce
 // CHECK:STDOUT:

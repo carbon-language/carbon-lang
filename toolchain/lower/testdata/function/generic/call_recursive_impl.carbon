@@ -48,13 +48,13 @@ fn Run() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: define void @"_CF.X.Main:I.Main"() !dbg !4 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %print.int = call i32 (ptr, ...) @printf(ptr @printf.int.format, i32 1), !dbg !7
+// CHECK:STDOUT:   %Print.call = call i32 (ptr, ...) @printf(ptr @printf.int.format, i32 1), !dbg !7
 // CHECK:STDOUT:   ret void, !dbg !8
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: define void @"_CF.Y.Main:I.Main"() !dbg !9 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %print.int = call i32 (ptr, ...) @printf(ptr @printf.int.format, i32 2), !dbg !10
+// CHECK:STDOUT:   %Print.call = call i32 (ptr, ...) @printf(ptr @printf.int.format, i32 2), !dbg !10
 // CHECK:STDOUT:   ret void, !dbg !11
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -70,30 +70,30 @@ fn Run() {
 // CHECK:STDOUT: define linkonce_odr i32 @_CG.Main.2c436a64dfc3fd29(i32 %count) !dbg !16 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   call void @"_CF.X.Main:I.Main"(), !dbg !17
-// CHECK:STDOUT:   %int.greater = icmp sgt i32 %count, 0, !dbg !18
-// CHECK:STDOUT:   br i1 %int.greater, label %if.then, label %if.else, !dbg !19
+// CHECK:STDOUT:   %Int.as.OrderedWith.impl.Greater.call = icmp sgt i32 %count, 0, !dbg !18
+// CHECK:STDOUT:   br i1 %Int.as.OrderedWith.impl.Greater.call, label %if.then, label %if.else, !dbg !19
 // CHECK:STDOUT:
 // CHECK:STDOUT: if.then:                                          ; preds = %entry
 // CHECK:STDOUT:   ret i32 %count, !dbg !20
 // CHECK:STDOUT:
 // CHECK:STDOUT: if.else:                                          ; preds = %entry
-// CHECK:STDOUT:   %int.sadd = add i32 %count, 1, !dbg !21
-// CHECK:STDOUT:   %G.call = call i32 @_CG.Main.2c436a64dfc3fd29(i32 %int.sadd), !dbg !22
+// CHECK:STDOUT:   %Int.as.AddWith.impl.Op.call = add i32 %count, 1, !dbg !21
+// CHECK:STDOUT:   %G.call = call i32 @_CG.Main.2c436a64dfc3fd29(i32 %Int.as.AddWith.impl.Op.call), !dbg !22
 // CHECK:STDOUT:   ret i32 %G.call, !dbg !23
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: define linkonce_odr i32 @_CG.Main.c124d41ebc08c32b(i32 %count) !dbg !24 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   call void @"_CF.Y.Main:I.Main"(), !dbg !25
-// CHECK:STDOUT:   %int.greater = icmp sgt i32 %count, 0, !dbg !26
-// CHECK:STDOUT:   br i1 %int.greater, label %if.then, label %if.else, !dbg !27
+// CHECK:STDOUT:   %Int.as.OrderedWith.impl.Greater.call = icmp sgt i32 %count, 0, !dbg !26
+// CHECK:STDOUT:   br i1 %Int.as.OrderedWith.impl.Greater.call, label %if.then, label %if.else, !dbg !27
 // CHECK:STDOUT:
 // CHECK:STDOUT: if.then:                                          ; preds = %entry
 // CHECK:STDOUT:   ret i32 %count, !dbg !28
 // CHECK:STDOUT:
 // CHECK:STDOUT: if.else:                                          ; preds = %entry
-// CHECK:STDOUT:   %int.sadd = add i32 %count, 1, !dbg !29
-// CHECK:STDOUT:   %G.call = call i32 @_CG.Main.c124d41ebc08c32b(i32 %int.sadd), !dbg !30
+// CHECK:STDOUT:   %Int.as.AddWith.impl.Op.call = add i32 %count, 1, !dbg !29
+// CHECK:STDOUT:   %G.call = call i32 @_CG.Main.c124d41ebc08c32b(i32 %Int.as.AddWith.impl.Op.call), !dbg !30
 // CHECK:STDOUT:   ret i32 %G.call, !dbg !31
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

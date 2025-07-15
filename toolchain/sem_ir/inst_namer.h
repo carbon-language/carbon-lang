@@ -63,6 +63,10 @@ class InstNamer {
   // Returns the IR name for the specified scope.
   auto GetScopeName(ScopeId scope) const -> std::string;
 
+  // Returns the name for a parent NameScope. Does not return a name for
+  // namespaces. Used as part of naming functions with their containing scope.
+  auto GetNameForParentNameScope(NameScopeId name_scope_id) -> llvm::StringRef;
+
   // Returns the IR name to use for a function, class, or interface.
   template <typename IdT>
     requires(ScopeIdTypeEnum::Contains<IdT> || std::same_as<IdT, GenericId>)
@@ -229,7 +233,9 @@ class InstNamer {
   std::vector<ScopeId> generic_scopes_;
 
   // The stack of instructions to name.
-  llvm::SmallVector<std::pair<ScopeId, InstId>> stack_;
+  llvm::SmallVector<std::pair<ScopeId, InstId>> inst_stack_;
+  // The stack of blocks to traverse.
+  llvm::SmallVector<std::pair<ScopeId, InstBlockId>> inst_block_stack_;
 };
 
 }  // namespace Carbon::SemIR

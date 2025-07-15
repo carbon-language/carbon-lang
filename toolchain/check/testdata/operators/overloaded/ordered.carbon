@@ -89,35 +89,35 @@ fn TestGreaterEqual(a: D, b: D) -> bool {
 // CHECK:STDOUT:   %OrderedWith.generic: %OrderedWith.type.270 = struct_value () [concrete]
 // CHECK:STDOUT:   %pattern_type.831: type = pattern_type bool [concrete]
 // CHECK:STDOUT:   %OrderedWith.type.914: type = facet_type <@OrderedWith, @OrderedWith(%C)> [concrete]
-// CHECK:STDOUT:   %Less.type.ef8: type = fn_type @Less.1, @OrderedWith(%C) [concrete]
-// CHECK:STDOUT:   %LessOrEquivalent.type.718: type = fn_type @LessOrEquivalent.1, @OrderedWith(%C) [concrete]
-// CHECK:STDOUT:   %Greater.type.394: type = fn_type @Greater.1, @OrderedWith(%C) [concrete]
-// CHECK:STDOUT:   %GreaterOrEquivalent.type.f2b: type = fn_type @GreaterOrEquivalent.1, @OrderedWith(%C) [concrete]
+// CHECK:STDOUT:   %OrderedWith.Less.type.ef8: type = fn_type @OrderedWith.Less, @OrderedWith(%C) [concrete]
+// CHECK:STDOUT:   %OrderedWith.LessOrEquivalent.type.718: type = fn_type @OrderedWith.LessOrEquivalent, @OrderedWith(%C) [concrete]
+// CHECK:STDOUT:   %OrderedWith.Greater.type.394: type = fn_type @OrderedWith.Greater, @OrderedWith(%C) [concrete]
+// CHECK:STDOUT:   %OrderedWith.GreaterOrEquivalent.type.f2b: type = fn_type @OrderedWith.GreaterOrEquivalent, @OrderedWith(%C) [concrete]
 // CHECK:STDOUT:   %OrderedWith.impl_witness: <witness> = impl_witness file.%OrderedWith.impl_witness_table [concrete]
 // CHECK:STDOUT:   %pattern_type.c48: type = pattern_type %C [concrete]
 // CHECK:STDOUT:   %Bool.type: type = fn_type @Bool [concrete]
 // CHECK:STDOUT:   %Bool: %Bool.type = struct_value () [concrete]
-// CHECK:STDOUT:   %Less.type.e31: type = fn_type @Less.loc7 [concrete]
-// CHECK:STDOUT:   %Less.076: %Less.type.e31 = struct_value () [concrete]
-// CHECK:STDOUT:   %LessOrEquivalent.type.873: type = fn_type @LessOrEquivalent.loc8 [concrete]
-// CHECK:STDOUT:   %LessOrEquivalent.4d6: %LessOrEquivalent.type.873 = struct_value () [concrete]
-// CHECK:STDOUT:   %Greater.type.54b: type = fn_type @Greater.loc9 [concrete]
-// CHECK:STDOUT:   %Greater.548: %Greater.type.54b = struct_value () [concrete]
-// CHECK:STDOUT:   %GreaterOrEquivalent.type.311: type = fn_type @GreaterOrEquivalent.loc10 [concrete]
-// CHECK:STDOUT:   %GreaterOrEquivalent.1b2: %GreaterOrEquivalent.type.311 = struct_value () [concrete]
+// CHECK:STDOUT:   %C.as.OrderedWith.impl.Less.type: type = fn_type @C.as.OrderedWith.impl.Less [concrete]
+// CHECK:STDOUT:   %C.as.OrderedWith.impl.Less: %C.as.OrderedWith.impl.Less.type = struct_value () [concrete]
+// CHECK:STDOUT:   %C.as.OrderedWith.impl.LessOrEquivalent.type: type = fn_type @C.as.OrderedWith.impl.LessOrEquivalent [concrete]
+// CHECK:STDOUT:   %C.as.OrderedWith.impl.LessOrEquivalent: %C.as.OrderedWith.impl.LessOrEquivalent.type = struct_value () [concrete]
+// CHECK:STDOUT:   %C.as.OrderedWith.impl.Greater.type: type = fn_type @C.as.OrderedWith.impl.Greater [concrete]
+// CHECK:STDOUT:   %C.as.OrderedWith.impl.Greater: %C.as.OrderedWith.impl.Greater.type = struct_value () [concrete]
+// CHECK:STDOUT:   %C.as.OrderedWith.impl.GreaterOrEquivalent.type: type = fn_type @C.as.OrderedWith.impl.GreaterOrEquivalent [concrete]
+// CHECK:STDOUT:   %C.as.OrderedWith.impl.GreaterOrEquivalent: %C.as.OrderedWith.impl.GreaterOrEquivalent.type = struct_value () [concrete]
 // CHECK:STDOUT:   %OrderedWith.facet: %OrderedWith.type.914 = facet_value %C, (%OrderedWith.impl_witness) [concrete]
 // CHECK:STDOUT:   %TestLess.type: type = fn_type @TestLess [concrete]
 // CHECK:STDOUT:   %TestLess: %TestLess.type = struct_value () [concrete]
-// CHECK:STDOUT:   %.dc0: type = fn_type_with_self_type %Less.type.ef8, %OrderedWith.facet [concrete]
+// CHECK:STDOUT:   %.dc0: type = fn_type_with_self_type %OrderedWith.Less.type.ef8, %OrderedWith.facet [concrete]
 // CHECK:STDOUT:   %TestLessEqual.type: type = fn_type @TestLessEqual [concrete]
 // CHECK:STDOUT:   %TestLessEqual: %TestLessEqual.type = struct_value () [concrete]
-// CHECK:STDOUT:   %.d74: type = fn_type_with_self_type %LessOrEquivalent.type.718, %OrderedWith.facet [concrete]
+// CHECK:STDOUT:   %.d74: type = fn_type_with_self_type %OrderedWith.LessOrEquivalent.type.718, %OrderedWith.facet [concrete]
 // CHECK:STDOUT:   %TestGreater.type: type = fn_type @TestGreater [concrete]
 // CHECK:STDOUT:   %TestGreater: %TestGreater.type = struct_value () [concrete]
-// CHECK:STDOUT:   %.aa9: type = fn_type_with_self_type %Greater.type.394, %OrderedWith.facet [concrete]
+// CHECK:STDOUT:   %.aa9: type = fn_type_with_self_type %OrderedWith.Greater.type.394, %OrderedWith.facet [concrete]
 // CHECK:STDOUT:   %TestGreaterEqual.type: type = fn_type @TestGreaterEqual [concrete]
 // CHECK:STDOUT:   %TestGreaterEqual: %TestGreaterEqual.type = struct_value () [concrete]
-// CHECK:STDOUT:   %.af7: type = fn_type_with_self_type %GreaterOrEquivalent.type.f2b, %OrderedWith.facet [concrete]
+// CHECK:STDOUT:   %.af7: type = fn_type_with_self_type %OrderedWith.GreaterOrEquivalent.type.f2b, %OrderedWith.facet [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -142,14 +142,14 @@ fn TestGreaterEqual(a: D, b: D) -> bool {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %C.decl: type = class_decl @C [concrete = constants.%C] {} {}
-// CHECK:STDOUT:   impl_decl @OrderedWith.impl.ecd [concrete] {} {
+// CHECK:STDOUT:   impl_decl @C.as.OrderedWith.impl [concrete] {} {
 // CHECK:STDOUT:     %C.ref.loc6_6: type = name_ref C, file.%C.decl [concrete = constants.%C]
 // CHECK:STDOUT:     %Core.ref: <namespace> = name_ref Core, imports.%Core [concrete = imports.%Core]
 // CHECK:STDOUT:     %OrderedWith.ref: %OrderedWith.type.270 = name_ref OrderedWith, imports.%Core.OrderedWith [concrete = constants.%OrderedWith.generic]
 // CHECK:STDOUT:     %C.ref.loc6_28: type = name_ref C, file.%C.decl [concrete = constants.%C]
 // CHECK:STDOUT:     %OrderedWith.type: type = facet_type <@OrderedWith, @OrderedWith(constants.%C)> [concrete = constants.%OrderedWith.type.914]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %OrderedWith.impl_witness_table = impl_witness_table (@OrderedWith.impl.ecd.%Less.decl, @OrderedWith.impl.ecd.%LessOrEquivalent.decl, @OrderedWith.impl.ecd.%Greater.decl, @OrderedWith.impl.ecd.%GreaterOrEquivalent.decl), @OrderedWith.impl.ecd [concrete]
+// CHECK:STDOUT:   %OrderedWith.impl_witness_table = impl_witness_table (@C.as.OrderedWith.impl.%C.as.OrderedWith.impl.Less.decl, @C.as.OrderedWith.impl.%C.as.OrderedWith.impl.LessOrEquivalent.decl, @C.as.OrderedWith.impl.%C.as.OrderedWith.impl.Greater.decl, @C.as.OrderedWith.impl.%C.as.OrderedWith.impl.GreaterOrEquivalent.decl), @C.as.OrderedWith.impl [concrete]
 // CHECK:STDOUT:   %OrderedWith.impl_witness: <witness> = impl_witness %OrderedWith.impl_witness_table [concrete = constants.%OrderedWith.impl_witness]
 // CHECK:STDOUT:   %TestLess.decl: %TestLess.type = fn_decl @TestLess [concrete = constants.%TestLess] {
 // CHECK:STDOUT:     %a.patt: %pattern_type.c48 = binding_pattern a [concrete]
@@ -159,9 +159,9 @@ fn TestGreaterEqual(a: D, b: D) -> bool {
 // CHECK:STDOUT:     %return.patt: %pattern_type.831 = return_slot_pattern [concrete]
 // CHECK:STDOUT:     %return.param_patt: %pattern_type.831 = out_param_pattern %return.patt, call_param2 [concrete]
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %bool.make_type: init type = call constants.%Bool() [concrete = bool]
-// CHECK:STDOUT:     %.loc13_28.1: type = value_of_initializer %bool.make_type [concrete = bool]
-// CHECK:STDOUT:     %.loc13_28.2: type = converted %bool.make_type, %.loc13_28.1 [concrete = bool]
+// CHECK:STDOUT:     %Bool.call: init type = call constants.%Bool() [concrete = bool]
+// CHECK:STDOUT:     %.loc13_28.1: type = value_of_initializer %Bool.call [concrete = bool]
+// CHECK:STDOUT:     %.loc13_28.2: type = converted %Bool.call, %.loc13_28.1 [concrete = bool]
 // CHECK:STDOUT:     %a.param: %C = value_param call_param0
 // CHECK:STDOUT:     %C.ref.loc13_16: type = name_ref C, file.%C.decl [concrete = constants.%C]
 // CHECK:STDOUT:     %a: %C = bind_name a, %a.param
@@ -179,9 +179,9 @@ fn TestGreaterEqual(a: D, b: D) -> bool {
 // CHECK:STDOUT:     %return.patt: %pattern_type.831 = return_slot_pattern [concrete]
 // CHECK:STDOUT:     %return.param_patt: %pattern_type.831 = out_param_pattern %return.patt, call_param2 [concrete]
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %bool.make_type: init type = call constants.%Bool() [concrete = bool]
-// CHECK:STDOUT:     %.loc17_33.1: type = value_of_initializer %bool.make_type [concrete = bool]
-// CHECK:STDOUT:     %.loc17_33.2: type = converted %bool.make_type, %.loc17_33.1 [concrete = bool]
+// CHECK:STDOUT:     %Bool.call: init type = call constants.%Bool() [concrete = bool]
+// CHECK:STDOUT:     %.loc17_33.1: type = value_of_initializer %Bool.call [concrete = bool]
+// CHECK:STDOUT:     %.loc17_33.2: type = converted %Bool.call, %.loc17_33.1 [concrete = bool]
 // CHECK:STDOUT:     %a.param: %C = value_param call_param0
 // CHECK:STDOUT:     %C.ref.loc17_21: type = name_ref C, file.%C.decl [concrete = constants.%C]
 // CHECK:STDOUT:     %a: %C = bind_name a, %a.param
@@ -199,9 +199,9 @@ fn TestGreaterEqual(a: D, b: D) -> bool {
 // CHECK:STDOUT:     %return.patt: %pattern_type.831 = return_slot_pattern [concrete]
 // CHECK:STDOUT:     %return.param_patt: %pattern_type.831 = out_param_pattern %return.patt, call_param2 [concrete]
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %bool.make_type: init type = call constants.%Bool() [concrete = bool]
-// CHECK:STDOUT:     %.loc21_31.1: type = value_of_initializer %bool.make_type [concrete = bool]
-// CHECK:STDOUT:     %.loc21_31.2: type = converted %bool.make_type, %.loc21_31.1 [concrete = bool]
+// CHECK:STDOUT:     %Bool.call: init type = call constants.%Bool() [concrete = bool]
+// CHECK:STDOUT:     %.loc21_31.1: type = value_of_initializer %Bool.call [concrete = bool]
+// CHECK:STDOUT:     %.loc21_31.2: type = converted %Bool.call, %.loc21_31.1 [concrete = bool]
 // CHECK:STDOUT:     %a.param: %C = value_param call_param0
 // CHECK:STDOUT:     %C.ref.loc21_19: type = name_ref C, file.%C.decl [concrete = constants.%C]
 // CHECK:STDOUT:     %a: %C = bind_name a, %a.param
@@ -219,9 +219,9 @@ fn TestGreaterEqual(a: D, b: D) -> bool {
 // CHECK:STDOUT:     %return.patt: %pattern_type.831 = return_slot_pattern [concrete]
 // CHECK:STDOUT:     %return.param_patt: %pattern_type.831 = out_param_pattern %return.patt, call_param2 [concrete]
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %bool.make_type: init type = call constants.%Bool() [concrete = bool]
-// CHECK:STDOUT:     %.loc25_36.1: type = value_of_initializer %bool.make_type [concrete = bool]
-// CHECK:STDOUT:     %.loc25_36.2: type = converted %bool.make_type, %.loc25_36.1 [concrete = bool]
+// CHECK:STDOUT:     %Bool.call: init type = call constants.%Bool() [concrete = bool]
+// CHECK:STDOUT:     %.loc25_36.1: type = value_of_initializer %Bool.call [concrete = bool]
+// CHECK:STDOUT:     %.loc25_36.2: type = converted %Bool.call, %.loc25_36.1 [concrete = bool]
 // CHECK:STDOUT:     %a.param: %C = value_param call_param0
 // CHECK:STDOUT:     %C.ref.loc25_24: type = name_ref C, file.%C.decl [concrete = constants.%C]
 // CHECK:STDOUT:     %a: %C = bind_name a, %a.param
@@ -233,8 +233,8 @@ fn TestGreaterEqual(a: D, b: D) -> bool {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: impl @OrderedWith.impl.ecd: %C.ref.loc6_6 as %OrderedWith.type {
-// CHECK:STDOUT:   %Less.decl: %Less.type.e31 = fn_decl @Less.loc7 [concrete = constants.%Less.076] {
+// CHECK:STDOUT: impl @C.as.OrderedWith.impl: %C.ref.loc6_6 as %OrderedWith.type {
+// CHECK:STDOUT:   %C.as.OrderedWith.impl.Less.decl: %C.as.OrderedWith.impl.Less.type = fn_decl @C.as.OrderedWith.impl.Less [concrete = constants.%C.as.OrderedWith.impl.Less] {
 // CHECK:STDOUT:     %self.patt: %pattern_type.c48 = binding_pattern self [concrete]
 // CHECK:STDOUT:     %self.param_patt: %pattern_type.c48 = value_param_pattern %self.patt, call_param0 [concrete]
 // CHECK:STDOUT:     %other.patt: %pattern_type.c48 = binding_pattern other [concrete]
@@ -242,9 +242,9 @@ fn TestGreaterEqual(a: D, b: D) -> bool {
 // CHECK:STDOUT:     %return.patt: %pattern_type.831 = return_slot_pattern [concrete]
 // CHECK:STDOUT:     %return.param_patt: %pattern_type.831 = out_param_pattern %return.patt, call_param2 [concrete]
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %bool.make_type: init type = call constants.%Bool() [concrete = bool]
-// CHECK:STDOUT:     %.loc7_33.1: type = value_of_initializer %bool.make_type [concrete = bool]
-// CHECK:STDOUT:     %.loc7_33.2: type = converted %bool.make_type, %.loc7_33.1 [concrete = bool]
+// CHECK:STDOUT:     %Bool.call: init type = call constants.%Bool() [concrete = bool]
+// CHECK:STDOUT:     %.loc7_33.1: type = value_of_initializer %Bool.call [concrete = bool]
+// CHECK:STDOUT:     %.loc7_33.2: type = converted %Bool.call, %.loc7_33.1 [concrete = bool]
 // CHECK:STDOUT:     %self.param: %C = value_param call_param0
 // CHECK:STDOUT:     %C.ref.loc7_17: type = name_ref C, file.%C.decl [concrete = constants.%C]
 // CHECK:STDOUT:     %self: %C = bind_name self, %self.param
@@ -254,7 +254,7 @@ fn TestGreaterEqual(a: D, b: D) -> bool {
 // CHECK:STDOUT:     %return.param: ref bool = out_param call_param2
 // CHECK:STDOUT:     %return: ref bool = return_slot %return.param
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %LessOrEquivalent.decl: %LessOrEquivalent.type.873 = fn_decl @LessOrEquivalent.loc8 [concrete = constants.%LessOrEquivalent.4d6] {
+// CHECK:STDOUT:   %C.as.OrderedWith.impl.LessOrEquivalent.decl: %C.as.OrderedWith.impl.LessOrEquivalent.type = fn_decl @C.as.OrderedWith.impl.LessOrEquivalent [concrete = constants.%C.as.OrderedWith.impl.LessOrEquivalent] {
 // CHECK:STDOUT:     %self.patt: %pattern_type.c48 = binding_pattern self [concrete]
 // CHECK:STDOUT:     %self.param_patt: %pattern_type.c48 = value_param_pattern %self.patt, call_param0 [concrete]
 // CHECK:STDOUT:     %other.patt: %pattern_type.c48 = binding_pattern other [concrete]
@@ -262,9 +262,9 @@ fn TestGreaterEqual(a: D, b: D) -> bool {
 // CHECK:STDOUT:     %return.patt: %pattern_type.831 = return_slot_pattern [concrete]
 // CHECK:STDOUT:     %return.param_patt: %pattern_type.831 = out_param_pattern %return.patt, call_param2 [concrete]
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %bool.make_type: init type = call constants.%Bool() [concrete = bool]
-// CHECK:STDOUT:     %.loc8_45.1: type = value_of_initializer %bool.make_type [concrete = bool]
-// CHECK:STDOUT:     %.loc8_45.2: type = converted %bool.make_type, %.loc8_45.1 [concrete = bool]
+// CHECK:STDOUT:     %Bool.call: init type = call constants.%Bool() [concrete = bool]
+// CHECK:STDOUT:     %.loc8_45.1: type = value_of_initializer %Bool.call [concrete = bool]
+// CHECK:STDOUT:     %.loc8_45.2: type = converted %Bool.call, %.loc8_45.1 [concrete = bool]
 // CHECK:STDOUT:     %self.param: %C = value_param call_param0
 // CHECK:STDOUT:     %C.ref.loc8_29: type = name_ref C, file.%C.decl [concrete = constants.%C]
 // CHECK:STDOUT:     %self: %C = bind_name self, %self.param
@@ -274,7 +274,7 @@ fn TestGreaterEqual(a: D, b: D) -> bool {
 // CHECK:STDOUT:     %return.param: ref bool = out_param call_param2
 // CHECK:STDOUT:     %return: ref bool = return_slot %return.param
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %Greater.decl: %Greater.type.54b = fn_decl @Greater.loc9 [concrete = constants.%Greater.548] {
+// CHECK:STDOUT:   %C.as.OrderedWith.impl.Greater.decl: %C.as.OrderedWith.impl.Greater.type = fn_decl @C.as.OrderedWith.impl.Greater [concrete = constants.%C.as.OrderedWith.impl.Greater] {
 // CHECK:STDOUT:     %self.patt: %pattern_type.c48 = binding_pattern self [concrete]
 // CHECK:STDOUT:     %self.param_patt: %pattern_type.c48 = value_param_pattern %self.patt, call_param0 [concrete]
 // CHECK:STDOUT:     %other.patt: %pattern_type.c48 = binding_pattern other [concrete]
@@ -282,9 +282,9 @@ fn TestGreaterEqual(a: D, b: D) -> bool {
 // CHECK:STDOUT:     %return.patt: %pattern_type.831 = return_slot_pattern [concrete]
 // CHECK:STDOUT:     %return.param_patt: %pattern_type.831 = out_param_pattern %return.patt, call_param2 [concrete]
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %bool.make_type: init type = call constants.%Bool() [concrete = bool]
-// CHECK:STDOUT:     %.loc9_36.1: type = value_of_initializer %bool.make_type [concrete = bool]
-// CHECK:STDOUT:     %.loc9_36.2: type = converted %bool.make_type, %.loc9_36.1 [concrete = bool]
+// CHECK:STDOUT:     %Bool.call: init type = call constants.%Bool() [concrete = bool]
+// CHECK:STDOUT:     %.loc9_36.1: type = value_of_initializer %Bool.call [concrete = bool]
+// CHECK:STDOUT:     %.loc9_36.2: type = converted %Bool.call, %.loc9_36.1 [concrete = bool]
 // CHECK:STDOUT:     %self.param: %C = value_param call_param0
 // CHECK:STDOUT:     %C.ref.loc9_20: type = name_ref C, file.%C.decl [concrete = constants.%C]
 // CHECK:STDOUT:     %self: %C = bind_name self, %self.param
@@ -294,7 +294,7 @@ fn TestGreaterEqual(a: D, b: D) -> bool {
 // CHECK:STDOUT:     %return.param: ref bool = out_param call_param2
 // CHECK:STDOUT:     %return: ref bool = return_slot %return.param
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %GreaterOrEquivalent.decl: %GreaterOrEquivalent.type.311 = fn_decl @GreaterOrEquivalent.loc10 [concrete = constants.%GreaterOrEquivalent.1b2] {
+// CHECK:STDOUT:   %C.as.OrderedWith.impl.GreaterOrEquivalent.decl: %C.as.OrderedWith.impl.GreaterOrEquivalent.type = fn_decl @C.as.OrderedWith.impl.GreaterOrEquivalent [concrete = constants.%C.as.OrderedWith.impl.GreaterOrEquivalent] {
 // CHECK:STDOUT:     %self.patt: %pattern_type.c48 = binding_pattern self [concrete]
 // CHECK:STDOUT:     %self.param_patt: %pattern_type.c48 = value_param_pattern %self.patt, call_param0 [concrete]
 // CHECK:STDOUT:     %other.patt: %pattern_type.c48 = binding_pattern other [concrete]
@@ -302,9 +302,9 @@ fn TestGreaterEqual(a: D, b: D) -> bool {
 // CHECK:STDOUT:     %return.patt: %pattern_type.831 = return_slot_pattern [concrete]
 // CHECK:STDOUT:     %return.param_patt: %pattern_type.831 = out_param_pattern %return.patt, call_param2 [concrete]
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %bool.make_type: init type = call constants.%Bool() [concrete = bool]
-// CHECK:STDOUT:     %.loc10_48.1: type = value_of_initializer %bool.make_type [concrete = bool]
-// CHECK:STDOUT:     %.loc10_48.2: type = converted %bool.make_type, %.loc10_48.1 [concrete = bool]
+// CHECK:STDOUT:     %Bool.call: init type = call constants.%Bool() [concrete = bool]
+// CHECK:STDOUT:     %.loc10_48.1: type = value_of_initializer %Bool.call [concrete = bool]
+// CHECK:STDOUT:     %.loc10_48.2: type = converted %Bool.call, %.loc10_48.1 [concrete = bool]
 // CHECK:STDOUT:     %self.param: %C = value_param call_param0
 // CHECK:STDOUT:     %C.ref.loc10_32: type = name_ref C, file.%C.decl [concrete = constants.%C]
 // CHECK:STDOUT:     %self: %C = bind_name self, %self.param
@@ -317,10 +317,10 @@ fn TestGreaterEqual(a: D, b: D) -> bool {
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .C = <poisoned>
-// CHECK:STDOUT:   .Less = %Less.decl
-// CHECK:STDOUT:   .LessOrEquivalent = %LessOrEquivalent.decl
-// CHECK:STDOUT:   .Greater = %Greater.decl
-// CHECK:STDOUT:   .GreaterOrEquivalent = %GreaterOrEquivalent.decl
+// CHECK:STDOUT:   .Less = %C.as.OrderedWith.impl.Less.decl
+// CHECK:STDOUT:   .LessOrEquivalent = %C.as.OrderedWith.impl.LessOrEquivalent.decl
+// CHECK:STDOUT:   .Greater = %C.as.OrderedWith.impl.Greater.decl
+// CHECK:STDOUT:   .GreaterOrEquivalent = %C.as.OrderedWith.impl.GreaterOrEquivalent.decl
 // CHECK:STDOUT:   witness = file.%OrderedWith.impl_witness
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -333,23 +333,23 @@ fn TestGreaterEqual(a: D, b: D) -> bool {
 // CHECK:STDOUT:   .Self = constants.%C
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Less.loc7(%self.param: %C, %other.param: %C) -> bool;
+// CHECK:STDOUT: fn @C.as.OrderedWith.impl.Less(%self.param: %C, %other.param: %C) -> bool;
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @LessOrEquivalent.loc8(%self.param: %C, %other.param: %C) -> bool;
+// CHECK:STDOUT: fn @C.as.OrderedWith.impl.LessOrEquivalent(%self.param: %C, %other.param: %C) -> bool;
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Greater.loc9(%self.param: %C, %other.param: %C) -> bool;
+// CHECK:STDOUT: fn @C.as.OrderedWith.impl.Greater(%self.param: %C, %other.param: %C) -> bool;
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @GreaterOrEquivalent.loc10(%self.param: %C, %other.param: %C) -> bool;
+// CHECK:STDOUT: fn @C.as.OrderedWith.impl.GreaterOrEquivalent(%self.param: %C, %other.param: %C) -> bool;
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @TestLess(%a.param: %C, %b.param: %C) -> bool {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %a.ref: %C = name_ref a, %a
 // CHECK:STDOUT:   %b.ref: %C = name_ref b, %b
-// CHECK:STDOUT:   %impl.elem0: %.dc0 = impl_witness_access constants.%OrderedWith.impl_witness, element0 [concrete = constants.%Less.076]
+// CHECK:STDOUT:   %impl.elem0: %.dc0 = impl_witness_access constants.%OrderedWith.impl_witness, element0 [concrete = constants.%C.as.OrderedWith.impl.Less]
 // CHECK:STDOUT:   %bound_method: <bound method> = bound_method %a.ref, %impl.elem0
-// CHECK:STDOUT:   %Less.call: init bool = call %bound_method(%a.ref, %b.ref)
-// CHECK:STDOUT:   %.loc14_15.1: bool = value_of_initializer %Less.call
-// CHECK:STDOUT:   %.loc14_15.2: bool = converted %Less.call, %.loc14_15.1
+// CHECK:STDOUT:   %C.as.OrderedWith.impl.Less.call: init bool = call %bound_method(%a.ref, %b.ref)
+// CHECK:STDOUT:   %.loc14_15.1: bool = value_of_initializer %C.as.OrderedWith.impl.Less.call
+// CHECK:STDOUT:   %.loc14_15.2: bool = converted %C.as.OrderedWith.impl.Less.call, %.loc14_15.1
 // CHECK:STDOUT:   return %.loc14_15.2
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -357,11 +357,11 @@ fn TestGreaterEqual(a: D, b: D) -> bool {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %a.ref: %C = name_ref a, %a
 // CHECK:STDOUT:   %b.ref: %C = name_ref b, %b
-// CHECK:STDOUT:   %impl.elem1: %.d74 = impl_witness_access constants.%OrderedWith.impl_witness, element1 [concrete = constants.%LessOrEquivalent.4d6]
+// CHECK:STDOUT:   %impl.elem1: %.d74 = impl_witness_access constants.%OrderedWith.impl_witness, element1 [concrete = constants.%C.as.OrderedWith.impl.LessOrEquivalent]
 // CHECK:STDOUT:   %bound_method: <bound method> = bound_method %a.ref, %impl.elem1
-// CHECK:STDOUT:   %LessOrEquivalent.call: init bool = call %bound_method(%a.ref, %b.ref)
-// CHECK:STDOUT:   %.loc18_16.1: bool = value_of_initializer %LessOrEquivalent.call
-// CHECK:STDOUT:   %.loc18_16.2: bool = converted %LessOrEquivalent.call, %.loc18_16.1
+// CHECK:STDOUT:   %C.as.OrderedWith.impl.LessOrEquivalent.call: init bool = call %bound_method(%a.ref, %b.ref)
+// CHECK:STDOUT:   %.loc18_16.1: bool = value_of_initializer %C.as.OrderedWith.impl.LessOrEquivalent.call
+// CHECK:STDOUT:   %.loc18_16.2: bool = converted %C.as.OrderedWith.impl.LessOrEquivalent.call, %.loc18_16.1
 // CHECK:STDOUT:   return %.loc18_16.2
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -369,11 +369,11 @@ fn TestGreaterEqual(a: D, b: D) -> bool {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %a.ref: %C = name_ref a, %a
 // CHECK:STDOUT:   %b.ref: %C = name_ref b, %b
-// CHECK:STDOUT:   %impl.elem2: %.aa9 = impl_witness_access constants.%OrderedWith.impl_witness, element2 [concrete = constants.%Greater.548]
+// CHECK:STDOUT:   %impl.elem2: %.aa9 = impl_witness_access constants.%OrderedWith.impl_witness, element2 [concrete = constants.%C.as.OrderedWith.impl.Greater]
 // CHECK:STDOUT:   %bound_method: <bound method> = bound_method %a.ref, %impl.elem2
-// CHECK:STDOUT:   %Greater.call: init bool = call %bound_method(%a.ref, %b.ref)
-// CHECK:STDOUT:   %.loc22_15.1: bool = value_of_initializer %Greater.call
-// CHECK:STDOUT:   %.loc22_15.2: bool = converted %Greater.call, %.loc22_15.1
+// CHECK:STDOUT:   %C.as.OrderedWith.impl.Greater.call: init bool = call %bound_method(%a.ref, %b.ref)
+// CHECK:STDOUT:   %.loc22_15.1: bool = value_of_initializer %C.as.OrderedWith.impl.Greater.call
+// CHECK:STDOUT:   %.loc22_15.2: bool = converted %C.as.OrderedWith.impl.Greater.call, %.loc22_15.1
 // CHECK:STDOUT:   return %.loc22_15.2
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -381,11 +381,11 @@ fn TestGreaterEqual(a: D, b: D) -> bool {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %a.ref: %C = name_ref a, %a
 // CHECK:STDOUT:   %b.ref: %C = name_ref b, %b
-// CHECK:STDOUT:   %impl.elem3: %.af7 = impl_witness_access constants.%OrderedWith.impl_witness, element3 [concrete = constants.%GreaterOrEquivalent.1b2]
+// CHECK:STDOUT:   %impl.elem3: %.af7 = impl_witness_access constants.%OrderedWith.impl_witness, element3 [concrete = constants.%C.as.OrderedWith.impl.GreaterOrEquivalent]
 // CHECK:STDOUT:   %bound_method: <bound method> = bound_method %a.ref, %impl.elem3
-// CHECK:STDOUT:   %GreaterOrEquivalent.call: init bool = call %bound_method(%a.ref, %b.ref)
-// CHECK:STDOUT:   %.loc26_16.1: bool = value_of_initializer %GreaterOrEquivalent.call
-// CHECK:STDOUT:   %.loc26_16.2: bool = converted %GreaterOrEquivalent.call, %.loc26_16.1
+// CHECK:STDOUT:   %C.as.OrderedWith.impl.GreaterOrEquivalent.call: init bool = call %bound_method(%a.ref, %b.ref)
+// CHECK:STDOUT:   %.loc26_16.1: bool = value_of_initializer %C.as.OrderedWith.impl.GreaterOrEquivalent.call
+// CHECK:STDOUT:   %.loc26_16.2: bool = converted %C.as.OrderedWith.impl.GreaterOrEquivalent.call, %.loc26_16.1
 // CHECK:STDOUT:   return %.loc26_16.2
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -441,9 +441,9 @@ fn TestGreaterEqual(a: D, b: D) -> bool {
 // CHECK:STDOUT:     %return.patt: %pattern_type.831 = return_slot_pattern [concrete]
 // CHECK:STDOUT:     %return.param_patt: %pattern_type.831 = out_param_pattern %return.patt, call_param2 [concrete]
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %bool.make_type: init type = call constants.%Bool() [concrete = bool]
-// CHECK:STDOUT:     %.loc6_28.1: type = value_of_initializer %bool.make_type [concrete = bool]
-// CHECK:STDOUT:     %.loc6_28.2: type = converted %bool.make_type, %.loc6_28.1 [concrete = bool]
+// CHECK:STDOUT:     %Bool.call: init type = call constants.%Bool() [concrete = bool]
+// CHECK:STDOUT:     %.loc6_28.1: type = value_of_initializer %Bool.call [concrete = bool]
+// CHECK:STDOUT:     %.loc6_28.2: type = converted %Bool.call, %.loc6_28.1 [concrete = bool]
 // CHECK:STDOUT:     %a.param: %D = value_param call_param0
 // CHECK:STDOUT:     %D.ref.loc6_16: type = name_ref D, file.%D.decl [concrete = constants.%D]
 // CHECK:STDOUT:     %a: %D = bind_name a, %a.param
@@ -461,9 +461,9 @@ fn TestGreaterEqual(a: D, b: D) -> bool {
 // CHECK:STDOUT:     %return.patt: %pattern_type.831 = return_slot_pattern [concrete]
 // CHECK:STDOUT:     %return.param_patt: %pattern_type.831 = out_param_pattern %return.patt, call_param2 [concrete]
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %bool.make_type: init type = call constants.%Bool() [concrete = bool]
-// CHECK:STDOUT:     %.loc14_33.1: type = value_of_initializer %bool.make_type [concrete = bool]
-// CHECK:STDOUT:     %.loc14_33.2: type = converted %bool.make_type, %.loc14_33.1 [concrete = bool]
+// CHECK:STDOUT:     %Bool.call: init type = call constants.%Bool() [concrete = bool]
+// CHECK:STDOUT:     %.loc14_33.1: type = value_of_initializer %Bool.call [concrete = bool]
+// CHECK:STDOUT:     %.loc14_33.2: type = converted %Bool.call, %.loc14_33.1 [concrete = bool]
 // CHECK:STDOUT:     %a.param: %D = value_param call_param0
 // CHECK:STDOUT:     %D.ref.loc14_21: type = name_ref D, file.%D.decl [concrete = constants.%D]
 // CHECK:STDOUT:     %a: %D = bind_name a, %a.param
@@ -481,9 +481,9 @@ fn TestGreaterEqual(a: D, b: D) -> bool {
 // CHECK:STDOUT:     %return.patt: %pattern_type.831 = return_slot_pattern [concrete]
 // CHECK:STDOUT:     %return.param_patt: %pattern_type.831 = out_param_pattern %return.patt, call_param2 [concrete]
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %bool.make_type: init type = call constants.%Bool() [concrete = bool]
-// CHECK:STDOUT:     %.loc22_31.1: type = value_of_initializer %bool.make_type [concrete = bool]
-// CHECK:STDOUT:     %.loc22_31.2: type = converted %bool.make_type, %.loc22_31.1 [concrete = bool]
+// CHECK:STDOUT:     %Bool.call: init type = call constants.%Bool() [concrete = bool]
+// CHECK:STDOUT:     %.loc22_31.1: type = value_of_initializer %Bool.call [concrete = bool]
+// CHECK:STDOUT:     %.loc22_31.2: type = converted %Bool.call, %.loc22_31.1 [concrete = bool]
 // CHECK:STDOUT:     %a.param: %D = value_param call_param0
 // CHECK:STDOUT:     %D.ref.loc22_19: type = name_ref D, file.%D.decl [concrete = constants.%D]
 // CHECK:STDOUT:     %a: %D = bind_name a, %a.param
@@ -501,9 +501,9 @@ fn TestGreaterEqual(a: D, b: D) -> bool {
 // CHECK:STDOUT:     %return.patt: %pattern_type.831 = return_slot_pattern [concrete]
 // CHECK:STDOUT:     %return.param_patt: %pattern_type.831 = out_param_pattern %return.patt, call_param2 [concrete]
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %bool.make_type: init type = call constants.%Bool() [concrete = bool]
-// CHECK:STDOUT:     %.loc30_36.1: type = value_of_initializer %bool.make_type [concrete = bool]
-// CHECK:STDOUT:     %.loc30_36.2: type = converted %bool.make_type, %.loc30_36.1 [concrete = bool]
+// CHECK:STDOUT:     %Bool.call: init type = call constants.%Bool() [concrete = bool]
+// CHECK:STDOUT:     %.loc30_36.1: type = value_of_initializer %Bool.call [concrete = bool]
+// CHECK:STDOUT:     %.loc30_36.2: type = converted %Bool.call, %.loc30_36.1 [concrete = bool]
 // CHECK:STDOUT:     %a.param: %D = value_param call_param0
 // CHECK:STDOUT:     %D.ref.loc30_24: type = name_ref D, file.%D.decl [concrete = constants.%D]
 // CHECK:STDOUT:     %a: %D = bind_name a, %a.param

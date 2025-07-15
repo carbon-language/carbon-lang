@@ -78,9 +78,9 @@ fn F() -> {.a: i32, .b: f64} {
 // CHECK:STDOUT:     %return.param_patt: %pattern_type.3de = out_param_pattern %return.patt, call_param0 [concrete]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %int_64: Core.IntLiteral = int_value 64 [concrete = constants.%int_64]
-// CHECK:STDOUT:     %float.make_type: init type = call constants.%Float(%int_64) [concrete = f64]
-// CHECK:STDOUT:     %.loc16_17.1: type = value_of_initializer %float.make_type [concrete = f64]
-// CHECK:STDOUT:     %.loc16_17.2: type = converted %float.make_type, %.loc16_17.1 [concrete = f64]
+// CHECK:STDOUT:     %Float.call: init type = call constants.%Float(%int_64) [concrete = f64]
+// CHECK:STDOUT:     %.loc16_17.1: type = value_of_initializer %Float.call [concrete = f64]
+// CHECK:STDOUT:     %.loc16_17.2: type = converted %Float.call, %.loc16_17.1 [concrete = f64]
 // CHECK:STDOUT:     %return.param: ref f64 = out_param call_param0
 // CHECK:STDOUT:     %return: ref f64 = return_slot %return.param
 // CHECK:STDOUT:   }
@@ -91,9 +91,9 @@ fn F() -> {.a: i32, .b: f64} {
 // CHECK:STDOUT:     %int_32.loc18: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
 // CHECK:STDOUT:     %i32.loc18: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
 // CHECK:STDOUT:     %int_64.loc18: Core.IntLiteral = int_value 64 [concrete = constants.%int_64]
-// CHECK:STDOUT:     %float.make_type.loc18: init type = call constants.%Float(%int_64.loc18) [concrete = f64]
-// CHECK:STDOUT:     %.loc18_25.1: type = value_of_initializer %float.make_type.loc18 [concrete = f64]
-// CHECK:STDOUT:     %.loc18_25.2: type = converted %float.make_type.loc18, %.loc18_25.1 [concrete = f64]
+// CHECK:STDOUT:     %Float.call.loc18: init type = call constants.%Float(%int_64.loc18) [concrete = f64]
+// CHECK:STDOUT:     %.loc18_25.1: type = value_of_initializer %Float.call.loc18 [concrete = f64]
+// CHECK:STDOUT:     %.loc18_25.2: type = converted %Float.call.loc18, %.loc18_25.1 [concrete = f64]
 // CHECK:STDOUT:     %struct_type.a.b.loc18: type = struct_type {.a: %i32, .b: f64} [concrete = constants.%struct_type.a.b]
 // CHECK:STDOUT:     %return.param: ref %struct_type.a.b = out_param call_param0
 // CHECK:STDOUT:     %return: ref %struct_type.a.b = return_slot %return.param
@@ -118,9 +118,9 @@ fn F() -> {.a: i32, .b: f64} {
 // CHECK:STDOUT:     %int_32.loc19: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
 // CHECK:STDOUT:     %i32.loc19: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
 // CHECK:STDOUT:     %int_64.loc19: Core.IntLiteral = int_value 64 [concrete = constants.%int_64]
-// CHECK:STDOUT:     %float.make_type.loc19: init type = call constants.%Float(%int_64.loc19) [concrete = f64]
-// CHECK:STDOUT:     %.loc19_24.1: type = value_of_initializer %float.make_type.loc19 [concrete = f64]
-// CHECK:STDOUT:     %.loc19_24.2: type = converted %float.make_type.loc19, %.loc19_24.1 [concrete = f64]
+// CHECK:STDOUT:     %Float.call.loc19: init type = call constants.%Float(%int_64.loc19) [concrete = f64]
+// CHECK:STDOUT:     %.loc19_24.1: type = value_of_initializer %Float.call.loc19 [concrete = f64]
+// CHECK:STDOUT:     %.loc19_24.2: type = converted %Float.call.loc19, %.loc19_24.1 [concrete = f64]
 // CHECK:STDOUT:     %struct_type.a.b.loc19: type = struct_type {.a: %i32, .b: f64} [concrete = constants.%struct_type.a.b]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %.loc19_62.2: %i32 = value_of_initializer %MakeI32.call
@@ -136,9 +136,9 @@ fn F() -> {.a: i32, .b: f64} {
 // CHECK:STDOUT:   %x.ref: %struct_type.a.b = name_ref x, %x
 // CHECK:STDOUT:   %.loc20_27: type = splice_block %struct_type.b.a [concrete = constants.%struct_type.b.a] {
 // CHECK:STDOUT:     %int_64.loc20: Core.IntLiteral = int_value 64 [concrete = constants.%int_64]
-// CHECK:STDOUT:     %float.make_type.loc20: init type = call constants.%Float(%int_64.loc20) [concrete = f64]
-// CHECK:STDOUT:     %.loc20_15.1: type = value_of_initializer %float.make_type.loc20 [concrete = f64]
-// CHECK:STDOUT:     %.loc20_15.2: type = converted %float.make_type.loc20, %.loc20_15.1 [concrete = f64]
+// CHECK:STDOUT:     %Float.call.loc20: init type = call constants.%Float(%int_64.loc20) [concrete = f64]
+// CHECK:STDOUT:     %.loc20_15.1: type = value_of_initializer %Float.call.loc20 [concrete = f64]
+// CHECK:STDOUT:     %.loc20_15.2: type = converted %Float.call.loc20, %.loc20_15.1 [concrete = f64]
 // CHECK:STDOUT:     %int_32.loc20: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
 // CHECK:STDOUT:     %i32.loc20: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
 // CHECK:STDOUT:     %struct_type.b.a: type = struct_type {.b: f64, .a: %i32} [concrete = constants.%struct_type.b.a]

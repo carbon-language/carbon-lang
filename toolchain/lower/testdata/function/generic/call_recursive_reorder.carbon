@@ -53,15 +53,15 @@ fn M() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: define linkonce_odr i32 @_CF.Main.2fe87eb83f5a4614(ptr %x, ptr %y, i32 %count) !dbg !17 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %int.greater = icmp sgt i32 %count, 2, !dbg !18
-// CHECK:STDOUT:   br i1 %int.greater, label %if.then, label %if.else, !dbg !19
+// CHECK:STDOUT:   %Int.as.OrderedWith.impl.Greater.call = icmp sgt i32 %count, 2, !dbg !18
+// CHECK:STDOUT:   br i1 %Int.as.OrderedWith.impl.Greater.call, label %if.then, label %if.else, !dbg !19
 // CHECK:STDOUT:
 // CHECK:STDOUT: if.then:                                          ; preds = %entry
 // CHECK:STDOUT:   ret i32 %count, !dbg !20
 // CHECK:STDOUT:
 // CHECK:STDOUT: if.else:                                          ; preds = %entry
-// CHECK:STDOUT:   %int.sadd = add i32 %count, 1, !dbg !21
-// CHECK:STDOUT:   %F.call = call i32 @_CF.Main.2fe87eb83f5a4614(ptr %y, ptr %x, i32 %int.sadd), !dbg !22
+// CHECK:STDOUT:   %Int.as.AddWith.impl.Op.call = add i32 %count, 1, !dbg !21
+// CHECK:STDOUT:   %F.call = call i32 @_CF.Main.2fe87eb83f5a4614(ptr %y, ptr %x, i32 %Int.as.AddWith.impl.Op.call), !dbg !22
 // CHECK:STDOUT:   ret i32 %F.call, !dbg !23
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

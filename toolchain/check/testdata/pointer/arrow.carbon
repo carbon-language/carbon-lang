@@ -32,9 +32,9 @@ fn Foo(ptr: C*) {
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %C: type = class_type @C [concrete]
 // CHECK:STDOUT:   %pattern_type.c48: type = pattern_type %C [concrete]
-// CHECK:STDOUT:   %Member.type: type = fn_type @Member [concrete]
+// CHECK:STDOUT:   %C.Member.type: type = fn_type @C.Member [concrete]
 // CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [concrete]
-// CHECK:STDOUT:   %Member: %Member.type = struct_value () [concrete]
+// CHECK:STDOUT:   %C.Member: %C.Member.type = struct_value () [concrete]
 // CHECK:STDOUT:   %ptr.019: type = ptr_type %C [concrete]
 // CHECK:STDOUT:   %C.elem: type = unbound_element_type %C, %ptr.019 [concrete]
 // CHECK:STDOUT:   %struct_type.field: type = struct_type {.field: %ptr.019} [concrete]
@@ -73,7 +73,7 @@ fn Foo(ptr: C*) {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @C {
-// CHECK:STDOUT:   %Member.decl: %Member.type = fn_decl @Member [concrete = constants.%Member] {
+// CHECK:STDOUT:   %C.Member.decl: %C.Member.type = fn_decl @C.Member [concrete = constants.%C.Member] {
 // CHECK:STDOUT:     %self.patt: %pattern_type.c48 = binding_pattern self [concrete]
 // CHECK:STDOUT:     %self.param_patt: %pattern_type.c48 = value_param_pattern %self.patt, call_param0 [concrete]
 // CHECK:STDOUT:   } {
@@ -90,27 +90,27 @@ fn Foo(ptr: C*) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%C
-// CHECK:STDOUT:   .Member = %Member.decl
+// CHECK:STDOUT:   .Member = %C.Member.decl
 // CHECK:STDOUT:   .C = <poisoned>
 // CHECK:STDOUT:   .field = %.loc17
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Member(%self.param: %C);
+// CHECK:STDOUT: fn @C.Member(%self.param: %C);
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Foo(%ptr.param: %ptr.019) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %ptr.ref.loc21: %ptr.019 = name_ref ptr, %ptr.loc20_8
 // CHECK:STDOUT:   %.loc21_4.1: ref %C = deref %ptr.ref.loc21
-// CHECK:STDOUT:   %Member.ref.loc21: %Member.type = name_ref Member, @C.%Member.decl [concrete = constants.%Member]
-// CHECK:STDOUT:   %Member.bound.loc21: <bound method> = bound_method %.loc21_4.1, %Member.ref.loc21
+// CHECK:STDOUT:   %Member.ref.loc21: %C.Member.type = name_ref Member, @C.%C.Member.decl [concrete = constants.%C.Member]
+// CHECK:STDOUT:   %C.Member.bound.loc21: <bound method> = bound_method %.loc21_4.1, %Member.ref.loc21
 // CHECK:STDOUT:   %.loc21_4.2: %C = bind_value %.loc21_4.1
-// CHECK:STDOUT:   %Member.call.loc21: init %empty_tuple.type = call %Member.bound.loc21(%.loc21_4.2)
+// CHECK:STDOUT:   %C.Member.call.loc21: init %empty_tuple.type = call %C.Member.bound.loc21(%.loc21_4.2)
 // CHECK:STDOUT:   %ptr.ref.loc22: %ptr.019 = name_ref ptr, %ptr.loc20_8
 // CHECK:STDOUT:   %.loc22_6.1: ref %C = deref %ptr.ref.loc22
-// CHECK:STDOUT:   %Member.ref.loc22: %Member.type = name_ref Member, @C.%Member.decl [concrete = constants.%Member]
-// CHECK:STDOUT:   %Member.bound.loc22: <bound method> = bound_method %.loc22_6.1, %Member.ref.loc22
+// CHECK:STDOUT:   %Member.ref.loc22: %C.Member.type = name_ref Member, @C.%C.Member.decl [concrete = constants.%C.Member]
+// CHECK:STDOUT:   %C.Member.bound.loc22: <bound method> = bound_method %.loc22_6.1, %Member.ref.loc22
 // CHECK:STDOUT:   %.loc22_6.2: %C = bind_value %.loc22_6.1
-// CHECK:STDOUT:   %Member.call.loc22: init %empty_tuple.type = call %Member.bound.loc22(%.loc22_6.2)
+// CHECK:STDOUT:   %C.Member.call.loc22: init %empty_tuple.type = call %C.Member.bound.loc22(%.loc22_6.2)
 // CHECK:STDOUT:   %ptr.ref.loc24: %ptr.019 = name_ref ptr, %ptr.loc20_8
 // CHECK:STDOUT:   %.loc24_4: ref %C = deref %ptr.ref.loc24
 // CHECK:STDOUT:   %field.ref.loc24: %C.elem = name_ref field, @C.%.loc17 [concrete = @C.%.loc17]

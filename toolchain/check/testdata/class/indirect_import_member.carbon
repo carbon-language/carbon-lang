@@ -108,8 +108,8 @@ var x: () = D.C.F();
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %C: type = class_type @C [concrete]
-// CHECK:STDOUT:   %F.type: type = fn_type @F [concrete]
-// CHECK:STDOUT:   %F: %F.type = struct_value () [concrete]
+// CHECK:STDOUT:   %C.F.type: type = fn_type @C.F [concrete]
+// CHECK:STDOUT:   %C.F: %C.F.type = struct_value () [concrete]
 // CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [concrete]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [concrete]
 // CHECK:STDOUT: }
@@ -122,17 +122,17 @@ var x: () = D.C.F();
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @C {
-// CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [concrete = constants.%F] {} {}
+// CHECK:STDOUT:   %C.F.decl: %C.F.type = fn_decl @C.F [concrete = constants.%C.F] {} {}
 // CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [concrete = constants.%empty_struct_type]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [concrete = constants.%complete_type]
 // CHECK:STDOUT:   complete_type_witness = %complete_type
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%C
-// CHECK:STDOUT:   .F = %F.decl
+// CHECK:STDOUT:   .F = %C.F.decl
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @F() {
+// CHECK:STDOUT: fn @C.F() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
@@ -261,15 +261,15 @@ var x: () = D.C.F();
 // CHECK:STDOUT:   %C: type = class_type @C [concrete]
 // CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [concrete]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [concrete]
-// CHECK:STDOUT:   %F.type: type = fn_type @F [concrete]
-// CHECK:STDOUT:   %F: %F.type = struct_value () [concrete]
+// CHECK:STDOUT:   %C.F.type: type = fn_type @C.F [concrete]
+// CHECK:STDOUT:   %C.F: %C.F.type = struct_value () [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT:   %Main.C: type = import_ref Main//a, C, loaded [concrete = constants.%C]
 // CHECK:STDOUT:   %Main.import_ref.8f2: <witness> = import_ref Main//a, loc6_1, loaded [concrete = constants.%complete_type]
 // CHECK:STDOUT:   %Main.import_ref.2c4 = import_ref Main//a, inst16 [no loc], unloaded
-// CHECK:STDOUT:   %Main.import_ref.943: %F.type = import_ref Main//a, loc5_10, loaded [concrete = constants.%F]
+// CHECK:STDOUT:   %Main.import_ref.943: %C.F.type = import_ref Main//a, loc5_10, loaded [concrete = constants.%C.F]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -298,14 +298,14 @@ var x: () = D.C.F();
 // CHECK:STDOUT:   .F = imports.%Main.import_ref.943
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @F [from "a.carbon"];
+// CHECK:STDOUT: fn @C.F [from "a.carbon"];
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %C.ref: type = name_ref C, imports.%Main.C [concrete = constants.%C]
-// CHECK:STDOUT:   %F.ref: %F.type = name_ref F, imports.%Main.import_ref.943 [concrete = constants.%F]
-// CHECK:STDOUT:   %F.call: init %empty_tuple.type = call %F.ref()
-// CHECK:STDOUT:   assign file.%x.var, %F.call
+// CHECK:STDOUT:   %F.ref: %C.F.type = name_ref F, imports.%Main.import_ref.943 [concrete = constants.%C.F]
+// CHECK:STDOUT:   %C.F.call: init %empty_tuple.type = call %F.ref()
+// CHECK:STDOUT:   assign file.%x.var, %C.F.call
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -317,15 +317,15 @@ var x: () = D.C.F();
 // CHECK:STDOUT:   %C: type = class_type @C [concrete]
 // CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [concrete]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [concrete]
-// CHECK:STDOUT:   %F.type: type = fn_type @F [concrete]
-// CHECK:STDOUT:   %F: %F.type = struct_value () [concrete]
+// CHECK:STDOUT:   %C.F.type: type = fn_type @C.F [concrete]
+// CHECK:STDOUT:   %C.F: %C.F.type = struct_value () [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT:   %Main.C: type = import_ref Main//c, C, loaded [concrete = constants.%C]
 // CHECK:STDOUT:   %Main.import_ref.8db: <witness> = import_ref Main//c, inst21 [indirect], loaded [concrete = constants.%complete_type]
 // CHECK:STDOUT:   %Main.import_ref.6a9 = import_ref Main//c, inst22 [indirect], unloaded
-// CHECK:STDOUT:   %Main.import_ref.5d3: %F.type = import_ref Main//c, inst23 [indirect], loaded [concrete = constants.%F]
+// CHECK:STDOUT:   %Main.import_ref.5d3: %C.F.type = import_ref Main//c, inst23 [indirect], loaded [concrete = constants.%C.F]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -354,14 +354,14 @@ var x: () = D.C.F();
 // CHECK:STDOUT:   .F = imports.%Main.import_ref.5d3
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @F [from "a.carbon"];
+// CHECK:STDOUT: fn @C.F [from "a.carbon"];
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %C.ref: type = name_ref C, imports.%Main.C [concrete = constants.%C]
-// CHECK:STDOUT:   %F.ref: %F.type = name_ref F, imports.%Main.import_ref.5d3 [concrete = constants.%F]
-// CHECK:STDOUT:   %F.call: init %empty_tuple.type = call %F.ref()
-// CHECK:STDOUT:   assign file.%x.var, %F.call
+// CHECK:STDOUT:   %F.ref: %C.F.type = name_ref F, imports.%Main.import_ref.5d3 [concrete = constants.%C.F]
+// CHECK:STDOUT:   %C.F.call: init %empty_tuple.type = call %F.ref()
+// CHECK:STDOUT:   assign file.%x.var, %C.F.call
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -373,15 +373,15 @@ var x: () = D.C.F();
 // CHECK:STDOUT:   %C: type = class_type @C [concrete]
 // CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [concrete]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [concrete]
-// CHECK:STDOUT:   %F.type: type = fn_type @F [concrete]
-// CHECK:STDOUT:   %F: %F.type = struct_value () [concrete]
+// CHECK:STDOUT:   %C.F.type: type = fn_type @C.F [concrete]
+// CHECK:STDOUT:   %C.F: %C.F.type = struct_value () [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT:   %Main.C: type = import_ref Main//c, C, loaded [concrete = constants.%C]
 // CHECK:STDOUT:   %Main.import_ref.8db: <witness> = import_ref Main//c, inst21 [indirect], loaded [concrete = constants.%complete_type]
 // CHECK:STDOUT:   %Main.import_ref.6a9 = import_ref Main//c, inst22 [indirect], unloaded
-// CHECK:STDOUT:   %Main.import_ref.5d3: %F.type = import_ref Main//c, inst23 [indirect], loaded [concrete = constants.%F]
+// CHECK:STDOUT:   %Main.import_ref.5d3: %C.F.type = import_ref Main//c, inst23 [indirect], loaded [concrete = constants.%C.F]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -410,14 +410,14 @@ var x: () = D.C.F();
 // CHECK:STDOUT:   .F = imports.%Main.import_ref.5d3
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @F [from "a.carbon"];
+// CHECK:STDOUT: fn @C.F [from "a.carbon"];
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %C.ref: type = name_ref C, imports.%Main.C [concrete = constants.%C]
-// CHECK:STDOUT:   %F.ref: %F.type = name_ref F, imports.%Main.import_ref.5d3 [concrete = constants.%F]
-// CHECK:STDOUT:   %F.call: init %empty_tuple.type = call %F.ref()
-// CHECK:STDOUT:   assign file.%x.var, %F.call
+// CHECK:STDOUT:   %F.ref: %C.F.type = name_ref F, imports.%Main.import_ref.5d3 [concrete = constants.%C.F]
+// CHECK:STDOUT:   %C.F.call: init %empty_tuple.type = call %F.ref()
+// CHECK:STDOUT:   assign file.%x.var, %C.F.call
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -430,8 +430,8 @@ var x: () = D.C.F();
 // CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [concrete]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [concrete]
 // CHECK:STDOUT:   %C: type = class_type @C [concrete]
-// CHECK:STDOUT:   %F.type: type = fn_type @F [concrete]
-// CHECK:STDOUT:   %F: %F.type = struct_value () [concrete]
+// CHECK:STDOUT:   %C.F.type: type = fn_type @C.F [concrete]
+// CHECK:STDOUT:   %C.F: %C.F.type = struct_value () [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -441,7 +441,7 @@ var x: () = D.C.F();
 // CHECK:STDOUT:   %Main.import_ref.bf1: type = import_ref Main//e, loc7_9, loaded [concrete = constants.%C]
 // CHECK:STDOUT:   %Main.import_ref.8f3: <witness> = import_ref Main//e, inst24 [indirect], loaded [concrete = constants.%complete_type]
 // CHECK:STDOUT:   %Main.import_ref.db8 = import_ref Main//e, inst25 [indirect], unloaded
-// CHECK:STDOUT:   %Main.import_ref.c85: %F.type = import_ref Main//e, inst26 [indirect], loaded [concrete = constants.%F]
+// CHECK:STDOUT:   %Main.import_ref.c85: %C.F.type = import_ref Main//e, inst26 [indirect], loaded [concrete = constants.%C.F]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -478,15 +478,15 @@ var x: () = D.C.F();
 // CHECK:STDOUT:   .F = imports.%Main.import_ref.c85
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @F [from "a.carbon"];
+// CHECK:STDOUT: fn @C.F [from "a.carbon"];
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %D.ref: type = name_ref D, imports.%Main.D [concrete = constants.%D]
 // CHECK:STDOUT:   %C.ref: type = name_ref C, imports.%Main.import_ref.bf1 [concrete = constants.%C]
-// CHECK:STDOUT:   %F.ref: %F.type = name_ref F, imports.%Main.import_ref.c85 [concrete = constants.%F]
-// CHECK:STDOUT:   %F.call: init %empty_tuple.type = call %F.ref()
-// CHECK:STDOUT:   assign file.%x.var, %F.call
+// CHECK:STDOUT:   %F.ref: %C.F.type = name_ref F, imports.%Main.import_ref.c85 [concrete = constants.%C.F]
+// CHECK:STDOUT:   %C.F.call: init %empty_tuple.type = call %F.ref()
+// CHECK:STDOUT:   assign file.%x.var, %C.F.call
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -499,8 +499,8 @@ var x: () = D.C.F();
 // CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [concrete]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [concrete]
 // CHECK:STDOUT:   %C: type = class_type @C [concrete]
-// CHECK:STDOUT:   %F.type: type = fn_type @F [concrete]
-// CHECK:STDOUT:   %F: %F.type = struct_value () [concrete]
+// CHECK:STDOUT:   %C.F.type: type = fn_type @C.F [concrete]
+// CHECK:STDOUT:   %C.F: %C.F.type = struct_value () [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -510,7 +510,7 @@ var x: () = D.C.F();
 // CHECK:STDOUT:   %Main.import_ref.bf1: type = import_ref Main//e, loc7_9, loaded [concrete = constants.%C]
 // CHECK:STDOUT:   %Main.import_ref.8f3: <witness> = import_ref Main//e, inst24 [indirect], loaded [concrete = constants.%complete_type]
 // CHECK:STDOUT:   %Main.import_ref.db8 = import_ref Main//e, inst25 [indirect], unloaded
-// CHECK:STDOUT:   %Main.import_ref.c85: %F.type = import_ref Main//e, inst26 [indirect], loaded [concrete = constants.%F]
+// CHECK:STDOUT:   %Main.import_ref.c85: %C.F.type = import_ref Main//e, inst26 [indirect], loaded [concrete = constants.%C.F]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -547,15 +547,15 @@ var x: () = D.C.F();
 // CHECK:STDOUT:   .F = imports.%Main.import_ref.c85
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @F [from "a.carbon"];
+// CHECK:STDOUT: fn @C.F [from "a.carbon"];
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %D.ref: type = name_ref D, imports.%Main.D [concrete = constants.%D]
 // CHECK:STDOUT:   %C.ref: type = name_ref C, imports.%Main.import_ref.bf1 [concrete = constants.%C]
-// CHECK:STDOUT:   %F.ref: %F.type = name_ref F, imports.%Main.import_ref.c85 [concrete = constants.%F]
-// CHECK:STDOUT:   %F.call: init %empty_tuple.type = call %F.ref()
-// CHECK:STDOUT:   assign file.%x.var, %F.call
+// CHECK:STDOUT:   %F.ref: %C.F.type = name_ref F, imports.%Main.import_ref.c85 [concrete = constants.%C.F]
+// CHECK:STDOUT:   %C.F.call: init %empty_tuple.type = call %F.ref()
+// CHECK:STDOUT:   assign file.%x.var, %C.F.call
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

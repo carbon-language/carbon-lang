@@ -49,8 +49,8 @@ fn UseVal(a: Cpp.A*) -> i32 {
 // CHECK:STDOUT:
 // CHECK:STDOUT: define i32 @_CUseVal.Main(ptr %a) !dbg !7 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %by_val.call = call i32 @_ZNK1A6by_valEv(ptr %a), !dbg !10
-// CHECK:STDOUT:   ret i32 %by_val.call, !dbg !11
+// CHECK:STDOUT:   %A.by_val.call = call i32 @_ZNK1A6by_valEv(ptr %a), !dbg !10
+// CHECK:STDOUT:   ret i32 %A.by_val.call, !dbg !11
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: mustprogress noinline nounwind optnone
@@ -92,8 +92,8 @@ fn UseVal(a: Cpp.A*) -> i32 {
 // CHECK:STDOUT:
 // CHECK:STDOUT: define i32 @_CUseVal.Main(ptr %a) !dbg !7 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %by_ref.call = call i32 @_ZN1A6by_refEv(ptr %a), !dbg !10
-// CHECK:STDOUT:   ret i32 %by_ref.call, !dbg !11
+// CHECK:STDOUT:   %A.by_ref.call = call i32 @_ZN1A6by_refEv(ptr %a), !dbg !10
+// CHECK:STDOUT:   ret i32 %A.by_ref.call, !dbg !11
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: mustprogress noinline nounwind optnone

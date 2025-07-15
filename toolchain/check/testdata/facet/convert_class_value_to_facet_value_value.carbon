@@ -47,10 +47,10 @@ fn F() {
 // CHECK:STDOUT:   %pattern_type.ab7: type = pattern_type %Goat [concrete]
 // CHECK:STDOUT:   %WalkAnimal.specific_fn: <specific function> = specific_function %WalkAnimal, @WalkAnimal(%Animal.facet) [concrete]
 // CHECK:STDOUT:   %Destroy.type: type = facet_type <@Destroy> [concrete]
-// CHECK:STDOUT:   %Op.type.e7a: type = fn_type @Op.1, @Destroy.impl(%Goat) [concrete]
-// CHECK:STDOUT:   %Op.55a: %Op.type.e7a = struct_value () [concrete]
+// CHECK:STDOUT:   %T.as.Destroy.impl.Op.type.e7a: type = fn_type @T.as.Destroy.impl.Op, @T.as.Destroy.impl(%Goat) [concrete]
+// CHECK:STDOUT:   %T.as.Destroy.impl.Op.55a: %T.as.Destroy.impl.Op.type.e7a = struct_value () [concrete]
 // CHECK:STDOUT:   %ptr.940: type = ptr_type %Goat [concrete]
-// CHECK:STDOUT:   %Op.specific_fn: <specific function> = specific_function %Op.55a, @Op.1(%Goat) [concrete]
+// CHECK:STDOUT:   %T.as.Destroy.impl.Op.specific_fn: <specific function> = specific_function %T.as.Destroy.impl.Op.55a, @T.as.Destroy.impl.Op(%Goat) [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -88,11 +88,11 @@ fn F() {
 // CHECK:STDOUT:     %a: @WalkAnimal.%T.as_type.loc17_30.1 (%T.as_type) = bind_name a, %a.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Goat.decl: type = class_decl @Goat [concrete = constants.%Goat] {} {}
-// CHECK:STDOUT:   impl_decl @Animal.impl [concrete] {} {
+// CHECK:STDOUT:   impl_decl @Goat.as.Animal.impl [concrete] {} {
 // CHECK:STDOUT:     %Goat.ref: type = name_ref Goat, file.%Goat.decl [concrete = constants.%Goat]
 // CHECK:STDOUT:     %Animal.ref: type = name_ref Animal, file.%Animal.decl [concrete = constants.%Animal.type]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %Animal.impl_witness_table = impl_witness_table (), @Animal.impl [concrete]
+// CHECK:STDOUT:   %Animal.impl_witness_table = impl_witness_table (), @Goat.as.Animal.impl [concrete]
 // CHECK:STDOUT:   %Animal.impl_witness: <witness> = impl_witness %Animal.impl_witness_table [concrete = constants.%Animal.impl_witness]
 // CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [concrete = constants.%F] {} {}
 // CHECK:STDOUT: }
@@ -105,7 +105,7 @@ fn F() {
 // CHECK:STDOUT:   witness = ()
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: impl @Animal.impl: %Goat.ref as %Animal.ref {
+// CHECK:STDOUT: impl @Goat.as.Animal.impl: %Goat.ref as %Animal.ref {
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   witness = file.%Animal.impl_witness
 // CHECK:STDOUT: }
@@ -149,11 +149,11 @@ fn F() {
 // CHECK:STDOUT:   %WalkAnimal.specific_fn: <specific function> = specific_function %WalkAnimal.ref, @WalkAnimal(constants.%Animal.facet) [concrete = constants.%WalkAnimal.specific_fn]
 // CHECK:STDOUT:   %.loc23_17.2: %Goat = bind_value %.loc23_17.1
 // CHECK:STDOUT:   %WalkAnimal.call: init %empty_tuple.type = call %WalkAnimal.specific_fn(%.loc23_17.2)
-// CHECK:STDOUT:   %Op.bound: <bound method> = bound_method %.loc23_15.2, constants.%Op.55a
-// CHECK:STDOUT:   %Op.specific_fn: <specific function> = specific_function constants.%Op.55a, @Op.1(constants.%Goat) [concrete = constants.%Op.specific_fn]
-// CHECK:STDOUT:   %bound_method: <bound method> = bound_method %.loc23_15.2, %Op.specific_fn
+// CHECK:STDOUT:   %T.as.Destroy.impl.Op.bound: <bound method> = bound_method %.loc23_15.2, constants.%T.as.Destroy.impl.Op.55a
+// CHECK:STDOUT:   %T.as.Destroy.impl.Op.specific_fn: <specific function> = specific_function constants.%T.as.Destroy.impl.Op.55a, @T.as.Destroy.impl.Op(constants.%Goat) [concrete = constants.%T.as.Destroy.impl.Op.specific_fn]
+// CHECK:STDOUT:   %bound_method: <bound method> = bound_method %.loc23_15.2, %T.as.Destroy.impl.Op.specific_fn
 // CHECK:STDOUT:   %addr: %ptr.940 = addr_of %.loc23_15.2
-// CHECK:STDOUT:   %no_op: init %empty_tuple.type = call %bound_method(%addr)
+// CHECK:STDOUT:   %T.as.Destroy.impl.Op.call: init %empty_tuple.type = call %bound_method(%addr)
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

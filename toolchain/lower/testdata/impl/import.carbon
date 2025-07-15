@@ -63,8 +63,8 @@ fn Call(a: A) -> i32 {
 // CHECK:STDOUT:
 // CHECK:STDOUT: define i32 @_CCall.Main(ptr %a) !dbg !4 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %F.call = call i32 @"_CF.A.Main:I.Main"(ptr %a), !dbg !7
-// CHECK:STDOUT:   ret i32 %F.call, !dbg !8
+// CHECK:STDOUT:   %A.as.I.impl.F.call = call i32 @"_CF.A.Main:I.Main"(ptr %a), !dbg !7
+// CHECK:STDOUT:   ret i32 %A.as.I.impl.F.call, !dbg !8
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: declare i32 @"_CF.A.Main:I.Main"(ptr)

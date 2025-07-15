@@ -51,10 +51,10 @@ fn MakeOuter() -> Outer {
 // CHECK:STDOUT:   %MakeOuter.type: type = fn_type @MakeOuter [concrete]
 // CHECK:STDOUT:   %MakeOuter: %MakeOuter.type = struct_value () [concrete]
 // CHECK:STDOUT:   %Destroy.type: type = facet_type <@Destroy> [concrete]
-// CHECK:STDOUT:   %Op.type.e24: type = fn_type @Op.1, @Destroy.impl(%Inner) [concrete]
-// CHECK:STDOUT:   %Op.7b1: %Op.type.e24 = struct_value () [concrete]
+// CHECK:STDOUT:   %T.as.Destroy.impl.Op.type.e24: type = fn_type @T.as.Destroy.impl.Op, @T.as.Destroy.impl(%Inner) [concrete]
+// CHECK:STDOUT:   %T.as.Destroy.impl.Op.7b1: %T.as.Destroy.impl.Op.type.e24 = struct_value () [concrete]
 // CHECK:STDOUT:   %ptr.78b: type = ptr_type %Inner [concrete]
-// CHECK:STDOUT:   %Op.specific_fn: <specific function> = specific_function %Op.7b1, @Op.1(%Inner) [concrete]
+// CHECK:STDOUT:   %T.as.Destroy.impl.Op.specific_fn: <specific function> = specific_function %T.as.Destroy.impl.Op.7b1, @T.as.Destroy.impl.Op(%Inner) [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -143,16 +143,16 @@ fn MakeOuter() -> Outer {
 // CHECK:STDOUT:   %.loc28_45.3: %struct_type.c.d.dce = struct_literal (%MakeInner.call.loc28_26, %MakeInner.call.loc28_44)
 // CHECK:STDOUT:   %.loc28_45.4: init %Outer = class_init (%MakeInner.call.loc28_26, %MakeInner.call.loc28_44), %return
 // CHECK:STDOUT:   %.loc28_46: init %Outer = converted %.loc28_45.3, %.loc28_45.4
-// CHECK:STDOUT:   %Op.bound.loc28_45.1: <bound method> = bound_method %.loc28_45.2, constants.%Op.7b1
-// CHECK:STDOUT:   %Op.specific_fn.1: <specific function> = specific_function constants.%Op.7b1, @Op.1(constants.%Inner) [concrete = constants.%Op.specific_fn]
-// CHECK:STDOUT:   %bound_method.loc28_45.1: <bound method> = bound_method %.loc28_45.2, %Op.specific_fn.1
+// CHECK:STDOUT:   %T.as.Destroy.impl.Op.bound.loc28_45.1: <bound method> = bound_method %.loc28_45.2, constants.%T.as.Destroy.impl.Op.7b1
+// CHECK:STDOUT:   %T.as.Destroy.impl.Op.specific_fn.1: <specific function> = specific_function constants.%T.as.Destroy.impl.Op.7b1, @T.as.Destroy.impl.Op(constants.%Inner) [concrete = constants.%T.as.Destroy.impl.Op.specific_fn]
+// CHECK:STDOUT:   %bound_method.loc28_45.1: <bound method> = bound_method %.loc28_45.2, %T.as.Destroy.impl.Op.specific_fn.1
 // CHECK:STDOUT:   %addr.loc28_45.1: %ptr.78b = addr_of %.loc28_45.2
-// CHECK:STDOUT:   %no_op.loc28_45.1: init %empty_tuple.type = call %bound_method.loc28_45.1(%addr.loc28_45.1)
-// CHECK:STDOUT:   %Op.bound.loc28_45.2: <bound method> = bound_method %.loc28_45.1, constants.%Op.7b1
-// CHECK:STDOUT:   %Op.specific_fn.2: <specific function> = specific_function constants.%Op.7b1, @Op.1(constants.%Inner) [concrete = constants.%Op.specific_fn]
-// CHECK:STDOUT:   %bound_method.loc28_45.2: <bound method> = bound_method %.loc28_45.1, %Op.specific_fn.2
+// CHECK:STDOUT:   %T.as.Destroy.impl.Op.call.loc28_45.1: init %empty_tuple.type = call %bound_method.loc28_45.1(%addr.loc28_45.1)
+// CHECK:STDOUT:   %T.as.Destroy.impl.Op.bound.loc28_45.2: <bound method> = bound_method %.loc28_45.1, constants.%T.as.Destroy.impl.Op.7b1
+// CHECK:STDOUT:   %T.as.Destroy.impl.Op.specific_fn.2: <specific function> = specific_function constants.%T.as.Destroy.impl.Op.7b1, @T.as.Destroy.impl.Op(constants.%Inner) [concrete = constants.%T.as.Destroy.impl.Op.specific_fn]
+// CHECK:STDOUT:   %bound_method.loc28_45.2: <bound method> = bound_method %.loc28_45.1, %T.as.Destroy.impl.Op.specific_fn.2
 // CHECK:STDOUT:   %addr.loc28_45.2: %ptr.78b = addr_of %.loc28_45.1
-// CHECK:STDOUT:   %no_op.loc28_45.2: init %empty_tuple.type = call %bound_method.loc28_45.2(%addr.loc28_45.2)
+// CHECK:STDOUT:   %T.as.Destroy.impl.Op.call.loc28_45.2: init %empty_tuple.type = call %bound_method.loc28_45.2(%addr.loc28_45.2)
 // CHECK:STDOUT:   return %.loc28_46 to %return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

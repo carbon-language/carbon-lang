@@ -81,10 +81,10 @@ interface Class { }
 // CHECK:STDOUT:   %Self.719cbb.1: %Interface.type.d726c6.1 = bind_symbolic_name Self, 0 [symbolic]
 // CHECK:STDOUT:   %Interface.type.d726c6.2: type = facet_type <@Interface.loc13> [concrete]
 // CHECK:STDOUT:   %Self.719cbb.2: %Interface.type.d726c6.2 = bind_symbolic_name Self, 0 [symbolic]
-// CHECK:STDOUT:   %F.type: type = fn_type @F [concrete]
-// CHECK:STDOUT:   %F: %F.type = struct_value () [concrete]
+// CHECK:STDOUT:   %Interface.F.type: type = fn_type @Interface.F [concrete]
+// CHECK:STDOUT:   %Interface.F: %Interface.F.type = struct_value () [concrete]
 // CHECK:STDOUT:   %Interface.assoc_type: type = assoc_entity_type @Interface.loc13 [concrete]
-// CHECK:STDOUT:   %assoc0: %Interface.assoc_type = assoc_entity element0, @Interface.loc13.%F.decl [concrete]
+// CHECK:STDOUT:   %assoc0: %Interface.assoc_type = assoc_entity element0, @Interface.loc13.%Interface.F.decl [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -105,20 +105,20 @@ interface Class { }
 // CHECK:STDOUT:
 // CHECK:STDOUT: interface @Interface.loc13 {
 // CHECK:STDOUT:   %Self: %Interface.type.d726c6.2 = bind_symbolic_name Self, 0 [symbolic = constants.%Self.719cbb.2]
-// CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [concrete = constants.%F] {} {}
-// CHECK:STDOUT:   %assoc0: %Interface.assoc_type = assoc_entity element0, %F.decl [concrete = constants.%assoc0]
+// CHECK:STDOUT:   %Interface.F.decl: %Interface.F.type = fn_decl @Interface.F [concrete = constants.%Interface.F] {} {}
+// CHECK:STDOUT:   %assoc0: %Interface.assoc_type = assoc_entity element0, %Interface.F.decl [concrete = constants.%assoc0]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = %Self
 // CHECK:STDOUT:   .F = %assoc0
-// CHECK:STDOUT:   witness = (%F.decl)
+// CHECK:STDOUT:   witness = (%Interface.F.decl)
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic fn @F(@Interface.loc13.%Self: %Interface.type.d726c6.2) {
+// CHECK:STDOUT: generic fn @Interface.F(@Interface.loc13.%Self: %Interface.type.d726c6.2) {
 // CHECK:STDOUT:   fn();
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @F(constants.%Self.719cbb.2) {}
+// CHECK:STDOUT: specific @Interface.F(constants.%Self.719cbb.2) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- fail_redefine_with_dependents.carbon
 // CHECK:STDOUT:
@@ -129,10 +129,10 @@ interface Class { }
 // CHECK:STDOUT:   %Self.719cbb.2: %Interface.type.d726c6.2 = bind_symbolic_name Self, 0 [symbolic]
 // CHECK:STDOUT:   %Self.as_type: type = facet_access_type %Self.719cbb.2 [symbolic]
 // CHECK:STDOUT:   %pattern_type: type = pattern_type %Self.as_type [symbolic]
-// CHECK:STDOUT:   %F.type: type = fn_type @F [concrete]
-// CHECK:STDOUT:   %F: %F.type = struct_value () [concrete]
+// CHECK:STDOUT:   %Interface.F.type: type = fn_type @Interface.F [concrete]
+// CHECK:STDOUT:   %Interface.F: %Interface.F.type = struct_value () [concrete]
 // CHECK:STDOUT:   %Interface.assoc_type: type = assoc_entity_type @Interface.loc13 [concrete]
-// CHECK:STDOUT:   %assoc0: %Interface.assoc_type = assoc_entity element0, @Interface.loc13.%F.decl [concrete]
+// CHECK:STDOUT:   %assoc0: %Interface.assoc_type = assoc_entity element0, @Interface.loc13.%Interface.F.decl [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -153,37 +153,37 @@ interface Class { }
 // CHECK:STDOUT:
 // CHECK:STDOUT: interface @Interface.loc13 {
 // CHECK:STDOUT:   %Self: %Interface.type.d726c6.2 = bind_symbolic_name Self, 0 [symbolic = constants.%Self.719cbb.2]
-// CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [concrete = constants.%F] {
-// CHECK:STDOUT:     %self.patt: @F.%pattern_type (%pattern_type) = binding_pattern self [concrete]
-// CHECK:STDOUT:     %self.param_patt: @F.%pattern_type (%pattern_type) = value_param_pattern %self.patt, call_param0 [concrete]
+// CHECK:STDOUT:   %Interface.F.decl: %Interface.F.type = fn_decl @Interface.F [concrete = constants.%Interface.F] {
+// CHECK:STDOUT:     %self.patt: @Interface.F.%pattern_type (%pattern_type) = binding_pattern self [concrete]
+// CHECK:STDOUT:     %self.param_patt: @Interface.F.%pattern_type (%pattern_type) = value_param_pattern %self.patt, call_param0 [concrete]
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %self.param: @F.%Self.as_type.loc14_14.2 (%Self.as_type) = value_param call_param0
-// CHECK:STDOUT:     %.loc14_14.1: type = splice_block %.loc14_14.2 [symbolic = %Self.as_type.loc14_14.2 (constants.%Self.as_type)] {
+// CHECK:STDOUT:     %self.param: @Interface.F.%Self.as_type.loc14_14.1 (%Self.as_type) = value_param call_param0
+// CHECK:STDOUT:     %.loc14_14.1: type = splice_block %.loc14_14.2 [symbolic = %Self.as_type.loc14_14.1 (constants.%Self.as_type)] {
 // CHECK:STDOUT:       %Self.ref: %Interface.type.d726c6.2 = name_ref Self, @Interface.loc13.%Self [symbolic = %Self (constants.%Self.719cbb.2)]
-// CHECK:STDOUT:       %Self.as_type.loc14_14.1: type = facet_access_type %Self.ref [symbolic = %Self.as_type.loc14_14.2 (constants.%Self.as_type)]
-// CHECK:STDOUT:       %.loc14_14.2: type = converted %Self.ref, %Self.as_type.loc14_14.1 [symbolic = %Self.as_type.loc14_14.2 (constants.%Self.as_type)]
+// CHECK:STDOUT:       %Self.as_type.loc14_14.2: type = facet_access_type %Self.ref [symbolic = %Self.as_type.loc14_14.1 (constants.%Self.as_type)]
+// CHECK:STDOUT:       %.loc14_14.2: type = converted %Self.ref, %Self.as_type.loc14_14.2 [symbolic = %Self.as_type.loc14_14.1 (constants.%Self.as_type)]
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %self: @F.%Self.as_type.loc14_14.2 (%Self.as_type) = bind_name self, %self.param
+// CHECK:STDOUT:     %self: @Interface.F.%Self.as_type.loc14_14.1 (%Self.as_type) = bind_name self, %self.param
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %assoc0: %Interface.assoc_type = assoc_entity element0, %F.decl [concrete = constants.%assoc0]
+// CHECK:STDOUT:   %assoc0: %Interface.assoc_type = assoc_entity element0, %Interface.F.decl [concrete = constants.%assoc0]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = %Self
 // CHECK:STDOUT:   .F = %assoc0
-// CHECK:STDOUT:   witness = (%F.decl)
+// CHECK:STDOUT:   witness = (%Interface.F.decl)
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic fn @F(@Interface.loc13.%Self: %Interface.type.d726c6.2) {
+// CHECK:STDOUT: generic fn @Interface.F(@Interface.loc13.%Self: %Interface.type.d726c6.2) {
 // CHECK:STDOUT:   %Self: %Interface.type.d726c6.2 = bind_symbolic_name Self, 0 [symbolic = %Self (constants.%Self.719cbb.2)]
-// CHECK:STDOUT:   %Self.as_type.loc14_14.2: type = facet_access_type %Self [symbolic = %Self.as_type.loc14_14.2 (constants.%Self.as_type)]
-// CHECK:STDOUT:   %pattern_type: type = pattern_type %Self.as_type.loc14_14.2 [symbolic = %pattern_type (constants.%pattern_type)]
+// CHECK:STDOUT:   %Self.as_type.loc14_14.1: type = facet_access_type %Self [symbolic = %Self.as_type.loc14_14.1 (constants.%Self.as_type)]
+// CHECK:STDOUT:   %pattern_type: type = pattern_type %Self.as_type.loc14_14.1 [symbolic = %pattern_type (constants.%pattern_type)]
 // CHECK:STDOUT:
-// CHECK:STDOUT:   fn(%self.param: @F.%Self.as_type.loc14_14.2 (%Self.as_type));
+// CHECK:STDOUT:   fn(%self.param: @Interface.F.%Self.as_type.loc14_14.1 (%Self.as_type));
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @F(constants.%Self.719cbb.2) {
+// CHECK:STDOUT: specific @Interface.F(constants.%Self.719cbb.2) {
 // CHECK:STDOUT:   %Self => constants.%Self.719cbb.2
-// CHECK:STDOUT:   %Self.as_type.loc14_14.2 => constants.%Self.as_type
+// CHECK:STDOUT:   %Self.as_type.loc14_14.1 => constants.%Self.as_type
 // CHECK:STDOUT:   %pattern_type => constants.%pattern_type
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

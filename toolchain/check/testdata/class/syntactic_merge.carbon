@@ -1066,12 +1066,12 @@ fn Base.F[addr self: Base*]() {
 // CHECK:STDOUT:   %ptr.11f: type = ptr_type %Base [concrete]
 // CHECK:STDOUT:   %pattern_type.1b9: type = pattern_type %ptr.11f [concrete]
 // CHECK:STDOUT:   %pattern_type.f6d: type = pattern_type auto [concrete]
-// CHECK:STDOUT:   %F.type.7c6384.1: type = fn_type @F.loc7 [concrete]
-// CHECK:STDOUT:   %F.d17bbc.1: %F.type.7c6384.1 = struct_value () [concrete]
+// CHECK:STDOUT:   %Base.F.type.7c6384.1: type = fn_type @Base.F.loc7 [concrete]
+// CHECK:STDOUT:   %Base.F.d17bbc.1: %Base.F.type.7c6384.1 = struct_value () [concrete]
 // CHECK:STDOUT:   %struct_type.a: type = struct_type {.a: %empty_tuple.type} [concrete]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %struct_type.a [concrete]
-// CHECK:STDOUT:   %F.type.7c6384.2: type = fn_type @F.loc17 [concrete]
-// CHECK:STDOUT:   %F.d17bbc.2: %F.type.7c6384.2 = struct_value () [concrete]
+// CHECK:STDOUT:   %Base.F.type.7c6384.2: type = fn_type @Base.F.loc17 [concrete]
+// CHECK:STDOUT:   %Base.F.d17bbc.2: %Base.F.type.7c6384.2 = struct_value () [concrete]
 // CHECK:STDOUT:   %empty_tuple: %empty_tuple.type = tuple_value () [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -1080,7 +1080,7 @@ fn Base.F[addr self: Base*]() {
 // CHECK:STDOUT:     .Base = %Base.decl
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Base.decl: type = class_decl @Base [concrete = constants.%Base] {} {}
-// CHECK:STDOUT:   %F.decl: %F.type.7c6384.2 = fn_decl @F.loc17 [concrete = constants.%F.d17bbc.2] {
+// CHECK:STDOUT:   %Base.F.decl: %Base.F.type.7c6384.2 = fn_decl @Base.F.loc17 [concrete = constants.%Base.F.d17bbc.2] {
 // CHECK:STDOUT:     %self.patt: %pattern_type.1b9 = binding_pattern self [concrete]
 // CHECK:STDOUT:     %self.param_patt: %pattern_type.1b9 = value_param_pattern %self.patt, call_param0 [concrete]
 // CHECK:STDOUT:     %.loc17_11: %pattern_type.f6d = addr_pattern %self.param_patt [concrete]
@@ -1098,7 +1098,7 @@ fn Base.F[addr self: Base*]() {
 // CHECK:STDOUT:   %.loc5_11.1: %empty_tuple.type = tuple_literal ()
 // CHECK:STDOUT:   %.loc5_11.2: type = converted %.loc5_11.1, constants.%empty_tuple.type [concrete = constants.%empty_tuple.type]
 // CHECK:STDOUT:   %.loc5_8: %Base.elem = field_decl a, element0 [concrete]
-// CHECK:STDOUT:   %F.decl: %F.type.7c6384.1 = fn_decl @F.loc7 [concrete = constants.%F.d17bbc.1] {
+// CHECK:STDOUT:   %Base.F.decl: %Base.F.type.7c6384.1 = fn_decl @Base.F.loc7 [concrete = constants.%Base.F.d17bbc.1] {
 // CHECK:STDOUT:     %self.patt: %pattern_type.1b9 = binding_pattern self [concrete]
 // CHECK:STDOUT:     %self.param_patt: %pattern_type.1b9 = value_param_pattern %self.patt, call_param0 [concrete]
 // CHECK:STDOUT:     %.loc7_8: %pattern_type.f6d = addr_pattern %self.param_patt [concrete]
@@ -1117,13 +1117,13 @@ fn Base.F[addr self: Base*]() {
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%Base
 // CHECK:STDOUT:   .a = %.loc5_8
-// CHECK:STDOUT:   .F = %F.decl
+// CHECK:STDOUT:   .F = %Base.F.decl
 // CHECK:STDOUT:   .Base = <poisoned>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @F.loc7(%self.param: %ptr.11f);
+// CHECK:STDOUT: fn @Base.F.loc7(%self.param: %ptr.11f);
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @F.loc17(%self.param: %ptr.11f) {
+// CHECK:STDOUT: fn @Base.F.loc17(%self.param: %ptr.11f) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %self.ref: %ptr.11f = name_ref self, %self
 // CHECK:STDOUT:   %.loc18_4: ref %Base = deref %self.ref

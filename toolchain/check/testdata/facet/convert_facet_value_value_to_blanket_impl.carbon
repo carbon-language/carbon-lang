@@ -31,7 +31,7 @@ fn HandleAnimal[T:! Animal](a: T) { Feed(a); }
 // CHECK:STDOUT:   %A: %Animal.type = bind_symbolic_name A, 0 [symbolic]
 // CHECK:STDOUT:   %pattern_type.3b0: type = pattern_type %Animal.type [concrete]
 // CHECK:STDOUT:   %A.as_type: type = facet_access_type %A [symbolic]
-// CHECK:STDOUT:   %Eats.impl_witness.8abeaf.1: <witness> = impl_witness file.%Eats.impl_witness_table, @Eats.impl(%A) [symbolic]
+// CHECK:STDOUT:   %Eats.impl_witness.8abeaf.1: <witness> = impl_witness file.%Eats.impl_witness_table, @A.as_type.as.Eats.impl(%A) [symbolic]
 // CHECK:STDOUT:   %T.1b5: %Eats.type = bind_symbolic_name T, 0 [symbolic]
 // CHECK:STDOUT:   %pattern_type.a05: type = pattern_type %Eats.type [concrete]
 // CHECK:STDOUT:   %T.as_type.27d: type = facet_access_type %T.1b5 [symbolic]
@@ -46,7 +46,7 @@ fn HandleAnimal[T:! Animal](a: T) { Feed(a); }
 // CHECK:STDOUT:   %HandleAnimal.type: type = fn_type @HandleAnimal [concrete]
 // CHECK:STDOUT:   %HandleAnimal: %HandleAnimal.type = struct_value () [concrete]
 // CHECK:STDOUT:   %require_complete.234: <witness> = require_complete_type %T.as_type.2ad [symbolic]
-// CHECK:STDOUT:   %Eats.impl_witness.8abeaf.2: <witness> = impl_witness file.%Eats.impl_witness_table, @Eats.impl(%T.fd4) [symbolic]
+// CHECK:STDOUT:   %Eats.impl_witness.8abeaf.2: <witness> = impl_witness file.%Eats.impl_witness_table, @A.as_type.as.Eats.impl(%T.fd4) [symbolic]
 // CHECK:STDOUT:   %Eats.lookup_impl_witness: <witness> = lookup_impl_witness %T.fd4, @Eats [symbolic]
 // CHECK:STDOUT:   %Eats.facet: %Eats.type = facet_value %T.as_type.2ad, (%Eats.lookup_impl_witness) [symbolic]
 // CHECK:STDOUT:   %Feed.specific_fn: <specific function> = specific_function %Feed, @Feed(%Eats.facet) [symbolic]
@@ -70,7 +70,7 @@ fn HandleAnimal[T:! Animal](a: T) { Feed(a); }
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %Eats.decl: type = interface_decl @Eats [concrete = constants.%Eats.type] {} {}
 // CHECK:STDOUT:   %Animal.decl: type = interface_decl @Animal [concrete = constants.%Animal.type] {} {}
-// CHECK:STDOUT:   impl_decl @Eats.impl [concrete] {
+// CHECK:STDOUT:   impl_decl @A.as_type.as.Eats.impl [concrete] {
 // CHECK:STDOUT:     %A.patt: %pattern_type.3b0 = symbolic_binding_pattern A, 0 [concrete]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %A.ref: %Animal.type = name_ref A, %A.loc18_14.1 [symbolic = %A.loc18_14.2 (constants.%A)]
@@ -80,8 +80,8 @@ fn HandleAnimal[T:! Animal](a: T) { Feed(a); }
 // CHECK:STDOUT:     %Animal.ref: type = name_ref Animal, file.%Animal.decl [concrete = constants.%Animal.type]
 // CHECK:STDOUT:     %A.loc18_14.1: %Animal.type = bind_symbolic_name A, 0 [symbolic = %A.loc18_14.2 (constants.%A)]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %Eats.impl_witness_table = impl_witness_table (), @Eats.impl [concrete]
-// CHECK:STDOUT:   %Eats.impl_witness: <witness> = impl_witness %Eats.impl_witness_table, @Eats.impl(constants.%A) [symbolic = @Eats.impl.%Eats.impl_witness (constants.%Eats.impl_witness.8abeaf.1)]
+// CHECK:STDOUT:   %Eats.impl_witness_table = impl_witness_table (), @A.as_type.as.Eats.impl [concrete]
+// CHECK:STDOUT:   %Eats.impl_witness: <witness> = impl_witness %Eats.impl_witness_table, @A.as_type.as.Eats.impl(constants.%A) [symbolic = @A.as_type.as.Eats.impl.%Eats.impl_witness (constants.%Eats.impl_witness.8abeaf.1)]
 // CHECK:STDOUT:   %Feed.decl: %Feed.type = fn_decl @Feed [concrete = constants.%Feed] {
 // CHECK:STDOUT:     %T.patt: %pattern_type.a05 = symbolic_binding_pattern T, 0 [concrete]
 // CHECK:STDOUT:     %e.patt: @Feed.%pattern_type (%pattern_type.2b4) = binding_pattern e [concrete]
@@ -130,10 +130,10 @@ fn HandleAnimal[T:! Animal](a: T) { Feed(a); }
 // CHECK:STDOUT:   witness = ()
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic impl @Eats.impl(%A.loc18_14.1: %Animal.type) {
+// CHECK:STDOUT: generic impl @A.as_type.as.Eats.impl(%A.loc18_14.1: %Animal.type) {
 // CHECK:STDOUT:   %A.loc18_14.2: %Animal.type = bind_symbolic_name A, 0 [symbolic = %A.loc18_14.2 (constants.%A)]
 // CHECK:STDOUT:   %A.as_type.loc18_26.2: type = facet_access_type %A.loc18_14.2 [symbolic = %A.as_type.loc18_26.2 (constants.%A.as_type)]
-// CHECK:STDOUT:   %Eats.impl_witness: <witness> = impl_witness file.%Eats.impl_witness_table, @Eats.impl(%A.loc18_14.2) [symbolic = %Eats.impl_witness (constants.%Eats.impl_witness.8abeaf.1)]
+// CHECK:STDOUT:   %Eats.impl_witness: <witness> = impl_witness file.%Eats.impl_witness_table, @A.as_type.as.Eats.impl(%A.loc18_14.2) [symbolic = %Eats.impl_witness (constants.%Eats.impl_witness.8abeaf.1)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:
@@ -188,7 +188,7 @@ fn HandleAnimal[T:! Animal](a: T) { Feed(a); }
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @Eats.impl(constants.%A) {
+// CHECK:STDOUT: specific @A.as_type.as.Eats.impl(constants.%A) {
 // CHECK:STDOUT:   %A.loc18_14.2 => constants.%A
 // CHECK:STDOUT:   %A.as_type.loc18_26.2 => constants.%A.as_type
 // CHECK:STDOUT:   %Eats.impl_witness => constants.%Eats.impl_witness.8abeaf.1
@@ -206,7 +206,7 @@ fn HandleAnimal[T:! Animal](a: T) { Feed(a); }
 // CHECK:STDOUT:   %pattern_type => constants.%pattern_type.36a
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @Eats.impl(constants.%T.fd4) {
+// CHECK:STDOUT: specific @A.as_type.as.Eats.impl(constants.%T.fd4) {
 // CHECK:STDOUT:   %A.loc18_14.2 => constants.%T.fd4
 // CHECK:STDOUT:   %A.as_type.loc18_26.2 => constants.%T.as_type.2ad
 // CHECK:STDOUT:   %Eats.impl_witness => constants.%Eats.impl_witness.8abeaf.2

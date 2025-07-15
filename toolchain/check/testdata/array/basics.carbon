@@ -181,11 +181,11 @@ var a: array(1, 1);
 // CHECK:STDOUT:   %tuple.type.14a: type = tuple_type (%tuple.type.734, %tuple.type.734) [concrete]
 // CHECK:STDOUT:   %int_0: Core.IntLiteral = int_value 0 [concrete]
 // CHECK:STDOUT:   %int_1: Core.IntLiteral = int_value 1 [concrete]
-// CHECK:STDOUT:   %Op.type.fe9: type = fn_type @Op.1, @Destroy.impl(%tuple.type.734) [concrete]
-// CHECK:STDOUT:   %Op.ae1: %Op.type.fe9 = struct_value () [concrete]
+// CHECK:STDOUT:   %T.as.Destroy.impl.Op.type.fe9: type = fn_type @T.as.Destroy.impl.Op, @T.as.Destroy.impl(%tuple.type.734) [concrete]
+// CHECK:STDOUT:   %T.as.Destroy.impl.Op.ae1: %T.as.Destroy.impl.Op.type.fe9 = struct_value () [concrete]
 // CHECK:STDOUT:   %ptr.dbe: type = ptr_type %tuple.type.734 [concrete]
-// CHECK:STDOUT:   %Op.type.280: type = fn_type @Op.1, @Destroy.impl(%array_type) [concrete]
-// CHECK:STDOUT:   %Op.d4f: %Op.type.280 = struct_value () [concrete]
+// CHECK:STDOUT:   %T.as.Destroy.impl.Op.type.280: type = fn_type @T.as.Destroy.impl.Op, @T.as.Destroy.impl(%array_type) [concrete]
+// CHECK:STDOUT:   %T.as.Destroy.impl.Op.d4f: %T.as.Destroy.impl.Op.type.280 = struct_value () [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -199,20 +199,20 @@ var a: array(1, 1);
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %v.var: ref %array_type = var %v.var_patt
 // CHECK:STDOUT:   %F.ref.loc10_33: %F.type = name_ref F, file.%F.decl [concrete = constants.%F]
-// CHECK:STDOUT:   %.loc10_41.1: ref %tuple.type.734 = splice_block %.loc10_41.2 {
+// CHECK:STDOUT:   %.loc10_41.1: ref %tuple.type.734 = splice_block %.loc10_41.6 {
 // CHECK:STDOUT:     %int_0: Core.IntLiteral = int_value 0 [concrete = constants.%int_0]
-// CHECK:STDOUT:     %.loc10_41.2: ref %tuple.type.734 = array_index %v.var, %int_0
+// CHECK:STDOUT:     %.loc10_41.6: ref %tuple.type.734 = array_index %v.var, %int_0
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %F.call.loc10_35: init %tuple.type.734 = call %F.ref.loc10_33() to %.loc10_41.1
 // CHECK:STDOUT:   %F.ref.loc10_38: %F.type = name_ref F, file.%F.decl [concrete = constants.%F]
-// CHECK:STDOUT:   %.loc10_41.3: ref %tuple.type.734 = splice_block %.loc10_41.4 {
+// CHECK:STDOUT:   %.loc10_41.2: ref %tuple.type.734 = splice_block %.loc10_41.5 {
 // CHECK:STDOUT:     %int_1: Core.IntLiteral = int_value 1 [concrete = constants.%int_1]
-// CHECK:STDOUT:     %.loc10_41.4: ref %tuple.type.734 = array_index %v.var, %int_1
+// CHECK:STDOUT:     %.loc10_41.5: ref %tuple.type.734 = array_index %v.var, %int_1
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %F.call.loc10_40: init %tuple.type.734 = call %F.ref.loc10_38() to %.loc10_41.3
-// CHECK:STDOUT:   %.loc10_41.5: %tuple.type.14a = tuple_literal (%F.call.loc10_35, %F.call.loc10_40)
-// CHECK:STDOUT:   %.loc10_41.6: init %array_type = array_init (%F.call.loc10_35, %F.call.loc10_40) to %v.var
-// CHECK:STDOUT:   %.loc10_3: init %array_type = converted %.loc10_41.5, %.loc10_41.6
+// CHECK:STDOUT:   %F.call.loc10_40: init %tuple.type.734 = call %F.ref.loc10_38() to %.loc10_41.2
+// CHECK:STDOUT:   %.loc10_41.3: %tuple.type.14a = tuple_literal (%F.call.loc10_35, %F.call.loc10_40)
+// CHECK:STDOUT:   %.loc10_41.4: init %array_type = array_init (%F.call.loc10_35, %F.call.loc10_40) to %v.var
+// CHECK:STDOUT:   %.loc10_3: init %array_type = converted %.loc10_41.3, %.loc10_41.4
 // CHECK:STDOUT:   assign %v.var, %.loc10_3
 // CHECK:STDOUT:   %.loc10_28: type = splice_block %array_type [concrete = constants.%array_type] {
 // CHECK:STDOUT:     %C.ref.loc10_17: type = name_ref C, file.%C.decl [concrete = constants.%C]
@@ -224,21 +224,21 @@ var a: array(1, 1);
 // CHECK:STDOUT:     %array_type: type = array_type %int_2, %.loc10_24.2 [concrete = constants.%array_type]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %v: ref %array_type = bind_name v, %v.var
-// CHECK:STDOUT:   %Op.bound.loc10_41.1: <bound method> = bound_method %.loc10_41.3, constants.%Op.ae1
+// CHECK:STDOUT:   %T.as.Destroy.impl.Op.bound.loc10_41.1: <bound method> = bound_method %.loc10_41.2, constants.%T.as.Destroy.impl.Op.ae1
 // CHECK:STDOUT:   <elided>
-// CHECK:STDOUT:   %bound_method.loc10_41.1: <bound method> = bound_method %.loc10_41.3, %Op.specific_fn.1
-// CHECK:STDOUT:   %addr.loc10_41.1: %ptr.dbe = addr_of %.loc10_41.3
-// CHECK:STDOUT:   %no_op.loc10_41.1: init %empty_tuple.type = call %bound_method.loc10_41.1(%addr.loc10_41.1)
-// CHECK:STDOUT:   %Op.bound.loc10_41.2: <bound method> = bound_method %.loc10_41.1, constants.%Op.ae1
+// CHECK:STDOUT:   %bound_method.loc10_41.1: <bound method> = bound_method %.loc10_41.2, %T.as.Destroy.impl.Op.specific_fn.1
+// CHECK:STDOUT:   %addr.loc10_41.1: %ptr.dbe = addr_of %.loc10_41.2
+// CHECK:STDOUT:   %T.as.Destroy.impl.Op.call.loc10_41.1: init %empty_tuple.type = call %bound_method.loc10_41.1(%addr.loc10_41.1)
+// CHECK:STDOUT:   %T.as.Destroy.impl.Op.bound.loc10_41.2: <bound method> = bound_method %.loc10_41.1, constants.%T.as.Destroy.impl.Op.ae1
 // CHECK:STDOUT:   <elided>
-// CHECK:STDOUT:   %bound_method.loc10_41.2: <bound method> = bound_method %.loc10_41.1, %Op.specific_fn.2
+// CHECK:STDOUT:   %bound_method.loc10_41.2: <bound method> = bound_method %.loc10_41.1, %T.as.Destroy.impl.Op.specific_fn.2
 // CHECK:STDOUT:   %addr.loc10_41.2: %ptr.dbe = addr_of %.loc10_41.1
-// CHECK:STDOUT:   %no_op.loc10_41.2: init %empty_tuple.type = call %bound_method.loc10_41.2(%addr.loc10_41.2)
-// CHECK:STDOUT:   %Op.bound.loc10_3: <bound method> = bound_method %v.var, constants.%Op.d4f
+// CHECK:STDOUT:   %T.as.Destroy.impl.Op.call.loc10_41.2: init %empty_tuple.type = call %bound_method.loc10_41.2(%addr.loc10_41.2)
+// CHECK:STDOUT:   %T.as.Destroy.impl.Op.bound.loc10_3: <bound method> = bound_method %v.var, constants.%T.as.Destroy.impl.Op.d4f
 // CHECK:STDOUT:   <elided>
-// CHECK:STDOUT:   %bound_method.loc10_3: <bound method> = bound_method %v.var, %Op.specific_fn.3
+// CHECK:STDOUT:   %bound_method.loc10_3: <bound method> = bound_method %v.var, %T.as.Destroy.impl.Op.specific_fn.3
 // CHECK:STDOUT:   %addr.loc10_3: %ptr.c6b = addr_of %v.var
-// CHECK:STDOUT:   %no_op.loc10_3: init %empty_tuple.type = call %bound_method.loc10_3(%addr.loc10_3)
+// CHECK:STDOUT:   %T.as.Destroy.impl.Op.call.loc10_3: init %empty_tuple.type = call %bound_method.loc10_3(%addr.loc10_3)
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -253,10 +253,10 @@ var a: array(1, 1);
 // CHECK:STDOUT:   %tuple.type: type = tuple_type (%empty_tuple.type, %empty_tuple.type, %empty_tuple.type) [concrete]
 // CHECK:STDOUT:   %ptr.7fe: type = ptr_type %tuple.type [concrete]
 // CHECK:STDOUT:   %pattern_type.8c1: type = pattern_type %tuple.type [concrete]
-// CHECK:STDOUT:   %Op.type.073: type = fn_type @Op.1, @Destroy.impl(%tuple.type) [concrete]
-// CHECK:STDOUT:   %Op.dce: %Op.type.073 = struct_value () [concrete]
-// CHECK:STDOUT:   %Op.type.c60: type = fn_type @Op.1, @Destroy.impl(%array_type) [concrete]
-// CHECK:STDOUT:   %Op.f81: %Op.type.c60 = struct_value () [concrete]
+// CHECK:STDOUT:   %T.as.Destroy.impl.Op.type.073: type = fn_type @T.as.Destroy.impl.Op, @T.as.Destroy.impl(%tuple.type) [concrete]
+// CHECK:STDOUT:   %T.as.Destroy.impl.Op.dce: %T.as.Destroy.impl.Op.type.073 = struct_value () [concrete]
+// CHECK:STDOUT:   %T.as.Destroy.impl.Op.type.c60: type = fn_type @T.as.Destroy.impl.Op, @T.as.Destroy.impl(%array_type) [concrete]
+// CHECK:STDOUT:   %T.as.Destroy.impl.Op.f81: %T.as.Destroy.impl.Op.type.c60 = struct_value () [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -292,16 +292,16 @@ var a: array(1, 1);
 // CHECK:STDOUT:     %.loc8_21.6: type = converted %.loc8_21.2, constants.%tuple.type [concrete = constants.%tuple.type]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %b: ref %tuple.type = bind_name b, %b.var
-// CHECK:STDOUT:   %Op.bound.loc8: <bound method> = bound_method %b.var, constants.%Op.dce
+// CHECK:STDOUT:   %T.as.Destroy.impl.Op.bound.loc8: <bound method> = bound_method %b.var, constants.%T.as.Destroy.impl.Op.dce
 // CHECK:STDOUT:   <elided>
-// CHECK:STDOUT:   %bound_method.loc8: <bound method> = bound_method %b.var, %Op.specific_fn.1
+// CHECK:STDOUT:   %bound_method.loc8: <bound method> = bound_method %b.var, %T.as.Destroy.impl.Op.specific_fn.1
 // CHECK:STDOUT:   %addr.loc8: %ptr.7fe = addr_of %b.var
-// CHECK:STDOUT:   %no_op.loc8: init %empty_tuple.type = call %bound_method.loc8(%addr.loc8)
-// CHECK:STDOUT:   %Op.bound.loc7: <bound method> = bound_method %a.var, constants.%Op.f81
+// CHECK:STDOUT:   %T.as.Destroy.impl.Op.call.loc8: init %empty_tuple.type = call %bound_method.loc8(%addr.loc8)
+// CHECK:STDOUT:   %T.as.Destroy.impl.Op.bound.loc7: <bound method> = bound_method %a.var, constants.%T.as.Destroy.impl.Op.f81
 // CHECK:STDOUT:   <elided>
-// CHECK:STDOUT:   %bound_method.loc7: <bound method> = bound_method %a.var, %Op.specific_fn.2
+// CHECK:STDOUT:   %bound_method.loc7: <bound method> = bound_method %a.var, %T.as.Destroy.impl.Op.specific_fn.2
 // CHECK:STDOUT:   %addr.loc7: %ptr.20b = addr_of %a.var
-// CHECK:STDOUT:   %no_op.loc7: init %empty_tuple.type = call %bound_method.loc7(%addr.loc7)
+// CHECK:STDOUT:   %T.as.Destroy.impl.Op.call.loc7: init %empty_tuple.type = call %bound_method.loc7(%addr.loc7)
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -319,11 +319,11 @@ var a: array(1, 1);
 // CHECK:STDOUT:   %pattern_type.fe8: type = pattern_type %array_type [concrete]
 // CHECK:STDOUT:   %int_0: Core.IntLiteral = int_value 0 [concrete]
 // CHECK:STDOUT:   %array: %array_type = tuple_value (%empty_tuple) [concrete]
-// CHECK:STDOUT:   %Op.type.23e: type = fn_type @Op.1, @Destroy.impl(%tuple.type) [concrete]
-// CHECK:STDOUT:   %Op.f19: %Op.type.23e = struct_value () [concrete]
+// CHECK:STDOUT:   %T.as.Destroy.impl.Op.type.23e: type = fn_type @T.as.Destroy.impl.Op, @T.as.Destroy.impl(%tuple.type) [concrete]
+// CHECK:STDOUT:   %T.as.Destroy.impl.Op.f19: %T.as.Destroy.impl.Op.type.23e = struct_value () [concrete]
 // CHECK:STDOUT:   %ptr.652: type = ptr_type %tuple.type [concrete]
-// CHECK:STDOUT:   %Op.type.471: type = fn_type @Op.1, @Destroy.impl(%array_type) [concrete]
-// CHECK:STDOUT:   %Op.688: %Op.type.471 = struct_value () [concrete]
+// CHECK:STDOUT:   %T.as.Destroy.impl.Op.type.471: type = fn_type @T.as.Destroy.impl.Op, @T.as.Destroy.impl(%array_type) [concrete]
+// CHECK:STDOUT:   %T.as.Destroy.impl.Op.688: %T.as.Destroy.impl.Op.type.471 = struct_value () [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -355,16 +355,16 @@ var a: array(1, 1);
 // CHECK:STDOUT:     %array_type: type = array_type %int_1, %.loc8_17.2 [concrete = constants.%array_type]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %t: ref %array_type = bind_name t, %t.var
-// CHECK:STDOUT:   %Op.bound.loc8_27: <bound method> = bound_method %.loc8_27.1, constants.%Op.f19
+// CHECK:STDOUT:   %T.as.Destroy.impl.Op.bound.loc8_27: <bound method> = bound_method %.loc8_27.1, constants.%T.as.Destroy.impl.Op.f19
 // CHECK:STDOUT:   <elided>
-// CHECK:STDOUT:   %bound_method.loc8_27: <bound method> = bound_method %.loc8_27.1, %Op.specific_fn.1
+// CHECK:STDOUT:   %bound_method.loc8_27: <bound method> = bound_method %.loc8_27.1, %T.as.Destroy.impl.Op.specific_fn.1
 // CHECK:STDOUT:   %addr.loc8_27: %ptr.652 = addr_of %.loc8_27.1
-// CHECK:STDOUT:   %no_op.loc8_27: init %empty_tuple.type = call %bound_method.loc8_27(%addr.loc8_27)
-// CHECK:STDOUT:   %Op.bound.loc8_3: <bound method> = bound_method %t.var, constants.%Op.688
+// CHECK:STDOUT:   %T.as.Destroy.impl.Op.call.loc8_27: init %empty_tuple.type = call %bound_method.loc8_27(%addr.loc8_27)
+// CHECK:STDOUT:   %T.as.Destroy.impl.Op.bound.loc8_3: <bound method> = bound_method %t.var, constants.%T.as.Destroy.impl.Op.688
 // CHECK:STDOUT:   <elided>
-// CHECK:STDOUT:   %bound_method.loc8_3: <bound method> = bound_method %t.var, %Op.specific_fn.2
+// CHECK:STDOUT:   %bound_method.loc8_3: <bound method> = bound_method %t.var, %T.as.Destroy.impl.Op.specific_fn.2
 // CHECK:STDOUT:   %addr.loc8_3: %ptr.b99 = addr_of %t.var
-// CHECK:STDOUT:   %no_op.loc8_3: init %empty_tuple.type = call %bound_method.loc8_3(%addr.loc8_3)
+// CHECK:STDOUT:   %T.as.Destroy.impl.Op.call.loc8_3: init %empty_tuple.type = call %bound_method.loc8_3(%addr.loc8_3)
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

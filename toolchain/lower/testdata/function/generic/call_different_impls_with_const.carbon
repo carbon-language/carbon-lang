@@ -49,13 +49,13 @@ fn Run() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: define i1 @"_CF.X.Main:I.Main"() !dbg !4 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %print.int = call i32 (ptr, ...) @printf(ptr @printf.int.format, i32 1), !dbg !7
+// CHECK:STDOUT:   %Print.call = call i32 (ptr, ...) @printf(ptr @printf.int.format, i32 1), !dbg !7
 // CHECK:STDOUT:   ret i1 false, !dbg !8
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: define i32 @"_CF.Y.Main:I.Main"() !dbg !9 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %print.int = call i32 (ptr, ...) @printf(ptr @printf.int.format, i32 2), !dbg !10
+// CHECK:STDOUT:   %Print.call = call i32 (ptr, ...) @printf(ptr @printf.int.format, i32 2), !dbg !10
 // CHECK:STDOUT:   ret i32 2, !dbg !11
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

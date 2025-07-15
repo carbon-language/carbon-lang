@@ -219,9 +219,9 @@ fn Make() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: define void @_CUse.Create(ptr %v) !dbg !15 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %Fn.call.vtable = load ptr, ptr %v, align 8, !dbg !16
-// CHECK:STDOUT:   %Fn.call = call ptr @llvm.load.relative.i32(ptr %Fn.call.vtable, i32 0), !dbg !16
-// CHECK:STDOUT:   call void %Fn.call(ptr %v), !dbg !16
+// CHECK:STDOUT:   %Intermediate.Fn.call.vtable = load ptr, ptr %v, align 8, !dbg !16
+// CHECK:STDOUT:   %Intermediate.Fn.call = call ptr @llvm.load.relative.i32(ptr %Intermediate.Fn.call.vtable, i32 0), !dbg !16
+// CHECK:STDOUT:   call void %Intermediate.Fn.call(ptr %v), !dbg !16
 // CHECK:STDOUT:   ret void, !dbg !17
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -379,9 +379,9 @@ fn Make() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: define void @_CUse.Main(ptr %b) !dbg !4 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %F.call.vtable = load ptr, ptr %b, align 8, !dbg !7
-// CHECK:STDOUT:   %F.call = call ptr @llvm.load.relative.i32(ptr %F.call.vtable, i32 0), !dbg !7
-// CHECK:STDOUT:   call void %F.call(ptr %b), !dbg !7
+// CHECK:STDOUT:   %Base.F.call.vtable = load ptr, ptr %b, align 8, !dbg !7
+// CHECK:STDOUT:   %Base.F.call = call ptr @llvm.load.relative.i32(ptr %Base.F.call.vtable, i32 0), !dbg !7
+// CHECK:STDOUT:   call void %Base.F.call(ptr %b), !dbg !7
 // CHECK:STDOUT:   ret void, !dbg !8
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -420,9 +420,9 @@ fn Make() {
 // CHECK:STDOUT:   %.loc14_32.2.base = getelementptr inbounds nuw { { ptr } }, ptr %v.var, i32 0, i32 0, !dbg !8
 // CHECK:STDOUT:   %.loc14_31.2.vptr = getelementptr inbounds nuw { ptr }, ptr %.loc14_32.2.base, i32 0, i32 0, !dbg !9
 // CHECK:STDOUT:   call void @llvm.memcpy.p0.p0.i64(ptr align 8 %v.var, ptr align 8 @Derived.val.loc14_3, i64 8, i1 false), !dbg !7
-// CHECK:STDOUT:   %F.call.vtable = load ptr, ptr %v.var, align 8, !dbg !10
-// CHECK:STDOUT:   %F.call = call ptr @llvm.load.relative.i32(ptr %F.call.vtable, i32 0), !dbg !10
-// CHECK:STDOUT:   call void %F.call(ptr %v.var), !dbg !10
+// CHECK:STDOUT:   %Derived.F.call.vtable = load ptr, ptr %v.var, align 8, !dbg !10
+// CHECK:STDOUT:   %Derived.F.call = call ptr @llvm.load.relative.i32(ptr %Derived.F.call.vtable, i32 0), !dbg !10
+// CHECK:STDOUT:   call void %Derived.F.call(ptr %v.var), !dbg !10
 // CHECK:STDOUT:   ret void, !dbg !11
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

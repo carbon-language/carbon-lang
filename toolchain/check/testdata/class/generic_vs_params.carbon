@@ -249,7 +249,7 @@ class Foo[T:! type];
 // CHECK:STDOUT:     %GenericAndParams.decl: @C.%GenericAndParams.type (%GenericAndParams.type.3ce) = class_decl @GenericAndParams.loc10 [symbolic = @C.%GenericAndParams.generic (constants.%GenericAndParams.generic.54a)] {
 // CHECK:STDOUT:       %U.patt: %pattern_type.98f = symbolic_binding_pattern U, 1 [concrete]
 // CHECK:STDOUT:     } {
-// CHECK:STDOUT:       %U.loc10_26.1: type = bind_symbolic_name U, 1 [symbolic = %U.loc10_26.2 (constants.%U)]
+// CHECK:STDOUT:       %U.loc10_26.2: type = bind_symbolic_name U, 1 [symbolic = %U.loc10_26.1 (constants.%U)]
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %empty_struct_type: type = struct_type {} [concrete = constants.%empty_struct_type]
 // CHECK:STDOUT:     %complete_type: <witness> = complete_type_witness %empty_struct_type [concrete = constants.%complete_type]
@@ -275,8 +275,8 @@ class Foo[T:! type];
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic class @GenericAndParams.loc10(@C.%T.loc8_9.2: type, %U.loc10_26.1: type) {
-// CHECK:STDOUT:   %U.loc10_26.2: type = bind_symbolic_name U, 1 [symbolic = %U.loc10_26.2 (constants.%U)]
+// CHECK:STDOUT: generic class @GenericAndParams.loc10(@C.%T.loc8_9.2: type, %U.loc10_26.2: type) {
+// CHECK:STDOUT:   %U.loc10_26.1: type = bind_symbolic_name U, 1 [symbolic = %U.loc10_26.1 (constants.%U)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:
@@ -335,7 +335,7 @@ class Foo[T:! type];
 // CHECK:STDOUT: specific @GenericNoParams(constants.%T) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @GenericAndParams.loc10(constants.%T, constants.%U) {
-// CHECK:STDOUT:   %U.loc10_26.2 => constants.%U
+// CHECK:STDOUT:   %U.loc10_26.1 => constants.%U
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @GenericAndParams.loc6(constants.%X) {
@@ -358,7 +358,7 @@ class Foo[T:! type];
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @GenericAndParams.loc10(constants.%X, constants.%X) {
-// CHECK:STDOUT:   %U.loc10_26.2 => constants.%X
+// CHECK:STDOUT:   %U.loc10_26.1 => constants.%X
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT: }

@@ -36,8 +36,8 @@ fn CallF() -> i32 {
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(i64 4, ptr %n.var), !dbg !8
 // CHECK:STDOUT:   store i32 0, ptr %n.var, align 4, !dbg !8
 // CHECK:STDOUT:   %.loc22_14 = load i32, ptr %n.var, align 4, !dbg !9
-// CHECK:STDOUT:   %F.call = call i32 @_CF.C.Main.b88d1103f417c6d4(ptr %c.var, i32 %.loc22_14), !dbg !10
-// CHECK:STDOUT:   ret i32 %F.call, !dbg !11
+// CHECK:STDOUT:   %C.F.call = call i32 @_CF.C.Main.b88d1103f417c6d4(ptr %c.var, i32 %.loc22_14), !dbg !10
+// CHECK:STDOUT:   ret i32 %C.F.call, !dbg !11
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nocallback nofree nosync nounwind willreturn memory(argmem: readwrite)

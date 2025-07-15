@@ -58,15 +58,15 @@ fn StaticMemberFunctionCall(T:! type) -> Class(T) {
 // CHECK:STDOUT:   %Class.elem.e26: type = unbound_element_type %Class.fe1, %T [symbolic]
 // CHECK:STDOUT:   %pattern_type.3c1: type = pattern_type %Class.fe1 [symbolic]
 // CHECK:STDOUT:   %pattern_type.7dc: type = pattern_type %T [symbolic]
-// CHECK:STDOUT:   %Get.type.fd9: type = fn_type @Get, @Class(%T) [symbolic]
-// CHECK:STDOUT:   %Get.cf9: %Get.type.fd9 = struct_value () [symbolic]
+// CHECK:STDOUT:   %Class.Get.type.fd9: type = fn_type @Class.Get, @Class(%T) [symbolic]
+// CHECK:STDOUT:   %Class.Get.cf9: %Class.Get.type.fd9 = struct_value () [symbolic]
 // CHECK:STDOUT:   %ptr.955: type = ptr_type %Class.fe1 [symbolic]
 // CHECK:STDOUT:   %pattern_type.9e0: type = pattern_type %ptr.955 [symbolic]
 // CHECK:STDOUT:   %pattern_type.f6d: type = pattern_type auto [concrete]
 // CHECK:STDOUT:   %ptr.79f: type = ptr_type %T [symbolic]
 // CHECK:STDOUT:   %pattern_type.afe: type = pattern_type %ptr.79f [symbolic]
-// CHECK:STDOUT:   %GetAddr.type.402: type = fn_type @GetAddr, @Class(%T) [symbolic]
-// CHECK:STDOUT:   %GetAddr.102: %GetAddr.type.402 = struct_value () [symbolic]
+// CHECK:STDOUT:   %Class.GetAddr.type.402: type = fn_type @Class.GetAddr, @Class(%T) [symbolic]
+// CHECK:STDOUT:   %Class.GetAddr.102: %Class.GetAddr.type.402 = struct_value () [symbolic]
 // CHECK:STDOUT:   %struct_type.x.2ac: type = struct_type {.x: %T} [symbolic]
 // CHECK:STDOUT:   %complete_type.433: <witness> = complete_type_witness %struct_type.x.2ac [symbolic]
 // CHECK:STDOUT:   %require_complete.4f8: <witness> = require_complete_type %Class.fe1 [symbolic]
@@ -84,22 +84,22 @@ fn StaticMemberFunctionCall(T:! type) -> Class(T) {
 // CHECK:STDOUT:   %i32.builtin: type = int_type signed, %int_32 [concrete]
 // CHECK:STDOUT:   %complete_type.f8a: <witness> = complete_type_witness %i32.builtin [concrete]
 // CHECK:STDOUT:   %Class.elem.2d8: type = unbound_element_type %Class.247, %i32 [concrete]
-// CHECK:STDOUT:   %Get.type.59d: type = fn_type @Get, @Class(%i32) [concrete]
-// CHECK:STDOUT:   %Get.a40: %Get.type.59d = struct_value () [concrete]
-// CHECK:STDOUT:   %GetAddr.type.be7: type = fn_type @GetAddr, @Class(%i32) [concrete]
-// CHECK:STDOUT:   %GetAddr.909: %GetAddr.type.be7 = struct_value () [concrete]
+// CHECK:STDOUT:   %Class.Get.type.59d: type = fn_type @Class.Get, @Class(%i32) [concrete]
+// CHECK:STDOUT:   %Class.Get.a40: %Class.Get.type.59d = struct_value () [concrete]
+// CHECK:STDOUT:   %Class.GetAddr.type.be7: type = fn_type @Class.GetAddr, @Class(%i32) [concrete]
+// CHECK:STDOUT:   %Class.GetAddr.909: %Class.GetAddr.type.be7 = struct_value () [concrete]
 // CHECK:STDOUT:   %struct_type.x.ed6: type = struct_type {.x: %i32} [concrete]
 // CHECK:STDOUT:   %complete_type.1ec: <witness> = complete_type_witness %struct_type.x.ed6 [concrete]
 // CHECK:STDOUT:   %MethodCall.type: type = fn_type @MethodCall [concrete]
 // CHECK:STDOUT:   %MethodCall: %MethodCall.type = struct_value () [concrete]
-// CHECK:STDOUT:   %Get.specific_fn: <specific function> = specific_function %Get.a40, @Get(%i32) [concrete]
+// CHECK:STDOUT:   %Class.Get.specific_fn: <specific function> = specific_function %Class.Get.a40, @Class.Get(%i32) [concrete]
 // CHECK:STDOUT:   %ptr.f7c: type = ptr_type %Class.247 [concrete]
 // CHECK:STDOUT:   %pattern_type.14a: type = pattern_type %ptr.f7c [concrete]
 // CHECK:STDOUT:   %AddrMethodCall.type: type = fn_type @AddrMethodCall [concrete]
 // CHECK:STDOUT:   %AddrMethodCall: %AddrMethodCall.type = struct_value () [concrete]
 // CHECK:STDOUT:   %ptr.235: type = ptr_type %i32 [concrete]
 // CHECK:STDOUT:   %pattern_type.fe8: type = pattern_type %ptr.235 [concrete]
-// CHECK:STDOUT:   %GetAddr.specific_fn: <specific function> = specific_function %GetAddr.909, @GetAddr(%i32) [concrete]
+// CHECK:STDOUT:   %Class.GetAddr.specific_fn: <specific function> = specific_function %Class.GetAddr.909, @Class.GetAddr(%i32) [concrete]
 // CHECK:STDOUT:   %complete_type.3d0: <witness> = complete_type_witness %ptr.235 [concrete]
 // CHECK:STDOUT:   %complete_type.6ee: <witness> = complete_type_witness %ptr.f7c [concrete]
 // CHECK:STDOUT: }
@@ -194,50 +194,50 @@ fn StaticMemberFunctionCall(T:! type) -> Class(T) {
 // CHECK:STDOUT:   %require_complete: <witness> = require_complete_type %T.loc2_13.1 [symbolic = %require_complete (constants.%require_complete.4ae)]
 // CHECK:STDOUT:   %Class: type = class_type @Class, @Class(%T.loc2_13.1) [symbolic = %Class (constants.%Class.fe1)]
 // CHECK:STDOUT:   %Class.elem: type = unbound_element_type %Class, %T.loc2_13.1 [symbolic = %Class.elem (constants.%Class.elem.e26)]
-// CHECK:STDOUT:   %Get.type: type = fn_type @Get, @Class(%T.loc2_13.1) [symbolic = %Get.type (constants.%Get.type.fd9)]
-// CHECK:STDOUT:   %Get: @Class.%Get.type (%Get.type.fd9) = struct_value () [symbolic = %Get (constants.%Get.cf9)]
-// CHECK:STDOUT:   %GetAddr.type: type = fn_type @GetAddr, @Class(%T.loc2_13.1) [symbolic = %GetAddr.type (constants.%GetAddr.type.402)]
-// CHECK:STDOUT:   %GetAddr: @Class.%GetAddr.type (%GetAddr.type.402) = struct_value () [symbolic = %GetAddr (constants.%GetAddr.102)]
+// CHECK:STDOUT:   %Class.Get.type: type = fn_type @Class.Get, @Class(%T.loc2_13.1) [symbolic = %Class.Get.type (constants.%Class.Get.type.fd9)]
+// CHECK:STDOUT:   %Class.Get: @Class.%Class.Get.type (%Class.Get.type.fd9) = struct_value () [symbolic = %Class.Get (constants.%Class.Get.cf9)]
+// CHECK:STDOUT:   %Class.GetAddr.type: type = fn_type @Class.GetAddr, @Class(%T.loc2_13.1) [symbolic = %Class.GetAddr.type (constants.%Class.GetAddr.type.402)]
+// CHECK:STDOUT:   %Class.GetAddr: @Class.%Class.GetAddr.type (%Class.GetAddr.type.402) = struct_value () [symbolic = %Class.GetAddr (constants.%Class.GetAddr.102)]
 // CHECK:STDOUT:   %struct_type.x.loc8_1.2: type = struct_type {.x: @Class.%T.loc2_13.1 (%T)} [symbolic = %struct_type.x.loc8_1.2 (constants.%struct_type.x.2ac)]
 // CHECK:STDOUT:   %complete_type.loc8_1.2: <witness> = complete_type_witness %struct_type.x.loc8_1.2 [symbolic = %complete_type.loc8_1.2 (constants.%complete_type.433)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   class {
 // CHECK:STDOUT:     %T.ref: type = name_ref T, %T.loc2_13.2 [symbolic = %T.loc2_13.1 (constants.%T)]
 // CHECK:STDOUT:     %.loc3: @Class.%Class.elem (%Class.elem.e26) = field_decl x, element0 [concrete]
-// CHECK:STDOUT:     %Get.decl: @Class.%Get.type (%Get.type.fd9) = fn_decl @Get [symbolic = @Class.%Get (constants.%Get.cf9)] {
-// CHECK:STDOUT:       %self.patt: @Get.%pattern_type.loc5_10 (%pattern_type.3c1) = binding_pattern self [concrete]
-// CHECK:STDOUT:       %self.param_patt: @Get.%pattern_type.loc5_10 (%pattern_type.3c1) = value_param_pattern %self.patt, call_param0 [concrete]
-// CHECK:STDOUT:       %return.patt: @Get.%pattern_type.loc5_24 (%pattern_type.7dc) = return_slot_pattern [concrete]
-// CHECK:STDOUT:       %return.param_patt: @Get.%pattern_type.loc5_24 (%pattern_type.7dc) = out_param_pattern %return.patt, call_param1 [concrete]
+// CHECK:STDOUT:     %Class.Get.decl: @Class.%Class.Get.type (%Class.Get.type.fd9) = fn_decl @Class.Get [symbolic = @Class.%Class.Get (constants.%Class.Get.cf9)] {
+// CHECK:STDOUT:       %self.patt: @Class.Get.%pattern_type.loc5_10 (%pattern_type.3c1) = binding_pattern self [concrete]
+// CHECK:STDOUT:       %self.param_patt: @Class.Get.%pattern_type.loc5_10 (%pattern_type.3c1) = value_param_pattern %self.patt, call_param0 [concrete]
+// CHECK:STDOUT:       %return.patt: @Class.Get.%pattern_type.loc5_24 (%pattern_type.7dc) = return_slot_pattern [concrete]
+// CHECK:STDOUT:       %return.param_patt: @Class.Get.%pattern_type.loc5_24 (%pattern_type.7dc) = out_param_pattern %return.patt, call_param1 [concrete]
 // CHECK:STDOUT:     } {
 // CHECK:STDOUT:       %T.ref: type = name_ref T, @Class.%T.loc2_13.2 [symbolic = %T (constants.%T)]
-// CHECK:STDOUT:       %self.param: @Get.%Class (%Class.fe1) = value_param call_param0
+// CHECK:STDOUT:       %self.param: @Class.Get.%Class (%Class.fe1) = value_param call_param0
 // CHECK:STDOUT:       %.loc5_16.1: type = splice_block %Self.ref [symbolic = %Class (constants.%Class.fe1)] {
 // CHECK:STDOUT:         %.loc5_16.2: type = specific_constant constants.%Class.fe1, @Class(constants.%T) [symbolic = %Class (constants.%Class.fe1)]
 // CHECK:STDOUT:         %Self.ref: type = name_ref Self, %.loc5_16.2 [symbolic = %Class (constants.%Class.fe1)]
 // CHECK:STDOUT:       }
-// CHECK:STDOUT:       %self: @Get.%Class (%Class.fe1) = bind_name self, %self.param
-// CHECK:STDOUT:       %return.param: ref @Get.%T (%T) = out_param call_param1
-// CHECK:STDOUT:       %return: ref @Get.%T (%T) = return_slot %return.param
+// CHECK:STDOUT:       %self: @Class.Get.%Class (%Class.fe1) = bind_name self, %self.param
+// CHECK:STDOUT:       %return.param: ref @Class.Get.%T (%T) = out_param call_param1
+// CHECK:STDOUT:       %return: ref @Class.Get.%T (%T) = return_slot %return.param
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %GetAddr.decl: @Class.%GetAddr.type (%GetAddr.type.402) = fn_decl @GetAddr [symbolic = @Class.%GetAddr (constants.%GetAddr.102)] {
-// CHECK:STDOUT:       %self.patt: @GetAddr.%pattern_type.loc7_19 (%pattern_type.9e0) = binding_pattern self [concrete]
-// CHECK:STDOUT:       %self.param_patt: @GetAddr.%pattern_type.loc7_19 (%pattern_type.9e0) = value_param_pattern %self.patt, call_param0 [concrete]
+// CHECK:STDOUT:     %Class.GetAddr.decl: @Class.%Class.GetAddr.type (%Class.GetAddr.type.402) = fn_decl @Class.GetAddr [symbolic = @Class.%Class.GetAddr (constants.%Class.GetAddr.102)] {
+// CHECK:STDOUT:       %self.patt: @Class.GetAddr.%pattern_type.loc7_19 (%pattern_type.9e0) = binding_pattern self [concrete]
+// CHECK:STDOUT:       %self.param_patt: @Class.GetAddr.%pattern_type.loc7_19 (%pattern_type.9e0) = value_param_pattern %self.patt, call_param0 [concrete]
 // CHECK:STDOUT:       %.loc7_14: %pattern_type.f6d = addr_pattern %self.param_patt [concrete]
-// CHECK:STDOUT:       %return.patt: @GetAddr.%pattern_type.loc7_34 (%pattern_type.afe) = return_slot_pattern [concrete]
-// CHECK:STDOUT:       %return.param_patt: @GetAddr.%pattern_type.loc7_34 (%pattern_type.afe) = out_param_pattern %return.patt, call_param1 [concrete]
+// CHECK:STDOUT:       %return.patt: @Class.GetAddr.%pattern_type.loc7_34 (%pattern_type.afe) = return_slot_pattern [concrete]
+// CHECK:STDOUT:       %return.param_patt: @Class.GetAddr.%pattern_type.loc7_34 (%pattern_type.afe) = out_param_pattern %return.patt, call_param1 [concrete]
 // CHECK:STDOUT:     } {
 // CHECK:STDOUT:       %T.ref: type = name_ref T, @Class.%T.loc2_13.2 [symbolic = %T (constants.%T)]
-// CHECK:STDOUT:       %ptr.loc7_38.1: type = ptr_type %T.ref [symbolic = %ptr.loc7_38.2 (constants.%ptr.79f)]
-// CHECK:STDOUT:       %self.param: @GetAddr.%ptr.loc7_29.2 (%ptr.955) = value_param call_param0
-// CHECK:STDOUT:       %.loc7_29: type = splice_block %ptr.loc7_29.1 [symbolic = %ptr.loc7_29.2 (constants.%ptr.955)] {
+// CHECK:STDOUT:       %ptr.loc7_38.2: type = ptr_type %T.ref [symbolic = %ptr.loc7_38.1 (constants.%ptr.79f)]
+// CHECK:STDOUT:       %self.param: @Class.GetAddr.%ptr.loc7_29.1 (%ptr.955) = value_param call_param0
+// CHECK:STDOUT:       %.loc7_29: type = splice_block %ptr.loc7_29.2 [symbolic = %ptr.loc7_29.1 (constants.%ptr.955)] {
 // CHECK:STDOUT:         %.loc7_25: type = specific_constant constants.%Class.fe1, @Class(constants.%T) [symbolic = %Class (constants.%Class.fe1)]
 // CHECK:STDOUT:         %Self.ref: type = name_ref Self, %.loc7_25 [symbolic = %Class (constants.%Class.fe1)]
-// CHECK:STDOUT:         %ptr.loc7_29.1: type = ptr_type %Self.ref [symbolic = %ptr.loc7_29.2 (constants.%ptr.955)]
+// CHECK:STDOUT:         %ptr.loc7_29.2: type = ptr_type %Self.ref [symbolic = %ptr.loc7_29.1 (constants.%ptr.955)]
 // CHECK:STDOUT:       }
-// CHECK:STDOUT:       %self: @GetAddr.%ptr.loc7_29.2 (%ptr.955) = bind_name self, %self.param
-// CHECK:STDOUT:       %return.param: ref @GetAddr.%ptr.loc7_38.2 (%ptr.79f) = out_param call_param1
-// CHECK:STDOUT:       %return: ref @GetAddr.%ptr.loc7_38.2 (%ptr.79f) = return_slot %return.param
+// CHECK:STDOUT:       %self: @Class.GetAddr.%ptr.loc7_29.1 (%ptr.955) = bind_name self, %self.param
+// CHECK:STDOUT:       %return.param: ref @Class.GetAddr.%ptr.loc7_38.1 (%ptr.79f) = out_param call_param1
+// CHECK:STDOUT:       %return: ref @Class.GetAddr.%ptr.loc7_38.1 (%ptr.79f) = return_slot %return.param
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %struct_type.x.loc8_1.1: type = struct_type {.x: %T} [symbolic = %struct_type.x.loc8_1.2 (constants.%struct_type.x.2ac)]
 // CHECK:STDOUT:     %complete_type.loc8_1.1: <witness> = complete_type_witness %struct_type.x.loc8_1.1 [symbolic = %complete_type.loc8_1.2 (constants.%complete_type.433)]
@@ -247,12 +247,12 @@ fn StaticMemberFunctionCall(T:! type) -> Class(T) {
 // CHECK:STDOUT:     .Self = constants.%Class.fe1
 // CHECK:STDOUT:     .T = <poisoned>
 // CHECK:STDOUT:     .x = %.loc3
-// CHECK:STDOUT:     .Get = %Get.decl
-// CHECK:STDOUT:     .GetAddr = %GetAddr.decl
+// CHECK:STDOUT:     .Get = %Class.Get.decl
+// CHECK:STDOUT:     .GetAddr = %Class.GetAddr.decl
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic fn @Get(@Class.%T.loc2_13.2: type) {
+// CHECK:STDOUT: generic fn @Class.Get(@Class.%T.loc2_13.2: type) {
 // CHECK:STDOUT:   %T: type = bind_symbolic_name T, 0 [symbolic = %T (constants.%T)]
 // CHECK:STDOUT:   %Class: type = class_type @Class, @Class(%T) [symbolic = %Class (constants.%Class.fe1)]
 // CHECK:STDOUT:   %pattern_type.loc5_10: type = pattern_type %Class [symbolic = %pattern_type.loc5_10 (constants.%pattern_type.3c1)]
@@ -263,37 +263,37 @@ fn StaticMemberFunctionCall(T:! type) -> Class(T) {
 // CHECK:STDOUT:   %Class.elem: type = unbound_element_type %Class, %T [symbolic = %Class.elem (constants.%Class.elem.e26)]
 // CHECK:STDOUT:   %require_complete.loc5_42: <witness> = require_complete_type %T [symbolic = %require_complete.loc5_42 (constants.%require_complete.4ae)]
 // CHECK:STDOUT:
-// CHECK:STDOUT:   fn(%self.param: @Get.%Class (%Class.fe1)) -> @Get.%T (%T) {
+// CHECK:STDOUT:   fn(%self.param: @Class.Get.%Class (%Class.fe1)) -> @Class.Get.%T (%T) {
 // CHECK:STDOUT:   !entry:
-// CHECK:STDOUT:     %self.ref: @Get.%Class (%Class.fe1) = name_ref self, %self
-// CHECK:STDOUT:     %x.ref: @Get.%Class.elem (%Class.elem.e26) = name_ref x, @Class.%.loc3 [concrete = @Class.%.loc3]
-// CHECK:STDOUT:     %.loc5_42.1: ref @Get.%T (%T) = class_element_access %self.ref, element0
-// CHECK:STDOUT:     %.loc5_42.2: @Get.%T (%T) = bind_value %.loc5_42.1
+// CHECK:STDOUT:     %self.ref: @Class.Get.%Class (%Class.fe1) = name_ref self, %self
+// CHECK:STDOUT:     %x.ref: @Class.Get.%Class.elem (%Class.elem.e26) = name_ref x, @Class.%.loc3 [concrete = @Class.%.loc3]
+// CHECK:STDOUT:     %.loc5_42.1: ref @Class.Get.%T (%T) = class_element_access %self.ref, element0
+// CHECK:STDOUT:     %.loc5_42.2: @Class.Get.%T (%T) = bind_value %.loc5_42.1
 // CHECK:STDOUT:     return %.loc5_42.2
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic fn @GetAddr(@Class.%T.loc2_13.2: type) {
+// CHECK:STDOUT: generic fn @Class.GetAddr(@Class.%T.loc2_13.2: type) {
 // CHECK:STDOUT:   %T: type = bind_symbolic_name T, 0 [symbolic = %T (constants.%T)]
 // CHECK:STDOUT:   %Class: type = class_type @Class, @Class(%T) [symbolic = %Class (constants.%Class.fe1)]
-// CHECK:STDOUT:   %ptr.loc7_29.2: type = ptr_type %Class [symbolic = %ptr.loc7_29.2 (constants.%ptr.955)]
-// CHECK:STDOUT:   %pattern_type.loc7_19: type = pattern_type %ptr.loc7_29.2 [symbolic = %pattern_type.loc7_19 (constants.%pattern_type.9e0)]
-// CHECK:STDOUT:   %ptr.loc7_38.2: type = ptr_type %T [symbolic = %ptr.loc7_38.2 (constants.%ptr.79f)]
-// CHECK:STDOUT:   %pattern_type.loc7_34: type = pattern_type %ptr.loc7_38.2 [symbolic = %pattern_type.loc7_34 (constants.%pattern_type.afe)]
+// CHECK:STDOUT:   %ptr.loc7_29.1: type = ptr_type %Class [symbolic = %ptr.loc7_29.1 (constants.%ptr.955)]
+// CHECK:STDOUT:   %pattern_type.loc7_19: type = pattern_type %ptr.loc7_29.1 [symbolic = %pattern_type.loc7_19 (constants.%pattern_type.9e0)]
+// CHECK:STDOUT:   %ptr.loc7_38.1: type = ptr_type %T [symbolic = %ptr.loc7_38.1 (constants.%ptr.79f)]
+// CHECK:STDOUT:   %pattern_type.loc7_34: type = pattern_type %ptr.loc7_38.1 [symbolic = %pattern_type.loc7_34 (constants.%pattern_type.afe)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
-// CHECK:STDOUT:   %require_complete.loc7_34: <witness> = require_complete_type %ptr.loc7_38.2 [symbolic = %require_complete.loc7_34 (constants.%require_complete.6e5)]
-// CHECK:STDOUT:   %require_complete.loc7_23: <witness> = require_complete_type %ptr.loc7_29.2 [symbolic = %require_complete.loc7_23 (constants.%require_complete.2ae)]
+// CHECK:STDOUT:   %require_complete.loc7_34: <witness> = require_complete_type %ptr.loc7_38.1 [symbolic = %require_complete.loc7_34 (constants.%require_complete.6e5)]
+// CHECK:STDOUT:   %require_complete.loc7_23: <witness> = require_complete_type %ptr.loc7_29.1 [symbolic = %require_complete.loc7_23 (constants.%require_complete.2ae)]
 // CHECK:STDOUT:   %require_complete.loc7_54: <witness> = require_complete_type %Class [symbolic = %require_complete.loc7_54 (constants.%require_complete.4f8)]
 // CHECK:STDOUT:   %Class.elem: type = unbound_element_type %Class, %T [symbolic = %Class.elem (constants.%Class.elem.e26)]
 // CHECK:STDOUT:
-// CHECK:STDOUT:   fn(%self.param: @GetAddr.%ptr.loc7_29.2 (%ptr.955)) -> @GetAddr.%ptr.loc7_38.2 (%ptr.79f) {
+// CHECK:STDOUT:   fn(%self.param: @Class.GetAddr.%ptr.loc7_29.1 (%ptr.955)) -> @Class.GetAddr.%ptr.loc7_38.1 (%ptr.79f) {
 // CHECK:STDOUT:   !entry:
-// CHECK:STDOUT:     %self.ref: @GetAddr.%ptr.loc7_29.2 (%ptr.955) = name_ref self, %self
-// CHECK:STDOUT:     %.loc7_54.1: ref @GetAddr.%Class (%Class.fe1) = deref %self.ref
-// CHECK:STDOUT:     %x.ref: @GetAddr.%Class.elem (%Class.elem.e26) = name_ref x, @Class.%.loc3 [concrete = @Class.%.loc3]
-// CHECK:STDOUT:     %.loc7_54.2: ref @GetAddr.%T (%T) = class_element_access %.loc7_54.1, element0
-// CHECK:STDOUT:     %addr: @GetAddr.%ptr.loc7_38.2 (%ptr.79f) = addr_of %.loc7_54.2
+// CHECK:STDOUT:     %self.ref: @Class.GetAddr.%ptr.loc7_29.1 (%ptr.955) = name_ref self, %self
+// CHECK:STDOUT:     %.loc7_54.1: ref @Class.GetAddr.%Class (%Class.fe1) = deref %self.ref
+// CHECK:STDOUT:     %x.ref: @Class.GetAddr.%Class.elem (%Class.elem.e26) = name_ref x, @Class.%.loc3 [concrete = @Class.%.loc3]
+// CHECK:STDOUT:     %.loc7_54.2: ref @Class.GetAddr.%T (%T) = class_element_access %.loc7_54.1, element0
+// CHECK:STDOUT:     %addr: @Class.GetAddr.%ptr.loc7_38.1 (%ptr.79f) = addr_of %.loc7_54.2
 // CHECK:STDOUT:     return %addr
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
@@ -310,14 +310,14 @@ fn StaticMemberFunctionCall(T:! type) -> Class(T) {
 // CHECK:STDOUT: fn @MethodCall(%x.param: %Class.247) -> %i32 {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %x.ref: %Class.247 = name_ref x, %x
-// CHECK:STDOUT:   %.loc15_11: %Get.type.59d = specific_constant @Class.%Get.decl, @Class(constants.%i32) [concrete = constants.%Get.a40]
-// CHECK:STDOUT:   %Get.ref: %Get.type.59d = name_ref Get, %.loc15_11 [concrete = constants.%Get.a40]
-// CHECK:STDOUT:   %Get.bound: <bound method> = bound_method %x.ref, %Get.ref
-// CHECK:STDOUT:   %Get.specific_fn: <specific function> = specific_function %Get.ref, @Get(constants.%i32) [concrete = constants.%Get.specific_fn]
-// CHECK:STDOUT:   %bound_method: <bound method> = bound_method %x.ref, %Get.specific_fn
-// CHECK:STDOUT:   %Get.call: init %i32 = call %bound_method(%x.ref)
-// CHECK:STDOUT:   %.loc15_17.1: %i32 = value_of_initializer %Get.call
-// CHECK:STDOUT:   %.loc15_17.2: %i32 = converted %Get.call, %.loc15_17.1
+// CHECK:STDOUT:   %.loc15_11: %Class.Get.type.59d = specific_constant @Class.%Class.Get.decl, @Class(constants.%i32) [concrete = constants.%Class.Get.a40]
+// CHECK:STDOUT:   %Get.ref: %Class.Get.type.59d = name_ref Get, %.loc15_11 [concrete = constants.%Class.Get.a40]
+// CHECK:STDOUT:   %Class.Get.bound: <bound method> = bound_method %x.ref, %Get.ref
+// CHECK:STDOUT:   %Class.Get.specific_fn: <specific function> = specific_function %Get.ref, @Class.Get(constants.%i32) [concrete = constants.%Class.Get.specific_fn]
+// CHECK:STDOUT:   %bound_method: <bound method> = bound_method %x.ref, %Class.Get.specific_fn
+// CHECK:STDOUT:   %Class.Get.call: init %i32 = call %bound_method(%x.ref)
+// CHECK:STDOUT:   %.loc15_17.1: %i32 = value_of_initializer %Class.Get.call
+// CHECK:STDOUT:   %.loc15_17.2: %i32 = converted %Class.Get.call, %.loc15_17.1
 // CHECK:STDOUT:   return %.loc15_17.2
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -325,15 +325,15 @@ fn StaticMemberFunctionCall(T:! type) -> Class(T) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %p.ref: %ptr.f7c = name_ref p, %p
 // CHECK:STDOUT:   %.loc19_12.1: ref %Class.247 = deref %p.ref
-// CHECK:STDOUT:   %.loc19_12.2: %GetAddr.type.be7 = specific_constant @Class.%GetAddr.decl, @Class(constants.%i32) [concrete = constants.%GetAddr.909]
-// CHECK:STDOUT:   %GetAddr.ref: %GetAddr.type.be7 = name_ref GetAddr, %.loc19_12.2 [concrete = constants.%GetAddr.909]
-// CHECK:STDOUT:   %GetAddr.bound: <bound method> = bound_method %.loc19_12.1, %GetAddr.ref
-// CHECK:STDOUT:   %GetAddr.specific_fn: <specific function> = specific_function %GetAddr.ref, @GetAddr(constants.%i32) [concrete = constants.%GetAddr.specific_fn]
-// CHECK:STDOUT:   %bound_method: <bound method> = bound_method %.loc19_12.1, %GetAddr.specific_fn
+// CHECK:STDOUT:   %.loc19_12.2: %Class.GetAddr.type.be7 = specific_constant @Class.%Class.GetAddr.decl, @Class(constants.%i32) [concrete = constants.%Class.GetAddr.909]
+// CHECK:STDOUT:   %GetAddr.ref: %Class.GetAddr.type.be7 = name_ref GetAddr, %.loc19_12.2 [concrete = constants.%Class.GetAddr.909]
+// CHECK:STDOUT:   %Class.GetAddr.bound: <bound method> = bound_method %.loc19_12.1, %GetAddr.ref
+// CHECK:STDOUT:   %Class.GetAddr.specific_fn: <specific function> = specific_function %GetAddr.ref, @Class.GetAddr(constants.%i32) [concrete = constants.%Class.GetAddr.specific_fn]
+// CHECK:STDOUT:   %bound_method: <bound method> = bound_method %.loc19_12.1, %Class.GetAddr.specific_fn
 // CHECK:STDOUT:   %addr: %ptr.f7c = addr_of %.loc19_12.1
-// CHECK:STDOUT:   %GetAddr.call: init %ptr.235 = call %bound_method(%addr)
-// CHECK:STDOUT:   %.loc19_22.1: %ptr.235 = value_of_initializer %GetAddr.call
-// CHECK:STDOUT:   %.loc19_22.2: %ptr.235 = converted %GetAddr.call, %.loc19_22.1
+// CHECK:STDOUT:   %Class.GetAddr.call: init %ptr.235 = call %bound_method(%addr)
+// CHECK:STDOUT:   %.loc19_22.1: %ptr.235 = value_of_initializer %Class.GetAddr.call
+// CHECK:STDOUT:   %.loc19_22.2: %ptr.235 = converted %Class.GetAddr.call, %.loc19_22.1
 // CHECK:STDOUT:   %.loc19_10.1: ref %i32 = deref %.loc19_22.2
 // CHECK:STDOUT:   %.loc19_10.2: %i32 = bind_value %.loc19_10.1
 // CHECK:STDOUT:   return %.loc19_10.2
@@ -346,27 +346,27 @@ fn StaticMemberFunctionCall(T:! type) -> Class(T) {
 // CHECK:STDOUT:   %require_complete => constants.%require_complete.4ae
 // CHECK:STDOUT:   %Class => constants.%Class.fe1
 // CHECK:STDOUT:   %Class.elem => constants.%Class.elem.e26
-// CHECK:STDOUT:   %Get.type => constants.%Get.type.fd9
-// CHECK:STDOUT:   %Get => constants.%Get.cf9
-// CHECK:STDOUT:   %GetAddr.type => constants.%GetAddr.type.402
-// CHECK:STDOUT:   %GetAddr => constants.%GetAddr.102
+// CHECK:STDOUT:   %Class.Get.type => constants.%Class.Get.type.fd9
+// CHECK:STDOUT:   %Class.Get => constants.%Class.Get.cf9
+// CHECK:STDOUT:   %Class.GetAddr.type => constants.%Class.GetAddr.type.402
+// CHECK:STDOUT:   %Class.GetAddr => constants.%Class.GetAddr.102
 // CHECK:STDOUT:   %struct_type.x.loc8_1.2 => constants.%struct_type.x.2ac
 // CHECK:STDOUT:   %complete_type.loc8_1.2 => constants.%complete_type.433
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @Get(constants.%T) {
+// CHECK:STDOUT: specific @Class.Get(constants.%T) {
 // CHECK:STDOUT:   %T => constants.%T
 // CHECK:STDOUT:   %Class => constants.%Class.fe1
 // CHECK:STDOUT:   %pattern_type.loc5_10 => constants.%pattern_type.3c1
 // CHECK:STDOUT:   %pattern_type.loc5_24 => constants.%pattern_type.7dc
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @GetAddr(constants.%T) {
+// CHECK:STDOUT: specific @Class.GetAddr(constants.%T) {
 // CHECK:STDOUT:   %T => constants.%T
 // CHECK:STDOUT:   %Class => constants.%Class.fe1
-// CHECK:STDOUT:   %ptr.loc7_29.2 => constants.%ptr.955
+// CHECK:STDOUT:   %ptr.loc7_29.1 => constants.%ptr.955
 // CHECK:STDOUT:   %pattern_type.loc7_19 => constants.%pattern_type.9e0
-// CHECK:STDOUT:   %ptr.loc7_38.2 => constants.%ptr.79f
+// CHECK:STDOUT:   %ptr.loc7_38.1 => constants.%ptr.79f
 // CHECK:STDOUT:   %pattern_type.loc7_34 => constants.%pattern_type.afe
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -377,15 +377,15 @@ fn StaticMemberFunctionCall(T:! type) -> Class(T) {
 // CHECK:STDOUT:   %require_complete => constants.%complete_type.f8a
 // CHECK:STDOUT:   %Class => constants.%Class.247
 // CHECK:STDOUT:   %Class.elem => constants.%Class.elem.2d8
-// CHECK:STDOUT:   %Get.type => constants.%Get.type.59d
-// CHECK:STDOUT:   %Get => constants.%Get.a40
-// CHECK:STDOUT:   %GetAddr.type => constants.%GetAddr.type.be7
-// CHECK:STDOUT:   %GetAddr => constants.%GetAddr.909
+// CHECK:STDOUT:   %Class.Get.type => constants.%Class.Get.type.59d
+// CHECK:STDOUT:   %Class.Get => constants.%Class.Get.a40
+// CHECK:STDOUT:   %Class.GetAddr.type => constants.%Class.GetAddr.type.be7
+// CHECK:STDOUT:   %Class.GetAddr => constants.%Class.GetAddr.909
 // CHECK:STDOUT:   %struct_type.x.loc8_1.2 => constants.%struct_type.x.ed6
 // CHECK:STDOUT:   %complete_type.loc8_1.2 => constants.%complete_type.1ec
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @Get(constants.%i32) {
+// CHECK:STDOUT: specific @Class.Get(constants.%i32) {
 // CHECK:STDOUT:   %T => constants.%i32
 // CHECK:STDOUT:   %Class => constants.%Class.247
 // CHECK:STDOUT:   %pattern_type.loc5_10 => constants.%pattern_type.0fa
@@ -397,12 +397,12 @@ fn StaticMemberFunctionCall(T:! type) -> Class(T) {
 // CHECK:STDOUT:   %require_complete.loc5_42 => constants.%complete_type.f8a
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @GetAddr(constants.%i32) {
+// CHECK:STDOUT: specific @Class.GetAddr(constants.%i32) {
 // CHECK:STDOUT:   %T => constants.%i32
 // CHECK:STDOUT:   %Class => constants.%Class.247
-// CHECK:STDOUT:   %ptr.loc7_29.2 => constants.%ptr.f7c
+// CHECK:STDOUT:   %ptr.loc7_29.1 => constants.%ptr.f7c
 // CHECK:STDOUT:   %pattern_type.loc7_19 => constants.%pattern_type.14a
-// CHECK:STDOUT:   %ptr.loc7_38.2 => constants.%ptr.235
+// CHECK:STDOUT:   %ptr.loc7_38.1 => constants.%ptr.235
 // CHECK:STDOUT:   %pattern_type.loc7_34 => constants.%pattern_type.fe8
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
@@ -422,24 +422,24 @@ fn StaticMemberFunctionCall(T:! type) -> Class(T) {
 // CHECK:STDOUT:   %Class.generic: %Class.type = struct_value () [concrete]
 // CHECK:STDOUT:   %Class: type = class_type @Class, @Class(%T) [symbolic]
 // CHECK:STDOUT:   %pattern_type.3c1: type = pattern_type %Class [symbolic]
-// CHECK:STDOUT:   %Make.type: type = fn_type @Make, @Class(%T) [symbolic]
-// CHECK:STDOUT:   %Make: %Make.type = struct_value () [symbolic]
+// CHECK:STDOUT:   %Class.Make.type: type = fn_type @Class.Make, @Class(%T) [symbolic]
+// CHECK:STDOUT:   %Class.Make: %Class.Make.type = struct_value () [symbolic]
 // CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [concrete]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [concrete]
 // CHECK:STDOUT:   %require_complete.4f8: <witness> = require_complete_type %Class [symbolic]
 // CHECK:STDOUT:   %Class.val: %Class = struct_value () [symbolic]
 // CHECK:STDOUT:   %StaticMemberFunctionCall.type: type = fn_type @StaticMemberFunctionCall [concrete]
 // CHECK:STDOUT:   %StaticMemberFunctionCall: %StaticMemberFunctionCall.type = struct_value () [concrete]
-// CHECK:STDOUT:   %Make.specific_fn: <specific function> = specific_function %Make, @Make(%T) [symbolic]
+// CHECK:STDOUT:   %Class.Make.specific_fn: <specific function> = specific_function %Class.Make, @Class.Make(%T) [symbolic]
 // CHECK:STDOUT:   %Destroy.type: type = facet_type <@Destroy> [concrete]
-// CHECK:STDOUT:   %Op.type.bae: type = fn_type @Op.1 [concrete]
+// CHECK:STDOUT:   %Destroy.Op.type: type = fn_type @Destroy.Op [concrete]
 // CHECK:STDOUT:   %ptr.955: type = ptr_type %Class [symbolic]
 // CHECK:STDOUT:   %require_complete.2ae: <witness> = require_complete_type %ptr.955 [symbolic]
 // CHECK:STDOUT:   %Destroy.lookup_impl_witness: <witness> = lookup_impl_witness %Class, @Destroy [symbolic]
 // CHECK:STDOUT:   %Destroy.facet: %Destroy.type = facet_value %Class, (%Destroy.lookup_impl_witness) [symbolic]
-// CHECK:STDOUT:   %.d76: type = fn_type_with_self_type %Op.type.bae, %Destroy.facet [symbolic]
+// CHECK:STDOUT:   %.d76: type = fn_type_with_self_type %Destroy.Op.type, %Destroy.facet [symbolic]
 // CHECK:STDOUT:   %impl.elem0: %.d76 = impl_witness_access %Destroy.lookup_impl_witness, element0 [symbolic]
-// CHECK:STDOUT:   %specific_impl_fn: <specific function> = specific_impl_function %impl.elem0, @Op.1(%Destroy.facet) [symbolic]
+// CHECK:STDOUT:   %specific_impl_fn: <specific function> = specific_impl_function %impl.elem0, @Destroy.Op(%Destroy.facet) [symbolic]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -481,19 +481,19 @@ fn StaticMemberFunctionCall(T:! type) -> Class(T) {
 // CHECK:STDOUT:   %T.loc4_13.1: type = bind_symbolic_name T, 0 [symbolic = %T.loc4_13.1 (constants.%T)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
-// CHECK:STDOUT:   %Make.type: type = fn_type @Make, @Class(%T.loc4_13.1) [symbolic = %Make.type (constants.%Make.type)]
-// CHECK:STDOUT:   %Make: @Class.%Make.type (%Make.type) = struct_value () [symbolic = %Make (constants.%Make)]
+// CHECK:STDOUT:   %Class.Make.type: type = fn_type @Class.Make, @Class(%T.loc4_13.1) [symbolic = %Class.Make.type (constants.%Class.Make.type)]
+// CHECK:STDOUT:   %Class.Make: @Class.%Class.Make.type (%Class.Make.type) = struct_value () [symbolic = %Class.Make (constants.%Class.Make)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   class {
-// CHECK:STDOUT:     %Make.decl: @Class.%Make.type (%Make.type) = fn_decl @Make [symbolic = @Class.%Make (constants.%Make)] {
-// CHECK:STDOUT:       %return.patt: @Make.%pattern_type (%pattern_type.3c1) = return_slot_pattern [concrete]
-// CHECK:STDOUT:       %return.param_patt: @Make.%pattern_type (%pattern_type.3c1) = out_param_pattern %return.patt, call_param0 [concrete]
+// CHECK:STDOUT:     %Class.Make.decl: @Class.%Class.Make.type (%Class.Make.type) = fn_decl @Class.Make [symbolic = @Class.%Class.Make (constants.%Class.Make)] {
+// CHECK:STDOUT:       %return.patt: @Class.Make.%pattern_type (%pattern_type.3c1) = return_slot_pattern [concrete]
+// CHECK:STDOUT:       %return.param_patt: @Class.Make.%pattern_type (%pattern_type.3c1) = out_param_pattern %return.patt, call_param0 [concrete]
 // CHECK:STDOUT:     } {
 // CHECK:STDOUT:       %Class.ref: %Class.type = name_ref Class, file.%Class.decl [concrete = constants.%Class.generic]
 // CHECK:STDOUT:       %T.ref: type = name_ref T, @Class.%T.loc4_13.2 [symbolic = %T (constants.%T)]
-// CHECK:STDOUT:       %Class.loc5_23.1: type = class_type @Class, @Class(constants.%T) [symbolic = %Class.loc5_23.2 (constants.%Class)]
-// CHECK:STDOUT:       %return.param: ref @Make.%Class.loc5_23.2 (%Class) = out_param call_param0
-// CHECK:STDOUT:       %return: ref @Make.%Class.loc5_23.2 (%Class) = return_slot %return.param
+// CHECK:STDOUT:       %Class.loc5_23.2: type = class_type @Class, @Class(constants.%T) [symbolic = %Class.loc5_23.1 (constants.%Class)]
+// CHECK:STDOUT:       %return.param: ref @Class.Make.%Class.loc5_23.1 (%Class) = out_param call_param0
+// CHECK:STDOUT:       %return: ref @Class.Make.%Class.loc5_23.1 (%Class) = return_slot %return.param
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %empty_struct_type: type = struct_type {} [concrete = constants.%empty_struct_type]
 // CHECK:STDOUT:     %complete_type: <witness> = complete_type_witness %empty_struct_type [concrete = constants.%complete_type]
@@ -503,24 +503,24 @@ fn StaticMemberFunctionCall(T:! type) -> Class(T) {
 // CHECK:STDOUT:     .Self = constants.%Class
 // CHECK:STDOUT:     .Class = <poisoned>
 // CHECK:STDOUT:     .T = <poisoned>
-// CHECK:STDOUT:     .Make = %Make.decl
+// CHECK:STDOUT:     .Make = %Class.Make.decl
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic fn @Make(@Class.%T.loc4_13.2: type) {
+// CHECK:STDOUT: generic fn @Class.Make(@Class.%T.loc4_13.2: type) {
 // CHECK:STDOUT:   %T: type = bind_symbolic_name T, 0 [symbolic = %T (constants.%T)]
-// CHECK:STDOUT:   %Class.loc5_23.2: type = class_type @Class, @Class(%T) [symbolic = %Class.loc5_23.2 (constants.%Class)]
-// CHECK:STDOUT:   %pattern_type: type = pattern_type %Class.loc5_23.2 [symbolic = %pattern_type (constants.%pattern_type.3c1)]
+// CHECK:STDOUT:   %Class.loc5_23.1: type = class_type @Class, @Class(%T) [symbolic = %Class.loc5_23.1 (constants.%Class)]
+// CHECK:STDOUT:   %pattern_type: type = pattern_type %Class.loc5_23.1 [symbolic = %pattern_type (constants.%pattern_type.3c1)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
-// CHECK:STDOUT:   %require_complete: <witness> = require_complete_type %Class.loc5_23.2 [symbolic = %require_complete (constants.%require_complete.4f8)]
-// CHECK:STDOUT:   %Class.val: @Make.%Class.loc5_23.2 (%Class) = struct_value () [symbolic = %Class.val (constants.%Class.val)]
+// CHECK:STDOUT:   %require_complete: <witness> = require_complete_type %Class.loc5_23.1 [symbolic = %require_complete (constants.%require_complete.4f8)]
+// CHECK:STDOUT:   %Class.val: @Class.Make.%Class.loc5_23.1 (%Class) = struct_value () [symbolic = %Class.val (constants.%Class.val)]
 // CHECK:STDOUT:
-// CHECK:STDOUT:   fn() -> %return.param: @Make.%Class.loc5_23.2 (%Class) {
+// CHECK:STDOUT:   fn() -> %return.param: @Class.Make.%Class.loc5_23.1 (%Class) {
 // CHECK:STDOUT:   !entry:
 // CHECK:STDOUT:     %.loc5_35.1: %empty_struct_type = struct_literal ()
-// CHECK:STDOUT:     %.loc5_35.2: init @Make.%Class.loc5_23.2 (%Class) = class_init (), %return [symbolic = %Class.val (constants.%Class.val)]
-// CHECK:STDOUT:     %.loc5_36: init @Make.%Class.loc5_23.2 (%Class) = converted %.loc5_35.1, %.loc5_35.2 [symbolic = %Class.val (constants.%Class.val)]
+// CHECK:STDOUT:     %.loc5_35.2: init @Class.Make.%Class.loc5_23.1 (%Class) = class_init (), %return [symbolic = %Class.val (constants.%Class.val)]
+// CHECK:STDOUT:     %.loc5_36: init @Class.Make.%Class.loc5_23.1 (%Class) = converted %.loc5_35.1, %.loc5_35.2 [symbolic = %Class.val (constants.%Class.val)]
 // CHECK:STDOUT:     return %.loc5_36 to %return
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
@@ -532,14 +532,14 @@ fn StaticMemberFunctionCall(T:! type) -> Class(T) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %require_complete.loc9: <witness> = require_complete_type %Class.loc8_49.1 [symbolic = %require_complete.loc9 (constants.%require_complete.4f8)]
-// CHECK:STDOUT:   %Make.type: type = fn_type @Make, @Class(%T.loc8_29.1) [symbolic = %Make.type (constants.%Make.type)]
-// CHECK:STDOUT:   %Make: @StaticMemberFunctionCall.%Make.type (%Make.type) = struct_value () [symbolic = %Make (constants.%Make)]
-// CHECK:STDOUT:   %Make.specific_fn.loc9_18.2: <specific function> = specific_function %Make, @Make(%T.loc8_29.1) [symbolic = %Make.specific_fn.loc9_18.2 (constants.%Make.specific_fn)]
+// CHECK:STDOUT:   %Class.Make.type: type = fn_type @Class.Make, @Class(%T.loc8_29.1) [symbolic = %Class.Make.type (constants.%Class.Make.type)]
+// CHECK:STDOUT:   %Class.Make: @StaticMemberFunctionCall.%Class.Make.type (%Class.Make.type) = struct_value () [symbolic = %Class.Make (constants.%Class.Make)]
+// CHECK:STDOUT:   %Class.Make.specific_fn.loc9_18.2: <specific function> = specific_function %Class.Make, @Class.Make(%T.loc8_29.1) [symbolic = %Class.Make.specific_fn.loc9_18.2 (constants.%Class.Make.specific_fn)]
 // CHECK:STDOUT:   %Destroy.lookup_impl_witness: <witness> = lookup_impl_witness %Class.loc8_49.1, @Destroy [symbolic = %Destroy.lookup_impl_witness (constants.%Destroy.lookup_impl_witness)]
 // CHECK:STDOUT:   %Destroy.facet: %Destroy.type = facet_value %Class.loc8_49.1, (%Destroy.lookup_impl_witness) [symbolic = %Destroy.facet (constants.%Destroy.facet)]
-// CHECK:STDOUT:   %.loc8_39.3: type = fn_type_with_self_type constants.%Op.type.bae, %Destroy.facet [symbolic = %.loc8_39.3 (constants.%.d76)]
+// CHECK:STDOUT:   %.loc8_39.3: type = fn_type_with_self_type constants.%Destroy.Op.type, %Destroy.facet [symbolic = %.loc8_39.3 (constants.%.d76)]
 // CHECK:STDOUT:   %impl.elem0.loc8_39.2: @StaticMemberFunctionCall.%.loc8_39.3 (%.d76) = impl_witness_access %Destroy.lookup_impl_witness, element0 [symbolic = %impl.elem0.loc8_39.2 (constants.%impl.elem0)]
-// CHECK:STDOUT:   %specific_impl_fn.loc8_39.2: <specific function> = specific_impl_function %impl.elem0.loc8_39.2, @Op.1(%Destroy.facet) [symbolic = %specific_impl_fn.loc8_39.2 (constants.%specific_impl_fn)]
+// CHECK:STDOUT:   %specific_impl_fn.loc8_39.2: <specific function> = specific_impl_function %impl.elem0.loc8_39.2, @Destroy.Op(%Destroy.facet) [symbolic = %specific_impl_fn.loc8_39.2 (constants.%specific_impl_fn)]
 // CHECK:STDOUT:   %ptr: type = ptr_type %Class.loc8_49.1 [symbolic = %ptr (constants.%ptr.955)]
 // CHECK:STDOUT:   %require_complete.loc8: <witness> = require_complete_type %ptr [symbolic = %require_complete.loc8 (constants.%require_complete.2ae)]
 // CHECK:STDOUT:
@@ -548,18 +548,18 @@ fn StaticMemberFunctionCall(T:! type) -> Class(T) {
 // CHECK:STDOUT:     %Class.ref.loc9: %Class.type = name_ref Class, file.%Class.decl [concrete = constants.%Class.generic]
 // CHECK:STDOUT:     %T.ref.loc9: type = name_ref T, %T.loc8_29.2 [symbolic = %T.loc8_29.1 (constants.%T)]
 // CHECK:STDOUT:     %Class.loc9: type = class_type @Class, @Class(constants.%T) [symbolic = %Class.loc8_49.1 (constants.%Class)]
-// CHECK:STDOUT:     %.loc9: @StaticMemberFunctionCall.%Make.type (%Make.type) = specific_constant @Class.%Make.decl, @Class(constants.%T) [symbolic = %Make (constants.%Make)]
-// CHECK:STDOUT:     %Make.ref: @StaticMemberFunctionCall.%Make.type (%Make.type) = name_ref Make, %.loc9 [symbolic = %Make (constants.%Make)]
-// CHECK:STDOUT:     %Make.specific_fn.loc9_18.1: <specific function> = specific_function %Make.ref, @Make(constants.%T) [symbolic = %Make.specific_fn.loc9_18.2 (constants.%Make.specific_fn)]
+// CHECK:STDOUT:     %.loc9: @StaticMemberFunctionCall.%Class.Make.type (%Class.Make.type) = specific_constant @Class.%Class.Make.decl, @Class(constants.%T) [symbolic = %Class.Make (constants.%Class.Make)]
+// CHECK:STDOUT:     %Make.ref: @StaticMemberFunctionCall.%Class.Make.type (%Class.Make.type) = name_ref Make, %.loc9 [symbolic = %Class.Make (constants.%Class.Make)]
+// CHECK:STDOUT:     %Class.Make.specific_fn.loc9_18.1: <specific function> = specific_function %Make.ref, @Class.Make(constants.%T) [symbolic = %Class.Make.specific_fn.loc9_18.2 (constants.%Class.Make.specific_fn)]
 // CHECK:STDOUT:     %.loc8_39.1: ref @StaticMemberFunctionCall.%Class.loc8_49.1 (%Class) = splice_block %return {}
-// CHECK:STDOUT:     %Make.call: init @StaticMemberFunctionCall.%Class.loc8_49.1 (%Class) = call %Make.specific_fn.loc9_18.1() to %.loc8_39.1
+// CHECK:STDOUT:     %Class.Make.call: init @StaticMemberFunctionCall.%Class.loc8_49.1 (%Class) = call %Class.Make.specific_fn.loc9_18.1() to %.loc8_39.1
 // CHECK:STDOUT:     %impl.elem0.loc8_39.1: @StaticMemberFunctionCall.%.loc8_39.3 (%.d76) = impl_witness_access constants.%Destroy.lookup_impl_witness, element0 [symbolic = %impl.elem0.loc8_39.2 (constants.%impl.elem0)]
 // CHECK:STDOUT:     %bound_method.loc8_39.1: <bound method> = bound_method %.loc8_39.1, %impl.elem0.loc8_39.1
-// CHECK:STDOUT:     %specific_impl_fn.loc8_39.1: <specific function> = specific_impl_function %impl.elem0.loc8_39.1, @Op.1(constants.%Destroy.facet) [symbolic = %specific_impl_fn.loc8_39.2 (constants.%specific_impl_fn)]
+// CHECK:STDOUT:     %specific_impl_fn.loc8_39.1: <specific function> = specific_impl_function %impl.elem0.loc8_39.1, @Destroy.Op(constants.%Destroy.facet) [symbolic = %specific_impl_fn.loc8_39.2 (constants.%specific_impl_fn)]
 // CHECK:STDOUT:     %bound_method.loc8_39.2: <bound method> = bound_method %.loc8_39.1, %specific_impl_fn.loc8_39.1
 // CHECK:STDOUT:     %addr: @StaticMemberFunctionCall.%ptr (%ptr.955) = addr_of %.loc8_39.1
 // CHECK:STDOUT:     %.loc8_39.2: init %empty_tuple.type = call %bound_method.loc8_39.2(%addr)
-// CHECK:STDOUT:     return %Make.call to %return
+// CHECK:STDOUT:     return %Class.Make.call to %return
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -567,13 +567,13 @@ fn StaticMemberFunctionCall(T:! type) -> Class(T) {
 // CHECK:STDOUT:   %T.loc4_13.1 => constants.%T
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
-// CHECK:STDOUT:   %Make.type => constants.%Make.type
-// CHECK:STDOUT:   %Make => constants.%Make
+// CHECK:STDOUT:   %Class.Make.type => constants.%Class.Make.type
+// CHECK:STDOUT:   %Class.Make => constants.%Class.Make
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @Make(constants.%T) {
+// CHECK:STDOUT: specific @Class.Make(constants.%T) {
 // CHECK:STDOUT:   %T => constants.%T
-// CHECK:STDOUT:   %Class.loc5_23.2 => constants.%Class
+// CHECK:STDOUT:   %Class.loc5_23.1 => constants.%Class
 // CHECK:STDOUT:   %pattern_type => constants.%pattern_type.3c1
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:

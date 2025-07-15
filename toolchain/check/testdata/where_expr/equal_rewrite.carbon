@@ -301,9 +301,9 @@ let K: (E where .F = .Self.G) = bool;
 // CHECK:STDOUT:       %.Self.as_type.loc10_31: type = facet_access_type %.Self.ref.loc10_31 [symbolic_self = constants.%.Self.as_type.adb]
 // CHECK:STDOUT:       %.loc10_31: type = converted %.Self.ref.loc10_31, %.Self.as_type.loc10_31 [symbolic_self = constants.%.Self.as_type.adb]
 // CHECK:STDOUT:       %impl.elem0: type = impl_witness_access constants.%A.lookup_impl_witness.5ad, element0 [symbolic_self = constants.%impl.elem0]
-// CHECK:STDOUT:       %bool.make_type: init type = call constants.%Bool() [concrete = bool]
-// CHECK:STDOUT:       %.loc10_36.1: type = value_of_initializer %bool.make_type [concrete = bool]
-// CHECK:STDOUT:       %.loc10_36.2: type = converted %bool.make_type, %.loc10_36.1 [concrete = bool]
+// CHECK:STDOUT:       %Bool.call: init type = call constants.%Bool() [concrete = bool]
+// CHECK:STDOUT:       %.loc10_36.1: type = value_of_initializer %Bool.call [concrete = bool]
+// CHECK:STDOUT:       %.loc10_36.2: type = converted %Bool.call, %.loc10_36.1 [concrete = bool]
 // CHECK:STDOUT:       %.loc10_25: type = where_expr %.Self.1 [concrete = constants.%A_where.type.ef7] {
 // CHECK:STDOUT:         requirement_rewrite %impl.elem0, %.loc10_36.2
 // CHECK:STDOUT:       }
@@ -506,9 +506,9 @@ let K: (E where .F = .Self.G) = bool;
 // CHECK:STDOUT:       %.Self.as_type.loc10_41: type = facet_access_type %.Self.ref.loc10_41 [symbolic_self = constants.%.Self.as_type]
 // CHECK:STDOUT:       %.loc10_41: type = converted %.Self.ref.loc10_41, %.Self.as_type.loc10_41 [symbolic_self = constants.%.Self.as_type]
 // CHECK:STDOUT:       %impl.elem1: type = impl_witness_access constants.%J.lookup_impl_witness, element1 [symbolic_self = constants.%impl.elem1]
-// CHECK:STDOUT:       %bool.make_type: init type = call constants.%Bool() [concrete = bool]
-// CHECK:STDOUT:       %.loc10_46.1: type = value_of_initializer %bool.make_type [concrete = bool]
-// CHECK:STDOUT:       %.loc10_46.2: type = converted %bool.make_type, %.loc10_46.1 [concrete = bool]
+// CHECK:STDOUT:       %Bool.call: init type = call constants.%Bool() [concrete = bool]
+// CHECK:STDOUT:       %.loc10_46.1: type = value_of_initializer %Bool.call [concrete = bool]
+// CHECK:STDOUT:       %.loc10_46.2: type = converted %Bool.call, %.loc10_46.1 [concrete = bool]
 // CHECK:STDOUT:       %.loc10_23.2: type = where_expr %.Self [concrete = constants.%J_where.type] {
 // CHECK:STDOUT:         requirement_rewrite %impl.elem0, %.loc10_35.2
 // CHECK:STDOUT:         requirement_rewrite %impl.elem1, %.loc10_46.2
@@ -527,9 +527,9 @@ let K: (E where .F = .Self.G) = bool;
 // CHECK:STDOUT:       %.Self.as_type.loc12_25: type = facet_access_type %.Self.ref.loc12_25 [symbolic_self = constants.%.Self.as_type]
 // CHECK:STDOUT:       %.loc12_25: type = converted %.Self.ref.loc12_25, %.Self.as_type.loc12_25 [symbolic_self = constants.%.Self.as_type]
 // CHECK:STDOUT:       %impl.elem1: type = impl_witness_access constants.%J.lookup_impl_witness, element1 [symbolic_self = constants.%impl.elem1]
-// CHECK:STDOUT:       %bool.make_type: init type = call constants.%Bool() [concrete = bool]
-// CHECK:STDOUT:       %.loc12_30.1: type = value_of_initializer %bool.make_type [concrete = bool]
-// CHECK:STDOUT:       %.loc12_30.2: type = converted %bool.make_type, %.loc12_30.1 [concrete = bool]
+// CHECK:STDOUT:       %Bool.call: init type = call constants.%Bool() [concrete = bool]
+// CHECK:STDOUT:       %.loc12_30.1: type = value_of_initializer %Bool.call [concrete = bool]
+// CHECK:STDOUT:       %.loc12_30.2: type = converted %Bool.call, %.loc12_30.1 [concrete = bool]
 // CHECK:STDOUT:       %.Self.ref.loc12_39: %J.type = name_ref .Self, %.Self [symbolic_self = constants.%.Self]
 // CHECK:STDOUT:       %K.ref: %J.assoc_type = name_ref K, @K.%assoc0 [concrete = constants.%assoc0]
 // CHECK:STDOUT:       %.Self.as_type.loc12_39: type = facet_access_type %.Self.ref.loc12_39 [symbolic_self = constants.%.Self.as_type]
