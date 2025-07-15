@@ -3642,7 +3642,7 @@ var v: Base(T1) = {};
 // CHECK:STDOUT:     %v.var_patt: %pattern_type.3bf = var_pattern %v.patt [concrete]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %v.var: ref %Base.ea5 = var %v.var_patt [concrete]
-// CHECK:STDOUT:   %.loc11: type = splice_block %Base [concrete = constants.%Base.ea5] {
+// CHECK:STDOUT:   %.loc7: type = splice_block %Base [concrete = constants.%Base.ea5] {
 // CHECK:STDOUT:     %Base.ref: %Base.type = name_ref Base, imports.%Main.Base [concrete = constants.%Base.generic]
 // CHECK:STDOUT:     %T1.ref: type = name_ref T1, %T1.decl [concrete = constants.%T1]
 // CHECK:STDOUT:     %Base: type = class_type @Base, @Base(constants.%T1) [concrete = constants.%Base.ea5]
@@ -3696,12 +3696,12 @@ var v: Base(T1) = {};
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %.loc11_20.1: %empty_struct_type = struct_literal ()
-// CHECK:STDOUT:   %.loc11_20.2: ref %ptr.454 = class_element_access file.%v.var, element0 [concrete = constants.%.b74]
-// CHECK:STDOUT:   %.loc11_20.3: init %ptr.454 = initialize_from constants.%Base.vtable_ptr.5be to %.loc11_20.2 [concrete = constants.%Base.vtable_ptr.5be]
-// CHECK:STDOUT:   %.loc11_20.4: init %Base.ea5 = class_init (%.loc11_20.3), file.%v.var [concrete = constants.%Base.val]
-// CHECK:STDOUT:   %.loc11_1: init %Base.ea5 = converted %.loc11_20.1, %.loc11_20.4 [concrete = constants.%Base.val]
-// CHECK:STDOUT:   assign file.%v.var, %.loc11_1
+// CHECK:STDOUT:   %.loc7_20.1: %empty_struct_type = struct_literal ()
+// CHECK:STDOUT:   %.loc7_20.2: ref %ptr.454 = class_element_access file.%v.var, element0 [concrete = constants.%.b74]
+// CHECK:STDOUT:   %.loc7_20.3: init %ptr.454 = initialize_from constants.%Base.vtable_ptr.5be to %.loc7_20.2 [concrete = constants.%Base.vtable_ptr.5be]
+// CHECK:STDOUT:   %.loc7_20.4: init %Base.ea5 = class_init (%.loc7_20.3), file.%v.var [concrete = constants.%Base.val]
+// CHECK:STDOUT:   %.loc7_1: init %Base.ea5 = converted %.loc7_20.1, %.loc7_20.4 [concrete = constants.%Base.val]
+// CHECK:STDOUT:   assign file.%v.var, %.loc7_1
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
