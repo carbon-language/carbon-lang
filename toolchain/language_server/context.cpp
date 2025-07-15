@@ -11,6 +11,7 @@
 #include "common/check.h"
 #include "common/raw_string_ostream.h"
 #include "llvm/TargetParser/Host.h"
+#include "toolchain/base/clang_invocation.h"
 #include "toolchain/base/shared_value_stores.h"
 #include "toolchain/check/check.h"
 #include "toolchain/diagnostics/diagnostic.h"
@@ -166,8 +167,8 @@ auto Context::File::SetText(Context& context, std::optional<int64_t> version,
   Check::CheckParseTreesOptions check_options;
   check_options.vlog_stream = context.vlog_stream();
 
-  auto clang_invocation = Check::BuildClangInvocation(
-      consumer, fs, {context.installation().clang_path()});
+  auto clang_invocation =
+      BuildClangInvocation(consumer, fs, {context.installation().clang_path()});
 
   Check::CheckParseTrees(units,
                          llvm::ArrayRef<Parse::GetTreeAndSubtreesFn>(getter),

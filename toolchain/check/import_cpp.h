@@ -15,14 +15,6 @@
 
 namespace Carbon::Check {
 
-// Builds a clang `CompilerInvocation` describing the options to use to build an
-// imported C++ AST.
-auto BuildClangInvocationImpl(
-    Diagnostics::NoLocEmitter& emitter,
-    llvm::IntrusiveRefCntPtr<llvm::vfs::FileSystem> fs,
-    llvm::ArrayRef<std::string> clang_path_and_args)
-    -> std::unique_ptr<clang::CompilerInvocation>;
-
 // Generates a C++ header that includes the imported cpp files, parses it,
 // generates the AST from it and links `SemIR::File` to it. Report C++ errors
 // and warnings. If successful, adds a `Cpp` namespace and returns the AST.

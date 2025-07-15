@@ -70,14 +70,6 @@ struct CheckParseTreesOptions {
   bool dump_raw_sem_ir_builtins = false;
 };
 
-// Builds and returns a clang `CompilerInvocation` to use when building code for
-// interop, from a list of clang driver arguments. Emits diagnostics to
-// `consumer` if the arguments are invalid.
-auto BuildClangInvocation(Diagnostics::Consumer& consumer,
-                          llvm::IntrusiveRefCntPtr<llvm::vfs::FileSystem> fs,
-                          llvm::ArrayRef<std::string> clang_path_and_args)
-    -> std::unique_ptr<clang::CompilerInvocation>;
-
 // Checks a group of parse trees. This will use imports to decide the order of
 // checking.
 auto CheckParseTrees(

@@ -26,24 +26,6 @@
 
 namespace Carbon::Check {
 
-auto BuildClangInvocation(Diagnostics::Consumer& consumer,
-                          llvm::IntrusiveRefCntPtr<llvm::vfs::FileSystem> fs,
-                          llvm::ArrayRef<std::string> clang_path_and_args)
-    -> std::unique_ptr<clang::CompilerInvocation> {
-  Diagnostics::ErrorTrackingConsumer error_tracker(consumer);
-  Diagnostics::NoLocEmitter emitter(&error_tracker);
-
-  // Forward to the implementation to avoid exposing `import_cpp` outside check.
-  auto invocation = BuildClangInvocationImpl(emitter, fs, clang_path_and_args);
-
-  // If Clang produced an error, throw away its invocation.
-  if (error_tracker.seen_error()) {
-    return nullptr;
-  }
-
-  return invocation;
-}
-
 // The package and library names, used as map keys.
 using ImportKey = std::pair<llvm::StringRef, llvm::StringRef>;
 

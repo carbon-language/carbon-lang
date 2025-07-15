@@ -15,6 +15,7 @@
 #include "common/vlog.h"
 #include "llvm/ADT/STLExtras.h"
 #include "llvm/ADT/ScopeExit.h"
+#include "toolchain/base/clang_invocation.h"
 #include "toolchain/base/timings.h"
 #include "toolchain/check/check.h"
 #include "toolchain/codegen/codegen.h"
@@ -865,8 +866,8 @@ auto CompileSubcommand::Run(DriverEnv& driver_env) -> DriverResult {
     for (auto str : options_.clang_args) {
       clang_path_and_args.push_back(str.str());
     }
-    clang_invocation = Check::BuildClangInvocation(
-        driver_env.consumer, driver_env.fs, clang_path_and_args);
+    clang_invocation = BuildClangInvocation(driver_env.consumer, driver_env.fs,
+                                            clang_path_and_args);
     if (!clang_invocation) {
       return {.success = false};
     }
