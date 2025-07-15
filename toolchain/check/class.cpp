@@ -187,26 +187,25 @@ static auto BuildVtable(Context& context, Parse::ClassDefinitionId node_id,
                        SemIR::FunctionFields::VirtualModifier::Impl &&
                    override_fn.name_id == fn.name_id;
           });
+      // Remap the base's vtable entry to the appropriate constant usable in
+      // the context of the derived class (for the specific for the base
+      // class, for instance)..
+      fn_decl_id = context.sem_ir().constant_values().GetInstId(
+          GetConstantValueInSpecific(context.sem_ir(), base_class_specific_id,
+                                     fn_decl_id));
       if (i != vtable_contents.end()) {
         auto& override_fn = context.functions().Get(
             context.insts().GetAs<SemIR::FunctionDecl>(*i).function_id);
-        // TODO: Support generic base classes, rather than passing
-        // `SpecificId::None`. This'll need to `GetConstantValueInSpecific` for
-        // the base function, then extract the specific from that for use here.
-        CheckFunctionTypeMatches(context, override_fn, fn,
-                                 SemIR::SpecificId::None,
-                                 /*check_syntax=*/false,
-                                 /*check_self=*/false);
+        auto x = GetCalleeFunction(context.sem_ir(), fn_decl_id);
+        CheckFunctionTypeMatches(
+            context, override_fn,
+            context.sem_ir().functions().Get(x.function_id),
+            x.resolved_specific_id,
+            /*check_syntax=*/false,
+            /*check_self=*/false);
         fn_decl_id = build_specific_function(*i);
         override_fn.virtual_index = vtable.size();
         CARBON_CHECK(override_fn.virtual_index == fn.virtual_index);
-      } else {
-        // Remap the base's vtable entry to the appropriate constant usable in
-        // the context of the derived class (for the specific for the base
-        // class, for instance)..
-        fn_decl_id = context.sem_ir().constant_values().GetInstId(
-            GetConstantValueInSpecific(context.sem_ir(), base_class_specific_id,
-                                       fn_decl_id));
       }
       vtable.push_back(fn_decl_id);
     }
