@@ -1971,6 +1971,7 @@ static auto TryResolveTypedInst(ImportRefResolver& resolver,
       GetLocalInstBlockContents(resolver, import_vtable.virtual_functions_id);
 
   auto specific_data = GetLocalSpecificData(resolver, inst.specific_id);
+  
   if (resolver.HasNewWork()) {
     return ResolveResult::Retry();
   }
