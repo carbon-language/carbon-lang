@@ -189,7 +189,7 @@ static auto BuildVtable(Context& context, Parse::ClassDefinitionId node_id,
           });
       // Remap the base's vtable entry to the appropriate constant usable in
       // the context of the derived class (for the specific for the base
-      // class, for instance)..
+      // class, for instance).
       fn_decl_id = context.sem_ir().constant_values().GetInstId(
           GetConstantValueInSpecific(context.sem_ir(), base_class_specific_id,
                                      fn_decl_id));
