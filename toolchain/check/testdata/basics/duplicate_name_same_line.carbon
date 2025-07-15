@@ -25,7 +25,7 @@ fn A() {
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [concrete]
 // CHECK:STDOUT:   %pattern_type.cb1: type = pattern_type %empty_tuple.type [concrete]
-// CHECK:STDOUT:   %Op.type.a63: type = fn_type @Op.2, @Destroy.impl(%empty_tuple.type) [concrete]
+// CHECK:STDOUT:   %Op.type.a63: type = fn_type @Op.1, @Destroy.impl(%empty_tuple.type) [concrete]
 // CHECK:STDOUT:   %Op.ea3: %Op.type.a63 = struct_value () [concrete]
 // CHECK:STDOUT:   %ptr.843: type = ptr_type %empty_tuple.type [concrete]
 // CHECK:STDOUT: }

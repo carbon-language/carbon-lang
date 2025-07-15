@@ -354,7 +354,7 @@ var b: i32 = a.({.index = 2}.index);
 // CHECK:STDOUT:   %F.type: type = fn_type @F [concrete]
 // CHECK:STDOUT:   %F: %F.type = struct_value () [concrete]
 // CHECK:STDOUT:   %int_0.5c6: Core.IntLiteral = int_value 0 [concrete]
-// CHECK:STDOUT:   %Op.type.438: type = fn_type @Op.3, @Destroy.impl(%tuple.type.a1c) [concrete]
+// CHECK:STDOUT:   %Op.type.438: type = fn_type @Op.2, @Destroy.impl(%tuple.type.a1c) [concrete]
 // CHECK:STDOUT:   %Op.c8e: %Op.type.438 = struct_value () [concrete]
 // CHECK:STDOUT:   %ptr.0b7: type = ptr_type %tuple.type.a1c [concrete]
 // CHECK:STDOUT: }

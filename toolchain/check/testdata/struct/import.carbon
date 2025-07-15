@@ -184,7 +184,7 @@ var c_bad: C({.a = 3, .b = 4}) = F();
 // CHECK:STDOUT:       %i32.loc8_27: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
 // CHECK:STDOUT:       %struct_type.a.b: type = struct_type {.a: %i32, .b: %i32} [concrete = constants.%struct_type.a.b.501]
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %S.loc8_9.1: %struct_type.a.b.501 = bind_symbolic_name S, 0 [symbolic = %S.loc8_9.2 (constants.%S)]
+// CHECK:STDOUT:     %S.loc8_9.2: %struct_type.a.b.501 = bind_symbolic_name S, 0 [symbolic = %S.loc8_9.1 (constants.%S)]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [concrete = constants.%F] {
 // CHECK:STDOUT:     %return.patt: %pattern_type.4f9 = return_slot_pattern [concrete]
@@ -216,8 +216,8 @@ var c_bad: C({.a = 3, .b = 4}) = F();
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic class @C(%S.loc8_9.1: %struct_type.a.b.501) {
-// CHECK:STDOUT:   %S.loc8_9.2: %struct_type.a.b.501 = bind_symbolic_name S, 0 [symbolic = %S.loc8_9.2 (constants.%S)]
+// CHECK:STDOUT: generic class @C(%S.loc8_9.2: %struct_type.a.b.501) {
+// CHECK:STDOUT:   %S.loc8_9.1: %struct_type.a.b.501 = bind_symbolic_name S, 0 [symbolic = %S.loc8_9.1 (constants.%S)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:
@@ -288,11 +288,11 @@ var c_bad: C({.a = 3, .b = 4}) = F();
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @C(constants.%S) {
-// CHECK:STDOUT:   %S.loc8_9.2 => constants.%S
+// CHECK:STDOUT:   %S.loc8_9.1 => constants.%S
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @C(constants.%struct.ed5) {
-// CHECK:STDOUT:   %S.loc8_9.2 => constants.%struct.ed5
+// CHECK:STDOUT:   %S.loc8_9.1 => constants.%struct.ed5
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- implicit.impl.carbon

@@ -141,10 +141,10 @@ fn AddressOfParam(param: i32) {
 // CHECK:STDOUT:   %false: bool = bool_literal false [concrete]
 // CHECK:STDOUT:   %ptr.235: type = ptr_type %i32 [concrete]
 // CHECK:STDOUT:   %Destroy.type: type = facet_type <@Destroy> [concrete]
-// CHECK:STDOUT:   %Op.type.c80: type = fn_type @Op.2, @Destroy.impl(%struct_type.a.ba9) [concrete]
+// CHECK:STDOUT:   %Op.type.c80: type = fn_type @Op.1, @Destroy.impl(%struct_type.a.ba9) [concrete]
 // CHECK:STDOUT:   %Op.691: %Op.type.c80 = struct_value () [concrete]
 // CHECK:STDOUT:   %ptr.1bb: type = ptr_type %struct_type.a.ba9 [concrete]
-// CHECK:STDOUT:   %Op.specific_fn.51b: <specific function> = specific_function %Op.691, @Op.2(%struct_type.a.ba9) [concrete]
+// CHECK:STDOUT:   %Op.specific_fn.51b: <specific function> = specific_function %Op.691, @Op.1(%struct_type.a.ba9) [concrete]
 // CHECK:STDOUT:   %AddressOfCall.type: type = fn_type @AddressOfCall [concrete]
 // CHECK:STDOUT:   %AddressOfCall: %AddressOfCall.type = struct_value () [concrete]
 // CHECK:STDOUT:   %AddressOfType.type: type = fn_type @AddressOfType [concrete]
@@ -158,10 +158,10 @@ fn AddressOfParam(param: i32) {
 // CHECK:STDOUT:   %AddressOfParam.type: type = fn_type @AddressOfParam [concrete]
 // CHECK:STDOUT:   %AddressOfParam: %AddressOfParam.type = struct_value () [concrete]
 // CHECK:STDOUT:   %pattern_type.fe8: type = pattern_type %ptr.235 [concrete]
-// CHECK:STDOUT:   %Op.type.ba2: type = fn_type @Op.2, @Destroy.impl(%ptr.235) [concrete]
+// CHECK:STDOUT:   %Op.type.ba2: type = fn_type @Op.1, @Destroy.impl(%ptr.235) [concrete]
 // CHECK:STDOUT:   %Op.649: %Op.type.ba2 = struct_value () [concrete]
 // CHECK:STDOUT:   %ptr.5d5: type = ptr_type %ptr.235 [concrete]
-// CHECK:STDOUT:   %Op.specific_fn.829: <specific function> = specific_function %Op.649, @Op.2(%ptr.235) [concrete]
+// CHECK:STDOUT:   %Op.specific_fn.829: <specific function> = specific_function %Op.649, @Op.1(%ptr.235) [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -272,7 +272,7 @@ fn AddressOfParam(param: i32) {
 // CHECK:STDOUT:   %.loc67: bool = not %true.loc67 [concrete = constants.%false]
 // CHECK:STDOUT:   %addr.loc67: %ptr.bb2 = addr_of <error> [concrete = <error>]
 // CHECK:STDOUT:   %Op.bound: <bound method> = bound_method %.loc62_6.1, constants.%Op.691
-// CHECK:STDOUT:   %Op.specific_fn: <specific function> = specific_function constants.%Op.691, @Op.2(constants.%struct_type.a.ba9) [concrete = constants.%Op.specific_fn.51b]
+// CHECK:STDOUT:   %Op.specific_fn: <specific function> = specific_function constants.%Op.691, @Op.1(constants.%struct_type.a.ba9) [concrete = constants.%Op.specific_fn.51b]
 // CHECK:STDOUT:   %bound_method: <bound method> = bound_method %.loc62_6.1, %Op.specific_fn
 // CHECK:STDOUT:   %addr.loc62_6: %ptr.1bb = addr_of %.loc62_6.1
 // CHECK:STDOUT:   %no_op: init %empty_tuple.type = call %bound_method(%addr.loc62_6)
@@ -330,7 +330,7 @@ fn AddressOfParam(param: i32) {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %param_addr: ref %ptr.235 = bind_name param_addr, %param_addr.var
 // CHECK:STDOUT:   %Op.bound: <bound method> = bound_method %param_addr.var, constants.%Op.649
-// CHECK:STDOUT:   %Op.specific_fn: <specific function> = specific_function constants.%Op.649, @Op.2(constants.%ptr.235) [concrete = constants.%Op.specific_fn.829]
+// CHECK:STDOUT:   %Op.specific_fn: <specific function> = specific_function constants.%Op.649, @Op.1(constants.%ptr.235) [concrete = constants.%Op.specific_fn.829]
 // CHECK:STDOUT:   %bound_method: <bound method> = bound_method %param_addr.var, %Op.specific_fn
 // CHECK:STDOUT:   %addr.loc104_3: %ptr.5d5 = addr_of %param_addr.var
 // CHECK:STDOUT:   %no_op: init %empty_tuple.type = call %bound_method(%addr.loc104_3)

@@ -63,7 +63,7 @@ fn F(T:! Empty) {
 // CHECK:STDOUT:     %T.patt: %pattern_type.6c3 = symbolic_binding_pattern T, 0 [concrete]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %Empty.ref: type = name_ref Empty, file.%Empty.decl [concrete = constants.%Empty.type]
-// CHECK:STDOUT:     %T.loc17_6.1: %Empty.type = bind_symbolic_name T, 0 [symbolic = %T.loc17_6.2 (constants.%T.193)]
+// CHECK:STDOUT:     %T.loc17_6.2: %Empty.type = bind_symbolic_name T, 0 [symbolic = %T.loc17_6.1 (constants.%T.193)]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -75,14 +75,14 @@ fn F(T:! Empty) {
 // CHECK:STDOUT:   witness = ()
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic fn @F(%T.loc17_6.1: %Empty.type) {
-// CHECK:STDOUT:   %T.loc17_6.2: %Empty.type = bind_symbolic_name T, 0 [symbolic = %T.loc17_6.2 (constants.%T.193)]
+// CHECK:STDOUT: generic fn @F(%T.loc17_6.2: %Empty.type) {
+// CHECK:STDOUT:   %T.loc17_6.1: %Empty.type = bind_symbolic_name T, 0 [symbolic = %T.loc17_6.1 (constants.%T.193)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
-// CHECK:STDOUT:   %T.as_type.loc18_10.2: type = facet_access_type %T.loc17_6.2 [symbolic = %T.as_type.loc18_10.2 (constants.%T.as_type)]
+// CHECK:STDOUT:   %T.as_type.loc18_10.2: type = facet_access_type %T.loc17_6.1 [symbolic = %T.as_type.loc18_10.2 (constants.%T.as_type)]
 // CHECK:STDOUT:   %require_complete.loc18_10: <witness> = require_complete_type %T.as_type.loc18_10.2 [symbolic = %require_complete.loc18_10 (constants.%require_complete.449)]
 // CHECK:STDOUT:   %pattern_type: type = pattern_type %T.as_type.loc18_10.2 [symbolic = %pattern_type (constants.%pattern_type.dad)]
-// CHECK:STDOUT:   %Destroy.lookup_impl_witness: <witness> = lookup_impl_witness %T.loc17_6.2, @Destroy [symbolic = %Destroy.lookup_impl_witness (constants.%Destroy.lookup_impl_witness)]
+// CHECK:STDOUT:   %Destroy.lookup_impl_witness: <witness> = lookup_impl_witness %T.loc17_6.1, @Destroy [symbolic = %Destroy.lookup_impl_witness (constants.%Destroy.lookup_impl_witness)]
 // CHECK:STDOUT:   %Destroy.facet: %Destroy.type = facet_value %T.as_type.loc18_10.2, (%Destroy.lookup_impl_witness) [symbolic = %Destroy.facet (constants.%Destroy.facet)]
 // CHECK:STDOUT:   %.loc18_3.3: type = fn_type_with_self_type constants.%Op.type.bae, %Destroy.facet [symbolic = %.loc18_3.3 (constants.%.868)]
 // CHECK:STDOUT:   %impl.elem0.loc18_3.2: @F.%.loc18_3.3 (%.868) = impl_witness_access %Destroy.lookup_impl_witness, element0 [symbolic = %impl.elem0.loc18_3.2 (constants.%impl.elem0)]
@@ -98,7 +98,7 @@ fn F(T:! Empty) {
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %x.var: ref @F.%T.as_type.loc18_10.2 (%T.as_type) = var %x.var_patt
 // CHECK:STDOUT:     %.loc18_10.1: type = splice_block %.loc18_10.2 [symbolic = %T.as_type.loc18_10.2 (constants.%T.as_type)] {
-// CHECK:STDOUT:       %T.ref: %Empty.type = name_ref T, %T.loc17_6.1 [symbolic = %T.loc17_6.2 (constants.%T.193)]
+// CHECK:STDOUT:       %T.ref: %Empty.type = name_ref T, %T.loc17_6.2 [symbolic = %T.loc17_6.1 (constants.%T.193)]
 // CHECK:STDOUT:       %T.as_type.loc18_10.1: type = facet_access_type %T.ref [symbolic = %T.as_type.loc18_10.2 (constants.%T.as_type)]
 // CHECK:STDOUT:       %.loc18_10.2: type = converted %T.ref, %T.as_type.loc18_10.1 [symbolic = %T.as_type.loc18_10.2 (constants.%T.as_type)]
 // CHECK:STDOUT:     }
@@ -116,6 +116,6 @@ fn F(T:! Empty) {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @F(constants.%T.193) {
-// CHECK:STDOUT:   %T.loc17_6.2 => constants.%T.193
+// CHECK:STDOUT:   %T.loc17_6.1 => constants.%T.193
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

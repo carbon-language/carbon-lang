@@ -67,10 +67,10 @@ fn TestRef(b: C) {
 // CHECK:STDOUT:   %AddAssignWith.generic: %AddAssignWith.type.fc6 = struct_value () [concrete]
 // CHECK:STDOUT:   %Inc.type: type = facet_type <@Inc> [concrete]
 // CHECK:STDOUT:   %Destroy.type: type = facet_type <@Destroy> [concrete]
-// CHECK:STDOUT:   %Op.type.153: type = fn_type @Op.10, @Destroy.impl(%C) [concrete]
+// CHECK:STDOUT:   %Op.type.153: type = fn_type @Op.7, @Destroy.impl(%C) [concrete]
 // CHECK:STDOUT:   %Op.5d7: %Op.type.153 = struct_value () [concrete]
 // CHECK:STDOUT:   %ptr.019: type = ptr_type %C [concrete]
-// CHECK:STDOUT:   %Op.specific_fn: <specific function> = specific_function %Op.5d7, @Op.10(%C) [concrete]
+// CHECK:STDOUT:   %Op.specific_fn: <specific function> = specific_function %Op.5d7, @Op.7(%C) [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -180,7 +180,7 @@ fn TestRef(b: C) {
 // CHECK:STDOUT:   %b.ref: %C = name_ref b, %b
 // CHECK:STDOUT:   %a.ref.loc45: ref %C = name_ref a, %a
 // CHECK:STDOUT:   %Op.bound: <bound method> = bound_method %a.var, constants.%Op.5d7
-// CHECK:STDOUT:   %Op.specific_fn: <specific function> = specific_function constants.%Op.5d7, @Op.10(constants.%C) [concrete = constants.%Op.specific_fn]
+// CHECK:STDOUT:   %Op.specific_fn: <specific function> = specific_function constants.%Op.5d7, @Op.7(constants.%C) [concrete = constants.%Op.specific_fn]
 // CHECK:STDOUT:   %bound_method: <bound method> = bound_method %a.var, %Op.specific_fn
 // CHECK:STDOUT:   %addr: %ptr.019 = addr_of %a.var
 // CHECK:STDOUT:   %no_op: init %empty_tuple.type = call %bound_method(%addr)

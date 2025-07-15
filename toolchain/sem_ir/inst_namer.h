@@ -17,6 +17,11 @@
 namespace Carbon::SemIR {
 
 // Assigns names to instructions, blocks, and scopes in the Semantics IR.
+//
+// If `<unexpected>` occurs in output of valid SemIR, it often means the
+// instruction needs to be handled by `NamingContext::NameInst` (see the cpp
+// file). Note that `<unexpected>` can occur in invalid SemIR just because we're
+// unable to correctly walk the SemIR.
 class InstNamer {
  public:
   // int32_t matches the input value size.
@@ -90,44 +95,51 @@ class InstNamer {
 
  private:
   // A space in which unique names can be allocated.
-  struct Namespace {
+  class Namespace {
+   private:
     // A result of a name lookup.
     struct NameResult;
 
+   public:
     // A name in a namespace, which might be redirected to refer to another name
     // for disambiguation purposes.
     class Name {
      public:
-      Name() : value_(nullptr) {}
-      explicit Name(llvm::StringMapIterator<NameResult> it) : value_(&*it) {}
+      explicit Name() : value_(nullptr) {}
+      explicit Name(llvm::StringMapIterator<NameResult> it,
+                    size_t base_name_size)
+          : value_(&*it), base_name_size_(base_name_size) {}
 
       explicit operator bool() const { return value_; }
 
-      auto str() const -> llvm::StringRef;
+      // Returns the disambiguated name.
+      auto GetDisambiguated() const -> llvm::StringRef;
+
+      // Returns the base name, without any disambiguators.
+      auto GetBase() const -> llvm::StringRef;
 
       auto SetFallback(Name name) -> void { value_->second.fallback = name; }
 
       auto SetAmbiguous() -> void { value_->second.ambiguous = true; }
 
      private:
-      llvm::StringMapEntry<NameResult>* value_ = nullptr;
+      llvm::StringMapEntry<NameResult>* value_;
+
+      // The base name length within `value_`.
+      size_t base_name_size_;
     };
 
+    auto AllocateName(const InstNamer& inst_namer,
+                      std::variant<LocId, uint64_t> loc_id_or_fingerprint,
+                      std::string name) -> Name;
+
+   private:
     struct NameResult {
       bool ambiguous = false;
       Name fallback = Name();
     };
 
-    llvm::StringMap<NameResult> allocated = {};
-    int unnamed_count = 0;
-
-    auto AddNameUnchecked(llvm::StringRef name) -> Name {
-      return Name(allocated.insert({name, NameResult()}).first);
-    }
-
-    auto AllocateName(const InstNamer& inst_namer,
-                      std::variant<LocId, uint64_t> loc_id_or_fingerprint,
-                      std::string name) -> Name;
+    llvm::StringMap<NameResult> allocated_;
   };
 
   // A named scope that contains named entities.
@@ -162,27 +174,40 @@ class InstNamer {
   // represents some kind of branch.
   auto AddBlockLabel(ScopeId scope_id, LocId loc_id, AnyBranch branch) -> void;
 
-  auto CollectNamesInBlock(ScopeId scope_id, InstBlockId block_id) -> void;
-
-  // Collects names from the provided block.
-  //
-  // This is essential for finding instructions that we need to name. If
-  // `<unexpected>` occurs in output of valid SemIR, it often means the
-  // instruction needs to be handled here. Note that `<unexpected>` can occur in
-  // invalid SemIR just because we're unable to correctly walk the SemIR.
-  auto CollectNamesInBlock(ScopeId scope_id, llvm::ArrayRef<InstId> block)
-      -> void;
-
-  auto CollectNamesInGeneric(ScopeId scope_id, GenericId generic_id) -> void;
-
   // Adds a scope and instructions to walk. Avoids recursion while allowing
   // the loop to below add more instructions during iteration. The new
   // instructions are queued such that they will be the next to be walked.
   // Internally that means they are reversed and added to the end of the vector,
   // since we pop from the back of the vector.
-  auto QueueBlockInsts(llvm::SmallVector<std::pair<ScopeId, InstId>>& queue,
-                       ScopeId scope_id, llvm::ArrayRef<InstId> inst_ids)
+  auto QueueBlockInsts(ScopeId scope_id, llvm::ArrayRef<InstId> inst_ids)
       -> void;
+  auto QueueBlockId(ScopeId scope_id, InstBlockId block_id) -> void;
+
+  // Queues generic information for an entity.
+  auto QueueGeneric(ScopeId scope_id, GenericId generic_id) -> void;
+
+  // Names an entity, and queues processing of its blocks.
+  auto QueueEntity(AssociatedConstantId associated_constant_id,
+                   ScopeId scope_id, Scope& scope) -> void;
+  auto QueueEntity(ClassId class_id, ScopeId scope_id, Scope& scope) -> void;
+  auto QueueEntity(FunctionId function_id, ScopeId scope_id, Scope& scope)
+      -> void;
+  auto QueueEntity(ImplId impl_id, ScopeId scope_id, Scope& scope) -> void;
+  auto QueueEntity(InterfaceId interface_id, ScopeId scope_id, Scope& scope)
+      -> void;
+  auto QueueEntity(VtableId vtable_id, ScopeId scope_id, Scope& scope) -> void;
+
+  // Always returns the name of the entity. May queue it if it has not yet been
+  // queued.
+  template <typename EntityIdT>
+  auto MaybeQueueEntity(EntityIdT entity_id) -> llvm::StringRef {
+    auto scope_id = GetScopeFor(entity_id);
+    auto& scope = GetScopeInfo(scope_id);
+    if (!scope.name) {
+      QueueEntity(entity_id, scope_id, scope);
+    }
+    return scope.name.GetBase();
+  }
 
   const File* sem_ir_;
   InstFingerprinter fingerprinter_;
@@ -201,6 +226,9 @@ class InstNamer {
   // The scope IDs corresponding to generics. The vector indexes are the
   // GenericId index.
   std::vector<ScopeId> generic_scopes_;
+
+  // The queue of instructions to name.
+  llvm::SmallVector<std::pair<ScopeId, InstId>> queue_;
 };
 
 }  // namespace Carbon::SemIR

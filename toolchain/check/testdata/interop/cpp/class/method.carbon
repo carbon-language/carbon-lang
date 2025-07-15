@@ -318,9 +318,9 @@ fn Ref(p: Cpp.HasQualifiers*) {
 // CHECK:STDOUT:   %ref_this.type: type = fn_type @ref_this [concrete]
 // CHECK:STDOUT:   %ref_this: %ref_this.type = struct_value () [concrete]
 // CHECK:STDOUT:   %Destroy.type: type = facet_type <@Destroy> [concrete]
-// CHECK:STDOUT:   %Op.type.e02: type = fn_type @Op.2, @Destroy.impl(%HasQualifiers) [concrete]
+// CHECK:STDOUT:   %Op.type.e02: type = fn_type @Op.1, @Destroy.impl(%HasQualifiers) [concrete]
 // CHECK:STDOUT:   %Op.b7c: %Op.type.e02 = struct_value () [concrete]
-// CHECK:STDOUT:   %Op.specific_fn: <specific function> = specific_function %Op.b7c, @Op.2(%HasQualifiers) [concrete]
+// CHECK:STDOUT:   %Op.specific_fn: <specific function> = specific_function %Op.b7c, @Op.1(%HasQualifiers) [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -424,17 +424,17 @@ fn Ref(p: Cpp.HasQualifiers*) {
 // CHECK:STDOUT:   %v.ref.loc52: %HasQualifiers = name_ref v, %v
 // CHECK:STDOUT:   %const_ref_ref_this.ref: <error> = name_ref const_ref_ref_this, <error> [concrete = <error>]
 // CHECK:STDOUT:   %Op.bound.loc34: <bound method> = bound_method %.loc34, constants.%Op.b7c
-// CHECK:STDOUT:   %Op.specific_fn.1: <specific function> = specific_function constants.%Op.b7c, @Op.2(constants.%HasQualifiers) [concrete = constants.%Op.specific_fn]
+// CHECK:STDOUT:   %Op.specific_fn.1: <specific function> = specific_function constants.%Op.b7c, @Op.1(constants.%HasQualifiers) [concrete = constants.%Op.specific_fn]
 // CHECK:STDOUT:   %bound_method.loc34: <bound method> = bound_method %.loc34, %Op.specific_fn.1
 // CHECK:STDOUT:   %addr.loc34_3.2: %ptr.ec3 = addr_of %.loc34
 // CHECK:STDOUT:   %no_op.loc34: init %empty_tuple.type = call %bound_method.loc34(%addr.loc34_3.2)
 // CHECK:STDOUT:   %Op.bound.loc27: <bound method> = bound_method %.loc27, constants.%Op.b7c
-// CHECK:STDOUT:   %Op.specific_fn.2: <specific function> = specific_function constants.%Op.b7c, @Op.2(constants.%HasQualifiers) [concrete = constants.%Op.specific_fn]
+// CHECK:STDOUT:   %Op.specific_fn.2: <specific function> = specific_function constants.%Op.b7c, @Op.1(constants.%HasQualifiers) [concrete = constants.%Op.specific_fn]
 // CHECK:STDOUT:   %bound_method.loc27: <bound method> = bound_method %.loc27, %Op.specific_fn.2
 // CHECK:STDOUT:   %addr.loc27_3.2: %ptr.ec3 = addr_of %.loc27
 // CHECK:STDOUT:   %no_op.loc27: init %empty_tuple.type = call %bound_method.loc27(%addr.loc27_3.2)
 // CHECK:STDOUT:   %Op.bound.loc12: <bound method> = bound_method %.loc12, constants.%Op.b7c
-// CHECK:STDOUT:   %Op.specific_fn.3: <specific function> = specific_function constants.%Op.b7c, @Op.2(constants.%HasQualifiers) [concrete = constants.%Op.specific_fn]
+// CHECK:STDOUT:   %Op.specific_fn.3: <specific function> = specific_function constants.%Op.b7c, @Op.1(constants.%HasQualifiers) [concrete = constants.%Op.specific_fn]
 // CHECK:STDOUT:   %bound_method.loc12: <bound method> = bound_method %.loc12, %Op.specific_fn.3
 // CHECK:STDOUT:   %addr.loc12_3.2: %ptr.ec3 = addr_of %.loc12
 // CHECK:STDOUT:   %no_op.loc12: init %empty_tuple.type = call %bound_method.loc12(%addr.loc12_3.2)

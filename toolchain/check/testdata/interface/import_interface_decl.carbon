@@ -74,7 +74,7 @@ impl library "[[@TEST_NAME]]";
 // CHECK:STDOUT:     .B = %B.decl
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %B.decl: type = interface_decl @B [concrete = constants.%B.type] {} {}
-// CHECK:STDOUT:   impl_decl @B.impl [concrete] {} {
+// CHECK:STDOUT:   %B.impl = impl_decl @B.impl [concrete] {} {
 // CHECK:STDOUT:     %.loc7_7.1: %empty_tuple.type = tuple_literal ()
 // CHECK:STDOUT:     %.loc7_7.2: type = converted %.loc7_7.1, constants.%empty_tuple.type [concrete = constants.%empty_tuple.type]
 // CHECK:STDOUT:     %B.ref: type = name_ref B, file.%B.decl [concrete = constants.%B.type]

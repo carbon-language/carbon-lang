@@ -33,10 +33,10 @@ fn Main() {
 // CHECK:STDOUT:   %pattern_type.7ce: type = pattern_type %i32 [concrete]
 // CHECK:STDOUT:   %int_0: Core.IntLiteral = int_value 0 [concrete]
 // CHECK:STDOUT:   %Destroy.type: type = facet_type <@Destroy> [concrete]
-// CHECK:STDOUT:   %Op.type.a17: type = fn_type @Op.3, @Destroy.impl(%i32) [concrete]
+// CHECK:STDOUT:   %Op.type.a17: type = fn_type @Op.1, @Destroy.impl(%i32) [concrete]
 // CHECK:STDOUT:   %Op.e6a: %Op.type.a17 = struct_value () [concrete]
 // CHECK:STDOUT:   %ptr.235: type = ptr_type %i32 [concrete]
-// CHECK:STDOUT:   %Op.specific_fn: <specific function> = specific_function %Op.e6a, @Op.3(%i32) [concrete]
+// CHECK:STDOUT:   %Op.specific_fn: <specific function> = specific_function %Op.e6a, @Op.1(%i32) [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -76,7 +76,7 @@ fn Main() {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %b: ref %i32 = bind_name b, %b.var
 // CHECK:STDOUT:   %Op.bound: <bound method> = bound_method %b.var, constants.%Op.e6a
-// CHECK:STDOUT:   %Op.specific_fn: <specific function> = specific_function constants.%Op.e6a, @Op.3(constants.%i32) [concrete = constants.%Op.specific_fn]
+// CHECK:STDOUT:   %Op.specific_fn: <specific function> = specific_function constants.%Op.e6a, @Op.1(constants.%i32) [concrete = constants.%Op.specific_fn]
 // CHECK:STDOUT:   %bound_method: <bound method> = bound_method %b.var, %Op.specific_fn
 // CHECK:STDOUT:   %addr: %ptr.235 = addr_of %b.var
 // CHECK:STDOUT:   %no_op: init %empty_tuple.type = call %bound_method(%addr)

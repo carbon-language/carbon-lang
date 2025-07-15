@@ -143,7 +143,7 @@ fn InstanceCallImportFail() {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %NonInstance.decl: type = interface_decl @NonInstance [concrete = constants.%NonInstance.type] {} {}
-// CHECK:STDOUT:   impl_decl @NonInstance.impl [concrete] {} {
+// CHECK:STDOUT:   %NonInstance.impl = impl_decl @NonInstance.impl [concrete] {} {
 // CHECK:STDOUT:     %.loc7_12.1: %empty_tuple.type = tuple_literal ()
 // CHECK:STDOUT:     %.loc7_12.2: type = converted %.loc7_12.1, constants.%empty_tuple.type [concrete = constants.%empty_tuple.type]
 // CHECK:STDOUT:     %struct_type.i: type = struct_type {.i: %empty_tuple.type} [concrete = constants.%struct_type.i]
@@ -152,7 +152,7 @@ fn InstanceCallImportFail() {
 // CHECK:STDOUT:   %NonInstance.impl_witness_table = impl_witness_table (@NonInstance.impl.%F.decl), @NonInstance.impl [concrete]
 // CHECK:STDOUT:   %NonInstance.impl_witness: <witness> = impl_witness %NonInstance.impl_witness_table [concrete = constants.%NonInstance.impl_witness]
 // CHECK:STDOUT:   %Instance.decl: type = interface_decl @Instance [concrete = constants.%Instance.type] {} {}
-// CHECK:STDOUT:   impl_decl @Instance.impl [concrete] {} {
+// CHECK:STDOUT:   %Instance.impl = impl_decl @Instance.impl [concrete] {} {
 // CHECK:STDOUT:     %.loc15_12.1: %empty_tuple.type = tuple_literal ()
 // CHECK:STDOUT:     %.loc15_12.2: type = converted %.loc15_12.1, constants.%empty_tuple.type [concrete = constants.%empty_tuple.type]
 // CHECK:STDOUT:     %struct_type.i: type = struct_type {.i: %empty_tuple.type} [concrete = constants.%struct_type.i]
@@ -179,13 +179,13 @@ fn InstanceCallImportFail() {
 // CHECK:STDOUT:     %self.patt: @G.loc12.%pattern_type (%pattern_type.4e4) = binding_pattern self [concrete]
 // CHECK:STDOUT:     %self.param_patt: @G.loc12.%pattern_type (%pattern_type.4e4) = value_param_pattern %self.patt, call_param0 [concrete]
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %self.param: @G.loc12.%Self.as_type.loc12_14.1 (%Self.as_type) = value_param call_param0
-// CHECK:STDOUT:     %.loc12_14.1: type = splice_block %.loc12_14.2 [symbolic = %Self.as_type.loc12_14.1 (constants.%Self.as_type)] {
+// CHECK:STDOUT:     %self.param: @G.loc12.%Self.as_type.loc12_14.2 (%Self.as_type) = value_param call_param0
+// CHECK:STDOUT:     %.loc12_14.1: type = splice_block %.loc12_14.2 [symbolic = %Self.as_type.loc12_14.2 (constants.%Self.as_type)] {
 // CHECK:STDOUT:       %Self.ref: %Instance.type = name_ref Self, @Instance.%Self [symbolic = %Self (constants.%Self.cf8)]
-// CHECK:STDOUT:       %Self.as_type.loc12_14.2: type = facet_access_type %Self.ref [symbolic = %Self.as_type.loc12_14.1 (constants.%Self.as_type)]
-// CHECK:STDOUT:       %.loc12_14.2: type = converted %Self.ref, %Self.as_type.loc12_14.2 [symbolic = %Self.as_type.loc12_14.1 (constants.%Self.as_type)]
+// CHECK:STDOUT:       %Self.as_type.loc12_14.1: type = facet_access_type %Self.ref [symbolic = %Self.as_type.loc12_14.2 (constants.%Self.as_type)]
+// CHECK:STDOUT:       %.loc12_14.2: type = converted %Self.ref, %Self.as_type.loc12_14.1 [symbolic = %Self.as_type.loc12_14.2 (constants.%Self.as_type)]
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %self: @G.loc12.%Self.as_type.loc12_14.1 (%Self.as_type) = bind_name self, %self.param
+// CHECK:STDOUT:     %self: @G.loc12.%Self.as_type.loc12_14.2 (%Self.as_type) = bind_name self, %self.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %assoc0: %Instance.assoc_type = assoc_entity element0, %G.decl [concrete = constants.%assoc0.ab8]
 // CHECK:STDOUT:
@@ -229,10 +229,10 @@ fn InstanceCallImportFail() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic fn @G.loc12(@Instance.%Self: %Instance.type) {
 // CHECK:STDOUT:   %Self: %Instance.type = bind_symbolic_name Self, 0 [symbolic = %Self (constants.%Self.cf8)]
-// CHECK:STDOUT:   %Self.as_type.loc12_14.1: type = facet_access_type %Self [symbolic = %Self.as_type.loc12_14.1 (constants.%Self.as_type)]
-// CHECK:STDOUT:   %pattern_type: type = pattern_type %Self.as_type.loc12_14.1 [symbolic = %pattern_type (constants.%pattern_type.4e4)]
+// CHECK:STDOUT:   %Self.as_type.loc12_14.2: type = facet_access_type %Self [symbolic = %Self.as_type.loc12_14.2 (constants.%Self.as_type)]
+// CHECK:STDOUT:   %pattern_type: type = pattern_type %Self.as_type.loc12_14.2 [symbolic = %pattern_type (constants.%pattern_type.4e4)]
 // CHECK:STDOUT:
-// CHECK:STDOUT:   fn(%self.param: @G.loc12.%Self.as_type.loc12_14.1 (%Self.as_type));
+// CHECK:STDOUT:   fn(%self.param: @G.loc12.%Self.as_type.loc12_14.2 (%Self.as_type));
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @G.loc16(%self.param: %struct_type.i) {
@@ -246,13 +246,13 @@ fn InstanceCallImportFail() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @G.loc12(constants.%Self.cf8) {
 // CHECK:STDOUT:   %Self => constants.%Self.cf8
-// CHECK:STDOUT:   %Self.as_type.loc12_14.1 => constants.%Self.as_type
+// CHECK:STDOUT:   %Self.as_type.loc12_14.2 => constants.%Self.as_type
 // CHECK:STDOUT:   %pattern_type => constants.%pattern_type.4e4
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @G.loc12(constants.%Instance.facet) {
 // CHECK:STDOUT:   %Self => constants.%Instance.facet
-// CHECK:STDOUT:   %Self.as_type.loc12_14.1 => constants.%struct_type.i
+// CHECK:STDOUT:   %Self.as_type.loc12_14.2 => constants.%struct_type.i
 // CHECK:STDOUT:   %pattern_type => constants.%pattern_type.9b2
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -267,13 +267,13 @@ fn InstanceCallImportFail() {
 // CHECK:STDOUT:   %Self.73c: %NonInstance.type = bind_symbolic_name Self, 0 [symbolic]
 // CHECK:STDOUT:   %NonInstance.assoc_type: type = assoc_entity_type @NonInstance [concrete]
 // CHECK:STDOUT:   %assoc0: %NonInstance.assoc_type = assoc_entity element0, imports.%Main.import_ref.474 [concrete]
-// CHECK:STDOUT:   %F.type.9e5: type = fn_type @F.1 [concrete]
+// CHECK:STDOUT:   %F.type.9e5: type = fn_type @F.2 [concrete]
 // CHECK:STDOUT:   %F.4e4: %F.type.9e5 = struct_value () [concrete]
 // CHECK:STDOUT:   %Instance.type: type = facet_type <@Instance> [concrete]
 // CHECK:STDOUT:   %NonInstance.impl_witness: <witness> = impl_witness imports.%NonInstance.impl_witness_table [concrete]
 // CHECK:STDOUT:   %NonInstance.facet: %NonInstance.type = facet_value %struct_type.i, (%NonInstance.impl_witness) [concrete]
 // CHECK:STDOUT:   %.923: type = fn_type_with_self_type %F.type.9e5, %NonInstance.facet [concrete]
-// CHECK:STDOUT:   %F.type.042: type = fn_type @F.2 [concrete]
+// CHECK:STDOUT:   %F.type.042: type = fn_type @F.1 [concrete]
 // CHECK:STDOUT:   %F.db4: %F.type.042 = struct_value () [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -352,13 +352,13 @@ fn InstanceCallImportFail() {
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic fn @F.1(imports.%Main.import_ref.f85: %NonInstance.type) [from "lib.carbon"] {
+// CHECK:STDOUT: generic fn @F.2(imports.%Main.import_ref.f85: %NonInstance.type) [from "lib.carbon"] {
 // CHECK:STDOUT:   fn;
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @F.2 [from "lib.carbon"];
+// CHECK:STDOUT: fn @F.1 [from "lib.carbon"];
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @F.1(constants.%Self.73c) {}
+// CHECK:STDOUT: specific @F.2(constants.%Self.73c) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- fail_import_non-instance.carbon
 // CHECK:STDOUT:
@@ -587,7 +587,7 @@ fn InstanceCallImportFail() {
 // CHECK:STDOUT:   %Self.cf8: %Instance.type = bind_symbolic_name Self, 0 [symbolic]
 // CHECK:STDOUT:   %Instance.assoc_type: type = assoc_entity_type @Instance [concrete]
 // CHECK:STDOUT:   %assoc0: %Instance.assoc_type = assoc_entity element0, imports.%Main.import_ref.b4d [concrete]
-// CHECK:STDOUT:   %G.type.1e1: type = fn_type @G.1 [concrete]
+// CHECK:STDOUT:   %G.type.1e1: type = fn_type @G.2 [concrete]
 // CHECK:STDOUT:   %G.449: %G.type.1e1 = struct_value () [concrete]
 // CHECK:STDOUT:   %Self.as_type: type = facet_access_type %Self.cf8 [symbolic]
 // CHECK:STDOUT:   %pattern_type.4e4: type = pattern_type %Self.as_type [symbolic]
@@ -595,7 +595,7 @@ fn InstanceCallImportFail() {
 // CHECK:STDOUT:   %Instance.impl_witness: <witness> = impl_witness imports.%Instance.impl_witness_table [concrete]
 // CHECK:STDOUT:   %Instance.facet: %Instance.type = facet_value %struct_type.i, (%Instance.impl_witness) [concrete]
 // CHECK:STDOUT:   %.efa: type = fn_type_with_self_type %G.type.1e1, %Instance.facet [concrete]
-// CHECK:STDOUT:   %G.type.0c0: type = fn_type @G.2 [concrete]
+// CHECK:STDOUT:   %G.type.0c0: type = fn_type @G.1 [concrete]
 // CHECK:STDOUT:   %G.484: %G.type.0c0 = struct_value () [concrete]
 // CHECK:STDOUT:   %ptr: type = ptr_type %struct_type.i [concrete]
 // CHECK:STDOUT:   %pattern_type.72c: type = pattern_type %ptr [concrete]
@@ -702,7 +702,7 @@ fn InstanceCallImportFail() {
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic fn @G.1(imports.%Main.import_ref.0d8: %Instance.type) [from "lib.carbon"] {
+// CHECK:STDOUT: generic fn @G.2(imports.%Main.import_ref.0d8: %Instance.type) [from "lib.carbon"] {
 // CHECK:STDOUT:   %Self: %Instance.type = bind_symbolic_name Self, 0 [symbolic = %Self (constants.%Self.cf8)]
 // CHECK:STDOUT:   %Self.as_type: type = facet_access_type %Self [symbolic = %Self.as_type (constants.%Self.as_type)]
 // CHECK:STDOUT:   %pattern_type: type = pattern_type %Self.as_type [symbolic = %pattern_type (constants.%pattern_type.4e4)]
@@ -710,7 +710,7 @@ fn InstanceCallImportFail() {
 // CHECK:STDOUT:   fn;
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @G.2 [from "lib.carbon"];
+// CHECK:STDOUT: fn @G.1 [from "lib.carbon"];
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @InstanceCallIndirectImport(%p.param: %ptr) {
 // CHECK:STDOUT: !entry:
@@ -729,7 +729,7 @@ fn InstanceCallImportFail() {
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @G.1(constants.%Self.cf8) {
+// CHECK:STDOUT: specific @G.2(constants.%Self.cf8) {
 // CHECK:STDOUT:   %Self => constants.%Self.cf8
 // CHECK:STDOUT:   %Self.as_type => constants.%Self.as_type
 // CHECK:STDOUT:   %pattern_type => constants.%pattern_type.4e4

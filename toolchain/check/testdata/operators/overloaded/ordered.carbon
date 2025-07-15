@@ -141,7 +141,7 @@ fn TestGreaterEqual(a: D, b: D) -> bool {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %C.decl: type = class_decl @C [concrete = constants.%C] {} {}
-// CHECK:STDOUT:   impl_decl @OrderedWith.impl.ecd [concrete] {} {
+// CHECK:STDOUT:   %OrderedWith.impl = impl_decl @OrderedWith.impl.ecd [concrete] {} {
 // CHECK:STDOUT:     %C.ref.loc6_6: type = name_ref C, file.%C.decl [concrete = constants.%C]
 // CHECK:STDOUT:     %Core.ref: <namespace> = name_ref Core, imports.%Core [concrete = imports.%Core]
 // CHECK:STDOUT:     %OrderedWith.ref: %OrderedWith.type.270 = name_ref OrderedWith, imports.%Core.OrderedWith [concrete = constants.%OrderedWith.generic]

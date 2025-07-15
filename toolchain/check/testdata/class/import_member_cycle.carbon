@@ -82,10 +82,10 @@ fn Run() {
 // CHECK:STDOUT:   %complete_type.e4b: <witness> = complete_type_witness %struct_type.a [concrete]
 // CHECK:STDOUT:   %pattern_type.d3d: type = pattern_type %ptr.257 [concrete]
 // CHECK:STDOUT:   %Destroy.type: type = facet_type <@Destroy> [concrete]
-// CHECK:STDOUT:   %Op.type.a45: type = fn_type @Op.2, @Destroy.impl(%ptr.257) [concrete]
+// CHECK:STDOUT:   %Op.type.a45: type = fn_type @Op.1, @Destroy.impl(%ptr.257) [concrete]
 // CHECK:STDOUT:   %Op.109: %Op.type.a45 = struct_value () [concrete]
 // CHECK:STDOUT:   %ptr.d80: type = ptr_type %ptr.257 [concrete]
-// CHECK:STDOUT:   %Op.specific_fn: <specific function> = specific_function %Op.109, @Op.2(%ptr.257) [concrete]
+// CHECK:STDOUT:   %Op.specific_fn: <specific function> = specific_function %Op.109, @Op.1(%ptr.257) [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -133,7 +133,7 @@ fn Run() {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %a: ref %ptr.257 = bind_name a, %a.var
 // CHECK:STDOUT:   %Op.bound: <bound method> = bound_method %a.var, constants.%Op.109
-// CHECK:STDOUT:   %Op.specific_fn: <specific function> = specific_function constants.%Op.109, @Op.2(constants.%ptr.257) [concrete = constants.%Op.specific_fn]
+// CHECK:STDOUT:   %Op.specific_fn: <specific function> = specific_function constants.%Op.109, @Op.1(constants.%ptr.257) [concrete = constants.%Op.specific_fn]
 // CHECK:STDOUT:   %bound_method: <bound method> = bound_method %a.var, %Op.specific_fn
 // CHECK:STDOUT:   %addr: %ptr.d80 = addr_of %a.var
 // CHECK:STDOUT:   %no_op: init %empty_tuple.type = call %bound_method(%addr)

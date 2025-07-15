@@ -260,13 +260,13 @@ fn P(o: O) {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @C {
-// CHECK:STDOUT:   impl_decl @HasF.impl [concrete] {} {
+// CHECK:STDOUT:   %HasF.impl = impl_decl @HasF.impl [concrete] {} {
 // CHECK:STDOUT:     %Self.ref: type = name_ref Self, constants.%C [concrete = constants.%C]
 // CHECK:STDOUT:     %HasF.ref: type = name_ref HasF, file.%HasF.decl [concrete = constants.%HasF.type]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %HasF.impl_witness_table = impl_witness_table (@HasF.impl.%F.decl), @HasF.impl [concrete]
 // CHECK:STDOUT:   %HasF.impl_witness: <witness> = impl_witness %HasF.impl_witness_table [concrete = constants.%HasF.impl_witness]
-// CHECK:STDOUT:   impl_decl @HasG.impl [concrete] {} {
+// CHECK:STDOUT:   %HasG.impl = impl_decl @HasG.impl [concrete] {} {
 // CHECK:STDOUT:     %Self.ref: type = name_ref Self, constants.%C [concrete = constants.%C]
 // CHECK:STDOUT:     %HasG.ref: type = name_ref HasG, file.%HasG.decl [concrete = constants.%HasG.type]
 // CHECK:STDOUT:   }
@@ -424,13 +424,13 @@ fn P(o: O) {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @D {
-// CHECK:STDOUT:   impl_decl @HasA1.impl [concrete] {} {
+// CHECK:STDOUT:   %HasA1.impl = impl_decl @HasA1.impl [concrete] {} {
 // CHECK:STDOUT:     %Self.ref: type = name_ref Self, constants.%D [concrete = constants.%D]
 // CHECK:STDOUT:     %HasA1.ref: type = name_ref HasA1, file.%HasA1.decl [concrete = constants.%HasA1.type]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %HasA1.impl_witness_table = impl_witness_table (@HasA1.impl.%A.decl), @HasA1.impl [concrete]
 // CHECK:STDOUT:   %HasA1.impl_witness: <witness> = impl_witness %HasA1.impl_witness_table [concrete = constants.%HasA1.impl_witness]
-// CHECK:STDOUT:   impl_decl @HasA2.impl [concrete] {} {
+// CHECK:STDOUT:   %HasA2.impl = impl_decl @HasA2.impl [concrete] {} {
 // CHECK:STDOUT:     %Self.ref: type = name_ref Self, constants.%D [concrete = constants.%D]
 // CHECK:STDOUT:     %HasA2.ref: type = name_ref HasA2, file.%HasA2.decl [concrete = constants.%HasA2.type]
 // CHECK:STDOUT:   }
@@ -569,7 +569,7 @@ fn P(o: O) {
 // CHECK:STDOUT: class @E {
 // CHECK:STDOUT:   %B.ref: type = name_ref B, file.%B.decl [concrete = constants.%B]
 // CHECK:STDOUT:   %.loc13: %E.elem = base_decl %B.ref, element0 [concrete]
-// CHECK:STDOUT:   impl_decl @HasI.impl [concrete] {} {
+// CHECK:STDOUT:   %HasI.impl = impl_decl @HasI.impl [concrete] {} {
 // CHECK:STDOUT:     %Self.ref: type = name_ref Self, constants.%E [concrete = constants.%E]
 // CHECK:STDOUT:     %HasI.ref: type = name_ref HasI, file.%HasI.decl [concrete = constants.%HasI.type]
 // CHECK:STDOUT:   }
@@ -708,7 +708,7 @@ fn P(o: O) {
 // CHECK:STDOUT: class @L {
 // CHECK:STDOUT:   %Base.ref: type = name_ref Base, file.%Base.decl [concrete = constants.%Base]
 // CHECK:STDOUT:   %.loc13: %L.elem = base_decl %Base.ref, element0 [concrete]
-// CHECK:STDOUT:   impl_decl @HasK.impl [concrete] {} {
+// CHECK:STDOUT:   %HasK.impl = impl_decl @HasK.impl [concrete] {} {
 // CHECK:STDOUT:     %Self.ref: type = name_ref Self, constants.%L [concrete = constants.%L]
 // CHECK:STDOUT:     %HasK.ref: type = name_ref HasK, file.%HasK.decl [concrete = constants.%HasK.type]
 // CHECK:STDOUT:   }
@@ -872,13 +872,13 @@ fn P(o: O) {
 // CHECK:STDOUT: class @O {
 // CHECK:STDOUT:   %NBase.ref: type = name_ref NBase, file.%NBase.decl [concrete = constants.%NBase]
 // CHECK:STDOUT:   %.loc17: %O.elem = base_decl %NBase.ref, element0 [concrete]
-// CHECK:STDOUT:   impl_decl @HasN1.impl [concrete] {} {
+// CHECK:STDOUT:   %HasN1.impl = impl_decl @HasN1.impl [concrete] {} {
 // CHECK:STDOUT:     %Self.ref: type = name_ref Self, constants.%O [concrete = constants.%O]
 // CHECK:STDOUT:     %HasN1.ref: type = name_ref HasN1, file.%HasN1.decl [concrete = constants.%HasN1.type]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %HasN1.impl_witness_table = impl_witness_table (@HasN1.impl.%N.decl), @HasN1.impl [concrete]
 // CHECK:STDOUT:   %HasN1.impl_witness: <witness> = impl_witness %HasN1.impl_witness_table [concrete = constants.%HasN1.impl_witness]
-// CHECK:STDOUT:   impl_decl @HasN2.impl [concrete] {} {
+// CHECK:STDOUT:   %HasN2.impl = impl_decl @HasN2.impl [concrete] {} {
 // CHECK:STDOUT:     %Self.ref: type = name_ref Self, constants.%O [concrete = constants.%O]
 // CHECK:STDOUT:     %HasN2.ref: type = name_ref HasN2, file.%HasN2.decl [concrete = constants.%HasN2.type]
 // CHECK:STDOUT:   }

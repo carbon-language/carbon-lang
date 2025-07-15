@@ -57,9 +57,9 @@ fn F(c: Class, p: Class*) {
 // CHECK:STDOUT:   %F.type.b25: type = fn_type @F.loc24 [concrete]
 // CHECK:STDOUT:   %F.c41: %F.type.b25 = struct_value () [concrete]
 // CHECK:STDOUT:   %Destroy.type: type = facet_type <@Destroy> [concrete]
-// CHECK:STDOUT:   %Op.type.7de: type = fn_type @Op.2, @Destroy.impl(%Class) [concrete]
+// CHECK:STDOUT:   %Op.type.7de: type = fn_type @Op.1, @Destroy.impl(%Class) [concrete]
 // CHECK:STDOUT:   %Op.d64: %Op.type.7de = struct_value () [concrete]
-// CHECK:STDOUT:   %Op.specific_fn: <specific function> = specific_function %Op.d64, @Op.2(%Class) [concrete]
+// CHECK:STDOUT:   %Op.specific_fn: <specific function> = specific_function %Op.d64, @Op.1(%Class) [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -158,7 +158,7 @@ fn F(c: Class, p: Class*) {
 // CHECK:STDOUT:   %.loc39_4.2: %Class = bind_value %.loc39_4.1
 // CHECK:STDOUT:   %G.call.loc39: init %empty_tuple.type = call %G.bound.loc39(%.loc39_4.2)
 // CHECK:STDOUT:   %Op.bound: <bound method> = bound_method %.loc32, constants.%Op.d64
-// CHECK:STDOUT:   %Op.specific_fn: <specific function> = specific_function constants.%Op.d64, @Op.2(constants.%Class) [concrete = constants.%Op.specific_fn]
+// CHECK:STDOUT:   %Op.specific_fn: <specific function> = specific_function constants.%Op.d64, @Op.1(constants.%Class) [concrete = constants.%Op.specific_fn]
 // CHECK:STDOUT:   %bound_method: <bound method> = bound_method %.loc32, %Op.specific_fn
 // CHECK:STDOUT:   %addr.loc32_3.2: %ptr.e71 = addr_of %.loc32
 // CHECK:STDOUT:   %no_op: init %empty_tuple.type = call %bound_method(%addr.loc32_3.2)

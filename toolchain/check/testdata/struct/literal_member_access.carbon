@@ -38,9 +38,9 @@ fn F() -> i32 {
 // CHECK:STDOUT:   %int_3: Core.IntLiteral = int_value 3 [concrete]
 // CHECK:STDOUT:   %struct_type.a.b.c.4ca: type = struct_type {.a: Core.IntLiteral, .b: %struct_type.x.y.z, .c: Core.IntLiteral} [concrete]
 // CHECK:STDOUT:   %Destroy.type: type = facet_type <@Destroy> [concrete]
-// CHECK:STDOUT:   %Op.type.f60: type = fn_type @Op.2, @Destroy.impl(%struct_type.x.y.z) [concrete]
+// CHECK:STDOUT:   %Op.type.f60: type = fn_type @Op.1, @Destroy.impl(%struct_type.x.y.z) [concrete]
 // CHECK:STDOUT:   %Op.1a4: %Op.type.f60 = struct_value () [concrete]
-// CHECK:STDOUT:   %Op.specific_fn: <specific function> = specific_function %Op.1a4, @Op.2(%struct_type.x.y.z) [concrete]
+// CHECK:STDOUT:   %Op.specific_fn: <specific function> = specific_function %Op.1a4, @Op.1(%struct_type.x.y.z) [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -110,7 +110,7 @@ fn F() -> i32 {
 // CHECK:STDOUT:   %.loc18_36: %struct_type.x.y.z = struct_access %.loc18_35.3, element1
 // CHECK:STDOUT:   %.loc18_38: %i32 = struct_access %.loc18_36, element1
 // CHECK:STDOUT:   %Op.bound: <bound method> = bound_method %.loc18_26.1, constants.%Op.1a4
-// CHECK:STDOUT:   %Op.specific_fn: <specific function> = specific_function constants.%Op.1a4, @Op.2(constants.%struct_type.x.y.z) [concrete = constants.%Op.specific_fn]
+// CHECK:STDOUT:   %Op.specific_fn: <specific function> = specific_function constants.%Op.1a4, @Op.1(constants.%struct_type.x.y.z) [concrete = constants.%Op.specific_fn]
 // CHECK:STDOUT:   %bound_method: <bound method> = bound_method %.loc18_26.1, %Op.specific_fn
 // CHECK:STDOUT:   %addr: %ptr.6eb = addr_of %.loc18_26.1
 // CHECK:STDOUT:   %no_op: init %empty_tuple.type = call %bound_method(%addr)

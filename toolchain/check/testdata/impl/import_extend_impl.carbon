@@ -84,7 +84,7 @@ fn G(c: C) {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @C {
-// CHECK:STDOUT:   impl_decl @I.impl [concrete] {} {
+// CHECK:STDOUT:   %I.impl = impl_decl @I.impl [concrete] {} {
 // CHECK:STDOUT:     %Self.ref: type = name_ref Self, constants.%C [concrete = constants.%C]
 // CHECK:STDOUT:     %I.ref: type = name_ref I, file.%I.decl [concrete = constants.%I.type]
 // CHECK:STDOUT:   }
@@ -128,11 +128,11 @@ fn G(c: C) {
 // CHECK:STDOUT:   %I.assoc_type: type = assoc_entity_type @I [concrete]
 // CHECK:STDOUT:   %assoc0: %I.assoc_type = assoc_entity element0, imports.%Main.import_ref.e03 [concrete]
 // CHECK:STDOUT:   %I.impl_witness: <witness> = impl_witness imports.%I.impl_witness_table [concrete]
-// CHECK:STDOUT:   %F.type.cf0: type = fn_type @F.1 [concrete]
+// CHECK:STDOUT:   %F.type.cf0: type = fn_type @F.2 [concrete]
 // CHECK:STDOUT:   %F.bc6: %F.type.cf0 = struct_value () [concrete]
 // CHECK:STDOUT:   %I.facet: %I.type = facet_value %C, (%I.impl_witness) [concrete]
 // CHECK:STDOUT:   %.038: type = fn_type_with_self_type %F.type.cf0, %I.facet [concrete]
-// CHECK:STDOUT:   %F.type.f36: type = fn_type @F.2 [concrete]
+// CHECK:STDOUT:   %F.type.f36: type = fn_type @F.1 [concrete]
 // CHECK:STDOUT:   %F.4c3: %F.type.f36 = struct_value () [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -205,11 +205,11 @@ fn G(c: C) {
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic fn @F.1(imports.%Main.import_ref.5dd: %I.type) [from "extend_impl_library.carbon"] {
+// CHECK:STDOUT: generic fn @F.2(imports.%Main.import_ref.5dd: %I.type) [from "extend_impl_library.carbon"] {
 // CHECK:STDOUT:   fn;
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @F.2 [from "extend_impl_library.carbon"];
+// CHECK:STDOUT: fn @F.1 [from "extend_impl_library.carbon"];
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @F.1(constants.%Self) {}
+// CHECK:STDOUT: specific @F.2(constants.%Self) {}
 // CHECK:STDOUT:

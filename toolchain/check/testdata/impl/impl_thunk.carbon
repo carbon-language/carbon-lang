@@ -329,7 +329,7 @@ impl () as I({}) {
 // CHECK:STDOUT:   %empty_tuple: %empty_tuple.type = tuple_value () [concrete]
 // CHECK:STDOUT:   %empty_struct: %empty_struct_type = struct_value () [concrete]
 // CHECK:STDOUT:   %struct: %struct_type.c.d.15a = struct_value (%empty_tuple, %empty_struct) [concrete]
-// CHECK:STDOUT:   %Op.type.afe: type = fn_type @Op.2, @Destroy.impl(%struct_type.d.c.b36) [concrete]
+// CHECK:STDOUT:   %Op.type.afe: type = fn_type @Op.1, @Destroy.impl(%struct_type.d.c.b36) [concrete]
 // CHECK:STDOUT:   %Op.742: %Op.type.afe = struct_value () [concrete]
 // CHECK:STDOUT:   %ptr.eab: type = ptr_type %struct_type.d.c.b36 [concrete]
 // CHECK:STDOUT: }
@@ -623,7 +623,7 @@ impl () as I({}) {
 // CHECK:STDOUT:   %F.77e9d5.1: %F.type.b24d6f.1 = struct_value () [concrete]
 // CHECK:STDOUT:   %F.type.b24d6f.2: type = fn_type @F.loc20_14.2 [concrete]
 // CHECK:STDOUT:   %F.77e9d5.2: %F.type.b24d6f.2 = struct_value () [concrete]
-// CHECK:STDOUT:   %Op.type.1a6: type = fn_type @Op.2, @Destroy.impl(%B) [concrete]
+// CHECK:STDOUT:   %Op.type.1a6: type = fn_type @Op.1, @Destroy.impl(%B) [concrete]
 // CHECK:STDOUT:   %Op.3c2: %Op.type.1a6 = struct_value () [concrete]
 // CHECK:STDOUT:   %ptr.e79: type = ptr_type %B [concrete]
 // CHECK:STDOUT: }
@@ -880,7 +880,7 @@ impl () as I({}) {
 // CHECK:STDOUT:   %F.975709.2: %F.type.29ab63.2 = struct_value () [concrete]
 // CHECK:STDOUT:   %empty_struct: %empty_struct_type = struct_value () [concrete]
 // CHECK:STDOUT:   %struct: %struct_type.a.b.f95 = struct_value (%empty_struct, %empty_struct) [concrete]
-// CHECK:STDOUT:   %Op.type.f20: type = fn_type @Op.2, @Destroy.impl(%struct_type.b.a.1b0) [concrete]
+// CHECK:STDOUT:   %Op.type.f20: type = fn_type @Op.1, @Destroy.impl(%struct_type.b.a.1b0) [concrete]
 // CHECK:STDOUT:   %Op.eab: %Op.type.f20 = struct_value () [concrete]
 // CHECK:STDOUT:   %ptr.30d: type = ptr_type %struct_type.b.a.1b0 [concrete]
 // CHECK:STDOUT: }

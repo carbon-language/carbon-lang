@@ -39,10 +39,10 @@ fn MemberNamedSelf.F(x: Self, y: r#Self) {}
 // CHECK:STDOUT:   %ptr.e71: type = ptr_type %Class [concrete]
 // CHECK:STDOUT:   %pattern_type.796: type = pattern_type %ptr.e71 [concrete]
 // CHECK:STDOUT:   %Destroy.type: type = facet_type <@Destroy> [concrete]
-// CHECK:STDOUT:   %Op.type.faa: type = fn_type @Op.2, @Destroy.impl(%ptr.e71) [concrete]
+// CHECK:STDOUT:   %Op.type.faa: type = fn_type @Op.1, @Destroy.impl(%ptr.e71) [concrete]
 // CHECK:STDOUT:   %Op.5a3: %Op.type.faa = struct_value () [concrete]
 // CHECK:STDOUT:   %ptr.0dd: type = ptr_type %ptr.e71 [concrete]
-// CHECK:STDOUT:   %Op.specific_fn: <specific function> = specific_function %Op.5a3, @Op.2(%ptr.e71) [concrete]
+// CHECK:STDOUT:   %Op.specific_fn: <specific function> = specific_function %Op.5a3, @Op.1(%ptr.e71) [concrete]
 // CHECK:STDOUT:   %MemberNamedSelf: type = class_type @MemberNamedSelf [concrete]
 // CHECK:STDOUT:   %Self.362: type = class_type @Self [concrete]
 // CHECK:STDOUT:   %pattern_type.356: type = pattern_type %MemberNamedSelf [concrete]
@@ -155,12 +155,12 @@ fn MemberNamedSelf.F(x: Self, y: r#Self) {}
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %p: ref %ptr.e71 = bind_name p, %p.var
 // CHECK:STDOUT:   %Op.bound.loc18: <bound method> = bound_method %p.var, constants.%Op.5a3
-// CHECK:STDOUT:   %Op.specific_fn.1: <specific function> = specific_function constants.%Op.5a3, @Op.2(constants.%ptr.e71) [concrete = constants.%Op.specific_fn]
+// CHECK:STDOUT:   %Op.specific_fn.1: <specific function> = specific_function constants.%Op.5a3, @Op.1(constants.%ptr.e71) [concrete = constants.%Op.specific_fn]
 // CHECK:STDOUT:   %bound_method.loc18: <bound method> = bound_method %p.var, %Op.specific_fn.1
 // CHECK:STDOUT:   %addr.loc18: %ptr.0dd = addr_of %p.var
 // CHECK:STDOUT:   %no_op.loc18: init %empty_tuple.type = call %bound_method.loc18(%addr.loc18)
 // CHECK:STDOUT:   %Op.bound.loc17: <bound method> = bound_method %Self.var, constants.%Op.5a3
-// CHECK:STDOUT:   %Op.specific_fn.2: <specific function> = specific_function constants.%Op.5a3, @Op.2(constants.%ptr.e71) [concrete = constants.%Op.specific_fn]
+// CHECK:STDOUT:   %Op.specific_fn.2: <specific function> = specific_function constants.%Op.5a3, @Op.1(constants.%ptr.e71) [concrete = constants.%Op.specific_fn]
 // CHECK:STDOUT:   %bound_method.loc17: <bound method> = bound_method %Self.var, %Op.specific_fn.2
 // CHECK:STDOUT:   %addr.loc17: %ptr.0dd = addr_of %Self.var
 // CHECK:STDOUT:   %no_op.loc17: init %empty_tuple.type = call %bound_method.loc17(%addr.loc17)

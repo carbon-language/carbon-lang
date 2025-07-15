@@ -103,13 +103,13 @@ fn F(c: C) -> i32 {
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %int_32: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
 // CHECK:STDOUT:     %i32: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
-// CHECK:STDOUT:     %self.param: @F.loc18.%Self.as_type.loc18_14.1 (%Self.as_type) = value_param call_param0
-// CHECK:STDOUT:     %.loc18_14.1: type = splice_block %.loc18_14.2 [symbolic = %Self.as_type.loc18_14.1 (constants.%Self.as_type)] {
+// CHECK:STDOUT:     %self.param: @F.loc18.%Self.as_type.loc18_14.2 (%Self.as_type) = value_param call_param0
+// CHECK:STDOUT:     %.loc18_14.1: type = splice_block %.loc18_14.2 [symbolic = %Self.as_type.loc18_14.2 (constants.%Self.as_type)] {
 // CHECK:STDOUT:       %Self.ref: %I.type = name_ref Self, @I.%Self [symbolic = %Self (constants.%Self)]
-// CHECK:STDOUT:       %Self.as_type.loc18_14.2: type = facet_access_type %Self.ref [symbolic = %Self.as_type.loc18_14.1 (constants.%Self.as_type)]
-// CHECK:STDOUT:       %.loc18_14.2: type = converted %Self.ref, %Self.as_type.loc18_14.2 [symbolic = %Self.as_type.loc18_14.1 (constants.%Self.as_type)]
+// CHECK:STDOUT:       %Self.as_type.loc18_14.1: type = facet_access_type %Self.ref [symbolic = %Self.as_type.loc18_14.2 (constants.%Self.as_type)]
+// CHECK:STDOUT:       %.loc18_14.2: type = converted %Self.ref, %Self.as_type.loc18_14.1 [symbolic = %Self.as_type.loc18_14.2 (constants.%Self.as_type)]
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %self: @F.loc18.%Self.as_type.loc18_14.1 (%Self.as_type) = bind_name self, %self.param
+// CHECK:STDOUT:     %self: @F.loc18.%Self.as_type.loc18_14.2 (%Self.as_type) = bind_name self, %self.param
 // CHECK:STDOUT:     %return.param: ref %i32 = out_param call_param1
 // CHECK:STDOUT:     %return: ref %i32 = return_slot %return.param
 // CHECK:STDOUT:   }
@@ -143,7 +143,7 @@ fn F(c: C) -> i32 {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @C {
-// CHECK:STDOUT:   impl_decl @I.impl [concrete] {} {
+// CHECK:STDOUT:   %I.impl = impl_decl @I.impl [concrete] {} {
 // CHECK:STDOUT:     %Self.ref: type = name_ref Self, constants.%C [concrete = constants.%C]
 // CHECK:STDOUT:     %I.ref: type = name_ref I, file.%I.decl [concrete = constants.%I.type]
 // CHECK:STDOUT:   }
@@ -162,10 +162,10 @@ fn F(c: C) -> i32 {
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic fn @F.loc18(@I.%Self: %I.type) {
 // CHECK:STDOUT:   %Self: %I.type = bind_symbolic_name Self, 0 [symbolic = %Self (constants.%Self)]
-// CHECK:STDOUT:   %Self.as_type.loc18_14.1: type = facet_access_type %Self [symbolic = %Self.as_type.loc18_14.1 (constants.%Self.as_type)]
-// CHECK:STDOUT:   %pattern_type: type = pattern_type %Self.as_type.loc18_14.1 [symbolic = %pattern_type (constants.%pattern_type.6de)]
+// CHECK:STDOUT:   %Self.as_type.loc18_14.2: type = facet_access_type %Self [symbolic = %Self.as_type.loc18_14.2 (constants.%Self.as_type)]
+// CHECK:STDOUT:   %pattern_type: type = pattern_type %Self.as_type.loc18_14.2 [symbolic = %pattern_type (constants.%pattern_type.6de)]
 // CHECK:STDOUT:
-// CHECK:STDOUT:   fn(%self.param: @F.loc18.%Self.as_type.loc18_14.1 (%Self.as_type)) -> %i32;
+// CHECK:STDOUT:   fn(%self.param: @F.loc18.%Self.as_type.loc18_14.2 (%Self.as_type)) -> %i32;
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F.loc23(%self.param: %C) -> %i32;
@@ -184,13 +184,13 @@ fn F(c: C) -> i32 {
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @F.loc18(constants.%Self) {
 // CHECK:STDOUT:   %Self => constants.%Self
-// CHECK:STDOUT:   %Self.as_type.loc18_14.1 => constants.%Self.as_type
+// CHECK:STDOUT:   %Self.as_type.loc18_14.2 => constants.%Self.as_type
 // CHECK:STDOUT:   %pattern_type => constants.%pattern_type.6de
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @F.loc18(constants.%I.facet) {
 // CHECK:STDOUT:   %Self => constants.%I.facet
-// CHECK:STDOUT:   %Self.as_type.loc18_14.1 => constants.%C
+// CHECK:STDOUT:   %Self.as_type.loc18_14.2 => constants.%C
 // CHECK:STDOUT:   %pattern_type => constants.%pattern_type.c48
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

@@ -123,11 +123,11 @@ fn H(T:! type) {
 // CHECK:STDOUT:   %impl.elem0.ab3: type = impl_witness_access %A.lookup_impl_witness.935, element0 [symbolic_self]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic class @C(%CC.loc6_9.1: type) {
+// CHECK:STDOUT: generic class @C(%CC.loc6_9.2: type) {
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
-// CHECK:STDOUT:   %F.type: type = fn_type @F, @C(%CC.loc6_9.2) [symbolic = %F.type (constants.%F.type.704ae6.1)]
+// CHECK:STDOUT:   %F.type: type = fn_type @F, @C(%CC.loc6_9.1) [symbolic = %F.type (constants.%F.type.704ae6.1)]
 // CHECK:STDOUT:   %F: @C.%F.type (%F.type.704ae6.1) = struct_value () [symbolic = %F (constants.%F.2d247e.1)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   class {
@@ -136,21 +136,21 @@ fn H(T:! type) {
 // CHECK:STDOUT:     } {
 // CHECK:STDOUT:       %.loc11_18.1: type = splice_block %.loc11_18.2 [symbolic = %A_where.type (constants.%A_where.type.5b404c.1)] {
 // CHECK:STDOUT:         %A.ref: %A.type.495 = name_ref A, file.%A.decl [concrete = constants.%A.generic]
-// CHECK:STDOUT:         %CC.ref.loc11_14: type = name_ref CC, @C.%CC.loc6_9.1 [symbolic = %CC (constants.%CC)]
-// CHECK:STDOUT:         %A.type.loc11_16.2: type = facet_type <@A, @A(constants.%CC)> [symbolic = %A.type.loc11_16.1 (constants.%A.type.75a876.2)]
+// CHECK:STDOUT:         %CC.ref.loc11_14: type = name_ref CC, @C.%CC.loc6_9.2 [symbolic = %CC (constants.%CC)]
+// CHECK:STDOUT:         %A.type.loc11_16.1: type = facet_type <@A, @A(constants.%CC)> [symbolic = %A.type.loc11_16.2 (constants.%A.type.75a876.2)]
 // CHECK:STDOUT:         <elided>
-// CHECK:STDOUT:         %.Self.ref: @F.%A.type.loc11_16.1 (%A.type.75a876.2) = name_ref .Self, %.Self.2 [symbolic = %.Self.1 (constants.%.Self.fafe34.1)]
+// CHECK:STDOUT:         %.Self.ref: @F.%A.type.loc11_16.2 (%A.type.75a876.2) = name_ref .Self, %.Self.1 [symbolic = %.Self.2 (constants.%.Self.fafe34.1)]
 // CHECK:STDOUT:         %.loc11_24.1: @F.%A.assoc_type (%A.assoc_type.ed3b32.2) = specific_constant @X.%assoc0, @A(constants.%CC) [symbolic = %assoc0 (constants.%assoc0.ce3509.2)]
 // CHECK:STDOUT:         %X.ref: @F.%A.assoc_type (%A.assoc_type.ed3b32.2) = name_ref X, %.loc11_24.1 [symbolic = %assoc0 (constants.%assoc0.ce3509.2)]
-// CHECK:STDOUT:         %.Self.as_type.loc11_24.2: type = facet_access_type %.Self.ref [symbolic = %.Self.as_type.loc11_24.1 (constants.%.Self.as_type)]
-// CHECK:STDOUT:         %.loc11_24.2: type = converted %.Self.ref, %.Self.as_type.loc11_24.2 [symbolic = %.Self.as_type.loc11_24.1 (constants.%.Self.as_type)]
-// CHECK:STDOUT:         %impl.elem0.loc11_24.2: type = impl_witness_access constants.%A.lookup_impl_witness.4e49fb.1, element0 [symbolic = %impl.elem0.loc11_24.1 (constants.%impl.elem0.452c56.1)]
-// CHECK:STDOUT:         %CC.ref.loc11_29: type = name_ref CC, @C.%CC.loc6_9.1 [symbolic = %CC (constants.%CC)]
-// CHECK:STDOUT:         %.loc11_18.2: type = where_expr %.Self.2 [symbolic = %A_where.type (constants.%A_where.type.5b404c.1)] {
-// CHECK:STDOUT:           requirement_rewrite %impl.elem0.loc11_24.2, %CC.ref.loc11_29
+// CHECK:STDOUT:         %.Self.as_type.loc11_24.1: type = facet_access_type %.Self.ref [symbolic = %.Self.as_type.loc11_24.2 (constants.%.Self.as_type)]
+// CHECK:STDOUT:         %.loc11_24.2: type = converted %.Self.ref, %.Self.as_type.loc11_24.1 [symbolic = %.Self.as_type.loc11_24.2 (constants.%.Self.as_type)]
+// CHECK:STDOUT:         %impl.elem0.loc11_24.1: type = impl_witness_access constants.%A.lookup_impl_witness.4e49fb.1, element0 [symbolic = %impl.elem0.loc11_24.2 (constants.%impl.elem0.452c56.1)]
+// CHECK:STDOUT:         %CC.ref.loc11_29: type = name_ref CC, @C.%CC.loc6_9.2 [symbolic = %CC (constants.%CC)]
+// CHECK:STDOUT:         %.loc11_18.2: type = where_expr %.Self.1 [symbolic = %A_where.type (constants.%A_where.type.5b404c.1)] {
+// CHECK:STDOUT:           requirement_rewrite %impl.elem0.loc11_24.1, %CC.ref.loc11_29
 // CHECK:STDOUT:         }
 // CHECK:STDOUT:       }
-// CHECK:STDOUT:       %T.loc11_8.2: @F.%A_where.type (%A_where.type.5b404c.1) = bind_symbolic_name T, 1 [symbolic = %T.loc11_8.1 (constants.%T.dad)]
+// CHECK:STDOUT:       %T.loc11_8.1: @F.%A_where.type (%A_where.type.5b404c.1) = bind_symbolic_name T, 1 [symbolic = %T.loc11_8.2 (constants.%T.dad)]
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     <elided>
 // CHECK:STDOUT:     complete_type_witness = %complete_type
@@ -163,7 +163,7 @@ fn H(T:! type) {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic class @D(%DD.loc15_9.1: type) {
+// CHECK:STDOUT: generic class @D(%DD.loc15_9.2: type) {
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
@@ -181,18 +181,18 @@ fn H(T:! type) {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic fn @F(@C.%CC.loc6_9.1: type, %T.loc11_8.2: @F.%A_where.type (%A_where.type.5b404c.1)) {
+// CHECK:STDOUT: generic fn @F(@C.%CC.loc6_9.2: type, %T.loc11_8.1: @F.%A_where.type (%A_where.type.5b404c.1)) {
 // CHECK:STDOUT:   %CC: type = bind_symbolic_name CC, 0 [symbolic = %CC (constants.%CC)]
-// CHECK:STDOUT:   %A.type.loc11_16.1: type = facet_type <@A, @A(%CC)> [symbolic = %A.type.loc11_16.1 (constants.%A.type.75a876.2)]
+// CHECK:STDOUT:   %A.type.loc11_16.2: type = facet_type <@A, @A(%CC)> [symbolic = %A.type.loc11_16.2 (constants.%A.type.75a876.2)]
 // CHECK:STDOUT:   <elided>
-// CHECK:STDOUT:   %require_complete: <witness> = require_complete_type %A.type.loc11_16.1 [symbolic = %require_complete (constants.%require_complete.6da)]
+// CHECK:STDOUT:   %require_complete: <witness> = require_complete_type %A.type.loc11_16.2 [symbolic = %require_complete (constants.%require_complete.6da)]
 // CHECK:STDOUT:   %A.assoc_type: type = assoc_entity_type @A, @A(%CC) [symbolic = %A.assoc_type (constants.%A.assoc_type.ed3b32.2)]
 // CHECK:STDOUT:   %assoc0: @F.%A.assoc_type (%A.assoc_type.ed3b32.2) = assoc_entity element0, @A.%X [symbolic = %assoc0 (constants.%assoc0.ce3509.2)]
-// CHECK:STDOUT:   %.Self.as_type.loc11_24.1: type = facet_access_type %.Self.1 [symbolic = %.Self.as_type.loc11_24.1 (constants.%.Self.as_type)]
-// CHECK:STDOUT:   %A.lookup_impl_witness: <witness> = lookup_impl_witness %.Self.1, @A, @A(%CC) [symbolic = %A.lookup_impl_witness (constants.%A.lookup_impl_witness.4e49fb.1)]
-// CHECK:STDOUT:   %impl.elem0.loc11_24.1: type = impl_witness_access %A.lookup_impl_witness, element0 [symbolic = %impl.elem0.loc11_24.1 (constants.%impl.elem0.452c56.1)]
-// CHECK:STDOUT:   %A_where.type: type = facet_type <@A, @A(%CC) where %impl.elem0.loc11_24.1 = %CC> [symbolic = %A_where.type (constants.%A_where.type.5b404c.1)]
-// CHECK:STDOUT:   %T.loc11_8.1: @F.%A_where.type (%A_where.type.5b404c.1) = bind_symbolic_name T, 1 [symbolic = %T.loc11_8.1 (constants.%T.dad)]
+// CHECK:STDOUT:   %.Self.as_type.loc11_24.2: type = facet_access_type %.Self.2 [symbolic = %.Self.as_type.loc11_24.2 (constants.%.Self.as_type)]
+// CHECK:STDOUT:   %A.lookup_impl_witness: <witness> = lookup_impl_witness %.Self.2, @A, @A(%CC) [symbolic = %A.lookup_impl_witness (constants.%A.lookup_impl_witness.4e49fb.1)]
+// CHECK:STDOUT:   %impl.elem0.loc11_24.2: type = impl_witness_access %A.lookup_impl_witness, element0 [symbolic = %impl.elem0.loc11_24.2 (constants.%impl.elem0.452c56.1)]
+// CHECK:STDOUT:   %A_where.type: type = facet_type <@A, @A(%CC) where %impl.elem0.loc11_24.2 = %CC> [symbolic = %A_where.type (constants.%A_where.type.5b404c.1)]
+// CHECK:STDOUT:   %T.loc11_8.2: @F.%A_where.type (%A_where.type.5b404c.1) = bind_symbolic_name T, 1 [symbolic = %T.loc11_8.2 (constants.%T.dad)]
 // CHECK:STDOUT:   %pattern_type: type = pattern_type %A_where.type [symbolic = %pattern_type (constants.%pattern_type.2e9)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
@@ -203,7 +203,7 @@ fn H(T:! type) {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic fn @G(@D.%DD.loc15_9.1: type, %T.loc16_8.2: type) {
+// CHECK:STDOUT: generic fn @G(@D.%DD.loc15_9.2: type, %T.loc16_8.1: type) {
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
@@ -220,17 +220,17 @@ fn H(T:! type) {
 // CHECK:STDOUT:   fn() {
 // CHECK:STDOUT:   !entry:
 // CHECK:STDOUT:     %C.ref: %C.type = name_ref C, file.%C.decl [concrete = constants.%C.generic]
-// CHECK:STDOUT:     %DD.ref: type = name_ref DD, @D.%DD.loc15_9.1 [symbolic = %DD (constants.%DD)]
+// CHECK:STDOUT:     %DD.ref: type = name_ref DD, @D.%DD.loc15_9.2 [symbolic = %DD (constants.%DD)]
 // CHECK:STDOUT:     %C.loc25_9.1: type = class_type @C, @C(constants.%DD) [symbolic = %C.loc25_9.2 (constants.%C.f2e1b5.2)]
 // CHECK:STDOUT:     %.loc25: @G.%F.type (%F.type.704ae6.2) = specific_constant @C.%F.decl, @C(constants.%DD) [symbolic = %F (constants.%F.2d247e.2)]
 // CHECK:STDOUT:     %F.ref: @G.%F.type (%F.type.704ae6.2) = name_ref F, %.loc25 [symbolic = %F (constants.%F.2d247e.2)]
-// CHECK:STDOUT:     %T.ref: type = name_ref T, %T.loc16_8.2 [symbolic = %T.loc16_8.1 (constants.%T.336)]
+// CHECK:STDOUT:     %T.ref: type = name_ref T, %T.loc16_8.1 [symbolic = %T.loc16_8.2 (constants.%T.336)]
 // CHECK:STDOUT:     <elided>
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @C(constants.%CC) {
-// CHECK:STDOUT:   %CC.loc6_9.2 => constants.%CC
+// CHECK:STDOUT:   %CC.loc6_9.1 => constants.%CC
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %F.type => constants.%F.type.704ae6.1
@@ -239,21 +239,21 @@ fn H(T:! type) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @F(constants.%CC, constants.%T.dad) {
 // CHECK:STDOUT:   %CC => constants.%CC
-// CHECK:STDOUT:   %A.type.loc11_16.1 => constants.%A.type.75a876.2
-// CHECK:STDOUT:   %.Self.1 => constants.%.Self.fafe34.1
+// CHECK:STDOUT:   %A.type.loc11_16.2 => constants.%A.type.75a876.2
+// CHECK:STDOUT:   %.Self.2 => constants.%.Self.fafe34.1
 // CHECK:STDOUT:   %require_complete => constants.%require_complete.6da
 // CHECK:STDOUT:   %A.assoc_type => constants.%A.assoc_type.ed3b32.2
 // CHECK:STDOUT:   %assoc0 => constants.%assoc0.ce3509.2
-// CHECK:STDOUT:   %.Self.as_type.loc11_24.1 => constants.%.Self.as_type
+// CHECK:STDOUT:   %.Self.as_type.loc11_24.2 => constants.%.Self.as_type
 // CHECK:STDOUT:   %A.lookup_impl_witness => constants.%A.lookup_impl_witness.4e49fb.1
-// CHECK:STDOUT:   %impl.elem0.loc11_24.1 => constants.%impl.elem0.452c56.1
+// CHECK:STDOUT:   %impl.elem0.loc11_24.2 => constants.%impl.elem0.452c56.1
 // CHECK:STDOUT:   %A_where.type => constants.%A_where.type.5b404c.1
-// CHECK:STDOUT:   %T.loc11_8.1 => constants.%T.dad
+// CHECK:STDOUT:   %T.loc11_8.2 => constants.%T.dad
 // CHECK:STDOUT:   %pattern_type => constants.%pattern_type.2e9
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @D(constants.%DD) {
-// CHECK:STDOUT:   %DD.loc15_9.2 => constants.%DD
+// CHECK:STDOUT:   %DD.loc15_9.1 => constants.%DD
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %G.type => constants.%G.type.a94
@@ -261,11 +261,11 @@ fn H(T:! type) {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @G(constants.%DD, constants.%T.336) {
-// CHECK:STDOUT:   %T.loc16_8.1 => constants.%T.336
+// CHECK:STDOUT:   %T.loc16_8.2 => constants.%T.336
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @C(constants.%DD) {
-// CHECK:STDOUT:   %CC.loc6_9.2 => constants.%DD
+// CHECK:STDOUT:   %CC.loc6_9.1 => constants.%DD
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %F.type => constants.%F.type.704ae6.2
@@ -273,7 +273,7 @@ fn H(T:! type) {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @D(constants.%empty_struct_type) {
-// CHECK:STDOUT:   %DD.loc15_9.2 => constants.%empty_struct_type
+// CHECK:STDOUT:   %DD.loc15_9.1 => constants.%empty_struct_type
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %G.type => constants.%G.type.0da
@@ -281,7 +281,7 @@ fn H(T:! type) {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @G(constants.%empty_struct_type, constants.%T.8b3) {
-// CHECK:STDOUT:   %T.loc16_8.1 => constants.%T.8b3
+// CHECK:STDOUT:   %T.loc16_8.2 => constants.%T.8b3
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %DD => constants.%empty_struct_type
@@ -296,7 +296,7 @@ fn H(T:! type) {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @C(constants.%empty_struct_type) {
-// CHECK:STDOUT:   %CC.loc6_9.2 => constants.%empty_struct_type
+// CHECK:STDOUT:   %CC.loc6_9.1 => constants.%empty_struct_type
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %F.type => constants.%F.type.789
@@ -357,7 +357,7 @@ fn H(T:! type) {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
-// CHECK:STDOUT:   impl_decl @B.impl.e5b [concrete] {
+// CHECK:STDOUT:   %B.impl.loc9 = impl_decl @B.impl.e5b [concrete] {
 // CHECK:STDOUT:     %AA.patt: %pattern_type.98f = symbolic_binding_pattern AA, 0 [concrete]
 // CHECK:STDOUT:     %BB.patt: @B.impl.e5b.%pattern_type (%pattern_type.0b2) = symbolic_binding_pattern BB, 1 [concrete]
 // CHECK:STDOUT:   } {
@@ -419,7 +419,7 @@ fn H(T:! type) {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic class @D(%DD.loc14_9.1: type) {
+// CHECK:STDOUT: generic class @D(%DD.loc14_9.2: type) {
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
@@ -437,7 +437,7 @@ fn H(T:! type) {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic fn @G(@D.%DD.loc14_9.1: type, %T.loc15_8.2: type) {
+// CHECK:STDOUT: generic fn @G(@D.%DD.loc14_9.2: type, %T.loc15_8.1: type) {
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
@@ -448,14 +448,14 @@ fn H(T:! type) {
 // CHECK:STDOUT:   %.Self: @G.%A.type (%A.type.75a876.2) = bind_symbolic_name .Self [symbolic = %.Self (constants.%.Self.fafe34.2)]
 // CHECK:STDOUT:   %A.lookup_impl_witness: <witness> = lookup_impl_witness %.Self, @A, @A(%DD) [symbolic = %A.lookup_impl_witness (constants.%A.lookup_impl_witness.4e49fb.2)]
 // CHECK:STDOUT:   %impl.elem0: type = impl_witness_access %A.lookup_impl_witness, element0 [symbolic = %impl.elem0 (constants.%impl.elem0.452c56.2)]
-// CHECK:STDOUT:   %B.lookup_impl_witness: <witness> = lookup_impl_witness %T.loc15_8.1, @B, @B(%ptr.loc21_14.2) [symbolic = %B.lookup_impl_witness (constants.%B.lookup_impl_witness.8e3)]
-// CHECK:STDOUT:   %B.facet.loc21_7.2: @G.%B.type.loc21_15.2 (%B.type.4e3fc4.2) = facet_value %T.loc15_8.1, (%B.lookup_impl_witness) [symbolic = %B.facet.loc21_7.2 (constants.%B.facet.44e)]
+// CHECK:STDOUT:   %B.lookup_impl_witness: <witness> = lookup_impl_witness %T.loc15_8.2, @B, @B(%ptr.loc21_14.2) [symbolic = %B.lookup_impl_witness (constants.%B.lookup_impl_witness.8e3)]
+// CHECK:STDOUT:   %B.facet.loc21_7.2: @G.%B.type.loc21_15.2 (%B.type.4e3fc4.2) = facet_value %T.loc15_8.2, (%B.lookup_impl_witness) [symbolic = %B.facet.loc21_7.2 (constants.%B.facet.44e)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   fn() {
 // CHECK:STDOUT:   !entry:
-// CHECK:STDOUT:     %T.ref: type = name_ref T, %T.loc15_8.2 [symbolic = %T.loc15_8.1 (constants.%T.336)]
+// CHECK:STDOUT:     %T.ref: type = name_ref T, %T.loc15_8.1 [symbolic = %T.loc15_8.2 (constants.%T.336)]
 // CHECK:STDOUT:     %B.ref: %B.type.bf2 = name_ref B, file.%B.decl [concrete = constants.%B.generic]
-// CHECK:STDOUT:     %DD.ref: type = name_ref DD, @D.%DD.loc14_9.1 [symbolic = %DD (constants.%DD)]
+// CHECK:STDOUT:     %DD.ref: type = name_ref DD, @D.%DD.loc14_9.2 [symbolic = %DD (constants.%DD)]
 // CHECK:STDOUT:     %ptr.loc21_14.1: type = ptr_type %DD.ref [symbolic = %ptr.loc21_14.2 (constants.%ptr.79f131.2)]
 // CHECK:STDOUT:     %B.type.loc21_15.1: type = facet_type <@B, @B(constants.%ptr.79f131.2)> [symbolic = %B.type.loc21_15.2 (constants.%B.type.4e3fc4.2)]
 // CHECK:STDOUT:     %B.facet.loc21_7.1: @G.%B.type.loc21_15.2 (%B.type.4e3fc4.2) = facet_value constants.%T.336, (constants.%B.lookup_impl_witness.8e3) [symbolic = %B.facet.loc21_7.2 (constants.%B.facet.44e)]
@@ -485,7 +485,7 @@ fn H(T:! type) {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @D(constants.%DD) {
-// CHECK:STDOUT:   %DD.loc14_9.2 => constants.%DD
+// CHECK:STDOUT:   %DD.loc14_9.1 => constants.%DD
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %G.type => constants.%G.type.a94
@@ -493,11 +493,11 @@ fn H(T:! type) {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @G(constants.%DD, constants.%T.336) {
-// CHECK:STDOUT:   %T.loc15_8.1 => constants.%T.336
+// CHECK:STDOUT:   %T.loc15_8.2 => constants.%T.336
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @D(constants.%empty_struct_type) {
-// CHECK:STDOUT:   %DD.loc14_9.2 => constants.%empty_struct_type
+// CHECK:STDOUT:   %DD.loc14_9.1 => constants.%empty_struct_type
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %G.type => constants.%G.type.0da
@@ -505,7 +505,7 @@ fn H(T:! type) {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @G(constants.%empty_struct_type, constants.%T.8b3) {
-// CHECK:STDOUT:   %T.loc15_8.1 => constants.%T.8b3
+// CHECK:STDOUT:   %T.loc15_8.2 => constants.%T.8b3
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %DD => constants.%empty_struct_type

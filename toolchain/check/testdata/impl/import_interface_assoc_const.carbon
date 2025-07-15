@@ -348,7 +348,7 @@ impl CD as IF where .F = 0 {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %default.import = import <none>
 // CHECK:STDOUT:   %C1.decl: type = class_decl @C1 [concrete = constants.%C1] {} {}
-// CHECK:STDOUT:   impl_decl @I.impl [concrete] {} {
+// CHECK:STDOUT:   %I.impl = impl_decl @I.impl [concrete] {} {
 // CHECK:STDOUT:     %C1.ref: type = name_ref C1, file.%C1.decl [concrete = constants.%C1]
 // CHECK:STDOUT:     %I.ref: type = name_ref I, imports.%Main.I [concrete = constants.%I.type]
 // CHECK:STDOUT:     %.Self: %I.type = bind_symbolic_name .Self [symbolic_self = constants.%.Self]
@@ -437,7 +437,7 @@ impl CD as IF where .F = 0 {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %default.import = import <none>
 // CHECK:STDOUT:   %C2.decl: type = class_decl @C2 [concrete = constants.%C2] {} {}
-// CHECK:STDOUT:   impl_decl @I.impl [concrete] {} {
+// CHECK:STDOUT:   %I.impl.loc5 = impl_decl @I.impl [concrete] {} {
 // CHECK:STDOUT:     %C2.ref.loc5: type = name_ref C2, file.%C2.decl [concrete = constants.%C2]
 // CHECK:STDOUT:     %I.ref.loc5: type = name_ref I, imports.%Main.I [concrete = constants.%I.type]
 // CHECK:STDOUT:     %.Self.1: %I.type = bind_symbolic_name .Self [symbolic_self = constants.%.Self]
@@ -455,7 +455,7 @@ impl CD as IF where .F = 0 {
 // CHECK:STDOUT:   %I.impl_witness_table = impl_witness_table (%impl_witness_assoc_constant), @I.impl [concrete]
 // CHECK:STDOUT:   %I.impl_witness: <witness> = impl_witness %I.impl_witness_table [concrete = constants.%I.impl_witness]
 // CHECK:STDOUT:   %impl_witness_assoc_constant: type = impl_witness_assoc_constant constants.%empty_struct_type [concrete = constants.%empty_struct_type]
-// CHECK:STDOUT:   impl_decl @I.impl [concrete] {} {
+// CHECK:STDOUT:   %I.impl.loc6 = impl_decl @I.impl [concrete] {} {
 // CHECK:STDOUT:     %C2.ref.loc6: type = name_ref C2, file.%C2.decl [concrete = constants.%C2]
 // CHECK:STDOUT:     %I.ref.loc6: type = name_ref I, imports.%Main.I [concrete = constants.%I.type]
 // CHECK:STDOUT:     %.Self.2: %I.type = bind_symbolic_name .Self [symbolic_self = constants.%.Self]
@@ -542,13 +542,13 @@ impl CD as IF where .F = 0 {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %default.import = import <none>
 // CHECK:STDOUT:   %C3.decl: type = class_decl @C3 [concrete = constants.%C3] {} {}
-// CHECK:STDOUT:   impl_decl @I.impl.16e [concrete] {} {
+// CHECK:STDOUT:   %I.impl.loc9 = impl_decl @I.impl.16e [concrete] {} {
 // CHECK:STDOUT:     %C3.ref: type = name_ref C3, file.%C3.decl [concrete = constants.%C3]
 // CHECK:STDOUT:     %I.ref: type = name_ref I, imports.%Main.I [concrete = constants.%I.type]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %I.impl_witness_table.loc9 = impl_witness_table (), @I.impl.16e [concrete]
 // CHECK:STDOUT:   %I.impl_witness.loc9: <witness> = impl_witness %I.impl_witness_table.loc9 [concrete = constants.%I.impl_witness.21f]
-// CHECK:STDOUT:   impl_decl @I.impl.625 [concrete] {} {
+// CHECK:STDOUT:   %I.impl.loc10 = impl_decl @I.impl.625 [concrete] {} {
 // CHECK:STDOUT:     %C3.ref: type = name_ref C3, file.%C3.decl [concrete = constants.%C3]
 // CHECK:STDOUT:     %I.ref: type = name_ref I, imports.%Main.I [concrete = constants.%I.type]
 // CHECK:STDOUT:     %.Self: %I.type = bind_symbolic_name .Self [symbolic_self = constants.%.Self]
@@ -642,7 +642,7 @@ impl CD as IF where .F = 0 {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %default.import = import <none>
 // CHECK:STDOUT:   %C4.decl: type = class_decl @C4 [concrete = constants.%C4] {} {}
-// CHECK:STDOUT:   impl_decl @I.impl.62b [concrete] {} {
+// CHECK:STDOUT:   %I.impl.loc9 = impl_decl @I.impl.62b [concrete] {} {
 // CHECK:STDOUT:     %C4.ref: type = name_ref C4, file.%C4.decl [concrete = constants.%C4]
 // CHECK:STDOUT:     %I.ref: type = name_ref I, imports.%Main.I [concrete = constants.%I.type]
 // CHECK:STDOUT:     %.Self: %I.type = bind_symbolic_name .Self [symbolic_self = constants.%.Self]
@@ -660,7 +660,7 @@ impl CD as IF where .F = 0 {
 // CHECK:STDOUT:   %I.impl_witness_table.loc9 = impl_witness_table (%impl_witness_assoc_constant.loc9), @I.impl.62b [concrete]
 // CHECK:STDOUT:   %I.impl_witness.loc9: <witness> = impl_witness %I.impl_witness_table.loc9 [concrete = constants.%I.impl_witness.b54]
 // CHECK:STDOUT:   %impl_witness_assoc_constant.loc9: type = impl_witness_assoc_constant constants.%empty_struct_type [concrete = constants.%empty_struct_type]
-// CHECK:STDOUT:   impl_decl @I.impl.384 [concrete] {} {
+// CHECK:STDOUT:   %I.impl.loc10 = impl_decl @I.impl.384 [concrete] {} {
 // CHECK:STDOUT:     %C4.ref: type = name_ref C4, file.%C4.decl [concrete = constants.%C4]
 // CHECK:STDOUT:     %I.ref: type = name_ref I, imports.%Main.I [concrete = constants.%I.type]
 // CHECK:STDOUT:     %.Self: %I.type = bind_symbolic_name .Self [symbolic_self = constants.%.Self]
@@ -769,7 +769,7 @@ impl CD as IF where .F = 0 {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %default.import = import <none>
 // CHECK:STDOUT:   %C5.decl: type = class_decl @C5 [concrete = constants.%C5] {} {}
-// CHECK:STDOUT:   impl_decl @impl.eaa268.1 [concrete] {} {
+// CHECK:STDOUT:   %impl.loc17 = impl_decl @impl.eaa268.1 [concrete] {} {
 // CHECK:STDOUT:     %C5.ref: type = name_ref C5, file.%C5.decl [concrete = constants.%C5]
 // CHECK:STDOUT:     %I3.ref: type = name_ref I3, imports.%Main.I3 [concrete = constants.%I3.type]
 // CHECK:STDOUT:     %.Self: %I3.type = bind_symbolic_name .Self [symbolic_self = constants.%.Self]
@@ -799,7 +799,7 @@ impl CD as IF where .F = 0 {
 // CHECK:STDOUT:       requirement_rewrite %impl.elem2, <error>
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   impl_decl @impl.eaa268.2 [concrete] {} {
+// CHECK:STDOUT:   %impl.loc27 = impl_decl @impl.eaa268.2 [concrete] {} {
 // CHECK:STDOUT:     %C5.ref: type = name_ref C5, file.%C5.decl [concrete = constants.%C5]
 // CHECK:STDOUT:     %I3.ref: type = name_ref I3, imports.%Main.I3 [concrete = constants.%I3.type]
 // CHECK:STDOUT:     %.Self: %I3.type = bind_symbolic_name .Self [symbolic_self = constants.%.Self]
@@ -921,7 +921,7 @@ impl CD as IF where .F = 0 {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %default.import = import <none>
 // CHECK:STDOUT:   %C6.decl: type = class_decl @C6 [concrete = constants.%C6] {} {}
-// CHECK:STDOUT:   impl_decl @I.impl.98d [concrete] {} {
+// CHECK:STDOUT:   %I.impl.loc5 = impl_decl @I.impl.98d [concrete] {} {
 // CHECK:STDOUT:     %C6.ref: type = name_ref C6, file.%C6.decl [concrete = constants.%C6]
 // CHECK:STDOUT:     %I.ref: type = name_ref I, imports.%Main.I [concrete = constants.%I.type]
 // CHECK:STDOUT:     %.Self: %I.type = bind_symbolic_name .Self [symbolic_self = constants.%.Self]
@@ -939,7 +939,7 @@ impl CD as IF where .F = 0 {
 // CHECK:STDOUT:   %I.impl_witness_table.loc5 = impl_witness_table (%impl_witness_assoc_constant), @I.impl.98d [concrete]
 // CHECK:STDOUT:   %I.impl_witness.loc5: <witness> = impl_witness %I.impl_witness_table.loc5 [concrete = constants.%I.impl_witness.9b2]
 // CHECK:STDOUT:   %impl_witness_assoc_constant: type = impl_witness_assoc_constant constants.%empty_struct_type [concrete = constants.%empty_struct_type]
-// CHECK:STDOUT:   impl_decl @I.impl.482 [concrete] {} {
+// CHECK:STDOUT:   %I.impl.loc18 = impl_decl @I.impl.482 [concrete] {} {
 // CHECK:STDOUT:     %C6.ref: type = name_ref C6, file.%C6.decl [concrete = constants.%C6]
 // CHECK:STDOUT:     %I.ref: type = name_ref I, imports.%Main.I [concrete = constants.%I.type]
 // CHECK:STDOUT:   }
@@ -1017,7 +1017,7 @@ impl CD as IF where .F = 0 {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %default.import = import <none>
 // CHECK:STDOUT:   %C7.decl: type = class_decl @C7 [concrete = constants.%C7] {} {}
-// CHECK:STDOUT:   impl_decl @impl [concrete] {} {
+// CHECK:STDOUT:   %impl = impl_decl @impl [concrete] {} {
 // CHECK:STDOUT:     %C7.ref: type = name_ref C7, file.%C7.decl [concrete = constants.%C7]
 // CHECK:STDOUT:     %I.ref: type = name_ref I, imports.%Main.I [concrete = constants.%I.type]
 // CHECK:STDOUT:     %.Self: %I.type = bind_symbolic_name .Self [symbolic_self = constants.%.Self]
@@ -1111,7 +1111,7 @@ impl CD as IF where .F = 0 {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %default.import = import <none>
 // CHECK:STDOUT:   %C8.decl: type = class_decl @C8 [concrete = constants.%C8] {} {}
-// CHECK:STDOUT:   impl_decl @impl [concrete] {} {
+// CHECK:STDOUT:   %impl = impl_decl @impl [concrete] {} {
 // CHECK:STDOUT:     %C8.ref: type = name_ref C8, file.%C8.decl [concrete = constants.%C8]
 // CHECK:STDOUT:     %I.ref: type = name_ref I, imports.%Main.I [concrete = constants.%I.type]
 // CHECK:STDOUT:     %.Self: %I.type = bind_symbolic_name .Self [symbolic_self = constants.%.Self]
@@ -1203,7 +1203,7 @@ impl CD as IF where .F = 0 {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %default.import = import <none>
 // CHECK:STDOUT:   %C9.decl: type = class_decl @C9 [concrete = constants.%C9] {} {}
-// CHECK:STDOUT:   impl_decl @impl [concrete] {} {
+// CHECK:STDOUT:   %impl = impl_decl @impl [concrete] {} {
 // CHECK:STDOUT:     %C9.ref: type = name_ref C9, file.%C9.decl [concrete = constants.%C9]
 // CHECK:STDOUT:     %I.ref: type = name_ref I, imports.%Main.I [concrete = constants.%I.type]
 // CHECK:STDOUT:     %.Self: %I.type = bind_symbolic_name .Self [symbolic_self = constants.%.Self]
@@ -1296,7 +1296,7 @@ impl CD as IF where .F = 0 {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %default.import = import <none>
 // CHECK:STDOUT:   %CA.decl: type = class_decl @CA [concrete = constants.%CA] {} {}
-// CHECK:STDOUT:   impl_decl @impl [concrete] {} {
+// CHECK:STDOUT:   %impl = impl_decl @impl [concrete] {} {
 // CHECK:STDOUT:     %CA.ref: type = name_ref CA, file.%CA.decl [concrete = constants.%CA]
 // CHECK:STDOUT:     %I.ref: type = name_ref I, imports.%Main.I [concrete = constants.%I.type]
 // CHECK:STDOUT:     %.Self: %I.type = bind_symbolic_name .Self [symbolic_self = constants.%.Self]
@@ -1388,7 +1388,7 @@ impl CD as IF where .F = 0 {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %default.import = import <none>
 // CHECK:STDOUT:   %CB.decl: type = class_decl @CB [concrete = constants.%CB] {} {}
-// CHECK:STDOUT:   impl_decl @I.impl [concrete] {} {
+// CHECK:STDOUT:   %I.impl = impl_decl @I.impl [concrete] {} {
 // CHECK:STDOUT:     %CB.ref: type = name_ref CB, file.%CB.decl [concrete = constants.%CB]
 // CHECK:STDOUT:     %I.ref: type = name_ref I, imports.%Main.I [concrete = constants.%I.type]
 // CHECK:STDOUT:     %.Self: %I.type = bind_symbolic_name .Self [symbolic_self = constants.%.Self]
@@ -1488,7 +1488,7 @@ impl CD as IF where .F = 0 {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %default.import = import <none>
 // CHECK:STDOUT:   %CC.decl: type = class_decl @CC [concrete = constants.%CC] {} {}
-// CHECK:STDOUT:   impl_decl @NonType.impl [concrete] {} {
+// CHECK:STDOUT:   %NonType.impl = impl_decl @NonType.impl [concrete] {} {
 // CHECK:STDOUT:     %CC.ref: type = name_ref CC, file.%CC.decl [concrete = constants.%CC]
 // CHECK:STDOUT:     %NonType.ref: type = name_ref NonType, imports.%Main.NonType [concrete = constants.%NonType.type]
 // CHECK:STDOUT:     %.Self: %NonType.type = bind_symbolic_name .Self [symbolic_self = constants.%.Self]
@@ -1618,7 +1618,7 @@ impl CD as IF where .F = 0 {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %default.import = import <none>
 // CHECK:STDOUT:   %CD.decl: type = class_decl @CD [concrete = constants.%CD] {} {}
-// CHECK:STDOUT:   impl_decl @IF.impl [concrete] {} {
+// CHECK:STDOUT:   %IF.impl = impl_decl @IF.impl [concrete] {} {
 // CHECK:STDOUT:     %CD.ref: type = name_ref CD, file.%CD.decl [concrete = constants.%CD]
 // CHECK:STDOUT:     %IF.ref: type = name_ref IF, imports.%Main.IF [concrete = constants.%IF.type]
 // CHECK:STDOUT:     %.Self: %IF.type = bind_symbolic_name .Self [symbolic_self = constants.%.Self]

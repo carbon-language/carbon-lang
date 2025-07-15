@@ -97,11 +97,11 @@ fn G(U:! Different) -> U.(Interface.T);
 // CHECK:STDOUT:     %return.patt: <error> = return_slot_pattern [concrete]
 // CHECK:STDOUT:     %return.param_patt: <error> = out_param_pattern %return.patt, call_param0 [concrete]
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %U.ref: %Different.type = name_ref U, %U.loc32_6.1 [symbolic = %U.loc32_6.2 (constants.%U)]
+// CHECK:STDOUT:     %U.ref: %Different.type = name_ref U, %U.loc32_6.2 [symbolic = %U.loc32_6.1 (constants.%U)]
 // CHECK:STDOUT:     %Interface.ref: type = name_ref Interface, file.%Interface.decl [concrete = constants.%Interface.type]
 // CHECK:STDOUT:     %T.ref: %Interface.assoc_type = name_ref T, @T.%assoc1 [concrete = constants.%assoc1]
 // CHECK:STDOUT:     %Different.ref: type = name_ref Different, file.%Different.decl [concrete = constants.%Different.type]
-// CHECK:STDOUT:     %U.loc32_6.1: %Different.type = bind_symbolic_name U, 0 [symbolic = %U.loc32_6.2 (constants.%U)]
+// CHECK:STDOUT:     %U.loc32_6.2: %Different.type = bind_symbolic_name U, 0 [symbolic = %U.loc32_6.1 (constants.%U)]
 // CHECK:STDOUT:     %return.param: ref <error> = out_param call_param0
 // CHECK:STDOUT:     %return: ref <error> = return_slot %return.param
 // CHECK:STDOUT:   }
@@ -156,8 +156,8 @@ fn G(U:! Different) -> U.(Interface.T);
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic fn @G(%U.loc32_6.1: %Different.type) {
-// CHECK:STDOUT:   %U.loc32_6.2: %Different.type = bind_symbolic_name U, 0 [symbolic = %U.loc32_6.2 (constants.%U)]
+// CHECK:STDOUT: generic fn @G(%U.loc32_6.2: %Different.type) {
+// CHECK:STDOUT:   %U.loc32_6.1: %Different.type = bind_symbolic_name U, 0 [symbolic = %U.loc32_6.1 (constants.%U)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   fn() -> <error>;
 // CHECK:STDOUT: }
@@ -167,6 +167,6 @@ fn G(U:! Different) -> U.(Interface.T);
 // CHECK:STDOUT: specific @T(constants.%Self.719) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @G(constants.%U) {
-// CHECK:STDOUT:   %U.loc32_6.2 => constants.%U
+// CHECK:STDOUT:   %U.loc32_6.1 => constants.%U
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

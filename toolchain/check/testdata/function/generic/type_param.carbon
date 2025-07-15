@@ -59,19 +59,19 @@ fn F(T:! type) {
 // CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [concrete = constants.%F] {
 // CHECK:STDOUT:     %T.patt: %pattern_type.98f = symbolic_binding_pattern T, 0 [concrete]
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %T.loc15_6.1: type = bind_symbolic_name T, 0 [symbolic = %T.loc15_6.2 (constants.%T)]
+// CHECK:STDOUT:     %T.loc15_6.2: type = bind_symbolic_name T, 0 [symbolic = %T.loc15_6.1 (constants.%T)]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic fn @F(%T.loc15_6.1: type) {
-// CHECK:STDOUT:   %T.loc15_6.2: type = bind_symbolic_name T, 0 [symbolic = %T.loc15_6.2 (constants.%T)]
+// CHECK:STDOUT: generic fn @F(%T.loc15_6.2: type) {
+// CHECK:STDOUT:   %T.loc15_6.1: type = bind_symbolic_name T, 0 [symbolic = %T.loc15_6.1 (constants.%T)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
-// CHECK:STDOUT:   %ptr.loc16_11.2: type = ptr_type %T.loc15_6.2 [symbolic = %ptr.loc16_11.2 (constants.%ptr.79f)]
+// CHECK:STDOUT:   %ptr.loc16_11.2: type = ptr_type %T.loc15_6.1 [symbolic = %ptr.loc16_11.2 (constants.%ptr.79f)]
 // CHECK:STDOUT:   %require_complete.loc16_11: <witness> = require_complete_type %ptr.loc16_11.2 [symbolic = %require_complete.loc16_11 (constants.%require_complete.6e5)]
 // CHECK:STDOUT:   %pattern_type.loc16: type = pattern_type %ptr.loc16_11.2 [symbolic = %pattern_type.loc16 (constants.%pattern_type.afe)]
-// CHECK:STDOUT:   %require_complete.loc17: <witness> = require_complete_type %T.loc15_6.2 [symbolic = %require_complete.loc17 (constants.%require_complete.4ae)]
-// CHECK:STDOUT:   %pattern_type.loc17: type = pattern_type %T.loc15_6.2 [symbolic = %pattern_type.loc17 (constants.%pattern_type.7dc)]
+// CHECK:STDOUT:   %require_complete.loc17: <witness> = require_complete_type %T.loc15_6.1 [symbolic = %require_complete.loc17 (constants.%require_complete.4ae)]
+// CHECK:STDOUT:   %pattern_type.loc17: type = pattern_type %T.loc15_6.1 [symbolic = %pattern_type.loc17 (constants.%pattern_type.7dc)]
 // CHECK:STDOUT:   %Destroy.lookup_impl_witness: <witness> = lookup_impl_witness %ptr.loc16_11.2, @Destroy [symbolic = %Destroy.lookup_impl_witness (constants.%Destroy.lookup_impl_witness)]
 // CHECK:STDOUT:   %Destroy.facet: %Destroy.type = facet_value %ptr.loc16_11.2, (%Destroy.lookup_impl_witness) [symbolic = %Destroy.facet (constants.%Destroy.facet)]
 // CHECK:STDOUT:   %.loc16_3.2: type = fn_type_with_self_type constants.%Op.type.bae, %Destroy.facet [symbolic = %.loc16_3.2 (constants.%.ea9)]
@@ -88,7 +88,7 @@ fn F(T:! type) {
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %p.var: ref @F.%ptr.loc16_11.2 (%ptr.79f) = var %p.var_patt
 // CHECK:STDOUT:     %.loc16_11: type = splice_block %ptr.loc16_11.1 [symbolic = %ptr.loc16_11.2 (constants.%ptr.79f)] {
-// CHECK:STDOUT:       %T.ref.loc16: type = name_ref T, %T.loc15_6.1 [symbolic = %T.loc15_6.2 (constants.%T)]
+// CHECK:STDOUT:       %T.ref.loc16: type = name_ref T, %T.loc15_6.2 [symbolic = %T.loc15_6.1 (constants.%T)]
 // CHECK:STDOUT:       %ptr.loc16_11.1: type = ptr_type %T.ref.loc16 [symbolic = %ptr.loc16_11.2 (constants.%ptr.79f)]
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %p: ref @F.%ptr.loc16_11.2 (%ptr.79f) = bind_name p, %p.var
@@ -97,10 +97,10 @@ fn F(T:! type) {
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %p.ref: ref @F.%ptr.loc16_11.2 (%ptr.79f) = name_ref p, %p
 // CHECK:STDOUT:     %.loc17_15: @F.%ptr.loc16_11.2 (%ptr.79f) = bind_value %p.ref
-// CHECK:STDOUT:     %.loc17_14.1: ref @F.%T.loc15_6.2 (%T) = deref %.loc17_15
-// CHECK:STDOUT:     %T.ref.loc17: type = name_ref T, %T.loc15_6.1 [symbolic = %T.loc15_6.2 (constants.%T)]
-// CHECK:STDOUT:     %.loc17_14.2: @F.%T.loc15_6.2 (%T) = bind_value %.loc17_14.1
-// CHECK:STDOUT:     %n: @F.%T.loc15_6.2 (%T) = bind_name n, %.loc17_14.2
+// CHECK:STDOUT:     %.loc17_14.1: ref @F.%T.loc15_6.1 (%T) = deref %.loc17_15
+// CHECK:STDOUT:     %T.ref.loc17: type = name_ref T, %T.loc15_6.2 [symbolic = %T.loc15_6.1 (constants.%T)]
+// CHECK:STDOUT:     %.loc17_14.2: @F.%T.loc15_6.1 (%T) = bind_value %.loc17_14.1
+// CHECK:STDOUT:     %n: @F.%T.loc15_6.1 (%T) = bind_name n, %.loc17_14.2
 // CHECK:STDOUT:     %impl.elem0.loc16_3.1: @F.%.loc16_3.2 (%.ea9) = impl_witness_access constants.%Destroy.lookup_impl_witness, element0 [symbolic = %impl.elem0.loc16_3.2 (constants.%impl.elem0)]
 // CHECK:STDOUT:     %bound_method.loc16_3.1: <bound method> = bound_method %p.var, %impl.elem0.loc16_3.1
 // CHECK:STDOUT:     %specific_impl_fn.loc16_3.1: <specific function> = specific_impl_function %impl.elem0.loc16_3.1, @Op.1(constants.%Destroy.facet) [symbolic = %specific_impl_fn.loc16_3.2 (constants.%specific_impl_fn)]
@@ -112,6 +112,6 @@ fn F(T:! type) {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @F(constants.%T) {
-// CHECK:STDOUT:   %T.loc15_6.2 => constants.%T
+// CHECK:STDOUT:   %T.loc15_6.1 => constants.%T
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

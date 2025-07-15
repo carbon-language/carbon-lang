@@ -164,10 +164,10 @@ fn Main() {
 // CHECK:STDOUT:   %bound_method.9a1: <bound method> = bound_method %int_1.5b8, %Convert.specific_fn [concrete]
 // CHECK:STDOUT:   %int_1.5d2: %i32 = int_value 1 [concrete]
 // CHECK:STDOUT:   %Destroy.type: type = facet_type <@Destroy> [concrete]
-// CHECK:STDOUT:   %Op.type.a17: type = fn_type @Op.3, @Destroy.impl(%i32) [concrete]
+// CHECK:STDOUT:   %Op.type.a17: type = fn_type @Op.2, @Destroy.impl(%i32) [concrete]
 // CHECK:STDOUT:   %Op.e6a: %Op.type.a17 = struct_value () [concrete]
 // CHECK:STDOUT:   %ptr.235: type = ptr_type %i32 [concrete]
-// CHECK:STDOUT:   %Op.specific_fn: <specific function> = specific_function %Op.e6a, @Op.3(%i32) [concrete]
+// CHECK:STDOUT:   %Op.specific_fn: <specific function> = specific_function %Op.e6a, @Op.2(%i32) [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -240,12 +240,12 @@ fn Main() {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %y: ref %i32 = bind_name y, %y.var
 // CHECK:STDOUT:   %Op.bound.loc9: <bound method> = bound_method %y.var, constants.%Op.e6a
-// CHECK:STDOUT:   %Op.specific_fn.1: <specific function> = specific_function constants.%Op.e6a, @Op.3(constants.%i32) [concrete = constants.%Op.specific_fn]
+// CHECK:STDOUT:   %Op.specific_fn.1: <specific function> = specific_function constants.%Op.e6a, @Op.2(constants.%i32) [concrete = constants.%Op.specific_fn]
 // CHECK:STDOUT:   %bound_method.loc9: <bound method> = bound_method %y.var, %Op.specific_fn.1
 // CHECK:STDOUT:   %addr.loc9: %ptr.235 = addr_of %y.var
 // CHECK:STDOUT:   %no_op.loc9: init %empty_tuple.type = call %bound_method.loc9(%addr.loc9)
 // CHECK:STDOUT:   %Op.bound.loc7: <bound method> = bound_method %x.var, constants.%Op.e6a
-// CHECK:STDOUT:   %Op.specific_fn.2: <specific function> = specific_function constants.%Op.e6a, @Op.3(constants.%i32) [concrete = constants.%Op.specific_fn]
+// CHECK:STDOUT:   %Op.specific_fn.2: <specific function> = specific_function constants.%Op.e6a, @Op.2(constants.%i32) [concrete = constants.%Op.specific_fn]
 // CHECK:STDOUT:   %bound_method.loc7_3.3: <bound method> = bound_method %x.var, %Op.specific_fn.2
 // CHECK:STDOUT:   %addr.loc7: %ptr.235 = addr_of %x.var
 // CHECK:STDOUT:   %no_op.loc7: init %empty_tuple.type = call %bound_method.loc7_3.3(%addr.loc7)

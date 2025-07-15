@@ -175,7 +175,7 @@ fn G(x: A) {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %HasF.decl: type = interface_decl @HasF [concrete = constants.%HasF.type] {} {}
-// CHECK:STDOUT:   impl_decl @HasF.impl [concrete] {
+// CHECK:STDOUT:   %HasF.impl = impl_decl @HasF.impl [concrete] {
 // CHECK:STDOUT:     %T.patt: %pattern_type.98f = symbolic_binding_pattern T, 0 [concrete]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %T.ref: type = name_ref T, %T.loc8_14.1 [symbolic = %T.loc8_14.2 (constants.%T)]
@@ -203,13 +203,13 @@ fn G(x: A) {
 // CHECK:STDOUT:     %self.patt: @F.loc5.%pattern_type (%pattern_type.28f) = binding_pattern self [concrete]
 // CHECK:STDOUT:     %self.param_patt: @F.loc5.%pattern_type (%pattern_type.28f) = value_param_pattern %self.patt, call_param0 [concrete]
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %self.param: @F.loc5.%Self.as_type.loc5_14.1 (%Self.as_type) = value_param call_param0
-// CHECK:STDOUT:     %.loc5_14.1: type = splice_block %.loc5_14.2 [symbolic = %Self.as_type.loc5_14.1 (constants.%Self.as_type)] {
+// CHECK:STDOUT:     %self.param: @F.loc5.%Self.as_type.loc5_14.2 (%Self.as_type) = value_param call_param0
+// CHECK:STDOUT:     %.loc5_14.1: type = splice_block %.loc5_14.2 [symbolic = %Self.as_type.loc5_14.2 (constants.%Self.as_type)] {
 // CHECK:STDOUT:       %Self.ref: %HasF.type = name_ref Self, @HasF.%Self [symbolic = %Self (constants.%Self)]
-// CHECK:STDOUT:       %Self.as_type.loc5_14.2: type = facet_access_type %Self.ref [symbolic = %Self.as_type.loc5_14.1 (constants.%Self.as_type)]
-// CHECK:STDOUT:       %.loc5_14.2: type = converted %Self.ref, %Self.as_type.loc5_14.2 [symbolic = %Self.as_type.loc5_14.1 (constants.%Self.as_type)]
+// CHECK:STDOUT:       %Self.as_type.loc5_14.1: type = facet_access_type %Self.ref [symbolic = %Self.as_type.loc5_14.2 (constants.%Self.as_type)]
+// CHECK:STDOUT:       %.loc5_14.2: type = converted %Self.ref, %Self.as_type.loc5_14.1 [symbolic = %Self.as_type.loc5_14.2 (constants.%Self.as_type)]
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %self: @F.loc5.%Self.as_type.loc5_14.1 (%Self.as_type) = bind_name self, %self.param
+// CHECK:STDOUT:     %self: @F.loc5.%Self.as_type.loc5_14.2 (%Self.as_type) = bind_name self, %self.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %assoc0: %HasF.assoc_type = assoc_entity element0, %F.decl [concrete = constants.%assoc0]
 // CHECK:STDOUT:
@@ -245,10 +245,10 @@ fn G(x: A) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic fn @F.loc5(@HasF.%Self: %HasF.type) {
 // CHECK:STDOUT:   %Self: %HasF.type = bind_symbolic_name Self, 0 [symbolic = %Self (constants.%Self)]
-// CHECK:STDOUT:   %Self.as_type.loc5_14.1: type = facet_access_type %Self [symbolic = %Self.as_type.loc5_14.1 (constants.%Self.as_type)]
-// CHECK:STDOUT:   %pattern_type: type = pattern_type %Self.as_type.loc5_14.1 [symbolic = %pattern_type (constants.%pattern_type.28f)]
+// CHECK:STDOUT:   %Self.as_type.loc5_14.2: type = facet_access_type %Self [symbolic = %Self.as_type.loc5_14.2 (constants.%Self.as_type)]
+// CHECK:STDOUT:   %pattern_type: type = pattern_type %Self.as_type.loc5_14.2 [symbolic = %pattern_type (constants.%pattern_type.28f)]
 // CHECK:STDOUT:
-// CHECK:STDOUT:   fn(%self.param: @F.loc5.%Self.as_type.loc5_14.1 (%Self.as_type));
+// CHECK:STDOUT:   fn(%self.param: @F.loc5.%Self.as_type.loc5_14.2 (%Self.as_type));
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic fn @F.loc9(@HasF.impl.%T.loc8_14.1: type) {
@@ -279,7 +279,7 @@ fn G(x: A) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @F.loc5(constants.%Self) {
 // CHECK:STDOUT:   %Self => constants.%Self
-// CHECK:STDOUT:   %Self.as_type.loc5_14.1 => constants.%Self.as_type
+// CHECK:STDOUT:   %Self.as_type.loc5_14.2 => constants.%Self.as_type
 // CHECK:STDOUT:   %pattern_type => constants.%pattern_type.28f
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -299,7 +299,7 @@ fn G(x: A) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @F.loc5(constants.%HasF.facet.216) {
 // CHECK:STDOUT:   %Self => constants.%HasF.facet.216
-// CHECK:STDOUT:   %Self.as_type.loc5_14.1 => constants.%T
+// CHECK:STDOUT:   %Self.as_type.loc5_14.2 => constants.%T
 // CHECK:STDOUT:   %pattern_type => constants.%pattern_type.7dc
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -352,10 +352,10 @@ fn G(x: A) {
 // CHECK:STDOUT:   %F.specific_fn: <specific function> = specific_function %F.f13, @F.loc9(%empty_struct_type) [concrete]
 // CHECK:STDOUT:   %empty_struct: %empty_struct_type = struct_value () [concrete]
 // CHECK:STDOUT:   %Destroy.type: type = facet_type <@Destroy> [concrete]
-// CHECK:STDOUT:   %Op.type.069: type = fn_type @Op.2, @Destroy.impl(%empty_struct_type) [concrete]
+// CHECK:STDOUT:   %Op.type.069: type = fn_type @Op.1, @Destroy.impl(%empty_struct_type) [concrete]
 // CHECK:STDOUT:   %Op.d5a: %Op.type.069 = struct_value () [concrete]
 // CHECK:STDOUT:   %ptr.c28: type = ptr_type %empty_struct_type [concrete]
-// CHECK:STDOUT:   %Op.specific_fn: <specific function> = specific_function %Op.d5a, @Op.2(%empty_struct_type) [concrete]
+// CHECK:STDOUT:   %Op.specific_fn: <specific function> = specific_function %Op.d5a, @Op.1(%empty_struct_type) [concrete]
 // CHECK:STDOUT:   %complete_type.357: <witness> = complete_type_witness %empty_struct_type [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -376,7 +376,7 @@ fn G(x: A) {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %HasF.decl: type = interface_decl @HasF [concrete = constants.%HasF.type] {} {}
-// CHECK:STDOUT:   impl_decl @HasF.impl [concrete] {
+// CHECK:STDOUT:   %HasF.impl = impl_decl @HasF.impl [concrete] {
 // CHECK:STDOUT:     %T.patt: %pattern_type.98f = symbolic_binding_pattern T, 0 [concrete]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %T.ref: type = name_ref T, %T.loc8_14.1 [symbolic = %T.loc8_14.2 (constants.%T)]
@@ -413,17 +413,17 @@ fn G(x: A) {
 // CHECK:STDOUT:     %return.param_patt: @F.loc5.%pattern_type (%pattern_type.28f) = out_param_pattern %return.patt, call_param1 [concrete]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %Self.ref.loc5_25: %HasF.type = name_ref Self, @HasF.%Self [symbolic = %Self (constants.%Self.f0c)]
-// CHECK:STDOUT:     %Self.as_type.loc5_25: type = facet_access_type %Self.ref.loc5_25 [symbolic = %Self.as_type.loc5_14.1 (constants.%Self.as_type.308)]
-// CHECK:STDOUT:     %.loc5_25: type = converted %Self.ref.loc5_25, %Self.as_type.loc5_25 [symbolic = %Self.as_type.loc5_14.1 (constants.%Self.as_type.308)]
-// CHECK:STDOUT:     %self.param: @F.loc5.%Self.as_type.loc5_14.1 (%Self.as_type.308) = value_param call_param0
-// CHECK:STDOUT:     %.loc5_14.1: type = splice_block %.loc5_14.2 [symbolic = %Self.as_type.loc5_14.1 (constants.%Self.as_type.308)] {
+// CHECK:STDOUT:     %Self.as_type.loc5_25: type = facet_access_type %Self.ref.loc5_25 [symbolic = %Self.as_type.loc5_14.2 (constants.%Self.as_type.308)]
+// CHECK:STDOUT:     %.loc5_25: type = converted %Self.ref.loc5_25, %Self.as_type.loc5_25 [symbolic = %Self.as_type.loc5_14.2 (constants.%Self.as_type.308)]
+// CHECK:STDOUT:     %self.param: @F.loc5.%Self.as_type.loc5_14.2 (%Self.as_type.308) = value_param call_param0
+// CHECK:STDOUT:     %.loc5_14.1: type = splice_block %.loc5_14.2 [symbolic = %Self.as_type.loc5_14.2 (constants.%Self.as_type.308)] {
 // CHECK:STDOUT:       %Self.ref.loc5_14: %HasF.type = name_ref Self, @HasF.%Self [symbolic = %Self (constants.%Self.f0c)]
-// CHECK:STDOUT:       %Self.as_type.loc5_14.2: type = facet_access_type %Self.ref.loc5_14 [symbolic = %Self.as_type.loc5_14.1 (constants.%Self.as_type.308)]
-// CHECK:STDOUT:       %.loc5_14.2: type = converted %Self.ref.loc5_14, %Self.as_type.loc5_14.2 [symbolic = %Self.as_type.loc5_14.1 (constants.%Self.as_type.308)]
+// CHECK:STDOUT:       %Self.as_type.loc5_14.1: type = facet_access_type %Self.ref.loc5_14 [symbolic = %Self.as_type.loc5_14.2 (constants.%Self.as_type.308)]
+// CHECK:STDOUT:       %.loc5_14.2: type = converted %Self.ref.loc5_14, %Self.as_type.loc5_14.1 [symbolic = %Self.as_type.loc5_14.2 (constants.%Self.as_type.308)]
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %self: @F.loc5.%Self.as_type.loc5_14.1 (%Self.as_type.308) = bind_name self, %self.param
-// CHECK:STDOUT:     %return.param: ref @F.loc5.%Self.as_type.loc5_14.1 (%Self.as_type.308) = out_param call_param1
-// CHECK:STDOUT:     %return: ref @F.loc5.%Self.as_type.loc5_14.1 (%Self.as_type.308) = return_slot %return.param
+// CHECK:STDOUT:     %self: @F.loc5.%Self.as_type.loc5_14.2 (%Self.as_type.308) = bind_name self, %self.param
+// CHECK:STDOUT:     %return.param: ref @F.loc5.%Self.as_type.loc5_14.2 (%Self.as_type.308) = out_param call_param1
+// CHECK:STDOUT:     %return: ref @F.loc5.%Self.as_type.loc5_14.2 (%Self.as_type.308) = return_slot %return.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %assoc0: %HasF.assoc_type = assoc_entity element0, %F.decl [concrete = constants.%assoc0.97a]
 // CHECK:STDOUT:
@@ -465,10 +465,10 @@ fn G(x: A) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic fn @F.loc5(@HasF.%Self: %HasF.type) {
 // CHECK:STDOUT:   %Self: %HasF.type = bind_symbolic_name Self, 0 [symbolic = %Self (constants.%Self.f0c)]
-// CHECK:STDOUT:   %Self.as_type.loc5_14.1: type = facet_access_type %Self [symbolic = %Self.as_type.loc5_14.1 (constants.%Self.as_type.308)]
-// CHECK:STDOUT:   %pattern_type: type = pattern_type %Self.as_type.loc5_14.1 [symbolic = %pattern_type (constants.%pattern_type.28f)]
+// CHECK:STDOUT:   %Self.as_type.loc5_14.2: type = facet_access_type %Self [symbolic = %Self.as_type.loc5_14.2 (constants.%Self.as_type.308)]
+// CHECK:STDOUT:   %pattern_type: type = pattern_type %Self.as_type.loc5_14.2 [symbolic = %pattern_type (constants.%pattern_type.28f)]
 // CHECK:STDOUT:
-// CHECK:STDOUT:   fn(%self.param: @F.loc5.%Self.as_type.loc5_14.1 (%Self.as_type.308)) -> @F.loc5.%Self.as_type.loc5_14.1 (%Self.as_type.308);
+// CHECK:STDOUT:   fn(%self.param: @F.loc5.%Self.as_type.loc5_14.2 (%Self.as_type.308)) -> @F.loc5.%Self.as_type.loc5_14.2 (%Self.as_type.308);
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic fn @F.loc9(@HasF.impl.%T.loc8_14.1: type) {
@@ -500,7 +500,7 @@ fn G(x: A) {
 // CHECK:STDOUT:   %empty_struct: %empty_struct_type = struct_value () [concrete = constants.%empty_struct]
 // CHECK:STDOUT:   %.loc13_22: %empty_struct_type = converted %F.call, %empty_struct [concrete = constants.%empty_struct]
 // CHECK:STDOUT:   %Op.bound: <bound method> = bound_method %.loc13_21.1, constants.%Op.d5a
-// CHECK:STDOUT:   %Op.specific_fn: <specific function> = specific_function constants.%Op.d5a, @Op.2(constants.%empty_struct_type) [concrete = constants.%Op.specific_fn]
+// CHECK:STDOUT:   %Op.specific_fn: <specific function> = specific_function constants.%Op.d5a, @Op.1(constants.%empty_struct_type) [concrete = constants.%Op.specific_fn]
 // CHECK:STDOUT:   %bound_method.loc13_21.2: <bound method> = bound_method %.loc13_21.1, %Op.specific_fn
 // CHECK:STDOUT:   %addr: %ptr.c28 = addr_of %.loc13_21.1
 // CHECK:STDOUT:   %no_op: init %empty_tuple.type = call %bound_method.loc13_21.2(%addr)
@@ -509,7 +509,7 @@ fn G(x: A) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @F.loc5(constants.%Self.f0c) {
 // CHECK:STDOUT:   %Self => constants.%Self.f0c
-// CHECK:STDOUT:   %Self.as_type.loc5_14.1 => constants.%Self.as_type.308
+// CHECK:STDOUT:   %Self.as_type.loc5_14.2 => constants.%Self.as_type.308
 // CHECK:STDOUT:   %pattern_type => constants.%pattern_type.28f
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -529,7 +529,7 @@ fn G(x: A) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @F.loc5(constants.%HasF.facet.216) {
 // CHECK:STDOUT:   %Self => constants.%HasF.facet.216
-// CHECK:STDOUT:   %Self.as_type.loc5_14.1 => constants.%T
+// CHECK:STDOUT:   %Self.as_type.loc5_14.2 => constants.%T
 // CHECK:STDOUT:   %pattern_type => constants.%pattern_type.7dc
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -606,9 +606,9 @@ fn G(x: A) {
 // CHECK:STDOUT:   %C.decl: %C.type = class_decl @C [concrete = constants.%C.generic] {
 // CHECK:STDOUT:     %T.patt: %pattern_type.98f = symbolic_binding_pattern T, 0 [concrete]
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %T.loc8_9.1: type = bind_symbolic_name T, 0 [symbolic = %T.loc8_9.2 (constants.%T)]
+// CHECK:STDOUT:     %T.loc8_9.2: type = bind_symbolic_name T, 0 [symbolic = %T.loc8_9.1 (constants.%T)]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   impl_decl @HasF.impl [concrete] {
+// CHECK:STDOUT:   %HasF.impl = impl_decl @HasF.impl [concrete] {
 // CHECK:STDOUT:     %T.patt: %pattern_type.98f = symbolic_binding_pattern T, 0 [concrete]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %C.ref: %C.type = name_ref C, file.%C.decl [concrete = constants.%C.generic]
@@ -640,13 +640,13 @@ fn G(x: A) {
 // CHECK:STDOUT:     %self.patt: @F.loc5.%pattern_type (%pattern_type.28f) = binding_pattern self [concrete]
 // CHECK:STDOUT:     %self.param_patt: @F.loc5.%pattern_type (%pattern_type.28f) = value_param_pattern %self.patt, call_param0 [concrete]
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %self.param: @F.loc5.%Self.as_type.loc5_14.1 (%Self.as_type) = value_param call_param0
-// CHECK:STDOUT:     %.loc5_14.1: type = splice_block %.loc5_14.2 [symbolic = %Self.as_type.loc5_14.1 (constants.%Self.as_type)] {
+// CHECK:STDOUT:     %self.param: @F.loc5.%Self.as_type.loc5_14.2 (%Self.as_type) = value_param call_param0
+// CHECK:STDOUT:     %.loc5_14.1: type = splice_block %.loc5_14.2 [symbolic = %Self.as_type.loc5_14.2 (constants.%Self.as_type)] {
 // CHECK:STDOUT:       %Self.ref: %HasF.type = name_ref Self, @HasF.%Self [symbolic = %Self (constants.%Self)]
-// CHECK:STDOUT:       %Self.as_type.loc5_14.2: type = facet_access_type %Self.ref [symbolic = %Self.as_type.loc5_14.1 (constants.%Self.as_type)]
-// CHECK:STDOUT:       %.loc5_14.2: type = converted %Self.ref, %Self.as_type.loc5_14.2 [symbolic = %Self.as_type.loc5_14.1 (constants.%Self.as_type)]
+// CHECK:STDOUT:       %Self.as_type.loc5_14.1: type = facet_access_type %Self.ref [symbolic = %Self.as_type.loc5_14.2 (constants.%Self.as_type)]
+// CHECK:STDOUT:       %.loc5_14.2: type = converted %Self.ref, %Self.as_type.loc5_14.1 [symbolic = %Self.as_type.loc5_14.2 (constants.%Self.as_type)]
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %self: @F.loc5.%Self.as_type.loc5_14.1 (%Self.as_type) = bind_name self, %self.param
+// CHECK:STDOUT:     %self: @F.loc5.%Self.as_type.loc5_14.2 (%Self.as_type) = bind_name self, %self.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %assoc0: %HasF.assoc_type = assoc_entity element0, %F.decl [concrete = constants.%assoc0]
 // CHECK:STDOUT:
@@ -681,8 +681,8 @@ fn G(x: A) {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic class @C(%T.loc8_9.1: type) {
-// CHECK:STDOUT:   %T.loc8_9.2: type = bind_symbolic_name T, 0 [symbolic = %T.loc8_9.2 (constants.%T)]
+// CHECK:STDOUT: generic class @C(%T.loc8_9.2: type) {
+// CHECK:STDOUT:   %T.loc8_9.1: type = bind_symbolic_name T, 0 [symbolic = %T.loc8_9.1 (constants.%T)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:
@@ -698,10 +698,10 @@ fn G(x: A) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic fn @F.loc5(@HasF.%Self: %HasF.type) {
 // CHECK:STDOUT:   %Self: %HasF.type = bind_symbolic_name Self, 0 [symbolic = %Self (constants.%Self)]
-// CHECK:STDOUT:   %Self.as_type.loc5_14.1: type = facet_access_type %Self [symbolic = %Self.as_type.loc5_14.1 (constants.%Self.as_type)]
-// CHECK:STDOUT:   %pattern_type: type = pattern_type %Self.as_type.loc5_14.1 [symbolic = %pattern_type (constants.%pattern_type.28f)]
+// CHECK:STDOUT:   %Self.as_type.loc5_14.2: type = facet_access_type %Self [symbolic = %Self.as_type.loc5_14.2 (constants.%Self.as_type)]
+// CHECK:STDOUT:   %pattern_type: type = pattern_type %Self.as_type.loc5_14.2 [symbolic = %pattern_type (constants.%pattern_type.28f)]
 // CHECK:STDOUT:
-// CHECK:STDOUT:   fn(%self.param: @F.loc5.%Self.as_type.loc5_14.1 (%Self.as_type));
+// CHECK:STDOUT:   fn(%self.param: @F.loc5.%Self.as_type.loc5_14.2 (%Self.as_type));
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic fn @F.loc11(@HasF.impl.%T.loc10_14.1: type) {
@@ -733,12 +733,12 @@ fn G(x: A) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @F.loc5(constants.%Self) {
 // CHECK:STDOUT:   %Self => constants.%Self
-// CHECK:STDOUT:   %Self.as_type.loc5_14.1 => constants.%Self.as_type
+// CHECK:STDOUT:   %Self.as_type.loc5_14.2 => constants.%Self.as_type
 // CHECK:STDOUT:   %pattern_type => constants.%pattern_type.28f
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @C(constants.%T) {
-// CHECK:STDOUT:   %T.loc8_9.2 => constants.%T
+// CHECK:STDOUT:   %T.loc8_9.1 => constants.%T
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT: }
@@ -761,12 +761,12 @@ fn G(x: A) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @F.loc5(constants.%HasF.facet.766) {
 // CHECK:STDOUT:   %Self => constants.%HasF.facet.766
-// CHECK:STDOUT:   %Self.as_type.loc5_14.1 => constants.%C.f2e
+// CHECK:STDOUT:   %Self.as_type.loc5_14.2 => constants.%C.f2e
 // CHECK:STDOUT:   %pattern_type => constants.%pattern_type.e5e
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @C(constants.%empty_struct_type) {
-// CHECK:STDOUT:   %T.loc8_9.2 => constants.%empty_struct_type
+// CHECK:STDOUT:   %T.loc8_9.1 => constants.%empty_struct_type
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT: }
@@ -847,9 +847,9 @@ fn G(x: A) {
 // CHECK:STDOUT:   %HasF.decl: %HasF.type.fe3 = interface_decl @HasF [concrete = constants.%HasF.generic] {
 // CHECK:STDOUT:     %T.patt: %pattern_type.98f = symbolic_binding_pattern T, 0 [concrete]
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %T.loc4_16.1: type = bind_symbolic_name T, 0 [symbolic = %T.loc4_16.2 (constants.%T)]
+// CHECK:STDOUT:     %T.loc4_16.2: type = bind_symbolic_name T, 0 [symbolic = %T.loc4_16.1 (constants.%T)]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   impl_decl @HasF.impl [concrete] {
+// CHECK:STDOUT:   %HasF.impl = impl_decl @HasF.impl [concrete] {
 // CHECK:STDOUT:     %T.patt: %pattern_type.98f = symbolic_binding_pattern T, 0 [concrete]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %.loc8_25.1: %empty_struct_type = struct_literal ()
@@ -874,15 +874,15 @@ fn G(x: A) {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic interface @HasF(%T.loc4_16.1: type) {
-// CHECK:STDOUT:   %T.loc4_16.2: type = bind_symbolic_name T, 0 [symbolic = %T.loc4_16.2 (constants.%T)]
+// CHECK:STDOUT: generic interface @HasF(%T.loc4_16.2: type) {
+// CHECK:STDOUT:   %T.loc4_16.1: type = bind_symbolic_name T, 0 [symbolic = %T.loc4_16.1 (constants.%T)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
-// CHECK:STDOUT:   %HasF.type: type = facet_type <@HasF, @HasF(%T.loc4_16.2)> [symbolic = %HasF.type (constants.%HasF.type.901)]
+// CHECK:STDOUT:   %HasF.type: type = facet_type <@HasF, @HasF(%T.loc4_16.1)> [symbolic = %HasF.type (constants.%HasF.type.901)]
 // CHECK:STDOUT:   %Self.2: @HasF.%HasF.type (%HasF.type.901) = bind_symbolic_name Self, 1 [symbolic = %Self.2 (constants.%Self.322)]
-// CHECK:STDOUT:   %F.type: type = fn_type @F.loc5, @HasF(%T.loc4_16.2) [symbolic = %F.type (constants.%F.type.46c)]
+// CHECK:STDOUT:   %F.type: type = fn_type @F.loc5, @HasF(%T.loc4_16.1) [symbolic = %F.type (constants.%F.type.46c)]
 // CHECK:STDOUT:   %F: @HasF.%F.type (%F.type.46c) = struct_value () [symbolic = %F (constants.%F.823)]
-// CHECK:STDOUT:   %HasF.assoc_type: type = assoc_entity_type @HasF, @HasF(%T.loc4_16.2) [symbolic = %HasF.assoc_type (constants.%HasF.assoc_type.dd8)]
+// CHECK:STDOUT:   %HasF.assoc_type: type = assoc_entity_type @HasF, @HasF(%T.loc4_16.1) [symbolic = %HasF.assoc_type (constants.%HasF.assoc_type.dd8)]
 // CHECK:STDOUT:   %assoc0.loc5_21.2: @HasF.%HasF.assoc_type (%HasF.assoc_type.dd8) = assoc_entity element0, %F.decl [symbolic = %assoc0.loc5_21.2 (constants.%assoc0.d31)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   interface {
@@ -891,14 +891,14 @@ fn G(x: A) {
 // CHECK:STDOUT:       %self.patt: @F.loc5.%pattern_type (%pattern_type.dfb) = binding_pattern self [concrete]
 // CHECK:STDOUT:       %self.param_patt: @F.loc5.%pattern_type (%pattern_type.dfb) = value_param_pattern %self.patt, call_param0 [concrete]
 // CHECK:STDOUT:     } {
-// CHECK:STDOUT:       %self.param: @F.loc5.%Self.as_type.loc5_14.1 (%Self.as_type) = value_param call_param0
-// CHECK:STDOUT:       %.loc5_14.1: type = splice_block %.loc5_14.3 [symbolic = %Self.as_type.loc5_14.1 (constants.%Self.as_type)] {
+// CHECK:STDOUT:       %self.param: @F.loc5.%Self.as_type.loc5_14.2 (%Self.as_type) = value_param call_param0
+// CHECK:STDOUT:       %.loc5_14.1: type = splice_block %.loc5_14.3 [symbolic = %Self.as_type.loc5_14.2 (constants.%Self.as_type)] {
 // CHECK:STDOUT:         %.loc5_14.2: @F.loc5.%HasF.type (%HasF.type.901) = specific_constant @HasF.%Self.1, @HasF(constants.%T) [symbolic = %Self (constants.%Self.322)]
 // CHECK:STDOUT:         %Self.ref: @F.loc5.%HasF.type (%HasF.type.901) = name_ref Self, %.loc5_14.2 [symbolic = %Self (constants.%Self.322)]
-// CHECK:STDOUT:         %Self.as_type.loc5_14.2: type = facet_access_type %Self.ref [symbolic = %Self.as_type.loc5_14.1 (constants.%Self.as_type)]
-// CHECK:STDOUT:         %.loc5_14.3: type = converted %Self.ref, %Self.as_type.loc5_14.2 [symbolic = %Self.as_type.loc5_14.1 (constants.%Self.as_type)]
+// CHECK:STDOUT:         %Self.as_type.loc5_14.1: type = facet_access_type %Self.ref [symbolic = %Self.as_type.loc5_14.2 (constants.%Self.as_type)]
+// CHECK:STDOUT:         %.loc5_14.3: type = converted %Self.ref, %Self.as_type.loc5_14.1 [symbolic = %Self.as_type.loc5_14.2 (constants.%Self.as_type)]
 // CHECK:STDOUT:       }
-// CHECK:STDOUT:       %self: @F.loc5.%Self.as_type.loc5_14.1 (%Self.as_type) = bind_name self, %self.param
+// CHECK:STDOUT:       %self: @F.loc5.%Self.as_type.loc5_14.2 (%Self.as_type) = bind_name self, %self.param
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %assoc0.loc5_21.1: @HasF.%HasF.assoc_type (%HasF.assoc_type.dd8) = assoc_entity element0, %F.decl [symbolic = %assoc0.loc5_21.2 (constants.%assoc0.d31)]
 // CHECK:STDOUT:
@@ -935,14 +935,14 @@ fn G(x: A) {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic fn @F.loc5(@HasF.%T.loc4_16.1: type, @HasF.%Self.1: @HasF.%HasF.type (%HasF.type.901)) {
+// CHECK:STDOUT: generic fn @F.loc5(@HasF.%T.loc4_16.2: type, @HasF.%Self.1: @HasF.%HasF.type (%HasF.type.901)) {
 // CHECK:STDOUT:   %T: type = bind_symbolic_name T, 0 [symbolic = %T (constants.%T)]
 // CHECK:STDOUT:   %HasF.type: type = facet_type <@HasF, @HasF(%T)> [symbolic = %HasF.type (constants.%HasF.type.901)]
 // CHECK:STDOUT:   %Self: @F.loc5.%HasF.type (%HasF.type.901) = bind_symbolic_name Self, 1 [symbolic = %Self (constants.%Self.322)]
-// CHECK:STDOUT:   %Self.as_type.loc5_14.1: type = facet_access_type %Self [symbolic = %Self.as_type.loc5_14.1 (constants.%Self.as_type)]
-// CHECK:STDOUT:   %pattern_type: type = pattern_type %Self.as_type.loc5_14.1 [symbolic = %pattern_type (constants.%pattern_type.dfb)]
+// CHECK:STDOUT:   %Self.as_type.loc5_14.2: type = facet_access_type %Self [symbolic = %Self.as_type.loc5_14.2 (constants.%Self.as_type)]
+// CHECK:STDOUT:   %pattern_type: type = pattern_type %Self.as_type.loc5_14.2 [symbolic = %pattern_type (constants.%pattern_type.dfb)]
 // CHECK:STDOUT:
-// CHECK:STDOUT:   fn(%self.param: @F.loc5.%Self.as_type.loc5_14.1 (%Self.as_type));
+// CHECK:STDOUT:   fn(%self.param: @F.loc5.%Self.as_type.loc5_14.2 (%Self.as_type));
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic fn @F.loc9(@HasF.impl.%T.loc8_14.1: type) {
@@ -972,7 +972,7 @@ fn G(x: A) {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @HasF(constants.%T) {
-// CHECK:STDOUT:   %T.loc4_16.2 => constants.%T
+// CHECK:STDOUT:   %T.loc4_16.1 => constants.%T
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %HasF.type => constants.%HasF.type.901
@@ -987,7 +987,7 @@ fn G(x: A) {
 // CHECK:STDOUT:   %T => constants.%T
 // CHECK:STDOUT:   %HasF.type => constants.%HasF.type.901
 // CHECK:STDOUT:   %Self => constants.%Self.322
-// CHECK:STDOUT:   %Self.as_type.loc5_14.1 => constants.%Self.as_type
+// CHECK:STDOUT:   %Self.as_type.loc5_14.2 => constants.%Self.as_type
 // CHECK:STDOUT:   %pattern_type => constants.%pattern_type.dfb
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -1008,12 +1008,12 @@ fn G(x: A) {
 // CHECK:STDOUT:   %T => constants.%T
 // CHECK:STDOUT:   %HasF.type => constants.%HasF.type.901
 // CHECK:STDOUT:   %Self => constants.%HasF.facet.566
-// CHECK:STDOUT:   %Self.as_type.loc5_14.1 => constants.%empty_struct_type
+// CHECK:STDOUT:   %Self.as_type.loc5_14.2 => constants.%empty_struct_type
 // CHECK:STDOUT:   %pattern_type => constants.%pattern_type.a96
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @HasF(constants.%empty_struct_type) {
-// CHECK:STDOUT:   %T.loc4_16.2 => constants.%empty_struct_type
+// CHECK:STDOUT:   %T.loc4_16.1 => constants.%empty_struct_type
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %HasF.type => constants.%HasF.type.072
@@ -1079,7 +1079,7 @@ fn G(x: A) {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %HasF.decl: type = interface_decl @HasF [concrete = constants.%HasF.type] {} {}
-// CHECK:STDOUT:   impl_decl @HasF.impl [concrete] {
+// CHECK:STDOUT:   %HasF.impl = impl_decl @HasF.impl [concrete] {
 // CHECK:STDOUT:     %T.patt: %pattern_type.98f = symbolic_binding_pattern T, 0 [concrete]
 // CHECK:STDOUT:     %U.patt: %pattern_type.98f = symbolic_binding_pattern U, 1 [concrete]
 // CHECK:STDOUT:   } {
@@ -1109,13 +1109,13 @@ fn G(x: A) {
 // CHECK:STDOUT:     %self.patt: @F.loc5.%pattern_type (%pattern_type.28f) = binding_pattern self [concrete]
 // CHECK:STDOUT:     %self.param_patt: @F.loc5.%pattern_type (%pattern_type.28f) = value_param_pattern %self.patt, call_param0 [concrete]
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %self.param: @F.loc5.%Self.as_type.loc5_14.1 (%Self.as_type) = value_param call_param0
-// CHECK:STDOUT:     %.loc5_14.1: type = splice_block %.loc5_14.2 [symbolic = %Self.as_type.loc5_14.1 (constants.%Self.as_type)] {
+// CHECK:STDOUT:     %self.param: @F.loc5.%Self.as_type.loc5_14.2 (%Self.as_type) = value_param call_param0
+// CHECK:STDOUT:     %.loc5_14.1: type = splice_block %.loc5_14.2 [symbolic = %Self.as_type.loc5_14.2 (constants.%Self.as_type)] {
 // CHECK:STDOUT:       %Self.ref: %HasF.type = name_ref Self, @HasF.%Self [symbolic = %Self (constants.%Self)]
-// CHECK:STDOUT:       %Self.as_type.loc5_14.2: type = facet_access_type %Self.ref [symbolic = %Self.as_type.loc5_14.1 (constants.%Self.as_type)]
-// CHECK:STDOUT:       %.loc5_14.2: type = converted %Self.ref, %Self.as_type.loc5_14.2 [symbolic = %Self.as_type.loc5_14.1 (constants.%Self.as_type)]
+// CHECK:STDOUT:       %Self.as_type.loc5_14.1: type = facet_access_type %Self.ref [symbolic = %Self.as_type.loc5_14.2 (constants.%Self.as_type)]
+// CHECK:STDOUT:       %.loc5_14.2: type = converted %Self.ref, %Self.as_type.loc5_14.1 [symbolic = %Self.as_type.loc5_14.2 (constants.%Self.as_type)]
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %self: @F.loc5.%Self.as_type.loc5_14.1 (%Self.as_type) = bind_name self, %self.param
+// CHECK:STDOUT:     %self: @F.loc5.%Self.as_type.loc5_14.2 (%Self.as_type) = bind_name self, %self.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %assoc0: %HasF.assoc_type = assoc_entity element0, %F.decl [concrete = constants.%assoc0]
 // CHECK:STDOUT:
@@ -1152,10 +1152,10 @@ fn G(x: A) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic fn @F.loc5(@HasF.%Self: %HasF.type) {
 // CHECK:STDOUT:   %Self: %HasF.type = bind_symbolic_name Self, 0 [symbolic = %Self (constants.%Self)]
-// CHECK:STDOUT:   %Self.as_type.loc5_14.1: type = facet_access_type %Self [symbolic = %Self.as_type.loc5_14.1 (constants.%Self.as_type)]
-// CHECK:STDOUT:   %pattern_type: type = pattern_type %Self.as_type.loc5_14.1 [symbolic = %pattern_type (constants.%pattern_type.28f)]
+// CHECK:STDOUT:   %Self.as_type.loc5_14.2: type = facet_access_type %Self [symbolic = %Self.as_type.loc5_14.2 (constants.%Self.as_type)]
+// CHECK:STDOUT:   %pattern_type: type = pattern_type %Self.as_type.loc5_14.2 [symbolic = %pattern_type (constants.%pattern_type.28f)]
 // CHECK:STDOUT:
-// CHECK:STDOUT:   fn(%self.param: @F.loc5.%Self.as_type.loc5_14.1 (%Self.as_type));
+// CHECK:STDOUT:   fn(%self.param: @F.loc5.%Self.as_type.loc5_14.2 (%Self.as_type));
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic fn @F.loc13(@HasF.impl.%T.loc12_14.1: type, @HasF.impl.%U.loc12_24.1: type) {
@@ -1181,7 +1181,7 @@ fn G(x: A) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @F.loc5(constants.%Self) {
 // CHECK:STDOUT:   %Self => constants.%Self
-// CHECK:STDOUT:   %Self.as_type.loc5_14.1 => constants.%Self.as_type
+// CHECK:STDOUT:   %Self.as_type.loc5_14.2 => constants.%Self.as_type
 // CHECK:STDOUT:   %pattern_type => constants.%pattern_type.28f
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -1256,9 +1256,9 @@ fn G(x: A) {
 // CHECK:STDOUT:   %HasF.decl: %HasF.type.fe3 = interface_decl @HasF [concrete = constants.%HasF.generic] {
 // CHECK:STDOUT:     %T.patt: %pattern_type.98f = symbolic_binding_pattern T, 0 [concrete]
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %T.loc4_16.1: type = bind_symbolic_name T, 0 [symbolic = %T.loc4_16.2 (constants.%T)]
+// CHECK:STDOUT:     %T.loc4_16.2: type = bind_symbolic_name T, 0 [symbolic = %T.loc4_16.1 (constants.%T)]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   impl_decl @HasF.impl [concrete] {
+// CHECK:STDOUT:   %HasF.impl = impl_decl @HasF.impl [concrete] {
 // CHECK:STDOUT:     %T.patt: %pattern_type.98f = symbolic_binding_pattern T, 0 [concrete]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %T.ref.loc8_24: type = name_ref T, %T.loc8_14.1 [symbolic = %T.loc8_14.2 (constants.%T)]
@@ -1281,15 +1281,15 @@ fn G(x: A) {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic interface @HasF(%T.loc4_16.1: type) {
-// CHECK:STDOUT:   %T.loc4_16.2: type = bind_symbolic_name T, 0 [symbolic = %T.loc4_16.2 (constants.%T)]
+// CHECK:STDOUT: generic interface @HasF(%T.loc4_16.2: type) {
+// CHECK:STDOUT:   %T.loc4_16.1: type = bind_symbolic_name T, 0 [symbolic = %T.loc4_16.1 (constants.%T)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
-// CHECK:STDOUT:   %HasF.type: type = facet_type <@HasF, @HasF(%T.loc4_16.2)> [symbolic = %HasF.type (constants.%HasF.type.901)]
+// CHECK:STDOUT:   %HasF.type: type = facet_type <@HasF, @HasF(%T.loc4_16.1)> [symbolic = %HasF.type (constants.%HasF.type.901)]
 // CHECK:STDOUT:   %Self.2: @HasF.%HasF.type (%HasF.type.901) = bind_symbolic_name Self, 1 [symbolic = %Self.2 (constants.%Self.322)]
-// CHECK:STDOUT:   %F.type: type = fn_type @F.loc5, @HasF(%T.loc4_16.2) [symbolic = %F.type (constants.%F.type.46c)]
+// CHECK:STDOUT:   %F.type: type = fn_type @F.loc5, @HasF(%T.loc4_16.1) [symbolic = %F.type (constants.%F.type.46c)]
 // CHECK:STDOUT:   %F: @HasF.%F.type (%F.type.46c) = struct_value () [symbolic = %F (constants.%F.823)]
-// CHECK:STDOUT:   %HasF.assoc_type: type = assoc_entity_type @HasF, @HasF(%T.loc4_16.2) [symbolic = %HasF.assoc_type (constants.%HasF.assoc_type.dd8)]
+// CHECK:STDOUT:   %HasF.assoc_type: type = assoc_entity_type @HasF, @HasF(%T.loc4_16.1) [symbolic = %HasF.assoc_type (constants.%HasF.assoc_type.dd8)]
 // CHECK:STDOUT:   %assoc0.loc5_21.2: @HasF.%HasF.assoc_type (%HasF.assoc_type.dd8) = assoc_entity element0, %F.decl [symbolic = %assoc0.loc5_21.2 (constants.%assoc0.d31)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   interface {
@@ -1298,14 +1298,14 @@ fn G(x: A) {
 // CHECK:STDOUT:       %self.patt: @F.loc5.%pattern_type (%pattern_type.dfb) = binding_pattern self [concrete]
 // CHECK:STDOUT:       %self.param_patt: @F.loc5.%pattern_type (%pattern_type.dfb) = value_param_pattern %self.patt, call_param0 [concrete]
 // CHECK:STDOUT:     } {
-// CHECK:STDOUT:       %self.param: @F.loc5.%Self.as_type.loc5_14.1 (%Self.as_type) = value_param call_param0
-// CHECK:STDOUT:       %.loc5_14.1: type = splice_block %.loc5_14.3 [symbolic = %Self.as_type.loc5_14.1 (constants.%Self.as_type)] {
+// CHECK:STDOUT:       %self.param: @F.loc5.%Self.as_type.loc5_14.2 (%Self.as_type) = value_param call_param0
+// CHECK:STDOUT:       %.loc5_14.1: type = splice_block %.loc5_14.3 [symbolic = %Self.as_type.loc5_14.2 (constants.%Self.as_type)] {
 // CHECK:STDOUT:         %.loc5_14.2: @F.loc5.%HasF.type (%HasF.type.901) = specific_constant @HasF.%Self.1, @HasF(constants.%T) [symbolic = %Self (constants.%Self.322)]
 // CHECK:STDOUT:         %Self.ref: @F.loc5.%HasF.type (%HasF.type.901) = name_ref Self, %.loc5_14.2 [symbolic = %Self (constants.%Self.322)]
-// CHECK:STDOUT:         %Self.as_type.loc5_14.2: type = facet_access_type %Self.ref [symbolic = %Self.as_type.loc5_14.1 (constants.%Self.as_type)]
-// CHECK:STDOUT:         %.loc5_14.3: type = converted %Self.ref, %Self.as_type.loc5_14.2 [symbolic = %Self.as_type.loc5_14.1 (constants.%Self.as_type)]
+// CHECK:STDOUT:         %Self.as_type.loc5_14.1: type = facet_access_type %Self.ref [symbolic = %Self.as_type.loc5_14.2 (constants.%Self.as_type)]
+// CHECK:STDOUT:         %.loc5_14.3: type = converted %Self.ref, %Self.as_type.loc5_14.1 [symbolic = %Self.as_type.loc5_14.2 (constants.%Self.as_type)]
 // CHECK:STDOUT:       }
-// CHECK:STDOUT:       %self: @F.loc5.%Self.as_type.loc5_14.1 (%Self.as_type) = bind_name self, %self.param
+// CHECK:STDOUT:       %self: @F.loc5.%Self.as_type.loc5_14.2 (%Self.as_type) = bind_name self, %self.param
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %assoc0.loc5_21.1: @HasF.%HasF.assoc_type (%HasF.assoc_type.dd8) = assoc_entity element0, %F.decl [symbolic = %assoc0.loc5_21.2 (constants.%assoc0.d31)]
 // CHECK:STDOUT:
@@ -1360,14 +1360,14 @@ fn G(x: A) {
 // CHECK:STDOUT:   .Self = constants.%B
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic fn @F.loc5(@HasF.%T.loc4_16.1: type, @HasF.%Self.1: @HasF.%HasF.type (%HasF.type.901)) {
+// CHECK:STDOUT: generic fn @F.loc5(@HasF.%T.loc4_16.2: type, @HasF.%Self.1: @HasF.%HasF.type (%HasF.type.901)) {
 // CHECK:STDOUT:   %T: type = bind_symbolic_name T, 0 [symbolic = %T (constants.%T)]
 // CHECK:STDOUT:   %HasF.type: type = facet_type <@HasF, @HasF(%T)> [symbolic = %HasF.type (constants.%HasF.type.901)]
 // CHECK:STDOUT:   %Self: @F.loc5.%HasF.type (%HasF.type.901) = bind_symbolic_name Self, 1 [symbolic = %Self (constants.%Self.322)]
-// CHECK:STDOUT:   %Self.as_type.loc5_14.1: type = facet_access_type %Self [symbolic = %Self.as_type.loc5_14.1 (constants.%Self.as_type)]
-// CHECK:STDOUT:   %pattern_type: type = pattern_type %Self.as_type.loc5_14.1 [symbolic = %pattern_type (constants.%pattern_type.dfb)]
+// CHECK:STDOUT:   %Self.as_type.loc5_14.2: type = facet_access_type %Self [symbolic = %Self.as_type.loc5_14.2 (constants.%Self.as_type)]
+// CHECK:STDOUT:   %pattern_type: type = pattern_type %Self.as_type.loc5_14.2 [symbolic = %pattern_type (constants.%pattern_type.dfb)]
 // CHECK:STDOUT:
-// CHECK:STDOUT:   fn(%self.param: @F.loc5.%Self.as_type.loc5_14.1 (%Self.as_type));
+// CHECK:STDOUT:   fn(%self.param: @F.loc5.%Self.as_type.loc5_14.2 (%Self.as_type));
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic fn @F.loc9(@HasF.impl.%T.loc8_14.1: type) {
@@ -1395,7 +1395,7 @@ fn G(x: A) {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @HasF(constants.%T) {
-// CHECK:STDOUT:   %T.loc4_16.2 => constants.%T
+// CHECK:STDOUT:   %T.loc4_16.1 => constants.%T
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %HasF.type => constants.%HasF.type.901
@@ -1410,7 +1410,7 @@ fn G(x: A) {
 // CHECK:STDOUT:   %T => constants.%T
 // CHECK:STDOUT:   %HasF.type => constants.%HasF.type.901
 // CHECK:STDOUT:   %Self => constants.%Self.322
-// CHECK:STDOUT:   %Self.as_type.loc5_14.1 => constants.%Self.as_type
+// CHECK:STDOUT:   %Self.as_type.loc5_14.2 => constants.%Self.as_type
 // CHECK:STDOUT:   %pattern_type => constants.%pattern_type.dfb
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -1434,12 +1434,12 @@ fn G(x: A) {
 // CHECK:STDOUT:   %T => constants.%T
 // CHECK:STDOUT:   %HasF.type => constants.%HasF.type.901
 // CHECK:STDOUT:   %Self => constants.%HasF.facet
-// CHECK:STDOUT:   %Self.as_type.loc5_14.1 => constants.%T
+// CHECK:STDOUT:   %Self.as_type.loc5_14.2 => constants.%T
 // CHECK:STDOUT:   %pattern_type => constants.%pattern_type.7dc
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @HasF(constants.%B) {
-// CHECK:STDOUT:   %T.loc4_16.2 => constants.%B
+// CHECK:STDOUT:   %T.loc4_16.1 => constants.%B
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %HasF.type => constants.%HasF.type.2f5

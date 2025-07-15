@@ -209,10 +209,10 @@ let n: {.x: ()} = {.x = ()} as {.x = ()};
 // CHECK:STDOUT:   %tuple.type.24b: type = tuple_type (type, type) [concrete]
 // CHECK:STDOUT:   %tuple.type.b67: type = tuple_type (%X, %X) [concrete]
 // CHECK:STDOUT:   %pattern_type.bb7: type = pattern_type %tuple.type.b67 [concrete]
-// CHECK:STDOUT:   %Op.type.9e1: type = fn_type @Op.2, @Destroy.impl(%X) [concrete]
+// CHECK:STDOUT:   %Op.type.9e1: type = fn_type @Op.1, @Destroy.impl(%X) [concrete]
 // CHECK:STDOUT:   %Op.33a: %Op.type.9e1 = struct_value () [concrete]
 // CHECK:STDOUT:   %ptr.d17: type = ptr_type %X [concrete]
-// CHECK:STDOUT:   %Op.type.df3: type = fn_type @Op.2, @Destroy.impl(%tuple.type.b67) [concrete]
+// CHECK:STDOUT:   %Op.type.df3: type = fn_type @Op.1, @Destroy.impl(%tuple.type.b67) [concrete]
 // CHECK:STDOUT:   %Op.279: %Op.type.df3 = struct_value () [concrete]
 // CHECK:STDOUT:   %ptr.120: type = ptr_type %tuple.type.b67 [concrete]
 // CHECK:STDOUT: }
@@ -318,7 +318,7 @@ let n: {.x: ()} = {.x = ()} as {.x = ()};
 // CHECK:STDOUT:   %pattern_type.1c6: type = pattern_type %ptr.d17 [concrete]
 // CHECK:STDOUT:   %Make.type: type = fn_type @Make [concrete]
 // CHECK:STDOUT:   %Make: %Make.type = struct_value () [concrete]
-// CHECK:STDOUT:   %Op.type.9e1: type = fn_type @Op.2, @Destroy.impl(%X) [concrete]
+// CHECK:STDOUT:   %Op.type.9e1: type = fn_type @Op.1, @Destroy.impl(%X) [concrete]
 // CHECK:STDOUT:   %Op.33a: %Op.type.9e1 = struct_value () [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

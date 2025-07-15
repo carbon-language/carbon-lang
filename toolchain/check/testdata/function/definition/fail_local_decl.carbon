@@ -103,10 +103,10 @@ fn F() {
 // CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [concrete]
 // CHECK:STDOUT:   %pattern_type.a96: type = pattern_type %empty_struct_type [concrete]
 // CHECK:STDOUT:   %Destroy.type: type = facet_type <@Destroy> [concrete]
-// CHECK:STDOUT:   %Op.type.069: type = fn_type @Op.2, @Destroy.impl(%empty_struct_type) [concrete]
+// CHECK:STDOUT:   %Op.type.069: type = fn_type @Op.1, @Destroy.impl(%empty_struct_type) [concrete]
 // CHECK:STDOUT:   %Op.d5a: %Op.type.069 = struct_value () [concrete]
 // CHECK:STDOUT:   %ptr.c28: type = ptr_type %empty_struct_type [concrete]
-// CHECK:STDOUT:   %Op.specific_fn: <specific function> = specific_function %Op.d5a, @Op.2(%empty_struct_type) [concrete]
+// CHECK:STDOUT:   %Op.specific_fn: <specific function> = specific_function %Op.d5a, @Op.1(%empty_struct_type) [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -150,12 +150,12 @@ fn F() {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %w: ref %empty_struct_type = bind_name w, %w.var
 // CHECK:STDOUT:   %Op.bound.loc14: <bound method> = bound_method %w.var, constants.%Op.d5a
-// CHECK:STDOUT:   %Op.specific_fn.1: <specific function> = specific_function constants.%Op.d5a, @Op.2(constants.%empty_struct_type) [concrete = constants.%Op.specific_fn]
+// CHECK:STDOUT:   %Op.specific_fn.1: <specific function> = specific_function constants.%Op.d5a, @Op.1(constants.%empty_struct_type) [concrete = constants.%Op.specific_fn]
 // CHECK:STDOUT:   %bound_method.loc14: <bound method> = bound_method %w.var, %Op.specific_fn.1
 // CHECK:STDOUT:   %addr.loc14: %ptr.c28 = addr_of %w.var
 // CHECK:STDOUT:   %no_op.loc14: init %empty_tuple.type = call %bound_method.loc14(%addr.loc14)
 // CHECK:STDOUT:   %Op.bound.loc9: <bound method> = bound_method %v.var, constants.%Op.d5a
-// CHECK:STDOUT:   %Op.specific_fn.2: <specific function> = specific_function constants.%Op.d5a, @Op.2(constants.%empty_struct_type) [concrete = constants.%Op.specific_fn]
+// CHECK:STDOUT:   %Op.specific_fn.2: <specific function> = specific_function constants.%Op.d5a, @Op.1(constants.%empty_struct_type) [concrete = constants.%Op.specific_fn]
 // CHECK:STDOUT:   %bound_method.loc9: <bound method> = bound_method %v.var, %Op.specific_fn.2
 // CHECK:STDOUT:   %addr.loc9: %ptr.c28 = addr_of %v.var
 // CHECK:STDOUT:   %no_op.loc9: init %empty_tuple.type = call %bound_method.loc9(%addr.loc9)

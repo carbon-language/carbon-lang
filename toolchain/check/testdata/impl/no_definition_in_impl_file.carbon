@@ -118,7 +118,7 @@ impl () as D;
 // CHECK:STDOUT:     .A = %A.decl
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %A.decl: type = interface_decl @A [concrete = constants.%A.type] {} {}
-// CHECK:STDOUT:   impl_decl @A.impl [concrete] {} {
+// CHECK:STDOUT:   %A.impl = impl_decl @A.impl [concrete] {} {
 // CHECK:STDOUT:     %.loc10_7.1: %empty_tuple.type = tuple_literal ()
 // CHECK:STDOUT:     %.loc10_7.2: type = converted %.loc10_7.1, constants.%empty_tuple.type [concrete = constants.%empty_tuple.type]
 // CHECK:STDOUT:     %A.ref: type = name_ref A, file.%A.decl [concrete = constants.%A.type]
@@ -157,12 +157,12 @@ impl () as D;
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %default.import.loc2_46.1 = import <none>
 // CHECK:STDOUT:   %default.import.loc2_46.2 = import <none>
-// CHECK:STDOUT:   impl_decl @A.impl.064930.2 [concrete] {} {
+// CHECK:STDOUT:   %A.impl.loc8 = impl_decl @A.impl.064930.2 [concrete] {} {
 // CHECK:STDOUT:     %.loc8_7.1: %empty_tuple.type = tuple_literal ()
 // CHECK:STDOUT:     %.loc8_7.2: type = converted %.loc8_7.1, constants.%empty_tuple.type [concrete = constants.%empty_tuple.type]
 // CHECK:STDOUT:     %A.ref: type = name_ref A, imports.%Main.A [concrete = constants.%A.type]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   impl_decl @A.impl.064930.3 [concrete] {} {
+// CHECK:STDOUT:   %A.impl.loc14 = impl_decl @A.impl.064930.3 [concrete] {} {
 // CHECK:STDOUT:     %.loc14_7.1: %empty_tuple.type = tuple_literal ()
 // CHECK:STDOUT:     %.loc14_7.2: type = converted %.loc14_7.1, constants.%empty_tuple.type [concrete = constants.%empty_tuple.type]
 // CHECK:STDOUT:     %A.ref: type = name_ref A, imports.%Main.A [concrete = constants.%A.type]
@@ -218,7 +218,7 @@ impl () as D;
 // CHECK:STDOUT:     .B = %B.decl
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %B.decl: type = interface_decl @B [concrete = constants.%B.type] {} {}
-// CHECK:STDOUT:   impl_decl @B.impl [concrete] {} {
+// CHECK:STDOUT:   %B.impl = impl_decl @B.impl [concrete] {} {
 // CHECK:STDOUT:     %.loc10_7.1: %empty_tuple.type = tuple_literal ()
 // CHECK:STDOUT:     %.loc10_7.2: type = converted %.loc10_7.1, constants.%empty_tuple.type [concrete = constants.%empty_tuple.type]
 // CHECK:STDOUT:     %B.ref: type = name_ref B, file.%B.decl [concrete = constants.%B.type]
@@ -281,7 +281,7 @@ impl () as D;
 // CHECK:STDOUT:     .C = %C.decl
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %C.decl: type = interface_decl @C [concrete = constants.%C.type] {} {}
-// CHECK:STDOUT:   impl_decl @C.impl [concrete] {} {
+// CHECK:STDOUT:   %C.impl = impl_decl @C.impl [concrete] {} {
 // CHECK:STDOUT:     %.loc10_7.1: %empty_tuple.type = tuple_literal ()
 // CHECK:STDOUT:     %.loc10_7.2: type = converted %.loc10_7.1, constants.%empty_tuple.type [concrete = constants.%empty_tuple.type]
 // CHECK:STDOUT:     %C.ref: type = name_ref C, file.%C.decl [concrete = constants.%C.type]
@@ -320,7 +320,7 @@ impl () as D;
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %default.import.loc2_40.1 = import <none>
 // CHECK:STDOUT:   %default.import.loc2_40.2 = import <none>
-// CHECK:STDOUT:   impl_decl @C.impl.590fe9.2 [concrete] {} {
+// CHECK:STDOUT:   %C.impl = impl_decl @C.impl.590fe9.2 [concrete] {} {
 // CHECK:STDOUT:     %.loc8_7.1: %empty_tuple.type = tuple_literal ()
 // CHECK:STDOUT:     %.loc8_7.2: type = converted %.loc8_7.1, constants.%empty_tuple.type [concrete = constants.%empty_tuple.type]
 // CHECK:STDOUT:     %C.ref: type = name_ref C, imports.%Main.C [concrete = constants.%C.type]
@@ -359,7 +359,7 @@ impl () as D;
 // CHECK:STDOUT:   %default.import.loc2_33.1 = import <none>
 // CHECK:STDOUT:   %default.import.loc2_33.2 = import <none>
 // CHECK:STDOUT:   %D.decl: type = interface_decl @D [concrete = constants.%D.type] {} {}
-// CHECK:STDOUT:   impl_decl @D.impl [concrete] {} {
+// CHECK:STDOUT:   %D.impl = impl_decl @D.impl [concrete] {} {
 // CHECK:STDOUT:     %.loc10_7.1: %empty_tuple.type = tuple_literal ()
 // CHECK:STDOUT:     %.loc10_7.2: type = converted %.loc10_7.1, constants.%empty_tuple.type [concrete = constants.%empty_tuple.type]
 // CHECK:STDOUT:     %D.ref: type = name_ref D, file.%D.decl [concrete = constants.%D.type]

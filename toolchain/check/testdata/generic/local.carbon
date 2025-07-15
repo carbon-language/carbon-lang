@@ -78,25 +78,25 @@ class C(C:! type) {
 // CHECK:STDOUT:   %ImplicitAs.type.cc7: type = generic_interface_type @ImplicitAs [concrete]
 // CHECK:STDOUT:   %ImplicitAs.generic: %ImplicitAs.type.cc7 = struct_value () [concrete]
 // CHECK:STDOUT:   %ImplicitAs.type.205: type = facet_type <@ImplicitAs, @ImplicitAs(%i32)> [concrete]
-// CHECK:STDOUT:   %Convert.type.1b6: type = fn_type @Convert.1, @ImplicitAs(%i32) [concrete]
+// CHECK:STDOUT:   %Convert.type.1b6: type = fn_type @Convert.2, @ImplicitAs(%i32) [concrete]
 // CHECK:STDOUT:   %To: Core.IntLiteral = bind_symbolic_name To, 0 [symbolic]
-// CHECK:STDOUT:   %Convert.type.0f9: type = fn_type @Convert.2, @ImplicitAs.impl.4f9(%To) [symbolic]
+// CHECK:STDOUT:   %Convert.type.0f9: type = fn_type @Convert.1, @ImplicitAs.impl.4f9(%To) [symbolic]
 // CHECK:STDOUT:   %Convert.f06: %Convert.type.0f9 = struct_value () [symbolic]
 // CHECK:STDOUT:   %ImplicitAs.impl_witness.c75: <witness> = impl_witness imports.%ImplicitAs.impl_witness_table.a2f, @ImplicitAs.impl.4f9(%int_32) [concrete]
-// CHECK:STDOUT:   %Convert.type.035: type = fn_type @Convert.2, @ImplicitAs.impl.4f9(%int_32) [concrete]
+// CHECK:STDOUT:   %Convert.type.035: type = fn_type @Convert.1, @ImplicitAs.impl.4f9(%int_32) [concrete]
 // CHECK:STDOUT:   %Convert.956: %Convert.type.035 = struct_value () [concrete]
 // CHECK:STDOUT:   %ImplicitAs.facet: %ImplicitAs.type.205 = facet_value Core.IntLiteral, (%ImplicitAs.impl_witness.c75) [concrete]
 // CHECK:STDOUT:   %.9c3: type = fn_type_with_self_type %Convert.type.1b6, %ImplicitAs.facet [concrete]
 // CHECK:STDOUT:   %Convert.bound: <bound method> = bound_method %int_1.5b8, %Convert.956 [concrete]
-// CHECK:STDOUT:   %Convert.specific_fn: <specific function> = specific_function %Convert.956, @Convert.2(%int_32) [concrete]
+// CHECK:STDOUT:   %Convert.specific_fn: <specific function> = specific_function %Convert.956, @Convert.1(%int_32) [concrete]
 // CHECK:STDOUT:   %bound_method: <bound method> = bound_method %int_1.5b8, %Convert.specific_fn [concrete]
 // CHECK:STDOUT:   %int_1.5d2: %i32 = int_value 1 [concrete]
 // CHECK:STDOUT:   %C.val: %C.d45 = struct_value (%int_1.5d2) [concrete]
 // CHECK:STDOUT:   %Destroy.type: type = facet_type <@Destroy> [concrete]
-// CHECK:STDOUT:   %Op.type.39b: type = fn_type @Op.3, @Destroy.impl(%C.d45) [concrete]
+// CHECK:STDOUT:   %Op.type.39b: type = fn_type @Op.1, @Destroy.impl(%C.d45) [concrete]
 // CHECK:STDOUT:   %Op.5e9: %Op.type.39b = struct_value () [concrete]
 // CHECK:STDOUT:   %ptr.9c7: type = ptr_type %C.d45 [concrete]
-// CHECK:STDOUT:   %Op.specific_fn: <specific function> = specific_function %Op.5e9, @Op.3(%C.d45) [concrete]
+// CHECK:STDOUT:   %Op.specific_fn: <specific function> = specific_function %Op.5e9, @Op.1(%C.d45) [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -163,7 +163,7 @@ class C(C:! type) {
 // CHECK:STDOUT:   %.loc8_26.1: %struct_type.x.c96 = struct_literal (%int_1)
 // CHECK:STDOUT:   %impl.elem0: %.9c3 = impl_witness_access constants.%ImplicitAs.impl_witness.c75, element0 [concrete = constants.%Convert.956]
 // CHECK:STDOUT:   %bound_method.loc8_26.1: <bound method> = bound_method %int_1, %impl.elem0 [concrete = constants.%Convert.bound]
-// CHECK:STDOUT:   %specific_fn: <specific function> = specific_function %impl.elem0, @Convert.2(constants.%int_32) [concrete = constants.%Convert.specific_fn]
+// CHECK:STDOUT:   %specific_fn: <specific function> = specific_function %impl.elem0, @Convert.1(constants.%int_32) [concrete = constants.%Convert.specific_fn]
 // CHECK:STDOUT:   %bound_method.loc8_26.2: <bound method> = bound_method %int_1, %specific_fn [concrete = constants.%bound_method]
 // CHECK:STDOUT:   %int.convert_checked: init %i32 = call %bound_method.loc8_26.2(%int_1) [concrete = constants.%int_1.5d2]
 // CHECK:STDOUT:   %.loc8_26.2: init %i32 = converted %int_1, %int.convert_checked [concrete = constants.%int_1.5d2]
@@ -180,7 +180,7 @@ class C(C:! type) {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %v: ref %C.d45 = bind_name v, %v.var
 // CHECK:STDOUT:   %Op.bound: <bound method> = bound_method %v.var, constants.%Op.5e9
-// CHECK:STDOUT:   %Op.specific_fn: <specific function> = specific_function constants.%Op.5e9, @Op.3(constants.%C.d45) [concrete = constants.%Op.specific_fn]
+// CHECK:STDOUT:   %Op.specific_fn: <specific function> = specific_function constants.%Op.5e9, @Op.1(constants.%C.d45) [concrete = constants.%Op.specific_fn]
 // CHECK:STDOUT:   %bound_method.loc8_3: <bound method> = bound_method %v.var, %Op.specific_fn
 // CHECK:STDOUT:   %addr: %ptr.9c7 = addr_of %v.var
 // CHECK:STDOUT:   %no_op: init %empty_tuple.type = call %bound_method.loc8_3(%addr)
@@ -289,12 +289,12 @@ class C(C:! type) {
 // CHECK:STDOUT:   %C.decl: %C.type = class_decl @C [concrete = constants.%C.generic] {
 // CHECK:STDOUT:     %C.patt: %pattern_type = symbolic_binding_pattern C, 0 [concrete]
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %C.loc4_9.1: type = bind_symbolic_name C, 0 [symbolic = %C.loc4_9.2 (constants.%C.8b3)]
+// CHECK:STDOUT:     %C.loc4_9.2: type = bind_symbolic_name C, 0 [symbolic = %C.loc4_9.1 (constants.%C.8b3)]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic class @C(%C.loc4_9.1: type) {
-// CHECK:STDOUT:   %C.loc4_9.2: type = bind_symbolic_name C, 0 [symbolic = %C.loc4_9.2 (constants.%C.8b3)]
+// CHECK:STDOUT: generic class @C(%C.loc4_9.2: type) {
+// CHECK:STDOUT:   %C.loc4_9.1: type = bind_symbolic_name C, 0 [symbolic = %C.loc4_9.1 (constants.%C.8b3)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:
@@ -309,6 +309,6 @@ class C(C:! type) {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @C(constants.%C.8b3) {
-// CHECK:STDOUT:   %C.loc4_9.2 => constants.%C.8b3
+// CHECK:STDOUT:   %C.loc4_9.1 => constants.%C.8b3
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

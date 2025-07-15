@@ -74,17 +74,17 @@ fn F0(n: i32) -> P.D {
 // CHECK:STDOUT:   %ImplicitAs.type.cc7: type = generic_interface_type @ImplicitAs [concrete]
 // CHECK:STDOUT:   %ImplicitAs.generic: %ImplicitAs.type.cc7 = struct_value () [concrete]
 // CHECK:STDOUT:   %ImplicitAs.type.205: type = facet_type <@ImplicitAs, @ImplicitAs(%i32)> [concrete]
-// CHECK:STDOUT:   %Convert.type.1b6: type = fn_type @Convert.1, @ImplicitAs(%i32) [concrete]
+// CHECK:STDOUT:   %Convert.type.1b6: type = fn_type @Convert.2, @ImplicitAs(%i32) [concrete]
 // CHECK:STDOUT:   %To: Core.IntLiteral = bind_symbolic_name To, 0 [symbolic]
-// CHECK:STDOUT:   %Convert.type.0f9: type = fn_type @Convert.2, @ImplicitAs.impl.4f9(%To) [symbolic]
+// CHECK:STDOUT:   %Convert.type.0f9: type = fn_type @Convert.1, @ImplicitAs.impl.4f9(%To) [symbolic]
 // CHECK:STDOUT:   %Convert.f06: %Convert.type.0f9 = struct_value () [symbolic]
 // CHECK:STDOUT:   %ImplicitAs.impl_witness.c75: <witness> = impl_witness imports.%ImplicitAs.impl_witness_table.a2f, @ImplicitAs.impl.4f9(%int_32) [concrete]
-// CHECK:STDOUT:   %Convert.type.035: type = fn_type @Convert.2, @ImplicitAs.impl.4f9(%int_32) [concrete]
+// CHECK:STDOUT:   %Convert.type.035: type = fn_type @Convert.1, @ImplicitAs.impl.4f9(%int_32) [concrete]
 // CHECK:STDOUT:   %Convert.956: %Convert.type.035 = struct_value () [concrete]
 // CHECK:STDOUT:   %ImplicitAs.facet.921: %ImplicitAs.type.205 = facet_value Core.IntLiteral, (%ImplicitAs.impl_witness.c75) [concrete]
 // CHECK:STDOUT:   %.9c3: type = fn_type_with_self_type %Convert.type.1b6, %ImplicitAs.facet.921 [concrete]
 // CHECK:STDOUT:   %Convert.bound.d04: <bound method> = bound_method %int_0.5c6, %Convert.956 [concrete]
-// CHECK:STDOUT:   %Convert.specific_fn: <specific function> = specific_function %Convert.956, @Convert.2(%int_32) [concrete]
+// CHECK:STDOUT:   %Convert.specific_fn: <specific function> = specific_function %Convert.956, @Convert.1(%int_32) [concrete]
 // CHECK:STDOUT:   %bound_method.b6e: <bound method> = bound_method %int_0.5c6, %Convert.specific_fn [concrete]
 // CHECK:STDOUT:   %int_0.6a9: %i32 = int_value 0 [concrete]
 // CHECK:STDOUT:   %D.val: %D = struct_value (%int_0.6a9, %int_0.6a9) [concrete]
@@ -95,10 +95,10 @@ fn F0(n: i32) -> P.D {
 // CHECK:STDOUT:   %Convert.type.cd0: type = fn_type @Convert.loc8 [concrete]
 // CHECK:STDOUT:   %Convert.b95: %Convert.type.cd0 = struct_value () [concrete]
 // CHECK:STDOUT:   %Destroy.type: type = facet_type <@Destroy> [concrete]
-// CHECK:STDOUT:   %Op.type.548: type = fn_type @Op.3, @Destroy.impl(%D) [concrete]
+// CHECK:STDOUT:   %Op.type.548: type = fn_type @Op.2, @Destroy.impl(%D) [concrete]
 // CHECK:STDOUT:   %Op.2d4: %Op.type.548 = struct_value () [concrete]
 // CHECK:STDOUT:   %ptr.19c: type = ptr_type %D [concrete]
-// CHECK:STDOUT:   %Op.specific_fn: <specific function> = specific_function %Op.2d4, @Op.3(%D) [concrete]
+// CHECK:STDOUT:   %Op.specific_fn: <specific function> = specific_function %Op.2d4, @Op.2(%D) [concrete]
 // CHECK:STDOUT:   %int_1.5b8: Core.IntLiteral = int_value 1 [concrete]
 // CHECK:STDOUT:   %Convert.bound.ab5: <bound method> = bound_method %int_1.5b8, %Convert.956 [concrete]
 // CHECK:STDOUT:   %bound_method.9a1: <bound method> = bound_method %int_1.5b8, %Convert.specific_fn [concrete]
@@ -194,7 +194,7 @@ fn F0(n: i32) -> P.D {
 // CHECK:STDOUT:       %int_32: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
 // CHECK:STDOUT:       %i32: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %N.loc4_9.1: %i32 = bind_symbolic_name N, 0 [symbolic = %N.loc4_9.2 (constants.%N.51e)]
+// CHECK:STDOUT:     %N.loc4_9.2: %i32 = bind_symbolic_name N, 0 [symbolic = %N.loc4_9.1 (constants.%N.51e)]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %D.decl: type = class_decl @D [concrete = constants.%D] {} {}
 // CHECK:STDOUT:   %Make.decl: %Make.type = fn_decl @Make [concrete = constants.%Make] {
@@ -205,12 +205,12 @@ fn F0(n: i32) -> P.D {
 // CHECK:STDOUT:     %return.param: ref %D = out_param call_param0
 // CHECK:STDOUT:     %return: ref %D = return_slot %return.param
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   impl_decl @ImplicitAs.impl.6d8 [concrete] {} {
+// CHECK:STDOUT:   %ImplicitAs.impl.loc8 = impl_decl @ImplicitAs.impl.6d8 [concrete] {} {
 // CHECK:STDOUT:     %C.ref: %C.type = name_ref C, file.%C.decl [concrete = constants.%C.generic]
 // CHECK:STDOUT:     %int_0: Core.IntLiteral = int_value 0 [concrete = constants.%int_0.5c6]
 // CHECK:STDOUT:     %impl.elem0: %.9c3 = impl_witness_access constants.%ImplicitAs.impl_witness.c75, element0 [concrete = constants.%Convert.956]
 // CHECK:STDOUT:     %bound_method.loc8_9.1: <bound method> = bound_method %int_0, %impl.elem0 [concrete = constants.%Convert.bound.d04]
-// CHECK:STDOUT:     %specific_fn: <specific function> = specific_function %impl.elem0, @Convert.2(constants.%int_32) [concrete = constants.%Convert.specific_fn]
+// CHECK:STDOUT:     %specific_fn: <specific function> = specific_function %impl.elem0, @Convert.1(constants.%int_32) [concrete = constants.%Convert.specific_fn]
 // CHECK:STDOUT:     %bound_method.loc8_9.2: <bound method> = bound_method %int_0, %specific_fn [concrete = constants.%bound_method.b6e]
 // CHECK:STDOUT:     %int.convert_checked: init %i32 = call %bound_method.loc8_9.2(%int_0) [concrete = constants.%int_0.6a9]
 // CHECK:STDOUT:     %.loc8_9.1: %i32 = value_of_initializer %int.convert_checked [concrete = constants.%int_0.6a9]
@@ -223,12 +223,12 @@ fn F0(n: i32) -> P.D {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %ImplicitAs.impl_witness_table.loc8 = impl_witness_table (@ImplicitAs.impl.6d8.%Convert.decl), @ImplicitAs.impl.6d8 [concrete]
 // CHECK:STDOUT:   %ImplicitAs.impl_witness.loc8: <witness> = impl_witness %ImplicitAs.impl_witness_table.loc8 [concrete = constants.%ImplicitAs.impl_witness.00c]
-// CHECK:STDOUT:   impl_decl @ImplicitAs.impl.b66 [concrete] {} {
+// CHECK:STDOUT:   %ImplicitAs.impl.loc9 = impl_decl @ImplicitAs.impl.b66 [concrete] {} {
 // CHECK:STDOUT:     %C.ref: %C.type = name_ref C, file.%C.decl [concrete = constants.%C.generic]
 // CHECK:STDOUT:     %int_1: Core.IntLiteral = int_value 1 [concrete = constants.%int_1.5b8]
 // CHECK:STDOUT:     %impl.elem0: %.9c3 = impl_witness_access constants.%ImplicitAs.impl_witness.c75, element0 [concrete = constants.%Convert.956]
 // CHECK:STDOUT:     %bound_method.loc9_9.1: <bound method> = bound_method %int_1, %impl.elem0 [concrete = constants.%Convert.bound.ab5]
-// CHECK:STDOUT:     %specific_fn: <specific function> = specific_function %impl.elem0, @Convert.2(constants.%int_32) [concrete = constants.%Convert.specific_fn]
+// CHECK:STDOUT:     %specific_fn: <specific function> = specific_function %impl.elem0, @Convert.1(constants.%int_32) [concrete = constants.%Convert.specific_fn]
 // CHECK:STDOUT:     %bound_method.loc9_9.2: <bound method> = bound_method %int_1, %specific_fn [concrete = constants.%bound_method.9a1]
 // CHECK:STDOUT:     %int.convert_checked: init %i32 = call %bound_method.loc9_9.2(%int_1) [concrete = constants.%int_1.5d2]
 // CHECK:STDOUT:     %.loc9_9.1: %i32 = value_of_initializer %int.convert_checked [concrete = constants.%int_1.5d2]
@@ -241,12 +241,12 @@ fn F0(n: i32) -> P.D {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %ImplicitAs.impl_witness_table.loc9 = impl_witness_table (@ImplicitAs.impl.b66.%Convert.decl), @ImplicitAs.impl.b66 [concrete]
 // CHECK:STDOUT:   %ImplicitAs.impl_witness.loc9: <witness> = impl_witness %ImplicitAs.impl_witness_table.loc9 [concrete = constants.%ImplicitAs.impl_witness.c66]
-// CHECK:STDOUT:   impl_decl @ImplicitAs.impl.9de [concrete] {} {
+// CHECK:STDOUT:   %ImplicitAs.impl.loc10 = impl_decl @ImplicitAs.impl.9de [concrete] {} {
 // CHECK:STDOUT:     %C.ref: %C.type = name_ref C, file.%C.decl [concrete = constants.%C.generic]
 // CHECK:STDOUT:     %int_2: Core.IntLiteral = int_value 2 [concrete = constants.%int_2.ecc]
 // CHECK:STDOUT:     %impl.elem0: %.9c3 = impl_witness_access constants.%ImplicitAs.impl_witness.c75, element0 [concrete = constants.%Convert.956]
 // CHECK:STDOUT:     %bound_method.loc10_9.1: <bound method> = bound_method %int_2, %impl.elem0 [concrete = constants.%Convert.bound.ef9]
-// CHECK:STDOUT:     %specific_fn: <specific function> = specific_function %impl.elem0, @Convert.2(constants.%int_32) [concrete = constants.%Convert.specific_fn]
+// CHECK:STDOUT:     %specific_fn: <specific function> = specific_function %impl.elem0, @Convert.1(constants.%int_32) [concrete = constants.%Convert.specific_fn]
 // CHECK:STDOUT:     %bound_method.loc10_9.2: <bound method> = bound_method %int_2, %specific_fn [concrete = constants.%bound_method.b92]
 // CHECK:STDOUT:     %int.convert_checked: init %i32 = call %bound_method.loc10_9.2(%int_2) [concrete = constants.%int_2.ef8]
 // CHECK:STDOUT:     %.loc10_9.1: %i32 = value_of_initializer %int.convert_checked [concrete = constants.%int_2.ef8]
@@ -259,12 +259,12 @@ fn F0(n: i32) -> P.D {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %ImplicitAs.impl_witness_table.loc10 = impl_witness_table (@ImplicitAs.impl.9de.%Convert.decl), @ImplicitAs.impl.9de [concrete]
 // CHECK:STDOUT:   %ImplicitAs.impl_witness.loc10: <witness> = impl_witness %ImplicitAs.impl_witness_table.loc10 [concrete = constants.%ImplicitAs.impl_witness.f9c]
-// CHECK:STDOUT:   impl_decl @ImplicitAs.impl.649 [concrete] {} {
+// CHECK:STDOUT:   %ImplicitAs.impl.loc11 = impl_decl @ImplicitAs.impl.649 [concrete] {} {
 // CHECK:STDOUT:     %C.ref: %C.type = name_ref C, file.%C.decl [concrete = constants.%C.generic]
 // CHECK:STDOUT:     %int_3: Core.IntLiteral = int_value 3 [concrete = constants.%int_3.1ba]
 // CHECK:STDOUT:     %impl.elem0: %.9c3 = impl_witness_access constants.%ImplicitAs.impl_witness.c75, element0 [concrete = constants.%Convert.956]
 // CHECK:STDOUT:     %bound_method.loc11_9.1: <bound method> = bound_method %int_3, %impl.elem0 [concrete = constants.%Convert.bound.b30]
-// CHECK:STDOUT:     %specific_fn: <specific function> = specific_function %impl.elem0, @Convert.2(constants.%int_32) [concrete = constants.%Convert.specific_fn]
+// CHECK:STDOUT:     %specific_fn: <specific function> = specific_function %impl.elem0, @Convert.1(constants.%int_32) [concrete = constants.%Convert.specific_fn]
 // CHECK:STDOUT:     %bound_method.loc11_9.2: <bound method> = bound_method %int_3, %specific_fn [concrete = constants.%bound_method.047]
 // CHECK:STDOUT:     %int.convert_checked: init %i32 = call %bound_method.loc11_9.2(%int_3) [concrete = constants.%int_3.822]
 // CHECK:STDOUT:     %.loc11_9.1: %i32 = value_of_initializer %int.convert_checked [concrete = constants.%int_3.822]
@@ -277,12 +277,12 @@ fn F0(n: i32) -> P.D {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %ImplicitAs.impl_witness_table.loc11 = impl_witness_table (@ImplicitAs.impl.649.%Convert.decl), @ImplicitAs.impl.649 [concrete]
 // CHECK:STDOUT:   %ImplicitAs.impl_witness.loc11: <witness> = impl_witness %ImplicitAs.impl_witness_table.loc11 [concrete = constants.%ImplicitAs.impl_witness.c1f]
-// CHECK:STDOUT:   impl_decl @ImplicitAs.impl.49b [concrete] {} {
+// CHECK:STDOUT:   %ImplicitAs.impl.loc12 = impl_decl @ImplicitAs.impl.49b [concrete] {} {
 // CHECK:STDOUT:     %C.ref: %C.type = name_ref C, file.%C.decl [concrete = constants.%C.generic]
 // CHECK:STDOUT:     %int_4: Core.IntLiteral = int_value 4 [concrete = constants.%int_4.0c1]
 // CHECK:STDOUT:     %impl.elem0: %.9c3 = impl_witness_access constants.%ImplicitAs.impl_witness.c75, element0 [concrete = constants.%Convert.956]
 // CHECK:STDOUT:     %bound_method.loc12_9.1: <bound method> = bound_method %int_4, %impl.elem0 [concrete = constants.%Convert.bound.ac3]
-// CHECK:STDOUT:     %specific_fn: <specific function> = specific_function %impl.elem0, @Convert.2(constants.%int_32) [concrete = constants.%Convert.specific_fn]
+// CHECK:STDOUT:     %specific_fn: <specific function> = specific_function %impl.elem0, @Convert.1(constants.%int_32) [concrete = constants.%Convert.specific_fn]
 // CHECK:STDOUT:     %bound_method.loc12_9.2: <bound method> = bound_method %int_4, %specific_fn [concrete = constants.%bound_method.1da]
 // CHECK:STDOUT:     %int.convert_checked: init %i32 = call %bound_method.loc12_9.2(%int_4) [concrete = constants.%int_4.940]
 // CHECK:STDOUT:     %.loc12_9.1: %i32 = value_of_initializer %int.convert_checked [concrete = constants.%int_4.940]
@@ -295,12 +295,12 @@ fn F0(n: i32) -> P.D {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %ImplicitAs.impl_witness_table.loc12 = impl_witness_table (@ImplicitAs.impl.49b.%Convert.decl), @ImplicitAs.impl.49b [concrete]
 // CHECK:STDOUT:   %ImplicitAs.impl_witness.loc12: <witness> = impl_witness %ImplicitAs.impl_witness_table.loc12 [concrete = constants.%ImplicitAs.impl_witness.097]
-// CHECK:STDOUT:   impl_decl @ImplicitAs.impl.75f [concrete] {} {
+// CHECK:STDOUT:   %ImplicitAs.impl.loc13 = impl_decl @ImplicitAs.impl.75f [concrete] {} {
 // CHECK:STDOUT:     %C.ref: %C.type = name_ref C, file.%C.decl [concrete = constants.%C.generic]
 // CHECK:STDOUT:     %int_5: Core.IntLiteral = int_value 5 [concrete = constants.%int_5.64b]
 // CHECK:STDOUT:     %impl.elem0: %.9c3 = impl_witness_access constants.%ImplicitAs.impl_witness.c75, element0 [concrete = constants.%Convert.956]
 // CHECK:STDOUT:     %bound_method.loc13_9.1: <bound method> = bound_method %int_5, %impl.elem0 [concrete = constants.%Convert.bound.4e6]
-// CHECK:STDOUT:     %specific_fn: <specific function> = specific_function %impl.elem0, @Convert.2(constants.%int_32) [concrete = constants.%Convert.specific_fn]
+// CHECK:STDOUT:     %specific_fn: <specific function> = specific_function %impl.elem0, @Convert.1(constants.%int_32) [concrete = constants.%Convert.specific_fn]
 // CHECK:STDOUT:     %bound_method.loc13_9.2: <bound method> = bound_method %int_5, %specific_fn [concrete = constants.%bound_method.a25]
 // CHECK:STDOUT:     %int.convert_checked: init %i32 = call %bound_method.loc13_9.2(%int_5) [concrete = constants.%int_5.0f6]
 // CHECK:STDOUT:     %.loc13_9.1: %i32 = value_of_initializer %int.convert_checked [concrete = constants.%int_5.0f6]
@@ -313,12 +313,12 @@ fn F0(n: i32) -> P.D {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %ImplicitAs.impl_witness_table.loc13 = impl_witness_table (@ImplicitAs.impl.75f.%Convert.decl), @ImplicitAs.impl.75f [concrete]
 // CHECK:STDOUT:   %ImplicitAs.impl_witness.loc13: <witness> = impl_witness %ImplicitAs.impl_witness_table.loc13 [concrete = constants.%ImplicitAs.impl_witness.03f]
-// CHECK:STDOUT:   impl_decl @ImplicitAs.impl.98f [concrete] {} {
+// CHECK:STDOUT:   %ImplicitAs.impl.loc14 = impl_decl @ImplicitAs.impl.98f [concrete] {} {
 // CHECK:STDOUT:     %C.ref: %C.type = name_ref C, file.%C.decl [concrete = constants.%C.generic]
 // CHECK:STDOUT:     %int_6: Core.IntLiteral = int_value 6 [concrete = constants.%int_6.462]
 // CHECK:STDOUT:     %impl.elem0: %.9c3 = impl_witness_access constants.%ImplicitAs.impl_witness.c75, element0 [concrete = constants.%Convert.956]
 // CHECK:STDOUT:     %bound_method.loc14_9.1: <bound method> = bound_method %int_6, %impl.elem0 [concrete = constants.%Convert.bound.ce9]
-// CHECK:STDOUT:     %specific_fn: <specific function> = specific_function %impl.elem0, @Convert.2(constants.%int_32) [concrete = constants.%Convert.specific_fn]
+// CHECK:STDOUT:     %specific_fn: <specific function> = specific_function %impl.elem0, @Convert.1(constants.%int_32) [concrete = constants.%Convert.specific_fn]
 // CHECK:STDOUT:     %bound_method.loc14_9.2: <bound method> = bound_method %int_6, %specific_fn [concrete = constants.%bound_method.efa]
 // CHECK:STDOUT:     %int.convert_checked: init %i32 = call %bound_method.loc14_9.2(%int_6) [concrete = constants.%int_6.e56]
 // CHECK:STDOUT:     %.loc14_9.1: %i32 = value_of_initializer %int.convert_checked [concrete = constants.%int_6.e56]
@@ -331,12 +331,12 @@ fn F0(n: i32) -> P.D {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %ImplicitAs.impl_witness_table.loc14 = impl_witness_table (@ImplicitAs.impl.98f.%Convert.decl), @ImplicitAs.impl.98f [concrete]
 // CHECK:STDOUT:   %ImplicitAs.impl_witness.loc14: <witness> = impl_witness %ImplicitAs.impl_witness_table.loc14 [concrete = constants.%ImplicitAs.impl_witness.89c]
-// CHECK:STDOUT:   impl_decl @ImplicitAs.impl.9fd [concrete] {} {
+// CHECK:STDOUT:   %ImplicitAs.impl.loc15 = impl_decl @ImplicitAs.impl.9fd [concrete] {} {
 // CHECK:STDOUT:     %C.ref: %C.type = name_ref C, file.%C.decl [concrete = constants.%C.generic]
 // CHECK:STDOUT:     %int_7: Core.IntLiteral = int_value 7 [concrete = constants.%int_7.29f]
 // CHECK:STDOUT:     %impl.elem0: %.9c3 = impl_witness_access constants.%ImplicitAs.impl_witness.c75, element0 [concrete = constants.%Convert.956]
 // CHECK:STDOUT:     %bound_method.loc15_9.1: <bound method> = bound_method %int_7, %impl.elem0 [concrete = constants.%Convert.bound.208]
-// CHECK:STDOUT:     %specific_fn: <specific function> = specific_function %impl.elem0, @Convert.2(constants.%int_32) [concrete = constants.%Convert.specific_fn]
+// CHECK:STDOUT:     %specific_fn: <specific function> = specific_function %impl.elem0, @Convert.1(constants.%int_32) [concrete = constants.%Convert.specific_fn]
 // CHECK:STDOUT:     %bound_method.loc15_9.2: <bound method> = bound_method %int_7, %specific_fn [concrete = constants.%bound_method.3bd]
 // CHECK:STDOUT:     %int.convert_checked: init %i32 = call %bound_method.loc15_9.2(%int_7) [concrete = constants.%int_7.0b1]
 // CHECK:STDOUT:     %.loc15_9.1: %i32 = value_of_initializer %int.convert_checked [concrete = constants.%int_7.0b1]
@@ -527,8 +527,8 @@ fn F0(n: i32) -> P.D {
 // CHECK:STDOUT:   witness = file.%ImplicitAs.impl_witness.loc15
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic class @C(%N.loc4_9.1: %i32) {
-// CHECK:STDOUT:   %N.loc4_9.2: %i32 = bind_symbolic_name N, 0 [symbolic = %N.loc4_9.2 (constants.%N.51e)]
+// CHECK:STDOUT: generic class @C(%N.loc4_9.2: %i32) {
+// CHECK:STDOUT:   %N.loc4_9.1: %i32 = bind_symbolic_name N, 0 [symbolic = %N.loc4_9.1 (constants.%N.51e)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:
@@ -566,7 +566,7 @@ fn F0(n: i32) -> P.D {
 // CHECK:STDOUT:   %.loc6_40.1: %struct_type.n.m.819 = struct_literal (%int_0.loc6_31, %int_0.loc6_39)
 // CHECK:STDOUT:   %impl.elem0.loc6_40.1: %.9c3 = impl_witness_access constants.%ImplicitAs.impl_witness.c75, element0 [concrete = constants.%Convert.956]
 // CHECK:STDOUT:   %bound_method.loc6_40.1: <bound method> = bound_method %int_0.loc6_31, %impl.elem0.loc6_40.1 [concrete = constants.%Convert.bound.d04]
-// CHECK:STDOUT:   %specific_fn.loc6_40.1: <specific function> = specific_function %impl.elem0.loc6_40.1, @Convert.2(constants.%int_32) [concrete = constants.%Convert.specific_fn]
+// CHECK:STDOUT:   %specific_fn.loc6_40.1: <specific function> = specific_function %impl.elem0.loc6_40.1, @Convert.1(constants.%int_32) [concrete = constants.%Convert.specific_fn]
 // CHECK:STDOUT:   %bound_method.loc6_40.2: <bound method> = bound_method %int_0.loc6_31, %specific_fn.loc6_40.1 [concrete = constants.%bound_method.b6e]
 // CHECK:STDOUT:   %int.convert_checked.loc6_40.1: init %i32 = call %bound_method.loc6_40.2(%int_0.loc6_31) [concrete = constants.%int_0.6a9]
 // CHECK:STDOUT:   %.loc6_40.2: init %i32 = converted %int_0.loc6_31, %int.convert_checked.loc6_40.1 [concrete = constants.%int_0.6a9]
@@ -574,7 +574,7 @@ fn F0(n: i32) -> P.D {
 // CHECK:STDOUT:   %.loc6_40.4: init %i32 = initialize_from %.loc6_40.2 to %.loc6_40.3 [concrete = constants.%int_0.6a9]
 // CHECK:STDOUT:   %impl.elem0.loc6_40.2: %.9c3 = impl_witness_access constants.%ImplicitAs.impl_witness.c75, element0 [concrete = constants.%Convert.956]
 // CHECK:STDOUT:   %bound_method.loc6_40.3: <bound method> = bound_method %int_0.loc6_39, %impl.elem0.loc6_40.2 [concrete = constants.%Convert.bound.d04]
-// CHECK:STDOUT:   %specific_fn.loc6_40.2: <specific function> = specific_function %impl.elem0.loc6_40.2, @Convert.2(constants.%int_32) [concrete = constants.%Convert.specific_fn]
+// CHECK:STDOUT:   %specific_fn.loc6_40.2: <specific function> = specific_function %impl.elem0.loc6_40.2, @Convert.1(constants.%int_32) [concrete = constants.%Convert.specific_fn]
 // CHECK:STDOUT:   %bound_method.loc6_40.4: <bound method> = bound_method %int_0.loc6_39, %specific_fn.loc6_40.2 [concrete = constants.%bound_method.b6e]
 // CHECK:STDOUT:   %int.convert_checked.loc6_40.2: init %i32 = call %bound_method.loc6_40.4(%int_0.loc6_39) [concrete = constants.%int_0.6a9]
 // CHECK:STDOUT:   %.loc6_40.5: init %i32 = converted %int_0.loc6_39, %int.convert_checked.loc6_40.2 [concrete = constants.%int_0.6a9]
@@ -591,7 +591,7 @@ fn F0(n: i32) -> P.D {
 // CHECK:STDOUT:   %.loc8: ref %D = splice_block %return {}
 // CHECK:STDOUT:   %Make.call: init %D = call %Make.ref() to %.loc8
 // CHECK:STDOUT:   %Op.bound: <bound method> = bound_method %.loc8, constants.%Op.2d4
-// CHECK:STDOUT:   %Op.specific_fn: <specific function> = specific_function constants.%Op.2d4, @Op.3(constants.%D) [concrete = constants.%Op.specific_fn]
+// CHECK:STDOUT:   %Op.specific_fn: <specific function> = specific_function constants.%Op.2d4, @Op.2(constants.%D) [concrete = constants.%Op.specific_fn]
 // CHECK:STDOUT:   %bound_method: <bound method> = bound_method %.loc8, %Op.specific_fn
 // CHECK:STDOUT:   %addr: %ptr.19c = addr_of %.loc8
 // CHECK:STDOUT:   %no_op: init %empty_tuple.type = call %bound_method(%addr)
@@ -604,7 +604,7 @@ fn F0(n: i32) -> P.D {
 // CHECK:STDOUT:   %.loc9: ref %D = splice_block %return {}
 // CHECK:STDOUT:   %Make.call: init %D = call %Make.ref() to %.loc9
 // CHECK:STDOUT:   %Op.bound: <bound method> = bound_method %.loc9, constants.%Op.2d4
-// CHECK:STDOUT:   %Op.specific_fn: <specific function> = specific_function constants.%Op.2d4, @Op.3(constants.%D) [concrete = constants.%Op.specific_fn]
+// CHECK:STDOUT:   %Op.specific_fn: <specific function> = specific_function constants.%Op.2d4, @Op.2(constants.%D) [concrete = constants.%Op.specific_fn]
 // CHECK:STDOUT:   %bound_method: <bound method> = bound_method %.loc9, %Op.specific_fn
 // CHECK:STDOUT:   %addr: %ptr.19c = addr_of %.loc9
 // CHECK:STDOUT:   %no_op: init %empty_tuple.type = call %bound_method(%addr)
@@ -617,7 +617,7 @@ fn F0(n: i32) -> P.D {
 // CHECK:STDOUT:   %.loc10: ref %D = splice_block %return {}
 // CHECK:STDOUT:   %Make.call: init %D = call %Make.ref() to %.loc10
 // CHECK:STDOUT:   %Op.bound: <bound method> = bound_method %.loc10, constants.%Op.2d4
-// CHECK:STDOUT:   %Op.specific_fn: <specific function> = specific_function constants.%Op.2d4, @Op.3(constants.%D) [concrete = constants.%Op.specific_fn]
+// CHECK:STDOUT:   %Op.specific_fn: <specific function> = specific_function constants.%Op.2d4, @Op.2(constants.%D) [concrete = constants.%Op.specific_fn]
 // CHECK:STDOUT:   %bound_method: <bound method> = bound_method %.loc10, %Op.specific_fn
 // CHECK:STDOUT:   %addr: %ptr.19c = addr_of %.loc10
 // CHECK:STDOUT:   %no_op: init %empty_tuple.type = call %bound_method(%addr)
@@ -630,7 +630,7 @@ fn F0(n: i32) -> P.D {
 // CHECK:STDOUT:   %.loc11: ref %D = splice_block %return {}
 // CHECK:STDOUT:   %Make.call: init %D = call %Make.ref() to %.loc11
 // CHECK:STDOUT:   %Op.bound: <bound method> = bound_method %.loc11, constants.%Op.2d4
-// CHECK:STDOUT:   %Op.specific_fn: <specific function> = specific_function constants.%Op.2d4, @Op.3(constants.%D) [concrete = constants.%Op.specific_fn]
+// CHECK:STDOUT:   %Op.specific_fn: <specific function> = specific_function constants.%Op.2d4, @Op.2(constants.%D) [concrete = constants.%Op.specific_fn]
 // CHECK:STDOUT:   %bound_method: <bound method> = bound_method %.loc11, %Op.specific_fn
 // CHECK:STDOUT:   %addr: %ptr.19c = addr_of %.loc11
 // CHECK:STDOUT:   %no_op: init %empty_tuple.type = call %bound_method(%addr)
@@ -643,7 +643,7 @@ fn F0(n: i32) -> P.D {
 // CHECK:STDOUT:   %.loc12: ref %D = splice_block %return {}
 // CHECK:STDOUT:   %Make.call: init %D = call %Make.ref() to %.loc12
 // CHECK:STDOUT:   %Op.bound: <bound method> = bound_method %.loc12, constants.%Op.2d4
-// CHECK:STDOUT:   %Op.specific_fn: <specific function> = specific_function constants.%Op.2d4, @Op.3(constants.%D) [concrete = constants.%Op.specific_fn]
+// CHECK:STDOUT:   %Op.specific_fn: <specific function> = specific_function constants.%Op.2d4, @Op.2(constants.%D) [concrete = constants.%Op.specific_fn]
 // CHECK:STDOUT:   %bound_method: <bound method> = bound_method %.loc12, %Op.specific_fn
 // CHECK:STDOUT:   %addr: %ptr.19c = addr_of %.loc12
 // CHECK:STDOUT:   %no_op: init %empty_tuple.type = call %bound_method(%addr)
@@ -656,7 +656,7 @@ fn F0(n: i32) -> P.D {
 // CHECK:STDOUT:   %.loc13: ref %D = splice_block %return {}
 // CHECK:STDOUT:   %Make.call: init %D = call %Make.ref() to %.loc13
 // CHECK:STDOUT:   %Op.bound: <bound method> = bound_method %.loc13, constants.%Op.2d4
-// CHECK:STDOUT:   %Op.specific_fn: <specific function> = specific_function constants.%Op.2d4, @Op.3(constants.%D) [concrete = constants.%Op.specific_fn]
+// CHECK:STDOUT:   %Op.specific_fn: <specific function> = specific_function constants.%Op.2d4, @Op.2(constants.%D) [concrete = constants.%Op.specific_fn]
 // CHECK:STDOUT:   %bound_method: <bound method> = bound_method %.loc13, %Op.specific_fn
 // CHECK:STDOUT:   %addr: %ptr.19c = addr_of %.loc13
 // CHECK:STDOUT:   %no_op: init %empty_tuple.type = call %bound_method(%addr)
@@ -669,7 +669,7 @@ fn F0(n: i32) -> P.D {
 // CHECK:STDOUT:   %.loc14: ref %D = splice_block %return {}
 // CHECK:STDOUT:   %Make.call: init %D = call %Make.ref() to %.loc14
 // CHECK:STDOUT:   %Op.bound: <bound method> = bound_method %.loc14, constants.%Op.2d4
-// CHECK:STDOUT:   %Op.specific_fn: <specific function> = specific_function constants.%Op.2d4, @Op.3(constants.%D) [concrete = constants.%Op.specific_fn]
+// CHECK:STDOUT:   %Op.specific_fn: <specific function> = specific_function constants.%Op.2d4, @Op.2(constants.%D) [concrete = constants.%Op.specific_fn]
 // CHECK:STDOUT:   %bound_method: <bound method> = bound_method %.loc14, %Op.specific_fn
 // CHECK:STDOUT:   %addr: %ptr.19c = addr_of %.loc14
 // CHECK:STDOUT:   %no_op: init %empty_tuple.type = call %bound_method(%addr)
@@ -682,7 +682,7 @@ fn F0(n: i32) -> P.D {
 // CHECK:STDOUT:   %.loc15: ref %D = splice_block %return {}
 // CHECK:STDOUT:   %Make.call: init %D = call %Make.ref() to %.loc15
 // CHECK:STDOUT:   %Op.bound: <bound method> = bound_method %.loc15, constants.%Op.2d4
-// CHECK:STDOUT:   %Op.specific_fn: <specific function> = specific_function constants.%Op.2d4, @Op.3(constants.%D) [concrete = constants.%Op.specific_fn]
+// CHECK:STDOUT:   %Op.specific_fn: <specific function> = specific_function constants.%Op.2d4, @Op.2(constants.%D) [concrete = constants.%Op.specific_fn]
 // CHECK:STDOUT:   %bound_method: <bound method> = bound_method %.loc15, %Op.specific_fn
 // CHECK:STDOUT:   %addr: %ptr.19c = addr_of %.loc15
 // CHECK:STDOUT:   %no_op: init %empty_tuple.type = call %bound_method(%addr)
@@ -690,53 +690,53 @@ fn F0(n: i32) -> P.D {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @C(constants.%N.51e) {
-// CHECK:STDOUT:   %N.loc4_9.2 => constants.%N.51e
+// CHECK:STDOUT:   %N.loc4_9.1 => constants.%N.51e
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @C(constants.%int_0.6a9) {
-// CHECK:STDOUT:   %N.loc4_9.2 => constants.%int_0.6a9
+// CHECK:STDOUT:   %N.loc4_9.1 => constants.%int_0.6a9
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @C(constants.%int_1.5d2) {
-// CHECK:STDOUT:   %N.loc4_9.2 => constants.%int_1.5d2
+// CHECK:STDOUT:   %N.loc4_9.1 => constants.%int_1.5d2
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @C(constants.%int_2.ef8) {
-// CHECK:STDOUT:   %N.loc4_9.2 => constants.%int_2.ef8
+// CHECK:STDOUT:   %N.loc4_9.1 => constants.%int_2.ef8
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @C(constants.%int_3.822) {
-// CHECK:STDOUT:   %N.loc4_9.2 => constants.%int_3.822
+// CHECK:STDOUT:   %N.loc4_9.1 => constants.%int_3.822
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @C(constants.%int_4.940) {
-// CHECK:STDOUT:   %N.loc4_9.2 => constants.%int_4.940
+// CHECK:STDOUT:   %N.loc4_9.1 => constants.%int_4.940
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @C(constants.%int_5.0f6) {
-// CHECK:STDOUT:   %N.loc4_9.2 => constants.%int_5.0f6
+// CHECK:STDOUT:   %N.loc4_9.1 => constants.%int_5.0f6
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @C(constants.%int_6.e56) {
-// CHECK:STDOUT:   %N.loc4_9.2 => constants.%int_6.e56
+// CHECK:STDOUT:   %N.loc4_9.1 => constants.%int_6.e56
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @C(constants.%int_7.0b1) {
-// CHECK:STDOUT:   %N.loc4_9.2 => constants.%int_7.0b1
+// CHECK:STDOUT:   %N.loc4_9.1 => constants.%int_7.0b1
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT: }
@@ -766,23 +766,23 @@ fn F0(n: i32) -> P.D {
 // CHECK:STDOUT:   %ImplicitAs.type.cc7: type = generic_interface_type @ImplicitAs [concrete]
 // CHECK:STDOUT:   %ImplicitAs.generic: %ImplicitAs.type.cc7 = struct_value () [concrete]
 // CHECK:STDOUT:   %ImplicitAs.type.205: type = facet_type <@ImplicitAs, @ImplicitAs(%i32)> [concrete]
-// CHECK:STDOUT:   %Convert.type.1b6: type = fn_type @Convert.1, @ImplicitAs(%i32) [concrete]
+// CHECK:STDOUT:   %Convert.type.1b6: type = fn_type @Convert.10, @ImplicitAs(%i32) [concrete]
 // CHECK:STDOUT:   %To: Core.IntLiteral = bind_symbolic_name To, 0 [symbolic]
-// CHECK:STDOUT:   %Convert.type.0f9: type = fn_type @Convert.2, @ImplicitAs.impl.4f9(%To) [symbolic]
+// CHECK:STDOUT:   %Convert.type.0f9: type = fn_type @Convert.1, @ImplicitAs.impl.4f9(%To) [symbolic]
 // CHECK:STDOUT:   %Convert.f06: %Convert.type.0f9 = struct_value () [symbolic]
 // CHECK:STDOUT:   %ImplicitAs.impl_witness.c75: <witness> = impl_witness imports.%ImplicitAs.impl_witness_table.a2f, @ImplicitAs.impl.4f9(%int_32) [concrete]
-// CHECK:STDOUT:   %Convert.type.035: type = fn_type @Convert.2, @ImplicitAs.impl.4f9(%int_32) [concrete]
+// CHECK:STDOUT:   %Convert.type.035: type = fn_type @Convert.1, @ImplicitAs.impl.4f9(%int_32) [concrete]
 // CHECK:STDOUT:   %Convert.956: %Convert.type.035 = struct_value () [concrete]
 // CHECK:STDOUT:   %ImplicitAs.facet.921: %ImplicitAs.type.205 = facet_value Core.IntLiteral, (%ImplicitAs.impl_witness.c75) [concrete]
 // CHECK:STDOUT:   %.9c3: type = fn_type_with_self_type %Convert.type.1b6, %ImplicitAs.facet.921 [concrete]
 // CHECK:STDOUT:   %Convert.bound.d04: <bound method> = bound_method %int_0.5c6, %Convert.956 [concrete]
-// CHECK:STDOUT:   %Convert.specific_fn: <specific function> = specific_function %Convert.956, @Convert.2(%int_32) [concrete]
+// CHECK:STDOUT:   %Convert.specific_fn: <specific function> = specific_function %Convert.956, @Convert.1(%int_32) [concrete]
 // CHECK:STDOUT:   %bound_method.b6e: <bound method> = bound_method %int_0.5c6, %Convert.specific_fn [concrete]
 // CHECK:STDOUT:   %int_0.6a9: %i32 = int_value 0 [concrete]
 // CHECK:STDOUT:   %C.b00: type = class_type @C, @C(%int_0.6a9) [concrete]
 // CHECK:STDOUT:   %C.val.452: %C.b00 = struct_value () [concrete]
 // CHECK:STDOUT:   %ImplicitAs.type.5f9: type = facet_type <@ImplicitAs, @ImplicitAs(%D)> [concrete]
-// CHECK:STDOUT:   %Convert.type.334: type = fn_type @Convert.1, @ImplicitAs(%D) [concrete]
+// CHECK:STDOUT:   %Convert.type.334: type = fn_type @Convert.10, @ImplicitAs(%D) [concrete]
 // CHECK:STDOUT:   %Destroy.type: type = facet_type <@Destroy> [concrete]
 // CHECK:STDOUT:   %int_1.5d2: %i32 = int_value 1 [concrete]
 // CHECK:STDOUT:   %C.674: type = class_type @C, @C(%int_1.5d2) [concrete]
@@ -801,16 +801,16 @@ fn F0(n: i32) -> P.D {
 // CHECK:STDOUT:   %ImplicitAs.impl_witness.f53: <witness> = impl_witness imports.%ImplicitAs.impl_witness_table.f4b [concrete]
 // CHECK:STDOUT:   %ImplicitAs.facet.014: %ImplicitAs.type.5f9 = facet_value %C.b00, (%ImplicitAs.impl_witness.f53) [concrete]
 // CHECK:STDOUT:   %.a9c: type = fn_type_with_self_type %Convert.type.334, %ImplicitAs.facet.014 [concrete]
-// CHECK:STDOUT:   %Convert.type.971: type = fn_type @Convert.7 [concrete]
+// CHECK:STDOUT:   %Convert.type.971: type = fn_type @Convert.2 [concrete]
 // CHECK:STDOUT:   %Convert.bf9: %Convert.type.971 = struct_value () [concrete]
-// CHECK:STDOUT:   %Op.type.69c: type = fn_type @Op.2, @Destroy.impl(%D) [concrete]
+// CHECK:STDOUT:   %Op.type.69c: type = fn_type @Op.1, @Destroy.impl(%D) [concrete]
 // CHECK:STDOUT:   %Op.f5a: %Op.type.69c = struct_value () [concrete]
 // CHECK:STDOUT:   %ptr.f29: type = ptr_type %D [concrete]
-// CHECK:STDOUT:   %Op.specific_fn.bd1: <specific function> = specific_function %Op.f5a, @Op.2(%D) [concrete]
-// CHECK:STDOUT:   %Op.type.94c: type = fn_type @Op.2, @Destroy.impl(%C.b00) [concrete]
+// CHECK:STDOUT:   %Op.specific_fn.bd1: <specific function> = specific_function %Op.f5a, @Op.1(%D) [concrete]
+// CHECK:STDOUT:   %Op.type.94c: type = fn_type @Op.1, @Destroy.impl(%C.b00) [concrete]
 // CHECK:STDOUT:   %Op.ae6: %Op.type.94c = struct_value () [concrete]
 // CHECK:STDOUT:   %ptr.697: type = ptr_type %C.b00 [concrete]
-// CHECK:STDOUT:   %Op.specific_fn.e42: <specific function> = specific_function %Op.ae6, @Op.2(%C.b00) [concrete]
+// CHECK:STDOUT:   %Op.specific_fn.e42: <specific function> = specific_function %Op.ae6, @Op.1(%C.b00) [concrete]
 // CHECK:STDOUT:   %int_1.5b8: Core.IntLiteral = int_value 1 [concrete]
 // CHECK:STDOUT:   %Convert.bound.ab5: <bound method> = bound_method %int_1.5b8, %Convert.956 [concrete]
 // CHECK:STDOUT:   %bound_method.9a1: <bound method> = bound_method %int_1.5b8, %Convert.specific_fn [concrete]
@@ -818,12 +818,12 @@ fn F0(n: i32) -> P.D {
 // CHECK:STDOUT:   %ImplicitAs.impl_witness.fcb: <witness> = impl_witness imports.%ImplicitAs.impl_witness_table.297 [concrete]
 // CHECK:STDOUT:   %ImplicitAs.facet.b8a: %ImplicitAs.type.5f9 = facet_value %C.674, (%ImplicitAs.impl_witness.fcb) [concrete]
 // CHECK:STDOUT:   %.7d6: type = fn_type_with_self_type %Convert.type.334, %ImplicitAs.facet.b8a [concrete]
-// CHECK:STDOUT:   %Convert.type.bdd: type = fn_type @Convert.8 [concrete]
+// CHECK:STDOUT:   %Convert.type.bdd: type = fn_type @Convert.3 [concrete]
 // CHECK:STDOUT:   %Convert.c82: %Convert.type.bdd = struct_value () [concrete]
-// CHECK:STDOUT:   %Op.type.b6b: type = fn_type @Op.2, @Destroy.impl(%C.674) [concrete]
+// CHECK:STDOUT:   %Op.type.b6b: type = fn_type @Op.1, @Destroy.impl(%C.674) [concrete]
 // CHECK:STDOUT:   %Op.ad8: %Op.type.b6b = struct_value () [concrete]
 // CHECK:STDOUT:   %ptr.625: type = ptr_type %C.674 [concrete]
-// CHECK:STDOUT:   %Op.specific_fn.6b6: <specific function> = specific_function %Op.ad8, @Op.2(%C.674) [concrete]
+// CHECK:STDOUT:   %Op.specific_fn.6b6: <specific function> = specific_function %Op.ad8, @Op.1(%C.674) [concrete]
 // CHECK:STDOUT:   %int_2.ecc: Core.IntLiteral = int_value 2 [concrete]
 // CHECK:STDOUT:   %Convert.bound.ef9: <bound method> = bound_method %int_2.ecc, %Convert.956 [concrete]
 // CHECK:STDOUT:   %bound_method.b92: <bound method> = bound_method %int_2.ecc, %Convert.specific_fn [concrete]
@@ -831,12 +831,12 @@ fn F0(n: i32) -> P.D {
 // CHECK:STDOUT:   %ImplicitAs.impl_witness.746: <witness> = impl_witness imports.%ImplicitAs.impl_witness_table.8b3 [concrete]
 // CHECK:STDOUT:   %ImplicitAs.facet.d55: %ImplicitAs.type.5f9 = facet_value %C.681, (%ImplicitAs.impl_witness.746) [concrete]
 // CHECK:STDOUT:   %.987: type = fn_type_with_self_type %Convert.type.334, %ImplicitAs.facet.d55 [concrete]
-// CHECK:STDOUT:   %Convert.type.4c1: type = fn_type @Convert.9 [concrete]
+// CHECK:STDOUT:   %Convert.type.4c1: type = fn_type @Convert.4 [concrete]
 // CHECK:STDOUT:   %Convert.08c: %Convert.type.4c1 = struct_value () [concrete]
-// CHECK:STDOUT:   %Op.type.a31: type = fn_type @Op.2, @Destroy.impl(%C.681) [concrete]
+// CHECK:STDOUT:   %Op.type.a31: type = fn_type @Op.1, @Destroy.impl(%C.681) [concrete]
 // CHECK:STDOUT:   %Op.404: %Op.type.a31 = struct_value () [concrete]
 // CHECK:STDOUT:   %ptr.3bd: type = ptr_type %C.681 [concrete]
-// CHECK:STDOUT:   %Op.specific_fn.822: <specific function> = specific_function %Op.404, @Op.2(%C.681) [concrete]
+// CHECK:STDOUT:   %Op.specific_fn.822: <specific function> = specific_function %Op.404, @Op.1(%C.681) [concrete]
 // CHECK:STDOUT:   %int_3.1ba: Core.IntLiteral = int_value 3 [concrete]
 // CHECK:STDOUT:   %Convert.bound.b30: <bound method> = bound_method %int_3.1ba, %Convert.956 [concrete]
 // CHECK:STDOUT:   %bound_method.047: <bound method> = bound_method %int_3.1ba, %Convert.specific_fn [concrete]
@@ -844,12 +844,12 @@ fn F0(n: i32) -> P.D {
 // CHECK:STDOUT:   %ImplicitAs.impl_witness.f79: <witness> = impl_witness imports.%ImplicitAs.impl_witness_table.db0 [concrete]
 // CHECK:STDOUT:   %ImplicitAs.facet.aa1: %ImplicitAs.type.5f9 = facet_value %C.7ac, (%ImplicitAs.impl_witness.f79) [concrete]
 // CHECK:STDOUT:   %.efa: type = fn_type_with_self_type %Convert.type.334, %ImplicitAs.facet.aa1 [concrete]
-// CHECK:STDOUT:   %Convert.type.f89: type = fn_type @Convert.10 [concrete]
+// CHECK:STDOUT:   %Convert.type.f89: type = fn_type @Convert.5 [concrete]
 // CHECK:STDOUT:   %Convert.2dd: %Convert.type.f89 = struct_value () [concrete]
-// CHECK:STDOUT:   %Op.type.100: type = fn_type @Op.2, @Destroy.impl(%C.7ac) [concrete]
+// CHECK:STDOUT:   %Op.type.100: type = fn_type @Op.1, @Destroy.impl(%C.7ac) [concrete]
 // CHECK:STDOUT:   %Op.9cf: %Op.type.100 = struct_value () [concrete]
 // CHECK:STDOUT:   %ptr.2b1: type = ptr_type %C.7ac [concrete]
-// CHECK:STDOUT:   %Op.specific_fn.694: <specific function> = specific_function %Op.9cf, @Op.2(%C.7ac) [concrete]
+// CHECK:STDOUT:   %Op.specific_fn.694: <specific function> = specific_function %Op.9cf, @Op.1(%C.7ac) [concrete]
 // CHECK:STDOUT:   %int_4.0c1: Core.IntLiteral = int_value 4 [concrete]
 // CHECK:STDOUT:   %Convert.bound.ac3: <bound method> = bound_method %int_4.0c1, %Convert.956 [concrete]
 // CHECK:STDOUT:   %bound_method.1da: <bound method> = bound_method %int_4.0c1, %Convert.specific_fn [concrete]
@@ -857,12 +857,12 @@ fn F0(n: i32) -> P.D {
 // CHECK:STDOUT:   %ImplicitAs.impl_witness.16c: <witness> = impl_witness imports.%ImplicitAs.impl_witness_table.54d [concrete]
 // CHECK:STDOUT:   %ImplicitAs.facet.750: %ImplicitAs.type.5f9 = facet_value %C.89d, (%ImplicitAs.impl_witness.16c) [concrete]
 // CHECK:STDOUT:   %.26e: type = fn_type_with_self_type %Convert.type.334, %ImplicitAs.facet.750 [concrete]
-// CHECK:STDOUT:   %Convert.type.2ce: type = fn_type @Convert.11 [concrete]
+// CHECK:STDOUT:   %Convert.type.2ce: type = fn_type @Convert.6 [concrete]
 // CHECK:STDOUT:   %Convert.009: %Convert.type.2ce = struct_value () [concrete]
-// CHECK:STDOUT:   %Op.type.86c: type = fn_type @Op.2, @Destroy.impl(%C.89d) [concrete]
+// CHECK:STDOUT:   %Op.type.86c: type = fn_type @Op.1, @Destroy.impl(%C.89d) [concrete]
 // CHECK:STDOUT:   %Op.6b4: %Op.type.86c = struct_value () [concrete]
 // CHECK:STDOUT:   %ptr.c28b: type = ptr_type %C.89d [concrete]
-// CHECK:STDOUT:   %Op.specific_fn.357: <specific function> = specific_function %Op.6b4, @Op.2(%C.89d) [concrete]
+// CHECK:STDOUT:   %Op.specific_fn.357: <specific function> = specific_function %Op.6b4, @Op.1(%C.89d) [concrete]
 // CHECK:STDOUT:   %int_5.64b: Core.IntLiteral = int_value 5 [concrete]
 // CHECK:STDOUT:   %Convert.bound.4e6: <bound method> = bound_method %int_5.64b, %Convert.956 [concrete]
 // CHECK:STDOUT:   %bound_method.a25: <bound method> = bound_method %int_5.64b, %Convert.specific_fn [concrete]
@@ -870,12 +870,12 @@ fn F0(n: i32) -> P.D {
 // CHECK:STDOUT:   %ImplicitAs.impl_witness.aa9: <witness> = impl_witness imports.%ImplicitAs.impl_witness_table.e3f [concrete]
 // CHECK:STDOUT:   %ImplicitAs.facet.8cc: %ImplicitAs.type.5f9 = facet_value %C.f0a, (%ImplicitAs.impl_witness.aa9) [concrete]
 // CHECK:STDOUT:   %.eaf: type = fn_type_with_self_type %Convert.type.334, %ImplicitAs.facet.8cc [concrete]
-// CHECK:STDOUT:   %Convert.type.e9d: type = fn_type @Convert.12 [concrete]
+// CHECK:STDOUT:   %Convert.type.e9d: type = fn_type @Convert.7 [concrete]
 // CHECK:STDOUT:   %Convert.b66: %Convert.type.e9d = struct_value () [concrete]
-// CHECK:STDOUT:   %Op.type.4df: type = fn_type @Op.2, @Destroy.impl(%C.f0a) [concrete]
+// CHECK:STDOUT:   %Op.type.4df: type = fn_type @Op.1, @Destroy.impl(%C.f0a) [concrete]
 // CHECK:STDOUT:   %Op.985: %Op.type.4df = struct_value () [concrete]
 // CHECK:STDOUT:   %ptr.24c: type = ptr_type %C.f0a [concrete]
-// CHECK:STDOUT:   %Op.specific_fn.a66: <specific function> = specific_function %Op.985, @Op.2(%C.f0a) [concrete]
+// CHECK:STDOUT:   %Op.specific_fn.a66: <specific function> = specific_function %Op.985, @Op.1(%C.f0a) [concrete]
 // CHECK:STDOUT:   %int_6.462: Core.IntLiteral = int_value 6 [concrete]
 // CHECK:STDOUT:   %Convert.bound.ce9: <bound method> = bound_method %int_6.462, %Convert.956 [concrete]
 // CHECK:STDOUT:   %bound_method.efa: <bound method> = bound_method %int_6.462, %Convert.specific_fn [concrete]
@@ -883,12 +883,12 @@ fn F0(n: i32) -> P.D {
 // CHECK:STDOUT:   %ImplicitAs.impl_witness.e4d: <witness> = impl_witness imports.%ImplicitAs.impl_witness_table.b31 [concrete]
 // CHECK:STDOUT:   %ImplicitAs.facet.a69: %ImplicitAs.type.5f9 = facet_value %C.c60, (%ImplicitAs.impl_witness.e4d) [concrete]
 // CHECK:STDOUT:   %.874: type = fn_type_with_self_type %Convert.type.334, %ImplicitAs.facet.a69 [concrete]
-// CHECK:STDOUT:   %Convert.type.4b8: type = fn_type @Convert.13 [concrete]
+// CHECK:STDOUT:   %Convert.type.4b8: type = fn_type @Convert.8 [concrete]
 // CHECK:STDOUT:   %Convert.f59: %Convert.type.4b8 = struct_value () [concrete]
-// CHECK:STDOUT:   %Op.type.32d: type = fn_type @Op.2, @Destroy.impl(%C.c60) [concrete]
+// CHECK:STDOUT:   %Op.type.32d: type = fn_type @Op.1, @Destroy.impl(%C.c60) [concrete]
 // CHECK:STDOUT:   %Op.ca5: %Op.type.32d = struct_value () [concrete]
 // CHECK:STDOUT:   %ptr.b5e: type = ptr_type %C.c60 [concrete]
-// CHECK:STDOUT:   %Op.specific_fn.8d0: <specific function> = specific_function %Op.ca5, @Op.2(%C.c60) [concrete]
+// CHECK:STDOUT:   %Op.specific_fn.8d0: <specific function> = specific_function %Op.ca5, @Op.1(%C.c60) [concrete]
 // CHECK:STDOUT:   %int_7.29f: Core.IntLiteral = int_value 7 [concrete]
 // CHECK:STDOUT:   %Convert.bound.208: <bound method> = bound_method %int_7.29f, %Convert.956 [concrete]
 // CHECK:STDOUT:   %bound_method.3bd: <bound method> = bound_method %int_7.29f, %Convert.specific_fn [concrete]
@@ -896,12 +896,12 @@ fn F0(n: i32) -> P.D {
 // CHECK:STDOUT:   %ImplicitAs.impl_witness.0ca: <witness> = impl_witness imports.%ImplicitAs.impl_witness_table.056 [concrete]
 // CHECK:STDOUT:   %ImplicitAs.facet.cca: %ImplicitAs.type.5f9 = facet_value %C.304, (%ImplicitAs.impl_witness.0ca) [concrete]
 // CHECK:STDOUT:   %.79b: type = fn_type_with_self_type %Convert.type.334, %ImplicitAs.facet.cca [concrete]
-// CHECK:STDOUT:   %Convert.type.c7e: type = fn_type @Convert.14 [concrete]
+// CHECK:STDOUT:   %Convert.type.c7e: type = fn_type @Convert.9 [concrete]
 // CHECK:STDOUT:   %Convert.6c1: %Convert.type.c7e = struct_value () [concrete]
-// CHECK:STDOUT:   %Op.type.986: type = fn_type @Op.2, @Destroy.impl(%C.304) [concrete]
+// CHECK:STDOUT:   %Op.type.986: type = fn_type @Op.1, @Destroy.impl(%C.304) [concrete]
 // CHECK:STDOUT:   %Op.6fc: %Op.type.986 = struct_value () [concrete]
 // CHECK:STDOUT:   %ptr.dc3: type = ptr_type %C.304 [concrete]
-// CHECK:STDOUT:   %Op.specific_fn.a08: <specific function> = specific_function %Op.6fc, @Op.2(%C.304) [concrete]
+// CHECK:STDOUT:   %Op.specific_fn.a08: <specific function> = specific_function %Op.6fc, @Op.1(%C.304) [concrete]
 // CHECK:STDOUT:   %Make.type: type = fn_type @Make [concrete]
 // CHECK:STDOUT:   %Make: %Make.type = struct_value () [concrete]
 // CHECK:STDOUT: }
@@ -1078,7 +1078,7 @@ fn F0(n: i32) -> P.D {
 // CHECK:STDOUT:   %int_0: Core.IntLiteral = int_value 0 [concrete = constants.%int_0.5c6]
 // CHECK:STDOUT:   %impl.elem0.loc7_34: %.9c3 = impl_witness_access constants.%ImplicitAs.impl_witness.c75, element0 [concrete = constants.%Convert.956]
 // CHECK:STDOUT:   %bound_method.loc7_34.1: <bound method> = bound_method %int_0, %impl.elem0.loc7_34 [concrete = constants.%Convert.bound.d04]
-// CHECK:STDOUT:   %specific_fn.loc7: <specific function> = specific_function %impl.elem0.loc7_34, @Convert.2(constants.%int_32) [concrete = constants.%Convert.specific_fn]
+// CHECK:STDOUT:   %specific_fn.loc7: <specific function> = specific_function %impl.elem0.loc7_34, @Convert.1(constants.%int_32) [concrete = constants.%Convert.specific_fn]
 // CHECK:STDOUT:   %bound_method.loc7_34.2: <bound method> = bound_method %int_0, %specific_fn.loc7 [concrete = constants.%bound_method.b6e]
 // CHECK:STDOUT:   %int.convert_checked.loc7: init %i32 = call %bound_method.loc7_34.2(%int_0) [concrete = constants.%int_0.6a9]
 // CHECK:STDOUT:   %.loc7_34.1: %i32 = value_of_initializer %int.convert_checked.loc7 [concrete = constants.%int_0.6a9]
@@ -1095,12 +1095,12 @@ fn F0(n: i32) -> P.D {
 // CHECK:STDOUT:   %Convert.call.loc7: init %D = call %bound_method.loc7_35.1(%.loc7_26.2) to %.loc7_35.1
 // CHECK:STDOUT:   %.loc7_35.2: init %D = converted %.loc7_26.1, %Convert.call.loc7
 // CHECK:STDOUT:   %Op.bound.loc7_35.1: <bound method> = bound_method %.loc7_35.1, constants.%Op.f5a
-// CHECK:STDOUT:   %Op.specific_fn.1: <specific function> = specific_function constants.%Op.f5a, @Op.2(constants.%D) [concrete = constants.%Op.specific_fn.bd1]
+// CHECK:STDOUT:   %Op.specific_fn.1: <specific function> = specific_function constants.%Op.f5a, @Op.1(constants.%D) [concrete = constants.%Op.specific_fn.bd1]
 // CHECK:STDOUT:   %bound_method.loc7_35.2: <bound method> = bound_method %.loc7_35.1, %Op.specific_fn.1
 // CHECK:STDOUT:   %addr.loc7_35.1: %ptr.f29 = addr_of %.loc7_35.1
 // CHECK:STDOUT:   %no_op.loc7_35.1: init %empty_tuple.type = call %bound_method.loc7_35.2(%addr.loc7_35.1)
 // CHECK:STDOUT:   %Op.bound.loc7_24.1: <bound method> = bound_method %.loc7_24.2, constants.%Op.ae6
-// CHECK:STDOUT:   %Op.specific_fn.2: <specific function> = specific_function constants.%Op.ae6, @Op.2(constants.%C.b00) [concrete = constants.%Op.specific_fn.e42]
+// CHECK:STDOUT:   %Op.specific_fn.2: <specific function> = specific_function constants.%Op.ae6, @Op.1(constants.%C.b00) [concrete = constants.%Op.specific_fn.e42]
 // CHECK:STDOUT:   %bound_method.loc7_24.1: <bound method> = bound_method %.loc7_24.2, %Op.specific_fn.2
 // CHECK:STDOUT:   %addr.loc7_24.1: %ptr.697 = addr_of %.loc7_24.2
 // CHECK:STDOUT:   %no_op.loc7_24.1: init %empty_tuple.type = call %bound_method.loc7_24.1(%addr.loc7_24.1)
@@ -1117,7 +1117,7 @@ fn F0(n: i32) -> P.D {
 // CHECK:STDOUT:   %int_1: Core.IntLiteral = int_value 1 [concrete = constants.%int_1.5b8]
 // CHECK:STDOUT:   %impl.elem0.loc8_34: %.9c3 = impl_witness_access constants.%ImplicitAs.impl_witness.c75, element0 [concrete = constants.%Convert.956]
 // CHECK:STDOUT:   %bound_method.loc8_34.1: <bound method> = bound_method %int_1, %impl.elem0.loc8_34 [concrete = constants.%Convert.bound.ab5]
-// CHECK:STDOUT:   %specific_fn.loc8: <specific function> = specific_function %impl.elem0.loc8_34, @Convert.2(constants.%int_32) [concrete = constants.%Convert.specific_fn]
+// CHECK:STDOUT:   %specific_fn.loc8: <specific function> = specific_function %impl.elem0.loc8_34, @Convert.1(constants.%int_32) [concrete = constants.%Convert.specific_fn]
 // CHECK:STDOUT:   %bound_method.loc8_34.2: <bound method> = bound_method %int_1, %specific_fn.loc8 [concrete = constants.%bound_method.9a1]
 // CHECK:STDOUT:   %int.convert_checked.loc8: init %i32 = call %bound_method.loc8_34.2(%int_1) [concrete = constants.%int_1.5d2]
 // CHECK:STDOUT:   %.loc8_34.1: %i32 = value_of_initializer %int.convert_checked.loc8 [concrete = constants.%int_1.5d2]
@@ -1134,22 +1134,22 @@ fn F0(n: i32) -> P.D {
 // CHECK:STDOUT:   %Convert.call.loc8: init %D = call %bound_method.loc8_35.1(%.loc8_26.2) to %.loc8_35.1
 // CHECK:STDOUT:   %.loc8_35.2: init %D = converted %.loc8_26.1, %Convert.call.loc8
 // CHECK:STDOUT:   %Op.bound.loc8_35.1: <bound method> = bound_method %.loc8_35.1, constants.%Op.f5a
-// CHECK:STDOUT:   %Op.specific_fn.3: <specific function> = specific_function constants.%Op.f5a, @Op.2(constants.%D) [concrete = constants.%Op.specific_fn.bd1]
+// CHECK:STDOUT:   %Op.specific_fn.3: <specific function> = specific_function constants.%Op.f5a, @Op.1(constants.%D) [concrete = constants.%Op.specific_fn.bd1]
 // CHECK:STDOUT:   %bound_method.loc8_35.2: <bound method> = bound_method %.loc8_35.1, %Op.specific_fn.3
 // CHECK:STDOUT:   %addr.loc8_35.1: %ptr.f29 = addr_of %.loc8_35.1
 // CHECK:STDOUT:   %no_op.loc8_35.1: init %empty_tuple.type = call %bound_method.loc8_35.2(%addr.loc8_35.1)
 // CHECK:STDOUT:   %Op.bound.loc8_24.1: <bound method> = bound_method %.loc8_24.2, constants.%Op.ad8
-// CHECK:STDOUT:   %Op.specific_fn.4: <specific function> = specific_function constants.%Op.ad8, @Op.2(constants.%C.674) [concrete = constants.%Op.specific_fn.6b6]
+// CHECK:STDOUT:   %Op.specific_fn.4: <specific function> = specific_function constants.%Op.ad8, @Op.1(constants.%C.674) [concrete = constants.%Op.specific_fn.6b6]
 // CHECK:STDOUT:   %bound_method.loc8_24.1: <bound method> = bound_method %.loc8_24.2, %Op.specific_fn.4
 // CHECK:STDOUT:   %addr.loc8_24.1: %ptr.625 = addr_of %.loc8_24.2
 // CHECK:STDOUT:   %no_op.loc8_24.1: init %empty_tuple.type = call %bound_method.loc8_24.1(%addr.loc8_24.1)
 // CHECK:STDOUT:   %Op.bound.loc7_35.2: <bound method> = bound_method %.loc7_35.1, constants.%Op.f5a
-// CHECK:STDOUT:   %Op.specific_fn.5: <specific function> = specific_function constants.%Op.f5a, @Op.2(constants.%D) [concrete = constants.%Op.specific_fn.bd1]
+// CHECK:STDOUT:   %Op.specific_fn.5: <specific function> = specific_function constants.%Op.f5a, @Op.1(constants.%D) [concrete = constants.%Op.specific_fn.bd1]
 // CHECK:STDOUT:   %bound_method.loc7_35.3: <bound method> = bound_method %.loc7_35.1, %Op.specific_fn.5
 // CHECK:STDOUT:   %addr.loc7_35.2: %ptr.f29 = addr_of %.loc7_35.1
 // CHECK:STDOUT:   %no_op.loc7_35.2: init %empty_tuple.type = call %bound_method.loc7_35.3(%addr.loc7_35.2)
 // CHECK:STDOUT:   %Op.bound.loc7_24.2: <bound method> = bound_method %.loc7_24.2, constants.%Op.ae6
-// CHECK:STDOUT:   %Op.specific_fn.6: <specific function> = specific_function constants.%Op.ae6, @Op.2(constants.%C.b00) [concrete = constants.%Op.specific_fn.e42]
+// CHECK:STDOUT:   %Op.specific_fn.6: <specific function> = specific_function constants.%Op.ae6, @Op.1(constants.%C.b00) [concrete = constants.%Op.specific_fn.e42]
 // CHECK:STDOUT:   %bound_method.loc7_24.2: <bound method> = bound_method %.loc7_24.2, %Op.specific_fn.6
 // CHECK:STDOUT:   %addr.loc7_24.2: %ptr.697 = addr_of %.loc7_24.2
 // CHECK:STDOUT:   %no_op.loc7_24.2: init %empty_tuple.type = call %bound_method.loc7_24.2(%addr.loc7_24.2)
@@ -1166,7 +1166,7 @@ fn F0(n: i32) -> P.D {
 // CHECK:STDOUT:   %int_2: Core.IntLiteral = int_value 2 [concrete = constants.%int_2.ecc]
 // CHECK:STDOUT:   %impl.elem0.loc9_34: %.9c3 = impl_witness_access constants.%ImplicitAs.impl_witness.c75, element0 [concrete = constants.%Convert.956]
 // CHECK:STDOUT:   %bound_method.loc9_34.1: <bound method> = bound_method %int_2, %impl.elem0.loc9_34 [concrete = constants.%Convert.bound.ef9]
-// CHECK:STDOUT:   %specific_fn.loc9: <specific function> = specific_function %impl.elem0.loc9_34, @Convert.2(constants.%int_32) [concrete = constants.%Convert.specific_fn]
+// CHECK:STDOUT:   %specific_fn.loc9: <specific function> = specific_function %impl.elem0.loc9_34, @Convert.1(constants.%int_32) [concrete = constants.%Convert.specific_fn]
 // CHECK:STDOUT:   %bound_method.loc9_34.2: <bound method> = bound_method %int_2, %specific_fn.loc9 [concrete = constants.%bound_method.b92]
 // CHECK:STDOUT:   %int.convert_checked.loc9: init %i32 = call %bound_method.loc9_34.2(%int_2) [concrete = constants.%int_2.ef8]
 // CHECK:STDOUT:   %.loc9_34.1: %i32 = value_of_initializer %int.convert_checked.loc9 [concrete = constants.%int_2.ef8]
@@ -1183,32 +1183,32 @@ fn F0(n: i32) -> P.D {
 // CHECK:STDOUT:   %Convert.call.loc9: init %D = call %bound_method.loc9_35.1(%.loc9_26.2) to %.loc9_35.1
 // CHECK:STDOUT:   %.loc9_35.2: init %D = converted %.loc9_26.1, %Convert.call.loc9
 // CHECK:STDOUT:   %Op.bound.loc9_35.1: <bound method> = bound_method %.loc9_35.1, constants.%Op.f5a
-// CHECK:STDOUT:   %Op.specific_fn.7: <specific function> = specific_function constants.%Op.f5a, @Op.2(constants.%D) [concrete = constants.%Op.specific_fn.bd1]
+// CHECK:STDOUT:   %Op.specific_fn.7: <specific function> = specific_function constants.%Op.f5a, @Op.1(constants.%D) [concrete = constants.%Op.specific_fn.bd1]
 // CHECK:STDOUT:   %bound_method.loc9_35.2: <bound method> = bound_method %.loc9_35.1, %Op.specific_fn.7
 // CHECK:STDOUT:   %addr.loc9_35.1: %ptr.f29 = addr_of %.loc9_35.1
 // CHECK:STDOUT:   %no_op.loc9_35.1: init %empty_tuple.type = call %bound_method.loc9_35.2(%addr.loc9_35.1)
 // CHECK:STDOUT:   %Op.bound.loc9_24.1: <bound method> = bound_method %.loc9_24.2, constants.%Op.404
-// CHECK:STDOUT:   %Op.specific_fn.8: <specific function> = specific_function constants.%Op.404, @Op.2(constants.%C.681) [concrete = constants.%Op.specific_fn.822]
+// CHECK:STDOUT:   %Op.specific_fn.8: <specific function> = specific_function constants.%Op.404, @Op.1(constants.%C.681) [concrete = constants.%Op.specific_fn.822]
 // CHECK:STDOUT:   %bound_method.loc9_24.1: <bound method> = bound_method %.loc9_24.2, %Op.specific_fn.8
 // CHECK:STDOUT:   %addr.loc9_24.1: %ptr.3bd = addr_of %.loc9_24.2
 // CHECK:STDOUT:   %no_op.loc9_24.1: init %empty_tuple.type = call %bound_method.loc9_24.1(%addr.loc9_24.1)
 // CHECK:STDOUT:   %Op.bound.loc8_35.2: <bound method> = bound_method %.loc8_35.1, constants.%Op.f5a
-// CHECK:STDOUT:   %Op.specific_fn.9: <specific function> = specific_function constants.%Op.f5a, @Op.2(constants.%D) [concrete = constants.%Op.specific_fn.bd1]
+// CHECK:STDOUT:   %Op.specific_fn.9: <specific function> = specific_function constants.%Op.f5a, @Op.1(constants.%D) [concrete = constants.%Op.specific_fn.bd1]
 // CHECK:STDOUT:   %bound_method.loc8_35.3: <bound method> = bound_method %.loc8_35.1, %Op.specific_fn.9
 // CHECK:STDOUT:   %addr.loc8_35.2: %ptr.f29 = addr_of %.loc8_35.1
 // CHECK:STDOUT:   %no_op.loc8_35.2: init %empty_tuple.type = call %bound_method.loc8_35.3(%addr.loc8_35.2)
 // CHECK:STDOUT:   %Op.bound.loc8_24.2: <bound method> = bound_method %.loc8_24.2, constants.%Op.ad8
-// CHECK:STDOUT:   %Op.specific_fn.10: <specific function> = specific_function constants.%Op.ad8, @Op.2(constants.%C.674) [concrete = constants.%Op.specific_fn.6b6]
+// CHECK:STDOUT:   %Op.specific_fn.10: <specific function> = specific_function constants.%Op.ad8, @Op.1(constants.%C.674) [concrete = constants.%Op.specific_fn.6b6]
 // CHECK:STDOUT:   %bound_method.loc8_24.2: <bound method> = bound_method %.loc8_24.2, %Op.specific_fn.10
 // CHECK:STDOUT:   %addr.loc8_24.2: %ptr.625 = addr_of %.loc8_24.2
 // CHECK:STDOUT:   %no_op.loc8_24.2: init %empty_tuple.type = call %bound_method.loc8_24.2(%addr.loc8_24.2)
 // CHECK:STDOUT:   %Op.bound.loc7_35.3: <bound method> = bound_method %.loc7_35.1, constants.%Op.f5a
-// CHECK:STDOUT:   %Op.specific_fn.11: <specific function> = specific_function constants.%Op.f5a, @Op.2(constants.%D) [concrete = constants.%Op.specific_fn.bd1]
+// CHECK:STDOUT:   %Op.specific_fn.11: <specific function> = specific_function constants.%Op.f5a, @Op.1(constants.%D) [concrete = constants.%Op.specific_fn.bd1]
 // CHECK:STDOUT:   %bound_method.loc7_35.4: <bound method> = bound_method %.loc7_35.1, %Op.specific_fn.11
 // CHECK:STDOUT:   %addr.loc7_35.3: %ptr.f29 = addr_of %.loc7_35.1
 // CHECK:STDOUT:   %no_op.loc7_35.3: init %empty_tuple.type = call %bound_method.loc7_35.4(%addr.loc7_35.3)
 // CHECK:STDOUT:   %Op.bound.loc7_24.3: <bound method> = bound_method %.loc7_24.2, constants.%Op.ae6
-// CHECK:STDOUT:   %Op.specific_fn.12: <specific function> = specific_function constants.%Op.ae6, @Op.2(constants.%C.b00) [concrete = constants.%Op.specific_fn.e42]
+// CHECK:STDOUT:   %Op.specific_fn.12: <specific function> = specific_function constants.%Op.ae6, @Op.1(constants.%C.b00) [concrete = constants.%Op.specific_fn.e42]
 // CHECK:STDOUT:   %bound_method.loc7_24.3: <bound method> = bound_method %.loc7_24.2, %Op.specific_fn.12
 // CHECK:STDOUT:   %addr.loc7_24.3: %ptr.697 = addr_of %.loc7_24.2
 // CHECK:STDOUT:   %no_op.loc7_24.3: init %empty_tuple.type = call %bound_method.loc7_24.3(%addr.loc7_24.3)
@@ -1225,7 +1225,7 @@ fn F0(n: i32) -> P.D {
 // CHECK:STDOUT:   %int_3: Core.IntLiteral = int_value 3 [concrete = constants.%int_3.1ba]
 // CHECK:STDOUT:   %impl.elem0.loc10_34: %.9c3 = impl_witness_access constants.%ImplicitAs.impl_witness.c75, element0 [concrete = constants.%Convert.956]
 // CHECK:STDOUT:   %bound_method.loc10_34.1: <bound method> = bound_method %int_3, %impl.elem0.loc10_34 [concrete = constants.%Convert.bound.b30]
-// CHECK:STDOUT:   %specific_fn.loc10: <specific function> = specific_function %impl.elem0.loc10_34, @Convert.2(constants.%int_32) [concrete = constants.%Convert.specific_fn]
+// CHECK:STDOUT:   %specific_fn.loc10: <specific function> = specific_function %impl.elem0.loc10_34, @Convert.1(constants.%int_32) [concrete = constants.%Convert.specific_fn]
 // CHECK:STDOUT:   %bound_method.loc10_34.2: <bound method> = bound_method %int_3, %specific_fn.loc10 [concrete = constants.%bound_method.047]
 // CHECK:STDOUT:   %int.convert_checked.loc10: init %i32 = call %bound_method.loc10_34.2(%int_3) [concrete = constants.%int_3.822]
 // CHECK:STDOUT:   %.loc10_34.1: %i32 = value_of_initializer %int.convert_checked.loc10 [concrete = constants.%int_3.822]
@@ -1242,42 +1242,42 @@ fn F0(n: i32) -> P.D {
 // CHECK:STDOUT:   %Convert.call.loc10: init %D = call %bound_method.loc10_35.1(%.loc10_26.2) to %.loc10_35.1
 // CHECK:STDOUT:   %.loc10_35.2: init %D = converted %.loc10_26.1, %Convert.call.loc10
 // CHECK:STDOUT:   %Op.bound.loc10_35.1: <bound method> = bound_method %.loc10_35.1, constants.%Op.f5a
-// CHECK:STDOUT:   %Op.specific_fn.13: <specific function> = specific_function constants.%Op.f5a, @Op.2(constants.%D) [concrete = constants.%Op.specific_fn.bd1]
+// CHECK:STDOUT:   %Op.specific_fn.13: <specific function> = specific_function constants.%Op.f5a, @Op.1(constants.%D) [concrete = constants.%Op.specific_fn.bd1]
 // CHECK:STDOUT:   %bound_method.loc10_35.2: <bound method> = bound_method %.loc10_35.1, %Op.specific_fn.13
 // CHECK:STDOUT:   %addr.loc10_35.1: %ptr.f29 = addr_of %.loc10_35.1
 // CHECK:STDOUT:   %no_op.loc10_35.1: init %empty_tuple.type = call %bound_method.loc10_35.2(%addr.loc10_35.1)
 // CHECK:STDOUT:   %Op.bound.loc10_24.1: <bound method> = bound_method %.loc10_24.2, constants.%Op.9cf
-// CHECK:STDOUT:   %Op.specific_fn.14: <specific function> = specific_function constants.%Op.9cf, @Op.2(constants.%C.7ac) [concrete = constants.%Op.specific_fn.694]
+// CHECK:STDOUT:   %Op.specific_fn.14: <specific function> = specific_function constants.%Op.9cf, @Op.1(constants.%C.7ac) [concrete = constants.%Op.specific_fn.694]
 // CHECK:STDOUT:   %bound_method.loc10_24.1: <bound method> = bound_method %.loc10_24.2, %Op.specific_fn.14
 // CHECK:STDOUT:   %addr.loc10_24.1: %ptr.2b1 = addr_of %.loc10_24.2
 // CHECK:STDOUT:   %no_op.loc10_24.1: init %empty_tuple.type = call %bound_method.loc10_24.1(%addr.loc10_24.1)
 // CHECK:STDOUT:   %Op.bound.loc9_35.2: <bound method> = bound_method %.loc9_35.1, constants.%Op.f5a
-// CHECK:STDOUT:   %Op.specific_fn.15: <specific function> = specific_function constants.%Op.f5a, @Op.2(constants.%D) [concrete = constants.%Op.specific_fn.bd1]
+// CHECK:STDOUT:   %Op.specific_fn.15: <specific function> = specific_function constants.%Op.f5a, @Op.1(constants.%D) [concrete = constants.%Op.specific_fn.bd1]
 // CHECK:STDOUT:   %bound_method.loc9_35.3: <bound method> = bound_method %.loc9_35.1, %Op.specific_fn.15
 // CHECK:STDOUT:   %addr.loc9_35.2: %ptr.f29 = addr_of %.loc9_35.1
 // CHECK:STDOUT:   %no_op.loc9_35.2: init %empty_tuple.type = call %bound_method.loc9_35.3(%addr.loc9_35.2)
 // CHECK:STDOUT:   %Op.bound.loc9_24.2: <bound method> = bound_method %.loc9_24.2, constants.%Op.404
-// CHECK:STDOUT:   %Op.specific_fn.16: <specific function> = specific_function constants.%Op.404, @Op.2(constants.%C.681) [concrete = constants.%Op.specific_fn.822]
+// CHECK:STDOUT:   %Op.specific_fn.16: <specific function> = specific_function constants.%Op.404, @Op.1(constants.%C.681) [concrete = constants.%Op.specific_fn.822]
 // CHECK:STDOUT:   %bound_method.loc9_24.2: <bound method> = bound_method %.loc9_24.2, %Op.specific_fn.16
 // CHECK:STDOUT:   %addr.loc9_24.2: %ptr.3bd = addr_of %.loc9_24.2
 // CHECK:STDOUT:   %no_op.loc9_24.2: init %empty_tuple.type = call %bound_method.loc9_24.2(%addr.loc9_24.2)
 // CHECK:STDOUT:   %Op.bound.loc8_35.3: <bound method> = bound_method %.loc8_35.1, constants.%Op.f5a
-// CHECK:STDOUT:   %Op.specific_fn.17: <specific function> = specific_function constants.%Op.f5a, @Op.2(constants.%D) [concrete = constants.%Op.specific_fn.bd1]
+// CHECK:STDOUT:   %Op.specific_fn.17: <specific function> = specific_function constants.%Op.f5a, @Op.1(constants.%D) [concrete = constants.%Op.specific_fn.bd1]
 // CHECK:STDOUT:   %bound_method.loc8_35.4: <bound method> = bound_method %.loc8_35.1, %Op.specific_fn.17
 // CHECK:STDOUT:   %addr.loc8_35.3: %ptr.f29 = addr_of %.loc8_35.1
 // CHECK:STDOUT:   %no_op.loc8_35.3: init %empty_tuple.type = call %bound_method.loc8_35.4(%addr.loc8_35.3)
 // CHECK:STDOUT:   %Op.bound.loc8_24.3: <bound method> = bound_method %.loc8_24.2, constants.%Op.ad8
-// CHECK:STDOUT:   %Op.specific_fn.18: <specific function> = specific_function constants.%Op.ad8, @Op.2(constants.%C.674) [concrete = constants.%Op.specific_fn.6b6]
+// CHECK:STDOUT:   %Op.specific_fn.18: <specific function> = specific_function constants.%Op.ad8, @Op.1(constants.%C.674) [concrete = constants.%Op.specific_fn.6b6]
 // CHECK:STDOUT:   %bound_method.loc8_24.3: <bound method> = bound_method %.loc8_24.2, %Op.specific_fn.18
 // CHECK:STDOUT:   %addr.loc8_24.3: %ptr.625 = addr_of %.loc8_24.2
 // CHECK:STDOUT:   %no_op.loc8_24.3: init %empty_tuple.type = call %bound_method.loc8_24.3(%addr.loc8_24.3)
 // CHECK:STDOUT:   %Op.bound.loc7_35.4: <bound method> = bound_method %.loc7_35.1, constants.%Op.f5a
-// CHECK:STDOUT:   %Op.specific_fn.19: <specific function> = specific_function constants.%Op.f5a, @Op.2(constants.%D) [concrete = constants.%Op.specific_fn.bd1]
+// CHECK:STDOUT:   %Op.specific_fn.19: <specific function> = specific_function constants.%Op.f5a, @Op.1(constants.%D) [concrete = constants.%Op.specific_fn.bd1]
 // CHECK:STDOUT:   %bound_method.loc7_35.5: <bound method> = bound_method %.loc7_35.1, %Op.specific_fn.19
 // CHECK:STDOUT:   %addr.loc7_35.4: %ptr.f29 = addr_of %.loc7_35.1
 // CHECK:STDOUT:   %no_op.loc7_35.4: init %empty_tuple.type = call %bound_method.loc7_35.5(%addr.loc7_35.4)
 // CHECK:STDOUT:   %Op.bound.loc7_24.4: <bound method> = bound_method %.loc7_24.2, constants.%Op.ae6
-// CHECK:STDOUT:   %Op.specific_fn.20: <specific function> = specific_function constants.%Op.ae6, @Op.2(constants.%C.b00) [concrete = constants.%Op.specific_fn.e42]
+// CHECK:STDOUT:   %Op.specific_fn.20: <specific function> = specific_function constants.%Op.ae6, @Op.1(constants.%C.b00) [concrete = constants.%Op.specific_fn.e42]
 // CHECK:STDOUT:   %bound_method.loc7_24.4: <bound method> = bound_method %.loc7_24.2, %Op.specific_fn.20
 // CHECK:STDOUT:   %addr.loc7_24.4: %ptr.697 = addr_of %.loc7_24.2
 // CHECK:STDOUT:   %no_op.loc7_24.4: init %empty_tuple.type = call %bound_method.loc7_24.4(%addr.loc7_24.4)
@@ -1294,7 +1294,7 @@ fn F0(n: i32) -> P.D {
 // CHECK:STDOUT:   %int_4: Core.IntLiteral = int_value 4 [concrete = constants.%int_4.0c1]
 // CHECK:STDOUT:   %impl.elem0.loc11_34: %.9c3 = impl_witness_access constants.%ImplicitAs.impl_witness.c75, element0 [concrete = constants.%Convert.956]
 // CHECK:STDOUT:   %bound_method.loc11_34.1: <bound method> = bound_method %int_4, %impl.elem0.loc11_34 [concrete = constants.%Convert.bound.ac3]
-// CHECK:STDOUT:   %specific_fn.loc11: <specific function> = specific_function %impl.elem0.loc11_34, @Convert.2(constants.%int_32) [concrete = constants.%Convert.specific_fn]
+// CHECK:STDOUT:   %specific_fn.loc11: <specific function> = specific_function %impl.elem0.loc11_34, @Convert.1(constants.%int_32) [concrete = constants.%Convert.specific_fn]
 // CHECK:STDOUT:   %bound_method.loc11_34.2: <bound method> = bound_method %int_4, %specific_fn.loc11 [concrete = constants.%bound_method.1da]
 // CHECK:STDOUT:   %int.convert_checked.loc11: init %i32 = call %bound_method.loc11_34.2(%int_4) [concrete = constants.%int_4.940]
 // CHECK:STDOUT:   %.loc11_34.1: %i32 = value_of_initializer %int.convert_checked.loc11 [concrete = constants.%int_4.940]
@@ -1311,52 +1311,52 @@ fn F0(n: i32) -> P.D {
 // CHECK:STDOUT:   %Convert.call.loc11: init %D = call %bound_method.loc11_35.1(%.loc11_26.2) to %.loc11_35.1
 // CHECK:STDOUT:   %.loc11_35.2: init %D = converted %.loc11_26.1, %Convert.call.loc11
 // CHECK:STDOUT:   %Op.bound.loc11_35.1: <bound method> = bound_method %.loc11_35.1, constants.%Op.f5a
-// CHECK:STDOUT:   %Op.specific_fn.21: <specific function> = specific_function constants.%Op.f5a, @Op.2(constants.%D) [concrete = constants.%Op.specific_fn.bd1]
+// CHECK:STDOUT:   %Op.specific_fn.21: <specific function> = specific_function constants.%Op.f5a, @Op.1(constants.%D) [concrete = constants.%Op.specific_fn.bd1]
 // CHECK:STDOUT:   %bound_method.loc11_35.2: <bound method> = bound_method %.loc11_35.1, %Op.specific_fn.21
 // CHECK:STDOUT:   %addr.loc11_35.1: %ptr.f29 = addr_of %.loc11_35.1
 // CHECK:STDOUT:   %no_op.loc11_35.1: init %empty_tuple.type = call %bound_method.loc11_35.2(%addr.loc11_35.1)
 // CHECK:STDOUT:   %Op.bound.loc11_24.1: <bound method> = bound_method %.loc11_24.2, constants.%Op.6b4
-// CHECK:STDOUT:   %Op.specific_fn.22: <specific function> = specific_function constants.%Op.6b4, @Op.2(constants.%C.89d) [concrete = constants.%Op.specific_fn.357]
+// CHECK:STDOUT:   %Op.specific_fn.22: <specific function> = specific_function constants.%Op.6b4, @Op.1(constants.%C.89d) [concrete = constants.%Op.specific_fn.357]
 // CHECK:STDOUT:   %bound_method.loc11_24.1: <bound method> = bound_method %.loc11_24.2, %Op.specific_fn.22
 // CHECK:STDOUT:   %addr.loc11_24.1: %ptr.c28b = addr_of %.loc11_24.2
 // CHECK:STDOUT:   %no_op.loc11_24.1: init %empty_tuple.type = call %bound_method.loc11_24.1(%addr.loc11_24.1)
 // CHECK:STDOUT:   %Op.bound.loc10_35.2: <bound method> = bound_method %.loc10_35.1, constants.%Op.f5a
-// CHECK:STDOUT:   %Op.specific_fn.23: <specific function> = specific_function constants.%Op.f5a, @Op.2(constants.%D) [concrete = constants.%Op.specific_fn.bd1]
+// CHECK:STDOUT:   %Op.specific_fn.23: <specific function> = specific_function constants.%Op.f5a, @Op.1(constants.%D) [concrete = constants.%Op.specific_fn.bd1]
 // CHECK:STDOUT:   %bound_method.loc10_35.3: <bound method> = bound_method %.loc10_35.1, %Op.specific_fn.23
 // CHECK:STDOUT:   %addr.loc10_35.2: %ptr.f29 = addr_of %.loc10_35.1
 // CHECK:STDOUT:   %no_op.loc10_35.2: init %empty_tuple.type = call %bound_method.loc10_35.3(%addr.loc10_35.2)
 // CHECK:STDOUT:   %Op.bound.loc10_24.2: <bound method> = bound_method %.loc10_24.2, constants.%Op.9cf
-// CHECK:STDOUT:   %Op.specific_fn.24: <specific function> = specific_function constants.%Op.9cf, @Op.2(constants.%C.7ac) [concrete = constants.%Op.specific_fn.694]
+// CHECK:STDOUT:   %Op.specific_fn.24: <specific function> = specific_function constants.%Op.9cf, @Op.1(constants.%C.7ac) [concrete = constants.%Op.specific_fn.694]
 // CHECK:STDOUT:   %bound_method.loc10_24.2: <bound method> = bound_method %.loc10_24.2, %Op.specific_fn.24
 // CHECK:STDOUT:   %addr.loc10_24.2: %ptr.2b1 = addr_of %.loc10_24.2
 // CHECK:STDOUT:   %no_op.loc10_24.2: init %empty_tuple.type = call %bound_method.loc10_24.2(%addr.loc10_24.2)
 // CHECK:STDOUT:   %Op.bound.loc9_35.3: <bound method> = bound_method %.loc9_35.1, constants.%Op.f5a
-// CHECK:STDOUT:   %Op.specific_fn.25: <specific function> = specific_function constants.%Op.f5a, @Op.2(constants.%D) [concrete = constants.%Op.specific_fn.bd1]
+// CHECK:STDOUT:   %Op.specific_fn.25: <specific function> = specific_function constants.%Op.f5a, @Op.1(constants.%D) [concrete = constants.%Op.specific_fn.bd1]
 // CHECK:STDOUT:   %bound_method.loc9_35.4: <bound method> = bound_method %.loc9_35.1, %Op.specific_fn.25
 // CHECK:STDOUT:   %addr.loc9_35.3: %ptr.f29 = addr_of %.loc9_35.1
 // CHECK:STDOUT:   %no_op.loc9_35.3: init %empty_tuple.type = call %bound_method.loc9_35.4(%addr.loc9_35.3)
 // CHECK:STDOUT:   %Op.bound.loc9_24.3: <bound method> = bound_method %.loc9_24.2, constants.%Op.404
-// CHECK:STDOUT:   %Op.specific_fn.26: <specific function> = specific_function constants.%Op.404, @Op.2(constants.%C.681) [concrete = constants.%Op.specific_fn.822]
+// CHECK:STDOUT:   %Op.specific_fn.26: <specific function> = specific_function constants.%Op.404, @Op.1(constants.%C.681) [concrete = constants.%Op.specific_fn.822]
 // CHECK:STDOUT:   %bound_method.loc9_24.3: <bound method> = bound_method %.loc9_24.2, %Op.specific_fn.26
 // CHECK:STDOUT:   %addr.loc9_24.3: %ptr.3bd = addr_of %.loc9_24.2
 // CHECK:STDOUT:   %no_op.loc9_24.3: init %empty_tuple.type = call %bound_method.loc9_24.3(%addr.loc9_24.3)
 // CHECK:STDOUT:   %Op.bound.loc8_35.4: <bound method> = bound_method %.loc8_35.1, constants.%Op.f5a
-// CHECK:STDOUT:   %Op.specific_fn.27: <specific function> = specific_function constants.%Op.f5a, @Op.2(constants.%D) [concrete = constants.%Op.specific_fn.bd1]
+// CHECK:STDOUT:   %Op.specific_fn.27: <specific function> = specific_function constants.%Op.f5a, @Op.1(constants.%D) [concrete = constants.%Op.specific_fn.bd1]
 // CHECK:STDOUT:   %bound_method.loc8_35.5: <bound method> = bound_method %.loc8_35.1, %Op.specific_fn.27
 // CHECK:STDOUT:   %addr.loc8_35.4: %ptr.f29 = addr_of %.loc8_35.1
 // CHECK:STDOUT:   %no_op.loc8_35.4: init %empty_tuple.type = call %bound_method.loc8_35.5(%addr.loc8_35.4)
 // CHECK:STDOUT:   %Op.bound.loc8_24.4: <bound method> = bound_method %.loc8_24.2, constants.%Op.ad8
-// CHECK:STDOUT:   %Op.specific_fn.28: <specific function> = specific_function constants.%Op.ad8, @Op.2(constants.%C.674) [concrete = constants.%Op.specific_fn.6b6]
+// CHECK:STDOUT:   %Op.specific_fn.28: <specific function> = specific_function constants.%Op.ad8, @Op.1(constants.%C.674) [concrete = constants.%Op.specific_fn.6b6]
 // CHECK:STDOUT:   %bound_method.loc8_24.4: <bound method> = bound_method %.loc8_24.2, %Op.specific_fn.28
 // CHECK:STDOUT:   %addr.loc8_24.4: %ptr.625 = addr_of %.loc8_24.2
 // CHECK:STDOUT:   %no_op.loc8_24.4: init %empty_tuple.type = call %bound_method.loc8_24.4(%addr.loc8_24.4)
 // CHECK:STDOUT:   %Op.bound.loc7_35.5: <bound method> = bound_method %.loc7_35.1, constants.%Op.f5a
-// CHECK:STDOUT:   %Op.specific_fn.29: <specific function> = specific_function constants.%Op.f5a, @Op.2(constants.%D) [concrete = constants.%Op.specific_fn.bd1]
+// CHECK:STDOUT:   %Op.specific_fn.29: <specific function> = specific_function constants.%Op.f5a, @Op.1(constants.%D) [concrete = constants.%Op.specific_fn.bd1]
 // CHECK:STDOUT:   %bound_method.loc7_35.6: <bound method> = bound_method %.loc7_35.1, %Op.specific_fn.29
 // CHECK:STDOUT:   %addr.loc7_35.5: %ptr.f29 = addr_of %.loc7_35.1
 // CHECK:STDOUT:   %no_op.loc7_35.5: init %empty_tuple.type = call %bound_method.loc7_35.6(%addr.loc7_35.5)
 // CHECK:STDOUT:   %Op.bound.loc7_24.5: <bound method> = bound_method %.loc7_24.2, constants.%Op.ae6
-// CHECK:STDOUT:   %Op.specific_fn.30: <specific function> = specific_function constants.%Op.ae6, @Op.2(constants.%C.b00) [concrete = constants.%Op.specific_fn.e42]
+// CHECK:STDOUT:   %Op.specific_fn.30: <specific function> = specific_function constants.%Op.ae6, @Op.1(constants.%C.b00) [concrete = constants.%Op.specific_fn.e42]
 // CHECK:STDOUT:   %bound_method.loc7_24.5: <bound method> = bound_method %.loc7_24.2, %Op.specific_fn.30
 // CHECK:STDOUT:   %addr.loc7_24.5: %ptr.697 = addr_of %.loc7_24.2
 // CHECK:STDOUT:   %no_op.loc7_24.5: init %empty_tuple.type = call %bound_method.loc7_24.5(%addr.loc7_24.5)
@@ -1373,7 +1373,7 @@ fn F0(n: i32) -> P.D {
 // CHECK:STDOUT:   %int_5: Core.IntLiteral = int_value 5 [concrete = constants.%int_5.64b]
 // CHECK:STDOUT:   %impl.elem0.loc12_34: %.9c3 = impl_witness_access constants.%ImplicitAs.impl_witness.c75, element0 [concrete = constants.%Convert.956]
 // CHECK:STDOUT:   %bound_method.loc12_34.1: <bound method> = bound_method %int_5, %impl.elem0.loc12_34 [concrete = constants.%Convert.bound.4e6]
-// CHECK:STDOUT:   %specific_fn.loc12: <specific function> = specific_function %impl.elem0.loc12_34, @Convert.2(constants.%int_32) [concrete = constants.%Convert.specific_fn]
+// CHECK:STDOUT:   %specific_fn.loc12: <specific function> = specific_function %impl.elem0.loc12_34, @Convert.1(constants.%int_32) [concrete = constants.%Convert.specific_fn]
 // CHECK:STDOUT:   %bound_method.loc12_34.2: <bound method> = bound_method %int_5, %specific_fn.loc12 [concrete = constants.%bound_method.a25]
 // CHECK:STDOUT:   %int.convert_checked.loc12: init %i32 = call %bound_method.loc12_34.2(%int_5) [concrete = constants.%int_5.0f6]
 // CHECK:STDOUT:   %.loc12_34.1: %i32 = value_of_initializer %int.convert_checked.loc12 [concrete = constants.%int_5.0f6]
@@ -1390,62 +1390,62 @@ fn F0(n: i32) -> P.D {
 // CHECK:STDOUT:   %Convert.call.loc12: init %D = call %bound_method.loc12_35.1(%.loc12_26.2) to %.loc12_35.1
 // CHECK:STDOUT:   %.loc12_35.2: init %D = converted %.loc12_26.1, %Convert.call.loc12
 // CHECK:STDOUT:   %Op.bound.loc12_35.1: <bound method> = bound_method %.loc12_35.1, constants.%Op.f5a
-// CHECK:STDOUT:   %Op.specific_fn.31: <specific function> = specific_function constants.%Op.f5a, @Op.2(constants.%D) [concrete = constants.%Op.specific_fn.bd1]
+// CHECK:STDOUT:   %Op.specific_fn.31: <specific function> = specific_function constants.%Op.f5a, @Op.1(constants.%D) [concrete = constants.%Op.specific_fn.bd1]
 // CHECK:STDOUT:   %bound_method.loc12_35.2: <bound method> = bound_method %.loc12_35.1, %Op.specific_fn.31
 // CHECK:STDOUT:   %addr.loc12_35.1: %ptr.f29 = addr_of %.loc12_35.1
 // CHECK:STDOUT:   %no_op.loc12_35.1: init %empty_tuple.type = call %bound_method.loc12_35.2(%addr.loc12_35.1)
 // CHECK:STDOUT:   %Op.bound.loc12_24.1: <bound method> = bound_method %.loc12_24.2, constants.%Op.985
-// CHECK:STDOUT:   %Op.specific_fn.32: <specific function> = specific_function constants.%Op.985, @Op.2(constants.%C.f0a) [concrete = constants.%Op.specific_fn.a66]
+// CHECK:STDOUT:   %Op.specific_fn.32: <specific function> = specific_function constants.%Op.985, @Op.1(constants.%C.f0a) [concrete = constants.%Op.specific_fn.a66]
 // CHECK:STDOUT:   %bound_method.loc12_24.1: <bound method> = bound_method %.loc12_24.2, %Op.specific_fn.32
 // CHECK:STDOUT:   %addr.loc12_24.1: %ptr.24c = addr_of %.loc12_24.2
 // CHECK:STDOUT:   %no_op.loc12_24.1: init %empty_tuple.type = call %bound_method.loc12_24.1(%addr.loc12_24.1)
 // CHECK:STDOUT:   %Op.bound.loc11_35.2: <bound method> = bound_method %.loc11_35.1, constants.%Op.f5a
-// CHECK:STDOUT:   %Op.specific_fn.33: <specific function> = specific_function constants.%Op.f5a, @Op.2(constants.%D) [concrete = constants.%Op.specific_fn.bd1]
+// CHECK:STDOUT:   %Op.specific_fn.33: <specific function> = specific_function constants.%Op.f5a, @Op.1(constants.%D) [concrete = constants.%Op.specific_fn.bd1]
 // CHECK:STDOUT:   %bound_method.loc11_35.3: <bound method> = bound_method %.loc11_35.1, %Op.specific_fn.33
 // CHECK:STDOUT:   %addr.loc11_35.2: %ptr.f29 = addr_of %.loc11_35.1
 // CHECK:STDOUT:   %no_op.loc11_35.2: init %empty_tuple.type = call %bound_method.loc11_35.3(%addr.loc11_35.2)
 // CHECK:STDOUT:   %Op.bound.loc11_24.2: <bound method> = bound_method %.loc11_24.2, constants.%Op.6b4
-// CHECK:STDOUT:   %Op.specific_fn.34: <specific function> = specific_function constants.%Op.6b4, @Op.2(constants.%C.89d) [concrete = constants.%Op.specific_fn.357]
+// CHECK:STDOUT:   %Op.specific_fn.34: <specific function> = specific_function constants.%Op.6b4, @Op.1(constants.%C.89d) [concrete = constants.%Op.specific_fn.357]
 // CHECK:STDOUT:   %bound_method.loc11_24.2: <bound method> = bound_method %.loc11_24.2, %Op.specific_fn.34
 // CHECK:STDOUT:   %addr.loc11_24.2: %ptr.c28b = addr_of %.loc11_24.2
 // CHECK:STDOUT:   %no_op.loc11_24.2: init %empty_tuple.type = call %bound_method.loc11_24.2(%addr.loc11_24.2)
 // CHECK:STDOUT:   %Op.bound.loc10_35.3: <bound method> = bound_method %.loc10_35.1, constants.%Op.f5a
-// CHECK:STDOUT:   %Op.specific_fn.35: <specific function> = specific_function constants.%Op.f5a, @Op.2(constants.%D) [concrete = constants.%Op.specific_fn.bd1]
+// CHECK:STDOUT:   %Op.specific_fn.35: <specific function> = specific_function constants.%Op.f5a, @Op.1(constants.%D) [concrete = constants.%Op.specific_fn.bd1]
 // CHECK:STDOUT:   %bound_method.loc10_35.4: <bound method> = bound_method %.loc10_35.1, %Op.specific_fn.35
 // CHECK:STDOUT:   %addr.loc10_35.3: %ptr.f29 = addr_of %.loc10_35.1
 // CHECK:STDOUT:   %no_op.loc10_35.3: init %empty_tuple.type = call %bound_method.loc10_35.4(%addr.loc10_35.3)
 // CHECK:STDOUT:   %Op.bound.loc10_24.3: <bound method> = bound_method %.loc10_24.2, constants.%Op.9cf
-// CHECK:STDOUT:   %Op.specific_fn.36: <specific function> = specific_function constants.%Op.9cf, @Op.2(constants.%C.7ac) [concrete = constants.%Op.specific_fn.694]
+// CHECK:STDOUT:   %Op.specific_fn.36: <specific function> = specific_function constants.%Op.9cf, @Op.1(constants.%C.7ac) [concrete = constants.%Op.specific_fn.694]
 // CHECK:STDOUT:   %bound_method.loc10_24.3: <bound method> = bound_method %.loc10_24.2, %Op.specific_fn.36
 // CHECK:STDOUT:   %addr.loc10_24.3: %ptr.2b1 = addr_of %.loc10_24.2
 // CHECK:STDOUT:   %no_op.loc10_24.3: init %empty_tuple.type = call %bound_method.loc10_24.3(%addr.loc10_24.3)
 // CHECK:STDOUT:   %Op.bound.loc9_35.4: <bound method> = bound_method %.loc9_35.1, constants.%Op.f5a
-// CHECK:STDOUT:   %Op.specific_fn.37: <specific function> = specific_function constants.%Op.f5a, @Op.2(constants.%D) [concrete = constants.%Op.specific_fn.bd1]
+// CHECK:STDOUT:   %Op.specific_fn.37: <specific function> = specific_function constants.%Op.f5a, @Op.1(constants.%D) [concrete = constants.%Op.specific_fn.bd1]
 // CHECK:STDOUT:   %bound_method.loc9_35.5: <bound method> = bound_method %.loc9_35.1, %Op.specific_fn.37
 // CHECK:STDOUT:   %addr.loc9_35.4: %ptr.f29 = addr_of %.loc9_35.1
 // CHECK:STDOUT:   %no_op.loc9_35.4: init %empty_tuple.type = call %bound_method.loc9_35.5(%addr.loc9_35.4)
 // CHECK:STDOUT:   %Op.bound.loc9_24.4: <bound method> = bound_method %.loc9_24.2, constants.%Op.404
-// CHECK:STDOUT:   %Op.specific_fn.38: <specific function> = specific_function constants.%Op.404, @Op.2(constants.%C.681) [concrete = constants.%Op.specific_fn.822]
+// CHECK:STDOUT:   %Op.specific_fn.38: <specific function> = specific_function constants.%Op.404, @Op.1(constants.%C.681) [concrete = constants.%Op.specific_fn.822]
 // CHECK:STDOUT:   %bound_method.loc9_24.4: <bound method> = bound_method %.loc9_24.2, %Op.specific_fn.38
 // CHECK:STDOUT:   %addr.loc9_24.4: %ptr.3bd = addr_of %.loc9_24.2
 // CHECK:STDOUT:   %no_op.loc9_24.4: init %empty_tuple.type = call %bound_method.loc9_24.4(%addr.loc9_24.4)
 // CHECK:STDOUT:   %Op.bound.loc8_35.5: <bound method> = bound_method %.loc8_35.1, constants.%Op.f5a
-// CHECK:STDOUT:   %Op.specific_fn.39: <specific function> = specific_function constants.%Op.f5a, @Op.2(constants.%D) [concrete = constants.%Op.specific_fn.bd1]
+// CHECK:STDOUT:   %Op.specific_fn.39: <specific function> = specific_function constants.%Op.f5a, @Op.1(constants.%D) [concrete = constants.%Op.specific_fn.bd1]
 // CHECK:STDOUT:   %bound_method.loc8_35.6: <bound method> = bound_method %.loc8_35.1, %Op.specific_fn.39
 // CHECK:STDOUT:   %addr.loc8_35.5: %ptr.f29 = addr_of %.loc8_35.1
 // CHECK:STDOUT:   %no_op.loc8_35.5: init %empty_tuple.type = call %bound_method.loc8_35.6(%addr.loc8_35.5)
 // CHECK:STDOUT:   %Op.bound.loc8_24.5: <bound method> = bound_method %.loc8_24.2, constants.%Op.ad8
-// CHECK:STDOUT:   %Op.specific_fn.40: <specific function> = specific_function constants.%Op.ad8, @Op.2(constants.%C.674) [concrete = constants.%Op.specific_fn.6b6]
+// CHECK:STDOUT:   %Op.specific_fn.40: <specific function> = specific_function constants.%Op.ad8, @Op.1(constants.%C.674) [concrete = constants.%Op.specific_fn.6b6]
 // CHECK:STDOUT:   %bound_method.loc8_24.5: <bound method> = bound_method %.loc8_24.2, %Op.specific_fn.40
 // CHECK:STDOUT:   %addr.loc8_24.5: %ptr.625 = addr_of %.loc8_24.2
 // CHECK:STDOUT:   %no_op.loc8_24.5: init %empty_tuple.type = call %bound_method.loc8_24.5(%addr.loc8_24.5)
 // CHECK:STDOUT:   %Op.bound.loc7_35.6: <bound method> = bound_method %.loc7_35.1, constants.%Op.f5a
-// CHECK:STDOUT:   %Op.specific_fn.41: <specific function> = specific_function constants.%Op.f5a, @Op.2(constants.%D) [concrete = constants.%Op.specific_fn.bd1]
+// CHECK:STDOUT:   %Op.specific_fn.41: <specific function> = specific_function constants.%Op.f5a, @Op.1(constants.%D) [concrete = constants.%Op.specific_fn.bd1]
 // CHECK:STDOUT:   %bound_method.loc7_35.7: <bound method> = bound_method %.loc7_35.1, %Op.specific_fn.41
 // CHECK:STDOUT:   %addr.loc7_35.6: %ptr.f29 = addr_of %.loc7_35.1
 // CHECK:STDOUT:   %no_op.loc7_35.6: init %empty_tuple.type = call %bound_method.loc7_35.7(%addr.loc7_35.6)
 // CHECK:STDOUT:   %Op.bound.loc7_24.6: <bound method> = bound_method %.loc7_24.2, constants.%Op.ae6
-// CHECK:STDOUT:   %Op.specific_fn.42: <specific function> = specific_function constants.%Op.ae6, @Op.2(constants.%C.b00) [concrete = constants.%Op.specific_fn.e42]
+// CHECK:STDOUT:   %Op.specific_fn.42: <specific function> = specific_function constants.%Op.ae6, @Op.1(constants.%C.b00) [concrete = constants.%Op.specific_fn.e42]
 // CHECK:STDOUT:   %bound_method.loc7_24.6: <bound method> = bound_method %.loc7_24.2, %Op.specific_fn.42
 // CHECK:STDOUT:   %addr.loc7_24.6: %ptr.697 = addr_of %.loc7_24.2
 // CHECK:STDOUT:   %no_op.loc7_24.6: init %empty_tuple.type = call %bound_method.loc7_24.6(%addr.loc7_24.6)
@@ -1462,7 +1462,7 @@ fn F0(n: i32) -> P.D {
 // CHECK:STDOUT:   %int_6: Core.IntLiteral = int_value 6 [concrete = constants.%int_6.462]
 // CHECK:STDOUT:   %impl.elem0.loc13_34: %.9c3 = impl_witness_access constants.%ImplicitAs.impl_witness.c75, element0 [concrete = constants.%Convert.956]
 // CHECK:STDOUT:   %bound_method.loc13_34.1: <bound method> = bound_method %int_6, %impl.elem0.loc13_34 [concrete = constants.%Convert.bound.ce9]
-// CHECK:STDOUT:   %specific_fn.loc13: <specific function> = specific_function %impl.elem0.loc13_34, @Convert.2(constants.%int_32) [concrete = constants.%Convert.specific_fn]
+// CHECK:STDOUT:   %specific_fn.loc13: <specific function> = specific_function %impl.elem0.loc13_34, @Convert.1(constants.%int_32) [concrete = constants.%Convert.specific_fn]
 // CHECK:STDOUT:   %bound_method.loc13_34.2: <bound method> = bound_method %int_6, %specific_fn.loc13 [concrete = constants.%bound_method.efa]
 // CHECK:STDOUT:   %int.convert_checked.loc13: init %i32 = call %bound_method.loc13_34.2(%int_6) [concrete = constants.%int_6.e56]
 // CHECK:STDOUT:   %.loc13_34.1: %i32 = value_of_initializer %int.convert_checked.loc13 [concrete = constants.%int_6.e56]
@@ -1479,72 +1479,72 @@ fn F0(n: i32) -> P.D {
 // CHECK:STDOUT:   %Convert.call.loc13: init %D = call %bound_method.loc13_35.1(%.loc13_26.2) to %.loc13_35.1
 // CHECK:STDOUT:   %.loc13_35.2: init %D = converted %.loc13_26.1, %Convert.call.loc13
 // CHECK:STDOUT:   %Op.bound.loc13_35.1: <bound method> = bound_method %.loc13_35.1, constants.%Op.f5a
-// CHECK:STDOUT:   %Op.specific_fn.43: <specific function> = specific_function constants.%Op.f5a, @Op.2(constants.%D) [concrete = constants.%Op.specific_fn.bd1]
+// CHECK:STDOUT:   %Op.specific_fn.43: <specific function> = specific_function constants.%Op.f5a, @Op.1(constants.%D) [concrete = constants.%Op.specific_fn.bd1]
 // CHECK:STDOUT:   %bound_method.loc13_35.2: <bound method> = bound_method %.loc13_35.1, %Op.specific_fn.43
 // CHECK:STDOUT:   %addr.loc13_35.1: %ptr.f29 = addr_of %.loc13_35.1
 // CHECK:STDOUT:   %no_op.loc13_35.1: init %empty_tuple.type = call %bound_method.loc13_35.2(%addr.loc13_35.1)
 // CHECK:STDOUT:   %Op.bound.loc13_24.1: <bound method> = bound_method %.loc13_24.2, constants.%Op.ca5
-// CHECK:STDOUT:   %Op.specific_fn.44: <specific function> = specific_function constants.%Op.ca5, @Op.2(constants.%C.c60) [concrete = constants.%Op.specific_fn.8d0]
+// CHECK:STDOUT:   %Op.specific_fn.44: <specific function> = specific_function constants.%Op.ca5, @Op.1(constants.%C.c60) [concrete = constants.%Op.specific_fn.8d0]
 // CHECK:STDOUT:   %bound_method.loc13_24.1: <bound method> = bound_method %.loc13_24.2, %Op.specific_fn.44
 // CHECK:STDOUT:   %addr.loc13_24.1: %ptr.b5e = addr_of %.loc13_24.2
 // CHECK:STDOUT:   %no_op.loc13_24.1: init %empty_tuple.type = call %bound_method.loc13_24.1(%addr.loc13_24.1)
 // CHECK:STDOUT:   %Op.bound.loc12_35.2: <bound method> = bound_method %.loc12_35.1, constants.%Op.f5a
-// CHECK:STDOUT:   %Op.specific_fn.45: <specific function> = specific_function constants.%Op.f5a, @Op.2(constants.%D) [concrete = constants.%Op.specific_fn.bd1]
+// CHECK:STDOUT:   %Op.specific_fn.45: <specific function> = specific_function constants.%Op.f5a, @Op.1(constants.%D) [concrete = constants.%Op.specific_fn.bd1]
 // CHECK:STDOUT:   %bound_method.loc12_35.3: <bound method> = bound_method %.loc12_35.1, %Op.specific_fn.45
 // CHECK:STDOUT:   %addr.loc12_35.2: %ptr.f29 = addr_of %.loc12_35.1
 // CHECK:STDOUT:   %no_op.loc12_35.2: init %empty_tuple.type = call %bound_method.loc12_35.3(%addr.loc12_35.2)
 // CHECK:STDOUT:   %Op.bound.loc12_24.2: <bound method> = bound_method %.loc12_24.2, constants.%Op.985
-// CHECK:STDOUT:   %Op.specific_fn.46: <specific function> = specific_function constants.%Op.985, @Op.2(constants.%C.f0a) [concrete = constants.%Op.specific_fn.a66]
+// CHECK:STDOUT:   %Op.specific_fn.46: <specific function> = specific_function constants.%Op.985, @Op.1(constants.%C.f0a) [concrete = constants.%Op.specific_fn.a66]
 // CHECK:STDOUT:   %bound_method.loc12_24.2: <bound method> = bound_method %.loc12_24.2, %Op.specific_fn.46
 // CHECK:STDOUT:   %addr.loc12_24.2: %ptr.24c = addr_of %.loc12_24.2
 // CHECK:STDOUT:   %no_op.loc12_24.2: init %empty_tuple.type = call %bound_method.loc12_24.2(%addr.loc12_24.2)
 // CHECK:STDOUT:   %Op.bound.loc11_35.3: <bound method> = bound_method %.loc11_35.1, constants.%Op.f5a
-// CHECK:STDOUT:   %Op.specific_fn.47: <specific function> = specific_function constants.%Op.f5a, @Op.2(constants.%D) [concrete = constants.%Op.specific_fn.bd1]
+// CHECK:STDOUT:   %Op.specific_fn.47: <specific function> = specific_function constants.%Op.f5a, @Op.1(constants.%D) [concrete = constants.%Op.specific_fn.bd1]
 // CHECK:STDOUT:   %bound_method.loc11_35.4: <bound method> = bound_method %.loc11_35.1, %Op.specific_fn.47
 // CHECK:STDOUT:   %addr.loc11_35.3: %ptr.f29 = addr_of %.loc11_35.1
 // CHECK:STDOUT:   %no_op.loc11_35.3: init %empty_tuple.type = call %bound_method.loc11_35.4(%addr.loc11_35.3)
 // CHECK:STDOUT:   %Op.bound.loc11_24.3: <bound method> = bound_method %.loc11_24.2, constants.%Op.6b4
-// CHECK:STDOUT:   %Op.specific_fn.48: <specific function> = specific_function constants.%Op.6b4, @Op.2(constants.%C.89d) [concrete = constants.%Op.specific_fn.357]
+// CHECK:STDOUT:   %Op.specific_fn.48: <specific function> = specific_function constants.%Op.6b4, @Op.1(constants.%C.89d) [concrete = constants.%Op.specific_fn.357]
 // CHECK:STDOUT:   %bound_method.loc11_24.3: <bound method> = bound_method %.loc11_24.2, %Op.specific_fn.48
 // CHECK:STDOUT:   %addr.loc11_24.3: %ptr.c28b = addr_of %.loc11_24.2
 // CHECK:STDOUT:   %no_op.loc11_24.3: init %empty_tuple.type = call %bound_method.loc11_24.3(%addr.loc11_24.3)
 // CHECK:STDOUT:   %Op.bound.loc10_35.4: <bound method> = bound_method %.loc10_35.1, constants.%Op.f5a
-// CHECK:STDOUT:   %Op.specific_fn.49: <specific function> = specific_function constants.%Op.f5a, @Op.2(constants.%D) [concrete = constants.%Op.specific_fn.bd1]
+// CHECK:STDOUT:   %Op.specific_fn.49: <specific function> = specific_function constants.%Op.f5a, @Op.1(constants.%D) [concrete = constants.%Op.specific_fn.bd1]
 // CHECK:STDOUT:   %bound_method.loc10_35.5: <bound method> = bound_method %.loc10_35.1, %Op.specific_fn.49
 // CHECK:STDOUT:   %addr.loc10_35.4: %ptr.f29 = addr_of %.loc10_35.1
 // CHECK:STDOUT:   %no_op.loc10_35.4: init %empty_tuple.type = call %bound_method.loc10_35.5(%addr.loc10_35.4)
 // CHECK:STDOUT:   %Op.bound.loc10_24.4: <bound method> = bound_method %.loc10_24.2, constants.%Op.9cf
-// CHECK:STDOUT:   %Op.specific_fn.50: <specific function> = specific_function constants.%Op.9cf, @Op.2(constants.%C.7ac) [concrete = constants.%Op.specific_fn.694]
+// CHECK:STDOUT:   %Op.specific_fn.50: <specific function> = specific_function constants.%Op.9cf, @Op.1(constants.%C.7ac) [concrete = constants.%Op.specific_fn.694]
 // CHECK:STDOUT:   %bound_method.loc10_24.4: <bound method> = bound_method %.loc10_24.2, %Op.specific_fn.50
 // CHECK:STDOUT:   %addr.loc10_24.4: %ptr.2b1 = addr_of %.loc10_24.2
 // CHECK:STDOUT:   %no_op.loc10_24.4: init %empty_tuple.type = call %bound_method.loc10_24.4(%addr.loc10_24.4)
 // CHECK:STDOUT:   %Op.bound.loc9_35.5: <bound method> = bound_method %.loc9_35.1, constants.%Op.f5a
-// CHECK:STDOUT:   %Op.specific_fn.51: <specific function> = specific_function constants.%Op.f5a, @Op.2(constants.%D) [concrete = constants.%Op.specific_fn.bd1]
+// CHECK:STDOUT:   %Op.specific_fn.51: <specific function> = specific_function constants.%Op.f5a, @Op.1(constants.%D) [concrete = constants.%Op.specific_fn.bd1]
 // CHECK:STDOUT:   %bound_method.loc9_35.6: <bound method> = bound_method %.loc9_35.1, %Op.specific_fn.51
 // CHECK:STDOUT:   %addr.loc9_35.5: %ptr.f29 = addr_of %.loc9_35.1
 // CHECK:STDOUT:   %no_op.loc9_35.5: init %empty_tuple.type = call %bound_method.loc9_35.6(%addr.loc9_35.5)
 // CHECK:STDOUT:   %Op.bound.loc9_24.5: <bound method> = bound_method %.loc9_24.2, constants.%Op.404
-// CHECK:STDOUT:   %Op.specific_fn.52: <specific function> = specific_function constants.%Op.404, @Op.2(constants.%C.681) [concrete = constants.%Op.specific_fn.822]
+// CHECK:STDOUT:   %Op.specific_fn.52: <specific function> = specific_function constants.%Op.404, @Op.1(constants.%C.681) [concrete = constants.%Op.specific_fn.822]
 // CHECK:STDOUT:   %bound_method.loc9_24.5: <bound method> = bound_method %.loc9_24.2, %Op.specific_fn.52
 // CHECK:STDOUT:   %addr.loc9_24.5: %ptr.3bd = addr_of %.loc9_24.2
 // CHECK:STDOUT:   %no_op.loc9_24.5: init %empty_tuple.type = call %bound_method.loc9_24.5(%addr.loc9_24.5)
 // CHECK:STDOUT:   %Op.bound.loc8_35.6: <bound method> = bound_method %.loc8_35.1, constants.%Op.f5a
-// CHECK:STDOUT:   %Op.specific_fn.53: <specific function> = specific_function constants.%Op.f5a, @Op.2(constants.%D) [concrete = constants.%Op.specific_fn.bd1]
+// CHECK:STDOUT:   %Op.specific_fn.53: <specific function> = specific_function constants.%Op.f5a, @Op.1(constants.%D) [concrete = constants.%Op.specific_fn.bd1]
 // CHECK:STDOUT:   %bound_method.loc8_35.7: <bound method> = bound_method %.loc8_35.1, %Op.specific_fn.53
 // CHECK:STDOUT:   %addr.loc8_35.6: %ptr.f29 = addr_of %.loc8_35.1
 // CHECK:STDOUT:   %no_op.loc8_35.6: init %empty_tuple.type = call %bound_method.loc8_35.7(%addr.loc8_35.6)
 // CHECK:STDOUT:   %Op.bound.loc8_24.6: <bound method> = bound_method %.loc8_24.2, constants.%Op.ad8
-// CHECK:STDOUT:   %Op.specific_fn.54: <specific function> = specific_function constants.%Op.ad8, @Op.2(constants.%C.674) [concrete = constants.%Op.specific_fn.6b6]
+// CHECK:STDOUT:   %Op.specific_fn.54: <specific function> = specific_function constants.%Op.ad8, @Op.1(constants.%C.674) [concrete = constants.%Op.specific_fn.6b6]
 // CHECK:STDOUT:   %bound_method.loc8_24.6: <bound method> = bound_method %.loc8_24.2, %Op.specific_fn.54
 // CHECK:STDOUT:   %addr.loc8_24.6: %ptr.625 = addr_of %.loc8_24.2
 // CHECK:STDOUT:   %no_op.loc8_24.6: init %empty_tuple.type = call %bound_method.loc8_24.6(%addr.loc8_24.6)
 // CHECK:STDOUT:   %Op.bound.loc7_35.7: <bound method> = bound_method %.loc7_35.1, constants.%Op.f5a
-// CHECK:STDOUT:   %Op.specific_fn.55: <specific function> = specific_function constants.%Op.f5a, @Op.2(constants.%D) [concrete = constants.%Op.specific_fn.bd1]
+// CHECK:STDOUT:   %Op.specific_fn.55: <specific function> = specific_function constants.%Op.f5a, @Op.1(constants.%D) [concrete = constants.%Op.specific_fn.bd1]
 // CHECK:STDOUT:   %bound_method.loc7_35.8: <bound method> = bound_method %.loc7_35.1, %Op.specific_fn.55
 // CHECK:STDOUT:   %addr.loc7_35.7: %ptr.f29 = addr_of %.loc7_35.1
 // CHECK:STDOUT:   %no_op.loc7_35.7: init %empty_tuple.type = call %bound_method.loc7_35.8(%addr.loc7_35.7)
 // CHECK:STDOUT:   %Op.bound.loc7_24.7: <bound method> = bound_method %.loc7_24.2, constants.%Op.ae6
-// CHECK:STDOUT:   %Op.specific_fn.56: <specific function> = specific_function constants.%Op.ae6, @Op.2(constants.%C.b00) [concrete = constants.%Op.specific_fn.e42]
+// CHECK:STDOUT:   %Op.specific_fn.56: <specific function> = specific_function constants.%Op.ae6, @Op.1(constants.%C.b00) [concrete = constants.%Op.specific_fn.e42]
 // CHECK:STDOUT:   %bound_method.loc7_24.7: <bound method> = bound_method %.loc7_24.2, %Op.specific_fn.56
 // CHECK:STDOUT:   %addr.loc7_24.7: %ptr.697 = addr_of %.loc7_24.2
 // CHECK:STDOUT:   %no_op.loc7_24.7: init %empty_tuple.type = call %bound_method.loc7_24.7(%addr.loc7_24.7)
@@ -1561,7 +1561,7 @@ fn F0(n: i32) -> P.D {
 // CHECK:STDOUT:   %int_7: Core.IntLiteral = int_value 7 [concrete = constants.%int_7.29f]
 // CHECK:STDOUT:   %impl.elem0.loc14_34: %.9c3 = impl_witness_access constants.%ImplicitAs.impl_witness.c75, element0 [concrete = constants.%Convert.956]
 // CHECK:STDOUT:   %bound_method.loc14_34.1: <bound method> = bound_method %int_7, %impl.elem0.loc14_34 [concrete = constants.%Convert.bound.208]
-// CHECK:STDOUT:   %specific_fn.loc14: <specific function> = specific_function %impl.elem0.loc14_34, @Convert.2(constants.%int_32) [concrete = constants.%Convert.specific_fn]
+// CHECK:STDOUT:   %specific_fn.loc14: <specific function> = specific_function %impl.elem0.loc14_34, @Convert.1(constants.%int_32) [concrete = constants.%Convert.specific_fn]
 // CHECK:STDOUT:   %bound_method.loc14_34.2: <bound method> = bound_method %int_7, %specific_fn.loc14 [concrete = constants.%bound_method.3bd]
 // CHECK:STDOUT:   %int.convert_checked.loc14: init %i32 = call %bound_method.loc14_34.2(%int_7) [concrete = constants.%int_7.0b1]
 // CHECK:STDOUT:   %.loc14_34.1: %i32 = value_of_initializer %int.convert_checked.loc14 [concrete = constants.%int_7.0b1]
@@ -1578,82 +1578,82 @@ fn F0(n: i32) -> P.D {
 // CHECK:STDOUT:   %Convert.call.loc14: init %D = call %bound_method.loc14_35.1(%.loc14_26.2) to %.loc14_35.1
 // CHECK:STDOUT:   %.loc14_35.2: init %D = converted %.loc14_26.1, %Convert.call.loc14
 // CHECK:STDOUT:   %Op.bound.loc14_35.1: <bound method> = bound_method %.loc14_35.1, constants.%Op.f5a
-// CHECK:STDOUT:   %Op.specific_fn.57: <specific function> = specific_function constants.%Op.f5a, @Op.2(constants.%D) [concrete = constants.%Op.specific_fn.bd1]
+// CHECK:STDOUT:   %Op.specific_fn.57: <specific function> = specific_function constants.%Op.f5a, @Op.1(constants.%D) [concrete = constants.%Op.specific_fn.bd1]
 // CHECK:STDOUT:   %bound_method.loc14_35.2: <bound method> = bound_method %.loc14_35.1, %Op.specific_fn.57
 // CHECK:STDOUT:   %addr.loc14_35.1: %ptr.f29 = addr_of %.loc14_35.1
 // CHECK:STDOUT:   %no_op.loc14_35.1: init %empty_tuple.type = call %bound_method.loc14_35.2(%addr.loc14_35.1)
 // CHECK:STDOUT:   %Op.bound.loc14_24.1: <bound method> = bound_method %.loc14_24.2, constants.%Op.6fc
-// CHECK:STDOUT:   %Op.specific_fn.58: <specific function> = specific_function constants.%Op.6fc, @Op.2(constants.%C.304) [concrete = constants.%Op.specific_fn.a08]
+// CHECK:STDOUT:   %Op.specific_fn.58: <specific function> = specific_function constants.%Op.6fc, @Op.1(constants.%C.304) [concrete = constants.%Op.specific_fn.a08]
 // CHECK:STDOUT:   %bound_method.loc14_24.1: <bound method> = bound_method %.loc14_24.2, %Op.specific_fn.58
 // CHECK:STDOUT:   %addr.loc14_24.1: %ptr.dc3 = addr_of %.loc14_24.2
 // CHECK:STDOUT:   %no_op.loc14_24.1: init %empty_tuple.type = call %bound_method.loc14_24.1(%addr.loc14_24.1)
 // CHECK:STDOUT:   %Op.bound.loc13_35.2: <bound method> = bound_method %.loc13_35.1, constants.%Op.f5a
-// CHECK:STDOUT:   %Op.specific_fn.59: <specific function> = specific_function constants.%Op.f5a, @Op.2(constants.%D) [concrete = constants.%Op.specific_fn.bd1]
+// CHECK:STDOUT:   %Op.specific_fn.59: <specific function> = specific_function constants.%Op.f5a, @Op.1(constants.%D) [concrete = constants.%Op.specific_fn.bd1]
 // CHECK:STDOUT:   %bound_method.loc13_35.3: <bound method> = bound_method %.loc13_35.1, %Op.specific_fn.59
 // CHECK:STDOUT:   %addr.loc13_35.2: %ptr.f29 = addr_of %.loc13_35.1
 // CHECK:STDOUT:   %no_op.loc13_35.2: init %empty_tuple.type = call %bound_method.loc13_35.3(%addr.loc13_35.2)
 // CHECK:STDOUT:   %Op.bound.loc13_24.2: <bound method> = bound_method %.loc13_24.2, constants.%Op.ca5
-// CHECK:STDOUT:   %Op.specific_fn.60: <specific function> = specific_function constants.%Op.ca5, @Op.2(constants.%C.c60) [concrete = constants.%Op.specific_fn.8d0]
+// CHECK:STDOUT:   %Op.specific_fn.60: <specific function> = specific_function constants.%Op.ca5, @Op.1(constants.%C.c60) [concrete = constants.%Op.specific_fn.8d0]
 // CHECK:STDOUT:   %bound_method.loc13_24.2: <bound method> = bound_method %.loc13_24.2, %Op.specific_fn.60
 // CHECK:STDOUT:   %addr.loc13_24.2: %ptr.b5e = addr_of %.loc13_24.2
 // CHECK:STDOUT:   %no_op.loc13_24.2: init %empty_tuple.type = call %bound_method.loc13_24.2(%addr.loc13_24.2)
 // CHECK:STDOUT:   %Op.bound.loc12_35.3: <bound method> = bound_method %.loc12_35.1, constants.%Op.f5a
-// CHECK:STDOUT:   %Op.specific_fn.61: <specific function> = specific_function constants.%Op.f5a, @Op.2(constants.%D) [concrete = constants.%Op.specific_fn.bd1]
+// CHECK:STDOUT:   %Op.specific_fn.61: <specific function> = specific_function constants.%Op.f5a, @Op.1(constants.%D) [concrete = constants.%Op.specific_fn.bd1]
 // CHECK:STDOUT:   %bound_method.loc12_35.4: <bound method> = bound_method %.loc12_35.1, %Op.specific_fn.61
 // CHECK:STDOUT:   %addr.loc12_35.3: %ptr.f29 = addr_of %.loc12_35.1
 // CHECK:STDOUT:   %no_op.loc12_35.3: init %empty_tuple.type = call %bound_method.loc12_35.4(%addr.loc12_35.3)
 // CHECK:STDOUT:   %Op.bound.loc12_24.3: <bound method> = bound_method %.loc12_24.2, constants.%Op.985
-// CHECK:STDOUT:   %Op.specific_fn.62: <specific function> = specific_function constants.%Op.985, @Op.2(constants.%C.f0a) [concrete = constants.%Op.specific_fn.a66]
+// CHECK:STDOUT:   %Op.specific_fn.62: <specific function> = specific_function constants.%Op.985, @Op.1(constants.%C.f0a) [concrete = constants.%Op.specific_fn.a66]
 // CHECK:STDOUT:   %bound_method.loc12_24.3: <bound method> = bound_method %.loc12_24.2, %Op.specific_fn.62
 // CHECK:STDOUT:   %addr.loc12_24.3: %ptr.24c = addr_of %.loc12_24.2
 // CHECK:STDOUT:   %no_op.loc12_24.3: init %empty_tuple.type = call %bound_method.loc12_24.3(%addr.loc12_24.3)
 // CHECK:STDOUT:   %Op.bound.loc11_35.4: <bound method> = bound_method %.loc11_35.1, constants.%Op.f5a
-// CHECK:STDOUT:   %Op.specific_fn.63: <specific function> = specific_function constants.%Op.f5a, @Op.2(constants.%D) [concrete = constants.%Op.specific_fn.bd1]
+// CHECK:STDOUT:   %Op.specific_fn.63: <specific function> = specific_function constants.%Op.f5a, @Op.1(constants.%D) [concrete = constants.%Op.specific_fn.bd1]
 // CHECK:STDOUT:   %bound_method.loc11_35.5: <bound method> = bound_method %.loc11_35.1, %Op.specific_fn.63
 // CHECK:STDOUT:   %addr.loc11_35.4: %ptr.f29 = addr_of %.loc11_35.1
 // CHECK:STDOUT:   %no_op.loc11_35.4: init %empty_tuple.type = call %bound_method.loc11_35.5(%addr.loc11_35.4)
 // CHECK:STDOUT:   %Op.bound.loc11_24.4: <bound method> = bound_method %.loc11_24.2, constants.%Op.6b4
-// CHECK:STDOUT:   %Op.specific_fn.64: <specific function> = specific_function constants.%Op.6b4, @Op.2(constants.%C.89d) [concrete = constants.%Op.specific_fn.357]
+// CHECK:STDOUT:   %Op.specific_fn.64: <specific function> = specific_function constants.%Op.6b4, @Op.1(constants.%C.89d) [concrete = constants.%Op.specific_fn.357]
 // CHECK:STDOUT:   %bound_method.loc11_24.4: <bound method> = bound_method %.loc11_24.2, %Op.specific_fn.64
 // CHECK:STDOUT:   %addr.loc11_24.4: %ptr.c28b = addr_of %.loc11_24.2
 // CHECK:STDOUT:   %no_op.loc11_24.4: init %empty_tuple.type = call %bound_method.loc11_24.4(%addr.loc11_24.4)
 // CHECK:STDOUT:   %Op.bound.loc10_35.5: <bound method> = bound_method %.loc10_35.1, constants.%Op.f5a
-// CHECK:STDOUT:   %Op.specific_fn.65: <specific function> = specific_function constants.%Op.f5a, @Op.2(constants.%D) [concrete = constants.%Op.specific_fn.bd1]
+// CHECK:STDOUT:   %Op.specific_fn.65: <specific function> = specific_function constants.%Op.f5a, @Op.1(constants.%D) [concrete = constants.%Op.specific_fn.bd1]
 // CHECK:STDOUT:   %bound_method.loc10_35.6: <bound method> = bound_method %.loc10_35.1, %Op.specific_fn.65
 // CHECK:STDOUT:   %addr.loc10_35.5: %ptr.f29 = addr_of %.loc10_35.1
 // CHECK:STDOUT:   %no_op.loc10_35.5: init %empty_tuple.type = call %bound_method.loc10_35.6(%addr.loc10_35.5)
 // CHECK:STDOUT:   %Op.bound.loc10_24.5: <bound method> = bound_method %.loc10_24.2, constants.%Op.9cf
-// CHECK:STDOUT:   %Op.specific_fn.66: <specific function> = specific_function constants.%Op.9cf, @Op.2(constants.%C.7ac) [concrete = constants.%Op.specific_fn.694]
+// CHECK:STDOUT:   %Op.specific_fn.66: <specific function> = specific_function constants.%Op.9cf, @Op.1(constants.%C.7ac) [concrete = constants.%Op.specific_fn.694]
 // CHECK:STDOUT:   %bound_method.loc10_24.5: <bound method> = bound_method %.loc10_24.2, %Op.specific_fn.66
 // CHECK:STDOUT:   %addr.loc10_24.5: %ptr.2b1 = addr_of %.loc10_24.2
 // CHECK:STDOUT:   %no_op.loc10_24.5: init %empty_tuple.type = call %bound_method.loc10_24.5(%addr.loc10_24.5)
 // CHECK:STDOUT:   %Op.bound.loc9_35.6: <bound method> = bound_method %.loc9_35.1, constants.%Op.f5a
-// CHECK:STDOUT:   %Op.specific_fn.67: <specific function> = specific_function constants.%Op.f5a, @Op.2(constants.%D) [concrete = constants.%Op.specific_fn.bd1]
+// CHECK:STDOUT:   %Op.specific_fn.67: <specific function> = specific_function constants.%Op.f5a, @Op.1(constants.%D) [concrete = constants.%Op.specific_fn.bd1]
 // CHECK:STDOUT:   %bound_method.loc9_35.7: <bound method> = bound_method %.loc9_35.1, %Op.specific_fn.67
 // CHECK:STDOUT:   %addr.loc9_35.6: %ptr.f29 = addr_of %.loc9_35.1
 // CHECK:STDOUT:   %no_op.loc9_35.6: init %empty_tuple.type = call %bound_method.loc9_35.7(%addr.loc9_35.6)
 // CHECK:STDOUT:   %Op.bound.loc9_24.6: <bound method> = bound_method %.loc9_24.2, constants.%Op.404
-// CHECK:STDOUT:   %Op.specific_fn.68: <specific function> = specific_function constants.%Op.404, @Op.2(constants.%C.681) [concrete = constants.%Op.specific_fn.822]
+// CHECK:STDOUT:   %Op.specific_fn.68: <specific function> = specific_function constants.%Op.404, @Op.1(constants.%C.681) [concrete = constants.%Op.specific_fn.822]
 // CHECK:STDOUT:   %bound_method.loc9_24.6: <bound method> = bound_method %.loc9_24.2, %Op.specific_fn.68
 // CHECK:STDOUT:   %addr.loc9_24.6: %ptr.3bd = addr_of %.loc9_24.2
 // CHECK:STDOUT:   %no_op.loc9_24.6: init %empty_tuple.type = call %bound_method.loc9_24.6(%addr.loc9_24.6)
 // CHECK:STDOUT:   %Op.bound.loc8_35.7: <bound method> = bound_method %.loc8_35.1, constants.%Op.f5a
-// CHECK:STDOUT:   %Op.specific_fn.69: <specific function> = specific_function constants.%Op.f5a, @Op.2(constants.%D) [concrete = constants.%Op.specific_fn.bd1]
+// CHECK:STDOUT:   %Op.specific_fn.69: <specific function> = specific_function constants.%Op.f5a, @Op.1(constants.%D) [concrete = constants.%Op.specific_fn.bd1]
 // CHECK:STDOUT:   %bound_method.loc8_35.8: <bound method> = bound_method %.loc8_35.1, %Op.specific_fn.69
 // CHECK:STDOUT:   %addr.loc8_35.7: %ptr.f29 = addr_of %.loc8_35.1
 // CHECK:STDOUT:   %no_op.loc8_35.7: init %empty_tuple.type = call %bound_method.loc8_35.8(%addr.loc8_35.7)
 // CHECK:STDOUT:   %Op.bound.loc8_24.7: <bound method> = bound_method %.loc8_24.2, constants.%Op.ad8
-// CHECK:STDOUT:   %Op.specific_fn.70: <specific function> = specific_function constants.%Op.ad8, @Op.2(constants.%C.674) [concrete = constants.%Op.specific_fn.6b6]
+// CHECK:STDOUT:   %Op.specific_fn.70: <specific function> = specific_function constants.%Op.ad8, @Op.1(constants.%C.674) [concrete = constants.%Op.specific_fn.6b6]
 // CHECK:STDOUT:   %bound_method.loc8_24.7: <bound method> = bound_method %.loc8_24.2, %Op.specific_fn.70
 // CHECK:STDOUT:   %addr.loc8_24.7: %ptr.625 = addr_of %.loc8_24.2
 // CHECK:STDOUT:   %no_op.loc8_24.7: init %empty_tuple.type = call %bound_method.loc8_24.7(%addr.loc8_24.7)
 // CHECK:STDOUT:   %Op.bound.loc7_35.8: <bound method> = bound_method %.loc7_35.1, constants.%Op.f5a
-// CHECK:STDOUT:   %Op.specific_fn.71: <specific function> = specific_function constants.%Op.f5a, @Op.2(constants.%D) [concrete = constants.%Op.specific_fn.bd1]
+// CHECK:STDOUT:   %Op.specific_fn.71: <specific function> = specific_function constants.%Op.f5a, @Op.1(constants.%D) [concrete = constants.%Op.specific_fn.bd1]
 // CHECK:STDOUT:   %bound_method.loc7_35.9: <bound method> = bound_method %.loc7_35.1, %Op.specific_fn.71
 // CHECK:STDOUT:   %addr.loc7_35.8: %ptr.f29 = addr_of %.loc7_35.1
 // CHECK:STDOUT:   %no_op.loc7_35.8: init %empty_tuple.type = call %bound_method.loc7_35.9(%addr.loc7_35.8)
 // CHECK:STDOUT:   %Op.bound.loc7_24.8: <bound method> = bound_method %.loc7_24.2, constants.%Op.ae6
-// CHECK:STDOUT:   %Op.specific_fn.72: <specific function> = specific_function constants.%Op.ae6, @Op.2(constants.%C.b00) [concrete = constants.%Op.specific_fn.e42]
+// CHECK:STDOUT:   %Op.specific_fn.72: <specific function> = specific_function constants.%Op.ae6, @Op.1(constants.%C.b00) [concrete = constants.%Op.specific_fn.e42]
 // CHECK:STDOUT:   %bound_method.loc7_24.8: <bound method> = bound_method %.loc7_24.2, %Op.specific_fn.72
 // CHECK:STDOUT:   %addr.loc7_24.8: %ptr.697 = addr_of %.loc7_24.2
 // CHECK:STDOUT:   %no_op.loc7_24.8: init %empty_tuple.type = call %bound_method.loc7_24.8(%addr.loc7_24.8)
@@ -1665,108 +1665,108 @@ fn F0(n: i32) -> P.D {
 // CHECK:STDOUT:   %.loc6_15: ref %D = splice_block %return {}
 // CHECK:STDOUT:   %Make.call: init %D = call %Make.ref() to %.loc6_15
 // CHECK:STDOUT:   %Op.bound.loc6: <bound method> = bound_method %.loc6_15, constants.%Op.f5a
-// CHECK:STDOUT:   %Op.specific_fn.73: <specific function> = specific_function constants.%Op.f5a, @Op.2(constants.%D) [concrete = constants.%Op.specific_fn.bd1]
+// CHECK:STDOUT:   %Op.specific_fn.73: <specific function> = specific_function constants.%Op.f5a, @Op.1(constants.%D) [concrete = constants.%Op.specific_fn.bd1]
 // CHECK:STDOUT:   %bound_method.loc6: <bound method> = bound_method %.loc6_15, %Op.specific_fn.73
 // CHECK:STDOUT:   %addr.loc6: %ptr.f29 = addr_of %.loc6_15
 // CHECK:STDOUT:   %no_op.loc6: init %empty_tuple.type = call %bound_method.loc6(%addr.loc6)
 // CHECK:STDOUT:   %Op.bound.loc14_35.2: <bound method> = bound_method %.loc14_35.1, constants.%Op.f5a
-// CHECK:STDOUT:   %Op.specific_fn.74: <specific function> = specific_function constants.%Op.f5a, @Op.2(constants.%D) [concrete = constants.%Op.specific_fn.bd1]
+// CHECK:STDOUT:   %Op.specific_fn.74: <specific function> = specific_function constants.%Op.f5a, @Op.1(constants.%D) [concrete = constants.%Op.specific_fn.bd1]
 // CHECK:STDOUT:   %bound_method.loc14_35.3: <bound method> = bound_method %.loc14_35.1, %Op.specific_fn.74
 // CHECK:STDOUT:   %addr.loc14_35.2: %ptr.f29 = addr_of %.loc14_35.1
 // CHECK:STDOUT:   %no_op.loc14_35.2: init %empty_tuple.type = call %bound_method.loc14_35.3(%addr.loc14_35.2)
 // CHECK:STDOUT:   %Op.bound.loc14_24.2: <bound method> = bound_method %.loc14_24.2, constants.%Op.6fc
-// CHECK:STDOUT:   %Op.specific_fn.75: <specific function> = specific_function constants.%Op.6fc, @Op.2(constants.%C.304) [concrete = constants.%Op.specific_fn.a08]
+// CHECK:STDOUT:   %Op.specific_fn.75: <specific function> = specific_function constants.%Op.6fc, @Op.1(constants.%C.304) [concrete = constants.%Op.specific_fn.a08]
 // CHECK:STDOUT:   %bound_method.loc14_24.2: <bound method> = bound_method %.loc14_24.2, %Op.specific_fn.75
 // CHECK:STDOUT:   %addr.loc14_24.2: %ptr.dc3 = addr_of %.loc14_24.2
 // CHECK:STDOUT:   %no_op.loc14_24.2: init %empty_tuple.type = call %bound_method.loc14_24.2(%addr.loc14_24.2)
 // CHECK:STDOUT:   %Op.bound.loc13_35.3: <bound method> = bound_method %.loc13_35.1, constants.%Op.f5a
-// CHECK:STDOUT:   %Op.specific_fn.76: <specific function> = specific_function constants.%Op.f5a, @Op.2(constants.%D) [concrete = constants.%Op.specific_fn.bd1]
+// CHECK:STDOUT:   %Op.specific_fn.76: <specific function> = specific_function constants.%Op.f5a, @Op.1(constants.%D) [concrete = constants.%Op.specific_fn.bd1]
 // CHECK:STDOUT:   %bound_method.loc13_35.4: <bound method> = bound_method %.loc13_35.1, %Op.specific_fn.76
 // CHECK:STDOUT:   %addr.loc13_35.3: %ptr.f29 = addr_of %.loc13_35.1
 // CHECK:STDOUT:   %no_op.loc13_35.3: init %empty_tuple.type = call %bound_method.loc13_35.4(%addr.loc13_35.3)
 // CHECK:STDOUT:   %Op.bound.loc13_24.3: <bound method> = bound_method %.loc13_24.2, constants.%Op.ca5
-// CHECK:STDOUT:   %Op.specific_fn.77: <specific function> = specific_function constants.%Op.ca5, @Op.2(constants.%C.c60) [concrete = constants.%Op.specific_fn.8d0]
+// CHECK:STDOUT:   %Op.specific_fn.77: <specific function> = specific_function constants.%Op.ca5, @Op.1(constants.%C.c60) [concrete = constants.%Op.specific_fn.8d0]
 // CHECK:STDOUT:   %bound_method.loc13_24.3: <bound method> = bound_method %.loc13_24.2, %Op.specific_fn.77
 // CHECK:STDOUT:   %addr.loc13_24.3: %ptr.b5e = addr_of %.loc13_24.2
 // CHECK:STDOUT:   %no_op.loc13_24.3: init %empty_tuple.type = call %bound_method.loc13_24.3(%addr.loc13_24.3)
 // CHECK:STDOUT:   %Op.bound.loc12_35.4: <bound method> = bound_method %.loc12_35.1, constants.%Op.f5a
-// CHECK:STDOUT:   %Op.specific_fn.78: <specific function> = specific_function constants.%Op.f5a, @Op.2(constants.%D) [concrete = constants.%Op.specific_fn.bd1]
+// CHECK:STDOUT:   %Op.specific_fn.78: <specific function> = specific_function constants.%Op.f5a, @Op.1(constants.%D) [concrete = constants.%Op.specific_fn.bd1]
 // CHECK:STDOUT:   %bound_method.loc12_35.5: <bound method> = bound_method %.loc12_35.1, %Op.specific_fn.78
 // CHECK:STDOUT:   %addr.loc12_35.4: %ptr.f29 = addr_of %.loc12_35.1
 // CHECK:STDOUT:   %no_op.loc12_35.4: init %empty_tuple.type = call %bound_method.loc12_35.5(%addr.loc12_35.4)
 // CHECK:STDOUT:   %Op.bound.loc12_24.4: <bound method> = bound_method %.loc12_24.2, constants.%Op.985
-// CHECK:STDOUT:   %Op.specific_fn.79: <specific function> = specific_function constants.%Op.985, @Op.2(constants.%C.f0a) [concrete = constants.%Op.specific_fn.a66]
+// CHECK:STDOUT:   %Op.specific_fn.79: <specific function> = specific_function constants.%Op.985, @Op.1(constants.%C.f0a) [concrete = constants.%Op.specific_fn.a66]
 // CHECK:STDOUT:   %bound_method.loc12_24.4: <bound method> = bound_method %.loc12_24.2, %Op.specific_fn.79
 // CHECK:STDOUT:   %addr.loc12_24.4: %ptr.24c = addr_of %.loc12_24.2
 // CHECK:STDOUT:   %no_op.loc12_24.4: init %empty_tuple.type = call %bound_method.loc12_24.4(%addr.loc12_24.4)
 // CHECK:STDOUT:   %Op.bound.loc11_35.5: <bound method> = bound_method %.loc11_35.1, constants.%Op.f5a
-// CHECK:STDOUT:   %Op.specific_fn.80: <specific function> = specific_function constants.%Op.f5a, @Op.2(constants.%D) [concrete = constants.%Op.specific_fn.bd1]
+// CHECK:STDOUT:   %Op.specific_fn.80: <specific function> = specific_function constants.%Op.f5a, @Op.1(constants.%D) [concrete = constants.%Op.specific_fn.bd1]
 // CHECK:STDOUT:   %bound_method.loc11_35.6: <bound method> = bound_method %.loc11_35.1, %Op.specific_fn.80
 // CHECK:STDOUT:   %addr.loc11_35.5: %ptr.f29 = addr_of %.loc11_35.1
 // CHECK:STDOUT:   %no_op.loc11_35.5: init %empty_tuple.type = call %bound_method.loc11_35.6(%addr.loc11_35.5)
 // CHECK:STDOUT:   %Op.bound.loc11_24.5: <bound method> = bound_method %.loc11_24.2, constants.%Op.6b4
-// CHECK:STDOUT:   %Op.specific_fn.81: <specific function> = specific_function constants.%Op.6b4, @Op.2(constants.%C.89d) [concrete = constants.%Op.specific_fn.357]
+// CHECK:STDOUT:   %Op.specific_fn.81: <specific function> = specific_function constants.%Op.6b4, @Op.1(constants.%C.89d) [concrete = constants.%Op.specific_fn.357]
 // CHECK:STDOUT:   %bound_method.loc11_24.5: <bound method> = bound_method %.loc11_24.2, %Op.specific_fn.81
 // CHECK:STDOUT:   %addr.loc11_24.5: %ptr.c28b = addr_of %.loc11_24.2
 // CHECK:STDOUT:   %no_op.loc11_24.5: init %empty_tuple.type = call %bound_method.loc11_24.5(%addr.loc11_24.5)
 // CHECK:STDOUT:   %Op.bound.loc10_35.6: <bound method> = bound_method %.loc10_35.1, constants.%Op.f5a
-// CHECK:STDOUT:   %Op.specific_fn.82: <specific function> = specific_function constants.%Op.f5a, @Op.2(constants.%D) [concrete = constants.%Op.specific_fn.bd1]
+// CHECK:STDOUT:   %Op.specific_fn.82: <specific function> = specific_function constants.%Op.f5a, @Op.1(constants.%D) [concrete = constants.%Op.specific_fn.bd1]
 // CHECK:STDOUT:   %bound_method.loc10_35.7: <bound method> = bound_method %.loc10_35.1, %Op.specific_fn.82
 // CHECK:STDOUT:   %addr.loc10_35.6: %ptr.f29 = addr_of %.loc10_35.1
 // CHECK:STDOUT:   %no_op.loc10_35.6: init %empty_tuple.type = call %bound_method.loc10_35.7(%addr.loc10_35.6)
 // CHECK:STDOUT:   %Op.bound.loc10_24.6: <bound method> = bound_method %.loc10_24.2, constants.%Op.9cf
-// CHECK:STDOUT:   %Op.specific_fn.83: <specific function> = specific_function constants.%Op.9cf, @Op.2(constants.%C.7ac) [concrete = constants.%Op.specific_fn.694]
+// CHECK:STDOUT:   %Op.specific_fn.83: <specific function> = specific_function constants.%Op.9cf, @Op.1(constants.%C.7ac) [concrete = constants.%Op.specific_fn.694]
 // CHECK:STDOUT:   %bound_method.loc10_24.6: <bound method> = bound_method %.loc10_24.2, %Op.specific_fn.83
 // CHECK:STDOUT:   %addr.loc10_24.6: %ptr.2b1 = addr_of %.loc10_24.2
 // CHECK:STDOUT:   %no_op.loc10_24.6: init %empty_tuple.type = call %bound_method.loc10_24.6(%addr.loc10_24.6)
 // CHECK:STDOUT:   %Op.bound.loc9_35.7: <bound method> = bound_method %.loc9_35.1, constants.%Op.f5a
-// CHECK:STDOUT:   %Op.specific_fn.84: <specific function> = specific_function constants.%Op.f5a, @Op.2(constants.%D) [concrete = constants.%Op.specific_fn.bd1]
+// CHECK:STDOUT:   %Op.specific_fn.84: <specific function> = specific_function constants.%Op.f5a, @Op.1(constants.%D) [concrete = constants.%Op.specific_fn.bd1]
 // CHECK:STDOUT:   %bound_method.loc9_35.8: <bound method> = bound_method %.loc9_35.1, %Op.specific_fn.84
 // CHECK:STDOUT:   %addr.loc9_35.7: %ptr.f29 = addr_of %.loc9_35.1
 // CHECK:STDOUT:   %no_op.loc9_35.7: init %empty_tuple.type = call %bound_method.loc9_35.8(%addr.loc9_35.7)
 // CHECK:STDOUT:   %Op.bound.loc9_24.7: <bound method> = bound_method %.loc9_24.2, constants.%Op.404
-// CHECK:STDOUT:   %Op.specific_fn.85: <specific function> = specific_function constants.%Op.404, @Op.2(constants.%C.681) [concrete = constants.%Op.specific_fn.822]
+// CHECK:STDOUT:   %Op.specific_fn.85: <specific function> = specific_function constants.%Op.404, @Op.1(constants.%C.681) [concrete = constants.%Op.specific_fn.822]
 // CHECK:STDOUT:   %bound_method.loc9_24.7: <bound method> = bound_method %.loc9_24.2, %Op.specific_fn.85
 // CHECK:STDOUT:   %addr.loc9_24.7: %ptr.3bd = addr_of %.loc9_24.2
 // CHECK:STDOUT:   %no_op.loc9_24.7: init %empty_tuple.type = call %bound_method.loc9_24.7(%addr.loc9_24.7)
 // CHECK:STDOUT:   %Op.bound.loc8_35.8: <bound method> = bound_method %.loc8_35.1, constants.%Op.f5a
-// CHECK:STDOUT:   %Op.specific_fn.86: <specific function> = specific_function constants.%Op.f5a, @Op.2(constants.%D) [concrete = constants.%Op.specific_fn.bd1]
+// CHECK:STDOUT:   %Op.specific_fn.86: <specific function> = specific_function constants.%Op.f5a, @Op.1(constants.%D) [concrete = constants.%Op.specific_fn.bd1]
 // CHECK:STDOUT:   %bound_method.loc8_35.9: <bound method> = bound_method %.loc8_35.1, %Op.specific_fn.86
 // CHECK:STDOUT:   %addr.loc8_35.8: %ptr.f29 = addr_of %.loc8_35.1
 // CHECK:STDOUT:   %no_op.loc8_35.8: init %empty_tuple.type = call %bound_method.loc8_35.9(%addr.loc8_35.8)
 // CHECK:STDOUT:   %Op.bound.loc8_24.8: <bound method> = bound_method %.loc8_24.2, constants.%Op.ad8
-// CHECK:STDOUT:   %Op.specific_fn.87: <specific function> = specific_function constants.%Op.ad8, @Op.2(constants.%C.674) [concrete = constants.%Op.specific_fn.6b6]
+// CHECK:STDOUT:   %Op.specific_fn.87: <specific function> = specific_function constants.%Op.ad8, @Op.1(constants.%C.674) [concrete = constants.%Op.specific_fn.6b6]
 // CHECK:STDOUT:   %bound_method.loc8_24.8: <bound method> = bound_method %.loc8_24.2, %Op.specific_fn.87
 // CHECK:STDOUT:   %addr.loc8_24.8: %ptr.625 = addr_of %.loc8_24.2
 // CHECK:STDOUT:   %no_op.loc8_24.8: init %empty_tuple.type = call %bound_method.loc8_24.8(%addr.loc8_24.8)
 // CHECK:STDOUT:   %Op.bound.loc7_35.9: <bound method> = bound_method %.loc7_35.1, constants.%Op.f5a
-// CHECK:STDOUT:   %Op.specific_fn.88: <specific function> = specific_function constants.%Op.f5a, @Op.2(constants.%D) [concrete = constants.%Op.specific_fn.bd1]
+// CHECK:STDOUT:   %Op.specific_fn.88: <specific function> = specific_function constants.%Op.f5a, @Op.1(constants.%D) [concrete = constants.%Op.specific_fn.bd1]
 // CHECK:STDOUT:   %bound_method.loc7_35.10: <bound method> = bound_method %.loc7_35.1, %Op.specific_fn.88
 // CHECK:STDOUT:   %addr.loc7_35.9: %ptr.f29 = addr_of %.loc7_35.1
 // CHECK:STDOUT:   %no_op.loc7_35.9: init %empty_tuple.type = call %bound_method.loc7_35.10(%addr.loc7_35.9)
 // CHECK:STDOUT:   %Op.bound.loc7_24.9: <bound method> = bound_method %.loc7_24.2, constants.%Op.ae6
-// CHECK:STDOUT:   %Op.specific_fn.89: <specific function> = specific_function constants.%Op.ae6, @Op.2(constants.%C.b00) [concrete = constants.%Op.specific_fn.e42]
+// CHECK:STDOUT:   %Op.specific_fn.89: <specific function> = specific_function constants.%Op.ae6, @Op.1(constants.%C.b00) [concrete = constants.%Op.specific_fn.e42]
 // CHECK:STDOUT:   %bound_method.loc7_24.9: <bound method> = bound_method %.loc7_24.2, %Op.specific_fn.89
 // CHECK:STDOUT:   %addr.loc7_24.9: %ptr.697 = addr_of %.loc7_24.2
 // CHECK:STDOUT:   %no_op.loc7_24.9: init %empty_tuple.type = call %bound_method.loc7_24.9(%addr.loc7_24.9)
 // CHECK:STDOUT:   return %Make.call to %return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
+// CHECK:STDOUT: fn @Convert.2 [from "library.carbon"];
+// CHECK:STDOUT:
+// CHECK:STDOUT: fn @Convert.3 [from "library.carbon"];
+// CHECK:STDOUT:
+// CHECK:STDOUT: fn @Convert.4 [from "library.carbon"];
+// CHECK:STDOUT:
+// CHECK:STDOUT: fn @Convert.5 [from "library.carbon"];
+// CHECK:STDOUT:
+// CHECK:STDOUT: fn @Convert.6 [from "library.carbon"];
+// CHECK:STDOUT:
 // CHECK:STDOUT: fn @Convert.7 [from "library.carbon"];
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Convert.8 [from "library.carbon"];
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Convert.9 [from "library.carbon"];
-// CHECK:STDOUT:
-// CHECK:STDOUT: fn @Convert.10 [from "library.carbon"];
-// CHECK:STDOUT:
-// CHECK:STDOUT: fn @Convert.11 [from "library.carbon"];
-// CHECK:STDOUT:
-// CHECK:STDOUT: fn @Convert.12 [from "library.carbon"];
-// CHECK:STDOUT:
-// CHECK:STDOUT: fn @Convert.13 [from "library.carbon"];
-// CHECK:STDOUT:
-// CHECK:STDOUT: fn @Convert.14 [from "library.carbon"];
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Make [from "library.carbon"];
 // CHECK:STDOUT:

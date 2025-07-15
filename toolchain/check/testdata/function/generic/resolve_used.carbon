@@ -114,16 +114,16 @@ fn CallNegative() {
 // CHECK:STDOUT:       %.loc4_39.2: type = value_of_initializer %int_literal.make_type [concrete = Core.IntLiteral]
 // CHECK:STDOUT:       %.loc4_39.3: type = converted %int_literal.make_type, %.loc4_39.2 [concrete = Core.IntLiteral]
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %N.loc4_19.1: Core.IntLiteral = bind_symbolic_name N, 0 [symbolic = %N.loc4_19.2 (constants.%N)]
+// CHECK:STDOUT:     %N.loc4_19.2: Core.IntLiteral = bind_symbolic_name N, 0 [symbolic = %N.loc4_19.1 (constants.%N)]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %CallNegative.decl: %CallNegative.type = fn_decl @CallNegative [concrete = constants.%CallNegative] {} {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic fn @ErrorIfNIsZero(%N.loc4_19.1: Core.IntLiteral) {
-// CHECK:STDOUT:   %N.loc4_19.2: Core.IntLiteral = bind_symbolic_name N, 0 [symbolic = %N.loc4_19.2 (constants.%N)]
+// CHECK:STDOUT: generic fn @ErrorIfNIsZero(%N.loc4_19.2: Core.IntLiteral) {
+// CHECK:STDOUT:   %N.loc4_19.1: Core.IntLiteral = bind_symbolic_name N, 0 [symbolic = %N.loc4_19.1 (constants.%N)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
-// CHECK:STDOUT:   %Int.loc12_20.2: type = class_type @Int, @Int(%N.loc4_19.2) [symbolic = %Int.loc12_20.2 (constants.%Int.49d0e6.1)]
+// CHECK:STDOUT:   %Int.loc12_20.2: type = class_type @Int, @Int(%N.loc4_19.1) [symbolic = %Int.loc12_20.2 (constants.%Int.49d0e6.1)]
 // CHECK:STDOUT:   %require_complete.loc12_20: <witness> = require_complete_type %Int.loc12_20.2 [symbolic = %require_complete.loc12_20 (constants.%require_complete.b4f426.1)]
 // CHECK:STDOUT:   %pattern_type: type = pattern_type %Int.loc12_20.2 [symbolic = %pattern_type (constants.%pattern_type.8963eb.1)]
 // CHECK:STDOUT:   %Destroy.lookup_impl_witness: <witness> = lookup_impl_witness %Int.loc12_20.2, @Destroy [symbolic = %Destroy.lookup_impl_witness (constants.%Destroy.lookup_impl_witness)]
@@ -144,7 +144,7 @@ fn CallNegative() {
 // CHECK:STDOUT:     %.loc12_20: type = splice_block %Int.loc12_20.1 [symbolic = %Int.loc12_20.2 (constants.%Int.49d0e6.1)] {
 // CHECK:STDOUT:       %Core.ref.loc12: <namespace> = name_ref Core, imports.%Core [concrete = imports.%Core]
 // CHECK:STDOUT:       %Int.ref: %Int.type = name_ref Int, imports.%Core.Int [concrete = constants.%Int.generic]
-// CHECK:STDOUT:       %N.ref: Core.IntLiteral = name_ref N, %N.loc4_19.1 [symbolic = %N.loc4_19.2 (constants.%N)]
+// CHECK:STDOUT:       %N.ref: Core.IntLiteral = name_ref N, %N.loc4_19.2 [symbolic = %N.loc4_19.1 (constants.%N)]
 // CHECK:STDOUT:       %Int.loc12_20.1: type = class_type @Int, @Int(constants.%N) [symbolic = %Int.loc12_20.2 (constants.%Int.49d0e6.1)]
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %v: ref @ErrorIfNIsZero.%Int.loc12_20.2 (%Int.49d0e6.1) = bind_name v, %v.var
@@ -168,11 +168,11 @@ fn CallNegative() {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @ErrorIfNIsZero(constants.%N) {
-// CHECK:STDOUT:   %N.loc4_19.2 => constants.%N
+// CHECK:STDOUT:   %N.loc4_19.1 => constants.%N
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @ErrorIfNIsZero(constants.%int_0) {
-// CHECK:STDOUT:   %N.loc4_19.2 => constants.%int_0
+// CHECK:STDOUT:   %N.loc4_19.1 => constants.%int_0
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %Int.loc12_20.2 => constants.%i0

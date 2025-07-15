@@ -39,10 +39,10 @@ fn Run() -> i32 {
 // CHECK:STDOUT:   %Run: %Run.type = struct_value () [concrete]
 // CHECK:STDOUT:   %pattern_type.761: type = pattern_type %Class [concrete]
 // CHECK:STDOUT:   %Destroy.type: type = facet_type <@Destroy> [concrete]
-// CHECK:STDOUT:   %Op.type.7de: type = fn_type @Op.2, @Destroy.impl(%Class) [concrete]
+// CHECK:STDOUT:   %Op.type.7de: type = fn_type @Op.1, @Destroy.impl(%Class) [concrete]
 // CHECK:STDOUT:   %Op.d64: %Op.type.7de = struct_value () [concrete]
 // CHECK:STDOUT:   %ptr.e71: type = ptr_type %Class [concrete]
-// CHECK:STDOUT:   %Op.specific_fn: <specific function> = specific_function %Op.d64, @Op.2(%Class) [concrete]
+// CHECK:STDOUT:   %Op.specific_fn: <specific function> = specific_function %Op.d64, @Op.1(%Class) [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -113,7 +113,7 @@ fn Run() -> i32 {
 // CHECK:STDOUT:   %.loc21_15.1: %i32 = value_of_initializer %F.call
 // CHECK:STDOUT:   %.loc21_15.2: %i32 = converted %F.call, %.loc21_15.1
 // CHECK:STDOUT:   %Op.bound: <bound method> = bound_method %c.var, constants.%Op.d64
-// CHECK:STDOUT:   %Op.specific_fn: <specific function> = specific_function constants.%Op.d64, @Op.2(constants.%Class) [concrete = constants.%Op.specific_fn]
+// CHECK:STDOUT:   %Op.specific_fn: <specific function> = specific_function constants.%Op.d64, @Op.1(constants.%Class) [concrete = constants.%Op.specific_fn]
 // CHECK:STDOUT:   %bound_method: <bound method> = bound_method %c.var, %Op.specific_fn
 // CHECK:STDOUT:   %addr: %ptr.e71 = addr_of %c.var
 // CHECK:STDOUT:   %no_op: init %empty_tuple.type = call %bound_method(%addr)

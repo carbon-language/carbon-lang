@@ -73,44 +73,44 @@ fn G(U: Empty(i32) where .A = i32*) {
 // CHECK:STDOUT:     %U.param_patt: @H.%pattern_type (%pattern_type.668) = value_param_pattern %U.patt, call_param0 [concrete]
 // CHECK:STDOUT:     %V.patt: %pattern_type.98f = symbolic_binding_pattern V, 1 [concrete]
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %T.loc21_6.1: type = bind_symbolic_name T, 0 [symbolic = %T.loc21_6.2 (constants.%T)]
+// CHECK:STDOUT:     %T.loc21_6.2: type = bind_symbolic_name T, 0 [symbolic = %T.loc21_6.1 (constants.%T)]
 // CHECK:STDOUT:     %U.param: @H.%Empty_where.type (%Empty_where.type.b73) = value_param call_param0
 // CHECK:STDOUT:     %.loc21_28.1: type = splice_block %.loc21_28.2 [symbolic = %Empty_where.type (constants.%Empty_where.type.b73)] {
 // CHECK:STDOUT:       %Empty.ref: %Empty.type.d5a = name_ref Empty, file.%Empty.decl [concrete = constants.%Empty.generic]
-// CHECK:STDOUT:       %T.ref.loc21_25: type = name_ref T, %T.loc21_6.1 [symbolic = %T.loc21_6.2 (constants.%T)]
-// CHECK:STDOUT:       %Empty.type.loc21_26.1: type = facet_type <@Empty, @Empty(constants.%T)> [symbolic = %Empty.type.loc21_26.2 (constants.%Empty.type.3e5fde.2)]
+// CHECK:STDOUT:       %T.ref.loc21_25: type = name_ref T, %T.loc21_6.2 [symbolic = %T.loc21_6.1 (constants.%T)]
+// CHECK:STDOUT:       %Empty.type.loc21_26.2: type = facet_type <@Empty, @Empty(constants.%T)> [symbolic = %Empty.type.loc21_26.1 (constants.%Empty.type.3e5fde.2)]
 // CHECK:STDOUT:       <elided>
-// CHECK:STDOUT:       %.Self.ref: @H.%Empty.type.loc21_26.2 (%Empty.type.3e5fde.2) = name_ref .Self, %.Self.1 [symbolic = %.Self.2 (constants.%.Self.c95)]
+// CHECK:STDOUT:       %.Self.ref: @H.%Empty.type.loc21_26.1 (%Empty.type.3e5fde.2) = name_ref .Self, %.Self.2 [symbolic = %.Self.1 (constants.%.Self.c95)]
 // CHECK:STDOUT:       %.loc21_34.1: @H.%Empty.assoc_type (%Empty.assoc_type.3cf698.2) = specific_constant @A.%assoc0, @Empty(constants.%T) [symbolic = %assoc0 (constants.%assoc0.3715ce.2)]
 // CHECK:STDOUT:       %A.ref: @H.%Empty.assoc_type (%Empty.assoc_type.3cf698.2) = name_ref A, %.loc21_34.1 [symbolic = %assoc0 (constants.%assoc0.3715ce.2)]
-// CHECK:STDOUT:       %.Self.as_type.loc21_34.1: type = facet_access_type %.Self.ref [symbolic = %.Self.as_type.loc21_34.2 (constants.%.Self.as_type.a75)]
-// CHECK:STDOUT:       %.loc21_34.2: type = converted %.Self.ref, %.Self.as_type.loc21_34.1 [symbolic = %.Self.as_type.loc21_34.2 (constants.%.Self.as_type.a75)]
-// CHECK:STDOUT:       %impl.elem0.loc21_34.1: type = impl_witness_access constants.%Empty.lookup_impl_witness.b1d, element0 [symbolic = %impl.elem0.loc21_34.2 (constants.%impl.elem0.c6e)]
-// CHECK:STDOUT:       %T.ref.loc21_39: type = name_ref T, %T.loc21_6.1 [symbolic = %T.loc21_6.2 (constants.%T)]
-// CHECK:STDOUT:       %ptr.loc21_40.1: type = ptr_type %T.ref.loc21_39 [symbolic = %ptr.loc21_40.2 (constants.%ptr.79f)]
-// CHECK:STDOUT:       %.loc21_28.2: type = where_expr %.Self.1 [symbolic = %Empty_where.type (constants.%Empty_where.type.b73)] {
-// CHECK:STDOUT:         requirement_rewrite %impl.elem0.loc21_34.1, %ptr.loc21_40.1
+// CHECK:STDOUT:       %.Self.as_type.loc21_34.2: type = facet_access_type %.Self.ref [symbolic = %.Self.as_type.loc21_34.1 (constants.%.Self.as_type.a75)]
+// CHECK:STDOUT:       %.loc21_34.2: type = converted %.Self.ref, %.Self.as_type.loc21_34.2 [symbolic = %.Self.as_type.loc21_34.1 (constants.%.Self.as_type.a75)]
+// CHECK:STDOUT:       %impl.elem0.loc21_34.2: type = impl_witness_access constants.%Empty.lookup_impl_witness.b1d, element0 [symbolic = %impl.elem0.loc21_34.1 (constants.%impl.elem0.c6e)]
+// CHECK:STDOUT:       %T.ref.loc21_39: type = name_ref T, %T.loc21_6.2 [symbolic = %T.loc21_6.1 (constants.%T)]
+// CHECK:STDOUT:       %ptr.loc21_40.2: type = ptr_type %T.ref.loc21_39 [symbolic = %ptr.loc21_40.1 (constants.%ptr.79f)]
+// CHECK:STDOUT:       %.loc21_28.2: type = where_expr %.Self.2 [symbolic = %Empty_where.type (constants.%Empty_where.type.b73)] {
+// CHECK:STDOUT:         requirement_rewrite %impl.elem0.loc21_34.2, %ptr.loc21_40.2
 // CHECK:STDOUT:       }
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %U: @H.%Empty_where.type (%Empty_where.type.b73) = bind_name U, %U.param
-// CHECK:STDOUT:     %V.loc21_43.1: type = bind_symbolic_name V, 1 [symbolic = %V.loc21_43.2 (constants.%V)]
+// CHECK:STDOUT:     %V.loc21_43.2: type = bind_symbolic_name V, 1 [symbolic = %V.loc21_43.1 (constants.%V)]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic fn @H(%T.loc21_6.1: type, %V.loc21_43.1: type) {
-// CHECK:STDOUT:   %T.loc21_6.2: type = bind_symbolic_name T, 0 [symbolic = %T.loc21_6.2 (constants.%T)]
-// CHECK:STDOUT:   %Empty.type.loc21_26.2: type = facet_type <@Empty, @Empty(%T.loc21_6.2)> [symbolic = %Empty.type.loc21_26.2 (constants.%Empty.type.3e5fde.2)]
+// CHECK:STDOUT: generic fn @H(%T.loc21_6.2: type, %V.loc21_43.2: type) {
+// CHECK:STDOUT:   %T.loc21_6.1: type = bind_symbolic_name T, 0 [symbolic = %T.loc21_6.1 (constants.%T)]
+// CHECK:STDOUT:   %Empty.type.loc21_26.1: type = facet_type <@Empty, @Empty(%T.loc21_6.1)> [symbolic = %Empty.type.loc21_26.1 (constants.%Empty.type.3e5fde.2)]
 // CHECK:STDOUT:   <elided>
-// CHECK:STDOUT:   %require_complete.loc21_34: <witness> = require_complete_type %Empty.type.loc21_26.2 [symbolic = %require_complete.loc21_34 (constants.%require_complete.22f)]
-// CHECK:STDOUT:   %Empty.assoc_type: type = assoc_entity_type @Empty, @Empty(%T.loc21_6.2) [symbolic = %Empty.assoc_type (constants.%Empty.assoc_type.3cf698.2)]
+// CHECK:STDOUT:   %require_complete.loc21_34: <witness> = require_complete_type %Empty.type.loc21_26.1 [symbolic = %require_complete.loc21_34 (constants.%require_complete.22f)]
+// CHECK:STDOUT:   %Empty.assoc_type: type = assoc_entity_type @Empty, @Empty(%T.loc21_6.1) [symbolic = %Empty.assoc_type (constants.%Empty.assoc_type.3cf698.2)]
 // CHECK:STDOUT:   %assoc0: @H.%Empty.assoc_type (%Empty.assoc_type.3cf698.2) = assoc_entity element0, @Empty.%A [symbolic = %assoc0 (constants.%assoc0.3715ce.2)]
-// CHECK:STDOUT:   %.Self.as_type.loc21_34.2: type = facet_access_type %.Self.2 [symbolic = %.Self.as_type.loc21_34.2 (constants.%.Self.as_type.a75)]
-// CHECK:STDOUT:   %Empty.lookup_impl_witness: <witness> = lookup_impl_witness %.Self.2, @Empty, @Empty(%T.loc21_6.2) [symbolic = %Empty.lookup_impl_witness (constants.%Empty.lookup_impl_witness.b1d)]
-// CHECK:STDOUT:   %impl.elem0.loc21_34.2: type = impl_witness_access %Empty.lookup_impl_witness, element0 [symbolic = %impl.elem0.loc21_34.2 (constants.%impl.elem0.c6e)]
-// CHECK:STDOUT:   %ptr.loc21_40.2: type = ptr_type %T.loc21_6.2 [symbolic = %ptr.loc21_40.2 (constants.%ptr.79f)]
-// CHECK:STDOUT:   %Empty_where.type: type = facet_type <@Empty, @Empty(%T.loc21_6.2) where %impl.elem0.loc21_34.2 = %ptr.loc21_40.2> [symbolic = %Empty_where.type (constants.%Empty_where.type.b73)]
+// CHECK:STDOUT:   %.Self.as_type.loc21_34.1: type = facet_access_type %.Self.1 [symbolic = %.Self.as_type.loc21_34.1 (constants.%.Self.as_type.a75)]
+// CHECK:STDOUT:   %Empty.lookup_impl_witness: <witness> = lookup_impl_witness %.Self.1, @Empty, @Empty(%T.loc21_6.1) [symbolic = %Empty.lookup_impl_witness (constants.%Empty.lookup_impl_witness.b1d)]
+// CHECK:STDOUT:   %impl.elem0.loc21_34.1: type = impl_witness_access %Empty.lookup_impl_witness, element0 [symbolic = %impl.elem0.loc21_34.1 (constants.%impl.elem0.c6e)]
+// CHECK:STDOUT:   %ptr.loc21_40.1: type = ptr_type %T.loc21_6.1 [symbolic = %ptr.loc21_40.1 (constants.%ptr.79f)]
+// CHECK:STDOUT:   %Empty_where.type: type = facet_type <@Empty, @Empty(%T.loc21_6.1) where %impl.elem0.loc21_34.1 = %ptr.loc21_40.1> [symbolic = %Empty_where.type (constants.%Empty_where.type.b73)]
 // CHECK:STDOUT:   %pattern_type: type = pattern_type %Empty_where.type [symbolic = %pattern_type (constants.%pattern_type.668)]
-// CHECK:STDOUT:   %V.loc21_43.2: type = bind_symbolic_name V, 1 [symbolic = %V.loc21_43.2 (constants.%V)]
+// CHECK:STDOUT:   %V.loc21_43.1: type = bind_symbolic_name V, 1 [symbolic = %V.loc21_43.1 (constants.%V)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %require_complete.loc21_17: <witness> = require_complete_type %Empty_where.type [symbolic = %require_complete.loc21_17 (constants.%require_complete.af8)]
@@ -122,35 +122,35 @@ fn G(U: Empty(i32) where .A = i32*) {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @H(constants.%T, constants.%V) {
-// CHECK:STDOUT:   %T.loc21_6.2 => constants.%T
-// CHECK:STDOUT:   %Empty.type.loc21_26.2 => constants.%Empty.type.3e5fde.2
-// CHECK:STDOUT:   %.Self.2 => constants.%.Self.c95
+// CHECK:STDOUT:   %T.loc21_6.1 => constants.%T
+// CHECK:STDOUT:   %Empty.type.loc21_26.1 => constants.%Empty.type.3e5fde.2
+// CHECK:STDOUT:   %.Self.1 => constants.%.Self.c95
 // CHECK:STDOUT:   %require_complete.loc21_34 => constants.%require_complete.22f
 // CHECK:STDOUT:   %Empty.assoc_type => constants.%Empty.assoc_type.3cf698.2
 // CHECK:STDOUT:   %assoc0 => constants.%assoc0.3715ce.2
-// CHECK:STDOUT:   %.Self.as_type.loc21_34.2 => constants.%.Self.as_type.a75
+// CHECK:STDOUT:   %.Self.as_type.loc21_34.1 => constants.%.Self.as_type.a75
 // CHECK:STDOUT:   %Empty.lookup_impl_witness => constants.%Empty.lookup_impl_witness.b1d
-// CHECK:STDOUT:   %impl.elem0.loc21_34.2 => constants.%impl.elem0.c6e
-// CHECK:STDOUT:   %ptr.loc21_40.2 => constants.%ptr.79f
+// CHECK:STDOUT:   %impl.elem0.loc21_34.1 => constants.%impl.elem0.c6e
+// CHECK:STDOUT:   %ptr.loc21_40.1 => constants.%ptr.79f
 // CHECK:STDOUT:   %Empty_where.type => constants.%Empty_where.type.b73
 // CHECK:STDOUT:   %pattern_type => constants.%pattern_type.668
-// CHECK:STDOUT:   %V.loc21_43.2 => constants.%V
+// CHECK:STDOUT:   %V.loc21_43.1 => constants.%V
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @H(constants.%i32, bool) {
-// CHECK:STDOUT:   %T.loc21_6.2 => constants.%i32
-// CHECK:STDOUT:   %Empty.type.loc21_26.2 => constants.%Empty.type.f0b
-// CHECK:STDOUT:   %.Self.2 => constants.%.Self.e6e
+// CHECK:STDOUT:   %T.loc21_6.1 => constants.%i32
+// CHECK:STDOUT:   %Empty.type.loc21_26.1 => constants.%Empty.type.f0b
+// CHECK:STDOUT:   %.Self.1 => constants.%.Self.e6e
 // CHECK:STDOUT:   %require_complete.loc21_34 => constants.%complete_type.091
 // CHECK:STDOUT:   %Empty.assoc_type => constants.%Empty.assoc_type.7c7
 // CHECK:STDOUT:   %assoc0 => constants.%assoc0.758
-// CHECK:STDOUT:   %.Self.as_type.loc21_34.2 => constants.%.Self.as_type.920
+// CHECK:STDOUT:   %.Self.as_type.loc21_34.1 => constants.%.Self.as_type.920
 // CHECK:STDOUT:   %Empty.lookup_impl_witness => constants.%Empty.lookup_impl_witness.4e3
-// CHECK:STDOUT:   %impl.elem0.loc21_34.2 => constants.%impl.elem0.64a
-// CHECK:STDOUT:   %ptr.loc21_40.2 => constants.%ptr.235
+// CHECK:STDOUT:   %impl.elem0.loc21_34.1 => constants.%impl.elem0.64a
+// CHECK:STDOUT:   %ptr.loc21_40.1 => constants.%ptr.235
 // CHECK:STDOUT:   %Empty_where.type => constants.%Empty_where.type.fc2
 // CHECK:STDOUT:   %pattern_type => constants.%pattern_type.012
-// CHECK:STDOUT:   %V.loc21_43.2 => bool
+// CHECK:STDOUT:   %V.loc21_43.1 => bool
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %require_complete.loc21_17 => constants.%complete_type.a3f

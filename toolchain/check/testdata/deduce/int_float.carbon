@@ -102,15 +102,15 @@ fn G(a: f64) -> Core.IntLiteral() {
 // CHECK:STDOUT:       %.loc4_26.2: type = value_of_initializer %int_literal.make_type.loc4_26 [concrete = Core.IntLiteral]
 // CHECK:STDOUT:       %.loc4_26.3: type = converted %int_literal.make_type.loc4_26, %.loc4_26.2 [concrete = Core.IntLiteral]
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %N.loc4_6.1: Core.IntLiteral = bind_symbolic_name N, 0 [symbolic = %N.loc4_6.2 (constants.%N)]
-// CHECK:STDOUT:     %n.param: @F.%Int.loc4_42.2 (%Int) = value_param call_param0
-// CHECK:STDOUT:     %.loc4_42: type = splice_block %Int.loc4_42.1 [symbolic = %Int.loc4_42.2 (constants.%Int)] {
+// CHECK:STDOUT:     %N.loc4_6.2: Core.IntLiteral = bind_symbolic_name N, 0 [symbolic = %N.loc4_6.1 (constants.%N)]
+// CHECK:STDOUT:     %n.param: @F.%Int.loc4_42.1 (%Int) = value_param call_param0
+// CHECK:STDOUT:     %.loc4_42: type = splice_block %Int.loc4_42.2 [symbolic = %Int.loc4_42.1 (constants.%Int)] {
 // CHECK:STDOUT:       %Core.ref.loc4_32: <namespace> = name_ref Core, imports.%Core [concrete = imports.%Core]
 // CHECK:STDOUT:       %Int.ref: %Int.type = name_ref Int, imports.%Core.Int [concrete = constants.%Int.generic]
-// CHECK:STDOUT:       %N.ref.loc4: Core.IntLiteral = name_ref N, %N.loc4_6.1 [symbolic = %N.loc4_6.2 (constants.%N)]
-// CHECK:STDOUT:       %Int.loc4_42.1: type = class_type @Int, @Int(constants.%N) [symbolic = %Int.loc4_42.2 (constants.%Int)]
+// CHECK:STDOUT:       %N.ref.loc4: Core.IntLiteral = name_ref N, %N.loc4_6.2 [symbolic = %N.loc4_6.1 (constants.%N)]
+// CHECK:STDOUT:       %Int.loc4_42.2: type = class_type @Int, @Int(constants.%N) [symbolic = %Int.loc4_42.1 (constants.%Int)]
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %n: @F.%Int.loc4_42.2 (%Int) = bind_name n, %n.param
+// CHECK:STDOUT:     %n: @F.%Int.loc4_42.1 (%Int) = bind_name n, %n.param
 // CHECK:STDOUT:     %return.param: ref Core.IntLiteral = out_param call_param1
 // CHECK:STDOUT:     %return: ref Core.IntLiteral = return_slot %return.param
 // CHECK:STDOUT:   }
@@ -136,17 +136,17 @@ fn G(a: f64) -> Core.IntLiteral() {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic fn @F(%N.loc4_6.1: Core.IntLiteral) {
-// CHECK:STDOUT:   %N.loc4_6.2: Core.IntLiteral = bind_symbolic_name N, 0 [symbolic = %N.loc4_6.2 (constants.%N)]
-// CHECK:STDOUT:   %Int.loc4_42.2: type = class_type @Int, @Int(%N.loc4_6.2) [symbolic = %Int.loc4_42.2 (constants.%Int)]
-// CHECK:STDOUT:   %pattern_type: type = pattern_type %Int.loc4_42.2 [symbolic = %pattern_type (constants.%pattern_type.896)]
+// CHECK:STDOUT: generic fn @F(%N.loc4_6.2: Core.IntLiteral) {
+// CHECK:STDOUT:   %N.loc4_6.1: Core.IntLiteral = bind_symbolic_name N, 0 [symbolic = %N.loc4_6.1 (constants.%N)]
+// CHECK:STDOUT:   %Int.loc4_42.1: type = class_type @Int, @Int(%N.loc4_6.1) [symbolic = %Int.loc4_42.1 (constants.%Int)]
+// CHECK:STDOUT:   %pattern_type: type = pattern_type %Int.loc4_42.1 [symbolic = %pattern_type (constants.%pattern_type.896)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
-// CHECK:STDOUT:   %require_complete: <witness> = require_complete_type %Int.loc4_42.2 [symbolic = %require_complete (constants.%require_complete.b4f)]
+// CHECK:STDOUT:   %require_complete: <witness> = require_complete_type %Int.loc4_42.1 [symbolic = %require_complete (constants.%require_complete.b4f)]
 // CHECK:STDOUT:
-// CHECK:STDOUT:   fn(%n.param: @F.%Int.loc4_42.2 (%Int)) -> Core.IntLiteral {
+// CHECK:STDOUT:   fn(%n.param: @F.%Int.loc4_42.1 (%Int)) -> Core.IntLiteral {
 // CHECK:STDOUT:   !entry:
-// CHECK:STDOUT:     %N.ref.loc5: Core.IntLiteral = name_ref N, %N.loc4_6.1 [symbolic = %N.loc4_6.2 (constants.%N)]
+// CHECK:STDOUT:     %N.ref.loc5: Core.IntLiteral = name_ref N, %N.loc4_6.2 [symbolic = %N.loc4_6.1 (constants.%N)]
 // CHECK:STDOUT:     return %N.ref.loc5
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
@@ -163,14 +163,14 @@ fn G(a: f64) -> Core.IntLiteral() {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @F(constants.%N) {
-// CHECK:STDOUT:   %N.loc4_6.2 => constants.%N
-// CHECK:STDOUT:   %Int.loc4_42.2 => constants.%Int
+// CHECK:STDOUT:   %N.loc4_6.1 => constants.%N
+// CHECK:STDOUT:   %Int.loc4_42.1 => constants.%Int
 // CHECK:STDOUT:   %pattern_type => constants.%pattern_type.896
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @F(constants.%int_64) {
-// CHECK:STDOUT:   %N.loc4_6.2 => constants.%int_64
-// CHECK:STDOUT:   %Int.loc4_42.2 => constants.%i64
+// CHECK:STDOUT:   %N.loc4_6.1 => constants.%int_64
+// CHECK:STDOUT:   %Int.loc4_42.1 => constants.%i64
 // CHECK:STDOUT:   %pattern_type => constants.%pattern_type.95b
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
@@ -231,12 +231,12 @@ fn G(a: f64) -> Core.IntLiteral() {
 // CHECK:STDOUT:       %.loc9_26.2: type = value_of_initializer %int_literal.make_type.loc9_26 [concrete = Core.IntLiteral]
 // CHECK:STDOUT:       %.loc9_26.3: type = converted %int_literal.make_type.loc9_26, %.loc9_26.2 [concrete = Core.IntLiteral]
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %N.loc9_6.1: Core.IntLiteral = bind_symbolic_name N, 0 [symbolic = %N.loc9_6.2 (constants.%N)]
+// CHECK:STDOUT:     %N.loc9_6.2: Core.IntLiteral = bind_symbolic_name N, 0 [symbolic = %N.loc9_6.1 (constants.%N)]
 // CHECK:STDOUT:     %n.param: <error> = value_param call_param0
 // CHECK:STDOUT:     %.1: <error> = splice_block <error> [concrete = <error>] {
 // CHECK:STDOUT:       %Core.ref.loc9_32: <namespace> = name_ref Core, imports.%Core [concrete = imports.%Core]
 // CHECK:STDOUT:       %Float.ref: %Float.type = name_ref Float, imports.%Core.Float [concrete = constants.%Float]
-// CHECK:STDOUT:       %N.ref.loc9: Core.IntLiteral = name_ref N, %N.loc9_6.1 [symbolic = %N.loc9_6.2 (constants.%N)]
+// CHECK:STDOUT:       %N.ref.loc9: Core.IntLiteral = name_ref N, %N.loc9_6.2 [symbolic = %N.loc9_6.1 (constants.%N)]
 // CHECK:STDOUT:       %float.make_type: init type = call %Float.ref(%N.ref.loc9)
 // CHECK:STDOUT:       %.loc9_44.1: type = value_of_initializer %float.make_type
 // CHECK:STDOUT:       %.loc9_44.2: type = converted %float.make_type, %.loc9_44.1
@@ -269,14 +269,14 @@ fn G(a: f64) -> Core.IntLiteral() {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic fn @F(%N.loc9_6.1: Core.IntLiteral) {
-// CHECK:STDOUT:   %N.loc9_6.2: Core.IntLiteral = bind_symbolic_name N, 0 [symbolic = %N.loc9_6.2 (constants.%N)]
+// CHECK:STDOUT: generic fn @F(%N.loc9_6.2: Core.IntLiteral) {
+// CHECK:STDOUT:   %N.loc9_6.1: Core.IntLiteral = bind_symbolic_name N, 0 [symbolic = %N.loc9_6.1 (constants.%N)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:
 // CHECK:STDOUT:   fn(%n.param: <error>) -> Core.IntLiteral {
 // CHECK:STDOUT:   !entry:
-// CHECK:STDOUT:     %N.ref.loc10: Core.IntLiteral = name_ref N, %N.loc9_6.1 [symbolic = %N.loc9_6.2 (constants.%N)]
+// CHECK:STDOUT:     %N.ref.loc10: Core.IntLiteral = name_ref N, %N.loc9_6.2 [symbolic = %N.loc9_6.1 (constants.%N)]
 // CHECK:STDOUT:     return %N.ref.loc10
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
@@ -289,6 +289,6 @@ fn G(a: f64) -> Core.IntLiteral() {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @F(constants.%N) {
-// CHECK:STDOUT:   %N.loc9_6.2 => constants.%N
+// CHECK:STDOUT:   %N.loc9_6.1 => constants.%N
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

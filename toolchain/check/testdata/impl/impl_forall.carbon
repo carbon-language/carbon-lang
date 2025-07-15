@@ -42,7 +42,7 @@ impl forall [T:! type] T as Simple {
 // CHECK:STDOUT:     .Simple = %Simple.decl
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Simple.decl: type = interface_decl @Simple [concrete = constants.%Simple.type] {} {}
-// CHECK:STDOUT:   impl_decl @Simple.impl [concrete] {
+// CHECK:STDOUT:   %Simple.impl = impl_decl @Simple.impl [concrete] {
 // CHECK:STDOUT:     %T.patt: %pattern_type = symbolic_binding_pattern T, 0 [concrete]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %T.ref: type = name_ref T, %T.loc19_14.1 [symbolic = %T.loc19_14.2 (constants.%T)]

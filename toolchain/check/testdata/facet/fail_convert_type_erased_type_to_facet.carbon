@@ -68,7 +68,7 @@ fn F() {
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %Animal.decl: type = interface_decl @Animal [concrete = constants.%Animal.type] {} {}
 // CHECK:STDOUT:   %Goat.decl: type = class_decl @Goat [concrete = constants.%Goat] {} {}
-// CHECK:STDOUT:   impl_decl @Animal.impl [concrete] {} {
+// CHECK:STDOUT:   %Animal.impl = impl_decl @Animal.impl [concrete] {} {
 // CHECK:STDOUT:     %Goat.ref: type = name_ref Goat, file.%Goat.decl [concrete = constants.%Goat]
 // CHECK:STDOUT:     %Animal.ref: type = name_ref Animal, file.%Animal.decl [concrete = constants.%Animal.type]
 // CHECK:STDOUT:   }
@@ -78,7 +78,7 @@ fn F() {
 // CHECK:STDOUT:     %a.patt: %pattern_type.3b0 = symbolic_binding_pattern a, 0 [concrete]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %Animal.ref: type = name_ref Animal, file.%Animal.decl [concrete = constants.%Animal.type]
-// CHECK:STDOUT:     %a.loc20_15.1: %Animal.type = bind_symbolic_name a, 0 [symbolic = %a.loc20_15.2 (constants.%a)]
+// CHECK:STDOUT:     %a.loc20_15.2: %Animal.type = bind_symbolic_name a, 0 [symbolic = %a.loc20_15.1 (constants.%a)]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [concrete = constants.%F] {} {}
 // CHECK:STDOUT: }
@@ -105,8 +105,8 @@ fn F() {
 // CHECK:STDOUT:   .Self = constants.%Goat
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic fn @WalkAnimal(%a.loc20_15.1: %Animal.type) {
-// CHECK:STDOUT:   %a.loc20_15.2: %Animal.type = bind_symbolic_name a, 0 [symbolic = %a.loc20_15.2 (constants.%a)]
+// CHECK:STDOUT: generic fn @WalkAnimal(%a.loc20_15.2: %Animal.type) {
+// CHECK:STDOUT:   %a.loc20_15.1: %Animal.type = bind_symbolic_name a, 0 [symbolic = %a.loc20_15.1 (constants.%a)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:
@@ -129,6 +129,6 @@ fn F() {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @WalkAnimal(constants.%a) {
-// CHECK:STDOUT:   %a.loc20_15.2 => constants.%a
+// CHECK:STDOUT:   %a.loc20_15.1 => constants.%a
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

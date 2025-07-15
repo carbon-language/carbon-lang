@@ -154,10 +154,10 @@ fn G() {
 // CHECK:STDOUT:   %pattern_type.cb1: type = pattern_type %empty_tuple.type [concrete]
 // CHECK:STDOUT:   %empty_tuple: %empty_tuple.type = tuple_value () [concrete]
 // CHECK:STDOUT:   %Destroy.type: type = facet_type <@Destroy> [concrete]
-// CHECK:STDOUT:   %Op.type.a63: type = fn_type @Op.2, @Destroy.impl(%empty_tuple.type) [concrete]
+// CHECK:STDOUT:   %Op.type.a63: type = fn_type @Op.1, @Destroy.impl(%empty_tuple.type) [concrete]
 // CHECK:STDOUT:   %Op.ea3: %Op.type.a63 = struct_value () [concrete]
 // CHECK:STDOUT:   %ptr.843: type = ptr_type %empty_tuple.type [concrete]
-// CHECK:STDOUT:   %Op.specific_fn: <specific function> = specific_function %Op.ea3, @Op.2(%empty_tuple.type) [concrete]
+// CHECK:STDOUT:   %Op.specific_fn: <specific function> = specific_function %Op.ea3, @Op.1(%empty_tuple.type) [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -195,7 +195,7 @@ fn G() {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %x: ref %empty_tuple.type = bind_name x, %x.var
 // CHECK:STDOUT:   %Op.bound: <bound method> = bound_method %x.var, constants.%Op.ea3
-// CHECK:STDOUT:   %Op.specific_fn: <specific function> = specific_function constants.%Op.ea3, @Op.2(constants.%empty_tuple.type) [concrete = constants.%Op.specific_fn]
+// CHECK:STDOUT:   %Op.specific_fn: <specific function> = specific_function constants.%Op.ea3, @Op.1(constants.%empty_tuple.type) [concrete = constants.%Op.specific_fn]
 // CHECK:STDOUT:   %bound_method: <bound method> = bound_method %x.var, %Op.specific_fn
 // CHECK:STDOUT:   %addr: %ptr.843 = addr_of %x.var
 // CHECK:STDOUT:   %no_op: init %empty_tuple.type = call %bound_method(%addr)
@@ -213,10 +213,10 @@ fn G() {
 // CHECK:STDOUT:   %pattern_type.5b8: type = pattern_type %tuple.type [concrete]
 // CHECK:STDOUT:   %empty_tuple: %empty_tuple.type = tuple_value () [concrete]
 // CHECK:STDOUT:   %Destroy.type: type = facet_type <@Destroy> [concrete]
-// CHECK:STDOUT:   %Op.type.a63: type = fn_type @Op.2, @Destroy.impl(%empty_tuple.type) [concrete]
+// CHECK:STDOUT:   %Op.type.a63: type = fn_type @Op.1, @Destroy.impl(%empty_tuple.type) [concrete]
 // CHECK:STDOUT:   %Op.ea3: %Op.type.a63 = struct_value () [concrete]
 // CHECK:STDOUT:   %ptr.843: type = ptr_type %empty_tuple.type [concrete]
-// CHECK:STDOUT:   %Op.specific_fn: <specific function> = specific_function %Op.ea3, @Op.2(%empty_tuple.type) [concrete]
+// CHECK:STDOUT:   %Op.specific_fn: <specific function> = specific_function %Op.ea3, @Op.1(%empty_tuple.type) [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -265,7 +265,7 @@ fn G() {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %y: ref %empty_tuple.type = bind_name y, %y.var
 // CHECK:STDOUT:   %Op.bound: <bound method> = bound_method %y.var, constants.%Op.ea3
-// CHECK:STDOUT:   %Op.specific_fn: <specific function> = specific_function constants.%Op.ea3, @Op.2(constants.%empty_tuple.type) [concrete = constants.%Op.specific_fn]
+// CHECK:STDOUT:   %Op.specific_fn: <specific function> = specific_function constants.%Op.ea3, @Op.1(constants.%empty_tuple.type) [concrete = constants.%Op.specific_fn]
 // CHECK:STDOUT:   %bound_method: <bound method> = bound_method %y.var, %Op.specific_fn
 // CHECK:STDOUT:   %addr: %ptr.843 = addr_of %y.var
 // CHECK:STDOUT:   %no_op: init %empty_tuple.type = call %bound_method(%addr)
@@ -285,9 +285,9 @@ fn G() {
 // CHECK:STDOUT:   %empty_tuple: %empty_tuple.type = tuple_value () [concrete]
 // CHECK:STDOUT:   %tuple: %tuple.type = tuple_value (%empty_tuple, %empty_tuple) [concrete]
 // CHECK:STDOUT:   %Destroy.type: type = facet_type <@Destroy> [concrete]
-// CHECK:STDOUT:   %Op.type.4e8: type = fn_type @Op.2, @Destroy.impl(%tuple.type) [concrete]
+// CHECK:STDOUT:   %Op.type.4e8: type = fn_type @Op.1, @Destroy.impl(%tuple.type) [concrete]
 // CHECK:STDOUT:   %Op.166: %Op.type.4e8 = struct_value () [concrete]
-// CHECK:STDOUT:   %Op.specific_fn: <specific function> = specific_function %Op.166, @Op.2(%tuple.type) [concrete]
+// CHECK:STDOUT:   %Op.specific_fn: <specific function> = specific_function %Op.166, @Op.1(%tuple.type) [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -342,7 +342,7 @@ fn G() {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %y: ref %empty_tuple.type = bind_name y, %tuple.elem1.loc5_3
 // CHECK:STDOUT:   %Op.bound: <bound method> = bound_method %.var, constants.%Op.166
-// CHECK:STDOUT:   %Op.specific_fn: <specific function> = specific_function constants.%Op.166, @Op.2(constants.%tuple.type) [concrete = constants.%Op.specific_fn]
+// CHECK:STDOUT:   %Op.specific_fn: <specific function> = specific_function constants.%Op.166, @Op.1(constants.%tuple.type) [concrete = constants.%Op.specific_fn]
 // CHECK:STDOUT:   %bound_method: <bound method> = bound_method %.var, %Op.specific_fn
 // CHECK:STDOUT:   %addr: %ptr.709 = addr_of %.var
 // CHECK:STDOUT:   %no_op: init %empty_tuple.type = call %bound_method(%addr)
@@ -362,9 +362,9 @@ fn G() {
 // CHECK:STDOUT:   %empty_tuple: %empty_tuple.type = tuple_value () [concrete]
 // CHECK:STDOUT:   %tuple: %tuple.type = tuple_value (%empty_tuple, %empty_tuple) [concrete]
 // CHECK:STDOUT:   %Destroy.type: type = facet_type <@Destroy> [concrete]
-// CHECK:STDOUT:   %Op.type.4e8: type = fn_type @Op.2, @Destroy.impl(%tuple.type) [concrete]
+// CHECK:STDOUT:   %Op.type.4e8: type = fn_type @Op.1, @Destroy.impl(%tuple.type) [concrete]
 // CHECK:STDOUT:   %Op.166: %Op.type.4e8 = struct_value () [concrete]
-// CHECK:STDOUT:   %Op.specific_fn: <specific function> = specific_function %Op.166, @Op.2(%tuple.type) [concrete]
+// CHECK:STDOUT:   %Op.specific_fn: <specific function> = specific_function %Op.166, @Op.1(%tuple.type) [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -419,7 +419,7 @@ fn G() {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %y: ref %empty_tuple.type = bind_name y, %tuple.elem1.loc5_7
 // CHECK:STDOUT:   %Op.bound: <bound method> = bound_method %.var, constants.%Op.166
-// CHECK:STDOUT:   %Op.specific_fn: <specific function> = specific_function constants.%Op.166, @Op.2(constants.%tuple.type) [concrete = constants.%Op.specific_fn]
+// CHECK:STDOUT:   %Op.specific_fn: <specific function> = specific_function constants.%Op.166, @Op.1(constants.%tuple.type) [concrete = constants.%Op.specific_fn]
 // CHECK:STDOUT:   %bound_method: <bound method> = bound_method %.var, %Op.specific_fn
 // CHECK:STDOUT:   %addr: %ptr.709 = addr_of %.var
 // CHECK:STDOUT:   %no_op: init %empty_tuple.type = call %bound_method(%addr)
@@ -437,10 +437,10 @@ fn G() {
 // CHECK:STDOUT:   %G: %G.type = struct_value () [concrete]
 // CHECK:STDOUT:   %empty_tuple: %empty_tuple.type = tuple_value () [concrete]
 // CHECK:STDOUT:   %Destroy.type: type = facet_type <@Destroy> [concrete]
-// CHECK:STDOUT:   %Op.type.a63: type = fn_type @Op.2, @Destroy.impl(%empty_tuple.type) [concrete]
+// CHECK:STDOUT:   %Op.type.a63: type = fn_type @Op.1, @Destroy.impl(%empty_tuple.type) [concrete]
 // CHECK:STDOUT:   %Op.ea3: %Op.type.a63 = struct_value () [concrete]
 // CHECK:STDOUT:   %ptr.843: type = ptr_type %empty_tuple.type [concrete]
-// CHECK:STDOUT:   %Op.specific_fn: <specific function> = specific_function %Op.ea3, @Op.2(%empty_tuple.type) [concrete]
+// CHECK:STDOUT:   %Op.specific_fn: <specific function> = specific_function %Op.ea3, @Op.1(%empty_tuple.type) [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -511,12 +511,12 @@ fn G() {
 // CHECK:STDOUT:   assign %.loc4_13.1, %.loc4_13.2
 // CHECK:STDOUT:   %F.call: init %empty_tuple.type = call %F.ref(%.loc8_5, %.loc4_13.1)
 // CHECK:STDOUT:   %Op.bound.loc4: <bound method> = bound_method %.loc4_13.1, constants.%Op.ea3
-// CHECK:STDOUT:   %Op.specific_fn.1: <specific function> = specific_function constants.%Op.ea3, @Op.2(constants.%empty_tuple.type) [concrete = constants.%Op.specific_fn]
+// CHECK:STDOUT:   %Op.specific_fn.1: <specific function> = specific_function constants.%Op.ea3, @Op.1(constants.%empty_tuple.type) [concrete = constants.%Op.specific_fn]
 // CHECK:STDOUT:   %bound_method.loc4: <bound method> = bound_method %.loc4_13.1, %Op.specific_fn.1
 // CHECK:STDOUT:   %addr.loc4: %ptr.843 = addr_of %.loc4_13.1
 // CHECK:STDOUT:   %no_op.loc4: init %empty_tuple.type = call %bound_method.loc4(%addr.loc4)
 // CHECK:STDOUT:   %Op.bound.loc7: <bound method> = bound_method %v.var, constants.%Op.ea3
-// CHECK:STDOUT:   %Op.specific_fn.2: <specific function> = specific_function constants.%Op.ea3, @Op.2(constants.%empty_tuple.type) [concrete = constants.%Op.specific_fn]
+// CHECK:STDOUT:   %Op.specific_fn.2: <specific function> = specific_function constants.%Op.ea3, @Op.1(constants.%empty_tuple.type) [concrete = constants.%Op.specific_fn]
 // CHECK:STDOUT:   %bound_method.loc7: <bound method> = bound_method %v.var, %Op.specific_fn.2
 // CHECK:STDOUT:   %addr.loc7: %ptr.843 = addr_of %v.var
 // CHECK:STDOUT:   %no_op.loc7: init %empty_tuple.type = call %bound_method.loc7(%addr.loc7)
@@ -632,18 +632,18 @@ fn G() {
 // CHECK:STDOUT:   %Destroy.type: type = facet_type <@Destroy> [concrete]
 // CHECK:STDOUT:   %Destroy.assoc_type: type = assoc_entity_type @Destroy [concrete]
 // CHECK:STDOUT:   %assoc0: %Destroy.assoc_type = assoc_entity element0, imports.%Core.import_ref.725 [concrete]
-// CHECK:STDOUT:   %Op.type.bae: type = fn_type @Op.1 [concrete]
+// CHECK:STDOUT:   %Op.type.bae: type = fn_type @Op.2 [concrete]
 // CHECK:STDOUT:   %Op.651: %Op.type.bae = struct_value () [concrete]
 // CHECK:STDOUT:   %T: type = bind_symbolic_name T, 0 [symbolic]
-// CHECK:STDOUT:   %Op.type.bc9: type = fn_type @Op.2, @Destroy.impl(%T) [symbolic]
+// CHECK:STDOUT:   %Op.type.bc9: type = fn_type @Op.1, @Destroy.impl(%T) [symbolic]
 // CHECK:STDOUT:   %Op.46f: %Op.type.bc9 = struct_value () [symbolic]
 // CHECK:STDOUT:   %Destroy.impl_witness.1dc: <witness> = impl_witness imports.%Destroy.impl_witness_table, @Destroy.impl(%empty_tuple.type) [concrete]
-// CHECK:STDOUT:   %Op.type.a63: type = fn_type @Op.2, @Destroy.impl(%empty_tuple.type) [concrete]
+// CHECK:STDOUT:   %Op.type.a63: type = fn_type @Op.1, @Destroy.impl(%empty_tuple.type) [concrete]
 // CHECK:STDOUT:   %Op.ea3: %Op.type.a63 = struct_value () [concrete]
 // CHECK:STDOUT:   %ptr.843: type = ptr_type %empty_tuple.type [concrete]
 // CHECK:STDOUT:   %Destroy.facet: %Destroy.type = facet_value %empty_tuple.type, (%Destroy.impl_witness.1dc) [concrete]
 // CHECK:STDOUT:   %.346: type = fn_type_with_self_type %Op.type.bae, %Destroy.facet [concrete]
-// CHECK:STDOUT:   %Op.specific_fn: <specific function> = specific_function %Op.ea3, @Op.2(%empty_tuple.type) [concrete]
+// CHECK:STDOUT:   %Op.specific_fn: <specific function> = specific_function %Op.ea3, @Op.1(%empty_tuple.type) [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -691,7 +691,7 @@ fn G() {
 // CHECK:STDOUT:   %Op.ref: %Destroy.assoc_type = name_ref Op, imports.%Core.import_ref.f99 [concrete = constants.%assoc0]
 // CHECK:STDOUT:   %impl.elem0: %.346 = impl_witness_access constants.%Destroy.impl_witness.1dc, element0 [concrete = constants.%Op.ea3]
 // CHECK:STDOUT:   %bound_method.1: <bound method> = bound_method %.1, %impl.elem0
-// CHECK:STDOUT:   %specific_fn: <specific function> = specific_function %impl.elem0, @Op.2(constants.%empty_tuple.type) [concrete = constants.%Op.specific_fn]
+// CHECK:STDOUT:   %specific_fn: <specific function> = specific_function %impl.elem0, @Op.1(constants.%empty_tuple.type) [concrete = constants.%Op.specific_fn]
 // CHECK:STDOUT:   %bound_method.2: <bound method> = bound_method %.1, %specific_fn
 // CHECK:STDOUT:   %addr: %ptr.843 = addr_of %.1
 // CHECK:STDOUT:   %no_op: init %empty_tuple.type = call %bound_method.2(%addr)
@@ -715,13 +715,13 @@ fn G() {
 // CHECK:STDOUT:   %ptr.709: type = ptr_type %tuple.type.bcd [concrete]
 // CHECK:STDOUT:   %tuple: %tuple.type.bcd = tuple_value (%empty_tuple, %empty_tuple) [concrete]
 // CHECK:STDOUT:   %Destroy.type: type = facet_type <@Destroy> [concrete]
-// CHECK:STDOUT:   %Op.type.4e8: type = fn_type @Op.2, @Destroy.impl(%tuple.type.bcd) [concrete]
+// CHECK:STDOUT:   %Op.type.4e8: type = fn_type @Op.1, @Destroy.impl(%tuple.type.bcd) [concrete]
 // CHECK:STDOUT:   %Op.166: %Op.type.4e8 = struct_value () [concrete]
-// CHECK:STDOUT:   %Op.specific_fn.48a: <specific function> = specific_function %Op.166, @Op.2(%tuple.type.bcd) [concrete]
-// CHECK:STDOUT:   %Op.type.a63: type = fn_type @Op.2, @Destroy.impl(%empty_tuple.type) [concrete]
+// CHECK:STDOUT:   %Op.specific_fn.48a: <specific function> = specific_function %Op.166, @Op.1(%tuple.type.bcd) [concrete]
+// CHECK:STDOUT:   %Op.type.a63: type = fn_type @Op.1, @Destroy.impl(%empty_tuple.type) [concrete]
 // CHECK:STDOUT:   %Op.ea3: %Op.type.a63 = struct_value () [concrete]
 // CHECK:STDOUT:   %ptr.843: type = ptr_type %empty_tuple.type [concrete]
-// CHECK:STDOUT:   %Op.specific_fn.393: <specific function> = specific_function %Op.ea3, @Op.2(%empty_tuple.type) [concrete]
+// CHECK:STDOUT:   %Op.specific_fn.393: <specific function> = specific_function %Op.ea3, @Op.1(%empty_tuple.type) [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -792,12 +792,12 @@ fn G() {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %z: ref %empty_tuple.type = bind_name z, %z.var
 // CHECK:STDOUT:   %Op.bound.loc9_15: <bound method> = bound_method %.var, constants.%Op.166
-// CHECK:STDOUT:   %Op.specific_fn.1: <specific function> = specific_function constants.%Op.166, @Op.2(constants.%tuple.type.bcd) [concrete = constants.%Op.specific_fn.48a]
+// CHECK:STDOUT:   %Op.specific_fn.1: <specific function> = specific_function constants.%Op.166, @Op.1(constants.%tuple.type.bcd) [concrete = constants.%Op.specific_fn.48a]
 // CHECK:STDOUT:   %bound_method.loc9_15: <bound method> = bound_method %.var, %Op.specific_fn.1
 // CHECK:STDOUT:   %addr.loc9_15: %ptr.709 = addr_of %.var
 // CHECK:STDOUT:   %no_op.loc9_15: init %empty_tuple.type = call %bound_method.loc9_15(%addr.loc9_15)
 // CHECK:STDOUT:   %Op.bound.loc9_27: <bound method> = bound_method %z.var, constants.%Op.ea3
-// CHECK:STDOUT:   %Op.specific_fn.2: <specific function> = specific_function constants.%Op.ea3, @Op.2(constants.%empty_tuple.type) [concrete = constants.%Op.specific_fn.393]
+// CHECK:STDOUT:   %Op.specific_fn.2: <specific function> = specific_function constants.%Op.ea3, @Op.1(constants.%empty_tuple.type) [concrete = constants.%Op.specific_fn.393]
 // CHECK:STDOUT:   %bound_method.loc9_27: <bound method> = bound_method %z.var, %Op.specific_fn.2
 // CHECK:STDOUT:   %addr.loc9_27: %ptr.843 = addr_of %z.var
 // CHECK:STDOUT:   %no_op.loc9_27: init %empty_tuple.type = call %bound_method.loc9_27(%addr.loc9_27)
@@ -879,10 +879,10 @@ fn G() {
 // CHECK:STDOUT:   %pattern_type.8c1: type = pattern_type %tuple.type [concrete]
 // CHECK:STDOUT:   %empty_tuple: %empty_tuple.type = tuple_value () [concrete]
 // CHECK:STDOUT:   %Destroy.type: type = facet_type <@Destroy> [concrete]
-// CHECK:STDOUT:   %Op.type.a63: type = fn_type @Op.2, @Destroy.impl(%empty_tuple.type) [concrete]
+// CHECK:STDOUT:   %Op.type.a63: type = fn_type @Op.1, @Destroy.impl(%empty_tuple.type) [concrete]
 // CHECK:STDOUT:   %Op.ea3: %Op.type.a63 = struct_value () [concrete]
 // CHECK:STDOUT:   %ptr.843: type = ptr_type %empty_tuple.type [concrete]
-// CHECK:STDOUT:   %Op.specific_fn: <specific function> = specific_function %Op.ea3, @Op.2(%empty_tuple.type) [concrete]
+// CHECK:STDOUT:   %Op.specific_fn: <specific function> = specific_function %Op.ea3, @Op.1(%empty_tuple.type) [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -957,17 +957,17 @@ fn G() {
 // CHECK:STDOUT:   %.loc8_48.3: %empty_tuple.type = converted %F.call.loc8_48, %tuple.loc8_48 [concrete = constants.%empty_tuple]
 // CHECK:STDOUT:   %z: %empty_tuple.type = bind_name z, %.loc8_48.3
 // CHECK:STDOUT:   %Op.bound.loc8_48: <bound method> = bound_method %.loc8_48.1, constants.%Op.ea3
-// CHECK:STDOUT:   %Op.specific_fn.1: <specific function> = specific_function constants.%Op.ea3, @Op.2(constants.%empty_tuple.type) [concrete = constants.%Op.specific_fn]
+// CHECK:STDOUT:   %Op.specific_fn.1: <specific function> = specific_function constants.%Op.ea3, @Op.1(constants.%empty_tuple.type) [concrete = constants.%Op.specific_fn]
 // CHECK:STDOUT:   %bound_method.loc8_48: <bound method> = bound_method %.loc8_48.1, %Op.specific_fn.1
 // CHECK:STDOUT:   %addr.loc8_48: %ptr.843 = addr_of %.loc8_48.1
 // CHECK:STDOUT:   %no_op.loc8_48: init %empty_tuple.type = call %bound_method.loc8_48(%addr.loc8_48)
 // CHECK:STDOUT:   %Op.bound.loc8_38: <bound method> = bound_method %.loc8_38.1, constants.%Op.ea3
-// CHECK:STDOUT:   %Op.specific_fn.2: <specific function> = specific_function constants.%Op.ea3, @Op.2(constants.%empty_tuple.type) [concrete = constants.%Op.specific_fn]
+// CHECK:STDOUT:   %Op.specific_fn.2: <specific function> = specific_function constants.%Op.ea3, @Op.1(constants.%empty_tuple.type) [concrete = constants.%Op.specific_fn]
 // CHECK:STDOUT:   %bound_method.loc8_38: <bound method> = bound_method %.loc8_38.1, %Op.specific_fn.2
 // CHECK:STDOUT:   %addr.loc8_38: %ptr.843 = addr_of %.loc8_38.1
 // CHECK:STDOUT:   %no_op.loc8_38: init %empty_tuple.type = call %bound_method.loc8_38(%addr.loc8_38)
 // CHECK:STDOUT:   %Op.bound.loc8_15: <bound method> = bound_method %y.var, constants.%Op.ea3
-// CHECK:STDOUT:   %Op.specific_fn.3: <specific function> = specific_function constants.%Op.ea3, @Op.2(constants.%empty_tuple.type) [concrete = constants.%Op.specific_fn]
+// CHECK:STDOUT:   %Op.specific_fn.3: <specific function> = specific_function constants.%Op.ea3, @Op.1(constants.%empty_tuple.type) [concrete = constants.%Op.specific_fn]
 // CHECK:STDOUT:   %bound_method.loc8_15: <bound method> = bound_method %y.var, %Op.specific_fn.3
 // CHECK:STDOUT:   %addr.loc8_15: %ptr.843 = addr_of %y.var
 // CHECK:STDOUT:   %no_op.loc8_15: init %empty_tuple.type = call %bound_method.loc8_15(%addr.loc8_15)

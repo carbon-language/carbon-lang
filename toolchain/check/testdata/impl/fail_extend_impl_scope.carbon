@@ -87,7 +87,7 @@ fn F() {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %I.decl: type = interface_decl @I [concrete = constants.%I.type] {} {}
-// CHECK:STDOUT:   impl_decl @I.impl [concrete] {} {
+// CHECK:STDOUT:   %I.impl = impl_decl @I.impl [concrete] {} {
 // CHECK:STDOUT:     %.loc9_14.1: %empty_tuple.type = tuple_literal ()
 // CHECK:STDOUT:     %.loc9_14.2: type = converted %.loc9_14.1, constants.%empty_tuple.type [concrete = constants.%empty_tuple.type]
 // CHECK:STDOUT:     %I.ref: type = name_ref I, file.%I.decl [concrete = constants.%I.type]
@@ -153,7 +153,7 @@ fn F() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F() {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   impl_decl @J.impl [concrete] {} {
+// CHECK:STDOUT:   %J.impl = impl_decl @J.impl [concrete] {} {
 // CHECK:STDOUT:     %.loc10_16.1: %empty_struct_type = struct_literal ()
 // CHECK:STDOUT:     %.loc10_16.2: type = converted %.loc10_16.1, constants.%empty_struct_type [concrete = constants.%empty_struct_type]
 // CHECK:STDOUT:     %J.ref: type = name_ref J, file.%J.decl [concrete = constants.%J.type]
@@ -187,10 +187,10 @@ fn F() {
 // CHECK:STDOUT:   %Point.val: %Point = struct_value () [concrete]
 // CHECK:STDOUT:   %.766: type = fn_type_with_self_type %Zero.type.822, %Z.facet [concrete]
 // CHECK:STDOUT:   %Destroy.type: type = facet_type <@Destroy> [concrete]
-// CHECK:STDOUT:   %Op.type.003: type = fn_type @Op.2, @Destroy.impl(%Point) [concrete]
+// CHECK:STDOUT:   %Op.type.003: type = fn_type @Op.1, @Destroy.impl(%Point) [concrete]
 // CHECK:STDOUT:   %Op.d2d: %Op.type.003 = struct_value () [concrete]
 // CHECK:STDOUT:   %ptr.536: type = ptr_type %Point [concrete]
-// CHECK:STDOUT:   %Op.specific_fn: <specific function> = specific_function %Op.d2d, @Op.2(%Point) [concrete]
+// CHECK:STDOUT:   %Op.specific_fn: <specific function> = specific_function %Op.d2d, @Op.1(%Point) [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -219,7 +219,7 @@ fn F() {
 // CHECK:STDOUT:   %Self: %Z.type = bind_symbolic_name Self, 0 [symbolic = constants.%Self.6e6]
 // CHECK:STDOUT:   %Zero.decl: %Zero.type.822 = fn_decl @Zero.loc4 [concrete = constants.%Zero.d14] {} {}
 // CHECK:STDOUT:   %assoc0: %Z.assoc_type = assoc_entity element0, %Zero.decl [concrete = constants.%assoc0.534]
-// CHECK:STDOUT:   impl_decl @Z.impl.6b5 [concrete] {} {
+// CHECK:STDOUT:   %Z.impl = impl_decl @Z.impl.6b5 [concrete] {} {
 // CHECK:STDOUT:     %Z.ref: type = name_ref Z, file.%Z.decl [concrete = constants.%Z.type]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:
@@ -254,7 +254,7 @@ fn F() {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @Point {
-// CHECK:STDOUT:   impl_decl @Z.impl.c94 [concrete] {} {
+// CHECK:STDOUT:   %Z.impl = impl_decl @Z.impl.c94 [concrete] {} {
 // CHECK:STDOUT:     %Self.ref: type = name_ref Self, constants.%Point [concrete = constants.%Point]
 // CHECK:STDOUT:     %Z.ref: type = name_ref Z, file.%Z.decl [concrete = constants.%Z.type]
 // CHECK:STDOUT:   }
@@ -301,7 +301,7 @@ fn F() {
 // CHECK:STDOUT:   %impl.elem0: %.766 = impl_witness_access constants.%Z.impl_witness, element0 [concrete = constants.%Zero.dec]
 // CHECK:STDOUT:   %Zero.call: init %empty_tuple.type = call %impl.elem0()
 // CHECK:STDOUT:   %Op.bound: <bound method> = bound_method %.loc25_5.2, constants.%Op.d2d
-// CHECK:STDOUT:   %Op.specific_fn: <specific function> = specific_function constants.%Op.d2d, @Op.2(constants.%Point) [concrete = constants.%Op.specific_fn]
+// CHECK:STDOUT:   %Op.specific_fn: <specific function> = specific_function constants.%Op.d2d, @Op.1(constants.%Point) [concrete = constants.%Op.specific_fn]
 // CHECK:STDOUT:   %bound_method: <bound method> = bound_method %.loc25_5.2, %Op.specific_fn
 // CHECK:STDOUT:   %addr: %ptr.536 = addr_of %.loc25_5.2
 // CHECK:STDOUT:   %no_op: init %empty_tuple.type = call %bound_method(%addr)

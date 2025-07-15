@@ -181,10 +181,10 @@ var a: array(1, 1);
 // CHECK:STDOUT:   %tuple.type.14a: type = tuple_type (%tuple.type.734, %tuple.type.734) [concrete]
 // CHECK:STDOUT:   %int_0: Core.IntLiteral = int_value 0 [concrete]
 // CHECK:STDOUT:   %int_1: Core.IntLiteral = int_value 1 [concrete]
-// CHECK:STDOUT:   %Op.type.fe9: type = fn_type @Op.2, @Destroy.impl(%tuple.type.734) [concrete]
+// CHECK:STDOUT:   %Op.type.fe9: type = fn_type @Op.1, @Destroy.impl(%tuple.type.734) [concrete]
 // CHECK:STDOUT:   %Op.ae1: %Op.type.fe9 = struct_value () [concrete]
 // CHECK:STDOUT:   %ptr.dbe: type = ptr_type %tuple.type.734 [concrete]
-// CHECK:STDOUT:   %Op.type.280: type = fn_type @Op.2, @Destroy.impl(%array_type) [concrete]
+// CHECK:STDOUT:   %Op.type.280: type = fn_type @Op.1, @Destroy.impl(%array_type) [concrete]
 // CHECK:STDOUT:   %Op.d4f: %Op.type.280 = struct_value () [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -253,9 +253,9 @@ var a: array(1, 1);
 // CHECK:STDOUT:   %tuple.type: type = tuple_type (%empty_tuple.type, %empty_tuple.type, %empty_tuple.type) [concrete]
 // CHECK:STDOUT:   %ptr.7fe: type = ptr_type %tuple.type [concrete]
 // CHECK:STDOUT:   %pattern_type.8c1: type = pattern_type %tuple.type [concrete]
-// CHECK:STDOUT:   %Op.type.073: type = fn_type @Op.2, @Destroy.impl(%tuple.type) [concrete]
+// CHECK:STDOUT:   %Op.type.073: type = fn_type @Op.1, @Destroy.impl(%tuple.type) [concrete]
 // CHECK:STDOUT:   %Op.dce: %Op.type.073 = struct_value () [concrete]
-// CHECK:STDOUT:   %Op.type.c60: type = fn_type @Op.2, @Destroy.impl(%array_type) [concrete]
+// CHECK:STDOUT:   %Op.type.c60: type = fn_type @Op.1, @Destroy.impl(%array_type) [concrete]
 // CHECK:STDOUT:   %Op.f81: %Op.type.c60 = struct_value () [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -319,10 +319,10 @@ var a: array(1, 1);
 // CHECK:STDOUT:   %pattern_type.fe8: type = pattern_type %array_type [concrete]
 // CHECK:STDOUT:   %int_0: Core.IntLiteral = int_value 0 [concrete]
 // CHECK:STDOUT:   %array: %array_type = tuple_value (%empty_tuple) [concrete]
-// CHECK:STDOUT:   %Op.type.23e: type = fn_type @Op.2, @Destroy.impl(%tuple.type) [concrete]
+// CHECK:STDOUT:   %Op.type.23e: type = fn_type @Op.1, @Destroy.impl(%tuple.type) [concrete]
 // CHECK:STDOUT:   %Op.f19: %Op.type.23e = struct_value () [concrete]
 // CHECK:STDOUT:   %ptr.652: type = ptr_type %tuple.type [concrete]
-// CHECK:STDOUT:   %Op.type.471: type = fn_type @Op.2, @Destroy.impl(%array_type) [concrete]
+// CHECK:STDOUT:   %Op.type.471: type = fn_type @Op.1, @Destroy.impl(%array_type) [concrete]
 // CHECK:STDOUT:   %Op.688: %Op.type.471 = struct_value () [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

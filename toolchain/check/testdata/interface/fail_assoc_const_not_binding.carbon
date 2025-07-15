@@ -91,9 +91,9 @@ interface I {
 // CHECK:STDOUT:   witness = ()
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: assoc_const @T T:! type;
+// CHECK:STDOUT: assoc_const @<null name> T:! type;
 // CHECK:STDOUT:
-// CHECK:STDOUT: assoc_const @U U:! type;
+// CHECK:STDOUT: assoc_const @<null name> U:! type;
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- fail_tuple_pattern_with_default.carbon
 // CHECK:STDOUT:
@@ -118,9 +118,9 @@ interface I {
 // CHECK:STDOUT:   witness = ()
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: assoc_const @T T:! type;
+// CHECK:STDOUT: assoc_const @<null name> T:! type;
 // CHECK:STDOUT:
-// CHECK:STDOUT: assoc_const @U U:! type;
+// CHECK:STDOUT: assoc_const @<null name> U:! type;
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- fail_var_pattern.carbon
 // CHECK:STDOUT:

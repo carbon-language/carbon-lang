@@ -129,7 +129,7 @@ let (a: {}, b: {}) = ({}, {}, {});
 // CHECK:STDOUT:   %pattern_type.de4: type = pattern_type %tuple.type.b6b [concrete]
 // CHECK:STDOUT:   %empty_struct: %empty_struct_type = struct_value () [concrete]
 // CHECK:STDOUT:   %tuple: %tuple.type.b6b = tuple_value (%empty_struct, %empty_struct) [concrete]
-// CHECK:STDOUT:   %Op.type.72a: type = fn_type @Op.2, @Destroy.impl(%tuple.type.b6b) [concrete]
+// CHECK:STDOUT:   %Op.type.72a: type = fn_type @Op.1, @Destroy.impl(%tuple.type.b6b) [concrete]
 // CHECK:STDOUT:   %Op.973: %Op.type.72a = struct_value () [concrete]
 // CHECK:STDOUT:   %ptr.8fc: type = ptr_type %tuple.type.b6b [concrete]
 // CHECK:STDOUT: }
@@ -234,7 +234,7 @@ let (a: {}, b: {}) = ({}, {}, {});
 // CHECK:STDOUT:   %empty_struct: %empty_struct_type = struct_value () [concrete]
 // CHECK:STDOUT:   %tuple: %tuple.type.b6b = tuple_value (%empty_struct, %empty_struct) [concrete]
 // CHECK:STDOUT:   %pattern_type.a96: type = pattern_type %empty_struct_type [concrete]
-// CHECK:STDOUT:   %Op.type.72a: type = fn_type @Op.2, @Destroy.impl(%tuple.type.b6b) [concrete]
+// CHECK:STDOUT:   %Op.type.72a: type = fn_type @Op.1, @Destroy.impl(%tuple.type.b6b) [concrete]
 // CHECK:STDOUT:   %Op.973: %Op.type.72a = struct_value () [concrete]
 // CHECK:STDOUT:   %ptr.8fc: type = ptr_type %tuple.type.b6b [concrete]
 // CHECK:STDOUT:   %MakeTuple.type: type = fn_type @MakeTuple [concrete]

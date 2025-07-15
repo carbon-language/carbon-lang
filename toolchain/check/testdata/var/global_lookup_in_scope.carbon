@@ -32,10 +32,10 @@ fn Main() {
 // CHECK:STDOUT:   %Main.type: type = fn_type @Main [concrete]
 // CHECK:STDOUT:   %Main: %Main.type = struct_value () [concrete]
 // CHECK:STDOUT:   %Destroy.type: type = facet_type <@Destroy> [concrete]
-// CHECK:STDOUT:   %Op.type.7e5: type = fn_type @Op.2, @Destroy.impl(%struct_type.v) [concrete]
+// CHECK:STDOUT:   %Op.type.7e5: type = fn_type @Op.1, @Destroy.impl(%struct_type.v) [concrete]
 // CHECK:STDOUT:   %Op.477: %Op.type.7e5 = struct_value () [concrete]
 // CHECK:STDOUT:   %ptr.ef9: type = ptr_type %struct_type.v [concrete]
-// CHECK:STDOUT:   %Op.specific_fn: <specific function> = specific_function %Op.477, @Op.2(%struct_type.v) [concrete]
+// CHECK:STDOUT:   %Op.specific_fn: <specific function> = specific_function %Op.477, @Op.1(%struct_type.v) [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -90,7 +90,7 @@ fn Main() {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %y: ref %struct_type.v = bind_name y, %y.var
 // CHECK:STDOUT:   %Op.bound: <bound method> = bound_method %y.var, constants.%Op.477
-// CHECK:STDOUT:   %Op.specific_fn: <specific function> = specific_function constants.%Op.477, @Op.2(constants.%struct_type.v) [concrete = constants.%Op.specific_fn]
+// CHECK:STDOUT:   %Op.specific_fn: <specific function> = specific_function constants.%Op.477, @Op.1(constants.%struct_type.v) [concrete = constants.%Op.specific_fn]
 // CHECK:STDOUT:   %bound_method: <bound method> = bound_method %y.var, %Op.specific_fn
 // CHECK:STDOUT:   %addr: %ptr.ef9 = addr_of %y.var
 // CHECK:STDOUT:   %no_op: init %empty_tuple.type = call %bound_method(%addr)

@@ -35,10 +35,10 @@ fn Main() {
 // CHECK:STDOUT:   %ImplicitAs.type.cc7: type = generic_interface_type @ImplicitAs [concrete]
 // CHECK:STDOUT:   %ImplicitAs.generic: %ImplicitAs.type.cc7 = struct_value () [concrete]
 // CHECK:STDOUT:   %Destroy.type: type = facet_type <@Destroy> [concrete]
-// CHECK:STDOUT:   %Op.type.655: type = fn_type @Op.2, @Destroy.impl(bool) [concrete]
+// CHECK:STDOUT:   %Op.type.655: type = fn_type @Op.1, @Destroy.impl(bool) [concrete]
 // CHECK:STDOUT:   %Op.8b7: %Op.type.655 = struct_value () [concrete]
 // CHECK:STDOUT:   %ptr.bb2: type = ptr_type bool [concrete]
-// CHECK:STDOUT:   %Op.specific_fn: <specific function> = specific_function %Op.8b7, @Op.2(bool) [concrete]
+// CHECK:STDOUT:   %Op.specific_fn: <specific function> = specific_function %Op.8b7, @Op.1(bool) [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -81,7 +81,7 @@ fn Main() {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %x: ref bool = bind_name x, %x.var
 // CHECK:STDOUT:   %Op.bound: <bound method> = bound_method %x.var, constants.%Op.8b7
-// CHECK:STDOUT:   %Op.specific_fn: <specific function> = specific_function constants.%Op.8b7, @Op.2(bool) [concrete = constants.%Op.specific_fn]
+// CHECK:STDOUT:   %Op.specific_fn: <specific function> = specific_function constants.%Op.8b7, @Op.1(bool) [concrete = constants.%Op.specific_fn]
 // CHECK:STDOUT:   %bound_method: <bound method> = bound_method %x.var, %Op.specific_fn
 // CHECK:STDOUT:   %addr: %ptr.bb2 = addr_of %x.var
 // CHECK:STDOUT:   %no_op: init %empty_tuple.type = call %bound_method(%addr)

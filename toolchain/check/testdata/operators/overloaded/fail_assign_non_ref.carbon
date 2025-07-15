@@ -73,9 +73,9 @@ fn TestAddAssignNonRef(a: C, b: C) {
 // CHECK:STDOUT:   %TestIncNonRef: %TestIncNonRef.type = struct_value () [concrete]
 // CHECK:STDOUT:   %.bc7: type = fn_type_with_self_type %Op.type.e3a, %Inc.facet [concrete]
 // CHECK:STDOUT:   %Destroy.type: type = facet_type <@Destroy> [concrete]
-// CHECK:STDOUT:   %Op.type.153: type = fn_type @Op.9, @Destroy.impl(%C) [concrete]
+// CHECK:STDOUT:   %Op.type.153: type = fn_type @Op.3, @Destroy.impl(%C) [concrete]
 // CHECK:STDOUT:   %Op.5d7: %Op.type.153 = struct_value () [concrete]
-// CHECK:STDOUT:   %Op.specific_fn: <specific function> = specific_function %Op.5d7, @Op.9(%C) [concrete]
+// CHECK:STDOUT:   %Op.specific_fn: <specific function> = specific_function %Op.5d7, @Op.3(%C) [concrete]
 // CHECK:STDOUT:   %TestAddAssignNonRef.type: type = fn_type @TestAddAssignNonRef [concrete]
 // CHECK:STDOUT:   %TestAddAssignNonRef: %TestAddAssignNonRef.type = struct_value () [concrete]
 // CHECK:STDOUT:   %.e2d: type = fn_type_with_self_type %Op.type.5af, %AddAssignWith.facet [concrete]
@@ -103,14 +103,14 @@ fn TestAddAssignNonRef(a: C, b: C) {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %C.decl: type = class_decl @C [concrete = constants.%C] {} {}
-// CHECK:STDOUT:   impl_decl @Inc.impl [concrete] {} {
+// CHECK:STDOUT:   %Inc.impl = impl_decl @Inc.impl [concrete] {} {
 // CHECK:STDOUT:     %C.ref: type = name_ref C, file.%C.decl [concrete = constants.%C]
 // CHECK:STDOUT:     %Core.ref: <namespace> = name_ref Core, imports.%Core [concrete = imports.%Core]
 // CHECK:STDOUT:     %Inc.ref: type = name_ref Inc, imports.%Core.Inc [concrete = constants.%Inc.type]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Inc.impl_witness_table = impl_witness_table (@Inc.impl.%Op.decl), @Inc.impl [concrete]
 // CHECK:STDOUT:   %Inc.impl_witness: <witness> = impl_witness %Inc.impl_witness_table [concrete = constants.%Inc.impl_witness]
-// CHECK:STDOUT:   impl_decl @AddAssignWith.impl [concrete] {} {
+// CHECK:STDOUT:   %AddAssignWith.impl = impl_decl @AddAssignWith.impl [concrete] {} {
 // CHECK:STDOUT:     %C.ref.loc21_6: type = name_ref C, file.%C.decl [concrete = constants.%C]
 // CHECK:STDOUT:     %Core.ref: <namespace> = name_ref Core, imports.%Core [concrete = imports.%Core]
 // CHECK:STDOUT:     %AddAssignWith.ref: %AddAssignWith.type.fc6 = name_ref AddAssignWith, imports.%Core.AddAssignWith [concrete = constants.%AddAssignWith.generic]
@@ -209,7 +209,7 @@ fn TestAddAssignNonRef(a: C, b: C) {
 // CHECK:STDOUT:   %addr.loc33_5.1: %ptr.019 = addr_of %.loc33
 // CHECK:STDOUT:   %Op.call: init %empty_tuple.type = call %bound_method.loc33_3(%addr.loc33_5.1)
 // CHECK:STDOUT:   %Op.bound: <bound method> = bound_method %.loc33, constants.%Op.5d7
-// CHECK:STDOUT:   %Op.specific_fn: <specific function> = specific_function constants.%Op.5d7, @Op.9(constants.%C) [concrete = constants.%Op.specific_fn]
+// CHECK:STDOUT:   %Op.specific_fn: <specific function> = specific_function constants.%Op.5d7, @Op.3(constants.%C) [concrete = constants.%Op.specific_fn]
 // CHECK:STDOUT:   %bound_method.loc33_5: <bound method> = bound_method %.loc33, %Op.specific_fn
 // CHECK:STDOUT:   %addr.loc33_5.2: %ptr.019 = addr_of %.loc33
 // CHECK:STDOUT:   %no_op: init %empty_tuple.type = call %bound_method.loc33_5(%addr.loc33_5.2)
@@ -226,7 +226,7 @@ fn TestAddAssignNonRef(a: C, b: C) {
 // CHECK:STDOUT:   %addr.loc44_3.1: %ptr.019 = addr_of %.loc44
 // CHECK:STDOUT:   %Op.call: init %empty_tuple.type = call %bound_method.loc44_5(%addr.loc44_3.1, %b.ref)
 // CHECK:STDOUT:   %Op.bound: <bound method> = bound_method %.loc44, constants.%Op.5d7
-// CHECK:STDOUT:   %Op.specific_fn: <specific function> = specific_function constants.%Op.5d7, @Op.9(constants.%C) [concrete = constants.%Op.specific_fn]
+// CHECK:STDOUT:   %Op.specific_fn: <specific function> = specific_function constants.%Op.5d7, @Op.3(constants.%C) [concrete = constants.%Op.specific_fn]
 // CHECK:STDOUT:   %bound_method.loc44_3: <bound method> = bound_method %.loc44, %Op.specific_fn
 // CHECK:STDOUT:   %addr.loc44_3.2: %ptr.019 = addr_of %.loc44
 // CHECK:STDOUT:   %no_op: init %empty_tuple.type = call %bound_method.loc44_3(%addr.loc44_3.2)

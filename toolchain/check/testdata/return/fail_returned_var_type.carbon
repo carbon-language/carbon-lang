@@ -41,10 +41,10 @@ fn Mismatch() -> i32 {
 // CHECK:STDOUT:   %pattern_type.3de: type = pattern_type f64 [concrete]
 // CHECK:STDOUT:   %float: f64 = float_literal 0 [concrete]
 // CHECK:STDOUT:   %Destroy.type: type = facet_type <@Destroy> [concrete]
-// CHECK:STDOUT:   %Op.type.3ef: type = fn_type @Op.2, @Destroy.impl(f64) [concrete]
+// CHECK:STDOUT:   %Op.type.3ef: type = fn_type @Op.1, @Destroy.impl(f64) [concrete]
 // CHECK:STDOUT:   %Op.868: %Op.type.3ef = struct_value () [concrete]
 // CHECK:STDOUT:   %ptr.ef1: type = ptr_type f64 [concrete]
-// CHECK:STDOUT:   %Op.specific_fn: <specific function> = specific_function %Op.868, @Op.2(f64) [concrete]
+// CHECK:STDOUT:   %Op.specific_fn: <specific function> = specific_function %Op.868, @Op.1(f64) [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -95,7 +95,7 @@ fn Mismatch() -> i32 {
 // CHECK:STDOUT:   %v: ref f64 = bind_name v, %v.var
 // CHECK:STDOUT:   %.loc23_16: f64 = bind_value %v
 // CHECK:STDOUT:   %Op.bound: <bound method> = bound_method %v.var, constants.%Op.868
-// CHECK:STDOUT:   %Op.specific_fn: <specific function> = specific_function constants.%Op.868, @Op.2(f64) [concrete = constants.%Op.specific_fn]
+// CHECK:STDOUT:   %Op.specific_fn: <specific function> = specific_function constants.%Op.868, @Op.1(f64) [concrete = constants.%Op.specific_fn]
 // CHECK:STDOUT:   %bound_method: <bound method> = bound_method %v.var, %Op.specific_fn
 // CHECK:STDOUT:   %addr: %ptr.ef1 = addr_of %v.var
 // CHECK:STDOUT:   %no_op: init %empty_tuple.type = call %bound_method(%addr)
