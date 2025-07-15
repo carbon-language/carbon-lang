@@ -170,8 +170,6 @@ fn KnownValueButNonConstantCondition(x: bool) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: !.loc14_7:
 // CHECK:STDOUT:   %b: <error> = bind_name b, <error> [concrete = <error>]
-// CHECK:STDOUT:   %impl.elem0.loc14: <error> = impl_witness_access <error>, element0 [concrete = <error>]
-// CHECK:STDOUT:   %impl.elem0.loc9: <error> = impl_witness_access <error>, element0 [concrete = <error>]
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -297,8 +295,6 @@ fn KnownValueButNonConstantCondition(x: bool) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: !.loc16_7:
 // CHECK:STDOUT:   %d: <error> = bind_name d, <error> [concrete = <error>]
-// CHECK:STDOUT:   %impl.elem0.loc16: <error> = impl_witness_access <error>, element0 [concrete = <error>]
-// CHECK:STDOUT:   %impl.elem0.loc11: <error> = impl_witness_access <error>, element0 [concrete = <error>]
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

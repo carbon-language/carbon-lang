@@ -112,7 +112,7 @@ impl C as AddWith(C) {
 // CHECK:STDOUT:   %AddWith.assoc_type.3f0: type = assoc_entity_type @AddWith, @AddWith(%C) [concrete]
 // CHECK:STDOUT:   %assoc0.730: %AddWith.assoc_type.3f0 = assoc_entity element0, imports.%Main.import_ref.0c5 [concrete]
 // CHECK:STDOUT:   %AddWith.impl_witness: <witness> = impl_witness file.%AddWith.impl_witness_table [concrete]
-// CHECK:STDOUT:   %F.type.c09: type = fn_type @F.2 [concrete]
+// CHECK:STDOUT:   %F.type.c09: type = fn_type @F.loc8 [concrete]
 // CHECK:STDOUT:   %F.e62: %F.type.c09 = struct_value () [concrete]
 // CHECK:STDOUT:   %AddWith.facet: %AddWith.type.e8e = facet_value %C, (%AddWith.impl_witness) [concrete]
 // CHECK:STDOUT: }
@@ -135,13 +135,13 @@ impl C as AddWith(C) {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %default.import = import <none>
 // CHECK:STDOUT:   %C.decl: type = class_decl @C [concrete = constants.%C] {} {}
-// CHECK:STDOUT:   impl_decl @impl [concrete] {} {
+// CHECK:STDOUT:   impl_decl @AddWith.impl [concrete] {} {
 // CHECK:STDOUT:     %C.ref.loc7_6: type = name_ref C, file.%C.decl [concrete = constants.%C]
 // CHECK:STDOUT:     %AddWith.ref: %AddWith.type.b35 = name_ref AddWith, imports.%Main.AddWith [concrete = constants.%AddWith.generic]
 // CHECK:STDOUT:     %C.ref.loc7_19: type = name_ref C, file.%C.decl [concrete = constants.%C]
 // CHECK:STDOUT:     %AddWith.type: type = facet_type <@AddWith, @AddWith(constants.%C)> [concrete = constants.%AddWith.type.e8e]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %AddWith.impl_witness_table = impl_witness_table (@impl.%F.decl), @impl [concrete]
+// CHECK:STDOUT:   %AddWith.impl_witness_table = impl_witness_table (@AddWith.impl.%F.decl), @AddWith.impl [concrete]
 // CHECK:STDOUT:   %AddWith.impl_witness: <witness> = impl_witness %AddWith.impl_witness_table [concrete = constants.%AddWith.impl_witness]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -164,8 +164,8 @@ impl C as AddWith(C) {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: impl @impl: %C.ref.loc7_6 as %AddWith.type {
-// CHECK:STDOUT:   %F.decl: %F.type.c09 = fn_decl @F.2 [concrete = constants.%F.e62] {} {}
+// CHECK:STDOUT: impl @AddWith.impl: %C.ref.loc7_6 as %AddWith.type {
+// CHECK:STDOUT:   %F.decl: %F.type.c09 = fn_decl @F.loc8 [concrete = constants.%F.e62] {} {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .F = %F.decl
@@ -185,7 +185,7 @@ impl C as AddWith(C) {
 // CHECK:STDOUT:   fn;
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @F.2() {
+// CHECK:STDOUT: fn @F.loc8() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }

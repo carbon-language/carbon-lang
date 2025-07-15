@@ -36,7 +36,7 @@ fn TestOp(a: C) -> C {
 // CHECK:STDOUT:   %BitComplement.type: type = facet_type <@BitComplement> [concrete]
 // CHECK:STDOUT:   %Op.type.f25: type = fn_type @Op.6 [concrete]
 // CHECK:STDOUT:   %BitComplement.impl_witness: <witness> = impl_witness file.%BitComplement.impl_witness_table [concrete]
-// CHECK:STDOUT:   %Op.type.e57: type = fn_type @Op.7 [concrete]
+// CHECK:STDOUT:   %Op.type.e57: type = fn_type @Op.loc21 [concrete]
 // CHECK:STDOUT:   %Op.d4b: %Op.type.e57 = struct_value () [concrete]
 // CHECK:STDOUT:   %BitComplement.facet.c4c: %BitComplement.type = facet_value %C, (%BitComplement.impl_witness) [concrete]
 // CHECK:STDOUT:   %.18b: type = fn_type_with_self_type %Op.type.f25, %BitComplement.facet.c4c [concrete]
@@ -49,9 +49,10 @@ fn TestOp(a: C) -> C {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %a.ref: %C = name_ref a, %a
 // CHECK:STDOUT:   %impl.elem1: %.18b = impl_witness_access constants.%BitComplement.impl_witness, element1 [concrete = constants.%Op.d4b]
-// CHECK:STDOUT:   %bound_method: <bound method> = bound_method %a.ref, %impl.elem1
+// CHECK:STDOUT:   %bound_method.loc28: <bound method> = bound_method %a.ref, %impl.elem1
 // CHECK:STDOUT:   <elided>
-// CHECK:STDOUT:   %Op.call: init %C = call %bound_method(%a.ref) to %.loc26
+// CHECK:STDOUT:   %Op.call: init %C = call %bound_method.loc28(%a.ref) to %.loc26
+// CHECK:STDOUT:   <elided>
 // CHECK:STDOUT:   return %Op.call to %return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

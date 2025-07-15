@@ -27,6 +27,7 @@ fn Run() -> i32 {
 // CHECK:STDOUT:   %Class: type = class_type @Class [concrete]
 // CHECK:STDOUT:   %int_32: Core.IntLiteral = int_value 32 [concrete]
 // CHECK:STDOUT:   %Int.type: type = generic_class_type @Int [concrete]
+// CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [concrete]
 // CHECK:STDOUT:   %Int.generic: %Int.type = struct_value () [concrete]
 // CHECK:STDOUT:   %i32: type = class_type @Int, @Int(%int_32) [concrete]
 // CHECK:STDOUT:   %pattern_type.7ce: type = pattern_type %i32 [concrete]
@@ -37,15 +38,22 @@ fn Run() -> i32 {
 // CHECK:STDOUT:   %Run.type: type = fn_type @Run [concrete]
 // CHECK:STDOUT:   %Run: %Run.type = struct_value () [concrete]
 // CHECK:STDOUT:   %pattern_type.761: type = pattern_type %Class [concrete]
+// CHECK:STDOUT:   %Destroy.type: type = facet_type <@Destroy> [concrete]
+// CHECK:STDOUT:   %Op.type.7de: type = fn_type @Op.2, @Destroy.impl(%Class) [concrete]
+// CHECK:STDOUT:   %Op.d64: %Op.type.7de = struct_value () [concrete]
+// CHECK:STDOUT:   %ptr.e71: type = ptr_type %Class [concrete]
+// CHECK:STDOUT:   %Op.specific_fn: <specific function> = specific_function %Op.d64, @Op.2(%Class) [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [concrete] {
 // CHECK:STDOUT:     .Int = %Core.Int
+// CHECK:STDOUT:     .Destroy = %Core.Destroy
 // CHECK:STDOUT:     import Core//prelude
 // CHECK:STDOUT:     import Core//prelude/...
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.Int: %Int.type = import_ref Core//prelude/parts/int, Int, loaded [concrete = constants.%Int.generic]
+// CHECK:STDOUT:   %Core.Destroy: type = import_ref Core//prelude/parts/destroy, Destroy, loaded [concrete = constants.%Destroy.type]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -104,6 +112,11 @@ fn Run() -> i32 {
 // CHECK:STDOUT:   %F.call: init %i32 = call %F.ref()
 // CHECK:STDOUT:   %.loc21_15.1: %i32 = value_of_initializer %F.call
 // CHECK:STDOUT:   %.loc21_15.2: %i32 = converted %F.call, %.loc21_15.1
+// CHECK:STDOUT:   %Op.bound: <bound method> = bound_method %c.var, constants.%Op.d64
+// CHECK:STDOUT:   %Op.specific_fn: <specific function> = specific_function constants.%Op.d64, @Op.2(constants.%Class) [concrete = constants.%Op.specific_fn]
+// CHECK:STDOUT:   %bound_method: <bound method> = bound_method %c.var, %Op.specific_fn
+// CHECK:STDOUT:   %addr: %ptr.e71 = addr_of %c.var
+// CHECK:STDOUT:   %no_op: init %empty_tuple.type = call %bound_method(%addr)
 // CHECK:STDOUT:   return %.loc21_15.2
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

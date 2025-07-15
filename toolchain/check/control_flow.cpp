@@ -160,16 +160,16 @@ static auto AddCleanupBlock(Context& context) -> void {
     // TODO: This does the `Destroy` lookup and call at every cleanup block.
     // Control flow can lead to the same variable being destroyed by multiple
     // cleanup blocks, so we'll want to avoid this in the future.
-    BuildUnaryOperator(context, SemIR::LocId(destroy_id),
+    BuildUnaryOperator(context,
+                       context.insts().GetLocIdForDesugaring(destroy_id),
                        {.interface_name = "Destroy"}, destroy_id);
   }
 }
 
-auto AddReturnCleanupBlock(
-    Context& context,
-    typename decltype(SemIR::Return::Kind)::TypedNodeId node_id) -> void {
+auto AddReturnCleanupBlock(Context& context,
+                           SemIR::LocIdAndInst loc_id_and_inst) -> void {
   AddCleanupBlock(context);
-  AddInst(context, node_id, SemIR::Return{});
+  AddInst(context, loc_id_and_inst);
 }
 
 }  // namespace Carbon::Check

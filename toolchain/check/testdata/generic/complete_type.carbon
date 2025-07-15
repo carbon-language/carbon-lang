@@ -206,7 +206,7 @@ fn G() { F(B); }
 // CHECK:STDOUT:   %pattern_type.7dc: type = pattern_type %T [symbolic]
 // CHECK:STDOUT:   %Destroy.type: type = facet_type <@Destroy> [concrete]
 // CHECK:STDOUT:   %Op.type.bae: type = fn_type @Op.1 [concrete]
-// CHECK:STDOUT:   %Op.type.bc9: type = fn_type @Op.2, @impl(%T) [symbolic]
+// CHECK:STDOUT:   %Op.type.bc9: type = fn_type @Op.2, @Destroy.impl(%T) [symbolic]
 // CHECK:STDOUT:   %Op.46f: %Op.type.bc9 = struct_value () [symbolic]
 // CHECK:STDOUT:   %ptr.79f: type = ptr_type %T [symbolic]
 // CHECK:STDOUT:   %require_complete.6e5: <witness> = require_complete_type %ptr.79f [symbolic]
@@ -221,8 +221,8 @@ fn G() { F(B); }
 // CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [concrete]
 // CHECK:STDOUT:   %complete_type.357: <witness> = complete_type_witness %empty_struct_type [concrete]
 // CHECK:STDOUT:   %pattern_type.049: type = pattern_type %B [concrete]
-// CHECK:STDOUT:   %Destroy.impl_witness.39d: <witness> = impl_witness imports.%Destroy.impl_witness_table, @impl(%B) [concrete]
-// CHECK:STDOUT:   %Op.type.1a6: type = fn_type @Op.2, @impl(%B) [concrete]
+// CHECK:STDOUT:   %Destroy.impl_witness.39d: <witness> = impl_witness imports.%Destroy.impl_witness_table, @Destroy.impl(%B) [concrete]
+// CHECK:STDOUT:   %Op.type.1a6: type = fn_type @Op.2, @Destroy.impl(%B) [concrete]
 // CHECK:STDOUT:   %Op.3c2: %Op.type.1a6 = struct_value () [concrete]
 // CHECK:STDOUT:   %ptr.e79: type = ptr_type %B [concrete]
 // CHECK:STDOUT:   %complete_type.3bf: <witness> = complete_type_witness %ptr.e79 [concrete]
@@ -238,8 +238,8 @@ fn G() { F(B); }
 // CHECK:STDOUT:     import Core//prelude/...
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.Destroy: type = import_ref Core//prelude/parts/destroy, Destroy, loaded [concrete = constants.%Destroy.type]
-// CHECK:STDOUT:   %Core.import_ref.0b9: @impl.%Op.type (%Op.type.bc9) = import_ref Core//prelude/parts/destroy, loc8_29, loaded [symbolic = @impl.%Op (constants.%Op.46f)]
-// CHECK:STDOUT:   %Destroy.impl_witness_table = impl_witness_table (%Core.import_ref.0b9), @impl [concrete]
+// CHECK:STDOUT:   %Core.import_ref.0b9: @Destroy.impl.%Op.type (%Op.type.bc9) = import_ref Core//prelude/parts/destroy, loc8_29, loaded [symbolic = @Destroy.impl.%Op (constants.%Op.46f)]
+// CHECK:STDOUT:   %Destroy.impl_witness_table = impl_witness_table (%Core.import_ref.0b9), @Destroy.impl [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -343,7 +343,7 @@ fn G() { F(B); }
 // CHECK:STDOUT:   %pattern_type.7dc: type = pattern_type %T [symbolic]
 // CHECK:STDOUT:   %Destroy.type: type = facet_type <@Destroy> [concrete]
 // CHECK:STDOUT:   %Op.type.bae: type = fn_type @Op.1 [concrete]
-// CHECK:STDOUT:   %Op.type.bc9: type = fn_type @Op.2, @impl(%T) [symbolic]
+// CHECK:STDOUT:   %Op.type.bc9: type = fn_type @Op.2, @Destroy.impl(%T) [symbolic]
 // CHECK:STDOUT:   %Op.46f: %Op.type.bc9 = struct_value () [symbolic]
 // CHECK:STDOUT:   %ptr.79f: type = ptr_type %T [symbolic]
 // CHECK:STDOUT:   %require_complete.6e5: <witness> = require_complete_type %ptr.79f [symbolic]
@@ -356,8 +356,8 @@ fn G() { F(B); }
 // CHECK:STDOUT:   %G: %G.type = struct_value () [concrete]
 // CHECK:STDOUT:   %F.specific_fn: <specific function> = specific_function %F, @F(%B) [concrete]
 // CHECK:STDOUT:   %pattern_type.049: type = pattern_type %B [concrete]
-// CHECK:STDOUT:   %Destroy.impl_witness.39d: <witness> = impl_witness imports.%Destroy.impl_witness_table, @impl(%B) [concrete]
-// CHECK:STDOUT:   %Op.type.1a6: type = fn_type @Op.2, @impl(%B) [concrete]
+// CHECK:STDOUT:   %Destroy.impl_witness.39d: <witness> = impl_witness imports.%Destroy.impl_witness_table, @Destroy.impl(%B) [concrete]
+// CHECK:STDOUT:   %Op.type.1a6: type = fn_type @Op.2, @Destroy.impl(%B) [concrete]
 // CHECK:STDOUT:   %Op.3c2: %Op.type.1a6 = struct_value () [concrete]
 // CHECK:STDOUT:   %ptr.e79: type = ptr_type %B [concrete]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %ptr.e79 [concrete]
@@ -373,8 +373,8 @@ fn G() { F(B); }
 // CHECK:STDOUT:     import Core//prelude/...
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.Destroy: type = import_ref Core//prelude/parts/destroy, Destroy, loaded [concrete = constants.%Destroy.type]
-// CHECK:STDOUT:   %Core.import_ref.0b9: @impl.%Op.type (%Op.type.bc9) = import_ref Core//prelude/parts/destroy, loc8_29, loaded [symbolic = @impl.%Op (constants.%Op.46f)]
-// CHECK:STDOUT:   %Destroy.impl_witness_table = impl_witness_table (%Core.import_ref.0b9), @impl [concrete]
+// CHECK:STDOUT:   %Core.import_ref.0b9: @Destroy.impl.%Op.type (%Op.type.bc9) = import_ref Core//prelude/parts/destroy, loc8_29, loaded [symbolic = @Destroy.impl.%Op (constants.%Op.46f)]
+// CHECK:STDOUT:   %Destroy.impl_witness_table = impl_witness_table (%Core.import_ref.0b9), @Destroy.impl [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {

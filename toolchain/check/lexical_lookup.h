@@ -83,9 +83,14 @@ class LexicalLookup {
   }
 
   // Maps identifiers to name lookup results.
+  //
+  // The outer size of `0` is used because it's resized once on construction,
+  // and will rarely fit on the stack. The inner size of `2` is used because
+  // most entries will only have zero or one results.
+  //
   // TODO: Consider TinyPtrVector<Result> or similar. For now, use a small size
   // of 2 to cover the common case.
-  llvm::SmallVector<llvm::SmallVector<Result, 2>> lookup_;
+  llvm::SmallVector<llvm::SmallVector<Result, 2>, 0> lookup_;
 };
 
 }  // namespace Carbon::Check

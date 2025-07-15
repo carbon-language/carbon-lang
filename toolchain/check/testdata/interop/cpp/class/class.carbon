@@ -6,9 +6,9 @@
 //
 // AUTOUPDATE
 // TIP: To test this file alone, run:
-// TIP:   bazel test //toolchain/testing:file_test --test_arg=--file_tests=toolchain/check/testdata/interop/cpp/struct.carbon
+// TIP:   bazel test //toolchain/testing:file_test --test_arg=--file_tests=toolchain/check/testdata/interop/cpp/class/class.carbon
 // TIP: To dump output, run:
-// TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/check/testdata/interop/cpp/struct.carbon
+// TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/check/testdata/interop/cpp/class/class.carbon
 
 // ============================================================================
 // Declaration
@@ -16,7 +16,7 @@
 
 // --- declaration.h
 
-struct Bar;
+class Bar;
 
 // --- fail_todo_import_declaration.carbon
 
@@ -41,7 +41,7 @@ fn MyF(bar: Cpp.Bar*);
 
 // --- definition.h
 
-struct Bar {};
+class Bar {};
 
 // --- import_definition.carbon
 
@@ -59,8 +59,8 @@ fn MyF(bar: Cpp.Bar*);
 
 // --- declaration_and_definition.h
 
-struct Bar;
-struct Bar {};
+class Bar;
+class Bar {};
 
 // --- import_declaration_and_definition.carbon
 
@@ -78,7 +78,8 @@ fn MyF(bar: Cpp.Bar*);
 
 // --- public_static_member_function.h
 
-struct Bar {
+class Bar {
+ public:
   static auto foo() -> void;
 };
 
@@ -100,7 +101,7 @@ fn MyF() {
 
 // --- private_static_member_function.h
 
-struct Bar {
+class Bar {
  private:
   static auto foo() -> void;
 };
@@ -116,41 +117,13 @@ fn MyF() {
 }
 
 // ============================================================================
-// Public member function
-// ============================================================================
-
-// --- public_member_function.h
-
-struct Bar {
-  auto foo() -> void;
-};
-
-// --- fail_todo_import_public_member_function.carbon
-
-library "[[@TEST_NAME]]";
-
-import Cpp library "public_member_function.h";
-
-//@dump-sem-ir-begin
-fn MyF(bar : Cpp.Bar*) {
-  // CHECK:STDERR: fail_todo_import_public_member_function.carbon:[[@LINE+7]]:3: error: semantics TODO: `Unsupported: Non-global function` [SemanticsTodo]
-  // CHECK:STDERR:   bar->foo();
-  // CHECK:STDERR:   ^~~~~~~~
-  // CHECK:STDERR: fail_todo_import_public_member_function.carbon:[[@LINE+4]]:3: note: in `Cpp` name lookup for `foo` [InCppNameLookup]
-  // CHECK:STDERR:   bar->foo();
-  // CHECK:STDERR:   ^~~~~~~~
-  // CHECK:STDERR:
-  bar->foo();
-}
-//@dump-sem-ir-end
-
-// ============================================================================
 // Public static data member
 // ============================================================================
 
 // --- public_static_data_member.h
 
-struct Bar {
+class Bar {
+ public:
   static Bar* foo;
 };
 
@@ -183,7 +156,8 @@ fn MyF() {
 
 // --- public_data_member.h
 
-struct Bar {
+class Bar {
+ public:
   Bar* foo;
 };
 
@@ -191,11 +165,11 @@ struct Bar {
 
 library "[[@TEST_NAME]]";
 
-import Cpp library "public_data_member.h";
+import Cpp library "public_static_data_member.h";
 
 //@dump-sem-ir-begin
 fn MyF(bar : Cpp.Bar*) {
-  // CHECK:STDERR: fail_todo_import_public_data_member.carbon:[[@LINE+11]]:27: error: semantics TODO: `Unsupported: Declaration type Field` [SemanticsTodo]
+  // CHECK:STDERR: fail_todo_import_public_data_member.carbon:[[@LINE+11]]:27: error: semantics TODO: `Unsupported: Declaration type Var` [SemanticsTodo]
   // CHECK:STDERR:   let foo_bar: Cpp.Bar* = bar->foo;
   // CHECK:STDERR:                           ^~~~~~~~
   // CHECK:STDERR: fail_todo_import_public_data_member.carbon:[[@LINE+8]]:27: note: in `Cpp` name lookup for `foo` [InCppNameLookup]
@@ -216,11 +190,13 @@ fn MyF(bar : Cpp.Bar*) {
 
 // --- inheritance_static.h
 
-struct Bar1 {
+class Bar1 {
+ public:
   static auto foo1() -> void;
 };
 
-struct Bar2 : public Bar1 {
+class Bar2 : public Bar1 {
+ public:
   static auto foo2() -> void;
 };
 
@@ -244,8 +220,8 @@ fn MyF() {
 
 // --- inheritance_pointers.h
 
-struct Bar1 {};
-struct Bar2 : public Bar1 {};
+class Bar1 {};
+class Bar2 : public Bar1 {};
 
 // --- fail_todo_import_inheritance_pointers.carbon
 
@@ -275,7 +251,8 @@ fn MyF2(bar : Cpp.Bar2*) { MyF1(bar); }
 
 // --- dynamic.h
 
-struct Bar {
+class Bar {
+ public:
   virtual ~Bar();
 };
 
@@ -302,7 +279,10 @@ fn MyF(bar : Cpp.Bar*);
 
 // --- to_inherit_public.h
 
-struct Bar { static auto foo() -> void; };
+class Bar {
+ public:
+  static auto foo() -> void;
+};
 
 // --- import_to_inherit_public.carbon
 
@@ -326,7 +306,7 @@ fn MyF() {
 
 // --- to_inherit_private.h
 
-struct Bar {
+class Bar {
  private:
   static auto foo() -> void;
 };
@@ -352,7 +332,7 @@ fn MyF() {
 // --- template.h
 
 template<typename T>
-struct Bar {};
+class Bar {};
 
 // --- fail_todo_import_template.carbon
 
@@ -504,48 +484,6 @@ fn MyF(bar: Cpp.Bar*);
 // CHECK:STDOUT:   %foo.ref: %foo.type = name_ref foo, imports.%foo.decl [concrete = constants.%foo]
 // CHECK:STDOUT:   %foo.call: init %empty_tuple.type = call %foo.ref()
 // CHECK:STDOUT:   <elided>
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: --- fail_todo_import_public_member_function.carbon
-// CHECK:STDOUT:
-// CHECK:STDOUT: constants {
-// CHECK:STDOUT:   %Bar: type = class_type @Bar [concrete]
-// CHECK:STDOUT:   %ptr.f68: type = ptr_type %Bar [concrete]
-// CHECK:STDOUT:   %pattern_type: type = pattern_type %ptr.f68 [concrete]
-// CHECK:STDOUT:   %MyF.type: type = fn_type @MyF [concrete]
-// CHECK:STDOUT:   %MyF: %MyF.type = struct_value () [concrete]
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: imports {
-// CHECK:STDOUT:   %Cpp: <namespace> = namespace file.%Cpp.import_cpp, [concrete] {
-// CHECK:STDOUT:     .Bar = %Bar.decl
-// CHECK:STDOUT:     import Cpp//...
-// CHECK:STDOUT:   }
-// CHECK:STDOUT:   %Bar.decl: type = class_decl @Bar [concrete = constants.%Bar] {} {}
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: file {
-// CHECK:STDOUT:   %MyF.decl: %MyF.type = fn_decl @MyF [concrete = constants.%MyF] {
-// CHECK:STDOUT:     %bar.patt: %pattern_type = binding_pattern bar [concrete]
-// CHECK:STDOUT:     %bar.param_patt: %pattern_type = value_param_pattern %bar.patt, call_param0 [concrete]
-// CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %bar.param: %ptr.f68 = value_param call_param0
-// CHECK:STDOUT:     %.loc7: type = splice_block %ptr [concrete = constants.%ptr.f68] {
-// CHECK:STDOUT:       %Cpp.ref: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
-// CHECK:STDOUT:       <elided>
-// CHECK:STDOUT:       %Bar.ref: type = name_ref Bar, imports.%Bar.decl [concrete = constants.%Bar]
-// CHECK:STDOUT:       %ptr: type = ptr_type %Bar.ref [concrete = constants.%ptr.f68]
-// CHECK:STDOUT:     }
-// CHECK:STDOUT:     %bar: %ptr.f68 = bind_name bar, %bar.param
-// CHECK:STDOUT:   }
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: fn @MyF(%bar.param: %ptr.f68) {
-// CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %bar.ref: %ptr.f68 = name_ref bar, %bar
-// CHECK:STDOUT:   %.loc15: ref %Bar = deref %bar.ref
-// CHECK:STDOUT:   %foo.ref: <error> = name_ref foo, <error> [concrete = <error>]
-// CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- fail_todo_import_public_static_data_member.carbon

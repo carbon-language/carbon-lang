@@ -46,14 +46,14 @@ fn TestAssign(a: C*, b: C) {
 // CHECK:STDOUT:   %AddWith.type.ffb: type = facet_type <@AddWith, @AddWith(%C)> [concrete]
 // CHECK:STDOUT:   %Op.type.45e: type = fn_type @Op.1, @AddWith(%C) [concrete]
 // CHECK:STDOUT:   %AddWith.impl_witness: <witness> = impl_witness file.%AddWith.impl_witness_table [concrete]
-// CHECK:STDOUT:   %Op.type.638: type = fn_type @Op.6 [concrete]
+// CHECK:STDOUT:   %Op.type.638: type = fn_type @Op.loc21 [concrete]
 // CHECK:STDOUT:   %Op.276: %Op.type.638 = struct_value () [concrete]
 // CHECK:STDOUT:   %AddWith.facet.3ef: %AddWith.type.ffb = facet_value %C, (%AddWith.impl_witness) [concrete]
 // CHECK:STDOUT:   %AddAssignWith.type.393: type = facet_type <@AddAssignWith, @AddAssignWith(%C)> [concrete]
-// CHECK:STDOUT:   %Op.type.5af: type = fn_type @Op.7, @AddAssignWith(%C) [concrete]
+// CHECK:STDOUT:   %Op.type.5af: type = fn_type @Op.6, @AddAssignWith(%C) [concrete]
 // CHECK:STDOUT:   %AddAssignWith.impl_witness: <witness> = impl_witness file.%AddAssignWith.impl_witness_table [concrete]
 // CHECK:STDOUT:   %ptr.019: type = ptr_type %C [concrete]
-// CHECK:STDOUT:   %Op.type.0d7: type = fn_type @Op.8 [concrete]
+// CHECK:STDOUT:   %Op.type.0d7: type = fn_type @Op.loc26 [concrete]
 // CHECK:STDOUT:   %Op.572: %Op.type.0d7 = struct_value () [concrete]
 // CHECK:STDOUT:   %AddAssignWith.facet: %AddAssignWith.type.393 = facet_value %C, (%AddAssignWith.impl_witness) [concrete]
 // CHECK:STDOUT:   %.268: type = fn_type_with_self_type %Op.type.45e, %AddWith.facet.3ef [concrete]
@@ -68,9 +68,10 @@ fn TestAssign(a: C*, b: C) {
 // CHECK:STDOUT:   %a.ref: %C = name_ref a, %a
 // CHECK:STDOUT:   %b.ref: %C = name_ref b, %b
 // CHECK:STDOUT:   %impl.elem1: %.268 = impl_witness_access constants.%AddWith.impl_witness, element1 [concrete = constants.%Op.276]
-// CHECK:STDOUT:   %bound_method: <bound method> = bound_method %a.ref, %impl.elem1
+// CHECK:STDOUT:   %bound_method.loc31: <bound method> = bound_method %a.ref, %impl.elem1
 // CHECK:STDOUT:   <elided>
-// CHECK:STDOUT:   %Op.call: init %C = call %bound_method(%a.ref, %b.ref) to %.loc29
+// CHECK:STDOUT:   %Op.call: init %C = call %bound_method.loc31(%a.ref, %b.ref) to %.loc29
+// CHECK:STDOUT:   <elided>
 // CHECK:STDOUT:   return %Op.call to %return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

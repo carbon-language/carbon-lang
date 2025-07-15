@@ -46,14 +46,14 @@ fn TestAssign(a: C*, b: C) {
 // CHECK:STDOUT:   %BitAndWith.type.e40: type = facet_type <@BitAndWith, @BitAndWith(%C)> [concrete]
 // CHECK:STDOUT:   %Op.type.914: type = fn_type @Op.1, @BitAndWith(%C) [concrete]
 // CHECK:STDOUT:   %BitAndWith.impl_witness: <witness> = impl_witness file.%BitAndWith.impl_witness_table [concrete]
-// CHECK:STDOUT:   %Op.type.bcc: type = fn_type @Op.6 [concrete]
+// CHECK:STDOUT:   %Op.type.bcc: type = fn_type @Op.loc21 [concrete]
 // CHECK:STDOUT:   %Op.c46: %Op.type.bcc = struct_value () [concrete]
 // CHECK:STDOUT:   %BitAndWith.facet.783: %BitAndWith.type.e40 = facet_value %C, (%BitAndWith.impl_witness) [concrete]
 // CHECK:STDOUT:   %BitAndAssignWith.type.e85: type = facet_type <@BitAndAssignWith, @BitAndAssignWith(%C)> [concrete]
-// CHECK:STDOUT:   %Op.type.73d: type = fn_type @Op.7, @BitAndAssignWith(%C) [concrete]
+// CHECK:STDOUT:   %Op.type.73d: type = fn_type @Op.6, @BitAndAssignWith(%C) [concrete]
 // CHECK:STDOUT:   %BitAndAssignWith.impl_witness: <witness> = impl_witness file.%BitAndAssignWith.impl_witness_table [concrete]
 // CHECK:STDOUT:   %ptr.019: type = ptr_type %C [concrete]
-// CHECK:STDOUT:   %Op.type.115: type = fn_type @Op.8 [concrete]
+// CHECK:STDOUT:   %Op.type.115: type = fn_type @Op.loc26 [concrete]
 // CHECK:STDOUT:   %Op.270: %Op.type.115 = struct_value () [concrete]
 // CHECK:STDOUT:   %BitAndAssignWith.facet: %BitAndAssignWith.type.e85 = facet_value %C, (%BitAndAssignWith.impl_witness) [concrete]
 // CHECK:STDOUT:   %.04a: type = fn_type_with_self_type %Op.type.914, %BitAndWith.facet.783 [concrete]
@@ -68,9 +68,10 @@ fn TestAssign(a: C*, b: C) {
 // CHECK:STDOUT:   %a.ref: %C = name_ref a, %a
 // CHECK:STDOUT:   %b.ref: %C = name_ref b, %b
 // CHECK:STDOUT:   %impl.elem1: %.04a = impl_witness_access constants.%BitAndWith.impl_witness, element1 [concrete = constants.%Op.c46]
-// CHECK:STDOUT:   %bound_method: <bound method> = bound_method %a.ref, %impl.elem1
+// CHECK:STDOUT:   %bound_method.loc31: <bound method> = bound_method %a.ref, %impl.elem1
 // CHECK:STDOUT:   <elided>
-// CHECK:STDOUT:   %Op.call: init %C = call %bound_method(%a.ref, %b.ref) to %.loc29
+// CHECK:STDOUT:   %Op.call: init %C = call %bound_method.loc31(%a.ref, %b.ref) to %.loc29
+// CHECK:STDOUT:   <elided>
 // CHECK:STDOUT:   return %Op.call to %return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

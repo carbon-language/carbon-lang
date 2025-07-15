@@ -37,7 +37,7 @@ fn TestOp() {
 // CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [concrete]
 // CHECK:STDOUT:   %Dec.impl_witness: <witness> = impl_witness file.%Dec.impl_witness_table [concrete]
 // CHECK:STDOUT:   %ptr.019: type = ptr_type %C [concrete]
-// CHECK:STDOUT:   %Op.type.9e0: type = fn_type @Op.2 [concrete]
+// CHECK:STDOUT:   %Op.type.9e0: type = fn_type @Op.loc21 [concrete]
 // CHECK:STDOUT:   %Op.cf9: %Op.type.9e0 = struct_value () [concrete]
 // CHECK:STDOUT:   %Dec.facet: %Dec.type = facet_value %C, (%Dec.impl_witness) [concrete]
 // CHECK:STDOUT:   %.859: type = fn_type_with_self_type %Op.type.633, %Dec.facet [concrete]
@@ -50,8 +50,8 @@ fn TestOp() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT:   %c.ref: ref %C = name_ref c, %c
-// CHECK:STDOUT:   %impl.elem0.loc27: %.859 = impl_witness_access constants.%Dec.impl_witness, element0 [concrete = constants.%Op.cf9]
-// CHECK:STDOUT:   %bound_method.loc27: <bound method> = bound_method %c.ref, %impl.elem0.loc27
+// CHECK:STDOUT:   %impl.elem0: %.859 = impl_witness_access constants.%Dec.impl_witness, element0 [concrete = constants.%Op.cf9]
+// CHECK:STDOUT:   %bound_method.loc27: <bound method> = bound_method %c.ref, %impl.elem0
 // CHECK:STDOUT:   %addr.loc27: %ptr.019 = addr_of %c.ref
 // CHECK:STDOUT:   %Op.call: init %empty_tuple.type = call %bound_method.loc27(%addr.loc27)
 // CHECK:STDOUT:   <elided>

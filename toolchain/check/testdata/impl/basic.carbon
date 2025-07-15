@@ -27,7 +27,7 @@ impl C as Simple {
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %Simple.type: type = facet_type <@Simple> [concrete]
 // CHECK:STDOUT:   %Self: %Simple.type = bind_symbolic_name Self, 0 [symbolic]
-// CHECK:STDOUT:   %F.type.e2e: type = fn_type @F.1 [concrete]
+// CHECK:STDOUT:   %F.type.e2e: type = fn_type @F.loc16 [concrete]
 // CHECK:STDOUT:   %F.df8: %F.type.e2e = struct_value () [concrete]
 // CHECK:STDOUT:   %Simple.assoc_type: type = assoc_entity_type @Simple [concrete]
 // CHECK:STDOUT:   %assoc0: %Simple.assoc_type = assoc_entity element0, @Simple.%F.decl [concrete]
@@ -35,7 +35,7 @@ impl C as Simple {
 // CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [concrete]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [concrete]
 // CHECK:STDOUT:   %Simple.impl_witness: <witness> = impl_witness file.%Simple.impl_witness_table [concrete]
-// CHECK:STDOUT:   %F.type.f9e: type = fn_type @F.2 [concrete]
+// CHECK:STDOUT:   %F.type.f9e: type = fn_type @F.loc22 [concrete]
 // CHECK:STDOUT:   %F.f50: %F.type.f9e = struct_value () [concrete]
 // CHECK:STDOUT:   %Simple.facet: %Simple.type = facet_value %C, (%Simple.impl_witness) [concrete]
 // CHECK:STDOUT: }
@@ -47,17 +47,17 @@ impl C as Simple {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Simple.decl: type = interface_decl @Simple [concrete = constants.%Simple.type] {} {}
 // CHECK:STDOUT:   %C.decl: type = class_decl @C [concrete = constants.%C] {} {}
-// CHECK:STDOUT:   impl_decl @impl [concrete] {} {
+// CHECK:STDOUT:   impl_decl @Simple.impl [concrete] {} {
 // CHECK:STDOUT:     %C.ref: type = name_ref C, file.%C.decl [concrete = constants.%C]
 // CHECK:STDOUT:     %Simple.ref: type = name_ref Simple, file.%Simple.decl [concrete = constants.%Simple.type]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %Simple.impl_witness_table = impl_witness_table (@impl.%F.decl), @impl [concrete]
+// CHECK:STDOUT:   %Simple.impl_witness_table = impl_witness_table (@Simple.impl.%F.decl), @Simple.impl [concrete]
 // CHECK:STDOUT:   %Simple.impl_witness: <witness> = impl_witness %Simple.impl_witness_table [concrete = constants.%Simple.impl_witness]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: interface @Simple {
 // CHECK:STDOUT:   %Self: %Simple.type = bind_symbolic_name Self, 0 [symbolic = constants.%Self]
-// CHECK:STDOUT:   %F.decl: %F.type.e2e = fn_decl @F.1 [concrete = constants.%F.df8] {} {}
+// CHECK:STDOUT:   %F.decl: %F.type.e2e = fn_decl @F.loc16 [concrete = constants.%F.df8] {} {}
 // CHECK:STDOUT:   %assoc0: %Simple.assoc_type = assoc_entity element0, %F.decl [concrete = constants.%assoc0]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
@@ -66,8 +66,8 @@ impl C as Simple {
 // CHECK:STDOUT:   witness = (%F.decl)
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: impl @impl: %C.ref as %Simple.ref {
-// CHECK:STDOUT:   %F.decl: %F.type.f9e = fn_decl @F.2 [concrete = constants.%F.f50] {} {}
+// CHECK:STDOUT: impl @Simple.impl: %C.ref as %Simple.ref {
+// CHECK:STDOUT:   %F.decl: %F.type.f9e = fn_decl @F.loc22 [concrete = constants.%F.f50] {} {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .F = %F.decl
@@ -83,16 +83,16 @@ impl C as Simple {
 // CHECK:STDOUT:   .Self = constants.%C
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic fn @F.1(@Simple.%Self: %Simple.type) {
+// CHECK:STDOUT: generic fn @F.loc16(@Simple.%Self: %Simple.type) {
 // CHECK:STDOUT:   fn();
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @F.2() {
+// CHECK:STDOUT: fn @F.loc22() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @F.1(constants.%Self) {}
+// CHECK:STDOUT: specific @F.loc16(constants.%Self) {}
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @F.1(constants.%Simple.facet) {}
+// CHECK:STDOUT: specific @F.loc16(constants.%Simple.facet) {}
 // CHECK:STDOUT:

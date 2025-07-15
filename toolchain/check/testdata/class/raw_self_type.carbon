@@ -31,7 +31,7 @@ fn MemberNamedSelf.F(x: Self, y: r#Self) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %Class: type = class_type @Class [concrete]
-// CHECK:STDOUT:   %F.type.f1b: type = fn_type @F.1 [concrete]
+// CHECK:STDOUT:   %F.type.f1b: type = fn_type @F.loc16 [concrete]
 // CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [concrete]
 // CHECK:STDOUT:   %F.1f2: %F.type.f1b = struct_value () [concrete]
 // CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [concrete]
@@ -39,22 +39,15 @@ fn MemberNamedSelf.F(x: Self, y: r#Self) {}
 // CHECK:STDOUT:   %ptr.e71: type = ptr_type %Class [concrete]
 // CHECK:STDOUT:   %pattern_type.796: type = pattern_type %ptr.e71 [concrete]
 // CHECK:STDOUT:   %Destroy.type: type = facet_type <@Destroy> [concrete]
-// CHECK:STDOUT:   %Op.type.bae: type = fn_type @Op.1 [concrete]
-// CHECK:STDOUT:   %T: type = bind_symbolic_name T, 0 [symbolic]
-// CHECK:STDOUT:   %Op.type.bc9: type = fn_type @Op.2, @impl(%T) [symbolic]
-// CHECK:STDOUT:   %Op.46f: %Op.type.bc9 = struct_value () [symbolic]
-// CHECK:STDOUT:   %Destroy.impl_witness.a50: <witness> = impl_witness imports.%Destroy.impl_witness_table, @impl(%ptr.e71) [concrete]
-// CHECK:STDOUT:   %Op.type.faa: type = fn_type @Op.2, @impl(%ptr.e71) [concrete]
+// CHECK:STDOUT:   %Op.type.faa: type = fn_type @Op.2, @Destroy.impl(%ptr.e71) [concrete]
 // CHECK:STDOUT:   %Op.5a3: %Op.type.faa = struct_value () [concrete]
 // CHECK:STDOUT:   %ptr.0dd: type = ptr_type %ptr.e71 [concrete]
-// CHECK:STDOUT:   %Destroy.facet: %Destroy.type = facet_value %ptr.e71, (%Destroy.impl_witness.a50) [concrete]
-// CHECK:STDOUT:   %.9cd: type = fn_type_with_self_type %Op.type.bae, %Destroy.facet [concrete]
 // CHECK:STDOUT:   %Op.specific_fn: <specific function> = specific_function %Op.5a3, @Op.2(%ptr.e71) [concrete]
 // CHECK:STDOUT:   %MemberNamedSelf: type = class_type @MemberNamedSelf [concrete]
 // CHECK:STDOUT:   %Self.362: type = class_type @Self [concrete]
 // CHECK:STDOUT:   %pattern_type.356: type = pattern_type %MemberNamedSelf [concrete]
 // CHECK:STDOUT:   %pattern_type.c06: type = pattern_type %Self.362 [concrete]
-// CHECK:STDOUT:   %F.type.648: type = fn_type @F.2 [concrete]
+// CHECK:STDOUT:   %F.type.648: type = fn_type @F.loc28 [concrete]
 // CHECK:STDOUT:   %F.e97: %F.type.648 = struct_value () [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -65,8 +58,6 @@ fn MemberNamedSelf.F(x: Self, y: r#Self) {}
 // CHECK:STDOUT:     import Core//prelude/...
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.Destroy: type = import_ref Core//prelude/parts/destroy, Destroy, loaded [concrete = constants.%Destroy.type]
-// CHECK:STDOUT:   %Core.import_ref.0b9: @impl.%Op.type (%Op.type.bc9) = import_ref Core//prelude/parts/destroy, loc8_29, loaded [symbolic = @impl.%Op (constants.%Op.46f)]
-// CHECK:STDOUT:   %Destroy.impl_witness_table = impl_witness_table (%Core.import_ref.0b9), @impl [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -78,7 +69,7 @@ fn MemberNamedSelf.F(x: Self, y: r#Self) {}
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %Class.decl: type = class_decl @Class [concrete = constants.%Class] {} {}
 // CHECK:STDOUT:   %MemberNamedSelf.decl: type = class_decl @MemberNamedSelf [concrete = constants.%MemberNamedSelf] {} {}
-// CHECK:STDOUT:   %F.decl: %F.type.648 = fn_decl @F.2 [concrete = constants.%F.e97] {
+// CHECK:STDOUT:   %F.decl: %F.type.648 = fn_decl @F.loc28 [concrete = constants.%F.e97] {
 // CHECK:STDOUT:     %x.patt: %pattern_type.356 = binding_pattern x [concrete]
 // CHECK:STDOUT:     %x.param_patt: %pattern_type.356 = value_param_pattern %x.patt, call_param0 [concrete]
 // CHECK:STDOUT:     %y.patt: %pattern_type.c06 = binding_pattern y [concrete]
@@ -94,7 +85,7 @@ fn MemberNamedSelf.F(x: Self, y: r#Self) {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @Class {
-// CHECK:STDOUT:   %F.decl: %F.type.f1b = fn_decl @F.1 [concrete = constants.%F.1f2] {} {}
+// CHECK:STDOUT:   %F.decl: %F.type.f1b = fn_decl @F.loc16 [concrete = constants.%F.1f2] {} {}
 // CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [concrete = constants.%empty_struct_type]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [concrete = constants.%complete_type.357]
 // CHECK:STDOUT:   complete_type_witness = %complete_type
@@ -106,7 +97,7 @@ fn MemberNamedSelf.F(x: Self, y: r#Self) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @MemberNamedSelf {
 // CHECK:STDOUT:   %Self.decl: type = class_decl @Self [concrete = constants.%Self.362] {} {}
-// CHECK:STDOUT:   %F.decl: %F.type.648 = fn_decl @F.2 [concrete = constants.%F.e97] {
+// CHECK:STDOUT:   %F.decl: %F.type.648 = fn_decl @F.loc28 [concrete = constants.%F.e97] {
 // CHECK:STDOUT:     %x.patt: %pattern_type.356 = binding_pattern x [concrete]
 // CHECK:STDOUT:     %x.param_patt: %pattern_type.356 = value_param_pattern %x.patt, call_param0 [concrete]
 // CHECK:STDOUT:     %y.patt: %pattern_type.c06 = binding_pattern y [concrete]
@@ -138,7 +129,7 @@ fn MemberNamedSelf.F(x: Self, y: r#Self) {}
 // CHECK:STDOUT:   .Self = constants.%Self.362
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @F.1() {
+// CHECK:STDOUT: fn @F.loc16() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %Self.patt: %pattern_type.796 = binding_pattern r#Self [concrete]
@@ -163,22 +154,20 @@ fn MemberNamedSelf.F(x: Self, y: r#Self) {}
 // CHECK:STDOUT:     %ptr.loc18: type = ptr_type %Self.ref.loc18_12 [concrete = constants.%ptr.e71]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %p: ref %ptr.e71 = bind_name p, %p.var
-// CHECK:STDOUT:   %impl.elem0.loc18: %.9cd = impl_witness_access constants.%Destroy.impl_witness.a50, element0 [concrete = constants.%Op.5a3]
-// CHECK:STDOUT:   %bound_method.loc18_5.1: <bound method> = bound_method %p.var, %impl.elem0.loc18
-// CHECK:STDOUT:   %specific_fn.loc18: <specific function> = specific_function %impl.elem0.loc18, @Op.2(constants.%ptr.e71) [concrete = constants.%Op.specific_fn]
-// CHECK:STDOUT:   %bound_method.loc18_5.2: <bound method> = bound_method %p.var, %specific_fn.loc18
+// CHECK:STDOUT:   %Op.bound.loc18: <bound method> = bound_method %p.var, constants.%Op.5a3
+// CHECK:STDOUT:   %Op.specific_fn.1: <specific function> = specific_function constants.%Op.5a3, @Op.2(constants.%ptr.e71) [concrete = constants.%Op.specific_fn]
+// CHECK:STDOUT:   %bound_method.loc18: <bound method> = bound_method %p.var, %Op.specific_fn.1
 // CHECK:STDOUT:   %addr.loc18: %ptr.0dd = addr_of %p.var
-// CHECK:STDOUT:   %no_op.loc18: init %empty_tuple.type = call %bound_method.loc18_5.2(%addr.loc18)
-// CHECK:STDOUT:   %impl.elem0.loc17: %.9cd = impl_witness_access constants.%Destroy.impl_witness.a50, element0 [concrete = constants.%Op.5a3]
-// CHECK:STDOUT:   %bound_method.loc17_5.1: <bound method> = bound_method %Self.var, %impl.elem0.loc17
-// CHECK:STDOUT:   %specific_fn.loc17: <specific function> = specific_function %impl.elem0.loc17, @Op.2(constants.%ptr.e71) [concrete = constants.%Op.specific_fn]
-// CHECK:STDOUT:   %bound_method.loc17_5.2: <bound method> = bound_method %Self.var, %specific_fn.loc17
+// CHECK:STDOUT:   %no_op.loc18: init %empty_tuple.type = call %bound_method.loc18(%addr.loc18)
+// CHECK:STDOUT:   %Op.bound.loc17: <bound method> = bound_method %Self.var, constants.%Op.5a3
+// CHECK:STDOUT:   %Op.specific_fn.2: <specific function> = specific_function constants.%Op.5a3, @Op.2(constants.%ptr.e71) [concrete = constants.%Op.specific_fn]
+// CHECK:STDOUT:   %bound_method.loc17: <bound method> = bound_method %Self.var, %Op.specific_fn.2
 // CHECK:STDOUT:   %addr.loc17: %ptr.0dd = addr_of %Self.var
-// CHECK:STDOUT:   %no_op.loc17: init %empty_tuple.type = call %bound_method.loc17_5.2(%addr.loc17)
+// CHECK:STDOUT:   %no_op.loc17: init %empty_tuple.type = call %bound_method.loc17(%addr.loc17)
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @F.2(%x.param.loc28: %MemberNamedSelf, %y.param.loc28: %Self.362) {
+// CHECK:STDOUT: fn @F.loc28(%x.param.loc28: %MemberNamedSelf, %y.param.loc28: %Self.362) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }

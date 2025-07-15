@@ -54,9 +54,9 @@ fn F() {
 // CHECK:STDOUT: --- fail_virtual.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
-// CHECK:STDOUT:   %F.type.b25: type = fn_type @F.1 [concrete]
+// CHECK:STDOUT:   %F.type.b25: type = fn_type @F.loc4 [concrete]
 // CHECK:STDOUT:   %F.c41: %F.type.b25 = struct_value () [concrete]
-// CHECK:STDOUT:   %F.type.21a: type = fn_type @F.2 [concrete]
+// CHECK:STDOUT:   %F.type.21a: type = fn_type @F.loc9 [concrete]
 // CHECK:STDOUT:   %F.c14: %F.type.21a = struct_value () [concrete]
 // CHECK:STDOUT:   %G.type: type = fn_type @G [concrete]
 // CHECK:STDOUT:   %G: %G.type = struct_value () [concrete]
@@ -77,18 +77,18 @@ fn F() {
 // CHECK:STDOUT:     .F = %F.decl
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import = import Core
-// CHECK:STDOUT:   %F.decl: %F.type.b25 = fn_decl @F.1 [concrete = constants.%F.c41] {} {}
+// CHECK:STDOUT:   %F.decl: %F.type.b25 = fn_decl @F.loc4 [concrete = constants.%F.c41] {} {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @F.1() {
+// CHECK:STDOUT: fn @F.loc4() {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %F.decl: %F.type.21a = fn_decl @F.2 [concrete = constants.%F.c14] {} {}
+// CHECK:STDOUT:   %F.decl: %F.type.21a = fn_decl @F.loc9 [concrete = constants.%F.c14] {} {}
 // CHECK:STDOUT:   %G.decl: %G.type = fn_decl @G [concrete = constants.%G] {} {}
 // CHECK:STDOUT:   %H.decl: %H.type = fn_decl @H [concrete = constants.%H] {} {}
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @F.2();
+// CHECK:STDOUT: fn @F.loc9();
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @G();
 // CHECK:STDOUT:
@@ -103,16 +103,9 @@ fn F() {
 // CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [concrete]
 // CHECK:STDOUT:   %pattern_type.a96: type = pattern_type %empty_struct_type [concrete]
 // CHECK:STDOUT:   %Destroy.type: type = facet_type <@Destroy> [concrete]
-// CHECK:STDOUT:   %Op.type.bae: type = fn_type @Op.1 [concrete]
-// CHECK:STDOUT:   %T: type = bind_symbolic_name T, 0 [symbolic]
-// CHECK:STDOUT:   %Op.type.bc9: type = fn_type @Op.2, @impl(%T) [symbolic]
-// CHECK:STDOUT:   %Op.46f: %Op.type.bc9 = struct_value () [symbolic]
-// CHECK:STDOUT:   %Destroy.impl_witness.eb8: <witness> = impl_witness imports.%Destroy.impl_witness_table, @impl(%empty_struct_type) [concrete]
-// CHECK:STDOUT:   %Op.type.069: type = fn_type @Op.2, @impl(%empty_struct_type) [concrete]
+// CHECK:STDOUT:   %Op.type.069: type = fn_type @Op.2, @Destroy.impl(%empty_struct_type) [concrete]
 // CHECK:STDOUT:   %Op.d5a: %Op.type.069 = struct_value () [concrete]
 // CHECK:STDOUT:   %ptr.c28: type = ptr_type %empty_struct_type [concrete]
-// CHECK:STDOUT:   %Destroy.facet: %Destroy.type = facet_value %empty_struct_type, (%Destroy.impl_witness.eb8) [concrete]
-// CHECK:STDOUT:   %.9da: type = fn_type_with_self_type %Op.type.bae, %Destroy.facet [concrete]
 // CHECK:STDOUT:   %Op.specific_fn: <specific function> = specific_function %Op.d5a, @Op.2(%empty_struct_type) [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -123,8 +116,6 @@ fn F() {
 // CHECK:STDOUT:     import Core//prelude/...
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.Destroy: type = import_ref Core//prelude/parts/destroy, Destroy, loaded [concrete = constants.%Destroy.type]
-// CHECK:STDOUT:   %Core.import_ref.0b9: @impl.%Op.type (%Op.type.bc9) = import_ref Core//prelude/parts/destroy, loc8_29, loaded [symbolic = @impl.%Op (constants.%Op.46f)]
-// CHECK:STDOUT:   %Destroy.impl_witness_table = impl_witness_table (%Core.import_ref.0b9), @impl [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -158,18 +149,16 @@ fn F() {
 // CHECK:STDOUT:     %.loc14_21.3: type = converted %.loc14_21.2, constants.%empty_struct_type [concrete = constants.%empty_struct_type]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %w: ref %empty_struct_type = bind_name w, %w.var
-// CHECK:STDOUT:   %impl.elem0.loc14: %.9da = impl_witness_access constants.%Destroy.impl_witness.eb8, element0 [concrete = constants.%Op.d5a]
-// CHECK:STDOUT:   %bound_method.loc14_13.1: <bound method> = bound_method %w.var, %impl.elem0.loc14
-// CHECK:STDOUT:   %specific_fn.loc14: <specific function> = specific_function %impl.elem0.loc14, @Op.2(constants.%empty_struct_type) [concrete = constants.%Op.specific_fn]
-// CHECK:STDOUT:   %bound_method.loc14_13.2: <bound method> = bound_method %w.var, %specific_fn.loc14
+// CHECK:STDOUT:   %Op.bound.loc14: <bound method> = bound_method %w.var, constants.%Op.d5a
+// CHECK:STDOUT:   %Op.specific_fn.1: <specific function> = specific_function constants.%Op.d5a, @Op.2(constants.%empty_struct_type) [concrete = constants.%Op.specific_fn]
+// CHECK:STDOUT:   %bound_method.loc14: <bound method> = bound_method %w.var, %Op.specific_fn.1
 // CHECK:STDOUT:   %addr.loc14: %ptr.c28 = addr_of %w.var
-// CHECK:STDOUT:   %no_op.loc14: init %empty_tuple.type = call %bound_method.loc14_13.2(%addr.loc14)
-// CHECK:STDOUT:   %impl.elem0.loc9: %.9da = impl_witness_access constants.%Destroy.impl_witness.eb8, element0 [concrete = constants.%Op.d5a]
-// CHECK:STDOUT:   %bound_method.loc9_11.1: <bound method> = bound_method %v.var, %impl.elem0.loc9
-// CHECK:STDOUT:   %specific_fn.loc9: <specific function> = specific_function %impl.elem0.loc9, @Op.2(constants.%empty_struct_type) [concrete = constants.%Op.specific_fn]
-// CHECK:STDOUT:   %bound_method.loc9_11.2: <bound method> = bound_method %v.var, %specific_fn.loc9
+// CHECK:STDOUT:   %no_op.loc14: init %empty_tuple.type = call %bound_method.loc14(%addr.loc14)
+// CHECK:STDOUT:   %Op.bound.loc9: <bound method> = bound_method %v.var, constants.%Op.d5a
+// CHECK:STDOUT:   %Op.specific_fn.2: <specific function> = specific_function constants.%Op.d5a, @Op.2(constants.%empty_struct_type) [concrete = constants.%Op.specific_fn]
+// CHECK:STDOUT:   %bound_method.loc9: <bound method> = bound_method %v.var, %Op.specific_fn.2
 // CHECK:STDOUT:   %addr.loc9: %ptr.c28 = addr_of %v.var
-// CHECK:STDOUT:   %no_op.loc9: init %empty_tuple.type = call %bound_method.loc9_11.2(%addr.loc9)
+// CHECK:STDOUT:   %no_op.loc9: init %empty_tuple.type = call %bound_method.loc9(%addr.loc9)
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
