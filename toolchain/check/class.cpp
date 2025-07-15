@@ -196,11 +196,11 @@ static auto BuildVtable(Context& context, Parse::ClassDefinitionId node_id,
       if (i != vtable_contents.end()) {
         auto& override_fn = context.functions().Get(
             context.insts().GetAs<SemIR::FunctionDecl>(*i).function_id);
-        auto x = GetCalleeFunction(context.sem_ir(), fn_decl_id);
+        auto callee_function = GetCalleeFunction(context.sem_ir(), fn_decl_id);
         CheckFunctionTypeMatches(
             context, override_fn,
-            context.sem_ir().functions().Get(x.function_id),
-            x.resolved_specific_id,
+            context.sem_ir().functions().Get(callee_function.function_id),
+            callee_function.resolved_specific_id,
             /*check_syntax=*/false,
             /*check_self=*/false);
         fn_decl_id = build_specific_function(*i);
