@@ -58,12 +58,17 @@ fn Value(v: Cpp.HasQualifiers) {
   v.plain();
 
   // TODO: This should remain invalid once we support `volatile`.
-  // CHECK:STDERR: fail_bad_object_param_qualifiers_by_value.carbon:[[@LINE+7]]:3: error: semantics TODO: `Unsupported: object parameter type: volatile struct HasQualifiers` [SemanticsTodo]
+  // CHECK:STDERR: fail_bad_object_param_qualifiers_by_value.carbon:[[@LINE+12]]:3: error: semantics TODO: `Unsupported: qualified type: volatile struct HasQualifiers` [SemanticsTodo]
   // CHECK:STDERR:   v.volatile_this();
   // CHECK:STDERR:   ^~~~~~~~~~~~~~~
-  // CHECK:STDERR: fail_bad_object_param_qualifiers_by_value.carbon:[[@LINE+4]]:3: note: in `Cpp` name lookup for `volatile_this` [InCppNameLookup]
+  // CHECK:STDERR: fail_bad_object_param_qualifiers_by_value.carbon:[[@LINE+9]]:3: note: in `Cpp` name lookup for `volatile_this` [InCppNameLookup]
   // CHECK:STDERR:   v.volatile_this();
   // CHECK:STDERR:   ^~~~~~~~~~~~~~~
+  // CHECK:STDERR:
+  // CHECK:STDERR: fail_bad_object_param_qualifiers_by_value.carbon:[[@LINE+5]]:3: error: `addr self` method cannot be invoked on a value [AddrSelfIsNonRef]
+  // CHECK:STDERR:   v.volatile_this();
+  // CHECK:STDERR:   ^
+  // CHECK:STDERR: fail_bad_object_param_qualifiers_by_value.carbon: note: initializing function parameter [InCallToFunctionParam]
   // CHECK:STDERR:
   v.volatile_this();
 
@@ -101,7 +106,7 @@ import Cpp library "object_param_qualifiers.h";
 
 fn Ref(p: Cpp.HasQualifiers*) {
   // TODO: This should eventually be accepted if we support `volatile`.
-  // CHECK:STDERR: fail_todo_bad_object_param_qualifiers_by_ref.carbon:[[@LINE+7]]:3: error: semantics TODO: `Unsupported: object parameter type: volatile struct HasQualifiers` [SemanticsTodo]
+  // CHECK:STDERR: fail_todo_bad_object_param_qualifiers_by_ref.carbon:[[@LINE+7]]:3: error: semantics TODO: `Unsupported: qualified type: volatile struct HasQualifiers` [SemanticsTodo]
   // CHECK:STDERR:   p->volatile_this();
   // CHECK:STDERR:   ^~~~~~~~~~~~~~~~
   // CHECK:STDERR: fail_todo_bad_object_param_qualifiers_by_ref.carbon:[[@LINE+4]]:3: note: in `Cpp` name lookup for `volatile_this` [InCppNameLookup]
@@ -308,6 +313,8 @@ fn Ref(p: Cpp.HasQualifiers*) {
 // CHECK:STDOUT:   %pattern_type.f6d: type = pattern_type auto [concrete]
 // CHECK:STDOUT:   %plain.type: type = fn_type @plain [concrete]
 // CHECK:STDOUT:   %plain: %plain.type = struct_value () [concrete]
+// CHECK:STDOUT:   %volatile_this.type: type = fn_type @volatile_this [concrete]
+// CHECK:STDOUT:   %volatile_this: %volatile_this.type = struct_value () [concrete]
 // CHECK:STDOUT:   %ref_this.type: type = fn_type @ref_this [concrete]
 // CHECK:STDOUT:   %ref_this: %ref_this.type = struct_value () [concrete]
 // CHECK:STDOUT:   %Destroy.type: type = facet_type <@Destroy> [concrete]
@@ -334,6 +341,14 @@ fn Ref(p: Cpp.HasQualifiers*) {
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %self.param: %ptr.ec3 = value_param call_param0
 // CHECK:STDOUT:     %self: %ptr.ec3 = bind_name self, %self.param
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %volatile_this.decl: %volatile_this.type = fn_decl @volatile_this [concrete = constants.%volatile_this] {
+// CHECK:STDOUT:     %self.patt: <error> = binding_pattern self [concrete]
+// CHECK:STDOUT:     %self.param_patt: <error> = value_param_pattern %self.patt, call_param0 [concrete]
+// CHECK:STDOUT:     %.1: %pattern_type.f6d = addr_pattern %self.param_patt [concrete]
+// CHECK:STDOUT:   } {
+// CHECK:STDOUT:     %self.param: <error> = value_param call_param0
+// CHECK:STDOUT:     %self: <error> = bind_name self, %self.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %ref_this.decl: %ref_this.type = fn_decl @ref_this [concrete = constants.%ref_this] {
 // CHECK:STDOUT:     %self.patt: %pattern_type.bc1 = binding_pattern self [concrete]
@@ -377,7 +392,7 @@ fn Ref(p: Cpp.HasQualifiers*) {
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%HasQualifiers
 // CHECK:STDOUT:   .plain = imports.%plain.decl
-// CHECK:STDOUT:   .volatile_this = <error>
+// CHECK:STDOUT:   .volatile_this = imports.%volatile_this.decl
 // CHECK:STDOUT:   .ref_this = imports.%ref_this.decl
 // CHECK:STDOUT:   .ref_ref_this = <error>
 // CHECK:STDOUT:   .const_ref_ref_this = <error>
@@ -392,32 +407,43 @@ fn Ref(p: Cpp.HasQualifiers*) {
 // CHECK:STDOUT:   %.loc12: ref %HasQualifiers = temporary_storage
 // CHECK:STDOUT:   %addr.loc12_3.1: %ptr.ec3 = addr_of %.loc12
 // CHECK:STDOUT:   %plain.call: init %empty_tuple.type = call %plain.bound(%addr.loc12_3.1)
-// CHECK:STDOUT:   %v.ref.loc22: %HasQualifiers = name_ref v, %v
-// CHECK:STDOUT:   %volatile_this.ref: <error> = name_ref volatile_this, <error> [concrete = <error>]
-// CHECK:STDOUT:   %v.ref.loc29: %HasQualifiers = name_ref v, %v
+// CHECK:STDOUT:   %v.ref.loc27: %HasQualifiers = name_ref v, %v
+// CHECK:STDOUT:   %volatile_this.ref: %volatile_this.type = name_ref volatile_this, imports.%volatile_this.decl [concrete = constants.%volatile_this]
+// CHECK:STDOUT:   %volatile_this.bound: <bound method> = bound_method %v.ref.loc27, %volatile_this.ref
+// CHECK:STDOUT:   %.loc27: ref %HasQualifiers = temporary_storage
+// CHECK:STDOUT:   %addr.loc27_3.1: %ptr.ec3 = addr_of %.loc27
+// CHECK:STDOUT:   %volatile_this.call: init %empty_tuple.type = call %volatile_this.bound(<error>)
+// CHECK:STDOUT:   %v.ref.loc34: %HasQualifiers = name_ref v, %v
 // CHECK:STDOUT:   %ref_this.ref: %ref_this.type = name_ref ref_this, imports.%ref_this.decl [concrete = constants.%ref_this]
-// CHECK:STDOUT:   %ref_this.bound: <bound method> = bound_method %v.ref.loc29, %ref_this.ref
-// CHECK:STDOUT:   %.loc29: ref %HasQualifiers = temporary_storage
-// CHECK:STDOUT:   %addr.loc29_3.1: %ptr.ec3 = addr_of %.loc29
-// CHECK:STDOUT:   %ref_this.call: init %empty_tuple.type = call %ref_this.bound(%addr.loc29_3.1)
-// CHECK:STDOUT:   %v.ref.loc38: %HasQualifiers = name_ref v, %v
+// CHECK:STDOUT:   %ref_this.bound: <bound method> = bound_method %v.ref.loc34, %ref_this.ref
+// CHECK:STDOUT:   %.loc34: ref %HasQualifiers = temporary_storage
+// CHECK:STDOUT:   %addr.loc34_3.1: %ptr.ec3 = addr_of %.loc34
+// CHECK:STDOUT:   %ref_this.call: init %empty_tuple.type = call %ref_this.bound(%addr.loc34_3.1)
+// CHECK:STDOUT:   %v.ref.loc43: %HasQualifiers = name_ref v, %v
 // CHECK:STDOUT:   %ref_ref_this.ref: <error> = name_ref ref_ref_this, <error> [concrete = <error>]
-// CHECK:STDOUT:   %v.ref.loc47: %HasQualifiers = name_ref v, %v
+// CHECK:STDOUT:   %v.ref.loc52: %HasQualifiers = name_ref v, %v
 // CHECK:STDOUT:   %const_ref_ref_this.ref: <error> = name_ref const_ref_ref_this, <error> [concrete = <error>]
-// CHECK:STDOUT:   %Op.bound.loc29: <bound method> = bound_method %.loc29, constants.%Op.b7c
+// CHECK:STDOUT:   %Op.bound.loc34: <bound method> = bound_method %.loc34, constants.%Op.b7c
 // CHECK:STDOUT:   %Op.specific_fn.1: <specific function> = specific_function constants.%Op.b7c, @Op.2(constants.%HasQualifiers) [concrete = constants.%Op.specific_fn]
-// CHECK:STDOUT:   %bound_method.loc29: <bound method> = bound_method %.loc29, %Op.specific_fn.1
-// CHECK:STDOUT:   %addr.loc29_3.2: %ptr.ec3 = addr_of %.loc29
-// CHECK:STDOUT:   %no_op.loc29: init %empty_tuple.type = call %bound_method.loc29(%addr.loc29_3.2)
-// CHECK:STDOUT:   %Op.bound.loc12: <bound method> = bound_method %.loc12, constants.%Op.b7c
+// CHECK:STDOUT:   %bound_method.loc34: <bound method> = bound_method %.loc34, %Op.specific_fn.1
+// CHECK:STDOUT:   %addr.loc34_3.2: %ptr.ec3 = addr_of %.loc34
+// CHECK:STDOUT:   %no_op.loc34: init %empty_tuple.type = call %bound_method.loc34(%addr.loc34_3.2)
+// CHECK:STDOUT:   %Op.bound.loc27: <bound method> = bound_method %.loc27, constants.%Op.b7c
 // CHECK:STDOUT:   %Op.specific_fn.2: <specific function> = specific_function constants.%Op.b7c, @Op.2(constants.%HasQualifiers) [concrete = constants.%Op.specific_fn]
-// CHECK:STDOUT:   %bound_method.loc12: <bound method> = bound_method %.loc12, %Op.specific_fn.2
+// CHECK:STDOUT:   %bound_method.loc27: <bound method> = bound_method %.loc27, %Op.specific_fn.2
+// CHECK:STDOUT:   %addr.loc27_3.2: %ptr.ec3 = addr_of %.loc27
+// CHECK:STDOUT:   %no_op.loc27: init %empty_tuple.type = call %bound_method.loc27(%addr.loc27_3.2)
+// CHECK:STDOUT:   %Op.bound.loc12: <bound method> = bound_method %.loc12, constants.%Op.b7c
+// CHECK:STDOUT:   %Op.specific_fn.3: <specific function> = specific_function constants.%Op.b7c, @Op.2(constants.%HasQualifiers) [concrete = constants.%Op.specific_fn]
+// CHECK:STDOUT:   %bound_method.loc12: <bound method> = bound_method %.loc12, %Op.specific_fn.3
 // CHECK:STDOUT:   %addr.loc12_3.2: %ptr.ec3 = addr_of %.loc12
 // CHECK:STDOUT:   %no_op.loc12: init %empty_tuple.type = call %bound_method.loc12(%addr.loc12_3.2)
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @plain(%self.param: %ptr.ec3);
+// CHECK:STDOUT:
+// CHECK:STDOUT: fn @volatile_this(%self.param: <error>);
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @ref_this(%self.param: %ptr.ec3);
 // CHECK:STDOUT:
@@ -428,9 +454,13 @@ fn Ref(p: Cpp.HasQualifiers*) {
 // CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [concrete]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [concrete]
 // CHECK:STDOUT:   %ptr.ec3: type = ptr_type %HasQualifiers [concrete]
-// CHECK:STDOUT:   %pattern_type: type = pattern_type %ptr.ec3 [concrete]
+// CHECK:STDOUT:   %pattern_type.bc1: type = pattern_type %ptr.ec3 [concrete]
 // CHECK:STDOUT:   %Ref.type: type = fn_type @Ref [concrete]
+// CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [concrete]
 // CHECK:STDOUT:   %Ref: %Ref.type = struct_value () [concrete]
+// CHECK:STDOUT:   %pattern_type.f6d: type = pattern_type auto [concrete]
+// CHECK:STDOUT:   %volatile_this.type: type = fn_type @volatile_this [concrete]
+// CHECK:STDOUT:   %volatile_this: %volatile_this.type = struct_value () [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -443,6 +473,14 @@ fn Ref(p: Cpp.HasQualifiers*) {
 // CHECK:STDOUT:     import Cpp//...
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %HasQualifiers.decl: type = class_decl @HasQualifiers [concrete = constants.%HasQualifiers] {} {}
+// CHECK:STDOUT:   %volatile_this.decl: %volatile_this.type = fn_decl @volatile_this [concrete = constants.%volatile_this] {
+// CHECK:STDOUT:     %self.patt: <error> = binding_pattern self [concrete]
+// CHECK:STDOUT:     %self.param_patt: <error> = value_param_pattern %self.patt, call_param0 [concrete]
+// CHECK:STDOUT:     %.1: %pattern_type.f6d = addr_pattern %self.param_patt [concrete]
+// CHECK:STDOUT:   } {
+// CHECK:STDOUT:     %self.param: <error> = value_param call_param0
+// CHECK:STDOUT:     %self: <error> = bind_name self, %self.param
+// CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -456,8 +494,8 @@ fn Ref(p: Cpp.HasQualifiers*) {
 // CHECK:STDOUT:     import Cpp "object_param_qualifiers.h"
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Ref.decl: %Ref.type = fn_decl @Ref [concrete = constants.%Ref] {
-// CHECK:STDOUT:     %p.patt: %pattern_type = binding_pattern p [concrete]
-// CHECK:STDOUT:     %p.param_patt: %pattern_type = value_param_pattern %p.patt, call_param0 [concrete]
+// CHECK:STDOUT:     %p.patt: %pattern_type.bc1 = binding_pattern p [concrete]
+// CHECK:STDOUT:     %p.param_patt: %pattern_type.bc1 = value_param_pattern %p.patt, call_param0 [concrete]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %p.param: %ptr.ec3 = value_param call_param0
 // CHECK:STDOUT:     %.loc6: type = splice_block %ptr [concrete = constants.%ptr.ec3] {
@@ -476,7 +514,7 @@ fn Ref(p: Cpp.HasQualifiers*) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%HasQualifiers
-// CHECK:STDOUT:   .volatile_this = <error>
+// CHECK:STDOUT:   .volatile_this = imports.%volatile_this.decl
 // CHECK:STDOUT:   import Cpp//...
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -484,9 +522,14 @@ fn Ref(p: Cpp.HasQualifiers*) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %p.ref: %ptr.ec3 = name_ref p, %p
 // CHECK:STDOUT:   %.loc15: ref %HasQualifiers = deref %p.ref
-// CHECK:STDOUT:   %volatile_this.ref: <error> = name_ref volatile_this, <error> [concrete = <error>]
+// CHECK:STDOUT:   %volatile_this.ref: %volatile_this.type = name_ref volatile_this, imports.%volatile_this.decl [concrete = constants.%volatile_this]
+// CHECK:STDOUT:   %volatile_this.bound: <bound method> = bound_method %.loc15, %volatile_this.ref
+// CHECK:STDOUT:   %addr: %ptr.ec3 = addr_of %.loc15
+// CHECK:STDOUT:   %volatile_this.call: init %empty_tuple.type = call %volatile_this.bound(<error>)
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: fn @volatile_this(%self.param: <error>);
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- fail_bad_object_param_qualifiers_ref_ref.carbon
 // CHECK:STDOUT:
