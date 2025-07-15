@@ -813,7 +813,7 @@ static auto MapType(Context& context, SemIR::LocId loc_id, clang::QualType type)
 static auto MakeImplicitParamPatternsBlockId(
     Context& context, SemIR::LocId loc_id,
     const clang::FunctionDecl& clang_decl) -> SemIR::InstBlockId {
-  auto* method_decl = dyn_cast<clang::CXXMethodDecl>(&clang_decl);
+  const auto* method_decl = dyn_cast<clang::CXXMethodDecl>(&clang_decl);
   if (!method_decl || method_decl->isStatic()) {
     return SemIR::InstBlockId::Empty;
   }
