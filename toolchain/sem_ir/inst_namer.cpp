@@ -591,7 +591,7 @@ auto InstNamer::QueueEntity(ImplId impl_id, ScopeId scope_id, Scope& scope)
 
   // TODO: Invent a name based on the self and constraint types.
   std::string impl_name;
-  if (auto interface_id = sem_ir_->impls().Get(impl_id).interface.interface_id;
+  if (auto interface_id = impl.interface.interface_id;
       interface_id.has_value()) {
     auto interface_info = sem_ir_->interfaces().Get(interface_id);
     impl_name = llvm::formatv(
