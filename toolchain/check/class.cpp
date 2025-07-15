@@ -181,8 +181,22 @@ static auto BuildVtable(Context& context, Parse::ClassDefinitionId node_id,
       fn_decl_id = context.sem_ir().constant_values().GetInstId(
           GetConstantValueInSpecific(context.sem_ir(), base_class_specific_id,
                                      fn_decl_id));
-      auto fn_decl = GetCalleeFunction(context.sem_ir(), fn_decl_id);
-      const auto& fn = context.functions().Get(fn_decl.function_id);
+      auto specific_id = SemIR::SpecificId::None;
+      auto callee_id = fn_decl_id;
+      if (auto specific_function =
+              context.sem_ir().insts().TryGetAs<SemIR::SpecificFunction>(
+                  fn_decl_id)) {
+        specific_id = specific_function->specific_id;
+        callee_id = specific_function->callee_id;
+      }
+
+      // Identify the function we're calling by its type.
+      auto fn_type_inst = context.sem_ir().types().GetAsInst(
+          context.sem_ir().insts().Get(callee_id).type_id());
+
+      const auto& fn = context.functions().Get(
+          fn_type_inst.As<SemIR::FunctionType>().function_id);
+
       const auto* i = llvm::find_if(
           vtable_contents, [&](SemIR::InstId override_fn_decl_id) -> bool {
             const auto& override_fn = context.functions().Get(
@@ -196,12 +210,9 @@ static auto BuildVtable(Context& context, Parse::ClassDefinitionId node_id,
       if (i != vtable_contents.end()) {
         auto& override_fn = context.functions().Get(
             context.insts().GetAs<SemIR::FunctionDecl>(*i).function_id);
-        CheckFunctionTypeMatches(
-            context, override_fn,
-            context.sem_ir().functions().Get(fn_decl.function_id),
-            fn_decl.resolved_specific_id,
-            /*check_syntax=*/false,
-            /*check_self=*/false);
+        CheckFunctionTypeMatches(context, override_fn, fn, specific_id,
+                                 /*check_syntax=*/false,
+                                 /*check_self=*/false);
         fn_decl_id = build_specific_function(*i);
         override_fn.virtual_index = vtable.size();
         CARBON_CHECK(override_fn.virtual_index == fn.virtual_index);
