@@ -50,17 +50,17 @@ fn C(n: i32, m: i32) -> i32 = "int.sadd";
 // CHECK:STDOUT:   %Int.generic: %Int.type = struct_value () [concrete]
 // CHECK:STDOUT:   %i32: type = class_type @Int, @Int(%int_32) [concrete]
 // CHECK:STDOUT:   %pattern_type.7ce: type = pattern_type %i32 [concrete]
-// CHECK:STDOUT:   %A.type.00d7e7.1: type = fn_type @A.1 [concrete]
+// CHECK:STDOUT:   %A.type.00d7e7.1: type = fn_type @A.loc15 [concrete]
 // CHECK:STDOUT:   %A.1db889.1: %A.type.00d7e7.1 = struct_value () [concrete]
-// CHECK:STDOUT:   %A.type.00d7e7.2: type = fn_type @A.2 [concrete]
+// CHECK:STDOUT:   %A.type.00d7e7.2: type = fn_type @A.loc23 [concrete]
 // CHECK:STDOUT:   %A.1db889.2: %A.type.00d7e7.2 = struct_value () [concrete]
-// CHECK:STDOUT:   %B.type.e168e5.1: type = fn_type @B.1 [concrete]
+// CHECK:STDOUT:   %B.type.e168e5.1: type = fn_type @B.loc25 [concrete]
 // CHECK:STDOUT:   %B.d1e2df.1: %B.type.e168e5.1 = struct_value () [concrete]
-// CHECK:STDOUT:   %B.type.e168e5.2: type = fn_type @B.2 [concrete]
+// CHECK:STDOUT:   %B.type.e168e5.2: type = fn_type @B.loc33 [concrete]
 // CHECK:STDOUT:   %B.d1e2df.2: %B.type.e168e5.2 = struct_value () [concrete]
-// CHECK:STDOUT:   %C.type.de0bfe.1: type = fn_type @C.1 [concrete]
+// CHECK:STDOUT:   %C.type.de0bfe.1: type = fn_type @C.loc35 [concrete]
 // CHECK:STDOUT:   %C.1b0370.1: %C.type.de0bfe.1 = struct_value () [concrete]
-// CHECK:STDOUT:   %C.type.de0bfe.2: type = fn_type @C.2 [concrete]
+// CHECK:STDOUT:   %C.type.de0bfe.2: type = fn_type @C.loc43 [concrete]
 // CHECK:STDOUT:   %C.1b0370.2: %C.type.de0bfe.2 = struct_value () [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -81,7 +81,7 @@ fn C(n: i32, m: i32) -> i32 = "int.sadd";
 // CHECK:STDOUT:     .C = %C.decl.loc35
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import = import Core
-// CHECK:STDOUT:   %A.decl.loc15: %A.type.00d7e7.1 = fn_decl @A.1 [concrete = constants.%A.1db889.1] {
+// CHECK:STDOUT:   %A.decl.loc15: %A.type.00d7e7.1 = fn_decl @A.loc15 [concrete = constants.%A.1db889.1] {
 // CHECK:STDOUT:     %n.patt: %pattern_type.7ce = binding_pattern n [concrete]
 // CHECK:STDOUT:     %n.param_patt: %pattern_type.7ce = value_param_pattern %n.patt, call_param0 [concrete]
 // CHECK:STDOUT:     %m.patt: %pattern_type.7ce = binding_pattern m [concrete]
@@ -106,7 +106,7 @@ fn C(n: i32, m: i32) -> i32 = "int.sadd";
 // CHECK:STDOUT:     %return.param: ref %i32 = out_param call_param2
 // CHECK:STDOUT:     %return: ref %i32 = return_slot %return.param
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %A.decl.loc23: %A.type.00d7e7.2 = fn_decl @A.2 [concrete = constants.%A.1db889.2] {
+// CHECK:STDOUT:   %A.decl.loc23: %A.type.00d7e7.2 = fn_decl @A.loc23 [concrete = constants.%A.1db889.2] {
 // CHECK:STDOUT:     %n.patt: %pattern_type.7ce = binding_pattern n [concrete]
 // CHECK:STDOUT:     %n.param_patt: %pattern_type.7ce = value_param_pattern %n.patt, call_param0 [concrete]
 // CHECK:STDOUT:     %m.patt: %pattern_type.7ce = binding_pattern m [concrete]
@@ -131,7 +131,7 @@ fn C(n: i32, m: i32) -> i32 = "int.sadd";
 // CHECK:STDOUT:     %return.param: ref %i32 = out_param call_param2
 // CHECK:STDOUT:     %return: ref %i32 = return_slot %return.param
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %B.decl.loc25: %B.type.e168e5.1 = fn_decl @B.1 [concrete = constants.%B.d1e2df.1] {
+// CHECK:STDOUT:   %B.decl.loc25: %B.type.e168e5.1 = fn_decl @B.loc25 [concrete = constants.%B.d1e2df.1] {
 // CHECK:STDOUT:     %n.patt: %pattern_type.7ce = binding_pattern n [concrete]
 // CHECK:STDOUT:     %n.param_patt: %pattern_type.7ce = value_param_pattern %n.patt, call_param0 [concrete]
 // CHECK:STDOUT:     %m.patt: %pattern_type.7ce = binding_pattern m [concrete]
@@ -156,7 +156,7 @@ fn C(n: i32, m: i32) -> i32 = "int.sadd";
 // CHECK:STDOUT:     %return.param: ref %i32 = out_param call_param2
 // CHECK:STDOUT:     %return: ref %i32 = return_slot %return.param
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %B.decl.loc33: %B.type.e168e5.2 = fn_decl @B.2 [concrete = constants.%B.d1e2df.2] {
+// CHECK:STDOUT:   %B.decl.loc33: %B.type.e168e5.2 = fn_decl @B.loc33 [concrete = constants.%B.d1e2df.2] {
 // CHECK:STDOUT:     %n.patt: %pattern_type.7ce = binding_pattern n [concrete]
 // CHECK:STDOUT:     %n.param_patt: %pattern_type.7ce = value_param_pattern %n.patt, call_param0 [concrete]
 // CHECK:STDOUT:     %m.patt: %pattern_type.7ce = binding_pattern m [concrete]
@@ -181,7 +181,7 @@ fn C(n: i32, m: i32) -> i32 = "int.sadd";
 // CHECK:STDOUT:     %return.param: ref %i32 = out_param call_param2
 // CHECK:STDOUT:     %return: ref %i32 = return_slot %return.param
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %C.decl.loc35: %C.type.de0bfe.1 = fn_decl @C.1 [concrete = constants.%C.1b0370.1] {
+// CHECK:STDOUT:   %C.decl.loc35: %C.type.de0bfe.1 = fn_decl @C.loc35 [concrete = constants.%C.1b0370.1] {
 // CHECK:STDOUT:     %n.patt: %pattern_type.7ce = binding_pattern n [concrete]
 // CHECK:STDOUT:     %n.param_patt: %pattern_type.7ce = value_param_pattern %n.patt, call_param0 [concrete]
 // CHECK:STDOUT:     %m.patt: %pattern_type.7ce = binding_pattern m [concrete]
@@ -206,7 +206,7 @@ fn C(n: i32, m: i32) -> i32 = "int.sadd";
 // CHECK:STDOUT:     %return.param: ref %i32 = out_param call_param2
 // CHECK:STDOUT:     %return: ref %i32 = return_slot %return.param
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %C.decl.loc43: %C.type.de0bfe.2 = fn_decl @C.2 [concrete = constants.%C.1b0370.2] {
+// CHECK:STDOUT:   %C.decl.loc43: %C.type.de0bfe.2 = fn_decl @C.loc43 [concrete = constants.%C.1b0370.2] {
 // CHECK:STDOUT:     %n.patt: %pattern_type.7ce = binding_pattern n [concrete]
 // CHECK:STDOUT:     %n.param_patt: %pattern_type.7ce = value_param_pattern %n.patt, call_param0 [concrete]
 // CHECK:STDOUT:     %m.patt: %pattern_type.7ce = binding_pattern m [concrete]
@@ -233,23 +233,23 @@ fn C(n: i32, m: i32) -> i32 = "int.sadd";
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @A.1(%n.param: %i32, %m.param: %i32) -> %i32 = "int.sadd";
+// CHECK:STDOUT: fn @A.loc15(%n.param: %i32, %m.param: %i32) -> %i32 = "int.sadd";
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @A.2(%n.param: %i32, %m.param: %i32) -> %i32 {
+// CHECK:STDOUT: fn @A.loc23(%n.param: %i32, %m.param: %i32) -> %i32 {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %n.ref: %i32 = name_ref n, %n
 // CHECK:STDOUT:   return %n.ref
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @B.1(%n.param: %i32, %m.param: %i32) -> %i32 {
+// CHECK:STDOUT: fn @B.loc25(%n.param: %i32, %m.param: %i32) -> %i32 {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %n.ref: %i32 = name_ref n, %n
 // CHECK:STDOUT:   return %n.ref
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @B.2(%n.param: %i32, %m.param: %i32) -> %i32 = "int.sadd";
+// CHECK:STDOUT: fn @B.loc33(%n.param: %i32, %m.param: %i32) -> %i32 = "int.sadd";
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @C.1(%n.param: %i32, %m.param: %i32) -> %i32 = "int.sadd";
+// CHECK:STDOUT: fn @C.loc35(%n.param: %i32, %m.param: %i32) -> %i32 = "int.sadd";
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @C.2(%n.param: %i32, %m.param: %i32) -> %i32 = "int.sadd";
+// CHECK:STDOUT: fn @C.loc43(%n.param: %i32, %m.param: %i32) -> %i32 = "int.sadd";
 // CHECK:STDOUT:

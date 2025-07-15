@@ -278,10 +278,6 @@ static auto CheckCompleteClassType(
                                  vtable_contents);
 
     auto vptr_type_id = GetPointerType(context, SemIR::VtableType::TypeInstId);
-    // TODO: Handle specifics here, probably passing
-    // `context.generics().GetSelfSpecific(class_info.generic_id)` as the
-    // specific_id here (but more work involved to get this all plumbed in and
-    // tested).
     auto generic_id = class_info.generic_id;
     auto self_specific_id = context.generics().GetSelfSpecific(generic_id);
     class_info.vtable_ptr_id =

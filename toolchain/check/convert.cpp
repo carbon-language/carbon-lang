@@ -591,6 +591,7 @@ static auto ConvertStructToClass(
     dest_vtable_ptr_inst_id = dest_class_info.vtable_ptr_id;
     if (dest_type.specific_id.has_value() &&
         dest_vtable_ptr_inst_id.has_value()) {
+      LoadImportRef(context, dest_vtable_ptr_inst_id);
       dest_vtable_ptr_inst_id = context.constant_values().GetInstId(
           GetConstantValueInSpecific(context.sem_ir(), dest_type.specific_id,
                                      dest_vtable_ptr_inst_id));

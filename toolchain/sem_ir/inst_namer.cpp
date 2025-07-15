@@ -96,9 +96,7 @@ InstNamer::InstNamer(const File* sem_ir) : sem_ir_(sem_ir) {
   // Build each function scope.
   for (auto [fn_id, fn] : sem_ir->functions().enumerate()) {
     auto fn_scope = GetScopeFor(fn_id);
-    // TODO: Provide a location for the function for use as a
-    // disambiguator.
-    auto fn_loc = Parse::NodeId::None;
+    LocId fn_loc(fn.latest_decl_id());
     GetScopeInfo(fn_scope).name = globals_.AllocateName(
         *this, fn_loc, sem_ir->names().GetIRBaseName(fn.name_id).str());
     CollectNamesInBlock(fn_scope, fn.call_params_id);
@@ -118,8 +116,7 @@ InstNamer::InstNamer(const File* sem_ir) : sem_ir_(sem_ir) {
   // Build each class scope.
   for (auto [class_id, class_info] : sem_ir->classes().enumerate()) {
     auto class_scope = GetScopeFor(class_id);
-    // TODO: Provide a location for the class for use as a disambiguator.
-    auto class_loc = Parse::NodeId::None;
+    LocId class_loc(class_info.latest_decl_id());
     GetScopeInfo(class_scope).name = globals_.AllocateName(
         *this, class_loc,
         sem_ir->names().GetIRBaseName(class_info.name_id).str());
@@ -132,9 +129,8 @@ InstNamer::InstNamer(const File* sem_ir) : sem_ir_(sem_ir) {
   // Build each vtable scope.
   for (auto [vtable_id, vtable_info] : sem_ir->vtables().enumerate()) {
     auto vtable_scope = GetScopeFor(vtable_id);
-    // TODO: Provide a location for the vtable for use as a disambiguator.
-    auto vtable_loc = Parse::NodeId::None;
     auto class_info = sem_ir->classes().Get(vtable_info.class_id);
+    LocId vtable_loc(class_info.latest_decl_id());
     GetScopeInfo(vtable_scope).name = globals_.AllocateName(
         *this, vtable_loc,
         sem_ir->names().GetIRBaseName(class_info.name_id).str() + ".vtable");
@@ -145,8 +141,7 @@ InstNamer::InstNamer(const File* sem_ir) : sem_ir_(sem_ir) {
   // Build each interface scope.
   for (auto [interface_id, interface_info] : sem_ir->interfaces().enumerate()) {
     auto interface_scope = GetScopeFor(interface_id);
-    // TODO: Provide a location for the interface for use as a disambiguator.
-    auto interface_loc = Parse::NodeId::None;
+    LocId interface_loc(interface_info.latest_decl_id());
     GetScopeInfo(interface_scope).name = globals_.AllocateName(
         *this, interface_loc,
         sem_ir->names().GetIRBaseName(interface_info.name_id).str());

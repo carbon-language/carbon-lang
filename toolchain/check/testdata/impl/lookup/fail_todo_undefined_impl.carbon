@@ -53,7 +53,7 @@ fn G() {
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %I.type: type = facet_type <@I> [concrete]
 // CHECK:STDOUT:   %Self: %I.type = bind_symbolic_name Self, 0 [symbolic]
-// CHECK:STDOUT:   %F.type.cf0: type = fn_type @F.1 [concrete]
+// CHECK:STDOUT:   %F.type.cf0: type = fn_type @F.loc16 [concrete]
 // CHECK:STDOUT:   %F.bc6: %F.type.cf0 = struct_value () [concrete]
 // CHECK:STDOUT:   %I.assoc_type: type = assoc_entity_type @I [concrete]
 // CHECK:STDOUT:   %assoc0: %I.assoc_type = assoc_entity element0, @I.%F.decl [concrete]
@@ -61,12 +61,12 @@ fn G() {
 // CHECK:STDOUT:   %I.impl_witness.ab4: <witness> = impl_witness @C.%I.impl_witness_table [concrete]
 // CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [concrete]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [concrete]
-// CHECK:STDOUT:   %F.type.b25: type = fn_type @F.2 [concrete]
+// CHECK:STDOUT:   %F.type.b25: type = fn_type @F.loc25 [concrete]
 // CHECK:STDOUT:   %F.c41: %F.type.b25 = struct_value () [concrete]
 // CHECK:STDOUT:   %I.facet.580: %I.type = facet_value %C, (%I.impl_witness.ab4) [concrete]
 // CHECK:STDOUT:   %.3ac: type = fn_type_with_self_type %F.type.cf0, %I.facet.580 [concrete]
 // CHECK:STDOUT:   %I.impl_witness.6f2: <witness> = impl_witness file.%I.impl_witness_table [concrete]
-// CHECK:STDOUT:   %F.type.5d6: type = fn_type @F.3 [concrete]
+// CHECK:STDOUT:   %F.type.5d6: type = fn_type @F.loc36 [concrete]
 // CHECK:STDOUT:   %F.a2e: %F.type.5d6 = struct_value () [concrete]
 // CHECK:STDOUT:   %I.facet.029: %I.type = facet_value %C, (%I.impl_witness.6f2) [concrete]
 // CHECK:STDOUT:   %G.type: type = fn_type @G [concrete]
@@ -82,7 +82,7 @@ fn G() {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %I.decl: type = interface_decl @I [concrete = constants.%I.type] {} {}
 // CHECK:STDOUT:   %C.decl: type = class_decl @C [concrete = constants.%C] {} {}
-// CHECK:STDOUT:   %F.decl: %F.type.b25 = fn_decl @F.2 [concrete = constants.%F.c41] {} {}
+// CHECK:STDOUT:   %F.decl: %F.type.b25 = fn_decl @F.loc25 [concrete = constants.%F.c41] {} {}
 // CHECK:STDOUT:   impl_decl @I.impl.770 [concrete] {} {
 // CHECK:STDOUT:     %C.ref: type = name_ref C, file.%C.decl [concrete = constants.%C]
 // CHECK:STDOUT:     %I.ref: type = name_ref I, file.%I.decl [concrete = constants.%I.type]
@@ -94,7 +94,7 @@ fn G() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: interface @I {
 // CHECK:STDOUT:   %Self: %I.type = bind_symbolic_name Self, 0 [symbolic = constants.%Self]
-// CHECK:STDOUT:   %F.decl: %F.type.cf0 = fn_decl @F.1 [concrete = constants.%F.bc6] {} {}
+// CHECK:STDOUT:   %F.decl: %F.type.cf0 = fn_decl @F.loc16 [concrete = constants.%F.bc6] {} {}
 // CHECK:STDOUT:   %assoc0: %I.assoc_type = assoc_entity element0, %F.decl [concrete = constants.%assoc0]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
@@ -106,7 +106,7 @@ fn G() {
 // CHECK:STDOUT: impl @I.impl.a21: %Self.ref as %I.ref;
 // CHECK:STDOUT:
 // CHECK:STDOUT: impl @I.impl.770: %C.ref as %I.ref {
-// CHECK:STDOUT:   %F.decl: %F.type.5d6 = fn_decl @F.3 [concrete = constants.%F.a2e] {} {}
+// CHECK:STDOUT:   %F.decl: %F.type.5d6 = fn_decl @F.loc36 [concrete = constants.%F.a2e] {} {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .F = %F.decl
@@ -131,11 +131,11 @@ fn G() {
 // CHECK:STDOUT:   extend @I.impl.a21.%I.ref
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic fn @F.1(@I.%Self: %I.type) {
+// CHECK:STDOUT: generic fn @F.loc16(@I.%Self: %I.type) {
 // CHECK:STDOUT:   fn();
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @F.2() {
+// CHECK:STDOUT: fn @F.loc25() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %C.ref: type = name_ref C, file.%C.decl [concrete = constants.%C]
 // CHECK:STDOUT:   %F.ref: %I.assoc_type = name_ref F, @I.%assoc0 [concrete = constants.%assoc0]
@@ -143,7 +143,7 @@ fn G() {
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @F.3() {
+// CHECK:STDOUT: fn @F.loc36() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
@@ -156,7 +156,7 @@ fn G() {
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @F.1(constants.%Self) {}
+// CHECK:STDOUT: specific @F.loc16(constants.%Self) {}
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @F.1(constants.%I.facet.029) {}
+// CHECK:STDOUT: specific @F.loc16(constants.%I.facet.029) {}
 // CHECK:STDOUT:

@@ -1597,7 +1597,7 @@ impl CD as IF where .F = 0 {
 // CHECK:STDOUT:   %int_0: Core.IntLiteral = int_value 0 [concrete]
 // CHECK:STDOUT:   %IF_where.type: type = facet_type <@IF where %impl.elem0 = %int_0> [concrete]
 // CHECK:STDOUT:   %IF.impl_witness: <witness> = impl_witness file.%IF.impl_witness_table [concrete]
-// CHECK:STDOUT:   %F.type.f56: type = fn_type @F.2 [concrete]
+// CHECK:STDOUT:   %F.type.f56: type = fn_type @F.loc11 [concrete]
 // CHECK:STDOUT:   %F.fae: %F.type.f56 = struct_value () [concrete]
 // CHECK:STDOUT:   %IF.facet.60c: %IF.type = facet_value %CD, (%IF.impl_witness) [concrete]
 // CHECK:STDOUT: }
@@ -1644,7 +1644,7 @@ impl CD as IF where .F = 0 {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: impl @IF.impl: %CD.ref as %.loc10_15 {
-// CHECK:STDOUT:   %F.decl: %F.type.f56 = fn_decl @F.2 [concrete = constants.%F.fae] {} {}
+// CHECK:STDOUT:   %F.decl: %F.type.f56 = fn_decl @F.loc11 [concrete = constants.%F.fae] {} {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .F = %F.decl
@@ -1664,7 +1664,7 @@ impl CD as IF where .F = 0 {
 // CHECK:STDOUT:   fn;
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @F.2() {
+// CHECK:STDOUT: fn @F.loc11() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }

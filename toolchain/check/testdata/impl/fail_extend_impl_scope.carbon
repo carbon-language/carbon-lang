@@ -168,16 +168,16 @@ fn F() {
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %Z.type: type = facet_type <@Z> [concrete]
 // CHECK:STDOUT:   %Self.6e6: %Z.type = bind_symbolic_name Self, 0 [symbolic]
-// CHECK:STDOUT:   %Zero.type.822: type = fn_type @Zero.1 [concrete]
+// CHECK:STDOUT:   %Zero.type.822: type = fn_type @Zero.loc4 [concrete]
 // CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [concrete]
 // CHECK:STDOUT:   %Zero.d14: %Zero.type.822 = struct_value () [concrete]
 // CHECK:STDOUT:   %Z.assoc_type: type = assoc_entity_type @Z [concrete]
 // CHECK:STDOUT:   %assoc0.534: %Z.assoc_type = assoc_entity element0, @Z.%Zero.decl [concrete]
-// CHECK:STDOUT:   %Zero.type.db4: type = fn_type @Zero.2, @Z.impl.6b5(%Self.6e6) [symbolic]
+// CHECK:STDOUT:   %Zero.type.db4: type = fn_type @Zero.loc11, @Z.impl.6b5(%Self.6e6) [symbolic]
 // CHECK:STDOUT:   %Zero.8fb: %Zero.type.db4 = struct_value () [symbolic]
 // CHECK:STDOUT:   %Point: type = class_type @Point [concrete]
 // CHECK:STDOUT:   %Z.impl_witness: <witness> = impl_witness @Point.%Z.impl_witness_table [concrete]
-// CHECK:STDOUT:   %Zero.type.e33: type = fn_type @Zero.3 [concrete]
+// CHECK:STDOUT:   %Zero.type.e33: type = fn_type @Zero.loc17 [concrete]
 // CHECK:STDOUT:   %Zero.dec: %Zero.type.e33 = struct_value () [concrete]
 // CHECK:STDOUT:   %Z.facet: %Z.type = facet_value %Point, (%Z.impl_witness) [concrete]
 // CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [concrete]
@@ -217,7 +217,7 @@ fn F() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: interface @Z {
 // CHECK:STDOUT:   %Self: %Z.type = bind_symbolic_name Self, 0 [symbolic = constants.%Self.6e6]
-// CHECK:STDOUT:   %Zero.decl: %Zero.type.822 = fn_decl @Zero.1 [concrete = constants.%Zero.d14] {} {}
+// CHECK:STDOUT:   %Zero.decl: %Zero.type.822 = fn_decl @Zero.loc4 [concrete = constants.%Zero.d14] {} {}
 // CHECK:STDOUT:   %assoc0: %Z.assoc_type = assoc_entity element0, %Zero.decl [concrete = constants.%assoc0.534]
 // CHECK:STDOUT:   impl_decl @Z.impl.6b5 [concrete] {} {
 // CHECK:STDOUT:     %Z.ref: type = name_ref Z, file.%Z.decl [concrete = constants.%Z.type]
@@ -233,11 +233,11 @@ fn F() {
 // CHECK:STDOUT: generic impl @Z.impl.6b5(@Z.%Self: %Z.type) {
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %Self: %Z.type = bind_symbolic_name Self, 0 [symbolic = %Self (constants.%Self.6e6)]
-// CHECK:STDOUT:   %Zero.type: type = fn_type @Zero.2, @Z.impl.6b5(%Self) [symbolic = %Zero.type (constants.%Zero.type.db4)]
+// CHECK:STDOUT:   %Zero.type: type = fn_type @Zero.loc11, @Z.impl.6b5(%Self) [symbolic = %Zero.type (constants.%Zero.type.db4)]
 // CHECK:STDOUT:   %Zero: @Z.impl.6b5.%Zero.type (%Zero.type.db4) = struct_value () [symbolic = %Zero (constants.%Zero.8fb)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   impl: <error> as %Z.ref {
-// CHECK:STDOUT:     %Zero.decl: @Z.impl.6b5.%Zero.type (%Zero.type.db4) = fn_decl @Zero.2 [symbolic = @Z.impl.6b5.%Zero (constants.%Zero.8fb)] {} {}
+// CHECK:STDOUT:     %Zero.decl: @Z.impl.6b5.%Zero.type (%Zero.type.db4) = fn_decl @Zero.loc11 [symbolic = @Z.impl.6b5.%Zero (constants.%Zero.8fb)] {} {}
 // CHECK:STDOUT:
 // CHECK:STDOUT:   !members:
 // CHECK:STDOUT:     .Zero = %Zero.decl
@@ -246,7 +246,7 @@ fn F() {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: impl @Z.impl.c94: %Self.ref as %Z.ref {
-// CHECK:STDOUT:   %Zero.decl: %Zero.type.e33 = fn_decl @Zero.3 [concrete = constants.%Zero.dec] {} {}
+// CHECK:STDOUT:   %Zero.decl: %Zero.type.e33 = fn_decl @Zero.loc17 [concrete = constants.%Zero.dec] {} {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Zero = %Zero.decl
@@ -271,11 +271,11 @@ fn F() {
 // CHECK:STDOUT:   extend @Z.impl.c94.%Z.ref
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic fn @Zero.1(@Z.%Self: %Z.type) {
+// CHECK:STDOUT: generic fn @Zero.loc4(@Z.%Self: %Z.type) {
 // CHECK:STDOUT:   fn();
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic fn @Zero.2(@Z.%Self: %Z.type) {
+// CHECK:STDOUT: generic fn @Zero.loc11(@Z.%Self: %Z.type) {
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:
 // CHECK:STDOUT:   fn() {
@@ -284,7 +284,7 @@ fn F() {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Zero.3() {
+// CHECK:STDOUT: fn @Zero.loc17() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
@@ -308,7 +308,7 @@ fn F() {
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @Zero.1(constants.%Self.6e6) {}
+// CHECK:STDOUT: specific @Zero.loc4(constants.%Self.6e6) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Z.impl.6b5(constants.%Self.6e6) {
 // CHECK:STDOUT: !definition:
@@ -317,7 +317,7 @@ fn F() {
 // CHECK:STDOUT:   %Zero => constants.%Zero.8fb
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @Zero.2(constants.%Self.6e6) {}
+// CHECK:STDOUT: specific @Zero.loc11(constants.%Self.6e6) {}
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @Zero.1(constants.%Z.facet) {}
+// CHECK:STDOUT: specific @Zero.loc4(constants.%Z.facet) {}
 // CHECK:STDOUT:

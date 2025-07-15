@@ -395,7 +395,7 @@ fn CallF() {
 // CHECK:STDOUT:   %ImplicitAs.impl_witness: <witness> = impl_witness file.%ImplicitAs.impl_witness_table [concrete]
 // CHECK:STDOUT:   %pattern_type.cb1: type = pattern_type %empty_tuple.type [concrete]
 // CHECK:STDOUT:   %pattern_type.c48: type = pattern_type %C [concrete]
-// CHECK:STDOUT:   %Convert.type.721: type = fn_type @Convert.2 [concrete]
+// CHECK:STDOUT:   %Convert.type.721: type = fn_type @Convert.loc11 [concrete]
 // CHECK:STDOUT:   %Convert.155: %Convert.type.721 = struct_value () [concrete]
 // CHECK:STDOUT:   %ImplicitAs.facet: %ImplicitAs.type.15e = facet_value %empty_tuple.type, (%ImplicitAs.impl_witness) [concrete]
 // CHECK:STDOUT:   %C.val: %C = struct_value () [concrete]
@@ -490,7 +490,7 @@ fn CallF() {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: impl @ImplicitAs.impl: %.loc10_7.2 as %ImplicitAs.type {
-// CHECK:STDOUT:   %Convert.decl: %Convert.type.721 = fn_decl @Convert.2 [concrete = constants.%Convert.155] {
+// CHECK:STDOUT:   %Convert.decl: %Convert.type.721 = fn_decl @Convert.loc11 [concrete = constants.%Convert.155] {
 // CHECK:STDOUT:     %self.patt: %pattern_type.cb1 = binding_pattern self [concrete]
 // CHECK:STDOUT:     %self.param_patt: %pattern_type.cb1 = value_param_pattern %self.patt, call_param0 [concrete]
 // CHECK:STDOUT:     %return.patt: %pattern_type.c48 = return_slot_pattern [concrete]
@@ -527,7 +527,7 @@ fn CallF() {
 // CHECK:STDOUT:   .Self = constants.%C
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Convert.2(%self.param: %empty_tuple.type) -> %return.param: %C {
+// CHECK:STDOUT: fn @Convert.loc11(%self.param: %empty_tuple.type) -> %return.param: %C {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %.loc11_41.1: %empty_struct_type = struct_literal ()
 // CHECK:STDOUT:   %.loc11_41.2: init %C = class_init (), %return [concrete = constants.%C.val]

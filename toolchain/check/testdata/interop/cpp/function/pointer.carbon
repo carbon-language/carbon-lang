@@ -43,7 +43,7 @@ struct S {};
 
 auto foo(S* _Nonnull * _Nonnull) -> void;
 
-// --- fail_todo_import_double_pointer_param.carbon
+// --- import_double_pointer_param.carbon
 
 library "[[@TEST_NAME]]";
 
@@ -53,13 +53,6 @@ fn F() {
   //@dump-sem-ir-begin
   var s: Cpp.S = {};
   var p: Cpp.S* = &s;
-  // CHECK:STDERR: fail_todo_import_double_pointer_param.carbon:[[@LINE+7]]:3: error: semantics TODO: `Unsupported: pointer to pointer type: S * _Nonnull` [SemanticsTodo]
-  // CHECK:STDERR:   Cpp.foo(&p);
-  // CHECK:STDERR:   ^~~~~~~
-  // CHECK:STDERR: fail_todo_import_double_pointer_param.carbon:[[@LINE+4]]:3: note: in `Cpp` name lookup for `foo` [InCppNameLookup]
-  // CHECK:STDERR:   Cpp.foo(&p);
-  // CHECK:STDERR:   ^~~~~~~
-  // CHECK:STDERR:
   Cpp.foo(&p);
   //@dump-sem-ir-end
 }
@@ -74,7 +67,7 @@ struct S {};
 
 auto foo(const S* _Nonnull) -> void;
 
-// --- fail_todo_import_const_pointer_param.carbon
+// --- import_const_pointer_param.carbon
 
 library "[[@TEST_NAME]]";
 
@@ -85,13 +78,6 @@ fn G() -> const Cpp.S;
 fn F() {
   //@dump-sem-ir-begin
   var s: const Cpp.S = G();
-  // CHECK:STDERR: fail_todo_import_const_pointer_param.carbon:[[@LINE+7]]:3: error: semantics TODO: `Unsupported: parameter type: const S * _Nonnull` [SemanticsTodo]
-  // CHECK:STDERR:   Cpp.foo(&s);
-  // CHECK:STDERR:   ^~~~~~~
-  // CHECK:STDERR: fail_todo_import_const_pointer_param.carbon:[[@LINE+4]]:3: note: in `Cpp` name lookup for `foo` [InCppNameLookup]
-  // CHECK:STDERR:   Cpp.foo(&s);
-  // CHECK:STDERR:   ^~~~~~~
-  // CHECK:STDERR:
   Cpp.foo(&s);
   //@dump-sem-ir-end
 }
@@ -131,7 +117,7 @@ struct S {};
 
 auto foo() -> S* _Nonnull * _Nonnull;
 
-// --- fail_todo_import_double_pointer_return.carbon
+// --- import_double_pointer_return.carbon
 
 library "[[@TEST_NAME]]";
 
@@ -141,13 +127,6 @@ fn IngestDoublePointer(s: Cpp.S**);
 
 fn F() {
   //@dump-sem-ir-begin
-  // CHECK:STDERR: fail_todo_import_double_pointer_return.carbon:[[@LINE+7]]:23: error: semantics TODO: `Unsupported: pointer to pointer type: S * _Nonnull` [SemanticsTodo]
-  // CHECK:STDERR:   IngestDoublePointer(Cpp.foo());
-  // CHECK:STDERR:                       ^~~~~~~
-  // CHECK:STDERR: fail_todo_import_double_pointer_return.carbon:[[@LINE+4]]:23: note: in `Cpp` name lookup for `foo` [InCppNameLookup]
-  // CHECK:STDERR:   IngestDoublePointer(Cpp.foo());
-  // CHECK:STDERR:                       ^~~~~~~
-  // CHECK:STDERR:
   IngestDoublePointer(Cpp.foo());
   Cpp.foo();
   //@dump-sem-ir-end
@@ -163,7 +142,7 @@ struct S {};
 
 auto foo() -> const S* _Nonnull;
 
-// --- fail_todo_import_const_pointer_return.carbon
+// --- import_const_pointer_return.carbon
 
 library "[[@TEST_NAME]]";
 
@@ -173,13 +152,6 @@ fn IngestConstPointer(s: const Cpp.S*);
 
 fn F() {
   //@dump-sem-ir-begin
-  // CHECK:STDERR: fail_todo_import_const_pointer_return.carbon:[[@LINE+7]]:22: error: semantics TODO: `Unsupported: return type: const S * _Nonnull` [SemanticsTodo]
-  // CHECK:STDERR:   IngestConstPointer(Cpp.foo());
-  // CHECK:STDERR:                      ^~~~~~~
-  // CHECK:STDERR: fail_todo_import_const_pointer_return.carbon:[[@LINE+4]]:22: note: in `Cpp` name lookup for `foo` [InCppNameLookup]
-  // CHECK:STDERR:   IngestConstPointer(Cpp.foo());
-  // CHECK:STDERR:                      ^~~~~~~
-  // CHECK:STDERR:
   IngestConstPointer(Cpp.foo());
   Cpp.foo();
   //@dump-sem-ir-end
@@ -274,7 +246,7 @@ fn F() {
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- fail_todo_import_double_pointer_param.carbon
+// CHECK:STDOUT: --- import_double_pointer_param.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [concrete]
@@ -284,9 +256,9 @@ fn F() {
 // CHECK:STDOUT:   %S.val: %S = struct_value () [concrete]
 // CHECK:STDOUT:   %ptr.5c7: type = ptr_type %S [concrete]
 // CHECK:STDOUT:   %pattern_type.259: type = pattern_type %ptr.5c7 [concrete]
+// CHECK:STDOUT:   %ptr.dfe: type = ptr_type %ptr.5c7 [concrete]
 // CHECK:STDOUT:   %foo.type: type = fn_type @foo [concrete]
 // CHECK:STDOUT:   %foo: %foo.type = struct_value () [concrete]
-// CHECK:STDOUT:   %ptr.dfe: type = ptr_type %ptr.5c7 [concrete]
 // CHECK:STDOUT:   %Op.type.c07: type = fn_type @Op.2, @Destroy.impl(%ptr.5c7) [concrete]
 // CHECK:STDOUT:   %Op.64b: %Op.type.c07 = struct_value () [concrete]
 // CHECK:STDOUT:   %Op.type.642: type = fn_type @Op.2, @Destroy.impl(%S) [concrete]
@@ -338,11 +310,11 @@ fn F() {
 // CHECK:STDOUT:     %ptr: type = ptr_type %S.ref.loc9 [concrete = constants.%ptr.5c7]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %p: ref %ptr.5c7 = bind_name p, %p.var
-// CHECK:STDOUT:   %Cpp.ref.loc17: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
+// CHECK:STDOUT:   %Cpp.ref.loc10: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
 // CHECK:STDOUT:   %foo.ref: %foo.type = name_ref foo, imports.%foo.decl [concrete = constants.%foo]
 // CHECK:STDOUT:   %p.ref: ref %ptr.5c7 = name_ref p, %p
-// CHECK:STDOUT:   %addr.loc17: %ptr.dfe = addr_of %p.ref
-// CHECK:STDOUT:   %foo.call: init %empty_tuple.type = call %foo.ref(<error>)
+// CHECK:STDOUT:   %addr.loc10: %ptr.dfe = addr_of %p.ref
+// CHECK:STDOUT:   %foo.call: init %empty_tuple.type = call %foo.ref(%addr.loc10)
 // CHECK:STDOUT:   %Op.bound.loc9: <bound method> = bound_method %p.var, constants.%Op.64b
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT:   %bound_method.loc9: <bound method> = bound_method %p.var, %Op.specific_fn.1
@@ -356,7 +328,7 @@ fn F() {
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- fail_todo_import_const_pointer_param.carbon
+// CHECK:STDOUT: --- import_const_pointer_param.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %S: type = class_type @S [concrete]
@@ -366,6 +338,8 @@ fn F() {
 // CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [concrete]
 // CHECK:STDOUT:   %G: %G.type = struct_value () [concrete]
 // CHECK:STDOUT:   %ptr.ff5: type = ptr_type %const [concrete]
+// CHECK:STDOUT:   %foo.type: type = fn_type @foo [concrete]
+// CHECK:STDOUT:   %foo: %foo.type = struct_value () [concrete]
 // CHECK:STDOUT:   %Op.type.372: type = fn_type @Op.2, @Destroy.impl(%const) [concrete]
 // CHECK:STDOUT:   %Op.af7: %Op.type.372 = struct_value () [concrete]
 // CHECK:STDOUT: }
@@ -373,10 +347,15 @@ fn F() {
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT:   %Cpp: <namespace> = namespace file.%Cpp.import_cpp, [concrete] {
 // CHECK:STDOUT:     .S = %S.decl
-// CHECK:STDOUT:     .foo = <error>
+// CHECK:STDOUT:     .foo = %foo.decl
 // CHECK:STDOUT:     import Cpp//...
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %S.decl: type = class_decl @S [concrete = constants.%S] {} {}
+// CHECK:STDOUT:   %foo.decl: %foo.type = fn_decl @foo [concrete = constants.%foo] {
+// CHECK:STDOUT:     <elided>
+// CHECK:STDOUT:   } {
+// CHECK:STDOUT:     <elided>
+// CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F() {
@@ -396,10 +375,11 @@ fn F() {
 // CHECK:STDOUT:     %const: type = const_type %S.ref [concrete = constants.%const]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %s: ref %const = bind_name s, %s.var
-// CHECK:STDOUT:   %Cpp.ref.loc18: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
-// CHECK:STDOUT:   %foo.ref: <error> = name_ref foo, <error> [concrete = <error>]
+// CHECK:STDOUT:   %Cpp.ref.loc11: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
+// CHECK:STDOUT:   %foo.ref: %foo.type = name_ref foo, imports.%foo.decl [concrete = constants.%foo]
 // CHECK:STDOUT:   %s.ref: ref %const = name_ref s, %s
-// CHECK:STDOUT:   %addr.loc18: %ptr.ff5 = addr_of %s.ref
+// CHECK:STDOUT:   %addr.loc11: %ptr.ff5 = addr_of %s.ref
+// CHECK:STDOUT:   %foo.call: init %empty_tuple.type = call %foo.ref(%addr.loc11)
 // CHECK:STDOUT:   %Op.bound.loc10_3.1: <bound method> = bound_method %.loc10_3, constants.%Op.af7
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT:   %bound_method.loc10_3.1: <bound method> = bound_method %.loc10_3, %Op.specific_fn.1
@@ -454,10 +434,12 @@ fn F() {
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- fail_todo_import_double_pointer_return.carbon
+// CHECK:STDOUT: --- import_double_pointer_return.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %S: type = class_type @S [concrete]
+// CHECK:STDOUT:   %ptr.5c7: type = ptr_type %S [concrete]
+// CHECK:STDOUT:   %ptr.dfe: type = ptr_type %ptr.5c7 [concrete]
 // CHECK:STDOUT:   %IngestDoublePointer.type: type = fn_type @IngestDoublePointer [concrete]
 // CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [concrete]
 // CHECK:STDOUT:   %IngestDoublePointer: %IngestDoublePointer.type = struct_value () [concrete]
@@ -482,42 +464,57 @@ fn F() {
 // CHECK:STDOUT: fn @F() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %IngestDoublePointer.ref: %IngestDoublePointer.type = name_ref IngestDoublePointer, file.%IngestDoublePointer.decl [concrete = constants.%IngestDoublePointer]
-// CHECK:STDOUT:   %Cpp.ref.loc17: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
-// CHECK:STDOUT:   %foo.ref.loc17: %foo.type = name_ref foo, imports.%foo.decl [concrete = constants.%foo]
-// CHECK:STDOUT:   %foo.call.loc17: init <error> = call %foo.ref.loc17()
-// CHECK:STDOUT:   %IngestDoublePointer.call: init %empty_tuple.type = call %IngestDoublePointer.ref(<error>)
-// CHECK:STDOUT:   %Cpp.ref.loc18: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
-// CHECK:STDOUT:   %foo.ref.loc18: %foo.type = name_ref foo, imports.%foo.decl [concrete = constants.%foo]
-// CHECK:STDOUT:   %foo.call.loc18: init <error> = call %foo.ref.loc18()
+// CHECK:STDOUT:   %Cpp.ref.loc10: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
+// CHECK:STDOUT:   %foo.ref.loc10: %foo.type = name_ref foo, imports.%foo.decl [concrete = constants.%foo]
+// CHECK:STDOUT:   %foo.call.loc10: init %ptr.dfe = call %foo.ref.loc10()
+// CHECK:STDOUT:   %.loc10_31.1: %ptr.dfe = value_of_initializer %foo.call.loc10
+// CHECK:STDOUT:   %.loc10_31.2: %ptr.dfe = converted %foo.call.loc10, %.loc10_31.1
+// CHECK:STDOUT:   %IngestDoublePointer.call: init %empty_tuple.type = call %IngestDoublePointer.ref(%.loc10_31.2)
+// CHECK:STDOUT:   %Cpp.ref.loc11: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
+// CHECK:STDOUT:   %foo.ref.loc11: %foo.type = name_ref foo, imports.%foo.decl [concrete = constants.%foo]
+// CHECK:STDOUT:   %foo.call.loc11: init %ptr.dfe = call %foo.ref.loc11()
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- fail_todo_import_const_pointer_return.carbon
+// CHECK:STDOUT: --- import_const_pointer_return.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %S: type = class_type @S [concrete]
+// CHECK:STDOUT:   %const: type = const_type %S [concrete]
+// CHECK:STDOUT:   %ptr: type = ptr_type %const [concrete]
 // CHECK:STDOUT:   %IngestConstPointer.type: type = fn_type @IngestConstPointer [concrete]
 // CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [concrete]
 // CHECK:STDOUT:   %IngestConstPointer: %IngestConstPointer.type = struct_value () [concrete]
+// CHECK:STDOUT:   %foo.type: type = fn_type @foo [concrete]
+// CHECK:STDOUT:   %foo: %foo.type = struct_value () [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT:   %Cpp: <namespace> = namespace file.%Cpp.import_cpp, [concrete] {
 // CHECK:STDOUT:     .S = %S.decl
-// CHECK:STDOUT:     .foo = <error>
+// CHECK:STDOUT:     .foo = %foo.decl
 // CHECK:STDOUT:     import Cpp//...
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %S.decl: type = class_decl @S [concrete = constants.%S] {} {}
+// CHECK:STDOUT:   %foo.decl: %foo.type = fn_decl @foo [concrete = constants.%foo] {
+// CHECK:STDOUT:     <elided>
+// CHECK:STDOUT:   } {
+// CHECK:STDOUT:     <elided>
+// CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %IngestConstPointer.ref: %IngestConstPointer.type = name_ref IngestConstPointer, file.%IngestConstPointer.decl [concrete = constants.%IngestConstPointer]
-// CHECK:STDOUT:   %Cpp.ref.loc17: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
-// CHECK:STDOUT:   %foo.ref.loc17: <error> = name_ref foo, <error> [concrete = <error>]
-// CHECK:STDOUT:   %IngestConstPointer.call: init %empty_tuple.type = call %IngestConstPointer.ref(<error>)
-// CHECK:STDOUT:   %Cpp.ref.loc18: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
-// CHECK:STDOUT:   %foo.ref.loc18: <error> = name_ref foo, <error> [concrete = <error>]
+// CHECK:STDOUT:   %Cpp.ref.loc10: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
+// CHECK:STDOUT:   %foo.ref.loc10: %foo.type = name_ref foo, imports.%foo.decl [concrete = constants.%foo]
+// CHECK:STDOUT:   %foo.call.loc10: init %ptr = call %foo.ref.loc10()
+// CHECK:STDOUT:   %.loc10_30.1: %ptr = value_of_initializer %foo.call.loc10
+// CHECK:STDOUT:   %.loc10_30.2: %ptr = converted %foo.call.loc10, %.loc10_30.1
+// CHECK:STDOUT:   %IngestConstPointer.call: init %empty_tuple.type = call %IngestConstPointer.ref(%.loc10_30.2)
+// CHECK:STDOUT:   %Cpp.ref.loc11: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
+// CHECK:STDOUT:   %foo.ref.loc11: %foo.type = name_ref foo, imports.%foo.decl [concrete = constants.%foo]
+// CHECK:STDOUT:   %foo.call.loc11: init %ptr = call %foo.ref.loc11()
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

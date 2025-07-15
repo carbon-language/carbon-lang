@@ -1204,7 +1204,7 @@ fn Works() {
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %A.type: type = facet_type <@A> [concrete]
 // CHECK:STDOUT:   %Self.31d: %A.type = bind_symbolic_name Self, 0 [symbolic]
-// CHECK:STDOUT:   %G.type.c3a: type = fn_type @G.1 [concrete]
+// CHECK:STDOUT:   %G.type.c3a: type = fn_type @G.loc4 [concrete]
 // CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [concrete]
 // CHECK:STDOUT:   %G.11a: %G.type.c3a = struct_value () [concrete]
 // CHECK:STDOUT:   %A.assoc_type: type = assoc_entity_type @A [concrete]
@@ -1213,7 +1213,7 @@ fn Works() {
 // CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [concrete]
 // CHECK:STDOUT:   %complete_type.357: <witness> = complete_type_witness %empty_struct_type [concrete]
 // CHECK:STDOUT:   %A.impl_witness: <witness> = impl_witness file.%A.impl_witness_table [concrete]
-// CHECK:STDOUT:   %G.type.486: type = fn_type @G.2 [concrete]
+// CHECK:STDOUT:   %G.type.486: type = fn_type @G.loc9 [concrete]
 // CHECK:STDOUT:   %G.001: %G.type.486 = struct_value () [concrete]
 // CHECK:STDOUT:   %A.facet: %A.type = facet_value %C, (%A.impl_witness) [concrete]
 // CHECK:STDOUT:   %Fails.type: type = fn_type @Fails [concrete]
@@ -1274,7 +1274,7 @@ fn Works() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: interface @A {
 // CHECK:STDOUT:   %Self: %A.type = bind_symbolic_name Self, 0 [symbolic = constants.%Self.31d]
-// CHECK:STDOUT:   %G.decl: %G.type.c3a = fn_decl @G.1 [concrete = constants.%G.11a] {} {}
+// CHECK:STDOUT:   %G.decl: %G.type.c3a = fn_decl @G.loc4 [concrete = constants.%G.11a] {} {}
 // CHECK:STDOUT:   %assoc0: %A.assoc_type = assoc_entity element0, %G.decl [concrete = constants.%assoc0.d52]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
@@ -1284,7 +1284,7 @@ fn Works() {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: impl @A.impl: %C.ref as %A.ref {
-// CHECK:STDOUT:   %G.decl: %G.type.486 = fn_decl @G.2 [concrete = constants.%G.001] {} {}
+// CHECK:STDOUT:   %G.decl: %G.type.486 = fn_decl @G.loc9 [concrete = constants.%G.001] {} {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .G = %G.decl
@@ -1300,11 +1300,11 @@ fn Works() {
 // CHECK:STDOUT:   .Self = constants.%C
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic fn @G.1(@A.%Self: %A.type) {
+// CHECK:STDOUT: generic fn @G.loc4(@A.%Self: %A.type) {
 // CHECK:STDOUT:   fn();
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @G.2() {
+// CHECK:STDOUT: fn @G.loc9() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
@@ -1388,16 +1388,16 @@ fn Works() {
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @G.1(constants.%Self.31d) {}
+// CHECK:STDOUT: specific @G.loc4(constants.%Self.31d) {}
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @G.1(constants.%A.facet) {}
+// CHECK:STDOUT: specific @G.loc4(constants.%A.facet) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- allowed_combine_non_instance.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %A.type: type = facet_type <@A> [concrete]
 // CHECK:STDOUT:   %Self.31d: %A.type = bind_symbolic_name Self, 0 [symbolic]
-// CHECK:STDOUT:   %G.type.c3a: type = fn_type @G.1 [concrete]
+// CHECK:STDOUT:   %G.type.c3a: type = fn_type @G.loc4 [concrete]
 // CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [concrete]
 // CHECK:STDOUT:   %G.11a: %G.type.c3a = struct_value () [concrete]
 // CHECK:STDOUT:   %A.assoc_type: type = assoc_entity_type @A [concrete]
@@ -1406,7 +1406,7 @@ fn Works() {
 // CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [concrete]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [concrete]
 // CHECK:STDOUT:   %A.impl_witness: <witness> = impl_witness file.%A.impl_witness_table [concrete]
-// CHECK:STDOUT:   %G.type.486: type = fn_type @G.2 [concrete]
+// CHECK:STDOUT:   %G.type.486: type = fn_type @G.loc9 [concrete]
 // CHECK:STDOUT:   %G.001: %G.type.486 = struct_value () [concrete]
 // CHECK:STDOUT:   %A.facet: %A.type = facet_value %C, (%A.impl_witness) [concrete]
 // CHECK:STDOUT:   %Works.type: type = fn_type @Works [concrete]
@@ -1456,7 +1456,7 @@ fn Works() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: interface @A {
 // CHECK:STDOUT:   %Self: %A.type = bind_symbolic_name Self, 0 [symbolic = constants.%Self.31d]
-// CHECK:STDOUT:   %G.decl: %G.type.c3a = fn_decl @G.1 [concrete = constants.%G.11a] {} {}
+// CHECK:STDOUT:   %G.decl: %G.type.c3a = fn_decl @G.loc4 [concrete = constants.%G.11a] {} {}
 // CHECK:STDOUT:   %assoc0: %A.assoc_type = assoc_entity element0, %G.decl [concrete = constants.%assoc0.d52]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
@@ -1466,7 +1466,7 @@ fn Works() {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: impl @A.impl: %C.ref as %A.ref {
-// CHECK:STDOUT:   %G.decl: %G.type.486 = fn_decl @G.2 [concrete = constants.%G.001] {} {}
+// CHECK:STDOUT:   %G.decl: %G.type.486 = fn_decl @G.loc9 [concrete = constants.%G.001] {} {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .G = %G.decl
@@ -1482,11 +1482,11 @@ fn Works() {
 // CHECK:STDOUT:   .Self = constants.%C
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic fn @G.1(@A.%Self: %A.type) {
+// CHECK:STDOUT: generic fn @G.loc4(@A.%Self: %A.type) {
 // CHECK:STDOUT:   fn();
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @G.2() {
+// CHECK:STDOUT: fn @G.loc9() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
@@ -1539,7 +1539,7 @@ fn Works() {
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @G.1(constants.%Self.31d) {}
+// CHECK:STDOUT: specific @G.loc4(constants.%Self.31d) {}
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @G.1(constants.%A.facet) {}
+// CHECK:STDOUT: specific @G.loc4(constants.%A.facet) {}
 // CHECK:STDOUT:

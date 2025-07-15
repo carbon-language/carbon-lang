@@ -284,7 +284,7 @@ fn F() { ()[()]; }
 // CHECK:STDOUT:   %IndexWith.assoc_type.3d4: type = assoc_entity_type @IndexWith, @IndexWith(%empty_tuple.type) [concrete]
 // CHECK:STDOUT:   %assoc0.21b: %IndexWith.assoc_type.3d4 = assoc_entity element0, imports.%Core.import_ref.e99 [concrete]
 // CHECK:STDOUT:   %IndexWith.impl_witness: <witness> = impl_witness file.%IndexWith.impl_witness_table [concrete]
-// CHECK:STDOUT:   %At.type.486: type = fn_type @At.2 [concrete]
+// CHECK:STDOUT:   %At.type.486: type = fn_type @At.loc7 [concrete]
 // CHECK:STDOUT:   %At.7c4: %At.type.486 = struct_value () [concrete]
 // CHECK:STDOUT:   %IndexWith.facet: %IndexWith.type.a51 = facet_value %empty_tuple.type, (%IndexWith.impl_witness) [concrete]
 // CHECK:STDOUT:   %empty_tuple: %empty_tuple.type = tuple_value () [concrete]
@@ -351,7 +351,7 @@ fn F() { ()[()]; }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: impl @IndexWith.impl: %.loc6_7.2 as %IndexWith.type {
-// CHECK:STDOUT:   %At.decl: %At.type.486 = fn_decl @At.2 [concrete = constants.%At.7c4] {
+// CHECK:STDOUT:   %At.decl: %At.type.486 = fn_decl @At.loc7 [concrete = constants.%At.7c4] {
 // CHECK:STDOUT:     %self.patt: %pattern_type.cb1 = binding_pattern self [concrete]
 // CHECK:STDOUT:     %self.param_patt: %pattern_type.cb1 = value_param_pattern %self.patt, call_param0 [concrete]
 // CHECK:STDOUT:     %subscript.patt: %pattern_type.cb1 = binding_pattern subscript [concrete]
@@ -390,7 +390,7 @@ fn F() { ()[()]; }
 // CHECK:STDOUT:   fn;
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @At.2(%self.param: %empty_tuple.type, %subscript.param: %empty_tuple.type) -> %empty_tuple.type {
+// CHECK:STDOUT: fn @At.loc7(%self.param: %empty_tuple.type, %subscript.param: %empty_tuple.type) -> %empty_tuple.type {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %.loc8_13: %empty_tuple.type = tuple_literal ()
 // CHECK:STDOUT:   %empty_tuple: %empty_tuple.type = tuple_value () [concrete = constants.%empty_tuple]

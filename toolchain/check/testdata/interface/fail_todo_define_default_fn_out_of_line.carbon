@@ -73,7 +73,7 @@ fn Interface.C.F[self: Self](U:! type, u: U) -> U { return u; }
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %Interface.type: type = facet_type <@Interface> [concrete]
 // CHECK:STDOUT:   %Self: %Interface.type = bind_symbolic_name Self, 0 [symbolic]
-// CHECK:STDOUT:   %F.type.1ad64d.1: type = fn_type @F.1 [concrete]
+// CHECK:STDOUT:   %F.type.1ad64d.1: type = fn_type @F.loc7 [concrete]
 // CHECK:STDOUT:   %F.5d382e.1: %F.type.1ad64d.1 = struct_value () [concrete]
 // CHECK:STDOUT:   %Interface.assoc_type: type = assoc_entity_type @Interface [concrete]
 // CHECK:STDOUT:   %assoc0: %Interface.assoc_type = assoc_entity element0, @Interface.%F.decl [concrete]
@@ -82,12 +82,12 @@ fn Interface.C.F[self: Self](U:! type, u: U) -> U { return u; }
 // CHECK:STDOUT:   %Int.generic: %Int.type = struct_value () [concrete]
 // CHECK:STDOUT:   %i32: type = class_type @Int, @Int(%int_32) [concrete]
 // CHECK:STDOUT:   %pattern_type.7ce: type = pattern_type %i32 [concrete]
-// CHECK:STDOUT:   %G.type.ef383d.1: type = fn_type @G.1 [concrete]
+// CHECK:STDOUT:   %G.type.ef383d.1: type = fn_type @G.loc13 [concrete]
 // CHECK:STDOUT:   %G.362a5a.1: %G.type.ef383d.1 = struct_value () [concrete]
 // CHECK:STDOUT:   %assoc1: %Interface.assoc_type = assoc_entity element1, @Interface.%G.decl [concrete]
-// CHECK:STDOUT:   %F.type.1ad64d.2: type = fn_type @F.2 [concrete]
+// CHECK:STDOUT:   %F.type.1ad64d.2: type = fn_type @F.loc23 [concrete]
 // CHECK:STDOUT:   %F.5d382e.2: %F.type.1ad64d.2 = struct_value () [concrete]
-// CHECK:STDOUT:   %G.type.ef383d.2: type = fn_type @G.2 [concrete]
+// CHECK:STDOUT:   %G.type.ef383d.2: type = fn_type @G.loc32 [concrete]
 // CHECK:STDOUT:   %G.362a5a.2: %G.type.ef383d.2 = struct_value () [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -107,8 +107,8 @@ fn Interface.C.F[self: Self](U:! type, u: U) -> U { return u; }
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %Interface.decl: type = interface_decl @Interface [concrete = constants.%Interface.type] {} {}
-// CHECK:STDOUT:   %F.decl: %F.type.1ad64d.2 = fn_decl @F.2 [concrete = constants.%F.5d382e.2] {} {}
-// CHECK:STDOUT:   %G.decl: %G.type.ef383d.2 = fn_decl @G.2 [concrete = constants.%G.362a5a.2] {
+// CHECK:STDOUT:   %F.decl: %F.type.1ad64d.2 = fn_decl @F.loc23 [concrete = constants.%F.5d382e.2] {} {}
+// CHECK:STDOUT:   %G.decl: %G.type.ef383d.2 = fn_decl @G.loc32 [concrete = constants.%G.362a5a.2] {
 // CHECK:STDOUT:     %a.patt: %pattern_type.7ce = binding_pattern a [concrete]
 // CHECK:STDOUT:     %a.param_patt: %pattern_type.7ce = value_param_pattern %a.patt, call_param0 [concrete]
 // CHECK:STDOUT:     %b.patt: %pattern_type.7ce = binding_pattern b [concrete]
@@ -137,9 +137,9 @@ fn Interface.C.F[self: Self](U:! type, u: U) -> U { return u; }
 // CHECK:STDOUT:
 // CHECK:STDOUT: interface @Interface {
 // CHECK:STDOUT:   %Self: %Interface.type = bind_symbolic_name Self, 0 [symbolic = constants.%Self]
-// CHECK:STDOUT:   %F.decl: %F.type.1ad64d.1 = fn_decl @F.1 [concrete = constants.%F.5d382e.1] {} {}
+// CHECK:STDOUT:   %F.decl: %F.type.1ad64d.1 = fn_decl @F.loc7 [concrete = constants.%F.5d382e.1] {} {}
 // CHECK:STDOUT:   %assoc0: %Interface.assoc_type = assoc_entity element0, %F.decl [concrete = constants.%assoc0]
-// CHECK:STDOUT:   %G.decl: %G.type.ef383d.1 = fn_decl @G.1 [concrete = constants.%G.362a5a.1] {
+// CHECK:STDOUT:   %G.decl: %G.type.ef383d.1 = fn_decl @G.loc13 [concrete = constants.%G.362a5a.1] {
 // CHECK:STDOUT:     %a.patt: %pattern_type.7ce = binding_pattern a [concrete]
 // CHECK:STDOUT:     %a.param_patt: %pattern_type.7ce = value_param_pattern %a.patt, call_param0 [concrete]
 // CHECK:STDOUT:     %b.patt: %pattern_type.7ce = binding_pattern b [concrete]
@@ -173,15 +173,15 @@ fn Interface.C.F[self: Self](U:! type, u: U) -> U { return u; }
 // CHECK:STDOUT:   witness = (%F.decl, %G.decl)
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic fn @F.1(@Interface.%Self: %Interface.type) {
+// CHECK:STDOUT: generic fn @F.loc7(@Interface.%Self: %Interface.type) {
 // CHECK:STDOUT:   fn();
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic fn @G.1(@Interface.%Self: %Interface.type) {
+// CHECK:STDOUT: generic fn @G.loc13(@Interface.%Self: %Interface.type) {
 // CHECK:STDOUT:   fn(%a.param: %i32, %b.param: %i32) -> %i32;
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic fn @F.2(@Interface.%Self: %Interface.type) {
+// CHECK:STDOUT: generic fn @F.loc23(@Interface.%Self: %Interface.type) {
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:
 // CHECK:STDOUT:   fn() {
@@ -190,19 +190,19 @@ fn Interface.C.F[self: Self](U:! type, u: U) -> U { return u; }
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic fn @G.2(@Interface.%Self: %Interface.type) {
+// CHECK:STDOUT: generic fn @G.loc32(@Interface.%Self: %Interface.type) {
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:
 // CHECK:STDOUT:   fn(%a.param: %i32, %b.param: %i32) -> %i32 = "int.sadd";
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @F.1(constants.%Self) {}
+// CHECK:STDOUT: specific @F.loc7(constants.%Self) {}
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @G.1(constants.%Self) {}
+// CHECK:STDOUT: specific @G.loc13(constants.%Self) {}
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @F.2(constants.%Self) {}
+// CHECK:STDOUT: specific @F.loc23(constants.%Self) {}
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @G.2(constants.%Self) {}
+// CHECK:STDOUT: specific @G.loc32(constants.%Self) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- dependent_return_type.carbon
 // CHECK:STDOUT:

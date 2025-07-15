@@ -34,10 +34,10 @@ fn N.M.B() -> i32 {
 // CHECK:STDOUT: --- shadow.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
-// CHECK:STDOUT:   %A.type.00d: type = fn_type @A.1 [concrete]
+// CHECK:STDOUT:   %A.type.00d: type = fn_type @A.loc15 [concrete]
 // CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [concrete]
 // CHECK:STDOUT:   %A.1db: %A.type.00d = struct_value () [concrete]
-// CHECK:STDOUT:   %A.type.0e8: type = fn_type @A.2 [concrete]
+// CHECK:STDOUT:   %A.type.0e8: type = fn_type @A.loc18 [concrete]
 // CHECK:STDOUT:   %A.281: %A.type.0e8 = struct_value () [concrete]
 // CHECK:STDOUT:   %int_32: Core.IntLiteral = int_value 32 [concrete]
 // CHECK:STDOUT:   %Int.type: type = generic_class_type @Int [concrete]
@@ -93,12 +93,12 @@ fn N.M.B() -> i32 {
 // CHECK:STDOUT:     .N = %N
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import = import Core
-// CHECK:STDOUT:   %A.decl.loc15: %A.type.00d = fn_decl @A.1 [concrete = constants.%A.1db] {} {}
+// CHECK:STDOUT:   %A.decl.loc15: %A.type.00d = fn_decl @A.loc15 [concrete = constants.%A.1db] {} {}
 // CHECK:STDOUT:   %N: <namespace> = namespace [concrete] {
 // CHECK:STDOUT:     .A = %A.decl.loc18
 // CHECK:STDOUT:     .M = %M
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %A.decl.loc18: %A.type.0e8 = fn_decl @A.2 [concrete = constants.%A.281] {} {}
+// CHECK:STDOUT:   %A.decl.loc18: %A.type.0e8 = fn_decl @A.loc18 [concrete = constants.%A.281] {} {}
 // CHECK:STDOUT:   %M: <namespace> = namespace [concrete] {
 // CHECK:STDOUT:     .B = %B.decl
 // CHECK:STDOUT:     .A = <poisoned>
@@ -114,9 +114,9 @@ fn N.M.B() -> i32 {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @A.1();
+// CHECK:STDOUT: fn @A.loc15();
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @A.2();
+// CHECK:STDOUT: fn @A.loc18();
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @B() -> %i32 {
 // CHECK:STDOUT: !entry:
