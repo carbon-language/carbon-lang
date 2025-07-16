@@ -481,7 +481,7 @@ fn UseF() { Other.F(); }
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %F.type.700976.1: type = fn_type @F.1 [concrete]
 // CHECK:STDOUT:   %F.7e9a3e.1: %F.type.700976.1 = struct_value () [concrete]
-// CHECK:STDOUT:   %F.type.700976.2: type = fn_type @F.2 [concrete]
+// CHECK:STDOUT:   %F.type.700976.2: type = fn_type @F.loc23 [concrete]
 // CHECK:STDOUT:   %F.7e9a3e.2: %F.type.700976.2 = struct_value () [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -500,12 +500,12 @@ fn UseF() { Other.F(); }
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %default.import = import <none>
 // CHECK:STDOUT:   %Other.import = import Other
-// CHECK:STDOUT:   %F.decl: %F.type.700976.2 = fn_decl @F.2 [concrete = constants.%F.7e9a3e.2] {} {}
+// CHECK:STDOUT:   %F.decl: %F.type.700976.2 = fn_decl @F.loc23 [concrete = constants.%F.7e9a3e.2] {} {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F.1 [from "other_fn.carbon"];
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @F.2() {
+// CHECK:STDOUT: fn @F.loc23() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }

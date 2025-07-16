@@ -110,28 +110,28 @@ fn G() { F({}); }
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %NoAddr: type = class_type @NoAddr [concrete]
 // CHECK:STDOUT:   %pattern_type.88f: type = pattern_type %NoAddr [concrete]
-// CHECK:STDOUT:   %Make.type.bc9: type = fn_type @Make.1 [concrete]
+// CHECK:STDOUT:   %Make.type.bc9: type = fn_type @Make.loc5 [concrete]
 // CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [concrete]
 // CHECK:STDOUT:   %Make.1be: %Make.type.bc9 = struct_value () [concrete]
-// CHECK:STDOUT:   %destroy.type.bc5: type = fn_type @destroy.1 [concrete]
+// CHECK:STDOUT:   %destroy.type.bc5: type = fn_type @destroy.loc6 [concrete]
 // CHECK:STDOUT:   %destroy.60f: %destroy.type.bc5 = struct_value () [concrete]
 // CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [concrete]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [concrete]
 // CHECK:STDOUT:   %ExplicitReturn: type = class_type @ExplicitReturn [concrete]
 // CHECK:STDOUT:   %pattern_type.611: type = pattern_type %ExplicitReturn [concrete]
-// CHECK:STDOUT:   %Make.type.378: type = fn_type @Make.2 [concrete]
+// CHECK:STDOUT:   %Make.type.378: type = fn_type @Make.loc10 [concrete]
 // CHECK:STDOUT:   %Make.960: %Make.type.378 = struct_value () [concrete]
 // CHECK:STDOUT:   %pattern_type.cb1: type = pattern_type %empty_tuple.type [concrete]
-// CHECK:STDOUT:   %destroy.type.dfa: type = fn_type @destroy.2 [concrete]
+// CHECK:STDOUT:   %destroy.type.dfa: type = fn_type @destroy.loc11 [concrete]
 // CHECK:STDOUT:   %destroy.539: %destroy.type.dfa = struct_value () [concrete]
 // CHECK:STDOUT:   %WithAddr: type = class_type @WithAddr [concrete]
 // CHECK:STDOUT:   %pattern_type.f93: type = pattern_type %WithAddr [concrete]
-// CHECK:STDOUT:   %Make.type.e14: type = fn_type @Make.3 [concrete]
+// CHECK:STDOUT:   %Make.type.e14: type = fn_type @Make.loc15 [concrete]
 // CHECK:STDOUT:   %Make.b0a: %Make.type.e14 = struct_value () [concrete]
 // CHECK:STDOUT:   %ptr: type = ptr_type %WithAddr [concrete]
 // CHECK:STDOUT:   %pattern_type.4a0: type = pattern_type %ptr [concrete]
 // CHECK:STDOUT:   %pattern_type.f6d: type = pattern_type auto [concrete]
-// CHECK:STDOUT:   %destroy.type.02f: type = fn_type @destroy.3 [concrete]
+// CHECK:STDOUT:   %destroy.type.02f: type = fn_type @destroy.loc16 [concrete]
 // CHECK:STDOUT:   %destroy.8d0: %destroy.type.02f = struct_value () [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -156,7 +156,7 @@ fn G() { F({}); }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @NoAddr {
-// CHECK:STDOUT:   %Make.decl: %Make.type.bc9 = fn_decl @Make.1 [concrete = constants.%Make.1be] {
+// CHECK:STDOUT:   %Make.decl: %Make.type.bc9 = fn_decl @Make.loc5 [concrete = constants.%Make.1be] {
 // CHECK:STDOUT:     %return.patt: %pattern_type.88f = return_slot_pattern [concrete]
 // CHECK:STDOUT:     %return.param_patt: %pattern_type.88f = out_param_pattern %return.patt, call_param0 [concrete]
 // CHECK:STDOUT:   } {
@@ -164,7 +164,7 @@ fn G() { F({}); }
 // CHECK:STDOUT:     %return.param: ref %NoAddr = out_param call_param0
 // CHECK:STDOUT:     %return: ref %NoAddr = return_slot %return.param
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %destroy.decl: %destroy.type.bc5 = fn_decl @destroy.1 [concrete = constants.%destroy.60f] {
+// CHECK:STDOUT:   %destroy.decl: %destroy.type.bc5 = fn_decl @destroy.loc6 [concrete = constants.%destroy.60f] {
 // CHECK:STDOUT:     %self.patt: %pattern_type.88f = binding_pattern self [concrete]
 // CHECK:STDOUT:     %self.param_patt: %pattern_type.88f = value_param_pattern %self.patt, call_param0 [concrete]
 // CHECK:STDOUT:   } {
@@ -184,7 +184,7 @@ fn G() { F({}); }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @ExplicitReturn {
-// CHECK:STDOUT:   %Make.decl: %Make.type.378 = fn_decl @Make.2 [concrete = constants.%Make.960] {
+// CHECK:STDOUT:   %Make.decl: %Make.type.378 = fn_decl @Make.loc10 [concrete = constants.%Make.960] {
 // CHECK:STDOUT:     %return.patt: %pattern_type.611 = return_slot_pattern [concrete]
 // CHECK:STDOUT:     %return.param_patt: %pattern_type.611 = out_param_pattern %return.patt, call_param0 [concrete]
 // CHECK:STDOUT:   } {
@@ -192,7 +192,7 @@ fn G() { F({}); }
 // CHECK:STDOUT:     %return.param: ref %ExplicitReturn = out_param call_param0
 // CHECK:STDOUT:     %return: ref %ExplicitReturn = return_slot %return.param
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %destroy.decl: %destroy.type.dfa = fn_decl @destroy.2 [concrete = constants.%destroy.539] {
+// CHECK:STDOUT:   %destroy.decl: %destroy.type.dfa = fn_decl @destroy.loc11 [concrete = constants.%destroy.539] {
 // CHECK:STDOUT:     %self.patt: %pattern_type.611 = binding_pattern self [concrete]
 // CHECK:STDOUT:     %self.param_patt: %pattern_type.611 = value_param_pattern %self.patt, call_param0 [concrete]
 // CHECK:STDOUT:     %return.patt: %pattern_type.cb1 = return_slot_pattern [concrete]
@@ -218,7 +218,7 @@ fn G() { F({}); }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @WithAddr {
-// CHECK:STDOUT:   %Make.decl: %Make.type.e14 = fn_decl @Make.3 [concrete = constants.%Make.b0a] {
+// CHECK:STDOUT:   %Make.decl: %Make.type.e14 = fn_decl @Make.loc15 [concrete = constants.%Make.b0a] {
 // CHECK:STDOUT:     %return.patt: %pattern_type.f93 = return_slot_pattern [concrete]
 // CHECK:STDOUT:     %return.param_patt: %pattern_type.f93 = out_param_pattern %return.patt, call_param0 [concrete]
 // CHECK:STDOUT:   } {
@@ -226,7 +226,7 @@ fn G() { F({}); }
 // CHECK:STDOUT:     %return.param: ref %WithAddr = out_param call_param0
 // CHECK:STDOUT:     %return: ref %WithAddr = return_slot %return.param
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %destroy.decl: %destroy.type.02f = fn_decl @destroy.3 [concrete = constants.%destroy.8d0] {
+// CHECK:STDOUT:   %destroy.decl: %destroy.type.02f = fn_decl @destroy.loc16 [concrete = constants.%destroy.8d0] {
 // CHECK:STDOUT:     %self.patt: %pattern_type.4a0 = binding_pattern self [concrete]
 // CHECK:STDOUT:     %self.param_patt: %pattern_type.4a0 = value_param_pattern %self.patt, call_param0 [concrete]
 // CHECK:STDOUT:     %.loc16_14: %pattern_type.f6d = addr_pattern %self.param_patt [concrete]
@@ -249,17 +249,17 @@ fn G() { F({}); }
 // CHECK:STDOUT:   .destroy = %destroy.decl
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Make.1() -> %NoAddr;
+// CHECK:STDOUT: fn @Make.loc5() -> %NoAddr;
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @destroy.1(%self.param: %NoAddr);
+// CHECK:STDOUT: fn @destroy.loc6(%self.param: %NoAddr);
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Make.2() -> %ExplicitReturn;
+// CHECK:STDOUT: fn @Make.loc10() -> %ExplicitReturn;
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @destroy.2(%self.param: %ExplicitReturn) -> %empty_tuple.type;
+// CHECK:STDOUT: fn @destroy.loc11(%self.param: %ExplicitReturn) -> %empty_tuple.type;
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Make.3() -> %WithAddr;
+// CHECK:STDOUT: fn @Make.loc15() -> %WithAddr;
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @destroy.3(%self.param: %ptr);
+// CHECK:STDOUT: fn @destroy.loc16(%self.param: %ptr);
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- implicit_return.carbon
 // CHECK:STDOUT:
@@ -276,15 +276,15 @@ fn G() { F({}); }
 // CHECK:STDOUT:   %WithAddr: type = class_type @WithAddr [concrete]
 // CHECK:STDOUT:   %pattern_type.f93: type = pattern_type %WithAddr [concrete]
 // CHECK:STDOUT:   %Destroy.type: type = facet_type <@Destroy> [concrete]
-// CHECK:STDOUT:   %Op.type.8f4: type = fn_type @Op.2, @impl(%WithAddr) [concrete]
+// CHECK:STDOUT:   %Op.type.8f4: type = fn_type @Op.2, @Destroy.impl(%WithAddr) [concrete]
 // CHECK:STDOUT:   %Op.bec: %Op.type.8f4 = struct_value () [concrete]
 // CHECK:STDOUT:   %ptr.b4e: type = ptr_type %WithAddr [concrete]
 // CHECK:STDOUT:   %Op.specific_fn.b42: <specific function> = specific_function %Op.bec, @Op.2(%WithAddr) [concrete]
-// CHECK:STDOUT:   %Op.type.641: type = fn_type @Op.2, @impl(%ExplicitReturn) [concrete]
+// CHECK:STDOUT:   %Op.type.641: type = fn_type @Op.2, @Destroy.impl(%ExplicitReturn) [concrete]
 // CHECK:STDOUT:   %Op.8e6: %Op.type.641 = struct_value () [concrete]
 // CHECK:STDOUT:   %ptr.b0a: type = ptr_type %ExplicitReturn [concrete]
 // CHECK:STDOUT:   %Op.specific_fn.523: <specific function> = specific_function %Op.8e6, @Op.2(%ExplicitReturn) [concrete]
-// CHECK:STDOUT:   %Op.type.73f: type = fn_type @Op.2, @impl(%NoAddr) [concrete]
+// CHECK:STDOUT:   %Op.type.73f: type = fn_type @Op.2, @Destroy.impl(%NoAddr) [concrete]
 // CHECK:STDOUT:   %Op.d78: %Op.type.73f = struct_value () [concrete]
 // CHECK:STDOUT:   %ptr.4b8: type = ptr_type %NoAddr [concrete]
 // CHECK:STDOUT:   %Op.specific_fn.8fe: <specific function> = specific_function %Op.d78, @Op.2(%NoAddr) [concrete]
@@ -411,15 +411,15 @@ fn G() { F({}); }
 // CHECK:STDOUT:   %pattern_type.f93: type = pattern_type %WithAddr [concrete]
 // CHECK:STDOUT:   %true: bool = bool_literal true [concrete]
 // CHECK:STDOUT:   %Destroy.type: type = facet_type <@Destroy> [concrete]
-// CHECK:STDOUT:   %Op.type.73f: type = fn_type @Op.2, @impl(%NoAddr) [concrete]
+// CHECK:STDOUT:   %Op.type.73f: type = fn_type @Op.2, @Destroy.impl(%NoAddr) [concrete]
 // CHECK:STDOUT:   %Op.d78: %Op.type.73f = struct_value () [concrete]
 // CHECK:STDOUT:   %ptr.4b8: type = ptr_type %NoAddr [concrete]
 // CHECK:STDOUT:   %Op.specific_fn.8fe: <specific function> = specific_function %Op.d78, @Op.2(%NoAddr) [concrete]
-// CHECK:STDOUT:   %Op.type.8f4: type = fn_type @Op.2, @impl(%WithAddr) [concrete]
+// CHECK:STDOUT:   %Op.type.8f4: type = fn_type @Op.2, @Destroy.impl(%WithAddr) [concrete]
 // CHECK:STDOUT:   %Op.bec: %Op.type.8f4 = struct_value () [concrete]
 // CHECK:STDOUT:   %ptr.b4e: type = ptr_type %WithAddr [concrete]
 // CHECK:STDOUT:   %Op.specific_fn.b42: <specific function> = specific_function %Op.bec, @Op.2(%WithAddr) [concrete]
-// CHECK:STDOUT:   %Op.type.641: type = fn_type @Op.2, @impl(%ExplicitReturn) [concrete]
+// CHECK:STDOUT:   %Op.type.641: type = fn_type @Op.2, @Destroy.impl(%ExplicitReturn) [concrete]
 // CHECK:STDOUT:   %Op.8e6: %Op.type.641 = struct_value () [concrete]
 // CHECK:STDOUT:   %ptr.b0a: type = ptr_type %ExplicitReturn [concrete]
 // CHECK:STDOUT:   %Op.specific_fn.523: <specific function> = specific_function %Op.8e6, @Op.2(%ExplicitReturn) [concrete]
@@ -567,15 +567,15 @@ fn G() { F({}); }
 // CHECK:STDOUT:   %Make.type.e14: type = fn_type @Make.3 [concrete]
 // CHECK:STDOUT:   %Make.b0a: %Make.type.e14 = struct_value () [concrete]
 // CHECK:STDOUT:   %Destroy.type: type = facet_type <@Destroy> [concrete]
-// CHECK:STDOUT:   %Op.type.8f4: type = fn_type @Op.2, @impl(%WithAddr) [concrete]
+// CHECK:STDOUT:   %Op.type.8f4: type = fn_type @Op.2, @Destroy.impl(%WithAddr) [concrete]
 // CHECK:STDOUT:   %Op.bec: %Op.type.8f4 = struct_value () [concrete]
 // CHECK:STDOUT:   %ptr.b4e: type = ptr_type %WithAddr [concrete]
 // CHECK:STDOUT:   %Op.specific_fn.b42: <specific function> = specific_function %Op.bec, @Op.2(%WithAddr) [concrete]
-// CHECK:STDOUT:   %Op.type.641: type = fn_type @Op.2, @impl(%ExplicitReturn) [concrete]
+// CHECK:STDOUT:   %Op.type.641: type = fn_type @Op.2, @Destroy.impl(%ExplicitReturn) [concrete]
 // CHECK:STDOUT:   %Op.8e6: %Op.type.641 = struct_value () [concrete]
 // CHECK:STDOUT:   %ptr.b0a: type = ptr_type %ExplicitReturn [concrete]
 // CHECK:STDOUT:   %Op.specific_fn.523: <specific function> = specific_function %Op.8e6, @Op.2(%ExplicitReturn) [concrete]
-// CHECK:STDOUT:   %Op.type.73f: type = fn_type @Op.2, @impl(%NoAddr) [concrete]
+// CHECK:STDOUT:   %Op.type.73f: type = fn_type @Op.2, @Destroy.impl(%NoAddr) [concrete]
 // CHECK:STDOUT:   %Op.d78: %Op.type.73f = struct_value () [concrete]
 // CHECK:STDOUT:   %ptr.4b8: type = ptr_type %NoAddr [concrete]
 // CHECK:STDOUT:   %Op.specific_fn.8fe: <specific function> = specific_function %Op.d78, @Op.2(%NoAddr) [concrete]
@@ -690,7 +690,7 @@ fn G() { F({}); }
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %NoSelf: type = class_type @NoSelf [concrete]
-// CHECK:STDOUT:   %destroy.type.d69: type = fn_type @destroy.1 [concrete]
+// CHECK:STDOUT:   %destroy.type.d69: type = fn_type @destroy.loc9 [concrete]
 // CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [concrete]
 // CHECK:STDOUT:   %destroy.ab7: %destroy.type.d69 = struct_value () [concrete]
 // CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [concrete]
@@ -698,17 +698,17 @@ fn G() { F({}); }
 // CHECK:STDOUT:   %Args: type = class_type @Args [concrete]
 // CHECK:STDOUT:   %pattern_type.a81: type = pattern_type %Args [concrete]
 // CHECK:STDOUT:   %pattern_type.cb1: type = pattern_type %empty_tuple.type [concrete]
-// CHECK:STDOUT:   %destroy.type.ba0: type = fn_type @destroy.2 [concrete]
+// CHECK:STDOUT:   %destroy.type.ba0: type = fn_type @destroy.loc17 [concrete]
 // CHECK:STDOUT:   %destroy.723: %destroy.type.ba0 = struct_value () [concrete]
 // CHECK:STDOUT:   %F.type: type = fn_type @F [concrete]
 // CHECK:STDOUT:   %F: %F.type = struct_value () [concrete]
 // CHECK:STDOUT:   %pattern_type.9f4: type = pattern_type %NoSelf [concrete]
 // CHECK:STDOUT:   %Destroy.type: type = facet_type <@Destroy> [concrete]
-// CHECK:STDOUT:   %Op.type.59d: type = fn_type @Op.2, @impl(%Args) [concrete]
+// CHECK:STDOUT:   %Op.type.59d: type = fn_type @Op.2, @Destroy.impl(%Args) [concrete]
 // CHECK:STDOUT:   %Op.a71: %Op.type.59d = struct_value () [concrete]
 // CHECK:STDOUT:   %ptr.7b2: type = ptr_type %Args [concrete]
 // CHECK:STDOUT:   %Op.specific_fn.242: <specific function> = specific_function %Op.a71, @Op.2(%Args) [concrete]
-// CHECK:STDOUT:   %Op.type.f20: type = fn_type @Op.2, @impl(%NoSelf) [concrete]
+// CHECK:STDOUT:   %Op.type.f20: type = fn_type @Op.2, @Destroy.impl(%NoSelf) [concrete]
 // CHECK:STDOUT:   %Op.2e0: %Op.type.f20 = struct_value () [concrete]
 // CHECK:STDOUT:   %ptr.5ab: type = ptr_type %NoSelf [concrete]
 // CHECK:STDOUT:   %Op.specific_fn.a58: <specific function> = specific_function %Op.2e0, @Op.2(%NoSelf) [concrete]
@@ -737,7 +737,7 @@ fn G() { F({}); }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @NoSelf {
-// CHECK:STDOUT:   %destroy.decl: %destroy.type.d69 = fn_decl @destroy.1 [concrete = constants.%destroy.ab7] {} {}
+// CHECK:STDOUT:   %destroy.decl: %destroy.type.d69 = fn_decl @destroy.loc9 [concrete = constants.%destroy.ab7] {} {}
 // CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [concrete = constants.%empty_struct_type]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [concrete = constants.%complete_type.357]
 // CHECK:STDOUT:   complete_type_witness = %complete_type
@@ -748,7 +748,7 @@ fn G() { F({}); }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @Args {
-// CHECK:STDOUT:   %destroy.decl: %destroy.type.ba0 = fn_decl @destroy.2 [concrete = constants.%destroy.723] {
+// CHECK:STDOUT:   %destroy.decl: %destroy.type.ba0 = fn_decl @destroy.loc17 [concrete = constants.%destroy.723] {
 // CHECK:STDOUT:     %self.patt: %pattern_type.a81 = binding_pattern self [concrete]
 // CHECK:STDOUT:     %self.param_patt: %pattern_type.a81 = value_param_pattern %self.patt, call_param0 [concrete]
 // CHECK:STDOUT:     %x.patt: %pattern_type.cb1 = binding_pattern x [concrete]
@@ -773,9 +773,9 @@ fn G() { F({}); }
 // CHECK:STDOUT:   .destroy = %destroy.decl
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @destroy.1();
+// CHECK:STDOUT: fn @destroy.loc9();
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @destroy.2(%self.param: %Args, %x.param: %empty_tuple.type);
+// CHECK:STDOUT: fn @destroy.loc17(%self.param: %Args, %x.param: %empty_tuple.type);
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F() {
 // CHECK:STDOUT: !entry:
@@ -824,7 +824,7 @@ fn G() { F({}); }
 // CHECK:STDOUT:   %Destroy.type: type = facet_type <@Destroy> [concrete]
 // CHECK:STDOUT:   %Op.type.bae: type = fn_type @Op.1 [concrete]
 // CHECK:STDOUT:   %T.8b3d5d.2: type = bind_symbolic_name T, 0 [symbolic]
-// CHECK:STDOUT:   %Op.type.bc9: type = fn_type @Op.2, @impl(%T.8b3d5d.2) [symbolic]
+// CHECK:STDOUT:   %Op.type.bc9: type = fn_type @Op.2, @Destroy.impl(%T.8b3d5d.2) [symbolic]
 // CHECK:STDOUT:   %Op.46f: %Op.type.bc9 = struct_value () [symbolic]
 // CHECK:STDOUT:   %ptr.7d2: type = ptr_type %C.f2e [template]
 // CHECK:STDOUT:   %require_complete.448: <witness> = require_complete_type %ptr.7d2 [template]
@@ -838,8 +838,8 @@ fn G() { F({}); }
 // CHECK:STDOUT:   %F.specific_fn: <specific function> = specific_function %F, @F(%empty_struct_type) [concrete]
 // CHECK:STDOUT:   %C.7a7: type = class_type @C, @C(%empty_struct_type) [concrete]
 // CHECK:STDOUT:   %pattern_type.99a: type = pattern_type %C.7a7 [concrete]
-// CHECK:STDOUT:   %Destroy.impl_witness.a3f: <witness> = impl_witness imports.%Destroy.impl_witness_table, @impl(%C.7a7) [concrete]
-// CHECK:STDOUT:   %Op.type.add: type = fn_type @Op.2, @impl(%C.7a7) [concrete]
+// CHECK:STDOUT:   %Destroy.impl_witness.a3f: <witness> = impl_witness imports.%Destroy.impl_witness_table, @Destroy.impl(%C.7a7) [concrete]
+// CHECK:STDOUT:   %Op.type.add: type = fn_type @Op.2, @Destroy.impl(%C.7a7) [concrete]
 // CHECK:STDOUT:   %Op.b1c: %Op.type.add = struct_value () [concrete]
 // CHECK:STDOUT:   %ptr.308: type = ptr_type %C.7a7 [concrete]
 // CHECK:STDOUT:   %complete_type.903: <witness> = complete_type_witness %ptr.308 [concrete]
@@ -855,8 +855,8 @@ fn G() { F({}); }
 // CHECK:STDOUT:     import Core//prelude/...
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.Destroy: type = import_ref Core//prelude/parts/destroy, Destroy, loaded [concrete = constants.%Destroy.type]
-// CHECK:STDOUT:   %Core.import_ref.0b9: @impl.%Op.type (%Op.type.bc9) = import_ref Core//prelude/parts/destroy, loc8_29, loaded [symbolic = @impl.%Op (constants.%Op.46f)]
-// CHECK:STDOUT:   %Destroy.impl_witness_table = impl_witness_table (%Core.import_ref.0b9), @impl [concrete]
+// CHECK:STDOUT:   %Core.import_ref.0b9: @Destroy.impl.%Op.type (%Op.type.bc9) = import_ref Core//prelude/parts/destroy, loc8_29, loaded [symbolic = @Destroy.impl.%Op (constants.%Op.46f)]
+// CHECK:STDOUT:   %Destroy.impl_witness_table = impl_witness_table (%Core.import_ref.0b9), @Destroy.impl [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {

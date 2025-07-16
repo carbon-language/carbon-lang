@@ -37,11 +37,16 @@ class Mangler {
 
   // Produce a deterministically unique mangled name for the specified class's
   // vtable.
-  auto MangleVTable(const SemIR::Class& class_info) -> std::string;
+  auto MangleVTable(const SemIR::Class& class_info,
+                    SemIR::SpecificId specific_id) -> std::string;
 
  private:
   // Mangle this `NameId` as an individual name component.
   auto MangleNameId(llvm::raw_ostream& os, SemIR::NameId name_id) -> void;
+
+  // Mangle this `SpecificId`, or nothing if it is `SpecificId::None`.
+  auto MangleSpecificId(llvm::raw_ostream& os, SemIR::SpecificId specific_id)
+      -> void;
 
   // Mangle this qualified name with inner scope first, working outwards. This
   // may reduce the incidence of common prefixes in the name mangling. (i.e.:

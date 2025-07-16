@@ -274,14 +274,14 @@ fn F(a: IntAdapter) -> i32 {
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %SomeClass: type = class_type @SomeClass [concrete]
 // CHECK:STDOUT:   %pattern_type.3eb: type = pattern_type %SomeClass [concrete]
-// CHECK:STDOUT:   %F.type.633: type = fn_type @F.1 [concrete]
+// CHECK:STDOUT:   %F.type.633: type = fn_type @F.loc5 [concrete]
 // CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [concrete]
 // CHECK:STDOUT:   %F.e19: %F.type.633 = struct_value () [concrete]
 // CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [concrete]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [concrete]
 // CHECK:STDOUT:   %SomeClassAdapter: type = class_type @SomeClassAdapter [concrete]
 // CHECK:STDOUT:   %pattern_type.080: type = pattern_type %SomeClassAdapter [concrete]
-// CHECK:STDOUT:   %F.type.b25: type = fn_type @F.2 [concrete]
+// CHECK:STDOUT:   %F.type.b25: type = fn_type @F.loc12 [concrete]
 // CHECK:STDOUT:   %F.c41: %F.type.b25 = struct_value () [concrete]
 // CHECK:STDOUT:   %ImplicitAs.type.cc7: type = generic_interface_type @ImplicitAs [concrete]
 // CHECK:STDOUT:   %ImplicitAs.generic: %ImplicitAs.type.cc7 = struct_value () [concrete]
@@ -306,7 +306,7 @@ fn F(a: IntAdapter) -> i32 {
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %SomeClass.decl: type = class_decl @SomeClass [concrete = constants.%SomeClass] {} {}
 // CHECK:STDOUT:   %SomeClassAdapter.decl: type = class_decl @SomeClassAdapter [concrete = constants.%SomeClassAdapter] {} {}
-// CHECK:STDOUT:   %F.decl: %F.type.b25 = fn_decl @F.2 [concrete = constants.%F.c41] {
+// CHECK:STDOUT:   %F.decl: %F.type.b25 = fn_decl @F.loc12 [concrete = constants.%F.c41] {
 // CHECK:STDOUT:     %a.patt: %pattern_type.080 = binding_pattern a [concrete]
 // CHECK:STDOUT:     %a.param_patt: %pattern_type.080 = value_param_pattern %a.patt, call_param0 [concrete]
 // CHECK:STDOUT:   } {
@@ -317,7 +317,7 @@ fn F(a: IntAdapter) -> i32 {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @SomeClass {
-// CHECK:STDOUT:   %F.decl: %F.type.633 = fn_decl @F.1 [concrete = constants.%F.e19] {
+// CHECK:STDOUT:   %F.decl: %F.type.633 = fn_decl @F.loc5 [concrete = constants.%F.e19] {
 // CHECK:STDOUT:     %self.patt: %pattern_type.3eb = binding_pattern self [concrete]
 // CHECK:STDOUT:     %self.param_patt: %pattern_type.3eb = value_param_pattern %self.patt, call_param0 [concrete]
 // CHECK:STDOUT:   } {
@@ -347,9 +347,9 @@ fn F(a: IntAdapter) -> i32 {
 // CHECK:STDOUT:   extend %SomeClass.ref
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @F.1(%self.param: %SomeClass);
+// CHECK:STDOUT: fn @F.loc5(%self.param: %SomeClass);
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @F.2(%a.param: %SomeClassAdapter) {
+// CHECK:STDOUT: fn @F.loc12(%a.param: %SomeClassAdapter) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %a.ref: %SomeClassAdapter = name_ref a, %a
 // CHECK:STDOUT:   %F.ref: %F.type.633 = name_ref F, @SomeClass.%F.decl [concrete = constants.%F.e19]

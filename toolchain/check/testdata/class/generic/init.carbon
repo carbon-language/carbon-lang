@@ -87,7 +87,7 @@ fn InitFromAdaptedSpecific(x: i32) -> i32 {
 // CHECK:STDOUT:   %struct_type.k.0bf: type = struct_type {.k: %i32} [concrete]
 // CHECK:STDOUT:   %complete_type.954: <witness> = complete_type_witness %struct_type.k.0bf [concrete]
 // CHECK:STDOUT:   %pattern_type.0fa: type = pattern_type %Class.247 [concrete]
-// CHECK:STDOUT:   %Op.type.fdc: type = fn_type @Op.2, @impl.49c(%Class.247) [concrete]
+// CHECK:STDOUT:   %Op.type.fdc: type = fn_type @Op.2, @Destroy.impl(%Class.247) [concrete]
 // CHECK:STDOUT:   %Op.af5: %Op.type.fdc = struct_value () [concrete]
 // CHECK:STDOUT:   %ptr.f7c: type = ptr_type %Class.247 [concrete]
 // CHECK:STDOUT:   %Op.specific_fn: <specific function> = specific_function %Op.af5, @Op.2(%Class.247) [concrete]

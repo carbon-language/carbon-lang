@@ -125,7 +125,7 @@ fn F() {
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %int_32: Core.IntLiteral = int_value 32 [concrete]
 // CHECK:STDOUT:   %u32: type = class_type @UInt, @UInt(%int_32) [concrete]
-// CHECK:STDOUT:   %Negate.type.15b: type = fn_type @Negate.1 [concrete]
+// CHECK:STDOUT:   %Negate.type.15b: type = fn_type @Negate.loc4 [concrete]
 // CHECK:STDOUT:   %Negate: %Negate.type.15b = struct_value () [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

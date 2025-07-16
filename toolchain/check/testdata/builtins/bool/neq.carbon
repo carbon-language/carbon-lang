@@ -112,7 +112,7 @@ var d: C(false != false) = False();
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT:   %Core.import_ref.a67 = import_ref Core//prelude/operators/comparison, loc36_45, unloaded
 // CHECK:STDOUT:   %Core.import_ref.76f: %NotEqual.type.bb4 = import_ref Core//prelude/operators/comparison, loc37_48, loaded [concrete = constants.%NotEqual.c32]
-// CHECK:STDOUT:   %EqWith.impl_witness_table = impl_witness_table (%Core.import_ref.a67, %Core.import_ref.76f), @impl.4e5 [concrete]
+// CHECK:STDOUT:   %EqWith.impl_witness_table = impl_witness_table (%Core.import_ref.a67, %Core.import_ref.76f), @EqWith.impl.4e5 [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {

@@ -32,7 +32,7 @@ fn Main() {
 // CHECK:STDOUT:   %Main.type: type = fn_type @Main [concrete]
 // CHECK:STDOUT:   %Main: %Main.type = struct_value () [concrete]
 // CHECK:STDOUT:   %Destroy.type: type = facet_type <@Destroy> [concrete]
-// CHECK:STDOUT:   %Op.type.7e5: type = fn_type @Op.2, @impl(%struct_type.v) [concrete]
+// CHECK:STDOUT:   %Op.type.7e5: type = fn_type @Op.2, @Destroy.impl(%struct_type.v) [concrete]
 // CHECK:STDOUT:   %Op.477: %Op.type.7e5 = struct_value () [concrete]
 // CHECK:STDOUT:   %ptr.ef9: type = ptr_type %struct_type.v [concrete]
 // CHECK:STDOUT:   %Op.specific_fn: <specific function> = specific_function %Op.477, @Op.2(%struct_type.v) [concrete]
