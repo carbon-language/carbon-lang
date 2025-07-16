@@ -195,7 +195,7 @@ fn F() {
 
 auto foo(const short a) -> void;
 
-// --- fail_todo_import_const_short.carbon
+// --- fail_todo_import_const_short_param.carbon
 
 library "[[@TEST_NAME]]";
 
@@ -203,13 +203,13 @@ import Cpp library "const_short_param.h";
 
 fn F() {
   //@dump-sem-ir-begin
-  // CHECK:STDERR: fail_todo_import_const_short.carbon:[[@LINE+8]]:11: error: cannot implicitly convert expression of type `i16` to `const i16` [ConversionFailure]
+  // CHECK:STDERR: fail_todo_import_const_short_param.carbon:[[@LINE+8]]:11: error: cannot implicitly convert expression of type `i16` to `const i16` [ConversionFailure]
   // CHECK:STDERR:   Cpp.foo(1 as i16);
   // CHECK:STDERR:           ^~~~~~~~
-  // CHECK:STDERR: fail_todo_import_const_short.carbon:[[@LINE+5]]:11: note: type `i16` does not implement interface `Core.ImplicitAs(const i16)` [MissingImplInMemberAccessNote]
+  // CHECK:STDERR: fail_todo_import_const_short_param.carbon:[[@LINE+5]]:11: note: type `i16` does not implement interface `Core.ImplicitAs(const i16)` [MissingImplInMemberAccessNote]
   // CHECK:STDERR:   Cpp.foo(1 as i16);
   // CHECK:STDERR:           ^~~~~~~~
-  // CHECK:STDERR: fail_todo_import_const_short.carbon: note: initializing function parameter [InCallToFunctionParam]
+  // CHECK:STDERR: fail_todo_import_const_short_param.carbon: note: initializing function parameter [InCallToFunctionParam]
   // CHECK:STDERR:
   Cpp.foo(1 as i16);
   //@dump-sem-ir-end
@@ -279,7 +279,7 @@ fn F() {
 
 auto foo(short* _Nonnull a) -> void;
 
-// --- import_short_pointer.carbon
+// --- import_short_pointer_param.carbon
 
 library "[[@TEST_NAME]]";
 
@@ -780,7 +780,7 @@ fn F() {
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- fail_todo_import_const_short.carbon
+// CHECK:STDOUT: --- fail_todo_import_const_short_param.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [concrete]
@@ -885,7 +885,7 @@ fn F() {
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- import_short_pointer.carbon
+// CHECK:STDOUT: --- import_short_pointer_param.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [concrete]

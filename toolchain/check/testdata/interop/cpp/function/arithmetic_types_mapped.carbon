@@ -18,7 +18,7 @@
 
 auto foo(int a) -> void;
 
-// --- import_int.carbon
+// --- import_int_param.carbon
 
 library "[[@TEST_NAME]]";
 
@@ -255,7 +255,7 @@ fn F() {
 
 auto foo(const int a) -> void;
 
-// --- fail_todo_import_const_int.carbon
+// --- fail_todo_import_const_int_param.carbon
 
 library "[[@TEST_NAME]]";
 
@@ -263,13 +263,13 @@ import Cpp library "const_int_param.h";
 
 fn F() {
   //@dump-sem-ir-begin
-  // CHECK:STDERR: fail_todo_import_const_int.carbon:[[@LINE+8]]:11: error: cannot implicitly convert expression of type `Core.IntLiteral` to `const i32` [ConversionFailure]
+  // CHECK:STDERR: fail_todo_import_const_int_param.carbon:[[@LINE+8]]:11: error: cannot implicitly convert expression of type `Core.IntLiteral` to `const i32` [ConversionFailure]
   // CHECK:STDERR:   Cpp.foo(1);
   // CHECK:STDERR:           ^
-  // CHECK:STDERR: fail_todo_import_const_int.carbon:[[@LINE+5]]:11: note: type `Core.IntLiteral` does not implement interface `Core.ImplicitAs(const i32)` [MissingImplInMemberAccessNote]
+  // CHECK:STDERR: fail_todo_import_const_int_param.carbon:[[@LINE+5]]:11: note: type `Core.IntLiteral` does not implement interface `Core.ImplicitAs(const i32)` [MissingImplInMemberAccessNote]
   // CHECK:STDERR:   Cpp.foo(1);
   // CHECK:STDERR:           ^
-  // CHECK:STDERR: fail_todo_import_const_int.carbon: note: initializing function parameter [InCallToFunctionParam]
+  // CHECK:STDERR: fail_todo_import_const_int_param.carbon: note: initializing function parameter [InCallToFunctionParam]
   // CHECK:STDERR:
   Cpp.foo(1);
   //@dump-sem-ir-end
@@ -283,7 +283,7 @@ fn F() {
 
 auto foo(int& a) -> int;
 
-// --- fail_todo_import_int_ref.carbon
+// --- fail_todo_import_int_ref_param.carbon
 
 library "[[@TEST_NAME]]";
 
@@ -292,10 +292,10 @@ import Cpp library "int_ref_param.h";
 fn F() {
   var a: i32 = 1;
   //@dump-sem-ir-begin
-  // CHECK:STDERR: fail_todo_import_int_ref.carbon:[[@LINE+7]]:3: error: semantics TODO: `Unsupported: parameter type: int &` [SemanticsTodo]
+  // CHECK:STDERR: fail_todo_import_int_ref_param.carbon:[[@LINE+7]]:3: error: semantics TODO: `Unsupported: parameter type: int &` [SemanticsTodo]
   // CHECK:STDERR:   Cpp.foo(a);
   // CHECK:STDERR:   ^~~~~~~
-  // CHECK:STDERR: fail_todo_import_int_ref.carbon:[[@LINE+4]]:3: note: in `Cpp` name lookup for `foo` [InCppNameLookup]
+  // CHECK:STDERR: fail_todo_import_int_ref_param.carbon:[[@LINE+4]]:3: note: in `Cpp` name lookup for `foo` [InCppNameLookup]
   // CHECK:STDERR:   Cpp.foo(a);
   // CHECK:STDERR:   ^~~~~~~
   // CHECK:STDERR:
@@ -311,7 +311,7 @@ fn F() {
 
 auto foo(const int& a) -> int;
 
-// --- fail_todo_import_const_int_ref.carbon
+// --- fail_todo_import_const_int_ref_param.carbon
 
 library "[[@TEST_NAME]]";
 
@@ -320,10 +320,10 @@ import Cpp library "const_int_ref_param.h";
 fn F() {
   var a : i32 = 1;
   //@dump-sem-ir-begin
-  // CHECK:STDERR: fail_todo_import_const_int_ref.carbon:[[@LINE+7]]:3: error: semantics TODO: `Unsupported: parameter type: const int &` [SemanticsTodo]
+  // CHECK:STDERR: fail_todo_import_const_int_ref_param.carbon:[[@LINE+7]]:3: error: semantics TODO: `Unsupported: parameter type: const int &` [SemanticsTodo]
   // CHECK:STDERR:   Cpp.foo(a);
   // CHECK:STDERR:   ^~~~~~~
-  // CHECK:STDERR: fail_todo_import_const_int_ref.carbon:[[@LINE+4]]:3: note: in `Cpp` name lookup for `foo` [InCppNameLookup]
+  // CHECK:STDERR: fail_todo_import_const_int_ref_param.carbon:[[@LINE+4]]:3: note: in `Cpp` name lookup for `foo` [InCppNameLookup]
   // CHECK:STDERR:   Cpp.foo(a);
   // CHECK:STDERR:   ^~~~~~~
   // CHECK:STDERR:
@@ -339,7 +339,7 @@ fn F() {
 
 auto foo(int* _Nonnull a) -> void;
 
-// --- import_int_pointer.carbon
+// --- import_int_pointer_param.carbon
 
 library "[[@TEST_NAME]]";
 
@@ -360,7 +360,7 @@ fn F() {
 
 auto foo(const int* _Nonnull a) -> int;
 
-// --- fail_todo_import_const_int_pointer.carbon
+// --- fail_todo_import_const_int_pointer_param.carbon
 
 library "[[@TEST_NAME]]";
 
@@ -369,13 +369,13 @@ import Cpp library "const_int_pointer_param.h";
 fn F() {
   var a : i32 = 1;
   //@dump-sem-ir-begin
-  // CHECK:STDERR: fail_todo_import_const_int_pointer.carbon:[[@LINE+8]]:11: error: cannot implicitly convert expression of type `i32*` to `const i32*` [ConversionFailure]
+  // CHECK:STDERR: fail_todo_import_const_int_pointer_param.carbon:[[@LINE+8]]:11: error: cannot implicitly convert expression of type `i32*` to `const i32*` [ConversionFailure]
   // CHECK:STDERR:   Cpp.foo(&a);
   // CHECK:STDERR:           ^~
-  // CHECK:STDERR: fail_todo_import_const_int_pointer.carbon:[[@LINE+5]]:11: note: type `i32*` does not implement interface `Core.ImplicitAs(const i32*)` [MissingImplInMemberAccessNote]
+  // CHECK:STDERR: fail_todo_import_const_int_pointer_param.carbon:[[@LINE+5]]:11: note: type `i32*` does not implement interface `Core.ImplicitAs(const i32*)` [MissingImplInMemberAccessNote]
   // CHECK:STDERR:   Cpp.foo(&a);
   // CHECK:STDERR:           ^~
-  // CHECK:STDERR: fail_todo_import_const_int_pointer.carbon: note: initializing function parameter [InCallToFunctionParam]
+  // CHECK:STDERR: fail_todo_import_const_int_pointer_param.carbon: note: initializing function parameter [InCallToFunctionParam]
   // CHECK:STDERR:
   Cpp.foo(&a);
   //@dump-sem-ir-end
@@ -385,7 +385,7 @@ fn F() {
 // int return
 // ============================================================================
 
-// --- int_return_param.h
+// --- int_return.h
 
 auto foo_int() -> int;
 
@@ -393,7 +393,7 @@ auto foo_int() -> int;
 
 library "[[@TEST_NAME]]";
 
-import Cpp library "int_return_param.h";
+import Cpp library "int_return.h";
 
 fn Carbon_foo(val: i32);
 
@@ -1000,7 +1000,7 @@ fn F() {
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- fail_todo_import_const_int.carbon
+// CHECK:STDOUT: --- fail_todo_import_const_int_param.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [concrete]
@@ -1034,7 +1034,7 @@ fn F() {
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- fail_todo_import_int_ref.carbon
+// CHECK:STDOUT: --- fail_todo_import_int_ref_param.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %int_32: Core.IntLiteral = int_value 32 [concrete]
@@ -1057,7 +1057,7 @@ fn F() {
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- fail_todo_import_const_int_ref.carbon
+// CHECK:STDOUT: --- fail_todo_import_const_int_ref_param.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %int_32: Core.IntLiteral = int_value 32 [concrete]
@@ -1080,7 +1080,7 @@ fn F() {
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- import_int_pointer.carbon
+// CHECK:STDOUT: --- import_int_pointer_param.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [concrete]
@@ -1114,7 +1114,7 @@ fn F() {
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- fail_todo_import_const_int_pointer.carbon
+// CHECK:STDOUT: --- fail_todo_import_const_int_pointer_param.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %int_32: Core.IntLiteral = int_value 32 [concrete]
