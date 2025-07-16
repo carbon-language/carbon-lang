@@ -498,6 +498,8 @@ static auto AsCarbonNamespace(Context& context,
     -> SemIR::InstId {
   CARBON_CHECK(decl_context);
   // Check if the declaration is already mapped.
+  // TODO: Try to avoid this check by rotating the loops below so they treat the
+  // given decl_context the same at its enclosing contexts.
   if (SemIR::InstId existing_inst_id = LookupClangDeclInstId(
           context, clang::dyn_cast<clang::Decl>(decl_context));
       existing_inst_id.has_value()) {
@@ -1003,6 +1005,9 @@ static auto ImportFunctionDecl(Context& context, SemIR::LocId loc_id,
 }
 // Imports a declaration from Clang to Carbon. If successful, returns the
 // instruction for the new Carbon declaration.
+// TODO: Remove `scope_id` parameter since we the scope the name was found in
+// isn't necessarily the parent scope. See
+// https://github.com/carbon-language/carbon-lang/pull/5789/files/a5629ebb303c5b1aef46181eb860b7065ca1aaf1#r2201769611
 static auto ImportNameDecl(Context& context, SemIR::LocId loc_id,
                            SemIR::NameScopeId scope_id, SemIR::NameId name_id,
                            clang::NamedDecl* clang_decl) -> SemIR::InstId {
