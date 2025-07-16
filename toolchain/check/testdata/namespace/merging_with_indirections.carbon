@@ -170,7 +170,7 @@ fn Run() {
 // CHECK:STDOUT:   %complete_type.357: <witness> = complete_type_witness %empty_struct_type [concrete]
 // CHECK:STDOUT:   %pattern_type.272: type = pattern_type %A [concrete]
 // CHECK:STDOUT:   %Destroy.type: type = facet_type <@Destroy> [concrete]
-// CHECK:STDOUT:   %Op.type.d74: type = fn_type @Op.2, @impl(%A) [concrete]
+// CHECK:STDOUT:   %Op.type.d74: type = fn_type @Op.2, @Destroy.impl(%A) [concrete]
 // CHECK:STDOUT:   %Op.478: %Op.type.d74 = struct_value () [concrete]
 // CHECK:STDOUT:   %ptr.07e: type = ptr_type %A [concrete]
 // CHECK:STDOUT:   %Op.specific_fn: <specific function> = specific_function %Op.478, @Op.2(%A) [concrete]

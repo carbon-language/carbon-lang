@@ -1713,8 +1713,6 @@ static auto TryResolveTypedInst(ImportRefResolver& resolver,
                       ? GetLocalConstantInstId(resolver, import_class.adapt_id)
                       : SemIR::InstId::None;
   auto& new_class = resolver.local_classes().Get(class_id);
-  // TODO: Make vtable_ptr_id lazily loaded, so we pull in the vtable only when
-  // it's needed, not for every use of the class.
   auto vtable_ptr_const_id =
       import_class.vtable_ptr_id.has_value()
           ? AddImportRef(resolver, import_class.vtable_ptr_id)
@@ -1970,6 +1968,8 @@ static auto TryResolveTypedInst(ImportRefResolver& resolver,
   auto virtual_functions =
       GetLocalInstBlockContents(resolver, import_vtable.virtual_functions_id);
 
+  auto specific_data = GetLocalSpecificData(resolver, inst.specific_id);
+
   if (resolver.HasNewWork()) {
     return ResolveResult::Retry();
   }
@@ -1984,9 +1984,6 @@ static auto TryResolveTypedInst(ImportRefResolver& resolver,
     auto generic_class_type =
         resolver.local_types().GetAs<SemIR::GenericClassType>(
             class_const_inst.type_id());
-    // TODO: Add support for generic vtables here and elsewhere.
-    // auto specific_id =
-    //    GetOrAddLocalSpecific(resolver, inst.specific_id, specific_data);
     class_id = generic_class_type.class_id;
   }
   auto new_vtable_id = resolver.local_vtables().Add(
@@ -1998,7 +1995,8 @@ static auto TryResolveTypedInst(ImportRefResolver& resolver,
       resolver, {.type_id = GetPointerType(resolver.local_context(),
                                            SemIR::VtableType::TypeInstId),
                  .vtable_id = new_vtable_id,
-                 .specific_id = SemIR::SpecificId::None});
+                 .specific_id = GetOrAddLocalSpecific(
+                     resolver, inst.specific_id, specific_data)});
 }
 
 static auto TryResolveTypedInst(ImportRefResolver& resolver,

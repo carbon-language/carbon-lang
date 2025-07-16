@@ -328,7 +328,7 @@ fn H(T:! type) {
 // CHECK:STDOUT:   %ptr.79f131.1: type = ptr_type %AA [symbolic]
 // CHECK:STDOUT:   %B.type.4e3fc4.1: type = facet_type <@B, @B(%ptr.79f131.1)> [symbolic]
 // CHECK:STDOUT:   %require_complete.13ba89.1: <witness> = require_complete_type %B.type.4e3fc4.1 [symbolic]
-// CHECK:STDOUT:   %B.impl_witness.741: <witness> = impl_witness file.%B.impl_witness_table.loc9, @impl.e5b(%AA, %BB.a66) [symbolic]
+// CHECK:STDOUT:   %B.impl_witness.741: <witness> = impl_witness file.%B.impl_witness_table.loc9, @B.impl.e5b(%AA, %BB.a66) [symbolic]
 // CHECK:STDOUT:   %DD: type = bind_symbolic_name DD, 0 [symbolic]
 // CHECK:STDOUT:   %D.432: type = class_type @D, @D(%DD) [symbolic]
 // CHECK:STDOUT:   %T.336: type = bind_symbolic_name T, 1 [symbolic]
@@ -357,11 +357,11 @@ fn H(T:! type) {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
-// CHECK:STDOUT:   impl_decl @impl.e5b [concrete] {
+// CHECK:STDOUT:   impl_decl @B.impl.e5b [concrete] {
 // CHECK:STDOUT:     %AA.patt: %pattern_type.98f = symbolic_binding_pattern AA, 0 [concrete]
-// CHECK:STDOUT:     %BB.patt: @impl.e5b.%pattern_type (%pattern_type.0b2) = symbolic_binding_pattern BB, 1 [concrete]
+// CHECK:STDOUT:     %BB.patt: @B.impl.e5b.%pattern_type (%pattern_type.0b2) = symbolic_binding_pattern BB, 1 [concrete]
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %BB.ref: @impl.e5b.%A_where.type (%A_where.type.812090.1) = name_ref BB, %BB.loc9_25.1 [symbolic = %BB.loc9_25.2 (constants.%BB.a66)]
+// CHECK:STDOUT:     %BB.ref: @B.impl.e5b.%A_where.type (%A_where.type.812090.1) = name_ref BB, %BB.loc9_25.1 [symbolic = %BB.loc9_25.2 (constants.%BB.a66)]
 // CHECK:STDOUT:     %BB.as_type.loc9_51.1: type = facet_access_type %BB.ref [symbolic = %BB.as_type.loc9_51.2 (constants.%BB.as_type)]
 // CHECK:STDOUT:     %.loc9_51: type = converted %BB.ref, %BB.as_type.loc9_51.1 [symbolic = %BB.as_type.loc9_51.2 (constants.%BB.as_type)]
 // CHECK:STDOUT:     %B.ref: %B.type.bf2 = name_ref B, file.%B.decl [concrete = constants.%B.generic]
@@ -374,9 +374,9 @@ fn H(T:! type) {
 // CHECK:STDOUT:       %AA.ref.loc9_32: type = name_ref AA, %AA.loc9_14.1 [symbolic = %AA.loc9_14.2 (constants.%AA)]
 // CHECK:STDOUT:       %A.type.loc9_34.1: type = facet_type <@A, @A(constants.%AA)> [symbolic = %A.type.loc9_34.2 (constants.%A.type.75a876.1)]
 // CHECK:STDOUT:       <elided>
-// CHECK:STDOUT:       %.Self.ref: @impl.e5b.%A.type.loc9_34.2 (%A.type.75a876.1) = name_ref .Self, %.Self.1 [symbolic = %.Self.2 (constants.%.Self.fafe34.1)]
-// CHECK:STDOUT:       %.loc9_42.1: @impl.e5b.%A.assoc_type (%A.assoc_type) = specific_constant @X.%assoc0, @A(constants.%AA) [symbolic = %assoc0 (constants.%assoc0)]
-// CHECK:STDOUT:       %X.ref: @impl.e5b.%A.assoc_type (%A.assoc_type) = name_ref X, %.loc9_42.1 [symbolic = %assoc0 (constants.%assoc0)]
+// CHECK:STDOUT:       %.Self.ref: @B.impl.e5b.%A.type.loc9_34.2 (%A.type.75a876.1) = name_ref .Self, %.Self.1 [symbolic = %.Self.2 (constants.%.Self.fafe34.1)]
+// CHECK:STDOUT:       %.loc9_42.1: @B.impl.e5b.%A.assoc_type (%A.assoc_type) = specific_constant @X.%assoc0, @A(constants.%AA) [symbolic = %assoc0 (constants.%assoc0)]
+// CHECK:STDOUT:       %X.ref: @B.impl.e5b.%A.assoc_type (%A.assoc_type) = name_ref X, %.loc9_42.1 [symbolic = %assoc0 (constants.%assoc0)]
 // CHECK:STDOUT:       %.Self.as_type.loc9_42.1: type = facet_access_type %.Self.ref [symbolic = %.Self.as_type.loc9_42.2 (constants.%.Self.as_type)]
 // CHECK:STDOUT:       %.loc9_42.2: type = converted %.Self.ref, %.Self.as_type.loc9_42.1 [symbolic = %.Self.as_type.loc9_42.2 (constants.%.Self.as_type)]
 // CHECK:STDOUT:       %impl.elem0.loc9_42.1: type = impl_witness_access constants.%A.lookup_impl_witness.4e49fb.1, element0 [symbolic = %impl.elem0.loc9_42.2 (constants.%impl.elem0.452c56.1)]
@@ -386,30 +386,30 @@ fn H(T:! type) {
 // CHECK:STDOUT:         requirement_rewrite %impl.elem0.loc9_42.1, %.loc9_48.2
 // CHECK:STDOUT:       }
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %BB.loc9_25.1: @impl.e5b.%A_where.type (%A_where.type.812090.1) = bind_symbolic_name BB, 1 [symbolic = %BB.loc9_25.2 (constants.%BB.a66)]
+// CHECK:STDOUT:     %BB.loc9_25.1: @B.impl.e5b.%A_where.type (%A_where.type.812090.1) = bind_symbolic_name BB, 1 [symbolic = %BB.loc9_25.2 (constants.%BB.a66)]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %B.impl_witness_table.loc9 = impl_witness_table (), @impl.e5b [concrete]
-// CHECK:STDOUT:   %B.impl_witness.loc9: <witness> = impl_witness %B.impl_witness_table.loc9, @impl.e5b(constants.%AA, constants.%BB.a66) [symbolic = @impl.e5b.%B.impl_witness (constants.%B.impl_witness.741)]
+// CHECK:STDOUT:   %B.impl_witness_table.loc9 = impl_witness_table (), @B.impl.e5b [concrete]
+// CHECK:STDOUT:   %B.impl_witness.loc9: <witness> = impl_witness %B.impl_witness_table.loc9, @B.impl.e5b(constants.%AA, constants.%BB.a66) [symbolic = @B.impl.e5b.%B.impl_witness (constants.%B.impl_witness.741)]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic impl @impl.e5b(%AA.loc9_14.1: type, %BB.loc9_25.1: @impl.e5b.%A_where.type (%A_where.type.812090.1)) {
+// CHECK:STDOUT: generic impl @B.impl.e5b(%AA.loc9_14.1: type, %BB.loc9_25.1: @B.impl.e5b.%A_where.type (%A_where.type.812090.1)) {
 // CHECK:STDOUT:   %AA.loc9_14.2: type = bind_symbolic_name AA, 0 [symbolic = %AA.loc9_14.2 (constants.%AA)]
 // CHECK:STDOUT:   %A.type.loc9_34.2: type = facet_type <@A, @A(%AA.loc9_14.2)> [symbolic = %A.type.loc9_34.2 (constants.%A.type.75a876.1)]
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT:   %require_complete.loc9_42: <witness> = require_complete_type %A.type.loc9_34.2 [symbolic = %require_complete.loc9_42 (constants.%require_complete.6da)]
 // CHECK:STDOUT:   %A.assoc_type: type = assoc_entity_type @A, @A(%AA.loc9_14.2) [symbolic = %A.assoc_type (constants.%A.assoc_type)]
-// CHECK:STDOUT:   %assoc0: @impl.e5b.%A.assoc_type (%A.assoc_type) = assoc_entity element0, @A.%X [symbolic = %assoc0 (constants.%assoc0)]
+// CHECK:STDOUT:   %assoc0: @B.impl.e5b.%A.assoc_type (%A.assoc_type) = assoc_entity element0, @A.%X [symbolic = %assoc0 (constants.%assoc0)]
 // CHECK:STDOUT:   %.Self.as_type.loc9_42.2: type = facet_access_type %.Self.2 [symbolic = %.Self.as_type.loc9_42.2 (constants.%.Self.as_type)]
 // CHECK:STDOUT:   %A.lookup_impl_witness: <witness> = lookup_impl_witness %.Self.2, @A, @A(%AA.loc9_14.2) [symbolic = %A.lookup_impl_witness (constants.%A.lookup_impl_witness.4e49fb.1)]
 // CHECK:STDOUT:   %impl.elem0.loc9_42.2: type = impl_witness_access %A.lookup_impl_witness, element0 [symbolic = %impl.elem0.loc9_42.2 (constants.%impl.elem0.452c56.1)]
 // CHECK:STDOUT:   %A_where.type: type = facet_type <@A, @A(%AA.loc9_14.2) where %impl.elem0.loc9_42.2 = constants.%empty_tuple.type> [symbolic = %A_where.type (constants.%A_where.type.812090.1)]
-// CHECK:STDOUT:   %BB.loc9_25.2: @impl.e5b.%A_where.type (%A_where.type.812090.1) = bind_symbolic_name BB, 1 [symbolic = %BB.loc9_25.2 (constants.%BB.a66)]
+// CHECK:STDOUT:   %BB.loc9_25.2: @B.impl.e5b.%A_where.type (%A_where.type.812090.1) = bind_symbolic_name BB, 1 [symbolic = %BB.loc9_25.2 (constants.%BB.a66)]
 // CHECK:STDOUT:   %pattern_type: type = pattern_type %A_where.type [symbolic = %pattern_type (constants.%pattern_type.0b2)]
 // CHECK:STDOUT:   %BB.as_type.loc9_51.2: type = facet_access_type %BB.loc9_25.2 [symbolic = %BB.as_type.loc9_51.2 (constants.%BB.as_type)]
 // CHECK:STDOUT:   %ptr.loc9_61.2: type = ptr_type %AA.loc9_14.2 [symbolic = %ptr.loc9_61.2 (constants.%ptr.79f131.1)]
 // CHECK:STDOUT:   %B.type.loc9_62.2: type = facet_type <@B, @B(%ptr.loc9_61.2)> [symbolic = %B.type.loc9_62.2 (constants.%B.type.4e3fc4.1)]
 // CHECK:STDOUT:   %require_complete.loc9_62: <witness> = require_complete_type %B.type.loc9_62.2 [symbolic = %require_complete.loc9_62 (constants.%require_complete.13ba89.1)]
-// CHECK:STDOUT:   %B.impl_witness: <witness> = impl_witness file.%B.impl_witness_table.loc9, @impl.e5b(%AA.loc9_14.2, %BB.loc9_25.2) [symbolic = %B.impl_witness (constants.%B.impl_witness.741)]
+// CHECK:STDOUT:   %B.impl_witness: <witness> = impl_witness file.%B.impl_witness_table.loc9, @B.impl.e5b(%AA.loc9_14.2, %BB.loc9_25.2) [symbolic = %B.impl_witness (constants.%B.impl_witness.741)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:
@@ -464,7 +464,7 @@ fn H(T:! type) {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @impl.e5b(constants.%AA, constants.%BB.a66) {
+// CHECK:STDOUT: specific @B.impl.e5b(constants.%AA, constants.%BB.a66) {
 // CHECK:STDOUT:   %AA.loc9_14.2 => constants.%AA
 // CHECK:STDOUT:   %A.type.loc9_34.2 => constants.%A.type.75a876.1
 // CHECK:STDOUT:   %.Self.2 => constants.%.Self.fafe34.1

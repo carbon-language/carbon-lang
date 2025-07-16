@@ -51,7 +51,7 @@ fn MakeOuter() -> Outer {
 // CHECK:STDOUT:   %MakeOuter.type: type = fn_type @MakeOuter [concrete]
 // CHECK:STDOUT:   %MakeOuter: %MakeOuter.type = struct_value () [concrete]
 // CHECK:STDOUT:   %Destroy.type: type = facet_type <@Destroy> [concrete]
-// CHECK:STDOUT:   %Op.type.e24: type = fn_type @Op.2, @impl(%Inner) [concrete]
+// CHECK:STDOUT:   %Op.type.e24: type = fn_type @Op.2, @Destroy.impl(%Inner) [concrete]
 // CHECK:STDOUT:   %Op.7b1: %Op.type.e24 = struct_value () [concrete]
 // CHECK:STDOUT:   %ptr.78b: type = ptr_type %Inner [concrete]
 // CHECK:STDOUT:   %Op.specific_fn: <specific function> = specific_function %Op.7b1, @Op.2(%Inner) [concrete]

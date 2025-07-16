@@ -44,7 +44,7 @@ fn Call(a: A*, b: B*, c: C*, d: D*) {
 // CHECK:STDOUT:   %ptr.6db: type = ptr_type %A [concrete]
 // CHECK:STDOUT:   %pattern_type.5f8: type = pattern_type %ptr.6db [concrete]
 // CHECK:STDOUT:   %pattern_type.f6d: type = pattern_type auto [concrete]
-// CHECK:STDOUT:   %F.type.649: type = fn_type @F.1 [concrete]
+// CHECK:STDOUT:   %F.type.649: type = fn_type @F.loc16 [concrete]
 // CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [concrete]
 // CHECK:STDOUT:   %F.485: %F.type.649 = struct_value () [concrete]
 // CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [concrete]
@@ -53,7 +53,7 @@ fn Call(a: A*, b: B*, c: C*, d: D*) {
 // CHECK:STDOUT:   %B.elem: type = unbound_element_type %B, %A [concrete]
 // CHECK:STDOUT:   %ptr.e79: type = ptr_type %B [concrete]
 // CHECK:STDOUT:   %pattern_type.960: type = pattern_type %ptr.e79 [concrete]
-// CHECK:STDOUT:   %F.type.8c6: type = fn_type @F.2 [concrete]
+// CHECK:STDOUT:   %F.type.8c6: type = fn_type @F.loc21 [concrete]
 // CHECK:STDOUT:   %F.92a: %F.type.8c6 = struct_value () [concrete]
 // CHECK:STDOUT:   %struct_type.base.953: type = struct_type {.base: %A} [concrete]
 // CHECK:STDOUT:   %complete_type.020: <witness> = complete_type_witness %struct_type.base.953 [concrete]
@@ -61,7 +61,7 @@ fn Call(a: A*, b: B*, c: C*, d: D*) {
 // CHECK:STDOUT:   %C.elem: type = unbound_element_type %C, %B [concrete]
 // CHECK:STDOUT:   %ptr.019: type = ptr_type %C [concrete]
 // CHECK:STDOUT:   %pattern_type.44a: type = pattern_type %ptr.019 [concrete]
-// CHECK:STDOUT:   %F.type.c29: type = fn_type @F.3 [concrete]
+// CHECK:STDOUT:   %F.type.c29: type = fn_type @F.loc26 [concrete]
 // CHECK:STDOUT:   %F.437: %F.type.c29 = struct_value () [concrete]
 // CHECK:STDOUT:   %struct_type.base.0ff: type = struct_type {.base: %B} [concrete]
 // CHECK:STDOUT:   %complete_type.98e: <witness> = complete_type_witness %struct_type.base.0ff [concrete]
@@ -132,7 +132,7 @@ fn Call(a: A*, b: B*, c: C*, d: D*) {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @A {
-// CHECK:STDOUT:   %F.decl: %F.type.649 = fn_decl @F.1 [concrete = constants.%F.485] {
+// CHECK:STDOUT:   %F.decl: %F.type.649 = fn_decl @F.loc16 [concrete = constants.%F.485] {
 // CHECK:STDOUT:     %self.patt: %pattern_type.5f8 = binding_pattern self [concrete]
 // CHECK:STDOUT:     %self.param_patt: %pattern_type.5f8 = value_param_pattern %self.patt, call_param0 [concrete]
 // CHECK:STDOUT:     %.loc16_8: %pattern_type.f6d = addr_pattern %self.param_patt [concrete]
@@ -156,7 +156,7 @@ fn Call(a: A*, b: B*, c: C*, d: D*) {
 // CHECK:STDOUT: class @B {
 // CHECK:STDOUT:   %A.ref: type = name_ref A, file.%A.decl [concrete = constants.%A]
 // CHECK:STDOUT:   %.loc20: %B.elem = base_decl %A.ref, element0 [concrete]
-// CHECK:STDOUT:   %F.decl: %F.type.8c6 = fn_decl @F.2 [concrete = constants.%F.92a] {
+// CHECK:STDOUT:   %F.decl: %F.type.8c6 = fn_decl @F.loc21 [concrete = constants.%F.92a] {
 // CHECK:STDOUT:     %self.patt: %pattern_type.960 = binding_pattern self [concrete]
 // CHECK:STDOUT:     %self.param_patt: %pattern_type.960 = value_param_pattern %self.patt, call_param0 [concrete]
 // CHECK:STDOUT:     %.loc21_8: %pattern_type.f6d = addr_pattern %self.param_patt [concrete]
@@ -183,7 +183,7 @@ fn Call(a: A*, b: B*, c: C*, d: D*) {
 // CHECK:STDOUT: class @C {
 // CHECK:STDOUT:   %B.ref: type = name_ref B, file.%B.decl [concrete = constants.%B]
 // CHECK:STDOUT:   %.loc25: %C.elem = base_decl %B.ref, element0 [concrete]
-// CHECK:STDOUT:   %F.decl: %F.type.c29 = fn_decl @F.3 [concrete = constants.%F.437] {
+// CHECK:STDOUT:   %F.decl: %F.type.c29 = fn_decl @F.loc26 [concrete = constants.%F.437] {
 // CHECK:STDOUT:     %self.patt: %pattern_type.44a = binding_pattern self [concrete]
 // CHECK:STDOUT:     %self.param_patt: %pattern_type.44a = value_param_pattern %self.patt, call_param0 [concrete]
 // CHECK:STDOUT:     %.loc26_8: %pattern_type.f6d = addr_pattern %self.param_patt [concrete]
@@ -222,11 +222,11 @@ fn Call(a: A*, b: B*, c: C*, d: D*) {
 // CHECK:STDOUT:   extend %B.ref
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @F.1(%self.param: %ptr.6db);
+// CHECK:STDOUT: fn @F.loc16(%self.param: %ptr.6db);
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @F.2(%self.param: %ptr.e79);
+// CHECK:STDOUT: fn @F.loc21(%self.param: %ptr.e79);
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @F.3(%self.param: %ptr.019);
+// CHECK:STDOUT: fn @F.loc26(%self.param: %ptr.019);
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Call(%a.param: %ptr.6db, %b.param: %ptr.e79, %c.param: %ptr.019, %d.param: %ptr.19c) {
 // CHECK:STDOUT: !entry:

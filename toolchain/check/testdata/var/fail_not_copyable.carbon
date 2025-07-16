@@ -45,11 +45,11 @@ fn F(x: X) {
 // CHECK:STDOUT:   %pattern_type.b05: type = pattern_type String [concrete]
 // CHECK:STDOUT:   %str: String = string_literal "hello" [concrete]
 // CHECK:STDOUT:   %Destroy.type: type = facet_type <@Destroy> [concrete]
-// CHECK:STDOUT:   %Op.type.9e1: type = fn_type @Op.2, @impl(%X) [concrete]
+// CHECK:STDOUT:   %Op.type.9e1: type = fn_type @Op.2, @Destroy.impl(%X) [concrete]
 // CHECK:STDOUT:   %Op.33a: %Op.type.9e1 = struct_value () [concrete]
 // CHECK:STDOUT:   %ptr.d17: type = ptr_type %X [concrete]
 // CHECK:STDOUT:   %Op.specific_fn.d1f: <specific function> = specific_function %Op.33a, @Op.2(%X) [concrete]
-// CHECK:STDOUT:   %Op.type.051: type = fn_type @Op.2, @impl(String) [concrete]
+// CHECK:STDOUT:   %Op.type.051: type = fn_type @Op.2, @Destroy.impl(String) [concrete]
 // CHECK:STDOUT:   %Op.5ef: %Op.type.051 = struct_value () [concrete]
 // CHECK:STDOUT:   %Op.specific_fn.93f: <specific function> = specific_function %Op.5ef, @Op.2(String) [concrete]
 // CHECK:STDOUT: }

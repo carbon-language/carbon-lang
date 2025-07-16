@@ -29,9 +29,9 @@ fn Main() {
 // CHECK:STDOUT:   %Int.generic: %Int.type = struct_value () [concrete]
 // CHECK:STDOUT:   %i32: type = class_type @Int, @Int(%int_32) [concrete]
 // CHECK:STDOUT:   %pattern_type.7ce: type = pattern_type %i32 [concrete]
-// CHECK:STDOUT:   %ReadChar.type.fa8: type = fn_type @ReadChar.1 [concrete]
+// CHECK:STDOUT:   %ReadChar.type.fa8: type = fn_type @ReadChar.loc4 [concrete]
 // CHECK:STDOUT:   %ReadChar.7f4: %ReadChar.type.fa8 = struct_value () [concrete]
-// CHECK:STDOUT:   %ReadChar.type.9f3: type = fn_type @ReadChar.2 [concrete]
+// CHECK:STDOUT:   %ReadChar.type.9f3: type = fn_type @ReadChar.1 [concrete]
 // CHECK:STDOUT:   %ReadChar.01f: %ReadChar.type.9f3 = struct_value () [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

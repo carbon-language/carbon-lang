@@ -73,9 +73,9 @@ fn NS();
 // CHECK:STDOUT: --- fail_conflict.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
-// CHECK:STDOUT:   %NS.type.1cad4d.1: type = fn_type @NS.1 [concrete]
+// CHECK:STDOUT:   %NS.type.1cad4d.1: type = fn_type @NS.loc18 [concrete]
 // CHECK:STDOUT:   %NS.b2e2ce.1: %NS.type.1cad4d.1 = struct_value () [concrete]
-// CHECK:STDOUT:   %NS.type.1cad4d.2: type = fn_type @NS.2 [concrete]
+// CHECK:STDOUT:   %NS.type.1cad4d.2: type = fn_type @NS.loc32 [concrete]
 // CHECK:STDOUT:   %NS.b2e2ce.2: %NS.type.1cad4d.2 = struct_value () [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -96,12 +96,12 @@ fn NS();
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %default.import = import <none>
 // CHECK:STDOUT:   %NS.loc8: <namespace> = namespace [concrete] {}
-// CHECK:STDOUT:   %NS.decl.loc18: %NS.type.1cad4d.1 = fn_decl @NS.1 [concrete = constants.%NS.b2e2ce.1] {} {}
+// CHECK:STDOUT:   %NS.decl.loc18: %NS.type.1cad4d.1 = fn_decl @NS.loc18 [concrete = constants.%NS.b2e2ce.1] {} {}
 // CHECK:STDOUT:   %NS.loc22: <namespace> = namespace [concrete] {}
-// CHECK:STDOUT:   %NS.decl.loc32: %NS.type.1cad4d.2 = fn_decl @NS.2 [concrete = constants.%NS.b2e2ce.2] {} {}
+// CHECK:STDOUT:   %NS.decl.loc32: %NS.type.1cad4d.2 = fn_decl @NS.loc32 [concrete = constants.%NS.b2e2ce.2] {} {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @NS.1();
+// CHECK:STDOUT: fn @NS.loc18();
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @NS.2();
+// CHECK:STDOUT: fn @NS.loc32();
 // CHECK:STDOUT:

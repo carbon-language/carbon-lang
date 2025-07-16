@@ -352,11 +352,11 @@ fn Base.F[addr self: Base*]() {
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [concrete]
 // CHECK:STDOUT:   %a: %C = bind_symbolic_name a, 0 [symbolic]
 // CHECK:STDOUT:   %pattern_type: type = pattern_type %C [concrete]
-// CHECK:STDOUT:   %Foo.type.39e446.1: type = generic_class_type @Foo.1 [concrete]
+// CHECK:STDOUT:   %Foo.type.39e446.1: type = generic_class_type @Foo.loc6 [concrete]
 // CHECK:STDOUT:   %Foo.generic.80461b.1: %Foo.type.39e446.1 = struct_value () [concrete]
-// CHECK:STDOUT:   %Foo.type.39e446.2: type = generic_class_type @Foo.2 [concrete]
+// CHECK:STDOUT:   %Foo.type.39e446.2: type = generic_class_type @Foo.loc14 [concrete]
 // CHECK:STDOUT:   %Foo.generic.80461b.2: %Foo.type.39e446.2 = struct_value () [concrete]
-// CHECK:STDOUT:   %Foo.67ab7c.2: type = class_type @Foo.2, @Foo.2(%a) [symbolic]
+// CHECK:STDOUT:   %Foo.67ab7c.2: type = class_type @Foo.loc14, @Foo.loc14(%a) [symbolic]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -365,13 +365,13 @@ fn Base.F[addr self: Base*]() {
 // CHECK:STDOUT:     .Foo = %Foo.decl.loc6
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %C.decl: type = class_decl @C [concrete = constants.%C] {} {}
-// CHECK:STDOUT:   %Foo.decl.loc6: %Foo.type.39e446.1 = class_decl @Foo.1 [concrete = constants.%Foo.generic.80461b.1] {
+// CHECK:STDOUT:   %Foo.decl.loc6: %Foo.type.39e446.1 = class_decl @Foo.loc6 [concrete = constants.%Foo.generic.80461b.1] {
 // CHECK:STDOUT:     %a.patt: %pattern_type = symbolic_binding_pattern a, 0 [concrete]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %C.ref: type = name_ref C, file.%C.decl [concrete = constants.%C]
 // CHECK:STDOUT:     %a.loc6_11.1: %C = bind_symbolic_name a, 0 [symbolic = %a.loc6_11.2 (constants.%a)]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %Foo.decl.loc14: %Foo.type.39e446.2 = class_decl @Foo.2 [concrete = constants.%Foo.generic.80461b.2] {
+// CHECK:STDOUT:   %Foo.decl.loc14: %Foo.type.39e446.2 = class_decl @Foo.loc14 [concrete = constants.%Foo.generic.80461b.2] {
 // CHECK:STDOUT:     %a.patt: %pattern_type = symbolic_binding_pattern a, 0 [concrete]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %C.ref: type = name_ref C, file.%C.decl [concrete = constants.%C]
@@ -388,13 +388,13 @@ fn Base.F[addr self: Base*]() {
 // CHECK:STDOUT:   .Self = constants.%C
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic class @Foo.1(%a.loc6_11.1: %C) {
+// CHECK:STDOUT: generic class @Foo.loc6(%a.loc6_11.1: %C) {
 // CHECK:STDOUT:   %a.loc6_11.2: %C = bind_symbolic_name a, 0 [symbolic = %a.loc6_11.2 (constants.%a)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   class;
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic class @Foo.2(%a.loc14_11.1: %C) {
+// CHECK:STDOUT: generic class @Foo.loc14(%a.loc14_11.1: %C) {
 // CHECK:STDOUT:   %a.loc14_11.2: %C = bind_symbolic_name a, 0 [symbolic = %a.loc14_11.2 (constants.%a)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
@@ -409,11 +409,11 @@ fn Base.F[addr self: Base*]() {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @Foo.1(constants.%a) {
+// CHECK:STDOUT: specific @Foo.loc6(constants.%a) {
 // CHECK:STDOUT:   %a.loc6_11.2 => constants.%a
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @Foo.2(constants.%a) {
+// CHECK:STDOUT: specific @Foo.loc14(constants.%a) {
 // CHECK:STDOUT:   %a.loc14_11.2 => constants.%a
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -646,12 +646,12 @@ fn Base.F[addr self: Base*]() {
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [concrete]
 // CHECK:STDOUT:   %a: %C = bind_symbolic_name a, 0 [symbolic]
 // CHECK:STDOUT:   %pattern_type: type = pattern_type %C [concrete]
-// CHECK:STDOUT:   %Foo.type.39e446.1: type = generic_class_type @Foo.1 [concrete]
+// CHECK:STDOUT:   %Foo.type.39e446.1: type = generic_class_type @Foo.loc7 [concrete]
 // CHECK:STDOUT:   %Foo.generic.80461b.1: %Foo.type.39e446.1 = struct_value () [concrete]
 // CHECK:STDOUT:   %b: %C = bind_symbolic_name b, 0 [symbolic]
-// CHECK:STDOUT:   %Foo.type.39e446.2: type = generic_class_type @Foo.2 [concrete]
+// CHECK:STDOUT:   %Foo.type.39e446.2: type = generic_class_type @Foo.loc15 [concrete]
 // CHECK:STDOUT:   %Foo.generic.80461b.2: %Foo.type.39e446.2 = struct_value () [concrete]
-// CHECK:STDOUT:   %Foo.67ab7c.2: type = class_type @Foo.2, @Foo.2(%b) [symbolic]
+// CHECK:STDOUT:   %Foo.67ab7c.2: type = class_type @Foo.loc15, @Foo.loc15(%b) [symbolic]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -663,13 +663,13 @@ fn Base.F[addr self: Base*]() {
 // CHECK:STDOUT:   %C.decl: type = class_decl @C [concrete = constants.%C] {} {}
 // CHECK:STDOUT:   %C.ref: type = name_ref C, %C.decl [concrete = constants.%C]
 // CHECK:STDOUT:   %D: type = bind_alias D, %C.decl [concrete = constants.%C]
-// CHECK:STDOUT:   %Foo.decl.loc7: %Foo.type.39e446.1 = class_decl @Foo.1 [concrete = constants.%Foo.generic.80461b.1] {
+// CHECK:STDOUT:   %Foo.decl.loc7: %Foo.type.39e446.1 = class_decl @Foo.loc7 [concrete = constants.%Foo.generic.80461b.1] {
 // CHECK:STDOUT:     %a.patt: %pattern_type = symbolic_binding_pattern a, 0 [concrete]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %C.ref: type = name_ref C, file.%C.decl [concrete = constants.%C]
 // CHECK:STDOUT:     %a.loc7_11.1: %C = bind_symbolic_name a, 0 [symbolic = %a.loc7_11.2 (constants.%a)]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %Foo.decl.loc15: %Foo.type.39e446.2 = class_decl @Foo.2 [concrete = constants.%Foo.generic.80461b.2] {
+// CHECK:STDOUT:   %Foo.decl.loc15: %Foo.type.39e446.2 = class_decl @Foo.loc15 [concrete = constants.%Foo.generic.80461b.2] {
 // CHECK:STDOUT:     %b.patt: %pattern_type = symbolic_binding_pattern b, 0 [concrete]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %D.ref: type = name_ref D, file.%D [concrete = constants.%C]
@@ -686,13 +686,13 @@ fn Base.F[addr self: Base*]() {
 // CHECK:STDOUT:   .Self = constants.%C
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic class @Foo.1(%a.loc7_11.1: %C) {
+// CHECK:STDOUT: generic class @Foo.loc7(%a.loc7_11.1: %C) {
 // CHECK:STDOUT:   %a.loc7_11.2: %C = bind_symbolic_name a, 0 [symbolic = %a.loc7_11.2 (constants.%a)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   class;
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic class @Foo.2(%b.loc15_11.1: %C) {
+// CHECK:STDOUT: generic class @Foo.loc15(%b.loc15_11.1: %C) {
 // CHECK:STDOUT:   %b.loc15_11.2: %C = bind_symbolic_name b, 0 [symbolic = %b.loc15_11.2 (constants.%b)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
@@ -707,11 +707,11 @@ fn Base.F[addr self: Base*]() {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @Foo.1(constants.%a) {
+// CHECK:STDOUT: specific @Foo.loc7(constants.%a) {
 // CHECK:STDOUT:   %a.loc7_11.2 => constants.%a
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @Foo.2(constants.%b) {
+// CHECK:STDOUT: specific @Foo.loc15(constants.%b) {
 // CHECK:STDOUT:   %b.loc15_11.2 => constants.%b
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -723,11 +723,11 @@ fn Base.F[addr self: Base*]() {
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [concrete]
 // CHECK:STDOUT:   %a: %C = bind_symbolic_name a, 0 [symbolic]
 // CHECK:STDOUT:   %pattern_type: type = pattern_type %C [concrete]
-// CHECK:STDOUT:   %Foo.type.39e446.1: type = generic_class_type @Foo.1 [concrete]
+// CHECK:STDOUT:   %Foo.type.39e446.1: type = generic_class_type @Foo.loc7 [concrete]
 // CHECK:STDOUT:   %Foo.generic.80461b.1: %Foo.type.39e446.1 = struct_value () [concrete]
-// CHECK:STDOUT:   %Foo.type.39e446.2: type = generic_class_type @Foo.2 [concrete]
+// CHECK:STDOUT:   %Foo.type.39e446.2: type = generic_class_type @Foo.loc15 [concrete]
 // CHECK:STDOUT:   %Foo.generic.80461b.2: %Foo.type.39e446.2 = struct_value () [concrete]
-// CHECK:STDOUT:   %Foo.67ab7c.2: type = class_type @Foo.2, @Foo.2(%a) [symbolic]
+// CHECK:STDOUT:   %Foo.67ab7c.2: type = class_type @Foo.loc15, @Foo.loc15(%a) [symbolic]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -739,13 +739,13 @@ fn Base.F[addr self: Base*]() {
 // CHECK:STDOUT:   %C.decl: type = class_decl @C [concrete = constants.%C] {} {}
 // CHECK:STDOUT:   %C.ref: type = name_ref C, %C.decl [concrete = constants.%C]
 // CHECK:STDOUT:   %D: type = bind_alias D, %C.decl [concrete = constants.%C]
-// CHECK:STDOUT:   %Foo.decl.loc7: %Foo.type.39e446.1 = class_decl @Foo.1 [concrete = constants.%Foo.generic.80461b.1] {
+// CHECK:STDOUT:   %Foo.decl.loc7: %Foo.type.39e446.1 = class_decl @Foo.loc7 [concrete = constants.%Foo.generic.80461b.1] {
 // CHECK:STDOUT:     %a.patt: %pattern_type = symbolic_binding_pattern a, 0 [concrete]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %C.ref: type = name_ref C, file.%C.decl [concrete = constants.%C]
 // CHECK:STDOUT:     %a.loc7_11.1: %C = bind_symbolic_name a, 0 [symbolic = %a.loc7_11.2 (constants.%a)]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %Foo.decl.loc15: %Foo.type.39e446.2 = class_decl @Foo.2 [concrete = constants.%Foo.generic.80461b.2] {
+// CHECK:STDOUT:   %Foo.decl.loc15: %Foo.type.39e446.2 = class_decl @Foo.loc15 [concrete = constants.%Foo.generic.80461b.2] {
 // CHECK:STDOUT:     %a.patt: %pattern_type = symbolic_binding_pattern a, 0 [concrete]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %D.ref: type = name_ref D, file.%D [concrete = constants.%C]
@@ -762,13 +762,13 @@ fn Base.F[addr self: Base*]() {
 // CHECK:STDOUT:   .Self = constants.%C
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic class @Foo.1(%a.loc7_11.1: %C) {
+// CHECK:STDOUT: generic class @Foo.loc7(%a.loc7_11.1: %C) {
 // CHECK:STDOUT:   %a.loc7_11.2: %C = bind_symbolic_name a, 0 [symbolic = %a.loc7_11.2 (constants.%a)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   class;
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic class @Foo.2(%a.loc15_11.1: %C) {
+// CHECK:STDOUT: generic class @Foo.loc15(%a.loc15_11.1: %C) {
 // CHECK:STDOUT:   %a.loc15_11.2: %C = bind_symbolic_name a, 0 [symbolic = %a.loc15_11.2 (constants.%a)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
@@ -783,11 +783,11 @@ fn Base.F[addr self: Base*]() {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @Foo.1(constants.%a) {
+// CHECK:STDOUT: specific @Foo.loc7(constants.%a) {
 // CHECK:STDOUT:   %a.loc7_11.2 => constants.%a
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @Foo.2(constants.%a) {
+// CHECK:STDOUT: specific @Foo.loc15(constants.%a) {
 // CHECK:STDOUT:   %a.loc15_11.2 => constants.%a
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -799,11 +799,11 @@ fn Base.F[addr self: Base*]() {
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [concrete]
 // CHECK:STDOUT:   %a: %C = bind_symbolic_name a, 0 [symbolic]
 // CHECK:STDOUT:   %pattern_type: type = pattern_type %C [concrete]
-// CHECK:STDOUT:   %Foo.type.39e446.1: type = generic_class_type @Foo.1 [concrete]
+// CHECK:STDOUT:   %Foo.type.39e446.1: type = generic_class_type @Foo.loc7 [concrete]
 // CHECK:STDOUT:   %Foo.generic.80461b.1: %Foo.type.39e446.1 = struct_value () [concrete]
-// CHECK:STDOUT:   %Foo.type.39e446.2: type = generic_class_type @Foo.2 [concrete]
+// CHECK:STDOUT:   %Foo.type.39e446.2: type = generic_class_type @Foo.loc15 [concrete]
 // CHECK:STDOUT:   %Foo.generic.80461b.2: %Foo.type.39e446.2 = struct_value () [concrete]
-// CHECK:STDOUT:   %Foo.67ab7c.2: type = class_type @Foo.2, @Foo.2(%a) [symbolic]
+// CHECK:STDOUT:   %Foo.67ab7c.2: type = class_type @Foo.loc15, @Foo.loc15(%a) [symbolic]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -815,13 +815,13 @@ fn Base.F[addr self: Base*]() {
 // CHECK:STDOUT:   %C.decl: type = class_decl @C [concrete = constants.%C] {} {}
 // CHECK:STDOUT:   %C.ref: type = name_ref C, %C.decl [concrete = constants.%C]
 // CHECK:STDOUT:   %D: type = bind_alias D, %C.decl [concrete = constants.%C]
-// CHECK:STDOUT:   %Foo.decl.loc7: %Foo.type.39e446.1 = class_decl @Foo.1 [concrete = constants.%Foo.generic.80461b.1] {
+// CHECK:STDOUT:   %Foo.decl.loc7: %Foo.type.39e446.1 = class_decl @Foo.loc7 [concrete = constants.%Foo.generic.80461b.1] {
 // CHECK:STDOUT:     %a.patt: %pattern_type = symbolic_binding_pattern a, 0 [concrete]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %C.ref: type = name_ref C, file.%C.decl [concrete = constants.%C]
 // CHECK:STDOUT:     %a.loc7_11.1: %C = bind_symbolic_name a, 0 [symbolic = %a.loc7_11.2 (constants.%a)]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %Foo.decl.loc15: %Foo.type.39e446.2 = class_decl @Foo.2 [concrete = constants.%Foo.generic.80461b.2] {
+// CHECK:STDOUT:   %Foo.decl.loc15: %Foo.type.39e446.2 = class_decl @Foo.loc15 [concrete = constants.%Foo.generic.80461b.2] {
 // CHECK:STDOUT:     %a.patt: %pattern_type = symbolic_binding_pattern a, 0 [concrete]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %D.ref: type = name_ref D, file.%D [concrete = constants.%C]
@@ -838,13 +838,13 @@ fn Base.F[addr self: Base*]() {
 // CHECK:STDOUT:   .Self = constants.%C
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic class @Foo.1(%a.loc7_11.1: %C) {
+// CHECK:STDOUT: generic class @Foo.loc7(%a.loc7_11.1: %C) {
 // CHECK:STDOUT:   %a.loc7_11.2: %C = bind_symbolic_name a, 0 [symbolic = %a.loc7_11.2 (constants.%a)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   class;
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic class @Foo.2(%a.loc15_11.1: %C) {
+// CHECK:STDOUT: generic class @Foo.loc15(%a.loc15_11.1: %C) {
 // CHECK:STDOUT:   %a.loc15_11.2: %C = bind_symbolic_name a, 0 [symbolic = %a.loc15_11.2 (constants.%a)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
@@ -859,11 +859,11 @@ fn Base.F[addr self: Base*]() {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @Foo.1(constants.%a) {
+// CHECK:STDOUT: specific @Foo.loc7(constants.%a) {
 // CHECK:STDOUT:   %a.loc7_11.2 => constants.%a
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @Foo.2(constants.%a) {
+// CHECK:STDOUT: specific @Foo.loc15(constants.%a) {
 // CHECK:STDOUT:   %a.loc15_11.2 => constants.%a
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -985,11 +985,11 @@ fn Base.F[addr self: Base*]() {
 // CHECK:STDOUT:   %const: type = const_type %C [concrete]
 // CHECK:STDOUT:   %a: %const = bind_symbolic_name a, 0 [symbolic]
 // CHECK:STDOUT:   %pattern_type: type = pattern_type %const [concrete]
-// CHECK:STDOUT:   %Foo.type.39e446.1: type = generic_class_type @Foo.1 [concrete]
+// CHECK:STDOUT:   %Foo.type.39e446.1: type = generic_class_type @Foo.loc6 [concrete]
 // CHECK:STDOUT:   %Foo.generic.80461b.1: %Foo.type.39e446.1 = struct_value () [concrete]
-// CHECK:STDOUT:   %Foo.type.39e446.2: type = generic_class_type @Foo.2 [concrete]
+// CHECK:STDOUT:   %Foo.type.39e446.2: type = generic_class_type @Foo.loc18 [concrete]
 // CHECK:STDOUT:   %Foo.generic.80461b.2: %Foo.type.39e446.2 = struct_value () [concrete]
-// CHECK:STDOUT:   %Foo.1a4f0e.2: type = class_type @Foo.2, @Foo.2(%a) [symbolic]
+// CHECK:STDOUT:   %Foo.1a4f0e.2: type = class_type @Foo.loc18, @Foo.loc18(%a) [symbolic]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -998,7 +998,7 @@ fn Base.F[addr self: Base*]() {
 // CHECK:STDOUT:     .Foo = %Foo.decl.loc6
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %C.decl: type = class_decl @C [concrete = constants.%C] {} {}
-// CHECK:STDOUT:   %Foo.decl.loc6: %Foo.type.39e446.1 = class_decl @Foo.1 [concrete = constants.%Foo.generic.80461b.1] {
+// CHECK:STDOUT:   %Foo.decl.loc6: %Foo.type.39e446.1 = class_decl @Foo.loc6 [concrete = constants.%Foo.generic.80461b.1] {
 // CHECK:STDOUT:     %a.patt: %pattern_type = symbolic_binding_pattern a, 0 [concrete]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %.loc6: type = splice_block %const [concrete = constants.%const] {
@@ -1007,7 +1007,7 @@ fn Base.F[addr self: Base*]() {
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %a.loc6_11.1: %const = bind_symbolic_name a, 0 [symbolic = %a.loc6_11.2 (constants.%a)]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %Foo.decl.loc18: %Foo.type.39e446.2 = class_decl @Foo.2 [concrete = constants.%Foo.generic.80461b.2] {
+// CHECK:STDOUT:   %Foo.decl.loc18: %Foo.type.39e446.2 = class_decl @Foo.loc18 [concrete = constants.%Foo.generic.80461b.2] {
 // CHECK:STDOUT:     %a.patt: %pattern_type = symbolic_binding_pattern a, 0 [concrete]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %.loc18: type = splice_block %const.loc18_15 [concrete = constants.%const] {
@@ -1028,13 +1028,13 @@ fn Base.F[addr self: Base*]() {
 // CHECK:STDOUT:   .Self = constants.%C
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic class @Foo.1(%a.loc6_11.1: %const) {
+// CHECK:STDOUT: generic class @Foo.loc6(%a.loc6_11.1: %const) {
 // CHECK:STDOUT:   %a.loc6_11.2: %const = bind_symbolic_name a, 0 [symbolic = %a.loc6_11.2 (constants.%a)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   class;
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic class @Foo.2(%a.loc18_11.1: %const) {
+// CHECK:STDOUT: generic class @Foo.loc18(%a.loc18_11.1: %const) {
 // CHECK:STDOUT:   %a.loc18_11.2: %const = bind_symbolic_name a, 0 [symbolic = %a.loc18_11.2 (constants.%a)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
@@ -1049,11 +1049,11 @@ fn Base.F[addr self: Base*]() {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @Foo.1(constants.%a) {
+// CHECK:STDOUT: specific @Foo.loc6(constants.%a) {
 // CHECK:STDOUT:   %a.loc6_11.2 => constants.%a
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @Foo.2(constants.%a) {
+// CHECK:STDOUT: specific @Foo.loc18(constants.%a) {
 // CHECK:STDOUT:   %a.loc18_11.2 => constants.%a
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -1066,11 +1066,11 @@ fn Base.F[addr self: Base*]() {
 // CHECK:STDOUT:   %ptr.11f: type = ptr_type %Base [concrete]
 // CHECK:STDOUT:   %pattern_type.1b9: type = pattern_type %ptr.11f [concrete]
 // CHECK:STDOUT:   %pattern_type.f6d: type = pattern_type auto [concrete]
-// CHECK:STDOUT:   %F.type.7c6384.1: type = fn_type @F.1 [concrete]
+// CHECK:STDOUT:   %F.type.7c6384.1: type = fn_type @F.loc7 [concrete]
 // CHECK:STDOUT:   %F.d17bbc.1: %F.type.7c6384.1 = struct_value () [concrete]
 // CHECK:STDOUT:   %struct_type.a: type = struct_type {.a: %empty_tuple.type} [concrete]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %struct_type.a [concrete]
-// CHECK:STDOUT:   %F.type.7c6384.2: type = fn_type @F.2 [concrete]
+// CHECK:STDOUT:   %F.type.7c6384.2: type = fn_type @F.loc17 [concrete]
 // CHECK:STDOUT:   %F.d17bbc.2: %F.type.7c6384.2 = struct_value () [concrete]
 // CHECK:STDOUT:   %empty_tuple: %empty_tuple.type = tuple_value () [concrete]
 // CHECK:STDOUT: }
@@ -1080,7 +1080,7 @@ fn Base.F[addr self: Base*]() {
 // CHECK:STDOUT:     .Base = %Base.decl
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Base.decl: type = class_decl @Base [concrete = constants.%Base] {} {}
-// CHECK:STDOUT:   %F.decl: %F.type.7c6384.2 = fn_decl @F.2 [concrete = constants.%F.d17bbc.2] {
+// CHECK:STDOUT:   %F.decl: %F.type.7c6384.2 = fn_decl @F.loc17 [concrete = constants.%F.d17bbc.2] {
 // CHECK:STDOUT:     %self.patt: %pattern_type.1b9 = binding_pattern self [concrete]
 // CHECK:STDOUT:     %self.param_patt: %pattern_type.1b9 = value_param_pattern %self.patt, call_param0 [concrete]
 // CHECK:STDOUT:     %.loc17_11: %pattern_type.f6d = addr_pattern %self.param_patt [concrete]
@@ -1098,7 +1098,7 @@ fn Base.F[addr self: Base*]() {
 // CHECK:STDOUT:   %.loc5_11.1: %empty_tuple.type = tuple_literal ()
 // CHECK:STDOUT:   %.loc5_11.2: type = converted %.loc5_11.1, constants.%empty_tuple.type [concrete = constants.%empty_tuple.type]
 // CHECK:STDOUT:   %.loc5_8: %Base.elem = field_decl a, element0 [concrete]
-// CHECK:STDOUT:   %F.decl: %F.type.7c6384.1 = fn_decl @F.1 [concrete = constants.%F.d17bbc.1] {
+// CHECK:STDOUT:   %F.decl: %F.type.7c6384.1 = fn_decl @F.loc7 [concrete = constants.%F.d17bbc.1] {
 // CHECK:STDOUT:     %self.patt: %pattern_type.1b9 = binding_pattern self [concrete]
 // CHECK:STDOUT:     %self.param_patt: %pattern_type.1b9 = value_param_pattern %self.patt, call_param0 [concrete]
 // CHECK:STDOUT:     %.loc7_8: %pattern_type.f6d = addr_pattern %self.param_patt [concrete]
@@ -1121,9 +1121,9 @@ fn Base.F[addr self: Base*]() {
 // CHECK:STDOUT:   .Base = <poisoned>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @F.1(%self.param: %ptr.11f);
+// CHECK:STDOUT: fn @F.loc7(%self.param: %ptr.11f);
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @F.2(%self.param: %ptr.11f) {
+// CHECK:STDOUT: fn @F.loc17(%self.param: %ptr.11f) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %self.ref: %ptr.11f = name_ref self, %self
 // CHECK:STDOUT:   %.loc18_4: ref %Base = deref %self.ref

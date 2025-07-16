@@ -277,10 +277,10 @@ interface C {
 // CHECK:STDOUT:   %impl.elem0.dde: type = impl_witness_access %I2.lookup_impl_witness.ebe, element0 [symbolic_self]
 // CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [concrete]
 // CHECK:STDOUT:   %I2_where.type: type = facet_type <@I2 where %impl.elem0.dde = %empty_tuple.type> [concrete]
-// CHECK:STDOUT:   %I2.impl_witness.2ab13d.1: <witness> = impl_witness file.%I2.impl_witness_table, @impl(%V) [symbolic]
+// CHECK:STDOUT:   %I2.impl_witness.2ab13d.1: <witness> = impl_witness file.%I2.impl_witness_table, @I2.impl(%V) [symbolic]
 // CHECK:STDOUT:   %Self.541: %J2.type = bind_symbolic_name Self, 0 [symbolic]
 // CHECK:STDOUT:   %Self.as_type: type = facet_access_type %Self.541 [symbolic]
-// CHECK:STDOUT:   %I2.impl_witness.2ab13d.2: <witness> = impl_witness file.%I2.impl_witness_table, @impl(%Self.541) [symbolic]
+// CHECK:STDOUT:   %I2.impl_witness.2ab13d.2: <witness> = impl_witness file.%I2.impl_witness_table, @I2.impl(%Self.541) [symbolic]
 // CHECK:STDOUT:   %I2.lookup_impl_witness.487: <witness> = lookup_impl_witness %Self.541, @I2 [symbolic]
 // CHECK:STDOUT:   %I2.facet.758: %I2.type = facet_value %Self.as_type, (%I2.lookup_impl_witness.487) [symbolic]
 // CHECK:STDOUT:   %impl.elem0.7c7: type = impl_witness_access %I2.lookup_impl_witness.487, element0 [symbolic]
@@ -306,7 +306,7 @@ interface C {
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %I2.decl: type = interface_decl @I2 [concrete = constants.%I2.type] {} {}
 // CHECK:STDOUT:   %J2.decl.loc9: type = interface_decl @J2 [concrete = constants.%J2.type] {} {}
-// CHECK:STDOUT:   impl_decl @impl [concrete] {
+// CHECK:STDOUT:   impl_decl @I2.impl [concrete] {
 // CHECK:STDOUT:     %V.patt: %pattern_type.f47 = symbolic_binding_pattern V, 0 [concrete]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %V.ref: %J2.type = name_ref V, %V.loc11_14.1 [symbolic = %V.loc11_14.2 (constants.%V)]
@@ -327,8 +327,8 @@ interface C {
 // CHECK:STDOUT:     %J2.ref: type = name_ref J2, file.%J2.decl.loc9 [concrete = constants.%J2.type]
 // CHECK:STDOUT:     %V.loc11_14.1: %J2.type = bind_symbolic_name V, 0 [symbolic = %V.loc11_14.2 (constants.%V)]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %I2.impl_witness_table = impl_witness_table (%impl_witness_assoc_constant), @impl [concrete]
-// CHECK:STDOUT:   %I2.impl_witness: <witness> = impl_witness %I2.impl_witness_table, @impl(constants.%V) [symbolic = @impl.%I2.impl_witness (constants.%I2.impl_witness.2ab13d.1)]
+// CHECK:STDOUT:   %I2.impl_witness_table = impl_witness_table (%impl_witness_assoc_constant), @I2.impl [concrete]
+// CHECK:STDOUT:   %I2.impl_witness: <witness> = impl_witness %I2.impl_witness_table, @I2.impl(constants.%V) [symbolic = @I2.impl.%I2.impl_witness (constants.%I2.impl_witness.2ab13d.1)]
 // CHECK:STDOUT:   %impl_witness_assoc_constant: type = impl_witness_assoc_constant constants.%empty_tuple.type [concrete = constants.%empty_tuple.type]
 // CHECK:STDOUT:   %J2.decl.loc13: type = interface_decl @J2 [concrete = constants.%J2.type] {} {}
 // CHECK:STDOUT: }
@@ -382,10 +382,10 @@ interface C {
 // CHECK:STDOUT:   assoc_const T2:! type;
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic impl @impl(%V.loc11_14.1: %J2.type) {
+// CHECK:STDOUT: generic impl @I2.impl(%V.loc11_14.1: %J2.type) {
 // CHECK:STDOUT:   %V.loc11_14.2: %J2.type = bind_symbolic_name V, 0 [symbolic = %V.loc11_14.2 (constants.%V)]
 // CHECK:STDOUT:   %V.as_type.loc11_22.2: type = facet_access_type %V.loc11_14.2 [symbolic = %V.as_type.loc11_22.2 (constants.%V.as_type)]
-// CHECK:STDOUT:   %I2.impl_witness: <witness> = impl_witness file.%I2.impl_witness_table, @impl(%V.loc11_14.2) [symbolic = %I2.impl_witness (constants.%I2.impl_witness.2ab13d.1)]
+// CHECK:STDOUT:   %I2.impl_witness: <witness> = impl_witness file.%I2.impl_witness_table, @I2.impl(%V.loc11_14.2) [symbolic = %I2.impl_witness (constants.%I2.impl_witness.2ab13d.1)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:
@@ -410,13 +410,13 @@ interface C {
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @T2(constants.%I2.facet.708) {}
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @impl(constants.%V) {
+// CHECK:STDOUT: specific @I2.impl(constants.%V) {
 // CHECK:STDOUT:   %V.loc11_14.2 => constants.%V
 // CHECK:STDOUT:   %V.as_type.loc11_22.2 => constants.%V.as_type
 // CHECK:STDOUT:   %I2.impl_witness => constants.%I2.impl_witness.2ab13d.1
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @impl(constants.%Self.541) {
+// CHECK:STDOUT: specific @I2.impl(constants.%Self.541) {
 // CHECK:STDOUT:   %V.loc11_14.2 => constants.%Self.541
 // CHECK:STDOUT:   %V.as_type.loc11_22.2 => constants.%Self.as_type
 // CHECK:STDOUT:   %I2.impl_witness => constants.%I2.impl_witness.2ab13d.2

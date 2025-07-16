@@ -175,6 +175,13 @@ auto Mangler::Mangle(SemIR::FunctionId function_id,
   // the mangling.
   MangleInverseQualifiedNameScope(os, function.parent_scope_id);
 
+  MangleSpecificId(os, specific_id);
+
+  return os.TakeStr();
+}
+
+auto Mangler::MangleSpecificId(llvm::raw_ostream& os,
+                               SemIR::SpecificId specific_id) -> void {
   // TODO: Add proper support for mangling generic entities. For now we use a
   // fingerprint of the specific arguments, which should be stable across files,
   // but isn't necessarily stable across toolchain changes.
@@ -186,8 +193,6 @@ auto Mangler::Mangle(SemIR::FunctionId function_id,
             &sem_ir(), sem_ir().specifics().Get(specific_id).args_id),
         llvm::HexPrintStyle::Lower, 16);
   }
-
-  return os.TakeStr();
 }
 
 auto Mangler::MangleGlobalVariable(SemIR::InstId pattern_id) -> std::string {
@@ -215,7 +220,8 @@ auto Mangler::MangleCppClang(const clang::NamedDecl* decl) -> std::string {
       .str();
 }
 
-auto Mangler::MangleVTable(const SemIR::Class& class_info) -> std::string {
+auto Mangler::MangleVTable(const SemIR::Class& class_info,
+                           SemIR::SpecificId specific_id) -> std::string {
   RawStringOstream os;
   os << "_C";
 
@@ -225,6 +231,8 @@ auto Mangler::MangleVTable(const SemIR::Class& class_info) -> std::string {
   MangleInverseQualifiedNameScope(os, class_info.parent_scope_id);
 
   os << ".$vtable";
+
+  MangleSpecificId(os, specific_id);
 
   return os.TakeStr();
 }
