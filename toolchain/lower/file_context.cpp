@@ -970,13 +970,13 @@ auto FileContext::BuildVtable(const SemIR::Vtable& vtable,
   vfuncs.reserve(vtable_inst_block.size());
 
   for (auto fn_decl_id : vtable_inst_block) {
-    auto fn_decl = GetCalleeFunction(sem_ir(), fn_decl_id, specific_id);
+    auto [fn_decl, fn_id, fn_specific_id] =
+        DecomposeVirtualFunction(sem_ir(), fn_decl_id, specific_id);
+
     vfuncs.push_back(llvm::ConstantExpr::getTrunc(
         llvm::ConstantExpr::getSub(
             llvm::ConstantExpr::getPtrToInt(
-                GetOrCreateFunction(fn_decl.function_id,
-                                    fn_decl.resolved_specific_id),
-                i64_type),
+                GetOrCreateFunction(fn_id, fn_specific_id), i64_type),
             vtable_const_int),
         i32_type));
   }
