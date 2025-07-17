@@ -84,7 +84,7 @@ auto DecomposeVirtualFunction(const File& sem_ir, InstId fn_decl_id,
   auto fn_type_inst =
       sem_ir.types().GetAsInst(sem_ir.insts().Get(callee_id).type_id());
 
-  return {fn_decl_id, fn_type_inst.As<FunctionType>().function_id, specific_id};
+  return {.fn_decl_id = fn_decl_id, .function_id = fn_type_inst.As<FunctionType>().function_id, .specific_id = specific_id};
 }
 
 auto Function::GetParamPatternInfoFromPatternId(const File& sem_ir,
