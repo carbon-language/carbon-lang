@@ -38,6 +38,7 @@
 #include "toolchain/diagnostics/diagnostic_emitter.h"
 #include "toolchain/diagnostics/format_providers.h"
 #include "toolchain/parse/node_ids.h"
+#include "toolchain/sem_ir/clang_decl.h"
 #include "toolchain/sem_ir/ids.h"
 #include "toolchain/sem_ir/name_scope.h"
 #include "toolchain/sem_ir/typed_insts.h"
@@ -462,8 +463,21 @@ static auto ClangLookup(Context& context, SemIR::NameScopeId scope_id,
   return lookup;
 }
 
+// If `decl` already mapped to an instruction, returns that instruction.
+// Otherwise returns `None`.
+static auto LookupClangDeclInstId(Context& context, clang::Decl* decl)
+    -> SemIR::InstId {
+  auto& clang_decls = context.sem_ir().clang_decls();
+  if (auto context_clang_decl_id = clang_decls.Lookup(decl);
+      context_clang_decl_id.has_value()) {
+    return clang_decls.Get(context_clang_decl_id).inst_id;
+  }
+  return SemIR::InstId::None;
+}
+
 // Imports a namespace declaration from Clang to Carbon. If successful, returns
-// the new Carbon namespace declaration `InstId`.
+// the new Carbon namespace declaration `InstId`. If the declaration was already
+// imported, returns the mapped instruction.
 static auto ImportNamespaceDecl(Context& context,
                                 SemIR::NameScopeId parent_scope_id,
                                 SemIR::NameId name_id,
@@ -484,14 +498,16 @@ static auto AsCarbonNamespace(Context& context,
                               clang::DeclContext* decl_context)
     -> SemIR::InstId {
   CARBON_CHECK(decl_context);
-  auto& clang_decls = context.sem_ir().clang_decls();
-
-  // Check if the decl context is already mapped to a Carbon namespace.
-  if (auto context_clang_decl_id =
-          clang_decls.Lookup(clang::dyn_cast<clang::Decl>(decl_context));
-      context_clang_decl_id.has_value()) {
-    return clang_decls.Get(context_clang_decl_id).inst_id;
+  // Check if the declaration is already mapped.
+  // TODO: Try to avoid this check by rotating the loops below so they treat the
+  // given decl_context the same at its enclosing contexts.
+  if (SemIR::InstId existing_inst_id = LookupClangDeclInstId(
+          context, clang::dyn_cast<clang::Decl>(decl_context));
+      existing_inst_id.has_value()) {
+    return existing_inst_id;
   }
+
+  auto& clang_decls = context.sem_ir().clang_decls();
 
   // We know we have at least one context to map, add all decl contexts we need
   // to map.
@@ -681,12 +697,9 @@ static auto MapRecordType(Context& context, SemIR::LocId loc_id,
     return {.inst_id = SemIR::TypeInstId::None, .type_id = SemIR::TypeId::None};
   }
 
-  auto& clang_decls = context.sem_ir().clang_decls();
-  SemIR::InstId record_inst_id = SemIR::InstId::None;
-  if (auto record_clang_decl_id = clang_decls.Lookup(record_decl);
-      record_clang_decl_id.has_value()) {
-    record_inst_id = clang_decls.Get(record_clang_decl_id).inst_id;
-  } else {
+  // Check if the declaration is already mapped.
+  SemIR::InstId record_inst_id = LookupClangDeclInstId(context, record_decl);
+  if (!record_inst_id.has_value()) {
     auto parent_inst_id =
         AsCarbonNamespace(context, record_decl->getDeclContext());
     auto parent_name_scope_id =
@@ -1041,18 +1054,27 @@ static auto CreateFunctionParamsInsts(Context& context, SemIR::LocId loc_id,
 }
 
 // Imports a function declaration from Clang to Carbon. If successful, returns
-// the new Carbon function declaration `InstId`.
+// the new Carbon function declaration `InstId`. If the declaration was already
+// imported, returns the mapped instruction.
 static auto ImportFunctionDecl(Context& context, SemIR::LocId loc_id,
                                SemIR::NameScopeId scope_id,
                                SemIR::NameId name_id,
                                clang::FunctionDecl* clang_decl)
     -> SemIR::InstId {
+  // Check if the declaration is already mapped.
+  if (SemIR::InstId existing_inst_id =
+          LookupClangDeclInstId(context, clang_decl);
+      existing_inst_id.has_value()) {
+    return existing_inst_id;
+  }
+
   if (clang_decl->isVariadic()) {
     context.TODO(loc_id, "Unsupported: Variadic function");
     MarkFailedDecl(context, clang_decl);
     return SemIR::ErrorInst::InstId;
   }
-  if (clang_decl->getTemplatedKind() != clang::FunctionDecl::TK_NonTemplate) {
+  if (clang_decl->getTemplatedKind() ==
+      clang::FunctionDecl::TK_FunctionTemplate) {
     context.TODO(loc_id, "Unsupported: Template function");
     MarkFailedDecl(context, clang_decl);
     return SemIR::ErrorInst::InstId;
@@ -1114,6 +1136,9 @@ static auto ImportFunctionDecl(Context& context, SemIR::LocId loc_id,
 }
 // Imports a declaration from Clang to Carbon. If successful, returns the
 // instruction for the new Carbon declaration.
+// TODO: Remove `scope_id` parameter since we the scope the name was found in
+// isn't necessarily the parent scope. See
+// https://github.com/carbon-language/carbon-lang/pull/5789/files/a5629ebb303c5b1aef46181eb860b7065ca1aaf1#r2201769611
 static auto ImportNameDecl(Context& context, SemIR::LocId loc_id,
                            SemIR::NameScopeId scope_id, SemIR::NameId name_id,
                            clang::NamedDecl* clang_decl) -> SemIR::InstId {
@@ -1123,8 +1148,8 @@ static auto ImportNameDecl(Context& context, SemIR::LocId loc_id,
   }
   if (auto* clang_namespace_decl =
           clang::dyn_cast<clang::NamespaceDecl>(clang_decl)) {
-    return ImportNamespaceDecl(context, scope_id, name_id,
-                               clang_namespace_decl);
+    return AsCarbonNamespace(
+        context, llvm::dyn_cast<clang::DeclContext>(clang_namespace_decl));
   }
   if (auto* type_decl = clang::dyn_cast<clang::TypeDecl>(clang_decl)) {
     auto type = type_decl->getASTContext().getTypeDeclType(type_decl);

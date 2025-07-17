@@ -567,11 +567,9 @@ fn MyF(bar: Cpp.Bar*);
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [concrete]
 // CHECK:STDOUT:   %Bar1: type = class_type @Bar1 [concrete]
-// CHECK:STDOUT:   %foo1.type.148: type = fn_type @foo1.1 [concrete]
-// CHECK:STDOUT:   %foo1.8cd: %foo1.type.148 = struct_value () [concrete]
+// CHECK:STDOUT:   %foo1.type: type = fn_type @foo1 [concrete]
+// CHECK:STDOUT:   %foo1: %foo1.type = struct_value () [concrete]
 // CHECK:STDOUT:   %Bar2: type = class_type @Bar2 [concrete]
-// CHECK:STDOUT:   %foo1.type.0b8: type = fn_type @foo1.2 [concrete]
-// CHECK:STDOUT:   %foo1.ba2: %foo1.type.0b8 = struct_value () [concrete]
 // CHECK:STDOUT:   %foo2.type: type = fn_type @foo2 [concrete]
 // CHECK:STDOUT:   %foo2: %foo2.type = struct_value () [concrete]
 // CHECK:STDOUT: }
@@ -583,9 +581,8 @@ fn MyF(bar: Cpp.Bar*);
 // CHECK:STDOUT:     import Cpp//...
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Bar1.decl: type = class_decl @Bar1 [concrete = constants.%Bar1] {} {}
-// CHECK:STDOUT:   %foo1.decl.c80: %foo1.type.148 = fn_decl @foo1.1 [concrete = constants.%foo1.8cd] {} {}
+// CHECK:STDOUT:   %foo1.decl: %foo1.type = fn_decl @foo1 [concrete = constants.%foo1] {} {}
 // CHECK:STDOUT:   %Bar2.decl: type = class_decl @Bar2 [concrete = constants.%Bar2] {} {}
-// CHECK:STDOUT:   %foo1.decl.191: %foo1.type.0b8 = fn_decl @foo1.2 [concrete = constants.%foo1.ba2] {} {}
 // CHECK:STDOUT:   %foo2.decl: %foo2.type = fn_decl @foo2 [concrete = constants.%foo2] {} {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -594,12 +591,12 @@ fn MyF(bar: Cpp.Bar*);
 // CHECK:STDOUT:   %Cpp.ref.loc8: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT:   %Bar1.ref: type = name_ref Bar1, imports.%Bar1.decl [concrete = constants.%Bar1]
-// CHECK:STDOUT:   %foo1.ref.loc8: %foo1.type.148 = name_ref foo1, imports.%foo1.decl.c80 [concrete = constants.%foo1.8cd]
+// CHECK:STDOUT:   %foo1.ref.loc8: %foo1.type = name_ref foo1, imports.%foo1.decl [concrete = constants.%foo1]
 // CHECK:STDOUT:   %foo1.call.loc8: init %empty_tuple.type = call %foo1.ref.loc8()
 // CHECK:STDOUT:   %Cpp.ref.loc9: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT:   %Bar2.ref.loc9: type = name_ref Bar2, imports.%Bar2.decl [concrete = constants.%Bar2]
-// CHECK:STDOUT:   %foo1.ref.loc9: %foo1.type.0b8 = name_ref foo1, imports.%foo1.decl.191 [concrete = constants.%foo1.ba2]
+// CHECK:STDOUT:   %foo1.ref.loc9: %foo1.type = name_ref foo1, imports.%foo1.decl [concrete = constants.%foo1]
 // CHECK:STDOUT:   %foo1.call.loc9: init %empty_tuple.type = call %foo1.ref.loc9()
 // CHECK:STDOUT:   %Cpp.ref.loc10: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
 // CHECK:STDOUT:   %Bar2.ref.loc10: type = name_ref Bar2, imports.%Bar2.decl [concrete = constants.%Bar2]
