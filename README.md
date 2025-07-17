@@ -357,14 +357,9 @@ Learn more about the Carbon project:
 -   [Carbon Toolchain](/toolchain)
 -   [FAQ](/docs/project/faq.md)
 
-## Talks
+## Conference Talks
 
 Carbon focused talks from the community:
-
-### 2025
-
--   How we compile, Google tech talk ([video](https://youtu.be/HBUAWvwo3qg),
-    [slides](https://drive.google.com/file/d/1YoM1lz74PsBs0KQIyAVb3cGh5G0WL2Ik/view))
 
 ### 2024
 
@@ -409,6 +404,10 @@ Carbon focused talks from the community:
 -   Carbon Language: An experimental successor to C++, CppNorth
     ([video](https://youtu.be/omrY53kbVoA),
     [slides](https://chandlerc.blog/slides/2022-07-19-cppnorth-keynote/#/))
+
+### Other videos
+
+We additionally have [toolchain videos](/toolchain/docs/README.md#videos).
 
 ## Join us
 
