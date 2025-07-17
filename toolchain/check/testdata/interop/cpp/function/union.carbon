@@ -270,8 +270,7 @@ union O {
   union U {};
 };
 
-auto foo1(O::U) -> void;
-auto foo2(O) -> void;
+auto foo(O::U) -> void;
 
 // --- fail_todo_import_inner_and_outer_value_param_type.carbon
 
@@ -281,13 +280,13 @@ import Cpp library "inner_and_outer_value_param_type.h";
 
 fn F() {
   // CHECK:STDERR: fail_todo_import_inner_and_outer_value_param_type.carbon:[[@LINE+7]]:3: error: semantics TODO: `Unsupported mapping of a C++ record to a type within a declaration context that is not the translation unit or a namespace` [SemanticsTodo]
-  // CHECK:STDERR:   Cpp.foo1({});
-  // CHECK:STDERR:   ^~~~~~~~
-  // CHECK:STDERR: fail_todo_import_inner_and_outer_value_param_type.carbon:[[@LINE+4]]:3: note: in `Cpp` name lookup for `foo1` [InCppNameLookup]
-  // CHECK:STDERR:   Cpp.foo1({});
-  // CHECK:STDERR:   ^~~~~~~~
+  // CHECK:STDERR:   Cpp.foo({});
+  // CHECK:STDERR:   ^~~~~~~
+  // CHECK:STDERR: fail_todo_import_inner_and_outer_value_param_type.carbon:[[@LINE+4]]:3: note: in `Cpp` name lookup for `foo` [InCppNameLookup]
+  // CHECK:STDERR:   Cpp.foo({});
+  // CHECK:STDERR:   ^~~~~~~
   // CHECK:STDERR:
-  Cpp.foo1({});
+  Cpp.foo({});
   //@dump-sem-ir-begin
   var x: Cpp.O;
   //@dump-sem-ir-end
@@ -769,8 +768,8 @@ fn F() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [concrete]
-// CHECK:STDOUT:   %foo1.type: type = fn_type @foo1 [concrete]
-// CHECK:STDOUT:   %foo1: %foo1.type = struct_value () [concrete]
+// CHECK:STDOUT:   %foo.type: type = fn_type @foo [concrete]
+// CHECK:STDOUT:   %foo: %foo.type = struct_value () [concrete]
 // CHECK:STDOUT:   %O: type = class_type @O [concrete]
 // CHECK:STDOUT:   %pattern_type.cff: type = pattern_type %O [concrete]
 // CHECK:STDOUT:   %Op.type.1b8: type = fn_type @Op.2, @Destroy.impl(%O) [concrete]
@@ -780,11 +779,11 @@ fn F() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT:   %Cpp: <namespace> = namespace file.%Cpp.import_cpp, [concrete] {
-// CHECK:STDOUT:     .foo1 = %foo1.decl
+// CHECK:STDOUT:     .foo = %foo.decl
 // CHECK:STDOUT:     .O = %O.decl
 // CHECK:STDOUT:     import Cpp//...
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %foo1.decl: %foo1.type = fn_decl @foo1 [concrete = constants.%foo1] {
+// CHECK:STDOUT:   %foo.decl: %foo.type = fn_decl @foo [concrete = constants.%foo] {
 // CHECK:STDOUT:     <elided>
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     <elided>
