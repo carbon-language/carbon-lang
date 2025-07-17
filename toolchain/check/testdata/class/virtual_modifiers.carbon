@@ -104,7 +104,11 @@ fn Use() {
 library "[[@TEST_NAME]]";
 
 class C {
-  // CHECK:STDERR: fail_modifiers.carbon:[[@LINE+4]]:3: error: impl without base class [ImplWithoutBase]
+  // CHECK:STDERR: fail_modifiers.carbon:[[@LINE+8]]:3: error: impl without base class [ImplWithoutBase]
+  // CHECK:STDERR:   impl fn F[self: Self]();
+  // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~~~~~
+  // CHECK:STDERR:
+  // CHECK:STDERR: fail_modifiers.carbon:[[@LINE+4]]:3: error: impl without compatible virtual in base class [ImplWithoutVirtualInBase]
   // CHECK:STDERR:   impl fn F[self: Self]();
   // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~~~~~
   // CHECK:STDERR:
@@ -132,7 +136,7 @@ fn F() {
   b1.m2 = 4;
 }
 
-// --- todo_fail_impl_without_base_declaration.carbon
+// --- fail_impl_without_base_declaration.carbon
 
 library "[[@TEST_NAME]]";
 
@@ -141,6 +145,10 @@ base class Base {
 
 class Derived {
   extend base: Base;
+  // CHECK:STDERR: fail_impl_without_base_declaration.carbon:[[@LINE+4]]:3: error: impl without compatible virtual in base class [ImplWithoutVirtualInBase]
+  // CHECK:STDERR:   impl fn F[self: Self]();
+  // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~~~~~
+  // CHECK:STDERR:
   impl fn F[self: Self]();
 }
 
@@ -1534,7 +1542,7 @@ var v: Base(T1) = {};
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- todo_fail_impl_without_base_declaration.carbon
+// CHECK:STDOUT: --- fail_impl_without_base_declaration.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %Base: type = class_type @Base [concrete]

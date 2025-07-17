@@ -169,6 +169,7 @@ static auto BuildVtable(Context& context, Parse::ClassDefinitionId node_id,
   };
 
   llvm::SmallVector<SemIR::InstId> vtable;
+  Set<SemIR::FunctionId> implemented_impls;
   if (base_vtable_id.has_value()) {
     auto base_vtable_inst_block = context.inst_blocks().Get(
         context.vtables().Get(base_vtable_id).virtual_functions_id);
@@ -190,8 +191,10 @@ static auto BuildVtable(Context& context, Parse::ClassDefinitionId node_id,
                    override_fn.name_id == fn.name_id;
           });
       if (i != vtable_contents.end()) {
-        auto& override_fn = context.functions().Get(
-            context.insts().GetAs<SemIR::FunctionDecl>(*i).function_id);
+        auto override_fn_id =
+            context.insts().GetAs<SemIR::FunctionDecl>(*i).function_id;
+        implemented_impls.Insert(override_fn_id);
+        auto& override_fn = context.functions().Get(override_fn_id);
         CheckFunctionTypeMatches(context, override_fn, fn, specific_id,
                                  /*check_syntax=*/false,
                                  /*check_self=*/false);
@@ -209,6 +212,10 @@ static auto BuildVtable(Context& context, Parse::ClassDefinitionId node_id,
     if (fn.virtual_modifier != SemIR::FunctionFields::VirtualModifier::Impl) {
       fn.virtual_index = vtable.size();
       vtable.push_back(build_specific_function(inst_id));
+    } else if (!implemented_impls.Lookup(fn_decl.function_id)) {
+      CARBON_DIAGNOSTIC(ImplWithoutVirtualInBase, Error,
+                        "impl without compatible virtual in base class");
+      context.emitter().Emit(SemIR::LocId(inst_id), ImplWithoutVirtualInBase);
     }
   }
 
