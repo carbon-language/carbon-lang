@@ -60,7 +60,7 @@ struct ConversionTarget {
 // TODO: The `vtable_id` parameter is too much of a special case here, and
 // should be removed - once partial classes are implemented, the vtable pointer
 // initialization will be done not in this conversion, but during initialization
-// of the object of non-partial class time from the object of partial class
+// of the object of non-partial class type from the object of partial class
 // type.
 auto Convert(Context& context, SemIR::LocId loc_id, SemIR::InstId expr_id,
              ConversionTarget target,

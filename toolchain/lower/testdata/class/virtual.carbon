@@ -37,7 +37,8 @@ fn Create() {
   var b: Classes.Base = {};
   var i: Classes.Intermediate = {.base = {}};
   var d: Classes.Derived = {.base = {.base = {}}};
-  // TODO: Support vptr initialization without explicit source initializers.
+  // Implicit initialization creates an object with the unformed state, which
+  // doesn't include vptr initialization.
   var d2: Classes.Derived;
 }
 

@@ -604,8 +604,6 @@ static auto ConvertStructToClass(
 
   auto result_id = ConvertStructToStructOrClass<SemIR::ClassElementAccess>(
       context, src_type, dest_struct_type, value_id, target,
-      // TODO: Pass down the specific_id of the passed in
-      // dest_vtable_ptr_inst_id, or from the dest_type.specific_id.
       dest_vtable_ptr_inst_id);
 
   if (need_temporary) {

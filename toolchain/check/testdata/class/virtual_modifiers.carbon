@@ -124,11 +124,9 @@ base class Base {
 
 fn F() {
   var i: i32 = 3;
-  // TODO: These should initialize element1 (.m), not element0 (the vptr)
   var b1: Base = {.m2 = i, .m1 = i};
   var b2: Base = {.m2 = 3, .m1 = 5};
 
-  // This one is good, though.
   b1.m2 = 4;
 }
 
