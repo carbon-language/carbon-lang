@@ -2,6 +2,7 @@
 // Exceptions. See /LICENSE for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
+// INCLUDE-FILE: toolchain/testing/testdata/min_prelude/full.carbon
 // TODO: Add ranges and switch to "--dump-sem-ir-ranges=only".
 // EXTRA-ARGS: --dump-sem-ir-ranges=if-present
 //
@@ -46,14 +47,14 @@ fn TestAssign(a: C*, b: C) {
 // CHECK:STDOUT:   %BitAndWith.type.e40: type = facet_type <@BitAndWith, @BitAndWith(%C)> [concrete]
 // CHECK:STDOUT:   %Op.type.914: type = fn_type @Op.1, @BitAndWith(%C) [concrete]
 // CHECK:STDOUT:   %BitAndWith.impl_witness: <witness> = impl_witness file.%BitAndWith.impl_witness_table [concrete]
-// CHECK:STDOUT:   %Op.type.bcc: type = fn_type @Op.loc21 [concrete]
+// CHECK:STDOUT:   %Op.type.bcc: type = fn_type @Op.loc22 [concrete]
 // CHECK:STDOUT:   %Op.c46: %Op.type.bcc = struct_value () [concrete]
 // CHECK:STDOUT:   %BitAndWith.facet.783: %BitAndWith.type.e40 = facet_value %C, (%BitAndWith.impl_witness) [concrete]
 // CHECK:STDOUT:   %BitAndAssignWith.type.e85: type = facet_type <@BitAndAssignWith, @BitAndAssignWith(%C)> [concrete]
 // CHECK:STDOUT:   %Op.type.73d: type = fn_type @Op.6, @BitAndAssignWith(%C) [concrete]
 // CHECK:STDOUT:   %BitAndAssignWith.impl_witness: <witness> = impl_witness file.%BitAndAssignWith.impl_witness_table [concrete]
 // CHECK:STDOUT:   %ptr.019: type = ptr_type %C [concrete]
-// CHECK:STDOUT:   %Op.type.115: type = fn_type @Op.loc26 [concrete]
+// CHECK:STDOUT:   %Op.type.115: type = fn_type @Op.loc27 [concrete]
 // CHECK:STDOUT:   %Op.270: %Op.type.115 = struct_value () [concrete]
 // CHECK:STDOUT:   %BitAndAssignWith.facet: %BitAndAssignWith.type.e85 = facet_value %C, (%BitAndAssignWith.impl_witness) [concrete]
 // CHECK:STDOUT:   %.04a: type = fn_type_with_self_type %Op.type.914, %BitAndWith.facet.783 [concrete]
@@ -68,9 +69,9 @@ fn TestAssign(a: C*, b: C) {
 // CHECK:STDOUT:   %a.ref: %C = name_ref a, %a
 // CHECK:STDOUT:   %b.ref: %C = name_ref b, %b
 // CHECK:STDOUT:   %impl.elem1: %.04a = impl_witness_access constants.%BitAndWith.impl_witness, element1 [concrete = constants.%Op.c46]
-// CHECK:STDOUT:   %bound_method.loc31: <bound method> = bound_method %a.ref, %impl.elem1
+// CHECK:STDOUT:   %bound_method.loc32: <bound method> = bound_method %a.ref, %impl.elem1
 // CHECK:STDOUT:   <elided>
-// CHECK:STDOUT:   %Op.call: init %C = call %bound_method.loc31(%a.ref, %b.ref) to %.loc29
+// CHECK:STDOUT:   %Op.call: init %C = call %bound_method.loc32(%a.ref, %b.ref) to %.loc30
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT:   return %Op.call to %return
 // CHECK:STDOUT: }
@@ -78,11 +79,11 @@ fn TestAssign(a: C*, b: C) {
 // CHECK:STDOUT: fn @TestAssign(%a.param: %ptr.019, %b.param: %C) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %a.ref: %ptr.019 = name_ref a, %a
-// CHECK:STDOUT:   %.loc37: ref %C = deref %a.ref
+// CHECK:STDOUT:   %.loc38: ref %C = deref %a.ref
 // CHECK:STDOUT:   %b.ref: %C = name_ref b, %b
 // CHECK:STDOUT:   %impl.elem0: %.554 = impl_witness_access constants.%BitAndAssignWith.impl_witness, element0 [concrete = constants.%Op.270]
-// CHECK:STDOUT:   %bound_method: <bound method> = bound_method %.loc37, %impl.elem0
-// CHECK:STDOUT:   %addr: %ptr.019 = addr_of %.loc37
+// CHECK:STDOUT:   %bound_method: <bound method> = bound_method %.loc38, %impl.elem0
+// CHECK:STDOUT:   %addr: %ptr.019 = addr_of %.loc38
 // CHECK:STDOUT:   %Op.call: init %empty_tuple.type = call %bound_method(%addr, %b.ref)
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }

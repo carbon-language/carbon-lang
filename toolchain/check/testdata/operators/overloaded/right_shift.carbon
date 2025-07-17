@@ -2,6 +2,7 @@
 // Exceptions. See /LICENSE for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
+// INCLUDE-FILE: toolchain/testing/testdata/min_prelude/full.carbon
 // TODO: Add ranges and switch to "--dump-sem-ir-ranges=only".
 // EXTRA-ARGS: --dump-sem-ir-ranges=if-present
 //
@@ -46,14 +47,14 @@ fn TestAssign(a: C*, b: C) {
 // CHECK:STDOUT:   %RightShiftWith.type.bd6: type = facet_type <@RightShiftWith, @RightShiftWith(%C)> [concrete]
 // CHECK:STDOUT:   %Op.type.19b: type = fn_type @Op.1, @RightShiftWith(%C) [concrete]
 // CHECK:STDOUT:   %RightShiftWith.impl_witness: <witness> = impl_witness file.%RightShiftWith.impl_witness_table [concrete]
-// CHECK:STDOUT:   %Op.type.873: type = fn_type @Op.loc21 [concrete]
+// CHECK:STDOUT:   %Op.type.873: type = fn_type @Op.loc22 [concrete]
 // CHECK:STDOUT:   %Op.909: %Op.type.873 = struct_value () [concrete]
 // CHECK:STDOUT:   %RightShiftWith.facet.fb0: %RightShiftWith.type.bd6 = facet_value %C, (%RightShiftWith.impl_witness) [concrete]
 // CHECK:STDOUT:   %RightShiftAssignWith.type.cd0: type = facet_type <@RightShiftAssignWith, @RightShiftAssignWith(%C)> [concrete]
 // CHECK:STDOUT:   %Op.type.ae9: type = fn_type @Op.6, @RightShiftAssignWith(%C) [concrete]
 // CHECK:STDOUT:   %RightShiftAssignWith.impl_witness: <witness> = impl_witness file.%RightShiftAssignWith.impl_witness_table [concrete]
 // CHECK:STDOUT:   %ptr.019: type = ptr_type %C [concrete]
-// CHECK:STDOUT:   %Op.type.e0c: type = fn_type @Op.loc26 [concrete]
+// CHECK:STDOUT:   %Op.type.e0c: type = fn_type @Op.loc27 [concrete]
 // CHECK:STDOUT:   %Op.6a2: %Op.type.e0c = struct_value () [concrete]
 // CHECK:STDOUT:   %RightShiftAssignWith.facet: %RightShiftAssignWith.type.cd0 = facet_value %C, (%RightShiftAssignWith.impl_witness) [concrete]
 // CHECK:STDOUT:   %.982: type = fn_type_with_self_type %Op.type.19b, %RightShiftWith.facet.fb0 [concrete]
@@ -68,9 +69,9 @@ fn TestAssign(a: C*, b: C) {
 // CHECK:STDOUT:   %a.ref: %C = name_ref a, %a
 // CHECK:STDOUT:   %b.ref: %C = name_ref b, %b
 // CHECK:STDOUT:   %impl.elem1: %.982 = impl_witness_access constants.%RightShiftWith.impl_witness, element1 [concrete = constants.%Op.909]
-// CHECK:STDOUT:   %bound_method.loc31: <bound method> = bound_method %a.ref, %impl.elem1
+// CHECK:STDOUT:   %bound_method.loc32: <bound method> = bound_method %a.ref, %impl.elem1
 // CHECK:STDOUT:   <elided>
-// CHECK:STDOUT:   %Op.call: init %C = call %bound_method.loc31(%a.ref, %b.ref) to %.loc29
+// CHECK:STDOUT:   %Op.call: init %C = call %bound_method.loc32(%a.ref, %b.ref) to %.loc30
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT:   return %Op.call to %return
 // CHECK:STDOUT: }
@@ -78,11 +79,11 @@ fn TestAssign(a: C*, b: C) {
 // CHECK:STDOUT: fn @TestAssign(%a.param: %ptr.019, %b.param: %C) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %a.ref: %ptr.019 = name_ref a, %a
-// CHECK:STDOUT:   %.loc37: ref %C = deref %a.ref
+// CHECK:STDOUT:   %.loc38: ref %C = deref %a.ref
 // CHECK:STDOUT:   %b.ref: %C = name_ref b, %b
 // CHECK:STDOUT:   %impl.elem0: %.d41 = impl_witness_access constants.%RightShiftAssignWith.impl_witness, element0 [concrete = constants.%Op.6a2]
-// CHECK:STDOUT:   %bound_method: <bound method> = bound_method %.loc37, %impl.elem0
-// CHECK:STDOUT:   %addr: %ptr.019 = addr_of %.loc37
+// CHECK:STDOUT:   %bound_method: <bound method> = bound_method %.loc38, %impl.elem0
+// CHECK:STDOUT:   %addr: %ptr.019 = addr_of %.loc38
 // CHECK:STDOUT:   %Op.call: init %empty_tuple.type = call %bound_method(%addr, %b.ref)
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
