@@ -12,7 +12,6 @@
 #include <utility>
 
 #include "common/check.h"
-
 #include "common/ostream.h"
 #include "llvm/ADT/STLExtras.h"
 #include "llvm/ADT/Sequence.h"
