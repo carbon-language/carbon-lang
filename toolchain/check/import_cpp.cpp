@@ -1052,7 +1052,8 @@ static auto ImportFunctionDecl(Context& context, SemIR::LocId loc_id,
     MarkFailedDecl(context, clang_decl);
     return SemIR::ErrorInst::InstId;
   }
-  if (clang_decl->getTemplatedKind() != clang::FunctionDecl::TK_NonTemplate) {
+  if (clang_decl->getTemplatedKind() ==
+      clang::FunctionDecl::TK_FunctionTemplate) {
     context.TODO(loc_id, "Unsupported: Template function");
     MarkFailedDecl(context, clang_decl);
     return SemIR::ErrorInst::InstId;
