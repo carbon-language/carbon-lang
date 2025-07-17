@@ -14,9 +14,10 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 -   [High-level architecture](#high-level-architecture)
     -   [Design patterns](#design-patterns)
 -   [Adding features](#adding-features)
--   [Talks](#talks)
-    -   [2025](#2025)
-    -   [2024](#2024)
+-   [Videos](#videos)
+    -   [Talks](#talks)
+        -   [2025](#2025)
+    -   [Implementation walkthroughs](#implementation-walkthroughs)
 
 <!-- tocstop -->
 

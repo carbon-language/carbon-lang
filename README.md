@@ -357,7 +357,7 @@ Learn more about the Carbon project:
 -   [Carbon Toolchain](/toolchain)
 -   [FAQ](/docs/project/faq.md)
 
-## Conference Talks
+## Conference talks
 
 Carbon focused talks from the community:
 
