@@ -242,30 +242,17 @@ fn F() {
   //@dump-sem-ir-end
 }
 
-// ============================================================================
-// Pass outer struct after passing inner struct
-// ============================================================================
-
-// --- inner_and_outer_value_param_type.h
-
-struct O {
- public:
-  struct S {};
-};
-
-auto foo(O::S) -> void;
-
-// --- fail_todo_import_inner_and_outer_value_param_type.carbon
+// --- fail_todo_import_inner_param_type_and_outer_type.carbon
 
 library "[[@TEST_NAME]]";
 
-import Cpp library "inner_and_outer_value_param_type.h";
+import Cpp library "definition_in_struct_value_param_type.h";
 
 fn F() {
-  // CHECK:STDERR: fail_todo_import_inner_and_outer_value_param_type.carbon:[[@LINE+7]]:3: error: semantics TODO: `Unsupported mapping of a C++ record to a type within a declaration context that is not the translation unit or a namespace` [SemanticsTodo]
+  // CHECK:STDERR: fail_todo_import_inner_param_type_and_outer_type.carbon:[[@LINE+7]]:3: error: semantics TODO: `Unsupported mapping of a C++ record to a type within a declaration context that is not the translation unit or a namespace` [SemanticsTodo]
   // CHECK:STDERR:   Cpp.foo({});
   // CHECK:STDERR:   ^~~~~~~
-  // CHECK:STDERR: fail_todo_import_inner_and_outer_value_param_type.carbon:[[@LINE+4]]:3: note: in `Cpp` name lookup for `foo` [InCppNameLookup]
+  // CHECK:STDERR: fail_todo_import_inner_param_type_and_outer_type.carbon:[[@LINE+4]]:3: note: in `Cpp` name lookup for `foo` [InCppNameLookup]
   // CHECK:STDERR:   Cpp.foo({});
   // CHECK:STDERR:   ^~~~~~~
   // CHECK:STDERR:
@@ -747,7 +734,7 @@ fn F() {
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- fail_todo_import_inner_and_outer_value_param_type.carbon
+// CHECK:STDOUT: --- fail_todo_import_inner_param_type_and_outer_type.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [concrete]
