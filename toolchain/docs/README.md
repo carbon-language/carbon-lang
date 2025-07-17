@@ -101,7 +101,7 @@ We have a [walkthrough for adding features](adding_features.md).
 
 ### Talks
 
-These talks are focused on implementation details of the toolchain, can can be
+These talks are focused on implementation details of the toolchain, and can be
 helpful for learning how the toolchain internals work.
 
 #### 2025
