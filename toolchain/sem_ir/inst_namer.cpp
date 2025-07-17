@@ -134,8 +134,6 @@ InstNamer::InstNamer(const File* sem_ir) : sem_ir_(sem_ir) {
     GetScopeInfo(vtable_scope).name = globals_.AllocateName(
         *this, vtable_loc,
         sem_ir->names().GetIRBaseName(class_info.name_id).str() + ".vtable");
-    // TODO: Add support for generic vtables here and elsewhere.
-    // CollectNamesInGeneric(vtable_scope, vtable_info.generic_id);
   }
 
   // Build each interface scope.
