@@ -357,9 +357,14 @@ Learn more about the Carbon project:
 -   [Carbon Toolchain](/toolchain)
 -   [FAQ](/docs/project/faq.md)
 
-## Conference talks
+## Talks
 
 Carbon focused talks from the community:
+
+### 2025
+
+-   How we compile, Google tech talk ([video](https://youtu.be/HBUAWvwo3qg),
+    [slides](https://drive.google.com/file/d/1YoM1lz74PsBs0KQIyAVb3cGh5G0WL2Ik/view))
 
 ### 2024
 
