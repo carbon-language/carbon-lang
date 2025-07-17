@@ -263,7 +263,6 @@ library "[[@TEST_NAME]]";
 import Cpp library "inner_and_outer_value_param_type.h";
 
 fn F() {
-  //@dump-sem-ir-begin
   // CHECK:STDERR: fail_todo_import_inner_and_outer_value_param_type.carbon:[[@LINE+7]]:3: error: semantics TODO: `Unsupported mapping of a C++ record to a type within a declaration context that is not the translation unit or a namespace` [SemanticsTodo]
   // CHECK:STDERR:   Cpp.foo1({});
   // CHECK:STDERR:   ^~~~~~~~
@@ -272,6 +271,7 @@ fn F() {
   // CHECK:STDERR:   ^~~~~~~~
   // CHECK:STDERR:
   Cpp.foo1({});
+  //@dump-sem-ir-begin
   var x: Cpp.O;
   //@dump-sem-ir-end
 }
@@ -754,7 +754,6 @@ fn F() {
 // CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [concrete]
 // CHECK:STDOUT:   %foo1.type: type = fn_type @foo1 [concrete]
 // CHECK:STDOUT:   %foo1: %foo1.type = struct_value () [concrete]
-// CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [concrete]
 // CHECK:STDOUT:   %O: type = class_type @O [concrete]
 // CHECK:STDOUT:   %pattern_type.cff: type = pattern_type %O [concrete]
 // CHECK:STDOUT:   %Op.type.1b8: type = fn_type @Op.2, @Destroy.impl(%O) [concrete]
@@ -778,10 +777,7 @@ fn F() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F() {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %Cpp.ref.loc15: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
-// CHECK:STDOUT:   %foo1.ref: %foo1.type = name_ref foo1, imports.%foo1.decl [concrete = constants.%foo1]
-// CHECK:STDOUT:   %.loc15: %empty_struct_type = struct_literal ()
-// CHECK:STDOUT:   %foo1.call: init %empty_tuple.type = call %foo1.ref(<error>)
+// CHECK:STDOUT:   <elided>
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %x.patt: %pattern_type.cff = binding_pattern x [concrete]
 // CHECK:STDOUT:     %x.var_patt: %pattern_type.cff = var_pattern %x.patt [concrete]
