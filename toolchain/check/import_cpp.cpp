@@ -17,11 +17,13 @@
 #include "clang/Frontend/TextDiagnostic.h"
 #include "clang/Lex/PreprocessorOptions.h"
 #include "clang/Sema/Lookup.h"
+#include "common/check.h"
 #include "common/ostream.h"
 #include "common/raw_string_ostream.h"
 #include "llvm/ADT/IntrusiveRefCntPtr.h"
 #include "llvm/ADT/StringRef.h"
 #include "llvm/Support/raw_ostream.h"
+#include "toolchain/base/kind_switch.h"
 #include "toolchain/check/class.h"
 #include "toolchain/check/context.h"
 #include "toolchain/check/convert.h"
@@ -463,11 +465,17 @@ static auto ClangLookup(Context& context, SemIR::NameScopeId scope_id,
   return lookup;
 }
 
+// Returns whether `decl` already mapped to an instruction.
+static auto IsClangDeclImported(const Context& context, clang::Decl* decl)
+    -> bool {
+  return context.sem_ir().clang_decls().Lookup(decl).has_value();
+}
+
 // If `decl` already mapped to an instruction, returns that instruction.
 // Otherwise returns `None`.
-static auto LookupClangDeclInstId(Context& context, clang::Decl* decl)
+static auto LookupClangDeclInstId(const Context& context, clang::Decl* decl)
     -> SemIR::InstId {
-  auto& clang_decls = context.sem_ir().clang_decls();
+  const auto& clang_decls = context.sem_ir().clang_decls();
   if (auto context_clang_decl_id = clang_decls.Lookup(decl);
       context_clang_decl_id.has_value()) {
     return clang_decls.Get(context_clang_decl_id).inst_id;
@@ -475,70 +483,56 @@ static auto LookupClangDeclInstId(Context& context, clang::Decl* decl)
   return SemIR::InstId::None;
 }
 
+// Returns the parent of the given declaration. Skips declaration types we
+// ignore.
+static auto GetParentDecl(clang::Decl* clang_decl) -> clang::Decl* {
+  clang::DeclContext* decl_context = clang_decl->getDeclContext();
+  while (llvm::isa<clang::LinkageSpecDecl>(decl_context)) {
+    decl_context = decl_context->getParent();
+  }
+  return llvm::cast<clang::Decl>(decl_context);
+}
+
+// Returns the given declaration's parent scope. Assumes the parent declaration
+// was already imported.
+static auto GetParentNameScopeId(Context& context, clang::Decl* clang_decl)
+    -> SemIR::NameScopeId {
+  SemIR::InstId parent_inst_id =
+      LookupClangDeclInstId(context, GetParentDecl(clang_decl));
+  CARBON_CHECK(parent_inst_id.has_value());
+
+  CARBON_KIND_SWITCH(context.insts().Get(parent_inst_id)) {
+    case CARBON_KIND(SemIR::ClassDecl class_decl): {
+      return context.classes().Get(class_decl.class_id).scope_id;
+    }
+    case CARBON_KIND(SemIR::InterfaceDecl interface_decl): {
+      return context.interfaces().Get(interface_decl.interface_id).scope_id;
+    }
+    case CARBON_KIND(SemIR::Namespace namespace_inst): {
+      return namespace_inst.name_scope_id;
+    }
+    default: {
+      CARBON_FATAL("Unexpected parent instruction kind");
+    }
+  }
+}
+
 // Imports a namespace declaration from Clang to Carbon. If successful, returns
 // the new Carbon namespace declaration `InstId`. If the declaration was already
 // imported, returns the mapped instruction.
 static auto ImportNamespaceDecl(Context& context,
-                                SemIR::NameScopeId parent_scope_id,
-                                SemIR::NameId name_id,
                                 clang::NamespaceDecl* clang_decl)
     -> SemIR::InstId {
   auto result = AddImportNamespace(
       context, GetSingletonType(context, SemIR::NamespaceType::TypeInstId),
-      name_id, parent_scope_id, /*import_id=*/SemIR::InstId::None);
+      AddIdentifierName(context, clang_decl->getName()),
+      GetParentNameScopeId(context, clang_decl),
+      /*import_id=*/SemIR::InstId::None);
   context.name_scopes()
       .Get(result.name_scope_id)
       .set_clang_decl_context_id(context.sem_ir().clang_decls().Add(
           {.decl = clang_decl, .inst_id = result.inst_id}));
   return result.inst_id;
-}
-
-// Maps a C++ declaration context to a Carbon namespace.
-static auto AsCarbonNamespace(Context& context,
-                              clang::DeclContext* decl_context)
-    -> SemIR::InstId {
-  CARBON_CHECK(decl_context);
-  // Check if the declaration is already mapped.
-  // TODO: Try to avoid this check by rotating the loops below so they treat the
-  // given decl_context the same at its enclosing contexts.
-  if (SemIR::InstId existing_inst_id = LookupClangDeclInstId(
-          context, clang::dyn_cast<clang::Decl>(decl_context));
-      existing_inst_id.has_value()) {
-    return existing_inst_id;
-  }
-
-  auto& clang_decls = context.sem_ir().clang_decls();
-
-  // We know we have at least one context to map, add all decl contexts we need
-  // to map.
-  llvm::SmallVector<clang::DeclContext*> decl_contexts;
-  auto parent_decl_id = SemIR::ClangDeclId::None;
-  do {
-    decl_contexts.push_back(decl_context);
-    decl_context = decl_context->getParent();
-    parent_decl_id =
-        clang_decls.Lookup(clang::dyn_cast<clang::Decl>(decl_context));
-  } while (!parent_decl_id.has_value());
-
-  // We know the parent of the last decl context is mapped, map the rest.
-  auto namespace_inst_id = SemIR::InstId::None;
-  do {
-    decl_context = decl_contexts.pop_back_val();
-    auto parent_inst_id = clang_decls.Get(parent_decl_id).inst_id;
-    auto parent_namespace =
-        context.insts().GetAs<SemIR::Namespace>(parent_inst_id);
-    namespace_inst_id = ImportNamespaceDecl(
-        context, parent_namespace.name_scope_id,
-        AddIdentifierName(
-            context, llvm::dyn_cast<clang::NamedDecl>(decl_context)->getName()),
-        clang::dyn_cast<clang::NamespaceDecl>(decl_context));
-    parent_decl_id = clang_decls.Add({
-        .decl = clang::dyn_cast<clang::Decl>(decl_context),
-        .inst_id = namespace_inst_id,
-    });
-  } while (!decl_contexts.empty());
-
-  return namespace_inst_id;
 }
 
 // Creates a class declaration for the given class name in the given scope.
@@ -700,23 +694,11 @@ static auto MapRecordType(Context& context, SemIR::LocId loc_id,
   // Check if the declaration is already mapped.
   SemIR::InstId record_inst_id = LookupClangDeclInstId(context, record_decl);
   if (!record_inst_id.has_value()) {
-    clang::DeclContext* decl_context = record_decl->getDeclContext();
-    if (!clang::isa<clang::TranslationUnitDecl>(decl_context) &&
-        !clang::isa<clang::NamespaceDecl>(decl_context)) {
-      context.TODO(loc_id,
-                   "Unsupported mapping of a C++ record to a type within a "
-                   "declaration context that is not the translation unit or "
-                   "a namespace");
-      return {.inst_id = SemIR::ErrorInst::TypeInstId,
-              .type_id = SemIR::ErrorInst::TypeId};
-    }
-    auto parent_inst_id = AsCarbonNamespace(context, decl_context);
-    auto parent_name_scope_id =
-        context.insts().GetAs<SemIR::Namespace>(parent_inst_id).name_scope_id;
     SemIR::NameId record_name_id =
         AddIdentifierName(context, record_decl->getName());
-    record_inst_id = ImportCXXRecordDecl(context, loc_id, parent_name_scope_id,
-                                         record_name_id, record_decl);
+    record_inst_id = ImportCXXRecordDecl(
+        context, loc_id, GetParentNameScopeId(context, record_decl),
+        record_name_id, record_decl);
   }
   SemIR::TypeInstId record_type_inst_id =
       context.types().GetAsTypeInstId(record_inst_id);
@@ -1066,8 +1048,6 @@ static auto CreateFunctionParamsInsts(Context& context, SemIR::LocId loc_id,
 // the new Carbon function declaration `InstId`. If the declaration was already
 // imported, returns the mapped instruction.
 static auto ImportFunctionDecl(Context& context, SemIR::LocId loc_id,
-                               SemIR::NameScopeId scope_id,
-                               SemIR::NameId name_id,
                                clang::FunctionDecl* clang_decl)
     -> SemIR::InstId {
   // Check if the declaration is already mapped.
@@ -1112,8 +1092,8 @@ static auto ImportFunctionDecl(Context& context, SemIR::LocId loc_id,
   context.imports().push_back(decl_id);
 
   auto function_info = SemIR::Function{
-      {.name_id = name_id,
-       .parent_scope_id = scope_id,
+      {.name_id = AddIdentifierName(context, clang_decl->getName()),
+       .parent_scope_id = GetParentNameScopeId(context, clang_decl),
        .generic_id = SemIR::GenericId::None,
        .first_param_node_id = Parse::NodeId::None,
        .last_param_node_id = Parse::NodeId::None,
@@ -1143,22 +1123,88 @@ static auto ImportFunctionDecl(Context& context, SemIR::LocId loc_id,
 
   return decl_id;
 }
-// Imports a declaration from Clang to Carbon. If successful, returns the
-// instruction for the new Carbon declaration.
-// TODO: Remove `scope_id` parameter since we the scope the name was found in
-// isn't necessarily the parent scope. See
-// https://github.com/carbon-language/carbon-lang/pull/5789/files/a5629ebb303c5b1aef46181eb860b7065ca1aaf1#r2201769611
-static auto ImportNameDecl(Context& context, SemIR::LocId loc_id,
-                           SemIR::NameScopeId scope_id, SemIR::NameId name_id,
-                           clang::NamedDecl* clang_decl) -> SemIR::InstId {
+
+// Returns all decls that need to be imported before importing the given type.
+static auto GetDependentUnimportedTypeDecls(const Context& context,
+                                            clang::QualType type)
+    -> llvm::SmallVector<clang::Decl*> {
+  while (true) {
+    type = type.getCanonicalType();
+    if (type->isPointerType() || type->isReferenceType()) {
+      type = type->getPointeeType();
+    } else if (const clang::ArrayType* array_type =
+                   type->getAsArrayTypeUnsafe()) {
+      type = array_type->getElementType();
+    } else {
+      break;
+    }
+  }
+
+  type = type.getUnqualifiedType();
+
+  if (const auto* record_type = type->getAs<clang::RecordType>()) {
+    if (auto* record_decl =
+            clang::dyn_cast<clang::CXXRecordDecl>(record_type->getDecl())) {
+      if (!IsClangDeclImported(context, record_decl)) {
+        return {record_decl};
+      }
+    }
+  }
+
+  return {};
+}
+
+// Returns all decls that need to be imported before importing the given
+// function.
+static auto GetDependentUnimportedFunctionDecls(
+    const Context& context, const clang::FunctionDecl& clang_decl)
+    -> llvm::SmallVector<clang::Decl*> {
+  llvm::SmallVector<clang::Decl*> decls;
+  for (const auto* param : clang_decl.parameters()) {
+    llvm::append_range(
+        decls, GetDependentUnimportedTypeDecls(context, param->getType()));
+  }
+  llvm::append_range(decls, GetDependentUnimportedTypeDecls(
+                                context, clang_decl.getReturnType()));
+  return decls;
+}
+
+// Returns all decls that need to be imported before importing the given
+// declaration.
+static auto GetDependentUnimportedDecls(const Context& context,
+                                        clang::Decl* clang_decl)
+    -> llvm::SmallVector<clang::Decl*> {
+  llvm::SmallVector<clang::Decl*> decls;
+  if (auto* parent_decl = GetParentDecl(clang_decl);
+      !IsClangDeclImported(context, parent_decl)) {
+    decls.push_back(parent_decl);
+  }
+
   if (auto* clang_function_decl = clang_decl->getAsFunction()) {
-    return ImportFunctionDecl(context, loc_id, scope_id, name_id,
-                              clang_function_decl);
+    llvm::append_range(decls, GetDependentUnimportedFunctionDecls(
+                                  context, *clang_function_decl));
+  } else if (auto* type_decl = clang::dyn_cast<clang::TypeDecl>(clang_decl)) {
+    llvm::append_range(
+        decls,
+        GetDependentUnimportedTypeDecls(
+            context, type_decl->getASTContext().getTypeDeclType(type_decl)));
+  }
+
+  return decls;
+}
+
+// Imports a declaration from Clang to Carbon. If successful, returns the
+// instruction for the new Carbon declaration. Assumes all dependencies have
+// already been imported.
+static auto ImportDeclAfterDependencies(Context& context, SemIR::LocId loc_id,
+                                        clang::Decl* clang_decl)
+    -> SemIR::InstId {
+  if (auto* clang_function_decl = clang_decl->getAsFunction()) {
+    return ImportFunctionDecl(context, loc_id, clang_function_decl);
   }
   if (auto* clang_namespace_decl =
           clang::dyn_cast<clang::NamespaceDecl>(clang_decl)) {
-    return AsCarbonNamespace(
-        context, llvm::dyn_cast<clang::DeclContext>(clang_namespace_decl));
+    return ImportNamespaceDecl(context, clang_namespace_decl);
   }
   if (auto* type_decl = clang::dyn_cast<clang::TypeDecl>(clang_decl)) {
     auto type = type_decl->getASTContext().getTypeDeclType(type_decl);
@@ -1177,6 +1223,33 @@ static auto ImportNameDecl(Context& context, SemIR::LocId loc_id,
   return SemIR::InstId::None;
 }
 
+// Imports a declaration from Clang to Carbon. If successful, returns the
+// instruction for the new Carbon declaration. All unimported dependencies would
+// be imported first.
+static auto ImportDeclAndDependencies(Context& context, SemIR::LocId loc_id,
+                                      clang::Decl* clang_decl)
+    -> SemIR::InstId {
+  // Collect dependencies.
+  llvm::SetVector<clang::Decl*> clang_decls;
+  clang_decls.insert(clang_decl);
+  for (size_t i = 0; i < clang_decls.size(); ++i) {
+    auto dependent_decls = GetDependentUnimportedDecls(context, clang_decls[i]);
+    for (clang::Decl* dependent_decl : dependent_decls) {
+      clang_decls.insert(dependent_decl);
+    }
+    // llvm::append_range(clang_decls, dependent_decls);
+  }
+
+  // Import dependencies in reverse order.
+  auto inst_id = SemIR::InstId::None;
+  do {
+    inst_id = ImportDeclAfterDependencies(context, loc_id,
+                                          clang_decls.pop_back_val());
+  } while (inst_id.has_value() && !clang_decls.empty());
+
+  return inst_id;
+}
+
 // Imports a `clang::NamedDecl` into Carbon and adds that name into the
 // `NameScope`.
 static auto ImportNameDeclIntoScope(Context& context, SemIR::LocId loc_id,
@@ -1185,7 +1258,7 @@ static auto ImportNameDeclIntoScope(Context& context, SemIR::LocId loc_id,
                                     clang::NamedDecl* clang_decl)
     -> SemIR::InstId {
   SemIR::InstId inst_id =
-      ImportNameDecl(context, loc_id, scope_id, name_id, clang_decl);
+      ImportDeclAndDependencies(context, loc_id, clang_decl);
   AddNameToScope(context, scope_id, name_id, inst_id);
   return inst_id;
 }
