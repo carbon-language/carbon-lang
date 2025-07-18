@@ -2,7 +2,7 @@
 // Exceptions. See /LICENSE for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
-// INCLUDE-FILE: toolchain/testing/testdata/min_prelude/none.carbon
+// INCLUDE-FILE: toolchain/testing/testdata/min_prelude/destroy.carbon
 //
 // AUTOUPDATE
 // TIP: To test this file alone, run:
@@ -85,6 +85,74 @@ fn MyF() {
   Cpp.my_namespace1.foo1();
   Cpp.my_namespace1.my_namespace2.foo2();
   Cpp.my_namespace1.my_namespace2.my_namespace3.foo3();
+  //@dump-sem-ir-end
+}
+
+// ============================================================================
+// Inline namespace
+// ============================================================================
+
+// --- inline.h
+
+inline namespace { namespace N { inline namespace { void foo(); } } }
+
+// --- import_inline.carbon
+
+library "[[@TEST_NAME]]";
+
+import Cpp library "inline.h";
+
+fn MyF() {
+  //@dump-sem-ir-begin
+  Cpp.N.foo();
+  //@dump-sem-ir-end
+}
+
+// ============================================================================
+// Inline namespace triggers ambiguity
+// ============================================================================
+
+// --- inline_ambiguity.h
+
+namespace N { void foo(); }
+inline namespace { namespace N {} }
+
+// --- fail_import_inline_ambiguity.carbon
+
+library "[[@TEST_NAME]]";
+
+import Cpp library "inline_ambiguity.h";
+
+fn MyF() {
+  // CHECK:STDERR: fail_import_inline_ambiguity.carbon:[[@LINE+7]]:3: error: semantics TODO: `Unsupported: Lookup succeeded but couldn't find a single result; LookupResultKind: 5` [SemanticsTodo]
+  // CHECK:STDERR:   Cpp.N.foo();
+  // CHECK:STDERR:   ^~~~~
+  // CHECK:STDERR: fail_import_inline_ambiguity.carbon:[[@LINE+4]]:3: note: in `Cpp` name lookup for `N` [InCppNameLookup]
+  // CHECK:STDERR:   Cpp.N.foo();
+  // CHECK:STDERR:   ^~~~~
+  // CHECK:STDERR:
+  Cpp.N.foo();
+}
+
+// ============================================================================
+// Inline namespace ambiguity not triggered
+// ============================================================================
+
+// --- inline_ambiguity_not_triggered.h
+
+namespace N { struct X {}; }
+auto foo() -> N::X;
+inline namespace { namespace N {} }
+
+// --- import_inline_ambiguity_not_triggered.carbon
+
+library "[[@TEST_NAME]]";
+
+import Cpp library "inline_ambiguity_not_triggered.h";
+
+fn MyF() {
+  //@dump-sem-ir-begin
+  Cpp.foo();
   //@dump-sem-ir-end
 }
 
@@ -204,6 +272,75 @@ fn MyF() {
 // CHECK:STDOUT:   %my_namespace3.ref: <namespace> = name_ref my_namespace3, imports.%my_namespace3 [concrete = imports.%my_namespace3]
 // CHECK:STDOUT:   %foo3.ref: %foo3.type = name_ref foo3, imports.%foo3.decl [concrete = constants.%foo3]
 // CHECK:STDOUT:   %foo3.call: init %empty_tuple.type = call %foo3.ref()
+// CHECK:STDOUT:   <elided>
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: --- import_inline.carbon
+// CHECK:STDOUT:
+// CHECK:STDOUT: constants {
+// CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [concrete]
+// CHECK:STDOUT:   %foo.type: type = fn_type @foo [concrete]
+// CHECK:STDOUT:   %foo: %foo.type = struct_value () [concrete]
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: imports {
+// CHECK:STDOUT:   %Cpp: <namespace> = namespace file.%Cpp.import_cpp, [concrete] {
+// CHECK:STDOUT:     .N = %N
+// CHECK:STDOUT:     import Cpp//...
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %N: <namespace> = namespace [concrete] {
+// CHECK:STDOUT:     .foo = %foo.decl
+// CHECK:STDOUT:     import Cpp//...
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %foo.decl: %foo.type = fn_decl @foo [concrete = constants.%foo] {} {}
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: fn @MyF() {
+// CHECK:STDOUT: !entry:
+// CHECK:STDOUT:   %Cpp.ref: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
+// CHECK:STDOUT:   %N.ref: <namespace> = name_ref N, imports.%N [concrete = imports.%N]
+// CHECK:STDOUT:   %foo.ref: %foo.type = name_ref foo, imports.%foo.decl [concrete = constants.%foo]
+// CHECK:STDOUT:   %foo.call: init %empty_tuple.type = call %foo.ref()
+// CHECK:STDOUT:   <elided>
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: --- import_inline_ambiguity_not_triggered.carbon
+// CHECK:STDOUT:
+// CHECK:STDOUT: constants {
+// CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [concrete]
+// CHECK:STDOUT:   %X: type = class_type @X [concrete]
+// CHECK:STDOUT:   %foo.type: type = fn_type @foo [concrete]
+// CHECK:STDOUT:   %foo: %foo.type = struct_value () [concrete]
+// CHECK:STDOUT:   %Op.type.0e5: type = fn_type @Op.2, @Destroy.impl(%X) [concrete]
+// CHECK:STDOUT:   %Op.cbf: %Op.type.0e5 = struct_value () [concrete]
+// CHECK:STDOUT:   %ptr.13d: type = ptr_type %X [concrete]
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: imports {
+// CHECK:STDOUT:   %Cpp: <namespace> = namespace file.%Cpp.import_cpp, [concrete] {
+// CHECK:STDOUT:     .foo = %foo.decl
+// CHECK:STDOUT:     import Cpp//...
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %foo.decl: %foo.type = fn_decl @foo [concrete = constants.%foo] {
+// CHECK:STDOUT:     <elided>
+// CHECK:STDOUT:   } {
+// CHECK:STDOUT:     <elided>
+// CHECK:STDOUT:   }
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: fn @MyF() {
+// CHECK:STDOUT: !entry:
+// CHECK:STDOUT:   %Cpp.ref: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
+// CHECK:STDOUT:   <elided>
+// CHECK:STDOUT:   %foo.ref: %foo.type = name_ref foo, imports.%foo.decl [concrete = constants.%foo]
+// CHECK:STDOUT:   %.loc8_11.1: ref %X = temporary_storage
+// CHECK:STDOUT:   %foo.call: init %X = call %foo.ref() to %.loc8_11.1
+// CHECK:STDOUT:   %.loc8_11.2: ref %X = temporary %.loc8_11.1, %foo.call
+// CHECK:STDOUT:   %Op.bound: <bound method> = bound_method %.loc8_11.1, constants.%Op.cbf
+// CHECK:STDOUT:   <elided>
+// CHECK:STDOUT:   %bound_method: <bound method> = bound_method %.loc8_11.1, %Op.specific_fn
+// CHECK:STDOUT:   %addr: %ptr.13d = addr_of %.loc8_11.1
+// CHECK:STDOUT:   %no_op: init %empty_tuple.type = call %bound_method(%addr)
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
