@@ -581,7 +581,11 @@ fn F() {
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT:   %Cpp: <namespace> = namespace file.%Cpp.import_cpp, [concrete] {
 // CHECK:STDOUT:     .foo = %foo.decl
-// CHECK:STDOUT:     .N = %N.194aef.2
+// CHECK:STDOUT:     .N = %N
+// CHECK:STDOUT:     import Cpp//...
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %N: <namespace> = namespace [concrete] {
+// CHECK:STDOUT:     .S = %S.decl
 // CHECK:STDOUT:     import Cpp//...
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %S.decl: type = class_decl @S [concrete = constants.%S] {} {}
@@ -589,10 +593,6 @@ fn F() {
 // CHECK:STDOUT:     <elided>
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     <elided>
-// CHECK:STDOUT:   }
-// CHECK:STDOUT:   %N.194aef.2: <namespace> = namespace [concrete] {
-// CHECK:STDOUT:     .S = %S.decl
-// CHECK:STDOUT:     import Cpp//...
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -615,7 +615,7 @@ fn F() {
 // CHECK:STDOUT:   %x.var: ref %S = var %x.var_patt
 // CHECK:STDOUT:   %.loc10: type = splice_block %S.ref [concrete = constants.%S] {
 // CHECK:STDOUT:     %Cpp.ref.loc10: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
-// CHECK:STDOUT:     %N.ref: <namespace> = name_ref N, imports.%N.194aef.2 [concrete = imports.%N.194aef.2]
+// CHECK:STDOUT:     %N.ref: <namespace> = name_ref N, imports.%N [concrete = imports.%N]
 // CHECK:STDOUT:     %S.ref: type = name_ref S, imports.%S.decl [concrete = constants.%S]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %x: ref %S = bind_name x, %x.var

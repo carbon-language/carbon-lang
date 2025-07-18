@@ -523,6 +523,12 @@ static auto GetParentNameScopeId(Context& context, clang::Decl* clang_decl)
 static auto ImportNamespaceDecl(Context& context,
                                 clang::NamespaceDecl* clang_decl)
     -> SemIR::InstId {
+  // Check if the declaration is already mapped.
+  if (SemIR::InstId existing_inst_id =
+          LookupClangDeclInstId(context, clang_decl);
+      existing_inst_id.has_value()) {
+    return existing_inst_id;
+  }
   auto result = AddImportNamespace(
       context, GetSingletonType(context, SemIR::NamespaceType::TypeInstId),
       AddIdentifierName(context, clang_decl->getName()),
