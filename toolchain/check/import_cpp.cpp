@@ -489,17 +489,16 @@ static auto BuildClassDecl(Context& context, SemIR::NameScopeId parent_scope_id,
   return {class_decl.class_id, class_decl_id};
 }
 
-// Creates a class definition for the given class name in the given scope based
-// on the information in the given Clang declaration. Returns the `InstId` for
-// the declaration, which is assumed to be for a class definition. Returns the
-// new class id and instruction id.
+// Creates a class definition for the given based on the information in the
+// given Clang declaration. Returns the `InstId` for the declaration, which is
+// assumed to be for a class definition. Returns the new class id and
+// instruction id.
 static auto BuildClassDefinition(Context& context,
-                                 SemIR::NameScopeId parent_scope_id,
-                                 SemIR::NameId name_id,
                                  clang::CXXRecordDecl* clang_decl)
     -> std::tuple<SemIR::ClassId, SemIR::InstId> {
   auto [class_id, class_inst_id] =
-      BuildClassDecl(context, parent_scope_id, name_id);
+      BuildClassDecl(context, GetParentNameScopeId(context, clang_decl),
+                     AddIdentifierName(context, clang_decl->getName()));
   auto& class_info = context.classes().Get(class_id);
   StartClassDefinition(context, class_info, class_inst_id);
 
@@ -522,8 +521,6 @@ static auto MarkFailedDecl(Context& context, clang::Decl* clang_decl) {
 // TODO: Change `clang_decl` to `const &` when lookup is using `clang::DeclID`
 // and we don't need to store the decl for lookup context.
 static auto ImportCXXRecordDecl(Context& context, SemIR::LocId loc_id,
-                                SemIR::NameScopeId parent_scope_id,
-                                SemIR::NameId name_id,
                                 clang::CXXRecordDecl* clang_decl)
     -> SemIR::InstId {
   clang::CXXRecordDecl* clang_def = clang_decl->getDefinition();
@@ -546,8 +543,7 @@ static auto ImportCXXRecordDecl(Context& context, SemIR::LocId loc_id,
     return SemIR::ErrorInst::InstId;
   }
 
-  auto [class_id, class_def_id] =
-      BuildClassDefinition(context, parent_scope_id, name_id, clang_def);
+  auto [class_id, class_def_id] = BuildClassDefinition(context, clang_def);
 
   // The class type is now fully defined. Compute its object representation.
   ComputeClassObjectRepr(context,
@@ -605,11 +601,7 @@ static auto MapRecordType(Context& context, SemIR::LocId loc_id,
   // Check if the declaration is already mapped.
   SemIR::InstId record_inst_id = LookupClangDeclInstId(context, record_decl);
   if (!record_inst_id.has_value()) {
-    SemIR::NameId record_name_id =
-        AddIdentifierName(context, record_decl->getName());
-    record_inst_id = ImportCXXRecordDecl(
-        context, loc_id, GetParentNameScopeId(context, record_decl),
-        record_name_id, record_decl);
+    record_inst_id = ImportCXXRecordDecl(context, loc_id, record_decl);
   }
   SemIR::TypeInstId record_type_inst_id =
       context.types().GetAsTypeInstId(record_inst_id);
