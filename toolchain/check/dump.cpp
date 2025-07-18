@@ -38,6 +38,11 @@ LLVM_DUMP_METHOD static auto Dump(const Context& context, Parse::NodeId node_id)
   return Parse::Dump(context.parse_tree(), node_id);
 }
 
+LLVM_DUMP_METHOD static auto Dump(const Context& context, int32_t inst_id)
+    -> std::string {
+  return SemIR::Dump(context.sem_ir(), inst_id);
+}
+
 LLVM_DUMP_METHOD static auto Dump(const Context& context,
                                   SemIR::ClassId class_id) -> std::string {
   return SemIR::Dump(context.sem_ir(), class_id);
