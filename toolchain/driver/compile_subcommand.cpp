@@ -883,18 +883,18 @@ auto CompileSubcommand::Run(DriverEnv& driver_env) -> DriverResult {
     }
   }
 
-  // Prepare CompilationUnits before building scope exit handlers. Prelude files
-  // are first, then input files.
-  llvm::SmallVector<std::unique_ptr<CompilationUnit>> units(llvm::map_range(
-      llvm::seq(prelude.size() + options_.input_filenames.size()),
-      [&](size_t i) -> std::unique_ptr<CompilationUnit> {
-        llvm::StringRef filename =
-            (i < prelude.size()) ? llvm::StringRef(prelude[i])
-                                 : options_.input_filenames[i - prelude.size()];
-        return std::make_unique<CompilationUnit>(
-            SemIR::CheckIRId(i), &driver_env, &options_, &driver_env.consumer,
-            filename);
-      }));
+  // Prepare CompilationUnits before building scope exit handlers.
+  llvm::SmallVector<std::unique_ptr<CompilationUnit>> units;
+  int unit_index = -1;
+  auto unit_builder = [&](llvm::StringRef filename) {
+    ++unit_index;
+    return std::make_unique<CompilationUnit>(SemIR::CheckIRId(unit_index),
+                                             &driver_env, &options_,
+                                             &driver_env.consumer, filename);
+  };
+  llvm::append_range(units, llvm::map_range(prelude, unit_builder));
+  llvm::append_range(units,
+                     llvm::map_range(options_.input_filenames, unit_builder));
 
   // Add the cache to all units. This must be done after all units are created.
   MultiUnitCache cache(&options_, units);

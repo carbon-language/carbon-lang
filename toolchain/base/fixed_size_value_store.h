@@ -52,7 +52,8 @@ class FixedSizeValueStore {
   }
 
   // Makes a ValueStore from the given range. When possible, use the constructor
-  // that takes a `factory_fn` instead, because it verifies `IdT`.
+  // that takes a `factory_fn` instead, because it verifies that the `IdType`s
+  // match.
   template <typename RangeT>
   static auto MakeWithRange(const llvm::iterator_range<RangeT>& range)
       -> FixedSizeValueStore {
