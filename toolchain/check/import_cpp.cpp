@@ -490,9 +490,8 @@ static auto BuildClassDecl(Context& context, SemIR::NameScopeId parent_scope_id,
 }
 
 // Creates a class definition for the given based on the information in the
-// given Clang declaration. Returns the `InstId` for the declaration, which is
-// assumed to be for a class definition. Returns the new class id and
-// instruction id.
+// given Clang declaration, which is assumed to be for a class definition.
+// Returns the new class id and instruction id.
 static auto BuildClassDefinition(Context& context,
                                  clang::CXXRecordDecl* clang_decl)
     -> std::tuple<SemIR::ClassId, SemIR::InstId> {
