@@ -113,10 +113,10 @@ class InstNamer {
       explicit operator bool() const { return value_; }
 
       // Returns the disambiguated name.
-      auto GetDisambiguated() const -> llvm::StringRef;
+      auto GetFullName() const -> llvm::StringRef;
 
       // Returns the base name, without any disambiguators.
-      auto GetBase() const -> llvm::StringRef;
+      auto GetBaseName() const -> llvm::StringRef;
 
       auto SetFallback(Name name) -> void { value_->second.fallback = name; }
 
@@ -129,6 +129,7 @@ class InstNamer {
       size_t base_name_size_;
     };
 
+    // Allocates and returns a name, handling ambiguity.
     auto AllocateName(const InstNamer& inst_namer,
                       std::variant<LocId, uint64_t> loc_id_or_fingerprint,
                       std::string name) -> Name;
@@ -176,37 +177,37 @@ class InstNamer {
 
   // Adds a scope and instructions to walk. Avoids recursion while allowing
   // the loop to below add more instructions during iteration. The new
-  // instructions are queued such that they will be the next to be walked.
+  // instructions are pushed such that they will be the next to be walked.
   // Internally that means they are reversed and added to the end of the vector,
   // since we pop from the back of the vector.
-  auto QueueBlockInsts(ScopeId scope_id, llvm::ArrayRef<InstId> inst_ids)
+  auto PushBlockInsts(ScopeId scope_id, llvm::ArrayRef<InstId> inst_ids)
       -> void;
-  auto QueueBlockId(ScopeId scope_id, InstBlockId block_id) -> void;
+  auto PushBlockId(ScopeId scope_id, InstBlockId block_id) -> void;
 
-  // Queues generic information for an entity.
-  auto QueueGeneric(ScopeId scope_id, GenericId generic_id) -> void;
+  // Pushes generic information for an entity.
+  auto PushGeneric(ScopeId scope_id, GenericId generic_id) -> void;
 
-  // Names an entity, and queues processing of its blocks.
-  auto QueueEntity(AssociatedConstantId associated_constant_id,
-                   ScopeId scope_id, Scope& scope) -> void;
-  auto QueueEntity(ClassId class_id, ScopeId scope_id, Scope& scope) -> void;
-  auto QueueEntity(FunctionId function_id, ScopeId scope_id, Scope& scope)
+  // Names an entity, and pushes processing of its blocks.
+  auto PushEntity(AssociatedConstantId associated_constant_id, ScopeId scope_id,
+                  Scope& scope) -> void;
+  auto PushEntity(ClassId class_id, ScopeId scope_id, Scope& scope) -> void;
+  auto PushEntity(FunctionId function_id, ScopeId scope_id, Scope& scope)
       -> void;
-  auto QueueEntity(ImplId impl_id, ScopeId scope_id, Scope& scope) -> void;
-  auto QueueEntity(InterfaceId interface_id, ScopeId scope_id, Scope& scope)
+  auto PushEntity(ImplId impl_id, ScopeId scope_id, Scope& scope) -> void;
+  auto PushEntity(InterfaceId interface_id, ScopeId scope_id, Scope& scope)
       -> void;
-  auto QueueEntity(VtableId vtable_id, ScopeId scope_id, Scope& scope) -> void;
+  auto PushEntity(VtableId vtable_id, ScopeId scope_id, Scope& scope) -> void;
 
-  // Always returns the name of the entity. May queue it if it has not yet been
-  // queued.
+  // Always returns the name of the entity. May push it if it has not yet been
+  // pushed.
   template <typename EntityIdT>
-  auto MaybeQueueEntity(EntityIdT entity_id) -> llvm::StringRef {
+  auto MaybePushEntity(EntityIdT entity_id) -> llvm::StringRef {
     auto scope_id = GetScopeFor(entity_id);
     auto& scope = GetScopeInfo(scope_id);
     if (!scope.name) {
-      QueueEntity(entity_id, scope_id, scope);
+      PushEntity(entity_id, scope_id, scope);
     }
-    return scope.name.GetBase();
+    return scope.name.GetBaseName();
   }
 
   const File* sem_ir_;
@@ -227,8 +228,8 @@ class InstNamer {
   // GenericId index.
   std::vector<ScopeId> generic_scopes_;
 
-  // The queue of instructions to name.
-  llvm::SmallVector<std::pair<ScopeId, InstId>> queue_;
+  // The stack of instructions to name.
+  llvm::SmallVector<std::pair<ScopeId, InstId>> stack_;
 };
 
 }  // namespace Carbon::SemIR
