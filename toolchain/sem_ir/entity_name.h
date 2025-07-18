@@ -47,7 +47,7 @@ struct EntityName : public Printable<EntityName> {
   // The parent scope.
   NameScopeId parent_scope_id;
 
-  // TODO: The following fields are only meaningful for a symbolic binding.
+  // TODO: The following two fields are only meaningful for a symbolic binding.
   // Consider splitting them off into a separate type so that we don't store
   // them for other kinds of `EntityName`.
 
