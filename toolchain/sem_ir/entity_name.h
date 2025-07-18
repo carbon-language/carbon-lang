@@ -21,6 +21,9 @@ struct EntityName : public Printable<EntityName> {
 
   friend auto CarbonHashtableEq(const EntityName& lhs, const EntityName& rhs)
       -> bool {
+    // This requires that there are no padding bits in the type. This is upheld
+    // since it holds values all of the same size: each is 32 bits, with one
+    // split into 31 and 1 bits.
     return std::memcmp(&lhs, &rhs, sizeof(EntityName)) == 0;
   }
 
@@ -44,7 +47,7 @@ struct EntityName : public Printable<EntityName> {
   // The parent scope.
   NameScopeId parent_scope_id;
 
-  // TODO: The following two fields are only meaningful for a symbolic binding.
+  // TODO: The following fields are only meaningful for a symbolic binding.
   // Consider splitting them off into a separate type so that we don't store
   // them for other kinds of `EntityName`.
 
