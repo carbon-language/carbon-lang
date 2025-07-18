@@ -1152,10 +1152,13 @@ static auto ImportDeclAndDependencies(Context& context, SemIR::LocId loc_id,
 
   // Import dependencies in reverse order.
   auto inst_id = SemIR::InstId::None;
-  do {
-    inst_id = ImportDeclAfterDependencies(context, loc_id,
-                                          clang_decls.pop_back_val());
-  } while (inst_id.has_value() && !clang_decls.empty());
+  for (clang::Decl* clang_decl_to_import : llvm::reverse(clang_decls)) {
+    inst_id =
+        ImportDeclAfterDependencies(context, loc_id, clang_decl_to_import);
+    if (!inst_id.has_value()) {
+      break;
+    }
+  }
 
   return inst_id;
 }
