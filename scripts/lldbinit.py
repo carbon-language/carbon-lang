@@ -51,58 +51,50 @@ def cmd_dump(debugger: Any, command: Any, result: Any, dict: Any) -> None:
     context = args[0]
 
     # The set of "Make" functions in dump.cpp.
-    id_types = [
-        ("class", "MakeClassId"),
-        ("constant", "MakeConstantId"),
-        ("symbolic_constant", "MakeSymbolicConstantId"),
-        ("entity_name", "MakeEntityNameId"),
-        ("facet_type", "MakeFacetTypeId"),
-        ("function", "MakeFunctionId"),
-        ("generic", "MakeGenericId"),
-        ("impl", "MakeImplId"),
-        ("inst_block", "MakeInstBlockId"),
-        ("inst", "MakeInstId"),
-        ("interface", "MakeInterfaceId"),
-        ("name", "MakeNameId"),
-        ("name_scope", "MakeNameScopeId"),
-        ("identified_facet_type", "MakeIdentifiedFacetTypeId"),
-        ("specific", "MakeSpecificId"),
-        ("specific_interface", "MakeSpecificInterfaceId"),
-        ("struct_type_fields", "MakeStructTypeFieldsId"),
-        ("type", "MakeTypeId"),
-    ]
+    id_types = {
+        "class": "MakeClassId",
+        "constant": "MakeConstantId",
+        "symbolic_constant": "MakeSymbolicConstantId",
+        "entity_name": "MakeEntityNameId",
+        "facet_type": "MakeFacetTypeId",
+        "function": "MakeFunctionId",
+        "generic": "MakeGenericId",
+        "impl": "MakeImplId",
+        "inst_block": "MakeInstBlockId",
+        "inst": "MakeInstId",
+        "interface": "MakeInterfaceId",
+        "name": "MakeNameId",
+        "name_scope": "MakeNameScopeId",
+        "identified_facet_type": "MakeIdentifiedFacetTypeId",
+        "specific": "MakeSpecificId",
+        "specific_interface": "MakeSpecificInterfaceId",
+        "struct_type_fields": "MakeStructTypeFieldsId",
+        "type": "MakeTypeId",
+    }
 
     # Try find a type + id from the input args. If not, the id will be passed
     # through directly to C++, as it can be a variable name.
     id_type = None
 
     # Look for <type><id> as a single argument.
-    for id_type_pair in id_types:
-        if re.fullmatch(f"{id_type_pair[0]}[0-9]+", args[1]):
-            at = len(id_type_pair[0])
-            id_type = args[1][:at]
-            id = args[1][at:]
-            break
+    if m := re.fullmatch("([a-z_]+)(\\d+)", args[1]):
+        if m[1] in id_types:
+            if len(args) != 2:
+                print_usage()
+                return
+            id_type = m[1]
+            id = f"SemIR::{id_types[id_type]}({m[2]})"
 
     # Look for <type> <id> as two arguments.
     if not id_type:
-        for id_type_pair in id_types:
-            if id_type_pair[0] == args[1]:
-                if len(args) < 3:
-                    print_usage()
-                    return
-                id_type = args[1]
-                id = args[2]
-                break
+        if args[1] in id_types:
+            if len(args) != 3:
+                print_usage()
+                return
+            id_type = args[1]
+            id = f"SemIR::{id_types[id_type]}({args[2]})"
 
-    # If we have an id type, transform the id as a number into that id
-    # with the factory function.
-    if id_type:
-        for id_type_pair in id_types:
-            if id_type_pair[0] == id_type:
-                id = f"SemIR::{id_type_pair[1]}({id})"
-                break
-    else:
+    if not id_type:
         # Use `--` to escape a variable name like `inst22`.
         if args[1] == "--":
             id = " ".join(args[2:])
@@ -111,9 +103,8 @@ def cmd_dump(debugger: Any, command: Any, result: Any, dict: Any) -> None:
 
     cmd = f"p Dump({context}, {id})"
     out = RunCommand(cmd, print_command=False)
-    m = re.match(dump_re, out)
-    if m:
-        print(m.group(1))
+    if m := re.match(dump_re, out):
+        print(m[1])
     else:
         # Unexpected output, show the command that was run.
         print(f"(lldb) {cmd}")
