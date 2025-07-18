@@ -514,8 +514,7 @@ class CompilationUnit {
 class MultiUnitCache {
  public:
   using IncludeInDumpsStore = FixedSizeValueStore<SemIR::CheckIRId, bool>;
-  using TreeAndSubtreesGettersStore =
-      FixedSizeValueStore<SemIR::CheckIRId, Parse::GetTreeAndSubtreesFn>;
+  using TreeAndSubtreesGettersStore = Parse::GetTreeAndSubtreesStore;
 
   // This relies on construction after `units` are all initialized, which is
   // reflected by the `ArrayRef` here.

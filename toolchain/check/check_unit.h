@@ -123,8 +123,7 @@ class CheckUnit {
  public:
   explicit CheckUnit(
       UnitAndImports* unit_and_imports,
-      const FixedSizeValueStore<SemIR::CheckIRId, Parse::GetTreeAndSubtreesFn>&
-          tree_and_subtrees_getters,
+      const Parse::GetTreeAndSubtreesStore& tree_and_subtrees_getters,
       llvm::IntrusiveRefCntPtr<llvm::vfs::FileSystem> fs,
       std::shared_ptr<clang::CompilerInvocation> clang_invocation,
       llvm::raw_ostream* vlog_stream);

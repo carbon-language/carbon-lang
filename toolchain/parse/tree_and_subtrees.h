@@ -10,6 +10,10 @@
 #include "toolchain/lex/token_index.h"
 #include "toolchain/parse/tree.h"
 
+namespace Carbon::SemIR {
+struct CheckIRId;
+}  // namespace Carbon::SemIR
+
 namespace Carbon::Parse {
 
 // Calculates and stores subtree data for a parse tree. Supports APIs that
@@ -191,6 +195,10 @@ class TreeAndSubtrees {
 
 // A standard signature for a callback to support lazy construction.
 using GetTreeAndSubtreesFn = llvm::function_ref<auto()->const TreeAndSubtrees&>;
+
+// The typical storage of `GetTreeAndSubtreesFn`.
+using GetTreeAndSubtreesStore =
+    FixedSizeValueStore<SemIR::CheckIRId, Parse::GetTreeAndSubtreesFn>;
 
 // A forward iterator across the siblings at a particular level in the parse
 // tree. It produces `Tree::NodeId` objects which are opaque handles and must

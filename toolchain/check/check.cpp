@@ -361,8 +361,7 @@ static auto MaybeDumpFormattedSemIR(
 // Handles options for dumping SemIR, including verbose output.
 static auto MaybeDumpSemIR(
     llvm::ArrayRef<Unit> units,
-    const FixedSizeValueStore<SemIR::CheckIRId, Parse::GetTreeAndSubtreesFn>&
-        tree_and_subtrees_getters,
+    const Parse::GetTreeAndSubtreesStore& tree_and_subtrees_getters,
     const CheckParseTreesOptions& options) -> void {
   if (!options.vlog_stream && !options.dump_stream &&
       !options.raw_dump_stream) {
@@ -390,8 +389,7 @@ static auto MaybeDumpSemIR(
 
 auto CheckParseTrees(
     llvm::MutableArrayRef<Unit> units,
-    const FixedSizeValueStore<SemIR::CheckIRId, Parse::GetTreeAndSubtreesFn>&
-        tree_and_subtrees_getters,
+    const Parse::GetTreeAndSubtreesStore& tree_and_subtrees_getters,
     llvm::IntrusiveRefCntPtr<llvm::vfs::FileSystem> fs,
     const CheckParseTreesOptions& options,
     std::shared_ptr<clang::CompilerInvocation> clang_invocation) -> void {

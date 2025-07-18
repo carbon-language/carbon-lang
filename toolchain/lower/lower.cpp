@@ -17,8 +17,7 @@ namespace Carbon::Lower {
 auto LowerToLLVM(
     llvm::LLVMContext& llvm_context,
     llvm::IntrusiveRefCntPtr<llvm::vfs::FileSystem> fs,
-    const FixedSizeValueStore<SemIR::CheckIRId, Parse::GetTreeAndSubtreesFn>&
-        tree_and_subtrees_getters,
+    const Parse::GetTreeAndSubtreesStore& tree_and_subtrees_getters,
     const SemIR::File& sem_ir, const LowerToLLVMOptions& options)
     -> std::unique_ptr<llvm::Module> {
   Context context(llvm_context, std::move(fs), options.want_debug_info,

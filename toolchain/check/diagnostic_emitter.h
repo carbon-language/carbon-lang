@@ -18,8 +18,7 @@ class DiagnosticEmitter : public DiagnosticEmitterBase {
  public:
   explicit DiagnosticEmitter(
       Diagnostics::Consumer* consumer,
-      const FixedSizeValueStore<SemIR::CheckIRId, Parse::GetTreeAndSubtreesFn>&
-          tree_and_subtrees_getters,
+      const Parse::GetTreeAndSubtreesStore& tree_and_subtrees_getters,
       const SemIR::File* sem_ir)
       : DiagnosticEmitterBase(consumer),
         sem_ir_(sem_ir),

@@ -72,11 +72,10 @@ struct CheckParseTreesOptions {
 };
 
 // Checks a group of parse trees. This will use imports to decide the order of
-// checking.
+// checking.Parse::GetTreeAndSubtreesStore
 auto CheckParseTrees(
     llvm::MutableArrayRef<Unit> units,
-    const FixedSizeValueStore<SemIR::CheckIRId, Parse::GetTreeAndSubtreesFn>&
-        tree_and_subtrees_getters,
+    const Parse::GetTreeAndSubtreesStore& tree_and_subtrees_getters,
     llvm::IntrusiveRefCntPtr<llvm::vfs::FileSystem> fs,
     const CheckParseTreesOptions& options,
     std::shared_ptr<clang::CompilerInvocation> clang_invocation) -> void;
