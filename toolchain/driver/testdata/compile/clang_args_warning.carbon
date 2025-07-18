@@ -2,7 +2,7 @@
 // Exceptions. See /LICENSE for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
-// ARGS: --include-diagnostic-kind compile --clang-arg=-L/usr/lib foo.carbon
+// ARGS: --include-diagnostic-kind compile --clang-arg=-L/usr/lib foo.carbon --phase=lex
 //
 // AUTOUPDATE
 // TIP: To test this file alone, run:

@@ -11,7 +11,7 @@
 // TIP:   bazel test //toolchain/testing:file_test --test_arg=--file_tests=toolchain/driver/testdata/compile/fail_clang_args.carbon
 // TIP: To dump output, run:
 // TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/driver/testdata/compile/fail_clang_args.carbon
-// CHECK:STDERR: clang version {{.*}}
+// CHECK:STDERR: {{.*}}clang version {{.*}}
 // CHECK:STDERR: InstalledDir: {{.*}}/toolchain/install/prefix_root/lib/carbon/../../lib/carbon/llvm/bin
 // CHECK:STDERR:  "{{.*}}/toolchain/install/prefix_root/lib/carbon/../../lib/carbon/llvm/bin/clang" "-cc1" {{.*}}"-triple" "x86-pc-linux-gnu" {{.*}}"-fsyntax-only" {{.*}} "-resource-dir" {{.*}} "-Wall" "-Wextra" "-Wuninitialized" "-Wno-all" {{.*}}
 
