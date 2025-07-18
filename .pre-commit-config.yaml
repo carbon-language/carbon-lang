@@ -53,6 +53,8 @@ repos:
       - id: prettier
         name: prettier
         language: node
+        # TODO: Not upgrading to/past 3.4.0 due to list indent changes that may
+        # get fixed. See: https://github.com/prettier/prettier/issues/16929
         additional_dependencies: ['prettier@3.3.3']
         types_or: [html, javascript, json, markdown, yaml]
         entry: npx prettier@3.3.3 --write --log-level=warn
@@ -88,7 +90,7 @@ repos:
         types_or: [c++, def]
         language: python
         args: ['-i']
-        additional_dependencies: ['clang-format==20.1.4']
+        additional_dependencies: ['clang-format==20.1.8']
 
   - repo: local
     hooks:
