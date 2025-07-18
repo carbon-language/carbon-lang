@@ -34,10 +34,10 @@
 
 namespace Carbon::SemIR {
 
-Formatter::Formatter(const File* sem_ir,
-                     Parse::GetTreeAndSubtreesFn get_tree_and_subtrees,
-                     llvm::ArrayRef<bool> include_ir_in_dumps,
-                     bool use_dump_sem_ir_ranges)
+Formatter::Formatter(
+    const File* sem_ir, Parse::GetTreeAndSubtreesFn get_tree_and_subtrees,
+    const FixedSizeValueStore<SemIR::CheckIRId, bool>* include_ir_in_dumps,
+    bool use_dump_sem_ir_ranges)
     : sem_ir_(sem_ir),
       inst_namer_(sem_ir_),
       get_tree_and_subtrees_(get_tree_and_subtrees),
@@ -168,7 +168,7 @@ auto Formatter::IncludeChunkInOutput(size_t chunk) -> void {
 
 auto Formatter::ShouldIncludeInstByIR(InstId inst_id) -> bool {
   const auto* import_ir = GetCanonicalFileAndInstId(sem_ir_, inst_id).first;
-  return include_ir_in_dumps_[import_ir->check_ir_id().index];
+  return include_ir_in_dumps_->Get(import_ir->check_ir_id());
 }
 
 // Returns true for a `DefinitionStart` node.

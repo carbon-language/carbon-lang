@@ -52,8 +52,7 @@ auto DiagnosticLocConverter::ConvertImpl(SemIR::CheckIRId check_ir_id,
                                          bool token_only) const
     -> Diagnostics::ConvertedLoc {
   CARBON_CHECK(check_ir_id != SemIR::CheckIRId::Cpp);
-  const auto& tree_and_subtrees =
-      tree_and_subtrees_getters_[check_ir_id.index]();
+  const auto& tree_and_subtrees = tree_and_subtrees_getters_.Get(check_ir_id)();
   return tree_and_subtrees.NodeToDiagnosticLoc(node_id, token_only);
 }
 

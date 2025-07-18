@@ -166,13 +166,15 @@ auto Context::File::SetText(Context& context, std::optional<int64_t> version,
   // TODO: Include the prelude.
   Check::CheckParseTreesOptions check_options;
   check_options.vlog_stream = context.vlog_stream();
+  auto getters =
+      FixedSizeValueStore<SemIR::CheckIRId, Parse::GetTreeAndSubtreesFn>::
+          MakeWithExplicitSize(1, getter);
 
   auto clang_invocation =
       BuildClangInvocation(consumer, fs, {context.installation().clang_path()});
 
-  Check::CheckParseTrees(units,
-                         llvm::ArrayRef<Parse::GetTreeAndSubtreesFn>(getter),
-                         fs, check_options, std::move(clang_invocation));
+  Check::CheckParseTrees(units, getters, fs, check_options,
+                         std::move(clang_invocation));
 
   // Note we need to publish diagnostics even when empty.
   // TODO: Consider caching previously published diagnostics and only publishing

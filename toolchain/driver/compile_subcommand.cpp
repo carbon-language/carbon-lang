@@ -25,6 +25,7 @@
 #include "toolchain/lower/lower.h"
 #include "toolchain/parse/parse.h"
 #include "toolchain/parse/tree_and_subtrees.h"
+#include "toolchain/sem_ir/ids.h"
 #include "toolchain/source/source_buffer.h"
 
 namespace Carbon {
@@ -407,7 +408,7 @@ class MultiUnitCache;
 // Ties together information for a file being compiled.
 class CompilationUnit {
  public:
-  explicit CompilationUnit(int unit_index, DriverEnv* driver_env,
+  explicit CompilationUnit(SemIR::CheckIRId check_ir_id, DriverEnv* driver_env,
                            const CompileOptions* options,
                            Diagnostics::Consumer* consumer,
                            llvm::StringRef input_filename);
@@ -465,8 +466,8 @@ class CompilationUnit {
   // Returns true if the current file should be included in debug dumps.
   auto IncludeInDumps() -> bool;
 
-  // The index of the unit amongst all units. Equivalent to a `CheckIRId`.
-  int unit_index_;
+  // The index of the unit amongst all units.
+  SemIR::CheckIRId check_ir_id_;
 
   DriverEnv* driver_env_;
   const CompileOptions* options_;
@@ -512,70 +513,63 @@ class CompilationUnit {
 // they may not be used.
 class MultiUnitCache {
  public:
+  using IncludeInDumpsStore = FixedSizeValueStore<SemIR::CheckIRId, bool>;
+  using TreeAndSubtreesGettersStore =
+      FixedSizeValueStore<SemIR::CheckIRId, Parse::GetTreeAndSubtreesFn>;
+
   // This relies on construction after `units` are all initialized, which is
   // reflected by the `ArrayRef` here.
   explicit MultiUnitCache(
       const CompileOptions* options,
-      const llvm::ArrayRef<std::unique_ptr<CompilationUnit>> units)
+      const llvm::SmallVector<std::unique_ptr<CompilationUnit>>* units)
       : options_(options), units_(units) {}
 
-  auto include_in_dumps() -> llvm::ArrayRef<bool> {
-    CARBON_CHECK(!units_.empty());
-    if (include_in_dumps_.empty()) {
-      BuildIncludeInDumps();
+  auto include_in_dumps() -> const IncludeInDumpsStore& {
+    if (!include_in_dumps_) {
+      include_in_dumps_.emplace(IncludeInDumpsStore::MakeWithRange(
+          llvm::map_range(*units_, [&](auto& unit) {
+            return llvm::none_of(
+                options_->exclude_dump_file_prefixes, [&](auto prefix) {
+                  return unit->input_filename().starts_with(prefix);
+                });
+          })));
     }
-    return include_in_dumps_;
+    return *include_in_dumps_;
   }
 
-  auto tree_and_subtrees_getters()
-      -> llvm::ArrayRef<Parse::GetTreeAndSubtreesFn> {
-    CARBON_CHECK(!units_.empty());
-    if (tree_and_subtrees_getters_.empty()) {
-      BuildTreeAndSubtreesGetters();
+  auto tree_and_subtrees_getters() -> const TreeAndSubtreesGettersStore& {
+    if (!tree_and_subtrees_getters_) {
+      tree_and_subtrees_getters_.emplace(
+          TreeAndSubtreesGettersStore::MakeWithRange(llvm::map_range(
+              *units_, [&](const std::unique_ptr<CompilationUnit>& unit) {
+                return unit->has_source() ? unit->get_trees_and_subtrees()
+                                          : nullptr;
+              })));
     }
-    return tree_and_subtrees_getters_;
+    return *tree_and_subtrees_getters_;
   }
 
  private:
-  auto BuildIncludeInDumps() -> void {
-    CARBON_CHECK(include_in_dumps_.empty());
-    llvm::append_range(
-        include_in_dumps_, llvm::map_range(units_, [&](const auto& unit) {
-          return llvm::none_of(
-              options_->exclude_dump_file_prefixes, [&](auto prefix) {
-                return unit->input_filename().starts_with(prefix);
-              });
-        }));
-  }
-
-  auto BuildTreeAndSubtreesGetters() -> void {
-    CARBON_CHECK(tree_and_subtrees_getters_.empty());
-    llvm::append_range(
-        tree_and_subtrees_getters_,
-        llvm::map_range(units_, [&](const auto& unit) {
-          return unit->has_source() ? unit->get_trees_and_subtrees() : nullptr;
-        }));
-  }
-
   const CompileOptions* options_;
 
   // The units being compiled.
-  const llvm::ArrayRef<std::unique_ptr<CompilationUnit>> units_;
+  const llvm::SmallVector<std::unique_ptr<CompilationUnit>>* units_;
 
   // For each unit, whether it's included in dumps. Used cross-phase.
-  llvm::SmallVector<bool> include_in_dumps_;
+  std::optional<IncludeInDumpsStore> include_in_dumps_;
 
   // For each unit, the `TreeAndSubtrees` getter. Used by lowering.
-  llvm::SmallVector<Parse::GetTreeAndSubtreesFn> tree_and_subtrees_getters_;
+  std::optional<TreeAndSubtreesGettersStore> tree_and_subtrees_getters_;
 };
 
 }  // namespace
 
-CompilationUnit::CompilationUnit(int unit_index, DriverEnv* driver_env,
+CompilationUnit::CompilationUnit(SemIR::CheckIRId check_ir_id,
+                                 DriverEnv* driver_env,
                                  const CompileOptions* options,
                                  Diagnostics::Consumer* consumer,
                                  llvm::StringRef input_filename)
-    : unit_index_(unit_index),
+    : check_ir_id_(check_ir_id),
       driver_env_(driver_env),
       options_(options),
       input_filename_(input_filename),
@@ -589,7 +583,7 @@ CompilationUnit::CompilationUnit(int unit_index, DriverEnv* driver_env,
 }
 
 auto CompilationUnit::IncludeInDumps() -> bool {
-  return cache_->include_in_dumps()[unit_index_];
+  return cache_->include_in_dumps().Get(check_ir_id_);
 }
 
 auto CompilationUnit::SetMultiUnitCache(MultiUnitCache* cache) -> void {
@@ -670,9 +664,8 @@ auto CompilationUnit::GetCheckUnit() -> Check::Unit {
   tree_and_subtrees_getter_ = [this]() -> const Parse::TreeAndSubtrees& {
     return this->GetParseTreeAndSubtrees();
   };
-  sem_ir_.emplace(&*parse_tree_, SemIR::CheckIRId(unit_index_),
-                  parse_tree_->packaging_decl(), value_stores_,
-                  input_filename_);
+  sem_ir_.emplace(&*parse_tree_, check_ir_id_, parse_tree_->packaging_decl(),
+                  value_stores_, input_filename_);
   return {.consumer = consumer_,
           .value_stores = &value_stores_,
           .timings = timings_ ? &*timings_ : nullptr,
@@ -890,19 +883,21 @@ auto CompileSubcommand::Run(DriverEnv& driver_env) -> DriverResult {
     }
   }
 
-  // Prepare CompilationUnits before building scope exit handlers.
-  llvm::SmallVector<std::unique_ptr<CompilationUnit>> units;
-  int unit_index = -1;
-  auto unit_builder = [&](llvm::StringRef filename) {
-    return std::make_unique<CompilationUnit>(
-        ++unit_index, &driver_env, &options_, &driver_env.consumer, filename);
-  };
-  llvm::append_range(units, llvm::map_range(prelude, unit_builder));
-  llvm::append_range(units,
-                     llvm::map_range(options_.input_filenames, unit_builder));
+  // Prepare CompilationUnits before building scope exit handlers. Prelude files
+  // are first, then input files.
+  llvm::SmallVector<std::unique_ptr<CompilationUnit>> units(llvm::map_range(
+      llvm::seq(prelude.size() + options_.input_filenames.size()),
+      [&](size_t i) -> std::unique_ptr<CompilationUnit> {
+        llvm::StringRef filename =
+            (i < prelude.size()) ? llvm::StringRef(prelude[i])
+                                 : options_.input_filenames[i - prelude.size()];
+        return std::make_unique<CompilationUnit>(
+            SemIR::CheckIRId(i), &driver_env, &options_, &driver_env.consumer,
+            filename);
+      }));
 
   // Add the cache to all units. This must be done after all units are created.
-  MultiUnitCache cache(&options_, units);
+  MultiUnitCache cache(&options_, &units);
   for (auto& unit : units) {
     unit->SetMultiUnitCache(&cache);
   }
@@ -984,7 +979,7 @@ auto CompileSubcommand::Run(DriverEnv& driver_env) -> DriverResult {
   options.vlog_stream = driver_env.vlog_stream;
   options.fuzzing = driver_env.fuzzing;
   if (options.vlog_stream || options_.dump_sem_ir || options_.dump_raw_sem_ir) {
-    options.include_in_dumps = cache.include_in_dumps();
+    options.include_in_dumps = &cache.include_in_dumps();
     if (options_.dump_sem_ir) {
       options.dump_stream = driver_env.output_stream;
     }

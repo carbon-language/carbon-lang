@@ -37,7 +37,8 @@ class DiagnosticLocConverter {
 
   // `sem_ir` must not be null.
   explicit DiagnosticLocConverter(
-      llvm::ArrayRef<Parse::GetTreeAndSubtreesFn> tree_and_subtrees_getters,
+      const FixedSizeValueStore<SemIR::CheckIRId, Parse::GetTreeAndSubtreesFn>&
+          tree_and_subtrees_getters,
       const File* sem_ir)
       : tree_and_subtrees_getters_(tree_and_subtrees_getters),
         sem_ir_(sem_ir) {}
@@ -66,7 +67,8 @@ class DiagnosticLocConverter {
       -> Diagnostics::ConvertedLoc;
 
   // Converters for each SemIR.
-  llvm::ArrayRef<Parse::GetTreeAndSubtreesFn> tree_and_subtrees_getters_;
+  const FixedSizeValueStore<SemIR::CheckIRId, Parse::GetTreeAndSubtreesFn>&
+      tree_and_subtrees_getters_;
 
   // The current SemIR being processed.
   const File* sem_ir_;

@@ -123,7 +123,8 @@ class CheckUnit {
  public:
   explicit CheckUnit(
       UnitAndImports* unit_and_imports,
-      llvm::ArrayRef<Parse::GetTreeAndSubtreesFn> tree_and_subtrees_getters,
+      const FixedSizeValueStore<SemIR::CheckIRId, Parse::GetTreeAndSubtreesFn>&
+          tree_and_subtrees_getters,
       llvm::IntrusiveRefCntPtr<llvm::vfs::FileSystem> fs,
       std::shared_ptr<clang::CompilerInvocation> clang_invocation,
       llvm::raw_ostream* vlog_stream);
@@ -136,11 +137,11 @@ class CheckUnit {
   auto InitPackageScopeAndImports() -> void;
 
   // Collects direct imports, for CollectTransitiveImports.
-  auto CollectDirectImports(llvm::SmallVector<SemIR::ImportIR>& results,
-                            llvm::MutableArrayRef<int> ir_to_result_index,
-                            SemIR::InstId import_decl_id,
-                            const PackageImports& imports, bool is_local)
-      -> void;
+  auto CollectDirectImports(
+      llvm::SmallVector<SemIR::ImportIR>& results,
+      FixedSizeValueStore<SemIR::CheckIRId, int>& ir_to_result_index,
+      SemIR::InstId import_decl_id, const PackageImports& imports,
+      bool is_local) -> void;
 
   // Collects transitive imports, handling deduplication. These will be unified
   // between local_imports and api_imports.

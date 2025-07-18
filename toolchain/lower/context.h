@@ -44,7 +44,8 @@ class Context {
   explicit Context(
       llvm::LLVMContext& llvm_context,
       llvm::IntrusiveRefCntPtr<llvm::vfs::FileSystem> fs, bool want_debug_info,
-      llvm::ArrayRef<Parse::GetTreeAndSubtreesFn> tree_and_subtrees_getters,
+      const FixedSizeValueStore<SemIR::CheckIRId, Parse::GetTreeAndSubtreesFn>&
+          tree_and_subtrees_getters,
       llvm::StringRef module_name, llvm::raw_ostream* vlog_stream);
 
   // Gets or creates the `FileContext` for a given SemIR file. If an
@@ -95,8 +96,8 @@ class Context {
   }
   auto di_builder() -> llvm::DIBuilder& { return di_builder_; }
   auto di_compile_unit() -> llvm::DICompileUnit* { return di_compile_unit_; }
-  auto tree_and_subtrees_getters()
-      -> llvm::ArrayRef<Parse::GetTreeAndSubtreesFn> {
+  auto tree_and_subtrees_getters() -> const
+      FixedSizeValueStore<SemIR::CheckIRId, Parse::GetTreeAndSubtreesFn>& {
     return tree_and_subtrees_getters_;
   }
 
@@ -133,7 +134,8 @@ class Context {
   llvm::DICompileUnit* di_compile_unit_;
 
   // Parse trees. Used for debug information and crash diagnostics.
-  llvm::ArrayRef<Parse::GetTreeAndSubtreesFn> tree_and_subtrees_getters_;
+  const FixedSizeValueStore<SemIR::CheckIRId, Parse::GetTreeAndSubtreesFn>&
+      tree_and_subtrees_getters_;
 
   // The optional vlog stream.
   llvm::raw_ostream* vlog_stream_;

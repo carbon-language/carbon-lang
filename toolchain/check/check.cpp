@@ -361,7 +361,8 @@ static auto MaybeDumpFormattedSemIR(
 // Handles options for dumping SemIR, including verbose output.
 static auto MaybeDumpSemIR(
     llvm::ArrayRef<Unit> units,
-    llvm::ArrayRef<Parse::GetTreeAndSubtreesFn> tree_and_subtrees_getters,
+    const FixedSizeValueStore<SemIR::CheckIRId, Parse::GetTreeAndSubtreesFn>&
+        tree_and_subtrees_getters,
     const CheckParseTreesOptions& options) -> void {
   if (!options.vlog_stream && !options.dump_stream &&
       !options.raw_dump_stream) {
@@ -375,22 +376,22 @@ static auto MaybeDumpSemIR(
 
   for (const auto& unit : units) {
     bool include_in_dumps =
-        options.include_in_dumps[unit.sem_ir->check_ir_id().index];
+        options.include_in_dumps->Get(unit.sem_ir->check_ir_id());
     if (include_in_dumps && options.raw_dump_stream) {
       unit.sem_ir->Print(*options.raw_dump_stream,
                          options.dump_raw_sem_ir_builtins);
     }
 
     MaybeDumpFormattedSemIR(
-        *unit.sem_ir,
-        tree_and_subtrees_getters[unit.sem_ir->check_ir_id().index],
+        *unit.sem_ir, tree_and_subtrees_getters.Get(unit.sem_ir->check_ir_id()),
         include_in_dumps, options);
   }
 }
 
 auto CheckParseTrees(
     llvm::MutableArrayRef<Unit> units,
-    llvm::ArrayRef<Parse::GetTreeAndSubtreesFn> tree_and_subtrees_getters,
+    const FixedSizeValueStore<SemIR::CheckIRId, Parse::GetTreeAndSubtreesFn>&
+        tree_and_subtrees_getters,
     llvm::IntrusiveRefCntPtr<llvm::vfs::FileSystem> fs,
     const CheckParseTreesOptions& options,
     std::shared_ptr<clang::CompilerInvocation> clang_invocation) -> void {
@@ -399,7 +400,7 @@ auto CheckParseTrees(
   llvm::SmallVector<UnitAndImports, 0> unit_infos(
       llvm::map_range(units, [&](Unit& unit) {
         return UnitAndImports(
-            &unit, tree_and_subtrees_getters[unit.sem_ir->check_ir_id().index]);
+            &unit, tree_and_subtrees_getters.Get(unit.sem_ir->check_ir_id()));
       }));
 
   Map<ImportKey, UnitAndImports*> api_map =

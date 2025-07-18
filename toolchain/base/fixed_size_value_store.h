@@ -44,11 +44,19 @@ class FixedSizeValueStore {
   }
 
   // Makes a ValueStore of the specified size, initialized to a default.
-  static auto MakeWithExplicitSize(size_t size, ValueT default_value)
+  static auto MakeWithExplicitSize(size_t size, ConstRefType default_value)
       -> FixedSizeValueStore {
     FixedSizeValueStore store;
     store.values_.resize(size, default_value);
     return store;
+  }
+
+  // Makes a ValueStore from the given range. When possible, use the constructor
+  // that takes a `factory_fn` instead, because it verifies `IdT`.
+  template <typename RangeT>
+  static auto MakeWithRange(const llvm::iterator_range<RangeT>& range)
+      -> FixedSizeValueStore {
+    return FixedSizeValueStore(range);
   }
 
   // Makes a ValueStore of the same size as a source `ValueStoreT`. This is
@@ -57,9 +65,20 @@ class FixedSizeValueStore {
   template <typename ValueStoreT>
     requires std::same_as<IdT, typename ValueStoreT::IdType>
   explicit FixedSizeValueStore(const ValueStoreT& size_source,
-                               ValueT default_value) {
+                               ConstRefType default_value) {
     values_.resize(size_source.size(), default_value);
   }
+
+  // Makes a ValueStore using a mapped range of `source`. The `factory_fn`
+  // receives each enumerated entry for construction of `ValueType`.
+  template <typename ValueStoreT>
+    requires std::same_as<IdT, typename ValueStoreT::IdType>
+  explicit FixedSizeValueStore(
+      const ValueStoreT& source,
+      llvm::function_ref<
+          auto(IdT, typename ValueStoreT::ConstRefType)->ValueType>
+          factory_fn)
+      : FixedSizeValueStore(llvm::map_range(source.enumerate(), factory_fn)) {}
 
   // Move-only.
   FixedSizeValueStore(FixedSizeValueStore&&) noexcept = default;
@@ -91,13 +110,25 @@ class FixedSizeValueStore {
   }
 
   auto size() const -> size_t { return values_.size(); }
-  auto values() -> auto {
+
+  auto values()
+      -> llvm::iterator_range<typename llvm::SmallVector<ValueT, 0>::iterator> {
+    return llvm::make_range(values_.begin(), values_.end());
+  }
+
+  auto values() const -> llvm::iterator_range<
+      typename llvm::SmallVector<ValueT, 0>::const_iterator> {
     return llvm::make_range(values_.begin(), values_.end());
   }
 
  private:
   // Allow default construction for `Make` functions.
   FixedSizeValueStore() = default;
+
+  // Allow construction from a range.
+  template <typename RangeT>
+  explicit FixedSizeValueStore(const llvm::iterator_range<RangeT>& range)
+      : values_(range) {}
 
   // Storage for the `ValueT` objects, indexed by the id.
   llvm::SmallVector<ValueT, 0> values_;
