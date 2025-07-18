@@ -1243,7 +1243,6 @@ static auto ImportDeclAndDependencies(Context& context, SemIR::LocId loc_id,
     for (clang::Decl* dependent_decl : dependent_decls) {
       clang_decls.insert(dependent_decl);
     }
-    // llvm::append_range(clang_decls, dependent_decls);
   }
 
   // Import dependencies in reverse order.
