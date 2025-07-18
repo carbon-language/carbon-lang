@@ -125,7 +125,7 @@ class InstNamer {
      private:
       llvm::StringMapEntry<NameResult>* value_;
 
-      // The base name length within `value_`.
+      // The base name length within `value_->first()`.
       size_t base_name_size_;
     };
 
