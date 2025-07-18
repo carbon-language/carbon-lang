@@ -11,6 +11,7 @@
 #include "toolchain/parse/tree.h"
 
 namespace Carbon::SemIR {
+// Forward-declared here for `GetTreeAndSubtreesStore`.
 struct CheckIRId;
 }  // namespace Carbon::SemIR
 
@@ -196,7 +197,11 @@ class TreeAndSubtrees {
 // A standard signature for a callback to support lazy construction.
 using GetTreeAndSubtreesFn = llvm::function_ref<auto()->const TreeAndSubtrees&>;
 
-// The typical storage of `GetTreeAndSubtreesFn`.
+// The typical storage of `GetTreeAndSubtreesFn`. Note this stores non-owning
+// references.
+//
+// This is a commonly used alias, and while it depends on SemIR, it's difficult
+// to find a better home.
 using GetTreeAndSubtreesStore =
     FixedSizeValueStore<SemIR::CheckIRId, Parse::GetTreeAndSubtreesFn>;
 

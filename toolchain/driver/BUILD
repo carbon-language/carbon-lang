@@ -141,6 +141,7 @@ cc_library(
         "//toolchain/parse",
         "//toolchain/parse:tree",
         "//toolchain/sem_ir:file",
+        "//toolchain/sem_ir:typed_insts",
         "//toolchain/source:source_buffer",
         "@llvm-project//llvm:Core",
         "@llvm-project//llvm:Support",

@@ -192,6 +192,7 @@ cc_library(
         "//common:ostream",
         "//common:pretty_stack_trace_function",
         "//common:vlog",
+        "//toolchain/base:fixed_size_value_store",
         "//toolchain/base:kind_switch",
         "//toolchain/base:shared_value_stores",
         "//toolchain/base:timings",

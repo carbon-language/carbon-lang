@@ -121,9 +121,11 @@ struct UnitAndImports {
 // logic in check.cpp.
 class CheckUnit {
  public:
+  // `unit_and_imports` and `tree_and_subtrees_getters` must be non-null.
+  // `vlog_stream` is optional.
   explicit CheckUnit(
       UnitAndImports* unit_and_imports,
-      const Parse::GetTreeAndSubtreesStore& tree_and_subtrees_getters,
+      const Parse::GetTreeAndSubtreesStore* tree_and_subtrees_getters,
       llvm::IntrusiveRefCntPtr<llvm::vfs::FileSystem> fs,
       std::shared_ptr<clang::CompilerInvocation> clang_invocation,
       llvm::raw_ostream* vlog_stream);

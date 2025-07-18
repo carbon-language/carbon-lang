@@ -408,6 +408,7 @@ class MultiUnitCache;
 // Ties together information for a file being compiled.
 class CompilationUnit {
  public:
+  // `driver_env`, `options`, and `consumer` must be non-null.
   explicit CompilationUnit(SemIR::CheckIRId check_ir_id, DriverEnv* driver_env,
                            const CompileOptions* options,
                            Diagnostics::Consumer* consumer,
@@ -520,13 +521,13 @@ class MultiUnitCache {
   // reflected by the `ArrayRef` here.
   explicit MultiUnitCache(
       const CompileOptions* options,
-      const llvm::SmallVector<std::unique_ptr<CompilationUnit>>* units)
+      llvm::ArrayRef<std::unique_ptr<CompilationUnit>> units)
       : options_(options), units_(units) {}
 
   auto include_in_dumps() -> const IncludeInDumpsStore& {
     if (!include_in_dumps_) {
       include_in_dumps_.emplace(IncludeInDumpsStore::MakeWithRange(
-          llvm::map_range(*units_, [&](auto& unit) {
+          llvm::map_range(units_, [&](auto& unit) {
             return llvm::none_of(
                 options_->exclude_dump_file_prefixes, [&](auto prefix) {
                   return unit->input_filename().starts_with(prefix);
@@ -540,7 +541,7 @@ class MultiUnitCache {
     if (!tree_and_subtrees_getters_) {
       tree_and_subtrees_getters_.emplace(
           TreeAndSubtreesGettersStore::MakeWithRange(llvm::map_range(
-              *units_, [&](const std::unique_ptr<CompilationUnit>& unit) {
+              units_, [&](const std::unique_ptr<CompilationUnit>& unit) {
                 return unit->has_source() ? unit->get_trees_and_subtrees()
                                           : nullptr;
               })));
@@ -552,7 +553,7 @@ class MultiUnitCache {
   const CompileOptions* options_;
 
   // The units being compiled.
-  const llvm::SmallVector<std::unique_ptr<CompilationUnit>>* units_;
+  llvm::ArrayRef<std::unique_ptr<CompilationUnit>> units_;
 
   // For each unit, whether it's included in dumps. Used cross-phase.
   std::optional<IncludeInDumpsStore> include_in_dumps_;
@@ -896,7 +897,7 @@ auto CompileSubcommand::Run(DriverEnv& driver_env) -> DriverResult {
       }));
 
   // Add the cache to all units. This must be done after all units are created.
-  MultiUnitCache cache(&options_, &units);
+  MultiUnitCache cache(&options_, units);
   for (auto& unit : units) {
     unit->SetMultiUnitCache(&cache);
   }

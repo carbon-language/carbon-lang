@@ -56,14 +56,14 @@ static auto GetImportedIRCount(UnitAndImports* unit_and_imports) -> int {
 
 CheckUnit::CheckUnit(
     UnitAndImports* unit_and_imports,
-    const Parse::GetTreeAndSubtreesStore& tree_and_subtrees_getters,
+    const Parse::GetTreeAndSubtreesStore* tree_and_subtrees_getters,
     llvm::IntrusiveRefCntPtr<llvm::vfs::FileSystem> fs,
     std::shared_ptr<clang::CompilerInvocation> clang_invocation,
     llvm::raw_ostream* vlog_stream)
     : unit_and_imports_(unit_and_imports),
-      tree_and_subtrees_getter_(tree_and_subtrees_getters.Get(
+      tree_and_subtrees_getter_(tree_and_subtrees_getters->Get(
           unit_and_imports->unit->sem_ir->check_ir_id())),
-      total_ir_count_(tree_and_subtrees_getters.size()),
+      total_ir_count_(tree_and_subtrees_getters->size()),
       fs_(std::move(fs)),
       clang_invocation_(std::move(clang_invocation)),
       emitter_(&unit_and_imports_->err_tracker, tree_and_subtrees_getters,

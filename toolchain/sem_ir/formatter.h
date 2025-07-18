@@ -19,6 +19,7 @@ namespace Carbon::SemIR {
 // Formatter for printing textual Semantics IR.
 class Formatter {
  public:
+  // sem_ir and include_ir_in_dumps must be non-null.
   explicit Formatter(
       const File* sem_ir, Parse::GetTreeAndSubtreesFn get_tree_and_subtrees,
       const FixedSizeValueStore<SemIR::CheckIRId, bool>* include_ir_in_dumps,

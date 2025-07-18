@@ -72,7 +72,10 @@ struct CheckParseTreesOptions {
 };
 
 // Checks a group of parse trees. This will use imports to decide the order of
-// checking.Parse::GetTreeAndSubtreesStore
+// checking.
+//
+// `units` will only contain units which should be checked, and is not indexed
+// by `CheckIRId`.
 auto CheckParseTrees(
     llvm::MutableArrayRef<Unit> units,
     const Parse::GetTreeAndSubtreesStore& tree_and_subtrees_getters,
