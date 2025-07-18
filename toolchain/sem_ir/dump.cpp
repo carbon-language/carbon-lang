@@ -67,10 +67,6 @@ static auto DumpSpecificSummary(const File& file, SpecificId specific_id)
   return out.TakeStr();
 }
 
-LLVM_DUMP_METHOD auto Dump(const File& file, int32_t inst_id) -> std::string {
-  return Dump(file, InstId(inst_id));
-}
-
 LLVM_DUMP_METHOD auto Dump(const File& file, ClassId class_id) -> std::string {
   RawStringOstream out;
   out << class_id;

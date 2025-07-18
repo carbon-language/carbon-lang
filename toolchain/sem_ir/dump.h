@@ -20,10 +20,6 @@
 
 namespace Carbon::SemIR {
 
-// A number on its own is treated as an InstId since that is the most common
-// thing to Dump.
-auto Dump(const File& file, int32_t inst_id) -> std::string;
-
 auto Dump(const File& file, ClassId class_id) -> std::string;
 auto Dump(const File& file, ConstantId const_id) -> std::string;
 auto Dump(const File& file, EntityNameId entity_name_id) -> std::string;
