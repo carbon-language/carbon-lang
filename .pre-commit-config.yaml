@@ -128,11 +128,11 @@ repos:
         files: ^.*/BUILD$
         pass_filenames: false
   - repo: https://github.com/PyCQA/flake8
-    rev: 4b5e89b4b108a6c1a000c591d334a99a80d34c7b # frozen: 7.2.0
+    rev: d93590f5be797aabb60e3b09f2f52dddb02f349f # frozen: 7.3.0
     hooks:
       - id: flake8
   - repo: https://github.com/pre-commit/mirrors-mypy
-    rev: 'f40886d54c729f533f864ed6ce584e920feb0af7' # frozen: v1.15.0
+    rev: '850d8bf806620ef89a99381c5cf5ea2c1ea826dd' # frozen: v1.17.0
     hooks:
       - id: mypy
         # Use setup.cfg to match the command line.
