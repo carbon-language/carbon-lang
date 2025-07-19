@@ -39,9 +39,33 @@ dump_re = re.compile('\\(std::string\\) "((:?.|\n)+)"', re.MULTILINE)
 # A helper to ease calling the Dump() free functions.
 def cmd_dump(debugger: Any, command: Any, result: Any, dict: Any) -> None:
     def print_usage() -> None:
-        print("dump <context> [<ID>|<TYPE><ID>|<TYPE> <ID>|-- <ID>]")
-        print("")
-        print('TYPE can be "inst", "entity_name", etc.')
+        print(
+            """
+Dumps the value of an associated ID, using the C++ Dump() functions.
+
+Usage:
+  dump <CONTEXT> [<EXPR>|-- <EXPR>|<TYPE><ID>|<TYPE> <ID>]
+
+Args:
+  CONTEXT is the dump context, such a SemIR::Context reference, a SemIR::File,
+          a Parse::Context, or a Lex::TokenizeBuffer.
+  EXPR is a C++ expression such as a variable name. Use `--` to prevent it from
+       being treated as a TYPE and ID.
+  TYPE can be `inst`, `constant`, `generic`, `impl`, `entity_name`, etc. See
+       the `Label` string in `IdBase` classes to find possible TYPE names,
+       though only Id types that have a matching `Make...Id()` function are
+       supported.
+  ID is an integer number, such as `42`.
+
+Example usage:
+  # Dumps the `inst_id` local variable, with a `context` local variable.
+  dump context inst_id
+
+  # Dumps the instruction with id 42, with a `context()` method for accessing
+  # the `Check::Context&`.
+  dump context() inst42
+"""
+        )
 
     args = command.split(" ")
     if len(args) < 2:
