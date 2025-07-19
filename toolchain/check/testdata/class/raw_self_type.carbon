@@ -31,7 +31,7 @@ fn MemberNamedSelf.F(x: Self, y: r#Self) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %Class: type = class_type @Class [concrete]
-// CHECK:STDOUT:   %F.type.f1b: type = fn_type @F.1 [concrete]
+// CHECK:STDOUT:   %F.type.f1b: type = fn_type @F.loc16 [concrete]
 // CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [concrete]
 // CHECK:STDOUT:   %F.1f2: %F.type.f1b = struct_value () [concrete]
 // CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [concrete]
@@ -47,7 +47,7 @@ fn MemberNamedSelf.F(x: Self, y: r#Self) {}
 // CHECK:STDOUT:   %Self.362: type = class_type @Self [concrete]
 // CHECK:STDOUT:   %pattern_type.356: type = pattern_type %MemberNamedSelf [concrete]
 // CHECK:STDOUT:   %pattern_type.c06: type = pattern_type %Self.362 [concrete]
-// CHECK:STDOUT:   %F.type.648: type = fn_type @F.2 [concrete]
+// CHECK:STDOUT:   %F.type.648: type = fn_type @F.loc28 [concrete]
 // CHECK:STDOUT:   %F.e97: %F.type.648 = struct_value () [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -69,7 +69,7 @@ fn MemberNamedSelf.F(x: Self, y: r#Self) {}
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %Class.decl: type = class_decl @Class [concrete = constants.%Class] {} {}
 // CHECK:STDOUT:   %MemberNamedSelf.decl: type = class_decl @MemberNamedSelf [concrete = constants.%MemberNamedSelf] {} {}
-// CHECK:STDOUT:   %F.decl: %F.type.648 = fn_decl @F.2 [concrete = constants.%F.e97] {
+// CHECK:STDOUT:   %F.decl: %F.type.648 = fn_decl @F.loc28 [concrete = constants.%F.e97] {
 // CHECK:STDOUT:     %x.patt: %pattern_type.356 = binding_pattern x [concrete]
 // CHECK:STDOUT:     %x.param_patt: %pattern_type.356 = value_param_pattern %x.patt, call_param0 [concrete]
 // CHECK:STDOUT:     %y.patt: %pattern_type.c06 = binding_pattern y [concrete]
@@ -85,7 +85,7 @@ fn MemberNamedSelf.F(x: Self, y: r#Self) {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @Class {
-// CHECK:STDOUT:   %F.decl: %F.type.f1b = fn_decl @F.1 [concrete = constants.%F.1f2] {} {}
+// CHECK:STDOUT:   %F.decl: %F.type.f1b = fn_decl @F.loc16 [concrete = constants.%F.1f2] {} {}
 // CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [concrete = constants.%empty_struct_type]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [concrete = constants.%complete_type.357]
 // CHECK:STDOUT:   complete_type_witness = %complete_type
@@ -97,7 +97,7 @@ fn MemberNamedSelf.F(x: Self, y: r#Self) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @MemberNamedSelf {
 // CHECK:STDOUT:   %Self.decl: type = class_decl @Self [concrete = constants.%Self.362] {} {}
-// CHECK:STDOUT:   %F.decl: %F.type.648 = fn_decl @F.2 [concrete = constants.%F.e97] {
+// CHECK:STDOUT:   %F.decl: %F.type.648 = fn_decl @F.loc28 [concrete = constants.%F.e97] {
 // CHECK:STDOUT:     %x.patt: %pattern_type.356 = binding_pattern x [concrete]
 // CHECK:STDOUT:     %x.param_patt: %pattern_type.356 = value_param_pattern %x.patt, call_param0 [concrete]
 // CHECK:STDOUT:     %y.patt: %pattern_type.c06 = binding_pattern y [concrete]
@@ -129,7 +129,7 @@ fn MemberNamedSelf.F(x: Self, y: r#Self) {}
 // CHECK:STDOUT:   .Self = constants.%Self.362
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @F.1() {
+// CHECK:STDOUT: fn @F.loc16() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %Self.patt: %pattern_type.796 = binding_pattern r#Self [concrete]
@@ -167,7 +167,7 @@ fn MemberNamedSelf.F(x: Self, y: r#Self) {}
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @F.2(%x.param.loc28: %MemberNamedSelf, %y.param.loc28: %Self.362) {
+// CHECK:STDOUT: fn @F.loc28(%x.param.loc28: %MemberNamedSelf, %y.param.loc28: %Self.362) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }

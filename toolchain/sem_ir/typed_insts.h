@@ -103,7 +103,7 @@ struct AddrOf {
 // An `addr` pattern, such as `addr self: Self*`. Structurally, `inner_id` will
 // generally be a pattern inst.
 struct AddrPattern {
-  static constexpr auto Kind = InstKind::AddrPattern.Define<Parse::AddrId>(
+  static constexpr auto Kind = InstKind::AddrPattern.Define<Parse::NodeId>(
       {.ir_name = "addr_pattern",
        .constant_kind = InstConstantKind::AlwaysUnique,
        .is_lowered = false});

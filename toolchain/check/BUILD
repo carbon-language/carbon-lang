@@ -131,6 +131,7 @@ cc_library(
         "//toolchain/lex:tokenized_buffer",
         "//toolchain/parse:node_kind",
         "//toolchain/parse:tree",
+        "//toolchain/sem_ir:clang_decl",
         "//toolchain/sem_ir:expr_info",
         "//toolchain/sem_ir:file",
         "//toolchain/sem_ir:formatter",
@@ -207,6 +208,7 @@ cc_library(
         "//toolchain/sem_ir:file",
         "//toolchain/sem_ir:formatter",
         "//toolchain/sem_ir:typed_insts",
+        "@llvm-project//clang:frontend",
         "@llvm-project//llvm:Support",
     ],
 )

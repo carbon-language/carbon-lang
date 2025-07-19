@@ -201,7 +201,7 @@ fn F() {
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %Eats.type: type = facet_type <@Eats> [concrete]
 // CHECK:STDOUT:   %Self.1b5: %Eats.type = bind_symbolic_name Self, 0 [symbolic]
-// CHECK:STDOUT:   %Eat.type.e5d: type = fn_type @Eat.1 [concrete]
+// CHECK:STDOUT:   %Eat.type.e5d: type = fn_type @Eat.loc5 [concrete]
 // CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [concrete]
 // CHECK:STDOUT:   %Eat.7cd: %Eat.type.e5d = struct_value () [concrete]
 // CHECK:STDOUT:   %Eats.assoc_type: type = assoc_entity_type @Eats [concrete]
@@ -213,7 +213,7 @@ fn F() {
 // CHECK:STDOUT:   %Bleet: %Bleet.type = struct_value () [concrete]
 // CHECK:STDOUT:   %Animal.impl_witness: <witness> = impl_witness @Goat.%Animal.impl_witness_table [concrete]
 // CHECK:STDOUT:   %Eats.impl_witness: <witness> = impl_witness @Goat.%Eats.impl_witness_table [concrete]
-// CHECK:STDOUT:   %Eat.type.1b3: type = fn_type @Eat.2 [concrete]
+// CHECK:STDOUT:   %Eat.type.1b3: type = fn_type @Eat.loc14 [concrete]
 // CHECK:STDOUT:   %Eat.73e: %Eat.type.1b3 = struct_value () [concrete]
 // CHECK:STDOUT:   %Eats.facet: %Eats.type = facet_value %Goat, (%Eats.impl_witness) [concrete]
 // CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [concrete]
@@ -257,7 +257,7 @@ fn F() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: interface @Eats {
 // CHECK:STDOUT:   %Self: %Eats.type = bind_symbolic_name Self, 0 [symbolic = constants.%Self.1b5]
-// CHECK:STDOUT:   %Eat.decl: %Eat.type.e5d = fn_decl @Eat.1 [concrete = constants.%Eat.7cd] {} {}
+// CHECK:STDOUT:   %Eat.decl: %Eat.type.e5d = fn_decl @Eat.loc5 [concrete = constants.%Eat.7cd] {} {}
 // CHECK:STDOUT:   %assoc0: %Eats.assoc_type = assoc_entity element0, %Eat.decl [concrete = constants.%assoc0.e43]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
@@ -280,7 +280,7 @@ fn F() {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: impl @Eats.impl: %Self.ref as %Eats.ref {
-// CHECK:STDOUT:   %Eat.decl: %Eat.type.1b3 = fn_decl @Eat.2 [concrete = constants.%Eat.73e] {} {}
+// CHECK:STDOUT:   %Eat.decl: %Eat.type.1b3 = fn_decl @Eat.loc14 [concrete = constants.%Eat.73e] {} {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Eat = %Eat.decl
@@ -314,7 +314,7 @@ fn F() {
 // CHECK:STDOUT:   extend @Eats.impl.%Eats.ref
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic fn @Eat.1(@Eats.%Self: %Eats.type) {
+// CHECK:STDOUT: generic fn @Eat.loc5(@Eats.%Self: %Eats.type) {
 // CHECK:STDOUT:   fn();
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -323,7 +323,7 @@ fn F() {
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Eat.2() {
+// CHECK:STDOUT: fn @Eat.loc14() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
@@ -403,7 +403,7 @@ fn F() {
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @Eat.1(constants.%Self.1b5) {}
+// CHECK:STDOUT: specific @Eat.loc5(constants.%Self.1b5) {}
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @Eat.1(constants.%Eats.facet) {}
+// CHECK:STDOUT: specific @Eat.loc5(constants.%Eats.facet) {}
 // CHECK:STDOUT:

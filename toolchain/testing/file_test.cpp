@@ -163,11 +163,9 @@ auto ToolchainFileTest::Run(
       }
     }
     if (!found_prelude_flag) {
-      // TODO: Enable this error when all check/ and lower/ tests include a
-      // prelude choice explicitly.
-      // return Error(
-      //     "Include a prelude from //toolchain/testing/testdata/min_prelude "
-      //     "to specify what should be imported into the test.");
+      return Error(
+          "Include a prelude from //toolchain/testing/testdata/min_prelude "
+          "to specify what should be imported into the test.");
     }
   } else {
     filtered_test_args = test_args;

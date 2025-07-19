@@ -591,6 +591,7 @@ static auto ConvertStructToClass(
     dest_vtable_ptr_inst_id = dest_class_info.vtable_ptr_id;
     if (dest_type.specific_id.has_value() &&
         dest_vtable_ptr_inst_id.has_value()) {
+      LoadImportRef(context, dest_vtable_ptr_inst_id);
       dest_vtable_ptr_inst_id = context.constant_values().GetInstId(
           GetConstantValueInSpecific(context.sem_ir(), dest_type.specific_id,
                                      dest_vtable_ptr_inst_id));
@@ -603,8 +604,6 @@ static auto ConvertStructToClass(
 
   auto result_id = ConvertStructToStructOrClass<SemIR::ClassElementAccess>(
       context, src_type, dest_struct_type, value_id, target,
-      // TODO: Pass down the specific_id of the passed in
-      // dest_vtable_ptr_inst_id, or from the dest_type.specific_id.
       dest_vtable_ptr_inst_id);
 
   if (need_temporary) {

@@ -5,9 +5,13 @@
 #ifndef CARBON_TOOLCHAIN_CHECK_IMPORT_CPP_H_
 #define CARBON_TOOLCHAIN_CHECK_IMPORT_CPP_H_
 
+#include "llvm/ADT/ArrayRef.h"
+#include "llvm/ADT/IntrusiveRefCntPtr.h"
 #include "llvm/ADT/StringRef.h"
+#include "llvm/Support/VirtualFileSystem.h"
 #include "toolchain/check/context.h"
 #include "toolchain/check/diagnostic_helpers.h"
+#include "toolchain/diagnostics/diagnostic_emitter.h"
 
 namespace Carbon::Check {
 
@@ -17,7 +21,7 @@ namespace Carbon::Check {
 auto ImportCppFiles(Context& context,
                     llvm::ArrayRef<Parse::Tree::PackagingNames> imports,
                     llvm::IntrusiveRefCntPtr<llvm::vfs::FileSystem> fs,
-                    llvm::StringRef clang_path, llvm::StringRef target)
+                    std::shared_ptr<clang::CompilerInvocation> invocation)
     -> std::unique_ptr<clang::ASTUnit>;
 
 // Looks up the given name in the Clang AST generated when importing C++ code.

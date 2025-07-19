@@ -86,7 +86,7 @@ fn Test(d: D) -> i32 {
 // CHECK:STDOUT:   %Convert.type.1b6: type = fn_type @Convert.1, @ImplicitAs(%i32) [concrete]
 // CHECK:STDOUT:   %ImplicitAs.impl_witness.96d: <witness> = impl_witness @C.%ImplicitAs.impl_witness_table [concrete]
 // CHECK:STDOUT:   %pattern_type.c48: type = pattern_type %C [concrete]
-// CHECK:STDOUT:   %Convert.type.dae: type = fn_type @Convert.2 [concrete]
+// CHECK:STDOUT:   %Convert.type.dae: type = fn_type @Convert.loc15 [concrete]
 // CHECK:STDOUT:   %Convert.937: %Convert.type.dae = struct_value () [concrete]
 // CHECK:STDOUT:   %ImplicitAs.facet: %ImplicitAs.type.205 = facet_value %C, (%ImplicitAs.impl_witness.96d) [concrete]
 // CHECK:STDOUT:   %struct_type.n: type = struct_type {.n: %i32} [concrete]
@@ -186,7 +186,7 @@ fn Test(d: D) -> i32 {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: impl @ImplicitAs.impl.4e3: %Self.ref as %ImplicitAs.type {
-// CHECK:STDOUT:   %Convert.decl: %Convert.type.dae = fn_decl @Convert.2 [concrete = constants.%Convert.937] {
+// CHECK:STDOUT:   %Convert.decl: %Convert.type.dae = fn_decl @Convert.loc15 [concrete = constants.%Convert.937] {
 // CHECK:STDOUT:     %self.patt: %pattern_type.c48 = binding_pattern self [concrete]
 // CHECK:STDOUT:     %self.param_patt: %pattern_type.c48 = value_param_pattern %self.patt, call_param0 [concrete]
 // CHECK:STDOUT:     %return.patt: %pattern_type.7ce = return_slot_pattern [concrete]
@@ -258,7 +258,7 @@ fn Test(d: D) -> i32 {
 // CHECK:STDOUT:   return %.loc9_14.2
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Convert.2(%self.param: %C) -> %i32 {
+// CHECK:STDOUT: fn @Convert.loc15(%self.param: %C) -> %i32 {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %self.ref: %C = name_ref self, %self
 // CHECK:STDOUT:   %n.ref: %C.elem = name_ref n, @C.%.loc13 [concrete = @C.%.loc13]

@@ -7,6 +7,8 @@
 #include "toolchain/check/generic.h"
 #include "toolchain/check/handle.h"
 #include "toolchain/check/inst.h"
+#include "toolchain/sem_ir/ids.h"
+#include "toolchain/sem_ir/typed_insts.h"
 
 namespace Carbon::Check {
 
@@ -30,15 +32,16 @@ auto HandleParseNode(Context& context, Parse::WhereOperandId node_id) -> bool {
   context.scope_stack().PushForSameRegion();
   // Introduce `.Self` as a symbolic binding. Its type is the value of the
   // expression to the left of `where`, so `MyInterface` in the example above.
-  auto entity_name_id = context.entity_names().Add(
+  auto entity_name_id = context.entity_names().AddCanonical(
       {.name_id = SemIR::NameId::PeriodSelf,
        .parent_scope_id = context.scope_stack().PeekNameScopeId()});
   auto inst_id = AddInst(
-      context, SemIR::LocIdAndInst::NoLoc<SemIR::BindSymbolicName>(
-                   {.type_id = self_type_id,
-                    .entity_name_id = entity_name_id,
-                    // `None` because there is no equivalent non-symbolic value.
-                    .value_id = SemIR::InstId::None}));
+      context, SemIR::LocIdAndInst::NoLoc<SemIR::BindSymbolicName>({
+                   .type_id = self_type_id,
+                   .entity_name_id = entity_name_id,
+                   // `None` because there is no equivalent non-symbolic value.
+                   .value_id = SemIR::InstId::None,
+               }));
   auto existing =
       context.scope_stack().LookupOrAddName(SemIR::NameId::PeriodSelf, inst_id);
   // Shouldn't have any names in newly created scope.
@@ -58,10 +61,10 @@ auto HandleParseNode(Context& context, Parse::WhereOperandId node_id) -> bool {
 auto HandleParseNode(Context& context, Parse::RequirementEqualId node_id)
     -> bool {
   auto [rhs_node, rhs_id] = context.node_stack().PopExprWithNodeId();
-  auto lhs = context.node_stack().PopExpr();
+  auto lhs_id = context.node_stack().PopExpr();
 
   // Convert rhs to type of lhs.
-  auto lhs_type_id = context.insts().Get(lhs).type_id();
+  auto lhs_type_id = context.insts().Get(lhs_id).type_id();
   if (lhs_type_id.is_symbolic()) {
     // If the type of the associated constant is symbolic, we defer conversion
     // until the constraint is resolved, in case it depends on `Self` (which
@@ -73,13 +76,13 @@ auto HandleParseNode(Context& context, Parse::RequirementEqualId node_id)
     rhs_id = ConvertToValueExpr(context, rhs_id);
   } else {
     rhs_id = ConvertToValueOfType(context, rhs_node, rhs_id,
-                                  context.insts().Get(lhs).type_id());
+                                  context.insts().Get(lhs_id).type_id());
   }
 
   // Build up the list of arguments for the `WhereExpr` inst.
   context.args_type_info_stack().AddInstId(
       AddInstInNoBlock<SemIR::RequirementRewrite>(
-          context, node_id, {.lhs_id = lhs, .rhs_id = rhs_id}));
+          context, node_id, {.lhs_id = lhs_id, .rhs_id = rhs_id}));
   return true;
 }
 

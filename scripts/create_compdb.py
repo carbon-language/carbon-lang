@@ -25,11 +25,14 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
 import argparse
 import subprocess
+import sys
 
 import scripts_utils
 
 
-def _build_generated_files(bazel: str, logtostderr: bool) -> None:
+def _build_generated_files(
+    bazel: str, logtostderr: bool, dump_files: bool
+) -> None:
     print("Building the generated files so that tools can find them...")
 
     # Collect the generated file labels. Include some rules which generate
@@ -37,7 +40,7 @@ def _build_generated_files(bazel: str, logtostderr: bool) -> None:
     kinds_query = (
         "filter("
         ' ".*\\.(h|cpp|cc|c|cxx|def|inc)$",'
-        ' kind("(generated file|manifest_as_cpp)",'
+        ' kind("(generated file|generate_llvm_tools_def|manifest_as_cpp)",'
         # tree_sitter is excluded here because it causes the query to failure on
         # `@platforms`.
         "      deps(//... except //utils/tree_sitter/...))"
@@ -51,6 +54,10 @@ def _build_generated_files(bazel: str, logtostderr: bool) -> None:
         stderr=log_to,
         encoding="utf-8",
     ).splitlines()
+    if dump_files:
+        for f in sorted(generated_file_labels):
+            print(f)
+        sys.exit(0)
     print(f"Found {len(generated_file_labels)} generated files...", flush=True)
 
     # Directly build these labels so that indexing can find them. Allow this to
@@ -72,12 +79,17 @@ def main() -> None:
         action="store_true",
         help="Prints subcommand errors to stderr (default: False)",
     )
+    parser.add_argument(
+        "--dump-files",
+        action="store_true",
+        help="Dumps the full list of generated files (default: False)",
+    )
 
     args = parser.parse_args()
     scripts_utils.chdir_repo_root()
     bazel = scripts_utils.locate_bazel()
 
-    _build_generated_files(bazel, args.alsologtostderr)
+    _build_generated_files(bazel, args.alsologtostderr, args.dump_files)
 
     print(
         "Generating compile_commands.json (may take a few minutes)...",

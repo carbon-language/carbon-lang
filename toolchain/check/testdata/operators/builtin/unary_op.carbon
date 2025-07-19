@@ -2,6 +2,7 @@
 // Exceptions. See /LICENSE for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
+// INCLUDE-FILE: toolchain/testing/testdata/min_prelude/bool.carbon
 // TODO: Add ranges and switch to "--dump-sem-ir-ranges=only".
 // EXTRA-ARGS: --dump-sem-ir-ranges=if-present
 //
@@ -56,8 +57,8 @@ fn Constant() {
 // CHECK:STDOUT:     import Core//prelude
 // CHECK:STDOUT:     import Core//prelude/...
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %Core.Bool: %Bool.type = import_ref Core//prelude/types/bool, Bool, loaded [concrete = constants.%Bool]
-// CHECK:STDOUT:   %Core.Destroy: type = import_ref Core//prelude/destroy, Destroy, loaded [concrete = constants.%Destroy.type]
+// CHECK:STDOUT:   %Core.Bool: %Bool.type = import_ref Core//prelude/parts/bool, Bool, loaded [concrete = constants.%Bool]
+// CHECK:STDOUT:   %Core.Destroy: type = import_ref Core//prelude/parts/destroy, Destroy, loaded [concrete = constants.%Destroy.type]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -75,14 +76,14 @@ fn Constant() {
 // CHECK:STDOUT:     %return.patt: %pattern_type.831 = return_slot_pattern [concrete]
 // CHECK:STDOUT:     %return.param_patt: %pattern_type.831 = out_param_pattern %return.patt, call_param1 [concrete]
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %bool.make_type.loc14_20: init type = call constants.%Bool() [concrete = bool]
-// CHECK:STDOUT:     %.loc14_20.1: type = value_of_initializer %bool.make_type.loc14_20 [concrete = bool]
-// CHECK:STDOUT:     %.loc14_20.2: type = converted %bool.make_type.loc14_20, %.loc14_20.1 [concrete = bool]
+// CHECK:STDOUT:     %bool.make_type.loc15_20: init type = call constants.%Bool() [concrete = bool]
+// CHECK:STDOUT:     %.loc15_20.1: type = value_of_initializer %bool.make_type.loc15_20 [concrete = bool]
+// CHECK:STDOUT:     %.loc15_20.2: type = converted %bool.make_type.loc15_20, %.loc15_20.1 [concrete = bool]
 // CHECK:STDOUT:     %b.param: bool = value_param call_param0
-// CHECK:STDOUT:     %.loc14_11.1: type = splice_block %.loc14_11.3 [concrete = bool] {
-// CHECK:STDOUT:       %bool.make_type.loc14_11: init type = call constants.%Bool() [concrete = bool]
-// CHECK:STDOUT:       %.loc14_11.2: type = value_of_initializer %bool.make_type.loc14_11 [concrete = bool]
-// CHECK:STDOUT:       %.loc14_11.3: type = converted %bool.make_type.loc14_11, %.loc14_11.2 [concrete = bool]
+// CHECK:STDOUT:     %.loc15_11.1: type = splice_block %.loc15_11.3 [concrete = bool] {
+// CHECK:STDOUT:       %bool.make_type.loc15_11: init type = call constants.%Bool() [concrete = bool]
+// CHECK:STDOUT:       %.loc15_11.2: type = value_of_initializer %bool.make_type.loc15_11 [concrete = bool]
+// CHECK:STDOUT:       %.loc15_11.3: type = converted %bool.make_type.loc15_11, %.loc15_11.2 [concrete = bool]
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %b: bool = bind_name b, %b.param
 // CHECK:STDOUT:     %return.param: ref bool = out_param call_param1
@@ -91,29 +92,29 @@ fn Constant() {
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %not_true.patt: %pattern_type.831 = binding_pattern not_true [concrete]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %.loc18_15.1: type = splice_block %.loc18_15.3 [concrete = bool] {
-// CHECK:STDOUT:     %bool.make_type.loc18: init type = call constants.%Bool() [concrete = bool]
-// CHECK:STDOUT:     %.loc18_15.2: type = value_of_initializer %bool.make_type.loc18 [concrete = bool]
-// CHECK:STDOUT:     %.loc18_15.3: type = converted %bool.make_type.loc18, %.loc18_15.2 [concrete = bool]
+// CHECK:STDOUT:   %.loc19_15.1: type = splice_block %.loc19_15.3 [concrete = bool] {
+// CHECK:STDOUT:     %bool.make_type.loc19: init type = call constants.%Bool() [concrete = bool]
+// CHECK:STDOUT:     %.loc19_15.2: type = value_of_initializer %bool.make_type.loc19 [concrete = bool]
+// CHECK:STDOUT:     %.loc19_15.3: type = converted %bool.make_type.loc19, %.loc19_15.2 [concrete = bool]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %not_true: bool = bind_name not_true, @__global_init.%.loc18
+// CHECK:STDOUT:   %not_true: bool = bind_name not_true, @__global_init.%.loc19
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %not_false.patt: %pattern_type.831 = binding_pattern not_false [concrete]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %.loc19_16.1: type = splice_block %.loc19_16.3 [concrete = bool] {
-// CHECK:STDOUT:     %bool.make_type.loc19: init type = call constants.%Bool() [concrete = bool]
-// CHECK:STDOUT:     %.loc19_16.2: type = value_of_initializer %bool.make_type.loc19 [concrete = bool]
-// CHECK:STDOUT:     %.loc19_16.3: type = converted %bool.make_type.loc19, %.loc19_16.2 [concrete = bool]
+// CHECK:STDOUT:   %.loc20_16.1: type = splice_block %.loc20_16.3 [concrete = bool] {
+// CHECK:STDOUT:     %bool.make_type.loc20: init type = call constants.%Bool() [concrete = bool]
+// CHECK:STDOUT:     %.loc20_16.2: type = value_of_initializer %bool.make_type.loc20 [concrete = bool]
+// CHECK:STDOUT:     %.loc20_16.3: type = converted %bool.make_type.loc20, %.loc20_16.2 [concrete = bool]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %not_false: bool = bind_name not_false, @__global_init.%.loc19
+// CHECK:STDOUT:   %not_false: bool = bind_name not_false, @__global_init.%.loc20
 // CHECK:STDOUT:   %Constant.decl: %Constant.type = fn_decl @Constant [concrete = constants.%Constant] {} {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Not(%b.param: bool) -> bool {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %b.ref: bool = name_ref b, %b
-// CHECK:STDOUT:   %.loc15: bool = not %b.ref
-// CHECK:STDOUT:   return %.loc15
+// CHECK:STDOUT:   %.loc16: bool = not %b.ref
+// CHECK:STDOUT:   return %.loc16
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Constant() {
@@ -123,84 +124,84 @@ fn Constant() {
 // CHECK:STDOUT:     %a.var_patt: %pattern_type.cb1 = var_pattern %a.patt [concrete]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %a.var: ref %empty_tuple.type = var %a.var_patt
-// CHECK:STDOUT:   %.loc22_43.1: %empty_tuple.type = tuple_literal ()
-// CHECK:STDOUT:   %.loc22_43.2: init %empty_tuple.type = tuple_init () to %a.var [concrete = constants.%empty_tuple]
-// CHECK:STDOUT:   %.loc22_3: init %empty_tuple.type = converted %.loc22_43.1, %.loc22_43.2 [concrete = constants.%empty_tuple]
-// CHECK:STDOUT:   assign %a.var, %.loc22_3
-// CHECK:STDOUT:   br !.loc22_17
+// CHECK:STDOUT:   %.loc23_43.1: %empty_tuple.type = tuple_literal ()
+// CHECK:STDOUT:   %.loc23_43.2: init %empty_tuple.type = tuple_init () to %a.var [concrete = constants.%empty_tuple]
+// CHECK:STDOUT:   %.loc23_3: init %empty_tuple.type = converted %.loc23_43.1, %.loc23_43.2 [concrete = constants.%empty_tuple]
+// CHECK:STDOUT:   assign %a.var, %.loc23_3
+// CHECK:STDOUT:   br !.loc23_17
 // CHECK:STDOUT:
-// CHECK:STDOUT: !.loc22_17:
-// CHECK:STDOUT:   %true.loc22: bool = bool_literal true [concrete = constants.%true]
-// CHECK:STDOUT:   %.loc22_13: bool = not %true.loc22 [concrete = constants.%false]
-// CHECK:STDOUT:   if %.loc22_13 br !if.expr.then.loc22 else br !if.expr.else.loc22
+// CHECK:STDOUT: !.loc23_17:
+// CHECK:STDOUT:   %true.loc23: bool = bool_literal true [concrete = constants.%true]
+// CHECK:STDOUT:   %.loc23_13: bool = not %true.loc23 [concrete = constants.%false]
+// CHECK:STDOUT:   if %.loc23_13 br !if.expr.then.loc23 else br !if.expr.else.loc23
 // CHECK:STDOUT:
-// CHECK:STDOUT: !if.expr.then.loc22:
-// CHECK:STDOUT:   %bool.make_type.loc22: init type = call constants.%Bool() [concrete = bool]
-// CHECK:STDOUT:   %.loc22_27.1: type = value_of_initializer %bool.make_type.loc22 [concrete = bool]
-// CHECK:STDOUT:   %.loc22_27.2: type = converted %bool.make_type.loc22, %.loc22_27.1 [concrete = bool]
-// CHECK:STDOUT:   br !if.expr.result.loc22(%.loc22_27.2)
+// CHECK:STDOUT: !if.expr.then.loc23:
+// CHECK:STDOUT:   %bool.make_type.loc23: init type = call constants.%Bool() [concrete = bool]
+// CHECK:STDOUT:   %.loc23_27.1: type = value_of_initializer %bool.make_type.loc23 [concrete = bool]
+// CHECK:STDOUT:   %.loc23_27.2: type = converted %bool.make_type.loc23, %.loc23_27.1 [concrete = bool]
+// CHECK:STDOUT:   br !if.expr.result.loc23(%.loc23_27.2)
 // CHECK:STDOUT:
-// CHECK:STDOUT: !if.expr.else.loc22:
-// CHECK:STDOUT:   %.loc22_38: %empty_tuple.type = tuple_literal ()
-// CHECK:STDOUT:   %.loc22_32: type = converted %.loc22_38, constants.%empty_tuple.type [concrete = constants.%empty_tuple.type]
-// CHECK:STDOUT:   br !if.expr.result.loc22(%.loc22_32)
+// CHECK:STDOUT: !if.expr.else.loc23:
+// CHECK:STDOUT:   %.loc23_38: %empty_tuple.type = tuple_literal ()
+// CHECK:STDOUT:   %.loc23_32: type = converted %.loc23_38, constants.%empty_tuple.type [concrete = constants.%empty_tuple.type]
+// CHECK:STDOUT:   br !if.expr.result.loc23(%.loc23_32)
 // CHECK:STDOUT:
-// CHECK:STDOUT: !if.expr.result.loc22:
-// CHECK:STDOUT:   %.loc22_10: type = block_arg !if.expr.result.loc22 [concrete = constants.%empty_tuple.type]
-// CHECK:STDOUT:   br !.loc22_7
+// CHECK:STDOUT: !if.expr.result.loc23:
+// CHECK:STDOUT:   %.loc23_10: type = block_arg !if.expr.result.loc23 [concrete = constants.%empty_tuple.type]
+// CHECK:STDOUT:   br !.loc23_7
 // CHECK:STDOUT:
-// CHECK:STDOUT: !.loc22_7:
+// CHECK:STDOUT: !.loc23_7:
 // CHECK:STDOUT:   %a: ref %empty_tuple.type = bind_name a, %a.var
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %b.patt: %pattern_type.831 = binding_pattern b [concrete]
 // CHECK:STDOUT:     %b.var_patt: %pattern_type.831 = var_pattern %b.patt [concrete]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %b.var: ref bool = var %b.var_patt
-// CHECK:STDOUT:   %true.loc23: bool = bool_literal true [concrete = constants.%true]
-// CHECK:STDOUT:   assign %b.var, %true.loc23
-// CHECK:STDOUT:   br !.loc23_17
+// CHECK:STDOUT:   %true.loc24: bool = bool_literal true [concrete = constants.%true]
+// CHECK:STDOUT:   assign %b.var, %true.loc24
+// CHECK:STDOUT:   br !.loc24_17
 // CHECK:STDOUT:
-// CHECK:STDOUT: !.loc23_17:
+// CHECK:STDOUT: !.loc24_17:
 // CHECK:STDOUT:   %false: bool = bool_literal false [concrete = constants.%false]
-// CHECK:STDOUT:   %.loc23_13: bool = not %false [concrete = constants.%true]
-// CHECK:STDOUT:   if %.loc23_13 br !if.expr.then.loc23 else br !if.expr.else.loc23
+// CHECK:STDOUT:   %.loc24_13: bool = not %false [concrete = constants.%true]
+// CHECK:STDOUT:   if %.loc24_13 br !if.expr.then.loc24 else br !if.expr.else.loc24
 // CHECK:STDOUT:
-// CHECK:STDOUT: !if.expr.then.loc23:
-// CHECK:STDOUT:   %bool.make_type.loc23: init type = call constants.%Bool() [concrete = bool]
-// CHECK:STDOUT:   %.loc23_28.1: type = value_of_initializer %bool.make_type.loc23 [concrete = bool]
-// CHECK:STDOUT:   %.loc23_28.2: type = converted %bool.make_type.loc23, %.loc23_28.1 [concrete = bool]
-// CHECK:STDOUT:   br !if.expr.result.loc23(%.loc23_28.2)
+// CHECK:STDOUT: !if.expr.then.loc24:
+// CHECK:STDOUT:   %bool.make_type.loc24: init type = call constants.%Bool() [concrete = bool]
+// CHECK:STDOUT:   %.loc24_28.1: type = value_of_initializer %bool.make_type.loc24 [concrete = bool]
+// CHECK:STDOUT:   %.loc24_28.2: type = converted %bool.make_type.loc24, %.loc24_28.1 [concrete = bool]
+// CHECK:STDOUT:   br !if.expr.result.loc24(%.loc24_28.2)
 // CHECK:STDOUT:
-// CHECK:STDOUT: !if.expr.else.loc23:
-// CHECK:STDOUT:   %.loc23_39: %empty_tuple.type = tuple_literal ()
-// CHECK:STDOUT:   %.loc23_33: type = converted %.loc23_39, constants.%empty_tuple.type [concrete = constants.%empty_tuple.type]
-// CHECK:STDOUT:   br !if.expr.result.loc23(%.loc23_33)
+// CHECK:STDOUT: !if.expr.else.loc24:
+// CHECK:STDOUT:   %.loc24_39: %empty_tuple.type = tuple_literal ()
+// CHECK:STDOUT:   %.loc24_33: type = converted %.loc24_39, constants.%empty_tuple.type [concrete = constants.%empty_tuple.type]
+// CHECK:STDOUT:   br !if.expr.result.loc24(%.loc24_33)
 // CHECK:STDOUT:
-// CHECK:STDOUT: !if.expr.result.loc23:
-// CHECK:STDOUT:   %.loc23_10: type = block_arg !if.expr.result.loc23 [concrete = bool]
-// CHECK:STDOUT:   br !.loc23_7
+// CHECK:STDOUT: !if.expr.result.loc24:
+// CHECK:STDOUT:   %.loc24_10: type = block_arg !if.expr.result.loc24 [concrete = bool]
+// CHECK:STDOUT:   br !.loc24_7
 // CHECK:STDOUT:
-// CHECK:STDOUT: !.loc23_7:
+// CHECK:STDOUT: !.loc24_7:
 // CHECK:STDOUT:   %b: ref bool = bind_name b, %b.var
-// CHECK:STDOUT:   %Op.bound.loc23: <bound method> = bound_method %b.var, constants.%Op.8b7
+// CHECK:STDOUT:   %Op.bound.loc24: <bound method> = bound_method %b.var, constants.%Op.8b7
 // CHECK:STDOUT:   %Op.specific_fn.1: <specific function> = specific_function constants.%Op.8b7, @Op.2(bool) [concrete = constants.%Op.specific_fn.c3f]
-// CHECK:STDOUT:   %bound_method.loc23: <bound method> = bound_method %b.var, %Op.specific_fn.1
-// CHECK:STDOUT:   %addr.loc23: %ptr.bb2 = addr_of %b.var
-// CHECK:STDOUT:   %no_op.loc23: init %empty_tuple.type = call %bound_method.loc23(%addr.loc23)
-// CHECK:STDOUT:   %Op.bound.loc22: <bound method> = bound_method %a.var, constants.%Op.ea3
+// CHECK:STDOUT:   %bound_method.loc24: <bound method> = bound_method %b.var, %Op.specific_fn.1
+// CHECK:STDOUT:   %addr.loc24: %ptr.bb2 = addr_of %b.var
+// CHECK:STDOUT:   %no_op.loc24: init %empty_tuple.type = call %bound_method.loc24(%addr.loc24)
+// CHECK:STDOUT:   %Op.bound.loc23: <bound method> = bound_method %a.var, constants.%Op.ea3
 // CHECK:STDOUT:   %Op.specific_fn.2: <specific function> = specific_function constants.%Op.ea3, @Op.2(constants.%empty_tuple.type) [concrete = constants.%Op.specific_fn.393]
-// CHECK:STDOUT:   %bound_method.loc22: <bound method> = bound_method %a.var, %Op.specific_fn.2
-// CHECK:STDOUT:   %addr.loc22: %ptr.843 = addr_of %a.var
-// CHECK:STDOUT:   %no_op.loc22: init %empty_tuple.type = call %bound_method.loc22(%addr.loc22)
+// CHECK:STDOUT:   %bound_method.loc23: <bound method> = bound_method %a.var, %Op.specific_fn.2
+// CHECK:STDOUT:   %addr.loc23: %ptr.843 = addr_of %a.var
+// CHECK:STDOUT:   %no_op.loc23: init %empty_tuple.type = call %bound_method.loc23(%addr.loc23)
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %true: bool = bool_literal true [concrete = constants.%true]
-// CHECK:STDOUT:   %.loc18: bool = not %true [concrete = constants.%false]
+// CHECK:STDOUT:   %.loc19: bool = not %true [concrete = constants.%false]
 // CHECK:STDOUT:   %false: bool = bool_literal false [concrete = constants.%false]
-// CHECK:STDOUT:   %.loc19: bool = not %false [concrete = constants.%true]
+// CHECK:STDOUT:   %.loc20: bool = not %false [concrete = constants.%true]
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

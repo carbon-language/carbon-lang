@@ -327,7 +327,7 @@ static auto IsGenericFunction(Context& context,
 // Requests a vtable be created when processing a virtual function.
 static auto RequestVtableIfVirtual(
     Context& context, Parse::AnyFunctionDeclId node_id,
-    SemIR::Function::VirtualModifier virtual_modifier,
+    SemIR::Function::VirtualModifier& virtual_modifier,
     const std::optional<SemIR::Inst>& parent_scope_inst, SemIR::InstId decl_id,
     SemIR::GenericId generic_id) -> void {
   // In order to request a vtable, the function must be virtual, and in a class
@@ -346,11 +346,14 @@ static auto RequestVtableIfVirtual(
       !class_info.base_id.has_value()) {
     CARBON_DIAGNOSTIC(ImplWithoutBase, Error, "impl without base class");
     context.emitter().Emit(node_id, ImplWithoutBase);
+    virtual_modifier = SemIR::Function::VirtualModifier::None;
+    return;
   }
 
   if (IsGenericFunction(context, generic_id, class_info.generic_id)) {
     CARBON_DIAGNOSTIC(GenericVirtual, Error, "generic virtual function");
     context.emitter().Emit(node_id, GenericVirtual);
+    virtual_modifier = SemIR::Function::VirtualModifier::None;
     return;
   }
 
@@ -528,8 +531,8 @@ static auto BuildFunctionDecl(Context& context,
     // TODO: Validate that the redeclaration doesn't set an access modifier.
   }
 
-  RequestVtableIfVirtual(context, node_id, virtual_modifier, parent_scope_inst,
-                         decl_id, function_info.generic_id);
+  RequestVtableIfVirtual(context, node_id, function_info.virtual_modifier,
+                         parent_scope_inst, decl_id, function_info.generic_id);
 
   // Write the function ID into the FunctionDecl.
   ReplaceInstBeforeConstantUse(context, decl_id, function_decl);

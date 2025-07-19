@@ -30,9 +30,9 @@ fn Foo.Baz() {
 // CHECK:STDOUT: --- fail_duplicate.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
-// CHECK:STDOUT:   %Baz.type.8987ba.1: type = fn_type @Baz.1 [concrete]
+// CHECK:STDOUT:   %Baz.type.8987ba.1: type = fn_type @Baz.loc17 [concrete]
 // CHECK:STDOUT:   %Baz.eb4c34.1: %Baz.type.8987ba.1 = struct_value () [concrete]
-// CHECK:STDOUT:   %Baz.type.8987ba.2: type = fn_type @Baz.2 [concrete]
+// CHECK:STDOUT:   %Baz.type.8987ba.2: type = fn_type @Baz.loc27 [concrete]
 // CHECK:STDOUT:   %Baz.eb4c34.2: %Baz.type.8987ba.2 = struct_value () [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -52,16 +52,16 @@ fn Foo.Baz() {
 // CHECK:STDOUT:   %Foo: <namespace> = namespace [concrete] {
 // CHECK:STDOUT:     .Baz = %Baz.decl.loc17
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %Baz.decl.loc17: %Baz.type.8987ba.1 = fn_decl @Baz.1 [concrete = constants.%Baz.eb4c34.1] {} {}
-// CHECK:STDOUT:   %Baz.decl.loc27: %Baz.type.8987ba.2 = fn_decl @Baz.2 [concrete = constants.%Baz.eb4c34.2] {} {}
+// CHECK:STDOUT:   %Baz.decl.loc17: %Baz.type.8987ba.1 = fn_decl @Baz.loc17 [concrete = constants.%Baz.eb4c34.1] {} {}
+// CHECK:STDOUT:   %Baz.decl.loc27: %Baz.type.8987ba.2 = fn_decl @Baz.loc27 [concrete = constants.%Baz.eb4c34.2] {} {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Baz.1() {
+// CHECK:STDOUT: fn @Baz.loc17() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Baz.2() {
+// CHECK:STDOUT: fn @Baz.loc27() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }

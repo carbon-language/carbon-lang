@@ -393,7 +393,7 @@ fn D() {}
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %A.type.00d7e7.1: type = fn_type @A.1 [concrete]
 // CHECK:STDOUT:   %A.1db889.1: %A.type.00d7e7.1 = struct_value () [concrete]
-// CHECK:STDOUT:   %A.type.00d7e7.2: type = fn_type @A.2 [concrete]
+// CHECK:STDOUT:   %A.type.00d7e7.2: type = fn_type @A.loc14 [concrete]
 // CHECK:STDOUT:   %A.1db889.2: %A.type.00d7e7.2 = struct_value () [concrete]
 // CHECK:STDOUT:   %int_32: Core.IntLiteral = int_value 32 [concrete]
 // CHECK:STDOUT:   %Int.type: type = generic_class_type @Int [concrete]
@@ -425,7 +425,7 @@ fn D() {}
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %default.import = import <none>
-// CHECK:STDOUT:   %A.decl: %A.type.00d7e7.2 = fn_decl @A.2 [concrete = constants.%A.1db889.2] {} {}
+// CHECK:STDOUT:   %A.decl: %A.type.00d7e7.2 = fn_decl @A.loc14 [concrete = constants.%A.1db889.2] {} {}
 // CHECK:STDOUT:   %B.decl: %B.type = fn_decl @B [concrete = constants.%B] {} {
 // CHECK:STDOUT:     %int_32.loc23_17: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
 // CHECK:STDOUT:     %i32.loc23_17: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
@@ -442,7 +442,7 @@ fn D() {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @A.1 [from "fns.carbon"];
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @A.2() {
+// CHECK:STDOUT: fn @A.loc14() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }

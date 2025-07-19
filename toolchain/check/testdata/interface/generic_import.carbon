@@ -112,7 +112,7 @@ impl C as AddWith(C) {
 // CHECK:STDOUT:   %AddWith.assoc_type.3f0: type = assoc_entity_type @AddWith, @AddWith(%C) [concrete]
 // CHECK:STDOUT:   %assoc0.730: %AddWith.assoc_type.3f0 = assoc_entity element0, imports.%Main.import_ref.0c5 [concrete]
 // CHECK:STDOUT:   %AddWith.impl_witness: <witness> = impl_witness file.%AddWith.impl_witness_table [concrete]
-// CHECK:STDOUT:   %F.type.c09: type = fn_type @F.2 [concrete]
+// CHECK:STDOUT:   %F.type.c09: type = fn_type @F.loc8 [concrete]
 // CHECK:STDOUT:   %F.e62: %F.type.c09 = struct_value () [concrete]
 // CHECK:STDOUT:   %AddWith.facet: %AddWith.type.e8e = facet_value %C, (%AddWith.impl_witness) [concrete]
 // CHECK:STDOUT: }
@@ -165,7 +165,7 @@ impl C as AddWith(C) {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: impl @AddWith.impl: %C.ref.loc7_6 as %AddWith.type {
-// CHECK:STDOUT:   %F.decl: %F.type.c09 = fn_decl @F.2 [concrete = constants.%F.e62] {} {}
+// CHECK:STDOUT:   %F.decl: %F.type.c09 = fn_decl @F.loc8 [concrete = constants.%F.e62] {} {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .F = %F.decl
@@ -185,7 +185,7 @@ impl C as AddWith(C) {
 // CHECK:STDOUT:   fn;
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @F.2() {
+// CHECK:STDOUT: fn @F.loc8() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }

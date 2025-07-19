@@ -62,7 +62,7 @@ extend impl nonexistent* as I {}
 // CHECK:STDOUT:   %HasF.type: type = facet_type <@HasF> [concrete]
 // CHECK:STDOUT:   %C: type = class_type @C [concrete]
 // CHECK:STDOUT:   %HasF.impl_witness: <witness> = impl_witness @C.%HasF.impl_witness_table [concrete]
-// CHECK:STDOUT:   %F.type.a65: type = fn_type @F.2 [concrete]
+// CHECK:STDOUT:   %F.type.a65: type = fn_type @F.loc11 [concrete]
 // CHECK:STDOUT:   %F.ad8: %F.type.a65 = struct_value () [concrete]
 // CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [concrete]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [concrete]
@@ -73,7 +73,7 @@ extend impl nonexistent* as I {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: impl @HasF.impl: %Self.ref as %HasF.ref {
-// CHECK:STDOUT:   %F.decl: %F.type.a65 = fn_decl @F.2 [concrete = constants.%F.ad8] {} {}
+// CHECK:STDOUT:   %F.decl: %F.type.a65 = fn_decl @F.loc11 [concrete = constants.%F.ad8] {} {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .F = %F.decl
@@ -98,7 +98,7 @@ extend impl nonexistent* as I {}
 // CHECK:STDOUT:   extend @HasF.impl.%HasF.ref
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @F.2() {
+// CHECK:STDOUT: fn @F.loc11() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }

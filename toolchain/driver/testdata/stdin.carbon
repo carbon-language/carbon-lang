@@ -49,8 +49,9 @@
 // CHECK:STDOUT:   insts:
 // CHECK:STDOUT:     inst14:          {kind: Namespace, arg0: name_scope0, arg1: inst<none>, type: type(inst(NamespaceType))}
 // CHECK:STDOUT:   constant_values:
-// CHECK:STDOUT:     inst14:          concrete_constant(inst14)
-// CHECK:STDOUT:   symbolic_constants: {}
+// CHECK:STDOUT:     values:
+// CHECK:STDOUT:       inst14:          concrete_constant(inst14)
+// CHECK:STDOUT:     symbolic_constants: {}
 // CHECK:STDOUT:   inst_blocks:
 // CHECK:STDOUT:     inst_block_empty: {}
 // CHECK:STDOUT:     exports:         {}

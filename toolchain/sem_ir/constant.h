@@ -87,7 +87,7 @@ class ConstantValueStore {
     CARBON_DCHECK(inst_id.index >= 0);
     return static_cast<size_t>(inst_id.index) >= values_.size()
                ? default_
-               : values_[inst_id.index];
+               : values_.Get(inst_id);
   }
 
   // Sets the constant value of the given instruction, or sets that it is known
@@ -95,9 +95,9 @@ class ConstantValueStore {
   auto Set(InstId inst_id, ConstantId const_id) -> void {
     CARBON_DCHECK(inst_id.index >= 0);
     if (static_cast<size_t>(inst_id.index) >= values_.size()) {
-      values_.resize(inst_id.index + 1, default_);
+      values_.Resize(inst_id.index + 1, default_);
     }
-    values_[inst_id.index] = const_id;
+    values_.Get(inst_id) = const_id;
   }
 
   // Gets the instruction ID that defines the value of the given constant.
@@ -135,17 +135,16 @@ class ConstantValueStore {
   }
 
   auto AddSymbolicConstant(SymbolicConstant constant) -> ConstantId {
-    symbolic_constants_.push_back(constant);
-    return ConstantId::ForSymbolicConstantIndex(symbolic_constants_.size() - 1);
+    return ConstantId::ForSymbolicConstantId(symbolic_constants_.Add(constant));
   }
 
   auto GetSymbolicConstant(ConstantId const_id) -> SymbolicConstant& {
-    return symbolic_constants_[const_id.symbolic_index()];
+    return symbolic_constants_.Get(const_id.symbolic_id());
   }
 
   auto GetSymbolicConstant(ConstantId const_id) const
       -> const SymbolicConstant& {
-    return symbolic_constants_[const_id.symbolic_index()];
+    return symbolic_constants_.Get(const_id.symbolic_id());
   }
 
   // Get the dependence of the given constant.
@@ -170,18 +169,24 @@ class ConstantValueStore {
 
   // Makes an iterable range over pairs of the instruction id and constant value
   // id for each value in the store.
-  auto enumerate() const -> auto {
-    auto index_to_id = [](auto pair) -> std::pair<InstId, ConstantId> {
-      auto [index, value] = pair;
-      return std::pair<InstId, ConstantId>(InstId(index), value);
-    };
-    return llvm::map_range(llvm::enumerate(values_), index_to_id);
-  }
+  auto enumerate() const -> auto { return values_.enumerate(); }
 
-  // Returns the symbolic constants mapping as an ArrayRef whose keys are
-  // symbolic indexes of constants.
-  auto symbolic_constants() const -> llvm::ArrayRef<SymbolicConstant> {
-    return symbolic_constants_;
+  // Outputs assigned constant values, and all symbolic constants.
+  auto OutputYaml(bool include_singletons) const -> Yaml::OutputMapping {
+    return Yaml::OutputMapping([&, include_singletons](
+                                   Yaml::OutputMapping::Map map) {
+      map.Add("values", Yaml::OutputMapping([&](Yaml::OutputMapping::Map map) {
+                for (auto [id, value] : values_.enumerate()) {
+                  if (!include_singletons && IsSingletonInstId(id)) {
+                    continue;
+                  }
+                  if (!value.has_value() || value.is_constant()) {
+                    map.Add(PrintToString(id), Yaml::OutputScalar(value));
+                  }
+                }
+              }));
+      map.Add("symbolic_constants", symbolic_constants_.OutputYaml());
+    });
   }
 
  private:
@@ -193,14 +198,14 @@ class ConstantValueStore {
   //
   // Set inline size to 0 because these will typically be too large for the
   // stack, while this does make File smaller.
-  llvm::SmallVector<ConstantId, 0> values_;
+  ValueStore<InstId, ConstantId> values_;
 
   // A mapping from a symbolic constant ID index to information about the
   // symbolic constant. For a concrete constant, the only information that we
   // track is the instruction ID, which is stored directly within the
   // `ConstantId`. For a symbolic constant, we also track information about
   // where the constant was used, which is stored here.
-  llvm::SmallVector<SymbolicConstant, 0> symbolic_constants_;
+  ValueStore<ConstantId::SymbolicId, SymbolicConstant> symbolic_constants_;
 };
 
 // Given a constant ID, returns an instruction that has that constant value.

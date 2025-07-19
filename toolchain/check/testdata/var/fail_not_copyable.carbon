@@ -2,6 +2,7 @@
 // Exceptions. See /LICENSE for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
+// INCLUDE-FILE: toolchain/testing/testdata/min_prelude/full.carbon
 // TODO: Add ranges and switch to "--dump-sem-ir-ranges=only".
 // EXTRA-ARGS: --dump-sem-ir-ranges=if-present
 //
@@ -76,7 +77,7 @@ fn F(x: X) {
 // CHECK:STDOUT:     %x.param_patt: %pattern_type.019 = value_param_pattern %x.patt, call_param0 [concrete]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %x.param: %X = value_param call_param0
-// CHECK:STDOUT:     %X.ref.loc17: type = name_ref X, file.%X.decl [concrete = constants.%X]
+// CHECK:STDOUT:     %X.ref.loc18: type = name_ref X, file.%X.decl [concrete = constants.%X]
 // CHECK:STDOUT:     %x: %X = bind_name x, %x.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
@@ -107,18 +108,18 @@ fn F(x: X) {
 // CHECK:STDOUT:   %y.var: ref %X = var %y.var_patt
 // CHECK:STDOUT:   %x.ref: %X = name_ref x, %x
 // CHECK:STDOUT:   assign %y.var, <error>
-// CHECK:STDOUT:   %X.ref.loc31: type = name_ref X, file.%X.decl [concrete = constants.%X]
+// CHECK:STDOUT:   %X.ref.loc32: type = name_ref X, file.%X.decl [concrete = constants.%X]
 // CHECK:STDOUT:   %y: ref %X = bind_name y, %y.var
-// CHECK:STDOUT:   %Op.bound.loc31: <bound method> = bound_method %y.var, constants.%Op.33a
+// CHECK:STDOUT:   %Op.bound.loc32: <bound method> = bound_method %y.var, constants.%Op.33a
 // CHECK:STDOUT:   %Op.specific_fn.1: <specific function> = specific_function constants.%Op.33a, @Op.2(constants.%X) [concrete = constants.%Op.specific_fn.d1f]
-// CHECK:STDOUT:   %bound_method.loc31: <bound method> = bound_method %y.var, %Op.specific_fn.1
-// CHECK:STDOUT:   %addr.loc31: %ptr.d17 = addr_of %y.var
-// CHECK:STDOUT:   %no_op.loc31: init %empty_tuple.type = call %bound_method.loc31(%addr.loc31)
-// CHECK:STDOUT:   %Op.bound.loc24: <bound method> = bound_method %s.var, constants.%Op.5ef
+// CHECK:STDOUT:   %bound_method.loc32: <bound method> = bound_method %y.var, %Op.specific_fn.1
+// CHECK:STDOUT:   %addr.loc32: %ptr.d17 = addr_of %y.var
+// CHECK:STDOUT:   %no_op.loc32: init %empty_tuple.type = call %bound_method.loc32(%addr.loc32)
+// CHECK:STDOUT:   %Op.bound.loc25: <bound method> = bound_method %s.var, constants.%Op.5ef
 // CHECK:STDOUT:   %Op.specific_fn.2: <specific function> = specific_function constants.%Op.5ef, @Op.2(String) [concrete = constants.%Op.specific_fn.93f]
-// CHECK:STDOUT:   %bound_method.loc24: <bound method> = bound_method %s.var, %Op.specific_fn.2
-// CHECK:STDOUT:   %addr.loc24: %ptr.a45 = addr_of %s.var
-// CHECK:STDOUT:   %no_op.loc24: init %empty_tuple.type = call %bound_method.loc24(%addr.loc24)
+// CHECK:STDOUT:   %bound_method.loc25: <bound method> = bound_method %s.var, %Op.specific_fn.2
+// CHECK:STDOUT:   %addr.loc25: %ptr.a45 = addr_of %s.var
+// CHECK:STDOUT:   %no_op.loc25: init %empty_tuple.type = call %bound_method.loc25(%addr.loc25)
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

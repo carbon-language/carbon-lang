@@ -2,6 +2,8 @@
 // Exceptions. See /LICENSE for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
+// INCLUDE-FILE: toolchain/testing/testdata/min_prelude/full.carbon
+//
 // AUTOUPDATE
 // TIP: To test this file alone, run:
 // TIP:   bazel test //toolchain/testing:file_test --test_arg=--file_tests=toolchain/lower/testdata/for/for.carbon
@@ -33,25 +35,25 @@ fn For() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: define void @_CFor.Main() !dbg !4 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %.loc19_32.1.temp = alloca { i32, i32 }, align 8, !dbg !7
+// CHECK:STDOUT:   %.loc21_32.1.temp = alloca { i32, i32 }, align 8, !dbg !7
 // CHECK:STDOUT:   %var = alloca i32, align 4, !dbg !8
-// CHECK:STDOUT:   %.loc19_33.1.temp = alloca { i1, i32 }, align 8, !dbg !8
+// CHECK:STDOUT:   %.loc21_33.1.temp = alloca { i1, i32 }, align 8, !dbg !8
 // CHECK:STDOUT:   call void @_CF.Main(), !dbg !9
-// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(i64 8, ptr %.loc19_32.1.temp), !dbg !7
-// CHECK:STDOUT:   call void @_CRange.Core(ptr %.loc19_32.1.temp, i32 100), !dbg !7
-// CHECK:STDOUT:   %NewCursor.call = call i32 @"_CNewCursor.IntRange.Core:Iterate.Core.be1e879c1ad406d8"(ptr %.loc19_32.1.temp), !dbg !8
+// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(i64 8, ptr %.loc21_32.1.temp), !dbg !7
+// CHECK:STDOUT:   call void @_CRange.Core(ptr %.loc21_32.1.temp, i32 100), !dbg !7
+// CHECK:STDOUT:   %NewCursor.call = call i32 @"_CNewCursor.IntRange.Core:Iterate.Core.be1e879c1ad406d8"(ptr %.loc21_32.1.temp), !dbg !8
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(i64 4, ptr %var), !dbg !8
 // CHECK:STDOUT:   store i32 %NewCursor.call, ptr %var, align 4, !dbg !8
 // CHECK:STDOUT:   br label %for.next, !dbg !8
 // CHECK:STDOUT:
 // CHECK:STDOUT: for.next:                                         ; preds = %for.body, %entry
-// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(i64 8, ptr %.loc19_33.1.temp), !dbg !8
-// CHECK:STDOUT:   call void @"_CNext.IntRange.Core:Iterate.Core.be1e879c1ad406d8"(ptr %.loc19_33.1.temp, ptr %.loc19_32.1.temp, ptr %var), !dbg !8
-// CHECK:STDOUT:   %HasValue.call = call i1 @_CHasValue.Optional.Core.b88d1103f417c6d4(ptr %.loc19_33.1.temp), !dbg !8
+// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(i64 8, ptr %.loc21_33.1.temp), !dbg !8
+// CHECK:STDOUT:   call void @"_CNext.IntRange.Core:Iterate.Core.be1e879c1ad406d8"(ptr %.loc21_33.1.temp, ptr %.loc21_32.1.temp, ptr %var), !dbg !8
+// CHECK:STDOUT:   %HasValue.call = call i1 @_CHasValue.Optional.Core.b88d1103f417c6d4(ptr %.loc21_33.1.temp), !dbg !8
 // CHECK:STDOUT:   br i1 %HasValue.call, label %for.body, label %for.done, !dbg !8
 // CHECK:STDOUT:
 // CHECK:STDOUT: for.body:                                         ; preds = %for.next
-// CHECK:STDOUT:   %Get.call = call i32 @_CGet.Optional.Core.b88d1103f417c6d4(ptr %.loc19_33.1.temp), !dbg !8
+// CHECK:STDOUT:   %Get.call = call i32 @_CGet.Optional.Core.b88d1103f417c6d4(ptr %.loc21_33.1.temp), !dbg !8
 // CHECK:STDOUT:   call void @_CG.Main(), !dbg !10
 // CHECK:STDOUT:   br label %for.next, !dbg !11
 // CHECK:STDOUT:
@@ -150,16 +152,16 @@ fn For() {
 // CHECK:STDOUT: !1 = !{i32 2, !"Debug Info Version", i32 3}
 // CHECK:STDOUT: !2 = distinct !DICompileUnit(language: DW_LANG_C, file: !3, producer: "carbon", isOptimized: false, runtimeVersion: 0, emissionKind: FullDebug)
 // CHECK:STDOUT: !3 = !DIFile(filename: "for.carbon", directory: "")
-// CHECK:STDOUT: !4 = distinct !DISubprogram(name: "For", linkageName: "_CFor.Main", scope: null, file: !3, line: 17, type: !5, spFlags: DISPFlagDefinition, unit: !2)
+// CHECK:STDOUT: !4 = distinct !DISubprogram(name: "For", linkageName: "_CFor.Main", scope: null, file: !3, line: 19, type: !5, spFlags: DISPFlagDefinition, unit: !2)
 // CHECK:STDOUT: !5 = !DISubroutineType(types: !6)
 // CHECK:STDOUT: !6 = !{}
-// CHECK:STDOUT: !7 = !DILocation(line: 19, column: 18, scope: !4)
-// CHECK:STDOUT: !8 = !DILocation(line: 19, column: 7, scope: !4)
-// CHECK:STDOUT: !9 = !DILocation(line: 18, column: 3, scope: !4)
-// CHECK:STDOUT: !10 = !DILocation(line: 20, column: 5, scope: !4)
-// CHECK:STDOUT: !11 = !DILocation(line: 19, column: 3, scope: !4)
-// CHECK:STDOUT: !12 = !DILocation(line: 22, column: 3, scope: !4)
-// CHECK:STDOUT: !13 = !DILocation(line: 17, column: 1, scope: !4)
+// CHECK:STDOUT: !7 = !DILocation(line: 21, column: 18, scope: !4)
+// CHECK:STDOUT: !8 = !DILocation(line: 21, column: 7, scope: !4)
+// CHECK:STDOUT: !9 = !DILocation(line: 20, column: 3, scope: !4)
+// CHECK:STDOUT: !10 = !DILocation(line: 22, column: 5, scope: !4)
+// CHECK:STDOUT: !11 = !DILocation(line: 21, column: 3, scope: !4)
+// CHECK:STDOUT: !12 = !DILocation(line: 24, column: 3, scope: !4)
+// CHECK:STDOUT: !13 = !DILocation(line: 19, column: 1, scope: !4)
 // CHECK:STDOUT: !14 = distinct !DISubprogram(name: "NewCursor", linkageName: "_CNewCursor.IntRange.Core:Iterate.Core.be1e879c1ad406d8", scope: null, file: !15, line: 25, type: !5, spFlags: DISPFlagDefinition, unit: !2)
 // CHECK:STDOUT: !15 = !DIFile(filename: "{{.*}}/range.carbon", directory: "")
 // CHECK:STDOUT: !16 = !DILocation(line: 25, column: 51, scope: !14)

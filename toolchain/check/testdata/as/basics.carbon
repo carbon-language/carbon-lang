@@ -394,7 +394,7 @@ let n: {.x: ()} = {.x = ()} as {.x = ()};
 // CHECK:STDOUT:   %As.type.bdd: type = facet_type <@As, @As(%Y)> [concrete]
 // CHECK:STDOUT:   %Convert.type.d2d: type = fn_type @Convert.1, @As(%Y) [concrete]
 // CHECK:STDOUT:   %As.impl_witness.06e: <witness> = impl_witness file.%As.impl_witness_table.loc14 [concrete]
-// CHECK:STDOUT:   %Convert.type.dbe: type = fn_type @Convert.3 [concrete]
+// CHECK:STDOUT:   %Convert.type.dbe: type = fn_type @Convert.loc15 [concrete]
 // CHECK:STDOUT:   %Convert.9cb: %Convert.type.dbe = struct_value () [concrete]
 // CHECK:STDOUT:   %As.facet.8d1: %As.type.bdd = facet_value %X, (%As.impl_witness.06e) [concrete]
 // CHECK:STDOUT:   %.1fc: type = fn_type_with_self_type %Convert.type.d2d, %As.facet.8d1 [concrete]

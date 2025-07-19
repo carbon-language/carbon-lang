@@ -191,6 +191,20 @@ auto GetCalleeFunction(const File& sem_ir, InstId callee_id,
                        SpecificId specific_id = SpecificId::None)
     -> CalleeFunction;
 
+struct DecomposedVirtualFunction {
+  // The underlying `FunctionDecl`.
+  InstId fn_decl_id;
+  // The function.
+  FunctionId function_id;
+  // The specific for the function.
+  SpecificId specific_id;
+};
+
+// Returns information for the virtual function table entry instruction.
+auto DecomposeVirtualFunction(const File& sem_ir, InstId fn_decl_id,
+                              SpecificId base_class_specific_id)
+    -> DecomposedVirtualFunction;
+
 }  // namespace Carbon::SemIR
 
 #endif  // CARBON_TOOLCHAIN_SEM_IR_FUNCTION_H_

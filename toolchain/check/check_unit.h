@@ -5,6 +5,7 @@
 #ifndef CARBON_TOOLCHAIN_CHECK_CHECK_UNIT_H_
 #define CARBON_TOOLCHAIN_CHECK_CHECK_UNIT_H_
 
+#include "clang/Frontend/CompilerInvocation.h"
 #include "common/map.h"
 #include "llvm/ADT/SmallVector.h"
 #include "toolchain/check/check.h"
@@ -124,7 +125,7 @@ class CheckUnit {
       UnitAndImports* unit_and_imports,
       llvm::ArrayRef<Parse::GetTreeAndSubtreesFn> tree_and_subtrees_getters,
       llvm::IntrusiveRefCntPtr<llvm::vfs::FileSystem> fs,
-      llvm::StringRef clang_path, llvm::StringRef target,
+      std::shared_ptr<clang::CompilerInvocation> clang_invocation,
       llvm::raw_ostream* vlog_stream);
 
   // Produces and checks the IR for the provided unit.
@@ -187,8 +188,7 @@ class CheckUnit {
   // The number of IRs being checked in total.
   int total_ir_count_;
   llvm::IntrusiveRefCntPtr<llvm::vfs::FileSystem> fs_;
-  llvm::StringRef clang_path_;
-  llvm::StringRef target_;
+  std::shared_ptr<clang::CompilerInvocation> clang_invocation_;
 
   DiagnosticEmitter emitter_;
   Context context_;

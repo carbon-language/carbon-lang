@@ -35,6 +35,7 @@ cc_library(
         "//common:check",
         "//common:map",
         "//common:raw_string_ostream",
+        "//toolchain/base:clang_invocation",
         "//toolchain/base:shared_value_stores",
         "//toolchain/check",
         "//toolchain/diagnostics:diagnostic_emitter",

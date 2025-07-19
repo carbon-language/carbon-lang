@@ -65,12 +65,12 @@ fn H() -> C({}).(I.F)() {}
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [concrete]
 // CHECK:STDOUT:   %I.type: type = facet_type <@I> [concrete]
 // CHECK:STDOUT:   %Self: %I.type = bind_symbolic_name Self, 0 [symbolic]
-// CHECK:STDOUT:   %F.type.cf0: type = fn_type @F.1 [concrete]
+// CHECK:STDOUT:   %F.type.cf0: type = fn_type @F.loc7 [concrete]
 // CHECK:STDOUT:   %F.bc6: %F.type.cf0 = struct_value () [concrete]
 // CHECK:STDOUT:   %I.assoc_type: type = assoc_entity_type @I [concrete]
 // CHECK:STDOUT:   %assoc0: %I.assoc_type = assoc_entity element0, @I.%F.decl [concrete]
 // CHECK:STDOUT:   %I.impl_witness: <witness> = impl_witness file.%I.impl_witness_table, @I.impl(%T) [symbolic]
-// CHECK:STDOUT:   %F.type.40c: type = fn_type @F.2, @I.impl(%T) [symbolic]
+// CHECK:STDOUT:   %F.type.40c: type = fn_type @F.loc11, @I.impl(%T) [symbolic]
 // CHECK:STDOUT:   %F.071: %F.type.40c = struct_value () [symbolic]
 // CHECK:STDOUT:   %I.facet: %I.type = facet_value %C, (%I.impl_witness) [symbolic]
 // CHECK:STDOUT: }
@@ -101,7 +101,7 @@ fn H() -> C({}).(I.F)() {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: interface @I {
 // CHECK:STDOUT:   %Self: %I.type = bind_symbolic_name Self, 0 [symbolic = constants.%Self]
-// CHECK:STDOUT:   %F.decl: %F.type.cf0 = fn_decl @F.1 [concrete = constants.%F.bc6] {} {}
+// CHECK:STDOUT:   %F.decl: %F.type.cf0 = fn_decl @F.loc7 [concrete = constants.%F.bc6] {} {}
 // CHECK:STDOUT:   %assoc0: %I.assoc_type = assoc_entity element0, %F.decl [concrete = constants.%assoc0]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
@@ -116,11 +116,11 @@ fn H() -> C({}).(I.F)() {}
 // CHECK:STDOUT:   %I.impl_witness: <witness> = impl_witness file.%I.impl_witness_table, @I.impl(%T.loc10_14.2) [symbolic = %I.impl_witness (constants.%I.impl_witness)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
-// CHECK:STDOUT:   %F.type: type = fn_type @F.2, @I.impl(%T.loc10_14.2) [symbolic = %F.type (constants.%F.type.40c)]
+// CHECK:STDOUT:   %F.type: type = fn_type @F.loc11, @I.impl(%T.loc10_14.2) [symbolic = %F.type (constants.%F.type.40c)]
 // CHECK:STDOUT:   %F: @I.impl.%F.type (%F.type.40c) = struct_value () [symbolic = %F (constants.%F.071)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   impl: %C.loc10_27.1 as %I.ref {
-// CHECK:STDOUT:     %F.decl: @I.impl.%F.type (%F.type.40c) = fn_decl @F.2 [symbolic = @I.impl.%F (constants.%F.071)] {} {}
+// CHECK:STDOUT:     %F.decl: @I.impl.%F.type (%F.type.40c) = fn_decl @F.loc11 [symbolic = @I.impl.%F (constants.%F.071)] {} {}
 // CHECK:STDOUT:
 // CHECK:STDOUT:   !members:
 // CHECK:STDOUT:     .F = %F.decl
@@ -143,11 +143,11 @@ fn H() -> C({}).(I.F)() {}
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic fn @F.1(@I.%Self: %I.type) {
+// CHECK:STDOUT: generic fn @F.loc7(@I.%Self: %I.type) {
 // CHECK:STDOUT:   fn();
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic fn @F.2(@I.impl.%T.loc10_14.1: type) {
+// CHECK:STDOUT: generic fn @F.loc11(@I.impl.%T.loc10_14.1: type) {
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:
 // CHECK:STDOUT:   fn() {
@@ -160,7 +160,7 @@ fn H() -> C({}).(I.F)() {}
 // CHECK:STDOUT:   %T.loc4_9.2 => constants.%T
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @F.1(constants.%Self) {}
+// CHECK:STDOUT: specific @F.loc7(constants.%Self) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @I.impl(constants.%T) {
 // CHECK:STDOUT:   %T.loc10_14.2 => constants.%T
@@ -172,9 +172,9 @@ fn H() -> C({}).(I.F)() {}
 // CHECK:STDOUT:   %F => constants.%F.071
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @F.2(constants.%T) {}
+// CHECK:STDOUT: specific @F.loc11(constants.%T) {}
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @F.1(constants.%I.facet) {}
+// CHECK:STDOUT: specific @F.loc7(constants.%I.facet) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- fail_use_in_fn_decl.carbon
 // CHECK:STDOUT:

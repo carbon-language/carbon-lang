@@ -86,8 +86,10 @@ TEST(SemIRTest, Yaml) {
                                              Pair("arg1", "inst_block_empty"),
                                              Pair("type", type_id)))))))),
       Pair("constant_values",
-           Yaml::Mapping(AllOf(Each(Pair(inst_id, constant_id))))),
-      Pair("symbolic_constants", Yaml::Mapping(SizeIs(0))),
+           Yaml::Mapping(ElementsAre(
+               Pair("values",
+                    Yaml::Mapping(AllOf(Each(Pair(inst_id, constant_id))))),
+               Pair("symbolic_constants", Yaml::Mapping(SizeIs(0)))))),
       Pair("inst_blocks",
            Yaml::Mapping(ElementsAre(
                Pair("inst_block_empty", Yaml::Mapping(IsEmpty())),

@@ -17,16 +17,19 @@
 #include "clang/Frontend/TextDiagnostic.h"
 #include "clang/Lex/PreprocessorOptions.h"
 #include "clang/Sema/Lookup.h"
+#include "common/check.h"
 #include "common/ostream.h"
 #include "common/raw_string_ostream.h"
 #include "llvm/ADT/IntrusiveRefCntPtr.h"
 #include "llvm/ADT/StringRef.h"
 #include "llvm/Support/raw_ostream.h"
+#include "toolchain/base/kind_switch.h"
 #include "toolchain/check/class.h"
 #include "toolchain/check/context.h"
 #include "toolchain/check/convert.h"
 #include "toolchain/check/diagnostic_helpers.h"
 #include "toolchain/check/eval.h"
+#include "toolchain/check/function.h"
 #include "toolchain/check/import.h"
 #include "toolchain/check/inst.h"
 #include "toolchain/check/literal.h"
@@ -37,14 +40,12 @@
 #include "toolchain/diagnostics/diagnostic_emitter.h"
 #include "toolchain/diagnostics/format_providers.h"
 #include "toolchain/parse/node_ids.h"
+#include "toolchain/sem_ir/clang_decl.h"
 #include "toolchain/sem_ir/ids.h"
 #include "toolchain/sem_ir/name_scope.h"
 #include "toolchain/sem_ir/typed_insts.h"
 
 namespace Carbon::Check {
-
-// The fake file name to use for the synthesized includes file.
-static constexpr const char IncludesFileName[] = "<carbon Cpp imports>";
 
 // Generates C++ file contents to #include all requested imports.
 static auto GenerateCppIncludesHeaderCode(
@@ -95,99 +96,6 @@ static auto AddImportIRInst(Context& context,
       context.sem_ir().clang_source_locs().Add(clang_source_loc);
   return context.import_ir_insts().Add(
       SemIR::ImportIRInst(clang_source_loc_id));
-}
-
-namespace {
-
-// Used to convert diagnostics from the Clang driver to Carbon diagnostics.
-class CarbonClangDriverDiagnosticConsumer : public clang::DiagnosticConsumer {
- public:
-  // Creates an instance with the location that triggers calling Clang.
-  // `context` must not be null.
-  explicit CarbonClangDriverDiagnosticConsumer(
-      Diagnostics::NoLocEmitter* emitter)
-      : emitter_(emitter) {}
-
-  // Generates a Carbon warning for each Clang warning and a Carbon error for
-  // each Clang error or fatal.
-  auto HandleDiagnostic(clang::DiagnosticsEngine::Level diag_level,
-                        const clang::Diagnostic& info) -> void override {
-    DiagnosticConsumer::HandleDiagnostic(diag_level, info);
-
-    llvm::SmallString<256> message;
-    info.FormatDiagnostic(message);
-
-    switch (diag_level) {
-      case clang::DiagnosticsEngine::Ignored:
-      case clang::DiagnosticsEngine::Note:
-      case clang::DiagnosticsEngine::Remark: {
-        // TODO: Emit notes and remarks.
-        break;
-      }
-      case clang::DiagnosticsEngine::Warning:
-      case clang::DiagnosticsEngine::Error:
-      case clang::DiagnosticsEngine::Fatal: {
-        CARBON_DIAGNOSTIC(CppInteropDriverWarning, Warning, "{0}", std::string);
-        CARBON_DIAGNOSTIC(CppInteropDriverError, Error, "{0}", std::string);
-        emitter_->Emit(diag_level == clang::DiagnosticsEngine::Warning
-                           ? CppInteropDriverWarning
-                           : CppInteropDriverError,
-                       message.str().str());
-        break;
-      }
-    }
-  }
-
- private:
-  // Diagnostic emitter. Note that driver diagnostics don't have meaningful
-  // locations attached.
-  Diagnostics::NoLocEmitter* emitter_;
-};
-
-}  // namespace
-
-// Builds a clang `CompilerInvocation` describing the options to use to build an
-// imported C++ AST.
-// TODO: Cache the compiler invocation created here and reuse it if building
-// multiple AST units. Consider building the `CompilerInvocation` from the
-// driver and passing it into check. This would also allow us to have a shared
-// set of defaults between the Clang invocation we use for imports and the
-// invocation we use for `carbon clang`.
-static auto BuildCompilerInvocation(
-    Context& context, llvm::IntrusiveRefCntPtr<llvm::vfs::FileSystem> fs,
-    const std::string& clang_path, const std::string& target)
-    -> std::unique_ptr<clang::CompilerInvocation> {
-  Diagnostics::NoLocEmitter emitter(context.emitter());
-  CarbonClangDriverDiagnosticConsumer diagnostics_consumer(&emitter);
-
-  const char* driver_args[] = {
-      clang_path.c_str(),
-      // Propagate the target to Clang.
-      "-target",
-      target.c_str(),
-      // Require PIE. Note its default is configurable in Clang.
-      "-fPIE",
-      // Parse as a C++ (not C) header.
-      "-x",
-      "c++",
-      IncludesFileName,
-  };
-
-  // Build a diagnostics engine. Note that we don't have any diagnostic options
-  // yet; they're produced by running the driver.
-  clang::DiagnosticOptions driver_diag_opts;
-  llvm::IntrusiveRefCntPtr<clang::DiagnosticsEngine> driver_diags(
-      clang::CompilerInstance::createDiagnostics(*fs, driver_diag_opts,
-                                                 &diagnostics_consumer,
-                                                 /*ShouldOwnClient=*/false));
-
-  // Ask the driver to process the arguments and build a corresponding clang
-  // frontend invocation.
-  auto invocation =
-      clang::createInvocation(driver_args, {.Diags = driver_diags, .VFS = fs});
-
-  // Emit any queued diagnostics from parsing our driver arguments.
-  return invocation;
 }
 
 namespace {
@@ -308,16 +216,8 @@ class CarbonClangDiagnosticConsumer : public clang::DiagnosticConsumer {
 static auto GenerateAst(Context& context,
                         llvm::ArrayRef<Parse::Tree::PackagingNames> imports,
                         llvm::IntrusiveRefCntPtr<llvm::vfs::FileSystem> fs,
-                        const std::string& clang_path,
-                        const std::string& target)
+                        std::shared_ptr<clang::CompilerInvocation> invocation)
     -> std::pair<std::unique_ptr<clang::ASTUnit>, bool> {
-  // Build the options to use to invoke the Clang frontend.
-  std::shared_ptr<clang::CompilerInvocation> invocation =
-      BuildCompilerInvocation(context, fs, clang_path, target);
-  if (!invocation) {
-    return {nullptr, true};
-  }
-
   // Build a diagnostics engine.
   CarbonClangDiagnosticConsumer diagnostics_consumer(&context,
                                                      invocation.get());
@@ -326,11 +226,20 @@ static auto GenerateAst(Context& context,
           *fs, invocation->getDiagnosticOpts(), &diagnostics_consumer,
           /*ShouldOwnClient=*/false));
 
+  // Extract the input from the frontend invocation and make sure it makes
+  // sense.
+  const auto& inputs = invocation->getFrontendOpts().Inputs;
+  CARBON_CHECK(inputs.size() == 1 &&
+               inputs[0].getKind().getLanguage() == clang::Language::CXX &&
+               inputs[0].getKind().getFormat() == clang::InputKind::Source);
+  llvm::StringRef file_name = inputs[0].getFile();
+
   // Remap the imports file name to the corresponding `#include`s.
+  // TODO: Modify the frontend options to specify this memory buffer as input
+  // instead of remapping the file.
   std::string includes = GenerateCppIncludesHeaderCode(context, imports);
-  auto includes_buffer =
-      llvm::MemoryBuffer::getMemBuffer(includes, IncludesFileName);
-  invocation->getPreprocessorOpts().addRemappedFile(IncludesFileName,
+  auto includes_buffer = llvm::MemoryBuffer::getMemBuffer(includes, file_name);
+  invocation->getPreprocessorOpts().addRemappedFile(file_name,
                                                     includes_buffer.get());
 
   // Create the AST unit.
@@ -386,7 +295,7 @@ static auto AddNamespace(Context& context, PackageNameId cpp_package_id,
 auto ImportCppFiles(Context& context,
                     llvm::ArrayRef<Parse::Tree::PackagingNames> imports,
                     llvm::IntrusiveRefCntPtr<llvm::vfs::FileSystem> fs,
-                    llvm::StringRef clang_path, llvm::StringRef target)
+                    std::shared_ptr<clang::CompilerInvocation> invocation)
     -> std::unique_ptr<clang::ASTUnit> {
   if (imports.empty()) {
     return nullptr;
@@ -402,7 +311,7 @@ auto ImportCppFiles(Context& context,
   auto name_scope_id = AddNamespace(context, package_id, imports);
 
   auto [generated_ast, ast_has_error] =
-      GenerateAst(context, imports, fs, clang_path.str(), target.str());
+      GenerateAst(context, imports, fs, std::move(invocation));
 
   SemIR::NameScope& name_scope = context.name_scopes().Get(name_scope_id);
   name_scope.set_is_closed_import(true);
@@ -461,67 +370,80 @@ static auto ClangLookup(Context& context, SemIR::NameScopeId scope_id,
   return lookup;
 }
 
+// Returns whether `decl` already mapped to an instruction.
+static auto IsClangDeclImported(const Context& context, clang::Decl* decl)
+    -> bool {
+  return context.sem_ir().clang_decls().Lookup(decl).has_value();
+}
+
+// If `decl` already mapped to an instruction, returns that instruction.
+// Otherwise returns `None`.
+static auto LookupClangDeclInstId(const Context& context, clang::Decl* decl)
+    -> SemIR::InstId {
+  const auto& clang_decls = context.sem_ir().clang_decls();
+  if (auto context_clang_decl_id = clang_decls.Lookup(decl);
+      context_clang_decl_id.has_value()) {
+    return clang_decls.Get(context_clang_decl_id).inst_id;
+  }
+  return SemIR::InstId::None;
+}
+
+// Returns the parent of the given declaration. Skips declaration types we
+// ignore.
+static auto GetParentDecl(clang::Decl* clang_decl) -> clang::Decl* {
+  clang::DeclContext* decl_context = clang_decl->getDeclContext();
+  while (llvm::isa<clang::LinkageSpecDecl>(decl_context)) {
+    decl_context = decl_context->getParent();
+  }
+  return llvm::cast<clang::Decl>(decl_context);
+}
+
+// Returns the given declaration's parent scope. Assumes the parent declaration
+// was already imported.
+static auto GetParentNameScopeId(Context& context, clang::Decl* clang_decl)
+    -> SemIR::NameScopeId {
+  SemIR::InstId parent_inst_id =
+      LookupClangDeclInstId(context, GetParentDecl(clang_decl));
+  CARBON_CHECK(parent_inst_id.has_value());
+
+  CARBON_KIND_SWITCH(context.insts().Get(parent_inst_id)) {
+    case CARBON_KIND(SemIR::ClassDecl class_decl): {
+      return context.classes().Get(class_decl.class_id).scope_id;
+    }
+    case CARBON_KIND(SemIR::InterfaceDecl interface_decl): {
+      return context.interfaces().Get(interface_decl.interface_id).scope_id;
+    }
+    case CARBON_KIND(SemIR::Namespace namespace_inst): {
+      return namespace_inst.name_scope_id;
+    }
+    default: {
+      CARBON_FATAL("Unexpected parent instruction kind");
+    }
+  }
+}
+
 // Imports a namespace declaration from Clang to Carbon. If successful, returns
-// the new Carbon namespace declaration `InstId`.
+// the new Carbon namespace declaration `InstId`. If the declaration was already
+// imported, returns the mapped instruction.
 static auto ImportNamespaceDecl(Context& context,
-                                SemIR::NameScopeId parent_scope_id,
-                                SemIR::NameId name_id,
                                 clang::NamespaceDecl* clang_decl)
     -> SemIR::InstId {
+  // Check if the declaration is already mapped.
+  if (SemIR::InstId existing_inst_id =
+          LookupClangDeclInstId(context, clang_decl);
+      existing_inst_id.has_value()) {
+    return existing_inst_id;
+  }
   auto result = AddImportNamespace(
       context, GetSingletonType(context, SemIR::NamespaceType::TypeInstId),
-      name_id, parent_scope_id, /*import_id=*/SemIR::InstId::None);
+      AddIdentifierName(context, clang_decl->getName()),
+      GetParentNameScopeId(context, clang_decl),
+      /*import_id=*/SemIR::InstId::None);
   context.name_scopes()
       .Get(result.name_scope_id)
       .set_clang_decl_context_id(context.sem_ir().clang_decls().Add(
           {.decl = clang_decl, .inst_id = result.inst_id}));
   return result.inst_id;
-}
-
-// Maps a C++ declaration context to a Carbon namespace.
-static auto AsCarbonNamespace(Context& context,
-                              clang::DeclContext* decl_context)
-    -> SemIR::InstId {
-  CARBON_CHECK(decl_context);
-  auto& clang_decls = context.sem_ir().clang_decls();
-
-  // Check if the decl context is already mapped to a Carbon namespace.
-  if (auto context_clang_decl_id =
-          clang_decls.Lookup(clang::dyn_cast<clang::Decl>(decl_context));
-      context_clang_decl_id.has_value()) {
-    return clang_decls.Get(context_clang_decl_id).inst_id;
-  }
-
-  // We know we have at least one context to map, add all decl contexts we need
-  // to map.
-  llvm::SmallVector<clang::DeclContext*> decl_contexts;
-  auto parent_decl_id = SemIR::ClangDeclId::None;
-  do {
-    decl_contexts.push_back(decl_context);
-    decl_context = decl_context->getParent();
-    parent_decl_id =
-        clang_decls.Lookup(clang::dyn_cast<clang::Decl>(decl_context));
-  } while (!parent_decl_id.has_value());
-
-  // We know the parent of the last decl context is mapped, map the rest.
-  auto namespace_inst_id = SemIR::InstId::None;
-  do {
-    decl_context = decl_contexts.pop_back_val();
-    auto parent_inst_id = clang_decls.Get(parent_decl_id).inst_id;
-    auto parent_namespace =
-        context.insts().GetAs<SemIR::Namespace>(parent_inst_id);
-    namespace_inst_id = ImportNamespaceDecl(
-        context, parent_namespace.name_scope_id,
-        AddIdentifierName(
-            context, llvm::dyn_cast<clang::NamedDecl>(decl_context)->getName()),
-        clang::dyn_cast<clang::NamespaceDecl>(decl_context));
-    parent_decl_id = clang_decls.Add({
-        .decl = clang::dyn_cast<clang::Decl>(decl_context),
-        .inst_id = namespace_inst_id,
-    });
-  } while (!decl_contexts.empty());
-
-  return namespace_inst_id;
 }
 
 // Creates a class declaration for the given class name in the given scope.
@@ -567,17 +489,15 @@ static auto BuildClassDecl(Context& context, SemIR::NameScopeId parent_scope_id,
   return {class_decl.class_id, class_decl_id};
 }
 
-// Creates a class definition for the given class name in the given scope based
-// on the information in the given Clang declaration. Returns the `InstId` for
-// the declaration, which is assumed to be for a class definition. Returns the
-// new class id and instruction id.
+// Creates a class definition based on the information in the given Clang
+// declaration, which is assumed to be for a class definition. Returns the new
+// class id and instruction id.
 static auto BuildClassDefinition(Context& context,
-                                 SemIR::NameScopeId parent_scope_id,
-                                 SemIR::NameId name_id,
                                  clang::CXXRecordDecl* clang_decl)
     -> std::tuple<SemIR::ClassId, SemIR::InstId> {
   auto [class_id, class_inst_id] =
-      BuildClassDecl(context, parent_scope_id, name_id);
+      BuildClassDecl(context, GetParentNameScopeId(context, clang_decl),
+                     AddIdentifierName(context, clang_decl->getName()));
   auto& class_info = context.classes().Get(class_id);
   StartClassDefinition(context, class_info, class_inst_id);
 
@@ -600,8 +520,6 @@ static auto MarkFailedDecl(Context& context, clang::Decl* clang_decl) {
 // TODO: Change `clang_decl` to `const &` when lookup is using `clang::DeclID`
 // and we don't need to store the decl for lookup context.
 static auto ImportCXXRecordDecl(Context& context, SemIR::LocId loc_id,
-                                SemIR::NameScopeId parent_scope_id,
-                                SemIR::NameId name_id,
                                 clang::CXXRecordDecl* clang_decl)
     -> SemIR::InstId {
   clang::CXXRecordDecl* clang_def = clang_decl->getDefinition();
@@ -624,8 +542,7 @@ static auto ImportCXXRecordDecl(Context& context, SemIR::LocId loc_id,
     return SemIR::ErrorInst::InstId;
   }
 
-  auto [class_id, class_def_id] =
-      BuildClassDefinition(context, parent_scope_id, name_id, clang_def);
+  auto [class_id, class_def_id] = BuildClassDefinition(context, clang_def);
 
   // The class type is now fully defined. Compute its object representation.
   ComputeClassObjectRepr(context,
@@ -680,20 +597,10 @@ static auto MapRecordType(Context& context, SemIR::LocId loc_id,
     return {.inst_id = SemIR::TypeInstId::None, .type_id = SemIR::TypeId::None};
   }
 
-  auto& clang_decls = context.sem_ir().clang_decls();
-  SemIR::InstId record_inst_id = SemIR::InstId::None;
-  if (auto record_clang_decl_id = clang_decls.Lookup(record_decl);
-      record_clang_decl_id.has_value()) {
-    record_inst_id = clang_decls.Get(record_clang_decl_id).inst_id;
-  } else {
-    auto parent_inst_id =
-        AsCarbonNamespace(context, record_decl->getDeclContext());
-    auto parent_name_scope_id =
-        context.insts().GetAs<SemIR::Namespace>(parent_inst_id).name_scope_id;
-    SemIR::NameId record_name_id =
-        AddIdentifierName(context, record_decl->getName());
-    record_inst_id = ImportCXXRecordDecl(context, loc_id, parent_name_scope_id,
-                                         record_name_id, record_decl);
+  // Check if the declaration is already mapped.
+  SemIR::InstId record_inst_id = LookupClangDeclInstId(context, record_decl);
+  if (!record_inst_id.has_value()) {
+    record_inst_id = ImportCXXRecordDecl(context, loc_id, record_decl);
   }
   SemIR::TypeInstId record_type_inst_id =
       context.types().GetAsTypeInstId(record_inst_id);
@@ -805,6 +712,87 @@ static auto MapType(Context& context, SemIR::LocId loc_id, clang::QualType type)
   return mapped;
 }
 
+// Returns a block for the implicit parameters of the given function
+// declaration. Because function templates are not yet supported, this currently
+// only contains the `self` parameter. On error, produces a diagnostic and
+// returns None.
+static auto MakeImplicitParamPatternsBlockId(
+    Context& context, SemIR::LocId loc_id,
+    const clang::FunctionDecl& clang_decl) -> SemIR::InstBlockId {
+  const auto* method_decl = dyn_cast<clang::CXXMethodDecl>(&clang_decl);
+  if (!method_decl || method_decl->isStatic()) {
+    return SemIR::InstBlockId::Empty;
+  }
+
+  // Build a `self` parameter from the object parameter.
+  BeginSubpattern(context);
+
+  // Perform some special-case mapping for the object parameter:
+  //
+  //  - If it's a const reference to T, produce a by-value `self: T` parameter.
+  //  - If it's a non-const reference to T, produce an `addr self: T*`
+  //    parameter.
+  //  - Otherwise, map it directly, which will currently fail for `&&`-qualified
+  //    methods.
+  //
+  // TODO: Some of this mapping should be performed for all parameters.
+  clang::QualType param_type =
+      method_decl->getFunctionObjectParameterReferenceType();
+  bool addr_self = false;
+  if (param_type->isLValueReferenceType()) {
+    param_type = param_type.getNonReferenceType();
+    if (param_type.isConstQualified()) {
+      // TODO: Consider only doing this if `const` is the only qualifier. For
+      // now, any other qualifier will fail when mapping the type.
+      auto split_type = param_type.getSplitUnqualifiedType();
+      split_type.Quals.removeConst();
+      param_type = method_decl->getASTContext().getQualifiedType(split_type);
+    } else {
+      addr_self = true;
+    }
+  }
+
+  auto [type_inst_id, type_id] = MapType(context, loc_id, param_type);
+  SemIR::ExprRegionId type_expr_region_id =
+      EndSubpatternAsExpr(context, type_inst_id);
+
+  if (!type_id.has_value()) {
+    context.TODO(loc_id,
+                 llvm::formatv("Unsupported: object parameter type: {0}",
+                               param_type.getAsString()));
+    return SemIR::InstBlockId::None;
+  }
+
+  if (addr_self) {
+    type_id = GetPointerType(context, type_inst_id);
+  }
+
+  SemIR::InstId pattern_id =
+      // TODO: Fill in a location once available.
+      AddBindingPattern(context, SemIR::LocId::None, SemIR::NameId::SelfValue,
+                        type_id, type_expr_region_id, /*is_generic*/ false,
+                        /*is_template*/ false)
+          .pattern_id;
+
+  // TODO: Fill in a location once available.
+  pattern_id = AddPatternInst<SemIR::ValueParamPattern>(
+      context, SemIR::LocId::None,
+      {.type_id = context.insts().Get(pattern_id).type_id(),
+       .subpattern_id = pattern_id,
+       .index = SemIR::CallParamIndex::None});
+
+  // If we're building `addr self: Self*`, do that now.
+  if (addr_self) {
+    // TODO: Fill in a location once available.
+    pattern_id = AddPatternInst<SemIR::AddrPattern>(
+        context, SemIR::LocId::None,
+        {.type_id = GetPatternType(context, SemIR::AutoType::TypeId),
+         .inner_id = pattern_id});
+  }
+
+  return context.inst_blocks().Add({pattern_id});
+}
+
 // Returns a block id for the explicit parameters of the given function
 // declaration. If the function declaration has no parameters, it returns
 // `SemIR::InstBlockId::Empty`. In the case of an unsupported parameter type, it
@@ -909,6 +897,7 @@ namespace {
 // Represents the parameter patterns block id, the return slot pattern id and
 // the call parameters block id for a function declaration.
 struct FunctionParamsInsts {
+  SemIR::InstBlockId implicit_param_patterns_id;
   SemIR::InstBlockId param_patterns_id;
   SemIR::InstId return_slot_pattern_id;
   SemIR::InstBlockId call_params_id;
@@ -927,6 +916,16 @@ struct FunctionParamsInsts {
 static auto CreateFunctionParamsInsts(Context& context, SemIR::LocId loc_id,
                                       const clang::FunctionDecl* clang_decl)
     -> std::optional<FunctionParamsInsts> {
+  if (isa<clang::CXXConstructorDecl, clang::CXXDestructorDecl>(clang_decl)) {
+    context.TODO(loc_id, "Unsupported: Constructor/Destructor");
+    return std::nullopt;
+  }
+
+  auto implicit_param_patterns_id =
+      MakeImplicitParamPatternsBlockId(context, loc_id, *clang_decl);
+  if (!implicit_param_patterns_id.has_value()) {
+    return std::nullopt;
+  }
   auto param_patterns_id =
       MakeParamPatternsBlockId(context, loc_id, *clang_decl);
   if (!param_patterns_id.has_value()) {
@@ -937,34 +936,36 @@ static auto CreateFunctionParamsInsts(Context& context, SemIR::LocId loc_id,
     return std::nullopt;
   }
 
-  // TODO: Add support for implicit parameters.
-  auto call_params_id = CalleePatternMatch(
-      context, /*implicit_param_patterns_id=*/SemIR::InstBlockId::None,
-      param_patterns_id, return_slot_pattern_id);
+  auto call_params_id =
+      CalleePatternMatch(context, implicit_param_patterns_id, param_patterns_id,
+                         return_slot_pattern_id);
 
-  return {{.param_patterns_id = param_patterns_id,
+  return {{.implicit_param_patterns_id = implicit_param_patterns_id,
+           .param_patterns_id = param_patterns_id,
            .return_slot_pattern_id = return_slot_pattern_id,
            .call_params_id = call_params_id}};
 }
 
 // Imports a function declaration from Clang to Carbon. If successful, returns
-// the new Carbon function declaration `InstId`.
+// the new Carbon function declaration `InstId`. If the declaration was already
+// imported, returns the mapped instruction.
 static auto ImportFunctionDecl(Context& context, SemIR::LocId loc_id,
-                               SemIR::NameScopeId scope_id,
-                               SemIR::NameId name_id,
                                clang::FunctionDecl* clang_decl)
     -> SemIR::InstId {
+  // Check if the declaration is already mapped.
+  if (SemIR::InstId existing_inst_id =
+          LookupClangDeclInstId(context, clang_decl);
+      existing_inst_id.has_value()) {
+    return existing_inst_id;
+  }
+
   if (clang_decl->isVariadic()) {
     context.TODO(loc_id, "Unsupported: Variadic function");
     MarkFailedDecl(context, clang_decl);
     return SemIR::ErrorInst::InstId;
   }
-  if (!clang_decl->isGlobal()) {
-    context.TODO(loc_id, "Unsupported: Non-global function");
-    MarkFailedDecl(context, clang_decl);
-    return SemIR::ErrorInst::InstId;
-  }
-  if (clang_decl->getTemplatedKind() != clang::FunctionDecl::TK_NonTemplate) {
+  if (clang_decl->getTemplatedKind() ==
+      clang::FunctionDecl::TK_FunctionTemplate) {
     context.TODO(loc_id, "Unsupported: Template function");
     MarkFailedDecl(context, clang_decl);
     return SemIR::ErrorInst::InstId;
@@ -993,13 +994,14 @@ static auto ImportFunctionDecl(Context& context, SemIR::LocId loc_id,
   context.imports().push_back(decl_id);
 
   auto function_info = SemIR::Function{
-      {.name_id = name_id,
-       .parent_scope_id = scope_id,
+      {.name_id = AddIdentifierName(context, clang_decl->getName()),
+       .parent_scope_id = GetParentNameScopeId(context, clang_decl),
        .generic_id = SemIR::GenericId::None,
        .first_param_node_id = Parse::NodeId::None,
        .last_param_node_id = Parse::NodeId::None,
        .pattern_block_id = pattern_block_id,
-       .implicit_param_patterns_id = SemIR::InstBlockId::Empty,
+       .implicit_param_patterns_id =
+           function_params_insts->implicit_param_patterns_id,
        .param_patterns_id = function_params_insts->param_patterns_id,
        .is_extern = false,
        .extern_library_id = SemIR::LibraryNameId::None,
@@ -1009,7 +1011,8 @@ static auto ImportFunctionDecl(Context& context, SemIR::LocId loc_id,
       {.call_params_id = function_params_insts->call_params_id,
        .return_slot_pattern_id = function_params_insts->return_slot_pattern_id,
        .virtual_modifier = SemIR::FunctionFields::VirtualModifier::None,
-       .self_param_id = SemIR::InstId::None,
+       .self_param_id = FindSelfPattern(
+           context, function_params_insts->implicit_param_patterns_id),
        .clang_decl_id = context.sem_ir().clang_decls().Add(
            {.decl = clang_decl, .inst_id = decl_id})}};
 
@@ -1022,19 +1025,88 @@ static auto ImportFunctionDecl(Context& context, SemIR::LocId loc_id,
 
   return decl_id;
 }
-// Imports a declaration from Clang to Carbon. If successful, returns the
-// instruction for the new Carbon declaration.
-static auto ImportNameDecl(Context& context, SemIR::LocId loc_id,
-                           SemIR::NameScopeId scope_id, SemIR::NameId name_id,
-                           clang::NamedDecl* clang_decl) -> SemIR::InstId {
+
+// Returns all decls that need to be imported before importing the given type.
+static auto GetDependentUnimportedTypeDecls(const Context& context,
+                                            clang::QualType type)
+    -> llvm::SmallVector<clang::Decl*> {
+  while (true) {
+    type = type.getCanonicalType();
+    if (type->isPointerType() || type->isReferenceType()) {
+      type = type->getPointeeType();
+    } else if (const clang::ArrayType* array_type =
+                   type->getAsArrayTypeUnsafe()) {
+      type = array_type->getElementType();
+    } else {
+      break;
+    }
+  }
+
+  type = type.getUnqualifiedType();
+
+  if (const auto* record_type = type->getAs<clang::RecordType>()) {
+    if (auto* record_decl =
+            clang::dyn_cast<clang::CXXRecordDecl>(record_type->getDecl())) {
+      if (!IsClangDeclImported(context, record_decl)) {
+        return {record_decl};
+      }
+    }
+  }
+
+  return {};
+}
+
+// Returns all decls that need to be imported before importing the given
+// function.
+static auto GetDependentUnimportedFunctionDecls(
+    const Context& context, const clang::FunctionDecl& clang_decl)
+    -> llvm::SmallVector<clang::Decl*> {
+  llvm::SmallVector<clang::Decl*> decls;
+  for (const auto* param : clang_decl.parameters()) {
+    llvm::append_range(
+        decls, GetDependentUnimportedTypeDecls(context, param->getType()));
+  }
+  llvm::append_range(decls, GetDependentUnimportedTypeDecls(
+                                context, clang_decl.getReturnType()));
+  return decls;
+}
+
+// Returns all decls that need to be imported before importing the given
+// declaration.
+static auto GetDependentUnimportedDecls(const Context& context,
+                                        clang::Decl* clang_decl)
+    -> llvm::SmallVector<clang::Decl*> {
+  llvm::SmallVector<clang::Decl*> decls;
+  if (auto* parent_decl = GetParentDecl(clang_decl);
+      !IsClangDeclImported(context, parent_decl)) {
+    decls.push_back(parent_decl);
+  }
+
   if (auto* clang_function_decl = clang_decl->getAsFunction()) {
-    return ImportFunctionDecl(context, loc_id, scope_id, name_id,
-                              clang_function_decl);
+    llvm::append_range(decls, GetDependentUnimportedFunctionDecls(
+                                  context, *clang_function_decl));
+  } else if (auto* type_decl = clang::dyn_cast<clang::TypeDecl>(clang_decl)) {
+    llvm::append_range(
+        decls,
+        GetDependentUnimportedTypeDecls(
+            context, type_decl->getASTContext().getTypeDeclType(type_decl)));
+  }
+
+  return decls;
+}
+
+// Imports a declaration from Clang to Carbon. If successful, returns the
+// instruction for the new Carbon declaration. Assumes all dependencies have
+// already been imported.
+static auto ImportDeclAfterDependencies(Context& context, SemIR::LocId loc_id,
+                                        clang::Decl* clang_decl)
+    -> SemIR::InstId {
+  if (auto* clang_function_decl = clang_decl->getAsFunction()) {
+    return ImportFunctionDecl(context, loc_id, clang_function_decl);
   }
   if (auto* clang_namespace_decl =
           clang::dyn_cast<clang::NamespaceDecl>(clang_decl)) {
-    return ImportNamespaceDecl(context, scope_id, name_id,
-                               clang_namespace_decl);
+    return ImportNamespaceDecl(context, clang_namespace_decl);
   }
   if (auto* type_decl = clang::dyn_cast<clang::TypeDecl>(clang_decl)) {
     auto type = type_decl->getASTContext().getTypeDeclType(type_decl);
@@ -1053,6 +1125,35 @@ static auto ImportNameDecl(Context& context, SemIR::LocId loc_id,
   return SemIR::InstId::None;
 }
 
+// Imports a declaration from Clang to Carbon. If successful, returns the
+// instruction for the new Carbon declaration. All unimported dependencies would
+// be imported first.
+static auto ImportDeclAndDependencies(Context& context, SemIR::LocId loc_id,
+                                      clang::Decl* clang_decl)
+    -> SemIR::InstId {
+  // Collect dependencies.
+  llvm::SetVector<clang::Decl*> clang_decls;
+  clang_decls.insert(clang_decl);
+  for (size_t i = 0; i < clang_decls.size(); ++i) {
+    auto dependent_decls = GetDependentUnimportedDecls(context, clang_decls[i]);
+    for (clang::Decl* dependent_decl : dependent_decls) {
+      clang_decls.insert(dependent_decl);
+    }
+  }
+
+  // Import dependencies in reverse order.
+  auto inst_id = SemIR::InstId::None;
+  for (clang::Decl* clang_decl_to_import : llvm::reverse(clang_decls)) {
+    inst_id =
+        ImportDeclAfterDependencies(context, loc_id, clang_decl_to_import);
+    if (!inst_id.has_value()) {
+      break;
+    }
+  }
+
+  return inst_id;
+}
+
 // Imports a `clang::NamedDecl` into Carbon and adds that name into the
 // `NameScope`.
 static auto ImportNameDeclIntoScope(Context& context, SemIR::LocId loc_id,
@@ -1061,7 +1162,7 @@ static auto ImportNameDeclIntoScope(Context& context, SemIR::LocId loc_id,
                                     clang::NamedDecl* clang_decl)
     -> SemIR::InstId {
   SemIR::InstId inst_id =
-      ImportNameDecl(context, loc_id, scope_id, name_id, clang_decl);
+      ImportDeclAndDependencies(context, loc_id, clang_decl);
   AddNameToScope(context, scope_id, name_id, inst_id);
   return inst_id;
 }
