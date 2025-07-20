@@ -414,9 +414,9 @@ the available implementation strategies.
 > **Future work:** The interaction between a
 > [custom value representation](#value-representation-and-customization) and a
 > value expression used with a polymorphic type needs to be fully captured.
-> Either it needs to restrict to a `const Self*` style representation (to
-> prevent slicing) or it needs to have a model for the semantics when a
-> different value representation is used.
+> Either it needs to restrict to a `const ref` style representation (to prevent
+> slicing) or it needs to have a model for the semantics when a different value
+> representation is used.
 
 ### Interop with C++ `const &` and `const` methods
 
@@ -890,8 +890,8 @@ The provided representation type must be one of the following:
     original object, but with the `const` API subset.
 -   A custom type that is not `Self`, `const Self`, or a pointer to either.
 
-If the representation is `const Self` or `const Self *`, then the type fields
-will be accessible as [_value expressions_](#value-expressions) using the normal
+If the representation is `const Self` or `const ref`, then the type fields will
+be accessible as [_value expressions_](#value-expressions) using the normal
 member access syntax for value expressions of a type. These will be implemented
 by either accessing a copy of the object in the non-pointer case or a pointer to
 the original object in the pointer case. A representation of `const Self`
@@ -902,7 +902,7 @@ used.
 If no customization is provided, the implementation will select one based on a
 set of heuristics. Some examples:
 
--   Non-copyable types and polymorphic types would use a `const Self*`.
+-   Non-copyable types and polymorphic types would use a `const ref`.
 -   Small objects that are trivially copied in a machine register would use
     `const Self`.
 
