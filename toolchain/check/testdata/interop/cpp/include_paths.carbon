@@ -3,6 +3,7 @@
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
 // INCLUDE-FILE: toolchain/testing/testdata/min_prelude/uint.carbon
+// EXTRA-ARGS: --target=x86_64-linux-gnu
 //
 // AUTOUPDATE
 // TIP: To test this file alone, run:
@@ -18,7 +19,6 @@
 #include <stddef.h>
 
 ptrdiff_t GetSize();
-inline int GetSizeAsInt() { return GetSize(); }
 
 // --- import_stddef_indirectly.carbon
 
@@ -26,24 +26,14 @@ library "[[@TEST_NAME]]";
 
 import Cpp library "include_stddef.h";
 
-// TODO: `fn CallGetSize() -> Cpp.ptrdiff_t {`
-fn CallGetSize() -> i32 {
-  // TODO: Call `Cpp.GetSize` directly once we can import the types `long` and `long long`.
-  return Cpp.GetSizeAsInt() as i32;
+fn CallGetSize() -> Cpp.ptrdiff_t {
+  return Cpp.GetSize();
 }
 
-// --- fail_todo_import_stddef_directly.carbon
+// --- import_stddef_directly.carbon
 
 library "[[@TEST_NAME]]";
 
 import Cpp library "stddef.h";
 
-// TODO: Once we can import `unsigned long` / `unsigned long long`, this should work.
-// CHECK:STDERR: fail_todo_import_stddef_directly.carbon:[[@LINE+7]]:8: error: semantics TODO: `Unsupported: Type declaration: size_t` [SemanticsTodo]
-// CHECK:STDERR: var n: Cpp.size_t = 42;
-// CHECK:STDERR:        ^~~~~~~~~~
-// CHECK:STDERR: fail_todo_import_stddef_directly.carbon:[[@LINE+4]]:8: note: in `Cpp` name lookup for `size_t` [InCppNameLookup]
-// CHECK:STDERR: var n: Cpp.size_t = 42;
-// CHECK:STDERR:        ^~~~~~~~~~
-// CHECK:STDERR:
 var n: Cpp.size_t = 42;
