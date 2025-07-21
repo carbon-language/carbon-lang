@@ -274,6 +274,9 @@ class Context {
   auto struct_type_fields() -> SemIR::StructTypeFieldsStore& {
     return sem_ir().struct_type_fields();
   }
+  auto custom_layouts() -> SemIR::CustomLayoutStore& {
+    return sem_ir().custom_layouts();
+  }
   auto types() -> SemIR::TypeStore& { return sem_ir().types(); }
   // Instructions should be added with `AddInst` or `AddInstInNoBlock` from
   // `inst.h`. This is `const` to prevent accidental misuse.

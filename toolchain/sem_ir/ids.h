@@ -740,7 +740,7 @@ struct CustomLayoutId : public IdBase<CustomLayoutId> {
   // The index in a custom layout of the overall alignmnet field.
   static constexpr int AlignIndex = 1;
   // The index in a custom layout of the offset of the first struct field.
-  static constexpr int FirstFieldIndex = 1;
+  static constexpr int FirstFieldIndex = 2;
 
   using IdBase::IdBase;
 };
