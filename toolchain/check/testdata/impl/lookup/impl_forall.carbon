@@ -167,7 +167,7 @@ fn TestSpecific(a: A({})) -> {} {
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %U.loc7_13.2: type = bind_symbolic_name U, 0 [symbolic = %U.loc7_13.1 (constants.%U)]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %I.impl = impl_decl @I.impl [concrete] {
+// CHECK:STDOUT:   impl_decl @I.impl [concrete] {
 // CHECK:STDOUT:     %V.patt: %pattern_type.98f = symbolic_binding_pattern V, 0 [concrete]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %A.ref: %A.type = name_ref A, file.%A.decl [concrete = constants.%A.generic]

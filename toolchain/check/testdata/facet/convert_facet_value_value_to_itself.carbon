@@ -110,7 +110,7 @@ fn F() {
 // CHECK:STDOUT:     %a: @HandleAnimal.%T.as_type.loc19_32.1 (%T.as_type) = bind_name a, %a.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Goat.decl: type = class_decl @Goat [concrete = constants.%Goat] {} {}
-// CHECK:STDOUT:   %Animal.impl = impl_decl @Animal.impl [concrete] {} {
+// CHECK:STDOUT:   impl_decl @Animal.impl [concrete] {} {
 // CHECK:STDOUT:     %Goat.ref: type = name_ref Goat, file.%Goat.decl [concrete = constants.%Goat]
 // CHECK:STDOUT:     %Animal.ref: type = name_ref Animal, file.%Animal.decl [concrete = constants.%Animal.type]
 // CHECK:STDOUT:   }

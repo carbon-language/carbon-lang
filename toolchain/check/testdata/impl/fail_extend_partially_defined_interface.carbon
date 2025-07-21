@@ -66,7 +66,7 @@ interface I {
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:
 // CHECK:STDOUT:   class {
-// CHECK:STDOUT:     %I.impl = impl_decl @I.impl [concrete] {} {
+// CHECK:STDOUT:     impl_decl @I.impl [concrete] {} {
 // CHECK:STDOUT:       %Self.ref: type = name_ref Self, constants.%C [symbolic = %C (constants.%C)]
 // CHECK:STDOUT:       %I.ref: type = name_ref I, file.%I.decl [concrete = constants.%I.type]
 // CHECK:STDOUT:     }

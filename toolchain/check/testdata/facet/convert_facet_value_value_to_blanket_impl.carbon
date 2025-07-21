@@ -70,7 +70,7 @@ fn HandleAnimal[T:! Animal](a: T) { Feed(a); }
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %Eats.decl: type = interface_decl @Eats [concrete = constants.%Eats.type] {} {}
 // CHECK:STDOUT:   %Animal.decl: type = interface_decl @Animal [concrete = constants.%Animal.type] {} {}
-// CHECK:STDOUT:   %Eats.impl = impl_decl @Eats.impl [concrete] {
+// CHECK:STDOUT:   impl_decl @Eats.impl [concrete] {
 // CHECK:STDOUT:     %A.patt: %pattern_type.3b0 = symbolic_binding_pattern A, 0 [concrete]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %A.ref: %Animal.type = name_ref A, %A.loc18_14.1 [symbolic = %A.loc18_14.2 (constants.%A)]

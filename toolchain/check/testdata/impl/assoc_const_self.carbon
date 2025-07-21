@@ -169,7 +169,7 @@ fn CallF() {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %I.decl: type = interface_decl @I [concrete = constants.%I.type] {} {}
-// CHECK:STDOUT:   %I.impl.loc8 = impl_decl @I.impl.983 [concrete] {} {
+// CHECK:STDOUT:   impl_decl @I.impl.983 [concrete] {} {
 // CHECK:STDOUT:     %.loc8_7.1: %empty_struct_type = struct_literal ()
 // CHECK:STDOUT:     %.loc8_7.2: type = converted %.loc8_7.1, constants.%empty_struct_type [concrete = constants.%empty_struct_type]
 // CHECK:STDOUT:     %I.ref: type = name_ref I, file.%I.decl [concrete = constants.%I.type]
@@ -189,7 +189,7 @@ fn CallF() {
 // CHECK:STDOUT:   %I.impl_witness_table.loc8 = impl_witness_table (%impl_witness_assoc_constant.loc8), @I.impl.983 [concrete]
 // CHECK:STDOUT:   %I.impl_witness.loc8: <witness> = impl_witness %I.impl_witness_table.loc8 [concrete = constants.%I.impl_witness.3d1]
 // CHECK:STDOUT:   %impl_witness_assoc_constant.loc8: %empty_struct_type = impl_witness_assoc_constant constants.%empty_struct [concrete = constants.%empty_struct]
-// CHECK:STDOUT:   %I.impl.loc10 = impl_decl @I.impl.728 [concrete] {} {
+// CHECK:STDOUT:   impl_decl @I.impl.728 [concrete] {} {
 // CHECK:STDOUT:     %int_32: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
 // CHECK:STDOUT:     %i32: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
 // CHECK:STDOUT:     %I.ref: type = name_ref I, file.%I.decl [concrete = constants.%I.type]
@@ -311,7 +311,7 @@ fn CallF() {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %I.decl: type = interface_decl @I [concrete = constants.%I.type] {} {}
-// CHECK:STDOUT:   %I.impl = impl_decl @I.impl [concrete] {} {
+// CHECK:STDOUT:   impl_decl @I.impl [concrete] {} {
 // CHECK:STDOUT:     %.loc15_7.1: %empty_struct_type = struct_literal ()
 // CHECK:STDOUT:     %.loc15_7.2: type = converted %.loc15_7.1, constants.%empty_struct_type [concrete = constants.%empty_struct_type]
 // CHECK:STDOUT:     %I.ref: type = name_ref I, file.%I.decl [concrete = constants.%I.type]
@@ -431,7 +431,7 @@ fn CallF() {
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %I.decl: type = interface_decl @I [concrete = constants.%I.type] {} {}
 // CHECK:STDOUT:   %C.decl: type = class_decl @C [concrete = constants.%C] {} {}
-// CHECK:STDOUT:   %ImplicitAs.impl = impl_decl @ImplicitAs.impl [concrete] {} {
+// CHECK:STDOUT:   impl_decl @ImplicitAs.impl [concrete] {} {
 // CHECK:STDOUT:     %.loc10_7.1: %empty_tuple.type = tuple_literal ()
 // CHECK:STDOUT:     %.loc10_7.2: type = converted %.loc10_7.1, constants.%empty_tuple.type [concrete = constants.%empty_tuple.type]
 // CHECK:STDOUT:     %Core.ref: <namespace> = name_ref Core, imports.%Core [concrete = imports.%Core]
@@ -441,7 +441,7 @@ fn CallF() {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %ImplicitAs.impl_witness_table = impl_witness_table (@ImplicitAs.impl.%Convert.decl), @ImplicitAs.impl [concrete]
 // CHECK:STDOUT:   %ImplicitAs.impl_witness: <witness> = impl_witness %ImplicitAs.impl_witness_table [concrete = constants.%ImplicitAs.impl_witness]
-// CHECK:STDOUT:   %I.impl = impl_decl @I.impl [concrete] {} {
+// CHECK:STDOUT:   impl_decl @I.impl [concrete] {} {
 // CHECK:STDOUT:     %C.ref: type = name_ref C, file.%C.decl [concrete = constants.%C]
 // CHECK:STDOUT:     %I.ref: type = name_ref I, file.%I.decl [concrete = constants.%I.type]
 // CHECK:STDOUT:     %.Self: %I.type = bind_symbolic_name .Self [symbolic_self = constants.%.Self]
@@ -623,7 +623,7 @@ fn CallF() {
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %N.loc4_13.2: Core.IntLiteral = bind_symbolic_name N, 0 [symbolic = %N.loc4_13.1 (constants.%N)]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %impl = impl_decl @impl [concrete] {} {
+// CHECK:STDOUT:   impl_decl @impl [concrete] {} {
 // CHECK:STDOUT:     %.loc15_7.1: %empty_struct_type = struct_literal ()
 // CHECK:STDOUT:     %.loc15_7.2: type = converted %.loc15_7.1, constants.%empty_struct_type [concrete = constants.%empty_struct_type]
 // CHECK:STDOUT:     %I.ref: %I.type.dac = name_ref I, file.%I.decl [concrete = constants.%I.generic]

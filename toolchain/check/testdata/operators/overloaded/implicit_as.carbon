@@ -113,7 +113,7 @@ fn Test() {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %X.decl: type = class_decl @X [concrete = constants.%X] {} {}
-// CHECK:STDOUT:   %ImplicitAs.impl.loc19 = impl_decl @ImplicitAs.impl.8f9 [concrete] {} {
+// CHECK:STDOUT:   impl_decl @ImplicitAs.impl.8f9 [concrete] {} {
 // CHECK:STDOUT:     %int_32: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
 // CHECK:STDOUT:     %i32: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
 // CHECK:STDOUT:     %Core.ref: <namespace> = name_ref Core, imports.%Core [concrete = imports.%Core]
@@ -123,7 +123,7 @@ fn Test() {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %ImplicitAs.impl_witness_table.loc19 = impl_witness_table (@ImplicitAs.impl.8f9.%Convert.decl), @ImplicitAs.impl.8f9 [concrete]
 // CHECK:STDOUT:   %ImplicitAs.impl_witness.loc19: <witness> = impl_witness %ImplicitAs.impl_witness_table.loc19 [concrete = constants.%ImplicitAs.impl_witness.aa3]
-// CHECK:STDOUT:   %ImplicitAs.impl.loc23 = impl_decl @ImplicitAs.impl.c94 [concrete] {} {
+// CHECK:STDOUT:   impl_decl @ImplicitAs.impl.c94 [concrete] {} {
 // CHECK:STDOUT:     %X.ref: type = name_ref X, file.%X.decl [concrete = constants.%X]
 // CHECK:STDOUT:     %Core.ref: <namespace> = name_ref Core, imports.%Core [concrete = imports.%Core]
 // CHECK:STDOUT:     %ImplicitAs.ref: %ImplicitAs.type.cc7 = name_ref ImplicitAs, imports.%Core.ImplicitAs [concrete = constants.%ImplicitAs.generic]

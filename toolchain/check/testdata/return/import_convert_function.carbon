@@ -205,7 +205,7 @@ fn F0(n: i32) -> P.D {
 // CHECK:STDOUT:     %return.param: ref %D = out_param call_param0
 // CHECK:STDOUT:     %return: ref %D = return_slot %return.param
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %ImplicitAs.impl.loc8 = impl_decl @ImplicitAs.impl.6d8 [concrete] {} {
+// CHECK:STDOUT:   impl_decl @ImplicitAs.impl.6d8 [concrete] {} {
 // CHECK:STDOUT:     %C.ref: %C.type = name_ref C, file.%C.decl [concrete = constants.%C.generic]
 // CHECK:STDOUT:     %int_0: Core.IntLiteral = int_value 0 [concrete = constants.%int_0.5c6]
 // CHECK:STDOUT:     %impl.elem0: %.9c3 = impl_witness_access constants.%ImplicitAs.impl_witness.c75, element0 [concrete = constants.%Convert.956]
@@ -223,7 +223,7 @@ fn F0(n: i32) -> P.D {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %ImplicitAs.impl_witness_table.loc8 = impl_witness_table (@ImplicitAs.impl.6d8.%Convert.decl), @ImplicitAs.impl.6d8 [concrete]
 // CHECK:STDOUT:   %ImplicitAs.impl_witness.loc8: <witness> = impl_witness %ImplicitAs.impl_witness_table.loc8 [concrete = constants.%ImplicitAs.impl_witness.00c]
-// CHECK:STDOUT:   %ImplicitAs.impl.loc9 = impl_decl @ImplicitAs.impl.b66 [concrete] {} {
+// CHECK:STDOUT:   impl_decl @ImplicitAs.impl.b66 [concrete] {} {
 // CHECK:STDOUT:     %C.ref: %C.type = name_ref C, file.%C.decl [concrete = constants.%C.generic]
 // CHECK:STDOUT:     %int_1: Core.IntLiteral = int_value 1 [concrete = constants.%int_1.5b8]
 // CHECK:STDOUT:     %impl.elem0: %.9c3 = impl_witness_access constants.%ImplicitAs.impl_witness.c75, element0 [concrete = constants.%Convert.956]
@@ -241,7 +241,7 @@ fn F0(n: i32) -> P.D {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %ImplicitAs.impl_witness_table.loc9 = impl_witness_table (@ImplicitAs.impl.b66.%Convert.decl), @ImplicitAs.impl.b66 [concrete]
 // CHECK:STDOUT:   %ImplicitAs.impl_witness.loc9: <witness> = impl_witness %ImplicitAs.impl_witness_table.loc9 [concrete = constants.%ImplicitAs.impl_witness.c66]
-// CHECK:STDOUT:   %ImplicitAs.impl.loc10 = impl_decl @ImplicitAs.impl.9de [concrete] {} {
+// CHECK:STDOUT:   impl_decl @ImplicitAs.impl.9de [concrete] {} {
 // CHECK:STDOUT:     %C.ref: %C.type = name_ref C, file.%C.decl [concrete = constants.%C.generic]
 // CHECK:STDOUT:     %int_2: Core.IntLiteral = int_value 2 [concrete = constants.%int_2.ecc]
 // CHECK:STDOUT:     %impl.elem0: %.9c3 = impl_witness_access constants.%ImplicitAs.impl_witness.c75, element0 [concrete = constants.%Convert.956]
@@ -259,7 +259,7 @@ fn F0(n: i32) -> P.D {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %ImplicitAs.impl_witness_table.loc10 = impl_witness_table (@ImplicitAs.impl.9de.%Convert.decl), @ImplicitAs.impl.9de [concrete]
 // CHECK:STDOUT:   %ImplicitAs.impl_witness.loc10: <witness> = impl_witness %ImplicitAs.impl_witness_table.loc10 [concrete = constants.%ImplicitAs.impl_witness.f9c]
-// CHECK:STDOUT:   %ImplicitAs.impl.loc11 = impl_decl @ImplicitAs.impl.649 [concrete] {} {
+// CHECK:STDOUT:   impl_decl @ImplicitAs.impl.649 [concrete] {} {
 // CHECK:STDOUT:     %C.ref: %C.type = name_ref C, file.%C.decl [concrete = constants.%C.generic]
 // CHECK:STDOUT:     %int_3: Core.IntLiteral = int_value 3 [concrete = constants.%int_3.1ba]
 // CHECK:STDOUT:     %impl.elem0: %.9c3 = impl_witness_access constants.%ImplicitAs.impl_witness.c75, element0 [concrete = constants.%Convert.956]
@@ -277,7 +277,7 @@ fn F0(n: i32) -> P.D {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %ImplicitAs.impl_witness_table.loc11 = impl_witness_table (@ImplicitAs.impl.649.%Convert.decl), @ImplicitAs.impl.649 [concrete]
 // CHECK:STDOUT:   %ImplicitAs.impl_witness.loc11: <witness> = impl_witness %ImplicitAs.impl_witness_table.loc11 [concrete = constants.%ImplicitAs.impl_witness.c1f]
-// CHECK:STDOUT:   %ImplicitAs.impl.loc12 = impl_decl @ImplicitAs.impl.49b [concrete] {} {
+// CHECK:STDOUT:   impl_decl @ImplicitAs.impl.49b [concrete] {} {
 // CHECK:STDOUT:     %C.ref: %C.type = name_ref C, file.%C.decl [concrete = constants.%C.generic]
 // CHECK:STDOUT:     %int_4: Core.IntLiteral = int_value 4 [concrete = constants.%int_4.0c1]
 // CHECK:STDOUT:     %impl.elem0: %.9c3 = impl_witness_access constants.%ImplicitAs.impl_witness.c75, element0 [concrete = constants.%Convert.956]
@@ -295,7 +295,7 @@ fn F0(n: i32) -> P.D {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %ImplicitAs.impl_witness_table.loc12 = impl_witness_table (@ImplicitAs.impl.49b.%Convert.decl), @ImplicitAs.impl.49b [concrete]
 // CHECK:STDOUT:   %ImplicitAs.impl_witness.loc12: <witness> = impl_witness %ImplicitAs.impl_witness_table.loc12 [concrete = constants.%ImplicitAs.impl_witness.097]
-// CHECK:STDOUT:   %ImplicitAs.impl.loc13 = impl_decl @ImplicitAs.impl.75f [concrete] {} {
+// CHECK:STDOUT:   impl_decl @ImplicitAs.impl.75f [concrete] {} {
 // CHECK:STDOUT:     %C.ref: %C.type = name_ref C, file.%C.decl [concrete = constants.%C.generic]
 // CHECK:STDOUT:     %int_5: Core.IntLiteral = int_value 5 [concrete = constants.%int_5.64b]
 // CHECK:STDOUT:     %impl.elem0: %.9c3 = impl_witness_access constants.%ImplicitAs.impl_witness.c75, element0 [concrete = constants.%Convert.956]
@@ -313,7 +313,7 @@ fn F0(n: i32) -> P.D {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %ImplicitAs.impl_witness_table.loc13 = impl_witness_table (@ImplicitAs.impl.75f.%Convert.decl), @ImplicitAs.impl.75f [concrete]
 // CHECK:STDOUT:   %ImplicitAs.impl_witness.loc13: <witness> = impl_witness %ImplicitAs.impl_witness_table.loc13 [concrete = constants.%ImplicitAs.impl_witness.03f]
-// CHECK:STDOUT:   %ImplicitAs.impl.loc14 = impl_decl @ImplicitAs.impl.98f [concrete] {} {
+// CHECK:STDOUT:   impl_decl @ImplicitAs.impl.98f [concrete] {} {
 // CHECK:STDOUT:     %C.ref: %C.type = name_ref C, file.%C.decl [concrete = constants.%C.generic]
 // CHECK:STDOUT:     %int_6: Core.IntLiteral = int_value 6 [concrete = constants.%int_6.462]
 // CHECK:STDOUT:     %impl.elem0: %.9c3 = impl_witness_access constants.%ImplicitAs.impl_witness.c75, element0 [concrete = constants.%Convert.956]
@@ -331,7 +331,7 @@ fn F0(n: i32) -> P.D {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %ImplicitAs.impl_witness_table.loc14 = impl_witness_table (@ImplicitAs.impl.98f.%Convert.decl), @ImplicitAs.impl.98f [concrete]
 // CHECK:STDOUT:   %ImplicitAs.impl_witness.loc14: <witness> = impl_witness %ImplicitAs.impl_witness_table.loc14 [concrete = constants.%ImplicitAs.impl_witness.89c]
-// CHECK:STDOUT:   %ImplicitAs.impl.loc15 = impl_decl @ImplicitAs.impl.9fd [concrete] {} {
+// CHECK:STDOUT:   impl_decl @ImplicitAs.impl.9fd [concrete] {} {
 // CHECK:STDOUT:     %C.ref: %C.type = name_ref C, file.%C.decl [concrete = constants.%C.generic]
 // CHECK:STDOUT:     %int_7: Core.IntLiteral = int_value 7 [concrete = constants.%int_7.29f]
 // CHECK:STDOUT:     %impl.elem0: %.9c3 = impl_witness_access constants.%ImplicitAs.impl_witness.c75, element0 [concrete = constants.%Convert.956]

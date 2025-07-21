@@ -166,7 +166,7 @@ fn F(x: (), y: ()) -> () {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %default.import = import <none>
-// CHECK:STDOUT:   %Add.impl = impl_decl @Add.impl [concrete] {} {
+// CHECK:STDOUT:   impl_decl @Add.impl [concrete] {} {
 // CHECK:STDOUT:     %.loc6_7.1: %empty_tuple.type = tuple_literal ()
 // CHECK:STDOUT:     %.loc6_7.2: type = converted %.loc6_7.1, constants.%empty_tuple.type [concrete = constants.%empty_tuple.type]
 // CHECK:STDOUT:     %Add.ref: type = name_ref Add, imports.%Main.Add [concrete = constants.%Add.type]

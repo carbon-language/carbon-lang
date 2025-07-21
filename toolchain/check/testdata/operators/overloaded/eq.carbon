@@ -129,7 +129,7 @@ fn TestLhsBad(a: D, b: C) -> bool {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %C.decl: type = class_decl @C [concrete = constants.%C] {} {}
-// CHECK:STDOUT:   %EqWith.impl = impl_decl @EqWith.impl.cac [concrete] {} {
+// CHECK:STDOUT:   impl_decl @EqWith.impl.cac [concrete] {} {
 // CHECK:STDOUT:     %C.ref.loc6_6: type = name_ref C, file.%C.decl [concrete = constants.%C]
 // CHECK:STDOUT:     %Core.ref: <namespace> = name_ref Core, imports.%Core [concrete = imports.%Core]
 // CHECK:STDOUT:     %EqWith.ref: %EqWith.type.c2e = name_ref EqWith, imports.%Core.EqWith [concrete = constants.%EqWith.generic]
@@ -417,7 +417,7 @@ fn TestLhsBad(a: D, b: C) -> bool {
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %C.decl: type = class_decl @C [concrete = constants.%C] {} {}
 // CHECK:STDOUT:   %D.decl: type = class_decl @D [concrete = constants.%D] {} {}
-// CHECK:STDOUT:   %EqWith.impl = impl_decl @EqWith.impl.cac [concrete] {} {
+// CHECK:STDOUT:   impl_decl @EqWith.impl.cac [concrete] {} {
 // CHECK:STDOUT:     %C.ref.loc7_6: type = name_ref C, file.%C.decl [concrete = constants.%C]
 // CHECK:STDOUT:     %Core.ref: <namespace> = name_ref Core, imports.%Core [concrete = imports.%Core]
 // CHECK:STDOUT:     %EqWith.ref: %EqWith.type.c2e = name_ref EqWith, imports.%Core.EqWith [concrete = constants.%EqWith.generic]

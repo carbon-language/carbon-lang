@@ -127,7 +127,7 @@ fn G() {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %GenericParam.decl: type = class_decl @GenericParam [concrete = constants.%GenericParam] {} {}
 // CHECK:STDOUT:   %ImplsGeneric.decl: type = class_decl @ImplsGeneric [concrete = constants.%ImplsGeneric] {} {}
-// CHECK:STDOUT:   %Generic.impl = impl_decl @Generic.impl [concrete] {} {
+// CHECK:STDOUT:   impl_decl @Generic.impl [concrete] {} {
 // CHECK:STDOUT:     %ImplsGeneric.ref: type = name_ref ImplsGeneric, file.%ImplsGeneric.decl [concrete = constants.%ImplsGeneric]
 // CHECK:STDOUT:     %Generic.ref: %Generic.type.c21 = name_ref Generic, file.%Generic.decl [concrete = constants.%Generic.generic]
 // CHECK:STDOUT:     %GenericParam.ref: type = name_ref GenericParam, file.%GenericParam.decl [concrete = constants.%GenericParam]
@@ -136,7 +136,7 @@ fn G() {
 // CHECK:STDOUT:   %Generic.impl_witness_table = impl_witness_table (@Generic.impl.%F.decl), @Generic.impl [concrete]
 // CHECK:STDOUT:   %Generic.impl_witness: <witness> = impl_witness %Generic.impl_witness_table [concrete = constants.%Generic.impl_witness]
 // CHECK:STDOUT:   %Other.decl: type = interface_decl @Other [concrete = constants.%Other.type] {} {}
-// CHECK:STDOUT:   %Other.impl = impl_decl @Other.impl [concrete] {} {
+// CHECK:STDOUT:   impl_decl @Other.impl [concrete] {} {
 // CHECK:STDOUT:     %ImplsGeneric.ref: type = name_ref ImplsGeneric, file.%ImplsGeneric.decl [concrete = constants.%ImplsGeneric]
 // CHECK:STDOUT:     %Other.ref: type = name_ref Other, file.%Other.decl [concrete = constants.%Other.type]
 // CHECK:STDOUT:   }

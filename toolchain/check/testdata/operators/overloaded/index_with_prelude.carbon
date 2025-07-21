@@ -128,7 +128,7 @@ let x: i32 = c[0];
 // CHECK:STDOUT:   %C.decl: type = class_decl @C [concrete = constants.%C] {} {}
 // CHECK:STDOUT:   %ElementType.decl: type = class_decl @ElementType [concrete = constants.%ElementType.e6b] {} {}
 // CHECK:STDOUT:   %SubscriptType.decl: type = class_decl @SubscriptType [concrete = constants.%SubscriptType.8ee] {} {}
-// CHECK:STDOUT:   %IndexWith.impl = impl_decl @IndexWith.impl [concrete] {} {
+// CHECK:STDOUT:   impl_decl @IndexWith.impl [concrete] {} {
 // CHECK:STDOUT:     %C.ref: type = name_ref C, file.%C.decl [concrete = constants.%C]
 // CHECK:STDOUT:     %Core.ref: <namespace> = name_ref Core, imports.%Core [concrete = imports.%Core]
 // CHECK:STDOUT:     %IndexWith.ref: %IndexWith.type.504 = name_ref IndexWith, imports.%Core.IndexWith [concrete = constants.%IndexWith.generic]
@@ -313,7 +313,7 @@ let x: i32 = c[0];
 // CHECK:STDOUT:     .e = %e
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import = import Core
-// CHECK:STDOUT:   %IndexWith.impl = impl_decl @IndexWith.impl [concrete] {} {
+// CHECK:STDOUT:   impl_decl @IndexWith.impl [concrete] {} {
 // CHECK:STDOUT:     %int_32.loc4_7: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
 // CHECK:STDOUT:     %i32.loc4_7: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
 // CHECK:STDOUT:     %int_32.loc4_12: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
@@ -478,7 +478,7 @@ let x: i32 = c[0];
 // CHECK:STDOUT:   %C.decl: type = class_decl @C [concrete = constants.%C] {} {}
 // CHECK:STDOUT:   %ElementType.decl: type = class_decl @ElementType [concrete = constants.%ElementType.e6b] {} {}
 // CHECK:STDOUT:   %SubscriptType.decl: type = class_decl @SubscriptType [concrete = constants.%SubscriptType.8ee] {} {}
-// CHECK:STDOUT:   %IndexWith.impl = impl_decl @IndexWith.impl [concrete] {} {
+// CHECK:STDOUT:   impl_decl @IndexWith.impl [concrete] {} {
 // CHECK:STDOUT:     %C.ref: type = name_ref C, file.%C.decl [concrete = constants.%C]
 // CHECK:STDOUT:     %Core.ref: <namespace> = name_ref Core, imports.%Core [concrete = imports.%Core]
 // CHECK:STDOUT:     %IndexWith.ref: %IndexWith.type.504 = name_ref IndexWith, imports.%Core.IndexWith [concrete = constants.%IndexWith.generic]

@@ -210,7 +210,7 @@ fn Test(d: D) -> i32 {
 // CHECK:STDOUT:   %int_32: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
 // CHECK:STDOUT:   %i32: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
 // CHECK:STDOUT:   %.loc13: %C.elem = field_decl n, element0 [concrete]
-// CHECK:STDOUT:   %ImplicitAs.impl = impl_decl @ImplicitAs.impl.4e3 [concrete] {} {
+// CHECK:STDOUT:   impl_decl @ImplicitAs.impl.4e3 [concrete] {} {
 // CHECK:STDOUT:     %Self.ref: type = name_ref Self, constants.%C [concrete = constants.%C]
 // CHECK:STDOUT:     %Core.ref: <namespace> = name_ref Core, imports.%Core [concrete = imports.%Core]
 // CHECK:STDOUT:     %ImplicitAs.ref: %ImplicitAs.type.cc7 = name_ref ImplicitAs, imports.%Core.ImplicitAs [concrete = constants.%ImplicitAs.generic]

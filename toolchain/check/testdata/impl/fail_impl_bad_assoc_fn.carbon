@@ -974,7 +974,7 @@ class SelfNestedBadReturnType {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @NoF {
-// CHECK:STDOUT:   %I.impl = impl_decl @I.impl.0c9 [concrete] {} {
+// CHECK:STDOUT:   impl_decl @I.impl.0c9 [concrete] {} {
 // CHECK:STDOUT:     %Self.ref: type = name_ref Self, constants.%NoF [concrete = constants.%NoF]
 // CHECK:STDOUT:     %I.ref: type = name_ref I, file.%I.decl [concrete = constants.%I.type]
 // CHECK:STDOUT:   }
@@ -990,7 +990,7 @@ class SelfNestedBadReturnType {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @FNotFunction {
-// CHECK:STDOUT:   %I.impl = impl_decl @I.impl.b55 [concrete] {} {
+// CHECK:STDOUT:   impl_decl @I.impl.b55 [concrete] {} {
 // CHECK:STDOUT:     %Self.ref: type = name_ref Self, constants.%FNotFunction [concrete = constants.%FNotFunction]
 // CHECK:STDOUT:     %I.ref: type = name_ref I, file.%I.decl [concrete = constants.%I.type]
 // CHECK:STDOUT:   }
@@ -1008,7 +1008,7 @@ class SelfNestedBadReturnType {
 // CHECK:STDOUT: class @F.loc37;
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @FAlias {
-// CHECK:STDOUT:   %I.impl = impl_decl @I.impl.199 [concrete] {} {
+// CHECK:STDOUT:   impl_decl @I.impl.199 [concrete] {} {
 // CHECK:STDOUT:     %Self.ref: type = name_ref Self, constants.%FAlias [concrete = constants.%FAlias]
 // CHECK:STDOUT:     %I.ref: type = name_ref I, file.%I.decl [concrete = constants.%I.type]
 // CHECK:STDOUT:   }
@@ -1025,7 +1025,7 @@ class SelfNestedBadReturnType {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @FExtraParam {
-// CHECK:STDOUT:   %I.impl = impl_decl @I.impl.ddd [concrete] {} {
+// CHECK:STDOUT:   impl_decl @I.impl.ddd [concrete] {} {
 // CHECK:STDOUT:     %Self.ref: type = name_ref Self, constants.%FExtraParam [concrete = constants.%FExtraParam]
 // CHECK:STDOUT:     %I.ref: type = name_ref I, file.%I.decl [concrete = constants.%I.type]
 // CHECK:STDOUT:   }
@@ -1041,7 +1041,7 @@ class SelfNestedBadReturnType {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @FExtraImplicitParam {
-// CHECK:STDOUT:   %I.impl = impl_decl @I.impl.698 [concrete] {} {
+// CHECK:STDOUT:   impl_decl @I.impl.698 [concrete] {} {
 // CHECK:STDOUT:     %Self.ref: type = name_ref Self, constants.%FExtraImplicitParam [concrete = constants.%FExtraImplicitParam]
 // CHECK:STDOUT:     %I.ref: type = name_ref I, file.%I.decl [concrete = constants.%I.type]
 // CHECK:STDOUT:   }
@@ -1057,7 +1057,7 @@ class SelfNestedBadReturnType {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @FExtraReturnType {
-// CHECK:STDOUT:   %I.impl = impl_decl @I.impl.77b [concrete] {} {
+// CHECK:STDOUT:   impl_decl @I.impl.77b [concrete] {} {
 // CHECK:STDOUT:     %Self.ref: type = name_ref Self, constants.%FExtraReturnType [concrete = constants.%FExtraReturnType]
 // CHECK:STDOUT:     %I.ref: type = name_ref I, file.%I.decl [concrete = constants.%I.type]
 // CHECK:STDOUT:   }
@@ -1073,7 +1073,7 @@ class SelfNestedBadReturnType {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @FMissingParam {
-// CHECK:STDOUT:   %J.impl = impl_decl @J.impl.5cf [concrete] {} {
+// CHECK:STDOUT:   impl_decl @J.impl.5cf [concrete] {} {
 // CHECK:STDOUT:     %Self.ref: type = name_ref Self, constants.%FMissingParam [concrete = constants.%FMissingParam]
 // CHECK:STDOUT:     %J.ref: type = name_ref J, file.%J.decl [concrete = constants.%J.type]
 // CHECK:STDOUT:   }
@@ -1089,7 +1089,7 @@ class SelfNestedBadReturnType {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @FMissingImplicitParam {
-// CHECK:STDOUT:   %J.impl = impl_decl @J.impl.bac [concrete] {} {
+// CHECK:STDOUT:   impl_decl @J.impl.bac [concrete] {} {
 // CHECK:STDOUT:     %Self.ref: type = name_ref Self, constants.%FMissingImplicitParam [concrete = constants.%FMissingImplicitParam]
 // CHECK:STDOUT:     %J.ref: type = name_ref J, file.%J.decl [concrete = constants.%J.type]
 // CHECK:STDOUT:   }
@@ -1105,7 +1105,7 @@ class SelfNestedBadReturnType {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @FMissingReturnType {
-// CHECK:STDOUT:   %J.impl = impl_decl @J.impl.1a7 [concrete] {} {
+// CHECK:STDOUT:   impl_decl @J.impl.1a7 [concrete] {} {
 // CHECK:STDOUT:     %Self.ref: type = name_ref Self, constants.%FMissingReturnType [concrete = constants.%FMissingReturnType]
 // CHECK:STDOUT:     %J.ref: type = name_ref J, file.%J.decl [concrete = constants.%J.type]
 // CHECK:STDOUT:   }
@@ -1121,7 +1121,7 @@ class SelfNestedBadReturnType {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @FDifferentParamType {
-// CHECK:STDOUT:   %J.impl = impl_decl @J.impl.f2b [concrete] {} {
+// CHECK:STDOUT:   impl_decl @J.impl.f2b [concrete] {} {
 // CHECK:STDOUT:     %Self.ref: type = name_ref Self, constants.%FDifferentParamType [concrete = constants.%FDifferentParamType]
 // CHECK:STDOUT:     %J.ref: type = name_ref J, file.%J.decl [concrete = constants.%J.type]
 // CHECK:STDOUT:   }
@@ -1137,7 +1137,7 @@ class SelfNestedBadReturnType {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @FDifferentImplicitParamType {
-// CHECK:STDOUT:   %J.impl = impl_decl @J.impl.db4 [concrete] {} {
+// CHECK:STDOUT:   impl_decl @J.impl.db4 [concrete] {} {
 // CHECK:STDOUT:     %Self.ref: type = name_ref Self, constants.%FDifferentImplicitParamType [concrete = constants.%FDifferentImplicitParamType]
 // CHECK:STDOUT:     %J.ref: type = name_ref J, file.%J.decl [concrete = constants.%J.type]
 // CHECK:STDOUT:   }
@@ -1153,7 +1153,7 @@ class SelfNestedBadReturnType {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @FDifferentReturnType {
-// CHECK:STDOUT:   %J.impl = impl_decl @J.impl.fcc [concrete] {} {
+// CHECK:STDOUT:   impl_decl @J.impl.fcc [concrete] {} {
 // CHECK:STDOUT:     %Self.ref: type = name_ref Self, constants.%FDifferentReturnType [concrete = constants.%FDifferentReturnType]
 // CHECK:STDOUT:     %J.ref: type = name_ref J, file.%J.decl [concrete = constants.%J.type]
 // CHECK:STDOUT:   }
@@ -1169,7 +1169,7 @@ class SelfNestedBadReturnType {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @SelfNestedBadParam {
-// CHECK:STDOUT:   %SelfNested.impl = impl_decl @SelfNested.impl.6a5 [concrete] {} {
+// CHECK:STDOUT:   impl_decl @SelfNested.impl.6a5 [concrete] {} {
 // CHECK:STDOUT:     %Self.ref: type = name_ref Self, constants.%SelfNestedBadParam [concrete = constants.%SelfNestedBadParam]
 // CHECK:STDOUT:     %SelfNested.ref: type = name_ref SelfNested, file.%SelfNested.decl [concrete = constants.%SelfNested.type]
 // CHECK:STDOUT:   }
@@ -1186,7 +1186,7 @@ class SelfNestedBadReturnType {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @SelfNestedBadReturnType {
-// CHECK:STDOUT:   %SelfNested.impl = impl_decl @SelfNested.impl.bfc [concrete] {} {
+// CHECK:STDOUT:   impl_decl @SelfNested.impl.bfc [concrete] {} {
 // CHECK:STDOUT:     %Self.ref: type = name_ref Self, constants.%SelfNestedBadReturnType [concrete = constants.%SelfNestedBadReturnType]
 // CHECK:STDOUT:     %SelfNested.ref: type = name_ref SelfNested, file.%SelfNested.decl [concrete = constants.%SelfNested.type]
 // CHECK:STDOUT:   }

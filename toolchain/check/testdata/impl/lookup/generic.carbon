@@ -175,7 +175,7 @@ fn G(x: A) {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %HasF.decl: type = interface_decl @HasF [concrete = constants.%HasF.type] {} {}
-// CHECK:STDOUT:   %HasF.impl = impl_decl @HasF.impl [concrete] {
+// CHECK:STDOUT:   impl_decl @HasF.impl [concrete] {
 // CHECK:STDOUT:     %T.patt: %pattern_type.98f = symbolic_binding_pattern T, 0 [concrete]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %T.ref: type = name_ref T, %T.loc8_14.1 [symbolic = %T.loc8_14.2 (constants.%T)]
@@ -376,7 +376,7 @@ fn G(x: A) {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %HasF.decl: type = interface_decl @HasF [concrete = constants.%HasF.type] {} {}
-// CHECK:STDOUT:   %HasF.impl = impl_decl @HasF.impl [concrete] {
+// CHECK:STDOUT:   impl_decl @HasF.impl [concrete] {
 // CHECK:STDOUT:     %T.patt: %pattern_type.98f = symbolic_binding_pattern T, 0 [concrete]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %T.ref: type = name_ref T, %T.loc8_14.1 [symbolic = %T.loc8_14.2 (constants.%T)]
@@ -608,7 +608,7 @@ fn G(x: A) {
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %T.loc8_9.2: type = bind_symbolic_name T, 0 [symbolic = %T.loc8_9.1 (constants.%T)]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %HasF.impl = impl_decl @HasF.impl [concrete] {
+// CHECK:STDOUT:   impl_decl @HasF.impl [concrete] {
 // CHECK:STDOUT:     %T.patt: %pattern_type.98f = symbolic_binding_pattern T, 0 [concrete]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %C.ref: %C.type = name_ref C, file.%C.decl [concrete = constants.%C.generic]
@@ -849,7 +849,7 @@ fn G(x: A) {
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %T.loc4_16.2: type = bind_symbolic_name T, 0 [symbolic = %T.loc4_16.1 (constants.%T)]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %HasF.impl = impl_decl @HasF.impl [concrete] {
+// CHECK:STDOUT:   impl_decl @HasF.impl [concrete] {
 // CHECK:STDOUT:     %T.patt: %pattern_type.98f = symbolic_binding_pattern T, 0 [concrete]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %.loc8_25.1: %empty_struct_type = struct_literal ()
@@ -1079,7 +1079,7 @@ fn G(x: A) {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %HasF.decl: type = interface_decl @HasF [concrete = constants.%HasF.type] {} {}
-// CHECK:STDOUT:   %HasF.impl = impl_decl @HasF.impl [concrete] {
+// CHECK:STDOUT:   impl_decl @HasF.impl [concrete] {
 // CHECK:STDOUT:     %T.patt: %pattern_type.98f = symbolic_binding_pattern T, 0 [concrete]
 // CHECK:STDOUT:     %U.patt: %pattern_type.98f = symbolic_binding_pattern U, 1 [concrete]
 // CHECK:STDOUT:   } {
@@ -1258,7 +1258,7 @@ fn G(x: A) {
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %T.loc4_16.2: type = bind_symbolic_name T, 0 [symbolic = %T.loc4_16.1 (constants.%T)]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %HasF.impl = impl_decl @HasF.impl [concrete] {
+// CHECK:STDOUT:   impl_decl @HasF.impl [concrete] {
 // CHECK:STDOUT:     %T.patt: %pattern_type.98f = symbolic_binding_pattern T, 0 [concrete]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %T.ref.loc8_24: type = name_ref T, %T.loc8_14.1 [symbolic = %T.loc8_14.2 (constants.%T)]

@@ -240,7 +240,7 @@ fn InstanceCallFail() {
 // CHECK:STDOUT:     .NonInstanceCall1 = %NonInstanceCall1.decl
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %NonInstance1.decl: type = interface_decl @NonInstance1 [concrete = constants.%NonInstance1.type] {} {}
-// CHECK:STDOUT:   %NonInstance1.impl = impl_decl @NonInstance1.impl [concrete] {} {
+// CHECK:STDOUT:   impl_decl @NonInstance1.impl [concrete] {} {
 // CHECK:STDOUT:     %.loc7_12.1: %empty_tuple.type = tuple_literal ()
 // CHECK:STDOUT:     %.loc7_12.2: type = converted %.loc7_12.1, constants.%empty_tuple.type [concrete = constants.%empty_tuple.type]
 // CHECK:STDOUT:     %struct_type.a: type = struct_type {.a: %empty_tuple.type} [concrete = constants.%struct_type.a]
@@ -360,7 +360,7 @@ fn InstanceCallFail() {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %NonInstance2.decl: type = interface_decl @NonInstance2 [concrete = constants.%NonInstance2.type] {} {}
-// CHECK:STDOUT:   %NonInstance2.impl = impl_decl @NonInstance2.impl [concrete] {} {
+// CHECK:STDOUT:   impl_decl @NonInstance2.impl [concrete] {} {
 // CHECK:STDOUT:     %.loc9_12.1: %empty_tuple.type = tuple_literal ()
 // CHECK:STDOUT:     %.loc9_12.2: type = converted %.loc9_12.1, constants.%empty_tuple.type [concrete = constants.%empty_tuple.type]
 // CHECK:STDOUT:     %struct_type.b: type = struct_type {.b: %empty_tuple.type} [concrete = constants.%struct_type.b]
@@ -542,7 +542,7 @@ fn InstanceCallFail() {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %NonInstance3.decl: type = interface_decl @NonInstance3 [concrete = constants.%NonInstance3.type] {} {}
-// CHECK:STDOUT:   %NonInstance3.impl = impl_decl @NonInstance3.impl [concrete] {} {
+// CHECK:STDOUT:   impl_decl @NonInstance3.impl [concrete] {} {
 // CHECK:STDOUT:     %.loc9_12.1: %empty_tuple.type = tuple_literal ()
 // CHECK:STDOUT:     %.loc9_12.2: type = converted %.loc9_12.1, constants.%empty_tuple.type [concrete = constants.%empty_tuple.type]
 // CHECK:STDOUT:     %struct_type.c: type = struct_type {.c: %empty_tuple.type} [concrete = constants.%struct_type.c]
@@ -698,7 +698,7 @@ fn InstanceCallFail() {
 // CHECK:STDOUT:     .InstanceCallIndirect = %InstanceCallIndirect.decl
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Instance1.decl: type = interface_decl @Instance1 [concrete = constants.%Instance1.type] {} {}
-// CHECK:STDOUT:   %Instance1.impl = impl_decl @Instance1.impl [concrete] {} {
+// CHECK:STDOUT:   impl_decl @Instance1.impl [concrete] {} {
 // CHECK:STDOUT:     %.loc7_12.1: %empty_tuple.type = tuple_literal ()
 // CHECK:STDOUT:     %.loc7_12.2: type = converted %.loc7_12.1, constants.%empty_tuple.type [concrete = constants.%empty_tuple.type]
 // CHECK:STDOUT:     %struct_type.d: type = struct_type {.d: %empty_tuple.type} [concrete = constants.%struct_type.d]
@@ -851,7 +851,7 @@ fn InstanceCallFail() {
 // CHECK:STDOUT:     .InstanceCallFail = %InstanceCallFail.decl
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Instance2.decl: type = interface_decl @Instance2 [concrete = constants.%Instance2.type] {} {}
-// CHECK:STDOUT:   %Instance2.impl = impl_decl @Instance2.impl [concrete] {} {
+// CHECK:STDOUT:   impl_decl @Instance2.impl [concrete] {} {
 // CHECK:STDOUT:     %.loc7_12.1: %empty_tuple.type = tuple_literal ()
 // CHECK:STDOUT:     %.loc7_12.2: type = converted %.loc7_12.1, constants.%empty_tuple.type [concrete = constants.%empty_tuple.type]
 // CHECK:STDOUT:     %struct_type.e: type = struct_type {.e: %empty_tuple.type} [concrete = constants.%struct_type.e]

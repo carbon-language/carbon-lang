@@ -388,7 +388,7 @@ fn Read() {
 // CHECK:STDOUT:       %return.param: ref @Make.%IntRange (%IntRange.349) = out_param call_param2
 // CHECK:STDOUT:       %return: ref @Make.%IntRange (%IntRange.349) = return_slot %return.param
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %Iterate.impl = impl_decl @Iterate.impl [concrete] {} {
+// CHECK:STDOUT:     impl_decl @Iterate.impl [concrete] {} {
 // CHECK:STDOUT:       %Self.ref: type = name_ref Self, constants.%IntRange.349 [symbolic = %IntRange (constants.%IntRange.349)]
 // CHECK:STDOUT:       %Core.ref.loc9_11: <namespace> = name_ref Core, imports.%Core [concrete = imports.%Core]
 // CHECK:STDOUT:       %Iterate.ref: type = name_ref Iterate, imports.%Core.Iterate [concrete = constants.%Iterate.type]

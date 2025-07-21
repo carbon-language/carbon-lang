@@ -191,7 +191,7 @@ fn B() {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %GenericParam.decl: type = class_decl @GenericParam [concrete = constants.%GenericParam] {} {}
 // CHECK:STDOUT:   %ImplsGeneric.decl: type = class_decl @ImplsGeneric [concrete = constants.%ImplsGeneric] {} {}
-// CHECK:STDOUT:   %Generic.impl = impl_decl @Generic.impl [concrete] {} {
+// CHECK:STDOUT:   impl_decl @Generic.impl [concrete] {} {
 // CHECK:STDOUT:     %ImplsGeneric.ref: type = name_ref ImplsGeneric, file.%ImplsGeneric.decl [concrete = constants.%ImplsGeneric]
 // CHECK:STDOUT:     %Generic.ref: %Generic.type.c21 = name_ref Generic, file.%Generic.decl [concrete = constants.%Generic.generic]
 // CHECK:STDOUT:     %GenericParam.ref: type = name_ref GenericParam, file.%GenericParam.decl [concrete = constants.%GenericParam]
@@ -492,7 +492,7 @@ fn B() {
 // CHECK:STDOUT:     %W.loc3_23.2: type = bind_symbolic_name W, 1 [symbolic = %W.loc3_23.1 (constants.%W)]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %C.decl: type = class_decl @C [concrete = constants.%C] {} {}
-// CHECK:STDOUT:   %I.impl = impl_decl @I.impl [concrete] {
+// CHECK:STDOUT:   impl_decl @I.impl [concrete] {
 // CHECK:STDOUT:     %T.patt: %pattern_type.98f = symbolic_binding_pattern T, 0 [concrete]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %C.ref: type = name_ref C, file.%C.decl [concrete = constants.%C]
@@ -725,7 +725,7 @@ fn B() {
 // CHECK:STDOUT:     %W.loc3_23.2: type = bind_symbolic_name W, 1 [symbolic = %W.loc3_23.1 (constants.%W)]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %C.decl: type = class_decl @C [concrete = constants.%C] {} {}
-// CHECK:STDOUT:   %I.impl = impl_decl @I.impl [concrete] {
+// CHECK:STDOUT:   impl_decl @I.impl [concrete] {
 // CHECK:STDOUT:     %T.patt: %pattern_type.98f = symbolic_binding_pattern T, 0 [concrete]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %C.ref: type = name_ref C, file.%C.decl [concrete = constants.%C]
@@ -927,7 +927,7 @@ fn B() {
 // CHECK:STDOUT:     %V.loc5_9.2: type = bind_symbolic_name V, 0 [symbolic = %V.loc5_9.1 (constants.%V)]
 // CHECK:STDOUT:     %W.loc5_19.2: type = bind_symbolic_name W, 1 [symbolic = %W.loc5_19.1 (constants.%W)]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %I.impl = impl_decl @I.impl [concrete] {
+// CHECK:STDOUT:   impl_decl @I.impl [concrete] {
 // CHECK:STDOUT:     %T.patt: %pattern_type.98f = symbolic_binding_pattern T, 0 [concrete]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %C.ref: %C.type = name_ref C, file.%C.decl [concrete = constants.%C.generic]

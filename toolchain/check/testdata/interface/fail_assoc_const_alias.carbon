@@ -306,7 +306,7 @@ interface C {
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %I2.decl: type = interface_decl @I2 [concrete = constants.%I2.type] {} {}
 // CHECK:STDOUT:   %J2.decl.loc9: type = interface_decl @J2 [concrete = constants.%J2.type] {} {}
-// CHECK:STDOUT:   %I2.impl = impl_decl @I2.impl [concrete] {
+// CHECK:STDOUT:   impl_decl @I2.impl [concrete] {
 // CHECK:STDOUT:     %V.patt: %pattern_type.f47 = symbolic_binding_pattern V, 0 [concrete]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %V.ref: %J2.type = name_ref V, %V.loc11_14.1 [symbolic = %V.loc11_14.2 (constants.%V)]

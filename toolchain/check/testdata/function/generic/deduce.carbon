@@ -1598,7 +1598,7 @@ fn F() {
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %Z.decl: type = interface_decl @Z [concrete = constants.%Z.type] {} {}
 // CHECK:STDOUT:   %EE.decl: type = class_decl @EE [concrete = constants.%EE] {} {}
-// CHECK:STDOUT:   %Z.impl.loc6 = impl_decl @Z.impl.a6b [concrete] {} {
+// CHECK:STDOUT:   impl_decl @Z.impl.a6b [concrete] {} {
 // CHECK:STDOUT:     %EE.ref: type = name_ref EE, file.%EE.decl [concrete = constants.%EE]
 // CHECK:STDOUT:     %Z.ref: type = name_ref Z, file.%Z.decl [concrete = constants.%Z.type]
 // CHECK:STDOUT:   }
@@ -1609,7 +1609,7 @@ fn F() {
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %E.loc8_10.2: type = bind_symbolic_name E, 0 [symbolic = %E.loc8_10.1 (constants.%E)]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %Z.impl.loc9 = impl_decl @Z.impl.266 [concrete] {
+// CHECK:STDOUT:   impl_decl @Z.impl.266 [concrete] {
 // CHECK:STDOUT:     %E.patt: %pattern_type.98f = symbolic_binding_pattern E, 0 [concrete]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %DD.ref: %DD.type = name_ref DD, file.%DD.decl [concrete = constants.%DD.generic]
@@ -1626,7 +1626,7 @@ fn F() {
 // CHECK:STDOUT:     %Z.ref: type = name_ref Z, file.%Z.decl [concrete = constants.%Z.type]
 // CHECK:STDOUT:     %D.loc11_10.2: %Z.type = bind_symbolic_name D, 0 [symbolic = %D.loc11_10.1 (constants.%D)]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %Z.impl.loc12 = impl_decl @Z.impl.497 [concrete] {
+// CHECK:STDOUT:   impl_decl @Z.impl.497 [concrete] {
 // CHECK:STDOUT:     %E.patt: %pattern_type.98f = symbolic_binding_pattern E, 0 [concrete]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %CC.ref: %CC.type = name_ref CC, file.%CC.decl [concrete = constants.%CC.generic]

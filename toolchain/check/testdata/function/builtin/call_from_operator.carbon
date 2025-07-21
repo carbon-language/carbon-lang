@@ -186,7 +186,7 @@ var arr: array(i32, (1 as i32) + (2 as i32)) = (3, 4, (3 as i32) + (4 as i32));
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %T.loc15_22.2: type = bind_symbolic_name T, 0 [symbolic = %T.loc15_22.1 (constants.%T)]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %AddWith.impl = impl_decl @AddWith.impl [concrete] {} {
+// CHECK:STDOUT:   impl_decl @AddWith.impl [concrete] {} {
 // CHECK:STDOUT:     %int_32.loc19_6: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
 // CHECK:STDOUT:     %int.make_type_signed.loc19_6: init type = call constants.%Int(%int_32.loc19_6) [concrete = constants.%i32.builtin]
 // CHECK:STDOUT:     %.loc19_6.1: type = value_of_initializer %int.make_type_signed.loc19_6 [concrete = constants.%i32.builtin]
@@ -200,7 +200,7 @@ var arr: array(i32, (1 as i32) + (2 as i32)) = (3, 4, (3 as i32) + (4 as i32));
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %AddWith.impl_witness_table = impl_witness_table (@AddWith.impl.%Op.decl), @AddWith.impl [concrete]
 // CHECK:STDOUT:   %AddWith.impl_witness: <witness> = impl_witness %AddWith.impl_witness_table [concrete = constants.%AddWith.impl_witness]
-// CHECK:STDOUT:   %As.impl = impl_decl @As.impl [concrete] {} {
+// CHECK:STDOUT:   impl_decl @As.impl [concrete] {} {
 // CHECK:STDOUT:     %IntLiteral.ref: %IntLiteral.type = name_ref IntLiteral, file.%IntLiteral.decl [concrete = constants.%IntLiteral]
 // CHECK:STDOUT:     %int_literal.make_type: init type = call %IntLiteral.ref() [concrete = Core.IntLiteral]
 // CHECK:STDOUT:     %.loc23_17.1: type = value_of_initializer %int_literal.make_type [concrete = Core.IntLiteral]
@@ -214,7 +214,7 @@ var arr: array(i32, (1 as i32) + (2 as i32)) = (3, 4, (3 as i32) + (4 as i32));
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %As.impl_witness_table = impl_witness_table (@As.impl.%Convert.decl), @As.impl [concrete]
 // CHECK:STDOUT:   %As.impl_witness: <witness> = impl_witness %As.impl_witness_table [concrete = constants.%As.impl_witness]
-// CHECK:STDOUT:   %ImplicitAs.impl.loc27 = impl_decl @ImplicitAs.impl.e13 [concrete] {} {
+// CHECK:STDOUT:   impl_decl @ImplicitAs.impl.e13 [concrete] {} {
 // CHECK:STDOUT:     %IntLiteral.ref: %IntLiteral.type = name_ref IntLiteral, file.%IntLiteral.decl [concrete = constants.%IntLiteral]
 // CHECK:STDOUT:     %int_literal.make_type: init type = call %IntLiteral.ref() [concrete = Core.IntLiteral]
 // CHECK:STDOUT:     %.loc27_17.1: type = value_of_initializer %int_literal.make_type [concrete = Core.IntLiteral]
@@ -228,7 +228,7 @@ var arr: array(i32, (1 as i32) + (2 as i32)) = (3, 4, (3 as i32) + (4 as i32));
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %ImplicitAs.impl_witness_table.loc27 = impl_witness_table (@ImplicitAs.impl.e13.%Convert.decl), @ImplicitAs.impl.e13 [concrete]
 // CHECK:STDOUT:   %ImplicitAs.impl_witness.loc27: <witness> = impl_witness %ImplicitAs.impl_witness_table.loc27 [concrete = constants.%ImplicitAs.impl_witness.be0]
-// CHECK:STDOUT:   %ImplicitAs.impl.loc31 = impl_decl @ImplicitAs.impl.3df [concrete] {} {
+// CHECK:STDOUT:   impl_decl @ImplicitAs.impl.3df [concrete] {} {
 // CHECK:STDOUT:     %int_32: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
 // CHECK:STDOUT:     %int.make_type_signed: init type = call constants.%Int(%int_32) [concrete = constants.%i32.builtin]
 // CHECK:STDOUT:     %.loc31_6.1: type = value_of_initializer %int.make_type_signed [concrete = constants.%i32.builtin]

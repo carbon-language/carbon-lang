@@ -1929,7 +1929,7 @@ var v: Base(T1) = {};
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %T1.decl: type = class_decl @T1 [concrete = constants.%T1] {} {}
 // CHECK:STDOUT:   %T2.decl: type = class_decl @T2 [concrete = constants.%T2] {} {}
-// CHECK:STDOUT:   %ImplicitAs.impl = impl_decl @ImplicitAs.impl [concrete] {} {
+// CHECK:STDOUT:   impl_decl @ImplicitAs.impl [concrete] {} {
 // CHECK:STDOUT:     %T2.ref: type = name_ref T2, file.%T2.decl [concrete = constants.%T2]
 // CHECK:STDOUT:     %Core.ref: <namespace> = name_ref Core, imports.%Core [concrete = imports.%Core]
 // CHECK:STDOUT:     %ImplicitAs.ref: %ImplicitAs.type.cc7 = name_ref ImplicitAs, imports.%Core.ImplicitAs [concrete = constants.%ImplicitAs.generic]

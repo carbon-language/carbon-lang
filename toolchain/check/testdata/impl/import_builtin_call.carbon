@@ -163,7 +163,7 @@ var n: Int(64) = MakeFromClass(FromLiteral(64) as OtherInt);
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %N.loc11_13.2: Core.IntLiteral = bind_symbolic_name N, 0 [symbolic = %N.loc11_13.1 (constants.%N)]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %Add.impl = impl_decl @Add.impl [concrete] {
+// CHECK:STDOUT:   impl_decl @Add.impl [concrete] {
 // CHECK:STDOUT:     %N.patt: %pattern_type.dc0 = symbolic_binding_pattern N, 0 [concrete]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %MyInt.ref: %MyInt.type = name_ref MyInt, file.%MyInt.decl [concrete = constants.%MyInt.generic]

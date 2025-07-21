@@ -120,7 +120,7 @@ impl i32 as I {
 // CHECK:STDOUT:     %X.loc15_19.2: @C.%T.loc15_9.1 (%T) = bind_symbolic_name X, 1 [symbolic = %X.loc15_19.1 (constants.%X)]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %I.decl: type = interface_decl @I [concrete = constants.%I.type] {} {}
-// CHECK:STDOUT:   %I.impl.loc28 = impl_decl @I.impl.049 [concrete] {} {
+// CHECK:STDOUT:   impl_decl @I.impl.049 [concrete] {} {
 // CHECK:STDOUT:     %bool.make_type: init type = call constants.%Bool() [concrete = bool]
 // CHECK:STDOUT:     %.loc28_6.1: type = value_of_initializer %bool.make_type [concrete = bool]
 // CHECK:STDOUT:     %.loc28_6.2: type = converted %bool.make_type, %.loc28_6.1 [concrete = bool]
@@ -128,7 +128,7 @@ impl i32 as I {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %I.impl_witness_table.loc28 = impl_witness_table (@I.impl.049.%F.decl), @I.impl.049 [concrete]
 // CHECK:STDOUT:   %I.impl_witness.loc28: <witness> = impl_witness %I.impl_witness_table.loc28 [concrete = constants.%I.impl_witness.c21]
-// CHECK:STDOUT:   %I.impl.loc35 = impl_decl @I.impl.a9a [concrete] {} {
+// CHECK:STDOUT:   impl_decl @I.impl.a9a [concrete] {} {
 // CHECK:STDOUT:     %int_32: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
 // CHECK:STDOUT:     %i32: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
 // CHECK:STDOUT:     %I.ref: type = name_ref I, file.%I.decl [concrete = constants.%I.type]

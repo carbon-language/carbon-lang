@@ -87,7 +87,7 @@ fn F() {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %I.decl: type = interface_decl @I [concrete = constants.%I.type] {} {}
-// CHECK:STDOUT:   %I.impl = impl_decl @I.impl [concrete] {} {
+// CHECK:STDOUT:   impl_decl @I.impl [concrete] {} {
 // CHECK:STDOUT:     %.loc9_14.1: %empty_tuple.type = tuple_literal ()
 // CHECK:STDOUT:     %.loc9_14.2: type = converted %.loc9_14.1, constants.%empty_tuple.type [concrete = constants.%empty_tuple.type]
 // CHECK:STDOUT:     %I.ref: type = name_ref I, file.%I.decl [concrete = constants.%I.type]
@@ -153,7 +153,7 @@ fn F() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F() {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %J.impl = impl_decl @J.impl [concrete] {} {
+// CHECK:STDOUT:   impl_decl @J.impl [concrete] {} {
 // CHECK:STDOUT:     %.loc10_16.1: %empty_struct_type = struct_literal ()
 // CHECK:STDOUT:     %.loc10_16.2: type = converted %.loc10_16.1, constants.%empty_struct_type [concrete = constants.%empty_struct_type]
 // CHECK:STDOUT:     %J.ref: type = name_ref J, file.%J.decl [concrete = constants.%J.type]
@@ -219,7 +219,7 @@ fn F() {
 // CHECK:STDOUT:   %Self: %Z.type = bind_symbolic_name Self, 0 [symbolic = constants.%Self.6e6]
 // CHECK:STDOUT:   %Zero.decl: %Zero.type.822 = fn_decl @Zero.loc4 [concrete = constants.%Zero.d14] {} {}
 // CHECK:STDOUT:   %assoc0: %Z.assoc_type = assoc_entity element0, %Zero.decl [concrete = constants.%assoc0.534]
-// CHECK:STDOUT:   %Z.impl = impl_decl @Z.impl.6b5 [concrete] {} {
+// CHECK:STDOUT:   impl_decl @Z.impl.6b5 [concrete] {} {
 // CHECK:STDOUT:     %Z.ref: type = name_ref Z, file.%Z.decl [concrete = constants.%Z.type]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:
@@ -254,7 +254,7 @@ fn F() {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @Point {
-// CHECK:STDOUT:   %Z.impl = impl_decl @Z.impl.c94 [concrete] {} {
+// CHECK:STDOUT:   impl_decl @Z.impl.c94 [concrete] {} {
 // CHECK:STDOUT:     %Self.ref: type = name_ref Self, constants.%Point [concrete = constants.%Point]
 // CHECK:STDOUT:     %Z.ref: type = name_ref Z, file.%Z.decl [concrete = constants.%Z.type]
 // CHECK:STDOUT:   }

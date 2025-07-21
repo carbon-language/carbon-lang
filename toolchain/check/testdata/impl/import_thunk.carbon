@@ -172,7 +172,7 @@ fn G() {
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %X.loc5_9.2: %empty_tuple.type = bind_symbolic_name X, 0 [symbolic = %X.loc5_9.1 (constants.%X)]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %I.impl = impl_decl @I.impl [concrete] {
+// CHECK:STDOUT:   impl_decl @I.impl [concrete] {
 // CHECK:STDOUT:     %Y.patt: %pattern_type.cb1 = symbolic_binding_pattern Y, 0 [concrete]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %C.ref: %C.type = name_ref C, file.%C.decl [concrete = constants.%C.generic]

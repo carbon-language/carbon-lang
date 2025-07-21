@@ -547,7 +547,7 @@ fn CallsWithTypeExplicit(U:! type) {
 // CHECK:STDOUT:   %Eats.decl: type = interface_decl @Eats [concrete = constants.%Eats.type] {} {}
 // CHECK:STDOUT:   %Animal.decl: type = interface_decl @Animal [concrete = constants.%Animal.type] {} {}
 // CHECK:STDOUT:   %Tame.decl: type = interface_decl @Tame [concrete = constants.%Tame.type] {} {}
-// CHECK:STDOUT:   %Eats.impl = impl_decl @Eats.impl [concrete] {
+// CHECK:STDOUT:   impl_decl @Eats.impl [concrete] {
 // CHECK:STDOUT:     %A.patt: %pattern_type.3b0 = symbolic_binding_pattern A, 0 [concrete]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %A.ref: %Animal.type = name_ref A, %A.loc7_14.1 [symbolic = %A.loc7_14.2 (constants.%A)]

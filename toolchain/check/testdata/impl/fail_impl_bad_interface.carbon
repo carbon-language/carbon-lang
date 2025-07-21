@@ -86,7 +86,7 @@ impl {.a: bool} as type where .Self impls I {}
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %.loc11: type = converted @impl.%false, <error> [concrete = <error>]
-// CHECK:STDOUT:   %impl = impl_decl @impl [concrete] {} {
+// CHECK:STDOUT:   impl_decl @impl [concrete] {} {
 // CHECK:STDOUT:     %int_32: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
 // CHECK:STDOUT:     %i32: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
 // CHECK:STDOUT:     %false: bool = bool_literal false [concrete = constants.%false]
@@ -119,7 +119,7 @@ impl {.a: bool} as type where .Self impls I {}
 // CHECK:STDOUT:     .Core = imports.%Core
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import = import Core
-// CHECK:STDOUT:   %impl = impl_decl @impl [concrete] {} {
+// CHECK:STDOUT:   impl_decl @impl [concrete] {} {
 // CHECK:STDOUT:     %bool.make_type: init type = call constants.%Bool() [concrete = bool]
 // CHECK:STDOUT:     %.loc8_6.1: type = value_of_initializer %bool.make_type [concrete = bool]
 // CHECK:STDOUT:     %.loc8_6.2: type = converted %bool.make_type, %.loc8_6.1 [concrete = bool]
@@ -155,7 +155,7 @@ impl {.a: bool} as type where .Self impls I {}
 // CHECK:STDOUT:     .Core = imports.%Core
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import = import Core
-// CHECK:STDOUT:   %impl = impl_decl @impl [concrete] {} {
+// CHECK:STDOUT:   impl_decl @impl [concrete] {} {
 // CHECK:STDOUT:     %int_64: Core.IntLiteral = int_value 64 [concrete = constants.%int_64]
 // CHECK:STDOUT:     %float.make_type: init type = call constants.%Float(%int_64) [concrete = f64]
 // CHECK:STDOUT:     %.loc8_6.1: type = value_of_initializer %float.make_type [concrete = f64]
@@ -201,7 +201,7 @@ impl {.a: bool} as type where .Self impls I {}
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %I.decl: type = interface_decl @I [concrete = constants.%I.type] {} {}
-// CHECK:STDOUT:   %impl = impl_decl @impl [concrete] {} {
+// CHECK:STDOUT:   impl_decl @impl [concrete] {} {
 // CHECK:STDOUT:     %bool.make_type: init type = call constants.%Bool() [concrete = bool]
 // CHECK:STDOUT:     %.loc10_11.1: type = value_of_initializer %bool.make_type [concrete = bool]
 // CHECK:STDOUT:     %.loc10_11.2: type = converted %bool.make_type, %.loc10_11.1 [concrete = bool]

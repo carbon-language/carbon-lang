@@ -133,7 +133,7 @@ impl forall [T:! type] D as J(T*) {}
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %T.loc5_13.2: type = bind_symbolic_name T, 0 [symbolic = %T.loc5_13.1 (constants.%T)]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %I.impl.loc8 = impl_decl @I.impl.084 [concrete] {
+// CHECK:STDOUT:   impl_decl @I.impl.084 [concrete] {
 // CHECK:STDOUT:     %T.patt: %pattern_type = symbolic_binding_pattern T, 0 [concrete]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %C.ref.loc8: type = name_ref C, file.%C.decl [concrete = constants.%C]
@@ -144,7 +144,7 @@ impl forall [T:! type] D as J(T*) {}
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %I.impl_witness_table.loc8 = impl_witness_table (), @I.impl.084 [concrete]
 // CHECK:STDOUT:   %I.impl_witness.loc8: <witness> = impl_witness %I.impl_witness_table.loc8, @I.impl.084(constants.%T) [symbolic = @I.impl.084.%I.impl_witness (constants.%I.impl_witness.1a9)]
-// CHECK:STDOUT:   %I.impl.loc9 = impl_decl @I.impl.084 [concrete] {
+// CHECK:STDOUT:   impl_decl @I.impl.084 [concrete] {
 // CHECK:STDOUT:     %T.patt: %pattern_type = symbolic_binding_pattern T, 0 [concrete]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %C.ref.loc9: type = name_ref C, file.%C.decl [concrete = constants.%C]
@@ -153,7 +153,7 @@ impl forall [T:! type] D as J(T*) {}
 // CHECK:STDOUT:     %I.type.loc9: type = facet_type <@I, @I(constants.%T)> [symbolic = %I.type.loc8_32.2 (constants.%I.type.325)]
 // CHECK:STDOUT:     %T.loc9: type = bind_symbolic_name T, 0 [symbolic = %T.loc8_14.2 (constants.%T)]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %I.impl.loc12 = impl_decl @I.impl.cd2 [concrete] {
+// CHECK:STDOUT:   impl_decl @I.impl.cd2 [concrete] {
 // CHECK:STDOUT:     %T.patt: %pattern_type = symbolic_binding_pattern T, 0 [concrete]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %C.ref: type = name_ref C, file.%C.decl [concrete = constants.%C]
@@ -298,7 +298,7 @@ impl forall [T:! type] D as J(T*) {}
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %default.import.loc2_30.1 = import <none>
 // CHECK:STDOUT:   %default.import.loc2_30.2 = import <none>
-// CHECK:STDOUT:   %I.impl.loc8 = impl_decl @I.impl.08450a.2 [concrete] {
+// CHECK:STDOUT:   impl_decl @I.impl.08450a.2 [concrete] {
 // CHECK:STDOUT:     %T.patt: %pattern_type = symbolic_binding_pattern T, 0 [concrete]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %C.ref: type = name_ref C, imports.%Main.C [concrete = constants.%C]
@@ -307,7 +307,7 @@ impl forall [T:! type] D as J(T*) {}
 // CHECK:STDOUT:     %I.type.loc8_32.1: type = facet_type <@I, @I(constants.%T)> [symbolic = %I.type.loc8_32.2 (constants.%I.type.325)]
 // CHECK:STDOUT:     %T.loc8_14.1: type = bind_symbolic_name T, 0 [symbolic = %T.loc8_14.2 (constants.%T)]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %I.impl.loc14 = impl_decl @I.impl.08450a.3 [concrete] {
+// CHECK:STDOUT:   impl_decl @I.impl.08450a.3 [concrete] {
 // CHECK:STDOUT:     %T.patt: %pattern_type = symbolic_binding_pattern T, 0 [concrete]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %C.ref: type = name_ref C, imports.%Main.C [concrete = constants.%C]
@@ -316,7 +316,7 @@ impl forall [T:! type] D as J(T*) {}
 // CHECK:STDOUT:     %I.type.loc14_32.1: type = facet_type <@I, @I(constants.%T)> [symbolic = %I.type.loc14_32.2 (constants.%I.type.325)]
 // CHECK:STDOUT:     %T.loc14_14.1: type = bind_symbolic_name T, 0 [symbolic = %T.loc14_14.2 (constants.%T)]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %I.impl.loc20 = impl_decl @I.impl.cd2fdc.2 [concrete] {
+// CHECK:STDOUT:   impl_decl @I.impl.cd2fdc.2 [concrete] {
 // CHECK:STDOUT:     %T.patt: %pattern_type = symbolic_binding_pattern T, 0 [concrete]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %C.ref: type = name_ref C, imports.%Main.C [concrete = constants.%C]
@@ -326,7 +326,7 @@ impl forall [T:! type] D as J(T*) {}
 // CHECK:STDOUT:     %I.type.loc20_33.1: type = facet_type <@I, @I(constants.%ptr)> [symbolic = %I.type.loc20_33.2 (constants.%I.type.0e2)]
 // CHECK:STDOUT:     %T.loc20_14.1: type = bind_symbolic_name T, 0 [symbolic = %T.loc20_14.2 (constants.%T)]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %I.impl.loc26 = impl_decl @I.impl.cd2fdc.3 [concrete] {
+// CHECK:STDOUT:   impl_decl @I.impl.cd2fdc.3 [concrete] {
 // CHECK:STDOUT:     %T.patt: %pattern_type = symbolic_binding_pattern T, 0 [concrete]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %C.ref: type = name_ref C, imports.%Main.C [concrete = constants.%C]
@@ -509,7 +509,7 @@ impl forall [T:! type] D as J(T*) {}
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %T.loc5_13.2: type = bind_symbolic_name T, 0 [symbolic = %T.loc5_13.1 (constants.%T)]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %J.impl.loc11 = impl_decl @J.impl.199 [concrete] {
+// CHECK:STDOUT:   impl_decl @J.impl.199 [concrete] {
 // CHECK:STDOUT:     %T.patt: %pattern_type = symbolic_binding_pattern T, 0 [concrete]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %D.ref: type = name_ref D, file.%D.decl [concrete = constants.%D]
@@ -520,7 +520,7 @@ impl forall [T:! type] D as J(T*) {}
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %J.impl_witness_table.loc11 = impl_witness_table (), @J.impl.199 [concrete]
 // CHECK:STDOUT:   %J.impl_witness.loc11: <witness> = impl_witness %J.impl_witness_table.loc11, @J.impl.199(constants.%T) [symbolic = @J.impl.199.%J.impl_witness (constants.%J.impl_witness.809)]
-// CHECK:STDOUT:   %J.impl.loc17 = impl_decl @J.impl.dfd [concrete] {
+// CHECK:STDOUT:   impl_decl @J.impl.dfd [concrete] {
 // CHECK:STDOUT:     %T.patt: %pattern_type = symbolic_binding_pattern T, 0 [concrete]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %D.ref: type = name_ref D, file.%D.decl [concrete = constants.%D]
@@ -639,7 +639,7 @@ impl forall [T:! type] D as J(T*) {}
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %default.import.loc2_35.1 = import <none>
 // CHECK:STDOUT:   %default.import.loc2_35.2 = import <none>
-// CHECK:STDOUT:   %J.impl.loc8 = impl_decl @J.impl.199bba.2 [concrete] {
+// CHECK:STDOUT:   impl_decl @J.impl.199bba.2 [concrete] {
 // CHECK:STDOUT:     %T.patt: %pattern_type = symbolic_binding_pattern T, 0 [concrete]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %D.ref: type = name_ref D, imports.%Main.D [concrete = constants.%D]
@@ -648,7 +648,7 @@ impl forall [T:! type] D as J(T*) {}
 // CHECK:STDOUT:     %J.type.loc8_32.1: type = facet_type <@J, @J(constants.%T)> [symbolic = %J.type.loc8_32.2 (constants.%J.type.b72)]
 // CHECK:STDOUT:     %T.loc8_14.1: type = bind_symbolic_name T, 0 [symbolic = %T.loc8_14.2 (constants.%T)]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %J.impl.loc14 = impl_decl @J.impl.199bba.3 [concrete] {
+// CHECK:STDOUT:   impl_decl @J.impl.199bba.3 [concrete] {
 // CHECK:STDOUT:     %T.patt: %pattern_type = symbolic_binding_pattern T, 0 [concrete]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %D.ref: type = name_ref D, imports.%Main.D [concrete = constants.%D]
@@ -657,7 +657,7 @@ impl forall [T:! type] D as J(T*) {}
 // CHECK:STDOUT:     %J.type.loc14_32.1: type = facet_type <@J, @J(constants.%T)> [symbolic = %J.type.loc14_32.2 (constants.%J.type.b72)]
 // CHECK:STDOUT:     %T.loc14_14.1: type = bind_symbolic_name T, 0 [symbolic = %T.loc14_14.2 (constants.%T)]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %J.impl.loc20 = impl_decl @J.impl.dfd2f7.2 [concrete] {
+// CHECK:STDOUT:   impl_decl @J.impl.dfd2f7.2 [concrete] {
 // CHECK:STDOUT:     %T.patt: %pattern_type = symbolic_binding_pattern T, 0 [concrete]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %D.ref: type = name_ref D, imports.%Main.D [concrete = constants.%D]
@@ -667,7 +667,7 @@ impl forall [T:! type] D as J(T*) {}
 // CHECK:STDOUT:     %J.type.loc20_33.1: type = facet_type <@J, @J(constants.%ptr)> [symbolic = %J.type.loc20_33.2 (constants.%J.type.628)]
 // CHECK:STDOUT:     %T.loc20_14.1: type = bind_symbolic_name T, 0 [symbolic = %T.loc20_14.2 (constants.%T)]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %J.impl.loc26 = impl_decl @J.impl.dfd2f7.3 [concrete] {
+// CHECK:STDOUT:   impl_decl @J.impl.dfd2f7.3 [concrete] {
 // CHECK:STDOUT:     %T.patt: %pattern_type = symbolic_binding_pattern T, 0 [concrete]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %D.ref: type = name_ref D, imports.%Main.D [concrete = constants.%D]

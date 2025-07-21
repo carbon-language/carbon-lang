@@ -834,7 +834,9 @@ auto InstNamer::NamingContext::NameInst() -> void {
       return;
     }
     case CARBON_KIND(ImplDecl inst): {
-      AddEntityNameAndMaybePush(inst.impl_id);
+      // `impl` declarations aren't named because they aren't added to any
+      // namespace, and so aren't referenced directly.
+      inst_namer_->MaybePushEntity(inst.impl_id);
       PushBlockId(inst_namer_->GetScopeFor(inst.impl_id), inst.decl_block_id);
       return;
     }

@@ -105,7 +105,7 @@ class A {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @A {
-// CHECK:STDOUT:   %DefaultConstructible.impl = impl_decl @DefaultConstructible.impl [concrete] {} {
+// CHECK:STDOUT:   impl_decl @DefaultConstructible.impl [concrete] {} {
 // CHECK:STDOUT:     %C.ref: type = name_ref C, file.%C.decl [concrete = constants.%C]
 // CHECK:STDOUT:     %DefaultConstructible.ref: type = name_ref DefaultConstructible, file.%DefaultConstructible.decl [concrete = constants.%DefaultConstructible.type]
 // CHECK:STDOUT:   }

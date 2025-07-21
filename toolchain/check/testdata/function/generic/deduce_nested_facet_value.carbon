@@ -108,13 +108,13 @@ fn F() {
 // CHECK:STDOUT:   %Y.decl: type = interface_decl @Y [concrete = constants.%Y.type] {} {}
 // CHECK:STDOUT:   %W.decl: type = interface_decl @W [concrete = constants.%W.type] {} {}
 // CHECK:STDOUT:   %DD.decl: type = class_decl @DD [concrete = constants.%DD] {} {}
-// CHECK:STDOUT:   %Y.impl = impl_decl @Y.impl [concrete] {} {
+// CHECK:STDOUT:   impl_decl @Y.impl [concrete] {} {
 // CHECK:STDOUT:     %DD.ref: type = name_ref DD, file.%DD.decl [concrete = constants.%DD]
 // CHECK:STDOUT:     %Y.ref: type = name_ref Y, file.%Y.decl [concrete = constants.%Y.type]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Y.impl_witness_table = impl_witness_table (), @Y.impl [concrete]
 // CHECK:STDOUT:   %Y.impl_witness: <witness> = impl_witness %Y.impl_witness_table [concrete = constants.%Y.impl_witness]
-// CHECK:STDOUT:   %W.impl = impl_decl @W.impl [concrete] {} {
+// CHECK:STDOUT:   impl_decl @W.impl [concrete] {} {
 // CHECK:STDOUT:     %DD.ref: type = name_ref DD, file.%DD.decl [concrete = constants.%DD]
 // CHECK:STDOUT:     %W.ref: type = name_ref W, file.%W.decl [concrete = constants.%W.type]
 // CHECK:STDOUT:   }
@@ -127,7 +127,7 @@ fn F() {
 // CHECK:STDOUT:     %D.loc12_10.2: %Y.type = bind_symbolic_name D, 0 [symbolic = %D.loc12_10.1 (constants.%D)]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Z.decl: type = interface_decl @Z [concrete = constants.%Z.type] {} {}
-// CHECK:STDOUT:   %Z.impl = impl_decl @Z.impl [concrete] {
+// CHECK:STDOUT:   impl_decl @Z.impl [concrete] {
 // CHECK:STDOUT:     %E.patt: %pattern_type.122 = symbolic_binding_pattern E, 0 [concrete]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %CC.ref: %CC.type = name_ref CC, file.%CC.decl [concrete = constants.%CC.generic]

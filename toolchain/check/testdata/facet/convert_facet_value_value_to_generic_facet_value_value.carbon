@@ -143,7 +143,7 @@ fn F() {
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %Edible.decl: type = interface_decl @Edible [concrete = constants.%Edible.type] {} {}
 // CHECK:STDOUT:   %Grass.decl: type = class_decl @Grass [concrete = constants.%Grass] {} {}
-// CHECK:STDOUT:   %Edible.impl = impl_decl @Edible.impl [concrete] {} {
+// CHECK:STDOUT:   impl_decl @Edible.impl [concrete] {} {
 // CHECK:STDOUT:     %Grass.ref: type = name_ref Grass, file.%Grass.decl [concrete = constants.%Grass]
 // CHECK:STDOUT:     %Edible.ref: type = name_ref Edible, file.%Edible.decl [concrete = constants.%Edible.type]
 // CHECK:STDOUT:   }
@@ -155,7 +155,7 @@ fn F() {
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %Food.loc21_16.2: type = bind_symbolic_name Food, 0 [symbolic = %Food.loc21_16.1 (constants.%Food.8b3)]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %Eats.impl = impl_decl @Eats.impl [concrete] {
+// CHECK:STDOUT:   impl_decl @Eats.impl [concrete] {
 // CHECK:STDOUT:     %T.patt: %pattern_type.3b0 = symbolic_binding_pattern T, 0 [concrete]
 // CHECK:STDOUT:     %U.patt: %pattern_type.939 = symbolic_binding_pattern U, 1 [concrete]
 // CHECK:STDOUT:   } {
@@ -175,7 +175,7 @@ fn F() {
 // CHECK:STDOUT:   %Eats.impl_witness_table = impl_witness_table (), @Eats.impl [concrete]
 // CHECK:STDOUT:   %Eats.impl_witness: <witness> = impl_witness %Eats.impl_witness_table, @Eats.impl(constants.%T.fd4, constants.%U) [symbolic = @Eats.impl.%Eats.impl_witness (constants.%Eats.impl_witness.fabf92.1)]
 // CHECK:STDOUT:   %Goat.decl: type = class_decl @Goat [concrete = constants.%Goat] {} {}
-// CHECK:STDOUT:   %Animal.impl = impl_decl @Animal.impl [concrete] {} {
+// CHECK:STDOUT:   impl_decl @Animal.impl [concrete] {} {
 // CHECK:STDOUT:     %Goat.ref: type = name_ref Goat, file.%Goat.decl [concrete = constants.%Goat]
 // CHECK:STDOUT:     %Animal.ref: type = name_ref Animal, file.%Animal.decl [concrete = constants.%Animal.type]
 // CHECK:STDOUT:   }

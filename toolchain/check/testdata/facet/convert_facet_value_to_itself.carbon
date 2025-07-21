@@ -80,7 +80,7 @@ fn F() {
 // CHECK:STDOUT:     %T.loc19_17.2: %Animal.type = bind_symbolic_name T, 0 [symbolic = %T.loc19_17.1 (constants.%T)]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Goat.decl: type = class_decl @Goat [concrete = constants.%Goat] {} {}
-// CHECK:STDOUT:   %Animal.impl = impl_decl @Animal.impl [concrete] {} {
+// CHECK:STDOUT:   impl_decl @Animal.impl [concrete] {} {
 // CHECK:STDOUT:     %Goat.ref: type = name_ref Goat, file.%Goat.decl [concrete = constants.%Goat]
 // CHECK:STDOUT:     %Animal.ref: type = name_ref Animal, file.%Animal.decl [concrete = constants.%Animal.type]
 // CHECK:STDOUT:   }

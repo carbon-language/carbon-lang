@@ -137,20 +137,20 @@ interface Bar[T:! type] {}
 // CHECK:STDOUT:     %T.loc8_9.2: type = bind_symbolic_name T, 0 [symbolic = %T.loc8_9.1 (constants.%T)]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %X.decl: type = class_decl @X [concrete = constants.%X] {} {}
-// CHECK:STDOUT:   %NotGenericNoParams.impl = impl_decl @NotGenericNoParams.impl [concrete] {} {
+// CHECK:STDOUT:   impl_decl @NotGenericNoParams.impl [concrete] {} {
 // CHECK:STDOUT:     %X.ref: type = name_ref X, file.%X.decl [concrete = constants.%X]
 // CHECK:STDOUT:     %NotGenericNoParams.ref: type = name_ref NotGenericNoParams, file.%NotGenericNoParams.decl [concrete = constants.%NotGenericNoParams.type]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %NotGenericNoParams.impl_witness_table = impl_witness_table (), @NotGenericNoParams.impl [concrete]
 // CHECK:STDOUT:   %NotGenericNoParams.impl_witness: <witness> = impl_witness %NotGenericNoParams.impl_witness_table [concrete = constants.%NotGenericNoParams.impl_witness]
-// CHECK:STDOUT:   %NotGenericButParams.impl = impl_decl @NotGenericButParams.impl [concrete] {} {
+// CHECK:STDOUT:   impl_decl @NotGenericButParams.impl [concrete] {} {
 // CHECK:STDOUT:     %X.ref: type = name_ref X, file.%X.decl [concrete = constants.%X]
 // CHECK:STDOUT:     %NotGenericButParams.ref: %NotGenericButParams.type.f26 = name_ref NotGenericButParams, file.%NotGenericButParams.decl [concrete = constants.%NotGenericButParams.generic]
 // CHECK:STDOUT:     %NotGenericButParams.type: type = facet_type <@NotGenericButParams> [concrete = constants.%NotGenericButParams.type.014]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %NotGenericButParams.impl_witness_table = impl_witness_table (), @NotGenericButParams.impl [concrete]
 // CHECK:STDOUT:   %NotGenericButParams.impl_witness: <witness> = impl_witness %NotGenericButParams.impl_witness_table [concrete = constants.%NotGenericButParams.impl_witness]
-// CHECK:STDOUT:   %GenericAndParams.impl.loc16 = impl_decl @GenericAndParams.impl.87f [concrete] {} {
+// CHECK:STDOUT:   impl_decl @GenericAndParams.impl.87f [concrete] {} {
 // CHECK:STDOUT:     %X.ref.loc16_6: type = name_ref X, file.%X.decl [concrete = constants.%X]
 // CHECK:STDOUT:     %GenericAndParams.ref: %GenericAndParams.type.cde = name_ref GenericAndParams, file.%GenericAndParams.decl [concrete = constants.%GenericAndParams.generic.827]
 // CHECK:STDOUT:     %X.ref.loc16_28: type = name_ref X, file.%X.decl [concrete = constants.%X]
@@ -158,7 +158,7 @@ interface Bar[T:! type] {}
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %GenericAndParams.impl_witness_table.loc16 = impl_witness_table (), @GenericAndParams.impl.87f [concrete]
 // CHECK:STDOUT:   %GenericAndParams.impl_witness.loc16: <witness> = impl_witness %GenericAndParams.impl_witness_table.loc16 [concrete = constants.%GenericAndParams.impl_witness.c06]
-// CHECK:STDOUT:   %GenericNoParams.impl = impl_decl @GenericNoParams.impl [concrete] {} {
+// CHECK:STDOUT:   impl_decl @GenericNoParams.impl [concrete] {} {
 // CHECK:STDOUT:     %X.ref.loc17_6: type = name_ref X, file.%X.decl [concrete = constants.%X]
 // CHECK:STDOUT:     %C.ref: %C.type = name_ref C, file.%C.decl [concrete = constants.%C.generic]
 // CHECK:STDOUT:     %X.ref.loc17_13: type = name_ref X, file.%X.decl [concrete = constants.%X]
@@ -168,7 +168,7 @@ interface Bar[T:! type] {}
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %GenericNoParams.impl_witness_table = impl_witness_table (), @GenericNoParams.impl [concrete]
 // CHECK:STDOUT:   %GenericNoParams.impl_witness: <witness> = impl_witness %GenericNoParams.impl_witness_table [concrete = constants.%GenericNoParams.impl_witness]
-// CHECK:STDOUT:   %GenericAndParams.impl.loc18 = impl_decl @GenericAndParams.impl.15f [concrete] {} {
+// CHECK:STDOUT:   impl_decl @GenericAndParams.impl.15f [concrete] {} {
 // CHECK:STDOUT:     %X.ref.loc18_6: type = name_ref X, file.%X.decl [concrete = constants.%X]
 // CHECK:STDOUT:     %C.ref: %C.type = name_ref C, file.%C.decl [concrete = constants.%C.generic]
 // CHECK:STDOUT:     %X.ref.loc18_13: type = name_ref X, file.%X.decl [concrete = constants.%X]

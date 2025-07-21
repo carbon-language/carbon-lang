@@ -57,7 +57,7 @@ fn G() { F(Animal); }
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %Eats.decl: type = interface_decl @Eats [concrete = constants.%Eats.type] {} {}
 // CHECK:STDOUT:   %Animal.decl: type = interface_decl @Animal [concrete = constants.%Animal.type] {} {}
-// CHECK:STDOUT:   %Eats.impl = impl_decl @Eats.impl [concrete] {} {
+// CHECK:STDOUT:   impl_decl @Eats.impl [concrete] {} {
 // CHECK:STDOUT:     %Animal.ref: type = name_ref Animal, file.%Animal.decl [concrete = constants.%Animal.type]
 // CHECK:STDOUT:     %Eats.ref: type = name_ref Eats, file.%Eats.decl [concrete = constants.%Eats.type]
 // CHECK:STDOUT:   }

@@ -250,7 +250,7 @@ fn G(T:! Generic(B)) {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @C {
-// CHECK:STDOUT:   %Simple.impl = impl_decl @Simple.impl [concrete] {} {
+// CHECK:STDOUT:   impl_decl @Simple.impl [concrete] {} {
 // CHECK:STDOUT:     %Self.ref: type = name_ref Self, constants.%C [concrete = constants.%C]
 // CHECK:STDOUT:     %Simple.ref: %Simple.type.3b3 = name_ref Simple, file.%Simple.decl [concrete = constants.%Simple.generic]
 // CHECK:STDOUT:     %C.ref: type = name_ref C, file.%C.decl [concrete = constants.%C]
@@ -258,7 +258,7 @@ fn G(T:! Generic(B)) {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Simple.impl_witness_table = impl_witness_table (), @Simple.impl [concrete]
 // CHECK:STDOUT:   %Simple.impl_witness: <witness> = impl_witness %Simple.impl_witness_table [concrete = constants.%Simple.impl_witness]
-// CHECK:STDOUT:   %WithAssocFn.impl = impl_decl @WithAssocFn.impl [concrete] {} {
+// CHECK:STDOUT:   impl_decl @WithAssocFn.impl [concrete] {} {
 // CHECK:STDOUT:     %Self.ref: type = name_ref Self, constants.%C [concrete = constants.%C]
 // CHECK:STDOUT:     %WithAssocFn.ref: %WithAssocFn.type.509 = name_ref WithAssocFn, file.%WithAssocFn.decl [concrete = constants.%WithAssocFn.generic]
 // CHECK:STDOUT:     %C.ref: type = name_ref C, file.%C.decl [concrete = constants.%C]

@@ -260,7 +260,7 @@ fn Test(c: HasExtraInterfaces.C(type)) {
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %HasF.decl: type = interface_decl @HasF [concrete = constants.%HasF.type] {} {}
 // CHECK:STDOUT:   %C.decl: type = class_decl @C [concrete = constants.%C] {} {}
-// CHECK:STDOUT:   %HasF.impl = impl_decl @HasF.impl [concrete] {} {
+// CHECK:STDOUT:   impl_decl @HasF.impl [concrete] {} {
 // CHECK:STDOUT:     %C.ref: type = name_ref C, file.%C.decl [concrete = constants.%C]
 // CHECK:STDOUT:     %HasF.ref: type = name_ref HasF, file.%HasF.decl [concrete = constants.%HasF.type]
 // CHECK:STDOUT:   }
@@ -407,21 +407,21 @@ fn Test(c: HasExtraInterfaces.C(type)) {
 // CHECK:STDOUT:   %PackageA.import = import PackageA
 // CHECK:STDOUT:   %HasG.decl: type = interface_decl @HasG [concrete = constants.%HasG.type] {} {}
 // CHECK:STDOUT:   %D.decl: type = class_decl @D [concrete = constants.%D] {} {}
-// CHECK:STDOUT:   %HasG.impl.loc13 = impl_decl @HasG.impl.e95 [concrete] {} {
+// CHECK:STDOUT:   impl_decl @HasG.impl.e95 [concrete] {} {
 // CHECK:STDOUT:     %PackageA.ref: <namespace> = name_ref PackageA, imports.%PackageA [concrete = imports.%PackageA]
 // CHECK:STDOUT:     %C.ref: type = name_ref C, imports.%PackageA.C [concrete = constants.%C]
 // CHECK:STDOUT:     %HasG.ref: type = name_ref HasG, file.%HasG.decl [concrete = constants.%HasG.type]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %HasG.impl_witness_table.loc13 = impl_witness_table (@HasG.impl.e95.%G.decl), @HasG.impl.e95 [concrete]
 // CHECK:STDOUT:   %HasG.impl_witness.loc13: <witness> = impl_witness %HasG.impl_witness_table.loc13 [concrete = constants.%HasG.impl_witness.69b]
-// CHECK:STDOUT:   %HasF.impl = impl_decl @HasF.impl [concrete] {} {
+// CHECK:STDOUT:   impl_decl @HasF.impl [concrete] {} {
 // CHECK:STDOUT:     %D.ref: type = name_ref D, file.%D.decl [concrete = constants.%D]
 // CHECK:STDOUT:     %PackageA.ref: <namespace> = name_ref PackageA, imports.%PackageA [concrete = imports.%PackageA]
 // CHECK:STDOUT:     %HasF.ref: type = name_ref HasF, imports.%PackageA.HasF [concrete = constants.%HasF.type]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %HasF.impl_witness_table = impl_witness_table (@HasF.impl.%F.decl), @HasF.impl [concrete]
 // CHECK:STDOUT:   %HasF.impl_witness: <witness> = impl_witness %HasF.impl_witness_table [concrete = constants.%HasF.impl_witness]
-// CHECK:STDOUT:   %HasG.impl.loc23 = impl_decl @HasG.impl.da9 [concrete] {} {
+// CHECK:STDOUT:   impl_decl @HasG.impl.da9 [concrete] {} {
 // CHECK:STDOUT:     %D.ref: type = name_ref D, file.%D.decl [concrete = constants.%D]
 // CHECK:STDOUT:     %HasG.ref: type = name_ref HasG, file.%HasG.decl [concrete = constants.%HasG.type]
 // CHECK:STDOUT:   }
@@ -1226,7 +1226,7 @@ fn Test(c: HasExtraInterfaces.C(type)) {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %Z.decl: type = interface_decl @Z [concrete = constants.%Z.type] {} {}
-// CHECK:STDOUT:   %Z.impl = impl_decl @Z.impl [concrete] {} {
+// CHECK:STDOUT:   impl_decl @Z.impl [concrete] {} {
 // CHECK:STDOUT:     %.loc8_7.1: %empty_tuple.type = tuple_literal ()
 // CHECK:STDOUT:     %.loc8_7.2: type = converted %.loc8_7.1, constants.%empty_tuple.type [concrete = constants.%empty_tuple.type]
 // CHECK:STDOUT:     %Z.ref: type = name_ref Z, file.%Z.decl [concrete = constants.%Z.type]
@@ -1590,7 +1590,7 @@ fn Test(c: HasExtraInterfaces.C(type)) {
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %U.loc6_28.2: type = bind_symbolic_name U, 0 [symbolic = %U.loc6_28.1 (constants.%U)]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %Y.impl = impl_decl @Y.impl [concrete] {} {
+// CHECK:STDOUT:   impl_decl @Y.impl [concrete] {} {
 // CHECK:STDOUT:     %PackageHasParam.ref.loc8_6: <namespace> = name_ref PackageHasParam, imports.%PackageHasParam [concrete = imports.%PackageHasParam]
 // CHECK:STDOUT:     %AnyParam.ref: %AnyParam.type = name_ref AnyParam, imports.%PackageHasParam.AnyParam [concrete = constants.%AnyParam.generic]
 // CHECK:STDOUT:     %GenericInterface.ref: %GenericInterface.type.c92 = name_ref GenericInterface, file.%GenericInterface.decl [concrete = constants.%GenericInterface.generic]
@@ -2024,7 +2024,7 @@ fn Test(c: HasExtraInterfaces.C(type)) {
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %U.loc6_20.2: type = bind_symbolic_name U, 0 [symbolic = %U.loc6_20.1 (constants.%U)]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %Y.impl = impl_decl @Y.impl [concrete] {} {
+// CHECK:STDOUT:   impl_decl @Y.impl [concrete] {} {
 // CHECK:STDOUT:     %PackageHasParam.ref.loc8_6: <namespace> = name_ref PackageHasParam, imports.%PackageHasParam [concrete = imports.%PackageHasParam]
 // CHECK:STDOUT:     %AnyParam.ref: %AnyParam.type = name_ref AnyParam, imports.%PackageHasParam.AnyParam [concrete = constants.%AnyParam.generic]
 // CHECK:STDOUT:     %GenericClass.ref: %GenericClass.type = name_ref GenericClass, file.%GenericClass.decl [concrete = constants.%GenericClass.generic]
@@ -2453,7 +2453,7 @@ fn Test(c: HasExtraInterfaces.C(type)) {
 // CHECK:STDOUT:     %T.loc13_9.2: type = bind_symbolic_name T, 0 [symbolic = %T.loc13_9.1 (constants.%T)]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %I.decl: type = interface_decl @I [concrete = constants.%I.type] {} {}
-// CHECK:STDOUT:   %I.impl = impl_decl @I.impl [concrete] {} {
+// CHECK:STDOUT:   impl_decl @I.impl [concrete] {} {
 // CHECK:STDOUT:     %C.ref: %C.type = name_ref C, file.%C.decl [concrete = constants.%C.generic]
 // CHECK:STDOUT:     %Extra1.ref: type = name_ref Extra1, file.%Extra1.decl [concrete = constants.%Extra1.type]
 // CHECK:STDOUT:     %Extra2.ref: type = name_ref Extra2, file.%Extra2.decl [concrete = constants.%Extra2.type]

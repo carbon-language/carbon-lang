@@ -103,14 +103,14 @@ fn TestAddAssignNonRef(a: C, b: C) {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %C.decl: type = class_decl @C [concrete = constants.%C] {} {}
-// CHECK:STDOUT:   %Inc.impl = impl_decl @Inc.impl [concrete] {} {
+// CHECK:STDOUT:   impl_decl @Inc.impl [concrete] {} {
 // CHECK:STDOUT:     %C.ref: type = name_ref C, file.%C.decl [concrete = constants.%C]
 // CHECK:STDOUT:     %Core.ref: <namespace> = name_ref Core, imports.%Core [concrete = imports.%Core]
 // CHECK:STDOUT:     %Inc.ref: type = name_ref Inc, imports.%Core.Inc [concrete = constants.%Inc.type]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Inc.impl_witness_table = impl_witness_table (@Inc.impl.%Op.decl), @Inc.impl [concrete]
 // CHECK:STDOUT:   %Inc.impl_witness: <witness> = impl_witness %Inc.impl_witness_table [concrete = constants.%Inc.impl_witness]
-// CHECK:STDOUT:   %AddAssignWith.impl = impl_decl @AddAssignWith.impl [concrete] {} {
+// CHECK:STDOUT:   impl_decl @AddAssignWith.impl [concrete] {} {
 // CHECK:STDOUT:     %C.ref.loc21_6: type = name_ref C, file.%C.decl [concrete = constants.%C]
 // CHECK:STDOUT:     %Core.ref: <namespace> = name_ref Core, imports.%Core [concrete = imports.%Core]
 // CHECK:STDOUT:     %AddAssignWith.ref: %AddAssignWith.type.fc6 = name_ref AddAssignWith, imports.%Core.AddAssignWith [concrete = constants.%AddAssignWith.generic]

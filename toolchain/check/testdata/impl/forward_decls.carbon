@@ -302,7 +302,7 @@ interface I {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %I.decl.loc3: type = interface_decl @I [concrete = constants.%I.type] {} {}
-// CHECK:STDOUT:   %I.impl.loc4 = impl_decl @I.impl [concrete] {} {
+// CHECK:STDOUT:   impl_decl @I.impl [concrete] {} {
 // CHECK:STDOUT:     %.loc4_7.1: %empty_struct_type = struct_literal ()
 // CHECK:STDOUT:     %.loc4_7.2: type = converted %.loc4_7.1, constants.%empty_struct_type [concrete = constants.%empty_struct_type]
 // CHECK:STDOUT:     %I.ref.loc4: type = name_ref I, file.%I.decl.loc3 [concrete = constants.%I.type]
@@ -310,7 +310,7 @@ interface I {
 // CHECK:STDOUT:   %I.impl_witness_table = impl_witness_table (), @I.impl [concrete]
 // CHECK:STDOUT:   %I.impl_witness: <witness> = impl_witness %I.impl_witness_table [concrete = constants.%I.impl_witness]
 // CHECK:STDOUT:   %I.decl.loc6: type = interface_decl @I [concrete = constants.%I.type] {} {}
-// CHECK:STDOUT:   %I.impl.loc7 = impl_decl @I.impl [concrete] {} {
+// CHECK:STDOUT:   impl_decl @I.impl [concrete] {} {
 // CHECK:STDOUT:     %.loc7_7.1: %empty_struct_type = struct_literal ()
 // CHECK:STDOUT:     %.loc7_7.2: type = converted %.loc7_7.1, constants.%empty_struct_type [concrete = constants.%empty_struct_type]
 // CHECK:STDOUT:     %I.ref.loc7: type = name_ref I, file.%I.decl.loc3 [concrete = constants.%I.type]
@@ -360,7 +360,7 @@ interface I {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %I.decl.loc3: type = interface_decl @I [concrete = constants.%I.type] {} {}
-// CHECK:STDOUT:   %I.impl.loc4 = impl_decl @I.impl [concrete] {} {
+// CHECK:STDOUT:   impl_decl @I.impl [concrete] {} {
 // CHECK:STDOUT:     %.loc4_7.1: %empty_struct_type = struct_literal ()
 // CHECK:STDOUT:     %.loc4_7.2: type = converted %.loc4_7.1, constants.%empty_struct_type [concrete = constants.%empty_struct_type]
 // CHECK:STDOUT:     %I.ref.loc4: type = name_ref I, file.%I.decl.loc3 [concrete = constants.%I.type]
@@ -368,7 +368,7 @@ interface I {
 // CHECK:STDOUT:   %I.impl_witness_table = impl_witness_table (@I.impl.%G.decl), @I.impl [concrete]
 // CHECK:STDOUT:   %I.impl_witness: <witness> = impl_witness %I.impl_witness_table [concrete = constants.%I.impl_witness]
 // CHECK:STDOUT:   %I.decl.loc6: type = interface_decl @I [concrete = constants.%I.type] {} {}
-// CHECK:STDOUT:   %I.impl.loc9 = impl_decl @I.impl [concrete] {} {
+// CHECK:STDOUT:   impl_decl @I.impl [concrete] {} {
 // CHECK:STDOUT:     %.loc9_7.1: %empty_struct_type = struct_literal ()
 // CHECK:STDOUT:     %.loc9_7.2: type = converted %.loc9_7.1, constants.%empty_struct_type [concrete = constants.%empty_struct_type]
 // CHECK:STDOUT:     %I.ref.loc9: type = name_ref I, file.%I.decl.loc3 [concrete = constants.%I.type]
@@ -446,7 +446,7 @@ interface I {
 // CHECK:STDOUT:   %I.decl.loc3: type = interface_decl @I [concrete = constants.%I.type] {} {}
 // CHECK:STDOUT:   %.loc4_14.1: type = value_of_initializer @I.impl.%type.and.loc4 [concrete = constants.%I.type]
 // CHECK:STDOUT:   %.loc4_14.2: type = converted @I.impl.%type.and.loc4, %.loc4_14.1 [concrete = constants.%I.type]
-// CHECK:STDOUT:   %I.impl.loc4 = impl_decl @I.impl [concrete] {} {
+// CHECK:STDOUT:   impl_decl @I.impl [concrete] {} {
 // CHECK:STDOUT:     %.loc4_7.1: %empty_struct_type = struct_literal ()
 // CHECK:STDOUT:     %.loc4_7.2: type = converted %.loc4_7.1, constants.%empty_struct_type [concrete = constants.%empty_struct_type]
 // CHECK:STDOUT:     %I.ref.loc4_12: type = name_ref I, file.%I.decl.loc3 [concrete = constants.%I.type]
@@ -460,7 +460,7 @@ interface I {
 // CHECK:STDOUT:   %I.decl.loc6: type = interface_decl @I [concrete = constants.%I.type] {} {}
 // CHECK:STDOUT:   %.loc7_14.1: type = value_of_initializer @I.impl.%type.and.loc7 [concrete = constants.%I.type]
 // CHECK:STDOUT:   %.loc7_14.2: type = converted @I.impl.%type.and.loc7, %.loc7_14.1 [concrete = constants.%I.type]
-// CHECK:STDOUT:   %I.impl.loc7 = impl_decl @I.impl [concrete] {} {
+// CHECK:STDOUT:   impl_decl @I.impl [concrete] {} {
 // CHECK:STDOUT:     %.loc7_7.1: %empty_struct_type = struct_literal ()
 // CHECK:STDOUT:     %.loc7_7.2: type = converted %.loc7_7.1, constants.%empty_struct_type [concrete = constants.%empty_struct_type]
 // CHECK:STDOUT:     %I.ref.loc7_12: type = name_ref I, file.%I.decl.loc3 [concrete = constants.%I.type]
@@ -516,7 +516,7 @@ interface I {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %I.decl: type = interface_decl @I [concrete = constants.%I.type] {} {}
-// CHECK:STDOUT:   %I.impl.loc6 = impl_decl @I.impl [concrete] {} {
+// CHECK:STDOUT:   impl_decl @I.impl [concrete] {} {
 // CHECK:STDOUT:     %.loc6_7.1: %empty_struct_type = struct_literal ()
 // CHECK:STDOUT:     %.loc6_7.2: type = converted %.loc6_7.1, constants.%empty_struct_type [concrete = constants.%empty_struct_type]
 // CHECK:STDOUT:     %I.ref.loc6: type = name_ref I, file.%I.decl [concrete = constants.%I.type]
@@ -535,7 +535,7 @@ interface I {
 // CHECK:STDOUT:   %I.impl_witness_table = impl_witness_table (%impl_witness_assoc_constant), @I.impl [concrete]
 // CHECK:STDOUT:   %I.impl_witness: <witness> = impl_witness %I.impl_witness_table [concrete = constants.%I.impl_witness]
 // CHECK:STDOUT:   %impl_witness_assoc_constant: type = impl_witness_assoc_constant constants.%empty_tuple.type [concrete = constants.%empty_tuple.type]
-// CHECK:STDOUT:   %I.impl.loc8 = impl_decl @I.impl [concrete] {} {
+// CHECK:STDOUT:   impl_decl @I.impl [concrete] {} {
 // CHECK:STDOUT:     %.loc8_7.1: %empty_struct_type = struct_literal ()
 // CHECK:STDOUT:     %.loc8_7.2: type = converted %.loc8_7.1, constants.%empty_struct_type [concrete = constants.%empty_struct_type]
 // CHECK:STDOUT:     %I.ref.loc8: type = name_ref I, file.%I.decl [concrete = constants.%I.type]
@@ -618,7 +618,7 @@ interface I {
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %I.decl: type = interface_decl @I [concrete = constants.%I.type] {} {}
 // CHECK:STDOUT:   %C.decl: type = class_decl @C [concrete = constants.%C] {} {}
-// CHECK:STDOUT:   %I.impl.loc7 = impl_decl @I.impl [concrete] {} {
+// CHECK:STDOUT:   impl_decl @I.impl [concrete] {} {
 // CHECK:STDOUT:     %C.ref.loc7: type = name_ref C, file.%C.decl [concrete = constants.%C]
 // CHECK:STDOUT:     %I.ref.loc7: type = name_ref I, file.%I.decl [concrete = constants.%I.type]
 // CHECK:STDOUT:     %.Self.1: %I.type = bind_symbolic_name .Self [symbolic_self = constants.%.Self]
@@ -650,7 +650,7 @@ interface I {
 // CHECK:STDOUT:   %empty_tuple: %empty_tuple.type = tuple_value () [concrete = constants.%empty_tuple]
 // CHECK:STDOUT:   %.loc9_19: %empty_tuple.type = converted @__global_init.%.loc9, %empty_tuple [concrete = constants.%empty_tuple]
 // CHECK:STDOUT:   %x: %empty_tuple.type = bind_name x, %.loc9_19
-// CHECK:STDOUT:   %I.impl.loc11 = impl_decl @I.impl [concrete] {} {
+// CHECK:STDOUT:   impl_decl @I.impl [concrete] {} {
 // CHECK:STDOUT:     %C.ref.loc11: type = name_ref C, file.%C.decl [concrete = constants.%C]
 // CHECK:STDOUT:     %I.ref.loc11: type = name_ref I, file.%I.decl [concrete = constants.%I.type]
 // CHECK:STDOUT:     %.Self.2: %I.type = bind_symbolic_name .Self [symbolic_self = constants.%.Self]
@@ -749,7 +749,7 @@ interface I {
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %I.decl: type = interface_decl @I [concrete = constants.%I.type] {} {}
 // CHECK:STDOUT:   %C.decl: type = class_decl @C [concrete = constants.%C] {} {}
-// CHECK:STDOUT:   %I.impl.loc7 = impl_decl @I.impl [concrete] {} {
+// CHECK:STDOUT:   impl_decl @I.impl [concrete] {} {
 // CHECK:STDOUT:     %C.ref.loc7: type = name_ref C, file.%C.decl [concrete = constants.%C]
 // CHECK:STDOUT:     %I.ref.loc7: type = name_ref I, file.%I.decl [concrete = constants.%I.type]
 // CHECK:STDOUT:     %.Self.1: %I.type = bind_symbolic_name .Self [symbolic_self = constants.%.Self]
@@ -783,7 +783,7 @@ interface I {
 // CHECK:STDOUT:   %empty_tuple: %empty_tuple.type = tuple_value () [concrete = constants.%empty_tuple]
 // CHECK:STDOUT:   %.loc9_22: %empty_tuple.type = converted @__global_init.%.loc9, %empty_tuple [concrete = constants.%empty_tuple]
 // CHECK:STDOUT:   %x: %empty_tuple.type = bind_name x, %.loc9_22
-// CHECK:STDOUT:   %I.impl.loc11 = impl_decl @I.impl [concrete] {} {
+// CHECK:STDOUT:   impl_decl @I.impl [concrete] {} {
 // CHECK:STDOUT:     %C.ref.loc11: type = name_ref C, file.%C.decl [concrete = constants.%C]
 // CHECK:STDOUT:     %I.ref.loc11: type = name_ref I, file.%I.decl [concrete = constants.%I.type]
 // CHECK:STDOUT:     %.Self.2: %I.type = bind_symbolic_name .Self [symbolic_self = constants.%.Self]
@@ -874,7 +874,7 @@ interface I {
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %I.decl: type = interface_decl @I [concrete = constants.%I.type] {} {}
 // CHECK:STDOUT:   %C.decl: type = class_decl @C [concrete = constants.%C] {} {}
-// CHECK:STDOUT:   %I.impl.loc7 = impl_decl @I.impl [concrete] {} {
+// CHECK:STDOUT:   impl_decl @I.impl [concrete] {} {
 // CHECK:STDOUT:     %C.ref.loc7: type = name_ref C, file.%C.decl [concrete = constants.%C]
 // CHECK:STDOUT:     %I.ref.loc7: type = name_ref I, file.%I.decl [concrete = constants.%I.type]
 // CHECK:STDOUT:   }
@@ -894,7 +894,7 @@ interface I {
 // CHECK:STDOUT:     %impl.elem0: type = impl_witness_access constants.%I.impl_witness, element0 [concrete = <error>]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %x: <error> = bind_name x, <error> [concrete = <error>]
-// CHECK:STDOUT:   %I.impl.loc22 = impl_decl @I.impl [concrete] {} {
+// CHECK:STDOUT:   impl_decl @I.impl [concrete] {} {
 // CHECK:STDOUT:     %C.ref.loc22: type = name_ref C, file.%C.decl [concrete = constants.%C]
 // CHECK:STDOUT:     %I.ref.loc22: type = name_ref I, file.%I.decl [concrete = constants.%I.type]
 // CHECK:STDOUT:   }
@@ -970,7 +970,7 @@ interface I {
 // CHECK:STDOUT:   %I.decl.loc3: type = interface_decl @I [concrete = constants.%I.type] {} {}
 // CHECK:STDOUT:   %C.decl.loc4: type = class_decl @C [concrete = constants.%C] {} {}
 // CHECK:STDOUT:   %D.decl: type = class_decl @D [concrete = constants.%D] {} {}
-// CHECK:STDOUT:   %impl.loc13 = impl_decl @impl [concrete] {} {
+// CHECK:STDOUT:   impl_decl @impl [concrete] {} {
 // CHECK:STDOUT:     %D.ref.loc13: type = name_ref D, file.%D.decl [concrete = constants.%D]
 // CHECK:STDOUT:     %I.ref.loc13: type = name_ref I, file.%I.decl.loc3 [concrete = constants.%I.type]
 // CHECK:STDOUT:     %.Self.1: %I.type = bind_symbolic_name .Self [symbolic_self = constants.%.Self]
@@ -982,7 +982,7 @@ interface I {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %I.decl.loc15: type = interface_decl @I [concrete = constants.%I.type] {} {}
 // CHECK:STDOUT:   %C.decl.loc16: type = class_decl @C [concrete = constants.%C] {} {}
-// CHECK:STDOUT:   %impl.loc21 = impl_decl @impl [concrete] {} {
+// CHECK:STDOUT:   impl_decl @impl [concrete] {} {
 // CHECK:STDOUT:     %D.ref.loc21: type = name_ref D, file.%D.decl [concrete = constants.%D]
 // CHECK:STDOUT:     %I.ref.loc21: type = name_ref I, file.%I.decl.loc3 [concrete = constants.%I.type]
 // CHECK:STDOUT:     %.Self.2: %I.type = bind_symbolic_name .Self [symbolic_self = constants.%.Self]
@@ -1077,7 +1077,7 @@ interface I {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %C.decl.loc6: type = class_decl @C [concrete = constants.%C] {} {}
 // CHECK:STDOUT:   %D.decl: type = class_decl @D [concrete = constants.%D] {} {}
-// CHECK:STDOUT:   %I.impl.loc8 = impl_decl @I.impl [concrete] {} {
+// CHECK:STDOUT:   impl_decl @I.impl [concrete] {} {
 // CHECK:STDOUT:     %D.ref.loc8: type = name_ref D, file.%D.decl [concrete = constants.%D]
 // CHECK:STDOUT:     %I.ref.loc8: %I.type.dac = name_ref I, file.%I.decl [concrete = constants.%I.generic]
 // CHECK:STDOUT:     %C.ref.loc8_13: type = name_ref C, file.%C.decl.loc6 [concrete = constants.%C]
@@ -1098,7 +1098,7 @@ interface I {
 // CHECK:STDOUT:   %I.impl_witness: <witness> = impl_witness %I.impl_witness_table [concrete = constants.%I.impl_witness]
 // CHECK:STDOUT:   %impl_witness_assoc_constant: type = impl_witness_assoc_constant constants.%C [concrete = constants.%C]
 // CHECK:STDOUT:   %C.decl.loc10: type = class_decl @C [concrete = constants.%C] {} {}
-// CHECK:STDOUT:   %I.impl.loc11 = impl_decl @I.impl [concrete] {} {
+// CHECK:STDOUT:   impl_decl @I.impl [concrete] {} {
 // CHECK:STDOUT:     %D.ref.loc11: type = name_ref D, file.%D.decl [concrete = constants.%D]
 // CHECK:STDOUT:     %I.ref.loc11: %I.type.dac = name_ref I, file.%I.decl [concrete = constants.%I.generic]
 // CHECK:STDOUT:     %C.ref.loc11_13: type = name_ref C, file.%C.decl.loc6 [concrete = constants.%C]
@@ -1223,7 +1223,7 @@ interface I {
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %I.decl.loc3: type = interface_decl @I [concrete = constants.%I.type] {} {}
 // CHECK:STDOUT:   %D.decl: type = class_decl @D [concrete = constants.%D] {} {}
-// CHECK:STDOUT:   %I.impl.loc5 = impl_decl @I.impl [concrete] {} {
+// CHECK:STDOUT:   impl_decl @I.impl [concrete] {} {
 // CHECK:STDOUT:     %D.ref.loc5: type = name_ref D, file.%D.decl [concrete = constants.%D]
 // CHECK:STDOUT:     %I.ref.loc5: type = name_ref I, file.%I.decl.loc3 [concrete = constants.%I.type]
 // CHECK:STDOUT:   }
@@ -1250,7 +1250,7 @@ interface I {
 // CHECK:STDOUT:     %x.loc8: %C.8b1 = bind_name x, %x.param.loc8
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %I.decl.loc10: type = interface_decl @I [concrete = constants.%I.type] {} {}
-// CHECK:STDOUT:   %I.impl.loc11 = impl_decl @I.impl [concrete] {} {
+// CHECK:STDOUT:   impl_decl @I.impl [concrete] {} {
 // CHECK:STDOUT:     %D.ref.loc11: type = name_ref D, file.%D.decl [concrete = constants.%D]
 // CHECK:STDOUT:     %I.ref.loc11: type = name_ref I, file.%I.decl.loc3 [concrete = constants.%I.type]
 // CHECK:STDOUT:   }
@@ -1371,7 +1371,7 @@ interface I {
 // CHECK:STDOUT:   %J.decl.loc4: type = interface_decl @J [concrete = constants.%J.type] {} {}
 // CHECK:STDOUT:   %.loc10_14.1: type = value_of_initializer @impl.%type.and [concrete = constants.%facet_type]
 // CHECK:STDOUT:   %.loc10_14.2: type = converted @impl.%type.and, %.loc10_14.1 [concrete = constants.%facet_type]
-// CHECK:STDOUT:   %impl = impl_decl @impl [concrete] {} {
+// CHECK:STDOUT:   impl_decl @impl [concrete] {} {
 // CHECK:STDOUT:     %.loc10_7.1: %empty_struct_type = struct_literal ()
 // CHECK:STDOUT:     %.loc10_7.2: type = converted %.loc10_7.1, constants.%empty_struct_type [concrete = constants.%empty_struct_type]
 // CHECK:STDOUT:     %I.ref: type = name_ref I, file.%I.decl.loc3 [concrete = constants.%I.type]
@@ -1439,7 +1439,7 @@ interface I {
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %I.decl: type = interface_decl @I [concrete = constants.%I.type] {} {}
 // CHECK:STDOUT:   %C.decl: type = class_decl @C [concrete = constants.%C] {} {}
-// CHECK:STDOUT:   %I.impl.loc9 = impl_decl @I.impl [concrete] {} {
+// CHECK:STDOUT:   impl_decl @I.impl [concrete] {} {
 // CHECK:STDOUT:     %C.ref.loc9: type = name_ref C, file.%C.decl [concrete = constants.%C]
 // CHECK:STDOUT:     %I.ref.loc9: type = name_ref I, file.%I.decl [concrete = constants.%I.type]
 // CHECK:STDOUT:     %.Self.1: %I.type = bind_symbolic_name .Self [symbolic_self = constants.%.Self]
@@ -1457,7 +1457,7 @@ interface I {
 // CHECK:STDOUT:   %I.impl_witness_table = impl_witness_table (%impl_witness_assoc_constant, <error>), @I.impl [concrete]
 // CHECK:STDOUT:   %I.impl_witness: <witness> = impl_witness %I.impl_witness_table [concrete = constants.%I.impl_witness]
 // CHECK:STDOUT:   %impl_witness_assoc_constant: type = impl_witness_assoc_constant constants.%empty_tuple.type [concrete = constants.%empty_tuple.type]
-// CHECK:STDOUT:   %I.impl.loc18 = impl_decl @I.impl [concrete] {} {
+// CHECK:STDOUT:   impl_decl @I.impl [concrete] {} {
 // CHECK:STDOUT:     %C.ref.loc18: type = name_ref C, file.%C.decl [concrete = constants.%C]
 // CHECK:STDOUT:     %I.ref.loc18: type = name_ref I, file.%I.decl [concrete = constants.%I.type]
 // CHECK:STDOUT:     %.Self.2: %I.type = bind_symbolic_name .Self [symbolic_self = constants.%.Self]
@@ -1589,7 +1589,7 @@ interface I {
 // CHECK:STDOUT:     %u.loc7: @G.%U.as_type.loc7_16.1 (%U.as_type) = bind_name u, %u.param.loc7
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %C.decl.loc9: type = class_decl @C [concrete = constants.%C] {} {}
-// CHECK:STDOUT:   %X.impl.loc12 = impl_decl @X.impl [concrete] {} {
+// CHECK:STDOUT:   impl_decl @X.impl [concrete] {} {
 // CHECK:STDOUT:     %C.ref.loc12: type = name_ref C, file.%C.decl.loc9 [concrete = constants.%C]
 // CHECK:STDOUT:     %X.ref.loc12: type = name_ref X, file.%X.decl.loc3 [concrete = constants.%X.type]
 // CHECK:STDOUT:   }
@@ -1628,17 +1628,17 @@ interface I {
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %u.loc35: @G.%U.as_type.loc7_16.1 (%U.as_type) = bind_name u, %u.param.loc35
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %Y.impl.loc36 = impl_decl @Y.impl [concrete] {} {
+// CHECK:STDOUT:   impl_decl @Y.impl [concrete] {} {
 // CHECK:STDOUT:     %C.ref.loc36: type = name_ref C, file.%C.decl.loc9 [concrete = constants.%C]
 // CHECK:STDOUT:     %Y.ref.loc36: type = name_ref Y, file.%Y.decl.loc14 [concrete = constants.%Y.type]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Y.impl_witness_table = impl_witness_table (), @Y.impl [concrete]
 // CHECK:STDOUT:   %Y.impl_witness: <witness> = impl_witness %Y.impl_witness_table [concrete = constants.%Y.impl_witness]
-// CHECK:STDOUT:   %X.impl.loc37 = impl_decl @X.impl [concrete] {} {
+// CHECK:STDOUT:   impl_decl @X.impl [concrete] {} {
 // CHECK:STDOUT:     %C.ref.loc37: type = name_ref C, file.%C.decl.loc9 [concrete = constants.%C]
 // CHECK:STDOUT:     %X.ref.loc37: type = name_ref X, file.%X.decl.loc3 [concrete = constants.%X.type]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %Y.impl.loc38 = impl_decl @Y.impl [concrete] {} {
+// CHECK:STDOUT:   impl_decl @Y.impl [concrete] {} {
 // CHECK:STDOUT:     %C.ref.loc38: type = name_ref C, file.%C.decl.loc9 [concrete = constants.%C]
 // CHECK:STDOUT:     %Y.ref.loc38: type = name_ref Y, file.%Y.decl.loc14 [concrete = constants.%Y.type]
 // CHECK:STDOUT:   }
@@ -1826,13 +1826,13 @@ interface I {
 // CHECK:STDOUT:   fn() {
 // CHECK:STDOUT:   !entry:
 // CHECK:STDOUT:     %C.decl: type = class_decl @C [symbolic = @F.%C (constants.%C)] {} {}
-// CHECK:STDOUT:     %I.impl.loc11 = impl_decl @I.impl [concrete] {} {
+// CHECK:STDOUT:     impl_decl @I.impl [concrete] {} {
 // CHECK:STDOUT:       %C.ref.loc11: type = name_ref C, @F.%C.decl [symbolic = %C (constants.%C)]
 // CHECK:STDOUT:       %I.ref.loc11: type = name_ref I, file.%I.decl [concrete = constants.%I.type]
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %I.impl_witness_table = impl_witness_table (<error>), @I.impl [concrete]
 // CHECK:STDOUT:     %I.impl_witness: <witness> = impl_witness %I.impl_witness_table, @I.impl(constants.%Self) [symbolic = @I.impl.%I.impl_witness (constants.%I.impl_witness)]
-// CHECK:STDOUT:     %I.impl.loc20 = impl_decl @I.impl [concrete] {} {
+// CHECK:STDOUT:     impl_decl @I.impl [concrete] {} {
 // CHECK:STDOUT:       %C.ref.loc20: type = name_ref C, @F.%C.decl [symbolic = %C (constants.%C)]
 // CHECK:STDOUT:       %I.ref.loc20: type = name_ref I, file.%I.decl [concrete = constants.%I.type]
 // CHECK:STDOUT:     }
@@ -1946,7 +1946,7 @@ interface I {
 // CHECK:STDOUT:   fn() {
 // CHECK:STDOUT:   !entry:
 // CHECK:STDOUT:     %C.decl: type = class_decl @C [symbolic = @F.%C (constants.%C)] {} {}
-// CHECK:STDOUT:     %I.impl.loc12 = impl_decl @I.impl [concrete] {} {
+// CHECK:STDOUT:     impl_decl @I.impl [concrete] {} {
 // CHECK:STDOUT:       %C.ref.loc12_10: type = name_ref C, @F.%C.decl [symbolic = %C (constants.%C)]
 // CHECK:STDOUT:       %I.ref.loc12: type = name_ref I, file.%I.decl [concrete = constants.%I.type]
 // CHECK:STDOUT:       %.Self.1: %I.type = bind_symbolic_name .Self [symbolic_self = constants.%.Self]
@@ -1963,7 +1963,7 @@ interface I {
 // CHECK:STDOUT:     %I.impl_witness_table = impl_witness_table (%impl_witness_assoc_constant, <error>), @I.impl [concrete]
 // CHECK:STDOUT:     %I.impl_witness: <witness> = impl_witness %I.impl_witness_table, @I.impl(constants.%Self) [symbolic = @I.impl.%I.impl_witness (constants.%I.impl_witness)]
 // CHECK:STDOUT:     %impl_witness_assoc_constant: type = impl_witness_assoc_constant constants.%C [symbolic = @I.impl.%C (constants.%C)]
-// CHECK:STDOUT:     %I.impl.loc21 = impl_decl @I.impl [concrete] {} {
+// CHECK:STDOUT:     impl_decl @I.impl [concrete] {} {
 // CHECK:STDOUT:       %C.ref.loc21_10: type = name_ref C, @F.%C.decl [symbolic = %C (constants.%C)]
 // CHECK:STDOUT:       %I.ref.loc21: type = name_ref I, file.%I.decl [concrete = constants.%I.type]
 // CHECK:STDOUT:       %.Self.2: %I.type = bind_symbolic_name .Self [symbolic_self = constants.%.Self]

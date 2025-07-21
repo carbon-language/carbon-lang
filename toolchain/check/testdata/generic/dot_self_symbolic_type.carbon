@@ -357,7 +357,7 @@ fn H(T:! type) {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
-// CHECK:STDOUT:   %B.impl.loc9 = impl_decl @B.impl.e5b [concrete] {
+// CHECK:STDOUT:   impl_decl @B.impl.e5b [concrete] {
 // CHECK:STDOUT:     %AA.patt: %pattern_type.98f = symbolic_binding_pattern AA, 0 [concrete]
 // CHECK:STDOUT:     %BB.patt: @B.impl.e5b.%pattern_type (%pattern_type.0b2) = symbolic_binding_pattern BB, 1 [concrete]
 // CHECK:STDOUT:   } {

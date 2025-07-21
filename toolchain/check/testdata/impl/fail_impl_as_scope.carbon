@@ -128,7 +128,7 @@ class X {
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %I.decl: type = interface_decl @I [concrete = constants.%I.type] {} {}
 // CHECK:STDOUT:   %G.decl: %G.type = fn_decl @G [concrete = constants.%G] {} {}
-// CHECK:STDOUT:   %I.impl = impl_decl @I.impl [concrete] {} {
+// CHECK:STDOUT:   impl_decl @I.impl [concrete] {} {
 // CHECK:STDOUT:     %I.ref: type = name_ref I, file.%I.decl [concrete = constants.%I.type]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [concrete = constants.%F] {} {}
@@ -211,7 +211,7 @@ class X {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F() {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %J.impl = impl_decl @J.impl [concrete] {} {
+// CHECK:STDOUT:   impl_decl @J.impl [concrete] {} {
 // CHECK:STDOUT:     %J.ref: type = name_ref J, file.%J.decl [concrete = constants.%J.type]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %G.ref: %G.type = name_ref G, file.%G.decl [concrete = constants.%G]
@@ -300,7 +300,7 @@ class X {
 // CHECK:STDOUT:     %self: @Method.loc5.%Self.as_type.loc5_19.2 (%Self.as_type.cd1) = bind_name self, %self.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %assoc1: %Z.assoc_type = assoc_entity element1, %Method.decl [concrete = constants.%assoc1]
-// CHECK:STDOUT:   %Z.impl = impl_decl @Z.impl.6b5 [concrete] {} {
+// CHECK:STDOUT:   impl_decl @Z.impl.6b5 [concrete] {} {
 // CHECK:STDOUT:     %Z.ref: type = name_ref Z, file.%Z.decl [concrete = constants.%Z.type]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:
@@ -360,7 +360,7 @@ class X {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @Point {
-// CHECK:STDOUT:   %Z.impl = impl_decl @Z.impl.c94 [concrete] {} {
+// CHECK:STDOUT:   impl_decl @Z.impl.c94 [concrete] {} {
 // CHECK:STDOUT:     %Self.ref: type = name_ref Self, constants.%Point [concrete = constants.%Point]
 // CHECK:STDOUT:     %Z.ref: type = name_ref Z, file.%Z.decl [concrete = constants.%Z.type]
 // CHECK:STDOUT:   }
@@ -547,7 +547,7 @@ class X {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: impl @A.impl: %Self.ref as %A.ref {
-// CHECK:STDOUT:   %C.impl = impl_decl @C.impl [concrete] {} {
+// CHECK:STDOUT:   impl_decl @C.impl [concrete] {} {
 // CHECK:STDOUT:     %C.ref: type = name_ref C, file.%C.decl [concrete = constants.%C.type]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %B.decl: %B.type.d47 = fn_decl @B.loc18 [concrete = constants.%B.4af] {} {}
@@ -565,7 +565,7 @@ class X {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @X {
-// CHECK:STDOUT:   %A.impl = impl_decl @A.impl [concrete] {} {
+// CHECK:STDOUT:   impl_decl @A.impl [concrete] {} {
 // CHECK:STDOUT:     %Self.ref: type = name_ref Self, constants.%X [concrete = constants.%X]
 // CHECK:STDOUT:     %A.ref: type = name_ref A, file.%A.decl [concrete = constants.%A.type]
 // CHECK:STDOUT:   }

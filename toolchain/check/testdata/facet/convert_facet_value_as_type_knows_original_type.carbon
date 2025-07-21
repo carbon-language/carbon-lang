@@ -103,13 +103,13 @@ fn F() {
 // CHECK:STDOUT:   %Eats.decl: type = interface_decl @Eats [concrete = constants.%Eats.type] {} {}
 // CHECK:STDOUT:   %Animal.decl: type = interface_decl @Animal [concrete = constants.%Animal.type] {} {}
 // CHECK:STDOUT:   %Goat.decl: type = class_decl @Goat [concrete = constants.%Goat] {} {}
-// CHECK:STDOUT:   %Animal.impl = impl_decl @Animal.impl [concrete] {} {
+// CHECK:STDOUT:   impl_decl @Animal.impl [concrete] {} {
 // CHECK:STDOUT:     %Goat.ref: type = name_ref Goat, file.%Goat.decl [concrete = constants.%Goat]
 // CHECK:STDOUT:     %Animal.ref: type = name_ref Animal, file.%Animal.decl [concrete = constants.%Animal.type]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Animal.impl_witness_table = impl_witness_table (), @Animal.impl [concrete]
 // CHECK:STDOUT:   %Animal.impl_witness: <witness> = impl_witness %Animal.impl_witness_table [concrete = constants.%Animal.impl_witness]
-// CHECK:STDOUT:   %Eats.impl = impl_decl @Eats.impl [concrete] {} {
+// CHECK:STDOUT:   impl_decl @Eats.impl [concrete] {} {
 // CHECK:STDOUT:     %Goat.ref: type = name_ref Goat, file.%Goat.decl [concrete = constants.%Goat]
 // CHECK:STDOUT:     %Eats.ref: type = name_ref Eats, file.%Eats.decl [concrete = constants.%Eats.type]
 // CHECK:STDOUT:   }
@@ -289,13 +289,13 @@ fn F() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @Goat {
 // CHECK:STDOUT:   %Bleet.decl: %Bleet.type = fn_decl @Bleet [concrete = constants.%Bleet] {} {}
-// CHECK:STDOUT:   %Animal.impl = impl_decl @Animal.impl [concrete] {} {
+// CHECK:STDOUT:   impl_decl @Animal.impl [concrete] {} {
 // CHECK:STDOUT:     %Self.ref: type = name_ref Self, constants.%Goat [concrete = constants.%Goat]
 // CHECK:STDOUT:     %Animal.ref: type = name_ref Animal, file.%Animal.decl [concrete = constants.%Animal.type]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Animal.impl_witness_table = impl_witness_table (), @Animal.impl [concrete]
 // CHECK:STDOUT:   %Animal.impl_witness: <witness> = impl_witness %Animal.impl_witness_table [concrete = constants.%Animal.impl_witness]
-// CHECK:STDOUT:   %Eats.impl = impl_decl @Eats.impl [concrete] {} {
+// CHECK:STDOUT:   impl_decl @Eats.impl [concrete] {} {
 // CHECK:STDOUT:     %Self.ref: type = name_ref Self, constants.%Goat [concrete = constants.%Goat]
 // CHECK:STDOUT:     %Eats.ref: type = name_ref Eats, file.%Eats.decl [concrete = constants.%Eats.type]
 // CHECK:STDOUT:   }
