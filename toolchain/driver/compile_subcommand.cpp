@@ -526,13 +526,16 @@ class MultiUnitCache {
 
   auto include_in_dumps() -> const IncludeInDumpsStore& {
     if (!include_in_dumps_) {
-      include_in_dumps_.emplace(IncludeInDumpsStore::MakeWithRange(
-          llvm::map_range(units_, [&](auto& unit) {
-            return llvm::none_of(
-                options_->exclude_dump_file_prefixes, [&](auto prefix) {
-                  return unit->input_filename().starts_with(prefix);
-                });
-          })));
+      include_in_dumps_.emplace(
+          IncludeInDumpsStore::MakeWithExplicitSize(units_.size(), false));
+      for (const auto& [i, unit] : llvm::enumerate(units_)) {
+        include_in_dumps_->Set(
+            SemIR::CheckIRId(i),
+            llvm::none_of(options_->exclude_dump_file_prefixes,
+                          [&](auto prefix) {
+                            return unit->input_filename().starts_with(prefix);
+                          }));
+      }
     }
     return *include_in_dumps_;
   }
@@ -540,11 +543,14 @@ class MultiUnitCache {
   auto tree_and_subtrees_getters() -> const TreeAndSubtreesGettersStore& {
     if (!tree_and_subtrees_getters_) {
       tree_and_subtrees_getters_.emplace(
-          TreeAndSubtreesGettersStore::MakeWithRange(llvm::map_range(
-              units_, [&](const std::unique_ptr<CompilationUnit>& unit) {
-                return unit->has_source() ? unit->get_trees_and_subtrees()
-                                          : nullptr;
-              })));
+          TreeAndSubtreesGettersStore::MakeWithExplicitSize(units_.size(),
+                                                            nullptr));
+      for (const auto& [i, unit] : llvm::enumerate(units_)) {
+        if (unit->has_source()) {
+          tree_and_subtrees_getters_->Set(SemIR::CheckIRId(i),
+                                          unit->get_trees_and_subtrees());
+        }
+      }
     }
     return *tree_and_subtrees_getters_;
   }

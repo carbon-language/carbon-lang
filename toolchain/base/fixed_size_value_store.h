@@ -51,15 +51,6 @@ class FixedSizeValueStore {
     return store;
   }
 
-  // Makes a ValueStore from the given range. When possible, use the constructor
-  // that takes a `factory_fn` instead, because it verifies that the `IdType`s
-  // match.
-  template <typename RangeT>
-  static auto MakeWithRange(const llvm::iterator_range<RangeT>& range)
-      -> FixedSizeValueStore {
-    return FixedSizeValueStore(range);
-  }
-
   // Makes a ValueStore of the same size as a source `ValueStoreT`. This is
   // the safest constructor to use, since it ensures everything's initialized to
   // a default, and verifies a matching `IdT` for the size.
@@ -79,7 +70,7 @@ class FixedSizeValueStore {
       llvm::function_ref<
           auto(IdT, typename ValueStoreT::ConstRefType)->ValueType>
           factory_fn)
-      : FixedSizeValueStore(llvm::map_range(source.enumerate(), factory_fn)) {}
+      : values_(llvm::map_range(source.enumerate(), factory_fn)) {}
 
   // Move-only.
   FixedSizeValueStore(FixedSizeValueStore&&) noexcept = default;
@@ -125,11 +116,6 @@ class FixedSizeValueStore {
  private:
   // Allow default construction for `Make` functions.
   FixedSizeValueStore() = default;
-
-  // Allow construction from a range.
-  template <typename RangeT>
-  explicit FixedSizeValueStore(const llvm::iterator_range<RangeT>& range)
-      : values_(range) {}
 
   // Storage for the `ValueT` objects, indexed by the id.
   llvm::SmallVector<ValueT, 0> values_;
