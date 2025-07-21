@@ -269,6 +269,7 @@ CARBON_DIAGNOSTIC_KIND(ClassSpecificDeclPrevious)
 CARBON_DIAGNOSTIC_KIND(ClassIncompleteWithinDefinition)
 CARBON_DIAGNOSTIC_KIND(GenericVirtual)
 CARBON_DIAGNOSTIC_KIND(ImplWithoutBase)
+CARBON_DIAGNOSTIC_KIND(ImplWithoutVirtualInBase)
 CARBON_DIAGNOSTIC_KIND(VirtualWithoutSelf)
 
 // Deduction.

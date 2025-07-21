@@ -8,6 +8,7 @@
 #include <bit>
 #include <cstddef>
 #include <limits>
+#include <memory>
 #include <type_traits>
 #include <utility>
 
@@ -92,7 +93,7 @@ class ValueStore
     }
 
     CARBON_DCHECK(pos == chunks_[chunk_index].size());
-    chunks_[chunk_index].push(std::move(value));
+    chunks_[chunk_index].Add(std::move(value));
     return id;
   }
 
@@ -101,7 +102,7 @@ class ValueStore
     CARBON_DCHECK(id.index >= 0, "{0}", id);
     CARBON_DCHECK(id.index < size_, "{0}", id);
     auto [chunk_index, pos] = IdToChunkIndices(id);
-    return chunks_[chunk_index].at(pos);
+    return chunks_[chunk_index].Get(pos);
   }
 
   // Returns the value for an ID.
@@ -109,20 +110,47 @@ class ValueStore
     CARBON_DCHECK(id.index >= 0, "{0}", id);
     CARBON_DCHECK(id.index < size_, "{0}", id);
     auto [chunk_index, pos] = IdToChunkIndices(id);
-    return chunks_[chunk_index].at(pos);
+    return chunks_[chunk_index].Get(pos);
   }
 
   // Reserves space.
-  auto Reserve(size_t size) -> void {
-    // We get the number of chunks needed to satisfy `size` by rounding any
-    // partial result up.
-    size_t num_more_chunks = (size + Chunk::Capacity() - 1) / Chunk::Capacity();
-    if (chunks_.size() < num_more_chunks) {
-      // We resize() rather than reserve() here to create the new `ChunkType`
-      // objects, which will in turn allocate space for values in those chunks
-      // (but not initialize them).
-      chunks_.resize(num_more_chunks);
+  auto Reserve(int32_t size) -> void {
+    if (size <= size_) {
+      return;
     }
+    auto [final_chunk_index, _] = IdToChunkIndices(IdType(size - 1));
+    chunks_.resize(final_chunk_index + 1);
+  }
+
+  // Grows the ValueStore to `size`. Fills entries with `default_value`.
+  auto Resize(int32_t size, ConstRefType default_value) -> void {
+    if (size <= size_) {
+      return;
+    }
+
+    auto [begin_chunk_index, begin_pos] = IdToChunkIndices(IdType(size_));
+    // Use an inclusive range so that if `size` would be the next chunk, we
+    // don't try doing something with it.
+    auto [end_chunk_index, end_pos] = IdToChunkIndices(IdType(size - 1));
+    chunks_.resize(end_chunk_index + 1);
+
+    // If the begin and end chunks are the same, we only fill from begin to end.
+    if (begin_chunk_index == end_chunk_index) {
+      chunks_[begin_chunk_index].UninitializedFill(end_pos - begin_pos + 1,
+                                                   default_value);
+    } else {
+      // Otherwise, we do partial fills on the begin and end chunk, and full
+      // fills on intermediate chunks.
+      chunks_[begin_chunk_index].UninitializedFill(
+          Chunk::Capacity() - begin_pos, default_value);
+      for (auto i = begin_chunk_index + 1; i < end_chunk_index; ++i) {
+        chunks_[i].UninitializedFill(Chunk::Capacity(), default_value);
+      }
+      chunks_[end_chunk_index].UninitializedFill(end_pos + 1, default_value);
+    }
+
+    // Update size.
+    size_ = size;
   }
 
   // These are to support printable structures, and are not guaranteed.
@@ -246,19 +274,28 @@ class ValueStore
       }
     }
 
-    auto at(int32_t i) -> ValueType& {
-      CARBON_CHECK(i < num_, "{0}", i);
+    auto Get(int32_t i) -> ValueType& {
+      CARBON_DCHECK(i < num_, "{0}", i);
       return buf_[i];
     }
-    auto at(int32_t i) const -> const ValueType& {
-      CARBON_CHECK(i < num_, "{0}", i);
+    auto Get(int32_t i) const -> const ValueType& {
+      CARBON_DCHECK(i < num_, "{0}", i);
       return buf_[i];
     }
 
-    auto push(ValueType&& value) -> void {
-      CARBON_CHECK(num_ < Capacity());
+    auto Add(ValueType&& value) -> void {
+      CARBON_DCHECK(num_ < Capacity());
       std::construct_at(buf_ + num_, std::move(value));
       ++num_;
+    }
+
+    // Fills `fill_count` entries with `default_value`, increasing the size
+    // respectively.
+    auto UninitializedFill(int32_t fill_count, ConstRefType default_value)
+        -> void {
+      CARBON_DCHECK(num_ + fill_count <= Capacity());
+      std::uninitialized_fill_n(buf_ + num_, fill_count, default_value);
+      num_ += fill_count;
     }
 
     auto size() const -> int32_t { return num_; }

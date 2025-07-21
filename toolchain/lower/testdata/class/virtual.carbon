@@ -37,7 +37,8 @@ fn Create() {
   var b: Classes.Base = {};
   var i: Classes.Intermediate = {.base = {}};
   var d: Classes.Derived = {.base = {.base = {}}};
-  // TODO: Support vptr initialization without explicit source initializers.
+  // Implicit initialization creates an object with the unformed state, which
+  // doesn't include vptr initialization.
   var d2: Classes.Derived;
 }
 
@@ -254,14 +255,14 @@ fn Make() {
 // CHECK:STDOUT: !7 = !DILocation(line: 7, column: 3, scope: !4)
 // CHECK:STDOUT: !8 = !DILocation(line: 8, column: 3, scope: !4)
 // CHECK:STDOUT: !9 = !DILocation(line: 9, column: 3, scope: !4)
-// CHECK:STDOUT: !10 = !DILocation(line: 11, column: 3, scope: !4)
+// CHECK:STDOUT: !10 = !DILocation(line: 12, column: 3, scope: !4)
 // CHECK:STDOUT: !11 = !DILocation(line: 8, column: 33, scope: !4)
 // CHECK:STDOUT: !12 = !DILocation(line: 9, column: 28, scope: !4)
 // CHECK:STDOUT: !13 = !DILocation(line: 9, column: 37, scope: !4)
 // CHECK:STDOUT: !14 = !DILocation(line: 6, column: 1, scope: !4)
-// CHECK:STDOUT: !15 = distinct !DISubprogram(name: "Use", linkageName: "_CUse.Create", scope: null, file: !3, line: 14, type: !5, spFlags: DISPFlagDefinition, unit: !2)
-// CHECK:STDOUT: !16 = !DILocation(line: 15, column: 3, scope: !15)
-// CHECK:STDOUT: !17 = !DILocation(line: 14, column: 1, scope: !15)
+// CHECK:STDOUT: !15 = distinct !DISubprogram(name: "Use", linkageName: "_CUse.Create", scope: null, file: !3, line: 15, type: !5, spFlags: DISPFlagDefinition, unit: !2)
+// CHECK:STDOUT: !16 = !DILocation(line: 16, column: 3, scope: !15)
+// CHECK:STDOUT: !17 = !DILocation(line: 15, column: 1, scope: !15)
 // CHECK:STDOUT: ; ModuleID = 'member_init.carbon'
 // CHECK:STDOUT: source_filename = "member_init.carbon"
 // CHECK:STDOUT:

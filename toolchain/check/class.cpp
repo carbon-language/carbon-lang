@@ -169,14 +169,17 @@ static auto BuildVtable(Context& context, Parse::ClassDefinitionId node_id,
   };
 
   llvm::SmallVector<SemIR::InstId> vtable;
+  Set<SemIR::FunctionId> implemented_impls;
   if (base_vtable_id.has_value()) {
     auto base_vtable_inst_block = context.inst_blocks().Get(
         context.vtables().Get(base_vtable_id).virtual_functions_id);
     // TODO: Avoid quadratic search. Perhaps build a map from `NameId` to the
     // elements of the top of `vtable_stack`.
-    for (auto fn_decl_id : base_vtable_inst_block) {
-      auto fn_decl = GetCalleeFunction(context.sem_ir(), fn_decl_id);
-      const auto& fn = context.functions().Get(fn_decl.function_id);
+    for (auto base_vtable_entry_id : base_vtable_inst_block) {
+      auto [derived_vtable_entry_id, fn_id, specific_id] =
+          DecomposeVirtualFunction(context.sem_ir(), base_vtable_entry_id,
+                                   base_class_specific_id);
+      const auto& fn = context.sem_ir().functions().Get(fn_id);
       const auto* i = llvm::find_if(
           vtable_contents, [&](SemIR::InstId override_fn_decl_id) -> bool {
             const auto& override_fn = context.functions().Get(
@@ -188,27 +191,18 @@ static auto BuildVtable(Context& context, Parse::ClassDefinitionId node_id,
                    override_fn.name_id == fn.name_id;
           });
       if (i != vtable_contents.end()) {
-        auto& override_fn = context.functions().Get(
-            context.insts().GetAs<SemIR::FunctionDecl>(*i).function_id);
-        // TODO: Support generic base classes, rather than passing
-        // `SpecificId::None`. This'll need to `GetConstantValueInSpecific` for
-        // the base function, then extract the specific from that for use here.
-        CheckFunctionTypeMatches(context, override_fn, fn,
-                                 SemIR::SpecificId::None,
+        auto override_fn_id =
+            context.insts().GetAs<SemIR::FunctionDecl>(*i).function_id;
+        implemented_impls.Insert(override_fn_id);
+        auto& override_fn = context.functions().Get(override_fn_id);
+        CheckFunctionTypeMatches(context, override_fn, fn, specific_id,
                                  /*check_syntax=*/false,
                                  /*check_self=*/false);
-        fn_decl_id = build_specific_function(*i);
+        derived_vtable_entry_id = build_specific_function(*i);
         override_fn.virtual_index = vtable.size();
         CARBON_CHECK(override_fn.virtual_index == fn.virtual_index);
-      } else {
-        // Remap the base's vtable entry to the appropriate constant usable in
-        // the context of the derived class (for the specific for the base
-        // class, for instance)..
-        fn_decl_id = context.sem_ir().constant_values().GetInstId(
-            GetConstantValueInSpecific(context.sem_ir(), base_class_specific_id,
-                                       fn_decl_id));
       }
-      vtable.push_back(fn_decl_id);
+      vtable.push_back(derived_vtable_entry_id);
     }
   }
 
@@ -218,6 +212,10 @@ static auto BuildVtable(Context& context, Parse::ClassDefinitionId node_id,
     if (fn.virtual_modifier != SemIR::FunctionFields::VirtualModifier::Impl) {
       fn.virtual_index = vtable.size();
       vtable.push_back(build_specific_function(inst_id));
+    } else if (!implemented_impls.Lookup(fn_decl.function_id)) {
+      CARBON_DIAGNOSTIC(ImplWithoutVirtualInBase, Error,
+                        "impl without compatible virtual in base class");
+      context.emitter().Emit(SemIR::LocId(inst_id), ImplWithoutVirtualInBase);
     }
   }
 

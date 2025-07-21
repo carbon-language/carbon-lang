@@ -2,6 +2,7 @@
 // Exceptions. See /LICENSE for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
+// INCLUDE-FILE: toolchain/testing/testdata/min_prelude/bool.carbon
 // TODO: Add ranges and switch to "--dump-sem-ir-ranges=only".
 // EXTRA-ARGS: --dump-sem-ir-ranges=if-present
 //
@@ -49,9 +50,9 @@ fn Main() {
 // CHECK:STDOUT:     import Core//prelude
 // CHECK:STDOUT:     import Core//prelude/...
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %Core.Bool: %Bool.type = import_ref Core//prelude/types/bool, Bool, loaded [concrete = constants.%Bool]
-// CHECK:STDOUT:   %Core.ImplicitAs: %ImplicitAs.type.cc7 = import_ref Core//prelude/operators/as, ImplicitAs, loaded [concrete = constants.%ImplicitAs.generic]
-// CHECK:STDOUT:   %Core.Destroy: type = import_ref Core//prelude/destroy, Destroy, loaded [concrete = constants.%Destroy.type]
+// CHECK:STDOUT:   %Core.Bool: %Bool.type = import_ref Core//prelude/parts/bool, Bool, loaded [concrete = constants.%Bool]
+// CHECK:STDOUT:   %Core.ImplicitAs: %ImplicitAs.type.cc7 = import_ref Core//prelude/parts/as, ImplicitAs, loaded [concrete = constants.%ImplicitAs.generic]
+// CHECK:STDOUT:   %Core.Destroy: type = import_ref Core//prelude/parts/destroy, Destroy, loaded [concrete = constants.%Destroy.type]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -71,13 +72,13 @@ fn Main() {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %x.var: ref bool = var %x.var_patt
 // CHECK:STDOUT:   %int_12: Core.IntLiteral = int_value 12 [concrete = constants.%int_12]
-// CHECK:STDOUT:   %.loc22_17.1: bool = converted %int_12, <error> [concrete = <error>]
-// CHECK:STDOUT:   %.loc22_17.2: <error> = not <error> [concrete = <error>]
+// CHECK:STDOUT:   %.loc23_17.1: bool = converted %int_12, <error> [concrete = <error>]
+// CHECK:STDOUT:   %.loc23_17.2: <error> = not <error> [concrete = <error>]
 // CHECK:STDOUT:   assign %x.var, <error>
-// CHECK:STDOUT:   %.loc22_10.1: type = splice_block %.loc22_10.3 [concrete = bool] {
+// CHECK:STDOUT:   %.loc23_10.1: type = splice_block %.loc23_10.3 [concrete = bool] {
 // CHECK:STDOUT:     %bool.make_type: init type = call constants.%Bool() [concrete = bool]
-// CHECK:STDOUT:     %.loc22_10.2: type = value_of_initializer %bool.make_type [concrete = bool]
-// CHECK:STDOUT:     %.loc22_10.3: type = converted %bool.make_type, %.loc22_10.2 [concrete = bool]
+// CHECK:STDOUT:     %.loc23_10.2: type = value_of_initializer %bool.make_type [concrete = bool]
+// CHECK:STDOUT:     %.loc23_10.3: type = converted %bool.make_type, %.loc23_10.2 [concrete = bool]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %x: ref bool = bind_name x, %x.var
 // CHECK:STDOUT:   %Op.bound: <bound method> = bound_method %x.var, constants.%Op.8b7

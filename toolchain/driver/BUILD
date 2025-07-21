@@ -125,6 +125,7 @@ cc_library(
         "//common:raw_string_ostream",
         "//common:version",
         "//common:vlog",
+        "//toolchain/base:clang_invocation",
         "//toolchain/base:llvm_tools",
         "//toolchain/base:shared_value_stores",
         "//toolchain/base:timings",

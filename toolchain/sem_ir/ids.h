@@ -153,12 +153,6 @@ struct ConstantId : public IdBase<ConstantId> {
     return ConstantId(const_id.index);
   }
 
-  // Returns the constant ID corresponding to a symbolic constant index.
-  static constexpr auto ForSymbolicConstantIndex(int32_t symbolic_index)
-      -> ConstantId {
-    return ConstantId(FirstSymbolicIndex - symbolic_index);
-  }
-
   using IdBase::IdBase;
 
   // Returns whether this represents a constant. Requires has_value.
@@ -169,7 +163,7 @@ struct ConstantId : public IdBase<ConstantId> {
   // Returns whether this represents a symbolic constant. Requires has_value.
   constexpr auto is_symbolic() const -> bool {
     CARBON_DCHECK(has_value());
-    return index <= FirstSymbolicIndex;
+    return index <= FirstSymbolicId;
   }
   // Returns whether this represents a concrete constant. Requires has_value.
   constexpr auto is_concrete() const -> bool {
@@ -186,6 +180,21 @@ struct ConstantId : public IdBase<ConstantId> {
  private:
   friend class ConstantValueStore;
 
+  // For Dump.
+  friend auto MakeSymbolicConstantId(int id) -> ConstantId;
+
+  // A symbolic constant.
+  struct SymbolicId : public IdBase<SymbolicId> {
+    static constexpr llvm::StringLiteral Label = "symbolic_constant";
+    using IdBase::IdBase;
+  };
+
+  // Returns the constant ID corresponding to a symbolic constant index.
+  static constexpr auto ForSymbolicConstantId(SymbolicId symbolic_id)
+      -> ConstantId {
+    return ConstantId(FirstSymbolicId - symbolic_id.index);
+  }
+
   // TODO: C++23 makes std::abs constexpr, but until then we mirror std::abs
   // logic here. LLVM should still optimize this.
   static constexpr auto Abs(int32_t i) -> int32_t { return i > 0 ? i : -i; }
@@ -200,13 +209,13 @@ struct ConstantId : public IdBase<ConstantId> {
 
   // Returns the symbolic constant index that describes this symbolic constant
   // value. Requires `is_symbolic()`.
-  constexpr auto symbolic_index() const -> int32_t {
+  constexpr auto symbolic_id() const -> SymbolicId {
     CARBON_DCHECK(is_symbolic());
-    return FirstSymbolicIndex - index;
+    return SymbolicId(FirstSymbolicId - index);
   }
 
   static constexpr int32_t NotConstantIndex = NoneIndex - 1;
-  static constexpr int32_t FirstSymbolicIndex = NoneIndex - 2;
+  static constexpr int32_t FirstSymbolicId = NoneIndex - 2;
 };
 
 constexpr ConstantId ConstantId::NotConstant = ConstantId(NotConstantIndex);

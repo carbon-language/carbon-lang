@@ -6,33 +6,33 @@
 //
 // AUTOUPDATE
 // TIP: To test this file alone, run:
-// TIP:   bazel test //toolchain/testing:file_test --test_arg=--file_tests=toolchain/check/testdata/interop/cpp/function/param_int32.carbon
+// TIP:   bazel test //toolchain/testing:file_test --test_arg=--file_tests=toolchain/check/testdata/interop/cpp/function/arithmetic_types_mapped.carbon
 // TIP: To dump output, run:
-// TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/check/testdata/interop/cpp/function/param_int32.carbon
+// TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/check/testdata/interop/cpp/function/arithmetic_types_mapped.carbon
 
 // ============================================================================
-// int
+// int param
 // ============================================================================
 
-// --- int.h
+// --- int_param.h
 
 auto foo(int a) -> void;
 
-// --- import_int.carbon
+// --- import_int_param.carbon
 
 library "[[@TEST_NAME]]";
 
-import Cpp library "int.h";
+import Cpp library "int_param.h";
 
 fn F() {
   Cpp.foo(1);
 }
 
-// --- import_int_max.carbon
+// --- import_int_param_max.carbon
 
 library "[[@TEST_NAME]]";
 
-import Cpp library "int.h";
+import Cpp library "int_param.h";
 
 fn F() {
   //@dump-sem-ir-begin
@@ -40,26 +40,26 @@ fn F() {
   //@dump-sem-ir-end
 }
 
-// --- fail_import_int_overflow_max.carbon
+// --- fail_import_int_param_overflow_max.carbon
 
 library "[[@TEST_NAME]]";
 
-import Cpp library "int.h";
+import Cpp library "int_param.h";
 
 fn F() {
-  // CHECK:STDERR: fail_import_int_overflow_max.carbon:[[@LINE+5]]:11: error: integer value 2147483648 too large for type `i32` [IntTooLargeForType]
+  // CHECK:STDERR: fail_import_int_param_overflow_max.carbon:[[@LINE+5]]:11: error: integer value 2147483648 too large for type `i32` [IntTooLargeForType]
   // CHECK:STDERR:   Cpp.foo(0x8000_0000);
   // CHECK:STDERR:           ^~~~~~~~~~~
-  // CHECK:STDERR: fail_import_int_overflow_max.carbon: note: initializing function parameter [InCallToFunctionParam]
+  // CHECK:STDERR: fail_import_int_param_overflow_max.carbon: note: initializing function parameter [InCallToFunctionParam]
   // CHECK:STDERR:
   Cpp.foo(0x8000_0000);
 }
 
-// --- import_int_min.carbon
+// --- import_int_param_min.carbon
 
 library "[[@TEST_NAME]]";
 
-import Cpp library "int.h";
+import Cpp library "int_param.h";
 
 fn F() {
   //@dump-sem-ir-begin
@@ -67,34 +67,34 @@ fn F() {
   //@dump-sem-ir-end
 }
 
-// --- fail_import_int_overflow_min.carbon
+// --- fail_import_int_param_overflow_min.carbon
 
 library "[[@TEST_NAME]]";
 
-import Cpp library "int.h";
+import Cpp library "int_param.h";
 
 fn F() {
-  // CHECK:STDERR: fail_import_int_overflow_min.carbon:[[@LINE+5]]:11: error: integer value -2147483649 too large for type `i32` [IntTooLargeForType]
+  // CHECK:STDERR: fail_import_int_param_overflow_min.carbon:[[@LINE+5]]:11: error: integer value -2147483649 too large for type `i32` [IntTooLargeForType]
   // CHECK:STDERR:   Cpp.foo(-0x8000_0001);
   // CHECK:STDERR:           ^~~~~~~~~~~~
-  // CHECK:STDERR: fail_import_int_overflow_min.carbon: note: initializing function parameter [InCallToFunctionParam]
+  // CHECK:STDERR: fail_import_int_param_overflow_min.carbon: note: initializing function parameter [InCallToFunctionParam]
   // CHECK:STDERR:
   Cpp.foo(-0x8000_0001);
 }
 
 // ============================================================================
-// signed int
+// signed int param
 // ============================================================================
 
-// --- signed_int.h
+// --- signed_int_param.h
 
 auto foo(signed int a) -> void;
 
-// --- import_signed_int.carbon
+// --- import_signed_int_param.carbon
 
 library "[[@TEST_NAME]]";
 
-import Cpp library "signed_int.h";
+import Cpp library "signed_int_param.h";
 
 fn F() {
   //@dump-sem-ir-begin
@@ -103,18 +103,18 @@ fn F() {
 }
 
 // ============================================================================
-// signed
+// signed param
 // ============================================================================
 
-// --- signed.h
+// --- signed_param.h
 
 auto foo(signed a) -> void;
 
-// --- import_signed.carbon
+// --- import_signed_param.carbon
 
 library "[[@TEST_NAME]]";
 
-import Cpp library "signed.h";
+import Cpp library "signed_param.h";
 
 fn F() {
   //@dump-sem-ir-begin
@@ -123,10 +123,10 @@ fn F() {
 }
 
 // ============================================================================
-// typedef for int
+// typedef for int param
 // ============================================================================
 
-// --- int32_t.h
+// --- int32_t_param.h
 
 namespace std {
   // Mimicking glibc definition for int32_t: https://codebrowser.dev/glibc/glibc/posix/bits/types.h.html#__int32_t
@@ -135,11 +135,11 @@ namespace std {
 
 auto foo(std::int32_t a) -> void;
 
-// --- import_int32_t.carbon
+// --- import_int32_t_param.carbon
 
 library "[[@TEST_NAME]]";
 
-import Cpp library "int32_t.h";
+import Cpp library "int32_t_param.h";
 
 fn F() {
   //@dump-sem-ir-begin
@@ -148,18 +148,18 @@ fn F() {
 }
 
 // ============================================================================
-// ints
+// int params
 // ============================================================================
 
-// --- ints.h
+// --- int_params.h
 
 auto foo(int a, int b) -> void;
 
-// --- import_ints.carbon
+// --- import_int_params.carbon
 
 library "[[@TEST_NAME]]";
 
-import Cpp library "ints.h";
+import Cpp library "int_params.h";
 
 fn F() {
   //@dump-sem-ir-begin
@@ -168,20 +168,20 @@ fn F() {
 }
 
 // ============================================================================
-// Multiple ints
+// Multiple function with int params
 // ============================================================================
 
-// --- multiple_ints.h
+// --- multiple_int_params.h
 
 auto foo1(int a, int b) -> void;
 
 auto foo2(int c, int b) -> void;
 
-// --- import_multiple_ints.carbon
+// --- import_multiple_int_params.carbon
 
 library "[[@TEST_NAME]]";
 
-import Cpp library "multiple_ints.h";
+import Cpp library "multiple_int_params.h";
 
 fn F() {
   //@dump-sem-ir-begin
@@ -191,18 +191,18 @@ fn F() {
 }
 
 // ============================================================================
-// Unnamed int
+// Unnamed int param
 // ============================================================================
 
-// --- unnamed_int.h
+// --- unnamed_int_param.h
 
 auto foo(int) -> void;
 
-// --- import_unnamed_int.carbon
+// --- import_unnamed_int_param.carbon
 
 library "[[@TEST_NAME]]";
 
-import Cpp library "unnamed_int.h";
+import Cpp library "unnamed_int_param.h";
 
 fn F() {
   //@dump-sem-ir-begin
@@ -211,10 +211,10 @@ fn F() {
 }
 
 // ============================================================================
-// int default
+// int default param
 // ============================================================================
 
-// --- int_default.h
+// --- int_default_param.h
 
 auto foo(int a = 0) -> void;
 
@@ -222,7 +222,7 @@ auto foo(int a = 0) -> void;
 
 library "[[@TEST_NAME]]";
 
-import Cpp library "int_default.h";
+import Cpp library "int_default_param.h";
 
 fn F() {
   //@dump-sem-ir-begin
@@ -235,11 +235,11 @@ fn F() {
   //@dump-sem-ir-end
 }
 
-// --- import_int_default_sucessful_call.carbon
+// --- import_int_default_param_sucessful_call.carbon
 
 library "[[@TEST_NAME]]";
 
-import Cpp library "int_default.h";
+import Cpp library "int_default_param.h";
 
 fn F() {
   //@dump-sem-ir-begin
@@ -248,54 +248,54 @@ fn F() {
 }
 
 // ============================================================================
-// const int
+// const int param
 // ============================================================================
 
-// --- const_int.h
+// --- const_int_param.h
 
 auto foo(const int a) -> void;
 
-// --- fail_todo_import_const_int.carbon
+// --- fail_todo_import_const_int_param.carbon
 
 library "[[@TEST_NAME]]";
 
-import Cpp library "const_int.h";
+import Cpp library "const_int_param.h";
 
 fn F() {
   //@dump-sem-ir-begin
-  // CHECK:STDERR: fail_todo_import_const_int.carbon:[[@LINE+8]]:11: error: cannot implicitly convert expression of type `Core.IntLiteral` to `const i32` [ConversionFailure]
+  // CHECK:STDERR: fail_todo_import_const_int_param.carbon:[[@LINE+8]]:11: error: cannot implicitly convert expression of type `Core.IntLiteral` to `const i32` [ConversionFailure]
   // CHECK:STDERR:   Cpp.foo(1);
   // CHECK:STDERR:           ^
-  // CHECK:STDERR: fail_todo_import_const_int.carbon:[[@LINE+5]]:11: note: type `Core.IntLiteral` does not implement interface `Core.ImplicitAs(const i32)` [MissingImplInMemberAccessNote]
+  // CHECK:STDERR: fail_todo_import_const_int_param.carbon:[[@LINE+5]]:11: note: type `Core.IntLiteral` does not implement interface `Core.ImplicitAs(const i32)` [MissingImplInMemberAccessNote]
   // CHECK:STDERR:   Cpp.foo(1);
   // CHECK:STDERR:           ^
-  // CHECK:STDERR: fail_todo_import_const_int.carbon: note: initializing function parameter [InCallToFunctionParam]
+  // CHECK:STDERR: fail_todo_import_const_int_param.carbon: note: initializing function parameter [InCallToFunctionParam]
   // CHECK:STDERR:
   Cpp.foo(1);
   //@dump-sem-ir-end
 }
 
 // ============================================================================
-// int reference
+// int reference param
 // ============================================================================
 
-// --- int_ref.h
+// --- int_ref_param.h
 
 auto foo(int& a) -> int;
 
-// --- fail_todo_import_int_ref.carbon
+// --- fail_todo_import_int_ref_param.carbon
 
 library "[[@TEST_NAME]]";
 
-import Cpp library "int_ref.h";
+import Cpp library "int_ref_param.h";
 
 fn F() {
   var a: i32 = 1;
   //@dump-sem-ir-begin
-  // CHECK:STDERR: fail_todo_import_int_ref.carbon:[[@LINE+7]]:3: error: semantics TODO: `Unsupported: parameter type: int &` [SemanticsTodo]
+  // CHECK:STDERR: fail_todo_import_int_ref_param.carbon:[[@LINE+7]]:3: error: semantics TODO: `Unsupported: parameter type: int &` [SemanticsTodo]
   // CHECK:STDERR:   Cpp.foo(a);
   // CHECK:STDERR:   ^~~~~~~
-  // CHECK:STDERR: fail_todo_import_int_ref.carbon:[[@LINE+4]]:3: note: in `Cpp` name lookup for `foo` [InCppNameLookup]
+  // CHECK:STDERR: fail_todo_import_int_ref_param.carbon:[[@LINE+4]]:3: note: in `Cpp` name lookup for `foo` [InCppNameLookup]
   // CHECK:STDERR:   Cpp.foo(a);
   // CHECK:STDERR:   ^~~~~~~
   // CHECK:STDERR:
@@ -304,26 +304,26 @@ fn F() {
 }
 
 // ============================================================================
-// const int reference
+// const int reference param
 // ============================================================================
 
-// --- const_int_ref.h
+// --- const_int_ref_param.h
 
 auto foo(const int& a) -> int;
 
-// --- fail_todo_import_const_int_ref.carbon
+// --- fail_todo_import_const_int_ref_param.carbon
 
 library "[[@TEST_NAME]]";
 
-import Cpp library "const_int_ref.h";
+import Cpp library "const_int_ref_param.h";
 
 fn F() {
   var a : i32 = 1;
   //@dump-sem-ir-begin
-  // CHECK:STDERR: fail_todo_import_const_int_ref.carbon:[[@LINE+7]]:3: error: semantics TODO: `Unsupported: parameter type: const int &` [SemanticsTodo]
+  // CHECK:STDERR: fail_todo_import_const_int_ref_param.carbon:[[@LINE+7]]:3: error: semantics TODO: `Unsupported: parameter type: const int &` [SemanticsTodo]
   // CHECK:STDERR:   Cpp.foo(a);
   // CHECK:STDERR:   ^~~~~~~
-  // CHECK:STDERR: fail_todo_import_const_int_ref.carbon:[[@LINE+4]]:3: note: in `Cpp` name lookup for `foo` [InCppNameLookup]
+  // CHECK:STDERR: fail_todo_import_const_int_ref_param.carbon:[[@LINE+4]]:3: note: in `Cpp` name lookup for `foo` [InCppNameLookup]
   // CHECK:STDERR:   Cpp.foo(a);
   // CHECK:STDERR:   ^~~~~~~
   // CHECK:STDERR:
@@ -332,18 +332,18 @@ fn F() {
 }
 
 // ============================================================================
-// int pointer
+// int pointer param
 // ============================================================================
 
-// --- int_pointer.h
+// --- int_pointer_param.h
 
 auto foo(int* _Nonnull a) -> void;
 
-// --- import_int_pointer.carbon
+// --- import_int_pointer_param.carbon
 
 library "[[@TEST_NAME]]";
 
-import Cpp library "int_pointer.h";
+import Cpp library "int_pointer_param.h";
 
 fn F() {
   var a: i32 = 1;
@@ -353,35 +353,57 @@ fn F() {
 }
 
 // ============================================================================
-// const int pointer
+// const int pointer param
 // ============================================================================
 
-// --- const_int_pointer.h
+// --- const_int_pointer_param.h
 
 auto foo(const int* _Nonnull a) -> int;
 
-// --- fail_todo_import_const_int_pointer.carbon
+// --- fail_todo_import_const_int_pointer_param.carbon
 
 library "[[@TEST_NAME]]";
 
-import Cpp library "const_int_pointer.h";
+import Cpp library "const_int_pointer_param.h";
 
 fn F() {
   var a : i32 = 1;
   //@dump-sem-ir-begin
-  // CHECK:STDERR: fail_todo_import_const_int_pointer.carbon:[[@LINE+8]]:11: error: cannot implicitly convert expression of type `i32*` to `const i32*` [ConversionFailure]
+  // CHECK:STDERR: fail_todo_import_const_int_pointer_param.carbon:[[@LINE+8]]:11: error: cannot implicitly convert expression of type `i32*` to `const i32*` [ConversionFailure]
   // CHECK:STDERR:   Cpp.foo(&a);
   // CHECK:STDERR:           ^~
-  // CHECK:STDERR: fail_todo_import_const_int_pointer.carbon:[[@LINE+5]]:11: note: type `i32*` does not implement interface `Core.ImplicitAs(const i32*)` [MissingImplInMemberAccessNote]
+  // CHECK:STDERR: fail_todo_import_const_int_pointer_param.carbon:[[@LINE+5]]:11: note: type `i32*` does not implement interface `Core.ImplicitAs(const i32*)` [MissingImplInMemberAccessNote]
   // CHECK:STDERR:   Cpp.foo(&a);
   // CHECK:STDERR:           ^~
-  // CHECK:STDERR: fail_todo_import_const_int_pointer.carbon: note: initializing function parameter [InCallToFunctionParam]
+  // CHECK:STDERR: fail_todo_import_const_int_pointer_param.carbon: note: initializing function parameter [InCallToFunctionParam]
   // CHECK:STDERR:
   Cpp.foo(&a);
   //@dump-sem-ir-end
 }
 
-// CHECK:STDOUT: --- import_int_max.carbon
+// ============================================================================
+// int return
+// ============================================================================
+
+// --- int_return.h
+
+auto foo_int() -> int;
+
+// --- import_int_return.carbon
+
+library "[[@TEST_NAME]]";
+
+import Cpp library "int_return.h";
+
+fn Carbon_foo(val: i32);
+
+fn F() {
+  //@dump-sem-ir-begin
+  Carbon_foo(Cpp.foo_int());
+  //@dump-sem-ir-end
+}
+
+// CHECK:STDOUT: --- import_int_param_max.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [concrete]
@@ -436,7 +458,7 @@ fn F() {
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- import_int_min.carbon
+// CHECK:STDOUT: --- import_int_param_min.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [concrete]
@@ -508,7 +530,7 @@ fn F() {
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- import_signed_int.carbon
+// CHECK:STDOUT: --- import_signed_int_param.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [concrete]
@@ -563,7 +585,7 @@ fn F() {
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- import_signed.carbon
+// CHECK:STDOUT: --- import_signed_param.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [concrete]
@@ -618,7 +640,7 @@ fn F() {
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- import_int32_t.carbon
+// CHECK:STDOUT: --- import_int32_t_param.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [concrete]
@@ -673,7 +695,7 @@ fn F() {
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- import_ints.carbon
+// CHECK:STDOUT: --- import_int_params.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [concrete]
@@ -740,7 +762,7 @@ fn F() {
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- import_multiple_ints.carbon
+// CHECK:STDOUT: --- import_multiple_int_params.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [concrete]
@@ -842,7 +864,7 @@ fn F() {
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- import_unnamed_int.carbon
+// CHECK:STDOUT: --- import_unnamed_int_param.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [concrete]
@@ -923,7 +945,7 @@ fn F() {
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- import_int_default_sucessful_call.carbon
+// CHECK:STDOUT: --- import_int_default_param_sucessful_call.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [concrete]
@@ -978,7 +1000,7 @@ fn F() {
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- fail_todo_import_const_int.carbon
+// CHECK:STDOUT: --- fail_todo_import_const_int_param.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [concrete]
@@ -1012,7 +1034,7 @@ fn F() {
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- fail_todo_import_int_ref.carbon
+// CHECK:STDOUT: --- fail_todo_import_int_ref_param.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %int_32: Core.IntLiteral = int_value 32 [concrete]
@@ -1035,7 +1057,7 @@ fn F() {
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- fail_todo_import_const_int_ref.carbon
+// CHECK:STDOUT: --- fail_todo_import_const_int_ref_param.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %int_32: Core.IntLiteral = int_value 32 [concrete]
@@ -1058,7 +1080,7 @@ fn F() {
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- import_int_pointer.carbon
+// CHECK:STDOUT: --- import_int_pointer_param.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [concrete]
@@ -1092,7 +1114,7 @@ fn F() {
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- fail_todo_import_const_int_pointer.carbon
+// CHECK:STDOUT: --- fail_todo_import_const_int_pointer_param.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %int_32: Core.IntLiteral = int_value 32 [concrete]
@@ -1125,6 +1147,42 @@ fn F() {
 // CHECK:STDOUT:   %addr.loc17: %ptr.235 = addr_of %a.ref
 // CHECK:STDOUT:   %.loc17: %ptr.36b = converted %addr.loc17, <error> [concrete = <error>]
 // CHECK:STDOUT:   %foo.call: init %i32 = call %foo.ref(<error>)
+// CHECK:STDOUT:   <elided>
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: --- import_int_return.carbon
+// CHECK:STDOUT:
+// CHECK:STDOUT: constants {
+// CHECK:STDOUT:   %int_32: Core.IntLiteral = int_value 32 [concrete]
+// CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [concrete]
+// CHECK:STDOUT:   %i32: type = class_type @Int, @Int(%int_32) [concrete]
+// CHECK:STDOUT:   %Carbon_foo.type: type = fn_type @Carbon_foo [concrete]
+// CHECK:STDOUT:   %Carbon_foo: %Carbon_foo.type = struct_value () [concrete]
+// CHECK:STDOUT:   %foo_int.type: type = fn_type @foo_int [concrete]
+// CHECK:STDOUT:   %foo_int: %foo_int.type = struct_value () [concrete]
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: imports {
+// CHECK:STDOUT:   %Cpp: <namespace> = namespace file.%Cpp.import_cpp, [concrete] {
+// CHECK:STDOUT:     .foo_int = %foo_int.decl
+// CHECK:STDOUT:     import Cpp//...
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %foo_int.decl: %foo_int.type = fn_decl @foo_int [concrete = constants.%foo_int] {
+// CHECK:STDOUT:     <elided>
+// CHECK:STDOUT:   } {
+// CHECK:STDOUT:     <elided>
+// CHECK:STDOUT:   }
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: fn @F() {
+// CHECK:STDOUT: !entry:
+// CHECK:STDOUT:   %Carbon_foo.ref: %Carbon_foo.type = name_ref Carbon_foo, file.%Carbon_foo.decl [concrete = constants.%Carbon_foo]
+// CHECK:STDOUT:   %Cpp.ref: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
+// CHECK:STDOUT:   %foo_int.ref: %foo_int.type = name_ref foo_int, imports.%foo_int.decl [concrete = constants.%foo_int]
+// CHECK:STDOUT:   %foo_int.call: init %i32 = call %foo_int.ref()
+// CHECK:STDOUT:   %.loc10_26.1: %i32 = value_of_initializer %foo_int.call
+// CHECK:STDOUT:   %.loc10_26.2: %i32 = converted %foo_int.call, %.loc10_26.1
+// CHECK:STDOUT:   %Carbon_foo.call: init %empty_tuple.type = call %Carbon_foo.ref(%.loc10_26.2)
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

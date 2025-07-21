@@ -2,6 +2,8 @@
 // Exceptions. See /LICENSE for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
+// INCLUDE-FILE: toolchain/testing/testdata/min_prelude/full.carbon
+//
 // AUTOUPDATE
 // TIP: To test this file alone, run:
 // TIP:   bazel test //toolchain/testing:file_test --test_arg=--file_tests=toolchain/lower/testdata/function/generic/call_recursive_basic.carbon
@@ -52,14 +54,14 @@ fn M() {
 // CHECK:STDOUT:   store double 1.000000e+00, ptr %m.var, align 8, !dbg !8
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(i64 8, ptr %ptr_i32.var), !dbg !9
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(i64 8, ptr %ptr_f64.var), !dbg !10
-// CHECK:STDOUT:   %.loc28_5 = load i32, ptr %n.var, align 4, !dbg !11
-// CHECK:STDOUT:   %F.call.loc28 = call i32 @_CF.Main.b88d1103f417c6d4(i32 %.loc28_5, i32 0), !dbg !12
-// CHECK:STDOUT:   %.loc29_5 = load double, ptr %m.var, align 8, !dbg !13
-// CHECK:STDOUT:   %F.call.loc29 = call double @_CF.Main.66be507887ceee78(double %.loc29_5, i32 0), !dbg !14
-// CHECK:STDOUT:   %.loc30_5 = load ptr, ptr %ptr_i32.var, align 8, !dbg !15
-// CHECK:STDOUT:   %F.call.loc30 = call ptr @_CF.Main.e8193710fd35b608(ptr %.loc30_5, i32 0), !dbg !16
-// CHECK:STDOUT:   %.loc31_5 = load ptr, ptr %ptr_f64.var, align 8, !dbg !17
-// CHECK:STDOUT:   %F.call.loc31 = call ptr @_CF.Main.e8193710fd35b608(ptr %.loc31_5, i32 0), !dbg !18
+// CHECK:STDOUT:   %.loc30_5 = load i32, ptr %n.var, align 4, !dbg !11
+// CHECK:STDOUT:   %F.call.loc30 = call i32 @_CF.Main.b88d1103f417c6d4(i32 %.loc30_5, i32 0), !dbg !12
+// CHECK:STDOUT:   %.loc31_5 = load double, ptr %m.var, align 8, !dbg !13
+// CHECK:STDOUT:   %F.call.loc31 = call double @_CF.Main.66be507887ceee78(double %.loc31_5, i32 0), !dbg !14
+// CHECK:STDOUT:   %.loc32_5 = load ptr, ptr %ptr_i32.var, align 8, !dbg !15
+// CHECK:STDOUT:   %F.call.loc32 = call ptr @_CF.Main.e8193710fd35b608(ptr %.loc32_5, i32 0), !dbg !16
+// CHECK:STDOUT:   %.loc33_5 = load ptr, ptr %ptr_f64.var, align 8, !dbg !17
+// CHECK:STDOUT:   %F.call.loc33 = call ptr @_CF.Main.e8193710fd35b608(ptr %.loc33_5, i32 0), !dbg !18
 // CHECK:STDOUT:   ret void, !dbg !19
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -121,40 +123,40 @@ fn M() {
 // CHECK:STDOUT: !1 = !{i32 2, !"Debug Info Version", i32 3}
 // CHECK:STDOUT: !2 = distinct !DICompileUnit(language: DW_LANG_C, file: !3, producer: "carbon", isOptimized: false, runtimeVersion: 0, emissionKind: FullDebug)
 // CHECK:STDOUT: !3 = !DIFile(filename: "call_recursive_basic.carbon", directory: "")
-// CHECK:STDOUT: !4 = distinct !DISubprogram(name: "M", linkageName: "_CM.Main", scope: null, file: !3, line: 22, type: !5, spFlags: DISPFlagDefinition, unit: !2)
+// CHECK:STDOUT: !4 = distinct !DISubprogram(name: "M", linkageName: "_CM.Main", scope: null, file: !3, line: 24, type: !5, spFlags: DISPFlagDefinition, unit: !2)
 // CHECK:STDOUT: !5 = !DISubroutineType(types: !6)
 // CHECK:STDOUT: !6 = !{}
-// CHECK:STDOUT: !7 = !DILocation(line: 23, column: 3, scope: !4)
-// CHECK:STDOUT: !8 = !DILocation(line: 24, column: 3, scope: !4)
-// CHECK:STDOUT: !9 = !DILocation(line: 25, column: 3, scope: !4)
-// CHECK:STDOUT: !10 = !DILocation(line: 26, column: 3, scope: !4)
-// CHECK:STDOUT: !11 = !DILocation(line: 28, column: 5, scope: !4)
-// CHECK:STDOUT: !12 = !DILocation(line: 28, column: 3, scope: !4)
-// CHECK:STDOUT: !13 = !DILocation(line: 29, column: 5, scope: !4)
-// CHECK:STDOUT: !14 = !DILocation(line: 29, column: 3, scope: !4)
-// CHECK:STDOUT: !15 = !DILocation(line: 30, column: 5, scope: !4)
-// CHECK:STDOUT: !16 = !DILocation(line: 30, column: 3, scope: !4)
-// CHECK:STDOUT: !17 = !DILocation(line: 31, column: 5, scope: !4)
-// CHECK:STDOUT: !18 = !DILocation(line: 31, column: 3, scope: !4)
-// CHECK:STDOUT: !19 = !DILocation(line: 22, column: 1, scope: !4)
-// CHECK:STDOUT: !20 = distinct !DISubprogram(name: "F", linkageName: "_CF.Main.b88d1103f417c6d4", scope: null, file: !3, line: 15, type: !5, spFlags: DISPFlagDefinition, unit: !2)
-// CHECK:STDOUT: !21 = !DILocation(line: 16, column: 7, scope: !20)
-// CHECK:STDOUT: !22 = !DILocation(line: 16, column: 6, scope: !20)
-// CHECK:STDOUT: !23 = !DILocation(line: 17, column: 5, scope: !20)
-// CHECK:STDOUT: !24 = !DILocation(line: 19, column: 15, scope: !20)
-// CHECK:STDOUT: !25 = !DILocation(line: 19, column: 10, scope: !20)
-// CHECK:STDOUT: !26 = !DILocation(line: 19, column: 3, scope: !20)
-// CHECK:STDOUT: !27 = distinct !DISubprogram(name: "F", linkageName: "_CF.Main.66be507887ceee78", scope: null, file: !3, line: 15, type: !5, spFlags: DISPFlagDefinition, unit: !2)
-// CHECK:STDOUT: !28 = !DILocation(line: 16, column: 7, scope: !27)
-// CHECK:STDOUT: !29 = !DILocation(line: 16, column: 6, scope: !27)
-// CHECK:STDOUT: !30 = !DILocation(line: 17, column: 5, scope: !27)
-// CHECK:STDOUT: !31 = !DILocation(line: 19, column: 15, scope: !27)
-// CHECK:STDOUT: !32 = !DILocation(line: 19, column: 10, scope: !27)
-// CHECK:STDOUT: !33 = !DILocation(line: 19, column: 3, scope: !27)
-// CHECK:STDOUT: !34 = distinct !DISubprogram(name: "F", linkageName: "_CF.Main.e8193710fd35b608", scope: null, file: !3, line: 15, type: !5, spFlags: DISPFlagDefinition, unit: !2)
-// CHECK:STDOUT: !35 = !DILocation(line: 16, column: 7, scope: !34)
-// CHECK:STDOUT: !36 = !DILocation(line: 16, column: 6, scope: !34)
-// CHECK:STDOUT: !37 = !DILocation(line: 17, column: 5, scope: !34)
-// CHECK:STDOUT: !38 = !DILocation(line: 19, column: 15, scope: !34)
-// CHECK:STDOUT: !39 = !DILocation(line: 19, column: 10, scope: !34)
-// CHECK:STDOUT: !40 = !DILocation(line: 19, column: 3, scope: !34)
+// CHECK:STDOUT: !7 = !DILocation(line: 25, column: 3, scope: !4)
+// CHECK:STDOUT: !8 = !DILocation(line: 26, column: 3, scope: !4)
+// CHECK:STDOUT: !9 = !DILocation(line: 27, column: 3, scope: !4)
+// CHECK:STDOUT: !10 = !DILocation(line: 28, column: 3, scope: !4)
+// CHECK:STDOUT: !11 = !DILocation(line: 30, column: 5, scope: !4)
+// CHECK:STDOUT: !12 = !DILocation(line: 30, column: 3, scope: !4)
+// CHECK:STDOUT: !13 = !DILocation(line: 31, column: 5, scope: !4)
+// CHECK:STDOUT: !14 = !DILocation(line: 31, column: 3, scope: !4)
+// CHECK:STDOUT: !15 = !DILocation(line: 32, column: 5, scope: !4)
+// CHECK:STDOUT: !16 = !DILocation(line: 32, column: 3, scope: !4)
+// CHECK:STDOUT: !17 = !DILocation(line: 33, column: 5, scope: !4)
+// CHECK:STDOUT: !18 = !DILocation(line: 33, column: 3, scope: !4)
+// CHECK:STDOUT: !19 = !DILocation(line: 24, column: 1, scope: !4)
+// CHECK:STDOUT: !20 = distinct !DISubprogram(name: "F", linkageName: "_CF.Main.b88d1103f417c6d4", scope: null, file: !3, line: 17, type: !5, spFlags: DISPFlagDefinition, unit: !2)
+// CHECK:STDOUT: !21 = !DILocation(line: 18, column: 7, scope: !20)
+// CHECK:STDOUT: !22 = !DILocation(line: 18, column: 6, scope: !20)
+// CHECK:STDOUT: !23 = !DILocation(line: 19, column: 5, scope: !20)
+// CHECK:STDOUT: !24 = !DILocation(line: 21, column: 15, scope: !20)
+// CHECK:STDOUT: !25 = !DILocation(line: 21, column: 10, scope: !20)
+// CHECK:STDOUT: !26 = !DILocation(line: 21, column: 3, scope: !20)
+// CHECK:STDOUT: !27 = distinct !DISubprogram(name: "F", linkageName: "_CF.Main.66be507887ceee78", scope: null, file: !3, line: 17, type: !5, spFlags: DISPFlagDefinition, unit: !2)
+// CHECK:STDOUT: !28 = !DILocation(line: 18, column: 7, scope: !27)
+// CHECK:STDOUT: !29 = !DILocation(line: 18, column: 6, scope: !27)
+// CHECK:STDOUT: !30 = !DILocation(line: 19, column: 5, scope: !27)
+// CHECK:STDOUT: !31 = !DILocation(line: 21, column: 15, scope: !27)
+// CHECK:STDOUT: !32 = !DILocation(line: 21, column: 10, scope: !27)
+// CHECK:STDOUT: !33 = !DILocation(line: 21, column: 3, scope: !27)
+// CHECK:STDOUT: !34 = distinct !DISubprogram(name: "F", linkageName: "_CF.Main.e8193710fd35b608", scope: null, file: !3, line: 17, type: !5, spFlags: DISPFlagDefinition, unit: !2)
+// CHECK:STDOUT: !35 = !DILocation(line: 18, column: 7, scope: !34)
+// CHECK:STDOUT: !36 = !DILocation(line: 18, column: 6, scope: !34)
+// CHECK:STDOUT: !37 = !DILocation(line: 19, column: 5, scope: !34)
+// CHECK:STDOUT: !38 = !DILocation(line: 21, column: 15, scope: !34)
+// CHECK:STDOUT: !39 = !DILocation(line: 21, column: 10, scope: !34)
+// CHECK:STDOUT: !40 = !DILocation(line: 21, column: 3, scope: !34)

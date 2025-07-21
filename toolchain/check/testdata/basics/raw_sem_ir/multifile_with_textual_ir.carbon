@@ -63,12 +63,13 @@ fn B() {
 // CHECK:STDOUT:     inst18:          {kind: StructValue, arg0: inst_block_empty, type: type(inst16)}
 // CHECK:STDOUT:     inst19:          {kind: Return}
 // CHECK:STDOUT:   constant_values:
-// CHECK:STDOUT:     inst14:          concrete_constant(inst14)
-// CHECK:STDOUT:     inst15:          concrete_constant(inst18)
-// CHECK:STDOUT:     inst16:          concrete_constant(inst16)
-// CHECK:STDOUT:     inst17:          concrete_constant(inst17)
-// CHECK:STDOUT:     inst18:          concrete_constant(inst18)
-// CHECK:STDOUT:   symbolic_constants: {}
+// CHECK:STDOUT:     values:
+// CHECK:STDOUT:       inst14:          concrete_constant(inst14)
+// CHECK:STDOUT:       inst15:          concrete_constant(inst18)
+// CHECK:STDOUT:       inst16:          concrete_constant(inst16)
+// CHECK:STDOUT:       inst17:          concrete_constant(inst17)
+// CHECK:STDOUT:       inst18:          concrete_constant(inst18)
+// CHECK:STDOUT:     symbolic_constants: {}
 // CHECK:STDOUT:   inst_blocks:
 // CHECK:STDOUT:     inst_block_empty: {}
 // CHECK:STDOUT:     exports:
@@ -154,19 +155,20 @@ fn B() {
 // CHECK:STDOUT:     inst27:          {kind: Call, arg0: inst26, arg1: inst_block_empty, type: type(inst19)}
 // CHECK:STDOUT:     inst28:          {kind: Return}
 // CHECK:STDOUT:   constant_values:
-// CHECK:STDOUT:     inst14:          concrete_constant(inst14)
-// CHECK:STDOUT:     inst16:          concrete_constant(inst16)
-// CHECK:STDOUT:     inst17:          concrete_constant(inst20)
-// CHECK:STDOUT:     inst18:          concrete_constant(inst18)
-// CHECK:STDOUT:     inst19:          concrete_constant(inst19)
-// CHECK:STDOUT:     inst20:          concrete_constant(inst20)
-// CHECK:STDOUT:     inst21:          concrete_constant(inst16)
-// CHECK:STDOUT:     inst22:          concrete_constant(inst25)
-// CHECK:STDOUT:     inst23:          concrete_constant(inst25)
-// CHECK:STDOUT:     inst24:          concrete_constant(inst24)
-// CHECK:STDOUT:     inst25:          concrete_constant(inst25)
-// CHECK:STDOUT:     inst26:          concrete_constant(inst25)
-// CHECK:STDOUT:   symbolic_constants: {}
+// CHECK:STDOUT:     values:
+// CHECK:STDOUT:       inst14:          concrete_constant(inst14)
+// CHECK:STDOUT:       inst16:          concrete_constant(inst16)
+// CHECK:STDOUT:       inst17:          concrete_constant(inst20)
+// CHECK:STDOUT:       inst18:          concrete_constant(inst18)
+// CHECK:STDOUT:       inst19:          concrete_constant(inst19)
+// CHECK:STDOUT:       inst20:          concrete_constant(inst20)
+// CHECK:STDOUT:       inst21:          concrete_constant(inst16)
+// CHECK:STDOUT:       inst22:          concrete_constant(inst25)
+// CHECK:STDOUT:       inst23:          concrete_constant(inst25)
+// CHECK:STDOUT:       inst24:          concrete_constant(inst24)
+// CHECK:STDOUT:       inst25:          concrete_constant(inst25)
+// CHECK:STDOUT:       inst26:          concrete_constant(inst25)
+// CHECK:STDOUT:     symbolic_constants: {}
 // CHECK:STDOUT:   inst_blocks:
 // CHECK:STDOUT:     inst_block_empty: {}
 // CHECK:STDOUT:     exports:

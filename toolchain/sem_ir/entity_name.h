@@ -21,6 +21,9 @@ struct EntityName : public Printable<EntityName> {
 
   friend auto CarbonHashtableEq(const EntityName& lhs, const EntityName& rhs)
       -> bool {
+    // This requires that there are no padding bits in the type. This is upheld
+    // since it holds values all of the same size: each is 32 bits, with one
+    // split into 31 and 1 bits.
     return std::memcmp(&lhs, &rhs, sizeof(EntityName)) == 0;
   }
 

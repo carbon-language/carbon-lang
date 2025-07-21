@@ -51,22 +51,23 @@
 // CHECK:STDOUT:     'inst(WitnessType)': {kind: WitnessType, type: type(TypeType)}
 // CHECK:STDOUT:     inst14:          {kind: Namespace, arg0: name_scope0, arg1: inst<none>, type: type(inst(NamespaceType))}
 // CHECK:STDOUT:   constant_values:
-// CHECK:STDOUT:     'inst(TypeType)':  concrete_constant(inst(TypeType))
-// CHECK:STDOUT:     'inst(AutoType)':  concrete_constant(inst(AutoType))
-// CHECK:STDOUT:     'inst(BoolType)':  concrete_constant(inst(BoolType))
-// CHECK:STDOUT:     'inst(BoundMethodType)': concrete_constant(inst(BoundMethodType))
-// CHECK:STDOUT:     'inst(ErrorInst)': concrete_constant(inst(ErrorInst))
-// CHECK:STDOUT:     'inst(ImplWitnessTablePlaceholder)': concrete_constant(inst(ImplWitnessTablePlaceholder))
-// CHECK:STDOUT:     'inst(InstType)':  concrete_constant(inst(InstType))
-// CHECK:STDOUT:     'inst(IntLiteralType)': concrete_constant(inst(IntLiteralType))
-// CHECK:STDOUT:     'inst(LegacyFloatType)': concrete_constant(inst(LegacyFloatType))
-// CHECK:STDOUT:     'inst(NamespaceType)': concrete_constant(inst(NamespaceType))
-// CHECK:STDOUT:     'inst(SpecificFunctionType)': concrete_constant(inst(SpecificFunctionType))
-// CHECK:STDOUT:     'inst(StringType)': concrete_constant(inst(StringType))
-// CHECK:STDOUT:     'inst(VtableType)': concrete_constant(inst(VtableType))
-// CHECK:STDOUT:     'inst(WitnessType)': concrete_constant(inst(WitnessType))
-// CHECK:STDOUT:     inst14:          concrete_constant(inst14)
-// CHECK:STDOUT:   symbolic_constants: {}
+// CHECK:STDOUT:     values:
+// CHECK:STDOUT:       'inst(TypeType)':  concrete_constant(inst(TypeType))
+// CHECK:STDOUT:       'inst(AutoType)':  concrete_constant(inst(AutoType))
+// CHECK:STDOUT:       'inst(BoolType)':  concrete_constant(inst(BoolType))
+// CHECK:STDOUT:       'inst(BoundMethodType)': concrete_constant(inst(BoundMethodType))
+// CHECK:STDOUT:       'inst(ErrorInst)': concrete_constant(inst(ErrorInst))
+// CHECK:STDOUT:       'inst(ImplWitnessTablePlaceholder)': concrete_constant(inst(ImplWitnessTablePlaceholder))
+// CHECK:STDOUT:       'inst(InstType)':  concrete_constant(inst(InstType))
+// CHECK:STDOUT:       'inst(IntLiteralType)': concrete_constant(inst(IntLiteralType))
+// CHECK:STDOUT:       'inst(LegacyFloatType)': concrete_constant(inst(LegacyFloatType))
+// CHECK:STDOUT:       'inst(NamespaceType)': concrete_constant(inst(NamespaceType))
+// CHECK:STDOUT:       'inst(SpecificFunctionType)': concrete_constant(inst(SpecificFunctionType))
+// CHECK:STDOUT:       'inst(StringType)': concrete_constant(inst(StringType))
+// CHECK:STDOUT:       'inst(VtableType)': concrete_constant(inst(VtableType))
+// CHECK:STDOUT:       'inst(WitnessType)': concrete_constant(inst(WitnessType))
+// CHECK:STDOUT:       inst14:          concrete_constant(inst14)
+// CHECK:STDOUT:     symbolic_constants: {}
 // CHECK:STDOUT:   inst_blocks:
 // CHECK:STDOUT:     inst_block_empty: {}
 // CHECK:STDOUT:     exports:         {}

@@ -11,10 +11,12 @@
 #include "common/check.h"
 #include "common/raw_string_ostream.h"
 #include "llvm/TargetParser/Host.h"
+#include "toolchain/base/clang_invocation.h"
 #include "toolchain/base/shared_value_stores.h"
 #include "toolchain/check/check.h"
 #include "toolchain/diagnostics/diagnostic.h"
 #include "toolchain/diagnostics/diagnostic_consumer.h"
+#include "toolchain/diagnostics/diagnostic_emitter.h"
 #include "toolchain/lex/lex.h"
 #include "toolchain/lex/tokenized_buffer.h"
 #include "toolchain/parse/parse.h"
@@ -157,16 +159,20 @@ auto Context::File::SetText(Context& context, std::optional<int64_t> version,
   auto getter = [this]() -> const Parse::TreeAndSubtrees& {
     return *tree_and_subtrees_;
   };
-  llvm::IntrusiveRefCntPtr<llvm::vfs::InMemoryFileSystem> fs =
-      new llvm::vfs::InMemoryFileSystem;
+  // TODO: Include any unsaved files as an overlay on the real file system.
+  llvm::IntrusiveRefCntPtr<llvm::vfs::FileSystem> fs =
+      llvm::vfs::getRealFileSystem();
 
   // TODO: Include the prelude.
   Check::CheckParseTreesOptions check_options;
   check_options.vlog_stream = context.vlog_stream();
+
+  auto clang_invocation =
+      BuildClangInvocation(consumer, fs, {context.installation().clang_path()});
+
   Check::CheckParseTrees(units,
                          llvm::ArrayRef<Parse::GetTreeAndSubtreesFn>(getter),
-                         fs, context.installation().clang_path(),
-                         llvm::sys::getDefaultTargetTriple(), check_options);
+                         fs, check_options, std::move(clang_invocation));
 
   // Note we need to publish diagnostics even when empty.
   // TODO: Consider caching previously published diagnostics and only publishing

@@ -5,6 +5,7 @@
 #ifndef CARBON_TOOLCHAIN_CHECK_CHECK_H_
 #define CARBON_TOOLCHAIN_CHECK_CHECK_H_
 
+#include "clang/Frontend/CompilerInvocation.h"
 #include "common/ostream.h"
 #include "toolchain/base/shared_value_stores.h"
 #include "toolchain/base/timings.h"
@@ -75,8 +76,8 @@ auto CheckParseTrees(
     llvm::MutableArrayRef<Unit> units,
     llvm::ArrayRef<Parse::GetTreeAndSubtreesFn> tree_and_subtrees_getters,
     llvm::IntrusiveRefCntPtr<llvm::vfs::FileSystem> fs,
-    llvm::StringRef clang_path, llvm::StringRef target,
-    const CheckParseTreesOptions& options) -> void;
+    const CheckParseTreesOptions& options,
+    std::shared_ptr<clang::CompilerInvocation> clang_invocation) -> void;
 
 }  // namespace Carbon::Check
 

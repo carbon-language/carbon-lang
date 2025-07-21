@@ -571,8 +571,6 @@ auto InstNamer::PushEntity(VtableId vtable_id, ScopeId /*scope_id*/,
   scope.name = globals_.AllocateName(
       *this, vtable_loc,
       sem_ir_->names().GetIRBaseName(class_info.name_id).str() + ".vtable");
-  // TODO: Add support for generic vtables here and elsewhere.
-  // PushGeneric(scope_id, vtable_info.generic_id);
 }
 
 InstNamer::NamingContext::NamingContext(InstNamer* inst_namer,
