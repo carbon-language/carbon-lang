@@ -5,9 +5,11 @@
 #ifndef CARBON_COMMON_ERROR_H_
 #define CARBON_COMMON_ERROR_H_
 
+#include <concepts>
 #include <functional>
 #include <string>
 #include <type_traits>
+#include <utility>
 #include <variant>
 
 #include "common/check.h"
@@ -71,19 +73,76 @@ class [[nodiscard]] Error : public Printable<Error> {
   std::string message_;
 };
 
-// Holds a value of type `T`, or an Error explaining why the value is
+// A common base class that custom error types should derive from.
+//
+// This combines the ability to be printed with the ability to convert the error
+// to a string and in turn to a non-customized `Error` type by rendering into a
+// string.
+//
+// The goal is that custom error types can be used for errors that are common
+// and/or would have cost to fully render the error message to a string. A
+// custom type can then be used to allow custom, light-weight handling of errors
+// when appropriate. But to avoid these custom types being excessively viral, we
+// ensure they can be converted to normal `Error` types when needed by rendering
+// fully to a string.
+template <typename ErrorT>
+class [[nodiscard]] ErrorBase : public Printable<ErrorT> {
+ public:
+  // NOLINTNEXTLINE(bugprone-crtp-constructor-accessibility): Deleted.
+  ErrorBase(const ErrorBase&) = delete;
+
+  auto ToString() const -> std::string {
+    RawStringOstream s;
+    static_cast<const ErrorT*>(this)->Print(s);
+    return s.TakeStr();
+  }
+
+  explicit operator Error() { return Error(this->ToString()); }
+
+ private:
+  friend ErrorT;
+
+  ErrorBase() = default;
+  ErrorBase(ErrorBase&&) noexcept = default;
+  auto operator=(ErrorBase&&) noexcept -> ErrorBase& = default;
+};
+
+// Holds a value of type `T`, or an `ErrorT` type explaining why the value is
 // unavailable.
 //
+// The `ErrorT` type defaults to `Error` but can be customized where desired
+// with a type that derives from `ErrorBase` above. See the documentation for
+// `ErrorBase` to understand the expected contract of custom error types.
+//
 // This is nodiscard to enforce error handling prior to destruction.
-template <typename T>
+template <typename T, typename ErrorT = Error>
 class [[nodiscard]] ErrorOr {
  public:
   using ValueT = std::remove_reference_t<T>;
+  static_assert(!std::is_reference_v<ErrorT>,
+                "Error type must be a value type.");
+  static_assert(std::same_as<ErrorT, Error> ||
+                    std::derived_from<ErrorT, ErrorBase<ErrorT>>,
+                "Error type must be `Error` or be derived from `ErrorBase`.");
 
   // Constructs with an error; the error must not be Error::Success().
   // Implicit for easy construction on returns.
   // NOLINTNEXTLINE(google-explicit-constructor)
-  ErrorOr(Error err) : val_(std::move(err)) {}
+  ErrorOr(ErrorT err) : val_(std::move(err)) {}
+
+  // Constructs with any convertible error, necessary for return statements that
+  // are already converting to the `ErrorOr` wrapper.
+  //
+  // This supports *explicitly* conversions, not just implicit, which is
+  // important to make common patterns of returning and adjusting the error
+  // type without each error type conversion needing to be implicit.
+  template <typename OtherErrorT>
+    requires(std::constructible_from<ErrorT, OtherErrorT> &&
+             std::derived_from<OtherErrorT, ErrorBase<OtherErrorT>>)
+  // Implicit for easy construction on returns.
+  // NOLINTNEXTLINE(google-explicit-constructor)
+  ErrorOr(OtherErrorT other_err)
+      : val_(std::in_place_type<ErrorT>, std::move(other_err)) {}
 
   // Constructs with a reference.
   // Implicit for easy construction on returns.
@@ -104,13 +163,13 @@ class [[nodiscard]] ErrorOr {
 
   // Returns the contained error.
   // REQUIRES: `ok()` is false.
-  auto error() const& -> const Error& {
+  auto error() const& -> const ErrorT& {
     CARBON_CHECK(!ok());
-    return std::get<Error>(val_);
+    return std::get<ErrorT>(val_);
   }
-  auto error() && -> Error {
+  auto error() && -> ErrorT {
     CARBON_CHECK(!ok());
-    return std::get<Error>(std::move(val_));
+    return std::get<ErrorT>(std::move(val_));
   }
 
   // Returns the contained value.
@@ -140,7 +199,7 @@ class [[nodiscard]] ErrorOr {
                                      std::reference_wrapper<ValueT>, T>;
 
   // Either an error message or a value.
-  std::variant<Error, StoredT> val_;
+  std::variant<ErrorT, StoredT> val_;
 };
 
 // A helper class for accumulating error message and converting to
