@@ -60,7 +60,7 @@ Its semantics are defined in terms of the following interface:
 package Core;
 
 interface IndexWithPrimitive
-    [anchor Self:! Form]
+    [implicit_into anchor Self:! Form]
     (implicit_into Subscript:! Form) {
   let implicit_from ResultForm:! Form;
   fn Op[bound self:? Self](subscript:? Subscript)

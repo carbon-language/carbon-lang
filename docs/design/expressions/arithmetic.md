@@ -194,7 +194,7 @@ following family of interfaces:
 package Core;
 
 // Unary `-`.
-interface NegatePrimitive[anchor Self:! NoRefForm] {
+interface NegatePrimitive[implicit_into anchor Self:! NoRefForm] {
   default let implicit_from ResultForm:! NoRefForm
       = form(var Self.type);
   fn Op[bound self:? Self]()
