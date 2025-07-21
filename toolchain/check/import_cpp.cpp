@@ -454,16 +454,16 @@ static auto ImportNamespaceDecl(Context& context,
 
 // Creates a class declaration for the given class name in the given scope.
 // Returns the `InstId` for the declaration.
-static auto BuildClassDecl(Context& context, SemIR::NameScopeId parent_scope_id,
+static auto BuildClassDecl(Context& context, SemIR::ImportIRInstId loc,
+                           SemIR::NameScopeId parent_scope_id,
                            SemIR::NameId name_id)
     -> std::tuple<SemIR::ClassId, SemIR::InstId> {
   // Add the class declaration.
   auto class_decl = SemIR::ClassDecl{.type_id = SemIR::TypeType::TypeId,
                                      .class_id = SemIR::ClassId::None,
                                      .decl_block_id = SemIR::InstBlockId::None};
-  // TODO: Consider setting a proper location.
   auto class_decl_id = AddPlaceholderInstInNoBlock(
-      context, SemIR::LocIdAndInst::NoLoc(class_decl));
+      context, SemIR::LocIdAndInst::UncheckedLoc(loc, class_decl));
   context.imports().push_back(class_decl_id);
 
   SemIR::Class class_info = {
@@ -497,7 +497,7 @@ static auto BuildClassDecl(Context& context, SemIR::NameScopeId parent_scope_id,
 
 // Checks that the specified finished class definition is valid and builds and
 // returns a corresponding complete type witness instruction.
-static auto ImportClassObjectRepr(Context& context,
+static auto ImportClassObjectRepr(Context& context, SemIR::ImportIRInstId loc,
                                   const clang::RecordDecl* clang_def)
     -> SemIR::InstId {
   const auto& clang_layout =
@@ -519,7 +519,6 @@ static auto ImportClassObjectRepr(Context& context,
   // TODO: Import fields.
   // TODO: Add a field to prevent tail padding reuse if necessary.
 
-  auto loc = AddImportIRInst(context, clang_def->getLocation());
   auto layout_type_inst_id = AddTypeInst<SemIR::CustomLayoutType>(
       context, loc,
       {.type_id = SemIR::TypeType::TypeId,
@@ -534,7 +533,8 @@ static auto ImportClassObjectRepr(Context& context,
 
 // Creates a class definition based on the information in the given Clang
 // declaration, which is assumed to be for a class definition.
-static auto BuildClassDefinition(Context& context, SemIR::ClassId class_id,
+static auto BuildClassDefinition(Context& context, SemIR::ImportIRInstId loc,
+                                 SemIR::ClassId class_id,
                                  SemIR::InstId class_inst_id,
                                  SemIR::ClangDeclId clang_decl_id,
                                  clang::CXXRecordDecl* clang_def) -> void {
@@ -548,7 +548,7 @@ static auto BuildClassDefinition(Context& context, SemIR::ClassId class_id,
 
   // Compute the class's object representation.
   class_info.complete_type_witness_id =
-      ImportClassObjectRepr(context, clang_def);
+      ImportClassObjectRepr(context, loc, clang_def);
 }
 
 // Mark the given `Decl` as failed in `clang_decls`.
@@ -564,16 +564,22 @@ static auto MarkFailedDecl(Context& context, clang::Decl* clang_decl) {
 static auto ImportCXXRecordDecl(Context& context,
                                 clang::CXXRecordDecl* clang_decl)
     -> SemIR::InstId {
+  clang::CXXRecordDecl* clang_def = clang_decl->getDefinition();
+  if (clang_def) {
+    clang_decl = clang_def;
+  }
+  auto loc = AddImportIRInst(context, clang_decl->getLocation());
+
   auto [class_id, class_inst_id] =
-      BuildClassDecl(context, GetParentNameScopeId(context, clang_decl),
+      BuildClassDecl(context, loc, GetParentNameScopeId(context, clang_decl),
                      AddIdentifierName(context, clang_decl->getName()));
 
   // TODO: The caller does the same lookup. Avoid doing it twice.
   auto clang_decl_id = context.sem_ir().clang_decls().Add(
       {.decl = clang_decl->getCanonicalDecl(), .inst_id = class_inst_id});
 
-  if (clang::CXXRecordDecl* clang_def = clang_decl->getDefinition()) {
-    BuildClassDefinition(context, class_id, class_inst_id, clang_decl_id,
+  if (clang_def) {
+    BuildClassDefinition(context, loc, class_id, class_inst_id, clang_decl_id,
                          clang_def);
   }
 

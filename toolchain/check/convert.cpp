@@ -574,6 +574,10 @@ static auto ConvertStructToClass(
   if (object_repr_id == SemIR::ErrorInst::TypeId) {
     return SemIR::ErrorInst::InstId;
   }
+  if (context.types().Is<SemIR::CustomLayoutType>(object_repr_id)) {
+    // Builtin conversion does not apply.
+    return value_id;
+  }
   auto dest_struct_type =
       context.types().GetAs<SemIR::StructType>(object_repr_id);
 
