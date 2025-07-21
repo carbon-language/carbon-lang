@@ -767,6 +767,13 @@ static auto BuildTypeForInst(FileContext& context, SemIR::ConstType inst)
       context.sem_ir().types().GetTypeIdForTypeInstId(inst.inner_id));
 }
 
+static auto BuildTypeForInst(FileContext& context, SemIR::CustomLayoutType inst)
+    -> llvm::Type* {
+  auto layout = context.sem_ir().custom_layouts().Get(inst.layout_id);
+  return llvm::ArrayType::get(llvm::Type::getInt8Ty(context.llvm_context()),
+                              layout[SemIR::CustomLayoutId::SizeIndex]);
+}
+
 static auto BuildTypeForInst(FileContext& context, SemIR::PartialType inst)
     -> llvm::Type* {
   return context.GetType(

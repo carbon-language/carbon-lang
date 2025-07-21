@@ -299,6 +299,12 @@ class Stringifier {
     step_stack_->PushInstId(inst.inner_id);
   }
 
+  auto StringifyInst(InstId /*inst_id*/, CustomLayoutType inst) -> void {
+    auto layout = sem_ir_->custom_layouts().Get(inst.layout_id);
+    *out_ << "<size " << layout[CustomLayoutId::SizeIndex] << ", align "
+          << layout[CustomLayoutId::AlignIndex] << ">";
+  }
+
   auto StringifyInst(InstId /*inst_id*/, FacetAccessType inst) -> void {
     // Given `T:! I`, print `T as type` as simply `T`.
     step_stack_->PushInstId(inst.facet_value_inst_id);

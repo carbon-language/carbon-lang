@@ -218,6 +218,8 @@ auto FunctionContext::CreateAlloca(llvm::Type* type, const llvm::Twine& name)
     builder().SetCurrentDebugLocation(debug_loc);
 
     // Create an alloca for this variable in the entry block.
+    // TODO: Compute alignment of the type, which may be greater than the
+    // alignment computed by LLVM.
     alloca = builder().CreateAlloca(type, /*ArraySize=*/nullptr, name);
   }
 
