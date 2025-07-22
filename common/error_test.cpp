@@ -54,7 +54,7 @@ template <typename ErrorT>
 class ErrorOrTest : public ::testing::Test {
  public:
   template <typename T>
-  using TestErrorOr = ErrorOr<T, ErrorT>;
+  using TestErrorOrTemp = ErrorOr<T, ErrorT>;
 
   auto ErrorStr() -> std::string {
     if constexpr (std::same_as<ErrorT, Error>) {
@@ -81,20 +81,20 @@ using ErrorOrTestParams = ::testing::Types<Error, CustomError>;
 TYPED_TEST_SUITE(ErrorOrTest, ErrorOrTestParams);
 
 TYPED_TEST(ErrorOrTest, ErrorOr) {
-  using TestErrorOr = typename TestFixture::template TestErrorOr<int>;
+  using TestErrorOr = typename TestFixture::template TestErrorOrTemp<int>;
   TestErrorOr err(this->MakeError());
 
   EXPECT_THAT(err, IsError(this->ErrorStr()));
 }
 
 TYPED_TEST(ErrorOrTest, ErrorOrValue) {
-  using TestErrorOr = typename TestFixture::template TestErrorOr<int>;
+  using TestErrorOr = typename TestFixture::template TestErrorOrTemp<int>;
   EXPECT_TRUE(TestErrorOr(0).ok());
 }
 
 template <typename Fixture>
 auto IndirectErrorOrTest(Fixture& fixture) ->
-    typename Fixture::template TestErrorOr<int> {
+    typename Fixture::template TestErrorOrTemp<int> {
   return fixture.MakeError();
 }
 
@@ -107,13 +107,13 @@ struct Val {
 };
 
 TYPED_TEST(ErrorOrTest, ErrorOrArrowOp) {
-  using TestErrorOr = typename TestFixture::template TestErrorOr<Val>;
+  using TestErrorOr = typename TestFixture::template TestErrorOrTemp<Val>;
   TestErrorOr err({1});
   EXPECT_EQ(err->val, 1);
 }
 
 TYPED_TEST(ErrorOrTest, ErrorOrReference) {
-  using TestErrorOr = typename TestFixture::template TestErrorOr<Val&>;
+  using TestErrorOr = typename TestFixture::template TestErrorOrTemp<Val&>;
   Val val = {1};
   TestErrorOr maybe_val(val);
   EXPECT_EQ(maybe_val->val, 1);
@@ -121,7 +121,7 @@ TYPED_TEST(ErrorOrTest, ErrorOrReference) {
 
 template <typename Fixture>
 auto IndirectErrorOrSuccessTest() ->
-    typename Fixture::template TestErrorOr<Success> {
+    typename Fixture::template TestErrorOrTemp<Success> {
   return Success();
 }
 
@@ -130,7 +130,7 @@ TYPED_TEST(ErrorOrTest, IndirectErrorOrSuccess) {
 }
 
 TYPED_TEST(ErrorOrTest, ReturnIfErrorNoError) {
-  using TestErrorOr = typename TestFixture::template TestErrorOr<Success>;
+  using TestErrorOr = typename TestFixture::template TestErrorOrTemp<Success>;
   auto result = []() -> TestErrorOr {
     CARBON_RETURN_IF_ERROR(TestErrorOr(Success()));
     CARBON_RETURN_IF_ERROR(TestErrorOr(Success()));
@@ -140,7 +140,7 @@ TYPED_TEST(ErrorOrTest, ReturnIfErrorNoError) {
 }
 
 TYPED_TEST(ErrorOrTest, ReturnIfErrorHasError) {
-  using TestErrorOr = typename TestFixture::template TestErrorOr<Success>;
+  using TestErrorOr = typename TestFixture::template TestErrorOrTemp<Success>;
   auto result = [this]() -> TestErrorOr {
     CARBON_RETURN_IF_ERROR(TestErrorOr(Success()));
     CARBON_RETURN_IF_ERROR(TestErrorOr(this->MakeError()));
@@ -150,7 +150,7 @@ TYPED_TEST(ErrorOrTest, ReturnIfErrorHasError) {
 }
 
 TYPED_TEST(ErrorOrTest, AssignOrReturnNoError) {
-  using TestErrorOr = typename TestFixture::template TestErrorOr<int>;
+  using TestErrorOr = typename TestFixture::template TestErrorOrTemp<int>;
   auto result = []() -> TestErrorOr {
     CARBON_ASSIGN_OR_RETURN(int a, TestErrorOr(1));
     CARBON_ASSIGN_OR_RETURN(const int b, TestErrorOr(2));
@@ -162,7 +162,7 @@ TYPED_TEST(ErrorOrTest, AssignOrReturnNoError) {
 }
 
 TYPED_TEST(ErrorOrTest, AssignOrReturnHasDirectError) {
-  using TestErrorOr = typename TestFixture::template TestErrorOr<int>;
+  using TestErrorOr = typename TestFixture::template TestErrorOrTemp<int>;
   auto result = [this]() -> TestErrorOr {
     CARBON_RETURN_IF_ERROR(TestErrorOr(this->MakeError()));
     return 0;
@@ -171,7 +171,7 @@ TYPED_TEST(ErrorOrTest, AssignOrReturnHasDirectError) {
 }
 
 TYPED_TEST(ErrorOrTest, AssignOrReturnHasErrorInExpected) {
-  using TestErrorOr = typename TestFixture::template TestErrorOr<int>;
+  using TestErrorOr = typename TestFixture::template TestErrorOrTemp<int>;
   auto result = [this]() -> TestErrorOr {
     CARBON_ASSIGN_OR_RETURN(int a, TestErrorOr(this->MakeError()));
     return a;
@@ -189,11 +189,12 @@ class AnotherCustomError : public ErrorBase<AnotherCustomError> {
 };
 
 TYPED_TEST(ErrorOrTest, AssignOrReturnNoErrorAcrossErrorTypes) {
-  using TestErrorOr = typename TestFixture::template TestErrorOr<int>;
+  using TestErrorOr = typename TestFixture::template TestErrorOrTemp<int>;
   auto result = []() -> ErrorOr<int> {
     CARBON_ASSIGN_OR_RETURN(int a, TestErrorOr(1));
     CARBON_ASSIGN_OR_RETURN(const int b, []() -> TestErrorOr {
-      CARBON_ASSIGN_OR_RETURN(int inner, (ErrorOr<int, AnotherCustomError>)(2));
+      CARBON_ASSIGN_OR_RETURN(
+          int inner, (static_cast<ErrorOr<int, AnotherCustomError>>(2)));
       return inner;
     }());
     int c = 0;
@@ -204,12 +205,13 @@ TYPED_TEST(ErrorOrTest, AssignOrReturnNoErrorAcrossErrorTypes) {
 }
 
 TYPED_TEST(ErrorOrTest, AssignOrReturnErrorAcrossErrorTypes) {
-  using TestErrorOr = typename TestFixture::template TestErrorOr<int>;
+  using TestErrorOr = typename TestFixture::template TestErrorOrTemp<int>;
   auto result = []() -> ErrorOr<int> {
     CARBON_ASSIGN_OR_RETURN(int a, TestErrorOr(1));
     CARBON_ASSIGN_OR_RETURN(const int b, []() -> TestErrorOr {
-      CARBON_ASSIGN_OR_RETURN(
-          int inner, (ErrorOr<int, AnotherCustomError>)(AnotherCustomError()));
+      CARBON_ASSIGN_OR_RETURN(int inner,
+                              (static_cast<ErrorOr<int, AnotherCustomError>>(
+                                  AnotherCustomError())));
       return inner;
     }());
     int c = 0;

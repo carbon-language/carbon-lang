@@ -88,14 +88,14 @@ class [[nodiscard]] Error : public Printable<Error> {
 template <typename ErrorT>
 class [[nodiscard]] ErrorBase : public Printable<ErrorT> {
  public:
-  // NOLINTNEXTLINE(bugprone-crtp-constructor-accessibility): Deleted.
   ErrorBase(const ErrorBase&) = delete;
 
   auto ToString() const -> std::string {
-    return Dump();
+    RawStringOstream os;
+    static_cast<const ErrorT*>(this)->Print(os);
+    return os.TakeStr();
   }
-
-  explicit operator Error() { return Error(this->ToString()); }
+  auto ToError() const -> Error { return Error(this->ToString()); }
 
  private:
   friend ErrorT;
@@ -128,8 +128,17 @@ class [[nodiscard]] ErrorOr {
   // NOLINTNEXTLINE(google-explicit-constructor)
   ErrorOr(ErrorT err) : val_(std::move(err)) {}
 
-  // Constructs with any convertible error, necessary for return statements that
-  // are already converting to the `ErrorOr` wrapper.
+  // Constructs from a custom error type derived from `ErrorBase` into an
+  // `ErrorOr` for `Error` to facilitate returning errors transparently.
+  template <typename OtherErrorT>
+    requires(std::same_as<ErrorT, Error> &&
+             std::derived_from<OtherErrorT, ErrorBase<OtherErrorT>>)
+  // Implicit for easy construction on returns.
+  // NOLINTNEXTLINE(google-explicit-constructor)
+  ErrorOr(OtherErrorT other_err) : val_(other_err.ToError()) {}
+
+  // Constructs with any convertible error type, necessary for return statements
+  // that are already converting to the `ErrorOr` wrapper.
   //
   // This supports *explicitly* conversions, not just implicit, which is
   // important to make common patterns of returning and adjusting the error
