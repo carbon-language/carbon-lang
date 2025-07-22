@@ -452,12 +452,15 @@ static auto ImportNamespaceDecl(Context& context,
   return result.inst_id;
 }
 
+static auto MapType(Context& context, SemIR::LocId loc_id, clang::QualType type)
+    -> TypeExpr;
+
 // Creates a class declaration for the given class name in the given scope.
 // Returns the `InstId` for the declaration.
 static auto BuildClassDecl(Context& context, SemIR::ImportIRInstId loc,
                            SemIR::NameScopeId parent_scope_id,
                            SemIR::NameId name_id)
-    -> std::tuple<SemIR::ClassId, SemIR::InstId> {
+    -> std::tuple<SemIR::ClassId, SemIR::TypeInstId> {
   // Add the class declaration.
   auto class_decl = SemIR::ClassDecl{.type_id = SemIR::TypeType::TypeId,
                                      .class_id = SemIR::ClassId::None,
@@ -492,12 +495,13 @@ static auto BuildClassDecl(Context& context, SemIR::ImportIRInstId loc,
 
   SetClassSelfType(context, class_decl.class_id);
 
-  return {class_decl.class_id, class_decl_id};
+  return {class_decl.class_id, context.types().GetAsTypeInstId(class_decl_id)};
 }
 
 // Checks that the specified finished class definition is valid and builds and
 // returns a corresponding complete type witness instruction.
 static auto ImportClassObjectRepr(Context& context, SemIR::ImportIRInstId loc,
+                                  SemIR::TypeInstId class_type_inst_id,
                                   const clang::CXXRecordDecl* clang_def)
     -> SemIR::TypeInstId {
   // For now, if the class is empty, produce an empty struct as the object
@@ -527,7 +531,41 @@ static auto ImportClassObjectRepr(Context& context, SemIR::ImportIRInstId loc,
 
   // TODO: Import vptr(s).
   // TODO: Import bases.
-  // TODO: Import fields.
+
+  // Import fields.
+  for (auto* field : clang_def->fields()) {
+    if (field->isBitField()) {
+      // TODO: Add a represntation for named bitfield members.
+      continue;
+    }
+    if (field->isAnonymousStructOrUnion()) {
+      // TODO: Visit IndirectFieldDecls and add them to the layout.
+      continue;
+    }
+
+    auto field_name_id = AddIdentifierName(context, field->getName());
+    auto [field_type_inst_id, field_type_id] =
+        MapType(context, loc, field->getType());
+
+    // Create a field now, as we know the index to use.
+    // TODO: Consider doing this lazily instead.
+    auto field_decl_id = AddInstInNoBlock(
+        context,
+        // TODO: Factor out this call.
+        SemIR::LocIdAndInst::UncheckedLoc(
+            loc, SemIR::FieldDecl{
+                     .type_id = GetUnboundElementType(
+                         context, class_type_inst_id, field_type_inst_id),
+                     .name_id = field_name_id,
+                     .index = SemIR::ElementIndex(fields.size())}));
+    context.sem_ir().clang_decls().Add(
+        {.decl = field->getCanonicalDecl(), .inst_id = field_decl_id});
+
+    layout.push_back(clang_layout.getFieldOffset(field->getFieldIndex()));
+    fields.push_back({.name_id = field_name_id,
+                      .type_inst_id = field_type_inst_id});
+  }
+
   // TODO: Add a field to prevent tail padding reuse if necessary.
 
   return AddTypeInst<SemIR::CustomLayoutType>(
@@ -541,7 +579,7 @@ static auto ImportClassObjectRepr(Context& context, SemIR::ImportIRInstId loc,
 // declaration, which is assumed to be for a class definition.
 static auto BuildClassDefinition(Context& context, SemIR::ImportIRInstId loc,
                                  SemIR::ClassId class_id,
-                                 SemIR::InstId class_inst_id,
+                                 SemIR::TypeInstId class_inst_id,
                                  SemIR::ClangDeclId clang_decl_id,
                                  clang::CXXRecordDecl* clang_def) -> void {
   auto& class_info = context.classes().Get(class_id);
@@ -554,11 +592,12 @@ static auto BuildClassDefinition(Context& context, SemIR::ImportIRInstId loc,
 
   // Compute the class's object representation.
   auto object_repr_id =
-      ImportClassObjectRepr(context, loc, clang_def);
-  class_info.complete_type_witness_id = AddInst<SemIR::CompleteTypeWitness>(
-      context, loc,
-      {.type_id = GetSingletonType(context, SemIR::WitnessType::TypeInstId),
-       .object_repr_type_inst_id = object_repr_id});
+      ImportClassObjectRepr(context, loc, class_inst_id, clang_def);
+  class_info.complete_type_witness_id =
+      AddInstInNoBlock<SemIR::CompleteTypeWitness>(
+          context, loc,
+          {.type_id = GetSingletonType(context, SemIR::WitnessType::TypeInstId),
+           .object_repr_type_inst_id = object_repr_id});
 }
 
 // Mark the given `Decl` as failed in `clang_decls`.
@@ -1088,6 +1127,7 @@ static auto GetDependentUnimportedTypeDecls(const Context& context,
       if (!IsClangDeclImported(context, record_decl)) {
         return {record_decl};
       }
+      // TODO: Also collect field types.
     }
   }
 
@@ -1155,6 +1195,14 @@ static auto ImportDeclAfterDependencies(Context& context, SemIR::LocId loc_id,
       return SemIR::ErrorInst::InstId;
     }
     return type_inst_id;
+  }
+  if (clang::isa<clang::FieldDecl>(clang_decl)) {
+    // Usable fields get imported as a side effect of importing the class.
+    if (SemIR::InstId existing_inst_id =
+            LookupClangDeclInstId(context, clang_decl);
+        existing_inst_id.has_value()) {
+      return existing_inst_id;
+    }
   }
 
   context.TODO(loc_id, llvm::formatv("Unsupported: Declaration type {0}",

@@ -741,8 +741,8 @@ fn MyF(bar: Cpp.Bar*);
 // CHECK:STDOUT:   %Bar.ref: type = name_ref Bar, imports.%Bar.decl [concrete = constants.%Bar]
 // CHECK:STDOUT:   %.loc8: %Derived.elem = base_decl %Bar.ref, element0 [concrete]
 // CHECK:STDOUT:   %struct_type.base: type = struct_type {.base: %Bar} [concrete = constants.%struct_type.base.36d]
-// CHECK:STDOUT:   %complete_type.loc9: <witness> = complete_type_witness %struct_type.base [concrete = constants.%complete_type.fff]
-// CHECK:STDOUT:   complete_type_witness = %complete_type.loc9
+// CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %struct_type.base [concrete = constants.%complete_type.fff]
+// CHECK:STDOUT:   complete_type_witness = %complete_type
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%Derived
