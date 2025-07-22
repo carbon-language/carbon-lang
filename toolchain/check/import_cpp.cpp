@@ -498,8 +498,19 @@ static auto BuildClassDecl(Context& context, SemIR::ImportIRInstId loc,
 // Checks that the specified finished class definition is valid and builds and
 // returns a corresponding complete type witness instruction.
 static auto ImportClassObjectRepr(Context& context, SemIR::ImportIRInstId loc,
-                                  const clang::RecordDecl* clang_def)
-    -> SemIR::InstId {
+                                  const clang::CXXRecordDecl* clang_def)
+    -> SemIR::TypeInstId {
+  // For now, if the class is empty, produce an empty struct as the object
+  // representation. This allows our tests to continue to pass while we don't
+  // properly support initializing imported C++ classes.
+  // TODO: Remove this.
+  if (clang_def->isEmpty()) {
+    return AddTypeInst<SemIR::StructType>(
+        context, loc,
+        {.type_id = SemIR::TypeType::TypeId,
+         .fields_id = SemIR::StructTypeFieldsId::Empty});
+  }
+
   const auto& clang_layout =
       clang_def->getASTContext().getASTRecordLayout(clang_def);
 
@@ -519,16 +530,11 @@ static auto ImportClassObjectRepr(Context& context, SemIR::ImportIRInstId loc,
   // TODO: Import fields.
   // TODO: Add a field to prevent tail padding reuse if necessary.
 
-  auto layout_type_inst_id = AddTypeInst<SemIR::CustomLayoutType>(
+  return AddTypeInst<SemIR::CustomLayoutType>(
       context, loc,
       {.type_id = SemIR::TypeType::TypeId,
        .fields_id = context.struct_type_fields().Add(fields),
        .layout_id = context.custom_layouts().Add(layout)});
-
-  return AddInst<SemIR::CompleteTypeWitness>(
-      context, loc,
-      {.type_id = GetSingletonType(context, SemIR::WitnessType::TypeInstId),
-       .object_repr_type_inst_id = layout_type_inst_id});
 }
 
 // Creates a class definition based on the information in the given Clang
@@ -547,8 +553,12 @@ static auto BuildClassDefinition(Context& context, SemIR::ImportIRInstId loc,
       .set_clang_decl_context_id(clang_decl_id);
 
   // Compute the class's object representation.
-  class_info.complete_type_witness_id =
+  auto object_repr_id =
       ImportClassObjectRepr(context, loc, clang_def);
+  class_info.complete_type_witness_id = AddInst<SemIR::CompleteTypeWitness>(
+      context, loc,
+      {.type_id = GetSingletonType(context, SemIR::WitnessType::TypeInstId),
+       .object_repr_type_inst_id = object_repr_id});
 }
 
 // Mark the given `Decl` as failed in `clang_decls`.

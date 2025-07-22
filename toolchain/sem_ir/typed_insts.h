@@ -1510,8 +1510,7 @@ struct StructLiteral {
 
 // The type of a struct.
 struct StructType {
-  static constexpr auto Kind = InstKind::StructType.Define<
-      Parse::NodeIdOneOf<Parse::StructTypeLiteralId, Parse::ClassDefinitionId>>(
+  static constexpr auto Kind = InstKind::StructType.Define<Parse::NodeId>(
       {.ir_name = "struct_type",
        .is_type = InstIsType::Always,
        .constant_kind = InstConstantKind::WheneverPossible,
