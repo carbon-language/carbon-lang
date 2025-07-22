@@ -648,7 +648,7 @@ auto ImportNameFromOtherPackage(
 
     const auto* import_scope_entry = LookupNameInImport(
         *import_ir.sem_ir, import_scope_id, name_id, identifier);
-    if (!import_scope_entry) {
+    if (!import_scope_entry || !import_scope_entry->result.is_found()) {
       continue;
     }
     SemIR::InstId import_scope_inst_id =
