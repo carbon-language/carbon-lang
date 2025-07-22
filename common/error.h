@@ -30,43 +30,21 @@ struct Success : public Printable<Success> {
 class [[nodiscard]] Error : public Printable<Error> {
  public:
   // Represents an error state.
-  explicit Error(llvm::Twine location, llvm::Twine message)
-      : location_(location.str()), message_(message.str()) {
+  explicit Error(llvm::Twine message) : message_(message.str()) {
     CARBON_CHECK(!message_.empty(), "Errors must have a message.");
   }
 
-  // Represents an error with no associated location.
-  // TODO: Consider using two different types.
-  explicit Error(llvm::Twine message) : Error("", message) {}
-
-  Error(Error&& other) noexcept
-      : location_(std::move(other.location_)),
-        message_(std::move(other.message_)) {}
-
-  auto operator=(Error&& other) noexcept -> Error& {
-    location_ = std::move(other.location_);
-    message_ = std::move(other.message_);
-    return *this;
-  }
+  // Move-only.
+  Error(Error&& other) noexcept = default;
+  auto operator=(Error&& other) noexcept -> Error& = default;
 
   // Prints the error string.
-  auto Print(llvm::raw_ostream& out) const -> void {
-    if (!location().empty()) {
-      out << location() << ": ";
-    }
-    out << message();
-  }
-
-  // Returns a string describing the location of the error, such as
-  // "file.cc:123".
-  auto location() const -> const std::string& { return location_; }
+  auto Print(llvm::raw_ostream& out) const -> void { out << message(); }
 
   // Returns the error message.
   auto message() const -> const std::string& { return message_; }
 
  private:
-  // The location associated with the error.
-  std::string location_;
   // The error message.
   std::string message_;
 };
@@ -147,9 +125,7 @@ class [[nodiscard]] ErrorOr {
 // `Error` and `ErrorOr<T>`.
 class ErrorBuilder {
  public:
-  explicit ErrorBuilder(std::string location = "")
-      : location_(std::move(location)),
-        out_(std::make_unique<RawStringOstream>()) {}
+  explicit ErrorBuilder() : out_(std::make_unique<RawStringOstream>()) {}
 
   ErrorBuilder(ErrorBuilder&&) = default;
   auto operator=(ErrorBuilder&&) -> ErrorBuilder& = default;
@@ -170,16 +146,15 @@ class ErrorBuilder {
   }
 
   // NOLINTNEXTLINE(google-explicit-constructor): Implicit cast for returns.
-  operator Error() { return Error(location_, out_->TakeStr()); }
+  operator Error() { return Error(out_->TakeStr()); }
 
   template <typename T>
   // NOLINTNEXTLINE(google-explicit-constructor): Implicit cast for returns.
   operator ErrorOr<T>() {
-    return Error(location_, out_->TakeStr());
+    return Error(out_->TakeStr());
   }
 
  private:
-  std::string location_;
   std::unique_ptr<RawStringOstream> out_;
 };
 

@@ -108,7 +108,7 @@ static auto ExtractFilePathFromUri(llvm::StringRef uri)
     -> ErrorOr<llvm::StringRef> {
   static constexpr llvm::StringRef FilePrefix = "file:/";
   if (!uri.starts_with(FilePrefix)) {
-    return ErrorBuilder("uri `") << uri << "` is not a file uri";
+    return ErrorBuilder() << "uri `" << uri << "` is not a file uri";
   }
   return uri.drop_front(FilePrefix.size());
 }
