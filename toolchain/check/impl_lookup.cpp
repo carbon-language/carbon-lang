@@ -28,6 +28,8 @@
 
 namespace Carbon::Check {
 
+// Returns IRs which are allowed to define an `impl` involving the arguments.
+// This is limited by the orphan rule.
 static auto FindAssociatedImportIRs(Context& context,
                                     SemIR::ConstantId query_self_const_id,
                                     SemIR::ConstantId query_facet_type_const_id)
