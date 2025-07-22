@@ -8,6 +8,7 @@
 #include "common/check.h"
 #include "llvm/ADT/APInt.h"
 #include "llvm/ADT/SmallVector.h"
+#include "toolchain/base/canonical_value_store.h"
 #include "toolchain/base/index_base.h"
 #include "toolchain/base/mem_usage.h"
 #include "toolchain/base/value_store.h"
@@ -53,7 +54,6 @@ struct IntStoreTestPeer;
 class IntId : public Printable<IntId> {
  public:
   static constexpr llvm::StringLiteral Label = "int";
-  using ValueType = llvm::APInt;
 
   // The encoding of integer IDs ensures that IDs associated with tokens during
   // lexing can fit into a compressed storage space. We arrange for
@@ -346,8 +346,8 @@ class IntStore {
   // into the ID space.
   auto OutputYaml() const -> Yaml::OutputMapping;
 
-  auto array_ref() const -> llvm::ArrayRef<llvm::APInt> {
-    return values_.array_ref();
+  auto values() const [[clang::lifetimebound]] -> auto {
+    return values_.values();
   }
   auto size() const -> size_t { return values_.size(); }
 
@@ -361,7 +361,6 @@ class IntStore {
   // Used for `values_`; tracked using `IntId`'s index range.
   struct APIntId : IdBase<APIntId> {
     static constexpr llvm::StringLiteral Label = "ap_int";
-    using ValueType = llvm::APInt;
     static const APIntId None;
     using IdBase::IdBase;
   };
@@ -421,7 +420,7 @@ class IntStore {
   auto LookupSignedLarge(llvm::APInt value) const -> IntId;
 
   // Stores values which don't fit in an IntId. These are always signed.
-  CanonicalValueStore<APIntId> values_;
+  CanonicalValueStore<APIntId, llvm::APInt> values_;
 };
 
 constexpr IntStore::APIntId IntStore::APIntId::None(IntId::None.AsIndex());

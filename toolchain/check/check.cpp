@@ -13,12 +13,15 @@
 #include "toolchain/check/context.h"
 #include "toolchain/check/diagnostic_emitter.h"
 #include "toolchain/check/diagnostic_helpers.h"
+#include "toolchain/check/import_cpp.h"
 #include "toolchain/diagnostics/diagnostic.h"
+#include "toolchain/diagnostics/diagnostic_consumer.h"
 #include "toolchain/diagnostics/format_providers.h"
 #include "toolchain/lex/token_kind.h"
 #include "toolchain/parse/node_ids.h"
 #include "toolchain/parse/tree.h"
 #include "toolchain/sem_ir/file.h"
+#include "toolchain/sem_ir/formatter.h"
 #include "toolchain/sem_ir/typed_insts.h"
 
 namespace Carbon::Check {
@@ -322,17 +325,80 @@ static auto BuildApiMapAndDiagnosePackaging(
   return api_map;
 }
 
+// Handles printing of formatted SemIR.
+static auto MaybeDumpFormattedSemIR(
+    const SemIR::File& sem_ir,
+    Parse::GetTreeAndSubtreesFn tree_and_subtrees_getter, bool include_in_dumps,
+    const CheckParseTreesOptions& options) -> void {
+  bool dump = options.dump_stream && include_in_dumps;
+  if (!options.vlog_stream && !dump) {
+    return;
+  }
+
+  bool has_ranges = sem_ir.parse_tree().tokens().has_dump_sem_ir_ranges();
+  if (options.dump_sem_ir_ranges ==
+          CheckParseTreesOptions::DumpSemIRRanges::Only &&
+      !has_ranges) {
+    return;
+  }
+
+  bool use_dump_sem_ir_ranges =
+      options.dump_sem_ir_ranges !=
+          CheckParseTreesOptions::DumpSemIRRanges::Ignore &&
+      has_ranges;
+  SemIR::Formatter formatter(&sem_ir, tree_and_subtrees_getter,
+                             options.include_in_dumps, use_dump_sem_ir_ranges);
+  formatter.Format();
+  if (options.vlog_stream) {
+    CARBON_VLOG_TO(options.vlog_stream, "*** SemIR::File ***\n");
+    formatter.Write(*options.vlog_stream);
+  }
+  if (dump) {
+    formatter.Write(*options.dump_stream);
+  }
+}
+
+// Handles options for dumping SemIR, including verbose output.
+static auto MaybeDumpSemIR(
+    llvm::ArrayRef<Unit> units,
+    const Parse::GetTreeAndSubtreesStore& tree_and_subtrees_getters,
+    const CheckParseTreesOptions& options) -> void {
+  if (!options.vlog_stream && !options.dump_stream &&
+      !options.raw_dump_stream) {
+    return;
+  }
+
+  // Flush diagnostics before printing.
+  for (const auto& unit : units) {
+    unit.consumer->Flush();
+  }
+
+  for (const auto& unit : units) {
+    bool include_in_dumps =
+        options.include_in_dumps->Get(unit.sem_ir->check_ir_id());
+    if (include_in_dumps && options.raw_dump_stream) {
+      unit.sem_ir->Print(*options.raw_dump_stream,
+                         options.dump_raw_sem_ir_builtins);
+    }
+
+    MaybeDumpFormattedSemIR(
+        *unit.sem_ir, tree_and_subtrees_getters.Get(unit.sem_ir->check_ir_id()),
+        include_in_dumps, options);
+  }
+}
+
 auto CheckParseTrees(
     llvm::MutableArrayRef<Unit> units,
-    llvm::ArrayRef<Parse::GetTreeAndSubtreesFn> tree_and_subtrees_getters,
-    bool prelude_import, llvm::IntrusiveRefCntPtr<llvm::vfs::FileSystem> fs,
-    llvm::raw_ostream* vlog_stream, bool fuzzing) -> void {
+    const Parse::GetTreeAndSubtreesStore& tree_and_subtrees_getters,
+    llvm::IntrusiveRefCntPtr<llvm::vfs::FileSystem> fs,
+    const CheckParseTreesOptions& options,
+    std::shared_ptr<clang::CompilerInvocation> clang_invocation) -> void {
   // UnitAndImports is big due to its SmallVectors, so we default to 0 on the
   // stack.
   llvm::SmallVector<UnitAndImports, 0> unit_infos(
       llvm::map_range(units, [&](Unit& unit) {
         return UnitAndImports(
-            &unit, tree_and_subtrees_getters[unit.sem_ir->check_ir_id().index]);
+            &unit, tree_and_subtrees_getters.Get(unit.sem_ir->check_ir_id()));
       }));
 
   Map<ImportKey, UnitAndImports*> api_map =
@@ -347,14 +413,14 @@ auto CheckParseTrees(
       // An `impl` has an implicit import of its `api`.
       auto implicit_names = packaging->names;
       implicit_names.package_id = PackageNameId::None;
-      TrackImport(api_map, nullptr, unit_info, implicit_names, fuzzing);
+      TrackImport(api_map, nullptr, unit_info, implicit_names, options.fuzzing);
     }
 
     Map<ImportKey, Parse::NodeId> explicit_import_map;
 
     // Add the prelude import. It's added to explicit_import_map so that it can
     // conflict with an explicit import of the prelude.
-    if (prelude_import &&
+    if (options.prelude_import &&
         !(packaging && packaging->names.package_id == PackageNameId::Core)) {
       auto prelude_id =
           unit_info.unit->value_stores->string_literal_values().Add("prelude");
@@ -362,11 +428,12 @@ auto CheckParseTrees(
                   {.node_id = Parse::NoneNodeId(),
                    .package_id = PackageNameId::Core,
                    .library_id = prelude_id},
-                  fuzzing);
+                  options.fuzzing);
     }
 
     for (const auto& import : unit_info.parse_tree().imports()) {
-      TrackImport(api_map, &explicit_import_map, unit_info, import, fuzzing);
+      TrackImport(api_map, &explicit_import_map, unit_info, import,
+                  options.fuzzing);
     }
 
     // If there were no imports, mark the file as ready to check for below.
@@ -380,7 +447,9 @@ auto CheckParseTrees(
   for (int check_index = 0;
        check_index < static_cast<int>(ready_to_check.size()); ++check_index) {
     auto* unit_info = ready_to_check[check_index];
-    CheckUnit(unit_info, tree_and_subtrees_getters, fs, vlog_stream).Run();
+    CheckUnit(unit_info, &tree_and_subtrees_getters, fs, clang_invocation,
+              options.vlog_stream)
+        .Run();
     for (auto* incoming_import : unit_info->incoming_imports) {
       --incoming_import->imports_remaining;
       if (incoming_import->imports_remaining == 0) {
@@ -427,10 +496,14 @@ auto CheckParseTrees(
     // incomplete imports.
     for (auto& unit_info : unit_infos) {
       if (unit_info.imports_remaining > 0) {
-        CheckUnit(&unit_info, tree_and_subtrees_getters, fs, vlog_stream).Run();
+        CheckUnit(&unit_info, &tree_and_subtrees_getters, fs, clang_invocation,
+                  options.vlog_stream)
+            .Run();
       }
     }
   }
+
+  MaybeDumpSemIR(units, tree_and_subtrees_getters, options);
 }
 
 }  // namespace Carbon::Check

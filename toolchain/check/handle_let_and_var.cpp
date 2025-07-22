@@ -5,7 +5,6 @@
 #include <optional>
 
 #include "toolchain/check/context.h"
-#include "toolchain/check/control_flow.h"
 #include "toolchain/check/convert.h"
 #include "toolchain/check/decl_introducer_state.h"
 #include "toolchain/check/generic.h"
@@ -16,11 +15,11 @@
 #include "toolchain/check/modifiers.h"
 #include "toolchain/check/pattern.h"
 #include "toolchain/check/pattern_match.h"
-#include "toolchain/check/return.h"
 #include "toolchain/diagnostics/diagnostic_emitter.h"
 #include "toolchain/diagnostics/format_providers.h"
 #include "toolchain/lex/token_kind.h"
 #include "toolchain/parse/node_kind.h"
+#include "toolchain/parse/typed_nodes.h"
 #include "toolchain/sem_ir/ids.h"
 #include "toolchain/sem_ir/inst.h"
 #include "toolchain/sem_ir/name_scope.h"
@@ -115,36 +114,15 @@ auto HandleParseNode(Context& context, Parse::FieldIntroducerId node_id)
   return true;
 }
 
-// Returns a VarStorage inst for the given `var` pattern. If the pattern
-// is the body of a returned var, this reuses the return slot, and otherwise it
-// adds a new inst.
-static auto GetOrAddStorage(Context& context, SemIR::InstId var_pattern_id)
-    -> SemIR::InstId {
-  if (context.decl_introducer_state_stack().innermost().modifier_set.HasAnyOf(
-          KeywordModifierSet::Returned)) {
-    auto& function = GetCurrentFunctionForReturn(context);
-    auto return_info =
-        SemIR::ReturnTypeInfo::ForFunction(context.sem_ir(), function);
-    if (return_info.has_return_slot()) {
-      return GetCurrentReturnSlot(context);
-    }
-  }
-  auto pattern = context.insts().GetWithLocId(var_pattern_id);
-
-  return AddInstWithCleanup(
-      context, pattern.loc_id,
-      SemIR::VarStorage{
-          .type_id =
-              ExtractScrutineeType(context.sem_ir(), pattern.inst.type_id()),
-          .pretty_name_id = SemIR::GetPrettyNameFromPatternId(
-              context.sem_ir(),
-              pattern.inst.As<SemIR::VarPattern>().subpattern_id)});
-}
-
 auto HandleParseNode(Context& context, Parse::VariablePatternId node_id)
     -> bool {
   auto subpattern_id = context.node_stack().PopPattern();
   auto type_id = context.insts().Get(subpattern_id).type_id();
+
+  if (subpattern_id == SemIR::ErrorInst::InstId) {
+    context.node_stack().Push(node_id, SemIR::ErrorInst::InstId);
+    return true;
+  }
 
   // In a parameter list, a `var` pattern is always a single `Call` parameter,
   // even if it contains multiple binding patterns.
@@ -180,17 +158,11 @@ static auto EndFullPattern(Context& context) -> void {
   AddInst<SemIR::NameBindingDecl>(context, context.node_stack().PeekNodeId(),
                                   {.pattern_block_id = pattern_block_id});
 
-  // We need to emit the VarStorage insts early, because they may be output
-  // arguments for the initializer. However, we can't emit them when we emit
-  // the corresponding `VarPattern`s because they're part of the pattern match,
-  // not part of the pattern.
-  // TODO: find a way to do this without walking the whole pattern block.
-  for (auto inst_id : context.inst_blocks().Get(pattern_block_id)) {
-    if (context.insts().Is<SemIR::VarPattern>(inst_id)) {
-      context.var_storage_map().Insert(inst_id,
-                                       GetOrAddStorage(context, inst_id));
-    }
-  }
+  // Emit storage for any `var`s in the pattern now.
+  bool returned =
+      context.decl_introducer_state_stack().innermost().modifier_set.HasAnyOf(
+          KeywordModifierSet::Returned);
+  AddPatternVarStorage(context, pattern_block_id, returned);
 }
 
 static auto HandleInitializer(Context& context, Parse::NodeId node_id) -> bool {
@@ -366,13 +338,14 @@ auto HandleParseNode(Context& context, Parse::LetDeclId node_id) -> bool {
     CARBON_DIAGNOSTIC(
         ExpectedInitializerAfterLet, Error,
         "expected `=`; `let` declaration must have an initializer");
-    context.emitter().Emit(SemIR::LocId(node_id).ToTokenOnly(),
+    context.emitter().Emit(LocIdForDiagnostics::TokenOnly(node_id),
                            ExpectedInitializerAfterLet);
   }
   return true;
 }
 
-auto HandleParseNode(Context& context, Parse::VariableDeclId node_id) -> bool {
+auto HandleParseNode(Context& context, Parse::VariableDeclId /*node_id*/)
+    -> bool {
   auto decl_info =
       HandleDecl<Lex::TokenKind::Var, Parse::NodeKind::VariableIntroducer,
                  Parse::NodeKind::VariableInitializer>(context);
@@ -380,13 +353,6 @@ auto HandleParseNode(Context& context, Parse::VariableDeclId node_id) -> bool {
   LimitModifiersOnDecl(
       context, decl_info.introducer,
       KeywordModifierSet::Access | KeywordModifierSet::Returned);
-
-  if (context.scope_stack().GetCurrentScopeAs<SemIR::InterfaceDecl>()) {
-    CARBON_DIAGNOSTIC(VarInInterfaceDecl, Error,
-                      "`var` declaration in interface");
-    context.emitter().Emit(node_id, VarInInterfaceDecl);
-    return true;
-  }
 
   LocalPatternMatch(context, decl_info.pattern_id, decl_info.init_id);
   return true;

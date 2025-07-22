@@ -19,6 +19,18 @@ auto SubstInstCallbacks::RebuildType(SemIR::TypeInstId type_inst_id) const
   return context().types().GetTypeIdForTypeInstId(type_inst_id);
 }
 
+auto SubstInstCallbacks::RebuildNewInst(SemIR::LocId loc_id,
+                                        SemIR::Inst new_inst) const
+    -> SemIR::InstId {
+  auto const_id = EvalOrAddInst(
+      context(), SemIR::LocIdAndInst::UncheckedLoc(loc_id, new_inst));
+  CARBON_CHECK(const_id.has_value(),
+               "Substitution into constant produced non-constant");
+  CARBON_CHECK(const_id.is_constant(),
+               "Substitution into constant produced runtime value");
+  return context().constant_values().GetInstId(const_id);
+}
+
 namespace {
 
 // Information about an instruction that we are substituting into.
@@ -304,6 +316,12 @@ auto SubstInst(Context& context, SemIR::InstId inst_id,
     }
 
     if (callbacks.Subst(item.inst_id)) {
+      // If any instruction is an ErrorInst, combining it into another
+      // instruction will also produce an ErrorInst, so shortcut out here to
+      // save wasted work.
+      if (item.inst_id == SemIR::ErrorInst::InstId) {
+        return SemIR::ErrorInst::InstId;
+      }
       index = item.next_index;
       continue;
     }
@@ -345,8 +363,11 @@ namespace {
 class SubstConstantCallbacks final : public SubstInstCallbacks {
  public:
   // `context` must not be null.
-  SubstConstantCallbacks(Context* context, Substitutions substitutions)
-      : SubstInstCallbacks(context), substitutions_(substitutions) {}
+  SubstConstantCallbacks(Context* context, SemIR::LocId loc_id,
+                         Substitutions substitutions)
+      : SubstInstCallbacks(context),
+        loc_id_(loc_id),
+        substitutions_(substitutions) {}
 
   // Applies the given Substitutions to an instruction, in order to replace
   // BindSymbolicName instructions with the value of the binding.
@@ -381,31 +402,27 @@ class SubstConstantCallbacks final : public SubstInstCallbacks {
       }
     }
 
-    // If it's not being substituted, don't look through it. Its constant
-    // value doesn't depend on its operand.
-    return true;
+    // If it's not being substituted, we still need to look through it, as we
+    // may need to substitute into its type (a `FacetType`, with one or more
+    // `SpecificInterfaces` within).
+    return false;
   }
 
   // Rebuilds an instruction by building a new constant.
-  auto Rebuild(SemIR::InstId old_inst_id, SemIR::Inst new_inst) const
+  auto Rebuild(SemIR::InstId /*old_inst_id*/, SemIR::Inst new_inst) const
       -> SemIR::InstId override {
-    auto const_id = EvalOrAddInst(
-        context(),
-        SemIR::LocIdAndInst::UncheckedLoc(
-            context().insts().GetCanonicalLocId(old_inst_id).ToImplicit(),
-            new_inst));
-    CARBON_CHECK(const_id.has_value(),
-                 "Substitution into constant produced non-constant");
-    return context().constant_values().GetInstId(const_id);
+    return RebuildNewInst(loc_id_, new_inst);
   }
 
  private:
+  SemIR::LocId loc_id_;
   Substitutions substitutions_;
 };
 }  // namespace
 
-auto SubstConstant(Context& context, SemIR::ConstantId const_id,
-                   Substitutions substitutions) -> SemIR::ConstantId {
+auto SubstConstant(Context& context, SemIR::LocId loc_id,
+                   SemIR::ConstantId const_id, Substitutions substitutions)
+    -> SemIR::ConstantId {
   CARBON_CHECK(const_id.is_constant(), "Substituting into non-constant");
 
   if (substitutions.empty()) {
@@ -420,7 +437,7 @@ auto SubstConstant(Context& context, SemIR::ConstantId const_id,
 
   auto subst_inst_id =
       SubstInst(context, context.constant_values().GetInstId(const_id),
-                SubstConstantCallbacks(&context, substitutions));
+                SubstConstantCallbacks(&context, loc_id, substitutions));
   return context.constant_values().Get(subst_inst_id);
 }
 

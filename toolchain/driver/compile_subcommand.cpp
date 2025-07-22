@@ -11,10 +11,11 @@
 #include <system_error>
 #include <utility>
 
+#include "common/pretty_stack_trace_function.h"
 #include "common/vlog.h"
 #include "llvm/ADT/STLExtras.h"
 #include "llvm/ADT/ScopeExit.h"
-#include "toolchain/base/pretty_stack_trace_function.h"
+#include "toolchain/base/clang_invocation.h"
 #include "toolchain/base/timings.h"
 #include "toolchain/check/check.h"
 #include "toolchain/codegen/codegen.h"
@@ -24,9 +25,7 @@
 #include "toolchain/lower/lower.h"
 #include "toolchain/parse/parse.h"
 #include "toolchain/parse/tree_and_subtrees.h"
-#include "toolchain/sem_ir/formatter.h"
-#include "toolchain/sem_ir/import_ir.h"
-#include "toolchain/sem_ir/inst_namer.h"
+#include "toolchain/sem_ir/ids.h"
 #include "toolchain/source/source_buffer.h"
 
 namespace Carbon {
@@ -64,6 +63,30 @@ compile to machine code.
             },
             &phase);
       });
+
+  b.AddStringOption(
+      {
+          .name = "clang-arg",
+          .value_name = "CLANG-ARG",
+          .help = R"""(
+An argument to pass to the Clang compiler for use when compiling imported C++
+code.
+
+All flags that are accepted by the Clang driver are supported. However, you
+cannot specify arguments that would result in additional compilations being
+performed. Use `carbon clang` instead to compile additional source files.
+)""",
+      },
+      [&](auto& arg_b) { arg_b.Append(&clang_args); });
+
+  b.AddStringPositionalArg(
+      {
+          .name = "CLANG-ARG",
+          .help = R"""(
+Additional Clang arguments. See help for `--clang-arg` for details.
+)""",
+      },
+      [&](auto& arg_b) { arg_b.Append(&clang_args); });
 
   // TODO: Rearrange the code setting this option and two related ones to
   // allow them to reference each other instead of hard-coding their names.
@@ -196,6 +219,7 @@ prints full SemIR.
 )""",
       },
       [&](auto& arg_b) {
+        using DumpSemIRRanges = Check::CheckParseTreesOptions::DumpSemIRRanges;
         arg_b.SetOneOf(
             {
                 arg_b.OneOfValue("if-present", DumpSemIRRanges::IfPresent)
@@ -282,7 +306,7 @@ to be specified in the compile command line.
 Excludes files with the given prefix from dumps.
 )""",
       },
-      [&](auto& arg_b) { arg_b.Set(&exclude_dump_file_prefix); });
+      [&](auto& arg_b) { arg_b.Append(&exclude_dump_file_prefixes); });
   b.AddFlag(
       {
           .name = "debug-info",
@@ -293,6 +317,17 @@ Whether to emit DWARF debug information.
       [&](auto& arg_b) {
         arg_b.Default(true);
         arg_b.Set(&include_debug_info);
+      });
+  b.AddFlag(
+      {
+          .name = "verify-llvm-ir",
+          .help = R"""(
+Whether to run the LLVM verifier on modules.
+)""",
+      },
+      [&](auto& arg_b) {
+        arg_b.Default(true);
+        arg_b.Set(&run_llvm_verifier);
       });
 }
 
@@ -373,7 +408,8 @@ class MultiUnitCache;
 // Ties together information for a file being compiled.
 class CompilationUnit {
  public:
-  explicit CompilationUnit(int unit_index, DriverEnv* driver_env,
+  // `driver_env`, `options`, and `consumer` must be non-null.
+  explicit CompilationUnit(SemIR::CheckIRId check_ir_id, DriverEnv* driver_env,
                            const CompileOptions* options,
                            Diagnostics::Consumer* consumer,
                            llvm::StringRef input_filename);
@@ -421,9 +457,6 @@ class CompilationUnit {
   // significant overhead. Avoid constructing it when unused.
   auto GetParseTreeAndSubtrees() -> const Parse::TreeAndSubtrees&;
 
-  // Handles printing of formatted SemIR.
-  auto MaybePrintFormattedSemIR() -> void;
-
   // Wraps a call with log statements to indicate start and end. Typically logs
   // with the actual function name, but marks timings with the appropriate
   // phase.
@@ -434,8 +467,8 @@ class CompilationUnit {
   // Returns true if the current file should be included in debug dumps.
   auto IncludeInDumps() -> bool;
 
-  // The index of the unit amongst all units. Equivalent to a `CheckIRId`.
-  int unit_index_;
+  // The index of the unit amongst all units.
+  SemIR::CheckIRId check_ir_id_;
 
   DriverEnv* driver_env_;
   const CompileOptions* options_;
@@ -481,69 +514,68 @@ class CompilationUnit {
 // they may not be used.
 class MultiUnitCache {
  public:
+  using IncludeInDumpsStore = FixedSizeValueStore<SemIR::CheckIRId, bool>;
+  using TreeAndSubtreesGettersStore = Parse::GetTreeAndSubtreesStore;
+
   // This relies on construction after `units` are all initialized, which is
   // reflected by the `ArrayRef` here.
   explicit MultiUnitCache(
       const CompileOptions* options,
-      const llvm::ArrayRef<std::unique_ptr<CompilationUnit>> units)
+      llvm::ArrayRef<std::unique_ptr<CompilationUnit>> units)
       : options_(options), units_(units) {}
 
-  auto include_in_dumps() -> llvm::ArrayRef<bool> {
-    CARBON_CHECK(!units_.empty());
-    if (include_in_dumps_.empty()) {
-      BuildIncludeInDumps();
+  auto include_in_dumps() -> const IncludeInDumpsStore& {
+    if (!include_in_dumps_) {
+      include_in_dumps_.emplace(
+          IncludeInDumpsStore::MakeWithExplicitSize(units_.size(), false));
+      for (const auto& [i, unit] : llvm::enumerate(units_)) {
+        include_in_dumps_->Set(
+            SemIR::CheckIRId(i),
+            llvm::none_of(options_->exclude_dump_file_prefixes,
+                          [&](auto prefix) {
+                            return unit->input_filename().starts_with(prefix);
+                          }));
+      }
     }
-    return include_in_dumps_;
+    return *include_in_dumps_;
   }
 
-  auto tree_and_subtrees_getters()
-      -> llvm::ArrayRef<Parse::GetTreeAndSubtreesFn> {
-    CARBON_CHECK(!units_.empty());
-    if (tree_and_subtrees_getters_.empty()) {
-      BuildTreeAndSubtreesGetters();
+  auto tree_and_subtrees_getters() -> const TreeAndSubtreesGettersStore& {
+    if (!tree_and_subtrees_getters_) {
+      tree_and_subtrees_getters_.emplace(
+          TreeAndSubtreesGettersStore::MakeWithExplicitSize(units_.size(),
+                                                            nullptr));
+      for (const auto& [i, unit] : llvm::enumerate(units_)) {
+        if (unit->has_source()) {
+          tree_and_subtrees_getters_->Set(SemIR::CheckIRId(i),
+                                          unit->get_trees_and_subtrees());
+        }
+      }
     }
-    return tree_and_subtrees_getters_;
+    return *tree_and_subtrees_getters_;
   }
 
  private:
-  auto BuildIncludeInDumps() -> void {
-    CARBON_CHECK(include_in_dumps_.empty());
-    llvm::append_range(include_in_dumps_,
-                       llvm::map_range(units_, [&](const auto& unit) {
-                         return options_->exclude_dump_file_prefix.empty() ||
-                                !unit->input_filename().starts_with(
-                                    options_->exclude_dump_file_prefix);
-                       }));
-  }
-
-  auto BuildTreeAndSubtreesGetters() -> void {
-    CARBON_CHECK(tree_and_subtrees_getters_.empty());
-    llvm::append_range(
-        tree_and_subtrees_getters_,
-        llvm::map_range(units_, [&](const auto& unit) {
-          return unit->has_source() ? unit->get_trees_and_subtrees() : nullptr;
-        }));
-  }
-
   const CompileOptions* options_;
 
   // The units being compiled.
-  const llvm::ArrayRef<std::unique_ptr<CompilationUnit>> units_;
+  llvm::ArrayRef<std::unique_ptr<CompilationUnit>> units_;
 
   // For each unit, whether it's included in dumps. Used cross-phase.
-  llvm::SmallVector<bool> include_in_dumps_;
+  std::optional<IncludeInDumpsStore> include_in_dumps_;
 
   // For each unit, the `TreeAndSubtrees` getter. Used by lowering.
-  llvm::SmallVector<Parse::GetTreeAndSubtreesFn> tree_and_subtrees_getters_;
+  std::optional<TreeAndSubtreesGettersStore> tree_and_subtrees_getters_;
 };
 
 }  // namespace
 
-CompilationUnit::CompilationUnit(int unit_index, DriverEnv* driver_env,
+CompilationUnit::CompilationUnit(SemIR::CheckIRId check_ir_id,
+                                 DriverEnv* driver_env,
                                  const CompileOptions* options,
                                  Diagnostics::Consumer* consumer,
                                  llvm::StringRef input_filename)
-    : unit_index_(unit_index),
+    : check_ir_id_(check_ir_id),
       driver_env_(driver_env),
       options_(options),
       input_filename_(input_filename),
@@ -557,7 +589,7 @@ CompilationUnit::CompilationUnit(int unit_index, DriverEnv* driver_env,
 }
 
 auto CompilationUnit::IncludeInDumps() -> bool {
-  return cache_->include_in_dumps()[unit_index_];
+  return cache_->include_in_dumps().Get(check_ir_id_);
 }
 
 auto CompilationUnit::SetMultiUnitCache(MultiUnitCache* cache) -> void {
@@ -594,17 +626,19 @@ auto CompilationUnit::RunLex() -> void {
 
   CARBON_VLOG("*** SourceBuffer ***\n```\n{0}\n```\n", source_->text());
 
-  LogCall("Lex::Lex", "lex",
-          [&] { tokens_ = Lex::Lex(value_stores_, *source_, *consumer_); });
-  if (options_->dump_tokens && IncludeInDumps()) {
-    consumer_->Flush();
-    tokens_->Print(*driver_env_->output_stream,
-                   options_->omit_file_boundary_tokens);
-  }
+  LogCall("Lex::Lex", "lex", [&] {
+    Lex::LexOptions options;
+    options.consumer = consumer_;
+    options.vlog_stream = vlog_stream_;
+    if (options_->dump_tokens && IncludeInDumps()) {
+      options.dump_stream = driver_env_->output_stream;
+      options.omit_file_boundary_tokens = options_->omit_file_boundary_tokens;
+    }
+    tokens_ = Lex::Lex(value_stores_, *source_, options);
+  });
   if (mem_usage_) {
     mem_usage_->Collect("tokens_", *tokens_);
   }
-  CARBON_VLOG("*** Lex::TokenizedBuffer ***\n{0}", tokens_);
   if (tokens_->has_errors()) {
     success_ = false;
   }
@@ -612,21 +646,18 @@ auto CompilationUnit::RunLex() -> void {
 
 auto CompilationUnit::RunParse() -> void {
   LogCall("Parse::Parse", "parse", [&] {
-    parse_tree_ = Parse::Parse(*tokens_, *consumer_, vlog_stream_);
-  });
-  if (options_->dump_parse_tree && IncludeInDumps()) {
-    consumer_->Flush();
-    const auto& tree_and_subtrees = GetParseTreeAndSubtrees();
-    if (options_->preorder_parse_tree) {
-      tree_and_subtrees.PrintPreorder(*driver_env_->output_stream);
-    } else {
-      tree_and_subtrees.Print(*driver_env_->output_stream);
+    Parse::ParseOptions options;
+    options.consumer = consumer_;
+    options.vlog_stream = vlog_stream_;
+    if (options_->dump_parse_tree && IncludeInDumps()) {
+      options.dump_stream = driver_env_->output_stream;
+      options.dump_preorder_parse_tree = options_->preorder_parse_tree;
     }
-  }
+    parse_tree_ = Parse::Parse(*tokens_, options);
+  });
   if (mem_usage_) {
     mem_usage_->Collect("parse_tree_", *parse_tree_);
   }
-  CARBON_VLOG("*** Parse::Tree ***\n{0}", parse_tree_);
   if (parse_tree_->has_errors()) {
     success_ = false;
   }
@@ -639,41 +670,13 @@ auto CompilationUnit::GetCheckUnit() -> Check::Unit {
   tree_and_subtrees_getter_ = [this]() -> const Parse::TreeAndSubtrees& {
     return this->GetParseTreeAndSubtrees();
   };
-  sem_ir_.emplace(&*parse_tree_, SemIR::CheckIRId(unit_index_),
-                  parse_tree_->packaging_decl(), value_stores_,
-                  input_filename_);
+  sem_ir_.emplace(&*parse_tree_, check_ir_id_, parse_tree_->packaging_decl(),
+                  value_stores_, input_filename_);
   return {.consumer = consumer_,
           .value_stores = &value_stores_,
           .timings = timings_ ? &*timings_ : nullptr,
           .sem_ir = &*sem_ir_,
           .cpp_ast = &cpp_ast_};
-}
-
-auto CompilationUnit::MaybePrintFormattedSemIR() -> void {
-  bool print = options_->dump_sem_ir && IncludeInDumps();
-  if (!vlog_stream_ && !print) {
-    return;
-  }
-
-  if (options_->dump_sem_ir_ranges == CompileOptions::DumpSemIRRanges::Only &&
-      !tokens_->has_dump_sem_ir_ranges()) {
-    return;
-  }
-
-  bool use_dump_sem_ir_ranges =
-      options_->dump_sem_ir_ranges != CompileOptions::DumpSemIRRanges::Ignore &&
-      tokens_->has_dump_sem_ir_ranges();
-  SemIR::Formatter formatter(&*sem_ir_, *tree_and_subtrees_getter_,
-                             cache_->include_in_dumps(),
-                             use_dump_sem_ir_ranges);
-  formatter.Format();
-  if (vlog_stream_) {
-    CARBON_VLOG("*** SemIR::File ***\n");
-    formatter.Write(*vlog_stream_);
-  }
-  if (print) {
-    formatter.Write(*driver_env_->output_stream);
-  }
 }
 
 auto CompilationUnit::PostCheck() -> void {
@@ -688,15 +691,6 @@ auto CompilationUnit::PostCheck() -> void {
     mem_usage_->Collect("sem_ir_", *sem_ir_);
   }
 
-  if (options_->dump_raw_sem_ir && IncludeInDumps()) {
-    CARBON_VLOG("*** Raw SemIR::File ***\n{0}\n", *sem_ir_);
-    sem_ir_->Print(*driver_env_->output_stream, options_->builtin_sem_ir);
-    if (options_->dump_sem_ir) {
-      *driver_env_->output_stream << "\n";
-    }
-  }
-
-  MaybePrintFormattedSemIR();
   if (sem_ir_->has_errors()) {
     success_ = false;
   }
@@ -705,27 +699,18 @@ auto CompilationUnit::PostCheck() -> void {
 auto CompilationUnit::RunLower() -> void {
   LogCall("Lower::LowerToLLVM", "lower", [&] {
     llvm_context_ = std::make_unique<llvm::LLVMContext>();
-    // TODO: Consider disabling instruction naming by default if we're not
-    // producing textual LLVM IR.
-    SemIR::InstNamer inst_namer(&*sem_ir_);
-    std::optional<llvm::ArrayRef<Parse::GetTreeAndSubtreesFn>> subtrees;
-    if (options_->include_debug_info) {
-      subtrees = cache_->tree_and_subtrees_getters();
+    Lower::LowerToLLVMOptions options;
+    options.llvm_verifier_stream =
+        options_->run_llvm_verifier ? driver_env_->error_stream : nullptr;
+    options.want_debug_info = options_->include_debug_info;
+    options.vlog_stream = vlog_stream_;
+    if (options_->dump_llvm_ir && IncludeInDumps()) {
+      options.dump_stream = driver_env_->output_stream;
     }
-    module_ =
-        Lower::LowerToLLVM(*llvm_context_, subtrees, input_filename_, *sem_ir_,
-                           sem_ir_->cpp_ast(), &inst_namer, vlog_stream_);
+    module_ = Lower::LowerToLLVM(*llvm_context_, driver_env_->fs,
+                                 cache_->tree_and_subtrees_getters(), *sem_ir_,
+                                 options);
   });
-  if (vlog_stream_) {
-    CARBON_VLOG("*** llvm::Module ***\n");
-    module_->print(*vlog_stream_, /*AAW=*/nullptr,
-                   /*ShouldPreserveUseListOrder=*/false,
-                   /*IsForDebug=*/true);
-  }
-  if (options_->dump_llvm_ir && IncludeInDumps()) {
-    module_->print(*driver_env_->output_stream, /*AAW=*/nullptr,
-                   /*ShouldPreserveUseListOrder=*/true);
-  }
 }
 
 auto CompilationUnit::RunCodeGen() -> void {
@@ -845,6 +830,9 @@ auto CompilationUnit::GetParseTreeAndSubtrees()
 auto CompilationUnit::LogCall(llvm::StringLiteral logging_label,
                               llvm::StringLiteral timing_label,
                               llvm::function_ref<auto()->void> fn) -> void {
+  PrettyStackTraceFunction trace_file([&](llvm::raw_ostream& out) {
+    out << "Filename: " << input_filename_ << "\n";
+  });
   CARBON_VLOG("*** {0}: {1} ***\n", logging_label, input_filename_);
   Timings::ScopedTiming timing(timings_ ? &*timings_ : nullptr, timing_label);
   fn();
@@ -854,6 +842,34 @@ auto CompilationUnit::LogCall(llvm::StringLiteral logging_label,
 auto CompileSubcommand::Run(DriverEnv& driver_env) -> DriverResult {
   if (!ValidateOptions(driver_env.emitter)) {
     return {.success = false};
+  }
+
+  std::shared_ptr<clang::CompilerInvocation> clang_invocation;
+  // Build a clang invocation. We do this regardless of whether we're running
+  // check, because this is essentially performing further option validation,
+  // and we generally validate all options even if we're not using them for the
+  // selected phases of compilation.
+  // TODO: Share any arguments we specify here with the `carbon clang`
+  // subcommand.
+  {
+    llvm::SmallVector<std::string> clang_path_and_args = {
+        driver_env.installation->clang_path(),
+        // Propagate the target to Clang.
+        llvm::formatv("--target={0}", options_.codegen_options.target).str(),
+        // Enable PIE by default, but allow it to be overridden by Clang
+        // arguments. Clang's default is configurable, but we'd like our
+        // defaults to be more stable.
+        // TODO: Decide if we want this.
+        "-fPIE",
+    };
+    for (auto str : options_.clang_args) {
+      clang_path_and_args.push_back(str.str());
+    }
+    clang_invocation = BuildClangInvocation(driver_env.consumer, driver_env.fs,
+                                            clang_path_and_args);
+    if (!clang_invocation) {
+      return {.success = false};
+    }
   }
 
   // Find the files comprising the prelude if we are importing it.
@@ -877,8 +893,10 @@ auto CompileSubcommand::Run(DriverEnv& driver_env) -> DriverResult {
   llvm::SmallVector<std::unique_ptr<CompilationUnit>> units;
   int unit_index = -1;
   auto unit_builder = [&](llvm::StringRef filename) {
-    return std::make_unique<CompilationUnit>(
-        ++unit_index, &driver_env, &options_, &driver_env.consumer, filename);
+    ++unit_index;
+    return std::make_unique<CompilationUnit>(SemIR::CheckIRId(unit_index),
+                                             &driver_env, &options_,
+                                             &driver_env.consumer, filename);
   };
   llvm::append_range(units, llvm::map_range(prelude, unit_builder));
   llvm::append_range(units,
@@ -962,9 +980,25 @@ auto CompileSubcommand::Run(DriverEnv& driver_env) -> DriverResult {
 
   // Execute the actual checking.
   CARBON_VLOG_TO(driver_env.vlog_stream, "*** Check::CheckParseTrees ***\n");
+  Check::CheckParseTreesOptions options;
+  options.prelude_import = options_.prelude_import;
+  options.vlog_stream = driver_env.vlog_stream;
+  options.fuzzing = driver_env.fuzzing;
+  if (options.vlog_stream || options_.dump_sem_ir || options_.dump_raw_sem_ir) {
+    options.include_in_dumps = &cache.include_in_dumps();
+    if (options_.dump_sem_ir) {
+      options.dump_stream = driver_env.output_stream;
+    }
+    if (options.vlog_stream || options_.dump_sem_ir) {
+      options.dump_sem_ir_ranges = options_.dump_sem_ir_ranges;
+    }
+    if (options_.dump_raw_sem_ir) {
+      options.raw_dump_stream = driver_env.output_stream;
+      options.dump_raw_sem_ir_builtins = options_.builtin_sem_ir;
+    }
+  }
   Check::CheckParseTrees(check_units, cache.tree_and_subtrees_getters(),
-                         options_.prelude_import, driver_env.fs,
-                         driver_env.vlog_stream, driver_env.fuzzing);
+                         driver_env.fs, options, clang_invocation);
   CARBON_VLOG_TO(driver_env.vlog_stream,
                  "*** Check::CheckParseTrees done ***\n");
   for (auto& unit : units) {

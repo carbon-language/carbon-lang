@@ -2,7 +2,7 @@
 // Exceptions. See /LICENSE for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
-// EXTRA-ARGS: --no-dump-sem-ir
+// INCLUDE-FILE: toolchain/testing/testdata/min_prelude/int.carbon
 //
 // AUTOUPDATE
 // TIP: To test this file alone, run:
@@ -12,18 +12,22 @@
 
 // --- int_div.carbon
 
+library "[[@TEST_NAME]]";
+
 fn Mod(a: i32, b: i32) -> i32 = "int.smod";
 
 var arr: array(i32, Mod(5, 3));
 let arr_p: array(i32, 2)* = &arr;
 
 fn RuntimeCallIsValid(a: i32, b: i32) -> i32 {
+  //@dump-sem-ir-begin
   return Mod(a, b);
+  //@dump-sem-ir-end
 }
 
 // --- fail_overflow.carbon
 
-package FailOverflow;
+library "[[@TEST_NAME]]";
 
 fn Mod(a: i32, b: i32) -> i32 = "int.smod";
 fn Sub(a: i32, b: i32) -> i32 = "int.ssub";
@@ -45,7 +49,7 @@ let c: i32 = Mod(Sub(Negate(0x7FFF_FFFF), 1), Negate(1));
 
 // --- fail_div_by_zero.carbon
 
-package FailDivByZero;
+library "[[@TEST_NAME]]";
 
 fn Mod(a: i32, b: i32) -> i32 = "int.smod";
 
@@ -62,3 +66,32 @@ let a: i32 = Mod(1, 0);
 // CHECK:STDERR:              ^~~~~~~~~
 // CHECK:STDERR:
 let b: i32 = Mod(0, 0);
+
+// CHECK:STDOUT: --- int_div.carbon
+// CHECK:STDOUT:
+// CHECK:STDOUT: constants {
+// CHECK:STDOUT:   %int_32: Core.IntLiteral = int_value 32 [concrete]
+// CHECK:STDOUT:   %i32: type = class_type @Int, @Int(%int_32) [concrete]
+// CHECK:STDOUT:   %Mod.type: type = fn_type @Mod [concrete]
+// CHECK:STDOUT:   %Mod: %Mod.type = struct_value () [concrete]
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: imports {
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: fn @RuntimeCallIsValid(%a.param: %i32, %b.param: %i32) -> %i32 {
+// CHECK:STDOUT: !entry:
+// CHECK:STDOUT:   %Mod.ref: %Mod.type = name_ref Mod, file.%Mod.decl [concrete = constants.%Mod]
+// CHECK:STDOUT:   %a.ref: %i32 = name_ref a, %a
+// CHECK:STDOUT:   %b.ref: %i32 = name_ref b, %b
+// CHECK:STDOUT:   %Mod.call: init %i32 = call %Mod.ref(%a.ref, %b.ref)
+// CHECK:STDOUT:   %.loc11_19.1: %i32 = value_of_initializer %Mod.call
+// CHECK:STDOUT:   %.loc11_19.2: %i32 = converted %Mod.call, %.loc11_19.1
+// CHECK:STDOUT:   return %.loc11_19.2
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: fn @__global_init() {
+// CHECK:STDOUT: !entry:
+// CHECK:STDOUT:   <elided>
+// CHECK:STDOUT: }
+// CHECK:STDOUT:

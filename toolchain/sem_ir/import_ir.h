@@ -6,6 +6,7 @@
 #define CARBON_TOOLCHAIN_SEM_IR_IMPORT_IR_H_
 
 #include "llvm/ADT/FoldingSet.h"
+#include "toolchain/base/value_store.h"
 #include "toolchain/sem_ir/ids.h"
 #include "toolchain/sem_ir/inst.h"
 
@@ -24,6 +25,8 @@ struct ImportIR : public Printable<ImportIR> {
 };
 
 static_assert(sizeof(ImportIR) == 8 + sizeof(uintptr_t), "Unexpected size");
+
+using ImportIRStore = ValueStore<ImportIRId, ImportIR>;
 
 // A reference to an instruction in an imported IR. Used for diagnostics with
 // LocId. For a `Cpp` import, points to a Clang source location.
@@ -69,6 +72,8 @@ class ImportIRInst : public Printable<ImportIRInst> {
     ClangSourceLocId clang_source_loc_id_;
   };
 };
+
+using ImportIRInstStore = ValueStore<ImportIRInstId, ImportIRInst>;
 
 // Returns the canonical `File` and `InstId` for an entity, tracing imported
 // instructions. Note the returned `File` might not be directly imported by the

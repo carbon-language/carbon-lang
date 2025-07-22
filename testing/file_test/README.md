@@ -202,18 +202,26 @@ Supported comment markers are:
     // EXTRA-ARGS: <arguments>
     ```
 
-    Same as `ARGS`, including substitution behavior, but appends to the default
-    argument list instead of replacing it.
+    Same as `ARGS`, including substitution behavior, but appends to the argument
+    list instead of replacing it.
 
-    `EXTRA-ARGS` can be specified at most once, and a test cannot specify both
-    `ARGS` and `EXTRA-ARGS`.
+    `EXTRA-ARGS` can be repeated, and provided with `ARGS`.
 
 -   ```
     // INCLUDE-FILE: <path/from/repository/root>
     ```
 
     Includes the specified file in the test's virtual file system and adds the
-    path to the file's splits.
+    included file's content to the current file's splits. Included files can
+    use:
+
+    -   `// ARGS`
+    -   `// EXTRA-ARGS`
+    -   `// INCLUDE-FILE`
+    -   `// --- <filename>`
+
+    Included files will use `include_files/<filename>` for their name when a
+    split isn't provided.
 
     This can be used to provide a minimal `Core` package (and `prelude` library)
     in toolchain tests. See the

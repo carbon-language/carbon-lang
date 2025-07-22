@@ -98,25 +98,27 @@ static auto GetDefaultSelfType(Context& context) -> SemIR::TypeId {
 
 auto HandleParseNode(Context& context, Parse::DefaultSelfImplAsId node_id)
     -> bool {
-  auto self_type_id = GetDefaultSelfType(context);
-  if (!self_type_id.has_value()) {
+  auto self_inst_id = SemIR::TypeInstId::None;
+
+  if (auto self_type_id = GetDefaultSelfType(context);
+      self_type_id.has_value()) {
+    // Build the implicit access to the enclosing `Self`.
+    // TODO: Consider calling `HandleNameAsExpr` to build this implicit `Self`
+    // expression. We've already done the work to check that the enclosing
+    // context is a class and found its `Self`, so additionally performing an
+    // unqualified name lookup would be redundant work, but would avoid
+    // duplicating the handling of the `Self` expression.
+    self_inst_id = AddTypeInst(
+        context, node_id,
+        SemIR::NameRef{.type_id = SemIR::TypeType::TypeId,
+                       .name_id = SemIR::NameId::SelfType,
+                       .value_id = context.types().GetInstId(self_type_id)});
+  } else {
     CARBON_DIAGNOSTIC(ImplAsOutsideClass, Error,
                       "`impl as` can only be used in a class");
     context.emitter().Emit(node_id, ImplAsOutsideClass);
-    self_type_id = SemIR::ErrorInst::TypeId;
+    self_inst_id = SemIR::ErrorInst::TypeInstId;
   }
-
-  // Build the implicit access to the enclosing `Self`.
-  // TODO: Consider calling `HandleNameAsExpr` to build this implicit `Self`
-  // expression. We've already done the work to check that the enclosing context
-  // is a class and found its `Self`, so additionally performing an unqualified
-  // name lookup would be redundant work, but would avoid duplicating the
-  // handling of the `Self` expression.
-  auto self_inst_id = AddTypeInst(
-      context, node_id,
-      SemIR::NameRef{.type_id = SemIR::TypeType::TypeId,
-                     .name_id = SemIR::NameId::SelfType,
-                     .value_id = context.types().GetInstId(self_type_id)});
 
   // There's no need to push `Self` into scope here, because we can find it in
   // the parent class scope.
@@ -352,29 +354,21 @@ static auto DiagnoseUnusedGenericBinding(Context& context,
                                          SemIR::ImplId impl_id) -> void {
   auto deduced_specific_id = SemIR::SpecificId::None;
 
-  {
-    auto& stored_impl_info = context.impls().Get(impl_id);
-    if (!stored_impl_info.generic_id.has_value() ||
-        stored_impl_info.witness_id == SemIR::ErrorInst::InstId) {
-      return;
-    }
-
-    // TODO: Deduce has side effects in the semir by generating `Converted`
-    // instructions which we will not use here. We should stop generating
-    // those when deducing for impl lookup, but for now we discard them by
-    // pushing an InstBlock on the stack and dropping it right after.
-    context.inst_block_stack().Push();
-    // Deduction can invalidate references to ValueStores; we can't use
-    // `stored_impl_info` after.
-    deduced_specific_id = DeduceImplArguments(
-        context, node_id,
-        DeduceImpl{.self_id = stored_impl_info.self_id,
-                   .generic_id = stored_impl_info.generic_id,
-                   .specific_id = stored_impl_info.interface.specific_id},
-        context.constant_values().Get(stored_impl_info.self_id),
-        stored_impl_info.interface.specific_id);
-    context.inst_block_stack().PopAndDiscard();
+  auto& impl = context.impls().Get(impl_id);
+  if (!impl.generic_id.has_value() ||
+      impl.witness_id == SemIR::ErrorInst::InstId) {
+    return;
   }
+
+  // TODO: Deduce has side effects in the semir by generating `Converted`
+  // instructions which we will not use here. We should stop generating
+  // those when deducing for impl lookup, but for now we discard them by
+  // pushing an InstBlock on the stack and dropping it right after.
+  context.inst_block_stack().Push();
+  deduced_specific_id = DeduceImplArguments(
+      context, node_id, impl, context.constant_values().Get(impl.self_id),
+      impl.interface.specific_id);
+  context.inst_block_stack().PopAndDiscard();
 
   if (deduced_specific_id.has_value()) {
     // Deduction succeeded, all bindings were used.
@@ -405,7 +399,6 @@ static auto BuildImplDecl(Context& context, Parse::AnyImplDeclId node_id,
       context.node_stack().PopExprWithNodeId();
   auto [self_type_node, self_type_inst_id] =
       context.node_stack().PopWithNodeId<Parse::NodeCategory::ImplAs>();
-  auto self_type_id = context.types().GetTypeIdForTypeInstId(self_type_inst_id);
   // Pop the `impl` introducer and any `forall` parameters as a "name".
   auto name = PopImplIntroducerAndParamsAsNameComponent(context, node_id);
   auto decl_block_id = context.inst_block_stack().Pop();
@@ -510,24 +503,26 @@ static auto BuildImplDecl(Context& context, Parse::AnyImplDeclId node_id,
   ReplaceInstBeforeConstantUse(context, impl_decl_id, impl_decl);
 
   // For an `extend impl` declaration, mark the impl as extending this `impl`.
-  if (self_type_id != SemIR::ErrorInst::TypeId &&
-      introducer.modifier_set.HasAnyOf(KeywordModifierSet::Extend)) {
+  if (introducer.modifier_set.HasAnyOf(KeywordModifierSet::Extend)) {
     auto& stored_impl_info = context.impls().Get(impl_decl.impl_id);
-
-    auto extend_node = introducer.modifier_node_id(ModifierOrder::Extend);
-    if (stored_impl_info.generic_id.has_value()) {
-      constraint_type_inst_id = AddTypeInst<SemIR::SpecificConstant>(
-          context, SemIR::LocId(constraint_type_inst_id),
-          {.type_id = SemIR::TypeType::TypeId,
-           .inst_id = constraint_type_inst_id,
-           .specific_id = context.generics().GetSelfSpecific(
-               stored_impl_info.generic_id)});
-    }
-    if (!ExtendImpl(context, extend_node, node_id, impl_decl.impl_id,
-                    self_type_node, self_type_id, name.implicit_params_loc_id,
-                    constraint_type_inst_id, constraint_type_id)) {
-      // Don't allow the invalid impl to be used.
-      FillImplWitnessWithErrors(context, stored_impl_info);
+    auto self_type_id =
+        context.types().GetTypeIdForTypeInstId(stored_impl_info.self_id);
+    if (self_type_id != SemIR::ErrorInst::TypeId) {
+      auto extend_node = introducer.modifier_node_id(ModifierOrder::Extend);
+      if (stored_impl_info.generic_id.has_value()) {
+        constraint_type_inst_id = AddTypeInst<SemIR::SpecificConstant>(
+            context, SemIR::LocId(constraint_type_inst_id),
+            {.type_id = SemIR::TypeType::TypeId,
+             .inst_id = constraint_type_inst_id,
+             .specific_id = context.generics().GetSelfSpecific(
+                 stored_impl_info.generic_id)});
+      }
+      if (!ExtendImpl(context, extend_node, node_id, impl_decl.impl_id,
+                      self_type_node, self_type_id, name.implicit_params_loc_id,
+                      constraint_type_inst_id, constraint_type_id)) {
+        // Don't allow the invalid impl to be used.
+        FillImplWitnessWithErrors(context, stored_impl_info);
+      }
     }
   }
 

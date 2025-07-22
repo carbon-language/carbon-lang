@@ -7,18 +7,6 @@ load("//bazel/cc_rules:defs.bzl", "cc_library", "cc_test")
 package(default_visibility = ["//visibility:public"])
 
 cc_library(
-    name = "block_value_store",
-    hdrs = ["block_value_store.h"],
-    deps = [
-        "//common:hashing",
-        "//common:set",
-        "//toolchain/base:value_store",
-        "//toolchain/base:yaml",
-        "@llvm-project//llvm:Support",
-    ],
-)
-
-cc_library(
     name = "typed_insts",
     srcs = [
         "ids.cpp",
@@ -27,8 +15,10 @@ cc_library(
     hdrs = [
         "id_kind.h",
         "ids.h",
+        "inst_categories.h",
         "inst_kind.h",
         "singleton_insts.h",
+        "specific_interface.h",
         "typed_insts.h",
     ],
     textual_hdrs = ["inst_kind.def"],
@@ -36,6 +26,8 @@ cc_library(
         "//common:check",
         "//common:enum_base",
         "//common:ostream",
+        "//common:type_enum",
+        "//toolchain/base:canonical_value_store",
         "//toolchain/base:index_base",
         "//toolchain/base:int",
         "//toolchain/base:value_ids",
@@ -52,6 +44,19 @@ cc_test(
         ":typed_insts",
         "//testing/base:gtest_main",
         "@googletest//:gtest",
+    ],
+)
+
+cc_library(
+    name = "clang_decl",
+    srcs = ["clang_decl.cpp"],
+    hdrs = ["clang_decl.h"],
+    deps = [
+        ":typed_insts",
+        "//common:hashtable_key_context",
+        "//common:ostream",
+        "//toolchain/base:canonical_value_store",
+        "@llvm-project//clang:ast",
     ],
 )
 
@@ -99,12 +104,13 @@ cc_library(
         "type.h",
         "type_info.h",
         "type_iterator.h",
+        "vtable.h",
     ],
     textual_hdrs = [
         "builtin_function_kind.def",
     ],
     deps = [
-        ":block_value_store",
+        ":clang_decl",
         ":typed_insts",
         "//common:check",
         "//common:enum_base",
@@ -115,9 +121,12 @@ cc_library(
         "//common:raw_string_ostream",
         "//common:set",
         "//common:struct_reflection",
+        "//toolchain/base:block_value_store",
+        "//toolchain/base:canonical_value_store",
         "//toolchain/base:index_base",
         "//toolchain/base:int",
         "//toolchain/base:kind_switch",
+        "//toolchain/base:relational_value_store",
         "//toolchain/base:shared_value_stores",
         "//toolchain/base:value_ids",
         "//toolchain/base:value_store",
@@ -139,6 +148,7 @@ cc_library(
         ":file",
         ":typed_insts",
         "//common:check",
+        "//common:concepts",
         "//common:raw_string_ostream",
         "//toolchain/base:kind_switch",
         "@llvm-project//llvm:Support",
@@ -158,8 +168,10 @@ cc_library(
     deps = [
         ":file",
         ":typed_insts",
+        "//common:concepts",
         "//common:ostream",
         "//common:raw_string_ostream",
+        "//common:type_enum",
         "//toolchain/base:kind_switch",
         "//toolchain/base:shared_value_stores",
         "//toolchain/base:value_ids",
@@ -178,7 +190,9 @@ cc_library(
         ":file",
         ":inst_namer",
         ":typed_insts",
+        "//common:concepts",
         "//common:ostream",
+        "//toolchain/base:fixed_size_value_store",
         "//toolchain/base:kind_switch",
         "//toolchain/base:shared_value_stores",
         "//toolchain/lex:tokenized_buffer",
@@ -218,6 +232,20 @@ cc_library(
         ":typed_insts",
         "//common:check",
         "//toolchain/base:kind_switch",
+    ],
+)
+
+cc_library(
+    name = "diagnostic_loc_converter",
+    srcs = ["diagnostic_loc_converter.cpp"],
+    hdrs = ["diagnostic_loc_converter.h"],
+    deps = [
+        ":absolute_node_id",
+        ":file",
+        ":typed_insts",
+        "//toolchain/diagnostics:diagnostic_emitter",
+        "//toolchain/parse:tree",
+        "@llvm-project//llvm:Support",
     ],
 )
 

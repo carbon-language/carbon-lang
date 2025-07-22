@@ -24,43 +24,46 @@ TEST(IdsTest, LocIdValues) {
       static_cast<LocId>(InstId(std::numeric_limits<int32_t>::max())).index,
       Eq(std::numeric_limits<int32_t>::max()));
 
-  EXPECT_THAT(static_cast<LocId>(Parse::NodeId(0)).index, Eq(-2));
-  EXPECT_THAT(static_cast<LocId>(Parse::NodeId(Parse::NodeId::Max - 1)).index,
-              Eq(-2 - (1 << 24) + 1));
+  auto min_node_id = static_cast<LocId>(Parse::NodeId(0));
+  EXPECT_THAT(min_node_id.index, Eq(-2));
+  EXPECT_THAT(min_node_id.AsDesugared().index, Eq(-2 - (1 << 24)));
+  EXPECT_THAT(min_node_id.AsDesugared().index,
+              Eq(min_node_id.AsDesugared().AsDesugared().index));
 
-  EXPECT_THAT(static_cast<LocId>(ImportIRInstId(0)).index, Eq(-2 - (1 << 24)));
+  auto max_node_id = static_cast<LocId>(Parse::NodeId(Parse::NodeId::Max - 1));
+  EXPECT_THAT(max_node_id.index, Eq(-2 - (1 << 24) + 1));
+  EXPECT_THAT(max_node_id.AsDesugared().index, Eq(-2 - (1 << 25) + 1));
+  EXPECT_THAT(max_node_id.AsDesugared().index,
+              Eq(max_node_id.AsDesugared().AsDesugared().index));
+
+  EXPECT_THAT(static_cast<LocId>(ImportIRInstId(0)).index, Eq(-2 - (1 << 25)));
   EXPECT_THAT(static_cast<LocId>(ImportIRInstId(ImportIRInstId::Max - 1)).index,
-              Eq(-(1 << 29) + 1));
+              Eq(std::numeric_limits<int32_t>::min()));
 }
 
-// A standard parameterized test for (implicit, token_only, index).
+// A standard parameterized test for (is_desugared, index).
 class IdsTestWithParam
-    : public testing::TestWithParam<std::tuple<bool, bool, int32_t>> {
+    : public testing::TestWithParam<std::tuple<bool, int32_t>> {
  public:
   explicit IdsTestWithParam() {
-    llvm::errs() << "implicit=" << is_implicit()
-                 << ", token_only=" << is_token_only()
-                 << ", index=" << std::get<2>(GetParam()) << "\n";
+    llvm::errs() << "is_desugared=" << is_desugared() << ", index=" << index()
+                 << "\n";
   }
 
   // Returns IdT with its matching LocId form. Sets flags based on test
   // parameters.
   template <typename IdT>
   auto BuildIdAndLocId() -> std::pair<IdT, LocId> {
-    auto [implicit, token_only, index] = GetParam();
-    IdT id(index);
-    LocId loc_id(id);
-    if (implicit) {
-      loc_id = loc_id.ToImplicit();
+    IdT id(index());
+    if (is_desugared()) {
+      return {id, LocId(id).AsDesugared()};
+    } else {
+      return {id, LocId(id)};
     }
-    if (token_only) {
-      loc_id = loc_id.ToTokenOnly();
-    }
-    return {id, loc_id};
   }
 
-  auto is_implicit() -> bool { return std::get<0>(GetParam()); }
-  auto is_token_only() -> bool { return std::get<1>(GetParam()); }
+  auto is_desugared() -> bool { return std::get<0>(GetParam()); }
+  auto index() -> int32_t { return std::get<1>(GetParam()); }
 };
 
 // Returns a test case generator for edge-case values.
@@ -70,7 +73,7 @@ static auto GetValueRange(int32_t max) -> auto {
 
 // Returns a test case generator for `IdsTestWithParam` uses.
 static auto CombineWithFlags(auto value_range) -> auto {
-  return testing::Combine(testing::Bool(), testing::Bool(), value_range);
+  return testing::Combine(testing::Bool(), value_range);
 }
 
 class LocIdAsNoneTestWithParam : public IdsTestWithParam {};
@@ -83,7 +86,7 @@ TEST_P(LocIdAsNoneTestWithParam, Test) {
   auto [_, loc_id] = BuildIdAndLocId<Parse::NodeId>();
   EXPECT_FALSE(loc_id.has_value());
   EXPECT_THAT(loc_id.kind(), Eq(LocId::Kind::None));
-  EXPECT_FALSE(loc_id.is_implicit());
+  EXPECT_FALSE(loc_id.is_desugared());
   EXPECT_THAT(loc_id.import_ir_inst_id(), Eq(ImportIRInstId::None));
   EXPECT_THAT(loc_id.inst_id(), Eq(InstId::None));
   EXPECT_THAT(loc_id.node_id(),
@@ -101,15 +104,14 @@ TEST_P(LocIdAsImportIRInstIdTest, Test) {
   EXPECT_TRUE(loc_id.has_value());
   ASSERT_THAT(loc_id.kind(), Eq(LocId::Kind::ImportIRInstId));
   EXPECT_THAT(loc_id.import_ir_inst_id(), import_ir_inst_id);
-  EXPECT_FALSE(loc_id.is_implicit());
-  EXPECT_THAT(loc_id.is_token_only(), Eq(is_token_only()));
+  EXPECT_FALSE(loc_id.is_desugared());
 }
 
 class LocIdAsInstIdTest : public IdsTestWithParam {};
 
 INSTANTIATE_TEST_SUITE_P(
     Test, LocIdAsInstIdTest,
-    testing::Combine(testing::Values(false), testing::Values(false),
+    testing::Combine(testing::Values(false),
                      GetValueRange(std::numeric_limits<int32_t>::max())));
 
 TEST_P(LocIdAsInstIdTest, Test) {
@@ -117,8 +119,7 @@ TEST_P(LocIdAsInstIdTest, Test) {
   EXPECT_TRUE(loc_id.has_value());
   ASSERT_THAT(loc_id.kind(), Eq(LocId::Kind::InstId));
   EXPECT_THAT(loc_id.inst_id(), inst_id);
-  // Note that `is_implicit` and `is_token_only` are invalid to use with
-  // `InstId`.
+  // Note that `is_desugared` is invalid to use with `InstId`.
 }
 
 class LocIdAsNodeIdTest : public IdsTestWithParam {};
@@ -131,8 +132,7 @@ TEST_P(LocIdAsNodeIdTest, Test) {
   EXPECT_TRUE(loc_id.has_value());
   ASSERT_THAT(loc_id.kind(), Eq(LocId::Kind::NodeId));
   EXPECT_THAT(loc_id.node_id(), node_id);
-  EXPECT_THAT(loc_id.is_implicit(), Eq(is_implicit()));
-  EXPECT_THAT(loc_id.is_token_only(), Eq(is_token_only()));
+  EXPECT_THAT(loc_id.is_desugared(), Eq(is_desugared()));
 }
 
 }  // namespace

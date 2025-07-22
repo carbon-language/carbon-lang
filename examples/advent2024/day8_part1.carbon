@@ -5,17 +5,16 @@
 // https://adventofcode.com/2024/day/8
 
 import Core library "io";
+import Core library "range";
 
 import library "day8_common";
 import library "io_utils";
 
 fn IsAntinode(grid: Grid, ox: i32, oy: i32) -> bool {
-  var ay: i32 = 0;
-  while (ay < 50) {
+  for (ay: i32 in Core.Range(50)) {
     let by: i32 = ay * 2 - oy;
     if (by >= 0 and by < 50) {
-      var ax: i32 = 0;
-      while (ax < 50) {
+      for (ax: i32 in Core.Range(50)) {
         let bx: i32 = ax * 2 - ox;
         if (bx >= 0 and bx < 50 and (ax != bx or ay != by)) {
           if (grid.data[ax][ay] != 0x2E and
@@ -23,26 +22,20 @@ fn IsAntinode(grid: Grid, ox: i32, oy: i32) -> bool {
             return true;
           }
         }
-        ++ax;
       }
     }
-    ++ay;
   }
   return false;
 }
 
 fn CountAntinodes(grid: Grid) -> i32 {
   var count: i32 = 0;
-  var y: i32 = 0;
-  while (y < 50) {
-    var x: i32 = 0;
-    while (x < 50) {
+  for (y: i32 in Core.Range(50)) {
+    for (x: i32 in Core.Range(50)) {
       if (IsAntinode(grid, x, y)) {
         ++count;
       }
-      ++x;
     }
-    ++y;
   }
   return count;
 }

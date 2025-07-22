@@ -47,9 +47,8 @@ common --disk_cache=~/.cache/carbon-lang-build-cache
 # line to `user.bazelrc` in the repository root and modify the number there.
 common --experimental_disk_cache_gc_max_size=100G
 
-# Enable some safety when using the build cache, likely to be defaulted in
-# future Bazel releases.
-common --experimental_guard_against_concurrent_changes
+# Enable some safety when using the build cache. Defaults to `lite`.
+common --guard_against_concurrent_changes=full
 
 # Used by clang_configuration.bzl.
 common --action_env=CC --host_action_env=CC

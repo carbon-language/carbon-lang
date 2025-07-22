@@ -2,6 +2,8 @@
 // Exceptions. See /LICENSE for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
+// INCLUDE-FILE: toolchain/testing/testdata/min_prelude/convert.carbon
+//
 // AUTOUPDATE
 // TIP: To test this file alone, run:
 // TIP:   bazel test //toolchain/testing:file_test --test_arg=--file_tests=toolchain/check/testdata/class/fail_base_as_declared_name.carbon
@@ -19,8 +21,3 @@ namespace N;
 // CHECK:STDERR:      ^~~~
 // CHECK:STDERR:
 fn N.base() {}
-
-// CHECK:STDOUT: --- fail_base_as_declared_name.carbon
-// CHECK:STDOUT:
-// CHECK:STDOUT: file {}
-// CHECK:STDOUT:

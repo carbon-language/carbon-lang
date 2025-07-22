@@ -24,15 +24,62 @@
 namespace Carbon::Testing {
 namespace {
 
+// Adds a file to the fs.
+static auto AddFile(llvm::vfs::InMemoryFileSystem& fs, llvm::StringRef path)
+    -> ErrorOr<Success> {
+  llvm::ErrorOr<std::unique_ptr<llvm::MemoryBuffer>> file =
+      llvm::MemoryBuffer::getFile(path);
+  if (file.getError()) {
+    return ErrorBuilder() << "Getting `" << path
+                          << "`: " << file.getError().message();
+  }
+  if (!fs.addFile(path, /*ModificationTime=*/0, std::move(*file))) {
+    return ErrorBuilder() << "Duplicate file: `" << path << "`";
+  }
+  return Success();
+}
+
+struct SharedTestData {
+  // The toolchain install information.
+  InstallPaths installation;
+
+  // Files in the prelude.
+  llvm::SmallVector<std::string> prelude_files;
+
+  // The installed files that tests can use.
+  llvm::IntrusiveRefCntPtr<llvm::vfs::InMemoryFileSystem> file_system =
+      new llvm::vfs::InMemoryFileSystem();
+};
+
+static auto GetSharedTestData(llvm::StringRef exe_path)
+    -> const SharedTestData* {
+  static ErrorOr<SharedTestData> data = [&]() -> ErrorOr<SharedTestData> {
+    SharedTestData data = {.installation =
+                               InstallPaths::MakeForBazelRunfiles(exe_path)};
+    CARBON_ASSIGN_OR_RETURN(data.prelude_files,
+                            data.installation.ReadPreludeManifest());
+    for (const auto& file : data.prelude_files) {
+      CARBON_RETURN_IF_ERROR(AddFile(*data.file_system, file));
+    }
+
+    llvm::SmallVector<std::string> clang_header_files;
+    CARBON_ASSIGN_OR_RETURN(clang_header_files,
+                            data.installation.ReadClangHeadersManifest());
+    for (const auto& file : clang_header_files) {
+      CARBON_RETURN_IF_ERROR(AddFile(*data.file_system, file));
+    }
+    return data;
+  }();
+  CARBON_CHECK(data.ok(), "{0}", data.error());
+  return &*data;
+}
+
 // Provides common test support for the driver. This is used by file tests in
 // component subdirectories.
 class ToolchainFileTest : public FileTestBase {
  public:
   explicit ToolchainFileTest(llvm::StringRef exe_path,
                              llvm::StringRef test_name);
-
-  // Adds a replacement for `core_package_dir`.
-  auto GetArgReplacements() const -> llvm::StringMap<std::string> override;
 
   // Loads files into the VFS and runs the driver.
   auto Run(const llvm::SmallVector<llvm::StringRef>& test_args,
@@ -63,29 +110,10 @@ class ToolchainFileTest : public FileTestBase {
   }
 
  private:
-  // The prelude mode. For lex and parse, it's always `None`; we exclude it in
-  // order to focus errors. For check and lowering, it's set through
-  // `min_prelude` and `no_prelude` subdirectories.
-  enum Prelude {
-    Default,
-    Min,
-    None,
-  };
-  auto prelude() const -> Prelude {
-    if (component_ == "lex" || component_ == "parse" ||
-        test_name().find("/no_prelude/") != llvm::StringRef::npos) {
-      return Prelude::None;
-    }
-    if (test_name().find("/min_prelude/") != llvm::StringRef::npos) {
-      return Prelude::Min;
-    }
-    return Prelude::Default;
-  }
-
   // The toolchain component subdirectory, such as `lex` or `language_server`.
   const llvm::StringRef component_;
-  // The toolchain install information.
-  const InstallPaths installation_;
+  // The shared test data.
+  const SharedTestData* data_;
 };
 
 }  // namespace
@@ -107,44 +135,45 @@ ToolchainFileTest::ToolchainFileTest(llvm::StringRef exe_path,
                                      llvm::StringRef test_name)
     : FileTestBase(test_name),
       component_(GetComponent(test_name)),
-      installation_(InstallPaths::MakeForBazelRunfiles(exe_path)) {}
-
-auto ToolchainFileTest::GetArgReplacements() const
-    -> llvm::StringMap<std::string> {
-  return {{"core_package_dir", installation_.core_package()}};
-}
-
-// Adds a file to the fs.
-static auto AddFile(llvm::vfs::InMemoryFileSystem& fs, llvm::StringRef path)
-    -> ErrorOr<Success> {
-  llvm::ErrorOr<std::unique_ptr<llvm::MemoryBuffer>> file =
-      llvm::MemoryBuffer::getFile(path);
-  if (file.getError()) {
-    return ErrorBuilder() << "Getting `" << path
-                          << "`: " << file.getError().message();
-  }
-  if (!fs.addFile(path, /*ModificationTime=*/0, std::move(*file))) {
-    return ErrorBuilder() << "Duplicate file: `" << path << "`";
-  }
-  return Success();
-}
+      data_(GetSharedTestData(exe_path)) {}
 
 auto ToolchainFileTest::Run(
     const llvm::SmallVector<llvm::StringRef>& test_args,
     llvm::IntrusiveRefCntPtr<llvm::vfs::InMemoryFileSystem>& fs,
     FILE* input_stream, llvm::raw_pwrite_stream& output_stream,
     llvm::raw_pwrite_stream& error_stream) const -> ErrorOr<RunResult> {
-  CARBON_ASSIGN_OR_RETURN(auto prelude_files,
-                          installation_.ReadPreludeManifest());
-  if (prelude() == Prelude::Default) {
-    for (const auto& file : prelude_files) {
-      CARBON_RETURN_IF_ERROR(AddFile(*fs, file));
+  llvm::IntrusiveRefCntPtr<llvm::vfs::OverlayFileSystem> overlay_fs =
+      new llvm::vfs::OverlayFileSystem(data_->file_system);
+  overlay_fs->pushOverlay(fs);
+
+  llvm::SmallVector<llvm::StringRef> filtered_test_args;
+  if (component_ == "check" || component_ == "lower") {
+    filtered_test_args.reserve(test_args.size());
+    bool found_prelude_flag = false;
+    for (auto arg : test_args) {
+      bool driver_flag = arg == "--custom-core" || arg == "--no-prelude-import";
+      // A flag specified by a test prelude to indicate the intention to include
+      // the full production prelude.
+      bool full_prelude = arg == "--expect-full-prelude";
+      if (driver_flag || full_prelude) {
+        found_prelude_flag = true;
+      }
+      if (!full_prelude) {
+        filtered_test_args.push_back(arg);
+      }
     }
+    if (!found_prelude_flag) {
+      return Error(
+          "Include a prelude from //toolchain/testing/testdata/min_prelude "
+          "to specify what should be imported into the test.");
+    }
+  } else {
+    filtered_test_args = test_args;
   }
 
-  Driver driver(fs, &installation_, input_stream, &output_stream,
+  Driver driver(overlay_fs, &data_->installation, input_stream, &output_stream,
                 &error_stream);
-  auto driver_result = driver.RunCommand(test_args);
+  auto driver_result = driver.RunCommand(filtered_test_args);
   // If any diagnostics have been produced, add a trailing newline to make the
   // last diagnostic match intermediate diagnostics (that have a newline
   // separator between them). This reduces churn when adding new diagnostics
@@ -162,7 +191,7 @@ auto ToolchainFileTest::Run(
                  [&](std::pair<llvm::StringRef, bool> entry) {
                    return entry.first == "." || entry.first == "-" ||
                           entry.first.starts_with("not_file") ||
-                          llvm::is_contained(prelude_files, entry.first);
+                          llvm::is_contained(data_->prelude_files, entry.first);
                  });
 
   if (component_ == "language_server") {
@@ -185,37 +214,27 @@ auto ToolchainFileTest::GetDefaultArgs() const
     return args;
   }
 
-  args.insert(args.end(), {"compile", "--phase=" + component_.str()});
+  args.insert(args.end(), {
+                              "compile",
+                              "--phase=" + component_.str(),
+                              // Use the install path to exclude prelude files.
+                              "--exclude-dump-file-prefix=" +
+                                  data_->installation.core_package(),
+                          });
 
   if (component_ == "lex") {
-    args.insert(args.end(), {"--dump-tokens", "--omit-file-boundary-tokens"});
+    args.insert(args.end(), {"--no-prelude-import", "--dump-tokens",
+                             "--omit-file-boundary-tokens"});
   } else if (component_ == "parse") {
-    args.push_back("--dump-parse-tree");
+    args.insert(args.end(), {"--no-prelude-import", "--dump-parse-tree"});
   } else if (component_ == "check") {
-    args.push_back("--dump-sem-ir");
+    args.insert(args.end(), {"--dump-sem-ir", "--dump-sem-ir-ranges=only"});
   } else if (component_ == "lower") {
-    args.push_back("--dump-llvm-ir");
+    args.insert(args.end(), {"--dump-llvm-ir", "--target=x86_64-linux-gnu"});
+  } else if (component_ == "codegen") {
+    // codegen tests specify flags as needed.
   } else {
     CARBON_FATAL("Unexpected test component {0}: {1}", component_, test_name());
-  }
-
-  switch (prelude()) {
-    case Prelude::Default:
-      // Use the install path to exclude prelude files.
-      args.push_back("--exclude-dump-file-prefix=" +
-                     installation_.core_package());
-      break;
-
-    case Prelude::Min:
-      // Included files all show up under the `include_files/` prefix, so
-      // exclude min_prelude files that way.
-      args.insert(args.end(), {"--custom-core",
-                               "--exclude-dump-file-prefix=include_files/"});
-      break;
-
-    case Prelude::None:
-      args.push_back("--no-prelude-import");
-      break;
   }
 
   args.push_back("%s");
@@ -258,13 +277,14 @@ auto ToolchainFileTest::DoExtraCheckReplacements(std::string& check_line) const
     // The column happens to be right for FileStart, but the line is wrong.
     static RE2 file_token_re(R"((FileEnd.*column: |FileStart.*line: )( *\d+))");
     RE2::Replace(&check_line, file_token_re, R"(\1{{ *\\d+}})");
-  } else if (component_ == "check") {
-    // The path to the core package appears in some check diagnostics, and will
-    // differ between testing environments, so don't test it.
+  } else if (component_ == "check" || component_ == "lower") {
+    // The path to the core package appears in some check diagnostics and in
+    // debug information produced by lowering, and will differ between testing
+    // environments, so don't test it.
     // TODO: Consider adding a content keyword to name the core package, and
     // replace with that instead. Alternatively, consider adding the core
     // package to the VFS with a fixed name.
-    absl::StrReplaceAll({{installation_.core_package(), "{{.*}}"}},
+    absl::StrReplaceAll({{data_->installation.core_package(), "{{.*}}"}},
                         &check_line);
   } else {
     FileTestBase::DoExtraCheckReplacements(check_line);

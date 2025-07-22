@@ -5,18 +5,23 @@
 #ifndef CARBON_TOOLCHAIN_CHECK_IMPORT_CPP_H_
 #define CARBON_TOOLCHAIN_CHECK_IMPORT_CPP_H_
 
+#include "llvm/ADT/ArrayRef.h"
+#include "llvm/ADT/IntrusiveRefCntPtr.h"
 #include "llvm/ADT/StringRef.h"
+#include "llvm/Support/VirtualFileSystem.h"
 #include "toolchain/check/context.h"
 #include "toolchain/check/diagnostic_helpers.h"
+#include "toolchain/diagnostics/diagnostic_emitter.h"
 
 namespace Carbon::Check {
 
 // Generates a C++ header that includes the imported cpp files, parses it,
 // generates the AST from it and links `SemIR::File` to it. Report C++ errors
 // and warnings. If successful, adds a `Cpp` namespace and returns the AST.
-auto ImportCppFiles(Context& context, llvm::StringRef importing_file_path,
+auto ImportCppFiles(Context& context,
                     llvm::ArrayRef<Parse::Tree::PackagingNames> imports,
-                    llvm::IntrusiveRefCntPtr<llvm::vfs::FileSystem> fs)
+                    llvm::IntrusiveRefCntPtr<llvm::vfs::FileSystem> fs,
+                    std::shared_ptr<clang::CompilerInvocation> invocation)
     -> std::unique_ptr<clang::ASTUnit>;
 
 // Looks up the given name in the Clang AST generated when importing C++ code.

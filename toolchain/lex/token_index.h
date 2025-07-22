@@ -10,6 +10,8 @@
 
 namespace Carbon::Lex {
 
+class TokenInfo;
+
 // A lightweight handle to a lexed token in a `TokenizedBuffer`.
 //
 // `TokenIndex` objects are designed to be passed by value, not reference or

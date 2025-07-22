@@ -14,6 +14,11 @@ namespace Carbon::SemIR {
 // `self: Foo` or `addr self: Self*`.
 auto IsSelfPattern(const File& sem_ir, InstId pattern_id) -> bool;
 
+// If `pattern_id` introduces any name bindings, this returns the `EntityNameId`
+// of the lexically-first such binding. Otherwise, returns `None`.
+auto GetFirstBindingNameFromPatternId(const File& sem_ir, InstId pattern_id)
+    -> EntityNameId;
+
 // If `pattern_id` is a declaration of a single name, this returns that name,
 // and otherwise returns `None`. This tries to "see through" wrappers like
 // `AddrPattern` and `*ParamPattern`, so this may return the same name for

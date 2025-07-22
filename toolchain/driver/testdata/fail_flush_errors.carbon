@@ -2,8 +2,10 @@
 // Exceptions. See /LICENSE for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
-// INCLUDE-FILE: toolchain/testing/min_prelude/destroy.carbon
-// ARGS: --include-diagnostic-kind compile --custom-core %s
+// This test is validating that the delayed error flush doesn't break on string
+// lifetimes.
+//
+// ARGS: --include-diagnostic-kind compile --no-prelude-import %s
 //
 // AUTOUPDATE
 // TIP: To test this file alone, run:
@@ -31,7 +33,7 @@ fn F() {
   undeclared2;
 
   // Add the name into the string table via a declaration rather than an expression.
-  if (true) { var undeclared3: () = (); }
+  if (true) { let undeclared3:! () = (); }
   // CHECK:STDERR: fail_flush_errors.carbon:[[@LINE+4]]:3: error: name `undeclared3` not found [NameNotFound]
   // CHECK:STDERR:   undeclared3;
   // CHECK:STDERR:   ^~~~~~~~~~~

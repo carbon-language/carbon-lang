@@ -10,10 +10,11 @@
 #include "common/map.h"
 #include "common/ostream.h"
 #include "llvm/ADT/SmallVector.h"
+#include "toolchain/base/canonical_value_store.h"
 #include "toolchain/base/value_store.h"
 #include "toolchain/check/decl_introducer_state.h"
 #include "toolchain/check/decl_name_stack.h"
-#include "toolchain/check/deferred_definition_scope.h"
+#include "toolchain/check/deferred_definition_worklist.h"
 #include "toolchain/check/diagnostic_helpers.h"
 #include "toolchain/check/full_pattern_stack.h"
 #include "toolchain/check/generic_region_stack.h"
@@ -27,11 +28,13 @@
 #include "toolchain/parse/node_ids.h"
 #include "toolchain/parse/tree.h"
 #include "toolchain/parse/tree_and_subtrees.h"
+#include "toolchain/sem_ir/facet_type_info.h"
 #include "toolchain/sem_ir/file.h"
 #include "toolchain/sem_ir/ids.h"
 #include "toolchain/sem_ir/import_ir.h"
 #include "toolchain/sem_ir/inst.h"
 #include "toolchain/sem_ir/name_scope.h"
+#include "toolchain/sem_ir/specific_interface.h"
 #include "toolchain/sem_ir/typed_insts.h"
 
 namespace Carbon::Check {
@@ -129,8 +132,8 @@ class Context {
     return scope_stack_.full_pattern_stack();
   }
 
-  auto deferred_definition_scope_stack() -> DeferredDefinitionScopeStack& {
-    return deferred_definition_scope_stack_;
+  auto deferred_definition_worklist() -> DeferredDefinitionWorklist& {
+    return deferred_definition_worklist_;
   }
 
   auto generic_region_stack() -> GenericRegionStack& {
@@ -141,7 +144,8 @@ class Context {
 
   auto exports() -> llvm::SmallVector<SemIR::InstId>& { return exports_; }
 
-  auto check_ir_map() -> llvm::MutableArrayRef<SemIR::ImportIRId> {
+  auto check_ir_map()
+      -> FixedSizeValueStore<SemIR::CheckIRId, SemIR::ImportIRId>& {
     return check_ir_map_;
   }
 
@@ -161,9 +165,7 @@ class Context {
 
   auto global_init() -> GlobalInit& { return global_init_; }
 
-  auto import_ref_ids() -> llvm::SmallVector<SemIR::InstId>& {
-    return import_ref_ids_;
-  }
+  auto imports() -> llvm::SmallVector<SemIR::InstId>& { return imports_; }
 
   // Pre-computed parts of a binding pattern.
   // TODO: Consider putting this behind a narrower API to guard against emitting
@@ -240,33 +242,27 @@ class Context {
   auto entity_names() -> SemIR::EntityNameStore& {
     return sem_ir().entity_names();
   }
-  auto functions() -> ValueStore<SemIR::FunctionId>& {
-    return sem_ir().functions();
-  }
-  auto classes() -> ValueStore<SemIR::ClassId>& { return sem_ir().classes(); }
-  auto interfaces() -> ValueStore<SemIR::InterfaceId>& {
-    return sem_ir().interfaces();
-  }
-  auto associated_constants() -> ValueStore<SemIR::AssociatedConstantId>& {
+  auto functions() -> SemIR::FunctionStore& { return sem_ir().functions(); }
+  auto classes() -> SemIR::ClassStore& { return sem_ir().classes(); }
+  auto vtables() -> SemIR::VtableStore& { return sem_ir().vtables(); }
+  auto interfaces() -> SemIR::InterfaceStore& { return sem_ir().interfaces(); }
+  auto associated_constants() -> SemIR::AssociatedConstantStore& {
     return sem_ir().associated_constants();
   }
-  auto facet_types() -> CanonicalValueStore<SemIR::FacetTypeId>& {
+  auto facet_types() -> SemIR::FacetTypeInfoStore& {
     return sem_ir().facet_types();
   }
   auto identified_facet_types() -> SemIR::File::IdentifiedFacetTypeStore& {
     return sem_ir().identified_facet_types();
   }
   auto impls() -> SemIR::ImplStore& { return sem_ir().impls(); }
-  auto specific_interfaces()
-      -> CanonicalValueStore<SemIR::SpecificInterfaceId>& {
+  auto specific_interfaces() -> SemIR::SpecificInterfaceStore& {
     return sem_ir().specific_interfaces();
   }
   auto generics() -> SemIR::GenericStore& { return sem_ir().generics(); }
   auto specifics() -> SemIR::SpecificStore& { return sem_ir().specifics(); }
-  auto import_irs() -> ValueStore<SemIR::ImportIRId>& {
-    return sem_ir().import_irs();
-  }
-  auto import_ir_insts() -> ValueStore<SemIR::ImportIRInstId>& {
+  auto import_irs() -> SemIR::ImportIRStore& { return sem_ir().import_irs(); }
+  auto import_ir_insts() -> SemIR::ImportIRInstStore& {
     return sem_ir().import_ir_insts();
   }
   auto ast_context() -> clang::ASTContext& {
@@ -342,8 +338,9 @@ class Context {
   // The stack of scopes we are currently within.
   ScopeStack scope_stack_;
 
-  // The stack of non-nested deferred definition scopes we are currently within.
-  DeferredDefinitionScopeStack deferred_definition_scope_stack_;
+  // The worklist of deferred definition tasks to perform at the end of the
+  // enclosing deferred definition scope.
+  DeferredDefinitionWorklist deferred_definition_worklist_;
 
   // The stack of generic regions we are currently within.
   GenericRegionStack generic_region_stack_;
@@ -352,11 +349,12 @@ class Context {
   // defined, regardless of whether the class can have virtual functions.
   InstBlockStack vtable_stack_;
 
-  // The list which will form NodeBlockId::Exports.
+  // Instructions which are operands to an `export` directive. This becomes
+  // `InstBlockId::Exports`.
   llvm::SmallVector<SemIR::InstId> exports_;
 
   // Maps CheckIRId to ImportIRId.
-  llvm::SmallVector<SemIR::ImportIRId> check_ir_map_;
+  FixedSizeValueStore<SemIR::CheckIRId, SemIR::ImportIRId> check_ir_map_;
 
   // Per-import constant values. These refer to the main IR and mainly serve as
   // a lookup table for quick access.
@@ -377,14 +375,14 @@ class Context {
   // State for global initialization.
   GlobalInit global_init_;
 
-  // A list of import refs which can't be inserted into their current context.
-  // They're typically added during name lookup or import ref resolution, where
-  // the current block on inst_block_stack_ is unrelated.
+  // Instructions which are generated as a result of imports; both `ImportRef`s
+  // and instructions they generate. For example, when a name reference resolves
+  // an imported function, the `ImportRefLoaded` results in a `FunctionDecl`,
+  // and both end up here. The `FunctionDecl` shouldn't use the current block on
+  // inst_block_stack_ because it's not tied to the referencing scope.
   //
-  // These are instead added here because they're referenced by other
-  // instructions and needs to be visible in textual IR.
-  // FinalizeImportRefBlock() will produce an inst block for them.
-  llvm::SmallVector<SemIR::InstId> import_ref_ids_;
+  // This becomes `InstBlockId::Imports`.
+  llvm::SmallVector<SemIR::InstId> imports_;
 
   // Map from an AnyBindingPattern inst to precomputed parts of the
   // pattern-match SemIR for it.

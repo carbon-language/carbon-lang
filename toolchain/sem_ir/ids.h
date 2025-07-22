@@ -14,42 +14,14 @@
 #include "toolchain/diagnostics/diagnostic_emitter.h"
 #include "toolchain/parse/node_ids.h"
 
-// NOLINTNEXTLINE(readability-identifier-naming)
-namespace clang {
-
-// Forward declare indexed types, for integration with ValueStore.
-class SourceLocation;
-
-}  // namespace clang
-
 namespace Carbon::SemIR {
 
-// Forward declare indexed types, for integration with ValueStore.
+// TODO: This is in use, but not here.
 class File;
-class ImportIRInst;
-class Inst;
-class NameScope;
-struct AssociatedConstant;
-struct Class;
-struct EntityName;
-struct ExprRegion;
-struct FacetTypeInfo;
-struct Function;
-struct Generic;
-struct IdentifiedFacetType;
-struct Specific;
-struct SpecificInterface;
-struct ImportCpp;
-struct ImportIR;
-struct Impl;
-struct Interface;
-struct StructTypeField;
-struct TypeInfo;
 
-// The ID of an instruction.
+// The ID of an `Inst`.
 struct InstId : public IdBase<InstId> {
   static constexpr llvm::StringLiteral Label = "inst";
-  using ValueType = Inst;
 
   // The maximum ID, inclusive.
   static constexpr int Max = std::numeric_limits<int32_t>::max();
@@ -65,10 +37,11 @@ struct InstId : public IdBase<InstId> {
 
 constexpr InstId InstId::InitTombstone = InstId(NoneIndex - 1);
 
-// And InstId whose value is a type. The fact it's a type is CHECKed on
+// An InstId whose value is a type. The fact it's a type is CHECKed on
 // construction, and this allows that check to be represented in the type
 // system.
 struct TypeInstId : public InstId {
+  static constexpr llvm::StringLiteral Label = "type_inst";
   static const TypeInstId None;
 
   using InstId::InstId;
@@ -96,6 +69,8 @@ constexpr TypeInstId TypeInstId::None = TypeInstId::UnsafeMake(InstId::None);
 // than substituting into it.
 class AbsoluteInstId : public InstId {
  public:
+  static constexpr llvm::StringLiteral Label = "absolute_inst";
+
   // Support implicit conversion from InstId so that InstId and AbsoluteInstId
   // have the same interface.
   // NOLINTNEXTLINE(google-explicit-constructor)
@@ -118,6 +93,8 @@ class AbsoluteInstId : public InstId {
 // an instruction.
 class DestInstId : public InstId {
  public:
+  static constexpr llvm::StringLiteral Label = "dest_inst";
+
   // Support implicit conversion from InstId so that InstId and DestInstId
   // have the same interface.
   // NOLINTNEXTLINE(google-explicit-constructor)
@@ -141,6 +118,8 @@ class DestInstId : public InstId {
 // has a non-constant value, the field is left unchanged by evaluation.
 class MetaInstId : public InstId {
  public:
+  static constexpr llvm::StringLiteral Label = "meta_inst";
+
   // Support implicit conversion from InstId so that InstId and MetaInstId
   // have the same interface.
   // NOLINTNEXTLINE(google-explicit-constructor)
@@ -174,12 +153,6 @@ struct ConstantId : public IdBase<ConstantId> {
     return ConstantId(const_id.index);
   }
 
-  // Returns the constant ID corresponding to a symbolic constant index.
-  static constexpr auto ForSymbolicConstantIndex(int32_t symbolic_index)
-      -> ConstantId {
-    return ConstantId(FirstSymbolicIndex - symbolic_index);
-  }
-
   using IdBase::IdBase;
 
   // Returns whether this represents a constant. Requires has_value.
@@ -190,7 +163,7 @@ struct ConstantId : public IdBase<ConstantId> {
   // Returns whether this represents a symbolic constant. Requires has_value.
   constexpr auto is_symbolic() const -> bool {
     CARBON_DCHECK(has_value());
-    return index <= FirstSymbolicIndex;
+    return index <= FirstSymbolicId;
   }
   // Returns whether this represents a concrete constant. Requires has_value.
   constexpr auto is_concrete() const -> bool {
@@ -207,6 +180,21 @@ struct ConstantId : public IdBase<ConstantId> {
  private:
   friend class ConstantValueStore;
 
+  // For Dump.
+  friend auto MakeSymbolicConstantId(int id) -> ConstantId;
+
+  // A symbolic constant.
+  struct SymbolicId : public IdBase<SymbolicId> {
+    static constexpr llvm::StringLiteral Label = "symbolic_constant";
+    using IdBase::IdBase;
+  };
+
+  // Returns the constant ID corresponding to a symbolic constant index.
+  static constexpr auto ForSymbolicConstantId(SymbolicId symbolic_id)
+      -> ConstantId {
+    return ConstantId(FirstSymbolicId - symbolic_id.index);
+  }
+
   // TODO: C++23 makes std::abs constexpr, but until then we mirror std::abs
   // logic here. LLVM should still optimize this.
   static constexpr auto Abs(int32_t i) -> int32_t { return i > 0 ? i : -i; }
@@ -221,21 +209,20 @@ struct ConstantId : public IdBase<ConstantId> {
 
   // Returns the symbolic constant index that describes this symbolic constant
   // value. Requires `is_symbolic()`.
-  constexpr auto symbolic_index() const -> int32_t {
+  constexpr auto symbolic_id() const -> SymbolicId {
     CARBON_DCHECK(is_symbolic());
-    return FirstSymbolicIndex - index;
+    return SymbolicId(FirstSymbolicId - index);
   }
 
   static constexpr int32_t NotConstantIndex = NoneIndex - 1;
-  static constexpr int32_t FirstSymbolicIndex = NoneIndex - 2;
+  static constexpr int32_t FirstSymbolicId = NoneIndex - 2;
 };
 
 constexpr ConstantId ConstantId::NotConstant = ConstantId(NotConstantIndex);
 
-// The ID of a EntityName.
+// The ID of a `EntityName`.
 struct EntityNameId : public IdBase<EntityNameId> {
   static constexpr llvm::StringLiteral Label = "entity_name";
-  using ValueType = EntityName;
 
   using IdBase::IdBase;
 };
@@ -260,10 +247,9 @@ struct CallParamIndex : public IndexBase<CallParamIndex> {
   using IndexBase::IndexBase;
 };
 
-// The ID of a function.
+// The ID of a `Function`.
 struct FunctionId : public IdBase<FunctionId> {
   static constexpr llvm::StringLiteral Label = "function";
-  using ValueType = Function;
 
   using IdBase::IdBase;
 };
@@ -281,34 +267,37 @@ struct CheckIRId : public IdBase<CheckIRId> {
 
 constexpr CheckIRId CheckIRId::Cpp = CheckIRId(NoneIndex - 1);
 
-// The ID of a class.
+// The ID of a `Class`.
 struct ClassId : public IdBase<ClassId> {
   static constexpr llvm::StringLiteral Label = "class";
-  using ValueType = Class;
 
   using IdBase::IdBase;
 };
 
-// The ID of an interface.
+// The ID of a `Vtable`.
+struct VtableId : public IdBase<VtableId> {
+  static constexpr llvm::StringLiteral Label = "vtable";
+
+  using IdBase::IdBase;
+};
+
+// The ID of an `Interface`.
 struct InterfaceId : public IdBase<InterfaceId> {
   static constexpr llvm::StringLiteral Label = "interface";
-  using ValueType = Interface;
 
   using IdBase::IdBase;
 };
 
-// The ID of an associated constant.
+// The ID of an `AssociatedConstant`.
 struct AssociatedConstantId : public IdBase<AssociatedConstantId> {
   static constexpr llvm::StringLiteral Label = "assoc_const";
-  using ValueType = AssociatedConstant;
 
   using IdBase::IdBase;
 };
 
-// The ID of an facet type value.
+// The ID of a `FacetTypeInfo`.
 struct FacetTypeId : public IdBase<FacetTypeId> {
   static constexpr llvm::StringLiteral Label = "facet_type";
-  using ValueType = FacetTypeInfo;
 
   using IdBase::IdBase;
 };
@@ -316,46 +305,41 @@ struct FacetTypeId : public IdBase<FacetTypeId> {
 // The ID of an resolved facet type value.
 struct IdentifiedFacetTypeId : public IdBase<IdentifiedFacetTypeId> {
   static constexpr llvm::StringLiteral Label = "identified_facet_type";
-  using ValueType = IdentifiedFacetType;
 
   using IdBase::IdBase;
 };
 
-// The ID of an impl.
+// The ID of an `Impl`.
 struct ImplId : public IdBase<ImplId> {
   using DiagnosticType = Diagnostics::TypeInfo<std::string>;
 
   static constexpr llvm::StringLiteral Label = "impl";
-  using ValueType = Impl;
 
   using IdBase::IdBase;
 };
 
-// The ID of a generic.
+// The ID of a `Generic`.
 struct GenericId : public IdBase<GenericId> {
   static constexpr llvm::StringLiteral Label = "generic";
-  using ValueType = Generic;
 
   using IdBase::IdBase;
 };
 
-// The ID of a specific, which is the result of specifying the generic arguments
-// for a generic.
+// The ID of a `Specific`, which is the result of specifying the generic
+// arguments for a generic.
 struct SpecificId : public IdBase<SpecificId> {
   using DiagnosticType = Diagnostics::TypeInfo<std::string>;
 
   static constexpr llvm::StringLiteral Label = "specific";
-  using ValueType = Specific;
 
   using IdBase::IdBase;
 };
 
-// The ID of a SpecificInterface, which is an interface and a specific pair.
+// The ID of a `SpecificInterface`, which is an interface and a specific pair.
 struct SpecificInterfaceId : public IdBase<SpecificInterfaceId> {
   using DiagnosticType = Diagnostics::TypeInfo<std::string>;
 
   static constexpr llvm::StringLiteral Label = "specific_interface";
-  using ValueType = SpecificInterface;
 
   using IdBase::IdBase;
 };
@@ -410,17 +394,17 @@ struct GenericInstIndex : public IndexBase<GenericInstIndex> {
 constexpr GenericInstIndex GenericInstIndex::None =
     GenericInstIndex::MakeNone();
 
+// The ID of an `ImportCpp`.
 struct ImportCppId : public IdBase<ImportCppId> {
   static constexpr llvm::StringLiteral Label = "import_cpp";
-  using ValueType = ImportCpp;
 
   using IdBase::IdBase;
 };
 
-// The ID of an IR within the set of imported IRs, both direct and indirect.
+// The ID of an `ImportIR` within the set of imported IRs, both direct and
+// indirect.
 struct ImportIRId : public IdBase<ImportIRId> {
   static constexpr llvm::StringLiteral Label = "ir";
-  using ValueType = ImportIR;
 
   // The implicit `api` import, for an `impl` file. A null entry is added if
   // there is none, as in an `api`, in which case this ID should not show up in
@@ -587,10 +571,9 @@ constexpr int NameId::NonIndexValueCount =
     1 CARBON_SPECIAL_NAME_ID(CARBON_SPECIAL_NAME_ID_FOR_COUNT);
 #undef CARBON_SPECIAL_NAME_ID_FOR_COUNT
 
-// The ID of a name scope.
+// The ID of a `NameScope`.
 struct NameScopeId : public IdBase<NameScopeId> {
   static constexpr llvm::StringLiteral Label = "name_scope";
-  using ValueType = NameScope;
 
   // The package (or file) name scope, guaranteed to be the first added.
   static const NameScopeId Package;
@@ -600,12 +583,9 @@ struct NameScopeId : public IdBase<NameScopeId> {
 
 constexpr NameScopeId NameScopeId::Package = NameScopeId(0);
 
-// The ID of an instruction block.
+// The ID of an `InstId` block.
 struct InstBlockId : public IdBase<InstBlockId> {
   static constexpr llvm::StringLiteral Label = "inst_block";
-  // Types for BlockValueStore<InstBlockId>.
-  using ElementType = InstId;
-  using ValueType = llvm::MutableArrayRef<ElementType>;
 
   // The canonical empty block, reused to avoid allocating empty vectors. Always
   // the 0-index block.
@@ -615,9 +595,9 @@ struct InstBlockId : public IdBase<InstBlockId> {
   // state is in the Check::Context.
   static const InstBlockId Exports;
 
-  // ImportRef instructions. Empty until the File is fully checked; intermediate
-  // state is in the Check::Context.
-  static const InstBlockId ImportRefs;
+  // Instructions produced through import logic. Empty until the File is fully
+  // checked; intermediate state is in the Check::Context.
+  static const InstBlockId Imports;
 
   // Global declaration initialization instructions. Empty if none are present.
   // Otherwise, __global_init function will be generated and this block will
@@ -633,7 +613,7 @@ struct InstBlockId : public IdBase<InstBlockId> {
 
 constexpr InstBlockId InstBlockId::Empty = InstBlockId(0);
 constexpr InstBlockId InstBlockId::Exports = InstBlockId(1);
-constexpr InstBlockId InstBlockId::ImportRefs = InstBlockId(2);
+constexpr InstBlockId InstBlockId::Imports = InstBlockId(2);
 constexpr InstBlockId InstBlockId::GlobalInit = InstBlockId(3);
 constexpr InstBlockId InstBlockId::Unreachable = InstBlockId(NoneIndex - 1);
 
@@ -726,21 +706,18 @@ class LabelId : public InstBlockId {
   using InstBlockId::InstBlockId;
 };
 
+// The ID of an `ExprRegion`.
 // TODO: Move this out of sem_ir and into check, if we don't wind up using it
 // in the SemIR for expression patterns.
 struct ExprRegionId : public IdBase<ExprRegionId> {
   static constexpr llvm::StringLiteral Label = "region";
-  using ValueType = ExprRegion;
 
   using IdBase::IdBase;
 };
 
-// The ID of a struct type field block.
+// The ID of a `StructTypeField` block.
 struct StructTypeFieldsId : public IdBase<StructTypeFieldsId> {
   static constexpr llvm::StringLiteral Label = "struct_type_fields";
-  // Types for BlockValueStore<StructTypeFieldsId>.
-  using ElementType = StructTypeField;
-  using ValueType = llvm::MutableArrayRef<StructTypeField>;
 
   // The canonical empty block, reused to avoid allocating empty vectors. Always
   // the 0-index block.
@@ -780,10 +757,9 @@ struct TypeId : public IdBase<TypeId> {
   auto Print(llvm::raw_ostream& out) const -> void;
 };
 
-// The ID of a Clang Source Location.
+// The ID of a `clang::SourceLocation`.
 struct ClangSourceLocId : public IdBase<ClangSourceLocId> {
   static constexpr llvm::StringLiteral Label = "clang_source_loc";
-  using ValueType = clang::SourceLocation;
 
   using IdBase::IdBase;
 };
@@ -822,16 +798,13 @@ struct LibraryNameId : public IdBase<LibraryNameId> {
 constexpr LibraryNameId LibraryNameId::Default = LibraryNameId(NoneIndex - 1);
 constexpr LibraryNameId LibraryNameId::Error = LibraryNameId(NoneIndex - 2);
 
-// The ID of an ImportIRInst.
+// The ID of an `ImportIRInst`.
 struct ImportIRInstId : public IdBase<ImportIRInstId> {
   static constexpr llvm::StringLiteral Label = "import_ir_inst";
-  using ValueType = ImportIRInst;
 
-  // ImportIRInstId is restricted so that it can fit into LocId.
-  static constexpr int32_t BitsWithNodeId = 29;
-
-  // The maximum ID, non-inclusive.
-  static constexpr int Max = (1 << BitsWithNodeId) - Parse::NodeId::Max - 2;
+  // The maximum ID, non-inclusive. This is constrained to fit inside LocId.
+  static constexpr int Max =
+      -(std::numeric_limits<int32_t>::min() + 2 * Parse::NodeId::Max + 1);
 
   constexpr explicit ImportIRInstId(int32_t index) : IdBase(index) {
     CARBON_DCHECK(index < Max, "Index out of range: {0}", index);
@@ -845,22 +818,17 @@ struct ImportIRInstId : public IdBase<ImportIRInstId> {
 //
 // The structure is:
 // - None: The standard NoneIndex for all Id types, -1.
-// - InstId: positive values including zero; a full 31 bits.
+// - InstId: Positive values including zero; a full 31 bits.
 //   - [0, 1 << 31)
-// - NodeId: negative values starting after None; the 24 bit NodeId range.
+// - NodeId: Negative values starting after None; the 24 bit NodeId range.
 //   - [-2, -2 - (1 << 24))
-// - ImportIRInstId: remaining negative values; after NodeId, fills out negative
-//   values to 29 bits.
-//   - [-2 - (1 << 24), -(1 << 29))
+// - Desugared NodeId: Another 24 bit NodeId range.
+//   - [-2 - (1 << 24), -2 - (1 << 25))
+// - ImportIRInstId: Remaining negative values; after NodeId, fills out negative
+//   values.
+//   - [-2 - (1 << 25), -(1 << 31)]
 //
-// In addition, two bits are used for flags: `ImplicitBit` and `TokenOnlyBit`.
-// Note that these can only be used with negative, non-`InstId` values.
-//
-// Use `InstStore::GetCanonicalLocId()` to get a canonical `LocId` which will
-// not be backed by an `InstId`. Note that the canonical `LocId` may be `None`
-// even when the original `LocId` was not, so this operation needs to be done
-// before checking `has_value()`. Only canonical locations can be converted with
-// `ToImplicit()` or `ToTokenOnly()`.
+// For desugaring, use `InstStore::GetLocIdForDesugaring()`.
 struct LocId : public IdBase<LocId> {
   // The contained index kind.
   enum class Kind {
@@ -889,30 +857,14 @@ struct LocId : public IdBase<LocId> {
   constexpr LocId(Parse::NodeId node_id)
       : IdBase(FirstNodeId - node_id.index) {}
 
-  // Forms an equivalent LocId for a desugared location. Requires a
-  // canonical location. See `InstStore::GetCanonicalLocId()`.
-  //
-  // TODO: Rename to something like `ToDesugared`.
-  auto ToImplicit() const -> LocId {
+  // Forms an equivalent LocId for a desugared location. Prefer calling
+  // `InstStore::GetLocIdForDesugaring`.
+  auto AsDesugared() const -> LocId {
     // This should only be called for NodeId or ImportIRInstId (i.e. canonical
     // locations), but we only set the flag for NodeId.
-    CARBON_CHECK(kind() != Kind::InstId);
-    if (kind() == Kind::NodeId) {
-      return LocId(index & ~ImplicitBit);
-    }
-    return *this;
-  }
-
-  // Forms an equivalent `LocId` for a token-only diagnostic location. Requires
-  // a canonical location. See `InstStore::GetCanonicalLocId()`.
-  //
-  // TODO: Consider making this a part of check/ diagnostics instead, as a free
-  // function operation on `LocIdForDiagnostics`?
-  // https://github.com/carbon-language/carbon-lang/pull/5355#discussion_r2064113186
-  auto ToTokenOnly() const -> LocId {
-    CARBON_CHECK(kind() != Kind::InstId);
-    if (has_value()) {
-      return LocId(index & ~TokenOnlyBit);
+    CARBON_CHECK(kind() != Kind::InstId, "Use InstStore::GetDesugaredLocId");
+    if (index <= FirstNodeId && index > FirstDesugaredNodeId) {
+      return LocId(index - Parse::NodeId::Max);
     }
     return *this;
   }
@@ -925,7 +877,7 @@ struct LocId : public IdBase<LocId> {
     if (index >= 0) {
       return Kind::InstId;
     }
-    if (index_without_flags() <= FirstImportIRInstId) {
+    if (index <= FirstImportIRInstId) {
       return Kind::ImportIRInstId;
     }
     return Kind::NodeId;
@@ -933,17 +885,8 @@ struct LocId : public IdBase<LocId> {
 
   // Returns true if the location corresponds to desugared instructions.
   // Requires a non-`InstId` location.
-  auto is_implicit() const -> bool {
-    return (kind() == Kind::NodeId) && (index & ImplicitBit) == 0;
-  }
-
-  // Returns true if the location is token-only for diagnostics.
-  //
-  // This means the displayed location will include only the location's specific
-  // parse node, instead of also including its descendants. As such, this can
-  // only be true for locations backed by a `NodeId`.
-  auto is_token_only() const -> bool {
-    return kind() != Kind::InstId && (index & TokenOnlyBit) == 0;
+  auto is_desugared() const -> bool {
+    return index <= FirstDesugaredNodeId && index > FirstImportIRInstId;
   }
 
   // Returns the equivalent `ImportIRInstId` when `kind()` matches or is `None`.
@@ -955,7 +898,7 @@ struct LocId : public IdBase<LocId> {
       return ImportIRInstId::None;
     }
     CARBON_CHECK(kind() == Kind::ImportIRInstId, "{0}", index);
-    return ImportIRInstId(FirstImportIRInstId - index_without_flags());
+    return ImportIRInstId(FirstImportIRInstId - index);
   }
 
   // Returns the equivalent `InstId` when `kind()` matches or is `None`.
@@ -970,29 +913,22 @@ struct LocId : public IdBase<LocId> {
       return Parse::NodeId::None;
     }
     CARBON_CHECK(kind() == Kind::NodeId, "{0}", index);
-    return Parse::NodeId(FirstNodeId - index_without_flags());
+    if (index <= FirstDesugaredNodeId) {
+      return Parse::NodeId(FirstDesugaredNodeId - index);
+    } else {
+      return Parse::NodeId(FirstNodeId - index);
+    }
   }
 
   auto Print(llvm::raw_ostream& out) const -> void;
 
  private:
-  // Whether a location corresponds to desugared instructions. This only applies
-  // for `NodeId`.
-  static constexpr int32_t ImplicitBit = 1 << 30;
-
-  // See `is_token_only` for the use. This only applies for canonical locations
-  // (i.e. those containing `NodeId` or `ImportIRInstId`).
-  static constexpr int32_t TokenOnlyBit = 1 << 29;
-
   // The value of the 0 index for each of `NodeId` and `ImportIRInstId`.
   static constexpr int32_t FirstNodeId = NoneIndex - 1;
-  static constexpr int32_t FirstImportIRInstId =
+  static constexpr int32_t FirstDesugaredNodeId =
       FirstNodeId - Parse::NodeId::Max;
-
-  auto index_without_flags() const -> int32_t {
-    CARBON_DCHECK(index < NoneIndex, "Only for NodeId and ImportIRInstId");
-    return index | ImplicitBit | TokenOnlyBit;
-  }
+  static constexpr int32_t FirstImportIRInstId =
+      FirstDesugaredNodeId - Parse::NodeId::Max;
 };
 
 // Polymorphic id for fields in `Any[...]` typed instruction category. Used for
@@ -1016,22 +952,6 @@ struct AnyRawId : public AnyIdBase {
   constexpr explicit AnyRawId() : AnyIdBase(AnyIdBase::NoneIndex) {}
   constexpr explicit AnyRawId(int32_t id) : AnyIdBase(id) {}
 };
-
-// A pair of an interface and a specific for that interface.
-struct SpecificInterface {
-  using DiagnosticType = Diagnostics::TypeInfo<std::string>;
-
-  InterfaceId interface_id;
-  SpecificId specific_id;
-
-  static const SpecificInterface None;
-
-  friend auto operator==(const SpecificInterface& lhs,
-                         const SpecificInterface& rhs) -> bool = default;
-};
-
-constexpr SpecificInterface SpecificInterface::None = {
-    .interface_id = InterfaceId::None, .specific_id = SpecificId::None};
 
 }  // namespace Carbon::SemIR
 

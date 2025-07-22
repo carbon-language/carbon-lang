@@ -2,6 +2,8 @@
 // Exceptions. See /LICENSE for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
+// INCLUDE-FILE: toolchain/testing/testdata/min_prelude/int.carbon
+//
 // AUTOUPDATE
 // TIP: To test this file alone, run:
 // TIP:   bazel test //toolchain/testing:file_test --test_arg=--file_tests=toolchain/lower/testdata/class/adapt.carbon
@@ -82,8 +84,8 @@ fn DoStuff(a: Int) -> Int {
 // CHECK:STDOUT:   %pa.var = alloca { i32, i32 }, align 8, !dbg !16
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(i64 8, ptr %pa.var), !dbg !16
 // CHECK:STDOUT:   call void @_CMake.PairAdapter.Main(ptr %pa.var), !dbg !17
-// CHECK:STDOUT:   %GetB.call = call i32 @_CGetB.PairAdapter.Main(ptr %pa.var), !dbg !18
-// CHECK:STDOUT:   ret i32 %GetB.call, !dbg !19
+// CHECK:STDOUT:   %PairAdapter.GetB.call = call i32 @_CGetB.PairAdapter.Main(ptr %pa.var), !dbg !18
+// CHECK:STDOUT:   ret i32 %PairAdapter.GetB.call, !dbg !19
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nocallback nofree nounwind willreturn memory(argmem: readwrite)

@@ -4,7 +4,9 @@
 
 #include "toolchain/check/pattern.h"
 
+#include "toolchain/check/control_flow.h"
 #include "toolchain/check/inst.h"
+#include "toolchain/check/return.h"
 #include "toolchain/check/type.h"
 
 namespace Carbon::Check {
@@ -92,6 +94,43 @@ auto AddBindingPattern(Context& context, SemIR::LocId name_loc,
           .is_inserted();
   CARBON_CHECK(inserted);
   return {.pattern_id = binding_pattern_id, .bind_id = bind_id};
+}
+
+// Returns a VarStorage inst for the given `var` pattern. If the pattern
+// is the body of a returned var, this reuses the return slot, and otherwise it
+// adds a new inst.
+static auto GetOrAddVarStorage(Context& context, SemIR::InstId var_pattern_id,
+                               bool is_returned_var) -> SemIR::InstId {
+  if (is_returned_var) {
+    auto& function = GetCurrentFunctionForReturn(context);
+    auto return_info =
+        SemIR::ReturnTypeInfo::ForFunction(context.sem_ir(), function);
+    if (return_info.has_return_slot()) {
+      return GetCurrentReturnSlot(context);
+    }
+  }
+  auto pattern = context.insts().GetWithLocId(var_pattern_id);
+
+  return AddInstWithCleanup(
+      context, pattern.loc_id,
+      SemIR::VarStorage{.type_id = ExtractScrutineeType(context.sem_ir(),
+                                                        pattern.inst.type_id()),
+                        .pattern_id = var_pattern_id});
+}
+
+auto AddPatternVarStorage(Context& context, SemIR::InstBlockId pattern_block_id,
+                          bool is_returned_var) -> void {
+  // We need to emit the VarStorage insts early, because they may be output
+  // arguments for the initializer. However, we can't emit them when we emit
+  // the corresponding `VarPattern`s because they're part of the pattern match,
+  // not part of the pattern.
+  // TODO: Find a way to do this without walking the whole pattern block.
+  for (auto inst_id : context.inst_blocks().Get(pattern_block_id)) {
+    if (context.insts().Is<SemIR::VarPattern>(inst_id)) {
+      context.var_storage_map().Insert(
+          inst_id, GetOrAddVarStorage(context, inst_id, is_returned_var));
+    }
+  }
 }
 
 }  // namespace Carbon::Check

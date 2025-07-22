@@ -7,6 +7,7 @@
 library "day9_common";
 
 import Core library "io";
+import Core library "range";
 import library "io_utils";
 
 class SectorList {
@@ -19,11 +20,9 @@ class SectorList {
     var c: i32 = ReadChar();
     while (c != Core.EOF() and c != 0xA) {
       let v: i32 = if used then sector else -1;
-      var n: i32 = c - 0x30;
-      while (n > 0) {
+      for (_: i32 in Core.Range(c - 0x30)) {
         me.data[me.size] = v;
         ++me.size;
-        --n;
       }
       if (used) {
         ++sector;
@@ -52,21 +51,17 @@ class SectorList {
   }
 
   fn HasSpace[addr self: Self*](start: i32, size: i32) -> bool {
-    var i: i32 = start;
-    while (i < start + size) {
+    for (i: i32 in Core.InclusiveRange(start, start + size - 1)) {
       if (self->data[i] != -1) {
         return false;
       }
-      ++i;
     }
     return true;
   }
 
   fn Fill[addr self: Self*](start: i32, size: i32, sector: i32) {
-    var i: i32 = start;
-    while (i < start + size) {
+    for (i: i32 in Core.InclusiveRange(start, start + size - 1)) {
       self->data[i] = sector;
-      ++i;
     }
   }
 
@@ -106,12 +101,10 @@ class SectorList {
 
   fn Checksum[self: Self]() -> i64 {
     var total: i64 = 0;
-    var i: i32 = 0;
-    while (i < self.size) {
+    for (i: i32 in Core.Range(self.size)) {
       if (self.data[i] != -1) {
         total = total + ((i * self.data[i]) as i64);
       }
-      ++i;
     }
     return total;
   }

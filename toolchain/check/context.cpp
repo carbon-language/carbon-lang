@@ -8,6 +8,8 @@
 #include <utility>
 
 #include "common/check.h"
+#include "toolchain/check/deferred_definition_worklist.h"
+#include "toolchain/sem_ir/ids.h"
 
 namespace Carbon::Check {
 
@@ -26,7 +28,11 @@ Context::Context(DiagnosticEmitterBase* emitter,
       args_type_info_stack_("args_type_info_stack_", *sem_ir, vlog_stream),
       decl_name_stack_(this),
       scope_stack_(sem_ir_),
+      deferred_definition_worklist_(vlog_stream),
       vtable_stack_("vtable_stack_", *sem_ir, vlog_stream),
+      check_ir_map_(
+          FixedSizeValueStore<SemIR::CheckIRId, SemIR::ImportIRId>::
+              MakeWithExplicitSize(total_ir_count, SemIR::ImportIRId::None)),
       global_init_(this),
       region_stack_([this](SemIR::LocId loc_id, std::string label) {
         TODO(loc_id, label);
@@ -34,7 +40,6 @@ Context::Context(DiagnosticEmitterBase* emitter,
   // Prepare fields which relate to the number of IRs available for import.
   import_irs().Reserve(imported_ir_count);
   import_ir_constant_values_.reserve(imported_ir_count);
-  check_ir_map_.resize(total_ir_count, SemIR::ImportIRId::None);
 }
 
 auto Context::TODO(SemIR::LocId loc_id, std::string label) -> bool {
@@ -80,6 +85,9 @@ auto Context::PrintForStackDump(llvm::raw_ostream& output) const -> void {
   // In a stack dump, this is probably indented by a tab. We treat that as 8
   // spaces then add a couple to indent past the Context label.
   constexpr int Indent = 10;
+
+  output.indent(Indent);
+  output << "filename: " << tokens().source().filename() << "\n";
 
   node_stack_.PrintForStackDump(Indent, output);
   inst_block_stack_.PrintForStackDump(Indent, output);

@@ -6,8 +6,9 @@
 #ifndef CARBON_TOOLCHAIN_CHECK_LEXICAL_LOOKUP_H_
 #define CARBON_TOOLCHAIN_CHECK_LEXICAL_LOOKUP_H_
 
+#include "toolchain/base/canonical_value_store.h"
+#include "toolchain/base/shared_value_stores.h"
 #include "toolchain/base/value_ids.h"
-#include "toolchain/base/value_store.h"
 #include "toolchain/check/scope_index.h"
 #include "toolchain/sem_ir/ids.h"
 
@@ -39,7 +40,7 @@ class LexicalLookup {
     SemIR::InstId inst_id;
   };
 
-  explicit LexicalLookup(const CanonicalValueStore<IdentifierId>& identifiers)
+  explicit LexicalLookup(const SharedValueStores::IdentifierStore& identifiers)
       : lookup_(identifiers.size() + SemIR::NameId::NonIndexValueCount) {}
 
   // Returns the lexical lookup results for a name.
@@ -82,9 +83,14 @@ class LexicalLookup {
   }
 
   // Maps identifiers to name lookup results.
+  //
+  // The outer size of `0` is used because it's resized once on construction,
+  // and will rarely fit on the stack. The inner size of `2` is used because
+  // most entries will only have zero or one results.
+  //
   // TODO: Consider TinyPtrVector<Result> or similar. For now, use a small size
   // of 2 to cover the common case.
-  llvm::SmallVector<llvm::SmallVector<Result, 2>> lookup_;
+  llvm::SmallVector<llvm::SmallVector<Result, 2>, 0> lookup_;
 };
 
 }  // namespace Carbon::Check

@@ -2,6 +2,8 @@
 // Exceptions. See /LICENSE for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
+// INCLUDE-FILE: toolchain/testing/testdata/min_prelude/int.carbon
+//
 // AUTOUPDATE
 // TIP: To test this file alone, run:
 // TIP:   bazel test //toolchain/testing:file_test --test_arg=--file_tests=toolchain/lower/testdata/impl/import.carbon
@@ -61,8 +63,8 @@ fn Call(a: A) -> i32 {
 // CHECK:STDOUT:
 // CHECK:STDOUT: define i32 @_CCall.Main(ptr %a) !dbg !4 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %F.call = call i32 @"_CF.A.Main:I.Main"(ptr %a), !dbg !7
-// CHECK:STDOUT:   ret i32 %F.call, !dbg !8
+// CHECK:STDOUT:   %A.as.I.impl.F.call = call i32 @"_CF.A.Main:I.Main"(ptr %a), !dbg !7
+// CHECK:STDOUT:   ret i32 %A.as.I.impl.F.call, !dbg !8
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: declare i32 @"_CF.A.Main:I.Main"(ptr)

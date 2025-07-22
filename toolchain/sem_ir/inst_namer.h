@@ -5,29 +5,41 @@
 #ifndef CARBON_TOOLCHAIN_SEM_IR_INST_NAMER_H_
 #define CARBON_TOOLCHAIN_SEM_IR_INST_NAMER_H_
 
+#include "common/type_enum.h"
 #include "llvm/Support/raw_ostream.h"
 #include "toolchain/lex/tokenized_buffer.h"
 #include "toolchain/parse/tree.h"
 #include "toolchain/sem_ir/file.h"
 #include "toolchain/sem_ir/ids.h"
+#include "toolchain/sem_ir/inst_categories.h"
 #include "toolchain/sem_ir/inst_fingerprinter.h"
 
 namespace Carbon::SemIR {
 
 // Assigns names to instructions, blocks, and scopes in the Semantics IR.
+//
+// If `<unexpected>` occurs in output of valid SemIR, it often means the
+// instruction needs to be handled by `NamingContext::NameInst` (see the cpp
+// file). Note that `<unexpected>` can occur in invalid SemIR just because we're
+// unable to correctly walk the SemIR.
 class InstNamer {
  public:
   // int32_t matches the input value size.
   enum class ScopeId : int32_t {
     None = -1,
+    // The three top-level scopes.
     File = 0,
-    ImportRefs = 1,
+    Imports = 1,
     Constants = 2,
-    FirstFunction = 3,
+    // The first entity scope; see entities in `ScopeIdTypeEnum`.
+    FirstEntityScope = 3,
   };
-  static_assert(sizeof(ScopeId) == sizeof(FunctionId));
+  static_assert(sizeof(ScopeId) == sizeof(AnyIdBase));
 
-  struct NumberOfScopesTag {};
+  // Entities whose scopes get entries from `ScopeId`.
+  using ScopeIdTypeEnum =
+      TypeEnum<AssociatedConstantId, ClassId, VtableId, FunctionId, ImplId,
+               InterfaceId, SpecificInterfaceId>;
 
   // Construct the instruction namer, and assign names to all instructions in
   // the provided file.
@@ -36,33 +48,10 @@ class InstNamer {
   // Returns the scope ID corresponding to an ID of a function, class, or
   // interface.
   template <typename IdT>
+    requires ScopeIdTypeEnum::Contains<IdT>
   auto GetScopeFor(IdT id) const -> ScopeId {
-    auto index = static_cast<int32_t>(ScopeId::FirstFunction);
-
-    if constexpr (!std::same_as<FunctionId, IdT>) {
-      index += sem_ir_->functions().size();
-      if constexpr (!std::same_as<ClassId, IdT>) {
-        index += sem_ir_->classes().size();
-        if constexpr (!std::same_as<InterfaceId, IdT>) {
-          index += sem_ir_->interfaces().size();
-          if constexpr (!std::same_as<AssociatedConstantId, IdT>) {
-            index += sem_ir_->associated_constants().size();
-            if constexpr (!std::same_as<ImplId, IdT>) {
-              index += sem_ir_->impls().size();
-              if constexpr (!std::same_as<SpecificInterfaceId, IdT>) {
-                index += sem_ir_->specific_interfaces().size();
-                static_assert(std::same_as<NumberOfScopesTag, IdT>,
-                              "Unknown ID kind for scope");
-              }
-            }
-          }
-        }
-      }
-    }
-    if constexpr (!std::same_as<NumberOfScopesTag, IdT>) {
-      index += id.index;
-    }
-    return static_cast<ScopeId>(index);
+    return static_cast<ScopeId>(GetScopeIdOffset(ScopeIdTypeEnum::For<IdT>) +
+                                id.index);
   }
 
   // Returns the scope ID corresponding to a generic. A generic object shares
@@ -74,8 +63,13 @@ class InstNamer {
   // Returns the IR name for the specified scope.
   auto GetScopeName(ScopeId scope) const -> std::string;
 
+  // Returns the name for a parent NameScope. Does not return a name for
+  // namespaces. Used as part of naming functions with their containing scope.
+  auto GetNameForParentNameScope(NameScopeId name_scope_id) -> llvm::StringRef;
+
   // Returns the IR name to use for a function, class, or interface.
   template <typename IdT>
+    requires(ScopeIdTypeEnum::Contains<IdT> || std::same_as<IdT, GenericId>)
   auto GetNameFor(IdT id) const -> std::string {
     if (!id.has_value()) {
       return "invalid";
@@ -98,46 +92,59 @@ class InstNamer {
   // Returns the IR name to use for a label, when referenced from a given scope.
   auto GetLabelFor(ScopeId scope_id, InstBlockId block_id) const -> std::string;
 
+  // Returns true if the instruction has a specific name assigned.
+  auto has_name(InstId inst_id) const -> bool {
+    return static_cast<bool>(insts_[inst_id.index].second);
+  }
+
  private:
   // A space in which unique names can be allocated.
-  struct Namespace {
+  class Namespace {
+   private:
     // A result of a name lookup.
     struct NameResult;
 
+   public:
     // A name in a namespace, which might be redirected to refer to another name
     // for disambiguation purposes.
     class Name {
      public:
-      Name() : value_(nullptr) {}
-      explicit Name(llvm::StringMapIterator<NameResult> it) : value_(&*it) {}
+      explicit Name() : value_(nullptr) {}
+      explicit Name(llvm::StringMapIterator<NameResult> it,
+                    size_t base_name_size)
+          : value_(&*it), base_name_size_(base_name_size) {}
 
       explicit operator bool() const { return value_; }
 
-      auto str() const -> llvm::StringRef;
+      // Returns the disambiguated name.
+      auto GetFullName() const -> llvm::StringRef;
+
+      // Returns the base name, without any disambiguators.
+      auto GetBaseName() const -> llvm::StringRef;
 
       auto SetFallback(Name name) -> void { value_->second.fallback = name; }
 
       auto SetAmbiguous() -> void { value_->second.ambiguous = true; }
 
      private:
-      llvm::StringMapEntry<NameResult>* value_ = nullptr;
+      llvm::StringMapEntry<NameResult>* value_;
+
+      // The base name length within `value_->first()`.
+      size_t base_name_size_;
     };
 
+    // Allocates and returns a name, handling ambiguity.
+    auto AllocateName(const InstNamer& inst_namer,
+                      std::variant<LocId, uint64_t> loc_id_or_fingerprint,
+                      std::string name) -> Name;
+
+   private:
     struct NameResult {
       bool ambiguous = false;
       Name fallback = Name();
     };
 
-    llvm::StringMap<NameResult> allocated = {};
-    int unnamed_count = 0;
-
-    auto AddNameUnchecked(llvm::StringRef name) -> Name {
-      return Name(allocated.insert({name, NameResult()}).first);
-    }
-
-    auto AllocateName(const InstNamer& inst_namer,
-                      std::variant<LocId, uint64_t> loc_id_or_fingerprint,
-                      std::string name) -> Name;
+    llvm::StringMap<NameResult> allocated_;
   };
 
   // A named scope that contains named entities.
@@ -147,6 +154,9 @@ class InstNamer {
     Namespace labels;
   };
 
+  // Helper class for naming a single instruction.
+  class NamingContext;
+
   auto GetScopeInfo(ScopeId scope_id) -> Scope& {
     return scopes_[static_cast<int>(scope_id)];
   }
@@ -154,6 +164,11 @@ class InstNamer {
   auto GetScopeInfo(ScopeId scope_id) const -> const Scope& {
     return scopes_[static_cast<int>(scope_id)];
   }
+
+  // For the given `IdT`, returns its start offset in the `ScopeId` space. Each
+  // of `ScopeIdTypeEnum` is stored sequentially. When called with
+  // `ScopeIdTypeEnum::None`, returns the full count of scopes.
+  auto GetScopeIdOffset(ScopeIdTypeEnum id_enum) const -> int;
 
   auto AddBlockLabel(
       ScopeId scope_id, InstBlockId block_id, std::string name = "",
@@ -164,12 +179,40 @@ class InstNamer {
   // represents some kind of branch.
   auto AddBlockLabel(ScopeId scope_id, LocId loc_id, AnyBranch branch) -> void;
 
-  auto CollectNamesInBlock(ScopeId scope_id, InstBlockId block_id) -> void;
-
-  auto CollectNamesInBlock(ScopeId scope_id, llvm::ArrayRef<InstId> block)
+  // Adds a scope and instructions to walk. Avoids recursion while allowing
+  // the loop to below add more instructions during iteration. The new
+  // instructions are pushed such that they will be the next to be walked.
+  // Internally that means they are reversed and added to the end of the vector,
+  // since we pop from the back of the vector.
+  auto PushBlockInsts(ScopeId scope_id, llvm::ArrayRef<InstId> inst_ids)
       -> void;
+  auto PushBlockId(ScopeId scope_id, InstBlockId block_id) -> void;
 
-  auto CollectNamesInGeneric(ScopeId scope_id, GenericId generic_id) -> void;
+  // Pushes generic information for an entity.
+  auto PushGeneric(ScopeId scope_id, GenericId generic_id) -> void;
+
+  // Names an entity, and pushes processing of its blocks.
+  auto PushEntity(AssociatedConstantId associated_constant_id, ScopeId scope_id,
+                  Scope& scope) -> void;
+  auto PushEntity(ClassId class_id, ScopeId scope_id, Scope& scope) -> void;
+  auto PushEntity(FunctionId function_id, ScopeId scope_id, Scope& scope)
+      -> void;
+  auto PushEntity(ImplId impl_id, ScopeId scope_id, Scope& scope) -> void;
+  auto PushEntity(InterfaceId interface_id, ScopeId scope_id, Scope& scope)
+      -> void;
+  auto PushEntity(VtableId vtable_id, ScopeId scope_id, Scope& scope) -> void;
+
+  // Always returns the name of the entity. May push it if it has not yet been
+  // pushed.
+  template <typename EntityIdT>
+  auto MaybePushEntity(EntityIdT entity_id) -> llvm::StringRef {
+    auto scope_id = GetScopeFor(entity_id);
+    auto& scope = GetScopeInfo(scope_id);
+    if (!scope.name) {
+      PushEntity(entity_id, scope_id, scope);
+    }
+    return scope.name.GetBaseName();
+  }
 
   const File* sem_ir_;
   InstFingerprinter fingerprinter_;
@@ -188,6 +231,11 @@ class InstNamer {
   // The scope IDs corresponding to generics. The vector indexes are the
   // GenericId index.
   std::vector<ScopeId> generic_scopes_;
+
+  // The stack of instructions to name.
+  llvm::SmallVector<std::pair<ScopeId, InstId>> inst_stack_;
+  // The stack of blocks to traverse.
+  llvm::SmallVector<std::pair<ScopeId, InstBlockId>> inst_block_stack_;
 };
 
 }  // namespace Carbon::SemIR

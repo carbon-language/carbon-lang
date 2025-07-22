@@ -112,6 +112,26 @@ cc_test(
 )
 
 cc_library(
+    name = "concepts",
+    hdrs = ["concepts.h"],
+)
+
+cc_library(
+    name = "emplace_by_calling",
+    hdrs = ["emplace_by_calling.h"],
+)
+
+cc_test(
+    name = "emplace_by_calling_test",
+    srcs = ["emplace_by_calling_test.cpp"],
+    deps = [
+        ":emplace_by_calling",
+        "//testing/base:gtest_main",
+        "@googletest//:gtest",
+    ],
+)
+
+cc_library(
     name = "enum_base",
     hdrs = ["enum_base.h"],
     deps = [
@@ -217,6 +237,22 @@ cc_test(
 )
 
 cc_library(
+    name = "growing_range",
+    hdrs = ["growing_range.h"],
+)
+
+cc_test(
+    name = "growing_range_test",
+    size = "small",
+    srcs = ["growing_range_test.cpp"],
+    deps = [
+        ":growing_range",
+        "//testing/base:gtest_main",
+        "@googletest//:gtest",
+    ],
+)
+
+cc_library(
     name = "hashing",
     srcs = ["hashing.cpp"],
     hdrs = ["hashing.h"],
@@ -307,6 +343,7 @@ cc_library(
     hdrs = ["map.h"],
     deps = [
         ":check",
+        ":concepts",
         ":hashtable_key_context",
         ":raw_hashtable",
         "@llvm-project//llvm:Support",
@@ -369,11 +406,20 @@ cc_library(
 )
 
 cc_library(
+    name = "pretty_stack_trace_function",
+    hdrs = ["pretty_stack_trace_function.h"],
+    deps = [
+        "@llvm-project//llvm:Support",
+    ],
+)
+
+cc_library(
     name = "raw_hashtable",
     srcs = ["raw_hashtable.cpp"],
     hdrs = ["raw_hashtable.h"],
     deps = [
         ":check",
+        ":concepts",
         ":hashing",
         ":hashtable_key_context",
         ":raw_hashtable_metadata_group",
@@ -430,6 +476,7 @@ cc_library(
         "@abseil-cpp//absl/base:no_destructor",
         "@abseil-cpp//absl/hash",
         "@abseil-cpp//absl/random",
+        "@boost_unordered",
         "@google_benchmark//:benchmark",
         "@llvm-project//llvm:Support",
     ],
@@ -574,6 +621,12 @@ cc_test(
         "//testing/base:gtest_main",
         "@googletest//:gtest",
     ],
+)
+
+cc_library(
+    name = "type_enum",
+    hdrs = ["type_enum.h"],
+    deps = [":ostream"],
 )
 
 # The base version source file only uses non-stamped parts of the version

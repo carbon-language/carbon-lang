@@ -53,7 +53,7 @@ struct Generic : public Printable<Generic> {
 };
 
 // Provides storage for generics.
-class GenericStore : public ValueStore<GenericId> {
+class GenericStore : public ValueStore<GenericId, Generic> {
  public:
   // Get the self specific for a generic, or `None` if the `id` is `None`.
   auto GetSelfSpecific(GenericId id) const -> SpecificId {
@@ -106,6 +106,8 @@ struct Specific : Printable<Specific> {
 // their associated generic argument list.
 class SpecificStore : public Yaml::Printable<SpecificStore> {
  public:
+  using IdType = SpecificId;
+
   // Adds a new specific, or gets the existing specific for a specified generic
   // and argument list. Returns the ID of the specific. The argument IDs must be
   // for instructions in the constant block, and must be a canonical instruction
@@ -129,10 +131,6 @@ class SpecificStore : public Yaml::Printable<SpecificStore> {
                                    : InstBlockId::Empty;
   }
 
-  // Invalidates all current pointers and references into the value store. Used
-  // in debug builds to trigger use-after-invalidation bugs.
-  auto Invalidate() -> void { specifics_.Invalidate(); }
-
   // These are to support printable structures, and are not guaranteed.
   auto OutputYaml() const -> Yaml::OutputMapping {
     return specifics_.OutputYaml();
@@ -142,17 +140,20 @@ class SpecificStore : public Yaml::Printable<SpecificStore> {
   auto CollectMemUsage(MemUsage& mem_usage, llvm::StringRef label) const
       -> void;
 
-  auto array_ref() const -> llvm::ArrayRef<Specific> {
-    return specifics_.array_ref();
+  auto values() const [[clang::lifetimebound]]
+  -> ValueStore<SpecificId, Specific>::Range {
+    return specifics_.values();
   }
   auto size() const -> size_t { return specifics_.size(); }
-  auto enumerate() const -> auto { return specifics_.enumerate(); }
+  auto enumerate() const [[clang::lifetimebound]] -> auto {
+    return specifics_.enumerate();
+  }
 
  private:
   // Context for hashing keys.
   class KeyContext;
 
-  ValueStore<SpecificId> specifics_;
+  ValueStore<SpecificId, Specific> specifics_;
   Carbon::Set<SpecificId, 0, KeyContext> lookup_table_;
 };
 
@@ -162,11 +163,27 @@ class SpecificStore : public Yaml::Printable<SpecificStore> {
 auto GetConstantValueInSpecific(const File& sem_ir, SpecificId specific_id,
                                 InstId inst_id) -> ConstantId;
 
+// Gets the substituted constant value of a potentially generic instruction
+// within a specific, where the generic instruction and the specific may be in
+// different files. Returns the file in which the constant value was found and
+// the constant ID in that file.
+auto GetConstantValueInSpecific(const File& specific_ir, SpecificId specific_id,
+                                const File& inst_ir, InstId inst_id)
+    -> std::pair<const File*, ConstantId>;
+
 // Gets the substituted type of an instruction within a specific. Note that this
 // does not perform substitution, and will return `None` if the substituted type
 // is not yet known.
 auto GetTypeOfInstInSpecific(const File& sem_ir, SpecificId specific_id,
                              InstId inst_id) -> TypeId;
+
+// Gets the substituted type of a potentially generic instruction within a
+// specific, where the generic instruction and the specific may be in different
+// files. Returns the file in which the type was found and the type ID in that
+// file.
+auto GetTypeOfInstInSpecific(const File& specific_ir, SpecificId specific_id,
+                             const File& inst_ir, InstId inst_id)
+    -> std::pair<const File*, TypeId>;
 
 }  // namespace Carbon::SemIR
 

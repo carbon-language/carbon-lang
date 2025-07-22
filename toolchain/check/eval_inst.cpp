@@ -16,7 +16,11 @@
 #include "toolchain/check/type.h"
 #include "toolchain/check/type_completion.h"
 #include "toolchain/diagnostics/diagnostic.h"
+#include "toolchain/parse/typed_nodes.h"
+#include "toolchain/sem_ir/builtin_function_kind.h"
+#include "toolchain/sem_ir/expr_info.h"
 #include "toolchain/sem_ir/ids.h"
+#include "toolchain/sem_ir/pattern.h"
 #include "toolchain/sem_ir/typed_insts.h"
 
 namespace Carbon::Check {
@@ -101,6 +105,19 @@ auto EvalConstantInst(Context& context, SemIR::BindAlias inst)
       context.constant_values().Get(inst.value_id));
 }
 
+auto EvalConstantInst(Context& context, SemIR::BindName inst)
+    -> ConstantEvalResult {
+  // A reference binding evaluates to the value it's bound to.
+  if (inst.value_id.has_value() && SemIR::IsRefCategory(SemIR::GetExprCategory(
+                                       context.sem_ir(), inst.value_id))) {
+    return ConstantEvalResult::Existing(
+        context.constant_values().Get(inst.value_id));
+  }
+
+  // Non-`:!` value bindings are not constant.
+  return ConstantEvalResult::NotConstant;
+}
+
 auto EvalConstantInst(Context& /*context*/, SemIR::BindValue /*inst*/)
     -> ConstantEvalResult {
   // TODO: Handle this once we've decided how to represent constant values of
@@ -148,6 +165,11 @@ auto EvalConstantInst(Context& context, SemIR::ConstType inst)
         context.constant_values().Get(inst.inner_id));
   }
   // Otherwise, `const T` evaluates to itself.
+  return ConstantEvalResult::NewSamePhase(inst);
+}
+
+auto EvalConstantInst(Context& /*context*/, SemIR::PartialType inst)
+    -> ConstantEvalResult {
   return ConstantEvalResult::NewSamePhase(inst);
 }
 
@@ -225,9 +247,9 @@ auto EvalConstantInst(Context& context, SemIR::InstId inst_id,
 
 auto EvalConstantInst(Context& context, SemIR::InstId inst_id,
                       SemIR::ImplWitnessAccess inst) -> ConstantEvalResult {
-  // This is PerformAggregateAccess followed by GetConstantValueInSpecific.
   if (auto witness =
           context.insts().TryGetAs<SemIR::ImplWitness>(inst.witness_id)) {
+    // This is PerformAggregateAccess followed by GetConstantValueInSpecific.
     auto witness_table = context.insts().GetAs<SemIR::ImplWitnessTable>(
         witness->witness_table_id);
     auto elements = context.inst_blocks().Get(witness_table.elements_id);
@@ -249,6 +271,63 @@ auto EvalConstantInst(Context& context, SemIR::InstId inst_id,
     // TODO: Add note pointing to the impl declaration.
     context.emitter().Emit(inst_id, ImplAccessMemberBeforeSet);
     return ConstantEvalResult::Error;
+  } else if (auto witness = context.insts().TryGetAs<SemIR::LookupImplWitness>(
+                 inst.witness_id)) {
+    // If the witness is symbolic but has a self type that is a FacetType, it
+    // can pull rewrite values from the self type. If the access is for one of
+    // those rewrites, evaluate to the RHS of the rewrite.
+
+    auto witness_self_type_id =
+        context.insts().Get(witness->query_self_inst_id).type_id();
+    if (!context.types().Is<SemIR::FacetType>(witness_self_type_id)) {
+      return ConstantEvalResult::NewSamePhase(inst);
+    }
+
+    // The `ImplWitnessAccess` is accessing a value, by index, for this
+    // interface.
+    auto access_interface_id = witness->query_specific_interface_id;
+
+    auto witness_self_facet_type_id =
+        context.types()
+            .GetAs<SemIR::FacetType>(witness_self_type_id)
+            .facet_type_id;
+    // TODO: We could consider something better than linear search here, such as
+    // a map. However that would probably require heap allocations which may be
+    // worse overall since the number of rewrite constraints is generally low.
+    // If the `rewrite_constraints` were sorted so that associated constants are
+    // grouped together, as in ResolveFacetTypeRewriteConstraints(), and limited
+    // to just the `ImplWitnessAccess` entries, then a binary search may work
+    // here.
+    for (auto witness_rewrite : context.facet_types()
+                                    .Get(witness_self_facet_type_id)
+                                    .rewrite_constraints) {
+      // Look at each rewrite constraint in the self facet value's type. If the
+      // LHS is an `ImplWitnessAccess` into the same interface that `inst` is
+      // indexing into, then we can use its RHS as the value.
+      auto witness_rewrite_lhs_access =
+          context.insts().TryGetAs<SemIR::ImplWitnessAccess>(
+              witness_rewrite.lhs_id);
+      if (!witness_rewrite_lhs_access) {
+        continue;
+      }
+      if (witness_rewrite_lhs_access->index != inst.index) {
+        continue;
+      }
+
+      auto witness_rewrite_lhs_interface_id =
+          context.insts()
+              .GetAs<SemIR::LookupImplWitness>(
+                  witness_rewrite_lhs_access->witness_id)
+              .query_specific_interface_id;
+      if (witness_rewrite_lhs_interface_id != access_interface_id) {
+        continue;
+      }
+
+      // The `ImplWitnessAccess` evaluates to the RHS from the witness self
+      // facet value's type.
+      return ConstantEvalResult::Existing(
+          context.constant_values().Get(witness_rewrite.rhs_id));
+    }
   }
 
   return ConstantEvalResult::NewSamePhase(inst);
@@ -406,8 +485,12 @@ auto EvalConstantInst(Context& context, SemIR::InstId inst_id,
 
 auto EvalConstantInst(Context& context, SemIR::InstId inst_id,
                       SemIR::SpecificFunction inst) -> ConstantEvalResult {
-  if (!SemIR::GetCalleeFunction(context.sem_ir(), inst.callee_id)
-           .self_type_id.has_value()) {
+  auto callee_function =
+      SemIR::GetCalleeFunction(context.sem_ir(), inst.callee_id);
+  const auto& fn = context.functions().Get(callee_function.function_id);
+  if (!callee_function.self_type_id.has_value() &&
+      fn.builtin_function_kind() != SemIR::BuiltinFunctionKind::NoOp &&
+      fn.virtual_modifier != SemIR::Function::VirtualModifier::Abstract) {
     // This is not an associated function. Those will be required to be defined
     // as part of checking that the impl is complete.
     context.definitions_required_by_use().push_back(
@@ -503,6 +586,36 @@ auto EvalConstantInst(Context& context, SemIR::ValueOfInitializer inst)
   // operand.
   return ConstantEvalResult::Existing(
       context.constant_values().Get(inst.init_id));
+}
+
+auto EvalConstantInst(Context& context, SemIR::InstId inst_id,
+                      SemIR::VarStorage inst) -> ConstantEvalResult {
+  if (!inst.pattern_id.has_value()) {
+    // This variable was not created from a `var` pattern, so isn't a global
+    // variable.
+    return ConstantEvalResult::NotConstant;
+  }
+
+  // A variable is constant if it's global.
+  auto entity_name_id = SemIR::GetFirstBindingNameFromPatternId(
+      context.sem_ir(), inst.pattern_id);
+  if (!entity_name_id.has_value()) {
+    // Variable doesn't introduce any bindings, so can only be referenced by its
+    // own initializer. We treat such a reference as not being constant.
+    return ConstantEvalResult::NotConstant;
+  }
+
+  auto scope_id = context.entity_names().Get(entity_name_id).parent_scope_id;
+  if (!scope_id.has_value() ||
+      !context.insts().Is<SemIR::Namespace>(
+          context.name_scopes().Get(scope_id).inst_id())) {
+    // Only namespace-scope variables are reference constants.
+    return ConstantEvalResult::NotConstant;
+  }
+
+  // This is a constant reference expression denoting this global variable.
+  return ConstantEvalResult::Existing(
+      SemIR::ConstantId::ForConcreteConstant(inst_id));
 }
 
 }  // namespace Carbon::Check

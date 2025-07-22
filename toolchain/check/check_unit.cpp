@@ -4,20 +4,24 @@
 
 #include "toolchain/check/check_unit.h"
 
+#include <iterator>
 #include <string>
 #include <tuple>
 #include <utility>
 
+#include "common/growing_range.h"
+#include "common/pretty_stack_trace_function.h"
 #include "llvm/ADT/IntrusiveRefCntPtr.h"
 #include "llvm/ADT/StringRef.h"
 #include "llvm/Support/VirtualFileSystem.h"
+#include "toolchain/base/fixed_size_value_store.h"
 #include "toolchain/base/kind_switch.h"
-#include "toolchain/base/pretty_stack_trace_function.h"
 #include "toolchain/check/diagnostic_helpers.h"
 #include "toolchain/check/generic.h"
 #include "toolchain/check/handle.h"
 #include "toolchain/check/impl.h"
 #include "toolchain/check/impl_lookup.h"
+#include "toolchain/check/impl_validation.h"
 #include "toolchain/check/import.h"
 #include "toolchain/check/import_cpp.h"
 #include "toolchain/check/import_ref.h"
@@ -52,16 +56,16 @@ static auto GetImportedIRCount(UnitAndImports* unit_and_imports) -> int {
 
 CheckUnit::CheckUnit(
     UnitAndImports* unit_and_imports,
-    llvm::ArrayRef<Parse::GetTreeAndSubtreesFn> tree_and_subtrees_getters,
+    const Parse::GetTreeAndSubtreesStore* tree_and_subtrees_getters,
     llvm::IntrusiveRefCntPtr<llvm::vfs::FileSystem> fs,
+    std::shared_ptr<clang::CompilerInvocation> clang_invocation,
     llvm::raw_ostream* vlog_stream)
     : unit_and_imports_(unit_and_imports),
-      tree_and_subtrees_getter_(
-          tree_and_subtrees_getters
-              [unit_and_imports->unit->sem_ir->check_ir_id().index]),
-      total_ir_count_(tree_and_subtrees_getters.size()),
+      tree_and_subtrees_getter_(tree_and_subtrees_getters->Get(
+          unit_and_imports->unit->sem_ir->check_ir_id())),
+      total_ir_count_(tree_and_subtrees_getters->size()),
       fs_(std::move(fs)),
-      vlog_stream_(vlog_stream),
+      clang_invocation_(std::move(clang_invocation)),
       emitter_(&unit_and_imports_->err_tracker, tree_and_subtrees_getters,
                unit_and_imports_->unit->sem_ir),
       context_(
@@ -153,18 +157,18 @@ auto CheckUnit::InitPackageScopeAndImports() -> void {
     CARBON_CHECK(cpp_ast);
     CARBON_CHECK(!cpp_ast->get());
     *cpp_ast =
-        ImportCppFiles(context_, unit_and_imports_->unit->sem_ir->filename(),
-                       cpp_import_names, fs_);
+        ImportCppFiles(context_, cpp_import_names, fs_, clang_invocation_);
   }
 }
 
 auto CheckUnit::CollectDirectImports(
     llvm::SmallVector<SemIR::ImportIR>& results,
-    llvm::MutableArrayRef<int> ir_to_result_index, SemIR::InstId import_decl_id,
-    const PackageImports& imports, bool is_local) -> void {
+    FixedSizeValueStore<SemIR::CheckIRId, int>& ir_to_result_index,
+    SemIR::InstId import_decl_id, const PackageImports& imports, bool is_local)
+    -> void {
   for (const auto& import : imports.imports) {
     const auto& direct_ir = *import.unit_info->unit->sem_ir;
-    auto& index = ir_to_result_index[direct_ir.check_ir_id().index];
+    auto& index = ir_to_result_index.Get(direct_ir.check_ir_id());
     if (index != -1) {
       // This should only happen when doing API imports for an implementation
       // file. Don't change the entry; is_export doesn't matter.
@@ -188,7 +192,9 @@ auto CheckUnit::CollectTransitiveImports(SemIR::InstId import_decl_id,
   // Track whether an IR was imported in full, including `export import`. This
   // distinguishes from IRs that are indirectly added without all names being
   // exported to this IR.
-  llvm::SmallVector<int> ir_to_result_index(total_ir_count_, -1);
+  auto ir_to_result_index =
+      FixedSizeValueStore<SemIR::CheckIRId, int>::MakeWithExplicitSize(
+          total_ir_count_, -1);
 
   // First add direct imports. This means that if an entity is imported both
   // directly and indirectly, the import path will reflect the direct import.
@@ -210,13 +216,13 @@ auto CheckUnit::CollectTransitiveImports(SemIR::InstId import_decl_id,
     bool is_export = results[direct_index].is_export;
 
     for (const auto& indirect_ir :
-         results[direct_index].sem_ir->import_irs().array_ref()) {
+         results[direct_index].sem_ir->import_irs().values()) {
       if (!indirect_ir.is_export) {
         continue;
       }
 
       auto& indirect_index =
-          ir_to_result_index[indirect_ir.sem_ir->check_ir_id().index];
+          ir_to_result_index.Get(indirect_ir.sem_ir->check_ir_id());
       if (indirect_index == -1) {
         indirect_index = results.size();
         // TODO: In the case of a recursive `export import`, this only points at
@@ -364,7 +370,7 @@ auto CheckUnit::ImportOtherPackages(SemIR::TypeId namespace_type_id) -> void {
 // for example if an unrecoverable state is encountered.
 // NOLINTNEXTLINE(readability-function-size)
 auto CheckUnit::ProcessNodeIds() -> bool {
-  NodeIdTraversal traversal(&context_, vlog_stream_);
+  NodeIdTraversal traversal(&context_);
 
   Parse::NodeId node_id = Parse::NodeId::None;
 
@@ -373,7 +379,7 @@ auto CheckUnit::ProcessNodeIds() -> bool {
     const auto& tree = tree_and_subtrees_getter_();
     auto converted = tree.NodeToDiagnosticLoc(node_id, /*token_only=*/false);
     converted.loc.FormatLocation(output);
-    output << "checking " << context_.parse_tree().node_kind(node_id) << "\n";
+    output << "Checking " << context_.parse_tree().node_kind(node_id) << "\n";
     // Crash output has a tab indent; try to indent slightly past that.
     converted.loc.FormatSnippet(output, /*indent=*/10);
   });
@@ -413,7 +419,7 @@ auto CheckUnit::ProcessNodeIds() -> bool {
 }
 
 auto CheckUnit::CheckRequiredDeclarations() -> void {
-  for (const auto& function : context_.functions().array_ref()) {
+  for (const auto& function : context_.functions().values()) {
     if (!function.first_owning_decl_id.has_value() &&
         function.extern_library_id == context_.sem_ir().library_id()) {
       auto function_import_id =
@@ -451,11 +457,7 @@ auto CheckUnit::CheckRequiredDeclarations() -> void {
 auto CheckUnit::CheckRequiredDefinitions() -> void {
   CARBON_DIAGNOSTIC(MissingDefinitionInImpl, Error,
                     "no definition found for declaration in impl file");
-
-  // Note that more required definitions can be added during this loop.
-  // NOLINTNEXTLINE(modernize-loop-convert)
-  for (size_t i = 0; i != context_.definitions_required_by_decl().size(); ++i) {
-    SemIR::InstId decl_inst_id = context_.definitions_required_by_decl()[i];
+  for (SemIR::InstId decl_inst_id : context_.definitions_required_by_decl()) {
     SemIR::Inst decl_inst = context_.insts().Get(decl_inst_id);
     CARBON_KIND_SWITCH(context_.insts().Get(decl_inst_id)) {
       case CARBON_KIND(SemIR::ClassDecl class_decl): {
@@ -494,12 +496,10 @@ auto CheckUnit::CheckRequiredDefinitions() -> void {
     }
   }
 
-  // Note that more required definitions can be added during this loop.
-  // NOLINTNEXTLINE(modernize-loop-convert)
-  for (size_t i = 0; i != context_.definitions_required_by_use().size(); ++i) {
+  for (auto [loc, specific_id] :
+       GrowingRange(context_.definitions_required_by_use())) {
     // This is using the location for the use. We could track the
     // list of enclosing locations if this was used from a generic.
-    auto [loc, specific_id] = context_.definitions_required_by_use()[i];
     if (!ResolveSpecificDefinition(context_, loc, specific_id)) {
       CARBON_DIAGNOSTIC(MissingGenericFunctionDefinition, Error,
                         "use of undefined generic function");
@@ -571,160 +571,13 @@ auto CheckUnit::CheckPoisonedConcreteImplLookupQueries() -> void {
   context_.inst_block_stack().PopAndDiscard();
 }
 
-// Check for invalid overlap between impls, given the set of all impls for a
-// single interface.
-static auto CheckOverlappingImplsForInterface(
-    Context& context,
-    llvm::ArrayRef<std::pair<SemIR::ImplId, SemIR::SpecificInterface>>
-        impls_and_interface) -> void {
-  // Range over `SemIR::ImplId` only. It'd be nice to make this the function
-  // parameter but we don't have a concept to express that outside the (banned)
-  // std::ranges.
-  auto impl_ids = llvm::map_range(
-      impls_and_interface,
-      [=](std::pair<SemIR::ImplId, SemIR::SpecificInterface> pair) {
-        auto [impl_id, _] = pair;
-        return impl_id;
-      });
-
-  // Avoid holding a reference into the ImplStore, as the diagnostic checks
-  // below can invalidate the reference. We copy out the part of the `Impl` we
-  // need.
-  struct ImplInfo {
-    bool is_final;
-    SemIR::InstId witness_id;
-    SemIR::TypeInstId self_id;
-    SemIR::InstId latest_decl_id;
-    SemIR::SpecificInterface interface;
-  };
-  auto get_impl_info = [&](SemIR::ImplId impl_id) -> ImplInfo {
-    const auto& impl = context.impls().Get(impl_id);
-    return {.is_final = impl.is_final,
-            .witness_id = impl.witness_id,
-            .self_id = impl.self_id,
-            .latest_decl_id = impl.latest_decl_id(),
-            .interface = impl.interface};
-  };
-
-  // TODO: We should revisit this and look for a way to do these checks in less
-  // than quadratic time. From @zygoloid: Possibly by converting the set of
-  // impls into a decision tree.
-  for (auto [index_a, impl_a_id] : llvm::enumerate(impl_ids)) {
-    auto impl_a = get_impl_info(impl_a_id);
-    if (impl_a.witness_id == SemIR::ErrorInst::InstId) {
-      continue;
-    }
-    auto type_structure =
-        BuildTypeStructure(context, impl_a.self_id, impl_a.interface);
-
-    for (auto impl_b_id : llvm::drop_begin(impl_ids, index_a + 1)) {
-      auto impl_b = get_impl_info(impl_b_id);
-      if (impl_b.witness_id == SemIR::ErrorInst::InstId) {
-        continue;
-      }
-
-      // The type structure each non-final `impl` must differ from all other
-      // non-final `impl` for the same interface visible from the file.
-      if (!impl_a.is_final && !impl_b.is_final) {
-        auto type_structure2 =
-            BuildTypeStructure(context, impl_b.self_id, impl_b.interface);
-        if (type_structure == type_structure2) {
-          CARBON_DIAGNOSTIC(ImplNonFinalSameTypeStructure, Error,
-                            "found non-final `impl` with the same type "
-                            "structure as another non-final `impl`");
-          auto builder = context.emitter().Build(impl_b.latest_decl_id,
-                                                 ImplNonFinalSameTypeStructure);
-          CARBON_DIAGNOSTIC(ImplNonFinalSameTypeStructureNote, Note,
-                            "other `impl` here");
-          builder.Note(impl_a.latest_decl_id,
-                       ImplNonFinalSameTypeStructureNote);
-          builder.Emit();
-          break;
-        }
-      } else {
-        CARBON_CHECK(impl_a.is_final || impl_b.is_final);
-
-        auto diagnose = [&](ImplInfo& query_impl, SemIR::ImplId final_impl_id,
-                            const ImplInfo& final_impl) -> bool {
-          if (LookupMatchesImpl(
-                  context, SemIR::LocId(query_impl.latest_decl_id),
-                  context.constant_values().Get(query_impl.self_id),
-                  query_impl.interface, final_impl_id)) {
-            CARBON_DIAGNOSTIC(ImplFinalOverlapsNonFinal, Error,
-                              "`impl` will never be used");
-            auto builder = context.emitter().Build(query_impl.latest_decl_id,
-                                                   ImplFinalOverlapsNonFinal);
-            CARBON_DIAGNOSTIC(
-                ImplFinalOverlapsNonFinalNote, Note,
-                "`final impl` declared here would always be used instead");
-            builder.Note(final_impl.latest_decl_id,
-                         ImplFinalOverlapsNonFinalNote);
-            builder.Emit();
-            return true;
-          }
-          return false;
-        };
-
-        bool did_diagnose = false;
-        if (impl_a.is_final) {
-          did_diagnose = diagnose(impl_b, impl_a_id, impl_a);
-        }
-        if (impl_b.is_final && !did_diagnose) {
-          diagnose(impl_a, impl_b_id, impl_b);
-        }
-      }
-    }
-
-    // TODO: The self + constraint of a `impl` must not match against (be
-    // fully subsumed by) any final `impl` visible from the file. Do a
-    // final-only query for all non-final impls?
-  }
-}
-
-auto CheckUnit::CheckOverlappingImpls() -> void {
-  // Collect all of the impls sorted into contiguous segments by their
-  // interface. We only need to compare impls within each such segment.
-  //
-  // Don't hold Impl pointers here because the process of looking for
-  // diagnostics may cause imports and may invalidate pointers into the
-  // ImplStore.
-  llvm::SmallVector<std::pair<SemIR::ImplId, SemIR::SpecificInterface>>
-      impl_ids_by_interface(llvm::map_range(
-          context_.impls().enumerate(),
-          [](std::pair<SemIR::ImplId, const SemIR::Impl&> pair) {
-            return std::make_pair(pair.first, pair.second.interface);
-          }));
-  llvm::stable_sort(
-      impl_ids_by_interface,
-      [](std::pair<SemIR::ImplId, SemIR::SpecificInterface> a,
-         std::pair<SemIR::ImplId, const SemIR::SpecificInterface> b) {
-        return a.second.interface_id.index < b.second.interface_id.index;
-      });
-
-  const auto* it = impl_ids_by_interface.begin();
-  while (it != impl_ids_by_interface.end()) {
-    const auto* segment_begin = it;
-    do {
-      ++it;
-    } while (it != impl_ids_by_interface.end() &&
-             it->second.interface_id == segment_begin->second.interface_id);
-    const auto* segment_end = it;
-
-    if (std::distance(segment_begin, segment_end) == 1) {
-      // Only 1 interface in the segment; nothing to overlap with.
-      continue;
-    }
-
-    CheckOverlappingImplsForInterface(
-        context_, llvm::ArrayRef(segment_begin, segment_end));
-  }
-}
+auto CheckUnit::CheckImpls() -> void { ValidateImplsInFile(context_); }
 
 auto CheckUnit::FinishRun() -> void {
   CheckRequiredDeclarations();
   CheckRequiredDefinitions();
   CheckPoisonedConcreteImplLookupQueries();
-  CheckOverlappingImpls();
+  CheckImpls();
 
   // Pop information for the file-level scope.
   context_.sem_ir().set_top_inst_block_id(context_.inst_block_stack().Pop());
@@ -734,8 +587,8 @@ auto CheckUnit::FinishRun() -> void {
   context_.inst_blocks().ReplacePlaceholder(SemIR::InstBlockId::Exports,
                                             context_.exports());
   // Finalizes the ImportRef inst block.
-  context_.inst_blocks().ReplacePlaceholder(SemIR::InstBlockId::ImportRefs,
-                                            context_.import_ref_ids());
+  context_.inst_blocks().ReplacePlaceholder(SemIR::InstBlockId::Imports,
+                                            context_.imports());
   // Finalizes __global_init.
   context_.global_init().Finalize();
 

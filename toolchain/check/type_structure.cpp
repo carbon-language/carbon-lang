@@ -15,7 +15,8 @@
 
 namespace Carbon::Check {
 
-auto TypeStructure::IsCompatibleWith(const TypeStructure& other) const -> bool {
+auto TypeStructure::CompareStructure(CompareTest test,
+                                     const TypeStructure& other) const -> bool {
   const auto& lhs = structure_;
   const auto& rhs = other.structure_;
 
@@ -63,17 +64,33 @@ auto TypeStructure::IsCompatibleWith(const TypeStructure& other) const -> bool {
     // From here we know one side is a Symbolic and the other is not. We can
     // match the Symbolic against either a single Concrete or a larger bracketed
     // set of Concrete structural elements.
-    //
-    // We move the symbolic to the RHS to make only one case to handle in the
-    // lambda.
-    if (*lhs_cursor == Structural::Symbolic) {
-      if (!ConsumeRhsSymbolic(rhs_cursor, rhs_concrete_cursor, lhs_cursor)) {
-        return false;
-      }
-    } else {
-      if (!ConsumeRhsSymbolic(lhs_cursor, lhs_concrete_cursor, rhs_cursor)) {
-        return false;
-      }
+    switch (test) {
+      case CompareTest::IsEqualToOrMoreSpecificThan:
+        // If the symbolic is on the LHS, then the RHS structure is more
+        // specific and we return false. If the symbolic is on the RHS, we
+        // consume it and match it against the structure on the LHS.
+        if (*lhs_cursor == Structural::Symbolic) {
+          return false;
+        }
+        if (!ConsumeRhsSymbolic(lhs_cursor, lhs_concrete_cursor, rhs_cursor)) {
+          return false;
+        }
+        break;
+      case CompareTest::HasOverlap:
+        // The symbolic can be on either side, and whichever side it is on, we
+        // consume it and match it against the structure on the other side.
+        if (*lhs_cursor == Structural::Symbolic) {
+          if (!ConsumeRhsSymbolic(rhs_cursor, rhs_concrete_cursor,
+                                  lhs_cursor)) {
+            return false;
+          }
+        } else {
+          if (!ConsumeRhsSymbolic(lhs_cursor, lhs_concrete_cursor,
+                                  rhs_cursor)) {
+            return false;
+          }
+        }
+        break;
     }
   }
 

@@ -11,7 +11,9 @@
 #include "llvm/ADT/iterator_range.h"
 #include "llvm/Support/Allocator.h"
 #include "llvm/Support/FormatVariadic.h"
+#include "toolchain/base/canonical_value_store.h"
 #include "toolchain/base/int.h"
+#include "toolchain/base/relational_value_store.h"
 #include "toolchain/base/shared_value_stores.h"
 #include "toolchain/base/value_store.h"
 #include "toolchain/base/yaml.h"
@@ -32,9 +34,11 @@
 #include "toolchain/sem_ir/name.h"
 #include "toolchain/sem_ir/name_scope.h"
 #include "toolchain/sem_ir/singleton_insts.h"
+#include "toolchain/sem_ir/specific_interface.h"
 #include "toolchain/sem_ir/struct_type_field.h"
 #include "toolchain/sem_ir/type.h"
 #include "toolchain/sem_ir/type_info.h"
+#include "toolchain/sem_ir/vtable.h"
 
 namespace Carbon::SemIR {
 
@@ -55,11 +59,14 @@ struct ExprRegion {
   InstId result_id;
 };
 
+using ExprRegionStore = ValueStore<ExprRegionId, ExprRegion>;
+
 // Provides semantic analysis on a Parse::Tree.
 class File : public Printable<File> {
  public:
   using IdentifiedFacetTypeStore =
-      RelationalValueStore<FacetTypeId, IdentifiedFacetTypeId>;
+      RelationalValueStore<FacetTypeId, IdentifiedFacetTypeId,
+                           IdentifiedFacetType>;
 
   // Starts a new file for Check::CheckParseTree.
   explicit File(const Parse::Tree* parse_tree, CheckIRId check_ir_id,
@@ -143,27 +150,21 @@ class File : public Printable<File> {
 
   auto entity_names() -> EntityNameStore& { return entity_names_; }
   auto entity_names() const -> const EntityNameStore& { return entity_names_; }
-  auto functions() -> ValueStore<FunctionId>& { return functions_; }
-  auto functions() const -> const ValueStore<FunctionId>& { return functions_; }
-  auto classes() -> ValueStore<ClassId>& { return classes_; }
-  auto classes() const -> const ValueStore<ClassId>& { return classes_; }
-  auto interfaces() -> ValueStore<InterfaceId>& { return interfaces_; }
-  auto interfaces() const -> const ValueStore<InterfaceId>& {
-    return interfaces_;
-  }
-  auto associated_constants() -> ValueStore<AssociatedConstantId>& {
+  auto functions() -> FunctionStore& { return functions_; }
+  auto functions() const -> const FunctionStore& { return functions_; }
+  auto classes() -> ClassStore& { return classes_; }
+  auto classes() const -> const ClassStore& { return classes_; }
+  auto interfaces() -> InterfaceStore& { return interfaces_; }
+  auto interfaces() const -> const InterfaceStore& { return interfaces_; }
+  auto associated_constants() -> AssociatedConstantStore& {
     return associated_constants_;
   }
-  auto associated_constants() const -> const ValueStore<AssociatedConstantId>& {
+  auto associated_constants() const -> const AssociatedConstantStore& {
     return associated_constants_;
   }
   // TODO: Rename these to `facet_type_infos`.
-  auto facet_types() -> CanonicalValueStore<FacetTypeId>& {
-    return facet_types_;
-  }
-  auto facet_types() const -> const CanonicalValueStore<FacetTypeId>& {
-    return facet_types_;
-  }
+  auto facet_types() -> FacetTypeInfoStore& { return facet_types_; }
+  auto facet_types() const -> const FacetTypeInfoStore& { return facet_types_; }
   auto identified_facet_types() -> IdentifiedFacetTypeStore& {
     return identified_facet_types_;
   }
@@ -172,37 +173,32 @@ class File : public Printable<File> {
   }
   auto impls() -> ImplStore& { return impls_; }
   auto impls() const -> const ImplStore& { return impls_; }
-  auto specific_interfaces() -> CanonicalValueStore<SpecificInterfaceId>& {
+  auto specific_interfaces() -> SpecificInterfaceStore& {
     return specific_interfaces_;
   }
-  auto specific_interfaces() const
-      -> const CanonicalValueStore<SpecificInterfaceId>& {
+  auto specific_interfaces() const -> const SpecificInterfaceStore& {
     return specific_interfaces_;
   }
   auto generics() -> GenericStore& { return generics_; }
   auto generics() const -> const GenericStore& { return generics_; }
   auto specifics() -> SpecificStore& { return specifics_; }
   auto specifics() const -> const SpecificStore& { return specifics_; }
-  auto import_irs() -> ValueStore<ImportIRId>& { return import_irs_; }
-  auto import_irs() const -> const ValueStore<ImportIRId>& {
-    return import_irs_;
-  }
-  auto import_ir_insts() -> ValueStore<ImportIRInstId>& {
+  auto import_irs() -> ImportIRStore& { return import_irs_; }
+  auto import_irs() const -> const ImportIRStore& { return import_irs_; }
+  auto import_ir_insts() -> ImportIRInstStore& { return import_ir_insts_; }
+  auto import_ir_insts() const -> const ImportIRInstStore& {
     return import_ir_insts_;
   }
-  auto import_ir_insts() const -> const ValueStore<ImportIRInstId>& {
-    return import_ir_insts_;
-  }
-  auto import_cpps() -> ValueStore<ImportCppId>& { return import_cpps_; }
-  auto import_cpps() const -> const ValueStore<ImportCppId>& {
-    return import_cpps_;
-  }
+  auto import_cpps() -> ImportCppStore& { return import_cpps_; }
+  auto import_cpps() const -> const ImportCppStore& { return import_cpps_; }
   auto cpp_ast() -> clang::ASTUnit* { return cpp_ast_; }
   auto cpp_ast() const -> const clang::ASTUnit* { return cpp_ast_; }
   // TODO: When the AST can be created before creating `File`, initialize the
   // pointer in the constructor and remove this function. This is part of
   // https://github.com/carbon-language/carbon-lang/issues/4666
   auto set_cpp_ast(clang::ASTUnit* cpp_ast) -> void { cpp_ast_ = cpp_ast; }
+  auto clang_decls() -> ClangDeclStore& { return clang_decls_; }
+  auto clang_decls() const -> const ClangDeclStore& { return clang_decls_; }
   auto names() const -> NameStoreWrapper {
     return NameStoreWrapper(&identifiers());
   }
@@ -218,6 +214,8 @@ class File : public Printable<File> {
   auto types() const -> const TypeStore& { return types_; }
   auto insts() -> InstStore& { return insts_; }
   auto insts() const -> const InstStore& { return insts_; }
+  auto vtables() -> VtableStore& { return vtables_; }
+  auto vtables() const -> const VtableStore& { return vtables_; }
   auto constant_values() -> ConstantValueStore& { return constant_values_; }
   auto constant_values() const -> const ConstantValueStore& {
     return constant_values_;
@@ -227,15 +225,15 @@ class File : public Printable<File> {
   auto constants() -> ConstantStore& { return constants_; }
   auto constants() const -> const ConstantStore& { return constants_; }
 
-  auto expr_regions() -> ValueStore<ExprRegionId>& { return expr_regions_; }
-  auto expr_regions() const -> const ValueStore<ExprRegionId>& {
-    return expr_regions_;
-  }
+  auto expr_regions() -> ExprRegionStore& { return expr_regions_; }
+  auto expr_regions() const -> const ExprRegionStore& { return expr_regions_; }
 
-  auto clang_source_locs() -> ValueStore<ClangSourceLocId>& {
+  using ClangSourceLocStore =
+      ValueStore<ClangSourceLocId, clang::SourceLocation>;
+  auto clang_source_locs() -> ClangSourceLocStore& {
     return clang_source_locs_;
   }
-  auto clang_source_locs() const -> const ValueStore<ClangSourceLocId>& {
+  auto clang_source_locs() const -> const ClangSourceLocStore& {
     return clang_source_locs_;
   }
 
@@ -285,19 +283,19 @@ class File : public Printable<File> {
   EntityNameStore entity_names_;
 
   // Storage for callable objects.
-  ValueStore<FunctionId> functions_;
+  FunctionStore functions_;
 
   // Storage for classes.
-  ValueStore<ClassId> classes_;
+  ClassStore classes_;
 
   // Storage for interfaces.
-  ValueStore<InterfaceId> interfaces_;
+  InterfaceStore interfaces_;
 
   // Storage for associated constants.
-  ValueStore<AssociatedConstantId> associated_constants_;
+  AssociatedConstantStore associated_constants_;
 
   // Storage for facet types.
-  CanonicalValueStore<FacetTypeId> facet_types_;
+  FacetTypeInfoStore facet_types_;
 
   // Storage for identified facet types.
   IdentifiedFacetTypeStore identified_facet_types_;
@@ -307,7 +305,7 @@ class File : public Printable<File> {
 
   // Storage for specific interfaces, which are an individual unit of impl
   // lookup for a single interface.
-  CanonicalValueStore<SpecificInterfaceId> specific_interfaces_;
+  SpecificInterfaceStore specific_interfaces_;
 
   // Storage for generics.
   GenericStore generics_;
@@ -316,22 +314,29 @@ class File : public Printable<File> {
   SpecificStore specifics_;
 
   // Related IRs. There are some fixed entries at the start; see ImportIRId.
-  ValueStore<ImportIRId> import_irs_;
+  ImportIRStore import_irs_;
 
   // Related IR instructions. These are created for LocIds for instructions
   // that are import-related.
-  ValueStore<ImportIRInstId> import_ir_insts_;
+  ImportIRInstStore import_ir_insts_;
 
   // List of Cpp imports.
-  ValueStore<ImportCppId> import_cpps_;
+  ImportCppStore import_cpps_;
 
   // The Clang AST to use when looking up `Cpp` names. Null if there are no
   // `Cpp` imports.
   clang::ASTUnit* cpp_ast_ = nullptr;
 
+  // Clang AST declarations pointing to the AST and their mapped Carbon
+  // instructions. When calling `Lookup()`, `inst_id` is ignored. `Add()` will
+  // not add multiple entries with the same `decl` and different `inst_id`.
+  ClangDeclStore clang_decls_;
+
   // All instructions. The first entries will always be the singleton
   // instructions.
   InstStore insts_ = InstStore(this);
+
+  VtableStore vtables_;
 
   // Storage for name scopes.
   NameScopeStore name_scopes_ = NameScopeStore(this);
@@ -361,10 +366,10 @@ class File : public Printable<File> {
 
   // Single-entry/single-exit regions that are referenced as units, e.g. because
   // they represent expressions.
-  ValueStore<ExprRegionId> expr_regions_;
+  ExprRegionStore expr_regions_;
 
   // C++ source locations for C++ interop.
-  ValueStore<ClangSourceLocId> clang_source_locs_;
+  ClangSourceLocStore clang_source_locs_;
 };
 
 }  // namespace Carbon::SemIR

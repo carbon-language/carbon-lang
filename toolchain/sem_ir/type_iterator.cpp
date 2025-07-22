@@ -81,6 +81,8 @@ auto TypeIterator::Next() -> Step {
       case SemIR::BoolType::Kind:
       case SemIR::FacetType::Kind:
       case SemIR::FloatType::Kind:
+      case SemIR::FunctionType::Kind:
+      case SemIR::FunctionTypeWithSelfType::Kind:
       case SemIR::GenericClassType::Kind:
       case SemIR::GenericInterfaceType::Kind:
       case SemIR::ImplWitnessAccess::Kind:
@@ -123,6 +125,12 @@ auto TypeIterator::Next() -> Step {
         // We don't stop at `const` since it is a modifier; just move to the
         // inner type.
         PushInstId(const_type.inner_id);
+        break;
+      }
+      case CARBON_KIND(SemIR::PartialType partial_type): {
+        // We don't stop at `partial` since it is a modifier; just move to the
+        // inner type.
+        PushInstId(partial_type.inner_id);
         break;
       }
       case CARBON_KIND(SemIR::ImplWitnessAssociatedConstant assoc): {

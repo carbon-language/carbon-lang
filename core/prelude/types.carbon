@@ -7,6 +7,7 @@ package Core library "prelude/types";
 export import library "prelude/types/bool";
 export import library "prelude/types/int_literal";
 export import library "prelude/types/int";
+export import library "prelude/types/optional";
 export import library "prelude/types/uint";
 
 fn Float(size: IntLiteral()) -> type = "float.make_type";
