@@ -123,15 +123,15 @@ expression is referring to.
 
 For a simple member access, if the first operand is a type, form, facet,
 package, or namespace, a search for the member name is performed in the first
-operand. If the first operand is a form, the search is performed in its
-[type component](/docs/design/values.md#expression-forms). Otherwise, a search
-for the member name is performed in the type of the first operand. In either
-case, the search must succeed. In the latter case, if the result is an instance
-member, then [instance binding](#instance-binding) is performed on the first
-operand.
+operand. Otherwise, a search for the member name is performed in the type of the
+first operand. In either case, the search must succeed. In the latter case, if
+the result is an instance member, then [instance binding](#instance-binding) is
+performed on the first operand.
 
-Note that this means that the form of an expression never affects simple member
-access into that expression, except through its type component.
+A search for a name within a form searches for the name in its
+[type component](/docs/design/values.md#expression-forms). Note that this means
+that the form of an expression never affects simple member access into that
+expression, except through its type component.
 
 For a compound member access, the second operand is evaluated as a compile-time
 constant to determine the member being accessed. The evaluation is required to
