@@ -21,17 +21,6 @@ enum class InstIsType : int8_t {
   Never,
 };
 
-// Whether an instruction produces or represents a value, and if so, what kind
-// of value.
-enum class InstValueKind : int8_t {
-  // This instruction doesn't produce a value, and shouldn't be referenced by
-  // other instructions.
-  None,
-  // This instruction represents an expression or expression-like construct that
-  // produces a value of the type indicated by its `type_id` field.
-  Typed,
-};
-
 // Whether an instruction can have a constant value, and whether it can be a
 // constant inst (i.e. an inst whose canonical ID defines a constant value; see
 // constant.h).
