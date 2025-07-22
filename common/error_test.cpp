@@ -51,7 +51,8 @@ class CustomError : public ErrorBase<CustomError> {
 };
 
 template <typename ErrorT>
-struct ErrorOrTest : ::testing::Test {
+class ErrorOrTest : public ::testing::Test {
+ public:
   template <typename T>
   using TestErrorOr = ErrorOr<T, ErrorT>;
 

@@ -92,9 +92,7 @@ class [[nodiscard]] ErrorBase : public Printable<ErrorT> {
   ErrorBase(const ErrorBase&) = delete;
 
   auto ToString() const -> std::string {
-    RawStringOstream s;
-    static_cast<const ErrorT*>(this)->Print(s);
-    return s.TakeStr();
+    return Dump();
   }
 
   explicit operator Error() { return Error(this->ToString()); }
