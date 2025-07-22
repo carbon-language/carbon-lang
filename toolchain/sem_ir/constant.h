@@ -138,8 +138,8 @@ class ConstantValueStore {
     values_[inst_id.index] = const_id;
   }
 
-  // Gets the underlying constant inst for the given constant. Returns `None` if
-  // the constant ID is non-constant. Requires `const_id.has_value()`.
+  // Gets the ID of the underlying constant inst for the given constant. Returns
+  // `None` if the constant ID is non-constant. Requires `const_id.has_value()`.
   auto GetInstId(ConstantId const_id) const -> InstId {
     if (const_id.is_concrete()) {
       return const_id.concrete_inst_id();
@@ -150,8 +150,8 @@ class ConstantValueStore {
     return InstId::None;
   }
 
-  // Gets the underlying constant inst for the given constant. Returns `None` if
-  // the constant ID is non-constant or `None`.
+  // Gets the ID of the underlying constant inst for the given constant. Returns
+  // `None` if the constant ID is non-constant or `None`.
   auto GetInstIdIfValid(ConstantId const_id) const -> InstId {
     return const_id.has_value() ? GetInstId(const_id) : InstId::None;
   }

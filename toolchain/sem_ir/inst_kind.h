@@ -52,16 +52,16 @@ enum class InstConstantKind : int8_t {
   Indirect,
   // This instruction can be a symbolic constant inst, depending on its
   // operands, but never a concrete constant inst. For example, a `Call`
-  // instruction can be a symbolic constant inst but never a concrete constant inst.
-  // The instruction may have a concrete constant value of a different kind.
+  // instruction can be a symbolic constant inst but never a concrete constant
+  // inst. The instruction may have a concrete constant value of a different
+  // kind.
   SymbolicOnly,
   // This instruction is a metaprogramming or template instantiation action that
   // generates an instruction. Like `SymbolicOnly`, it may be a symbolic
-  // constant
-  // inst depending on its operands, but never a concrete constant inst.
-  // The instruction may have a concrete constant value that is a generated
-  // instruction. Constant evaluation support for types with this constant kind
-  // is provided automatically, by calling `PerformDelayedAction`.
+  // constant inst depending on its operands, but never a concrete constant
+  // inst. The instruction may have a concrete constant value that is a
+  // generated instruction. Constant evaluation support for types with this
+  // constant kind is provided automatically, by calling `PerformDelayedAction`.
   InstAction,
   // This instruction's operands determine whether it has a constant value,
   // whether it is a constant inst, and/or whether it results in a compile-time
@@ -72,11 +72,11 @@ enum class InstConstantKind : int8_t {
   // `ConstType`.
   Conditional,
   // This instruction is a constant inst if and only if its operands are all the
-  // canonical IDs of constant insts, and it has a constant value if and only if
-  // its operands all have constant values. For example, a `TupleValue` is a
-  // constant inst if and only if its operands are all the canonical IDs of
-  // constant insts. Constant evaluation support for types with this constant
-  // kind is provided automatically.
+  // canonical IDs of constant insts, it has a constant value if and only if its
+  // operands all have constant values, and that constant value is the result of
+  // substituting the operands with their canonical IDs. For example, a
+  // `TupleValue` has all these properties. Constant evaluation support for
+  // types with this constant kind is provided automatically.
   WheneverPossible,
   // The same as `WheneverPossible`, except that the operands are known in
   // advance to always have a constant value. For example, `IntValue`.
