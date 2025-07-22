@@ -280,11 +280,15 @@ scrutinee.
 The scrutinee is expected to have the same type as the resolved type of the
 nested _proper-pattern_, and it is expected to be a runtime-phase initializing
 expression. The scrutinee expression is converted as needed to satisfy those
-expectations, and then used to initialize a newly-allocated object of that type.
-The `var` pattern then matches if the nested _proper-pattern_ matches a durable
-reference expression referring to that object. As a result, any reference
-binding patterns within the nested pattern refer to portions of the
-corresponding object rather than to the original scrutinee.
+expectations, and the resulting initializing expression is evaluated with a
+newly-allocated object of that type as its output. The `var` pattern then
+matches if the nested _proper-pattern_ matches a durable reference expression
+referring to that object. As a result, any reference binding patterns within the
+nested pattern refer to portions of the corresponding object rather than to the
+original scrutinee.
+
+> **TODO**: Factor out a separate definition of "initializing an object from an
+> expression", which can be reused in places like `return` statements.
 
 The lifetime of the allocated object extends to the end of scope of the `var`
 pattern (that is the scope that any bindings declared within it would have).

@@ -750,8 +750,11 @@ on what instance member `M` was found:
     possibly materialized `x`. The type of `x.f` is the declared type of the
     field, and it has the same expression phase as `x`.
 -   For an element member of a tuple type, `x` is required to have that tuple
-    type, and `x.f` evaluates to the corresponding element of `x` and `x.f` has
-    a primitive form as well. If `x` is an
+    type, and `x.f` evaluates to the corresponding element of `x`. If `x` has a
+    [tuple form](/docs/design/values.md#expression-forms), the form of `x.f` is
+    the value of the corresponding element of the tuple form. Otherwise, `x`
+    must have a primitive form, and `x.f` has a primitive form as well. If `x`
+    is an
     [initializing expression](/docs/design/values.md#initializing-expressions),
     then a
     [temporary is materialized](/docs/design/values.md#temporary-materialization)

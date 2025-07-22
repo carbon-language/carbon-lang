@@ -604,12 +604,14 @@ Initialization and assignment occur field-by-field. The order of fields is
 determined from the target on the left side of the `=`. This rule matches what
 we expect for classes with encapsulation more generally.
 
-More precisely, if `source` is an expression whose type `Source` is a struct
-type, when `source` is converted to a struct or class type `Dest` that has the
-same set of field names, the conversion is an initializing expression of type
-`Dest` that initializes each field `field` from a
-[member access](expressions/member_access.md) `source.field`, in `Dest`'s field
-order.
+More precisely, if $s$ is an expression whose type $S$ is a struct type, when
+$s$ is converted to a struct or class type $D$ that has the same set of field
+names, the conversion is an initializing expression of type $D$ that initializes
+each field in $D$'s field order. For a given field named $F$, that
+initialization consists of
+[resolving](expressions/member_access.md#member-resolution) the name $F$ in $S$
+and then [instance-binding](expressions/member_access.md#instance-binding) the
+resolved name to $s$.
 
 **Open question:** What operations and in what order happen for assignment and
 initialization?
