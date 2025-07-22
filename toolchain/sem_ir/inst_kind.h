@@ -44,11 +44,11 @@ enum class InstConstantKind : int8_t {
   // This is also used for instructions that don't produce a value at all and
   // aren't used as constants.
   Never,
-  // This instruction is never a constant inst, but can evaluate to a
-  // constant value of a different kind. For example, `UnaryOperatorNot` never
-  // defines a constant value; if its operand is a concrete constant, its
+  // This instruction is never a constant inst, but can reduce to a
+  // constant value of a different kind. For example, `UnaryOperatorNot` is
+  // never a constant inst; if its operand is a concrete constant, its
   // constant value will instead be a `BoolLiteral`, and if its operand is not a
-  // concrete constant, the result is non-constant. This is the default.
+  // concrete constant, it is non-constant. This is the default.
   Indirect,
   // This instruction can be a symbolic constant inst, depending on its
   // operands, but never a concrete constant inst. For example, a `Call`
