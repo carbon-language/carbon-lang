@@ -52,7 +52,7 @@ enum class InstConstantKind : int8_t {
   Indirect,
   // This instruction can be a symbolic constant inst, depending on its
   // operands, but never a concrete constant inst. For example, a `Call`
-  // instruction can define a symbolic constant but never a concrete constant.
+  // instruction can be a symbolic constant inst but never a concrete constant inst.
   // The instruction may have a concrete constant value of a different kind.
   SymbolicOnly,
   // This instruction is a metaprogramming or template instantiation action that
