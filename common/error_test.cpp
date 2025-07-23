@@ -194,7 +194,7 @@ TYPED_TEST(ErrorOrTest, AssignOrReturnNoErrorAcrossErrorTypes) {
     CARBON_ASSIGN_OR_RETURN(int a, TestErrorOr(1));
     CARBON_ASSIGN_OR_RETURN(const int b, []() -> TestErrorOr {
       CARBON_ASSIGN_OR_RETURN(
-          int inner, (static_cast<ErrorOr<int, AnotherCustomError>>(2)));
+          int inner, (ErrorOr<int, AnotherCustomError>(2)));
       return inner;
     }());
     int c = 0;
@@ -210,8 +210,8 @@ TYPED_TEST(ErrorOrTest, AssignOrReturnErrorAcrossErrorTypes) {
     CARBON_ASSIGN_OR_RETURN(int a, TestErrorOr(1));
     CARBON_ASSIGN_OR_RETURN(const int b, []() -> TestErrorOr {
       CARBON_ASSIGN_OR_RETURN(int inner,
-                              (static_cast<ErrorOr<int, AnotherCustomError>>(
-                                  AnotherCustomError())));
+                              (ErrorOr<int, AnotherCustomError>(
+                                  AnotherCustomError()));
       return inner;
     }());
     int c = 0;
