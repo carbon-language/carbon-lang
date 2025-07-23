@@ -18,7 +18,7 @@
 
 struct Bar;
 
-// --- fail_todo_import_declaration.carbon
+// --- import_declaration.carbon
 
 library "[[@TEST_NAME]]";
 
@@ -27,6 +27,22 @@ import Cpp library "declaration.h";
 //@dump-sem-ir-begin
 fn MyF(bar: Cpp.Bar*);
 //@dump-sem-ir-end
+
+// --- fail_use_declaration_as_definition.carbon
+
+library "[[@TEST_NAME]]";
+
+import Cpp library "declaration.h";
+
+fn MyF() {
+  // CHECK:STDERR: fail_use_declaration_as_definition.carbon:[[@LINE+6]]:12: error: binding pattern has incomplete type `Bar` in name binding declaration [IncompleteTypeInBindingDecl]
+  // CHECK:STDERR:   var bar: Cpp.Bar;
+  // CHECK:STDERR:            ^~~~~~~
+  // CHECK:STDERR: fail_use_declaration_as_definition.carbon:[[@LINE-6]]:1: in import [InImport]
+  // CHECK:STDERR: ./declaration.h:2: note: class was forward declared here [ClassForwardDeclaredHere]
+  // CHECK:STDERR:
+  var bar: Cpp.Bar;
+}
 
 // ============================================================================
 // Definition
@@ -105,6 +121,7 @@ library "[[@TEST_NAME]]";
 import Cpp library "private_static_member_function.h";
 
 fn MyF() {
+  // TODO: Should fail because `foo` is inaccessible.
   Cpp.Bar.foo();
 }
 
@@ -115,7 +132,7 @@ fn MyF() {
 // --- public_static_data_member.h
 
 struct Bar {
-  static Bar* foo;
+  static Bar* _Nonnull foo;
 };
 
 // --- fail_todo_import_public_static_data_member.carbon
@@ -207,19 +224,19 @@ library "[[@TEST_NAME]]";
 import Cpp library "inheritance_pointers.h";
 
 //@dump-sem-ir-begin
-fn MyF1(bar : Cpp.Bar1*);
+fn MyF1(bar: Cpp.Bar1*);
 // TODO: Support C++ inheritance.
-// CHECK:STDERR: fail_todo_import_inheritance_pointers.carbon:[[@LINE+10]]:33: error: cannot implicitly convert expression of type `Cpp.Bar2*` to `Cpp.Bar1*` [ConversionFailure]
-// CHECK:STDERR: fn MyF2(bar : Cpp.Bar2*) { MyF1(bar); }
-// CHECK:STDERR:                                 ^~~
-// CHECK:STDERR: fail_todo_import_inheritance_pointers.carbon:[[@LINE+7]]:33: note: type `Cpp.Bar2*` does not implement interface `Core.ImplicitAs(Cpp.Bar1*)` [MissingImplInMemberAccessNote]
-// CHECK:STDERR: fn MyF2(bar : Cpp.Bar2*) { MyF1(bar); }
-// CHECK:STDERR:                                 ^~~
+// CHECK:STDERR: fail_todo_import_inheritance_pointers.carbon:[[@LINE+10]]:32: error: cannot implicitly convert expression of type `Cpp.Bar2*` to `Cpp.Bar1*` [ConversionFailure]
+// CHECK:STDERR: fn MyF2(bar: Cpp.Bar2*) { MyF1(bar); }
+// CHECK:STDERR:                                ^~~
+// CHECK:STDERR: fail_todo_import_inheritance_pointers.carbon:[[@LINE+7]]:32: note: type `Cpp.Bar2*` does not implement interface `Core.ImplicitAs(Cpp.Bar1*)` [MissingImplInMemberAccessNote]
+// CHECK:STDERR: fn MyF2(bar: Cpp.Bar2*) { MyF1(bar); }
+// CHECK:STDERR:                                ^~~
 // CHECK:STDERR: fail_todo_import_inheritance_pointers.carbon:[[@LINE-8]]:9: note: initializing function parameter [InCallToFunctionParam]
-// CHECK:STDERR: fn MyF1(bar : Cpp.Bar1*);
-// CHECK:STDERR:         ^~~~~~~~~~~~~~~
+// CHECK:STDERR: fn MyF1(bar: Cpp.Bar1*);
+// CHECK:STDERR:         ^~~~~~~~~~~~~~
 // CHECK:STDERR:
-fn MyF2(bar : Cpp.Bar2*) { MyF1(bar); }
+fn MyF2(bar: Cpp.Bar2*) { MyF1(bar); }
 //@dump-sem-ir-end
 
 // ============================================================================
@@ -229,17 +246,30 @@ fn MyF2(bar : Cpp.Bar2*) { MyF1(bar); }
 // --- dynamic.h
 
 struct Bar {
-  virtual ~Bar();
+  virtual void f();
 };
 
-// --- fail_todo_import_dynamic.carbon
+// --- import_dynamic.carbon
 
 library "[[@TEST_NAME]]";
 
 import Cpp library "dynamic.h";
 
 //@dump-sem-ir-begin
-fn MyF(bar : Cpp.Bar*);
+fn MyF(bar: Cpp.Bar*);
+//@dump-sem-ir-end
+
+// --- todo_call_dynamic.carbon
+
+library "[[@TEST_NAME]]";
+
+import Cpp library "dynamic.h";
+
+//@dump-sem-ir-begin
+fn MyF(bar: Cpp.Bar*) {
+  // TODO: This should perform virtual dispatch.
+  bar->f();
+}
 //@dump-sem-ir-end
 
 // ============================================================================
@@ -288,6 +318,7 @@ class Derived {
 }
 
 fn MyF() {
+  // TODO: Should fail because `foo` is inaccessible.
   Derived.foo();
 }
 
@@ -321,7 +352,7 @@ import Cpp library "template.h";
 fn MyF(bar: Cpp.Bar*);
 //@dump-sem-ir-end
 
-// CHECK:STDOUT: --- fail_todo_import_declaration.carbon
+// CHECK:STDOUT: --- import_declaration.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %Bar: type = class_type @Bar [concrete]
@@ -632,7 +663,7 @@ fn MyF(bar: Cpp.Bar*);
 // CHECK:STDOUT:     %bar.param_patt: %pattern_type.92a = value_param_pattern %bar.patt, call_param0 [concrete]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %bar.param: %ptr.eca = value_param call_param0
-// CHECK:STDOUT:     %.loc19_23: type = splice_block %ptr [concrete = constants.%ptr.eca] {
+// CHECK:STDOUT:     %.loc19_22: type = splice_block %ptr [concrete = constants.%ptr.eca] {
 // CHECK:STDOUT:       %Cpp.ref: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
 // CHECK:STDOUT:       <elided>
 // CHECK:STDOUT:       %Bar2.ref: type = name_ref Bar2, imports.%Bar2.decl [concrete = constants.%Bar2]
@@ -648,12 +679,12 @@ fn MyF(bar: Cpp.Bar*);
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %MyF1.ref: %MyF1.type = name_ref MyF1, file.%MyF1.decl [concrete = constants.%MyF1]
 // CHECK:STDOUT:   %bar.ref: %ptr.eca = name_ref bar, %bar
-// CHECK:STDOUT:   %.loc19_33: %ptr.f68 = converted %bar.ref, <error> [concrete = <error>]
+// CHECK:STDOUT:   %.loc19_32: %ptr.f68 = converted %bar.ref, <error> [concrete = <error>]
 // CHECK:STDOUT:   %MyF1.call: init %empty_tuple.type = call %MyF1.ref(<error>)
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- fail_todo_import_dynamic.carbon
+// CHECK:STDOUT: --- import_dynamic.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %Bar: type = class_type @Bar [concrete]
@@ -688,6 +719,59 @@ fn MyF(bar: Cpp.Bar*);
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @MyF(%bar.param: %ptr);
+// CHECK:STDOUT:
+// CHECK:STDOUT: --- todo_call_dynamic.carbon
+// CHECK:STDOUT:
+// CHECK:STDOUT: constants {
+// CHECK:STDOUT:   %Bar: type = class_type @Bar [concrete]
+// CHECK:STDOUT:   %ptr.f68: type = ptr_type %Bar [concrete]
+// CHECK:STDOUT:   %pattern_type.146: type = pattern_type %ptr.f68 [concrete]
+// CHECK:STDOUT:   %MyF.type: type = fn_type @MyF [concrete]
+// CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [concrete]
+// CHECK:STDOUT:   %MyF: %MyF.type = struct_value () [concrete]
+// CHECK:STDOUT:   %Bar.f.type: type = fn_type @Bar.f [concrete]
+// CHECK:STDOUT:   %Bar.f: %Bar.f.type = struct_value () [concrete]
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: imports {
+// CHECK:STDOUT:   %Cpp: <namespace> = namespace file.%Cpp.import_cpp, [concrete] {
+// CHECK:STDOUT:     .Bar = %Bar.decl
+// CHECK:STDOUT:     import Cpp//...
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %Bar.decl: type = class_decl @Bar [concrete = constants.%Bar] {} {}
+// CHECK:STDOUT:   %Bar.f.decl: %Bar.f.type = fn_decl @Bar.f [concrete = constants.%Bar.f] {
+// CHECK:STDOUT:     <elided>
+// CHECK:STDOUT:   } {
+// CHECK:STDOUT:     <elided>
+// CHECK:STDOUT:   }
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: file {
+// CHECK:STDOUT:   %MyF.decl: %MyF.type = fn_decl @MyF [concrete = constants.%MyF] {
+// CHECK:STDOUT:     %bar.patt: %pattern_type.146 = binding_pattern bar [concrete]
+// CHECK:STDOUT:     %bar.param_patt: %pattern_type.146 = value_param_pattern %bar.patt, call_param0 [concrete]
+// CHECK:STDOUT:   } {
+// CHECK:STDOUT:     %bar.param: %ptr.f68 = value_param call_param0
+// CHECK:STDOUT:     %.loc7: type = splice_block %ptr [concrete = constants.%ptr.f68] {
+// CHECK:STDOUT:       %Cpp.ref: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
+// CHECK:STDOUT:       <elided>
+// CHECK:STDOUT:       %Bar.ref: type = name_ref Bar, imports.%Bar.decl [concrete = constants.%Bar]
+// CHECK:STDOUT:       %ptr: type = ptr_type %Bar.ref [concrete = constants.%ptr.f68]
+// CHECK:STDOUT:     }
+// CHECK:STDOUT:     %bar: %ptr.f68 = bind_name bar, %bar.param
+// CHECK:STDOUT:   }
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: fn @MyF(%bar.param: %ptr.f68) {
+// CHECK:STDOUT: !entry:
+// CHECK:STDOUT:   %bar.ref: %ptr.f68 = name_ref bar, %bar
+// CHECK:STDOUT:   %.loc9: ref %Bar = deref %bar.ref
+// CHECK:STDOUT:   %f.ref: %Bar.f.type = name_ref f, imports.%Bar.f.decl [concrete = constants.%Bar.f]
+// CHECK:STDOUT:   %Bar.f.bound: <bound method> = bound_method %.loc9, %f.ref
+// CHECK:STDOUT:   %addr: %ptr.f68 = addr_of %.loc9
+// CHECK:STDOUT:   %Bar.f.call: init %empty_tuple.type = call %Bar.f.bound(%addr)
+// CHECK:STDOUT:   return
+// CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- import_to_inherit_public.carbon
 // CHECK:STDOUT:

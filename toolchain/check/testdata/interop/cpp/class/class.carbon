@@ -18,7 +18,7 @@
 
 class Bar;
 
-// --- fail_todo_import_declaration.carbon
+// --- import_declaration.carbon
 
 library "[[@TEST_NAME]]";
 
@@ -27,6 +27,22 @@ import Cpp library "declaration.h";
 //@dump-sem-ir-begin
 fn MyF(bar: Cpp.Bar*);
 //@dump-sem-ir-end
+
+// --- fail_use_declaration_as_definition.carbon
+
+library "[[@TEST_NAME]]";
+
+import Cpp library "declaration.h";
+
+fn MyF() {
+  // CHECK:STDERR: fail_use_declaration_as_definition.carbon:[[@LINE+6]]:12: error: binding pattern has incomplete type `Bar` in name binding declaration [IncompleteTypeInBindingDecl]
+  // CHECK:STDERR:   var bar: Cpp.Bar;
+  // CHECK:STDERR:            ^~~~~~~
+  // CHECK:STDERR: fail_use_declaration_as_definition.carbon:[[@LINE-6]]:1: in import [InImport]
+  // CHECK:STDERR: ./declaration.h:2: note: class was forward declared here [ClassForwardDeclaredHere]
+  // CHECK:STDERR:
+  var bar: Cpp.Bar;
+}
 
 // ============================================================================
 // Definition
@@ -151,28 +167,17 @@ fn MyF() {
 
 class Bar {
  public:
-  Bar* foo;
+  Bar* _Nonnull foo;
 };
 
-// --- fail_todo_import_public_data_member.carbon
+// --- import_public_data_member.carbon
 
 library "[[@TEST_NAME]]";
 
-import Cpp library "public_static_data_member.h";
+import Cpp library "public_data_member.h";
 
 //@dump-sem-ir-begin
 fn MyF(bar : Cpp.Bar*) {
-  // CHECK:STDERR: fail_todo_import_public_data_member.carbon:[[@LINE+11]]:27: error: semantics TODO: `Unsupported: Declaration type Var` [SemanticsTodo]
-  // CHECK:STDERR:   let foo_bar: Cpp.Bar* = bar->foo;
-  // CHECK:STDERR:                           ^~~~~~~~
-  // CHECK:STDERR: fail_todo_import_public_data_member.carbon:[[@LINE+8]]:27: note: in `Cpp` name lookup for `foo` [InCppNameLookup]
-  // CHECK:STDERR:   let foo_bar: Cpp.Bar* = bar->foo;
-  // CHECK:STDERR:                           ^~~~~~~~
-  // CHECK:STDERR:
-  // CHECK:STDERR: fail_todo_import_public_data_member.carbon:[[@LINE+4]]:27: error: member name `foo` not found in `Cpp.Bar` [MemberNameNotFoundInInstScope]
-  // CHECK:STDERR:   let foo_bar: Cpp.Bar* = bar->foo;
-  // CHECK:STDERR:                           ^~~~~~~~
-  // CHECK:STDERR:
   let foo_bar: Cpp.Bar* = bar->foo;
 }
 //@dump-sem-ir-end
@@ -341,7 +346,7 @@ import Cpp library "template.h";
 fn MyF(bar: Cpp.Bar*);
 //@dump-sem-ir-end
 
-// CHECK:STDOUT: --- fail_todo_import_declaration.carbon
+// CHECK:STDOUT: --- import_declaration.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %Bar: type = class_type @Bar [concrete]
@@ -510,11 +515,12 @@ fn MyF(bar: Cpp.Bar*);
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- fail_todo_import_public_data_member.carbon
+// CHECK:STDOUT: --- import_public_data_member.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %Bar: type = class_type @Bar [concrete]
 // CHECK:STDOUT:   %ptr.f68: type = ptr_type %Bar [concrete]
+// CHECK:STDOUT:   %Bar.elem: type = unbound_element_type %Bar, %ptr.f68 [concrete]
 // CHECK:STDOUT:   %pattern_type: type = pattern_type %ptr.f68 [concrete]
 // CHECK:STDOUT:   %MyF.type: type = fn_type @MyF [concrete]
 // CHECK:STDOUT:   %MyF: %MyF.type = struct_value () [concrete]
@@ -550,14 +556,16 @@ fn MyF(bar: Cpp.Bar*);
 // CHECK:STDOUT:     %foo_bar.patt: %pattern_type = binding_pattern foo_bar [concrete]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %bar.ref: %ptr.f68 = name_ref bar, %bar
-// CHECK:STDOUT:   %.loc19_30: ref %Bar = deref %bar.ref
-// CHECK:STDOUT:   %foo.ref: <error> = name_ref foo, <error> [concrete = <error>]
-// CHECK:STDOUT:   %.loc19_23: type = splice_block %ptr.loc19 [concrete = constants.%ptr.f68] {
-// CHECK:STDOUT:     %Cpp.ref.loc19: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
-// CHECK:STDOUT:     %Bar.ref.loc19: type = name_ref Bar, imports.%Bar.decl [concrete = constants.%Bar]
-// CHECK:STDOUT:     %ptr.loc19: type = ptr_type %Bar.ref.loc19 [concrete = constants.%ptr.f68]
+// CHECK:STDOUT:   %.loc8_30.1: ref %Bar = deref %bar.ref
+// CHECK:STDOUT:   %foo.ref: %Bar.elem = name_ref foo, <unexpected>.inst24 [concrete = <unexpected>.inst24]
+// CHECK:STDOUT:   %.loc8_30.2: ref %ptr.f68 = class_element_access %.loc8_30.1, element0
+// CHECK:STDOUT:   %.loc8_23: type = splice_block %ptr.loc8 [concrete = constants.%ptr.f68] {
+// CHECK:STDOUT:     %Cpp.ref.loc8: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
+// CHECK:STDOUT:     %Bar.ref.loc8: type = name_ref Bar, imports.%Bar.decl [concrete = constants.%Bar]
+// CHECK:STDOUT:     %ptr.loc8: type = ptr_type %Bar.ref.loc8 [concrete = constants.%ptr.f68]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %foo_bar: %ptr.f68 = bind_name foo_bar, <error> [concrete = <error>]
+// CHECK:STDOUT:   %.loc8_30.3: %ptr.f68 = bind_value %.loc8_30.2
+// CHECK:STDOUT:   %foo_bar: %ptr.f68 = bind_name foo_bar, %.loc8_30.3
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
