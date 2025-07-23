@@ -89,6 +89,7 @@ template <typename ErrorT>
 class [[nodiscard]] ErrorBase : public Printable<ErrorT> {
  public:
   ErrorBase(const ErrorBase&) = delete;
+  auto operator=(const ErrorBase&) -> ErrorBase& = delete;
 
   auto ToString() const -> std::string {
     RawStringOstream os;
@@ -97,9 +98,7 @@ class [[nodiscard]] ErrorBase : public Printable<ErrorT> {
   }
   auto ToError() const -> Error { return Error(this->ToString()); }
 
- private:
-  friend ErrorT;
-
+ protected:
   ErrorBase() = default;
   ErrorBase(ErrorBase&&) noexcept = default;
   auto operator=(ErrorBase&&) noexcept -> ErrorBase& = default;
@@ -114,14 +113,12 @@ class [[nodiscard]] ErrorBase : public Printable<ErrorT> {
 //
 // This is nodiscard to enforce error handling prior to destruction.
 template <typename T, typename ErrorT = Error>
+  requires(!std::is_reference_v<ErrorT> &&
+           (std::same_as<ErrorT, Error> ||
+            std::derived_from<ErrorT, ErrorBase<ErrorT>>))
 class [[nodiscard]] ErrorOr {
  public:
   using ValueT = std::remove_reference_t<T>;
-  static_assert(!std::is_reference_v<ErrorT>,
-                "Error type must be a value type.");
-  static_assert(std::same_as<ErrorT, Error> ||
-                    std::derived_from<ErrorT, ErrorBase<ErrorT>>,
-                "Error type must be `Error` or be derived from `ErrorBase`.");
 
   // Constructs with an error; the error must not be Error::Success().
   // Implicit for easy construction on returns.
