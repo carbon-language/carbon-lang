@@ -699,7 +699,7 @@ var v: Base(T1) = {};
 // CHECK:STDOUT:
 // CHECK:STDOUT: impl fn @Derived.H(%self.param: %Derived);
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Base.H [from "modifiers.carbon"];
+// CHECK:STDOUT: virtual fn @Base.H [from "modifiers.carbon"];
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Use() {
 // CHECK:STDOUT: !entry:
@@ -821,7 +821,7 @@ var v: Base(T1) = {};
 // CHECK:STDOUT:
 // CHECK:STDOUT: virtual fn @Derived.F(%self.param: %Derived);
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Base.H [from "modifiers.carbon"];
+// CHECK:STDOUT: virtual fn @Base.H [from "modifiers.carbon"];
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- init.carbon
 // CHECK:STDOUT:
@@ -914,7 +914,7 @@ var v: Base(T1) = {};
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Base.H [from "modifiers.carbon"];
+// CHECK:STDOUT: virtual fn @Base.H [from "modifiers.carbon"];
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- impl_abstract.carbon
 // CHECK:STDOUT:
@@ -4897,7 +4897,7 @@ var v: Base(T1) = {};
 // CHECK:STDOUT:   constants.%Base.F.specific_fn.892
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic fn @Base.F(imports.%Main.import_ref.5ab3ec.2: type) [from "generic_lib.carbon"] {
+// CHECK:STDOUT: generic virtual fn @Base.F(imports.%Main.import_ref.5ab3ec.2: type) [from "generic_lib.carbon"] {
 // CHECK:STDOUT:   %T: type = bind_symbolic_name T, 0 [symbolic = %T (constants.%T)]
 // CHECK:STDOUT:   %Base: type = class_type @Base, @Base(%T) [symbolic = %Base (constants.%Base.370)]
 // CHECK:STDOUT:   %pattern_type: type = pattern_type %Base [symbolic = %pattern_type (constants.%pattern_type.9f7)]
@@ -4905,7 +4905,7 @@ var v: Base(T1) = {};
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %require_complete: <witness> = require_complete_type %Base [symbolic = %require_complete (constants.%require_complete)]
 // CHECK:STDOUT:
-// CHECK:STDOUT:   fn;
+// CHECK:STDOUT:   virtual fn;
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {
