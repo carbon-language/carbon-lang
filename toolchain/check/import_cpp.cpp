@@ -108,9 +108,9 @@ class CarbonClangDiagnosticConsumer : public clang::DiagnosticConsumer {
  public:
   // Creates an instance with the location that triggers calling Clang.
   // `context` must not be null.
-  explicit CarbonClangDiagnosticConsumer(Context* context,
-                                         clang::CompilerInvocation* invocation)
-      : context_(context), invocation_(invocation) {}
+  explicit CarbonClangDiagnosticConsumer(
+      Context* context, std::shared_ptr<clang::CompilerInvocation> invocation)
+      : context_(context), invocation_(std::move(invocation)) {}
 
   // Generates a Carbon warning for each Clang warning and a Carbon error for
   // each Clang error or fatal.
@@ -188,7 +188,7 @@ class CarbonClangDiagnosticConsumer : public clang::DiagnosticConsumer {
   Context* context_;
 
   // The compiler invocation that is producing the diagnostics.
-  clang::CompilerInvocation* invocation_;
+  std::shared_ptr<clang::CompilerInvocation> invocation_;
 
   // Information on a Clang diagnostic that can be converted to a Carbon
   // diagnostic.
@@ -222,11 +222,11 @@ static auto GenerateAst(Context& context,
                         std::shared_ptr<clang::CompilerInvocation> invocation)
     -> std::pair<std::unique_ptr<clang::ASTUnit>, bool> {
   // Build a diagnostics engine.
-  CarbonClangDiagnosticConsumer diagnostics_consumer(&context,
-                                                     invocation.get());
+  auto diagnostics_consumer =
+      std::make_unique<CarbonClangDiagnosticConsumer>(&context, invocation);
   llvm::IntrusiveRefCntPtr<clang::DiagnosticsEngine> diags(
       clang::CompilerInstance::createDiagnostics(
-          *fs, invocation->getDiagnosticOpts(), &diagnostics_consumer,
+          *fs, invocation->getDiagnosticOpts(), diagnostics_consumer.get(),
           /*ShouldOwnClient=*/false));
 
   // Extract the input from the frontend invocation and make sure it makes
@@ -245,13 +245,10 @@ static auto GenerateAst(Context& context,
   invocation->getPreprocessorOpts().addRemappedFile(file_name,
                                                     includes_buffer.get());
 
-  // Create the AST unit.
+// Create the AST unit.
   auto ast = clang::ASTUnit::LoadFromCompilerInvocation(
       invocation, std::make_shared<clang::PCHContainerOperations>(), nullptr,
       diags, new clang::FileManager(invocation->getFileSystemOpts(), fs));
-
-  // Remove link to the diagnostics consumer before its destruction.
-  ast->getDiagnostics().setClient(nullptr);
 
   // Remove remapped file before its underlying storage is destroyed.
   invocation->getPreprocessorOpts().clearRemappedFiles();
@@ -262,9 +259,15 @@ static auto GenerateAst(Context& context,
   context.sem_ir().set_cpp_ast(ast.get());
 
   // Emit any diagnostics we queued up while building the AST.
-  diagnostics_consumer.EmitDiagnostics();
+  diagnostics_consumer->EmitDiagnostics();
+  bool any_errors = diagnostics_consumer->getNumErrors() > 0;
 
-  return {std::move(ast), !ast || diagnostics_consumer.getNumErrors() > 0};
+  // Transfer ownership of the consumer to the AST unit, in case more
+  // diagnostics are produced by AST queries.
+  ast->getDiagnostics().setClient(diagnostics_consumer.release(),
+                                  /*ShouldOwnClient=*/true);
+
+  return {std::move(ast), !ast || any_errors};
 }
 
 // Adds a namespace for the `Cpp` import and returns its `NameScopeId`.
@@ -516,7 +519,7 @@ static auto ImportClassObjectRepr(Context& context, SemIR::ImportIRInstId loc,
   }
 
   const auto& clang_layout =
-      clang_def->getASTContext().getASTRecordLayout(clang_def);
+      context.ast_context().getASTRecordLayout(clang_def);
 
   llvm::SmallVector<uint64_t> layout;
   llvm::SmallVector<SemIR::StructTypeField> fields;
@@ -561,7 +564,10 @@ static auto ImportClassObjectRepr(Context& context, SemIR::ImportIRInstId loc,
     context.sem_ir().clang_decls().Add(
         {.decl = field->getCanonicalDecl(), .inst_id = field_decl_id});
 
-    layout.push_back(clang_layout.getFieldOffset(field->getFieldIndex()));
+    layout.push_back(context.ast_context()
+                         .toCharUnitsFromBits(clang_layout.getFieldOffset(
+                             field->getFieldIndex()))
+                         .getQuantity());
     fields.push_back({.name_id = field_name_id,
                       .type_inst_id = field_type_inst_id});
   }

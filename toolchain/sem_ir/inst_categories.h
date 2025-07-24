@@ -167,6 +167,17 @@ struct AnyParamPattern {
   CallParamIndex index;
 };
 
+// A struct-like type with a list of named fields.
+struct AnyStructType {
+  using CategoryInfo = CategoryOf<StructType, CustomLayoutType>;
+
+  InstKind kind;
+
+  TypeId type_id;
+  StructTypeFieldsId fields_id;
+  AnyRawId arg1;
+};
+
 }  // namespace Carbon::SemIR
 
 #endif  // CARBON_TOOLCHAIN_SEM_IR_INST_CATEGORIES_H_

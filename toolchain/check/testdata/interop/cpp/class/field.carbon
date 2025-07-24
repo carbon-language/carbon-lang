@@ -74,7 +74,7 @@ fn H(u: Cpp.Union) -> i32 {
 // CHECK:STDOUT:   %Struct.elem.86b: type = unbound_element_type %Struct, %i32 [concrete]
 // CHECK:STDOUT:   %ptr.235: type = ptr_type %i32 [concrete]
 // CHECK:STDOUT:   %Struct.elem.765: type = unbound_element_type %Struct, %ptr.235 [concrete]
-// CHECK:STDOUT:   %.003: type = custom_layout_type {size=16, align=8, .a@0: %i32, .b@32: %i32, .p@64: %ptr.235} [concrete]
+// CHECK:STDOUT:   %.550: type = custom_layout_type {size=16, align=8, .a@0: %i32, .b@4: %i32, .p@8: %ptr.235} [concrete]
 // CHECK:STDOUT:   %pattern_type.60c: type = pattern_type %Struct [concrete]
 // CHECK:STDOUT:   %tuple.type.ff9: type = tuple_type (type, type, type) [concrete]
 // CHECK:STDOUT:   %tuple.type.189: type = tuple_type (%i32, %i32, %i32) [concrete]
@@ -130,7 +130,7 @@ fn H(u: Cpp.Union) -> i32 {
 // CHECK:STDOUT:       %i32.2: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
 // CHECK:STDOUT:       %int_32.3: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
 // CHECK:STDOUT:       %i32.3: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
-// CHECK:STDOUT:       %.1: type = custom_layout_type {size=16, align=8, .a@0: %i32, .b@32: %i32, .p@64: %ptr.235} [concrete = constants.%.003]
+// CHECK:STDOUT:       %.1: type = custom_layout_type {size=16, align=8, .a@0: %i32, .b@4: %i32, .p@8: %ptr.235} [concrete = constants.%.550]
 // CHECK:STDOUT:       %Struct.ref: type = name_ref Struct, imports.%Struct.decl [concrete = constants.%Struct]
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %s: %Struct = bind_name s, %s.param
