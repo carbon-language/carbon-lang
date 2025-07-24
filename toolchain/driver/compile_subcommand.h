@@ -41,6 +41,7 @@ struct CompileOptions {
 
   llvm::StringRef output_filename;
   llvm::SmallVector<llvm::StringRef> input_filenames;
+  llvm::SmallVector<llvm::StringRef> clang_args;
 
   bool asm_output = false;
   bool force_obj_output = false;

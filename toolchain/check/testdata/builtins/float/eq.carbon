@@ -53,9 +53,9 @@ fn WrongResult(a: f64, b: f64) -> f64 = "float.eq";
 // CHECK:STDOUT:   %Eq.ref: %Eq.type = name_ref Eq, file.%Eq.decl [concrete = constants.%Eq]
 // CHECK:STDOUT:   %a.ref: f64 = name_ref a, %a
 // CHECK:STDOUT:   %b.ref: f64 = name_ref b, %b
-// CHECK:STDOUT:   %float.eq: init bool = call %Eq.ref(%a.ref, %b.ref)
-// CHECK:STDOUT:   %.loc14_18.1: bool = value_of_initializer %float.eq
-// CHECK:STDOUT:   %.loc14_18.2: bool = converted %float.eq, %.loc14_18.1
+// CHECK:STDOUT:   %Eq.call: init bool = call %Eq.ref(%a.ref, %b.ref)
+// CHECK:STDOUT:   %.loc14_18.1: bool = value_of_initializer %Eq.call
+// CHECK:STDOUT:   %.loc14_18.2: bool = converted %Eq.call, %.loc14_18.1
 // CHECK:STDOUT:   return %.loc14_18.2
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

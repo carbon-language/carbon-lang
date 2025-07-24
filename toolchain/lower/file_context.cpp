@@ -53,7 +53,8 @@ FileContext::FileContext(Context& context, const SemIR::File& sem_ir,
                                                     nullptr)),
       constants_(LoweredConstantStore::MakeWithExplicitSize(
           sem_ir.insts().size(), nullptr)),
-      lowered_specifics_(sem_ir.generics(), {}),
+      lowered_specifics_(sem_ir.generics(),
+                         llvm::SmallVector<SemIR::SpecificId>()),
       coalescer_(vlog_stream_, sem_ir.specifics()),
       vtables_(decltype(vtables_)::MakeForOverwrite(sem_ir.vtables())),
       specific_vtables_(sem_ir.specifics(), nullptr) {
@@ -541,7 +542,7 @@ auto FileContext::BuildFunctionBody(SemIR::FunctionId function_id,
   // On crash, report the function we were lowering.
   PrettyStackTraceFunction stack_trace_entry([&](llvm::raw_ostream& output) {
     SemIR::DiagnosticLocConverter converter(
-        context().tree_and_subtrees_getters(), &sem_ir());
+        &context().tree_and_subtrees_getters(), &sem_ir());
     auto converted =
         converter.Convert(SemIR::LocId(declaration_function.definition_id),
                           /*token_only=*/false);

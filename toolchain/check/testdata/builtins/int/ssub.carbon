@@ -56,9 +56,9 @@ let c: i32 = Sub(Sub(0, 0x7FFFFFFF), 2);
 // CHECK:STDOUT:   %Sub.ref: %Sub.type = name_ref Sub, file.%Sub.decl [concrete = constants.%Sub]
 // CHECK:STDOUT:   %a.ref: %i32 = name_ref a, %a
 // CHECK:STDOUT:   %b.ref: %i32 = name_ref b, %b
-// CHECK:STDOUT:   %int.ssub: init %i32 = call %Sub.ref(%a.ref, %b.ref)
-// CHECK:STDOUT:   %.loc11_19.1: %i32 = value_of_initializer %int.ssub
-// CHECK:STDOUT:   %.loc11_19.2: %i32 = converted %int.ssub, %.loc11_19.1
+// CHECK:STDOUT:   %Sub.call: init %i32 = call %Sub.ref(%a.ref, %b.ref)
+// CHECK:STDOUT:   %.loc11_19.1: %i32 = value_of_initializer %Sub.call
+// CHECK:STDOUT:   %.loc11_19.2: %i32 = converted %Sub.call, %.loc11_19.1
 // CHECK:STDOUT:   return %.loc11_19.2
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

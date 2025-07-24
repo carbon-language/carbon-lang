@@ -144,7 +144,8 @@ class Context {
 
   auto exports() -> llvm::SmallVector<SemIR::InstId>& { return exports_; }
 
-  auto check_ir_map() -> llvm::MutableArrayRef<SemIR::ImportIRId> {
+  auto check_ir_map()
+      -> FixedSizeValueStore<SemIR::CheckIRId, SemIR::ImportIRId>& {
     return check_ir_map_;
   }
 
@@ -353,7 +354,7 @@ class Context {
   llvm::SmallVector<SemIR::InstId> exports_;
 
   // Maps CheckIRId to ImportIRId.
-  llvm::SmallVector<SemIR::ImportIRId> check_ir_map_;
+  FixedSizeValueStore<SemIR::CheckIRId, SemIR::ImportIRId> check_ir_map_;
 
   // Per-import constant values. These refer to the main IR and mainly serve as
   // a lookup table for quick access.

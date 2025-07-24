@@ -2,6 +2,8 @@
 // Exceptions. See /LICENSE for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
+// INCLUDE-FILE: toolchain/testing/testdata/min_prelude/full.carbon
+//
 // AUTOUPDATE
 // TIP: To test this file alone, run:
 // TIP:   bazel test //toolchain/testing:file_test --test_arg=--file_tests=toolchain/lower/testdata/operators/overloaded.carbon
@@ -33,59 +35,59 @@ fn Calculate(a: Number, b: Number) -> Number {
 // CHECK:STDOUT:
 // CHECK:STDOUT: define void @"_COp.Number.Main:Negate.Core"(ptr sret({ i1 }) %return, ptr %self) !dbg !4 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %.loc17_36.1.is_positive = getelementptr inbounds nuw { i1 }, ptr %self, i32 0, i32 0, !dbg !7
-// CHECK:STDOUT:   %.loc17_36.2 = load i1, ptr %.loc17_36.1.is_positive, align 1, !dbg !7
-// CHECK:STDOUT:   %.loc17_28 = xor i1 %.loc17_36.2, true, !dbg !8
-// CHECK:STDOUT:   %.loc17_48.2.is_positive = getelementptr inbounds nuw { i1 }, ptr %return, i32 0, i32 0, !dbg !9
-// CHECK:STDOUT:   store i1 %.loc17_28, ptr %.loc17_48.2.is_positive, align 1, !dbg !9
+// CHECK:STDOUT:   %.loc19_36.1.is_positive = getelementptr inbounds nuw { i1 }, ptr %self, i32 0, i32 0, !dbg !7
+// CHECK:STDOUT:   %.loc19_36.2 = load i1, ptr %.loc19_36.1.is_positive, align 1, !dbg !7
+// CHECK:STDOUT:   %.loc19_28 = xor i1 %.loc19_36.2, true, !dbg !8
+// CHECK:STDOUT:   %.loc19_48.2.is_positive = getelementptr inbounds nuw { i1 }, ptr %return, i32 0, i32 0, !dbg !9
+// CHECK:STDOUT:   store i1 %.loc19_28, ptr %.loc19_48.2.is_positive, align 1, !dbg !9
 // CHECK:STDOUT:   ret void, !dbg !10
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: define void @"_COp.Number.Main:MulWith.Core"(ptr sret({ i1 }) %return, ptr %self, ptr %other) !dbg !11 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %.loc22_33.1.is_positive = getelementptr inbounds nuw { i1 }, ptr %self, i32 0, i32 0, !dbg !12
-// CHECK:STDOUT:   %.loc22_33.2 = load i1, ptr %.loc22_33.1.is_positive, align 1, !dbg !12
-// CHECK:STDOUT:   br i1 %.loc22_33.2, label %and.rhs.loc22, label %and.result.loc22, !dbg !12
+// CHECK:STDOUT:   %.loc24_33.1.is_positive = getelementptr inbounds nuw { i1 }, ptr %self, i32 0, i32 0, !dbg !12
+// CHECK:STDOUT:   %.loc24_33.2 = load i1, ptr %.loc24_33.1.is_positive, align 1, !dbg !12
+// CHECK:STDOUT:   br i1 %.loc24_33.2, label %and.rhs.loc24, label %and.result.loc24, !dbg !12
 // CHECK:STDOUT:
-// CHECK:STDOUT: and.rhs.loc22:                                    ; preds = %entry
-// CHECK:STDOUT:   %.loc22_55.1.is_positive = getelementptr inbounds nuw { i1 }, ptr %other, i32 0, i32 0, !dbg !13
-// CHECK:STDOUT:   %.loc22_55.2 = load i1, ptr %.loc22_55.1.is_positive, align 1, !dbg !13
-// CHECK:STDOUT:   br label %and.result.loc22, !dbg !12
+// CHECK:STDOUT: and.rhs.loc24:                                    ; preds = %entry
+// CHECK:STDOUT:   %.loc24_55.1.is_positive = getelementptr inbounds nuw { i1 }, ptr %other, i32 0, i32 0, !dbg !13
+// CHECK:STDOUT:   %.loc24_55.2 = load i1, ptr %.loc24_55.1.is_positive, align 1, !dbg !13
+// CHECK:STDOUT:   br label %and.result.loc24, !dbg !12
 // CHECK:STDOUT:
-// CHECK:STDOUT: and.result.loc22:                                 ; preds = %and.rhs.loc22, %entry
-// CHECK:STDOUT:   %0 = phi i1 [ false, %entry ], [ %.loc22_55.2, %and.rhs.loc22 ]
-// CHECK:STDOUT:   %.loc22_69.1 = xor i1 %0, true, !dbg !14
-// CHECK:STDOUT:   br i1 %.loc22_69.1, label %or.rhs, label %or.result, !dbg !14
+// CHECK:STDOUT: and.result.loc24:                                 ; preds = %and.rhs.loc24, %entry
+// CHECK:STDOUT:   %0 = phi i1 [ false, %entry ], [ %.loc24_55.2, %and.rhs.loc24 ]
+// CHECK:STDOUT:   %.loc24_69.1 = xor i1 %0, true, !dbg !14
+// CHECK:STDOUT:   br i1 %.loc24_69.1, label %or.rhs, label %or.result, !dbg !14
 // CHECK:STDOUT:
-// CHECK:STDOUT: or.rhs:                                           ; preds = %and.result.loc22
-// CHECK:STDOUT:   %.loc23_38.1.is_positive = getelementptr inbounds nuw { i1 }, ptr %self, i32 0, i32 0, !dbg !15
-// CHECK:STDOUT:   %.loc23_38.2 = load i1, ptr %.loc23_38.1.is_positive, align 1, !dbg !15
-// CHECK:STDOUT:   %.loc23_30 = xor i1 %.loc23_38.2, true, !dbg !16
-// CHECK:STDOUT:   br i1 %.loc23_30, label %and.rhs.loc23, label %and.result.loc23, !dbg !16
+// CHECK:STDOUT: or.rhs:                                           ; preds = %and.result.loc24
+// CHECK:STDOUT:   %.loc25_38.1.is_positive = getelementptr inbounds nuw { i1 }, ptr %self, i32 0, i32 0, !dbg !15
+// CHECK:STDOUT:   %.loc25_38.2 = load i1, ptr %.loc25_38.1.is_positive, align 1, !dbg !15
+// CHECK:STDOUT:   %.loc25_30 = xor i1 %.loc25_38.2, true, !dbg !16
+// CHECK:STDOUT:   br i1 %.loc25_30, label %and.rhs.loc25, label %and.result.loc25, !dbg !16
 // CHECK:STDOUT:
-// CHECK:STDOUT: and.rhs.loc23:                                    ; preds = %or.rhs
-// CHECK:STDOUT:   %.loc23_64.1.is_positive = getelementptr inbounds nuw { i1 }, ptr %other, i32 0, i32 0, !dbg !17
-// CHECK:STDOUT:   %.loc23_64.2 = load i1, ptr %.loc23_64.1.is_positive, align 1, !dbg !17
-// CHECK:STDOUT:   %.loc23_55 = xor i1 %.loc23_64.2, true, !dbg !18
-// CHECK:STDOUT:   br label %and.result.loc23, !dbg !16
+// CHECK:STDOUT: and.rhs.loc25:                                    ; preds = %or.rhs
+// CHECK:STDOUT:   %.loc25_64.1.is_positive = getelementptr inbounds nuw { i1 }, ptr %other, i32 0, i32 0, !dbg !17
+// CHECK:STDOUT:   %.loc25_64.2 = load i1, ptr %.loc25_64.1.is_positive, align 1, !dbg !17
+// CHECK:STDOUT:   %.loc25_55 = xor i1 %.loc25_64.2, true, !dbg !18
+// CHECK:STDOUT:   br label %and.result.loc25, !dbg !16
 // CHECK:STDOUT:
-// CHECK:STDOUT: and.result.loc23:                                 ; preds = %and.rhs.loc23, %or.rhs
-// CHECK:STDOUT:   %1 = phi i1 [ false, %or.rhs ], [ %.loc23_55, %and.rhs.loc23 ]
+// CHECK:STDOUT: and.result.loc25:                                 ; preds = %and.rhs.loc25, %or.rhs
+// CHECK:STDOUT:   %1 = phi i1 [ false, %or.rhs ], [ %.loc25_55, %and.rhs.loc25 ]
 // CHECK:STDOUT:   br label %or.result, !dbg !14
 // CHECK:STDOUT:
-// CHECK:STDOUT: or.result:                                        ; preds = %and.result.loc23, %and.result.loc22
-// CHECK:STDOUT:   %2 = phi i1 [ true, %and.result.loc22 ], [ %1, %and.result.loc23 ]
-// CHECK:STDOUT:   %.loc23_77.2.is_positive = getelementptr inbounds nuw { i1 }, ptr %return, i32 0, i32 0, !dbg !19
-// CHECK:STDOUT:   store i1 %2, ptr %.loc23_77.2.is_positive, align 1, !dbg !19
+// CHECK:STDOUT: or.result:                                        ; preds = %and.result.loc25, %and.result.loc24
+// CHECK:STDOUT:   %2 = phi i1 [ true, %and.result.loc24 ], [ %1, %and.result.loc25 ]
+// CHECK:STDOUT:   %.loc25_77.2.is_positive = getelementptr inbounds nuw { i1 }, ptr %return, i32 0, i32 0, !dbg !19
+// CHECK:STDOUT:   store i1 %2, ptr %.loc25_77.2.is_positive, align 1, !dbg !19
 // CHECK:STDOUT:   ret void, !dbg !20
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: define void @_CCalculate.Main(ptr sret({ i1 }) %return, ptr %a, ptr %b) !dbg !21 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %.loc28_10.1.temp = alloca { i1 }, align 8, !dbg !22
-// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(i64 1, ptr %.loc28_10.1.temp), !dbg !22
-// CHECK:STDOUT:   call void @"_COp.Number.Main:Negate.Core"(ptr %.loc28_10.1.temp, ptr %a), !dbg !22
-// CHECK:STDOUT:   call void @"_COp.Number.Main:MulWith.Core"(ptr %return, ptr %.loc28_10.1.temp, ptr %b), !dbg !22
+// CHECK:STDOUT:   %.loc30_10.1.temp = alloca { i1 }, align 8, !dbg !22
+// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(i64 1, ptr %.loc30_10.1.temp), !dbg !22
+// CHECK:STDOUT:   call void @"_COp.Number.Main:Negate.Core"(ptr %.loc30_10.1.temp, ptr %a), !dbg !22
+// CHECK:STDOUT:   call void @"_COp.Number.Main:MulWith.Core"(ptr %return, ptr %.loc30_10.1.temp, ptr %b), !dbg !22
 // CHECK:STDOUT:   ret void, !dbg !23
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -101,23 +103,23 @@ fn Calculate(a: Number, b: Number) -> Number {
 // CHECK:STDOUT: !1 = !{i32 2, !"Debug Info Version", i32 3}
 // CHECK:STDOUT: !2 = distinct !DICompileUnit(language: DW_LANG_C, file: !3, producer: "carbon", isOptimized: false, runtimeVersion: 0, emissionKind: FullDebug)
 // CHECK:STDOUT: !3 = !DIFile(filename: "overloaded.carbon", directory: "")
-// CHECK:STDOUT: !4 = distinct !DISubprogram(name: "Op", linkageName: "_COp.Number.Main:Negate.Core", scope: null, file: !3, line: 16, type: !5, spFlags: DISPFlagDefinition, unit: !2)
+// CHECK:STDOUT: !4 = distinct !DISubprogram(name: "Op", linkageName: "_COp.Number.Main:Negate.Core", scope: null, file: !3, line: 18, type: !5, spFlags: DISPFlagDefinition, unit: !2)
 // CHECK:STDOUT: !5 = !DISubroutineType(types: !6)
 // CHECK:STDOUT: !6 = !{}
-// CHECK:STDOUT: !7 = !DILocation(line: 17, column: 32, scope: !4)
-// CHECK:STDOUT: !8 = !DILocation(line: 17, column: 28, scope: !4)
-// CHECK:STDOUT: !9 = !DILocation(line: 17, column: 12, scope: !4)
-// CHECK:STDOUT: !10 = !DILocation(line: 17, column: 5, scope: !4)
-// CHECK:STDOUT: !11 = distinct !DISubprogram(name: "Op", linkageName: "_COp.Number.Main:MulWith.Core", scope: null, file: !3, line: 21, type: !5, spFlags: DISPFlagDefinition, unit: !2)
-// CHECK:STDOUT: !12 = !DILocation(line: 22, column: 29, scope: !11)
-// CHECK:STDOUT: !13 = !DILocation(line: 22, column: 50, scope: !11)
-// CHECK:STDOUT: !14 = !DILocation(line: 22, column: 28, scope: !11)
-// CHECK:STDOUT: !15 = !DILocation(line: 23, column: 34, scope: !11)
-// CHECK:STDOUT: !16 = !DILocation(line: 23, column: 30, scope: !11)
-// CHECK:STDOUT: !17 = !DILocation(line: 23, column: 59, scope: !11)
-// CHECK:STDOUT: !18 = !DILocation(line: 23, column: 55, scope: !11)
-// CHECK:STDOUT: !19 = !DILocation(line: 22, column: 12, scope: !11)
-// CHECK:STDOUT: !20 = !DILocation(line: 22, column: 5, scope: !11)
-// CHECK:STDOUT: !21 = distinct !DISubprogram(name: "Calculate", linkageName: "_CCalculate.Main", scope: null, file: !3, line: 27, type: !5, spFlags: DISPFlagDefinition, unit: !2)
-// CHECK:STDOUT: !22 = !DILocation(line: 28, column: 10, scope: !21)
-// CHECK:STDOUT: !23 = !DILocation(line: 28, column: 3, scope: !21)
+// CHECK:STDOUT: !7 = !DILocation(line: 19, column: 32, scope: !4)
+// CHECK:STDOUT: !8 = !DILocation(line: 19, column: 28, scope: !4)
+// CHECK:STDOUT: !9 = !DILocation(line: 19, column: 12, scope: !4)
+// CHECK:STDOUT: !10 = !DILocation(line: 19, column: 5, scope: !4)
+// CHECK:STDOUT: !11 = distinct !DISubprogram(name: "Op", linkageName: "_COp.Number.Main:MulWith.Core", scope: null, file: !3, line: 23, type: !5, spFlags: DISPFlagDefinition, unit: !2)
+// CHECK:STDOUT: !12 = !DILocation(line: 24, column: 29, scope: !11)
+// CHECK:STDOUT: !13 = !DILocation(line: 24, column: 50, scope: !11)
+// CHECK:STDOUT: !14 = !DILocation(line: 24, column: 28, scope: !11)
+// CHECK:STDOUT: !15 = !DILocation(line: 25, column: 34, scope: !11)
+// CHECK:STDOUT: !16 = !DILocation(line: 25, column: 30, scope: !11)
+// CHECK:STDOUT: !17 = !DILocation(line: 25, column: 59, scope: !11)
+// CHECK:STDOUT: !18 = !DILocation(line: 25, column: 55, scope: !11)
+// CHECK:STDOUT: !19 = !DILocation(line: 24, column: 12, scope: !11)
+// CHECK:STDOUT: !20 = !DILocation(line: 24, column: 5, scope: !11)
+// CHECK:STDOUT: !21 = distinct !DISubprogram(name: "Calculate", linkageName: "_CCalculate.Main", scope: null, file: !3, line: 29, type: !5, spFlags: DISPFlagDefinition, unit: !2)
+// CHECK:STDOUT: !22 = !DILocation(line: 30, column: 10, scope: !21)
+// CHECK:STDOUT: !23 = !DILocation(line: 30, column: 3, scope: !21)

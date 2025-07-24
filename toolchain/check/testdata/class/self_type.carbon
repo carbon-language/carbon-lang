@@ -36,10 +36,10 @@ fn Class.F[self: Self]() -> i32 {
 // CHECK:STDOUT:   %Int.generic: %Int.type = struct_value () [concrete]
 // CHECK:STDOUT:   %i32: type = class_type @Int, @Int(%int_32) [concrete]
 // CHECK:STDOUT:   %pattern_type.7ce: type = pattern_type %i32 [concrete]
-// CHECK:STDOUT:   %F.type: type = fn_type @F [concrete]
-// CHECK:STDOUT:   %F: %F.type = struct_value () [concrete]
-// CHECK:STDOUT:   %Make.type: type = fn_type @Make [concrete]
-// CHECK:STDOUT:   %Make: %Make.type = struct_value () [concrete]
+// CHECK:STDOUT:   %Class.F.type: type = fn_type @Class.F [concrete]
+// CHECK:STDOUT:   %Class.F: %Class.F.type = struct_value () [concrete]
+// CHECK:STDOUT:   %Class.Make.type: type = fn_type @Class.Make [concrete]
+// CHECK:STDOUT:   %Class.Make: %Class.Make.type = struct_value () [concrete]
 // CHECK:STDOUT:   %ptr.e71: type = ptr_type %Class [concrete]
 // CHECK:STDOUT:   %Class.elem: type = unbound_element_type %Class, %ptr.e71 [concrete]
 // CHECK:STDOUT:   %struct_type.p: type = struct_type {.p: %ptr.e71} [concrete]
@@ -62,7 +62,7 @@ fn Class.F[self: Self]() -> i32 {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %Class.decl: type = class_decl @Class [concrete = constants.%Class] {} {}
-// CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [concrete = constants.%F] {
+// CHECK:STDOUT:   %Class.F.decl: %Class.F.type = fn_decl @Class.F [concrete = constants.%Class.F] {
 // CHECK:STDOUT:     %self.patt: %pattern_type.761 = binding_pattern self [concrete]
 // CHECK:STDOUT:     %self.param_patt: %pattern_type.761 = value_param_pattern %self.patt, call_param0 [concrete]
 // CHECK:STDOUT:     %return.patt: %pattern_type.7ce = return_slot_pattern [concrete]
@@ -79,7 +79,7 @@ fn Class.F[self: Self]() -> i32 {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @Class {
-// CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [concrete = constants.%F] {
+// CHECK:STDOUT:   %Class.F.decl: %Class.F.type = fn_decl @Class.F [concrete = constants.%Class.F] {
 // CHECK:STDOUT:     %self.patt: %pattern_type.761 = binding_pattern self [concrete]
 // CHECK:STDOUT:     %self.param_patt: %pattern_type.761 = value_param_pattern %self.patt, call_param0 [concrete]
 // CHECK:STDOUT:     %return.patt: %pattern_type.7ce = return_slot_pattern [concrete]
@@ -93,7 +93,7 @@ fn Class.F[self: Self]() -> i32 {
 // CHECK:STDOUT:     %return.param.loc16: ref %i32 = out_param call_param1
 // CHECK:STDOUT:     %return.loc16: ref %i32 = return_slot %return.param.loc16
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %Make.decl: %Make.type = fn_decl @Make [concrete = constants.%Make] {
+// CHECK:STDOUT:   %Class.Make.decl: %Class.Make.type = fn_decl @Class.Make [concrete = constants.%Class.Make] {
 // CHECK:STDOUT:     %return.patt: %pattern_type.761 = return_slot_pattern [concrete]
 // CHECK:STDOUT:     %return.param_patt: %pattern_type.761 = out_param_pattern %return.patt, call_param0 [concrete]
 // CHECK:STDOUT:   } {
@@ -110,28 +110,28 @@ fn Class.F[self: Self]() -> i32 {
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%Class
-// CHECK:STDOUT:   .F = %F.decl
-// CHECK:STDOUT:   .Make = %Make.decl
+// CHECK:STDOUT:   .F = %Class.F.decl
+// CHECK:STDOUT:   .Make = %Class.Make.decl
 // CHECK:STDOUT:   .p = %.loc22
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @F(%self.param.loc25: %Class) -> %i32 {
+// CHECK:STDOUT: fn @Class.F(%self.param.loc25: %Class) -> %i32 {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %self.ref: %Class = name_ref self, %self.loc25
 // CHECK:STDOUT:   %p.ref: %Class.elem = name_ref p, @Class.%.loc22 [concrete = @Class.%.loc22]
 // CHECK:STDOUT:   %.loc26_16.1: ref %ptr.e71 = class_element_access %self.ref, element0
 // CHECK:STDOUT:   %.loc26_16.2: %ptr.e71 = bind_value %.loc26_16.1
 // CHECK:STDOUT:   %.loc26_11.1: ref %Class = deref %.loc26_16.2
-// CHECK:STDOUT:   %F.ref: %F.type = name_ref F, @Class.%F.decl [concrete = constants.%F]
-// CHECK:STDOUT:   %F.bound: <bound method> = bound_method %.loc26_11.1, %F.ref
+// CHECK:STDOUT:   %F.ref: %Class.F.type = name_ref F, @Class.%Class.F.decl [concrete = constants.%Class.F]
+// CHECK:STDOUT:   %Class.F.bound: <bound method> = bound_method %.loc26_11.1, %F.ref
 // CHECK:STDOUT:   %.loc26_11.2: %Class = bind_value %.loc26_11.1
-// CHECK:STDOUT:   %F.call: init %i32 = call %F.bound(%.loc26_11.2)
-// CHECK:STDOUT:   %.loc26_23.1: %i32 = value_of_initializer %F.call
-// CHECK:STDOUT:   %.loc26_23.2: %i32 = converted %F.call, %.loc26_23.1
+// CHECK:STDOUT:   %Class.F.call: init %i32 = call %Class.F.bound(%.loc26_11.2)
+// CHECK:STDOUT:   %.loc26_23.1: %i32 = value_of_initializer %Class.F.call
+// CHECK:STDOUT:   %.loc26_23.2: %i32 = converted %Class.F.call, %.loc26_23.1
 // CHECK:STDOUT:   return %.loc26_23.2
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Make() -> %return.param: %Class {
+// CHECK:STDOUT: fn @Class.Make() -> %return.param: %Class {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %s.patt: %pattern_type.761 = binding_pattern s [concrete]

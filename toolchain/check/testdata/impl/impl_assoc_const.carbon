@@ -338,7 +338,7 @@ impl CD as IF where .F = 0 {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
-// CHECK:STDOUT:   impl_decl @impl [concrete] {} {
+// CHECK:STDOUT:   impl_decl @empty_tuple.type.as.<error>.impl [concrete] {} {
 // CHECK:STDOUT:     %.loc13_7.1: %empty_tuple.type = tuple_literal ()
 // CHECK:STDOUT:     %.loc13_7.2: type = converted %.loc13_7.1, constants.%empty_tuple.type [concrete = constants.%empty_tuple.type]
 // CHECK:STDOUT:     %L.ref: type = name_ref L, file.%L.decl [concrete = constants.%L.type]
@@ -404,7 +404,7 @@ impl CD as IF where .F = 0 {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: impl @impl: %.loc13_7.2 as %.loc13_14 {
+// CHECK:STDOUT: impl @empty_tuple.type.as.<error>.impl: %.loc13_7.2 as %.loc13_14 {
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   witness = <error>
 // CHECK:STDOUT: }
@@ -427,7 +427,7 @@ impl CD as IF where .F = 0 {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
-// CHECK:STDOUT:   impl_decl @impl [concrete] {} {
+// CHECK:STDOUT:   impl_decl @empty_tuple.type.as.<error>.impl [concrete] {} {
 // CHECK:STDOUT:     %.loc13_7.1: %empty_tuple.type = tuple_literal ()
 // CHECK:STDOUT:     %.loc13_7.2: type = converted %.loc13_7.1, constants.%empty_tuple.type [concrete = constants.%empty_tuple.type]
 // CHECK:STDOUT:     %M.ref: type = name_ref M, file.%M.decl [concrete = constants.%M.type]
@@ -467,7 +467,7 @@ impl CD as IF where .F = 0 {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: impl @impl: %.loc13_7.2 as %.loc13_14 {
+// CHECK:STDOUT: impl @empty_tuple.type.as.<error>.impl: %.loc13_7.2 as %.loc13_14 {
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   witness = <error>
 // CHECK:STDOUT: }

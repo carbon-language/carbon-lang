@@ -720,13 +720,13 @@ fn Foo(a: const (const C)) {}
 // CHECK:STDOUT:     %a.patt: %pattern_type = symbolic_binding_pattern a, 0 [concrete]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %C.ref: type = name_ref C, file.%C.decl [concrete = constants.%C]
-// CHECK:STDOUT:     %a.loc7_8.1: %C = bind_symbolic_name a, 0 [symbolic = %a.loc7_8.2 (constants.%a)]
+// CHECK:STDOUT:     %a.loc7_8.2: %C = bind_symbolic_name a, 0 [symbolic = %a.loc7_8.1 (constants.%a)]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Foo.decl.loc15: %Foo.type.a02530.2 = fn_decl @Foo.loc15 [concrete = constants.%Foo.ddeb7d.2] {
 // CHECK:STDOUT:     %a.patt: %pattern_type = symbolic_binding_pattern a, 0 [concrete]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %D.ref: type = name_ref D, file.%D [concrete = constants.%C]
-// CHECK:STDOUT:     %a.loc15_8.1: %C = bind_symbolic_name a, 0 [symbolic = %a.loc15_8.2 (constants.%a)]
+// CHECK:STDOUT:     %a.loc15_8.2: %C = bind_symbolic_name a, 0 [symbolic = %a.loc15_8.1 (constants.%a)]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -739,14 +739,14 @@ fn Foo(a: const (const C)) {}
 // CHECK:STDOUT:   .Self = constants.%C
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic fn @Foo.loc7(%a.loc7_8.1: %C) {
-// CHECK:STDOUT:   %a.loc7_8.2: %C = bind_symbolic_name a, 0 [symbolic = %a.loc7_8.2 (constants.%a)]
+// CHECK:STDOUT: generic fn @Foo.loc7(%a.loc7_8.2: %C) {
+// CHECK:STDOUT:   %a.loc7_8.1: %C = bind_symbolic_name a, 0 [symbolic = %a.loc7_8.1 (constants.%a)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   fn();
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic fn @Foo.loc15(%a.loc15_8.1: %C) {
-// CHECK:STDOUT:   %a.loc15_8.2: %C = bind_symbolic_name a, 0 [symbolic = %a.loc15_8.2 (constants.%a)]
+// CHECK:STDOUT: generic fn @Foo.loc15(%a.loc15_8.2: %C) {
+// CHECK:STDOUT:   %a.loc15_8.1: %C = bind_symbolic_name a, 0 [symbolic = %a.loc15_8.1 (constants.%a)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:
@@ -757,11 +757,11 @@ fn Foo(a: const (const C)) {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Foo.loc7(constants.%a) {
-// CHECK:STDOUT:   %a.loc7_8.2 => constants.%a
+// CHECK:STDOUT:   %a.loc7_8.1 => constants.%a
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Foo.loc15(constants.%a) {
-// CHECK:STDOUT:   %a.loc15_8.2 => constants.%a
+// CHECK:STDOUT:   %a.loc15_8.1 => constants.%a
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- todo_fail_alias_in_return.carbon

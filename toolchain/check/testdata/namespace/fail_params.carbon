@@ -90,7 +90,7 @@ fn D(T:! type).F() {}
 // CHECK:STDOUT:   %C: <namespace> = namespace [concrete] {}
 // CHECK:STDOUT:   %D: <namespace> = namespace [concrete] {}
 // CHECK:STDOUT:   %F.decl.loc48: %F.type.b25 = fn_decl @F.loc48 [concrete = constants.%F.c41] {} {
-// CHECK:STDOUT:     %T.loc48_6.1: type = bind_symbolic_name T, 0 [symbolic = %T.loc48_6.2 (constants.%T)]
+// CHECK:STDOUT:     %T.loc48_6.2: type = bind_symbolic_name T, 0 [symbolic = %T.loc48_6.1 (constants.%T)]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -99,8 +99,8 @@ fn D(T:! type).F() {}
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic fn @F.loc48(%T.loc48_6.1: type) {
-// CHECK:STDOUT:   %T.loc48_6.2: type = bind_symbolic_name T, 0 [symbolic = %T.loc48_6.2 (constants.%T)]
+// CHECK:STDOUT: generic fn @F.loc48(%T.loc48_6.2: type) {
+// CHECK:STDOUT:   %T.loc48_6.1: type = bind_symbolic_name T, 0 [symbolic = %T.loc48_6.1 (constants.%T)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:
@@ -111,6 +111,6 @@ fn D(T:! type).F() {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @F.loc48(constants.%T) {
-// CHECK:STDOUT:   %T.loc48_6.2 => constants.%T
+// CHECK:STDOUT:   %T.loc48_6.1 => constants.%T
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

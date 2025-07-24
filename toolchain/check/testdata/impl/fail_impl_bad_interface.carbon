@@ -85,15 +85,15 @@ impl {.a: bool} as type where .Self impls I {}
 // CHECK:STDOUT:     .Core = imports.%Core
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import = import Core
-// CHECK:STDOUT:   %.loc11: type = converted @impl.%false, <error> [concrete = <error>]
-// CHECK:STDOUT:   impl_decl @impl [concrete] {} {
+// CHECK:STDOUT:   %.loc11: type = converted @i32.as.<error>.impl.%false, <error> [concrete = <error>]
+// CHECK:STDOUT:   impl_decl @i32.as.<error>.impl [concrete] {} {
 // CHECK:STDOUT:     %int_32: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
 // CHECK:STDOUT:     %i32: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
 // CHECK:STDOUT:     %false: bool = bool_literal false [concrete = constants.%false]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: impl @impl: %i32 as <error> {
+// CHECK:STDOUT: impl @i32.as.<error>.impl: %i32 as <error> {
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   witness = <error>
 // CHECK:STDOUT: }
@@ -119,14 +119,14 @@ impl {.a: bool} as type where .Self impls I {}
 // CHECK:STDOUT:     .Core = imports.%Core
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import = import Core
-// CHECK:STDOUT:   impl_decl @impl [concrete] {} {
-// CHECK:STDOUT:     %bool.make_type: init type = call constants.%Bool() [concrete = bool]
-// CHECK:STDOUT:     %.loc8_6.1: type = value_of_initializer %bool.make_type [concrete = bool]
-// CHECK:STDOUT:     %.loc8_6.2: type = converted %bool.make_type, %.loc8_6.1 [concrete = bool]
+// CHECK:STDOUT:   impl_decl @bool.as.<error>.impl [concrete] {} {
+// CHECK:STDOUT:     %Bool.call: init type = call constants.%Bool() [concrete = bool]
+// CHECK:STDOUT:     %.loc8_6.1: type = value_of_initializer %Bool.call [concrete = bool]
+// CHECK:STDOUT:     %.loc8_6.2: type = converted %Bool.call, %.loc8_6.1 [concrete = bool]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: impl @impl: %.loc8_6.2 as type {
+// CHECK:STDOUT: impl @bool.as.<error>.impl: %.loc8_6.2 as type {
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   witness = <error>
 // CHECK:STDOUT: }
@@ -155,11 +155,11 @@ impl {.a: bool} as type where .Self impls I {}
 // CHECK:STDOUT:     .Core = imports.%Core
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import = import Core
-// CHECK:STDOUT:   impl_decl @impl [concrete] {} {
+// CHECK:STDOUT:   impl_decl @f64.as.<error>.impl [concrete] {} {
 // CHECK:STDOUT:     %int_64: Core.IntLiteral = int_value 64 [concrete = constants.%int_64]
-// CHECK:STDOUT:     %float.make_type: init type = call constants.%Float(%int_64) [concrete = f64]
-// CHECK:STDOUT:     %.loc8_6.1: type = value_of_initializer %float.make_type [concrete = f64]
-// CHECK:STDOUT:     %.loc8_6.2: type = converted %float.make_type, %.loc8_6.1 [concrete = f64]
+// CHECK:STDOUT:     %Float.call: init type = call constants.%Float(%int_64) [concrete = f64]
+// CHECK:STDOUT:     %.loc8_6.1: type = value_of_initializer %Float.call [concrete = f64]
+// CHECK:STDOUT:     %.loc8_6.2: type = converted %Float.call, %.loc8_6.1 [concrete = f64]
 // CHECK:STDOUT:     %.Self: type = bind_symbolic_name .Self [symbolic_self = constants.%.Self]
 // CHECK:STDOUT:     %.Self.ref: type = name_ref .Self, %.Self [symbolic_self = constants.%.Self]
 // CHECK:STDOUT:     %.loc8_18: type = where_expr %.Self [concrete = constants.%type] {
@@ -168,7 +168,7 @@ impl {.a: bool} as type where .Self impls I {}
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: impl @impl: %.loc8_6.2 as %.loc8_18 {
+// CHECK:STDOUT: impl @f64.as.<error>.impl: %.loc8_6.2 as %.loc8_18 {
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   witness = <error>
 // CHECK:STDOUT: }
@@ -201,10 +201,10 @@ impl {.a: bool} as type where .Self impls I {}
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %I.decl: type = interface_decl @I [concrete = constants.%I.type] {} {}
-// CHECK:STDOUT:   impl_decl @impl [concrete] {} {
-// CHECK:STDOUT:     %bool.make_type: init type = call constants.%Bool() [concrete = bool]
-// CHECK:STDOUT:     %.loc10_11.1: type = value_of_initializer %bool.make_type [concrete = bool]
-// CHECK:STDOUT:     %.loc10_11.2: type = converted %bool.make_type, %.loc10_11.1 [concrete = bool]
+// CHECK:STDOUT:   impl_decl @struct_type.a.as.<error>.impl [concrete] {} {
+// CHECK:STDOUT:     %Bool.call: init type = call constants.%Bool() [concrete = bool]
+// CHECK:STDOUT:     %.loc10_11.1: type = value_of_initializer %Bool.call [concrete = bool]
+// CHECK:STDOUT:     %.loc10_11.2: type = converted %Bool.call, %.loc10_11.1 [concrete = bool]
 // CHECK:STDOUT:     %struct_type.a: type = struct_type {.a: bool} [concrete = constants.%struct_type.a]
 // CHECK:STDOUT:     %.Self: type = bind_symbolic_name .Self [symbolic_self = constants.%.Self]
 // CHECK:STDOUT:     %.Self.ref: type = name_ref .Self, %.Self [symbolic_self = constants.%.Self]
@@ -223,7 +223,7 @@ impl {.a: bool} as type where .Self impls I {}
 // CHECK:STDOUT:   witness = ()
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: impl @impl: %struct_type.a as %.loc10_25 {
+// CHECK:STDOUT: impl @struct_type.a.as.<error>.impl: %struct_type.a as %.loc10_25 {
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   witness = <error>
 // CHECK:STDOUT: }

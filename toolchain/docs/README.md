@@ -14,6 +14,10 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 -   [High-level architecture](#high-level-architecture)
     -   [Design patterns](#design-patterns)
 -   [Adding features](#adding-features)
+-   [Videos](#videos)
+    -   [Talks](#talks)
+        -   [2025](#2025)
+    -   [Implementation walkthroughs](#implementation-walkthroughs)
 
 <!-- tocstop -->
 
@@ -92,3 +96,24 @@ techniques.
 ## Adding features
 
 We have a [walkthrough for adding features](adding_features.md).
+
+## Videos
+
+### Talks
+
+These talks are focused on implementation details of the toolchain, and can be
+helpful for learning how the toolchain internals work.
+
+#### 2025
+
+-   How we compile, Google tech talk ([video](https://youtu.be/HBUAWvwo3qg),
+    [slides](https://drive.google.com/file/d/1YoM1lz74PsBs0KQIyAVb3cGh5G0WL2Ik/view))
+
+### Implementation walkthroughs
+
+These are recordings of implementing PRs.
+
+-   PR [#4173](https://github.com/carbon-language/carbon-lang/pull/4173):
+    Parsing `extern library` syntax ([video](https://youtu.be/iyE3sT4zB2Q))
+-   PR [#4149](https://github.com/carbon-language/carbon-lang/pull/4149):
+    Implementing syntactic merge checks ([video](https://youtu.be/71UM06RiZLA))

@@ -5,6 +5,7 @@
 #ifndef CARBON_TOOLCHAIN_CHECK_CHECK_UNIT_H_
 #define CARBON_TOOLCHAIN_CHECK_CHECK_UNIT_H_
 
+#include "clang/Frontend/CompilerInvocation.h"
 #include "common/map.h"
 #include "llvm/ADT/SmallVector.h"
 #include "toolchain/check/check.h"
@@ -120,11 +121,13 @@ struct UnitAndImports {
 // logic in check.cpp.
 class CheckUnit {
  public:
+  // `unit_and_imports` and `tree_and_subtrees_getters` must be non-null.
+  // `vlog_stream` is optional.
   explicit CheckUnit(
       UnitAndImports* unit_and_imports,
-      llvm::ArrayRef<Parse::GetTreeAndSubtreesFn> tree_and_subtrees_getters,
+      const Parse::GetTreeAndSubtreesStore* tree_and_subtrees_getters,
       llvm::IntrusiveRefCntPtr<llvm::vfs::FileSystem> fs,
-      llvm::StringRef clang_path, llvm::StringRef target,
+      std::shared_ptr<clang::CompilerInvocation> clang_invocation,
       llvm::raw_ostream* vlog_stream);
 
   // Produces and checks the IR for the provided unit.
@@ -135,11 +138,11 @@ class CheckUnit {
   auto InitPackageScopeAndImports() -> void;
 
   // Collects direct imports, for CollectTransitiveImports.
-  auto CollectDirectImports(llvm::SmallVector<SemIR::ImportIR>& results,
-                            llvm::MutableArrayRef<int> ir_to_result_index,
-                            SemIR::InstId import_decl_id,
-                            const PackageImports& imports, bool is_local)
-      -> void;
+  auto CollectDirectImports(
+      llvm::SmallVector<SemIR::ImportIR>& results,
+      FixedSizeValueStore<SemIR::CheckIRId, int>& ir_to_result_index,
+      SemIR::InstId import_decl_id, const PackageImports& imports,
+      bool is_local) -> void;
 
   // Collects transitive imports, handling deduplication. These will be unified
   // between local_imports and api_imports.
@@ -187,8 +190,7 @@ class CheckUnit {
   // The number of IRs being checked in total.
   int total_ir_count_;
   llvm::IntrusiveRefCntPtr<llvm::vfs::FileSystem> fs_;
-  llvm::StringRef clang_path_;
-  llvm::StringRef target_;
+  std::shared_ptr<clang::CompilerInvocation> clang_invocation_;
 
   DiagnosticEmitter emitter_;
   Context context_;

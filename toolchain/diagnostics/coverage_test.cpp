@@ -58,12 +58,6 @@ constexpr Kind UntestedKinds[] = {
     // conversion cannot fail. This should be covered once we support `ref`
     // binding syntax.
     Kind::ConversionFailureNonRefToRef,
-
-    // TODO: These are temporarily unreachable because we don't pass invalid
-    // driver options to Clang, but will become reachable once we support
-    // passing custom Clang arguments.
-    Kind::CppInteropDriverError,
-    Kind::CppInteropDriverWarning,
 };
 
 // Looks for diagnostic kinds that aren't covered by a file_test.

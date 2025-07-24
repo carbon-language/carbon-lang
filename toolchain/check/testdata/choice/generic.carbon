@@ -39,15 +39,15 @@ choice Always(T:! type) {
 // CHECK:STDOUT:   %Always.decl: %Always.type = class_decl @Always [concrete = constants.%Always.generic] {
 // CHECK:STDOUT:     %T.patt: %pattern_type = symbolic_binding_pattern T, 0 [concrete]
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %T.loc14_15.1: type = bind_symbolic_name T, 0 [symbolic = %T.loc14_15.2 (constants.%T)]
+// CHECK:STDOUT:     %T.loc14_15.2: type = bind_symbolic_name T, 0 [symbolic = %T.loc14_15.1 (constants.%T)]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic class @Always(%T.loc14_15.1: type) {
-// CHECK:STDOUT:   %T.loc14_15.2: type = bind_symbolic_name T, 0 [symbolic = %T.loc14_15.2 (constants.%T)]
+// CHECK:STDOUT: generic class @Always(%T.loc14_15.2: type) {
+// CHECK:STDOUT:   %T.loc14_15.1: type = bind_symbolic_name T, 0 [symbolic = %T.loc14_15.1 (constants.%T)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
-// CHECK:STDOUT:   %Always: type = class_type @Always, @Always(%T.loc14_15.2) [symbolic = %Always (constants.%Always)]
+// CHECK:STDOUT:   %Always: type = class_type @Always, @Always(%T.loc14_15.1) [symbolic = %Always (constants.%Always)]
 // CHECK:STDOUT:   %require_complete: <witness> = require_complete_type %Always [symbolic = %require_complete (constants.%require_complete)]
 // CHECK:STDOUT:   %Always.val: @Always.%Always (%Always) = struct_value (constants.%empty_tuple) [symbolic = %Always.val (constants.%Always.val)]
 // CHECK:STDOUT:
@@ -75,6 +75,6 @@ choice Always(T:! type) {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Always(constants.%T) {
-// CHECK:STDOUT:   %T.loc14_15.2 => constants.%T
+// CHECK:STDOUT:   %T.loc14_15.1 => constants.%T
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

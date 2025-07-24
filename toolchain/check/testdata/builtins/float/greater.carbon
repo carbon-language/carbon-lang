@@ -47,9 +47,9 @@ fn RuntimeCallIsValid(a: f64, b: f64) -> bool {
 // CHECK:STDOUT:   %Greater.ref: %Greater.type = name_ref Greater, file.%Greater.decl [concrete = constants.%Greater]
 // CHECK:STDOUT:   %a.ref: f64 = name_ref a, %a
 // CHECK:STDOUT:   %b.ref: f64 = name_ref b, %b
-// CHECK:STDOUT:   %float.greater: init bool = call %Greater.ref(%a.ref, %b.ref)
-// CHECK:STDOUT:   %.loc18_23.1: bool = value_of_initializer %float.greater
-// CHECK:STDOUT:   %.loc18_23.2: bool = converted %float.greater, %.loc18_23.1
+// CHECK:STDOUT:   %Greater.call: init bool = call %Greater.ref(%a.ref, %b.ref)
+// CHECK:STDOUT:   %.loc18_23.1: bool = value_of_initializer %Greater.call
+// CHECK:STDOUT:   %.loc18_23.2: bool = converted %Greater.call, %.loc18_23.1
 // CHECK:STDOUT:   return %.loc18_23.2
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

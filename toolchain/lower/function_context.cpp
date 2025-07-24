@@ -62,7 +62,7 @@ auto FunctionContext::LowerBlockContents(SemIR::InstBlockId block_id) -> void {
   // On crash, report the instruction we were lowering.
   PrettyStackTraceFunction stack_trace_entry([&](llvm::raw_ostream& output) {
     SemIR::DiagnosticLocConverter converter(
-        file_context_->context().tree_and_subtrees_getters(), &sem_ir());
+        &file_context_->context().tree_and_subtrees_getters(), &sem_ir());
     auto converted = converter.Convert(SemIR::LocId(inst_id_for_stack_trace),
                                        /*token_only=*/false);
     converted.loc.FormatLocation(output);

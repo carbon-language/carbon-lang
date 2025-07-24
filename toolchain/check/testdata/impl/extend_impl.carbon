@@ -62,8 +62,8 @@ extend impl nonexistent* as I {}
 // CHECK:STDOUT:   %HasF.type: type = facet_type <@HasF> [concrete]
 // CHECK:STDOUT:   %C: type = class_type @C [concrete]
 // CHECK:STDOUT:   %HasF.impl_witness: <witness> = impl_witness @C.%HasF.impl_witness_table [concrete]
-// CHECK:STDOUT:   %F.type.a65: type = fn_type @F.loc11 [concrete]
-// CHECK:STDOUT:   %F.ad8: %F.type.a65 = struct_value () [concrete]
+// CHECK:STDOUT:   %C.as.HasF.impl.F.type: type = fn_type @C.as.HasF.impl.F [concrete]
+// CHECK:STDOUT:   %C.as.HasF.impl.F: %C.as.HasF.impl.F.type = struct_value () [concrete]
 // CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [concrete]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [concrete]
 // CHECK:STDOUT: }
@@ -72,20 +72,20 @@ extend impl nonexistent* as I {}
 // CHECK:STDOUT:   %C.decl: type = class_decl @C [concrete = constants.%C] {} {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: impl @HasF.impl: %Self.ref as %HasF.ref {
-// CHECK:STDOUT:   %F.decl: %F.type.a65 = fn_decl @F.loc11 [concrete = constants.%F.ad8] {} {}
+// CHECK:STDOUT: impl @C.as.HasF.impl: %Self.ref as %HasF.ref {
+// CHECK:STDOUT:   %C.as.HasF.impl.F.decl: %C.as.HasF.impl.F.type = fn_decl @C.as.HasF.impl.F [concrete = constants.%C.as.HasF.impl.F] {} {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
-// CHECK:STDOUT:   .F = %F.decl
+// CHECK:STDOUT:   .F = %C.as.HasF.impl.F.decl
 // CHECK:STDOUT:   witness = @C.%HasF.impl_witness
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @C {
-// CHECK:STDOUT:   impl_decl @HasF.impl [concrete] {} {
+// CHECK:STDOUT:   impl_decl @C.as.HasF.impl [concrete] {} {
 // CHECK:STDOUT:     %Self.ref: type = name_ref Self, constants.%C [concrete = constants.%C]
 // CHECK:STDOUT:     %HasF.ref: type = name_ref HasF, file.%HasF.decl [concrete = constants.%HasF.type]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %HasF.impl_witness_table = impl_witness_table (@HasF.impl.%F.decl), @HasF.impl [concrete]
+// CHECK:STDOUT:   %HasF.impl_witness_table = impl_witness_table (@C.as.HasF.impl.%C.as.HasF.impl.F.decl), @C.as.HasF.impl [concrete]
 // CHECK:STDOUT:   %HasF.impl_witness: <witness> = impl_witness %HasF.impl_witness_table [concrete = constants.%HasF.impl_witness]
 // CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [concrete = constants.%empty_struct_type]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [concrete = constants.%complete_type]
@@ -95,10 +95,10 @@ extend impl nonexistent* as I {}
 // CHECK:STDOUT:   .Self = constants.%C
 // CHECK:STDOUT:   .HasF = <poisoned>
 // CHECK:STDOUT:   .F = <poisoned>
-// CHECK:STDOUT:   extend @HasF.impl.%HasF.ref
+// CHECK:STDOUT:   extend @C.as.HasF.impl.%HasF.ref
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @F.loc11() {
+// CHECK:STDOUT: fn @C.as.HasF.impl.F() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }

@@ -161,10 +161,10 @@ fn Test(e: E) {
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %int_32: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
 // CHECK:STDOUT:     %i32: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
-// CHECK:STDOUT:     %T.loc4_15.1: type = bind_symbolic_name T, 0, template [template = %T.loc4_15.2 (constants.%T)]
-// CHECK:STDOUT:     %x.param: @F.%T.loc4_15.2 (%T) = value_param call_param0
-// CHECK:STDOUT:     %T.ref: type = name_ref T, %T.loc4_15.1 [template = %T.loc4_15.2 (constants.%T)]
-// CHECK:STDOUT:     %x: @F.%T.loc4_15.2 (%T) = bind_name x, %x.param
+// CHECK:STDOUT:     %T.loc4_15.2: type = bind_symbolic_name T, 0, template [template = %T.loc4_15.1 (constants.%T)]
+// CHECK:STDOUT:     %x.param: @F.%T.loc4_15.1 (%T) = value_param call_param0
+// CHECK:STDOUT:     %T.ref: type = name_ref T, %T.loc4_15.2 [template = %T.loc4_15.1 (constants.%T)]
+// CHECK:STDOUT:     %x: @F.%T.loc4_15.1 (%T) = bind_name x, %x.param
 // CHECK:STDOUT:     %return.param: ref %i32 = out_param call_param1
 // CHECK:STDOUT:     %return: ref %i32 = return_slot %return.param
 // CHECK:STDOUT:   }
@@ -206,21 +206,21 @@ fn Test(e: E) {
 // CHECK:STDOUT:   .n = %.loc9
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic fn @F(%T.loc4_15.1: type) {
-// CHECK:STDOUT:   %T.loc4_15.2: type = bind_symbolic_name T, 0, template [template = %T.loc4_15.2 (constants.%T)]
-// CHECK:STDOUT:   %pattern_type: type = pattern_type %T.loc4_15.2 [template = %pattern_type (constants.%pattern_type.7dc)]
+// CHECK:STDOUT: generic fn @F(%T.loc4_15.2: type) {
+// CHECK:STDOUT:   %T.loc4_15.1: type = bind_symbolic_name T, 0, template [template = %T.loc4_15.1 (constants.%T)]
+// CHECK:STDOUT:   %pattern_type: type = pattern_type %T.loc4_15.1 [template = %pattern_type (constants.%pattern_type.7dc)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
-// CHECK:STDOUT:   %require_complete: <witness> = require_complete_type %T.loc4_15.2 [template = %require_complete (constants.%require_complete.4ae)]
-// CHECK:STDOUT:   %.loc5_11.3: <instruction> = refine_type_action %x.ref, %T.loc4_15.2 [template]
+// CHECK:STDOUT:   %require_complete: <witness> = require_complete_type %T.loc4_15.1 [template = %require_complete (constants.%require_complete.4ae)]
+// CHECK:STDOUT:   %.loc5_11.3: <instruction> = refine_type_action %x.ref, %T.loc4_15.1 [template]
 // CHECK:STDOUT:   %.loc5_11.4: <instruction> = access_member_action %.loc5_11.1, n [template]
 // CHECK:STDOUT:   %.loc5_11.5: type = type_of_inst %.loc5_11.4 [template]
 // CHECK:STDOUT:   %.loc5_13.2: <instruction> = convert_to_value_action %.loc5_11.2, constants.%i32 [template]
 // CHECK:STDOUT:
-// CHECK:STDOUT:   fn(%x.param: @F.%T.loc4_15.2 (%T)) -> %i32 {
+// CHECK:STDOUT:   fn(%x.param: @F.%T.loc4_15.1 (%T)) -> %i32 {
 // CHECK:STDOUT:   !entry:
-// CHECK:STDOUT:     %x.ref: @F.%T.loc4_15.2 (%T) = name_ref x, %x
-// CHECK:STDOUT:     %.loc5_11.1: @F.%T.loc4_15.2 (%T) = splice_inst %.loc5_11.3
+// CHECK:STDOUT:     %x.ref: @F.%T.loc4_15.1 (%T) = name_ref x, %x
+// CHECK:STDOUT:     %.loc5_11.1: @F.%T.loc4_15.1 (%T) = splice_inst %.loc5_11.3
 // CHECK:STDOUT:     %.loc5_11.2: @F.%.loc5_11.5 (@F.%.loc5_11.5) = splice_inst %.loc5_11.4
 // CHECK:STDOUT:     %.loc5_13.1: %i32 = splice_inst %.loc5_13.2
 // CHECK:STDOUT:     return %.loc5_13.1
@@ -246,12 +246,12 @@ fn Test(e: E) {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @F(constants.%T) {
-// CHECK:STDOUT:   %T.loc4_15.2 => constants.%T
+// CHECK:STDOUT:   %T.loc4_15.1 => constants.%T
 // CHECK:STDOUT:   %pattern_type => constants.%pattern_type.7dc
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @F(constants.%C) {
-// CHECK:STDOUT:   %T.loc4_15.2 => constants.%C
+// CHECK:STDOUT:   %T.loc4_15.1 => constants.%C
 // CHECK:STDOUT:   %pattern_type => constants.%pattern_type.c48
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
@@ -263,7 +263,7 @@ fn Test(e: E) {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @F(constants.%struct_type.m.n) {
-// CHECK:STDOUT:   %T.loc4_15.2 => constants.%struct_type.m.n
+// CHECK:STDOUT:   %T.loc4_15.1 => constants.%struct_type.m.n
 // CHECK:STDOUT:   %pattern_type => constants.%pattern_type.811
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
@@ -333,10 +333,10 @@ fn Test(e: E) {
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %int_32: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
 // CHECK:STDOUT:     %i32: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
-// CHECK:STDOUT:     %T.loc4_15.1: type = bind_symbolic_name T, 0, template [template = %T.loc4_15.2 (constants.%T)]
-// CHECK:STDOUT:     %x.param: @F.%T.loc4_15.2 (%T) = value_param call_param0
-// CHECK:STDOUT:     %T.ref: type = name_ref T, %T.loc4_15.1 [template = %T.loc4_15.2 (constants.%T)]
-// CHECK:STDOUT:     %x: @F.%T.loc4_15.2 (%T) = bind_name x, %x.param
+// CHECK:STDOUT:     %T.loc4_15.2: type = bind_symbolic_name T, 0, template [template = %T.loc4_15.1 (constants.%T)]
+// CHECK:STDOUT:     %x.param: @F.%T.loc4_15.1 (%T) = value_param call_param0
+// CHECK:STDOUT:     %T.ref: type = name_ref T, %T.loc4_15.2 [template = %T.loc4_15.1 (constants.%T)]
+// CHECK:STDOUT:     %x: @F.%T.loc4_15.1 (%T) = bind_name x, %x.param
 // CHECK:STDOUT:     %return.param: ref %i32 = out_param call_param1
 // CHECK:STDOUT:     %return: ref %i32 = return_slot %return.param
 // CHECK:STDOUT:   }
@@ -365,21 +365,21 @@ fn Test(e: E) {
 // CHECK:STDOUT:   .n = <poisoned>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic fn @F(%T.loc4_15.1: type) {
-// CHECK:STDOUT:   %T.loc4_15.2: type = bind_symbolic_name T, 0, template [template = %T.loc4_15.2 (constants.%T)]
-// CHECK:STDOUT:   %pattern_type: type = pattern_type %T.loc4_15.2 [template = %pattern_type (constants.%pattern_type.7dc)]
+// CHECK:STDOUT: generic fn @F(%T.loc4_15.2: type) {
+// CHECK:STDOUT:   %T.loc4_15.1: type = bind_symbolic_name T, 0, template [template = %T.loc4_15.1 (constants.%T)]
+// CHECK:STDOUT:   %pattern_type: type = pattern_type %T.loc4_15.1 [template = %pattern_type (constants.%pattern_type.7dc)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
-// CHECK:STDOUT:   %require_complete: <witness> = require_complete_type %T.loc4_15.2 [template = %require_complete (constants.%require_complete.4ae)]
-// CHECK:STDOUT:   %.loc8_11.3: <instruction> = refine_type_action %x.ref, %T.loc4_15.2 [template]
+// CHECK:STDOUT:   %require_complete: <witness> = require_complete_type %T.loc4_15.1 [template = %require_complete (constants.%require_complete.4ae)]
+// CHECK:STDOUT:   %.loc8_11.3: <instruction> = refine_type_action %x.ref, %T.loc4_15.1 [template]
 // CHECK:STDOUT:   %.loc8_11.4: <instruction> = access_member_action %.loc8_11.1, n [template]
 // CHECK:STDOUT:   %.loc8_11.5: type = type_of_inst %.loc8_11.4 [template]
 // CHECK:STDOUT:   %.loc8_13.2: <instruction> = convert_to_value_action %.loc8_11.2, constants.%i32 [template]
 // CHECK:STDOUT:
-// CHECK:STDOUT:   fn(%x.param: @F.%T.loc4_15.2 (%T)) -> %i32 {
+// CHECK:STDOUT:   fn(%x.param: @F.%T.loc4_15.1 (%T)) -> %i32 {
 // CHECK:STDOUT:   !entry:
-// CHECK:STDOUT:     %x.ref: @F.%T.loc4_15.2 (%T) = name_ref x, %x
-// CHECK:STDOUT:     %.loc8_11.1: @F.%T.loc4_15.2 (%T) = splice_inst %.loc8_11.3
+// CHECK:STDOUT:     %x.ref: @F.%T.loc4_15.1 (%T) = name_ref x, %x
+// CHECK:STDOUT:     %.loc8_11.1: @F.%T.loc4_15.1 (%T) = splice_inst %.loc8_11.3
 // CHECK:STDOUT:     %.loc8_11.2: @F.%.loc8_11.5 (@F.%.loc8_11.5) = splice_inst %.loc8_11.4
 // CHECK:STDOUT:     %.loc8_13.1: %i32 = splice_inst %.loc8_13.2
 // CHECK:STDOUT:     return %.loc8_13.1
@@ -396,12 +396,12 @@ fn Test(e: E) {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @F(constants.%T) {
-// CHECK:STDOUT:   %T.loc4_15.2 => constants.%T
+// CHECK:STDOUT:   %T.loc4_15.1 => constants.%T
 // CHECK:STDOUT:   %pattern_type => constants.%pattern_type.7dc
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @F(constants.%D) {
-// CHECK:STDOUT:   %T.loc4_15.2 => constants.%D
+// CHECK:STDOUT:   %T.loc4_15.1 => constants.%D
 // CHECK:STDOUT:   %pattern_type => constants.%pattern_type.510
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
@@ -484,10 +484,10 @@ fn Test(e: E) {
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %int_32: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
 // CHECK:STDOUT:     %i32: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
-// CHECK:STDOUT:     %T.loc4_15.1: type = bind_symbolic_name T, 0, template [template = %T.loc4_15.2 (constants.%T)]
-// CHECK:STDOUT:     %x.param: @F.loc4.%T.loc4_15.2 (%T) = value_param call_param0
-// CHECK:STDOUT:     %T.ref: type = name_ref T, %T.loc4_15.1 [template = %T.loc4_15.2 (constants.%T)]
-// CHECK:STDOUT:     %x: @F.loc4.%T.loc4_15.2 (%T) = bind_name x, %x.param
+// CHECK:STDOUT:     %T.loc4_15.2: type = bind_symbolic_name T, 0, template [template = %T.loc4_15.1 (constants.%T)]
+// CHECK:STDOUT:     %x.param: @F.loc4.%T.loc4_15.1 (%T) = value_param call_param0
+// CHECK:STDOUT:     %T.ref: type = name_ref T, %T.loc4_15.2 [template = %T.loc4_15.1 (constants.%T)]
+// CHECK:STDOUT:     %x: @F.loc4.%T.loc4_15.1 (%T) = bind_name x, %x.param
 // CHECK:STDOUT:     %return.param: ref %i32 = out_param call_param1
 // CHECK:STDOUT:     %return: ref %i32 = return_slot %return.param
 // CHECK:STDOUT:   }
@@ -525,21 +525,21 @@ fn Test(e: E) {
 // CHECK:STDOUT:   .Self = constants.%F.a8a
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic fn @F.loc4(%T.loc4_15.1: type) {
-// CHECK:STDOUT:   %T.loc4_15.2: type = bind_symbolic_name T, 0, template [template = %T.loc4_15.2 (constants.%T)]
-// CHECK:STDOUT:   %pattern_type: type = pattern_type %T.loc4_15.2 [template = %pattern_type (constants.%pattern_type.7dcd0a.1)]
+// CHECK:STDOUT: generic fn @F.loc4(%T.loc4_15.2: type) {
+// CHECK:STDOUT:   %T.loc4_15.1: type = bind_symbolic_name T, 0, template [template = %T.loc4_15.1 (constants.%T)]
+// CHECK:STDOUT:   %pattern_type: type = pattern_type %T.loc4_15.1 [template = %pattern_type (constants.%pattern_type.7dcd0a.1)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
-// CHECK:STDOUT:   %require_complete: <witness> = require_complete_type %T.loc4_15.2 [template = %require_complete (constants.%require_complete.4ae)]
-// CHECK:STDOUT:   %.loc11_11.3: <instruction> = refine_type_action %x.ref, %T.loc4_15.2 [template]
+// CHECK:STDOUT:   %require_complete: <witness> = require_complete_type %T.loc4_15.1 [template = %require_complete (constants.%require_complete.4ae)]
+// CHECK:STDOUT:   %.loc11_11.3: <instruction> = refine_type_action %x.ref, %T.loc4_15.1 [template]
 // CHECK:STDOUT:   %.loc11_11.4: <instruction> = access_member_action %.loc11_11.1, n [template]
 // CHECK:STDOUT:   %.loc11_11.5: type = type_of_inst %.loc11_11.4 [template]
 // CHECK:STDOUT:   %.loc11_13.2: <instruction> = convert_to_value_action %.loc11_11.2, constants.%i32 [template]
 // CHECK:STDOUT:
-// CHECK:STDOUT:   fn(%x.param: @F.loc4.%T.loc4_15.2 (%T)) -> %i32 {
+// CHECK:STDOUT:   fn(%x.param: @F.loc4.%T.loc4_15.1 (%T)) -> %i32 {
 // CHECK:STDOUT:   !entry:
-// CHECK:STDOUT:     %x.ref: @F.loc4.%T.loc4_15.2 (%T) = name_ref x, %x
-// CHECK:STDOUT:     %.loc11_11.1: @F.loc4.%T.loc4_15.2 (%T) = splice_inst %.loc11_11.3
+// CHECK:STDOUT:     %x.ref: @F.loc4.%T.loc4_15.1 (%T) = name_ref x, %x
+// CHECK:STDOUT:     %.loc11_11.1: @F.loc4.%T.loc4_15.1 (%T) = splice_inst %.loc11_11.3
 // CHECK:STDOUT:     %.loc11_11.2: @F.loc4.%.loc11_11.5 (@F.loc4.%.loc11_11.5) = splice_inst %.loc11_11.4
 // CHECK:STDOUT:     %.loc11_13.1: %i32 = splice_inst %.loc11_13.2
 // CHECK:STDOUT:     return %.loc11_13.1
@@ -556,12 +556,12 @@ fn Test(e: E) {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @F.loc4(constants.%T) {
-// CHECK:STDOUT:   %T.loc4_15.2 => constants.%T
+// CHECK:STDOUT:   %T.loc4_15.1 => constants.%T
 // CHECK:STDOUT:   %pattern_type => constants.%pattern_type.7dcd0a.1
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @F.loc4(constants.%E) {
-// CHECK:STDOUT:   %T.loc4_15.2 => constants.%E
+// CHECK:STDOUT:   %T.loc4_15.1 => constants.%E
 // CHECK:STDOUT:   %pattern_type => constants.%pattern_type.a4a
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:

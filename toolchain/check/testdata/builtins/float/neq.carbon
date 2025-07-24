@@ -55,9 +55,9 @@ fn WrongResult(a: f64, b: f64) -> f64 = "float.neq";
 // CHECK:STDOUT:   %Neq.ref: %Neq.type = name_ref Neq, file.%Neq.decl [concrete = constants.%Neq]
 // CHECK:STDOUT:   %a.ref: f64 = name_ref a, %a
 // CHECK:STDOUT:   %b.ref: f64 = name_ref b, %b
-// CHECK:STDOUT:   %float.neq: init bool = call %Neq.ref(%a.ref, %b.ref)
-// CHECK:STDOUT:   %.loc16_19.1: bool = value_of_initializer %float.neq
-// CHECK:STDOUT:   %.loc16_19.2: bool = converted %float.neq, %.loc16_19.1
+// CHECK:STDOUT:   %Neq.call: init bool = call %Neq.ref(%a.ref, %b.ref)
+// CHECK:STDOUT:   %.loc16_19.1: bool = value_of_initializer %Neq.call
+// CHECK:STDOUT:   %.loc16_19.2: bool = converted %Neq.call, %.loc16_19.1
 // CHECK:STDOUT:   return %.loc16_19.2
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

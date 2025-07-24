@@ -151,14 +151,14 @@ interface I {
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %Adapted: type = class_type @Adapted [concrete]
-// CHECK:STDOUT:   %F.type.967: type = fn_type @F.loc5 [concrete]
-// CHECK:STDOUT:   %F.9eb: %F.type.967 = struct_value () [concrete]
+// CHECK:STDOUT:   %Adapted.F.type: type = fn_type @Adapted.F [concrete]
+// CHECK:STDOUT:   %Adapted.F: %Adapted.F.type = struct_value () [concrete]
 // CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [concrete]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [concrete]
 // CHECK:STDOUT:   %AdaptNotExtend: type = class_type @AdaptNotExtend [concrete]
 // CHECK:STDOUT:   %pattern_type: type = pattern_type %AdaptNotExtend [concrete]
-// CHECK:STDOUT:   %F.type.b25: type = fn_type @F.loc12 [concrete]
-// CHECK:STDOUT:   %F.c41: %F.type.b25 = struct_value () [concrete]
+// CHECK:STDOUT:   %F.type: type = fn_type @F [concrete]
+// CHECK:STDOUT:   %F: %F.type = struct_value () [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -178,7 +178,7 @@ interface I {
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %Adapted.decl: type = class_decl @Adapted [concrete = constants.%Adapted] {} {}
 // CHECK:STDOUT:   %AdaptNotExtend.decl: type = class_decl @AdaptNotExtend [concrete = constants.%AdaptNotExtend] {} {}
-// CHECK:STDOUT:   %F.decl: %F.type.b25 = fn_decl @F.loc12 [concrete = constants.%F.c41] {
+// CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [concrete = constants.%F] {
 // CHECK:STDOUT:     %a.patt: %pattern_type = binding_pattern a [concrete]
 // CHECK:STDOUT:     %a.param_patt: %pattern_type = value_param_pattern %a.patt, call_param0 [concrete]
 // CHECK:STDOUT:   } {
@@ -189,14 +189,14 @@ interface I {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @Adapted {
-// CHECK:STDOUT:   %F.decl: %F.type.967 = fn_decl @F.loc5 [concrete = constants.%F.9eb] {} {}
+// CHECK:STDOUT:   %Adapted.F.decl: %Adapted.F.type = fn_decl @Adapted.F [concrete = constants.%Adapted.F] {} {}
 // CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [concrete = constants.%empty_struct_type]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [concrete = constants.%complete_type]
 // CHECK:STDOUT:   complete_type_witness = %complete_type
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%Adapted
-// CHECK:STDOUT:   .F = %F.decl
+// CHECK:STDOUT:   .F = %Adapted.F.decl
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @AdaptNotExtend {
@@ -211,9 +211,9 @@ interface I {
 // CHECK:STDOUT:   .F = <poisoned>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @F.loc5();
+// CHECK:STDOUT: fn @Adapted.F();
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @F.loc12(%a.param: %AdaptNotExtend) {
+// CHECK:STDOUT: fn @F(%a.param: %AdaptNotExtend) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %a.ref: %AdaptNotExtend = name_ref a, %a
 // CHECK:STDOUT:   %F.ref: <error> = name_ref F, <error> [concrete = <error>]

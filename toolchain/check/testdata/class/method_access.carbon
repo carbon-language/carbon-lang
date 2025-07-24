@@ -32,9 +32,9 @@ fn G(x: X) {
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %X: type = class_type @X [concrete]
 // CHECK:STDOUT:   %pattern_type: type = pattern_type %X [concrete]
-// CHECK:STDOUT:   %F.type: type = fn_type @F [concrete]
+// CHECK:STDOUT:   %X.F.type: type = fn_type @X.F [concrete]
 // CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [concrete]
-// CHECK:STDOUT:   %F: %F.type = struct_value () [concrete]
+// CHECK:STDOUT:   %X.F: %X.F.type = struct_value () [concrete]
 // CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [concrete]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [concrete]
 // CHECK:STDOUT:   %G.type: type = fn_type @G [concrete]
@@ -58,7 +58,7 @@ fn G(x: X) {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @X {
-// CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [concrete = constants.%F] {
+// CHECK:STDOUT:   %X.F.decl: %X.F.type = fn_decl @X.F [concrete = constants.%X.F] {
 // CHECK:STDOUT:     %self.patt: %pattern_type = binding_pattern self [concrete]
 // CHECK:STDOUT:     %self.param_patt: %pattern_type = value_param_pattern %self.patt, call_param0 [concrete]
 // CHECK:STDOUT:   } {
@@ -72,18 +72,18 @@ fn G(x: X) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%X
-// CHECK:STDOUT:   .F = %F.decl
+// CHECK:STDOUT:   .F = %X.F.decl
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @F(%self.param: %X);
+// CHECK:STDOUT: fn @X.F(%self.param: %X);
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @G(%x.param: %X) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %x.ref.loc12_3: %X = name_ref x, %x
 // CHECK:STDOUT:   %x.ref.loc12_6: %X = name_ref x, %x
-// CHECK:STDOUT:   %F.ref: %F.type = name_ref F, @X.%F.decl [concrete = constants.%F]
-// CHECK:STDOUT:   %F.bound: <bound method> = bound_method %x.ref.loc12_6, %F.ref
-// CHECK:STDOUT:   %F.call: init %empty_tuple.type = call %F.bound(%x.ref.loc12_6)
+// CHECK:STDOUT:   %F.ref: %X.F.type = name_ref F, @X.%X.F.decl [concrete = constants.%X.F]
+// CHECK:STDOUT:   %X.F.bound: <bound method> = bound_method %x.ref.loc12_6, %F.ref
+// CHECK:STDOUT:   %X.F.call: init %empty_tuple.type = call %X.F.bound(%x.ref.loc12_6)
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

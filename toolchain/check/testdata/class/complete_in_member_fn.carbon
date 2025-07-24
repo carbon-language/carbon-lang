@@ -28,8 +28,8 @@ class C {
 // CHECK:STDOUT:   %Int.generic: %Int.type = struct_value () [concrete]
 // CHECK:STDOUT:   %i32: type = class_type @Int, @Int(%int_32) [concrete]
 // CHECK:STDOUT:   %pattern_type.7ce: type = pattern_type %i32 [concrete]
-// CHECK:STDOUT:   %F.type: type = fn_type @F [concrete]
-// CHECK:STDOUT:   %F: %F.type = struct_value () [concrete]
+// CHECK:STDOUT:   %C.F.type: type = fn_type @C.F [concrete]
+// CHECK:STDOUT:   %C.F: %C.F.type = struct_value () [concrete]
 // CHECK:STDOUT:   %C.elem: type = unbound_element_type %C, %i32 [concrete]
 // CHECK:STDOUT:   %struct_type.a: type = struct_type {.a: %i32} [concrete]
 // CHECK:STDOUT:   %complete_type.fd7: <witness> = complete_type_witness %struct_type.a [concrete]
@@ -54,7 +54,7 @@ class C {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @C {
-// CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [concrete = constants.%F] {
+// CHECK:STDOUT:   %C.F.decl: %C.F.type = fn_decl @C.F [concrete = constants.%C.F] {
 // CHECK:STDOUT:     %c.patt: %pattern_type.c48 = binding_pattern c [concrete]
 // CHECK:STDOUT:     %c.param_patt: %pattern_type.c48 = value_param_pattern %c.patt, call_param0 [concrete]
 // CHECK:STDOUT:     %return.patt: %pattern_type.7ce = return_slot_pattern [concrete]
@@ -78,11 +78,11 @@ class C {
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%C
 // CHECK:STDOUT:   .C = <poisoned>
-// CHECK:STDOUT:   .F = %F.decl
+// CHECK:STDOUT:   .F = %C.F.decl
 // CHECK:STDOUT:   .a = %.loc18
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @F(%c.param: %C) -> %i32 {
+// CHECK:STDOUT: fn @C.F(%c.param: %C) -> %i32 {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %c.ref: %C = name_ref c, %c
 // CHECK:STDOUT:   %a.ref: %C.elem = name_ref a, @C.%.loc18 [concrete = @C.%.loc18]

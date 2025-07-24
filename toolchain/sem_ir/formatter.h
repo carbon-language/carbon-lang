@@ -19,10 +19,11 @@ namespace Carbon::SemIR {
 // Formatter for printing textual Semantics IR.
 class Formatter {
  public:
-  explicit Formatter(const File* sem_ir,
-                     Parse::GetTreeAndSubtreesFn get_tree_and_subtrees,
-                     llvm::ArrayRef<bool> include_ir_in_dumps,
-                     bool use_dump_sem_ir_ranges);
+  // sem_ir and include_ir_in_dumps must be non-null.
+  explicit Formatter(
+      const File* sem_ir, Parse::GetTreeAndSubtreesFn get_tree_and_subtrees,
+      const FixedSizeValueStore<SemIR::CheckIRId, bool>* include_ir_in_dumps,
+      bool use_dump_sem_ir_ranges);
 
   // Prints the SemIR into an internal buffer. Must only be called once.
   //
@@ -333,7 +334,7 @@ class Formatter {
   Parse::GetTreeAndSubtreesFn get_tree_and_subtrees_;
 
   // For each CheckIRId, whether entities from it should be formatted.
-  llvm::ArrayRef<bool> include_ir_in_dumps_;
+  const FixedSizeValueStore<SemIR::CheckIRId, bool>* include_ir_in_dumps_;
 
   // Whether to use ranges when dumping, or to dump the full SemIR.
   bool use_dump_sem_ir_ranges_;

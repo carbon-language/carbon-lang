@@ -61,9 +61,9 @@ var y: i32 = x.b;
 // CHECK:STDOUT:   %x.var: ref %struct_type.a = var %x.var_patt [concrete]
 // CHECK:STDOUT:   %.loc15_16: type = splice_block %struct_type.a [concrete = constants.%struct_type.a] {
 // CHECK:STDOUT:     %int_64: Core.IntLiteral = int_value 64 [concrete = constants.%int_64]
-// CHECK:STDOUT:     %float.make_type: init type = call constants.%Float(%int_64) [concrete = f64]
-// CHECK:STDOUT:     %.loc15_13.1: type = value_of_initializer %float.make_type [concrete = f64]
-// CHECK:STDOUT:     %.loc15_13.2: type = converted %float.make_type, %.loc15_13.1 [concrete = f64]
+// CHECK:STDOUT:     %Float.call: init type = call constants.%Float(%int_64) [concrete = f64]
+// CHECK:STDOUT:     %.loc15_13.1: type = value_of_initializer %Float.call [concrete = f64]
+// CHECK:STDOUT:     %.loc15_13.2: type = converted %Float.call, %.loc15_13.1 [concrete = f64]
 // CHECK:STDOUT:     %struct_type.a: type = struct_type {.a: f64} [concrete = constants.%struct_type.a]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %x: ref %struct_type.a = bind_name x, %x.var [concrete = %x.var]

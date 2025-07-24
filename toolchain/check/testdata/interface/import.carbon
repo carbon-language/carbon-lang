@@ -61,16 +61,16 @@ var f: ForwardDeclared* = &f_ref.f;
 // CHECK:STDOUT:   %Self.1c7: %Basic.type = bind_symbolic_name Self, 0 [symbolic]
 // CHECK:STDOUT:   %Basic.assoc_type: type = assoc_entity_type @Basic [concrete]
 // CHECK:STDOUT:   %assoc0.0d9: %Basic.assoc_type = assoc_entity element0, @Basic.%T [concrete]
-// CHECK:STDOUT:   %F.type.320: type = fn_type @F.loc9 [concrete]
-// CHECK:STDOUT:   %F.952: %F.type.320 = struct_value () [concrete]
-// CHECK:STDOUT:   %assoc1.9b4: %Basic.assoc_type = assoc_entity element1, @Basic.%F.decl [concrete]
+// CHECK:STDOUT:   %Basic.F.type: type = fn_type @Basic.F [concrete]
+// CHECK:STDOUT:   %Basic.F: %Basic.F.type = struct_value () [concrete]
+// CHECK:STDOUT:   %assoc1.9b4: %Basic.assoc_type = assoc_entity element1, @Basic.%Basic.F.decl [concrete]
 // CHECK:STDOUT:   %ForwardDeclared.type: type = facet_type <@ForwardDeclared> [concrete]
 // CHECK:STDOUT:   %Self.efa: %ForwardDeclared.type = bind_symbolic_name Self, 0 [symbolic]
 // CHECK:STDOUT:   %ForwardDeclared.assoc_type: type = assoc_entity_type @ForwardDeclared [concrete]
 // CHECK:STDOUT:   %assoc0.27c: %ForwardDeclared.assoc_type = assoc_entity element0, @ForwardDeclared.%T [concrete]
-// CHECK:STDOUT:   %F.type.505: type = fn_type @F.loc17 [concrete]
-// CHECK:STDOUT:   %F.eb5: %F.type.505 = struct_value () [concrete]
-// CHECK:STDOUT:   %assoc1.c80: %ForwardDeclared.assoc_type = assoc_entity element1, @ForwardDeclared.%F.decl [concrete]
+// CHECK:STDOUT:   %ForwardDeclared.F.type: type = fn_type @ForwardDeclared.F [concrete]
+// CHECK:STDOUT:   %ForwardDeclared.F: %ForwardDeclared.F.type = struct_value () [concrete]
+// CHECK:STDOUT:   %assoc1.c80: %ForwardDeclared.assoc_type = assoc_entity element1, @ForwardDeclared.%ForwardDeclared.F.decl [concrete]
 // CHECK:STDOUT:   %struct_type.f: type = struct_type {.f: %ForwardDeclared.type} [concrete]
 // CHECK:STDOUT:   %pattern_type: type = pattern_type %struct_type.f [concrete]
 // CHECK:STDOUT: }
@@ -110,14 +110,14 @@ var f: ForwardDeclared* = &f_ref.f;
 // CHECK:STDOUT:   %T: type = assoc_const_decl @T.loc8 [concrete] {
 // CHECK:STDOUT:     %assoc0: %Basic.assoc_type = assoc_entity element0, @Basic.%T [concrete = constants.%assoc0.0d9]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %F.decl: %F.type.320 = fn_decl @F.loc9 [concrete = constants.%F.952] {} {}
-// CHECK:STDOUT:   %assoc1: %Basic.assoc_type = assoc_entity element1, %F.decl [concrete = constants.%assoc1.9b4]
+// CHECK:STDOUT:   %Basic.F.decl: %Basic.F.type = fn_decl @Basic.F [concrete = constants.%Basic.F] {} {}
+// CHECK:STDOUT:   %assoc1: %Basic.assoc_type = assoc_entity element1, %Basic.F.decl [concrete = constants.%assoc1.9b4]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = %Self
 // CHECK:STDOUT:   .T = @T.loc8.%assoc0
 // CHECK:STDOUT:   .F = %assoc1
-// CHECK:STDOUT:   witness = (%T, %F.decl)
+// CHECK:STDOUT:   witness = (%T, %Basic.F.decl)
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: interface @ForwardDeclared {
@@ -125,14 +125,14 @@ var f: ForwardDeclared* = &f_ref.f;
 // CHECK:STDOUT:   %T: type = assoc_const_decl @T.loc16 [concrete] {
 // CHECK:STDOUT:     %assoc0: %ForwardDeclared.assoc_type = assoc_entity element0, @ForwardDeclared.%T [concrete = constants.%assoc0.27c]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %F.decl: %F.type.505 = fn_decl @F.loc17 [concrete = constants.%F.eb5] {} {}
-// CHECK:STDOUT:   %assoc1: %ForwardDeclared.assoc_type = assoc_entity element1, %F.decl [concrete = constants.%assoc1.c80]
+// CHECK:STDOUT:   %ForwardDeclared.F.decl: %ForwardDeclared.F.type = fn_decl @ForwardDeclared.F [concrete = constants.%ForwardDeclared.F] {} {}
+// CHECK:STDOUT:   %assoc1: %ForwardDeclared.assoc_type = assoc_entity element1, %ForwardDeclared.F.decl [concrete = constants.%assoc1.c80]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = %Self
 // CHECK:STDOUT:   .T = @T.loc16.%assoc0
 // CHECK:STDOUT:   .F = %assoc1
-// CHECK:STDOUT:   witness = (%T, %F.decl)
+// CHECK:STDOUT:   witness = (%T, %ForwardDeclared.F.decl)
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic assoc_const @T.loc8(@Basic.%Self: %Basic.type) {
@@ -143,21 +143,21 @@ var f: ForwardDeclared* = &f_ref.f;
 // CHECK:STDOUT:   assoc_const T:! type;
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic fn @F.loc9(@Basic.%Self: %Basic.type) {
+// CHECK:STDOUT: generic fn @Basic.F(@Basic.%Self: %Basic.type) {
 // CHECK:STDOUT:   fn();
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic fn @F.loc17(@ForwardDeclared.%Self: %ForwardDeclared.type) {
+// CHECK:STDOUT: generic fn @ForwardDeclared.F(@ForwardDeclared.%Self: %ForwardDeclared.type) {
 // CHECK:STDOUT:   fn();
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @T.loc8(constants.%Self.1c7) {}
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @F.loc9(constants.%Self.1c7) {}
+// CHECK:STDOUT: specific @Basic.F(constants.%Self.1c7) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @T.loc16(constants.%Self.efa) {}
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @F.loc17(constants.%Self.efa) {}
+// CHECK:STDOUT: specific @ForwardDeclared.F(constants.%Self.efa) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- b.carbon
 // CHECK:STDOUT:

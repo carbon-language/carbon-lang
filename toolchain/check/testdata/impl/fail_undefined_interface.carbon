@@ -87,7 +87,7 @@ impl C as J where .Self impls Incomplete and .T = ();
 // CHECK:STDOUT:     .I = %I.decl
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %I.decl: type = interface_decl @I [concrete = constants.%I.type] {} {}
-// CHECK:STDOUT:   impl_decl @I.impl [concrete] {} {
+// CHECK:STDOUT:   impl_decl @empty_struct_type.as.I.impl [concrete] {} {
 // CHECK:STDOUT:     %.loc12_7.1: %empty_struct_type = struct_literal ()
 // CHECK:STDOUT:     %.loc12_7.2: type = converted %.loc12_7.1, constants.%empty_struct_type [concrete = constants.%empty_struct_type]
 // CHECK:STDOUT:     %I.ref: type = name_ref I, file.%I.decl [concrete = constants.%I.type]
@@ -96,7 +96,7 @@ impl C as J where .Self impls Incomplete and .T = ();
 // CHECK:STDOUT:
 // CHECK:STDOUT: interface @I;
 // CHECK:STDOUT:
-// CHECK:STDOUT: impl @I.impl: %.loc12_7.2 as %I.ref {
+// CHECK:STDOUT: impl @empty_struct_type.as.I.impl: %.loc12_7.2 as %I.ref {
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   witness = <error>
 // CHECK:STDOUT: }
@@ -117,7 +117,7 @@ impl C as J where .Self impls Incomplete and .T = ();
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %J.decl: type = interface_decl @J [concrete = constants.%J.type] {} {}
 // CHECK:STDOUT:   %C.decl: type = class_decl @C [concrete = constants.%C] {} {}
-// CHECK:STDOUT:   impl_decl @J.impl [concrete] {} {
+// CHECK:STDOUT:   impl_decl @C.as.J.impl [concrete] {} {
 // CHECK:STDOUT:     %C.ref: type = name_ref C, file.%C.decl [concrete = constants.%C]
 // CHECK:STDOUT:     %J.ref: type = name_ref J, file.%J.decl [concrete = constants.%J.type]
 // CHECK:STDOUT:   }
@@ -125,7 +125,7 @@ impl C as J where .Self impls Incomplete and .T = ();
 // CHECK:STDOUT:
 // CHECK:STDOUT: interface @J;
 // CHECK:STDOUT:
-// CHECK:STDOUT: impl @J.impl: %C.ref as %J.ref {
+// CHECK:STDOUT: impl @C.as.J.impl: %C.ref as %J.ref {
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   witness = <error>
 // CHECK:STDOUT: }
@@ -162,7 +162,7 @@ impl C as J where .Self impls Incomplete and .T = ();
 // CHECK:STDOUT:   %C.decl: type = class_decl @C [concrete = constants.%C] {} {}
 // CHECK:STDOUT:   %I.decl: type = interface_decl @I [concrete = constants.%I.type] {} {}
 // CHECK:STDOUT:   %Incomplete.decl: type = interface_decl @Incomplete [concrete = constants.%Incomplete.type] {} {}
-// CHECK:STDOUT:   impl_decl @I.impl [concrete] {} {
+// CHECK:STDOUT:   impl_decl @C.as.I.impl [concrete] {} {
 // CHECK:STDOUT:     %C.ref: type = name_ref C, file.%C.decl [concrete = constants.%C]
 // CHECK:STDOUT:     %I.ref: type = name_ref I, file.%I.decl [concrete = constants.%I.type]
 // CHECK:STDOUT:     %.Self: %I.type = bind_symbolic_name .Self [symbolic_self = constants.%.Self]
@@ -186,7 +186,7 @@ impl C as J where .Self impls Incomplete and .T = ();
 // CHECK:STDOUT:
 // CHECK:STDOUT: interface @Incomplete;
 // CHECK:STDOUT:
-// CHECK:STDOUT: impl @I.impl: %C.ref as %.loc15_13 {
+// CHECK:STDOUT: impl @C.as.I.impl: %C.ref as %.loc15_13 {
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   witness = <error>
 // CHECK:STDOUT: }
@@ -229,7 +229,7 @@ impl C as J where .Self impls Incomplete and .T = ();
 // CHECK:STDOUT:   %C.decl: type = class_decl @C [concrete = constants.%C] {} {}
 // CHECK:STDOUT:   %J.decl: type = interface_decl @J [concrete = constants.%J.type] {} {}
 // CHECK:STDOUT:   %Incomplete.decl: type = interface_decl @Incomplete [concrete = constants.%Incomplete.type] {} {}
-// CHECK:STDOUT:   impl_decl @J.impl [concrete] {} {
+// CHECK:STDOUT:   impl_decl @C.as.J.impl [concrete] {} {
 // CHECK:STDOUT:     %C.ref: type = name_ref C, file.%C.decl [concrete = constants.%C]
 // CHECK:STDOUT:     %J.ref: type = name_ref J, file.%J.decl [concrete = constants.%J.type]
 // CHECK:STDOUT:     %.Self: %J.type = bind_symbolic_name .Self [symbolic_self = constants.%.Self]
@@ -269,7 +269,7 @@ impl C as J where .Self impls Incomplete and .T = ();
 // CHECK:STDOUT:   assoc_const T:! type;
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: impl @J.impl: %C.ref as %.loc15_13;
+// CHECK:STDOUT: impl @C.as.J.impl: %C.ref as %.loc15_13;
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @C {
 // CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [concrete = constants.%empty_struct_type]
