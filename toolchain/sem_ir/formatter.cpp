@@ -907,11 +907,11 @@ auto Formatter::FormatPendingConstantValue(AddSpace space_where) -> void {
 
 auto Formatter::FormatInstLhs(InstId inst_id, Inst inst) -> void {
   // Every typed instruction is named, and there are some untyped instructions
-  // that have names (such as `ImportRefUnloaded`).
+  // that have names (such as `ImportRefUnloaded`). When there's a typed
+  // instruction with no name, it means an instruction is incorrectly not named
+  // -- but should be printed as such.
   bool has_name = inst_namer_.has_name(inst_id);
-  if (!has_name) {
-    CARBON_CHECK(!inst.kind().has_type(),
-                 "Missing name for typed instruction: {0}", inst);
+  if (!has_name && !inst.kind().has_type()) {
     return;
   }
 

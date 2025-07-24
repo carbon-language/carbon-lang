@@ -559,32 +559,29 @@ static auto ImportCXXRecordDecl(Context& context, SemIR::LocId loc_id,
 }
 
 // Creates an integer type of the given size.
-static auto MakeIntType(Context& context, IntId size_id) -> TypeExpr {
-  // TODO: Fill in a location for the type once available.
-  auto type_inst_id = MakeIntTypeLiteral(context, Parse::NodeId::None,
-                                         SemIR::IntKind::Signed, size_id);
+static auto MakeIntType(Context& context, IntId size_id, bool is_signed)
+    -> TypeExpr {
+  auto type_inst_id = MakeIntTypeLiteral(
+      context, Parse::NodeId::None,
+      is_signed ? SemIR::IntKind::Signed : SemIR::IntKind::Unsigned, size_id);
   return ExprAsType(context, Parse::NodeId::None, type_inst_id);
 }
 
 // Maps a C++ builtin type to a Carbon type.
 // TODO: Support more builtin types.
-static auto MapBuiltinType(Context& context, const clang::BuiltinType& type)
-    -> TypeExpr {
-  // TODO: Refactor to avoid duplication.
-  switch (type.getKind()) {
-    case clang::BuiltinType::Short:
-      if (context.ast_context().getTypeSize(&type) == 16) {
-        return MakeIntType(context, context.ints().Add(16));
-      }
-      break;
-    case clang::BuiltinType::Int:
-      if (context.ast_context().getTypeSize(&type) == 32) {
-        return MakeIntType(context, context.ints().Add(32));
-      }
-      break;
-    default:
-      break;
+static auto MapBuiltinType(Context& context, clang::QualType qual_type,
+                           const clang::BuiltinType& type) -> TypeExpr {
+  if (type.isInteger()) {
+    auto width = context.ast_context().getIntWidth(qual_type);
+    bool is_signed = type.isSignedInteger();
+    auto int_n_type =
+        context.ast_context().getIntTypeForBitwidth(width, is_signed);
+    if (context.ast_context().hasSameType(qual_type, int_n_type)) {
+      return MakeIntType(context, context.ints().Add(width), is_signed);
+    }
+    // TODO: Handle integer types that map to named aliases.
   }
+
   return {.inst_id = SemIR::TypeInstId::None, .type_id = SemIR::TypeId::None};
 }
 
@@ -615,7 +612,7 @@ static auto MapRecordType(Context& context, SemIR::LocId loc_id,
 static auto MapNonWrapperType(Context& context, SemIR::LocId loc_id,
                               clang::QualType type) -> TypeExpr {
   if (const auto* builtin_type = type->getAs<clang::BuiltinType>()) {
-    return MapBuiltinType(context, *builtin_type);
+    return MapBuiltinType(context, type, *builtin_type);
   }
 
   if (const auto* record_type = type->getAs<clang::RecordType>()) {
