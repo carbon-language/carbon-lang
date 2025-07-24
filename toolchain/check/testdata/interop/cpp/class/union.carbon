@@ -300,7 +300,6 @@ fn MyF(bar: Cpp.Bar*);
 // CHECK:STDOUT:     %bar.param: %ptr = value_param call_param0
 // CHECK:STDOUT:     %.loc7: type = splice_block %ptr [concrete = constants.%ptr] {
 // CHECK:STDOUT:       %Cpp.ref: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
-// CHECK:STDOUT:       <elided>
 // CHECK:STDOUT:       %Bar.ref: type = name_ref Bar, imports.%Bar.decl [concrete = constants.%Bar]
 // CHECK:STDOUT:       %ptr: type = ptr_type %Bar.ref [concrete = constants.%ptr]
 // CHECK:STDOUT:     }
@@ -336,7 +335,6 @@ fn MyF(bar: Cpp.Bar*);
 // CHECK:STDOUT:     %bar.param: %ptr = value_param call_param0
 // CHECK:STDOUT:     %.loc7: type = splice_block %ptr [concrete = constants.%ptr] {
 // CHECK:STDOUT:       %Cpp.ref: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
-// CHECK:STDOUT:       <elided>
 // CHECK:STDOUT:       %Bar.ref: type = name_ref Bar, imports.%Bar.decl [concrete = constants.%Bar]
 // CHECK:STDOUT:       %ptr: type = ptr_type %Bar.ref [concrete = constants.%ptr]
 // CHECK:STDOUT:     }
@@ -367,7 +365,6 @@ fn MyF(bar: Cpp.Bar*);
 // CHECK:STDOUT: fn @MyF() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %Cpp.ref: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
-// CHECK:STDOUT:   <elided>
 // CHECK:STDOUT:   %Bar.ref: type = name_ref Bar, imports.%Bar.decl [concrete = constants.%Bar]
 // CHECK:STDOUT:   %foo.ref: %Bar.foo.type = name_ref foo, imports.%Bar.foo.decl [concrete = constants.%Bar.foo]
 // CHECK:STDOUT:   %Bar.foo.call: init %empty_tuple.type = call %foo.ref()
@@ -400,7 +397,6 @@ fn MyF(bar: Cpp.Bar*);
 // CHECK:STDOUT:   %foo.ref: <error> = name_ref foo, <error> [concrete = <error>]
 // CHECK:STDOUT:   %.loc19: type = splice_block %ptr [concrete = constants.%ptr.f68] {
 // CHECK:STDOUT:     %Cpp.ref.loc19_12: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
-// CHECK:STDOUT:     <elided>
 // CHECK:STDOUT:     %Bar.ref.loc19_15: type = name_ref Bar, imports.%Bar.decl [concrete = constants.%Bar]
 // CHECK:STDOUT:     %ptr: type = ptr_type %Bar.ref.loc19_15 [concrete = constants.%ptr.f68]
 // CHECK:STDOUT:   }
@@ -435,7 +431,6 @@ fn MyF(bar: Cpp.Bar*);
 // CHECK:STDOUT:     %bar.param: %ptr.f68 = value_param call_param0
 // CHECK:STDOUT:     %.loc7: type = splice_block %ptr.loc7 [concrete = constants.%ptr.f68] {
 // CHECK:STDOUT:       %Cpp.ref.loc7: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
-// CHECK:STDOUT:       <elided>
 // CHECK:STDOUT:       %Bar.ref.loc7: type = name_ref Bar, imports.%Bar.decl [concrete = constants.%Bar]
 // CHECK:STDOUT:       %ptr.loc7: type = ptr_type %Bar.ref.loc7 [concrete = constants.%ptr.f68]
 // CHECK:STDOUT:     }
@@ -450,7 +445,7 @@ fn MyF(bar: Cpp.Bar*);
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %bar.ref: %ptr.f68 = name_ref bar, %bar
 // CHECK:STDOUT:   %.loc8_30.1: ref %Bar = deref %bar.ref
-// CHECK:STDOUT:   %foo.ref: %Bar.elem = name_ref foo, <unexpected>.inst24 [concrete = <unexpected>.inst24]
+// CHECK:STDOUT:   %foo.ref: %Bar.elem = name_ref foo, @Bar.%.1 [concrete = @Bar.%.1]
 // CHECK:STDOUT:   %.loc8_30.2: ref %ptr.f68 = class_element_access %.loc8_30.1, element0
 // CHECK:STDOUT:   %.loc8_23: type = splice_block %ptr.loc8 [concrete = constants.%ptr.f68] {
 // CHECK:STDOUT:     %Cpp.ref.loc8: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]

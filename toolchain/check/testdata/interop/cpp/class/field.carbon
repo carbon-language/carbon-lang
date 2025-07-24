@@ -75,6 +75,7 @@ fn H(u: Cpp.Union) -> i32 {
 // CHECK:STDOUT:   %ptr.235: type = ptr_type %i32 [concrete]
 // CHECK:STDOUT:   %Struct.elem.765: type = unbound_element_type %Struct, %ptr.235 [concrete]
 // CHECK:STDOUT:   %.550: type = custom_layout_type {size=16, align=8, .a@0: %i32, .b@4: %i32, .p@8: %ptr.235} [concrete]
+// CHECK:STDOUT:   %complete_type.8cf: <witness> = complete_type_witness %.550 [concrete]
 // CHECK:STDOUT:   %pattern_type.60c: type = pattern_type %Struct [concrete]
 // CHECK:STDOUT:   %tuple.type.ff9: type = tuple_type (type, type, type) [concrete]
 // CHECK:STDOUT:   %tuple.type.189: type = tuple_type (%i32, %i32, %i32) [concrete]
@@ -124,13 +125,6 @@ fn H(u: Cpp.Union) -> i32 {
 // CHECK:STDOUT:     %s.param: %Struct = value_param call_param0
 // CHECK:STDOUT:     %.loc6_12: type = splice_block %Struct.ref [concrete = constants.%Struct] {
 // CHECK:STDOUT:       %Cpp.ref: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
-// CHECK:STDOUT:       %int_32.1: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
-// CHECK:STDOUT:       %i32.1: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
-// CHECK:STDOUT:       %int_32.2: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
-// CHECK:STDOUT:       %i32.2: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
-// CHECK:STDOUT:       %int_32.3: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
-// CHECK:STDOUT:       %i32.3: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
-// CHECK:STDOUT:       %.1: type = custom_layout_type {size=16, align=8, .a@0: %i32, .b@4: %i32, .p@8: %ptr.235} [concrete = constants.%.550]
 // CHECK:STDOUT:       %Struct.ref: type = name_ref Struct, imports.%Struct.decl [concrete = constants.%Struct]
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %s: %Struct = bind_name s, %s.param
@@ -140,28 +134,39 @@ fn H(u: Cpp.Union) -> i32 {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @Struct {
-// CHECK:STDOUT:   complete_type_witness = <unexpected>.inst59
+// CHECK:STDOUT:   %int_32.1: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
+// CHECK:STDOUT:   %i32.1: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
+// CHECK:STDOUT:   %.1: %Struct.elem.86b = field_decl a, element0 [concrete]
+// CHECK:STDOUT:   %int_32.2: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
+// CHECK:STDOUT:   %i32.2: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
+// CHECK:STDOUT:   %.2: %Struct.elem.86b = field_decl b, element1 [concrete]
+// CHECK:STDOUT:   %int_32.3: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
+// CHECK:STDOUT:   %i32.3: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
+// CHECK:STDOUT:   %.3: %Struct.elem.765 = field_decl p, element2 [concrete]
+// CHECK:STDOUT:   %.4: type = custom_layout_type {size=16, align=8, .a@0: %i32, .b@4: %i32, .p@8: %ptr.235} [concrete = constants.%.550]
+// CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %.4 [concrete = constants.%complete_type.8cf]
+// CHECK:STDOUT:   complete_type_witness = %complete_type
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%Struct
-// CHECK:STDOUT:   .a = <unexpected>.inst48
-// CHECK:STDOUT:   .b = <unexpected>.inst51
-// CHECK:STDOUT:   .p = <unexpected>.inst56
+// CHECK:STDOUT:   .a = %.1
+// CHECK:STDOUT:   .b = %.2
+// CHECK:STDOUT:   .p = %.3
 // CHECK:STDOUT:   import Cpp//...
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F(%s.param: %Struct) -> %return.param: %tuple.type.189 {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %s.ref.loc8_11: %Struct = name_ref s, %s
-// CHECK:STDOUT:   %a.ref: %Struct.elem.86b = name_ref a, <unexpected>.inst48 [concrete = <unexpected>.inst48]
+// CHECK:STDOUT:   %a.ref: %Struct.elem.86b = name_ref a, @Struct.%.1 [concrete = @Struct.%.1]
 // CHECK:STDOUT:   %.loc8_12.1: ref %i32 = class_element_access %s.ref.loc8_11, element0
 // CHECK:STDOUT:   %.loc8_12.2: %i32 = bind_value %.loc8_12.1
 // CHECK:STDOUT:   %s.ref.loc8_16: %Struct = name_ref s, %s
-// CHECK:STDOUT:   %b.ref: %Struct.elem.86b = name_ref b, <unexpected>.inst51 [concrete = <unexpected>.inst51]
+// CHECK:STDOUT:   %b.ref: %Struct.elem.86b = name_ref b, @Struct.%.2 [concrete = @Struct.%.2]
 // CHECK:STDOUT:   %.loc8_17.1: ref %i32 = class_element_access %s.ref.loc8_16, element1
 // CHECK:STDOUT:   %.loc8_17.2: %i32 = bind_value %.loc8_17.1
 // CHECK:STDOUT:   %s.ref.loc8_22: %Struct = name_ref s, %s
-// CHECK:STDOUT:   %p.ref: %Struct.elem.765 = name_ref p, <unexpected>.inst56 [concrete = <unexpected>.inst56]
+// CHECK:STDOUT:   %p.ref: %Struct.elem.765 = name_ref p, @Struct.%.3 [concrete = @Struct.%.3]
 // CHECK:STDOUT:   %.loc8_23.1: ref %ptr.235 = class_element_access %s.ref.loc8_22, element2
 // CHECK:STDOUT:   %.loc8_23.2: %ptr.235 = bind_value %.loc8_23.1
 // CHECK:STDOUT:   %.loc8_21.1: ref %i32 = deref %.loc8_23.2
@@ -190,6 +195,7 @@ fn H(u: Cpp.Union) -> i32 {
 // CHECK:STDOUT:   %ptr.235: type = ptr_type %i32 [concrete]
 // CHECK:STDOUT:   %Union.elem.92a: type = unbound_element_type %Union, %ptr.235 [concrete]
 // CHECK:STDOUT:   %.c84: type = custom_layout_type {size=8, align=8, .a@0: %i32, .b@0: %i32, .p@0: %ptr.235} [concrete]
+// CHECK:STDOUT:   %complete_type.1b0: <witness> = complete_type_witness %.c84 [concrete]
 // CHECK:STDOUT:   %pattern_type.a90: type = pattern_type %Union [concrete]
 // CHECK:STDOUT:   %pattern_type.7ce: type = pattern_type %i32 [concrete]
 // CHECK:STDOUT:   %F.type: type = fn_type @F [concrete]
@@ -232,18 +238,11 @@ fn H(u: Cpp.Union) -> i32 {
 // CHECK:STDOUT:     %return.patt: %pattern_type.7ce = return_slot_pattern [concrete]
 // CHECK:STDOUT:     %return.param_patt: %pattern_type.7ce = out_param_pattern %return.patt, call_param1 [concrete]
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %int_32.loc6: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
-// CHECK:STDOUT:     %i32.loc6: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
+// CHECK:STDOUT:     %int_32: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
+// CHECK:STDOUT:     %i32: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
 // CHECK:STDOUT:     %u.param: %Union = value_param call_param0
 // CHECK:STDOUT:     %.loc6: type = splice_block %Union.ref [concrete = constants.%Union] {
 // CHECK:STDOUT:       %Cpp.ref: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
-// CHECK:STDOUT:       %int_32.1: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
-// CHECK:STDOUT:       %i32.1: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
-// CHECK:STDOUT:       %int_32.2: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
-// CHECK:STDOUT:       %i32.2: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
-// CHECK:STDOUT:       %int_32.3: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
-// CHECK:STDOUT:       %i32.3: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
-// CHECK:STDOUT:       %.1: type = custom_layout_type {size=8, align=8, .a@0: %i32, .b@0: %i32, .p@0: %ptr.235} [concrete = constants.%.c84]
 // CHECK:STDOUT:       %Union.ref: type = name_ref Union, imports.%Union.decl [concrete = constants.%Union]
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %u: %Union = bind_name u, %u.param
@@ -287,20 +286,31 @@ fn H(u: Cpp.Union) -> i32 {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @Union {
-// CHECK:STDOUT:   complete_type_witness = <unexpected>.inst59
+// CHECK:STDOUT:   %int_32.1: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
+// CHECK:STDOUT:   %i32.1: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
+// CHECK:STDOUT:   %.1: %Union.elem.041 = field_decl a, element0 [concrete]
+// CHECK:STDOUT:   %int_32.2: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
+// CHECK:STDOUT:   %i32.2: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
+// CHECK:STDOUT:   %.2: %Union.elem.041 = field_decl b, element1 [concrete]
+// CHECK:STDOUT:   %int_32.3: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
+// CHECK:STDOUT:   %i32.3: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
+// CHECK:STDOUT:   %.3: %Union.elem.92a = field_decl p, element2 [concrete]
+// CHECK:STDOUT:   %.4: type = custom_layout_type {size=8, align=8, .a@0: %i32, .b@0: %i32, .p@0: %ptr.235} [concrete = constants.%.c84]
+// CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %.4 [concrete = constants.%complete_type.1b0]
+// CHECK:STDOUT:   complete_type_witness = %complete_type
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%Union
-// CHECK:STDOUT:   .a = <unexpected>.inst48
-// CHECK:STDOUT:   .b = <unexpected>.inst51
-// CHECK:STDOUT:   .p = <unexpected>.inst56
+// CHECK:STDOUT:   .a = %.1
+// CHECK:STDOUT:   .b = %.2
+// CHECK:STDOUT:   .p = %.3
 // CHECK:STDOUT:   import Cpp//...
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F(%u.param: %Union) -> %i32 {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %u.ref: %Union = name_ref u, %u
-// CHECK:STDOUT:   %a.ref: %Union.elem.041 = name_ref a, <unexpected>.inst48 [concrete = <unexpected>.inst48]
+// CHECK:STDOUT:   %a.ref: %Union.elem.041 = name_ref a, @Union.%.1 [concrete = @Union.%.1]
 // CHECK:STDOUT:   %.loc8_11.1: ref %i32 = class_element_access %u.ref, element0
 // CHECK:STDOUT:   %.loc8_11.2: %i32 = bind_value %.loc8_11.1
 // CHECK:STDOUT:   return %.loc8_11.2
@@ -309,7 +319,7 @@ fn H(u: Cpp.Union) -> i32 {
 // CHECK:STDOUT: fn @G(%u.param: %Union) -> %i32 {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %u.ref: %Union = name_ref u, %u
-// CHECK:STDOUT:   %b.ref: %Union.elem.041 = name_ref b, <unexpected>.inst51 [concrete = <unexpected>.inst51]
+// CHECK:STDOUT:   %b.ref: %Union.elem.041 = name_ref b, @Union.%.2 [concrete = @Union.%.2]
 // CHECK:STDOUT:   %.loc14_11.1: ref %i32 = class_element_access %u.ref, element1
 // CHECK:STDOUT:   %.loc14_11.2: %i32 = bind_value %.loc14_11.1
 // CHECK:STDOUT:   return %.loc14_11.2
@@ -318,7 +328,7 @@ fn H(u: Cpp.Union) -> i32 {
 // CHECK:STDOUT: fn @H(%u.param: %Union) -> %i32 {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %u.ref: %Union = name_ref u, %u
-// CHECK:STDOUT:   %p.ref: %Union.elem.92a = name_ref p, <unexpected>.inst56 [concrete = <unexpected>.inst56]
+// CHECK:STDOUT:   %p.ref: %Union.elem.92a = name_ref p, @Union.%.3 [concrete = @Union.%.3]
 // CHECK:STDOUT:   %.loc20_12.1: ref %ptr.235 = class_element_access %u.ref, element2
 // CHECK:STDOUT:   %.loc20_12.2: %ptr.235 = bind_value %.loc20_12.1
 // CHECK:STDOUT:   %.loc20_10.1: ref %i32 = deref %.loc20_12.2

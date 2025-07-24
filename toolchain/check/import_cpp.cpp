@@ -552,7 +552,7 @@ static auto ImportClassObjectRepr(Context& context, SemIR::ImportIRInstId loc,
 
     // Create a field now, as we know the index to use.
     // TODO: Consider doing this lazily instead.
-    auto field_decl_id = AddInstInNoBlock(
+    auto field_decl_id = AddInst(
         context,
         // TODO: Factor out this call.
         SemIR::LocIdAndInst::UncheckedLoc(
@@ -596,14 +596,17 @@ static auto BuildClassDefinition(Context& context, SemIR::ImportIRInstId loc,
       .Get(class_info.scope_id)
       .set_clang_decl_context_id(clang_decl_id);
 
+  context.inst_block_stack().Push();
+
   // Compute the class's object representation.
   auto object_repr_id =
       ImportClassObjectRepr(context, loc, class_inst_id, clang_def);
-  class_info.complete_type_witness_id =
-      AddInstInNoBlock<SemIR::CompleteTypeWitness>(
-          context, loc,
-          {.type_id = GetSingletonType(context, SemIR::WitnessType::TypeInstId),
-           .object_repr_type_inst_id = object_repr_id});
+  class_info.complete_type_witness_id = AddInst<SemIR::CompleteTypeWitness>(
+      context, loc,
+      {.type_id = GetSingletonType(context, SemIR::WitnessType::TypeInstId),
+       .object_repr_type_inst_id = object_repr_id});
+
+  class_info.body_block_id = context.inst_block_stack().Pop();
 }
 
 // Mark the given `Decl` as failed in `clang_decls`.
