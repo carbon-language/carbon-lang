@@ -16,13 +16,17 @@ library "[[@TEST_NAME]]";
 
 fn Run() {
   // TODO: These diagnostics could be better. If nothing else, we should only diagnose once.
+  // CHECK:STDERR: fail_not_range.carbon:[[@LINE+12]]:7: error: cannot access member of interface `Core.Iterate` in type `{}` that does not implement that interface [MissingImplInMemberAccess]
+  // CHECK:STDERR:   for (c: {} in {}) {
+  // CHECK:STDERR:       ^~~~~~~~~~~~~
+  // CHECK:STDERR:
   // CHECK:STDERR: fail_not_range.carbon:[[@LINE+8]]:7: error: cannot access member of interface `Core.Iterate` in type `{}` that does not implement that interface [MissingImplInMemberAccess]
   // CHECK:STDERR:   for (c: {} in {}) {
   // CHECK:STDERR:       ^~~~~~~~~~~~~
   // CHECK:STDERR:
-  // CHECK:STDERR: fail_not_range.carbon:[[@LINE+4]]:7: error: cannot access member of interface `Core.Iterate` in type `{}` that does not implement that interface [MissingImplInMemberAccess]
-  // CHECK:STDERR:   for (c: {} in {}) {
-  // CHECK:STDERR:       ^~~~~~~~~~~~~
+  // CHECK:STDERR: min_prelude/parts/optional.carbon:5:1: error: imported API 'Core//prelude/parts/destroy.carbon' not found [ImportNotFound]
+  // CHECK:STDERR: import library "prelude/parts/destroy.carbon";
+  // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
   // CHECK:STDERR:
   for (c: {} in {}) {
   }
