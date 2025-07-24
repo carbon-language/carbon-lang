@@ -500,6 +500,12 @@ CARBON_DIAGNOSTIC_KIND(GenericMissingExplicitParameters)
 CARBON_DIAGNOSTIC_KIND(TuplePatternSizeDoesntMatchLiteral)
 
 // ============================================================================
+// CodeGen diagnostics
+// ============================================================================
+
+CARBON_DIAGNOSTIC_KIND(CodeGenUnableToEmit)
+
+// ============================================================================
 // Language server diagnostics
 // ============================================================================
 

@@ -741,8 +741,7 @@ auto CompilationUnit::PostCompile() -> void {
 
 auto CompilationUnit::RunCodeGenHelper() -> bool {
   std::optional<CodeGen> codegen =
-      CodeGen::Make(module_.get(), options_->codegen_options.target,
-                    driver_env_->error_stream);
+      CodeGen::Make(module_.get(), options_->codegen_options.target, consumer_);
   if (!codegen) {
     return false;
   }

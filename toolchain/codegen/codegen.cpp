@@ -13,15 +13,16 @@
 #include "llvm/MC/TargetRegistry.h"
 #include "llvm/Target/TargetOptions.h"
 #include "llvm/TargetParser/Host.h"
+#include "toolchain/diagnostics/diagnostic_consumer.h"
 
 namespace Carbon {
 
 auto CodeGen::Make(llvm::Module* module, llvm::StringRef target_triple_str,
-                   llvm::raw_pwrite_stream* errors) -> std::optional<CodeGen> {
+                   Diagnostics::Consumer* consumer) -> std::optional<CodeGen> {
   std::string error;
   const llvm::Target* target =
       llvm::TargetRegistry::lookupTarget(target_triple_str, error);
-  CARBON_CHECK(target, "Target should be validated before codegen");
+  CARBON_CHECK(target, "Target should be validated before codegen: {0}", error);
 
   llvm::Triple target_triple(target_triple_str);
   module->setTargetTriple(target_triple);
@@ -30,7 +31,8 @@ auto CodeGen::Make(llvm::Module* module, llvm::StringRef target_triple_str,
   constexpr llvm::StringLiteral Features = "";
 
   llvm::TargetOptions target_opts;
-  CodeGen codegen(module, errors);
+  CodeGen codegen(module,
+                  consumer ? consumer : &Diagnostics::ConsoleConsumer());
   codegen.target_machine_.reset(target->createTargetMachine(
       target_triple, CPU, Features, target_opts, llvm::Reloc::PIC_));
   return codegen;
@@ -54,7 +56,9 @@ auto CodeGen::EmitCode(llvm::raw_pwrite_stream& out,
   llvm::legacy::PassManager pass;
   // Note that this returns true on an error.
   if (target_machine_->addPassesToEmitFile(pass, out, nullptr, file_type)) {
-    *errors_ << "error: unable to emit to this file\n";
+    CARBON_DIAGNOSTIC(CodeGenUnableToEmit, Error,
+                      "unable to emit to this file");
+    emitter_.Emit(module_->getName(), CodeGenUnableToEmit);
     return false;
   }
 
