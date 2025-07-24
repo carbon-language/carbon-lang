@@ -292,6 +292,7 @@ cc_test(
     size = "small",
     srcs = ["yaml_test.cpp"],
     deps = [
+        "//common:all_llvm_targets",
         "//common:ostream",
         "//common:raw_string_ostream",
         "//testing/base:global_exe_path",

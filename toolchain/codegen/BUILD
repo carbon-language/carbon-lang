@@ -16,6 +16,7 @@ cc_library(
     srcs = ["codegen.cpp"],
     hdrs = ["codegen.h"],
     deps = [
+        "//common:check",
         "@llvm-project//llvm:Core",
         "@llvm-project//llvm:MC",
         "@llvm-project//llvm:Support",

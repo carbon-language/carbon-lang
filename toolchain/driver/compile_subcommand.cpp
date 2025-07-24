@@ -15,6 +15,7 @@
 #include "common/vlog.h"
 #include "llvm/ADT/STLExtras.h"
 #include "llvm/ADT/ScopeExit.h"
+#include "llvm/MC/TargetRegistry.h"
 #include "toolchain/base/clang_invocation.h"
 #include "toolchain/base/timings.h"
 #include "toolchain/check/check.h"
@@ -844,6 +845,17 @@ auto CompileSubcommand::Run(DriverEnv& driver_env) -> DriverResult {
     return {.success = false};
   }
 
+  // Validate the target before passing it to Clang.
+  std::string target_error;
+  const llvm::Target* target = llvm::TargetRegistry::lookupTarget(
+      options_.codegen_options.target, target_error);
+  if (!target) {
+    CARBON_DIAGNOSTIC(CompileTargetInvalid, Error, "invalid target: {0}",
+                      std::string);
+    driver_env.emitter.Emit(CompileTargetInvalid, target_error);
+    return {.success = false};
+  }
+
   std::shared_ptr<clang::CompilerInvocation> clang_invocation;
   // Build a clang invocation. We do this regardless of whether we're running
   // check, because this is essentially performing further option validation,
@@ -862,6 +874,10 @@ auto CompileSubcommand::Run(DriverEnv& driver_env) -> DriverResult {
         // TODO: Decide if we want this.
         "-fPIE",
     };
+    if (driver_env.fuzzing && !options_.clang_args.empty()) {
+      DisableFuzzingExternalLibraries(driver_env, "compile");
+      return {.success = false};
+    }
     for (auto str : options_.clang_args) {
       clang_path_and_args.push_back(str.str());
     }

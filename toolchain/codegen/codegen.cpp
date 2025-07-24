@@ -8,6 +8,7 @@
 #include <optional>
 #include <string>
 
+#include "common/check.h"
 #include "llvm/IR/LegacyPassManager.h"
 #include "llvm/MC/TargetRegistry.h"
 #include "llvm/Target/TargetOptions.h"
@@ -20,11 +21,8 @@ auto CodeGen::Make(llvm::Module* module, llvm::StringRef target_triple_str,
   std::string error;
   const llvm::Target* target =
       llvm::TargetRegistry::lookupTarget(target_triple_str, error);
+  CARBON_CHECK(target, "Target should be validated before codegen");
 
-  if (!target) {
-    *errors << "error: invalid target: " << error << "\n";
-    return {};
-  }
   llvm::Triple target_triple(target_triple_str);
   module->setTargetTriple(target_triple);
 
