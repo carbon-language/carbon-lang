@@ -10,7 +10,7 @@
 package Core library "prelude/parts/optional";
 
 import library "prelude/parts/bool";
-import library "prelude/parts/destroy.carbon";
+import library "prelude/parts/destroy";
 
 class Optional(T:! type) {
   fn None() -> Self {

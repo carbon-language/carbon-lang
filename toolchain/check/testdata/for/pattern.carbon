@@ -107,16 +107,12 @@ class X {}
 class Y {}
 
 fn Run() {
-  // CHECK:STDERR: fail_bad_pattern.carbon:[[@LINE+11]]:7: error: cannot implicitly convert expression of type `Y` to `X` [ConversionFailure]
+  // CHECK:STDERR: fail_bad_pattern.carbon:[[@LINE+7]]:7: error: cannot implicitly convert expression of type `Y` to `X` [ConversionFailure]
   // CHECK:STDERR:   for (x: X in EmptyRange(Y).Make()) {
   // CHECK:STDERR:       ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-  // CHECK:STDERR: fail_bad_pattern.carbon:[[@LINE+8]]:7: note: type `Y` does not implement interface `Core.ImplicitAs(X)` [MissingImplInMemberAccessNote]
+  // CHECK:STDERR: fail_bad_pattern.carbon:[[@LINE+4]]:7: note: type `Y` does not implement interface `Core.ImplicitAs(X)` [MissingImplInMemberAccessNote]
   // CHECK:STDERR:   for (x: X in EmptyRange(Y).Make()) {
   // CHECK:STDERR:       ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-  // CHECK:STDERR:
-  // CHECK:STDERR: min_prelude/parts/optional.carbon:5:1: error: imported API 'Core//prelude/parts/destroy.carbon' not found [ImportNotFound]
-  // CHECK:STDERR: import library "prelude/parts/destroy.carbon";
-  // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
   // CHECK:STDERR:
   for (x: X in EmptyRange(Y).Make()) {
   }
