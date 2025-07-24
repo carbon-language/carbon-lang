@@ -2,7 +2,7 @@
 // Exceptions. See /LICENSE for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
-// INCLUDE-FILE: toolchain/testing/testdata/min_prelude/destroy.carbon
+// INCLUDE-FILE: toolchain/testing/testdata/min_prelude/convert.carbon
 //
 // AUTOUPDATE
 // TIP: To test this file alone, run:
@@ -138,7 +138,10 @@ import Cpp library "definition_single_data_member_value_param_type.h";
 
 fn F() {
   //@dump-sem-ir-begin
-  // CHECK:STDERR: import_definition_single_data_member_value_param_type.carbon:[[@LINE+5]]:11: error: name `Core.ImplicitAs` implicitly referenced here, but not found [CoreNameNotFound]
+  // CHECK:STDERR: import_definition_single_data_member_value_param_type.carbon:[[@LINE+8]]:11: error: cannot implicitly convert expression of type `{}` to `Cpp.C` [ConversionFailure]
+  // CHECK:STDERR:   Cpp.foo({});
+  // CHECK:STDERR:           ^~
+  // CHECK:STDERR: import_definition_single_data_member_value_param_type.carbon:[[@LINE+5]]:11: note: type `{}` does not implement interface `Core.ImplicitAs(Cpp.C)` [MissingImplInMemberAccessNote]
   // CHECK:STDERR:   Cpp.foo({});
   // CHECK:STDERR:           ^~
   // CHECK:STDERR: import_definition_single_data_member_value_param_type.carbon: note: initializing function parameter [InCallToFunctionParam]
@@ -171,7 +174,10 @@ import Cpp library "definition_multiple_data_members_value_param_type.h";
 
 fn F() {
   //@dump-sem-ir-begin
-  // CHECK:STDERR: import_definition_multiple_data_members_value_param_type.carbon:[[@LINE+5]]:11: error: name `Core.ImplicitAs` implicitly referenced here, but not found [CoreNameNotFound]
+  // CHECK:STDERR: import_definition_multiple_data_members_value_param_type.carbon:[[@LINE+8]]:11: error: cannot implicitly convert expression of type `{}` to `Cpp.C` [ConversionFailure]
+  // CHECK:STDERR:   Cpp.foo({});
+  // CHECK:STDERR:           ^~
+  // CHECK:STDERR: import_definition_multiple_data_members_value_param_type.carbon:[[@LINE+5]]:11: note: type `{}` does not implement interface `Core.ImplicitAs(Cpp.C)` [MissingImplInMemberAccessNote]
   // CHECK:STDERR:   Cpp.foo({});
   // CHECK:STDERR:           ^~
   // CHECK:STDERR: import_definition_multiple_data_members_value_param_type.carbon: note: initializing function parameter [InCallToFunctionParam]
