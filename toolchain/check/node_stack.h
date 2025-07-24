@@ -466,6 +466,9 @@ class NodeStack {
       case Parse::NodeKind::TuplePatternStart:
       case Parse::NodeKind::VariableInitializer:
       case Parse::NodeKind::VariableIntroducer:
+      case Parse::NodeKind::AssociatedConstantIntroducer:
+      case Parse::NodeKind::AssociatedConstantInitializer:
+      case Parse::NodeKind::AssociatedConstantNameAndType:
         return Id::Kind::None;
       case Parse::NodeKind::AdaptIntroducer:
       case Parse::NodeKind::AliasInitializer:

@@ -179,6 +179,11 @@ CARBON_PARSE_NODE_KIND(LetIntroducer)
 CARBON_PARSE_NODE_KIND(LetInitializer)
 CARBON_PARSE_NODE_KIND(LetDecl)
 
+CARBON_PARSE_NODE_KIND(AssociatedConstantIntroducer)
+CARBON_PARSE_NODE_KIND(AssociatedConstantInitializer)
+CARBON_PARSE_NODE_KIND(AssociatedConstantDecl)
+CARBON_PARSE_NODE_KIND(AssociatedConstantNameAndType)
+
 CARBON_PARSE_NODE_KIND(VariableIntroducer)
 CARBON_PARSE_NODE_KIND(ReturnedModifier)
 CARBON_PARSE_NODE_KIND(VariableInitializer)

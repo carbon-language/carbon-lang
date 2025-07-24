@@ -532,6 +532,42 @@ struct LetDecl {
   Lex::SemiTokenIndex token;
 };
 
+// `associated constant` nodes
+// ----------------------------
+
+using AssociatedConstantIntroducer =
+    LeafNode<NodeKind::AssociatedConstantIntroducer, Lex::LetTokenIndex>;
+
+using AssociatedConstantInitializer =
+    LeafNode<NodeKind::AssociatedConstantInitializer, Lex::EqualTokenIndex>;
+
+// An associated constant declaration: `let a:! i32 = 5;`.
+struct AssociatedConstantDecl {
+  static constexpr auto Kind = NodeKind::AssociatedConstantDecl.Define(
+      {.category = NodeCategory::Decl,
+       .bracketed_by = AssociatedConstantIntroducer::Kind});
+
+  AssociatedConstantIntroducerId introducer;
+  llvm::SmallVector<AnyModifierId> modifiers;
+  AssociatedConstantNameAndTypeId name_and_type;
+
+  struct Initializer {
+    AssociatedConstantInitializerId equals;
+    AnyExprId initializer;
+  };
+  std::optional<Initializer> initializer;
+  Lex::SemiTokenIndex token;
+};
+
+struct AssociatedConstantNameAndType {
+  static constexpr auto Kind =
+      NodeKind::AssociatedConstantNameAndType.Define({.child_count = 2});
+
+  IdentifierNameNotBeforeParamsId name;
+  Lex::ColonExclaimTokenIndex token;
+  AnyExprId type;
+};
+
 // `var` nodes
 // -----------
 

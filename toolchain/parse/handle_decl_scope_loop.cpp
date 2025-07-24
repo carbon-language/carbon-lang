@@ -48,7 +48,8 @@ namespace {
 enum DeclContextKind : int8_t {
   NonClassContext = 0,
   ClassContext = 1,
-  MaxDeclContextKind = ClassContext,
+  InterfaceContext = 2,
+  MaxDeclContextKind = InterfaceContext,
 };
 
 // The kind of declaration introduced by an introducer keyword.
@@ -70,6 +71,9 @@ static constexpr auto DeclIntroducers = [] {
   std::array<DeclIntroducerInfo, MaxDeclContextKind + 1> introducers[] = {
 #define CARBON_TOKEN(Name)                                \
   {{{.introducer_kind = DeclIntroducerKind::Unrecognized, \
+     .node_kind = NodeKind::InvalidParse,                 \
+     .state_kind = StateKind::Invalid},                   \
+    {.introducer_kind = DeclIntroducerKind::Unrecognized, \
      .node_kind = NodeKind::InvalidParse,                 \
      .state_kind = StateKind::Invalid},                   \
     {.introducer_kind = DeclIntroducerKind::Unrecognized, \
@@ -126,7 +130,11 @@ static constexpr auto DeclIntroducers = [] {
       StateKind::TypeAfterIntroducerAsInterface);
   set(Lex::TokenKind::Namespace, NodeKind::NamespaceStart,
       StateKind::Namespace);
-  set(Lex::TokenKind::Let, NodeKind::LetIntroducer, StateKind::Let);
+  set_contextual(Lex::TokenKind::Let, NonClassContext, NodeKind::LetIntroducer,
+                 StateKind::Let);
+  set_contextual(Lex::TokenKind::Let, InterfaceContext,
+                 NodeKind::AssociatedConstantIntroducer,
+                 StateKind::AssociatedConstantDecl);
   set_contextual(Lex::TokenKind::Var, NonClassContext,
                  NodeKind::VariableIntroducer, StateKind::VarAsRegular);
   set_contextual(Lex::TokenKind::Var, ClassContext, NodeKind::FieldIntroducer,
@@ -294,6 +302,10 @@ auto HandleDeclAsClass(Context& context) -> void {
   HandleDecl(context, ClassContext);
 }
 
+auto HandleDeclAsInterface(Context& context) -> void {
+  HandleDecl(context, InterfaceContext);
+}
+
 auto HandleDeclAsNonClass(Context& context) -> void {
   HandleDecl(context, NonClassContext);
 }
@@ -313,6 +325,10 @@ static auto HandleDeclScopeLoop(Context& context, StateKind decl_state_kind)
 
 auto HandleDeclScopeLoopAsClass(Context& context) -> void {
   HandleDeclScopeLoop(context, StateKind::DeclAsClass);
+}
+
+auto HandleDeclScopeLoopAsInterface(Context& context) -> void {
+  HandleDeclScopeLoop(context, StateKind::DeclAsInterface);
 }
 
 auto HandleDeclScopeLoopAsNonClass(Context& context) -> void {

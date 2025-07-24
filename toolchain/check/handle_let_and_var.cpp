@@ -381,4 +381,28 @@ auto HandleParseNode(Context& context, Parse::FieldDeclId node_id) -> bool {
   return true;
 }
 
+auto HandleParseNode(Context& context,
+                     Parse::AssociatedConstantIntroducerId node_id) -> bool {
+  context.TODO(node_id, "Not yet implemented");
+  return true;
+}
+
+auto HandleParseNode(Context& context,
+                     Parse::AssociatedConstantInitializerId node_id) -> bool {
+  context.TODO(node_id, "Not yet implemented");
+  return true;
+}
+
+auto HandleParseNode(Context& context, Parse::AssociatedConstantDeclId node_id)
+    -> bool {
+  context.TODO(node_id, "Not yet implemented");
+  return true;
+}
+
+auto HandleParseNode(Context& context,
+                     Parse::AssociatedConstantNameAndTypeId node_id) -> bool {
+  context.TODO(node_id, "Not yet implemented");
+  return true;
+}
+
 }  // namespace Carbon::Check
