@@ -732,12 +732,13 @@ constexpr StructTypeFieldsId StructTypeFieldsId::Empty = StructTypeFieldsId(0);
 struct CustomLayoutId : public IdBase<CustomLayoutId> {
   static constexpr llvm::StringLiteral Label = "custom_layout";
 
-  // The canonical empty block. This is never used, but needed by BlockValueStore.
+  // The canonical empty block. This is never used, but needed by
+  // BlockValueStore.
   static const CustomLayoutId Empty;
 
   // The index in a custom layout of the overall size field.
   static constexpr int SizeIndex = 0;
-  // The index in a custom layout of the overall alignmnet field.
+  // The index in a custom layout of the overall alignment field.
   static constexpr int AlignIndex = 1;
   // The index in a custom layout of the offset of the first struct field.
   static constexpr int FirstFieldIndex = 2;

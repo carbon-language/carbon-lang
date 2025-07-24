@@ -128,8 +128,8 @@ static auto GetAggregateElement(FunctionContext& context,
 
 static auto GetStructFieldName(FunctionContext::TypeInFile struct_type,
                                SemIR::ElementIndex index) -> llvm::StringRef {
-  auto struct_type_inst =
-      struct_type.file->types().GetAs<SemIR::AnyStructType>(struct_type.type_id);
+  auto struct_type_inst = struct_type.file->types().GetAs<SemIR::AnyStructType>(
+      struct_type.type_id);
   auto fields =
       struct_type.file->struct_type_fields().Get(struct_type_inst.fields_id);
   // We intentionally don't add this to the fingerprint because it's only used

@@ -245,7 +245,7 @@ static auto GenerateAst(Context& context,
   invocation->getPreprocessorOpts().addRemappedFile(file_name,
                                                     includes_buffer.get());
 
-// Create the AST unit.
+  // Create the AST unit.
   auto ast = clang::ASTUnit::LoadFromCompilerInvocation(
       invocation, std::make_shared<clang::PCHContainerOperations>(), nullptr,
       diags, new clang::FileManager(invocation->getFileSystemOpts(), fs));
@@ -538,7 +538,7 @@ static auto ImportClassObjectRepr(Context& context, SemIR::ImportIRInstId loc,
   // Import fields.
   for (auto* field : clang_def->fields()) {
     if (field->isBitField()) {
-      // TODO: Add a represntation for named bitfield members.
+      // TODO: Add a representation for named bitfield members.
       continue;
     }
     if (field->isAnonymousStructOrUnion()) {
@@ -568,8 +568,8 @@ static auto ImportClassObjectRepr(Context& context, SemIR::ImportIRInstId loc,
                          .toCharUnitsFromBits(clang_layout.getFieldOffset(
                              field->getFieldIndex()))
                          .getQuantity());
-    fields.push_back({.name_id = field_name_id,
-                      .type_inst_id = field_type_inst_id});
+    fields.push_back(
+        {.name_id = field_name_id, .type_inst_id = field_type_inst_id});
   }
 
   // TODO: Add a field to prevent tail padding reuse if necessary.
