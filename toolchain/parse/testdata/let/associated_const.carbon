@@ -10,7 +10,7 @@
 
 interface MagicBox {
   let secretMessage:! String;
-} 
+}
 
 // CHECK:STDOUT: - filename: associated_const.carbon
 // CHECK:STDOUT:   parse_tree: [

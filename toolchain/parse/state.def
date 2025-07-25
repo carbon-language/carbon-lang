@@ -1425,7 +1425,6 @@ CARBON_PARSE_STATE(FieldDecl)
 //   3. LetFinishAsLet
 CARBON_PARSE_STATE(Let)
 
-
 // Handles the start of a `let` (as an associated constant).
 //
 // let ...

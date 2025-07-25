@@ -14,7 +14,7 @@ interface MagicBox {
   // CHECK:STDERR:                              ^
   // CHECK:STDERR:
   let secretMessage:! String = "This is a super secret";
-} 
+}
 
 // CHECK:STDOUT: - filename: fail_associated_const_default_initializer.carbon
 // CHECK:STDOUT:   parse_tree: [
