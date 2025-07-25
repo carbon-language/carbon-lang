@@ -77,13 +77,6 @@ auto HandleLetAfterPatternAsAssociatedConstant(Context& context) -> void {
 
   context.AddNode(NodeKind::AssociatedConstantNameAndType, state.token,
                   state.has_error);
-
-  if (context.PositionIs(Lex::TokenKind::Equal)) {
-    CARBON_DIAGNOSTIC(ExpectedDeclSemi, Error,
-                      "expected `;` in associated constant declaration");
-    context.emitter().Emit(*context.position(), ExpectedDeclSemi);
-    state.has_error = true;
-  }
 }
 
 auto HandleLetFinishAsLet(Context& context) -> void {
