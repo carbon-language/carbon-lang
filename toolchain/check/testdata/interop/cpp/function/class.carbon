@@ -130,7 +130,7 @@ class C {
 
 auto foo(C) -> void;
 
-// --- import_definition_single_data_member_value_param_type.carbon
+// --- fail_todo_import_definition_single_data_member_value_param_type.carbon
 
 library "[[@TEST_NAME]]";
 
@@ -138,13 +138,13 @@ import Cpp library "definition_single_data_member_value_param_type.h";
 
 fn F() {
   //@dump-sem-ir-begin
-  // CHECK:STDERR: import_definition_single_data_member_value_param_type.carbon:[[@LINE+8]]:11: error: cannot implicitly convert expression of type `{}` to `Cpp.C` [ConversionFailure]
+  // CHECK:STDERR: fail_todo_import_definition_single_data_member_value_param_type.carbon:[[@LINE+8]]:11: error: cannot implicitly convert expression of type `{}` to `Cpp.C` [ConversionFailure]
   // CHECK:STDERR:   Cpp.foo({});
   // CHECK:STDERR:           ^~
-  // CHECK:STDERR: import_definition_single_data_member_value_param_type.carbon:[[@LINE+5]]:11: note: type `{}` does not implement interface `Core.ImplicitAs(Cpp.C)` [MissingImplInMemberAccessNote]
+  // CHECK:STDERR: fail_todo_import_definition_single_data_member_value_param_type.carbon:[[@LINE+5]]:11: note: type `{}` does not implement interface `Core.ImplicitAs(Cpp.C)` [MissingImplInMemberAccessNote]
   // CHECK:STDERR:   Cpp.foo({});
   // CHECK:STDERR:           ^~
-  // CHECK:STDERR: import_definition_single_data_member_value_param_type.carbon: note: initializing function parameter [InCallToFunctionParam]
+  // CHECK:STDERR: fail_todo_import_definition_single_data_member_value_param_type.carbon: note: initializing function parameter [InCallToFunctionParam]
   // CHECK:STDERR:
   Cpp.foo({});
   //@dump-sem-ir-end
@@ -166,7 +166,7 @@ class C {
 
 auto foo(C) -> void;
 
-// --- import_definition_multiple_data_members_value_param_type.carbon
+// --- fail_todo_import_definition_multiple_data_members_value_param_type.carbon
 
 library "[[@TEST_NAME]]";
 
@@ -174,13 +174,13 @@ import Cpp library "definition_multiple_data_members_value_param_type.h";
 
 fn F() {
   //@dump-sem-ir-begin
-  // CHECK:STDERR: import_definition_multiple_data_members_value_param_type.carbon:[[@LINE+8]]:11: error: cannot implicitly convert expression of type `{}` to `Cpp.C` [ConversionFailure]
+  // CHECK:STDERR: fail_todo_import_definition_multiple_data_members_value_param_type.carbon:[[@LINE+8]]:11: error: cannot implicitly convert expression of type `{}` to `Cpp.C` [ConversionFailure]
   // CHECK:STDERR:   Cpp.foo({});
   // CHECK:STDERR:           ^~
-  // CHECK:STDERR: import_definition_multiple_data_members_value_param_type.carbon:[[@LINE+5]]:11: note: type `{}` does not implement interface `Core.ImplicitAs(Cpp.C)` [MissingImplInMemberAccessNote]
+  // CHECK:STDERR: fail_todo_import_definition_multiple_data_members_value_param_type.carbon:[[@LINE+5]]:11: note: type `{}` does not implement interface `Core.ImplicitAs(Cpp.C)` [MissingImplInMemberAccessNote]
   // CHECK:STDERR:   Cpp.foo({});
   // CHECK:STDERR:           ^~
-  // CHECK:STDERR: import_definition_multiple_data_members_value_param_type.carbon: note: initializing function parameter [InCallToFunctionParam]
+  // CHECK:STDERR: fail_todo_import_definition_multiple_data_members_value_param_type.carbon: note: initializing function parameter [InCallToFunctionParam]
   // CHECK:STDERR:
   Cpp.foo({});
   //@dump-sem-ir-end
@@ -307,7 +307,7 @@ class C;
 
 auto foo(C* _Nonnull) -> void;
 
-// --- fail_todo_import_decl_pointer_param_type.carbon
+// --- import_decl_pointer_param_type.carbon
 
 library "[[@TEST_NAME]]";
 
@@ -400,7 +400,7 @@ class C;
 
 auto foo() -> C* _Nonnull;
 
-// --- fail_todo_import_decl_pointer_return_type.carbon
+// --- import_decl_pointer_return_type.carbon
 
 library "[[@TEST_NAME]]";
 
@@ -479,7 +479,7 @@ fn F() {
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- import_definition_single_data_member_value_param_type.carbon
+// CHECK:STDOUT: --- fail_todo_import_definition_single_data_member_value_param_type.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [concrete]
@@ -505,13 +505,13 @@ fn F() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %Cpp.ref: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
 // CHECK:STDOUT:   %foo.ref: %foo.type = name_ref foo, imports.%foo.decl [concrete = constants.%foo]
-// CHECK:STDOUT:   %.loc13_12.1: %empty_struct_type = struct_literal ()
-// CHECK:STDOUT:   %.loc13_12.2: %C = converted %.loc13_12.1, <error> [concrete = <error>]
+// CHECK:STDOUT:   %.loc16_12.1: %empty_struct_type = struct_literal ()
+// CHECK:STDOUT:   %.loc16_12.2: %C = converted %.loc16_12.1, <error> [concrete = <error>]
 // CHECK:STDOUT:   %foo.call: init %empty_tuple.type = call %foo.ref(<error>)
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- import_definition_multiple_data_members_value_param_type.carbon
+// CHECK:STDOUT: --- fail_todo_import_definition_multiple_data_members_value_param_type.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [concrete]
@@ -537,8 +537,8 @@ fn F() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %Cpp.ref: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
 // CHECK:STDOUT:   %foo.ref: %foo.type = name_ref foo, imports.%foo.decl [concrete = constants.%foo]
-// CHECK:STDOUT:   %.loc13_12.1: %empty_struct_type = struct_literal ()
-// CHECK:STDOUT:   %.loc13_12.2: %C = converted %.loc13_12.1, <error> [concrete = <error>]
+// CHECK:STDOUT:   %.loc16_12.1: %empty_struct_type = struct_literal ()
+// CHECK:STDOUT:   %.loc16_12.2: %C = converted %.loc16_12.1, <error> [concrete = <error>]
 // CHECK:STDOUT:   %foo.call: init %empty_tuple.type = call %foo.ref(<error>)
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
@@ -836,7 +836,7 @@ fn F() {
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- fail_todo_import_decl_pointer_param_type.carbon
+// CHECK:STDOUT: --- import_decl_pointer_param_type.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %C: type = class_type @C [concrete]
@@ -941,7 +941,7 @@ fn F() {
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- fail_todo_import_decl_pointer_return_type.carbon
+// CHECK:STDOUT: --- import_decl_pointer_return_type.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %C: type = class_type @C [concrete]

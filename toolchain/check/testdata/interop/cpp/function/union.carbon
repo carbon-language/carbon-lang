@@ -303,7 +303,7 @@ union U;
 
 auto foo(U* _Nonnull) -> void;
 
-// --- fail_todo_import_decl_pointer_param_type.carbon
+// --- import_decl_pointer_param_type.carbon
 
 library "[[@TEST_NAME]]";
 
@@ -869,7 +869,7 @@ fn F() {
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- fail_todo_import_decl_pointer_param_type.carbon
+// CHECK:STDOUT: --- import_decl_pointer_param_type.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %U: type = class_type @U [concrete]

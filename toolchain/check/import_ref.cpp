@@ -15,6 +15,7 @@
 #include "toolchain/check/context.h"
 #include "toolchain/check/eval.h"
 #include "toolchain/check/generic.h"
+#include "toolchain/check/import.h"
 #include "toolchain/check/inst.h"
 #include "toolchain/check/name_lookup.h"
 #include "toolchain/check/type.h"
@@ -3438,40 +3439,5 @@ auto ImportImpl(Context& context, SemIR::ImportIRId import_ir_id,
                        .Get(impl_id)
                        .first_decl_id());
 }
-
-// Returns whether a parse node associated with an imported instruction of kind
-// `imported_kind` is usable as the location of a corresponding local
-// instruction of kind `local_kind`.
-static auto HasCompatibleImportedNodeKind(SemIR::InstKind imported_kind,
-                                          SemIR::InstKind local_kind) -> bool {
-  if (imported_kind == local_kind) {
-    return true;
-  }
-  if (imported_kind == SemIR::ImportDecl::Kind &&
-      local_kind == SemIR::Namespace::Kind) {
-    static_assert(
-        std::is_convertible_v<decltype(SemIR::ImportDecl::Kind)::TypedNodeId,
-                              decltype(SemIR::Namespace::Kind)::TypedNodeId>);
-    return true;
-  }
-  return false;
-}
-
-namespace Internal {
-
-auto CheckCompatibleImportedNodeKind(Context& context,
-                                     SemIR::ImportIRInstId imported_loc_id,
-                                     SemIR::InstKind kind) -> void {
-  auto& import_ir_inst = context.import_ir_insts().Get(imported_loc_id);
-  const auto* import_ir =
-      context.import_irs().Get(import_ir_inst.ir_id()).sem_ir;
-  auto imported_kind = import_ir->insts().Get(import_ir_inst.inst_id()).kind();
-  CARBON_CHECK(
-      HasCompatibleImportedNodeKind(imported_kind, kind),
-      "Node of kind {0} created with location of imported node of kind {1}",
-      kind, imported_kind);
-}
-
-}  // namespace Internal
 
 }  // namespace Carbon::Check

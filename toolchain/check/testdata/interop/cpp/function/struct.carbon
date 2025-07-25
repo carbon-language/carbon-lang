@@ -130,7 +130,7 @@ struct S {
 
 auto foo(S) -> void;
 
-// --- import_definition_single_data_member_value_param_type.carbon
+// --- fail_todo_import_definition_single_data_member_value_param_type.carbon
 
 library "[[@TEST_NAME]]";
 
@@ -138,10 +138,10 @@ import Cpp library "definition_single_data_member_value_param_type.h";
 
 fn F() {
   //@dump-sem-ir-begin
-  // CHECK:STDERR: import_definition_single_data_member_value_param_type.carbon:[[@LINE+5]]:11: error: name `Core.ImplicitAs` implicitly referenced here, but not found [CoreNameNotFound]
+  // CHECK:STDERR: fail_todo_import_definition_single_data_member_value_param_type.carbon:[[@LINE+5]]:11: error: name `Core.ImplicitAs` implicitly referenced here, but not found [CoreNameNotFound]
   // CHECK:STDERR:   Cpp.foo({});
   // CHECK:STDERR:           ^~
-  // CHECK:STDERR: import_definition_single_data_member_value_param_type.carbon: note: initializing function parameter [InCallToFunctionParam]
+  // CHECK:STDERR: fail_todo_import_definition_single_data_member_value_param_type.carbon: note: initializing function parameter [InCallToFunctionParam]
   // CHECK:STDERR:
   Cpp.foo({});
   //@dump-sem-ir-end
@@ -163,7 +163,7 @@ struct S {
 
 auto foo(S) -> void;
 
-// --- import_definition_multiple_data_members_value_param_type.carbon
+// --- fail_todo_import_definition_multiple_data_members_value_param_type.carbon
 
 library "[[@TEST_NAME]]";
 
@@ -171,10 +171,10 @@ import Cpp library "definition_multiple_data_members_value_param_type.h";
 
 fn F() {
   //@dump-sem-ir-begin
-  // CHECK:STDERR: import_definition_multiple_data_members_value_param_type.carbon:[[@LINE+5]]:11: error: name `Core.ImplicitAs` implicitly referenced here, but not found [CoreNameNotFound]
+  // CHECK:STDERR: fail_todo_import_definition_multiple_data_members_value_param_type.carbon:[[@LINE+5]]:11: error: name `Core.ImplicitAs` implicitly referenced here, but not found [CoreNameNotFound]
   // CHECK:STDERR:   Cpp.foo({});
   // CHECK:STDERR:           ^~
-  // CHECK:STDERR: import_definition_multiple_data_members_value_param_type.carbon: note: initializing function parameter [InCallToFunctionParam]
+  // CHECK:STDERR: fail_todo_import_definition_multiple_data_members_value_param_type.carbon: note: initializing function parameter [InCallToFunctionParam]
   // CHECK:STDERR:
   Cpp.foo({});
   //@dump-sem-ir-end
@@ -300,7 +300,7 @@ struct S;
 
 auto foo(S* _Nonnull) -> void;
 
-// --- fail_todo_import_decl_pointer_param_type.carbon
+// --- import_decl_pointer_param_type.carbon
 
 library "[[@TEST_NAME]]";
 
@@ -393,7 +393,7 @@ struct S;
 
 auto foo() -> S* _Nonnull;
 
-// --- fail_todo_import_decl_pointer_return_type.carbon
+// --- import_decl_pointer_return_type.carbon
 
 library "[[@TEST_NAME]]";
 
@@ -472,7 +472,7 @@ fn F() {
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- import_definition_single_data_member_value_param_type.carbon
+// CHECK:STDOUT: --- fail_todo_import_definition_single_data_member_value_param_type.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [concrete]
@@ -504,7 +504,7 @@ fn F() {
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- import_definition_multiple_data_members_value_param_type.carbon
+// CHECK:STDOUT: --- fail_todo_import_definition_multiple_data_members_value_param_type.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [concrete]
@@ -829,7 +829,7 @@ fn F() {
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- fail_todo_import_decl_pointer_param_type.carbon
+// CHECK:STDOUT: --- import_decl_pointer_param_type.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %S: type = class_type @S [concrete]
@@ -934,7 +934,7 @@ fn F() {
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- fail_todo_import_decl_pointer_return_type.carbon
+// CHECK:STDOUT: --- import_decl_pointer_return_type.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %S: type = class_type @S [concrete]
