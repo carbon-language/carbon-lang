@@ -59,7 +59,7 @@ CheckUnit::CheckUnit(
     const Parse::GetTreeAndSubtreesStore* tree_and_subtrees_getters,
     llvm::IntrusiveRefCntPtr<llvm::vfs::FileSystem> fs,
     std::shared_ptr<clang::CompilerInvocation> clang_invocation,
-    bool desugar_type_impls, llvm::raw_ostream* vlog_stream)
+    bool implicit_type_impls, llvm::raw_ostream* vlog_stream)
     : unit_and_imports_(unit_and_imports),
       tree_and_subtrees_getter_(tree_and_subtrees_getters->Get(
           unit_and_imports->unit->sem_ir->check_ir_id())),
@@ -71,7 +71,7 @@ CheckUnit::CheckUnit(
       context_(&emitter_, tree_and_subtrees_getter_,
                unit_and_imports_->unit->sem_ir,
                GetImportedIRCount(unit_and_imports), total_ir_count_,
-               desugar_type_impls, vlog_stream) {}
+               implicit_type_impls, vlog_stream) {}
 
 auto CheckUnit::Run() -> void {
   Timings::ScopedTiming timing(unit_and_imports_->unit->timings, "check");

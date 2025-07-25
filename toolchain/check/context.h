@@ -58,7 +58,7 @@ class Context {
   explicit Context(DiagnosticEmitterBase* emitter,
                    Parse::GetTreeAndSubtreesFn tree_and_subtrees_getter,
                    SemIR::File* sem_ir, int imported_ir_count,
-                   int total_ir_count, bool desugar_type_impls,
+                   int total_ir_count, bool implicit_type_impls,
                    llvm::raw_ostream* vlog_stream);
 
   // Marks an implementation TODO. Always returns false.
@@ -93,7 +93,7 @@ class Context {
     return parse_tree().tokens();
   }
 
-  auto desugar_type_impls() -> bool { return desugar_type_impls_; }
+  auto implicit_type_impls() -> bool { return implicit_type_impls_; }
 
   auto vlog_stream() -> llvm::raw_ostream* { return vlog_stream_; }
 
@@ -304,9 +304,9 @@ class Context {
   // The SemIR::File being added to.
   SemIR::File* sem_ir_;
 
-  // Whether to desugar standard impls for types, such as `Core.Destroy`; see
+  // Whether to generate standard impls for types, such as `Core.Destroy`; see
   // `CheckParseTreesOptions`.
-  bool desugar_type_impls_;
+  bool implicit_type_impls_;
 
   // Whether to print verbose output.
   llvm::raw_ostream* vlog_stream_;

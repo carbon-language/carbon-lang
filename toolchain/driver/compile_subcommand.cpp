@@ -284,16 +284,16 @@ Whether to use the implicit prelude import. Enabled by default.
       });
   b.AddFlag(
       {
-          .name = "desugar-type-impls",
+          .name = "implicit-type-impls",
           .help = R"""(
-Whether to desugar standard impls for types, such as `Core.Destroy`. This only
+Whether to generate standard impls for types, such as `Core.Destroy`. This only
 controls generation of the `impl`; code which expects the `impl` is expected to
 fail. Enabled by default.
 )""",
       },
       [&](auto& arg_b) {
         arg_b.Default(true);
-        arg_b.Set(&desugar_type_impls);
+        arg_b.Set(&implicit_type_impls);
       });
   b.AddFlag(
       {
@@ -1012,7 +1012,7 @@ auto CompileSubcommand::Run(DriverEnv& driver_env) -> DriverResult {
   CARBON_VLOG_TO(driver_env.vlog_stream, "*** Check::CheckParseTrees ***\n");
   Check::CheckParseTreesOptions options;
   options.prelude_import = options_.prelude_import;
-  options.desugar_type_impls = options_.desugar_type_impls;
+  options.implicit_type_impls = options_.implicit_type_impls;
   options.vlog_stream = driver_env.vlog_stream;
   options.fuzzing = driver_env.fuzzing;
   if (options.vlog_stream || options_.dump_sem_ir || options_.dump_raw_sem_ir) {
