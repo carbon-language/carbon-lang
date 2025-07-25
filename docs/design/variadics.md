@@ -480,13 +480,10 @@ expansion itself is relatively straightforward:
 
 ### Typechecking patterns
 
-A _full pattern_ consists of an optional deduced parameter list, a pattern, and
-an optional return type expression.
-
 A pack expansion pattern has _fixed arity_ if it contains at least one usage of
-an each-name that is not a parameter of the enclosing full pattern. Otherwise it
-has _deduced arity_. A tuple pattern can have at most one segment with deduced
-arity. For example:
+an each-name that is not a parameter of the enclosing
+[full pattern](pattern_matching.md). Otherwise it has _deduced arity_. A tuple
+pattern can have at most one segment with deduced arity. For example:
 
 ```carbon
 class C(... each T:! type) {

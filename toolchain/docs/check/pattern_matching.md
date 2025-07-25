@@ -10,10 +10,9 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
 ## Table of contents
 
--   [Glossary](#glossary)
 -   [Overview](#overview)
--   [Pattern insts](#pattern-insts)
--   [Inst ordering](#inst-ordering)
+-   [Pattern instructions](#pattern-instructions)
+-   [Instruction ordering](#instruction-ordering)
 -   [Parser-driven pattern block pushing](#parser-driven-pattern-block-pushing)
 -   [Function parameters](#function-parameters)
     -   [`Call` parameters and arguments](#call-parameters-and-arguments)
@@ -22,29 +21,28 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
 <!-- tocstop -->
 
-## Glossary
-
-A _full-pattern_ is a pattern that is not a subpattern of an enclosing pattern.
-
-The _scrutinee_ of a pattern is the value that a pattern is being matched
-against.
-
 ## Overview
+
+This document focuses on the implementation of pattern matching. See
+[here](/docs/design/pattern_matching.md) for more on the design and fundamental
+concepts.
 
 The SemIR for a pattern-matching operation is emitted in three steps:
 
-1. Traverse the parse tree of the pattern to emit SemIR that abstractly
-   describes the pattern.
-2. Traverse the parse tree of the scrutinee expression to emit SemIR that
-   evaluates it.
-3. Traverse the pattern SemIR from step 1 (sometimes in conjunction with the
-   scrutinee SemIR) to emit SemIR that actually performs pattern matching.
+1. **Pattern:** Traverse the parse tree of the pattern to emit SemIR that
+   abstractly describes the pattern.
+2. **Scrutinee:**Traverse the parse tree of the scrutinee expression to emit
+   SemIR that evaluates it.
+3. **Match:** Traverse the pattern SemIR from step 1 (sometimes in conjunction
+   with the scrutinee SemIR) to emit SemIR that actually performs pattern
+   matching.
 
-## Pattern insts
+## Pattern instructions
 
-The SemIR emitted in step 1 primarily consists of _pattern insts_, which are
-insts that describe the pattern itself. For example, given the pattern
-`(x: i32, y:i32)`, step 1 might emit the following SemIR:
+The SemIR emitted in the pattern step primarily consists of _pattern
+instructions_, which are instructions that describe the pattern itself. For
+example, given the pattern `(x: i32, y:i32)`, the pattern step might emit the
+following SemIR:
 
 ```
 %x.patt: %pattern_type.7ce = binding_pattern x [concrete]
@@ -52,11 +50,12 @@ insts that describe the pattern itself. For example, given the pattern
 %.loc4_21: %pattern_type.511 = tuple_pattern (%x.patt, %y.patt) [concrete]
 ```
 
-Pattern insts do not represent executable code, and are generally ignored during
-lowering. Instead, they descriptively represent the pattern itself as a kind of
-constant value, and their primary consumer is step 3. The type of a pattern inst
-is a _pattern type_, which is represented by a `pattern_type` inst. For example,
-the `constants` block might define the types in the above SemIR like so:
+Pattern instructions do not represent executable code, and are generally ignored
+during lowering. Instead, they descriptively represent the pattern itself as a
+kind of constant value, and their primary consumer is the match step. The type
+of a pattern instruction is a _pattern type_, which is represented by a
+`PatternType` instruction. For example, the `constants` block might define the
+types in the above SemIR like so:
 
 ```
 %i32: type = class_type @Int, @Int(%int_32) [concrete]
@@ -69,31 +68,32 @@ We can read this as saying that the type of `%x.patt` and `%y.patt` is "pattern
 that matches an `i32` scrutinee", and the type of `%.loc4_21` is "pattern that
 matches a `(i32, i32)` scrutinee".
 
-Insts that are not pattern insts are called _procedural insts_. All the insts
-emitted in steps 2 and 3 are procedural insts, but step 1 can emit procedural
-insts as well. For example, in a pattern like `(x: i32, a + b)`, `i32` and
-`a + b` are ordinary expressions, and so their SemIR must be emitted during the
-initial traversal of the parse tree, as with any other expression.
+Pattern instructions are only emitted during the pattern step, but that step can
+emit non-pattern instructions as well. For example, in a pattern like
+`(x: i32, a + b)`, `i32` and `a + b` are ordinary expressions, and so their
+SemIR must be emitted during the initial traversal of the parse tree, as with
+any other expression.
 
-All the pattern insts for a given full-pattern are grouped together in a
-distinct block that contains no procedural insts. Consequently, `Check::Context`
-maintains `pattern_block_stack` as a separate `InstBlockStack` for pattern
-blocks, and provides separate methods like `AddPatternInst` for adding insts to
-it.
+All the pattern instructions for a given full-pattern are grouped together in a
+distinct block that contains only pattern instructions. Consequently,
+`Check::Context` maintains `pattern_block_stack` as a separate `InstBlockStack`
+for pattern blocks, and provides separate methods like `AddPatternInst` for
+adding instructions to it.
 
-## Inst ordering
+## Instruction ordering
 
 The SemIR produced in the first two steps is (like most SemIR) generally in
-post-order, reflecting the order of the parse tree. However, the step 3
-traversal is performed pre-order, starting with the root inst of the pattern and
-traversing into its dependencies.
+post-order, reflecting the order of the parse tree. However, the match step
+traversal is performed pre-order, starting with the root instruction of the
+pattern and traversing into its dependencies.
 
-In some cases it is necessary for step 1 to allocate insts that won't actually
-be emitted until step 3, because they are responsible for performing pattern
-matching. When that happens, they are allocated but not added to a block, and
-their IDs are stored in the `Check::Context` (typically in a map from pattern
-inst IDs to the corresponding match inst IDs) so that they can be spliced into
-the current block at the appropriate point in step 3.
+In some cases it is necessary for the pattern step to allocate instructions that
+won't actually be emitted until the match step, because they are responsible for
+performing pattern matching. When that happens, they are allocated but not added
+to a block, and their IDs are stored in the `Check::Context` (typically in a map
+from pattern instruction IDs to the corresponding match instruction IDs) so that
+they can be spliced into the current block at the appropriate point in the match
+step.
 
 For example:
 
@@ -103,27 +103,29 @@ For example:
       case (n: i32, n) => ...
     ```
     For this to work, the name `n` needs to be added to the scope as soon as we
-    handle its declaration, and it needs to resolve to the `BindName` inst that
-    binds a value to that name. This means that the `BindName` inst needs to be
-    allocated during step 1, even though it is part of matching, not part of the
-    pattern. `Context::bind_name_map` stores these `BindName`s, keyed by the
-    corresponding `BindingPattern` inst.
+    handle its declaration, and it needs to resolve to the `BindName`
+    instruction that binds a value to that name. This means that the `BindName`
+    instruction needs to be allocated during the pattern step, even though it is
+    part of matching, not part of the pattern. `Context::bind_name_map` stores
+    these `BindName`s, keyed by the corresponding `BindingPattern` instruction.
 -   A `var` pattern allocates storage during matching, which is represented by a
-    `VarStorage` inst. This inst must be allocated during step 1, so that it can
-    be used as the output parameter of scrutinee expression evaluation during
-    step 2. `Context::var_storage_map` stores these `VarStorage` insts, keyed by
-    the corresponding `VarPattern` inst.
+    `VarStorage` instruction. This instruction must be allocated during the
+    pattern step, so that it can be used as the output parameter of scrutinee
+    expression evaluation during the scrutinee step. `Context::var_storage_map`
+    stores these `VarStorage` instructions, keyed by the corresponding
+    `VarPattern` instruction.
 
-As noted earlier, step 1 can also emit procedural insts to evaluate expressions
-that are embedded in the pattern, such as the type expressions of binding
-patterns, and expressions that are used as patterns themselves (although those
-have not been implemented yet). The parse tree doesn't mark these situations in
-advance: any given subpattern might turn out to be one that emits procedural
-insts. To handle these situations, we speculatively push an inst block onto the
-(procedural) stack whenever we are about to begin handling a subpattern, and
-then pop it at the end of the subpattern, with different treatment depending on
-whether the subpattern turned out to be a subexpression. This is handled by
-`BeginSubpattern`, `EndSubpatternAsExpr`, and `EndSubpatternAsNonExpr`.
+As noted earlier, the pattern step can also emit non-pattern instructions to
+evaluate expressions that are embedded in the pattern, such as the type
+expressions of binding patterns, and expressions that are used as patterns
+themselves (although those have not been implemented yet). The parse tree
+doesn't mark these situations in advance: any given subpattern might turn out to
+be one that emits non-pattern instructions. To handle these situations, we
+speculatively push an instruction block onto the (non-pattern) stack whenever we
+are about to begin handling a subpattern, and then pop it at the end of the
+subpattern, with different treatment depending on whether the subpattern turned
+out to be a subexpression. This is handled by `BeginSubpattern`,
+`EndSubpatternAsExpr`, and `EndSubpatternAsNonExpr`.
 
 One further complication here is that the type expression can contain control
 flow (such as an `if` expression). Consequently, we can't represent the type
@@ -132,11 +134,11 @@ type expression as a
 [single-entry, single-exit (SE/SE) region](https://en.wikipedia.org/wiki/Single-entry_single-exit),
 potentially consisting of multiple blocks.
 
-> **Note:** The original motivation for rigorously excluding procedural insts
-> from the pattern block may no longer apply. In particular, it may make sense
-> to put procedural insts in the pattern block when they represent an expression
-> that is part of the pattern. If so, substantial parts of this design might
-> change. See
+> **Note:** The original motivation for rigorously excluding non-pattern
+> instructions from the pattern block may no longer apply. In particular, it may
+> make sense to put non-pattern instructions in the pattern block when they
+> represent an expression that is part of the pattern. If so, substantial parts
+> of this design might change. See
 > [issue #5351](https://github.com/carbon-language/carbon-lang/issues/5351).
 
 ## Parser-driven pattern block pushing
@@ -165,7 +167,7 @@ enum by having separate node kinds `IdentifierNameBeforeParams` and
 `IdentifierNameNotBeforeParams`.
 
 If the parameterized name is a name qualifier (such as the first part of
-`Foo(X: i32).Bar(y: i32)`), the node immediately after it will be the qualifier
+`Foo(X:! i32).Bar(y: i32)`), the node immediately after it will be the qualifier
 node. As of this writing, we bifurcate qualifier nodes into
 `NameQualifierWithParams` and `NameQualifierWithoutParams`, much like we do with
 identifier names, but we don't actually use that information, and instead use
@@ -186,12 +188,13 @@ functionally part of the parameter pattern.
 
 ### `Call` parameters and arguments
 
-SemIR models a function call as a `Call` inst, which has an inst block
-consisting of one inst per argument. Correspondingly, the SemIR representation
-of a function has a block consisting of one inst per parameter. We refer to
-these as _`Call` arguments_ and _`Call` parameters_, because they don't
-necessarily correspond to the colloquial meaning of "arguments" and "parameters"
-(which are sometimes referred to as _syntactic_ arguments and parameters).
+SemIR models a function call as a `Call` instruction, which has an instruction
+block consisting of one instruction per argument. Correspondingly, the SemIR
+representation of a function has a block consisting of one instruction per
+parameter. We refer to these as _`Call` arguments_ and _`Call` parameters_,
+because they don't necessarily correspond to the colloquial meaning of
+"arguments" and "parameters" (which are sometimes referred to as _syntactic_
+arguments and parameters).
 
 For example, consider this function:
 
@@ -199,12 +202,13 @@ For example, consider this function:
 fn F(T:! type, U:! type) -> Core.String;
 ```
 
-The `Call` inst is a runtime-phase operation, so it notionally runs after
+The `Call` instruction is a runtime-phase operation, so it notionally runs after
 compile-time parameters have already been bound to values. As a result, a `Call`
-inst calling `F` does not pass values for either `T` or `U`. On the other hand,
-it does pass a reference to the storage that `F` should construct the return
-value in. So although we would colloquially say that `F` takes two parameters of
-type `type`, it has a single `Call` parameter of type `Core.String`.
+instruction calling `F` does not pass values for either `T` or `U`. On the other
+hand, it does pass a reference to the storage that `F` should construct the
+return value in. So although we would colloquially say that `F` takes two
+parameters of type `type`, it has a single `Call` parameter of type
+`Core.String`.
 
 If Carbon supports general patterns in function parameter lists, that introduces
 additional ways that `Call` parameters can diverge from the colloquial meaning.
@@ -233,53 +237,54 @@ converting `0` to `i32`, and for initializing a new `(i32, i32)` object from
 `Call` parameter, and for destructuring its second `Call` parameter and binding
 the names `y` and `z` to its elements.
 
-In SemIR we represent this situation with special `ParamPattern` insts, which
-mark the boundary: there is exactly one `ParamPattern` inst for each `Call`
-parameter, which matches the entire corresponding `Call` argument. The
-subpatterns of the `ParamPattern`s are matched on the callee side, and
+In SemIR we represent this situation with special `ParamPattern` instructions,
+which mark the boundary: there is exactly one `ParamPattern` instruction for
+each `Call` parameter, which matches the entire corresponding `Call` argument.
+The subpatterns of the `ParamPattern`s are matched on the callee side, and
 everything above them is matched on the caller side. There are multiple kinds of
-`ParamPattern` inst, which correspond to different ways of passing a parameter
-(such as by reference or by value).
+`ParamPattern` instruction, which correspond to different ways of passing a
+parameter (such as by reference or by value).
 
 When performing callee-side pattern matching, we do not have an actual scrutinee
-expression. Instead, for each `ParamPattern` inst we generate a corresponding
-`Param` inst, which reads from the corresponding entry in the `Call` argument
-list, and we use that as the scrutinee of the `ParamPattern`. Every
-`ParamPattern` kind has a corresponding `Param` kind.
+expression. Instead, for each `ParamPattern` instruction we generate a
+corresponding `Param` instruction, which reads from the corresponding entry in
+the `Call` argument list, and we use that as the scrutinee of the
+`ParamPattern`. Every `ParamPattern` kind has a corresponding `Param` kind.
 
 ### The return slot
 
 If a function has a declared return type, the function takes an additional
 `Call` parameter, which points to the storage that should be initialized with
 the return value. This `Call` parameter is represented as an `OutParamPattern`
-inst with a `ReturnSlotPattern` inst as a subpattern. The `ReturnSlotPattern`
-also represents the return type declaration itself, such as in
-`SemIR::FunctionFields`. The SemIR that matches these patterns consists of a
-`ReturnSlot` inst, which binds the special name `NameId::ReturnSlot` to the
-`OutParam` inst representing the storage passed by the caller.
+instruction with a `ReturnSlotPattern` instruction as a subpattern. The
+`ReturnSlotPattern` also represents the return type declaration itself, such as
+in `FunctionFields`. The SemIR that matches these patterns consists of a
+`ReturnSlot` instruction, which binds the special name `NameId::ReturnSlot` to
+the `OutParam` instruction representing the storage passed by the caller.
 
 This structure is analogous to the handling of an ordinary by-value parameter,
-which is represented in the `Call` parameters as a `ValueParamPattern` inst with
-a `BindingPattern`, and in the pattern-matching SemIR as a `BindName` inst that
-binds the parameter name to the `ValueParam` inst representing the argument
-passed by the caller.
+which is represented in the `Call` parameters as a `ValueParamPattern`
+instruction with a `BindingPattern`, and in the pattern-matching SemIR as a
+`BindName` instruction that binds the parameter name to the `ValueParam`
+instruction representing the argument passed by the caller.
 
 Note that if the return type does not have an in-place value representation
-(meaning that the return value should not be passed in memory), these insts will
-all still be generated, but the SemIR for `return` statements will not access
-the `ReturnSlot`, and the `Call` argument list will not contain an argument
-corresponding to the `OutParamPattern` (and so it will be one element shorter
-than the `Call` parameter list). However, the `ReturnSlotPattern` is still used,
-in its other role as a representation of the return type declaration. This leads
-to a potentially confusing situation, where the term "return slot" sometimes
-refers to the `ReturnSlotPattern` (for example in
-`FunctionFields::return_slot_pattern`), which is present for any function with a
-declared return type, and sometimes refers to the actual storage provided by the
-caller (for example in `ReturnTypeInfo::has_return_slot`), which is present only
-if the return type has an in-place value representation.
+(meaning that the return value should not be passed in memory), these
+instructions will all still be generated, but the SemIR for `return` statements
+will not access the `ReturnSlot`, and the `Call` argument list will not contain
+an argument corresponding to the `OutParamPattern` (and so it will be one
+element shorter than the `Call` parameter list). However, the
+`ReturnSlotPattern` is still used, in its other role as a representation of the
+return type declaration. This leads to a potentially confusing situation, where
+the term "return slot" sometimes refers to the `ReturnSlotPattern` (for example
+in `FunctionFields::return_slot_pattern`), which is present for any function
+with a declared return type, and sometimes refers to the actual storage provided
+by the caller (for example in `ReturnTypeInfo::has_return_slot`), which is
+present only if the return type has an in-place value representation.
 
 > **TODO:** When the return type isn't in-place, the `OutParamPattern` should
 > probably not be in the `Call` parameter list (for consistency with the `Call`
 > argument list), and possibly the `OutParamPattern`, `OutParam`, and
-> `ReturnSlot` insts should not be emitted in the first place. Furthermore, we
-> should find a way to resolve the inconsistent "return slot" terminology.
+> `ReturnSlot` instructions should not be emitted in the first place.
+> Furthermore, we should find a way to resolve the inconsistent "return slot"
+> terminology.
