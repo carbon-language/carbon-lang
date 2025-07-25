@@ -84,8 +84,8 @@ it.
 ## Inst ordering
 
 The SemIR produced in the first two steps is (like most SemIR) generally in
-bottom-up order, reflecting the order of the parse tree. However, the step 3
-traversal is performed top-down, starting with the root inst of the pattern and
+post-order, reflecting the order of the parse tree. However, the step 3
+traversal is performed pre-order, starting with the root inst of the pattern and
 traversing into its dependencies.
 
 In some cases it is necessary for step 1 to allocate insts that won't actually
@@ -266,7 +266,7 @@ passed by the caller.
 
 Note that if the return type does not have an in-place value representation
 (meaning that the return value should not be passed in memory), these insts will
-all still be generated, but the `SemIR` for `return` statements will not access
+all still be generated, but the SemIR for `return` statements will not access
 the `ReturnSlot`, and the `Call` argument list will not contain an argument
 corresponding to the `OutParamPattern` (and so it will be one element shorter
 than the `Call` parameter list). However, the `ReturnSlotPattern` is still used,
