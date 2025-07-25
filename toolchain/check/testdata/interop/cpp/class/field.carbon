@@ -63,6 +63,33 @@ fn H(u: Cpp.Union) -> i32 {
   //@dump-sem-ir-end
 }
 
+// --- anon_struct_union.h
+
+struct A {
+  union {
+    struct {
+      short a_0;
+      short b_2;
+      int c_4;
+    };
+    struct {
+      char d_0;
+      char e_1;
+      int f_4;
+      short g_8;
+    };
+  };
+  int h_12;
+};
+
+// --- use_anon_struct_union.carbon
+
+library "[[@TEST_NAME]]";
+
+import Cpp library "anon_struct_union.h";
+
+fn GetF(a: Cpp.A) -> i32 { return a.f_4; }
+
 // --- with_bitfields.h
 
 struct Struct {
@@ -404,6 +431,107 @@ fn G(s: Cpp.Union) -> i32 {
 // CHECK:STDOUT:   %.loc20_10.1: ref %i32 = deref %.loc20_12.2
 // CHECK:STDOUT:   %.loc20_10.2: %i32 = bind_value %.loc20_10.1
 // CHECK:STDOUT:   return %.loc20_10.2
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: --- use_anon_struct_union.carbon
+// CHECK:STDOUT:
+// CHECK:STDOUT: constants {
+// CHECK:STDOUT:   %A: type = class_type @A [concrete]
+// CHECK:STDOUT:   %int_16: Core.IntLiteral = int_value 16 [concrete]
+// CHECK:STDOUT:   %Int.type: type = generic_class_type @Int [concrete]
+// CHECK:STDOUT:   %Int.generic: %Int.type = struct_value () [concrete]
+// CHECK:STDOUT:   %i16: type = class_type @Int, @Int(%int_16) [concrete]
+// CHECK:STDOUT:   %A.elem.543: type = unbound_element_type %A, %i16 [concrete]
+// CHECK:STDOUT:   %int_32: Core.IntLiteral = int_value 32 [concrete]
+// CHECK:STDOUT:   %i32: type = class_type @Int, @Int(%int_32) [concrete]
+// CHECK:STDOUT:   %A.elem.c3f: type = unbound_element_type %A, %i32 [concrete]
+// CHECK:STDOUT:   %.371: type = custom_layout_type {size=16, align=4, .a_0@0: %i16, .b_2@2: %i16, .c_4@4: %i32, .f_4@4: %i32, .g_8@8: %i16, .h_12@12: %i32} [concrete]
+// CHECK:STDOUT:   %complete_type.fa3: <witness> = complete_type_witness %.371 [concrete]
+// CHECK:STDOUT:   %pattern_type.9de: type = pattern_type %A [concrete]
+// CHECK:STDOUT:   %pattern_type.7ce: type = pattern_type %i32 [concrete]
+// CHECK:STDOUT:   %GetF.type: type = fn_type @GetF [concrete]
+// CHECK:STDOUT:   %GetF: %GetF.type = struct_value () [concrete]
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: imports {
+// CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [concrete] {
+// CHECK:STDOUT:     .Int = %Core.Int
+// CHECK:STDOUT:     import Core//prelude
+// CHECK:STDOUT:     import Core//prelude/...
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %Cpp: <namespace> = namespace file.%Cpp.import_cpp, [concrete] {
+// CHECK:STDOUT:     .A = %A.decl
+// CHECK:STDOUT:     import Cpp//...
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %A.decl: type = class_decl @A [concrete = constants.%A] {} {}
+// CHECK:STDOUT:   %Core.Int: %Int.type = import_ref Core//prelude/parts/int, Int, loaded [concrete = constants.%Int.generic]
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: file {
+// CHECK:STDOUT:   package: <namespace> = namespace [concrete] {
+// CHECK:STDOUT:     .Core = imports.%Core
+// CHECK:STDOUT:     .Cpp = imports.%Cpp
+// CHECK:STDOUT:     .GetF = %GetF.decl
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %Core.import = import Core
+// CHECK:STDOUT:   %Cpp.import_cpp = import_cpp {
+// CHECK:STDOUT:     import Cpp "anon_struct_union.h"
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %GetF.decl: %GetF.type = fn_decl @GetF [concrete = constants.%GetF] {
+// CHECK:STDOUT:     %a.patt: %pattern_type.9de = binding_pattern a [concrete]
+// CHECK:STDOUT:     %a.param_patt: %pattern_type.9de = value_param_pattern %a.patt, call_param0 [concrete]
+// CHECK:STDOUT:     %return.patt: %pattern_type.7ce = return_slot_pattern [concrete]
+// CHECK:STDOUT:     %return.param_patt: %pattern_type.7ce = out_param_pattern %return.patt, call_param1 [concrete]
+// CHECK:STDOUT:   } {
+// CHECK:STDOUT:     %int_32: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
+// CHECK:STDOUT:     %i32: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
+// CHECK:STDOUT:     %a.param: %A = value_param call_param0
+// CHECK:STDOUT:     %.loc6_15: type = splice_block %A.ref [concrete = constants.%A] {
+// CHECK:STDOUT:       %Cpp.ref: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
+// CHECK:STDOUT:       %A.ref: type = name_ref A, imports.%A.decl [concrete = constants.%A]
+// CHECK:STDOUT:     }
+// CHECK:STDOUT:     %a: %A = bind_name a, %a.param
+// CHECK:STDOUT:     %return.param: ref %i32 = out_param call_param1
+// CHECK:STDOUT:     %return: ref %i32 = return_slot %return.param
+// CHECK:STDOUT:   }
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: class @A {
+// CHECK:STDOUT:   %int_16.1: Core.IntLiteral = int_value 16 [concrete = constants.%int_16]
+// CHECK:STDOUT:   %i16.1: type = class_type @Int, @Int(constants.%int_16) [concrete = constants.%i16]
+// CHECK:STDOUT:   %.1: %A.elem.543 = field_decl a_0, element0 [concrete]
+// CHECK:STDOUT:   %int_16.2: Core.IntLiteral = int_value 16 [concrete = constants.%int_16]
+// CHECK:STDOUT:   %i16.2: type = class_type @Int, @Int(constants.%int_16) [concrete = constants.%i16]
+// CHECK:STDOUT:   %.2: %A.elem.543 = field_decl b_2, element1 [concrete]
+// CHECK:STDOUT:   %int_32.1: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
+// CHECK:STDOUT:   %i32.1: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
+// CHECK:STDOUT:   %.3: %A.elem.c3f = field_decl c_4, element2 [concrete]
+// CHECK:STDOUT:   %int_32.2: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
+// CHECK:STDOUT:   %i32.2: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
+// CHECK:STDOUT:   %.4: %A.elem.c3f = field_decl f_4, element3 [concrete]
+// CHECK:STDOUT:   %int_16.3: Core.IntLiteral = int_value 16 [concrete = constants.%int_16]
+// CHECK:STDOUT:   %i16.3: type = class_type @Int, @Int(constants.%int_16) [concrete = constants.%i16]
+// CHECK:STDOUT:   %.5: %A.elem.543 = field_decl g_8, element4 [concrete]
+// CHECK:STDOUT:   %int_32.3: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
+// CHECK:STDOUT:   %i32.3: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
+// CHECK:STDOUT:   %.6: %A.elem.c3f = field_decl h_12, element5 [concrete]
+// CHECK:STDOUT:   %.7: type = custom_layout_type {size=16, align=4, .a_0@0: %i16, .b_2@2: %i16, .c_4@4: %i32, .f_4@4: %i32, .g_8@8: %i16, .h_12@12: %i32} [concrete = constants.%.371]
+// CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %.7 [concrete = constants.%complete_type.fa3]
+// CHECK:STDOUT:   complete_type_witness = %complete_type
+// CHECK:STDOUT:
+// CHECK:STDOUT: !members:
+// CHECK:STDOUT:   .Self = constants.%A
+// CHECK:STDOUT:   .f_4 = %.4
+// CHECK:STDOUT:   import Cpp//...
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: fn @GetF(%a.param: %A) -> %i32 {
+// CHECK:STDOUT: !entry:
+// CHECK:STDOUT:   %a.ref: %A = name_ref a, %a
+// CHECK:STDOUT:   %f_4.ref: %A.elem.c3f = name_ref f_4, @A.%.4 [concrete = @A.%.4]
+// CHECK:STDOUT:   %.loc6_36.1: ref %i32 = class_element_access %a.ref, element3
+// CHECK:STDOUT:   %.loc6_36.2: %i32 = bind_value %.loc6_36.1
+// CHECK:STDOUT:   return %.loc6_36.2
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- use_non_bitfields_in_type_with_bitfields.carbon

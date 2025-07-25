@@ -543,19 +543,44 @@ static auto ImportClassObjectRepr(Context& context,
   // TODO: Import bases.
 
   // Import fields.
-  for (auto* field : clang_def->fields()) {
+  for (auto* decl : clang_def->decls()) {
+    auto* field = clang::dyn_cast<clang::FieldDecl>(decl);
+
+    // Track the chain of fields from the class to this field. This chain is
+    // only one element long unless the field is a member of an anonymous struct
+    // or union.
+    clang::NamedDecl* single_field_chain[1] = {field};
+    llvm::ArrayRef<clang::NamedDecl*> chain = single_field_chain;
+
+    // If this isn't a field, it might be an indirect field in an anonymous
+    // struct or union.
+    if (!field) {
+      auto* indirect_field = clang::dyn_cast<clang::IndirectFieldDecl>(decl);
+      if (!indirect_field) {
+        continue;
+      }
+      chain = indirect_field->chain();
+      field = indirect_field->getAnonField();
+    }
+
     if (field->isBitField()) {
       // TODO: Add a representation for named bitfield members.
       continue;
     }
+
     if (field->isAnonymousStructOrUnion()) {
-      // TODO: Visit IndirectFieldDecls and add them to the layout.
+      // Fields within an anonymous structure or union will be added via their
+      // IndirectFieldDecls.
       continue;
     }
 
     auto field_name_id = AddIdentifierName(context, field->getName());
     auto [field_type_inst_id, field_type_id] =
         MapType(context, import_ir_inst_id, field->getType());
+    if (!field_type_inst_id.has_value()) {
+      // TODO: For now, just skip over fields whose types we can't map.
+      continue;
+    }
 
     // Create a field now, as we know the index to use.
     // TODO: Consider doing this lazily instead.
@@ -568,12 +593,23 @@ static auto ImportClassObjectRepr(Context& context,
                          .name_id = field_name_id,
                          .index = SemIR::ElementIndex(fields.size())}));
     context.sem_ir().clang_decls().Add(
-        {.decl = field->getCanonicalDecl(), .inst_id = field_decl_id});
+        {.decl = decl->getCanonicalDecl(), .inst_id = field_decl_id});
 
-    layout.push_back(context.ast_context()
-                         .toCharUnitsFromBits(clang_layout.getFieldOffset(
-                             field->getFieldIndex()))
-                         .getQuantity());
+    // Compute the offset to the field that appears directly in the class.
+    uint64_t offset = clang_layout.getFieldOffset(
+        clang::cast<clang::FieldDecl>(chain.front())->getFieldIndex());
+
+    // If this is an indirect field, walk the path and accumulate the offset to
+    // the named field.
+    for (auto* inner_decl : chain.drop_front()) {
+      auto* inner_field = clang::cast<clang::FieldDecl>(inner_decl);
+      const auto& inner_layout =
+          context.ast_context().getASTRecordLayout(inner_field->getParent());
+      offset += inner_layout.getFieldOffset(inner_field->getFieldIndex());
+    }
+
+    layout.push_back(
+        context.ast_context().toCharUnitsFromBits(offset).getQuantity());
     fields.push_back(
         {.name_id = field_name_id, .type_inst_id = field_type_inst_id});
   }
@@ -1228,7 +1264,7 @@ static auto ImportDeclAfterDependencies(Context& context, SemIR::LocId loc_id,
     }
     return type_inst_id;
   }
-  if (clang::isa<clang::FieldDecl>(clang_decl)) {
+  if (clang::isa<clang::FieldDecl, clang::IndirectFieldDecl>(clang_decl)) {
     // Usable fields get imported as a side effect of importing the class.
     if (SemIR::InstId existing_inst_id =
             LookupClangDeclInstId(context, clang_decl);
