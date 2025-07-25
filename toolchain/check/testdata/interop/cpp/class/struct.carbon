@@ -226,17 +226,17 @@ import Cpp library "inheritance_pointers.h";
 //@dump-sem-ir-begin
 fn MyF1(bar: Cpp.Bar1*);
 // TODO: Support C++ inheritance.
-// CHECK:STDERR: fail_todo_import_inheritance_pointers.carbon:[[@LINE+10]]:32: error: cannot implicitly convert expression of type `Cpp.Bar2*` to `Cpp.Bar1*` [ConversionFailure]
-// CHECK:STDERR: fn MyF2(bar: Cpp.Bar2*) { MyF1(bar); }
-// CHECK:STDERR:                                ^~~
-// CHECK:STDERR: fail_todo_import_inheritance_pointers.carbon:[[@LINE+7]]:32: note: type `Cpp.Bar2*` does not implement interface `Core.ImplicitAs(Cpp.Bar1*)` [MissingImplInMemberAccessNote]
-// CHECK:STDERR: fn MyF2(bar: Cpp.Bar2*) { MyF1(bar); }
-// CHECK:STDERR:                                ^~~
+// CHECK:STDERR: fail_todo_import_inheritance_pointers.carbon:[[@LINE+10]]:33: error: cannot implicitly convert expression of type `Cpp.Bar2*` to `Cpp.Bar1*` [ConversionFailure]
+// CHECK:STDERR: fn MyF2(bar : Cpp.Bar2*) { MyF1(bar); }
+// CHECK:STDERR:                                 ^~~
+// CHECK:STDERR: fail_todo_import_inheritance_pointers.carbon:[[@LINE+7]]:33: note: type `Cpp.Bar2*` does not implement interface `Core.ImplicitAs(Cpp.Bar1*)` [MissingImplInMemberAccessNote]
+// CHECK:STDERR: fn MyF2(bar : Cpp.Bar2*) { MyF1(bar); }
+// CHECK:STDERR:                                 ^~~
 // CHECK:STDERR: fail_todo_import_inheritance_pointers.carbon:[[@LINE-8]]:9: note: initializing function parameter [InCallToFunctionParam]
 // CHECK:STDERR: fn MyF1(bar: Cpp.Bar1*);
 // CHECK:STDERR:         ^~~~~~~~~~~~~~
 // CHECK:STDERR:
-fn MyF2(bar: Cpp.Bar2*) { MyF1(bar); }
+fn MyF2(bar : Cpp.Bar2*) { MyF1(bar); }
 //@dump-sem-ir-end
 
 // ============================================================================
@@ -661,7 +661,7 @@ fn MyF(bar: Cpp.Bar*);
 // CHECK:STDOUT:     %bar.param_patt: %pattern_type.92a = value_param_pattern %bar.patt, call_param0 [concrete]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %bar.param: %ptr.eca = value_param call_param0
-// CHECK:STDOUT:     %.loc19_22: type = splice_block %ptr [concrete = constants.%ptr.eca] {
+// CHECK:STDOUT:     %.loc19_23: type = splice_block %ptr [concrete = constants.%ptr.eca] {
 // CHECK:STDOUT:       %Cpp.ref: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
 // CHECK:STDOUT:       %Bar2.ref: type = name_ref Bar2, imports.%Bar2.decl [concrete = constants.%Bar2]
 // CHECK:STDOUT:       %ptr: type = ptr_type %Bar2.ref [concrete = constants.%ptr.eca]
@@ -676,7 +676,7 @@ fn MyF(bar: Cpp.Bar*);
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %MyF1.ref: %MyF1.type = name_ref MyF1, file.%MyF1.decl [concrete = constants.%MyF1]
 // CHECK:STDOUT:   %bar.ref: %ptr.eca = name_ref bar, %bar
-// CHECK:STDOUT:   %.loc19_32: %ptr.f68 = converted %bar.ref, <error> [concrete = <error>]
+// CHECK:STDOUT:   %.loc19_33: %ptr.f68 = converted %bar.ref, <error> [concrete = <error>]
 // CHECK:STDOUT:   %MyF1.call: init %empty_tuple.type = call %MyF1.ref(<error>)
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
