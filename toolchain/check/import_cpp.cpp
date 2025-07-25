@@ -1238,6 +1238,8 @@ static auto ImportDeclAfterDependencies(Context& context, SemIR::LocId loc_id,
         existing_inst_id.has_value()) {
       return existing_inst_id;
     }
+    context.TODO(loc_id, "Unsupported: Unhandled kind of field declaration");
+    return SemIR::InstId::None;
   }
 
   context.TODO(loc_id, llvm::formatv("Unsupported: Declaration type {0}",
