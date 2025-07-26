@@ -507,7 +507,7 @@ static auto BuildClassDecl(Context& context,
 // returns a corresponding complete type witness instruction.
 // TODO: Remove recursion into mapping field types.
 // NOLINTNEXTLINE(misc-no-recursion)
-static auto ImportClassObjectRepr(Context& context,
+static auto ImportClassObjectRepr(Context& context, SemIR::ClassId class_id,
                                   SemIR::ImportIRInstId import_ir_inst_id,
                                   SemIR::TypeInstId class_type_inst_id,
                                   const clang::CXXRecordDecl* clang_def)
@@ -516,7 +516,7 @@ static auto ImportClassObjectRepr(Context& context,
   // representation. This allows our tests to continue to pass while we don't
   // properly support initializing imported C++ classes.
   // TODO: Remove this.
-  if (clang_def->isEmpty()) {
+  if (clang_def->isEmpty() && !clang_def->getNumBases()) {
     return context.types().GetAsTypeInstId(AddInst(
         context,
         MakeImportedLocIdAndInst(
@@ -540,7 +540,49 @@ static auto ImportClassObjectRepr(Context& context,
   static_assert(SemIR::CustomLayoutId::FirstFieldIndex == 2);
 
   // TODO: Import vptr(s).
-  // TODO: Import bases.
+
+  // Import bases.
+  for (const auto& base : clang_def->bases()) {
+    if (base.isVirtual()) {
+      // TODO: Handle virtual bases. We don't actually know where they go in the
+      // layout. We may also want to use a different size in the layout for
+      // `partial C`, excluding the virtual base.
+      continue;
+    }
+
+    auto [base_type_inst_id, base_type_id] =
+        MapType(context, import_ir_inst_id, base.getType());
+    auto* base_class = base.getType()->getAsCXXRecordDecl();
+    if (!base_class || !base_type_id.has_value()) {
+      // If the base class's type can't be mapped, skip it.
+      continue;
+    }
+
+    auto base_decl_id = AddInst(
+        context,
+        MakeImportedLocIdAndInst(
+            context, import_ir_inst_id,
+            SemIR::BaseDecl{.type_id = GetUnboundElementType(
+                                context, class_type_inst_id, base_type_inst_id),
+                            .base_type_inst_id = base_type_inst_id,
+                            .index = SemIR::ElementIndex(fields.size())}));
+
+    // If there's exactly one base class, treat it as a Carbon base class too.
+    // TODO: Improve handling for the case where the class has multiple base
+    // classes.
+    if (clang_def->getNumBases() == 1) {
+      auto& class_info = context.classes().Get(class_id);
+      CARBON_CHECK(!class_info.base_id.has_value());
+      class_info.base_id = base_decl_id;
+    }
+
+    auto base_offset = base.isVirtual()
+                           ? clang_layout.getVBaseClassOffset(base_class)
+                           : clang_layout.getBaseClassOffset(base_class);
+    layout.push_back(base_offset.getQuantity());
+    fields.push_back(
+        {.name_id = SemIR::NameId::Base, .type_inst_id = base_type_inst_id});
+  }
 
   // Import fields.
   for (auto* field : clang_def->fields()) {
@@ -608,8 +650,8 @@ static auto BuildClassDefinition(Context& context,
   context.inst_block_stack().Push();
 
   // Compute the class's object representation.
-  auto object_repr_id = ImportClassObjectRepr(context, import_ir_inst_id,
-                                              class_inst_id, clang_def);
+  auto object_repr_id = ImportClassObjectRepr(
+      context, class_id, import_ir_inst_id, class_inst_id, clang_def);
   class_info.complete_type_witness_id = AddInst<SemIR::CompleteTypeWitness>(
       context, import_ir_inst_id,
       {.type_id = GetSingletonType(context, SemIR::WitnessType::TypeInstId),
@@ -1159,7 +1201,7 @@ static auto GetDependentUnimportedTypeDecls(const Context& context,
       if (!IsClangDeclImported(context, record_decl)) {
         return {record_decl};
       }
-      // TODO: Also collect field types.
+      // TODO: Also collect base and field types.
     }
   }
 
