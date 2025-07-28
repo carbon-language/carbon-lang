@@ -18,6 +18,7 @@
 #include "toolchain/diagnostics/diagnostic_emitter.h"
 #include "toolchain/diagnostics/format_providers.h"
 #include "toolchain/lex/token_kind.h"
+#include "toolchain/parse/node_ids.h"
 #include "toolchain/parse/node_kind.h"
 #include "toolchain/parse/typed_nodes.h"
 #include "toolchain/sem_ir/ids.h"
@@ -28,15 +29,6 @@
 #include "toolchain/sem_ir/typed_insts.h"
 
 namespace Carbon::Check {
-
-// Handles the start of a declaration of an associated constant.
-static auto StartAssociatedConstant(Context& context) -> void {
-  // An associated constant is always generic.
-  StartGenericDecl(context);
-  // Collect the declarations nested in the associated constant in a decl
-  // block. This is popped by FinishAssociatedConstantDecl.
-  context.inst_block_stack().Push();
-}
 
 // Handles the end of the declaration region of an associated constant. This is
 // called at the `=` or the `;` of the declaration, whichever comes first.
@@ -95,11 +87,21 @@ static auto HandleIntroducer(Context& context, Parse::NodeId node_id) -> bool {
 }
 
 auto HandleParseNode(Context& context, Parse::LetIntroducerId node_id) -> bool {
-  if (context.scope_stack().GetCurrentScopeAs<SemIR::InterfaceDecl>()) {
-    StartAssociatedConstant(context);
-  }
-
   return HandleIntroducer<Lex::TokenKind::Let>(context, node_id);
+}
+
+auto HandleParseNode(Context& context, Parse::AssociatedConstantIntroducerId node_id) -> bool {
+  context.decl_introducer_state_stack().Push<Lex::TokenKind::Let>();
+  context.node_stack().Push(node_id);
+  context.pattern_block_stack().Push();
+  context.full_pattern_stack().PushFullPattern(
+      FullPatternStack::Kind::NameBindingDecl);
+  BeginSubpattern(context);
+
+  StartGenericDecl(context);
+  context.inst_block_stack().Push();
+  
+  return true;
 }
 
 auto HandleParseNode(Context& context, Parse::VariableIntroducerId node_id)
@@ -145,6 +147,19 @@ auto HandleParseNode(Context& context, Parse::VariablePatternId node_id)
   return true;
 }
 
+auto HandleParseNode(Context& context, Parse::LetPatternId node_id) -> bool {
+  auto subpattern_id = context.node_stack().PopPattern();
+  
+  if (subpattern_id == SemIR::ErrorInst::InstId) {
+    context.node_stack().Push(node_id, SemIR::ErrorInst::InstId);
+    return true;
+  }
+
+  // LetPattern just forwards its subpattern - it doesn't need its own SemIR node
+  context.node_stack().Push(node_id, subpattern_id);
+  return true;
+}
+
 // Handle the end of the full-pattern of a let/var declaration (before the
 // start of the initializer, if any).
 static auto EndFullPattern(Context& context) -> void {
@@ -177,14 +192,18 @@ static auto HandleInitializer(Context& context, Parse::NodeId node_id) -> bool {
 
 auto HandleParseNode(Context& context, Parse::LetInitializerId node_id)
     -> bool {
-  if (auto interface_decl =
-          context.scope_stack().GetCurrentScopeAs<SemIR::InterfaceDecl>()) {
-    auto generic_id =
-        EndAssociatedConstantDeclRegion(context, interface_decl->interface_id);
+  return HandleInitializer(context, node_id);
+}
 
-    // Start building the definition region of the constant.
-    StartGenericDefinition(context, generic_id);
-  }
+auto HandleParseNode(Context& context, Parse::AssociatedConstantInitializerId node_id)
+    -> bool {
+  auto interface_decl =
+      context.scope_stack().GetCurrentScopeAs<SemIR::InterfaceDecl>();
+  auto generic_id =
+      EndAssociatedConstantDeclRegion(context, interface_decl->interface_id);
+
+  // Start building the definition region of the constant.
+  StartGenericDefinition(context, generic_id);
 
   return HandleInitializer(context, node_id);
 }
@@ -261,24 +280,52 @@ static auto HandleDecl(Context& context) -> DeclInfo {
   return decl_info;
 }
 
-// Finishes an associated constant declaration. This is called at the `;` to
-// perform any final steps. The `AssociatedConstantDecl` instruction and the
-// corresponding `AssociatedConstant` entity are built as part of handling the
-// binding pattern, but we still need to finish building the `Generic` object
-// and attach the default value, if any is specified.
-static auto FinishAssociatedConstant(Context& context, Parse::LetDeclId node_id,
-                                     SemIR::InterfaceId interface_id,
-                                     DeclInfo& decl_info) -> void {
+auto HandleParseNode(Context& context, Parse::LetDeclId node_id) -> bool {
+  auto decl_info =
+      HandleDecl<Lex::TokenKind::Let, Parse::NodeKind::LetIntroducer,
+                 Parse::NodeKind::LetInitializer>(context);
+
+  LimitModifiersOnDecl(
+      context, decl_info.introducer,
+      KeywordModifierSet::Access | KeywordModifierSet::Interface);
+
+  // Diagnose interface modifiers given that we're not building an associated
+  // constant. We use this rather than `LimitModifiersOnDecl` to get a more
+  // specific error.
+  RequireDefaultFinalOnlyInInterfaces(context, decl_info.introducer,
+                                      std::nullopt);
+
+  if (decl_info.init_id.has_value()) {
+    LocalPatternMatch(context, decl_info.pattern_id, decl_info.init_id);
+  } else {
+    CARBON_DIAGNOSTIC(
+        ExpectedInitializerAfterLet, Error,
+        "expected `=`; `let` declaration must have an initializer");
+    context.emitter().Emit(LocIdForDiagnostics::TokenOnly(node_id),
+                           ExpectedInitializerAfterLet);
+  }
+  return true;
+}
+
+auto HandleParseNode(Context& context, Parse::AssociatedConstantDeclId node_id) -> bool {
+  auto decl_info =
+      HandleDecl<Lex::TokenKind::Let, Parse::NodeKind::AssociatedConstantIntroducer,
+                 Parse::NodeKind::AssociatedConstantInitializer>(context);
+
+  LimitModifiersOnDecl(
+      context, decl_info.introducer,
+      KeywordModifierSet::Access | KeywordModifierSet::Interface);
+
+  // Handle error case
   if (decl_info.pattern_id == SemIR::ErrorInst::InstId) {
-    context.name_scopes()
-        .Get(context.interfaces().Get(interface_id).scope_id)
-        .set_has_error();
+    // Clean up generic state on error
     if (decl_info.init_id.has_value()) {
       DiscardGenericDecl(context);
     }
     context.inst_block_stack().Pop();
-    return;
+    return true;
   }
+  
   auto decl = context.insts().GetAs<SemIR::AssociatedConstantDecl>(
       decl_info.pattern_id);
 
@@ -306,41 +353,7 @@ static auto FinishAssociatedConstant(Context& context, Parse::LetDeclId node_id,
   ReplaceInstPreservingConstantValue(context, decl_info.pattern_id, decl);
 
   context.inst_block_stack().AddInstId(decl_info.pattern_id);
-}
 
-auto HandleParseNode(Context& context, Parse::LetDeclId node_id) -> bool {
-  auto decl_info =
-      HandleDecl<Lex::TokenKind::Let, Parse::NodeKind::LetIntroducer,
-                 Parse::NodeKind::LetInitializer>(context);
-
-  LimitModifiersOnDecl(
-      context, decl_info.introducer,
-      KeywordModifierSet::Access | KeywordModifierSet::Interface);
-
-  // At interface scope, we are forming an associated constant, which has
-  // different rules.
-  if (auto interface_scope =
-          context.scope_stack().GetCurrentScopeAs<SemIR::InterfaceDecl>()) {
-    FinishAssociatedConstant(context, node_id, interface_scope->interface_id,
-                             decl_info);
-    return true;
-  }
-
-  // Diagnose interface modifiers given that we're not building an associated
-  // constant. We use this rather than `LimitModifiersOnDecl` to get a more
-  // specific error.
-  RequireDefaultFinalOnlyInInterfaces(context, decl_info.introducer,
-                                      std::nullopt);
-
-  if (decl_info.init_id.has_value()) {
-    LocalPatternMatch(context, decl_info.pattern_id, decl_info.init_id);
-  } else {
-    CARBON_DIAGNOSTIC(
-        ExpectedInitializerAfterLet, Error,
-        "expected `=`; `let` declaration must have an initializer");
-    context.emitter().Emit(LocIdForDiagnostics::TokenOnly(node_id),
-                           ExpectedInitializerAfterLet);
-  }
   return true;
 }
 

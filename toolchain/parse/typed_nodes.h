@@ -532,6 +532,39 @@ struct LetDecl {
   Lex::SemiTokenIndex token;
 };
 
+// A `let` pattern.
+struct LetPattern {
+  static constexpr auto Kind = NodeKind::LetPattern.Define(
+      {.category = NodeCategory::Pattern, .child_count = 1});
+
+  Lex::LetTokenIndex token;
+  AnyPatternId inner;
+};
+
+// Associated constant nodes
+using AssociatedConstantIntroducer = LeafNode<NodeKind::AssociatedConstantIntroducer, Lex::LetTokenIndex>;
+using AssociatedConstantInitializer = LeafNode<NodeKind::AssociatedConstantInitializer, Lex::EqualTokenIndex>;
+
+struct AssociatedConstantNameAndType {
+  static constexpr auto Kind =
+      NodeKind::AssociatedConstantNameAndType.Define({.child_count = 2});
+  
+  IdentifierNameNotBeforeParamsId name;
+  Lex::ColonExclaimTokenIndex token;
+  AnyExprId type;
+};
+
+// An associated constant declaration: `let a:! i32;`.
+struct AssociatedConstantDecl {
+  static constexpr auto Kind = NodeKind::AssociatedConstantDecl.Define(
+      {.category = NodeCategory::Decl, .bracketed_by = AssociatedConstantIntroducer::Kind});
+
+  AssociatedConstantIntroducerId introducer;
+  llvm::SmallVector<AnyModifierId> modifiers;
+  AssociatedConstantNameAndTypeId name_and_type;
+  Lex::SemiTokenIndex token;
+};
+
 // `var` nodes
 // -----------
 

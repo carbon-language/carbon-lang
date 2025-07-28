@@ -146,6 +146,8 @@ CARBON_DIAGNOSTIC_KIND(ExpectedFieldIdentifier)
 CARBON_DIAGNOSTIC_KIND(ExpectedFieldColon)
 CARBON_DIAGNOSTIC_KIND(ImplExpectedAfterForall)
 CARBON_DIAGNOSTIC_KIND(ImplExpectedAs)
+CARBON_DIAGNOSTIC_KIND(ExpectedAssociatedConstantIdentifier)
+CARBON_DIAGNOSTIC_KIND(ExpectedAssociatedConstantColonExclaim)
 
 // Alias diagnostics.
 CARBON_DIAGNOSTIC_KIND(ExpectedAliasInitializer)

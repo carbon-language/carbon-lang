@@ -411,6 +411,7 @@ class NodeStack {
     switch (node_kind) {
       case Parse::NodeKind::CallExprStart:
       case Parse::NodeKind::FieldNameAndType:
+      case Parse::NodeKind::AssociatedConstantNameAndType:
       case Parse::NodeKind::IfExprThen:
       case Parse::NodeKind::ReturnType:
       case Parse::NodeKind::ShortCircuitOperandAnd:
@@ -457,6 +458,8 @@ class NodeStack {
       case Parse::NodeKind::InterfaceIntroducer:
       case Parse::NodeKind::LetInitializer:
       case Parse::NodeKind::LetIntroducer:
+      case Parse::NodeKind::AssociatedConstantIntroducer:
+      case Parse::NodeKind::AssociatedConstantInitializer:
       case Parse::NodeKind::ReturnStatementStart:
       case Parse::NodeKind::StructLiteralStart:
       case Parse::NodeKind::StructTypeLiteralField:
