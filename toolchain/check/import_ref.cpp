@@ -1964,12 +1964,6 @@ static auto TryResolveTypedInst(ImportRefResolver& resolver,
                                        .Get(import_vtable.class_id)
                                        .first_owning_decl_id);
 
-  // TODO: Ensure the vtable is only imported once, in eg: if there's distinct
-  // vtable constants (imported from multiple libraries using the vtable) that
-  // refer to the same vtable, the vtable should still be singular.
-  auto virtual_functions =
-      GetLocalInstBlockContents(resolver, import_vtable.virtual_functions_id);
-
   auto specific_data = GetLocalSpecificData(resolver, inst.specific_id);
 
   if (resolver.HasNewWork()) {
@@ -1988,10 +1982,43 @@ static auto TryResolveTypedInst(ImportRefResolver& resolver,
             class_const_inst.type_id());
     class_id = generic_class_type.class_id;
   }
+
+  // TODO: Ensure the vtable is only imported once, in eg: if there's distinct
+  // vtable constants (imported from multiple libraries using the vtable) that
+  // refer to the same vtable, the vtable should still be singular.
+  auto virtual_functions =
+      resolver.import_inst_blocks().Get(import_vtable.virtual_functions_id);
+
+  llvm::SmallVector<SemIR::InstId> lazy_virtual_functions;
+  lazy_virtual_functions.reserve(virtual_functions.size());
+  for (auto vtable_entry_id : virtual_functions) {
+    auto local_attached_constant_id = GetLocalConstantId(
+        resolver,
+        resolver.import_constant_values().GetAttached(vtable_entry_id));
+    if (resolver.HasNewWork()) {
+      continue;
+    }
+    // Use LoadedImportRef for imported symbolic constant vtable entries so they
+    // can carry attached constants necessary for applying specifics to these
+    // constants when they are used.
+    lazy_virtual_functions.push_back(
+        local_attached_constant_id.is_symbolic()
+            ? AddLoadedImportRef(
+                  resolver,
+                  GetSingletonType(resolver.local_context(),
+                                   SemIR::SpecificFunctionType::TypeInstId),
+                  vtable_entry_id, local_attached_constant_id)
+            : resolver.local_constant_values().GetInstId(
+                  local_attached_constant_id));
+  }
+  if (resolver.HasNewWork()) {
+    return ResolveResult::Retry();
+  }
+
   auto new_vtable_id = resolver.local_vtables().Add(
       {{.class_id = class_id,
-        .virtual_functions_id = GetLocalCanonicalInstBlockId(
-            resolver, import_vtable.virtual_functions_id, virtual_functions)}});
+        .virtual_functions_id =
+            resolver.local_inst_blocks().Add(lazy_virtual_functions)}});
 
   return ResolveAsDeduplicated<SemIR::VtablePtr>(
       resolver, {.type_id = GetPointerType(resolver.local_context(),
