@@ -90,12 +90,12 @@ pattern and traversing into its dependencies.
 In some cases it is necessary for the pattern step to allocate instructions that
 won't actually be emitted until the match step, because they are responsible for
 performing pattern matching. When that happens, they are allocated but not added
-to a block, and their IDs are stored in the `Check::Context` (typically in a map
-from pattern instruction IDs to the corresponding match instruction IDs) so that
-they can be spliced into the current block at the appropriate point in the match
-step.
+to a block, and their IDs are stored in the `Check::Context` so that they can be
+spliced into the current block at the appropriate point in the match step.
 
-For example:
+Currently this happens in two cases, which are handled using two maps in
+`Check::Context` from pattern instruction IDs to the corresponding match
+instruction IDs:
 
 -   A name binding can be used within the same pattern that declares it:
     ```carbon
