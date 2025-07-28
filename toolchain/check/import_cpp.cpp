@@ -552,8 +552,7 @@ static auto ImportClassObjectRepr(Context& context, SemIR::ClassId class_id,
 
     auto [base_type_inst_id, base_type_id] =
         MapType(context, import_ir_inst_id, base.getType());
-    auto* base_class = base.getType()->getAsCXXRecordDecl();
-    if (!base_class || !base_type_id.has_value()) {
+    if (!base_type_id.has_value()) {
       // If the base class's type can't be mapped, skip it.
       continue;
     }
@@ -575,6 +574,10 @@ static auto ImportClassObjectRepr(Context& context, SemIR::ClassId class_id,
       CARBON_CHECK(!class_info.base_id.has_value());
       class_info.base_id = base_decl_id;
     }
+
+    auto* base_class = base.getType()->getAsCXXRecordDecl();
+    CARBON_CHECK(base_class, "Base class {0} is not a class",
+                 base.getType().getAsString());
 
     auto base_offset = base.isVirtual()
                            ? clang_layout.getVBaseClassOffset(base_class)
