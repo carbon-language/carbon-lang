@@ -400,11 +400,8 @@ static auto LookupClangDeclInstId(const Context& context, clang::Decl* decl)
 // Returns the parent of the given declaration. Skips declaration types we
 // ignore.
 static auto GetParentDecl(clang::Decl* clang_decl) -> clang::Decl* {
-  clang::DeclContext* decl_context = clang_decl->getDeclContext();
-  while (llvm::isa<clang::LinkageSpecDecl>(decl_context)) {
-    decl_context = decl_context->getParent();
-  }
-  return llvm::cast<clang::Decl>(decl_context);
+  return cast<clang::Decl>(
+      clang_decl->getDeclContext()->getNonTransparentContext());
 }
 
 // Returns the given declaration's parent scope. Assumes the parent declaration
@@ -1219,12 +1216,23 @@ static auto ImportFunctionDecl(Context& context, SemIR::LocId loc_id,
   return decl_id;
 }
 
-// Returns all decls that need to be imported before importing the given type.
-static auto GetDependentUnimportedTypeDecls(const Context& context,
-                                            clang::QualType type)
-    -> llvm::SmallVector<clang::Decl*> {
+using DeclSet = llvm::SetVector<clang::Decl*>;
+
+// Adds the given declaration to our list of declarations to import.
+static auto AddDependentDecl(const Context& context, clang::Decl* decl,
+                             DeclSet& decls) -> void {
+  // TODO: Do we need to also add the parent of the declaration, recursively?
+  if (!IsClangDeclImported(context, decl)) {
+    decls.insert(decl);
+  }
+}
+
+// Finds all decls that need to be imported before importing the given type and
+// adds them to the given set.
+static auto AddDependentUnimportedTypeDecls(const Context& context,
+                                            clang::QualType type,
+                                            DeclSet& decls) -> void {
   while (true) {
-    type = type.getCanonicalType();
     if (type->isPointerType() || type->isReferenceType()) {
       type = type->getPointeeType();
     } else if (const clang::ArrayType* array_type =
@@ -1235,58 +1243,38 @@ static auto GetDependentUnimportedTypeDecls(const Context& context,
     }
   }
 
-  type = type.getUnqualifiedType();
-
   if (const auto* record_type = type->getAs<clang::RecordType>()) {
-    if (auto* record_decl =
-            clang::dyn_cast<clang::CXXRecordDecl>(record_type->getDecl())) {
-      if (!IsClangDeclImported(context, record_decl)) {
-        return {record_decl};
-      }
-      // TODO: Also collect base and field types.
-    }
+    AddDependentDecl(context, record_type->getDecl(), decls);
+    // TODO: Also import bases and fields if the class is defined.
   }
-
-  return {};
 }
 
-// Returns all decls that need to be imported before importing the given
-// function.
-static auto GetDependentUnimportedFunctionDecls(
-    const Context& context, const clang::FunctionDecl& clang_decl)
-    -> llvm::SmallVector<clang::Decl*> {
-  llvm::SmallVector<clang::Decl*> decls;
+// Finds all decls that need to be imported before importing the given function
+// and adds them to the given set.
+static auto AddDependentUnimportedFunctionDecls(
+    const Context& context, const clang::FunctionDecl& clang_decl,
+    DeclSet& decls) -> void {
   for (const auto* param : clang_decl.parameters()) {
-    llvm::append_range(
-        decls, GetDependentUnimportedTypeDecls(context, param->getType()));
+    AddDependentUnimportedTypeDecls(context, param->getType(), decls);
   }
-  llvm::append_range(decls, GetDependentUnimportedTypeDecls(
-                                context, clang_decl.getReturnType()));
-  return decls;
+  AddDependentUnimportedTypeDecls(context, clang_decl.getReturnType(), decls);
 }
 
-// Returns all decls that need to be imported before importing the given
-// declaration.
-static auto GetDependentUnimportedDecls(const Context& context,
-                                        clang::Decl* clang_decl)
-    -> llvm::SmallVector<clang::Decl*> {
-  llvm::SmallVector<clang::Decl*> decls;
-  if (auto* parent_decl = GetParentDecl(clang_decl);
-      !IsClangDeclImported(context, parent_decl)) {
-    decls.push_back(parent_decl);
+// Finds all decls that need to be imported before importing the given
+// declaration and adds them to the given set.
+static auto AddDependentUnimportedDecls(const Context& context,
+                                        clang::Decl* clang_decl, DeclSet& decls)
+    -> void {
+  if (auto* parent_decl = GetParentDecl(clang_decl)) {
+    AddDependentDecl(context, parent_decl, decls);
   }
 
   if (auto* clang_function_decl = clang_decl->getAsFunction()) {
-    llvm::append_range(decls, GetDependentUnimportedFunctionDecls(
-                                  context, *clang_function_decl));
+    AddDependentUnimportedFunctionDecls(context, *clang_function_decl, decls);
   } else if (auto* type_decl = clang::dyn_cast<clang::TypeDecl>(clang_decl)) {
-    llvm::append_range(
-        decls,
-        GetDependentUnimportedTypeDecls(
-            context, type_decl->getASTContext().getTypeDeclType(type_decl)));
+    AddDependentUnimportedTypeDecls(
+        context, type_decl->getASTContext().getTypeDeclType(type_decl), decls);
   }
-
-  return decls;
 }
 
 // Imports a declaration from Clang to Carbon. If successful, returns the
@@ -1339,10 +1327,7 @@ static auto ImportDeclAndDependencies(Context& context, SemIR::LocId loc_id,
   llvm::SetVector<clang::Decl*> clang_decls;
   clang_decls.insert(clang_decl);
   for (size_t i = 0; i < clang_decls.size(); ++i) {
-    auto dependent_decls = GetDependentUnimportedDecls(context, clang_decls[i]);
-    for (clang::Decl* dependent_decl : dependent_decls) {
-      clang_decls.insert(dependent_decl);
-    }
+    AddDependentUnimportedDecls(context, clang_decls[i], clang_decls);
   }
 
   // Import dependencies in reverse order.
