@@ -105,6 +105,32 @@ fn MyF() {
 }
 
 // ============================================================================
+// Protected static member function
+// ============================================================================
+
+// --- protected_static_member_function.h
+
+class Bar {
+ protected:
+  static auto foo() -> void;
+};
+
+// --- fail_import_protected_static_member_function.carbon
+
+library "[[@TEST_NAME]]";
+
+import Cpp library "protected_static_member_function.h";
+
+fn MyF() {
+  // CHECK:STDERR: fail_import_protected_static_member_function.carbon:[[@LINE+5]]:3: error: cannot access protected member `foo` of type `Cpp.Bar` [ClassInvalidMemberAccess]
+  // CHECK:STDERR:   Cpp.Bar.foo();
+  // CHECK:STDERR:   ^~~~~~~~~~~
+  // CHECK:STDERR: fail_import_protected_static_member_function.carbon: note: declared here [ClassMemberDeclaration]
+  // CHECK:STDERR:
+  Cpp.Bar.foo();
+}
+
+// ============================================================================
 // Private static member function
 // ============================================================================
 
@@ -115,13 +141,18 @@ class Bar {
   static auto foo() -> void;
 };
 
-// --- todo_fail_import_private_static_member_function.carbon
+// --- fail_import_private_static_member_function.carbon
 
 library "[[@TEST_NAME]]";
 
 import Cpp library "private_static_member_function.h";
 
 fn MyF() {
+  // CHECK:STDERR: fail_import_private_static_member_function.carbon:[[@LINE+5]]:3: error: cannot access private member `foo` of type `Cpp.Bar` [ClassInvalidMemberAccess]
+  // CHECK:STDERR:   Cpp.Bar.foo();
+  // CHECK:STDERR:   ^~~~~~~~~~~
+  // CHECK:STDERR: fail_import_private_static_member_function.carbon: note: declared here [ClassMemberDeclaration]
+  // CHECK:STDERR:
   Cpp.Bar.foo();
 }
 
@@ -160,6 +191,38 @@ fn MyF() {
 }
 
 // ============================================================================
+// Private static data member
+// ============================================================================
+
+// --- private_static_data_member.h
+
+class Bar {
+ private:
+  static Bar* foo;
+};
+
+// --- fail_todo_import_private_static_data_member.carbon
+
+library "[[@TEST_NAME]]";
+
+import Cpp library "private_static_data_member.h";
+
+fn MyF() {
+  // CHECK:STDERR: fail_todo_import_private_static_data_member.carbon:[[@LINE+11]]:23: error: semantics TODO: `Unsupported: Declaration type Var` [SemanticsTodo]
+  // CHECK:STDERR:   let bar: Cpp.Bar* = Cpp.Bar.foo();
+  // CHECK:STDERR:                       ^~~~~~~~~~~
+  // CHECK:STDERR: fail_todo_import_private_static_data_member.carbon:[[@LINE+8]]:23: note: in `Cpp` name lookup for `foo` [InCppNameLookup]
+  // CHECK:STDERR:   let bar: Cpp.Bar* = Cpp.Bar.foo();
+  // CHECK:STDERR:                       ^~~~~~~~~~~
+  // CHECK:STDERR:
+  // CHECK:STDERR: fail_todo_import_private_static_data_member.carbon:[[@LINE+4]]:23: error: member name `foo` not found in `Cpp.Bar` [MemberNameNotFoundInInstScope]
+  // CHECK:STDERR:   let bar: Cpp.Bar* = Cpp.Bar.foo();
+  // CHECK:STDERR:                       ^~~~~~~~~~~
+  // CHECK:STDERR:
+  let bar: Cpp.Bar* = Cpp.Bar.foo();
+}
+
+// ============================================================================
 // Public data member
 // ============================================================================
 
@@ -178,6 +241,35 @@ import Cpp library "public_data_member.h";
 
 //@dump-sem-ir-begin
 fn MyF(bar : Cpp.Bar*) {
+  let foo_bar: Cpp.Bar* = bar->foo;
+}
+//@dump-sem-ir-end
+
+// ============================================================================
+// Private data member
+// ============================================================================
+
+// --- private_data_member.h
+
+class Bar {
+ private:
+  Bar* _Nonnull foo;
+};
+
+// --- fail_import_private_data_member.carbon
+
+library "[[@TEST_NAME]]";
+
+import Cpp library "private_data_member.h";
+
+//@dump-sem-ir-begin
+fn MyF(bar : Cpp.Bar*) {
+  // CHECK:STDERR: fail_import_private_data_member.carbon:[[@LINE+6]]:27: error: cannot access private member `foo` of type `Cpp.Bar` [ClassInvalidMemberAccess]
+  // CHECK:STDERR:   let foo_bar: Cpp.Bar* = bar->foo;
+  // CHECK:STDERR:                           ^~~~~~~~
+  // CHECK:STDERR: fail_import_private_data_member.carbon:[[@LINE-7]]:1: in import [InImport]
+  // CHECK:STDERR: ./private_data_member.h:2: note: declared here [ClassMemberDeclaration]
+  // CHECK:STDERR:
   let foo_bar: Cpp.Bar* = bar->foo;
 }
 //@dump-sem-ir-end
@@ -302,7 +394,7 @@ class Bar {
   static auto foo() -> void;
 };
 
-// --- todo_fail_to_inherit_private.carbon
+// --- fail_to_inherit_private.carbon
 
 library "[[@TEST_NAME]]";
 
@@ -313,7 +405,35 @@ class Derived {
 }
 
 fn MyF() {
+  // CHECK:STDERR: fail_to_inherit_private.carbon:[[@LINE+5]]:3: error: cannot access private member `foo` of type `Cpp.Bar` [ClassInvalidMemberAccess]
+  // CHECK:STDERR:   Derived.foo();
+  // CHECK:STDERR:   ^~~~~~~~~~~
+  // CHECK:STDERR: fail_to_inherit_private.carbon: note: declared here [ClassMemberDeclaration]
+  // CHECK:STDERR:
   Derived.foo();
+}
+
+// ============================================================================
+// Private inheritance
+// ============================================================================
+
+// --- private_inheritance.h
+
+class Base {
+ public:
+  static auto foo() -> void;
+};
+
+class Derived : private Base {};
+
+// --- todo_fail_import_private_inheritance.carbon
+
+library "[[@TEST_NAME]]";
+
+import Cpp library "private_inheritance.h";
+
+fn MyF() {
+  Cpp.Derived.foo();
 }
 
 // ============================================================================
@@ -561,6 +681,56 @@ fn MyF(bar: Cpp.Bar*);
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %.loc8_30.3: %ptr.f68 = bind_value %.loc8_30.2
 // CHECK:STDOUT:   %foo_bar: %ptr.f68 = bind_name foo_bar, %.loc8_30.3
+// CHECK:STDOUT:   return
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: --- fail_import_private_data_member.carbon
+// CHECK:STDOUT:
+// CHECK:STDOUT: constants {
+// CHECK:STDOUT:   %Bar: type = class_type @Bar [concrete]
+// CHECK:STDOUT:   %ptr.f68: type = ptr_type %Bar [concrete]
+// CHECK:STDOUT:   %pattern_type: type = pattern_type %ptr.f68 [concrete]
+// CHECK:STDOUT:   %MyF.type: type = fn_type @MyF [concrete]
+// CHECK:STDOUT:   %MyF: %MyF.type = struct_value () [concrete]
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: imports {
+// CHECK:STDOUT:   %Cpp: <namespace> = namespace file.%Cpp.import_cpp, [concrete] {
+// CHECK:STDOUT:     .Bar = %Bar.decl
+// CHECK:STDOUT:     import Cpp//...
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %Bar.decl: type = class_decl @Bar [concrete = constants.%Bar] {} {}
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: file {
+// CHECK:STDOUT:   %MyF.decl: %MyF.type = fn_decl @MyF [concrete = constants.%MyF] {
+// CHECK:STDOUT:     %bar.patt: %pattern_type = binding_pattern bar [concrete]
+// CHECK:STDOUT:     %bar.param_patt: %pattern_type = value_param_pattern %bar.patt, call_param0 [concrete]
+// CHECK:STDOUT:   } {
+// CHECK:STDOUT:     %bar.param: %ptr.f68 = value_param call_param0
+// CHECK:STDOUT:     %.loc7: type = splice_block %ptr.loc7 [concrete = constants.%ptr.f68] {
+// CHECK:STDOUT:       %Cpp.ref.loc7: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
+// CHECK:STDOUT:       %Bar.ref.loc7: type = name_ref Bar, imports.%Bar.decl [concrete = constants.%Bar]
+// CHECK:STDOUT:       %ptr.loc7: type = ptr_type %Bar.ref.loc7 [concrete = constants.%ptr.f68]
+// CHECK:STDOUT:     }
+// CHECK:STDOUT:     %bar: %ptr.f68 = bind_name bar, %bar.param
+// CHECK:STDOUT:   }
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: fn @MyF(%bar.param: %ptr.f68) {
+// CHECK:STDOUT: !entry:
+// CHECK:STDOUT:   name_binding_decl {
+// CHECK:STDOUT:     %foo_bar.patt: %pattern_type = binding_pattern foo_bar [concrete]
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %bar.ref: %ptr.f68 = name_ref bar, %bar
+// CHECK:STDOUT:   %.loc14_30: ref %Bar = deref %bar.ref
+// CHECK:STDOUT:   %foo.ref: <error> = name_ref foo, <error> [concrete = <error>]
+// CHECK:STDOUT:   %.loc14_23: type = splice_block %ptr.loc14 [concrete = constants.%ptr.f68] {
+// CHECK:STDOUT:     %Cpp.ref.loc14: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
+// CHECK:STDOUT:     %Bar.ref.loc14: type = name_ref Bar, imports.%Bar.decl [concrete = constants.%Bar]
+// CHECK:STDOUT:     %ptr.loc14: type = ptr_type %Bar.ref.loc14 [concrete = constants.%ptr.f68]
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %foo_bar: %ptr.f68 = bind_name foo_bar, <error> [concrete = <error>]
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

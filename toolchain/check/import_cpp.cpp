@@ -74,14 +74,15 @@ static auto GenerateCppIncludesHeaderCode(
   return code;
 }
 
-// Adds the name to the scope with the given `inst_id`, if the `inst_id` is not
-// `None`.
+// Adds the name to the scope with the given `access_kind` and `inst_id`.
+// `inst_id` must have a value.
 static auto AddNameToScope(Context& context, SemIR::NameScopeId scope_id,
-                           SemIR::NameId name_id, SemIR::InstId inst_id)
-    -> void {
-  if (inst_id.has_value()) {
-    context.name_scopes().AddRequiredName(scope_id, name_id, inst_id);
-  }
+                           SemIR::NameId name_id, SemIR::AccessKind access_kind,
+                           SemIR::InstId inst_id) -> void {
+  CARBON_CHECK(inst_id.has_value());
+  context.name_scopes().Get(scope_id).AddRequired(
+      {.name_id = name_id,
+       .result = SemIR::ScopeLookupResult::MakeFound(inst_id, access_kind)});
 }
 
 // Maps a Clang name to a Carbon `NameId`.
@@ -355,10 +356,6 @@ static auto ClangLookup(Context& context, SemIR::NameScopeId scope_id,
               sema.getPreprocessor().getIdentifierInfo(*name)),
           clang::SourceLocation()),
       clang::Sema::LookupNameKind::LookupOrdinaryName);
-  // TODO: Diagnose on access and return the `AccessKind` for storage. We'll
-  // probably need a dedicated `DiagnosticConsumer` because
-  // `TextDiagnosticPrinter` assumes we're processing a C++ source file.
-  lookup.suppressDiagnostics();
 
   auto scope_clang_decl_context_id =
       context.name_scopes().Get(scope_id).clang_decl_context_id();
@@ -1274,22 +1271,41 @@ static auto ImportDeclAndDependencies(Context& context, SemIR::LocId loc_id,
   return inst_id;
 }
 
+// Maps `clang::AccessSpecifier` to `SemIR::AccessKind`.
+static auto MapAccess(clang::AccessSpecifier access_specifier)
+    -> SemIR::AccessKind {
+  switch (access_specifier) {
+    case clang::AS_public:
+    case clang::AS_none:
+      return SemIR::AccessKind::Public;
+    case clang::AS_protected:
+      return SemIR::AccessKind::Protected;
+    case clang::AS_private:
+      return SemIR::AccessKind::Private;
+  }
+}
+
 // Imports a `clang::NamedDecl` into Carbon and adds that name into the
 // `NameScope`.
 static auto ImportNameDeclIntoScope(Context& context, SemIR::LocId loc_id,
                                     SemIR::NameScopeId scope_id,
                                     SemIR::NameId name_id,
                                     clang::NamedDecl* clang_decl)
-    -> SemIR::InstId {
+    -> SemIR::ScopeLookupResult {
   SemIR::InstId inst_id =
       ImportDeclAndDependencies(context, loc_id, clang_decl);
-  AddNameToScope(context, scope_id, name_id, inst_id);
-  return inst_id;
+  if (!inst_id.has_value()) {
+    return SemIR::ScopeLookupResult::MakeNotFound();
+  }
+  SemIR::AccessKind access_kind = MapAccess(clang_decl->getAccess());
+  AddNameToScope(context, scope_id, name_id, access_kind, inst_id);
+  return SemIR::ScopeLookupResult::MakeWrappedLookupResult(inst_id,
+                                                           access_kind);
 }
 
 auto ImportNameFromCpp(Context& context, SemIR::LocId loc_id,
                        SemIR::NameScopeId scope_id, SemIR::NameId name_id)
-    -> SemIR::InstId {
+    -> SemIR::ScopeLookupResult {
   Diagnostics::AnnotationScope annotate_diagnostics(
       &context.emitter(), [&](auto& builder) {
         CARBON_DIAGNOSTIC(InCppNameLookup, Note,
@@ -1299,7 +1315,7 @@ auto ImportNameFromCpp(Context& context, SemIR::LocId loc_id,
 
   auto lookup = ClangLookup(context, scope_id, name_id);
   if (!lookup) {
-    return SemIR::InstId::None;
+    return SemIR::ScopeLookupResult::MakeNotFound();
   }
 
   if (!lookup->isSingleResult()) {
@@ -1310,7 +1326,7 @@ auto ImportNameFromCpp(Context& context, SemIR::LocId loc_id,
                      .str());
     context.name_scopes().AddRequiredName(scope_id, name_id,
                                           SemIR::ErrorInst::InstId);
-    return SemIR::ErrorInst::InstId;
+    return SemIR::ScopeLookupResult::MakeError();
   }
 
   return ImportNameDeclIntoScope(context, loc_id, scope_id, name_id,

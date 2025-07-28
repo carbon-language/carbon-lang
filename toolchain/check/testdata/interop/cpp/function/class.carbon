@@ -266,6 +266,7 @@ fn F() {
 // --- definition_with_static_method.h
 
 class C {
+ public:
   static void bar();
 };
 
