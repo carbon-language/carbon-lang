@@ -209,8 +209,8 @@ static auto BuildVtable(Context& context, Parse::ClassDefinitionId node_id,
               context, node_id,
               {.type_id = GetSingletonType(
                    context, SemIR::SpecificFunctionType::TypeInstId),
-               .callee_id = base_vtable_entry->callee_id,
-               .specific_id = base_vtable_entry->specific_id});
+               .callee_id = base_vtable_specific_function->callee_id,
+               .specific_id = base_vtable_specific_function->specific_id});
         }
       }
       vtable.push_back(derived_vtable_entry_id);
