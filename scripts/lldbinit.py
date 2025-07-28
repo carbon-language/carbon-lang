@@ -100,8 +100,8 @@ Example usage:
         cmd = f"p Dump({context}, {expr})"
         out = RunCommand(cmd, print_command=False)
         if m := re.match(dump_re, out):
-            # Use the `dump_re` match to print just the interesting part of the dump
-            # output.
+            # Use the `dump_re` match to print just the interesting part of the
+            # dump output.
             print(m[1])
         else:
             # Unexpected output, show the command that was run.
