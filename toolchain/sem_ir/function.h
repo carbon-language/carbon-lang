@@ -192,7 +192,7 @@ auto GetCalleeFunction(const File& sem_ir, InstId callee_id,
     -> CalleeFunction;
 
 struct DecomposedVirtualFunction {
-  // The canonical instruction.
+  // The canonical instruction from the `fn_decl_const_id`.
   InstId fn_decl_id;
   // The constant for the underlying instruction.
   ConstantId fn_decl_const_id;
