@@ -295,7 +295,7 @@ work reliably include:
 ## Debugger dumping with LLDB
 
 We include a `dump` command in `lldb` (see
-[Using-LLDB-from-the-command-line](#using-LLDB-from-the-command-line) to ensure
+[Using-LLDB-from-the-command-line](#using-lldb-from-the-command-line) to ensure
 it is available). The `dump` command allows you to dump the contents of a value
 associated with an id. Since most data in the toolchain is referenced by id,
 this ends up being a very frequent task.
