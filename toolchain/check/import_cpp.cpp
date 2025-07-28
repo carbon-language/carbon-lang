@@ -668,12 +668,18 @@ static auto MakeIntType(Context& context, IntId size_id, bool is_signed)
 // TODO: Support more builtin types.
 static auto MapBuiltinType(Context& context, clang::QualType qual_type,
                            const clang::BuiltinType& type) -> TypeExpr {
+  clang::ASTContext& ast_context = context.ast_context();
+  if (type.isBooleanType()) {
+    CARBON_CHECK(ast_context.hasSameType(qual_type, ast_context.BoolTy));
+    return ExprAsType(context, Parse::NodeId::None,
+                      context.types().GetInstId(GetSingletonType(
+                          context, SemIR::BoolType::TypeInstId)));
+  }
   if (type.isInteger()) {
-    auto width = context.ast_context().getIntWidth(qual_type);
+    auto width = ast_context.getIntWidth(qual_type);
     bool is_signed = type.isSignedInteger();
-    auto int_n_type =
-        context.ast_context().getIntTypeForBitwidth(width, is_signed);
-    if (context.ast_context().hasSameType(qual_type, int_n_type)) {
+    auto int_n_type = ast_context.getIntTypeForBitwidth(width, is_signed);
+    if (ast_context.hasSameType(qual_type, int_n_type)) {
       return MakeIntType(context, context.ints().Add(width), is_signed);
     }
     // TODO: Handle integer types that map to named aliases.
