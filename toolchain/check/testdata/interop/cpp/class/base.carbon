@@ -159,19 +159,33 @@ fn ConvertB(p: Cpp.C*) -> Cpp.B* {
 struct A { int a; };
 struct B : virtual A {};
 
+void UseB(B * _Nonnull p);
+
+// --- use_virtual_inheritance_incomplete.carbon
+
+library "[[@TEST_NAME]]";
+
+import Cpp library "virtual_inheritance.h";
+
+fn Convert(p: Cpp.B*) {
+  // OK, doesn't require `Cpp.B` to be a complete type.
+  Cpp.UseB(p);
+}
+
 // --- fail_todo_use_virtual_inheritance.carbon
 
 library "[[@TEST_NAME]]";
 
-// CHECK:STDERR: fail_todo_use_virtual_inheritance.carbon:[[@LINE+2]]:1: in import [InImport]
-// CHECK:STDERR: ./virtual_inheritance.h:3: error: semantics TODO: `class with virtual bases` [SemanticsTodo]
 import Cpp library "virtual_inheritance.h";
 
-// CHECK:STDERR: fail_todo_use_virtual_inheritance.carbon:[[@LINE+4]]:15: note: in `Cpp` name lookup for `B` [InCppNameLookup]
-// CHECK:STDERR: fn Convert(p: Cpp.B*) -> Cpp.A* {
-// CHECK:STDERR:               ^~~~~
-// CHECK:STDERR:
 fn Convert(p: Cpp.B*) -> Cpp.A* {
+  // CHECK:STDERR: fail_todo_use_virtual_inheritance.carbon:[[@LINE+14]]:3: error: semantics TODO: `class with virtual bases` [SemanticsTodo]
+  // CHECK:STDERR:   return p;
+  // CHECK:STDERR:   ^~~~~~~~~
+  // CHECK:STDERR: fail_todo_use_virtual_inheritance.carbon:[[@LINE+11]]:3: note: while completing C++ class type `Cpp.B` [InCppTypeCompletion]
+  // CHECK:STDERR:   return p;
+  // CHECK:STDERR:   ^~~~~~~~~
+  // CHECK:STDERR:
   // CHECK:STDERR: fail_todo_use_virtual_inheritance.carbon:[[@LINE+7]]:3: error: cannot implicitly convert expression of type `Cpp.B*` to `Cpp.A*` [ConversionFailure]
   // CHECK:STDERR:   return p;
   // CHECK:STDERR:   ^~~~~~~~~
@@ -186,19 +200,19 @@ fn Convert(p: Cpp.B*) -> Cpp.A* {
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %Derived: type = class_type @Derived [concrete]
-// CHECK:STDOUT:   %Base: type = class_type @Base [concrete]
-// CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [concrete]
-// CHECK:STDOUT:   %complete_type.357: <witness> = complete_type_witness %empty_struct_type [concrete]
-// CHECK:STDOUT:   %Derived.elem: type = unbound_element_type %Derived, %Base [concrete]
-// CHECK:STDOUT:   %.52d: type = custom_layout_type {size=1, align=1, .base@0: %Base} [concrete]
-// CHECK:STDOUT:   %complete_type.fd1: <witness> = complete_type_witness %.52d [concrete]
 // CHECK:STDOUT:   %ptr.ddb: type = ptr_type %Derived [concrete]
 // CHECK:STDOUT:   %pattern_type.5c8: type = pattern_type %ptr.ddb [concrete]
+// CHECK:STDOUT:   %Base: type = class_type @Base [concrete]
 // CHECK:STDOUT:   %ptr.fb2: type = ptr_type %Base [concrete]
 // CHECK:STDOUT:   %pattern_type.72a: type = pattern_type %ptr.fb2 [concrete]
 // CHECK:STDOUT:   %ConvertPtr.type: type = fn_type @ConvertPtr [concrete]
 // CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [concrete]
 // CHECK:STDOUT:   %ConvertPtr: %ConvertPtr.type = struct_value () [concrete]
+// CHECK:STDOUT:   %Derived.elem: type = unbound_element_type %Derived, %Base [concrete]
+// CHECK:STDOUT:   %.52d: type = custom_layout_type {size=1, align=1, .base@0: %Base} [concrete]
+// CHECK:STDOUT:   %complete_type.fd1: <witness> = complete_type_witness %.52d [concrete]
+// CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [concrete]
+// CHECK:STDOUT:   %complete_type.357: <witness> = complete_type_witness %empty_struct_type [concrete]
 // CHECK:STDOUT:   %pattern_type.a3a: type = pattern_type %Base [concrete]
 // CHECK:STDOUT:   %AcceptVal.type: type = fn_type @AcceptVal [concrete]
 // CHECK:STDOUT:   %AcceptVal: %AcceptVal.type = struct_value () [concrete]
@@ -283,7 +297,6 @@ fn Convert(p: Cpp.B*) -> Cpp.A* {
 // CHECK:STDOUT:   complete_type_witness = %complete_type
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
-// CHECK:STDOUT:   .Self = constants.%Derived
 // CHECK:STDOUT:   import Cpp//...
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -293,7 +306,6 @@ fn Convert(p: Cpp.B*) -> Cpp.A* {
 // CHECK:STDOUT:   complete_type_witness = %complete_type
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
-// CHECK:STDOUT:   .Self = constants.%Base
 // CHECK:STDOUT:   import Cpp//...
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -374,7 +386,6 @@ fn Convert(p: Cpp.B*) -> Cpp.A* {
 // CHECK:STDOUT:   complete_type_witness = %complete_type
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
-// CHECK:STDOUT:   .Self = constants.%Base
 // CHECK:STDOUT:   .base_fn = imports.%Base.base_fn.decl
 // CHECK:STDOUT:   import Cpp//...
 // CHECK:STDOUT: }
@@ -386,7 +397,6 @@ fn Convert(p: Cpp.B*) -> Cpp.A* {
 // CHECK:STDOUT:   complete_type_witness = %complete_type
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
-// CHECK:STDOUT:   .Self = constants.%Derived
 // CHECK:STDOUT:   .base_fn = imports.%Base.base_fn.decl
 // CHECK:STDOUT:   .derived_fn = imports.%Derived.derived_fn.decl
 // CHECK:STDOUT:   import Cpp//...
@@ -417,22 +427,22 @@ fn Convert(p: Cpp.B*) -> Cpp.A* {
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %Derived: type = class_type @Derived [concrete]
-// CHECK:STDOUT:   %Base: type = class_type @Base [concrete]
+// CHECK:STDOUT:   %pattern_type.5de: type = pattern_type %Derived [concrete]
 // CHECK:STDOUT:   %int_32: Core.IntLiteral = int_value 32 [concrete]
 // CHECK:STDOUT:   %Int.type: type = generic_class_type @Int [concrete]
 // CHECK:STDOUT:   %Int.generic: %Int.type = struct_value () [concrete]
 // CHECK:STDOUT:   %i32: type = class_type @Int, @Int(%int_32) [concrete]
-// CHECK:STDOUT:   %Base.elem: type = unbound_element_type %Base, %i32 [concrete]
-// CHECK:STDOUT:   %.807: type = custom_layout_type {size=8, align=4, .a@0: %i32, .b@4: %i32} [concrete]
-// CHECK:STDOUT:   %complete_type.e3e: <witness> = complete_type_witness %.807 [concrete]
+// CHECK:STDOUT:   %pattern_type.7ce: type = pattern_type %i32 [concrete]
+// CHECK:STDOUT:   %AccessDirect.type: type = fn_type @AccessDirect [concrete]
+// CHECK:STDOUT:   %AccessDirect: %AccessDirect.type = struct_value () [concrete]
+// CHECK:STDOUT:   %Base: type = class_type @Base [concrete]
 // CHECK:STDOUT:   %Derived.elem.b4e: type = unbound_element_type %Derived, %Base [concrete]
 // CHECK:STDOUT:   %Derived.elem.16d: type = unbound_element_type %Derived, %i32 [concrete]
 // CHECK:STDOUT:   %.f26: type = custom_layout_type {size=12, align=4, .base@0: %Base, .b@8: %i32} [concrete]
 // CHECK:STDOUT:   %complete_type.0bc: <witness> = complete_type_witness %.f26 [concrete]
-// CHECK:STDOUT:   %pattern_type.5de: type = pattern_type %Derived [concrete]
-// CHECK:STDOUT:   %pattern_type.7ce: type = pattern_type %i32 [concrete]
-// CHECK:STDOUT:   %AccessDirect.type: type = fn_type @AccessDirect [concrete]
-// CHECK:STDOUT:   %AccessDirect: %AccessDirect.type = struct_value () [concrete]
+// CHECK:STDOUT:   %Base.elem: type = unbound_element_type %Base, %i32 [concrete]
+// CHECK:STDOUT:   %.807: type = custom_layout_type {size=8, align=4, .a@0: %i32, .b@4: %i32} [concrete]
+// CHECK:STDOUT:   %complete_type.e3e: <witness> = complete_type_witness %.807 [concrete]
 // CHECK:STDOUT:   %AccessQualified.type: type = fn_type @AccessQualified [concrete]
 // CHECK:STDOUT:   %AccessQualified: %AccessQualified.type = struct_value () [concrete]
 // CHECK:STDOUT: }
@@ -449,8 +459,8 @@ fn Convert(p: Cpp.B*) -> Cpp.A* {
 // CHECK:STDOUT:     import Cpp//...
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Derived.decl: type = class_decl @Derived [concrete = constants.%Derived] {} {}
-// CHECK:STDOUT:   %Base.decl: type = class_decl @Base [concrete = constants.%Base] {} {}
 // CHECK:STDOUT:   %Core.Int: %Int.type = import_ref Core//prelude/parts/int, Int, loaded [concrete = constants.%Int.generic]
+// CHECK:STDOUT:   %Base.decl: type = class_decl @Base [concrete = constants.%Base] {} {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -510,7 +520,6 @@ fn Convert(p: Cpp.B*) -> Cpp.A* {
 // CHECK:STDOUT:   complete_type_witness = %complete_type
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
-// CHECK:STDOUT:   .Self = constants.%Derived
 // CHECK:STDOUT:   .a = @Base.%.1
 // CHECK:STDOUT:   import Cpp//...
 // CHECK:STDOUT: }
@@ -527,7 +536,6 @@ fn Convert(p: Cpp.B*) -> Cpp.A* {
 // CHECK:STDOUT:   complete_type_witness = %complete_type
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
-// CHECK:STDOUT:   .Self = constants.%Base
 // CHECK:STDOUT:   .b = %.2
 // CHECK:STDOUT:   import Cpp//...
 // CHECK:STDOUT: }
@@ -560,16 +568,16 @@ fn Convert(p: Cpp.B*) -> Cpp.A* {
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %Derived: type = class_type @Derived [concrete]
-// CHECK:STDOUT:   %Base: type = class_type @Base [concrete]
-// CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [concrete]
-// CHECK:STDOUT:   %complete_type.357: <witness> = complete_type_witness %empty_struct_type [concrete]
-// CHECK:STDOUT:   %Derived.elem: type = unbound_element_type %Derived, %Base [concrete]
-// CHECK:STDOUT:   %.52d: type = custom_layout_type {size=1, align=1, .base@0: %Base} [concrete]
-// CHECK:STDOUT:   %complete_type.fd1: <witness> = complete_type_witness %.52d [concrete]
 // CHECK:STDOUT:   %pattern_type.5de: type = pattern_type %Derived [concrete]
 // CHECK:STDOUT:   %CallDirect.type: type = fn_type @CallDirect [concrete]
 // CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [concrete]
 // CHECK:STDOUT:   %CallDirect: %CallDirect.type = struct_value () [concrete]
+// CHECK:STDOUT:   %Base: type = class_type @Base [concrete]
+// CHECK:STDOUT:   %Derived.elem: type = unbound_element_type %Derived, %Base [concrete]
+// CHECK:STDOUT:   %.52d: type = custom_layout_type {size=1, align=1, .base@0: %Base} [concrete]
+// CHECK:STDOUT:   %complete_type.fd1: <witness> = complete_type_witness %.52d [concrete]
+// CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [concrete]
+// CHECK:STDOUT:   %complete_type.357: <witness> = complete_type_witness %empty_struct_type [concrete]
 // CHECK:STDOUT:   %pattern_type.a3a: type = pattern_type %Base [concrete]
 // CHECK:STDOUT:   %Base.f.type: type = fn_type @Base.f [concrete]
 // CHECK:STDOUT:   %Base.f: %Base.f.type = struct_value () [concrete]
@@ -649,7 +657,6 @@ fn Convert(p: Cpp.B*) -> Cpp.A* {
 // CHECK:STDOUT:   complete_type_witness = %complete_type
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
-// CHECK:STDOUT:   .Self = constants.%Derived
 // CHECK:STDOUT:   .f = imports.%Base.f.decl
 // CHECK:STDOUT:   import Cpp//...
 // CHECK:STDOUT: }
@@ -660,7 +667,6 @@ fn Convert(p: Cpp.B*) -> Cpp.A* {
 // CHECK:STDOUT:   complete_type_witness = %complete_type
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
-// CHECK:STDOUT:   .Self = constants.%Base
 // CHECK:STDOUT:   .g = imports.%Base.g.decl
 // CHECK:STDOUT:   import Cpp//...
 // CHECK:STDOUT: }
@@ -699,28 +705,28 @@ fn Convert(p: Cpp.B*) -> Cpp.A* {
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %C: type = class_type @C [concrete]
-// CHECK:STDOUT:   %A: type = class_type @A [concrete]
-// CHECK:STDOUT:   %int_32: Core.IntLiteral = int_value 32 [concrete]
-// CHECK:STDOUT:   %Int.type: type = generic_class_type @Int [concrete]
-// CHECK:STDOUT:   %Int.generic: %Int.type = struct_value () [concrete]
-// CHECK:STDOUT:   %i32: type = class_type @Int, @Int(%int_32) [concrete]
-// CHECK:STDOUT:   %A.elem: type = unbound_element_type %A, %i32 [concrete]
-// CHECK:STDOUT:   %.79a: type = custom_layout_type {size=4, align=4, .a@0: %i32} [concrete]
-// CHECK:STDOUT:   %complete_type.33a: <witness> = complete_type_witness %.79a [concrete]
-// CHECK:STDOUT:   %C.elem.1e5: type = unbound_element_type %C, %A [concrete]
-// CHECK:STDOUT:   %B: type = class_type @B [concrete]
-// CHECK:STDOUT:   %B.elem: type = unbound_element_type %B, %i32 [concrete]
-// CHECK:STDOUT:   %.903: type = custom_layout_type {size=4, align=4, .b@0: %i32} [concrete]
-// CHECK:STDOUT:   %complete_type.fb9: <witness> = complete_type_witness %.903 [concrete]
-// CHECK:STDOUT:   %C.elem.874: type = unbound_element_type %C, %B [concrete]
-// CHECK:STDOUT:   %.dba: type = custom_layout_type {size=8, align=4, .base@0: %A, .base@4: %B} [concrete]
-// CHECK:STDOUT:   %complete_type.1ad: <witness> = complete_type_witness %.dba [concrete]
 // CHECK:STDOUT:   %ptr.d9e: type = ptr_type %C [concrete]
 // CHECK:STDOUT:   %pattern_type.a31: type = pattern_type %ptr.d9e [concrete]
+// CHECK:STDOUT:   %A: type = class_type @A [concrete]
 // CHECK:STDOUT:   %ptr.270: type = ptr_type %A [concrete]
 // CHECK:STDOUT:   %pattern_type.bcf: type = pattern_type %ptr.270 [concrete]
 // CHECK:STDOUT:   %ConvertA.type: type = fn_type @ConvertA [concrete]
 // CHECK:STDOUT:   %ConvertA: %ConvertA.type = struct_value () [concrete]
+// CHECK:STDOUT:   %C.elem.1e5: type = unbound_element_type %C, %A [concrete]
+// CHECK:STDOUT:   %B: type = class_type @B [concrete]
+// CHECK:STDOUT:   %C.elem.874: type = unbound_element_type %C, %B [concrete]
+// CHECK:STDOUT:   %.dba: type = custom_layout_type {size=8, align=4, .base@0: %A, .base@4: %B} [concrete]
+// CHECK:STDOUT:   %complete_type.1ad: <witness> = complete_type_witness %.dba [concrete]
+// CHECK:STDOUT:   %int_32: Core.IntLiteral = int_value 32 [concrete]
+// CHECK:STDOUT:   %Int.type: type = generic_class_type @Int [concrete]
+// CHECK:STDOUT:   %Int.generic: %Int.type = struct_value () [concrete]
+// CHECK:STDOUT:   %i32: type = class_type @Int, @Int(%int_32) [concrete]
+// CHECK:STDOUT:   %B.elem: type = unbound_element_type %B, %i32 [concrete]
+// CHECK:STDOUT:   %.903: type = custom_layout_type {size=4, align=4, .b@0: %i32} [concrete]
+// CHECK:STDOUT:   %complete_type.fb9: <witness> = complete_type_witness %.903 [concrete]
+// CHECK:STDOUT:   %A.elem: type = unbound_element_type %A, %i32 [concrete]
+// CHECK:STDOUT:   %.79a: type = custom_layout_type {size=4, align=4, .a@0: %i32} [concrete]
+// CHECK:STDOUT:   %complete_type.33a: <witness> = complete_type_witness %.79a [concrete]
 // CHECK:STDOUT:   %ImplicitAs.type.cc7: type = generic_interface_type @ImplicitAs [concrete]
 // CHECK:STDOUT:   %ImplicitAs.generic: %ImplicitAs.type.cc7 = struct_value () [concrete]
 // CHECK:STDOUT:   %ptr.a04: type = ptr_type %B [concrete]
@@ -744,8 +750,8 @@ fn Convert(p: Cpp.B*) -> Cpp.A* {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %C.decl: type = class_decl @C [concrete = constants.%C] {} {}
 // CHECK:STDOUT:   %A.decl: type = class_decl @A [concrete = constants.%A] {} {}
-// CHECK:STDOUT:   %Core.Int: %Int.type = import_ref Core//prelude/parts/int, Int, loaded [concrete = constants.%Int.generic]
 // CHECK:STDOUT:   %B.decl: type = class_decl @B [concrete = constants.%B] {} {}
+// CHECK:STDOUT:   %Core.Int: %Int.type = import_ref Core//prelude/parts/int, Int, loaded [concrete = constants.%Int.generic]
 // CHECK:STDOUT:   %Core.ImplicitAs: %ImplicitAs.type.cc7 = import_ref Core//prelude/parts/as, ImplicitAs, loaded [concrete = constants.%ImplicitAs.generic]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -808,7 +814,6 @@ fn Convert(p: Cpp.B*) -> Cpp.A* {
 // CHECK:STDOUT:   complete_type_witness = %complete_type
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
-// CHECK:STDOUT:   .Self = constants.%C
 // CHECK:STDOUT:   import Cpp//...
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -821,7 +826,6 @@ fn Convert(p: Cpp.B*) -> Cpp.A* {
 // CHECK:STDOUT:   complete_type_witness = %complete_type
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
-// CHECK:STDOUT:   .Self = constants.%A
 // CHECK:STDOUT:   import Cpp//...
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -834,7 +838,6 @@ fn Convert(p: Cpp.B*) -> Cpp.A* {
 // CHECK:STDOUT:   complete_type_witness = %complete_type
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
-// CHECK:STDOUT:   .Self = constants.%B
 // CHECK:STDOUT:   import Cpp//...
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -852,6 +855,81 @@ fn Convert(p: Cpp.B*) -> Cpp.A* {
 // CHECK:STDOUT:   return <error>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
+// CHECK:STDOUT: --- use_virtual_inheritance_incomplete.carbon
+// CHECK:STDOUT:
+// CHECK:STDOUT: constants {
+// CHECK:STDOUT:   %B: type = class_type @B [concrete]
+// CHECK:STDOUT:   %ptr: type = ptr_type %B [concrete]
+// CHECK:STDOUT:   %pattern_type: type = pattern_type %ptr [concrete]
+// CHECK:STDOUT:   %Convert.type: type = fn_type @Convert [concrete]
+// CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [concrete]
+// CHECK:STDOUT:   %Convert: %Convert.type = struct_value () [concrete]
+// CHECK:STDOUT:   %UseB.type: type = fn_type @UseB [concrete]
+// CHECK:STDOUT:   %UseB: %UseB.type = struct_value () [concrete]
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: imports {
+// CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [concrete] {
+// CHECK:STDOUT:     import Core//prelude
+// CHECK:STDOUT:     import Core//prelude/...
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %Cpp: <namespace> = namespace file.%Cpp.import_cpp, [concrete] {
+// CHECK:STDOUT:     .B = %B.decl
+// CHECK:STDOUT:     .UseB = %UseB.decl
+// CHECK:STDOUT:     import Cpp//...
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %B.decl: type = class_decl @B [concrete = constants.%B] {} {}
+// CHECK:STDOUT:   %UseB.decl: %UseB.type = fn_decl @UseB [concrete = constants.%UseB] {
+// CHECK:STDOUT:     %p.patt: %pattern_type = binding_pattern p [concrete]
+// CHECK:STDOUT:     %p.param_patt: %pattern_type = value_param_pattern %p.patt, call_param0 [concrete]
+// CHECK:STDOUT:   } {
+// CHECK:STDOUT:     %p.param: %ptr = value_param call_param0
+// CHECK:STDOUT:     %p: %ptr = bind_name p, %p.param
+// CHECK:STDOUT:   }
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: file {
+// CHECK:STDOUT:   package: <namespace> = namespace [concrete] {
+// CHECK:STDOUT:     .Core = imports.%Core
+// CHECK:STDOUT:     .Cpp = imports.%Cpp
+// CHECK:STDOUT:     .Convert = %Convert.decl
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %Core.import = import Core
+// CHECK:STDOUT:   %Cpp.import_cpp = import_cpp {
+// CHECK:STDOUT:     import Cpp "virtual_inheritance.h"
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %Convert.decl: %Convert.type = fn_decl @Convert [concrete = constants.%Convert] {
+// CHECK:STDOUT:     %p.patt: %pattern_type = binding_pattern p [concrete]
+// CHECK:STDOUT:     %p.param_patt: %pattern_type = value_param_pattern %p.patt, call_param0 [concrete]
+// CHECK:STDOUT:   } {
+// CHECK:STDOUT:     %p.param: %ptr = value_param call_param0
+// CHECK:STDOUT:     %.loc6: type = splice_block %ptr [concrete = constants.%ptr] {
+// CHECK:STDOUT:       %Cpp.ref.loc6: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
+// CHECK:STDOUT:       %B.ref: type = name_ref B, imports.%B.decl [concrete = constants.%B]
+// CHECK:STDOUT:       %ptr: type = ptr_type %B.ref [concrete = constants.%ptr]
+// CHECK:STDOUT:     }
+// CHECK:STDOUT:     %p: %ptr = bind_name p, %p.param
+// CHECK:STDOUT:   }
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: class @B {
+// CHECK:STDOUT:   complete_type_witness = invalid
+// CHECK:STDOUT:
+// CHECK:STDOUT: !members:
+// CHECK:STDOUT:   import Cpp//...
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: fn @Convert(%p.param: %ptr) {
+// CHECK:STDOUT: !entry:
+// CHECK:STDOUT:   %Cpp.ref.loc8: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
+// CHECK:STDOUT:   %UseB.ref: %UseB.type = name_ref UseB, imports.%UseB.decl [concrete = constants.%UseB]
+// CHECK:STDOUT:   %p.ref: %ptr = name_ref p, %p
+// CHECK:STDOUT:   %UseB.call: init %empty_tuple.type = call %UseB.ref(%p.ref)
+// CHECK:STDOUT:   return
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: fn @UseB(%p.param: %ptr);
+// CHECK:STDOUT:
 // CHECK:STDOUT: --- fail_todo_use_virtual_inheritance.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
@@ -859,13 +937,6 @@ fn Convert(p: Cpp.B*) -> Cpp.A* {
 // CHECK:STDOUT:   %ptr.a04: type = ptr_type %B [concrete]
 // CHECK:STDOUT:   %pattern_type.837: type = pattern_type %ptr.a04 [concrete]
 // CHECK:STDOUT:   %A: type = class_type @A [concrete]
-// CHECK:STDOUT:   %int_32: Core.IntLiteral = int_value 32 [concrete]
-// CHECK:STDOUT:   %Int.type: type = generic_class_type @Int [concrete]
-// CHECK:STDOUT:   %Int.generic: %Int.type = struct_value () [concrete]
-// CHECK:STDOUT:   %i32: type = class_type @Int, @Int(%int_32) [concrete]
-// CHECK:STDOUT:   %A.elem: type = unbound_element_type %A, %i32 [concrete]
-// CHECK:STDOUT:   %.79a: type = custom_layout_type {size=4, align=4, .a@0: %i32} [concrete]
-// CHECK:STDOUT:   %complete_type.33a: <witness> = complete_type_witness %.79a [concrete]
 // CHECK:STDOUT:   %ptr.270: type = ptr_type %A [concrete]
 // CHECK:STDOUT:   %pattern_type.bcf: type = pattern_type %ptr.270 [concrete]
 // CHECK:STDOUT:   %Convert.type: type = fn_type @Convert [concrete]
@@ -876,7 +947,6 @@ fn Convert(p: Cpp.B*) -> Cpp.A* {
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [concrete] {
-// CHECK:STDOUT:     .Int = %Core.Int
 // CHECK:STDOUT:     .ImplicitAs = %Core.ImplicitAs
 // CHECK:STDOUT:     import Core//prelude
 // CHECK:STDOUT:     import Core//prelude/...
@@ -888,7 +958,6 @@ fn Convert(p: Cpp.B*) -> Cpp.A* {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %B.decl: type = class_decl @B [concrete = constants.%B] {} {}
 // CHECK:STDOUT:   %A.decl: type = class_decl @A [concrete = constants.%A] {} {}
-// CHECK:STDOUT:   %Core.Int: %Int.type = import_ref Core//prelude/parts/int, Int, loaded [concrete = constants.%Int.generic]
 // CHECK:STDOUT:   %Core.ImplicitAs: %ImplicitAs.type.cc7 = import_ref Core//prelude/parts/as, ImplicitAs, loaded [concrete = constants.%ImplicitAs.generic]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -908,14 +977,14 @@ fn Convert(p: Cpp.B*) -> Cpp.A* {
 // CHECK:STDOUT:     %return.patt: %pattern_type.bcf = return_slot_pattern [concrete]
 // CHECK:STDOUT:     %return.param_patt: %pattern_type.bcf = out_param_pattern %return.patt, call_param1 [concrete]
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %Cpp.ref.loc12_26: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
+// CHECK:STDOUT:     %Cpp.ref.loc6_26: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
 // CHECK:STDOUT:     %A.ref: type = name_ref A, imports.%A.decl [concrete = constants.%A]
-// CHECK:STDOUT:     %ptr.loc12_31: type = ptr_type %A.ref [concrete = constants.%ptr.270]
+// CHECK:STDOUT:     %ptr.loc6_31: type = ptr_type %A.ref [concrete = constants.%ptr.270]
 // CHECK:STDOUT:     %p.param: %ptr.a04 = value_param call_param0
-// CHECK:STDOUT:     %.loc12: type = splice_block %ptr.loc12_20 [concrete = constants.%ptr.a04] {
-// CHECK:STDOUT:       %Cpp.ref.loc12_15: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
+// CHECK:STDOUT:     %.loc6: type = splice_block %ptr.loc6_20 [concrete = constants.%ptr.a04] {
+// CHECK:STDOUT:       %Cpp.ref.loc6_15: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
 // CHECK:STDOUT:       %B.ref: type = name_ref B, imports.%B.decl [concrete = constants.%B]
-// CHECK:STDOUT:       %ptr.loc12_20: type = ptr_type %B.ref [concrete = constants.%ptr.a04]
+// CHECK:STDOUT:       %ptr.loc6_20: type = ptr_type %B.ref [concrete = constants.%ptr.a04]
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %p: %ptr.a04 = bind_name p, %p.param
 // CHECK:STDOUT:     %return.param: ref %ptr.270 = out_param call_param1
@@ -924,31 +993,23 @@ fn Convert(p: Cpp.B*) -> Cpp.A* {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @B {
-// CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness <error> [concrete = <error>]
-// CHECK:STDOUT:   complete_type_witness = %complete_type
+// CHECK:STDOUT:   complete_type_witness = invalid
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
-// CHECK:STDOUT:   .Self = constants.%B
 // CHECK:STDOUT:   import Cpp//...
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @A {
-// CHECK:STDOUT:   %int_32: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
-// CHECK:STDOUT:   %i32: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
-// CHECK:STDOUT:   %.1: %A.elem = field_decl a, element0 [concrete]
-// CHECK:STDOUT:   %.2: type = custom_layout_type {size=4, align=4, .a@0: %i32} [concrete = constants.%.79a]
-// CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %.2 [concrete = constants.%complete_type.33a]
-// CHECK:STDOUT:   complete_type_witness = %complete_type
+// CHECK:STDOUT:   complete_type_witness = invalid
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
-// CHECK:STDOUT:   .Self = constants.%A
 // CHECK:STDOUT:   import Cpp//...
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Convert(%p.param: %ptr.a04) -> %ptr.270 {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %p.ref: %ptr.a04 = name_ref p, %p
-// CHECK:STDOUT:   %.loc20: %ptr.270 = converted %p.ref, <error> [concrete = <error>]
+// CHECK:STDOUT:   %.loc21: %ptr.270 = converted %p.ref, <error> [concrete = <error>]
 // CHECK:STDOUT:   return <error>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

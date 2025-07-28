@@ -146,14 +146,14 @@ fn Ref(p: Cpp.HasQualifiers*) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %HasQualifiers: type = class_type @HasQualifiers [concrete]
-// CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [concrete]
-// CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [concrete]
 // CHECK:STDOUT:   %pattern_type.e15: type = pattern_type %HasQualifiers [concrete]
 // CHECK:STDOUT:   %ptr.ec3: type = ptr_type %HasQualifiers [concrete]
 // CHECK:STDOUT:   %pattern_type.bc1: type = pattern_type %ptr.ec3 [concrete]
 // CHECK:STDOUT:   %F.type: type = fn_type @F [concrete]
 // CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [concrete]
 // CHECK:STDOUT:   %F: %F.type = struct_value () [concrete]
+// CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [concrete]
+// CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [concrete]
 // CHECK:STDOUT:   %HasQualifiers.const_this.type: type = fn_type @HasQualifiers.const_this [concrete]
 // CHECK:STDOUT:   %HasQualifiers.const_this: %HasQualifiers.const_this.type = struct_value () [concrete]
 // CHECK:STDOUT:   %HasQualifiers.const_ref_this.type: type = fn_type @HasQualifiers.const_ref_this [concrete]
@@ -245,7 +245,6 @@ fn Ref(p: Cpp.HasQualifiers*) {
 // CHECK:STDOUT:   complete_type_witness = %complete_type
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
-// CHECK:STDOUT:   .Self = constants.%HasQualifiers
 // CHECK:STDOUT:   .const_this = imports.%HasQualifiers.const_this.decl
 // CHECK:STDOUT:   .const_ref_this = imports.%HasQualifiers.const_ref_this.decl
 // CHECK:STDOUT:   .plain = imports.%HasQualifiers.plain.decl
@@ -302,12 +301,12 @@ fn Ref(p: Cpp.HasQualifiers*) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %HasQualifiers: type = class_type @HasQualifiers [concrete]
-// CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [concrete]
-// CHECK:STDOUT:   %complete_type.357: <witness> = complete_type_witness %empty_struct_type [concrete]
 // CHECK:STDOUT:   %pattern_type.e15: type = pattern_type %HasQualifiers [concrete]
 // CHECK:STDOUT:   %Value.type: type = fn_type @Value [concrete]
 // CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [concrete]
 // CHECK:STDOUT:   %Value: %Value.type = struct_value () [concrete]
+// CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [concrete]
+// CHECK:STDOUT:   %complete_type.357: <witness> = complete_type_witness %empty_struct_type [concrete]
 // CHECK:STDOUT:   %ptr.ec3: type = ptr_type %HasQualifiers [concrete]
 // CHECK:STDOUT:   %pattern_type.bc1: type = pattern_type %ptr.ec3 [concrete]
 // CHECK:STDOUT:   %pattern_type.f6d: type = pattern_type auto [concrete]
@@ -390,7 +389,6 @@ fn Ref(p: Cpp.HasQualifiers*) {
 // CHECK:STDOUT:   complete_type_witness = %complete_type
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
-// CHECK:STDOUT:   .Self = constants.%HasQualifiers
 // CHECK:STDOUT:   .plain = imports.%HasQualifiers.plain.decl
 // CHECK:STDOUT:   .volatile_this = imports.%HasQualifiers.volatile_this.decl
 // CHECK:STDOUT:   .ref_this = imports.%HasQualifiers.ref_this.decl
@@ -451,13 +449,13 @@ fn Ref(p: Cpp.HasQualifiers*) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %HasQualifiers: type = class_type @HasQualifiers [concrete]
-// CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [concrete]
-// CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [concrete]
 // CHECK:STDOUT:   %ptr.ec3: type = ptr_type %HasQualifiers [concrete]
 // CHECK:STDOUT:   %pattern_type.bc1: type = pattern_type %ptr.ec3 [concrete]
 // CHECK:STDOUT:   %Ref.type: type = fn_type @Ref [concrete]
 // CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [concrete]
 // CHECK:STDOUT:   %Ref: %Ref.type = struct_value () [concrete]
+// CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [concrete]
+// CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [concrete]
 // CHECK:STDOUT:   %pattern_type.f6d: type = pattern_type auto [concrete]
 // CHECK:STDOUT:   %HasQualifiers.volatile_this.type: type = fn_type @HasQualifiers.volatile_this [concrete]
 // CHECK:STDOUT:   %HasQualifiers.volatile_this: %HasQualifiers.volatile_this.type = struct_value () [concrete]
@@ -513,7 +511,6 @@ fn Ref(p: Cpp.HasQualifiers*) {
 // CHECK:STDOUT:   complete_type_witness = %complete_type
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
-// CHECK:STDOUT:   .Self = constants.%HasQualifiers
 // CHECK:STDOUT:   .volatile_this = imports.%HasQualifiers.volatile_this.decl
 // CHECK:STDOUT:   import Cpp//...
 // CHECK:STDOUT: }
@@ -535,12 +532,12 @@ fn Ref(p: Cpp.HasQualifiers*) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %HasQualifiers: type = class_type @HasQualifiers [concrete]
-// CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [concrete]
-// CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [concrete]
 // CHECK:STDOUT:   %ptr.ec3: type = ptr_type %HasQualifiers [concrete]
 // CHECK:STDOUT:   %pattern_type: type = pattern_type %ptr.ec3 [concrete]
 // CHECK:STDOUT:   %Ref.type: type = fn_type @Ref [concrete]
 // CHECK:STDOUT:   %Ref: %Ref.type = struct_value () [concrete]
+// CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [concrete]
+// CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -585,7 +582,6 @@ fn Ref(p: Cpp.HasQualifiers*) {
 // CHECK:STDOUT:   complete_type_witness = %complete_type
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
-// CHECK:STDOUT:   .Self = constants.%HasQualifiers
 // CHECK:STDOUT:   .ref_ref_this = <error>
 // CHECK:STDOUT:   .const_ref_ref_this = <error>
 // CHECK:STDOUT:   import Cpp//...

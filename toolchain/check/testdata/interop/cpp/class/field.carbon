@@ -164,21 +164,21 @@ fn G(s: Cpp.Union) -> i32 {
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %Struct: type = class_type @Struct [concrete]
+// CHECK:STDOUT:   %pattern_type.60c: type = pattern_type %Struct [concrete]
 // CHECK:STDOUT:   %int_32: Core.IntLiteral = int_value 32 [concrete]
 // CHECK:STDOUT:   %Int.type: type = generic_class_type @Int [concrete]
 // CHECK:STDOUT:   %Int.generic: %Int.type = struct_value () [concrete]
 // CHECK:STDOUT:   %i32: type = class_type @Int, @Int(%int_32) [concrete]
-// CHECK:STDOUT:   %Struct.elem.86b: type = unbound_element_type %Struct, %i32 [concrete]
-// CHECK:STDOUT:   %ptr.235: type = ptr_type %i32 [concrete]
-// CHECK:STDOUT:   %Struct.elem.765: type = unbound_element_type %Struct, %ptr.235 [concrete]
-// CHECK:STDOUT:   %.550: type = custom_layout_type {size=16, align=8, .a@0: %i32, .b@4: %i32, .p@8: %ptr.235} [concrete]
-// CHECK:STDOUT:   %complete_type.8cf: <witness> = complete_type_witness %.550 [concrete]
-// CHECK:STDOUT:   %pattern_type.60c: type = pattern_type %Struct [concrete]
 // CHECK:STDOUT:   %tuple.type.ff9: type = tuple_type (type, type, type) [concrete]
 // CHECK:STDOUT:   %tuple.type.189: type = tuple_type (%i32, %i32, %i32) [concrete]
 // CHECK:STDOUT:   %pattern_type.b5a: type = pattern_type %tuple.type.189 [concrete]
 // CHECK:STDOUT:   %F.type: type = fn_type @F [concrete]
 // CHECK:STDOUT:   %F: %F.type = struct_value () [concrete]
+// CHECK:STDOUT:   %Struct.elem.86b: type = unbound_element_type %Struct, %i32 [concrete]
+// CHECK:STDOUT:   %ptr.235: type = ptr_type %i32 [concrete]
+// CHECK:STDOUT:   %Struct.elem.765: type = unbound_element_type %Struct, %ptr.235 [concrete]
+// CHECK:STDOUT:   %.550: type = custom_layout_type {size=16, align=8, .a@0: %i32, .b@4: %i32, .p@8: %ptr.235} [concrete]
+// CHECK:STDOUT:   %complete_type.8cf: <witness> = complete_type_witness %.550 [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -245,7 +245,6 @@ fn G(s: Cpp.Union) -> i32 {
 // CHECK:STDOUT:   complete_type_witness = %complete_type
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
-// CHECK:STDOUT:   .Self = constants.%Struct
 // CHECK:STDOUT:   .a = %.1
 // CHECK:STDOUT:   .b = %.2
 // CHECK:STDOUT:   .p = %.3
@@ -284,19 +283,19 @@ fn G(s: Cpp.Union) -> i32 {
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %Union: type = class_type @Union [concrete]
+// CHECK:STDOUT:   %pattern_type.a90: type = pattern_type %Union [concrete]
 // CHECK:STDOUT:   %int_32: Core.IntLiteral = int_value 32 [concrete]
 // CHECK:STDOUT:   %Int.type: type = generic_class_type @Int [concrete]
 // CHECK:STDOUT:   %Int.generic: %Int.type = struct_value () [concrete]
 // CHECK:STDOUT:   %i32: type = class_type @Int, @Int(%int_32) [concrete]
+// CHECK:STDOUT:   %pattern_type.7ce: type = pattern_type %i32 [concrete]
+// CHECK:STDOUT:   %F.type: type = fn_type @F [concrete]
+// CHECK:STDOUT:   %F: %F.type = struct_value () [concrete]
 // CHECK:STDOUT:   %Union.elem.041: type = unbound_element_type %Union, %i32 [concrete]
 // CHECK:STDOUT:   %ptr.235: type = ptr_type %i32 [concrete]
 // CHECK:STDOUT:   %Union.elem.92a: type = unbound_element_type %Union, %ptr.235 [concrete]
 // CHECK:STDOUT:   %.c84: type = custom_layout_type {size=8, align=8, .a@0: %i32, .b@0: %i32, .p@0: %ptr.235} [concrete]
 // CHECK:STDOUT:   %complete_type.1b0: <witness> = complete_type_witness %.c84 [concrete]
-// CHECK:STDOUT:   %pattern_type.a90: type = pattern_type %Union [concrete]
-// CHECK:STDOUT:   %pattern_type.7ce: type = pattern_type %i32 [concrete]
-// CHECK:STDOUT:   %F.type: type = fn_type @F [concrete]
-// CHECK:STDOUT:   %F: %F.type = struct_value () [concrete]
 // CHECK:STDOUT:   %G.type: type = fn_type @G [concrete]
 // CHECK:STDOUT:   %G: %G.type = struct_value () [concrete]
 // CHECK:STDOUT:   %H.type: type = fn_type @H [concrete]
@@ -397,7 +396,6 @@ fn G(s: Cpp.Union) -> i32 {
 // CHECK:STDOUT:   complete_type_witness = %complete_type
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
-// CHECK:STDOUT:   .Self = constants.%Union
 // CHECK:STDOUT:   .a = %.1
 // CHECK:STDOUT:   .b = %.2
 // CHECK:STDOUT:   .p = %.3
@@ -437,20 +435,20 @@ fn G(s: Cpp.Union) -> i32 {
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %A: type = class_type @A [concrete]
-// CHECK:STDOUT:   %int_16: Core.IntLiteral = int_value 16 [concrete]
+// CHECK:STDOUT:   %pattern_type.9de: type = pattern_type %A [concrete]
+// CHECK:STDOUT:   %int_32: Core.IntLiteral = int_value 32 [concrete]
 // CHECK:STDOUT:   %Int.type: type = generic_class_type @Int [concrete]
 // CHECK:STDOUT:   %Int.generic: %Int.type = struct_value () [concrete]
-// CHECK:STDOUT:   %i16: type = class_type @Int, @Int(%int_16) [concrete]
-// CHECK:STDOUT:   %A.elem.543: type = unbound_element_type %A, %i16 [concrete]
-// CHECK:STDOUT:   %int_32: Core.IntLiteral = int_value 32 [concrete]
 // CHECK:STDOUT:   %i32: type = class_type @Int, @Int(%int_32) [concrete]
-// CHECK:STDOUT:   %A.elem.c3f: type = unbound_element_type %A, %i32 [concrete]
-// CHECK:STDOUT:   %.371: type = custom_layout_type {size=16, align=4, .a_0@0: %i16, .b_2@2: %i16, .c_4@4: %i32, .f_4@4: %i32, .g_8@8: %i16, .h_12@12: %i32} [concrete]
-// CHECK:STDOUT:   %complete_type.fa3: <witness> = complete_type_witness %.371 [concrete]
-// CHECK:STDOUT:   %pattern_type.9de: type = pattern_type %A [concrete]
 // CHECK:STDOUT:   %pattern_type.7ce: type = pattern_type %i32 [concrete]
 // CHECK:STDOUT:   %GetF.type: type = fn_type @GetF [concrete]
 // CHECK:STDOUT:   %GetF: %GetF.type = struct_value () [concrete]
+// CHECK:STDOUT:   %int_16: Core.IntLiteral = int_value 16 [concrete]
+// CHECK:STDOUT:   %i16: type = class_type @Int, @Int(%int_16) [concrete]
+// CHECK:STDOUT:   %A.elem.543: type = unbound_element_type %A, %i16 [concrete]
+// CHECK:STDOUT:   %A.elem.c3f: type = unbound_element_type %A, %i32 [concrete]
+// CHECK:STDOUT:   %.371: type = custom_layout_type {size=16, align=4, .a_0@0: %i16, .b_2@2: %i16, .c_4@4: %i32, .f_4@4: %i32, .g_8@8: %i16, .h_12@12: %i32} [concrete]
+// CHECK:STDOUT:   %complete_type.fa3: <witness> = complete_type_witness %.371 [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -520,7 +518,6 @@ fn G(s: Cpp.Union) -> i32 {
 // CHECK:STDOUT:   complete_type_witness = %complete_type
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
-// CHECK:STDOUT:   .Self = constants.%A
 // CHECK:STDOUT:   .f_4 = %.4
 // CHECK:STDOUT:   import Cpp//...
 // CHECK:STDOUT: }
@@ -538,24 +535,24 @@ fn G(s: Cpp.Union) -> i32 {
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %Struct: type = class_type @Struct [concrete]
+// CHECK:STDOUT:   %pattern_type.60c: type = pattern_type %Struct [concrete]
 // CHECK:STDOUT:   %int_32: Core.IntLiteral = int_value 32 [concrete]
 // CHECK:STDOUT:   %Int.type: type = generic_class_type @Int [concrete]
 // CHECK:STDOUT:   %Int.generic: %Int.type = struct_value () [concrete]
 // CHECK:STDOUT:   %i32: type = class_type @Int, @Int(%int_32) [concrete]
-// CHECK:STDOUT:   %Struct.elem: type = unbound_element_type %Struct, %i32 [concrete]
-// CHECK:STDOUT:   %.f9e: type = custom_layout_type {size=8, align=4, .a@0: %i32} [concrete]
-// CHECK:STDOUT:   %complete_type.d3c: <witness> = complete_type_witness %.f9e [concrete]
-// CHECK:STDOUT:   %pattern_type.60c: type = pattern_type %Struct [concrete]
 // CHECK:STDOUT:   %pattern_type.7ce: type = pattern_type %i32 [concrete]
 // CHECK:STDOUT:   %F.type: type = fn_type @F [concrete]
 // CHECK:STDOUT:   %F: %F.type = struct_value () [concrete]
+// CHECK:STDOUT:   %Struct.elem: type = unbound_element_type %Struct, %i32 [concrete]
+// CHECK:STDOUT:   %.f9e: type = custom_layout_type {size=8, align=4, .a@0: %i32} [concrete]
+// CHECK:STDOUT:   %complete_type.d3c: <witness> = complete_type_witness %.f9e [concrete]
 // CHECK:STDOUT:   %Union: type = class_type @Union [concrete]
-// CHECK:STDOUT:   %Union.elem: type = unbound_element_type %Union, %i32 [concrete]
-// CHECK:STDOUT:   %.891: type = custom_layout_type {size=4, align=4, .c@0: %i32} [concrete]
-// CHECK:STDOUT:   %complete_type.591: <witness> = complete_type_witness %.891 [concrete]
 // CHECK:STDOUT:   %pattern_type.a90: type = pattern_type %Union [concrete]
 // CHECK:STDOUT:   %G.type: type = fn_type @G [concrete]
 // CHECK:STDOUT:   %G: %G.type = struct_value () [concrete]
+// CHECK:STDOUT:   %Union.elem: type = unbound_element_type %Union, %i32 [concrete]
+// CHECK:STDOUT:   %.891: type = custom_layout_type {size=4, align=4, .c@0: %i32} [concrete]
+// CHECK:STDOUT:   %complete_type.591: <witness> = complete_type_witness %.891 [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -630,7 +627,6 @@ fn G(s: Cpp.Union) -> i32 {
 // CHECK:STDOUT:   complete_type_witness = %complete_type
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
-// CHECK:STDOUT:   .Self = constants.%Struct
 // CHECK:STDOUT:   .a = %.1
 // CHECK:STDOUT:   import Cpp//...
 // CHECK:STDOUT: }
@@ -644,7 +640,6 @@ fn G(s: Cpp.Union) -> i32 {
 // CHECK:STDOUT:   complete_type_witness = %complete_type
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
-// CHECK:STDOUT:   .Self = constants.%Union
 // CHECK:STDOUT:   .c = %.1
 // CHECK:STDOUT:   import Cpp//...
 // CHECK:STDOUT: }
@@ -671,24 +666,24 @@ fn G(s: Cpp.Union) -> i32 {
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %Struct: type = class_type @Struct [concrete]
+// CHECK:STDOUT:   %pattern_type.60c: type = pattern_type %Struct [concrete]
 // CHECK:STDOUT:   %int_32: Core.IntLiteral = int_value 32 [concrete]
 // CHECK:STDOUT:   %Int.type: type = generic_class_type @Int [concrete]
 // CHECK:STDOUT:   %Int.generic: %Int.type = struct_value () [concrete]
 // CHECK:STDOUT:   %i32: type = class_type @Int, @Int(%int_32) [concrete]
-// CHECK:STDOUT:   %Struct.elem: type = unbound_element_type %Struct, %i32 [concrete]
-// CHECK:STDOUT:   %.f9e: type = custom_layout_type {size=8, align=4, .a@0: %i32} [concrete]
-// CHECK:STDOUT:   %complete_type.d3c: <witness> = complete_type_witness %.f9e [concrete]
-// CHECK:STDOUT:   %pattern_type.60c: type = pattern_type %Struct [concrete]
 // CHECK:STDOUT:   %pattern_type.7ce: type = pattern_type %i32 [concrete]
 // CHECK:STDOUT:   %F.type: type = fn_type @F [concrete]
 // CHECK:STDOUT:   %F: %F.type = struct_value () [concrete]
+// CHECK:STDOUT:   %Struct.elem: type = unbound_element_type %Struct, %i32 [concrete]
+// CHECK:STDOUT:   %.f9e: type = custom_layout_type {size=8, align=4, .a@0: %i32} [concrete]
+// CHECK:STDOUT:   %complete_type.d3c: <witness> = complete_type_witness %.f9e [concrete]
 // CHECK:STDOUT:   %Union: type = class_type @Union [concrete]
-// CHECK:STDOUT:   %Union.elem: type = unbound_element_type %Union, %i32 [concrete]
-// CHECK:STDOUT:   %.891: type = custom_layout_type {size=4, align=4, .c@0: %i32} [concrete]
-// CHECK:STDOUT:   %complete_type.591: <witness> = complete_type_witness %.891 [concrete]
 // CHECK:STDOUT:   %pattern_type.a90: type = pattern_type %Union [concrete]
 // CHECK:STDOUT:   %G.type: type = fn_type @G [concrete]
 // CHECK:STDOUT:   %G: %G.type = struct_value () [concrete]
+// CHECK:STDOUT:   %Union.elem: type = unbound_element_type %Union, %i32 [concrete]
+// CHECK:STDOUT:   %.891: type = custom_layout_type {size=4, align=4, .c@0: %i32} [concrete]
+// CHECK:STDOUT:   %complete_type.591: <witness> = complete_type_witness %.891 [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -763,7 +758,6 @@ fn G(s: Cpp.Union) -> i32 {
 // CHECK:STDOUT:   complete_type_witness = %complete_type
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
-// CHECK:STDOUT:   .Self = constants.%Struct
 // CHECK:STDOUT:   .b = <poisoned>
 // CHECK:STDOUT:   import Cpp//...
 // CHECK:STDOUT: }
@@ -777,7 +771,6 @@ fn G(s: Cpp.Union) -> i32 {
 // CHECK:STDOUT:   complete_type_witness = %complete_type
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
-// CHECK:STDOUT:   .Self = constants.%Union
 // CHECK:STDOUT:   .d = <poisoned>
 // CHECK:STDOUT:   import Cpp//...
 // CHECK:STDOUT: }
