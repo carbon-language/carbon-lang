@@ -338,34 +338,6 @@ static auto CompareFacetTypeConstraintValues(Context& context,
          context.constant_values().GetConstantInstId(rhs_id).index;
 }
 
-// Sort and dedupe the rewrite constraints, with accesses to the same associated
-// constants through the same facet value being treated as equivalent.
-static auto SortAndDedupeRewriteConstraints(
-    Context& context,
-    llvm::SmallVector<SemIR::FacetTypeInfo::RewriteConstraint>& rewrites) {
-  auto ord = [&](const SemIR::FacetTypeInfo::RewriteConstraint& a,
-                 const SemIR::FacetTypeInfo::RewriteConstraint& b) {
-    auto lhs = CompareFacetTypeConstraintValues(context, a.lhs_id, b.lhs_id);
-    if (lhs != std::weak_ordering::equivalent) {
-      return lhs;
-    }
-    auto rhs = CompareFacetTypeConstraintValues(context, a.rhs_id, b.rhs_id);
-    return rhs;
-  };
-
-  auto less = [&](const SemIR::FacetTypeInfo::RewriteConstraint& a,
-                  const SemIR::FacetTypeInfo::RewriteConstraint& b) {
-    return ord(a, b) == std::weak_ordering::less;
-  };
-  llvm::stable_sort(rewrites, less);
-
-  auto eq = [&](const SemIR::FacetTypeInfo::RewriteConstraint& a,
-                const SemIR::FacetTypeInfo::RewriteConstraint& b) {
-    return ord(a, b) == std::weak_ordering::equivalent;
-  };
-  rewrites.erase(llvm::unique(rewrites, eq), rewrites.end());
-}
-
 // To be used for substituting into the RHS of a rewrite constraint.
 //
 // It will substitute any `ImplWitnessAccess` into `.Self` (a reference to an
@@ -433,21 +405,51 @@ class SubstImplWitnessAccessCallbacks : public SubstInstCallbacks {
       }
     }
 
-    auto SetFullyRewritten(Context& context, SemIR::ImplWitnessAccess access,
-                           SemIR::InstId rewritten_to_inst_id) -> void {
+    auto SetFullyRewritten(Context& context, SemIR::LocId loc_id,
+                           SemIR::ImplWitnessAccess access,
+                           SemIR::InstId access_inst_id,
+                           SemIR::InstId rewritten_to_inst_id)
+        -> SemIR::InstId {
       auto it = map_.find({GetKey(context, access)});
       CARBON_CHECK(it != map_.end());
-      // TODO: If state == FullyRewrtten and the inst id is different (according
-      // to `CompareFacetTypeConstraintValues`), we can diagnose writing two
-      // different values for the same associated constant immediately?
-      //
-      // TODO: Once the above is done, we don't need to do the SortAndDedupe
-      // step in ResolveFacetTypeRewriteConstraints()? We can just convert this
-      // `map_` into a new set of `RewriteConstraint`s which will already be
-      // deduped.
-      if (it->second.state == BeingRewritten) {
+      if (it->second.state == FullyRewritten) {
+        auto ord = CompareFacetTypeConstraintValues(context, it->second.inst_id,
+                                                    rewritten_to_inst_id);
+        if (ord != std::weak_ordering::equivalent) {
+          if (it->second.inst_id != SemIR::ErrorInst::InstId &&
+              rewritten_to_inst_id != SemIR::ErrorInst::InstId) {
+            CARBON_DIAGNOSTIC(AssociatedConstantWithDifferentValues, Error,
+                              "associated constant {0} given two different "
+                              "values {1} and {2}",
+                              InstIdAsConstant, InstIdAsConstant,
+                              InstIdAsConstant);
+            // Use inst id ordering as a simple proxy for source ordering, to
+            // try to name the values in the same order they appear in the facet
+            // type.
+            auto source_order1 =
+                it->second.inst_id.index < rewritten_to_inst_id.index
+                    ? it->second.inst_id
+                    : rewritten_to_inst_id;
+            auto source_order2 =
+                it->second.inst_id.index >= rewritten_to_inst_id.index
+                    ? it->second.inst_id
+                    : rewritten_to_inst_id;
+            // TODO: It would be nice to note the places where the values are
+            // assigned but rewrite constraint instructions are from canonical
+            // constant values, and have no locations. We'd need to store a
+            // location along with them in the rewrite constraints.
+            context.emitter().Emit(
+                loc_id, AssociatedConstantWithDifferentValues, access_inst_id,
+                source_order1, source_order2);
+          }
+          it->second.inst_id = SemIR::ErrorInst::InstId;
+        }
+      } else {
+        CARBON_CHECK(it->second.state == BeingRewritten);
         it->second = {FullyRewritten, rewritten_to_inst_id};
       }
+
+      return it->second.inst_id;
     }
 
    private:
@@ -574,7 +576,8 @@ class SubstImplWitnessAccessCallbacks : public SubstInstCallbacks {
     auto subst_inst_id = substs_in_progress_.pop_back_val();
     if (auto access = context().insts().TryGetAs<SemIR::ImplWitnessAccess>(
             subst_inst_id)) {
-      rewrite_values_->SetFullyRewritten(context(), *access, inst_id);
+      return rewrite_values_->SetFullyRewritten(context(), loc_id_, *access,
+                                                subst_inst_id, inst_id);
     }
     return inst_id;
   }
@@ -583,7 +586,8 @@ class SubstImplWitnessAccessCallbacks : public SubstInstCallbacks {
     auto subst_inst_id = substs_in_progress_.pop_back_val();
     if (auto access = context().insts().TryGetAs<SemIR::ImplWitnessAccess>(
             subst_inst_id)) {
-      rewrite_values_->SetFullyRewritten(context(), *access, orig_inst_id);
+      return rewrite_values_->SetFullyRewritten(context(), loc_id_, *access,
+                                                subst_inst_id, orig_inst_id);
     }
     return orig_inst_id;
   }
@@ -627,10 +631,6 @@ auto ResolveFacetTypeRewriteConstraints(
   // `.X = Y and .Y = ()` becomes `.X = () and .Y = ()`.
   SubstImplWitnessAccessCallbacks::AccessRewriteValues rewrite_values;
   for (auto& constraint : rewrites) {
-    if (constraint.lhs_id == SemIR::ErrorInst::InstId ||
-        constraint.rhs_id == SemIR::ErrorInst::InstId) {
-      continue;
-    }
     auto lhs_access =
         context.insts().TryGetAs<SemIR::ImplWitnessAccess>(constraint.lhs_id);
     if (!lhs_access) {
@@ -640,10 +640,6 @@ auto ResolveFacetTypeRewriteConstraints(
     rewrite_values.InsertNotRewritten(context, *lhs_access, constraint.rhs_id);
   }
   for (auto& constraint : rewrites) {
-    if (constraint.lhs_id == SemIR::ErrorInst::InstId ||
-        constraint.rhs_id == SemIR::ErrorInst::InstId) {
-      continue;
-    }
     auto lhs_access =
         context.insts().TryGetAs<SemIR::ImplWitnessAccess>(constraint.lhs_id);
     if (!lhs_access) {
@@ -654,87 +650,41 @@ auto ResolveFacetTypeRewriteConstraints(
 
     auto replace_witness_callbacks =
         SubstImplWitnessAccessCallbacks(&context, loc_id, &rewrite_values);
-    auto subst_inst_id =
+    auto subst_rhs_id =
         SubstInst(context, constraint.rhs_id, replace_witness_callbacks);
-    constraint.rhs_id = subst_inst_id;
+    constraint.rhs_id = rewrite_values.SetFullyRewritten(
+        context, loc_id, *lhs_access, constraint.lhs_id, subst_rhs_id);
+
     if (constraint.rhs_id == SemIR::ErrorInst::InstId) {
       return false;
     }
-
-    rewrite_values.SetFullyRewritten(context, *lhs_access, subst_inst_id);
   }
 
-  // We sort the constraints so that we can find different values being written
-  // to the same LHS by looking at consecutive rewrite constraints.
-  //
-  // It is important to dedupe so that we don't have redundant rewrite
-  // constraints, as these lead to being diagnosed as a cycle. For example:
-  // ```
-  // (T:! Z where .X = .Y) where .X = .Y
-  // ```
-  // Here we drop one of the `.X = .Y` in the resulting facet type. If we don't,
-  // then the `.X` in the outer facet type can be evaluated to `.Y` from the
-  // inner facet type, resulting in `.Y = .Y` which is a cycle. By deduping, we
-  // avoid any LHS of a rewrite constraint from being evaluated to the RHS of
-  // a duplicate rewrite constraint.
-  SortAndDedupeRewriteConstraints(context, rewrites);
-
-  for (size_t i = 0; i < rewrites.size() - 1; ++i) {
+  // Drop any duplicate rewrites in the `rewrites` vector by walking through the
+  // `rewrite_values` map and dropping the computed RHS value for each LHS the
+  // first time we see it, and erasing the constraint from the vector if we see
+  // the same LHS again.
+  size_t keep_size = rewrites.size();
+  for (size_t i = 0; i < keep_size;) {
     auto& constraint = rewrites[i];
-    if (constraint.lhs_id == SemIR::ErrorInst::InstId ||
-        constraint.rhs_id == SemIR::ErrorInst::InstId) {
-      continue;
-    }
 
     auto lhs_access =
         context.insts().TryGetAs<SemIR::ImplWitnessAccess>(constraint.lhs_id);
     if (!lhs_access) {
+      ++i;
       continue;
     }
 
-    // This loop moves `i` to the last position with the same LHS value, so that
-    // we don't diagnose more than once within the same contiguous range of
-    // assignments to a single LHS value.
-    for (; i < rewrites.size() - 1; ++i) {
-      auto& next = rewrites[i + 1];
-      auto next_lhs_access =
-          context.insts().TryGetAs<SemIR::ImplWitnessAccess>(next.lhs_id);
-      if (!next_lhs_access) {
-        break;
-      }
-
-      if (CompareFacetTypeConstraintValues(context, constraint.lhs_id,
-                                           next.lhs_id) !=
-          std::weak_ordering::equivalent) {
-        break;
-      }
-
-      if (constraint.rhs_id != SemIR::ErrorInst::InstId &&
-          next.rhs_id != SemIR::ErrorInst::InstId) {
-        CARBON_DIAGNOSTIC(
-            AssociatedConstantWithDifferentValues, Error,
-            "associated constant {0} given two different values {1} and {2}",
-            InstIdAsConstant, InstIdAsConstant, InstIdAsConstant);
-        // Use inst id ordering as a simple proxy for source ordering, to try
-        // to name the values in the same order they appear in the facet type.
-        auto source_order1 = constraint.rhs_id.index < next.rhs_id.index
-                                 ? constraint.rhs_id
-                                 : next.rhs_id;
-        auto source_order2 = constraint.rhs_id.index >= next.rhs_id.index
-                                 ? constraint.rhs_id
-                                 : next.rhs_id;
-        // TODO: It would be nice to note the places where the values are
-        // assigned but rewrite constraint instructions are from canonical
-        // constant values, and have no locations. We'd need to store a
-        // location along with them in the rewrite constraints.
-        context.emitter().Emit(loc_id, AssociatedConstantWithDifferentValues,
-                               constraint.lhs_id, source_order1, source_order2);
-      }
-      constraint.rhs_id = SemIR::ErrorInst::InstId;
-      next.rhs_id = SemIR::ErrorInst::InstId;
-      return false;
+    auto* rewrite_value = *rewrite_values.FindRef(context, *lhs_access);
+    auto rhs_id = std::exchange(rewrite_value->inst_id, SemIR::InstId::None);
+    if (rhs_id == SemIR::InstId::None) {
+      std::swap(rewrites[i], rewrites[keep_size - 1]);
+      --keep_size;
+    } else {
+      ++i;
     }
   }
+  rewrites.erase(rewrites.begin() + keep_size, rewrites.end());
 
   return true;
 }
