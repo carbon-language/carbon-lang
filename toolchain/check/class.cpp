@@ -201,7 +201,7 @@ static auto BuildVtable(Context& context, Parse::ClassDefinitionId node_id,
         derived_vtable_entry_id = build_specific_function(*i);
         override_fn.virtual_index = vtable.size();
         CARBON_CHECK(override_fn.virtual_index == fn.virtual_index);
-      } else if (auto base_vtable_entry =
+      } else if (auto base_vtable_specific_function =
                      context.sem_ir().insts().TryGetAs<SemIR::SpecificFunction>(
                          base_vtable_entry_id)) {
         if (class_generic_id.has_value()) {
