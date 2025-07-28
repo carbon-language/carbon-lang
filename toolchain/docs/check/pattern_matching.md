@@ -31,7 +31,7 @@ The SemIR for a pattern-matching operation is emitted in three steps:
 
 1. **Pattern:** Traverse the parse tree of the pattern to emit SemIR that
    abstractly describes the pattern.
-2. **Scrutinee:**Traverse the parse tree of the scrutinee expression to emit
+2. **Scrutinee:** Traverse the parse tree of the scrutinee expression to emit
    SemIR that evaluates it.
 3. **Match:** Traverse the pattern SemIR from step 1 (sometimes in conjunction
    with the scrutinee SemIR) to emit SemIR that actually performs pattern
@@ -157,7 +157,7 @@ the case of a `var` decl with no initializer. Similarly, the beginning of an
 `impl forall` parameter list is marked by the `Forall` node, and the end is
 marked by the `ImplDecl` or `ImplDefinitionStart`.
 
-The case of a parameterized name (such as `Foo(x: i32)`) is more challenging.
+The case of a parameterized name (such as `Bar(y: i32)`) is more challenging.
 The node immediately before the start of the full-pattern is an identifier, but
 an identifier doesn't necessarily mark the start of a full-pattern. We've solved
 that by having the parser mark identifier nodes that are followed by
