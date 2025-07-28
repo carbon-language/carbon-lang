@@ -206,6 +206,11 @@ static auto BuildVtable(Context& context, Parse::ClassDefinitionId node_id,
                      context.sem_ir().insts().TryGetAs<SemIR::SpecificFunction>(
                          derived_vtable_entry_id)) {
         if (derived_vtable_entry_const_id.is_symbolic()) {
+          // Create a new instruction here that is otherwise identical to
+          // `derived_vtable_entry_id` but is dependent within the derived
+          // class. This ensures we can `GetConstantValueInSpecific` for it
+          // with the derived class's specific (when forming further derived
+          // classes, lowering the vtable, etc).
           derived_vtable_entry_id = GetOrAddInst<SemIR::SpecificFunction>(
               context, node_id,
               {.type_id = GetSingletonType(
