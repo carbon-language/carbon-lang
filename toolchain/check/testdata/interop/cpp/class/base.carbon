@@ -163,8 +163,14 @@ struct B : virtual A {};
 
 library "[[@TEST_NAME]]";
 
+// CHECK:STDERR: fail_todo_use_virtual_inheritance.carbon:[[@LINE+2]]:1: in import [InImport]
+// CHECK:STDERR: ./virtual_inheritance.h:3: error: semantics TODO: `class with virtual bases` [SemanticsTodo]
 import Cpp library "virtual_inheritance.h";
 
+// CHECK:STDERR: fail_todo_use_virtual_inheritance.carbon:[[@LINE+4]]:15: note: in `Cpp` name lookup for `B` [InCppNameLookup]
+// CHECK:STDERR: fn Convert(p: Cpp.B*) -> Cpp.A* {
+// CHECK:STDERR:               ^~~~~
+// CHECK:STDERR:
 fn Convert(p: Cpp.B*) -> Cpp.A* {
   // CHECK:STDERR: fail_todo_use_virtual_inheritance.carbon:[[@LINE+7]]:3: error: cannot implicitly convert expression of type `Cpp.B*` to `Cpp.A*` [ConversionFailure]
   // CHECK:STDERR:   return p;
@@ -850,8 +856,6 @@ fn Convert(p: Cpp.B*) -> Cpp.A* {
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %B: type = class_type @B [concrete]
-// CHECK:STDOUT:   %.e55: type = custom_layout_type {size=16, align=8} [concrete]
-// CHECK:STDOUT:   %complete_type.1a4: <witness> = complete_type_witness %.e55 [concrete]
 // CHECK:STDOUT:   %ptr.a04: type = ptr_type %B [concrete]
 // CHECK:STDOUT:   %pattern_type.837: type = pattern_type %ptr.a04 [concrete]
 // CHECK:STDOUT:   %A: type = class_type @A [concrete]
@@ -904,14 +908,14 @@ fn Convert(p: Cpp.B*) -> Cpp.A* {
 // CHECK:STDOUT:     %return.patt: %pattern_type.bcf = return_slot_pattern [concrete]
 // CHECK:STDOUT:     %return.param_patt: %pattern_type.bcf = out_param_pattern %return.patt, call_param1 [concrete]
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %Cpp.ref.loc6_26: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
+// CHECK:STDOUT:     %Cpp.ref.loc12_26: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
 // CHECK:STDOUT:     %A.ref: type = name_ref A, imports.%A.decl [concrete = constants.%A]
-// CHECK:STDOUT:     %ptr.loc6_31: type = ptr_type %A.ref [concrete = constants.%ptr.270]
+// CHECK:STDOUT:     %ptr.loc12_31: type = ptr_type %A.ref [concrete = constants.%ptr.270]
 // CHECK:STDOUT:     %p.param: %ptr.a04 = value_param call_param0
-// CHECK:STDOUT:     %.loc6: type = splice_block %ptr.loc6_20 [concrete = constants.%ptr.a04] {
-// CHECK:STDOUT:       %Cpp.ref.loc6_15: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
+// CHECK:STDOUT:     %.loc12: type = splice_block %ptr.loc12_20 [concrete = constants.%ptr.a04] {
+// CHECK:STDOUT:       %Cpp.ref.loc12_15: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
 // CHECK:STDOUT:       %B.ref: type = name_ref B, imports.%B.decl [concrete = constants.%B]
-// CHECK:STDOUT:       %ptr.loc6_20: type = ptr_type %B.ref [concrete = constants.%ptr.a04]
+// CHECK:STDOUT:       %ptr.loc12_20: type = ptr_type %B.ref [concrete = constants.%ptr.a04]
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %p: %ptr.a04 = bind_name p, %p.param
 // CHECK:STDOUT:     %return.param: ref %ptr.270 = out_param call_param1
@@ -920,8 +924,7 @@ fn Convert(p: Cpp.B*) -> Cpp.A* {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @B {
-// CHECK:STDOUT:   %.1: type = custom_layout_type {size=16, align=8} [concrete = constants.%.e55]
-// CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %.1 [concrete = constants.%complete_type.1a4]
+// CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness <error> [concrete = <error>]
 // CHECK:STDOUT:   complete_type_witness = %complete_type
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
@@ -945,7 +948,7 @@ fn Convert(p: Cpp.B*) -> Cpp.A* {
 // CHECK:STDOUT: fn @Convert(%p.param: %ptr.a04) -> %ptr.270 {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %p.ref: %ptr.a04 = name_ref p, %p
-// CHECK:STDOUT:   %.loc14: %ptr.270 = converted %p.ref, <error> [concrete = <error>]
+// CHECK:STDOUT:   %.loc20: %ptr.270 = converted %p.ref, <error> [concrete = <error>]
 // CHECK:STDOUT:   return <error>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

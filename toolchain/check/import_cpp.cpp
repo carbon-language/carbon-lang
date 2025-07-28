@@ -546,14 +546,17 @@ static auto ImportClassObjectRepr(Context& context, SemIR::ClassId class_id,
     if (base.isVirtual()) {
       // TODO: Handle virtual bases. We don't actually know where they go in the
       // layout. We may also want to use a different size in the layout for
-      // `partial C`, excluding the virtual base.
-      continue;
+      // `partial C`, excluding the virtual base. It's also not entirely safe to
+      // just skip over the virtual base, as the type we would construct would
+      // have a misleading size.
+      context.TODO(import_ir_inst_id, "class with virtual bases");
+      return SemIR::ErrorInst::TypeInstId;
     }
 
     auto [base_type_inst_id, base_type_id] =
         MapType(context, import_ir_inst_id, base.getType());
     if (!base_type_id.has_value()) {
-      // If the base class's type can't be mapped, skip it.
+      // TODO: If the base class's type can't be mapped, skip it.
       continue;
     }
 
