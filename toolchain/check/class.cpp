@@ -176,7 +176,8 @@ static auto BuildVtable(Context& context, Parse::ClassDefinitionId node_id,
     // TODO: Avoid quadratic search. Perhaps build a map from `NameId` to the
     // elements of the top of `vtable_stack`.
     for (auto base_vtable_entry_id : base_vtable_inst_block) {
-      auto [derived_vtable_entry_id, fn_id, specific_id] =
+      auto [derived_vtable_entry_id, derived_vtable_entry_const_id, fn_id,
+            specific_id] =
           DecomposeVirtualFunction(context.sem_ir(), base_vtable_entry_id,
                                    base_class_specific_id);
       const auto& fn = context.sem_ir().functions().Get(fn_id);
@@ -204,7 +205,7 @@ static auto BuildVtable(Context& context, Parse::ClassDefinitionId node_id,
       } else if (auto base_vtable_specific_function =
                      context.sem_ir().insts().TryGetAs<SemIR::SpecificFunction>(
                          derived_vtable_entry_id)) {
-        if (class_generic_id.has_value()) {
+        if (derived_vtable_entry_const_id.is_symbolic()) {
           derived_vtable_entry_id = GetOrAddInst<SemIR::SpecificFunction>(
               context, node_id,
               {.type_id = GetSingletonType(

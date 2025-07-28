@@ -70,8 +70,9 @@ auto DecomposeVirtualFunction(const File& sem_ir, InstId fn_decl_id,
   // Remap the base's vtable entry to the appropriate constant usable in
   // the context of the derived class (for the specific for the base
   // class, for instance).
-  fn_decl_id = sem_ir.constant_values().GetInstId(
-      GetConstantValueInSpecific(sem_ir, base_class_specific_id, fn_decl_id));
+  auto fn_decl_const_id =
+      GetConstantValueInSpecific(sem_ir, base_class_specific_id, fn_decl_id);
+  fn_decl_id = sem_ir.constant_values().GetInstId(fn_decl_const_id);
   auto specific_id = SemIR::SpecificId::None;
   auto callee_id = fn_decl_id;
   if (auto specific_function =
@@ -85,6 +86,7 @@ auto DecomposeVirtualFunction(const File& sem_ir, InstId fn_decl_id,
       sem_ir.types().GetAsInst(sem_ir.insts().Get(callee_id).type_id());
 
   return {.fn_decl_id = fn_decl_id,
+          .fn_decl_const_id = fn_decl_const_id,
           .function_id = fn_type_inst.As<FunctionType>().function_id,
           .specific_id = specific_id};
 }

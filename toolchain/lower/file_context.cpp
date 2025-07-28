@@ -971,7 +971,7 @@ auto FileContext::BuildVtable(const SemIR::Vtable& vtable,
   vfuncs.reserve(vtable_inst_block.size());
 
   for (auto fn_decl_id : vtable_inst_block) {
-    auto [fn_decl, fn_id, fn_specific_id] =
+    auto [_1, _2, fn_id, fn_specific_id] =
         DecomposeVirtualFunction(sem_ir(), fn_decl_id, specific_id);
 
     vfuncs.push_back(llvm::ConstantExpr::getTrunc(
