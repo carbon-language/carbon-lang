@@ -203,7 +203,7 @@ static auto BuildVtable(Context& context, Parse::ClassDefinitionId node_id,
         CARBON_CHECK(override_fn.virtual_index == fn.virtual_index);
       } else if (auto base_vtable_specific_function =
                      context.sem_ir().insts().TryGetAs<SemIR::SpecificFunction>(
-                         base_vtable_entry_id)) {
+                         derived_vtable_entry_id)) {
         if (class_generic_id.has_value()) {
           derived_vtable_entry_id = GetOrAddInst<SemIR::SpecificFunction>(
               context, node_id,
