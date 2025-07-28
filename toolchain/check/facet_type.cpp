@@ -530,7 +530,7 @@ class SubstImplWitnessAccessCallbacks : public SubstInstCallbacks {
       return SubstResult::FullySubstituted;
     }
 
-    // Finds a cycle if the RHS refers to something that depends on the value
+    // Diagnose a cycle if the RHS refers to something that depends on the value
     // of the RHS.
     if (cached_value->state == AccessRewriteCache::BeingRewritten) {
       CARBON_DIAGNOSTIC(FacetTypeConstraintCycle, Error,
