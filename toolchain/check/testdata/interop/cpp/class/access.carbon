@@ -253,23 +253,48 @@ fn F() {
   //@dump-sem-ir-end
 }
 
-// --- todo_fail_import_base_class_protected.carbon
+// --- fail_import_base_class_protected.carbon
 
 library "[[@TEST_NAME]]";
 
 import Cpp library "base_class.h";
 
 fn F() {
+  // CHECK:STDERR: fail_import_base_class_protected.carbon:[[@LINE+5]]:3: error: cannot access protected member `foo` of type `Cpp.DerivedProtected` [ClassInvalidMemberAccess]
+  // CHECK:STDERR:   Cpp.DerivedProtected.foo();
+  // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~~~~~
+  // CHECK:STDERR: fail_import_base_class_protected.carbon: note: declared here [ClassMemberDeclaration]
+  // CHECK:STDERR:
   Cpp.DerivedProtected.foo();
 }
 
-// --- todo_fail_import_base_class_private.carbon
+// --- use_base_class_protected_from_derived.carbon
+
+library "[[@TEST_NAME]]";
+
+import Cpp library "base_class.h";
+
+class Derived {
+  extend base: Cpp.DerivedProtected;
+
+  fn F() {
+    // OK, we can access a protected member of our base class.
+    Cpp.DerivedProtected.foo();
+  }
+}
+
+// --- fail_import_base_class_private.carbon
 
 library "[[@TEST_NAME]]";
 
 import Cpp library "base_class.h";
 
 fn F() {
+  // CHECK:STDERR: fail_import_base_class_private.carbon:[[@LINE+5]]:3: error: cannot access private member `foo` of type `Cpp.DerivedPrivate` [ClassInvalidMemberAccess]
+  // CHECK:STDERR:   Cpp.DerivedPrivate.foo();
+  // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~~~
+  // CHECK:STDERR: fail_import_base_class_private.carbon: note: declared here [ClassMemberDeclaration]
+  // CHECK:STDERR:
   Cpp.DerivedPrivate.foo();
 }
 

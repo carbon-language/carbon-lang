@@ -1365,14 +1365,15 @@ static auto MapAccess(clang::AccessSpecifier access_specifier)
 static auto ImportNameDeclIntoScope(Context& context, SemIR::LocId loc_id,
                                     SemIR::NameScopeId scope_id,
                                     SemIR::NameId name_id,
-                                    clang::NamedDecl* clang_decl)
+                                    clang::NamedDecl* clang_decl,
+                                    clang::AccessSpecifier access)
     -> SemIR::ScopeLookupResult {
   SemIR::InstId inst_id =
       ImportDeclAndDependencies(context, loc_id, clang_decl);
   if (!inst_id.has_value()) {
     return SemIR::ScopeLookupResult::MakeNotFound();
   }
-  SemIR::AccessKind access_kind = MapAccess(clang_decl->getAccess());
+  SemIR::AccessKind access_kind = MapAccess(access);
   AddNameToScope(context, scope_id, name_id, access_kind, inst_id);
   return SemIR::ScopeLookupResult::MakeWrappedLookupResult(inst_id,
                                                            access_kind);
@@ -1405,7 +1406,8 @@ auto ImportNameFromCpp(Context& context, SemIR::LocId loc_id,
   }
 
   return ImportNameDeclIntoScope(context, loc_id, scope_id, name_id,
-                                 lookup->getFoundDecl());
+                                 lookup->getFoundDecl(),
+                                 lookup->begin().getAccess());
 }
 
 }  // namespace Carbon::Check
