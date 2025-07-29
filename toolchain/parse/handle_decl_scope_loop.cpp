@@ -46,7 +46,7 @@ static auto ApplyIntroducer(Context& context, Context::State state,
 namespace {
 // The kind of context in which a declaration appears.
 enum DeclContextKind : int8_t {
-  NonClassContext = 0,
+  OrdinaryContext = 0,
   ClassContext = 1,
   InterfaceContext = 2,
   MaxDeclContextKind = InterfaceContext,
@@ -130,12 +130,12 @@ static constexpr auto DeclIntroducers = [] {
       StateKind::TypeAfterIntroducerAsInterface);
   set(Lex::TokenKind::Namespace, NodeKind::NamespaceStart,
       StateKind::Namespace);
-  set_contextual(Lex::TokenKind::Let, NonClassContext, NodeKind::LetIntroducer,
+  set_contextual(Lex::TokenKind::Let, OrdinaryContext, NodeKind::LetIntroducer,
                  StateKind::Let);
   set_contextual(Lex::TokenKind::Let, InterfaceContext,
                  NodeKind::AssociatedConstantIntroducer,
                  StateKind::AssociatedConstantDecl);
-  set_contextual(Lex::TokenKind::Var, NonClassContext,
+  set_contextual(Lex::TokenKind::Var, OrdinaryContext,
                  NodeKind::VariableIntroducer, StateKind::VarAsRegular);
   set_contextual(Lex::TokenKind::Var, ClassContext, NodeKind::FieldIntroducer,
                  StateKind::FieldDecl);
@@ -306,8 +306,8 @@ auto HandleDeclAsInterface(Context& context) -> void {
   HandleDecl(context, InterfaceContext);
 }
 
-auto HandleDeclAsNonClass(Context& context) -> void {
-  HandleDecl(context, NonClassContext);
+auto HandleDeclAsOrdinary(Context& context) -> void {
+  HandleDecl(context, OrdinaryContext);
 }
 
 static auto HandleDeclScopeLoop(Context& context, StateKind decl_state_kind)
@@ -331,8 +331,8 @@ auto HandleDeclScopeLoopAsInterface(Context& context) -> void {
   HandleDeclScopeLoop(context, StateKind::DeclAsInterface);
 }
 
-auto HandleDeclScopeLoopAsNonClass(Context& context) -> void {
-  HandleDeclScopeLoop(context, StateKind::DeclAsNonClass);
+auto HandleDeclScopeLoopAsOrdinary(Context& context) -> void {
+  HandleDeclScopeLoop(context, StateKind::DeclAsOrdinary);
 }
 
 }  // namespace Carbon::Parse

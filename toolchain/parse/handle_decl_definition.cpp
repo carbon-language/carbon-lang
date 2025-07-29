@@ -27,7 +27,7 @@ static auto HandleDeclOrDefinition(Context& context, NodeKind decl_kind,
   } else if (decl_kind == NodeKind::InterfaceDecl) {
     context.PushState(StateKind::DeclScopeLoopAsInterface);
   } else {
-    context.PushState(StateKind::DeclScopeLoopAsNonClass);
+    context.PushState(StateKind::DeclScopeLoopAsOrdinary);
   }
   context.AddNode(definition_start_kind, context.Consume(), state.has_error);
 }

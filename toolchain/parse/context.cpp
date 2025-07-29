@@ -438,7 +438,7 @@ static auto ParsingInDeferredDefinitionScope(Context& context) -> bool {
   auto& stack = context.state_stack();
   if (stack.size() < 2 ||
       (stack.back().kind != StateKind::DeclScopeLoopAsClass &&
-       stack.back().kind != StateKind::DeclScopeLoopAsNonClass)) {
+       stack.back().kind != StateKind::DeclScopeLoopAsOrdinary)) {
     return false;
   }
   auto kind = stack[stack.size() - 2].kind;
