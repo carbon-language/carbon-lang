@@ -764,6 +764,14 @@ static auto MapBuiltinType(Context& context, clang::QualType qual_type,
       return MakeIntType(context, context.ints().Add(width), is_signed);
     }
     // TODO: Handle integer types that map to named aliases.
+  } else if (type.isDoubleType()) {
+    // TODO: Handle other floating point types when Carbon supports fN where N
+    // != 64.
+    CARBON_CHECK(ast_context.hasSameType(qual_type, ast_context.DoubleTy));
+    return ExprAsType(
+        context, Parse::NodeId::None,
+        MakeFloatTypeLiteral(context, Parse::NodeId::None,
+                             SemIR::FloatKind::None, context.ints().Add(64)));
   }
 
   return {.inst_id = SemIR::TypeInstId::None, .type_id = SemIR::TypeId::None};

@@ -24,6 +24,11 @@ auto MakeIntTypeLiteral(Context& context, Parse::NodeId node_id,
 auto MakeIntType(Context& context, Parse::NodeId node_id,
                  SemIR::IntKind int_kind, IntId size_id) -> SemIR::TypeId;
 
+// Forms a floating point type expression for `fN` literal.
+auto MakeFloatTypeLiteral(Context& context, Parse::NodeId node_id,
+                          SemIR::FloatKind float_kind, IntId size_id)
+    -> SemIR::InstId;
+
 }  // namespace Carbon::Check
 
 #endif  // CARBON_TOOLCHAIN_CHECK_LITERAL_H_
