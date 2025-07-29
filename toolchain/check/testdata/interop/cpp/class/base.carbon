@@ -185,7 +185,7 @@ fn Convert(p: Cpp.B*) -> Cpp.A* {
 
 struct A final {};
 
-// --- derive_from_final.carbon
+// --- fail_derive_from_final.carbon
 
 library "[[@TEST_NAME]]";
 
@@ -203,7 +203,7 @@ class B {
 
 union U {};
 
-// --- derive_from_union.carbon
+// --- fail_derive_from_union.carbon
 
 library "[[@TEST_NAME]]";
 
