@@ -77,6 +77,11 @@ auto HandleLetAfterPatternAsAssociatedConstant(Context& context) -> void {
 
   context.AddNode(NodeKind::AssociatedConstantNameAndType, state.token,
                   state.has_error);
+
+  if (auto equals = context.ConsumeIf(Lex::TokenKind::Equal)) {
+    context.AddLeafNode(NodeKind::AssociatedConstantInitializer, *equals);
+    context.PushState(StateKind::Expr);
+  }
 }
 
 auto HandleLetFinishAsLet(Context& context) -> void {
