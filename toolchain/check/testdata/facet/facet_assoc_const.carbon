@@ -249,11 +249,22 @@ library "[[@TEST_NAME]]";
 
 interface M { let X:! type; }
 
+// This fails because it resolves to `.X = .X` which is cyclical.
+//
 // CHECK:STDERR: fail_cycle_single.carbon:[[@LINE+4]]:10: error: found cycle in facet type constraint for `.(M.X)` [FacetTypeConstraintCycle]
 // CHECK:STDERR: fn F(T:! M where .X = .X) {}
 // CHECK:STDERR:          ^~~~~~~~~~~~~~~
 // CHECK:STDERR:
 fn F(T:! M where .X = .X) {}
+
+// Even though `.X = ()` is specified, the rewrites are resolved left to right
+// and a cycle `.X = .X` is found first.
+//
+// CHECK:STDERR: fail_cycle_single.carbon:[[@LINE+4]]:10: error: found cycle in facet type constraint for `.(M.X)` [FacetTypeConstraintCycle]
+// CHECK:STDERR: fn G(T:! M where .X = .X and .X = ()) {}
+// CHECK:STDERR:          ^~~~~~~~~~~~~~~~~~~~~~~~~~~
+// CHECK:STDERR:
+fn G(T:! M where .X = .X and .X = ()) {}
 
 // --- fail_cycle.carbon
 library "[[@TEST_NAME]]";
