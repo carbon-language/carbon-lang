@@ -217,7 +217,7 @@ Supported comment markers are:
 
     -   `// ARGS`
     -   `// EXTRA-ARGS`
-        -   Included `EXTRA-ARGS` will come before `EXTRA-ARGS` in the main
+        -   Included `EXTRA-ARGS` will come before `EXTRA-ARGS` in the main test
             file.
     -   `// INCLUDE-FILE`
     -   `// --- <filename>`
