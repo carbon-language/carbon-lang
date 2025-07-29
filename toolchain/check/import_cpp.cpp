@@ -767,6 +767,7 @@ static auto MapBuiltinType(Context& context, clang::QualType qual_type,
   } else if (type.isDoubleType()) {
     // TODO: Handle other floating point types when Carbon supports fN where N
     // != 64.
+    CARBON_CHECK(ast_context.getTypeSize(qual_type) == 64);
     CARBON_CHECK(ast_context.hasSameType(qual_type, ast_context.DoubleTy));
     return ExprAsType(
         context, Parse::NodeId::None,
