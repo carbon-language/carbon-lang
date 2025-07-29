@@ -366,6 +366,110 @@ static auto SortAndDedupeRewriteConstraints(
   rewrites.erase(llvm::unique(rewrites, eq), rewrites.end());
 }
 
+// A mapping of each associated constant (represented as `ImplWitnessAccess`) to
+// its value (represented as an `InstId`). Used to track rewrite constraints,
+// with the LHS mapping to the resolved value of the RHS.
+class AccessRewriteValues {
+ public:
+  enum State {
+    NotRewritten,
+    BeingRewritten,
+    FullyRewritten,
+  };
+  struct Value {
+    State state;
+    SemIR::InstId inst_id;
+  };
+
+  auto InsertNotRewritten(Context& context, SemIR::ImplWitnessAccess access,
+                          SemIR::InstId inst_id) -> void {
+    map_.insert({GetKey(context, access), {NotRewritten, inst_id}});
+  }
+
+  // Finds and returns a pointer into the cache for a given ImplWitnessAccess.
+  // The pointer will be invalidated by mutating the cache. Returns `nullptr`
+  // if `access` is not found.
+  auto FindRef(Context& context, SemIR::ImplWitnessAccess access) -> Value* {
+    auto it = map_.find(GetKey(context, access));
+    if (it == map_.end()) {
+      return nullptr;
+    }
+    return &it->second;
+  }
+
+  auto SetBeingRewritten(Context& context, SemIR::ImplWitnessAccess access)
+      -> void {
+    auto it = map_.find({GetKey(context, access)});
+    CARBON_CHECK(it != map_.end());
+    if (it->second.state == NotRewritten) {
+      it->second.state = BeingRewritten;
+    }
+  }
+
+  auto SetFullyRewritten(Context& context, SemIR::ImplWitnessAccess access,
+                         SemIR::InstId rewritten_to_inst_id) -> void {
+    auto it = map_.find({GetKey(context, access)});
+    CARBON_CHECK(it != map_.end());
+    // TODO: If state == FullyRewrtten and the inst id is different (according
+    // to `CompareFacetTypeConstraintValues`), we can diagnose writing two
+    // different values for the same associated constant immediately?
+    //
+    // TODO: Once the above is done, we don't need to do the SortAndDedupe
+    // step in ResolveFacetTypeRewriteConstraints()? We can just convert this
+    // `map_` into a new set of `RewriteConstraint`s which will already be
+    // deduped.
+    if (it->second.state == BeingRewritten) {
+      it->second = {FullyRewritten, rewritten_to_inst_id};
+    }
+  }
+
+ private:
+  using Key = FacetTypeConstraintValue;
+  struct KeyInfo {
+    static auto getEmptyKey() -> Key {
+      return {
+          .entity_name_id = SemIR::EntityNameId::None,
+          .access_index = SemIR::ElementIndex(-1),
+          .specific_interface_id = SemIR::SpecificInterfaceId::None,
+      };
+    }
+    static auto getTombstoneKey() -> Key {
+      return {
+          .entity_name_id = SemIR::EntityNameId::None,
+          .access_index = SemIR::ElementIndex(-2),
+          .specific_interface_id = SemIR::SpecificInterfaceId::None,
+      };
+    }
+    static auto getHashValue(Key key) -> unsigned {
+      // This hash produces the same value if two ImplWitnessAccess are
+      // pointing to the same associated constant, even if they are different
+      // instruction ids.
+      //
+      // TODO: This truncates the high bits of the hash code which does not
+      // make for a good hash function.
+      return static_cast<unsigned>(static_cast<uint64_t>(HashValue(key)));
+    }
+    static auto isEqual(Key lhs, Key rhs) -> bool {
+      // This comparison is true if the two ImplWitnessAccess are pointing to
+      // the same associated constant, even if they are different instruction
+      // ids.
+      return lhs == rhs;
+    }
+  };
+
+  auto GetKey(Context& context, SemIR::ImplWitnessAccess access) -> Key {
+    return {*GetFacetTypeConstraintValue(context, access)};
+  }
+
+  // Try avoid heap allocations in the common case where there are a small
+  // number of rewrite rules referring to each other by keeping up to 16 on
+  // the stack.
+  //
+  // TODO: Revisit if 16 is an appropriate number when we can measure how deep
+  // rewrite constraint chains go in practice.
+  llvm::SmallDenseMap<Key, Value, 16, KeyInfo> map_;
+};
+
 // To be used for substituting into the RHS of a rewrite constraint.
 //
 // It will substitute any `ImplWitnessAccess` into `.Self` (a reference to an
@@ -397,107 +501,6 @@ static auto SortAndDedupeRewriteConstraints(
 // avoid duplicating work.
 class SubstImplWitnessAccessCallbacks : public SubstInstCallbacks {
  public:
-  class AccessRewriteValues {
-   public:
-    enum State {
-      NotRewritten,
-      BeingRewritten,
-      FullyRewritten,
-    };
-    struct Value {
-      State state;
-      SemIR::InstId inst_id;
-    };
-
-    // Finds and returns a pointer into the cache for a given ImplWitnessAccess.
-    // The pointer will be invalidated by mutating the cache. Returns `nullptr`
-    // if `access` is not found.
-    auto FindRef(Context& context, SemIR::ImplWitnessAccess access) -> Value* {
-      auto it = map_.find(GetKey(context, access));
-      if (it == map_.end()) {
-        return nullptr;
-      }
-      return &it->second;
-    }
-
-    auto InsertNotRewritten(Context& context, SemIR::ImplWitnessAccess access,
-                            SemIR::InstId inst_id) -> void {
-      map_.insert({GetKey(context, access), {NotRewritten, inst_id}});
-    }
-
-    auto SetBeingRewritten(Context& context, SemIR::ImplWitnessAccess access)
-        -> void {
-      auto it = map_.find({GetKey(context, access)});
-      CARBON_CHECK(it != map_.end());
-      if (it->second.state == NotRewritten) {
-        it->second.state = BeingRewritten;
-      }
-    }
-
-    auto SetFullyRewritten(Context& context, SemIR::ImplWitnessAccess access,
-                           SemIR::InstId rewritten_to_inst_id) -> void {
-      auto it = map_.find({GetKey(context, access)});
-      CARBON_CHECK(it != map_.end());
-      // TODO: If state == FullyRewrtten and the inst id is different (according
-      // to `CompareFacetTypeConstraintValues`), we can diagnose writing two
-      // different values for the same associated constant immediately?
-      //
-      // TODO: Once the above is done, we don't need to do the SortAndDedupe
-      // step in ResolveFacetTypeRewriteConstraints()? We can just convert this
-      // `map_` into a new set of `RewriteConstraint`s which will already be
-      // deduped.
-      if (it->second.state == BeingRewritten) {
-        it->second = {FullyRewritten, rewritten_to_inst_id};
-      }
-    }
-
-   private:
-    using Key = FacetTypeConstraintValue;
-    struct KeyInfo {
-      static auto getEmptyKey() -> Key {
-        return {
-            .entity_name_id = SemIR::EntityNameId::None,
-            .access_index = SemIR::ElementIndex(-1),
-            .specific_interface_id = SemIR::SpecificInterfaceId::None,
-        };
-      }
-      static auto getTombstoneKey() -> Key {
-        return {
-            .entity_name_id = SemIR::EntityNameId::None,
-            .access_index = SemIR::ElementIndex(-2),
-            .specific_interface_id = SemIR::SpecificInterfaceId::None,
-        };
-      }
-      static auto getHashValue(Key key) -> unsigned {
-        // This hash produces the same value if two ImplWitnessAccess are
-        // pointing to the same associated constant, even if they are different
-        // instruction ids.
-        //
-        // TODO: This truncates the high bits of the hash code which does not
-        // make for a good hash function.
-        return static_cast<unsigned>(static_cast<uint64_t>(HashValue(key)));
-      }
-      static auto isEqual(Key lhs, Key rhs) -> bool {
-        // This comparison is true if the two ImplWitnessAccess are pointing to
-        // the same associated constant, even if they are different instruction
-        // ids.
-        return lhs == rhs;
-      }
-    };
-
-    auto GetKey(Context& context, SemIR::ImplWitnessAccess access) -> Key {
-      return {*GetFacetTypeConstraintValue(context, access)};
-    }
-
-    // Try avoid heap allocations in the common case where there are a small
-    // number of rewrite rules referring to each other by keeping up to 16 on
-    // the stack.
-    //
-    // TODO: Revisit if 16 is an appropriate number when we can measure how deep
-    // rewrite constraint chains go in practice.
-    llvm::SmallDenseMap<Key, Value, 16, KeyInfo> map_;
-  };
-
   explicit SubstImplWitnessAccessCallbacks(Context* context,
                                            SemIR::LocId loc_id,
                                            AccessRewriteValues* rewrite_values)
@@ -623,7 +626,7 @@ auto ResolveFacetTypeRewriteConstraints(
 
   // Apply rewrite constraints to each other, so that for example:
   // `.X = Y and .Y = ()` becomes `.X = () and .Y = ()`.
-  SubstImplWitnessAccessCallbacks::AccessRewriteValues rewrite_values;
+  AccessRewriteValues rewrite_values;
   for (auto& constraint : rewrites) {
     if (constraint.lhs_id == SemIR::ErrorInst::InstId ||
         constraint.rhs_id == SemIR::ErrorInst::InstId) {
