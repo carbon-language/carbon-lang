@@ -388,12 +388,13 @@ static auto SortAndDedupeRewriteConstraints(
 // replaced with `ErrorInst` so that further evaluation of the
 // `ImplWitnessAccess` will not loop infinitely.
 //
-// The `cache` must be set up initially with each rewrite rule of an associated
-// constant inserted with its unresolved value via `InsertNotRewritten`. Then
-// for each rewrite rule of an associated constant, the LHS access should be set
-// as being rewritten via `SetBeingRewritten` in order to detect cycles before
-// performing SubstInst. The result of SubstInst should be inserted afterward
-// via `InsertRewritten` to avoid duplicating work.
+// The `rewrite_values` given to the constructor must be set up initially with
+// each rewrite rule of an associated constant inserted with its unresolved
+// value via `InsertNotRewritten`. Then for each rewrite rule of an associated
+// constant, the LHS access should be set as being rewritten via
+// `SetBeingRewritten` in order to detect cycles before performing SubstInst.
+// The result of SubstInst should be inserted afterward via `InsertRewritten` to
+// avoid duplicating work.
 class SubstImplWitnessAccessCallbacks : public SubstInstCallbacks {
  public:
   class AccessRewriteValues {
@@ -409,12 +410,12 @@ class SubstImplWitnessAccessCallbacks : public SubstInstCallbacks {
     };
 
     // Finds and returns a pointer into the cache for a given ImplWitnessAccess.
-    // The pointer will be invalidated by mutating the cache.
-    auto FindRef(Context& context, SemIR::ImplWitnessAccess access)
-        -> std::optional<Value*> {
+    // The pointer will be invalidated by mutating the cache. Returns `nullptr`
+    // if `access` is not found.
+    auto FindRef(Context& context, SemIR::ImplWitnessAccess access) -> Value* {
       auto it = map_.find(GetKey(context, access));
       if (it == map_.end()) {
-        return std::nullopt;
+        return nullptr;
       }
       return &it->second;
     }
@@ -497,9 +498,6 @@ class SubstImplWitnessAccessCallbacks : public SubstInstCallbacks {
     llvm::SmallDenseMap<Key, Value, 16, KeyInfo> map_;
   };
 
-  // The `cache` should already be populated with an `ImplWitnessAccess` for
-  // associated constant on the LHS of each rewrite constraint. They may
-  // initially be in the `NotRewritten` state.
   explicit SubstImplWitnessAccessCallbacks(Context* context,
                                            SemIR::LocId loc_id,
                                            AccessRewriteValues* rewrite_values)
@@ -530,7 +528,7 @@ class SubstImplWitnessAccessCallbacks : public SubstInstCallbacks {
       }
     }
 
-    auto rewrite_value = rewrite_values_->FindRef(context(), *rhs_access);
+    auto* rewrite_value = rewrite_values_->FindRef(context(), *rhs_access);
     if (!rewrite_value) {
       // The RHS refers to an associated constant for which there is no rewrite
       // rule.
@@ -539,7 +537,7 @@ class SubstImplWitnessAccessCallbacks : public SubstInstCallbacks {
 
     // Diagnose a cycle if the RHS refers to something that depends on the value
     // of the RHS.
-    if ((*rewrite_value)->state == AccessRewriteValues::BeingRewritten) {
+    if (rewrite_value->state == AccessRewriteValues::BeingRewritten) {
       CARBON_DIAGNOSTIC(FacetTypeConstraintCycle, Error,
                         "found cycle in facet type constraint for {0}",
                         InstIdAsConstant);
@@ -551,20 +549,20 @@ class SubstImplWitnessAccessCallbacks : public SubstInstCallbacks {
       context().emitter().Emit(loc_id_, FacetTypeConstraintCycle, rhs_inst_id);
       rhs_inst_id = SemIR::ErrorInst::InstId;
       return SubstResult::FullySubstituted;
-    } else if ((*rewrite_value)->state == AccessRewriteValues::FullyRewritten) {
-      rhs_inst_id = (*rewrite_value)->inst_id;
+    } else if (rewrite_value->state == AccessRewriteValues::FullyRewritten) {
+      rhs_inst_id = rewrite_value->inst_id;
       return SubstResult::FullySubstituted;
     }
 
     // We have a non-rewritten RHS. We need to recurse on rewriting it. Reuse
     // the previous lookup by mutating it in place.
-    (*rewrite_value)->state = AccessRewriteValues::BeingRewritten;
+    rewrite_value->state = AccessRewriteValues::BeingRewritten;
 
     // The ImplWitnessAccess was replaced with some other instruction, which may
     // contain or be another ImplWitnessAccess. Keep track of the associated
     // constant we are now computing the value of.
     substs_in_progress_.push_back(rhs_inst_id);
-    rhs_inst_id = (*rewrite_value)->inst_id;
+    rhs_inst_id = rewrite_value->inst_id;
     return SubstResult::SubstAgain;
   }
 
