@@ -176,7 +176,7 @@ fn G(T:! type where C(()) impls I(.Self)) {}
 // CHECK:STDOUT:         requirement_equivalent %.Self.ref, %.loc9_37
 // CHECK:STDOUT:       }
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %T.loc9_15.1: %I_where.type = bind_symbolic_name T, 0 [symbolic = %T.loc9_15.2 (constants.%T)]
+// CHECK:STDOUT:     %T.loc9_15.2: %I_where.type = bind_symbolic_name T, 0 [symbolic = %T.loc9_15.1 (constants.%T)]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %PeriodMember.decl: %PeriodMember.type = fn_decl @PeriodMember [concrete = constants.%PeriodMember] {
 // CHECK:STDOUT:     %U.patt: %pattern_type.f03 = symbolic_binding_pattern U, 0 [concrete]
@@ -194,7 +194,7 @@ fn G(T:! type where C(()) impls I(.Self)) {}
 // CHECK:STDOUT:         requirement_equivalent %impl.elem0, %.loc11_41
 // CHECK:STDOUT:       }
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %U.loc11_17.1: %I_where.type = bind_symbolic_name U, 0 [symbolic = %U.loc11_17.2 (constants.%U)]
+// CHECK:STDOUT:     %U.loc11_17.2: %I_where.type = bind_symbolic_name U, 0 [symbolic = %U.loc11_17.1 (constants.%U)]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %TypeSelfImpls.decl: %TypeSelfImpls.type = fn_decl @TypeSelfImpls [concrete = constants.%TypeSelfImpls] {
 // CHECK:STDOUT:     %V.patt: %pattern_type.2b5 = symbolic_binding_pattern V, 0 [concrete]
@@ -207,37 +207,37 @@ fn G(T:! type where C(()) impls I(.Self)) {}
 // CHECK:STDOUT:         requirement_impls %.Self.ref, %I.ref
 // CHECK:STDOUT:       }
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %V.loc13_18.1: %type_where = bind_symbolic_name V, 0 [symbolic = %V.loc13_18.2 (constants.%V)]
+// CHECK:STDOUT:     %V.loc13_18.2: %type_where = bind_symbolic_name V, 0 [symbolic = %V.loc13_18.1 (constants.%V)]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic fn @PeriodSelf(%T.loc9_15.1: %I_where.type) {
-// CHECK:STDOUT:   %T.loc9_15.2: %I_where.type = bind_symbolic_name T, 0 [symbolic = %T.loc9_15.2 (constants.%T)]
+// CHECK:STDOUT: generic fn @PeriodSelf(%T.loc9_15.2: %I_where.type) {
+// CHECK:STDOUT:   %T.loc9_15.1: %I_where.type = bind_symbolic_name T, 0 [symbolic = %T.loc9_15.1 (constants.%T)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   fn();
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic fn @PeriodMember(%U.loc11_17.1: %I_where.type) {
-// CHECK:STDOUT:   %U.loc11_17.2: %I_where.type = bind_symbolic_name U, 0 [symbolic = %U.loc11_17.2 (constants.%U)]
+// CHECK:STDOUT: generic fn @PeriodMember(%U.loc11_17.2: %I_where.type) {
+// CHECK:STDOUT:   %U.loc11_17.1: %I_where.type = bind_symbolic_name U, 0 [symbolic = %U.loc11_17.1 (constants.%U)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   fn();
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic fn @TypeSelfImpls(%V.loc13_18.1: %type_where) {
-// CHECK:STDOUT:   %V.loc13_18.2: %type_where = bind_symbolic_name V, 0 [symbolic = %V.loc13_18.2 (constants.%V)]
+// CHECK:STDOUT: generic fn @TypeSelfImpls(%V.loc13_18.2: %type_where) {
+// CHECK:STDOUT:   %V.loc13_18.1: %type_where = bind_symbolic_name V, 0 [symbolic = %V.loc13_18.1 (constants.%V)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   fn();
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @PeriodSelf(constants.%T) {
-// CHECK:STDOUT:   %T.loc9_15.2 => constants.%T
+// CHECK:STDOUT:   %T.loc9_15.1 => constants.%T
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @PeriodMember(constants.%U) {
-// CHECK:STDOUT:   %U.loc11_17.2 => constants.%U
+// CHECK:STDOUT:   %U.loc11_17.1 => constants.%U
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @TypeSelfImpls(constants.%V) {
-// CHECK:STDOUT:   %V.loc13_18.2 => constants.%V
+// CHECK:STDOUT:   %V.loc13_18.1 => constants.%V
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

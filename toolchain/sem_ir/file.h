@@ -61,6 +61,8 @@ struct ExprRegion {
 
 using ExprRegionStore = ValueStore<ExprRegionId, ExprRegion>;
 
+using CustomLayoutStore = BlockValueStore<CustomLayoutId, uint64_t>;
+
 // Provides semantic analysis on a Parse::Tree.
 class File : public Printable<File> {
  public:
@@ -209,6 +211,10 @@ class File : public Printable<File> {
   }
   auto struct_type_fields() const -> const StructTypeFieldsStore& {
     return struct_type_fields_;
+  }
+  auto custom_layouts() -> CustomLayoutStore& { return custom_layouts_; }
+  auto custom_layouts() const -> const CustomLayoutStore& {
+    return custom_layouts_;
   }
   auto types() -> TypeStore& { return types_; }
   auto types() const -> const TypeStore& { return types_; }
@@ -360,6 +366,9 @@ class File : public Printable<File> {
 
   // Storage for StructTypeField lists.
   StructTypeFieldsStore struct_type_fields_ = StructTypeFieldsStore(allocator_);
+
+  // Storage for custom layouts.
+  CustomLayoutStore custom_layouts_ = CustomLayoutStore(allocator_);
 
   // Descriptions of types used in this file.
   TypeStore types_ = TypeStore(this);

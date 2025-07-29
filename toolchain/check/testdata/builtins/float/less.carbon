@@ -47,9 +47,9 @@ fn RuntimeCallIsValid(a: f64, b: f64) -> bool {
 // CHECK:STDOUT:   %Less.ref: %Less.type = name_ref Less, file.%Less.decl [concrete = constants.%Less]
 // CHECK:STDOUT:   %a.ref: f64 = name_ref a, %a
 // CHECK:STDOUT:   %b.ref: f64 = name_ref b, %b
-// CHECK:STDOUT:   %float.less: init bool = call %Less.ref(%a.ref, %b.ref)
-// CHECK:STDOUT:   %.loc18_20.1: bool = value_of_initializer %float.less
-// CHECK:STDOUT:   %.loc18_20.2: bool = converted %float.less, %.loc18_20.1
+// CHECK:STDOUT:   %Less.call: init bool = call %Less.ref(%a.ref, %b.ref)
+// CHECK:STDOUT:   %.loc18_20.1: bool = value_of_initializer %Less.call
+// CHECK:STDOUT:   %.loc18_20.2: bool = converted %Less.call, %.loc18_20.1
 // CHECK:STDOUT:   return %.loc18_20.2
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

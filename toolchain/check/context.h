@@ -144,7 +144,8 @@ class Context {
 
   auto exports() -> llvm::SmallVector<SemIR::InstId>& { return exports_; }
 
-  auto check_ir_map() -> llvm::MutableArrayRef<SemIR::ImportIRId> {
+  auto check_ir_map()
+      -> FixedSizeValueStore<SemIR::CheckIRId, SemIR::ImportIRId>& {
     return check_ir_map_;
   }
 
@@ -274,6 +275,9 @@ class Context {
   auto struct_type_fields() -> SemIR::StructTypeFieldsStore& {
     return sem_ir().struct_type_fields();
   }
+  auto custom_layouts() -> SemIR::CustomLayoutStore& {
+    return sem_ir().custom_layouts();
+  }
   auto types() -> SemIR::TypeStore& { return sem_ir().types(); }
   // Instructions should be added with `AddInst` or `AddInstInNoBlock` from
   // `inst.h`. This is `const` to prevent accidental misuse.
@@ -353,7 +357,7 @@ class Context {
   llvm::SmallVector<SemIR::InstId> exports_;
 
   // Maps CheckIRId to ImportIRId.
-  llvm::SmallVector<SemIR::ImportIRId> check_ir_map_;
+  FixedSizeValueStore<SemIR::CheckIRId, SemIR::ImportIRId> check_ir_map_;
 
   // Per-import constant values. These refer to the main IR and mainly serve as
   // a lookup table for quick access.

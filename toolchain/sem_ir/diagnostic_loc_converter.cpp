@@ -53,7 +53,7 @@ auto DiagnosticLocConverter::ConvertImpl(SemIR::CheckIRId check_ir_id,
     -> Diagnostics::ConvertedLoc {
   CARBON_CHECK(check_ir_id != SemIR::CheckIRId::Cpp);
   const auto& tree_and_subtrees =
-      tree_and_subtrees_getters_[check_ir_id.index]();
+      tree_and_subtrees_getters_->Get(check_ir_id)();
   return tree_and_subtrees.NodeToDiagnosticLoc(node_id, token_only);
 }
 
@@ -65,6 +65,9 @@ auto DiagnosticLocConverter::ConvertImpl(
   CARBON_CHECK(sem_ir_->cpp_ast());
   clang::PresumedLoc presumed_loc =
       sem_ir_->cpp_ast()->getSourceManager().getPresumedLoc(clang_loc);
+  if (presumed_loc.isInvalid()) {
+    return Diagnostics::ConvertedLoc();
+  }
   unsigned offset =
       sem_ir_->cpp_ast()->getSourceManager().getDecomposedLoc(clang_loc).second;
 

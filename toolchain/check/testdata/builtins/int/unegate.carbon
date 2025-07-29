@@ -125,7 +125,7 @@ fn F() {
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %int_32: Core.IntLiteral = int_value 32 [concrete]
 // CHECK:STDOUT:   %u32: type = class_type @UInt, @UInt(%int_32) [concrete]
-// CHECK:STDOUT:   %Negate.type.15b: type = fn_type @Negate.1 [concrete]
+// CHECK:STDOUT:   %Negate.type.15b: type = fn_type @Negate.loc4 [concrete]
 // CHECK:STDOUT:   %Negate: %Negate.type.15b = struct_value () [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -136,9 +136,9 @@ fn F() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %Negate.ref: %Negate.type.15b = name_ref Negate, file.%Negate.decl [concrete = constants.%Negate]
 // CHECK:STDOUT:   %a.ref: %u32 = name_ref a, %a
-// CHECK:STDOUT:   %int.unegate: init %u32 = call %Negate.ref(%a.ref)
-// CHECK:STDOUT:   %.loc13_19.1: %u32 = value_of_initializer %int.unegate
-// CHECK:STDOUT:   %.loc13_19.2: %u32 = converted %int.unegate, %.loc13_19.1
+// CHECK:STDOUT:   %Negate.call: init %u32 = call %Negate.ref(%a.ref)
+// CHECK:STDOUT:   %.loc13_19.1: %u32 = value_of_initializer %Negate.call
+// CHECK:STDOUT:   %.loc13_19.2: %u32 = converted %Negate.call, %.loc13_19.1
 // CHECK:STDOUT:   return %.loc13_19.2
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

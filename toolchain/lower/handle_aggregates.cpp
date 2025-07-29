@@ -10,6 +10,7 @@
 #include "toolchain/lower/function_context.h"
 #include "toolchain/sem_ir/expr_info.h"
 #include "toolchain/sem_ir/file.h"
+#include "toolchain/sem_ir/ids.h"
 #include "toolchain/sem_ir/inst.h"
 #include "toolchain/sem_ir/typed_insts.h"
 
@@ -24,6 +25,30 @@ static auto GetPointeeType(FunctionContext::TypeInFile type)
     -> FunctionContext::TypeInFile {
   return {.file = type.file,
           .type_id = type.file->GetPointeeType(type.type_id)};
+}
+
+// Given an index within a SemIR aggregate type, returns the corresponding index
+// of the element within the LLVM type suitable for use with the getelementptr
+// instruction.
+static auto GetElementIndex(FunctionContext::TypeInFile type,
+                            SemIR::ElementIndex idx) -> unsigned int {
+  auto type_inst = type.file->types().GetAsInst(type.type_id);
+
+  if (auto custom_layout_type = type_inst.TryAs<SemIR::CustomLayoutType>()) {
+    // For custom layout types, we form an array of i8 as the LLVM type, so the
+    // offset in the type is the getelementptr index.
+    // TODO: This offset might not fit into an `unsigned int`.
+    return type.file->custom_layouts().Get(
+        custom_layout_type
+            ->layout_id)[SemIR::CustomLayoutId::FirstFieldIndex + idx.index];
+  }
+
+  // For now, struct and tuple types map directly into LLVM struct types with
+  // identical field numbering.
+  CARBON_CHECK(
+      type_inst.Is<SemIR::StructType>() || type_inst.Is<SemIR::TupleType>(),
+      "Indexing unexpected aggregate type {0}", type_inst);
+  return idx.index;
 }
 
 // Extracts an element of an aggregate, such as a struct, tuple, or class, by
@@ -58,14 +83,16 @@ static auto GetAggregateElement(FunctionContext& context,
           return aggr_value;
         case SemIR::ValueRepr::Copy:
           // We are holding the values of the aggregate directly, elementwise.
-          return context.builder().CreateExtractValue(aggr_value, idx.index,
-                                                      name);
+          return context.builder().CreateExtractValue(
+              aggr_value, GetElementIndex(value_repr.type(), idx), name);
         case SemIR::ValueRepr::Pointer: {
           // The value representation is a pointer to an aggregate that we want
           // to index into.
-          auto* value_type = context.GetType(GetPointeeType(value_repr.type()));
+          auto value_rep_type = GetPointeeType(value_repr.type());
+          auto* value_type = context.GetType(value_rep_type);
           auto* elem_ptr = context.builder().CreateStructGEP(
-              value_type, aggr_value, idx.index, name);
+              value_type, aggr_value, GetElementIndex(value_rep_type, idx),
+              name);
 
           if (!value_repr.repr.elements_are_values()) {
             // `elem_ptr` points to an object representation, which is our
@@ -88,17 +115,21 @@ static auto GetAggregateElement(FunctionContext& context,
     case SemIR::ExprCategory::DurableRef:
     case SemIR::ExprCategory::EphemeralRef: {
       // Just locate the aggregate element.
-      auto* aggr_type = context.GetTypeOfInst(aggr_inst_id);
-      return context.builder().CreateStructGEP(aggr_type, aggr_value, idx.index,
-                                               name);
+      auto aggr_type = context.GetTypeIdOfInst(aggr_inst_id);
+      auto object_repr = FunctionContext::TypeInFile{
+          .file = aggr_type.file,
+          .type_id = aggr_type.file->types().GetObjectRepr(aggr_type.type_id)};
+      return context.builder().CreateStructGEP(
+          context.GetType(object_repr), aggr_value,
+          GetElementIndex(object_repr, idx), name);
     }
   }
 }
 
 static auto GetStructFieldName(FunctionContext::TypeInFile struct_type,
                                SemIR::ElementIndex index) -> llvm::StringRef {
-  auto struct_type_inst =
-      struct_type.file->types().GetAs<SemIR::StructType>(struct_type.type_id);
+  auto struct_type_inst = struct_type.file->types().GetAs<SemIR::AnyStructType>(
+      struct_type.type_id);
   auto fields =
       struct_type.file->struct_type_fields().Get(struct_type_inst.fields_id);
   // We intentionally don't add this to the fingerprint because it's only used

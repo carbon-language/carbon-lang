@@ -140,6 +140,10 @@ class TypeCompleter {
   auto BuildInfoForInst(SemIR::TypeId /*type_id*/, SemIR::ConstType inst) const
       -> SemIR::CompleteTypeInfo;
 
+  auto BuildInfoForInst(SemIR::TypeId type_id,
+                        SemIR::CustomLayoutType inst) const
+      -> SemIR::CompleteTypeInfo;
+
   auto BuildInfoForInst(SemIR::TypeId /*type_id*/,
                         SemIR::PartialType inst) const
       -> SemIR::CompleteTypeInfo;
@@ -292,6 +296,12 @@ auto TypeCompleter::AddNestedIncompleteTypes(SemIR::Inst type_inst) -> bool {
     }
     case CARBON_KIND(SemIR::ConstType inst): {
       Push(context_->types().GetTypeIdForTypeInstId(inst.inner_id));
+      break;
+    }
+    case CARBON_KIND(SemIR::CustomLayoutType inst): {
+      for (auto field : context_->struct_type_fields().Get(inst.fields_id)) {
+        Push(context_->types().GetTypeIdForTypeInstId(field.type_inst_id));
+      }
       break;
     }
     case CARBON_KIND(SemIR::PartialType inst): {
@@ -518,6 +528,14 @@ auto TypeCompleter::BuildInfoForInst(SemIR::TypeId /*type_id*/,
   // The value representation of `const T` is the same as that of `T`.
   // Objects are not modifiable through their value representations.
   return GetNestedInfo(context_->types().GetTypeIdForTypeInstId(inst.inner_id));
+}
+
+auto TypeCompleter::BuildInfoForInst(SemIR::TypeId type_id,
+                                     SemIR::CustomLayoutType /*inst*/) const
+    -> SemIR::CompleteTypeInfo {
+  // TODO: Should we support other value representations for custom layout
+  // types?
+  return {.value_repr = MakePointerValueRepr(type_id)};
 }
 
 auto TypeCompleter::BuildInfoForInst(SemIR::TypeId /*type_id*/,

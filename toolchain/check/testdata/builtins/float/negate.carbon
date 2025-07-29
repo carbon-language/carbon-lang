@@ -80,9 +80,9 @@ fn RuntimeCallIsValidBadReturnType(a: f64) -> bool {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %Negate.ref: %Negate.type = name_ref Negate, file.%Negate.decl [concrete = constants.%Negate]
 // CHECK:STDOUT:   %a.ref: f64 = name_ref a, %a
-// CHECK:STDOUT:   %float.negate: init f64 = call %Negate.ref(%a.ref)
-// CHECK:STDOUT:   %.loc8_19.1: f64 = value_of_initializer %float.negate
-// CHECK:STDOUT:   %.loc8_19.2: f64 = converted %float.negate, %.loc8_19.1
+// CHECK:STDOUT:   %Negate.call: init f64 = call %Negate.ref(%a.ref)
+// CHECK:STDOUT:   %.loc8_19.1: f64 = value_of_initializer %Negate.call
+// CHECK:STDOUT:   %.loc8_19.2: f64 = converted %Negate.call, %.loc8_19.1
 // CHECK:STDOUT:   return %.loc8_19.2
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

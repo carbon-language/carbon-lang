@@ -81,9 +81,9 @@ fn RuntimeCallIsValidBadReturnType(a: f64, b: f64) -> bool {
 // CHECK:STDOUT:   %Div.ref: %Div.type = name_ref Div, file.%Div.decl [concrete = constants.%Div]
 // CHECK:STDOUT:   %a.ref: f64 = name_ref a, %a
 // CHECK:STDOUT:   %b.ref: f64 = name_ref b, %b
-// CHECK:STDOUT:   %float.div: init f64 = call %Div.ref(%a.ref, %b.ref)
-// CHECK:STDOUT:   %.loc8_19.1: f64 = value_of_initializer %float.div
-// CHECK:STDOUT:   %.loc8_19.2: f64 = converted %float.div, %.loc8_19.1
+// CHECK:STDOUT:   %Div.call: init f64 = call %Div.ref(%a.ref, %b.ref)
+// CHECK:STDOUT:   %.loc8_19.1: f64 = value_of_initializer %Div.call
+// CHECK:STDOUT:   %.loc8_19.2: f64 = converted %Div.call, %.loc8_19.1
 // CHECK:STDOUT:   return %.loc8_19.2
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

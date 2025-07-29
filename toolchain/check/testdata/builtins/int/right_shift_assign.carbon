@@ -73,7 +73,7 @@ fn NotPtr(a: i32, b: i32) = "int.right_shift_assign";
 // CHECK:STDOUT:   %Builtin.ref: %Builtin.type = name_ref Builtin, file.%Builtin.decl [concrete = constants.%Builtin]
 // CHECK:STDOUT:   %a.ref: %ptr = name_ref a, %a
 // CHECK:STDOUT:   %b.ref: %i32 = name_ref b, %b
-// CHECK:STDOUT:   %int.right_shift_assign: init %empty_tuple.type = call %Builtin.ref(%a.ref, %b.ref)
+// CHECK:STDOUT:   %Builtin.call: init %empty_tuple.type = call %Builtin.ref(%a.ref, %b.ref)
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -82,7 +82,7 @@ fn NotPtr(a: i32, b: i32) = "int.right_shift_assign";
 // CHECK:STDOUT:   %MixedTypes.ref: %MixedTypes.type = name_ref MixedTypes, file.%MixedTypes.decl [concrete = constants.%MixedTypes]
 // CHECK:STDOUT:   %a.ref: %ptr = name_ref a, %a
 // CHECK:STDOUT:   %b.ref: %i64 = name_ref b, %b
-// CHECK:STDOUT:   %int.right_shift_assign: init %empty_tuple.type = call %MixedTypes.ref(%a.ref, %b.ref)
+// CHECK:STDOUT:   %MixedTypes.call: init %empty_tuple.type = call %MixedTypes.ref(%a.ref, %b.ref)
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

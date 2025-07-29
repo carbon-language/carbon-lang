@@ -27,6 +27,7 @@ CARBON_DIAGNOSTIC_KIND(CompilePhaseFlagConflict)
 CARBON_DIAGNOSTIC_KIND(CompilePreludeManifestError)
 CARBON_DIAGNOSTIC_KIND(CompileInputNotRegularFile)
 CARBON_DIAGNOSTIC_KIND(CompileOutputFileOpenError)
+CARBON_DIAGNOSTIC_KIND(CompileTargetInvalid)
 CARBON_DIAGNOSTIC_KIND(FormatMultipleFilesToOneOutput)
 CARBON_DIAGNOSTIC_KIND(ToolFuzzingDisallowed)
 
@@ -166,6 +167,8 @@ CARBON_DIAGNOSTIC_KIND(ResolvingSpecificHere)
 // Package/import checking diagnostics.
 CARBON_DIAGNOSTIC_KIND(CppInteropFuzzing)
 CARBON_DIAGNOSTIC_KIND(CppInteropMissingLibrary)
+CARBON_DIAGNOSTIC_KIND(CppInteropDriverError)
+CARBON_DIAGNOSTIC_KIND(CppInteropDriverWarning)
 CARBON_DIAGNOSTIC_KIND(CppInteropParseError)
 CARBON_DIAGNOSTIC_KIND(CppInteropParseWarning)
 CARBON_DIAGNOSTIC_KIND(IncorrectExtension)
@@ -267,6 +270,7 @@ CARBON_DIAGNOSTIC_KIND(ClassSpecificDeclPrevious)
 CARBON_DIAGNOSTIC_KIND(ClassIncompleteWithinDefinition)
 CARBON_DIAGNOSTIC_KIND(GenericVirtual)
 CARBON_DIAGNOSTIC_KIND(ImplWithoutBase)
+CARBON_DIAGNOSTIC_KIND(ImplWithoutVirtualInBase)
 CARBON_DIAGNOSTIC_KIND(VirtualWithoutSelf)
 
 // Deduction.
@@ -494,6 +498,12 @@ CARBON_DIAGNOSTIC_KIND(GenericMissingExplicitParameters)
 
 // Pattern matching diagnostics.
 CARBON_DIAGNOSTIC_KIND(TuplePatternSizeDoesntMatchLiteral)
+
+// ============================================================================
+// CodeGen diagnostics
+// ============================================================================
+
+CARBON_DIAGNOSTIC_KIND(CodeGenUnableToEmit)
 
 // ============================================================================
 // Language server diagnostics

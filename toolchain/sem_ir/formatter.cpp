@@ -34,10 +34,10 @@
 
 namespace Carbon::SemIR {
 
-Formatter::Formatter(const File* sem_ir,
-                     Parse::GetTreeAndSubtreesFn get_tree_and_subtrees,
-                     llvm::ArrayRef<bool> include_ir_in_dumps,
-                     bool use_dump_sem_ir_ranges)
+Formatter::Formatter(
+    const File* sem_ir, Parse::GetTreeAndSubtreesFn get_tree_and_subtrees,
+    const FixedSizeValueStore<SemIR::CheckIRId, bool>* include_ir_in_dumps,
+    bool use_dump_sem_ir_ranges)
     : sem_ir_(sem_ir),
       inst_namer_(sem_ir_),
       get_tree_and_subtrees_(get_tree_and_subtrees),
@@ -168,7 +168,7 @@ auto Formatter::IncludeChunkInOutput(size_t chunk) -> void {
 
 auto Formatter::ShouldIncludeInstByIR(InstId inst_id) -> bool {
   const auto* import_ir = GetCanonicalFileAndInstId(sem_ir_, inst_id).first;
-  return include_ir_in_dumps_[import_ir->check_ir_id().index];
+  return include_ir_in_dumps_->Get(import_ir->check_ir_id());
 }
 
 // Returns true for a `DefinitionStart` node.
@@ -907,11 +907,11 @@ auto Formatter::FormatPendingConstantValue(AddSpace space_where) -> void {
 
 auto Formatter::FormatInstLhs(InstId inst_id, Inst inst) -> void {
   // Every typed instruction is named, and there are some untyped instructions
-  // that have names (such as `ImportRefUnloaded`).
+  // that have names (such as `ImportRefUnloaded`). When there's a typed
+  // instruction with no name, it means an instruction is incorrectly not named
+  // -- but should be printed as such.
   bool has_name = inst_namer_.has_name(inst_id);
-  if (!has_name) {
-    CARBON_CHECK(!inst.kind().has_type(),
-                 "Missing name for typed instruction: {0}", inst);
+  if (!has_name && !inst.kind().has_type()) {
     return;
   }
 
@@ -1003,6 +1003,23 @@ auto Formatter::FormatInstRhs(Inst inst) -> void {
       FormatDeclRhs(decl.class_id,
                     sem_ir_->classes().Get(decl.class_id).pattern_block_id,
                     decl.decl_block_id);
+      return;
+    }
+
+    case CARBON_KIND(CustomLayoutType type): {
+      out_ << " {";
+      auto layout = sem_ir_->custom_layouts().Get(type.layout_id);
+      out_ << "size=" << layout[CustomLayoutId::SizeIndex]
+           << ", align=" << layout[CustomLayoutId::AlignIndex];
+      for (auto [field, offset] :
+           llvm::zip(sem_ir_->struct_type_fields().Get(type.fields_id),
+                     layout.drop_front(CustomLayoutId::FirstFieldIndex))) {
+        out_ << ", .";
+        FormatName(field.name_id);
+        out_ << "@" << offset << ": ";
+        FormatInstAsType(field.type_inst_id);
+      }
+      out_ << "}";
       return;
     }
 

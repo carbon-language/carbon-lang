@@ -15,6 +15,7 @@
 #include "toolchain/check/context.h"
 #include "toolchain/check/eval.h"
 #include "toolchain/check/generic.h"
+#include "toolchain/check/import.h"
 #include "toolchain/check/inst.h"
 #include "toolchain/check/name_lookup.h"
 #include "toolchain/check/type.h"
@@ -64,7 +65,7 @@ auto SetSpecialImportIRs(Context& context, SemIR::ImportIR import_ir) -> void {
 
 auto AddImportIR(Context& context, SemIR::ImportIR import_ir)
     -> SemIR::ImportIRId {
-  auto& ir_id = context.check_ir_map()[import_ir.sem_ir->check_ir_id().index];
+  auto& ir_id = context.check_ir_map().Get(import_ir.sem_ir->check_ir_id());
   if (!ir_id.has_value()) {
     // Note this updates check_ir_map.
     ir_id = InternalAddImportIR(context, import_ir);
@@ -1713,8 +1714,6 @@ static auto TryResolveTypedInst(ImportRefResolver& resolver,
                       ? GetLocalConstantInstId(resolver, import_class.adapt_id)
                       : SemIR::InstId::None;
   auto& new_class = resolver.local_classes().Get(class_id);
-  // TODO: Make vtable_ptr_id lazily loaded, so we pull in the vtable only when
-  // it's needed, not for every use of the class.
   auto vtable_ptr_const_id =
       import_class.vtable_ptr_id.has_value()
           ? AddImportRef(resolver, import_class.vtable_ptr_id)
@@ -1847,6 +1846,7 @@ static auto MakeFunctionDecl(ImportContext& context,
       {GetIncompleteLocalEntityBase(context, function_decl_id, import_function),
        {.call_params_id = SemIR::InstBlockId::None,
         .return_slot_pattern_id = SemIR::InstId::None,
+        .virtual_modifier = import_function.virtual_modifier,
         .virtual_index = import_function.virtual_index}});
 
   function_decl.type_id = GetFunctionType(
@@ -1970,6 +1970,8 @@ static auto TryResolveTypedInst(ImportRefResolver& resolver,
   auto virtual_functions =
       GetLocalInstBlockContents(resolver, import_vtable.virtual_functions_id);
 
+  auto specific_data = GetLocalSpecificData(resolver, inst.specific_id);
+
   if (resolver.HasNewWork()) {
     return ResolveResult::Retry();
   }
@@ -1984,9 +1986,6 @@ static auto TryResolveTypedInst(ImportRefResolver& resolver,
     auto generic_class_type =
         resolver.local_types().GetAs<SemIR::GenericClassType>(
             class_const_inst.type_id());
-    // TODO: Add support for generic vtables here and elsewhere.
-    // auto specific_id =
-    //    GetOrAddLocalSpecific(resolver, inst.specific_id, specific_data);
     class_id = generic_class_type.class_id;
   }
   auto new_vtable_id = resolver.local_vtables().Add(
@@ -1998,7 +1997,8 @@ static auto TryResolveTypedInst(ImportRefResolver& resolver,
       resolver, {.type_id = GetPointerType(resolver.local_context(),
                                            SemIR::VtableType::TypeInstId),
                  .vtable_id = new_vtable_id,
-                 .specific_id = SemIR::SpecificId::None});
+                 .specific_id = GetOrAddLocalSpecific(
+                     resolver, inst.specific_id, specific_data)});
 }
 
 static auto TryResolveTypedInst(ImportRefResolver& resolver,
@@ -3440,40 +3440,5 @@ auto ImportImpl(Context& context, SemIR::ImportIRId import_ir_id,
                        .Get(impl_id)
                        .first_decl_id());
 }
-
-// Returns whether a parse node associated with an imported instruction of kind
-// `imported_kind` is usable as the location of a corresponding local
-// instruction of kind `local_kind`.
-static auto HasCompatibleImportedNodeKind(SemIR::InstKind imported_kind,
-                                          SemIR::InstKind local_kind) -> bool {
-  if (imported_kind == local_kind) {
-    return true;
-  }
-  if (imported_kind == SemIR::ImportDecl::Kind &&
-      local_kind == SemIR::Namespace::Kind) {
-    static_assert(
-        std::is_convertible_v<decltype(SemIR::ImportDecl::Kind)::TypedNodeId,
-                              decltype(SemIR::Namespace::Kind)::TypedNodeId>);
-    return true;
-  }
-  return false;
-}
-
-namespace Internal {
-
-auto CheckCompatibleImportedNodeKind(Context& context,
-                                     SemIR::ImportIRInstId imported_loc_id,
-                                     SemIR::InstKind kind) -> void {
-  auto& import_ir_inst = context.import_ir_insts().Get(imported_loc_id);
-  const auto* import_ir =
-      context.import_irs().Get(import_ir_inst.ir_id()).sem_ir;
-  auto imported_kind = import_ir->insts().Get(import_ir_inst.inst_id()).kind();
-  CARBON_CHECK(
-      HasCompatibleImportedNodeKind(imported_kind, kind),
-      "Node of kind {0} created with location of imported node of kind {1}",
-      kind, imported_kind);
-}
-
-}  // namespace Internal
 
 }  // namespace Carbon::Check

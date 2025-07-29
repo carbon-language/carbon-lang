@@ -186,6 +186,7 @@ class Emitter {
 
   template <typename OtherLocT, typename AnnotateFn>
   friend class AnnotationScope;
+  friend class NoLocEmitter;
 
   Consumer* consumer_;
   llvm::SmallVector<llvm::function_ref<auto(Builder& builder)->void>>
@@ -202,6 +203,10 @@ class Emitter {
 class NoLocEmitter : public Emitter<void*> {
  public:
   using Emitter::Emitter;
+
+  template <typename LocT>
+  explicit NoLocEmitter(const Emitter<LocT>& emitter)
+      : Emitter(emitter.consumer_) {}
 
   // Emits an error. This specialization only applies to
   // `NoLocEmitter`.

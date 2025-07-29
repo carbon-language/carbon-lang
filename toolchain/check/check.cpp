@@ -13,7 +13,9 @@
 #include "toolchain/check/context.h"
 #include "toolchain/check/diagnostic_emitter.h"
 #include "toolchain/check/diagnostic_helpers.h"
+#include "toolchain/check/import_cpp.h"
 #include "toolchain/diagnostics/diagnostic.h"
+#include "toolchain/diagnostics/diagnostic_consumer.h"
 #include "toolchain/diagnostics/format_providers.h"
 #include "toolchain/lex/token_kind.h"
 #include "toolchain/parse/node_ids.h"
@@ -359,7 +361,7 @@ static auto MaybeDumpFormattedSemIR(
 // Handles options for dumping SemIR, including verbose output.
 static auto MaybeDumpSemIR(
     llvm::ArrayRef<Unit> units,
-    llvm::ArrayRef<Parse::GetTreeAndSubtreesFn> tree_and_subtrees_getters,
+    const Parse::GetTreeAndSubtreesStore& tree_and_subtrees_getters,
     const CheckParseTreesOptions& options) -> void {
   if (!options.vlog_stream && !options.dump_stream &&
       !options.raw_dump_stream) {
@@ -373,30 +375,30 @@ static auto MaybeDumpSemIR(
 
   for (const auto& unit : units) {
     bool include_in_dumps =
-        options.include_in_dumps[unit.sem_ir->check_ir_id().index];
+        options.include_in_dumps->Get(unit.sem_ir->check_ir_id());
     if (include_in_dumps && options.raw_dump_stream) {
       unit.sem_ir->Print(*options.raw_dump_stream,
                          options.dump_raw_sem_ir_builtins);
     }
 
     MaybeDumpFormattedSemIR(
-        *unit.sem_ir,
-        tree_and_subtrees_getters[unit.sem_ir->check_ir_id().index],
+        *unit.sem_ir, tree_and_subtrees_getters.Get(unit.sem_ir->check_ir_id()),
         include_in_dumps, options);
   }
 }
 
 auto CheckParseTrees(
     llvm::MutableArrayRef<Unit> units,
-    llvm::ArrayRef<Parse::GetTreeAndSubtreesFn> tree_and_subtrees_getters,
-    llvm::IntrusiveRefCntPtr<llvm::vfs::FileSystem> fs, llvm::StringRef target,
-    const CheckParseTreesOptions& options) -> void {
+    const Parse::GetTreeAndSubtreesStore& tree_and_subtrees_getters,
+    llvm::IntrusiveRefCntPtr<llvm::vfs::FileSystem> fs,
+    const CheckParseTreesOptions& options,
+    std::shared_ptr<clang::CompilerInvocation> clang_invocation) -> void {
   // UnitAndImports is big due to its SmallVectors, so we default to 0 on the
   // stack.
   llvm::SmallVector<UnitAndImports, 0> unit_infos(
       llvm::map_range(units, [&](Unit& unit) {
         return UnitAndImports(
-            &unit, tree_and_subtrees_getters[unit.sem_ir->check_ir_id().index]);
+            &unit, tree_and_subtrees_getters.Get(unit.sem_ir->check_ir_id()));
       }));
 
   Map<ImportKey, UnitAndImports*> api_map =
@@ -445,7 +447,7 @@ auto CheckParseTrees(
   for (int check_index = 0;
        check_index < static_cast<int>(ready_to_check.size()); ++check_index) {
     auto* unit_info = ready_to_check[check_index];
-    CheckUnit(unit_info, tree_and_subtrees_getters, fs, target,
+    CheckUnit(unit_info, &tree_and_subtrees_getters, fs, clang_invocation,
               options.vlog_stream)
         .Run();
     for (auto* incoming_import : unit_info->incoming_imports) {
@@ -494,7 +496,7 @@ auto CheckParseTrees(
     // incomplete imports.
     for (auto& unit_info : unit_infos) {
       if (unit_info.imports_remaining > 0) {
-        CheckUnit(&unit_info, tree_and_subtrees_getters, fs, target,
+        CheckUnit(&unit_info, &tree_and_subtrees_getters, fs, clang_invocation,
                   options.vlog_stream)
             .Run();
       }

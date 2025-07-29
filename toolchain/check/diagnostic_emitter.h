@@ -16,9 +16,10 @@ namespace Carbon::Check {
 // Handles the transformation of a SemIR::LocId to a DiagnosticLoc.
 class DiagnosticEmitter : public DiagnosticEmitterBase {
  public:
+  // `consumer`, `tree_and_subtrees_getters`, and `sem_ir` must be non-null.
   explicit DiagnosticEmitter(
       Diagnostics::Consumer* consumer,
-      llvm::ArrayRef<Parse::GetTreeAndSubtreesFn> tree_and_subtrees_getters,
+      const Parse::GetTreeAndSubtreesStore* tree_and_subtrees_getters,
       const SemIR::File* sem_ir)
       : DiagnosticEmitterBase(consumer),
         sem_ir_(sem_ir),

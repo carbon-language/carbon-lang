@@ -84,8 +84,8 @@ fn DoStuff(a: Int) -> Int {
 // CHECK:STDOUT:   %pa.var = alloca { i32, i32 }, align 8, !dbg !16
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(i64 8, ptr %pa.var), !dbg !16
 // CHECK:STDOUT:   call void @_CMake.PairAdapter.Main(ptr %pa.var), !dbg !17
-// CHECK:STDOUT:   %GetB.call = call i32 @_CGetB.PairAdapter.Main(ptr %pa.var), !dbg !18
-// CHECK:STDOUT:   ret i32 %GetB.call, !dbg !19
+// CHECK:STDOUT:   %PairAdapter.GetB.call = call i32 @_CGetB.PairAdapter.Main(ptr %pa.var), !dbg !18
+// CHECK:STDOUT:   ret i32 %PairAdapter.GetB.call, !dbg !19
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nocallback nofree nounwind willreturn memory(argmem: readwrite)

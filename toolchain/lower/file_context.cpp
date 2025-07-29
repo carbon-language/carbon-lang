@@ -53,8 +53,11 @@ FileContext::FileContext(Context& context, const SemIR::File& sem_ir,
                                                     nullptr)),
       constants_(LoweredConstantStore::MakeWithExplicitSize(
           sem_ir.insts().size(), nullptr)),
-      lowered_specifics_(sem_ir.generics(), {}),
-      coalescer_(vlog_stream_, sem_ir.specifics()) {
+      lowered_specifics_(sem_ir.generics(),
+                         llvm::SmallVector<SemIR::SpecificId>()),
+      coalescer_(vlog_stream_, sem_ir.specifics()),
+      vtables_(decltype(vtables_)::MakeForOverwrite(sem_ir.vtables())),
+      specific_vtables_(sem_ir.specifics(), nullptr) {
   // Initialization that relies on invariants of the class.
   cpp_code_generator_ = CreateCppCodeGenerator();
   CARBON_CHECK(!sem_ir.has_errors(),
@@ -84,9 +87,12 @@ auto FileContext::PrepareToLower() -> void {
 
   // TODO: Split vtable declaration creation from definition creation to avoid
   // redundant vtable definitions for imported vtables.
-  for (const auto& [id, class_info] : sem_ir_->vtables().enumerate()) {
-    if (auto* vtable = BuildVtable(class_info)) {
-      vtables_.Insert(id, vtable);
+  for (const auto& [id, vtable] : sem_ir_->vtables().enumerate()) {
+    const auto& class_info = sem_ir().classes().Get(vtable.class_id);
+    // Vtables can't be generated for generics, only for their specifics - and
+    // must be done lazily based on the use of those specifics.
+    if (!class_info.generic_id.has_value()) {
+      vtables_.Set(id, BuildVtable(vtable, SemIR::SpecificId::None));
     }
   }
 
@@ -536,7 +542,7 @@ auto FileContext::BuildFunctionBody(SemIR::FunctionId function_id,
   // On crash, report the function we were lowering.
   PrettyStackTraceFunction stack_trace_entry([&](llvm::raw_ostream& output) {
     SemIR::DiagnosticLocConverter converter(
-        context().tree_and_subtrees_getters(), &sem_ir());
+        &context().tree_and_subtrees_getters(), &sem_ir());
     auto converted =
         converter.Convert(SemIR::LocId(declaration_function.definition_id),
                           /*token_only=*/false);
@@ -704,7 +710,7 @@ auto FileContext::BuildDISubprogram(const SemIR::Function& function,
       /*File=*/context().di_builder().createFile(loc.filename, ""),
       /*LineNo=*/loc.line_number,
       context().di_builder().createSubroutineType(
-          context().di_builder().getOrCreateTypeArray(std::nullopt)),
+          context().di_builder().getOrCreateTypeArray({})),
       /*ScopeLine=*/0, llvm::DINode::FlagZero,
       llvm::DISubprogram::SPFlagDefinition);
 }
@@ -760,6 +766,13 @@ static auto BuildTypeForInst(FileContext& context, SemIR::ConstType inst)
     -> llvm::Type* {
   return context.GetType(
       context.sem_ir().types().GetTypeIdForTypeInstId(inst.inner_id));
+}
+
+static auto BuildTypeForInst(FileContext& context, SemIR::CustomLayoutType inst)
+    -> llvm::Type* {
+  auto layout = context.sem_ir().custom_layouts().Get(inst.layout_id);
+  return llvm::ArrayType::get(llvm::Type::getInt8Ty(context.llvm_context()),
+                              layout[SemIR::CustomLayoutId::SizeIndex]);
 }
 
 static auto BuildTypeForInst(FileContext& context, SemIR::PartialType inst)
@@ -922,18 +935,13 @@ auto FileContext::GetLocForDI(SemIR::InstId inst_id) -> Context::LocForDI {
       GetAbsoluteNodeId(sem_ir_, SemIR::LocId(inst_id)).back());
 }
 
-auto FileContext::BuildVtable(const SemIR::Vtable& vtable)
+auto FileContext::BuildVtable(const SemIR::Vtable& vtable,
+                              SemIR::SpecificId specific_id)
     -> llvm::GlobalVariable* {
   const auto& class_info = sem_ir().classes().Get(vtable.class_id);
 
-  // Vtables can't be generated for generics, only for their specifics - and
-  // must be done lazily based on the use of those specifics.
-  if (class_info.generic_id.has_value()) {
-    return nullptr;
-  }
-
   Mangler m(*this);
-  std::string mangled_name = m.MangleVTable(class_info);
+  std::string mangled_name = m.MangleVTable(class_info, specific_id);
 
   if (sem_ir()
           .insts()
@@ -970,13 +978,13 @@ auto FileContext::BuildVtable(const SemIR::Vtable& vtable)
   vfuncs.reserve(vtable_inst_block.size());
 
   for (auto fn_decl_id : vtable_inst_block) {
-    auto fn_decl = GetCalleeFunction(sem_ir(), fn_decl_id);
+    auto [_1, _2, fn_id, fn_specific_id] =
+        DecomposeVirtualFunction(sem_ir(), fn_decl_id, specific_id);
+
     vfuncs.push_back(llvm::ConstantExpr::getTrunc(
         llvm::ConstantExpr::getSub(
             llvm::ConstantExpr::getPtrToInt(
-                GetOrCreateFunction(fn_decl.function_id,
-                                    SemIR::SpecificId::None),
-                i64_type),
+                GetOrCreateFunction(fn_id, fn_specific_id), i64_type),
             vtable_const_int),
         i32_type));
   }

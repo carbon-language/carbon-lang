@@ -60,7 +60,11 @@ file_test(
     size = "small",
     timeout = "moderate",  # Taking >60 seconds in GitHub actions
     srcs = ["file_test.cpp"],
-    data = [":min_prelude"],
+    data = [
+        ":min_prelude",
+        "//toolchain/install:clang_headers",
+        "//toolchain/install:clang_headers_manifest.txt",
+    ],
     tests = [":all_testdata"],
     deps = [
         "//common:all_llvm_targets",

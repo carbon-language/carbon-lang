@@ -85,9 +85,9 @@ fn KnownValueButNonConstantCondition(x: bool) {
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %x.param: bool = value_param call_param0
 // CHECK:STDOUT:     %.loc4_23.1: type = splice_block %.loc4_23.3 [concrete = bool] {
-// CHECK:STDOUT:       %bool.make_type.loc4: init type = call constants.%Bool() [concrete = bool]
-// CHECK:STDOUT:       %.loc4_23.2: type = value_of_initializer %bool.make_type.loc4 [concrete = bool]
-// CHECK:STDOUT:       %.loc4_23.3: type = converted %bool.make_type.loc4, %.loc4_23.2 [concrete = bool]
+// CHECK:STDOUT:       %Bool.call.loc4: init type = call constants.%Bool() [concrete = bool]
+// CHECK:STDOUT:       %.loc4_23.2: type = value_of_initializer %Bool.call.loc4 [concrete = bool]
+// CHECK:STDOUT:       %.loc4_23.3: type = converted %Bool.call.loc4, %.loc4_23.2 [concrete = bool]
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %x: bool = bind_name x, %x.param
 // CHECK:STDOUT:   }
@@ -116,9 +116,9 @@ fn KnownValueButNonConstantCondition(x: bool) {
 // CHECK:STDOUT:   if %.loc9_18 br !if.expr.then.loc9 else br !if.expr.else.loc9
 // CHECK:STDOUT:
 // CHECK:STDOUT: !if.expr.then.loc9:
-// CHECK:STDOUT:   %bool.make_type.loc9: init type = call constants.%Bool() [concrete = bool]
-// CHECK:STDOUT:   %.loc9_29.1: type = value_of_initializer %bool.make_type.loc9 [concrete = bool]
-// CHECK:STDOUT:   %.loc9_29.2: type = converted %bool.make_type.loc9, %.loc9_29.1 [concrete = bool]
+// CHECK:STDOUT:   %Bool.call.loc9: init type = call constants.%Bool() [concrete = bool]
+// CHECK:STDOUT:   %.loc9_29.1: type = value_of_initializer %Bool.call.loc9 [concrete = bool]
+// CHECK:STDOUT:   %.loc9_29.2: type = converted %Bool.call.loc9, %.loc9_29.1 [concrete = bool]
 // CHECK:STDOUT:   br !if.expr.result.loc9(%.loc9_29.2)
 // CHECK:STDOUT:
 // CHECK:STDOUT: !if.expr.else.loc9:
@@ -154,9 +154,9 @@ fn KnownValueButNonConstantCondition(x: bool) {
 // CHECK:STDOUT:   if %.loc14_19.2 br !if.expr.then.loc14 else br !if.expr.else.loc14
 // CHECK:STDOUT:
 // CHECK:STDOUT: !if.expr.then.loc14:
-// CHECK:STDOUT:   %bool.make_type.loc14: init type = call constants.%Bool() [concrete = bool]
-// CHECK:STDOUT:   %.loc14_29.1: type = value_of_initializer %bool.make_type.loc14 [concrete = bool]
-// CHECK:STDOUT:   %.loc14_29.2: type = converted %bool.make_type.loc14, %.loc14_29.1 [concrete = bool]
+// CHECK:STDOUT:   %Bool.call.loc14: init type = call constants.%Bool() [concrete = bool]
+// CHECK:STDOUT:   %.loc14_29.1: type = value_of_initializer %Bool.call.loc14 [concrete = bool]
+// CHECK:STDOUT:   %.loc14_29.2: type = converted %Bool.call.loc14, %.loc14_29.1 [concrete = bool]
 // CHECK:STDOUT:   br !if.expr.result.loc14(%.loc14_29.2)
 // CHECK:STDOUT:
 // CHECK:STDOUT: !if.expr.else.loc14:
@@ -170,8 +170,6 @@ fn KnownValueButNonConstantCondition(x: bool) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: !.loc14_7:
 // CHECK:STDOUT:   %b: <error> = bind_name b, <error> [concrete = <error>]
-// CHECK:STDOUT:   %impl.elem0.loc14: <error> = impl_witness_access <error>, element0 [concrete = <error>]
-// CHECK:STDOUT:   %impl.elem0.loc9: <error> = impl_witness_access <error>, element0 [concrete = <error>]
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -212,9 +210,9 @@ fn KnownValueButNonConstantCondition(x: bool) {
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %x.param: bool = value_param call_param0
 // CHECK:STDOUT:     %.loc4_41.1: type = splice_block %.loc4_41.3 [concrete = bool] {
-// CHECK:STDOUT:       %bool.make_type.loc4: init type = call constants.%Bool() [concrete = bool]
-// CHECK:STDOUT:       %.loc4_41.2: type = value_of_initializer %bool.make_type.loc4 [concrete = bool]
-// CHECK:STDOUT:       %.loc4_41.3: type = converted %bool.make_type.loc4, %.loc4_41.2 [concrete = bool]
+// CHECK:STDOUT:       %Bool.call.loc4: init type = call constants.%Bool() [concrete = bool]
+// CHECK:STDOUT:       %.loc4_41.2: type = value_of_initializer %Bool.call.loc4 [concrete = bool]
+// CHECK:STDOUT:       %.loc4_41.3: type = converted %Bool.call.loc4, %.loc4_41.2 [concrete = bool]
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %x: bool = bind_name x, %x.param
 // CHECK:STDOUT:   }
@@ -243,9 +241,9 @@ fn KnownValueButNonConstantCondition(x: bool) {
 // CHECK:STDOUT:   if %.loc11_15 br !if.expr.then.loc11 else br !if.expr.else.loc11
 // CHECK:STDOUT:
 // CHECK:STDOUT: !if.expr.then.loc11:
-// CHECK:STDOUT:   %bool.make_type.loc11: init type = call constants.%Bool() [concrete = bool]
-// CHECK:STDOUT:   %.loc11_30.1: type = value_of_initializer %bool.make_type.loc11 [concrete = bool]
-// CHECK:STDOUT:   %.loc11_30.2: type = converted %bool.make_type.loc11, %.loc11_30.1 [concrete = bool]
+// CHECK:STDOUT:   %Bool.call.loc11: init type = call constants.%Bool() [concrete = bool]
+// CHECK:STDOUT:   %.loc11_30.1: type = value_of_initializer %Bool.call.loc11 [concrete = bool]
+// CHECK:STDOUT:   %.loc11_30.2: type = converted %Bool.call.loc11, %.loc11_30.1 [concrete = bool]
 // CHECK:STDOUT:   br !if.expr.result.loc11(%.loc11_30.2)
 // CHECK:STDOUT:
 // CHECK:STDOUT: !if.expr.else.loc11:
@@ -281,9 +279,9 @@ fn KnownValueButNonConstantCondition(x: bool) {
 // CHECK:STDOUT:   if %.loc16_15.2 br !if.expr.then.loc16 else br !if.expr.else.loc16
 // CHECK:STDOUT:
 // CHECK:STDOUT: !if.expr.then.loc16:
-// CHECK:STDOUT:   %bool.make_type.loc16: init type = call constants.%Bool() [concrete = bool]
-// CHECK:STDOUT:   %.loc16_28.1: type = value_of_initializer %bool.make_type.loc16 [concrete = bool]
-// CHECK:STDOUT:   %.loc16_28.2: type = converted %bool.make_type.loc16, %.loc16_28.1 [concrete = bool]
+// CHECK:STDOUT:   %Bool.call.loc16: init type = call constants.%Bool() [concrete = bool]
+// CHECK:STDOUT:   %.loc16_28.1: type = value_of_initializer %Bool.call.loc16 [concrete = bool]
+// CHECK:STDOUT:   %.loc16_28.2: type = converted %Bool.call.loc16, %.loc16_28.1 [concrete = bool]
 // CHECK:STDOUT:   br !if.expr.result.loc16(%.loc16_28.2)
 // CHECK:STDOUT:
 // CHECK:STDOUT: !if.expr.else.loc16:
@@ -297,8 +295,6 @@ fn KnownValueButNonConstantCondition(x: bool) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: !.loc16_7:
 // CHECK:STDOUT:   %d: <error> = bind_name d, <error> [concrete = <error>]
-// CHECK:STDOUT:   %impl.elem0.loc16: <error> = impl_witness_access <error>, element0 [concrete = <error>]
-// CHECK:STDOUT:   %impl.elem0.loc11: <error> = impl_witness_access <error>, element0 [concrete = <error>]
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

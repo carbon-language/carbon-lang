@@ -215,7 +215,7 @@ fn F() {
 // CHECK:STDOUT:         requirement_impls %.loc7_18, type
 // CHECK:STDOUT:       }
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %T.loc7_6.1: %I.type = bind_symbolic_name T, 0 [symbolic = %T.loc7_6.2 (constants.%T)]
+// CHECK:STDOUT:     %T.loc7_6.2: %I.type = bind_symbolic_name T, 0 [symbolic = %T.loc7_6.1 (constants.%T)]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %G.decl: %G.type = fn_decl @G [concrete = constants.%G] {
 // CHECK:STDOUT:     %T.patt: %pattern_type = symbolic_binding_pattern T, 0 [concrete]
@@ -231,28 +231,28 @@ fn F() {
 // CHECK:STDOUT:         requirement_impls %.loc13_18, %Type.ref
 // CHECK:STDOUT:       }
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %T.loc13_6.1: %I.type = bind_symbolic_name T, 0 [symbolic = %T.loc13_6.2 (constants.%T)]
+// CHECK:STDOUT:     %T.loc13_6.2: %I.type = bind_symbolic_name T, 0 [symbolic = %T.loc13_6.1 (constants.%T)]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic fn @F(%T.loc7_6.1: %I.type) {
-// CHECK:STDOUT:   %T.loc7_6.2: %I.type = bind_symbolic_name T, 0 [symbolic = %T.loc7_6.2 (constants.%T)]
+// CHECK:STDOUT: generic fn @F(%T.loc7_6.2: %I.type) {
+// CHECK:STDOUT:   %T.loc7_6.1: %I.type = bind_symbolic_name T, 0 [symbolic = %T.loc7_6.1 (constants.%T)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   fn();
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic fn @G(%T.loc13_6.1: %I.type) {
-// CHECK:STDOUT:   %T.loc13_6.2: %I.type = bind_symbolic_name T, 0 [symbolic = %T.loc13_6.2 (constants.%T)]
+// CHECK:STDOUT: generic fn @G(%T.loc13_6.2: %I.type) {
+// CHECK:STDOUT:   %T.loc13_6.1: %I.type = bind_symbolic_name T, 0 [symbolic = %T.loc13_6.1 (constants.%T)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   fn();
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @F(constants.%T) {
-// CHECK:STDOUT:   %T.loc7_6.2 => constants.%T
+// CHECK:STDOUT:   %T.loc7_6.1 => constants.%T
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @G(constants.%T) {
-// CHECK:STDOUT:   %T.loc13_6.2 => constants.%T
+// CHECK:STDOUT:   %T.loc13_6.1 => constants.%T
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- fail_self_impls_error.carbon
@@ -340,7 +340,7 @@ fn F() {
 // CHECK:STDOUT:         requirement_equivalent %.Self.ref, %.loc12_37
 // CHECK:STDOUT:       }
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %U.loc12_15.1: %I_where.type.cad = bind_symbolic_name U, 0 [symbolic = %U.loc12_15.2 (constants.%U)]
+// CHECK:STDOUT:     %U.loc12_15.2: %I_where.type.cad = bind_symbolic_name U, 0 [symbolic = %U.loc12_15.1 (constants.%U)]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Impls.decl: %Impls.type = fn_decl @Impls [concrete = constants.%Impls] {
 // CHECK:STDOUT:     %V.patt: %pattern_type.d2b = symbolic_binding_pattern V, 0 [concrete]
@@ -356,7 +356,7 @@ fn F() {
 // CHECK:STDOUT:         requirement_impls %.loc14_22, %I.ref
 // CHECK:STDOUT:       }
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %V.loc14_10.1: %J_where.type = bind_symbolic_name V, 0 [symbolic = %V.loc14_10.2 (constants.%V)]
+// CHECK:STDOUT:     %V.loc14_10.2: %J_where.type = bind_symbolic_name V, 0 [symbolic = %V.loc14_10.1 (constants.%V)]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %And.decl: %And.type = fn_decl @And [concrete = constants.%And] {
 // CHECK:STDOUT:     %W.patt: %pattern_type.127 = symbolic_binding_pattern W, 0 [concrete]
@@ -379,38 +379,38 @@ fn F() {
 // CHECK:STDOUT:         requirement_equivalent %impl.elem0, %.loc16_50
 // CHECK:STDOUT:       }
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %W.loc16_8.1: %I_where.type.427 = bind_symbolic_name W, 0 [symbolic = %W.loc16_8.2 (constants.%W)]
+// CHECK:STDOUT:     %W.loc16_8.2: %I_where.type.427 = bind_symbolic_name W, 0 [symbolic = %W.loc16_8.1 (constants.%W)]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic fn @EqualEqual(%U.loc12_15.1: %I_where.type.cad) {
-// CHECK:STDOUT:   %U.loc12_15.2: %I_where.type.cad = bind_symbolic_name U, 0 [symbolic = %U.loc12_15.2 (constants.%U)]
+// CHECK:STDOUT: generic fn @EqualEqual(%U.loc12_15.2: %I_where.type.cad) {
+// CHECK:STDOUT:   %U.loc12_15.1: %I_where.type.cad = bind_symbolic_name U, 0 [symbolic = %U.loc12_15.1 (constants.%U)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   fn();
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic fn @Impls(%V.loc14_10.1: %J_where.type) {
-// CHECK:STDOUT:   %V.loc14_10.2: %J_where.type = bind_symbolic_name V, 0 [symbolic = %V.loc14_10.2 (constants.%V)]
+// CHECK:STDOUT: generic fn @Impls(%V.loc14_10.2: %J_where.type) {
+// CHECK:STDOUT:   %V.loc14_10.1: %J_where.type = bind_symbolic_name V, 0 [symbolic = %V.loc14_10.1 (constants.%V)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   fn();
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic fn @And(%W.loc16_8.1: %I_where.type.427) {
-// CHECK:STDOUT:   %W.loc16_8.2: %I_where.type.427 = bind_symbolic_name W, 0 [symbolic = %W.loc16_8.2 (constants.%W)]
+// CHECK:STDOUT: generic fn @And(%W.loc16_8.2: %I_where.type.427) {
+// CHECK:STDOUT:   %W.loc16_8.1: %I_where.type.427 = bind_symbolic_name W, 0 [symbolic = %W.loc16_8.1 (constants.%W)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   fn();
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @EqualEqual(constants.%U) {
-// CHECK:STDOUT:   %U.loc12_15.2 => constants.%U
+// CHECK:STDOUT:   %U.loc12_15.1 => constants.%U
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Impls(constants.%V) {
-// CHECK:STDOUT:   %V.loc14_10.2 => constants.%V
+// CHECK:STDOUT:   %V.loc14_10.1 => constants.%V
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @And(constants.%W) {
-// CHECK:STDOUT:   %W.loc16_8.2 => constants.%W
+// CHECK:STDOUT:   %W.loc16_8.1 => constants.%W
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- associated_type_impls.carbon
@@ -455,18 +455,18 @@ fn F() {
 // CHECK:STDOUT:         requirement_impls %.loc12_36.2, %M.ref
 // CHECK:STDOUT:       }
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %W.loc12_24.1: %K_where.type = bind_symbolic_name W, 0 [symbolic = %W.loc12_24.2 (constants.%W)]
+// CHECK:STDOUT:     %W.loc12_24.2: %K_where.type = bind_symbolic_name W, 0 [symbolic = %W.loc12_24.1 (constants.%W)]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic fn @AssociatedTypeImpls(%W.loc12_24.1: %K_where.type) {
-// CHECK:STDOUT:   %W.loc12_24.2: %K_where.type = bind_symbolic_name W, 0 [symbolic = %W.loc12_24.2 (constants.%W)]
+// CHECK:STDOUT: generic fn @AssociatedTypeImpls(%W.loc12_24.2: %K_where.type) {
+// CHECK:STDOUT:   %W.loc12_24.1: %K_where.type = bind_symbolic_name W, 0 [symbolic = %W.loc12_24.1 (constants.%W)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   fn();
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @AssociatedTypeImpls(constants.%W) {
-// CHECK:STDOUT:   %W.loc12_24.2 => constants.%W
+// CHECK:STDOUT:   %W.loc12_24.1 => constants.%W
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- fail_error_in_constraint.carbon

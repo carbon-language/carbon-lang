@@ -45,9 +45,9 @@ fn RuntimeCallIsValid(a: i32, b: i32) -> bool {
 // CHECK:STDOUT:   %Neq.ref: %Neq.type = name_ref Neq, file.%Neq.decl [concrete = constants.%Neq]
 // CHECK:STDOUT:   %a.ref: %i32 = name_ref a, %a
 // CHECK:STDOUT:   %b.ref: %i32 = name_ref b, %b
-// CHECK:STDOUT:   %int.neq: init bool = call %Neq.ref(%a.ref, %b.ref)
-// CHECK:STDOUT:   %.loc14_19.1: bool = value_of_initializer %int.neq
-// CHECK:STDOUT:   %.loc14_19.2: bool = converted %int.neq, %.loc14_19.1
+// CHECK:STDOUT:   %Neq.call: init bool = call %Neq.ref(%a.ref, %b.ref)
+// CHECK:STDOUT:   %.loc14_19.1: bool = value_of_initializer %Neq.call
+// CHECK:STDOUT:   %.loc14_19.2: bool = converted %Neq.call, %.loc14_19.1
 // CHECK:STDOUT:   return %.loc14_19.2
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

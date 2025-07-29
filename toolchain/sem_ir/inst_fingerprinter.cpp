@@ -150,6 +150,16 @@ struct Worklist {
     AddBlock(sem_ir->struct_type_fields().Get(struct_type_fields_id));
   }
 
+  auto Add(CustomLayoutId custom_layout_id) -> void {
+    if (!custom_layout_id.has_value()) {
+      AddInvalid();
+      return;
+    }
+    auto block = sem_ir->custom_layouts().Get(custom_layout_id);
+    contents.push_back(block.size());
+    contents.insert(contents.end(), block.begin(), block.end());
+  }
+
   auto Add(NameScopeId name_scope_id) -> void {
     if (!name_scope_id.has_value()) {
       AddInvalid();

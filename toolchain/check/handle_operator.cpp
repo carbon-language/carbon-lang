@@ -325,7 +325,6 @@ auto HandleParseNode(Context& context, Parse::PrefixOperatorPartialId node_id)
     context.emitter().Emit(node_id, PartialOnFinal, inner_type.type_id);
   }
 
-  // TODO: Add diagnostics for partial applied to non-base/abstract types.
   AddInstAndPush<SemIR::PartialType>(
       context, node_id,
       {.type_id = SemIR::TypeType::TypeId, .inner_id = inner_type.inst_id});

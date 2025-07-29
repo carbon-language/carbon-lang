@@ -246,18 +246,18 @@ let K: (E where .F = .Self.G) = bool;
 // CHECK:STDOUT:         requirement_rewrite %impl.elem0, %.loc9_28.2
 // CHECK:STDOUT:       }
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %T.loc9_10.1: %N_where.type = bind_symbolic_name T, 0 [symbolic = %T.loc9_10.2 (constants.%T)]
+// CHECK:STDOUT:     %T.loc9_10.2: %N_where.type = bind_symbolic_name T, 0 [symbolic = %T.loc9_10.1 (constants.%T)]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic fn @Equal(%T.loc9_10.1: %N_where.type) {
-// CHECK:STDOUT:   %T.loc9_10.2: %N_where.type = bind_symbolic_name T, 0 [symbolic = %T.loc9_10.2 (constants.%T)]
+// CHECK:STDOUT: generic fn @Equal(%T.loc9_10.2: %N_where.type) {
+// CHECK:STDOUT:   %T.loc9_10.1: %N_where.type = bind_symbolic_name T, 0 [symbolic = %T.loc9_10.1 (constants.%T)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   fn();
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Equal(constants.%T) {
-// CHECK:STDOUT:   %T.loc9_10.2 => constants.%T
+// CHECK:STDOUT:   %T.loc9_10.1 => constants.%T
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- nested_rewrites.carbon
@@ -301,9 +301,9 @@ let K: (E where .F = .Self.G) = bool;
 // CHECK:STDOUT:       %.Self.as_type.loc10_31: type = facet_access_type %.Self.ref.loc10_31 [symbolic_self = constants.%.Self.as_type.adb]
 // CHECK:STDOUT:       %.loc10_31: type = converted %.Self.ref.loc10_31, %.Self.as_type.loc10_31 [symbolic_self = constants.%.Self.as_type.adb]
 // CHECK:STDOUT:       %impl.elem0: type = impl_witness_access constants.%A.lookup_impl_witness.5ad, element0 [symbolic_self = constants.%impl.elem0]
-// CHECK:STDOUT:       %bool.make_type: init type = call constants.%Bool() [concrete = bool]
-// CHECK:STDOUT:       %.loc10_36.1: type = value_of_initializer %bool.make_type [concrete = bool]
-// CHECK:STDOUT:       %.loc10_36.2: type = converted %bool.make_type, %.loc10_36.1 [concrete = bool]
+// CHECK:STDOUT:       %Bool.call: init type = call constants.%Bool() [concrete = bool]
+// CHECK:STDOUT:       %.loc10_36.1: type = value_of_initializer %Bool.call [concrete = bool]
+// CHECK:STDOUT:       %.loc10_36.2: type = converted %Bool.call, %.loc10_36.1 [concrete = bool]
 // CHECK:STDOUT:       %.loc10_25: type = where_expr %.Self.1 [concrete = constants.%A_where.type.ef7] {
 // CHECK:STDOUT:         requirement_rewrite %impl.elem0, %.loc10_36.2
 // CHECK:STDOUT:       }
@@ -319,18 +319,18 @@ let K: (E where .F = .Self.G) = bool;
 // CHECK:STDOUT:         requirement_rewrite %impl.elem1, %.loc10_54.2
 // CHECK:STDOUT:       }
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %D.loc10_18.1: %A_where.type.2d0 = bind_symbolic_name D, 0 [symbolic = %D.loc10_18.2 (constants.%D)]
+// CHECK:STDOUT:     %D.loc10_18.2: %A_where.type.2d0 = bind_symbolic_name D, 0 [symbolic = %D.loc10_18.1 (constants.%D)]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic fn @NestedRewrite(%D.loc10_18.1: %A_where.type.2d0) {
-// CHECK:STDOUT:   %D.loc10_18.2: %A_where.type.2d0 = bind_symbolic_name D, 0 [symbolic = %D.loc10_18.2 (constants.%D)]
+// CHECK:STDOUT: generic fn @NestedRewrite(%D.loc10_18.2: %A_where.type.2d0) {
+// CHECK:STDOUT:   %D.loc10_18.1: %A_where.type.2d0 = bind_symbolic_name D, 0 [symbolic = %D.loc10_18.1 (constants.%D)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   fn();
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @NestedRewrite(constants.%D) {
-// CHECK:STDOUT:   %D.loc10_18.2 => constants.%D
+// CHECK:STDOUT:   %D.loc10_18.1 => constants.%D
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- repeated_rewrite.carbon
@@ -378,7 +378,7 @@ let K: (E where .F = .Self.G) = bool;
 // CHECK:STDOUT:         requirement_rewrite %impl.elem0, %i32
 // CHECK:STDOUT:       }
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %G.loc9_15.1: %E_where.type = bind_symbolic_name G, 0 [symbolic = %G.loc9_15.2 (constants.%G)]
+// CHECK:STDOUT:     %G.loc9_15.2: %E_where.type = bind_symbolic_name G, 0 [symbolic = %G.loc9_15.1 (constants.%G)]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %RepeatedRewrite.decl: %RepeatedRewrite.type = fn_decl @RepeatedRewrite [concrete = constants.%RepeatedRewrite] {
 // CHECK:STDOUT:     %H.patt: %pattern_type.c64 = symbolic_binding_pattern H, 0 [concrete]
@@ -405,12 +405,12 @@ let K: (E where .F = .Self.G) = bool;
 // CHECK:STDOUT:         requirement_rewrite %impl.elem0.loc11_45, %i32.loc11_50
 // CHECK:STDOUT:       }
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %H.loc11_20.1: %E_where.type = bind_symbolic_name H, 0 [symbolic = %H.loc11_20.2 (constants.%H)]
+// CHECK:STDOUT:     %H.loc11_20.2: %E_where.type = bind_symbolic_name H, 0 [symbolic = %H.loc11_20.1 (constants.%H)]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic fn @OneRewrite(%G.loc9_15.1: %E_where.type) {
-// CHECK:STDOUT:   %G.loc9_15.2: %E_where.type = bind_symbolic_name G, 0 [symbolic = %G.loc9_15.2 (constants.%G)]
+// CHECK:STDOUT: generic fn @OneRewrite(%G.loc9_15.2: %E_where.type) {
+// CHECK:STDOUT:   %G.loc9_15.1: %E_where.type = bind_symbolic_name G, 0 [symbolic = %G.loc9_15.1 (constants.%G)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:
@@ -420,8 +420,8 @@ let K: (E where .F = .Self.G) = bool;
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic fn @RepeatedRewrite(%H.loc11_20.1: %E_where.type) {
-// CHECK:STDOUT:   %H.loc11_20.2: %E_where.type = bind_symbolic_name H, 0 [symbolic = %H.loc11_20.2 (constants.%H)]
+// CHECK:STDOUT: generic fn @RepeatedRewrite(%H.loc11_20.2: %E_where.type) {
+// CHECK:STDOUT:   %H.loc11_20.1: %E_where.type = bind_symbolic_name H, 0 [symbolic = %H.loc11_20.1 (constants.%H)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   <elided>
@@ -433,28 +433,28 @@ let K: (E where .F = .Self.G) = bool;
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @OneRewrite(constants.%G) {
-// CHECK:STDOUT:   %G.loc9_15.2 => constants.%G
+// CHECK:STDOUT:   %G.loc9_15.1 => constants.%G
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @RepeatedRewrite(constants.%H) {
-// CHECK:STDOUT:   %H.loc11_20.2 => constants.%H
+// CHECK:STDOUT:   %H.loc11_20.1 => constants.%H
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @OneRewrite(constants.%H) {
-// CHECK:STDOUT:   %G.loc9_15.2 => constants.%H
+// CHECK:STDOUT:   %G.loc9_15.1 => constants.%H
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @RepeatedRewrite(constants.%I) {
-// CHECK:STDOUT:   %H.loc11_20.2 => constants.%I
+// CHECK:STDOUT:   %H.loc11_20.1 => constants.%I
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %OneRewrite.specific_fn.loc13_3.2 => constants.%OneRewrite.specific_fn.7fa5d5.2
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @OneRewrite(constants.%I) {
-// CHECK:STDOUT:   %G.loc9_15.2 => constants.%I
+// CHECK:STDOUT:   %G.loc9_15.1 => constants.%I
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT: }
@@ -506,15 +506,15 @@ let K: (E where .F = .Self.G) = bool;
 // CHECK:STDOUT:       %.Self.as_type.loc10_41: type = facet_access_type %.Self.ref.loc10_41 [symbolic_self = constants.%.Self.as_type]
 // CHECK:STDOUT:       %.loc10_41: type = converted %.Self.ref.loc10_41, %.Self.as_type.loc10_41 [symbolic_self = constants.%.Self.as_type]
 // CHECK:STDOUT:       %impl.elem1: type = impl_witness_access constants.%J.lookup_impl_witness, element1 [symbolic_self = constants.%impl.elem1]
-// CHECK:STDOUT:       %bool.make_type: init type = call constants.%Bool() [concrete = bool]
-// CHECK:STDOUT:       %.loc10_46.1: type = value_of_initializer %bool.make_type [concrete = bool]
-// CHECK:STDOUT:       %.loc10_46.2: type = converted %bool.make_type, %.loc10_46.1 [concrete = bool]
+// CHECK:STDOUT:       %Bool.call: init type = call constants.%Bool() [concrete = bool]
+// CHECK:STDOUT:       %.loc10_46.1: type = value_of_initializer %Bool.call [concrete = bool]
+// CHECK:STDOUT:       %.loc10_46.2: type = converted %Bool.call, %.loc10_46.1 [concrete = bool]
 // CHECK:STDOUT:       %.loc10_23.2: type = where_expr %.Self [concrete = constants.%J_where.type] {
 // CHECK:STDOUT:         requirement_rewrite %impl.elem0, %.loc10_35.2
 // CHECK:STDOUT:         requirement_rewrite %impl.elem1, %.loc10_46.2
 // CHECK:STDOUT:       }
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %M.loc10_17.1: %J_where.type = bind_symbolic_name M, 0 [symbolic = %M.loc10_17.2 (constants.%M)]
+// CHECK:STDOUT:     %M.loc10_17.2: %J_where.type = bind_symbolic_name M, 0 [symbolic = %M.loc10_17.1 (constants.%M)]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Reversed.decl: %Reversed.type = fn_decl @Reversed [concrete = constants.%Reversed] {
 // CHECK:STDOUT:     %N.patt: %pattern_type.49f = symbolic_binding_pattern N, 0 [concrete]
@@ -527,9 +527,9 @@ let K: (E where .F = .Self.G) = bool;
 // CHECK:STDOUT:       %.Self.as_type.loc12_25: type = facet_access_type %.Self.ref.loc12_25 [symbolic_self = constants.%.Self.as_type]
 // CHECK:STDOUT:       %.loc12_25: type = converted %.Self.ref.loc12_25, %.Self.as_type.loc12_25 [symbolic_self = constants.%.Self.as_type]
 // CHECK:STDOUT:       %impl.elem1: type = impl_witness_access constants.%J.lookup_impl_witness, element1 [symbolic_self = constants.%impl.elem1]
-// CHECK:STDOUT:       %bool.make_type: init type = call constants.%Bool() [concrete = bool]
-// CHECK:STDOUT:       %.loc12_30.1: type = value_of_initializer %bool.make_type [concrete = bool]
-// CHECK:STDOUT:       %.loc12_30.2: type = converted %bool.make_type, %.loc12_30.1 [concrete = bool]
+// CHECK:STDOUT:       %Bool.call: init type = call constants.%Bool() [concrete = bool]
+// CHECK:STDOUT:       %.loc12_30.1: type = value_of_initializer %Bool.call [concrete = bool]
+// CHECK:STDOUT:       %.loc12_30.2: type = converted %Bool.call, %.loc12_30.1 [concrete = bool]
 // CHECK:STDOUT:       %.Self.ref.loc12_39: %J.type = name_ref .Self, %.Self [symbolic_self = constants.%.Self]
 // CHECK:STDOUT:       %K.ref: %J.assoc_type = name_ref K, @K.%assoc0 [concrete = constants.%assoc0]
 // CHECK:STDOUT:       %.Self.as_type.loc12_39: type = facet_access_type %.Self.ref.loc12_39 [symbolic_self = constants.%.Self.as_type]
@@ -542,12 +542,12 @@ let K: (E where .F = .Self.G) = bool;
 // CHECK:STDOUT:         requirement_rewrite %impl.elem0, %.loc12_45.2
 // CHECK:STDOUT:       }
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %N.loc12_13.1: %J_where.type = bind_symbolic_name N, 0 [symbolic = %N.loc12_13.2 (constants.%N)]
+// CHECK:STDOUT:     %N.loc12_13.2: %J_where.type = bind_symbolic_name N, 0 [symbolic = %N.loc12_13.1 (constants.%N)]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic fn @Alphabetical(%M.loc10_17.1: %J_where.type) {
-// CHECK:STDOUT:   %M.loc10_17.2: %J_where.type = bind_symbolic_name M, 0 [symbolic = %M.loc10_17.2 (constants.%M)]
+// CHECK:STDOUT: generic fn @Alphabetical(%M.loc10_17.2: %J_where.type) {
+// CHECK:STDOUT:   %M.loc10_17.1: %J_where.type = bind_symbolic_name M, 0 [symbolic = %M.loc10_17.1 (constants.%M)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:
@@ -557,8 +557,8 @@ let K: (E where .F = .Self.G) = bool;
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic fn @Reversed(%N.loc12_13.1: %J_where.type) {
-// CHECK:STDOUT:   %N.loc12_13.2: %J_where.type = bind_symbolic_name N, 0 [symbolic = %N.loc12_13.2 (constants.%N)]
+// CHECK:STDOUT: generic fn @Reversed(%N.loc12_13.2: %J_where.type) {
+// CHECK:STDOUT:   %N.loc12_13.1: %J_where.type = bind_symbolic_name N, 0 [symbolic = %N.loc12_13.1 (constants.%N)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   <elided>
@@ -570,15 +570,15 @@ let K: (E where .F = .Self.G) = bool;
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Alphabetical(constants.%M) {
-// CHECK:STDOUT:   %M.loc10_17.2 => constants.%M
+// CHECK:STDOUT:   %M.loc10_17.1 => constants.%M
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Reversed(constants.%N) {
-// CHECK:STDOUT:   %N.loc12_13.2 => constants.%N
+// CHECK:STDOUT:   %N.loc12_13.1 => constants.%N
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Alphabetical(constants.%N) {
-// CHECK:STDOUT:   %M.loc10_17.2 => constants.%N
+// CHECK:STDOUT:   %M.loc10_17.1 => constants.%N
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT: }

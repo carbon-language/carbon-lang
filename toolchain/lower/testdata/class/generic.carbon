@@ -250,8 +250,8 @@ fn AccessTuple() -> (i32, i32, i32) {
 // CHECK:STDOUT:   %.loc19_37.2.v = getelementptr inbounds nuw { i1, i32 }, ptr %c.var, i32 0, i32 0, !dbg !8
 // CHECK:STDOUT:   %.loc19_37.5.w = getelementptr inbounds nuw { i1, i32 }, ptr %c.var, i32 0, i32 1, !dbg !8
 // CHECK:STDOUT:   call void @llvm.memcpy.p0.p0.i64(ptr align 4 %c.var, ptr align 4 @C.val.98f.loc19_3, i64 8, i1 false), !dbg !7
-// CHECK:STDOUT:   %GetBool.call = call i1 @_CGetBool.C.Main.b88d1103f417c6d4(ptr %c.var), !dbg !9
-// CHECK:STDOUT:   ret i1 %GetBool.call, !dbg !10
+// CHECK:STDOUT:   %C.GetBool.call = call i1 @_CGetBool.C.Main.b88d1103f417c6d4(ptr %c.var), !dbg !9
+// CHECK:STDOUT:   ret i1 %C.GetBool.call, !dbg !10
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: define i32 @_CAccessInt.Main() !dbg !11 {
@@ -261,8 +261,8 @@ fn AccessTuple() -> (i32, i32, i32) {
 // CHECK:STDOUT:   %.loc24_37.2.v = getelementptr inbounds nuw { i1, i32 }, ptr %c.var, i32 0, i32 0, !dbg !13
 // CHECK:STDOUT:   %.loc24_37.5.w = getelementptr inbounds nuw { i1, i32 }, ptr %c.var, i32 0, i32 1, !dbg !13
 // CHECK:STDOUT:   call void @llvm.memcpy.p0.p0.i64(ptr align 4 %c.var, ptr align 4 @C.val.98f.loc19_3, i64 8, i1 false), !dbg !12
-// CHECK:STDOUT:   %GetT.call = call i32 @_CGetT.C.Main.b88d1103f417c6d4(ptr %c.var), !dbg !14
-// CHECK:STDOUT:   ret i32 %GetT.call, !dbg !15
+// CHECK:STDOUT:   %C.GetT.call = call i32 @_CGetT.C.Main.b88d1103f417c6d4(ptr %c.var), !dbg !14
+// CHECK:STDOUT:   ret i32 %C.GetT.call, !dbg !15
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: define void @_CAccessEmpty.Main() !dbg !16 {

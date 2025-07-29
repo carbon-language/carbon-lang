@@ -149,9 +149,9 @@ let negative_lit_zero: Core.IntLiteral() = RightShiftLit(0, -1);
 // CHECK:STDOUT:   %RightShift.ref: %RightShift.type = name_ref RightShift, file.%RightShift.decl [concrete = constants.%RightShift]
 // CHECK:STDOUT:   %a.ref: %i32 = name_ref a, %a
 // CHECK:STDOUT:   %b.ref: %i32 = name_ref b, %b
-// CHECK:STDOUT:   %int.right_shift: init %i32 = call %RightShift.ref(%a.ref, %b.ref)
-// CHECK:STDOUT:   %.loc22_26.1: %i32 = value_of_initializer %int.right_shift
-// CHECK:STDOUT:   %.loc22_26.2: %i32 = converted %int.right_shift, %.loc22_26.1
+// CHECK:STDOUT:   %RightShift.call: init %i32 = call %RightShift.ref(%a.ref, %b.ref)
+// CHECK:STDOUT:   %.loc22_26.1: %i32 = value_of_initializer %RightShift.call
+// CHECK:STDOUT:   %.loc22_26.2: %i32 = converted %RightShift.call, %.loc22_26.1
 // CHECK:STDOUT:   return %.loc22_26.2
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -173,9 +173,9 @@ let negative_lit_zero: Core.IntLiteral() = RightShiftLit(0, -1);
 // CHECK:STDOUT:   %RightShift.ref: %RightShift.type = name_ref RightShift, file.%RightShift.decl [concrete = constants.%RightShift]
 // CHECK:STDOUT:   %a.ref: %u32 = name_ref a, %a
 // CHECK:STDOUT:   %b.ref: %i32 = name_ref b, %b
-// CHECK:STDOUT:   %int.right_shift: init %u32 = call %RightShift.ref(%a.ref, %b.ref)
-// CHECK:STDOUT:   %.loc21_26.1: %u32 = value_of_initializer %int.right_shift
-// CHECK:STDOUT:   %.loc21_26.2: %u32 = converted %int.right_shift, %.loc21_26.1
+// CHECK:STDOUT:   %RightShift.call: init %u32 = call %RightShift.ref(%a.ref, %b.ref)
+// CHECK:STDOUT:   %.loc21_26.1: %u32 = value_of_initializer %RightShift.call
+// CHECK:STDOUT:   %.loc21_26.2: %u32 = converted %RightShift.call, %.loc21_26.1
 // CHECK:STDOUT:   return %.loc21_26.2
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

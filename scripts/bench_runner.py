@@ -162,7 +162,7 @@ binary.
     )
     parser.add_argument(
         "--runs",
-        default=5,
+        default=10,
         metavar="N",
         type=int,
         help="Number of runs of the benchmark",
@@ -203,6 +203,19 @@ results, and just dumps the aggregate JSON data from the repeated runs.
 """.strip(),
     )
     return parser.parse_args(args=args)
+
+
+# Default arguments that will be passed even when arguments are passed with
+# `--benchmark_args` to the script. These can be undone by overriding them in
+# explicitly passed arguments.
+DEFAULT_BENCHMARK_ARGS = [
+    # Randomize the order in which the benchmarks run to avoid skewed results
+    # due to a specific order.
+    "--benchmark_enable_random_interleaving",
+    # Reduce the default minimum time to 0.1s as it's more effective to use
+    # multiple runs to improve confidence in measurements.
+    "--benchmark_min_time=0.1s",
+]
 
 
 # Pre-compiled regexes to match metrics that measure _speed_: larger is better.
@@ -688,12 +701,12 @@ def run_benchmark_binary(
     if len(binary_path.parts) == 1 and binary_path.exists():
         binary_str = f"./{binary_str}"
     run_cmd = (
-        [
-            binary_str,
-            "--benchmark_format=json",
-        ]
+        [binary_str]
+        + DEFAULT_BENCHMARK_ARGS
         + common_args
         + specific_args
+        # Pass the format flag last as it is required and can't be overridden.
+        + ["--benchmark_format=json"]
     )
     console.log(f"Executing: {' '.join(run_cmd)}")
 
@@ -761,6 +774,7 @@ def print_run_context(
 
 
 def get_benchmark_names_and_metrics(
+    console: Console,
     parsed_args: argparse.Namespace,
     exp_runs: list[dict],
     base_runs: list[dict],
@@ -779,10 +793,8 @@ def get_benchmark_names_and_metrics(
         - The list of unique benchmark names, maintaining their order.
         - The list of metrics to display.
     """
-    metrics: list[str] = []
-    benchmark_names: list[str] = []
-
     # Start with the base time and iteration metrics requested.
+    metrics: list[str] = []
     if parsed_args.wall_time:
         metrics.append("real_time")
     else:
@@ -803,12 +815,24 @@ def get_benchmark_names_and_metrics(
     if parsed_args.base_benchmark:
         one_run_benchmarks += base_runs[0]["benchmarks"]
 
+    benchmark_name_set: set[str] = set()
+    benchmark_name_indices: dict[str, tuple[int, int]] = {}
     for benchmark in one_run_benchmarks:
         name = benchmark["name"]
-        # Add the benchmark name if we haven't seen it before to get a unique
-        # list that preserves the order of appearance.
-        if name not in benchmark_names:
-            benchmark_names.append(name)
+        benchmark_name_set.add(name)
+        indices = (
+            benchmark["family_index"],
+            benchmark["per_family_instance_index"],
+        )
+        if name not in benchmark_name_indices:
+            benchmark_name_indices[name] = indices
+        else:
+            if benchmark_name_indices[name] != indices:
+                console.print(
+                    f"ERROR: Inconsintent indices {indices} and "
+                    f"{benchmark_name_indices[name]} for benchmark `{name}`."
+                )
+                sys.exit(1)
 
         # Add any extra metrics from this benchmark.
         for key in benchmark.keys():
@@ -818,6 +842,9 @@ def get_benchmark_names_and_metrics(
                 continue
             metrics.append(key)
 
+    benchmark_names = sorted(
+        list(benchmark_name_set), key=lambda name: benchmark_name_indices[name]
+    )
     return benchmark_names, metrics
 
 
@@ -1074,7 +1101,7 @@ def main() -> None:
 
     # Collect the benchmark names and metric names.
     benchmark_names, metrics = get_benchmark_names_and_metrics(
-        parsed_args, exp_runs, base_runs
+        console, parsed_args, exp_runs, base_runs
     )
 
     # Build any mappings between main benchmark names and comparables, and reset

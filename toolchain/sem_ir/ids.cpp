@@ -33,7 +33,7 @@ auto ConstantId::Print(llvm::raw_ostream& out, bool disambiguate) const
       out << ")";
     }
   } else if (is_symbolic()) {
-    out << "symbolic_constant" << symbolic_index();
+    out << symbolic_id();
   } else {
     CARBON_CHECK(!is_constant());
     out << "runtime";

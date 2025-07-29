@@ -103,7 +103,7 @@ struct AddrOf {
 // An `addr` pattern, such as `addr self: Self*`. Structurally, `inner_id` will
 // generally be a pattern inst.
 struct AddrPattern {
-  static constexpr auto Kind = InstKind::AddrPattern.Define<Parse::AddrId>(
+  static constexpr auto Kind = InstKind::AddrPattern.Define<Parse::NodeId>(
       {.ir_name = "addr_pattern",
        .constant_kind = InstConstantKind::AlwaysUnique,
        .is_lowered = false});
@@ -550,6 +550,20 @@ struct ConvertToValueAction {
   TypeId type_id;
   MetaInstId inst_id;
   TypeInstId target_type_inst_id;
+};
+
+// A type whose layout is determined externally. This is used as the object
+// representation of class types imported from C++.
+struct CustomLayoutType {
+  static constexpr auto Kind = InstKind::CustomLayoutType.Define<Parse::NodeId>(
+      {.ir_name = "custom_layout_type",
+       .is_type = InstIsType::Always,
+       .constant_kind = InstConstantKind::WheneverPossible,
+       .deduce_through = true});
+
+  TypeId type_id;
+  StructTypeFieldsId fields_id;
+  CustomLayoutId layout_id;
 };
 
 // The `*` dereference operator, as in `*pointer`.
@@ -1779,8 +1793,7 @@ struct VtableType {
 // Initializer for virtual function table pointers in object initialization.
 struct VtablePtr {
   static constexpr auto Kind = InstKind::VtablePtr.Define<Parse::NodeId>(
-      {.ir_name = "vtable_ptr",
-       .constant_kind = InstConstantKind::WheneverPossible});
+      {.ir_name = "vtable_ptr", .constant_kind = InstConstantKind::Always});
   TypeId type_id;
   VtableId vtable_id;
   SpecificId specific_id;

@@ -34,6 +34,7 @@ fn MakeOuter() -> Outer {
 // CHECK:STDOUT:   %Inner: type = class_type @Inner [concrete]
 // CHECK:STDOUT:   %int_32: Core.IntLiteral = int_value 32 [concrete]
 // CHECK:STDOUT:   %Int.type: type = generic_class_type @Int [concrete]
+// CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [concrete]
 // CHECK:STDOUT:   %Int.generic: %Int.type = struct_value () [concrete]
 // CHECK:STDOUT:   %i32: type = class_type @Int, @Int(%int_32) [concrete]
 // CHECK:STDOUT:   %Inner.elem: type = unbound_element_type %Inner, %i32 [concrete]
@@ -49,15 +50,22 @@ fn MakeOuter() -> Outer {
 // CHECK:STDOUT:   %pattern_type.e74: type = pattern_type %Outer [concrete]
 // CHECK:STDOUT:   %MakeOuter.type: type = fn_type @MakeOuter [concrete]
 // CHECK:STDOUT:   %MakeOuter: %MakeOuter.type = struct_value () [concrete]
+// CHECK:STDOUT:   %Destroy.type: type = facet_type <@Destroy> [concrete]
+// CHECK:STDOUT:   %T.as.Destroy.impl.Op.type.e24: type = fn_type @T.as.Destroy.impl.Op, @T.as.Destroy.impl(%Inner) [concrete]
+// CHECK:STDOUT:   %T.as.Destroy.impl.Op.7b1: %T.as.Destroy.impl.Op.type.e24 = struct_value () [concrete]
+// CHECK:STDOUT:   %ptr.78b: type = ptr_type %Inner [concrete]
+// CHECK:STDOUT:   %T.as.Destroy.impl.Op.specific_fn: <specific function> = specific_function %T.as.Destroy.impl.Op.7b1, @T.as.Destroy.impl.Op(%Inner) [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [concrete] {
 // CHECK:STDOUT:     .Int = %Core.Int
+// CHECK:STDOUT:     .Destroy = %Core.Destroy
 // CHECK:STDOUT:     import Core//prelude
 // CHECK:STDOUT:     import Core//prelude/...
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.Int: %Int.type = import_ref Core//prelude/parts/int, Int, loaded [concrete = constants.%Int.generic]
+// CHECK:STDOUT:   %Core.Destroy: type = import_ref Core//prelude/parts/destroy, Destroy, loaded [concrete = constants.%Destroy.type]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -135,6 +143,16 @@ fn MakeOuter() -> Outer {
 // CHECK:STDOUT:   %.loc28_45.3: %struct_type.c.d.dce = struct_literal (%MakeInner.call.loc28_26, %MakeInner.call.loc28_44)
 // CHECK:STDOUT:   %.loc28_45.4: init %Outer = class_init (%MakeInner.call.loc28_26, %MakeInner.call.loc28_44), %return
 // CHECK:STDOUT:   %.loc28_46: init %Outer = converted %.loc28_45.3, %.loc28_45.4
+// CHECK:STDOUT:   %T.as.Destroy.impl.Op.bound.loc28_45.1: <bound method> = bound_method %.loc28_45.2, constants.%T.as.Destroy.impl.Op.7b1
+// CHECK:STDOUT:   %T.as.Destroy.impl.Op.specific_fn.1: <specific function> = specific_function constants.%T.as.Destroy.impl.Op.7b1, @T.as.Destroy.impl.Op(constants.%Inner) [concrete = constants.%T.as.Destroy.impl.Op.specific_fn]
+// CHECK:STDOUT:   %bound_method.loc28_45.1: <bound method> = bound_method %.loc28_45.2, %T.as.Destroy.impl.Op.specific_fn.1
+// CHECK:STDOUT:   %addr.loc28_45.1: %ptr.78b = addr_of %.loc28_45.2
+// CHECK:STDOUT:   %T.as.Destroy.impl.Op.call.loc28_45.1: init %empty_tuple.type = call %bound_method.loc28_45.1(%addr.loc28_45.1)
+// CHECK:STDOUT:   %T.as.Destroy.impl.Op.bound.loc28_45.2: <bound method> = bound_method %.loc28_45.1, constants.%T.as.Destroy.impl.Op.7b1
+// CHECK:STDOUT:   %T.as.Destroy.impl.Op.specific_fn.2: <specific function> = specific_function constants.%T.as.Destroy.impl.Op.7b1, @T.as.Destroy.impl.Op(constants.%Inner) [concrete = constants.%T.as.Destroy.impl.Op.specific_fn]
+// CHECK:STDOUT:   %bound_method.loc28_45.2: <bound method> = bound_method %.loc28_45.1, %T.as.Destroy.impl.Op.specific_fn.2
+// CHECK:STDOUT:   %addr.loc28_45.2: %ptr.78b = addr_of %.loc28_45.1
+// CHECK:STDOUT:   %T.as.Destroy.impl.Op.call.loc28_45.2: init %empty_tuple.type = call %bound_method.loc28_45.2(%addr.loc28_45.2)
 // CHECK:STDOUT:   return %.loc28_46 to %return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

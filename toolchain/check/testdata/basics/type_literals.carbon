@@ -316,9 +316,9 @@ var x: type = 42;
 // CHECK:STDOUT:   %test_f64.var: ref f64 = var %test_f64.var_patt [concrete]
 // CHECK:STDOUT:   %.loc4_15.1: type = splice_block %.loc4_15.3 [concrete = f64] {
 // CHECK:STDOUT:     %int_64: Core.IntLiteral = int_value 64 [concrete = constants.%int_64]
-// CHECK:STDOUT:     %float.make_type: init type = call constants.%Float(%int_64) [concrete = f64]
-// CHECK:STDOUT:     %.loc4_15.2: type = value_of_initializer %float.make_type [concrete = f64]
-// CHECK:STDOUT:     %.loc4_15.3: type = converted %float.make_type, %.loc4_15.2 [concrete = f64]
+// CHECK:STDOUT:     %Float.call: init type = call constants.%Float(%int_64) [concrete = f64]
+// CHECK:STDOUT:     %.loc4_15.2: type = value_of_initializer %Float.call [concrete = f64]
+// CHECK:STDOUT:     %.loc4_15.3: type = converted %Float.call, %.loc4_15.2 [concrete = f64]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %test_f64: ref f64 = bind_name test_f64, %test_f64.var [concrete = %test_f64.var]
 // CHECK:STDOUT: }

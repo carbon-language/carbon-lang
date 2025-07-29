@@ -30,11 +30,15 @@ fn G(n: i32) -> i32 {
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %int_32: Core.IntLiteral = int_value 32 [concrete]
+// CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [concrete]
 // CHECK:STDOUT:   %i32: type = class_type @Int, @Int(%int_32) [concrete]
 // CHECK:STDOUT:   %F.type: type = fn_type @F [concrete]
 // CHECK:STDOUT:   %F: %F.type = struct_value () [concrete]
 // CHECK:STDOUT:   %int_42: Core.IntLiteral = int_value 42 [concrete]
 // CHECK:STDOUT:   %array_type: type = array_type %int_42, %i32 [concrete]
+// CHECK:STDOUT:   %ptr.830: type = ptr_type %array_type [concrete]
+// CHECK:STDOUT:   %T.as.Destroy.impl.Op.type.b8c: type = fn_type @T.as.Destroy.impl.Op, @T.as.Destroy.impl(%array_type) [concrete]
+// CHECK:STDOUT:   %T.as.Destroy.impl.Op.552: %T.as.Destroy.impl.Op.type.b8c = struct_value () [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -52,6 +56,11 @@ fn G(n: i32) -> i32 {
 // CHECK:STDOUT:   %i32.loc6: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
 // CHECK:STDOUT:   %.loc6_15.1: ref %i32 = array_index %.loc6_12.2, %n.ref
 // CHECK:STDOUT:   %.loc6_15.2: %i32 = bind_value %.loc6_15.1
+// CHECK:STDOUT:   %T.as.Destroy.impl.Op.bound: <bound method> = bound_method %.loc6_12.1, constants.%T.as.Destroy.impl.Op.552
+// CHECK:STDOUT:   <elided>
+// CHECK:STDOUT:   %bound_method: <bound method> = bound_method %.loc6_12.1, %T.as.Destroy.impl.Op.specific_fn
+// CHECK:STDOUT:   %addr: %ptr.830 = addr_of %.loc6_12.1
+// CHECK:STDOUT:   %T.as.Destroy.impl.Op.call: init %empty_tuple.type = call %bound_method(%addr)
 // CHECK:STDOUT:   return %.loc6_15.2
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

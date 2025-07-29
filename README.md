@@ -405,6 +405,10 @@ Carbon focused talks from the community:
     ([video](https://youtu.be/omrY53kbVoA),
     [slides](https://chandlerc.blog/slides/2022-07-19-cppnorth-keynote/#/))
 
+### Other videos
+
+We additionally have [toolchain videos](/toolchain/docs/README.md#videos).
+
 ## Join us
 
 We'd love to have folks join us and contribute to the project. Carbon is

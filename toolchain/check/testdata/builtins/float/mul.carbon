@@ -81,9 +81,9 @@ fn RuntimeCallIsValidBadReturnType(a: f64, b: f64) -> bool {
 // CHECK:STDOUT:   %Mul.ref: %Mul.type = name_ref Mul, file.%Mul.decl [concrete = constants.%Mul]
 // CHECK:STDOUT:   %a.ref: f64 = name_ref a, %a
 // CHECK:STDOUT:   %b.ref: f64 = name_ref b, %b
-// CHECK:STDOUT:   %float.mul: init f64 = call %Mul.ref(%a.ref, %b.ref)
-// CHECK:STDOUT:   %.loc8_19.1: f64 = value_of_initializer %float.mul
-// CHECK:STDOUT:   %.loc8_19.2: f64 = converted %float.mul, %.loc8_19.1
+// CHECK:STDOUT:   %Mul.call: init f64 = call %Mul.ref(%a.ref, %b.ref)
+// CHECK:STDOUT:   %.loc8_19.1: f64 = value_of_initializer %Mul.call
+// CHECK:STDOUT:   %.loc8_19.2: f64 = converted %Mul.call, %.loc8_19.1
 // CHECK:STDOUT:   return %.loc8_19.2
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

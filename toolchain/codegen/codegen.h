@@ -7,35 +7,37 @@
 
 #include "llvm/IR/Module.h"
 #include "llvm/Target/TargetMachine.h"
+#include "toolchain/diagnostics/diagnostic_consumer.h"
+#include "toolchain/diagnostics/file_diagnostics.h"
 
 namespace Carbon {
 
 class CodeGen {
  public:
-  // `module` and `errors` must not be null.
+  // `module` and `errors` must not be null. `consumer` may be null, in which
+  // case diagnostics go to stderr.
   static auto Make(llvm::Module* module, llvm::StringRef target_triple_str,
-                   llvm::raw_pwrite_stream* errors) -> std::optional<CodeGen>;
+                   Diagnostics::Consumer* consumer = nullptr)
+      -> std::optional<CodeGen>;
 
   // Generates the object code file.
   // Returns false in case of failure, and any information about the failure is
   // printed to the error stream.
   //
-  // Note that unlike the error stream, this requires a `pwrite` stream to allow
-  // patching the output.
+  // Note this requires a `pwrite` stream to allow patching the output.
   auto EmitObject(llvm::raw_pwrite_stream& out) -> bool;
 
   // Prints the assembly to stdout.
   // Returns false in case of failure, and any information about the failure is
   // printed to the error stream.
   //
-  // Note that unlike the error stream, this requires a `pwrite` stream to allow
-  // patching the output.
+  // Note this requires a `pwrite` stream to allow patching the output.
   auto EmitAssembly(llvm::raw_pwrite_stream& out) -> bool;
 
  private:
-  // `module` and `errors` must not be null.
-  explicit CodeGen(llvm::Module* module, llvm::raw_pwrite_stream* errors)
-      : module_(module), errors_(errors) {}
+  // `module` and `consumer` must not be null.
+  explicit CodeGen(llvm::Module* module, Diagnostics::Consumer* consumer)
+      : module_(module), emitter_(consumer) {}
 
   // Using the llvm pass emits either assembly or object code to dest.
   // Returns false in case of failure, and any information about the failure is
@@ -44,7 +46,10 @@ class CodeGen {
       -> bool;
 
   llvm::Module* module_;
-  llvm::raw_pwrite_stream* errors_;
+
+  // The emitter for diagnostics.
+  Diagnostics::FileEmitter emitter_;
+
   std::unique_ptr<llvm::TargetMachine> target_machine_;
 };
 

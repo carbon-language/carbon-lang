@@ -48,68 +48,68 @@ fn TestGreaterEq(a: f64, b: f64) -> bool { return GreaterEq(a, b); }
 // CHECK:STDOUT:
 // CHECK:STDOUT: define double @_CTestNegate.Main(double %a) !dbg !4 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %float.negate = fneg double %a, !dbg !7
-// CHECK:STDOUT:   ret double %float.negate, !dbg !8
+// CHECK:STDOUT:   %Negate.call = fneg double %a, !dbg !7
+// CHECK:STDOUT:   ret double %Negate.call, !dbg !8
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: define double @_CTestAdd.Main(double %a, double %b) !dbg !9 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %float.add = fadd double %a, %b, !dbg !10
-// CHECK:STDOUT:   ret double %float.add, !dbg !11
+// CHECK:STDOUT:   %Add.call = fadd double %a, %b, !dbg !10
+// CHECK:STDOUT:   ret double %Add.call, !dbg !11
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: define double @_CTestSub.Main(double %a, double %b) !dbg !12 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %float.sub = fsub double %a, %b, !dbg !13
-// CHECK:STDOUT:   ret double %float.sub, !dbg !14
+// CHECK:STDOUT:   %Sub.call = fsub double %a, %b, !dbg !13
+// CHECK:STDOUT:   ret double %Sub.call, !dbg !14
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: define double @_CTestMul.Main(double %a, double %b) !dbg !15 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %float.mul = fmul double %a, %b, !dbg !16
-// CHECK:STDOUT:   ret double %float.mul, !dbg !17
+// CHECK:STDOUT:   %Mul.call = fmul double %a, %b, !dbg !16
+// CHECK:STDOUT:   ret double %Mul.call, !dbg !17
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: define double @_CTestDiv.Main(double %a, double %b) !dbg !18 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %float.div = fdiv double %a, %b, !dbg !19
-// CHECK:STDOUT:   ret double %float.div, !dbg !20
+// CHECK:STDOUT:   %Div.call = fdiv double %a, %b, !dbg !19
+// CHECK:STDOUT:   ret double %Div.call, !dbg !20
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: define i1 @_CTestEq.Main(double %a, double %b) !dbg !21 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %float.eq = fcmp oeq double %a, %b, !dbg !22
-// CHECK:STDOUT:   ret i1 %float.eq, !dbg !23
+// CHECK:STDOUT:   %Eq.call = fcmp oeq double %a, %b, !dbg !22
+// CHECK:STDOUT:   ret i1 %Eq.call, !dbg !23
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: define i1 @_CTestNeq.Main(double %a, double %b) !dbg !24 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %float.neq = fcmp one double %a, %b, !dbg !25
-// CHECK:STDOUT:   ret i1 %float.neq, !dbg !26
+// CHECK:STDOUT:   %Neq.call = fcmp one double %a, %b, !dbg !25
+// CHECK:STDOUT:   ret i1 %Neq.call, !dbg !26
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: define i1 @_CTestLess.Main(double %a, double %b) !dbg !27 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %float.less = fcmp olt double %a, %b, !dbg !28
-// CHECK:STDOUT:   ret i1 %float.less, !dbg !29
+// CHECK:STDOUT:   %Less.call = fcmp olt double %a, %b, !dbg !28
+// CHECK:STDOUT:   ret i1 %Less.call, !dbg !29
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: define i1 @_CTestLessEq.Main(double %a, double %b) !dbg !30 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %float.less_eq = fcmp ole double %a, %b, !dbg !31
-// CHECK:STDOUT:   ret i1 %float.less_eq, !dbg !32
+// CHECK:STDOUT:   %LessEq.call = fcmp ole double %a, %b, !dbg !31
+// CHECK:STDOUT:   ret i1 %LessEq.call, !dbg !32
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: define i1 @_CTestGreater.Main(double %a, double %b) !dbg !33 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %float.greater = fcmp ogt double %a, %b, !dbg !34
-// CHECK:STDOUT:   ret i1 %float.greater, !dbg !35
+// CHECK:STDOUT:   %Greater.call = fcmp ogt double %a, %b, !dbg !34
+// CHECK:STDOUT:   ret i1 %Greater.call, !dbg !35
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: define i1 @_CTestGreaterEq.Main(double %a, double %b) !dbg !36 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %float.greater_eq = fcmp oge double %a, %b, !dbg !37
-// CHECK:STDOUT:   ret i1 %float.greater_eq, !dbg !38
+// CHECK:STDOUT:   %GreaterEq.call = fcmp oge double %a, %b, !dbg !37
+// CHECK:STDOUT:   ret i1 %GreaterEq.call, !dbg !38
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: !llvm.module.flags = !{!0, !1}

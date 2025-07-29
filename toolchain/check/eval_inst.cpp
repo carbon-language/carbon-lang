@@ -485,12 +485,12 @@ auto EvalConstantInst(Context& context, SemIR::InstId inst_id,
 
 auto EvalConstantInst(Context& context, SemIR::InstId inst_id,
                       SemIR::SpecificFunction inst) -> ConstantEvalResult {
-  if (auto callee_function =
-          SemIR::GetCalleeFunction(context.sem_ir(), inst.callee_id);
-      !callee_function.self_type_id.has_value() &&
-      context.functions()
-              .Get(callee_function.function_id)
-              .builtin_function_kind() != SemIR::BuiltinFunctionKind::NoOp) {
+  auto callee_function =
+      SemIR::GetCalleeFunction(context.sem_ir(), inst.callee_id);
+  const auto& fn = context.functions().Get(callee_function.function_id);
+  if (!callee_function.self_type_id.has_value() &&
+      fn.builtin_function_kind() != SemIR::BuiltinFunctionKind::NoOp &&
+      fn.virtual_modifier != SemIR::Function::VirtualModifier::Abstract) {
     // This is not an associated function. Those will be required to be defined
     // as part of checking that the impl is complete.
     context.definitions_required_by_use().push_back(

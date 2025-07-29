@@ -286,7 +286,7 @@ static auto GetFacetTypeConstraintValue(Context& context,
   return std::nullopt;
 }
 
-// Returns an true if two values in a rewrite constraint are equivalent. Two
+// Returns true if two values in a rewrite constraint are equivalent. Two
 // `ImplWitnessAccess` instructions that refer to the same associated constant
 // through the same facet value are treated as equivalent.
 static auto CompareFacetTypeConstraintValues(Context& context,
