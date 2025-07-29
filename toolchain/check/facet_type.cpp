@@ -397,19 +397,14 @@ class AccessRewriteValues {
     return &it->second;
   }
 
-  auto SetBeingRewritten(Context& context, SemIR::ImplWitnessAccess access)
-      -> void {
-    auto it = map_.find({GetKey(context, access)});
-    CARBON_CHECK(it != map_.end());
-    if (it->second.state == NotRewritten) {
-      it->second.state = BeingRewritten;
+  auto SetBeingRewritten(Value* value) -> void {
+    if (value->state == NotRewritten) {
+      value->state = BeingRewritten;
     }
   }
 
-  auto SetFullyRewritten(Context& context, SemIR::ImplWitnessAccess access,
-                         SemIR::InstId rewritten_to_inst_id) -> void {
-    auto it = map_.find({GetKey(context, access)});
-    CARBON_CHECK(it != map_.end());
+  auto SetFullyRewritten(Value* value, SemIR::InstId rewritten_to_inst_id)
+      -> void {
     // TODO: If state == FullyRewrtten and the inst id is different (according
     // to `CompareFacetTypeConstraintValues`), we can diagnose writing two
     // different values for the same associated constant immediately?
@@ -418,8 +413,8 @@ class AccessRewriteValues {
     // step in ResolveFacetTypeRewriteConstraints()? We can just convert this
     // `map_` into a new set of `RewriteConstraint`s which will already be
     // deduped.
-    if (it->second.state == BeingRewritten) {
-      it->second = {FullyRewritten, rewritten_to_inst_id};
+    if (value->state == BeingRewritten) {
+      *value = {FullyRewritten, rewritten_to_inst_id};
     }
   }
 
@@ -495,10 +490,11 @@ class AccessRewriteValues {
 // The `rewrite_values` given to the constructor must be set up initially with
 // each rewrite rule of an associated constant inserted with its unresolved
 // value via `InsertNotRewritten`. Then for each rewrite rule of an associated
-// constant, the LHS access should be set as being rewritten via
-// `SetBeingRewritten` in order to detect cycles before performing SubstInst.
-// The result of SubstInst should be inserted afterward via `InsertRewritten` to
-// avoid duplicating work.
+// constant, the LHS access should be set as being rewritten with its state
+// changed to `BeingRewritten` in order to detect cycles before performing
+// SubstInst. The result of SubstInst should be preserved afterward by changing
+// the state and value for the LHS to `FullyRewritten` and the subst output
+// instruction, respectively, to avoid duplicating work.
 class SubstImplWitnessAccessCallbacks : public SubstInstCallbacks {
  public:
   explicit SubstImplWitnessAccessCallbacks(Context* context,
@@ -559,7 +555,7 @@ class SubstImplWitnessAccessCallbacks : public SubstInstCallbacks {
 
     // We have a non-rewritten RHS. We need to recurse on rewriting it. Reuse
     // the previous lookup by mutating it in place.
-    rewrite_value->state = AccessRewriteValues::BeingRewritten;
+    rewrite_values_->SetBeingRewritten(rewrite_value);
 
     // The ImplWitnessAccess was replaced with some other instruction, which may
     // contain or be another ImplWitnessAccess. Keep track of the associated
@@ -575,7 +571,8 @@ class SubstImplWitnessAccessCallbacks : public SubstInstCallbacks {
     auto subst_inst_id = substs_in_progress_.pop_back_val();
     if (auto access = context().insts().TryGetAs<SemIR::ImplWitnessAccess>(
             subst_inst_id)) {
-      rewrite_values_->SetFullyRewritten(context(), *access, inst_id);
+      rewrite_values_->SetFullyRewritten(
+          rewrite_values_->FindRef(context(), *access), inst_id);
     }
     return inst_id;
   }
@@ -584,7 +581,8 @@ class SubstImplWitnessAccessCallbacks : public SubstInstCallbacks {
     auto subst_inst_id = substs_in_progress_.pop_back_val();
     if (auto access = context().insts().TryGetAs<SemIR::ImplWitnessAccess>(
             subst_inst_id)) {
-      rewrite_values_->SetFullyRewritten(context(), *access, orig_inst_id);
+      rewrite_values_->SetFullyRewritten(
+          rewrite_values_->FindRef(context(), *access), orig_inst_id);
     }
     return orig_inst_id;
   }
@@ -651,7 +649,8 @@ auto ResolveFacetTypeRewriteConstraints(
       continue;
     }
 
-    rewrite_values.SetBeingRewritten(context, *lhs_access);
+    auto* lhs_rewrite_value = rewrite_values.FindRef(context, *lhs_access);
+    rewrite_values.SetBeingRewritten(lhs_rewrite_value);
 
     auto replace_witness_callbacks =
         SubstImplWitnessAccessCallbacks(&context, loc_id, &rewrite_values);
@@ -662,7 +661,7 @@ auto ResolveFacetTypeRewriteConstraints(
       return false;
     }
 
-    rewrite_values.SetFullyRewritten(context, *lhs_access, subst_inst_id);
+    rewrite_values.SetFullyRewritten(lhs_rewrite_value, subst_inst_id);
   }
 
   // We sort the constraints so that we can find different values being written
