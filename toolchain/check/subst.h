@@ -77,10 +77,6 @@ class SubstInstCallbacks {
 // Performs substitution into `inst_id` and its operands recursively, using
 // `callbacks` to process each instruction. For each instruction encountered,
 // calls `Subst` to perform substitution on that instruction.
-//
-// If `Subst` returns false, the instruction is decomposed into its operands,
-// which are substituted recursively, and if any of them change then `Rebuild`
-// is used to build a new instruction with the substituted operands.
 auto SubstInst(Context& context, SemIR::InstId inst_id,
                SubstInstCallbacks& callbacks) -> SemIR::InstId;
 auto SubstInst(Context& context, SemIR::TypeInstId inst_id,
