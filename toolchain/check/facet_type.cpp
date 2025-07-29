@@ -622,7 +622,6 @@ auto ResolveFacetTypeRewriteConstraints(
         context.emitter().Emit(loc_id, AssociatedConstantWithDifferentValues,
                                constraint.lhs_id, source_order1, source_order2);
       }
-      rhs_subst_inst_id = SemIR::ErrorInst::InstId;
       return false;
     }
 
