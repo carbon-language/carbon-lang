@@ -710,7 +710,7 @@ auto FileContext::BuildDISubprogram(const SemIR::Function& function,
       /*File=*/context().di_builder().createFile(loc.filename, ""),
       /*LineNo=*/loc.line_number,
       context().di_builder().createSubroutineType(
-          context().di_builder().getOrCreateTypeArray(std::nullopt)),
+          context().di_builder().getOrCreateTypeArray({})),
       /*ScopeLine=*/0, llvm::DINode::FlagZero,
       llvm::DISubprogram::SPFlagDefinition);
 }
