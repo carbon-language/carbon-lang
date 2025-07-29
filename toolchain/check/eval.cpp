@@ -635,10 +635,7 @@ static auto GetConstantFacetTypeInfo(EvalContext& eval_context,
   // Rewrite constraints are resolved first before replacing them with their
   // canonical instruction, so that in a `WhereExpr` we can work with the
   // `ImplWitnessAccess` references to `.Self` on the LHS of the constraints
-  // rather than the value of the associated constant they reference. It also
-  // ensures that any errors inserted during resolution will be seen by
-  // GetConstantValueIgnoringPeriodSelf() which will update the phase
-  // accordingly.
+  // rather than the value of the associated constant they reference.
   info.rewrite_constraints = orig.rewrite_constraints;
   if (!ResolveFacetTypeRewriteConstraints(eval_context.context(), loc_id,
                                           info.rewrite_constraints)) {
