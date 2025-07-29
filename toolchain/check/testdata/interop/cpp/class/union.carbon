@@ -82,21 +82,21 @@ fn MyF(bar: Cpp.Bar*);
 //@dump-sem-ir-end
 
 // ============================================================================
-// Public static member function
+// Static member function
 // ============================================================================
 
-// --- public_static_member_function.h
+// --- static_member_function.h
 
 union Bar {
  public:
   static auto foo() -> void;
 };
 
-// --- import_public_static_member_function.carbon
+// --- import_static_member_function.carbon
 
 library "[[@TEST_NAME]]";
 
-import Cpp library "public_static_member_function.h";
+import Cpp library "static_member_function.h";
 
 fn MyF() {
   //@dump-sem-ir-begin
@@ -105,85 +105,32 @@ fn MyF() {
 }
 
 // ============================================================================
-// Protected static member function
+// Static data member
 // ============================================================================
 
-// --- protected_static_member_function.h
-
-union Bar {
- protected:
-  static auto foo() -> void;
-};
-
-// --- fail_import_protected_static_member_function.carbon
-
-library "[[@TEST_NAME]]";
-
-import Cpp library "protected_static_member_function.h";
-
-fn MyF() {
-  // CHECK:STDERR: fail_import_protected_static_member_function.carbon:[[@LINE+5]]:3: error: cannot access protected member `foo` of type `Cpp.Bar` [ClassInvalidMemberAccess]
-  // CHECK:STDERR:   Cpp.Bar.foo();
-  // CHECK:STDERR:   ^~~~~~~~~~~
-  // CHECK:STDERR: fail_import_protected_static_member_function.carbon: note: declared here [ClassMemberDeclaration]
-  // CHECK:STDERR:
-  Cpp.Bar.foo();
-}
-
-
-// ============================================================================
-// Private static member function
-// ============================================================================
-
-// --- private_static_member_function.h
-
-union Bar {
- private:
-  static auto foo() -> void;
-};
-
-// --- fail_import_private_static_member_function.carbon
-
-library "[[@TEST_NAME]]";
-
-import Cpp library "private_static_member_function.h";
-
-fn MyF() {
-  // CHECK:STDERR: fail_import_private_static_member_function.carbon:[[@LINE+5]]:3: error: cannot access private member `foo` of type `Cpp.Bar` [ClassInvalidMemberAccess]
-  // CHECK:STDERR:   Cpp.Bar.foo();
-  // CHECK:STDERR:   ^~~~~~~~~~~
-  // CHECK:STDERR: fail_import_private_static_member_function.carbon: note: declared here [ClassMemberDeclaration]
-  // CHECK:STDERR:
-  Cpp.Bar.foo();
-}
-
-// ============================================================================
-// Public static data member
-// ============================================================================
-
-// --- public_static_data_member.h
+// --- static_data_member.h
 
 union Bar {
  public:
   static Bar* _Nonnull foo;
 };
 
-// --- fail_todo_import_public_static_data_member.carbon
+// --- fail_todo_import_static_data_member.carbon
 
 library "[[@TEST_NAME]]";
 
-import Cpp library "public_static_data_member.h";
+import Cpp library "static_data_member.h";
 
 fn MyF() {
   //@dump-sem-ir-begin
-  // CHECK:STDERR: fail_todo_import_public_static_data_member.carbon:[[@LINE+11]]:23: error: semantics TODO: `Unsupported: Declaration type Var` [SemanticsTodo]
+  // CHECK:STDERR: fail_todo_import_static_data_member.carbon:[[@LINE+11]]:23: error: semantics TODO: `Unsupported: Declaration type Var` [SemanticsTodo]
   // CHECK:STDERR:   let bar: Cpp.Bar* = Cpp.Bar.foo();
   // CHECK:STDERR:                       ^~~~~~~~~~~
-  // CHECK:STDERR: fail_todo_import_public_static_data_member.carbon:[[@LINE+8]]:23: note: in `Cpp` name lookup for `foo` [InCppNameLookup]
+  // CHECK:STDERR: fail_todo_import_static_data_member.carbon:[[@LINE+8]]:23: note: in `Cpp` name lookup for `foo` [InCppNameLookup]
   // CHECK:STDERR:   let bar: Cpp.Bar* = Cpp.Bar.foo();
   // CHECK:STDERR:                       ^~~~~~~~~~~
   // CHECK:STDERR:
-  // CHECK:STDERR: fail_todo_import_public_static_data_member.carbon:[[@LINE+4]]:23: error: member name `foo` not found in `Cpp.Bar` [MemberNameNotFoundInInstScope]
+  // CHECK:STDERR: fail_todo_import_static_data_member.carbon:[[@LINE+4]]:23: error: member name `foo` not found in `Cpp.Bar` [MemberNameNotFoundInInstScope]
   // CHECK:STDERR:   let bar: Cpp.Bar* = Cpp.Bar.foo();
   // CHECK:STDERR:                       ^~~~~~~~~~~
   // CHECK:STDERR:
@@ -192,86 +139,27 @@ fn MyF() {
 }
 
 // ============================================================================
-// Private static data member
+// Data member
 // ============================================================================
 
-// --- private_static_data_member.h
-
-union Bar {
- private:
-  static Bar* _Nonnull foo;
-};
-
-// --- fail_todo_import_private_static_data_member.carbon
-
-library "[[@TEST_NAME]]";
-
-import Cpp library "private_static_data_member.h";
-
-fn MyF() {
-  // CHECK:STDERR: fail_todo_import_private_static_data_member.carbon:[[@LINE+11]]:23: error: semantics TODO: `Unsupported: Declaration type Var` [SemanticsTodo]
-  // CHECK:STDERR:   let bar: Cpp.Bar* = Cpp.Bar.foo();
-  // CHECK:STDERR:                       ^~~~~~~~~~~
-  // CHECK:STDERR: fail_todo_import_private_static_data_member.carbon:[[@LINE+8]]:23: note: in `Cpp` name lookup for `foo` [InCppNameLookup]
-  // CHECK:STDERR:   let bar: Cpp.Bar* = Cpp.Bar.foo();
-  // CHECK:STDERR:                       ^~~~~~~~~~~
-  // CHECK:STDERR:
-  // CHECK:STDERR: fail_todo_import_private_static_data_member.carbon:[[@LINE+4]]:23: error: member name `foo` not found in `Cpp.Bar` [MemberNameNotFoundInInstScope]
-  // CHECK:STDERR:   let bar: Cpp.Bar* = Cpp.Bar.foo();
-  // CHECK:STDERR:                       ^~~~~~~~~~~
-  // CHECK:STDERR:
-  let bar: Cpp.Bar* = Cpp.Bar.foo();
-}
-
-// ============================================================================
-// Public data member
-// ============================================================================
-
-// --- public_data_member.h
+// --- data_member.h
 
 union Bar {
  public:
   Bar* _Nonnull foo;
 };
 
-// --- import_public_data_member.carbon
+// --- import_data_member.carbon
 
 library "[[@TEST_NAME]]";
 
-import Cpp library "public_data_member.h";
+import Cpp library "data_member.h";
 
 //@dump-sem-ir-begin
 fn MyF(bar : Cpp.Bar*) {
   let foo_bar: Cpp.Bar* = bar->foo;
 }
 //@dump-sem-ir-end
-
-// ============================================================================
-// Private data member
-// ============================================================================
-
-// --- private_data_member.h
-
-union Bar {
- private:
-  Bar* _Nonnull foo;
-};
-
-// --- fail_import_private_data_member.carbon
-
-library "[[@TEST_NAME]]";
-
-import Cpp library "private_data_member.h";
-
-fn MyF(bar : Cpp.Bar*) {
-  // CHECK:STDERR: fail_import_private_data_member.carbon:[[@LINE+6]]:27: error: cannot access private member `foo` of type `Cpp.Bar` [ClassInvalidMemberAccess]
-  // CHECK:STDERR:   let foo_bar: Cpp.Bar* = bar->foo;
-  // CHECK:STDERR:                           ^~~~~~~~
-  // CHECK:STDERR: fail_import_private_data_member.carbon:[[@LINE-6]]:1: in import [InImport]
-  // CHECK:STDERR: ./private_data_member.h:2: note: declared here [ClassMemberDeclaration]
-  // CHECK:STDERR:
-  let foo_bar: Cpp.Bar* = bar->foo;
-}
 
 // ============================================================================
 // To inherit public
@@ -434,7 +322,7 @@ fn MyF(bar: Cpp.Bar*);
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @MyF(%bar.param: %ptr);
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- import_public_static_member_function.carbon
+// CHECK:STDOUT: --- import_static_member_function.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [concrete]
@@ -461,7 +349,7 @@ fn MyF(bar: Cpp.Bar*);
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- fail_todo_import_public_static_data_member.carbon
+// CHECK:STDOUT: --- fail_todo_import_static_data_member.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %Bar: type = class_type @Bar [concrete]
@@ -494,7 +382,7 @@ fn MyF(bar: Cpp.Bar*);
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- import_public_data_member.carbon
+// CHECK:STDOUT: --- import_data_member.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %Bar: type = class_type @Bar [concrete]
