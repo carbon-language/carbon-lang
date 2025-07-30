@@ -51,23 +51,23 @@ fn G() {
 // CHECK:STDOUT:   %Generic.assoc_type.0fd: type = assoc_entity_type @Generic, @Generic(%Scalar) [symbolic]
 // CHECK:STDOUT:   %assoc0.296: %Generic.assoc_type.0fd = assoc_entity element0, @Generic.%Generic.F.decl [symbolic]
 // CHECK:STDOUT:   %GenericParam: type = class_type @GenericParam [concrete]
-// CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [concrete]
-// CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [concrete]
 // CHECK:STDOUT:   %Destroy.type: type = facet_type <@Destroy> [concrete]
 // CHECK:STDOUT:   %pattern_type.f6d: type = pattern_type auto [concrete]
-// CHECK:STDOUT:   %Destroy.impl_witness.5d1: <witness> = impl_witness file.%Destroy.impl_witness_table.loc19 [concrete]
+// CHECK:STDOUT:   %Destroy.impl_witness.884: <witness> = impl_witness @GenericParam.%Destroy.impl_witness_table [concrete]
 // CHECK:STDOUT:   %ptr.f73: type = ptr_type %GenericParam [concrete]
 // CHECK:STDOUT:   %pattern_type.7c3: type = pattern_type %ptr.f73 [concrete]
 // CHECK:STDOUT:   %GenericParam.as.Destroy.impl.Op.type: type = fn_type @GenericParam.as.Destroy.impl.Op [concrete]
 // CHECK:STDOUT:   %GenericParam.as.Destroy.impl.Op: %GenericParam.as.Destroy.impl.Op.type = struct_value () [concrete]
+// CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [concrete]
+// CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [concrete]
 // CHECK:STDOUT:   %WrongGenericParam: type = class_type @WrongGenericParam [concrete]
-// CHECK:STDOUT:   %Destroy.impl_witness.666: <witness> = impl_witness file.%Destroy.impl_witness_table.loc20 [concrete]
+// CHECK:STDOUT:   %Destroy.impl_witness.01c: <witness> = impl_witness @WrongGenericParam.%Destroy.impl_witness_table [concrete]
 // CHECK:STDOUT:   %ptr.397: type = ptr_type %WrongGenericParam [concrete]
 // CHECK:STDOUT:   %pattern_type.396: type = pattern_type %ptr.397 [concrete]
 // CHECK:STDOUT:   %WrongGenericParam.as.Destroy.impl.Op.type: type = fn_type @WrongGenericParam.as.Destroy.impl.Op [concrete]
 // CHECK:STDOUT:   %WrongGenericParam.as.Destroy.impl.Op: %WrongGenericParam.as.Destroy.impl.Op.type = struct_value () [concrete]
 // CHECK:STDOUT:   %ImplsGeneric: type = class_type @ImplsGeneric [concrete]
-// CHECK:STDOUT:   %Destroy.impl_witness.49a: <witness> = impl_witness file.%Destroy.impl_witness_table.loc22 [concrete]
+// CHECK:STDOUT:   %Destroy.impl_witness.9ca: <witness> = impl_witness @ImplsGeneric.%Destroy.impl_witness_table [concrete]
 // CHECK:STDOUT:   %ptr.011: type = ptr_type %ImplsGeneric [concrete]
 // CHECK:STDOUT:   %pattern_type.2db: type = pattern_type %ptr.011 [concrete]
 // CHECK:STDOUT:   %ImplsGeneric.as.Destroy.impl.Op.type: type = fn_type @ImplsGeneric.as.Destroy.impl.Op [concrete]
@@ -118,17 +118,8 @@ fn G() {
 // CHECK:STDOUT:     %Scalar.loc15_19.2: type = bind_symbolic_name Scalar, 0 [symbolic = %Scalar.loc15_19.1 (constants.%Scalar)]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %GenericParam.decl: type = class_decl @GenericParam [concrete = constants.%GenericParam] {} {}
-// CHECK:STDOUT:   impl_decl @GenericParam.as.Destroy.impl [concrete] {} {}
-// CHECK:STDOUT:   %Destroy.impl_witness_table.loc19 = impl_witness_table (@GenericParam.as.Destroy.impl.%GenericParam.as.Destroy.impl.Op.decl), @GenericParam.as.Destroy.impl [concrete]
-// CHECK:STDOUT:   %Destroy.impl_witness.loc19: <witness> = impl_witness %Destroy.impl_witness_table.loc19 [concrete = constants.%Destroy.impl_witness.5d1]
 // CHECK:STDOUT:   %WrongGenericParam.decl: type = class_decl @WrongGenericParam [concrete = constants.%WrongGenericParam] {} {}
-// CHECK:STDOUT:   impl_decl @WrongGenericParam.as.Destroy.impl [concrete] {} {}
-// CHECK:STDOUT:   %Destroy.impl_witness_table.loc20 = impl_witness_table (@WrongGenericParam.as.Destroy.impl.%WrongGenericParam.as.Destroy.impl.Op.decl), @WrongGenericParam.as.Destroy.impl [concrete]
-// CHECK:STDOUT:   %Destroy.impl_witness.loc20: <witness> = impl_witness %Destroy.impl_witness_table.loc20 [concrete = constants.%Destroy.impl_witness.666]
 // CHECK:STDOUT:   %ImplsGeneric.decl: type = class_decl @ImplsGeneric [concrete = constants.%ImplsGeneric] {} {}
-// CHECK:STDOUT:   impl_decl @ImplsGeneric.as.Destroy.impl [concrete] {} {}
-// CHECK:STDOUT:   %Destroy.impl_witness_table.loc22 = impl_witness_table (@ImplsGeneric.as.Destroy.impl.%ImplsGeneric.as.Destroy.impl.Op.decl), @ImplsGeneric.as.Destroy.impl [concrete]
-// CHECK:STDOUT:   %Destroy.impl_witness.loc22: <witness> = impl_witness %Destroy.impl_witness_table.loc22 [concrete = constants.%Destroy.impl_witness.49a]
 // CHECK:STDOUT:   impl_decl @ImplsGeneric.as.Generic.impl [concrete] {} {
 // CHECK:STDOUT:     %ImplsGeneric.ref: type = name_ref ImplsGeneric, file.%ImplsGeneric.decl [concrete = constants.%ImplsGeneric]
 // CHECK:STDOUT:     %Generic.ref: %Generic.type.c21 = name_ref Generic, file.%Generic.decl [concrete = constants.%Generic.generic]
@@ -188,7 +179,7 @@ fn G() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Op = %GenericParam.as.Destroy.impl.Op.decl
-// CHECK:STDOUT:   witness = file.%Destroy.impl_witness.loc19
+// CHECK:STDOUT:   witness = @GenericParam.%Destroy.impl_witness
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: impl @WrongGenericParam.as.Destroy.impl: constants.%WrongGenericParam as constants.%Destroy.type {
@@ -204,7 +195,7 @@ fn G() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Op = %WrongGenericParam.as.Destroy.impl.Op.decl
-// CHECK:STDOUT:   witness = file.%Destroy.impl_witness.loc20
+// CHECK:STDOUT:   witness = @WrongGenericParam.%Destroy.impl_witness
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: impl @ImplsGeneric.as.Destroy.impl: constants.%ImplsGeneric as constants.%Destroy.type {
@@ -220,7 +211,7 @@ fn G() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Op = %ImplsGeneric.as.Destroy.impl.Op.decl
-// CHECK:STDOUT:   witness = file.%Destroy.impl_witness.loc22
+// CHECK:STDOUT:   witness = @ImplsGeneric.%Destroy.impl_witness
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: impl @ImplsGeneric.as.Generic.impl: %ImplsGeneric.ref as %Generic.type {
@@ -232,6 +223,9 @@ fn G() {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @GenericParam {
+// CHECK:STDOUT:   impl_decl @GenericParam.as.Destroy.impl [concrete] {} {}
+// CHECK:STDOUT:   %Destroy.impl_witness_table = impl_witness_table (@GenericParam.as.Destroy.impl.%GenericParam.as.Destroy.impl.Op.decl), @GenericParam.as.Destroy.impl [concrete]
+// CHECK:STDOUT:   %Destroy.impl_witness: <witness> = impl_witness %Destroy.impl_witness_table [concrete = constants.%Destroy.impl_witness.884]
 // CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [concrete = constants.%empty_struct_type]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [concrete = constants.%complete_type]
 // CHECK:STDOUT:   complete_type_witness = %complete_type
@@ -241,6 +235,9 @@ fn G() {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @WrongGenericParam {
+// CHECK:STDOUT:   impl_decl @WrongGenericParam.as.Destroy.impl [concrete] {} {}
+// CHECK:STDOUT:   %Destroy.impl_witness_table = impl_witness_table (@WrongGenericParam.as.Destroy.impl.%WrongGenericParam.as.Destroy.impl.Op.decl), @WrongGenericParam.as.Destroy.impl [concrete]
+// CHECK:STDOUT:   %Destroy.impl_witness: <witness> = impl_witness %Destroy.impl_witness_table [concrete = constants.%Destroy.impl_witness.01c]
 // CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [concrete = constants.%empty_struct_type]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [concrete = constants.%complete_type]
 // CHECK:STDOUT:   complete_type_witness = %complete_type
@@ -250,6 +247,9 @@ fn G() {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @ImplsGeneric {
+// CHECK:STDOUT:   impl_decl @ImplsGeneric.as.Destroy.impl [concrete] {} {}
+// CHECK:STDOUT:   %Destroy.impl_witness_table = impl_witness_table (@ImplsGeneric.as.Destroy.impl.%ImplsGeneric.as.Destroy.impl.Op.decl), @ImplsGeneric.as.Destroy.impl [concrete]
+// CHECK:STDOUT:   %Destroy.impl_witness: <witness> = impl_witness %Destroy.impl_witness_table [concrete = constants.%Destroy.impl_witness.9ca]
 // CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [concrete = constants.%empty_struct_type]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [concrete = constants.%complete_type]
 // CHECK:STDOUT:   complete_type_witness = %complete_type

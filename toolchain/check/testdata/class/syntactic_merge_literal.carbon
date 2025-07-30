@@ -47,15 +47,15 @@ class D(b:! C(1_000)) {}
 // CHECK:STDOUT:   %C.type: type = generic_class_type @C [concrete]
 // CHECK:STDOUT:   %C.generic: %C.type = struct_value () [concrete]
 // CHECK:STDOUT:   %C.506: type = class_type @C, @C(%a) [symbolic]
-// CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [concrete]
-// CHECK:STDOUT:   %complete_type.357: <witness> = complete_type_witness %empty_struct_type [concrete]
 // CHECK:STDOUT:   %Destroy.type: type = facet_type <@Destroy> [concrete]
 // CHECK:STDOUT:   %pattern_type.f6d: type = pattern_type auto [concrete]
-// CHECK:STDOUT:   %Destroy.impl_witness.781: <witness> = impl_witness file.%Destroy.impl_witness_table.loc4, @C.as.Destroy.impl(%a) [symbolic]
+// CHECK:STDOUT:   %Destroy.impl_witness.1ba: <witness> = impl_witness @C.%Destroy.impl_witness_table, @C.as.Destroy.impl(%a) [symbolic]
 // CHECK:STDOUT:   %ptr.128: type = ptr_type %C.506 [symbolic]
 // CHECK:STDOUT:   %pattern_type.d64: type = pattern_type %ptr.128 [symbolic]
 // CHECK:STDOUT:   %C.as.Destroy.impl.Op.type: type = fn_type @C.as.Destroy.impl.Op, @C.as.Destroy.impl(%a) [symbolic]
 // CHECK:STDOUT:   %C.as.Destroy.impl.Op: %C.as.Destroy.impl.Op.type = struct_value () [symbolic]
+// CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [concrete]
+// CHECK:STDOUT:   %complete_type.357: <witness> = complete_type_witness %empty_struct_type [concrete]
 // CHECK:STDOUT:   %int_1000.ff9: Core.IntLiteral = int_value 1000 [concrete]
 // CHECK:STDOUT:   %ImplicitAs.type.cc7: type = generic_interface_type @ImplicitAs [concrete]
 // CHECK:STDOUT:   %ImplicitAs.generic: %ImplicitAs.type.cc7 = struct_value () [concrete]
@@ -79,7 +79,7 @@ class D(b:! C(1_000)) {}
 // CHECK:STDOUT:   %D.type: type = generic_class_type @D [concrete]
 // CHECK:STDOUT:   %D.generic: %D.type = struct_value () [concrete]
 // CHECK:STDOUT:   %D: type = class_type @D, @D(%b) [symbolic]
-// CHECK:STDOUT:   %Destroy.impl_witness.0f5: <witness> = impl_witness file.%Destroy.impl_witness_table.loc6, @D.as.Destroy.impl(%b) [symbolic]
+// CHECK:STDOUT:   %Destroy.impl_witness.5ad: <witness> = impl_witness @D.%Destroy.impl_witness_table, @D.as.Destroy.impl(%b) [symbolic]
 // CHECK:STDOUT:   %ptr.779: type = ptr_type %D [symbolic]
 // CHECK:STDOUT:   %pattern_type.bf6: type = pattern_type %ptr.779 [symbolic]
 // CHECK:STDOUT:   %D.as.Destroy.impl.Op.type: type = fn_type @D.as.Destroy.impl.Op, @D.as.Destroy.impl(%b) [symbolic]
@@ -117,9 +117,6 @@ class D(b:! C(1_000)) {}
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %a.loc4_9.2: %i32 = bind_symbolic_name a, 0 [symbolic = %a.loc4_9.1 (constants.%a)]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   impl_decl @C.as.Destroy.impl [concrete] {} {}
-// CHECK:STDOUT:   %Destroy.impl_witness_table.loc4 = impl_witness_table (@C.as.Destroy.impl.%C.as.Destroy.impl.Op.decl), @C.as.Destroy.impl [concrete]
-// CHECK:STDOUT:   %Destroy.impl_witness.loc4: <witness> = impl_witness %Destroy.impl_witness_table.loc4, @C.as.Destroy.impl(constants.%a) [symbolic = @C.as.Destroy.impl.%Destroy.impl_witness (constants.%Destroy.impl_witness.781)]
 // CHECK:STDOUT:   %D.decl.loc5: %D.type = class_decl @D [concrete = constants.%D.generic] {
 // CHECK:STDOUT:     %b.patt: %pattern_type.dfb = symbolic_binding_pattern b, 0 [concrete]
 // CHECK:STDOUT:   } {
@@ -154,14 +151,11 @@ class D(b:! C(1_000)) {}
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %b.loc6: %C.262 = bind_symbolic_name b, 0 [symbolic = %b.loc5_9.1 (constants.%b)]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   impl_decl @D.as.Destroy.impl [concrete] {} {}
-// CHECK:STDOUT:   %Destroy.impl_witness_table.loc6 = impl_witness_table (@D.as.Destroy.impl.%D.as.Destroy.impl.Op.decl), @D.as.Destroy.impl [concrete]
-// CHECK:STDOUT:   %Destroy.impl_witness.loc6: <witness> = impl_witness %Destroy.impl_witness_table.loc6, @D.as.Destroy.impl(constants.%b) [symbolic = @D.as.Destroy.impl.%Destroy.impl_witness (constants.%Destroy.impl_witness.0f5)]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic impl @C.as.Destroy.impl(@C.%a.loc4_9.2: %i32) {
 // CHECK:STDOUT:   %a: %i32 = bind_symbolic_name a, 0 [symbolic = %a (constants.%a)]
-// CHECK:STDOUT:   %Destroy.impl_witness: <witness> = impl_witness file.%Destroy.impl_witness_table.loc4, @C.as.Destroy.impl(%a) [symbolic = %Destroy.impl_witness (constants.%Destroy.impl_witness.781)]
+// CHECK:STDOUT:   %Destroy.impl_witness: <witness> = impl_witness @C.%Destroy.impl_witness_table, @C.as.Destroy.impl(%a) [symbolic = %Destroy.impl_witness (constants.%Destroy.impl_witness.1ba)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %C.as.Destroy.impl.Op.type: type = fn_type @C.as.Destroy.impl.Op, @C.as.Destroy.impl(%a) [symbolic = %C.as.Destroy.impl.Op.type (constants.%C.as.Destroy.impl.Op.type)]
@@ -183,13 +177,13 @@ class D(b:! C(1_000)) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT:   !members:
 // CHECK:STDOUT:     .Op = %C.as.Destroy.impl.Op.decl
-// CHECK:STDOUT:     witness = file.%Destroy.impl_witness.loc4
+// CHECK:STDOUT:     witness = @C.%Destroy.impl_witness
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic impl @D.as.Destroy.impl(@D.%b.loc6: %C.262) {
 // CHECK:STDOUT:   %b: %C.262 = bind_symbolic_name b, 0 [symbolic = %b (constants.%b)]
-// CHECK:STDOUT:   %Destroy.impl_witness: <witness> = impl_witness file.%Destroy.impl_witness_table.loc6, @D.as.Destroy.impl(%b) [symbolic = %Destroy.impl_witness (constants.%Destroy.impl_witness.0f5)]
+// CHECK:STDOUT:   %Destroy.impl_witness: <witness> = impl_witness @D.%Destroy.impl_witness_table, @D.as.Destroy.impl(%b) [symbolic = %Destroy.impl_witness (constants.%Destroy.impl_witness.5ad)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %D.as.Destroy.impl.Op.type: type = fn_type @D.as.Destroy.impl.Op, @D.as.Destroy.impl(%b) [symbolic = %D.as.Destroy.impl.Op.type (constants.%D.as.Destroy.impl.Op.type)]
@@ -211,7 +205,7 @@ class D(b:! C(1_000)) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT:   !members:
 // CHECK:STDOUT:     .Op = %D.as.Destroy.impl.Op.decl
-// CHECK:STDOUT:     witness = file.%Destroy.impl_witness.loc6
+// CHECK:STDOUT:     witness = @D.%Destroy.impl_witness
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -221,6 +215,9 @@ class D(b:! C(1_000)) {}
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:
 // CHECK:STDOUT:   class {
+// CHECK:STDOUT:     impl_decl @C.as.Destroy.impl [concrete] {} {}
+// CHECK:STDOUT:     %Destroy.impl_witness_table = impl_witness_table (@C.as.Destroy.impl.%C.as.Destroy.impl.Op.decl), @C.as.Destroy.impl [concrete]
+// CHECK:STDOUT:     %Destroy.impl_witness: <witness> = impl_witness %Destroy.impl_witness_table, @C.as.Destroy.impl(constants.%a) [symbolic = @C.as.Destroy.impl.%Destroy.impl_witness (constants.%Destroy.impl_witness.1ba)]
 // CHECK:STDOUT:     %empty_struct_type: type = struct_type {} [concrete = constants.%empty_struct_type]
 // CHECK:STDOUT:     %complete_type: <witness> = complete_type_witness %empty_struct_type [concrete = constants.%complete_type.357]
 // CHECK:STDOUT:     complete_type_witness = %complete_type
@@ -236,6 +233,9 @@ class D(b:! C(1_000)) {}
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:
 // CHECK:STDOUT:   class {
+// CHECK:STDOUT:     impl_decl @D.as.Destroy.impl [concrete] {} {}
+// CHECK:STDOUT:     %Destroy.impl_witness_table = impl_witness_table (@D.as.Destroy.impl.%D.as.Destroy.impl.Op.decl), @D.as.Destroy.impl [concrete]
+// CHECK:STDOUT:     %Destroy.impl_witness: <witness> = impl_witness %Destroy.impl_witness_table, @D.as.Destroy.impl(constants.%b) [symbolic = @D.as.Destroy.impl.%Destroy.impl_witness (constants.%Destroy.impl_witness.5ad)]
 // CHECK:STDOUT:     %empty_struct_type: type = struct_type {} [concrete = constants.%empty_struct_type]
 // CHECK:STDOUT:     %complete_type: <witness> = complete_type_witness %empty_struct_type [concrete = constants.%complete_type.357]
 // CHECK:STDOUT:     complete_type_witness = %complete_type
@@ -273,7 +273,7 @@ class D(b:! C(1_000)) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @C.as.Destroy.impl(constants.%a) {
 // CHECK:STDOUT:   %a => constants.%a
-// CHECK:STDOUT:   %Destroy.impl_witness => constants.%Destroy.impl_witness.781
+// CHECK:STDOUT:   %Destroy.impl_witness => constants.%Destroy.impl_witness.1ba
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @C.as.Destroy.impl.Op(constants.%a) {
@@ -295,7 +295,7 @@ class D(b:! C(1_000)) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @D.as.Destroy.impl(constants.%b) {
 // CHECK:STDOUT:   %b => constants.%b
-// CHECK:STDOUT:   %Destroy.impl_witness => constants.%Destroy.impl_witness.0f5
+// CHECK:STDOUT:   %Destroy.impl_witness => constants.%Destroy.impl_witness.5ad
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @D.as.Destroy.impl.Op(constants.%b) {
@@ -317,15 +317,15 @@ class D(b:! C(1_000)) {}
 // CHECK:STDOUT:   %C.type: type = generic_class_type @C [concrete]
 // CHECK:STDOUT:   %C.generic: %C.type = struct_value () [concrete]
 // CHECK:STDOUT:   %C.506: type = class_type @C, @C(%a) [symbolic]
-// CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [concrete]
-// CHECK:STDOUT:   %complete_type.357: <witness> = complete_type_witness %empty_struct_type [concrete]
 // CHECK:STDOUT:   %Destroy.type: type = facet_type <@Destroy> [concrete]
 // CHECK:STDOUT:   %pattern_type.f6d: type = pattern_type auto [concrete]
-// CHECK:STDOUT:   %Destroy.impl_witness.781: <witness> = impl_witness file.%Destroy.impl_witness_table.loc4, @C.as.Destroy.impl(%a) [symbolic]
+// CHECK:STDOUT:   %Destroy.impl_witness.1ba: <witness> = impl_witness @C.%Destroy.impl_witness_table, @C.as.Destroy.impl(%a) [symbolic]
 // CHECK:STDOUT:   %ptr.128: type = ptr_type %C.506 [symbolic]
 // CHECK:STDOUT:   %pattern_type.d64: type = pattern_type %ptr.128 [symbolic]
 // CHECK:STDOUT:   %C.as.Destroy.impl.Op.type: type = fn_type @C.as.Destroy.impl.Op, @C.as.Destroy.impl(%a) [symbolic]
 // CHECK:STDOUT:   %C.as.Destroy.impl.Op: %C.as.Destroy.impl.Op.type = struct_value () [symbolic]
+// CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [concrete]
+// CHECK:STDOUT:   %complete_type.357: <witness> = complete_type_witness %empty_struct_type [concrete]
 // CHECK:STDOUT:   %int_1000.ff9: Core.IntLiteral = int_value 1000 [concrete]
 // CHECK:STDOUT:   %ImplicitAs.type.cc7: type = generic_interface_type @ImplicitAs [concrete]
 // CHECK:STDOUT:   %ImplicitAs.generic: %ImplicitAs.type.cc7 = struct_value () [concrete]
@@ -351,7 +351,7 @@ class D(b:! C(1_000)) {}
 // CHECK:STDOUT:   %D.type.bbd080.2: type = generic_class_type @D.loc13 [concrete]
 // CHECK:STDOUT:   %D.generic.4e2319.2: %D.type.bbd080.2 = struct_value () [concrete]
 // CHECK:STDOUT:   %D.126b2d.2: type = class_type @D.loc13, @D.loc13(%b) [symbolic]
-// CHECK:STDOUT:   %Destroy.impl_witness.0f5: <witness> = impl_witness file.%Destroy.impl_witness_table.loc13, @D.as.Destroy.impl(%b) [symbolic]
+// CHECK:STDOUT:   %Destroy.impl_witness.5ad: <witness> = impl_witness @D.loc13.%Destroy.impl_witness_table, @D.as.Destroy.impl(%b) [symbolic]
 // CHECK:STDOUT:   %ptr.779: type = ptr_type %D.126b2d.2 [symbolic]
 // CHECK:STDOUT:   %pattern_type.bf6: type = pattern_type %ptr.779 [symbolic]
 // CHECK:STDOUT:   %D.as.Destroy.impl.Op.type: type = fn_type @D.as.Destroy.impl.Op, @D.as.Destroy.impl(%b) [symbolic]
@@ -389,9 +389,6 @@ class D(b:! C(1_000)) {}
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %a.loc4_9.2: %i32 = bind_symbolic_name a, 0 [symbolic = %a.loc4_9.1 (constants.%a)]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   impl_decl @C.as.Destroy.impl [concrete] {} {}
-// CHECK:STDOUT:   %Destroy.impl_witness_table.loc4 = impl_witness_table (@C.as.Destroy.impl.%C.as.Destroy.impl.Op.decl), @C.as.Destroy.impl [concrete]
-// CHECK:STDOUT:   %Destroy.impl_witness.loc4: <witness> = impl_witness %Destroy.impl_witness_table.loc4, @C.as.Destroy.impl(constants.%a) [symbolic = @C.as.Destroy.impl.%Destroy.impl_witness (constants.%Destroy.impl_witness.781)]
 // CHECK:STDOUT:   %D.decl.loc5: %D.type.bbd080.1 = class_decl @D.loc5 [concrete = constants.%D.generic.4e2319.1] {
 // CHECK:STDOUT:     %b.patt: %pattern_type.dfb = symbolic_binding_pattern b, 0 [concrete]
 // CHECK:STDOUT:   } {
@@ -426,14 +423,11 @@ class D(b:! C(1_000)) {}
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %b.loc13_9.2: %C.262 = bind_symbolic_name b, 0 [symbolic = %b.loc13_9.1 (constants.%b)]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   impl_decl @D.as.Destroy.impl [concrete] {} {}
-// CHECK:STDOUT:   %Destroy.impl_witness_table.loc13 = impl_witness_table (@D.as.Destroy.impl.%D.as.Destroy.impl.Op.decl), @D.as.Destroy.impl [concrete]
-// CHECK:STDOUT:   %Destroy.impl_witness.loc13: <witness> = impl_witness %Destroy.impl_witness_table.loc13, @D.as.Destroy.impl(constants.%b) [symbolic = @D.as.Destroy.impl.%Destroy.impl_witness (constants.%Destroy.impl_witness.0f5)]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic impl @C.as.Destroy.impl(@C.%a.loc4_9.2: %i32) {
 // CHECK:STDOUT:   %a: %i32 = bind_symbolic_name a, 0 [symbolic = %a (constants.%a)]
-// CHECK:STDOUT:   %Destroy.impl_witness: <witness> = impl_witness file.%Destroy.impl_witness_table.loc4, @C.as.Destroy.impl(%a) [symbolic = %Destroy.impl_witness (constants.%Destroy.impl_witness.781)]
+// CHECK:STDOUT:   %Destroy.impl_witness: <witness> = impl_witness @C.%Destroy.impl_witness_table, @C.as.Destroy.impl(%a) [symbolic = %Destroy.impl_witness (constants.%Destroy.impl_witness.1ba)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %C.as.Destroy.impl.Op.type: type = fn_type @C.as.Destroy.impl.Op, @C.as.Destroy.impl(%a) [symbolic = %C.as.Destroy.impl.Op.type (constants.%C.as.Destroy.impl.Op.type)]
@@ -455,13 +449,13 @@ class D(b:! C(1_000)) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT:   !members:
 // CHECK:STDOUT:     .Op = %C.as.Destroy.impl.Op.decl
-// CHECK:STDOUT:     witness = file.%Destroy.impl_witness.loc4
+// CHECK:STDOUT:     witness = @C.%Destroy.impl_witness
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic impl @D.as.Destroy.impl(@D.loc13.%b.loc13_9.2: %C.262) {
 // CHECK:STDOUT:   %b: %C.262 = bind_symbolic_name b, 0 [symbolic = %b (constants.%b)]
-// CHECK:STDOUT:   %Destroy.impl_witness: <witness> = impl_witness file.%Destroy.impl_witness_table.loc13, @D.as.Destroy.impl(%b) [symbolic = %Destroy.impl_witness (constants.%Destroy.impl_witness.0f5)]
+// CHECK:STDOUT:   %Destroy.impl_witness: <witness> = impl_witness @D.loc13.%Destroy.impl_witness_table, @D.as.Destroy.impl(%b) [symbolic = %Destroy.impl_witness (constants.%Destroy.impl_witness.5ad)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %D.as.Destroy.impl.Op.type: type = fn_type @D.as.Destroy.impl.Op, @D.as.Destroy.impl(%b) [symbolic = %D.as.Destroy.impl.Op.type (constants.%D.as.Destroy.impl.Op.type)]
@@ -483,7 +477,7 @@ class D(b:! C(1_000)) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT:   !members:
 // CHECK:STDOUT:     .Op = %D.as.Destroy.impl.Op.decl
-// CHECK:STDOUT:     witness = file.%Destroy.impl_witness.loc13
+// CHECK:STDOUT:     witness = @D.loc13.%Destroy.impl_witness
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -493,6 +487,9 @@ class D(b:! C(1_000)) {}
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:
 // CHECK:STDOUT:   class {
+// CHECK:STDOUT:     impl_decl @C.as.Destroy.impl [concrete] {} {}
+// CHECK:STDOUT:     %Destroy.impl_witness_table = impl_witness_table (@C.as.Destroy.impl.%C.as.Destroy.impl.Op.decl), @C.as.Destroy.impl [concrete]
+// CHECK:STDOUT:     %Destroy.impl_witness: <witness> = impl_witness %Destroy.impl_witness_table, @C.as.Destroy.impl(constants.%a) [symbolic = @C.as.Destroy.impl.%Destroy.impl_witness (constants.%Destroy.impl_witness.1ba)]
 // CHECK:STDOUT:     %empty_struct_type: type = struct_type {} [concrete = constants.%empty_struct_type]
 // CHECK:STDOUT:     %complete_type: <witness> = complete_type_witness %empty_struct_type [concrete = constants.%complete_type.357]
 // CHECK:STDOUT:     complete_type_witness = %complete_type
@@ -514,6 +511,9 @@ class D(b:! C(1_000)) {}
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:
 // CHECK:STDOUT:   class {
+// CHECK:STDOUT:     impl_decl @D.as.Destroy.impl [concrete] {} {}
+// CHECK:STDOUT:     %Destroy.impl_witness_table = impl_witness_table (@D.as.Destroy.impl.%D.as.Destroy.impl.Op.decl), @D.as.Destroy.impl [concrete]
+// CHECK:STDOUT:     %Destroy.impl_witness: <witness> = impl_witness %Destroy.impl_witness_table, @D.as.Destroy.impl(constants.%b) [symbolic = @D.as.Destroy.impl.%Destroy.impl_witness (constants.%Destroy.impl_witness.5ad)]
 // CHECK:STDOUT:     %empty_struct_type: type = struct_type {} [concrete = constants.%empty_struct_type]
 // CHECK:STDOUT:     %complete_type: <witness> = complete_type_witness %empty_struct_type [concrete = constants.%complete_type.357]
 // CHECK:STDOUT:     complete_type_witness = %complete_type
@@ -551,7 +551,7 @@ class D(b:! C(1_000)) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @C.as.Destroy.impl(constants.%a) {
 // CHECK:STDOUT:   %a => constants.%a
-// CHECK:STDOUT:   %Destroy.impl_witness => constants.%Destroy.impl_witness.781
+// CHECK:STDOUT:   %Destroy.impl_witness => constants.%Destroy.impl_witness.1ba
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @C.as.Destroy.impl.Op(constants.%a) {
@@ -577,7 +577,7 @@ class D(b:! C(1_000)) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @D.as.Destroy.impl(constants.%b) {
 // CHECK:STDOUT:   %b => constants.%b
-// CHECK:STDOUT:   %Destroy.impl_witness => constants.%Destroy.impl_witness.0f5
+// CHECK:STDOUT:   %Destroy.impl_witness => constants.%Destroy.impl_witness.5ad
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @D.as.Destroy.impl.Op(constants.%b) {

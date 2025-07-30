@@ -21,6 +21,7 @@ namespace Carbon::Check {
 // should inspect the resulting `impl` to ensure it's incomplete before
 // proceeding to define it.
 static auto TryDeclareImpl(Context& context, SemIR::LocId loc_id,
+                           SemIR::NameScopeId parent_scope_id,
                            SemIR::TypeId self_type_id,
                            SemIR::InstId interface_id)
     -> std::pair<SemIR::ImplId, SemIR::InstId> {
@@ -36,7 +37,7 @@ static auto TryDeclareImpl(Context& context, SemIR::LocId loc_id,
   SemIR::Impl impl = {
       {
           .name_id = SemIR::NameId::None,
-          .parent_scope_id = SemIR::NameScopeId::Package,
+          .parent_scope_id = parent_scope_id,
           .generic_id = SemIR::GenericId::None,
           .first_param_node_id = Parse::NodeId::None,
           .last_param_node_id = Parse::NodeId::None,
@@ -163,7 +164,8 @@ auto MakeClassDestroyImpl(Context& context, SemIR::ClassId class_id) -> void {
 
   // Declare the `impl`.
   auto [impl_id, impl_decl_id] =
-      TryDeclareImpl(context, loc_id, class_info.self_type_id, destroy_id);
+      TryDeclareImpl(context, loc_id, class_info.scope_id,
+                     class_info.self_type_id, destroy_id);
   auto& impl = context.impls().Get(impl_id);
   if (impl.is_complete()) {
     return;
@@ -172,7 +174,7 @@ auto MakeClassDestroyImpl(Context& context, SemIR::ClassId class_id) -> void {
   // Define the `impl`.
   impl.definition_id = impl_decl_id;
   impl.scope_id = context.name_scopes().Add(impl_decl_id, SemIR::NameId::None,
-                                            SemIR::NameScopeId::Package);
+                                            class_info.scope_id);
 
   context.scope_stack().PushForEntity(
       impl_decl_id, impl.scope_id,

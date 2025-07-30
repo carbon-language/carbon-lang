@@ -36,15 +36,15 @@ fn G() {
 // CHECK:STDOUT:   %pattern_type.7dcd0a.1: type = pattern_type %T [symbolic]
 // CHECK:STDOUT:   %Wrap.Make.type.652: type = fn_type @Wrap.Make, @Wrap(%T) [symbolic]
 // CHECK:STDOUT:   %Wrap.Make.eb2: %Wrap.Make.type.652 = struct_value () [symbolic]
-// CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [concrete]
-// CHECK:STDOUT:   %complete_type.357: <witness> = complete_type_witness %empty_struct_type [concrete]
 // CHECK:STDOUT:   %Destroy.type: type = facet_type <@Destroy> [concrete]
 // CHECK:STDOUT:   %pattern_type.f6d: type = pattern_type auto [concrete]
-// CHECK:STDOUT:   %Destroy.impl_witness.57a: <witness> = impl_witness file.%Destroy.impl_witness_table.loc15, @Wrap.as.Destroy.impl(%T) [symbolic]
+// CHECK:STDOUT:   %Destroy.impl_witness.c6a: <witness> = impl_witness @Wrap.%Destroy.impl_witness_table, @Wrap.as.Destroy.impl(%T) [symbolic]
 // CHECK:STDOUT:   %ptr.b45: type = ptr_type %Wrap.af6 [symbolic]
 // CHECK:STDOUT:   %pattern_type.3b2: type = pattern_type %ptr.b45 [symbolic]
 // CHECK:STDOUT:   %Wrap.as.Destroy.impl.Op.type: type = fn_type @Wrap.as.Destroy.impl.Op, @Wrap.as.Destroy.impl(%T) [symbolic]
 // CHECK:STDOUT:   %Wrap.as.Destroy.impl.Op: %Wrap.as.Destroy.impl.Op.type = struct_value () [symbolic]
+// CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [concrete]
+// CHECK:STDOUT:   %complete_type.357: <witness> = complete_type_witness %empty_struct_type [concrete]
 // CHECK:STDOUT:   %require_complete.4ae: <witness> = require_complete_type %T [symbolic]
 // CHECK:STDOUT:   %Wrap.Make.specific_fn.bf1: <specific function> = specific_function %Wrap.Make.eb2, @Wrap.Make(%T) [symbolic]
 // CHECK:STDOUT:   %C: type = class_type @C [concrete]
@@ -57,13 +57,13 @@ fn G() {
 // CHECK:STDOUT:   %i32.builtin: type = int_type signed, %int_32 [concrete]
 // CHECK:STDOUT:   %complete_type.f8a: <witness> = complete_type_witness %i32.builtin [concrete]
 // CHECK:STDOUT:   %C.elem: type = unbound_element_type %C, %array_type [concrete]
-// CHECK:STDOUT:   %struct_type.arr.5f2: type = struct_type {.arr: %array_type} [concrete]
-// CHECK:STDOUT:   %complete_type.22a: <witness> = complete_type_witness %struct_type.arr.5f2 [concrete]
-// CHECK:STDOUT:   %Destroy.impl_witness.44c: <witness> = impl_witness file.%Destroy.impl_witness_table.loc19 [concrete]
+// CHECK:STDOUT:   %Destroy.impl_witness.edd: <witness> = impl_witness @C.%Destroy.impl_witness_table [concrete]
 // CHECK:STDOUT:   %ptr.019: type = ptr_type %C [concrete]
 // CHECK:STDOUT:   %pattern_type.44a: type = pattern_type %ptr.019 [concrete]
 // CHECK:STDOUT:   %C.as.Destroy.impl.Op.type: type = fn_type @C.as.Destroy.impl.Op [concrete]
 // CHECK:STDOUT:   %C.as.Destroy.impl.Op: %C.as.Destroy.impl.Op.type = struct_value () [concrete]
+// CHECK:STDOUT:   %struct_type.arr.5f2: type = struct_type {.arr: %array_type} [concrete]
+// CHECK:STDOUT:   %complete_type.22a: <witness> = complete_type_witness %struct_type.arr.5f2 [concrete]
 // CHECK:STDOUT:   %G.type: type = fn_type @G [concrete]
 // CHECK:STDOUT:   %G: %G.type = struct_value () [concrete]
 // CHECK:STDOUT:   %pattern_type.7ce: type = pattern_type %i32 [concrete]
@@ -116,19 +116,13 @@ fn G() {
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %T.loc15_12.2: type = bind_symbolic_name T, 0 [symbolic = %T.loc15_12.1 (constants.%T)]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   impl_decl @Wrap.as.Destroy.impl [concrete] {} {}
-// CHECK:STDOUT:   %Destroy.impl_witness_table.loc15 = impl_witness_table (@Wrap.as.Destroy.impl.%Wrap.as.Destroy.impl.Op.decl), @Wrap.as.Destroy.impl [concrete]
-// CHECK:STDOUT:   %Destroy.impl_witness.loc15: <witness> = impl_witness %Destroy.impl_witness_table.loc15, @Wrap.as.Destroy.impl(constants.%T) [symbolic = @Wrap.as.Destroy.impl.%Destroy.impl_witness (constants.%Destroy.impl_witness.57a)]
 // CHECK:STDOUT:   %C.decl: type = class_decl @C [concrete = constants.%C] {} {}
-// CHECK:STDOUT:   impl_decl @C.as.Destroy.impl [concrete] {} {}
-// CHECK:STDOUT:   %Destroy.impl_witness_table.loc19 = impl_witness_table (@C.as.Destroy.impl.%C.as.Destroy.impl.Op.decl), @C.as.Destroy.impl [concrete]
-// CHECK:STDOUT:   %Destroy.impl_witness.loc19: <witness> = impl_witness %Destroy.impl_witness_table.loc19 [concrete = constants.%Destroy.impl_witness.44c]
 // CHECK:STDOUT:   %G.decl: %G.type = fn_decl @G [concrete = constants.%G] {} {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic impl @Wrap.as.Destroy.impl(@Wrap.%T.loc15_12.2: type) {
 // CHECK:STDOUT:   %T: type = bind_symbolic_name T, 0 [symbolic = %T (constants.%T)]
-// CHECK:STDOUT:   %Destroy.impl_witness: <witness> = impl_witness file.%Destroy.impl_witness_table.loc15, @Wrap.as.Destroy.impl(%T) [symbolic = %Destroy.impl_witness (constants.%Destroy.impl_witness.57a)]
+// CHECK:STDOUT:   %Destroy.impl_witness: <witness> = impl_witness @Wrap.%Destroy.impl_witness_table, @Wrap.as.Destroy.impl(%T) [symbolic = %Destroy.impl_witness (constants.%Destroy.impl_witness.c6a)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %Wrap.as.Destroy.impl.Op.type: type = fn_type @Wrap.as.Destroy.impl.Op, @Wrap.as.Destroy.impl(%T) [symbolic = %Wrap.as.Destroy.impl.Op.type (constants.%Wrap.as.Destroy.impl.Op.type)]
@@ -150,7 +144,7 @@ fn G() {
 // CHECK:STDOUT:
 // CHECK:STDOUT:   !members:
 // CHECK:STDOUT:     .Op = %Wrap.as.Destroy.impl.Op.decl
-// CHECK:STDOUT:     witness = file.%Destroy.impl_witness.loc15
+// CHECK:STDOUT:     witness = @Wrap.%Destroy.impl_witness
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -167,7 +161,7 @@ fn G() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Op = %C.as.Destroy.impl.Op.decl
-// CHECK:STDOUT:   witness = file.%Destroy.impl_witness.loc19
+// CHECK:STDOUT:   witness = @C.%Destroy.impl_witness
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic class @Wrap(%T.loc15_12.2: type) {
@@ -186,6 +180,9 @@ fn G() {
 // CHECK:STDOUT:       %return.param: ref @Wrap.Make.%T (%T) = out_param call_param0
 // CHECK:STDOUT:       %return: ref @Wrap.Make.%T (%T) = return_slot %return.param
 // CHECK:STDOUT:     }
+// CHECK:STDOUT:     impl_decl @Wrap.as.Destroy.impl [concrete] {} {}
+// CHECK:STDOUT:     %Destroy.impl_witness_table = impl_witness_table (@Wrap.as.Destroy.impl.%Wrap.as.Destroy.impl.Op.decl), @Wrap.as.Destroy.impl [concrete]
+// CHECK:STDOUT:     %Destroy.impl_witness: <witness> = impl_witness %Destroy.impl_witness_table, @Wrap.as.Destroy.impl(constants.%T) [symbolic = @Wrap.as.Destroy.impl.%Destroy.impl_witness (constants.%Destroy.impl_witness.c6a)]
 // CHECK:STDOUT:     %empty_struct_type: type = struct_type {} [concrete = constants.%empty_struct_type]
 // CHECK:STDOUT:     %complete_type: <witness> = complete_type_witness %empty_struct_type [concrete = constants.%complete_type.357]
 // CHECK:STDOUT:     complete_type_witness = %complete_type
@@ -203,6 +200,9 @@ fn G() {
 // CHECK:STDOUT:   %int_100: Core.IntLiteral = int_value 100 [concrete = constants.%int_100]
 // CHECK:STDOUT:   %array_type: type = array_type %int_100, %i32 [concrete = constants.%array_type]
 // CHECK:STDOUT:   %.loc19: %C.elem = field_decl arr, element0 [concrete]
+// CHECK:STDOUT:   impl_decl @C.as.Destroy.impl [concrete] {} {}
+// CHECK:STDOUT:   %Destroy.impl_witness_table = impl_witness_table (@C.as.Destroy.impl.%C.as.Destroy.impl.Op.decl), @C.as.Destroy.impl [concrete]
+// CHECK:STDOUT:   %Destroy.impl_witness: <witness> = impl_witness %Destroy.impl_witness_table [concrete = constants.%Destroy.impl_witness.edd]
 // CHECK:STDOUT:   %struct_type.arr: type = struct_type {.arr: %array_type} [concrete = constants.%struct_type.arr.5f2]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %struct_type.arr [concrete = constants.%complete_type.22a]
 // CHECK:STDOUT:   complete_type_witness = %complete_type
@@ -343,7 +343,7 @@ fn G() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Wrap.as.Destroy.impl(constants.%T) {
 // CHECK:STDOUT:   %T => constants.%T
-// CHECK:STDOUT:   %Destroy.impl_witness => constants.%Destroy.impl_witness.57a
+// CHECK:STDOUT:   %Destroy.impl_witness => constants.%Destroy.impl_witness.c6a
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Wrap.as.Destroy.impl.Op(constants.%T) {

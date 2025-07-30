@@ -567,6 +567,8 @@ auto HandleParseNode(Context& context, Parse::ClassDefinitionId node_id)
   auto class_id =
       context.node_stack().Pop<Parse::NodeKind::ClassDefinitionStart>();
 
+  MakeClassDestroyImpl(context, class_id);
+
   // The class type is now fully defined. Compute its object representation.
   ComputeClassObjectRepr(context, node_id, class_id,
                          context.field_decls_stack().PeekArray(),
@@ -578,8 +580,6 @@ auto HandleParseNode(Context& context, Parse::ClassDefinitionId node_id)
   context.vtable_stack().Pop();
 
   FinishGenericDefinition(context, context.classes().Get(class_id).generic_id);
-
-  MakeClassDestroyImpl(context, class_id);
 
   // The decl_name_stack and scopes are popped by `ProcessNodeIds`.
   return true;

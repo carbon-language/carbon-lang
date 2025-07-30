@@ -36,15 +36,15 @@ class Access {
 // CHECK:STDOUT:   %Int.generic: %Int.type = struct_value () [concrete]
 // CHECK:STDOUT:   %i32: type = class_type @Int, @Int(%int_32) [concrete]
 // CHECK:STDOUT:   %Access.elem: type = unbound_element_type %Access, %i32 [concrete]
-// CHECK:STDOUT:   %struct_type.k.l: type = struct_type {.k: %i32, .l: %i32} [concrete]
-// CHECK:STDOUT:   %complete_type.48a: <witness> = complete_type_witness %struct_type.k.l [concrete]
 // CHECK:STDOUT:   %Destroy.type: type = facet_type <@Destroy> [concrete]
 // CHECK:STDOUT:   %pattern_type.f6d: type = pattern_type auto [concrete]
-// CHECK:STDOUT:   %Destroy.impl_witness: <witness> = impl_witness file.%Destroy.impl_witness_table [concrete]
+// CHECK:STDOUT:   %Destroy.impl_witness: <witness> = impl_witness @Access.%Destroy.impl_witness_table [concrete]
 // CHECK:STDOUT:   %ptr.2af: type = ptr_type %Access [concrete]
 // CHECK:STDOUT:   %pattern_type.010: type = pattern_type %ptr.2af [concrete]
 // CHECK:STDOUT:   %Access.as.Destroy.impl.Op.type: type = fn_type @Access.as.Destroy.impl.Op [concrete]
 // CHECK:STDOUT:   %Access.as.Destroy.impl.Op: %Access.as.Destroy.impl.Op.type = struct_value () [concrete]
+// CHECK:STDOUT:   %struct_type.k.l: type = struct_type {.k: %i32, .l: %i32} [concrete]
+// CHECK:STDOUT:   %complete_type.48a: <witness> = complete_type_witness %struct_type.k.l [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -65,9 +65,6 @@ class Access {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %Access.decl: type = class_decl @Access [concrete = constants.%Access] {} {}
-// CHECK:STDOUT:   impl_decl @Access.as.Destroy.impl [concrete] {} {}
-// CHECK:STDOUT:   %Destroy.impl_witness_table = impl_witness_table (@Access.as.Destroy.impl.%Access.as.Destroy.impl.Op.decl), @Access.as.Destroy.impl [concrete]
-// CHECK:STDOUT:   %Destroy.impl_witness: <witness> = impl_witness %Destroy.impl_witness_table [concrete = constants.%Destroy.impl_witness]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: impl @Access.as.Destroy.impl: constants.%Access as constants.%Destroy.type {
@@ -83,7 +80,7 @@ class Access {
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Op = %Access.as.Destroy.impl.Op.decl
-// CHECK:STDOUT:   witness = file.%Destroy.impl_witness
+// CHECK:STDOUT:   witness = @Access.%Destroy.impl_witness
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @Access {
@@ -95,6 +92,9 @@ class Access {
 // CHECK:STDOUT:   %int_32.loc23: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
 // CHECK:STDOUT:   %i32.loc23: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
 // CHECK:STDOUT:   %.loc23: %Access.elem = field_decl l, element1 [concrete]
+// CHECK:STDOUT:   impl_decl @Access.as.Destroy.impl [concrete] {} {}
+// CHECK:STDOUT:   %Destroy.impl_witness_table = impl_witness_table (@Access.as.Destroy.impl.%Access.as.Destroy.impl.Op.decl), @Access.as.Destroy.impl [concrete]
+// CHECK:STDOUT:   %Destroy.impl_witness: <witness> = impl_witness %Destroy.impl_witness_table [concrete = constants.%Destroy.impl_witness]
 // CHECK:STDOUT:   %struct_type.k.l: type = struct_type {.k: %i32, .l: %i32} [concrete = constants.%struct_type.k.l]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %struct_type.k.l [concrete = constants.%complete_type.48a]
 // CHECK:STDOUT:   complete_type_witness = %complete_type

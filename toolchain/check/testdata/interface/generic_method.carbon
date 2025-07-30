@@ -102,24 +102,24 @@ fn CallIndirect() {
 // CHECK:STDOUT:   %A.assoc_type.ed3: type = assoc_entity_type @A, @A(%T.8b3) [symbolic]
 // CHECK:STDOUT:   %assoc0.fcb: %A.assoc_type.ed3 = assoc_entity element0, @A.%A.F.decl [symbolic]
 // CHECK:STDOUT:   %X: type = class_type @X [concrete]
-// CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [concrete]
-// CHECK:STDOUT:   %complete_type.357: <witness> = complete_type_witness %empty_struct_type [concrete]
 // CHECK:STDOUT:   %Destroy.type: type = facet_type <@Destroy> [concrete]
 // CHECK:STDOUT:   %Destroy.Op.type: type = fn_type @Destroy.Op [concrete]
 // CHECK:STDOUT:   %pattern_type.f6d: type = pattern_type auto [concrete]
-// CHECK:STDOUT:   %Destroy.impl_witness.bd4: <witness> = impl_witness file.%Destroy.impl_witness_table.loc9 [concrete]
+// CHECK:STDOUT:   %Destroy.impl_witness.807: <witness> = impl_witness @X.%Destroy.impl_witness_table [concrete]
 // CHECK:STDOUT:   %ptr.d17: type = ptr_type %X [concrete]
 // CHECK:STDOUT:   %pattern_type.1c6: type = pattern_type %ptr.d17 [concrete]
 // CHECK:STDOUT:   %X.as.Destroy.impl.Op.type: type = fn_type @X.as.Destroy.impl.Op [concrete]
 // CHECK:STDOUT:   %X.as.Destroy.impl.Op: %X.as.Destroy.impl.Op.type = struct_value () [concrete]
+// CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [concrete]
+// CHECK:STDOUT:   %complete_type.357: <witness> = complete_type_witness %empty_struct_type [concrete]
 // CHECK:STDOUT:   %Y: type = class_type @Y [concrete]
-// CHECK:STDOUT:   %Destroy.impl_witness.ef9: <witness> = impl_witness file.%Destroy.impl_witness_table.loc10 [concrete]
+// CHECK:STDOUT:   %Destroy.impl_witness.621: <witness> = impl_witness @Y.%Destroy.impl_witness_table [concrete]
 // CHECK:STDOUT:   %ptr.455: type = ptr_type %Y [concrete]
 // CHECK:STDOUT:   %pattern_type.0ae: type = pattern_type %ptr.455 [concrete]
 // CHECK:STDOUT:   %Y.as.Destroy.impl.Op.type: type = fn_type @Y.as.Destroy.impl.Op [concrete]
 // CHECK:STDOUT:   %Y.as.Destroy.impl.Op: %Y.as.Destroy.impl.Op.type = struct_value () [concrete]
 // CHECK:STDOUT:   %Z: type = class_type @Z [concrete]
-// CHECK:STDOUT:   %Destroy.impl_witness.d45: <witness> = impl_witness file.%Destroy.impl_witness_table.loc11 [concrete]
+// CHECK:STDOUT:   %Destroy.impl_witness.2a0: <witness> = impl_witness @Z.%Destroy.impl_witness_table [concrete]
 // CHECK:STDOUT:   %ptr.fb6: type = ptr_type %Z [concrete]
 // CHECK:STDOUT:   %pattern_type.f76: type = pattern_type %ptr.fb6 [concrete]
 // CHECK:STDOUT:   %Z.as.Destroy.impl.Op.type: type = fn_type @Z.as.Destroy.impl.Op [concrete]
@@ -219,17 +219,8 @@ fn CallIndirect() {
 // CHECK:STDOUT:     %T.loc5_13.2: type = bind_symbolic_name T, 0 [symbolic = %T.loc5_13.1 (constants.%T.8b3)]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %X.decl: type = class_decl @X [concrete = constants.%X] {} {}
-// CHECK:STDOUT:   impl_decl @X.as.Destroy.impl [concrete] {} {}
-// CHECK:STDOUT:   %Destroy.impl_witness_table.loc9 = impl_witness_table (@X.as.Destroy.impl.%X.as.Destroy.impl.Op.decl), @X.as.Destroy.impl [concrete]
-// CHECK:STDOUT:   %Destroy.impl_witness.loc9: <witness> = impl_witness %Destroy.impl_witness_table.loc9 [concrete = constants.%Destroy.impl_witness.bd4]
 // CHECK:STDOUT:   %Y.decl: type = class_decl @Y [concrete = constants.%Y] {} {}
-// CHECK:STDOUT:   impl_decl @Y.as.Destroy.impl [concrete] {} {}
-// CHECK:STDOUT:   %Destroy.impl_witness_table.loc10 = impl_witness_table (@Y.as.Destroy.impl.%Y.as.Destroy.impl.Op.decl), @Y.as.Destroy.impl [concrete]
-// CHECK:STDOUT:   %Destroy.impl_witness.loc10: <witness> = impl_witness %Destroy.impl_witness_table.loc10 [concrete = constants.%Destroy.impl_witness.ef9]
 // CHECK:STDOUT:   %Z.decl: type = class_decl @Z [concrete = constants.%Z] {} {}
-// CHECK:STDOUT:   impl_decl @Z.as.Destroy.impl [concrete] {} {}
-// CHECK:STDOUT:   %Destroy.impl_witness_table.loc11 = impl_witness_table (@Z.as.Destroy.impl.%Z.as.Destroy.impl.Op.decl), @Z.as.Destroy.impl [concrete]
-// CHECK:STDOUT:   %Destroy.impl_witness.loc11: <witness> = impl_witness %Destroy.impl_witness_table.loc11 [concrete = constants.%Destroy.impl_witness.d45]
 // CHECK:STDOUT:   impl_decl @Y.as.A.impl [concrete] {} {
 // CHECK:STDOUT:     %Y.ref: type = name_ref Y, file.%Y.decl [concrete = constants.%Y]
 // CHECK:STDOUT:     %A.ref: %A.type.495 = name_ref A, file.%A.decl [concrete = constants.%A.generic]
@@ -310,7 +301,7 @@ fn CallIndirect() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Op = %X.as.Destroy.impl.Op.decl
-// CHECK:STDOUT:   witness = file.%Destroy.impl_witness.loc9
+// CHECK:STDOUT:   witness = @X.%Destroy.impl_witness
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: impl @Y.as.Destroy.impl: constants.%Y as constants.%Destroy.type {
@@ -326,7 +317,7 @@ fn CallIndirect() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Op = %Y.as.Destroy.impl.Op.decl
-// CHECK:STDOUT:   witness = file.%Destroy.impl_witness.loc10
+// CHECK:STDOUT:   witness = @Y.%Destroy.impl_witness
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: impl @Z.as.Destroy.impl: constants.%Z as constants.%Destroy.type {
@@ -342,7 +333,7 @@ fn CallIndirect() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Op = %Z.as.Destroy.impl.Op.decl
-// CHECK:STDOUT:   witness = file.%Destroy.impl_witness.loc11
+// CHECK:STDOUT:   witness = @Z.%Destroy.impl_witness
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: impl @Y.as.A.impl: %Y.ref as %A.type {
@@ -374,6 +365,9 @@ fn CallIndirect() {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @X {
+// CHECK:STDOUT:   impl_decl @X.as.Destroy.impl [concrete] {} {}
+// CHECK:STDOUT:   %Destroy.impl_witness_table = impl_witness_table (@X.as.Destroy.impl.%X.as.Destroy.impl.Op.decl), @X.as.Destroy.impl [concrete]
+// CHECK:STDOUT:   %Destroy.impl_witness: <witness> = impl_witness %Destroy.impl_witness_table [concrete = constants.%Destroy.impl_witness.807]
 // CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [concrete = constants.%empty_struct_type]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [concrete = constants.%complete_type.357]
 // CHECK:STDOUT:   complete_type_witness = %complete_type
@@ -383,6 +377,9 @@ fn CallIndirect() {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @Y {
+// CHECK:STDOUT:   impl_decl @Y.as.Destroy.impl [concrete] {} {}
+// CHECK:STDOUT:   %Destroy.impl_witness_table = impl_witness_table (@Y.as.Destroy.impl.%Y.as.Destroy.impl.Op.decl), @Y.as.Destroy.impl [concrete]
+// CHECK:STDOUT:   %Destroy.impl_witness: <witness> = impl_witness %Destroy.impl_witness_table [concrete = constants.%Destroy.impl_witness.621]
 // CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [concrete = constants.%empty_struct_type]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [concrete = constants.%complete_type.357]
 // CHECK:STDOUT:   complete_type_witness = %complete_type
@@ -392,6 +389,9 @@ fn CallIndirect() {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @Z {
+// CHECK:STDOUT:   impl_decl @Z.as.Destroy.impl [concrete] {} {}
+// CHECK:STDOUT:   %Destroy.impl_witness_table = impl_witness_table (@Z.as.Destroy.impl.%Z.as.Destroy.impl.Op.decl), @Z.as.Destroy.impl [concrete]
+// CHECK:STDOUT:   %Destroy.impl_witness: <witness> = impl_witness %Destroy.impl_witness_table [concrete = constants.%Destroy.impl_witness.2a0]
 // CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [concrete = constants.%empty_struct_type]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [concrete = constants.%complete_type.357]
 // CHECK:STDOUT:   complete_type_witness = %complete_type
@@ -678,30 +678,30 @@ fn CallIndirect() {
 // CHECK:STDOUT:   %A.assoc_type.ed3: type = assoc_entity_type @A, @A(%T.8b3) [symbolic]
 // CHECK:STDOUT:   %assoc0.fcb: %A.assoc_type.ed3 = assoc_entity element0, @A.%A.F.decl [symbolic]
 // CHECK:STDOUT:   %X: type = class_type @X [concrete]
-// CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [concrete]
-// CHECK:STDOUT:   %complete_type.357: <witness> = complete_type_witness %empty_struct_type [concrete]
 // CHECK:STDOUT:   %Destroy.type: type = facet_type <@Destroy> [concrete]
 // CHECK:STDOUT:   %Destroy.Op.type: type = fn_type @Destroy.Op [concrete]
 // CHECK:STDOUT:   %pattern_type.f6d: type = pattern_type auto [concrete]
-// CHECK:STDOUT:   %Destroy.impl_witness.bd4: <witness> = impl_witness file.%Destroy.impl_witness_table.loc9 [concrete]
+// CHECK:STDOUT:   %Destroy.impl_witness.807: <witness> = impl_witness @X.%Destroy.impl_witness_table [concrete]
 // CHECK:STDOUT:   %ptr.d17: type = ptr_type %X [concrete]
 // CHECK:STDOUT:   %pattern_type.1c6: type = pattern_type %ptr.d17 [concrete]
 // CHECK:STDOUT:   %X.as.Destroy.impl.Op.type: type = fn_type @X.as.Destroy.impl.Op [concrete]
 // CHECK:STDOUT:   %X.as.Destroy.impl.Op: %X.as.Destroy.impl.Op.type = struct_value () [concrete]
+// CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [concrete]
+// CHECK:STDOUT:   %complete_type.357: <witness> = complete_type_witness %empty_struct_type [concrete]
 // CHECK:STDOUT:   %Y1: type = class_type @Y1 [concrete]
-// CHECK:STDOUT:   %Destroy.impl_witness.df8: <witness> = impl_witness file.%Destroy.impl_witness_table.loc10 [concrete]
+// CHECK:STDOUT:   %Destroy.impl_witness.614: <witness> = impl_witness @Y1.%Destroy.impl_witness_table [concrete]
 // CHECK:STDOUT:   %ptr.723: type = ptr_type %Y1 [concrete]
 // CHECK:STDOUT:   %pattern_type.273: type = pattern_type %ptr.723 [concrete]
 // CHECK:STDOUT:   %Y1.as.Destroy.impl.Op.type: type = fn_type @Y1.as.Destroy.impl.Op [concrete]
 // CHECK:STDOUT:   %Y1.as.Destroy.impl.Op: %Y1.as.Destroy.impl.Op.type = struct_value () [concrete]
 // CHECK:STDOUT:   %Y2: type = class_type @Y2 [concrete]
-// CHECK:STDOUT:   %Destroy.impl_witness.cf2: <witness> = impl_witness file.%Destroy.impl_witness_table.loc11 [concrete]
+// CHECK:STDOUT:   %Destroy.impl_witness.7b0: <witness> = impl_witness @Y2.%Destroy.impl_witness_table [concrete]
 // CHECK:STDOUT:   %ptr.23d: type = ptr_type %Y2 [concrete]
 // CHECK:STDOUT:   %pattern_type.484: type = pattern_type %ptr.23d [concrete]
 // CHECK:STDOUT:   %Y2.as.Destroy.impl.Op.type: type = fn_type @Y2.as.Destroy.impl.Op [concrete]
 // CHECK:STDOUT:   %Y2.as.Destroy.impl.Op: %Y2.as.Destroy.impl.Op.type = struct_value () [concrete]
 // CHECK:STDOUT:   %Z: type = class_type @Z [concrete]
-// CHECK:STDOUT:   %Destroy.impl_witness.d45: <witness> = impl_witness file.%Destroy.impl_witness_table.loc12 [concrete]
+// CHECK:STDOUT:   %Destroy.impl_witness.2a0: <witness> = impl_witness @Z.%Destroy.impl_witness_table [concrete]
 // CHECK:STDOUT:   %ptr.fb6: type = ptr_type %Z [concrete]
 // CHECK:STDOUT:   %pattern_type.f76: type = pattern_type %ptr.fb6 [concrete]
 // CHECK:STDOUT:   %Z.as.Destroy.impl.Op.type: type = fn_type @Z.as.Destroy.impl.Op [concrete]
@@ -825,21 +825,9 @@ fn CallIndirect() {
 // CHECK:STDOUT:     %T.loc5_13.2: type = bind_symbolic_name T, 0 [symbolic = %T.loc5_13.1 (constants.%T.8b3)]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %X.decl: type = class_decl @X [concrete = constants.%X] {} {}
-// CHECK:STDOUT:   impl_decl @X.as.Destroy.impl [concrete] {} {}
-// CHECK:STDOUT:   %Destroy.impl_witness_table.loc9 = impl_witness_table (@X.as.Destroy.impl.%X.as.Destroy.impl.Op.decl), @X.as.Destroy.impl [concrete]
-// CHECK:STDOUT:   %Destroy.impl_witness.loc9: <witness> = impl_witness %Destroy.impl_witness_table.loc9 [concrete = constants.%Destroy.impl_witness.bd4]
 // CHECK:STDOUT:   %Y1.decl: type = class_decl @Y1 [concrete = constants.%Y1] {} {}
-// CHECK:STDOUT:   impl_decl @Y1.as.Destroy.impl [concrete] {} {}
-// CHECK:STDOUT:   %Destroy.impl_witness_table.loc10 = impl_witness_table (@Y1.as.Destroy.impl.%Y1.as.Destroy.impl.Op.decl), @Y1.as.Destroy.impl [concrete]
-// CHECK:STDOUT:   %Destroy.impl_witness.loc10: <witness> = impl_witness %Destroy.impl_witness_table.loc10 [concrete = constants.%Destroy.impl_witness.df8]
 // CHECK:STDOUT:   %Y2.decl: type = class_decl @Y2 [concrete = constants.%Y2] {} {}
-// CHECK:STDOUT:   impl_decl @Y2.as.Destroy.impl [concrete] {} {}
-// CHECK:STDOUT:   %Destroy.impl_witness_table.loc11 = impl_witness_table (@Y2.as.Destroy.impl.%Y2.as.Destroy.impl.Op.decl), @Y2.as.Destroy.impl [concrete]
-// CHECK:STDOUT:   %Destroy.impl_witness.loc11: <witness> = impl_witness %Destroy.impl_witness_table.loc11 [concrete = constants.%Destroy.impl_witness.cf2]
 // CHECK:STDOUT:   %Z.decl: type = class_decl @Z [concrete = constants.%Z] {} {}
-// CHECK:STDOUT:   impl_decl @Z.as.Destroy.impl [concrete] {} {}
-// CHECK:STDOUT:   %Destroy.impl_witness_table.loc12 = impl_witness_table (@Z.as.Destroy.impl.%Z.as.Destroy.impl.Op.decl), @Z.as.Destroy.impl [concrete]
-// CHECK:STDOUT:   %Destroy.impl_witness.loc12: <witness> = impl_witness %Destroy.impl_witness_table.loc12 [concrete = constants.%Destroy.impl_witness.d45]
 // CHECK:STDOUT:   impl_decl @tuple.type.as.A.impl [concrete] {
 // CHECK:STDOUT:     %V1.patt: %pattern_type.98f = symbolic_binding_pattern V1, 0 [concrete]
 // CHECK:STDOUT:     %V2.patt: %pattern_type.98f = symbolic_binding_pattern V2, 1 [concrete]
@@ -930,7 +918,7 @@ fn CallIndirect() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Op = %X.as.Destroy.impl.Op.decl
-// CHECK:STDOUT:   witness = file.%Destroy.impl_witness.loc9
+// CHECK:STDOUT:   witness = @X.%Destroy.impl_witness
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: impl @Y1.as.Destroy.impl: constants.%Y1 as constants.%Destroy.type {
@@ -946,7 +934,7 @@ fn CallIndirect() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Op = %Y1.as.Destroy.impl.Op.decl
-// CHECK:STDOUT:   witness = file.%Destroy.impl_witness.loc10
+// CHECK:STDOUT:   witness = @Y1.%Destroy.impl_witness
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: impl @Y2.as.Destroy.impl: constants.%Y2 as constants.%Destroy.type {
@@ -962,7 +950,7 @@ fn CallIndirect() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Op = %Y2.as.Destroy.impl.Op.decl
-// CHECK:STDOUT:   witness = file.%Destroy.impl_witness.loc11
+// CHECK:STDOUT:   witness = @Y2.%Destroy.impl_witness
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: impl @Z.as.Destroy.impl: constants.%Z as constants.%Destroy.type {
@@ -978,7 +966,7 @@ fn CallIndirect() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Op = %Z.as.Destroy.impl.Op.decl
-// CHECK:STDOUT:   witness = file.%Destroy.impl_witness.loc12
+// CHECK:STDOUT:   witness = @Z.%Destroy.impl_witness
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic impl @tuple.type.as.A.impl(%V1.loc14_14.2: type, %V2.loc14_25.2: type, %W.loc14_36.2: type) {
@@ -1028,6 +1016,9 @@ fn CallIndirect() {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @X {
+// CHECK:STDOUT:   impl_decl @X.as.Destroy.impl [concrete] {} {}
+// CHECK:STDOUT:   %Destroy.impl_witness_table = impl_witness_table (@X.as.Destroy.impl.%X.as.Destroy.impl.Op.decl), @X.as.Destroy.impl [concrete]
+// CHECK:STDOUT:   %Destroy.impl_witness: <witness> = impl_witness %Destroy.impl_witness_table [concrete = constants.%Destroy.impl_witness.807]
 // CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [concrete = constants.%empty_struct_type]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [concrete = constants.%complete_type.357]
 // CHECK:STDOUT:   complete_type_witness = %complete_type
@@ -1037,6 +1028,9 @@ fn CallIndirect() {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @Y1 {
+// CHECK:STDOUT:   impl_decl @Y1.as.Destroy.impl [concrete] {} {}
+// CHECK:STDOUT:   %Destroy.impl_witness_table = impl_witness_table (@Y1.as.Destroy.impl.%Y1.as.Destroy.impl.Op.decl), @Y1.as.Destroy.impl [concrete]
+// CHECK:STDOUT:   %Destroy.impl_witness: <witness> = impl_witness %Destroy.impl_witness_table [concrete = constants.%Destroy.impl_witness.614]
 // CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [concrete = constants.%empty_struct_type]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [concrete = constants.%complete_type.357]
 // CHECK:STDOUT:   complete_type_witness = %complete_type
@@ -1046,6 +1040,9 @@ fn CallIndirect() {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @Y2 {
+// CHECK:STDOUT:   impl_decl @Y2.as.Destroy.impl [concrete] {} {}
+// CHECK:STDOUT:   %Destroy.impl_witness_table = impl_witness_table (@Y2.as.Destroy.impl.%Y2.as.Destroy.impl.Op.decl), @Y2.as.Destroy.impl [concrete]
+// CHECK:STDOUT:   %Destroy.impl_witness: <witness> = impl_witness %Destroy.impl_witness_table [concrete = constants.%Destroy.impl_witness.7b0]
 // CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [concrete = constants.%empty_struct_type]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [concrete = constants.%complete_type.357]
 // CHECK:STDOUT:   complete_type_witness = %complete_type
@@ -1055,6 +1052,9 @@ fn CallIndirect() {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @Z {
+// CHECK:STDOUT:   impl_decl @Z.as.Destroy.impl [concrete] {} {}
+// CHECK:STDOUT:   %Destroy.impl_witness_table = impl_witness_table (@Z.as.Destroy.impl.%Z.as.Destroy.impl.Op.decl), @Z.as.Destroy.impl [concrete]
+// CHECK:STDOUT:   %Destroy.impl_witness: <witness> = impl_witness %Destroy.impl_witness_table [concrete = constants.%Destroy.impl_witness.2a0]
 // CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [concrete = constants.%empty_struct_type]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [concrete = constants.%complete_type.357]
 // CHECK:STDOUT:   complete_type_witness = %complete_type

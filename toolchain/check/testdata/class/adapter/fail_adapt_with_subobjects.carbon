@@ -83,22 +83,22 @@ class AdaptWithBaseAndFields {
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %Base: type = class_type @Base [concrete]
-// CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [concrete]
-// CHECK:STDOUT:   %complete_type.357: <witness> = complete_type_witness %empty_struct_type [concrete]
 // CHECK:STDOUT:   %Destroy.type: type = facet_type <@Destroy> [concrete]
 // CHECK:STDOUT:   %pattern_type.f6d: type = pattern_type auto [concrete]
-// CHECK:STDOUT:   %Destroy.impl_witness.bea: <witness> = impl_witness file.%Destroy.impl_witness_table.loc4 [concrete]
+// CHECK:STDOUT:   %Destroy.impl_witness.ae4: <witness> = impl_witness @Base.%Destroy.impl_witness_table [concrete]
 // CHECK:STDOUT:   %ptr.11f: type = ptr_type %Base [concrete]
 // CHECK:STDOUT:   %pattern_type.1b9: type = pattern_type %ptr.11f [concrete]
 // CHECK:STDOUT:   %Base.as.Destroy.impl.Op.type: type = fn_type @Base.as.Destroy.impl.Op [concrete]
 // CHECK:STDOUT:   %Base.as.Destroy.impl.Op: %Base.as.Destroy.impl.Op.type = struct_value () [concrete]
+// CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [concrete]
+// CHECK:STDOUT:   %complete_type.357: <witness> = complete_type_witness %empty_struct_type [concrete]
 // CHECK:STDOUT:   %AdaptWithBase: type = class_type @AdaptWithBase [concrete]
 // CHECK:STDOUT:   %int_32: Core.IntLiteral = int_value 32 [concrete]
 // CHECK:STDOUT:   %Int.type: type = generic_class_type @Int [concrete]
 // CHECK:STDOUT:   %Int.generic: %Int.type = struct_value () [concrete]
 // CHECK:STDOUT:   %i32: type = class_type @Int, @Int(%int_32) [concrete]
 // CHECK:STDOUT:   %AdaptWithBase.elem: type = unbound_element_type %AdaptWithBase, %Base [concrete]
-// CHECK:STDOUT:   %Destroy.impl_witness.e2c: <witness> = impl_witness file.%Destroy.impl_witness_table.loc6 [concrete]
+// CHECK:STDOUT:   %Destroy.impl_witness.8b8: <witness> = impl_witness @AdaptWithBase.%Destroy.impl_witness_table [concrete]
 // CHECK:STDOUT:   %ptr.52c: type = ptr_type %AdaptWithBase [concrete]
 // CHECK:STDOUT:   %pattern_type.d4d: type = pattern_type %ptr.52c [concrete]
 // CHECK:STDOUT:   %AdaptWithBase.as.Destroy.impl.Op.type: type = fn_type @AdaptWithBase.as.Destroy.impl.Op [concrete]
@@ -124,13 +124,7 @@ class AdaptWithBaseAndFields {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %Base.decl: type = class_decl @Base [concrete = constants.%Base] {} {}
-// CHECK:STDOUT:   impl_decl @Base.as.Destroy.impl [concrete] {} {}
-// CHECK:STDOUT:   %Destroy.impl_witness_table.loc4 = impl_witness_table (@Base.as.Destroy.impl.%Base.as.Destroy.impl.Op.decl), @Base.as.Destroy.impl [concrete]
-// CHECK:STDOUT:   %Destroy.impl_witness.loc4: <witness> = impl_witness %Destroy.impl_witness_table.loc4 [concrete = constants.%Destroy.impl_witness.bea]
 // CHECK:STDOUT:   %AdaptWithBase.decl: type = class_decl @AdaptWithBase [concrete = constants.%AdaptWithBase] {} {}
-// CHECK:STDOUT:   impl_decl @AdaptWithBase.as.Destroy.impl [concrete] {} {}
-// CHECK:STDOUT:   %Destroy.impl_witness_table.loc6 = impl_witness_table (@AdaptWithBase.as.Destroy.impl.%AdaptWithBase.as.Destroy.impl.Op.decl), @AdaptWithBase.as.Destroy.impl [concrete]
-// CHECK:STDOUT:   %Destroy.impl_witness.loc6: <witness> = impl_witness %Destroy.impl_witness_table.loc6 [concrete = constants.%Destroy.impl_witness.e2c]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: impl @Base.as.Destroy.impl: constants.%Base as constants.%Destroy.type {
@@ -146,7 +140,7 @@ class AdaptWithBaseAndFields {
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Op = %Base.as.Destroy.impl.Op.decl
-// CHECK:STDOUT:   witness = file.%Destroy.impl_witness.loc4
+// CHECK:STDOUT:   witness = @Base.%Destroy.impl_witness
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: impl @AdaptWithBase.as.Destroy.impl: constants.%AdaptWithBase as constants.%Destroy.type {
@@ -162,10 +156,13 @@ class AdaptWithBaseAndFields {
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Op = %AdaptWithBase.as.Destroy.impl.Op.decl
-// CHECK:STDOUT:   witness = file.%Destroy.impl_witness.loc6
+// CHECK:STDOUT:   witness = @AdaptWithBase.%Destroy.impl_witness
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @Base {
+// CHECK:STDOUT:   impl_decl @Base.as.Destroy.impl [concrete] {} {}
+// CHECK:STDOUT:   %Destroy.impl_witness_table = impl_witness_table (@Base.as.Destroy.impl.%Base.as.Destroy.impl.Op.decl), @Base.as.Destroy.impl [concrete]
+// CHECK:STDOUT:   %Destroy.impl_witness: <witness> = impl_witness %Destroy.impl_witness_table [concrete = constants.%Destroy.impl_witness.ae4]
 // CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [concrete = constants.%empty_struct_type]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [concrete = constants.%complete_type.357]
 // CHECK:STDOUT:   complete_type_witness = %complete_type
@@ -180,6 +177,9 @@ class AdaptWithBaseAndFields {
 // CHECK:STDOUT:   adapt_decl %i32 [concrete]
 // CHECK:STDOUT:   %Base.ref: type = name_ref Base, file.%Base.decl [concrete = constants.%Base]
 // CHECK:STDOUT:   %.loc15: %AdaptWithBase.elem = base_decl %Base.ref, element<none> [concrete]
+// CHECK:STDOUT:   impl_decl @AdaptWithBase.as.Destroy.impl [concrete] {} {}
+// CHECK:STDOUT:   %Destroy.impl_witness_table = impl_witness_table (@AdaptWithBase.as.Destroy.impl.%AdaptWithBase.as.Destroy.impl.Op.decl), @AdaptWithBase.as.Destroy.impl [concrete]
+// CHECK:STDOUT:   %Destroy.impl_witness: <witness> = impl_witness %Destroy.impl_witness_table [concrete = constants.%Destroy.impl_witness.8b8]
 // CHECK:STDOUT:   complete_type_witness = <error>
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
@@ -204,14 +204,14 @@ class AdaptWithBaseAndFields {
 // CHECK:STDOUT:   %AdaptWithField.elem: type = unbound_element_type %AdaptWithField, %i32 [concrete]
 // CHECK:STDOUT:   %Destroy.type: type = facet_type <@Destroy> [concrete]
 // CHECK:STDOUT:   %pattern_type.f6d: type = pattern_type auto [concrete]
-// CHECK:STDOUT:   %Destroy.impl_witness.adf: <witness> = impl_witness file.%Destroy.impl_witness_table.loc4 [concrete]
+// CHECK:STDOUT:   %Destroy.impl_witness.333: <witness> = impl_witness @AdaptWithField.%Destroy.impl_witness_table [concrete]
 // CHECK:STDOUT:   %ptr.849: type = ptr_type %AdaptWithField [concrete]
 // CHECK:STDOUT:   %pattern_type.55a: type = pattern_type %ptr.849 [concrete]
 // CHECK:STDOUT:   %AdaptWithField.as.Destroy.impl.Op.type: type = fn_type @AdaptWithField.as.Destroy.impl.Op [concrete]
 // CHECK:STDOUT:   %AdaptWithField.as.Destroy.impl.Op: %AdaptWithField.as.Destroy.impl.Op.type = struct_value () [concrete]
 // CHECK:STDOUT:   %AdaptWithFields: type = class_type @AdaptWithFields [concrete]
 // CHECK:STDOUT:   %AdaptWithFields.elem: type = unbound_element_type %AdaptWithFields, %i32 [concrete]
-// CHECK:STDOUT:   %Destroy.impl_witness.ce1: <witness> = impl_witness file.%Destroy.impl_witness_table.loc16 [concrete]
+// CHECK:STDOUT:   %Destroy.impl_witness.8f2: <witness> = impl_witness @AdaptWithFields.%Destroy.impl_witness_table [concrete]
 // CHECK:STDOUT:   %ptr.521: type = ptr_type %AdaptWithFields [concrete]
 // CHECK:STDOUT:   %pattern_type.1a9: type = pattern_type %ptr.521 [concrete]
 // CHECK:STDOUT:   %AdaptWithFields.as.Destroy.impl.Op.type: type = fn_type @AdaptWithFields.as.Destroy.impl.Op [concrete]
@@ -237,13 +237,7 @@ class AdaptWithBaseAndFields {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %AdaptWithField.decl: type = class_decl @AdaptWithField [concrete = constants.%AdaptWithField] {} {}
-// CHECK:STDOUT:   impl_decl @AdaptWithField.as.Destroy.impl [concrete] {} {}
-// CHECK:STDOUT:   %Destroy.impl_witness_table.loc4 = impl_witness_table (@AdaptWithField.as.Destroy.impl.%AdaptWithField.as.Destroy.impl.Op.decl), @AdaptWithField.as.Destroy.impl [concrete]
-// CHECK:STDOUT:   %Destroy.impl_witness.loc4: <witness> = impl_witness %Destroy.impl_witness_table.loc4 [concrete = constants.%Destroy.impl_witness.adf]
 // CHECK:STDOUT:   %AdaptWithFields.decl: type = class_decl @AdaptWithFields [concrete = constants.%AdaptWithFields] {} {}
-// CHECK:STDOUT:   impl_decl @AdaptWithFields.as.Destroy.impl [concrete] {} {}
-// CHECK:STDOUT:   %Destroy.impl_witness_table.loc16 = impl_witness_table (@AdaptWithFields.as.Destroy.impl.%AdaptWithFields.as.Destroy.impl.Op.decl), @AdaptWithFields.as.Destroy.impl [concrete]
-// CHECK:STDOUT:   %Destroy.impl_witness.loc16: <witness> = impl_witness %Destroy.impl_witness_table.loc16 [concrete = constants.%Destroy.impl_witness.ce1]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: impl @AdaptWithField.as.Destroy.impl: constants.%AdaptWithField as constants.%Destroy.type {
@@ -259,7 +253,7 @@ class AdaptWithBaseAndFields {
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Op = %AdaptWithField.as.Destroy.impl.Op.decl
-// CHECK:STDOUT:   witness = file.%Destroy.impl_witness.loc4
+// CHECK:STDOUT:   witness = @AdaptWithField.%Destroy.impl_witness
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: impl @AdaptWithFields.as.Destroy.impl: constants.%AdaptWithFields as constants.%Destroy.type {
@@ -275,7 +269,7 @@ class AdaptWithBaseAndFields {
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Op = %AdaptWithFields.as.Destroy.impl.Op.decl
-// CHECK:STDOUT:   witness = file.%Destroy.impl_witness.loc16
+// CHECK:STDOUT:   witness = @AdaptWithFields.%Destroy.impl_witness
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @AdaptWithField {
@@ -285,6 +279,9 @@ class AdaptWithBaseAndFields {
 // CHECK:STDOUT:   %int_32.loc13: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
 // CHECK:STDOUT:   %i32.loc13: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
 // CHECK:STDOUT:   %.loc13: %AdaptWithField.elem = field_decl n, element<none> [concrete]
+// CHECK:STDOUT:   impl_decl @AdaptWithField.as.Destroy.impl [concrete] {} {}
+// CHECK:STDOUT:   %Destroy.impl_witness_table = impl_witness_table (@AdaptWithField.as.Destroy.impl.%AdaptWithField.as.Destroy.impl.Op.decl), @AdaptWithField.as.Destroy.impl [concrete]
+// CHECK:STDOUT:   %Destroy.impl_witness: <witness> = impl_witness %Destroy.impl_witness_table [concrete = constants.%Destroy.impl_witness.333]
 // CHECK:STDOUT:   complete_type_witness = <error>
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
@@ -305,6 +302,9 @@ class AdaptWithBaseAndFields {
 // CHECK:STDOUT:   %int_32.loc27: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
 // CHECK:STDOUT:   %i32.loc27: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
 // CHECK:STDOUT:   %.loc27: %AdaptWithFields.elem = field_decl c, element<none> [concrete]
+// CHECK:STDOUT:   impl_decl @AdaptWithFields.as.Destroy.impl [concrete] {} {}
+// CHECK:STDOUT:   %Destroy.impl_witness_table = impl_witness_table (@AdaptWithFields.as.Destroy.impl.%AdaptWithFields.as.Destroy.impl.Op.decl), @AdaptWithFields.as.Destroy.impl [concrete]
+// CHECK:STDOUT:   %Destroy.impl_witness: <witness> = impl_witness %Destroy.impl_witness_table [concrete = constants.%Destroy.impl_witness.8f2]
 // CHECK:STDOUT:   complete_type_witness = <error>
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
@@ -322,15 +322,15 @@ class AdaptWithBaseAndFields {
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %Base: type = class_type @Base [concrete]
-// CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [concrete]
-// CHECK:STDOUT:   %complete_type.357: <witness> = complete_type_witness %empty_struct_type [concrete]
 // CHECK:STDOUT:   %Destroy.type: type = facet_type <@Destroy> [concrete]
 // CHECK:STDOUT:   %pattern_type.f6d: type = pattern_type auto [concrete]
-// CHECK:STDOUT:   %Destroy.impl_witness.bea: <witness> = impl_witness file.%Destroy.impl_witness_table.loc4 [concrete]
+// CHECK:STDOUT:   %Destroy.impl_witness.ae4: <witness> = impl_witness @Base.%Destroy.impl_witness_table [concrete]
 // CHECK:STDOUT:   %ptr.11f: type = ptr_type %Base [concrete]
 // CHECK:STDOUT:   %pattern_type.1b9: type = pattern_type %ptr.11f [concrete]
 // CHECK:STDOUT:   %Base.as.Destroy.impl.Op.type: type = fn_type @Base.as.Destroy.impl.Op [concrete]
 // CHECK:STDOUT:   %Base.as.Destroy.impl.Op: %Base.as.Destroy.impl.Op.type = struct_value () [concrete]
+// CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [concrete]
+// CHECK:STDOUT:   %complete_type.357: <witness> = complete_type_witness %empty_struct_type [concrete]
 // CHECK:STDOUT:   %AdaptWithBaseAndFields: type = class_type @AdaptWithBaseAndFields [concrete]
 // CHECK:STDOUT:   %AdaptWithBaseAndFields.elem.767: type = unbound_element_type %AdaptWithBaseAndFields, %Base [concrete]
 // CHECK:STDOUT:   %int_32: Core.IntLiteral = int_value 32 [concrete]
@@ -338,7 +338,7 @@ class AdaptWithBaseAndFields {
 // CHECK:STDOUT:   %Int.generic: %Int.type = struct_value () [concrete]
 // CHECK:STDOUT:   %i32: type = class_type @Int, @Int(%int_32) [concrete]
 // CHECK:STDOUT:   %AdaptWithBaseAndFields.elem.ddf: type = unbound_element_type %AdaptWithBaseAndFields, %i32 [concrete]
-// CHECK:STDOUT:   %Destroy.impl_witness.4dc: <witness> = impl_witness file.%Destroy.impl_witness_table.loc6 [concrete]
+// CHECK:STDOUT:   %Destroy.impl_witness.034: <witness> = impl_witness @AdaptWithBaseAndFields.%Destroy.impl_witness_table [concrete]
 // CHECK:STDOUT:   %ptr.cbb: type = ptr_type %AdaptWithBaseAndFields [concrete]
 // CHECK:STDOUT:   %pattern_type.926: type = pattern_type %ptr.cbb [concrete]
 // CHECK:STDOUT:   %AdaptWithBaseAndFields.as.Destroy.impl.Op.type: type = fn_type @AdaptWithBaseAndFields.as.Destroy.impl.Op [concrete]
@@ -364,13 +364,7 @@ class AdaptWithBaseAndFields {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %Base.decl: type = class_decl @Base [concrete = constants.%Base] {} {}
-// CHECK:STDOUT:   impl_decl @Base.as.Destroy.impl [concrete] {} {}
-// CHECK:STDOUT:   %Destroy.impl_witness_table.loc4 = impl_witness_table (@Base.as.Destroy.impl.%Base.as.Destroy.impl.Op.decl), @Base.as.Destroy.impl [concrete]
-// CHECK:STDOUT:   %Destroy.impl_witness.loc4: <witness> = impl_witness %Destroy.impl_witness_table.loc4 [concrete = constants.%Destroy.impl_witness.bea]
 // CHECK:STDOUT:   %AdaptWithBaseAndFields.decl: type = class_decl @AdaptWithBaseAndFields [concrete = constants.%AdaptWithBaseAndFields] {} {}
-// CHECK:STDOUT:   impl_decl @AdaptWithBaseAndFields.as.Destroy.impl [concrete] {} {}
-// CHECK:STDOUT:   %Destroy.impl_witness_table.loc6 = impl_witness_table (@AdaptWithBaseAndFields.as.Destroy.impl.%AdaptWithBaseAndFields.as.Destroy.impl.Op.decl), @AdaptWithBaseAndFields.as.Destroy.impl [concrete]
-// CHECK:STDOUT:   %Destroy.impl_witness.loc6: <witness> = impl_witness %Destroy.impl_witness_table.loc6 [concrete = constants.%Destroy.impl_witness.4dc]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: impl @Base.as.Destroy.impl: constants.%Base as constants.%Destroy.type {
@@ -386,7 +380,7 @@ class AdaptWithBaseAndFields {
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Op = %Base.as.Destroy.impl.Op.decl
-// CHECK:STDOUT:   witness = file.%Destroy.impl_witness.loc4
+// CHECK:STDOUT:   witness = @Base.%Destroy.impl_witness
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: impl @AdaptWithBaseAndFields.as.Destroy.impl: constants.%AdaptWithBaseAndFields as constants.%Destroy.type {
@@ -402,10 +396,13 @@ class AdaptWithBaseAndFields {
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Op = %AdaptWithBaseAndFields.as.Destroy.impl.Op.decl
-// CHECK:STDOUT:   witness = file.%Destroy.impl_witness.loc6
+// CHECK:STDOUT:   witness = @AdaptWithBaseAndFields.%Destroy.impl_witness
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @Base {
+// CHECK:STDOUT:   impl_decl @Base.as.Destroy.impl [concrete] {} {}
+// CHECK:STDOUT:   %Destroy.impl_witness_table = impl_witness_table (@Base.as.Destroy.impl.%Base.as.Destroy.impl.Op.decl), @Base.as.Destroy.impl [concrete]
+// CHECK:STDOUT:   %Destroy.impl_witness: <witness> = impl_witness %Destroy.impl_witness_table [concrete = constants.%Destroy.impl_witness.ae4]
 // CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [concrete = constants.%empty_struct_type]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [concrete = constants.%complete_type.357]
 // CHECK:STDOUT:   complete_type_witness = %complete_type
@@ -423,6 +420,9 @@ class AdaptWithBaseAndFields {
 // CHECK:STDOUT:   %.loc16_10: %empty_struct_type = struct_literal ()
 // CHECK:STDOUT:   %.loc16_11: type = converted %.loc16_10, constants.%empty_struct_type [concrete = constants.%empty_struct_type]
 // CHECK:STDOUT:   adapt_decl %.loc16_11 [concrete]
+// CHECK:STDOUT:   impl_decl @AdaptWithBaseAndFields.as.Destroy.impl [concrete] {} {}
+// CHECK:STDOUT:   %Destroy.impl_witness_table = impl_witness_table (@AdaptWithBaseAndFields.as.Destroy.impl.%AdaptWithBaseAndFields.as.Destroy.impl.Op.decl), @AdaptWithBaseAndFields.as.Destroy.impl [concrete]
+// CHECK:STDOUT:   %Destroy.impl_witness: <witness> = impl_witness %Destroy.impl_witness_table [concrete = constants.%Destroy.impl_witness.034]
 // CHECK:STDOUT:   complete_type_witness = <error>
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:

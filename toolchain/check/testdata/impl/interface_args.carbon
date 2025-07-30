@@ -218,23 +218,23 @@ fn InstanceC(a: A) -> C {
 // CHECK:STDOUT:   %Action.assoc_type.32e: type = assoc_entity_type @Action, @Action(%T) [symbolic]
 // CHECK:STDOUT:   %assoc0.268: %Action.assoc_type.32e = assoc_entity element0, @Action.%Action.Op.decl [symbolic]
 // CHECK:STDOUT:   %A: type = class_type @A [concrete]
-// CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [concrete]
-// CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [concrete]
 // CHECK:STDOUT:   %Destroy.type: type = facet_type <@Destroy> [concrete]
 // CHECK:STDOUT:   %pattern_type.f6d: type = pattern_type auto [concrete]
-// CHECK:STDOUT:   %Destroy.impl_witness.cbc: <witness> = impl_witness file.%Destroy.impl_witness_table.loc8 [concrete]
+// CHECK:STDOUT:   %Destroy.impl_witness.b44: <witness> = impl_witness @A.%Destroy.impl_witness_table [concrete]
 // CHECK:STDOUT:   %ptr.6db: type = ptr_type %A [concrete]
 // CHECK:STDOUT:   %pattern_type.5f8: type = pattern_type %ptr.6db [concrete]
 // CHECK:STDOUT:   %A.as.Destroy.impl.Op.type: type = fn_type @A.as.Destroy.impl.Op [concrete]
 // CHECK:STDOUT:   %A.as.Destroy.impl.Op: %A.as.Destroy.impl.Op.type = struct_value () [concrete]
+// CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [concrete]
+// CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [concrete]
 // CHECK:STDOUT:   %B: type = class_type @B [concrete]
-// CHECK:STDOUT:   %Destroy.impl_witness.a5a: <witness> = impl_witness file.%Destroy.impl_witness_table.loc9 [concrete]
+// CHECK:STDOUT:   %Destroy.impl_witness.40d: <witness> = impl_witness @B.%Destroy.impl_witness_table [concrete]
 // CHECK:STDOUT:   %ptr.e79: type = ptr_type %B [concrete]
 // CHECK:STDOUT:   %pattern_type.960: type = pattern_type %ptr.e79 [concrete]
 // CHECK:STDOUT:   %B.as.Destroy.impl.Op.type: type = fn_type @B.as.Destroy.impl.Op [concrete]
 // CHECK:STDOUT:   %B.as.Destroy.impl.Op: %B.as.Destroy.impl.Op.type = struct_value () [concrete]
 // CHECK:STDOUT:   %C: type = class_type @C [concrete]
-// CHECK:STDOUT:   %Destroy.impl_witness.44c: <witness> = impl_witness file.%Destroy.impl_witness_table.loc10 [concrete]
+// CHECK:STDOUT:   %Destroy.impl_witness.edd: <witness> = impl_witness @C.%Destroy.impl_witness_table [concrete]
 // CHECK:STDOUT:   %ptr.019: type = ptr_type %C [concrete]
 // CHECK:STDOUT:   %pattern_type.44a: type = pattern_type %ptr.019 [concrete]
 // CHECK:STDOUT:   %C.as.Destroy.impl.Op.type: type = fn_type @C.as.Destroy.impl.Op [concrete]
@@ -280,17 +280,8 @@ fn InstanceC(a: A) -> C {
 // CHECK:STDOUT:     %T.loc4_18.2: type = bind_symbolic_name T, 0 [symbolic = %T.loc4_18.1 (constants.%T)]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %A.decl: type = class_decl @A [concrete = constants.%A] {} {}
-// CHECK:STDOUT:   impl_decl @A.as.Destroy.impl [concrete] {} {}
-// CHECK:STDOUT:   %Destroy.impl_witness_table.loc8 = impl_witness_table (@A.as.Destroy.impl.%A.as.Destroy.impl.Op.decl), @A.as.Destroy.impl [concrete]
-// CHECK:STDOUT:   %Destroy.impl_witness.loc8: <witness> = impl_witness %Destroy.impl_witness_table.loc8 [concrete = constants.%Destroy.impl_witness.cbc]
 // CHECK:STDOUT:   %B.decl: type = class_decl @B [concrete = constants.%B] {} {}
-// CHECK:STDOUT:   impl_decl @B.as.Destroy.impl [concrete] {} {}
-// CHECK:STDOUT:   %Destroy.impl_witness_table.loc9 = impl_witness_table (@B.as.Destroy.impl.%B.as.Destroy.impl.Op.decl), @B.as.Destroy.impl [concrete]
-// CHECK:STDOUT:   %Destroy.impl_witness.loc9: <witness> = impl_witness %Destroy.impl_witness_table.loc9 [concrete = constants.%Destroy.impl_witness.a5a]
 // CHECK:STDOUT:   %C.decl: type = class_decl @C [concrete = constants.%C] {} {}
-// CHECK:STDOUT:   impl_decl @C.as.Destroy.impl [concrete] {} {}
-// CHECK:STDOUT:   %Destroy.impl_witness_table.loc10 = impl_witness_table (@C.as.Destroy.impl.%C.as.Destroy.impl.Op.decl), @C.as.Destroy.impl [concrete]
-// CHECK:STDOUT:   %Destroy.impl_witness.loc10: <witness> = impl_witness %Destroy.impl_witness_table.loc10 [concrete = constants.%Destroy.impl_witness.44c]
 // CHECK:STDOUT:   impl_decl @A.as.Action.impl [concrete] {} {
 // CHECK:STDOUT:     %A.ref: type = name_ref A, file.%A.decl [concrete = constants.%A]
 // CHECK:STDOUT:     %Action.ref: %Action.type.29c = name_ref Action, file.%Action.decl [concrete = constants.%Action.generic]
@@ -357,7 +348,7 @@ fn InstanceC(a: A) -> C {
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Op = %A.as.Destroy.impl.Op.decl
-// CHECK:STDOUT:   witness = file.%Destroy.impl_witness.loc8
+// CHECK:STDOUT:   witness = @A.%Destroy.impl_witness
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: impl @B.as.Destroy.impl: constants.%B as constants.%Destroy.type {
@@ -373,7 +364,7 @@ fn InstanceC(a: A) -> C {
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Op = %B.as.Destroy.impl.Op.decl
-// CHECK:STDOUT:   witness = file.%Destroy.impl_witness.loc9
+// CHECK:STDOUT:   witness = @B.%Destroy.impl_witness
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: impl @C.as.Destroy.impl: constants.%C as constants.%Destroy.type {
@@ -389,7 +380,7 @@ fn InstanceC(a: A) -> C {
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Op = %C.as.Destroy.impl.Op.decl
-// CHECK:STDOUT:   witness = file.%Destroy.impl_witness.loc10
+// CHECK:STDOUT:   witness = @C.%Destroy.impl_witness
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: impl @A.as.Action.impl: %A.ref as %Action.type {
@@ -408,6 +399,9 @@ fn InstanceC(a: A) -> C {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @A {
+// CHECK:STDOUT:   impl_decl @A.as.Destroy.impl [concrete] {} {}
+// CHECK:STDOUT:   %Destroy.impl_witness_table = impl_witness_table (@A.as.Destroy.impl.%A.as.Destroy.impl.Op.decl), @A.as.Destroy.impl [concrete]
+// CHECK:STDOUT:   %Destroy.impl_witness: <witness> = impl_witness %Destroy.impl_witness_table [concrete = constants.%Destroy.impl_witness.b44]
 // CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [concrete = constants.%empty_struct_type]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [concrete = constants.%complete_type]
 // CHECK:STDOUT:   complete_type_witness = %complete_type
@@ -417,6 +411,9 @@ fn InstanceC(a: A) -> C {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @B {
+// CHECK:STDOUT:   impl_decl @B.as.Destroy.impl [concrete] {} {}
+// CHECK:STDOUT:   %Destroy.impl_witness_table = impl_witness_table (@B.as.Destroy.impl.%B.as.Destroy.impl.Op.decl), @B.as.Destroy.impl [concrete]
+// CHECK:STDOUT:   %Destroy.impl_witness: <witness> = impl_witness %Destroy.impl_witness_table [concrete = constants.%Destroy.impl_witness.40d]
 // CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [concrete = constants.%empty_struct_type]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [concrete = constants.%complete_type]
 // CHECK:STDOUT:   complete_type_witness = %complete_type
@@ -426,6 +423,9 @@ fn InstanceC(a: A) -> C {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @C {
+// CHECK:STDOUT:   impl_decl @C.as.Destroy.impl [concrete] {} {}
+// CHECK:STDOUT:   %Destroy.impl_witness_table = impl_witness_table (@C.as.Destroy.impl.%C.as.Destroy.impl.Op.decl), @C.as.Destroy.impl [concrete]
+// CHECK:STDOUT:   %Destroy.impl_witness: <witness> = impl_witness %Destroy.impl_witness_table [concrete = constants.%Destroy.impl_witness.edd]
 // CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [concrete = constants.%empty_struct_type]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [concrete = constants.%complete_type]
 // CHECK:STDOUT:   complete_type_witness = %complete_type
@@ -549,24 +549,24 @@ fn InstanceC(a: A) -> C {
 // CHECK:STDOUT:     import Core//prelude
 // CHECK:STDOUT:     import Core//prelude/...
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %Main.import_ref.e4e = import_ref Main//action, loc8_9, unloaded
+// CHECK:STDOUT:   %Main.import_ref.7b0 = import_ref Main//action, loc8_9, unloaded
 // CHECK:STDOUT:   %Main.import_ref.8f24d3.1: <witness> = import_ref Main//action, loc8_10, loaded [concrete = constants.%complete_type]
 // CHECK:STDOUT:   %Main.import_ref.da3 = import_ref Main//action, inst58 [no loc], unloaded
 // CHECK:STDOUT:   %Main.import_ref.93c: type = import_ref Main//action, inst58 [no loc], loaded [concrete = constants.%A]
-// CHECK:STDOUT:   %Main.import_ref.cb9298.1: type = import_ref Main//action, inst65 [no loc], loaded [concrete = constants.%Destroy.type]
-// CHECK:STDOUT:   %Main.import_ref.9c1 = import_ref Main//action, loc8_9, unloaded
-// CHECK:STDOUT:   %Main.import_ref.942 = import_ref Main//action, loc9_9, unloaded
+// CHECK:STDOUT:   %Main.import_ref.cb9298.1: type = import_ref Main//action, inst61 [no loc], loaded [concrete = constants.%Destroy.type]
+// CHECK:STDOUT:   %Main.import_ref.2d5 = import_ref Main//action, loc8_9, unloaded
+// CHECK:STDOUT:   %Main.import_ref.ae7 = import_ref Main//action, loc9_9, unloaded
 // CHECK:STDOUT:   %Main.import_ref.8f24d3.2: <witness> = import_ref Main//action, loc9_10, loaded [concrete = constants.%complete_type]
 // CHECK:STDOUT:   %Main.import_ref.54a = import_ref Main//action, inst102 [no loc], unloaded
 // CHECK:STDOUT:   %Main.import_ref.bfe: type = import_ref Main//action, inst102 [no loc], loaded [concrete = constants.%B]
-// CHECK:STDOUT:   %Main.import_ref.cb9298.2: type = import_ref Main//action, inst65 [no loc], loaded [concrete = constants.%Destroy.type]
-// CHECK:STDOUT:   %Main.import_ref.729 = import_ref Main//action, loc9_9, unloaded
-// CHECK:STDOUT:   %Main.import_ref.c18 = import_ref Main//action, loc10_9, unloaded
+// CHECK:STDOUT:   %Main.import_ref.cb9298.2: type = import_ref Main//action, inst61 [no loc], loaded [concrete = constants.%Destroy.type]
+// CHECK:STDOUT:   %Main.import_ref.fc3 = import_ref Main//action, loc9_9, unloaded
+// CHECK:STDOUT:   %Main.import_ref.34c = import_ref Main//action, loc10_9, unloaded
 // CHECK:STDOUT:   %Main.import_ref.8f24d3.3: <witness> = import_ref Main//action, loc10_10, loaded [concrete = constants.%complete_type]
 // CHECK:STDOUT:   %Main.import_ref.2c4 = import_ref Main//action, inst122 [no loc], unloaded
 // CHECK:STDOUT:   %Main.import_ref.c0c: type = import_ref Main//action, inst122 [no loc], loaded [concrete = constants.%C]
-// CHECK:STDOUT:   %Main.import_ref.cb9298.3: type = import_ref Main//action, inst65 [no loc], loaded [concrete = constants.%Destroy.type]
-// CHECK:STDOUT:   %Main.import_ref.f74 = import_ref Main//action, loc10_9, unloaded
+// CHECK:STDOUT:   %Main.import_ref.cb9298.3: type = import_ref Main//action, inst61 [no loc], loaded [concrete = constants.%Destroy.type]
+// CHECK:STDOUT:   %Main.import_ref.b3d = import_ref Main//action, loc10_9, unloaded
 // CHECK:STDOUT:   %Main.import_ref.5ab3ec.1: type = import_ref Main//action, loc4_18, loaded [symbolic = @Action.%T (constants.%T)]
 // CHECK:STDOUT:   %Main.import_ref.ddc = import_ref Main//action, inst27 [no loc], unloaded
 // CHECK:STDOUT:   %Main.import_ref.c55: @Action.%Action.assoc_type (%Action.assoc_type.32e) = import_ref Main//action, loc5_22, loaded [symbolic = @Action.%assoc0 (constants.%assoc0.f18741.2)]
@@ -628,20 +628,20 @@ fn InstanceC(a: A) -> C {
 // CHECK:STDOUT:
 // CHECK:STDOUT: impl @A.as.Destroy.impl: imports.%Main.import_ref.93c as imports.%Main.import_ref.cb9298.1 [from "action.carbon"] {
 // CHECK:STDOUT: !members:
-// CHECK:STDOUT:   .Op = imports.%Main.import_ref.9c1
-// CHECK:STDOUT:   witness = imports.%Main.import_ref.e4e
+// CHECK:STDOUT:   .Op = imports.%Main.import_ref.2d5
+// CHECK:STDOUT:   witness = imports.%Main.import_ref.7b0
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: impl @B.as.Destroy.impl: imports.%Main.import_ref.bfe as imports.%Main.import_ref.cb9298.2 [from "action.carbon"] {
 // CHECK:STDOUT: !members:
-// CHECK:STDOUT:   .Op = imports.%Main.import_ref.729
-// CHECK:STDOUT:   witness = imports.%Main.import_ref.942
+// CHECK:STDOUT:   .Op = imports.%Main.import_ref.fc3
+// CHECK:STDOUT:   witness = imports.%Main.import_ref.ae7
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: impl @C.as.Destroy.impl: imports.%Main.import_ref.c0c as imports.%Main.import_ref.cb9298.3 [from "action.carbon"] {
 // CHECK:STDOUT: !members:
-// CHECK:STDOUT:   .Op = imports.%Main.import_ref.f74
-// CHECK:STDOUT:   witness = imports.%Main.import_ref.c18
+// CHECK:STDOUT:   .Op = imports.%Main.import_ref.b3d
+// CHECK:STDOUT:   witness = imports.%Main.import_ref.34c
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: impl @A.as.Action.impl: imports.%Main.import_ref.984 as imports.%Main.import_ref.bb2 [from "action.carbon"] {
@@ -769,24 +769,24 @@ fn InstanceC(a: A) -> C {
 // CHECK:STDOUT:     import Core//prelude
 // CHECK:STDOUT:     import Core//prelude/...
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %Main.import_ref.e4e = import_ref Main//action, loc8_9, unloaded
+// CHECK:STDOUT:   %Main.import_ref.7b0 = import_ref Main//action, loc8_9, unloaded
 // CHECK:STDOUT:   %Main.import_ref.8f24d3.1: <witness> = import_ref Main//action, loc8_10, loaded [concrete = constants.%complete_type]
 // CHECK:STDOUT:   %Main.import_ref.da3 = import_ref Main//action, inst58 [no loc], unloaded
 // CHECK:STDOUT:   %Main.import_ref.93c: type = import_ref Main//action, inst58 [no loc], loaded [concrete = constants.%A]
-// CHECK:STDOUT:   %Main.import_ref.cb9298.1: type = import_ref Main//action, inst65 [no loc], loaded [concrete = constants.%Destroy.type]
-// CHECK:STDOUT:   %Main.import_ref.9c1 = import_ref Main//action, loc8_9, unloaded
-// CHECK:STDOUT:   %Main.import_ref.942 = import_ref Main//action, loc9_9, unloaded
+// CHECK:STDOUT:   %Main.import_ref.cb9298.1: type = import_ref Main//action, inst61 [no loc], loaded [concrete = constants.%Destroy.type]
+// CHECK:STDOUT:   %Main.import_ref.2d5 = import_ref Main//action, loc8_9, unloaded
+// CHECK:STDOUT:   %Main.import_ref.ae7 = import_ref Main//action, loc9_9, unloaded
 // CHECK:STDOUT:   %Main.import_ref.8f24d3.2: <witness> = import_ref Main//action, loc9_10, loaded [concrete = constants.%complete_type]
 // CHECK:STDOUT:   %Main.import_ref.54a = import_ref Main//action, inst102 [no loc], unloaded
 // CHECK:STDOUT:   %Main.import_ref.bfe: type = import_ref Main//action, inst102 [no loc], loaded [concrete = constants.%B]
-// CHECK:STDOUT:   %Main.import_ref.cb9298.2: type = import_ref Main//action, inst65 [no loc], loaded [concrete = constants.%Destroy.type]
-// CHECK:STDOUT:   %Main.import_ref.729 = import_ref Main//action, loc9_9, unloaded
-// CHECK:STDOUT:   %Main.import_ref.c18 = import_ref Main//action, loc10_9, unloaded
+// CHECK:STDOUT:   %Main.import_ref.cb9298.2: type = import_ref Main//action, inst61 [no loc], loaded [concrete = constants.%Destroy.type]
+// CHECK:STDOUT:   %Main.import_ref.fc3 = import_ref Main//action, loc9_9, unloaded
+// CHECK:STDOUT:   %Main.import_ref.34c = import_ref Main//action, loc10_9, unloaded
 // CHECK:STDOUT:   %Main.import_ref.8f24d3.3: <witness> = import_ref Main//action, loc10_10, loaded [concrete = constants.%complete_type]
 // CHECK:STDOUT:   %Main.import_ref.2c4 = import_ref Main//action, inst122 [no loc], unloaded
 // CHECK:STDOUT:   %Main.import_ref.c0c: type = import_ref Main//action, inst122 [no loc], loaded [concrete = constants.%C]
-// CHECK:STDOUT:   %Main.import_ref.cb9298.3: type = import_ref Main//action, inst65 [no loc], loaded [concrete = constants.%Destroy.type]
-// CHECK:STDOUT:   %Main.import_ref.f74 = import_ref Main//action, loc10_9, unloaded
+// CHECK:STDOUT:   %Main.import_ref.cb9298.3: type = import_ref Main//action, inst61 [no loc], loaded [concrete = constants.%Destroy.type]
+// CHECK:STDOUT:   %Main.import_ref.b3d = import_ref Main//action, loc10_9, unloaded
 // CHECK:STDOUT:   %Main.import_ref.5ab3ec.1: type = import_ref Main//action, loc4_18, loaded [symbolic = @Action.%T (constants.%T)]
 // CHECK:STDOUT:   %Main.import_ref.ddc = import_ref Main//action, inst27 [no loc], unloaded
 // CHECK:STDOUT:   %Main.import_ref.c55: @Action.%Action.assoc_type (%Action.assoc_type.32e) = import_ref Main//action, loc5_22, loaded [symbolic = @Action.%assoc0 (constants.%assoc0.f18)]
@@ -846,20 +846,20 @@ fn InstanceC(a: A) -> C {
 // CHECK:STDOUT:
 // CHECK:STDOUT: impl @A.as.Destroy.impl: imports.%Main.import_ref.93c as imports.%Main.import_ref.cb9298.1 [from "action.carbon"] {
 // CHECK:STDOUT: !members:
-// CHECK:STDOUT:   .Op = imports.%Main.import_ref.9c1
-// CHECK:STDOUT:   witness = imports.%Main.import_ref.e4e
+// CHECK:STDOUT:   .Op = imports.%Main.import_ref.2d5
+// CHECK:STDOUT:   witness = imports.%Main.import_ref.7b0
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: impl @B.as.Destroy.impl: imports.%Main.import_ref.bfe as imports.%Main.import_ref.cb9298.2 [from "action.carbon"] {
 // CHECK:STDOUT: !members:
-// CHECK:STDOUT:   .Op = imports.%Main.import_ref.729
-// CHECK:STDOUT:   witness = imports.%Main.import_ref.942
+// CHECK:STDOUT:   .Op = imports.%Main.import_ref.fc3
+// CHECK:STDOUT:   witness = imports.%Main.import_ref.ae7
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: impl @C.as.Destroy.impl: imports.%Main.import_ref.c0c as imports.%Main.import_ref.cb9298.3 [from "action.carbon"] {
 // CHECK:STDOUT: !members:
-// CHECK:STDOUT:   .Op = imports.%Main.import_ref.f74
-// CHECK:STDOUT:   witness = imports.%Main.import_ref.c18
+// CHECK:STDOUT:   .Op = imports.%Main.import_ref.b3d
+// CHECK:STDOUT:   witness = imports.%Main.import_ref.34c
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: impl @A.as.Action.impl: imports.%Main.import_ref.984 as imports.%Main.import_ref.bb2 [from "action.carbon"] {
@@ -966,17 +966,17 @@ fn InstanceC(a: A) -> C {
 // CHECK:STDOUT:   %Factory.Method.a71: %Factory.Method.type.7ee = struct_value () [symbolic]
 // CHECK:STDOUT:   %assoc1.e30: %Factory.assoc_type.207 = assoc_entity element1, @Factory.%Factory.Method.decl [symbolic]
 // CHECK:STDOUT:   %A: type = class_type @A [concrete]
-// CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [concrete]
-// CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [concrete]
 // CHECK:STDOUT:   %Destroy.type: type = facet_type <@Destroy> [concrete]
 // CHECK:STDOUT:   %pattern_type.f6d: type = pattern_type auto [concrete]
-// CHECK:STDOUT:   %Destroy.impl_witness.cbc: <witness> = impl_witness file.%Destroy.impl_witness_table.loc11 [concrete]
+// CHECK:STDOUT:   %Destroy.impl_witness.b44: <witness> = impl_witness @A.%Destroy.impl_witness_table [concrete]
 // CHECK:STDOUT:   %ptr.6db: type = ptr_type %A [concrete]
 // CHECK:STDOUT:   %pattern_type.5f8: type = pattern_type %ptr.6db [concrete]
 // CHECK:STDOUT:   %A.as.Destroy.impl.Op.type: type = fn_type @A.as.Destroy.impl.Op [concrete]
 // CHECK:STDOUT:   %A.as.Destroy.impl.Op: %A.as.Destroy.impl.Op.type = struct_value () [concrete]
+// CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [concrete]
+// CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [concrete]
 // CHECK:STDOUT:   %B: type = class_type @B [concrete]
-// CHECK:STDOUT:   %Destroy.impl_witness.a5a: <witness> = impl_witness file.%Destroy.impl_witness_table.loc12 [concrete]
+// CHECK:STDOUT:   %Destroy.impl_witness.40d: <witness> = impl_witness @B.%Destroy.impl_witness_table [concrete]
 // CHECK:STDOUT:   %ptr.e79: type = ptr_type %B [concrete]
 // CHECK:STDOUT:   %pattern_type.960: type = pattern_type %ptr.e79 [concrete]
 // CHECK:STDOUT:   %B.as.Destroy.impl.Op.type: type = fn_type @B.as.Destroy.impl.Op [concrete]
@@ -1023,13 +1023,7 @@ fn InstanceC(a: A) -> C {
 // CHECK:STDOUT:     %T.loc4_19.2: type = bind_symbolic_name T, 0 [symbolic = %T.loc4_19.1 (constants.%T)]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %A.decl: type = class_decl @A [concrete = constants.%A] {} {}
-// CHECK:STDOUT:   impl_decl @A.as.Destroy.impl [concrete] {} {}
-// CHECK:STDOUT:   %Destroy.impl_witness_table.loc11 = impl_witness_table (@A.as.Destroy.impl.%A.as.Destroy.impl.Op.decl), @A.as.Destroy.impl [concrete]
-// CHECK:STDOUT:   %Destroy.impl_witness.loc11: <witness> = impl_witness %Destroy.impl_witness_table.loc11 [concrete = constants.%Destroy.impl_witness.cbc]
 // CHECK:STDOUT:   %B.decl: type = class_decl @B [concrete = constants.%B] {} {}
-// CHECK:STDOUT:   impl_decl @B.as.Destroy.impl [concrete] {} {}
-// CHECK:STDOUT:   %Destroy.impl_witness_table.loc12 = impl_witness_table (@B.as.Destroy.impl.%B.as.Destroy.impl.Op.decl), @B.as.Destroy.impl [concrete]
-// CHECK:STDOUT:   %Destroy.impl_witness.loc12: <witness> = impl_witness %Destroy.impl_witness_table.loc12 [concrete = constants.%Destroy.impl_witness.a5a]
 // CHECK:STDOUT:   impl_decl @A.as.Factory.impl [concrete] {} {
 // CHECK:STDOUT:     %A.ref: type = name_ref A, file.%A.decl [concrete = constants.%A]
 // CHECK:STDOUT:     %Factory.ref: %Factory.type.1a8 = name_ref Factory, file.%Factory.decl [concrete = constants.%Factory.generic]
@@ -1107,7 +1101,7 @@ fn InstanceC(a: A) -> C {
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Op = %A.as.Destroy.impl.Op.decl
-// CHECK:STDOUT:   witness = file.%Destroy.impl_witness.loc11
+// CHECK:STDOUT:   witness = @A.%Destroy.impl_witness
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: impl @B.as.Destroy.impl: constants.%B as constants.%Destroy.type {
@@ -1123,7 +1117,7 @@ fn InstanceC(a: A) -> C {
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Op = %B.as.Destroy.impl.Op.decl
-// CHECK:STDOUT:   witness = file.%Destroy.impl_witness.loc12
+// CHECK:STDOUT:   witness = @B.%Destroy.impl_witness
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: impl @A.as.Factory.impl: %A.ref as %Factory.type {
@@ -1157,6 +1151,9 @@ fn InstanceC(a: A) -> C {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @A {
+// CHECK:STDOUT:   impl_decl @A.as.Destroy.impl [concrete] {} {}
+// CHECK:STDOUT:   %Destroy.impl_witness_table = impl_witness_table (@A.as.Destroy.impl.%A.as.Destroy.impl.Op.decl), @A.as.Destroy.impl [concrete]
+// CHECK:STDOUT:   %Destroy.impl_witness: <witness> = impl_witness %Destroy.impl_witness_table [concrete = constants.%Destroy.impl_witness.b44]
 // CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [concrete = constants.%empty_struct_type]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [concrete = constants.%complete_type]
 // CHECK:STDOUT:   complete_type_witness = %complete_type
@@ -1166,6 +1163,9 @@ fn InstanceC(a: A) -> C {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @B {
+// CHECK:STDOUT:   impl_decl @B.as.Destroy.impl [concrete] {} {}
+// CHECK:STDOUT:   %Destroy.impl_witness_table = impl_witness_table (@B.as.Destroy.impl.%B.as.Destroy.impl.Op.decl), @B.as.Destroy.impl [concrete]
+// CHECK:STDOUT:   %Destroy.impl_witness: <witness> = impl_witness %Destroy.impl_witness_table [concrete = constants.%Destroy.impl_witness.40d]
 // CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [concrete = constants.%empty_struct_type]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [concrete = constants.%complete_type]
 // CHECK:STDOUT:   complete_type_witness = %complete_type
@@ -1289,7 +1289,7 @@ fn InstanceC(a: A) -> C {
 // CHECK:STDOUT:   %.711: type = fn_type_with_self_type %Factory.Make.type.c59, %Factory.facet [concrete]
 // CHECK:STDOUT:   %A.as.Factory.impl.Make.type: type = fn_type @A.as.Factory.impl.Make [concrete]
 // CHECK:STDOUT:   %A.as.Factory.impl.Make: %A.as.Factory.impl.Make.type = struct_value () [concrete]
-// CHECK:STDOUT:   %Destroy.impl_witness.d49: <witness> = impl_witness imports.%Destroy.impl_witness_table.75c [concrete]
+// CHECK:STDOUT:   %Destroy.impl_witness.5cf: <witness> = impl_witness imports.%Destroy.impl_witness_table.f6b [concrete]
 // CHECK:STDOUT:   %B.as.Destroy.impl.Op.type: type = fn_type @B.as.Destroy.impl.Op [concrete]
 // CHECK:STDOUT:   %B.as.Destroy.impl.Op: %B.as.Destroy.impl.Op.type = struct_value () [concrete]
 // CHECK:STDOUT:   %ptr.e79: type = ptr_type %B [concrete]
@@ -1311,18 +1311,18 @@ fn InstanceC(a: A) -> C {
 // CHECK:STDOUT:     import Core//prelude
 // CHECK:STDOUT:     import Core//prelude/...
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %Main.import_ref.e4e = import_ref Main//factory, loc11_9, unloaded
+// CHECK:STDOUT:   %Main.import_ref.7b0 = import_ref Main//factory, loc11_9, unloaded
 // CHECK:STDOUT:   %Main.import_ref.8f24d3.1: <witness> = import_ref Main//factory, loc11_10, loaded [concrete = constants.%complete_type]
 // CHECK:STDOUT:   %Main.import_ref.da3 = import_ref Main//factory, inst80 [no loc], unloaded
 // CHECK:STDOUT:   %Main.import_ref.93c: type = import_ref Main//factory, inst80 [no loc], loaded [concrete = constants.%A]
-// CHECK:STDOUT:   %Main.import_ref.cb9298.1: type = import_ref Main//factory, inst87 [no loc], loaded [concrete = constants.%Destroy.type]
-// CHECK:STDOUT:   %Main.import_ref.9c1 = import_ref Main//factory, loc11_9, unloaded
-// CHECK:STDOUT:   %Main.import_ref.329: <witness> = import_ref Main//factory, loc12_9, loaded [concrete = constants.%Destroy.impl_witness.d49]
+// CHECK:STDOUT:   %Main.import_ref.cb9298.1: type = import_ref Main//factory, inst83 [no loc], loaded [concrete = constants.%Destroy.type]
+// CHECK:STDOUT:   %Main.import_ref.2d5 = import_ref Main//factory, loc11_9, unloaded
+// CHECK:STDOUT:   %Main.import_ref.6c7: <witness> = import_ref Main//factory, loc12_9, loaded [concrete = constants.%Destroy.impl_witness.5cf]
 // CHECK:STDOUT:   %Main.import_ref.8f24d3.2: <witness> = import_ref Main//factory, loc12_10, loaded [concrete = constants.%complete_type]
 // CHECK:STDOUT:   %Main.import_ref.54a = import_ref Main//factory, inst124 [no loc], unloaded
 // CHECK:STDOUT:   %Main.import_ref.bfe: type = import_ref Main//factory, inst124 [no loc], loaded [concrete = constants.%B]
-// CHECK:STDOUT:   %Main.import_ref.cb9298.2: type = import_ref Main//factory, inst87 [no loc], loaded [concrete = constants.%Destroy.type]
-// CHECK:STDOUT:   %Main.import_ref.729 = import_ref Main//factory, loc12_9, unloaded
+// CHECK:STDOUT:   %Main.import_ref.cb9298.2: type = import_ref Main//factory, inst83 [no loc], loaded [concrete = constants.%Destroy.type]
+// CHECK:STDOUT:   %Main.import_ref.fc3 = import_ref Main//factory, loc12_9, unloaded
 // CHECK:STDOUT:   %Main.import_ref.5ab3ec.1: type = import_ref Main//factory, loc4_19, loaded [symbolic = @Factory.%T (constants.%T)]
 // CHECK:STDOUT:   %Main.import_ref.fbb = import_ref Main//factory, inst27 [no loc], unloaded
 // CHECK:STDOUT:   %Main.import_ref.46c: @Factory.%Factory.assoc_type (%Factory.assoc_type.207) = import_ref Main//factory, loc6_17, loaded [symbolic = @Factory.%assoc0 (constants.%assoc0.46d25f.2)]
@@ -1347,8 +1347,8 @@ fn InstanceC(a: A) -> C {
 // CHECK:STDOUT:   %Main.import_ref.7dd: %A.as.Factory.impl.Method.type = import_ref Main//factory, loc16_31, loaded [concrete = constants.%A.as.Factory.impl.Method]
 // CHECK:STDOUT:   %Factory.impl_witness_table = impl_witness_table (%Main.import_ref.9ec, %Main.import_ref.7dd), @A.as.Factory.impl [concrete]
 // CHECK:STDOUT:   %Core.Destroy: type = import_ref Core//prelude/parts/destroy, Destroy, loaded [concrete = constants.%Destroy.type]
-// CHECK:STDOUT:   %Main.import_ref.34b: %B.as.Destroy.impl.Op.type = import_ref Main//factory, loc12_9, loaded [concrete = constants.%B.as.Destroy.impl.Op]
-// CHECK:STDOUT:   %Destroy.impl_witness_table.75c = impl_witness_table (%Main.import_ref.34b), @B.as.Destroy.impl [concrete]
+// CHECK:STDOUT:   %Main.import_ref.82a: %B.as.Destroy.impl.Op.type = import_ref Main//factory, loc12_9, loaded [concrete = constants.%B.as.Destroy.impl.Op]
+// CHECK:STDOUT:   %Destroy.impl_witness_table.f6b = impl_witness_table (%Main.import_ref.82a), @B.as.Destroy.impl [concrete]
 // CHECK:STDOUT:   %Main.import_ref.46fc3c.2 = import_ref Main//factory, loc8_31, unloaded
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -1412,14 +1412,14 @@ fn InstanceC(a: A) -> C {
 // CHECK:STDOUT:
 // CHECK:STDOUT: impl @A.as.Destroy.impl: imports.%Main.import_ref.93c as imports.%Main.import_ref.cb9298.1 [from "factory.carbon"] {
 // CHECK:STDOUT: !members:
-// CHECK:STDOUT:   .Op = imports.%Main.import_ref.9c1
-// CHECK:STDOUT:   witness = imports.%Main.import_ref.e4e
+// CHECK:STDOUT:   .Op = imports.%Main.import_ref.2d5
+// CHECK:STDOUT:   witness = imports.%Main.import_ref.7b0
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: impl @B.as.Destroy.impl: imports.%Main.import_ref.bfe as imports.%Main.import_ref.cb9298.2 [from "factory.carbon"] {
 // CHECK:STDOUT: !members:
-// CHECK:STDOUT:   .Op = imports.%Main.import_ref.729
-// CHECK:STDOUT:   witness = imports.%Main.import_ref.329
+// CHECK:STDOUT:   .Op = imports.%Main.import_ref.fc3
+// CHECK:STDOUT:   witness = imports.%Main.import_ref.6c7
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: impl @A.as.Factory.impl: imports.%Main.import_ref.984 as imports.%Main.import_ref.bd2 [from "factory.carbon"] {
@@ -1571,7 +1571,7 @@ fn InstanceC(a: A) -> C {
 // CHECK:STDOUT:   %assoc1.535: %Factory.assoc_type.579 = assoc_entity element1, imports.%Main.import_ref.46fc3c.1 [concrete]
 // CHECK:STDOUT:   %C: type = class_type @C [concrete]
 // CHECK:STDOUT:   %pattern_type.f6d: type = pattern_type auto [concrete]
-// CHECK:STDOUT:   %Destroy.impl_witness: <witness> = impl_witness file.%Destroy.impl_witness_table [concrete]
+// CHECK:STDOUT:   %Destroy.impl_witness: <witness> = impl_witness @C.%Destroy.impl_witness_table [concrete]
 // CHECK:STDOUT:   %ptr.019: type = ptr_type %C [concrete]
 // CHECK:STDOUT:   %pattern_type.44a: type = pattern_type %ptr.019 [concrete]
 // CHECK:STDOUT:   %C.as.Destroy.impl.Op.type: type = fn_type @C.as.Destroy.impl.Op [concrete]
@@ -1605,18 +1605,18 @@ fn InstanceC(a: A) -> C {
 // CHECK:STDOUT:     import Core//default
 // CHECK:STDOUT:     import Core//prelude/...
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %Main.import_ref.e4e = import_ref Main//factory, loc11_9, unloaded
+// CHECK:STDOUT:   %Main.import_ref.7b0 = import_ref Main//factory, loc11_9, unloaded
 // CHECK:STDOUT:   %Main.import_ref.8f24d3.1: <witness> = import_ref Main//factory, loc11_10, loaded [concrete = constants.%complete_type]
 // CHECK:STDOUT:   %Main.import_ref.da3 = import_ref Main//factory, inst80 [no loc], unloaded
 // CHECK:STDOUT:   %Main.import_ref.93c: type = import_ref Main//factory, inst80 [no loc], loaded [concrete = constants.%A]
-// CHECK:STDOUT:   %Main.import_ref.cb9298.1: type = import_ref Main//factory, inst87 [no loc], loaded [concrete = constants.%Destroy.type]
-// CHECK:STDOUT:   %Main.import_ref.9c1 = import_ref Main//factory, loc11_9, unloaded
-// CHECK:STDOUT:   %Main.import_ref.942 = import_ref Main//factory, loc12_9, unloaded
+// CHECK:STDOUT:   %Main.import_ref.cb9298.1: type = import_ref Main//factory, inst83 [no loc], loaded [concrete = constants.%Destroy.type]
+// CHECK:STDOUT:   %Main.import_ref.2d5 = import_ref Main//factory, loc11_9, unloaded
+// CHECK:STDOUT:   %Main.import_ref.ae7 = import_ref Main//factory, loc12_9, unloaded
 // CHECK:STDOUT:   %Main.import_ref.8f24d3.2: <witness> = import_ref Main//factory, loc12_10, loaded [concrete = constants.%complete_type]
 // CHECK:STDOUT:   %Main.import_ref.54a = import_ref Main//factory, inst124 [no loc], unloaded
 // CHECK:STDOUT:   %Main.import_ref.bfe: type = import_ref Main//factory, inst124 [no loc], loaded [concrete = constants.%B]
-// CHECK:STDOUT:   %Main.import_ref.cb9298.2: type = import_ref Main//factory, inst87 [no loc], loaded [concrete = constants.%Destroy.type]
-// CHECK:STDOUT:   %Main.import_ref.729 = import_ref Main//factory, loc12_9, unloaded
+// CHECK:STDOUT:   %Main.import_ref.cb9298.2: type = import_ref Main//factory, inst83 [no loc], loaded [concrete = constants.%Destroy.type]
+// CHECK:STDOUT:   %Main.import_ref.fc3 = import_ref Main//factory, loc12_9, unloaded
 // CHECK:STDOUT:   %Main.import_ref.5ab3ec.1: type = import_ref Main//factory, loc4_19, loaded [symbolic = @Factory.%T (constants.%T)]
 // CHECK:STDOUT:   %Main.import_ref.fbb = import_ref Main//factory, inst27 [no loc], unloaded
 // CHECK:STDOUT:   %Main.import_ref.46c: @Factory.%Factory.assoc_type (%Factory.assoc_type.207) = import_ref Main//factory, loc6_17, loaded [symbolic = @Factory.%assoc0 (constants.%assoc0.46d)]
@@ -1655,9 +1655,6 @@ fn InstanceC(a: A) -> C {
 // CHECK:STDOUT:   %default.import.loc2_23.2 = import <none>
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %C.decl: type = class_decl @C [concrete = constants.%C] {} {}
-// CHECK:STDOUT:   impl_decl @C.as.Destroy.impl [concrete] {} {}
-// CHECK:STDOUT:   %Destroy.impl_witness_table = impl_witness_table (@C.as.Destroy.impl.%C.as.Destroy.impl.Op.decl), @C.as.Destroy.impl [concrete]
-// CHECK:STDOUT:   %Destroy.impl_witness: <witness> = impl_witness %Destroy.impl_witness_table [concrete = constants.%Destroy.impl_witness]
 // CHECK:STDOUT:   %MakeC.decl: %MakeC.type = fn_decl @MakeC [concrete = constants.%MakeC] {
 // CHECK:STDOUT:     %return.patt: %pattern_type.c48 = return_slot_pattern [concrete]
 // CHECK:STDOUT:     %return.param_patt: %pattern_type.c48 = out_param_pattern %return.patt, call_param0 [concrete]
@@ -1706,14 +1703,14 @@ fn InstanceC(a: A) -> C {
 // CHECK:STDOUT:
 // CHECK:STDOUT: impl @A.as.Destroy.impl: imports.%Main.import_ref.93c as imports.%Main.import_ref.cb9298.1 [from "factory.carbon"] {
 // CHECK:STDOUT: !members:
-// CHECK:STDOUT:   .Op = imports.%Main.import_ref.9c1
-// CHECK:STDOUT:   witness = imports.%Main.import_ref.e4e
+// CHECK:STDOUT:   .Op = imports.%Main.import_ref.2d5
+// CHECK:STDOUT:   witness = imports.%Main.import_ref.7b0
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: impl @B.as.Destroy.impl: imports.%Main.import_ref.bfe as imports.%Main.import_ref.cb9298.2 [from "factory.carbon"] {
 // CHECK:STDOUT: !members:
-// CHECK:STDOUT:   .Op = imports.%Main.import_ref.729
-// CHECK:STDOUT:   witness = imports.%Main.import_ref.942
+// CHECK:STDOUT:   .Op = imports.%Main.import_ref.fc3
+// CHECK:STDOUT:   witness = imports.%Main.import_ref.ae7
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: impl @A.as.Factory.impl: imports.%Main.import_ref.984 as imports.%Main.import_ref.bd2 [from "factory.carbon"] {
@@ -1736,7 +1733,7 @@ fn InstanceC(a: A) -> C {
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Op = %C.as.Destroy.impl.Op.decl
-// CHECK:STDOUT:   witness = file.%Destroy.impl_witness
+// CHECK:STDOUT:   witness = @C.%Destroy.impl_witness
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @A [from "factory.carbon"] {
@@ -1754,6 +1751,9 @@ fn InstanceC(a: A) -> C {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @C {
+// CHECK:STDOUT:   impl_decl @C.as.Destroy.impl [concrete] {} {}
+// CHECK:STDOUT:   %Destroy.impl_witness_table = impl_witness_table (@C.as.Destroy.impl.%C.as.Destroy.impl.Op.decl), @C.as.Destroy.impl [concrete]
+// CHECK:STDOUT:   %Destroy.impl_witness: <witness> = impl_witness %Destroy.impl_witness_table [concrete = constants.%Destroy.impl_witness]
 // CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [concrete = constants.%empty_struct_type]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [concrete = constants.%complete_type]
 // CHECK:STDOUT:   complete_type_witness = %complete_type
