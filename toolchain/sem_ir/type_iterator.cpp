@@ -79,7 +79,6 @@ auto TypeIterator::Next() -> Step {
 
       case SemIR::AssociatedEntityType::Kind:
       case SemIR::BoolType::Kind:
-      case SemIR::ErrorInst::Kind:
       case SemIR::FacetType::Kind:
       case SemIR::FloatType::Kind:
       case SemIR::FunctionType::Kind:
@@ -167,6 +166,10 @@ auto TypeIterator::Next() -> Step {
           return Step::StructStart{.type_id = type_id};
         }
       }
+
+      case SemIR::ErrorInst::Kind:
+        return Step::Error();
+
       default:
         CARBON_FATAL("Unhandled type instruction {0}", inst_id);
     }
