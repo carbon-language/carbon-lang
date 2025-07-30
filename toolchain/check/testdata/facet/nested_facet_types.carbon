@@ -54,6 +54,21 @@ interface Z {
 
 fn F(FF:! ((Z where .T = .U and .U = .V) where .T = .U and .U = .V) where .T = .U and .U = .V) {}
 
+// --- fail_todo_nested_facet_types_same_associated_in_generic_parameter.carbon
+library "[[@TEST_NAME]]";
+
+interface Z {
+  let T:! type;
+  let U:! type;
+}
+class C(T:! type) {}
+
+// CHECK:STDERR: fail_todo_nested_facet_types_same_associated_in_generic_parameter.carbon:[[@LINE+4]]:12: error: associated constant `.(Z.T)` given two different values `C(.(Z.U))` and `C(.(Z.U))` [AssociatedConstantWithDifferentValues]
+// CHECK:STDERR: fn F(FF:! ((Z where .T = C(.U)) where .T = C(.U)) where .T = C(.U)) {}
+// CHECK:STDERR:            ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+// CHECK:STDERR:
+fn F(FF:! ((Z where .T = C(.U)) where .T = C(.U)) where .T = C(.U)) {}
+
 // --- fail_nested_facet_types_different.carbon
 library "[[@TEST_NAME]]";
 
@@ -80,6 +95,21 @@ interface Z {
 // CHECK:STDERR:           ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 // CHECK:STDERR:
 fn F(FF:! (Z where .T = .U) where .T = {}) {}
+
+// --- fail_nested_facet_types_different_with_associated_in_generic_parameter.carbon
+library "[[@TEST_NAME]]";
+
+interface Z {
+  let T:! type;
+  let U:! type;
+}
+class C(T:! type) {}
+
+// CHECK:STDERR: fail_nested_facet_types_different_with_associated_in_generic_parameter.carbon:[[@LINE+4]]:11: error: associated constant `.(Z.T)` given two different values `C(.(Z.U))` and `{}` [AssociatedConstantWithDifferentValues]
+// CHECK:STDERR: fn F(FF:! (Z where .T = C(.U)) where .T = {}) {}
+// CHECK:STDERR:           ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+// CHECK:STDERR:
+fn F(FF:! (Z where .T = C(.U)) where .T = {}) {}
 
 // --- nested_facet_types_same_with_bitand.carbon
 library "[[@TEST_NAME]]";

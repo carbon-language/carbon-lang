@@ -32,16 +32,28 @@ class SubstInstCallbacks {
     // Attempt to substitute again on the resulting instruction, acting like
     // recursion on the instruction itself.
     SubstAgain,
+    // Attempt to substitute into the operands of the instruction. If the InstId
+    // returned from Rebuild or ReuseUnchanged differs from the input (typically
+    // because some operand in the instruction changed), then the new
+    // instruction will be given to `Subst` again afterward. This allows for the
+    // uncommon case of substituting from the inside out.
+    SubstOperandsAndRetry,
   };
 
   // Performs any needed substitution into an instruction. The instruction ID
-  // should be updated as necessary to represent the new instruction. Returns
-  // FullySubstituted if the resulting instruction ID is fully-substituted.
-  // Return SubstOperands if substitution may be needed into operands of the
-  // instruction, or SubstAgain if the replaced instruction itself should have
-  // substitution applied to it again. When SubstOperands or SubstAgain is
-  // returned, it results in a call back to Rebuild or ReuseUnchanged when that
-  // instruction is done being substituted.
+  // should be updated as necessary to represent the new instruction.
+  //
+  // Return FullySubstituted if the resulting instruction ID is
+  // fully-substituted. Return SubstOperands if substitution may be needed into
+  // operands of the instruction, or SubstAgain if the replaced instruction
+  // itself should have substitution applied to it again. Return
+  // SubstOperandsAndRetry to recurse on the instructions operands and then
+  // substitute the resulting instruction afterward, if the instruction is
+  // replaced by a new one (typically due to Rebuild when the operands changed).
+  //
+  // When SubstOperands, SubstAgain, or SubstOperandsAndRetry is returned, it
+  // results in a call back to Rebuild or ReuseUnchanged when that instruction's
+  // substitution step is complete.
   virtual auto Subst(SemIR::InstId& inst_id) -> SubstResult = 0;
 
   // Rebuilds the type of an instruction from the substituted type instruction.

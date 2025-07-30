@@ -312,26 +312,33 @@ auto SubstInst(Context& context, SemIR::InstId inst_id,
   while (index != -1) {
     auto& item = worklist[index];
 
-    if (item.is_repeated) {
-      // Pop the copy of the repeated item when we get back to the repeated
-      // item, and steal any work that was done there so we don't have to
-      // Subst() the repeated item again. The pop does not reallocate the
-      // worklist so does not invalidate `item`.
-      item.inst_id = worklist.Pop();
-    }
-
     if (item.is_expanded) {
       // Rebuild this item if necessary. Note that this might pop items from the
       // worklist but does not reallocate, so does not invalidate `item`.
-      item.inst_id = Rebuild(context, worklist, item.inst_id, callbacks);
-      index = item.next_index;
-      continue;
+      auto old_inst_id = std::exchange(
+          item.inst_id, Rebuild(context, worklist, item.inst_id, callbacks));
+      if (item.is_repeated && old_inst_id != item.inst_id) {
+        // SubstOperandsAndRetry was returned for the item, and the instruction
+        // was rebuilt from new operands, so go through Subst() again. Note that
+        // we've already called Rebuild so we don't want to leave this item as
+        // repeated, and call back to ReuseUnchanged for it again later unless
+        // the next call to Subst() asks for that.
+        item.is_expanded = false;
+        item.is_repeated = false;
+      } else {
+        index = item.next_index;
+        continue;
+      }
     }
 
     if (item.is_repeated) {
+      // SubstAgain was returned for the item, and the result of that Subst() is
+      // at the back of the worklist, which we pop. Note that popping from the
+      // worklist does not reallocate, so does not invalidate `item`.
+      //
       // When Subst returns SubstAgain, we must call back to Rebuild or
       // ReuseUnchanged for that work item.
-      item.inst_id = callbacks.ReuseUnchanged(item.inst_id);
+      item.inst_id = callbacks.ReuseUnchanged(worklist.Pop());
       index = item.next_index;
       continue;
     }
@@ -356,6 +363,9 @@ auto SubstInst(Context& context, SemIR::InstId inst_id,
         continue;
       }
       case SubstInstCallbacks::SubstResult::SubstOperands:
+        break;
+      case SubstInstCallbacks::SubstResult::SubstOperandsAndRetry:
+        item.is_repeated = true;
         break;
     }
 
