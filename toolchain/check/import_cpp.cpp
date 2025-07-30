@@ -126,7 +126,7 @@ class CarbonClangDiagnosticConsumer : public clang::DiagnosticConsumer {
     context->emitter().AddFlushFn(flusher_);
   }
 
-  ~CarbonClangDiagnosticConsumer() {
+  ~CarbonClangDiagnosticConsumer() override {
     CARBON_CHECK(diagnostic_infos_.empty(),
                  "Missing flush before destroying diagnostic consumer");
   }
