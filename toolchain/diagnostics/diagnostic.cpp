@@ -33,6 +33,11 @@ auto Loc::FormatSnippet(llvm::raw_ostream& out, int indent) const -> void {
 
   out.indent(indent);
   out << line << "\n";
+
+  if (length == -1) {
+    return;
+  }
+
   out.indent(indent + column);
   out << "^";
   // We want to ensure that we don't underline past the end of the line in

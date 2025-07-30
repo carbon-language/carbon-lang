@@ -135,38 +135,29 @@ class CarbonClangDiagnosticConsumer : public clang::DiagnosticConsumer {
                         const clang::Diagnostic& info) -> void override {
     DiagnosticConsumer::HandleDiagnostic(diag_level, info);
 
-    SemIR::ImportIRInstId clang_import_ir_inst_id =
-        AddImportIRInst(*context_, info.getLocation());
-
     llvm::SmallString<256> message;
     info.FormatDiagnostic(message);
 
+    // Render a code snippet including any highlighted ranges and fixit hints.
+    // TODO: Also include the #include stack and macro expansion stack in the
+    // diagnostic output in some way.
+    RawStringOstream snippet_stream;
     if (!info.hasSourceManager()) {
-      // If we don't have a source manager, we haven't actually started
-      // compiling yet, and this is an error from the driver or early in the
-      // frontend. Pass it on directly.
+      // If we don't have a source manager, this is an error from early in the
+      // frontend. Don't produce a snippet.
       CARBON_CHECK(info.getLocation().isInvalid());
-      diagnostic_infos_.push_back({.level = diag_level,
-                                   .import_ir_inst_id = clang_import_ir_inst_id,
-                                   .message = message.str().str()});
-      return;
+    } else {
+      CodeContextRenderer(snippet_stream, invocation_->getLangOpts(),
+                          invocation_->getDiagnosticOpts())
+          .emitDiagnostic(
+              clang::FullSourceLoc(info.getLocation(), info.getSourceManager()),
+              diag_level, message, info.getRanges(), info.getFixItHints());
     }
 
-    // TODO: This includes the full clang diagnostic, including the source
-    // location, resulting in the location appearing twice in the output.
-    RawStringOstream diagnostics_stream;
-    clang::TextDiagnostic text_diagnostic(diagnostics_stream,
-                                          invocation_->getLangOpts(),
-                                          invocation_->getDiagnosticOpts());
-    text_diagnostic.emitDiagnostic(
-        clang::FullSourceLoc(info.getLocation(), info.getSourceManager()),
-        diag_level, message, info.getRanges(), info.getFixItHints());
-
-    std::string diagnostics_str = diagnostics_stream.TakeStr();
-
     diagnostic_infos_.push_back({.level = diag_level,
-                                 .import_ir_inst_id = clang_import_ir_inst_id,
-                                 .message = diagnostics_str});
+                                 .loc = info.getLocation(),
+                                 .message = message.str().str(),
+                                 .snippet = snippet_stream.TakeStr()});
   }
 
   // Outputs Carbon diagnostics based on the collected Clang diagnostics. Must
@@ -182,7 +173,7 @@ class CarbonClangDiagnosticConsumer : public clang::DiagnosticConsumer {
         case clang::DiagnosticsEngine::Note:
         case clang::DiagnosticsEngine::Remark: {
           context_->TODO(
-              SemIR::LocId(info.import_ir_inst_id),
+              SemIR::LocId(AddImportIRInst(*context_, info.loc)),
               llvm::formatv(
                   "Unsupported: C++ diagnostic level for diagnostic\n{0}",
                   info.message));
@@ -191,24 +182,17 @@ class CarbonClangDiagnosticConsumer : public clang::DiagnosticConsumer {
         case clang::DiagnosticsEngine::Warning:
         case clang::DiagnosticsEngine::Error:
         case clang::DiagnosticsEngine::Fatal: {
-          CARBON_DIAGNOSTIC(CppInteropParseWarning, Warning, "{0}",
-                            std::string);
-          CARBON_DIAGNOSTIC(CppInteropParseError, Error, "{0}", std::string);
-          auto builder = context_->emitter().Build(
-              SemIR::LocId(info.import_ir_inst_id),
-              info.level == clang::DiagnosticsEngine::Warning
-                  ? CppInteropParseWarning
-                  : CppInteropParseError,
-              info.message);
-          for (;
-               i + 1 < diagnostic_infos_.size() &&
-               diagnostic_infos_[i + 1].level == clang::DiagnosticsEngine::Note;
-               ++i) {
-            const ClangDiagnosticInfo& note_info = diagnostic_infos_[i + 1];
-            CARBON_DIAGNOSTIC(CppInteropParseNote, Note, "{0}", std::string);
-            builder.Note(SemIR::LocId(note_info.import_ir_inst_id),
-                         CppInteropParseNote, note_info.message);
+          auto builder = context_->emitter().BuildRaw(ConvertToMessage(info));
+          while (i + 1 < diagnostic_infos_.size() &&
+               diagnostic_infos_[i + 1].level == clang::DiagnosticsEngine::Note) {
+            ++i;
+            const ClangDiagnosticInfo& note_info = diagnostic_infos_[i];
+            builder.NoteRaw(ConvertToMessage(note_info));
           }
+          // TODO: This will apply all current Carbon annotation functions. We
+          // should instead track how Clang's context notes and Carbon's
+          // annotation functions are interleaved, and interleave the notes in
+          // the same order.
           builder.Emit();
           break;
         }
@@ -218,11 +202,36 @@ class CarbonClangDiagnosticConsumer : public clang::DiagnosticConsumer {
   }
 
  private:
-  // The type-checking context in which we're running Clang.
-  Context* context_;
+  // A diagnostics renderer based on clang's TextDiagnostic that captures just
+  // the code context (the snippet).
+  class CodeContextRenderer : public clang::TextDiagnostic {
+   public:
+    using TextDiagnostic::TextDiagnostic;
 
-  // The compiler invocation that is producing the diagnostics.
-  std::shared_ptr<clang::CompilerInvocation> invocation_;
+    void emitDiagnosticMessage(
+        clang::FullSourceLoc /*loc*/, clang::PresumedLoc /*ploc*/,
+        clang::DiagnosticsEngine::Level /*level*/, llvm::StringRef /*message*/,
+        llvm::ArrayRef<clang::CharSourceRange> /*ranges*/,
+        clang::DiagOrStoredDiag /*info*/) override {}
+    void emitDiagnosticLoc(
+        clang::FullSourceLoc /*loc*/, clang::PresumedLoc /*ploc*/,
+        clang::DiagnosticsEngine::Level /*level*/,
+        llvm::ArrayRef<clang::CharSourceRange> /*ranges*/) override {}
+
+    // emitCodeContext is inherited from clang::TextDiagnostic.
+
+    void emitIncludeLocation(clang::FullSourceLoc /*loc*/,
+                             clang::PresumedLoc /*ploc*/) override {}
+    void emitImportLocation(clang::FullSourceLoc /*loc*/,
+                            clang::PresumedLoc /*ploc*/,
+                            llvm::StringRef /*module_name*/) override {}
+    void emitBuildingModuleLocation(clang::FullSourceLoc /*loc*/,
+                                    clang::PresumedLoc /*ploc*/,
+                                    llvm::StringRef /*module_name*/) override {}
+
+    // beginDiagnostic and endDiagnostic are inherited from
+    // clang::TextDiagnostic in case it wants to do any setup / teardown work.
+  };
 
   // Information on a Clang diagnostic that can be converted to a Carbon
   // diagnostic.
@@ -230,18 +239,85 @@ class CarbonClangDiagnosticConsumer : public clang::DiagnosticConsumer {
     // The Clang diagnostic level.
     clang::DiagnosticsEngine::Level level;
 
-    // The ID of the ImportIR instruction referring to the Clang source
-    // location.
-    SemIR::ImportIRInstId import_ir_inst_id;
+    // The location of the diagnostic.
+    clang::SourceLocation loc;
 
     // The Clang diagnostic textual message.
     std::string message;
+
+    // The code snippet produced by clang.
+    std::string snippet;
   };
+
+  auto ConvertLevel(clang::DiagnosticsEngine::Level level)
+      -> Diagnostics::Level {
+    switch (level) {
+      case clang::DiagnosticsEngine::Ignored:
+        CARBON_FATAL("Rendering an ignored diagnostic");
+      case clang::DiagnosticsEngine::Note:
+        return Diagnostics::Level::Note;
+      case clang::DiagnosticsEngine::Remark:
+        // TODO: Add a different diagnostic level for remarks. For now we treat
+        // them as warnings.
+      case clang::DiagnosticsEngine::Warning:
+        return Diagnostics::Level::Warning;
+      case clang::DiagnosticsEngine::Error:
+      case clang::DiagnosticsEngine::Fatal:
+        return Diagnostics::Level::Error;
+    }
+  }
+
+  // Get a persistent StringRef that has the given string contents. Used to
+  // produce strings that live long enough to be consumed later by the
+  // diagnostics machinery.
+  // TODO: Make the Diagnostics::Loc be able to own its filename and snippet
+  // line and remove this.
+  auto InternString(llvm::StringRef string) -> llvm::StringRef {
+    return interned_strings_.insert(string).first->getKey();
+  }
+
+  auto ConvertLoc(clang::SourceLocation loc, llvm::StringRef snippet) -> Diagnostics::Loc {
+    if (loc.isInvalid()) {
+      return Diagnostics::Loc();
+    }
+    auto& src_mgr = context_->sem_ir().cpp_ast()->getSourceManager();
+    auto presumed_loc = src_mgr.getPresumedLoc(loc);
+    return {.filename = InternString(presumed_loc.getFilename()),
+            .line = InternString(snippet),
+            .line_number = static_cast<int32_t>(presumed_loc.getLine()),
+            .column_number = static_cast<int32_t>(presumed_loc.getColumn()),
+            .length = -1};
+  }
+
+  auto ConvertToMessage(const ClangDiagnosticInfo& info)
+      -> Diagnostics::Message {
+    return {
+        // TODO: Pass the clang diagnostic ID along so that the relevant warning
+        // flag can be included in the diagnostic.
+        .kind = Diagnostics::Kind::ClangDiagnostic,
+        .level = ConvertLevel(info.level),
+        .loc = ConvertLoc(info.loc, info.snippet),
+        .format = "",
+        .format_args = {},
+        .format_fn = [message = info.message](
+                         const Diagnostics::Message&) { return message; },
+    };
+  }
+
+  // The type-checking context in which we're running Clang.
+  Context* context_;
+
+  // The compiler invocation that is producing the diagnostics.
+  std::shared_ptr<clang::CompilerInvocation> invocation_;
 
   // Collects the information for all Clang diagnostics to be converted to
   // Carbon diagnostics after the context has been initialized with the Clang
   // AST.
   llvm::SmallVector<ClangDiagnosticInfo> diagnostic_infos_;
+
+  // A collection of interned strings that may have been handed off to the
+  // diagnostics machinery for later use.
+  llvm::StringSet<> interned_strings_;
 };
 
 }  // namespace

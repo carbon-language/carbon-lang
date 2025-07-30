@@ -72,7 +72,9 @@ struct Loc {
   int32_t column_number = -1;
 
   // The number of characters corresponding to the location in the line,
-  // starting at column_number. Should always be at least 1.
+  // starting at column_number. Should always be at least 1. As a special case,
+  // a length of -1 indicates that no caret line should be produced. This is
+  // used when the caret information is already present in `line`.
   int32_t length = 1;
 };
 

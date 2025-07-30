@@ -6,6 +6,7 @@
 
 #include <algorithm>
 #include <cstdint>
+#include "llvm/ADT/Any.h"
 
 namespace Carbon::Diagnostics {
 
@@ -36,10 +37,10 @@ auto StreamConsumer::HandleDiagnostic(Diagnostic diagnostic) -> void {
       *stream_ << " [" << message.kind << "]";
     }
     *stream_ << "\n";
-    // Don't include a snippet for location information to keep this diagnostic
-    // more visually associated with the following diagnostic that it describes
-    // and to better match C++ compilers.
     if (message.level != Level::LocationInfo) {
+      // Don't include a snippet for location information to keep this diagnostic
+      // more visually associated with the following diagnostic that it describes
+      // and to better match C++ compilers.
       message.loc.FormatSnippet(*stream_);
     }
   }

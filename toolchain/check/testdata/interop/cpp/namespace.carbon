@@ -51,10 +51,11 @@ library "[[@TEST_NAME]]";
 import Cpp library "single.h";
 
 fn MyF() {
-  // CHECK:STDERR: fail_import_namespace_wrong_name.carbon:[[@LINE+4]]:3: error: member name `not_my_namespace` not found in `Cpp` [MemberNameNotFoundInInstScope]
+  // CHECK:STDERR: fail_import_namespace_wrong_name.carbon:[[@LINE+5]]:3: error: member name `not_my_namespace` not found in `Cpp` [MemberNameNotFoundInInstScope]
   // CHECK:STDERR:   Cpp.not_my_namespace.foo();
   // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~
   // CHECK:STDERR:
+  // CHECK:STDERR: error: reference to 'N' is ambiguous [ClangDiagnostic]
   Cpp.not_my_namespace.foo();
 }
 
@@ -114,26 +115,21 @@ fn MyF() {
 
 // --- inline_ambiguity.h
 
+// CHECK:STDERR: ./inline_ambiguity.h:[[@LINE+4]]:11: note: candidate found by name lookup is 'N' [ClangDiagnostic]
+// CHECK:STDERR:     6 | namespace N { void foo(); }
+// CHECK:STDERR:       |           ^
+// CHECK:STDERR:
 namespace N { void foo(); }
+// CHECK:STDERR: ./inline_ambiguity.h:[[@LINE+4]]:30: note: candidate found by name lookup is '(anonymous namespace)::N' [ClangDiagnostic]
+// CHECK:STDERR:    11 | inline namespace { namespace N {} }
+// CHECK:STDERR:       |                              ^
+// CHECK:STDERR:
 inline namespace { namespace N {} }
 
 // --- fail_import_inline_ambiguity.carbon
 
 library "[[@TEST_NAME]]";
 
-// CHECK:STDERR: fail_import_inline_ambiguity.carbon:[[@LINE+13]]:1: in import [InImport]
-// CHECK:STDERR: error: error: reference to 'N' is ambiguous
-// CHECK:STDERR:  [CppInteropParseError]
-// CHECK:STDERR: fail_import_inline_ambiguity.carbon:[[@LINE+10]]:1: in import [InImport]
-// CHECK:STDERR: ./inline_ambiguity.h:2: note: ./inline_ambiguity.h:2:11: note: candidate found by name lookup is 'N'
-// CHECK:STDERR:     2 | namespace N { void foo(); }
-// CHECK:STDERR:       |           ^
-// CHECK:STDERR:  [CppInteropParseNote]
-// CHECK:STDERR: fail_import_inline_ambiguity.carbon:[[@LINE+5]]:1: in import [InImport]
-// CHECK:STDERR: ./inline_ambiguity.h:3: note: ./inline_ambiguity.h:3:30: note: candidate found by name lookup is '(anonymous namespace)::N'
-// CHECK:STDERR:     3 | inline namespace { namespace N {} }
-// CHECK:STDERR:       |                              ^
-// CHECK:STDERR:  [CppInteropParseNote]
 import Cpp library "inline_ambiguity.h";
 
 fn MyF() {
