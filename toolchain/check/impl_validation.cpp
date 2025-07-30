@@ -270,7 +270,7 @@ static auto ValidateImplsForInterface(Context& context,
 
     auto impls_before = llvm::drop_end(impls, num_impls - split_point);
     for (const auto& impl_a : impls_before) {
-      // Don't compare structures that contain errors.
+      // Don't diagnose structures that contain errors.
       if (!impl_a.type_structure || !impl_b.type_structure) {
         continue;
       }
