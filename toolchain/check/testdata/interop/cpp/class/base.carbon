@@ -175,11 +175,12 @@ fn Convert(p: Cpp.B*) {
 
 library "[[@TEST_NAME]]";
 
-// CHECK:STDERR: fail_todo_use_virtual_inheritance.carbon:[[@LINE+2]]:1: in import [InImport]
-// CHECK:STDERR: ./virtual_inheritance.h:3: error: semantics TODO: `class with virtual bases` [SemanticsTodo]
 import Cpp library "virtual_inheritance.h";
 
 fn Convert(p: Cpp.B*) -> Cpp.A* {
+  // CHECK:STDERR: fail_todo_use_virtual_inheritance.carbon:[[@LINE+14]]:3: error: semantics TODO: `class with virtual bases` [SemanticsTodo]
+  // CHECK:STDERR:   return p;
+  // CHECK:STDERR:   ^~~~~~~~~
   // CHECK:STDERR: fail_todo_use_virtual_inheritance.carbon:[[@LINE+11]]:3: note: while completing C++ class type `Cpp.B` [InCppTypeCompletion]
   // CHECK:STDERR:   return p;
   // CHECK:STDERR:   ^~~~~~~~~

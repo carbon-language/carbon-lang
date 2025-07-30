@@ -620,15 +620,8 @@ static auto ImportClassObjectRepr(Context& context, SemIR::ClassId class_id,
 
   // Import bases.
   for (const auto& base : clang_def->bases()) {
-    if (base.isVirtual()) {
-      // TODO: Handle virtual bases. We don't actually know where they go in the
-      // layout. We may also want to use a different size in the layout for
-      // `partial C`, excluding the virtual base. It's also not entirely safe to
-      // just skip over the virtual base, as the type we would construct would
-      // have a misleading size.
-      context.TODO(import_ir_inst_id, "class with virtual bases");
-      return SemIR::ErrorInst::TypeInstId;
-    }
+    CARBON_CHECK(!base.isVirtual(),
+                 "Should not import definition for class with vbase");
 
     auto [base_type_inst_id, base_type_id] =
         MapType(context, import_ir_inst_id, base.getType());
@@ -809,6 +802,17 @@ auto ImportCppClassDefinition(Context& context, SemIR::LocId loc_id,
 
   clang::CXXRecordDecl* clang_def = clang_decl->getDefinition();
   CARBON_CHECK(clang_def, "Complete type has no definition");
+
+  if (clang_def->getNumVBases()) {
+    // TODO: Handle virtual bases. We don't actually know where they go in the
+    // layout. We may also want to use a different size in the layout for
+    // `partial C`, excluding the virtual base. It's also not entirely safe to
+    // just skip over the virtual base, as the type we would construct would
+    // have a misleading size. For now, treat a C++ class with vbases as
+    // incomplete in Carbon.
+    context.TODO(loc_id, "class with virtual bases");
+    return false;
+  }
 
   auto import_ir_inst_id =
       context.insts().GetCanonicalLocId(class_inst_id).import_ir_inst_id();
