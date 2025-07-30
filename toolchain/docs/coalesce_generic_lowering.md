@@ -17,7 +17,6 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
     -   [Complexity](#complexity)
     -   [Canonical specific to use](#canonical-specific-to-use)
 -   [Algorithm details](#algorithm-details)
--   [Rationale](#rationale)
 -   [Alternatives considered](#alternatives-considered)
     -   [Coalescing in the front-end vs back-end?](#coalescing-in-the-front-end-vs-back-end)
     -   [When to do coalescing in the front-end?](#when-to-do-coalescing-in-the-front-end)
@@ -28,14 +27,14 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
 ## Overview
 
-When lowering Carbon generics to LLVM, it is possible we emit duplicate LLVM IR
+When lowering Carbon generics to LLVM, it is possible we emit duplicate LLVM-IR
 functions. This document describes the algorithm implemented in
 [lowering](lower.md) for determining when and which generated specifics, while
 different at the Carbon language level, can be coalesced into a single one when
 lowering Carbon’s intermediate representation (_SemIR_), to
 [LLVM IR](https://llvm.org/docs/LangRef.html).
 
-The overall goal of this optimization is to avoid generating duplicate LLVM IR
+The overall goal of this optimization is to avoid generating duplicate LLVM-IR
 code where it is easy to determine this from the front-end. Such an optimization
 needs to be done after specialization, but there is some flexibility in when to
 do it afterwards: before lowering, through analysis of SemIR or during/after
@@ -61,10 +60,10 @@ In SemIR, a specific function is defined by an unique tuple: <`function_id`,
 `specific_id`>. There is a single in-memory representation of a generic
 function’s body (not one for each specific), where the instructions that are
 different between specifics can be determined, on-demand, based on a given
-specific_id. Hence determining if two specifics are equivalent needs to analyze
-if these specific-dependent instructions are equivalent at the LLVM-IR level.
-This can only be determined after the eval phase is complete and using
-information on how Carbon types map to LLVM-IR `Type`s.
+`specific_id`. Hence, determining if two specifics are equivalent needs to
+analyze if these specific-dependent instructions are equivalent at the LLVM-IR
+level. This can only be determined after the eval phase is complete and using
+information on how Carbon types map to `llvm::Type`s.
 
 The algorithm described below does coalescing of specifics during lowering. For
 alternatives considered, see [the section below](#alternatives-considered).
@@ -105,13 +104,13 @@ as part of an equivalence SCC), while the second fingerprint,
 `specific_fingerprint`, includes all specific-dependent information. As such,
 two specific functions are not equivalent if their `common_fingerprint` differs.
 Two specific functions are equivalent if their `specific_fingerprint`s are
-equal. If the `common_fingerprint`s are equal but the `specific_fingerprint`s is
-not, the two functions may still be equivalent.
+equal. If the `common_fingerprint`s are equal but the `specific_fingerprint`s
+are not, the two functions may still be equivalent.
 
 Ideally, the `specific_fingerprint` can be used as a unique hash and used to
 first coalesce all specific functions with this same fingerprint, with no
 additional checks. Then, all remaining functions may use the
-`common_fingerprint` as a another unique hash to group remaining potential
+`common_fingerprint` as another unique hash to group remaining potential
 candidates for coalescing. Then, only those with this same second hash are
 processed in a quadratic pass walking all calls instructions and comparing if
 the `specific_id` information is equivalent. This optimization is not currently
@@ -158,7 +157,7 @@ defined [above](#complexity), and a list of calls to other specific functions.
 
 ```none
 CreateLLVMFunctionDefinition (function, specific_id) {
-   Step1: Build LLVM::Function*: emit LLVM IR for each SemIR instruction.
+   Step1: Build llvm::Function*: emit LLVM IR for each SemIR instruction.
 
    Step2: If the instruction is specific-dependent, hash it and add to its `common_fingerprint`
 
@@ -173,9 +172,9 @@ CreateLLVMFunctionDefinition (function, specific_id) {
 The logic that performs the actual coalescing, first checks if the LLVM function
 types match (using a third hash-like fingerprint: `function_type_fingerprint`
 for storage optimization), then if these are equivalent based on the
-`SpecificFunctionFingerprint`. For each pair of equivalent functions found (in
-an SCC), the uses of a definition will be replaced with the canonical one, and
-that definition will be deleted.
+`SpecificFunctionFingerprint`. For each pair of equivalent functions found (in a
+callgraph SCC), the uses of one of the functions will be replaced with the
+canonical one, while the other definition will ultimately be deleted.
 
 ```none
 PerformCoalescingPostProcessing () {
@@ -232,11 +231,6 @@ CheckIfEquivalent(two specifics, mutable list of assumed equivalent specifics) -
   }
 }
 ```
-
-## Rationale
-
-The Carbon language cares about low compile times in general. This optimization
-focuses on that.
 
 ## Alternatives considered
 
