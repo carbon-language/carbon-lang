@@ -253,6 +253,11 @@ auto Cast(SwitchT&& kind_switch_value) -> decltype(auto) {
 // This uses `if` to scope the variable, and provides a dangling `else` in order
 // to prevent accidental `else` use. The label allows `:` to follow the macro
 // name, making it look more like a typical `case`.
+//
+// Because of the dangling else, braces should always be used with a `case
+// CARBON_KIND`. Otherwise, only the first statement is going to see the
+// variable. Even if that sometimes works, it can lead to confusing issues when
+// statements are added, and `if`/`else` coding style already requires braces.
 #define CARBON_KIND(typed_variable_decl)                                   \
   ::Carbon::Internal::Kind::ForCase<                                       \
       decltype(carbon_internal_kind_switch_value),                         \

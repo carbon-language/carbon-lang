@@ -92,8 +92,9 @@ static auto DiagnoseFinalImplNotInSameFileAsRootSelfTypeOrInterface(
       break;
     }
 
-    case CARBON_KIND(Step::Done _):
+    case CARBON_KIND(Step::Done _): {
       CARBON_FATAL("self type is empty?");
+    }
 
     default:
       break;
