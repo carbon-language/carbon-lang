@@ -318,7 +318,7 @@ auto SubstInst(Context& context, SemIR::InstId inst_id,
       auto old_inst_id = std::exchange(
           item.inst_id, Rebuild(context, worklist, item.inst_id, callbacks));
       if (item.is_repeated && old_inst_id != item.inst_id) {
-        // SubstOperandsAndAgain was returned for the item, and the instruction
+        // SubstOperandsAndRetry was returned for the item, and the instruction
         // was rebuilt from new operands, so go through Subst() again. Note that
         // we've already called Rebuild so we don't want to leave this item as
         // repeated, and call back to ReuseUnchanged for it again later unless
@@ -364,7 +364,7 @@ auto SubstInst(Context& context, SemIR::InstId inst_id,
       }
       case SubstInstCallbacks::SubstResult::SubstOperands:
         break;
-      case SubstInstCallbacks::SubstResult::SubstOperandsAndAgain:
+      case SubstInstCallbacks::SubstResult::SubstOperandsAndRetry:
         item.is_repeated = true;
         break;
     }

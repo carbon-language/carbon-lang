@@ -543,7 +543,7 @@ class SubstImplWitnessAccessCallbacks : public SubstInstCallbacks {
       if (context().insts().Is<SemIR::ImplWitnessAccess>(
               lookup->query_self_inst_id)) {
         substs_in_progress_.push_back(rhs_inst_id);
-        return SubstResult::SubstOperandsAndAgain;
+        return SubstResult::SubstOperandsAndRetry;
       }
     }
 
