@@ -90,7 +90,6 @@ TEST_F(EmitterTest, Flush) {
 
     // Registering the function does not flush.
     EXPECT_FALSE(flushed);
-    flushed = false;
 
     // Explicit calls to `Flush` should flush.
     emitter.Flush();
