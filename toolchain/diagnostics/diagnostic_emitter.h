@@ -167,8 +167,8 @@ class Emitter {
   //
   // No mechanism is provided to unregister a flush function, so the function
   // must ensure that it remains callable until the emitter is destroyed.
-  // Currently only one flush function is ever registered, to flush Clang
-  // diagnostics.
+  //
+  // This is used to register a handler to flush diagnostics from Clang.
   auto AddFlushFn(llvm::function_ref<auto()->void> flush_fn) -> void {
     flush_fns_.push_back(flush_fn);
   }
@@ -212,8 +212,6 @@ class Emitter {
 
   template <typename OtherLocT, typename AnnotateFn>
   friend class AnnotationScope;
-  template <typename OtherLocT, typename FlushFn>
-  friend class FlushRegion;
   friend class NoLocEmitter;
 
   Consumer* consumer_;
