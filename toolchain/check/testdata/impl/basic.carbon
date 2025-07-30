@@ -45,7 +45,7 @@ impl Unknown as I {
   fn Op[self: Self]() {}
 }
 
-// --- import_invalid_impl.carbon
+// --- fail_import_invalid_impl.carbon
 
 library "[[@TEST_NAME]]";
 import library "invalid_impl";
@@ -53,7 +53,7 @@ import library "invalid_impl";
 fn F() {
   // This impl doesn't exist, but it still tests that we can ignore the
   // `impl Unknown as I` on import.
-  // CHECK:STDERR: import_invalid_impl.carbon:[[@LINE+4]]:3: error: cannot access member of interface `I` in type `type` that does not implement that interface [MissingImplInMemberAccess]
+  // CHECK:STDERR: fail_import_invalid_impl.carbon:[[@LINE+4]]:3: error: cannot access member of interface `I` in type `type` that does not implement that interface [MissingImplInMemberAccess]
   // CHECK:STDERR:   C.(I.Op)();
   // CHECK:STDERR:   ^~~~~~~~
   // CHECK:STDERR:
