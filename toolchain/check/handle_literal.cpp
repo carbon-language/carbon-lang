@@ -12,6 +12,7 @@
 #include "toolchain/check/name_lookup.h"
 #include "toolchain/check/type.h"
 #include "toolchain/diagnostics/format_providers.h"
+#include "toolchain/sem_ir/ids.h"
 #include "toolchain/sem_ir/typed_insts.h"
 
 namespace Carbon::Check {
@@ -147,9 +148,8 @@ auto HandleParseNode(Context& context, Parse::FloatTypeLiteralId node_id)
   }
   auto tok_id = context.parse_tree().node_token(node_id);
   auto size_id = context.tokens().GetTypeLiteralSize(tok_id);
-  auto width_id = MakeIntLiteral(context, node_id, size_id);
-  auto fn_inst_id = LookupNameInCore(context, node_id, "Float");
-  auto type_inst_id = PerformCall(context, node_id, fn_inst_id, {width_id});
+  auto type_inst_id =
+      MakeFloatTypeLiteral(context, node_id, SemIR::FloatKind::None, size_id);
   context.node_stack().Push(node_id, type_inst_id);
   return true;
 }

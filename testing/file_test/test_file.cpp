@@ -797,10 +797,14 @@ auto ProcessTestFile(llvm::StringRef test_name, bool running_autoupdate)
   // (recursively).
   llvm::SmallVector<std::string> include_files;
 
+  // Store the main file's `EXTRA-ARGS` so that they can be put after any that
+  // come from `INCLUDE-FILE`.
+  llvm::SmallVector<std::string> main_extra_args;
+
   // Process the main file.
   CARBON_RETURN_IF_ERROR(ProcessFileContent(
       test_name, test_file.input_content, running_autoupdate, &test_file,
-      &found_autoupdate, test_file.test_args, test_file.extra_args,
+      &found_autoupdate, test_file.test_args, main_extra_args,
       test_file.file_splits, include_files));
 
   if (!found_autoupdate) {
@@ -858,6 +862,9 @@ auto ProcessTestFile(llvm::StringRef test_name, bool running_autoupdate)
       return Error("AUTOUPDATE-SPLIT is disallowed in included files");
     }
   }
+
+  // Copy over `EXTRA-ARGS` from the main file (after includes).
+  test_file.extra_args.append(main_extra_args);
 
   return std::move(test_file);
 }

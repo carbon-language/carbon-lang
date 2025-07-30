@@ -162,32 +162,6 @@ fn MyF(bar : Cpp.Bar*) {
 //@dump-sem-ir-end
 
 // ============================================================================
-// To inherit public
-// ============================================================================
-
-// --- to_inherit_public.h
-
-union Bar {
- public:
-  static auto foo() -> void;
-};
-
-// --- todo_fail_import_to_inherit_public.carbon
-
-library "[[@TEST_NAME]]";
-
-import Cpp library "to_inherit_public.h";
-
-class Derived {
-  // TODO: Presumably we should disallow deriving from a union.
-  extend base: Cpp.Bar;
-}
-
-fn MyF() {
-  Derived.foo();
-}
-
-// ============================================================================
 // Template
 // ============================================================================
 

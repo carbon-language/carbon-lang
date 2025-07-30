@@ -497,6 +497,37 @@ static auto BuildClassDecl(Context& context,
   return {class_decl.class_id, context.types().GetAsTypeInstId(class_decl_id)};
 }
 
+// Determines the Carbon inheritance kind to use for a C++ class definition.
+static auto GetInheritanceKind(clang::CXXRecordDecl* class_def)
+    -> SemIR::Class::InheritanceKind {
+  if (class_def->isUnion()) {
+    // Treat all unions as final classes to match their C++ semantics. While we
+    // could support this, the author of a C++ union has no way to mark their
+    // type as `final` to prevent it, and so we assume the intent was to
+    // disallow inheritance.
+    return SemIR::Class::Final;
+  }
+
+  if (class_def->hasAttr<clang::FinalAttr>()) {
+    // The class is final in C++; don't allow Carbon types to derive from it.
+    // Note that such a type might also be abstract in C++; we treat final as
+    // taking precedence.
+    //
+    // We could also treat classes with a final destructor as being final, as
+    // Clang does when determining whether a class is "effectively final", but
+    // to keep our rules simpler we do not.
+    return SemIR::Class::Final;
+  }
+
+  if (class_def->isAbstract()) {
+    // If the class has any abstract members, it's abstract.
+    return SemIR::Class::Abstract;
+  }
+
+  // Allow inheritance from any other C++ class type.
+  return SemIR::Class::Base;
+}
+
 // Checks that the specified finished class definition is valid and builds and
 // returns a corresponding complete type witness instruction.
 // TODO: Remove recursion into mapping field types.
@@ -685,6 +716,8 @@ static auto BuildClassDefinition(Context& context,
 
   context.inst_block_stack().Push();
 
+  class_info.inheritance_kind = GetInheritanceKind(clang_def);
+
   // Compute the class's object representation.
   auto object_repr_id = ImportClassObjectRepr(
       context, class_id, import_ir_inst_id, class_inst_id, clang_def);
@@ -761,6 +794,15 @@ static auto MapBuiltinType(Context& context, clang::QualType qual_type,
       return MakeIntType(context, context.ints().Add(width), is_signed);
     }
     // TODO: Handle integer types that map to named aliases.
+  } else if (type.isDoubleType()) {
+    // TODO: Handle other floating point types when Carbon supports fN where N
+    // != 64.
+    CARBON_CHECK(ast_context.getTypeSize(qual_type) == 64);
+    CARBON_CHECK(ast_context.hasSameType(qual_type, ast_context.DoubleTy));
+    return ExprAsType(
+        context, Parse::NodeId::None,
+        MakeFloatTypeLiteral(context, Parse::NodeId::None,
+                             SemIR::FloatKind::None, context.ints().Add(64)));
   }
 
   return {.inst_id = SemIR::TypeInstId::None, .type_id = SemIR::TypeId::None};
