@@ -60,6 +60,56 @@ fn F() {
   C.(I.Op)();
 }
 
+// --- fail_conflicting_bad_impls.carbon
+
+library "[[@TEST_NAME]]";
+
+interface I {}
+
+class C(T:! type) {}
+
+// CHECK:STDERR: fail_conflicting_bad_impls.carbon:[[@LINE+4]]:12: error: name `invalid` not found [NameNotFound]
+// CHECK:STDERR: final impl invalid as I {}
+// CHECK:STDERR:            ^~~~~~~
+// CHECK:STDERR:
+final impl invalid as I {}
+// CHECK:STDERR: fail_conflicting_bad_impls.carbon:[[@LINE+11]]:12: error: name `invalid` not found [NameNotFound]
+// CHECK:STDERR: final impl invalid as I {}
+// CHECK:STDERR:            ^~~~~~~
+// CHECK:STDERR:
+// CHECK:STDERR: fail_conflicting_bad_impls.carbon:[[@LINE+7]]:1: error: redefinition of `impl <error> as I` [ImplRedefinition]
+// CHECK:STDERR: final impl invalid as I {}
+// CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~
+// CHECK:STDERR: fail_conflicting_bad_impls.carbon:[[@LINE-8]]:1: note: previous definition was here [ImplPreviousDefinition]
+// CHECK:STDERR: final impl invalid as I {}
+// CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~
+// CHECK:STDERR:
+final impl invalid as I {}
+
+// CHECK:STDERR: fail_conflicting_bad_impls.carbon:[[@LINE+4]]:12: error: name `alsoinvalid` not found [NameNotFound]
+// CHECK:STDERR: final impl alsoinvalid as I {}
+// CHECK:STDERR:            ^~~~~~~~~~~
+// CHECK:STDERR:
+final impl alsoinvalid as I {}
+
+// CHECK:STDERR: fail_conflicting_bad_impls.carbon:[[@LINE+4]]:14: error: name `invalid` not found [NameNotFound]
+// CHECK:STDERR: final impl C(invalid) as I {}
+// CHECK:STDERR:              ^~~~~~~
+// CHECK:STDERR:
+final impl C(invalid) as I {}
+// CHECK:STDERR: fail_conflicting_bad_impls.carbon:[[@LINE+11]]:14: error: name `invalid` not found [NameNotFound]
+// CHECK:STDERR: final impl C(invalid) as I {}
+// CHECK:STDERR:              ^~~~~~~
+// CHECK:STDERR:
+// CHECK:STDERR: fail_conflicting_bad_impls.carbon:[[@LINE+7]]:1: error: redefinition of `impl <error> as I` [ImplRedefinition]
+// CHECK:STDERR: final impl C(invalid) as I {}
+// CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~
+// CHECK:STDERR: fail_conflicting_bad_impls.carbon:[[@LINE-8]]:1: note: previous definition was here [ImplPreviousDefinition]
+// CHECK:STDERR: final impl C(invalid) as I {}
+// CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~
+// CHECK:STDERR:
+final impl C(invalid) as I {}
+
 // CHECK:STDOUT: --- basic.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {

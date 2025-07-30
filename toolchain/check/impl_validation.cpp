@@ -34,7 +34,7 @@ struct ImplInfo {
   bool is_local;
   // If imported, the IR from which the `impl` decl was imported.
   SemIR::ImportIRId ir_id;
-  TypeStructure type_structure;
+  std::optional<TypeStructure> type_structure;
 };
 
 }  // namespace
@@ -47,7 +47,7 @@ static auto GetIRId(Context& context, SemIR::InstId owning_inst_id)
   return GetCanonicalImportIRInst(context, owning_inst_id).ir_id();
 }
 
-auto GetImplInfo(Context& context, SemIR::ImplId impl_id) -> ImplInfo {
+static auto GetImplInfo(Context& context, SemIR::ImplId impl_id) -> ImplInfo {
   const auto& impl = context.impls().Get(impl_id);
   auto ir_id = GetIRId(context, impl.first_owning_decl_id);
   return {.impl_id = impl_id,
@@ -270,6 +270,11 @@ static auto ValidateImplsForInterface(Context& context,
 
     auto impls_before = llvm::drop_end(impls, num_impls - split_point);
     for (const auto& impl_a : impls_before) {
+      // Don't compare structures that contain errors.
+      if (!impl_a.type_structure || !impl_b.type_structure) {
+        continue;
+      }
+
       // Only enforce rules when at least one of the impls was written in this
       // file.
       if (!impl_a.is_local && !impl_b.is_local) {
@@ -303,9 +308,9 @@ static auto ValidateImplsForInterface(Context& context,
             did_diagnose_unmatchable_non_final_impl_with_final_impl = true;
           }
         }
-      } else if (impl_a.type_structure.CompareStructure(
+      } else if (impl_a.type_structure->CompareStructure(
                      TypeStructure::CompareTest::HasOverlap,
-                     impl_b.type_structure)) {
+                     *impl_b.type_structure)) {
         // =====================================================================
         // Rules between two overlapping final impls.
         // =====================================================================

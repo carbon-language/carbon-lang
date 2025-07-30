@@ -155,7 +155,8 @@ class TypeStructureBuilder {
   explicit TypeStructureBuilder(Context* context) : context_(context) {}
 
   auto Run(SemIR::InstId self_inst_id,
-           SemIR::SpecificInterface interface_constraint) -> TypeStructure {
+           SemIR::SpecificInterface interface_constraint)
+      -> std::optional<TypeStructure> {
     structure_.clear();
     symbolic_type_indices_.clear();
     concrete_types_.clear();
@@ -172,7 +173,7 @@ class TypeStructureBuilder {
   }
 
  private:
-  auto Build(SemIR::TypeIterator type_iter) -> TypeStructure;
+  auto Build(SemIR::TypeIterator type_iter) -> std::optional<TypeStructure>;
 
   // Append a structural element to the TypeStructure being built.
   auto AppendStructuralConcrete(TypeStructure::ConcreteType type) -> void {
@@ -202,7 +203,7 @@ class TypeStructureBuilder {
 
 // Builds the type structure and returns it.
 auto TypeStructureBuilder::Build(SemIR::TypeIterator type_iter)
-    -> TypeStructure {
+    -> std::optional<TypeStructure> {
   while (true) {
     using Step = SemIR::TypeIterator::Step;
     CARBON_KIND_SWITCH(type_iter.Next().any) {
@@ -215,6 +216,8 @@ auto TypeStructureBuilder::Build(SemIR::TypeIterator type_iter)
       case CARBON_KIND(Step::End _):
         AppendStructuralConcreteCloseParen();
         break;
+      case CARBON_KIND(Step::Error _):
+        return std::nullopt;
       case CARBON_KIND(Step::ConcreteType concrete):
         AppendStructuralConcrete(concrete.type_id);
         break;
@@ -272,7 +275,8 @@ auto TypeStructureBuilder::Build(SemIR::TypeIterator type_iter)
 }
 
 auto BuildTypeStructure(Context& context, SemIR::InstId self_inst_id,
-                        SemIR::SpecificInterface interface) -> TypeStructure {
+                        SemIR::SpecificInterface interface)
+    -> std::optional<TypeStructure> {
   TypeStructureBuilder builder(&context);
   return builder.Run(self_inst_id, interface);
 }
