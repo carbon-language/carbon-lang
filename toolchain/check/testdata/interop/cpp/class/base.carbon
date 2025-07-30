@@ -176,12 +176,11 @@ fn Convert(p: Cpp.B*) {
 
 library "[[@TEST_NAME]]";
 
+// CHECK:STDERR: fail_todo_use_virtual_inheritance.carbon:[[@LINE+2]]:1: in import [InImport]
+// CHECK:STDERR: ./virtual_inheritance.h:3: error: semantics TODO: `class with virtual bases` [SemanticsTodo]
 import Cpp library "virtual_inheritance.h";
 
 fn Convert(p: Cpp.B*) -> Cpp.A* {
-  // CHECK:STDERR: fail_todo_use_virtual_inheritance.carbon:[[@LINE+14]]:3: error: semantics TODO: `class with virtual bases` [SemanticsTodo]
-  // CHECK:STDERR:   return p;
-  // CHECK:STDERR:   ^~~~~~~~~
   // CHECK:STDERR: fail_todo_use_virtual_inheritance.carbon:[[@LINE+11]]:3: note: while completing C++ class type `Cpp.B` [InCppTypeCompletion]
   // CHECK:STDERR:   return p;
   // CHECK:STDERR:   ^~~~~~~~~
@@ -977,14 +976,14 @@ fn Convert(p: Cpp.B*) -> Cpp.A* {
 // CHECK:STDOUT:     %return.patt: %pattern_type.bcf = return_slot_pattern [concrete]
 // CHECK:STDOUT:     %return.param_patt: %pattern_type.bcf = out_param_pattern %return.patt, call_param1 [concrete]
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %Cpp.ref.loc6_26: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
+// CHECK:STDOUT:     %Cpp.ref.loc8_26: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
 // CHECK:STDOUT:     %A.ref: type = name_ref A, imports.%A.decl [concrete = constants.%A]
-// CHECK:STDOUT:     %ptr.loc6_31: type = ptr_type %A.ref [concrete = constants.%ptr.270]
+// CHECK:STDOUT:     %ptr.loc8_31: type = ptr_type %A.ref [concrete = constants.%ptr.270]
 // CHECK:STDOUT:     %p.param: %ptr.a04 = value_param call_param0
-// CHECK:STDOUT:     %.loc6: type = splice_block %ptr.loc6_20 [concrete = constants.%ptr.a04] {
-// CHECK:STDOUT:       %Cpp.ref.loc6_15: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
+// CHECK:STDOUT:     %.loc8: type = splice_block %ptr.loc8_20 [concrete = constants.%ptr.a04] {
+// CHECK:STDOUT:       %Cpp.ref.loc8_15: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
 // CHECK:STDOUT:       %B.ref: type = name_ref B, imports.%B.decl [concrete = constants.%B]
-// CHECK:STDOUT:       %ptr.loc6_20: type = ptr_type %B.ref [concrete = constants.%ptr.a04]
+// CHECK:STDOUT:       %ptr.loc8_20: type = ptr_type %B.ref [concrete = constants.%ptr.a04]
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %p: %ptr.a04 = bind_name p, %p.param
 // CHECK:STDOUT:     %return.param: ref %ptr.270 = out_param call_param1
@@ -993,7 +992,8 @@ fn Convert(p: Cpp.B*) -> Cpp.A* {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @B {
-// CHECK:STDOUT:   complete_type_witness = invalid
+// CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness <error> [concrete = <error>]
+// CHECK:STDOUT:   complete_type_witness = %complete_type
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   import Cpp//...
@@ -1009,7 +1009,7 @@ fn Convert(p: Cpp.B*) -> Cpp.A* {
 // CHECK:STDOUT: fn @Convert(%p.param: %ptr.a04) -> %ptr.270 {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %p.ref: %ptr.a04 = name_ref p, %p
-// CHECK:STDOUT:   %.loc21: %ptr.270 = converted %p.ref, <error> [concrete = <error>]
+// CHECK:STDOUT:   %.loc20: %ptr.270 = converted %p.ref, <error> [concrete = <error>]
 // CHECK:STDOUT:   return <error>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
