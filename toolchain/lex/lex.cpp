@@ -1105,12 +1105,13 @@ auto Lexer::LexNumericLiteral(llvm::StringRef source_text, ssize_t& position)
   position += token_size;
 
   CARBON_KIND_SWITCH(literal->ComputeValue(emitter_)) {
-    case CARBON_KIND(NumericLiteral::IntValue && value):
+    case CARBON_KIND(NumericLiteral::IntValue && value): {
       return LexTokenWithPayload(TokenKind::IntLiteral,
                                  buffer_.value_stores_->ints()
                                      .AddUnsigned(std::move(value.value))
                                      .AsTokenPayload(),
                                  byte_offset);
+    }
     case CARBON_KIND(NumericLiteral::RealValue && value): {
       auto real_id = buffer_.value_stores_->reals().Add(
           Real{.mantissa = value.mantissa,
@@ -1119,8 +1120,9 @@ auto Lexer::LexNumericLiteral(llvm::StringRef source_text, ssize_t& position)
       return LexTokenWithPayload(TokenKind::RealLiteral, real_id.index,
                                  byte_offset);
     }
-    case CARBON_KIND(NumericLiteral::UnrecoverableError _):
+    case CARBON_KIND(NumericLiteral::UnrecoverableError _): {
       return LexTokenWithPayload(TokenKind::Error, token_size, byte_offset);
+    }
   }
 }
 
