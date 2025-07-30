@@ -105,13 +105,31 @@ static auto AddImportIRInst(Context& context,
 namespace {
 
 // Used to convert Clang diagnostics to Carbon diagnostics.
+//
+// Handling of Clang notes is a little subtle: as far as Clang is concerned,
+// notes are separate diagnostics, not connected to the error or warning that
+// precedes them. But in Carbon's diagnostics system, notes are part of the
+// enclosing diagnostic. To handle this, we buffer Clang diagnostics until we
+// reach a point where we know we're not in the middle of a diagnostic, and then
+// emit a diagnostic along with all of its notes. This is triggered when adding
+// or removing a Carbon context note, which could otherwise get attached to the
+// wrong C++ diagnostics, and at the end of the Carbon program.
 class CarbonClangDiagnosticConsumer : public clang::DiagnosticConsumer {
  public:
   // Creates an instance with the location that triggers calling Clang.
   // `context` must not be null.
   explicit CarbonClangDiagnosticConsumer(
       Context* context, std::shared_ptr<clang::CompilerInvocation> invocation)
-      : context_(context), invocation_(std::move(invocation)) {}
+      : context_(context),
+        invocation_(std::move(invocation)),
+        flusher_{.consumer_ = this} {
+    context->emitter().AddFlushFn(flusher_);
+  }
+
+  ~CarbonClangDiagnosticConsumer() {
+    CARBON_CHECK(diagnostic_infos_.empty(),
+                 "Missing flush before destroying diagnostic consumer");
+  }
 
   // Generates a Carbon warning for each Clang warning and a Carbon error for
   // each Clang error or fatal.
@@ -154,7 +172,11 @@ class CarbonClangDiagnosticConsumer : public clang::DiagnosticConsumer {
   // Outputs Carbon diagnostics based on the collected Clang diagnostics. Must
   // be called after the AST is set in the context.
   auto EmitDiagnostics() -> void {
-    for (const ClangDiagnosticInfo& info : diagnostic_infos_) {
+    CARBON_CHECK(context_->sem_ir().cpp_ast(),
+                 "Attempted to emit diagnostics before the AST Unit is loaded");
+
+    for (size_t i = 0; i != diagnostic_infos_.size(); ++i) {
+      const ClangDiagnosticInfo& info = diagnostic_infos_[i];
       switch (info.level) {
         case clang::DiagnosticsEngine::Ignored:
         case clang::DiagnosticsEngine::Note:
@@ -172,19 +194,36 @@ class CarbonClangDiagnosticConsumer : public clang::DiagnosticConsumer {
           CARBON_DIAGNOSTIC(CppInteropParseWarning, Warning, "{0}",
                             std::string);
           CARBON_DIAGNOSTIC(CppInteropParseError, Error, "{0}", std::string);
-          context_->emitter().Emit(
+          auto builder = context_->emitter().Build(
               SemIR::LocId(info.import_ir_inst_id),
               info.level == clang::DiagnosticsEngine::Warning
                   ? CppInteropParseWarning
                   : CppInteropParseError,
               info.message);
+          for (;
+               i + 1 < diagnostic_infos_.size() &&
+               diagnostic_infos_[i + 1].level == clang::DiagnosticsEngine::Note;
+               ++i) {
+            const ClangDiagnosticInfo& note_info = diagnostic_infos_[i + 1];
+            CARBON_DIAGNOSTIC(CppInteropParseNote, Note, "{0}", std::string);
+            builder.Note(SemIR::LocId(note_info.import_ir_inst_id),
+                         CppInteropParseNote, note_info.message);
+          }
+          builder.Emit();
           break;
         }
       }
     }
+    diagnostic_infos_.clear();
   }
 
  private:
+  // Callback to flush Clang diagnostics into the Carbon diagnostics engine.
+  struct DiagnosticFlusher {
+    CarbonClangDiagnosticConsumer* consumer_;
+    void operator()() const { consumer_->EmitDiagnostics(); }
+  };
+
   // The type-checking context in which we're running Clang.
   Context* context_;
 
@@ -209,6 +248,10 @@ class CarbonClangDiagnosticConsumer : public clang::DiagnosticConsumer {
   // Carbon diagnostics after the context has been initialized with the Clang
   // AST.
   llvm::SmallVector<ClangDiagnosticInfo> diagnostic_infos_;
+
+  // A diagnostic flusher registered to flush any diagnostics created by Clang
+  // into the Carbon diagnostic stream when appropriate.
+  DiagnosticFlusher flusher_;
 };
 
 }  // namespace
@@ -223,12 +266,11 @@ static auto GenerateAst(Context& context,
                         std::shared_ptr<clang::CompilerInvocation> invocation)
     -> std::pair<std::unique_ptr<clang::ASTUnit>, bool> {
   // Build a diagnostics engine.
-  auto diagnostics_consumer =
-      std::make_unique<CarbonClangDiagnosticConsumer>(&context, invocation);
   llvm::IntrusiveRefCntPtr<clang::DiagnosticsEngine> diags(
       clang::CompilerInstance::createDiagnostics(
-          *fs, invocation->getDiagnosticOpts(), diagnostics_consumer.get(),
-          /*ShouldOwnClient=*/false));
+          *fs, invocation->getDiagnosticOpts(),
+          new CarbonClangDiagnosticConsumer(&context, invocation),
+          /*ShouldOwnClient=*/true));
 
   // Extract the input from the frontend invocation and make sure it makes
   // sense.
@@ -246,6 +288,8 @@ static auto GenerateAst(Context& context,
   invocation->getPreprocessorOpts().addRemappedFile(file_name,
                                                     includes_buffer.get());
 
+  clang::DiagnosticErrorTrap trap(*diags);
+
   // Create the AST unit.
   auto ast = clang::ASTUnit::LoadFromCompilerInvocation(
       invocation, std::make_shared<clang::PCHContainerOperations>(), nullptr,
@@ -260,15 +304,9 @@ static auto GenerateAst(Context& context,
   context.sem_ir().set_cpp_ast(ast.get());
 
   // Emit any diagnostics we queued up while building the AST.
-  diagnostics_consumer->EmitDiagnostics();
-  bool any_errors = diagnostics_consumer->getNumErrors() > 0;
+  context.emitter().Flush();
 
-  // Transfer ownership of the consumer to the AST unit, in case more
-  // diagnostics are produced by AST queries.
-  ast->getDiagnostics().setClient(diagnostics_consumer.release(),
-                                  /*ShouldOwnClient=*/true);
-
-  return {std::move(ast), !ast || any_errors};
+  return {std::move(ast), !ast || trap.hasErrorOccurred()};
 }
 
 // Adds a namespace for the `Cpp` import and returns its `NameScopeId`.
@@ -1393,12 +1431,18 @@ auto ImportNameFromCpp(Context& context, SemIR::LocId loc_id,
     return SemIR::ScopeLookupResult::MakeNotFound();
   }
 
+  // Access checks are performed separately by the Carbon name lookup logic.
+  lookup->suppressAccessDiagnostics();
+
   if (!lookup->isSingleResult()) {
-    context.TODO(loc_id,
-                 llvm::formatv("Unsupported: Lookup succeeded but couldn't "
-                               "find a single result; LookupResultKind: {0}",
-                               static_cast<int>(lookup->getResultKind()))
-                     .str());
+    // Clang will diagnose ambiguous lookup results for us.
+    if (!lookup->isAmbiguous()) {
+      context.TODO(loc_id,
+                   llvm::formatv("Unsupported: Lookup succeeded but couldn't "
+                                 "find a single result; LookupResultKind: {0}",
+                                 static_cast<int>(lookup->getResultKind()))
+                       .str());
+    }
     context.name_scopes().AddRequiredName(scope_id, name_id,
                                           SemIR::ErrorInst::InstId);
     return SemIR::ScopeLookupResult::MakeError();

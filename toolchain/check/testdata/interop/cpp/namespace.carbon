@@ -121,12 +121,22 @@ inline namespace { namespace N {} }
 
 library "[[@TEST_NAME]]";
 
+// CHECK:STDERR: fail_import_inline_ambiguity.carbon:[[@LINE+13]]:1: in import [InImport]
+// CHECK:STDERR: error: error: reference to 'N' is ambiguous
+// CHECK:STDERR:  [CppInteropParseError]
+// CHECK:STDERR: fail_import_inline_ambiguity.carbon:[[@LINE+10]]:1: in import [InImport]
+// CHECK:STDERR: ./inline_ambiguity.h:2: note: ./inline_ambiguity.h:2:11: note: candidate found by name lookup is 'N'
+// CHECK:STDERR:     2 | namespace N { void foo(); }
+// CHECK:STDERR:       |           ^
+// CHECK:STDERR:  [CppInteropParseNote]
+// CHECK:STDERR: fail_import_inline_ambiguity.carbon:[[@LINE+5]]:1: in import [InImport]
+// CHECK:STDERR: ./inline_ambiguity.h:3: note: ./inline_ambiguity.h:3:30: note: candidate found by name lookup is '(anonymous namespace)::N'
+// CHECK:STDERR:     3 | inline namespace { namespace N {} }
+// CHECK:STDERR:       |                              ^
+// CHECK:STDERR:  [CppInteropParseNote]
 import Cpp library "inline_ambiguity.h";
 
 fn MyF() {
-  // CHECK:STDERR: fail_import_inline_ambiguity.carbon:[[@LINE+7]]:3: error: semantics TODO: `Unsupported: Lookup succeeded but couldn't find a single result; LookupResultKind: 5` [SemanticsTodo]
-  // CHECK:STDERR:   Cpp.N.foo();
-  // CHECK:STDERR:   ^~~~~
   // CHECK:STDERR: fail_import_inline_ambiguity.carbon:[[@LINE+4]]:3: note: in `Cpp` name lookup for `N` [InCppNameLookup]
   // CHECK:STDERR:   Cpp.N.foo();
   // CHECK:STDERR:   ^~~~~

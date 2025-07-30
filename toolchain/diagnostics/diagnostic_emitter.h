@@ -137,7 +137,7 @@ class Emitter {
   // `consumer` is required to outlive the diagnostic emitter.
   explicit Emitter(Consumer* consumer) : consumer_(consumer) {}
 
-  virtual ~Emitter() = default;
+  virtual ~Emitter() { Flush(); }
 
   // Emits an error.
   //
@@ -160,6 +160,32 @@ class Emitter {
   // Create a null `Builder` that will not emit anything. Notes will
   // be silently ignored.
   auto BuildSuppressed() -> Builder { return Builder(); }
+
+  // Adds a flush function to flush pending diagnostics that might be enqueued
+  // and not yet emitted. The flush function will be called whenever `Flush` is
+  // called.
+  //
+  // No mechanism is provided to unregister a flush function, so the function
+  // must ensure that it remains callable until the emitter is destroyed.
+  // Currently only one flush function is ever registered, to flush Clang
+  // diagnostics.
+  auto AddFlushFn(llvm::function_ref<auto()->void> flush_fn) -> void {
+    flush_fns_.push_back(flush_fn);
+  }
+
+  // Flush all pending diagnostics that are queued externally, such as Clang
+  // diagnostics. This should not be called when the external source might be in
+  // the middle of producing a diagnostic, such as between Clang producing an
+  // error and producing the attached notes.
+  //
+  // This is called automatically before any diagnostic annotator is added or
+  // removed, to flush any pending diagnostics with suitable notes attached, and
+  // when the emitter is destroyed.
+  auto Flush() -> void {
+    for (auto flush_fn : flush_fns_) {
+      flush_fn();
+    }
+  }
 
  protected:
   // Callback type used to report context messages from ConvertLoc.
@@ -186,9 +212,12 @@ class Emitter {
 
   template <typename OtherLocT, typename AnnotateFn>
   friend class AnnotationScope;
+  template <typename OtherLocT, typename FlushFn>
+  friend class FlushRegion;
   friend class NoLocEmitter;
 
   Consumer* consumer_;
+  llvm::SmallVector<llvm::function_ref<auto()->void>, 1> flush_fns_;
   llvm::SmallVector<llvm::function_ref<auto(Builder& builder)->void>>
       annotate_fns_;
 };
@@ -235,9 +264,13 @@ class AnnotationScope {
  public:
   AnnotationScope(Emitter<LocT>* emitter, AnnotateFn annotate)
       : emitter_(emitter), annotate_(std::move(annotate)) {
+    emitter_->Flush();
     emitter_->annotate_fns_.push_back(annotate_);
   }
-  ~AnnotationScope() { emitter_->annotate_fns_.pop_back(); }
+  ~AnnotationScope() {
+    emitter_->Flush();
+    emitter_->annotate_fns_.pop_back();
+  }
 
  private:
   Emitter<LocT>* emitter_;
