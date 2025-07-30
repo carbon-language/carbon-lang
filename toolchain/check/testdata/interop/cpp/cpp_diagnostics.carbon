@@ -403,6 +403,40 @@ fn F() {
   Cpp.foo();
 }
 
+// ============================================================================
+// Diagnostic with notes
+// ============================================================================
+
+// --- with_notes.h
+
+void foobar(int);
+
+inline void call_foobar() {
+  foobar(1, 2);
+}
+
+// --- fail_with_notes.carbon
+
+library "[[@TEST_NAME]]";
+
+// CHECK:STDERR: fail_with_notes.carbon:[[@LINE+12]]:1: in import [InImport]
+// CHECK:STDERR: ./with_notes.h:5: error: In file included from fail_with_notes.carbon:[[@LINE+11]]:
+// CHECK:STDERR: ./with_notes.h:5:3: error: no matching function for call to 'foobar'
+// CHECK:STDERR:     5 |   foobar(1, 2);
+// CHECK:STDERR:       |   ^~~~~~
+// CHECK:STDERR:  [CppInteropParseError]
+// CHECK:STDERR: fail_with_notes.carbon:[[@LINE+6]]:1: in import [InImport]
+// CHECK:STDERR: ./with_notes.h:2: note: ./with_notes.h:2:6: note: candidate function not viable: requires 1 argument, but 2 were provided
+// CHECK:STDERR:     2 | void foobar(int);
+// CHECK:STDERR:       |      ^      ~~~
+// CHECK:STDERR:  [CppInteropParseNote]
+// CHECK:STDERR:
+import Cpp library "with_notes.h";
+
+fn F() {
+  Cpp.call_foobar();
+}
+
 // CHECK:STDOUT: --- import_cpp_file_with_one_warning.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {

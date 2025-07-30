@@ -925,9 +925,6 @@ auto CompileSubcommand::Run(DriverEnv& driver_env) -> DriverResult {
     unit->SetMultiUnitCache(&cache);
   }
 
-  // Declare Check::Units before building scope exit handlers.
-  llvm::SmallVector<Check::Unit> check_units;
-
   auto on_exit = llvm::make_scope_exit([&]() {
     // Finish compilation units. This flushes their diagnostics in the order in
     // which they were specified on the command line.
@@ -990,6 +987,7 @@ auto CompileSubcommand::Run(DriverEnv& driver_env) -> DriverResult {
   }
 
   // Gather Check::Units.
+  llvm::SmallVector<Check::Unit> check_units;
   check_units.reserve(units.size());
   for (auto& unit : units) {
     if (unit->has_source()) {
