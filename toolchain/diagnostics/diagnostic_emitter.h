@@ -169,8 +169,8 @@ class Emitter {
   // must ensure that it remains callable until the emitter is destroyed.
   //
   // This is used to register a handler to flush diagnostics from Clang.
-  auto AddFlushFn(llvm::function_ref<auto()->void> flush_fn) -> void {
-    flush_fns_.push_back(flush_fn);
+  auto AddFlushFn(std::function<auto()->void> flush_fn) -> void {
+    flush_fns_.push_back(std::move(flush_fn));
   }
 
   // Flush all pending diagnostics that are queued externally, such as Clang
@@ -182,7 +182,7 @@ class Emitter {
   // removed, to flush any pending diagnostics with suitable notes attached, and
   // when the emitter is destroyed.
   auto Flush() -> void {
-    for (auto flush_fn : flush_fns_) {
+    for (auto& flush_fn : flush_fns_) {
       flush_fn();
     }
   }
@@ -215,7 +215,7 @@ class Emitter {
   friend class NoLocEmitter;
 
   Consumer* consumer_;
-  llvm::SmallVector<llvm::function_ref<auto()->void>, 1> flush_fns_;
+  llvm::SmallVector<std::function<auto()->void>, 1> flush_fns_;
   llvm::SmallVector<llvm::function_ref<auto(Builder& builder)->void>>
       annotate_fns_;
 };

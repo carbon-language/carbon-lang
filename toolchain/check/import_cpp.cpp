@@ -120,10 +120,8 @@ class CarbonClangDiagnosticConsumer : public clang::DiagnosticConsumer {
   // `context` must not be null.
   explicit CarbonClangDiagnosticConsumer(
       Context* context, std::shared_ptr<clang::CompilerInvocation> invocation)
-      : context_(context),
-        invocation_(std::move(invocation)),
-        flusher_{.consumer_ = this} {
-    context->emitter().AddFlushFn(flusher_);
+      : context_(context), invocation_(std::move(invocation)) {
+    context->emitter().AddFlushFn([this] { EmitDiagnostics(); });
   }
 
   ~CarbonClangDiagnosticConsumer() override {
@@ -220,12 +218,6 @@ class CarbonClangDiagnosticConsumer : public clang::DiagnosticConsumer {
   }
 
  private:
-  // Callback to flush Clang diagnostics into the Carbon diagnostics engine.
-  struct DiagnosticFlusher {
-    CarbonClangDiagnosticConsumer* consumer_;
-    void operator()() const { consumer_->EmitDiagnostics(); }
-  };
-
   // The type-checking context in which we're running Clang.
   Context* context_;
 
@@ -250,10 +242,6 @@ class CarbonClangDiagnosticConsumer : public clang::DiagnosticConsumer {
   // Carbon diagnostics after the context has been initialized with the Clang
   // AST.
   llvm::SmallVector<ClangDiagnosticInfo> diagnostic_infos_;
-
-  // A diagnostic flusher registered to flush any diagnostics created by Clang
-  // into the Carbon diagnostic stream when appropriate.
-  DiagnosticFlusher flusher_;
 };
 
 }  // namespace
