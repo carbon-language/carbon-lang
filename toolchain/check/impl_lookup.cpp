@@ -537,11 +537,13 @@ static auto CollectCandidateImplsForQuery(
     // Build the type structure used for choosing the best the candidate.
     auto type_structure =
         BuildTypeStructure(context, impl.self_id, impl.interface);
+    if (!type_structure) {
+      continue;
+    }
     // TODO: We can skip the comparison here if the `impl_interface_const_id` is
     // not symbolic, since when the interface and specific ids match, and they
     // aren't symbolic, the structure will be identical.
-    if (!type_structure ||
-        !query_type_structure.CompareStructure(
+    if (!query_type_structure.CompareStructure(
             TypeStructure::CompareTest::IsEqualToOrMoreSpecificThan,
             *type_structure)) {
       continue;
