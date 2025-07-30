@@ -322,6 +322,7 @@ interface C {
 // CHECK:STDOUT:     %.loc11_43.1: %empty_tuple.type = tuple_literal ()
 // CHECK:STDOUT:     %.loc11_43.2: type = converted %.loc11_43.1, constants.%empty_tuple.type [concrete = constants.%empty_tuple.type]
 // CHECK:STDOUT:     %.loc11_30: type = where_expr %.Self [concrete = constants.%I2_where.type] {
+// CHECK:STDOUT:       requirement_base_facet_type constants.%I2.type
 // CHECK:STDOUT:       requirement_rewrite %impl.elem0, %.loc11_43.2
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %J2.ref: type = name_ref J2, file.%J2.decl.loc9 [concrete = constants.%J2.type]

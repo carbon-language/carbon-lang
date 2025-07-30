@@ -147,6 +147,7 @@ fn H(T:! type) {
 // CHECK:STDOUT:         %impl.elem0.loc11_24.2: type = impl_witness_access constants.%A.lookup_impl_witness.4e49fb.1, element0 [symbolic = %impl.elem0.loc11_24.1 (constants.%impl.elem0.452c56.1)]
 // CHECK:STDOUT:         %CC.ref.loc11_29: type = name_ref CC, @C.%CC.loc6_9.2 [symbolic = %CC (constants.%CC)]
 // CHECK:STDOUT:         %.loc11_18.2: type = where_expr %.Self.2 [symbolic = %A_where.type (constants.%A_where.type.5b404c.1)] {
+// CHECK:STDOUT:           requirement_base_facet_type constants.%A.type.75a876.2
 // CHECK:STDOUT:           requirement_rewrite %impl.elem0.loc11_24.2, %CC.ref.loc11_29
 // CHECK:STDOUT:         }
 // CHECK:STDOUT:       }
@@ -383,6 +384,7 @@ fn H(T:! type) {
 // CHECK:STDOUT:       %.loc9_48.1: %empty_tuple.type = tuple_literal ()
 // CHECK:STDOUT:       %.loc9_48.2: type = converted %.loc9_48.1, constants.%empty_tuple.type [concrete = constants.%empty_tuple.type]
 // CHECK:STDOUT:       %.loc9_36.2: type = where_expr %.Self.1 [symbolic = %A_where.type (constants.%A_where.type.812090.1)] {
+// CHECK:STDOUT:         requirement_base_facet_type constants.%A.type.75a876.1
 // CHECK:STDOUT:         requirement_rewrite %impl.elem0.loc9_42.1, %.loc9_48.2
 // CHECK:STDOUT:       }
 // CHECK:STDOUT:     }

@@ -213,6 +213,7 @@ impl () as I where .X = {.a = true, .b = (1, 2)} and .X = {.a = false, .b = (3, 
 // CHECK:STDOUT:     %struct.loc6_95: %struct_type.a.b.fe2 = struct_value (%.loc6_65, %.loc6_95.2) [concrete = constants.%struct]
 // CHECK:STDOUT:     %.loc6_95.3: %struct_type.a.b.fe2 = converted %.loc6_95.1, %struct.loc6_95 [concrete = constants.%struct]
 // CHECK:STDOUT:     %.loc6_14: type = where_expr %.Self [concrete = constants.%I_where.type] {
+// CHECK:STDOUT:       requirement_base_facet_type constants.%I.type
 // CHECK:STDOUT:       requirement_rewrite %impl.elem0.loc6_20, %.loc6_48.3
 // CHECK:STDOUT:       requirement_rewrite %impl.elem0.loc6_54, %.loc6_95.3
 // CHECK:STDOUT:     }
@@ -391,6 +392,7 @@ impl () as I where .X = {.a = true, .b = (1, 2)} and .X = {.a = false, .b = (3, 
 // CHECK:STDOUT:     %struct.loc10_83: %struct_type.a.b.fe2 = struct_value (%false, %.loc10_83.2) [concrete = constants.%struct.68c]
 // CHECK:STDOUT:     %.loc10_83.3: %struct_type.a.b.fe2 = converted %.loc10_83.1, %struct.loc10_83 [concrete = constants.%struct.68c]
 // CHECK:STDOUT:     %.loc10_14: type = where_expr %.Self [concrete = <error>] {
+// CHECK:STDOUT:       requirement_base_facet_type constants.%I.type
 // CHECK:STDOUT:       requirement_rewrite %impl.elem0.loc10_20, %.loc10_48.3
 // CHECK:STDOUT:       requirement_rewrite %impl.elem0.loc10_54, %.loc10_83.3
 // CHECK:STDOUT:     }

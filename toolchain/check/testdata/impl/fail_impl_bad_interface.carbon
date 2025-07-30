@@ -163,6 +163,7 @@ impl {.a: bool} as type where .Self impls I {}
 // CHECK:STDOUT:     %.Self: type = bind_symbolic_name .Self [symbolic_self = constants.%.Self]
 // CHECK:STDOUT:     %.Self.ref: type = name_ref .Self, %.Self [symbolic_self = constants.%.Self]
 // CHECK:STDOUT:     %.loc8_18: type = where_expr %.Self [concrete = constants.%type] {
+// CHECK:STDOUT:       requirement_base_facet_type type
 // CHECK:STDOUT:       requirement_impls %.Self.ref, type
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:   }
@@ -210,6 +211,7 @@ impl {.a: bool} as type where .Self impls I {}
 // CHECK:STDOUT:     %.Self.ref: type = name_ref .Self, %.Self [symbolic_self = constants.%.Self]
 // CHECK:STDOUT:     %I.ref: type = name_ref I, file.%I.decl [concrete = constants.%I.type]
 // CHECK:STDOUT:     %.loc10_25: type = where_expr %.Self [concrete = constants.%type_where] {
+// CHECK:STDOUT:       requirement_base_facet_type type
 // CHECK:STDOUT:       requirement_impls %.Self.ref, %I.ref
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:   }

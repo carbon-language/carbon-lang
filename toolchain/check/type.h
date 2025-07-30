@@ -77,6 +77,10 @@ auto GetGenericInterfaceType(Context& context, SemIR::InterfaceId interface_id,
 auto GetInterfaceType(Context& context, SemIR::InterfaceId interface_id,
                       SemIR::SpecificId specific_id) -> SemIR::TypeId;
 
+// Gets the facet type for the given `info`.
+auto GetFacetType(Context& context, const SemIR::FacetTypeInfo& info)
+    -> SemIR::TypeId;
+
 // Returns a pointer type whose pointee type is `pointee_type_id`.
 auto GetPointerType(Context& context, SemIR::TypeInstId pointee_type_id)
     -> SemIR::TypeId;

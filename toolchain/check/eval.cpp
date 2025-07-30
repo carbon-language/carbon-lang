@@ -17,6 +17,7 @@
 #include "toolchain/check/facet_type.h"
 #include "toolchain/check/generic.h"
 #include "toolchain/check/import_ref.h"
+#include "toolchain/check/name_lookup.h"
 #include "toolchain/check/type.h"
 #include "toolchain/check/type_completion.h"
 #include "toolchain/diagnostics/diagnostic.h"
@@ -2013,31 +2014,32 @@ auto TryEvalTypedInst<SemIR::WhereExpr>(EvalContext& eval_context,
   auto typed_inst = inst.As<SemIR::WhereExpr>();
 
   Phase phase = Phase::Concrete;
-  SemIR::TypeId base_facet_type_id =
-      eval_context.GetTypeOfInst(typed_inst.period_self_id);
-  SemIR::Inst base_facet_inst =
-      eval_context.types().GetAsInst(base_facet_type_id);
   SemIR::FacetTypeInfo info = {.other_requirements = false};
-
-  // `where` provides that the base facet is an error, `type`, or a facet
-  // type.
-  if (auto facet_type = base_facet_inst.TryAs<SemIR::FacetType>()) {
-    info = eval_context.facet_types().Get(facet_type->facet_type_id);
-  } else if (base_facet_type_id == SemIR::ErrorInst::TypeId) {
-    return SemIR::ErrorInst::ConstantId;
-  } else {
-    CARBON_CHECK(base_facet_type_id == SemIR::TypeType::TypeId,
-                 "Unexpected type_id: {0}, inst: {1}", base_facet_type_id,
-                 base_facet_inst);
-  }
 
   // Add the constraints from the `WhereExpr` instruction into `info`.
   if (typed_inst.requirements_id.has_value()) {
     auto insts = eval_context.inst_blocks().Get(typed_inst.requirements_id);
     for (auto inst_id : insts) {
-      if (auto rewrite =
-              eval_context.insts().TryGetAs<SemIR::RequirementRewrite>(
+      if (auto base =
+              eval_context.insts().TryGetAs<SemIR::RequirementBaseFacetType>(
                   inst_id)) {
+        if (base->base_type_inst_id == SemIR::ErrorInst::TypeInstId) {
+          return SemIR::ErrorInst::ConstantId;
+        }
+
+        if (auto base_facet_type =
+                eval_context.insts().TryGetAs<SemIR::FacetType>(
+                    base->base_type_inst_id)) {
+          const auto& base_info =
+              eval_context.facet_types().Get(base_facet_type->facet_type_id);
+          info.extend_constraints.append(base_info.extend_constraints);
+          info.self_impls_constraints.append(base_info.self_impls_constraints);
+          info.rewrite_constraints.append(base_info.rewrite_constraints);
+          info.other_requirements |= base_info.other_requirements;
+        }
+      } else if (auto rewrite =
+                     eval_context.insts().TryGetAs<SemIR::RequirementRewrite>(
+                         inst_id)) {
         info.rewrite_constraints.push_back(
             {.lhs_id = rewrite->lhs_id, .rhs_id = rewrite->rhs_id});
       } else if (auto impls =

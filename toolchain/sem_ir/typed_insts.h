@@ -1244,6 +1244,19 @@ struct RequireCompleteType {
   TypeInstId complete_type_inst_id;
 };
 
+// The facet type a `where` expression is being applied to, which is a
+// FacetType, the TypeType singleton, or an ErrorInst.
+struct RequirementBaseFacetType {
+  static constexpr auto Kind =
+      InstKind::RequirementBaseFacetType.Define<Parse::NodeId>(
+          {.ir_name = "requirement_base_facet_type",
+           .constant_kind = InstConstantKind::Never,
+           .is_lowered = false});
+
+  // No type since not an expression
+  TypeInstId base_type_inst_id;
+};
+
 // An `expr == expr` clause in a `where` expression or `require` declaration.
 struct RequirementEquivalent {
   static constexpr auto Kind =

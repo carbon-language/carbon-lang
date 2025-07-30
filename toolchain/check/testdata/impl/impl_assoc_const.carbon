@@ -464,6 +464,7 @@ fn G() {
 // CHECK:STDOUT:     %.loc13_102.4: type = converted %.loc13_101, constants.%empty_struct_type [concrete = constants.%empty_struct_type]
 // CHECK:STDOUT:     %.loc13_102.5: type = converted %.loc13_102.1, constants.%tuple.type.bd8 [concrete = constants.%tuple.type.bd8]
 // CHECK:STDOUT:     %.loc13_14: type = where_expr %.Self [concrete = <error>] {
+// CHECK:STDOUT:       requirement_base_facet_type constants.%L.type
 // CHECK:STDOUT:       requirement_rewrite %impl.elem0.loc13_20, %.loc13_36.5
 // CHECK:STDOUT:       requirement_rewrite %impl.elem0.loc13_42, %.loc13_58.5
 // CHECK:STDOUT:       requirement_rewrite %impl.elem0.loc13_64, %.loc13_80.5
@@ -528,6 +529,7 @@ fn G() {
 // CHECK:STDOUT:     %.loc13_50.1: %empty_tuple.type = tuple_literal ()
 // CHECK:STDOUT:     %.loc13_50.2: type = converted %.loc13_50.1, constants.%empty_tuple.type [concrete = constants.%empty_tuple.type]
 // CHECK:STDOUT:     %.loc13_14: type = where_expr %.Self [concrete = <error>] {
+// CHECK:STDOUT:       requirement_base_facet_type constants.%M.type
 // CHECK:STDOUT:       requirement_rewrite %impl.elem0.loc13_20, %impl.elem1.loc13_25
 // CHECK:STDOUT:       requirement_rewrite %impl.elem1.loc13_32, %impl.elem0.loc13_37
 // CHECK:STDOUT:       requirement_rewrite %impl.elem2, %.loc13_50.2

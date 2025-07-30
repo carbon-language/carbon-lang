@@ -24,9 +24,11 @@ namespace Carbon::Check {
 
 auto FacetTypeFromInterface(Context& context, SemIR::InterfaceId interface_id,
                             SemIR::SpecificId specific_id) -> SemIR::FacetType {
-  SemIR::FacetTypeId facet_type_id = context.facet_types().Add(
+  auto info =
       SemIR::FacetTypeInfo{.extend_constraints = {{interface_id, specific_id}},
-                           .other_requirements = false});
+                           .other_requirements = false};
+  info.Canonicalize();
+  SemIR::FacetTypeId facet_type_id = context.facet_types().Add(info);
   return {.type_id = SemIR::TypeType::TypeId, .facet_type_id = facet_type_id};
 }
 
@@ -286,32 +288,6 @@ static auto GetFacetTypeConstraintValue(Context& context,
   return std::nullopt;
 }
 
-// Returns true if two values in a rewrite constraint are equivalent. Two
-// `ImplWitnessAccess` instructions that refer to the same associated constant
-// through the same facet value are treated as equivalent.
-static auto CompareFacetTypeConstraintValues(Context& context,
-                                             SemIR::InstId lhs_id,
-                                             SemIR::InstId rhs_id) -> bool {
-  if (lhs_id == rhs_id) {
-    return true;
-  }
-
-  auto lhs_access = context.insts().TryGetAs<SemIR::ImplWitnessAccess>(lhs_id);
-  auto rhs_access = context.insts().TryGetAs<SemIR::ImplWitnessAccess>(rhs_id);
-  if (lhs_access && rhs_access) {
-    auto lhs_access_value = GetFacetTypeConstraintValue(context, *lhs_access);
-    auto rhs_access_value = GetFacetTypeConstraintValue(context, *rhs_access);
-    // We do *not* want to get the evaluated result of `ImplWitnessAccess` here,
-    // we want to keep them as a reference to an associated constant for the
-    // resolution phase.
-    return lhs_access_value && rhs_access_value &&
-           *lhs_access_value == *rhs_access_value;
-  }
-
-  return context.constant_values().GetConstantInstId(lhs_id) ==
-         context.constant_values().GetConstantInstId(rhs_id);
-}
-
 // A mapping of each associated constant (represented as `ImplWitnessAccess`) to
 // its value (represented as an `InstId`). Used to track rewrite constraints,
 // with the LHS mapping to the resolved value of the RHS.
@@ -355,9 +331,10 @@ class AccessRewriteValues {
 
   auto SetFullyRewritten(Context& context, Value& value, SemIR::InstId inst_id)
       -> void {
-    CARBON_CHECK(
-        value.state == BeingRewritten ||
-        CompareFacetTypeConstraintValues(context, value.inst_id, inst_id));
+    if (value.state == FullyRewritten) {
+      CARBON_CHECK(context.constant_values().Get(value.inst_id) ==
+                   context.constant_values().Get(inst_id));
+    }
     value = {FullyRewritten, inst_id};
   }
 
@@ -616,33 +593,39 @@ auto ResolveFacetTypeRewriteConstraints(
       return false;
     }
 
-    if (lhs_rewrite_value->state == AccessRewriteValues::FullyRewritten &&
-        !CompareFacetTypeConstraintValues(context, lhs_rewrite_value->inst_id,
-                                          rhs_subst_inst_id)) {
-      if (lhs_rewrite_value->inst_id != SemIR::ErrorInst::InstId) {
-        CARBON_DIAGNOSTIC(AssociatedConstantWithDifferentValues, Error,
-                          "associated constant {0} given two different "
-                          "values {1} and {2}",
-                          InstIdAsConstant, InstIdAsConstant, InstIdAsConstant);
-        // Use inst id ordering as a simple proxy for source ordering, to
-        // try to name the values in the same order they appear in the facet
-        // type.
-        auto source_order1 =
-            lhs_rewrite_value->inst_id.index < rhs_subst_inst_id.index
-                ? lhs_rewrite_value->inst_id
-                : rhs_subst_inst_id;
-        auto source_order2 =
-            lhs_rewrite_value->inst_id.index >= rhs_subst_inst_id.index
-                ? lhs_rewrite_value->inst_id
-                : rhs_subst_inst_id;
-        // TODO: It would be nice to note the places where the values are
-        // assigned but rewrite constraint instructions are from canonical
-        // constant values, and have no locations. We'd need to store a
-        // location along with them in the rewrite constraints.
-        context.emitter().Emit(loc_id, AssociatedConstantWithDifferentValues,
-                               constraint.lhs_id, source_order1, source_order2);
+    if (lhs_rewrite_value->state == AccessRewriteValues::FullyRewritten) {
+      auto rhs_existing_const_id =
+          context.constant_values().Get(lhs_rewrite_value->inst_id);
+      auto rhs_subst_const_id =
+          context.constant_values().Get(rhs_subst_inst_id);
+      if (rhs_subst_const_id != rhs_existing_const_id) {
+        if (rhs_existing_const_id != SemIR::ErrorInst::ConstantId) {
+          CARBON_DIAGNOSTIC(AssociatedConstantWithDifferentValues, Error,
+                            "associated constant {0} given two different "
+                            "values {1} and {2}",
+                            InstIdAsConstant, InstIdAsConstant,
+                            InstIdAsConstant);
+          // Use inst id ordering as a simple proxy for source ordering, to
+          // try to name the values in the same order they appear in the facet
+          // type.
+          auto source_order1 =
+              lhs_rewrite_value->inst_id.index < rhs_subst_inst_id.index
+                  ? lhs_rewrite_value->inst_id
+                  : rhs_subst_inst_id;
+          auto source_order2 =
+              lhs_rewrite_value->inst_id.index >= rhs_subst_inst_id.index
+                  ? lhs_rewrite_value->inst_id
+                  : rhs_subst_inst_id;
+          // TODO: It would be nice to note the places where the values are
+          // assigned but rewrite constraint instructions are from canonical
+          // constant values, and have no locations. We'd need to store a
+          // location along with them in the rewrite constraints.
+          context.emitter().Emit(loc_id, AssociatedConstantWithDifferentValues,
+                                 constraint.lhs_id, source_order1,
+                                 source_order2);
+        }
+        return false;
       }
-      return false;
     }
 
     rewrite_values.SetFullyRewritten(context, *lhs_rewrite_value,

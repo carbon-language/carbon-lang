@@ -101,6 +101,13 @@ class C(T:! Z where .Z1 = ()) {}
 
 interface J {
   // Implied: .Z1 == (), but this is also explicitly required for J1.
+  // CHECK:STDERR: fail_todo_nested_constraint_visible_in_type_parameter.carbon:[[@LINE+7]]:43: error: cannot convert type `.Self` that implements `Z` into type implementing `Z where .(Z.Z1) = ()` [ConversionFailureFacetToFacet]
+  // CHECK:STDERR:   let J1:! (Z where .Z1 = ()) where .Z2 = C(.Self);
+  // CHECK:STDERR:                                           ^~~~~~~~
+  // CHECK:STDERR: fail_todo_nested_constraint_visible_in_type_parameter.carbon:[[@LINE-7]]:9: note: initializing generic parameter `T` declared here [InitializingGenericParam]
+  // CHECK:STDERR: class C(T:! Z where .Z1 = ()) {}
+  // CHECK:STDERR:         ^
+  // CHECK:STDERR:
   let J1:! (Z where .Z1 = ()) where .Z2 = C(.Self);
 }
 
@@ -111,15 +118,11 @@ class D;
 // CHECK:STDERR: fail_todo_nested_constraint_visible_in_type_parameter.carbon:[[@LINE+7]]:38: error: cannot convert type `.Self` that implements `Z` into type implementing `Z where .(Z.Z1) = ()` [ConversionFailureFacetToFacet]
 // CHECK:STDERR: impl D as Z where .Z1 = () and .Z2 = C(.Self) {}
 // CHECK:STDERR:                                      ^~~~~~~~
-// CHECK:STDERR: fail_todo_nested_constraint_visible_in_type_parameter.carbon:[[@LINE-14]]:9: note: initializing generic parameter `T` declared here [InitializingGenericParam]
+// CHECK:STDERR: fail_todo_nested_constraint_visible_in_type_parameter.carbon:[[@LINE-21]]:9: note: initializing generic parameter `T` declared here [InitializingGenericParam]
 // CHECK:STDERR: class C(T:! Z where .Z1 = ()) {}
 // CHECK:STDERR:         ^
 // CHECK:STDERR:
 impl D as Z where .Z1 = () and .Z2 = C(.Self) {}
-// CHECK:STDERR: fail_todo_nested_constraint_visible_in_type_parameter.carbon:[[@LINE+4]]:24: error: cannot convert type `D` into type implementing `Z where .(Z.Z1) = () and .(Z.Z2) = C(.Self)` [ConversionFailureTypeToFacet]
-// CHECK:STDERR: fn G(T:! J where .J1 = D) {
-// CHECK:STDERR:                        ^
-// CHECK:STDERR:
 fn G(T:! J where .J1 = D) {
   F(T);
 }

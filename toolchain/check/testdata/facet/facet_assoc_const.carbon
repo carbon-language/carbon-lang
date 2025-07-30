@@ -713,6 +713,7 @@ fn F(T:! I & J where .I1 = .J1.I2) {}
 // CHECK:STDOUT:       %.loc13_48.1: %empty_tuple.type = tuple_literal ()
 // CHECK:STDOUT:       %.loc13_48.2: type = converted %.loc13_48.1, constants.%empty_tuple.type [concrete = constants.%empty_tuple.type]
 // CHECK:STDOUT:       %.loc13_12.2: type = where_expr %.Self [concrete = <error>] {
+// CHECK:STDOUT:         requirement_base_facet_type constants.%M.type
 // CHECK:STDOUT:         requirement_rewrite %impl.elem0.loc13_18, %impl.elem1.loc13_23
 // CHECK:STDOUT:         requirement_rewrite %impl.elem1.loc13_30, %impl.elem0.loc13_35
 // CHECK:STDOUT:         requirement_rewrite %impl.elem2, %.loc13_48.2
