@@ -154,6 +154,8 @@ class CarbonClangDiagnosticConsumer : public clang::DiagnosticConsumer {
       return;
     }
 
+    // TODO: This includes the full clang diagnostic, including the source
+    // location, resulting in the location appearing twice in the output.
     RawStringOstream diagnostics_stream;
     clang::TextDiagnostic text_diagnostic(diagnostics_stream,
                                           invocation_->getLangOpts(),

@@ -433,12 +433,8 @@ library "[[@TEST_NAME]]";
 // CHECK:STDERR:
 import Cpp library "with_notes.h";
 
-// CHECK:STDERR: fail_with_notes.carbon:[[@LINE+4]]:11: error: `Core.Int` implicitly referenced here, but package `Core` not found [CoreNotFound]
-// CHECK:STDERR: fn F() -> i32 {
-// CHECK:STDERR:           ^~~
-// CHECK:STDERR:
-fn F() -> i32 {
-  return Cpp.goobar;
+fn F() {
+  Cpp.call_foobar();
 }
 
 // CHECK:STDOUT: --- import_cpp_file_with_one_warning.carbon
