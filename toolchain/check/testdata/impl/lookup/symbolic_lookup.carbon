@@ -59,7 +59,7 @@ interface Z(T:! type) {
   let X:! type;
 }
 
-// This impl has a rewrite to a symbolic value, and the `.Self` type has a
+// This impl has a rewrite to a symbolic constant, and the `.Self` type has a
 // dependency on a generic parameter.
 final impl forall [T:! type, S:! type] T as Z(S) where .X = T {}
 

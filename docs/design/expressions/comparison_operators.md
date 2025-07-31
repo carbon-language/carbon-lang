@@ -220,15 +220,16 @@ wider type than either of the operand types.
 
 We permit the following comparisons involving constants:
 
--   A constant can be compared with a value of any type to which it can be
-    implicitly converted.
--   Any two constants can be compared, even if there is no type that can
-    represent both.
+-   A template constant can be compared with a value of any type to which it can
+    be implicitly converted.
+-   Any two template constants can be compared, even if there is no type that
+    can represent both.
 
 As described in [implicit conversions](implicit_conversions.md#data-types),
-integer constants can be implicitly converted to any integer or floating-point
-type that can represent their value, and floating-point constants can be
-implicitly converted to any floating-point type that can represent their value.
+integer template constants can be implicitly converted to any integer or
+floating-point type that can represent their value, and floating-point template
+constants can be implicitly converted to any floating-point type that can
+represent their value.
 
 Note that this disallows comparisons between, for example, `i32` and an integer
 literal that cannot be represented in `i32`. Such comparisons would always be

@@ -335,7 +335,7 @@ generic parameter, or in fact any
 [compile-time binding](/docs/design/generics/terminology.md#bindings), the
 lookup is performed from a context where the value of that binding is unknown.
 Evaluation of an expression involving the binding may still succeed, but will
-result in a symbolic value involving that binding.
+result in a symbolic constant involving that binding.
 
 ```carbon
 class GenericWrapper(T:! type) {

@@ -775,7 +775,7 @@ checked-generic function.
 
 A checked-generic caller of a checked-generic function performs the same
 substitution process to determine the return type, but the result may be a
-symbolic value. In this example of calling a checked generic from another
+symbolic constant. In this example of calling a checked generic from another
 checked generic,
 
 ```carbon

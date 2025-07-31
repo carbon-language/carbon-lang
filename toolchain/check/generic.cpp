@@ -220,7 +220,7 @@ static auto AddGenericConstantToEvalBlock(Context& context,
                                           SemIR::InstId inst_id)
     -> SemIR::ConstantId {
   CARBON_CHECK(context.constant_values().Get(inst_id).is_symbolic(),
-               "Adding generic constant {0} with non-symbolic value {1}",
+               "Adding generic constant {0} with non-symbolic constant {1}",
                context.insts().Get(inst_id),
                context.constant_values().Get(inst_id));
 

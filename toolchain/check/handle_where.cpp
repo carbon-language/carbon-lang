@@ -36,12 +36,13 @@ auto HandleParseNode(Context& context, Parse::WhereOperandId node_id) -> bool {
       {.name_id = SemIR::NameId::PeriodSelf,
        .parent_scope_id = context.scope_stack().PeekNameScopeId()});
   auto inst_id = AddInst(
-      context, SemIR::LocIdAndInst::NoLoc<SemIR::BindSymbolicName>({
-                   .type_id = self_type_id,
-                   .entity_name_id = entity_name_id,
-                   // `None` because there is no equivalent non-symbolic value.
-                   .value_id = SemIR::InstId::None,
-               }));
+      context,
+      SemIR::LocIdAndInst::NoLoc<SemIR::BindSymbolicName>({
+          .type_id = self_type_id,
+          .entity_name_id = entity_name_id,
+          // `None` because there is no equivalent non-symbolic constant.
+          .value_id = SemIR::InstId::None,
+      }));
   auto existing =
       context.scope_stack().LookupOrAddName(SemIR::NameId::PeriodSelf, inst_id);
   // Shouldn't have any names in newly created scope.

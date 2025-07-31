@@ -116,12 +116,13 @@ The following implicit numeric conversions are available:
 In each case, the numerical value is the same before and after the conversion.
 An integer zero is translated into a floating-point positive zero.
 
-An integer constant can be implicitly converted to any type `iM`, `uM`, or `fM`
-in which that value can be exactly represented. A floating-point constant can be
-implicitly converted to any type `fM` in which that value is between the least
-representable finite value and the greatest representable finite value
-(inclusive), and converts to the nearest representable finite value, with ties
-broken by picking the value for which the mantissa is even.
+An integer template constant can be implicitly converted to any type `iM`, `uM`,
+or `fM` in which that value can be exactly represented. A floating-point
+template constant can be implicitly converted to any type `fM` in which that
+value is between the least representable finite value and the greatest
+representable finite value (inclusive), and converts to the nearest
+representable finite value, with ties broken by picking the value for which the
+mantissa is even.
 
 The above conversions are also precisely those that C++ considers non-narrowing,
 except:
@@ -131,16 +132,17 @@ except:
     converted to `f64`. Lossy conversions, such as from `i32` to `f32`, are not
     permitted.
 
--   What Carbon considers to be an integer constant or floating-point constant
-    may differ from what C++ considers to be a constant expression.
+-   What Carbon considers to be an integer template constant or floating-point
+    template constant may differ from what C++ considers to be a template
+    constant expression.
 
-    **Note:** We have not yet decided what will qualify as a constant in this
-    context, but it will include at least integer and floating-point literals,
-    with optional enclosing parentheses. It is possible that such constants will
-    have singleton types; see issue
+    **Note:** We have not yet decided what will qualify as a template constant
+    in this context, but it will include at least integer and floating-point
+    literals, with optional enclosing parentheses. It is possible that such
+    template constants will have singleton types; see issue
     [#508](https://github.com/carbon-language/carbon-lang/issues/508).
 
-In addition to the above rules, a negative integer constant `k` can be
+In addition to the above rules, a negative integer template constant `k` can be
 implicitly converted to the type `uN` if the value `k` + 2<sup>N</sup> can be
 exactly represented, and converts to that value. Note that this conversion
 violates the "semantics-preserving" test. For example, `(-1 as u8) as i32`
