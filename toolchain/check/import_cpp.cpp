@@ -621,7 +621,7 @@ static auto ImportClassObjectRepr(Context& context, SemIR::ClassId class_id,
   // Import bases.
   for (const auto& base : clang_def->bases()) {
     CARBON_CHECK(!base.isVirtual(),
-                 "Should not import definition for class with vbase");
+                 "Should not import definition for class with a virtual base");
 
     auto [base_type_inst_id, base_type_id] =
         MapType(context, import_ir_inst_id, base.getType());
