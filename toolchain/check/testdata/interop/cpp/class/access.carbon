@@ -53,7 +53,7 @@ fn F(c: Cpp.C) {
   // CHECK:STDERR: fail_import_non_function_member_protected.carbon:[[@LINE+8]]:16: error: cannot access protected member `x` of type `Cpp.C` [ClassInvalidMemberAccess]
   // CHECK:STDERR:   let x: i32 = c.x;
   // CHECK:STDERR:                ^~~
-  // CHECK:STDERR: fail_import_non_function_member_protected.carbon:[[@LINE-6]]:1: in import [InImport]
+  // CHECK:STDERR: fail_import_non_function_member_protected.carbon:[[@LINE-6]]:10: in file included here [InCppInclude]
   // CHECK:STDERR: ./non_function_member_protected.h:2:7: note: declared here [ClassMemberDeclaration]
   // CHECK:STDERR: class C {
   // CHECK:STDERR:       ^
@@ -81,7 +81,7 @@ fn F(c: Cpp.C) {
   // CHECK:STDERR: fail_import_non_function_member_private.carbon:[[@LINE+8]]:16: error: cannot access private member `x` of type `Cpp.C` [ClassInvalidMemberAccess]
   // CHECK:STDERR:   let x: i32 = c.x;
   // CHECK:STDERR:                ^~~
-  // CHECK:STDERR: fail_import_non_function_member_private.carbon:[[@LINE-6]]:1: in import [InImport]
+  // CHECK:STDERR: fail_import_non_function_member_private.carbon:[[@LINE-6]]:10: in file included here [InCppInclude]
   // CHECK:STDERR: ./non_function_member_private.h:2:7: note: declared here [ClassMemberDeclaration]
   // CHECK:STDERR: class C {
   // CHECK:STDERR:       ^

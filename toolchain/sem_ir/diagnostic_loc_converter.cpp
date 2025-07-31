@@ -14,6 +14,8 @@ static auto ConvertPresumedLocToDiagnosticsLoc(clang::FullSourceLoc loc,
 
   // Ask the Clang SourceManager for the contents of the line containing this
   // location.
+  // TODO: If this location is in our generated header, use the source text from
+  // the presumed location (the Carbon source file) as the snippet instead.
   bool loc_invalid = false;
   const auto& src_mgr = loc.getManager();
   auto [file_id, offset] = src_mgr.getDecomposedSpellingLoc(loc);
@@ -70,20 +72,12 @@ class ClangImportCollector : public clang::DiagnosticRenderer {
 
   void emitIncludeLocation(clang::FullSourceLoc loc,
                            clang::PresumedLoc ploc) override {
-    if (!seen_first_include_) {
-      seen_first_include_ = true;
-      return;
-    }
     imports_->push_back(
         {.loc = ConvertPresumedLocToDiagnosticsLoc(loc, ploc),
          .kind = DiagnosticLocConverter::ImportLoc::CppInclude});
   }
   void emitImportLocation(clang::FullSourceLoc loc, clang::PresumedLoc ploc,
                           llvm::StringRef module_name) override {
-    if (!seen_first_include_) {
-      seen_first_include_ = true;
-      return;
-    }
     imports_->push_back(
         {.loc = ConvertPresumedLocToDiagnosticsLoc(loc, ploc),
          .kind = DiagnosticLocConverter::ImportLoc::CppModuleImport,
@@ -92,10 +86,6 @@ class ClangImportCollector : public clang::DiagnosticRenderer {
   void emitBuildingModuleLocation(clang::FullSourceLoc loc,
                                   clang::PresumedLoc ploc,
                                   llvm::StringRef module_name) override {
-    if (!seen_first_include_) {
-      seen_first_include_ = true;
-      return;
-    }
     imports_->push_back(
         {.loc = ConvertPresumedLocToDiagnosticsLoc(loc, ploc),
          .kind = DiagnosticLocConverter::ImportLoc::CppModuleImport,
@@ -108,10 +98,6 @@ class ClangImportCollector : public clang::DiagnosticRenderer {
   // emitted after this is an "in macro expansion" note that we want to capture
   // as context.
   bool emitted_message_ = false;
-  // Whether we've seen the first "in file included here" note or not. The first
-  // one corresponds to the Carbon `import` declaration, which we already capture
-  // as part of the Carbon-side import stack, so we skip it.
-  bool seen_first_include_ = false;
 };
 }
 

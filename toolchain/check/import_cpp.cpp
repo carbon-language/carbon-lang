@@ -279,17 +279,39 @@ class CarbonClangDiagnosticConsumer : public clang::DiagnosticConsumer {
   llvm::SmallVector<ClangDiagnosticInfo> diagnostic_infos_;
 };
 
+// A wrapper around a clang::CompilerInvocation that allows us to make a shallow
+// copy of most of the invocation and only make a deep copy of the parts that we
+// want to change.
+//
+// clang::CowCompilerInvocation almost allows this, but doesn't derive from
+// CompilerInvocation or support shallow copies from a CompilerInvocation, so is
+// not useful to us as we can't build an ASTUnit from it.
+class ShallowCopyCompilerInvocation : public clang::CompilerInvocation {
+ public:
+  explicit ShallowCopyCompilerInvocation(
+      const clang::CompilerInvocation& invocation) {
+    shallow_copy_assign(invocation);
+
+    // The preprocessor options are modified to hold a replacement includes
+    // buffer, so make our own version of those options.
+    PPOpts = std::make_shared<clang::PreprocessorOptions>(*PPOpts);
+  }
+};
+
 }  // namespace
 
 // Returns an AST for the C++ imports and a bool that represents whether
 // compilation errors where encountered or the generated AST is null due to an
 // error. Sets the AST in the context's `sem_ir`.
 // TODO: Consider to always have a (non-null) AST.
-static auto GenerateAst(Context& context,
-                        llvm::ArrayRef<Parse::Tree::PackagingNames> imports,
-                        llvm::IntrusiveRefCntPtr<llvm::vfs::FileSystem> fs,
-                        std::shared_ptr<clang::CompilerInvocation> invocation)
+static auto GenerateAst(
+    Context& context, llvm::ArrayRef<Parse::Tree::PackagingNames> imports,
+    llvm::IntrusiveRefCntPtr<llvm::vfs::FileSystem> fs,
+    std::shared_ptr<clang::CompilerInvocation> base_invocation)
     -> std::pair<std::unique_ptr<clang::ASTUnit>, bool> {
+  auto invocation =
+      std::make_shared<ShallowCopyCompilerInvocation>(*base_invocation);
+
   // Build a diagnostics engine.
   llvm::IntrusiveRefCntPtr<clang::DiagnosticsEngine> diags(
       clang::CompilerInstance::createDiagnostics(
@@ -309,9 +331,10 @@ static auto GenerateAst(Context& context,
   // TODO: Modify the frontend options to specify this memory buffer as input
   // instead of remapping the file.
   std::string includes = GenerateCppIncludesHeaderCode(context, imports);
-  auto includes_buffer = llvm::MemoryBuffer::getMemBuffer(includes, file_name);
+  auto includes_buffer =
+      llvm::MemoryBuffer::getMemBufferCopy(includes, file_name);
   invocation->getPreprocessorOpts().addRemappedFile(file_name,
-                                                    includes_buffer.get());
+                                                    includes_buffer.release());
 
   clang::DiagnosticErrorTrap trap(*diags);
 
@@ -319,9 +342,6 @@ static auto GenerateAst(Context& context,
   auto ast = clang::ASTUnit::LoadFromCompilerInvocation(
       invocation, std::make_shared<clang::PCHContainerOperations>(), nullptr,
       diags, new clang::FileManager(invocation->getFileSystemOpts(), fs));
-
-  // Remove remapped file before its underlying storage is destroyed.
-  invocation->getPreprocessorOpts().clearRemappedFiles();
 
   // Attach the AST to SemIR. This needs to be done before we can emit any
   // diagnostics, so their locations can be properly interpreted by our
@@ -412,6 +432,9 @@ static auto ClangLookup(Context& context, SemIR::NameScopeId scope_id,
   CARBON_CHECK(ast);
   clang::Sema& sema = ast->getSema();
 
+  // TODO: Map the LocId of the lookup to a clang SourceLocation and provide it
+  // here so that clang's diagnostics can point into the carbon code that uses
+  // the name.
   clang::LookupResult lookup(
       sema,
       clang::DeclarationNameInfo(

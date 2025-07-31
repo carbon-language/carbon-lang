@@ -60,12 +60,12 @@ using Xint = X<int>;
 
 library "[[@TEST_NAME]]";
 
-// CHECK:STDERR: fail_use_instantiation_error.carbon:[[@LINE+10]]:1: in import [InImport]
+// CHECK:STDERR: fail_use_instantiation_error.carbon:[[@LINE+10]]:10: in file included here [InCppInclude]
 // CHECK:STDERR: ./instantiation_error.h:3:25: error: type 'int' cannot be used prior to '::' because it has no members [CppInteropParseError]
 // CHECK:STDERR:     3 |   using type = typename T::member;
 // CHECK:STDERR:       |                         ^
 // CHECK:STDERR:
-// CHECK:STDERR: fail_use_instantiation_error.carbon:[[@LINE+5]]:1: in import [InImport]
+// CHECK:STDERR: fail_use_instantiation_error.carbon:[[@LINE+5]]:10: in file included here [InCppInclude]
 // CHECK:STDERR: ./instantiation_error.h:2:29: note: in instantiation of template class 'X<int>' requested here [CppInteropParseNote]
 // CHECK:STDERR:     2 | template<typename T> struct X {
 // CHECK:STDERR:       |                             ^
