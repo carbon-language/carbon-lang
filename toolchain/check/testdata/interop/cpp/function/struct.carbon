@@ -32,7 +32,7 @@ fn F() {
   // CHECK:STDERR:           ^~
   // CHECK:STDERR: fail_todo_import_decl_value_param_type.carbon:[[@LINE-6]]:1: in import [InImport]
   // CHECK:STDERR: ./decl_value_param_type.h:2:8: note: class was forward declared here [ClassForwardDeclaredHere]
-  // CHECK:STDERR:
+  // CHECK:STDERR: struct S;
   // CHECK:STDERR:        ^
   // CHECK:STDERR: fail_todo_import_decl_value_param_type.carbon: note: initializing function parameter [InCallToFunctionParam]
   // CHECK:STDERR:
@@ -51,7 +51,7 @@ fn F() {
   // CHECK:STDERR:          ^~~~~
   // CHECK:STDERR: fail_todo_import_decl_value_param_type_previously_imported.carbon:[[@LINE-6]]:1: in import [InImport]
   // CHECK:STDERR: ./decl_value_param_type.h:2:8: note: class was forward declared here [ClassForwardDeclaredHere]
-  // CHECK:STDERR:
+  // CHECK:STDERR: struct S;
   // CHECK:STDERR:        ^
   // CHECK:STDERR:
   // CHECK:STDERR: fail_todo_import_decl_value_param_type_previously_imported.carbon:[[@LINE+4]]:15: error: expected `=`; `let` declaration must have an initializer [ExpectedInitializerAfterLet]
@@ -85,7 +85,7 @@ fn F() {
   // CHECK:STDERR:            ^~
   // CHECK:STDERR: fail_todo_import_double_decl_value_param_type.carbon:[[@LINE-6]]:1: in import [InImport]
   // CHECK:STDERR: ./double_decl_value_param_type.h:2:8: note: class was forward declared here [ClassForwardDeclaredHere]
-  // CHECK:STDERR:
+  // CHECK:STDERR: struct S;
   // CHECK:STDERR:        ^
   // CHECK:STDERR: fail_todo_import_double_decl_value_param_type.carbon: note: initializing function parameter [InCallToFunctionParam]
   // CHECK:STDERR:
@@ -95,7 +95,7 @@ fn F() {
   // CHECK:STDERR:            ^~
   // CHECK:STDERR: fail_todo_import_double_decl_value_param_type.carbon:[[@LINE-16]]:1: in import [InImport]
   // CHECK:STDERR: ./double_decl_value_param_type.h:2:8: note: class was forward declared here [ClassForwardDeclaredHere]
-  // CHECK:STDERR:
+  // CHECK:STDERR: struct S;
   // CHECK:STDERR:        ^
   // CHECK:STDERR: fail_todo_import_double_decl_value_param_type.carbon: note: initializing function parameter [InCallToFunctionParam]
   // CHECK:STDERR:
@@ -364,7 +364,7 @@ fn F() {
   // CHECK:STDERR:   ^~~~~~~~~
   // CHECK:STDERR: fail_todo_import_decl_value_return_type.carbon:[[@LINE-6]]:1: in import [InImport]
   // CHECK:STDERR: ./decl_value_return_type.h:2:8: note: class was forward declared here [ClassForwardDeclaredHere]
-  // CHECK:STDERR:
+  // CHECK:STDERR: struct S;
   // CHECK:STDERR:        ^
   // CHECK:STDERR: fail_todo_import_decl_value_return_type.carbon: note: return type declared here [IncompleteReturnTypeHere]
   // CHECK:STDERR:

@@ -55,7 +55,7 @@ fn F(c: Cpp.C) {
   // CHECK:STDERR:                ^~~
   // CHECK:STDERR: fail_import_non_function_member_protected.carbon:[[@LINE-6]]:1: in import [InImport]
   // CHECK:STDERR: ./non_function_member_protected.h:2:7: note: declared here [ClassMemberDeclaration]
-  // CHECK:STDERR:
+  // CHECK:STDERR: class C {
   // CHECK:STDERR:       ^
   // CHECK:STDERR:
   let x: i32 = c.x;
@@ -83,7 +83,7 @@ fn F(c: Cpp.C) {
   // CHECK:STDERR:                ^~~
   // CHECK:STDERR: fail_import_non_function_member_private.carbon:[[@LINE-6]]:1: in import [InImport]
   // CHECK:STDERR: ./non_function_member_private.h:2:7: note: declared here [ClassMemberDeclaration]
-  // CHECK:STDERR:
+  // CHECK:STDERR: class C {
   // CHECK:STDERR:       ^
   // CHECK:STDERR:
   let x: i32 = c.x;

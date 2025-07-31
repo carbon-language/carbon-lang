@@ -40,7 +40,7 @@ fn MyF() {
   // CHECK:STDERR:            ^~~~~~~
   // CHECK:STDERR: fail_use_declaration_as_definition.carbon:[[@LINE-6]]:1: in import [InImport]
   // CHECK:STDERR: ./declaration.h:2:7: note: class was forward declared here [ClassForwardDeclaredHere]
-  // CHECK:STDERR:
+  // CHECK:STDERR: class Bar;
   // CHECK:STDERR:       ^
   // CHECK:STDERR:
   var bar: Cpp.Bar;

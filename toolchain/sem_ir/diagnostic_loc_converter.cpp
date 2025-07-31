@@ -7,11 +7,28 @@
 
 namespace Carbon::SemIR {
 
-static auto ConvertPresumedLocToDiagnosticsLoc(clang::PresumedLoc presumed_loc)
+static auto ConvertPresumedLocToDiagnosticsLoc(clang::FullSourceLoc loc,
+                                               clang::PresumedLoc presumed_loc)
     -> Diagnostics::Loc {
+  llvm::StringRef line;
+
+  // Ask the Clang SourceManager for the contents of the line containing this
+  // location.
+  bool loc_invalid = false;
+  const auto& src_mgr = loc.getManager();
+  auto [file_id, offset] = src_mgr.getDecomposedSpellingLoc(loc);
+  auto loc_line = src_mgr.getLineNumber(file_id, offset, &loc_invalid);
+  if (!loc_invalid) {
+    auto start_of_line = src_mgr.translateLineCol(file_id, loc_line, 1);
+    line = src_mgr.getCharacterData(start_of_line, &loc_invalid);
+    line = line.take_until([](char c) { return c == '\n'; });
+  }
+
   return {.filename = presumed_loc.getFilename(),
+          .line = loc_invalid ? "" : line,
           .line_number = static_cast<int32_t>(presumed_loc.getLine()),
-          .column_number = static_cast<int32_t>(presumed_loc.getColumn())};
+          .column_number = static_cast<int32_t>(presumed_loc.getColumn()),
+          .length = loc_invalid ? -1 : 1};
 }
 
 namespace {
@@ -24,7 +41,7 @@ class ClangImportCollector : public clang::DiagnosticRenderer {
       llvm::SmallVectorImpl<DiagnosticLocConverter::ImportLoc>* imports)
       : DiagnosticRenderer(lang_opts, diag_opts), imports_(imports) {}
 
-  void emitDiagnosticMessage(clang::FullSourceLoc /*loc*/,
+  void emitDiagnosticMessage(clang::FullSourceLoc loc,
                              clang::PresumedLoc ploc,
                              clang::DiagnosticsEngine::Level /*level*/,
                              llvm::StringRef message,
@@ -37,7 +54,7 @@ class ClangImportCollector : public clang::DiagnosticRenderer {
     // This is an "in macro expanded here" diagnostic that Clang emits after the
     // emitted diagnostic. We treat that as another form of context location.
     imports_->push_back(
-        {.loc = ConvertPresumedLocToDiagnosticsLoc(ploc),
+        {.loc = ConvertPresumedLocToDiagnosticsLoc(loc, ploc),
          .kind = DiagnosticLocConverter::ImportLoc::CppMacroExpansion,
          .imported_name = message});
   }
@@ -51,28 +68,28 @@ class ClangImportCollector : public clang::DiagnosticRenderer {
       llvm::SmallVectorImpl<clang::CharSourceRange>& /*ranges*/,
       llvm::ArrayRef<clang::FixItHint> /*hints*/) override {}
 
-  void emitIncludeLocation(clang::FullSourceLoc /*loc*/,
+  void emitIncludeLocation(clang::FullSourceLoc loc,
                            clang::PresumedLoc ploc) override {
     if (!seen_first_include_) {
       seen_first_include_ = true;
       return;
     }
     imports_->push_back(
-        {.loc = ConvertPresumedLocToDiagnosticsLoc(ploc),
+        {.loc = ConvertPresumedLocToDiagnosticsLoc(loc, ploc),
          .kind = DiagnosticLocConverter::ImportLoc::CppInclude});
   }
-  void emitImportLocation(clang::FullSourceLoc /*loc*/, clang::PresumedLoc ploc,
+  void emitImportLocation(clang::FullSourceLoc loc, clang::PresumedLoc ploc,
                           llvm::StringRef module_name) override {
     if (!seen_first_include_) {
       seen_first_include_ = true;
       return;
     }
     imports_->push_back(
-        {.loc = ConvertPresumedLocToDiagnosticsLoc(ploc),
+        {.loc = ConvertPresumedLocToDiagnosticsLoc(loc, ploc),
          .kind = DiagnosticLocConverter::ImportLoc::CppModuleImport,
          .imported_name = module_name});
   }
-  void emitBuildingModuleLocation(clang::FullSourceLoc /*loc*/,
+  void emitBuildingModuleLocation(clang::FullSourceLoc loc,
                                   clang::PresumedLoc ploc,
                                   llvm::StringRef module_name) override {
     if (!seen_first_include_) {
@@ -80,7 +97,7 @@ class ClangImportCollector : public clang::DiagnosticRenderer {
       return;
     }
     imports_->push_back(
-        {.loc = ConvertPresumedLocToDiagnosticsLoc(ploc),
+        {.loc = ConvertPresumedLocToDiagnosticsLoc(loc, ploc),
          .kind = DiagnosticLocConverter::ImportLoc::CppModuleImport,
          .imported_name = module_name});
   }
@@ -169,16 +186,16 @@ auto DiagnosticLocConverter::ConvertImpl(
       sem_ir_->clang_source_locs().Get(clang_source_loc_id);
 
   CARBON_CHECK(sem_ir_->cpp_ast());
-  clang::PresumedLoc presumed_loc =
-      sem_ir_->cpp_ast()->getSourceManager().getPresumedLoc(clang_loc);
+  const auto& src_mgr = sem_ir_->cpp_ast()->getSourceManager();
+  clang::PresumedLoc presumed_loc = src_mgr.getPresumedLoc(clang_loc);
   if (presumed_loc.isInvalid()) {
     return Diagnostics::ConvertedLoc();
   }
-  unsigned offset =
-      sem_ir_->cpp_ast()->getSourceManager().getDecomposedLoc(clang_loc).second;
+  unsigned offset = src_mgr.getDecomposedLoc(clang_loc).second;
 
   return Diagnostics::ConvertedLoc{
-      .loc = ConvertPresumedLocToDiagnosticsLoc(presumed_loc),
+      .loc = ConvertPresumedLocToDiagnosticsLoc(
+          clang::FullSourceLoc(clang_loc, src_mgr), presumed_loc),
       .last_byte_offset = static_cast<int32_t>(offset)};
 }
 
