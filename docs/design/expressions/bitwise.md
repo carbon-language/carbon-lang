@@ -151,43 +151,43 @@ here.
 
 ## Integer constants
 
-These operations can also be applied to a pair of integer constants, or to an
-integer constant and a value of integer type, as follows:
+These operations can also be applied to a pair of integer template constants, or
+to an integer template constant and a value of integer type, as follows:
 
 -   If any binary bitwise or bit-shift operator is applied to two integer
-    constants, or the unary `^` operator is applied to an integer constant, the
-    result is an integer constant. Integer constants are treated as having
-    infinitely many high-order bits, where all but finitely many of those bits
-    are sign bits. For example, `-1` comprises infinitely many `1` bits. Note
-    that there is no difference between an arithmetic and a logical right shift
-    on an integer constant, because every bit always has a higher-order bit to
-    shift from.
+    constants, or the unary `^` operator is applied to an integer template
+    constant, the result is an integer template constant. Integer template
+    constants are treated as having infinitely many high-order bits, where all
+    but finitely many of those bits are sign bits. For example, `-1` comprises
+    infinitely many `1` bits. Note that there is no difference between an
+    arithmetic and a logical right shift on an integer template constant,
+    because every bit always has a higher-order bit to shift from.
     -   It is easy to produce extremely large numbers by left-shifting an
-        integer constant. For example, the binary representation of
+        integer template constant. For example, the binary representation of
         `1 << (1 << 1000)` is thought to be substantially larger than the total
         entropy in the observable universe. In practice, Carbon implementations
-        will set a much lower limit on the largest integer constant that they
-        support.
+        will set a much lower limit on the largest integer template constant
+        that they support.
 -   If a binary bitwise `&`, `|`, or `^` operation is applied to an integer
-    constant and a value of an integer type to which the constant can be
-    implicitly converted, the operand that is an integer constant is implicitly
-    converted to the integer type and the computation is performed as described
-    [above](#integer-types).
--   If the second operand of a bit-shift operator is an integer constant and the
-    first operand is not, and the second operand is between 0 (inclusive) and
-    the bit-width of the first operand (exclusive), the integer constant is
-    converted to an integer type that can hold its value and the computation is
-    performed as described above.
+    template constant and a value of an integer type to which the constant can
+    be implicitly converted, the operand that is an integer template constant is
+    implicitly converted to the integer type and the computation is performed as
+    described [above](#integer-types).
+-   If the second operand of a bit-shift operator is an integer template
+    constant and the first operand is not, and the second operand is between 0
+    (inclusive) and the bit-width of the first operand (exclusive), the integer
+    template constant is converted to an integer type that can hold its value
+    and the computation is performed as described above.
 
-Other operations involving integer constants are invalid. For example, a bitwise
-`&` between a `u8` and an integer constant `500` is invalid because `500`
-doesn't fit into `u8`, and `1 << n` is invalid if `n` is an integer variable
-because we don't know what type to use to compute the result.
+Other operations involving integer template constants are invalid. For example,
+a bitwise `&` between a `u8` and an integer template constant `500` is invalid
+because `500` doesn't fit into `u8`, and `1 << n` is invalid if `n` is an
+integer variable because we don't know what type to use to compute the result.
 
-Note that the unary `^` operator applied to a non-negative integer constant
-results in a negative integer constant, and the binary `^` operator gives a
-negative result if exactly one of the input operands was negative. For example,
-`^0 == -1` evaluates to `true`.
+Note that the unary `^` operator applied to a non-negative integer template
+constant results in a negative integer template constant, and the binary `^`
+operator gives a negative result if exactly one of the input operands was
+negative. For example, `^0 == -1` evaluates to `true`.
 
 ## Extensibility
 
