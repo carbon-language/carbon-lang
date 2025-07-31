@@ -136,7 +136,7 @@ fn G(T:! M & L, a: T.W) -> () { return a; }
 fn H(T:! L where .W = {}, a: T.W) -> {} { return a; }
 
 fn F(T:! M & (L where .W = {}), a: T.W) {
-  // TODO: One of `b` or `c` must fail, because `T.W` is either found to be `()` from
+  // One of `b` or `c` must fail, because `T.W` is either found to be `()` from
   // the impl or `{}` from the facet type of T.
 
   let b: () = G(T, a);
