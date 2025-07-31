@@ -24,10 +24,14 @@ auto Loc::FormatLocation(llvm::raw_ostream& out) const -> void {
 }
 
 auto Loc::FormatSnippet(llvm::raw_ostream& out, int indent) const -> void {
-  if (length == -1) {
-    // A length of -1 indicates that `line` is our complete snippet.
-    out.indent(indent);
-    out << line << "\n";
+  if (!snippet.empty()) {
+    llvm::StringRef snippet_ref = snippet;
+    do {
+      auto [snippet_line, rest] = snippet_ref.split('\n');
+      out.indent(indent);
+      out << snippet_line << "\n";
+      snippet_ref = rest;
+    } while (!snippet_ref.empty());
     return;
   }
 

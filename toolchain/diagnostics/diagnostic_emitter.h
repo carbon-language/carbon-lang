@@ -77,7 +77,8 @@ class Emitter {
 
     // Overrides the snippet for the most recently added diagnostic or note with
     // the given text. The provided override should include the caret text as
-    // well as the source snippet, and if non-empty, should end in a newline.
+    // well as the source snippet. An empty snippet restores the default
+    // behavior of printing the original source line.
     auto OverrideSnippet(llvm::StringRef snippet) -> Builder&;
 
     // Adds a note diagnostic attached to the main diagnostic being built.
@@ -310,17 +311,10 @@ struct DiagnosticTypeForArg<Arg> : public Arg::DiagnosticType {};
 template <typename LocT>
 auto Emitter<LocT>::Builder::OverrideSnippet(llvm::StringRef snippet)
     -> Builder& {
-  CARBON_CHECK(snippet.empty() || snippet.back() == '\n');
   if (!emitter_) {
     return *this;
   }
-  auto& message = diagnostic_.messages.back();
-  // Give the snippet persistent storage and a stable address.
-  message.snippet_storage = std::make_shared<std::string>(snippet);
-  message.loc.line = *message.snippet_storage;
-  // A length of -1 causes the diagnostic machinery to not render its own
-  // snippet.
-  message.loc.length = -1;
+  diagnostic_.messages.back().loc.snippet = snippet;
   return *this;
 }
 

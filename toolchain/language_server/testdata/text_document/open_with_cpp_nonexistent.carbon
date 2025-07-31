@@ -33,7 +33,7 @@
 // CHECK:STDOUT:       "textDocumentSync": 2
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:   }
-// CHECK:STDOUT: }Content-Length: 463{{\r}}
+// CHECK:STDOUT: }Content-Length: 464{{\r}}
 // CHECK:STDOUT: {{\r}}
 // CHECK:STDOUT: {
 // CHECK:STDOUT:   "jsonrpc": "2.0",
@@ -44,7 +44,7 @@
 // CHECK:STDOUT:         "message": "'nonexistent.h' file not found",
 // CHECK:STDOUT:         "range": {
 // CHECK:STDOUT:           "end": {
-// CHECK:STDOUT:             "character": 9,
+// CHECK:STDOUT:             "character": 11,
 // CHECK:STDOUT:             "line": 1
 // CHECK:STDOUT:           },
 // CHECK:STDOUT:           "start": {

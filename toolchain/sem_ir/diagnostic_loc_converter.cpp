@@ -72,6 +72,9 @@ class ClangImportCollector : public clang::DiagnosticRenderer {
 
   void emitIncludeLocation(clang::FullSourceLoc loc,
                            clang::PresumedLoc ploc) override {
+    // TODO: If this location is for a `#include` in the generated C++ includes
+    // buffer that corresponds to a carbon import, report it as being an Import
+    // instead of a CppInclude.
     imports_->push_back(
         {.loc = ConvertPresumedLocToDiagnosticsLoc(loc, ploc),
          .kind = DiagnosticLocConverter::ImportLoc::CppInclude});

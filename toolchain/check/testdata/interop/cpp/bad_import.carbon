@@ -34,9 +34,8 @@ import Cpp library "";
 
 library "[[@TEST_NAME]]";
 
-// CHECK:STDERR: fail_import_cpp_library_file_with_quotes.carbon:[[@LINE+5]]:10: error: '\"foo.h\"' file not found [CppInteropParseError]
-// CHECK:STDERR:     9 | #include "\"foo.h\""
+// CHECK:STDERR: fail_import_cpp_library_file_with_quotes.carbon:[[@LINE+4]]:10: error: '\"foo.h\"' file not found [CppInteropParseError]
+// CHECK:STDERR:     8 | #include "\"foo.h\""
 // CHECK:STDERR:       |          ^~~~~~~~~~~
-// CHECK:STDERR:
 // CHECK:STDERR:
 import Cpp library "\"foo.h\"";
