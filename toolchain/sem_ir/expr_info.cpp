@@ -29,6 +29,7 @@ auto GetExprCategory(const File& file, InstId inst_id) -> ExprCategory {
       case BranchIf::Kind:
       case BranchWithArg::Kind:
       case FieldDecl::Kind:
+      case OverloadedFunctionDecl::Kind:
       case FunctionDecl::Kind:
       case ImplDecl::Kind:
       case NameBindingDecl::Kind:
@@ -114,6 +115,7 @@ auto GetExprCategory(const File& file, InstId inst_id) -> ExprCategory {
       case FacetValue::Kind:
       case FloatLiteral::Kind:
       case FloatType::Kind:
+      case OverloadedFunctionType::Kind:
       case FunctionType::Kind:
       case FunctionTypeWithSelfType::Kind:
       case GenericClassType::Kind:

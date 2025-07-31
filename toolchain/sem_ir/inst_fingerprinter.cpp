@@ -15,6 +15,7 @@
 #include "llvm/ADT/StableHashing.h"
 #include "toolchain/base/value_ids.h"
 #include "toolchain/sem_ir/entity_with_params_base.h"
+#include "toolchain/sem_ir/function.h"
 #include "toolchain/sem_ir/ids.h"
 #include "toolchain/sem_ir/typed_insts.h"
 
@@ -173,6 +174,17 @@ struct Worklist {
 
   auto Add(FunctionId function_id) -> void {
     AddEntity(sem_ir->functions().Get(function_id));
+  }
+
+  auto Add(OverloadedFunctionId overloaded_function_id) -> void {
+    OverloadedFunction overloaded_function =
+        sem_ir->overloaded_functions().Get(overloaded_function_id);
+    Add(overloaded_function.name_id);
+    if (overloaded_function.parent_scope_id.has_value()) {
+      Add(sem_ir->name_scopes()
+              .Get(overloaded_function.parent_scope_id)
+              .inst_id());
+    }
   }
 
   auto Add(ClassId class_id) -> void {

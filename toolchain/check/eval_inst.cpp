@@ -210,6 +210,12 @@ auto EvalConstantInst(Context& context, SemIR::InstId inst_id,
              : ConstantEvalResult::Error;
 }
 
+auto EvalConstantInst(Context& /*context*/, SemIR::OverloadedFunctionDecl inst)
+    -> ConstantEvalResult {
+  return ConstantEvalResult::NewSamePhase(SemIR::StructValue{
+      .type_id = inst.type_id, .elements_id = SemIR::InstBlockId::Empty});
+}
+
 auto EvalConstantInst(Context& /*context*/, SemIR::FunctionDecl inst)
     -> ConstantEvalResult {
   // A function declaration evaluates to a function object, which is an empty

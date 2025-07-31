@@ -194,6 +194,8 @@ fn MyF() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [concrete]
+// CHECK:STDOUT:   %.839: type = overloaded_fn_type @foo [concrete]
+// CHECK:STDOUT:   %empty_struct: %.839 = struct_value () [concrete]
 // CHECK:STDOUT:   %foo.type: type = fn_type @foo [concrete]
 // CHECK:STDOUT:   %foo: %foo.type = struct_value () [concrete]
 // CHECK:STDOUT: }
@@ -204,9 +206,10 @@ fn MyF() {
 // CHECK:STDOUT:     import Cpp//...
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %my_namespace: <namespace> = namespace [concrete] {
-// CHECK:STDOUT:     .foo = %foo.decl
+// CHECK:STDOUT:     .foo = %.339
 // CHECK:STDOUT:     import Cpp//...
 // CHECK:STDOUT:   }
+// CHECK:STDOUT:   %.339: %.839 = overloaded_fn_decl @foo [concrete = constants.%empty_struct]
 // CHECK:STDOUT:   %foo.decl: %foo.type = fn_decl @foo [concrete = constants.%foo] {} {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -214,8 +217,8 @@ fn MyF() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %Cpp.ref: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
 // CHECK:STDOUT:   %my_namespace.ref: <namespace> = name_ref my_namespace, imports.%my_namespace [concrete = imports.%my_namespace]
-// CHECK:STDOUT:   %foo.ref: %foo.type = name_ref foo, imports.%foo.decl [concrete = constants.%foo]
-// CHECK:STDOUT:   %foo.call: init %empty_tuple.type = call %foo.ref()
+// CHECK:STDOUT:   %foo.ref: %.839 = name_ref foo, imports.%.339 [concrete = constants.%empty_struct]
+// CHECK:STDOUT:   %foo.call: init %empty_tuple.type = call imports.%foo.decl()
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -223,10 +226,16 @@ fn MyF() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [concrete]
+// CHECK:STDOUT:   %.5b4: type = overloaded_fn_type @foo3 [concrete]
+// CHECK:STDOUT:   %empty_struct.3be: %.5b4 = struct_value () [concrete]
 // CHECK:STDOUT:   %foo1.type: type = fn_type @foo1 [concrete]
 // CHECK:STDOUT:   %foo1: %foo1.type = struct_value () [concrete]
+// CHECK:STDOUT:   %.d2e: type = overloaded_fn_type @<null name> [concrete]
+// CHECK:STDOUT:   %empty_struct.1e2: %.d2e = struct_value () [concrete]
 // CHECK:STDOUT:   %foo2.type: type = fn_type @foo2 [concrete]
 // CHECK:STDOUT:   %foo2: %foo2.type = struct_value () [concrete]
+// CHECK:STDOUT:   %.a94: type = overloaded_fn_type @<null name> [concrete]
+// CHECK:STDOUT:   %empty_struct.8ff: %.a94 = struct_value () [concrete]
 // CHECK:STDOUT:   %foo3.type: type = fn_type @foo3 [concrete]
 // CHECK:STDOUT:   %foo3: %foo3.type = struct_value () [concrete]
 // CHECK:STDOUT: }
@@ -237,21 +246,24 @@ fn MyF() {
 // CHECK:STDOUT:     import Cpp//...
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %my_namespace1: <namespace> = namespace [concrete] {
-// CHECK:STDOUT:     .foo1 = %foo1.decl
+// CHECK:STDOUT:     .foo1 = %.38a
 // CHECK:STDOUT:     .my_namespace2 = %my_namespace2
 // CHECK:STDOUT:     import Cpp//...
 // CHECK:STDOUT:   }
+// CHECK:STDOUT:   %.38a: %.5b4 = overloaded_fn_decl @foo3 [concrete = constants.%empty_struct.3be]
 // CHECK:STDOUT:   %foo1.decl: %foo1.type = fn_decl @foo1 [concrete = constants.%foo1] {} {}
 // CHECK:STDOUT:   %my_namespace2: <namespace> = namespace [concrete] {
-// CHECK:STDOUT:     .foo2 = %foo2.decl
+// CHECK:STDOUT:     .foo2 = %.9f7
 // CHECK:STDOUT:     .my_namespace3 = %my_namespace3
 // CHECK:STDOUT:     import Cpp//...
 // CHECK:STDOUT:   }
+// CHECK:STDOUT:   %.9f7: %.d2e = overloaded_fn_decl @<null name> [concrete = constants.%empty_struct.1e2]
 // CHECK:STDOUT:   %foo2.decl: %foo2.type = fn_decl @foo2 [concrete = constants.%foo2] {} {}
 // CHECK:STDOUT:   %my_namespace3: <namespace> = namespace [concrete] {
-// CHECK:STDOUT:     .foo3 = %foo3.decl
+// CHECK:STDOUT:     .foo3 = %.a99
 // CHECK:STDOUT:     import Cpp//...
 // CHECK:STDOUT:   }
+// CHECK:STDOUT:   %.a99: %.a94 = overloaded_fn_decl @<null name> [concrete = constants.%empty_struct.8ff]
 // CHECK:STDOUT:   %foo3.decl: %foo3.type = fn_decl @foo3 [concrete = constants.%foo3] {} {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -259,19 +271,19 @@ fn MyF() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %Cpp.ref.loc8: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
 // CHECK:STDOUT:   %my_namespace1.ref.loc8: <namespace> = name_ref my_namespace1, imports.%my_namespace1 [concrete = imports.%my_namespace1]
-// CHECK:STDOUT:   %foo1.ref: %foo1.type = name_ref foo1, imports.%foo1.decl [concrete = constants.%foo1]
-// CHECK:STDOUT:   %foo1.call: init %empty_tuple.type = call %foo1.ref()
+// CHECK:STDOUT:   %foo1.ref: %.5b4 = name_ref foo1, imports.%.38a [concrete = constants.%empty_struct.3be]
+// CHECK:STDOUT:   %foo1.call: init %empty_tuple.type = call imports.%foo1.decl()
 // CHECK:STDOUT:   %Cpp.ref.loc9: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
 // CHECK:STDOUT:   %my_namespace1.ref.loc9: <namespace> = name_ref my_namespace1, imports.%my_namespace1 [concrete = imports.%my_namespace1]
 // CHECK:STDOUT:   %my_namespace2.ref.loc9: <namespace> = name_ref my_namespace2, imports.%my_namespace2 [concrete = imports.%my_namespace2]
-// CHECK:STDOUT:   %foo2.ref: %foo2.type = name_ref foo2, imports.%foo2.decl [concrete = constants.%foo2]
-// CHECK:STDOUT:   %foo2.call: init %empty_tuple.type = call %foo2.ref()
+// CHECK:STDOUT:   %foo2.ref: %.d2e = name_ref foo2, imports.%.9f7 [concrete = constants.%empty_struct.1e2]
+// CHECK:STDOUT:   %foo2.call: init %empty_tuple.type = call imports.%foo2.decl()
 // CHECK:STDOUT:   %Cpp.ref.loc10: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
 // CHECK:STDOUT:   %my_namespace1.ref.loc10: <namespace> = name_ref my_namespace1, imports.%my_namespace1 [concrete = imports.%my_namespace1]
 // CHECK:STDOUT:   %my_namespace2.ref.loc10: <namespace> = name_ref my_namespace2, imports.%my_namespace2 [concrete = imports.%my_namespace2]
 // CHECK:STDOUT:   %my_namespace3.ref: <namespace> = name_ref my_namespace3, imports.%my_namespace3 [concrete = imports.%my_namespace3]
-// CHECK:STDOUT:   %foo3.ref: %foo3.type = name_ref foo3, imports.%foo3.decl [concrete = constants.%foo3]
-// CHECK:STDOUT:   %foo3.call: init %empty_tuple.type = call %foo3.ref()
+// CHECK:STDOUT:   %foo3.ref: %.a94 = name_ref foo3, imports.%.a99 [concrete = constants.%empty_struct.8ff]
+// CHECK:STDOUT:   %foo3.call: init %empty_tuple.type = call imports.%foo3.decl()
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -279,6 +291,8 @@ fn MyF() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [concrete]
+// CHECK:STDOUT:   %.dd2: type = overloaded_fn_type @foo [concrete]
+// CHECK:STDOUT:   %empty_struct: %.dd2 = struct_value () [concrete]
 // CHECK:STDOUT:   %foo.type: type = fn_type @foo [concrete]
 // CHECK:STDOUT:   %foo: %foo.type = struct_value () [concrete]
 // CHECK:STDOUT: }
@@ -289,9 +303,10 @@ fn MyF() {
 // CHECK:STDOUT:     import Cpp//...
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %N: <namespace> = namespace [concrete] {
-// CHECK:STDOUT:     .foo = %foo.decl
+// CHECK:STDOUT:     .foo = %.736
 // CHECK:STDOUT:     import Cpp//...
 // CHECK:STDOUT:   }
+// CHECK:STDOUT:   %.736: %.dd2 = overloaded_fn_decl @foo [concrete = constants.%empty_struct]
 // CHECK:STDOUT:   %foo.decl: %foo.type = fn_decl @foo [concrete = constants.%foo] {} {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -299,8 +314,8 @@ fn MyF() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %Cpp.ref: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
 // CHECK:STDOUT:   %N.ref: <namespace> = name_ref N, imports.%N [concrete = imports.%N]
-// CHECK:STDOUT:   %foo.ref: %foo.type = name_ref foo, imports.%foo.decl [concrete = constants.%foo]
-// CHECK:STDOUT:   %foo.call: init %empty_tuple.type = call %foo.ref()
+// CHECK:STDOUT:   %foo.ref: %.dd2 = name_ref foo, imports.%.736 [concrete = constants.%empty_struct]
+// CHECK:STDOUT:   %foo.call: init %empty_tuple.type = call imports.%foo.decl()
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -308,6 +323,8 @@ fn MyF() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [concrete]
+// CHECK:STDOUT:   %.273: type = overloaded_fn_type @foo [concrete]
+// CHECK:STDOUT:   %empty_struct: %.273 = struct_value () [concrete]
 // CHECK:STDOUT:   %X: type = class_type @X [concrete]
 // CHECK:STDOUT:   %foo.type: type = fn_type @foo [concrete]
 // CHECK:STDOUT:   %foo: %foo.type = struct_value () [concrete]
@@ -318,9 +335,10 @@ fn MyF() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT:   %Cpp: <namespace> = namespace file.%Cpp.import_cpp, [concrete] {
-// CHECK:STDOUT:     .foo = %foo.decl
+// CHECK:STDOUT:     .foo = %.f88
 // CHECK:STDOUT:     import Cpp//...
 // CHECK:STDOUT:   }
+// CHECK:STDOUT:   %.f88: %.273 = overloaded_fn_decl @foo [concrete = constants.%empty_struct]
 // CHECK:STDOUT:   %foo.decl: %foo.type = fn_decl @foo [concrete = constants.%foo] {
 // CHECK:STDOUT:     <elided>
 // CHECK:STDOUT:   } {
@@ -331,10 +349,10 @@ fn MyF() {
 // CHECK:STDOUT: fn @MyF() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %Cpp.ref: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
+// CHECK:STDOUT:   %foo.ref: %.273 = name_ref foo, imports.%.f88 [concrete = constants.%empty_struct]
 // CHECK:STDOUT:   <elided>
-// CHECK:STDOUT:   %foo.ref: %foo.type = name_ref foo, imports.%foo.decl [concrete = constants.%foo]
 // CHECK:STDOUT:   %.loc8_11.1: ref %X = temporary_storage
-// CHECK:STDOUT:   %foo.call: init %X = call %foo.ref() to %.loc8_11.1
+// CHECK:STDOUT:   %foo.call: init %X = call imports.%foo.decl() to %.loc8_11.1
 // CHECK:STDOUT:   %.loc8_11.2: ref %X = temporary %.loc8_11.1, %foo.call
 // CHECK:STDOUT:   %T.as.Destroy.impl.Op.bound: <bound method> = bound_method %.loc8_11.1, constants.%T.as.Destroy.impl.Op.cbf
 // CHECK:STDOUT:   <elided>
@@ -348,6 +366,8 @@ fn MyF() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [concrete]
+// CHECK:STDOUT:   %.c79: type = overloaded_fn_type @foo [concrete]
+// CHECK:STDOUT:   %empty_struct: %.c79 = struct_value () [concrete]
 // CHECK:STDOUT:   %foo.type: type = fn_type @foo [concrete]
 // CHECK:STDOUT:   %foo: %foo.type = struct_value () [concrete]
 // CHECK:STDOUT: }
@@ -358,9 +378,10 @@ fn MyF() {
 // CHECK:STDOUT:     import Cpp//...
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %base: <namespace> = namespace [concrete] {
-// CHECK:STDOUT:     .foo = %foo.decl
+// CHECK:STDOUT:     .foo = %.8ff
 // CHECK:STDOUT:     import Cpp//...
 // CHECK:STDOUT:   }
+// CHECK:STDOUT:   %.8ff: %.c79 = overloaded_fn_decl @foo [concrete = constants.%empty_struct]
 // CHECK:STDOUT:   %foo.decl: %foo.type = fn_decl @foo [concrete = constants.%foo] {} {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -368,8 +389,8 @@ fn MyF() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %Cpp.ref: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
 // CHECK:STDOUT:   %base.ref: <namespace> = name_ref r#base, imports.%base [concrete = imports.%base]
-// CHECK:STDOUT:   %foo.ref: %foo.type = name_ref foo, imports.%foo.decl [concrete = constants.%foo]
-// CHECK:STDOUT:   %foo.call: init %empty_tuple.type = call %foo.ref()
+// CHECK:STDOUT:   %foo.ref: %.c79 = name_ref foo, imports.%.8ff [concrete = constants.%empty_struct]
+// CHECK:STDOUT:   %foo.call: init %empty_tuple.type = call imports.%foo.decl()
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

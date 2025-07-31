@@ -28,10 +28,10 @@ fn F() {
   //@dump-sem-ir-begin
   // CHECK:STDERR: fail_todo_import_unsupported_primitive_type.carbon:[[@LINE+7]]:3: error: semantics TODO: `Unsupported: parameter type: float` [SemanticsTodo]
   // CHECK:STDERR:   Cpp.foo(1.1);
-  // CHECK:STDERR:   ^~~~~~~
-  // CHECK:STDERR: fail_todo_import_unsupported_primitive_type.carbon:[[@LINE+4]]:3: note: in `Cpp` name lookup for `foo` [InCppNameLookup]
+  // CHECK:STDERR:   ^~~~~~~~~~~~
+  // CHECK:STDERR: fail_todo_import_unsupported_primitive_type.carbon:[[@LINE+4]]:3: note: in call to a Cpp (overloaded) function here [InCallToOverloadedCppFunction]
   // CHECK:STDERR:   Cpp.foo(1.1);
-  // CHECK:STDERR:   ^~~~~~~
+  // CHECK:STDERR:   ^~~~~~~~~~~~
   // CHECK:STDERR:
   Cpp.foo(1.1);
   //@dump-sem-ir-end
@@ -55,10 +55,10 @@ fn F() {
   //@dump-sem-ir-begin
   // CHECK:STDERR: fail_todo_import_unsupported_primitive_type_among_params.carbon:[[@LINE+7]]:3: error: semantics TODO: `Unsupported: parameter type: float` [SemanticsTodo]
   // CHECK:STDERR:   Cpp.foo(1, 2.0);
-  // CHECK:STDERR:   ^~~~~~~
-  // CHECK:STDERR: fail_todo_import_unsupported_primitive_type_among_params.carbon:[[@LINE+4]]:3: note: in `Cpp` name lookup for `foo` [InCppNameLookup]
+  // CHECK:STDERR:   ^~~~~~~~~~~~~~~
+  // CHECK:STDERR: fail_todo_import_unsupported_primitive_type_among_params.carbon:[[@LINE+4]]:3: note: in call to a Cpp (overloaded) function here [InCallToOverloadedCppFunction]
   // CHECK:STDERR:   Cpp.foo(1, 2.0);
-  // CHECK:STDERR:   ^~~~~~~
+  // CHECK:STDERR:   ^~~~~~~~~~~~~~~
   // CHECK:STDERR:
   Cpp.foo(1, 2.0);
   //@dump-sem-ir-end
@@ -67,20 +67,23 @@ fn F() {
 // CHECK:STDOUT: --- fail_todo_import_unsupported_primitive_type.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
+// CHECK:STDOUT:   %.273: type = overloaded_fn_type @<null name> [concrete]
+// CHECK:STDOUT:   %empty_struct: %.273 = struct_value () [concrete]
 // CHECK:STDOUT:   %float: f64 = float_literal 1.1000000000000001 [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT:   %Cpp: <namespace> = namespace file.%Cpp.import_cpp, [concrete] {
-// CHECK:STDOUT:     .foo = <error>
+// CHECK:STDOUT:     .foo = %.f88
 // CHECK:STDOUT:     import Cpp//...
 // CHECK:STDOUT:   }
+// CHECK:STDOUT:   %.f88: %.273 = overloaded_fn_decl @<null name> [concrete = constants.%empty_struct]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %Cpp.ref: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
-// CHECK:STDOUT:   %foo.ref: <error> = name_ref foo, <error> [concrete = <error>]
+// CHECK:STDOUT:   %foo.ref: %.273 = name_ref foo, imports.%.f88 [concrete = constants.%empty_struct]
 // CHECK:STDOUT:   %float: f64 = float_literal 1.1000000000000001 [concrete = constants.%float]
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
@@ -88,21 +91,24 @@ fn F() {
 // CHECK:STDOUT: --- fail_todo_import_unsupported_primitive_type_among_params.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
+// CHECK:STDOUT:   %.273: type = overloaded_fn_type @<null name> [concrete]
+// CHECK:STDOUT:   %empty_struct: %.273 = struct_value () [concrete]
 // CHECK:STDOUT:   %int_1: Core.IntLiteral = int_value 1 [concrete]
 // CHECK:STDOUT:   %float: f64 = float_literal 2 [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT:   %Cpp: <namespace> = namespace file.%Cpp.import_cpp, [concrete] {
-// CHECK:STDOUT:     .foo = <error>
+// CHECK:STDOUT:     .foo = %.f88
 // CHECK:STDOUT:     import Cpp//...
 // CHECK:STDOUT:   }
+// CHECK:STDOUT:   %.f88: %.273 = overloaded_fn_decl @<null name> [concrete = constants.%empty_struct]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %Cpp.ref: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
-// CHECK:STDOUT:   %foo.ref: <error> = name_ref foo, <error> [concrete = <error>]
+// CHECK:STDOUT:   %foo.ref: %.273 = name_ref foo, imports.%.f88 [concrete = constants.%empty_struct]
 // CHECK:STDOUT:   %int_1: Core.IntLiteral = int_value 1 [concrete = constants.%int_1]
 // CHECK:STDOUT:   %float: f64 = float_literal 2 [concrete = constants.%float]
 // CHECK:STDOUT:   <elided>

@@ -242,6 +242,9 @@ class Context {
   auto entity_names() -> SemIR::EntityNameStore& {
     return sem_ir().entity_names();
   }
+  auto overloaded_functions() -> SemIR::OverloadedFunctionStore& {
+    return sem_ir().overloaded_functions();
+  }
   auto functions() -> SemIR::FunctionStore& { return sem_ir().functions(); }
   auto classes() -> SemIR::ClassStore& { return sem_ir().classes(); }
   auto vtables() -> SemIR::VtableStore& { return sem_ir().vtables(); }

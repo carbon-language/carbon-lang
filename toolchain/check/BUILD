@@ -55,6 +55,7 @@ cc_library(
         "thunk.cpp",
         "type.cpp",
         "type_completion.cpp",
+        "type_mapping.cpp",
         "type_structure.cpp",
     ],
     hdrs = [
@@ -104,6 +105,7 @@ cc_library(
         "thunk.h",
         "type.h",
         "type_completion.h",
+        "type_mapping.h",
         "type_structure.h",
     ],
     deps = [
@@ -121,7 +123,9 @@ cc_library(
         "//common:vlog",
         "//toolchain/base:canonical_value_store",
         "//toolchain/base:index_base",
+        "//toolchain/base:int",
         "//toolchain/base:kind_switch",
+        "//toolchain/base:value_ids",
         "//toolchain/base:value_store",
         "//toolchain/check:generic_region_stack",
         "//toolchain/check:scope_stack",
@@ -136,6 +140,7 @@ cc_library(
         "//toolchain/sem_ir:file",
         "//toolchain/sem_ir:formatter",
         "//toolchain/sem_ir:typed_insts",
+        "@llvm-project//clang:ast",
         "@llvm-project//clang:basic",
         "@llvm-project//clang:frontend",
         "@llvm-project//clang:lex",

@@ -46,6 +46,11 @@ auto GetConstType(Context& context, SemIR::TypeInstId inner_type_id)
 auto GetClassType(Context& context, SemIR::ClassId class_id,
                   SemIR::SpecificId specific_id) -> SemIR::TypeId;
 
+// Gets an overloaded function type. The returned type will be complete.
+auto GetOverloadedFunctionType(Context& context,
+                               SemIR::OverloadedFunctionId overloaded_fn_id,
+                               SemIR::SpecificId specific_id) -> SemIR::TypeId;
+
 // Gets a function type. The returned type will be complete.
 auto GetFunctionType(Context& context, SemIR::FunctionId fn_id,
                      SemIR::SpecificId specific_id) -> SemIR::TypeId;

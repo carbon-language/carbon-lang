@@ -364,6 +364,14 @@ class Stringifier {
     }
   }
 
+  auto StringifyInst(InstId /*inst_id*/, OverloadedFunctionType inst) -> void {
+    const auto& fn =
+        sem_ir_->overloaded_functions().Get(inst.overloaded_function_id);
+    *out_ << "<type of ";
+    step_stack_->Push(
+        StepStack::QualifiedNameItem{fn.parent_scope_id, fn.name_id}, ">");
+  }
+
   auto StringifyInst(InstId /*inst_id*/, FunctionType inst) -> void {
     const auto& fn = sem_ir_->functions().Get(inst.function_id);
     *out_ << "<type of ";

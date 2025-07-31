@@ -38,11 +38,13 @@ fn F() {
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [concrete]
 // CHECK:STDOUT:   %X: type = class_type @X [concrete]
+// CHECK:STDOUT:   %.080: type = overloaded_fn_type @X.f [concrete]
+// CHECK:STDOUT:   %empty_struct: %.080 = struct_value () [concrete]
+// CHECK:STDOUT:   %int_42.20e: Core.IntLiteral = int_value 42 [concrete]
 // CHECK:STDOUT:   %int_32: Core.IntLiteral = int_value 32 [concrete]
 // CHECK:STDOUT:   %i32: type = class_type @Int, @Int(%int_32) [concrete]
 // CHECK:STDOUT:   %X.f.type: type = fn_type @X.f [concrete]
 // CHECK:STDOUT:   %X.f: %X.f.type = struct_value () [concrete]
-// CHECK:STDOUT:   %int_42.20e: Core.IntLiteral = int_value 42 [concrete]
 // CHECK:STDOUT:   %ImplicitAs.type.205: type = facet_type <@ImplicitAs, @ImplicitAs(%i32)> [concrete]
 // CHECK:STDOUT:   %ImplicitAs.Convert.type.1b6: type = fn_type @ImplicitAs.Convert, @ImplicitAs(%i32) [concrete]
 // CHECK:STDOUT:   %To: Core.IntLiteral = bind_symbolic_name To, 0 [symbolic]
@@ -65,6 +67,7 @@ fn F() {
 // CHECK:STDOUT:     import Cpp//...
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %X.decl: type = class_decl @X [concrete = constants.%X] {} {}
+// CHECK:STDOUT:   %.647: %.080 = overloaded_fn_decl @X.f [concrete = constants.%empty_struct]
 // CHECK:STDOUT:   %X.f.decl: %X.f.type = fn_decl @X.f [concrete = constants.%X.f] {
 // CHECK:STDOUT:     <elided>
 // CHECK:STDOUT:   } {
@@ -79,7 +82,7 @@ fn F() {
 // CHECK:STDOUT:   %Cpp.ref: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT:   %Y.ref: type = name_ref Y, imports.%X.decl [concrete = constants.%X]
-// CHECK:STDOUT:   %f.ref: %X.f.type = name_ref f, imports.%X.f.decl [concrete = constants.%X.f]
+// CHECK:STDOUT:   %f.ref: %.080 = name_ref f, imports.%.647 [concrete = constants.%empty_struct]
 // CHECK:STDOUT:   %int_42: Core.IntLiteral = int_value 42 [concrete = constants.%int_42.20e]
 // CHECK:STDOUT:   %impl.elem0: %.9c3 = impl_witness_access constants.%ImplicitAs.impl_witness.c75, element0 [concrete = constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.956]
 // CHECK:STDOUT:   %bound_method.loc8_11.1: <bound method> = bound_method %int_42, %impl.elem0 [concrete = constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.bound]
@@ -88,7 +91,7 @@ fn F() {
 // CHECK:STDOUT:   %Core.IntLiteral.as.ImplicitAs.impl.Convert.call: init %i32 = call %bound_method.loc8_11.2(%int_42) [concrete = constants.%int_42.c68]
 // CHECK:STDOUT:   %.loc8_11.1: %i32 = value_of_initializer %Core.IntLiteral.as.ImplicitAs.impl.Convert.call [concrete = constants.%int_42.c68]
 // CHECK:STDOUT:   %.loc8_11.2: %i32 = converted %int_42, %.loc8_11.1 [concrete = constants.%int_42.c68]
-// CHECK:STDOUT:   %X.f.call: init %empty_tuple.type = call %f.ref(%.loc8_11.2)
+// CHECK:STDOUT:   %X.f.call: init %empty_tuple.type = call imports.%X.f.decl(%.loc8_11.2)
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

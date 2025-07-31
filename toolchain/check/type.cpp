@@ -124,6 +124,13 @@ auto GetClassType(Context& context, SemIR::ClassId class_id,
   return GetTypeImpl<SemIR::ClassType>(context, class_id, specific_id);
 }
 
+auto GetOverloadedFunctionType(Context& context,
+                               SemIR::OverloadedFunctionId overloaded_fn_id,
+                               SemIR::SpecificId specific_id) -> SemIR::TypeId {
+  return GetCompleteTypeImpl<SemIR::OverloadedFunctionType>(
+      context, overloaded_fn_id, specific_id);
+}
+
 auto GetFunctionType(Context& context, SemIR::FunctionId fn_id,
                      SemIR::SpecificId specific_id) -> SemIR::TypeId {
   return GetCompleteTypeImpl<SemIR::FunctionType>(context, fn_id, specific_id);

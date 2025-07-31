@@ -38,8 +38,8 @@ class InstNamer {
 
   // Entities whose scopes get entries from `ScopeId`.
   using ScopeIdTypeEnum =
-      TypeEnum<AssociatedConstantId, ClassId, VtableId, FunctionId, ImplId,
-               InterfaceId, SpecificInterfaceId>;
+      TypeEnum<AssociatedConstantId, ClassId, VtableId, OverloadedFunctionId,
+               FunctionId, ImplId, InterfaceId, SpecificInterfaceId>;
 
   // Construct the instruction namer, and assign names to all instructions in
   // the provided file.

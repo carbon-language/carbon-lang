@@ -6,6 +6,7 @@
 #define CARBON_TOOLCHAIN_SEM_IR_FUNCTION_H_
 
 #include "clang/AST/Decl.h"
+#include "clang/AST/UnresolvedSet.h"
 #include "toolchain/base/value_store.h"
 #include "toolchain/sem_ir/builtin_function_kind.h"
 #include "toolchain/sem_ir/clang_decl.h"
@@ -80,6 +81,25 @@ struct FunctionFields {
   // creation to mangling.
   ClangDeclId clang_decl_id = ClangDeclId::None;
 };
+
+// An overloaded function.
+struct OverloadedFunction : public Printable<OverloadedFunction> {
+  // The function's name.
+  NameId name_id;
+
+  // The parent scope.
+  NameScopeId parent_scope_id;
+
+  // List of all named decls found at name lookup.
+  clang::UnresolvedSet<8> candidate_functions;
+
+  auto Print(llvm::raw_ostream& out) const -> void {
+    out << "name: " << name_id << ", parent_scope: " << parent_scope_id;
+  }
+};
+
+using OverloadedFunctionStore =
+    ValueStore<OverloadedFunctionId, OverloadedFunction>;
 
 // A function. See EntityWithParamsBase regarding the inheritance here.
 struct Function : public EntityWithParamsBase,
@@ -176,6 +196,8 @@ struct CalleeFunction : public Printable<CalleeFunction> {
   InstId self_id;
   // True if an error instruction was found.
   bool is_error;
+  // True if the function is an overloaded c++ function.
+  bool is_overloaded_function;
 
   auto Print(llvm::raw_ostream& out) const -> void {
     out << "{function_id: " << function_id

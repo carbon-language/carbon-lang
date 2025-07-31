@@ -57,6 +57,7 @@ using IdKind = TypeEnum<
     MetaInstId,
     NameId,
     NameScopeId,
+    OverloadedFunctionId,
     SpecificId,
     SpecificInterfaceId,
     StructTypeFieldsId,

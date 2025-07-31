@@ -152,6 +152,12 @@ class File : public Printable<File> {
   auto entity_names() const -> const EntityNameStore& { return entity_names_; }
   auto functions() -> FunctionStore& { return functions_; }
   auto functions() const -> const FunctionStore& { return functions_; }
+  auto overloaded_functions() -> OverloadedFunctionStore& {
+    return overloaded_functions_;
+  }
+  auto overloaded_functions() const -> const OverloadedFunctionStore& {
+    return overloaded_functions_;
+  }
   auto classes() -> ClassStore& { return classes_; }
   auto classes() const -> const ClassStore& { return classes_; }
   auto interfaces() -> InterfaceStore& { return interfaces_; }
@@ -284,6 +290,9 @@ class File : public Printable<File> {
 
   // Storage for callable objects.
   FunctionStore functions_;
+
+  // Storage for OverloadedFunctions.
+  OverloadedFunctionStore overloaded_functions_;
 
   // Storage for classes.
   ClassStore classes_;

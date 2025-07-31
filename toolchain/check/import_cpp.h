@@ -30,6 +30,12 @@ auto ImportNameFromCpp(Context& context, SemIR::LocId loc_id,
                        SemIR::NameScopeId scope_id, SemIR::NameId name_id)
     -> SemIR::InstId;
 
+// Imports a declaration from Clang to Carbon. If successful, returns the
+// instruction for the new Carbon declaration. All unimported dependencies would
+// be imported first.
+auto ImportDeclAndDependencies(Context& context, SemIR::LocId loc_id,
+                               clang::Decl* clang_decl) -> SemIR::InstId;
+
 }  // namespace Carbon::Check
 
 #endif  // CARBON_TOOLCHAIN_CHECK_IMPORT_CPP_H_

@@ -247,7 +247,14 @@ struct CallParamIndex : public IndexBase<CallParamIndex> {
   using IndexBase::IndexBase;
 };
 
-// The ID of a `Function`.
+// The ID of an overloaded function.
+struct OverloadedFunctionId : public IdBase<OverloadedFunctionId> {
+  static constexpr llvm::StringLiteral Label = "overloaded_function";
+
+  using IdBase::IdBase;
+};
+
+// The ID of a function.
 struct FunctionId : public IdBase<FunctionId> {
   static constexpr llvm::StringLiteral Label = "function";
 

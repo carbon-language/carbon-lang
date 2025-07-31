@@ -41,6 +41,7 @@
 #include "toolchain/diagnostics/format_providers.h"
 #include "toolchain/parse/node_ids.h"
 #include "toolchain/sem_ir/clang_decl.h"
+#include "toolchain/sem_ir/function.h"
 #include "toolchain/sem_ir/ids.h"
 #include "toolchain/sem_ir/name_scope.h"
 #include "toolchain/sem_ir/typed_insts.h"
@@ -581,7 +582,6 @@ static auto MapBuiltinType(Context& context, clang::QualType qual_type,
     }
     // TODO: Handle integer types that map to named aliases.
   }
-
   return {.inst_id = SemIR::TypeInstId::None, .type_id = SemIR::TypeId::None};
 }
 
@@ -1122,12 +1122,8 @@ static auto ImportDeclAfterDependencies(Context& context, SemIR::LocId loc_id,
   return SemIR::InstId::None;
 }
 
-// Imports a declaration from Clang to Carbon. If successful, returns the
-// instruction for the new Carbon declaration. All unimported dependencies would
-// be imported first.
-static auto ImportDeclAndDependencies(Context& context, SemIR::LocId loc_id,
-                                      clang::Decl* clang_decl)
-    -> SemIR::InstId {
+auto ImportDeclAndDependencies(Context& context, SemIR::LocId loc_id,
+                               clang::Decl* clang_decl) -> SemIR::InstId {
   // Collect dependencies.
   llvm::SetVector<clang::Decl*> clang_decls;
   clang_decls.insert(clang_decl);
@@ -1177,6 +1173,36 @@ auto ImportNameFromCpp(Context& context, SemIR::LocId loc_id,
   auto lookup = ClangLookup(context, scope_id, name_id);
   if (!lookup) {
     return SemIR::InstId::None;
+  }
+
+  if (lookup->isOverloadedResult() ||
+      (lookup->isSingleResult() && lookup->getFoundDecl()->getAsFunction())) {
+    auto overloaded_func_decl_inst = SemIR::OverloadedFunctionDecl{
+        SemIR::TypeId::None, SemIR::OverloadedFunctionId::None};
+    auto decl_inst_id = AddPlaceholderInstInNoBlock(
+        context, Parse::NodeId::None, overloaded_func_decl_inst);
+    context.imports().push_back(decl_inst_id);
+
+    clang::UnresolvedSet<8> overload_set;
+    overload_set.append(lookup->begin(), lookup->end());
+
+    auto overloaded_function_info =
+        SemIR::OverloadedFunction{.name_id = name_id,
+                                  .parent_scope_id = scope_id,
+                                  .candidate_functions = overload_set};
+
+    overloaded_func_decl_inst.overloaded_function_id =
+        context.overloaded_functions().Add(overloaded_function_info);
+
+    overloaded_func_decl_inst.type_id = GetOverloadedFunctionType(
+        context, overloaded_func_decl_inst.overloaded_function_id,
+        SemIR::SpecificId::None);
+
+    ReplaceInstBeforeConstantUse(context, decl_inst_id,
+                                 overloaded_func_decl_inst);
+
+    AddNameToScope(context, scope_id, name_id, decl_inst_id);
+    return decl_inst_id;
   }
 
   if (!lookup->isSingleResult()) {

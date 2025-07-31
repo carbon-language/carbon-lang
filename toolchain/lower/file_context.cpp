@@ -875,7 +875,8 @@ static auto BuildTypeForInst(FileContext& context, InstT /*inst*/)
 
 template <typename InstT>
   requires(InstT::Kind.template IsAnyOf<
-           SemIR::AssociatedEntityType, SemIR::FacetType, SemIR::FunctionType,
+           SemIR::AssociatedEntityType, SemIR::FacetType,
+           SemIR::OverloadedFunctionType, SemIR::FunctionType,
            SemIR::FunctionTypeWithSelfType, SemIR::GenericClassType,
            SemIR::GenericInterfaceType, SemIR::InstType,
            SemIR::UnboundElementType, SemIR::WhereExpr>())

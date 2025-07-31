@@ -674,6 +674,29 @@ struct FloatType {
   InstId bit_width_id;
 };
 
+// An overloaded function declaration.
+struct OverloadedFunctionDecl {
+  static constexpr auto Kind =
+      InstKind::OverloadedFunctionDecl.Define<Parse::AnyFunctionDeclId>(
+          {.ir_name = "overloaded_fn_decl", .is_lowered = false});
+
+  TypeId type_id;
+  OverloadedFunctionId overloaded_function_id;
+};
+
+// The type of an overloaded function.
+struct OverloadedFunctionType {
+  static constexpr auto Kind =
+      InstKind::OverloadedFunctionType.Define<Parse::AnyFunctionDeclId>(
+          {.ir_name = "overloaded_fn_type",
+           .is_type = InstIsType::Always,
+           .constant_kind = InstConstantKind::WheneverPossible});
+
+  TypeId type_id;
+  OverloadedFunctionId overloaded_function_id;
+  SpecificId specific_id;
+};
+
 // A function declaration.
 struct FunctionDecl {
   static constexpr auto Kind =
