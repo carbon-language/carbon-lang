@@ -11,10 +11,10 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 ## Table of contents
 
 -   [Overview](#overview)
--   [Problem details](#problem-details)
-    -   [SemIR representation and when to do coalescing](#semir-representation-and-when-to-do-coalescing)
-    -   [Recursion and strongly connected components](#recursion-and-strongly-connected-components)
-    -   [Complexity](#complexity)
+-   [Design details](#design-details)
+    -   [SemIR representation and why to coalesce during lowering](#semir-representation-and-why-to-coalesce-during-lowering)
+    -   [Recursion and strongly connected components (SCCs)](#recursion-and-strongly-connected-components-sccs)
+    -   [Function fingerprints](#function-fingerprints)
     -   [Canonical specific to use](#canonical-specific-to-use)
 -   [Algorithm details](#algorithm-details)
 -   [Alternatives considered](#alternatives-considered)
@@ -27,93 +27,94 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
 ## Overview
 
-When lowering Carbon generics to LLVM, it is possible we emit duplicate LLVM-IR
+When lowering Carbon generics to LLVM, it is possible we emit duplicate LLVM IR
 functions. This document describes the algorithm implemented in
 [lowering](lower.md) for determining when and which generated specifics, while
 different at the Carbon language level, can be coalesced into a single one when
 lowering Carbon’s intermediate representation (_SemIR_), to
 [LLVM IR](https://llvm.org/docs/LangRef.html).
 
-The overall goal of this optimization is to avoid generating duplicate LLVM-IR
+The overall goal of this optimization is to avoid generating duplicate LLVM IR
 code where it is easy to determine this from the front-end. Such an optimization
 needs to be done after specialization, but there is some flexibility in when to
 do it afterwards: before lowering, through analysis of SemIR or during/after
 lowering.
 
 The goal of this doc is to describe the algorithm implemented in
-[https://github.com/carbon-language/carbon-lang/pull/5314](https://github.com/carbon-language/carbon-lang/pull/5314),
-from putting it into context, to the overall goal, the challenges and where
-there is still room for improvement in subsequent iterations.
+[specifics_coalescer](/toolchain/lower/specific_coalescer.h), from putting it
+into context, to the overall goal, the challenges and where there is still room
+for improvement in subsequent iterations.
 
 Determining the impact on compile-time is beyond the scope of this document, but
 an important problem to follow up on.
 
-## Problem details
+## Design details
 
 In order to determine if two specific functions are equivalent, and a single one
 of them can be used instead of the other, the following need to be considered as
 part of the algorithm and its implementation.
 
-### SemIR representation and when to do coalescing
+### SemIR representation and why to coalesce during lowering
 
-In SemIR, a specific function is defined by an unique tuple: <`function_id`,
-`specific_id`>. There is a single in-memory representation of a generic
-function’s body (not one for each specific), where the instructions that are
-different between specifics can be determined, on-demand, based on a given
+In SemIR, a specific function is defined by an unique tuple:
+`(function_id, specific_id)`. There is a single in-memory representation of a
+generic function’s body (not one for each specific), where the instructions that
+are different between specifics can be determined, on-demand, based on a given
 `specific_id`. Hence, determining if two specifics are equivalent needs to
-analyze if these specific-dependent instructions are equivalent at the LLVM-IR
+analyze if these specific-dependent instructions are equivalent at the LLVM IR
 level. This can only be determined after the eval phase is complete and using
 information on how Carbon types map to `llvm::Type`s.
 
-The algorithm described below does coalescing of specifics during lowering. For
-alternatives considered, see [the section below](#alternatives-considered).
+The algorithm described below does coalescing of specifics during lowering. Also
+see [alternatives considered](#alternatives-considered).
 
-### Recursion and strongly connected components
+### Recursion and strongly connected components (SCCs)
 
-Comparing if two different specific functions contain (access, invoke, etc) the
-same specific-dependent instruction is not straight forward when recursion is
+Comparing if two different specific functions contain (access, invoke, etc.) the
+same specific-dependent instruction is not straightforward when recursion is
 involved. The simplest example is when A and B each are recursive functions, and
-are equivalent. The check “are A and B equivalent” needs to use that as the
-starting assumption, and when a call to A and B respectively are found in each,
-then the conclusion is that they are equivalent. In practice this requires
-comparison of `specific_id`s, which in SemIR are distinct.
+are equivalent. The check "are A and B equivalent" needs to start by assuming
+they are equivalent, and when a self-recursive call is found in each, that call
+is still equivalent. In practice this requires comparison of `specific_id`s,
+which in SemIR are distinct.
 
-In the general case, this analysis needs to analyze the call-graph for all
-functions and build strongly connected components (SCCs). Either the call graph
-is created before lowering, or it is built while lowering, and in a
-post-processing phase we can conclude equivalence and simplify the (read: delete
-unnecessary) emitted LLVM IR. The current implementation does the latter.
+In the general case, this analysis needs to analyze the call graph for all
+functions and build strongly connected components (SCCs). The call graph could
+either be created before lowering or built while lowering. The current
+implementation does the latter, and in a post-processing phase we can conclude
+equivalence and simplify the emitted LLVM IR by deleting unnecessary parts.
 
-A non-viable option is building the call graph based on the information “what
-are all call sites of myself, where I am a specific function”, because this
+A non-viable option is building the call graph based on the information "what
+are all call sites of myself, where I am a specific function", because this
 information is not available until processing the function bodies of all
 specific functions. This is an optimization done so that the definition of a
 specific isn’t emitted until a use of it is found. Building that information
 would duplicate all the lowering logic, minus the LLVM IR creation.
 
-### Complexity
+### Function fingerprints
 
 Even with limiting the comparison of specific functions to those defined from
 the same generic, a comparison algorithm would still end up with quadratic
 complexity in the number of specifics for that generic.
 
-We define two fingerprints for each specific: the first fingerprint
-`common_fingerprint` includes specific-dependent information that does not
-include `specific_id` information (this would only be discoverable as equivalent
-as part of an equivalence SCC), while the second fingerprint,
-`specific_fingerprint`, includes all specific-dependent information. As such,
-two specific functions are not equivalent if their `common_fingerprint` differs.
-Two specific functions are equivalent if their `specific_fingerprint`s are
-equal. If the `common_fingerprint`s are equal but the `specific_fingerprint`s
-are not, the two functions may still be equivalent.
+We define two fingerprints for each specific:
 
-Ideally, the `specific_fingerprint` can be used as a unique hash and used to
-first coalesce all specific functions with this same fingerprint, with no
-additional checks. Then, all remaining functions may use the
-`common_fingerprint` as another unique hash to group remaining potential
-candidates for coalescing. Then, only those with this same second hash are
-processed in a quadratic pass walking all calls instructions and comparing if
-the `specific_id` information is equivalent. This optimization is not currently
+1. `specific_fingerprint`: Includes all specific-dependent information.
+2. `common_fingerprint`: Includes the same except for `specific_id` information,
+   as `specific_id`s can only be determined to be equivalent after building an
+   equivalence SCC. As such, two specific functions are equivalent if their
+   `specific_fingerprint`s are equal and are not equivalent if their
+   `common_fingerprint`s differs. If the `common_fingerprint`s are equal but the
+   `specific_fingerprint`s are not, the two functions may still be equivalent.
+
+Ideally, the `specific_fingerprint` can be used as a unique hash to first
+coalesce all specific functions with this same fingerprint, with no additional
+checks. Then, all remaining functions may use the `common_fingerprint` as
+another unique hash to group remaining potential candidates for coalescing.
+Then, only those with this same `common_fingerprint` are processed in a
+quadratic pass walking all calls instructions and comparing if the `specific_id`
+information is equivalent. The optimization of clustering first by
+`specific_fingerprint` then by `common_fingerprint` is not currently
 implemented.
 
 Note that, if we were to extend the algorithm to do compile-time ICF (Identical
@@ -132,8 +133,9 @@ For determining the canonical specific to use, we use a
 Below is a pseudocode of the existing algorithm in
 `toolchain/lower/specific_coalescer.*`.
 
-The implementation has been merged in
-[https://github.com/carbon-language/carbon-lang/pull/5314](https://github.com/carbon-language/carbon-lang/pull/5314)
+The implementation can be found in
+[specifics_coalescer.h](/toolchain/lower/specific_coalescer.h) and
+[specifics_coalescer.cpp](/toolchain/lower/specific_coalescer.cpp).
 
 At the top level, the current algorithm first generates all function
 definitions, and once this is complete, it performs the logic to coalesce
@@ -152,29 +154,30 @@ calls to specifics are encountered, it also generates definitions for those
 specific functions.
 
 For each lowered specific function definition, we create the
-`SpecificFunctionFingerprint`, which includes the two fingerprints (hashes)
-defined [above](#complexity), and a list of calls to other specific functions.
+`SpecificFunctionFingerprint`, which includes the
+[two fingerprints](#function-fingerprints), and a list of calls to other
+specific functions.
 
 ```none
 CreateLLVMFunctionDefinition (function, specific_id) {
-   Step1: Build llvm::Function*: emit LLVM IR for each SemIR instruction.
-
-   Step2: If the instruction is specific-dependent, hash it and add to its `common_fingerprint`
-
-   Step3: When finding a call to a generic, with a defined type (that is a call to a specific),
-    a) create a definition for this specific_id if it doesn't exist:
-      CreateLLVMFunctionDefinition (function, specific_id);
-    b) hash the specific_id to the current function's `specific_fingerprint`
-    c) add the non-hashed specific_id to list of calls performed
+  For each SemIR instruction in the function:
+    Step 1: Emit LLVM IR for the instruction
+    Step 2: If the instruction is specific-dependent, hash it and add to its `common_fingerprint`
+    Step 3: If the SemIR instruction is a call to a specific,
+      a) Create a definition for this specific_id if it doesn't exist:
+        CreateLLVMFunctionDefinition (function, specific_id);
+      b) Hash the specific_id to the current function's `specific_fingerprint`
+      c) Add the non-hashed specific_id to list of calls performed
 }
 ```
 
-The logic that performs the actual coalescing, first checks if the LLVM function
-types match (using a third hash-like fingerprint: `function_type_fingerprint`
-for storage optimization), then if these are equivalent based on the
+The logic that performs the actual coalescing analyzes all specifics. For each
+pair of two specifics, it first checks if the LLVM function types match (using a
+third hash-like fingerprint: `function_type_fingerprint` for storage
+optimization), then if these are equivalent based on the
 `SpecificFunctionFingerprint`. For each pair of equivalent functions found (in a
-callgraph SCC), the uses of one of the functions will be replaced with the
-canonical one, while the other definition will ultimately be deleted.
+callgraph SCC), one function will be marked non-canonical: its uses are replaced
+with the canonical one and its definition will ultimately be deleted.
 
 ```none
 PerformCoalescingPostProcessing () {
@@ -204,24 +207,24 @@ make the determination for all functions in the SCC call graph (in practice the
 implementation uses a worklist to avoid the recursion).
 
 ```none
-CheckIfEquivalent(two specifics, mutable list of assumed equivalent specifics) -> bool {
-  if common_fingerprints are non-equal or already tracked as non-equivalent {
-    track as non-equivalent
+CheckIfEquivalent(two specifics, &assumed equivalent specifics) -> bool {
+  if common_fingerprints are non-equal {
+    track as non-equivalent specifics
     return false
   }
   if specific_fingerprints are equal {
-    track as equivalent
+    track as equivalent specifics
     return true
   }
-  if already tracked as equivalent or assumed equivalent {
+  if already tracked as equivalent or assumed equivalent specifics {
     return true
   }
 
   for each of the calls in each of the specifics {
-    if the functions called are the same or already equivalent or assumed equivalent {
+    if the functions called are the same or already equivalent or assumed equivalent specifics {
       continue
     }
-    if the functions called are already non-equivalent {
+    if the functions called are already non-equivalent specifics {
       return false
     }
     add <pair of calls> to assumed equivalent specifics
@@ -252,9 +255,9 @@ to make the equivalence determination.
 
 ### Compile-time trade-offs
 
-Not doing any coalescing is also expected to increase compile time more than
-performing the analysis and deduplication. This can be evaluated in practice and
-the feature disabled if found to be too costly.
+Not doing any coalescing is also expected to increase the back-end codegen time
+more than performing the analysis and deduplication. This can be evaluated in
+practice and the feature disabled if found to be too costly.
 
 ## Opportunities for further improvement
 
@@ -267,8 +270,8 @@ The current implemented algorithm can be improved with at least the following:
     in the number of specific calls inside the functions) to determine SCCs that
     may be equivalent.
 
-This should reduce the complexity from the current N^2, with N=number of
-specifics for a generic, to M^2, with M being the number of specifics for a
+This should reduce the complexity from the current O(N^2), with N=number of
+specifics for a generic, to O(M^2), with M being the number of specifics for a
 generic that have different `specific_fingerprint` and equal
 `common_fingerprint` (expectation is that M << N).
 
