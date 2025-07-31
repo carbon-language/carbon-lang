@@ -9,7 +9,7 @@
 
 namespace Carbon::Check {
 
-// Constructs `impl <class> as Destroy`, with appropriate implementation based
+// Constructs `impl <class> as Destroy { ... }`, with appropriate implementation based
 // on the `destroy` function and members.
 auto MakeClassDestroyImpl(Context& context, SemIR::ClassId class_id) -> void;
 
