@@ -447,10 +447,10 @@ fn Run() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %Bool.type: type = fn_type @Bool [concrete]
-// CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [concrete]
 // CHECK:STDOUT:   %Bool: %Bool.type = struct_value () [concrete]
 // CHECK:STDOUT:   %pattern_type.831: type = pattern_type bool [concrete]
 // CHECK:STDOUT:   %Body.type: type = fn_type @Body [concrete]
+// CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [concrete]
 // CHECK:STDOUT:   %Body: %Body.type = struct_value () [concrete]
 // CHECK:STDOUT:   %tuple.type.784: type = tuple_type (bool, bool) [concrete]
 // CHECK:STDOUT:   %pattern_type.860: type = pattern_type %tuple.type.784 [concrete]
