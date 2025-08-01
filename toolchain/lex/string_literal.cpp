@@ -506,7 +506,7 @@ auto StringLiteral::ComputeCharValue(Diagnostics::Emitter<const char*>& emitter)
   llvm::UTF32* target_cursor = target;
   llvm::ConversionResult conv_result = llvm::ConvertUTF8toUTF32(
       &source_cursor, reinterpret_cast<const llvm::UTF8*>(result.end()),
-      &target_cursor, &target[1], llvm::strictConversion);
+      &target_cursor, std::end(target), llvm::strictConversion);
 
   switch (conv_result) {
     case llvm::conversionOK: {
