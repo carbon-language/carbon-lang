@@ -109,10 +109,6 @@ struct Message {
 
   // Returns the formatted string. By default, this uses llvm::formatv.
   std::function<auto(const Message&)->std::string> format_fn;
-
-  // Storage for a custom snippet, if one is being used.
-  // TODO: Find a better way to store this.
-  std::shared_ptr<std::string> snippet_storage = nullptr;
 };
 
 // An instance of a single error or warning.  Information about the diagnostic
