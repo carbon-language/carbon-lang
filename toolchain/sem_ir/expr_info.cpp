@@ -104,6 +104,9 @@ auto GetExprCategory(const File& file, InstId inst_id) -> ExprCategory {
       case BoolType::Kind:
       case BoundMethod::Kind:
       case BoundMethodType::Kind:
+      case CharLiteralType::Kind:
+      case CharType::Kind:
+      case CharValue::Kind:
       case ClassDecl::Kind:
       case ClassType::Kind:
       case CompleteTypeWitness::Kind:

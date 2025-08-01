@@ -5,9 +5,11 @@
 #include "toolchain/check/diagnostic_emitter.h"
 
 #include <algorithm>
+#include <format>
 #include <optional>
 #include <string>
 
+#include "common/ostream.h"
 #include "common/raw_string_ostream.h"
 #include "toolchain/check/diagnostic_helpers.h"
 #include "toolchain/sem_ir/absolute_node_id.h"

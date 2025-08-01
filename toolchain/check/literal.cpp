@@ -9,9 +9,18 @@
 #include "toolchain/check/convert.h"
 #include "toolchain/check/name_lookup.h"
 #include "toolchain/check/type.h"
+#include "toolchain/lex/token_info.h"
 #include "toolchain/sem_ir/ids.h"
 
 namespace Carbon::Check {
+
+auto MakeCharLiteral(Context& context, Parse::NodeId node_id,
+                     Lex::CharLiteralValue value) -> SemIR::InstId {
+  return AddInst<SemIR::CharValue>(
+      context, node_id,
+      {.type_id = GetSingletonType(context, SemIR::CharLiteralType::TypeInstId),
+       .value = SemIR::CharId(value.value)});
+}
 
 auto MakeIntLiteral(Context& context, Parse::NodeId node_id, IntId int_id)
     -> SemIR::InstId {

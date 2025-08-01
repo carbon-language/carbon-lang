@@ -6,9 +6,15 @@
 #define CARBON_TOOLCHAIN_CHECK_LITERAL_H_
 
 #include "toolchain/check/context.h"
+#include "toolchain/lex/token_info.h"
 #include "toolchain/sem_ir/ids.h"
 
 namespace Carbon::Check {
+
+// Forms an CharValue instruction with type `CharLiteral` for a given literal
+// integer value, which is assumed to be unsigned.
+auto MakeCharLiteral(Context& context, Parse::NodeId node_id,
+                     Lex::CharLiteralValue value) -> SemIR::InstId;
 
 // Forms an IntValue instruction with type `IntLiteral` for a given literal
 // integer value, which is assumed to be unsigned.

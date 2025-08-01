@@ -35,6 +35,15 @@ auto HandleParseNode(Context& context, Parse::BoolLiteralTrueId node_id)
   return true;
 }
 
+auto HandleParseNode(Context& context, Parse::CharLiteralId node_id) -> bool {
+  auto int_literal_id =
+      MakeCharLiteral(context, node_id,
+                      context.tokens().GetCharLiteralValue(
+                          context.parse_tree().node_token(node_id)));
+  context.node_stack().Push(node_id, int_literal_id);
+  return true;
+}
+
 auto HandleParseNode(Context& context, Parse::IntLiteralId node_id) -> bool {
   auto int_literal_id = MakeIntLiteral(
       context, node_id,

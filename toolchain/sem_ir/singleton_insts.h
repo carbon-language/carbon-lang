@@ -17,6 +17,8 @@ static constexpr std::array SingletonInstKinds = {
     InstKind::AutoType,
     InstKind::BoolType,
     InstKind::BoundMethodType,
+    InstKind::CharLiteralType,
+    InstKind::CharType,
     InstKind::ErrorInst,
     InstKind::ImplWitnessTablePlaceholder,
     InstKind::InstType,

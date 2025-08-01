@@ -7,6 +7,7 @@
 
 #include "toolchain/base/int.h"
 #include "toolchain/parse/node_ids.h"
+#include "toolchain/parse/typed_nodes.h"
 #include "toolchain/sem_ir/ids.h"
 #include "toolchain/sem_ir/inst_kind.h"
 #include "toolchain/sem_ir/singleton_insts.h"
@@ -426,6 +427,49 @@ struct Call {
   // Runtime arguments in lexical order of the parameter declarations, followed
   // by the argument for the return slot, if present.
   InstBlockId args_id;
+};
+
+// A unicode code point character literal. This type only provides compile-time
+// operations, and is represented as an empty type at runtime.
+struct CharLiteralType {
+  static constexpr auto Kind =
+      InstKind::CharLiteralType.Define<Parse::NoneNodeId>(
+          {.ir_name = "Core.CharLiteral",
+           .is_type = InstIsType::Always,
+           .constant_kind = InstConstantKind::Always});
+  // This is a singleton instruction. However, it may still evolve into a more
+  // standard type and be removed.
+  static constexpr auto TypeInstId = MakeSingletonTypeInstId<Kind>();
+  static constexpr auto TypeId =
+      TypeId::ForTypeConstant(ConstantId::ForConcreteConstant(TypeInstId));
+
+  SemIR::TypeId type_id;
+};
+
+// `Core.Char`, an 8-bit character.
+struct CharType {
+  static constexpr auto Kind = InstKind::CharType.Define<Parse::NoneNodeId>(
+      {.ir_name = "Core.Char",
+       .is_type = InstIsType::Always,
+       .constant_kind = InstConstantKind::Always,
+       .deduce_through = true});
+  static constexpr auto TypeInstId = MakeSingletonTypeInstId<Kind>();
+  static constexpr auto TypeId =
+      TypeId::ForTypeConstant(ConstantId::ForConcreteConstant(TypeInstId));
+
+  SemIR::TypeId type_id;
+};
+
+// A unicode code point character value, whose type is either `CharLiteralType`
+// or `CharType`.
+struct CharValue {
+  // TODO: Make Parse::NodeId more specific.
+  static constexpr auto Kind = InstKind::CharValue.Define<Parse::NodeId>(
+      {.ir_name = "char_value", .constant_kind = InstConstantKind::Always});
+
+  TypeId type_id;
+
+  CharId value;
 };
 
 // A class declaration.

@@ -446,6 +446,15 @@ struct BoolValue : public IdBase<BoolValue> {
 constexpr BoolValue BoolValue::False = BoolValue(0);
 constexpr BoolValue BoolValue::True = BoolValue(1);
 
+// A character literal value as a unicode codepoint.
+struct CharId : public IdBase<CharId> {
+  // Not used by `Print`, but for `IdKind`.
+  static constexpr llvm::StringLiteral Label = "";
+
+  using IdBase::IdBase;
+  auto Print(llvm::raw_ostream& out) const -> void;
+};
+
 // An integer kind value -- either "signed" or "unsigned".
 //
 // This might eventually capture any other properties of an integer type that

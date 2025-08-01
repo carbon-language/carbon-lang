@@ -209,23 +209,23 @@ fn Read() {
 // CHECK:STDOUT:   %Core.import_ref.1c9: %Iterate.assoc_type = import_ref Core//prelude/iterate, loc12_18, loaded [concrete = constants.%assoc0.724]
 // CHECK:STDOUT:   %Core.import_ref.ed6: %Iterate.assoc_type = import_ref Core//prelude/iterate, loc13_17, loaded [concrete = constants.%assoc1.02e]
 // CHECK:STDOUT:   %Core.import_ref.9e6: type = import_ref Core//prelude/iterate, loc13_17, loaded [concrete = %CursorType]
-// CHECK:STDOUT:   %Core.import_ref.f49c: @Optional.%Optional.None.type (%Optional.None.type.ef2) = import_ref Core//prelude/iterate, inst131 [indirect], loaded [symbolic = @Optional.%Optional.None (constants.%Optional.None.fd6)]
-// CHECK:STDOUT:   %Core.import_ref.1a8: @Optional.%Optional.Some.type (%Optional.Some.type.b2c) = import_ref Core//prelude/iterate, inst132 [indirect], loaded [symbolic = @Optional.%Optional.Some (constants.%Optional.Some.d0d)]
-// CHECK:STDOUT:   %Core.import_ref.cf4: @Core.IntLiteral.as.ImplicitAs.impl.%Core.IntLiteral.as.ImplicitAs.impl.Convert.type (%Core.IntLiteral.as.ImplicitAs.impl.Convert.type.0f9) = import_ref Core//prelude/iterate, inst439 [indirect], loaded [symbolic = @Core.IntLiteral.as.ImplicitAs.impl.%Core.IntLiteral.as.ImplicitAs.impl.Convert (constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.f06)]
+// CHECK:STDOUT:   %Core.import_ref.f49c: @Optional.%Optional.None.type (%Optional.None.type.ef2) = import_ref Core//prelude/iterate, inst135 [indirect], loaded [symbolic = @Optional.%Optional.None (constants.%Optional.None.fd6)]
+// CHECK:STDOUT:   %Core.import_ref.1a8: @Optional.%Optional.Some.type (%Optional.Some.type.b2c) = import_ref Core//prelude/iterate, inst136 [indirect], loaded [symbolic = @Optional.%Optional.Some (constants.%Optional.Some.d0d)]
+// CHECK:STDOUT:   %Core.import_ref.cf4: @Core.IntLiteral.as.ImplicitAs.impl.%Core.IntLiteral.as.ImplicitAs.impl.Convert.type (%Core.IntLiteral.as.ImplicitAs.impl.Convert.type.0f9) = import_ref Core//prelude/iterate, inst443 [indirect], loaded [symbolic = @Core.IntLiteral.as.ImplicitAs.impl.%Core.IntLiteral.as.ImplicitAs.impl.Convert (constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.f06)]
 // CHECK:STDOUT:   %ImplicitAs.impl_witness_table.2b9 = impl_witness_table (%Core.import_ref.cf4), @Core.IntLiteral.as.ImplicitAs.impl [concrete]
-// CHECK:STDOUT:   %Core.import_ref.19a: @OrderedWith.%OrderedWith.assoc_type (%OrderedWith.assoc_type.03c) = import_ref Core//prelude/iterate, inst819 [indirect], loaded [symbolic = @OrderedWith.%assoc0 (constants.%assoc0.5db)]
-// CHECK:STDOUT:   %Core.import_ref.b2b: @Int.as.OrderedWith.impl.db3.%Int.as.OrderedWith.impl.Less.type (%Int.as.OrderedWith.impl.Less.type.2c7) = import_ref Core//prelude/iterate, inst908 [indirect], loaded [symbolic = @Int.as.OrderedWith.impl.db3.%Int.as.OrderedWith.impl.Less (constants.%Int.as.OrderedWith.impl.Less.a5a)]
-// CHECK:STDOUT:   %Core.import_ref.ab6 = import_ref Core//prelude/iterate, inst909 [indirect], unloaded
-// CHECK:STDOUT:   %Core.import_ref.875 = import_ref Core//prelude/iterate, inst910 [indirect], unloaded
-// CHECK:STDOUT:   %Core.import_ref.82b = import_ref Core//prelude/iterate, inst911 [indirect], unloaded
+// CHECK:STDOUT:   %Core.import_ref.19a: @OrderedWith.%OrderedWith.assoc_type (%OrderedWith.assoc_type.03c) = import_ref Core//prelude/iterate, inst823 [indirect], loaded [symbolic = @OrderedWith.%assoc0 (constants.%assoc0.5db)]
+// CHECK:STDOUT:   %Core.import_ref.b2b: @Int.as.OrderedWith.impl.db3.%Int.as.OrderedWith.impl.Less.type (%Int.as.OrderedWith.impl.Less.type.2c7) = import_ref Core//prelude/iterate, inst912 [indirect], loaded [symbolic = @Int.as.OrderedWith.impl.db3.%Int.as.OrderedWith.impl.Less (constants.%Int.as.OrderedWith.impl.Less.a5a)]
+// CHECK:STDOUT:   %Core.import_ref.ab6 = import_ref Core//prelude/iterate, inst913 [indirect], unloaded
+// CHECK:STDOUT:   %Core.import_ref.875 = import_ref Core//prelude/iterate, inst914 [indirect], unloaded
+// CHECK:STDOUT:   %Core.import_ref.82b = import_ref Core//prelude/iterate, inst915 [indirect], unloaded
 // CHECK:STDOUT:   %OrderedWith.impl_witness_table.476 = impl_witness_table (%Core.import_ref.b2b, %Core.import_ref.ab6, %Core.import_ref.875, %Core.import_ref.82b), @Int.as.OrderedWith.impl.db3 [concrete]
-// CHECK:STDOUT:   %Core.import_ref.13d: @OrderedWith.%OrderedWith.Less.type (%OrderedWith.Less.type.f19) = import_ref Core//prelude/iterate, inst1883 [indirect], loaded [symbolic = @OrderedWith.%OrderedWith.Less (constants.%OrderedWith.Less.02e)]
+// CHECK:STDOUT:   %Core.import_ref.13d: @OrderedWith.%OrderedWith.Less.type (%OrderedWith.Less.type.f19) = import_ref Core//prelude/iterate, inst1887 [indirect], loaded [symbolic = @OrderedWith.%OrderedWith.Less (constants.%OrderedWith.Less.02e)]
 // CHECK:STDOUT:   %CursorType: type = assoc_const_decl @CursorType [concrete] {}
 // CHECK:STDOUT:   %Core.import_ref.4f9: type = import_ref Core//prelude/iterate, loc12_18, loaded [concrete = %ElementType]
 // CHECK:STDOUT:   %ElementType: type = assoc_const_decl @ElementType [concrete] {}
 // CHECK:STDOUT:   %Core.Optional: %Optional.type = import_ref Core//prelude/types/optional, Optional, loaded [concrete = constants.%Optional.generic]
 // CHECK:STDOUT:   %Core.OrderedWith: %OrderedWith.type.270 = import_ref Core//prelude/operators/comparison, OrderedWith, loaded [concrete = constants.%OrderedWith.generic]
-// CHECK:STDOUT:   %Core.import_ref.d49 = import_ref Core//prelude/iterate, inst6604 [indirect], unloaded
+// CHECK:STDOUT:   %Core.import_ref.d49 = import_ref Core//prelude/iterate, inst6608 [indirect], unloaded
 // CHECK:STDOUT:   %Core.Inc: type = import_ref Core//prelude/operators/arithmetic, Inc, loaded [concrete = constants.%Inc.type]
 // CHECK:STDOUT:   %Core.Destroy: type = import_ref Core//prelude/destroy, Destroy, loaded [concrete = constants.%Destroy.type]
 // CHECK:STDOUT:   %Core.ImplicitAs: %ImplicitAs.type.cc7 = import_ref Core//prelude/operators/as, ImplicitAs, loaded [concrete = constants.%ImplicitAs.generic]
@@ -706,6 +706,10 @@ fn Read() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @CursorType(constants.%Iterate.facet.7f1) {}
 // CHECK:STDOUT:
+// CHECK:STDOUT: specific @ElementType(constants.%Self.a96) {}
+// CHECK:STDOUT:
+// CHECK:STDOUT: specific @ElementType(constants.%Iterate.facet.7f1) {}
+// CHECK:STDOUT:
 // CHECK:STDOUT: specific @IntRange.as.Iterate.impl(constants.%N.c80) {
 // CHECK:STDOUT:   %N => constants.%N.c80
 // CHECK:STDOUT:   %IntRange => constants.%IntRange.349
@@ -896,7 +900,7 @@ fn Read() {
 // CHECK:STDOUT:   %Core.IntLiteral: %IntLiteral.type = import_ref Core//prelude/types/int_literal, IntLiteral, loaded [concrete = constants.%IntLiteral]
 // CHECK:STDOUT:   %Main.import_ref.f1e294.1: Core.IntLiteral = import_ref Main//lib, loc4_16, loaded [symbolic = @IntRange.%N (constants.%N.c80)]
 // CHECK:STDOUT:   %Main.import_ref.30f: <witness> = import_ref Main//lib, loc24_1, loaded [symbolic = @IntRange.%complete_type (constants.%complete_type.c76)]
-// CHECK:STDOUT:   %Main.import_ref.d13 = import_ref Main//lib, inst39 [no loc], unloaded
+// CHECK:STDOUT:   %Main.import_ref.d13 = import_ref Main//lib, inst41 [no loc], unloaded
 // CHECK:STDOUT:   %Main.import_ref.d98 = import_ref Main//lib, loc5_57, unloaded
 // CHECK:STDOUT:   %Main.import_ref.e58 = import_ref Main//lib, loc22_20, unloaded
 // CHECK:STDOUT:   %Main.import_ref.261 = import_ref Main//lib, loc23_18, unloaded
@@ -921,7 +925,7 @@ fn Read() {
 // CHECK:STDOUT:   %Iterate.impl_witness_table.b32 = impl_witness_table (%Main.import_ref.e3faa9.1, %Main.import_ref.e3faa9.2, %Main.import_ref.11c, %Main.import_ref.f97), @IntRange.as.Iterate.impl [concrete]
 // CHECK:STDOUT:   %Main.import_ref.f1e294.4: Core.IntLiteral = import_ref Main//lib, loc4_16, loaded [symbolic = @IntRange.%N (constants.%N.c80)]
 // CHECK:STDOUT:   %Main.import_ref.f1e294.5: Core.IntLiteral = import_ref Main//lib, loc4_16, loaded [symbolic = @IntRange.%N (constants.%N.c80)]
-// CHECK:STDOUT:   %Main.import_ref.026 = import_ref Main//lib, inst1842 [indirect], unloaded
+// CHECK:STDOUT:   %Main.import_ref.026 = import_ref Main//lib, inst1844 [indirect], unloaded
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {

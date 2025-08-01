@@ -9,6 +9,7 @@
 #include <optional>
 #include <utility>
 
+#include "llvm/Support/ConvertUTF.h"
 #include "toolchain/base/canonical_value_store.h"
 #include "toolchain/base/kind_switch.h"
 #include "toolchain/check/action.h"
@@ -951,6 +952,51 @@ static auto PerformArrayIndex(EvalContext& eval_context, SemIR::ArrayIndex inst)
   return eval_context.GetConstantValue(elements[index_val.getZExtValue()]);
 }
 
+// Performs a conversion between character types, diagnosing if the value
+// doesn't fit in the destination type.
+static auto PerformCheckedCharConvert(Context& context, SemIR::LocId loc_id,
+                                      SemIR::InstId arg_id,
+                                      SemIR::TypeId dest_type_id)
+    -> SemIR::ConstantId {
+  auto arg = context.insts().GetAs<SemIR::CharValue>(arg_id);
+
+  auto object_repr_id = context.types().GetObjectRepr(dest_type_id);
+  if (object_repr_id != arg.type_id) {
+    if (object_repr_id == SemIR::CharType::TypeId) {
+      llvm::UTF32 utf32[1] = {static_cast<llvm::UTF32>(arg.value.index)};
+      const llvm::UTF32* source_start = utf32;
+      llvm::UTF8 utf8[1];
+      llvm::UTF8* target_start = utf8;
+      auto conv_result = llvm::ConvertUTF32toUTF8(
+          &source_start, std::end(utf32), &target_start, std::end(utf8),
+          llvm::strictConversion);
+      switch (conv_result) {
+        case llvm::conversionOK: {
+          break;
+        }
+        case llvm::targetExhausted: {
+          CARBON_DIAGNOSTIC(CharTooLargeForType, Error,
+                            "character value {0} too large for type {1}",
+                            SemIR::CharId, SemIR::TypeId);
+          context.emitter().Emit(loc_id, CharTooLargeForType, arg.value,
+                                 dest_type_id);
+          return SemIR::ErrorInst::ConstantId;
+        }
+        case llvm::sourceExhausted:
+        case llvm::sourceIllegal: {
+          CARBON_FATAL("Unexpected convert failure");
+        }
+      }
+    } else {
+      CARBON_CHECK(object_repr_id == SemIR::CharLiteralType::TypeId);
+    }
+  }
+
+  return MakeConstantResult(
+      context, SemIR::CharValue{.type_id = dest_type_id, .value = arg.value},
+      Phase::Concrete);
+}
+
 // Forms a constant int type as an evaluation result. Requires that width_id is
 // constant.
 static auto MakeIntTypeResult(Context& context, SemIR::LocId loc_id,
@@ -1590,6 +1636,14 @@ static auto MakeConstantForBuiltinCall(EvalContext& eval_context,
       return MakeFacetTypeResult(eval_context.context(), combined_info, phase);
     }
 
+    case SemIR::BuiltinFunctionKind::CharLiteralMakeType: {
+      return context.constant_values().Get(SemIR::CharLiteralType::TypeInstId);
+    }
+
+    case SemIR::BuiltinFunctionKind::CharMakeType: {
+      return context.constant_values().Get(SemIR::CharType::TypeInstId);
+    }
+
     case SemIR::BuiltinFunctionKind::IntLiteralMakeType: {
       return context.constant_values().Get(SemIR::IntLiteralType::TypeInstId);
     }
@@ -1617,6 +1671,15 @@ static auto MakeConstantForBuiltinCall(EvalContext& eval_context,
 
     case SemIR::BuiltinFunctionKind::BoolMakeType: {
       return context.constant_values().Get(SemIR::BoolType::TypeInstId);
+    }
+
+    // Character conversions.
+    case SemIR::BuiltinFunctionKind::CharConvertChecked: {
+      if (phase != Phase::Concrete) {
+        return MakeConstantResult(context, call, phase);
+      }
+      return PerformCheckedCharConvert(context, loc_id, arg_ids[0],
+                                       call.type_id);
     }
 
     // Integer conversions.

@@ -79,6 +79,8 @@ auto TypeIterator::Next() -> Step {
 
       case SemIR::AssociatedEntityType::Kind:
       case SemIR::BoolType::Kind:
+      case SemIR::CharLiteralType::Kind:
+      case SemIR::CharType::Kind:
       case SemIR::FacetType::Kind:
       case SemIR::FloatType::Kind:
       case SemIR::FunctionType::Kind:

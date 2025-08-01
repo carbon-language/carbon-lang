@@ -87,7 +87,7 @@ class TypeCompleter {
 
   template <typename InstT>
     requires(InstT::Kind.template IsAnyOf<
-             SemIR::AutoType, SemIR::BoolType, SemIR::BoundMethodType,
+             SemIR::AutoType, SemIR::BoolType, SemIR::BoundMethodType, SemIR::CharType, SemIR::CharLiteralType,
              SemIR::ErrorInst, SemIR::FacetType, SemIR::FloatType,
              SemIR::IntType, SemIR::IntLiteralType, SemIR::LegacyFloatType,
              SemIR::NamespaceType, SemIR::PatternType, SemIR::PointerType,

@@ -212,6 +212,19 @@ static auto EmitAsConstant(ConstantContext& context, SemIR::BoundMethod inst)
   return context.GetConstant(inst.function_decl_id);
 }
 
+static auto EmitAsConstant(ConstantContext& context, SemIR::CharValue inst)
+    -> llvm::Constant* {
+  auto object_repr_id = context.sem_ir().types().GetObjectRepr(inst.type_id);
+  if (object_repr_id == SemIR::CharType::TypeId) {
+    return llvm::ConstantInt::get(llvm::Type::getInt8Ty(context.llvm_context()),
+                                  inst.value.index);
+  } else {
+    CARBON_CHECK(object_repr_id == SemIR::CharLiteralType::TypeId);
+    return llvm::ConstantInt::get(
+        llvm::Type::getInt32Ty(context.llvm_context()), inst.value.index);
+  }
+}
+
 static auto EmitAsConstant(ConstantContext& context,
                            SemIR::CompleteTypeWitness inst) -> llvm::Constant* {
   return context.GetUnusedConstant(inst.type_id);
@@ -291,6 +304,7 @@ static auto MaybeEmitAsConstant(ConstantContext& context, InstT inst)
   }
 }
 
+// NOLINTNEXTLINE(readability-function-size): Macro-generated.
 auto LowerConstants(FileContext& file_context,
                     FileContext::LoweredConstantStore& constants) -> void {
   ConstantContext context(file_context, &constants);

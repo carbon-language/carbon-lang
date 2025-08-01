@@ -95,6 +95,16 @@ struct NoReturn {
 // Constraint that a type is `bool`.
 using Bool = BuiltinType<BoolType::TypeInstId>;
 
+// Constraint that requires the type to be a character type.
+struct AnyChar {
+  static auto Check(const File& sem_ir, ValidateState& state, TypeId type_id)
+      -> bool {
+    return BuiltinType<CharLiteralType::TypeInstId>::Check(sem_ir, state,
+                                                           type_id) ||
+           BuiltinType<CharType::TypeInstId>::Check(sem_ir, state, type_id);
+  }
+};
+
 // Constraint that requires the type to be a sized integer type.
 struct AnySizedInt {
   static auto Check(const File& sem_ir, ValidateState& /*state*/,
@@ -248,6 +258,14 @@ constexpr BuiltinInfo PrintInt = {
 constexpr BuiltinInfo ReadChar = {"read.char",
                                   ValidateSignature<auto()->AnySizedInt>};
 
+// Returns the `Core.CharLiteral` type.
+constexpr BuiltinInfo CharLiteralMakeType = {"char_literal.make_type",
+                                             ValidateSignature<auto()->Type>};
+
+// Returns the `Core.Char` type.
+constexpr BuiltinInfo CharMakeType = {"char.make_type",
+                                      ValidateSignature<auto()->Type>};
+
 // Returns the `Core.IntLiteral` type.
 constexpr BuiltinInfo IntLiteralMakeType = {"int_literal.make_type",
                                             ValidateSignature<auto()->Type>};
@@ -268,6 +286,10 @@ constexpr BuiltinInfo FloatMakeType = {"float.make_type",
 // Returns the `bool` type.
 constexpr BuiltinInfo BoolMakeType = {"bool.make_type",
                                       ValidateSignature<auto()->Type>};
+
+// Converts between char types, with a diagnostic if the value doesn't fit.
+constexpr BuiltinInfo CharConvertChecked = {
+    "char.convert_checked", ValidateSignature<auto(AnyChar)->AnyChar>};
 
 // Converts between integer types, truncating if necessary.
 constexpr BuiltinInfo IntConvert = {"int.convert",
@@ -578,8 +600,9 @@ auto BuiltinFunctionKind::IsCompTimeOnly(const File& sem_ir,
                                          llvm::ArrayRef<InstId> arg_ids,
                                          TypeId return_type_id) const -> bool {
   switch (*this) {
+    case CharConvertChecked:
     case IntConvertChecked:
-      // Checked integer conversions are compile-time only.
+      // Checked conversions are compile-time only.
       return true;
 
     case IntConvert:
