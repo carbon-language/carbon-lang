@@ -337,6 +337,22 @@ impl CD as IF where .F = 0 {
   fn F() {}
 }
 
+// --- fail_todo_period_self_impl_lookup.carbon
+library "[[@TEST_NAME]]";
+
+interface Y {}
+interface Z {
+    let Z1:! Y;
+}
+
+class C;
+impl C as Y {}
+// CHECK:STDERR: fail_todo_period_self_impl_lookup.carbon:[[@LINE+4]]:25: error: cannot convert type `.Self` that implements `Z` into type implementing `Y` [ConversionFailureFacetToFacet]
+// CHECK:STDERR: impl C as Z where .Z1 = .Self {}
+// CHECK:STDERR:                         ^~~~~
+// CHECK:STDERR:
+impl C as Z where .Z1 = .Self {}
+
 // CHECK:STDOUT: --- fail_many_different.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
