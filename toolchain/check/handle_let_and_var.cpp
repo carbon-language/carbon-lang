@@ -100,8 +100,8 @@ auto HandleParseNode(Context& context, Parse::LetIntroducerId node_id) -> bool {
 }
 
 auto HandleParseNode(Context& context, Parse::AssociatedConstantIntroducerId node_id) -> bool {
-  StartAssociatedConstant(Context &context);
-  return HandleIntroducer<int Kind>(context, node_id);
+  StartAssociatedConstant(context);
+  return HandleIntroducer<Lex::TokenKind::Let>(context, node_id);
 }
 
 auto HandleParseNode(Context& context, Parse::VariableIntroducerId node_id)
@@ -272,7 +272,7 @@ static auto HandleDecl(Context& context) -> DeclInfo {
 // corresponding `AssociatedConstant` entity are built as part of handling the
 // binding pattern, but we still need to finish building the `Generic` object
 // and attach the default value, if any is specified.
-static auto FinishAssociatedConstant(Context& context, Parse::LetDeclId node_id,
+static auto FinishAssociatedConstant(Context& context, Parse::AssociatedConstantDeclId node_id,
                                      SemIR::InterfaceId interface_id,
                                      DeclInfo& decl_info) -> void {
   if (decl_info.pattern_id == SemIR::ErrorInst::InstId) {
