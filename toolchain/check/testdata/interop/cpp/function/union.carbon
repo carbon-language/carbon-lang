@@ -28,11 +28,13 @@ import Cpp library "decl_value_param_type.h";
 
 fn F() {
   //@dump-sem-ir-begin
-  // CHECK:STDERR: fail_todo_import_decl_value_param_type.carbon:[[@LINE+7]]:11: error: forming value of incomplete type `Cpp.U` [IncompleteTypeInValueConversion]
+  // CHECK:STDERR: fail_todo_import_decl_value_param_type.carbon:[[@LINE+9]]:11: error: forming value of incomplete type `Cpp.U` [IncompleteTypeInValueConversion]
   // CHECK:STDERR:   Cpp.foo({});
   // CHECK:STDERR:           ^~
-  // CHECK:STDERR: fail_todo_import_decl_value_param_type.carbon:[[@LINE-7]]:1: in import [InImport]
-  // CHECK:STDERR: ./decl_value_param_type.h:2: note: class was forward declared here [ClassForwardDeclaredHere]
+  // CHECK:STDERR: fail_todo_import_decl_value_param_type.carbon:[[@LINE-7]]:10: in file included here [InCppInclude]
+  // CHECK:STDERR: ./decl_value_param_type.h:2:7: note: class was forward declared here [ClassForwardDeclaredHere]
+  // CHECK:STDERR: union U;
+  // CHECK:STDERR:       ^
   // CHECK:STDERR: fail_todo_import_decl_value_param_type.carbon: note: initializing function parameter [InCallToFunctionParam]
   // CHECK:STDERR:
   Cpp.foo({});
@@ -46,11 +48,13 @@ library "[[@TEST_NAME]]";
 import Cpp library "decl_value_param_type.h";
 
 fn F() {
-  // CHECK:STDERR: fail_todo_import_decl_value_param_type_previously_imported.carbon:[[@LINE+10]]:10: error: binding pattern has incomplete type `U` in name binding declaration [IncompleteTypeInBindingDecl]
+  // CHECK:STDERR: fail_todo_import_decl_value_param_type_previously_imported.carbon:[[@LINE+12]]:10: error: binding pattern has incomplete type `U` in name binding declaration [IncompleteTypeInBindingDecl]
   // CHECK:STDERR:   let u: Cpp.U;
   // CHECK:STDERR:          ^~~~~
-  // CHECK:STDERR: fail_todo_import_decl_value_param_type_previously_imported.carbon:[[@LINE-6]]:1: in import [InImport]
-  // CHECK:STDERR: ./decl_value_param_type.h:2: note: class was forward declared here [ClassForwardDeclaredHere]
+  // CHECK:STDERR: fail_todo_import_decl_value_param_type_previously_imported.carbon:[[@LINE-6]]:10: in file included here [InCppInclude]
+  // CHECK:STDERR: ./decl_value_param_type.h:2:7: note: class was forward declared here [ClassForwardDeclaredHere]
+  // CHECK:STDERR: union U;
+  // CHECK:STDERR:       ^
   // CHECK:STDERR:
   // CHECK:STDERR: fail_todo_import_decl_value_param_type_previously_imported.carbon:[[@LINE+4]]:15: error: expected `=`; `let` declaration must have an initializer [ExpectedInitializerAfterLet]
   // CHECK:STDERR:   let u: Cpp.U;
@@ -78,19 +82,23 @@ library "[[@TEST_NAME]]";
 import Cpp library "double_decl_value_param_type.h";
 
 fn F() {
-  // CHECK:STDERR: fail_todo_import_double_decl_value_param_type.carbon:[[@LINE+7]]:12: error: forming value of incomplete type `Cpp.U` [IncompleteTypeInValueConversion]
+  // CHECK:STDERR: fail_todo_import_double_decl_value_param_type.carbon:[[@LINE+9]]:12: error: forming value of incomplete type `Cpp.U` [IncompleteTypeInValueConversion]
   // CHECK:STDERR:   Cpp.foo1({});
   // CHECK:STDERR:            ^~
-  // CHECK:STDERR: fail_todo_import_double_decl_value_param_type.carbon:[[@LINE-6]]:1: in import [InImport]
-  // CHECK:STDERR: ./double_decl_value_param_type.h:2: note: class was forward declared here [ClassForwardDeclaredHere]
+  // CHECK:STDERR: fail_todo_import_double_decl_value_param_type.carbon:[[@LINE-6]]:10: in file included here [InCppInclude]
+  // CHECK:STDERR: ./double_decl_value_param_type.h:2:7: note: class was forward declared here [ClassForwardDeclaredHere]
+  // CHECK:STDERR: union U;
+  // CHECK:STDERR:       ^
   // CHECK:STDERR: fail_todo_import_double_decl_value_param_type.carbon: note: initializing function parameter [InCallToFunctionParam]
   // CHECK:STDERR:
   Cpp.foo1({});
-  // CHECK:STDERR: fail_todo_import_double_decl_value_param_type.carbon:[[@LINE+7]]:12: error: forming value of incomplete type `Cpp.U` [IncompleteTypeInValueConversion]
+  // CHECK:STDERR: fail_todo_import_double_decl_value_param_type.carbon:[[@LINE+9]]:12: error: forming value of incomplete type `Cpp.U` [IncompleteTypeInValueConversion]
   // CHECK:STDERR:   Cpp.foo2({});
   // CHECK:STDERR:            ^~
-  // CHECK:STDERR: fail_todo_import_double_decl_value_param_type.carbon:[[@LINE-14]]:1: in import [InImport]
-  // CHECK:STDERR: ./double_decl_value_param_type.h:2: note: class was forward declared here [ClassForwardDeclaredHere]
+  // CHECK:STDERR: fail_todo_import_double_decl_value_param_type.carbon:[[@LINE-16]]:10: in file included here [InCppInclude]
+  // CHECK:STDERR: ./double_decl_value_param_type.h:2:7: note: class was forward declared here [ClassForwardDeclaredHere]
+  // CHECK:STDERR: union U;
+  // CHECK:STDERR:       ^
   // CHECK:STDERR: fail_todo_import_double_decl_value_param_type.carbon: note: initializing function parameter [InCallToFunctionParam]
   // CHECK:STDERR:
   Cpp.foo2({});
@@ -354,11 +362,13 @@ library "[[@TEST_NAME]]";
 import Cpp library "decl_value_return_type.h";
 
 fn F() {
-  // CHECK:STDERR: fail_todo_import_decl_value_return_type.carbon:[[@LINE+7]]:3: error: function returns incomplete type `Cpp.U` [IncompleteTypeInFunctionReturnType]
+  // CHECK:STDERR: fail_todo_import_decl_value_return_type.carbon:[[@LINE+9]]:3: error: function returns incomplete type `Cpp.U` [IncompleteTypeInFunctionReturnType]
   // CHECK:STDERR:   Cpp.foo();
   // CHECK:STDERR:   ^~~~~~~~~
-  // CHECK:STDERR: fail_todo_import_decl_value_return_type.carbon:[[@LINE-6]]:1: in import [InImport]
-  // CHECK:STDERR: ./decl_value_return_type.h:2: note: class was forward declared here [ClassForwardDeclaredHere]
+  // CHECK:STDERR: fail_todo_import_decl_value_return_type.carbon:[[@LINE-6]]:10: in file included here [InCppInclude]
+  // CHECK:STDERR: ./decl_value_return_type.h:2:7: note: class was forward declared here [ClassForwardDeclaredHere]
+  // CHECK:STDERR: union U;
+  // CHECK:STDERR:       ^
   // CHECK:STDERR: fail_todo_import_decl_value_return_type.carbon: note: return type declared here [IncompleteReturnTypeHere]
   // CHECK:STDERR:
   Cpp.foo();
@@ -455,7 +465,7 @@ fn F() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %Cpp.ref: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
 // CHECK:STDOUT:   %foo.ref: %foo.type = name_ref foo, imports.%foo.decl [concrete = constants.%foo]
-// CHECK:STDOUT:   %.loc15: %empty_struct_type = struct_literal ()
+// CHECK:STDOUT:   %.loc17: %empty_struct_type = struct_literal ()
 // CHECK:STDOUT:   %foo.call: init %empty_tuple.type = call %foo.ref(<error>)
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }

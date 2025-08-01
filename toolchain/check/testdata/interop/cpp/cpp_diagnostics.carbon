@@ -22,12 +22,10 @@
 
 library "[[@TEST_NAME]]";
 
-// CHECK:STDERR: fail_import_cpp_file_with_one_error.carbon:[[@LINE+7]]:1: in import [InImport]
-// CHECK:STDERR: ./one_error.h:2: error: In file included from fail_import_cpp_file_with_one_error.carbon:[[@LINE+6]]:
-// CHECK:STDERR: ./one_error.h:2:2: error: "error1"
+// CHECK:STDERR: fail_import_cpp_file_with_one_error.carbon:[[@LINE+5]]:10: in file included here [InCppInclude]
+// CHECK:STDERR: ./one_error.h:2:2: error: "error1" [CppInteropParseError]
 // CHECK:STDERR:     2 | #error "error1"
 // CHECK:STDERR:       |  ^
-// CHECK:STDERR:  [CppInteropParseError]
 // CHECK:STDERR:
 import Cpp library "one_error.h";
 
@@ -44,19 +42,15 @@ import Cpp library "one_error.h";
 
 library "[[@TEST_NAME]]";
 
-// CHECK:STDERR: fail_import_cpp_file_with_multiple_errors.carbon:[[@LINE+14]]:1: in import [InImport]
-// CHECK:STDERR: ./multiple_errors.h:2: error: In file included from fail_import_cpp_file_with_multiple_errors.carbon:[[@LINE+13]]:
-// CHECK:STDERR: ./multiple_errors.h:2:2: error: "error1"
+// CHECK:STDERR: fail_import_cpp_file_with_multiple_errors.carbon:[[@LINE+10]]:10: in file included here [InCppInclude]
+// CHECK:STDERR: ./multiple_errors.h:2:2: error: "error1" [CppInteropParseError]
 // CHECK:STDERR:     2 | #error "error1"
 // CHECK:STDERR:       |  ^
-// CHECK:STDERR:  [CppInteropParseError]
 // CHECK:STDERR:
-// CHECK:STDERR: fail_import_cpp_file_with_multiple_errors.carbon:[[@LINE+7]]:1: in import [InImport]
-// CHECK:STDERR: ./multiple_errors.h:3: error: In file included from fail_import_cpp_file_with_multiple_errors.carbon:[[@LINE+6]]:
-// CHECK:STDERR: ./multiple_errors.h:3:2: error: "error2"
+// CHECK:STDERR: fail_import_cpp_file_with_multiple_errors.carbon:[[@LINE+5]]:10: in file included here [InCppInclude]
+// CHECK:STDERR: ./multiple_errors.h:3:2: error: "error2" [CppInteropParseError]
 // CHECK:STDERR:     3 | #error "error2"
 // CHECK:STDERR:       |  ^
-// CHECK:STDERR:  [CppInteropParseError]
 // CHECK:STDERR:
 import Cpp library "multiple_errors.h";
 
@@ -73,12 +67,10 @@ import Cpp library "multiple_errors.h";
 library "[[@TEST_NAME]]";
 
 //@dump-sem-ir-begin
-// CHECK:STDERR: import_cpp_file_with_one_warning.carbon:[[@LINE+7]]:1: in import [InImport]
-// CHECK:STDERR: ./one_warning.h:2: warning: In file included from import_cpp_file_with_one_warning.carbon:[[@LINE+6]]:
-// CHECK:STDERR: ./one_warning.h:2:2: warning: "warning1"
+// CHECK:STDERR: import_cpp_file_with_one_warning.carbon:[[@LINE+5]]:10: in file included here [InCppInclude]
+// CHECK:STDERR: ./one_warning.h:2:2: warning: "warning1" [CppInteropParseWarning]
 // CHECK:STDERR:     2 | #warning "warning1"
 // CHECK:STDERR:       |  ^
-// CHECK:STDERR:  [CppInteropParseWarning]
 // CHECK:STDERR:
 import Cpp library "one_warning.h";
 //@dump-sem-ir-end
@@ -98,26 +90,20 @@ import Cpp library "one_warning.h";
 library "[[@TEST_NAME]]";
 
 //@dump-sem-ir-begin
-// CHECK:STDERR: import_cpp_file_with_multiple_warnings.carbon:[[@LINE+21]]:1: in import [InImport]
-// CHECK:STDERR: ./multiple_warnings.h:2: warning: In file included from import_cpp_file_with_multiple_warnings.carbon:[[@LINE+20]]:
-// CHECK:STDERR: ./multiple_warnings.h:2:2: warning: "warning1"
+// CHECK:STDERR: import_cpp_file_with_multiple_warnings.carbon:[[@LINE+15]]:10: in file included here [InCppInclude]
+// CHECK:STDERR: ./multiple_warnings.h:2:2: warning: "warning1" [CppInteropParseWarning]
 // CHECK:STDERR:     2 | #warning "warning1"
 // CHECK:STDERR:       |  ^
-// CHECK:STDERR:  [CppInteropParseWarning]
 // CHECK:STDERR:
-// CHECK:STDERR: import_cpp_file_with_multiple_warnings.carbon:[[@LINE+14]]:1: in import [InImport]
-// CHECK:STDERR: ./multiple_warnings.h:3: warning: In file included from import_cpp_file_with_multiple_warnings.carbon:[[@LINE+13]]:
-// CHECK:STDERR: ./multiple_warnings.h:3:2: warning: "warning2"
+// CHECK:STDERR: import_cpp_file_with_multiple_warnings.carbon:[[@LINE+10]]:10: in file included here [InCppInclude]
+// CHECK:STDERR: ./multiple_warnings.h:3:2: warning: "warning2" [CppInteropParseWarning]
 // CHECK:STDERR:     3 | #warning "warning2"
 // CHECK:STDERR:       |  ^
-// CHECK:STDERR:  [CppInteropParseWarning]
 // CHECK:STDERR:
-// CHECK:STDERR: import_cpp_file_with_multiple_warnings.carbon:[[@LINE+7]]:1: in import [InImport]
-// CHECK:STDERR: ./multiple_warnings.h:4: warning: In file included from import_cpp_file_with_multiple_warnings.carbon:[[@LINE+6]]:
-// CHECK:STDERR: ./multiple_warnings.h:4:2: warning: "warning3"
+// CHECK:STDERR: import_cpp_file_with_multiple_warnings.carbon:[[@LINE+5]]:10: in file included here [InCppInclude]
+// CHECK:STDERR: ./multiple_warnings.h:4:2: warning: "warning3" [CppInteropParseWarning]
 // CHECK:STDERR:     4 | #warning "warning3"
 // CHECK:STDERR:       |  ^
-// CHECK:STDERR:  [CppInteropParseWarning]
 // CHECK:STDERR:
 import Cpp library "multiple_warnings.h";
 //@dump-sem-ir-end
@@ -135,19 +121,15 @@ import Cpp library "multiple_warnings.h";
 
 library "[[@TEST_NAME]]";
 
-// CHECK:STDERR: fail_import_cpp_file_with_one_error_and_one_warning.carbon:[[@LINE+14]]:1: in import [InImport]
-// CHECK:STDERR: ./one_error_and_one_warning.h:2: error: In file included from fail_import_cpp_file_with_one_error_and_one_warning.carbon:[[@LINE+13]]:
-// CHECK:STDERR: ./one_error_and_one_warning.h:2:2: error: "error1"
+// CHECK:STDERR: fail_import_cpp_file_with_one_error_and_one_warning.carbon:[[@LINE+10]]:10: in file included here [InCppInclude]
+// CHECK:STDERR: ./one_error_and_one_warning.h:2:2: error: "error1" [CppInteropParseError]
 // CHECK:STDERR:     2 | #error "error1"
 // CHECK:STDERR:       |  ^
-// CHECK:STDERR:  [CppInteropParseError]
 // CHECK:STDERR:
-// CHECK:STDERR: fail_import_cpp_file_with_one_error_and_one_warning.carbon:[[@LINE+7]]:1: in import [InImport]
-// CHECK:STDERR: ./one_error_and_one_warning.h:3: warning: In file included from fail_import_cpp_file_with_one_error_and_one_warning.carbon:[[@LINE+6]]:
-// CHECK:STDERR: ./one_error_and_one_warning.h:3:2: warning: "warning1"
+// CHECK:STDERR: fail_import_cpp_file_with_one_error_and_one_warning.carbon:[[@LINE+5]]:10: in file included here [InCppInclude]
+// CHECK:STDERR: ./one_error_and_one_warning.h:3:2: warning: "warning1" [CppInteropParseWarning]
 // CHECK:STDERR:     3 | #warning "warning1"
 // CHECK:STDERR:       |  ^
-// CHECK:STDERR:  [CppInteropParseWarning]
 // CHECK:STDERR:
 import Cpp library "one_error_and_one_warning.h";
 
@@ -167,40 +149,30 @@ import Cpp library "one_error_and_one_warning.h";
 
 library "[[@TEST_NAME]]";
 
-// CHECK:STDERR: fail_import_cpp_file_with_multiple_errors_and_multiple_warnings.carbon:[[@LINE+35]]:1: in import [InImport]
-// CHECK:STDERR: ./multiple_errors_and_multiple_warnings.h:2: error: In file included from fail_import_cpp_file_with_multiple_errors_and_multiple_warnings.carbon:[[@LINE+34]]:
-// CHECK:STDERR: ./multiple_errors_and_multiple_warnings.h:2:2: error: "error1"
+// CHECK:STDERR: fail_import_cpp_file_with_multiple_errors_and_multiple_warnings.carbon:[[@LINE+25]]:10: in file included here [InCppInclude]
+// CHECK:STDERR: ./multiple_errors_and_multiple_warnings.h:2:2: error: "error1" [CppInteropParseError]
 // CHECK:STDERR:     2 | #error "error1"
 // CHECK:STDERR:       |  ^
-// CHECK:STDERR:  [CppInteropParseError]
 // CHECK:STDERR:
-// CHECK:STDERR: fail_import_cpp_file_with_multiple_errors_and_multiple_warnings.carbon:[[@LINE+28]]:1: in import [InImport]
-// CHECK:STDERR: ./multiple_errors_and_multiple_warnings.h:3: error: In file included from fail_import_cpp_file_with_multiple_errors_and_multiple_warnings.carbon:[[@LINE+27]]:
-// CHECK:STDERR: ./multiple_errors_and_multiple_warnings.h:3:2: error: "error2"
+// CHECK:STDERR: fail_import_cpp_file_with_multiple_errors_and_multiple_warnings.carbon:[[@LINE+20]]:10: in file included here [InCppInclude]
+// CHECK:STDERR: ./multiple_errors_and_multiple_warnings.h:3:2: error: "error2" [CppInteropParseError]
 // CHECK:STDERR:     3 | #error "error2"
 // CHECK:STDERR:       |  ^
-// CHECK:STDERR:  [CppInteropParseError]
 // CHECK:STDERR:
-// CHECK:STDERR: fail_import_cpp_file_with_multiple_errors_and_multiple_warnings.carbon:[[@LINE+21]]:1: in import [InImport]
-// CHECK:STDERR: ./multiple_errors_and_multiple_warnings.h:4: warning: In file included from fail_import_cpp_file_with_multiple_errors_and_multiple_warnings.carbon:[[@LINE+20]]:
-// CHECK:STDERR: ./multiple_errors_and_multiple_warnings.h:4:2: warning: "warning1"
+// CHECK:STDERR: fail_import_cpp_file_with_multiple_errors_and_multiple_warnings.carbon:[[@LINE+15]]:10: in file included here [InCppInclude]
+// CHECK:STDERR: ./multiple_errors_and_multiple_warnings.h:4:2: warning: "warning1" [CppInteropParseWarning]
 // CHECK:STDERR:     4 | #warning "warning1"
 // CHECK:STDERR:       |  ^
-// CHECK:STDERR:  [CppInteropParseWarning]
 // CHECK:STDERR:
-// CHECK:STDERR: fail_import_cpp_file_with_multiple_errors_and_multiple_warnings.carbon:[[@LINE+14]]:1: in import [InImport]
-// CHECK:STDERR: ./multiple_errors_and_multiple_warnings.h:5: warning: In file included from fail_import_cpp_file_with_multiple_errors_and_multiple_warnings.carbon:[[@LINE+13]]:
-// CHECK:STDERR: ./multiple_errors_and_multiple_warnings.h:5:2: warning: "warning2"
+// CHECK:STDERR: fail_import_cpp_file_with_multiple_errors_and_multiple_warnings.carbon:[[@LINE+10]]:10: in file included here [InCppInclude]
+// CHECK:STDERR: ./multiple_errors_and_multiple_warnings.h:5:2: warning: "warning2" [CppInteropParseWarning]
 // CHECK:STDERR:     5 | #warning "warning2"
 // CHECK:STDERR:       |  ^
-// CHECK:STDERR:  [CppInteropParseWarning]
 // CHECK:STDERR:
-// CHECK:STDERR: fail_import_cpp_file_with_multiple_errors_and_multiple_warnings.carbon:[[@LINE+7]]:1: in import [InImport]
-// CHECK:STDERR: ./multiple_errors_and_multiple_warnings.h:6: warning: In file included from fail_import_cpp_file_with_multiple_errors_and_multiple_warnings.carbon:[[@LINE+6]]:
-// CHECK:STDERR: ./multiple_errors_and_multiple_warnings.h:6:2: warning: "warning3"
+// CHECK:STDERR: fail_import_cpp_file_with_multiple_errors_and_multiple_warnings.carbon:[[@LINE+5]]:10: in file included here [InCppInclude]
+// CHECK:STDERR: ./multiple_errors_and_multiple_warnings.h:6:2: warning: "warning3" [CppInteropParseWarning]
 // CHECK:STDERR:     6 | #warning "warning3"
 // CHECK:STDERR:       |  ^
-// CHECK:STDERR:  [CppInteropParseWarning]
 // CHECK:STDERR:
 import Cpp library "multiple_errors_and_multiple_warnings.h";
 
@@ -213,35 +185,27 @@ import Cpp library "multiple_errors_and_multiple_warnings.h";
 library "[[@TEST_NAME]]";
 
 //@dump-sem-ir-begin
-// CHECK:STDERR: import_multiple_cpp_files_with_warnings.carbon:[[@LINE+28]]:1: in import [InImport]
-// CHECK:STDERR: ./one_warning.h:2: warning: In file included from import_multiple_cpp_files_with_warnings.carbon:[[@LINE+27]]:
-// CHECK:STDERR: ./one_warning.h:2:2: warning: "warning1"
+// CHECK:STDERR: import_multiple_cpp_files_with_warnings.carbon:[[@LINE+5]]:10: in file included here [InCppInclude]
+// CHECK:STDERR: ./one_warning.h:2:2: warning: "warning1" [CppInteropParseWarning]
 // CHECK:STDERR:     2 | #warning "warning1"
 // CHECK:STDERR:       |  ^
-// CHECK:STDERR:  [CppInteropParseWarning]
-// CHECK:STDERR:
-// CHECK:STDERR: import_multiple_cpp_files_with_warnings.carbon:[[@LINE+21]]:1: in import [InImport]
-// CHECK:STDERR: ./multiple_warnings.h:2: warning: In file included from import_multiple_cpp_files_with_warnings.carbon:[[@LINE+21]]:
-// CHECK:STDERR: ./multiple_warnings.h:2:2: warning: "warning1"
-// CHECK:STDERR:     2 | #warning "warning1"
-// CHECK:STDERR:       |  ^
-// CHECK:STDERR:  [CppInteropParseWarning]
-// CHECK:STDERR:
-// CHECK:STDERR: import_multiple_cpp_files_with_warnings.carbon:[[@LINE+14]]:1: in import [InImport]
-// CHECK:STDERR: ./multiple_warnings.h:3: warning: In file included from import_multiple_cpp_files_with_warnings.carbon:[[@LINE+14]]:
-// CHECK:STDERR: ./multiple_warnings.h:3:2: warning: "warning2"
-// CHECK:STDERR:     3 | #warning "warning2"
-// CHECK:STDERR:       |  ^
-// CHECK:STDERR:  [CppInteropParseWarning]
-// CHECK:STDERR:
-// CHECK:STDERR: import_multiple_cpp_files_with_warnings.carbon:[[@LINE+7]]:1: in import [InImport]
-// CHECK:STDERR: ./multiple_warnings.h:4: warning: In file included from import_multiple_cpp_files_with_warnings.carbon:[[@LINE+7]]:
-// CHECK:STDERR: ./multiple_warnings.h:4:2: warning: "warning3"
-// CHECK:STDERR:     4 | #warning "warning3"
-// CHECK:STDERR:       |  ^
-// CHECK:STDERR:  [CppInteropParseWarning]
 // CHECK:STDERR:
 import Cpp library "one_warning.h";
+// CHECK:STDERR: import_multiple_cpp_files_with_warnings.carbon:[[@LINE+15]]:10: in file included here [InCppInclude]
+// CHECK:STDERR: ./multiple_warnings.h:2:2: warning: "warning1" [CppInteropParseWarning]
+// CHECK:STDERR:     2 | #warning "warning1"
+// CHECK:STDERR:       |  ^
+// CHECK:STDERR:
+// CHECK:STDERR: import_multiple_cpp_files_with_warnings.carbon:[[@LINE+10]]:10: in file included here [InCppInclude]
+// CHECK:STDERR: ./multiple_warnings.h:3:2: warning: "warning2" [CppInteropParseWarning]
+// CHECK:STDERR:     3 | #warning "warning2"
+// CHECK:STDERR:       |  ^
+// CHECK:STDERR:
+// CHECK:STDERR: import_multiple_cpp_files_with_warnings.carbon:[[@LINE+5]]:10: in file included here [InCppInclude]
+// CHECK:STDERR: ./multiple_warnings.h:4:2: warning: "warning3" [CppInteropParseWarning]
+// CHECK:STDERR:     4 | #warning "warning3"
+// CHECK:STDERR:       |  ^
+// CHECK:STDERR:
 import Cpp library "multiple_warnings.h";
 //@dump-sem-ir-end
 
@@ -253,56 +217,42 @@ import Cpp library "multiple_warnings.h";
 
 library "[[@TEST_NAME]]";
 
-// CHECK:STDERR: fail_import_multiple_cpp_files_with_errors_and_warnings.carbon:[[@LINE+49]]:1: in import [InImport]
-// CHECK:STDERR: ./one_error_and_one_warning.h:2: error: In file included from fail_import_multiple_cpp_files_with_errors_and_warnings.carbon:[[@LINE+48]]:
-// CHECK:STDERR: ./one_error_and_one_warning.h:2:2: error: "error1"
+// CHECK:STDERR: fail_import_multiple_cpp_files_with_errors_and_warnings.carbon:[[@LINE+10]]:10: in file included here [InCppInclude]
+// CHECK:STDERR: ./one_error_and_one_warning.h:2:2: error: "error1" [CppInteropParseError]
 // CHECK:STDERR:     2 | #error "error1"
 // CHECK:STDERR:       |  ^
-// CHECK:STDERR:  [CppInteropParseError]
 // CHECK:STDERR:
-// CHECK:STDERR: fail_import_multiple_cpp_files_with_errors_and_warnings.carbon:[[@LINE+42]]:1: in import [InImport]
-// CHECK:STDERR: ./one_error_and_one_warning.h:3: warning: In file included from fail_import_multiple_cpp_files_with_errors_and_warnings.carbon:[[@LINE+41]]:
-// CHECK:STDERR: ./one_error_and_one_warning.h:3:2: warning: "warning1"
+// CHECK:STDERR: fail_import_multiple_cpp_files_with_errors_and_warnings.carbon:[[@LINE+5]]:10: in file included here [InCppInclude]
+// CHECK:STDERR: ./one_error_and_one_warning.h:3:2: warning: "warning1" [CppInteropParseWarning]
 // CHECK:STDERR:     3 | #warning "warning1"
 // CHECK:STDERR:       |  ^
-// CHECK:STDERR:  [CppInteropParseWarning]
-// CHECK:STDERR:
-// CHECK:STDERR: fail_import_multiple_cpp_files_with_errors_and_warnings.carbon:[[@LINE+35]]:1: in import [InImport]
-// CHECK:STDERR: ./multiple_errors_and_multiple_warnings.h:2: error: In file included from fail_import_multiple_cpp_files_with_errors_and_warnings.carbon:[[@LINE+35]]:
-// CHECK:STDERR: ./multiple_errors_and_multiple_warnings.h:2:2: error: "error1"
-// CHECK:STDERR:     2 | #error "error1"
-// CHECK:STDERR:       |  ^
-// CHECK:STDERR:  [CppInteropParseError]
-// CHECK:STDERR:
-// CHECK:STDERR: fail_import_multiple_cpp_files_with_errors_and_warnings.carbon:[[@LINE+28]]:1: in import [InImport]
-// CHECK:STDERR: ./multiple_errors_and_multiple_warnings.h:3: error: In file included from fail_import_multiple_cpp_files_with_errors_and_warnings.carbon:[[@LINE+28]]:
-// CHECK:STDERR: ./multiple_errors_and_multiple_warnings.h:3:2: error: "error2"
-// CHECK:STDERR:     3 | #error "error2"
-// CHECK:STDERR:       |  ^
-// CHECK:STDERR:  [CppInteropParseError]
-// CHECK:STDERR:
-// CHECK:STDERR: fail_import_multiple_cpp_files_with_errors_and_warnings.carbon:[[@LINE+21]]:1: in import [InImport]
-// CHECK:STDERR: ./multiple_errors_and_multiple_warnings.h:4: warning: In file included from fail_import_multiple_cpp_files_with_errors_and_warnings.carbon:[[@LINE+21]]:
-// CHECK:STDERR: ./multiple_errors_and_multiple_warnings.h:4:2: warning: "warning1"
-// CHECK:STDERR:     4 | #warning "warning1"
-// CHECK:STDERR:       |  ^
-// CHECK:STDERR:  [CppInteropParseWarning]
-// CHECK:STDERR:
-// CHECK:STDERR: fail_import_multiple_cpp_files_with_errors_and_warnings.carbon:[[@LINE+14]]:1: in import [InImport]
-// CHECK:STDERR: ./multiple_errors_and_multiple_warnings.h:5: warning: In file included from fail_import_multiple_cpp_files_with_errors_and_warnings.carbon:[[@LINE+14]]:
-// CHECK:STDERR: ./multiple_errors_and_multiple_warnings.h:5:2: warning: "warning2"
-// CHECK:STDERR:     5 | #warning "warning2"
-// CHECK:STDERR:       |  ^
-// CHECK:STDERR:  [CppInteropParseWarning]
-// CHECK:STDERR:
-// CHECK:STDERR: fail_import_multiple_cpp_files_with_errors_and_warnings.carbon:[[@LINE+7]]:1: in import [InImport]
-// CHECK:STDERR: ./multiple_errors_and_multiple_warnings.h:6: warning: In file included from fail_import_multiple_cpp_files_with_errors_and_warnings.carbon:[[@LINE+7]]:
-// CHECK:STDERR: ./multiple_errors_and_multiple_warnings.h:6:2: warning: "warning3"
-// CHECK:STDERR:     6 | #warning "warning3"
-// CHECK:STDERR:       |  ^
-// CHECK:STDERR:  [CppInteropParseWarning]
 // CHECK:STDERR:
 import Cpp library "one_error_and_one_warning.h";
+// CHECK:STDERR: fail_import_multiple_cpp_files_with_errors_and_warnings.carbon:[[@LINE+25]]:10: in file included here [InCppInclude]
+// CHECK:STDERR: ./multiple_errors_and_multiple_warnings.h:2:2: error: "error1" [CppInteropParseError]
+// CHECK:STDERR:     2 | #error "error1"
+// CHECK:STDERR:       |  ^
+// CHECK:STDERR:
+// CHECK:STDERR: fail_import_multiple_cpp_files_with_errors_and_warnings.carbon:[[@LINE+20]]:10: in file included here [InCppInclude]
+// CHECK:STDERR: ./multiple_errors_and_multiple_warnings.h:3:2: error: "error2" [CppInteropParseError]
+// CHECK:STDERR:     3 | #error "error2"
+// CHECK:STDERR:       |  ^
+// CHECK:STDERR:
+// CHECK:STDERR: fail_import_multiple_cpp_files_with_errors_and_warnings.carbon:[[@LINE+15]]:10: in file included here [InCppInclude]
+// CHECK:STDERR: ./multiple_errors_and_multiple_warnings.h:4:2: warning: "warning1" [CppInteropParseWarning]
+// CHECK:STDERR:     4 | #warning "warning1"
+// CHECK:STDERR:       |  ^
+// CHECK:STDERR:
+// CHECK:STDERR: fail_import_multiple_cpp_files_with_errors_and_warnings.carbon:[[@LINE+10]]:10: in file included here [InCppInclude]
+// CHECK:STDERR: ./multiple_errors_and_multiple_warnings.h:5:2: warning: "warning2" [CppInteropParseWarning]
+// CHECK:STDERR:     5 | #warning "warning2"
+// CHECK:STDERR:       |  ^
+// CHECK:STDERR:
+// CHECK:STDERR: fail_import_multiple_cpp_files_with_errors_and_warnings.carbon:[[@LINE+5]]:10: in file included here [InCppInclude]
+// CHECK:STDERR: ./multiple_errors_and_multiple_warnings.h:6:2: warning: "warning3" [CppInteropParseWarning]
+// CHECK:STDERR:     6 | #warning "warning3"
+// CHECK:STDERR:       |  ^
+// CHECK:STDERR:
 import Cpp library "multiple_errors_and_multiple_warnings.h";
 
 // ============================================================================
@@ -313,19 +263,15 @@ import Cpp library "multiple_errors_and_multiple_warnings.h";
 
 #include "one_error.h"
 
-// --- fail_todo_import_indirect_error.carbon
+// --- fail_import_indirect_error.carbon
 
 library "[[@TEST_NAME]]";
 
-// TODO: The `In file included from` line should not be prefixed. See
-// https://github.com/carbon-language/carbon-lang/pull/5614#pullrequestreview-2900939411
-// CHECK:STDERR: fail_todo_import_indirect_error.carbon:[[@LINE+8]]:1: in import [InImport]
-// CHECK:STDERR: ./one_error.h:2: error: In file included from fail_todo_import_indirect_error.carbon:[[@LINE+7]]:
-// CHECK:STDERR: In file included from ./indirect_error.h:2:
-// CHECK:STDERR: ./one_error.h:2:2: error: "error1"
+// CHECK:STDERR: fail_import_indirect_error.carbon:[[@LINE+6]]:10: in file included here [InCppInclude]
+// CHECK:STDERR: ./indirect_error.h:2:10: in file included here [InCppInclude]
+// CHECK:STDERR: ./one_error.h:2:2: error: "error1" [CppInteropParseError]
 // CHECK:STDERR:     2 | #error "error1"
 // CHECK:STDERR:       |  ^
-// CHECK:STDERR:  [CppInteropParseError]
 // CHECK:STDERR:
 import Cpp library "indirect_error.h";
 
@@ -337,20 +283,16 @@ import Cpp library "indirect_error.h";
 
 #include "one_warning.h"
 
-// --- todo_import_indirect_warning.carbon
+// --- import_indirect_warning.carbon
 
 library "[[@TEST_NAME]]";
 
-// TODO: The `In file included from` line should not be prefixed. See
-// https://github.com/carbon-language/carbon-lang/pull/5614#pullrequestreview-2900939411
 //@dump-sem-ir-begin
-// CHECK:STDERR: todo_import_indirect_warning.carbon:[[@LINE+8]]:1: in import [InImport]
-// CHECK:STDERR: ./one_warning.h:2: warning: In file included from todo_import_indirect_warning.carbon:[[@LINE+7]]:
-// CHECK:STDERR: In file included from ./indirect_warning.h:2:
-// CHECK:STDERR: ./one_warning.h:2:2: warning: "warning1"
+// CHECK:STDERR: import_indirect_warning.carbon:[[@LINE+6]]:10: in file included here [InCppInclude]
+// CHECK:STDERR: ./indirect_warning.h:2:10: in file included here [InCppInclude]
+// CHECK:STDERR: ./one_warning.h:2:2: warning: "warning1" [CppInteropParseWarning]
 // CHECK:STDERR:     2 | #warning "warning1"
 // CHECK:STDERR:       |  ^
-// CHECK:STDERR:  [CppInteropParseWarning]
 // CHECK:STDERR:
 import Cpp library "indirect_warning.h";
 //@dump-sem-ir-end
@@ -364,14 +306,12 @@ import Cpp library "indirect_warning.h";
 library "[[@TEST_NAME]]";  // Trailing comment
 
 // TODO: Move this warning to be after the lexer trailing comment error.
-// CHECK:STDERR: fail_import_cpp_library_lexer_error.carbon:[[@LINE+11]]:1: in import [InImport]
-// CHECK:STDERR: ./one_warning.h:2: warning: In file included from fail_import_cpp_library_lexer_error.carbon:[[@LINE+10]]:
-// CHECK:STDERR: ./one_warning.h:2:2: warning: "warning1"
+// CHECK:STDERR: fail_import_cpp_library_lexer_error.carbon:[[@LINE+9]]:10: in file included here [InCppInclude]
+// CHECK:STDERR: ./one_warning.h:2:2: warning: "warning1" [CppInteropParseWarning]
 // CHECK:STDERR:     2 | #warning "warning1"
 // CHECK:STDERR:       |  ^
-// CHECK:STDERR:  [CppInteropParseWarning]
 // CHECK:STDERR:
-// CHECK:STDERR: fail_import_cpp_library_lexer_error.carbon:[[@LINE-10]]:44: error: trailing comments are not permitted [TrailingComment]
+// CHECK:STDERR: fail_import_cpp_library_lexer_error.carbon:[[@LINE-8]]:44: error: trailing comments are not permitted [TrailingComment]
 // CHECK:STDERR: library "import_cpp_library_lexer_error";  // Trailing comment
 // CHECK:STDERR:                                            ^
 // CHECK:STDERR:
@@ -389,13 +329,11 @@ double score = 0.1
 
 library "[[@TEST_NAME]]";
 
-// CHECK:STDERR: fail_import_fix_it_hints.carbon:[[@LINE+8]]:1: in import [InImport]
-// CHECK:STDERR: ./fix_it_hints.h:2: error: In file included from fail_import_fix_it_hints.carbon:[[@LINE+7]]:
-// CHECK:STDERR: ./fix_it_hints.h:2:19: error: expected ';' after top level declarator
+// CHECK:STDERR: fail_import_fix_it_hints.carbon:[[@LINE+6]]:10: in file included here [InCppInclude]
+// CHECK:STDERR: ./fix_it_hints.h:2:19: error: expected ';' after top level declarator [CppInteropParseError]
 // CHECK:STDERR:     2 | double score = 0.1
 // CHECK:STDERR:       |                   ^
 // CHECK:STDERR:       |                   ;
-// CHECK:STDERR:  [CppInteropParseError]
 // CHECK:STDERR:
 import Cpp library "fix_it_hints.h";
 
@@ -419,23 +357,58 @@ inline void call_foobar() {
 
 library "[[@TEST_NAME]]";
 
-// CHECK:STDERR: fail_with_notes.carbon:[[@LINE+12]]:1: in import [InImport]
-// CHECK:STDERR: ./with_notes.h:5: error: In file included from fail_with_notes.carbon:[[@LINE+11]]:
-// CHECK:STDERR: ./with_notes.h:5:3: error: no matching function for call to 'foobar'
+// CHECK:STDERR: fail_with_notes.carbon:[[@LINE+9]]:10: in file included here [InCppInclude]
+// CHECK:STDERR: ./with_notes.h:5:3: error: no matching function for call to 'foobar' [CppInteropParseError]
 // CHECK:STDERR:     5 |   foobar(1, 2);
 // CHECK:STDERR:       |   ^~~~~~
-// CHECK:STDERR:  [CppInteropParseError]
-// CHECK:STDERR: fail_with_notes.carbon:[[@LINE+6]]:1: in import [InImport]
-// CHECK:STDERR: ./with_notes.h:2: note: ./with_notes.h:2:6: note: candidate function not viable: requires 1 argument, but 2 were provided
+// CHECK:STDERR: fail_with_notes.carbon:[[@LINE+5]]:10: in file included here [InCppInclude]
+// CHECK:STDERR: ./with_notes.h:2:6: note: candidate function not viable: requires 1 argument, but 2 were provided [CppInteropParseNote]
 // CHECK:STDERR:     2 | void foobar(int);
 // CHECK:STDERR:       |      ^      ~~~
-// CHECK:STDERR:  [CppInteropParseNote]
 // CHECK:STDERR:
 import Cpp library "with_notes.h";
 
 fn F() {
   Cpp.call_foobar();
 }
+
+// ============================================================================
+// Context stacks
+// ============================================================================
+
+// --- indirect_include.h
+
+#define FOO BAR
+#define BAZ void f(error);
+
+FOO
+
+// --- direct_include.h
+
+#define BAR BAZ
+
+#include "indirect_include.h"
+
+// --- fail_use_context_stack.carbon
+
+library "[[@TEST_NAME]]";
+
+// CHECK:STDERR: fail_use_context_stack.carbon:[[@LINE+15]]:10: in file included here [InCppInclude]
+// CHECK:STDERR: ./direct_include.h:4:10: in file included here [InCppInclude]
+// CHECK:STDERR: ./indirect_include.h:2:13: in expansion of macro defined here [InCppMacroExpansion]
+// CHECK:STDERR: ./direct_include.h:2:13: in expansion of macro defined here [InCppMacroExpansion]
+// CHECK:STDERR: ./indirect_include.h:3:20: in expansion of macro defined here [InCppMacroExpansion]
+// CHECK:STDERR: ./indirect_include.h:5:1: error: unknown type name 'error' [CppInteropParseError]
+// CHECK:STDERR:     5 | FOO
+// CHECK:STDERR:       | ^
+// CHECK:STDERR:     2 | #define FOO BAR
+// CHECK:STDERR:       |             ^
+// CHECK:STDERR:     2 | #define BAR BAZ
+// CHECK:STDERR:       |             ^
+// CHECK:STDERR:     3 | #define BAZ void f(error);
+// CHECK:STDERR:       |                    ^
+// CHECK:STDERR:
+import Cpp library "direct_include.h";
 
 // CHECK:STDOUT: --- import_cpp_file_with_one_warning.carbon
 // CHECK:STDOUT:
@@ -471,7 +444,7 @@ fn F() {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- todo_import_indirect_warning.carbon
+// CHECK:STDOUT: --- import_indirect_warning.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT: }

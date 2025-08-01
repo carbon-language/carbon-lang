@@ -11,6 +11,7 @@
 #include "common/raw_string_ostream.h"
 #include "toolchain/check/diagnostic_helpers.h"
 #include "toolchain/sem_ir/absolute_node_id.h"
+#include "toolchain/sem_ir/diagnostic_loc_converter.h"
 #include "toolchain/sem_ir/ids.h"
 #include "toolchain/sem_ir/stringify.h"
 
@@ -23,7 +24,28 @@ auto DiagnosticEmitter::ConvertLoc(LocIdForDiagnostics loc_id,
       loc_id.loc_id(), loc_id.is_token_only());
   for (const auto& import : imports) {
     CARBON_DIAGNOSTIC(InImport, LocationInfo, "in import");
-    context_fn(import.loc, InImport);
+    CARBON_DIAGNOSTIC(InCppInclude, LocationInfo, "in file included here");
+    CARBON_DIAGNOSTIC(InCppModule, LocationInfo, "in module imported here");
+    CARBON_DIAGNOSTIC(InCppMacroExpansion, LocationInfo,
+                      "in expansion of macro defined here");
+    switch (import.kind) {
+      case Carbon::SemIR::DiagnosticLocConverter::ImportLoc::Import:
+        // TODO: Include the library name in the note.
+        context_fn(import.loc, InImport);
+        break;
+      case Carbon::SemIR::DiagnosticLocConverter::ImportLoc::CppInclude:
+        // TODO: Include the file name in the note.
+        context_fn(import.loc, InCppInclude);
+        break;
+      case Carbon::SemIR::DiagnosticLocConverter::ImportLoc::CppModuleImport:
+        // TODO: Include the module name in the note.
+        context_fn(import.loc, InCppModule);
+        break;
+      case Carbon::SemIR::DiagnosticLocConverter::ImportLoc::CppMacroExpansion:
+        // TODO: Include the macro name in the note.
+        context_fn(import.loc, InCppMacroExpansion);
+        break;
+    }
   }
 
   // Use the token when possible, but -1 is the default value.

@@ -27,11 +27,13 @@ library "[[@TEST_NAME]]";
 import Cpp library "decl_value_param_type.h";
 
 fn F() {
-  // CHECK:STDERR: fail_todo_import_decl_value_param_type.carbon:[[@LINE+7]]:11: error: forming value of incomplete type `Cpp.C` [IncompleteTypeInValueConversion]
+  // CHECK:STDERR: fail_todo_import_decl_value_param_type.carbon:[[@LINE+9]]:11: error: forming value of incomplete type `Cpp.C` [IncompleteTypeInValueConversion]
   // CHECK:STDERR:   Cpp.foo({});
   // CHECK:STDERR:           ^~
-  // CHECK:STDERR: fail_todo_import_decl_value_param_type.carbon:[[@LINE-6]]:1: in import [InImport]
-  // CHECK:STDERR: ./decl_value_param_type.h:2: note: class was forward declared here [ClassForwardDeclaredHere]
+  // CHECK:STDERR: fail_todo_import_decl_value_param_type.carbon:[[@LINE-6]]:10: in file included here [InCppInclude]
+  // CHECK:STDERR: ./decl_value_param_type.h:2:7: note: class was forward declared here [ClassForwardDeclaredHere]
+  // CHECK:STDERR: class C;
+  // CHECK:STDERR:       ^
   // CHECK:STDERR: fail_todo_import_decl_value_param_type.carbon: note: initializing function parameter [InCallToFunctionParam]
   // CHECK:STDERR:
   Cpp.foo({});
@@ -44,11 +46,13 @@ library "[[@TEST_NAME]]";
 import Cpp library "decl_value_param_type.h";
 
 fn F() {
-  // CHECK:STDERR: fail_todo_import_decl_value_param_type_previously_imported.carbon:[[@LINE+10]]:10: error: binding pattern has incomplete type `C` in name binding declaration [IncompleteTypeInBindingDecl]
+  // CHECK:STDERR: fail_todo_import_decl_value_param_type_previously_imported.carbon:[[@LINE+12]]:10: error: binding pattern has incomplete type `C` in name binding declaration [IncompleteTypeInBindingDecl]
   // CHECK:STDERR:   let c: Cpp.C;
   // CHECK:STDERR:          ^~~~~
-  // CHECK:STDERR: fail_todo_import_decl_value_param_type_previously_imported.carbon:[[@LINE-6]]:1: in import [InImport]
-  // CHECK:STDERR: ./decl_value_param_type.h:2: note: class was forward declared here [ClassForwardDeclaredHere]
+  // CHECK:STDERR: fail_todo_import_decl_value_param_type_previously_imported.carbon:[[@LINE-6]]:10: in file included here [InCppInclude]
+  // CHECK:STDERR: ./decl_value_param_type.h:2:7: note: class was forward declared here [ClassForwardDeclaredHere]
+  // CHECK:STDERR: class C;
+  // CHECK:STDERR:       ^
   // CHECK:STDERR:
   // CHECK:STDERR: fail_todo_import_decl_value_param_type_previously_imported.carbon:[[@LINE+4]]:15: error: expected `=`; `let` declaration must have an initializer [ExpectedInitializerAfterLet]
   // CHECK:STDERR:   let c: Cpp.C;
@@ -76,19 +80,23 @@ library "[[@TEST_NAME]]";
 import Cpp library "double_decl_value_param_type.h";
 
 fn F() {
-  // CHECK:STDERR: fail_todo_import_double_decl_value_param_type.carbon:[[@LINE+7]]:12: error: forming value of incomplete type `Cpp.C` [IncompleteTypeInValueConversion]
+  // CHECK:STDERR: fail_todo_import_double_decl_value_param_type.carbon:[[@LINE+9]]:12: error: forming value of incomplete type `Cpp.C` [IncompleteTypeInValueConversion]
   // CHECK:STDERR:   Cpp.foo1({});
   // CHECK:STDERR:            ^~
-  // CHECK:STDERR: fail_todo_import_double_decl_value_param_type.carbon:[[@LINE-6]]:1: in import [InImport]
-  // CHECK:STDERR: ./double_decl_value_param_type.h:2: note: class was forward declared here [ClassForwardDeclaredHere]
+  // CHECK:STDERR: fail_todo_import_double_decl_value_param_type.carbon:[[@LINE-6]]:10: in file included here [InCppInclude]
+  // CHECK:STDERR: ./double_decl_value_param_type.h:2:7: note: class was forward declared here [ClassForwardDeclaredHere]
+  // CHECK:STDERR: class C;
+  // CHECK:STDERR:       ^
   // CHECK:STDERR: fail_todo_import_double_decl_value_param_type.carbon: note: initializing function parameter [InCallToFunctionParam]
   // CHECK:STDERR:
   Cpp.foo1({});
-  // CHECK:STDERR: fail_todo_import_double_decl_value_param_type.carbon:[[@LINE+7]]:12: error: forming value of incomplete type `Cpp.C` [IncompleteTypeInValueConversion]
+  // CHECK:STDERR: fail_todo_import_double_decl_value_param_type.carbon:[[@LINE+9]]:12: error: forming value of incomplete type `Cpp.C` [IncompleteTypeInValueConversion]
   // CHECK:STDERR:   Cpp.foo2({});
   // CHECK:STDERR:            ^~
-  // CHECK:STDERR: fail_todo_import_double_decl_value_param_type.carbon:[[@LINE-14]]:1: in import [InImport]
-  // CHECK:STDERR: ./double_decl_value_param_type.h:2: note: class was forward declared here [ClassForwardDeclaredHere]
+  // CHECK:STDERR: fail_todo_import_double_decl_value_param_type.carbon:[[@LINE-16]]:10: in file included here [InCppInclude]
+  // CHECK:STDERR: ./double_decl_value_param_type.h:2:7: note: class was forward declared here [ClassForwardDeclaredHere]
+  // CHECK:STDERR: class C;
+  // CHECK:STDERR:       ^
   // CHECK:STDERR: fail_todo_import_double_decl_value_param_type.carbon: note: initializing function parameter [InCallToFunctionParam]
   // CHECK:STDERR:
   Cpp.foo2({});
@@ -359,11 +367,13 @@ library "[[@TEST_NAME]]";
 import Cpp library "decl_value_return_type.h";
 
 fn F() {
-  // CHECK:STDERR: fail_todo_import_decl_value_return_type.carbon:[[@LINE+7]]:3: error: function returns incomplete type `Cpp.C` [IncompleteTypeInFunctionReturnType]
+  // CHECK:STDERR: fail_todo_import_decl_value_return_type.carbon:[[@LINE+9]]:3: error: function returns incomplete type `Cpp.C` [IncompleteTypeInFunctionReturnType]
   // CHECK:STDERR:   Cpp.foo();
   // CHECK:STDERR:   ^~~~~~~~~
-  // CHECK:STDERR: fail_todo_import_decl_value_return_type.carbon:[[@LINE-6]]:1: in import [InImport]
-  // CHECK:STDERR: ./decl_value_return_type.h:2: note: class was forward declared here [ClassForwardDeclaredHere]
+  // CHECK:STDERR: fail_todo_import_decl_value_return_type.carbon:[[@LINE-6]]:10: in file included here [InCppInclude]
+  // CHECK:STDERR: ./decl_value_return_type.h:2:7: note: class was forward declared here [ClassForwardDeclaredHere]
+  // CHECK:STDERR: class C;
+  // CHECK:STDERR:       ^
   // CHECK:STDERR: fail_todo_import_decl_value_return_type.carbon: note: return type declared here [IncompleteReturnTypeHere]
   // CHECK:STDERR:
   Cpp.foo();

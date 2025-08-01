@@ -121,22 +121,29 @@ inline namespace { namespace N {} }
 
 library "[[@TEST_NAME]]";
 
-// CHECK:STDERR: fail_import_inline_ambiguity.carbon:[[@LINE+13]]:1: in import [InImport]
-// CHECK:STDERR: error: error: reference to 'N' is ambiguous
-// CHECK:STDERR:  [CppInteropParseError]
-// CHECK:STDERR: fail_import_inline_ambiguity.carbon:[[@LINE+10]]:1: in import [InImport]
-// CHECK:STDERR: ./inline_ambiguity.h:2: note: ./inline_ambiguity.h:2:11: note: candidate found by name lookup is 'N'
-// CHECK:STDERR:     2 | namespace N { void foo(); }
-// CHECK:STDERR:       |           ^
-// CHECK:STDERR:  [CppInteropParseNote]
-// CHECK:STDERR: fail_import_inline_ambiguity.carbon:[[@LINE+5]]:1: in import [InImport]
-// CHECK:STDERR: ./inline_ambiguity.h:3: note: ./inline_ambiguity.h:3:30: note: candidate found by name lookup is '(anonymous namespace)::N'
-// CHECK:STDERR:     3 | inline namespace { namespace N {} }
-// CHECK:STDERR:       |                              ^
-// CHECK:STDERR:  [CppInteropParseNote]
 import Cpp library "inline_ambiguity.h";
 
 fn MyF() {
+  // Artificially create an error message here so that the first error line for
+  // this file (which otherwise has no source location) is associated with this
+  // file split.
+  // TODO: Pass a location into Clang when performing C++ name lookup so that
+  // its error has a location attached.
+  // CHECK:STDERR: fail_import_inline_ambiguity.carbon:[[@LINE+13]]:3: error: name `error` not found [NameNotFound]
+  // CHECK:STDERR:   error;
+  // CHECK:STDERR:   ^~~~~
+  // CHECK:STDERR:
+  // CHECK:STDERR: error: reference to 'N' is ambiguous [CppInteropParseError]
+  // CHECK:STDERR: fail_import_inline_ambiguity.carbon:[[@LINE-13]]:10: in file included here [InCppInclude]
+  // CHECK:STDERR: ./inline_ambiguity.h:2:11: note: candidate found by name lookup is 'N' [CppInteropParseNote]
+  // CHECK:STDERR:     2 | namespace N { void foo(); }
+  // CHECK:STDERR:       |           ^
+  // CHECK:STDERR: fail_import_inline_ambiguity.carbon:[[@LINE-17]]:10: in file included here [InCppInclude]
+  // CHECK:STDERR: ./inline_ambiguity.h:3:30: note: candidate found by name lookup is '(anonymous namespace)::N' [CppInteropParseNote]
+  // CHECK:STDERR:     3 | inline namespace { namespace N {} }
+  // CHECK:STDERR:       |                              ^
+  error;
+
   // CHECK:STDERR: fail_import_inline_ambiguity.carbon:[[@LINE+4]]:3: note: in `Cpp` name lookup for `N` [InCppNameLookup]
   // CHECK:STDERR:   Cpp.N.foo();
   // CHECK:STDERR:   ^~~~~

@@ -141,32 +141,26 @@ class CarbonClangDiagnosticConsumer : public clang::DiagnosticConsumer {
     llvm::SmallString<256> message;
     info.FormatDiagnostic(message);
 
+    // Render a code snippet including any highlighted ranges and fixit hints.
+    // TODO: Also include the #include stack and macro expansion stack in the
+    // diagnostic output in some way.
+    RawStringOstream snippet_stream;
     if (!info.hasSourceManager()) {
-      // If we don't have a source manager, we haven't actually started
-      // compiling yet, and this is an error from the driver or early in the
-      // frontend. Pass it on directly.
+      // If we don't have a source manager, this is an error from early in the
+      // frontend. Don't produce a snippet.
       CARBON_CHECK(info.getLocation().isInvalid());
-      diagnostic_infos_.push_back({.level = diag_level,
-                                   .import_ir_inst_id = clang_import_ir_inst_id,
-                                   .message = message.str().str()});
-      return;
+    } else {
+      CodeContextRenderer(snippet_stream, invocation_->getLangOpts(),
+                          invocation_->getDiagnosticOpts())
+          .emitDiagnostic(
+              clang::FullSourceLoc(info.getLocation(), info.getSourceManager()),
+              diag_level, message, info.getRanges(), info.getFixItHints());
     }
-
-    // TODO: This includes the full clang diagnostic, including the source
-    // location, resulting in the location appearing twice in the output.
-    RawStringOstream diagnostics_stream;
-    clang::TextDiagnostic text_diagnostic(diagnostics_stream,
-                                          invocation_->getLangOpts(),
-                                          invocation_->getDiagnosticOpts());
-    text_diagnostic.emitDiagnostic(
-        clang::FullSourceLoc(info.getLocation(), info.getSourceManager()),
-        diag_level, message, info.getRanges(), info.getFixItHints());
-
-    std::string diagnostics_str = diagnostics_stream.TakeStr();
 
     diagnostic_infos_.push_back({.level = diag_level,
                                  .import_ir_inst_id = clang_import_ir_inst_id,
-                                 .message = diagnostics_str});
+                                 .message = message.str().str(),
+                                 .snippet = snippet_stream.TakeStr()});
   }
 
   // Outputs Carbon diagnostics based on the collected Clang diagnostics. Must
@@ -200,15 +194,22 @@ class CarbonClangDiagnosticConsumer : public clang::DiagnosticConsumer {
                   ? CppInteropParseWarning
                   : CppInteropParseError,
               info.message);
+          builder.OverrideSnippet(info.snippet);
           for (;
                i + 1 < diagnostic_infos_.size() &&
                diagnostic_infos_[i + 1].level == clang::DiagnosticsEngine::Note;
                ++i) {
             const ClangDiagnosticInfo& note_info = diagnostic_infos_[i + 1];
             CARBON_DIAGNOSTIC(CppInteropParseNote, Note, "{0}", std::string);
-            builder.Note(SemIR::LocId(note_info.import_ir_inst_id),
-                         CppInteropParseNote, note_info.message);
+            builder
+                .Note(SemIR::LocId(note_info.import_ir_inst_id),
+                      CppInteropParseNote, note_info.message)
+                .OverrideSnippet(note_info.snippet);
           }
+          // TODO: This will apply all current Carbon annotation functions. We
+          // should instead track how Clang's context notes and Carbon's
+          // annotation functions are interleaved, and interleave the notes in
+          // the same order.
           builder.Emit();
           break;
         }
@@ -218,11 +219,36 @@ class CarbonClangDiagnosticConsumer : public clang::DiagnosticConsumer {
   }
 
  private:
-  // The type-checking context in which we're running Clang.
-  Context* context_;
+  // A diagnostics renderer based on clang's TextDiagnostic that captures just
+  // the code context (the snippet).
+  class CodeContextRenderer : public clang::TextDiagnostic {
+   public:
+    using TextDiagnostic::TextDiagnostic;
 
-  // The compiler invocation that is producing the diagnostics.
-  std::shared_ptr<clang::CompilerInvocation> invocation_;
+    void emitDiagnosticMessage(
+        clang::FullSourceLoc /*loc*/, clang::PresumedLoc /*ploc*/,
+        clang::DiagnosticsEngine::Level /*level*/, llvm::StringRef /*message*/,
+        llvm::ArrayRef<clang::CharSourceRange> /*ranges*/,
+        clang::DiagOrStoredDiag /*info*/) override {}
+    void emitDiagnosticLoc(
+        clang::FullSourceLoc /*loc*/, clang::PresumedLoc /*ploc*/,
+        clang::DiagnosticsEngine::Level /*level*/,
+        llvm::ArrayRef<clang::CharSourceRange> /*ranges*/) override {}
+
+    // emitCodeContext is inherited from clang::TextDiagnostic.
+
+    void emitIncludeLocation(clang::FullSourceLoc /*loc*/,
+                             clang::PresumedLoc /*ploc*/) override {}
+    void emitImportLocation(clang::FullSourceLoc /*loc*/,
+                            clang::PresumedLoc /*ploc*/,
+                            llvm::StringRef /*module_name*/) override {}
+    void emitBuildingModuleLocation(clang::FullSourceLoc /*loc*/,
+                                    clang::PresumedLoc /*ploc*/,
+                                    llvm::StringRef /*module_name*/) override {}
+
+    // beginDiagnostic and endDiagnostic are inherited from
+    // clang::TextDiagnostic in case it wants to do any setup / teardown work.
+  };
 
   // Information on a Clang diagnostic that can be converted to a Carbon
   // diagnostic.
@@ -236,12 +262,40 @@ class CarbonClangDiagnosticConsumer : public clang::DiagnosticConsumer {
 
     // The Clang diagnostic textual message.
     std::string message;
+
+    // The code snippet produced by clang.
+    std::string snippet;
   };
+
+  // The type-checking context in which we're running Clang.
+  Context* context_;
+
+  // The compiler invocation that is producing the diagnostics.
+  std::shared_ptr<clang::CompilerInvocation> invocation_;
 
   // Collects the information for all Clang diagnostics to be converted to
   // Carbon diagnostics after the context has been initialized with the Clang
   // AST.
   llvm::SmallVector<ClangDiagnosticInfo> diagnostic_infos_;
+};
+
+// A wrapper around a clang::CompilerInvocation that allows us to make a shallow
+// copy of most of the invocation and only make a deep copy of the parts that we
+// want to change.
+//
+// clang::CowCompilerInvocation almost allows this, but doesn't derive from
+// CompilerInvocation or support shallow copies from a CompilerInvocation, so is
+// not useful to us as we can't build an ASTUnit from it.
+class ShallowCopyCompilerInvocation : public clang::CompilerInvocation {
+ public:
+  explicit ShallowCopyCompilerInvocation(
+      const clang::CompilerInvocation& invocation) {
+    shallow_copy_assign(invocation);
+
+    // The preprocessor options are modified to hold a replacement includes
+    // buffer, so make our own version of those options.
+    PPOpts = std::make_shared<clang::PreprocessorOptions>(*PPOpts);
+  }
 };
 
 }  // namespace
@@ -250,11 +304,14 @@ class CarbonClangDiagnosticConsumer : public clang::DiagnosticConsumer {
 // compilation errors where encountered or the generated AST is null due to an
 // error. Sets the AST in the context's `sem_ir`.
 // TODO: Consider to always have a (non-null) AST.
-static auto GenerateAst(Context& context,
-                        llvm::ArrayRef<Parse::Tree::PackagingNames> imports,
-                        llvm::IntrusiveRefCntPtr<llvm::vfs::FileSystem> fs,
-                        std::shared_ptr<clang::CompilerInvocation> invocation)
+static auto GenerateAst(
+    Context& context, llvm::ArrayRef<Parse::Tree::PackagingNames> imports,
+    llvm::IntrusiveRefCntPtr<llvm::vfs::FileSystem> fs,
+    std::shared_ptr<clang::CompilerInvocation> base_invocation)
     -> std::pair<std::unique_ptr<clang::ASTUnit>, bool> {
+  auto invocation =
+      std::make_shared<ShallowCopyCompilerInvocation>(*base_invocation);
+
   // Build a diagnostics engine.
   llvm::IntrusiveRefCntPtr<clang::DiagnosticsEngine> diags(
       clang::CompilerInstance::createDiagnostics(
@@ -274,9 +331,10 @@ static auto GenerateAst(Context& context,
   // TODO: Modify the frontend options to specify this memory buffer as input
   // instead of remapping the file.
   std::string includes = GenerateCppIncludesHeaderCode(context, imports);
-  auto includes_buffer = llvm::MemoryBuffer::getMemBuffer(includes, file_name);
+  auto includes_buffer =
+      llvm::MemoryBuffer::getMemBufferCopy(includes, file_name);
   invocation->getPreprocessorOpts().addRemappedFile(file_name,
-                                                    includes_buffer.get());
+                                                    includes_buffer.release());
 
   clang::DiagnosticErrorTrap trap(*diags);
 
@@ -284,9 +342,6 @@ static auto GenerateAst(Context& context,
   auto ast = clang::ASTUnit::LoadFromCompilerInvocation(
       invocation, std::make_shared<clang::PCHContainerOperations>(), nullptr,
       diags, new clang::FileManager(invocation->getFileSystemOpts(), fs));
-
-  // Remove remapped file before its underlying storage is destroyed.
-  invocation->getPreprocessorOpts().clearRemappedFiles();
 
   // Attach the AST to SemIR. This needs to be done before we can emit any
   // diagnostics, so their locations can be properly interpreted by our
@@ -377,6 +432,9 @@ static auto ClangLookup(Context& context, SemIR::NameScopeId scope_id,
   CARBON_CHECK(ast);
   clang::Sema& sema = ast->getSema();
 
+  // TODO: Map the LocId of the lookup to a clang SourceLocation and provide it
+  // here so that clang's diagnostics can point into the carbon code that uses
+  // the name.
   clang::LookupResult lookup(
       sema,
       clang::DeclarationNameInfo(

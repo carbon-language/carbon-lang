@@ -35,11 +35,13 @@ library "[[@TEST_NAME]]";
 import Cpp library "declaration.h";
 
 fn MyF() {
-  // CHECK:STDERR: fail_use_declaration_as_definition.carbon:[[@LINE+6]]:12: error: binding pattern has incomplete type `Bar` in name binding declaration [IncompleteTypeInBindingDecl]
+  // CHECK:STDERR: fail_use_declaration_as_definition.carbon:[[@LINE+8]]:12: error: binding pattern has incomplete type `Bar` in name binding declaration [IncompleteTypeInBindingDecl]
   // CHECK:STDERR:   var bar: Cpp.Bar;
   // CHECK:STDERR:            ^~~~~~~
-  // CHECK:STDERR: fail_use_declaration_as_definition.carbon:[[@LINE-6]]:1: in import [InImport]
-  // CHECK:STDERR: ./declaration.h:2: note: class was forward declared here [ClassForwardDeclaredHere]
+  // CHECK:STDERR: fail_use_declaration_as_definition.carbon:[[@LINE-6]]:10: in file included here [InCppInclude]
+  // CHECK:STDERR: ./declaration.h:2:7: note: class was forward declared here [ClassForwardDeclaredHere]
+  // CHECK:STDERR: union Bar;
+  // CHECK:STDERR:       ^
   // CHECK:STDERR:
   var bar: Cpp.Bar;
 }

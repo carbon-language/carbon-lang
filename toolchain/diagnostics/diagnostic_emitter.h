@@ -75,6 +75,12 @@ class Emitter {
     Builder(Builder&&) noexcept = default;
     auto operator=(Builder&&) noexcept -> Builder& = default;
 
+    // Overrides the snippet for the most recently added diagnostic or note with
+    // the given text. The provided override should include the caret text as
+    // well as the source snippet. An empty snippet restores the default
+    // behavior of printing the original source line.
+    auto OverrideSnippet(llvm::StringRef snippet) -> Builder&;
+
     // Adds a note diagnostic attached to the main diagnostic being built.
     // The API mirrors the main emission API: `Emitter::Emit`.
     // For the expected usage see the builder API: `Emitter::Build`.
@@ -301,6 +307,16 @@ template <typename Arg>
 struct DiagnosticTypeForArg<Arg> : public Arg::DiagnosticType {};
 
 }  // namespace Internal
+
+template <typename LocT>
+auto Emitter<LocT>::Builder::OverrideSnippet(llvm::StringRef snippet)
+    -> Builder& {
+  if (!emitter_) {
+    return *this;
+  }
+  diagnostic_.messages.back().loc.snippet = snippet;
+  return *this;
+}
 
 template <typename LocT>
 template <typename... Args>
