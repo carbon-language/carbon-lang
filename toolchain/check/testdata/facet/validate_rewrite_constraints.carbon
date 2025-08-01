@@ -618,7 +618,7 @@ fn F(AA:! A where .X = (), BB:! B where .Y = {}) {
   AA as (C(BB) where .AX = () and .BY = {});
 }
 
-// --- facet_type_concrete_types_become_final_blank_impl_types.carbon
+// --- facet_type_concrete_types_become_final_blanket_impl_types.carbon
 library "[[@TEST_NAME]]";
 
 interface A { let X:! type; }
@@ -630,6 +630,24 @@ final impl forall [AA:! A, BB:! B] AA as C(BB) where .AX = AA.X and .BY = BB.Y {
 
 fn F(AA:! A where .X = (), BB:! B where .Y = {}) {
   AA as (C(BB) where .AX = () and .BY = {});
+}
+
+// --- fail_facet_type_concrete_types_become_final_blanket_impl_types_wrong_types.carbon
+library "[[@TEST_NAME]]";
+
+interface A { let X:! type; }
+interface B { let Y:! type; }
+
+interface C(BB:! B) { let AX:! type; let BY:! type; }
+
+final impl forall [AA:! A, BB:! B] AA as C(BB) where .AX = AA.X and .BY = BB.Y {}
+
+fn F(AA:! A where .X = (), BB:! B where .Y = {}) {
+  // CHECK:STDERR: fail_facet_type_concrete_types_become_final_blanket_impl_types_wrong_types.carbon:[[@LINE+4]]:3: error: cannot convert type `AA` that implements `A where .(A.X) = ()` into type implementing `C(BB as B) where .(C(BB as B).AX) = {} and .(C(BB as B).BY) = ()` [ConversionFailureFacetToFacet]
+  // CHECK:STDERR:   AA as (C(BB) where .AX = {} and .BY = ());
+  // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+  // CHECK:STDERR:
+  AA as (C(BB) where .AX = {} and .BY = ());
 }
 
 // --- chain_in_target.carbon
