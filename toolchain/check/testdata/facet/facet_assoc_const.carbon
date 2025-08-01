@@ -140,7 +140,9 @@ fn F(T:! M & (L where .W = {}), a: T.W) {
   // the impl or `{}` from the facet type of T.
 
   let b: () = G(T, a);
-  // FIXME: This diagnostic sucks. Can we make the facet type's value take precidence over final, since that's what is written in the code and more likely to show up in diagnostics?
+  // FIXME: This diagnostic sucks. Can we make the facet type's value take
+  // precidence over final, since that's what is written in the code and more
+  // likely to show up in diagnostics?
   //
   // CHECK:STDERR: fail_two_different_combined_from_final_impl_and_facet.carbon:[[@LINE+7]]:15: error: cannot convert type `T` that implements `L & M where .(L.W) = {}` into type implementing `L where .(L.W) = {}` [ConversionFailureFacetToFacet]
   // CHECK:STDERR:   let c: {} = H(T, a);
