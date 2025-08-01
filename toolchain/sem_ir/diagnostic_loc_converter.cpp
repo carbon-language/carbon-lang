@@ -3,6 +3,7 @@
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
 #include "toolchain/sem_ir/diagnostic_loc_converter.h"
+
 #include "clang/Frontend/DiagnosticRenderer.h"
 
 namespace Carbon::SemIR {
@@ -43,8 +44,7 @@ class ClangImportCollector : public clang::DiagnosticRenderer {
       llvm::SmallVectorImpl<DiagnosticLocConverter::ImportLoc>* imports)
       : DiagnosticRenderer(lang_opts, diag_opts), imports_(imports) {}
 
-  void emitDiagnosticMessage(clang::FullSourceLoc loc,
-                             clang::PresumedLoc ploc,
+  void emitDiagnosticMessage(clang::FullSourceLoc loc, clang::PresumedLoc ploc,
                              clang::DiagnosticsEngine::Level /*level*/,
                              llvm::StringRef message,
                              llvm::ArrayRef<clang::CharSourceRange> /*ranges*/,
@@ -102,7 +102,7 @@ class ClangImportCollector : public clang::DiagnosticRenderer {
   // as context.
   bool emitted_message_ = false;
 };
-}
+}  // namespace
 
 auto DiagnosticLocConverter::ConvertWithImports(LocId loc_id,
                                                 bool token_only) const
