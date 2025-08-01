@@ -1830,7 +1830,7 @@ static auto TryResolveTypedInst(ImportRefResolver& resolver,
 
 // Make a declaration of a function. This is done as a separate step from
 // importing the function declaration in order to resolve cycles.
-static auto MakeFunctionDecl(ImportRefResolver& context,
+static auto MakeFunctionDecl(ImportContext& context,
                              const SemIR::Function& import_function,
                              SemIR::SpecificId specific_id)
     -> std::pair<SemIR::FunctionId, SemIR::ConstantId> {
