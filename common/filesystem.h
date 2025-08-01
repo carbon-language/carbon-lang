@@ -28,9 +28,9 @@
 // Provides a filesystem library for use in the Carbon project.
 //
 // This library provides an API designed to support modern Unix / Linux / POSIX
-// style filesystem operations efficiently and securely, while also carefully
-// staying to a set of abstractions and operations that can be reasonably
-// implemented even on Windows platforms.
+// style filesystem operations, often called "Unix-like"[1] here, efficiently
+// and securely, while also carefully staying to a set of abstractions and
+// operations that can be reasonably implemented even on Windows platforms.
 //
 // TODO: Currently, there is not a Windows implementation, but this is actively
 // desired when we have testing infrastructure in place for Windows development.
@@ -38,8 +38,8 @@
 // here are manually compared with LLVM's filesystem library to ensure a
 // reasonable Windows implementation is possible.
 //
-// The library uses C++'s `std::filesystem::path` as its abstraction for paths,
-// and provides two core APIs: open directories and files.
+// The library uses C++'s `std::filesystem::path`[2] as its abstraction for
+// paths. This library provides two core APIs: open directories and files.
 //
 // Open directories provide relative- and absolute-path based operations to open
 // other directories or files. This allows secure creation of directories even
@@ -63,55 +63,111 @@
 // enumeration *values* should not be expected to be portable across platforms.
 // Customizing the values is part of the larger TODO to port the implementation
 // to Windows.
+//
+// [1]: Note that we refer to platforms as "Unix-like" rather than POSIX as we
+// want
+//      to group together all the OSes where the Unix-derived APIs are the
+//      primary and expected way to interact with the filesystem, regardless of
+//      whether a POSIX conforming API happens to exist. For example, both macOS
+//      and WSL (Windows Subsystem for Linux) _are_ Unix-like as those are the
+//      primary APIs used to access files in those environments. But Windows
+//      itself _isn't_ Unix-like, even considering things like the defunct NT
+//      POSIX subsystem or modern WSL, as those aren't the primary filesystem
+//      APIs for the (non-WSL) Windows platform. This also matches the rough OS
+//      classification used in LLVM.
+//
+// [2]: The path parameters to most APIs are accepted by-copied-value in this
+// API
+//      because we often propagate the path into any returned errors. Using
+//      `const &` parameters would either require a copy into the error (rather
+//      than a move) or create complex lifetime constraints on the returned
+//      errors. Using by-copying-value parameters avoids this complexity, and in
+//      practice does not appear to cause a significant performance cost. Many
+//      callers form paths exclusively for a single call, and because these must
+//      be null-terminated they already typically require their own object. We
+//      also expect significantly shorter paths because we operate relative to
+//      directories (see `openat` discussion above), making the underlying
+//      small-size-optimization `std::filesystem::path` inherits from
+//      `std::string` even more effective than usual.
 namespace Carbon::Filesystem {
 
-// Enumerates the different open access modes available. These are largely used
-// to parameterize types in order to constrain which API subset is available.
-enum class OpenAccess {
-  ReadOnly = O_RDONLY,
-  WriteOnly = O_WRONLY,
-  ReadWrite = O_RDWR,
-};
-
-// The different creation styles available when opening a file or directory.
+// The different creation options available when opening a file or directory.
 //
 // Because these are by far the most common parameters and they have unambiguous
 // names, the enumerators are also available directly within the namespace.
-enum class CreationFlags {
+enum class CreationOptions {
+  // Requires an existing file or directory.
   OpenExisting = 0,
+
+  // Opens an existing file or directory, and create one otherwise.
   OpenAlways = O_CREAT,
+
+  // Opens and truncates an existing file or creates a new file. Provides
+  // consistent behavior of an empty file regardless of the starting state. This
+  // cannot be used for directories as they cannot be truncated on open. This is
+  // essentially a short-cut for using `OpenAlways` and passing the
+  // `OpenFlags::Truncate` below.
   CreateAlways = O_CREAT | O_TRUNC,
+
+  // Requires no existing file or directory and will error if one is found. Only
+  // succeeds when it creates a new file or directory.
   CreateNew = O_CREAT | O_EXCL,
 };
-using CreationFlags::CreateAlways;
-using CreationFlags::CreateNew;
-using CreationFlags::OpenAlways;
-using CreationFlags::OpenExisting;
+using enum CreationOptions;
 
 // General flags to control the behavior of opening files that aren't covered by
 // other more specific flags.
-enum class OpenFlags {
+//
+// These can be combined using the `|` operator where the semantics are
+// compatible, although not all are.
+enum class OpenFlags : int {
   None = 0,
+
+  // Open the file for appending rather than with the position at the start.
+  //
+  // An error to combine with `Truncate` or to use with `CreateAlways`.
   Append = O_APPEND,
+
+  // Open the file and truncate its contents to be empty.
   Truncate = O_TRUNC,
 };
+inline auto operator|(OpenFlags lhs, OpenFlags rhs) -> OpenFlags {
+  return static_cast<OpenFlags>(static_cast<int>(lhs) | static_cast<int>(rhs));
+}
 
 // Flags controlling which permissions should be checked in an `Access` call.
 //
-// These permissions can also be combined with the `|` operator, so `AccessCheckFlags::Read |
-// AccessCheckFlags::Write` checks for both read and write access.
-enum class AccessCheck : int {
+// These permissions can also be combined with the `|` operator, so
+// `AccessCheckFlags::Read | AccessCheckFlags::Write` checks for both read and
+// write access.
+enum class AccessCheckFlags : int {
   Exists = F_OK,
   Read = R_OK,
   Write = W_OK,
   Execute = X_OK,
 };
-inline auto operator|(AccessCheck lhs, AccessCheck rhs) -> AccessCheck {
-  return static_cast<AccessCheck>(static_cast<int>(lhs) |
-                                  static_cast<int>(rhs));
+inline auto operator|(AccessCheckFlags lhs, AccessCheckFlags rhs)
+    -> AccessCheckFlags {
+  return static_cast<AccessCheckFlags>(static_cast<int>(lhs) |
+                                       static_cast<int>(rhs));
 }
 
-// The underlying type that should be used to model the mode of a type.
+// The underlying integer type that should be used to model the mode of a file.
+//
+// The mode is used in this API to represent both the permission bit mask and
+// special properties of a file. For example, on Unix-like systems, it combines
+// permissions with set-user-ID, set-group-ID, and sticky bits.
+//
+// The permission bits in the mode are represented using the Unix-style bit
+// pattern that facilitates octal modeling:
+// - Owner bit mask: 0700
+// - Group bit mask: 0070
+// - All bit mask:   0007
+//
+// For each, read is an octal value of `1`, write `2`, and execute `4`.
+//
+// Windows gracefully degrades to the effective permissions modeled using
+// these values.
 using ModeType = mode_t;
 
 // Enumeration of the different file types recognized.
@@ -126,14 +182,24 @@ enum class FileType : ModeType {
   RegularFile = S_IFREG,
   SymbolicLink = S_IFLNK,
 
-  // Non-portable Unix-variant specific types.
+  // Non-portable Unix-like platform specific types.
   Fifo = S_IFIFO,
   CharDevice = S_IFCHR,
   BlockDevice = S_IFBLK,
   Socket = S_IFSOCK,
 
-  // Mask for the Unix-variant types to allow easy extraction.
+  // Mask for the Unix-like types to allow easy extraction.
   Mask = S_IFMT,
+};
+
+// Enumerates the different open access modes available.
+//
+// These are largely used to parameterize types in order to constrain which API
+// subset is available, and rarely needed directly.
+enum class OpenAccess {
+  ReadOnly = O_RDONLY,
+  WriteOnly = O_WRONLY,
+  ReadWrite = O_RDWR,
 };
 
 // Forward declarations of various types that appear in APIs.
@@ -183,18 +249,8 @@ class FileStatus {
   auto is_file() const -> bool { return type() == FileType::RegularFile; }
   auto is_symlink() const -> bool { return type() == FileType::SymbolicLink; }
 
-  // The read, write, and execute permissions for user, group, and others.
-  //
-  // These are represented using the Unix-style bit pattern that facilitates
-  // octal modeling:
-  // - Owner bit mask: 0700
-  // - Group bit mask: 0070
-  // - All bit mask:   0007
-  //
-  // For each, read is an octal value of `1`, write `2`, and execute `4`.
-  //
-  // Windows gracefully degrades to the effective permissions modeled using
-  // these values.
+  // The read, write, and execute permissions for user, group, and others. See
+  // the `ModeType` documentation for how to interpret the result.
   auto permissions() const -> ModeType { return stat_buf_.st_mode & 0777; }
 
   // Non-portable APIs only available on Unix-like systems. See the
@@ -230,12 +286,6 @@ class Internal::FileRefBase {
   // handle in that case. This is to support rebinding operations.
   FileRefBase() = default;
 
-  // These objects are movable and copyable.
-  FileRefBase(FileRefBase&&) = default;
-  FileRefBase(const FileRefBase&) = default;
-  auto operator=(FileRefBase&&) -> FileRefBase& = default;
-  auto operator=(const FileRefBase&) -> FileRefBase& = default;
-
   // Computes the file status.
   //
   // Analogous to the Unix-like `fstat` call.
@@ -251,8 +301,8 @@ class Internal::FileRefBase {
   //
   // On success, this returns a new slice from the start to the end of the
   // successfully read bytes. These will always be located in the passed-in
-  // buffer, but not all of the buffer may be filled. A partial read does not mean that
-  // the end of the file has been reached.
+  // buffer, but not all of the buffer may be filled. A partial read does not
+  // mean that the end of the file has been reached.
   //
   // When a successful read with an *empty* slice is returned, that represents
   // reaching EOF on the underlying file successfully and there is no more data
@@ -299,6 +349,10 @@ class Internal::FileRefBase {
   // provide a single, non-templated implementation.
   auto Close() && -> ErrorOr<Success, FdError>;
 
+  // Factored out code to destroy an open file. This calls `Close` above, checks
+  // that it did not produce an error, and resets the reference to an invalid
+  // state similar to the default constructor.
+  //
   // Note: this is a private API that should not be made public, and should only
   // be used by the implementation of subclass destructors. It should also only
   // be called for subclasses with *ownership* of the file reference, and is
@@ -343,12 +397,6 @@ class FileRef : public Internal::FileRefBase {
   // This object can be default constructed, but will hold an invalid file
   // handle in that case. This is to support rebinding operations.
   FileRef() = default;
-
-  // These objects are movable and copyable.
-  FileRef(FileRef&&) = default;
-  FileRef(const FileRef&) = default;
-  auto operator=(FileRef&&) -> FileRef& = default;
-  auto operator=(const FileRef&) -> FileRef& = default;
 
   // Read and Write methods that delegate to the `FileRefBase` implementations,
   // but require the relevant access. See the methods on `FileRefBase` for full
@@ -406,7 +454,6 @@ class File : public FileRef<A> {
   File() = default;
 
   // File objects are move-only as they model ownership.
-  File(const File&) = delete;
   File(File&& arg) noexcept : FileRef<A>(arg.fd_) { arg.fd_ = -1; }
   auto operator=(File&& arg) noexcept -> File& {
     this->Destroy();
@@ -414,13 +461,20 @@ class File : public FileRef<A> {
     arg.fd_ = -1;
     return *this;
   }
+  File(const File&) = delete;
+  auto operator=(const File&) -> File& = delete;
   ~File() { this->Destroy(); }
 
+  // Closes the open file and leaves the file in a moved-from state.
+  //
+  // The signature is `auto Close() && -> ErrorOr<Success, FdError>`.
+  //
   // This type provides ownership of the file, so expose the `Close` method to
   // allow checked destruction and release of the file resources.
   //
-  // See the base class for full documentation of the `Close` signature and how
-  // to handle errors.
+  // If any errors are encountered during closing, returns them. Note that the
+  // file should still be considered closed, and the object is moved-from even
+  // if errors occur.
   using Internal::FileRefBase::Close;
 
  private:
@@ -477,25 +531,28 @@ class DirRef {
 
   // Checks that the provided path can be accessed.
   auto Access(std::filesystem::path path,
-              AccessCheck check = AccessCheck::Exists)
+              AccessCheckFlags check = AccessCheckFlags::Exists)
       -> ErrorOr<bool, PathError>;
 
-  // Returns the `FileStatus` for the open directory.
+  // Reads the `FileStatus` for the open directory.
   auto Stat() -> ErrorOr<FileStatus, FdError>;
 
-  // Returns the `FileStatus` for the provided path (without opening it).
+  // Reads the `FileStatus` for the provided path (without opening it).
   //
   // Like the `stat` system call on Unix-like platforms, this will follow any
   // symlinks and provide the status of the underlying file or directory.
   auto Stat(std::filesystem::path path) -> ErrorOr<FileStatus, PathError>;
 
-  // Returns the `FileStatus` for the provided path (without opening it).
+  // Reads the `FileStatus` for the provided path (without opening it).
   //
   // Like the `lstat` system call on Unix-like platforms, this will *not* follow
   // symlinks, and instead will return the status of the symlink itself.
   auto Lstat(std::filesystem::path path) -> ErrorOr<FileStatus, PathError>;
 
-  // Returns the contents of the symlink at the provided path.
+  // Reads the target string of the symlink at the provided path.
+  //
+  // This does not follow the symlink, and does not require the symlink target
+  // to be valid or exist. It merely reads the textual string.
   //
   // Returns an error if called with a path that is not a symlink.
   auto Readlink(std::filesystem::path path) -> ErrorOr<std::string, PathError>;
@@ -503,25 +560,31 @@ class DirRef {
   // Opens the provided path as a read-only file.
   //
   // The interaction with an existing file is governed by `creation_flags` and
-  // defaults to error unless opening an existing file.
+  // defaults to error unless opening an existing file. When creating a file,
+  // only the leaf component in the provided path can be created with this call.
   //
   // If creating a file, the file is created with `creation_mode` which defaults
-  // to a restrictive `0600`. Additional flags can be provided to `flags` to
-  // control other aspects of behavior on open.
+  // to a restrictive `0600`. The creation permission bits are also completely
+  // independent of the access provided via the opened file. For example,
+  // creating with write permissions doesn't impact whether write access is
+  // available via the returned file. And creating _without_ write permission
+  // bits is compatible with opening the file for writing.
+  //
+  // Additional flags can be provided to `flags` to control other aspects of
+  // behavior on open.
   //
   // This is an error if the path exists and is a directory. If the path is a
   // symlink, it will follow the symlink.
   auto OpenReadOnly(std::filesystem::path path,
-                    CreationFlags creation_flags = OpenExisting,
+                    CreationOptions creation_flags = OpenExisting,
                     ModeType creation_mode = 0600,
                     OpenFlags flags = OpenFlags::None)
       -> ErrorOr<ReadFile, PathError>;
 
   // Opens the provided path as a write-only file. Otherwise, behaves as
-  // `OpenReadOnly`. Note that write-access of the open file and the permissions
-  // in the creation mode are orthogonal.
+  // `OpenReadOnly`.
   auto OpenWriteOnly(std::filesystem::path path,
-                     CreationFlags creation_flags = OpenExisting,
+                     CreationOptions creation_flags = OpenExisting,
                      ModeType creation_mode = 0600,
                      OpenFlags flags = OpenFlags::None)
       -> ErrorOr<WriteFile, PathError>;
@@ -529,7 +592,7 @@ class DirRef {
   // Opens the provided path as a read-and-write file. Otherwise, behaves as
   // `OpenReadOnly`.
   auto OpenReadWrite(std::filesystem::path path,
-                     CreationFlags creation_flags = OpenExisting,
+                     CreationOptions creation_flags = OpenExisting,
                      ModeType creation_mode = 0600,
                      OpenFlags flags = OpenFlags::None)
       -> ErrorOr<ReadWriteFile, PathError>;
@@ -555,10 +618,10 @@ class DirRef {
   // process's control or produce an error due to an existing directory.
   // However, no validation is done on any prefix path components leading to the
   // leaf component created. When securely creating directories, the initial
-  // creation should typically have a single component from a known and opened
+  // creation should typically have a single component from an opened existing
   // parent directory.
   auto OpenDir(std::filesystem::path path,
-               CreationFlags creation_flags = OpenExisting,
+               CreationOptions creation_flags = OpenExisting,
                ModeType creation_mode = 0700) -> ErrorOr<Dir, PathError>;
 
   // Reads the file at the provided path to a string.
@@ -574,7 +637,7 @@ class DirRef {
   // to `creation_flags` as necessary, writing `content` to it, and closing it.
   // Errors from any step are returned.
   auto WriteFileFromString(std::filesystem::path path, llvm::StringRef content,
-                           CreationFlags creation_flags = CreateAlways)
+                           CreationOptions creation_flags = CreateAlways)
       -> ErrorOr<Success, PathError>;
 
   // Changes the current working directory to this directory.
@@ -593,6 +656,9 @@ class DirRef {
   // error checking on whether it exists or is sensible. Also, the target string
   // set will be up to the first null byte in `target`, regardless of its
   // `size`. This will not overwrite an existing symlink at the provided path.
+  //
+  // Also note that the written symlink will be the null-terminated string
+  // `target.c_str()`, ignoring everything past any embedded null bytes.
   auto Symlink(std::filesystem::path path, const std::string& target)
       -> ErrorOr<Success, PathError>;
 
@@ -617,7 +683,11 @@ class DirRef {
                          ModeType creation_mode = 0700)
       -> ErrorOr<Dir, PathError>;
 
-  // Unlink the last component of the path.
+  // Unlink the last component of the path, removing that name from its parent
+  // directory.
+  //
+  // If this was the last link to the underlying file its contents will be
+  // removed when the last open file handle to it is closed.
   //
   // The path must not be a directory. If the path is a symbolic link, the link
   // will be removed, not the target. Models the behavior of `unlinkat(2)` on
@@ -630,13 +700,12 @@ class DirRef {
   // `rmdirat(2)` on Unix-like platforms.
   auto Rmdir(std::filesystem::path path) -> ErrorOr<Success, PathError>;
 
-  // Recursively remove the directory entry of the last component of the path.
+  // Remove the directory tree identified by the last component of the path.
   //
   // The provided path must name a directory. This removes all files and
   // subdirectories contained within that named directory and then removes the
   // directory itself once empty.
-  auto RmdirRecursively(std::filesystem::path path)
-      -> ErrorOr<Success, PathError>;
+  auto Rmtree(std::filesystem::path path) -> ErrorOr<Success, PathError>;
 
  protected:
   constexpr DirRef() = default;
@@ -650,7 +719,7 @@ class DirRef {
   // Generic implementation of the various `Open*` variants using the
   // `OpenAccess` enumerator.
   template <OpenAccess A>
-  auto OpenImpl(std::filesystem::path path, CreationFlags creation_flags,
+  auto OpenImpl(std::filesystem::path path, CreationOptions creation_flags,
                 ModeType creation_mode, OpenFlags flags)
       -> ErrorOr<File<A>, PathError>;
 
@@ -687,13 +756,14 @@ class Dir : public DirRef {
 
   // Dir objects are move-only as they model ownership.
   Dir(Dir&& arg) noexcept : DirRef(arg.dfd_) { arg.dfd_ = -1; }
-  Dir(const Dir&) = delete;
   auto operator=(Dir&& arg) noexcept -> Dir& {
     Destroy();
     dfd_ = arg.dfd_;
     arg.dfd_ = -1;
     return *this;
   }
+  Dir(const Dir&) = delete;
+  auto operator=(const Dir&) -> Dir& = delete;
   constexpr ~Dir();
 
   // An optimized way to read the entries in a directory when moving from an
@@ -703,8 +773,8 @@ class Dir : public DirRef {
   // That `Reader` also supports the full `DirRef` API and so can often be used
   // without retaining the original `Dir`.
   //
-  // For more details about `Read`, see the documentation on `DirRef::Read`.
-  auto Read() && -> ErrorOr<Reader, FdError>;
+  // For more details about reading, see the documentation on `DirRef::Read`.
+  auto TakeAndRead() && -> ErrorOr<Reader, FdError>;
 
   // Also include `DirRef`'s read API.
   using DirRef::Read;
@@ -718,7 +788,8 @@ class Dir : public DirRef {
 
   // Prevent implicit creation of a `Dir` object from a `RemovingDir` which will
   // end up as a subclass below and represent harmful implicit slicing. Instead,
-  // require friendship and an explicit construction that delegates.
+  // require friendship and an explicit construction on an _intended_ release of
+  // the removing semantics.
   explicit Dir(RemovingDir&& arg) noexcept;
 
   constexpr auto Destroy() -> void;
@@ -735,14 +806,27 @@ class Dir : public DirRef {
 // lifetime and handle any resultant errors.
 class RemovingDir : public Dir {
  public:
+  // Takes ownership of the open directory `d` and wraps it in a `RemovingDir`
+  // that will remove it on destruction using `abs_path`. Requires `abs_path` to
+  // be an absolute path and the desired path to remove on destruction.
+  //
+  // Note that there is no way for the implementation to validate what directory
+  // `abs_path` refers to, that is the responsibility of the caller.
+  explicit RemovingDir(Dir d, std::filesystem::path abs_path)
+      : Dir(std::move(d)), abs_path_(std::move(abs_path)) {
+    CARBON_CHECK(abs_path_.is_absolute(), "Relative path used for removal: {0}",
+                 abs_path_);
+  }
+
   RemovingDir() = default;
   RemovingDir(RemovingDir&& arg) = default;
-  explicit RemovingDir(Dir d, std::filesystem::path abs_path)
-      : Dir(std::move(d)), abs_path_(std::move(abs_path)) {}
-  ~RemovingDir();
   auto operator=(RemovingDir&& rhs) -> RemovingDir& = default;
+  ~RemovingDir();
 
-  auto abs_path() const -> const std::filesystem::path& [[clang::lifetimebound]] { return abs_path_; }
+  auto abs_path() const [[clang::lifetimebound]]
+  -> const std::filesystem::path& {
+    return abs_path_;
+  }
 
   // Releases the directory from being removed and returns just the underlying
   // owning handle.
@@ -808,7 +892,9 @@ class DirRef::Iterator
     return entry_.dent_ == rhs.entry_.dent_;
   }
 
-  auto operator*() const -> const Entry& [[clang::lifetimebound]] { return entry_; }
+  auto operator*() const [[clang::lifetimebound]] -> const Entry& {
+    return entry_;
+  }
   auto operator++() -> Iterator&;
 
  private:
@@ -846,6 +932,8 @@ class DirRef::Reader : public DirRef {
   Reader() = default;
   Reader(Reader&& arg) noexcept : DirRef(arg.dfd_), dirp_(arg.dirp_) {
     arg.dirp_ = nullptr;
+    // The directory file descriptor isn't owning, but clear it for clarity.
+    arg.dfd_ = -1;
   }
   Reader(const Reader&) = delete;
   auto operator=(Reader&& arg) noexcept -> Reader& {
@@ -853,6 +941,8 @@ class DirRef::Reader : public DirRef {
     dfd_ = arg.dfd_;
     dirp_ = arg.dirp_;
     arg.dirp_ = nullptr;
+    // The directory file descriptor isn't owning, but clear it for clarity.
+    arg.dfd_ = -1;
     return *this;
   }
   ~Reader() { Destroy(); }
@@ -1129,10 +1219,10 @@ inline auto DirRef::Read() & -> ErrorOr<Reader, FdError> {
     // loop and retry.
     return FdError(errno, "Dir::Read on '{0}'", dfd_);
   }
-  return Dir(dup_dfd).Read();
+  return Dir(dup_dfd).TakeAndRead();
 }
 
-inline auto DirRef::Access(std::filesystem::path path, AccessCheck check)
+inline auto DirRef::Access(std::filesystem::path path, AccessCheckFlags check)
     -> ErrorOr<bool, PathError> {
   if (faccessat(dfd_, path.c_str(), static_cast<int>(check), /*flags=*/0) ==
       0) {
@@ -1178,13 +1268,13 @@ inline auto DirRef::Readlink(std::filesystem::path path)
   constexpr ssize_t BufferSize = 256;
   char buffer[BufferSize];
   ssize_t read_bytes = readlinkat(dfd_, path.c_str(), buffer, BufferSize);
-  if (result == -1) {
+  if (read_bytes == -1) {
     return PathError(errno, "Dir::Readlink on '{0}' relative to '{1}'",
                      std::move(path), dfd_);
   }
-  if (result < BufferSize) {
+  if (read_bytes < BufferSize) {
     // We got the whole contents in one shot, return it.
-    return std::string(buffer, result);
+    return std::string(buffer, read_bytes);
   }
 
   // Otherwise, fallback to an out-of-line function to handle the slow path.
@@ -1192,7 +1282,7 @@ inline auto DirRef::Readlink(std::filesystem::path path)
 }
 
 inline auto DirRef::OpenReadOnly(std::filesystem::path path,
-                                 CreationFlags creation_flags,
+                                 CreationOptions creation_flags,
                                  ModeType creation_mode, OpenFlags flags)
     -> ErrorOr<ReadFile, PathError> {
   return OpenImpl<OpenAccess::ReadOnly>(path, creation_flags, creation_mode,
@@ -1200,7 +1290,7 @@ inline auto DirRef::OpenReadOnly(std::filesystem::path path,
 }
 
 inline auto DirRef::OpenWriteOnly(std::filesystem::path path,
-                                  CreationFlags creation_flags,
+                                  CreationOptions creation_flags,
                                   ModeType creation_mode, OpenFlags flags)
     -> ErrorOr<WriteFile, PathError> {
   return OpenImpl<OpenAccess::WriteOnly>(path, creation_flags, creation_mode,
@@ -1208,7 +1298,7 @@ inline auto DirRef::OpenWriteOnly(std::filesystem::path path,
 }
 
 inline auto DirRef::OpenReadWrite(std::filesystem::path path,
-                                  CreationFlags creation_flags,
+                                  CreationOptions creation_flags,
                                   ModeType creation_mode, OpenFlags flags)
     -> ErrorOr<ReadWriteFile, PathError> {
   return OpenImpl<OpenAccess::ReadWrite>(path, creation_flags, creation_mode,
@@ -1272,7 +1362,7 @@ inline auto DirRef::Rmdir(std::filesystem::path path)
 
 template <OpenAccess A>
 inline auto DirRef::OpenImpl(std::filesystem::path path,
-                             CreationFlags creation_flags,
+                             CreationOptions creation_flags,
                              ModeType creation_mode, OpenFlags flags)
     -> ErrorOr<File<A>, PathError> {
   for (;;) {
@@ -1294,7 +1384,7 @@ inline auto DirRef::OpenImpl(std::filesystem::path path,
 
 constexpr Dir::~Dir() { Destroy(); }
 
-inline auto Dir::Read() && -> ErrorOr<Reader, FdError> {
+inline auto Dir::TakeAndRead() && -> ErrorOr<Reader, FdError> {
   // Transition our file descriptor into a directory stream, clearing it in the
   // process.
   int dfd = dfd_;
@@ -1332,7 +1422,7 @@ inline auto RemovingDir::Remove() && -> ErrorOr<Success, PathError> {
 
   // Close the directory base object prior to removing it.
   static_cast<Dir&>(*this) = Dir();
-  return Cwd().RmdirRecursively(abs_path_);
+  return Cwd().Rmtree(abs_path_);
 }
 
 inline auto Dir::Iterator::operator++() -> Iterator& {
@@ -1359,14 +1449,14 @@ inline auto Dir::Reader::end() -> Iterator { return Iterator(); }
 
 inline auto Dir::Reader::Destroy() -> void {
   if (dirp_) {
-    int fd = dirfd(dirp_);
     int result = closedir(dirp_);
     // Closing a directory shouldn't produce interesting errors, so check fail
     // on them directly.
     CARBON_CHECK(result == 0, "{0}",
-                 FdError(errno, "Dir::Reader::Destroy on '{0}'", fd));
+                 FdError(errno, "Dir::Reader::Destroy on '{0}'", dfd_));
+    dirp_ = nullptr;
+    dfd_ = -1;
   }
-  dirp_ = nullptr;
 }
 
 }  // namespace Carbon::Filesystem

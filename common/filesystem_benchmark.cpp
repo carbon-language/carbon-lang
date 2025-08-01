@@ -44,7 +44,7 @@ struct BenchContext {
   absl::BitGen rng;
 
   BenchContext() : tmpdir(std::move(*MakeTmpDir())) {
-    auto f = tmpdir.OpenWriteOnly("file", CreationFlags::CreateNew);
+    auto f = tmpdir.OpenWriteOnly("file", CreationOptions::CreateNew);
     CARBON_CHECK(f.ok(), "{0}", f.error());
   }
 
@@ -59,7 +59,7 @@ struct BenchContext {
       int subdir_count;
     };
     llvm::SmallVector<DirStackEntry> dir_stack;
-    auto d = tmpdir.OpenDir(base, CreationFlags::CreateNew);
+    auto d = tmpdir.OpenDir(base, CreationOptions::CreateNew);
     CARBON_CHECK(d.ok(), "{0}", d.error());
     dir_stack.push_back({std::move(*d), entries, 0});
 
@@ -70,7 +70,7 @@ struct BenchContext {
       CARBON_CHECK(entries_per_subdir < num_entries);
       if (entries_per_subdir >= entries_per_dir && subdir_count < num_subdirs) {
         auto name = llvm::formatv("dir_{0}", subdir_count).str();
-        auto subdir = dir.OpenDir(name, CreationFlags::CreateNew);
+        auto subdir = dir.OpenDir(name, CreationOptions::CreateNew);
         CARBON_CHECK(subdir.ok(), "{0}", subdir.error());
         ++subdir_count;
 
@@ -85,7 +85,7 @@ struct BenchContext {
 
       for (int i = 0; i < num_files; ++i) {
         auto name = llvm::formatv("file_{0}", i).str();
-        auto f = dir.OpenWriteOnly(name, CreationFlags::CreateNew);
+        auto f = dir.OpenWriteOnly(name, CreationOptions::CreateNew);
         CARBON_CHECK(f.ok(), "{0}", f.error());
         auto close_result = std::move(*f).Close();
         CARBON_CHECK(close_result.ok(), "{0}", close_result.error());
@@ -122,7 +122,8 @@ auto BM_CreateRemove(benchmark::State& state) -> void {
   for (auto _ : state) {
     if constexpr (Comp == Carbon) {
       // Create the file by opening it.
-      auto f = context.tmpdir.OpenWriteOnly(filename, CreationFlags::CreateNew);
+      auto f =
+          context.tmpdir.OpenWriteOnly(filename, CreationOptions::CreateNew);
       CARBON_CHECK(f.ok(), "{0}", f.error());
       // Close it right away.
       auto close_result = std::move(*f).Close();
@@ -155,7 +156,8 @@ auto BM_Read(benchmark::State& state) -> void {
   int length = state.range(0);
   std::string content = GetText(length);
   {
-    auto f = context.tmpdir.OpenWriteOnly("file", CreationFlags::CreateAlways);
+    auto f =
+        context.tmpdir.OpenWriteOnly("file", CreationOptions::CreateAlways);
     CARBON_CHECK(f.ok(), "{0}", f.error());
     auto write_result = f->WriteFromString(content);
     CARBON_CHECK(write_result.ok(), "{0}", write_result.error());
@@ -201,7 +203,7 @@ auto BM_Write(benchmark::State& state) -> void {
   for (auto _ : state) {
     if constexpr (Comp == Carbon) {
       auto f =
-          context.tmpdir.OpenWriteOnly("file", CreationFlags::CreateAlways);
+          context.tmpdir.OpenWriteOnly("file", CreationOptions::CreateAlways);
       CARBON_CHECK(f.ok(), "{0}", f.error());
       auto write_result = f->WriteFromString(content);
       CARBON_CHECK(write_result.ok(), "{0}", write_result.error());
@@ -240,7 +242,7 @@ auto BM_RemoveTree(benchmark::State& state) -> void {
     for (int i = 0; i < batch_size; ++i) {
       std::string tree = llvm::formatv("tree_{0}", i).str();
       if constexpr (Comp == Carbon) {
-        auto rmdir_result = context.tmpdir.RmdirRecursively(tree);
+        auto rmdir_result = context.tmpdir.Rmtree(tree);
         CARBON_CHECK(rmdir_result.ok(), "{0}", rmdir_result.error());
       } else if constexpr (Comp == Std) {
         std::error_code ec;
@@ -314,7 +316,7 @@ auto BM_CreateDirectories(benchmark::State& state) -> void {
         // overhead but matches the realistic use case and ensures that there
         // isn't some laziness that makes just creating a directory have an
         // unusually low cost.
-        auto f = result->OpenWriteOnly("test", CreationFlags::CreateNew);
+        auto f = result->OpenWriteOnly("test", CreationOptions::CreateNew);
         CARBON_CHECK(f.ok(), "{0}", f.error());
         auto close_result = std::move(*f).Close();
         CARBON_CHECK(close_result.ok(), "{0}", close_result.error());
@@ -339,7 +341,7 @@ auto BM_CreateDirectories(benchmark::State& state) -> void {
 
     state.PauseTiming();
     for (int i = 0; i < BatchSize; ++i) {
-      auto result = context.tmpdir.RmdirRecursively(
+      auto result = context.tmpdir.Rmtree(
           llvm::formatv("{0}_{1}", existing_depth > 0 ? "exists" : "dir", i)
               .str());
       CARBON_CHECK(result.ok(), "{0}", result.error());

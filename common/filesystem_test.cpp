@@ -51,12 +51,12 @@ TEST_F(FilesystemTest, CreateOpenCloseAndUnlink) {
   EXPECT_THAT(unlink_result, IsError(HasSubstr("No such file")));
 #endif
 
-  auto f = dir_.OpenWriteOnly("test", CreationFlags::CreateNew);
+  auto f = dir_.OpenWriteOnly("test", CreationOptions::CreateNew);
   ASSERT_THAT(f, IsSuccess(_));
   auto result = (*std::move(f)).Close();
   EXPECT_THAT(result, IsSuccess(_));
 
-  f = dir_.OpenWriteOnly("test", CreationFlags::CreateNew);
+  f = dir_.OpenWriteOnly("test", CreationOptions::CreateNew);
   ASSERT_FALSE(f.ok());
   EXPECT_TRUE(f.error().already_exists());
 #ifdef _GNU_SOURCE
@@ -87,7 +87,7 @@ TEST_F(FilesystemTest, CreateOpenCloseAndUnlink) {
   EXPECT_THAT(f, IsError(HasSubstr("No such file")));
 #endif
 
-  f = dir_.OpenWriteOnly("test", CreationFlags::OpenAlways);
+  f = dir_.OpenWriteOnly("test", CreationOptions::OpenAlways);
   ASSERT_THAT(f, IsSuccess(_));
   result = std::move(*f).Close();
   EXPECT_THAT(result, IsSuccess(_));
@@ -99,7 +99,7 @@ TEST_F(FilesystemTest, CreateOpenCloseAndUnlink) {
 TEST_F(FilesystemTest, BasicWriteAndRead) {
   std::string content_str = "0123456789";
   {
-    auto f = dir_.OpenWriteOnly("test", CreationFlags::CreateNew);
+    auto f = dir_.OpenWriteOnly("test", CreationOptions::CreateNew);
     ASSERT_THAT(f, IsSuccess(_));
     auto write_result = f->WriteFromString(content_str);
     EXPECT_THAT(write_result, IsSuccess(_));
@@ -153,7 +153,7 @@ TEST_F(FilesystemTest, CreateAndRemoveDirecotries) {
     ASSERT_THAT(f4, IsSuccess(_));
   }
 
-  auto rm_result = Cwd().RmdirRecursively(path() / "a");
+  auto rm_result = Cwd().Rmtree(path() / "a");
   ASSERT_THAT(rm_result, IsSuccess(_));
 }
 
@@ -163,8 +163,9 @@ TEST_F(FilesystemTest, StatAndAccess) {
   EXPECT_TRUE(access_result.error().no_entity());
 
   // Make sure the flags and bit-or-ing them works in the boring case.
-  access_result = dir_.Access(
-      "test", AccessCheck::Read | AccessCheck::Write | AccessCheck::Execute);
+  access_result =
+      dir_.Access("test", AccessCheckFlags::Read | AccessCheckFlags::Write |
+                              AccessCheckFlags::Execute);
   ASSERT_FALSE(access_result.ok());
   EXPECT_TRUE(access_result.error().no_entity());
 
@@ -177,22 +178,23 @@ TEST_F(FilesystemTest, StatAndAccess) {
   // under.
   std::string content_str = "0123456789";
   ModeType permissions = 0450;
-  auto f = dir_.OpenWriteOnly("test", CreationFlags::CreateNew, permissions);
+  auto f = dir_.OpenWriteOnly("test", CreationOptions::CreateNew, permissions);
   ASSERT_THAT(f, IsSuccess(_));
   auto write_result = f->WriteFromString(content_str);
   EXPECT_THAT(write_result, IsSuccess(_));
 
   access_result = dir_.Access("test");
   EXPECT_THAT(access_result, IsSuccess(_));
-  access_result = dir_.Access("test", AccessCheck::Read);
+  access_result = dir_.Access("test", AccessCheckFlags::Read);
   EXPECT_THAT(access_result, IsSuccess(_));
 
   // Neither write nor execute permission should be present though.
-  access_result = dir_.Access("test", AccessCheck::Write);
+  access_result = dir_.Access("test", AccessCheckFlags::Write);
   ASSERT_FALSE(access_result.ok());
   EXPECT_TRUE(access_result.error().access_denied());
-  access_result = dir_.Access(
-      "test", AccessCheck::Read | AccessCheck::Write | AccessCheck::Execute);
+  access_result =
+      dir_.Access("test", AccessCheckFlags::Read | AccessCheckFlags::Write |
+                              AccessCheckFlags::Execute);
   ASSERT_FALSE(access_result.ok());
   EXPECT_TRUE(access_result.error().access_denied());
 
@@ -205,8 +207,9 @@ TEST_F(FilesystemTest, StatAndAccess) {
   EXPECT_THAT(stat_result->permissions(), Eq(permissions));
 
   // Directory instead of file.
-  access_result = dir_.Access(
-      ".", AccessCheck::Read | AccessCheck::Write | AccessCheck::Execute);
+  access_result =
+      dir_.Access(".", AccessCheckFlags::Read | AccessCheckFlags::Write |
+                           AccessCheckFlags::Execute);
   EXPECT_THAT(access_result, IsSuccess(_));
 
   stat_result = dir_.Stat(".");
@@ -290,7 +293,7 @@ TEST_F(FilesystemTest, Chdir) {
   EXPECT_TRUE(chdir_path_result.error().no_entity());
 
   // Create a regular file and try to chdir to that.
-  auto f = dir_.OpenWriteOnly("test2", CreationFlags::CreateNew);
+  auto f = dir_.OpenWriteOnly("test2", CreationOptions::CreateNew);
   ASSERT_THAT(f, IsSuccess(_));
   auto write_result = f->WriteFromString("test2");
   EXPECT_THAT(write_result, IsSuccess(_));
@@ -298,7 +301,7 @@ TEST_F(FilesystemTest, Chdir) {
   ASSERT_FALSE(chdir_path_result.ok());
   EXPECT_TRUE(chdir_path_result.error().not_dir());
 
-  auto d2_result = Cwd().OpenDir("test_d2", CreationFlags::CreateNew);
+  auto d2_result = Cwd().OpenDir("test_d2", CreationOptions::CreateNew);
   ASSERT_THAT(d2_result, IsSuccess(_));
   symlink_result = d2_result->Symlink("test2", "def");
   EXPECT_THAT(symlink_result, IsSuccess(_));

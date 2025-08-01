@@ -110,7 +110,7 @@ auto DirRef::ReadFileToString(std::filesystem::path path)
 
 auto DirRef::WriteFileFromString(std::filesystem::path path,
                                  llvm::StringRef content,
-                                 CreationFlags creation_flags)
+                                 CreationOptions creation_flags)
     -> ErrorOr<Success, PathError> {
   CARBON_ASSIGN_OR_RETURN(WriteFile f, OpenWriteOnly(path, creation_flags));
   auto result = f.WriteFromString(content);
@@ -158,7 +158,7 @@ auto DirRef::CreateDirectories(std::filesystem::path path,
        !parent_path.empty(); parent_path = parent_path.parent_path()) {
     auto open_result = OpenDir(parent_path, OpenExisting);
     if (open_result.ok()) {
-      dir_tmp = std::move(*open_result);
+      work_dir = std::move(*open_result);
       break;
     }
     missing_components.push_back(parent_path.filename());
@@ -168,13 +168,13 @@ auto DirRef::CreateDirectories(std::filesystem::path path,
   // If we haven't yet opened an intermediate directory, start by creating one
   // relative to this directory. We can't do this as part of the loop below as
   // `this` and the newly opened directory have different types.
-  if (!dir_tmp) {
+  if (!work_dir) {
     std::filesystem::path component = missing_components.pop_back_val();
     CARBON_ASSIGN_OR_RETURN(
         Dir component_dir,
-        OpenDir(component, CreationFlags::OpenAlways, creation_mode));
+        OpenDir(component, CreationOptions::OpenAlways, creation_mode));
     // Move this component into our temporary directory slot.
-    dir_tmp = std::move(component_dir);
+    work_dir = std::move(component_dir);
   }
 
   // Now walk through the remaining components opening and creating each
@@ -183,21 +183,21 @@ auto DirRef::CreateDirectories(std::filesystem::path path,
     std::filesystem::path component = missing_components.pop_back_val();
     CARBON_ASSIGN_OR_RETURN(
         Dir component_dir,
-        dir_tmp->OpenDir(component, CreationFlags::OpenAlways, creation_mode));
+        work_dir->OpenDir(component, CreationOptions::OpenAlways,
+                          creation_mode));
 
     // Close the current temporary directory and move the new component
     // directory object into its place.
-    dir_tmp = std::move(component_dir);
+    work_dir = std::move(component_dir);
   }
 
-  CARBON_CHECK(dir_tmp,
+  CARBON_CHECK(work_dir,
                "Should always have created at least one directory for a "
                "non-empty path!");
-  return std::move(dir_tmp).value();
+  return std::move(work_dir).value();
 }
 
-auto DirRef::RmdirRecursively(std::filesystem::path path)
-    -> ErrorOr<Success, PathError> {
+auto DirRef::Rmtree(std::filesystem::path path) -> ErrorOr<Success, PathError> {
   struct DirAndWorklists {
     DirRef::Reader dir;
     ssize_t dir_entries_start;
@@ -210,7 +210,7 @@ auto DirRef::RmdirRecursively(std::filesystem::path path)
       -> ErrorOr<Success, PathError> {
     CARBON_ASSIGN_OR_RETURN(Dir subdir, current_dir.OpenDir(entry_path));
 
-    auto read_result = std::move(subdir).Read();
+    auto read_result = std::move(subdir).TakeAndRead();
     if (!read_result.ok()) {
       return PathError(
           read_result.error().number(),
@@ -345,7 +345,7 @@ auto DirRef::ReadlinkSlow(std::filesystem::path path)
   return large_buffer;
 }
 
-auto DirRef::OpenDir(std::filesystem::path path, CreationFlags creation_flags,
+auto DirRef::OpenDir(std::filesystem::path path, CreationOptions creation_flags,
                      ModeType creation_mode) -> ErrorOr<Dir, PathError> {
   // If we potentially need to create a directory, we have to do that
   // separately as no systems support `O_CREAT | O_DIRECTORY`, even though
@@ -466,7 +466,8 @@ auto MakeTmpDir() -> ErrorOr<RemovingDir, Error> {
     PrintErrorNumber(os, errno);
     return Error(os.TakeStr());
   }
-  CARBON_CHECK(result == tmpdir_path_buffer.data(), "`mkdtemp` used a modified path");
+  CARBON_CHECK(result == tmpdir_path_buffer.data(),
+               "`mkdtemp` used a modified path");
   tmpdir_path = std::move(tmpdir_path_buffer);
 
   // Because `mkdtemp` doesn't return an open directory atomically, open the
