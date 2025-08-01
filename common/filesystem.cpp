@@ -152,7 +152,7 @@ auto DirRef::CreateDirectories(std::filesystem::path path,
   // and so we can use a bit of stack and avoid allocating and moving the paths
   // in common cases. We use `8` as an arbitrary but likely good for all of the
   // hottest cases.
-  llvm::SmallVector<std::filesystem::path, 32> missing_components;
+  llvm::SmallVector<std::filesystem::path, 8> missing_components;
   missing_components.push_back(path.filename());
   for (std::filesystem::path parent_path = path.parent_path();
        !parent_path.empty(); parent_path = parent_path.parent_path()) {
@@ -261,7 +261,7 @@ auto DirRef::Rmtree(std::filesystem::path path) -> ErrorOr<Success, PathError> {
 
   CARBON_RETURN_IF_ERROR(push_dir(*this, path));
 
-  while (true) {
+  for (;;) {
     auto& current = dir_stack.back();
     if (current.dir_entries_start != static_cast<ssize_t>(dir_entries.size())) {
       CARBON_CHECK(current.dir_entries_start <
@@ -288,21 +288,24 @@ auto DirRef::Rmtree(std::filesystem::path path) -> ErrorOr<Success, PathError> {
 
 auto DirRef::ReadlinkSlow(std::filesystem::path path)
     -> ErrorOr<std::string, PathError> {
+  constexpr ssize_t MinBufferSize =
+#ifdef PATH_MAX
+      PATH_MAX
+#else
+      1024
+#endif
+      ;
   // Read directly into a string to avoid allocating two large buffers.
   std::string large_buffer;
   // Stat the symlink to get an initial guess at the size.
   CARBON_ASSIGN_OR_RETURN(FileStatus status, Lstat(path));
   // We try to use the size from the `lstat` unless it is empty, in which case
-  // we try to use `PATH_MAX` or a constant value. We have a fallback to
-  // dynamically discover an adequate buffer size below that will handle any
-  // inaccuracy.
+  // we try to use our minimum buffer size which is `PATH_MAX` or a constant
+  // value. We have a fallback to dynamically discover an adequate buffer size
+  // below that will handle any inaccuracy.
   ssize_t buffer_size = status.size();
   if (buffer_size == 0) {
-#ifdef PATH_MAX
-    buffer_size = PATH_MAX;
-#else
-    buffer_size = 1024;
-#endif
+    buffer_size = MinBufferSize;
   }
   large_buffer.resize(status.size());
   ssize_t result =
@@ -314,24 +317,18 @@ auto DirRef::ReadlinkSlow(std::filesystem::path path)
 
   // Now the really bad fallback case: if there are racing writes to the
   // symlink, the guessed size may not have been large enough. As a last-ditch
-  // effort, begin doubling (from the next power of two >= PATH_MAX) the length
-  // until it fits. We cap this at 10 MiB to prevent egregious file system
-  // contents (or some bug somewhere) from exhausting memory.
-  constexpr ssize_t MaxSize = 10 << 20;
-  constexpr ssize_t MinSize =
-#ifdef PATH_MAX
-      PATH_MAX
-#else
-      1024
-#endif
-      ;
+  // effort, begin doubling (from the next power of two >= our min buffer size)
+  // the length until it fits. We cap this at 10 MiB to prevent egregious file
+  // system contents (or some bug somewhere) from exhausting memory.
+  constexpr ssize_t MaxBufferSize = 10 << 20;
   while (result == static_cast<ssize_t>(large_buffer.size())) {
-    if (large_buffer.size() >= MaxSize) {
-      return PathError(errno, "Readlink on '{0}' relative to '{1}'",
+    int64_t next_buffer_size = std::max<ssize_t>(
+        MinBufferSize, llvm::NextPowerOf2(large_buffer.size()));
+    if (next_buffer_size > MaxBufferSize) {
+      return PathError(ENOMEM, "Readlink on '{0}' relative to '{1}'",
                        std::move(path), dfd_);
     }
-    large_buffer.resize(
-        std::max<ssize_t>(MinSize, llvm::NextPowerOf2(large_buffer.size())));
+    large_buffer.resize(next_buffer_size);
     result = readlinkat(dfd_, path.c_str(), large_buffer.data(),
                         large_buffer.size());
     if (result == -1) {
@@ -397,8 +394,7 @@ auto DirRef::OpenDir(std::filesystem::path path, CreationOptions creation_flags,
 
   // If we actually created the directory, we also need to verify that the
   // opened file descriptor continues to have the same permissions and the
-  // correct owner and group as we couldn't do the creation atomically with the
-  // open.
+  // correct owner as we couldn't do the creation atomically with the open.
   if (created) {
     auto stat_result = result.Stat();
     if (!stat_result.ok()) {
@@ -408,6 +404,10 @@ auto DirRef::OpenDir(std::filesystem::path path, CreationOptions creation_flags,
                        "DirRef::Stat after opening '{0}' relative to '{1}'",
                        std::move(path), dfd_);
     }
+
+    // FIXME: Go back through the security concerns here and double check things
+    // and tighten up comments. As part of that, update the API docs to explain
+    // the security constraints.
 
     // Check that the permissions are a subset of the requested ones. They may
     // have been masked down by `umask`, but if there are *new* permissions,
@@ -438,6 +438,9 @@ auto DirRef::OpenDir(std::filesystem::path path, CreationOptions creation_flags,
 
 auto MakeTmpDir() -> ErrorOr<RemovingDir, Error> {
   std::filesystem::path tmpdir_path = "/tmp";
+  // We use both `TEST_TMPDIR` and `TMPDIR`. The `TEST_TMPDIR` is set by Bazel
+  // and preferred to keep tests using the expected output tree rather than
+  // the system temporary directory.
   for (const char* tmpdir_env_name : {"TEST_TMPDIR", "TMPDIR"}) {
     const char* tmpdir_env_cstr = getenv(tmpdir_env_name);
     if (tmpdir_env_cstr == nullptr) {
