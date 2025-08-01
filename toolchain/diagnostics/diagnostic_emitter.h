@@ -75,17 +75,17 @@ class Emitter {
     Builder(Builder&&) noexcept = default;
     auto operator=(Builder&&) noexcept -> Builder& = default;
 
+    // Overrides the snippet for the most recently added diagnostic or note with
+    // the given text. The provided override should include the caret text as
+    // well as the source snippet, and if non-empty, should end in a newline.
+    auto OverrideSnippet(llvm::StringRef snippet) -> Builder&;
+
     // Adds a note diagnostic attached to the main diagnostic being built.
     // The API mirrors the main emission API: `Emitter::Emit`.
     // For the expected usage see the builder API: `Emitter::Build`.
     template <typename... Args>
     auto Note(LocT loc, const DiagnosticBase<Args...>& diagnostic_base,
               Internal::NoTypeDeduction<Args>... args) -> Builder&;
-
-    // Adds a note diagnostic attached to the main diagnostic being built,
-    // specified as a raw `Message`. This should be used rarely, for example
-    // when importing a diagnostic from another diagnostic infrastructure.
-    auto NoteRaw(Message message) -> Builder&;
 
     // Emits the built diagnostic and its attached notes.
     // For the expected usage see the builder API: `Emitter::Build`.
@@ -108,9 +108,6 @@ class Emitter {
     explicit Builder(Emitter<LocT>* emitter, LocT loc,
                      const DiagnosticBase<Args...>& diagnostic_base,
                      llvm::SmallVector<llvm::Any> args);
-
-    template <typename... Args>
-    explicit Builder(Emitter<LocT>* emitter, Message&& message);
 
     // Create a null `Builder` that will not emit anything. Notes will
     // be silently ignored.
@@ -164,10 +161,6 @@ class Emitter {
   template <typename... Args>
   auto Build(LocT loc, const DiagnosticBase<Args...>& diagnostic_base,
              Internal::NoTypeDeduction<Args>... args) -> Builder;
-
-  // Create a builder from a raw `Message`. This should be used rarely, for
-  // example when importing a diagnostic from another diagnostic infrastructure.
-  auto BuildRaw(Message message) -> Builder;
 
   // Create a null `Builder` that will not emit anything. Notes will
   // be silently ignored.
@@ -315,6 +308,23 @@ struct DiagnosticTypeForArg<Arg> : public Arg::DiagnosticType {};
 }  // namespace Internal
 
 template <typename LocT>
+auto Emitter<LocT>::Builder::OverrideSnippet(llvm::StringRef snippet)
+    -> Builder& {
+  CARBON_CHECK(snippet.empty() || snippet.back() == '\n');
+  if (!emitter_) {
+    return *this;
+  }
+  auto& message = diagnostic_.messages.back();
+  // Give the snippet persistent storage and a stable address.
+  message.snippet_storage = std::make_shared<std::string>(snippet);
+  message.loc.line = *message.snippet_storage;
+  // A length of -1 causes the diagnostic machinery to not render its own
+  // snippet.
+  message.loc.length = -1;
+  return *this;
+}
+
+template <typename LocT>
 template <typename... Args>
 auto Emitter<LocT>::Builder::Note(
     LocT loc, const DiagnosticBase<Args...>& diagnostic_base,
@@ -326,18 +336,6 @@ auto Emitter<LocT>::Builder::Note(
                    diagnostic_base.Level == Level::LocationInfo,
                "{0}", static_cast<int>(diagnostic_base.Level));
   AddMessage(LocT(loc), diagnostic_base, {emitter_->MakeAny<Args>(args)...});
-  return *this;
-}
-
-template <typename LocT>
-auto Emitter<LocT>::Builder::NoteRaw(Message message) -> Builder& {
-  if (!emitter_) {
-    return *this;
-  }
-  CARBON_CHECK(
-      message.level == Level::Note || message.level == Level::LocationInfo,
-      "{0}", static_cast<int>(message.level));
-  diagnostic_.messages.push_back(std::move(message));
   return *this;
 }
 
@@ -374,17 +372,9 @@ template <typename... Args>
 Emitter<LocT>::Builder::Builder(Emitter<LocT>* emitter, LocT loc,
                                 const DiagnosticBase<Args...>& diagnostic_base,
                                 llvm::SmallVector<llvm::Any> args)
-    : emitter_(emitter), diagnostic_{.level = diagnostic_base.Level} {
-  CARBON_CHECK(diagnostic_.level != Level::Note);
+    : emitter_(emitter), diagnostic_({.level = diagnostic_base.Level}) {
   AddMessage(LocT(loc), diagnostic_base, std::move(args));
-}
-
-template <typename LocT>
-template <typename... Args>
-Emitter<LocT>::Builder::Builder(Emitter<LocT>* emitter, Message&& message)
-    : emitter_(emitter),
-      diagnostic_{.level = message.level, .messages = {std::move(message)}} {
-  CARBON_CHECK(diagnostic_.level != Level::Note);
+  CARBON_CHECK(diagnostic_base.Level != Level::Note);
 }
 
 template <typename LocT>
@@ -415,16 +405,16 @@ auto Emitter<LocT>::Builder::AddMessageWithLoc(
   if (!emitter_) {
     return;
   }
-  diagnostic_.messages.push_back(
-      {.kind = diagnostic_base.Kind,
-       .level = diagnostic_base.Level,
-       .loc = loc,
-       .format = diagnostic_base.Format,
-       .format_args = std::move(args),
-       .format_fn = [](const Message& message) -> std::string {
-         return FormatFn<Args...>(message,
-                                  std::make_index_sequence<sizeof...(Args)>());
-       }});
+  diagnostic_.messages.emplace_back(
+      Message{.kind = diagnostic_base.Kind,
+              .level = diagnostic_base.Level,
+              .loc = loc,
+              .format = diagnostic_base.Format,
+              .format_args = std::move(args),
+              .format_fn = [](const Message& message) -> std::string {
+                return FormatFn<Args...>(
+                    message, std::make_index_sequence<sizeof...(Args)>());
+              }});
 }
 
 template <typename LocT>
@@ -458,11 +448,6 @@ auto Emitter<LocT>::Build(LocT loc,
                           const DiagnosticBase<Args...>& diagnostic_base,
                           Internal::NoTypeDeduction<Args>... args) -> Builder {
   return Builder(this, loc, diagnostic_base, {MakeAny<Args>(args)...});
-}
-
-template <typename LocT>
-auto Emitter<LocT>::BuildRaw(Message message) -> Builder {
-  return Builder(this, std::move(message));
 }
 
 template <typename LocT>

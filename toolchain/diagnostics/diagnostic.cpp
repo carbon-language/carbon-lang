@@ -24,6 +24,13 @@ auto Loc::FormatLocation(llvm::raw_ostream& out) const -> void {
 }
 
 auto Loc::FormatSnippet(llvm::raw_ostream& out, int indent) const -> void {
+  if (length == -1) {
+    // A length of -1 indicates that `line` is our complete snippet.
+    out.indent(indent);
+    out << line << "\n";
+    return;
+  }
+
   if (column_number == -1) {
     return;
   }
@@ -33,10 +40,6 @@ auto Loc::FormatSnippet(llvm::raw_ostream& out, int indent) const -> void {
 
   out.indent(indent);
   out << line << "\n";
-
-  if (length == -1) {
-    return;
-  }
 
   out.indent(indent + column);
   out << "^";

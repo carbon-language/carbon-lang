@@ -50,11 +50,13 @@ library "[[@TEST_NAME]]";
 import Cpp library "non_function_member_protected.h";
 
 fn F(c: Cpp.C) {
-  // CHECK:STDERR: fail_import_non_function_member_protected.carbon:[[@LINE+6]]:16: error: cannot access protected member `x` of type `Cpp.C` [ClassInvalidMemberAccess]
+  // CHECK:STDERR: fail_import_non_function_member_protected.carbon:[[@LINE+8]]:16: error: cannot access protected member `x` of type `Cpp.C` [ClassInvalidMemberAccess]
   // CHECK:STDERR:   let x: i32 = c.x;
   // CHECK:STDERR:                ^~~
   // CHECK:STDERR: fail_import_non_function_member_protected.carbon:[[@LINE-6]]:1: in import [InImport]
-  // CHECK:STDERR: ./non_function_member_protected.h:2: note: declared here [ClassMemberDeclaration]
+  // CHECK:STDERR: ./non_function_member_protected.h:2:7: note: declared here [ClassMemberDeclaration]
+  // CHECK:STDERR:
+  // CHECK:STDERR:       ^
   // CHECK:STDERR:
   let x: i32 = c.x;
 }
@@ -76,11 +78,13 @@ library "[[@TEST_NAME]]";
 import Cpp library "non_function_member_private.h";
 
 fn F(c: Cpp.C) {
-  // CHECK:STDERR: fail_import_non_function_member_private.carbon:[[@LINE+6]]:16: error: cannot access private member `x` of type `Cpp.C` [ClassInvalidMemberAccess]
+  // CHECK:STDERR: fail_import_non_function_member_private.carbon:[[@LINE+8]]:16: error: cannot access private member `x` of type `Cpp.C` [ClassInvalidMemberAccess]
   // CHECK:STDERR:   let x: i32 = c.x;
   // CHECK:STDERR:                ^~~
   // CHECK:STDERR: fail_import_non_function_member_private.carbon:[[@LINE-6]]:1: in import [InImport]
-  // CHECK:STDERR: ./non_function_member_private.h:2: note: declared here [ClassMemberDeclaration]
+  // CHECK:STDERR: ./non_function_member_private.h:2:7: note: declared here [ClassMemberDeclaration]
+  // CHECK:STDERR:
+  // CHECK:STDERR:       ^
   // CHECK:STDERR:
   let x: i32 = c.x;
 }

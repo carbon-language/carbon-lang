@@ -14,8 +14,9 @@
 
 library "[[@TEST_NAME]]";
 
-// CHECK:STDERR: fail_cpp_file_not_found.carbon:[[@LINE+5]]:10: error: 'not_found.h' file not found [ClangDiagnostic]
-// CHECK:STDERR:     9 | #include "not_found.h"
+// CHECK:STDERR: fail_cpp_file_not_found.carbon:[[@LINE+6]]:1: in import [InImport]
+// CHECK:STDERR: fail_cpp_file_not_found.carbon:[[@LINE+5]]:10: error: 'not_found.h' file not found [CppInteropParseError]
+// CHECK:STDERR:    10 | #include "not_found.h"
 // CHECK:STDERR:       |          ^~~~~~~~~~~~~
 // CHECK:STDERR:
 // CHECK:STDERR:
