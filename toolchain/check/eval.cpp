@@ -637,6 +637,13 @@ static auto GetConstantFacetTypeInfo(EvalContext& eval_context,
   // canonical instruction, so that in a `WhereExpr` we can work with the
   // `ImplWitnessAccess` references to `.Self` on the LHS of the constraints
   // rather than the value of the associated constant they reference.
+  //
+  // This also implies that we may find `ImplWitnessAccessSubstituted`
+  // instructions in the LHS and RHS of these constraints, which are preserved
+  // to maintain them as an unresolved reference to an associated constant, but
+  // which must be handled gracefully during resolution. They will be replaced
+  // with the constant value of the `ImplWitnessAccess` below when they are
+  // substituted with a constant value.
   info.rewrite_constraints = orig.rewrite_constraints;
   if (!ResolveFacetTypeRewriteConstraints(eval_context.context(), loc_id,
                                           info.rewrite_constraints)) {

@@ -334,6 +334,13 @@ auto EvalConstantInst(Context& context, SemIR::InstId inst_id,
 }
 
 auto EvalConstantInst(Context& context,
+                      SemIR::ImplWitnessAccessSubstituted inst)
+    -> ConstantEvalResult {
+  return ConstantEvalResult::Existing(
+      context.constant_values().Get(inst.value_id));
+}
+
+auto EvalConstantInst(Context& context,
                       SemIR::ImplWitnessAssociatedConstant inst)
     -> ConstantEvalResult {
   return ConstantEvalResult::Existing(

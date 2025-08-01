@@ -89,6 +89,10 @@ auto HandleParseNode(Context& context, Parse::WhereOperandId node_id) -> bool {
           {.base_type_inst_id =
                context.types().GetInstId(self_with_constraints_type_id)}));
 
+  // Add a context stack for tracking rewrite constraints, that will be used to
+  // allow later constraints to read from them eagerly.
+  context.rewrites_stack().emplace_back();
+
   return true;
 }
 
@@ -117,6 +121,13 @@ auto HandleParseNode(Context& context, Parse::RequirementEqualId node_id)
   context.args_type_info_stack().AddInstId(
       AddInstInNoBlock<SemIR::RequirementRewrite>(
           context, node_id, {.lhs_id = lhs_id, .rhs_id = rhs_id}));
+
+  // Track the value of the rewrite so further constraints can use it
+  // immediately, before they are evaluated. This happens directly where the
+  // `ImplWitnessAccess` that refers to the rewrite constraint would have been
+  // created, and the value of the constraint will be used instead.
+  context.rewrites_stack().back().Insert(context.constant_values().Get(lhs_id),
+                                         rhs_id);
   return true;
 }
 
@@ -169,6 +180,7 @@ auto HandleParseNode(Context& /*context*/, Parse::RequirementAndId /*node_id*/)
 }
 
 auto HandleParseNode(Context& context, Parse::WhereExprId node_id) -> bool {
+  context.rewrites_stack().pop_back();
   // Remove `PeriodSelf` from name lookup, undoing the `Push` done for the
   // `WhereOperand`.
   context.scope_stack().Pop();

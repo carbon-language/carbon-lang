@@ -322,7 +322,7 @@ fn F(T:! I where .X1 = .X2* and .X2 = .X1*);
 class C(T:! type);
 // This fails because it resolves to `.X1 = C(C(.X1))` which is cyclical.
 //
-// CHECK:STDERR: fail_indirect_cycle.carbon:[[@LINE+4]]:10: error: found cycle in facet type constraint for `.(I.X1)` [FacetTypeConstraintCycle]
+// CHECK:STDERR: fail_indirect_cycle.carbon:[[@LINE+4]]:10: error: found cycle in facet type constraint for `.(I.X2)` [FacetTypeConstraintCycle]
 // CHECK:STDERR: fn G(T:! I where .X1 = C(.X2) and .X2 = C(.X1));
 // CHECK:STDERR:          ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 // CHECK:STDERR:
@@ -342,7 +342,7 @@ class C(T:! type, U:! type);
 // This fails because it resolves to `.X1 = C(C(.X3, .X1), .X3)` which is
 // cyclical.
 //
-// CHECK:STDERR: fail_complex_indirect_cycle.carbon:[[@LINE+4]]:10: error: found cycle in facet type constraint for `.(I.X1)` [FacetTypeConstraintCycle]
+// CHECK:STDERR: fail_complex_indirect_cycle.carbon:[[@LINE+4]]:10: error: found cycle in facet type constraint for `.(I.X2)` [FacetTypeConstraintCycle]
 // CHECK:STDERR: fn F(T:! I where .X1 = C(.X2, .X3) and .X2 = C(.X3, .X1));
 // CHECK:STDERR:          ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 // CHECK:STDERR:
@@ -403,7 +403,7 @@ interface Z {
 // approach can recursively rebuild the RHS values from the ground up
 // repeatedly.
 fn F(
-    // CHECK:STDERR: fail_exponential_large_cycle.carbon:[[@LINE+4]]:9: error: found cycle in facet type constraint for `.(Z.T9)` [FacetTypeConstraintCycle]
+    // CHECK:STDERR: fail_exponential_large_cycle.carbon:[[@LINE+4]]:9: error: found cycle in facet type constraint for `.(Z.T0)` [FacetTypeConstraintCycle]
     // CHECK:STDERR:     T:! Z where
     // CHECK:STDERR:         ^~~~~~~
     // CHECK:STDERR:
@@ -705,6 +705,7 @@ fn F(T:! I & J where .I1 = .J1.I2) {}
 // CHECK:STDOUT:       %.Self.as_type.loc13_35: type = facet_access_type %.Self.ref.loc13_35 [symbolic_self = constants.%.Self.as_type]
 // CHECK:STDOUT:       %.loc13_35: type = converted %.Self.ref.loc13_35, %.Self.as_type.loc13_35 [symbolic_self = constants.%.Self.as_type]
 // CHECK:STDOUT:       %impl.elem0.loc13_35: type = impl_witness_access constants.%M.lookup_impl_witness, element0 [symbolic_self = constants.%impl.elem0]
+// CHECK:STDOUT:       %impl.elem0.subst: type = impl_witness_access_substituted %impl.elem0.loc13_35, %impl.elem1.loc13_23 [symbolic_self = constants.%impl.elem1]
 // CHECK:STDOUT:       %.Self.ref.loc13_42: %M.type = name_ref .Self, %.Self [symbolic_self = constants.%.Self]
 // CHECK:STDOUT:       %Z.ref: %M.assoc_type = name_ref Z, @Z.%assoc2 [concrete = constants.%assoc2]
 // CHECK:STDOUT:       %.Self.as_type.loc13_42: type = facet_access_type %.Self.ref.loc13_42 [symbolic_self = constants.%.Self.as_type]
@@ -715,7 +716,7 @@ fn F(T:! I & J where .I1 = .J1.I2) {}
 // CHECK:STDOUT:       %.loc13_12.2: type = where_expr %.Self [concrete = <error>] {
 // CHECK:STDOUT:         requirement_base_facet_type constants.%M.type
 // CHECK:STDOUT:         requirement_rewrite %impl.elem0.loc13_18, %impl.elem1.loc13_23
-// CHECK:STDOUT:         requirement_rewrite %impl.elem1.loc13_30, %impl.elem0.loc13_35
+// CHECK:STDOUT:         requirement_rewrite %impl.elem1.loc13_30, %impl.elem0.subst
 // CHECK:STDOUT:         requirement_rewrite %impl.elem2, %.loc13_48.2
 // CHECK:STDOUT:       }
 // CHECK:STDOUT:     }

@@ -60,6 +60,21 @@ static auto IncompleteFacetTypeDiagnosticBuilder(
   }
 }
 
+// Given an ImplWitnessAccessSubstituted, returns the InstId of the
+// ImplWitnessAccess. Otherwise, returns the input `inst_id` unchanged.
+//
+// This must be used when accessing the LHS of a rewrite constraint which has
+// not yet been resolved in order to preserve which associated constant is being
+// rewritten.
+static auto GetImplWitnessAccess(Context& context, SemIR::InstId inst_id)
+    -> SemIR::InstId {
+  if (auto inst = context.insts().TryGetAs<SemIR::ImplWitnessAccessSubstituted>(
+          inst_id)) {
+    return inst->impl_witness_access_id;
+  }
+  return inst_id;
+}
+
 auto InitialFacetTypeImplWitness(
     Context& context, SemIR::LocId witness_loc_id,
     SemIR::TypeInstId facet_type_inst_id, SemIR::TypeInstId self_type_inst_id,
@@ -131,8 +146,8 @@ auto InitialFacetTypeImplWitness(
   }
 
   for (auto rewrite : facet_type_info.rewrite_constraints) {
-    auto access =
-        context.insts().GetAs<SemIR::ImplWitnessAccess>(rewrite.lhs_id);
+    auto access = context.insts().GetAs<SemIR::ImplWitnessAccess>(
+        GetImplWitnessAccess(context, rewrite.lhs_id));
     if (!WitnessQueryMatchesInterface(context, access.witness_id,
                                       interface_to_witness)) {
       continue;
@@ -438,6 +453,14 @@ class SubstImplWitnessAccessCallbacks : public SubstInstCallbacks {
       if (context().insts().Is<SemIR::FacetType>(rhs_inst_id)) {
         return SubstResult::FullySubstituted;
       }
+      // The reference to an associated constant was eagerly replaced with the
+      // value of an earlier rewrite constraint, but may need further
+      // replacement.
+      if (context().insts().Is<SemIR::ImplWitnessAccessSubstituted>(
+              rhs_inst_id)) {
+        substs_in_progress_.push_back(rhs_inst_id);
+        return SubstResult::SubstOperands;
+      }
       if (context().constant_values().Get(rhs_inst_id).is_concrete()) {
         // There's no ImplWitnessAccess that we care about inside this
         // instruction.
@@ -564,8 +587,8 @@ auto ResolveFacetTypeRewriteConstraints(
   AccessRewriteValues rewrite_values;
 
   for (auto& constraint : rewrites) {
-    auto lhs_access =
-        context.insts().TryGetAs<SemIR::ImplWitnessAccess>(constraint.lhs_id);
+    auto lhs_access = context.insts().TryGetAs<SemIR::ImplWitnessAccess>(
+        GetImplWitnessAccess(context, constraint.lhs_id));
     if (!lhs_access) {
       continue;
     }
@@ -574,8 +597,8 @@ auto ResolveFacetTypeRewriteConstraints(
   }
 
   for (auto& constraint : rewrites) {
-    auto lhs_access =
-        context.insts().TryGetAs<SemIR::ImplWitnessAccess>(constraint.lhs_id);
+    auto lhs_access = context.insts().TryGetAs<SemIR::ImplWitnessAccess>(
+        GetImplWitnessAccess(context, constraint.lhs_id));
     if (!lhs_access) {
       continue;
     }
@@ -620,9 +643,10 @@ auto ResolveFacetTypeRewriteConstraints(
           // assigned but rewrite constraint instructions are from canonical
           // constant values, and have no locations. We'd need to store a
           // location along with them in the rewrite constraints.
-          context.emitter().Emit(loc_id, AssociatedConstantWithDifferentValues,
-                                 constraint.lhs_id, source_order1,
-                                 source_order2);
+          context.emitter().Emit(
+              loc_id, AssociatedConstantWithDifferentValues,
+              GetImplWitnessAccess(context, constraint.lhs_id), source_order1,
+              source_order2);
         }
         return false;
       }
@@ -641,8 +665,8 @@ auto ResolveFacetTypeRewriteConstraints(
   for (size_t i = 0; i < keep_size;) {
     auto& constraint = rewrites[i];
 
-    auto lhs_access =
-        context.insts().TryGetAs<SemIR::ImplWitnessAccess>(constraint.lhs_id);
+    auto lhs_access = context.insts().TryGetAs<SemIR::ImplWitnessAccess>(
+        GetImplWitnessAccess(context, constraint.lhs_id));
     if (!lhs_access) {
       ++i;
       continue;
