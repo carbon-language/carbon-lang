@@ -491,7 +491,7 @@ auto StringLiteral::ComputeCharValue(Diagnostics::Emitter<const char*>& emitter)
   // more efficient/faster with a `ExpandEscapeSequencesAndRemoveIndent`
   // implementation aware of the buffer size, but this is trying to share logic
   // with string expansion.
-  llvm::SmallVector<char, 0> buffer;
+  llvm::SmallVector<char> buffer;
   buffer.resize_for_overwrite(content_.size());
 
   auto result = ExpandEscapeSequencesAndRemoveIndent(

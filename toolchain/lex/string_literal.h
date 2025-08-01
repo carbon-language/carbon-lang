@@ -19,7 +19,6 @@ class StringLiteral {
   // A string literal's kind.
   enum class Kind : int8_t {
     // A character literal is still handled through string literal lexing.
-    // Note the consumer must still validate as a single character.
     Char,
 
     // A single-line string, `"<content>"`.
