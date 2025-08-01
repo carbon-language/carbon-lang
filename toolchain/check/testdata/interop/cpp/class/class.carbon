@@ -212,36 +212,6 @@ fn MyF() {
 //@dump-sem-ir-end
 
 // ============================================================================
-// To inherit private
-// ============================================================================
-
-// --- to_inherit_private.h
-
-class Bar {
- private:
-  static auto foo() -> void;
-};
-
-// --- fail_to_inherit_private.carbon
-
-library "[[@TEST_NAME]]";
-
-import Cpp library "to_inherit_private.h";
-
-class Derived {
-  extend base: Cpp.Bar;
-}
-
-fn MyF() {
-  // CHECK:STDERR: fail_to_inherit_private.carbon:[[@LINE+5]]:3: error: cannot access private member `foo` of type `Cpp.Bar` [ClassInvalidMemberAccess]
-  // CHECK:STDERR:   Derived.foo();
-  // CHECK:STDERR:   ^~~~~~~~~~~
-  // CHECK:STDERR: fail_to_inherit_private.carbon: note: declared here [ClassMemberDeclaration]
-  // CHECK:STDERR:
-  Derived.foo();
-}
-
-// ============================================================================
 // Template
 // ============================================================================
 

@@ -32,6 +32,22 @@ fn F(s: Cpp.S) {
   //@dump-sem-ir-end
 }
 
+// --- import_non_function_member_public_extend.carbon
+
+library "[[@TEST_NAME]]";
+
+import Cpp library "non_function_member_public.h";
+
+class Derived {
+  extend base: Cpp.S;
+}
+
+fn F(d: Derived) {
+  //@dump-sem-ir-begin
+  let x: i32 = d.x;
+  //@dump-sem-ir-end
+}
+
 // ============================================================================
 // Protected non-function member
 // ============================================================================
@@ -61,6 +77,28 @@ fn F(c: Cpp.C) {
   let x: i32 = c.x;
 }
 
+// --- fail_import_non_function_member_protected_extend.carbon
+
+library "[[@TEST_NAME]]";
+
+import Cpp library "non_function_member_protected.h";
+
+class Derived {
+  extend base: Cpp.C;
+}
+
+fn F(d: Derived) {
+  // CHECK:STDERR: fail_import_non_function_member_protected_extend.carbon:[[@LINE+8]]:16: error: cannot access protected member `x` of type `Derived` [ClassInvalidMemberAccess]
+  // CHECK:STDERR:   let x: i32 = d.x;
+  // CHECK:STDERR:                ^~~
+  // CHECK:STDERR: fail_import_non_function_member_protected_extend.carbon:[[@LINE-10]]:10: in file included here [InCppInclude]
+  // CHECK:STDERR: ./non_function_member_protected.h:2:7: note: declared here [ClassMemberDeclaration]
+  // CHECK:STDERR: class C {
+  // CHECK:STDERR:       ^
+  // CHECK:STDERR:
+  let x: i32 = d.x;
+}
+
 // ============================================================================
 // Private non-function member
 // ============================================================================
@@ -87,6 +125,28 @@ fn F(c: Cpp.C) {
   // CHECK:STDERR:       ^
   // CHECK:STDERR:
   let x: i32 = c.x;
+}
+
+// --- fail_import_non_function_member_private_extend.carbon
+
+library "[[@TEST_NAME]]";
+
+import Cpp library "non_function_member_private.h";
+
+class Derived {
+  extend base: Cpp.C;
+}
+
+fn F(d: Derived) {
+  // CHECK:STDERR: fail_import_non_function_member_private_extend.carbon:[[@LINE+8]]:16: error: cannot access private member `x` of type `Cpp.C` [ClassInvalidMemberAccess]
+  // CHECK:STDERR:   let x: i32 = d.x;
+  // CHECK:STDERR:                ^~~
+  // CHECK:STDERR: fail_import_non_function_member_private_extend.carbon:[[@LINE-10]]:10: in file included here [InCppInclude]
+  // CHECK:STDERR: ./non_function_member_private.h:2:7: note: declared here [ClassMemberDeclaration]
+  // CHECK:STDERR: class C {
+  // CHECK:STDERR:       ^
+  // CHECK:STDERR:
+  let x: i32 = d.x;
 }
 
 // ============================================================================
@@ -329,6 +389,39 @@ fn F() {
 // CHECK:STDOUT:     %i32: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %x: %i32 = bind_name x, %.loc8_17.2
+// CHECK:STDOUT:   <elided>
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: --- import_non_function_member_public_extend.carbon
+// CHECK:STDOUT:
+// CHECK:STDOUT: constants {
+// CHECK:STDOUT:   %Derived: type = class_type @Derived [concrete]
+// CHECK:STDOUT:   %S: type = class_type @S [concrete]
+// CHECK:STDOUT:   %int_32: Core.IntLiteral = int_value 32 [concrete]
+// CHECK:STDOUT:   %i32: type = class_type @Int, @Int(%int_32) [concrete]
+// CHECK:STDOUT:   %S.elem: type = unbound_element_type %S, %i32 [concrete]
+// CHECK:STDOUT:   %pattern_type.7ce: type = pattern_type %i32 [concrete]
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: imports {
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: fn @F(%d.param: %Derived) {
+// CHECK:STDOUT: !entry:
+// CHECK:STDOUT:   name_binding_decl {
+// CHECK:STDOUT:     %x.patt: %pattern_type.7ce = binding_pattern x [concrete]
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %d.ref: %Derived = name_ref d, %d
+// CHECK:STDOUT:   %x.ref: %S.elem = name_ref x, @S.%.1 [concrete = @S.%.1]
+// CHECK:STDOUT:   %.loc12_17.1: ref %S = class_element_access %d.ref, element0
+// CHECK:STDOUT:   %.loc12_17.2: ref %S = converted %d.ref, %.loc12_17.1
+// CHECK:STDOUT:   %.loc12_17.3: ref %i32 = class_element_access %.loc12_17.2, element0
+// CHECK:STDOUT:   %.loc12_10: type = splice_block %i32 [concrete = constants.%i32] {
+// CHECK:STDOUT:     %int_32: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
+// CHECK:STDOUT:     %i32: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %.loc12_17.4: %i32 = bind_value %.loc12_17.3
+// CHECK:STDOUT:   %x: %i32 = bind_name x, %.loc12_17.4
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
