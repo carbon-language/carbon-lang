@@ -29,7 +29,7 @@ interface J {
   let J1:! (Z where .Z1 = ()) where .Z2 = C(.Self);
 }
 
-// --- todo_earlier_constraint_visible_in_type_parameter.carbon
+// --- fail_todo_earlier_constraint_visible_in_type_parameter.carbon
 library "[[@TEST_NAME]]";
 
 interface Z {
@@ -43,10 +43,17 @@ class C(T:! Z where .Z1 = ()) {}
 // .Z1's value visible to .Z2?
 // See https://github.com/carbon-language/carbon-lang/issues/5884.
 interface J {
+  // CHECK:STDERR: fail_todo_earlier_constraint_visible_in_type_parameter.carbon:[[@LINE+7]]:39: error: cannot convert type `.Self` that implements `Z` into type implementing `Z where .(Z.Z1) = ()` [ConversionFailureFacetToFacet]
+  // CHECK:STDERR:   let J1:! Z where .Z1 = () and .Z2 = C(.Self);
+  // CHECK:STDERR:                                       ^~~~~~~~
+  // CHECK:STDERR: fail_todo_earlier_constraint_visible_in_type_parameter.carbon:[[@LINE-9]]:9: note: initializing generic parameter `T` declared here [InitializingGenericParam]
+  // CHECK:STDERR: class C(T:! Z where .Z1 = ()) {}
+  // CHECK:STDERR:         ^
+  // CHECK:STDERR:
   let J1:! Z where .Z1 = () and .Z2 = C(.Self);
 }
 
-// --- todo_later_constraint_visible_in_type_parameter.carbon
+// --- fail_todo_later_constraint_visible_in_type_parameter.carbon
 library "[[@TEST_NAME]]";
 
 interface Z {
@@ -60,6 +67,13 @@ class C(T:! Z where .Z1 = ()) {}
 // .Z1's value visible to .Z2?
 // See https://github.com/carbon-language/carbon-lang/issues/5884.
 interface J {
+  // CHECK:STDERR: fail_todo_later_constraint_visible_in_type_parameter.carbon:[[@LINE+7]]:26: error: cannot convert type `.Self` that implements `Z` into type implementing `Z where .(Z.Z1) = ()` [ConversionFailureFacetToFacet]
+  // CHECK:STDERR:   let J1:! Z where .Z2 = C(.Self) and .Z1 = ();
+  // CHECK:STDERR:                          ^~~~~~~~
+  // CHECK:STDERR: fail_todo_later_constraint_visible_in_type_parameter.carbon:[[@LINE-9]]:9: note: initializing generic parameter `T` declared here [InitializingGenericParam]
+  // CHECK:STDERR: class C(T:! Z where .Z1 = ()) {}
+  // CHECK:STDERR:         ^
+  // CHECK:STDERR:
   let J1:! Z where .Z2 = C(.Self) and .Z1 = ();
 }
 
