@@ -21,6 +21,7 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
     -   [Coalescing in the front-end vs back-end?](#coalescing-in-the-front-end-vs-back-end)
     -   [When to do coalescing in the front-end?](#when-to-do-coalescing-in-the-front-end)
     -   [Compile-time trade-offs](#compile-time-trade-offs)
+    -   [Coalescing duplicate non-specific functions](#coalescing-duplicate-non-specific-functions)
 -   [Opportunities for further improvement](#opportunities-for-further-improvement)
 
 <!-- tocstop -->
@@ -102,10 +103,12 @@ We define two fingerprints for each specific:
 1. `specific_fingerprint`: Includes all specific-dependent information.
 2. `common_fingerprint`: Includes the same except for `specific_id` information,
    as `specific_id`s can only be determined to be equivalent after building an
-   equivalence SCC. As such, two specific functions are equivalent if their
-   `specific_fingerprint`s are equal and are not equivalent if their
-   `common_fingerprint`s differs. If the `common_fingerprint`s are equal but the
-   `specific_fingerprint`s are not, the two functions may still be equivalent.
+   equivalence SCC.
+
+Two specific functions are equivalent if their `specific_fingerprint`s are equal
+and are not equivalent if their `common_fingerprint`s differs. If the
+`common_fingerprint`s are equal but the `specific_fingerprint`s are not, the two
+functions may still be equivalent.
 
 Ideally, the `specific_fingerprint` can be used as a unique hash to first
 coalesce all specific functions with this same fingerprint, with no additional
@@ -113,15 +116,10 @@ checks. Then, all remaining functions may use the `common_fingerprint` as
 another unique hash to group remaining potential candidates for coalescing.
 Then, only those with this same `common_fingerprint` are processed in a
 quadratic pass walking all calls instructions and comparing if the `specific_id`
-information is equivalent. The optimization of clustering first by
-`specific_fingerprint` then by `common_fingerprint` is not currently
-implemented.
+information is equivalent. These optimizations are not currently implemented.
 
-Note that, if we were to extend the algorithm to do compile-time ICF (Identical
-Code Folding), that is define a fingerprint for all functions (not only
-specifics of the same generic), based on all their instructions (not only their
-specific-dependent ones), the complexity would be much higher, and so would the
-compile-time cost.
+Note that this does not
+[coalesce non-specifics](#coalescing-duplicate-non-specific-functions).
 
 ### Canonical specific to use
 
@@ -258,6 +256,18 @@ to make the equivalence determination.
 Not doing any coalescing is also expected to increase the back-end codegen time
 more than performing the analysis and deduplication. This can be evaluated in
 practice and the feature disabled if found to be too costly.
+
+### Coalescing duplicate non-specific functions
+
+We could coalesce duplicate functions in non-specific cases, similar to lld's
+[Identical Code Folding](https://lld.llvm.org/NewLLD.html#glossary) or LLVM's
+[MergeFunctions pass](https://llvm.org/docs/MergeFunctions.html). This would
+require fingerprinting all instructions in all functions, whereas specific
+coalescing can focus on cases that only Carbon's front-end knows about. Carbon
+would also be restricted to coalescing functions in a single compilation unit,
+which would require replacing function definitions that allow external calls
+with a placeholder that calls the coalesced definition. We don't expect
+sufficient advantages over existing support.
 
 ## Opportunities for further improvement
 
