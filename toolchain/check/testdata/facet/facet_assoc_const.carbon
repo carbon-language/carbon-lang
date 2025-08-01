@@ -147,7 +147,7 @@ fn F(T:! M & (L where .W = {}), a: T.W) {
   // CHECK:STDERR: fail_two_different_combined_from_final_impl_and_facet.carbon:[[@LINE+7]]:15: error: cannot convert type `T` that implements `L & M where .(L.W) = {}` into type implementing `L where .(L.W) = {}` [ConversionFailureFacetToFacet]
   // CHECK:STDERR:   let c: {} = H(T, a);
   // CHECK:STDERR:               ^~~~~~~
-  // CHECK:STDERR: fail_two_different_combined_from_final_impl_and_facet.carbon:[[@LINE-12]]:6: note: initializing generic parameter `T` declared here [InitializingGenericParam]
+  // CHECK:STDERR: fail_two_different_combined_from_final_impl_and_facet.carbon:[[@LINE-14]]:6: note: initializing generic parameter `T` declared here [InitializingGenericParam]
   // CHECK:STDERR: fn H(T:! L where .W = {}, a: T.W) -> {} { return a; }
   // CHECK:STDERR:      ^
   // CHECK:STDERR:
