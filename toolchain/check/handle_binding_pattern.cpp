@@ -244,7 +244,7 @@ auto HandleParseNode(Context& context,
   return HandleAnyBindingPattern(context, node_id, node_kind);
 }
 
-auto HandleParseNode(Context& context, Parse::AssociatedConstantNameAndTypeId node_id)
+auto HandleParseNode(Context& context, Parse::AssociatedConstantBindingPatternId node_id)
     -> bool {
   auto [type_node, parsed_type_id] = context.node_stack().PopExprWithNodeId();
   auto [cast_type_inst_id, cast_type_id] =
@@ -252,8 +252,8 @@ auto HandleParseNode(Context& context, Parse::AssociatedConstantNameAndTypeId no
   auto is_template =
       context.node_stack()
           .PopAndDiscardSoloNodeIdIf<Parse::NodeKind::TemplateBindingName>();
-
   auto [name_node, name_id] = context.node_stack().PopNameWithNodeId();
+
   if (name_id == SemIR::NameId::Underscore) {
     // The action item here may be to document this as not allowed, and
     // add a proper diagnostic.
@@ -270,41 +270,26 @@ auto HandleParseNode(Context& context, Parse::AssociatedConstantNameAndTypeId no
     CARBON_DIAGNOSTIC(TemplateBindingInAssociatedConstantDecl, Error,
                       "associated constant has `template` binding");
     context.emitter().Emit(type_node,
-                           TemplateBindingInAssociatedConstantDecl);
+                            TemplateBindingInAssociatedConstantDecl);
   }
 
-  // Create the AssociatedConstantDecl instruction directly
   SemIR::AssociatedConstantDecl assoc_const_decl = {
       .type_id = cast_type_id,
       .assoc_const_id = SemIR::AssociatedConstantId::None,
       .decl_block_id = SemIR::InstBlockId::None};
-  auto assoc_const_decl_id = AddInstInNoBlock(
-      context, SemIR::LocIdAndInst::UncheckedLoc(SemIR::LocId(node_id), assoc_const_decl));
-
-  // Create the associated constant entry
-  auto assoc_const_id = context.associated_constants().Add(
+  auto decl_id = AddPlaceholderInstInNoBlock(
+      context,
+      node_id,
+      assoc_const_decl);
+  assoc_const_decl.assoc_const_id = context.associated_constants().Add(
       {.name_id = name_id,
-       .parent_scope_id = context.scope_stack().PeekNameScopeId(),
-       .decl_id = assoc_const_decl_id,
-       .generic_id = SemIR::GenericId::None,
-       .default_value_id = SemIR::InstId::None});
+        .parent_scope_id = context.scope_stack().PeekNameScopeId(),
+        .decl_id = decl_id,
+        .generic_id = SemIR::GenericId::None,
+        .default_value_id = SemIR::InstId::None});
+  ReplaceInstBeforeConstantUse(context, decl_id, assoc_const_decl);
 
-  // Update the instruction with the associated constant ID
-  assoc_const_decl.assoc_const_id = assoc_const_id;
-  ReplaceInstBeforeConstantUse(context, assoc_const_decl_id, assoc_const_decl);
-
-  // Add the name to the declaration name stack
-  if (name_id != SemIR::NameId::Underscore) {
-    const DeclIntroducerState& introducer =
-        context.decl_introducer_state_stack().innermost();
-    auto name_context =
-        context.decl_name_stack().MakeUnqualifiedName(name_node, name_id);
-    context.decl_name_stack().AddNameOrDiagnose(
-        name_context, assoc_const_decl_id,
-        introducer.modifier_set.GetAccessKind());
-  }
-
-  context.node_stack().Push(node_id, assoc_const_decl_id);
+  context.node_stack().Push(node_id, decl_id);
   return true;
 }
 

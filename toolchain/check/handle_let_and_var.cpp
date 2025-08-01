@@ -30,6 +30,15 @@
 
 namespace Carbon::Check {
 
+// Handles the start of a declaration of an associated constant.
+static auto StartAssociatedConstant(Context& context) -> void {
+  // An associated constant is always generic.
+  StartGenericDecl(context);
+  // Collect the declarations nested in the associated constant in a decl
+  // block. This is popped by FinishAssociatedConstantDecl.
+  context.inst_block_stack().Push();
+}
+
 // Handles the end of the declaration region of an associated constant. This is
 // called at the `=` or the `;` of the declaration, whichever comes first.
 static auto EndAssociatedConstantDeclRegion(Context& context,
@@ -91,17 +100,8 @@ auto HandleParseNode(Context& context, Parse::LetIntroducerId node_id) -> bool {
 }
 
 auto HandleParseNode(Context& context, Parse::AssociatedConstantIntroducerId node_id) -> bool {
-  context.decl_introducer_state_stack().Push<Lex::TokenKind::Let>();
-  context.node_stack().Push(node_id);
-  context.pattern_block_stack().Push();
-  context.full_pattern_stack().PushFullPattern(
-      FullPatternStack::Kind::NameBindingDecl);
-  BeginSubpattern(context);
-
-  StartGenericDecl(context);
-  context.inst_block_stack().Push();
-  
-  return true;
+  StartAssociatedConstant(Context &context);
+  return HandleIntroducer<int Kind>(context, node_id);
 }
 
 auto HandleParseNode(Context& context, Parse::VariableIntroducerId node_id)
@@ -144,19 +144,6 @@ auto HandleParseNode(Context& context, Parse::VariablePatternId node_id)
   auto pattern_id = AddPatternInst<SemIR::VarPattern>(
       context, node_id, {.type_id = type_id, .subpattern_id = subpattern_id});
   context.node_stack().Push(node_id, pattern_id);
-  return true;
-}
-
-auto HandleParseNode(Context& context, Parse::LetPatternId node_id) -> bool {
-  auto subpattern_id = context.node_stack().PopPattern();
-  
-  if (subpattern_id == SemIR::ErrorInst::InstId) {
-    context.node_stack().Push(node_id, SemIR::ErrorInst::InstId);
-    return true;
-  }
-
-  // LetPattern just forwards its subpattern - it doesn't need its own SemIR node
-  context.node_stack().Push(node_id, subpattern_id);
   return true;
 }
 
@@ -280,6 +267,53 @@ static auto HandleDecl(Context& context) -> DeclInfo {
   return decl_info;
 }
 
+// Finishes an associated constant declaration. This is called at the `;` to
+// perform any final steps. The `AssociatedConstantDecl` instruction and the
+// corresponding `AssociatedConstant` entity are built as part of handling the
+// binding pattern, but we still need to finish building the `Generic` object
+// and attach the default value, if any is specified.
+static auto FinishAssociatedConstant(Context& context, Parse::LetDeclId node_id,
+                                     SemIR::InterfaceId interface_id,
+                                     DeclInfo& decl_info) -> void {
+  if (decl_info.pattern_id == SemIR::ErrorInst::InstId) {
+    context.name_scopes()
+        .Get(context.interfaces().Get(interface_id).scope_id)
+        .set_has_error();
+    if (decl_info.init_id.has_value()) {
+      DiscardGenericDecl(context);
+    }
+    context.inst_block_stack().Pop();
+    return;
+  }
+  auto decl = context.insts().GetAs<SemIR::AssociatedConstantDecl>(
+      decl_info.pattern_id);
+
+  if (decl_info.introducer.modifier_set.HasAnyOf(
+          KeywordModifierSet::Interface)) {
+    context.TODO(decl_info.introducer.modifier_node_id(ModifierOrder::Decl),
+                 "interface modifier");
+  }
+
+  // If there was an initializer, convert it and store it on the constant.
+  if (decl_info.init_id.has_value()) {
+    // TODO: Diagnose if the `default` modifier was not used.
+    auto default_value_id =
+        ConvertToValueOfType(context, node_id, decl_info.init_id, decl.type_id);
+    auto& assoc_const = context.associated_constants().Get(decl.assoc_const_id);
+    assoc_const.default_value_id = default_value_id;
+    FinishGenericDefinition(context, assoc_const.generic_id);
+  } else {
+    // TODO: Either allow redeclarations of associated constants or diagnose if
+    // the `default` modifier was used.
+  }
+
+  // Store the decl block on the declaration.
+  decl.decl_block_id = context.inst_block_stack().Pop();
+  ReplaceInstPreservingConstantValue(context, decl_info.pattern_id, decl);
+
+  context.inst_block_stack().AddInstId(decl_info.pattern_id);
+}
+
 auto HandleParseNode(Context& context, Parse::LetDeclId node_id) -> bool {
   auto decl_info =
       HandleDecl<Lex::TokenKind::Let, Parse::NodeKind::LetIntroducer,
@@ -308,52 +342,17 @@ auto HandleParseNode(Context& context, Parse::LetDeclId node_id) -> bool {
 }
 
 auto HandleParseNode(Context& context, Parse::AssociatedConstantDeclId node_id) -> bool {
-  auto decl_info =
-      HandleDecl<Lex::TokenKind::Let, Parse::NodeKind::AssociatedConstantIntroducer,
-                 Parse::NodeKind::AssociatedConstantInitializer>(context);
+    auto decl_info =
+      HandleDecl<Lex::TokenKind::Let, Parse::NodeKind::LetIntroducer,
+                 Parse::NodeKind::LetInitializer>(context);
 
   LimitModifiersOnDecl(
       context, decl_info.introducer,
       KeywordModifierSet::Access | KeywordModifierSet::Interface);
 
-  // Handle error case
-  if (decl_info.pattern_id == SemIR::ErrorInst::InstId) {
-    // Clean up generic state on error
-    if (decl_info.init_id.has_value()) {
-      DiscardGenericDecl(context);
-    }
-    context.inst_block_stack().Pop();
-    return true;
-  }
-  
-  auto decl = context.insts().GetAs<SemIR::AssociatedConstantDecl>(
-      decl_info.pattern_id);
-
-  if (decl_info.introducer.modifier_set.HasAnyOf(
-          KeywordModifierSet::Interface)) {
-    context.TODO(decl_info.introducer.modifier_node_id(ModifierOrder::Decl),
-                 "interface modifier");
-  }
-
-  // If there was an initializer, convert it and store it on the constant.
-  if (decl_info.init_id.has_value()) {
-    // TODO: Diagnose if the `default` modifier was not used.
-    auto default_value_id =
-        ConvertToValueOfType(context, node_id, decl_info.init_id, decl.type_id);
-    auto& assoc_const = context.associated_constants().Get(decl.assoc_const_id);
-    assoc_const.default_value_id = default_value_id;
-    FinishGenericDefinition(context, assoc_const.generic_id);
-  } else {
-    // TODO: Either allow redeclarations of associated constants or diagnose if
-    // the `default` modifier was used.
-  }
-
-  // Store the decl block on the declaration.
-  decl.decl_block_id = context.inst_block_stack().Pop();
-  ReplaceInstPreservingConstantValue(context, decl_info.pattern_id, decl);
-
-  context.inst_block_stack().AddInstId(decl_info.pattern_id);
-
+  auto interface_scope = context.scope_stack().GetCurrentScopeAs<SemIR::InterfaceDecl>();
+  FinishAssociatedConstant(context, node_id, interface_scope->interface_id,
+                           decl_info);
   return true;
 }
 

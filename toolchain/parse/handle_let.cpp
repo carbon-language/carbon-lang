@@ -74,11 +74,11 @@ static auto HandleLetAfterPattern(Context& context, NodeKind pattern_kind, NodeK
 }
 
 auto HandleLetAfterPatternAsRegular(Context& context) -> void {
-  HandleLetAfterPattern(context, NodeKind::LetPattern, NodeKind::LetInitializer);
+  HandleLetAfterPattern(context, NodeKind::LetBindingPattern, NodeKind::LetInitializer);
 }
 
 auto HandleLetAfterPatternAsAssociatedConstant(Context& context) -> void {
-  HandleLetAfterPattern(context, NodeKind::AssociatedConstantNameAndType, NodeKind::AssociatedConstantInitializer);
+  HandleLetAfterPattern(context, NodeKind::AssociatedConstantBindingPattern, NodeKind::AssociatedConstantInitializer);
 }
 
 static auto HandleLetFinish(Context& context, NodeKind node_kind) -> void {
