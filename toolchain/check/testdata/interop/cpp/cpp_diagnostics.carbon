@@ -263,13 +263,11 @@ import Cpp library "multiple_errors_and_multiple_warnings.h";
 
 #include "one_error.h"
 
-// --- fail_todo_import_indirect_error.carbon
+// --- fail_import_indirect_error.carbon
 
 library "[[@TEST_NAME]]";
 
-// TODO: The `In file included from` line should not be prefixed. See
-// https://github.com/carbon-language/carbon-lang/pull/5614#pullrequestreview-2900939411
-// CHECK:STDERR: fail_todo_import_indirect_error.carbon:[[@LINE+6]]:10: in file included here [InCppInclude]
+// CHECK:STDERR: fail_import_indirect_error.carbon:[[@LINE+6]]:10: in file included here [InCppInclude]
 // CHECK:STDERR: ./indirect_error.h:2:10: in file included here [InCppInclude]
 // CHECK:STDERR: ./one_error.h:2:2: error: "error1" [CppInteropParseError]
 // CHECK:STDERR:     2 | #error "error1"
@@ -285,14 +283,12 @@ import Cpp library "indirect_error.h";
 
 #include "one_warning.h"
 
-// --- todo_import_indirect_warning.carbon
+// --- import_indirect_warning.carbon
 
 library "[[@TEST_NAME]]";
 
-// TODO: The `In file included from` line should not be prefixed. See
-// https://github.com/carbon-language/carbon-lang/pull/5614#pullrequestreview-2900939411
 //@dump-sem-ir-begin
-// CHECK:STDERR: todo_import_indirect_warning.carbon:[[@LINE+6]]:10: in file included here [InCppInclude]
+// CHECK:STDERR: import_indirect_warning.carbon:[[@LINE+6]]:10: in file included here [InCppInclude]
 // CHECK:STDERR: ./indirect_warning.h:2:10: in file included here [InCppInclude]
 // CHECK:STDERR: ./one_warning.h:2:2: warning: "warning1" [CppInteropParseWarning]
 // CHECK:STDERR:     2 | #warning "warning1"
@@ -448,7 +444,7 @@ import Cpp library "direct_include.h";
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- todo_import_indirect_warning.carbon
+// CHECK:STDOUT: --- import_indirect_warning.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT: }
