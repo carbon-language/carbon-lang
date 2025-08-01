@@ -2,7 +2,7 @@
 // Exceptions. See /LICENSE for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
-// INCLUDE-FILE: toolchain/testing/testdata/min_prelude/int.carbon
+// INCLUDE-FILE: toolchain/testing/testdata/min_prelude/primitives.carbon
 //
 // AUTOUPDATE
 // TIP: To test this file alone, run:
@@ -14,6 +14,38 @@
 // Carbon, because the parameter and return types might have a non-trivial
 // calling convention.
 // TODO: Create thunks for these cases.
+
+// ============================================================================
+// bool param
+// ============================================================================
+
+// --- bool_param.h
+
+auto foo(bool a) -> void;
+
+// --- import_bool_param_true.carbon
+
+library "[[@TEST_NAME]]";
+
+import Cpp library "bool_param.h";
+
+fn F() {
+  //@dump-sem-ir-begin
+  Cpp.foo(true);
+  //@dump-sem-ir-end
+}
+
+// --- import_bool_param_false.carbon
+
+library "[[@TEST_NAME]]";
+
+import Cpp library "bool_param.h";
+
+fn F() {
+  //@dump-sem-ir-begin
+  Cpp.foo(false);
+  //@dump-sem-ir-end
+}
 
 // ============================================================================
 // short param
@@ -327,6 +359,46 @@ fn F() {
 }
 
 // ============================================================================
+// double param
+// ============================================================================
+
+// --- double_param.h
+
+auto foo(double a) -> void;
+
+// --- import_double_param.carbon
+
+library "[[@TEST_NAME]]";
+
+import Cpp library "double_param.h";
+
+fn F() {
+  //@dump-sem-ir-begin
+  Cpp.foo(0.8 as f64);
+  //@dump-sem-ir-end
+}
+
+// ============================================================================
+// bool return
+// ============================================================================
+
+// --- bool_return.h
+
+auto foo_bool() -> bool;
+
+// --- import_bool_return.carbon
+
+library "[[@TEST_NAME]]";
+
+import Cpp library "bool_return.h";
+
+fn F() {
+  //@dump-sem-ir-begin
+  let x: bool = Cpp.foo_bool();
+  //@dump-sem-ir-end
+}
+
+// ============================================================================
 // short return
 // ============================================================================
 
@@ -347,32 +419,86 @@ fn F() {
 }
 
 // ============================================================================
-// float return
+// double return
 // ============================================================================
 
-// --- float_return.h
+// --- double_return.h
 
-auto foo_float() -> float;
+auto foo_double() -> double;
 
-// --- fail_todo_import_float_return.carbon
+// --- import_double_return.carbon
 
 library "[[@TEST_NAME]]";
 
-import Cpp library "float_return.h";
+import Cpp library "double_return.h";
 
 fn F() {
   //@dump-sem-ir-begin
-  // CHECK:STDERR: fail_todo_import_float_return.carbon:[[@LINE+7]]:3: error: semantics TODO: `Unsupported: return type: float` [SemanticsTodo]
-  // CHECK:STDERR:   Cpp.foo_float();
-  // CHECK:STDERR:   ^~~~~~~~~~~~~
-  // CHECK:STDERR: fail_todo_import_float_return.carbon:[[@LINE+4]]:3: note: in `Cpp` name lookup for `foo_float` [InCppNameLookup]
-  // CHECK:STDERR:   Cpp.foo_float();
-  // CHECK:STDERR:   ^~~~~~~~~~~~~
-  // CHECK:STDERR:
-  Cpp.foo_float();
+  let x: f64 = Cpp.foo_double();
   //@dump-sem-ir-end
 }
 
+
+// CHECK:STDOUT: --- import_bool_param_true.carbon
+// CHECK:STDOUT:
+// CHECK:STDOUT: constants {
+// CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [concrete]
+// CHECK:STDOUT:   %foo.type: type = fn_type @foo [concrete]
+// CHECK:STDOUT:   %foo: %foo.type = struct_value () [concrete]
+// CHECK:STDOUT:   %true: bool = bool_literal true [concrete]
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: imports {
+// CHECK:STDOUT:   %Cpp: <namespace> = namespace file.%Cpp.import_cpp, [concrete] {
+// CHECK:STDOUT:     .foo = %foo.decl
+// CHECK:STDOUT:     import Cpp//...
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %foo.decl: %foo.type = fn_decl @foo [concrete = constants.%foo] {
+// CHECK:STDOUT:     <elided>
+// CHECK:STDOUT:   } {
+// CHECK:STDOUT:     <elided>
+// CHECK:STDOUT:   }
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: fn @F() {
+// CHECK:STDOUT: !entry:
+// CHECK:STDOUT:   %Cpp.ref: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
+// CHECK:STDOUT:   %foo.ref: %foo.type = name_ref foo, imports.%foo.decl [concrete = constants.%foo]
+// CHECK:STDOUT:   %true: bool = bool_literal true [concrete = constants.%true]
+// CHECK:STDOUT:   %foo.call: init %empty_tuple.type = call %foo.ref(%true)
+// CHECK:STDOUT:   <elided>
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: --- import_bool_param_false.carbon
+// CHECK:STDOUT:
+// CHECK:STDOUT: constants {
+// CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [concrete]
+// CHECK:STDOUT:   %foo.type: type = fn_type @foo [concrete]
+// CHECK:STDOUT:   %foo: %foo.type = struct_value () [concrete]
+// CHECK:STDOUT:   %false: bool = bool_literal false [concrete]
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: imports {
+// CHECK:STDOUT:   %Cpp: <namespace> = namespace file.%Cpp.import_cpp, [concrete] {
+// CHECK:STDOUT:     .foo = %foo.decl
+// CHECK:STDOUT:     import Cpp//...
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %foo.decl: %foo.type = fn_decl @foo [concrete = constants.%foo] {
+// CHECK:STDOUT:     <elided>
+// CHECK:STDOUT:   } {
+// CHECK:STDOUT:     <elided>
+// CHECK:STDOUT:   }
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: fn @F() {
+// CHECK:STDOUT: !entry:
+// CHECK:STDOUT:   %Cpp.ref: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
+// CHECK:STDOUT:   %foo.ref: %foo.type = name_ref foo, imports.%foo.decl [concrete = constants.%foo]
+// CHECK:STDOUT:   %false: bool = bool_literal false [concrete = constants.%false]
+// CHECK:STDOUT:   %foo.call: init %empty_tuple.type = call %foo.ref(%false)
+// CHECK:STDOUT:   <elided>
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
 // CHECK:STDOUT: --- import_short_param.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
@@ -961,6 +1087,84 @@ fn F() {
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
+// CHECK:STDOUT: --- import_double_param.carbon
+// CHECK:STDOUT:
+// CHECK:STDOUT: constants {
+// CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [concrete]
+// CHECK:STDOUT:   %int_64: Core.IntLiteral = int_value 64 [concrete]
+// CHECK:STDOUT:   %Float.type: type = fn_type @Float [concrete]
+// CHECK:STDOUT:   %Float: %Float.type = struct_value () [concrete]
+// CHECK:STDOUT:   %foo.type: type = fn_type @foo [concrete]
+// CHECK:STDOUT:   %foo: %foo.type = struct_value () [concrete]
+// CHECK:STDOUT:   %float: f64 = float_literal 0.80000000000000004 [concrete]
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: imports {
+// CHECK:STDOUT:   %Cpp: <namespace> = namespace file.%Cpp.import_cpp, [concrete] {
+// CHECK:STDOUT:     .foo = %foo.decl
+// CHECK:STDOUT:     import Cpp//...
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %foo.decl: %foo.type = fn_decl @foo [concrete = constants.%foo] {
+// CHECK:STDOUT:     <elided>
+// CHECK:STDOUT:   } {
+// CHECK:STDOUT:     <elided>
+// CHECK:STDOUT:   }
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: fn @F() {
+// CHECK:STDOUT: !entry:
+// CHECK:STDOUT:   %Cpp.ref: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
+// CHECK:STDOUT:   %foo.ref: %foo.type = name_ref foo, imports.%foo.decl [concrete = constants.%foo]
+// CHECK:STDOUT:   %float: f64 = float_literal 0.80000000000000004 [concrete = constants.%float]
+// CHECK:STDOUT:   %int_64: Core.IntLiteral = int_value 64 [concrete = constants.%int_64]
+// CHECK:STDOUT:   %Float.call: init type = call constants.%Float(%int_64) [concrete = f64]
+// CHECK:STDOUT:   %.loc8_18.1: type = value_of_initializer %Float.call [concrete = f64]
+// CHECK:STDOUT:   %.loc8_18.2: type = converted %Float.call, %.loc8_18.1 [concrete = f64]
+// CHECK:STDOUT:   %foo.call: init %empty_tuple.type = call %foo.ref(%float)
+// CHECK:STDOUT:   <elided>
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: --- import_bool_return.carbon
+// CHECK:STDOUT:
+// CHECK:STDOUT: constants {
+// CHECK:STDOUT:   %Bool.type: type = fn_type @Bool [concrete]
+// CHECK:STDOUT:   %Bool: %Bool.type = struct_value () [concrete]
+// CHECK:STDOUT:   %pattern_type.831: type = pattern_type bool [concrete]
+// CHECK:STDOUT:   %foo_bool.type: type = fn_type @foo_bool [concrete]
+// CHECK:STDOUT:   %foo_bool: %foo_bool.type = struct_value () [concrete]
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: imports {
+// CHECK:STDOUT:   %Cpp: <namespace> = namespace file.%Cpp.import_cpp, [concrete] {
+// CHECK:STDOUT:     .foo_bool = %foo_bool.decl
+// CHECK:STDOUT:     import Cpp//...
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %foo_bool.decl: %foo_bool.type = fn_decl @foo_bool [concrete = constants.%foo_bool] {
+// CHECK:STDOUT:     <elided>
+// CHECK:STDOUT:   } {
+// CHECK:STDOUT:     <elided>
+// CHECK:STDOUT:   }
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: fn @F() {
+// CHECK:STDOUT: !entry:
+// CHECK:STDOUT:   name_binding_decl {
+// CHECK:STDOUT:     %x.patt: %pattern_type.831 = binding_pattern x [concrete]
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %Cpp.ref: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
+// CHECK:STDOUT:   %foo_bool.ref: %foo_bool.type = name_ref foo_bool, imports.%foo_bool.decl [concrete = constants.%foo_bool]
+// CHECK:STDOUT:   %foo_bool.call: init bool = call %foo_bool.ref()
+// CHECK:STDOUT:   %.loc8_10.1: type = splice_block %.loc8_10.3 [concrete = bool] {
+// CHECK:STDOUT:     %Bool.call: init type = call constants.%Bool() [concrete = bool]
+// CHECK:STDOUT:     %.loc8_10.2: type = value_of_initializer %Bool.call [concrete = bool]
+// CHECK:STDOUT:     %.loc8_10.3: type = converted %Bool.call, %.loc8_10.2 [concrete = bool]
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %.loc8_30.1: bool = value_of_initializer %foo_bool.call
+// CHECK:STDOUT:   %.loc8_30.2: bool = converted %foo_bool.call, %.loc8_30.1
+// CHECK:STDOUT:   %x: bool = bind_name x, %.loc8_30.2
+// CHECK:STDOUT:   <elided>
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
 // CHECK:STDOUT: --- import_short_return.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
@@ -1001,22 +1205,46 @@ fn F() {
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- fail_todo_import_float_return.carbon
+// CHECK:STDOUT: --- import_double_return.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
+// CHECK:STDOUT:   %int_64: Core.IntLiteral = int_value 64 [concrete]
+// CHECK:STDOUT:   %Float.type: type = fn_type @Float [concrete]
+// CHECK:STDOUT:   %Float: %Float.type = struct_value () [concrete]
+// CHECK:STDOUT:   %pattern_type.3de: type = pattern_type f64 [concrete]
+// CHECK:STDOUT:   %foo_double.type: type = fn_type @foo_double [concrete]
+// CHECK:STDOUT:   %foo_double: %foo_double.type = struct_value () [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT:   %Cpp: <namespace> = namespace file.%Cpp.import_cpp, [concrete] {
-// CHECK:STDOUT:     .foo_float = <error>
+// CHECK:STDOUT:     .foo_double = %foo_double.decl
 // CHECK:STDOUT:     import Cpp//...
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %foo_double.decl: %foo_double.type = fn_decl @foo_double [concrete = constants.%foo_double] {
+// CHECK:STDOUT:     <elided>
+// CHECK:STDOUT:   } {
+// CHECK:STDOUT:     <elided>
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F() {
 // CHECK:STDOUT: !entry:
+// CHECK:STDOUT:   name_binding_decl {
+// CHECK:STDOUT:     %x.patt: %pattern_type.3de = binding_pattern x [concrete]
+// CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Cpp.ref: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
-// CHECK:STDOUT:   %foo_float.ref: <error> = name_ref foo_float, <error> [concrete = <error>]
+// CHECK:STDOUT:   %foo_double.ref: %foo_double.type = name_ref foo_double, imports.%foo_double.decl [concrete = constants.%foo_double]
+// CHECK:STDOUT:   %foo_double.call: init f64 = call %foo_double.ref()
+// CHECK:STDOUT:   %.loc8_10.1: type = splice_block %.loc8_10.3 [concrete = f64] {
+// CHECK:STDOUT:     %int_64: Core.IntLiteral = int_value 64 [concrete = constants.%int_64]
+// CHECK:STDOUT:     %Float.call: init type = call constants.%Float(%int_64) [concrete = f64]
+// CHECK:STDOUT:     %.loc8_10.2: type = value_of_initializer %Float.call [concrete = f64]
+// CHECK:STDOUT:     %.loc8_10.3: type = converted %Float.call, %.loc8_10.2 [concrete = f64]
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %.loc8_31.1: f64 = value_of_initializer %foo_double.call
+// CHECK:STDOUT:   %.loc8_31.2: f64 = converted %foo_double.call, %.loc8_31.1
+// CHECK:STDOUT:   %x: f64 = bind_name x, %.loc8_31.2
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

@@ -75,6 +75,12 @@ class Emitter {
     Builder(Builder&&) noexcept = default;
     auto operator=(Builder&&) noexcept -> Builder& = default;
 
+    // Overrides the snippet for the most recently added diagnostic or note with
+    // the given text. The provided override should include the caret text as
+    // well as the source snippet. An empty snippet restores the default
+    // behavior of printing the original source line.
+    auto OverrideSnippet(llvm::StringRef snippet) -> Builder&;
+
     // Adds a note diagnostic attached to the main diagnostic being built.
     // The API mirrors the main emission API: `Emitter::Emit`.
     // For the expected usage see the builder API: `Emitter::Build`.
@@ -137,7 +143,7 @@ class Emitter {
   // `consumer` is required to outlive the diagnostic emitter.
   explicit Emitter(Consumer* consumer) : consumer_(consumer) {}
 
-  virtual ~Emitter() = default;
+  virtual ~Emitter() { Flush(); }
 
   // Emits an error.
   //
@@ -160,6 +166,32 @@ class Emitter {
   // Create a null `Builder` that will not emit anything. Notes will
   // be silently ignored.
   auto BuildSuppressed() -> Builder { return Builder(); }
+
+  // Adds a flush function to flush pending diagnostics that might be enqueued
+  // and not yet emitted. The flush function will be called whenever `Flush` is
+  // called.
+  //
+  // No mechanism is provided to unregister a flush function, so the function
+  // must ensure that it remains callable until the emitter is destroyed.
+  //
+  // This is used to register a handler to flush diagnostics from Clang.
+  auto AddFlushFn(std::function<auto()->void> flush_fn) -> void {
+    flush_fns_.push_back(std::move(flush_fn));
+  }
+
+  // Flush all pending diagnostics that are queued externally, such as Clang
+  // diagnostics. This should not be called when the external source might be in
+  // the middle of producing a diagnostic, such as between Clang producing an
+  // error and producing the attached notes.
+  //
+  // This is called automatically before any diagnostic annotator is added or
+  // removed, to flush any pending diagnostics with suitable notes attached, and
+  // when the emitter is destroyed.
+  auto Flush() -> void {
+    for (auto& flush_fn : flush_fns_) {
+      flush_fn();
+    }
+  }
 
  protected:
   // Callback type used to report context messages from ConvertLoc.
@@ -189,6 +221,7 @@ class Emitter {
   friend class NoLocEmitter;
 
   Consumer* consumer_;
+  llvm::SmallVector<std::function<auto()->void>, 1> flush_fns_;
   llvm::SmallVector<llvm::function_ref<auto(Builder& builder)->void>>
       annotate_fns_;
 };
@@ -235,9 +268,13 @@ class AnnotationScope {
  public:
   AnnotationScope(Emitter<LocT>* emitter, AnnotateFn annotate)
       : emitter_(emitter), annotate_(std::move(annotate)) {
+    emitter_->Flush();
     emitter_->annotate_fns_.push_back(annotate_);
   }
-  ~AnnotationScope() { emitter_->annotate_fns_.pop_back(); }
+  ~AnnotationScope() {
+    emitter_->Flush();
+    emitter_->annotate_fns_.pop_back();
+  }
 
  private:
   Emitter<LocT>* emitter_;
@@ -270,6 +307,16 @@ template <typename Arg>
 struct DiagnosticTypeForArg<Arg> : public Arg::DiagnosticType {};
 
 }  // namespace Internal
+
+template <typename LocT>
+auto Emitter<LocT>::Builder::OverrideSnippet(llvm::StringRef snippet)
+    -> Builder& {
+  if (!emitter_) {
+    return *this;
+  }
+  diagnostic_.messages.back().loc.snippet = snippet;
+  return *this;
+}
 
 template <typename LocT>
 template <typename... Args>

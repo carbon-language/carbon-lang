@@ -35,11 +35,13 @@ library "[[@TEST_NAME]]";
 import Cpp library "declaration.h";
 
 fn MyF() {
-  // CHECK:STDERR: fail_use_declaration_as_definition.carbon:[[@LINE+6]]:12: error: binding pattern has incomplete type `Bar` in name binding declaration [IncompleteTypeInBindingDecl]
+  // CHECK:STDERR: fail_use_declaration_as_definition.carbon:[[@LINE+8]]:12: error: binding pattern has incomplete type `Bar` in name binding declaration [IncompleteTypeInBindingDecl]
   // CHECK:STDERR:   var bar: Cpp.Bar;
   // CHECK:STDERR:            ^~~~~~~
-  // CHECK:STDERR: fail_use_declaration_as_definition.carbon:[[@LINE-6]]:1: in import [InImport]
-  // CHECK:STDERR: ./declaration.h:2: note: class was forward declared here [ClassForwardDeclaredHere]
+  // CHECK:STDERR: fail_use_declaration_as_definition.carbon:[[@LINE-6]]:10: in file included here [InCppInclude]
+  // CHECK:STDERR: ./declaration.h:2:8: note: class was forward declared here [ClassForwardDeclaredHere]
+  // CHECK:STDERR: struct Bar;
+  // CHECK:STDERR:        ^
   // CHECK:STDERR:
   var bar: Cpp.Bar;
 }
@@ -82,20 +84,20 @@ fn MyF(bar: Cpp.Bar*);
 //@dump-sem-ir-end
 
 // ============================================================================
-// Public static member function
+// Static member function
 // ============================================================================
 
-// --- public_static_member_function.h
+// --- static_member_function.h
 
 struct Bar {
   static auto foo() -> void;
 };
 
-// --- import_public_static_member_function.carbon
+// --- import_static_member_function.carbon
 
 library "[[@TEST_NAME]]";
 
-import Cpp library "public_static_member_function.h";
+import Cpp library "static_member_function.h";
 
 fn MyF() {
   //@dump-sem-ir-begin
@@ -104,53 +106,31 @@ fn MyF() {
 }
 
 // ============================================================================
-// Private static member function
+// Static data member
 // ============================================================================
 
-// --- private_static_member_function.h
-
-struct Bar {
- private:
-  static auto foo() -> void;
-};
-
-// --- todo_fail_import_private_static_member_function.carbon
-
-library "[[@TEST_NAME]]";
-
-import Cpp library "private_static_member_function.h";
-
-fn MyF() {
-  // TODO: Should fail because `foo` is inaccessible.
-  Cpp.Bar.foo();
-}
-
-// ============================================================================
-// Public static data member
-// ============================================================================
-
-// --- public_static_data_member.h
+// --- static_data_member.h
 
 struct Bar {
   static Bar* _Nonnull foo;
 };
 
-// --- fail_todo_import_public_static_data_member.carbon
+// --- fail_todo_import_static_data_member.carbon
 
 library "[[@TEST_NAME]]";
 
-import Cpp library "public_static_data_member.h";
+import Cpp library "static_data_member.h";
 
 fn MyF() {
   //@dump-sem-ir-begin
-  // CHECK:STDERR: fail_todo_import_public_static_data_member.carbon:[[@LINE+11]]:23: error: semantics TODO: `Unsupported: Declaration type Var` [SemanticsTodo]
+  // CHECK:STDERR: fail_todo_import_static_data_member.carbon:[[@LINE+11]]:23: error: semantics TODO: `Unsupported: Declaration type Var` [SemanticsTodo]
   // CHECK:STDERR:   let bar: Cpp.Bar* = Cpp.Bar.foo();
   // CHECK:STDERR:                       ^~~~~~~~~~~
-  // CHECK:STDERR: fail_todo_import_public_static_data_member.carbon:[[@LINE+8]]:23: note: in `Cpp` name lookup for `foo` [InCppNameLookup]
+  // CHECK:STDERR: fail_todo_import_static_data_member.carbon:[[@LINE+8]]:23: note: in `Cpp` name lookup for `foo` [InCppNameLookup]
   // CHECK:STDERR:   let bar: Cpp.Bar* = Cpp.Bar.foo();
   // CHECK:STDERR:                       ^~~~~~~~~~~
   // CHECK:STDERR:
-  // CHECK:STDERR: fail_todo_import_public_static_data_member.carbon:[[@LINE+4]]:23: error: member name `foo` not found in `Cpp.Bar` [MemberNameNotFoundInInstScope]
+  // CHECK:STDERR: fail_todo_import_static_data_member.carbon:[[@LINE+4]]:23: error: member name `foo` not found in `Cpp.Bar` [MemberNameNotFoundInInstScope]
   // CHECK:STDERR:   let bar: Cpp.Bar* = Cpp.Bar.foo();
   // CHECK:STDERR:                       ^~~~~~~~~~~
   // CHECK:STDERR:
@@ -159,20 +139,20 @@ fn MyF() {
 }
 
 // ============================================================================
-// Public data member
+// Data member
 // ============================================================================
 
-// --- public_data_member.h
+// --- data_member.h
 
 struct Bar {
   Bar* _Nonnull foo;
 };
 
-// --- import_public_data_member.carbon
+// --- import_data_member.carbon
 
 library "[[@TEST_NAME]]";
 
-import Cpp library "public_data_member.h";
+import Cpp library "data_member.h";
 
 //@dump-sem-ir-begin
 fn MyF(bar : Cpp.Bar*) {
@@ -218,56 +198,6 @@ fn MyF(bar: Cpp.Bar*) {
   bar->f();
 }
 //@dump-sem-ir-end
-
-// ============================================================================
-// To inherit public
-// ============================================================================
-
-// --- to_inherit_public.h
-
-struct Bar { static auto foo() -> void; };
-
-// --- import_to_inherit_public.carbon
-
-library "[[@TEST_NAME]]";
-
-import Cpp library "to_inherit_public.h";
-
-//@dump-sem-ir-begin
-class Derived {
-  extend base: Cpp.Bar;
-}
-
-fn MyF() {
-  Derived.foo();
-}
-//@dump-sem-ir-end
-
-// ============================================================================
-// To inherit private
-// ============================================================================
-
-// --- to_inherit_private.h
-
-struct Bar {
- private:
-  static auto foo() -> void;
-};
-
-// --- todo_fail_to_inherit_private.carbon
-
-library "[[@TEST_NAME]]";
-
-import Cpp library "to_inherit_private.h";
-
-class Derived {
-  extend base: Cpp.Bar;
-}
-
-fn MyF() {
-  // TODO: Should fail because `foo` is inaccessible.
-  Derived.foo();
-}
 
 // ============================================================================
 // Template
@@ -404,7 +334,7 @@ fn MyF(bar: Cpp.Bar*);
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @MyF(%bar.param: %ptr);
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- import_public_static_member_function.carbon
+// CHECK:STDOUT: --- import_static_member_function.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [concrete]
@@ -431,7 +361,7 @@ fn MyF(bar: Cpp.Bar*);
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- fail_todo_import_public_static_data_member.carbon
+// CHECK:STDOUT: --- fail_todo_import_static_data_member.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %Bar: type = class_type @Bar [concrete]
@@ -464,15 +394,15 @@ fn MyF(bar: Cpp.Bar*);
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- import_public_data_member.carbon
+// CHECK:STDOUT: --- import_data_member.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %Bar: type = class_type @Bar [concrete]
 // CHECK:STDOUT:   %ptr.f68: type = ptr_type %Bar [concrete]
-// CHECK:STDOUT:   %Bar.elem: type = unbound_element_type %Bar, %ptr.f68 [concrete]
 // CHECK:STDOUT:   %pattern_type: type = pattern_type %ptr.f68 [concrete]
 // CHECK:STDOUT:   %MyF.type: type = fn_type @MyF [concrete]
 // CHECK:STDOUT:   %MyF: %MyF.type = struct_value () [concrete]
+// CHECK:STDOUT:   %Bar.elem: type = unbound_element_type %Bar, %ptr.f68 [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -590,87 +520,6 @@ fn MyF(bar: Cpp.Bar*);
 // CHECK:STDOUT:   %bar.ref: %ptr.f68 = name_ref bar, %bar
 // CHECK:STDOUT:   %.loc15: ref %Bar = deref %bar.ref
 // CHECK:STDOUT:   %f.ref: <error> = name_ref f, <error> [concrete = <error>]
-// CHECK:STDOUT:   return
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: --- import_to_inherit_public.carbon
-// CHECK:STDOUT:
-// CHECK:STDOUT: constants {
-// CHECK:STDOUT:   %Derived: type = class_type @Derived [concrete]
-// CHECK:STDOUT:   %Bar: type = class_type @Bar [concrete]
-// CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [concrete]
-// CHECK:STDOUT:   %Derived.elem: type = unbound_element_type %Derived, %Bar [concrete]
-// CHECK:STDOUT:   %Destroy.type: type = facet_type <@Destroy> [concrete]
-// CHECK:STDOUT:   %pattern_type.f6d: type = pattern_type auto [concrete]
-// CHECK:STDOUT:   %Destroy.impl_witness: <witness> = impl_witness @Derived.%Destroy.impl_witness_table [concrete]
-// CHECK:STDOUT:   %ptr.404: type = ptr_type %Derived [concrete]
-// CHECK:STDOUT:   %pattern_type.605: type = pattern_type %ptr.404 [concrete]
-// CHECK:STDOUT:   %Derived.as.Destroy.impl.Op.type: type = fn_type @Derived.as.Destroy.impl.Op [concrete]
-// CHECK:STDOUT:   %Derived.as.Destroy.impl.Op: %Derived.as.Destroy.impl.Op.type = struct_value () [concrete]
-// CHECK:STDOUT:   %struct_type.base.36d: type = struct_type {.base: %Bar} [concrete]
-// CHECK:STDOUT:   %complete_type.fff: <witness> = complete_type_witness %struct_type.base.36d [concrete]
-// CHECK:STDOUT:   %MyF.type: type = fn_type @MyF [concrete]
-// CHECK:STDOUT:   %MyF: %MyF.type = struct_value () [concrete]
-// CHECK:STDOUT:   %Bar.foo.type: type = fn_type @Bar.foo [concrete]
-// CHECK:STDOUT:   %Bar.foo: %Bar.foo.type = struct_value () [concrete]
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: imports {
-// CHECK:STDOUT:   %Cpp: <namespace> = namespace file.%Cpp.import_cpp, [concrete] {
-// CHECK:STDOUT:     .Bar = %Bar.decl
-// CHECK:STDOUT:     import Cpp//...
-// CHECK:STDOUT:   }
-// CHECK:STDOUT:   %Bar.decl: type = class_decl @Bar [concrete = constants.%Bar] {} {}
-// CHECK:STDOUT:   %Bar.foo.decl: %Bar.foo.type = fn_decl @Bar.foo [concrete = constants.%Bar.foo] {} {}
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: file {
-// CHECK:STDOUT:   %Derived.decl: type = class_decl @Derived [concrete = constants.%Derived] {} {}
-// CHECK:STDOUT:   %MyF.decl: %MyF.type = fn_decl @MyF [concrete = constants.%MyF] {} {}
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: impl @Derived.as.Destroy.impl: constants.%Derived as constants.%Destroy.type {
-// CHECK:STDOUT:   %Derived.as.Destroy.impl.Op.decl: %Derived.as.Destroy.impl.Op.type = fn_decl @Derived.as.Destroy.impl.Op [concrete = constants.%Derived.as.Destroy.impl.Op] {
-// CHECK:STDOUT:     %self.patt: %pattern_type.605 = binding_pattern self [concrete]
-// CHECK:STDOUT:     %self.param_patt: %pattern_type.605 = value_param_pattern %self.patt, call_param0 [concrete]
-// CHECK:STDOUT:     %.loc7: %pattern_type.f6d = addr_pattern %self.param_patt [concrete]
-// CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %self.param: %ptr.404 = value_param call_param0
-// CHECK:STDOUT:     %Self.ref: type = name_ref Self, constants.%Derived [concrete = constants.%Derived]
-// CHECK:STDOUT:     %self: %ptr.404 = bind_name self, %self.param
-// CHECK:STDOUT:   }
-// CHECK:STDOUT:
-// CHECK:STDOUT: !members:
-// CHECK:STDOUT:   .Op = %Derived.as.Destroy.impl.Op.decl
-// CHECK:STDOUT:   witness = @Derived.%Destroy.impl_witness
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: class @Derived {
-// CHECK:STDOUT:   %Cpp.ref: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
-// CHECK:STDOUT:   %Bar.ref: type = name_ref Bar, imports.%Bar.decl [concrete = constants.%Bar]
-// CHECK:STDOUT:   %.loc8: %Derived.elem = base_decl %Bar.ref, element0 [concrete]
-// CHECK:STDOUT:   impl_decl @Derived.as.Destroy.impl [concrete] {} {}
-// CHECK:STDOUT:   %Destroy.impl_witness_table = impl_witness_table (@Derived.as.Destroy.impl.%Derived.as.Destroy.impl.Op.decl), @Derived.as.Destroy.impl [concrete]
-// CHECK:STDOUT:   %Destroy.impl_witness: <witness> = impl_witness %Destroy.impl_witness_table [concrete = constants.%Destroy.impl_witness]
-// CHECK:STDOUT:   %struct_type.base: type = struct_type {.base: %Bar} [concrete = constants.%struct_type.base.36d]
-// CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %struct_type.base [concrete = constants.%complete_type.fff]
-// CHECK:STDOUT:   complete_type_witness = %complete_type
-// CHECK:STDOUT:
-// CHECK:STDOUT: !members:
-// CHECK:STDOUT:   .Self = constants.%Derived
-// CHECK:STDOUT:   .Cpp = <poisoned>
-// CHECK:STDOUT:   .base = %.loc8
-// CHECK:STDOUT:   .foo = <poisoned>
-// CHECK:STDOUT:   extend %Bar.ref
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: fn @Derived.as.Destroy.impl.Op(%self.param: %ptr.404) = "no_op";
-// CHECK:STDOUT:
-// CHECK:STDOUT: fn @MyF() {
-// CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %Derived.ref: type = name_ref Derived, file.%Derived.decl [concrete = constants.%Derived]
-// CHECK:STDOUT:   %foo.ref: %Bar.foo.type = name_ref foo, imports.%Bar.foo.decl [concrete = constants.%Bar.foo]
-// CHECK:STDOUT:   %Bar.foo.call: init %empty_tuple.type = call %foo.ref()
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

@@ -537,17 +537,20 @@ static auto CollectCandidateImplsForQuery(
     // Build the type structure used for choosing the best the candidate.
     auto type_structure =
         BuildTypeStructure(context, impl.self_id, impl.interface);
+    if (!type_structure) {
+      continue;
+    }
     // TODO: We can skip the comparison here if the `impl_interface_const_id` is
     // not symbolic, since when the interface and specific ids match, and they
     // aren't symbolic, the structure will be identical.
     if (!query_type_structure.CompareStructure(
             TypeStructure::CompareTest::IsEqualToOrMoreSpecificThan,
-            type_structure)) {
+            *type_structure)) {
       continue;
     }
 
     candidate_impls.push_back(
-        {id, impl.definition_id, std::move(type_structure)});
+        {id, impl.definition_id, std::move(*type_structure)});
   }
 
   auto compare = [](auto& lhs, auto& rhs) -> bool {
@@ -607,6 +610,9 @@ auto EvalLookupSingleImplWitness(Context& context, SemIR::LocId loc_id,
   auto query_type_structure = BuildTypeStructure(
       context, context.constant_values().GetInstId(query_self_const_id),
       query_specific_interface);
+  if (!query_type_structure) {
+    return EvalImplLookupResult::MakeNone();
+  }
   bool query_is_concrete =
       QueryIsConcrete(context, query_self_const_id, query_specific_interface);
 
@@ -621,7 +627,7 @@ auto EvalLookupSingleImplWitness(Context& context, SemIR::LocId loc_id,
   // not be concrete in this case, so only final impls can produce a concrete
   // witness for this query.
   auto candidate_impls = CollectCandidateImplsForQuery(
-      context, self_facet_provides_witness, query_type_structure,
+      context, self_facet_provides_witness, *query_type_structure,
       query_specific_interface);
 
   for (const auto& candidate : candidate_impls) {

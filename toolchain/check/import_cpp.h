@@ -24,11 +24,18 @@ auto ImportCppFiles(Context& context,
                     std::shared_ptr<clang::CompilerInvocation> invocation)
     -> std::unique_ptr<clang::ASTUnit>;
 
-// Looks up the given name in the Clang AST generated when importing C++ code.
-// If successful, generates the instruction and returns the new `InstId`.
+// Looks up the given name in the Clang AST generated when importing C++ code
+// and returns a lookup result.
 auto ImportNameFromCpp(Context& context, SemIR::LocId loc_id,
                        SemIR::NameScopeId scope_id, SemIR::NameId name_id)
-    -> SemIR::InstId;
+    -> SemIR::ScopeLookupResult;
+
+// Given a class declaration that was imported from C++, attempt to import a
+// corresponding class definition. Returns true if nothing went wrong (whether
+// or not a definition could be imported), false if a diagnostic was produced.
+auto ImportCppClassDefinition(Context& context, SemIR::LocId loc_id,
+                              SemIR::ClassId class_id,
+                              SemIR::ClangDeclId clang_decl_id) -> bool;
 
 }  // namespace Carbon::Check
 
