@@ -147,9 +147,9 @@ auto DirRef::CreateDirectories(std::filesystem::path path,
   // descriptors have to be allocated for any intervening directories, etc. We
   // keep the path components that are missing as we pop them off for easy
   // traversal back down.
-  std::optional<Dir> dir_tmp;
+  std::optional<Dir> work_dir;
   // Paths typically consist of relatively few components
-  // and so we can use a bit of stack and avoid allocated and moving the paths
+  // and so we can use a bit of stack and avoid allocating and moving the paths
   // in common cases. We use `8` as an arbitrary but likely good for all of the
   // hottest cases.
   llvm::SmallVector<std::filesystem::path, 32> missing_components;
@@ -165,7 +165,7 @@ auto DirRef::CreateDirectories(std::filesystem::path path,
   }
   CARBON_CHECK(!missing_components.empty());
 
-  // If we haven't yet opened an intermediate directory, start by creating
+  // If we haven't yet opened an intermediate directory, start by creating one
   // relative to this directory. We can't do this as part of the loop below as
   // `this` and the newly opened directory have different types.
   if (!dir_tmp) {
@@ -466,7 +466,7 @@ auto MakeTmpDir() -> ErrorOr<RemovingDir, Error> {
     PrintErrorNumber(os, errno);
     return Error(os.TakeStr());
   }
-  CARBON_CHECK(result == tmpdir_path_buffer.data());
+  CARBON_CHECK(result == tmpdir_path_buffer.data(), "`mkdtemp` used a modified path");
   tmpdir_path = std::move(tmpdir_path_buffer);
 
   // Because `mkdtemp` doesn't return an open directory atomically, open the

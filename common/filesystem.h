@@ -98,8 +98,8 @@ enum class OpenFlags {
 
 // Flags controlling which permissions should be checked in an `Access` call.
 //
-// These permissions can also be combined with the `|` operator, so `R_OK |
-// W_OK` checks for both read and write access.
+// These permissions can also be combined with the `|` operator, so `AccessCheckFlags::Read |
+// AccessCheckFlags::Write` checks for both read and write access.
 enum class AccessCheck : int {
   Exists = F_OK,
   Read = R_OK,
@@ -127,7 +127,7 @@ enum class FileType : ModeType {
   SymbolicLink = S_IFLNK,
 
   // Non-portable Unix-variant specific types.
-  FIFO = S_IFIFO,
+  Fifo = S_IFIFO,
   CharDevice = S_IFCHR,
   BlockDevice = S_IFBLK,
   Socket = S_IFSOCK,
@@ -160,7 +160,7 @@ consteval auto Cwd() -> Dir;
 
 // Creates a temporary directory and returns a removing directory handle to it.
 //
-// Each directory created should be unique and newly created by the call. It is
+// Each directory created will be unique and newly created by the call. It is
 // the caller's responsibility to clean up this directory.
 auto MakeTmpDir() -> ErrorOr<RemovingDir, Error>;
 
@@ -218,7 +218,7 @@ class FileStatus {
 // main `File` types: `ReadFileRef`, `WriteFileRef`, and `ReadWriteFileRef`.
 //
 // Objects using this type have access to an open file handle to a specific file
-// and expose operation on that open file. These operations may fail directly
+// and expose operations on that open file. These operations may fail directly
 // with their `ErrorOr` return, but some errors may be deferred until the
 // underlying owning file is closed.
 //
@@ -236,7 +236,7 @@ class Internal::FileRefBase {
   auto operator=(FileRefBase&&) -> FileRefBase& = default;
   auto operator=(const FileRefBase&) -> FileRefBase& = default;
 
-  // Computers the file status.
+  // Computes the file status.
   //
   // Analogous to the Unix-like `fstat` call.
   auto Stat() -> ErrorOr<FileStatus, FdError>;
@@ -251,7 +251,7 @@ class Internal::FileRefBase {
   //
   // On success, this returns a new slice from the start to the end of the
   // successfully read bytes. These will always be located in the passed-in
-  // buffer, but not all of it may be filled. A partial read does not mean that
+  // buffer, but not all of the buffer may be filled. A partial read does not mean that
   // the end of the file has been reached.
   //
   // When a successful read with an *empty* slice is returned, that represents
@@ -526,7 +526,7 @@ class DirRef {
                      OpenFlags flags = OpenFlags::None)
       -> ErrorOr<WriteFile, PathError>;
 
-  // Opens the provided path as a write-only file. Otherwise, behaves as
+  // Opens the provided path as a read-and-write file. Otherwise, behaves as
   // `OpenReadOnly`.
   auto OpenReadWrite(std::filesystem::path path,
                      CreationFlags creation_flags = OpenExisting,
@@ -611,7 +611,7 @@ class DirRef {
   // created directory with a potentially untrusted entity. Once some prefix has
   // been redirected to an untrustworthy location, subsequent calls cannot
   // detect and avoid this. When creating directories securely, start from a
-  // securely directly created `Dir` with limited access, and then create
+  // directly created `Dir` with limited access, and then create
   // subsequent paths within it as needed.
   auto CreateDirectories(std::filesystem::path path,
                          ModeType creation_mode = 0700)
@@ -684,6 +684,8 @@ class DirRef {
 class Dir : public DirRef {
  public:
   Dir() = default;
+
+  // Dir objects are move-only as they model ownership.
   Dir(Dir&& arg) noexcept : DirRef(arg.dfd_) { arg.dfd_ = -1; }
   Dir(const Dir&) = delete;
   auto operator=(Dir&& arg) noexcept -> Dir& {
@@ -740,7 +742,7 @@ class RemovingDir : public Dir {
   ~RemovingDir();
   auto operator=(RemovingDir&& rhs) -> RemovingDir& = default;
 
-  auto abs_path() const -> const std::filesystem::path& { return abs_path_; }
+  auto abs_path() const -> const std::filesystem::path& [[clang::lifetimebound]] { return abs_path_; }
 
   // Releases the directory from being removed and returns just the underlying
   // owning handle.
@@ -806,7 +808,7 @@ class DirRef::Iterator
     return entry_.dent_ == rhs.entry_.dent_;
   }
 
-  auto operator*() const -> const Entry& { return entry_; }
+  auto operator*() const -> const Entry& [[clang::lifetimebound]] { return entry_; }
   auto operator++() -> Iterator&;
 
  private:
@@ -1085,7 +1087,6 @@ inline auto Internal::FileRefBase::Destroy() -> void {
     // file descriptor.
     CARBON_DCHECK(result.ok(), "{0}", result.error());
   }
-  fd_ = -1;
 }
 
 template <OpenAccess A>
@@ -1176,7 +1177,7 @@ inline auto DirRef::Readlink(std::filesystem::path path)
   // contents.
   constexpr ssize_t BufferSize = 256;
   char buffer[BufferSize];
-  ssize_t result = readlinkat(dfd_, path.c_str(), buffer, BufferSize);
+  ssize_t read_bytes = readlinkat(dfd_, path.c_str(), buffer, BufferSize);
   if (result == -1) {
     return PathError(errno, "Dir::Readlink on '{0}' relative to '{1}'",
                      std::move(path), dfd_);
@@ -1244,8 +1245,7 @@ inline auto DirRef::Chdir(std::filesystem::path path)
 inline auto DirRef::Symlink(std::filesystem::path path,
                             const std::string& target)
     -> ErrorOr<Success, PathError> {
-  int result = symlinkat(target.c_str(), dfd_, path.c_str());
-  if (result == -1) {
+  if (symlinkat(target.c_str(), dfd_, path.c_str()) == -1) {
     return PathError(errno, "Dir::Symlink on '{0}' relative to '{1}'",
                      std::move(path), dfd_);
   }
