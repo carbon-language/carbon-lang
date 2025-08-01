@@ -304,6 +304,7 @@ fn F(T:! J) {}
 class D;
 // Satisfies the implied constraint in J.J1.
 impl D as Z where .Z1 = () and .Z2 = C(()) {}
+impl D as Y where .Y1 = D {}
 fn G(T:! J where .J1 = D) {
   F(T);
 }
