@@ -65,8 +65,7 @@
 // to Windows.
 //
 // [1]: Note that we refer to platforms as "Unix-like" rather than POSIX as we
-// want
-//      to group together all the OSes where the Unix-derived APIs are the
+//      want to group together all the OSes where the Unix-derived APIs are the
 //      primary and expected way to interact with the filesystem, regardless of
 //      whether a POSIX conforming API happens to exist. For example, both macOS
 //      and WSL (Windows Subsystem for Linux) _are_ Unix-like as those are the
@@ -77,8 +76,7 @@
 //      classification used in LLVM.
 //
 // [2]: The path parameters to most APIs are accepted by-copied-value in this
-// API
-//      because we often propagate the path into any returned errors. Using
+//      API because we often propagate the path into any returned errors. Using
 //      `const &` parameters would either require a copy into the error (rather
 //      than a move) or create complex lifetime constraints on the returned
 //      errors. Using by-copying-value parameters avoids this complexity, and in
@@ -558,7 +556,7 @@ class DirRef {
 
   // Opens the provided path as a read-only file.
   //
-  // The interaction with an existing file is governed by `creation_flags` and
+  // The interaction with an existing file is governed by `creation_options` and
   // defaults to error unless opening an existing file. When creating a file,
   // only the leaf component in the provided path can be created with this call.
   //
@@ -575,7 +573,7 @@ class DirRef {
   // This is an error if the path exists and is a directory. If the path is a
   // symlink, it will follow the symlink.
   auto OpenReadOnly(std::filesystem::path path,
-                    CreationOptions creation_flags = OpenExisting,
+                    CreationOptions creation_options = OpenExisting,
                     ModeType creation_mode = 0600,
                     OpenFlags flags = OpenFlags::None)
       -> ErrorOr<ReadFile, PathError>;
@@ -583,7 +581,7 @@ class DirRef {
   // Opens the provided path as a write-only file. Otherwise, behaves as
   // `OpenReadOnly`.
   auto OpenWriteOnly(std::filesystem::path path,
-                     CreationOptions creation_flags = OpenExisting,
+                     CreationOptions creation_options = OpenExisting,
                      ModeType creation_mode = 0600,
                      OpenFlags flags = OpenFlags::None)
       -> ErrorOr<WriteFile, PathError>;
@@ -591,7 +589,7 @@ class DirRef {
   // Opens the provided path as a read-and-write file. Otherwise, behaves as
   // `OpenReadOnly`.
   auto OpenReadWrite(std::filesystem::path path,
-                     CreationOptions creation_flags = OpenExisting,
+                     CreationOptions creation_options = OpenExisting,
                      ModeType creation_mode = 0600,
                      OpenFlags flags = OpenFlags::None)
       -> ErrorOr<ReadWriteFile, PathError>;
@@ -599,7 +597,7 @@ class DirRef {
   // Opens the provided path as a directory.
   //
   // Similar to `OpenReadOnly` and other file opening APIs, accepts
-  // `creation_flags` to control the interaction with any existing directory.
+  // `creation_options` to control the interaction with any existing directory.
   // However, `CreateAlways` is not implementable for directories and an error
   // if passed. The default permissions in the `creation_mode` are `0700` which
   // is more suitable for directories. There are no extra flags that can be
@@ -620,7 +618,7 @@ class DirRef {
   // creation should typically have a single component from an opened existing
   // parent directory.
   auto OpenDir(std::filesystem::path path,
-               CreationOptions creation_flags = OpenExisting,
+               CreationOptions creation_options = OpenExisting,
                ModeType creation_mode = 0700) -> ErrorOr<Dir, PathError>;
 
   // Reads the file at the provided path to a string.
@@ -633,10 +631,10 @@ class DirRef {
   // Writes the provided `content` to the provided path.
   //
   // This is a convenience wrapper for opening the path, creating it according
-  // to `creation_flags` as necessary, writing `content` to it, and closing it.
-  // Errors from any step are returned.
+  // to `creation_options` as necessary, writing `content` to it, and closing
+  // it. Errors from any step are returned.
   auto WriteFileFromString(std::filesystem::path path, llvm::StringRef content,
-                           CreationOptions creation_flags = CreateAlways)
+                           CreationOptions creation_options = CreateAlways)
       -> ErrorOr<Success, PathError>;
 
   // Changes the current working directory to this directory.
@@ -718,7 +716,7 @@ class DirRef {
   // Generic implementation of the various `Open*` variants using the
   // `OpenAccess` enumerator.
   template <OpenAccess A>
-  auto OpenImpl(std::filesystem::path path, CreationOptions creation_flags,
+  auto OpenImpl(std::filesystem::path path, CreationOptions creation_options,
                 ModeType creation_mode, OpenFlags flags)
       -> ErrorOr<File<A>, PathError>;
 
@@ -851,15 +849,20 @@ class DirRef::Entry {
   // representation.
   auto name() const -> const char* { return dent_->d_name; }
 
-  // Test whether the entry is known to be a directory.
+  // Test if the entry has an unknown type. In this case, all other type
+  // predicates will return false and the caller will have to directly `lstat`
+  // the entry to determine its type.
+  auto is_unknown_type() const -> bool { return dent_->d_type == DT_UNKNOWN; }
+
+  // Predicates to test for known entry types.
   //
-  // An empty optional indicates it is unknown what kind of entry this is, while
-  // an engaged optional contains a bool indicating whether it is known a
-  // directory or known a non-directory entry.
-  auto is_dir() const -> std::optional<bool> {
-    return dent_->d_type == DT_UNKNOWN ? std::nullopt
-                                       : std::optional(dent_->d_type == DT_DIR);
-  }
+  // Note that we don't provide an enumerator here as we don't have any reliably
+  // way to predict the set of possible values or narrow to that set. Different
+  // platforms and even different versions of the same header may change the set
+  // of types surfaced here.
+  auto is_known_dir() const -> bool { return dent_->d_type == DT_DIR; }
+  auto is_known_regular_file() const -> bool { return dent_->d_type == DT_REG; }
+  auto is_known_symlink() const -> bool { return dent_->d_type == DT_LNK; }
 
  private:
   friend Dir::Reader;
@@ -1281,23 +1284,23 @@ inline auto DirRef::OpenReadOnly(std::filesystem::path path,
                                  CreationOptions creation_options,
                                  ModeType creation_mode, OpenFlags flags)
     -> ErrorOr<ReadFile, PathError> {
-  return OpenImpl<OpenAccess::ReadOnly>(path, creation_flags, creation_mode,
+  return OpenImpl<OpenAccess::ReadOnly>(path, creation_options, creation_mode,
                                         flags);
 }
 
 inline auto DirRef::OpenWriteOnly(std::filesystem::path path,
-                                  CreationOptions creation_flags,
+                                  CreationOptions creation_options,
                                   ModeType creation_mode, OpenFlags flags)
     -> ErrorOr<WriteFile, PathError> {
-  return OpenImpl<OpenAccess::WriteOnly>(path, creation_flags, creation_mode,
+  return OpenImpl<OpenAccess::WriteOnly>(path, creation_options, creation_mode,
                                          flags);
 }
 
 inline auto DirRef::OpenReadWrite(std::filesystem::path path,
-                                  CreationOptions creation_flags,
+                                  CreationOptions creation_options,
                                   ModeType creation_mode, OpenFlags flags)
     -> ErrorOr<ReadWriteFile, PathError> {
-  return OpenImpl<OpenAccess::ReadWrite>(path, creation_flags, creation_mode,
+  return OpenImpl<OpenAccess::ReadWrite>(path, creation_options, creation_mode,
                                          flags);
 }
 
@@ -1358,12 +1361,12 @@ inline auto DirRef::Rmdir(std::filesystem::path path)
 
 template <OpenAccess A>
 inline auto DirRef::OpenImpl(std::filesystem::path path,
-                             CreationOptions creation_flags,
+                             CreationOptions creation_options,
                              ModeType creation_mode, OpenFlags flags)
     -> ErrorOr<File<A>, PathError> {
   for (;;) {
     int fd = openat(dfd_, path.c_str(),
-                    static_cast<int>(A) | static_cast<int>(creation_flags) |
+                    static_cast<int>(A) | static_cast<int>(creation_options) |
                         static_cast<int>(flags),
                     creation_mode);
     if (fd == -1) {

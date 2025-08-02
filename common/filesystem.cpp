@@ -110,9 +110,9 @@ auto DirRef::ReadFileToString(std::filesystem::path path)
 
 auto DirRef::WriteFileFromString(std::filesystem::path path,
                                  llvm::StringRef content,
-                                 CreationOptions creation_flags)
+                                 CreationOptions creation_options)
     -> ErrorOr<Success, PathError> {
-  CARBON_ASSIGN_OR_RETURN(WriteFile f, OpenWriteOnly(path, creation_flags));
+  CARBON_ASSIGN_OR_RETURN(WriteFile f, OpenWriteOnly(path, creation_options));
   auto result = f.WriteFromString(content);
   if (result.ok()) {
     return Success();
@@ -228,7 +228,7 @@ auto DirRef::Rmtree(std::filesystem::path path) -> ErrorOr<Success, PathError> {
       // If we don't know this is a directory form the entry, try unlinking. For
       // unknown entries, the failure will tell us to fall through to the
       // directory case if needed without an extra stat.
-      if (auto is_dir = entry.is_dir(); is_dir.has_value() && !*is_dir) {
+      if (!entry.is_known_dir()) {
         auto unlink_result = read_result->Unlink(name.str());
         if (unlink_result.ok() || unlink_result.error().no_entity()) {
           continue;
@@ -342,16 +342,17 @@ auto DirRef::ReadlinkSlow(std::filesystem::path path)
   return large_buffer;
 }
 
-auto DirRef::OpenDir(std::filesystem::path path, CreationOptions creation_flags,
-                     ModeType creation_mode) -> ErrorOr<Dir, PathError> {
+auto DirRef::OpenDir(std::filesystem::path path,
+                     CreationOptions creation_options, ModeType creation_mode)
+    -> ErrorOr<Dir, PathError> {
   // If we potentially need to create a directory, we have to do that
   // separately as no systems support `O_CREAT | O_DIRECTORY`, even though
   // that would be (much) nicer.
   bool created = false;
   int open_flags = O_DIRECTORY;
-  if (creation_flags != OpenExisting) {
-    CARBON_CHECK(creation_flags != CreateAlways,
-                 "Invalid `creation_flags` value of `CreateAlways`: there is "
+  if (creation_options != OpenExisting) {
+    CARBON_CHECK(creation_options != CreateAlways,
+                 "Invalid `creation_options` value of `CreateAlways`: there is "
                  "no support for truncating directories, and so they cannot be "
                  "created in an analogous way to files if they already exist.");
 
@@ -369,7 +370,7 @@ auto DirRef::OpenDir(std::filesystem::path path, CreationOptions creation_flags,
       // allowed for the requested creation flags, report any error here as part
       // of opening just like we would if the error originated from `openat`
       // with `O_CREAT`.
-      if (creation_flags == CreateNew || errno != EEXIST) {
+      if (creation_options == CreateNew || errno != EEXIST) {
         return PathError(errno,
                          "Calling `mkdirat` on '{0}' relative to '{1}' during "
                          "DirRef::OpenDir",
