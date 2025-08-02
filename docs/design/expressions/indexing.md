@@ -23,17 +23,18 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 Carbon supports indexing using the conventional `a[i]` subscript syntax. When
 `a` is a [value expression](/docs/design/values.md#value-expressions), the
 result can be a durable reference expression or a value expression, depending on
-which constraint the type implements:
+which constraints the type implements:
 
 -   If subscripting a value expression produces a value expression, as with an
-    array, the type should implement `IndexWith`.
+    array, the type should implement `IndexValueWith` and `IndexRefWith`. Types
+    that implement both satisfy the `IndexWith` constraint.
 -   If subscripting a value expression produces a durable reference expression,
     as with C++'s `std::span`, the type should implement `IndirectIndexWith`.
 
 When `a` is a
 [durable reference expression](/docs/design/values.md#durable-reference-expressions),
-the result of subscripting is also a durable reference expression if either of
-those constraints are implemented.
+the result of subscripting is also a durable reference expression in either
+case.
 
 Any type that implements `IndirectIndexWith` automatically also implements
 `IndexWith`.
@@ -41,12 +42,12 @@ Any type that implements `IndirectIndexWith` automatically also implements
 Other behaviors can be accomplished by implementing the underlying interface
 `IndexWithPrimitive`.
 
-`IndirectIndexWith` and `IndexWith` overlap, so a type can implement at most one
-of those two constraints.
+`IndirectIndexWith` overlaps `IndexValueWith`, so a type can implement at most
+one of those two constraints.
 
-The `Ref` methods of these interfaces, which are used to form durable reference
-expressions on indexing, return by `ref`. The `IndexWith` interface also has an
-`At` method that returns by value.
+The `Ref` methods of `IndexRefWith` and `IndirectIndexWith`, which are used to
+form durable reference expressions on indexing, return by `ref`. The
+`IndexValueWith` interface has an `At` method that returns by value.
 
 ## Details
 
@@ -54,7 +55,7 @@ A subscript expression has the form "_lhs_ `[` _index_ `]`". As in C++, this
 syntax has the same precedence as `.`, `->`, and function calls, and associates
 left-to-right with all of them.
 
-Its semantics are defined in terms of the following interface:
+Its semantics are defined in terms of the following form interface:
 
 ```carbon
 package Core;
@@ -80,11 +81,11 @@ owns the storage for its elements, like an array or C++'s `std::vector`:
 constraint IndexValueWith(SubscriptType:! type) {
   let ElementType:! type;
 
-  require form(let Self) impls
-     IndexWithPrimitive(form(let SubscriptType))
-     where .ResultForm = form(let ElementType);
+  require form(val Self) impls
+     IndexWithPrimitive(form(val SubscriptType))
+     where .ResultForm = form(val ElementType);
   alias At = LetSelf(IndexWithPrimitive(
-      form(let SubscriptType))).Op;
+      form(val SubscriptType))).Op;
 }
 
 // `lhs[index]` is a ref expression when `lhs`
@@ -93,15 +94,15 @@ constraint IndexRefWith(SubscriptType:! type) {
   let ElementType:! type;
 
   require form(ref Self) impls
-     IndexWithPrimitive(form(let SubscriptType))
+     IndexWithPrimitive(form(val SubscriptType))
      where .ResultForm = form(ref ElementType);
   alias Ref = RefSelf(IndexWithPrimitive(
-      form(let SubscriptType))).Op;
+      form(val SubscriptType))).Op;
 }
 
 // `lhs[index]` is a reference expression or value
 // depending on the category of `lhs`.
-constraint IndexWithConstraint
+constraint IndexWith
     [Self:! NoVarForm](SubscriptType:! type) {
   let ElementType:! type;
   match_first {
@@ -110,14 +111,6 @@ constraint IndexWithConstraint
     extend require impls IndexValueWith(SubscriptType)
         where .ElementType = ElementType;
   }
-}
-
-interface IndexWithToImpl(SubscriptType:! type) {
-  let ElementType:! type;
-  extend final impl as IndexValueWith(SubscriptType)
-      where .ElementType = ElementType;
-  extend final impl as IndexRefWith(SubscriptType)
-      where .ElementType = ElementType;
 }
 ```
 
@@ -129,13 +122,17 @@ FIXME: describe
 constraint IndirectIndexWith(SubscriptType:! type) {
   let ElementType:! type;
 
-  require form(let Self) impls
-     IndexWithPrimitive(form(let SubscriptType))
+  require form(val Self) impls
+     IndexWithPrimitive(form(val SubscriptType))
      where .ResultForm = form(ref ElementType);
   alias Ref = LetSelf(IndexWithPrimitive(
-      form(let SubscriptType))).Op;
+      form(val SubscriptType))).Op;
 }
 ```
+
+FIXME: Note that both `IndexValueWith` and `IndexIndirectWith` require
+`form(val Self) as IndexWithPrimitive(form(val SubscriptType))`, with different
+result forms, and so conflict.
 
 FIXME: describe will be used no matter the category of the _lhs_ argument.
 
