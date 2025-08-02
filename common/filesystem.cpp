@@ -96,7 +96,7 @@ auto Internal::FileRefBase::WriteFromString(llvm::StringRef str)
   return Success();
 }
 
-auto DirRef::OpenDir(std::filesystem::path path,
+auto DirRef::OpenDir(const std::filesystem::path& path,
                      CreationOptions creation_options, ModeType creation_mode,
                      OpenFlags open_flags) -> ErrorOr<Dir, PathError> {
   // If we potentially need to create a directory, we have to do that
@@ -128,7 +128,7 @@ auto DirRef::OpenDir(std::filesystem::path path,
         return PathError(errno,
                          "Calling `mkdirat` on '{0}' relative to '{1}' during "
                          "DirRef::OpenDir",
-                         std::move(path), dfd_);
+                         path, dfd_);
       }
     }
   }
@@ -144,7 +144,7 @@ auto DirRef::OpenDir(std::filesystem::path path,
     return PathError(
         errno,
         "Calling `openat` on '{0}' relative to '{1}' during DirRef::OpenDir",
-        std::move(path), dfd_);
+        path, dfd_);
   }
   Dir result(result_fd);
 
@@ -172,7 +172,7 @@ auto DirRef::OpenDir(std::filesystem::path path,
       // path and relative directory.
       return PathError(stat_result.error().unix_errnum(),
                        "DirRef::Stat after opening '{0}' relative to '{1}'",
-                       std::move(path), dfd_);
+                       path, dfd_);
     }
 
     // Check that the owning UID is the current effective UID.
@@ -181,7 +181,7 @@ auto DirRef::OpenDir(std::filesystem::path path,
       return PathError(EPERM,
                        "Unexpected UID change after creating '{0}' relative to "
                        "'{1}' during DirRef::OpenDir",
-                       std::move(path), dfd_);
+                       path, dfd_);
     }
 
     // Check that the permissions are a subset of the requested ones. They may
@@ -193,14 +193,14 @@ auto DirRef::OpenDir(std::filesystem::path path,
       return PathError(EPERM,
                        "Unexpected permissions after creating '{0}' relative "
                        "to '{1}' during DirRef::OpenDir",
-                       std::move(path), dfd_);
+                       path, dfd_);
     }
   }
 
   return result;
 }
 
-auto DirRef::ReadFileToString(std::filesystem::path path)
+auto DirRef::ReadFileToString(const std::filesystem::path& path)
     -> ErrorOr<std::string, PathError> {
   CARBON_ASSIGN_OR_RETURN(ReadFile f, OpenReadOnly(path));
   auto result = f.ReadToString();
@@ -208,11 +208,11 @@ auto DirRef::ReadFileToString(std::filesystem::path path)
     return *std::move(result);
   }
   return PathError(result.error().unix_errnum(),
-                   "Dir::ReadFileToString on '{0}' relative to '{1}'",
-                   std::move(path), dfd_);
+                   "Dir::ReadFileToString on '{0}' relative to '{1}'", path,
+                   dfd_);
 }
 
-auto DirRef::WriteFileFromString(std::filesystem::path path,
+auto DirRef::WriteFileFromString(const std::filesystem::path& path,
                                  llvm::StringRef content,
                                  CreationOptions creation_options)
     -> ErrorOr<Success, PathError> {
@@ -222,11 +222,11 @@ auto DirRef::WriteFileFromString(std::filesystem::path path,
     return Success();
   }
   return PathError(result.error().unix_errnum(),
-                   "Dir::WriteFileFromString on '{0}' relative to '{1}'",
-                   std::move(path), dfd_);
+                   "Dir::WriteFileFromString on '{0}' relative to '{1}'", path,
+                   dfd_);
 }
 
-auto DirRef::CreateDirectories(std::filesystem::path path,
+auto DirRef::CreateDirectories(const std::filesystem::path& path,
                                ModeType creation_mode)
     -> ErrorOr<Dir, PathError> {
   // Avoid having to handle an empty path by immediately rejecting it as
@@ -234,7 +234,7 @@ auto DirRef::CreateDirectories(std::filesystem::path path,
   if (path.empty()) {
     return PathError(EINVAL,
                      "DirRef::CreateDirectories on '{0}' relative to '{1}'",
-                     std::move(path), dfd_);
+                     path, dfd_);
   }
   // Try directly opening the directory and use that if successful. This is an
   // important hot path case of users essentially doing an "open-always" form of
@@ -301,7 +301,8 @@ auto DirRef::CreateDirectories(std::filesystem::path path,
   return std::move(work_dir).value();
 }
 
-auto DirRef::Rmtree(std::filesystem::path path) -> ErrorOr<Success, PathError> {
+auto DirRef::Rmtree(const std::filesystem::path& path)
+    -> ErrorOr<Success, PathError> {
   struct DirAndWorklists {
     DirRef::Reader dir;
     ssize_t dir_entries_start;
@@ -328,12 +329,13 @@ auto DirRef::Rmtree(std::filesystem::path path) -> ErrorOr<Success, PathError> {
       if (name == "." || name == "..") {
         continue;
       }
+      std::filesystem::path name_path = name.str();
 
       // If we don't know this is a directory form the entry, try unlinking. For
       // unknown entries, the failure will tell us to fall through to the
       // directory case if needed without an extra stat.
       if (!entry.is_known_dir()) {
-        auto unlink_result = read_result->Unlink(name.str());
+        auto unlink_result = read_result->Unlink(name_path);
         if (unlink_result.ok() || unlink_result.error().no_entity()) {
           continue;
         } else if (!unlink_result.error().is_dir()) {
@@ -344,14 +346,14 @@ auto DirRef::Rmtree(std::filesystem::path path) -> ErrorOr<Success, PathError> {
       // This is a directory, so try to speculatively remove it. This will fail
       // for non-empty directories, but avoids opening, reading, and closing the
       // directory when already empty.
-      auto rmdir_result = read_result->Rmdir(name.str());
+      auto rmdir_result = read_result->Rmdir(name_path);
       if (rmdir_result.ok() || rmdir_result.error().no_entity()) {
         // Removed here or by something else.
         continue;
       }
       if (rmdir_result.error().not_empty()) {
         // Found a non-empty directory, add it to our list and continue.
-        dir_entries.push_back(name.str());
+        dir_entries.push_back(std::move(name_path));
         continue;
       }
 
@@ -384,13 +386,13 @@ auto DirRef::Rmtree(std::filesystem::path path) -> ErrorOr<Success, PathError> {
     CARBON_CHECK(parent.dir_entries_start <
                  static_cast<ssize_t>(dir_entries.size()));
     std::filesystem::path subdir_path = dir_entries.pop_back_val();
-    CARBON_RETURN_IF_ERROR(parent.dir.Rmdir(std::move(subdir_path)));
+    CARBON_RETURN_IF_ERROR(parent.dir.Rmdir(subdir_path));
   }
 
-  return Rmdir(std::move(path));
+  return Rmdir(path);
 }
 
-auto DirRef::ReadlinkSlow(std::filesystem::path path)
+auto DirRef::ReadlinkSlow(const std::filesystem::path& path)
     -> ErrorOr<std::string, PathError> {
   constexpr ssize_t MinBufferSize =
 #ifdef PATH_MAX
@@ -415,8 +417,7 @@ auto DirRef::ReadlinkSlow(std::filesystem::path path)
   ssize_t result =
       readlinkat(dfd_, path.c_str(), large_buffer.data(), large_buffer.size());
   if (result == -1) {
-    return PathError(errno, "Readlink on '{0}' relative to '{1}'",
-                     std::move(path), dfd_);
+    return PathError(errno, "Readlink on '{0}' relative to '{1}'", path, dfd_);
   }
 
   // Now the really bad fallback case: if there are racing writes to the
@@ -429,15 +430,15 @@ auto DirRef::ReadlinkSlow(std::filesystem::path path)
     int64_t next_buffer_size = std::max<ssize_t>(
         MinBufferSize, llvm::NextPowerOf2(large_buffer.size()));
     if (next_buffer_size > MaxBufferSize) {
-      return PathError(ENOMEM, "Readlink on '{0}' relative to '{1}'",
-                       std::move(path), dfd_);
+      return PathError(ENOMEM, "Readlink on '{0}' relative to '{1}'", path,
+                       dfd_);
     }
     large_buffer.resize(next_buffer_size);
     result = readlinkat(dfd_, path.c_str(), large_buffer.data(),
                         large_buffer.size());
     if (result == -1) {
-      return PathError(errno, "Readlink on '{0}' relative to '{1}'",
-                       std::move(path), dfd_);
+      return PathError(errno, "Readlink on '{0}' relative to '{1}'", path,
+                       dfd_);
     }
   }
 

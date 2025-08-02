@@ -375,8 +375,8 @@ auto BM_Write(benchmark::State& state) -> void {
 
     for (int i : llvm::seq(NumFiles)) {
       if constexpr (Comp == Carbon) {
-        auto write_result = context.tmpdir.WriteFileFromString(
-            context.file_paths[i], content);
+        auto write_result =
+            context.tmpdir.WriteFileFromString(context.file_paths[i], content);
         CARBON_CHECK(write_result.ok(), "{0}", write_result.error());
       } else if constexpr (Comp == Std) {
         std::ofstream f(context.tmpdir.abs_path() / context.file_paths[i],

@@ -38,7 +38,7 @@
 // here are manually compared with LLVM's filesystem library to ensure a
 // reasonable Windows implementation is possible.
 //
-// The library uses C++'s `std::filesystem::path`[2] as its abstraction for
+// The library uses C++'s `std::filesystem::path` as its abstraction for
 // paths. This library provides two core APIs: open directories and files.
 //
 // Open directories provide relative- and absolute-path based operations to open
@@ -74,19 +74,6 @@
 //      POSIX subsystem or modern WSL, as those aren't the primary filesystem
 //      APIs for the (non-WSL) Windows platform. This also matches the rough OS
 //      classification used in LLVM.
-//
-// [2]: The path parameters to most APIs are accepted by-copied-value in this
-//      API because we often propagate the path into any returned errors. Using
-//      `const &` parameters would either require a copy into the error (rather
-//      than a move) or create complex lifetime constraints on the returned
-//      errors. Using by-copying-value parameters avoids this complexity, and in
-//      practice does not appear to cause a significant performance cost. Many
-//      callers form paths exclusively for a single call, and because these must
-//      be null-terminated they already typically require their own object. We
-//      also expect significantly shorter paths because we operate relative to
-//      directories (see `openat` discussion above), making the underlying
-//      small-size-optimization `std::filesystem::path` inherits from
-//      `std::string` even more effective than usual.
 namespace Carbon::Filesystem {
 
 // The different creation options available when opening a file or directory.
@@ -539,7 +526,7 @@ class DirRef {
   auto Read() & -> ErrorOr<Reader, FdError>;
 
   // Checks that the provided path can be accessed.
-  auto Access(std::filesystem::path path,
+  auto Access(const std::filesystem::path& path,
               AccessCheckFlags check = AccessCheckFlags::Exists)
       -> ErrorOr<bool, PathError>;
 
@@ -550,13 +537,15 @@ class DirRef {
   //
   // Like the `stat` system call on Unix-like platforms, this will follow any
   // symlinks and provide the status of the underlying file or directory.
-  auto Stat(std::filesystem::path path) -> ErrorOr<FileStatus, PathError>;
+  auto Stat(const std::filesystem::path& path)
+      -> ErrorOr<FileStatus, PathError>;
 
   // Reads the `FileStatus` for the provided path (without opening it).
   //
   // Like the `lstat` system call on Unix-like platforms, this will *not* follow
   // symlinks, and instead will return the status of the symlink itself.
-  auto Lstat(std::filesystem::path path) -> ErrorOr<FileStatus, PathError>;
+  auto Lstat(const std::filesystem::path& path)
+      -> ErrorOr<FileStatus, PathError>;
 
   // Reads the target string of the symlink at the provided path.
   //
@@ -564,7 +553,8 @@ class DirRef {
   // to be valid or exist. It merely reads the textual string.
   //
   // Returns an error if called with a path that is not a symlink.
-  auto Readlink(std::filesystem::path path) -> ErrorOr<std::string, PathError>;
+  auto Readlink(const std::filesystem::path& path)
+      -> ErrorOr<std::string, PathError>;
 
   // Opens the provided path as a read-only file.
   //
@@ -584,7 +574,7 @@ class DirRef {
   //
   // This is an error if the path exists and is a directory. If the path is a
   // symlink, it will follow the symlink.
-  auto OpenReadOnly(std::filesystem::path path,
+  auto OpenReadOnly(const std::filesystem::path& path,
                     CreationOptions creation_options = OpenExisting,
                     ModeType creation_mode = 0600,
                     OpenFlags flags = OpenFlags::None)
@@ -592,7 +582,7 @@ class DirRef {
 
   // Opens the provided path as a write-only file. Otherwise, behaves as
   // `OpenReadOnly`.
-  auto OpenWriteOnly(std::filesystem::path path,
+  auto OpenWriteOnly(const std::filesystem::path& path,
                      CreationOptions creation_options = OpenExisting,
                      ModeType creation_mode = 0600,
                      OpenFlags flags = OpenFlags::None)
@@ -600,7 +590,7 @@ class DirRef {
 
   // Opens the provided path as a read-and-write file. Otherwise, behaves as
   // `OpenReadOnly`.
-  auto OpenReadWrite(std::filesystem::path path,
+  auto OpenReadWrite(const std::filesystem::path& path,
                      CreationOptions creation_options = OpenExisting,
                      ModeType creation_mode = 0600,
                      OpenFlags flags = OpenFlags::None)
@@ -642,7 +632,7 @@ class DirRef {
   // `CreateNew`, callers can directly `CreateNew` and handle failures with an
   // explicit `OpenExisting` that also blocks following symlinks with
   // `OpenFlags::NoFollow` and performs any needed validation.
-  auto OpenDir(std::filesystem::path path,
+  auto OpenDir(const std::filesystem::path& path,
                CreationOptions creation_options = OpenExisting,
                ModeType creation_mode = 0700, OpenFlags flags = OpenFlags::None)
       -> ErrorOr<Dir, PathError>;
@@ -651,7 +641,7 @@ class DirRef {
   //
   // This is a convenience wrapper for opening the path, reading the returned
   // file to a string, and closing it. Errors from any step are returned.
-  auto ReadFileToString(std::filesystem::path path)
+  auto ReadFileToString(const std::filesystem::path& path)
       -> ErrorOr<std::string, PathError>;
 
   // Writes the provided `content` to the provided path.
@@ -659,7 +649,8 @@ class DirRef {
   // This is a convenience wrapper for opening the path, creating it according
   // to `creation_options` as necessary, writing `content` to it, and closing
   // it. Errors from any step are returned.
-  auto WriteFileFromString(std::filesystem::path path, llvm::StringRef content,
+  auto WriteFileFromString(const std::filesystem::path& path,
+                           llvm::StringRef content,
                            CreationOptions creation_options = CreateAlways)
       -> ErrorOr<Success, PathError>;
 
@@ -671,7 +662,7 @@ class DirRef {
   // An error if the provided path is not a directory. Does not open the
   // provided path as a directory, but it will be available as the current
   // working directory via `Cwd()`.
-  auto Chdir(std::filesystem::path path) -> ErrorOr<Success, PathError>;
+  auto Chdir(const std::filesystem::path& path) -> ErrorOr<Success, PathError>;
 
   // Creates a symlink at the provided path with the contents of `target`.
   //
@@ -682,7 +673,7 @@ class DirRef {
   //
   // Also note that the written symlink will be the null-terminated string
   // `target.c_str()`, ignoring everything past any embedded null bytes.
-  auto Symlink(std::filesystem::path path, const std::string& target)
+  auto Symlink(const std::filesystem::path& path, const std::string& target)
       -> ErrorOr<Success, PathError>;
 
   // Creates the directories in the provided path, using the permissions in
@@ -700,7 +691,7 @@ class DirRef {
   // directory securely using `OpenDir` and `CreateNew` with restricted
   // permissions that preclude any adversarial behavior, then use this API to
   // create tree components within that root.
-  auto CreateDirectories(std::filesystem::path path,
+  auto CreateDirectories(const std::filesystem::path& path,
                          ModeType creation_mode = 0700)
       -> ErrorOr<Dir, PathError>;
 
@@ -713,20 +704,20 @@ class DirRef {
   // The path must not be a directory. If the path is a symbolic link, the link
   // will be removed, not the target. Models the behavior of `unlinkat(2)` on
   // Unix-like platforms.
-  auto Unlink(std::filesystem::path path) -> ErrorOr<Success, PathError>;
+  auto Unlink(const std::filesystem::path& path) -> ErrorOr<Success, PathError>;
 
   // Remove the directory entry of the last component of the path.
   //
   // The path must be a directory, and that directory must be empty. Models
   // `rmdirat(2)` on Unix-like platforms.
-  auto Rmdir(std::filesystem::path path) -> ErrorOr<Success, PathError>;
+  auto Rmdir(const std::filesystem::path& path) -> ErrorOr<Success, PathError>;
 
   // Remove the directory tree identified by the last component of the path.
   //
   // The provided path must name a directory. This removes all files and
   // subdirectories contained within that named directory and then removes the
   // directory itself once empty.
-  auto Rmtree(std::filesystem::path path) -> ErrorOr<Success, PathError>;
+  auto Rmtree(const std::filesystem::path& path) -> ErrorOr<Success, PathError>;
 
  protected:
   constexpr DirRef() = default;
@@ -734,15 +725,15 @@ class DirRef {
 
   // Slow-path fallback when unable to read the symlink target into a small
   // stack buffer.
-  auto ReadlinkSlow(std::filesystem::path path)
+  auto ReadlinkSlow(const std::filesystem::path& path)
       -> ErrorOr<std::string, PathError>;
 
   // Generic implementation of the various `Open*` variants using the
   // `OpenAccess` enumerator.
   template <OpenAccess A>
-  auto OpenImpl(std::filesystem::path path, CreationOptions creation_options,
-                ModeType creation_mode, OpenFlags flags)
-      -> ErrorOr<File<A>, PathError>;
+  auto OpenImpl(const std::filesystem::path& path,
+                CreationOptions creation_options, ModeType creation_mode,
+                OpenFlags flags) -> ErrorOr<File<A>, PathError>;
 
   // State representing an open directory.
   //
@@ -1243,14 +1234,13 @@ inline auto DirRef::Read() & -> ErrorOr<Reader, FdError> {
   return Dir(dup_dfd).TakeAndRead();
 }
 
-inline auto DirRef::Access(std::filesystem::path path, AccessCheckFlags check)
-    -> ErrorOr<bool, PathError> {
+inline auto DirRef::Access(const std::filesystem::path& path,
+                           AccessCheckFlags check) -> ErrorOr<bool, PathError> {
   if (faccessat(dfd_, path.c_str(), static_cast<int>(check), /*flags=*/0) ==
       0) {
     return true;
   }
-  return PathError(errno, "Dir::Access on '{0}' relative to '{1}'",
-                   std::move(path), dfd_);
+  return PathError(errno, "Dir::Access on '{0}' relative to '{1}'", path, dfd_);
 }
 
 inline auto DirRef::Stat() -> ErrorOr<FileStatus, FdError> {
@@ -1261,28 +1251,26 @@ inline auto DirRef::Stat() -> ErrorOr<FileStatus, FdError> {
   return FdError(errno, "Dir::Stat on '{0}': ", dfd_);
 }
 
-inline auto DirRef::Stat(std::filesystem::path path)
+inline auto DirRef::Stat(const std::filesystem::path& path)
     -> ErrorOr<FileStatus, PathError> {
   FileStatus status;
   if (fstatat(dfd_, path.c_str(), &status.stat_buf_, /*flags=*/0) == 0) {
     return status;
   }
-  return PathError(errno, "Dir::Stat on '{0}' relative to '{1}'",
-                   std::move(path), dfd_);
+  return PathError(errno, "Dir::Stat on '{0}' relative to '{1}'", path, dfd_);
 }
 
-inline auto DirRef::Lstat(std::filesystem::path path)
+inline auto DirRef::Lstat(const std::filesystem::path& path)
     -> ErrorOr<FileStatus, PathError> {
   FileStatus status;
   if (fstatat(dfd_, path.c_str(), &status.stat_buf_,
               /*flags=*/AT_SYMLINK_NOFOLLOW) == 0) {
     return status;
   }
-  return PathError(errno, "Dir::Lstat on '{0}' relative to '{1}'",
-                   std::move(path), dfd_);
+  return PathError(errno, "Dir::Lstat on '{0}' relative to '{1}'", path, dfd_);
 }
 
-inline auto DirRef::Readlink(std::filesystem::path path)
+inline auto DirRef::Readlink(const std::filesystem::path& path)
     -> ErrorOr<std::string, PathError> {
   // On the fast path, we read into a small stack buffer and get the whole
   // contents.
@@ -1290,8 +1278,8 @@ inline auto DirRef::Readlink(std::filesystem::path path)
   char buffer[BufferSize];
   ssize_t read_bytes = readlinkat(dfd_, path.c_str(), buffer, BufferSize);
   if (read_bytes == -1) {
-    return PathError(errno, "Dir::Readlink on '{0}' relative to '{1}'",
-                     std::move(path), dfd_);
+    return PathError(errno, "Dir::Readlink on '{0}' relative to '{1}'", path,
+                     dfd_);
   }
   if (read_bytes < BufferSize) {
     // We got the whole contents in one shot, return it.
@@ -1299,10 +1287,10 @@ inline auto DirRef::Readlink(std::filesystem::path path)
   }
 
   // Otherwise, fallback to an out-of-line function to handle the slow path.
-  return ReadlinkSlow(std::move(path));
+  return ReadlinkSlow(path);
 }
 
-inline auto DirRef::OpenReadOnly(std::filesystem::path path,
+inline auto DirRef::OpenReadOnly(const std::filesystem::path& path,
                                  CreationOptions creation_options,
                                  ModeType creation_mode, OpenFlags flags)
     -> ErrorOr<ReadFile, PathError> {
@@ -1310,7 +1298,7 @@ inline auto DirRef::OpenReadOnly(std::filesystem::path path,
                                         flags);
 }
 
-inline auto DirRef::OpenWriteOnly(std::filesystem::path path,
+inline auto DirRef::OpenWriteOnly(const std::filesystem::path& path,
                                   CreationOptions creation_options,
                                   ModeType creation_mode, OpenFlags flags)
     -> ErrorOr<WriteFile, PathError> {
@@ -1318,7 +1306,7 @@ inline auto DirRef::OpenWriteOnly(std::filesystem::path path,
                                          flags);
 }
 
-inline auto DirRef::OpenReadWrite(std::filesystem::path path,
+inline auto DirRef::OpenReadWrite(const std::filesystem::path& path,
                                   CreationOptions creation_options,
                                   ModeType creation_mode, OpenFlags flags)
     -> ErrorOr<ReadWriteFile, PathError> {
@@ -1333,12 +1321,12 @@ inline auto DirRef::Chdir() -> ErrorOr<Success, FdError> {
   return Success();
 }
 
-inline auto DirRef::Chdir(std::filesystem::path path)
+inline auto DirRef::Chdir(const std::filesystem::path& path)
     -> ErrorOr<Success, PathError> {
   if (path.is_absolute()) {
     if (chdir(path.c_str()) == -1) {
-      return PathError(errno, "Dir::Chdir on '{0}' relative to '{1}'",
-                       std::move(path), dfd_);
+      return PathError(errno, "Dir::Chdir on '{0}' relative to '{1}'", path,
+                       dfd_);
     }
     return Success();
   }
@@ -1349,40 +1337,39 @@ inline auto DirRef::Chdir(std::filesystem::path path)
     return Success();
   }
   return PathError(result.error().unix_errnum(),
-                   "Dir::Chdir on '{0}' relative to '{1}'", std::move(path),
-                   dfd_);
+                   "Dir::Chdir on '{0}' relative to '{1}'", path, dfd_);
 }
 
-inline auto DirRef::Symlink(std::filesystem::path path,
+inline auto DirRef::Symlink(const std::filesystem::path& path,
                             const std::string& target)
     -> ErrorOr<Success, PathError> {
   if (symlinkat(target.c_str(), dfd_, path.c_str()) == -1) {
-    return PathError(errno, "Dir::Symlink on '{0}' relative to '{1}'",
-                     std::move(path), dfd_);
+    return PathError(errno, "Dir::Symlink on '{0}' relative to '{1}'", path,
+                     dfd_);
   }
   return Success();
 }
 
-inline auto DirRef::Unlink(std::filesystem::path path)
+inline auto DirRef::Unlink(const std::filesystem::path& path)
     -> ErrorOr<Success, PathError> {
   if (unlinkat(dfd_, path.c_str(), /*flags=*/0) == -1) {
-    return PathError(errno, "Dir::Unlink on '{0}' relative to '{1}'",
-                     std::move(path), dfd_);
+    return PathError(errno, "Dir::Unlink on '{0}' relative to '{1}'", path,
+                     dfd_);
   }
   return Success();
 }
 
-inline auto DirRef::Rmdir(std::filesystem::path path)
+inline auto DirRef::Rmdir(const std::filesystem::path& path)
     -> ErrorOr<Success, PathError> {
   if (unlinkat(dfd_, path.c_str(), AT_REMOVEDIR) == -1) {
-    return PathError(errno, "Dir::Rmdir on '{0}' relative to '{1}'",
-                     std::move(path), dfd_);
+    return PathError(errno, "Dir::Rmdir on '{0}' relative to '{1}'", path,
+                     dfd_);
   }
   return Success();
 }
 
 template <OpenAccess A>
-inline auto DirRef::OpenImpl(std::filesystem::path path,
+inline auto DirRef::OpenImpl(const std::filesystem::path& path,
                              CreationOptions creation_options,
                              ModeType creation_mode, OpenFlags flags)
     -> ErrorOr<File<A>, PathError> {
@@ -1396,8 +1383,8 @@ inline auto DirRef::OpenImpl(std::filesystem::path path,
       if (errno == EINTR) {
         continue;
       }
-      return PathError(errno, "Dir::Open on '{0}' relative to '{1}'",
-                       std::move(path), dfd_);
+      return PathError(errno, "Dir::Open on '{0}' relative to '{1}'", path,
+                       dfd_);
     }
     return File<A>(fd);
   }
