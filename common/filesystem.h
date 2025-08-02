@@ -128,9 +128,16 @@ enum class OpenFlags : int {
 
   // Open the file and truncate its contents to be empty.
   Truncate = O_TRUNC,
+
+  // Don't follow a symlink in the final path component being opened.
+  NoFollow = O_NOFOLLOW,
 };
 inline auto operator|(OpenFlags lhs, OpenFlags rhs) -> OpenFlags {
   return static_cast<OpenFlags>(static_cast<int>(lhs) | static_cast<int>(rhs));
+}
+inline auto operator|=(OpenFlags& lhs, OpenFlags rhs) -> OpenFlags& {
+  lhs = lhs | rhs;
+  return lhs;
 }
 
 // Flags controlling which permissions should be checked in an `Access` call.
@@ -148,6 +155,11 @@ inline auto operator|(AccessCheckFlags lhs, AccessCheckFlags rhs)
     -> AccessCheckFlags {
   return static_cast<AccessCheckFlags>(static_cast<int>(lhs) |
                                        static_cast<int>(rhs));
+}
+inline auto operator|=(AccessCheckFlags& lhs, AccessCheckFlags rhs)
+    -> AccessCheckFlags& {
+  lhs = lhs | rhs;
+  return lhs;
 }
 
 // The underlying integer type that should be used to model the mode of a file.
@@ -607,19 +619,33 @@ class DirRef {
   // component can be created by the call to this routine.
   //
   // When creating a directory with `CreateNew`, this routine works to be safe
-  // even in the presence of adversarial, concurrent operations. Specifically,
-  // even if the current (parent) directory allows different users to create
-  // subdirectories, and an adversarial user attempts to detect a new
-  // subdirectory created by calling this routine and replace it with one under
-  // their control, this routine reliably will return the directory under this
-  // process's control or produce an error due to an existing directory.
+  // even in the presence of adversarial, concurrent operations that attempt to
+  // replace the created directory with one that is controlled by the adversary.
+  //
+  // Specifically, for `CreateNew` we ensure that the last component is a
+  // created directory in its parent, and  cannot be replaced by a symlink into
+  // an attacker-controlled directory. We further ensure it cannot have been
+  // replaced by a directory with a different owner or with wider permissions
+  // than the created directory.
+  //
   // However, no validation is done on any prefix path components leading to the
   // leaf component created. When securely creating directories, the initial
-  // creation should typically have a single component from an opened existing
-  // parent directory.
+  // creation should have a single component from an opened existing parent
+  // directory. Also, no validation of the owning _group_ is performed. When
+  // securely creating a directory, the caller should either ensure the parent
+  // directory does not have a malicious setgid bit set, or restriction the
+  // created mode to not give group access, or both. In general, the lack of
+  // control over the owning group motivates our choice to make the default mode
+  // permissions restrictive and not include any group access.
+  //
+  // To securely achieve a result similar to `OpenAlways` instead of
+  // `CreateNew`, callers can directly `CreateNew` and handle failures with an
+  // explicit `OpenExisting` that also blocks following symlinks with
+  // `OpenFlags::NoFollow` and performs any needed validation.
   auto OpenDir(std::filesystem::path path,
                CreationOptions creation_options = OpenExisting,
-               ModeType creation_mode = 0700) -> ErrorOr<Dir, PathError>;
+               ModeType creation_mode = 0700, OpenFlags flags = OpenFlags::None)
+      -> ErrorOr<Dir, PathError>;
 
   // Reads the file at the provided path to a string.
   //
@@ -667,15 +693,13 @@ class DirRef {
   // path. The leaf created directory is opened and returned.
   //
   // The implementation allows for concurrent creation of the same directory (or
-  // a prefix) without error or corruption. However, concurrent creation of the
-  // same path tree cannot be made safe using this API. This function works to
-  // ensure that any directories created have the correct permissions and user,
-  // but only the _first_ concurrent creation will detect the replacement of its
-  // created directory with a potentially untrusted entity. Once some prefix has
-  // been redirected to an untrustworthy location, subsequent calls cannot
-  // detect and avoid this. When creating directories securely, start from a
-  // directly created `Dir` with limited access, and then create
-  // subsequent paths within it as needed.
+  // a prefix) without error or corruption and optimizes for performance of
+  // creating the requested path. As a consequence, this creation is _unsafe_ in
+  // the face of adversarial concurrent manipulation of components of the path.
+  // If you need to create directories securely, first create an initial
+  // directory securely using `OpenDir` and `CreateNew` with restricted
+  // permissions that preclude any adversarial behavior, then use this API to
+  // create tree components within that root.
   auto CreateDirectories(std::filesystem::path path,
                          ModeType creation_mode = 0700)
       -> ErrorOr<Dir, PathError>;

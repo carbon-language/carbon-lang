@@ -96,6 +96,110 @@ auto Internal::FileRefBase::WriteFromString(llvm::StringRef str)
   return Success();
 }
 
+auto DirRef::OpenDir(std::filesystem::path path,
+                     CreationOptions creation_options, ModeType creation_mode,
+                     OpenFlags open_flags) -> ErrorOr<Dir, PathError> {
+  // If we potentially need to create a directory, we have to do that
+  // separately as no systems support `O_CREAT | O_DIRECTORY`, even though
+  // that would be (much) nicer.
+
+  if (creation_options == CreateNew) {
+    // If we are required to be the one that created the directory, disable
+    // following the last symlink when we open that directory. The last symlink
+    // is the only one that matters for security here because it is only valid
+    // to create the last component. It is that directory component that we want
+    // to ensure has not been replaced with a symlink by an adversarial
+    // concurrent process.
+    open_flags |= OpenFlags::NoFollow;
+  }
+
+  if (creation_options != OpenExisting) {
+    CARBON_CHECK(creation_options != CreateAlways,
+                 "Invalid `creation_options` value of `CreateAlways`: there is "
+                 "no support for truncating directories, and so they cannot be "
+                 "created in an analogous way to files if they already exist.");
+
+    if (mkdirat(dfd_, path.c_str(), creation_mode) != 0) {
+      // Unless the error is just that the path already exists, and that is
+      // allowed for the requested creation flags, report any error here as part
+      // of opening just like we would if the error originated from `openat`
+      // with `O_CREAT`.
+      if (creation_options == CreateNew || errno != EEXIST) {
+        return PathError(errno,
+                         "Calling `mkdirat` on '{0}' relative to '{1}' during "
+                         "DirRef::OpenDir",
+                         std::move(path), dfd_);
+      }
+    }
+  }
+
+  // Open this path as a directory. Note that this has to succeed, and when we
+  // created the directory we require the last component to not be a symlink in
+  // case it was _replaced_ with a symlink while running.
+  int result_fd =
+      openat(dfd_, path.c_str(), static_cast<int>(open_flags) | O_DIRECTORY);
+  if (result_fd == -1) {
+    // No need for `EINTR` handling here as if this is a FIFO it would be an
+    // error with `O_DIRECTORY`.
+    return PathError(
+        errno,
+        "Calling `openat` on '{0}' relative to '{1}' during DirRef::OpenDir",
+        std::move(path), dfd_);
+  }
+  Dir result(result_fd);
+
+  // If we were required to create the directory, we also need to verify that
+  // the opened file descriptor continues to have the same permissions and the
+  // correct owner as we couldn't do the creation atomically with the open. This
+  // defends against an adversarial removal of the created directory and
+  // creation of a new directory with the same name but either with wider
+  // permissions such as all-write, or with a different owner.
+  //
+  // We don't defend against replacement with a directory of the same name, same
+  // permissions, same owner, but different group. There is no good way to do
+  // this defense given the complexity of group assignment, and there appears to
+  // be no need. Achieving such a replacement without superuser power would
+  // require a parent directory with `setgid` bit, and a group that gives the
+  // attacker access -- but such a parent directory would make *any* creation
+  // vulnerable without any need for a replacement, so we can't defend against
+  // that here. The caller has ample tools to defend against this including
+  // taking care with the parent directory and restricting the group permission
+  // bits which we *do* verify.
+  if (creation_options == CreateNew) {
+    auto stat_result = result.Stat();
+    if (!stat_result.ok()) {
+      // Manually propagate this error so we can attach it back to the opened
+      // path and relative directory.
+      return PathError(stat_result.error().unix_errnum(),
+                       "DirRef::Stat after opening '{0}' relative to '{1}'",
+                       std::move(path), dfd_);
+    }
+
+    // Check that the owning UID is the current effective UID.
+    if (stat_result->unix_uid() != geteuid()) {
+      // Model this as `EPERM`, which is a bit awkward, but should be fine.
+      return PathError(EPERM,
+                       "Unexpected UID change after creating '{0}' relative to "
+                       "'{1}' during DirRef::OpenDir",
+                       std::move(path), dfd_);
+    }
+
+    // Check that the permissions are a subset of the requested ones. They may
+    // have been masked down by `umask`, but if there are *new* permissions,
+    // that would be a security issue.
+    if ((stat_result->permissions() & creation_mode) !=
+        stat_result->permissions()) {
+      // Model this with `EPERM` and a custom message.
+      return PathError(EPERM,
+                       "Unexpected permissions after creating '{0}' relative "
+                       "to '{1}' during DirRef::OpenDir",
+                       std::move(path), dfd_);
+    }
+  }
+
+  return result;
+}
+
 auto DirRef::ReadFileToString(std::filesystem::path path)
     -> ErrorOr<std::string, PathError> {
   CARBON_ASSIGN_OR_RETURN(ReadFile f, OpenReadOnly(path));
@@ -342,101 +446,6 @@ auto DirRef::ReadlinkSlow(std::filesystem::path path)
   return large_buffer;
 }
 
-auto DirRef::OpenDir(std::filesystem::path path,
-                     CreationOptions creation_options, ModeType creation_mode)
-    -> ErrorOr<Dir, PathError> {
-  // If we potentially need to create a directory, we have to do that
-  // separately as no systems support `O_CREAT | O_DIRECTORY`, even though
-  // that would be (much) nicer.
-  bool created = false;
-  int open_flags = O_DIRECTORY;
-  if (creation_options != OpenExisting) {
-    CARBON_CHECK(creation_options != CreateAlways,
-                 "Invalid `creation_options` value of `CreateAlways`: there is "
-                 "no support for truncating directories, and so they cannot be "
-                 "created in an analogous way to files if they already exist.");
-
-    if (mkdirat(dfd_, path.c_str(), creation_mode) == 0) {
-      created = true;
-
-      // If we created the directory, we also disable following the last
-      // symlink. The last symlink is the only one that matters for security
-      // here because `mkdirat` above is only valid to create a single directory
-      // component. It is that directory component that we want to ensure has
-      // not been replaced with a symlink by an adversarial concurrent process.
-      open_flags |= O_NOFOLLOW;
-    } else {
-      // Unless the error is just that the path already exists, and that is
-      // allowed for the requested creation flags, report any error here as part
-      // of opening just like we would if the error originated from `openat`
-      // with `O_CREAT`.
-      if (creation_options == CreateNew || errno != EEXIST) {
-        return PathError(errno,
-                         "Calling `mkdirat` on '{0}' relative to '{1}' during "
-                         "DirRef::OpenDir",
-                         std::move(path), dfd_);
-      }
-    }
-  }
-
-  // Open this path as a directory. Note that this has to succeed, and when we
-  // created the directory we require the last component to not be a symlink in
-  // case it was _replaced_ with a symlink while running.
-  int result_fd = openat(dfd_, path.c_str(), open_flags);
-  if (result_fd == -1) {
-    // No need for `EINTR` handling here as if this is a FIFO it would be an
-    // error with `O_DIRECTORY`.
-    return PathError(
-        errno,
-        "Calling `openat` on '{0}' relative to '{1}' during DirRef::OpenDir",
-        std::move(path), dfd_);
-  }
-  Dir result(result_fd);
-
-  // If we actually created the directory, we also need to verify that the
-  // opened file descriptor continues to have the same permissions and the
-  // correct owner as we couldn't do the creation atomically with the open.
-  if (created) {
-    auto stat_result = result.Stat();
-    if (!stat_result.ok()) {
-      // Manually propagate this error so we can attach it back to the opened
-      // path and relative directory.
-      return PathError(stat_result.error().unix_errnum(),
-                       "DirRef::Stat after opening '{0}' relative to '{1}'",
-                       std::move(path), dfd_);
-    }
-
-    // FIXME: Go back through the security concerns here and double check things
-    // and tighten up comments. As part of that, update the API docs to explain
-    // the security constraints.
-
-    // Check that the permissions are a subset of the requested ones. They may
-    // have been masked down by `umask`, but if there are *new* permissions,
-    // that would be a security issue. We first need to extract the permission
-    // bits from the mode, as other bits are separately controlled.
-    if ((stat_result->permissions() & creation_mode) !=
-        stat_result->permissions()) {
-      // Model this `EPERM`.
-      return PathError(EPERM,
-                       "Setting permissions when creating '{0}' relative to "
-                       "'{1}' during DirRef::OpenDir",
-                       std::move(path), dfd_);
-    }
-    // Also check that the UID is the current effective UID. We don't currently
-    // verify the GID because it could come from the parent directory, so
-    // callers that need to should instead validate this themselves.
-    if (stat_result->unix_uid() != geteuid()) {
-      // Model this as `EPERM`, which is a bit awkward, but should be fine.
-      return PathError(EPERM,
-                       "Setting UID when creating '{0}' relative to "
-                       "'{1}' during DirRef::OpenDir",
-                       std::move(path), dfd_);
-    }
-  }
-
-  return result;
-}
-
 auto MakeTmpDir() -> ErrorOr<RemovingDir, Error> {
   std::filesystem::path tmpdir_path = "/tmp";
   // We use both `TEST_TMPDIR` and `TMPDIR`. The `TEST_TMPDIR` is set by Bazel
@@ -475,10 +484,11 @@ auto MakeTmpDir() -> ErrorOr<RemovingDir, Error> {
   tmpdir_path = std::move(tmpdir_path_buffer);
 
   // Because `mkdtemp` doesn't return an open directory atomically, open the
-  // created directory and perform safety checks. We can be more strict here as
-  // there can't be correct racing creation of the *same* new temporary
-  // directory.
-  CARBON_ASSIGN_OR_RETURN(Dir tmp, Cwd().OpenDir(tmpdir_path));
+  // created directory and perform safety checks similar to `OpenDir` when
+  // creating a new directory.
+  CARBON_ASSIGN_OR_RETURN(
+      Dir tmp, Cwd().OpenDir(tmpdir_path, OpenExisting, /*creation_mode=*/0,
+                             OpenFlags::NoFollow));
   // Make sure we try to remove the directory from here on out.
   RemovingDir result_dir(std::move(tmp), tmpdir_path);
 
@@ -493,25 +503,6 @@ auto MakeTmpDir() -> ErrorOr<RemovingDir, Error> {
         llvm::formatv("Found incorrect permissions or UID on tmpdir '{0}'",
                       tmpdir_path.native())
             .str());
-  }
-
-  // Last but not least, the directory must also be empty (other than `.` and
-  // `..`). Any files here would represent a security issue from injected
-  // symlinks to trigger traversal out of our tmp directory and into another
-  // directory we don't control.
-  CARBON_ASSIGN_OR_RETURN(Dir::Reader reader, result_dir.Read());
-  for (const auto& entry : reader) {
-    llvm::StringRef name = entry.name();
-    if (name != "." && name != "..") {
-      // We found an existing directory *other* than the empty one we expected
-      // to create. Likely this was created by something else racing with us and
-      // we should not use it.
-      return Error(
-          llvm::formatv(
-              "Found unexpected entry '{0}' in newly created tmpdir '{1}'",
-              name, tmpdir_path.native())
-              .str());
-    }
   }
 
   return result_dir;
