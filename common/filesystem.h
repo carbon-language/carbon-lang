@@ -286,7 +286,7 @@ class Internal::FileRefBase {
   // handle in that case. This is to support rebinding operations.
   FileRefBase() = default;
 
-  // Computes the file status.
+  // Reads the file status.
   //
   // Analogous to the Unix-like `fstat` call.
   auto Stat() -> ErrorOr<FileStatus, FdError>;
@@ -454,11 +454,10 @@ class File : public FileRef<A> {
   File() = default;
 
   // File objects are move-only as they model ownership.
-  File(File&& arg) noexcept : FileRef<A>(arg.fd_) { arg.fd_ = -1; }
+  File(File&& arg) noexcept : FileRef<A>(std::exchange(arg.fd_, -1)) {}
   auto operator=(File&& arg) noexcept -> File& {
     this->Destroy();
-    this->fd_ = arg.fd_;
-    arg.fd_ = -1;
+    this->fd_ = std::exchange(arg.fd_, -1);
     return *this;
   }
   File(const File&) = delete;
@@ -755,11 +754,10 @@ class Dir : public DirRef {
   Dir() = default;
 
   // Dir objects are move-only as they model ownership.
-  Dir(Dir&& arg) noexcept : DirRef(arg.dfd_) { arg.dfd_ = -1; }
+  Dir(Dir&& arg) noexcept : DirRef(std::exchange(arg.dfd_, -1)) {}
   auto operator=(Dir&& arg) noexcept -> Dir& {
     Destroy();
-    dfd_ = arg.dfd_;
-    arg.dfd_ = -1;
+    dfd_ = std::exchange(arg.dfd_, -1);
     return *this;
   }
   Dir(const Dir&) = delete;
@@ -938,9 +936,8 @@ class DirRef::Reader : public DirRef {
   Reader(const Reader&) = delete;
   auto operator=(Reader&& arg) noexcept -> Reader& {
     Destroy();
-    dfd_ = arg.dfd_;
-    dirp_ = arg.dirp_;
-    arg.dirp_ = nullptr;
+    dfd_ = std::exchange(arg.dfd_, -1);
+    dirp_ = std::exchange(arg.dirp_, nullptr);
     // The directory file descriptor isn't owning, but clear it for clarity.
     arg.dfd_ = -1;
     return *this;
@@ -1159,8 +1156,7 @@ inline auto Internal::FileRefBase::WriteFromBuffer(
 inline auto Internal::FileRefBase::Close() && -> ErrorOr<Success, FdError> {
   // Put the file in a moved-from state immediately as it is invalid to
   // retry closing or use the file in any way even if the close fails.
-  int fd = fd_;
-  fd_ = -1;
+  int fd = std::exchange(fd_, -1);
 
   int result = close(fd);
   if (result == 0) {
@@ -1282,7 +1278,7 @@ inline auto DirRef::Readlink(std::filesystem::path path)
 }
 
 inline auto DirRef::OpenReadOnly(std::filesystem::path path,
-                                 CreationOptions creation_flags,
+                                 CreationOptions creation_options,
                                  ModeType creation_mode, OpenFlags flags)
     -> ErrorOr<ReadFile, PathError> {
   return OpenImpl<OpenAccess::ReadOnly>(path, creation_flags, creation_mode,
@@ -1387,8 +1383,7 @@ constexpr Dir::~Dir() { Destroy(); }
 inline auto Dir::TakeAndRead() && -> ErrorOr<Reader, FdError> {
   // Transition our file descriptor into a directory stream, clearing it in the
   // process.
-  int dfd = dfd_;
-  dfd_ = -1;
+  int dfd = std::exchange(dfd_, -1);
   DIR* dirp = fdopendir(dfd);
   if (dirp == nullptr) {
     return FdError(errno, "Dir::Read on '{0}'", dfd);
