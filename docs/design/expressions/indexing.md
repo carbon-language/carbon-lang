@@ -26,7 +26,7 @@ result can be a durable reference expression or a value expression, depending on
 which constraints the type implements:
 
 -   If subscripting a value expression produces a value expression, as with an
-    array, the type should implement `IndexValueWith` and `IndexRefWith`. Types
+    array, the type should implement `IndexValWith` and `IndexRefWith`. Types
     that implement both satisfy the `IndexWith` constraint.
 -   If subscripting a value expression produces a durable reference expression,
     as with C++'s `std::span`, the type should implement `IndirectIndexWith`.
@@ -42,12 +42,12 @@ Any type that implements `IndirectIndexWith` automatically also implements
 Other behaviors can be accomplished by implementing the underlying interface
 `IndexWithPrimitive`.
 
-`IndirectIndexWith` overlaps `IndexValueWith`, so a type can implement at most
-one of those two constraints.
+`IndirectIndexWith` overlaps and conflicts with `IndexValWith`, so a type can
+implement at most one of those two constraints.
 
 The `Ref` methods of `IndexRefWith` and `IndirectIndexWith`, which are used to
 form durable reference expressions on indexing, return by `ref`. The
-`IndexValueWith` interface has an `At` method that returns by value.
+`IndexValWith` interface has an `At` method that returns by value.
 
 ## Details
 
@@ -78,7 +78,7 @@ owns the storage for its elements, like an array or C++'s `std::vector`:
 ```carbon
 // `lhs[index]` is a value expression when `lhs`
 // is a value expression.
-constraint IndexValueWith(SubscriptType:! type) {
+constraint IndexValWith(SubscriptType:! type) {
   let ElementType:! type;
 
   require form(val Self) impls
@@ -108,13 +108,18 @@ constraint IndexWith
   match_first {
     extend require impls IndexRefWith(SubscriptType)
         where .ElementType = ElementType;
-    extend require impls IndexValueWith(SubscriptType)
+    extend require impls IndexValWith(SubscriptType)
         where .ElementType = ElementType;
   }
 }
 ```
 
-FIXME: describe
+Note that `IndexWith` may be used as parameter's constraint, but can't be
+directly implemented, since Carbon doesn't support implementing multiple
+interfaces together (see
+[leads issue #4566: Implementing multiple interfaces with a single `impl` definition](https://github.com/carbon-language/carbon-lang/issues/4566)
+and
+[proposal #5168: Forward `impl` declaration of an incomplete interface](https://github.com/carbon-language/carbon-lang/pull/5168)).
 
 ```carbon
 // `lhs[index]` is always reference expression, even
@@ -130,58 +135,11 @@ constraint IndirectIndexWith(SubscriptType:! type) {
 }
 ```
 
-FIXME: Note that both `IndexValueWith` and `IndexIndirectWith` require
+Note that both `IndexValWith` and `IndexIndirectWith` require
 `form(val Self) as IndexWithPrimitive(form(val SubscriptType))`, with different
-result forms, and so conflict.
-
-FIXME: describe will be used no matter the category of the _lhs_ argument.
-
-FIXME: both of these require
-
-```
-interface IndexWith(SubscriptType:! type) {
-  let ElementType:! type;
-  fn At[self: Self](subscript: SubscriptType) -> ElementType;
-  fn Addr[addr self: Self*](subscript: SubscriptType) -> ElementType*;
-}
-
-interface IndirectIndexWith(SubscriptType:! type) {
-  require Self impls IndexWith(SubscriptType);
-  fn Addr[self: Self](subscript: SubscriptType) -> ElementType*;
-}
-```
-
-A subscript expression where _lhs_ has type `T` and _index_ has type `I` is
-rewritten based on the expression category of _lhs_ and whether `T` is known to
-implement `IndirectIndexWith(I)`:
-
--   If `T` implements `IndirectIndexWith(I)`, the expression is rewritten to
-    "`*((` _lhs_ `).(IndirectIndexWith(I).Addr)(` _index_ `))`".
--   Otherwise, if _lhs_ is a
-    [_durable reference expression_](/docs/design/values.md#durable-reference-expressions),
-    the expression is rewritten to "`*((` _lhs_ `).(IndexWith(I).Addr)(` _index_
-    `))`".
--   Otherwise, the expression is rewritten to "`(` _lhs_ `).(IndexWith(I).At)(`
-    _index_ `)`".
-
-`IndirectIndexWith` provides a blanket `final impl` for `IndexWith`:
-
-```
-final impl forall
-    [SubscriptType:! type, T:! IndirectIndexWith(SubscriptType)]
-    T as IndexWith(SubscriptType) {
-  let ElementType:! type = T.(IndirectIndexWith(SubscriptType)).ElementType;
-  fn At[self: Self](subscript: SubscriptType) -> ElementType {
-    return *(self.(IndirectIndexWith(SubscriptType).Addr)(index));
-  }
-  fn Addr[addr self: Self*](subscript: SubscriptType) -> ElementType* {
-    return self->(IndirectIndexWith(SubscriptType).Addr)(index);
-  }
-}
-```
-
-Thus, a type that implements `IndirectIndexWith` need not, and cannot, provide
-its own definitions of `IndexWith.At` and `IndexWith.Addr`.
+result forms, and so conflict. However, a type that defines an `impl` of
+`IndirectIndexWith` will also satisfy the `IndexValWith`, `IndexRefWith`, and
+`IndexWith` constraints due to implicit conversions.
 
 ### Examples
 
@@ -189,10 +147,13 @@ An array type could implement subscripting like so:
 
 ```
 class Array(template T:! type) {
-  impl as IndexWith(like i64) {
-    let ElementType:! type = T;
-    fn At[self: Self](subscript: i64) -> T;
-    fn Addr[addr self: Self*](subscript: i64) -> T*;
+  impl as IndexValWith(i64) {
+    where ElementType = T;
+    fn At[bound self: Self](subscript: i64) -> val T;
+  }
+  impl as IndexRefWith(i64) {
+    where ElementType = T;
+    fn Ref[bound ref self: Self](subscript: i64) -> ref T;
   }
 }
 ```
@@ -201,9 +162,9 @@ And a type such as `std::span` could look like this:
 
 ```
 class Span(T:! type) {
-  impl as IndirectIndexWith(like i64) {
-    let ElementType:! type = T;
-    fn Addr[self: Self](subscript: i64) -> T*;
+  impl as IndirectIndexWith(i64) {
+    where ElementType = T;
+    fn Ref[bound self: Self](subscript: i64) -> ref T;
   }
 }
 ```
