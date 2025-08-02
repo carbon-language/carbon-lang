@@ -42,7 +42,7 @@ auto FdError::Print(llvm::raw_ostream& out) const -> void {
   // `.data()` is safe here.
   // NOLINTNEXTLINE(bugprone-suspicious-stringview-data-usage)
   out << llvm::formatv(format_.data(), fd_) << " failed: ";
-  PrintErrorNumber(out, number());
+  PrintErrorNumber(out, unix_errnum());
 }
 
 auto PathError::Print(llvm::raw_ostream& out) const -> void {
@@ -50,7 +50,7 @@ auto PathError::Print(llvm::raw_ostream& out) const -> void {
   // `.data()` is safe here.
   // NOLINTNEXTLINE(bugprone-suspicious-stringview-data-usage)
   out << llvm::formatv(format_.data(), path_, dir_fd_) << " failed: ";
-  PrintErrorNumber(out, number());
+  PrintErrorNumber(out, unix_errnum());
 }
 
 auto Internal::FileRefBase::ReadToString() -> ErrorOr<std::string, FdError> {
@@ -103,7 +103,7 @@ auto DirRef::ReadFileToString(std::filesystem::path path)
   if (result.ok()) {
     return *std::move(result);
   }
-  return PathError(result.error().number(),
+  return PathError(result.error().unix_errnum(),
                    "Dir::ReadFileToString on '{0}' relative to '{1}'",
                    std::move(path), dfd_);
 }
@@ -117,7 +117,7 @@ auto DirRef::WriteFileFromString(std::filesystem::path path,
   if (result.ok()) {
     return Success();
   }
-  return PathError(result.error().number(),
+  return PathError(result.error().unix_errnum(),
                    "Dir::WriteFileFromString on '{0}' relative to '{1}'",
                    std::move(path), dfd_);
 }
@@ -213,7 +213,7 @@ auto DirRef::Rmtree(std::filesystem::path path) -> ErrorOr<Success, PathError> {
     auto read_result = std::move(subdir).TakeAndRead();
     if (!read_result.ok()) {
       return PathError(
-          read_result.error().number(),
+          read_result.error().unix_errnum(),
           "Dir::Read on '{0}' relative to '{1}' during RmdirRecursively",
           entry_path, current_dir.dfd_);
     }
@@ -401,7 +401,7 @@ auto DirRef::OpenDir(std::filesystem::path path,
     if (!stat_result.ok()) {
       // Manually propagate this error so we can attach it back to the opened
       // path and relative directory.
-      return PathError(stat_result.error().number(),
+      return PathError(stat_result.error().unix_errnum(),
                        "DirRef::Stat after opening '{0}' relative to '{1}'",
                        std::move(path), dfd_);
     }
@@ -425,7 +425,7 @@ auto DirRef::OpenDir(std::filesystem::path path,
     // Also check that the UID is the current effective UID. We don't currently
     // verify the GID because it could come from the parent directory, so
     // callers that need to should instead validate this themselves.
-    if (stat_result->uid() != geteuid()) {
+    if (stat_result->unix_uid() != geteuid()) {
       // Model this as `EPERM`, which is a bit awkward, but should be fine.
       return PathError(EPERM,
                        "Setting UID when creating '{0}' relative to "
@@ -488,7 +488,7 @@ auto MakeTmpDir() -> ErrorOr<RemovingDir, Error> {
 
   // The permissions must be exactly 0700 for a temporary directory, and the UID
   // should be ours.
-  if (stat.permissions() != 0700 && stat.uid() != geteuid()) {
+  if (stat.permissions() != 0700 && stat.unix_uid() != geteuid()) {
     return Error(
         llvm::formatv("Found incorrect permissions or UID on tmpdir '{0}'",
                       tmpdir_path.native())

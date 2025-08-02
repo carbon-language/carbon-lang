@@ -181,13 +181,13 @@ enum class FileType : ModeType {
   SymbolicLink = S_IFLNK,
 
   // Non-portable Unix-like platform specific types.
-  Fifo = S_IFIFO,
-  CharDevice = S_IFCHR,
-  BlockDevice = S_IFBLK,
-  Socket = S_IFSOCK,
+  UnixFifo = S_IFIFO,
+  UnixCharDevice = S_IFCHR,
+  UnixBlockDevice = S_IFBLK,
+  UnixSocket = S_IFSOCK,
 
   // Mask for the Unix-like types to allow easy extraction.
-  Mask = S_IFMT,
+  UnixMask = S_IFMT,
 };
 
 // Enumerates the different open access modes available.
@@ -239,7 +239,7 @@ class FileStatus {
 
   auto type() const -> FileType {
     return static_cast<FileType>(stat_buf_.st_mode &
-                                 static_cast<ModeType>(FileType::Mask));
+                                 static_cast<ModeType>(FileType::UnixMask));
   }
 
   // Convenience predicates to test for specific values of `type()`.
@@ -254,8 +254,8 @@ class FileStatus {
   // Non-portable APIs only available on Unix-like systems. See the
   // documentation of the Unix `stat` structure fields they expose for their
   // meaning.
-  auto inode() const -> uint64_t { return stat_buf_.st_ino; }
-  auto uid() const -> uid_t { return stat_buf_.st_uid; }
+  auto unix_inode() const -> uint64_t { return stat_buf_.st_ino; }
+  auto unix_uid() const -> uid_t { return stat_buf_.st_uid; }
 
  private:
   friend DirRef;
@@ -292,8 +292,8 @@ class Internal::FileRefBase {
   // Methods to seek the current file position, with various semantics for the
   // offset.
   auto Seek(int64_t delta) -> ErrorOr<int64_t, FdError>;
-  auto SeekTo(int64_t pos) -> ErrorOr<int64_t, FdError>;
-  auto SeekFromEnd(int64_t delta) -> ErrorOr<int64_t, FdError>;
+  auto SeekFromBeginning(int64_t pos) -> ErrorOr<int64_t, FdError>;
+  auto SeekFromEnd(int64_t delta_from_end) -> ErrorOr<int64_t, FdError>;
 
   // Reads as much data as is available and fits into the provided buffer.
   //
@@ -931,18 +931,16 @@ class DirRef::Iterator
 class DirRef::Reader : public DirRef {
  public:
   Reader() = default;
-  Reader(Reader&& arg) noexcept : DirRef(arg.dfd_), dirp_(arg.dirp_) {
-    arg.dirp_ = nullptr;
-    // The directory file descriptor isn't owning, but clear it for clarity.
-    arg.dfd_ = -1;
-  }
+  Reader(Reader&& arg) noexcept
+      // The directory file descriptor isn't owning, but clear it for clarity.
+      : DirRef(std::exchange(arg.dfd_, -1)),
+        dirp_(std::exchange(arg.dirp_, nullptr)) {}
   Reader(const Reader&) = delete;
   auto operator=(Reader&& arg) noexcept -> Reader& {
     Destroy();
+    // The directory file descriptor isn't owning, but clear it for clarity.
     dfd_ = std::exchange(arg.dfd_, -1);
     dirp_ = std::exchange(arg.dirp_, nullptr);
-    // The directory file descriptor isn't owning, but clear it for clarity.
-    arg.dfd_ = -1;
     return *this;
   }
   ~Reader() { Destroy(); }
@@ -970,28 +968,28 @@ template <typename ErrorT>
 class ErrnoErrorBase : public ErrorBase<ErrorT> {
  public:
   // Accessors to test for specific kinds of errors that are portably available.
-  auto already_exists() const -> bool { return number_ == EEXIST; }
-  auto is_dir() const -> bool { return number_ == EISDIR; }
-  auto no_entity() const -> bool { return number_ == ENOENT; }
-  auto not_dir() const -> bool { return number_ == ENOTDIR; }
-  auto access_denied() const -> bool { return number_ == EACCES; }
+  auto already_exists() const -> bool { return errnum_ == EEXIST; }
+  auto is_dir() const -> bool { return errnum_ == EISDIR; }
+  auto no_entity() const -> bool { return errnum_ == ENOENT; }
+  auto not_dir() const -> bool { return errnum_ == ENOTDIR; }
+  auto access_denied() const -> bool { return errnum_ == EACCES; }
 
   // Specific to `Rmdir` operations, two different error values can be used.
   auto not_empty() const -> bool {
-    return number_ == ENOTEMPTY || number_ == EEXIST;
+    return errnum_ == ENOTEMPTY || errnum_ == EEXIST;
   }
 
   // Accessor for the `errno` based error number. This is not a portable API,
   // code using it will need to be ported to use a different API on Windows.
   // TODO: Add a Windows-specific API for its low-level error information.
-  auto number() const -> int { return number_; }
+  auto unix_errnum() const -> int { return errnum_; }
 
  protected:
   // NOLINTNEXTLINE(bugprone-crtp-constructor-accessibility):
-  explicit ErrnoErrorBase(int errnum) : number_(errnum) {}
+  explicit ErrnoErrorBase(int errnum) : errnum_(errnum) {}
 
  private:
-  int number_;
+  int errnum_;
 };
 }  // namespace Internal
 
@@ -1108,7 +1106,7 @@ inline auto Internal::FileRefBase::Seek(int64_t delta)
   return byte_offset;
 }
 
-inline auto Internal::FileRefBase::SeekTo(int64_t pos)
+inline auto Internal::FileRefBase::SeekFromBeginning(int64_t pos)
     -> ErrorOr<int64_t, FdError> {
   int64_t byte_offset = lseek(fd_, pos, SEEK_SET);
   if (byte_offset == -1) {
@@ -1326,7 +1324,7 @@ inline auto DirRef::Chdir(std::filesystem::path path)
   if (result.ok()) {
     return Success();
   }
-  return PathError(result.error().number(),
+  return PathError(result.error().unix_errnum(),
                    "Dir::Chdir on '{0}' relative to '{1}'", std::move(path),
                    dfd_);
 }
