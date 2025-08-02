@@ -1416,7 +1416,9 @@ inline auto Dir::TakeAndRead() && -> ErrorOr<Reader, FdError> {
   return Dir::Reader(dirp);
 }
 
-inline Dir::Dir(RemovingDir&& arg) noexcept : Dir(static_cast<Dir&&>(arg)) {}
+inline Dir::Dir(RemovingDir&& arg) noexcept : Dir(static_cast<Dir&&>(arg)) {
+  arg.abs_path_.clear();
+}
 
 constexpr auto Dir::Destroy() -> void {
   if (dfd_ != -1 && dfd_ != AT_FDCWD) {
