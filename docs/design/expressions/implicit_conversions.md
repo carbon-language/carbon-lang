@@ -222,7 +222,7 @@ interface ImplicitAsPrimitive
   //     ->? ResultForm;
 }
 constraint ImplicitAs(Dest:! type) {
-  extend require form(let Self) as
+  extend require form(val Self) as
       ImplicitAsPrimitive(Dest)
       where .ResultForm = form(var Dest);
 }

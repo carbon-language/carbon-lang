@@ -206,7 +206,7 @@ interface BitComplementPrimitive
 }
 constraint BitComplement {
   let Result:! type;
-  extend require form(let Self) impls
+  extend require form(val Self) impls
       BitComplementPrimitive
       where .ResultForm = form(var Result);
 }
@@ -224,7 +224,7 @@ interface BitAndWithPrimitive
 }
 constraint BitAndWith(U:! type) {
   let Result:! type;
-  extend require form(let Self) impls
+  extend require form(val Self) impls
       BitAndWithPrimitive
       where .ResultForm = form(var Result);
 }
@@ -245,7 +245,7 @@ interface BitOrWithPrimitive
 }
 constraint BitOrWith(U:! type) {
   let Result:! type;
-  extend require form(let Self) impls
+  extend require form(val Self) impls
       BitOrWithPrimitive
       where .ResultForm = form(var Result);
 }
@@ -266,7 +266,7 @@ interface BitXorWithPrimitive
 }
 constraint BitXorWith(U:! type) {
   let Result:! type;
-  extend require form(let Self) impls
+  extend require form(val Self) impls
       BitXorWithPrimitive
       where .ResultForm = form(var Result);
 }
@@ -289,7 +289,7 @@ interface LeftShiftWithPrimitive
 }
 constraint LeftShiftWith(U:! type) {
   let Result:! type;
-  extend require form(let Self) impls
+  extend require form(val Self) impls
       LeftShiftWithPrimitive
       where .ResultForm = form(var Result);
 }
@@ -310,7 +310,7 @@ interface RightShiftWithPrimitive
 }
 constraint RightShiftWith(U:! type) {
   let Result:! type;
-  extend require form(let Self) impls
+  extend require form(val Self) impls
       RightShiftWithPrimitive
       where .ResultForm = form(var Result);
 }

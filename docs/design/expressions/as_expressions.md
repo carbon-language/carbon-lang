@@ -190,7 +190,7 @@ interface AsPrimitive[implicit_into Self:! Form]
       ->? ResultForm;
 }
 namespace As(Dest:! type) {
-  extend require form(let Self) as
+  extend require form(val Self) as
       AsPrimitive(Dest)
       where .ResultForm = form(var Dest);
 }

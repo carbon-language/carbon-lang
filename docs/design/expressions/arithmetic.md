@@ -203,7 +203,7 @@ interface NegatePrimitive[implicit_into anchor Self:! NoRefForm] {
 }
 constraint Negate {
   let Result:! type;
-  extend require form(let Self) impls
+  extend require form(val Self) impls
       NegatePrimitive
       where .ResultForm = form(var Result);
 }
@@ -221,7 +221,7 @@ interface AddWithPrimitive
 }
 constraint AddWith(U:! type) {
   let Result:! type;
-  extend require form(let Self) impls
+  extend require form(val Self) impls
       AddWithPrimitive
       where .ResultForm = form(var Result);
 }
@@ -242,7 +242,7 @@ interface SubWithPrimitive
 }
 constraint SubWith(U:! type) {
   let Result:! type;
-  extend require form(let Self) impls
+  extend require form(val Self) impls
       SubWithPrimitive
       where .ResultForm = form(var Result);
 }
@@ -263,7 +263,7 @@ interface MulWithPrimitive
 }
 constraint MulWith(U:! type) {
   let Result:! type;
-  extend require form(let Self) impls
+  extend require form(val Self) impls
       MulWithPrimitive
       where .ResultForm = form(var Result);
 }
@@ -284,7 +284,7 @@ interface DivWithPrimitive
 }
 constraint DivWith(U:! type) {
   let Result:! type;
-  extend require form(let Self) impls
+  extend require form(val Self) impls
       DivWithPrimitive
       where .ResultForm = form(var Result);
 }
@@ -305,7 +305,7 @@ interface ModWithPrimitive
 }
 constraint ModWith(U:! type) {
   let Result:! type;
-  extend require form(let Self) impls
+  extend require form(val Self) impls
       ModWithPrimitive
       where .ResultForm = form(var Result);
 }

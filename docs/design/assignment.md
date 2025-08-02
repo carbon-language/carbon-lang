@@ -182,7 +182,7 @@ interface AssignWithPrimitive
 }
 constraint AssignWith(U:! type) {
   extend require impls
-      AssignWithPrimitive(form(let U));
+      AssignWithPrimitive(form(val U));
 }
 constraint Assign {
   extend require impls AssignWith(Self);
@@ -202,7 +202,7 @@ interface AddAssignWithPrimitive
 }
 constraint AddAssignWith(U:! type) {
   extend require impls
-      AddAssignWithPrimitive(form(let U));
+      AddAssignWithPrimitive(form(val U));
 }
 constraint AddAssign {
   extend require impls AddAssignWith(Self);
@@ -217,7 +217,7 @@ interface SubAssignWithPrimitive
 }
 constraint SubAssignWith(U:! type) {
   extend require impls
-      SubAssignWithPrimitive(form(let U));
+      SubAssignWithPrimitive(form(val U));
 }
 constraint SubAssign {
   extend require impls SubAssignWith(Self);
@@ -232,7 +232,7 @@ interface MulAssignWithPrimitive
 }
 constraint MulAssignWith(U:! type) {
   extend require impls
-      MulAssignWithPrimitive(form(let U));
+      MulAssignWithPrimitive(form(val U));
 }
 constraint MulAssign {
   extend require impls MulAssignWith(Self);
@@ -247,7 +247,7 @@ interface DivAssignWithPrimitive
 }
 constraint DivAssignWith(U:! type) {
   extend require impls
-      DivAssignWithPrimitive(form(let U));
+      DivAssignWithPrimitive(form(val U));
 }
 constraint DivAssign {
   extend require impls DivAssignWith(Self);
@@ -262,7 +262,7 @@ interface ModAssignWithPrimitive
 }
 constraint ModAssignWith(U:! type) {
   extend require impls
-      ModAssignWithPrimitive(form(let U));
+      ModAssignWithPrimitive(form(val U));
 }
 constraint ModAssign {
   extend require impls ModAssignWith(Self);
@@ -301,7 +301,7 @@ interface BitAndAssignWithPrimitive
 }
 constraint BitAndAssignWith(U:! type) {
   extend require impls
-      BitAndAssignWithPrimitive(form(let U));
+      BitAndAssignWithPrimitive(form(val U));
 }
 constraint BitAndAssign {
   extend require impls BitAndAssignWith(Self);
@@ -316,7 +316,7 @@ interface BitOrAssignWithPrimitive
 }
 constraint BitOrAssignWith(U:! type) {
   extend require impls
-      BitOrAssignWithPrimitive(form(let U));
+      BitOrAssignWithPrimitive(form(val U));
 }
 constraint BitOrAssign {
   extend require impls BitOrAssignWith(Self);
@@ -331,7 +331,7 @@ interface BitXorAssignWithPrimitive
 }
 constraint BitXorAssignWith(U:! type) {
   extend require impls
-      BitXorAssignWithPrimitive(form(let U));
+      BitXorAssignWithPrimitive(form(val U));
 }
 constraint BitXorAssign {
   extend require impls BitXorAssignWith(Self);
@@ -346,7 +346,7 @@ interface LeftShiftAssignWithPrimitive
 }
 constraint LeftShiftAssignWith(U:! type) {
   extend require impls
-      LeftShiftAssignWithPrimitive(form(let U));
+      LeftShiftAssignWithPrimitive(form(val U));
 }
 constraint LeftShiftAssign {
   extend require impls LeftShiftAssignWith(Self);
@@ -361,7 +361,7 @@ interface RightShiftAssignWithPrimitive
 }
 constraint RightShiftAssignWith(U:! type) {
   extend require impls
-      RightShiftAssignWithPrimitive(form(let U));
+      RightShiftAssignWithPrimitive(form(val U));
 }
 constraint RightShiftAssign {
   extend require impls

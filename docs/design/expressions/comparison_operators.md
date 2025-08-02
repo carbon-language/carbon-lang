@@ -264,7 +264,7 @@ interface EqWithPrimitive
 }
 constraint EqWith(U:! type) {
   extend require impls
-      LetSelf(EqWithPrimitive(form(let U)));
+      LetSelf(EqWithPrimitive(form(val U)));
 }
 # FIXME: anchor
 constraint Eq {
@@ -390,7 +390,7 @@ interface OrderedWithPrimitive
 }
 constraint OrderedWith(U:! type) {
   extend require impls
-      LetSelf(OrderedWithPrimitive(form(let U)));
+      LetSelf(OrderedWithPrimitive(form(val U)));
 }
 // FIXME: anchor
 constraint Ordered {
