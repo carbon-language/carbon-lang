@@ -343,7 +343,7 @@ Carbon:
 
 ```shell
 # Build and run the toolchain's help to get documentation on the command line.
-$ ./scripts/run_bazelisk.py run //toolchain -- help
+$ ./scripts/run_bazelisk.py run ./toolchain -- help
 ```
 
 For complete instructions, including installing dependencies on various
