@@ -18,6 +18,7 @@
 #include "toolchain/diagnostics/diagnostic_emitter.h"
 #include "toolchain/diagnostics/format_providers.h"
 #include "toolchain/lex/token_kind.h"
+#include "toolchain/parse/node_ids.h"
 #include "toolchain/parse/node_kind.h"
 #include "toolchain/parse/typed_nodes.h"
 #include "toolchain/sem_ir/ids.h"
@@ -266,7 +267,8 @@ static auto HandleDecl(Context& context) -> DeclInfo {
 // corresponding `AssociatedConstant` entity are built as part of handling the
 // binding pattern, but we still need to finish building the `Generic` object
 // and attach the default value, if any is specified.
-static auto FinishAssociatedConstant(Context& context, Parse::LetDeclId node_id,
+static auto FinishAssociatedConstant(Context& context,
+                                     Parse::AssociatedConstantDeclId node_id,
                                      SemIR::InterfaceId interface_id,
                                      DeclInfo& decl_info) -> void {
   if (decl_info.pattern_id == SemIR::ErrorInst::InstId) {
@@ -308,6 +310,27 @@ static auto FinishAssociatedConstant(Context& context, Parse::LetDeclId node_id,
   context.inst_block_stack().AddInstId(decl_info.pattern_id);
 }
 
+auto HandleParseNode(Context& context, Parse::AssociatedConstantDeclId node_id)
+    -> bool {
+  auto decl_info =
+      HandleDecl<Lex::TokenKind::Let,
+                 Parse::NodeKind::AssociatedConstantIntroducer,
+                 Parse::NodeKind::AssociatedConstantInitializer>(context);
+
+  auto interface_scope =
+      context.scope_stack().GetCurrentScopeAs<SemIR::InterfaceDecl>();
+
+  CARBON_CHECK(interface_scope);
+
+  // I shouldn't be doing this here, looks like I'm doing something wrong.
+  context.inst_block_stack().Pop();
+  context.region_stack().PopAndDiscardRegion();
+
+  FinishAssociatedConstant(context, node_id, interface_scope->interface_id,
+                           decl_info);
+  return true;
+}
+
 auto HandleParseNode(Context& context, Parse::LetDeclId node_id) -> bool {
   auto decl_info =
       HandleDecl<Lex::TokenKind::Let, Parse::NodeKind::LetIntroducer,
@@ -316,15 +339,6 @@ auto HandleParseNode(Context& context, Parse::LetDeclId node_id) -> bool {
   LimitModifiersOnDecl(
       context, decl_info.introducer,
       KeywordModifierSet::Access | KeywordModifierSet::Interface);
-
-  // At interface scope, we are forming an associated constant, which has
-  // different rules.
-  if (auto interface_scope =
-          context.scope_stack().GetCurrentScopeAs<SemIR::InterfaceDecl>()) {
-    FinishAssociatedConstant(context, node_id, interface_scope->interface_id,
-                             decl_info);
-    return true;
-  }
 
   // Diagnose interface modifiers given that we're not building an associated
   // constant. We use this rather than `LimitModifiersOnDecl` to get a more
@@ -383,24 +397,12 @@ auto HandleParseNode(Context& context, Parse::FieldDeclId node_id) -> bool {
 
 auto HandleParseNode(Context& context,
                      Parse::AssociatedConstantIntroducerId node_id) -> bool {
-  context.TODO(node_id, "Not yet implemented");
-  return true;
+  StartAssociatedConstant(context);
+  return HandleIntroducer<Lex::TokenKind::Let>(context, node_id);
 }
 
 auto HandleParseNode(Context& context,
                      Parse::AssociatedConstantInitializerId node_id) -> bool {
-  context.TODO(node_id, "Not yet implemented");
-  return true;
-}
-
-auto HandleParseNode(Context& context, Parse::AssociatedConstantDeclId node_id)
-    -> bool {
-  context.TODO(node_id, "Not yet implemented");
-  return true;
-}
-
-auto HandleParseNode(Context& context,
-                     Parse::AssociatedConstantNameAndTypeId node_id) -> bool {
   context.TODO(node_id, "Not yet implemented");
   return true;
 }
