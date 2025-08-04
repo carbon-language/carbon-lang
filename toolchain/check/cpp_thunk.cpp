@@ -195,6 +195,7 @@ static auto CreateThunkFunctionDecl(
   const auto* callee_function_type = callee_function_decl.getFunctionType()
                                          ->castAs<clang::FunctionProtoType>();
 
+  // TODO: Check whether we need to modify `ExtParameterInfo` in `ExtProtoInfo`.
   clang::QualType thunk_function_type = ast_context.getFunctionType(
       callee_function_decl.getReturnType(), thunk_param_types,
       callee_function_type->getExtProtoInfo());
