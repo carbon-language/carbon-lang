@@ -192,14 +192,12 @@ static auto CreateThunkFunctionDecl(
   clang::IdentifierInfo& identifier_info = ast_context.Idents.get(
       callee_function_decl.getNameAsString() + "__carbon_thunk");
 
-  const clang::FunctionType* callee_function_type =
-      callee_function_decl.getFunctionType();
-  CARBON_CHECK(callee_function_type->isFunctionProtoType());
+  const auto* callee_function_type = callee_function_decl.getFunctionType()
+                                         ->castAs<clang::FunctionProtoType>();
 
   clang::QualType thunk_function_type = ast_context.getFunctionType(
       callee_function_decl.getReturnType(), thunk_param_types,
-      callee_function_type->getAs<clang::FunctionProtoType>()
-          ->getExtProtoInfo());
+      callee_function_type->getExtProtoInfo());
 
   clang::FunctionDecl* thunk_function_decl = clang::FunctionDecl::Create(
       ast_context, ast_context.getTranslationUnitDecl(), clang_loc, clang_loc,
