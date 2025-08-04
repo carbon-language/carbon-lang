@@ -251,7 +251,8 @@ static auto BuildCalleeArgs(clang::Sema& sema,
 }
 
 // Builds the thunk function body which calls the callee function using the call
-// args and returns the callee function return value.
+// args and returns the callee function return value. Returns nullptr on
+// failure.
 static auto BuildThunkBody(clang::Sema& sema,
                            clang::FunctionDecl* callee_function_decl,
                            llvm::MutableArrayRef<clang::Expr*> call_args)
@@ -264,7 +265,9 @@ static auto BuildThunkBody(clang::Sema& sema,
 
   clang::ExprResult call_result = sema.BuildCallExpr(
       nullptr, callee_function_ref, clang_loc, call_args, clang_loc);
-  CARBON_CHECK(call_result.isUsable());
+  if (!call_result.isUsable()) {
+    return nullptr;
+  }
   clang::Expr* call = call_result.get();
 
   clang::StmtResult return_result = sema.BuildReturnStmt(clang_loc, call);
@@ -294,18 +297,22 @@ auto BuildCppThunk(Context& context, const SemIR::Function& callee_function)
   clang::Sema::ContextRAII context_raii(sema, thunk_function_decl);
   sema.ActOnStartOfFunctionDef(nullptr, thunk_function_decl);
 
-  llvm::SmallVector<clang::Expr*> call_args =
-      BuildCalleeArgs(sema, thunk_function_decl, param_type_changed);
-  clang::Stmt* body = BuildThunkBody(sema, callee_function_decl, call_args);
-
   {
+    // TODO: Remove special diagnostics handling after merging.
+    clang::DiagnosticsEngine& diag_engine = ast_context.getDiagnostics();
     clang::DiagnosticConsumer diag_client;
-    ast_context.getDiagnostics().setClient(&diag_client,
-                                           /*ShouldOwnClient=*/false);
-    sema.ActOnFinishFunctionBody(thunk_function_decl, body);
+    diag_engine.setClient(&diag_client,
+                          /*ShouldOwnClient=*/false);
+    llvm::SmallVector<clang::Expr*> call_args =
+        BuildCalleeArgs(sema, thunk_function_decl, param_type_changed);
+    clang::Stmt* body = BuildThunkBody(sema, callee_function_decl, call_args);
+    if (!body) {
+      diag_engine.setClient(nullptr);
+      return nullptr;
+    }
     CARBON_CHECK(diag_client.getNumErrors() == 0);
     CARBON_CHECK(diag_client.getNumWarnings() == 0);
-    ast_context.getDiagnostics().setClient(nullptr);
+    diag_engine.setClient(nullptr);
   }
 
   return thunk_function_decl;

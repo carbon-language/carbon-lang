@@ -111,6 +111,30 @@ fn F() {
 }
 
 // ============================================================================
+// Non copyable class as parameter type
+// ============================================================================
+
+// --- non_copyable_param_type.h
+
+class C {
+  C(const C&) = delete;
+};
+
+auto foo(C) -> void;
+
+// --- todo_fail_import_non_copyable_param_type.carbon
+
+library "[[@TEST_NAME]]";
+
+import Cpp library "non_copyable_param_type.h";
+
+fn F() {
+  //@dump-sem-ir-begin
+  Cpp.foo({});
+  //@dump-sem-ir-end
+}
+
+// ============================================================================
 // Defined class with a single data member as parameter type
 // ============================================================================
 
@@ -484,6 +508,52 @@ fn F() {
 // CHECK:STDOUT:   %bound_method.loc8_12: <bound method> = bound_method %.loc8_12.2, %T.as.Destroy.impl.Op.specific_fn.2
 // CHECK:STDOUT:   %addr.loc8_12: %ptr.d9e = addr_of %.loc8_12.2
 // CHECK:STDOUT:   %T.as.Destroy.impl.Op.call.loc8_12: init %empty_tuple.type = call %bound_method.loc8_12(%addr.loc8_12)
+// CHECK:STDOUT:   <elided>
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: --- todo_fail_import_non_copyable_param_type.carbon
+// CHECK:STDOUT:
+// CHECK:STDOUT: constants {
+// CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [concrete]
+// CHECK:STDOUT:   %C: type = class_type @C [concrete]
+// CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [concrete]
+// CHECK:STDOUT:   %foo.type: type = fn_type @foo [concrete]
+// CHECK:STDOUT:   %foo: %foo.type = struct_value () [concrete]
+// CHECK:STDOUT:   %C.val: %C = struct_value () [concrete]
+// CHECK:STDOUT:   %T.as.Destroy.impl.Op.type.1b3: type = fn_type @T.as.Destroy.impl.Op, @T.as.Destroy.impl(%C) [concrete]
+// CHECK:STDOUT:   %T.as.Destroy.impl.Op.21b: %T.as.Destroy.impl.Op.type.1b3 = struct_value () [concrete]
+// CHECK:STDOUT:   %ptr.d9e: type = ptr_type %C [concrete]
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: imports {
+// CHECK:STDOUT:   %Cpp: <namespace> = namespace file.%Cpp.import_cpp, [concrete] {
+// CHECK:STDOUT:     .foo = %foo.decl
+// CHECK:STDOUT:     import Cpp//...
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %foo.decl: %foo.type = fn_decl @foo [concrete = constants.%foo] {
+// CHECK:STDOUT:     <elided>
+// CHECK:STDOUT:   } {
+// CHECK:STDOUT:     <elided>
+// CHECK:STDOUT:   }
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: fn @F() {
+// CHECK:STDOUT: !entry:
+// CHECK:STDOUT:   %Cpp.ref: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
+// CHECK:STDOUT:   <elided>
+// CHECK:STDOUT:   %foo.ref: %foo.type = name_ref foo, imports.%foo.decl [concrete = constants.%foo]
+// CHECK:STDOUT:   %.loc8_12.1: %empty_struct_type = struct_literal ()
+// CHECK:STDOUT:   %.loc8_12.2: ref %C = temporary_storage
+// CHECK:STDOUT:   %.loc8_12.3: init %C = class_init (), %.loc8_12.2 [concrete = constants.%C.val]
+// CHECK:STDOUT:   %.loc8_12.4: ref %C = temporary %.loc8_12.2, %.loc8_12.3
+// CHECK:STDOUT:   %.loc8_12.5: ref %C = converted %.loc8_12.1, %.loc8_12.4
+// CHECK:STDOUT:   %.loc8_12.6: %C = bind_value %.loc8_12.5
+// CHECK:STDOUT:   %foo.call: init %empty_tuple.type = call %foo.ref(%.loc8_12.6)
+// CHECK:STDOUT:   %T.as.Destroy.impl.Op.bound: <bound method> = bound_method %.loc8_12.2, constants.%T.as.Destroy.impl.Op.21b
+// CHECK:STDOUT:   <elided>
+// CHECK:STDOUT:   %bound_method: <bound method> = bound_method %.loc8_12.2, %T.as.Destroy.impl.Op.specific_fn
+// CHECK:STDOUT:   %addr: %ptr.d9e = addr_of %.loc8_12.2
+// CHECK:STDOUT:   %T.as.Destroy.impl.Op.call: init %empty_tuple.type = call %bound_method(%addr)
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
