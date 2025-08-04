@@ -17,9 +17,9 @@ auto IsCppThunkRequired(Context& context, const SemIR::Function& function)
     -> bool;
 
 // Given a function signature and a callee function, builds a C++ thunk with
-// simple scalar based ABI (pointers, i32 and i64 types) that calls the
-// specified callee. Assumes `IsCppThunkRequired()` return true for
-// `callee_function`. Returns `nullptr` on failure.
+// simple ABI (pointers, i32 and i64 types) that calls the specified callee.
+// Assumes `IsCppThunkRequired()` return true for `callee_function`. Returns
+// `nullptr` on failure.
 auto BuildCppThunk(Context& context, const SemIR::Function& callee_function)
     -> clang::FunctionDecl*;
 
