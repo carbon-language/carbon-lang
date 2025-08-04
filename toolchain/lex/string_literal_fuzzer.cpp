@@ -14,29 +14,46 @@ namespace Carbon::Testing {
 
 // NOLINTNEXTLINE: Match the documented fuzzer entry point declaration style.
 extern "C" int LLVMFuzzerTestOneInput(const unsigned char* data, size_t size) {
-  auto token = Lex::StringLiteral::Lex(
+  auto literal = Lex::StringLiteral::Lex(
       llvm::StringRef(reinterpret_cast<const char*>(data), size));
-  if (!token) {
+  if (!literal) {
     // Lexically not a string literal.
     return 0;
   }
 
-  if (!token->is_terminated()) {
+  if (!literal->is_terminated()) {
     // Found errors while parsing.
     return 0;
   }
 
-  fprintf(stderr, "valid: %d\n", token->is_terminated());
-  fprintf(stderr, "size: %lu\n", token->text().size());
-  fprintf(stderr, "text: %s\n", token->text().str().c_str());
+  fprintf(stderr, "valid: %d\n", literal->is_terminated());
+  fprintf(stderr, "size: %lu\n", literal->text().size());
+  fprintf(stderr, "text: %s\n", literal->text().str().c_str());
 
   // Check multiline flag was computed correctly.
-  CARBON_CHECK(token->is_multi_line() == token->text().contains('\n'));
+  switch (literal->kind()) {
+    case Lex::StringLiteral::Kind::Char:
+      break;
 
-  llvm::BumpPtrAllocator allocator;
-  volatile auto value =
-      token->ComputeValue(allocator, Diagnostics::NullEmitter<const char*>());
-  (void)value;
+    case Lex::StringLiteral::Kind::SingleLine:
+      CARBON_CHECK(!literal->text().contains('\n'));
+      break;
+
+    case Lex::StringLiteral::Kind::MultiLine:
+    case Lex::StringLiteral::Kind::MultiLineWithDoubleQuotes:
+      CARBON_CHECK(literal->text().contains('\n'));
+      break;
+  }
+
+  auto* null_emitter = &Diagnostics::NullEmitter<const char*>();
+  if (literal->kind() == Lex::StringLiteral::Kind::Char) {
+    volatile auto value = literal->ComputeCharValue(*null_emitter);
+    (void)value;
+  } else {
+    llvm::BumpPtrAllocator allocator;
+    volatile auto value = literal->ComputeStringValue(allocator, *null_emitter);
+    (void)value;
+  }
 
   return 0;
 }

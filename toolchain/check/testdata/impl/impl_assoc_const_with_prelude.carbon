@@ -127,8 +127,8 @@ impl () as I where .X = {.a = true, .b = (1, 2)} and .X = {.a = false, .b = (3, 
 // CHECK:STDOUT:   %SubWith.impl_witness_table.ad5 = impl_witness_table (%Core.import_ref.abd97d.1, %Core.import_ref.252), @Core.IntLiteral.as.SubWith.impl [concrete]
 // CHECK:STDOUT:   %Core.DivWith: %DivWith.type.fc9 = import_ref Core//prelude/operators/arithmetic, DivWith, loaded [concrete = constants.%DivWith.generic]
 // CHECK:STDOUT:   %Core.import_ref.abd97d.2 = import_ref Core//prelude/operators/arithmetic, loc99_57, unloaded
-// CHECK:STDOUT:   %Core.import_ref.0316: %Core.IntLiteral.as.DivWith.impl.Op.type = import_ref Core//prelude/operators/arithmetic, loc100_42, loaded [concrete = constants.%Core.IntLiteral.as.DivWith.impl.Op]
-// CHECK:STDOUT:   %DivWith.impl_witness_table.cc4 = impl_witness_table (%Core.import_ref.abd97d.2, %Core.import_ref.0316), @Core.IntLiteral.as.DivWith.impl [concrete]
+// CHECK:STDOUT:   %Core.import_ref.031: %Core.IntLiteral.as.DivWith.impl.Op.type = import_ref Core//prelude/operators/arithmetic, loc100_42, loaded [concrete = constants.%Core.IntLiteral.as.DivWith.impl.Op]
+// CHECK:STDOUT:   %DivWith.impl_witness_table.cc4 = impl_witness_table (%Core.import_ref.abd97d.2, %Core.import_ref.031), @Core.IntLiteral.as.DivWith.impl [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {

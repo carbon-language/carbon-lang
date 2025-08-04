@@ -74,6 +74,12 @@ CARBON_DIAGNOSTIC_KIND(UnrecognizedCharacters)
 CARBON_DIAGNOSTIC_KIND(UnterminatedString)
 CARBON_DIAGNOSTIC_KIND(WrongRealLiteralExponent)
 
+CARBON_DIAGNOSTIC_KIND(CharLiteralEmpty)
+CARBON_DIAGNOSTIC_KIND(CharLiteralInvalidUTF8)
+CARBON_DIAGNOSTIC_KIND(CharLiteralOverflow)
+CARBON_DIAGNOSTIC_KIND(CharLiteralRaw)
+CARBON_DIAGNOSTIC_KIND(CharLiteralUnderflow)
+
 // ============================================================================
 // Parser diagnostics
 // ============================================================================

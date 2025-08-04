@@ -72,7 +72,7 @@ fn Reversed(N:! J where .L = bool and .K = ()) {
   Alphabetical(N);
 }
 
-// --- todo_fail_rewrites_mismatch_right.carbon
+// --- fail_rewrites_mismatch_right.carbon
 
 library "[[@TEST_NAME]]";
 
@@ -83,11 +83,17 @@ interface O {
 fn WithInteger(Q:! O where .P = i32) {}
 
 fn WithBool(R:! O where .P = bool) {
-  // TODO: This should fail.
+  // CHECK:STDERR: fail_rewrites_mismatch_right.carbon:[[@LINE+7]]:3: error: cannot convert type `R` that implements `O where .(O.P) = bool` into type implementing `O where .(O.P) = i32` [ConversionFailureFacetToFacet]
+  // CHECK:STDERR:   WithInteger(R);
+  // CHECK:STDERR:   ^~~~~~~~~~~~~~
+  // CHECK:STDERR: fail_rewrites_mismatch_right.carbon:[[@LINE-6]]:16: note: initializing generic parameter `Q` declared here [InitializingGenericParam]
+  // CHECK:STDERR: fn WithInteger(Q:! O where .P = i32) {}
+  // CHECK:STDERR:                ^
+  // CHECK:STDERR:
   WithInteger(R);
 }
 
-// --- todo_fail_rewrites_mismatch_left.carbon
+// --- fail_rewrites_mismatch_left.carbon
 
 library "[[@TEST_NAME]]";
 
@@ -99,7 +105,13 @@ interface S {
 fn WithT(V:! S where .T = ()) {}
 
 fn WithU(W:! S where .U = ()) {
-  // TODO: This should fail.
+  // CHECK:STDERR: fail_rewrites_mismatch_left.carbon:[[@LINE+7]]:3: error: cannot convert type `W` that implements `S where .(S.U) = ()` into type implementing `S where .(S.T) = ()` [ConversionFailureFacetToFacet]
+  // CHECK:STDERR:   WithT(W);
+  // CHECK:STDERR:   ^~~~~~~~
+  // CHECK:STDERR: fail_rewrites_mismatch_left.carbon:[[@LINE-6]]:10: note: initializing generic parameter `V` declared here [InitializingGenericParam]
+  // CHECK:STDERR: fn WithT(V:! S where .T = ()) {}
+  // CHECK:STDERR:          ^
+  // CHECK:STDERR:
   WithT(W);
 }
 
