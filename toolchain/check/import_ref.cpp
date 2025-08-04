@@ -1947,7 +1947,7 @@ static auto TryResolveTypedInst(ImportRefResolver& resolver,
           resolver, import_function.thunk_decl_id(), entity_name_id));
       break;
     }
-    case SemIR::Function::SpecialFunctionKind::CppThunkRequired: {
+    case SemIR::Function::SpecialFunctionKind::HasCppThunk: {
       CARBON_FATAL();
     }
   }

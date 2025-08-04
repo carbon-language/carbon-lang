@@ -273,7 +273,7 @@ static auto PerformCallToFunction(Context& context, SemIR::LocId loc_id,
                               thunk_ref_id);
     }
 
-    case SemIR::Function::SpecialFunctionKind::CppThunkRequired: {
+    case SemIR::Function::SpecialFunctionKind::HasCppThunk: {
       // This recurses back into `PerformCall`. However, we never form a C++
       // thunk to a C++ thunk, so we only recurse once.
       return PerformCppThunkCall(context, loc_id, callee_function.function_id,

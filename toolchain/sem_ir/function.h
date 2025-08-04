@@ -23,7 +23,7 @@ struct FunctionFields {
     None,
     Builtin,
     Thunk,
-    CppThunkRequired,
+    HasCppThunk,
   };
 
   // Kinds of virtual modifiers that can apply to functions.
@@ -134,7 +134,7 @@ struct Function : public EntityWithParamsBase,
   // function, or None if this function is not a C++ function that requires
   // calling a thunk.
   auto cpp_thunk_decl_id() const -> InstId {
-    return special_function_kind == SpecialFunctionKind::CppThunkRequired
+    return special_function_kind == SpecialFunctionKind::HasCppThunk
                ? InstId(special_function_kind_data.index)
                : InstId::None;
   }
@@ -172,10 +172,11 @@ struct Function : public EntityWithParamsBase,
     special_function_kind_data = AnyRawId(decl_id.index);
   }
 
-  // Sets that this function is a C++ function and requires calling a C++ thunk.
-  auto SetCppThunkRequired(InstId decl_id) -> void {
+  // Sets that this function is a C++ function that should be called using a C++
+  // thunk.
+  auto SetHasCppThunk(InstId decl_id) -> void {
     CARBON_CHECK(special_function_kind == SpecialFunctionKind::None);
-    special_function_kind = SpecialFunctionKind::CppThunkRequired;
+    special_function_kind = SpecialFunctionKind::HasCppThunk;
     special_function_kind_data = AnyRawId(decl_id.index);
   }
 };

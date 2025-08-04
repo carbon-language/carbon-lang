@@ -169,7 +169,7 @@ auto Mangler::Mangle(SemIR::FunctionId function_id,
     case SemIR::Function::SpecialFunctionKind::Thunk:
       os << ":thunk";
       break;
-    case SemIR::Function::SpecialFunctionKind::CppThunkRequired:
+    case SemIR::Function::SpecialFunctionKind::HasCppThunk:
       CARBON_FATAL("C++ functions should have been handled earlier");
   }
 

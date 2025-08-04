@@ -1030,7 +1030,7 @@ static auto ImportFunctionDecl(Context& context, SemIR::LocId loc_id,
 
   if (IsCppThunkRequired(context, function_info)) {
     clang::FunctionDecl* thunk_decl = BuildCppThunk(context, function_info);
-    function_info.SetCppThunkRequired(
+    function_info.SetHasCppThunk(
         ImportFunctionDecl(context, loc_id, thunk_decl));
   }
 
