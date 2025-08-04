@@ -310,6 +310,7 @@ auto BuildCppThunk(Context& context, const SemIR::Function& callee_function)
       diag_engine.setClient(nullptr);
       return nullptr;
     }
+    sema.ActOnFinishFunctionBody(thunk_function_decl, body);
     CARBON_CHECK(diag_client.getNumErrors() == 0);
     CARBON_CHECK(diag_client.getNumWarnings() == 0);
     diag_engine.setClient(nullptr);
