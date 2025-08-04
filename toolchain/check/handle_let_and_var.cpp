@@ -178,15 +178,6 @@ static auto HandleInitializer(Context& context, Parse::NodeId node_id) -> bool {
 
 auto HandleParseNode(Context& context, Parse::LetInitializerId node_id)
     -> bool {
-  if (auto interface_decl =
-          context.scope_stack().GetCurrentScopeAs<SemIR::InterfaceDecl>()) {
-    auto generic_id =
-        EndAssociatedConstantDeclRegion(context, interface_decl->interface_id);
-
-    // Start building the definition region of the constant.
-    StartGenericDefinition(context, generic_id);
-  }
-
   return HandleInitializer(context, node_id);
 }
 
@@ -399,8 +390,16 @@ auto HandleParseNode(Context& context,
 
 auto HandleParseNode(Context& context,
                      Parse::AssociatedConstantInitializerId node_id) -> bool {
-  context.TODO(node_id, "Not yet implemented");
-  return true;
+  if (auto interface_decl =
+          context.scope_stack().GetCurrentScopeAs<SemIR::InterfaceDecl>()) {
+    auto generic_id =
+        EndAssociatedConstantDeclRegion(context, interface_decl->interface_id);
+
+    // Start building the definition region of the constant.
+    StartGenericDefinition(context, generic_id);
+  }
+
+  return HandleInitializer(context, node_id);
 }
 
 }  // namespace Carbon::Check
