@@ -177,7 +177,7 @@ auto HandleParseNode(Context& context,
       GetInterfaceType(context, interface_id, self_specific_id);
 
   // We model `Self` as a symbolic binding whose type is the interface.
-  // Because there is no equivalent non-symbolic constant, we use `None` as
+  // Because there is no equivalent non-symbolic value, we use `None` as
   // the `value_id` on the `BindSymbolicName`.
   auto entity_name_id = context.entity_names().AddSymbolicBindingName(
       SemIR::NameId::SelfType, interface_info.scope_id,

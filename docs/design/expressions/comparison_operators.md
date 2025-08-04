@@ -220,8 +220,8 @@ wider type than either of the operand types.
 
 We permit the following comparisons involving constants:
 
--   A template constant can be compared with a value of any type to which it can
-    be implicitly converted.
+-   A constant can be compared with a value of any type to which it can be
+    implicitly converted.
 -   Any two template constants can be compared, even if there is no type that
     can represent both.
 

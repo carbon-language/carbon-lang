@@ -3179,7 +3179,7 @@ static auto TryResolveInst(ImportRefResolver& resolver, SemIR::InstId inst_id,
            .dependence = symbolic_const.dependence});
       if (result.decl_id.has_value()) {
         // Overwrite the unattached symbolic constant given initially to the
-        // declaration with its final attached symbolic constant.
+        // declaration with its final attached symbolic value.
         resolver.local_constant_values().Set(result.decl_id, result.const_id);
       }
     }

@@ -229,7 +229,7 @@ auto TypeIterator::PushArgs(llvm::ArrayRef<SemIR::InstId> args) -> void {
 }
 
 // Push an instruction's type value into the work queue, or a marker if the
-// instruction has a symbolic constant.
+// instruction has a symbolic value.
 auto TypeIterator::PushInstId(SemIR::InstId inst_id) -> void {
   auto maybe_type_id = TryGetInstIdAsTypeId(inst_id);
   if (std::holds_alternative<SymbolicType>(maybe_type_id)) {

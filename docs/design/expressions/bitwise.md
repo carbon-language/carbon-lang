@@ -13,7 +13,7 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 -   [Overview](#overview)
 -   [Precedence and associativity](#precedence-and-associativity)
 -   [Integer types](#integer-types)
--   [Integer constants](#integer-constants)
+-   [Integer template constants](#integer-template-constants)
 -   [Extensibility](#extensibility)
 -   [Alternatives considered](#alternatives-considered)
 -   [References](#references)
@@ -149,10 +149,10 @@ second operand is not within that range.
 arithmetic overflow, document the behavior in a common place and link to it from
 here.
 
-## Integer constants
+## Integer template constants
 
-These operations can also be applied to a pair of integer template constants, or
-to an integer template constant and a value of integer type, as follows:
+These operations can also be applied to a pair of integer constants, or to an
+integer template constant and a value of integer type, as follows:
 
 -   If any binary bitwise or bit-shift operator is applied to two integer
     constants, or the unary `^` operator is applied to an integer template

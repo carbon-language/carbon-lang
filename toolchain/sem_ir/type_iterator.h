@@ -94,7 +94,7 @@ class TypeIterator {
   auto PushArgs(llvm::ArrayRef<SemIR::InstId> args) -> void;
 
   // Push an instruction's type value into the work queue, or a marker if the
-  // instruction has a symbolic constant.
+  // instruction has a symbolic value.
   auto PushInstId(SemIR::InstId inst_id) -> void;
 
   // Push the next step into the work queue.

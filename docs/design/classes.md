@@ -1098,7 +1098,7 @@ class, but other kinds of type declarations, like choice types, are allowed.
 
 ### Let
 
-Other type template constants can be defined using a `let` declaration:
+Other type constants can be defined using a `let` declaration:
 
 ```
 class MyClass {
@@ -1107,8 +1107,8 @@ class MyClass {
 }
 ```
 
-The `:!` indicates that this is defining a compile-time template constant, and
-so does not affect the storage of instances of that class.
+The `:!` indicates that this is defining a compile-time constant, and so does
+not affect the storage of instances of that class.
 
 ### Alias
 
