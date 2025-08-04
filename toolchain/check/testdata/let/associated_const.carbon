@@ -22,6 +22,8 @@ interface Xyz {
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %Xyz.type: type = facet_type <@Xyz> [concrete]
 // CHECK:STDOUT:   %Self: %Xyz.type = bind_symbolic_name Self, 0 [symbolic]
+// CHECK:STDOUT:   %Xyz.assoc_type: type = assoc_entity_type @Xyz [concrete]
+// CHECK:STDOUT:   %assoc0: %Xyz.assoc_type = assoc_entity element0, @Xyz.%hello [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -42,11 +44,13 @@ interface Xyz {
 // CHECK:STDOUT:
 // CHECK:STDOUT: interface @Xyz {
 // CHECK:STDOUT:   %Self: %Xyz.type = bind_symbolic_name Self, 0 [symbolic = constants.%Self]
-// CHECK:STDOUT:   %hello: String = assoc_const_decl @hello [concrete] {}
+// CHECK:STDOUT:   %hello: String = assoc_const_decl @hello [concrete] {
+// CHECK:STDOUT:     %assoc0: %Xyz.assoc_type = assoc_entity element0, @Xyz.%hello [concrete = constants.%assoc0]
+// CHECK:STDOUT:   }
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = %Self
-// CHECK:STDOUT:   .hello = <unexpected>.inst25.loc17_11
+// CHECK:STDOUT:   .hello = @hello.%assoc0
 // CHECK:STDOUT:   witness = (%hello)
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

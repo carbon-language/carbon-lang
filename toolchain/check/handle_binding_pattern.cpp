@@ -4,7 +4,6 @@
 
 #include "toolchain/check/context.h"
 #include "toolchain/check/convert.h"
-#include "toolchain/check/decl_introducer_state.h"
 #include "toolchain/check/handle.h"
 #include "toolchain/check/inst.h"
 #include "toolchain/check/interface.h"
@@ -14,7 +13,6 @@
 #include "toolchain/check/type.h"
 #include "toolchain/check/type_completion.h"
 #include "toolchain/diagnostics/format_providers.h"
-#include "toolchain/parse/node_ids.h"
 #include "toolchain/sem_ir/ids.h"
 #include "toolchain/sem_ir/inst.h"
 #include "toolchain/sem_ir/pattern.h"
@@ -40,7 +38,8 @@ static auto HandleAnyBindingPattern(Context& context, Parse::NodeId node_id,
       EndSubpatternAsExpr(context, cast_type_inst_id);
 
   // The name in a template binding may be wrapped in `template`.
-  bool is_generic = node_kind == Parse::NodeKind::CompileTimeBindingPattern;
+  bool is_generic = node_kind == Parse::NodeKind::CompileTimeBindingPattern ||
+                    node_kind == Parse::NodeKind::AssociatedConstantNameAndType;
   auto is_template =
       context.node_stack()
           .PopAndDiscardSoloNodeIdIf<Parse::NodeKind::TemplateBindingName>();
@@ -80,6 +79,62 @@ static auto HandleAnyBindingPattern(Context& context, Parse::NodeId node_id,
         SelfOutsideImplicitParamList, Error,
         "`self` can only be declared in an implicit parameter list");
     context.emitter().Emit(node_id, SelfOutsideImplicitParamList);
+  }
+
+  // A binding in an interface scope declares an associated constant, not a
+  // true binding, so we handle it separately.
+  if (auto parent_interface_decl =
+          context.scope_stack().GetCurrentScopeAs<SemIR::InterfaceDecl>();
+      parent_interface_decl.has_value()) {
+    // TODO: diagnose this during parsing, to avoid near-duplicate error
+    // messages.
+    if (!is_generic) {
+      CARBON_DIAGNOSTIC(ExpectedSymbolicBindingInAssociatedConstant, Error,
+                        "found runtime binding pattern in associated constant "
+                        "declaration; expected a `:!` binding");
+      context.emitter().Emit(node_id,
+                             ExpectedSymbolicBindingInAssociatedConstant);
+      context.node_stack().Push(node_id, SemIR::ErrorInst::InstId);
+      return true;
+    }
+    if (name_id == SemIR::NameId::Underscore) {
+      // The action item here may be to document this as not allowed, and
+      // add a proper diagnostic.
+      context.TODO(node_id, "_ used as associated constant name");
+    }
+    cast_type_id = AsCompleteType(context, cast_type_id, type_node, [&] {
+      CARBON_DIAGNOSTIC(IncompleteTypeInAssociatedConstantDecl, Error,
+                        "associated constant has incomplete type {0}",
+                        SemIR::TypeId);
+      return context.emitter().Build(
+          type_node, IncompleteTypeInAssociatedConstantDecl, cast_type_id);
+    });
+    if (is_template) {
+      CARBON_DIAGNOSTIC(TemplateBindingInAssociatedConstantDecl, Error,
+                        "associated constant has `template` binding");
+      context.emitter().Emit(type_node,
+                             TemplateBindingInAssociatedConstantDecl);
+    }
+
+    SemIR::AssociatedConstantDecl assoc_const_decl = {
+        .type_id = cast_type_id,
+        .assoc_const_id = SemIR::AssociatedConstantId::None,
+        .decl_block_id = SemIR::InstBlockId::None};
+    auto decl_id = AddPlaceholderInstInNoBlock(
+        context,
+        context.parse_tree().As<Parse::AssociatedConstantNameAndTypeId>(
+            node_id),
+        assoc_const_decl);
+    assoc_const_decl.assoc_const_id = context.associated_constants().Add(
+        {.name_id = name_id,
+         .parent_scope_id = context.scope_stack().PeekNameScopeId(),
+         .decl_id = decl_id,
+         .generic_id = SemIR::GenericId::None,
+         .default_value_id = SemIR::InstId::None});
+    ReplaceInstBeforeConstantUse(context, decl_id, assoc_const_decl);
+
+    context.node_stack().Push(node_id, decl_id);
+    return true;
   }
 
   // Allocate an instruction of the appropriate kind, linked to the name for
@@ -222,46 +277,8 @@ auto HandleParseNode(Context& context, Parse::VarBindingPatternId node_id)
 
 auto HandleParseNode(Context& context,
                      Parse::AssociatedConstantNameAndTypeId node_id) -> bool {
-  auto [type_node, parsed_type_id] = context.node_stack().PopExprWithNodeId();
-  auto [cast_type_inst_id, cast_type_id] =
-      ExprAsType(context, type_node, parsed_type_id);
-
-  auto [name_node, name_id] = context.node_stack().PopNameWithNodeId();
-
-  if (name_id == SemIR::NameId::Underscore) {
-    // The action item here may be to document this as not allowed, and
-    // add a proper diagnostic.
-    context.TODO(node_id, "_ used as associated constant name");
-  }
-
-  cast_type_id = AsCompleteType(context, cast_type_id, type_node, [&] {
-    CARBON_DIAGNOSTIC(IncompleteTypeInAssociatedConstantDecl, Error,
-                      "associated constant has incomplete type {0}",
-                      SemIR::TypeId);
-    return context.emitter().Build(
-        type_node, IncompleteTypeInAssociatedConstantDecl, cast_type_id);
-  });
-
-  SemIR::AssociatedConstantDecl assoc_const_decl = {
-      .type_id = cast_type_id,
-      .assoc_const_id = SemIR::AssociatedConstantId::None,
-      .decl_block_id = SemIR::InstBlockId::None};
-
-  auto decl_id = AddPlaceholderInstInNoBlock(
-      context,
-      context.parse_tree().As<Parse::AssociatedConstantNameAndTypeId>(node_id),
-      assoc_const_decl);
-
-  assoc_const_decl.assoc_const_id = context.associated_constants().Add(
-      {.name_id = name_id,
-       .parent_scope_id = context.scope_stack().PeekNameScopeId(),
-       .decl_id = decl_id,
-       .generic_id = SemIR::GenericId::None,
-       .default_value_id = SemIR::InstId::None});
-  ReplaceInstBeforeConstantUse(context, decl_id, assoc_const_decl);
-
-  context.node_stack().Push(node_id, decl_id);
-  return true;
+  return HandleAnyBindingPattern(
+      context, node_id, Parse::NodeKind::AssociatedConstantNameAndType);
 }
 
 auto HandleParseNode(Context& context,

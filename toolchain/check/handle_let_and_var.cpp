@@ -322,10 +322,6 @@ auto HandleParseNode(Context& context, Parse::AssociatedConstantDeclId node_id)
 
   CARBON_CHECK(interface_scope);
 
-  // I shouldn't be doing this here, looks like I'm doing something wrong.
-  context.inst_block_stack().Pop();
-  context.region_stack().PopAndDiscardRegion();
-
   FinishAssociatedConstant(context, node_id, interface_scope->interface_id,
                            decl_info);
   return true;
