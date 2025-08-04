@@ -446,7 +446,7 @@ struct CharLiteralType {
   SemIR::TypeId type_id;
 };
 
-// `Core.Char`, an 8-bit character.
+// `Core.Char`, a possibly invalid UTF-8 code unit.
 struct CharType {
   static constexpr auto Kind = InstKind::CharType.Define<Parse::NoneNodeId>(
       {.ir_name = "Core.Char",

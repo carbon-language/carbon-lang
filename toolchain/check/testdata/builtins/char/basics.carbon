@@ -15,7 +15,15 @@
 library "[[@TEST_NAME]]";
 
 //@dump-sem-ir-begin
+// CHECK:STDERR: basics.carbon:[[@LINE+4]]:20: error: character value 'a' too large for type `Core.Char` [CharTooLargeForType]
+// CHECK:STDERR: let c: Core.Char = 'a';
+// CHECK:STDERR:                    ^~~
+// CHECK:STDERR:
 let c: Core.Char = 'a';
+// CHECK:STDERR: basics.carbon:[[@LINE+4]]:22: error: character value '\x00' too large for type `Core.Char` [CharTooLargeForType]
+// CHECK:STDERR: let nul: Core.Char = '\0';
+// CHECK:STDERR:                      ^~~~
+// CHECK:STDERR:
 let nul: Core.Char = '\0';
 let lit: Core.CharLiteral() = '\u{1E15}';
 //@dump-sem-ir-end
@@ -26,20 +34,12 @@ let lit_as_char: Core.Char = c;
 
 library "[[@TEST_NAME]]";
 
-// CHECK:STDERR: fail_size_small.carbon:[[@LINE+4]]:20: error: character value '\xC2\xA0' too large for type `Core.Char` [CharTooLargeForType]
-// CHECK:STDERR: let c: Core.Char = '\u{A0}';
-// CHECK:STDERR:                    ^~~~~~~~
-// CHECK:STDERR:
 let c: Core.Char = '\u{80}';
 
 // --- fail_size_multi_byte.carbon
 
 library "[[@TEST_NAME]]";
 
-// CHECK:STDERR: fail_size_multi_byte.carbon:[[@LINE+4]]:20: error: character value '\xE1\xB8\x95' too large for type `Core.Char` [CharTooLargeForType]
-// CHECK:STDERR: let c: Core.Char = '\u{1E15}';
-// CHECK:STDERR:                    ^~~~~~~~~~
-// CHECK:STDERR:
 let c: Core.Char = '\u{1E15}';
 
 // CHECK:STDOUT: --- basics.carbon
@@ -59,10 +59,8 @@ let c: Core.Char = '\u{1E15}';
 // CHECK:STDOUT:   %Core.CharLiteral.as.ImplicitAs.impl.Convert: %Core.CharLiteral.as.ImplicitAs.impl.Convert.type = struct_value () [concrete]
 // CHECK:STDOUT:   %pattern_type.8c6: type = pattern_type Core.CharLiteral [concrete]
 // CHECK:STDOUT:   %Core.CharLiteral.as.ImplicitAs.impl.Convert.bound.142: <bound method> = bound_method %.54f, %Core.CharLiteral.as.ImplicitAs.impl.Convert [concrete]
-// CHECK:STDOUT:   %.b69: %Char = char_value 'a' [concrete]
 // CHECK:STDOUT:   %.dc9: Core.CharLiteral = char_value '\x00' [concrete]
 // CHECK:STDOUT:   %Core.CharLiteral.as.ImplicitAs.impl.Convert.bound.f0f: <bound method> = bound_method %.dc9, %Core.CharLiteral.as.ImplicitAs.impl.Convert [concrete]
-// CHECK:STDOUT:   %.b3a: %Char = char_value '\x00' [concrete]
 // CHECK:STDOUT:   %CharLiteral.type: type = fn_type @CharLiteral [concrete]
 // CHECK:STDOUT:   %CharLiteral: %CharLiteral.type = struct_value () [concrete]
 // CHECK:STDOUT:   %.a81: Core.CharLiteral = char_value '\xE1\xB8\x95' [concrete]
@@ -93,10 +91,10 @@ let c: Core.Char = '\u{1E15}';
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %impl.elem0.loc5: %.a57 = impl_witness_access constants.%ImplicitAs.impl_witness.b70, element0 [concrete = constants.%Core.CharLiteral.as.ImplicitAs.impl.Convert]
 // CHECK:STDOUT:   %bound_method.loc5: <bound method> = bound_method @__global_init.%.loc5, %impl.elem0.loc5 [concrete = constants.%Core.CharLiteral.as.ImplicitAs.impl.Convert.bound.142]
-// CHECK:STDOUT:   %Core.CharLiteral.as.ImplicitAs.impl.Convert.call.loc5: init %Char = call %bound_method.loc5(@__global_init.%.loc5) [concrete = constants.%.b69]
-// CHECK:STDOUT:   %.loc5_20.1: %Char = value_of_initializer %Core.CharLiteral.as.ImplicitAs.impl.Convert.call.loc5 [concrete = constants.%.b69]
-// CHECK:STDOUT:   %.loc5_20.2: %Char = converted @__global_init.%.loc5, %.loc5_20.1 [concrete = constants.%.b69]
-// CHECK:STDOUT:   %c: %Char = bind_name c, %.loc5_20.2
+// CHECK:STDOUT:   %Core.CharLiteral.as.ImplicitAs.impl.Convert.call.loc5: init %Char = call %bound_method.loc5(@__global_init.%.loc5) [concrete = <error>]
+// CHECK:STDOUT:   %.loc5_20.1: %Char = value_of_initializer %Core.CharLiteral.as.ImplicitAs.impl.Convert.call.loc5 [concrete = <error>]
+// CHECK:STDOUT:   %.loc5_20.2: %Char = converted @__global_init.%.loc5, %.loc5_20.1 [concrete = <error>]
+// CHECK:STDOUT:   %c: %Char = bind_name c, %.loc5_20.2 [concrete = <error>]
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %nul.patt: %pattern_type.b09 = binding_pattern nul [concrete]
 // CHECK:STDOUT:   }
@@ -106,10 +104,10 @@ let c: Core.Char = '\u{1E15}';
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %impl.elem0.loc6: %.a57 = impl_witness_access constants.%ImplicitAs.impl_witness.b70, element0 [concrete = constants.%Core.CharLiteral.as.ImplicitAs.impl.Convert]
 // CHECK:STDOUT:   %bound_method.loc6: <bound method> = bound_method @__global_init.%.loc6, %impl.elem0.loc6 [concrete = constants.%Core.CharLiteral.as.ImplicitAs.impl.Convert.bound.f0f]
-// CHECK:STDOUT:   %Core.CharLiteral.as.ImplicitAs.impl.Convert.call.loc6: init %Char = call %bound_method.loc6(@__global_init.%.loc6) [concrete = constants.%.b3a]
-// CHECK:STDOUT:   %.loc6_22.1: %Char = value_of_initializer %Core.CharLiteral.as.ImplicitAs.impl.Convert.call.loc6 [concrete = constants.%.b3a]
-// CHECK:STDOUT:   %.loc6_22.2: %Char = converted @__global_init.%.loc6, %.loc6_22.1 [concrete = constants.%.b3a]
-// CHECK:STDOUT:   %nul: %Char = bind_name nul, %.loc6_22.2
+// CHECK:STDOUT:   %Core.CharLiteral.as.ImplicitAs.impl.Convert.call.loc6: init %Char = call %bound_method.loc6(@__global_init.%.loc6) [concrete = <error>]
+// CHECK:STDOUT:   %.loc6_22.1: %Char = value_of_initializer %Core.CharLiteral.as.ImplicitAs.impl.Convert.call.loc6 [concrete = <error>]
+// CHECK:STDOUT:   %.loc6_22.2: %Char = converted @__global_init.%.loc6, %.loc6_22.1 [concrete = <error>]
+// CHECK:STDOUT:   %nul: %Char = bind_name nul, %.loc6_22.2 [concrete = <error>]
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %lit.patt: %pattern_type.8c6 = binding_pattern lit [concrete]
 // CHECK:STDOUT:   }

@@ -963,29 +963,13 @@ static auto PerformCheckedCharConvert(Context& context, SemIR::LocId loc_id,
   auto object_repr_id = context.types().GetObjectRepr(dest_type_id);
   if (object_repr_id != arg.type_id) {
     if (object_repr_id == SemIR::CharType::TypeId) {
-      llvm::UTF32 utf32[1] = {static_cast<llvm::UTF32>(arg.value.index)};
-      const llvm::UTF32* source_start = utf32;
-      llvm::UTF8 utf8[1];
-      llvm::UTF8* target_start = utf8;
-      auto conv_result = llvm::ConvertUTF32toUTF8(
-          &source_start, std::end(utf32), &target_start, std::end(utf8),
-          llvm::strictConversion);
-      switch (conv_result) {
-        case llvm::conversionOK: {
-          break;
-        }
-        case llvm::targetExhausted: {
-          CARBON_DIAGNOSTIC(CharTooLargeForType, Error,
-                            "character value {0} too large for type {1}",
-                            SemIR::CharId, SemIR::TypeId);
-          context.emitter().Emit(loc_id, CharTooLargeForType, arg.value,
-                                 dest_type_id);
-          return SemIR::ErrorInst::ConstantId;
-        }
-        case llvm::sourceExhausted:
-        case llvm::sourceIllegal: {
-          CARBON_FATAL("Unexpected convert failure");
-        }
+      if (arg.value.index < 0x80) {
+        CARBON_DIAGNOSTIC(CharTooLargeForType, Error,
+                          "character value {0} too large for type {1}",
+                          SemIR::CharId, SemIR::TypeId);
+        context.emitter().Emit(loc_id, CharTooLargeForType, arg.value,
+                               dest_type_id);
+        return SemIR::ErrorInst::ConstantId;
       }
     } else {
       CARBON_CHECK(object_repr_id == SemIR::CharLiteralType::TypeId);

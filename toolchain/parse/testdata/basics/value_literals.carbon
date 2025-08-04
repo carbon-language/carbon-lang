@@ -32,6 +32,11 @@ var reals: array(f64, 7) = (
     39999999999999999993.0e39999999999999999993,
 );
 
+// --- bool_literal.carbon
+
+var f: bool = false;
+var t: bool = true;
+
 // --- char_literal.carbon
 
 var c: Core.Char = 'c';
@@ -100,6 +105,27 @@ var test_str: String = "Test";
 // CHECK:STDOUT:         {kind: 'TupleLiteralComma', text: ','},
 // CHECK:STDOUT:       {kind: 'TupleLiteral', text: ')', subtree_size: 16},
 // CHECK:STDOUT:     {kind: 'VariableDecl', text: ';', subtree_size: 28},
+// CHECK:STDOUT:     {kind: 'FileEnd', text: ''},
+// CHECK:STDOUT:   ]
+// CHECK:STDOUT: - filename: bool_literal.carbon
+// CHECK:STDOUT:   parse_tree: [
+// CHECK:STDOUT:     {kind: 'FileStart', text: ''},
+// CHECK:STDOUT:       {kind: 'VariableIntroducer', text: 'var'},
+// CHECK:STDOUT:           {kind: 'IdentifierNameNotBeforeParams', text: 'f'},
+// CHECK:STDOUT:           {kind: 'BoolTypeLiteral', text: 'bool'},
+// CHECK:STDOUT:         {kind: 'VarBindingPattern', text: ':', subtree_size: 3},
+// CHECK:STDOUT:       {kind: 'VariablePattern', text: 'var', subtree_size: 4},
+// CHECK:STDOUT:       {kind: 'VariableInitializer', text: '='},
+// CHECK:STDOUT:       {kind: 'BoolLiteralFalse', text: 'false'},
+// CHECK:STDOUT:     {kind: 'VariableDecl', text: ';', subtree_size: 8},
+// CHECK:STDOUT:       {kind: 'VariableIntroducer', text: 'var'},
+// CHECK:STDOUT:           {kind: 'IdentifierNameNotBeforeParams', text: 't'},
+// CHECK:STDOUT:           {kind: 'BoolTypeLiteral', text: 'bool'},
+// CHECK:STDOUT:         {kind: 'VarBindingPattern', text: ':', subtree_size: 3},
+// CHECK:STDOUT:       {kind: 'VariablePattern', text: 'var', subtree_size: 4},
+// CHECK:STDOUT:       {kind: 'VariableInitializer', text: '='},
+// CHECK:STDOUT:       {kind: 'BoolLiteralTrue', text: 'true'},
+// CHECK:STDOUT:     {kind: 'VariableDecl', text: ';', subtree_size: 8},
 // CHECK:STDOUT:     {kind: 'FileEnd', text: ''},
 // CHECK:STDOUT:   ]
 // CHECK:STDOUT: - filename: char_literal.carbon
