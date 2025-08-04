@@ -24,6 +24,7 @@ static auto GenerateThunkMangledName(
     const clang::FunctionDecl& callee_function_decl) -> std::string {
   RawStringOstream mangled_name_stream;
   {
+    // TODO: Create `MangleContext` once.
     std::unique_ptr<clang::MangleContext> mangle_context(
         ast_context.createMangleContext());
     mangle_context->mangleName(clang::GlobalDecl(&callee_function_decl),
