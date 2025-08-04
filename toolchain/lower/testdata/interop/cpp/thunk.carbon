@@ -25,6 +25,8 @@ library "[[@TEST_NAME]]";
 import Cpp library "thunk.h";
 
 fn MyF() {
+  // TODO: Make sure we actually store the value 5 into `alloca`.
+  // See https://github.com/carbon-language/carbon-lang/pull/5850/files#r2249030529
   Cpp.foo(5, 6, 7);
 }
 
@@ -35,9 +37,9 @@ fn MyF() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: define void @_CMyF.Main() !dbg !7 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %.loc7_18.1.temp = alloca i16, align 2, !dbg !10
-// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(i64 2, ptr %.loc7_18.1.temp), !dbg !10
-// CHECK:STDOUT:   call void @_Z3foosil.carbon_thunk(ptr %.loc7_18.1.temp, i32 6, i64 7), !dbg !10
+// CHECK:STDOUT:   %.loc9_18.1.temp = alloca i16, align 2, !dbg !10
+// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(i64 2, ptr %.loc9_18.1.temp), !dbg !10
+// CHECK:STDOUT:   call void @_Z3foosil.carbon_thunk(ptr %.loc9_18.1.temp, i32 6, i64 7), !dbg !10
 // CHECK:STDOUT:   ret void, !dbg !11
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -79,5 +81,5 @@ fn MyF() {
 // CHECK:STDOUT: !7 = distinct !DISubprogram(name: "MyF", linkageName: "_CMyF.Main", scope: null, file: !6, line: 6, type: !8, spFlags: DISPFlagDefinition, unit: !5)
 // CHECK:STDOUT: !8 = !DISubroutineType(types: !9)
 // CHECK:STDOUT: !9 = !{}
-// CHECK:STDOUT: !10 = !DILocation(line: 7, column: 3, scope: !7)
+// CHECK:STDOUT: !10 = !DILocation(line: 9, column: 3, scope: !7)
 // CHECK:STDOUT: !11 = !DILocation(line: 6, column: 1, scope: !7)

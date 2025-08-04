@@ -365,6 +365,9 @@ auto PerformCppThunkCall(Context& context, SemIR::LocId loc_id,
                                     .src_id = arg_id,
                                     .dest_id = temporary_storage_inst_id});
 
+      // TODO: Do not use `InitializeFrom` directly. Use the `Initialize`
+      // machinery. See
+      // https://github.com/carbon-language/carbon-lang/pull/5850/files#r2249030529.
       arg_id = AddInst(context, loc_id,
                        SemIR::AddrOf{.type_id = thunk_param_type_id,
                                      .lvalue_id = temporary_storage_inst_id});
