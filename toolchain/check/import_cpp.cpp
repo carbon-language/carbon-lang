@@ -50,6 +50,16 @@
 
 namespace Carbon::Check {
 
+// Add a line marker directive pointing at the location of the `import Cpp`
+// declaration in the Carbon source file. This will cause Clang's diagnostics
+// machinery to track and report the location in Carbon code where the import
+// was written.
+static auto GenerateLineMarker(Context& context, llvm::raw_ostream& out,
+                               int line) {
+  out << "# " << line << " \""
+      << FormatEscaped(context.tokens().source().filename()) << "\"\n";
+}
+
 // Generates C++ file contents to #include all requested imports.
 static auto GenerateCppIncludesHeaderCode(
     Context& context, llvm::ArrayRef<Parse::Tree::PackagingNames> imports)
@@ -57,19 +67,36 @@ static auto GenerateCppIncludesHeaderCode(
   std::string code;
   llvm::raw_string_ostream code_stream(code);
   for (const Parse::Tree::PackagingNames& import : imports) {
-    // Add a line marker directive pointing at the location of the `import Cpp`
-    // declaration in the Carbon source file. This will cause Clang's
-    // diagnostics machinery to track and report the location in Carbon code
-    // where the import was written.
-    auto token = context.parse_tree().node_token(import.node_id);
-    code_stream << "# " << context.tokens().GetLineNumber(token) << " \""
-                << FormatEscaped(context.tokens().source().filename())
-                << "\"\n";
+    if (import.inline_body_id.has_value()) {
+      // Expand `import Cpp inline "code";` directly into the specified code.
+      auto code_token = context.parse_tree().node_token(import.inline_body_id);
 
-    code_stream << "#include \""
-                << FormatEscaped(
-                       context.string_literal_values().Get(import.library_id))
-                << "\"\n";
+      // Compute the line number on which the C++ code starts. Usually the code
+      // is specified as a block string literal and starts on the line after the
+      // start of the string token.
+      // TODO: Determine if this is a block string literal without calling
+      // `GetTokenText`, which re-lexes the string.
+      int line = context.tokens().GetLineNumber(code_token);
+      if (context.tokens().GetTokenText(code_token).contains('\n')) {
+        ++line;
+      }
+
+      GenerateLineMarker(context, code_stream, line);
+      code_stream << context.string_literal_values().Get(
+                         context.tokens().GetStringLiteralValue(code_token))
+                  << "\n";
+      // TODO: Inject a clang pragma here to produce an error if there are
+      // unclosed scopes at the end of this inline C++ fragment.
+    } else {
+      // Translate `import Cpp library "foo.h";` into `#include "foo.h"`.
+      GenerateLineMarker(context, code_stream,
+                         context.tokens().GetLineNumber(
+                             context.parse_tree().node_token(import.node_id)));
+      code_stream << "#include \""
+                  << FormatEscaped(
+                         context.string_literal_values().Get(import.library_id))
+                  << "\"\n";
+    }
   }
   return code;
 }

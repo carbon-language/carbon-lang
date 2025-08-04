@@ -47,7 +47,7 @@ static auto GetImportedIRCount(UnitAndImports* unit_and_imports) -> int {
     // Leave an empty slot for `ImportIRId::ApiForImpl`.
     ++count;
   }
-  if (!unit_and_imports->cpp_import_names.empty()) {
+  if (!unit_and_imports->cpp_imports.empty()) {
     // Leave an empty slot for `ImportIRId::Cpp`.
     ++count;
   }
@@ -152,13 +152,12 @@ auto CheckUnit::InitPackageScopeAndImports() -> void {
   CARBON_CHECK(context_.scope_stack().PeekIndex() == ScopeIndex::Package);
   ImportOtherPackages(namespace_type_id);
 
-  const auto& cpp_import_names = unit_and_imports_->cpp_import_names;
-  if (!cpp_import_names.empty()) {
+  const auto& cpp_imports = unit_and_imports_->cpp_imports;
+  if (!cpp_imports.empty()) {
     auto* cpp_ast = unit_and_imports_->unit->cpp_ast;
     CARBON_CHECK(cpp_ast);
     CARBON_CHECK(!cpp_ast->get());
-    *cpp_ast =
-        ImportCppFiles(context_, cpp_import_names, fs_, clang_invocation_);
+    *cpp_ast = ImportCppFiles(context_, cpp_imports, fs_, clang_invocation_);
   }
 }
 

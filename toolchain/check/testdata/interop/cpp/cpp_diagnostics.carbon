@@ -410,6 +410,35 @@ library "[[@TEST_NAME]]";
 // CHECK:STDERR:
 import Cpp library "direct_include.h";
 
+// ============================================================================
+// Diagnostic location in inline code.
+// ============================================================================
+
+// --- fail_loc_in_inline_simple.carbon
+
+library "[[@TEST_NAME]]";
+
+// CHECK:STDERR: fail_loc_in_inline_simple.carbon:[[@LINE+4]]:9: error: use of undeclared identifier 'banana' [CppInteropParseError]
+// CHECK:STDERR:     8 | int n = banana;
+// CHECK:STDERR:       |         ^~~~~~
+// CHECK:STDERR:
+import Cpp inline "int n = banana;";
+
+// --- fail_loc_in_inline_block.carbon
+
+import Cpp inline '''c++
+void f(const int n) {
+  // CHECK:STDERR: fail_loc_in_inline_block.carbon:[[@LINE+7]]:3: error: cannot assign to variable 'n' with const-qualified type 'const int' [CppInteropParseError]
+  // CHECK:STDERR:    11 |   ++n;
+  // CHECK:STDERR:       |   ^ ~
+  // CHECK:STDERR: fail_loc_in_inline_block.carbon:[[@LINE-4]]:18: note: variable 'n' declared const here [CppInteropParseNote]
+  // CHECK:STDERR:     3 | void f(const int n) {
+  // CHECK:STDERR:       |        ~~~~~~~~~~^
+  // CHECK:STDERR:
+  ++n;
+}
+''';
+
 // CHECK:STDOUT: --- import_cpp_file_with_one_warning.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
