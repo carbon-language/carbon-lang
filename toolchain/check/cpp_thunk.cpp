@@ -238,6 +238,7 @@ static auto BuildCalleeArgs(clang::Sema& sema,
     clang::Expr* call_arg = sema.BuildDeclRefExpr(
         thunk_param, thunk_param->getType(), clang::VK_LValue, clang_loc);
     if (param_type_changed[i]) {
+      // TODO: Insert a cast to an rvalue.
       clang::ExprResult deref_result =
           sema.BuildUnaryOp(nullptr, clang_loc, clang::UO_Deref, call_arg);
       CARBON_CHECK(deref_result.isUsable());
