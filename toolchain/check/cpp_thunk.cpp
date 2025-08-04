@@ -115,8 +115,7 @@ static auto IsSimpleAbiType(clang::ASTContext& ast_context,
   }
 
   if (const auto* builtin_type = type->getAs<clang::BuiltinType>()) {
-    // TODO: Add support for other integer types.
-    if (builtin_type->getKind() == clang::BuiltinType::Int) {
+    if (builtin_type->isSignedInteger()) {
       uint64_t type_size = ast_context.getIntWidth(type);
       return type_size == 32 || type_size == 64;
     }

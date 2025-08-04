@@ -16,7 +16,7 @@
 
 // --- thunk.h
 
-void foo(short x);
+void foo(short x, int y, long z);
 
 // --- import_thunk.carbon
 
@@ -25,7 +25,7 @@ library "[[@TEST_NAME]]";
 import Cpp library "thunk.h";
 
 fn MyF() {
-  Cpp.foo(5);
+  Cpp.foo(5, 6, 7);
 }
 
 // CHECK:STDOUT: ; ModuleID = 'import_thunk.carbon'
@@ -35,25 +35,31 @@ fn MyF() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: define void @_CMyF.Main() !dbg !7 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %.loc7_12.1.temp = alloca i16, align 2, !dbg !10
-// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(i64 2, ptr %.loc7_12.1.temp), !dbg !10
-// CHECK:STDOUT:   call void @_Z3foos.carbon_thunk(ptr %.loc7_12.1.temp), !dbg !10
+// CHECK:STDOUT:   %.loc7_18.1.temp = alloca i16, align 2, !dbg !10
+// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(i64 2, ptr %.loc7_18.1.temp), !dbg !10
+// CHECK:STDOUT:   call void @_Z3foosil.carbon_thunk(ptr %.loc7_18.1.temp, i32 6, i64 7), !dbg !10
 // CHECK:STDOUT:   ret void, !dbg !11
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: declare void @_Z3foos(i16)
+// CHECK:STDOUT: declare void @_Z3foosil(i16, i32, i64)
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nocallback nofree nosync nounwind willreturn memory(argmem: readwrite)
 // CHECK:STDOUT: declare void @llvm.lifetime.start.p0(i64 immarg, ptr captures(none)) #0
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: alwaysinline mustprogress
-// CHECK:STDOUT: define dso_local void @_Z3foos.carbon_thunk(ptr %x) #1 {
+// CHECK:STDOUT: define dso_local void @_Z3foosil.carbon_thunk(ptr %x, i32 %y, i64 %z) #1 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   %x.addr = alloca ptr, align 8
+// CHECK:STDOUT:   %y.addr = alloca i32, align 4
+// CHECK:STDOUT:   %z.addr = alloca i64, align 8
 // CHECK:STDOUT:   store ptr %x, ptr %x.addr, align 8
+// CHECK:STDOUT:   store i32 %y, ptr %y.addr, align 4
+// CHECK:STDOUT:   store i64 %z, ptr %z.addr, align 8
 // CHECK:STDOUT:   %0 = load ptr, ptr %x.addr, align 8
 // CHECK:STDOUT:   %1 = load i16, ptr %0, align 2
-// CHECK:STDOUT:   call void @_Z3foos(i16 signext %1)
+// CHECK:STDOUT:   %2 = load i32, ptr %y.addr, align 4
+// CHECK:STDOUT:   %3 = load i64, ptr %z.addr, align 8
+// CHECK:STDOUT:   call void @_Z3foosil(i16 signext %1, i32 %2, i64 %3)
 // CHECK:STDOUT:   ret void
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
