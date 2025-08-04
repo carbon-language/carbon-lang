@@ -11,7 +11,7 @@
 
 namespace Carbon::Check {
 
-// Forms an CharValue instruction with type `CharLiteral` for a given literal
+// Forms a CharValue instruction with type `CharLiteral` for a given literal
 // integer value, which is assumed to be unsigned.
 auto MakeCharLiteral(Context& context, Parse::NodeId node_id,
                      Lex::CharLiteralValue value) -> SemIR::InstId;

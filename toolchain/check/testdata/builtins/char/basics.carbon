@@ -30,7 +30,7 @@ library "[[@TEST_NAME]]";
 // CHECK:STDERR: let c: Core.Char = '\u{A0}';
 // CHECK:STDERR:                    ^~~~~~~~
 // CHECK:STDERR:
-let c: Core.Char = '\u{A0}';
+let c: Core.Char = '\u{80}';
 
 // --- fail_size_multi_byte.carbon
 
