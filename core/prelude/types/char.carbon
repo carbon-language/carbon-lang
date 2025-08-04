@@ -11,7 +11,7 @@ import library "prelude/types/uint";
 fn CharLiteral() -> type = "char_literal.make_type";
 
 class Char {
-  extend adapt u8;
+  adapt u8;
 }
 
 impl CharLiteral() as ImplicitAs(Char) {
