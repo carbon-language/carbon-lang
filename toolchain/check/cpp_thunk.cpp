@@ -201,8 +201,8 @@ static auto CreateThunkFunctionDecl(
 
   clang::FunctionDecl* thunk_function_decl = clang::FunctionDecl::Create(
       ast_context, ast_context.getTranslationUnitDecl(), clang_loc, clang_loc,
-      clang::DeclarationName(&identifier_info), thunk_function_type, nullptr,
-      clang::SC_Extern, false, false);
+      clang::DeclarationName(&identifier_info), thunk_function_type,
+      /*TInfo=*/nullptr, clang::SC_Extern);
 
   thunk_function_decl->setParams(BuildThunkParameters(
       ast_context, callee_function_decl, thunk_function_decl));
