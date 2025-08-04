@@ -979,9 +979,8 @@ static auto ImportFunctionDecl(Context& context, SemIR::LocId loc_id,
     MarkFailedDecl(context, clang_decl);
     return SemIR::ErrorInst::InstId;
   }
-  // TODO: Convert to context.TODO() when we have a test case.
-  CARBON_CHECK(!clang_decl->getFunctionType()->isFunctionNoProtoType(),
-               "No Prototype function");
+  CARBON_CHECK(clang_decl->getFunctionType()->isFunctionProtoType(),
+               "Not Prototype function (non-C++ code)");
 
   context.scope_stack().PushForDeclName();
   context.inst_block_stack().Push();
