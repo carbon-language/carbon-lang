@@ -571,7 +571,8 @@ static auto MakeIntType(Context& context, IntId size_id, bool is_signed)
 
 // Maps a C++ builtin type to a Carbon type.
 // TODO: Support more builtin types.
-static auto MapBuiltinType(Context& context, clang::QualType qual_type,
+static auto MapBuiltinType(Context& context, SemIR::LocId loc_id,
+                           clang::QualType qual_type,
                            const clang::BuiltinType& type) -> TypeExpr {
   if (type.isInteger()) {
     unsigned width = context.ast_context().getIntWidth(qual_type);
@@ -581,12 +582,12 @@ static auto MapBuiltinType(Context& context, clang::QualType qual_type,
     if (context.ast_context().hasSameType(qual_type, int_n_type)) {
       TypeExpr type_expr =
           MakeIntType(context, context.ints().Add(width), is_signed);
-      // Make sure signed integer of 32 or 64 bits are complete so we can check
-      // against them when deciding whether we need to generate a thunk.
+      // Try to make sure signed integer of 32 or 64 bits are complete so we can
+      // check against them when deciding whether we need to generate a thunk.
       if (is_signed && (width == 32 || width == 64)) {
         SemIR::TypeId type_id = type_expr.type_id;
         if (!context.types().IsComplete(type_id)) {
-          CompleteTypeOrCheckFail(context, type_id);
+          TryToCompleteType(context, type_id, loc_id);
         }
       }
       return type_expr;
@@ -624,7 +625,7 @@ static auto MapRecordType(Context& context, SemIR::LocId loc_id,
 static auto MapNonWrapperType(Context& context, SemIR::LocId loc_id,
                               clang::QualType type) -> TypeExpr {
   if (const auto* builtin_type = type->getAs<clang::BuiltinType>()) {
-    return MapBuiltinType(context, type, *builtin_type);
+    return MapBuiltinType(context, loc_id, type, *builtin_type);
   }
 
   if (const auto* record_type = type->getAs<clang::RecordType>()) {
