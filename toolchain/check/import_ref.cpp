@@ -1948,7 +1948,9 @@ static auto TryResolveTypedInst(ImportRefResolver& resolver,
       break;
     }
     case SemIR::Function::SpecialFunctionKind::HasCppThunk: {
-      CARBON_FATAL();
+      resolver.local_context().TODO(SemIR::LocId::None,
+                                    "Unsupported: Importing C++ functions that "
+                                    "require thunks indirectly");
     }
   }
 
