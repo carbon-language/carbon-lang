@@ -187,6 +187,8 @@ class TypeIterator::Step {
   struct End {};
   // Iteration is complete.
   struct Done {};
+  // Iteration found an error.
+  struct Error {};
 
   // Each step is one of these.
   using Any =
@@ -194,7 +196,7 @@ class TypeIterator::Step {
                    SymbolicValue, StructFieldName, ClassStartOnly,
                    StructStartOnly, TupleStartOnly, InterfaceStartOnly,
                    ClassStart, StructStart, TupleStart, InterfaceStart,
-                   IntStart, ArrayStart, PointerStart, End, Done>;
+                   IntStart, ArrayStart, PointerStart, End, Done, Error>;
 
   template <class T>
   auto Is() const -> bool {

@@ -80,7 +80,6 @@ fn F() {
 // CHECK:STDOUT: fn @F() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %Cpp.ref: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
-// CHECK:STDOUT:   <elided>
 // CHECK:STDOUT:   %Y.ref: type = name_ref Y, imports.%X.decl [concrete = constants.%X]
 // CHECK:STDOUT:   %f.ref: %.080 = name_ref f, imports.%.647 [concrete = constants.%empty_struct]
 // CHECK:STDOUT:   %int_42: Core.IntLiteral = int_value 42 [concrete = constants.%int_42.20e]

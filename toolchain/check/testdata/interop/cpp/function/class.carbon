@@ -2,7 +2,7 @@
 // Exceptions. See /LICENSE for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
-// INCLUDE-FILE: toolchain/testing/testdata/min_prelude/destroy.carbon
+// INCLUDE-FILE: toolchain/testing/testdata/min_prelude/convert.carbon
 //
 // AUTOUPDATE
 // TIP: To test this file alone, run:
@@ -44,12 +44,13 @@ library "[[@TEST_NAME]]";
 import Cpp library "decl_value_param_type.h";
 
 fn F() {
-  // CHECK:STDERR: fail_todo_import_decl_value_param_type_previously_imported.carbon:[[@LINE+11]]:10: error: semantics TODO: `Unsupported: Record declarations without a definition` [SemanticsTodo]
+  // CHECK:STDERR: fail_todo_import_decl_value_param_type_previously_imported.carbon:[[@LINE+12]]:10: error: binding pattern has incomplete type `C` in name binding declaration [IncompleteTypeInBindingDecl]
   // CHECK:STDERR:   let c: Cpp.C;
   // CHECK:STDERR:          ^~~~~
-  // CHECK:STDERR: fail_todo_import_decl_value_param_type_previously_imported.carbon:[[@LINE+8]]:10: note: in `Cpp` name lookup for `C` [InCppNameLookup]
-  // CHECK:STDERR:   let c: Cpp.C;
-  // CHECK:STDERR:          ^~~~~
+  // CHECK:STDERR: fail_todo_import_decl_value_param_type_previously_imported.carbon:[[@LINE-6]]:10: in file included here [InCppInclude]
+  // CHECK:STDERR: ./decl_value_param_type.h:2:7: note: class was forward declared here [ClassForwardDeclaredHere]
+  // CHECK:STDERR: class C;
+  // CHECK:STDERR:       ^
   // CHECK:STDERR:
   // CHECK:STDERR: fail_todo_import_decl_value_param_type_previously_imported.carbon:[[@LINE+4]]:15: error: expected `=`; `let` declaration must have an initializer [ExpectedInitializerAfterLet]
   // CHECK:STDERR:   let c: Cpp.C;
@@ -112,7 +113,7 @@ class C {};
 
 auto foo(C) -> void;
 
-// --- fail_fix_import_definition_no_data_members_value_param_type.carbon
+// --- fail_todo_import_definition_no_data_members_value_param_type.carbon
 
 library "[[@TEST_NAME]]";
 
@@ -120,10 +121,10 @@ import Cpp library "definition_no_data_members_value_param_type.h";
 
 fn F() {
   //@dump-sem-ir-begin
-  // CHECK:STDERR: fail_fix_import_definition_no_data_members_value_param_type.carbon:[[@LINE+7]]:3: error: call arg of type `{}` is not supported [CallArgTypeNotSupported]
+  // CHECK:STDERR: fail_todo_import_definition_no_data_members_value_param_type.carbon:[[@LINE+7]]:3: error: call arg of type `{}` is not supported [CallArgTypeNotSupported]
   // CHECK:STDERR:   Cpp.foo({});
   // CHECK:STDERR:   ^~~~~~~~~~~
-  // CHECK:STDERR: fail_fix_import_definition_no_data_members_value_param_type.carbon:[[@LINE+4]]:3: note: in call to a Cpp (overloaded) function here [InCallToOverloadedCppFunction]
+  // CHECK:STDERR: fail_todo_import_definition_no_data_members_value_param_type.carbon:[[@LINE+4]]:3: note: in call to a Cpp (overloaded) function here [InCallToOverloadedCppFunction]
   // CHECK:STDERR:   Cpp.foo({});
   // CHECK:STDERR:   ^~~~~~~~~~~
   // CHECK:STDERR:
@@ -145,7 +146,7 @@ class C {
 
 auto foo(C) -> void;
 
-// --- fail_fix_import_definition_single_data_member_value_param_type.carbon
+// --- fail_todo_import_definition_single_data_member_value_param_type.carbon
 
 library "[[@TEST_NAME]]";
 
@@ -153,10 +154,10 @@ import Cpp library "definition_single_data_member_value_param_type.h";
 
 fn F() {
   //@dump-sem-ir-begin
-  // CHECK:STDERR: fail_fix_import_definition_single_data_member_value_param_type.carbon:[[@LINE+7]]:3: error: call arg of type `{}` is not supported [CallArgTypeNotSupported]
+  // CHECK:STDERR: fail_todo_import_definition_single_data_member_value_param_type.carbon:[[@LINE+7]]:3: error: call arg of type `{}` is not supported [CallArgTypeNotSupported]
   // CHECK:STDERR:   Cpp.foo({});
   // CHECK:STDERR:   ^~~~~~~~~~~
-  // CHECK:STDERR: fail_fix_import_definition_single_data_member_value_param_type.carbon:[[@LINE+4]]:3: note: in call to a Cpp (overloaded) function here [InCallToOverloadedCppFunction]
+  // CHECK:STDERR: fail_todo_import_definition_single_data_member_value_param_type.carbon:[[@LINE+4]]:3: note: in call to a Cpp (overloaded) function here [InCallToOverloadedCppFunction]
   // CHECK:STDERR:   Cpp.foo({});
   // CHECK:STDERR:   ^~~~~~~~~~~
   // CHECK:STDERR:
@@ -180,7 +181,7 @@ class C {
 
 auto foo(C) -> void;
 
-// --- fail_fix_import_definition_multiple_data_members_value_param_type.carbon
+// --- fail_todo_import_definition_multiple_data_members_value_param_type.carbon
 
 library "[[@TEST_NAME]]";
 
@@ -188,10 +189,10 @@ import Cpp library "definition_multiple_data_members_value_param_type.h";
 
 fn F() {
   //@dump-sem-ir-begin
-  // CHECK:STDERR: fail_fix_import_definition_multiple_data_members_value_param_type.carbon:[[@LINE+7]]:3: error: call arg of type `{}` is not supported [CallArgTypeNotSupported]
+  // CHECK:STDERR: fail_todo_import_definition_multiple_data_members_value_param_type.carbon:[[@LINE+7]]:3: error: call arg of type `{}` is not supported [CallArgTypeNotSupported]
   // CHECK:STDERR:   Cpp.foo({});
   // CHECK:STDERR:   ^~~~~~~~~~~
-  // CHECK:STDERR: fail_fix_import_definition_multiple_data_members_value_param_type.carbon:[[@LINE+4]]:3: note: in call to a Cpp (overloaded) function here [InCallToOverloadedCppFunction]
+  // CHECK:STDERR: fail_todo_import_definition_multiple_data_members_value_param_type.carbon:[[@LINE+4]]:3: note: in call to a Cpp (overloaded) function here [InCallToOverloadedCppFunction]
   // CHECK:STDERR:   Cpp.foo({});
   // CHECK:STDERR:   ^~~~~~~~~~~
   // CHECK:STDERR:
@@ -209,7 +210,7 @@ namespace N { class C {}; }
 
 auto foo(N::C) -> void;
 
-// --- fail_fix_import_definition_in_namespace_value_param_type.carbon
+// --- fail_todo_import_definition_in_namespace_value_param_type.carbon
 
 library "[[@TEST_NAME]]";
 
@@ -217,10 +218,10 @@ import Cpp library "definition_in_namespace_value_param_type.h";
 
 fn F() {
   //@dump-sem-ir-begin
-  // CHECK:STDERR: fail_fix_import_definition_in_namespace_value_param_type.carbon:[[@LINE+7]]:3: error: call arg of type `{}` is not supported [CallArgTypeNotSupported]
+  // CHECK:STDERR: fail_todo_import_definition_in_namespace_value_param_type.carbon:[[@LINE+7]]:3: error: call arg of type `{}` is not supported [CallArgTypeNotSupported]
   // CHECK:STDERR:   Cpp.foo({});
   // CHECK:STDERR:   ^~~~~~~~~~~
-  // CHECK:STDERR: fail_fix_import_definition_in_namespace_value_param_type.carbon:[[@LINE+4]]:3: note: in call to a Cpp (overloaded) function here [InCallToOverloadedCppFunction]
+  // CHECK:STDERR: fail_todo_import_definition_in_namespace_value_param_type.carbon:[[@LINE+4]]:3: note: in call to a Cpp (overloaded) function here [InCallToOverloadedCppFunction]
   // CHECK:STDERR:   Cpp.foo({});
   // CHECK:STDERR:   ^~~~~~~~~~~
   // CHECK:STDERR:
@@ -241,7 +242,7 @@ namespace N1 {
   auto foo(N2::C) -> void;
 }
 
-// --- fail_fix_import_definition_in_relative_namespace_value_param_type.carbon
+// --- fail_todo_import_definition_in_relative_namespace_value_param_type.carbon
 
 library "[[@TEST_NAME]]";
 
@@ -249,10 +250,10 @@ import Cpp library "definition_in_relative_namespace_value_param_type.h";
 
 fn F() {
   //@dump-sem-ir-begin
-  // CHECK:STDERR: fail_fix_import_definition_in_relative_namespace_value_param_type.carbon:[[@LINE+7]]:3: error: call arg of type `{}` is not supported [CallArgTypeNotSupported]
+  // CHECK:STDERR: fail_todo_import_definition_in_relative_namespace_value_param_type.carbon:[[@LINE+7]]:3: error: call arg of type `{}` is not supported [CallArgTypeNotSupported]
   // CHECK:STDERR:   Cpp.N1.foo({});
   // CHECK:STDERR:   ^~~~~~~~~~~~~~
-  // CHECK:STDERR: fail_fix_import_definition_in_relative_namespace_value_param_type.carbon:[[@LINE+4]]:3: note: in call to a Cpp (overloaded) function here [InCallToOverloadedCppFunction]
+  // CHECK:STDERR: fail_todo_import_definition_in_relative_namespace_value_param_type.carbon:[[@LINE+4]]:3: note: in call to a Cpp (overloaded) function here [InCallToOverloadedCppFunction]
   // CHECK:STDERR:   Cpp.N1.foo({});
   // CHECK:STDERR:   ^~~~~~~~~~~~~~
   // CHECK:STDERR:
@@ -273,7 +274,7 @@ class O {
 
 auto foo(O::C) -> void;
 
-// --- fail_fix_import_definition_in_outer_definition.carbon
+// --- fail_todo_import_definition_in_outer_definition.carbon
 
 library "[[@TEST_NAME]]";
 
@@ -281,10 +282,10 @@ import Cpp library "definition_in_outer_definition.h";
 
 fn F() {
   //@dump-sem-ir-begin
-  // CHECK:STDERR: fail_fix_import_definition_in_outer_definition.carbon:[[@LINE+7]]:3: error: call arg of type `{}` is not supported [CallArgTypeNotSupported]
+  // CHECK:STDERR: fail_todo_import_definition_in_outer_definition.carbon:[[@LINE+7]]:3: error: call arg of type `{}` is not supported [CallArgTypeNotSupported]
   // CHECK:STDERR:   Cpp.foo({});
   // CHECK:STDERR:   ^~~~~~~~~~~
-  // CHECK:STDERR: fail_fix_import_definition_in_outer_definition.carbon:[[@LINE+4]]:3: note: in call to a Cpp (overloaded) function here [InCallToOverloadedCppFunction]
+  // CHECK:STDERR: fail_todo_import_definition_in_outer_definition.carbon:[[@LINE+4]]:3: note: in call to a Cpp (overloaded) function here [InCallToOverloadedCppFunction]
   // CHECK:STDERR:   Cpp.foo({});
   // CHECK:STDERR:   ^~~~~~~~~~~
   // CHECK:STDERR:
@@ -300,12 +301,13 @@ fn F() {
 // --- definition_with_static_method.h
 
 class C {
+ public:
   static void bar();
 };
 
 auto foo(C) -> void;
 
-// --- fail_fix_import_definition_and_static_method_call_before.carbon
+// --- fail_todo_import_definition_and_static_method_call_before.carbon
 
 library "[[@TEST_NAME]]";
 
@@ -314,10 +316,10 @@ import Cpp library "definition_with_static_method.h";
 fn F() {
   //@dump-sem-ir-begin
   Cpp.C.bar();
-  // CHECK:STDERR: fail_fix_import_definition_and_static_method_call_before.carbon:[[@LINE+7]]:3: error: call arg of type `{}` is not supported [CallArgTypeNotSupported]
+  // CHECK:STDERR: fail_todo_import_definition_and_static_method_call_before.carbon:[[@LINE+7]]:3: error: call arg of type `{}` is not supported [CallArgTypeNotSupported]
   // CHECK:STDERR:   Cpp.foo({});
   // CHECK:STDERR:   ^~~~~~~~~~~
-  // CHECK:STDERR: fail_fix_import_definition_and_static_method_call_before.carbon:[[@LINE+4]]:3: note: in call to a Cpp (overloaded) function here [InCallToOverloadedCppFunction]
+  // CHECK:STDERR: fail_todo_import_definition_and_static_method_call_before.carbon:[[@LINE+4]]:3: note: in call to a Cpp (overloaded) function here [InCallToOverloadedCppFunction]
   // CHECK:STDERR:   Cpp.foo({});
   // CHECK:STDERR:   ^~~~~~~~~~~
   // CHECK:STDERR:
@@ -325,7 +327,7 @@ fn F() {
   //@dump-sem-ir-end
 }
 
-// --- fail_fix_import_definition_and_static_method_call_after.carbon
+// --- fail_todo_import_definition_and_static_method_call_after.carbon
 
 library "[[@TEST_NAME]]";
 
@@ -333,10 +335,10 @@ import Cpp library "definition_with_static_method.h";
 
 fn F() {
   //@dump-sem-ir-begin
-  // CHECK:STDERR: fail_fix_import_definition_and_static_method_call_after.carbon:[[@LINE+7]]:3: error: call arg of type `{}` is not supported [CallArgTypeNotSupported]
+  // CHECK:STDERR: fail_todo_import_definition_and_static_method_call_after.carbon:[[@LINE+7]]:3: error: call arg of type `{}` is not supported [CallArgTypeNotSupported]
   // CHECK:STDERR:   Cpp.foo({});
   // CHECK:STDERR:   ^~~~~~~~~~~
-  // CHECK:STDERR: fail_fix_import_definition_and_static_method_call_after.carbon:[[@LINE+4]]:3: note: in call to a Cpp (overloaded) function here [InCallToOverloadedCppFunction]
+  // CHECK:STDERR: fail_todo_import_definition_and_static_method_call_after.carbon:[[@LINE+4]]:3: note: in call to a Cpp (overloaded) function here [InCallToOverloadedCppFunction]
   // CHECK:STDERR:   Cpp.foo({});
   // CHECK:STDERR:   ^~~~~~~~~~~
   // CHECK:STDERR:
@@ -355,28 +357,14 @@ class C;
 
 auto foo(C* _Nonnull) -> void;
 
-// --- fail_todo_import_decl_pointer_param_type.carbon
+// --- import_decl_pointer_param_type.carbon
 
 library "[[@TEST_NAME]]";
 
 import Cpp library "decl_pointer_param_type.h";
 
-// CHECK:STDERR: fail_todo_import_decl_pointer_param_type.carbon:[[@LINE+7]]:9: error: semantics TODO: `Unsupported: Record declarations without a definition` [SemanticsTodo]
-// CHECK:STDERR: fn F(c: Cpp.C*) {
-// CHECK:STDERR:         ^~~~~
-// CHECK:STDERR: fail_todo_import_decl_pointer_param_type.carbon:[[@LINE+4]]:9: note: in `Cpp` name lookup for `C` [InCppNameLookup]
-// CHECK:STDERR: fn F(c: Cpp.C*) {
-// CHECK:STDERR:         ^~~~~
-// CHECK:STDERR:
 fn F(c: Cpp.C*) {
   //@dump-sem-ir-begin
-  // CHECK:STDERR: fail_todo_import_decl_pointer_param_type.carbon:[[@LINE+7]]:3: error: call arg of type `<error>` is not supported [CallArgTypeNotSupported]
-  // CHECK:STDERR:   Cpp.foo(c);
-  // CHECK:STDERR:   ^~~~~~~~~~
-  // CHECK:STDERR: fail_todo_import_decl_pointer_param_type.carbon:[[@LINE+4]]:3: note: in call to a Cpp (overloaded) function here [InCallToOverloadedCppFunction]
-  // CHECK:STDERR:   Cpp.foo(c);
-  // CHECK:STDERR:   ^~~~~~~~~~
-  // CHECK:STDERR:
   Cpp.foo(c);
   //@dump-sem-ir-end
 }
@@ -420,12 +408,14 @@ library "[[@TEST_NAME]]";
 import Cpp library "decl_value_return_type.h";
 
 fn F() {
-  // CHECK:STDERR: fail_todo_import_decl_value_return_type.carbon:[[@LINE+7]]:3: error: semantics TODO: `Unsupported: Record declarations without a definition` [SemanticsTodo]
+  // CHECK:STDERR: fail_todo_import_decl_value_return_type.carbon:[[@LINE+9]]:3: error: function returns incomplete type `Cpp.C` [IncompleteTypeInFunctionReturnType]
   // CHECK:STDERR:   Cpp.foo();
   // CHECK:STDERR:   ^~~~~~~~~
-  // CHECK:STDERR: fail_todo_import_decl_value_return_type.carbon:[[@LINE+4]]:3: note: in call to a Cpp (overloaded) function here [InCallToOverloadedCppFunction]
-  // CHECK:STDERR:   Cpp.foo();
-  // CHECK:STDERR:   ^~~~~~~~~
+  // CHECK:STDERR: fail_todo_import_decl_value_return_type.carbon:[[@LINE-6]]:10: in file included here [InCppInclude]
+  // CHECK:STDERR: ./decl_value_return_type.h:2:7: note: class was forward declared here [ClassForwardDeclaredHere]
+  // CHECK:STDERR: class C;
+  // CHECK:STDERR:       ^
+  // CHECK:STDERR: fail_todo_import_decl_value_return_type.carbon: note: return type declared here [IncompleteReturnTypeHere]
   // CHECK:STDERR:
   Cpp.foo();
 }
@@ -462,7 +452,7 @@ class C;
 
 auto foo() -> C* _Nonnull;
 
-// --- fail_todo_import_decl_pointer_return_type.carbon
+// --- import_decl_pointer_return_type.carbon
 
 library "[[@TEST_NAME]]";
 
@@ -470,13 +460,6 @@ import Cpp library "decl_pointer_return_type.h";
 
 fn F() {
   //@dump-sem-ir-begin
-  // CHECK:STDERR: fail_todo_import_decl_pointer_return_type.carbon:[[@LINE+7]]:3: error: semantics TODO: `Unsupported: Record declarations without a definition` [SemanticsTodo]
-  // CHECK:STDERR:   Cpp.foo();
-  // CHECK:STDERR:   ^~~~~~~~~
-  // CHECK:STDERR: fail_todo_import_decl_pointer_return_type.carbon:[[@LINE+4]]:3: note: in call to a Cpp (overloaded) function here [InCallToOverloadedCppFunction]
-  // CHECK:STDERR:   Cpp.foo();
-  // CHECK:STDERR:   ^~~~~~~~~
-  // CHECK:STDERR:
   Cpp.foo();
   //@dump-sem-ir-end
 }
@@ -503,7 +486,7 @@ fn F() {
   //@dump-sem-ir-end
 }
 
-// CHECK:STDOUT: --- fail_fix_import_definition_no_data_members_value_param_type.carbon
+// CHECK:STDOUT: --- fail_todo_import_definition_no_data_members_value_param_type.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %.273: type = overloaded_fn_type @<null name> [concrete]
@@ -527,7 +510,7 @@ fn F() {
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- fail_fix_import_definition_single_data_member_value_param_type.carbon
+// CHECK:STDOUT: --- fail_todo_import_definition_single_data_member_value_param_type.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %.273: type = overloaded_fn_type @<null name> [concrete]
@@ -551,7 +534,7 @@ fn F() {
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- fail_fix_import_definition_multiple_data_members_value_param_type.carbon
+// CHECK:STDOUT: --- fail_todo_import_definition_multiple_data_members_value_param_type.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %.273: type = overloaded_fn_type @<null name> [concrete]
@@ -575,7 +558,7 @@ fn F() {
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- fail_fix_import_definition_in_namespace_value_param_type.carbon
+// CHECK:STDOUT: --- fail_todo_import_definition_in_namespace_value_param_type.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [concrete]
@@ -616,7 +599,6 @@ fn F() {
 // CHECK:STDOUT:   %.loc17: type = splice_block %C.ref [concrete = constants.%C] {
 // CHECK:STDOUT:     %Cpp.ref.loc17: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
 // CHECK:STDOUT:     %N.ref: <namespace> = name_ref N, imports.%N [concrete = imports.%N]
-// CHECK:STDOUT:     <elided>
 // CHECK:STDOUT:     %C.ref: type = name_ref C, imports.%C.decl [concrete = constants.%C]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %x: ref %C = bind_name x, %x.var
@@ -628,7 +610,7 @@ fn F() {
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- fail_fix_import_definition_in_relative_namespace_value_param_type.carbon
+// CHECK:STDOUT: --- fail_todo_import_definition_in_relative_namespace_value_param_type.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %.74b: type = overloaded_fn_type @<null name> [concrete]
@@ -657,7 +639,7 @@ fn F() {
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- fail_fix_import_definition_in_outer_definition.carbon
+// CHECK:STDOUT: --- fail_todo_import_definition_in_outer_definition.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [concrete]
@@ -693,7 +675,6 @@ fn F() {
 // CHECK:STDOUT:   %x.var: ref %O = var %x.var_patt
 // CHECK:STDOUT:   %.loc16: type = splice_block %O.ref [concrete = constants.%O] {
 // CHECK:STDOUT:     %Cpp.ref.loc16: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
-// CHECK:STDOUT:     <elided>
 // CHECK:STDOUT:     %O.ref: type = name_ref O, imports.%O.decl [concrete = constants.%O]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %x: ref %O = bind_name x, %x.var
@@ -705,7 +686,7 @@ fn F() {
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- fail_fix_import_definition_and_static_method_call_before.carbon
+// CHECK:STDOUT: --- fail_todo_import_definition_and_static_method_call_before.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [concrete]
@@ -734,7 +715,6 @@ fn F() {
 // CHECK:STDOUT: fn @F() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %Cpp.ref.loc8: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
-// CHECK:STDOUT:   <elided>
 // CHECK:STDOUT:   %C.ref: type = name_ref C, imports.%C.decl [concrete = constants.%C]
 // CHECK:STDOUT:   %bar.ref: %.bbc = name_ref bar, imports.%.60a [concrete = constants.%empty_struct.3a2]
 // CHECK:STDOUT:   %C.bar.call: init %empty_tuple.type = call imports.%C.bar.decl()
@@ -744,7 +724,7 @@ fn F() {
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- fail_fix_import_definition_and_static_method_call_after.carbon
+// CHECK:STDOUT: --- fail_todo_import_definition_and_static_method_call_after.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [concrete]
@@ -776,34 +756,45 @@ fn F() {
 // CHECK:STDOUT:   %foo.ref: %.273 = name_ref foo, imports.%.f88 [concrete = constants.%empty_struct.a8e]
 // CHECK:STDOUT:   %.loc15: %empty_struct_type = struct_literal ()
 // CHECK:STDOUT:   %Cpp.ref.loc16: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
-// CHECK:STDOUT:   <elided>
 // CHECK:STDOUT:   %C.ref: type = name_ref C, imports.%C.decl [concrete = constants.%C]
 // CHECK:STDOUT:   %bar.ref: %.bbc = name_ref bar, imports.%.60a [concrete = constants.%empty_struct.3a2]
 // CHECK:STDOUT:   %C.bar.call: init %empty_tuple.type = call imports.%C.bar.decl()
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- fail_todo_import_decl_pointer_param_type.carbon
+// CHECK:STDOUT: --- import_decl_pointer_param_type.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
-// CHECK:STDOUT:   %.273: type = overloaded_fn_type @<null name> [concrete]
+// CHECK:STDOUT:   %C: type = class_type @C [concrete]
+// CHECK:STDOUT:   %ptr: type = ptr_type %C [concrete]
+// CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [concrete]
+// CHECK:STDOUT:   %.273: type = overloaded_fn_type @foo [concrete]
 // CHECK:STDOUT:   %empty_struct: %.273 = struct_value () [concrete]
+// CHECK:STDOUT:   %foo.type: type = fn_type @foo [concrete]
+// CHECK:STDOUT:   %foo: %foo.type = struct_value () [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT:   %Cpp: <namespace> = namespace file.%Cpp.import_cpp, [concrete] {
-// CHECK:STDOUT:     .C = <error>
+// CHECK:STDOUT:     .C = %C.decl
 // CHECK:STDOUT:     .foo = %.f88
 // CHECK:STDOUT:     import Cpp//...
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %.f88: %.273 = overloaded_fn_decl @<null name> [concrete = constants.%empty_struct]
+// CHECK:STDOUT:   %C.decl: type = class_decl @C [concrete = constants.%C] {} {}
+// CHECK:STDOUT:   %.f88: %.273 = overloaded_fn_decl @foo [concrete = constants.%empty_struct]
+// CHECK:STDOUT:   %foo.decl: %foo.type = fn_decl @foo [concrete = constants.%foo] {
+// CHECK:STDOUT:     <elided>
+// CHECK:STDOUT:   } {
+// CHECK:STDOUT:     <elided>
+// CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @F(%c.param: <error>) {
+// CHECK:STDOUT: fn @F(%c.param: %ptr) {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %Cpp.ref.loc22: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
+// CHECK:STDOUT:   %Cpp.ref.loc8: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
 // CHECK:STDOUT:   %foo.ref: %.273 = name_ref foo, imports.%.f88 [concrete = constants.%empty_struct]
-// CHECK:STDOUT:   %c.ref: <error> = name_ref c, %c
+// CHECK:STDOUT:   %c.ref: %ptr = name_ref c, %c
+// CHECK:STDOUT:   %foo.call: init %empty_tuple.type = call imports.%foo.decl(%c.ref)
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -874,7 +865,6 @@ fn F() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %Cpp.ref: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
 // CHECK:STDOUT:   %foo.ref: %.273 = name_ref foo, imports.%.f88 [concrete = constants.%empty_struct]
-// CHECK:STDOUT:   <elided>
 // CHECK:STDOUT:   %.loc8_11.1: ref %C = temporary_storage
 // CHECK:STDOUT:   %foo.call: init %C = call imports.%foo.decl() to %.loc8_11.1
 // CHECK:STDOUT:   %.loc8_11.2: ref %C = temporary %.loc8_11.1, %foo.call
@@ -886,11 +876,13 @@ fn F() {
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- fail_todo_import_decl_pointer_return_type.carbon
+// CHECK:STDOUT: --- import_decl_pointer_return_type.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %.273: type = overloaded_fn_type @foo [concrete]
 // CHECK:STDOUT:   %empty_struct: %.273 = struct_value () [concrete]
+// CHECK:STDOUT:   %C: type = class_type @C [concrete]
+// CHECK:STDOUT:   %ptr: type = ptr_type %C [concrete]
 // CHECK:STDOUT:   %foo.type: type = fn_type @foo [concrete]
 // CHECK:STDOUT:   %foo: %foo.type = struct_value () [concrete]
 // CHECK:STDOUT: }
@@ -912,7 +904,7 @@ fn F() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %Cpp.ref: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
 // CHECK:STDOUT:   %foo.ref: %.273 = name_ref foo, imports.%.f88 [concrete = constants.%empty_struct]
-// CHECK:STDOUT:   %foo.call: init <error> = call imports.%foo.decl()
+// CHECK:STDOUT:   %foo.call: init %ptr = call imports.%foo.decl()
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -944,7 +936,6 @@ fn F() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %Cpp.ref: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
 // CHECK:STDOUT:   %foo.ref: %.273 = name_ref foo, imports.%.f88 [concrete = constants.%empty_struct]
-// CHECK:STDOUT:   <elided>
 // CHECK:STDOUT:   %foo.call: init %ptr = call imports.%foo.decl()
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }

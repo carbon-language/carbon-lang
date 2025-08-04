@@ -7,6 +7,7 @@
 #include "llvm/ADT/SmallVector.h"
 #include "toolchain/base/kind_switch.h"
 #include "toolchain/check/generic.h"
+#include "toolchain/check/import_cpp.h"
 #include "toolchain/check/inst.h"
 #include "toolchain/check/type.h"
 #include "toolchain/diagnostics/format_providers.h"
@@ -140,6 +141,10 @@ class TypeCompleter {
   auto BuildInfoForInst(SemIR::TypeId /*type_id*/, SemIR::ConstType inst) const
       -> SemIR::CompleteTypeInfo;
 
+  auto BuildInfoForInst(SemIR::TypeId type_id,
+                        SemIR::CustomLayoutType inst) const
+      -> SemIR::CompleteTypeInfo;
+
   auto BuildInfoForInst(SemIR::TypeId /*type_id*/,
                         SemIR::PartialType inst) const
       -> SemIR::CompleteTypeInfo;
@@ -270,6 +275,17 @@ auto TypeCompleter::AddNestedIncompleteTypes(SemIR::Inst type_inst) -> bool {
     }
     case CARBON_KIND(SemIR::ClassType inst): {
       auto& class_info = context_->classes().Get(inst.class_id);
+      // If the class was imported from C++, ask Clang to try to complete it.
+      if (!class_info.is_complete() && class_info.scope_id.has_value()) {
+        auto& scope = context_->name_scopes().Get(class_info.scope_id);
+        if (scope.clang_decl_context_id().has_value()) {
+          if (!ImportCppClassDefinition(*context_, loc_id_, inst.class_id,
+                                        scope.clang_decl_context_id())) {
+            // Clang produced a diagnostic. Don't produce one of our own.
+            return false;
+          }
+        }
+      }
       if (!class_info.is_complete()) {
         if (diagnoser_) {
           auto builder = diagnoser_();
@@ -292,6 +308,12 @@ auto TypeCompleter::AddNestedIncompleteTypes(SemIR::Inst type_inst) -> bool {
     }
     case CARBON_KIND(SemIR::ConstType inst): {
       Push(context_->types().GetTypeIdForTypeInstId(inst.inner_id));
+      break;
+    }
+    case CARBON_KIND(SemIR::CustomLayoutType inst): {
+      for (auto field : context_->struct_type_fields().Get(inst.fields_id)) {
+        Push(context_->types().GetTypeIdForTypeInstId(field.type_inst_id));
+      }
       break;
     }
     case CARBON_KIND(SemIR::PartialType inst): {
@@ -518,6 +540,14 @@ auto TypeCompleter::BuildInfoForInst(SemIR::TypeId /*type_id*/,
   // The value representation of `const T` is the same as that of `T`.
   // Objects are not modifiable through their value representations.
   return GetNestedInfo(context_->types().GetTypeIdForTypeInstId(inst.inner_id));
+}
+
+auto TypeCompleter::BuildInfoForInst(SemIR::TypeId type_id,
+                                     SemIR::CustomLayoutType /*inst*/) const
+    -> SemIR::CompleteTypeInfo {
+  // TODO: Should we support other value representations for custom layout
+  // types?
+  return {.value_repr = MakePointerValueRepr(type_id)};
 }
 
 auto TypeCompleter::BuildInfoForInst(SemIR::TypeId /*type_id*/,

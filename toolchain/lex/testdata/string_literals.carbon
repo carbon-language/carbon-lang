@@ -23,7 +23,7 @@
 // CHECK:STDOUT: - filename: fail_unterminated.carbon
 // CHECK:STDOUT:   tokens:
 
-// CHECK:STDERR: fail_unterminated.carbon:[[@LINE+4]]:1: error: string is missing a terminator [UnterminatedString]
+// CHECK:STDERR: fail_unterminated.carbon:[[@LINE+4]]:1: error: string literal is missing a terminator [UnterminatedString]
 // CHECK:STDERR: "s
 // CHECK:STDERR: ^
 // CHECK:STDERR:

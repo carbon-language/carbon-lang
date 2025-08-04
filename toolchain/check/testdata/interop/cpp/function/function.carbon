@@ -100,12 +100,12 @@ fn F() {
 }
 
 // ============================================================================
-// Variadic
+// Variadic arguments
 // ============================================================================
 
 // --- variadic.h
 
-auto foo(int...) -> void;
+auto foo(int x, ...) -> void;
 
 // --- fail_todo_import_variadic.carbon
 
@@ -116,13 +116,13 @@ import Cpp library "variadic.h";
 fn F() {
   //@dump-sem-ir-begin
   // CHECK:STDERR: fail_todo_import_variadic.carbon:[[@LINE+7]]:3: error: semantics TODO: `Unsupported: Variadic function` [SemanticsTodo]
-  // CHECK:STDERR:   Cpp.foo(1);
+  // CHECK:STDERR:   Cpp.foo(8);
   // CHECK:STDERR:   ^~~~~~~~~~
   // CHECK:STDERR: fail_todo_import_variadic.carbon:[[@LINE+4]]:3: note: in call to a Cpp (overloaded) function here [InCallToOverloadedCppFunction]
-  // CHECK:STDERR:   Cpp.foo(1);
+  // CHECK:STDERR:   Cpp.foo(8);
   // CHECK:STDERR:   ^~~~~~~~~~
   // CHECK:STDERR:
-  Cpp.foo(1);
+  Cpp.foo(8);
   //@dump-sem-ir-end
 }
 
@@ -241,7 +241,7 @@ fn F() {
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %.273: type = overloaded_fn_type @<null name> [concrete]
 // CHECK:STDOUT:   %empty_struct: %.273 = struct_value () [concrete]
-// CHECK:STDOUT:   %int_1: Core.IntLiteral = int_value 1 [concrete]
+// CHECK:STDOUT:   %int_8: Core.IntLiteral = int_value 8 [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -256,7 +256,7 @@ fn F() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %Cpp.ref: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
 // CHECK:STDOUT:   %foo.ref: %.273 = name_ref foo, imports.%.f88 [concrete = constants.%empty_struct]
-// CHECK:STDOUT:   %int_1: Core.IntLiteral = int_value 1 [concrete = constants.%int_1]
+// CHECK:STDOUT:   %int_8: Core.IntLiteral = int_value 8 [concrete = constants.%int_8]
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

@@ -136,19 +136,21 @@ fn G(T:! M & L, a: T.W) -> () { return a; }
 fn H(T:! L where .W = {}, a: T.W) -> {} { return a; }
 
 fn F(T:! M & (L where .W = {}), a: T.W) {
-  // TODO: One of `b` or `c` must fail, because `T.W` is either found to be `()` from
+  // One of `b` or `c` must fail, because `T.W` is either found to be `()` from
   // the impl or `{}` from the facet type of T.
 
   let b: () = G(T, a);
-  // CHECK:STDERR: fail_two_different_combined_from_final_impl_and_facet.carbon:[[@LINE+10]]:15: error: cannot implicitly convert expression of type `()` to `{}` [ConversionFailure]
+  // TODO: This diagnostic sucks. Can we make the facet type's value take
+  // precidence over final, since that's what is written in the code and more
+  // likely to show up in diagnostics? Or should we diagnose `T` as being
+  // invalid directly, where we can see both `.W` values and print them?
+  //
+  // CHECK:STDERR: fail_two_different_combined_from_final_impl_and_facet.carbon:[[@LINE+7]]:15: error: cannot convert type `T` that implements `L & M where .(L.W) = {}` into type implementing `L where .(L.W) = {}` [ConversionFailureFacetToFacet]
   // CHECK:STDERR:   let c: {} = H(T, a);
   // CHECK:STDERR:               ^~~~~~~
-  // CHECK:STDERR: fail_two_different_combined_from_final_impl_and_facet.carbon:[[@LINE+7]]:15: note: type `()` does not implement interface `Core.ImplicitAs({})` [MissingImplInMemberAccessNote]
-  // CHECK:STDERR:   let c: {} = H(T, a);
-  // CHECK:STDERR:               ^~~~~~~
-  // CHECK:STDERR: fail_two_different_combined_from_final_impl_and_facet.carbon:[[@LINE-13]]:1: note: while deducing parameters of generic declared here [DeductionGenericHere]
+  // CHECK:STDERR: fail_two_different_combined_from_final_impl_and_facet.carbon:[[@LINE-15]]:6: note: initializing generic parameter `T` declared here [InitializingGenericParam]
   // CHECK:STDERR: fn H(T:! L where .W = {}, a: T.W) -> {} { return a; }
-  // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+  // CHECK:STDERR:      ^
   // CHECK:STDERR:
   let c: {} = H(T, a);
 }
@@ -206,6 +208,20 @@ fn G(T:! M where .X = () and .Y = ()) {
   F(T);
 }
 
+// --- repeated_concrete_value_and_associated.carbon
+library "[[@TEST_NAME]]";
+
+interface M { let X:! type; let Y:! type; }
+
+fn F1(T:! M where .X = () and .Y = .X and .X = .Y) {}
+
+fn F2(T:! M where .X = () and .X = .X) {}
+
+fn G(T:! M where .X = () and .Y = ()) {
+  F1(T);
+  F2(T);
+}
+
 // --- repeated_with_bitand.carbon
 library "[[@TEST_NAME]]";
 
@@ -235,11 +251,22 @@ library "[[@TEST_NAME]]";
 
 interface M { let X:! type; }
 
+// This fails because it resolves to `.X = .X` which is cyclical.
+//
 // CHECK:STDERR: fail_cycle_single.carbon:[[@LINE+4]]:10: error: found cycle in facet type constraint for `.(M.X)` [FacetTypeConstraintCycle]
 // CHECK:STDERR: fn F(T:! M where .X = .X) {}
 // CHECK:STDERR:          ^~~~~~~~~~~~~~~
 // CHECK:STDERR:
 fn F(T:! M where .X = .X) {}
+
+// Even though `.X = ()` is specified, the rewrites are resolved left to right
+// and a cycle `.X = .X` is found first.
+//
+// CHECK:STDERR: fail_cycle_single.carbon:[[@LINE+4]]:10: error: found cycle in facet type constraint for `.(M.X)` [FacetTypeConstraintCycle]
+// CHECK:STDERR: fn G(T:! M where .X = .X and .X = ()) {}
+// CHECK:STDERR:          ^~~~~~~~~~~~~~~~~~~~~~~~~~~
+// CHECK:STDERR:
+fn G(T:! M where .X = .X and .X = ()) {}
 
 // --- fail_cycle.carbon
 library "[[@TEST_NAME]]";
@@ -270,7 +297,7 @@ interface J {
 
 // This fails because it resolves to `.X1 = .X1` which is cyclical.
 //
-// CHECK:STDERR: fail_cycle_between_interfaces.carbon:[[@LINE+4]]:10: error: found cycle in facet type constraint for `.(I.X2)` [FacetTypeConstraintCycle]
+// CHECK:STDERR: fail_cycle_between_interfaces.carbon:[[@LINE+4]]:10: error: found cycle in facet type constraint for `.(I.X1)` [FacetTypeConstraintCycle]
 // CHECK:STDERR: fn G(T:! I & J where .X1 = .X3 and .X2 = .X1 and .X3 = .X2) {}
 // CHECK:STDERR:          ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 // CHECK:STDERR:
@@ -320,6 +347,78 @@ class C(T:! type, U:! type);
 // CHECK:STDERR:          ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 // CHECK:STDERR:
 fn F(T:! I where .X1 = C(.X2, .X3) and .X2 = C(.X3, .X1));
+
+// --- exponential_large.carbon
+library "[[@TEST_NAME]]";
+
+interface Z {
+  let T0:! type;
+  let T1:! type;
+  let T2:! type;
+  let T3:! type;
+  let T4:! type;
+  let T5:! type;
+  let T6:! type;
+  let T7:! type;
+  let T8:! type;
+  let T9:! type;
+}
+
+// A naive attempt to resolve the rewrite rules will run take minutes to
+// complete, since the resulting RHS values are exponential in size, and a naive
+// approach can recursively rebuild the RHS values from the ground up
+// repeatedly.
+fn F(
+    T:! Z where
+      .T0 = (.T1, .T1, .T1, .T1, .T1, .T1, .T1, .T1, .T1, .T1, .T1, .T1) and
+      .T1 = (.T2, .T2, .T2, .T2, .T2, .T2, .T2, .T2, .T2, .T2, .T2, .T2) and
+      .T2 = (.T3, .T3, .T3, .T3, .T3, .T3, .T3, .T3, .T3, .T3, .T3, .T3) and
+      .T3 = (.T4, .T4, .T4, .T4, .T4, .T4, .T4, .T4, .T4, .T4, .T4, .T4) and
+      .T4 = (.T5, .T5, .T5, .T5, .T5, .T5, .T5, .T5, .T5, .T5, .T5, .T5) and
+      .T5 = (.T6, .T6, .T6, .T6, .T6, .T6, .T6, .T6, .T6, .T6, .T6, .T6) and
+      .T6 = (.T7, .T7, .T7, .T7, .T7, .T7, .T7, .T7, .T7, .T7, .T7, .T7) and
+      .T7 = (.T8, .T8, .T8, .T8, .T8, .T8, .T8, .T8, .T8, .T8, .T8, .T8) and
+      .T8 = (.T9, .T9, .T9, .T9, .T9, .T9, .T9, .T9, .T9, .T9, .T9, .T9) and
+      .T9 = ()
+    );
+
+// --- fail_exponential_large_cycle.carbon
+library "[[@TEST_NAME]]";
+
+interface Z {
+  let T0:! type;
+  let T1:! type;
+  let T2:! type;
+  let T3:! type;
+  let T4:! type;
+  let T5:! type;
+  let T6:! type;
+  let T7:! type;
+  let T8:! type;
+  let T9:! type;
+}
+
+// A naive attempt to resolve the rewrite rules will run take minutes to
+// complete, since the resulting RHS values are exponential in size, and a naive
+// approach can recursively rebuild the RHS values from the ground up
+// repeatedly.
+fn F(
+    // CHECK:STDERR: fail_exponential_large_cycle.carbon:[[@LINE+4]]:9: error: found cycle in facet type constraint for `.(Z.T9)` [FacetTypeConstraintCycle]
+    // CHECK:STDERR:     T:! Z where
+    // CHECK:STDERR:         ^~~~~~~
+    // CHECK:STDERR:
+    T:! Z where
+      .T9 = .T0 and
+      .T8 = (.T9, .T9, .T9, .T9, .T9, .T9, .T9, .T9, .T9, .T9, .T9, .T9) and
+      .T7 = (.T8, .T8, .T8, .T8, .T8, .T8, .T8, .T8, .T8, .T8, .T8, .T8) and
+      .T6 = (.T7, .T7, .T7, .T7, .T7, .T7, .T7, .T7, .T7, .T7, .T7, .T7) and
+      .T5 = (.T6, .T6, .T6, .T6, .T6, .T6, .T6, .T6, .T6, .T6, .T6, .T6) and
+      .T4 = (.T5, .T5, .T5, .T5, .T5, .T5, .T5, .T5, .T5, .T5, .T5, .T5) and
+      .T3 = (.T4, .T4, .T4, .T4, .T4, .T4, .T4, .T4, .T4, .T4, .T4, .T4) and
+      .T2 = (.T3, .T3, .T3, .T3, .T3, .T3, .T3, .T3, .T3, .T3, .T3, .T3) and
+      .T1 = (.T2, .T2, .T2, .T2, .T2, .T2, .T2, .T2, .T2, .T2, .T2, .T2) and
+      .T0 = (.T1, .T1, .T1, .T1, .T1, .T1, .T1, .T1, .T1, .T1, .T1, .T1)
+    );
 
 // --- non-type.carbon
 library "[[@TEST_NAME]]";
@@ -425,6 +524,137 @@ interface Z {
 fn F(A:! Z where .T = .V.U and .V = .Self and .U = ()) -> A.T {
   return ();
 }
+
+// --- fail_cycle_with_unrelated_associated_constant.carbon
+library "[[@TEST_NAME]]";
+
+interface Z {
+  let T0:! type;
+  let T1:! type;
+  let T2:! type;
+  let T3:! type;
+}
+
+// CHECK:STDERR: fail_cycle_with_unrelated_associated_constant.carbon:[[@LINE+4]]:10: error: found cycle in facet type constraint for `.(Z.T0)` [FacetTypeConstraintCycle]
+// CHECK:STDERR: fn F(T:! Z where .T0 = .T1 and .T1 = .T0 and .T2 = .T3) {}
+// CHECK:STDERR:          ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+// CHECK:STDERR:
+fn F(T:! Z where .T0 = .T1 and .T1 = .T0 and .T2 = .T3) {}
+
+// --- fail_cycle_with_branching_in_rhs.carbon
+library "[[@TEST_NAME]]";
+
+interface Z {
+  let T0:! type;
+  let T1:! type;
+  let T2:! type;
+  let T3:! type;
+  let T4:! type;
+}
+
+// TODO: There should only be one diagnostic here.
+//
+// CHECK:STDERR: fail_cycle_with_branching_in_rhs.carbon:[[@LINE+4]]:10: error: found cycle in facet type constraint for `.(Z.T1)` [FacetTypeConstraintCycle]
+// CHECK:STDERR: fn F(T:! Z where .T0 = .T1 and .T1 = (.T2, .T3) and .T2 = .T4 and .T3 = .T1) {}
+// CHECK:STDERR:          ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+// CHECK:STDERR:
+fn F(T:! Z where .T0 = .T1 and .T1 = (.T2, .T3) and .T2 = .T4 and .T3 = .T1) {}
+
+// CHECK:STDERR: fail_cycle_with_branching_in_rhs.carbon:[[@LINE+4]]:10: error: found cycle in facet type constraint for `.(Z.T0)` [FacetTypeConstraintCycle]
+// CHECK:STDERR: fn G(T:! Z where .T0 = .T1 and .T1 = (.T2, .T3) and .T2 = .T4 and .T3 = .T0) {}
+// CHECK:STDERR:          ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+// CHECK:STDERR:
+fn G(T:! Z where .T0 = .T1 and .T1 = (.T2, .T3) and .T2 = .T4 and .T3 = .T0) {}
+
+// --- no_cycle_with_branching_in_rhs.carbon
+library "[[@TEST_NAME]]";
+
+interface Z {
+  let T0:! type;
+  let T1:! type;
+  let T2:! type;
+  let T3:! type;
+  let T4:! type;
+  let T5:! type;
+}
+
+// These create misdiagnostics if the resolving algorithms messes up tracking
+// its stack during replacements by leaving either of .T2 or .T3 on the stack
+// (from the RHS of .T1) while resolving the other. Or it can fail to apply the
+// () up the chain correctly.
+
+fn F(T:! Z where .T0 = .T1 and .T1 = (.T2, .T3) and .T2 = .T4 and .T4 = () and .T3 = .T2) -> T.T0 {
+  return ((), ());
+}
+
+fn G(T:! Z where .T0 = .T1 and .T1 = (.T2, .T3) and .T2 = .T4 and .T4 = .T5 and .T5 = () and .T3 = .T2) -> T.T0 {
+  return ((), ());
+}
+
+fn H(T:! Z where .T0 = .T1 and .T1 = (.T2, .T3) and .T2 = (.T4, ()) and .T3 = .T2 and .T4 = {}) -> T.T0 {
+  return (({}, ()), ({}, ()));
+}
+
+fn I(T:! Z where .T0 = .T1 and .T1 = (.T2, .T3) and .T2 = .T4 and .T3 = .T2 and .T4 = ()) -> T.T0 {
+  return ((), ());
+}
+
+fn J(T:! Z where .T0 = .T1 and .T1 = (.T2, .T3) and .T2 = .T4 and .T4 = .T5 and .T3 = .T2 and .T5 = ()) -> T.T0 {
+  return ((), ());
+}
+
+// --- indirection_through_self_rhs.carbon
+library "[[@TEST_NAME]]";
+
+interface I {
+  let I1:! type;
+  let I2:! type;
+}
+
+interface J {
+  let J1:! I;
+}
+
+// The value of .I1 is (), but to know that requires resolving .J1 first then
+// .J1.I2.
+fn F(T:! I & J where .J1 = .Self and .I1 = .J1.I2 and .I2 = ()) -> T.I1 {
+  return ();
+}
+
+// --- indirection_through_not_self_rhs.carbon
+library "[[@TEST_NAME]]";
+
+interface I {
+  let I1:! type;
+  let I2:! type;
+}
+
+interface J {
+  let J1:! I;
+}
+
+// The value of .I1 is (), but to know that requires resolving .J1 first then
+// .J1.I2.
+fn F(U:! I where .I2 = (), T:! I & J where .J1 = U and .I1 = .J1.I2) -> T.I1 {
+  return ();
+}
+
+// --- indirection_through_unresolved_access_rhs.carbon
+library "[[@TEST_NAME]]";
+
+interface I {
+  let I1:! type;
+  let I2:! type;
+}
+
+interface J {
+  let J1:! I;
+}
+
+// If we assume the nested `.J1` access will resolve to a facet value, we may
+// loop forever trying to resolve the `.I2` access. We should gracefully accept
+// that it does not resolve further.
+fn F(T:! I & J where .I1 = .J1.I2) {}
 
 // CHECK:STDOUT: --- fail_cycle.carbon
 // CHECK:STDOUT:

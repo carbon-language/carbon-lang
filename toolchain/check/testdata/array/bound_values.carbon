@@ -148,9 +148,9 @@ var b: array(1, 39999999999999999993);
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
-// CHECK:STDOUT:   %Core.import_ref.823: @UInt.as.ImplicitAs.impl.%UInt.as.ImplicitAs.impl.Convert.type (%UInt.as.ImplicitAs.impl.Convert.type.002) = import_ref Core//prelude/types/uint, loc24_44, loaded [symbolic = @UInt.as.ImplicitAs.impl.%UInt.as.ImplicitAs.impl.Convert (constants.%UInt.as.ImplicitAs.impl.Convert.819)]
+// CHECK:STDOUT:   %Core.import_ref.823: @UInt.as.ImplicitAs.impl.%UInt.as.ImplicitAs.impl.Convert.type (%UInt.as.ImplicitAs.impl.Convert.type.002) = import_ref Core//prelude/types/uint, loc25_44, loaded [symbolic = @UInt.as.ImplicitAs.impl.%UInt.as.ImplicitAs.impl.Convert (constants.%UInt.as.ImplicitAs.impl.Convert.819)]
 // CHECK:STDOUT:   %ImplicitAs.impl_witness_table.6ad = impl_witness_table (%Core.import_ref.823), @UInt.as.ImplicitAs.impl [concrete]
-// CHECK:STDOUT:   %Core.import_ref.aef: @Core.IntLiteral.as.As.impl.2f2.%Core.IntLiteral.as.As.impl.Convert.type (%Core.IntLiteral.as.As.impl.Convert.type.792) = import_ref Core//prelude/types/uint, loc29_40, loaded [symbolic = @Core.IntLiteral.as.As.impl.2f2.%Core.IntLiteral.as.As.impl.Convert (constants.%Core.IntLiteral.as.As.impl.Convert.c02)]
+// CHECK:STDOUT:   %Core.import_ref.aef: @Core.IntLiteral.as.As.impl.2f2.%Core.IntLiteral.as.As.impl.Convert.type (%Core.IntLiteral.as.As.impl.Convert.type.792) = import_ref Core//prelude/types/uint, loc30_40, loaded [symbolic = @Core.IntLiteral.as.As.impl.2f2.%Core.IntLiteral.as.As.impl.Convert (constants.%Core.IntLiteral.as.As.impl.Convert.c02)]
 // CHECK:STDOUT:   %As.impl_witness_table.afe = impl_witness_table (%Core.import_ref.aef), @Core.IntLiteral.as.As.impl.2f2 [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

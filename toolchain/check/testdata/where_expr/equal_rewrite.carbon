@@ -72,7 +72,7 @@ fn Reversed(N:! J where .L = bool and .K = ()) {
   Alphabetical(N);
 }
 
-// --- todo_fail_rewrites_mismatch_right.carbon
+// --- fail_rewrites_mismatch_right.carbon
 
 library "[[@TEST_NAME]]";
 
@@ -83,11 +83,17 @@ interface O {
 fn WithInteger(Q:! O where .P = i32) {}
 
 fn WithBool(R:! O where .P = bool) {
-  // TODO: This should fail.
+  // CHECK:STDERR: fail_rewrites_mismatch_right.carbon:[[@LINE+7]]:3: error: cannot convert type `R` that implements `O where .(O.P) = bool` into type implementing `O where .(O.P) = i32` [ConversionFailureFacetToFacet]
+  // CHECK:STDERR:   WithInteger(R);
+  // CHECK:STDERR:   ^~~~~~~~~~~~~~
+  // CHECK:STDERR: fail_rewrites_mismatch_right.carbon:[[@LINE-6]]:16: note: initializing generic parameter `Q` declared here [InitializingGenericParam]
+  // CHECK:STDERR: fn WithInteger(Q:! O where .P = i32) {}
+  // CHECK:STDERR:                ^
+  // CHECK:STDERR:
   WithInteger(R);
 }
 
-// --- todo_fail_rewrites_mismatch_left.carbon
+// --- fail_rewrites_mismatch_left.carbon
 
 library "[[@TEST_NAME]]";
 
@@ -99,7 +105,13 @@ interface S {
 fn WithT(V:! S where .T = ()) {}
 
 fn WithU(W:! S where .U = ()) {
-  // TODO: This should fail.
+  // CHECK:STDERR: fail_rewrites_mismatch_left.carbon:[[@LINE+7]]:3: error: cannot convert type `W` that implements `S where .(S.U) = ()` into type implementing `S where .(S.T) = ()` [ConversionFailureFacetToFacet]
+  // CHECK:STDERR:   WithT(W);
+  // CHECK:STDERR:   ^~~~~~~~
+  // CHECK:STDERR: fail_rewrites_mismatch_left.carbon:[[@LINE-6]]:10: note: initializing generic parameter `V` declared here [InitializingGenericParam]
+  // CHECK:STDERR: fn WithT(V:! S where .T = ()) {}
+  // CHECK:STDERR:          ^
+  // CHECK:STDERR:
   WithT(W);
 }
 
@@ -272,13 +284,13 @@ let K: (E where .F = .Self.G) = bool;
 // CHECK:STDOUT:   %A.lookup_impl_witness.5ad: <witness> = lookup_impl_witness %.Self.3ca, @A [symbolic_self]
 // CHECK:STDOUT:   %impl.elem0: type = impl_witness_access %A.lookup_impl_witness.5ad, element0 [symbolic_self]
 // CHECK:STDOUT:   %Bool.type: type = fn_type @Bool [concrete]
-// CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [concrete]
 // CHECK:STDOUT:   %Bool: %Bool.type = struct_value () [concrete]
 // CHECK:STDOUT:   %A_where.type.ef7: type = facet_type <@A where %impl.elem0 = bool> [concrete]
 // CHECK:STDOUT:   %.Self.60a: %A_where.type.ef7 = bind_symbolic_name .Self [symbolic_self]
 // CHECK:STDOUT:   %.Self.as_type.e64: type = facet_access_type %.Self.60a [symbolic_self]
 // CHECK:STDOUT:   %A.lookup_impl_witness.138: <witness> = lookup_impl_witness %.Self.60a, @A [symbolic_self]
 // CHECK:STDOUT:   %impl.elem1: type = impl_witness_access %A.lookup_impl_witness.138, element1 [symbolic_self]
+// CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [concrete]
 // CHECK:STDOUT:   %A_where.type.2d0: type = facet_type <@A where %impl.elem0 = bool and %impl.elem1 = %empty_tuple.type> [concrete]
 // CHECK:STDOUT:   %D: %A_where.type.2d0 = bind_symbolic_name D, 0 [symbolic]
 // CHECK:STDOUT:   %pattern_type.24c: type = pattern_type %A_where.type.2d0 [concrete]

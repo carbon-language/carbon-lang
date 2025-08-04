@@ -232,7 +232,6 @@ fn F() {
 // CHECK:STDOUT:   assign %s.var, %.loc8_3
 // CHECK:STDOUT:   %.loc8_13: type = splice_block %S.ref [concrete = constants.%S] {
 // CHECK:STDOUT:     %Cpp.ref.loc8: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
-// CHECK:STDOUT:     <elided>
 // CHECK:STDOUT:     %S.ref: type = name_ref S, imports.%S.decl [concrete = constants.%S]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %s: ref %S = bind_name s, %s.var
@@ -298,7 +297,6 @@ fn F() {
 // CHECK:STDOUT:   assign %s.var, %.loc8_3
 // CHECK:STDOUT:   %.loc8_13: type = splice_block %S.ref.loc8 [concrete = constants.%S] {
 // CHECK:STDOUT:     %Cpp.ref.loc8: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
-// CHECK:STDOUT:     <elided>
 // CHECK:STDOUT:     %S.ref.loc8: type = name_ref S, imports.%S.decl [concrete = constants.%S]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %s: ref %S = bind_name s, %s.var
@@ -581,7 +579,6 @@ fn F() {
 // CHECK:STDOUT:   assign %s.var, %.loc8_3
 // CHECK:STDOUT:   %.loc8_13: type = splice_block %S.ref [concrete = constants.%S] {
 // CHECK:STDOUT:     %Cpp.ref.loc8: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
-// CHECK:STDOUT:     <elided>
 // CHECK:STDOUT:     %S.ref: type = name_ref S, imports.%S.decl [concrete = constants.%S]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %s: ref %S = bind_name s, %s.var
