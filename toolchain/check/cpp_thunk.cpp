@@ -130,12 +130,13 @@ static auto IsScalarType(clang::ASTContext& ast_context, clang::QualType type)
 static auto BuildThunkParameterTypes(
     clang::ASTContext& ast_context,
     const clang::FunctionDecl& callee_function_decl)
-    -> std::tuple<llvm::SmallVector<clang::QualType>,
-                  llvm::SmallVector<bool> > {
+    -> std::tuple<llvm::SmallVector<clang::QualType>, llvm::SmallVector<bool>> {
+  std::tuple<llvm::SmallVector<clang::QualType>, llvm::SmallVector<bool>>
+      result;
+  auto& [thunk_param_types, param_type_changed] = result;
+
   unsigned num_params = callee_function_decl.getNumParams();
-  llvm::SmallVector<clang::QualType> thunk_param_types;
   thunk_param_types.reserve(num_params);
-  llvm::SmallVector<bool> param_type_changed;
   param_type_changed.reserve(num_params);
 
   for (const clang::ParmVarDecl* callee_param :
@@ -151,7 +152,7 @@ static auto BuildThunkParameterTypes(
     thunk_param_types.push_back(param_type);
   }
 
-  return {thunk_param_types, param_type_changed};
+  return result;
 }
 
 // Returns the thunk parameters using the callee function parameter identifiers.
