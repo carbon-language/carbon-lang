@@ -232,7 +232,7 @@ fn CallFAndGIncomplete() {
 // CHECK:STDOUT:     import Core//prelude/...
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Main.import_ref.8f2: <witness> = import_ref Main//incomplete_return, loc37_10, loaded [concrete = constants.%complete_type.357]
-// CHECK:STDOUT:   %Main.import_ref.cab = import_ref Main//incomplete_return, inst22 [no loc], unloaded
+// CHECK:STDOUT:   %Main.import_ref.cab = import_ref Main//incomplete_return, inst21 [no loc], unloaded
 // CHECK:STDOUT:   %Core.Destroy: type = import_ref Core//prelude/parts/destroy, Destroy, loaded [concrete = constants.%Destroy.type]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

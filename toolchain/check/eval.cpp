@@ -958,27 +958,20 @@ static auto PerformCheckedCharConvert(Context& context, SemIR::LocId loc_id,
                                       SemIR::InstId arg_id,
                                       SemIR::TypeId dest_type_id)
     -> SemIR::ConstantId {
-  auto arg = context.insts().GetAs<SemIR::CharValue>(arg_id);
+  auto arg = context.insts().GetAs<SemIR::CharLiteralValue>(arg_id);
 
-  auto object_repr_id = context.types().GetObjectRepr(dest_type_id);
-  if (object_repr_id != arg.type_id) {
-    if (object_repr_id == SemIR::CharType::TypeId) {
-      if (arg.value.index < 0x80) {
-        CARBON_DIAGNOSTIC(CharTooLargeForType, Error,
-                          "character value {0} too large for type {1}",
-                          SemIR::CharId, SemIR::TypeId);
-        context.emitter().Emit(loc_id, CharTooLargeForType, arg.value,
-                               dest_type_id);
-        return SemIR::ErrorInst::ConstantId;
-      }
-    } else {
-      CARBON_CHECK(object_repr_id == SemIR::CharLiteralType::TypeId);
-    }
+  // Values over 0x80 require multiple code units in UTF-8.
+  if (arg.value.index >= 0x80) {
+    CARBON_DIAGNOSTIC(CharTooLargeForType, Error,
+                      "character value {0} too large for type {1}",
+                      SemIR::CharId, SemIR::TypeId);
+    context.emitter().Emit(loc_id, CharTooLargeForType, arg.value,
+                           dest_type_id);
+    return SemIR::ErrorInst::ConstantId;
   }
 
-  return MakeConstantResult(
-      context, SemIR::CharValue{.type_id = dest_type_id, .value = arg.value},
-      Phase::Concrete);
+  llvm::APInt int_val(8, arg.value.index, /*isSigned=*/false);
+  return MakeIntResult(context, dest_type_id, /*is_signed=*/false, int_val);
 }
 
 // Forms a constant int type as an evaluation result. Requires that width_id is
@@ -1622,10 +1615,6 @@ static auto MakeConstantForBuiltinCall(EvalContext& eval_context,
 
     case SemIR::BuiltinFunctionKind::CharLiteralMakeType: {
       return context.constant_values().Get(SemIR::CharLiteralType::TypeInstId);
-    }
-
-    case SemIR::BuiltinFunctionKind::CharMakeType: {
-      return context.constant_values().Get(SemIR::CharType::TypeInstId);
     }
 
     case SemIR::BuiltinFunctionKind::IntLiteralMakeType: {

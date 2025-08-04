@@ -1161,7 +1161,7 @@ auto Lexer::LexStringLiteral(llvm::StringRef source_text, ssize_t& position)
       DiagnoseUnterminatedString(emitter_, *literal, /*is_char=*/true);
       return lex_as_error();
     }
-    if (auto value = literal->ComputeCharValue(emitter_)) {
+    if (auto value = literal->ComputeCharLiteralValue(emitter_)) {
       return LexTokenWithPayload(TokenKind::CharLiteral, value->value,
                                  byte_offset);
     }

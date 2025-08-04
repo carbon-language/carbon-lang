@@ -753,11 +753,6 @@ static auto BuildTypeForInst(FileContext& context, SemIR::BoolType /*inst*/)
   return llvm::Type::getInt1Ty(context.llvm_context());
 }
 
-static auto BuildTypeForInst(FileContext& context, SemIR::CharType /*inst*/)
-    -> llvm::Type* {
-  return llvm::Type::getInt8Ty(context.llvm_context());
-}
-
 static auto BuildTypeForInst(FileContext& context, SemIR::ClassType inst)
     -> llvm::Type* {
   auto object_repr_id = context.sem_ir()

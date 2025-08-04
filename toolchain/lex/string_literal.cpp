@@ -476,8 +476,9 @@ static auto ExpandEscapeSequencesAndRemoveIndent(
   }
 }
 
-auto StringLiteral::ComputeCharValue(Diagnostics::Emitter<const char*>& emitter)
-    const -> std::optional<CharLiteralValue> {
+auto StringLiteral::ComputeCharLiteralValue(
+    Diagnostics::Emitter<const char*>& emitter) const
+    -> std::optional<CharLiteralValue> {
   CARBON_DCHECK(kind_ == Kind::Char);
   CARBON_DCHECK(is_terminated_);
 

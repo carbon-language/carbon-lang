@@ -6,29 +6,19 @@ package Core library "prelude/types/char";
 
 import library "prelude/destroy";
 import library "prelude/operators";
-import library "prelude/types/int_literal";
+import library "prelude/types/uint";
 
 fn CharLiteral() -> type = "char_literal.make_type";
 
-private fn MakeChar() -> type = "char.make_type";
-
 class Char {
-  adapt MakeChar();
+  extend adapt u8;
 }
 
 impl CharLiteral() as ImplicitAs(Char) {
   fn Convert[self: Self]() -> Char = "char.convert_checked";
 }
 
-impl Char as ImplicitAs(CharLiteral()) {
-  fn Convert[self: Self]() -> CharLiteral() = "char.convert_checked";
-}
-
 // TODO: Remove these once ImplicitAs extends As.
 impl CharLiteral() as As(Char) {
   fn Convert[self: Self]() -> Char = "char.convert_checked";
-}
-
-impl Char as As(CharLiteral()) {
-  fn Convert[self: Self]() -> CharLiteral() = "char.convert_checked";
 }

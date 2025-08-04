@@ -95,13 +95,24 @@ struct NoReturn {
 // Constraint that a type is `bool`.
 using Bool = BuiltinType<BoolType::TypeInstId>;
 
-// Constraint that requires the type to be a character type.
-struct AnyChar {
-  static auto Check(const File& sem_ir, ValidateState& state, TypeId type_id)
-      -> bool {
-    return BuiltinType<CharLiteralType::TypeInstId>::Check(sem_ir, state,
-                                                           type_id) ||
-           BuiltinType<CharType::TypeInstId>::Check(sem_ir, state, type_id);
+// Constraint that a type is `Core.CharLiteral`.
+using CharLiteral = BuiltinType<CharLiteralType::TypeInstId>;
+
+// Constraint that a type is `u8` or an adapted type, including `Core.Char`.
+struct CharCompatible {
+  static auto Check(const File& sem_ir, ValidateState& /*state*/,
+                    TypeId type_id) -> bool {
+    auto int_info = sem_ir.types().TryGetIntTypeInfo(type_id);
+    if (!int_info) {
+      // Not an integer.
+      return false;
+    }
+    if (!int_info->bit_width.has_value() || int_info->is_signed) {
+      // Must be unsigned.
+      return false;
+    }
+    auto bit_width = sem_ir.ints().Get(int_info->bit_width).getZExtValue();
+    return bit_width == 8;
   }
 };
 
@@ -262,10 +273,6 @@ constexpr BuiltinInfo ReadChar = {"read.char",
 constexpr BuiltinInfo CharLiteralMakeType = {"char_literal.make_type",
                                              ValidateSignature<auto()->Type>};
 
-// Returns the `Core.Char` type.
-constexpr BuiltinInfo CharMakeType = {"char.make_type",
-                                      ValidateSignature<auto()->Type>};
-
 // Returns the `Core.IntLiteral` type.
 constexpr BuiltinInfo IntLiteralMakeType = {"int_literal.make_type",
                                             ValidateSignature<auto()->Type>};
@@ -289,7 +296,8 @@ constexpr BuiltinInfo BoolMakeType = {"bool.make_type",
 
 // Converts between char types, with a diagnostic if the value doesn't fit.
 constexpr BuiltinInfo CharConvertChecked = {
-    "char.convert_checked", ValidateSignature<auto(AnyChar)->AnyChar>};
+    "char.convert_checked",
+    ValidateSignature<auto(CharLiteral)->CharCompatible>};
 
 // Converts between integer types, truncating if necessary.
 constexpr BuiltinInfo IntConvert = {"int.convert",

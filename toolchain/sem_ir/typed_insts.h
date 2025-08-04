@@ -446,25 +446,10 @@ struct CharLiteralType {
   SemIR::TypeId type_id;
 };
 
-// `Core.Char`, a possibly invalid UTF-8 code unit.
-struct CharType {
-  static constexpr auto Kind = InstKind::CharType.Define<Parse::NoneNodeId>(
-      {.ir_name = "Core.Char",
-       .is_type = InstIsType::Always,
-       .constant_kind = InstConstantKind::Always,
-       .deduce_through = true});
-  static constexpr auto TypeInstId = MakeSingletonTypeInstId<Kind>();
-  static constexpr auto TypeId =
-      TypeId::ForTypeConstant(ConstantId::ForConcreteConstant(TypeInstId));
-
-  SemIR::TypeId type_id;
-};
-
-// A unicode code point character value, whose type is either `CharLiteralType`
-// or `CharType`.
-struct CharValue {
+// A unicode code point character value, whose type is `CharLiteralType`.
+struct CharLiteralValue {
   // TODO: Make Parse::NodeId more specific.
-  static constexpr auto Kind = InstKind::CharValue.Define<Parse::NodeId>(
+  static constexpr auto Kind = InstKind::CharLiteralValue.Define<Parse::NodeId>(
       {.ir_name = "char_value", .constant_kind = InstConstantKind::Always});
 
   TypeId type_id;

@@ -168,6 +168,11 @@ class TypeStore : public Yaml::Printable<TypeStore> {
   // non-constant width and for IntLiteral.
   auto GetIntTypeInfo(TypeId int_type_id) const -> IntTypeInfo;
 
+  // Similar to `GetIntTypeInfo`, except allows non-`IntType` types to be
+  // handled.
+  auto TryGetIntTypeInfo(TypeId int_type_id) const
+      -> std::optional<IntTypeInfo>;
+
   // Returns whether `type_id` represents a facet type.
   auto IsFacetType(TypeId type_id) const -> bool {
     return type_id == TypeType::TypeId || Is<FacetType>(type_id);
