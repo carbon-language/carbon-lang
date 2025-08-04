@@ -392,6 +392,35 @@ fn F() {
 }
 
 // ============================================================================
+// _BitInt(24) param
+// ============================================================================
+
+// --- bit_int_24_param.h
+
+using bit_int_24 = _BitInt(24);
+
+auto foo(bit_int_24 x) -> void;
+
+// --- fail_todo_import_bit_int_24_param.carbon
+
+library "[[@TEST_NAME]]";
+
+import Cpp library "bit_int_24_param.h";
+
+fn F() {
+  //@dump-sem-ir-begin
+  // CHECK:STDERR: fail_todo_import_bit_int_24_param.carbon:[[@LINE+7]]:3: error: semantics TODO: `Unsupported: parameter type: bit_int_24` [SemanticsTodo]
+  // CHECK:STDERR:   Cpp.foo(1);
+  // CHECK:STDERR:   ^~~~~~~
+  // CHECK:STDERR: fail_todo_import_bit_int_24_param.carbon:[[@LINE+4]]:3: note: in `Cpp` name lookup for `foo` [InCppNameLookup]
+  // CHECK:STDERR:   Cpp.foo(1);
+  // CHECK:STDERR:   ^~~~~~~
+  // CHECK:STDERR:
+  Cpp.foo(1);
+  //@dump-sem-ir-end
+}
+
+// ============================================================================
 // float return
 // ============================================================================
 
@@ -1260,6 +1289,27 @@ fn F() {
 // CHECK:STDOUT:   %bound_method.loc8_12: <bound method> = bound_method %.loc8_12.1, %T.as.Destroy.impl.Op.specific_fn
 // CHECK:STDOUT:   %addr.loc8_12.2: %ptr.6fd = addr_of %.loc8_12.1
 // CHECK:STDOUT:   %T.as.Destroy.impl.Op.call: init %empty_tuple.type = call %bound_method.loc8_12(%addr.loc8_12.2)
+// CHECK:STDOUT:   <elided>
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: --- fail_todo_import_bit_int_24_param.carbon
+// CHECK:STDOUT:
+// CHECK:STDOUT: constants {
+// CHECK:STDOUT:   %int_1: Core.IntLiteral = int_value 1 [concrete]
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: imports {
+// CHECK:STDOUT:   %Cpp: <namespace> = namespace file.%Cpp.import_cpp, [concrete] {
+// CHECK:STDOUT:     .foo = <error>
+// CHECK:STDOUT:     import Cpp//...
+// CHECK:STDOUT:   }
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: fn @F() {
+// CHECK:STDOUT: !entry:
+// CHECK:STDOUT:   %Cpp.ref: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
+// CHECK:STDOUT:   %foo.ref: <error> = name_ref foo, <error> [concrete = <error>]
+// CHECK:STDOUT:   %int_1: Core.IntLiteral = int_value 1 [concrete = constants.%int_1]
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

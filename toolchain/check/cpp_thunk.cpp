@@ -117,7 +117,7 @@ static auto IsScalarType(clang::ASTContext& ast_context, clang::QualType type)
   if (const auto* builtin_type = type->getAs<clang::BuiltinType>()) {
     // TODO: Add support for other integer types.
     if (builtin_type->getKind() == clang::BuiltinType::Int) {
-      uint64_t type_size = ast_context.getTypeSize(type);
+      uint64_t type_size = ast_context.getIntWidth(type);
       return type_size == 32 || type_size == 64;
     }
   }
