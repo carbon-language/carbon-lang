@@ -24,7 +24,8 @@ namespace Carbon::Check {
 
 // Find the bit width of an integer literal.
 // The default bit width is 32. If the literal's bit width is greater than 32,
-// the bit width is increased to 64.
+// the bit width is increased to 64. Negative literals are assigned a bit width
+// of 64.
 static auto FindIntLiteralBitWidth(Context& context, SemIR::InstId arg_id,
                                    bool is_signed) -> IntId {
   auto bit_width_id = IntId::MakeRaw(32);

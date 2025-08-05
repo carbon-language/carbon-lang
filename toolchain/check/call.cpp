@@ -378,7 +378,6 @@ auto PerformCall(Context& context, SemIR::LocId loc_id, SemIR::InstId callee_id,
   if (callee_function.is_error) {
     return SemIR::ErrorInst::InstId;
   }
-  // TODO: refactor!
   if (callee_function.is_overloaded_function) {
     auto resolved_fn =
         PerformOverloadResolution(context, loc_id, callee_id, arg_ids);

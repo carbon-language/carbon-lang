@@ -1576,8 +1576,9 @@ auto ImportNameFromCpp(Context& context, SemIR::LocId loc_id,
     // For now supporting only overloaded set where all functions have the same
     // access, in order to keep the existing functionality for single
     // functions until the same is fixed for the overloaded functions.
+    auto overloaded_set_access = lookup->begin().getAccess();
     for (auto i = lookup->begin() + 1, e = lookup->end(); i < e; ++i) {
-      if (i.getAccess() != lookup->begin().getAccess()) {
+      if (i.getAccess() != overloaded_set_access) {
         context.TODO(
             loc_id,
             llvm::formatv(
@@ -1587,7 +1588,7 @@ auto ImportNameFromCpp(Context& context, SemIR::LocId loc_id,
         return SemIR::ScopeLookupResult::MakeError();
       }
     }
-    SemIR::AccessKind access_kind = MapAccess(lookup->begin().getAccess());
+    SemIR::AccessKind access_kind = MapAccess(overloaded_set_access);
     AddNameToScope(context, scope_id, name_id, access_kind, decl_inst_id);
     return SemIR::ScopeLookupResult::MakeWrappedLookupResult(decl_inst_id,
                                                              access_kind);
