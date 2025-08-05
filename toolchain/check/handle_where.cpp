@@ -4,6 +4,7 @@
 
 #include "toolchain/check/context.h"
 #include "toolchain/check/convert.h"
+#include "toolchain/check/facet_type.h"
 #include "toolchain/check/generic.h"
 #include "toolchain/check/handle.h"
 #include "toolchain/check/inst.h"
@@ -122,12 +123,16 @@ auto HandleParseNode(Context& context, Parse::RequirementEqualId node_id)
       AddInstInNoBlock<SemIR::RequirementRewrite>(
           context, node_id, {.lhs_id = lhs_id, .rhs_id = rhs_id}));
 
-  // Track the value of the rewrite so further constraints can use it
-  // immediately, before they are evaluated. This happens directly where the
-  // `ImplWitnessAccess` that refers to the rewrite constraint would have been
-  // created, and the value of the constraint will be used instead.
-  context.rewrites_stack().back().Insert(context.constant_values().Get(lhs_id),
-                                         rhs_id);
+  if (lhs_id != SemIR::ErrorInst::InstId) {
+    // Track the value of the rewrite so further constraints can use it
+    // immediately, before they are evaluated. This happens directly where the
+    // `ImplWitnessAccess` that refers to the rewrite constraint would have been
+    // created, and the value of the constraint will be used instead.
+    context.rewrites_stack().back().Insert(
+        context.constant_values().Get(
+            GetImplWitnessAccessWithoutSubstitution(context, lhs_id)),
+        rhs_id);
+  }
   return true;
 }
 
