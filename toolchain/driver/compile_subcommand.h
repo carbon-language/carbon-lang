@@ -60,6 +60,7 @@ struct CompileOptions {
   bool preorder_parse_tree = false;
   bool builtin_sem_ir = false;
   bool prelude_import = false;
+  bool gen_implicit_type_impls = false;
   bool include_debug_info = true;
   bool run_llvm_verifier = true;
 

@@ -158,19 +158,33 @@ fn ConvertB(p: Cpp.C*) -> Cpp.B* {
 struct A { int a; };
 struct B : virtual A {};
 
+void UseB(B * _Nonnull p);
+
+// --- use_virtual_inheritance_incomplete.carbon
+
+library "[[@TEST_NAME]]";
+
+import Cpp library "virtual_inheritance.h";
+
+fn Convert(p: Cpp.B*) {
+  // OK, doesn't require `Cpp.B` to be a complete type.
+  Cpp.UseB(p);
+}
+
 // --- fail_todo_use_virtual_inheritance.carbon
 
 library "[[@TEST_NAME]]";
 
-// CHECK:STDERR: fail_todo_use_virtual_inheritance.carbon:[[@LINE+2]]:1: in import [InImport]
-// CHECK:STDERR: ./virtual_inheritance.h:3: error: semantics TODO: `class with virtual bases` [SemanticsTodo]
 import Cpp library "virtual_inheritance.h";
 
-// CHECK:STDERR: fail_todo_use_virtual_inheritance.carbon:[[@LINE+4]]:15: note: in `Cpp` name lookup for `B` [InCppNameLookup]
-// CHECK:STDERR: fn Convert(p: Cpp.B*) -> Cpp.A* {
-// CHECK:STDERR:               ^~~~~
-// CHECK:STDERR:
 fn Convert(p: Cpp.B*) -> Cpp.A* {
+  // CHECK:STDERR: fail_todo_use_virtual_inheritance.carbon:[[@LINE+14]]:3: error: semantics TODO: `class with virtual bases` [SemanticsTodo]
+  // CHECK:STDERR:   return p;
+  // CHECK:STDERR:   ^~~~~~~~~
+  // CHECK:STDERR: fail_todo_use_virtual_inheritance.carbon:[[@LINE+11]]:3: note: while completing C++ class type `Cpp.B` [InCppTypeCompletion]
+  // CHECK:STDERR:   return p;
+  // CHECK:STDERR:   ^~~~~~~~~
+  // CHECK:STDERR:
   // CHECK:STDERR: fail_todo_use_virtual_inheritance.carbon:[[@LINE+7]]:3: error: cannot implicitly convert expression of type `Cpp.B*` to `Cpp.A*` [ConversionFailure]
   // CHECK:STDERR:   return p;
   // CHECK:STDERR:   ^~~~~~~~~
@@ -221,9 +235,9 @@ class V {
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %Derived: type = class_type @Derived [concrete]
-// CHECK:STDOUT:   %Base: type = class_type @Base [concrete]
 // CHECK:STDOUT:   %ptr.ddb: type = ptr_type %Derived [concrete]
 // CHECK:STDOUT:   %pattern_type.5c8: type = pattern_type %ptr.ddb [concrete]
+// CHECK:STDOUT:   %Base: type = class_type @Base [concrete]
 // CHECK:STDOUT:   %ptr.fb2: type = ptr_type %Base [concrete]
 // CHECK:STDOUT:   %pattern_type.72a: type = pattern_type %ptr.fb2 [concrete]
 // CHECK:STDOUT:   %ConvertPtr.type: type = fn_type @ConvertPtr [concrete]
@@ -345,9 +359,9 @@ class V {
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %Derived: type = class_type @Derived [concrete]
-// CHECK:STDOUT:   %Base: type = class_type @Base [concrete]
 // CHECK:STDOUT:   %int_32: Core.IntLiteral = int_value 32 [concrete]
 // CHECK:STDOUT:   %i32: type = class_type @Int, @Int(%int_32) [concrete]
+// CHECK:STDOUT:   %Base: type = class_type @Base [concrete]
 // CHECK:STDOUT:   %Base.elem: type = unbound_element_type %Base, %i32 [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -389,8 +403,8 @@ class V {
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %Derived: type = class_type @Derived [concrete]
-// CHECK:STDOUT:   %Base: type = class_type @Base [concrete]
 // CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [concrete]
+// CHECK:STDOUT:   %Base: type = class_type @Base [concrete]
 // CHECK:STDOUT:   %Base.f.type: type = fn_type @Base.f [concrete]
 // CHECK:STDOUT:   %Base.f: %Base.f.type = struct_value () [concrete]
 // CHECK:STDOUT:   %Base.g.type: type = fn_type @Base.g [concrete]

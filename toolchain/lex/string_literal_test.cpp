@@ -32,7 +32,7 @@ class StringLiteralTest : public ::testing::Test {
   auto Parse(llvm::StringRef text) -> llvm::StringRef {
     StringLiteral token = Lex(text);
     Testing::SingleTokenDiagnosticEmitter emitter(&error_tracker_, text);
-    return token.ComputeValue(allocator_, emitter);
+    return token.ComputeStringValue(allocator_, emitter);
   }
 
   llvm::BumpPtrAllocator allocator_;

@@ -136,19 +136,21 @@ fn G(T:! M & L, a: T.W) -> () { return a; }
 fn H(T:! L where .W = {}, a: T.W) -> {} { return a; }
 
 fn F(T:! M & (L where .W = {}), a: T.W) {
-  // TODO: One of `b` or `c` must fail, because `T.W` is either found to be `()` from
+  // One of `b` or `c` must fail, because `T.W` is either found to be `()` from
   // the impl or `{}` from the facet type of T.
 
   let b: () = G(T, a);
-  // CHECK:STDERR: fail_two_different_combined_from_final_impl_and_facet.carbon:[[@LINE+10]]:15: error: cannot implicitly convert expression of type `()` to `{}` [ConversionFailure]
+  // TODO: This diagnostic sucks. Can we make the facet type's value take
+  // precidence over final, since that's what is written in the code and more
+  // likely to show up in diagnostics? Or should we diagnose `T` as being
+  // invalid directly, where we can see both `.W` values and print them?
+  //
+  // CHECK:STDERR: fail_two_different_combined_from_final_impl_and_facet.carbon:[[@LINE+7]]:15: error: cannot convert type `T` that implements `L & M where .(L.W) = {}` into type implementing `L where .(L.W) = {}` [ConversionFailureFacetToFacet]
   // CHECK:STDERR:   let c: {} = H(T, a);
   // CHECK:STDERR:               ^~~~~~~
-  // CHECK:STDERR: fail_two_different_combined_from_final_impl_and_facet.carbon:[[@LINE+7]]:15: note: type `()` does not implement interface `Core.ImplicitAs({})` [MissingImplInMemberAccessNote]
-  // CHECK:STDERR:   let c: {} = H(T, a);
-  // CHECK:STDERR:               ^~~~~~~
-  // CHECK:STDERR: fail_two_different_combined_from_final_impl_and_facet.carbon:[[@LINE-13]]:1: note: while deducing parameters of generic declared here [DeductionGenericHere]
+  // CHECK:STDERR: fail_two_different_combined_from_final_impl_and_facet.carbon:[[@LINE-15]]:6: note: initializing generic parameter `T` declared here [InitializingGenericParam]
   // CHECK:STDERR: fn H(T:! L where .W = {}, a: T.W) -> {} { return a; }
-  // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+  // CHECK:STDERR:      ^
   // CHECK:STDERR:
   let c: {} = H(T, a);
 }
@@ -600,6 +602,59 @@ fn I(T:! Z where .T0 = .T1 and .T1 = (.T2, .T3) and .T2 = .T4 and .T3 = .T2 and 
 fn J(T:! Z where .T0 = .T1 and .T1 = (.T2, .T3) and .T2 = .T4 and .T4 = .T5 and .T3 = .T2 and .T5 = ()) -> T.T0 {
   return ((), ());
 }
+
+// --- indirection_through_self_rhs.carbon
+library "[[@TEST_NAME]]";
+
+interface I {
+  let I1:! type;
+  let I2:! type;
+}
+
+interface J {
+  let J1:! I;
+}
+
+// The value of .I1 is (), but to know that requires resolving .J1 first then
+// .J1.I2.
+fn F(T:! I & J where .J1 = .Self and .I1 = .J1.I2 and .I2 = ()) -> T.I1 {
+  return ();
+}
+
+// --- indirection_through_not_self_rhs.carbon
+library "[[@TEST_NAME]]";
+
+interface I {
+  let I1:! type;
+  let I2:! type;
+}
+
+interface J {
+  let J1:! I;
+}
+
+// The value of .I1 is (), but to know that requires resolving .J1 first then
+// .J1.I2.
+fn F(U:! I where .I2 = (), T:! I & J where .J1 = U and .I1 = .J1.I2) -> T.I1 {
+  return ();
+}
+
+// --- indirection_through_unresolved_access_rhs.carbon
+library "[[@TEST_NAME]]";
+
+interface I {
+  let I1:! type;
+  let I2:! type;
+}
+
+interface J {
+  let J1:! I;
+}
+
+// If we assume the nested `.J1` access will resolve to a facet value, we may
+// loop forever trying to resolve the `.I2` access. We should gracefully accept
+// that it does not resolve further.
+fn F(T:! I & J where .I1 = .J1.I2) {}
 
 // CHECK:STDOUT: --- fail_cycle.carbon
 // CHECK:STDOUT:

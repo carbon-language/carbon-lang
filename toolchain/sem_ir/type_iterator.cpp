@@ -166,6 +166,10 @@ auto TypeIterator::Next() -> Step {
           return Step::StructStart{.type_id = type_id};
         }
       }
+
+      case SemIR::ErrorInst::Kind:
+        return Step::Error();
+
       default:
         CARBON_FATAL("Unhandled type instruction {0}", inst_id);
     }

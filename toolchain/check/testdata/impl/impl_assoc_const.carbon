@@ -337,6 +337,56 @@ impl CD as IF where .F = 0 {
   fn F() {}
 }
 
+// --- facet_type_in_assoc_constant.carbon
+library "[[@TEST_NAME]]";
+
+interface M { let X:! type; }
+
+impl () as M where .X = (M where .X = (M where .X = {})) {}
+
+// --- fail_todo_period_self_impl_lookup.carbon
+library "[[@TEST_NAME]]";
+
+interface Y {}
+interface Z {
+    let Z1:! Y;
+}
+
+class C;
+impl C as Y {}
+// CHECK:STDERR: fail_todo_period_self_impl_lookup.carbon:[[@LINE+4]]:25: error: cannot convert type `.Self` that implements `Z` into type implementing `Y` [ConversionFailureFacetToFacet]
+// CHECK:STDERR: impl C as Z where .Z1 = .Self {}
+// CHECK:STDERR:                         ^~~~~
+// CHECK:STDERR:
+impl C as Z where .Z1 = .Self {}
+
+// --- fail_todo_period_self_compared_with_concrete_self.carbon
+library "[[@TEST_NAME]]";
+
+interface Y {}
+interface Z {
+    let Z1:! Y;
+}
+
+class C;
+impl C as Y {}
+impl C as Z where .Z1 = C {}
+
+// CHECK:STDERR: fail_todo_period_self_compared_with_concrete_self.carbon:[[@LINE+4]]:24: error: cannot convert type `.Self` that implements `Z` into type implementing `Y` [ConversionFailureFacetToFacet]
+// CHECK:STDERR: fn F(T:! Z where .Z1 = .Self) {}
+// CHECK:STDERR:                        ^~~~~
+// CHECK:STDERR:
+fn F(T:! Z where .Z1 = .Self) {}
+fn G() {
+  F(C);
+
+  // CHECK:STDERR: fail_todo_period_self_compared_with_concrete_self.carbon:[[@LINE+4]]:23: error: cannot convert type `.Self` that implements `Z` into type implementing `Y` [ConversionFailureFacetToFacet]
+  // CHECK:STDERR:   C as (Z where .Z1 = .Self);
+  // CHECK:STDERR:                       ^~~~~
+  // CHECK:STDERR:
+  C as (Z where .Z1 = .Self);
+}
+
 // CHECK:STDOUT: --- fail_many_different.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {

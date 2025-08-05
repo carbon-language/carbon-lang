@@ -82,7 +82,8 @@ auto TokenizedBuffer::GetTokenText(TokenIndex token) const -> llvm::StringRef {
 
   // Refer back to the source text to find the original spelling, including
   // escape sequences etc.
-  if (token_info.kind() == TokenKind::StringLiteral) {
+  if (token_info.kind() == TokenKind::StringLiteral ||
+      token_info.kind() == TokenKind::CharLiteral) {
     std::optional<StringLiteral> relexed_token =
         StringLiteral::Lex(source_->text().substr(token_info.byte_offset()));
     CARBON_CHECK(relexed_token, "Could not reform string literal token.");
@@ -135,6 +136,14 @@ auto TokenizedBuffer::GetStringLiteralValue(TokenIndex token) const
   CARBON_CHECK(token_info.kind() == TokenKind::StringLiteral, "{0}",
                token_info.kind());
   return token_info.string_literal_id();
+}
+
+auto TokenizedBuffer::GetCharLiteralValue(TokenIndex token) const
+    -> CharLiteralValue {
+  const auto& token_info = token_infos_.Get(token);
+  CARBON_CHECK(token_info.kind() == TokenKind::CharLiteral, "{0}",
+               token_info.kind());
+  return token_info.char_literal();
 }
 
 auto TokenizedBuffer::GetTypeLiteralSize(TokenIndex token) const -> IntId {

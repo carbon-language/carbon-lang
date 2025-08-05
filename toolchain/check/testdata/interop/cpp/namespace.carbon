@@ -124,9 +124,26 @@ library "[[@TEST_NAME]]";
 import Cpp library "inline_ambiguity.h";
 
 fn MyF() {
-  // CHECK:STDERR: fail_import_inline_ambiguity.carbon:[[@LINE+7]]:3: error: semantics TODO: `Unsupported: Lookup succeeded but couldn't find a single result; LookupResultKind: 5` [SemanticsTodo]
-  // CHECK:STDERR:   Cpp.N.foo();
+  // Artificially create an error message here so that the first error line for
+  // this file (which otherwise has no source location) is associated with this
+  // file split.
+  // TODO: Pass a location into Clang when performing C++ name lookup so that
+  // its error has a location attached.
+  // CHECK:STDERR: fail_import_inline_ambiguity.carbon:[[@LINE+13]]:3: error: name `error` not found [NameNotFound]
+  // CHECK:STDERR:   error;
   // CHECK:STDERR:   ^~~~~
+  // CHECK:STDERR:
+  // CHECK:STDERR: error: reference to 'N' is ambiguous [CppInteropParseError]
+  // CHECK:STDERR: fail_import_inline_ambiguity.carbon:[[@LINE-13]]:10: in file included here [InCppInclude]
+  // CHECK:STDERR: ./inline_ambiguity.h:2:11: note: candidate found by name lookup is 'N' [CppInteropParseNote]
+  // CHECK:STDERR:     2 | namespace N { void foo(); }
+  // CHECK:STDERR:       |           ^
+  // CHECK:STDERR: fail_import_inline_ambiguity.carbon:[[@LINE-17]]:10: in file included here [InCppInclude]
+  // CHECK:STDERR: ./inline_ambiguity.h:3:30: note: candidate found by name lookup is '(anonymous namespace)::N' [CppInteropParseNote]
+  // CHECK:STDERR:     3 | inline namespace { namespace N {} }
+  // CHECK:STDERR:       |                              ^
+  error;
+
   // CHECK:STDERR: fail_import_inline_ambiguity.carbon:[[@LINE+4]]:3: note: in `Cpp` name lookup for `N` [InCppNameLookup]
   // CHECK:STDERR:   Cpp.N.foo();
   // CHECK:STDERR:   ^~~~~

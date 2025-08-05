@@ -329,14 +329,18 @@ class AccessRewriteValues {
 
   auto InsertNotRewritten(Context& context, SemIR::ImplWitnessAccess access,
                           SemIR::InstId inst_id) -> void {
-    map_.insert({GetKey(context, access), {NotRewritten, inst_id}});
+    map_.insert({*GetKey(context, access), {NotRewritten, inst_id}});
   }
 
   // Finds and returns a pointer into the cache for a given ImplWitnessAccess.
   // The pointer will be invalidated by mutating the cache. Returns `nullptr`
   // if `access` is not found.
   auto FindRef(Context& context, SemIR::ImplWitnessAccess access) -> Value* {
-    auto it = map_.find(GetKey(context, access));
+    auto key = GetKey(context, access);
+    if (!key) {
+      return nullptr;
+    }
+    auto it = map_.find(*key);
     if (it == map_.end()) {
       return nullptr;
     }
@@ -391,8 +395,12 @@ class AccessRewriteValues {
     }
   };
 
-  auto GetKey(Context& context, SemIR::ImplWitnessAccess access) -> Key {
-    return {*GetFacetTypeConstraintValue(context, access)};
+  // Returns a key for the `access` to an associated context if the access is
+  // through a facet value. If the access it through another `ImplWitnessAccess`
+  // then no key is able to be made.
+  auto GetKey(Context& context, SemIR::ImplWitnessAccess access)
+      -> std::optional<Key> {
+    return GetFacetTypeConstraintValue(context, access);
   }
 
   // Try avoid heap allocations in the common case where there are a small
@@ -466,6 +474,18 @@ class SubstImplWitnessAccessCallbacks : public SubstInstCallbacks {
       }
     }
 
+    // If the access is going through a nested `ImplWitnessAccess`, that
+    // access needs to be resolved to a facet value first. If it can't be
+    // resolved then the outer one can not be either.
+    if (auto lookup = context().insts().TryGetAs<SemIR::LookupImplWitness>(
+            rhs_access->witness_id)) {
+      if (context().insts().Is<SemIR::ImplWitnessAccess>(
+              lookup->query_self_inst_id)) {
+        substs_in_progress_.push_back(rhs_inst_id);
+        return SubstResult::SubstOperandsAndRetry;
+      }
+    }
+
     auto* rewrite_value = rewrite_values_->FindRef(context(), *rhs_access);
     if (!rewrite_value) {
       // The RHS refers to an associated constant for which there is no rewrite
@@ -510,9 +530,9 @@ class SubstImplWitnessAccessCallbacks : public SubstInstCallbacks {
     auto subst_inst_id = substs_in_progress_.pop_back_val();
     if (auto access = context().insts().TryGetAs<SemIR::ImplWitnessAccess>(
             subst_inst_id)) {
-      auto* rewrite_value = rewrite_values_->FindRef(context(), *access);
-      CARBON_CHECK(rewrite_value);
-      rewrite_values_->SetFullyRewritten(context(), *rewrite_value, inst_id);
+      if (auto* rewrite_value = rewrite_values_->FindRef(context(), *access)) {
+        rewrite_values_->SetFullyRewritten(context(), *rewrite_value, inst_id);
+      }
     }
     return inst_id;
   }
@@ -521,10 +541,10 @@ class SubstImplWitnessAccessCallbacks : public SubstInstCallbacks {
     auto subst_inst_id = substs_in_progress_.pop_back_val();
     if (auto access = context().insts().TryGetAs<SemIR::ImplWitnessAccess>(
             subst_inst_id)) {
-      auto* rewrite_value = rewrite_values_->FindRef(context(), *access);
-      CARBON_CHECK(rewrite_value);
-      rewrite_values_->SetFullyRewritten(context(), *rewrite_value,
-                                         orig_inst_id);
+      if (auto* rewrite_value = rewrite_values_->FindRef(context(), *access)) {
+        rewrite_values_->SetFullyRewritten(context(), *rewrite_value,
+                                           orig_inst_id);
+      }
     }
     return orig_inst_id;
   }
