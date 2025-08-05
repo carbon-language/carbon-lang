@@ -334,7 +334,7 @@ auto ImportCppFiles(Context& context,
   return std::move(generated_ast);
 }
 
-// Look ups the given name in the Clang AST in a specific scope. Returns the
+// Looks up the given name in the Clang AST in a specific scope. Returns the
 // lookup result if lookup was successful.
 static auto ClangLookupName(Context& context, SemIR::NameScopeId scope_id,
                             SemIR::NameId name_id)
