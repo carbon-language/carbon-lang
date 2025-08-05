@@ -37,6 +37,10 @@ import library "foo.h" inline "bar";
 // --- fail_no_semi_at_eof.carbon
 
 import Cpp inline
+// CHECK:STDERR: fail_no_semi_at_eof.carbon:[[@LINE+4]]:1: error: expected string literal after `inline` [ExpectedStringAfterInline]
+// CHECK:STDERR:
+// CHECK:STDERR: ^
+// CHECK:STDERR:
 
 // --- fail_package_inline.carbon
 
@@ -90,6 +94,16 @@ int n;
 // CHECK:STDOUT:         {kind: 'LibraryName', text: '"foo.h"'},
 // CHECK:STDOUT:       {kind: 'LibrarySpecifier', text: 'library', subtree_size: 2},
 // CHECK:STDOUT:     {kind: 'ImportDecl', text: ';', has_error: yes, subtree_size: 4},
+// CHECK:STDOUT:     {kind: 'FileEnd', text: ''},
+// CHECK:STDOUT:   ]
+// CHECK:STDOUT: - filename: fail_no_semi_at_eof.carbon
+// CHECK:STDOUT:   parse_tree: [
+// CHECK:STDOUT:     {kind: 'FileStart', text: ''},
+// CHECK:STDOUT:       {kind: 'ImportIntroducer', text: 'import'},
+// CHECK:STDOUT:       {kind: 'IdentifierPackageName', text: 'Cpp'},
+// CHECK:STDOUT:         {kind: 'InlineImportBody', text: '', has_error: yes},
+// CHECK:STDOUT:       {kind: 'InlineImportSpecifier', text: 'inline', subtree_size: 2},
+// CHECK:STDOUT:     {kind: 'ImportDecl', text: 'inline', has_error: yes, subtree_size: 5},
 // CHECK:STDOUT:     {kind: 'FileEnd', text: ''},
 // CHECK:STDOUT:   ]
 // CHECK:STDOUT: - filename: fail_package_inline.carbon
