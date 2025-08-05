@@ -14,7 +14,7 @@
 
 library "[[@TEST_NAME]]";
 
-// CHECK:STDERR: fail_import_cpp.carbon:[[@LINE+4]]:1: error: expected `library` or `inline` in `Cpp` import [CppInteropMissingLibrary]
+// CHECK:STDERR: fail_import_cpp.carbon:[[@LINE+4]]:1: error: `Cpp` import without `library` or `inline` [CppInteropMissingLibrary]
 // CHECK:STDERR: import Cpp;
 // CHECK:STDERR: ^~~~~~~~~~~
 // CHECK:STDERR:

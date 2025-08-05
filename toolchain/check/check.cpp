@@ -89,7 +89,7 @@ static auto TrackImport(Map<ImportKey, UnitAndImports*>& api_map,
     }
     if (!import.library_id.has_value() && !import.inline_body_id.has_value()) {
       CARBON_DIAGNOSTIC(CppInteropMissingLibrary, Error,
-                        "expected `library` or `inline` in `Cpp` import");
+                        "`Cpp` import without `library` or `inline`");
       unit_info.emitter.Emit(import.node_id, CppInteropMissingLibrary);
       return;
     }
