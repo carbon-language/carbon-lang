@@ -201,6 +201,7 @@ static auto CreateThunkFunctionDecl(
       callee_function_decl.getReturnType(), thunk_param_types,
       callee_function_type->getExtProtoInfo());
 
+  // TODO: Thunks should not have external linkage, consider using `SC_Static`.
   clang::FunctionDecl* thunk_function_decl = clang::FunctionDecl::Create(
       ast_context, ast_context.getTranslationUnitDecl(), clang_loc, clang_loc,
       clang::DeclarationName(&identifier_info), thunk_function_type,
