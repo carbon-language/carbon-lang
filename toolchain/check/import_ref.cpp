@@ -1849,8 +1849,16 @@ static auto MakeFunctionDecl(ImportContext& context,
         .virtual_modifier = import_function.virtual_modifier,
         .virtual_index = import_function.virtual_index}});
 
-  function_decl.type_id = GetFunctionType(
-      context.local_context(), function_decl.function_id, specific_id);
+  // Directly add the function type constant. Don't use `GetFunctionType`
+  // because that will evaluate the function type, which we can't do if the
+  // specific's value block is still pending.
+  auto type_const_id = AddImportedConstant(
+      context.local_context(),
+      SemIR::FunctionType{.type_id = SemIR::TypeType::TypeId,
+                          .function_id = function_decl.function_id,
+                          .specific_id = specific_id});
+  function_decl.type_id =
+      context.local_types().GetTypeIdForTypeConstantId(type_const_id);
 
   // Write the function ID and type into the FunctionDecl.
   auto function_const_id =

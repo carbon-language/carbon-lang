@@ -245,6 +245,7 @@ cc_library(
         ":typed_insts",
         "//toolchain/diagnostics:diagnostic_emitter",
         "//toolchain/parse:tree",
+        "@llvm-project//clang:frontend",
         "@llvm-project//llvm:Support",
     ],
 )

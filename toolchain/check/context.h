@@ -58,7 +58,8 @@ class Context {
   explicit Context(DiagnosticEmitterBase* emitter,
                    Parse::GetTreeAndSubtreesFn tree_and_subtrees_getter,
                    SemIR::File* sem_ir, int imported_ir_count,
-                   int total_ir_count, llvm::raw_ostream* vlog_stream);
+                   int total_ir_count, bool gen_implicit_type_impls,
+                   llvm::raw_ostream* vlog_stream);
 
   // Marks an implementation TODO. Always returns false.
   auto TODO(SemIR::LocId loc_id, std::string label) -> bool;
@@ -91,6 +92,8 @@ class Context {
   auto tokens() const -> const Lex::TokenizedBuffer& {
     return parse_tree().tokens();
   }
+
+  auto gen_implicit_type_impls() -> bool { return gen_implicit_type_impls_; }
 
   auto vlog_stream() -> llvm::raw_ostream* { return vlog_stream_; }
 
@@ -303,6 +306,10 @@ class Context {
 
   // The SemIR::File being added to.
   SemIR::File* sem_ir_;
+
+  // Whether to generate standard `impl`s for types, such as `Core.Destroy`; see
+  // `CheckParseTreesOptions`.
+  bool gen_implicit_type_impls_;
 
   // Whether to print verbose output.
   llvm::raw_ostream* vlog_stream_;

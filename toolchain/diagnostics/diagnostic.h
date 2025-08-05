@@ -65,6 +65,10 @@ struct Loc {
   // A reference to the line of the error.
   llvm::StringRef line;
 
+  // A full snippet to print. If non-empty, this is used instead of `line` when
+  // printing a snippet. Should contain both the quoted text and the caret line.
+  std::string snippet;
+
   // 1-based line number. -1 indicates unknown; other values are unused.
   int32_t line_number = -1;
 

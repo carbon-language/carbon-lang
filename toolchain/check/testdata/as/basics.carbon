@@ -203,15 +203,15 @@ let n: {.x: ()} = {.x = ()} as {.x = ()};
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %X: type = class_type @X [concrete]
-// CHECK:STDOUT:   %Make.type: type = fn_type @Make [concrete]
+// CHECK:STDOUT:   %ptr.d17: type = ptr_type %X [concrete]
+// CHECK:STDOUT:   %X.as.Destroy.impl.Op.type: type = fn_type @X.as.Destroy.impl.Op [concrete]
 // CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [concrete]
+// CHECK:STDOUT:   %X.as.Destroy.impl.Op: %X.as.Destroy.impl.Op.type = struct_value () [concrete]
+// CHECK:STDOUT:   %Make.type: type = fn_type @Make [concrete]
 // CHECK:STDOUT:   %Make: %Make.type = struct_value () [concrete]
 // CHECK:STDOUT:   %tuple.type.24b: type = tuple_type (type, type) [concrete]
 // CHECK:STDOUT:   %tuple.type.b67: type = tuple_type (%X, %X) [concrete]
 // CHECK:STDOUT:   %pattern_type.bb7: type = pattern_type %tuple.type.b67 [concrete]
-// CHECK:STDOUT:   %T.as.Destroy.impl.Op.type.9e1: type = fn_type @T.as.Destroy.impl.Op, @T.as.Destroy.impl(%X) [concrete]
-// CHECK:STDOUT:   %T.as.Destroy.impl.Op.33a: %T.as.Destroy.impl.Op.type.9e1 = struct_value () [concrete]
-// CHECK:STDOUT:   %ptr.d17: type = ptr_type %X [concrete]
 // CHECK:STDOUT:   %T.as.Destroy.impl.Op.type.df3: type = fn_type @T.as.Destroy.impl.Op, @T.as.Destroy.impl(%tuple.type.b67) [concrete]
 // CHECK:STDOUT:   %T.as.Destroy.impl.Op.279: %T.as.Destroy.impl.Op.type.df3 = struct_value () [concrete]
 // CHECK:STDOUT:   %ptr.120: type = ptr_type %tuple.type.b67 [concrete]
@@ -249,16 +249,12 @@ let n: {.x: ()} = {.x = ()} as {.x = ()};
 // CHECK:STDOUT:   %tuple: %tuple.type.b67 = tuple_value (%.loc13_25.3, %.loc13_33.3)
 // CHECK:STDOUT:   %.loc13_34.2: %tuple.type.b67 = converted %.loc13_34.1, %tuple
 // CHECK:STDOUT:   %a: %tuple.type.b67 = bind_name a, %.loc13_34.2
-// CHECK:STDOUT:   %T.as.Destroy.impl.Op.bound.loc13_33: <bound method> = bound_method %.loc13_33.1, constants.%T.as.Destroy.impl.Op.33a
-// CHECK:STDOUT:   <elided>
-// CHECK:STDOUT:   %bound_method.loc13_33: <bound method> = bound_method %.loc13_33.1, %T.as.Destroy.impl.Op.specific_fn.1
+// CHECK:STDOUT:   %X.as.Destroy.impl.Op.bound.loc13_33: <bound method> = bound_method %.loc13_33.1, constants.%X.as.Destroy.impl.Op
 // CHECK:STDOUT:   %addr.loc13_33: %ptr.d17 = addr_of %.loc13_33.1
-// CHECK:STDOUT:   %T.as.Destroy.impl.Op.call.loc13_33: init %empty_tuple.type = call %bound_method.loc13_33(%addr.loc13_33)
-// CHECK:STDOUT:   %T.as.Destroy.impl.Op.bound.loc13_25: <bound method> = bound_method %.loc13_25.1, constants.%T.as.Destroy.impl.Op.33a
-// CHECK:STDOUT:   <elided>
-// CHECK:STDOUT:   %bound_method.loc13_25: <bound method> = bound_method %.loc13_25.1, %T.as.Destroy.impl.Op.specific_fn.2
+// CHECK:STDOUT:   %X.as.Destroy.impl.Op.call.loc13_33: init %empty_tuple.type = call %X.as.Destroy.impl.Op.bound.loc13_33(%addr.loc13_33)
+// CHECK:STDOUT:   %X.as.Destroy.impl.Op.bound.loc13_25: <bound method> = bound_method %.loc13_25.1, constants.%X.as.Destroy.impl.Op
 // CHECK:STDOUT:   %addr.loc13_25: %ptr.d17 = addr_of %.loc13_25.1
-// CHECK:STDOUT:   %T.as.Destroy.impl.Op.call.loc13_25: init %empty_tuple.type = call %bound_method.loc13_25(%addr.loc13_25)
+// CHECK:STDOUT:   %X.as.Destroy.impl.Op.call.loc13_25: init %empty_tuple.type = call %X.as.Destroy.impl.Op.bound.loc13_25(%addr.loc13_25)
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -290,21 +286,17 @@ let n: {.x: ()} = {.x = ()} as {.x = ()};
 // CHECK:STDOUT:     %.loc20_15.3: type = converted %.loc20_15.2, constants.%tuple.type.b67 [concrete = constants.%tuple.type.b67]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %b: ref %tuple.type.b67 = bind_name b, %b.var
-// CHECK:STDOUT:   %T.as.Destroy.impl.Op.bound.loc20_34.1: <bound method> = bound_method %tuple.elem1, constants.%T.as.Destroy.impl.Op.33a
-// CHECK:STDOUT:   <elided>
-// CHECK:STDOUT:   %bound_method.loc20_34.1: <bound method> = bound_method %tuple.elem1, %T.as.Destroy.impl.Op.specific_fn.1
+// CHECK:STDOUT:   %X.as.Destroy.impl.Op.bound.loc20_34.1: <bound method> = bound_method %tuple.elem1, constants.%X.as.Destroy.impl.Op
 // CHECK:STDOUT:   %addr.loc20_34.1: %ptr.d17 = addr_of %tuple.elem1
-// CHECK:STDOUT:   %T.as.Destroy.impl.Op.call.loc20_34.1: init %empty_tuple.type = call %bound_method.loc20_34.1(%addr.loc20_34.1)
-// CHECK:STDOUT:   %T.as.Destroy.impl.Op.bound.loc20_34.2: <bound method> = bound_method %tuple.elem0, constants.%T.as.Destroy.impl.Op.33a
-// CHECK:STDOUT:   <elided>
-// CHECK:STDOUT:   %bound_method.loc20_34.2: <bound method> = bound_method %tuple.elem0, %T.as.Destroy.impl.Op.specific_fn.2
+// CHECK:STDOUT:   %X.as.Destroy.impl.Op.call.loc20_34.1: init %empty_tuple.type = call %X.as.Destroy.impl.Op.bound.loc20_34.1(%addr.loc20_34.1)
+// CHECK:STDOUT:   %X.as.Destroy.impl.Op.bound.loc20_34.2: <bound method> = bound_method %tuple.elem0, constants.%X.as.Destroy.impl.Op
 // CHECK:STDOUT:   %addr.loc20_34.2: %ptr.d17 = addr_of %tuple.elem0
-// CHECK:STDOUT:   %T.as.Destroy.impl.Op.call.loc20_34.2: init %empty_tuple.type = call %bound_method.loc20_34.2(%addr.loc20_34.2)
-// CHECK:STDOUT:   %T.as.Destroy.impl.Op.bound.loc20_3: <bound method> = bound_method %b.var, constants.%T.as.Destroy.impl.Op.279
+// CHECK:STDOUT:   %X.as.Destroy.impl.Op.call.loc20_34.2: init %empty_tuple.type = call %X.as.Destroy.impl.Op.bound.loc20_34.2(%addr.loc20_34.2)
+// CHECK:STDOUT:   %T.as.Destroy.impl.Op.bound: <bound method> = bound_method %b.var, constants.%T.as.Destroy.impl.Op.279
 // CHECK:STDOUT:   <elided>
-// CHECK:STDOUT:   %bound_method.loc20_3: <bound method> = bound_method %b.var, %T.as.Destroy.impl.Op.specific_fn.3
+// CHECK:STDOUT:   %bound_method: <bound method> = bound_method %b.var, %T.as.Destroy.impl.Op.specific_fn
 // CHECK:STDOUT:   %addr.loc20_3: %ptr.120 = addr_of %b.var
-// CHECK:STDOUT:   %T.as.Destroy.impl.Op.call.loc20_3: init %empty_tuple.type = call %bound_method.loc20_3(%addr.loc20_3)
+// CHECK:STDOUT:   %T.as.Destroy.impl.Op.call: init %empty_tuple.type = call %bound_method(%addr.loc20_3)
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -312,14 +304,14 @@ let n: {.x: ()} = {.x = ()} as {.x = ()};
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %X: type = class_type @X [concrete]
-// CHECK:STDOUT:   %pattern_type.019: type = pattern_type %X [concrete]
-// CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [concrete]
 // CHECK:STDOUT:   %ptr.d17: type = ptr_type %X [concrete]
 // CHECK:STDOUT:   %pattern_type.1c6: type = pattern_type %ptr.d17 [concrete]
+// CHECK:STDOUT:   %X.as.Destroy.impl.Op.type: type = fn_type @X.as.Destroy.impl.Op [concrete]
+// CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [concrete]
+// CHECK:STDOUT:   %X.as.Destroy.impl.Op: %X.as.Destroy.impl.Op.type = struct_value () [concrete]
+// CHECK:STDOUT:   %pattern_type.019: type = pattern_type %X [concrete]
 // CHECK:STDOUT:   %Make.type: type = fn_type @Make [concrete]
 // CHECK:STDOUT:   %Make: %Make.type = struct_value () [concrete]
-// CHECK:STDOUT:   %T.as.Destroy.impl.Op.type.9e1: type = fn_type @T.as.Destroy.impl.Op, @T.as.Destroy.impl(%X) [concrete]
-// CHECK:STDOUT:   %T.as.Destroy.impl.Op.33a: %T.as.Destroy.impl.Op.type.9e1 = struct_value () [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -368,16 +360,12 @@ let n: {.x: ()} = {.x = ()} as {.x = ()};
 // CHECK:STDOUT:   assign %x.var, %Make.call
 // CHECK:STDOUT:   %X.ref.loc24_10: type = name_ref X, file.%X.decl [concrete = constants.%X]
 // CHECK:STDOUT:   %x: ref %X = bind_name x, %x.var
-// CHECK:STDOUT:   %T.as.Destroy.impl.Op.bound.loc24_3.1: <bound method> = bound_method %.loc24, constants.%T.as.Destroy.impl.Op.33a
-// CHECK:STDOUT:   <elided>
-// CHECK:STDOUT:   %bound_method.loc24_3.1: <bound method> = bound_method %.loc24, %T.as.Destroy.impl.Op.specific_fn.1
+// CHECK:STDOUT:   %X.as.Destroy.impl.Op.bound.loc24_3.1: <bound method> = bound_method %.loc24, constants.%X.as.Destroy.impl.Op
 // CHECK:STDOUT:   %addr.loc24_3.1: %ptr.d17 = addr_of %.loc24
-// CHECK:STDOUT:   %T.as.Destroy.impl.Op.call.loc24_3.1: init %empty_tuple.type = call %bound_method.loc24_3.1(%addr.loc24_3.1)
-// CHECK:STDOUT:   %T.as.Destroy.impl.Op.bound.loc24_3.2: <bound method> = bound_method %x.var, constants.%T.as.Destroy.impl.Op.33a
-// CHECK:STDOUT:   <elided>
-// CHECK:STDOUT:   %bound_method.loc24_3.2: <bound method> = bound_method %x.var, %T.as.Destroy.impl.Op.specific_fn.2
+// CHECK:STDOUT:   %X.as.Destroy.impl.Op.call.loc24_3.1: init %empty_tuple.type = call %X.as.Destroy.impl.Op.bound.loc24_3.1(%addr.loc24_3.1)
+// CHECK:STDOUT:   %X.as.Destroy.impl.Op.bound.loc24_3.2: <bound method> = bound_method %x.var, constants.%X.as.Destroy.impl.Op
 // CHECK:STDOUT:   %addr.loc24_3.2: %ptr.d17 = addr_of %x.var
-// CHECK:STDOUT:   %T.as.Destroy.impl.Op.call.loc24_3.2: init %empty_tuple.type = call %bound_method.loc24_3.2(%addr.loc24_3.2)
+// CHECK:STDOUT:   %X.as.Destroy.impl.Op.call.loc24_3.2: init %empty_tuple.type = call %X.as.Destroy.impl.Op.bound.loc24_3.2(%addr.loc24_3.2)
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

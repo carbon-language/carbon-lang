@@ -74,6 +74,12 @@ CARBON_DIAGNOSTIC_KIND(UnrecognizedCharacters)
 CARBON_DIAGNOSTIC_KIND(UnterminatedString)
 CARBON_DIAGNOSTIC_KIND(WrongRealLiteralExponent)
 
+CARBON_DIAGNOSTIC_KIND(CharLiteralEmpty)
+CARBON_DIAGNOSTIC_KIND(CharLiteralInvalidUTF8)
+CARBON_DIAGNOSTIC_KIND(CharLiteralOverflow)
+CARBON_DIAGNOSTIC_KIND(CharLiteralRaw)
+CARBON_DIAGNOSTIC_KIND(CharLiteralUnderflow)
+
 // ============================================================================
 // Parser diagnostics
 // ============================================================================
@@ -162,7 +168,11 @@ CARBON_DIAGNOSTIC_KIND(SemanticsTodo)
 
 // Location context.
 CARBON_DIAGNOSTIC_KIND(InImport)
+CARBON_DIAGNOSTIC_KIND(InCppInclude)
+CARBON_DIAGNOSTIC_KIND(InCppModule)
+CARBON_DIAGNOSTIC_KIND(InCppMacroExpansion)
 CARBON_DIAGNOSTIC_KIND(ResolvingSpecificHere)
+CARBON_DIAGNOSTIC_KIND(InCppTypeCompletion)
 
 // Package/import checking diagnostics.
 CARBON_DIAGNOSTIC_KIND(CppInteropFuzzing)
@@ -171,6 +181,7 @@ CARBON_DIAGNOSTIC_KIND(CppInteropDriverError)
 CARBON_DIAGNOSTIC_KIND(CppInteropDriverWarning)
 CARBON_DIAGNOSTIC_KIND(CppInteropParseError)
 CARBON_DIAGNOSTIC_KIND(CppInteropParseWarning)
+CARBON_DIAGNOSTIC_KIND(CppInteropParseNote)
 CARBON_DIAGNOSTIC_KIND(IncorrectExtension)
 CARBON_DIAGNOSTIC_KIND(IncorrectExtensionImplNote)
 CARBON_DIAGNOSTIC_KIND(DuplicateLibraryApi)

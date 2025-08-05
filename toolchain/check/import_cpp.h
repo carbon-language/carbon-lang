@@ -30,6 +30,13 @@ auto ImportNameFromCpp(Context& context, SemIR::LocId loc_id,
                        SemIR::NameScopeId scope_id, SemIR::NameId name_id)
     -> SemIR::ScopeLookupResult;
 
+// Given a class declaration that was imported from C++, attempt to import a
+// corresponding class definition. Returns true if nothing went wrong (whether
+// or not a definition could be imported), false if a diagnostic was produced.
+auto ImportCppClassDefinition(Context& context, SemIR::LocId loc_id,
+                              SemIR::ClassId class_id,
+                              SemIR::ClangDeclId clang_decl_id) -> bool;
+
 }  // namespace Carbon::Check
 
 #endif  // CARBON_TOOLCHAIN_CHECK_IMPORT_CPP_H_

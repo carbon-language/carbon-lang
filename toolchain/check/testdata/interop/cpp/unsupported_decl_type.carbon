@@ -22,11 +22,18 @@ import Cpp library "template.h";
 
 fn F() {
   //@dump-sem-ir-begin
-  // CHECK:STDERR: fail_todo_use_template.carbon:[[@LINE+4]]:10: error: name `C` not found [NameNotFound]
-  // CHECK:STDERR:   var c: C({});
-  // CHECK:STDERR:          ^
+  // CHECK:STDERR: fail_todo_use_template.carbon:[[@LINE+11]]:10: error: semantics TODO: `Unsupported: Declaration type ClassTemplate` [SemanticsTodo]
+  // CHECK:STDERR:   var c: Cpp.C({});
+  // CHECK:STDERR:          ^~~~~
+  // CHECK:STDERR: fail_todo_use_template.carbon:[[@LINE+8]]:10: note: in `Cpp` name lookup for `C` [InCppNameLookup]
+  // CHECK:STDERR:   var c: Cpp.C({});
+  // CHECK:STDERR:          ^~~~~
   // CHECK:STDERR:
-  var c: C({});
+  // CHECK:STDERR: fail_todo_use_template.carbon:[[@LINE+4]]:10: error: member name `C` not found in `Cpp` [MemberNameNotFoundInInstScope]
+  // CHECK:STDERR:   var c: Cpp.C({});
+  // CHECK:STDERR:          ^~~~~
+  // CHECK:STDERR:
+  var c: Cpp.C({});
   //@dump-sem-ir-end
 }
 

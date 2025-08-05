@@ -234,7 +234,7 @@ static auto EmitAsConstant(ConstantContext& context, SemIR::IntValue inst)
 
   // IntLiteral is represented as an empty struct. All other integer types are
   // represented as an LLVM integer type.
-  auto* int_type = llvm::dyn_cast<llvm::IntegerType>(type);
+  auto* int_type = dyn_cast<llvm::IntegerType>(type);
   if (!int_type) {
     auto* int_literal_value = context.GetIntLiteralAsValue();
     CARBON_CHECK(int_literal_value->getType() == type);

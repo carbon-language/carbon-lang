@@ -123,36 +123,46 @@ class StepStack {
   auto PushArray(llvm::ArrayRef<PushItem> items) -> void {
     for (auto item : llvm::reverse(items)) {
       CARBON_KIND_SWITCH(item) {
-        case CARBON_KIND(InstId inst_id):
+        case CARBON_KIND(InstId inst_id): {
           PushInstId(inst_id);
           break;
-        case CARBON_KIND(llvm::StringRef string):
+        }
+        case CARBON_KIND(llvm::StringRef string): {
           PushString(string);
           break;
-        case CARBON_KIND(NameId name_id):
+        }
+        case CARBON_KIND(NameId name_id): {
           PushNameId(name_id);
           break;
-        case CARBON_KIND(ElementIndex element_index):
+        }
+        case CARBON_KIND(ElementIndex element_index): {
           PushElementIndex(element_index);
           break;
-        case CARBON_KIND(QualifiedNameItem qualified_name):
+        }
+        case CARBON_KIND(QualifiedNameItem qualified_name): {
           PushQualifiedName(qualified_name.first, qualified_name.second);
           break;
-        case CARBON_KIND(EntityNameItem entity_name):
+        }
+        case CARBON_KIND(EntityNameItem entity_name): {
           PushEntityName(entity_name.first, entity_name.second);
           break;
-        case CARBON_KIND(EntityNameId entity_name_id):
+        }
+        case CARBON_KIND(EntityNameId entity_name_id): {
           PushEntityNameId(entity_name_id);
           break;
-        case CARBON_KIND(TypeId type_id):
+        }
+        case CARBON_KIND(TypeId type_id): {
           PushTypeId(type_id);
           break;
-        case CARBON_KIND(SpecificInterface specific_interface):
+        }
+        case CARBON_KIND(SpecificInterface specific_interface): {
           PushSpecificInterface(specific_interface);
           break;
-        case CARBON_KIND(llvm::ListSeparator * sep):
+        }
+        case CARBON_KIND(llvm::ListSeparator * sep): {
           PushString(*sep);
           break;
+        }
       }
     }
   }

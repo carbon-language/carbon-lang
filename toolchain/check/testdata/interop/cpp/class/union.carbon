@@ -35,11 +35,13 @@ library "[[@TEST_NAME]]";
 import Cpp library "declaration.h";
 
 fn MyF() {
-  // CHECK:STDERR: fail_use_declaration_as_definition.carbon:[[@LINE+6]]:12: error: binding pattern has incomplete type `Bar` in name binding declaration [IncompleteTypeInBindingDecl]
+  // CHECK:STDERR: fail_use_declaration_as_definition.carbon:[[@LINE+8]]:12: error: binding pattern has incomplete type `Bar` in name binding declaration [IncompleteTypeInBindingDecl]
   // CHECK:STDERR:   var bar: Cpp.Bar;
   // CHECK:STDERR:            ^~~~~~~
-  // CHECK:STDERR: fail_use_declaration_as_definition.carbon:[[@LINE-6]]:1: in import [InImport]
-  // CHECK:STDERR: ./declaration.h:2: note: class was forward declared here [ClassForwardDeclaredHere]
+  // CHECK:STDERR: fail_use_declaration_as_definition.carbon:[[@LINE-6]]:10: in file included here [InCppInclude]
+  // CHECK:STDERR: ./declaration.h:2:7: note: class was forward declared here [ClassForwardDeclaredHere]
+  // CHECK:STDERR: union Bar;
+  // CHECK:STDERR:       ^
   // CHECK:STDERR:
   var bar: Cpp.Bar;
 }
@@ -160,32 +162,6 @@ fn MyF(bar : Cpp.Bar*) {
   let foo_bar: Cpp.Bar* = bar->foo;
 }
 //@dump-sem-ir-end
-
-// ============================================================================
-// To inherit public
-// ============================================================================
-
-// --- to_inherit_public.h
-
-union Bar {
- public:
-  static auto foo() -> void;
-};
-
-// --- todo_fail_import_to_inherit_public.carbon
-
-library "[[@TEST_NAME]]";
-
-import Cpp library "to_inherit_public.h";
-
-class Derived {
-  // TODO: Presumably we should disallow deriving from a union.
-  extend base: Cpp.Bar;
-}
-
-fn MyF() {
-  Derived.foo();
-}
 
 // ============================================================================
 // Template
@@ -387,10 +363,10 @@ fn MyF(bar: Cpp.Bar*);
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %Bar: type = class_type @Bar [concrete]
 // CHECK:STDOUT:   %ptr.f68: type = ptr_type %Bar [concrete]
-// CHECK:STDOUT:   %Bar.elem: type = unbound_element_type %Bar, %ptr.f68 [concrete]
 // CHECK:STDOUT:   %pattern_type: type = pattern_type %ptr.f68 [concrete]
 // CHECK:STDOUT:   %MyF.type: type = fn_type @MyF [concrete]
 // CHECK:STDOUT:   %MyF: %MyF.type = struct_value () [concrete]
+// CHECK:STDOUT:   %Bar.elem: type = unbound_element_type %Bar, %ptr.f68 [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {

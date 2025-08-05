@@ -39,19 +39,27 @@ fn Run() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %Cycle: type = class_type @Cycle [concrete]
-// CHECK:STDOUT:   %ptr: type = ptr_type %Cycle [concrete]
-// CHECK:STDOUT:   %struct_type.b: type = struct_type {.b: %ptr} [concrete]
-// CHECK:STDOUT:   %pattern_type: type = pattern_type %struct_type.b [concrete]
+// CHECK:STDOUT:   %ptr.257: type = ptr_type %Cycle [concrete]
+// CHECK:STDOUT:   %struct_type.b: type = struct_type {.b: %ptr.257} [concrete]
+// CHECK:STDOUT:   %pattern_type.afd: type = pattern_type %struct_type.b [concrete]
 // CHECK:STDOUT:   %Cycle.elem: type = unbound_element_type %Cycle, %struct_type.b [concrete]
+// CHECK:STDOUT:   %Destroy.type: type = facet_type <@Destroy> [concrete]
+// CHECK:STDOUT:   %pattern_type.f6d: type = pattern_type auto [concrete]
+// CHECK:STDOUT:   %Destroy.impl_witness: <witness> = impl_witness @Cycle.%Destroy.impl_witness_table [concrete]
+// CHECK:STDOUT:   %pattern_type.d3d: type = pattern_type %ptr.257 [concrete]
+// CHECK:STDOUT:   %Cycle.as.Destroy.impl.Op.type: type = fn_type @Cycle.as.Destroy.impl.Op [concrete]
+// CHECK:STDOUT:   %Cycle.as.Destroy.impl.Op: %Cycle.as.Destroy.impl.Op.type = struct_value () [concrete]
 // CHECK:STDOUT:   %struct_type.c: type = struct_type {.c: %struct_type.b} [concrete]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %struct_type.c [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [concrete] {
+// CHECK:STDOUT:     .Destroy = %Core.Destroy
 // CHECK:STDOUT:     import Core//prelude
 // CHECK:STDOUT:     import Core//prelude/...
 // CHECK:STDOUT:   }
+// CHECK:STDOUT:   %Core.Destroy: type = import_ref Core//prelude/parts/destroy, Destroy, loaded [concrete = constants.%Destroy.type]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -63,24 +71,43 @@ fn Run() {
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %Cycle.decl.loc4: type = class_decl @Cycle [concrete = constants.%Cycle] {} {}
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %a.patt: %pattern_type = binding_pattern a [concrete]
-// CHECK:STDOUT:     %a.var_patt: %pattern_type = var_pattern %a.patt [concrete]
+// CHECK:STDOUT:     %a.patt: %pattern_type.afd = binding_pattern a [concrete]
+// CHECK:STDOUT:     %a.var_patt: %pattern_type.afd = var_pattern %a.patt [concrete]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %a.var: ref %struct_type.b = var %a.var_patt [concrete]
 // CHECK:STDOUT:   %.loc6: type = splice_block %struct_type.b [concrete = constants.%struct_type.b] {
 // CHECK:STDOUT:     %Cycle.ref: type = name_ref Cycle, %Cycle.decl.loc4 [concrete = constants.%Cycle]
-// CHECK:STDOUT:     %ptr: type = ptr_type %Cycle.ref [concrete = constants.%ptr]
-// CHECK:STDOUT:     %struct_type.b: type = struct_type {.b: %ptr} [concrete = constants.%struct_type.b]
+// CHECK:STDOUT:     %ptr: type = ptr_type %Cycle.ref [concrete = constants.%ptr.257]
+// CHECK:STDOUT:     %struct_type.b: type = struct_type {.b: %ptr.257} [concrete = constants.%struct_type.b]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %a: ref %struct_type.b = bind_name a, %a.var [concrete = %a.var]
 // CHECK:STDOUT:   %Cycle.decl.loc8: type = class_decl @Cycle [concrete = constants.%Cycle] {} {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
+// CHECK:STDOUT: impl @Cycle.as.Destroy.impl: constants.%Cycle as constants.%Destroy.type {
+// CHECK:STDOUT:   %Cycle.as.Destroy.impl.Op.decl: %Cycle.as.Destroy.impl.Op.type = fn_decl @Cycle.as.Destroy.impl.Op [concrete = constants.%Cycle.as.Destroy.impl.Op] {
+// CHECK:STDOUT:     %self.patt: %pattern_type.d3d = binding_pattern self [concrete]
+// CHECK:STDOUT:     %self.param_patt: %pattern_type.d3d = value_param_pattern %self.patt, call_param0 [concrete]
+// CHECK:STDOUT:     %.loc8: %pattern_type.f6d = addr_pattern %self.param_patt [concrete]
+// CHECK:STDOUT:   } {
+// CHECK:STDOUT:     %self.param: %ptr.257 = value_param call_param0
+// CHECK:STDOUT:     %Self.ref: type = name_ref Self, constants.%Cycle [concrete = constants.%Cycle]
+// CHECK:STDOUT:     %self: %ptr.257 = bind_name self, %self.param
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:
+// CHECK:STDOUT: !members:
+// CHECK:STDOUT:   .Op = %Cycle.as.Destroy.impl.Op.decl
+// CHECK:STDOUT:   witness = @Cycle.%Destroy.impl_witness
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
 // CHECK:STDOUT: class @Cycle {
 // CHECK:STDOUT:   %Cycle.ref: type = name_ref Cycle, file.%Cycle.decl.loc4 [concrete = constants.%Cycle]
-// CHECK:STDOUT:   %ptr: type = ptr_type %Cycle.ref [concrete = constants.%ptr]
-// CHECK:STDOUT:   %struct_type.b: type = struct_type {.b: %ptr} [concrete = constants.%struct_type.b]
+// CHECK:STDOUT:   %ptr: type = ptr_type %Cycle.ref [concrete = constants.%ptr.257]
+// CHECK:STDOUT:   %struct_type.b: type = struct_type {.b: %ptr.257} [concrete = constants.%struct_type.b]
 // CHECK:STDOUT:   %.loc10: %Cycle.elem = field_decl c, element0 [concrete]
+// CHECK:STDOUT:   impl_decl @Cycle.as.Destroy.impl [concrete] {} {}
+// CHECK:STDOUT:   %Destroy.impl_witness_table = impl_witness_table (@Cycle.as.Destroy.impl.%Cycle.as.Destroy.impl.Op.decl), @Cycle.as.Destroy.impl [concrete]
+// CHECK:STDOUT:   %Destroy.impl_witness: <witness> = impl_witness %Destroy.impl_witness_table [concrete = constants.%Destroy.impl_witness]
 // CHECK:STDOUT:   %struct_type.c: type = struct_type {.c: %struct_type.b} [concrete = constants.%struct_type.c]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %struct_type.c [concrete = constants.%complete_type]
 // CHECK:STDOUT:   complete_type_witness = %complete_type
@@ -90,6 +117,8 @@ fn Run() {
 // CHECK:STDOUT:   .Cycle = <poisoned>
 // CHECK:STDOUT:   .c = %.loc10
 // CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: fn @Cycle.as.Destroy.impl.Op(%self.param: %ptr.257) = "no_op";
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- b.carbon
 // CHECK:STDOUT:

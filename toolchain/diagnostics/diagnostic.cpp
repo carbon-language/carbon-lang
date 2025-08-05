@@ -24,6 +24,17 @@ auto Loc::FormatLocation(llvm::raw_ostream& out) const -> void {
 }
 
 auto Loc::FormatSnippet(llvm::raw_ostream& out, int indent) const -> void {
+  if (!snippet.empty()) {
+    llvm::StringRef snippet_ref = snippet;
+    do {
+      auto [snippet_line, rest] = snippet_ref.split('\n');
+      out.indent(indent);
+      out << snippet_line << "\n";
+      snippet_ref = rest;
+    } while (!snippet_ref.empty());
+    return;
+  }
+
   if (column_number == -1) {
     return;
   }
@@ -33,6 +44,7 @@ auto Loc::FormatSnippet(llvm::raw_ostream& out, int indent) const -> void {
 
   out.indent(indent);
   out << line << "\n";
+
   out.indent(indent + column);
   out << "^";
   // We want to ensure that we don't underline past the end of the line in
