@@ -435,8 +435,7 @@ static auto ClangLookup(Context& context, SemIR::LocId loc_id,
       context.TODO(loc_id,
                    llvm::formatv("Unsupported: Lookup succeeded but couldn't "
                                  "find a single result; LookupResultKind: {0}",
-                                 static_cast<int>(lookup->getResultKind()))
-                       .str());
+                                 static_cast<int>(lookup->getResultKind())));
       return nullptr;
     }
 
