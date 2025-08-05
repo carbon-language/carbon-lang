@@ -1203,7 +1203,7 @@ static auto GetReturnTypeExpr(Context& context, SemIR::LocId loc_id,
     return mapped_type;
   }
 
-  if (!isa<clang::CXXConstructorDecl>(clang_decl)) {
+  if (!clang::isa<clang::CXXConstructorDecl>(clang_decl)) {
     // void.
     return {.inst_id = SemIR::TypeInstId::None, .type_id = SemIR::TypeId::None};
   }
