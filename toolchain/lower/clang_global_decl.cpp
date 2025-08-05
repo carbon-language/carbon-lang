@@ -3,9 +3,6 @@
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
 #include "toolchain/lower/clang_global_decl.h"
-
-// #include "llvm/ADT/STLExtras.h"
-
 namespace Carbon::Lower {
 
 auto CreateGlobalDecl(const clang::NamedDecl* decl) -> clang::GlobalDecl {
