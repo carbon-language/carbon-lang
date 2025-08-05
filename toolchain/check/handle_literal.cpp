@@ -36,11 +36,13 @@ auto HandleParseNode(Context& context, Parse::BoolLiteralTrueId node_id)
 }
 
 auto HandleParseNode(Context& context, Parse::CharLiteralId node_id) -> bool {
-  auto int_literal_id =
-      MakeCharLiteral(context, node_id,
-                      context.tokens().GetCharLiteralValue(
-                          context.parse_tree().node_token(node_id)));
-  context.node_stack().Push(node_id, int_literal_id);
+  auto value = context.tokens().GetCharLiteralValue(
+      context.parse_tree().node_token(node_id));
+  auto inst_id = AddInst<SemIR::CharLiteralValue>(
+      context, node_id,
+      {.type_id = GetSingletonType(context, SemIR::CharLiteralType::TypeInstId),
+       .value = SemIR::CharId(value.value)});
+  context.node_stack().Push(node_id, inst_id);
   return true;
 }
 

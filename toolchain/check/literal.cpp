@@ -14,14 +14,6 @@
 
 namespace Carbon::Check {
 
-auto MakeCharLiteral(Context& context, Parse::NodeId node_id,
-                     Lex::CharLiteralValue value) -> SemIR::InstId {
-  return AddInst<SemIR::CharLiteralValue>(
-      context, node_id,
-      {.type_id = GetSingletonType(context, SemIR::CharLiteralType::TypeInstId),
-       .value = SemIR::CharId(value.value)});
-}
-
 auto MakeIntLiteral(Context& context, Parse::NodeId node_id, IntId int_id)
     -> SemIR::InstId {
   return AddInst<SemIR::IntValue>(
