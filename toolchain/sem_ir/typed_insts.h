@@ -1026,7 +1026,7 @@ struct IntType {
   InstId bit_width_id;
 };
 
-// A literal integer value.
+// An integer value.
 struct IntValue {
   // TODO: Make Parse::NodeId more specific.
   static constexpr auto Kind = InstKind::IntValue.Define<Parse::NodeId>(
