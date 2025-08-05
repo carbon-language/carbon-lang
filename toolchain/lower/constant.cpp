@@ -222,7 +222,7 @@ static auto EmitAsConstant(ConstantContext& context, SemIR::FieldDecl inst)
   return context.GetUnusedConstant(inst.type_id);
 }
 
-static auto EmitAsConstant(ConstantContext& context, SemIR::FloatLiteral inst)
+static auto EmitAsConstant(ConstantContext& context, SemIR::FloatValue inst)
     -> llvm::Constant* {
   const llvm::APFloat& value = context.sem_ir().floats().Get(inst.float_id);
   return llvm::ConstantFP::get(context.GetType(inst.type_id), value);

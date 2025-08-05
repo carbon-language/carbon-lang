@@ -662,11 +662,11 @@ struct FieldDecl {
   ElementIndex index;
 };
 
-// A literal floating point value.
-struct FloatLiteral {
+// A floating point value.
+struct FloatValue {
   static constexpr auto Kind =
-      InstKind::FloatLiteral.Define<Parse::RealLiteralId>(
-          {.ir_name = "float_literal",
+      InstKind::FloatValue.Define<Parse::RealLiteralId>(
+          {.ir_name = "float_value",
            .constant_kind = InstConstantKind::Always});
 
   TypeId type_id;

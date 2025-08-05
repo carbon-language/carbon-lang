@@ -80,7 +80,7 @@ auto HandleParseNode(Context& context, Parse::RealLiteralId node_id) -> bool {
                                real_value.exponent.getSExtValue());
 
   auto float_id = context.sem_ir().floats().Add(llvm::APFloat(double_val));
-  AddInstAndPush<SemIR::FloatLiteral>(
+  AddInstAndPush<SemIR::FloatValue>(
       context, node_id,
       {.type_id = GetSingletonType(context, SemIR::LegacyFloatType::TypeInstId),
        .float_id = float_id});
