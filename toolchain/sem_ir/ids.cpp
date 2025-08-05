@@ -5,6 +5,7 @@
 #include "toolchain/sem_ir/ids.h"
 
 #include "llvm/Support/ConvertUTF.h"
+#include "llvm/Support/NativeFormatting.h"
 #include "toolchain/base/value_ids.h"
 #include "toolchain/sem_ir/singleton_insts.h"
 #include "toolchain/sem_ir/typed_insts.h"
@@ -61,20 +62,10 @@ auto BoolValue::Print(llvm::raw_ostream& out) const -> void {
 }
 
 auto CharId::Print(llvm::raw_ostream& out) const -> void {
-  char utf8[UNI_MAX_UTF8_BYTES_PER_CODE_POINT + 1];
-  char* result = utf8;
-  if (llvm::ConvertCodePointToUTF8(index, result)) {
-    // TODO: If we switch to C++23, `std::format("`{:?}`")` might be a better
-    // choice.
-    out << "'"
-        << FormatEscaped(llvm::StringRef(utf8, result - utf8),
-                         /*use_hex_escapes=*/true)
-        << "'";
-  } else {
-    out << "'\\u{";
-    out.write_hex(index);
-    out << "}'";
-  }
+  // TODO: If we switch to C++23, `std::format("`{:?}`")` might be a better
+  // choice.
+  out << "U+";
+  llvm::write_hex(out, index, llvm::HexPrintStyle::Upper);
 }
 
 auto IntKind::Print(llvm::raw_ostream& out) const -> void {

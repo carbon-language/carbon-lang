@@ -213,11 +213,10 @@ static auto EmitAsConstant(ConstantContext& context, SemIR::BoundMethod inst)
 }
 
 static auto EmitAsConstant(ConstantContext& context,
-                           SemIR::CharLiteralValue inst) -> llvm::Constant* {
-  CARBON_CHECK(context.sem_ir().types().GetObjectRepr(inst.type_id) ==
-               SemIR::CharLiteralType::TypeId);
-  return llvm::ConstantInt::get(llvm::Type::getInt32Ty(context.llvm_context()),
-                                inst.value.index);
+                           SemIR::CharLiteralValue /*inst*/)
+    -> llvm::Constant* {
+  return llvm::ConstantStruct::get(
+      llvm::StructType::get(context.llvm_context()));
 }
 
 static auto EmitAsConstant(ConstantContext& context,
