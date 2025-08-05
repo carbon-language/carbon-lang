@@ -446,11 +446,10 @@ static auto ClangLookup(Context& context, SemIR::NameScopeId scope_id,
   auto scope_clang_decl_context_id =
       context.name_scopes().Get(scope_id).clang_decl_context_id();
   bool found = sema.LookupQualifiedName(
-      lookup,
-      clang::dyn_cast<clang::DeclContext>(context.sem_ir()
-                                              .clang_decls()
-                                              .Get(scope_clang_decl_context_id)
-                                              .decl));
+      lookup, dyn_cast<clang::DeclContext>(context.sem_ir()
+                                               .clang_decls()
+                                               .Get(scope_clang_decl_context_id)
+                                               .decl));
 
   if (!found) {
     return std::nullopt;
@@ -720,7 +719,7 @@ static auto ImportClassObjectRepr(Context& context, SemIR::ClassId class_id,
 
   // Import fields.
   for (auto* decl : clang_def->decls()) {
-    auto* field = clang::dyn_cast<clang::FieldDecl>(decl);
+    auto* field = dyn_cast<clang::FieldDecl>(decl);
 
     // Track the chain of fields from the class to this field. This chain is
     // only one element long unless the field is a member of an anonymous struct
@@ -731,7 +730,7 @@ static auto ImportClassObjectRepr(Context& context, SemIR::ClassId class_id,
     // If this isn't a field, it might be an indirect field in an anonymous
     // struct or union.
     if (!field) {
-      auto* indirect_field = clang::dyn_cast<clang::IndirectFieldDecl>(decl);
+      auto* indirect_field = dyn_cast<clang::IndirectFieldDecl>(decl);
       if (!indirect_field) {
         continue;
       }
@@ -773,12 +772,12 @@ static auto ImportClassObjectRepr(Context& context, SemIR::ClassId class_id,
 
     // Compute the offset to the field that appears directly in the class.
     uint64_t offset = clang_layout.getFieldOffset(
-        clang::cast<clang::FieldDecl>(chain.front())->getFieldIndex());
+        cast<clang::FieldDecl>(chain.front())->getFieldIndex());
 
     // If this is an indirect field, walk the path and accumulate the offset to
     // the named field.
     for (auto* inner_decl : chain.drop_front()) {
-      auto* inner_field = clang::cast<clang::FieldDecl>(inner_decl);
+      auto* inner_field = cast<clang::FieldDecl>(inner_decl);
       const auto& inner_layout =
           context.ast_context().getASTRecordLayout(inner_field->getParent());
       offset += inner_layout.getFieldOffset(inner_field->getFieldIndex());
@@ -930,7 +929,7 @@ static auto MapBuiltinType(Context& context, clang::QualType qual_type,
 // Maps a C++ record type to a Carbon type.
 static auto MapRecordType(Context& context, const clang::RecordType& type)
     -> TypeExpr {
-  auto* record_decl = clang::dyn_cast<clang::CXXRecordDecl>(type.getDecl());
+  auto* record_decl = dyn_cast<clang::CXXRecordDecl>(type.getDecl());
   if (!record_decl) {
     return {.inst_id = SemIR::TypeInstId::None, .type_id = SemIR::TypeId::None};
   }
@@ -1407,7 +1406,7 @@ static auto AddDependentUnimportedDecls(const Context& context,
 
   if (auto* clang_function_decl = clang_decl->getAsFunction()) {
     AddDependentUnimportedFunctionDecls(context, *clang_function_decl, decls);
-  } else if (auto* type_decl = clang::dyn_cast<clang::TypeDecl>(clang_decl)) {
+  } else if (auto* type_decl = dyn_cast<clang::TypeDecl>(clang_decl)) {
     AddDependentUnimportedTypeDecls(
         context, type_decl->getASTContext().getTypeDeclType(type_decl), decls);
   }
@@ -1422,11 +1421,10 @@ static auto ImportDeclAfterDependencies(Context& context, SemIR::LocId loc_id,
   if (auto* clang_function_decl = clang_decl->getAsFunction()) {
     return ImportFunctionDecl(context, loc_id, clang_function_decl);
   }
-  if (auto* clang_namespace_decl =
-          clang::dyn_cast<clang::NamespaceDecl>(clang_decl)) {
+  if (auto* clang_namespace_decl = dyn_cast<clang::NamespaceDecl>(clang_decl)) {
     return ImportNamespaceDecl(context, clang_namespace_decl);
   }
-  if (auto* type_decl = clang::dyn_cast<clang::TypeDecl>(clang_decl)) {
+  if (auto* type_decl = dyn_cast<clang::TypeDecl>(clang_decl)) {
     auto type = type_decl->getASTContext().getTypeDeclType(type_decl);
     auto type_inst_id = MapType(context, loc_id, type).inst_id;
     if (!type_inst_id.has_value()) {
@@ -1436,7 +1434,7 @@ static auto ImportDeclAfterDependencies(Context& context, SemIR::LocId loc_id,
     }
     return type_inst_id;
   }
-  if (clang::isa<clang::FieldDecl, clang::IndirectFieldDecl>(clang_decl)) {
+  if (isa<clang::FieldDecl, clang::IndirectFieldDecl>(clang_decl)) {
     // Usable fields get imported as a side effect of importing the class.
     if (SemIR::InstId existing_inst_id =
             LookupClangDeclInstId(context, clang_decl);
