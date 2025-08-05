@@ -1329,7 +1329,7 @@ static auto StartImportFunctionDecl(Context& context, SemIR::LocId loc_id,
        .clang_decl_id = context.sem_ir().clang_decls().Add(
            {.decl = clang_decl, .inst_id = decl_id})}};
 
-  return std::make_tuple(std::move(function_decl), std::move(function_info));
+  return std::make_tuple(function_decl, std::move(function_info));
 }
 
 // Adds the `Function` to the context and finishes setting up the
