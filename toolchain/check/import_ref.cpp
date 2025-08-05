@@ -1995,24 +1995,28 @@ static auto TryResolveTypedInst(ImportRefResolver& resolver,
     auto local_attached_constant_id = GetLocalConstantId(
         resolver,
         resolver.import_constant_values().GetAttached(vtable_entry_id));
-    if (resolver.HasNewWork()) {
-      continue;
-    }
+    lazy_virtual_functions.push_back(
+        resolver.local_constant_values().GetInstIdIfValid(
+            local_attached_constant_id));
+  }
+
+  if (resolver.HasNewWork()) {
+    return ResolveResult::Retry();
+  }
+
+  for (auto& vtable_entry_id : lazy_virtual_functions) {
     // Use LoadedImportRef for imported symbolic constant vtable entries so they
     // can carry attached constants necessary for applying specifics to these
     // constants when they are used.
-    lazy_virtual_functions.push_back(
-        local_attached_constant_id.is_symbolic()
-            ? AddLoadedImportRef(
-                  resolver,
-                  GetSingletonType(resolver.local_context(),
-                                   SemIR::SpecificFunctionType::TypeInstId),
-                  vtable_entry_id, local_attached_constant_id)
-            : resolver.local_constant_values().GetInstId(
-                  local_attached_constant_id));
-  }
-  if (resolver.HasNewWork()) {
-    return ResolveResult::Retry();
+    auto local_attached_constant_id =
+        resolver.local_constant_values().Get(vtable_entry_id);
+    if (local_attached_constant_id.is_symbolic()) {
+      vtable_entry_id = AddLoadedImportRef(
+          resolver,
+          GetSingletonType(resolver.local_context(),
+                           SemIR::SpecificFunctionType::TypeInstId),
+          vtable_entry_id, local_attached_constant_id);
+    }
   }
 
   auto new_vtable_id = resolver.local_vtables().Add(
