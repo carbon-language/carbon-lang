@@ -1121,18 +1121,18 @@ inline auto Internal::FileRefBase::Seek(int64_t delta)
   return byte_offset;
 }
 
-inline auto Internal::FileRefBase::SeekFromBeginning(int64_t pos)
-    -> ErrorOr<int64_t, FdError> {
-  int64_t byte_offset = lseek(fd_, pos, SEEK_SET);
+inline auto Internal::FileRefBase::SeekFromBeginning(
+    int64_t delta_from_beginning) -> ErrorOr<int64_t, FdError> {
+  int64_t byte_offset = lseek(fd_, delta_from_beginning, SEEK_SET);
   if (byte_offset == -1) {
     return FdError(errno, "File::SeekTo on '{0}'", fd_);
   }
   return byte_offset;
 }
 
-inline auto Internal::FileRefBase::SeekFromEnd(int64_t delta)
+inline auto Internal::FileRefBase::SeekFromEnd(int64_t delta_from_end)
     -> ErrorOr<int64_t, FdError> {
-  int64_t byte_offset = lseek(fd_, delta, SEEK_END);
+  int64_t byte_offset = lseek(fd_, delta_from_end, SEEK_END);
   if (byte_offset == -1) {
     return FdError(errno, "File::SeekFromEnd on '{0}'", fd_);
   }
