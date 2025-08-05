@@ -291,7 +291,7 @@ class Internal::FileRefBase {
   // Methods to seek the current file position, with various semantics for the
   // offset.
   auto Seek(int64_t delta) -> ErrorOr<int64_t, FdError>;
-  auto SeekFromBeginning(int64_t pos) -> ErrorOr<int64_t, FdError>;
+  auto SeekFromBeginning(int64_t delta_from_beginning) -> ErrorOr<int64_t, FdError>;
   auto SeekFromEnd(int64_t delta_from_end) -> ErrorOr<int64_t, FdError>;
 
   // Reads as much data as is available and fits into the provided buffer.
@@ -613,7 +613,7 @@ class DirRef {
   // replace the created directory with one that is controlled by the adversary.
   //
   // Specifically, for `CreateNew` we ensure that the last component is a
-  // created directory in its parent, and  cannot be replaced by a symlink into
+  // created directory in its parent, and cannot be replaced by a symlink into
   // an attacker-controlled directory. We further ensure it cannot have been
   // replaced by a directory with a different owner or with wider permissions
   // than the created directory.
@@ -623,7 +623,7 @@ class DirRef {
   // creation should have a single component from an opened existing parent
   // directory. Also, no validation of the owning _group_ is performed. When
   // securely creating a directory, the caller should either ensure the parent
-  // directory does not have a malicious setgid bit set, or restriction the
+  // directory does not have a malicious setgid bit set, or restrict the
   // created mode to not give group access, or both. In general, the lack of
   // control over the owning group motivates our choice to make the default mode
   // permissions restrictive and not include any group access.
@@ -865,13 +865,13 @@ class DirRef::Entry {
   auto name() const -> const char* { return dent_->d_name; }
 
   // Test if the entry has an unknown type. In this case, all other type
-  // predicates will return false and the caller will have to directly `lstat`
+  // predicates will return false and the caller will have to directly `Lstat()`
   // the entry to determine its type.
   auto is_unknown_type() const -> bool { return dent_->d_type == DT_UNKNOWN; }
 
   // Predicates to test for known entry types.
   //
-  // Note that we don't provide an enumerator here as we don't have any reliably
+  // Note that we don't provide an enumerator here as we don't have any reliable
   // way to predict the set of possible values or narrow to that set. Different
   // platforms and even different versions of the same header may change the set
   // of types surfaced here.
