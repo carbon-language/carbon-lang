@@ -18,6 +18,7 @@
 #include "toolchain/base/int.h"
 #include "toolchain/base/value_store.h"
 #include "toolchain/sem_ir/id_kind.h"
+#include "toolchain/sem_ir/ids.h"
 #include "toolchain/sem_ir/inst_kind.h"
 #include "toolchain/sem_ir/singleton_insts.h"
 #include "toolchain/sem_ir/typed_insts.h"
@@ -500,6 +501,10 @@ class InstStore {
     return Get(inst_id).TryAs<InstT>();
   }
 
+  // Use `GetAs()` when the instruction type is known.
+  template <typename InstT>
+  auto TryGetAs(KnownInstId<InstT> inst_id) const = delete;
+
   // Returns the requested instruction as the specified type, if it is valid and
   // of that type. Otherwise returns nullopt.
   template <typename InstT>
@@ -508,6 +513,36 @@ class InstStore {
       return std::nullopt;
     }
     return TryGetAs<InstT>(inst_id);
+  }
+
+  template <class InstT>
+  struct GetAsWithIdResult {
+    SemIR::KnownInstId<InstT> inst_id;
+    InstT inst;
+  };
+
+  // Returns the requested instruction, which is known to have the specified
+  // type, along with the original `InstId`, encoding the work of checking its
+  // type in a `KnownInstId`.
+  template <typename InstT>
+  auto GetAsWithId(InstId inst_id) const -> GetAsWithIdResult<InstT> {
+    auto inst = GetAs<InstT>(inst_id);
+    return {.inst_id = SemIR::KnownInstId<InstT>::UnsafeMake(inst_id),
+            .inst = inst};
+  }
+
+  // Returns the requested instruction, if it is of that type, along with the
+  // original `InstId`, encoding the work of checking its type in a
+  // `KnownInstId`.
+  template <typename InstT>
+  auto TryGetAsWithId(InstId inst_id) const
+      -> std::optional<GetAsWithIdResult<InstT>> {
+    auto inst = TryGetAs<InstT>(inst_id);
+    if (!inst) {
+      return std::nullopt;
+    }
+    return {{.inst_id = SemIR::KnownInstId<InstT>::UnsafeMake(inst_id),
+             .inst = *inst}};
   }
 
   // Attempts to convert the given instruction to the type that contains
