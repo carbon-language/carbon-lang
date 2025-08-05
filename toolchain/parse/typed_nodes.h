@@ -284,7 +284,7 @@ struct PackageDecl {
   Lex::SemiTokenIndex token;
 };
 
-// `import [TheirPackage] [library "TheirLibrary"] [inline "code"];`
+// `import [TheirPackage] [library "TheirLibrary" | inline "code"];`
 using ImportIntroducer =
     LeafNode<NodeKind::ImportIntroducer, Lex::ImportTokenIndex>;
 struct ImportDecl {

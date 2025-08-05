@@ -34,6 +34,10 @@ import Cpp library "foo.h" inline "bar";
 // CHECK:STDERR:
 import library "foo.h" inline "bar";
 
+// --- fail_no_semi_at_eof.carbon
+
+import Cpp inline
+
 // --- fail_package_inline.carbon
 
 // CHECK:STDERR: fail_package_inline.carbon:[[@LINE+4]]:16: error: `package` declarations must end with a `;` [ExpectedDeclSemi]
