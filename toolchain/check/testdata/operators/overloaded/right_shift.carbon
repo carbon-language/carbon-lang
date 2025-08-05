@@ -43,6 +43,7 @@ fn TestAssign(a: C*, b: C) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %C: type = class_type @C [concrete]
+// CHECK:STDOUT:   %ptr.019: type = ptr_type %C [concrete]
 // CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [concrete]
 // CHECK:STDOUT:   %RightShiftWith.type.bd6: type = facet_type <@RightShiftWith, @RightShiftWith(%C)> [concrete]
 // CHECK:STDOUT:   %RightShiftWith.Op.type.19b: type = fn_type @RightShiftWith.Op, @RightShiftWith(%C) [concrete]
@@ -53,7 +54,6 @@ fn TestAssign(a: C*, b: C) {
 // CHECK:STDOUT:   %RightShiftAssignWith.type.cd0: type = facet_type <@RightShiftAssignWith, @RightShiftAssignWith(%C)> [concrete]
 // CHECK:STDOUT:   %RightShiftAssignWith.Op.type.ae9: type = fn_type @RightShiftAssignWith.Op, @RightShiftAssignWith(%C) [concrete]
 // CHECK:STDOUT:   %RightShiftAssignWith.impl_witness: <witness> = impl_witness file.%RightShiftAssignWith.impl_witness_table [concrete]
-// CHECK:STDOUT:   %ptr.019: type = ptr_type %C [concrete]
 // CHECK:STDOUT:   %C.as.RightShiftAssignWith.impl.Op.type: type = fn_type @C.as.RightShiftAssignWith.impl.Op [concrete]
 // CHECK:STDOUT:   %C.as.RightShiftAssignWith.impl.Op: %C.as.RightShiftAssignWith.impl.Op.type = struct_value () [concrete]
 // CHECK:STDOUT:   %RightShiftAssignWith.facet: %RightShiftAssignWith.type.cd0 = facet_value %C, (%RightShiftAssignWith.impl_witness) [concrete]
@@ -69,9 +69,9 @@ fn TestAssign(a: C*, b: C) {
 // CHECK:STDOUT:   %a.ref: %C = name_ref a, %a
 // CHECK:STDOUT:   %b.ref: %C = name_ref b, %b
 // CHECK:STDOUT:   %impl.elem1: %.982 = impl_witness_access constants.%RightShiftWith.impl_witness, element1 [concrete = constants.%C.as.RightShiftWith.impl.Op]
-// CHECK:STDOUT:   %bound_method.loc32: <bound method> = bound_method %a.ref, %impl.elem1
+// CHECK:STDOUT:   %bound_method: <bound method> = bound_method %a.ref, %impl.elem1
 // CHECK:STDOUT:   <elided>
-// CHECK:STDOUT:   %C.as.RightShiftWith.impl.Op.call: init %C = call %bound_method.loc32(%a.ref, %b.ref) to %.loc30
+// CHECK:STDOUT:   %C.as.RightShiftWith.impl.Op.call: init %C = call %bound_method(%a.ref, %b.ref) to %.loc30
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT:   return %C.as.RightShiftWith.impl.Op.call to %return
 // CHECK:STDOUT: }

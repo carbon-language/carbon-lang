@@ -105,9 +105,21 @@ var e: C = MakeAdaptC();
 // CHECK:STDOUT:   %Int.generic: %Int.type = struct_value () [concrete]
 // CHECK:STDOUT:   %i32: type = class_type @Int, @Int(%int_32) [concrete]
 // CHECK:STDOUT:   %C.elem: type = unbound_element_type %C, %i32 [concrete]
+// CHECK:STDOUT:   %Destroy.type: type = facet_type <@Destroy> [concrete]
+// CHECK:STDOUT:   %pattern_type.f6d: type = pattern_type auto [concrete]
+// CHECK:STDOUT:   %Destroy.impl_witness.edd: <witness> = impl_witness @C.%Destroy.impl_witness_table [concrete]
+// CHECK:STDOUT:   %ptr.019: type = ptr_type %C [concrete]
+// CHECK:STDOUT:   %pattern_type.44a: type = pattern_type %ptr.019 [concrete]
+// CHECK:STDOUT:   %C.as.Destroy.impl.Op.type: type = fn_type @C.as.Destroy.impl.Op [concrete]
+// CHECK:STDOUT:   %C.as.Destroy.impl.Op: %C.as.Destroy.impl.Op.type = struct_value () [concrete]
 // CHECK:STDOUT:   %struct_type.a.b.501: type = struct_type {.a: %i32, .b: %i32} [concrete]
 // CHECK:STDOUT:   %complete_type.705: <witness> = complete_type_witness %struct_type.a.b.501 [concrete]
 // CHECK:STDOUT:   %AdaptC: type = class_type @AdaptC [concrete]
+// CHECK:STDOUT:   %Destroy.impl_witness.d92: <witness> = impl_witness @AdaptC.%Destroy.impl_witness_table [concrete]
+// CHECK:STDOUT:   %ptr.b20: type = ptr_type %AdaptC [concrete]
+// CHECK:STDOUT:   %pattern_type.d7e: type = pattern_type %ptr.b20 [concrete]
+// CHECK:STDOUT:   %AdaptC.as.Destroy.impl.Op.type: type = fn_type @AdaptC.as.Destroy.impl.Op [concrete]
+// CHECK:STDOUT:   %AdaptC.as.Destroy.impl.Op: %AdaptC.as.Destroy.impl.Op.type = struct_value () [concrete]
 // CHECK:STDOUT:   %pattern_type.c48: type = pattern_type %C [concrete]
 // CHECK:STDOUT:   %int_1.5b8: Core.IntLiteral = int_value 1 [concrete]
 // CHECK:STDOUT:   %int_2.ecc: Core.IntLiteral = int_value 2 [concrete]
@@ -142,11 +154,13 @@ var e: C = MakeAdaptC();
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [concrete] {
 // CHECK:STDOUT:     .Int = %Core.Int
+// CHECK:STDOUT:     .Destroy = %Core.Destroy
 // CHECK:STDOUT:     .ImplicitAs = %Core.ImplicitAs
 // CHECK:STDOUT:     import Core//prelude
 // CHECK:STDOUT:     import Core//prelude/...
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.Int: %Int.type = import_ref Core//prelude/parts/int, Int, loaded [concrete = constants.%Int.generic]
+// CHECK:STDOUT:   %Core.Destroy: type = import_ref Core//prelude/parts/destroy, Destroy, loaded [concrete = constants.%Destroy.type]
 // CHECK:STDOUT:   %Core.ImplicitAs: %ImplicitAs.type.cc7 = import_ref Core//prelude/parts/as, ImplicitAs, loaded [concrete = constants.%ImplicitAs.generic]
 // CHECK:STDOUT:   %Core.import_ref.a5b: @Core.IntLiteral.as.ImplicitAs.impl.%Core.IntLiteral.as.ImplicitAs.impl.Convert.type (%Core.IntLiteral.as.ImplicitAs.impl.Convert.type.0f9) = import_ref Core//prelude/parts/int, loc16_39, loaded [symbolic = @Core.IntLiteral.as.ImplicitAs.impl.%Core.IntLiteral.as.ImplicitAs.impl.Convert (constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.f06)]
 // CHECK:STDOUT:   %ImplicitAs.impl_witness_table.a2f = impl_witness_table (%Core.import_ref.a5b), @Core.IntLiteral.as.ImplicitAs.impl [concrete]
@@ -236,6 +250,38 @@ var e: C = MakeAdaptC();
 // CHECK:STDOUT:   %e: ref %C = bind_name e, %e.var [concrete = %e.var]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
+// CHECK:STDOUT: impl @C.as.Destroy.impl: constants.%C as constants.%Destroy.type {
+// CHECK:STDOUT:   %C.as.Destroy.impl.Op.decl: %C.as.Destroy.impl.Op.type = fn_decl @C.as.Destroy.impl.Op [concrete = constants.%C.as.Destroy.impl.Op] {
+// CHECK:STDOUT:     %self.patt: %pattern_type.44a = binding_pattern self [concrete]
+// CHECK:STDOUT:     %self.param_patt: %pattern_type.44a = value_param_pattern %self.patt, call_param0 [concrete]
+// CHECK:STDOUT:     %.loc4: %pattern_type.f6d = addr_pattern %self.param_patt [concrete]
+// CHECK:STDOUT:   } {
+// CHECK:STDOUT:     %self.param: %ptr.019 = value_param call_param0
+// CHECK:STDOUT:     %Self.ref: type = name_ref Self, constants.%C [concrete = constants.%C]
+// CHECK:STDOUT:     %self: %ptr.019 = bind_name self, %self.param
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:
+// CHECK:STDOUT: !members:
+// CHECK:STDOUT:   .Op = %C.as.Destroy.impl.Op.decl
+// CHECK:STDOUT:   witness = @C.%Destroy.impl_witness
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: impl @AdaptC.as.Destroy.impl: constants.%AdaptC as constants.%Destroy.type {
+// CHECK:STDOUT:   %AdaptC.as.Destroy.impl.Op.decl: %AdaptC.as.Destroy.impl.Op.type = fn_decl @AdaptC.as.Destroy.impl.Op [concrete = constants.%AdaptC.as.Destroy.impl.Op] {
+// CHECK:STDOUT:     %self.patt: %pattern_type.d7e = binding_pattern self [concrete]
+// CHECK:STDOUT:     %self.param_patt: %pattern_type.d7e = value_param_pattern %self.patt, call_param0 [concrete]
+// CHECK:STDOUT:     %.loc9: %pattern_type.f6d = addr_pattern %self.param_patt [concrete]
+// CHECK:STDOUT:   } {
+// CHECK:STDOUT:     %self.param: %ptr.b20 = value_param call_param0
+// CHECK:STDOUT:     %Self.ref: type = name_ref Self, constants.%AdaptC [concrete = constants.%AdaptC]
+// CHECK:STDOUT:     %self: %ptr.b20 = bind_name self, %self.param
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:
+// CHECK:STDOUT: !members:
+// CHECK:STDOUT:   .Op = %AdaptC.as.Destroy.impl.Op.decl
+// CHECK:STDOUT:   witness = @AdaptC.%Destroy.impl_witness
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
 // CHECK:STDOUT: class @C {
 // CHECK:STDOUT:   %int_32.loc5: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
 // CHECK:STDOUT:   %i32.loc5: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
@@ -243,6 +289,9 @@ var e: C = MakeAdaptC();
 // CHECK:STDOUT:   %int_32.loc6: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
 // CHECK:STDOUT:   %i32.loc6: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
 // CHECK:STDOUT:   %.loc6: %C.elem = field_decl b, element1 [concrete]
+// CHECK:STDOUT:   impl_decl @C.as.Destroy.impl [concrete] {} {}
+// CHECK:STDOUT:   %Destroy.impl_witness_table = impl_witness_table (@C.as.Destroy.impl.%C.as.Destroy.impl.Op.decl), @C.as.Destroy.impl [concrete]
+// CHECK:STDOUT:   %Destroy.impl_witness: <witness> = impl_witness %Destroy.impl_witness_table [concrete = constants.%Destroy.impl_witness.edd]
 // CHECK:STDOUT:   %struct_type.a.b: type = struct_type {.a: %i32, .b: %i32} [concrete = constants.%struct_type.a.b.501]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %struct_type.a.b [concrete = constants.%complete_type.705]
 // CHECK:STDOUT:   complete_type_witness = %complete_type
@@ -256,6 +305,9 @@ var e: C = MakeAdaptC();
 // CHECK:STDOUT: class @AdaptC {
 // CHECK:STDOUT:   %C.ref: type = name_ref C, file.%C.decl [concrete = constants.%C]
 // CHECK:STDOUT:   adapt_decl %C.ref [concrete]
+// CHECK:STDOUT:   impl_decl @AdaptC.as.Destroy.impl [concrete] {} {}
+// CHECK:STDOUT:   %Destroy.impl_witness_table = impl_witness_table (@AdaptC.as.Destroy.impl.%AdaptC.as.Destroy.impl.Op.decl), @AdaptC.as.Destroy.impl [concrete]
+// CHECK:STDOUT:   %Destroy.impl_witness: <witness> = impl_witness %Destroy.impl_witness_table [concrete = constants.%Destroy.impl_witness.d92]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness constants.%struct_type.a.b.501 [concrete = constants.%complete_type.705]
 // CHECK:STDOUT:   complete_type_witness = %complete_type
 // CHECK:STDOUT:
@@ -263,6 +315,10 @@ var e: C = MakeAdaptC();
 // CHECK:STDOUT:   .Self = constants.%AdaptC
 // CHECK:STDOUT:   .C = <poisoned>
 // CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: fn @C.as.Destroy.impl.Op(%self.param: %ptr.019) = "no_op";
+// CHECK:STDOUT:
+// CHECK:STDOUT: fn @AdaptC.as.Destroy.impl.Op(%self.param: %ptr.b20) = "no_op";
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @MakeC() -> %return.param: %C;
 // CHECK:STDOUT:
@@ -307,9 +363,21 @@ var e: C = MakeAdaptC();
 // CHECK:STDOUT:   %Int.generic: %Int.type = struct_value () [concrete]
 // CHECK:STDOUT:   %i32: type = class_type @Int, @Int(%int_32) [concrete]
 // CHECK:STDOUT:   %C.elem: type = unbound_element_type %C, %i32 [concrete]
+// CHECK:STDOUT:   %Destroy.type: type = facet_type <@Destroy> [concrete]
+// CHECK:STDOUT:   %pattern_type.f6d: type = pattern_type auto [concrete]
+// CHECK:STDOUT:   %Destroy.impl_witness.edd: <witness> = impl_witness @C.%Destroy.impl_witness_table [concrete]
+// CHECK:STDOUT:   %ptr.019: type = ptr_type %C [concrete]
+// CHECK:STDOUT:   %pattern_type.44a: type = pattern_type %ptr.019 [concrete]
+// CHECK:STDOUT:   %C.as.Destroy.impl.Op.type: type = fn_type @C.as.Destroy.impl.Op [concrete]
+// CHECK:STDOUT:   %C.as.Destroy.impl.Op: %C.as.Destroy.impl.Op.type = struct_value () [concrete]
 // CHECK:STDOUT:   %struct_type.a.b.501: type = struct_type {.a: %i32, .b: %i32} [concrete]
 // CHECK:STDOUT:   %complete_type.705: <witness> = complete_type_witness %struct_type.a.b.501 [concrete]
 // CHECK:STDOUT:   %AdaptC: type = class_type @AdaptC [concrete]
+// CHECK:STDOUT:   %Destroy.impl_witness.d92: <witness> = impl_witness @AdaptC.%Destroy.impl_witness_table [concrete]
+// CHECK:STDOUT:   %ptr.b20: type = ptr_type %AdaptC [concrete]
+// CHECK:STDOUT:   %pattern_type.d7e: type = pattern_type %ptr.b20 [concrete]
+// CHECK:STDOUT:   %AdaptC.as.Destroy.impl.Op.type: type = fn_type @AdaptC.as.Destroy.impl.Op [concrete]
+// CHECK:STDOUT:   %AdaptC.as.Destroy.impl.Op: %AdaptC.as.Destroy.impl.Op.type = struct_value () [concrete]
 // CHECK:STDOUT:   %pattern_type.c48: type = pattern_type %C [concrete]
 // CHECK:STDOUT:   %int_1.5b8: Core.IntLiteral = int_value 1 [concrete]
 // CHECK:STDOUT:   %int_2.ecc: Core.IntLiteral = int_value 2 [concrete]
@@ -344,11 +412,13 @@ var e: C = MakeAdaptC();
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [concrete] {
 // CHECK:STDOUT:     .Int = %Core.Int
+// CHECK:STDOUT:     .Destroy = %Core.Destroy
 // CHECK:STDOUT:     .ImplicitAs = %Core.ImplicitAs
 // CHECK:STDOUT:     import Core//prelude
 // CHECK:STDOUT:     import Core//prelude/...
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.Int: %Int.type = import_ref Core//prelude/parts/int, Int, loaded [concrete = constants.%Int.generic]
+// CHECK:STDOUT:   %Core.Destroy: type = import_ref Core//prelude/parts/destroy, Destroy, loaded [concrete = constants.%Destroy.type]
 // CHECK:STDOUT:   %Core.ImplicitAs: %ImplicitAs.type.cc7 = import_ref Core//prelude/parts/as, ImplicitAs, loaded [concrete = constants.%ImplicitAs.generic]
 // CHECK:STDOUT:   %Core.import_ref.a5b: @Core.IntLiteral.as.ImplicitAs.impl.%Core.IntLiteral.as.ImplicitAs.impl.Convert.type (%Core.IntLiteral.as.ImplicitAs.impl.Convert.type.0f9) = import_ref Core//prelude/parts/int, loc16_39, loaded [symbolic = @Core.IntLiteral.as.ImplicitAs.impl.%Core.IntLiteral.as.ImplicitAs.impl.Convert (constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.f06)]
 // CHECK:STDOUT:   %ImplicitAs.impl_witness_table.a2f = impl_witness_table (%Core.import_ref.a5b), @Core.IntLiteral.as.ImplicitAs.impl [concrete]
@@ -440,6 +510,38 @@ var e: C = MakeAdaptC();
 // CHECK:STDOUT:   %e: ref %C = bind_name e, %e.var [concrete = %e.var]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
+// CHECK:STDOUT: impl @C.as.Destroy.impl: constants.%C as constants.%Destroy.type {
+// CHECK:STDOUT:   %C.as.Destroy.impl.Op.decl: %C.as.Destroy.impl.Op.type = fn_decl @C.as.Destroy.impl.Op [concrete = constants.%C.as.Destroy.impl.Op] {
+// CHECK:STDOUT:     %self.patt: %pattern_type.44a = binding_pattern self [concrete]
+// CHECK:STDOUT:     %self.param_patt: %pattern_type.44a = value_param_pattern %self.patt, call_param0 [concrete]
+// CHECK:STDOUT:     %.loc4: %pattern_type.f6d = addr_pattern %self.param_patt [concrete]
+// CHECK:STDOUT:   } {
+// CHECK:STDOUT:     %self.param: %ptr.019 = value_param call_param0
+// CHECK:STDOUT:     %Self.ref: type = name_ref Self, constants.%C [concrete = constants.%C]
+// CHECK:STDOUT:     %self: %ptr.019 = bind_name self, %self.param
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:
+// CHECK:STDOUT: !members:
+// CHECK:STDOUT:   .Op = %C.as.Destroy.impl.Op.decl
+// CHECK:STDOUT:   witness = @C.%Destroy.impl_witness
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: impl @AdaptC.as.Destroy.impl: constants.%AdaptC as constants.%Destroy.type {
+// CHECK:STDOUT:   %AdaptC.as.Destroy.impl.Op.decl: %AdaptC.as.Destroy.impl.Op.type = fn_decl @AdaptC.as.Destroy.impl.Op [concrete = constants.%AdaptC.as.Destroy.impl.Op] {
+// CHECK:STDOUT:     %self.patt: %pattern_type.d7e = binding_pattern self [concrete]
+// CHECK:STDOUT:     %self.param_patt: %pattern_type.d7e = value_param_pattern %self.patt, call_param0 [concrete]
+// CHECK:STDOUT:     %.loc9: %pattern_type.f6d = addr_pattern %self.param_patt [concrete]
+// CHECK:STDOUT:   } {
+// CHECK:STDOUT:     %self.param: %ptr.b20 = value_param call_param0
+// CHECK:STDOUT:     %Self.ref: type = name_ref Self, constants.%AdaptC [concrete = constants.%AdaptC]
+// CHECK:STDOUT:     %self: %ptr.b20 = bind_name self, %self.param
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:
+// CHECK:STDOUT: !members:
+// CHECK:STDOUT:   .Op = %AdaptC.as.Destroy.impl.Op.decl
+// CHECK:STDOUT:   witness = @AdaptC.%Destroy.impl_witness
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
 // CHECK:STDOUT: class @C {
 // CHECK:STDOUT:   %int_32.loc5: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
 // CHECK:STDOUT:   %i32.loc5: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
@@ -447,6 +549,9 @@ var e: C = MakeAdaptC();
 // CHECK:STDOUT:   %int_32.loc6: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
 // CHECK:STDOUT:   %i32.loc6: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
 // CHECK:STDOUT:   %.loc6: %C.elem = field_decl b, element1 [concrete]
+// CHECK:STDOUT:   impl_decl @C.as.Destroy.impl [concrete] {} {}
+// CHECK:STDOUT:   %Destroy.impl_witness_table = impl_witness_table (@C.as.Destroy.impl.%C.as.Destroy.impl.Op.decl), @C.as.Destroy.impl [concrete]
+// CHECK:STDOUT:   %Destroy.impl_witness: <witness> = impl_witness %Destroy.impl_witness_table [concrete = constants.%Destroy.impl_witness.edd]
 // CHECK:STDOUT:   %struct_type.a.b: type = struct_type {.a: %i32, .b: %i32} [concrete = constants.%struct_type.a.b.501]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %struct_type.a.b [concrete = constants.%complete_type.705]
 // CHECK:STDOUT:   complete_type_witness = %complete_type
@@ -460,6 +565,9 @@ var e: C = MakeAdaptC();
 // CHECK:STDOUT: class @AdaptC {
 // CHECK:STDOUT:   %C.ref: type = name_ref C, file.%C.decl [concrete = constants.%C]
 // CHECK:STDOUT:   adapt_decl %C.ref [concrete]
+// CHECK:STDOUT:   impl_decl @AdaptC.as.Destroy.impl [concrete] {} {}
+// CHECK:STDOUT:   %Destroy.impl_witness_table = impl_witness_table (@AdaptC.as.Destroy.impl.%AdaptC.as.Destroy.impl.Op.decl), @AdaptC.as.Destroy.impl [concrete]
+// CHECK:STDOUT:   %Destroy.impl_witness: <witness> = impl_witness %Destroy.impl_witness_table [concrete = constants.%Destroy.impl_witness.d92]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness constants.%struct_type.a.b.501 [concrete = constants.%complete_type.705]
 // CHECK:STDOUT:   complete_type_witness = %complete_type
 // CHECK:STDOUT:
@@ -467,6 +575,10 @@ var e: C = MakeAdaptC();
 // CHECK:STDOUT:   .Self = constants.%AdaptC
 // CHECK:STDOUT:   .C = <poisoned>
 // CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: fn @C.as.Destroy.impl.Op(%self.param: %ptr.019) = "no_op";
+// CHECK:STDOUT:
+// CHECK:STDOUT: fn @AdaptC.as.Destroy.impl.Op(%self.param: %ptr.b20) = "no_op";
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @MakeC() -> %return.param: %C;
 // CHECK:STDOUT:

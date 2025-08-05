@@ -5,12 +5,23 @@
 #include "toolchain/check/class.h"
 
 #include "toolchain/check/context.h"
+#include "toolchain/check/convert.h"
 #include "toolchain/check/eval.h"
 #include "toolchain/check/function.h"
+#include "toolchain/check/generic.h"
+#include "toolchain/check/impl.h"
 #include "toolchain/check/import_ref.h"
 #include "toolchain/check/inst.h"
+#include "toolchain/check/name_lookup.h"
+#include "toolchain/check/name_ref.h"
+#include "toolchain/check/pattern.h"
+#include "toolchain/check/pattern_match.h"
 #include "toolchain/check/type.h"
 #include "toolchain/parse/node_ids.h"
+#include "toolchain/sem_ir/builtin_function_kind.h"
+#include "toolchain/sem_ir/function.h"
+#include "toolchain/sem_ir/ids.h"
+#include "toolchain/sem_ir/typed_insts.h"
 
 namespace Carbon::Check {
 
@@ -176,7 +187,8 @@ static auto BuildVtable(Context& context, Parse::ClassDefinitionId node_id,
     // TODO: Avoid quadratic search. Perhaps build a map from `NameId` to the
     // elements of the top of `vtable_stack`.
     for (auto base_vtable_entry_id : base_vtable_inst_block) {
-      auto [derived_vtable_entry_id, fn_id, specific_id] =
+      auto [derived_vtable_entry_id, derived_vtable_entry_const_id, fn_id,
+            specific_id] =
           DecomposeVirtualFunction(context.sem_ir(), base_vtable_entry_id,
                                    base_class_specific_id);
       const auto& fn = context.sem_ir().functions().Get(fn_id);
@@ -201,6 +213,22 @@ static auto BuildVtable(Context& context, Parse::ClassDefinitionId node_id,
         derived_vtable_entry_id = build_specific_function(*i);
         override_fn.virtual_index = vtable.size();
         CARBON_CHECK(override_fn.virtual_index == fn.virtual_index);
+      } else if (auto base_vtable_specific_function =
+                     context.sem_ir().insts().TryGetAs<SemIR::SpecificFunction>(
+                         derived_vtable_entry_id)) {
+        if (derived_vtable_entry_const_id.is_symbolic()) {
+          // Create a new instruction here that is otherwise identical to
+          // `derived_vtable_entry_id` but is dependent within the derived
+          // class. This ensures we can `GetConstantValueInSpecific` for it
+          // with the derived class's specific (when forming further derived
+          // classes, lowering the vtable, etc).
+          derived_vtable_entry_id = GetOrAddInst<SemIR::SpecificFunction>(
+              context, node_id,
+              {.type_id = GetSingletonType(
+                   context, SemIR::SpecificFunctionType::TypeInstId),
+               .callee_id = base_vtable_specific_function->callee_id,
+               .specific_id = base_vtable_specific_function->specific_id});
+        }
       }
       vtable.push_back(derived_vtable_entry_id);
     }

@@ -180,17 +180,19 @@ fn F() {
 // CHECK:STDOUT:   %Point.as.Z.impl.Zero.type: type = fn_type @Point.as.Z.impl.Zero [concrete]
 // CHECK:STDOUT:   %Point.as.Z.impl.Zero: %Point.as.Z.impl.Zero.type = struct_value () [concrete]
 // CHECK:STDOUT:   %Z.facet: %Z.type = facet_value %Point, (%Z.impl_witness) [concrete]
+// CHECK:STDOUT:   %Destroy.type: type = facet_type <@Destroy> [concrete]
+// CHECK:STDOUT:   %pattern_type.f6d: type = pattern_type auto [concrete]
+// CHECK:STDOUT:   %Destroy.impl_witness.e19: <witness> = impl_witness @Point.%Destroy.impl_witness_table [concrete]
+// CHECK:STDOUT:   %ptr.536: type = ptr_type %Point [concrete]
+// CHECK:STDOUT:   %pattern_type.bbc: type = pattern_type %ptr.536 [concrete]
+// CHECK:STDOUT:   %Point.as.Destroy.impl.Op.type: type = fn_type @Point.as.Destroy.impl.Op [concrete]
+// CHECK:STDOUT:   %Point.as.Destroy.impl.Op: %Point.as.Destroy.impl.Op.type = struct_value () [concrete]
 // CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [concrete]
-// CHECK:STDOUT:   %complete_type.357: <witness> = complete_type_witness %empty_struct_type [concrete]
+// CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [concrete]
 // CHECK:STDOUT:   %F.type: type = fn_type @F [concrete]
 // CHECK:STDOUT:   %F: %F.type = struct_value () [concrete]
 // CHECK:STDOUT:   %Point.val: %Point = struct_value () [concrete]
 // CHECK:STDOUT:   %.766: type = fn_type_with_self_type %Z.Zero.type, %Z.facet [concrete]
-// CHECK:STDOUT:   %Destroy.type: type = facet_type <@Destroy> [concrete]
-// CHECK:STDOUT:   %T.as.Destroy.impl.Op.type.003: type = fn_type @T.as.Destroy.impl.Op, @T.as.Destroy.impl(%Point) [concrete]
-// CHECK:STDOUT:   %T.as.Destroy.impl.Op.d2d: %T.as.Destroy.impl.Op.type.003 = struct_value () [concrete]
-// CHECK:STDOUT:   %ptr.536: type = ptr_type %Point [concrete]
-// CHECK:STDOUT:   %T.as.Destroy.impl.Op.specific_fn: <specific function> = specific_function %T.as.Destroy.impl.Op.d2d, @T.as.Destroy.impl.Op(%Point) [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -253,6 +255,22 @@ fn F() {
 // CHECK:STDOUT:   witness = @Point.%Z.impl_witness
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
+// CHECK:STDOUT: impl @Point.as.Destroy.impl: constants.%Point as constants.%Destroy.type {
+// CHECK:STDOUT:   %Point.as.Destroy.impl.Op.decl: %Point.as.Destroy.impl.Op.type = fn_decl @Point.as.Destroy.impl.Op [concrete = constants.%Point.as.Destroy.impl.Op] {
+// CHECK:STDOUT:     %self.patt: %pattern_type.bbc = binding_pattern self [concrete]
+// CHECK:STDOUT:     %self.param_patt: %pattern_type.bbc = value_param_pattern %self.patt, call_param0 [concrete]
+// CHECK:STDOUT:     %.loc15: %pattern_type.f6d = addr_pattern %self.param_patt [concrete]
+// CHECK:STDOUT:   } {
+// CHECK:STDOUT:     %self.param: %ptr.536 = value_param call_param0
+// CHECK:STDOUT:     %Self.ref: type = name_ref Self, constants.%Point [concrete = constants.%Point]
+// CHECK:STDOUT:     %self: %ptr.536 = bind_name self, %self.param
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:
+// CHECK:STDOUT: !members:
+// CHECK:STDOUT:   .Op = %Point.as.Destroy.impl.Op.decl
+// CHECK:STDOUT:   witness = @Point.%Destroy.impl_witness
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
 // CHECK:STDOUT: class @Point {
 // CHECK:STDOUT:   impl_decl @Point.as.Z.impl [concrete] {} {
 // CHECK:STDOUT:     %Self.ref: type = name_ref Self, constants.%Point [concrete = constants.%Point]
@@ -260,8 +278,11 @@ fn F() {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Z.impl_witness_table = impl_witness_table (@Point.as.Z.impl.%Point.as.Z.impl.Zero.decl), @Point.as.Z.impl [concrete]
 // CHECK:STDOUT:   %Z.impl_witness: <witness> = impl_witness %Z.impl_witness_table [concrete = constants.%Z.impl_witness]
+// CHECK:STDOUT:   impl_decl @Point.as.Destroy.impl [concrete] {} {}
+// CHECK:STDOUT:   %Destroy.impl_witness_table = impl_witness_table (@Point.as.Destroy.impl.%Point.as.Destroy.impl.Op.decl), @Point.as.Destroy.impl [concrete]
+// CHECK:STDOUT:   %Destroy.impl_witness: <witness> = impl_witness %Destroy.impl_witness_table [concrete = constants.%Destroy.impl_witness.e19]
 // CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [concrete = constants.%empty_struct_type]
-// CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [concrete = constants.%complete_type.357]
+// CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [concrete = constants.%complete_type]
 // CHECK:STDOUT:   complete_type_witness = %complete_type
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
@@ -289,6 +310,8 @@ fn F() {
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
+// CHECK:STDOUT: fn @Point.as.Destroy.impl.Op(%self.param: %ptr.536) = "no_op";
+// CHECK:STDOUT:
 // CHECK:STDOUT: fn @F() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %.loc25_5.1: %empty_struct_type = struct_literal ()
@@ -300,11 +323,9 @@ fn F() {
 // CHECK:STDOUT:   %Zero.ref: %Z.assoc_type = name_ref Zero, @Z.%assoc0 [concrete = constants.%assoc0.534]
 // CHECK:STDOUT:   %impl.elem0: %.766 = impl_witness_access constants.%Z.impl_witness, element0 [concrete = constants.%Point.as.Z.impl.Zero]
 // CHECK:STDOUT:   %Point.as.Z.impl.Zero.call: init %empty_tuple.type = call %impl.elem0()
-// CHECK:STDOUT:   %T.as.Destroy.impl.Op.bound: <bound method> = bound_method %.loc25_5.2, constants.%T.as.Destroy.impl.Op.d2d
-// CHECK:STDOUT:   %T.as.Destroy.impl.Op.specific_fn: <specific function> = specific_function constants.%T.as.Destroy.impl.Op.d2d, @T.as.Destroy.impl.Op(constants.%Point) [concrete = constants.%T.as.Destroy.impl.Op.specific_fn]
-// CHECK:STDOUT:   %bound_method: <bound method> = bound_method %.loc25_5.2, %T.as.Destroy.impl.Op.specific_fn
+// CHECK:STDOUT:   %Point.as.Destroy.impl.Op.bound: <bound method> = bound_method %.loc25_5.2, constants.%Point.as.Destroy.impl.Op
 // CHECK:STDOUT:   %addr: %ptr.536 = addr_of %.loc25_5.2
-// CHECK:STDOUT:   %T.as.Destroy.impl.Op.call: init %empty_tuple.type = call %bound_method(%addr)
+// CHECK:STDOUT:   %Point.as.Destroy.impl.Op.call: init %empty_tuple.type = call %Point.as.Destroy.impl.Op.bound(%addr)
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

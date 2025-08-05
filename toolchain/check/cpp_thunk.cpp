@@ -298,24 +298,13 @@ auto BuildCppThunk(Context& context, const SemIR::Function& callee_function)
   clang::Sema::ContextRAII context_raii(sema, thunk_function_decl);
   sema.ActOnStartOfFunctionDef(nullptr, thunk_function_decl);
 
-  {
-    // TODO: Remove special diagnostics handling after merging.
-    clang::DiagnosticsEngine& diag_engine = ast_context.getDiagnostics();
-    clang::DiagnosticConsumer diag_client;
-    diag_engine.setClient(&diag_client,
-                          /*ShouldOwnClient=*/false);
-    llvm::SmallVector<clang::Expr*> call_args =
-        BuildCalleeArgs(sema, thunk_function_decl, param_type_changed);
-    clang::Stmt* body = BuildThunkBody(sema, callee_function_decl, call_args);
-    if (!body) {
-      diag_engine.setClient(nullptr);
-      return nullptr;
-    }
-    sema.ActOnFinishFunctionBody(thunk_function_decl, body);
-    CARBON_CHECK(diag_client.getNumErrors() == 0);
-    CARBON_CHECK(diag_client.getNumWarnings() == 0);
-    diag_engine.setClient(nullptr);
+  llvm::SmallVector<clang::Expr*> call_args =
+      BuildCalleeArgs(sema, thunk_function_decl, param_type_changed);
+  clang::Stmt* body = BuildThunkBody(sema, callee_function_decl, call_args);
+  if (!body) {
+    return nullptr;
   }
+  sema.ActOnFinishFunctionBody(thunk_function_decl, body);
 
   return thunk_function_decl;
 }

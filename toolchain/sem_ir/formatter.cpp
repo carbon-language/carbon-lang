@@ -1006,6 +1006,23 @@ auto Formatter::FormatInstRhs(Inst inst) -> void {
       return;
     }
 
+    case CARBON_KIND(CustomLayoutType type): {
+      out_ << " {";
+      auto layout = sem_ir_->custom_layouts().Get(type.layout_id);
+      out_ << "size=" << layout[CustomLayoutId::SizeIndex]
+           << ", align=" << layout[CustomLayoutId::AlignIndex];
+      for (auto [field, offset] :
+           llvm::zip(sem_ir_->struct_type_fields().Get(type.fields_id),
+                     layout.drop_front(CustomLayoutId::FirstFieldIndex))) {
+        out_ << ", .";
+        FormatName(field.name_id);
+        out_ << "@" << offset << ": ";
+        FormatInstAsType(field.type_inst_id);
+      }
+      out_ << "}";
+      return;
+    }
+
     case CARBON_KIND(FloatLiteral value): {
       llvm::SmallVector<char, 16> buffer;
       sem_ir_->floats().Get(value.float_id).toString(buffer);

@@ -18,6 +18,31 @@ class C {
   fn destroy[self: Self]();
 }
 
+// --- declare_impl.carbon
+
+library "[[@TEST_NAME]]";
+
+class C {
+  impl as Core.Destroy;
+}
+
+// --- fail_define_impl.carbon
+
+library "[[@TEST_NAME]]";
+
+// CHECK:STDERR: fail_define_impl.carbon:[[@LINE+3]]:1: error: redefinition of `impl C as Core.Destroy` [ImplRedefinition]
+// CHECK:STDERR: class C {
+// CHECK:STDERR: ^~~~~~~~~
+class C {
+  // CHECK:STDERR: fail_define_impl.carbon:[[@LINE+4]]:3: note: previous definition was here [ImplPreviousDefinition]
+  // CHECK:STDERR:   impl as Core.Destroy {
+  // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~~~
+  // CHECK:STDERR:
+  impl as Core.Destroy {
+    fn Op[addr self: Self*]() {}
+  }
+}
+
 // --- addr_self.carbon
 
 library "[[@TEST_NAME]]";

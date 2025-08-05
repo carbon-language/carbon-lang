@@ -25,6 +25,7 @@ contributions.
         -   [Using LLDB with VS Code](#using-lldb-with-vs-code)
         -   [Using GDB with VS Code](#using-gdb-with-vs-code)
     -   [Manually building Clang and LLVM (not recommended)](#manually-building-clang-and-llvm-not-recommended)
+-   [Debugger dumping with LLDB](#debugger-dumping-with-lldb)
 -   [Troubleshooting build issues](#troubleshooting-build-issues)
     -   [`bazel clean`](#bazel-clean)
     -   [Old LLVM versions](#old-llvm-versions)
@@ -176,7 +177,7 @@ These tools are essential for work on Carbon.
         -   [Bazelisk](https://docs.bazel.build/versions/master/install-bazelisk.html):
             Downloads and runs the [configured Bazel version](/.bazelversion).
     -   [Clang](https://clang.llvm.org/) and [LLVM](https://llvm.org/)
-        -   NOTE: Most LLVM 14+ installs should build Carbon. If you're having
+        -   NOTE: Most LLVM 19+ installs should build Carbon. If you're having
             issues, see
             [troubleshooting build issues](#troubleshooting-build-issues).
     -   [gh CLI](https://github.com/cli/cli): Helps with GitHub.
@@ -290,6 +291,20 @@ work reliably include:
 -DRUNTIMES_CMAKE_ARGS=-DLLVM_ENABLE_PER_TARGET_RUNTIME_DIR=OFF;-DCMAKE_POSITION_INDEPENDENT_CODE=ON;-DLIBCXX_ENABLE_STATIC_ABI_LIBRARY=ON;-DLIBCXX_STATICALLY_LINK_ABI_IN_SHARED_LIBRARY=OFF;-DLIBCXX_STATICALLY_LINK_ABI_IN_STATIC_LIBRARY=ON;-DLIBCXX_USE_COMPILER_RT=ON;-DLIBCXXABI_USE_COMPILER_RT=ON;-DLIBCXXABI_USE_LLVM_UNWINDER=ON
 -DLLDB_ENABLE_PYTHON=ON
 ```
+
+## Debugger dumping with LLDB
+
+We include a `dump` command in `lldb` (see
+[Using-LLDB-from-the-command-line](#using-lldb-from-the-command-line) to ensure
+it is available). The `dump` command allows you to dump the contents of a value
+associated with an id. Since most data in the toolchain is referenced by id,
+this ends up being a very frequent task.
+
+The debugger command `dump <context> <id_expr>`, gets roughly translated into a
+C++ call to `Dump(<context>, <id_expr>)`.
+
+Run the `dump` command without any arguments to see the builtin help on how to
+use it.
 
 ## Troubleshooting build issues
 

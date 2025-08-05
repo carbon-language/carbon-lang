@@ -80,5 +80,39 @@ TEST_F(EmitterTest, EmitNote) {
   emitter_.Build(1, TestDiagnostic).Note(2, TestDiagnosticNote).Emit();
 }
 
+TEST_F(EmitterTest, Flush) {
+  bool flushed = false;
+  auto flush_fn = [&]() { flushed = true; };
+
+  {
+    FakeEmitter emitter(&consumer_);
+    emitter.AddFlushFn(flush_fn);
+
+    // Registering the function does not flush.
+    EXPECT_FALSE(flushed);
+
+    // Explicit calls to `Flush` should flush.
+    emitter.Flush();
+    EXPECT_TRUE(flushed);
+    flushed = false;
+
+    {
+      Diagnostics::AnnotationScope annot(&emitter, [](auto&) {});
+
+      // Registering an annotation scope should flush.
+      EXPECT_TRUE(flushed);
+      flushed = false;
+    }
+
+    // Unregistering an annotation scope should flush.
+    EXPECT_TRUE(flushed);
+    flushed = false;
+  }
+
+  // Destroying the emitter should flush.
+  EXPECT_TRUE(flushed);
+  flushed = false;
+}
+
 }  // namespace
 }  // namespace Carbon::Testing

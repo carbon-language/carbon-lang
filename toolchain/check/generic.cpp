@@ -86,7 +86,7 @@ class RebuildGenericConstantInEvalBlockCallbacks : public SubstInstCallbacks {
 
   // Check for instructions for which we already have a mapping into the eval
   // block, and substitute them with the instructions in the eval block.
-  auto Subst(SemIR::InstId& inst_id) const -> bool override {
+  auto Subst(SemIR::InstId& inst_id) -> SubstResult override {
     auto const_id = context().constant_values().Get(inst_id);
     if (!const_id.has_value()) {
       // An unloaded import ref should never contain anything we need to
@@ -95,12 +95,12 @@ class RebuildGenericConstantInEvalBlockCallbacks : public SubstInstCallbacks {
           context().insts().Is<SemIR::ImportRefUnloaded>(inst_id),
           "Substituting into instruction with invalid constant ID: {0}",
           context().insts().Get(inst_id));
-      return true;
+      return SubstResult::FullySubstituted;
     }
     if (!context().constant_values().DependsOnGenericParameter(const_id)) {
       // This instruction doesn't have a symbolic constant value, so can't
       // contain any bindings that need to be substituted.
-      return true;
+      return SubstResult::FullySubstituted;
     }
 
     // If this constant value has a defining instruction in the eval block,
@@ -109,15 +109,15 @@ class RebuildGenericConstantInEvalBlockCallbacks : public SubstInstCallbacks {
     if (auto result = constants_in_generic_.Lookup(
             context().constant_values().GetInstId(const_id))) {
       inst_id = result.value();
-      return true;
+      return SubstResult::FullySubstituted;
     }
 
-    return false;
+    return SubstResult::SubstOperands;
   }
 
   // Build a new instruction in the eval block corresponding to the given
   // constant.
-  auto Rebuild(SemIR::InstId orig_inst_id, SemIR::Inst new_inst) const
+  auto Rebuild(SemIR::InstId orig_inst_id, SemIR::Inst new_inst)
       -> SemIR::InstId override {
     auto& orig_symbolic_const = context().constant_values().GetSymbolicConstant(
         context().constant_values().Get(orig_inst_id));
@@ -142,8 +142,7 @@ class RebuildGenericConstantInEvalBlockCallbacks : public SubstInstCallbacks {
     return result.value();
   }
 
-  auto ReuseUnchanged(SemIR::InstId orig_inst_id) const
-      -> SemIR::InstId override {
+  auto ReuseUnchanged(SemIR::InstId orig_inst_id) -> SemIR::InstId override {
     auto inst = context().insts().Get(orig_inst_id);
     CARBON_CHECK(
         inst.Is<SemIR::BindSymbolicName>() ||
@@ -173,7 +172,7 @@ class RebuildTemplateActionInEvalBlockCallbacks final
       : RebuildGenericConstantInEvalBlockCallbacks(context, loc_id),
         action_inst_id_(action_inst_id) {}
 
-  auto Rebuild(SemIR::InstId orig_inst_id, SemIR::Inst new_inst) const
+  auto Rebuild(SemIR::InstId orig_inst_id, SemIR::Inst new_inst)
       -> SemIR::InstId override {
     if (orig_inst_id == action_inst_id_) {
       // TODO: We want to ReplaceInstPreservingConstantValue here, but don't
@@ -185,8 +184,7 @@ class RebuildTemplateActionInEvalBlockCallbacks final
                                                                new_inst);
   }
 
-  auto ReuseUnchanged(SemIR::InstId orig_inst_id) const
-      -> SemIR::InstId override {
+  auto ReuseUnchanged(SemIR::InstId orig_inst_id) -> SemIR::InstId override {
     if (orig_inst_id == action_inst_id_) {
       return orig_inst_id;
     }
@@ -206,9 +204,10 @@ static auto AddGenericTypeToEvalBlock(Context& context, SemIR::LocId loc_id,
                                       SemIR::TypeId type_id) -> SemIR::TypeId {
   // Substitute into the type's constant instruction and rebuild it in the eval
   // block.
-  auto type_inst_id =
-      SubstInst(context, context.types().GetInstId(type_id),
-                RebuildGenericConstantInEvalBlockCallbacks(&context, loc_id));
+  auto rebuild_generic_constant_callbacks =
+      RebuildGenericConstantInEvalBlockCallbacks(&context, loc_id);
+  auto type_inst_id = SubstInst(context, context.types().GetInstId(type_id),
+                                rebuild_generic_constant_callbacks);
   return context.types().GetTypeIdForTypeConstantId(
       context.constant_values().GetAttached(type_inst_id));
 }
@@ -244,9 +243,11 @@ static auto AddGenericConstantToEvalBlock(Context& context,
 static auto AddTemplateActionToEvalBlock(Context& context,
                                          SemIR::InstId inst_id) -> void {
   // Substitute into the constant value and rebuild it in the eval block.
-  auto new_inst_id = SubstInst(context, inst_id,
-                               RebuildTemplateActionInEvalBlockCallbacks(
-                                   &context, SemIR::LocId(inst_id), inst_id));
+  auto rebuild_template_action_callbacks =
+      RebuildTemplateActionInEvalBlockCallbacks(&context, SemIR::LocId(inst_id),
+                                                inst_id);
+  auto new_inst_id =
+      SubstInst(context, inst_id, rebuild_template_action_callbacks);
   CARBON_CHECK(new_inst_id == inst_id,
                "Substitution changed InstId of template action");
   context.generic_region_stack().PeekConstantsInGenericMap().Insert(inst_id,

@@ -7,6 +7,7 @@
 #include <gtest/gtest.h>
 
 #include <concepts>
+#include <memory>
 
 #include "common/error_test_helpers.h"
 #include "common/raw_string_ostream.h"
@@ -16,6 +17,7 @@ namespace {
 
 using ::Carbon::Testing::IsError;
 using ::Carbon::Testing::IsSuccess;
+using ::testing::_;
 using ::testing::Eq;
 
 TEST(ErrorTest, Error) {
@@ -36,12 +38,10 @@ TEST(ErrorTest, ErrorBuilderOperatorImplicitCast) {
   EXPECT_THAT(result, IsError("msg"));
 }
 
-TEST(ErrorTest, StreamError) {
-  Error result = ErrorBuilder("TestFunc") << "msg";
-  RawStringOstream result_stream;
-  result_stream << result;
-  EXPECT_EQ(result_stream.TakeStr(), "TestFunc: msg");
-}
+// Make sure a custom error type can be forward declared and used with `ErrorOr`
+// until the `ErrorOr` is required to be complete itself.
+class CustomError;
+auto TestFunction() -> ErrorOr<int, CustomError>;
 
 class CustomError : public ErrorBase<CustomError> {
  public:
@@ -49,6 +49,14 @@ class CustomError : public ErrorBase<CustomError> {
     os << "Custom test error!";
   }
 };
+
+auto TestFunction() -> ErrorOr<int, CustomError> { return CustomError(); }
+
+TEST(ErrorTest, UseErrorOrWithCustomError) {
+  // Uses `TestFunction` to ensure it compiles correctly with forward
+  // declarations above.
+  EXPECT_THAT(TestFunction(), IsError("Custom test error!"));
+}
 
 template <typename ErrorT>
 class ErrorOrTest : public ::testing::Test {
@@ -122,6 +130,32 @@ auto IndirectErrorOrSuccessTest() -> ErrorOr<Success, ErrorT> {
 
 TYPED_TEST(ErrorOrTest, IndirectErrorOrSuccess) {
   EXPECT_TRUE(IndirectErrorOrSuccessTest<TypeParam>().ok());
+}
+
+TYPED_TEST(ErrorOrTest, MoveValue) {
+  using TestErrorOr = ErrorOr<std::unique_ptr<int>, TypeParam>;
+
+  auto make_value = []() -> TestErrorOr { return std::make_unique<int>(42); };
+
+  std::unique_ptr<int> p = *make_value();
+  EXPECT_THAT(*p, Eq(42));
+
+  auto result = make_value();
+  std::unique_ptr<int> p2 = *std::move(result);
+  EXPECT_THAT(*p2, Eq(42));
+}
+
+TYPED_TEST(ErrorOrTest, UnprintableValue) {
+  struct X {
+    int i;
+  };
+  using TestErrorOr = ErrorOr<X, TypeParam>;
+
+  TestErrorOr value(X{.i = 42});
+  EXPECT_THAT(value, IsSuccess(_));
+
+  TestErrorOr error = this->MakeError();
+  EXPECT_THAT(error, IsError(this->ErrorStr()));
 }
 
 TYPED_TEST(ErrorOrTest, ReturnIfErrorNoError) {

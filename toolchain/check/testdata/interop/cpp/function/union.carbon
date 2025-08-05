@@ -24,16 +24,30 @@ auto foo(U) -> void;
 
 library "[[@TEST_NAME]]";
 
+// CHECK:STDERR: fail_todo_import_decl_value_param_type.carbon:[[@LINE+8]]:10: in file included here [InCppInclude]
+// CHECK:STDERR: ./decl_value_param_type.h:4:6: error: argument type 'U' is incomplete [CppInteropParseError]
+// CHECK:STDERR:     4 | auto foo(U) -> void;
+// CHECK:STDERR:       |      ^~~
+// CHECK:STDERR: fail_todo_import_decl_value_param_type.carbon:[[@LINE+4]]:10: in file included here [InCppInclude]
+// CHECK:STDERR: ./decl_value_param_type.h:2:7: note: forward declaration of 'U' [CppInteropParseNote]
+// CHECK:STDERR:     2 | union U;
+// CHECK:STDERR:       |       ^
 import Cpp library "decl_value_param_type.h";
 
 fn F() {
   //@dump-sem-ir-begin
-  // CHECK:STDERR: fail_todo_import_decl_value_param_type.carbon:[[@LINE+7]]:3: error: semantics TODO: `Unsupported: Record declarations without a definition` [SemanticsTodo]
+  // CHECK:STDERR: fail_todo_import_decl_value_param_type.carbon:[[@LINE+13]]:3: note: in `Cpp` name lookup for `foo` [InCppNameLookup]
   // CHECK:STDERR:   Cpp.foo({});
   // CHECK:STDERR:   ^~~~~~~
-  // CHECK:STDERR: fail_todo_import_decl_value_param_type.carbon:[[@LINE+4]]:3: note: in `Cpp` name lookup for `foo` [InCppNameLookup]
+  // CHECK:STDERR:
+  // CHECK:STDERR: fail_todo_import_decl_value_param_type.carbon:[[@LINE+9]]:11: error: forming value of incomplete type `Cpp.U` [IncompleteTypeInValueConversion]
   // CHECK:STDERR:   Cpp.foo({});
-  // CHECK:STDERR:   ^~~~~~~
+  // CHECK:STDERR:           ^~
+  // CHECK:STDERR: fail_todo_import_decl_value_param_type.carbon:[[@LINE-11]]:10: in file included here [InCppInclude]
+  // CHECK:STDERR: ./decl_value_param_type.h:2:7: note: class was forward declared here [ClassForwardDeclaredHere]
+  // CHECK:STDERR: union U;
+  // CHECK:STDERR:       ^
+  // CHECK:STDERR: fail_todo_import_decl_value_param_type.carbon: note: initializing function parameter [InCallToFunctionParam]
   // CHECK:STDERR:
   Cpp.foo({});
   //@dump-sem-ir-end
@@ -43,21 +57,34 @@ fn F() {
 
 library "[[@TEST_NAME]]";
 
+// CHECK:STDERR: fail_todo_import_decl_value_param_type_previously_imported.carbon:[[@LINE+8]]:10: in file included here [InCppInclude]
+// CHECK:STDERR: ./decl_value_param_type.h:4:6: error: argument type 'U' is incomplete [CppInteropParseError]
+// CHECK:STDERR:     4 | auto foo(U) -> void;
+// CHECK:STDERR:       |      ^~~
+// CHECK:STDERR: fail_todo_import_decl_value_param_type_previously_imported.carbon:[[@LINE+4]]:10: in file included here [InCppInclude]
+// CHECK:STDERR: ./decl_value_param_type.h:2:7: note: forward declaration of 'U' [CppInteropParseNote]
+// CHECK:STDERR:     2 | union U;
+// CHECK:STDERR:       |       ^
 import Cpp library "decl_value_param_type.h";
 
 fn F() {
-  // CHECK:STDERR: fail_todo_import_decl_value_param_type_previously_imported.carbon:[[@LINE+11]]:10: error: semantics TODO: `Unsupported: Record declarations without a definition` [SemanticsTodo]
-  // CHECK:STDERR:   let u: Cpp.U;
-  // CHECK:STDERR:          ^~~~~
-  // CHECK:STDERR: fail_todo_import_decl_value_param_type_previously_imported.carbon:[[@LINE+8]]:10: note: in `Cpp` name lookup for `U` [InCppNameLookup]
-  // CHECK:STDERR:   let u: Cpp.U;
-  // CHECK:STDERR:          ^~~~~
+  let u: Cpp.U;
+  // CHECK:STDERR: fail_todo_import_decl_value_param_type_previously_imported.carbon:[[@LINE+16]]:3: note: in `Cpp` name lookup for `foo` [InCppNameLookup]
+  // CHECK:STDERR:   Cpp.foo(u);
+  // CHECK:STDERR:   ^~~~~~~
   // CHECK:STDERR:
-  // CHECK:STDERR: fail_todo_import_decl_value_param_type_previously_imported.carbon:[[@LINE+4]]:15: error: expected `=`; `let` declaration must have an initializer [ExpectedInitializerAfterLet]
+  // CHECK:STDERR: fail_todo_import_decl_value_param_type_previously_imported.carbon:[[@LINE-5]]:10: error: binding pattern has incomplete type `U` in name binding declaration [IncompleteTypeInBindingDecl]
+  // CHECK:STDERR:   let u: Cpp.U;
+  // CHECK:STDERR:          ^~~~~
+  // CHECK:STDERR: fail_todo_import_decl_value_param_type_previously_imported.carbon:[[@LINE-11]]:10: in file included here [InCppInclude]
+  // CHECK:STDERR: ./decl_value_param_type.h:2:7: note: class was forward declared here [ClassForwardDeclaredHere]
+  // CHECK:STDERR: union U;
+  // CHECK:STDERR:       ^
+  // CHECK:STDERR:
+  // CHECK:STDERR: fail_todo_import_decl_value_param_type_previously_imported.carbon:[[@LINE-13]]:15: error: expected `=`; `let` declaration must have an initializer [ExpectedInitializerAfterLet]
   // CHECK:STDERR:   let u: Cpp.U;
   // CHECK:STDERR:               ^
   // CHECK:STDERR:
-  let u: Cpp.U;
   Cpp.foo(u);
 }
 
@@ -76,17 +103,52 @@ auto foo2(U) -> void;
 
 library "[[@TEST_NAME]]";
 
+// CHECK:STDERR: fail_todo_import_double_decl_value_param_type.carbon:[[@LINE+8]]:10: in file included here [InCppInclude]
+// CHECK:STDERR: ./double_decl_value_param_type.h:4:6: error: argument type 'U' is incomplete [CppInteropParseError]
+// CHECK:STDERR:     4 | auto foo1(U) -> void;
+// CHECK:STDERR:       |      ^~~~
+// CHECK:STDERR: fail_todo_import_double_decl_value_param_type.carbon:[[@LINE+4]]:10: in file included here [InCppInclude]
+// CHECK:STDERR: ./double_decl_value_param_type.h:2:7: note: forward declaration of 'U' [CppInteropParseNote]
+// CHECK:STDERR:     2 | union U;
+// CHECK:STDERR:       |       ^
 import Cpp library "double_decl_value_param_type.h";
 
 fn F() {
-  // CHECK:STDERR: fail_todo_import_double_decl_value_param_type.carbon:[[@LINE+7]]:3: error: semantics TODO: `Unsupported: Record declarations without a definition` [SemanticsTodo]
-  // CHECK:STDERR:   Cpp.foo1({});
-  // CHECK:STDERR:   ^~~~~~~~
-  // CHECK:STDERR: fail_todo_import_double_decl_value_param_type.carbon:[[@LINE+4]]:3: note: in `Cpp` name lookup for `foo1` [InCppNameLookup]
+  // CHECK:STDERR: fail_todo_import_double_decl_value_param_type.carbon:[[@LINE+12]]:3: note: in `Cpp` name lookup for `foo1` [InCppNameLookup]
   // CHECK:STDERR:   Cpp.foo1({});
   // CHECK:STDERR:   ^~~~~~~~
   // CHECK:STDERR:
+  // CHECK:STDERR: fail_todo_import_double_decl_value_param_type.carbon:[[@LINE-7]]:10: in file included here [InCppInclude]
+  // CHECK:STDERR: ./double_decl_value_param_type.h:5:6: error: argument type 'U' is incomplete [CppInteropParseError]
+  // CHECK:STDERR:     5 | auto foo2(U) -> void;
+  // CHECK:STDERR:       |      ^~~~
+  // CHECK:STDERR: fail_todo_import_double_decl_value_param_type.carbon:[[@LINE-11]]:10: in file included here [InCppInclude]
+  // CHECK:STDERR: ./double_decl_value_param_type.h:2:7: note: forward declaration of 'U' [CppInteropParseNote]
+  // CHECK:STDERR:     2 | union U;
+  // CHECK:STDERR:       |       ^
   Cpp.foo1({});
+  // CHECK:STDERR: fail_todo_import_double_decl_value_param_type.carbon:[[@LINE+22]]:3: note: in `Cpp` name lookup for `foo2` [InCppNameLookup]
+  // CHECK:STDERR:   Cpp.foo2({});
+  // CHECK:STDERR:   ^~~~~~~~
+  // CHECK:STDERR:
+  // CHECK:STDERR: fail_todo_import_double_decl_value_param_type.carbon:[[@LINE-5]]:12: error: forming value of incomplete type `Cpp.U` [IncompleteTypeInValueConversion]
+  // CHECK:STDERR:   Cpp.foo1({});
+  // CHECK:STDERR:            ^~
+  // CHECK:STDERR: fail_todo_import_double_decl_value_param_type.carbon:[[@LINE-23]]:10: in file included here [InCppInclude]
+  // CHECK:STDERR: ./double_decl_value_param_type.h:2:7: note: class was forward declared here [ClassForwardDeclaredHere]
+  // CHECK:STDERR: union U;
+  // CHECK:STDERR:       ^
+  // CHECK:STDERR: fail_todo_import_double_decl_value_param_type.carbon: note: initializing function parameter [InCallToFunctionParam]
+  // CHECK:STDERR:
+  // CHECK:STDERR: fail_todo_import_double_decl_value_param_type.carbon:[[@LINE+9]]:12: error: forming value of incomplete type `Cpp.U` [IncompleteTypeInValueConversion]
+  // CHECK:STDERR:   Cpp.foo2({});
+  // CHECK:STDERR:            ^~
+  // CHECK:STDERR: fail_todo_import_double_decl_value_param_type.carbon:[[@LINE-32]]:10: in file included here [InCppInclude]
+  // CHECK:STDERR: ./double_decl_value_param_type.h:2:7: note: class was forward declared here [ClassForwardDeclaredHere]
+  // CHECK:STDERR: union U;
+  // CHECK:STDERR:       ^
+  // CHECK:STDERR: fail_todo_import_double_decl_value_param_type.carbon: note: initializing function parameter [InCallToFunctionParam]
+  // CHECK:STDERR:
   Cpp.foo2({});
 }
 
@@ -134,12 +196,13 @@ import Cpp library "definition_single_data_member_value_param_type.h";
 
 fn F() {
   //@dump-sem-ir-begin
-  // CHECK:STDERR: fail_import_definition_single_data_member_value_param_type.carbon:[[@LINE+7]]:3: error: semantics TODO: `Unsupported: Non-empty union` [SemanticsTodo]
+  // CHECK:STDERR: fail_import_definition_single_data_member_value_param_type.carbon:[[@LINE+8]]:11: error: cannot implicitly convert expression of type `{}` to `Cpp.U` [ConversionFailure]
   // CHECK:STDERR:   Cpp.foo({});
-  // CHECK:STDERR:   ^~~~~~~
-  // CHECK:STDERR: fail_import_definition_single_data_member_value_param_type.carbon:[[@LINE+4]]:3: note: in `Cpp` name lookup for `foo` [InCppNameLookup]
+  // CHECK:STDERR:           ^~
+  // CHECK:STDERR: fail_import_definition_single_data_member_value_param_type.carbon:[[@LINE+5]]:11: note: type `{}` does not implement interface `Core.ImplicitAs(Cpp.U)` [MissingImplInMemberAccessNote]
   // CHECK:STDERR:   Cpp.foo({});
-  // CHECK:STDERR:   ^~~~~~~
+  // CHECK:STDERR:           ^~
+  // CHECK:STDERR: fail_import_definition_single_data_member_value_param_type.carbon: note: initializing function parameter [InCallToFunctionParam]
   // CHECK:STDERR:
   Cpp.foo({});
   //@dump-sem-ir-end
@@ -169,12 +232,13 @@ import Cpp library "definition_multiple_data_members_value_param_type.h";
 
 fn F() {
   //@dump-sem-ir-begin
-  // CHECK:STDERR: fail_import_definition_multiple_data_members_value_param_type.carbon:[[@LINE+7]]:3: error: semantics TODO: `Unsupported: Non-empty union` [SemanticsTodo]
+  // CHECK:STDERR: fail_import_definition_multiple_data_members_value_param_type.carbon:[[@LINE+8]]:11: error: cannot implicitly convert expression of type `{}` to `Cpp.U` [ConversionFailure]
   // CHECK:STDERR:   Cpp.foo({});
-  // CHECK:STDERR:   ^~~~~~~
-  // CHECK:STDERR: fail_import_definition_multiple_data_members_value_param_type.carbon:[[@LINE+4]]:3: note: in `Cpp` name lookup for `foo` [InCppNameLookup]
+  // CHECK:STDERR:           ^~
+  // CHECK:STDERR: fail_import_definition_multiple_data_members_value_param_type.carbon:[[@LINE+5]]:11: note: type `{}` does not implement interface `Core.ImplicitAs(Cpp.U)` [MissingImplInMemberAccessNote]
   // CHECK:STDERR:   Cpp.foo({});
-  // CHECK:STDERR:   ^~~~~~~
+  // CHECK:STDERR:           ^~
+  // CHECK:STDERR: fail_import_definition_multiple_data_members_value_param_type.carbon: note: initializing function parameter [InCallToFunctionParam]
   // CHECK:STDERR:
   Cpp.foo({});
   //@dump-sem-ir-end
@@ -301,19 +365,12 @@ union U;
 
 auto foo(U* _Nonnull) -> void;
 
-// --- fail_todo_import_decl_pointer_param_type.carbon
+// --- import_decl_pointer_param_type.carbon
 
 library "[[@TEST_NAME]]";
 
 import Cpp library "decl_pointer_param_type.h";
 
-// CHECK:STDERR: fail_todo_import_decl_pointer_param_type.carbon:[[@LINE+7]]:9: error: semantics TODO: `Unsupported: Record declarations without a definition` [SemanticsTodo]
-// CHECK:STDERR: fn F(u: Cpp.U*) {
-// CHECK:STDERR:         ^~~~~
-// CHECK:STDERR: fail_todo_import_decl_pointer_param_type.carbon:[[@LINE+4]]:9: note: in `Cpp` name lookup for `U` [InCppNameLookup]
-// CHECK:STDERR: fn F(u: Cpp.U*) {
-// CHECK:STDERR:         ^~~~~
-// CHECK:STDERR:
 fn F(u: Cpp.U*) {
   //@dump-sem-ir-begin
   Cpp.foo(u);
@@ -359,12 +416,14 @@ library "[[@TEST_NAME]]";
 import Cpp library "decl_value_return_type.h";
 
 fn F() {
-  // CHECK:STDERR: fail_todo_import_decl_value_return_type.carbon:[[@LINE+7]]:3: error: semantics TODO: `Unsupported: Record declarations without a definition` [SemanticsTodo]
+  // CHECK:STDERR: fail_todo_import_decl_value_return_type.carbon:[[@LINE+9]]:3: error: function returns incomplete type `Cpp.U` [IncompleteTypeInFunctionReturnType]
   // CHECK:STDERR:   Cpp.foo();
-  // CHECK:STDERR:   ^~~~~~~
-  // CHECK:STDERR: fail_todo_import_decl_value_return_type.carbon:[[@LINE+4]]:3: note: in `Cpp` name lookup for `foo` [InCppNameLookup]
-  // CHECK:STDERR:   Cpp.foo();
-  // CHECK:STDERR:   ^~~~~~~
+  // CHECK:STDERR:   ^~~~~~~~~
+  // CHECK:STDERR: fail_todo_import_decl_value_return_type.carbon:[[@LINE-6]]:10: in file included here [InCppInclude]
+  // CHECK:STDERR: ./decl_value_return_type.h:2:7: note: class was forward declared here [ClassForwardDeclaredHere]
+  // CHECK:STDERR: union U;
+  // CHECK:STDERR:       ^
+  // CHECK:STDERR: fail_todo_import_decl_value_return_type.carbon: note: return type declared here [IncompleteReturnTypeHere]
   // CHECK:STDERR:
   Cpp.foo();
 }
@@ -399,9 +458,9 @@ fn F() {
 
 union U;
 
-auto foo() -> U*;
+auto foo() -> U* _Nonnull;
 
-// --- fail_todo_import_decl_pointer_return_type.carbon
+// --- import_decl_pointer_return_type.carbon
 
 library "[[@TEST_NAME]]";
 
@@ -409,13 +468,6 @@ import Cpp library "decl_pointer_return_type.h";
 
 fn F() {
   //@dump-sem-ir-begin
-  // CHECK:STDERR: fail_todo_import_decl_pointer_return_type.carbon:[[@LINE+7]]:3: error: semantics TODO: `Unsupported: Record declarations without a definition` [SemanticsTodo]
-  // CHECK:STDERR:   Cpp.foo();
-  // CHECK:STDERR:   ^~~~~~~
-  // CHECK:STDERR: fail_todo_import_decl_pointer_return_type.carbon:[[@LINE+4]]:3: note: in `Cpp` name lookup for `foo` [InCppNameLookup]
-  // CHECK:STDERR:   Cpp.foo();
-  // CHECK:STDERR:   ^~~~~~~
-  // CHECK:STDERR:
   Cpp.foo();
   //@dump-sem-ir-end
 }
@@ -467,7 +519,7 @@ fn F() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %Cpp.ref: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
 // CHECK:STDOUT:   %foo.ref: %foo.type = name_ref foo, imports.%foo.decl [concrete = constants.%foo]
-// CHECK:STDOUT:   %.loc15: %empty_struct_type = struct_literal ()
+// CHECK:STDOUT:   %.loc29: %empty_struct_type = struct_literal ()
 // CHECK:STDOUT:   %foo.call: init %empty_tuple.type = call %foo.ref(<error>)
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
@@ -477,12 +529,12 @@ fn F() {
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [concrete]
 // CHECK:STDOUT:   %U: type = class_type @U [concrete]
-// CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [concrete]
 // CHECK:STDOUT:   %ptr.86f: type = ptr_type %U [concrete]
 // CHECK:STDOUT:   %foo__carbon_thunk.type: type = fn_type @foo__carbon_thunk [concrete]
 // CHECK:STDOUT:   %foo__carbon_thunk: %foo__carbon_thunk.type = struct_value () [concrete]
 // CHECK:STDOUT:   %foo.type: type = fn_type @foo [concrete]
 // CHECK:STDOUT:   %foo: %foo.type = struct_value () [concrete]
+// CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [concrete]
 // CHECK:STDOUT:   %U.val: %U = struct_value () [concrete]
 // CHECK:STDOUT:   %T.as.Destroy.impl.Op.type.0b7: type = fn_type @T.as.Destroy.impl.Op, @T.as.Destroy.impl(%U) [concrete]
 // CHECK:STDOUT:   %T.as.Destroy.impl.Op.2fa: %T.as.Destroy.impl.Op.type.0b7 = struct_value () [concrete]
@@ -508,7 +560,6 @@ fn F() {
 // CHECK:STDOUT: fn @F() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %Cpp.ref: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
-// CHECK:STDOUT:   <elided>
 // CHECK:STDOUT:   %foo.ref: %foo.type = name_ref foo, imports.%foo.decl [concrete = constants.%foo]
 // CHECK:STDOUT:   %.loc8_12.1: %empty_struct_type = struct_literal ()
 // CHECK:STDOUT:   %.loc8_12.2: ref %U = temporary_storage
@@ -537,9 +588,15 @@ fn F() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [concrete]
+// CHECK:STDOUT:   %U: type = class_type @U [concrete]
+// CHECK:STDOUT:   %ptr.86f: type = ptr_type %U [concrete]
+// CHECK:STDOUT:   %foo__carbon_thunk.type: type = fn_type @foo__carbon_thunk [concrete]
+// CHECK:STDOUT:   %foo__carbon_thunk: %foo__carbon_thunk.type = struct_value () [concrete]
 // CHECK:STDOUT:   %foo.type: type = fn_type @foo [concrete]
 // CHECK:STDOUT:   %foo: %foo.type = struct_value () [concrete]
 // CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [concrete]
+// CHECK:STDOUT:   %T.as.Destroy.impl.Op.type.0b7: type = fn_type @T.as.Destroy.impl.Op, @T.as.Destroy.impl(%U) [concrete]
+// CHECK:STDOUT:   %T.as.Destroy.impl.Op.2fa: %T.as.Destroy.impl.Op.type.0b7 = struct_value () [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -552,14 +609,28 @@ fn F() {
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     <elided>
 // CHECK:STDOUT:   }
+// CHECK:STDOUT:   %foo__carbon_thunk.decl: %foo__carbon_thunk.type = fn_decl @foo__carbon_thunk [concrete = constants.%foo__carbon_thunk] {
+// CHECK:STDOUT:     <elided>
+// CHECK:STDOUT:   } {
+// CHECK:STDOUT:     <elided>
+// CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %Cpp.ref: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
 // CHECK:STDOUT:   %foo.ref: %foo.type = name_ref foo, imports.%foo.decl [concrete = constants.%foo]
-// CHECK:STDOUT:   %.loc15: %empty_struct_type = struct_literal ()
-// CHECK:STDOUT:   %foo.call: init %empty_tuple.type = call %foo.ref(<error>)
+// CHECK:STDOUT:   %.loc16_12.1: %empty_struct_type = struct_literal ()
+// CHECK:STDOUT:   %.loc16_12.2: %U = converted %.loc16_12.1, <error> [concrete = <error>]
+// CHECK:STDOUT:   %.loc16_13.1: ref %U = temporary_storage
+// CHECK:STDOUT:   %.loc16_13.2: init %U = initialize_from <error> to %.loc16_13.1 [concrete = <error>]
+// CHECK:STDOUT:   %addr.loc16_13.1: %ptr.86f = addr_of %.loc16_13.1
+// CHECK:STDOUT:   %foo__carbon_thunk.call: init %empty_tuple.type = call imports.%foo__carbon_thunk.decl(%addr.loc16_13.1)
+// CHECK:STDOUT:   %T.as.Destroy.impl.Op.bound: <bound method> = bound_method %.loc16_13.1, constants.%T.as.Destroy.impl.Op.2fa
+// CHECK:STDOUT:   <elided>
+// CHECK:STDOUT:   %bound_method: <bound method> = bound_method %.loc16_13.1, %T.as.Destroy.impl.Op.specific_fn
+// CHECK:STDOUT:   %addr.loc16_13.2: %ptr.86f = addr_of %.loc16_13.1
+// CHECK:STDOUT:   %T.as.Destroy.impl.Op.call: init %empty_tuple.type = call %bound_method(%addr.loc16_13.2)
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -567,9 +638,15 @@ fn F() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [concrete]
+// CHECK:STDOUT:   %U: type = class_type @U [concrete]
+// CHECK:STDOUT:   %ptr.86f: type = ptr_type %U [concrete]
+// CHECK:STDOUT:   %foo__carbon_thunk.type: type = fn_type @foo__carbon_thunk [concrete]
+// CHECK:STDOUT:   %foo__carbon_thunk: %foo__carbon_thunk.type = struct_value () [concrete]
 // CHECK:STDOUT:   %foo.type: type = fn_type @foo [concrete]
 // CHECK:STDOUT:   %foo: %foo.type = struct_value () [concrete]
 // CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [concrete]
+// CHECK:STDOUT:   %T.as.Destroy.impl.Op.type.0b7: type = fn_type @T.as.Destroy.impl.Op, @T.as.Destroy.impl(%U) [concrete]
+// CHECK:STDOUT:   %T.as.Destroy.impl.Op.2fa: %T.as.Destroy.impl.Op.type.0b7 = struct_value () [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -582,14 +659,28 @@ fn F() {
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     <elided>
 // CHECK:STDOUT:   }
+// CHECK:STDOUT:   %foo__carbon_thunk.decl: %foo__carbon_thunk.type = fn_decl @foo__carbon_thunk [concrete = constants.%foo__carbon_thunk] {
+// CHECK:STDOUT:     <elided>
+// CHECK:STDOUT:   } {
+// CHECK:STDOUT:     <elided>
+// CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %Cpp.ref: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
 // CHECK:STDOUT:   %foo.ref: %foo.type = name_ref foo, imports.%foo.decl [concrete = constants.%foo]
-// CHECK:STDOUT:   %.loc15: %empty_struct_type = struct_literal ()
-// CHECK:STDOUT:   %foo.call: init %empty_tuple.type = call %foo.ref(<error>)
+// CHECK:STDOUT:   %.loc16_12.1: %empty_struct_type = struct_literal ()
+// CHECK:STDOUT:   %.loc16_12.2: %U = converted %.loc16_12.1, <error> [concrete = <error>]
+// CHECK:STDOUT:   %.loc16_13.1: ref %U = temporary_storage
+// CHECK:STDOUT:   %.loc16_13.2: init %U = initialize_from <error> to %.loc16_13.1 [concrete = <error>]
+// CHECK:STDOUT:   %addr.loc16_13.1: %ptr.86f = addr_of %.loc16_13.1
+// CHECK:STDOUT:   %foo__carbon_thunk.call: init %empty_tuple.type = call imports.%foo__carbon_thunk.decl(%addr.loc16_13.1)
+// CHECK:STDOUT:   %T.as.Destroy.impl.Op.bound: <bound method> = bound_method %.loc16_13.1, constants.%T.as.Destroy.impl.Op.2fa
+// CHECK:STDOUT:   <elided>
+// CHECK:STDOUT:   %bound_method: <bound method> = bound_method %.loc16_13.1, %T.as.Destroy.impl.Op.specific_fn
+// CHECK:STDOUT:   %addr.loc16_13.2: %ptr.86f = addr_of %.loc16_13.1
+// CHECK:STDOUT:   %T.as.Destroy.impl.Op.call: init %empty_tuple.type = call %bound_method(%addr.loc16_13.2)
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -598,13 +689,13 @@ fn F() {
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [concrete]
 // CHECK:STDOUT:   %U: type = class_type @U [concrete]
-// CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [concrete]
 // CHECK:STDOUT:   %pattern_type.eb9: type = pattern_type %U [concrete]
 // CHECK:STDOUT:   %ptr.87e: type = ptr_type %U [concrete]
 // CHECK:STDOUT:   %foo__carbon_thunk.type: type = fn_type @foo__carbon_thunk [concrete]
 // CHECK:STDOUT:   %foo__carbon_thunk: %foo__carbon_thunk.type = struct_value () [concrete]
 // CHECK:STDOUT:   %foo.type: type = fn_type @foo [concrete]
 // CHECK:STDOUT:   %foo: %foo.type = struct_value () [concrete]
+// CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [concrete]
 // CHECK:STDOUT:   %U.val: %U = struct_value () [concrete]
 // CHECK:STDOUT:   %T.as.Destroy.impl.Op.type.2e1: type = fn_type @T.as.Destroy.impl.Op, @T.as.Destroy.impl(%U) [concrete]
 // CHECK:STDOUT:   %T.as.Destroy.impl.Op.d5d: %T.as.Destroy.impl.Op.type.2e1 = struct_value () [concrete]
@@ -636,7 +727,6 @@ fn F() {
 // CHECK:STDOUT: fn @F() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %Cpp.ref.loc8: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
-// CHECK:STDOUT:   <elided>
 // CHECK:STDOUT:   %foo.ref: %foo.type = name_ref foo, imports.%foo.decl [concrete = constants.%foo]
 // CHECK:STDOUT:   %.loc8_12.1: %empty_struct_type = struct_literal ()
 // CHECK:STDOUT:   %.loc8_12.2: ref %U = temporary_storage
@@ -682,12 +772,12 @@ fn F() {
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [concrete]
 // CHECK:STDOUT:   %U: type = class_type @U [concrete]
-// CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [concrete]
 // CHECK:STDOUT:   %ptr.8c1: type = ptr_type %U [concrete]
 // CHECK:STDOUT:   %foo__carbon_thunk.type: type = fn_type @foo__carbon_thunk [concrete]
 // CHECK:STDOUT:   %foo__carbon_thunk: %foo__carbon_thunk.type = struct_value () [concrete]
 // CHECK:STDOUT:   %foo.type: type = fn_type @foo [concrete]
 // CHECK:STDOUT:   %foo: %foo.type = struct_value () [concrete]
+// CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [concrete]
 // CHECK:STDOUT:   %U.val: %U = struct_value () [concrete]
 // CHECK:STDOUT:   %T.as.Destroy.impl.Op.type.ee1: type = fn_type @T.as.Destroy.impl.Op, @T.as.Destroy.impl(%U) [concrete]
 // CHECK:STDOUT:   %T.as.Destroy.impl.Op.28c: %T.as.Destroy.impl.Op.type.ee1 = struct_value () [concrete]
@@ -718,7 +808,6 @@ fn F() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %Cpp.ref: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
 // CHECK:STDOUT:   %N1.ref: <namespace> = name_ref N1, imports.%N1 [concrete = imports.%N1]
-// CHECK:STDOUT:   <elided>
 // CHECK:STDOUT:   %foo.ref: %foo.type = name_ref foo, imports.%foo.decl [concrete = constants.%foo]
 // CHECK:STDOUT:   %.loc8_15.1: %empty_struct_type = struct_literal ()
 // CHECK:STDOUT:   %.loc8_15.2: ref %U = temporary_storage
@@ -748,13 +837,13 @@ fn F() {
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [concrete]
 // CHECK:STDOUT:   %O: type = class_type @O [concrete]
-// CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [concrete]
 // CHECK:STDOUT:   %U: type = class_type @U [concrete]
 // CHECK:STDOUT:   %ptr.a6c: type = ptr_type %U [concrete]
 // CHECK:STDOUT:   %foo__carbon_thunk.type: type = fn_type @foo__carbon_thunk [concrete]
 // CHECK:STDOUT:   %foo__carbon_thunk: %foo__carbon_thunk.type = struct_value () [concrete]
 // CHECK:STDOUT:   %foo.type: type = fn_type @foo [concrete]
 // CHECK:STDOUT:   %foo: %foo.type = struct_value () [concrete]
+// CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [concrete]
 // CHECK:STDOUT:   %U.val: %U = struct_value () [concrete]
 // CHECK:STDOUT:   %pattern_type.cff: type = pattern_type %O [concrete]
 // CHECK:STDOUT:   %T.as.Destroy.impl.Op.type.1b8: type = fn_type @T.as.Destroy.impl.Op, @T.as.Destroy.impl(%O) [concrete]
@@ -786,7 +875,6 @@ fn F() {
 // CHECK:STDOUT: fn @F() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %Cpp.ref.loc8: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
-// CHECK:STDOUT:   <elided>
 // CHECK:STDOUT:   %foo.ref: %foo.type = name_ref foo, imports.%foo.decl [concrete = constants.%foo]
 // CHECK:STDOUT:   %.loc8_12.1: %empty_struct_type = struct_literal ()
 // CHECK:STDOUT:   %.loc8_12.2: ref %U = temporary_storage
@@ -867,7 +955,6 @@ fn F() {
 // CHECK:STDOUT: fn @F() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %Cpp.ref.loc8: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
-// CHECK:STDOUT:   <elided>
 // CHECK:STDOUT:   %U.ref: type = name_ref U, imports.%U.decl [concrete = constants.%U]
 // CHECK:STDOUT:   %bar.ref: %U.bar.type = name_ref bar, imports.%U.bar.decl [concrete = constants.%U.bar]
 // CHECK:STDOUT:   %U.bar.call: init %empty_tuple.type = call %bar.ref()
@@ -901,12 +988,12 @@ fn F() {
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [concrete]
 // CHECK:STDOUT:   %U: type = class_type @U [concrete]
-// CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [concrete]
 // CHECK:STDOUT:   %ptr.86f: type = ptr_type %U [concrete]
 // CHECK:STDOUT:   %foo__carbon_thunk.type: type = fn_type @foo__carbon_thunk [concrete]
 // CHECK:STDOUT:   %foo__carbon_thunk: %foo__carbon_thunk.type = struct_value () [concrete]
 // CHECK:STDOUT:   %foo.type: type = fn_type @foo [concrete]
 // CHECK:STDOUT:   %foo: %foo.type = struct_value () [concrete]
+// CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [concrete]
 // CHECK:STDOUT:   %U.val: %U = struct_value () [concrete]
 // CHECK:STDOUT:   %U.bar.type: type = fn_type @U.bar [concrete]
 // CHECK:STDOUT:   %U.bar: %U.bar.type = struct_value () [concrete]
@@ -937,7 +1024,6 @@ fn F() {
 // CHECK:STDOUT: fn @F() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %Cpp.ref.loc8: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
-// CHECK:STDOUT:   <elided>
 // CHECK:STDOUT:   %foo.ref: %foo.type = name_ref foo, imports.%foo.decl [concrete = constants.%foo]
 // CHECK:STDOUT:   %.loc8_12.1: %empty_struct_type = struct_literal ()
 // CHECK:STDOUT:   %.loc8_12.2: ref %U = temporary_storage
@@ -966,9 +1052,11 @@ fn F() {
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- fail_todo_import_decl_pointer_param_type.carbon
+// CHECK:STDOUT: --- import_decl_pointer_param_type.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
+// CHECK:STDOUT:   %U: type = class_type @U [concrete]
+// CHECK:STDOUT:   %ptr: type = ptr_type %U [concrete]
 // CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [concrete]
 // CHECK:STDOUT:   %foo.type: type = fn_type @foo [concrete]
 // CHECK:STDOUT:   %foo: %foo.type = struct_value () [concrete]
@@ -976,10 +1064,11 @@ fn F() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT:   %Cpp: <namespace> = namespace file.%Cpp.import_cpp, [concrete] {
-// CHECK:STDOUT:     .U = <error>
+// CHECK:STDOUT:     .U = %U.decl
 // CHECK:STDOUT:     .foo = %foo.decl
 // CHECK:STDOUT:     import Cpp//...
 // CHECK:STDOUT:   }
+// CHECK:STDOUT:   %U.decl: type = class_decl @U [concrete = constants.%U] {} {}
 // CHECK:STDOUT:   %foo.decl: %foo.type = fn_decl @foo [concrete = constants.%foo] {
 // CHECK:STDOUT:     <elided>
 // CHECK:STDOUT:   } {
@@ -987,12 +1076,12 @@ fn F() {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @F(%u.param: <error>) {
+// CHECK:STDOUT: fn @F(%u.param: %ptr) {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %Cpp.ref.loc15: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
+// CHECK:STDOUT:   %Cpp.ref.loc8: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
 // CHECK:STDOUT:   %foo.ref: %foo.type = name_ref foo, imports.%foo.decl [concrete = constants.%foo]
-// CHECK:STDOUT:   %u.ref: <error> = name_ref u, %u
-// CHECK:STDOUT:   %foo.call: init %empty_tuple.type = call %foo.ref(<error>)
+// CHECK:STDOUT:   %u.ref: %ptr = name_ref u, %u
+// CHECK:STDOUT:   %foo.call: init %empty_tuple.type = call %foo.ref(%u.ref)
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -1056,7 +1145,6 @@ fn F() {
 // CHECK:STDOUT: fn @F() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %Cpp.ref: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
-// CHECK:STDOUT:   <elided>
 // CHECK:STDOUT:   %foo.ref: %foo.type = name_ref foo, imports.%foo.decl [concrete = constants.%foo]
 // CHECK:STDOUT:   %.loc8_11.1: ref %U = temporary_storage
 // CHECK:STDOUT:   %foo.call: init %U = call %foo.ref() to %.loc8_11.1
@@ -1069,9 +1157,11 @@ fn F() {
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- fail_todo_import_decl_pointer_return_type.carbon
+// CHECK:STDOUT: --- import_decl_pointer_return_type.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
+// CHECK:STDOUT:   %U: type = class_type @U [concrete]
+// CHECK:STDOUT:   %ptr: type = ptr_type %U [concrete]
 // CHECK:STDOUT:   %foo.type: type = fn_type @foo [concrete]
 // CHECK:STDOUT:   %foo: %foo.type = struct_value () [concrete]
 // CHECK:STDOUT: }
@@ -1092,7 +1182,7 @@ fn F() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %Cpp.ref: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
 // CHECK:STDOUT:   %foo.ref: %foo.type = name_ref foo, imports.%foo.decl [concrete = constants.%foo]
-// CHECK:STDOUT:   %foo.call: init <error> = call %foo.ref()
+// CHECK:STDOUT:   %foo.call: init %ptr = call %foo.ref()
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -1120,7 +1210,6 @@ fn F() {
 // CHECK:STDOUT: fn @F() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %Cpp.ref: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
-// CHECK:STDOUT:   <elided>
 // CHECK:STDOUT:   %foo.ref: %foo.type = name_ref foo, imports.%foo.decl [concrete = constants.%foo]
 // CHECK:STDOUT:   %foo.call: init %ptr = call %foo.ref()
 // CHECK:STDOUT:   <elided>

@@ -36,23 +36,25 @@ fn F(x: X) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %X: type = class_type @X [concrete]
+// CHECK:STDOUT:   %Destroy.type: type = facet_type <@Destroy> [concrete]
+// CHECK:STDOUT:   %pattern_type.f6d: type = pattern_type auto [concrete]
+// CHECK:STDOUT:   %Destroy.impl_witness.807: <witness> = impl_witness @X.%Destroy.impl_witness_table [concrete]
+// CHECK:STDOUT:   %ptr.d17: type = ptr_type %X [concrete]
+// CHECK:STDOUT:   %pattern_type.1c6: type = pattern_type %ptr.d17 [concrete]
+// CHECK:STDOUT:   %X.as.Destroy.impl.Op.type: type = fn_type @X.as.Destroy.impl.Op [concrete]
+// CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [concrete]
+// CHECK:STDOUT:   %X.as.Destroy.impl.Op: %X.as.Destroy.impl.Op.type = struct_value () [concrete]
 // CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [concrete]
 // CHECK:STDOUT:   %complete_type.357: <witness> = complete_type_witness %empty_struct_type [concrete]
 // CHECK:STDOUT:   %pattern_type.019: type = pattern_type %X [concrete]
 // CHECK:STDOUT:   %F.type: type = fn_type @F [concrete]
-// CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [concrete]
 // CHECK:STDOUT:   %F: %F.type = struct_value () [concrete]
 // CHECK:STDOUT:   %ptr.a45: type = ptr_type String [concrete]
 // CHECK:STDOUT:   %pattern_type.b05: type = pattern_type String [concrete]
 // CHECK:STDOUT:   %str: String = string_literal "hello" [concrete]
-// CHECK:STDOUT:   %Destroy.type: type = facet_type <@Destroy> [concrete]
-// CHECK:STDOUT:   %T.as.Destroy.impl.Op.type.9e1: type = fn_type @T.as.Destroy.impl.Op, @T.as.Destroy.impl(%X) [concrete]
-// CHECK:STDOUT:   %T.as.Destroy.impl.Op.33a: %T.as.Destroy.impl.Op.type.9e1 = struct_value () [concrete]
-// CHECK:STDOUT:   %ptr.d17: type = ptr_type %X [concrete]
-// CHECK:STDOUT:   %T.as.Destroy.impl.Op.specific_fn.d1f: <specific function> = specific_function %T.as.Destroy.impl.Op.33a, @T.as.Destroy.impl.Op(%X) [concrete]
 // CHECK:STDOUT:   %T.as.Destroy.impl.Op.type.051: type = fn_type @T.as.Destroy.impl.Op, @T.as.Destroy.impl(String) [concrete]
 // CHECK:STDOUT:   %T.as.Destroy.impl.Op.5ef: %T.as.Destroy.impl.Op.type.051 = struct_value () [concrete]
-// CHECK:STDOUT:   %T.as.Destroy.impl.Op.specific_fn.93f: <specific function> = specific_function %T.as.Destroy.impl.Op.5ef, @T.as.Destroy.impl.Op(String) [concrete]
+// CHECK:STDOUT:   %T.as.Destroy.impl.Op.specific_fn: <specific function> = specific_function %T.as.Destroy.impl.Op.5ef, @T.as.Destroy.impl.Op(String) [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -82,7 +84,26 @@ fn F(x: X) {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
+// CHECK:STDOUT: impl @X.as.Destroy.impl: constants.%X as constants.%Destroy.type {
+// CHECK:STDOUT:   %X.as.Destroy.impl.Op.decl: %X.as.Destroy.impl.Op.type = fn_decl @X.as.Destroy.impl.Op [concrete = constants.%X.as.Destroy.impl.Op] {
+// CHECK:STDOUT:     %self.patt: %pattern_type.1c6 = binding_pattern self [concrete]
+// CHECK:STDOUT:     %self.param_patt: %pattern_type.1c6 = value_param_pattern %self.patt, call_param0 [concrete]
+// CHECK:STDOUT:     %.loc15: %pattern_type.f6d = addr_pattern %self.param_patt [concrete]
+// CHECK:STDOUT:   } {
+// CHECK:STDOUT:     %self.param: %ptr.d17 = value_param call_param0
+// CHECK:STDOUT:     %Self.ref: type = name_ref Self, constants.%X [concrete = constants.%X]
+// CHECK:STDOUT:     %self: %ptr.d17 = bind_name self, %self.param
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:
+// CHECK:STDOUT: !members:
+// CHECK:STDOUT:   .Op = %X.as.Destroy.impl.Op.decl
+// CHECK:STDOUT:   witness = @X.%Destroy.impl_witness
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
 // CHECK:STDOUT: class @X {
+// CHECK:STDOUT:   impl_decl @X.as.Destroy.impl [concrete] {} {}
+// CHECK:STDOUT:   %Destroy.impl_witness_table = impl_witness_table (@X.as.Destroy.impl.%X.as.Destroy.impl.Op.decl), @X.as.Destroy.impl [concrete]
+// CHECK:STDOUT:   %Destroy.impl_witness: <witness> = impl_witness %Destroy.impl_witness_table [concrete = constants.%Destroy.impl_witness.807]
 // CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [concrete = constants.%empty_struct_type]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [concrete = constants.%complete_type.357]
 // CHECK:STDOUT:   complete_type_witness = %complete_type
@@ -90,6 +111,8 @@ fn F(x: X) {
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%X
 // CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: fn @X.as.Destroy.impl.Op(%self.param: %ptr.d17) = "no_op";
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F(%x.param: %X) {
 // CHECK:STDOUT: !entry:
@@ -110,16 +133,14 @@ fn F(x: X) {
 // CHECK:STDOUT:   assign %y.var, <error>
 // CHECK:STDOUT:   %X.ref.loc32: type = name_ref X, file.%X.decl [concrete = constants.%X]
 // CHECK:STDOUT:   %y: ref %X = bind_name y, %y.var
-// CHECK:STDOUT:   %T.as.Destroy.impl.Op.bound.loc32: <bound method> = bound_method %y.var, constants.%T.as.Destroy.impl.Op.33a
-// CHECK:STDOUT:   %T.as.Destroy.impl.Op.specific_fn.1: <specific function> = specific_function constants.%T.as.Destroy.impl.Op.33a, @T.as.Destroy.impl.Op(constants.%X) [concrete = constants.%T.as.Destroy.impl.Op.specific_fn.d1f]
-// CHECK:STDOUT:   %bound_method.loc32: <bound method> = bound_method %y.var, %T.as.Destroy.impl.Op.specific_fn.1
+// CHECK:STDOUT:   %X.as.Destroy.impl.Op.bound: <bound method> = bound_method %y.var, constants.%X.as.Destroy.impl.Op
 // CHECK:STDOUT:   %addr.loc32: %ptr.d17 = addr_of %y.var
-// CHECK:STDOUT:   %T.as.Destroy.impl.Op.call.loc32: init %empty_tuple.type = call %bound_method.loc32(%addr.loc32)
-// CHECK:STDOUT:   %T.as.Destroy.impl.Op.bound.loc25: <bound method> = bound_method %s.var, constants.%T.as.Destroy.impl.Op.5ef
-// CHECK:STDOUT:   %T.as.Destroy.impl.Op.specific_fn.2: <specific function> = specific_function constants.%T.as.Destroy.impl.Op.5ef, @T.as.Destroy.impl.Op(String) [concrete = constants.%T.as.Destroy.impl.Op.specific_fn.93f]
-// CHECK:STDOUT:   %bound_method.loc25: <bound method> = bound_method %s.var, %T.as.Destroy.impl.Op.specific_fn.2
+// CHECK:STDOUT:   %X.as.Destroy.impl.Op.call: init %empty_tuple.type = call %X.as.Destroy.impl.Op.bound(%addr.loc32)
+// CHECK:STDOUT:   %T.as.Destroy.impl.Op.bound: <bound method> = bound_method %s.var, constants.%T.as.Destroy.impl.Op.5ef
+// CHECK:STDOUT:   %T.as.Destroy.impl.Op.specific_fn: <specific function> = specific_function constants.%T.as.Destroy.impl.Op.5ef, @T.as.Destroy.impl.Op(String) [concrete = constants.%T.as.Destroy.impl.Op.specific_fn]
+// CHECK:STDOUT:   %bound_method: <bound method> = bound_method %s.var, %T.as.Destroy.impl.Op.specific_fn
 // CHECK:STDOUT:   %addr.loc25: %ptr.a45 = addr_of %s.var
-// CHECK:STDOUT:   %T.as.Destroy.impl.Op.call.loc25: init %empty_tuple.type = call %bound_method.loc25(%addr.loc25)
+// CHECK:STDOUT:   %T.as.Destroy.impl.Op.call: init %empty_tuple.type = call %bound_method(%addr.loc25)
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

@@ -77,10 +77,13 @@ auto AllocateFacetTypeImplWitness(Context& context,
 //
 // The rewrite constraints in `rewrites` are modified in place and may be
 // reordered, with `ErrorInst` inserted when diagnosing errors.
+//
+// Returns false if resolve failed due to diagnosing an error. The resulting
+// value of the facet type should be an error constant.
 auto ResolveFacetTypeRewriteConstraints(
     Context& context, SemIR::LocId loc_id,
     llvm::SmallVector<SemIR::FacetTypeInfo::RewriteConstraint>& rewrites)
-    -> void;
+    -> bool;
 
 }  // namespace Carbon::Check
 

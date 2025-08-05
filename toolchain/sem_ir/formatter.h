@@ -401,8 +401,10 @@ auto Formatter::FormatEntityStart(llvm::StringRef entity_kind,
     if (import_ir_inst_id.has_value()) {
       auto import_ir_id =
           sem_ir_->import_ir_insts().Get(import_ir_inst_id).ir_id();
-      const auto* import_file = sem_ir_->import_irs().Get(import_ir_id).sem_ir;
-      pending_imported_from_ = import_file->filename();
+      if (const auto* import_file =
+              sem_ir_->import_irs().Get(import_ir_id).sem_ir) {
+        pending_imported_from_ = import_file->filename();
+      }
     }
   }
 

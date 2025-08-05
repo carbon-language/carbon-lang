@@ -85,8 +85,8 @@ fn F() {
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT:   %Main.FooShort: %foo_short.type = import_ref Main//api, FooShort, loaded [concrete = constants.%foo_short]
 // CHECK:STDOUT:   %Main.FooInt: %foo_int.type = import_ref Main//api, FooInt, loaded [concrete = constants.%foo_int]
-// CHECK:STDOUT:   %Core.import_ref.a86: @Core.IntLiteral.as.ImplicitAs.impl.%Core.IntLiteral.as.ImplicitAs.impl.Convert.type (%Core.IntLiteral.as.ImplicitAs.impl.Convert.type.0b2) = import_ref Core//prelude/parts/int, loc16_39, loaded [symbolic = @Core.IntLiteral.as.ImplicitAs.impl.%Core.IntLiteral.as.ImplicitAs.impl.Convert (constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.6d7)]
-// CHECK:STDOUT:   %ImplicitAs.impl_witness_table.e36 = impl_witness_table (%Core.import_ref.a86), @Core.IntLiteral.as.ImplicitAs.impl [concrete]
+// CHECK:STDOUT:   %Core.import_ref.a86c: @Core.IntLiteral.as.ImplicitAs.impl.%Core.IntLiteral.as.ImplicitAs.impl.Convert.type (%Core.IntLiteral.as.ImplicitAs.impl.Convert.type.0b2) = import_ref Core//prelude/parts/int, loc16_39, loaded [symbolic = @Core.IntLiteral.as.ImplicitAs.impl.%Core.IntLiteral.as.ImplicitAs.impl.Convert (constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.6d7)]
+// CHECK:STDOUT:   %ImplicitAs.impl_witness_table.e36 = impl_witness_table (%Core.import_ref.a86c), @Core.IntLiteral.as.ImplicitAs.impl [concrete]
 // CHECK:STDOUT:   %Core.import_ref.ea5: @Core.IntLiteral.as.As.impl.%Core.IntLiteral.as.As.impl.Convert.type (%Core.IntLiteral.as.As.impl.Convert.type.6c8) = import_ref Core//prelude/parts/int, loc25_39, loaded [symbolic = @Core.IntLiteral.as.As.impl.%Core.IntLiteral.as.As.impl.Convert (constants.%Core.IntLiteral.as.As.impl.Convert.1ee)]
 // CHECK:STDOUT:   %As.impl_witness_table.a72 = impl_witness_table (%Core.import_ref.ea5), @Core.IntLiteral.as.As.impl [concrete]
 // CHECK:STDOUT: }

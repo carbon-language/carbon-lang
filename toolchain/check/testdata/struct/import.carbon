@@ -71,6 +71,8 @@ var c_bad: C({.a = 3, .b = 4}) = F();
 // CHECK:STDOUT:   %ImplicitAs.generic: %ImplicitAs.type.cc7 = struct_value () [concrete]
 // CHECK:STDOUT:   %ImplicitAs.type.205: type = facet_type <@ImplicitAs, @ImplicitAs(%i32)> [concrete]
 // CHECK:STDOUT:   %ImplicitAs.Convert.type.1b6: type = fn_type @ImplicitAs.Convert, @ImplicitAs(%i32) [concrete]
+// CHECK:STDOUT:   %Destroy.type: type = facet_type <@Destroy> [concrete]
+// CHECK:STDOUT:   %pattern_type.f6d: type = pattern_type auto [concrete]
 // CHECK:STDOUT:   %To: Core.IntLiteral = bind_symbolic_name To, 0 [symbolic]
 // CHECK:STDOUT:   %Core.IntLiteral.as.ImplicitAs.impl.Convert.type.0f9: type = fn_type @Core.IntLiteral.as.ImplicitAs.impl.Convert, @Core.IntLiteral.as.ImplicitAs.impl(%To) [symbolic]
 // CHECK:STDOUT:   %Core.IntLiteral.as.ImplicitAs.impl.Convert.f06: %Core.IntLiteral.as.ImplicitAs.impl.Convert.type.0f9 = struct_value () [symbolic]
@@ -105,6 +107,11 @@ var c_bad: C({.a = 3, .b = 4}) = F();
 // CHECK:STDOUT:   %C.type: type = generic_class_type @C [concrete]
 // CHECK:STDOUT:   %C.generic: %C.type = struct_value () [concrete]
 // CHECK:STDOUT:   %C.775: type = class_type @C, @C(%S) [symbolic]
+// CHECK:STDOUT:   %Destroy.impl_witness.d9c: <witness> = impl_witness @C.%Destroy.impl_witness_table, @C.as.Destroy.impl(%S) [symbolic]
+// CHECK:STDOUT:   %ptr.e4c: type = ptr_type %C.775 [symbolic]
+// CHECK:STDOUT:   %pattern_type.d5f: type = pattern_type %ptr.e4c [symbolic]
+// CHECK:STDOUT:   %C.as.Destroy.impl.Op.type: type = fn_type @C.as.Destroy.impl.Op, @C.as.Destroy.impl(%S) [symbolic]
+// CHECK:STDOUT:   %C.as.Destroy.impl.Op: %C.as.Destroy.impl.Op.type = struct_value () [symbolic]
 // CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [concrete]
 // CHECK:STDOUT:   %complete_type.357: <witness> = complete_type_witness %empty_struct_type [concrete]
 // CHECK:STDOUT:   %int_1.5b8: Core.IntLiteral = int_value 1 [concrete]
@@ -127,6 +134,7 @@ var c_bad: C({.a = 3, .b = 4}) = F();
 // CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [concrete] {
 // CHECK:STDOUT:     .Int = %Core.Int
 // CHECK:STDOUT:     .ImplicitAs = %Core.ImplicitAs
+// CHECK:STDOUT:     .Destroy = %Core.Destroy
 // CHECK:STDOUT:     import Core//prelude
 // CHECK:STDOUT:     import Core//prelude/...
 // CHECK:STDOUT:   }
@@ -134,6 +142,7 @@ var c_bad: C({.a = 3, .b = 4}) = F();
 // CHECK:STDOUT:   %Core.ImplicitAs: %ImplicitAs.type.cc7 = import_ref Core//prelude/parts/as, ImplicitAs, loaded [concrete = constants.%ImplicitAs.generic]
 // CHECK:STDOUT:   %Core.import_ref.a5b: @Core.IntLiteral.as.ImplicitAs.impl.%Core.IntLiteral.as.ImplicitAs.impl.Convert.type (%Core.IntLiteral.as.ImplicitAs.impl.Convert.type.0f9) = import_ref Core//prelude/parts/int, loc16_39, loaded [symbolic = @Core.IntLiteral.as.ImplicitAs.impl.%Core.IntLiteral.as.ImplicitAs.impl.Convert (constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.f06)]
 // CHECK:STDOUT:   %ImplicitAs.impl_witness_table.a2f = impl_witness_table (%Core.import_ref.a5b), @Core.IntLiteral.as.ImplicitAs.impl [concrete]
+// CHECK:STDOUT:   %Core.Destroy: type = import_ref Core//prelude/parts/destroy, Destroy, loaded [concrete = constants.%Destroy.type]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -216,12 +225,43 @@ var c_bad: C({.a = 3, .b = 4}) = F();
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
+// CHECK:STDOUT: generic impl @C.as.Destroy.impl(@C.%S.loc8_9.2: %struct_type.a.b.501) {
+// CHECK:STDOUT:   %S: %struct_type.a.b.501 = bind_symbolic_name S, 0 [symbolic = %S (constants.%S)]
+// CHECK:STDOUT:   %Destroy.impl_witness: <witness> = impl_witness @C.%Destroy.impl_witness_table, @C.as.Destroy.impl(%S) [symbolic = %Destroy.impl_witness (constants.%Destroy.impl_witness.d9c)]
+// CHECK:STDOUT:
+// CHECK:STDOUT: !definition:
+// CHECK:STDOUT:   %C.as.Destroy.impl.Op.type: type = fn_type @C.as.Destroy.impl.Op, @C.as.Destroy.impl(%S) [symbolic = %C.as.Destroy.impl.Op.type (constants.%C.as.Destroy.impl.Op.type)]
+// CHECK:STDOUT:   %C.as.Destroy.impl.Op: @C.as.Destroy.impl.%C.as.Destroy.impl.Op.type (%C.as.Destroy.impl.Op.type) = struct_value () [symbolic = %C.as.Destroy.impl.Op (constants.%C.as.Destroy.impl.Op)]
+// CHECK:STDOUT:
+// CHECK:STDOUT:   impl: constants.%C.775 as constants.%Destroy.type {
+// CHECK:STDOUT:     %C.as.Destroy.impl.Op.decl: @C.as.Destroy.impl.%C.as.Destroy.impl.Op.type (%C.as.Destroy.impl.Op.type) = fn_decl @C.as.Destroy.impl.Op [symbolic = @C.as.Destroy.impl.%C.as.Destroy.impl.Op (constants.%C.as.Destroy.impl.Op)] {
+// CHECK:STDOUT:       %self.patt: @C.as.Destroy.impl.Op.%pattern_type (%pattern_type.d5f) = binding_pattern self [concrete]
+// CHECK:STDOUT:       %self.param_patt: @C.as.Destroy.impl.Op.%pattern_type (%pattern_type.d5f) = value_param_pattern %self.patt, call_param0 [concrete]
+// CHECK:STDOUT:       %.loc8_33.1: %pattern_type.f6d = addr_pattern %self.param_patt [concrete]
+// CHECK:STDOUT:     } {
+// CHECK:STDOUT:       %self.param: @C.as.Destroy.impl.Op.%ptr (%ptr.e4c) = value_param call_param0
+// CHECK:STDOUT:       %.loc8_33.2: type = splice_block %Self.ref [symbolic = %C (constants.%C.775)] {
+// CHECK:STDOUT:         %.loc8_33.3: type = specific_constant constants.%C.775, @C(constants.%S) [symbolic = %C (constants.%C.775)]
+// CHECK:STDOUT:         %Self.ref: type = name_ref Self, %.loc8_33.3 [symbolic = %C (constants.%C.775)]
+// CHECK:STDOUT:       }
+// CHECK:STDOUT:       %self: @C.as.Destroy.impl.Op.%ptr (%ptr.e4c) = bind_name self, %self.param
+// CHECK:STDOUT:     }
+// CHECK:STDOUT:
+// CHECK:STDOUT:   !members:
+// CHECK:STDOUT:     .Op = %C.as.Destroy.impl.Op.decl
+// CHECK:STDOUT:     witness = @C.%Destroy.impl_witness
+// CHECK:STDOUT:   }
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
 // CHECK:STDOUT: generic class @C(%S.loc8_9.2: %struct_type.a.b.501) {
 // CHECK:STDOUT:   %S.loc8_9.1: %struct_type.a.b.501 = bind_symbolic_name S, 0 [symbolic = %S.loc8_9.1 (constants.%S)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:
 // CHECK:STDOUT:   class {
+// CHECK:STDOUT:     impl_decl @C.as.Destroy.impl [concrete] {} {}
+// CHECK:STDOUT:     %Destroy.impl_witness_table = impl_witness_table (@C.as.Destroy.impl.%C.as.Destroy.impl.Op.decl), @C.as.Destroy.impl [concrete]
+// CHECK:STDOUT:     %Destroy.impl_witness: <witness> = impl_witness %Destroy.impl_witness_table, @C.as.Destroy.impl(constants.%S) [symbolic = @C.as.Destroy.impl.%Destroy.impl_witness (constants.%Destroy.impl_witness.d9c)]
 // CHECK:STDOUT:     %empty_struct_type: type = struct_type {} [concrete = constants.%empty_struct_type]
 // CHECK:STDOUT:     %complete_type: <witness> = complete_type_witness %empty_struct_type [concrete = constants.%complete_type.357]
 // CHECK:STDOUT:     complete_type_witness = %complete_type
@@ -229,6 +269,17 @@ var c_bad: C({.a = 3, .b = 4}) = F();
 // CHECK:STDOUT:   !members:
 // CHECK:STDOUT:     .Self = constants.%C.775
 // CHECK:STDOUT:   }
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: generic fn @C.as.Destroy.impl.Op(@C.%S.loc8_9.2: %struct_type.a.b.501) {
+// CHECK:STDOUT:   %S: %struct_type.a.b.501 = bind_symbolic_name S, 0 [symbolic = %S (constants.%S)]
+// CHECK:STDOUT:   %C: type = class_type @C, @C(%S) [symbolic = %C (constants.%C.775)]
+// CHECK:STDOUT:   %ptr: type = ptr_type %C [symbolic = %ptr (constants.%ptr.e4c)]
+// CHECK:STDOUT:   %pattern_type: type = pattern_type %ptr [symbolic = %pattern_type (constants.%pattern_type.d5f)]
+// CHECK:STDOUT:
+// CHECK:STDOUT: !definition:
+// CHECK:STDOUT:
+// CHECK:STDOUT:   fn(%self.param: @C.as.Destroy.impl.Op.%ptr (%ptr.e4c)) = "no_op";
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F() -> %C.c8f;
@@ -291,6 +342,18 @@ var c_bad: C({.a = 3, .b = 4}) = F();
 // CHECK:STDOUT:   %S.loc8_9.1 => constants.%S
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
+// CHECK:STDOUT: specific @C.as.Destroy.impl(constants.%S) {
+// CHECK:STDOUT:   %S => constants.%S
+// CHECK:STDOUT:   %Destroy.impl_witness => constants.%Destroy.impl_witness.d9c
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: specific @C.as.Destroy.impl.Op(constants.%S) {
+// CHECK:STDOUT:   %S => constants.%S
+// CHECK:STDOUT:   %C => constants.%C.775
+// CHECK:STDOUT:   %ptr => constants.%ptr.e4c
+// CHECK:STDOUT:   %pattern_type => constants.%pattern_type.d5f
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
 // CHECK:STDOUT: specific @C(constants.%struct.ed5) {
 // CHECK:STDOUT:   %S.loc8_9.1 => constants.%struct.ed5
 // CHECK:STDOUT: }
@@ -298,15 +361,28 @@ var c_bad: C({.a = 3, .b = 4}) = F();
 // CHECK:STDOUT: --- implicit.impl.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
-// CHECK:STDOUT:   %To: Core.IntLiteral = bind_symbolic_name To, 0 [symbolic]
+// CHECK:STDOUT:   %Destroy.type: type = facet_type <@Destroy> [concrete]
 // CHECK:STDOUT:   %Int.type: type = generic_class_type @Int [concrete]
 // CHECK:STDOUT:   %Int.generic: %Int.type = struct_value () [concrete]
+// CHECK:STDOUT:   %To: Core.IntLiteral = bind_symbolic_name To, 0 [symbolic]
 // CHECK:STDOUT:   %ImplicitAs.type.595: type = generic_interface_type @ImplicitAs [concrete]
 // CHECK:STDOUT:   %ImplicitAs.generic: %ImplicitAs.type.595 = struct_value () [concrete]
 // CHECK:STDOUT:   %Core.IntLiteral.as.ImplicitAs.impl.Convert.type.9a6: type = fn_type @Core.IntLiteral.as.ImplicitAs.impl.Convert, @Core.IntLiteral.as.ImplicitAs.impl(%To) [symbolic]
 // CHECK:STDOUT:   %Core.IntLiteral.as.ImplicitAs.impl.Convert.458: %Core.IntLiteral.as.ImplicitAs.impl.Convert.type.9a6 = struct_value () [symbolic]
 // CHECK:STDOUT:   %int_32: Core.IntLiteral = int_value 32 [concrete]
 // CHECK:STDOUT:   %i32: type = class_type @Int, @Int(%int_32) [concrete]
+// CHECK:STDOUT:   %struct_type.a.b.5ca: type = struct_type {.a: %i32, .b: %i32} [concrete]
+// CHECK:STDOUT:   %S: %struct_type.a.b.5ca = bind_symbolic_name S, 0 [symbolic]
+// CHECK:STDOUT:   %C.type: type = generic_class_type @C [concrete]
+// CHECK:STDOUT:   %C.generic: %C.type = struct_value () [concrete]
+// CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [concrete]
+// CHECK:STDOUT:   %complete_type.357: <witness> = complete_type_witness %empty_struct_type [concrete]
+// CHECK:STDOUT:   %C.720: type = class_type @C, @C(%S) [symbolic]
+// CHECK:STDOUT:   %Destroy.impl_witness.abc: <witness> = impl_witness imports.%Destroy.impl_witness_table.2ab, @C.as.Destroy.impl(%S) [symbolic]
+// CHECK:STDOUT:   %C.as.Destroy.impl.Op.type: type = fn_type @C.as.Destroy.impl.Op, @C.as.Destroy.impl(%S) [symbolic]
+// CHECK:STDOUT:   %C.as.Destroy.impl.Op: %C.as.Destroy.impl.Op.type = struct_value () [symbolic]
+// CHECK:STDOUT:   %ptr.9e0: type = ptr_type %C.720 [symbolic]
+// CHECK:STDOUT:   %pattern_type.d77: type = pattern_type %ptr.9e0 [symbolic]
 // CHECK:STDOUT:   %struct_type.a: type = struct_type {.a: %i32} [concrete]
 // CHECK:STDOUT:   %pattern_type.b54: type = pattern_type %struct_type.a [concrete]
 // CHECK:STDOUT:   %.c27: ref %i32 = struct_access imports.%a_ref.var, element0 [concrete]
@@ -324,12 +400,6 @@ var c_bad: C({.a = 3, .b = 4}) = F();
 // CHECK:STDOUT:   %tuple.elem0.aa5: ref %i32 = tuple_access %.e5f, element0 [concrete]
 // CHECK:STDOUT:   %.dfe: ref %i32 = struct_access imports.%b_ref.var, element1 [concrete]
 // CHECK:STDOUT:   %.607: ref %i32 = struct_access file.%b.var, element1 [concrete]
-// CHECK:STDOUT:   %C.type: type = generic_class_type @C [concrete]
-// CHECK:STDOUT:   %C.generic: %C.type = struct_value () [concrete]
-// CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [concrete]
-// CHECK:STDOUT:   %complete_type.357: <witness> = complete_type_witness %empty_struct_type [concrete]
-// CHECK:STDOUT:   %struct_type.a.b.5ca: type = struct_type {.a: %i32, .b: %i32} [concrete]
-// CHECK:STDOUT:   %S: %struct_type.a.b.5ca = bind_symbolic_name S, 0 [symbolic]
 // CHECK:STDOUT:   %int_1.5b8: Core.IntLiteral = int_value 1 [concrete]
 // CHECK:STDOUT:   %int_2.ecc: Core.IntLiteral = int_value 2 [concrete]
 // CHECK:STDOUT:   %struct_type.a.b.cfd: type = struct_type {.a: Core.IntLiteral, .b: Core.IntLiteral} [concrete]
@@ -365,8 +435,19 @@ var c_bad: C({.a = 3, .b = 4}) = F();
 // CHECK:STDOUT:     import Core//prelude
 // CHECK:STDOUT:     import Core//prelude/...
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %Implicit.import_ref.773: @Core.IntLiteral.as.ImplicitAs.impl.%Core.IntLiteral.as.ImplicitAs.impl.Convert.type (%Core.IntLiteral.as.ImplicitAs.impl.Convert.type.9a6) = import_ref Implicit//default, inst117 [indirect], loaded [symbolic = @Core.IntLiteral.as.ImplicitAs.impl.%Core.IntLiteral.as.ImplicitAs.impl.Convert (constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.458)]
+// CHECK:STDOUT:   %Implicit.import_ref.773: @Core.IntLiteral.as.ImplicitAs.impl.%Core.IntLiteral.as.ImplicitAs.impl.Convert.type (%Core.IntLiteral.as.ImplicitAs.impl.Convert.type.9a6) = import_ref Implicit//default, inst149 [indirect], loaded [symbolic = @Core.IntLiteral.as.ImplicitAs.impl.%Core.IntLiteral.as.ImplicitAs.impl.Convert (constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.458)]
 // CHECK:STDOUT:   %ImplicitAs.impl_witness_table.1ad = impl_witness_table (%Implicit.import_ref.773), @Core.IntLiteral.as.ImplicitAs.impl [concrete]
+// CHECK:STDOUT:   %Implicit.import_ref.48d = import_ref Implicit//default, loc8_33, unloaded
+// CHECK:STDOUT:   %Implicit.import_ref.c81f8f.1: %struct_type.a.b.5ca = import_ref Implicit//default, loc8_9, loaded [symbolic = @C.%S (constants.%S)]
+// CHECK:STDOUT:   %Implicit.import_ref.8f2: <witness> = import_ref Implicit//default, loc8_34, loaded [concrete = constants.%complete_type.357]
+// CHECK:STDOUT:   %Implicit.import_ref.b8b = import_ref Implicit//default, inst488 [no loc], unloaded
+// CHECK:STDOUT:   %Implicit.import_ref.c81f8f.2: %struct_type.a.b.5ca = import_ref Implicit//default, loc8_9, loaded [symbolic = @C.%S (constants.%S)]
+// CHECK:STDOUT:   %Implicit.import_ref.4cf: type = import_ref Implicit//default, inst488 [no loc], loaded [symbolic = constants.%C.720]
+// CHECK:STDOUT:   %Implicit.import_ref.cb9: type = import_ref Implicit//default, inst108 [no loc], loaded [concrete = constants.%Destroy.type]
+// CHECK:STDOUT:   %Implicit.import_ref.7f2ca0.1 = import_ref Implicit//default, loc8_33, unloaded
+// CHECK:STDOUT:   %Implicit.import_ref.7f2ca0.2 = import_ref Implicit//default, loc8_33, unloaded
+// CHECK:STDOUT:   %Destroy.impl_witness_table.2ab = impl_witness_table (%Implicit.import_ref.7f2ca0.2), @C.as.Destroy.impl [concrete]
+// CHECK:STDOUT:   %Implicit.import_ref.c81f8f.3: %struct_type.a.b.5ca = import_ref Implicit//default, loc8_9, loaded [symbolic = @C.%S (constants.%S)]
 // CHECK:STDOUT:   %Core.Int: %Int.type = import_ref Core//prelude/parts/int, Int, loaded [concrete = constants.%Int.generic]
 // CHECK:STDOUT:   %a_ref.patt: %pattern_type.b54 = binding_pattern a_ref [concrete]
 // CHECK:STDOUT:   %a_ref.var_patt: %pattern_type.b54 = var_pattern %a_ref.patt [concrete]
@@ -374,9 +455,6 @@ var c_bad: C({.a = 3, .b = 4}) = F();
 // CHECK:STDOUT:   %b_ref.patt: %pattern_type.020 = binding_pattern b_ref [concrete]
 // CHECK:STDOUT:   %b_ref.var_patt: %pattern_type.020 = var_pattern %b_ref.patt [concrete]
 // CHECK:STDOUT:   %b_ref.var: ref %struct_type.a.d.9db = var %b_ref.var_patt [concrete]
-// CHECK:STDOUT:   %Implicit.import_ref.c81: %struct_type.a.b.5ca = import_ref Implicit//default, loc8_9, loaded [symbolic = @C.%S (constants.%S)]
-// CHECK:STDOUT:   %Implicit.import_ref.8f2: <witness> = import_ref Implicit//default, loc8_34, loaded [concrete = constants.%complete_type.357]
-// CHECK:STDOUT:   %Implicit.import_ref.b8b = import_ref Implicit//default, inst456 [no loc], unloaded
 // CHECK:STDOUT:   %Core.ImplicitAs: %ImplicitAs.type.595 = import_ref Core//prelude/parts/as, ImplicitAs, loaded [concrete = constants.%ImplicitAs.generic]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -454,7 +532,22 @@ var c_bad: C({.a = 3, .b = 4}) = F();
 // CHECK:STDOUT:   %c: ref %C.a8a = bind_name c, %c.var [concrete = %c.var]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic class @C(imports.%Implicit.import_ref.c81: %struct_type.a.b.5ca) [from "implicit.carbon"] {
+// CHECK:STDOUT: generic impl @C.as.Destroy.impl(imports.%Implicit.import_ref.c81f8f.2: %struct_type.a.b.5ca) [from "implicit.carbon"] {
+// CHECK:STDOUT:   %S: %struct_type.a.b.5ca = bind_symbolic_name S, 0 [symbolic = %S (constants.%S)]
+// CHECK:STDOUT:   %Destroy.impl_witness: <witness> = impl_witness imports.%Destroy.impl_witness_table.2ab, @C.as.Destroy.impl(%S) [symbolic = %Destroy.impl_witness (constants.%Destroy.impl_witness.abc)]
+// CHECK:STDOUT:
+// CHECK:STDOUT: !definition:
+// CHECK:STDOUT:   %C.as.Destroy.impl.Op.type: type = fn_type @C.as.Destroy.impl.Op, @C.as.Destroy.impl(%S) [symbolic = %C.as.Destroy.impl.Op.type (constants.%C.as.Destroy.impl.Op.type)]
+// CHECK:STDOUT:   %C.as.Destroy.impl.Op: @C.as.Destroy.impl.%C.as.Destroy.impl.Op.type (%C.as.Destroy.impl.Op.type) = struct_value () [symbolic = %C.as.Destroy.impl.Op (constants.%C.as.Destroy.impl.Op)]
+// CHECK:STDOUT:
+// CHECK:STDOUT:   impl: imports.%Implicit.import_ref.4cf as imports.%Implicit.import_ref.cb9 {
+// CHECK:STDOUT:   !members:
+// CHECK:STDOUT:     .Op = imports.%Implicit.import_ref.7f2ca0.1
+// CHECK:STDOUT:     witness = imports.%Implicit.import_ref.48d
+// CHECK:STDOUT:   }
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: generic class @C(imports.%Implicit.import_ref.c81f8f.1: %struct_type.a.b.5ca) [from "implicit.carbon"] {
 // CHECK:STDOUT:   %S: %struct_type.a.b.5ca = bind_symbolic_name S, 0 [symbolic = %S (constants.%S)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
@@ -465,6 +558,17 @@ var c_bad: C({.a = 3, .b = 4}) = F();
 // CHECK:STDOUT:   !members:
 // CHECK:STDOUT:     .Self = imports.%Implicit.import_ref.b8b
 // CHECK:STDOUT:   }
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: generic fn @C.as.Destroy.impl.Op(imports.%Implicit.import_ref.c81f8f.3: %struct_type.a.b.5ca) [from "implicit.carbon"] {
+// CHECK:STDOUT:   %S: %struct_type.a.b.5ca = bind_symbolic_name S, 0 [symbolic = %S (constants.%S)]
+// CHECK:STDOUT:   %C: type = class_type @C, @C(%S) [symbolic = %C (constants.%C.720)]
+// CHECK:STDOUT:   %ptr: type = ptr_type %C [symbolic = %ptr (constants.%ptr.9e0)]
+// CHECK:STDOUT:   %pattern_type: type = pattern_type %ptr [symbolic = %pattern_type (constants.%pattern_type.d77)]
+// CHECK:STDOUT:
+// CHECK:STDOUT: !definition:
+// CHECK:STDOUT:
+// CHECK:STDOUT:   fn = "no_op";
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F [from "implicit.carbon"];
@@ -511,6 +615,18 @@ var c_bad: C({.a = 3, .b = 4}) = F();
 // CHECK:STDOUT:   %S => constants.%S
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
+// CHECK:STDOUT: specific @C.as.Destroy.impl(constants.%S) {
+// CHECK:STDOUT:   %S => constants.%S
+// CHECK:STDOUT:   %Destroy.impl_witness => constants.%Destroy.impl_witness.abc
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: specific @C.as.Destroy.impl.Op(constants.%S) {
+// CHECK:STDOUT:   %S => constants.%S
+// CHECK:STDOUT:   %C => constants.%C.720
+// CHECK:STDOUT:   %ptr => constants.%ptr.9e0
+// CHECK:STDOUT:   %pattern_type => constants.%pattern_type.d77
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
 // CHECK:STDOUT: specific @C(constants.%struct) {
 // CHECK:STDOUT:   %S => constants.%struct
 // CHECK:STDOUT:
@@ -520,14 +636,21 @@ var c_bad: C({.a = 3, .b = 4}) = F();
 // CHECK:STDOUT: --- fail_bad_type.impl.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
-// CHECK:STDOUT:   %C.type: type = generic_class_type @C [concrete]
-// CHECK:STDOUT:   %C.generic: %C.type = struct_value () [concrete]
-// CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [concrete]
-// CHECK:STDOUT:   %complete_type.357: <witness> = complete_type_witness %empty_struct_type [concrete]
+// CHECK:STDOUT:   %Destroy.type: type = facet_type <@Destroy> [concrete]
 // CHECK:STDOUT:   %int_32: Core.IntLiteral = int_value 32 [concrete]
 // CHECK:STDOUT:   %i32: type = class_type @Int, @Int(%int_32) [concrete]
 // CHECK:STDOUT:   %struct_type.a.b: type = struct_type {.a: %i32, .b: %i32} [concrete]
 // CHECK:STDOUT:   %S: %struct_type.a.b = bind_symbolic_name S, 0 [symbolic]
+// CHECK:STDOUT:   %C.type: type = generic_class_type @C [concrete]
+// CHECK:STDOUT:   %C.generic: %C.type = struct_value () [concrete]
+// CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [concrete]
+// CHECK:STDOUT:   %complete_type.357: <witness> = complete_type_witness %empty_struct_type [concrete]
+// CHECK:STDOUT:   %C.720: type = class_type @C, @C(%S) [symbolic]
+// CHECK:STDOUT:   %Destroy.impl_witness.abc: <witness> = impl_witness imports.%Destroy.impl_witness_table.2ab, @C.as.Destroy.impl(%S) [symbolic]
+// CHECK:STDOUT:   %C.as.Destroy.impl.Op.type: type = fn_type @C.as.Destroy.impl.Op, @C.as.Destroy.impl(%S) [symbolic]
+// CHECK:STDOUT:   %C.as.Destroy.impl.Op: %C.as.Destroy.impl.Op.type = struct_value () [symbolic]
+// CHECK:STDOUT:   %ptr.9e0: type = ptr_type %C.720 [symbolic]
+// CHECK:STDOUT:   %pattern_type.d77: type = pattern_type %ptr.9e0 [symbolic]
 // CHECK:STDOUT:   %int_1.5b8: Core.IntLiteral = int_value 1 [concrete]
 // CHECK:STDOUT:   %int_2.ecc: Core.IntLiteral = int_value 2 [concrete]
 // CHECK:STDOUT:   %struct_type.c.d: type = struct_type {.c: Core.IntLiteral, .d: Core.IntLiteral} [concrete]
@@ -548,9 +671,17 @@ var c_bad: C({.a = 3, .b = 4}) = F();
 // CHECK:STDOUT:     import Core//prelude
 // CHECK:STDOUT:     import Core//prelude/...
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %Implicit.import_ref.c81: %struct_type.a.b = import_ref Implicit//default, loc8_9, loaded [symbolic = @C.%S (constants.%S)]
+// CHECK:STDOUT:   %Implicit.import_ref.48d = import_ref Implicit//default, loc8_33, unloaded
+// CHECK:STDOUT:   %Implicit.import_ref.c81f8f.1: %struct_type.a.b = import_ref Implicit//default, loc8_9, loaded [symbolic = @C.%S (constants.%S)]
 // CHECK:STDOUT:   %Implicit.import_ref.8f2: <witness> = import_ref Implicit//default, loc8_34, loaded [concrete = constants.%complete_type.357]
-// CHECK:STDOUT:   %Implicit.import_ref.b8b = import_ref Implicit//default, inst456 [no loc], unloaded
+// CHECK:STDOUT:   %Implicit.import_ref.b8b = import_ref Implicit//default, inst488 [no loc], unloaded
+// CHECK:STDOUT:   %Implicit.import_ref.c81f8f.2: %struct_type.a.b = import_ref Implicit//default, loc8_9, loaded [symbolic = @C.%S (constants.%S)]
+// CHECK:STDOUT:   %Implicit.import_ref.4cf: type = import_ref Implicit//default, inst488 [no loc], loaded [symbolic = constants.%C.720]
+// CHECK:STDOUT:   %Implicit.import_ref.cb9: type = import_ref Implicit//default, inst108 [no loc], loaded [concrete = constants.%Destroy.type]
+// CHECK:STDOUT:   %Implicit.import_ref.7f2ca0.1 = import_ref Implicit//default, loc8_33, unloaded
+// CHECK:STDOUT:   %Implicit.import_ref.7f2ca0.2 = import_ref Implicit//default, loc8_33, unloaded
+// CHECK:STDOUT:   %Destroy.impl_witness_table.2ab = impl_witness_table (%Implicit.import_ref.7f2ca0.2), @C.as.Destroy.impl [concrete]
+// CHECK:STDOUT:   %Implicit.import_ref.c81f8f.3: %struct_type.a.b = import_ref Implicit//default, loc8_9, loaded [symbolic = @C.%S (constants.%S)]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -579,7 +710,22 @@ var c_bad: C({.a = 3, .b = 4}) = F();
 // CHECK:STDOUT:   %c_bad: <error> = bind_name c_bad, <error> [concrete = <error>]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic class @C(imports.%Implicit.import_ref.c81: %struct_type.a.b) [from "implicit.carbon"] {
+// CHECK:STDOUT: generic impl @C.as.Destroy.impl(imports.%Implicit.import_ref.c81f8f.2: %struct_type.a.b) [from "implicit.carbon"] {
+// CHECK:STDOUT:   %S: %struct_type.a.b = bind_symbolic_name S, 0 [symbolic = %S (constants.%S)]
+// CHECK:STDOUT:   %Destroy.impl_witness: <witness> = impl_witness imports.%Destroy.impl_witness_table.2ab, @C.as.Destroy.impl(%S) [symbolic = %Destroy.impl_witness (constants.%Destroy.impl_witness.abc)]
+// CHECK:STDOUT:
+// CHECK:STDOUT: !definition:
+// CHECK:STDOUT:   %C.as.Destroy.impl.Op.type: type = fn_type @C.as.Destroy.impl.Op, @C.as.Destroy.impl(%S) [symbolic = %C.as.Destroy.impl.Op.type (constants.%C.as.Destroy.impl.Op.type)]
+// CHECK:STDOUT:   %C.as.Destroy.impl.Op: @C.as.Destroy.impl.%C.as.Destroy.impl.Op.type (%C.as.Destroy.impl.Op.type) = struct_value () [symbolic = %C.as.Destroy.impl.Op (constants.%C.as.Destroy.impl.Op)]
+// CHECK:STDOUT:
+// CHECK:STDOUT:   impl: imports.%Implicit.import_ref.4cf as imports.%Implicit.import_ref.cb9 {
+// CHECK:STDOUT:   !members:
+// CHECK:STDOUT:     .Op = imports.%Implicit.import_ref.7f2ca0.1
+// CHECK:STDOUT:     witness = imports.%Implicit.import_ref.48d
+// CHECK:STDOUT:   }
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: generic class @C(imports.%Implicit.import_ref.c81f8f.1: %struct_type.a.b) [from "implicit.carbon"] {
 // CHECK:STDOUT:   %S: %struct_type.a.b = bind_symbolic_name S, 0 [symbolic = %S (constants.%S)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
@@ -590,6 +736,17 @@ var c_bad: C({.a = 3, .b = 4}) = F();
 // CHECK:STDOUT:   !members:
 // CHECK:STDOUT:     .Self = imports.%Implicit.import_ref.b8b
 // CHECK:STDOUT:   }
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: generic fn @C.as.Destroy.impl.Op(imports.%Implicit.import_ref.c81f8f.3: %struct_type.a.b) [from "implicit.carbon"] {
+// CHECK:STDOUT:   %S: %struct_type.a.b = bind_symbolic_name S, 0 [symbolic = %S (constants.%S)]
+// CHECK:STDOUT:   %C: type = class_type @C, @C(%S) [symbolic = %C (constants.%C.720)]
+// CHECK:STDOUT:   %ptr: type = ptr_type %C [symbolic = %ptr (constants.%ptr.9e0)]
+// CHECK:STDOUT:   %pattern_type: type = pattern_type %ptr [symbolic = %pattern_type (constants.%pattern_type.d77)]
+// CHECK:STDOUT:
+// CHECK:STDOUT: !definition:
+// CHECK:STDOUT:
+// CHECK:STDOUT:   fn = "no_op";
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F [from "implicit.carbon"];
@@ -607,6 +764,18 @@ var c_bad: C({.a = 3, .b = 4}) = F();
 // CHECK:STDOUT:   %S => constants.%S
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
+// CHECK:STDOUT: specific @C.as.Destroy.impl(constants.%S) {
+// CHECK:STDOUT:   %S => constants.%S
+// CHECK:STDOUT:   %Destroy.impl_witness => constants.%Destroy.impl_witness.abc
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: specific @C.as.Destroy.impl.Op(constants.%S) {
+// CHECK:STDOUT:   %S => constants.%S
+// CHECK:STDOUT:   %C => constants.%C.720
+// CHECK:STDOUT:   %ptr => constants.%ptr.9e0
+// CHECK:STDOUT:   %pattern_type => constants.%pattern_type.d77
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
 // CHECK:STDOUT: specific @C(constants.%struct) {
 // CHECK:STDOUT:   %S => constants.%struct
 // CHECK:STDOUT:
@@ -616,19 +785,26 @@ var c_bad: C({.a = 3, .b = 4}) = F();
 // CHECK:STDOUT: --- fail_bad_value.impl.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
+// CHECK:STDOUT:   %Destroy.type: type = facet_type <@Destroy> [concrete]
 // CHECK:STDOUT:   %To: Core.IntLiteral = bind_symbolic_name To, 0 [symbolic]
 // CHECK:STDOUT:   %ImplicitAs.type.595: type = generic_interface_type @ImplicitAs [concrete]
 // CHECK:STDOUT:   %ImplicitAs.generic: %ImplicitAs.type.595 = struct_value () [concrete]
 // CHECK:STDOUT:   %Core.IntLiteral.as.ImplicitAs.impl.Convert.type.9a6: type = fn_type @Core.IntLiteral.as.ImplicitAs.impl.Convert, @Core.IntLiteral.as.ImplicitAs.impl(%To) [symbolic]
 // CHECK:STDOUT:   %Core.IntLiteral.as.ImplicitAs.impl.Convert.458: %Core.IntLiteral.as.ImplicitAs.impl.Convert.type.9a6 = struct_value () [symbolic]
-// CHECK:STDOUT:   %C.type: type = generic_class_type @C [concrete]
-// CHECK:STDOUT:   %C.generic: %C.type = struct_value () [concrete]
-// CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [concrete]
-// CHECK:STDOUT:   %complete_type.357: <witness> = complete_type_witness %empty_struct_type [concrete]
 // CHECK:STDOUT:   %int_32: Core.IntLiteral = int_value 32 [concrete]
 // CHECK:STDOUT:   %i32: type = class_type @Int, @Int(%int_32) [concrete]
 // CHECK:STDOUT:   %struct_type.a.b.5ca: type = struct_type {.a: %i32, .b: %i32} [concrete]
 // CHECK:STDOUT:   %S: %struct_type.a.b.5ca = bind_symbolic_name S, 0 [symbolic]
+// CHECK:STDOUT:   %C.type: type = generic_class_type @C [concrete]
+// CHECK:STDOUT:   %C.generic: %C.type = struct_value () [concrete]
+// CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [concrete]
+// CHECK:STDOUT:   %complete_type.357: <witness> = complete_type_witness %empty_struct_type [concrete]
+// CHECK:STDOUT:   %C.720: type = class_type @C, @C(%S) [symbolic]
+// CHECK:STDOUT:   %Destroy.impl_witness.abc: <witness> = impl_witness imports.%Destroy.impl_witness_table.2ab, @C.as.Destroy.impl(%S) [symbolic]
+// CHECK:STDOUT:   %C.as.Destroy.impl.Op.type: type = fn_type @C.as.Destroy.impl.Op, @C.as.Destroy.impl(%S) [symbolic]
+// CHECK:STDOUT:   %C.as.Destroy.impl.Op: %C.as.Destroy.impl.Op.type = struct_value () [symbolic]
+// CHECK:STDOUT:   %ptr.9e0: type = ptr_type %C.720 [symbolic]
+// CHECK:STDOUT:   %pattern_type.d77: type = pattern_type %ptr.9e0 [symbolic]
 // CHECK:STDOUT:   %int_3.1ba: Core.IntLiteral = int_value 3 [concrete]
 // CHECK:STDOUT:   %int_4.0c1: Core.IntLiteral = int_value 4 [concrete]
 // CHECK:STDOUT:   %struct_type.a.b.cfd: type = struct_type {.a: Core.IntLiteral, .b: Core.IntLiteral} [concrete]
@@ -667,11 +843,19 @@ var c_bad: C({.a = 3, .b = 4}) = F();
 // CHECK:STDOUT:     import Core//prelude
 // CHECK:STDOUT:     import Core//prelude/...
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %Implicit.import_ref.773: @Core.IntLiteral.as.ImplicitAs.impl.%Core.IntLiteral.as.ImplicitAs.impl.Convert.type (%Core.IntLiteral.as.ImplicitAs.impl.Convert.type.9a6) = import_ref Implicit//default, inst117 [indirect], loaded [symbolic = @Core.IntLiteral.as.ImplicitAs.impl.%Core.IntLiteral.as.ImplicitAs.impl.Convert (constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.458)]
+// CHECK:STDOUT:   %Implicit.import_ref.773: @Core.IntLiteral.as.ImplicitAs.impl.%Core.IntLiteral.as.ImplicitAs.impl.Convert.type (%Core.IntLiteral.as.ImplicitAs.impl.Convert.type.9a6) = import_ref Implicit//default, inst149 [indirect], loaded [symbolic = @Core.IntLiteral.as.ImplicitAs.impl.%Core.IntLiteral.as.ImplicitAs.impl.Convert (constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.458)]
 // CHECK:STDOUT:   %ImplicitAs.impl_witness_table.1ad = impl_witness_table (%Implicit.import_ref.773), @Core.IntLiteral.as.ImplicitAs.impl [concrete]
-// CHECK:STDOUT:   %Implicit.import_ref.c81: %struct_type.a.b.5ca = import_ref Implicit//default, loc8_9, loaded [symbolic = @C.%S (constants.%S)]
+// CHECK:STDOUT:   %Implicit.import_ref.48d = import_ref Implicit//default, loc8_33, unloaded
+// CHECK:STDOUT:   %Implicit.import_ref.c81f8f.1: %struct_type.a.b.5ca = import_ref Implicit//default, loc8_9, loaded [symbolic = @C.%S (constants.%S)]
 // CHECK:STDOUT:   %Implicit.import_ref.8f2: <witness> = import_ref Implicit//default, loc8_34, loaded [concrete = constants.%complete_type.357]
-// CHECK:STDOUT:   %Implicit.import_ref.b8b = import_ref Implicit//default, inst456 [no loc], unloaded
+// CHECK:STDOUT:   %Implicit.import_ref.b8b = import_ref Implicit//default, inst488 [no loc], unloaded
+// CHECK:STDOUT:   %Implicit.import_ref.c81f8f.2: %struct_type.a.b.5ca = import_ref Implicit//default, loc8_9, loaded [symbolic = @C.%S (constants.%S)]
+// CHECK:STDOUT:   %Implicit.import_ref.4cf: type = import_ref Implicit//default, inst488 [no loc], loaded [symbolic = constants.%C.720]
+// CHECK:STDOUT:   %Implicit.import_ref.cb9: type = import_ref Implicit//default, inst108 [no loc], loaded [concrete = constants.%Destroy.type]
+// CHECK:STDOUT:   %Implicit.import_ref.7f2ca0.1 = import_ref Implicit//default, loc8_33, unloaded
+// CHECK:STDOUT:   %Implicit.import_ref.7f2ca0.2 = import_ref Implicit//default, loc8_33, unloaded
+// CHECK:STDOUT:   %Destroy.impl_witness_table.2ab = impl_witness_table (%Implicit.import_ref.7f2ca0.2), @C.as.Destroy.impl [concrete]
+// CHECK:STDOUT:   %Implicit.import_ref.c81f8f.3: %struct_type.a.b.5ca = import_ref Implicit//default, loc8_9, loaded [symbolic = @C.%S (constants.%S)]
 // CHECK:STDOUT:   %Core.ImplicitAs: %ImplicitAs.type.595 = import_ref Core//prelude/parts/as, ImplicitAs, loaded [concrete = constants.%ImplicitAs.generic]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -718,7 +902,22 @@ var c_bad: C({.a = 3, .b = 4}) = F();
 // CHECK:STDOUT:   %c_bad: ref %C.5a7 = bind_name c_bad, %c_bad.var [concrete = %c_bad.var]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic class @C(imports.%Implicit.import_ref.c81: %struct_type.a.b.5ca) [from "implicit.carbon"] {
+// CHECK:STDOUT: generic impl @C.as.Destroy.impl(imports.%Implicit.import_ref.c81f8f.2: %struct_type.a.b.5ca) [from "implicit.carbon"] {
+// CHECK:STDOUT:   %S: %struct_type.a.b.5ca = bind_symbolic_name S, 0 [symbolic = %S (constants.%S)]
+// CHECK:STDOUT:   %Destroy.impl_witness: <witness> = impl_witness imports.%Destroy.impl_witness_table.2ab, @C.as.Destroy.impl(%S) [symbolic = %Destroy.impl_witness (constants.%Destroy.impl_witness.abc)]
+// CHECK:STDOUT:
+// CHECK:STDOUT: !definition:
+// CHECK:STDOUT:   %C.as.Destroy.impl.Op.type: type = fn_type @C.as.Destroy.impl.Op, @C.as.Destroy.impl(%S) [symbolic = %C.as.Destroy.impl.Op.type (constants.%C.as.Destroy.impl.Op.type)]
+// CHECK:STDOUT:   %C.as.Destroy.impl.Op: @C.as.Destroy.impl.%C.as.Destroy.impl.Op.type (%C.as.Destroy.impl.Op.type) = struct_value () [symbolic = %C.as.Destroy.impl.Op (constants.%C.as.Destroy.impl.Op)]
+// CHECK:STDOUT:
+// CHECK:STDOUT:   impl: imports.%Implicit.import_ref.4cf as imports.%Implicit.import_ref.cb9 {
+// CHECK:STDOUT:   !members:
+// CHECK:STDOUT:     .Op = imports.%Implicit.import_ref.7f2ca0.1
+// CHECK:STDOUT:     witness = imports.%Implicit.import_ref.48d
+// CHECK:STDOUT:   }
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: generic class @C(imports.%Implicit.import_ref.c81f8f.1: %struct_type.a.b.5ca) [from "implicit.carbon"] {
 // CHECK:STDOUT:   %S: %struct_type.a.b.5ca = bind_symbolic_name S, 0 [symbolic = %S (constants.%S)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
@@ -729,6 +928,17 @@ var c_bad: C({.a = 3, .b = 4}) = F();
 // CHECK:STDOUT:   !members:
 // CHECK:STDOUT:     .Self = imports.%Implicit.import_ref.b8b
 // CHECK:STDOUT:   }
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: generic fn @C.as.Destroy.impl.Op(imports.%Implicit.import_ref.c81f8f.3: %struct_type.a.b.5ca) [from "implicit.carbon"] {
+// CHECK:STDOUT:   %S: %struct_type.a.b.5ca = bind_symbolic_name S, 0 [symbolic = %S (constants.%S)]
+// CHECK:STDOUT:   %C: type = class_type @C, @C(%S) [symbolic = %C (constants.%C.720)]
+// CHECK:STDOUT:   %ptr: type = ptr_type %C [symbolic = %ptr (constants.%ptr.9e0)]
+// CHECK:STDOUT:   %pattern_type: type = pattern_type %ptr [symbolic = %pattern_type (constants.%pattern_type.d77)]
+// CHECK:STDOUT:
+// CHECK:STDOUT: !definition:
+// CHECK:STDOUT:
+// CHECK:STDOUT:   fn = "no_op";
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F [from "implicit.carbon"];
@@ -745,6 +955,18 @@ var c_bad: C({.a = 3, .b = 4}) = F();
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @C(constants.%S) {
 // CHECK:STDOUT:   %S => constants.%S
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: specific @C.as.Destroy.impl(constants.%S) {
+// CHECK:STDOUT:   %S => constants.%S
+// CHECK:STDOUT:   %Destroy.impl_witness => constants.%Destroy.impl_witness.abc
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: specific @C.as.Destroy.impl.Op(constants.%S) {
+// CHECK:STDOUT:   %S => constants.%S
+// CHECK:STDOUT:   %C => constants.%C.720
+// CHECK:STDOUT:   %ptr => constants.%ptr.9e0
+// CHECK:STDOUT:   %pattern_type => constants.%pattern_type.d77
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @C(constants.%struct.8e6) {

@@ -710,7 +710,7 @@ auto FileContext::BuildDISubprogram(const SemIR::Function& function,
       /*File=*/context().di_builder().createFile(loc.filename, ""),
       /*LineNo=*/loc.line_number,
       context().di_builder().createSubroutineType(
-          context().di_builder().getOrCreateTypeArray(std::nullopt)),
+          context().di_builder().getOrCreateTypeArray({})),
       /*ScopeLine=*/0, llvm::DINode::FlagZero,
       llvm::DISubprogram::SPFlagDefinition);
 }
@@ -766,6 +766,13 @@ static auto BuildTypeForInst(FileContext& context, SemIR::ConstType inst)
     -> llvm::Type* {
   return context.GetType(
       context.sem_ir().types().GetTypeIdForTypeInstId(inst.inner_id));
+}
+
+static auto BuildTypeForInst(FileContext& context, SemIR::CustomLayoutType inst)
+    -> llvm::Type* {
+  auto layout = context.sem_ir().custom_layouts().Get(inst.layout_id);
+  return llvm::ArrayType::get(llvm::Type::getInt8Ty(context.llvm_context()),
+                              layout[SemIR::CustomLayoutId::SizeIndex]);
 }
 
 static auto BuildTypeForInst(FileContext& context, SemIR::PartialType inst)
@@ -971,7 +978,7 @@ auto FileContext::BuildVtable(const SemIR::Vtable& vtable,
   vfuncs.reserve(vtable_inst_block.size());
 
   for (auto fn_decl_id : vtable_inst_block) {
-    auto [fn_decl, fn_id, fn_specific_id] =
+    auto [_1, _2, fn_id, fn_specific_id] =
         DecomposeVirtualFunction(sem_ir(), fn_decl_id, specific_id);
 
     vfuncs.push_back(llvm::ConstantExpr::getTrunc(

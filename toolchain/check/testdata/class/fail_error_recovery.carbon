@@ -21,6 +21,13 @@ fn F(N:! error_not_found) {
     virtual fn Foo[self: Self]() {}
   }
 
+  // CHECK:STDERR: fail_virtual_fn_in_invalid_context.carbon:[[@LINE+7]]:3: error: redefinition of `impl <error> as Core.Destroy` [ImplRedefinition]
+  // CHECK:STDERR:   base class D {
+  // CHECK:STDERR:   ^~~~~~~~~~~~~~
+  // CHECK:STDERR: fail_virtual_fn_in_invalid_context.carbon:[[@LINE-7]]:3: note: previous definition was here [ImplPreviousDefinition]
+  // CHECK:STDERR:   base class C {
+  // CHECK:STDERR:   ^~~~~~~~~~~~~~
+  // CHECK:STDERR:
   base class D {
     extend base: C;
   }

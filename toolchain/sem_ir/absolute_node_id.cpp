@@ -17,12 +17,6 @@ static auto FollowImportRef(
   auto import_ir_inst = cursor_ir->import_ir_insts().Get(import_ir_inst_id);
   if (import_ir_inst.ir_id() == ImportIRId::Cpp) {
     CARBON_CHECK(cursor_ir->import_cpps().size() > 0);
-    // TODO: Decompose the Clang source location to determine which C++ import
-    // made this location available, and use the location of that import instead
-    // of arbitrarily using the first C++ import.
-    absolute_node_ids.push_back(
-        AbsoluteNodeId(cursor_ir->check_ir_id(),
-                       cursor_ir->import_cpps().values().begin()->node_id));
     absolute_node_ids.push_back(
         AbsoluteNodeId(import_ir_inst.clang_source_loc_id()));
     return true;

@@ -24,7 +24,7 @@ static constexpr char DoubleQuotedMultiLineIndicator[] = R"(""")";
 
 struct StringLiteral::Introducer {
   // The kind of string being introduced.
-  MultiLineKind kind;
+  Kind kind;
   // The terminator for the string, without any '#' suffixes.
   llvm::StringRef terminator;
   // The length of the introducer, including the file type indicator and
@@ -41,17 +41,17 @@ struct StringLiteral::Introducer {
 // recovery purposes, and reject """ literals after lexing.
 auto StringLiteral::Introducer::Lex(llvm::StringRef source_text)
     -> std::optional<Introducer> {
-  MultiLineKind kind = NotMultiLine;
+  Kind kind = Kind::SingleLine;
   llvm::StringRef indicator;
   if (source_text.starts_with(MultiLineIndicator)) {
-    kind = MultiLine;
+    kind = Kind::MultiLine;
     indicator = llvm::StringRef(MultiLineIndicator);
   } else if (source_text.starts_with(DoubleQuotedMultiLineIndicator)) {
-    kind = MultiLineWithDoubleQuotes;
+    kind = Kind::MultiLineWithDoubleQuotes;
     indicator = llvm::StringRef(DoubleQuotedMultiLineIndicator);
   }
 
-  if (kind != NotMultiLine) {
+  if (kind != Kind::SingleLine) {
     // The rest of the line must be a valid file type indicator: a sequence of
     // characters containing neither '#' nor '"' followed by a newline.
     auto prefix_end = source_text.find_first_of("#\n\"", indicator.size());
@@ -64,9 +64,13 @@ auto StringLiteral::Introducer::Lex(llvm::StringRef source_text)
     }
   }
 
-  if (!source_text.empty() && source_text[0] == '"') {
+  if (source_text.starts_with('"')) {
     return Introducer{
-        .kind = NotMultiLine, .terminator = "\"", .prefix_size = 1};
+        .kind = Kind::SingleLine, .terminator = "\"", .prefix_size = 1};
+  }
+
+  if (source_text.starts_with('\'')) {
+    return Introducer{.kind = Kind::Char, .terminator = "'", .prefix_size = 1};
   }
 
   return std::nullopt;
@@ -88,6 +92,12 @@ struct alignas(8) CharSet {
   }
 };
 }  // namespace
+
+// Determine whether this is a multi-line string literal.
+static auto IsMultiLine(StringLiteral::Kind kind) -> bool {
+  return kind == StringLiteral::Kind::MultiLine ||
+         kind == StringLiteral::Kind::MultiLineWithDoubleQuotes;
+}
 
 auto StringLiteral::Lex(llvm::StringRef source_text)
     -> std::optional<StringLiteral> {
@@ -144,8 +154,8 @@ auto StringLiteral::Lex(llvm::StringRef source_text)
           // If there's either not a character following the escape, or it's a
           // single-line string and the escaped character is a newline, we
           // should stop here.
-          if (cursor >= source_text_size || (introducer->kind == NotMultiLine &&
-                                             source_text[cursor] == '\n')) {
+          if (cursor >= source_text_size ||
+              (!IsMultiLine(introducer->kind) && source_text[cursor] == '\n')) {
             llvm::StringRef text = source_text.take_front(cursor);
             return StringLiteral(text, text.drop_front(prefix_len),
                                  content_needs_validation, hash_level,
@@ -155,7 +165,7 @@ auto StringLiteral::Lex(llvm::StringRef source_text)
         }
         break;
       case '\n':
-        if (introducer->kind == NotMultiLine) {
+        if (!IsMultiLine(introducer->kind)) {
           llvm::StringRef text = source_text.take_front(cursor);
           return StringLiteral(text, text.drop_front(prefix_len),
                                content_needs_validation, hash_level,
@@ -466,21 +476,82 @@ static auto ExpandEscapeSequencesAndRemoveIndent(
   }
 }
 
-auto StringLiteral::ComputeValue(llvm::BumpPtrAllocator& allocator,
-                                 DiagnosticEmitter& emitter) const
-    -> llvm::StringRef {
-  if (!is_terminated_) {
-    return "";
+auto StringLiteral::ComputeCharValue(Diagnostics::Emitter<const char*>& emitter)
+    const -> std::optional<CharLiteralValue> {
+  CARBON_DCHECK(kind_ == Kind::Char);
+  CARBON_DCHECK(is_terminated_);
+
+  if (hash_level_ != 0) {
+    CARBON_DIAGNOSTIC(CharLiteralRaw, Error,
+                      "unexpected `#` before character literal");
+    emitter.Emit(text_.begin(), CharLiteralRaw);
   }
-  if (multi_line_ == MultiLineWithDoubleQuotes) {
+
+  // Allocate a buffer sized to the content. Note it's possible this could be
+  // more efficient/faster with a `ExpandEscapeSequencesAndRemoveIndent`
+  // implementation aware of the buffer size, but this is trying to share logic
+  // with string expansion.
+  llvm::SmallVector<char> buffer;
+  buffer.resize_for_overwrite(content_.size());
+
+  auto result = ExpandEscapeSequencesAndRemoveIndent(
+      emitter, content_, 0, /*indent=*/llvm::StringRef(), buffer.data());
+  CARBON_CHECK(result.size() <= content_.size(),
+               "Content grew from {0} to {1}: `{2}`", content_.size(),
+               result.size(), content_);
+
+  llvm::UTF32 target[1];
+  const auto* source_cursor =
+      reinterpret_cast<const llvm::UTF8*>(result.begin());
+  llvm::UTF32* target_cursor = target;
+  llvm::ConversionResult conv_result = llvm::ConvertUTF8toUTF32(
+      &source_cursor, reinterpret_cast<const llvm::UTF8*>(result.end()),
+      &target_cursor, std::end(target), llvm::strictConversion);
+
+  switch (conv_result) {
+    case llvm::conversionOK: {
+      if (target_cursor == target) {
+        CARBON_DIAGNOSTIC(CharLiteralEmpty, Error, "empty character literal");
+        emitter.Emit(text_.begin(), CharLiteralEmpty);
+        return std::nullopt;
+      }
+      return CharLiteralValue{.value = static_cast<int32_t>(target[0])};
+    }
+    case llvm::sourceExhausted: {
+      CARBON_DIAGNOSTIC(CharLiteralUnderflow, Error, "incomplete UTF-8");
+      emitter.Emit(text_.begin(), CharLiteralUnderflow);
+      return std::nullopt;
+    }
+    case llvm::targetExhausted: {
+      CARBON_DIAGNOSTIC(CharLiteralOverflow, Error, "too many characters");
+      emitter.Emit(text_.begin(), CharLiteralOverflow);
+      return std::nullopt;
+    }
+    case llvm::sourceIllegal: {
+      CARBON_DIAGNOSTIC(CharLiteralInvalidUTF8, Error,
+                        "invalid UTF-8 character");
+      emitter.Emit(text_.begin(), CharLiteralInvalidUTF8);
+      return std::nullopt;
+    }
+  }
+}
+
+auto StringLiteral::ComputeStringValue(llvm::BumpPtrAllocator& allocator,
+                                       DiagnosticEmitter& emitter) const
+    -> llvm::StringRef {
+  CARBON_DCHECK(kind_ != Kind::Char);
+  CARBON_DCHECK(is_terminated_);
+
+  if (kind_ == Kind::MultiLineWithDoubleQuotes) {
     CARBON_DIAGNOSTIC(
         MultiLineStringWithDoubleQuotes, Error,
         "use `'''` delimiters for a multi-line string literal, not `\"\"\"`");
     emitter.Emit(text_.begin(), MultiLineStringWithDoubleQuotes);
   }
-  llvm::StringRef indent =
-      multi_line_ ? CheckIndent(emitter, text_, content_) : llvm::StringRef();
-  if (!content_needs_validation_ && (!multi_line_ || indent.empty())) {
+  llvm::StringRef indent = IsMultiLine(kind_)
+                               ? CheckIndent(emitter, text_, content_)
+                               : llvm::StringRef();
+  if (!content_needs_validation_ && (!IsMultiLine(kind_) || indent.empty())) {
     return content_;
   }
 

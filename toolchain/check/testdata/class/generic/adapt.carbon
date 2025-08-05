@@ -135,6 +135,13 @@ fn ImportedConvertLocal(a: Adapter(C)) -> i32 {
 // CHECK:STDOUT:   %C.f2e: type = class_type @C, @C(%T) [symbolic]
 // CHECK:STDOUT:   %require_complete.4ae: <witness> = require_complete_type %T [symbolic]
 // CHECK:STDOUT:   %C.elem.66c: type = unbound_element_type %C.f2e, %T [symbolic]
+// CHECK:STDOUT:   %Destroy.type: type = facet_type <@Destroy> [concrete]
+// CHECK:STDOUT:   %pattern_type.f6d: type = pattern_type auto [concrete]
+// CHECK:STDOUT:   %Destroy.impl_witness.a08: <witness> = impl_witness @C.%Destroy.impl_witness_table, @C.as.Destroy.impl(%T) [symbolic]
+// CHECK:STDOUT:   %ptr.7d2: type = ptr_type %C.f2e [symbolic]
+// CHECK:STDOUT:   %pattern_type.1d2: type = pattern_type %ptr.7d2 [symbolic]
+// CHECK:STDOUT:   %C.as.Destroy.impl.Op.type: type = fn_type @C.as.Destroy.impl.Op, @C.as.Destroy.impl(%T) [symbolic]
+// CHECK:STDOUT:   %C.as.Destroy.impl.Op: %C.as.Destroy.impl.Op.type = struct_value () [symbolic]
 // CHECK:STDOUT:   %struct_type.x.2ac: type = struct_type {.x: %T} [symbolic]
 // CHECK:STDOUT:   %complete_type.433: <witness> = complete_type_witness %struct_type.x.2ac [symbolic]
 // CHECK:STDOUT:   %Adapter: type = class_type @Adapter [concrete]
@@ -148,6 +155,11 @@ fn ImportedConvertLocal(a: Adapter(C)) -> i32 {
 // CHECK:STDOUT:   %C.elem.476: type = unbound_element_type %C.98a, %i32 [concrete]
 // CHECK:STDOUT:   %struct_type.x.ed6: type = struct_type {.x: %i32} [concrete]
 // CHECK:STDOUT:   %complete_type.1ec: <witness> = complete_type_witness %struct_type.x.ed6 [concrete]
+// CHECK:STDOUT:   %Destroy.impl_witness.223: <witness> = impl_witness @Adapter.%Destroy.impl_witness_table [concrete]
+// CHECK:STDOUT:   %ptr.0f9: type = ptr_type %Adapter [concrete]
+// CHECK:STDOUT:   %pattern_type.20f: type = pattern_type %ptr.0f9 [concrete]
+// CHECK:STDOUT:   %Adapter.as.Destroy.impl.Op.type: type = fn_type @Adapter.as.Destroy.impl.Op [concrete]
+// CHECK:STDOUT:   %Adapter.as.Destroy.impl.Op: %Adapter.as.Destroy.impl.Op.type = struct_value () [concrete]
 // CHECK:STDOUT:   %pattern_type.27e: type = pattern_type %Adapter [concrete]
 // CHECK:STDOUT:   %pattern_type.7ce: type = pattern_type %i32 [concrete]
 // CHECK:STDOUT:   %Access.type: type = fn_type @Access [concrete]
@@ -156,10 +168,12 @@ fn ImportedConvertLocal(a: Adapter(C)) -> i32 {
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [concrete] {
+// CHECK:STDOUT:     .Destroy = %Core.Destroy
 // CHECK:STDOUT:     .Int = %Core.Int
 // CHECK:STDOUT:     import Core//prelude
 // CHECK:STDOUT:     import Core//prelude/...
 // CHECK:STDOUT:   }
+// CHECK:STDOUT:   %Core.Destroy: type = import_ref Core//prelude/parts/destroy, Destroy, loaded [concrete = constants.%Destroy.type]
 // CHECK:STDOUT:   %Core.Int: %Int.type = import_ref Core//prelude/parts/int, Int, loaded [concrete = constants.%Int.generic]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -193,6 +207,50 @@ fn ImportedConvertLocal(a: Adapter(C)) -> i32 {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
+// CHECK:STDOUT: generic impl @C.as.Destroy.impl(@C.%T.loc4_9.2: type) {
+// CHECK:STDOUT:   %T: type = bind_symbolic_name T, 0 [symbolic = %T (constants.%T)]
+// CHECK:STDOUT:   %Destroy.impl_witness: <witness> = impl_witness @C.%Destroy.impl_witness_table, @C.as.Destroy.impl(%T) [symbolic = %Destroy.impl_witness (constants.%Destroy.impl_witness.a08)]
+// CHECK:STDOUT:
+// CHECK:STDOUT: !definition:
+// CHECK:STDOUT:   %C.as.Destroy.impl.Op.type: type = fn_type @C.as.Destroy.impl.Op, @C.as.Destroy.impl(%T) [symbolic = %C.as.Destroy.impl.Op.type (constants.%C.as.Destroy.impl.Op.type)]
+// CHECK:STDOUT:   %C.as.Destroy.impl.Op: @C.as.Destroy.impl.%C.as.Destroy.impl.Op.type (%C.as.Destroy.impl.Op.type) = struct_value () [symbolic = %C.as.Destroy.impl.Op (constants.%C.as.Destroy.impl.Op)]
+// CHECK:STDOUT:
+// CHECK:STDOUT:   impl: constants.%C.f2e as constants.%Destroy.type {
+// CHECK:STDOUT:     %C.as.Destroy.impl.Op.decl: @C.as.Destroy.impl.%C.as.Destroy.impl.Op.type (%C.as.Destroy.impl.Op.type) = fn_decl @C.as.Destroy.impl.Op [symbolic = @C.as.Destroy.impl.%C.as.Destroy.impl.Op (constants.%C.as.Destroy.impl.Op)] {
+// CHECK:STDOUT:       %self.patt: @C.as.Destroy.impl.Op.%pattern_type (%pattern_type.1d2) = binding_pattern self [concrete]
+// CHECK:STDOUT:       %self.param_patt: @C.as.Destroy.impl.Op.%pattern_type (%pattern_type.1d2) = value_param_pattern %self.patt, call_param0 [concrete]
+// CHECK:STDOUT:       %.loc4_19.1: %pattern_type.f6d = addr_pattern %self.param_patt [concrete]
+// CHECK:STDOUT:     } {
+// CHECK:STDOUT:       %self.param: @C.as.Destroy.impl.Op.%ptr (%ptr.7d2) = value_param call_param0
+// CHECK:STDOUT:       %.loc4_19.2: type = splice_block %Self.ref [symbolic = %C (constants.%C.f2e)] {
+// CHECK:STDOUT:         %.loc4_19.3: type = specific_constant constants.%C.f2e, @C(constants.%T) [symbolic = %C (constants.%C.f2e)]
+// CHECK:STDOUT:         %Self.ref: type = name_ref Self, %.loc4_19.3 [symbolic = %C (constants.%C.f2e)]
+// CHECK:STDOUT:       }
+// CHECK:STDOUT:       %self: @C.as.Destroy.impl.Op.%ptr (%ptr.7d2) = bind_name self, %self.param
+// CHECK:STDOUT:     }
+// CHECK:STDOUT:
+// CHECK:STDOUT:   !members:
+// CHECK:STDOUT:     .Op = %C.as.Destroy.impl.Op.decl
+// CHECK:STDOUT:     witness = @C.%Destroy.impl_witness
+// CHECK:STDOUT:   }
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: impl @Adapter.as.Destroy.impl: constants.%Adapter as constants.%Destroy.type {
+// CHECK:STDOUT:   %Adapter.as.Destroy.impl.Op.decl: %Adapter.as.Destroy.impl.Op.type = fn_decl @Adapter.as.Destroy.impl.Op [concrete = constants.%Adapter.as.Destroy.impl.Op] {
+// CHECK:STDOUT:     %self.patt: %pattern_type.20f = binding_pattern self [concrete]
+// CHECK:STDOUT:     %self.param_patt: %pattern_type.20f = value_param_pattern %self.patt, call_param0 [concrete]
+// CHECK:STDOUT:     %.loc8: %pattern_type.f6d = addr_pattern %self.param_patt [concrete]
+// CHECK:STDOUT:   } {
+// CHECK:STDOUT:     %self.param: %ptr.0f9 = value_param call_param0
+// CHECK:STDOUT:     %Self.ref: type = name_ref Self, constants.%Adapter [concrete = constants.%Adapter]
+// CHECK:STDOUT:     %self: %ptr.0f9 = bind_name self, %self.param
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:
+// CHECK:STDOUT: !members:
+// CHECK:STDOUT:   .Op = %Adapter.as.Destroy.impl.Op.decl
+// CHECK:STDOUT:   witness = @Adapter.%Destroy.impl_witness
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
 // CHECK:STDOUT: generic class @C(%T.loc4_9.2: type) {
 // CHECK:STDOUT:   %T.loc4_9.1: type = bind_symbolic_name T, 0 [symbolic = %T.loc4_9.1 (constants.%T)]
 // CHECK:STDOUT:
@@ -206,6 +264,9 @@ fn ImportedConvertLocal(a: Adapter(C)) -> i32 {
 // CHECK:STDOUT:   class {
 // CHECK:STDOUT:     %T.ref: type = name_ref T, %T.loc4_9.2 [symbolic = %T.loc4_9.1 (constants.%T)]
 // CHECK:STDOUT:     %.loc5: @C.%C.elem (%C.elem.66c) = field_decl x, element0 [concrete]
+// CHECK:STDOUT:     impl_decl @C.as.Destroy.impl [concrete] {} {}
+// CHECK:STDOUT:     %Destroy.impl_witness_table = impl_witness_table (@C.as.Destroy.impl.%C.as.Destroy.impl.Op.decl), @C.as.Destroy.impl [concrete]
+// CHECK:STDOUT:     %Destroy.impl_witness: <witness> = impl_witness %Destroy.impl_witness_table, @C.as.Destroy.impl(constants.%T) [symbolic = @C.as.Destroy.impl.%Destroy.impl_witness (constants.%Destroy.impl_witness.a08)]
 // CHECK:STDOUT:     %struct_type.x.loc6_1.1: type = struct_type {.x: %T} [symbolic = %struct_type.x.loc6_1.2 (constants.%struct_type.x.2ac)]
 // CHECK:STDOUT:     %complete_type.loc6_1.1: <witness> = complete_type_witness %struct_type.x.loc6_1.1 [symbolic = %complete_type.loc6_1.2 (constants.%complete_type.433)]
 // CHECK:STDOUT:     complete_type_witness = %complete_type.loc6_1.1
@@ -223,6 +284,9 @@ fn ImportedConvertLocal(a: Adapter(C)) -> i32 {
 // CHECK:STDOUT:   %i32: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
 // CHECK:STDOUT:   %C: type = class_type @C, @C(constants.%i32) [concrete = constants.%C.98a]
 // CHECK:STDOUT:   adapt_decl %C [concrete]
+// CHECK:STDOUT:   impl_decl @Adapter.as.Destroy.impl [concrete] {} {}
+// CHECK:STDOUT:   %Destroy.impl_witness_table = impl_witness_table (@Adapter.as.Destroy.impl.%Adapter.as.Destroy.impl.Op.decl), @Adapter.as.Destroy.impl [concrete]
+// CHECK:STDOUT:   %Destroy.impl_witness: <witness> = impl_witness %Destroy.impl_witness_table [concrete = constants.%Destroy.impl_witness.223]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness constants.%struct_type.x.ed6 [concrete = constants.%complete_type.1ec]
 // CHECK:STDOUT:   complete_type_witness = %complete_type
 // CHECK:STDOUT:
@@ -230,6 +294,19 @@ fn ImportedConvertLocal(a: Adapter(C)) -> i32 {
 // CHECK:STDOUT:   .Self = constants.%Adapter
 // CHECK:STDOUT:   .C = <poisoned>
 // CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: generic fn @C.as.Destroy.impl.Op(@C.%T.loc4_9.2: type) {
+// CHECK:STDOUT:   %T: type = bind_symbolic_name T, 0 [symbolic = %T (constants.%T)]
+// CHECK:STDOUT:   %C: type = class_type @C, @C(%T) [symbolic = %C (constants.%C.f2e)]
+// CHECK:STDOUT:   %ptr: type = ptr_type %C [symbolic = %ptr (constants.%ptr.7d2)]
+// CHECK:STDOUT:   %pattern_type: type = pattern_type %ptr [symbolic = %pattern_type (constants.%pattern_type.1d2)]
+// CHECK:STDOUT:
+// CHECK:STDOUT: !definition:
+// CHECK:STDOUT:
+// CHECK:STDOUT:   fn(%self.param: @C.as.Destroy.impl.Op.%ptr (%ptr.7d2)) = "no_op";
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: fn @Adapter.as.Destroy.impl.Op(%self.param: %ptr.0f9) = "no_op";
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Access(%a.param: %Adapter) -> %i32 {
 // CHECK:STDOUT: !entry:
@@ -248,6 +325,18 @@ fn ImportedConvertLocal(a: Adapter(C)) -> i32 {
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @C(constants.%T) {
 // CHECK:STDOUT:   %T.loc4_9.1 => constants.%T
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: specific @C.as.Destroy.impl(constants.%T) {
+// CHECK:STDOUT:   %T => constants.%T
+// CHECK:STDOUT:   %Destroy.impl_witness => constants.%Destroy.impl_witness.a08
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: specific @C.as.Destroy.impl.Op(constants.%T) {
+// CHECK:STDOUT:   %T => constants.%T
+// CHECK:STDOUT:   %C => constants.%C.f2e
+// CHECK:STDOUT:   %ptr => constants.%ptr.7d2
+// CHECK:STDOUT:   %pattern_type => constants.%pattern_type.1d2
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @C(constants.%i32) {
@@ -303,7 +392,7 @@ fn ImportedConvertLocal(a: Adapter(C)) -> i32 {
 // CHECK:STDOUT:   %Main.import_ref.4c0 = import_ref Main//adapt_specific_type, inst26 [no loc], unloaded
 // CHECK:STDOUT:   %Main.import_ref.262: @C.%C.elem (%C.elem.66c) = import_ref Main//adapt_specific_type, loc5_8, loaded [concrete = %.22b]
 // CHECK:STDOUT:   %Main.import_ref.709: <witness> = import_ref Main//adapt_specific_type, loc10_1, loaded [concrete = constants.%complete_type.c07]
-// CHECK:STDOUT:   %Main.import_ref.feb = import_ref Main//adapt_specific_type, inst42 [no loc], unloaded
+// CHECK:STDOUT:   %Main.import_ref.feb = import_ref Main//adapt_specific_type, inst90 [no loc], unloaded
 // CHECK:STDOUT:   %Core.Int: %Int.type = import_ref Core//prelude/parts/int, Int, loaded [concrete = constants.%Int.generic]
 // CHECK:STDOUT:   %.22b: @C.%C.elem (%C.elem.66c) = field_decl x, element0 [concrete]
 // CHECK:STDOUT: }
@@ -400,6 +489,13 @@ fn ImportedConvertLocal(a: Adapter(C)) -> i32 {
 // CHECK:STDOUT:   %C.f2e: type = class_type @C, @C(%T) [symbolic]
 // CHECK:STDOUT:   %require_complete.4ae: <witness> = require_complete_type %T [symbolic]
 // CHECK:STDOUT:   %C.elem.66c: type = unbound_element_type %C.f2e, %T [symbolic]
+// CHECK:STDOUT:   %Destroy.type: type = facet_type <@Destroy> [concrete]
+// CHECK:STDOUT:   %pattern_type.f6d: type = pattern_type auto [concrete]
+// CHECK:STDOUT:   %Destroy.impl_witness.a08: <witness> = impl_witness @C.%Destroy.impl_witness_table, @C.as.Destroy.impl(%T) [symbolic]
+// CHECK:STDOUT:   %ptr.7d2: type = ptr_type %C.f2e [symbolic]
+// CHECK:STDOUT:   %pattern_type.1d2: type = pattern_type %ptr.7d2 [symbolic]
+// CHECK:STDOUT:   %C.as.Destroy.impl.Op.type: type = fn_type @C.as.Destroy.impl.Op, @C.as.Destroy.impl(%T) [symbolic]
+// CHECK:STDOUT:   %C.as.Destroy.impl.Op: %C.as.Destroy.impl.Op.type = struct_value () [symbolic]
 // CHECK:STDOUT:   %struct_type.x.2ac: type = struct_type {.x: %T} [symbolic]
 // CHECK:STDOUT:   %complete_type.433: <witness> = complete_type_witness %struct_type.x.2ac [symbolic]
 // CHECK:STDOUT:   %Adapter: type = class_type @Adapter [concrete]
@@ -413,6 +509,11 @@ fn ImportedConvertLocal(a: Adapter(C)) -> i32 {
 // CHECK:STDOUT:   %C.elem.476: type = unbound_element_type %C.98a, %i32 [concrete]
 // CHECK:STDOUT:   %struct_type.x.ed6: type = struct_type {.x: %i32} [concrete]
 // CHECK:STDOUT:   %complete_type.1ec: <witness> = complete_type_witness %struct_type.x.ed6 [concrete]
+// CHECK:STDOUT:   %Destroy.impl_witness.223: <witness> = impl_witness @Adapter.%Destroy.impl_witness_table [concrete]
+// CHECK:STDOUT:   %ptr.0f9: type = ptr_type %Adapter [concrete]
+// CHECK:STDOUT:   %pattern_type.20f: type = pattern_type %ptr.0f9 [concrete]
+// CHECK:STDOUT:   %Adapter.as.Destroy.impl.Op.type: type = fn_type @Adapter.as.Destroy.impl.Op [concrete]
+// CHECK:STDOUT:   %Adapter.as.Destroy.impl.Op: %Adapter.as.Destroy.impl.Op.type = struct_value () [concrete]
 // CHECK:STDOUT:   %pattern_type.27e: type = pattern_type %Adapter [concrete]
 // CHECK:STDOUT:   %pattern_type.7ce: type = pattern_type %i32 [concrete]
 // CHECK:STDOUT:   %Access.type: type = fn_type @Access [concrete]
@@ -423,11 +524,13 @@ fn ImportedConvertLocal(a: Adapter(C)) -> i32 {
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [concrete] {
+// CHECK:STDOUT:     .Destroy = %Core.Destroy
 // CHECK:STDOUT:     .Int = %Core.Int
 // CHECK:STDOUT:     .ImplicitAs = %Core.ImplicitAs
 // CHECK:STDOUT:     import Core//prelude
 // CHECK:STDOUT:     import Core//prelude/...
 // CHECK:STDOUT:   }
+// CHECK:STDOUT:   %Core.Destroy: type = import_ref Core//prelude/parts/destroy, Destroy, loaded [concrete = constants.%Destroy.type]
 // CHECK:STDOUT:   %Core.Int: %Int.type = import_ref Core//prelude/parts/int, Int, loaded [concrete = constants.%Int.generic]
 // CHECK:STDOUT:   %Core.ImplicitAs: %ImplicitAs.type.cc7 = import_ref Core//prelude/parts/as, ImplicitAs, loaded [concrete = constants.%ImplicitAs.generic]
 // CHECK:STDOUT: }
@@ -462,6 +565,50 @@ fn ImportedConvertLocal(a: Adapter(C)) -> i32 {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
+// CHECK:STDOUT: generic impl @C.as.Destroy.impl(@C.%T.loc4_9.2: type) {
+// CHECK:STDOUT:   %T: type = bind_symbolic_name T, 0 [symbolic = %T (constants.%T)]
+// CHECK:STDOUT:   %Destroy.impl_witness: <witness> = impl_witness @C.%Destroy.impl_witness_table, @C.as.Destroy.impl(%T) [symbolic = %Destroy.impl_witness (constants.%Destroy.impl_witness.a08)]
+// CHECK:STDOUT:
+// CHECK:STDOUT: !definition:
+// CHECK:STDOUT:   %C.as.Destroy.impl.Op.type: type = fn_type @C.as.Destroy.impl.Op, @C.as.Destroy.impl(%T) [symbolic = %C.as.Destroy.impl.Op.type (constants.%C.as.Destroy.impl.Op.type)]
+// CHECK:STDOUT:   %C.as.Destroy.impl.Op: @C.as.Destroy.impl.%C.as.Destroy.impl.Op.type (%C.as.Destroy.impl.Op.type) = struct_value () [symbolic = %C.as.Destroy.impl.Op (constants.%C.as.Destroy.impl.Op)]
+// CHECK:STDOUT:
+// CHECK:STDOUT:   impl: constants.%C.f2e as constants.%Destroy.type {
+// CHECK:STDOUT:     %C.as.Destroy.impl.Op.decl: @C.as.Destroy.impl.%C.as.Destroy.impl.Op.type (%C.as.Destroy.impl.Op.type) = fn_decl @C.as.Destroy.impl.Op [symbolic = @C.as.Destroy.impl.%C.as.Destroy.impl.Op (constants.%C.as.Destroy.impl.Op)] {
+// CHECK:STDOUT:       %self.patt: @C.as.Destroy.impl.Op.%pattern_type (%pattern_type.1d2) = binding_pattern self [concrete]
+// CHECK:STDOUT:       %self.param_patt: @C.as.Destroy.impl.Op.%pattern_type (%pattern_type.1d2) = value_param_pattern %self.patt, call_param0 [concrete]
+// CHECK:STDOUT:       %.loc4_19.1: %pattern_type.f6d = addr_pattern %self.param_patt [concrete]
+// CHECK:STDOUT:     } {
+// CHECK:STDOUT:       %self.param: @C.as.Destroy.impl.Op.%ptr (%ptr.7d2) = value_param call_param0
+// CHECK:STDOUT:       %.loc4_19.2: type = splice_block %Self.ref [symbolic = %C (constants.%C.f2e)] {
+// CHECK:STDOUT:         %.loc4_19.3: type = specific_constant constants.%C.f2e, @C(constants.%T) [symbolic = %C (constants.%C.f2e)]
+// CHECK:STDOUT:         %Self.ref: type = name_ref Self, %.loc4_19.3 [symbolic = %C (constants.%C.f2e)]
+// CHECK:STDOUT:       }
+// CHECK:STDOUT:       %self: @C.as.Destroy.impl.Op.%ptr (%ptr.7d2) = bind_name self, %self.param
+// CHECK:STDOUT:     }
+// CHECK:STDOUT:
+// CHECK:STDOUT:   !members:
+// CHECK:STDOUT:     .Op = %C.as.Destroy.impl.Op.decl
+// CHECK:STDOUT:     witness = @C.%Destroy.impl_witness
+// CHECK:STDOUT:   }
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: impl @Adapter.as.Destroy.impl: constants.%Adapter as constants.%Destroy.type {
+// CHECK:STDOUT:   %Adapter.as.Destroy.impl.Op.decl: %Adapter.as.Destroy.impl.Op.type = fn_decl @Adapter.as.Destroy.impl.Op [concrete = constants.%Adapter.as.Destroy.impl.Op] {
+// CHECK:STDOUT:     %self.patt: %pattern_type.20f = binding_pattern self [concrete]
+// CHECK:STDOUT:     %self.param_patt: %pattern_type.20f = value_param_pattern %self.patt, call_param0 [concrete]
+// CHECK:STDOUT:     %.loc8: %pattern_type.f6d = addr_pattern %self.param_patt [concrete]
+// CHECK:STDOUT:   } {
+// CHECK:STDOUT:     %self.param: %ptr.0f9 = value_param call_param0
+// CHECK:STDOUT:     %Self.ref: type = name_ref Self, constants.%Adapter [concrete = constants.%Adapter]
+// CHECK:STDOUT:     %self: %ptr.0f9 = bind_name self, %self.param
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:
+// CHECK:STDOUT: !members:
+// CHECK:STDOUT:   .Op = %Adapter.as.Destroy.impl.Op.decl
+// CHECK:STDOUT:   witness = @Adapter.%Destroy.impl_witness
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
 // CHECK:STDOUT: generic class @C(%T.loc4_9.2: type) {
 // CHECK:STDOUT:   %T.loc4_9.1: type = bind_symbolic_name T, 0 [symbolic = %T.loc4_9.1 (constants.%T)]
 // CHECK:STDOUT:
@@ -475,6 +622,9 @@ fn ImportedConvertLocal(a: Adapter(C)) -> i32 {
 // CHECK:STDOUT:   class {
 // CHECK:STDOUT:     %T.ref: type = name_ref T, %T.loc4_9.2 [symbolic = %T.loc4_9.1 (constants.%T)]
 // CHECK:STDOUT:     %.loc5: @C.%C.elem (%C.elem.66c) = field_decl x, element0 [concrete]
+// CHECK:STDOUT:     impl_decl @C.as.Destroy.impl [concrete] {} {}
+// CHECK:STDOUT:     %Destroy.impl_witness_table = impl_witness_table (@C.as.Destroy.impl.%C.as.Destroy.impl.Op.decl), @C.as.Destroy.impl [concrete]
+// CHECK:STDOUT:     %Destroy.impl_witness: <witness> = impl_witness %Destroy.impl_witness_table, @C.as.Destroy.impl(constants.%T) [symbolic = @C.as.Destroy.impl.%Destroy.impl_witness (constants.%Destroy.impl_witness.a08)]
 // CHECK:STDOUT:     %struct_type.x.loc6_1.1: type = struct_type {.x: %T} [symbolic = %struct_type.x.loc6_1.2 (constants.%struct_type.x.2ac)]
 // CHECK:STDOUT:     %complete_type.loc6_1.1: <witness> = complete_type_witness %struct_type.x.loc6_1.1 [symbolic = %complete_type.loc6_1.2 (constants.%complete_type.433)]
 // CHECK:STDOUT:     complete_type_witness = %complete_type.loc6_1.1
@@ -492,6 +642,9 @@ fn ImportedConvertLocal(a: Adapter(C)) -> i32 {
 // CHECK:STDOUT:   %i32: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
 // CHECK:STDOUT:   %C: type = class_type @C, @C(constants.%i32) [concrete = constants.%C.98a]
 // CHECK:STDOUT:   adapt_decl %C [concrete]
+// CHECK:STDOUT:   impl_decl @Adapter.as.Destroy.impl [concrete] {} {}
+// CHECK:STDOUT:   %Destroy.impl_witness_table = impl_witness_table (@Adapter.as.Destroy.impl.%Adapter.as.Destroy.impl.Op.decl), @Adapter.as.Destroy.impl [concrete]
+// CHECK:STDOUT:   %Destroy.impl_witness: <witness> = impl_witness %Destroy.impl_witness_table [concrete = constants.%Destroy.impl_witness.223]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness constants.%struct_type.x.ed6 [concrete = constants.%complete_type.1ec]
 // CHECK:STDOUT:   complete_type_witness = %complete_type
 // CHECK:STDOUT:
@@ -501,6 +654,19 @@ fn ImportedConvertLocal(a: Adapter(C)) -> i32 {
 // CHECK:STDOUT:   .x = <poisoned>
 // CHECK:STDOUT:   extend %C
 // CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: generic fn @C.as.Destroy.impl.Op(@C.%T.loc4_9.2: type) {
+// CHECK:STDOUT:   %T: type = bind_symbolic_name T, 0 [symbolic = %T (constants.%T)]
+// CHECK:STDOUT:   %C: type = class_type @C, @C(%T) [symbolic = %C (constants.%C.f2e)]
+// CHECK:STDOUT:   %ptr: type = ptr_type %C [symbolic = %ptr (constants.%ptr.7d2)]
+// CHECK:STDOUT:   %pattern_type: type = pattern_type %ptr [symbolic = %pattern_type (constants.%pattern_type.1d2)]
+// CHECK:STDOUT:
+// CHECK:STDOUT: !definition:
+// CHECK:STDOUT:
+// CHECK:STDOUT:   fn(%self.param: @C.as.Destroy.impl.Op.%ptr (%ptr.7d2)) = "no_op";
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: fn @Adapter.as.Destroy.impl.Op(%self.param: %ptr.0f9) = "no_op";
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Access(%a.param: %Adapter) -> %i32 {
 // CHECK:STDOUT: !entry:
@@ -513,6 +679,18 @@ fn ImportedConvertLocal(a: Adapter(C)) -> i32 {
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @C(constants.%T) {
 // CHECK:STDOUT:   %T.loc4_9.1 => constants.%T
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: specific @C.as.Destroy.impl(constants.%T) {
+// CHECK:STDOUT:   %T => constants.%T
+// CHECK:STDOUT:   %Destroy.impl_witness => constants.%Destroy.impl_witness.a08
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: specific @C.as.Destroy.impl.Op(constants.%T) {
+// CHECK:STDOUT:   %T => constants.%T
+// CHECK:STDOUT:   %C => constants.%C.f2e
+// CHECK:STDOUT:   %ptr => constants.%ptr.7d2
+// CHECK:STDOUT:   %pattern_type => constants.%pattern_type.1d2
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @C(constants.%i32) {
@@ -536,6 +714,13 @@ fn ImportedConvertLocal(a: Adapter(C)) -> i32 {
 // CHECK:STDOUT:   %C.f2e: type = class_type @C, @C(%T) [symbolic]
 // CHECK:STDOUT:   %require_complete.4ae: <witness> = require_complete_type %T [symbolic]
 // CHECK:STDOUT:   %C.elem.66c: type = unbound_element_type %C.f2e, %T [symbolic]
+// CHECK:STDOUT:   %Destroy.type: type = facet_type <@Destroy> [concrete]
+// CHECK:STDOUT:   %pattern_type.f6d: type = pattern_type auto [concrete]
+// CHECK:STDOUT:   %Destroy.impl_witness.a08: <witness> = impl_witness @C.%Destroy.impl_witness_table, @C.as.Destroy.impl(%T) [symbolic]
+// CHECK:STDOUT:   %ptr.7d2: type = ptr_type %C.f2e [symbolic]
+// CHECK:STDOUT:   %pattern_type.1d2: type = pattern_type %ptr.7d2 [symbolic]
+// CHECK:STDOUT:   %C.as.Destroy.impl.Op.type: type = fn_type @C.as.Destroy.impl.Op, @C.as.Destroy.impl(%T) [symbolic]
+// CHECK:STDOUT:   %C.as.Destroy.impl.Op: %C.as.Destroy.impl.Op.type = struct_value () [symbolic]
 // CHECK:STDOUT:   %struct_type.x.2ac: type = struct_type {.x: %T} [symbolic]
 // CHECK:STDOUT:   %complete_type.433: <witness> = complete_type_witness %struct_type.x.2ac [symbolic]
 // CHECK:STDOUT:   %Adapter: type = class_type @Adapter [concrete]
@@ -549,14 +734,21 @@ fn ImportedConvertLocal(a: Adapter(C)) -> i32 {
 // CHECK:STDOUT:   %C.elem.476: type = unbound_element_type %C.98a, %i32 [concrete]
 // CHECK:STDOUT:   %struct_type.x.ed6: type = struct_type {.x: %i32} [concrete]
 // CHECK:STDOUT:   %complete_type.1ec: <witness> = complete_type_witness %struct_type.x.ed6 [concrete]
+// CHECK:STDOUT:   %Destroy.impl_witness.223: <witness> = impl_witness @Adapter.%Destroy.impl_witness_table [concrete]
+// CHECK:STDOUT:   %ptr.0f9: type = ptr_type %Adapter [concrete]
+// CHECK:STDOUT:   %pattern_type.20f: type = pattern_type %ptr.0f9 [concrete]
+// CHECK:STDOUT:   %Adapter.as.Destroy.impl.Op.type: type = fn_type @Adapter.as.Destroy.impl.Op [concrete]
+// CHECK:STDOUT:   %Adapter.as.Destroy.impl.Op: %Adapter.as.Destroy.impl.Op.type = struct_value () [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [concrete] {
+// CHECK:STDOUT:     .Destroy = %Core.Destroy
 // CHECK:STDOUT:     .Int = %Core.Int
 // CHECK:STDOUT:     import Core//prelude
 // CHECK:STDOUT:     import Core//prelude/...
 // CHECK:STDOUT:   }
+// CHECK:STDOUT:   %Core.Destroy: type = import_ref Core//prelude/parts/destroy, Destroy, loaded [concrete = constants.%Destroy.type]
 // CHECK:STDOUT:   %Core.Int: %Int.type = import_ref Core//prelude/parts/int, Int, loaded [concrete = constants.%Int.generic]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -575,6 +767,50 @@ fn ImportedConvertLocal(a: Adapter(C)) -> i32 {
 // CHECK:STDOUT:   %Adapter.decl: type = class_decl @Adapter [concrete = constants.%Adapter] {} {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
+// CHECK:STDOUT: generic impl @C.as.Destroy.impl(@C.%T.loc7_9.2: type) {
+// CHECK:STDOUT:   %T: type = bind_symbolic_name T, 0 [symbolic = %T (constants.%T)]
+// CHECK:STDOUT:   %Destroy.impl_witness: <witness> = impl_witness @C.%Destroy.impl_witness_table, @C.as.Destroy.impl(%T) [symbolic = %Destroy.impl_witness (constants.%Destroy.impl_witness.a08)]
+// CHECK:STDOUT:
+// CHECK:STDOUT: !definition:
+// CHECK:STDOUT:   %C.as.Destroy.impl.Op.type: type = fn_type @C.as.Destroy.impl.Op, @C.as.Destroy.impl(%T) [symbolic = %C.as.Destroy.impl.Op.type (constants.%C.as.Destroy.impl.Op.type)]
+// CHECK:STDOUT:   %C.as.Destroy.impl.Op: @C.as.Destroy.impl.%C.as.Destroy.impl.Op.type (%C.as.Destroy.impl.Op.type) = struct_value () [symbolic = %C.as.Destroy.impl.Op (constants.%C.as.Destroy.impl.Op)]
+// CHECK:STDOUT:
+// CHECK:STDOUT:   impl: constants.%C.f2e as constants.%Destroy.type {
+// CHECK:STDOUT:     %C.as.Destroy.impl.Op.decl: @C.as.Destroy.impl.%C.as.Destroy.impl.Op.type (%C.as.Destroy.impl.Op.type) = fn_decl @C.as.Destroy.impl.Op [symbolic = @C.as.Destroy.impl.%C.as.Destroy.impl.Op (constants.%C.as.Destroy.impl.Op)] {
+// CHECK:STDOUT:       %self.patt: @C.as.Destroy.impl.Op.%pattern_type (%pattern_type.1d2) = binding_pattern self [concrete]
+// CHECK:STDOUT:       %self.param_patt: @C.as.Destroy.impl.Op.%pattern_type (%pattern_type.1d2) = value_param_pattern %self.patt, call_param0 [concrete]
+// CHECK:STDOUT:       %.loc7_19.1: %pattern_type.f6d = addr_pattern %self.param_patt [concrete]
+// CHECK:STDOUT:     } {
+// CHECK:STDOUT:       %self.param: @C.as.Destroy.impl.Op.%ptr (%ptr.7d2) = value_param call_param0
+// CHECK:STDOUT:       %.loc7_19.2: type = splice_block %Self.ref [symbolic = %C (constants.%C.f2e)] {
+// CHECK:STDOUT:         %.loc7_19.3: type = specific_constant constants.%C.f2e, @C(constants.%T) [symbolic = %C (constants.%C.f2e)]
+// CHECK:STDOUT:         %Self.ref: type = name_ref Self, %.loc7_19.3 [symbolic = %C (constants.%C.f2e)]
+// CHECK:STDOUT:       }
+// CHECK:STDOUT:       %self: @C.as.Destroy.impl.Op.%ptr (%ptr.7d2) = bind_name self, %self.param
+// CHECK:STDOUT:     }
+// CHECK:STDOUT:
+// CHECK:STDOUT:   !members:
+// CHECK:STDOUT:     .Op = %C.as.Destroy.impl.Op.decl
+// CHECK:STDOUT:     witness = @C.%Destroy.impl_witness
+// CHECK:STDOUT:   }
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: impl @Adapter.as.Destroy.impl: constants.%Adapter as constants.%Destroy.type {
+// CHECK:STDOUT:   %Adapter.as.Destroy.impl.Op.decl: %Adapter.as.Destroy.impl.Op.type = fn_decl @Adapter.as.Destroy.impl.Op [concrete = constants.%Adapter.as.Destroy.impl.Op] {
+// CHECK:STDOUT:     %self.patt: %pattern_type.20f = binding_pattern self [concrete]
+// CHECK:STDOUT:     %self.param_patt: %pattern_type.20f = value_param_pattern %self.patt, call_param0 [concrete]
+// CHECK:STDOUT:     %.loc11: %pattern_type.f6d = addr_pattern %self.param_patt [concrete]
+// CHECK:STDOUT:   } {
+// CHECK:STDOUT:     %self.param: %ptr.0f9 = value_param call_param0
+// CHECK:STDOUT:     %Self.ref: type = name_ref Self, constants.%Adapter [concrete = constants.%Adapter]
+// CHECK:STDOUT:     %self: %ptr.0f9 = bind_name self, %self.param
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:
+// CHECK:STDOUT: !members:
+// CHECK:STDOUT:   .Op = %Adapter.as.Destroy.impl.Op.decl
+// CHECK:STDOUT:   witness = @Adapter.%Destroy.impl_witness
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
 // CHECK:STDOUT: generic class @C(%T.loc7_9.2: type) {
 // CHECK:STDOUT:   %T.loc7_9.1: type = bind_symbolic_name T, 0 [symbolic = %T.loc7_9.1 (constants.%T)]
 // CHECK:STDOUT:
@@ -588,6 +824,9 @@ fn ImportedConvertLocal(a: Adapter(C)) -> i32 {
 // CHECK:STDOUT:   class {
 // CHECK:STDOUT:     %T.ref: type = name_ref T, %T.loc7_9.2 [symbolic = %T.loc7_9.1 (constants.%T)]
 // CHECK:STDOUT:     %.loc8: @C.%C.elem (%C.elem.66c) = field_decl x, element0 [concrete]
+// CHECK:STDOUT:     impl_decl @C.as.Destroy.impl [concrete] {} {}
+// CHECK:STDOUT:     %Destroy.impl_witness_table = impl_witness_table (@C.as.Destroy.impl.%C.as.Destroy.impl.Op.decl), @C.as.Destroy.impl [concrete]
+// CHECK:STDOUT:     %Destroy.impl_witness: <witness> = impl_witness %Destroy.impl_witness_table, @C.as.Destroy.impl(constants.%T) [symbolic = @C.as.Destroy.impl.%Destroy.impl_witness (constants.%Destroy.impl_witness.a08)]
 // CHECK:STDOUT:     %struct_type.x.loc9_1.1: type = struct_type {.x: %T} [symbolic = %struct_type.x.loc9_1.2 (constants.%struct_type.x.2ac)]
 // CHECK:STDOUT:     %complete_type.loc9_1.1: <witness> = complete_type_witness %struct_type.x.loc9_1.1 [symbolic = %complete_type.loc9_1.2 (constants.%complete_type.433)]
 // CHECK:STDOUT:     complete_type_witness = %complete_type.loc9_1.1
@@ -605,6 +844,9 @@ fn ImportedConvertLocal(a: Adapter(C)) -> i32 {
 // CHECK:STDOUT:   %i32: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
 // CHECK:STDOUT:   %C: type = class_type @C, @C(constants.%i32) [concrete = constants.%C.98a]
 // CHECK:STDOUT:   adapt_decl %C [concrete]
+// CHECK:STDOUT:   impl_decl @Adapter.as.Destroy.impl [concrete] {} {}
+// CHECK:STDOUT:   %Destroy.impl_witness_table = impl_witness_table (@Adapter.as.Destroy.impl.%Adapter.as.Destroy.impl.Op.decl), @Adapter.as.Destroy.impl [concrete]
+// CHECK:STDOUT:   %Destroy.impl_witness: <witness> = impl_witness %Destroy.impl_witness_table [concrete = constants.%Destroy.impl_witness.223]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness constants.%struct_type.x.ed6 [concrete = constants.%complete_type.1ec]
 // CHECK:STDOUT:   complete_type_witness = %complete_type
 // CHECK:STDOUT:
@@ -614,8 +856,33 @@ fn ImportedConvertLocal(a: Adapter(C)) -> i32 {
 // CHECK:STDOUT:   extend %C
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
+// CHECK:STDOUT: generic fn @C.as.Destroy.impl.Op(@C.%T.loc7_9.2: type) {
+// CHECK:STDOUT:   %T: type = bind_symbolic_name T, 0 [symbolic = %T (constants.%T)]
+// CHECK:STDOUT:   %C: type = class_type @C, @C(%T) [symbolic = %C (constants.%C.f2e)]
+// CHECK:STDOUT:   %ptr: type = ptr_type %C [symbolic = %ptr (constants.%ptr.7d2)]
+// CHECK:STDOUT:   %pattern_type: type = pattern_type %ptr [symbolic = %pattern_type (constants.%pattern_type.1d2)]
+// CHECK:STDOUT:
+// CHECK:STDOUT: !definition:
+// CHECK:STDOUT:
+// CHECK:STDOUT:   fn(%self.param: @C.as.Destroy.impl.Op.%ptr (%ptr.7d2)) = "no_op";
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: fn @Adapter.as.Destroy.impl.Op(%self.param: %ptr.0f9) = "no_op";
+// CHECK:STDOUT:
 // CHECK:STDOUT: specific @C(constants.%T) {
 // CHECK:STDOUT:   %T.loc7_9.1 => constants.%T
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: specific @C.as.Destroy.impl(constants.%T) {
+// CHECK:STDOUT:   %T => constants.%T
+// CHECK:STDOUT:   %Destroy.impl_witness => constants.%Destroy.impl_witness.a08
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: specific @C.as.Destroy.impl.Op(constants.%T) {
+// CHECK:STDOUT:   %T => constants.%T
+// CHECK:STDOUT:   %C => constants.%C.f2e
+// CHECK:STDOUT:   %ptr => constants.%ptr.7d2
+// CHECK:STDOUT:   %pattern_type => constants.%pattern_type.1d2
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @C(constants.%i32) {
@@ -655,6 +922,12 @@ fn ImportedConvertLocal(a: Adapter(C)) -> i32 {
 // CHECK:STDOUT:   %ImportedAccess: %ImportedAccess.type = struct_value () [concrete]
 // CHECK:STDOUT:   %ImplicitAs.type.cc7: type = generic_interface_type @ImplicitAs [concrete]
 // CHECK:STDOUT:   %ImplicitAs.generic: %ImplicitAs.type.cc7 = struct_value () [concrete]
+// CHECK:STDOUT:   %Destroy.type: type = facet_type <@Destroy> [concrete]
+// CHECK:STDOUT:   %Destroy.impl_witness.afc: <witness> = impl_witness imports.%Destroy.impl_witness_table.00b, @C.as.Destroy.impl(%T) [symbolic]
+// CHECK:STDOUT:   %C.as.Destroy.impl.Op.type: type = fn_type @C.as.Destroy.impl.Op, @C.as.Destroy.impl(%T) [symbolic]
+// CHECK:STDOUT:   %C.as.Destroy.impl.Op: %C.as.Destroy.impl.Op.type = struct_value () [symbolic]
+// CHECK:STDOUT:   %ptr.7d2: type = ptr_type %C.f2e [symbolic]
+// CHECK:STDOUT:   %pattern_type.1d2: type = pattern_type %ptr.7d2 [symbolic]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -666,16 +939,26 @@ fn ImportedConvertLocal(a: Adapter(C)) -> i32 {
 // CHECK:STDOUT:     import Core//prelude
 // CHECK:STDOUT:     import Core//prelude/...
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %Main.import_ref.5ab: type = import_ref Main//extend_adapt_specific_type_library, loc7_9, loaded [symbolic = @C.%T (constants.%T)]
+// CHECK:STDOUT:   %Main.import_ref.5ab3ec.1: type = import_ref Main//extend_adapt_specific_type_library, loc7_9, loaded [symbolic = @C.%T (constants.%T)]
 // CHECK:STDOUT:   %Main.import_ref.b5f: <witness> = import_ref Main//extend_adapt_specific_type_library, loc9_1, loaded [symbolic = @C.%complete_type (constants.%complete_type.433)]
 // CHECK:STDOUT:   %Main.import_ref.4c0 = import_ref Main//extend_adapt_specific_type_library, inst26 [no loc], unloaded
 // CHECK:STDOUT:   %Main.import_ref.262: @C.%C.elem (%C.elem.66c) = import_ref Main//extend_adapt_specific_type_library, loc8_8, loaded [concrete = %.22b]
 // CHECK:STDOUT:   %Main.import_ref.709: <witness> = import_ref Main//extend_adapt_specific_type_library, loc13_1, loaded [concrete = constants.%complete_type.c07]
-// CHECK:STDOUT:   %Main.import_ref.feb = import_ref Main//extend_adapt_specific_type_library, inst42 [no loc], unloaded
+// CHECK:STDOUT:   %Main.import_ref.feb = import_ref Main//extend_adapt_specific_type_library, inst90 [no loc], unloaded
 // CHECK:STDOUT:   %Main.import_ref.19d12e.2: type = import_ref Main//extend_adapt_specific_type_library, loc12_21, loaded [concrete = constants.%C.239]
 // CHECK:STDOUT:   %Core.Int: %Int.type = import_ref Core//prelude/parts/int, Int, loaded [concrete = constants.%Int.generic]
 // CHECK:STDOUT:   %.22b: @C.%C.elem (%C.elem.66c) = field_decl x, element0 [concrete]
 // CHECK:STDOUT:   %Core.ImplicitAs: %ImplicitAs.type.cc7 = import_ref Core//prelude/parts/as, ImplicitAs, loaded [concrete = constants.%ImplicitAs.generic]
+// CHECK:STDOUT:   %Main.import_ref.21a = import_ref Main//extend_adapt_specific_type_library, loc7_19, unloaded
+// CHECK:STDOUT:   %Main.import_ref.5ab3ec.2: type = import_ref Main//extend_adapt_specific_type_library, loc7_9, loaded [symbolic = @C.%T (constants.%T)]
+// CHECK:STDOUT:   %Main.import_ref.499: type = import_ref Main//extend_adapt_specific_type_library, inst26 [no loc], loaded [symbolic = constants.%C.f2e]
+// CHECK:STDOUT:   %Main.import_ref.cb9298.1: type = import_ref Main//extend_adapt_specific_type_library, inst37 [no loc], loaded [concrete = constants.%Destroy.type]
+// CHECK:STDOUT:   %Main.import_ref.251 = import_ref Main//extend_adapt_specific_type_library, loc7_19, unloaded
+// CHECK:STDOUT:   %Destroy.impl_witness_table.00b = impl_witness_table (%Main.import_ref.251), @C.as.Destroy.impl [concrete]
+// CHECK:STDOUT:   %Main.import_ref.5ab3ec.3: type = import_ref Main//extend_adapt_specific_type_library, loc7_9, loaded [symbolic = @C.%T (constants.%T)]
+// CHECK:STDOUT:   %Main.import_ref.07a = import_ref Main//extend_adapt_specific_type_library, loc11_15, unloaded
+// CHECK:STDOUT:   %Main.import_ref.b65: type = import_ref Main//extend_adapt_specific_type_library, inst90 [no loc], loaded [concrete = constants.%Adapter]
+// CHECK:STDOUT:   %Main.import_ref.cb9298.2: type = import_ref Main//extend_adapt_specific_type_library, inst37 [no loc], loaded [concrete = constants.%Destroy.type]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -703,6 +986,25 @@ fn ImportedConvertLocal(a: Adapter(C)) -> i32 {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
+// CHECK:STDOUT: generic impl @C.as.Destroy.impl(imports.%Main.import_ref.5ab3ec.2: type) [from "extend_adapt_specific_type_library.carbon"] {
+// CHECK:STDOUT:   %T: type = bind_symbolic_name T, 0 [symbolic = %T (constants.%T)]
+// CHECK:STDOUT:   %Destroy.impl_witness: <witness> = impl_witness imports.%Destroy.impl_witness_table.00b, @C.as.Destroy.impl(%T) [symbolic = %Destroy.impl_witness (constants.%Destroy.impl_witness.afc)]
+// CHECK:STDOUT:
+// CHECK:STDOUT: !definition:
+// CHECK:STDOUT:   %C.as.Destroy.impl.Op.type: type = fn_type @C.as.Destroy.impl.Op, @C.as.Destroy.impl(%T) [symbolic = %C.as.Destroy.impl.Op.type (constants.%C.as.Destroy.impl.Op.type)]
+// CHECK:STDOUT:   %C.as.Destroy.impl.Op: @C.as.Destroy.impl.%C.as.Destroy.impl.Op.type (%C.as.Destroy.impl.Op.type) = struct_value () [symbolic = %C.as.Destroy.impl.Op (constants.%C.as.Destroy.impl.Op)]
+// CHECK:STDOUT:
+// CHECK:STDOUT:   impl: imports.%Main.import_ref.499 as imports.%Main.import_ref.cb9298.1 {
+// CHECK:STDOUT:   !members:
+// CHECK:STDOUT:     witness = imports.%Main.import_ref.21a
+// CHECK:STDOUT:   }
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: impl @Adapter.as.Destroy.impl: imports.%Main.import_ref.b65 as imports.%Main.import_ref.cb9298.2 [from "extend_adapt_specific_type_library.carbon"] {
+// CHECK:STDOUT: !members:
+// CHECK:STDOUT:   witness = imports.%Main.import_ref.07a
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
 // CHECK:STDOUT: class @Adapter [from "extend_adapt_specific_type_library.carbon"] {
 // CHECK:STDOUT:   complete_type_witness = imports.%Main.import_ref.709
 // CHECK:STDOUT:
@@ -712,7 +1014,7 @@ fn ImportedConvertLocal(a: Adapter(C)) -> i32 {
 // CHECK:STDOUT:   extend imports.%Main.import_ref.19d12e.2
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic class @C(imports.%Main.import_ref.5ab: type) [from "extend_adapt_specific_type_library.carbon"] {
+// CHECK:STDOUT: generic class @C(imports.%Main.import_ref.5ab3ec.1: type) [from "extend_adapt_specific_type_library.carbon"] {
 // CHECK:STDOUT:   %T: type = bind_symbolic_name T, 0 [symbolic = %T (constants.%T)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
@@ -740,6 +1042,17 @@ fn ImportedConvertLocal(a: Adapter(C)) -> i32 {
 // CHECK:STDOUT:   return <error>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
+// CHECK:STDOUT: generic fn @C.as.Destroy.impl.Op(imports.%Main.import_ref.5ab3ec.3: type) [from "extend_adapt_specific_type_library.carbon"] {
+// CHECK:STDOUT:   %T: type = bind_symbolic_name T, 0 [symbolic = %T (constants.%T)]
+// CHECK:STDOUT:   %C: type = class_type @C, @C(%T) [symbolic = %C (constants.%C.f2e)]
+// CHECK:STDOUT:   %ptr: type = ptr_type %C [symbolic = %ptr (constants.%ptr.7d2)]
+// CHECK:STDOUT:   %pattern_type: type = pattern_type %ptr [symbolic = %pattern_type (constants.%pattern_type.1d2)]
+// CHECK:STDOUT:
+// CHECK:STDOUT: !definition:
+// CHECK:STDOUT:
+// CHECK:STDOUT:   fn = "no_op";
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
 // CHECK:STDOUT: specific @C(constants.%T) {
 // CHECK:STDOUT:   %T => constants.%T
 // CHECK:STDOUT: }
@@ -755,6 +1068,18 @@ fn ImportedConvertLocal(a: Adapter(C)) -> i32 {
 // CHECK:STDOUT:   %complete_type => constants.%complete_type.c07
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
+// CHECK:STDOUT: specific @C.as.Destroy.impl(constants.%T) {
+// CHECK:STDOUT:   %T => constants.%T
+// CHECK:STDOUT:   %Destroy.impl_witness => constants.%Destroy.impl_witness.afc
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: specific @C.as.Destroy.impl.Op(constants.%T) {
+// CHECK:STDOUT:   %T => constants.%T
+// CHECK:STDOUT:   %C => constants.%C.f2e
+// CHECK:STDOUT:   %ptr => constants.%ptr.7d2
+// CHECK:STDOUT:   %pattern_type => constants.%pattern_type.1d2
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
 // CHECK:STDOUT: --- adapt_generic_type.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
@@ -764,6 +1089,13 @@ fn ImportedConvertLocal(a: Adapter(C)) -> i32 {
 // CHECK:STDOUT:   %Adapter.generic: %Adapter.type = struct_value () [concrete]
 // CHECK:STDOUT:   %Adapter.0e3: type = class_type @Adapter, @Adapter(%T) [symbolic]
 // CHECK:STDOUT:   %require_complete.4ae: <witness> = require_complete_type %T [symbolic]
+// CHECK:STDOUT:   %Destroy.type: type = facet_type <@Destroy> [concrete]
+// CHECK:STDOUT:   %pattern_type.f6d: type = pattern_type auto [concrete]
+// CHECK:STDOUT:   %Destroy.impl_witness: <witness> = impl_witness @Adapter.%Destroy.impl_witness_table, @Adapter.as.Destroy.impl(%T) [symbolic]
+// CHECK:STDOUT:   %ptr.36c: type = ptr_type %Adapter.0e3 [symbolic]
+// CHECK:STDOUT:   %pattern_type.aa7: type = pattern_type %ptr.36c [symbolic]
+// CHECK:STDOUT:   %Adapter.as.Destroy.impl.Op.type: type = fn_type @Adapter.as.Destroy.impl.Op, @Adapter.as.Destroy.impl(%T) [symbolic]
+// CHECK:STDOUT:   %Adapter.as.Destroy.impl.Op: %Adapter.as.Destroy.impl.Op.type = struct_value () [symbolic]
 // CHECK:STDOUT:   %complete_type.f87: <witness> = complete_type_witness %T [symbolic]
 // CHECK:STDOUT:   %int_32: Core.IntLiteral = int_value 32 [concrete]
 // CHECK:STDOUT:   %Int.type: type = generic_class_type @Int [concrete]
@@ -781,10 +1113,12 @@ fn ImportedConvertLocal(a: Adapter(C)) -> i32 {
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [concrete] {
+// CHECK:STDOUT:     .Destroy = %Core.Destroy
 // CHECK:STDOUT:     .Int = %Core.Int
 // CHECK:STDOUT:     import Core//prelude
 // CHECK:STDOUT:     import Core//prelude/...
 // CHECK:STDOUT:   }
+// CHECK:STDOUT:   %Core.Destroy: type = import_ref Core//prelude/parts/destroy, Destroy, loaded [concrete = constants.%Destroy.type]
 // CHECK:STDOUT:   %Core.Int: %Int.type = import_ref Core//prelude/parts/int, Int, loaded [concrete = constants.%Int.generic]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -821,6 +1155,34 @@ fn ImportedConvertLocal(a: Adapter(C)) -> i32 {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
+// CHECK:STDOUT: generic impl @Adapter.as.Destroy.impl(@Adapter.%T.loc4_15.2: type) {
+// CHECK:STDOUT:   %T: type = bind_symbolic_name T, 0 [symbolic = %T (constants.%T)]
+// CHECK:STDOUT:   %Destroy.impl_witness: <witness> = impl_witness @Adapter.%Destroy.impl_witness_table, @Adapter.as.Destroy.impl(%T) [symbolic = %Destroy.impl_witness (constants.%Destroy.impl_witness)]
+// CHECK:STDOUT:
+// CHECK:STDOUT: !definition:
+// CHECK:STDOUT:   %Adapter.as.Destroy.impl.Op.type: type = fn_type @Adapter.as.Destroy.impl.Op, @Adapter.as.Destroy.impl(%T) [symbolic = %Adapter.as.Destroy.impl.Op.type (constants.%Adapter.as.Destroy.impl.Op.type)]
+// CHECK:STDOUT:   %Adapter.as.Destroy.impl.Op: @Adapter.as.Destroy.impl.%Adapter.as.Destroy.impl.Op.type (%Adapter.as.Destroy.impl.Op.type) = struct_value () [symbolic = %Adapter.as.Destroy.impl.Op (constants.%Adapter.as.Destroy.impl.Op)]
+// CHECK:STDOUT:
+// CHECK:STDOUT:   impl: constants.%Adapter.0e3 as constants.%Destroy.type {
+// CHECK:STDOUT:     %Adapter.as.Destroy.impl.Op.decl: @Adapter.as.Destroy.impl.%Adapter.as.Destroy.impl.Op.type (%Adapter.as.Destroy.impl.Op.type) = fn_decl @Adapter.as.Destroy.impl.Op [symbolic = @Adapter.as.Destroy.impl.%Adapter.as.Destroy.impl.Op (constants.%Adapter.as.Destroy.impl.Op)] {
+// CHECK:STDOUT:       %self.patt: @Adapter.as.Destroy.impl.Op.%pattern_type (%pattern_type.aa7) = binding_pattern self [concrete]
+// CHECK:STDOUT:       %self.param_patt: @Adapter.as.Destroy.impl.Op.%pattern_type (%pattern_type.aa7) = value_param_pattern %self.patt, call_param0 [concrete]
+// CHECK:STDOUT:       %.loc4_25.1: %pattern_type.f6d = addr_pattern %self.param_patt [concrete]
+// CHECK:STDOUT:     } {
+// CHECK:STDOUT:       %self.param: @Adapter.as.Destroy.impl.Op.%ptr (%ptr.36c) = value_param call_param0
+// CHECK:STDOUT:       %.loc4_25.2: type = splice_block %Self.ref [symbolic = %Adapter (constants.%Adapter.0e3)] {
+// CHECK:STDOUT:         %.loc4_25.3: type = specific_constant constants.%Adapter.0e3, @Adapter(constants.%T) [symbolic = %Adapter (constants.%Adapter.0e3)]
+// CHECK:STDOUT:         %Self.ref: type = name_ref Self, %.loc4_25.3 [symbolic = %Adapter (constants.%Adapter.0e3)]
+// CHECK:STDOUT:       }
+// CHECK:STDOUT:       %self: @Adapter.as.Destroy.impl.Op.%ptr (%ptr.36c) = bind_name self, %self.param
+// CHECK:STDOUT:     }
+// CHECK:STDOUT:
+// CHECK:STDOUT:   !members:
+// CHECK:STDOUT:     .Op = %Adapter.as.Destroy.impl.Op.decl
+// CHECK:STDOUT:     witness = @Adapter.%Destroy.impl_witness
+// CHECK:STDOUT:   }
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
 // CHECK:STDOUT: generic class @Adapter(%T.loc4_15.2: type) {
 // CHECK:STDOUT:   %T.loc4_15.1: type = bind_symbolic_name T, 0 [symbolic = %T.loc4_15.1 (constants.%T)]
 // CHECK:STDOUT:
@@ -831,6 +1193,9 @@ fn ImportedConvertLocal(a: Adapter(C)) -> i32 {
 // CHECK:STDOUT:   class {
 // CHECK:STDOUT:     %T.ref: type = name_ref T, %T.loc4_15.2 [symbolic = %T.loc4_15.1 (constants.%T)]
 // CHECK:STDOUT:     adapt_decl %T.ref [concrete]
+// CHECK:STDOUT:     impl_decl @Adapter.as.Destroy.impl [concrete] {} {}
+// CHECK:STDOUT:     %Destroy.impl_witness_table = impl_witness_table (@Adapter.as.Destroy.impl.%Adapter.as.Destroy.impl.Op.decl), @Adapter.as.Destroy.impl [concrete]
+// CHECK:STDOUT:     %Destroy.impl_witness: <witness> = impl_witness %Destroy.impl_witness_table, @Adapter.as.Destroy.impl(constants.%T) [symbolic = @Adapter.as.Destroy.impl.%Destroy.impl_witness (constants.%Destroy.impl_witness)]
 // CHECK:STDOUT:     %complete_type.loc6_1.1: <witness> = complete_type_witness constants.%T [symbolic = %complete_type.loc6_1.2 (constants.%complete_type.f87)]
 // CHECK:STDOUT:     complete_type_witness = %complete_type.loc6_1.1
 // CHECK:STDOUT:
@@ -838,6 +1203,17 @@ fn ImportedConvertLocal(a: Adapter(C)) -> i32 {
 // CHECK:STDOUT:     .Self = constants.%Adapter.0e3
 // CHECK:STDOUT:     .T = <poisoned>
 // CHECK:STDOUT:   }
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: generic fn @Adapter.as.Destroy.impl.Op(@Adapter.%T.loc4_15.2: type) {
+// CHECK:STDOUT:   %T: type = bind_symbolic_name T, 0 [symbolic = %T (constants.%T)]
+// CHECK:STDOUT:   %Adapter: type = class_type @Adapter, @Adapter(%T) [symbolic = %Adapter (constants.%Adapter.0e3)]
+// CHECK:STDOUT:   %ptr: type = ptr_type %Adapter [symbolic = %ptr (constants.%ptr.36c)]
+// CHECK:STDOUT:   %pattern_type: type = pattern_type %ptr [symbolic = %pattern_type (constants.%pattern_type.aa7)]
+// CHECK:STDOUT:
+// CHECK:STDOUT: !definition:
+// CHECK:STDOUT:
+// CHECK:STDOUT:   fn(%self.param: @Adapter.as.Destroy.impl.Op.%ptr (%ptr.36c)) = "no_op";
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Convert(%a.param: %Adapter.e4c) -> %i32 {
@@ -852,6 +1228,18 @@ fn ImportedConvertLocal(a: Adapter(C)) -> i32 {
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Adapter(constants.%T) {
 // CHECK:STDOUT:   %T.loc4_15.1 => constants.%T
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: specific @Adapter.as.Destroy.impl(constants.%T) {
+// CHECK:STDOUT:   %T => constants.%T
+// CHECK:STDOUT:   %Destroy.impl_witness => constants.%Destroy.impl_witness
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: specific @Adapter.as.Destroy.impl.Op(constants.%T) {
+// CHECK:STDOUT:   %T => constants.%T
+// CHECK:STDOUT:   %Adapter => constants.%Adapter.0e3
+// CHECK:STDOUT:   %ptr => constants.%ptr.36c
+// CHECK:STDOUT:   %pattern_type => constants.%pattern_type.aa7
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Adapter(constants.%i32) {
@@ -884,6 +1272,13 @@ fn ImportedConvertLocal(a: Adapter(C)) -> i32 {
 // CHECK:STDOUT:   %complete_type.1eb: <witness> = complete_type_witness %i32 [concrete]
 // CHECK:STDOUT:   %C: type = class_type @C [concrete]
 // CHECK:STDOUT:   %C.elem: type = unbound_element_type %C, %i32 [concrete]
+// CHECK:STDOUT:   %Destroy.type: type = facet_type <@Destroy> [concrete]
+// CHECK:STDOUT:   %pattern_type.f6d: type = pattern_type auto [concrete]
+// CHECK:STDOUT:   %Destroy.impl_witness: <witness> = impl_witness @C.%Destroy.impl_witness_table [concrete]
+// CHECK:STDOUT:   %ptr.019: type = ptr_type %C [concrete]
+// CHECK:STDOUT:   %pattern_type.44a: type = pattern_type %ptr.019 [concrete]
+// CHECK:STDOUT:   %C.as.Destroy.impl.Op.type: type = fn_type @C.as.Destroy.impl.Op [concrete]
+// CHECK:STDOUT:   %C.as.Destroy.impl.Op: %C.as.Destroy.impl.Op.type = struct_value () [concrete]
 // CHECK:STDOUT:   %struct_type.n: type = struct_type {.n: %i32} [concrete]
 // CHECK:STDOUT:   %complete_type.54b: <witness> = complete_type_witness %struct_type.n [concrete]
 // CHECK:STDOUT:   %Adapter.58f: type = class_type @Adapter, @Adapter(%C) [concrete]
@@ -898,6 +1293,7 @@ fn ImportedConvertLocal(a: Adapter(C)) -> i32 {
 // CHECK:STDOUT:   %Main.Convert = import_ref Main//adapt_generic_type, Convert, unloaded
 // CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [concrete] {
 // CHECK:STDOUT:     .Int = %Core.Int
+// CHECK:STDOUT:     .Destroy = %Core.Destroy
 // CHECK:STDOUT:     import Core//prelude
 // CHECK:STDOUT:     import Core//prelude/...
 // CHECK:STDOUT:   }
@@ -905,6 +1301,7 @@ fn ImportedConvertLocal(a: Adapter(C)) -> i32 {
 // CHECK:STDOUT:   %Main.import_ref.fb3: <witness> = import_ref Main//adapt_generic_type, loc6_1, loaded [symbolic = @Adapter.%complete_type (constants.%complete_type.f87)]
 // CHECK:STDOUT:   %Main.import_ref.9a3 = import_ref Main//adapt_generic_type, inst26 [no loc], unloaded
 // CHECK:STDOUT:   %Core.Int: %Int.type = import_ref Core//prelude/parts/int, Int, loaded [concrete = constants.%Int.generic]
+// CHECK:STDOUT:   %Core.Destroy: type = import_ref Core//prelude/parts/destroy, Destroy, loaded [concrete = constants.%Destroy.type]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -958,6 +1355,22 @@ fn ImportedConvertLocal(a: Adapter(C)) -> i32 {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
+// CHECK:STDOUT: impl @C.as.Destroy.impl: constants.%C as constants.%Destroy.type {
+// CHECK:STDOUT:   %C.as.Destroy.impl.Op.decl: %C.as.Destroy.impl.Op.type = fn_decl @C.as.Destroy.impl.Op [concrete = constants.%C.as.Destroy.impl.Op] {
+// CHECK:STDOUT:     %self.patt: %pattern_type.44a = binding_pattern self [concrete]
+// CHECK:STDOUT:     %self.param_patt: %pattern_type.44a = value_param_pattern %self.patt, call_param0 [concrete]
+// CHECK:STDOUT:     %.loc10: %pattern_type.f6d = addr_pattern %self.param_patt [concrete]
+// CHECK:STDOUT:   } {
+// CHECK:STDOUT:     %self.param: %ptr.019 = value_param call_param0
+// CHECK:STDOUT:     %Self.ref: type = name_ref Self, constants.%C [concrete = constants.%C]
+// CHECK:STDOUT:     %self: %ptr.019 = bind_name self, %self.param
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:
+// CHECK:STDOUT: !members:
+// CHECK:STDOUT:   .Op = %C.as.Destroy.impl.Op.decl
+// CHECK:STDOUT:   witness = @C.%Destroy.impl_witness
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
 // CHECK:STDOUT: generic class @Adapter(imports.%Main.import_ref.5ab: type) [from "adapt_generic_type.carbon"] {
 // CHECK:STDOUT:   %T: type = bind_symbolic_name T, 0 [symbolic = %T (constants.%T)]
 // CHECK:STDOUT:
@@ -977,6 +1390,9 @@ fn ImportedConvertLocal(a: Adapter(C)) -> i32 {
 // CHECK:STDOUT:   %int_32: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
 // CHECK:STDOUT:   %i32: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
 // CHECK:STDOUT:   %.loc11: %C.elem = field_decl n, element0 [concrete]
+// CHECK:STDOUT:   impl_decl @C.as.Destroy.impl [concrete] {} {}
+// CHECK:STDOUT:   %Destroy.impl_witness_table = impl_witness_table (@C.as.Destroy.impl.%C.as.Destroy.impl.Op.decl), @C.as.Destroy.impl [concrete]
+// CHECK:STDOUT:   %Destroy.impl_witness: <witness> = impl_witness %Destroy.impl_witness_table [concrete = constants.%Destroy.impl_witness]
 // CHECK:STDOUT:   %struct_type.n: type = struct_type {.n: %i32} [concrete = constants.%struct_type.n]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %struct_type.n [concrete = constants.%complete_type.54b]
 // CHECK:STDOUT:   complete_type_witness = %complete_type
@@ -995,6 +1411,8 @@ fn ImportedConvertLocal(a: Adapter(C)) -> i32 {
 // CHECK:STDOUT:   %.loc7_12.2: %i32 = converted %a.ref, %.loc7_12.1
 // CHECK:STDOUT:   return %.loc7_12.2
 // CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: fn @C.as.Destroy.impl.Op(%self.param: %ptr.019) = "no_op";
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @ImportedConvertLocal(%a.param: %Adapter.58f) -> %i32 {
 // CHECK:STDOUT: !entry:

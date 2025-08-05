@@ -187,12 +187,7 @@ auto LookupNameInExactScope(Context& context, SemIR::LocId loc_id,
   }
 
   if (scope.is_cpp_scope()) {
-    SemIR::InstId imported_inst_id =
-        ImportNameFromCpp(context, loc_id, scope_id, name_id);
-    if (imported_inst_id.has_value()) {
-      return SemIR::ScopeLookupResult::MakeFound(imported_inst_id,
-                                                 SemIR::AccessKind::Public);
-    }
+    return ImportNameFromCpp(context, loc_id, scope_id, name_id);
   }
 
   return SemIR::ScopeLookupResult::MakeNotFound();
