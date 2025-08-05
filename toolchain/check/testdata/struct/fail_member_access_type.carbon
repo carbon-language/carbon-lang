@@ -27,7 +27,7 @@ var y: i32 = x.b;
 // CHECK:STDOUT:   %Float: %Float.type = struct_value () [concrete]
 // CHECK:STDOUT:   %struct_type.a: type = struct_type {.a: f64} [concrete]
 // CHECK:STDOUT:   %pattern_type.d08: type = pattern_type %struct_type.a [concrete]
-// CHECK:STDOUT:   %float: f64 = float_literal 4 [concrete]
+// CHECK:STDOUT:   %float: f64 = float_value 4 [concrete]
 // CHECK:STDOUT:   %struct: %struct_type.a = struct_value (%float) [concrete]
 // CHECK:STDOUT:   %int_32: Core.IntLiteral = int_value 32 [concrete]
 // CHECK:STDOUT:   %Int.type: type = generic_class_type @Int [concrete]
@@ -81,7 +81,7 @@ var y: i32 = x.b;
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %float: f64 = float_literal 4 [concrete = constants.%float]
+// CHECK:STDOUT:   %float: f64 = float_value 4 [concrete = constants.%float]
 // CHECK:STDOUT:   %.loc15_29.1: %struct_type.a = struct_literal (%float)
 // CHECK:STDOUT:   %.loc15_29.2: init %struct_type.a = struct_init (%float) to file.%x.var [concrete = constants.%struct]
 // CHECK:STDOUT:   %.loc15_1: init %struct_type.a = converted %.loc15_29.1, %.loc15_29.2 [concrete = constants.%struct]

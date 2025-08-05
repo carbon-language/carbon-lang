@@ -1096,7 +1096,7 @@ fn F() {
 // CHECK:STDOUT:   %Float: %Float.type = struct_value () [concrete]
 // CHECK:STDOUT:   %foo.type: type = fn_type @foo [concrete]
 // CHECK:STDOUT:   %foo: %foo.type = struct_value () [concrete]
-// CHECK:STDOUT:   %float: f64 = float_literal 0.80000000000000004 [concrete]
+// CHECK:STDOUT:   %float: f64 = float_value 0.80000000000000004 [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -1115,7 +1115,7 @@ fn F() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %Cpp.ref: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
 // CHECK:STDOUT:   %foo.ref: %foo.type = name_ref foo, imports.%foo.decl [concrete = constants.%foo]
-// CHECK:STDOUT:   %float: f64 = float_literal 0.80000000000000004 [concrete = constants.%float]
+// CHECK:STDOUT:   %float: f64 = float_value 0.80000000000000004 [concrete = constants.%float]
 // CHECK:STDOUT:   %int_64: Core.IntLiteral = int_value 64 [concrete = constants.%int_64]
 // CHECK:STDOUT:   %Float.call: init type = call constants.%Float(%int_64) [concrete = f64]
 // CHECK:STDOUT:   %.loc8_18.1: type = value_of_initializer %Float.call [concrete = f64]

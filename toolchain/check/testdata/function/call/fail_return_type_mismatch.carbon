@@ -35,7 +35,7 @@ fn Run() {
 // CHECK:STDOUT:   %Foo.type: type = fn_type @Foo [concrete]
 // CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [concrete]
 // CHECK:STDOUT:   %Foo: %Foo.type = struct_value () [concrete]
-// CHECK:STDOUT:   %float: f64 = float_literal 1 [concrete]
+// CHECK:STDOUT:   %float: f64 = float_value 1 [concrete]
 // CHECK:STDOUT:   %Run.type: type = fn_type @Run [concrete]
 // CHECK:STDOUT:   %Run: %Run.type = struct_value () [concrete]
 // CHECK:STDOUT:   %int_32: Core.IntLiteral = int_value 32 [concrete]
@@ -90,7 +90,7 @@ fn Run() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Foo() -> f64 {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %float: f64 = float_literal 1 [concrete = constants.%float]
+// CHECK:STDOUT:   %float: f64 = float_value 1 [concrete = constants.%float]
 // CHECK:STDOUT:   return %float
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
