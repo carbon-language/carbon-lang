@@ -43,7 +43,9 @@
 #include "toolchain/diagnostics/format_providers.h"
 #include "toolchain/parse/node_ids.h"
 #include "toolchain/sem_ir/clang_decl.h"
+#include "toolchain/sem_ir/function.h"
 #include "toolchain/sem_ir/ids.h"
+#include "toolchain/sem_ir/inst.h"
 #include "toolchain/sem_ir/name_scope.h"
 #include "toolchain/sem_ir/typed_insts.h"
 
@@ -956,33 +958,12 @@ static auto CreateFunctionParamsInsts(Context& context, SemIR::LocId loc_id,
            .call_params_id = call_params_id}};
 }
 
-// Imports a function declaration from Clang to Carbon. If successful, returns
-// the new Carbon function declaration `InstId`. If the declaration was already
-// imported, returns the mapped instruction.
-static auto ImportFunctionDecl(Context& context, SemIR::LocId loc_id,
-                               clang::FunctionDecl* clang_decl)
-    -> SemIR::InstId {
-  // Check if the declaration is already mapped.
-  if (SemIR::InstId existing_inst_id =
-          LookupClangDeclInstId(context, clang_decl);
-      existing_inst_id.has_value()) {
-    return existing_inst_id;
-  }
-
-  if (clang_decl->isVariadic()) {
-    context.TODO(loc_id, "Unsupported: Variadic function");
-    MarkFailedDecl(context, clang_decl);
-    return SemIR::ErrorInst::InstId;
-  }
-  if (clang_decl->getTemplatedKind() ==
-      clang::FunctionDecl::TK_FunctionTemplate) {
-    context.TODO(loc_id, "Unsupported: Template function");
-    MarkFailedDecl(context, clang_decl);
-    return SemIR::ErrorInst::InstId;
-  }
-  CARBON_CHECK(clang_decl->getFunctionType()->isFunctionProtoType(),
-               "Not Prototype function (non-C++ code)");
-
+// Creates a partial `FunctionDecl` and a `Function` without C++ thunk
+// information. Returns std::nullopt on failure. On success,
+// `FinishImportFunctionDecl()` must be later called.
+static auto StartImportFunctionDecl(Context& context, SemIR::LocId loc_id,
+                                    clang::FunctionDecl* clang_decl)
+    -> std::optional<std::tuple<SemIR::FunctionDecl, SemIR::Function>> {
   context.scope_stack().PushForDeclName();
   context.inst_block_stack().Push();
   context.pattern_block_stack().Push();
@@ -995,8 +976,7 @@ static auto ImportFunctionDecl(Context& context, SemIR::LocId loc_id,
   context.scope_stack().Pop();
 
   if (!function_params_insts.has_value()) {
-    MarkFailedDecl(context, clang_decl);
-    return SemIR::ErrorInst::InstId;
+    return std::nullopt;
   }
 
   auto function_decl = SemIR::FunctionDecl{
@@ -1028,22 +1008,73 @@ static auto ImportFunctionDecl(Context& context, SemIR::LocId loc_id,
        .clang_decl_id = context.sem_ir().clang_decls().Add(
            {.decl = clang_decl, .inst_id = decl_id})}};
 
-  if (IsCppThunkRequired(context, function_info)) {
-    clang::FunctionDecl* thunk_decl = BuildCppThunk(context, function_info);
-    if (thunk_decl) {
-      function_info.SetHasCppThunk(
-          ImportFunctionDecl(context, loc_id, thunk_decl));
-    }
-  }
+  return std::make_tuple(std::move(function_decl), std::move(function_info));
+}
 
+// Adds the `Function` to the context and finishes setting up the
+// `FunctionDecl`.
+static auto FinishImportFunctionDecl(Context& context,
+                                     SemIR::FunctionDecl& function_decl,
+                                     const SemIR::Function& function_info)
+    -> SemIR::InstId {
   function_decl.function_id = context.functions().Add(function_info);
 
   function_decl.type_id = GetFunctionType(context, function_decl.function_id,
                                           SemIR::SpecificId::None);
 
-  ReplaceInstBeforeConstantUse(context, decl_id, function_decl);
+  SemIR::InstId function_decl_id = function_info.first_owning_decl_id;
+  ReplaceInstBeforeConstantUse(context, function_decl_id, function_decl);
+  return function_decl_id;
+}
 
-  return decl_id;
+// Imports a function declaration from Clang to Carbon. If successful, returns
+// the new Carbon function declaration `InstId`. If the declaration was already
+// imported, returns the mapped instruction.
+static auto ImportFunctionDecl(Context& context, SemIR::LocId loc_id,
+                               clang::FunctionDecl* clang_decl)
+    -> SemIR::InstId {
+  // Check if the declaration is already mapped.
+  if (SemIR::InstId existing_inst_id =
+          LookupClangDeclInstId(context, clang_decl);
+      existing_inst_id.has_value()) {
+    return existing_inst_id;
+  }
+
+  if (clang_decl->isVariadic()) {
+    context.TODO(loc_id, "Unsupported: Variadic function");
+    MarkFailedDecl(context, clang_decl);
+    return SemIR::ErrorInst::InstId;
+  }
+  if (clang_decl->getTemplatedKind() ==
+      clang::FunctionDecl::TK_FunctionTemplate) {
+    context.TODO(loc_id, "Unsupported: Template function");
+    MarkFailedDecl(context, clang_decl);
+    return SemIR::ErrorInst::InstId;
+  }
+  CARBON_CHECK(clang_decl->getFunctionType()->isFunctionProtoType(),
+               "Not Prototype function (non-C++ code)");
+
+  auto function_decl_info =
+      StartImportFunctionDecl(context, loc_id, clang_decl);
+  if (!function_decl_info) {
+    MarkFailedDecl(context, clang_decl);
+    return SemIR::ErrorInst::InstId;
+  }
+
+  auto [function_decl, function_info] = *function_decl_info;
+
+  if (IsCppThunkRequired(context, function_info)) {
+    clang::FunctionDecl* thunk_clang_decl =
+        BuildCppThunk(context, function_info);
+    if (thunk_clang_decl) {
+      auto [thunk_function_decl, thunk_function_info] =
+          *StartImportFunctionDecl(context, loc_id, thunk_clang_decl);
+      function_info.SetHasCppThunk(FinishImportFunctionDecl(
+          context, thunk_function_decl, thunk_function_info));
+    }
+  }
+
+  return FinishImportFunctionDecl(context, function_decl, function_info);
 }
 
 // Returns all decls that need to be imported before importing the given type.
