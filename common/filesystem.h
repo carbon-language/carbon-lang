@@ -291,7 +291,8 @@ class Internal::FileRefBase {
   // Methods to seek the current file position, with various semantics for the
   // offset.
   auto Seek(int64_t delta) -> ErrorOr<int64_t, FdError>;
-  auto SeekFromBeginning(int64_t delta_from_beginning) -> ErrorOr<int64_t, FdError>;
+  auto SeekFromBeginning(int64_t delta_from_beginning)
+      -> ErrorOr<int64_t, FdError>;
   auto SeekFromEnd(int64_t delta_from_end) -> ErrorOr<int64_t, FdError>;
 
   // Reads as much data as is available and fits into the provided buffer.
@@ -1411,6 +1412,27 @@ constexpr auto Dir::Destroy() -> void {
   if (dfd_ != -1 && dfd_ != AT_FDCWD) {
     auto result = close(dfd_);
     // Closing a directory shouldn't produce errors, directly check fail on any.
+    //
+    // This is a very different case from `close` on a file producing an error.
+    // We don't actually write through the directory file descriptor, and for
+    // most platforms `closedir` (the closest thing in documentation and
+    // exclusively about directories), only provides a very few possible errors
+    // here:
+    //
+    // EBADF: This should be precluded by the types here, and so we consider
+    //        it a programming error.
+    //
+    // EINTR: Technically, a system could fail here. We have good evidence
+    //        that systems we practically support don't as there also is nothing
+    //        useful to *do* in the face of this: retrying on almost all systems
+    //        is not allowed as the file descriptor is immediately released. And
+    //        here, there is no potentially dropped data to report.
+    //
+    // If we ever discover a platform that fails here, we should adjust this
+    // code to not fail in the face of that, likely be dropping the error. If we
+    // end up supporting a platform that actually requires well-specified
+    // retries, this code should handle that. Until then, we require these to
+    // succeed so we will learn about any issues.
     CARBON_CHECK(result == 0, "{0}",
                  FdError(errno, "Dir::Destroy on '{0}'", dfd_));
   }
@@ -1461,6 +1483,10 @@ inline auto Dir::Reader::Destroy() -> void {
     int result = closedir(dirp_);
     // Closing a directory shouldn't produce interesting errors, so check fail
     // on them directly.
+    //
+    // See the detailed comment on `Dir::Destroy` for more context on closing of
+    // directories, why we check-fail, and what we should do if we discover
+    // platforms where an error needs to be handled here.
     CARBON_CHECK(result == 0, "{0}",
                  FdError(errno, "Dir::Reader::Destroy on '{0}'", dfd_));
     dirp_ = nullptr;
