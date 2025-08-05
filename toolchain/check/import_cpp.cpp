@@ -402,7 +402,7 @@ static auto IsDeclInjectedClassName(const Context& context,
     return false;
   }
 
-  SemIR::ClangDecl clang_decl = context.sem_ir().clang_decls().Get(
+  const SemIR::ClangDecl& clang_decl = context.sem_ir().clang_decls().Get(
       context.sem_ir().name_scopes().Get(scope_id).clang_decl_context_id());
   const auto* scope_record_decl =
       clang::cast<clang::CXXRecordDecl>(clang_decl.decl);
@@ -414,14 +414,11 @@ static auto IsDeclInjectedClassName(const Context& context,
           ast_context.getRecordType(scope_record_decl)) ==
       ast_context.getCanonicalType(ast_context.getRecordType(record_decl)));
 
-  CARBON_CHECK(name_id ==
-               context.sem_ir()
-                   .classes()
-                   .Get(context.sem_ir()
-                            .insts()
-                            .GetAs<SemIR::ClassDecl>(clang_decl.inst_id)
-                            .class_id)
-                   .name_id);
+  SemIR::ClassId class_id = context.sem_ir()
+                                .insts()
+                                .GetAs<SemIR::ClassDecl>(clang_decl.inst_id)
+                                .class_id;
+  CARBON_CHECK(name_id == context.sem_ir().classes().Get(class_id).name_id);
   return true;
 }
 
