@@ -57,7 +57,7 @@ static auto GetText(int length) -> std::string {
 // and instruction counters to measure aspects of the best case. The exact
 // number here was chosen arbitrarily to not make running benchmarks excessively
 // slow due to the large batches.
-constexpr int NumFiles = 256;
+constexpr int NumFiles = 64;
 
 // A common set of context used in benchmarks below. A separate context object
 // works better than the benchmark fixture support in practice.
