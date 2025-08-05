@@ -270,6 +270,9 @@ auto AllocateFacetTypeImplWitness(Context& context,
 }
 
 namespace {
+// TODO: This class should go away, and we should just use the constant value of
+// the ImplWitnessAccess as a key in AccessRewriteValues, but that requires
+// changing its API to work with InstId instead of ImplWitnessAccess.
 struct FacetTypeConstraintValue {
   SemIR::EntityNameId entity_name_id;
   SemIR::ElementIndex access_index;
