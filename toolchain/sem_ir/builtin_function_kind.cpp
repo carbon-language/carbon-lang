@@ -111,8 +111,7 @@ struct CharCompatible {
       // Must be unsigned.
       return false;
     }
-    auto bit_width = sem_ir.ints().Get(int_info->bit_width).getZExtValue();
-    return bit_width == 8;
+    return sem_ir.ints().Get(int_info->bit_width) == 8;
   }
 };
 
