@@ -5,6 +5,11 @@
 load("//bazel/carbon_rules:defs.bzl", "carbon_binary")
 
 carbon_binary(
+    name = "hello_world",
+    srcs = ["hello_world.carbon"],
+)
+
+carbon_binary(
     name = "sieve",
     srcs = ["sieve.carbon"],
 )
