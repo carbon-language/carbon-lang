@@ -281,8 +281,8 @@ class AccessRewriteValues {
   auto InsertNotRewritten(
       Context& context, SemIR::KnownInstId<SemIR::ImplWitnessAccess> access_id,
       SemIR::InstId inst_id) -> void {
-    map_.insert(
-        {context.constant_values().Get(access_id), {NotRewritten, inst_id}});
+    map_.Insert(context.constant_values().Get(access_id),
+                {NotRewritten, inst_id});
   }
 
   // Finds and returns a pointer into the cache for a given ImplWitnessAccess.
@@ -291,11 +291,11 @@ class AccessRewriteValues {
   auto FindRef(Context& context,
                SemIR::KnownInstId<SemIR::ImplWitnessAccess> access_id)
       -> Value* {
-    auto it = map_.find(context.constant_values().Get(access_id));
-    if (it == map_.end()) {
+    auto result = map_.Lookup(context.constant_values().Get(access_id));
+    if (!result) {
       return nullptr;
     }
-    return &it->second;
+    return &result.value();
   }
 
   auto SetBeingRewritten(Value& value) -> void {
@@ -314,33 +314,13 @@ class AccessRewriteValues {
   }
 
  private:
-  using Key = SemIR::ConstantId;
-  struct KeyInfo {
-    static auto getEmptyKey() -> Key { return SemIR::ConstantId::None; }
-    static auto getTombstoneKey() -> Key {
-      return SemIR::ConstantId::NotConstant;
-    }
-    static auto getHashValue(Key key) -> unsigned {
-      // This hash produces the same value if two ImplWitnessAccess are
-      // pointing to the same associated constant, even if they are different
-      // instruction ids.
-      return key.index;
-    }
-    static auto isEqual(Key lhs, Key rhs) -> bool {
-      // This comparison is true if the two ImplWitnessAccess are pointing to
-      // the same associated constant, even if they are different instruction
-      // ids.
-      return lhs == rhs;
-    }
-  };
-
   // Try avoid heap allocations in the common case where there are a small
   // number of rewrite rules referring to each other by keeping up to 16 on
   // the stack.
   //
   // TODO: Revisit if 16 is an appropriate number when we can measure how deep
   // rewrite constraint chains go in practice.
-  llvm::SmallDenseMap<Key, Value, 16, KeyInfo> map_;
+  Map<SemIR::ConstantId, Value, 16> map_;
 };
 
 // To be used for substituting into the RHS of a rewrite constraint.

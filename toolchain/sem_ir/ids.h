@@ -41,7 +41,6 @@ constexpr InstId InstId::InitTombstone = InstId(NoneIndex - 1);
 // before construction, and this allows that validation to be represented in the
 // type system.
 struct TypeInstId : public InstId {
-  static constexpr llvm::StringLiteral Label = "type_inst";
   static const TypeInstId None;
 
   using InstId::InstId;
@@ -61,9 +60,12 @@ constexpr TypeInstId TypeInstId::None = TypeInstId::UnsafeMake(InstId::None);
 // An InstId whose type is known to be T. The fact it's a type must be validated
 // before construction, and this allows that validation to be represented in the
 // type system.
+//
+// Unlike TypeInstId, this type can *not* be an operand in instructions, since
+// being a template prevents it from being used in non-generic contexts such as
+// switches.
 template <class T>
 struct KnownInstId : public InstId {
-  // FIXME: static constexpr llvm::StringLiteral Label = "known_inst";
   static const KnownInstId None;
 
   using InstId::InstId;

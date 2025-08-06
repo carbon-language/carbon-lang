@@ -466,6 +466,13 @@ class InstStore {
     return result;
   }
 
+  // Returns the requested instruction, which is known to have the specified
+  // type.
+  template <typename InstT>
+  auto Get(KnownInstId<InstT> inst_id) const -> InstT {
+    return Get(static_cast<InstId>(inst_id)).As<InstT>();
+  }
+
   // Returns the requested instruction, preserving its attached type.
   auto GetWithAttachedType(InstId inst_id) const -> Inst {
     return values_.Get(inst_id);
@@ -501,9 +508,9 @@ class InstStore {
     return Get(inst_id).TryAs<InstT>();
   }
 
-  // Use `GetAs()` when the instruction type is known.
-  template <typename InstT>
-  auto TryGetAs(KnownInstId<InstT> inst_id) const = delete;
+  // Use `Get()` when the instruction type is known.
+  template <typename InstT, typename KnownInstT>
+  auto TryGetAs(KnownInstId<KnownInstT> inst_id) const = delete;
 
   // Returns the requested instruction as the specified type, if it is valid and
   // of that type. Otherwise returns nullopt.
