@@ -301,10 +301,10 @@ auto BuildCppThunk(Context& context, const SemIR::Function& callee_function)
   llvm::SmallVector<clang::Expr*> call_args =
       BuildCalleeArgs(sema, thunk_function_decl, param_type_changed);
   clang::Stmt* body = BuildThunkBody(sema, callee_function_decl, call_args);
+  sema.ActOnFinishFunctionBody(thunk_function_decl, body);
   if (!body) {
     return nullptr;
   }
-  sema.ActOnFinishFunctionBody(thunk_function_decl, body);
 
   return thunk_function_decl;
 }
