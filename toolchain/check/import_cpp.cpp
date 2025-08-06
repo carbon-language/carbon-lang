@@ -469,7 +469,7 @@ static auto ClangConstructorLookup(const Context& context,
   clang::Sema& sema = context.sem_ir().cpp_ast()->getSema();
   clang::Decl* decl =
       context.sem_ir().clang_decls().Get(scope.clang_decl_context_id()).decl;
-  return sema.LookupConstructors(clang::cast<clang::CXXRecordDecl>(decl));
+  return sema.LookupConstructors(cast<clang::CXXRecordDecl>(decl));
 }
 
 // Returns true if the given Clang declaration is the implicit injected class
@@ -483,15 +483,14 @@ static auto IsDeclInjectedClassName(const Context& context,
     return false;
   }
 
-  const auto* record_decl = clang::dyn_cast<clang::CXXRecordDecl>(named_decl);
+  const auto* record_decl = dyn_cast<clang::CXXRecordDecl>(named_decl);
   if (!record_decl) {
     return false;
   }
 
   const SemIR::ClangDecl& clang_decl = context.sem_ir().clang_decls().Get(
       context.sem_ir().name_scopes().Get(scope_id).clang_decl_context_id());
-  const auto* scope_record_decl =
-      clang::cast<clang::CXXRecordDecl>(clang_decl.decl);
+  const auto* scope_record_decl = cast<clang::CXXRecordDecl>(clang_decl.decl);
 
   const clang::ASTContext& ast_context =
       context.sem_ir().cpp_ast()->getASTContext();
@@ -550,7 +549,7 @@ static auto ClangLookup(Context& context, SemIR::LocId loc_id,
 
   llvm::SmallVector<clang::CXXConstructorDecl*> constructors;
   for (clang::Decl* decl : constructors_lookup) {
-    auto* constructor = clang::cast<clang::CXXConstructorDecl>(decl);
+    auto* constructor = cast<clang::CXXConstructorDecl>(decl);
     if (constructor->isDeleted() || constructor->isCopyOrMoveConstructor()) {
       continue;
     }
@@ -1168,7 +1167,7 @@ static auto MakeImplicitParamPatternsBlockId(
     const clang::FunctionDecl& clang_decl) -> SemIR::InstBlockId {
   const auto* method_decl = dyn_cast<clang::CXXMethodDecl>(&clang_decl);
   if (!method_decl || method_decl->isStatic() ||
-      clang::isa<clang::CXXConstructorDecl>(clang_decl)) {
+      isa<clang::CXXConstructorDecl>(clang_decl)) {
     return SemIR::InstBlockId::Empty;
   }
 
@@ -1304,7 +1303,7 @@ static auto GetReturnTypeExpr(Context& context, SemIR::LocId loc_id,
     return mapped_type;
   }
 
-  if (!clang::isa<clang::CXXConstructorDecl>(clang_decl)) {
+  if (!isa<clang::CXXConstructorDecl>(clang_decl)) {
     // void.
     return {.inst_id = SemIR::TypeInstId::None, .type_id = SemIR::TypeId::None};
   }
@@ -1314,7 +1313,7 @@ static auto GetReturnTypeExpr(Context& context, SemIR::LocId loc_id,
       context.sem_ir()
           .clang_decls()
           .Get(context.sem_ir().clang_decls().Lookup(
-              clang::cast<clang::Decl>(clang_decl->getParent())))
+              cast<clang::Decl>(clang_decl->getParent())))
           .inst_id);
   return {
       .inst_id = record_type_inst_id,
@@ -1468,7 +1467,7 @@ static auto ImportFunctionDecl(Context& context, SemIR::LocId loc_id,
                 .Get(context.insts()
                          .GetAs<SemIR::ClassDecl>(LookupClangDeclInstId(
                              context,
-                             clang::cast<clang::Decl>(clang_decl->getParent())))
+                             cast<clang::Decl>(clang_decl->getParent())))
                          .class_id)
                 .name_id
           : AddIdentifierName(context, clang_decl->getName());
