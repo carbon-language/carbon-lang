@@ -1956,6 +1956,11 @@ static auto TryResolveTypedInst(ImportRefResolver& resolver,
           resolver, import_function.thunk_decl_id(), entity_name_id));
       break;
     }
+    case SemIR::Function::SpecialFunctionKind::HasCppThunk: {
+      resolver.local_context().TODO(SemIR::LocId::None,
+                                    "Unsupported: Importing C++ functions that "
+                                    "require thunks indirectly");
+    }
   }
 
   return ResolveResult::Done(function_const_id, new_function.first_decl_id());

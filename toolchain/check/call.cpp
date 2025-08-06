@@ -10,6 +10,7 @@
 #include "toolchain/check/context.h"
 #include "toolchain/check/control_flow.h"
 #include "toolchain/check/convert.h"
+#include "toolchain/check/cpp_thunk.h"
 #include "toolchain/check/deduce.h"
 #include "toolchain/check/facet_type.h"
 #include "toolchain/check/function.h"
@@ -255,27 +256,39 @@ static auto PerformCallToFunction(Context& context, SemIR::LocId loc_id,
       ConvertCallArgs(context, loc_id, callee_function.self_id, arg_ids,
                       return_slot_arg_id, callee, *callee_specific_id);
 
-  // If we're about to form a direct call to a thunk, inline it.
-  if (callee.special_function_kind ==
-      SemIR::Function::SpecialFunctionKind::Thunk) {
-    LoadImportRef(context, callee.thunk_decl_id());
+  switch (callee.special_function_kind) {
+    case SemIR::Function::SpecialFunctionKind::Thunk: {
+      // If we're about to form a direct call to a thunk, inline it.
+      LoadImportRef(context, callee.thunk_decl_id());
 
-    // Name the thunk target within the enclosing scope of the thunk.
-    auto thunk_ref_id =
-        BuildNameRef(context, loc_id, callee.name_id, callee.thunk_decl_id(),
-                     callee_function.enclosing_specific_id);
+      // Name the thunk target within the enclosing scope of the thunk.
+      auto thunk_ref_id =
+          BuildNameRef(context, loc_id, callee.name_id, callee.thunk_decl_id(),
+                       callee_function.enclosing_specific_id);
 
-    // This recurses back into `PerformCall`. However, we never form a thunk to
-    // a thunk, so we only recurse once.
-    return PerformThunkCall(context, loc_id, callee_function.function_id,
-                            context.inst_blocks().Get(converted_args_id),
-                            thunk_ref_id);
+      // This recurses back into `PerformCall`. However, we never form a thunk
+      // to a thunk, so we only recurse once.
+      return PerformThunkCall(context, loc_id, callee_function.function_id,
+                              context.inst_blocks().Get(converted_args_id),
+                              thunk_ref_id);
+    }
+
+    case SemIR::Function::SpecialFunctionKind::HasCppThunk: {
+      // This recurses back into `PerformCall`. However, we never form a C++
+      // thunk to a C++ thunk, so we only recurse once.
+      return PerformCppThunkCall(context, loc_id, callee_function.function_id,
+                                 context.inst_blocks().Get(converted_args_id),
+                                 callee.cpp_thunk_decl_id());
+    }
+
+    case SemIR::Function::SpecialFunctionKind::None:
+    case SemIR::Function::SpecialFunctionKind::Builtin: {
+      return GetOrAddInst<SemIR::Call>(context, loc_id,
+                                       {.type_id = return_info.type_id,
+                                        .callee_id = callee_id,
+                                        .args_id = converted_args_id});
+    }
   }
-
-  return GetOrAddInst<SemIR::Call>(context, loc_id,
-                                   {.type_id = return_info.type_id,
-                                    .callee_id = callee_id,
-                                    .args_id = converted_args_id});
 }
 
 auto PerformCall(Context& context, SemIR::LocId loc_id, SemIR::InstId callee_id,

@@ -845,12 +845,12 @@ auto InstNamer::NamingContext::NameInst() -> void {
       AddInstName("facet_value");
       return;
     }
-    case FloatLiteral::Kind: {
-      AddInstName("float");
-      return;
-    }
     case CARBON_KIND(FloatType inst): {
       AddIntOrFloatTypeName('f', inst.bit_width_id);
+      return;
+    }
+    case FloatValue::Kind: {
+      AddInstName("float");
       return;
     }
     case CARBON_KIND(FunctionDecl inst): {
