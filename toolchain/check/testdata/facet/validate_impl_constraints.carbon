@@ -125,9 +125,9 @@ interface I(T:! Z) {}
 // CHECK:STDERR:
 fn F(T:! I(.Self) where .Self impls Z) {}
 
-// CHECK:STDERR: fail_todo_self_in_interface_generic_param_constrained.carbon:[[@LINE+4]]:16: error: name `T` not found [NameNotFound]
-// CHECK:STDERR: fn G(T:! Z & I(T)) {
-// CHECK:STDERR:                ^
+// CHECK:STDERR: fail_todo_self_in_interface_generic_param_constrained.carbon:[[@LINE+4]]:16: error: name `.Self` not found [NameNotFound]
+// CHECK:STDERR: fn G(T:! Z & I(.Self)) {
+// CHECK:STDERR:                ^~~~~
 // CHECK:STDERR:
 fn G(T:! Z & I(.Self)) {
   F(T);
