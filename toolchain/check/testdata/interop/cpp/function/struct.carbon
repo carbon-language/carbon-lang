@@ -202,10 +202,10 @@ import Cpp library "non_copyable_param_type.h";
 fn F() {
   //@dump-sem-ir-begin
   // CHECK:STDERR: fail_import_non_copyable_param_type.carbon:[[@LINE+4]]:3: note: in `Cpp` name lookup for `foo` [InCppNameLookup]
-  // CHECK:STDERR:   Cpp.foo({});
+  // CHECK:STDERR:   Cpp.foo({} as Cpp.S);
   // CHECK:STDERR:   ^~~~~~~
   // CHECK:STDERR:
-  Cpp.foo({});
+  Cpp.foo({} as Cpp.S);
   //@dump-sem-ir-end
 }
 
@@ -607,8 +607,10 @@ fn F() {
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT:   %Cpp: <namespace> = namespace file.%Cpp.import_cpp, [concrete] {
 // CHECK:STDOUT:     .foo = %foo.decl
+// CHECK:STDOUT:     .S = %S.decl
 // CHECK:STDOUT:     import Cpp//...
 // CHECK:STDOUT:   }
+// CHECK:STDOUT:   %S.decl: type = class_decl @S [concrete = constants.%S] {} {}
 // CHECK:STDOUT:   %foo.decl: %foo.type = fn_decl @foo [concrete = constants.%foo] {
 // CHECK:STDOUT:     <elided>
 // CHECK:STDOUT:   } {
@@ -618,15 +620,17 @@ fn F() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F() {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %Cpp.ref: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
+// CHECK:STDOUT:   %Cpp.ref.loc24_3: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
 // CHECK:STDOUT:   %foo.ref: %foo.type = name_ref foo, imports.%foo.decl [concrete = constants.%foo]
 // CHECK:STDOUT:   %.loc24_12.1: %empty_struct_type = struct_literal ()
+// CHECK:STDOUT:   %Cpp.ref.loc24_17: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
+// CHECK:STDOUT:   %S.ref: type = name_ref S, imports.%S.decl [concrete = constants.%S]
 // CHECK:STDOUT:   %.loc24_12.2: ref %S = temporary_storage
 // CHECK:STDOUT:   %.loc24_12.3: init %S = class_init (), %.loc24_12.2 [concrete = constants.%S.val]
 // CHECK:STDOUT:   %.loc24_12.4: ref %S = temporary %.loc24_12.2, %.loc24_12.3
-// CHECK:STDOUT:   %.loc24_12.5: ref %S = converted %.loc24_12.1, %.loc24_12.4
-// CHECK:STDOUT:   %.loc24_12.6: %S = bind_value %.loc24_12.5
-// CHECK:STDOUT:   %foo.call: init %empty_tuple.type = call %foo.ref(%.loc24_12.6)
+// CHECK:STDOUT:   %.loc24_14.1: ref %S = converted %.loc24_12.1, %.loc24_12.4
+// CHECK:STDOUT:   %.loc24_14.2: %S = bind_value %.loc24_14.1
+// CHECK:STDOUT:   %foo.call: init %empty_tuple.type = call %foo.ref(%.loc24_14.2)
 // CHECK:STDOUT:   %T.as.Destroy.impl.Op.bound: <bound method> = bound_method %.loc24_12.2, constants.%T.as.Destroy.impl.Op.ab5
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT:   %bound_method: <bound method> = bound_method %.loc24_12.2, %T.as.Destroy.impl.Op.specific_fn
