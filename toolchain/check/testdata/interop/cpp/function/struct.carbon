@@ -20,46 +20,46 @@ struct S;
 
 auto foo(S) -> void;
 
-// --- fail_todo_import_decl_value_param_type.carbon
+// --- fail_import_decl_value_param_type.carbon
 
 library "[[@TEST_NAME]]";
 
-// CHECK:STDERR: fail_todo_import_decl_value_param_type.carbon:[[@LINE+8]]:10: in file included here [InCppInclude]
+// CHECK:STDERR: fail_import_decl_value_param_type.carbon:[[@LINE+8]]:10: in file included here [InCppInclude]
 // CHECK:STDERR: ./decl_value_param_type.h:4:6: error: argument type 'S' is incomplete [CppInteropParseError]
 // CHECK:STDERR:     4 | auto foo(S) -> void;
 // CHECK:STDERR:       |      ^~~
-// CHECK:STDERR: fail_todo_import_decl_value_param_type.carbon:[[@LINE+4]]:10: in file included here [InCppInclude]
+// CHECK:STDERR: fail_import_decl_value_param_type.carbon:[[@LINE+4]]:10: in file included here [InCppInclude]
 // CHECK:STDERR: ./decl_value_param_type.h:2:8: note: forward declaration of 'S' [CppInteropParseNote]
 // CHECK:STDERR:     2 | struct S;
 // CHECK:STDERR:       |        ^
 import Cpp library "decl_value_param_type.h";
 
 fn F() {
-  // CHECK:STDERR: fail_todo_import_decl_value_param_type.carbon:[[@LINE+13]]:3: note: in `Cpp` name lookup for `foo` [InCppNameLookup]
+  // CHECK:STDERR: fail_import_decl_value_param_type.carbon:[[@LINE+13]]:3: note: in `Cpp` name lookup for `foo` [InCppNameLookup]
   // CHECK:STDERR:   Cpp.foo({});
   // CHECK:STDERR:   ^~~~~~~
   // CHECK:STDERR:
-  // CHECK:STDERR: fail_todo_import_decl_value_param_type.carbon:[[@LINE+9]]:11: error: forming value of incomplete type `Cpp.S` [IncompleteTypeInValueConversion]
+  // CHECK:STDERR: fail_import_decl_value_param_type.carbon:[[@LINE+9]]:11: error: forming value of incomplete type `Cpp.S` [IncompleteTypeInValueConversion]
   // CHECK:STDERR:   Cpp.foo({});
   // CHECK:STDERR:           ^~
-  // CHECK:STDERR: fail_todo_import_decl_value_param_type.carbon:[[@LINE-10]]:10: in file included here [InCppInclude]
+  // CHECK:STDERR: fail_import_decl_value_param_type.carbon:[[@LINE-10]]:10: in file included here [InCppInclude]
   // CHECK:STDERR: ./decl_value_param_type.h:2:8: note: class was forward declared here [ClassForwardDeclaredHere]
   // CHECK:STDERR: struct S;
   // CHECK:STDERR:        ^
-  // CHECK:STDERR: fail_todo_import_decl_value_param_type.carbon: note: initializing function parameter [InCallToFunctionParam]
+  // CHECK:STDERR: fail_import_decl_value_param_type.carbon: note: initializing function parameter [InCallToFunctionParam]
   // CHECK:STDERR:
   Cpp.foo({});
 }
 
-// --- fail_todo_import_decl_value_param_type_previously_imported.carbon
+// --- fail_import_decl_value_param_type_previously_imported.carbon
 
 library "[[@TEST_NAME]]";
 
-// CHECK:STDERR: fail_todo_import_decl_value_param_type_previously_imported.carbon:[[@LINE+8]]:10: in file included here [InCppInclude]
+// CHECK:STDERR: fail_import_decl_value_param_type_previously_imported.carbon:[[@LINE+8]]:10: in file included here [InCppInclude]
 // CHECK:STDERR: ./decl_value_param_type.h:4:6: error: argument type 'S' is incomplete [CppInteropParseError]
 // CHECK:STDERR:     4 | auto foo(S) -> void;
 // CHECK:STDERR:       |      ^~~
-// CHECK:STDERR: fail_todo_import_decl_value_param_type_previously_imported.carbon:[[@LINE+4]]:10: in file included here [InCppInclude]
+// CHECK:STDERR: fail_import_decl_value_param_type_previously_imported.carbon:[[@LINE+4]]:10: in file included here [InCppInclude]
 // CHECK:STDERR: ./decl_value_param_type.h:2:8: note: forward declaration of 'S' [CppInteropParseNote]
 // CHECK:STDERR:     2 | struct S;
 // CHECK:STDERR:       |        ^
@@ -67,19 +67,19 @@ import Cpp library "decl_value_param_type.h";
 
 fn F() {
   let s: Cpp.S;
-  // CHECK:STDERR: fail_todo_import_decl_value_param_type_previously_imported.carbon:[[@LINE+16]]:3: note: in `Cpp` name lookup for `foo` [InCppNameLookup]
+  // CHECK:STDERR: fail_import_decl_value_param_type_previously_imported.carbon:[[@LINE+16]]:3: note: in `Cpp` name lookup for `foo` [InCppNameLookup]
   // CHECK:STDERR:   Cpp.foo(s);
   // CHECK:STDERR:   ^~~~~~~
   // CHECK:STDERR:
-  // CHECK:STDERR: fail_todo_import_decl_value_param_type_previously_imported.carbon:[[@LINE-5]]:10: error: binding pattern has incomplete type `S` in name binding declaration [IncompleteTypeInBindingDecl]
+  // CHECK:STDERR: fail_import_decl_value_param_type_previously_imported.carbon:[[@LINE-5]]:10: error: binding pattern has incomplete type `S` in name binding declaration [IncompleteTypeInBindingDecl]
   // CHECK:STDERR:   let s: Cpp.S;
   // CHECK:STDERR:          ^~~~~
-  // CHECK:STDERR: fail_todo_import_decl_value_param_type_previously_imported.carbon:[[@LINE-11]]:10: in file included here [InCppInclude]
+  // CHECK:STDERR: fail_import_decl_value_param_type_previously_imported.carbon:[[@LINE-11]]:10: in file included here [InCppInclude]
   // CHECK:STDERR: ./decl_value_param_type.h:2:8: note: class was forward declared here [ClassForwardDeclaredHere]
   // CHECK:STDERR: struct S;
   // CHECK:STDERR:        ^
   // CHECK:STDERR:
-  // CHECK:STDERR: fail_todo_import_decl_value_param_type_previously_imported.carbon:[[@LINE-13]]:15: error: expected `=`; `let` declaration must have an initializer [ExpectedInitializerAfterLet]
+  // CHECK:STDERR: fail_import_decl_value_param_type_previously_imported.carbon:[[@LINE-13]]:15: error: expected `=`; `let` declaration must have an initializer [ExpectedInitializerAfterLet]
   // CHECK:STDERR:   let s: Cpp.S;
   // CHECK:STDERR:               ^
   // CHECK:STDERR:
@@ -97,55 +97,55 @@ struct S;
 auto foo1(S) -> void;
 auto foo2(S) -> void;
 
-// --- fail_todo_import_double_decl_value_param_type.carbon
+// --- fail_import_double_decl_value_param_type.carbon
 
 library "[[@TEST_NAME]]";
 
-// CHECK:STDERR: fail_todo_import_double_decl_value_param_type.carbon:[[@LINE+8]]:10: in file included here [InCppInclude]
+// CHECK:STDERR: fail_import_double_decl_value_param_type.carbon:[[@LINE+8]]:10: in file included here [InCppInclude]
 // CHECK:STDERR: ./double_decl_value_param_type.h:4:6: error: argument type 'S' is incomplete [CppInteropParseError]
 // CHECK:STDERR:     4 | auto foo1(S) -> void;
 // CHECK:STDERR:       |      ^~~~
-// CHECK:STDERR: fail_todo_import_double_decl_value_param_type.carbon:[[@LINE+4]]:10: in file included here [InCppInclude]
+// CHECK:STDERR: fail_import_double_decl_value_param_type.carbon:[[@LINE+4]]:10: in file included here [InCppInclude]
 // CHECK:STDERR: ./double_decl_value_param_type.h:2:8: note: forward declaration of 'S' [CppInteropParseNote]
 // CHECK:STDERR:     2 | struct S;
 // CHECK:STDERR:       |        ^
 import Cpp library "double_decl_value_param_type.h";
 
 fn F() {
-  // CHECK:STDERR: fail_todo_import_double_decl_value_param_type.carbon:[[@LINE+12]]:3: note: in `Cpp` name lookup for `foo1` [InCppNameLookup]
+  // CHECK:STDERR: fail_import_double_decl_value_param_type.carbon:[[@LINE+12]]:3: note: in `Cpp` name lookup for `foo1` [InCppNameLookup]
   // CHECK:STDERR:   Cpp.foo1({});
   // CHECK:STDERR:   ^~~~~~~~
   // CHECK:STDERR:
-  // CHECK:STDERR: fail_todo_import_double_decl_value_param_type.carbon:[[@LINE-7]]:10: in file included here [InCppInclude]
+  // CHECK:STDERR: fail_import_double_decl_value_param_type.carbon:[[@LINE-7]]:10: in file included here [InCppInclude]
   // CHECK:STDERR: ./double_decl_value_param_type.h:5:6: error: argument type 'S' is incomplete [CppInteropParseError]
   // CHECK:STDERR:     5 | auto foo2(S) -> void;
   // CHECK:STDERR:       |      ^~~~
-  // CHECK:STDERR: fail_todo_import_double_decl_value_param_type.carbon:[[@LINE-11]]:10: in file included here [InCppInclude]
+  // CHECK:STDERR: fail_import_double_decl_value_param_type.carbon:[[@LINE-11]]:10: in file included here [InCppInclude]
   // CHECK:STDERR: ./double_decl_value_param_type.h:2:8: note: forward declaration of 'S' [CppInteropParseNote]
   // CHECK:STDERR:     2 | struct S;
   // CHECK:STDERR:       |        ^
   Cpp.foo1({});
-  // CHECK:STDERR: fail_todo_import_double_decl_value_param_type.carbon:[[@LINE+22]]:3: note: in `Cpp` name lookup for `foo2` [InCppNameLookup]
+  // CHECK:STDERR: fail_import_double_decl_value_param_type.carbon:[[@LINE+22]]:3: note: in `Cpp` name lookup for `foo2` [InCppNameLookup]
   // CHECK:STDERR:   Cpp.foo2({});
   // CHECK:STDERR:   ^~~~~~~~
   // CHECK:STDERR:
-  // CHECK:STDERR: fail_todo_import_double_decl_value_param_type.carbon:[[@LINE-5]]:12: error: forming value of incomplete type `Cpp.S` [IncompleteTypeInValueConversion]
+  // CHECK:STDERR: fail_import_double_decl_value_param_type.carbon:[[@LINE-5]]:12: error: forming value of incomplete type `Cpp.S` [IncompleteTypeInValueConversion]
   // CHECK:STDERR:   Cpp.foo1({});
   // CHECK:STDERR:            ^~
-  // CHECK:STDERR: fail_todo_import_double_decl_value_param_type.carbon:[[@LINE-23]]:10: in file included here [InCppInclude]
+  // CHECK:STDERR: fail_import_double_decl_value_param_type.carbon:[[@LINE-23]]:10: in file included here [InCppInclude]
   // CHECK:STDERR: ./double_decl_value_param_type.h:2:8: note: class was forward declared here [ClassForwardDeclaredHere]
   // CHECK:STDERR: struct S;
   // CHECK:STDERR:        ^
-  // CHECK:STDERR: fail_todo_import_double_decl_value_param_type.carbon: note: initializing function parameter [InCallToFunctionParam]
+  // CHECK:STDERR: fail_import_double_decl_value_param_type.carbon: note: initializing function parameter [InCallToFunctionParam]
   // CHECK:STDERR:
-  // CHECK:STDERR: fail_todo_import_double_decl_value_param_type.carbon:[[@LINE+9]]:12: error: forming value of incomplete type `Cpp.S` [IncompleteTypeInValueConversion]
+  // CHECK:STDERR: fail_import_double_decl_value_param_type.carbon:[[@LINE+9]]:12: error: forming value of incomplete type `Cpp.S` [IncompleteTypeInValueConversion]
   // CHECK:STDERR:   Cpp.foo2({});
   // CHECK:STDERR:            ^~
-  // CHECK:STDERR: fail_todo_import_double_decl_value_param_type.carbon:[[@LINE-32]]:10: in file included here [InCppInclude]
+  // CHECK:STDERR: fail_import_double_decl_value_param_type.carbon:[[@LINE-32]]:10: in file included here [InCppInclude]
   // CHECK:STDERR: ./double_decl_value_param_type.h:2:8: note: class was forward declared here [ClassForwardDeclaredHere]
   // CHECK:STDERR: struct S;
   // CHECK:STDERR:        ^
-  // CHECK:STDERR: fail_todo_import_double_decl_value_param_type.carbon: note: initializing function parameter [InCallToFunctionParam]
+  // CHECK:STDERR: fail_import_double_decl_value_param_type.carbon: note: initializing function parameter [InCallToFunctionParam]
   // CHECK:STDERR:
   Cpp.foo2({});
 }
@@ -446,21 +446,21 @@ struct S;
 
 auto foo() -> S;
 
-// --- fail_todo_import_decl_value_return_type.carbon
+// --- fail_import_decl_value_return_type.carbon
 
 library "[[@TEST_NAME]]";
 
 import Cpp library "decl_value_return_type.h";
 
 fn F() {
-  // CHECK:STDERR: fail_todo_import_decl_value_return_type.carbon:[[@LINE+9]]:3: error: function returns incomplete type `Cpp.S` [IncompleteTypeInFunctionReturnType]
+  // CHECK:STDERR: fail_import_decl_value_return_type.carbon:[[@LINE+9]]:3: error: function returns incomplete type `Cpp.S` [IncompleteTypeInFunctionReturnType]
   // CHECK:STDERR:   Cpp.foo();
   // CHECK:STDERR:   ^~~~~~~~~
-  // CHECK:STDERR: fail_todo_import_decl_value_return_type.carbon:[[@LINE-6]]:10: in file included here [InCppInclude]
+  // CHECK:STDERR: fail_import_decl_value_return_type.carbon:[[@LINE-6]]:10: in file included here [InCppInclude]
   // CHECK:STDERR: ./decl_value_return_type.h:2:8: note: class was forward declared here [ClassForwardDeclaredHere]
   // CHECK:STDERR: struct S;
   // CHECK:STDERR:        ^
-  // CHECK:STDERR: fail_todo_import_decl_value_return_type.carbon: note: return type declared here [IncompleteReturnTypeHere]
+  // CHECK:STDERR: fail_import_decl_value_return_type.carbon: note: return type declared here [IncompleteReturnTypeHere]
   // CHECK:STDERR:
   Cpp.foo();
 }
