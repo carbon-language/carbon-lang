@@ -1279,12 +1279,13 @@ static auto CreateFunctionParamsInsts(Context& context, SemIR::LocId loc_id,
            .call_params_id = call_params_id}};
 }
 
-// Creates a partial `FunctionDecl` and a `Function` without C++ thunk
-// information. Returns std::nullopt on failure. On success,
-// `FinishImportFunctionDecl()` must be later called.
-static auto StartImportFunctionDecl(Context& context, SemIR::LocId loc_id,
-                                    clang::FunctionDecl* clang_decl)
-    -> std::optional<std::tuple<SemIR::FunctionDecl, SemIR::Function>> {
+// Creates a `FunctionDecl` and a `Function` without C++ thunk information.
+// Returns std::nullopt on failure. The given Clang declaration is assumed to:
+// * Have not been imported before.
+// * Be of supported type (ignoring parameters).
+static auto ImportFunction(Context& context, SemIR::LocId loc_id,
+                           clang::FunctionDecl* clang_decl)
+    -> std::optional<SemIR::FunctionId> {
   context.scope_stack().PushForDeclName();
   context.inst_block_stack().Push();
   context.pattern_block_stack().Push();
@@ -1329,23 +1330,11 @@ static auto StartImportFunctionDecl(Context& context, SemIR::LocId loc_id,
        .clang_decl_id = context.sem_ir().clang_decls().Add(
            {.decl = clang_decl, .inst_id = decl_id})}};
 
-  return std::make_tuple(function_decl, std::move(function_info));
-}
-
-// Adds the `Function` to the context and finishes setting up the
-// `FunctionDecl`.
-static auto FinishImportFunctionDecl(Context& context,
-                                     SemIR::FunctionDecl& function_decl,
-                                     const SemIR::Function& function_info)
-    -> SemIR::InstId {
   function_decl.function_id = context.functions().Add(function_info);
-
   function_decl.type_id = GetFunctionType(context, function_decl.function_id,
                                           SemIR::SpecificId::None);
-
-  SemIR::InstId function_decl_id = function_info.first_owning_decl_id;
-  ReplaceInstBeforeConstantUse(context, function_decl_id, function_decl);
-  return function_decl_id;
+  ReplaceInstBeforeConstantUse(context, decl_id, function_decl);
+  return function_decl.function_id;
 }
 
 // Imports a function declaration from Clang to Carbon. If successful, returns
@@ -1385,27 +1374,26 @@ static auto ImportFunctionDecl(Context& context, SemIR::LocId loc_id,
   CARBON_CHECK(clang_decl->getFunctionType()->isFunctionProtoType(),
                "Not Prototype function (non-C++ code)");
 
-  auto function_decl_info =
-      StartImportFunctionDecl(context, loc_id, clang_decl);
-  if (!function_decl_info) {
+  auto function_id = ImportFunction(context, loc_id, clang_decl);
+  if (!function_id) {
     MarkFailedDecl(context, clang_decl);
     return SemIR::ErrorInst::InstId;
   }
 
-  auto [function_decl, function_info] = *function_decl_info;
-
+  SemIR::Function& function_info = context.functions().Get(*function_id);
   if (IsCppThunkRequired(context, function_info)) {
     clang::FunctionDecl* thunk_clang_decl =
         BuildCppThunk(context, function_info);
     if (thunk_clang_decl) {
-      auto [thunk_function_decl, thunk_function_info] =
-          *StartImportFunctionDecl(context, loc_id, thunk_clang_decl);
-      function_info.SetHasCppThunk(FinishImportFunctionDecl(
-          context, thunk_function_decl, thunk_function_info));
+      SemIR::FunctionId thunk_function_id =
+          *ImportFunction(context, loc_id, thunk_clang_decl);
+      SemIR::InstId thunk_function_decl_id =
+          context.functions().Get(thunk_function_id).first_owning_decl_id;
+      function_info.SetHasCppThunk(thunk_function_decl_id);
     }
   }
 
-  return FinishImportFunctionDecl(context, function_decl, function_info);
+  return function_info.first_owning_decl_id;
 }
 
 using DeclSet = llvm::SetVector<clang::Decl*>;
