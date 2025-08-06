@@ -5,12 +5,23 @@
 #include "toolchain/check/class.h"
 
 #include "toolchain/check/context.h"
+#include "toolchain/check/convert.h"
 #include "toolchain/check/eval.h"
 #include "toolchain/check/function.h"
+#include "toolchain/check/generic.h"
+#include "toolchain/check/impl.h"
 #include "toolchain/check/import_ref.h"
 #include "toolchain/check/inst.h"
+#include "toolchain/check/name_lookup.h"
+#include "toolchain/check/name_ref.h"
+#include "toolchain/check/pattern.h"
+#include "toolchain/check/pattern_match.h"
 #include "toolchain/check/type.h"
 #include "toolchain/parse/node_ids.h"
+#include "toolchain/sem_ir/builtin_function_kind.h"
+#include "toolchain/sem_ir/function.h"
+#include "toolchain/sem_ir/ids.h"
+#include "toolchain/sem_ir/typed_insts.h"
 
 namespace Carbon::Check {
 
@@ -176,6 +187,7 @@ static auto BuildVtable(Context& context, Parse::ClassDefinitionId node_id,
     // TODO: Avoid quadratic search. Perhaps build a map from `NameId` to the
     // elements of the top of `vtable_stack`.
     for (auto base_vtable_entry_id : base_vtable_inst_block) {
+      LoadImportRef(context, base_vtable_entry_id);
       auto [derived_vtable_entry_id, derived_vtable_entry_const_id, fn_id,
             specific_id] =
           DecomposeVirtualFunction(context.sem_ir(), base_vtable_entry_id,

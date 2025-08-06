@@ -84,6 +84,13 @@ fn AccessMissingConcrete(x: Derived(i32)) -> i32 {
 // CHECK:STDOUT:   %Base.370: type = class_type @Base, @Base(%T) [symbolic]
 // CHECK:STDOUT:   %require_complete.4ae: <witness> = require_complete_type %T [symbolic]
 // CHECK:STDOUT:   %Base.elem.9af: type = unbound_element_type %Base.370, %T [symbolic]
+// CHECK:STDOUT:   %Destroy.type: type = facet_type <@Destroy> [concrete]
+// CHECK:STDOUT:   %pattern_type.f6d: type = pattern_type auto [concrete]
+// CHECK:STDOUT:   %Destroy.impl_witness.9f8: <witness> = impl_witness @Base.%Destroy.impl_witness_table, @Base.as.Destroy.impl(%T) [symbolic]
+// CHECK:STDOUT:   %ptr.b7c: type = ptr_type %Base.370 [symbolic]
+// CHECK:STDOUT:   %pattern_type.8d4: type = pattern_type %ptr.b7c [symbolic]
+// CHECK:STDOUT:   %Base.as.Destroy.impl.Op.type: type = fn_type @Base.as.Destroy.impl.Op, @Base.as.Destroy.impl(%T) [symbolic]
+// CHECK:STDOUT:   %Base.as.Destroy.impl.Op: %Base.as.Destroy.impl.Op.type = struct_value () [symbolic]
 // CHECK:STDOUT:   %struct_type.b.f69: type = struct_type {.b: %T} [symbolic]
 // CHECK:STDOUT:   %complete_type.eaf: <witness> = complete_type_witness %struct_type.b.f69 [symbolic]
 // CHECK:STDOUT:   %Derived.type: type = generic_class_type @Derived [concrete]
@@ -92,6 +99,11 @@ fn AccessMissingConcrete(x: Derived(i32)) -> i32 {
 // CHECK:STDOUT:   %require_complete.97d: <witness> = require_complete_type %Base.370 [symbolic]
 // CHECK:STDOUT:   %Derived.elem.8b3: type = unbound_element_type %Derived.85c, %Base.370 [symbolic]
 // CHECK:STDOUT:   %Derived.elem.6d2: type = unbound_element_type %Derived.85c, %T [symbolic]
+// CHECK:STDOUT:   %Destroy.impl_witness.fa7: <witness> = impl_witness @Derived.%Destroy.impl_witness_table, @Derived.as.Destroy.impl(%T) [symbolic]
+// CHECK:STDOUT:   %ptr.178: type = ptr_type %Derived.85c [symbolic]
+// CHECK:STDOUT:   %pattern_type.520: type = pattern_type %ptr.178 [symbolic]
+// CHECK:STDOUT:   %Derived.as.Destroy.impl.Op.type: type = fn_type @Derived.as.Destroy.impl.Op, @Derived.as.Destroy.impl(%T) [symbolic]
+// CHECK:STDOUT:   %Derived.as.Destroy.impl.Op: %Derived.as.Destroy.impl.Op.type = struct_value () [symbolic]
 // CHECK:STDOUT:   %struct_type.base.d.37c: type = struct_type {.base: %Base.370, .d: %T} [symbolic]
 // CHECK:STDOUT:   %complete_type.8ad: <witness> = complete_type_witness %struct_type.base.d.37c [symbolic]
 // CHECK:STDOUT:   %pattern_type.423: type = pattern_type %Derived.85c [symbolic]
@@ -124,10 +136,12 @@ fn AccessMissingConcrete(x: Derived(i32)) -> i32 {
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [concrete] {
+// CHECK:STDOUT:     .Destroy = %Core.Destroy
 // CHECK:STDOUT:     .Int = %Core.Int
 // CHECK:STDOUT:     import Core//prelude
 // CHECK:STDOUT:     import Core//prelude/...
 // CHECK:STDOUT:   }
+// CHECK:STDOUT:   %Core.Destroy: type = import_ref Core//prelude/parts/destroy, Destroy, loaded [concrete = constants.%Destroy.type]
 // CHECK:STDOUT:   %Core.Int: %Int.type = import_ref Core//prelude/parts/int, Int, loaded [concrete = constants.%Int.generic]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -210,6 +224,62 @@ fn AccessMissingConcrete(x: Derived(i32)) -> i32 {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
+// CHECK:STDOUT: generic impl @Base.as.Destroy.impl(@Base.%T.loc4_17.2: type) {
+// CHECK:STDOUT:   %T: type = bind_symbolic_name T, 0 [symbolic = %T (constants.%T)]
+// CHECK:STDOUT:   %Destroy.impl_witness: <witness> = impl_witness @Base.%Destroy.impl_witness_table, @Base.as.Destroy.impl(%T) [symbolic = %Destroy.impl_witness (constants.%Destroy.impl_witness.9f8)]
+// CHECK:STDOUT:
+// CHECK:STDOUT: !definition:
+// CHECK:STDOUT:   %Base.as.Destroy.impl.Op.type: type = fn_type @Base.as.Destroy.impl.Op, @Base.as.Destroy.impl(%T) [symbolic = %Base.as.Destroy.impl.Op.type (constants.%Base.as.Destroy.impl.Op.type)]
+// CHECK:STDOUT:   %Base.as.Destroy.impl.Op: @Base.as.Destroy.impl.%Base.as.Destroy.impl.Op.type (%Base.as.Destroy.impl.Op.type) = struct_value () [symbolic = %Base.as.Destroy.impl.Op (constants.%Base.as.Destroy.impl.Op)]
+// CHECK:STDOUT:
+// CHECK:STDOUT:   impl: constants.%Base.370 as constants.%Destroy.type {
+// CHECK:STDOUT:     %Base.as.Destroy.impl.Op.decl: @Base.as.Destroy.impl.%Base.as.Destroy.impl.Op.type (%Base.as.Destroy.impl.Op.type) = fn_decl @Base.as.Destroy.impl.Op [symbolic = @Base.as.Destroy.impl.%Base.as.Destroy.impl.Op (constants.%Base.as.Destroy.impl.Op)] {
+// CHECK:STDOUT:       %self.patt: @Base.as.Destroy.impl.Op.%pattern_type (%pattern_type.8d4) = binding_pattern self [concrete]
+// CHECK:STDOUT:       %self.param_patt: @Base.as.Destroy.impl.Op.%pattern_type (%pattern_type.8d4) = value_param_pattern %self.patt, call_param0 [concrete]
+// CHECK:STDOUT:       %.loc4_27.1: %pattern_type.f6d = addr_pattern %self.param_patt [concrete]
+// CHECK:STDOUT:     } {
+// CHECK:STDOUT:       %self.param: @Base.as.Destroy.impl.Op.%ptr (%ptr.b7c) = value_param call_param0
+// CHECK:STDOUT:       %.loc4_27.2: type = splice_block %Self.ref [symbolic = %Base (constants.%Base.370)] {
+// CHECK:STDOUT:         %.loc4_27.3: type = specific_constant constants.%Base.370, @Base(constants.%T) [symbolic = %Base (constants.%Base.370)]
+// CHECK:STDOUT:         %Self.ref: type = name_ref Self, %.loc4_27.3 [symbolic = %Base (constants.%Base.370)]
+// CHECK:STDOUT:       }
+// CHECK:STDOUT:       %self: @Base.as.Destroy.impl.Op.%ptr (%ptr.b7c) = bind_name self, %self.param
+// CHECK:STDOUT:     }
+// CHECK:STDOUT:
+// CHECK:STDOUT:   !members:
+// CHECK:STDOUT:     .Op = %Base.as.Destroy.impl.Op.decl
+// CHECK:STDOUT:     witness = @Base.%Destroy.impl_witness
+// CHECK:STDOUT:   }
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: generic impl @Derived.as.Destroy.impl(@Derived.%T.loc8_15.2: type) {
+// CHECK:STDOUT:   %T: type = bind_symbolic_name T, 0 [symbolic = %T (constants.%T)]
+// CHECK:STDOUT:   %Destroy.impl_witness: <witness> = impl_witness @Derived.%Destroy.impl_witness_table, @Derived.as.Destroy.impl(%T) [symbolic = %Destroy.impl_witness (constants.%Destroy.impl_witness.fa7)]
+// CHECK:STDOUT:
+// CHECK:STDOUT: !definition:
+// CHECK:STDOUT:   %Derived.as.Destroy.impl.Op.type: type = fn_type @Derived.as.Destroy.impl.Op, @Derived.as.Destroy.impl(%T) [symbolic = %Derived.as.Destroy.impl.Op.type (constants.%Derived.as.Destroy.impl.Op.type)]
+// CHECK:STDOUT:   %Derived.as.Destroy.impl.Op: @Derived.as.Destroy.impl.%Derived.as.Destroy.impl.Op.type (%Derived.as.Destroy.impl.Op.type) = struct_value () [symbolic = %Derived.as.Destroy.impl.Op (constants.%Derived.as.Destroy.impl.Op)]
+// CHECK:STDOUT:
+// CHECK:STDOUT:   impl: constants.%Derived.85c as constants.%Destroy.type {
+// CHECK:STDOUT:     %Derived.as.Destroy.impl.Op.decl: @Derived.as.Destroy.impl.%Derived.as.Destroy.impl.Op.type (%Derived.as.Destroy.impl.Op.type) = fn_decl @Derived.as.Destroy.impl.Op [symbolic = @Derived.as.Destroy.impl.%Derived.as.Destroy.impl.Op (constants.%Derived.as.Destroy.impl.Op)] {
+// CHECK:STDOUT:       %self.patt: @Derived.as.Destroy.impl.Op.%pattern_type (%pattern_type.520) = binding_pattern self [concrete]
+// CHECK:STDOUT:       %self.param_patt: @Derived.as.Destroy.impl.Op.%pattern_type (%pattern_type.520) = value_param_pattern %self.patt, call_param0 [concrete]
+// CHECK:STDOUT:       %.loc8_25.1: %pattern_type.f6d = addr_pattern %self.param_patt [concrete]
+// CHECK:STDOUT:     } {
+// CHECK:STDOUT:       %self.param: @Derived.as.Destroy.impl.Op.%ptr (%ptr.178) = value_param call_param0
+// CHECK:STDOUT:       %.loc8_25.2: type = splice_block %Self.ref [symbolic = %Derived (constants.%Derived.85c)] {
+// CHECK:STDOUT:         %.loc8_25.3: type = specific_constant constants.%Derived.85c, @Derived(constants.%T) [symbolic = %Derived (constants.%Derived.85c)]
+// CHECK:STDOUT:         %Self.ref: type = name_ref Self, %.loc8_25.3 [symbolic = %Derived (constants.%Derived.85c)]
+// CHECK:STDOUT:       }
+// CHECK:STDOUT:       %self: @Derived.as.Destroy.impl.Op.%ptr (%ptr.178) = bind_name self, %self.param
+// CHECK:STDOUT:     }
+// CHECK:STDOUT:
+// CHECK:STDOUT:   !members:
+// CHECK:STDOUT:     .Op = %Derived.as.Destroy.impl.Op.decl
+// CHECK:STDOUT:     witness = @Derived.%Destroy.impl_witness
+// CHECK:STDOUT:   }
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
 // CHECK:STDOUT: generic class @Base(%T.loc4_17.2: type) {
 // CHECK:STDOUT:   %T.loc4_17.1: type = bind_symbolic_name T, 0 [symbolic = %T.loc4_17.1 (constants.%T)]
 // CHECK:STDOUT:
@@ -223,6 +293,9 @@ fn AccessMissingConcrete(x: Derived(i32)) -> i32 {
 // CHECK:STDOUT:   class {
 // CHECK:STDOUT:     %T.ref: type = name_ref T, %T.loc4_17.2 [symbolic = %T.loc4_17.1 (constants.%T)]
 // CHECK:STDOUT:     %.loc5: @Base.%Base.elem (%Base.elem.9af) = field_decl b, element0 [concrete]
+// CHECK:STDOUT:     impl_decl @Base.as.Destroy.impl [concrete] {} {}
+// CHECK:STDOUT:     %Destroy.impl_witness_table = impl_witness_table (@Base.as.Destroy.impl.%Base.as.Destroy.impl.Op.decl), @Base.as.Destroy.impl [concrete]
+// CHECK:STDOUT:     %Destroy.impl_witness: <witness> = impl_witness %Destroy.impl_witness_table, @Base.as.Destroy.impl(constants.%T) [symbolic = @Base.as.Destroy.impl.%Destroy.impl_witness (constants.%Destroy.impl_witness.9f8)]
 // CHECK:STDOUT:     %struct_type.b.loc6_1.1: type = struct_type {.b: %T} [symbolic = %struct_type.b.loc6_1.2 (constants.%struct_type.b.f69)]
 // CHECK:STDOUT:     %complete_type.loc6_1.1: <witness> = complete_type_witness %struct_type.b.loc6_1.1 [symbolic = %complete_type.loc6_1.2 (constants.%complete_type.eaf)]
 // CHECK:STDOUT:     complete_type_witness = %complete_type.loc6_1.1
@@ -254,6 +327,9 @@ fn AccessMissingConcrete(x: Derived(i32)) -> i32 {
 // CHECK:STDOUT:     %.loc9: @Derived.%Derived.elem.loc9 (%Derived.elem.8b3) = base_decl %Base.loc9_22.1, element0 [concrete]
 // CHECK:STDOUT:     %T.ref.loc10: type = name_ref T, %T.loc8_15.2 [symbolic = %T.loc8_15.1 (constants.%T)]
 // CHECK:STDOUT:     %.loc10: @Derived.%Derived.elem.loc10 (%Derived.elem.6d2) = field_decl d, element1 [concrete]
+// CHECK:STDOUT:     impl_decl @Derived.as.Destroy.impl [concrete] {} {}
+// CHECK:STDOUT:     %Destroy.impl_witness_table = impl_witness_table (@Derived.as.Destroy.impl.%Derived.as.Destroy.impl.Op.decl), @Derived.as.Destroy.impl [concrete]
+// CHECK:STDOUT:     %Destroy.impl_witness: <witness> = impl_witness %Destroy.impl_witness_table, @Derived.as.Destroy.impl(constants.%T) [symbolic = @Derived.as.Destroy.impl.%Destroy.impl_witness (constants.%Destroy.impl_witness.fa7)]
 // CHECK:STDOUT:     %struct_type.base.d.loc11_1.1: type = struct_type {.base: %Base.370, .d: %T} [symbolic = %struct_type.base.d.loc11_1.2 (constants.%struct_type.base.d.37c)]
 // CHECK:STDOUT:     %complete_type.loc11_1.1: <witness> = complete_type_witness %struct_type.base.d.loc11_1.1 [symbolic = %complete_type.loc11_1.2 (constants.%complete_type.8ad)]
 // CHECK:STDOUT:     complete_type_witness = %complete_type.loc11_1.1
@@ -267,6 +343,28 @@ fn AccessMissingConcrete(x: Derived(i32)) -> i32 {
 // CHECK:STDOUT:     .b = <poisoned>
 // CHECK:STDOUT:     extend %Base.loc9_22.1
 // CHECK:STDOUT:   }
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: generic fn @Base.as.Destroy.impl.Op(@Base.%T.loc4_17.2: type) {
+// CHECK:STDOUT:   %T: type = bind_symbolic_name T, 0 [symbolic = %T (constants.%T)]
+// CHECK:STDOUT:   %Base: type = class_type @Base, @Base(%T) [symbolic = %Base (constants.%Base.370)]
+// CHECK:STDOUT:   %ptr: type = ptr_type %Base [symbolic = %ptr (constants.%ptr.b7c)]
+// CHECK:STDOUT:   %pattern_type: type = pattern_type %ptr [symbolic = %pattern_type (constants.%pattern_type.8d4)]
+// CHECK:STDOUT:
+// CHECK:STDOUT: !definition:
+// CHECK:STDOUT:
+// CHECK:STDOUT:   fn(%self.param: @Base.as.Destroy.impl.Op.%ptr (%ptr.b7c)) = "no_op";
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: generic fn @Derived.as.Destroy.impl.Op(@Derived.%T.loc8_15.2: type) {
+// CHECK:STDOUT:   %T: type = bind_symbolic_name T, 0 [symbolic = %T (constants.%T)]
+// CHECK:STDOUT:   %Derived: type = class_type @Derived, @Derived(%T) [symbolic = %Derived (constants.%Derived.85c)]
+// CHECK:STDOUT:   %ptr: type = ptr_type %Derived [symbolic = %ptr (constants.%ptr.178)]
+// CHECK:STDOUT:   %pattern_type: type = pattern_type %ptr [symbolic = %pattern_type (constants.%pattern_type.520)]
+// CHECK:STDOUT:
+// CHECK:STDOUT: !definition:
+// CHECK:STDOUT:
+// CHECK:STDOUT:   fn(%self.param: @Derived.as.Destroy.impl.Op.%ptr (%ptr.178)) = "no_op";
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic fn @AccessDerived(%T.loc13_18.2: type) {
@@ -337,6 +435,18 @@ fn AccessMissingConcrete(x: Derived(i32)) -> i32 {
 // CHECK:STDOUT:   %complete_type.loc6_1.2 => constants.%complete_type.eaf
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
+// CHECK:STDOUT: specific @Base.as.Destroy.impl(constants.%T) {
+// CHECK:STDOUT:   %T => constants.%T
+// CHECK:STDOUT:   %Destroy.impl_witness => constants.%Destroy.impl_witness.9f8
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: specific @Base.as.Destroy.impl.Op(constants.%T) {
+// CHECK:STDOUT:   %T => constants.%T
+// CHECK:STDOUT:   %Base => constants.%Base.370
+// CHECK:STDOUT:   %ptr => constants.%ptr.b7c
+// CHECK:STDOUT:   %pattern_type => constants.%pattern_type.8d4
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
 // CHECK:STDOUT: specific @Derived(constants.%T) {
 // CHECK:STDOUT:   %T.loc8_15.1 => constants.%T
 // CHECK:STDOUT:
@@ -349,6 +459,18 @@ fn AccessMissingConcrete(x: Derived(i32)) -> i32 {
 // CHECK:STDOUT:   %Derived.elem.loc10 => constants.%Derived.elem.6d2
 // CHECK:STDOUT:   %struct_type.base.d.loc11_1.2 => constants.%struct_type.base.d.37c
 // CHECK:STDOUT:   %complete_type.loc11_1.2 => constants.%complete_type.8ad
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: specific @Derived.as.Destroy.impl(constants.%T) {
+// CHECK:STDOUT:   %T => constants.%T
+// CHECK:STDOUT:   %Destroy.impl_witness => constants.%Destroy.impl_witness.fa7
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: specific @Derived.as.Destroy.impl.Op(constants.%T) {
+// CHECK:STDOUT:   %T => constants.%T
+// CHECK:STDOUT:   %Derived => constants.%Derived.85c
+// CHECK:STDOUT:   %ptr => constants.%ptr.178
+// CHECK:STDOUT:   %pattern_type => constants.%pattern_type.520
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @AccessDerived(constants.%T) {
@@ -400,6 +522,13 @@ fn AccessMissingConcrete(x: Derived(i32)) -> i32 {
 // CHECK:STDOUT:   %Base.370: type = class_type @Base, @Base(%T) [symbolic]
 // CHECK:STDOUT:   %require_complete.4ae: <witness> = require_complete_type %T [symbolic]
 // CHECK:STDOUT:   %Base.elem.9af: type = unbound_element_type %Base.370, %T [symbolic]
+// CHECK:STDOUT:   %Destroy.type: type = facet_type <@Destroy> [concrete]
+// CHECK:STDOUT:   %pattern_type.f6d: type = pattern_type auto [concrete]
+// CHECK:STDOUT:   %Destroy.impl_witness.9f8: <witness> = impl_witness @Base.%Destroy.impl_witness_table, @Base.as.Destroy.impl(%T) [symbolic]
+// CHECK:STDOUT:   %ptr.b7c: type = ptr_type %Base.370 [symbolic]
+// CHECK:STDOUT:   %pattern_type.8d4: type = pattern_type %ptr.b7c [symbolic]
+// CHECK:STDOUT:   %Base.as.Destroy.impl.Op.type: type = fn_type @Base.as.Destroy.impl.Op, @Base.as.Destroy.impl(%T) [symbolic]
+// CHECK:STDOUT:   %Base.as.Destroy.impl.Op: %Base.as.Destroy.impl.Op.type = struct_value () [symbolic]
 // CHECK:STDOUT:   %struct_type.b.f69: type = struct_type {.b: %T} [symbolic]
 // CHECK:STDOUT:   %complete_type.eaf: <witness> = complete_type_witness %struct_type.b.f69 [symbolic]
 // CHECK:STDOUT:   %Derived.type: type = generic_class_type @Derived [concrete]
@@ -408,6 +537,11 @@ fn AccessMissingConcrete(x: Derived(i32)) -> i32 {
 // CHECK:STDOUT:   %require_complete.97d: <witness> = require_complete_type %Base.370 [symbolic]
 // CHECK:STDOUT:   %Derived.elem.8b3: type = unbound_element_type %Derived.85c, %Base.370 [symbolic]
 // CHECK:STDOUT:   %Derived.elem.6d2: type = unbound_element_type %Derived.85c, %T [symbolic]
+// CHECK:STDOUT:   %Destroy.impl_witness.fa7: <witness> = impl_witness @Derived.%Destroy.impl_witness_table, @Derived.as.Destroy.impl(%T) [symbolic]
+// CHECK:STDOUT:   %ptr.178: type = ptr_type %Derived.85c [symbolic]
+// CHECK:STDOUT:   %pattern_type.520: type = pattern_type %ptr.178 [symbolic]
+// CHECK:STDOUT:   %Derived.as.Destroy.impl.Op.type: type = fn_type @Derived.as.Destroy.impl.Op, @Derived.as.Destroy.impl(%T) [symbolic]
+// CHECK:STDOUT:   %Derived.as.Destroy.impl.Op: %Derived.as.Destroy.impl.Op.type = struct_value () [symbolic]
 // CHECK:STDOUT:   %struct_type.base.d.37c: type = struct_type {.base: %Base.370, .d: %T} [symbolic]
 // CHECK:STDOUT:   %complete_type.8ad: <witness> = complete_type_witness %struct_type.base.d.37c [symbolic]
 // CHECK:STDOUT:   %pattern_type.9f7: type = pattern_type %Base.370 [symbolic]
@@ -441,10 +575,12 @@ fn AccessMissingConcrete(x: Derived(i32)) -> i32 {
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [concrete] {
+// CHECK:STDOUT:     .Destroy = %Core.Destroy
 // CHECK:STDOUT:     .Int = %Core.Int
 // CHECK:STDOUT:     import Core//prelude
 // CHECK:STDOUT:     import Core//prelude/...
 // CHECK:STDOUT:   }
+// CHECK:STDOUT:   %Core.Destroy: type = import_ref Core//prelude/parts/destroy, Destroy, loaded [concrete = constants.%Destroy.type]
 // CHECK:STDOUT:   %Core.Int: %Int.type = import_ref Core//prelude/parts/int, Int, loaded [concrete = constants.%Int.generic]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -527,6 +663,62 @@ fn AccessMissingConcrete(x: Derived(i32)) -> i32 {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
+// CHECK:STDOUT: generic impl @Base.as.Destroy.impl(@Base.%T.loc4_17.2: type) {
+// CHECK:STDOUT:   %T: type = bind_symbolic_name T, 0 [symbolic = %T (constants.%T)]
+// CHECK:STDOUT:   %Destroy.impl_witness: <witness> = impl_witness @Base.%Destroy.impl_witness_table, @Base.as.Destroy.impl(%T) [symbolic = %Destroy.impl_witness (constants.%Destroy.impl_witness.9f8)]
+// CHECK:STDOUT:
+// CHECK:STDOUT: !definition:
+// CHECK:STDOUT:   %Base.as.Destroy.impl.Op.type: type = fn_type @Base.as.Destroy.impl.Op, @Base.as.Destroy.impl(%T) [symbolic = %Base.as.Destroy.impl.Op.type (constants.%Base.as.Destroy.impl.Op.type)]
+// CHECK:STDOUT:   %Base.as.Destroy.impl.Op: @Base.as.Destroy.impl.%Base.as.Destroy.impl.Op.type (%Base.as.Destroy.impl.Op.type) = struct_value () [symbolic = %Base.as.Destroy.impl.Op (constants.%Base.as.Destroy.impl.Op)]
+// CHECK:STDOUT:
+// CHECK:STDOUT:   impl: constants.%Base.370 as constants.%Destroy.type {
+// CHECK:STDOUT:     %Base.as.Destroy.impl.Op.decl: @Base.as.Destroy.impl.%Base.as.Destroy.impl.Op.type (%Base.as.Destroy.impl.Op.type) = fn_decl @Base.as.Destroy.impl.Op [symbolic = @Base.as.Destroy.impl.%Base.as.Destroy.impl.Op (constants.%Base.as.Destroy.impl.Op)] {
+// CHECK:STDOUT:       %self.patt: @Base.as.Destroy.impl.Op.%pattern_type (%pattern_type.8d4) = binding_pattern self [concrete]
+// CHECK:STDOUT:       %self.param_patt: @Base.as.Destroy.impl.Op.%pattern_type (%pattern_type.8d4) = value_param_pattern %self.patt, call_param0 [concrete]
+// CHECK:STDOUT:       %.loc4_27.1: %pattern_type.f6d = addr_pattern %self.param_patt [concrete]
+// CHECK:STDOUT:     } {
+// CHECK:STDOUT:       %self.param: @Base.as.Destroy.impl.Op.%ptr (%ptr.b7c) = value_param call_param0
+// CHECK:STDOUT:       %.loc4_27.2: type = splice_block %Self.ref [symbolic = %Base (constants.%Base.370)] {
+// CHECK:STDOUT:         %.loc4_27.3: type = specific_constant constants.%Base.370, @Base(constants.%T) [symbolic = %Base (constants.%Base.370)]
+// CHECK:STDOUT:         %Self.ref: type = name_ref Self, %.loc4_27.3 [symbolic = %Base (constants.%Base.370)]
+// CHECK:STDOUT:       }
+// CHECK:STDOUT:       %self: @Base.as.Destroy.impl.Op.%ptr (%ptr.b7c) = bind_name self, %self.param
+// CHECK:STDOUT:     }
+// CHECK:STDOUT:
+// CHECK:STDOUT:   !members:
+// CHECK:STDOUT:     .Op = %Base.as.Destroy.impl.Op.decl
+// CHECK:STDOUT:     witness = @Base.%Destroy.impl_witness
+// CHECK:STDOUT:   }
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: generic impl @Derived.as.Destroy.impl(@Derived.%T.loc8_15.2: type) {
+// CHECK:STDOUT:   %T: type = bind_symbolic_name T, 0 [symbolic = %T (constants.%T)]
+// CHECK:STDOUT:   %Destroy.impl_witness: <witness> = impl_witness @Derived.%Destroy.impl_witness_table, @Derived.as.Destroy.impl(%T) [symbolic = %Destroy.impl_witness (constants.%Destroy.impl_witness.fa7)]
+// CHECK:STDOUT:
+// CHECK:STDOUT: !definition:
+// CHECK:STDOUT:   %Derived.as.Destroy.impl.Op.type: type = fn_type @Derived.as.Destroy.impl.Op, @Derived.as.Destroy.impl(%T) [symbolic = %Derived.as.Destroy.impl.Op.type (constants.%Derived.as.Destroy.impl.Op.type)]
+// CHECK:STDOUT:   %Derived.as.Destroy.impl.Op: @Derived.as.Destroy.impl.%Derived.as.Destroy.impl.Op.type (%Derived.as.Destroy.impl.Op.type) = struct_value () [symbolic = %Derived.as.Destroy.impl.Op (constants.%Derived.as.Destroy.impl.Op)]
+// CHECK:STDOUT:
+// CHECK:STDOUT:   impl: constants.%Derived.85c as constants.%Destroy.type {
+// CHECK:STDOUT:     %Derived.as.Destroy.impl.Op.decl: @Derived.as.Destroy.impl.%Derived.as.Destroy.impl.Op.type (%Derived.as.Destroy.impl.Op.type) = fn_decl @Derived.as.Destroy.impl.Op [symbolic = @Derived.as.Destroy.impl.%Derived.as.Destroy.impl.Op (constants.%Derived.as.Destroy.impl.Op)] {
+// CHECK:STDOUT:       %self.patt: @Derived.as.Destroy.impl.Op.%pattern_type (%pattern_type.520) = binding_pattern self [concrete]
+// CHECK:STDOUT:       %self.param_patt: @Derived.as.Destroy.impl.Op.%pattern_type (%pattern_type.520) = value_param_pattern %self.patt, call_param0 [concrete]
+// CHECK:STDOUT:       %.loc8_25.1: %pattern_type.f6d = addr_pattern %self.param_patt [concrete]
+// CHECK:STDOUT:     } {
+// CHECK:STDOUT:       %self.param: @Derived.as.Destroy.impl.Op.%ptr (%ptr.178) = value_param call_param0
+// CHECK:STDOUT:       %.loc8_25.2: type = splice_block %Self.ref [symbolic = %Derived (constants.%Derived.85c)] {
+// CHECK:STDOUT:         %.loc8_25.3: type = specific_constant constants.%Derived.85c, @Derived(constants.%T) [symbolic = %Derived (constants.%Derived.85c)]
+// CHECK:STDOUT:         %Self.ref: type = name_ref Self, %.loc8_25.3 [symbolic = %Derived (constants.%Derived.85c)]
+// CHECK:STDOUT:       }
+// CHECK:STDOUT:       %self: @Derived.as.Destroy.impl.Op.%ptr (%ptr.178) = bind_name self, %self.param
+// CHECK:STDOUT:     }
+// CHECK:STDOUT:
+// CHECK:STDOUT:   !members:
+// CHECK:STDOUT:     .Op = %Derived.as.Destroy.impl.Op.decl
+// CHECK:STDOUT:     witness = @Derived.%Destroy.impl_witness
+// CHECK:STDOUT:   }
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
 // CHECK:STDOUT: generic class @Base(%T.loc4_17.2: type) {
 // CHECK:STDOUT:   %T.loc4_17.1: type = bind_symbolic_name T, 0 [symbolic = %T.loc4_17.1 (constants.%T)]
 // CHECK:STDOUT:
@@ -540,6 +732,9 @@ fn AccessMissingConcrete(x: Derived(i32)) -> i32 {
 // CHECK:STDOUT:   class {
 // CHECK:STDOUT:     %T.ref: type = name_ref T, %T.loc4_17.2 [symbolic = %T.loc4_17.1 (constants.%T)]
 // CHECK:STDOUT:     %.loc5: @Base.%Base.elem (%Base.elem.9af) = field_decl b, element0 [concrete]
+// CHECK:STDOUT:     impl_decl @Base.as.Destroy.impl [concrete] {} {}
+// CHECK:STDOUT:     %Destroy.impl_witness_table = impl_witness_table (@Base.as.Destroy.impl.%Base.as.Destroy.impl.Op.decl), @Base.as.Destroy.impl [concrete]
+// CHECK:STDOUT:     %Destroy.impl_witness: <witness> = impl_witness %Destroy.impl_witness_table, @Base.as.Destroy.impl(constants.%T) [symbolic = @Base.as.Destroy.impl.%Destroy.impl_witness (constants.%Destroy.impl_witness.9f8)]
 // CHECK:STDOUT:     %struct_type.b.loc6_1.1: type = struct_type {.b: %T} [symbolic = %struct_type.b.loc6_1.2 (constants.%struct_type.b.f69)]
 // CHECK:STDOUT:     %complete_type.loc6_1.1: <witness> = complete_type_witness %struct_type.b.loc6_1.1 [symbolic = %complete_type.loc6_1.2 (constants.%complete_type.eaf)]
 // CHECK:STDOUT:     complete_type_witness = %complete_type.loc6_1.1
@@ -572,6 +767,9 @@ fn AccessMissingConcrete(x: Derived(i32)) -> i32 {
 // CHECK:STDOUT:     %.loc9: @Derived.%Derived.elem.loc9 (%Derived.elem.8b3) = base_decl %Base.loc9_22.1, element0 [concrete]
 // CHECK:STDOUT:     %T.ref.loc10: type = name_ref T, %T.loc8_15.2 [symbolic = %T.loc8_15.1 (constants.%T)]
 // CHECK:STDOUT:     %.loc10: @Derived.%Derived.elem.loc10 (%Derived.elem.6d2) = field_decl d, element1 [concrete]
+// CHECK:STDOUT:     impl_decl @Derived.as.Destroy.impl [concrete] {} {}
+// CHECK:STDOUT:     %Destroy.impl_witness_table = impl_witness_table (@Derived.as.Destroy.impl.%Derived.as.Destroy.impl.Op.decl), @Derived.as.Destroy.impl [concrete]
+// CHECK:STDOUT:     %Destroy.impl_witness: <witness> = impl_witness %Destroy.impl_witness_table, @Derived.as.Destroy.impl(constants.%T) [symbolic = @Derived.as.Destroy.impl.%Destroy.impl_witness (constants.%Destroy.impl_witness.fa7)]
 // CHECK:STDOUT:     %struct_type.base.d.loc11_1.1: type = struct_type {.base: %Base.370, .d: %T} [symbolic = %struct_type.base.d.loc11_1.2 (constants.%struct_type.base.d.37c)]
 // CHECK:STDOUT:     %complete_type.loc11_1.1: <witness> = complete_type_witness %struct_type.base.d.loc11_1.1 [symbolic = %complete_type.loc11_1.2 (constants.%complete_type.8ad)]
 // CHECK:STDOUT:     complete_type_witness = %complete_type.loc11_1.1
@@ -585,6 +783,28 @@ fn AccessMissingConcrete(x: Derived(i32)) -> i32 {
 // CHECK:STDOUT:     .nonesuch = <poisoned>
 // CHECK:STDOUT:     extend %Base.loc9_22.1
 // CHECK:STDOUT:   }
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: generic fn @Base.as.Destroy.impl.Op(@Base.%T.loc4_17.2: type) {
+// CHECK:STDOUT:   %T: type = bind_symbolic_name T, 0 [symbolic = %T (constants.%T)]
+// CHECK:STDOUT:   %Base: type = class_type @Base, @Base(%T) [symbolic = %Base (constants.%Base.370)]
+// CHECK:STDOUT:   %ptr: type = ptr_type %Base [symbolic = %ptr (constants.%ptr.b7c)]
+// CHECK:STDOUT:   %pattern_type: type = pattern_type %ptr [symbolic = %pattern_type (constants.%pattern_type.8d4)]
+// CHECK:STDOUT:
+// CHECK:STDOUT: !definition:
+// CHECK:STDOUT:
+// CHECK:STDOUT:   fn(%self.param: @Base.as.Destroy.impl.Op.%ptr (%ptr.b7c)) = "no_op";
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: generic fn @Derived.as.Destroy.impl.Op(@Derived.%T.loc8_15.2: type) {
+// CHECK:STDOUT:   %T: type = bind_symbolic_name T, 0 [symbolic = %T (constants.%T)]
+// CHECK:STDOUT:   %Derived: type = class_type @Derived, @Derived(%T) [symbolic = %Derived (constants.%Derived.85c)]
+// CHECK:STDOUT:   %ptr: type = ptr_type %Derived [symbolic = %ptr (constants.%ptr.178)]
+// CHECK:STDOUT:   %pattern_type: type = pattern_type %ptr [symbolic = %pattern_type (constants.%pattern_type.520)]
+// CHECK:STDOUT:
+// CHECK:STDOUT: !definition:
+// CHECK:STDOUT:
+// CHECK:STDOUT:   fn(%self.param: @Derived.as.Destroy.impl.Op.%ptr (%ptr.178)) = "no_op";
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic fn @AccessMissingBase(%T.loc13_22.2: type) {
@@ -641,6 +861,18 @@ fn AccessMissingConcrete(x: Derived(i32)) -> i32 {
 // CHECK:STDOUT:   %complete_type.loc6_1.2 => constants.%complete_type.eaf
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
+// CHECK:STDOUT: specific @Base.as.Destroy.impl(constants.%T) {
+// CHECK:STDOUT:   %T => constants.%T
+// CHECK:STDOUT:   %Destroy.impl_witness => constants.%Destroy.impl_witness.9f8
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: specific @Base.as.Destroy.impl.Op(constants.%T) {
+// CHECK:STDOUT:   %T => constants.%T
+// CHECK:STDOUT:   %Base => constants.%Base.370
+// CHECK:STDOUT:   %ptr => constants.%ptr.b7c
+// CHECK:STDOUT:   %pattern_type => constants.%pattern_type.8d4
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
 // CHECK:STDOUT: specific @Derived(constants.%T) {
 // CHECK:STDOUT:   %T.loc8_15.1 => constants.%T
 // CHECK:STDOUT:
@@ -653,6 +885,18 @@ fn AccessMissingConcrete(x: Derived(i32)) -> i32 {
 // CHECK:STDOUT:   %Derived.elem.loc10 => constants.%Derived.elem.6d2
 // CHECK:STDOUT:   %struct_type.base.d.loc11_1.2 => constants.%struct_type.base.d.37c
 // CHECK:STDOUT:   %complete_type.loc11_1.2 => constants.%complete_type.8ad
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: specific @Derived.as.Destroy.impl(constants.%T) {
+// CHECK:STDOUT:   %T => constants.%T
+// CHECK:STDOUT:   %Destroy.impl_witness => constants.%Destroy.impl_witness.fa7
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: specific @Derived.as.Destroy.impl.Op(constants.%T) {
+// CHECK:STDOUT:   %T => constants.%T
+// CHECK:STDOUT:   %Derived => constants.%Derived.85c
+// CHECK:STDOUT:   %ptr => constants.%ptr.178
+// CHECK:STDOUT:   %pattern_type => constants.%pattern_type.520
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @AccessMissingBase(constants.%T) {

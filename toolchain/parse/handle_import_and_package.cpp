@@ -56,6 +56,7 @@ static auto HandleDeclContent(Context& context, Context::State state,
           PackageNameId::ForIdentifier(context.tokens().GetIdentifier(*ident));
       context.AddLeafNode(NodeKind::IdentifierPackageName, *ident);
     } else if (auto core = context.ConsumeIf(Lex::TokenKind::Core)) {
+      // TODO: Model `Cpp` as a keyword too.
       names.package_id = PackageNameId::Core;
       context.AddLeafNode(NodeKind::CorePackageName, *core);
     } else {
@@ -96,6 +97,22 @@ static auto HandleDeclContent(Context& context, Context::State state,
       if (auto library_id = context.ParseLibrarySpecifier(accept_default)) {
         names.library_id = *library_id;
       } else {
+        on_parse_error();
+        return;
+      }
+    } else if (DeclKind == NodeKind::ImportDecl &&
+               next_kind == Lex::TokenKind::Inline) {
+      auto inline_token = context.ConsumeChecked(Lex::TokenKind::Inline);
+      auto body_position = *context.position();
+      auto inline_body_token = context.ConsumeIf(Lex::TokenKind::StringLiteral);
+      names.inline_body_id = context.AddNode<NodeKind::InlineImportBody>(
+          body_position, /*has_error=*/!inline_body_token);
+      context.AddNode(NodeKind::InlineImportSpecifier, inline_token,
+                      /*has_error=*/false);
+      if (!inline_body_token) {
+        CARBON_DIAGNOSTIC(ExpectedStringAfterInline, Error,
+                          "expected string literal after `inline`");
+        context.emitter().Emit(body_position, ExpectedStringAfterInline);
         on_parse_error();
         return;
       }

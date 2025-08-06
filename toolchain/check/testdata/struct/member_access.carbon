@@ -28,7 +28,7 @@ var z: i32 = y;
 // CHECK:STDOUT:   %i32: type = class_type @Int, @Int(%int_32) [concrete]
 // CHECK:STDOUT:   %struct_type.a.b.ddf: type = struct_type {.a: f64, .b: %i32} [concrete]
 // CHECK:STDOUT:   %pattern_type.7fd: type = pattern_type %struct_type.a.b.ddf [concrete]
-// CHECK:STDOUT:   %float: f64 = float_literal 0 [concrete]
+// CHECK:STDOUT:   %float: f64 = float_value 0 [concrete]
 // CHECK:STDOUT:   %int_1.5b8: Core.IntLiteral = int_value 1 [concrete]
 // CHECK:STDOUT:   %struct_type.a.b.fbb: type = struct_type {.a: f64, .b: Core.IntLiteral} [concrete]
 // CHECK:STDOUT:   %.984: ref f64 = struct_access file.%x.var, element0 [concrete]
@@ -115,7 +115,7 @@ var z: i32 = y;
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %float: f64 = float_literal 0 [concrete = constants.%float]
+// CHECK:STDOUT:   %float: f64 = float_value 0 [concrete = constants.%float]
 // CHECK:STDOUT:   %int_1: Core.IntLiteral = int_value 1 [concrete = constants.%int_1.5b8]
 // CHECK:STDOUT:   %.loc15_46.1: %struct_type.a.b.fbb = struct_literal (%float, %int_1)
 // CHECK:STDOUT:   %.loc15_46.2: ref f64 = struct_access file.%x.var, element0 [concrete = constants.%.984]

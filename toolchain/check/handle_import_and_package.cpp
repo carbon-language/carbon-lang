@@ -89,4 +89,14 @@ auto HandleParseNode(Context& context, Parse::DefaultLibraryId node_id)
   return true;
 }
 
+auto HandleParseNode(Context& /*context*/,
+                     Parse::InlineImportSpecifierId /*node_id*/) -> bool {
+  return true;
+}
+
+auto HandleParseNode(Context& /*context*/,
+                     Parse::InlineImportBodyId /*node_id*/) -> bool {
+  return true;
+}
+
 }  // namespace Carbon::Check

@@ -691,11 +691,11 @@ struct FieldDecl {
   ElementIndex index;
 };
 
-// A literal floating point value.
-struct FloatLiteral {
+// A floating point value.
+struct FloatValue {
   static constexpr auto Kind =
-      InstKind::FloatLiteral.Define<Parse::RealLiteralId>(
-          {.ir_name = "float_literal",
+      InstKind::FloatValue.Define<Parse::RealLiteralId>(
+          {.ir_name = "float_value",
            .constant_kind = InstConstantKind::Always});
 
   TypeId type_id;
@@ -1055,7 +1055,7 @@ struct IntType {
   InstId bit_width_id;
 };
 
-// A literal integer value.
+// An integer value.
 struct IntValue {
   // TODO: Make Parse::NodeId more specific.
   static constexpr auto Kind = InstKind::IntValue.Define<Parse::NodeId>(
