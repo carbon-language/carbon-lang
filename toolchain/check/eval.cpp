@@ -9,6 +9,7 @@
 #include <optional>
 #include <utility>
 
+#include "llvm/Support/ConvertUTF.h"
 #include "toolchain/base/canonical_value_store.h"
 #include "toolchain/base/kind_switch.h"
 #include "toolchain/check/action.h"
@@ -951,6 +952,28 @@ static auto PerformArrayIndex(EvalContext& eval_context, SemIR::ArrayIndex inst)
   return eval_context.GetConstantValue(elements[index_val.getZExtValue()]);
 }
 
+// Performs a conversion between character types, diagnosing if the value
+// doesn't fit in the destination type.
+static auto PerformCheckedCharConvert(Context& context, SemIR::LocId loc_id,
+                                      SemIR::InstId arg_id,
+                                      SemIR::TypeId dest_type_id)
+    -> SemIR::ConstantId {
+  auto arg = context.insts().GetAs<SemIR::CharLiteralValue>(arg_id);
+
+  // Values over 0x80 require multiple code units in UTF-8.
+  if (arg.value.index >= 0x80) {
+    CARBON_DIAGNOSTIC(CharTooLargeForType, Error,
+                      "character value {0} too large for type {1}",
+                      SemIR::CharId, SemIR::TypeId);
+    context.emitter().Emit(loc_id, CharTooLargeForType, arg.value,
+                           dest_type_id);
+    return SemIR::ErrorInst::ConstantId;
+  }
+
+  llvm::APInt int_val(8, arg.value.index, /*isSigned=*/false);
+  return MakeIntResult(context, dest_type_id, /*is_signed=*/false, int_val);
+}
+
 // Forms a constant int type as an evaluation result. Requires that width_id is
 // constant.
 static auto MakeIntTypeResult(Context& context, SemIR::LocId loc_id,
@@ -1590,6 +1613,10 @@ static auto MakeConstantForBuiltinCall(EvalContext& eval_context,
       return MakeFacetTypeResult(eval_context.context(), combined_info, phase);
     }
 
+    case SemIR::BuiltinFunctionKind::CharLiteralMakeType: {
+      return context.constant_values().Get(SemIR::CharLiteralType::TypeInstId);
+    }
+
     case SemIR::BuiltinFunctionKind::IntLiteralMakeType: {
       return context.constant_values().Get(SemIR::IntLiteralType::TypeInstId);
     }
@@ -1617,6 +1644,15 @@ static auto MakeConstantForBuiltinCall(EvalContext& eval_context,
 
     case SemIR::BuiltinFunctionKind::BoolMakeType: {
       return context.constant_values().Get(SemIR::BoolType::TypeInstId);
+    }
+
+    // Character conversions.
+    case SemIR::BuiltinFunctionKind::CharConvertChecked: {
+      if (phase != Phase::Concrete) {
+        return MakeConstantResult(context, call, phase);
+      }
+      return PerformCheckedCharConvert(context, loc_id, arg_ids[0],
+                                       call.type_id);
     }
 
     // Integer conversions.

@@ -131,6 +131,7 @@ cc_library(
         "//toolchain/check:scope_stack",
         "//toolchain/diagnostics:diagnostic_emitter",
         "//toolchain/diagnostics:format_providers",
+        "//toolchain/lex:token_info",
         "//toolchain/lex:token_kind",
         "//toolchain/lex:tokenized_buffer",
         "//toolchain/parse:node_kind",
@@ -296,6 +297,7 @@ cc_library(
     hdrs = ["diagnostic_emitter.h"],
     deps = [
         ":context",
+        "//common:ostream",
         "//common:raw_string_ostream",
         "//toolchain/diagnostics:diagnostic_emitter",
         "//toolchain/lex:token_index",

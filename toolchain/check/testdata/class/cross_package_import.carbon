@@ -239,7 +239,7 @@ var c: Other.C = {};
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Other.C: type = import_ref Other//other_define, C, loaded [concrete = constants.%C]
 // CHECK:STDOUT:   %Other.import_ref.8f2: <witness> = import_ref Other//other_define, loc4_10, loaded [concrete = constants.%complete_type]
-// CHECK:STDOUT:   %Other.import_ref.2c4 = import_ref Other//other_define, inst18 [no loc], unloaded
+// CHECK:STDOUT:   %Other.import_ref.2c4 = import_ref Other//other_define, inst19 [no loc], unloaded
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -348,7 +348,7 @@ var c: Other.C = {};
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Other.C: type = import_ref Other//other_define, C, loaded [concrete = constants.%C]
 // CHECK:STDOUT:   %Other.import_ref.8f2: <witness> = import_ref Other//other_define, loc4_10, loaded [concrete = constants.%complete_type]
-// CHECK:STDOUT:   %Other.import_ref.2c4 = import_ref Other//other_define, inst18 [no loc], unloaded
+// CHECK:STDOUT:   %Other.import_ref.2c4 = import_ref Other//other_define, inst19 [no loc], unloaded
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -409,7 +409,7 @@ var c: Other.C = {};
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Other.C: type = import_ref Other//other_define, C, loaded [concrete = constants.%C]
 // CHECK:STDOUT:   %Other.import_ref.8f2: <witness> = import_ref Other//other_define, loc4_10, loaded [concrete = constants.%complete_type]
-// CHECK:STDOUT:   %Other.import_ref.2c4 = import_ref Other//other_define, inst18 [no loc], unloaded
+// CHECK:STDOUT:   %Other.import_ref.2c4 = import_ref Other//other_define, inst19 [no loc], unloaded
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {

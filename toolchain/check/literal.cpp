@@ -9,6 +9,7 @@
 #include "toolchain/check/convert.h"
 #include "toolchain/check/name_lookup.h"
 #include "toolchain/check/type.h"
+#include "toolchain/lex/token_info.h"
 #include "toolchain/sem_ir/ids.h"
 
 namespace Carbon::Check {

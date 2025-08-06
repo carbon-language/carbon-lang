@@ -213,6 +213,13 @@ static auto EmitAsConstant(ConstantContext& context, SemIR::BoundMethod inst)
 }
 
 static auto EmitAsConstant(ConstantContext& context,
+                           SemIR::CharLiteralValue /*inst*/)
+    -> llvm::Constant* {
+  return llvm::ConstantStruct::get(
+      llvm::StructType::get(context.llvm_context()));
+}
+
+static auto EmitAsConstant(ConstantContext& context,
                            SemIR::CompleteTypeWitness inst) -> llvm::Constant* {
   return context.GetUnusedConstant(inst.type_id);
 }
@@ -291,6 +298,7 @@ static auto MaybeEmitAsConstant(ConstantContext& context, InstT inst)
   }
 }
 
+// NOLINTNEXTLINE(readability-function-size): Macro-generated.
 auto LowerConstants(FileContext& file_context,
                     FileContext::LoweredConstantStore& constants) -> void {
   ConstantContext context(file_context, &constants);

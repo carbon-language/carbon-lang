@@ -376,27 +376,27 @@ fn G() { F({}); }
 // CHECK:STDOUT:     import Core//prelude/...
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Main.import_ref.8f24d3.1: <witness> = import_ref Main//types, loc7_1, loaded [concrete = constants.%complete_type]
-// CHECK:STDOUT:   %Main.import_ref.f42 = import_ref Main//types, inst18 [no loc], unloaded
+// CHECK:STDOUT:   %Main.import_ref.f42 = import_ref Main//types, inst19 [no loc], unloaded
 // CHECK:STDOUT:   %Main.import_ref.b5b = import_ref Main//types, loc5_22, unloaded
 // CHECK:STDOUT:   %Main.import_ref.1ed = import_ref Main//types, loc6_27, unloaded
 // CHECK:STDOUT:   %Main.import_ref.8f24d3.2: <witness> = import_ref Main//types, loc12_1, loaded [concrete = constants.%complete_type]
-// CHECK:STDOUT:   %Main.import_ref.ee7 = import_ref Main//types, inst79 [no loc], unloaded
+// CHECK:STDOUT:   %Main.import_ref.ee7 = import_ref Main//types, inst80 [no loc], unloaded
 // CHECK:STDOUT:   %Main.import_ref.b14 = import_ref Main//types, loc10_30, unloaded
 // CHECK:STDOUT:   %Main.import_ref.f79 = import_ref Main//types, loc11_33, unloaded
 // CHECK:STDOUT:   %Main.import_ref.8f24d3.3: <witness> = import_ref Main//types, loc17_1, loaded [concrete = constants.%complete_type]
-// CHECK:STDOUT:   %Main.import_ref.95d = import_ref Main//types, inst122 [no loc], unloaded
+// CHECK:STDOUT:   %Main.import_ref.95d = import_ref Main//types, inst123 [no loc], unloaded
 // CHECK:STDOUT:   %Main.import_ref.1cb = import_ref Main//types, loc15_24, unloaded
 // CHECK:STDOUT:   %Main.import_ref.675 = import_ref Main//types, loc16_33, unloaded
 // CHECK:STDOUT:   %Core.Destroy: type = import_ref Core//prelude/parts/destroy, Destroy, loaded [concrete = constants.%Destroy.type]
 // CHECK:STDOUT:   %Main.import_ref.15b: <witness> = import_ref Main//types, loc4_14, loaded [concrete = constants.%Destroy.impl_witness.17d]
-// CHECK:STDOUT:   %Main.import_ref.09f: type = import_ref Main//types, inst18 [no loc], loaded [concrete = constants.%NoAddr]
-// CHECK:STDOUT:   %Main.import_ref.cb9298.1: type = import_ref Main//types, inst39 [no loc], loaded [concrete = constants.%Destroy.type]
+// CHECK:STDOUT:   %Main.import_ref.09f: type = import_ref Main//types, inst19 [no loc], loaded [concrete = constants.%NoAddr]
+// CHECK:STDOUT:   %Main.import_ref.cb9298.1: type = import_ref Main//types, inst40 [no loc], loaded [concrete = constants.%Destroy.type]
 // CHECK:STDOUT:   %Main.import_ref.022: <witness> = import_ref Main//types, loc9_22, loaded [concrete = constants.%Destroy.impl_witness.f3a]
-// CHECK:STDOUT:   %Main.import_ref.2e8: type = import_ref Main//types, inst79 [no loc], loaded [concrete = constants.%ExplicitReturn]
-// CHECK:STDOUT:   %Main.import_ref.cb9298.2: type = import_ref Main//types, inst39 [no loc], loaded [concrete = constants.%Destroy.type]
+// CHECK:STDOUT:   %Main.import_ref.2e8: type = import_ref Main//types, inst80 [no loc], loaded [concrete = constants.%ExplicitReturn]
+// CHECK:STDOUT:   %Main.import_ref.cb9298.2: type = import_ref Main//types, inst40 [no loc], loaded [concrete = constants.%Destroy.type]
 // CHECK:STDOUT:   %Main.import_ref.d7d: <witness> = import_ref Main//types, loc14_16, loaded [concrete = constants.%Destroy.impl_witness.91f]
-// CHECK:STDOUT:   %Main.import_ref.0a2: type = import_ref Main//types, inst122 [no loc], loaded [concrete = constants.%WithAddr]
-// CHECK:STDOUT:   %Main.import_ref.cb9298.3: type = import_ref Main//types, inst39 [no loc], loaded [concrete = constants.%Destroy.type]
+// CHECK:STDOUT:   %Main.import_ref.0a2: type = import_ref Main//types, inst123 [no loc], loaded [concrete = constants.%WithAddr]
+// CHECK:STDOUT:   %Main.import_ref.cb9298.3: type = import_ref Main//types, inst40 [no loc], loaded [concrete = constants.%Destroy.type]
 // CHECK:STDOUT:   %Main.import_ref.344: %WithAddr.as.Destroy.impl.Op.type = import_ref Main//types, loc14_16, loaded [concrete = constants.%WithAddr.as.Destroy.impl.Op]
 // CHECK:STDOUT:   %Destroy.impl_witness_table.4f4 = impl_witness_table (%Main.import_ref.344), @WithAddr.as.Destroy.impl [concrete]
 // CHECK:STDOUT:   %Main.import_ref.d37: %ExplicitReturn.as.Destroy.impl.Op.type = import_ref Main//types, loc9_22, loaded [concrete = constants.%ExplicitReturn.as.Destroy.impl.Op]
@@ -541,27 +541,27 @@ fn G() { F({}); }
 // CHECK:STDOUT:     import Core//prelude/...
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Main.import_ref.8f24d3.1: <witness> = import_ref Main//types, loc7_1, loaded [concrete = constants.%complete_type]
-// CHECK:STDOUT:   %Main.import_ref.f42 = import_ref Main//types, inst18 [no loc], unloaded
+// CHECK:STDOUT:   %Main.import_ref.f42 = import_ref Main//types, inst19 [no loc], unloaded
 // CHECK:STDOUT:   %Main.import_ref.b5b = import_ref Main//types, loc5_22, unloaded
 // CHECK:STDOUT:   %Main.import_ref.1ed = import_ref Main//types, loc6_27, unloaded
 // CHECK:STDOUT:   %Main.import_ref.8f24d3.2: <witness> = import_ref Main//types, loc12_1, loaded [concrete = constants.%complete_type]
-// CHECK:STDOUT:   %Main.import_ref.ee7 = import_ref Main//types, inst79 [no loc], unloaded
+// CHECK:STDOUT:   %Main.import_ref.ee7 = import_ref Main//types, inst80 [no loc], unloaded
 // CHECK:STDOUT:   %Main.import_ref.b14 = import_ref Main//types, loc10_30, unloaded
 // CHECK:STDOUT:   %Main.import_ref.f79 = import_ref Main//types, loc11_33, unloaded
 // CHECK:STDOUT:   %Main.import_ref.8f24d3.3: <witness> = import_ref Main//types, loc17_1, loaded [concrete = constants.%complete_type]
-// CHECK:STDOUT:   %Main.import_ref.95d = import_ref Main//types, inst122 [no loc], unloaded
+// CHECK:STDOUT:   %Main.import_ref.95d = import_ref Main//types, inst123 [no loc], unloaded
 // CHECK:STDOUT:   %Main.import_ref.1cb = import_ref Main//types, loc15_24, unloaded
 // CHECK:STDOUT:   %Main.import_ref.675 = import_ref Main//types, loc16_33, unloaded
 // CHECK:STDOUT:   %Core.Destroy: type = import_ref Core//prelude/parts/destroy, Destroy, loaded [concrete = constants.%Destroy.type]
 // CHECK:STDOUT:   %Main.import_ref.15b: <witness> = import_ref Main//types, loc4_14, loaded [concrete = constants.%Destroy.impl_witness.17d]
-// CHECK:STDOUT:   %Main.import_ref.09f: type = import_ref Main//types, inst18 [no loc], loaded [concrete = constants.%NoAddr]
-// CHECK:STDOUT:   %Main.import_ref.cb9298.1: type = import_ref Main//types, inst39 [no loc], loaded [concrete = constants.%Destroy.type]
+// CHECK:STDOUT:   %Main.import_ref.09f: type = import_ref Main//types, inst19 [no loc], loaded [concrete = constants.%NoAddr]
+// CHECK:STDOUT:   %Main.import_ref.cb9298.1: type = import_ref Main//types, inst40 [no loc], loaded [concrete = constants.%Destroy.type]
 // CHECK:STDOUT:   %Main.import_ref.022: <witness> = import_ref Main//types, loc9_22, loaded [concrete = constants.%Destroy.impl_witness.f3a]
-// CHECK:STDOUT:   %Main.import_ref.2e8: type = import_ref Main//types, inst79 [no loc], loaded [concrete = constants.%ExplicitReturn]
-// CHECK:STDOUT:   %Main.import_ref.cb9298.2: type = import_ref Main//types, inst39 [no loc], loaded [concrete = constants.%Destroy.type]
+// CHECK:STDOUT:   %Main.import_ref.2e8: type = import_ref Main//types, inst80 [no loc], loaded [concrete = constants.%ExplicitReturn]
+// CHECK:STDOUT:   %Main.import_ref.cb9298.2: type = import_ref Main//types, inst40 [no loc], loaded [concrete = constants.%Destroy.type]
 // CHECK:STDOUT:   %Main.import_ref.d7d: <witness> = import_ref Main//types, loc14_16, loaded [concrete = constants.%Destroy.impl_witness.91f]
-// CHECK:STDOUT:   %Main.import_ref.0a2: type = import_ref Main//types, inst122 [no loc], loaded [concrete = constants.%WithAddr]
-// CHECK:STDOUT:   %Main.import_ref.cb9298.3: type = import_ref Main//types, inst39 [no loc], loaded [concrete = constants.%Destroy.type]
+// CHECK:STDOUT:   %Main.import_ref.0a2: type = import_ref Main//types, inst123 [no loc], loaded [concrete = constants.%WithAddr]
+// CHECK:STDOUT:   %Main.import_ref.cb9298.3: type = import_ref Main//types, inst40 [no loc], loaded [concrete = constants.%Destroy.type]
 // CHECK:STDOUT:   %Main.import_ref.b27: %NoAddr.as.Destroy.impl.Op.type = import_ref Main//types, loc4_14, loaded [concrete = constants.%NoAddr.as.Destroy.impl.Op]
 // CHECK:STDOUT:   %Destroy.impl_witness_table.b7c = impl_witness_table (%Main.import_ref.b27), @NoAddr.as.Destroy.impl [concrete]
 // CHECK:STDOUT:   %Main.import_ref.344: %WithAddr.as.Destroy.impl.Op.type = import_ref Main//types, loc14_16, loaded [concrete = constants.%WithAddr.as.Destroy.impl.Op]
@@ -725,27 +725,27 @@ fn G() { F({}); }
 // CHECK:STDOUT:     import Core//prelude/...
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Main.import_ref.8f24d3.1: <witness> = import_ref Main//types, loc7_1, loaded [concrete = constants.%complete_type]
-// CHECK:STDOUT:   %Main.import_ref.f42 = import_ref Main//types, inst18 [no loc], unloaded
+// CHECK:STDOUT:   %Main.import_ref.f42 = import_ref Main//types, inst19 [no loc], unloaded
 // CHECK:STDOUT:   %Main.import_ref.784: %NoAddr.Make.type = import_ref Main//types, loc5_22, loaded [concrete = constants.%NoAddr.Make]
 // CHECK:STDOUT:   %Main.import_ref.1ed = import_ref Main//types, loc6_27, unloaded
 // CHECK:STDOUT:   %Main.import_ref.8f24d3.2: <witness> = import_ref Main//types, loc12_1, loaded [concrete = constants.%complete_type]
-// CHECK:STDOUT:   %Main.import_ref.ee7 = import_ref Main//types, inst79 [no loc], unloaded
+// CHECK:STDOUT:   %Main.import_ref.ee7 = import_ref Main//types, inst80 [no loc], unloaded
 // CHECK:STDOUT:   %Main.import_ref.8e0: %ExplicitReturn.Make.type = import_ref Main//types, loc10_30, loaded [concrete = constants.%ExplicitReturn.Make]
 // CHECK:STDOUT:   %Main.import_ref.f79 = import_ref Main//types, loc11_33, unloaded
 // CHECK:STDOUT:   %Main.import_ref.8f24d3.3: <witness> = import_ref Main//types, loc17_1, loaded [concrete = constants.%complete_type]
-// CHECK:STDOUT:   %Main.import_ref.95d = import_ref Main//types, inst122 [no loc], unloaded
+// CHECK:STDOUT:   %Main.import_ref.95d = import_ref Main//types, inst123 [no loc], unloaded
 // CHECK:STDOUT:   %Main.import_ref.974: %WithAddr.Make.type = import_ref Main//types, loc15_24, loaded [concrete = constants.%WithAddr.Make]
 // CHECK:STDOUT:   %Main.import_ref.675 = import_ref Main//types, loc16_33, unloaded
 // CHECK:STDOUT:   %Core.Destroy: type = import_ref Core//prelude/parts/destroy, Destroy, loaded [concrete = constants.%Destroy.type]
 // CHECK:STDOUT:   %Main.import_ref.15b: <witness> = import_ref Main//types, loc4_14, loaded [concrete = constants.%Destroy.impl_witness.17d]
-// CHECK:STDOUT:   %Main.import_ref.09f: type = import_ref Main//types, inst18 [no loc], loaded [concrete = constants.%NoAddr]
-// CHECK:STDOUT:   %Main.import_ref.cb9298.1: type = import_ref Main//types, inst39 [no loc], loaded [concrete = constants.%Destroy.type]
+// CHECK:STDOUT:   %Main.import_ref.09f: type = import_ref Main//types, inst19 [no loc], loaded [concrete = constants.%NoAddr]
+// CHECK:STDOUT:   %Main.import_ref.cb9298.1: type = import_ref Main//types, inst40 [no loc], loaded [concrete = constants.%Destroy.type]
 // CHECK:STDOUT:   %Main.import_ref.022: <witness> = import_ref Main//types, loc9_22, loaded [concrete = constants.%Destroy.impl_witness.f3a]
-// CHECK:STDOUT:   %Main.import_ref.2e8: type = import_ref Main//types, inst79 [no loc], loaded [concrete = constants.%ExplicitReturn]
-// CHECK:STDOUT:   %Main.import_ref.cb9298.2: type = import_ref Main//types, inst39 [no loc], loaded [concrete = constants.%Destroy.type]
+// CHECK:STDOUT:   %Main.import_ref.2e8: type = import_ref Main//types, inst80 [no loc], loaded [concrete = constants.%ExplicitReturn]
+// CHECK:STDOUT:   %Main.import_ref.cb9298.2: type = import_ref Main//types, inst40 [no loc], loaded [concrete = constants.%Destroy.type]
 // CHECK:STDOUT:   %Main.import_ref.d7d: <witness> = import_ref Main//types, loc14_16, loaded [concrete = constants.%Destroy.impl_witness.91f]
-// CHECK:STDOUT:   %Main.import_ref.0a2: type = import_ref Main//types, inst122 [no loc], loaded [concrete = constants.%WithAddr]
-// CHECK:STDOUT:   %Main.import_ref.cb9298.3: type = import_ref Main//types, inst39 [no loc], loaded [concrete = constants.%Destroy.type]
+// CHECK:STDOUT:   %Main.import_ref.0a2: type = import_ref Main//types, inst123 [no loc], loaded [concrete = constants.%WithAddr]
+// CHECK:STDOUT:   %Main.import_ref.cb9298.3: type = import_ref Main//types, inst40 [no loc], loaded [concrete = constants.%Destroy.type]
 // CHECK:STDOUT:   %Main.import_ref.344: %WithAddr.as.Destroy.impl.Op.type = import_ref Main//types, loc14_16, loaded [concrete = constants.%WithAddr.as.Destroy.impl.Op]
 // CHECK:STDOUT:   %Destroy.impl_witness_table.4f4 = impl_witness_table (%Main.import_ref.344), @WithAddr.as.Destroy.impl [concrete]
 // CHECK:STDOUT:   %Main.import_ref.d37: %ExplicitReturn.as.Destroy.impl.Op.type = import_ref Main//types, loc9_22, loaded [concrete = constants.%ExplicitReturn.as.Destroy.impl.Op]

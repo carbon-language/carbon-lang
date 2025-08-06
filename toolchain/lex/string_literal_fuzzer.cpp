@@ -47,7 +47,7 @@ extern "C" int LLVMFuzzerTestOneInput(const unsigned char* data, size_t size) {
 
   auto* null_emitter = &Diagnostics::NullEmitter<const char*>();
   if (literal->kind() == Lex::StringLiteral::Kind::Char) {
-    volatile auto value = literal->ComputeCharValue(*null_emitter);
+    volatile auto value = literal->ComputeCharLiteralValue(*null_emitter);
     (void)value;
   } else {
     llvm::BumpPtrAllocator allocator;

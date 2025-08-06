@@ -5,6 +5,7 @@
 package Core library "prelude/types";
 
 export import library "prelude/types/bool";
+export import library "prelude/types/char";
 export import library "prelude/types/int";
 export import library "prelude/types/int_literal";
 export import library "prelude/types/optional";

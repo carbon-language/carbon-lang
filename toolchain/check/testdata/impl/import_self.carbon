@@ -150,10 +150,10 @@ fn F(x: (), y: ()) -> () {
 // CHECK:STDOUT:     import Core//prelude
 // CHECK:STDOUT:     import Core//prelude/...
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %Main.import_ref.07c = import_ref Main//a, inst19 [no loc], unloaded
+// CHECK:STDOUT:   %Main.import_ref.07c = import_ref Main//a, inst20 [no loc], unloaded
 // CHECK:STDOUT:   %Main.import_ref.f99: %Add.assoc_type = import_ref Main//a, loc5_41, loaded [concrete = constants.%assoc0.5ca]
 // CHECK:STDOUT:   %Main.Op: %Add.Op.type = import_ref Main//a, Op, loaded [concrete = constants.%Add.Op]
-// CHECK:STDOUT:   %Main.import_ref.e5e: %Add.type = import_ref Main//a, inst19 [no loc], loaded [symbolic = constants.%Self.b3d]
+// CHECK:STDOUT:   %Main.import_ref.e5e: %Add.type = import_ref Main//a, inst20 [no loc], loaded [symbolic = constants.%Self.b3d]
 // CHECK:STDOUT:   %Main.import_ref.5a3: %Add.Op.type = import_ref Main//a, loc5_41, loaded [concrete = constants.%Add.Op]
 // CHECK:STDOUT:   %Core.Destroy: type = import_ref Core//prelude/parts/destroy, Destroy, loaded [concrete = constants.%Destroy.type]
 // CHECK:STDOUT: }
