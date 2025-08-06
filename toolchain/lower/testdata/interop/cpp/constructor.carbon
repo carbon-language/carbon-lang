@@ -18,7 +18,7 @@
 
 class C {
  public:
-  C() : x_(8), y_(88) {}
+  C() : x_(8), y_(9) {}
 
  private:
   int x_;
@@ -76,7 +76,7 @@ fn F() {
 // CHECK:STDOUT:   %x_ = getelementptr inbounds nuw %class.C, ptr %this1, i32 0, i32 0
 // CHECK:STDOUT:   store i32 8, ptr %x_, align 4
 // CHECK:STDOUT:   %y_ = getelementptr inbounds nuw %class.C, ptr %this1, i32 0, i32 1
-// CHECK:STDOUT:   store i32 88, ptr %y_, align 4
+// CHECK:STDOUT:   store i32 9, ptr %y_, align 4
 // CHECK:STDOUT:   ret void
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
