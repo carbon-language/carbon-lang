@@ -123,36 +123,46 @@ class StepStack {
   auto PushArray(llvm::ArrayRef<PushItem> items) -> void {
     for (auto item : llvm::reverse(items)) {
       CARBON_KIND_SWITCH(item) {
-        case CARBON_KIND(InstId inst_id):
+        case CARBON_KIND(InstId inst_id): {
           PushInstId(inst_id);
           break;
-        case CARBON_KIND(llvm::StringRef string):
+        }
+        case CARBON_KIND(llvm::StringRef string): {
           PushString(string);
           break;
-        case CARBON_KIND(NameId name_id):
+        }
+        case CARBON_KIND(NameId name_id): {
           PushNameId(name_id);
           break;
-        case CARBON_KIND(ElementIndex element_index):
+        }
+        case CARBON_KIND(ElementIndex element_index): {
           PushElementIndex(element_index);
           break;
-        case CARBON_KIND(QualifiedNameItem qualified_name):
+        }
+        case CARBON_KIND(QualifiedNameItem qualified_name): {
           PushQualifiedName(qualified_name.first, qualified_name.second);
           break;
-        case CARBON_KIND(EntityNameItem entity_name):
+        }
+        case CARBON_KIND(EntityNameItem entity_name): {
           PushEntityName(entity_name.first, entity_name.second);
           break;
-        case CARBON_KIND(EntityNameId entity_name_id):
+        }
+        case CARBON_KIND(EntityNameId entity_name_id): {
           PushEntityNameId(entity_name_id);
           break;
-        case CARBON_KIND(TypeId type_id):
+        }
+        case CARBON_KIND(TypeId type_id): {
           PushTypeId(type_id);
           break;
-        case CARBON_KIND(SpecificInterface specific_interface):
+        }
+        case CARBON_KIND(SpecificInterface specific_interface): {
           PushSpecificInterface(specific_interface);
           break;
-        case CARBON_KIND(llvm::ListSeparator * sep):
+        }
+        case CARBON_KIND(llvm::ListSeparator * sep): {
           PushString(*sep);
           break;
+        }
       }
     }
   }
@@ -299,6 +309,12 @@ class Stringifier {
     step_stack_->PushInstId(inst.inner_id);
   }
 
+  auto StringifyInst(InstId /*inst_id*/, CustomLayoutType inst) -> void {
+    auto layout = sem_ir_->custom_layouts().Get(inst.layout_id);
+    *out_ << "<size " << layout[CustomLayoutId::SizeIndex] << ", align "
+          << layout[CustomLayoutId::AlignIndex] << ">";
+  }
+
   auto StringifyInst(InstId /*inst_id*/, FacetAccessType inst) -> void {
     // Given `T:! I`, print `T as type` as simply `T`.
     step_stack_->PushInstId(inst.facet_value_inst_id);
@@ -420,10 +436,15 @@ class Stringifier {
   auto StringifyInst(InstId /*inst_id*/, ImplWitnessAccess inst) -> void {
     auto witness_inst_id =
         sem_ir_->constant_values().GetConstantInstId(inst.witness_id);
-    if (auto specific_interface =
-            TryGetSpecificInterfaceForImplWitness(witness_inst_id)) {
-      const auto& interface =
-          sem_ir_->interfaces().Get(specific_interface->interface_id);
+    auto lookup = sem_ir_->insts().GetAs<LookupImplWitness>(witness_inst_id);
+    auto specific_interface =
+        sem_ir_->specific_interfaces().Get(lookup.query_specific_interface_id);
+    const auto& interface =
+        sem_ir_->interfaces().Get(specific_interface.interface_id);
+    if (!interface.associated_entities_id.has_value()) {
+      step_stack_->Push(".(TODO: element ", inst.index, " in incomplete ",
+                        witness_inst_id, ")");
+    } else {
       auto entities =
           sem_ir_->inst_blocks().Get(interface.associated_entities_id);
       size_t index = inst.index.index;
@@ -446,11 +467,8 @@ class Stringifier {
       }
       step_stack_->Push(
           ".(",
-          StepStack::EntityNameItem{interface, specific_interface->specific_id},
+          StepStack::EntityNameItem{interface, specific_interface.specific_id},
           ".");
-    } else {
-      step_stack_->Push(".(TODO: element ", inst.index, " in ", witness_inst_id,
-                        ")");
     }
 
     if (auto lookup =
@@ -510,6 +528,12 @@ class Stringifier {
     const auto& name_scope = sem_ir_->name_scopes().Get(inst.name_scope_id);
     step_stack_->PushQualifiedName(name_scope.parent_scope_id(),
                                    name_scope.name_id());
+  }
+
+  auto StringifyInst(InstId /*inst_id*/, PartialType inst) -> void {
+    *out_ << "partial ";
+
+    step_stack_->PushInstId(inst.inner_id);
   }
 
   auto StringifyInst(InstId /*inst_id*/, PatternType inst) -> void {

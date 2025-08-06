@@ -5,6 +5,7 @@
 #ifndef CARBON_TOOLCHAIN_SEM_IR_CLASS_H_
 #define CARBON_TOOLCHAIN_SEM_IR_CLASS_H_
 
+#include "toolchain/base/value_store.h"
 #include "toolchain/sem_ir/entity_with_params_base.h"
 #include "toolchain/sem_ir/ids.h"
 
@@ -62,7 +63,7 @@ struct ClassFields {
 
   // The virtual function table. `None` if the class has no (direct or
   // inherited) virtual functions.
-  InstId vtable_id = InstId::None;
+  InstId vtable_ptr_id = InstId::None;
 
   auto PrintClassFields(llvm::raw_ostream& out) const -> void {
     out << "self_type_id: " << self_type_id << ", inheritance_kind: ";
@@ -81,7 +82,7 @@ struct ClassFields {
         << ", body_block_id: " << body_block_id << ", adapt_id: " << adapt_id
         << ", base_id: " << base_id
         << ", complete_type_witness_id: " << complete_type_witness_id
-        << ", vtable_id: " << vtable_id << "}";
+        << ", vtable_ptr_id: " << vtable_ptr_id << "}";
   }
 };
 
@@ -114,6 +115,8 @@ struct Class : public EntityWithParamsBase,
   // is not yet defined.
   auto GetObjectRepr(const File& file, SpecificId specific_id) const -> TypeId;
 };
+
+using ClassStore = ValueStore<ClassId, Class>;
 
 }  // namespace Carbon::SemIR
 

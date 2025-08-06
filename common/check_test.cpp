@@ -6,6 +6,8 @@
 
 #include <gtest/gtest.h>
 
+#include <string>
+
 namespace Carbon {
 namespace {
 

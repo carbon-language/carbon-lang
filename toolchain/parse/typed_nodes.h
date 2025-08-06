@@ -258,6 +258,18 @@ struct LibrarySpecifier {
   NodeIdOneOf<LibraryName, DefaultLibrary> name;
 };
 
+using InlineImportBody =
+    LeafNode<NodeKind::InlineImportBody, Lex::StringLiteralTokenIndex>;
+
+// `inline` in `import`.
+struct InlineImportSpecifier {
+  static constexpr auto Kind =
+      NodeKind::InlineImportSpecifier.Define({.child_count = 1});
+
+  Lex::InlineTokenIndex token;
+  InlineImportBodyId body;
+};
+
 // First line of the file, such as:
 //   `impl package MyPackage library "MyLibrary";`
 struct PackageDecl {
@@ -272,7 +284,7 @@ struct PackageDecl {
   Lex::SemiTokenIndex token;
 };
 
-// `import TheirPackage library "TheirLibrary";`
+// `import [TheirPackage] [library "TheirLibrary" | inline "code"];`
 using ImportIntroducer =
     LeafNode<NodeKind::ImportIntroducer, Lex::ImportTokenIndex>;
 struct ImportDecl {
@@ -283,6 +295,7 @@ struct ImportDecl {
   llvm::SmallVector<AnyModifierId> modifiers;
   std::optional<AnyPackageNameId> name;
   std::optional<LibrarySpecifierId> library;
+  std::optional<InlineImportSpecifierId> inline_specifier;
   Lex::SemiTokenIndex token;
 };
 
@@ -675,17 +688,15 @@ struct ReturnStatement {
 using ForHeaderStart =
     LeafNode<NodeKind::ForHeaderStart, Lex::OpenParenTokenIndex>;
 
-// The `var ... in` portion of a `for` statement.
+// The `... in` portion of a `for` statement.
 struct ForIn {
-  static constexpr auto Kind = NodeKind::ForIn.Define(
-      {.bracketed_by = VariableIntroducer::Kind, .child_count = 2});
+  static constexpr auto Kind = NodeKind::ForIn.Define({.child_count = 1});
 
-  VariableIntroducerId introducer;
   AnyPatternId pattern;
   Lex::InTokenIndex token;
 };
 
-// The `for (var ... in ...)` portion of a `for` statement.
+// The `(... in ...)` portion of a `for` statement.
 struct ForHeader {
   static constexpr auto Kind =
       NodeKind::ForHeader.Define({.bracketed_by = ForHeaderStart::Kind});

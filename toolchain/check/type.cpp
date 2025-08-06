@@ -105,6 +105,11 @@ auto GetAssociatedEntityType(Context& context, SemIR::InterfaceId interface_id,
                                                   interface_specific_id);
 }
 
+auto GetConstType(Context& context, SemIR::TypeInstId inner_type_id)
+    -> SemIR::TypeId {
+  return GetTypeImpl<SemIR::ConstType>(context, inner_type_id);
+}
+
 auto GetSingletonType(Context& context, SemIR::TypeInstId singleton_id)
     -> SemIR::TypeId {
   CARBON_CHECK(SemIR::IsSingletonInstId(singleton_id));

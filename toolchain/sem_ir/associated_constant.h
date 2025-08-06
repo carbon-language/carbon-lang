@@ -6,6 +6,7 @@
 #define CARBON_TOOLCHAIN_SEM_IR_ASSOCIATED_CONSTANT_H_
 
 #include "common/ostream.h"
+#include "toolchain/base/value_store.h"
 #include "toolchain/sem_ir/ids.h"
 
 namespace Carbon::SemIR {
@@ -47,6 +48,9 @@ struct AssociatedConstant : public Printable<AssociatedConstant> {
   // The default value of the constant.
   InstId default_value_id = InstId::None;
 };
+
+using AssociatedConstantStore =
+    ValueStore<AssociatedConstantId, AssociatedConstant>;
 
 }  // namespace Carbon::SemIR
 

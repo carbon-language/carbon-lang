@@ -55,6 +55,10 @@
         {
           "name": "comment.line.carbon",
           "match": "^\\s*(?=//\\s).*$"
+        },
+        {
+          "name": "comment.line.carbon",
+          "match": "^\\s*//@dump-sem-ir-(begin|end)\\s*$"
         }
       ]
     },

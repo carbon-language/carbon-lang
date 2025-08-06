@@ -129,6 +129,7 @@ cc_library(
     deps = [
         ":character_set",
         ":helpers",
+        ":token_info",
         "//common:check",
         "//toolchain/diagnostics:diagnostic_emitter",
         "@llvm-project//llvm:Support",
@@ -189,12 +190,15 @@ cc_library(
         ":numeric_literal",
         ":string_literal",
         ":token_index",
+        ":token_info",
         ":token_kind",
         ":tokenized_buffer",
         "//common:check",
+        "//common:vlog",
         "//toolchain/base:kind_switch",
         "//toolchain/base:shared_value_stores",
         "//toolchain/diagnostics:diagnostic_emitter",
+        "//toolchain/diagnostics:format_providers",
         "//toolchain/source:source_buffer",
         "@llvm-project//llvm:Support",
     ],
@@ -223,6 +227,18 @@ cc_library(
 )
 
 cc_library(
+    name = "token_info",
+    hdrs = ["token_info.h"],
+    deps = [
+        ":token_index",
+        ":token_kind",
+        "//common:check",
+        "//toolchain/base:int",
+        "//toolchain/base:value_ids",
+    ],
+)
+
+cc_library(
     name = "tokenized_buffer",
     srcs = ["tokenized_buffer.cpp"],
     hdrs = ["tokenized_buffer.h"],
@@ -232,6 +248,7 @@ cc_library(
         ":numeric_literal",
         ":string_literal",
         ":token_index",
+        ":token_info",
         ":token_kind",
         "//common:check",
         "//common:ostream",

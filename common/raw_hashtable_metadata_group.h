@@ -480,12 +480,11 @@ class MetadataGroup : public Printable<MetadataGroup> {
   friend class BenchmarkSimdMetadataGroup;
 
   // All SIMD variants that we have an implementation for should be enabled for
-  // debugging and fuzzing. This lets us maintain a SIMD implementation even if
-  // it is not used due to performance reasons, and easily re-enable it if the
-  // performance changes.
+  // debugging. This lets us maintain a SIMD implementation even if it is not
+  // used due to performance reasons, and easily re-enable it if the performance
+  // changes.
   static constexpr bool DebugSimd =
-#if (!defined(NDEBUG) || defined(FUZZING_BUILD_MODE_UNSAFE_FOR_PRODUCTION)) && \
-    (CARBON_NEON_SIMD_SUPPORT || CARBON_X86_SIMD_SUPPORT)
+#if !defined(NDEBUG) && (CARBON_NEON_SIMD_SUPPORT || CARBON_X86_SIMD_SUPPORT)
       true;
 #else
       false;

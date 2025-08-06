@@ -78,9 +78,11 @@ cc_library(
 
 cc_library(
     name = "busybox_info",
+    srcs = ["busybox_info.cpp"],
     hdrs = ["busybox_info.h"],
     deps = [
         "//common:error",
+        "//common:exe_path",
         "@llvm-project//llvm:Support",
     ],
 )
@@ -179,7 +181,12 @@ install_dirs = {
         is_driver = True,
     ) for name in llvm_binaries],
     "lib/carbon/llvm/lib/clang/" + LLVM_VERSION_MAJOR: [
-        install_filegroup("include", ":clang_headers", "staging/include/"),
+        install_filegroup(
+            "include",
+            ":clang_headers",
+            label = "installed_clang_headers",
+            remove_prefix = "staging/include/",
+        ),
     ],
 }
 
@@ -201,6 +208,14 @@ py_test(
 manifest(
     name = "install_data_manifest.txt",
     srcs = [":install_data"],
+)
+
+# A list of clang's installed builtin header files.
+# This is consumed by //toolchain/testing:file_test.
+manifest(
+    name = "clang_headers_manifest.txt",
+    srcs = [":installed_clang_headers"],
+    strip_package_dir = True,
 )
 
 pkg_naming_variables(

@@ -150,6 +150,7 @@ Features that are provisional have been marked as such on a best-effort basis.
 Here is a simple function showing some Carbon code:
 
 ```carbon
+import Core library "io";
 import Math;
 
 // Returns the smallest factor of `n` > 1, and
@@ -160,7 +161,7 @@ fn SmallestFactor(n: i32) -> (i32, bool) {
   while (i <= limit) {
     let remainder: i32 = n % i;
     if (remainder == 0) {
-      Carbon.Print("{0} is a factor of {1}", i, n);
+      Core.Print("{0} is a factor of {1}", i, n);
       return (i, false);
     }
     if (i == 2) {
@@ -203,10 +204,9 @@ import Math;
 ```
 
 imports the default library from package `Math`. The names from this library are
-accessible as members of `Math`, like `Math.Sqrt`. The `Carbon.Print` function
-comes from the `Carbon` package's prelude library which is
-[imported by default](#name-lookup-for-common-types). Unlike C++, the namespaces
-of different packages are kept separate, so there are no name conflicts.
+accessible as members of `Math`, like `Math.Sqrt`. The `Core.Print` function
+comes from the `Core` package's `io` library. Unlike C++, the namespaces of
+different packages are kept separate, so there are no name conflicts.
 
 Carbon [comments](#code-and-comments) must be on a line by themselves starting
 with `//`:
@@ -287,10 +287,10 @@ Other expressions include `n % i`, which applies the binary `%` modulo operator
 with `n` and `i` as arguments, and `remainder == 0`, which applies the `==`
 comparison operator producing a `bool` result. Expression return values are
 ignored when expressions are used as statements, as in this call to the
-`Carbon.Print` function:
+`Core.Print` function:
 
 ```carbon
-      Carbon.Print("{0} is a factor of {1}", i, n);
+      Core.Print("{0} is a factor of {1}", i, n);
 ```
 
 Function calls consist of the name of the function followed by the
@@ -882,7 +882,7 @@ Elements of an array may be accessed using square brackets (`[`...`]`), as in
 
 ```carbon
 a[i] = 2;
-Carbon.Print(a[0]);
+Core.Print(a[0]);
 ```
 
 > **TODO:** Slices
@@ -1382,11 +1382,11 @@ For example:
 
 ```carbon
 if (fruit.IsYellow()) {
-  Carbon.Print("Banana!");
+  Core.Print("Banana!");
 } else if (fruit.IsOrange()) {
-  Carbon.Print("Orange!");
+  Core.Print("Orange!");
 } else {
-  Carbon.Print("Vegetable!");
+  Core.Print("Vegetable!");
 }
 ```
 
@@ -1415,10 +1415,10 @@ example, this prints `0`, `1`, `2`, then `Done!`:
 ```carbon
 var x: i32 = 0;
 while (x < 3) {
-  Carbon.Print(x);
+  Core.Print(x);
   ++x;
 }
-Carbon.Print("Done!");
+Core.Print("Done!");
 ```
 
 > References:
@@ -1434,7 +1434,7 @@ example, this prints each `String` value in `names`:
 
 ```carbon
 for (var name: String in names) {
-  Carbon.Print(name);
+  Core.Print(name);
 }
 ```
 
@@ -1456,7 +1456,7 @@ processed):
 ```carbon
 for (var step: Step in steps) {
   if (step.IsManual()) {
-    Carbon.Print("Reached manual step!");
+    Core.Print("Reached manual step!");
     break;
   }
   step.Process();
@@ -1485,7 +1485,7 @@ while (!f.EOF()) {
   if (line.IsEmpty()) {
     continue;
   }
-  Carbon.Print(line);
+  Core.Print(line);
 }
 ```
 
@@ -1514,7 +1514,7 @@ fn PrintFirstN(n: i32) {
       // executed after a `return`.
       return;
     }
-    Carbon.Print(i);
+    Core.Print(i);
   }
 }
 ```
@@ -2827,7 +2827,7 @@ class Circle {
   // `Printable`.
   impl as Printable {
     fn Print[self: Self]() {
-      Carbon.Print("Circle with radius: {0}", self.radius);
+      Core.Print("Circle with radius: {0}", self.radius);
     }
   }
 }

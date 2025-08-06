@@ -2,7 +2,7 @@
 // Exceptions. See /LICENSE for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
-// EXTRA-ARGS: --dump-sem-ir-ranges=only
+// INCLUDE-FILE: toolchain/testing/testdata/min_prelude/primitives.carbon
 //
 // AUTOUPDATE
 // TIP: To test this file alone, run:
@@ -166,8 +166,8 @@ let b: i32 = Add(0x7FFFFFFF, 1);
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %int_32: Core.IntLiteral = int_value 32 [concrete]
 // CHECK:STDOUT:   %i32: type = class_type @Int, @Int(%int_32) [concrete]
-// CHECK:STDOUT:   %Add.type.b1f: type = fn_type @Add.1 [concrete]
-// CHECK:STDOUT:   %Add: %Add.type.b1f = struct_value () [concrete]
+// CHECK:STDOUT:   %Add.type: type = fn_type @Add [concrete]
+// CHECK:STDOUT:   %Add: %Add.type = struct_value () [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -175,12 +175,12 @@ let b: i32 = Add(0x7FFFFFFF, 1);
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @RuntimeCallIsValid(%a.param: %i32, %b.param: %i32) -> %i32 {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %Add.ref: %Add.type.b1f = name_ref Add, file.%Add.decl [concrete = constants.%Add]
+// CHECK:STDOUT:   %Add.ref: %Add.type = name_ref Add, file.%Add.decl [concrete = constants.%Add]
 // CHECK:STDOUT:   %a.ref: %i32 = name_ref a, %a
 // CHECK:STDOUT:   %b.ref: %i32 = name_ref b, %b
-// CHECK:STDOUT:   %int.sadd: init %i32 = call %Add.ref(%a.ref, %b.ref)
-// CHECK:STDOUT:   %.loc17_19.1: %i32 = value_of_initializer %int.sadd
-// CHECK:STDOUT:   %.loc17_19.2: %i32 = converted %int.sadd, %.loc17_19.1
+// CHECK:STDOUT:   %Add.call: init %i32 = call %Add.ref(%a.ref, %b.ref)
+// CHECK:STDOUT:   %.loc17_19.1: %i32 = value_of_initializer %Add.call
+// CHECK:STDOUT:   %.loc17_19.2: %i32 = converted %Add.call, %.loc17_19.1
 // CHECK:STDOUT:   return %.loc17_19.2
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

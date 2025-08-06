@@ -2,6 +2,8 @@
 // Exceptions. See /LICENSE for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
+// INCLUDE-FILE: toolchain/testing/testdata/min_prelude/convert.carbon
+//
 // AUTOUPDATE
 // TIP: To test this file alone, run:
 // TIP:   bazel test //toolchain/testing:file_test --test_arg=--file_tests=toolchain/lower/testdata/global/class_obj.carbon
@@ -15,12 +17,12 @@ var a: A = {};
 // CHECK:STDOUT: source_filename = "class_obj.carbon"
 // CHECK:STDOUT:
 // CHECK:STDOUT: @_Ca.Main = global {} zeroinitializer
-// CHECK:STDOUT: @A.val.loc12_1 = internal constant {} zeroinitializer
+// CHECK:STDOUT: @A.val.loc14_1 = internal constant {} zeroinitializer
 // CHECK:STDOUT: @llvm.global_ctors = appending global [1 x { i32, ptr, ptr }] [{ i32, ptr, ptr } { i32 0, ptr @_C__global_init.Main, ptr null }]
 // CHECK:STDOUT:
 // CHECK:STDOUT: define void @_C__global_init.Main() !dbg !4 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   call void @llvm.memcpy.p0.p0.i64(ptr align 1 @_Ca.Main, ptr align 1 @A.val.loc12_1, i64 0, i1 false), !dbg !7
+// CHECK:STDOUT:   call void @llvm.memcpy.p0.p0.i64(ptr align 1 @_Ca.Main, ptr align 1 @A.val.loc14_1, i64 0, i1 false), !dbg !7
 // CHECK:STDOUT:   ret void, !dbg !8
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -39,5 +41,5 @@ var a: A = {};
 // CHECK:STDOUT: !4 = distinct !DISubprogram(name: "__global_init", linkageName: "_C__global_init.Main", scope: null, file: !3, type: !5, spFlags: DISPFlagDefinition, unit: !2)
 // CHECK:STDOUT: !5 = !DISubroutineType(types: !6)
 // CHECK:STDOUT: !6 = !{}
-// CHECK:STDOUT: !7 = !DILocation(line: 12, column: 1, scope: !4)
+// CHECK:STDOUT: !7 = !DILocation(line: 14, column: 1, scope: !4)
 // CHECK:STDOUT: !8 = !DILocation(line: 0, scope: !4)

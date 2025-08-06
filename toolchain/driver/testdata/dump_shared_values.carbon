@@ -2,7 +2,7 @@
 // Exceptions. See /LICENSE for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
-// ARGS: --include-diagnostic-kind compile --phase=lex --dump-shared-values %s
+// ARGS: compile --phase=lex --dump-shared-values %s
 //
 // AUTOUPDATE
 // TIP: To test this file alone, run:
@@ -27,6 +27,7 @@ var str2: String = "ab'\"c";
 // CHECK:STDOUT:     real0:           10*10^-1
 // CHECK:STDOUT:     real1:           8*10^7
 // CHECK:STDOUT:     real2:           8*10^8
+// CHECK:STDOUT:   floats:          {}
 // CHECK:STDOUT:   identifiers:
 // CHECK:STDOUT:     identifier0:     int1
 // CHECK:STDOUT:     identifier1:     int2

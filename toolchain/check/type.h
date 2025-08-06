@@ -38,6 +38,10 @@ auto GetAssociatedEntityType(Context& context, SemIR::InterfaceId interface_id,
 auto GetSingletonType(Context& context, SemIR::TypeInstId singleton_id)
     -> SemIR::TypeId;
 
+// Gets a const-qualified version of a type.
+auto GetConstType(Context& context, SemIR::TypeInstId inner_type_id)
+    -> SemIR::TypeId;
+
 // Gets a class type.
 auto GetClassType(Context& context, SemIR::ClassId class_id,
                   SemIR::SpecificId specific_id) -> SemIR::TypeId;
@@ -45,6 +49,9 @@ auto GetClassType(Context& context, SemIR::ClassId class_id,
 // Gets a function type. The returned type will be complete.
 auto GetFunctionType(Context& context, SemIR::FunctionId fn_id,
                      SemIR::SpecificId specific_id) -> SemIR::TypeId;
+
+auto GetVtableType(Context& context, SemIR::VtableId vtable_id)
+    -> SemIR::TypeId;
 
 // Gets the type of an associated function with the `Self` parameter bound to
 // a particular value. The returned type will be complete.

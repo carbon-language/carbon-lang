@@ -68,7 +68,7 @@ runs:
 
         # Enable remote cache for our CI but minimize downloads.
         build --remote_cache=https://storage.googleapis.com/carbon-builds-github-v${CACHE_VERSION}
-        build --remote_download_minimal
+        build --remote_download_outputs=minimal
 
         # We import a special key into every action in order to key the Bazel
         # remote cache in a way that avoids collisions between different

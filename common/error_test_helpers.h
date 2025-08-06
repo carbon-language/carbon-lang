@@ -21,14 +21,16 @@ class IsError {
   explicit IsError(::testing::Matcher<std::string> matcher)
       : matcher_(std::move(matcher)) {}
 
-  template <typename T>
-  auto MatchAndExplain(const ErrorOr<T>& result,
+  template <typename T, typename ErrorT>
+  auto MatchAndExplain(const ErrorOr<T, ErrorT>& result,
                        ::testing::MatchResultListener* listener) const -> bool {
     if (result.ok()) {
-      *listener->stream() << "is a success";
+      *listener << "is a success";
       return false;
     } else {
-      return matcher_.MatchAndExplain(result.error().message(), listener);
+      RawStringOstream os;
+      os << result.error();
+      return matcher_.MatchAndExplain(os.TakeStr(), listener);
     }
   }
 
@@ -57,14 +59,13 @@ class IsSuccessMatcher {
   explicit IsSuccessMatcher(InnerMatcher matcher)
       : matcher_(std::move(matcher)) {}
 
-  template <typename T>
-  auto MatchAndExplain(const ErrorOr<T>& result,
+  template <typename T, typename ErrorT>
+  auto MatchAndExplain(const ErrorOr<T, ErrorT>& result,
                        ::testing::MatchResultListener* listener) const -> bool {
     if (result.ok()) {
       return ::testing::Matcher<T>(matcher_).MatchAndExplain(*result, listener);
     } else {
-      *listener->stream() << "is an error with `" << result.error().message()
-                          << "`";
+      *listener << "is an error with `" << result.error() << "`";
       return false;
     }
   }
@@ -94,14 +95,21 @@ auto IsSuccess(InnerMatcher matcher) -> IsSuccessMatcher<InnerMatcher> {
 namespace Carbon {
 
 // Supports printing `ErrorOr<T>` to `std::ostream` in tests.
-template <typename T>
-auto operator<<(std::ostream& out, const ErrorOr<T>& error_or)
+template <typename T, typename ErrorT>
+auto operator<<(std::ostream& out, const ErrorOr<T, ErrorT>& error_or)
     -> std::ostream& {
   if (error_or.ok()) {
-    out << llvm::formatv("ErrorOr{{.value = `{0}`}}", *error_or);
+    // Try and print the value, but only if we can find a viable `<<` overload
+    // for the value type. This should ensure that the `formatv` below can
+    // compile cleanly, and avoid erroring when using matchers on `ErrorOr` with
+    // unprintable value types.
+    if constexpr (requires(const T& value) { out << value; }) {
+      out << llvm::formatv("ErrorOr{{.value = `{0}`}}", *error_or);
+    } else {
+      out << "ErrorOr{{.value = `<unknown>`}}";
+    }
   } else {
-    out << llvm::formatv("ErrorOr{{.error = \"{0}\"}}",
-                         error_or.error().message());
+    out << llvm::formatv("ErrorOr{{.error = \"{0}\"}}", error_or.error());
   }
   return out;
 }

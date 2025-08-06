@@ -8,6 +8,7 @@
 
 #include "common/raw_string_ostream.h"
 #include "toolchain/base/kind_switch.h"
+#include "toolchain/lower/clang_global_decl.h"
 #include "toolchain/sem_ir/entry_point.h"
 #include "toolchain/sem_ir/ids.h"
 #include "toolchain/sem_ir/pattern.h"
@@ -150,8 +151,9 @@ auto Mangler::Mangle(SemIR::FunctionId function_id,
     CARBON_CHECK(!specific_id.has_value(), "entry point should not be generic");
     return "main";
   }
-  if (function.cpp_decl) {
-    return MangleCppClang(function.cpp_decl);
+  if (function.clang_decl_id.has_value()) {
+    return MangleCppClang(dyn_cast<clang::NamedDecl>(
+        sem_ir().clang_decls().Get(function.clang_decl_id).decl));
   }
   RawStringOstream os;
   os << "_C";
@@ -162,13 +164,27 @@ auto Mangler::Mangle(SemIR::FunctionId function_id,
   switch (function.special_function_kind) {
     case SemIR::Function::SpecialFunctionKind::None:
       break;
+    case SemIR::Function::SpecialFunctionKind::Builtin:
+      CARBON_FATAL("Attempting to mangle declaration of builtin function {0}",
+                   function.builtin_function_kind());
     case SemIR::Function::SpecialFunctionKind::Thunk:
       os << ":thunk";
       break;
+    case SemIR::Function::SpecialFunctionKind::HasCppThunk:
+      CARBON_FATAL("C++ functions should have been handled earlier");
   }
 
+  // TODO: If the function is private, also include the library name as part of
+  // the mangling.
   MangleInverseQualifiedNameScope(os, function.parent_scope_id);
 
+  MangleSpecificId(os, specific_id);
+
+  return os.TakeStr();
+}
+
+auto Mangler::MangleSpecificId(llvm::raw_ostream& os,
+                               SemIR::SpecificId specific_id) -> void {
   // TODO: Add proper support for mangling generic entities. For now we use a
   // fingerprint of the specific arguments, which should be stable across files,
   // but isn't necessarily stable across toolchain changes.
@@ -180,8 +196,6 @@ auto Mangler::Mangle(SemIR::FunctionId function_id,
             &sem_ir(), sem_ir().specifics().Get(specific_id).args_id),
         llvm::HexPrintStyle::Lower, 16);
   }
-
-  return os.TakeStr();
 }
 
 auto Mangler::MangleGlobalVariable(SemIR::InstId pattern_id) -> std::string {
@@ -197,29 +211,31 @@ auto Mangler::MangleGlobalVariable(SemIR::InstId pattern_id) -> std::string {
 
   auto var_name = sem_ir().entity_names().Get(var_name_id);
   MangleNameId(os, var_name.name_id);
+  // TODO: If the variable is private, also include the library name as part of
+  // the mangling.
   MangleInverseQualifiedNameScope(os, var_name.parent_scope_id);
   return os.TakeStr();
 }
 
 auto Mangler::MangleCppClang(const clang::NamedDecl* decl) -> std::string {
-  CARBON_CHECK(
-      cpp_mangle_context_,
-      "Mangling of a C++ imported declaration without a Clang `MangleContext`");
-
-  RawStringOstream cpp_mangled_name;
-  cpp_mangle_context_->mangleName(decl, cpp_mangled_name);
-
-  return cpp_mangled_name.TakeStr();
+  return file_context_.cpp_code_generator()
+      .GetMangledName(CreateGlobalDecl(decl))
+      .str();
 }
 
-auto Mangler::MangleVTable(const SemIR::Class& class_info) -> std::string {
+auto Mangler::MangleVTable(const SemIR::Class& class_info,
+                           SemIR::SpecificId specific_id) -> std::string {
   RawStringOstream os;
   os << "_C";
 
   MangleNameId(os, class_info.name_id);
+  // TODO: If the class is private, also include the library name as part of the
+  // mangling.
   MangleInverseQualifiedNameScope(os, class_info.parent_scope_id);
 
   os << ".$vtable";
+
+  MangleSpecificId(os, specific_id);
 
   return os.TakeStr();
 }

@@ -18,7 +18,7 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
 <pre><code class="language-carbon">
 package Sorting api;
-import Carbon library "Printing";
+import Core library "io";
 
 fn Partition[T:! Comparable & Movable](s: Slice(T))
       -> i64 {
@@ -58,14 +58,14 @@ base class Widget {
 }
 
 fn Widget.Print[addr self: Self*](var i: i64, x: f32, _: bool, 47) {
-  Carbon.Print("test" + "t\u{FFFF}his");
-  Carbon.Print(
+  Core.Print("test" + "t\u{FFFF}his");
+  Core.Print(
       """
       testing more
       with weird stuff \
       that does stuff
       """);
-  Carbon.Print(
+  Core.Print(
       """c++
       template &lt;typename T&gt; class C {};
       """);
@@ -80,7 +80,7 @@ class FancyWidget(T:! type) extends Widget {
 }
 
 fn FancyWidget(T:! type).Print[self: Self]() {
-  Carbon.Print("more test");
+  Core.Print("more test");
 }
 
 impl forall [T:! type] FancyWidget(T) as Printable {

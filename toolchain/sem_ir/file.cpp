@@ -62,7 +62,7 @@ auto File::Verify() const -> ErrorOr<Success> {
 
   // Check that every code block has a terminator sequence that appears at the
   // end of the block.
-  for (const Function& function : functions_.array_ref()) {
+  for (const Function& function : functions_.values()) {
     for (InstBlockId block_id : function.body_block_ids) {
       TerminatorKind prior_kind = TerminatorKind::NotTerminator;
       for (InstId inst_id : inst_blocks().Get(block_id)) {
@@ -95,51 +95,30 @@ auto File::OutputYaml(bool include_singletons) const -> Yaml::OutputMapping {
   return Yaml::OutputMapping([this, include_singletons](
                                  Yaml::OutputMapping::Map map) {
     map.Add("filename", filename_);
-    map.Add(
-        "sem_ir", Yaml::OutputMapping([&](Yaml::OutputMapping::Map map) {
-          map.Add("import_irs", import_irs_.OutputYaml());
-          map.Add("import_ir_insts", import_ir_insts_.OutputYaml());
-          map.Add("name_scopes", name_scopes_.OutputYaml());
-          map.Add("entity_names", entity_names_.OutputYaml());
-          map.Add("functions", functions_.OutputYaml());
-          map.Add("classes", classes_.OutputYaml());
-          map.Add("generics", generics_.OutputYaml());
-          map.Add("specifics", specifics_.OutputYaml());
-          map.Add("struct_type_fields", struct_type_fields_.OutputYaml());
-          map.Add("types", types_.OutputYaml());
-          map.Add("insts",
-                  Yaml::OutputMapping([&](Yaml::OutputMapping::Map map) {
-                    for (auto [id, inst] : insts_.enumerate()) {
-                      if (!include_singletons && IsSingletonInstId(id)) {
-                        continue;
-                      }
-                      map.Add(PrintToString(id), Yaml::OutputScalar(inst));
-                    }
-                  }));
-          map.Add("constant_values",
-                  Yaml::OutputMapping([&](Yaml::OutputMapping::Map map) {
-                    for (auto [id, _] : insts_.enumerate()) {
-                      if (!include_singletons && IsSingletonInstId(id)) {
-                        continue;
-                      }
-                      auto value = constant_values_.Get(id);
-                      if (!value.has_value() || value.is_constant()) {
-                        map.Add(PrintToString(id), Yaml::OutputScalar(value));
-                      }
-                    }
-                  }));
-          map.Add(
-              "symbolic_constants",
-              Yaml::OutputMapping([&](Yaml::OutputMapping::Map map) {
-                for (const auto& [i, symbolic] :
-                     llvm::enumerate(constant_values().symbolic_constants())) {
-                  map.Add(
-                      PrintToString(ConstantId::ForSymbolicConstantIndex(i)),
-                      Yaml::OutputScalar(symbolic));
-                }
-              }));
-          map.Add("inst_blocks", inst_blocks_.OutputYaml());
-        }));
+    map.Add("sem_ir", Yaml::OutputMapping([&](Yaml::OutputMapping::Map map) {
+              map.Add("import_irs", import_irs_.OutputYaml());
+              map.Add("import_ir_insts", import_ir_insts_.OutputYaml());
+              map.Add("name_scopes", name_scopes_.OutputYaml());
+              map.Add("entity_names", entity_names_.OutputYaml());
+              map.Add("functions", functions_.OutputYaml());
+              map.Add("classes", classes_.OutputYaml());
+              map.Add("generics", generics_.OutputYaml());
+              map.Add("specifics", specifics_.OutputYaml());
+              map.Add("struct_type_fields", struct_type_fields_.OutputYaml());
+              map.Add("types", types_.OutputYaml());
+              map.Add("insts",
+                      Yaml::OutputMapping([&](Yaml::OutputMapping::Map map) {
+                        for (auto [id, inst] : insts_.enumerate()) {
+                          if (!include_singletons && IsSingletonInstId(id)) {
+                            continue;
+                          }
+                          map.Add(PrintToString(id), Yaml::OutputScalar(inst));
+                        }
+                      }));
+              map.Add("constant_values",
+                      constant_values_.OutputYaml(include_singletons));
+              map.Add("inst_blocks", inst_blocks_.OutputYaml());
+            }));
   });
 }
 

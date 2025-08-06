@@ -14,6 +14,7 @@
 #include "toolchain/diagnostics/diagnostic_consumer.h"
 #include "toolchain/diagnostics/diagnostic_emitter.h"
 #include "toolchain/diagnostics/file_diagnostics.h"
+#include "toolchain/install/install_paths.h"
 #include "toolchain/lex/tokenized_buffer.h"
 #include "toolchain/parse/tree_and_subtrees.h"
 #include "toolchain/sem_ir/file.h"
@@ -52,10 +53,12 @@ class Context {
   };
 
   // `vlog_stream` is optional; other parameters are required.
-  explicit Context(llvm::raw_ostream* vlog_stream,
+  explicit Context(const InstallPaths* installation,
+                   llvm::raw_ostream* vlog_stream,
                    Diagnostics::Consumer* consumer,
                    clang::clangd::LSPBinder::RawOutgoing* outgoing)
-      : vlog_stream_(vlog_stream),
+      : installation_(installation),
+        vlog_stream_(vlog_stream),
         file_emitter_(consumer),
         no_loc_emitter_(consumer),
         outgoing_(outgoing) {}
@@ -70,6 +73,8 @@ class Context {
     outgoing_->notify("textDocument/publishDiagnostics", params);
   }
 
+  auto installation() -> const InstallPaths& { return *installation_; }
+
   auto vlog_stream() -> llvm::raw_ostream* { return vlog_stream_; }
   auto file_emitter() -> Diagnostics::FileEmitter& { return file_emitter_; }
   auto no_loc_emitter() -> Diagnostics::NoLocEmitter& {
@@ -79,6 +84,8 @@ class Context {
   auto files() -> Map<std::string, File>& { return files_; }
 
  private:
+  const InstallPaths* installation_;
+
   // Diagnostic and output streams.
   llvm::raw_ostream* vlog_stream_;
   Diagnostics::FileEmitter file_emitter_;

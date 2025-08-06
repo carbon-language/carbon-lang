@@ -6,6 +6,7 @@
 #define CARBON_TOOLCHAIN_CHECK_LITERAL_H_
 
 #include "toolchain/check/context.h"
+#include "toolchain/lex/token_info.h"
 #include "toolchain/sem_ir/ids.h"
 
 namespace Carbon::Check {
@@ -23,6 +24,11 @@ auto MakeIntTypeLiteral(Context& context, Parse::NodeId node_id,
 // Forms an integer type of the specified kind and bit-width.
 auto MakeIntType(Context& context, Parse::NodeId node_id,
                  SemIR::IntKind int_kind, IntId size_id) -> SemIR::TypeId;
+
+// Forms a floating point type expression for `fN` literal.
+auto MakeFloatTypeLiteral(Context& context, Parse::NodeId node_id,
+                          SemIR::FloatKind float_kind, IntId size_id)
+    -> SemIR::InstId;
 
 }  // namespace Carbon::Check
 

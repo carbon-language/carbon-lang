@@ -9,6 +9,7 @@
 
 #include "common/concepts.h"
 #include "llvm/Support/raw_ostream.h"
+#include "toolchain/base/fixed_size_value_store.h"
 #include "toolchain/parse/tree_and_subtrees.h"
 #include "toolchain/sem_ir/file.h"
 #include "toolchain/sem_ir/inst_namer.h"
@@ -18,10 +19,11 @@ namespace Carbon::SemIR {
 // Formatter for printing textual Semantics IR.
 class Formatter {
  public:
-  explicit Formatter(const File* sem_ir,
-                     Parse::GetTreeAndSubtreesFn get_tree_and_subtrees,
-                     llvm::ArrayRef<bool> include_ir_in_dumps,
-                     bool use_dump_sem_ir_ranges);
+  // sem_ir and include_ir_in_dumps must be non-null.
+  explicit Formatter(
+      const File* sem_ir, Parse::GetTreeAndSubtreesFn get_tree_and_subtrees,
+      const FixedSizeValueStore<SemIR::CheckIRId, bool>* include_ir_in_dumps,
+      bool use_dump_sem_ir_ranges);
 
   // Prints the SemIR into an internal buffer. Must only be called once.
   //
@@ -113,9 +115,8 @@ class Formatter {
   auto ShouldIncludeInstByIR(InstId inst_id) -> bool;
 
   // Determines whether the specified entity should be included in the formatted
-  // output. `is_definition_start` should indicate whether, if `decl_id`'s
-  // `LocId` is a `NodeId`, it is expected to be a `DefinitionStart` kind.
-  auto ShouldFormatEntity(InstId decl_id, bool is_definition_start) -> bool;
+  // output.
+  auto ShouldFormatEntity(InstId decl_id) -> bool;
 
   auto ShouldFormatEntity(const EntityWithParamsBase& entity) -> bool;
 
@@ -149,6 +150,9 @@ class Formatter {
 
   // Formats a full class.
   auto FormatClass(ClassId id) -> void;
+
+  // Formats a full vtable.
+  auto FormatVtable(VtableId id) -> void;
 
   // Formats a full interface.
   auto FormatInterface(InterfaceId id) -> void;
@@ -273,6 +277,7 @@ class Formatter {
   }
 
   auto FormatArg(BoolValue v) -> void { out_ << v; }
+  auto FormatArg(CharId c) -> void { out_ << c; }
   auto FormatArg(EntityNameId id) -> void;
   auto FormatArg(FacetTypeId id) -> void;
   auto FormatArg(IntKind k) -> void { k.Print(out_); }
@@ -287,15 +292,12 @@ class Formatter {
   auto FormatArg(RealId id) -> void;
   auto FormatArg(StringLiteralValueId id) -> void;
 
-  // For MakeFormatArgFnTable.
+  // A `FormatArg` wrapper for `FormatInstArgAndKind`.
   using FormatArgFnT = auto(Formatter& formatter, int32_t arg) -> void;
 
-  // Returns a lookup table to format arguments by their `IdKind`, for
-  // `FormatInstArgAndKind`. Requires a null IdKind as a parameter in order to
-  // get the type pack.
+  // Returns the `FormatArgFnT` for the given `IdKind`.
   template <typename... Types>
-  static constexpr auto MakeFormatArgFnTable(TypeEnum<Types...>* /*id_kind*/)
-      -> std::array<FormatArgFnT*, SemIR::IdKind::NumValues>;
+  static auto GetFormatArgFn(TypeEnum<Types...> id_kind) -> FormatArgFnT*;
 
   // Calls `FormatArg` from an `ArgAndKind`.
   auto FormatInstArgAndKind(Inst::ArgAndKind arg_and_kind) -> void;
@@ -333,7 +335,7 @@ class Formatter {
   Parse::GetTreeAndSubtreesFn get_tree_and_subtrees_;
 
   // For each CheckIRId, whether entities from it should be formatted.
-  llvm::ArrayRef<bool> include_ir_in_dumps_;
+  const FixedSizeValueStore<SemIR::CheckIRId, bool>* include_ir_in_dumps_;
 
   // Whether to use ranges when dumping, or to dump the full SemIR.
   bool use_dump_sem_ir_ranges_;
@@ -379,13 +381,13 @@ class Formatter {
   llvm::StringRef pending_imported_from_;
 
   // Indexes of chunks of output that should be included when an instruction is
-  // referenced, indexed by the instruction's index. This is resized in advance
-  // to the correct size.
-  llvm::SmallVector<size_t, 0> tentative_inst_chunks_;
+  // referenced, indexed by the instruction's index.
+  FixedSizeValueStore<InstId, size_t> tentative_inst_chunks_;
 
   // Maps nodes to their parents. Only set when dump ranges are in use, because
   // the parents aren't used otherwise.
-  llvm::SmallVector<Parse::NodeId> node_parents_;
+  using NodeParentStore = FixedSizeValueStore<Parse::NodeId, Parse::NodeId>;
+  std::optional<NodeParentStore> node_parents_;
 };
 
 template <typename IdT>
@@ -400,8 +402,10 @@ auto Formatter::FormatEntityStart(llvm::StringRef entity_kind,
     if (import_ir_inst_id.has_value()) {
       auto import_ir_id =
           sem_ir_->import_ir_insts().Get(import_ir_inst_id).ir_id();
-      const auto* import_file = sem_ir_->import_irs().Get(import_ir_id).sem_ir;
-      pending_imported_from_ = import_file->filename();
+      if (const auto* import_file =
+              sem_ir_->import_irs().Get(import_ir_id).sem_ir) {
+        pending_imported_from_ = import_file->filename();
+      }
     }
   }
 
@@ -431,26 +435,21 @@ auto Formatter::FormatEntityStart(llvm::StringRef entity_kind,
 }
 
 template <typename... Types>
-constexpr auto Formatter::MakeFormatArgFnTable(TypeEnum<Types...>* /*id_kind*/)
-    -> std::array<FormatArgFnT*, SemIR::IdKind::NumValues> {
-  std::array<FormatArgFnT*, SemIR::IdKind::NumValues> table = {};
-  ((table[SemIR::IdKind::template For<Types>.ToIndex()] =
-        [](Formatter& formatter, int32_t arg) -> void {
-     auto typed_arg = SemIR::Inst::FromRaw<Types>(arg);
-     if constexpr (requires { formatter.FormatArg(typed_arg); }) {
-       formatter.FormatArg(typed_arg);
-     } else {
-       CARBON_FATAL("Missing FormatArg for {0}", typeid(Types).name());
-     }
-   }),
-   ...);
-  table[SemIR::IdKind::Invalid.ToIndex()] = [](Formatter& /*formatter*/,
-                                               int32_t /*arg*/) -> void {
-    CARBON_FATAL("Instruction has argument with invalid IdKind");
+auto Formatter::GetFormatArgFn(TypeEnum<Types...> id_kind) -> FormatArgFnT* {
+  static constexpr std::array<FormatArgFnT*, IdKind::NumValues> Table = {
+      [](Formatter& formatter, int32_t arg) -> void {
+        auto typed_arg = Inst::FromRaw<Types>(arg);
+        if constexpr (requires { formatter.FormatArg(typed_arg); }) {
+          formatter.FormatArg(typed_arg);
+        } else {
+          CARBON_FATAL("Missing FormatArg for {0}", typeid(Types).name());
+        }
+      }...,
+      // Invalid and None handling (ordering-sensitive).
+      [](auto...) -> void { CARBON_FATAL("Unexpected invalid IdKind"); },
+      [](auto...) -> void {},
   };
-  table[SemIR::IdKind::None.ToIndex()] = [](Formatter& /*formatter*/,
-                                            int32_t /*arg*/) -> void {};
-  return table;
+  return Table[id_kind.ToIndex()];
 }
 
 }  // namespace Carbon::SemIR

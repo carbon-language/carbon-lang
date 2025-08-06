@@ -7,11 +7,6 @@ load("//bazel/manifest:defs.bzl", "manifest")
 
 package(default_visibility = ["//visibility:public"])
 
-filegroup(
-    name = "testdata",
-    srcs = glob(["testdata/**/*.carbon"]),
-)
-
 cc_library(
     name = "diagnostic_emitter",
     srcs = [

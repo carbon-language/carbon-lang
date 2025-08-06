@@ -1116,30 +1116,25 @@ CARBON_PARSE_STATE(StatementBreakFinish)
 //   (state done)
 CARBON_PARSE_STATE(StatementContinueFinish)
 
-// Handles `for` processing of `(var`, proceeding to a binding pattern before
-// continuing.
+// Handles `for` processing of `(`, proceeding to a pattern before continuing.
 //
-// for ( var ... )
+// for ( ... )
 //     ^
-//   1. VarAsFor
-//   2. StatementForHeaderIn
-//
-// for ( ???
-//     ^
-// for ( ??? in ...
-//     ^~~~~~~~
-// for ??? in ...
-//     ^~~~~~
 // for ???
 //    ^
-//   1. StatementForHeaderIn
+//   1. Pattern
+//   2. StatementForHeaderIn
 CARBON_PARSE_STATE(StatementForHeader)
 
 // Handles `for` processing of `in`, proceeding to an expression before
 // continuing.
 //
 // for ( ... in ... )
-//             ^
+//           ^~
+// for ( ... : ... )
+//           ^
+// for ( ... ??? )
+//          ^
 //   1. Expr
 //   2. StatementForHeaderFinish
 CARBON_PARSE_STATE(StatementForHeaderIn)
@@ -1372,11 +1367,6 @@ CARBON_PARSE_STATE(ImplBeforeAs)
 //   2. VarAfterPatternAsVar
 //   3. VarFinishAsRegular
 //
-// var ...             (variant is For)
-//    ^
-//   1. Pattern
-//   2. VarFinishAsFor
-//
 // returned var ...    (variant is Returned)
 // ^~~~~~~~~~~~
 //   1. Pattern
@@ -1386,7 +1376,7 @@ CARBON_PARSE_STATE(ImplBeforeAs)
 // returned ??? ;      (variant is Returned)
 // ^~~~~~~~~~~~~~
 //   (state done)
-CARBON_PARSE_STATE_VARIANTS3(Var, Regular, Returned, For)
+CARBON_PARSE_STATE_VARIANTS2(Var, Regular, Returned)
 
 // Handles `var` after the pattern, either followed by an initializer or the
 // semicolon.
@@ -1404,18 +1394,12 @@ CARBON_PARSE_STATE_VARIANTS2(VarAfterPattern, Var, Field)
 
 // Handles `var` parsing at the end.
 //
-// var ... ;        (variant is Regular or Field)
+// var ... ;
 //         ^
-// var ... ??? ;    (variant is Regular or Field)
+// var ... ??? ;
 //         ^~~~~
 //   (state done)
-//
-// var ... in       (variant is For)
-//         ^~
-// var ... :        (variant is For, invalid)
-//         ^
-//   (state done)
-CARBON_PARSE_STATE_VARIANTS3(VarFinish, Regular, For, Field)
+CARBON_PARSE_STATE_VARIANTS2(VarFinish, Regular, Field)
 
 // Handles the beginning of a field declaration (`var` in a class context).
 //

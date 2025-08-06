@@ -9,8 +9,7 @@
 // TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/parse/testdata/for/fail_returned_var.carbon
 
 fn foo() -> i32 {
-  // TODO: Should we allow this?
-  // CHECK:STDERR: fail_returned_var.carbon:[[@LINE+4]]:8: error: expected `var` declaration [ExpectedVariableDecl]
+  // CHECK:STDERR: fail_returned_var.carbon:[[@LINE+4]]:8: error: expected name in binding pattern [ExpectedBindingPattern]
   // CHECK:STDERR:   for (returned var x: i32 in y) {
   // CHECK:STDERR:        ^~~~~~~~
   // CHECK:STDERR:
@@ -30,14 +29,17 @@ fn foo() -> i32 {
 // CHECK:STDOUT:         {kind: 'ReturnType', text: '->', subtree_size: 2},
 // CHECK:STDOUT:       {kind: 'FunctionDefinitionStart', text: '{', subtree_size: 7},
 // CHECK:STDOUT:           {kind: 'ForHeaderStart', text: '('},
-// CHECK:STDOUT:           {kind: 'IdentifierNameExpr', text: 'y'},
-// CHECK:STDOUT:         {kind: 'ForHeader', text: ')', has_error: yes, subtree_size: 3},
+// CHECK:STDOUT:               {kind: 'IdentifierNameNotBeforeParams', text: 'returned', has_error: yes},
+// CHECK:STDOUT:               {kind: 'InvalidParse', text: 'returned', has_error: yes},
+// CHECK:STDOUT:             {kind: 'LetBindingPattern', text: 'returned', has_error: yes, subtree_size: 3},
+// CHECK:STDOUT:           {kind: 'ForIn', text: '(', has_error: yes, subtree_size: 4},
+// CHECK:STDOUT:         {kind: 'ForHeader', text: ')', has_error: yes, subtree_size: 6},
 // CHECK:STDOUT:           {kind: 'CodeBlockStart', text: '{'},
 // CHECK:STDOUT:             {kind: 'ReturnStatementStart', text: 'return'},
 // CHECK:STDOUT:             {kind: 'ReturnVarModifier', text: 'var'},
 // CHECK:STDOUT:           {kind: 'ReturnStatement', text: ';', subtree_size: 3},
 // CHECK:STDOUT:         {kind: 'CodeBlock', text: '}', subtree_size: 5},
-// CHECK:STDOUT:       {kind: 'ForStatement', text: 'for', subtree_size: 9},
-// CHECK:STDOUT:     {kind: 'FunctionDefinition', text: '}', subtree_size: 17},
+// CHECK:STDOUT:       {kind: 'ForStatement', text: 'for', subtree_size: 12},
+// CHECK:STDOUT:     {kind: 'FunctionDefinition', text: '}', subtree_size: 20},
 // CHECK:STDOUT:     {kind: 'FileEnd', text: ''},
 // CHECK:STDOUT:   ]

@@ -2,7 +2,7 @@
 // Exceptions. See /LICENSE for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
-// EXTRA-ARGS: --dump-sem-ir-ranges=only
+// INCLUDE-FILE: toolchain/testing/testdata/min_prelude/int.carbon
 //
 // AUTOUPDATE
 // TIP: To test this file alone, run:
@@ -72,9 +72,9 @@ var dyn: Float(dyn_size);
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %Float.ref: %Float.type = name_ref Float, imports.%Main.Float [concrete = constants.%Float]
 // CHECK:STDOUT:   %dyn_size.ref: %i32 = name_ref dyn_size, %dyn_size
-// CHECK:STDOUT:   %float.make_type: init type = call %Float.ref(%dyn_size.ref)
-// CHECK:STDOUT:   %.loc10_25.1: type = value_of_initializer %float.make_type
-// CHECK:STDOUT:   %.loc10_25.2: type = converted %float.make_type, %.loc10_25.1
+// CHECK:STDOUT:   %Float.call: init type = call %Float.ref(%dyn_size.ref)
+// CHECK:STDOUT:   %.loc10_25.1: type = value_of_initializer %Float.call
+// CHECK:STDOUT:   %.loc10_25.2: type = converted %Float.call, %.loc10_25.1
 // CHECK:STDOUT:   return %.loc10_25.2
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

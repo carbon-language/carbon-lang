@@ -139,7 +139,7 @@ auto AddImportNamespace(Context& context, SemIR::TypeId namespace_type_id,
   AddImportNamespaceResult result = {
       .name_scope_id = SemIR::NameScopeId::None,
       .inst_id = AddPlaceholderInstInNoBlock(context, namespace_inst_and_loc)};
-  context.import_ref_ids().push_back(result.inst_id);
+  context.imports().push_back(result.inst_id);
   namespace_inst.name_scope_id =
       context.name_scopes().Add(result.inst_id, name_id, parent_scope_id);
   result.name_scope_id = namespace_inst.name_scope_id;
@@ -152,13 +152,13 @@ auto AddImportNamespaceToScope(
     SemIR::NameScopeId parent_scope_id, bool diagnose_duplicate_namespace,
     llvm::function_ref<SemIR::InstId()> make_import_id)
     -> AddImportNamespaceToScopeResult {
-  auto* parent_scope = &context.name_scopes().Get(parent_scope_id);
-  auto [inserted, entry_id] = parent_scope->LookupOrAdd(
+  auto& parent_scope = context.name_scopes().Get(parent_scope_id);
+  auto [inserted, entry_id] = parent_scope.LookupOrAdd(
       name_id,
       // This InstId is temporary and would be overridden if used.
       SemIR::InstId::None, SemIR::AccessKind::Public);
   if (!inserted) {
-    const auto& prev_entry = parent_scope->GetEntry(entry_id);
+    const auto& prev_entry = parent_scope.GetEntry(entry_id);
     if (!prev_entry.result.is_poisoned()) {
       auto prev_inst_id = prev_entry.result.target_inst_id();
       if (auto namespace_inst =
@@ -186,14 +186,11 @@ auto AddImportNamespaceToScope(
                                        parent_scope_id, import_id),
       .is_duplicate_of_namespace_in_current_package = false};
 
-  // Note we have to get the parent scope freshly, creating the imported
-  // namespace may invalidate the pointer above.
-  parent_scope = &context.name_scopes().Get(parent_scope_id);
   // Diagnose if there's a name conflict, but still produce the namespace to
   // supersede the name conflict in order to avoid repeat diagnostics. Names
   // are poisoned optimistically by name lookup before checking for imports,
   // so we may be overwriting a poisoned entry here.
-  auto& lookup_result = parent_scope->GetEntry(entry_id).result;
+  auto& lookup_result = parent_scope.GetEntry(entry_id).result;
   if (!lookup_result.is_poisoned() && !inserted) {
     // TODO: Pass the import namespace name location instead of the namespace
     // id to get more accurate location.
@@ -239,7 +236,7 @@ static auto CopySingleNameScopeFromImportIR(
                      {.type_id = namespace_type_id,
                       .import_ir_inst_id = import_ir_inst_id,
                       .entity_name_id = entity_name_id}));
-    context.import_ref_ids().push_back(inst_id);
+    context.imports().push_back(inst_id);
     return inst_id;
   };
   AddImportNamespaceToScopeResult result = AddImportNamespaceToScope(
@@ -651,7 +648,7 @@ auto ImportNameFromOtherPackage(
 
     const auto* import_scope_entry = LookupNameInImport(
         *import_ir.sem_ir, import_scope_id, name_id, identifier);
-    if (!import_scope_entry) {
+    if (!import_scope_entry || !import_scope_entry->result.is_found()) {
       continue;
     }
     SemIR::InstId import_scope_inst_id =
@@ -702,5 +699,45 @@ auto ImportNameFromOtherPackage(
 
   return result_id;
 }
+
+// Returns whether a parse node associated with an imported instruction of kind
+// `imported_kind` is usable as the location of a corresponding local
+// instruction of kind `local_kind`.
+static auto HasCompatibleImportedNodeKind(SemIR::InstKind imported_kind,
+                                          SemIR::InstKind local_kind) -> bool {
+  if (imported_kind == local_kind) {
+    return true;
+  }
+  if (imported_kind == SemIR::ImportDecl::Kind &&
+      local_kind == SemIR::Namespace::Kind) {
+    static_assert(
+        std::is_convertible_v<decltype(SemIR::ImportDecl::Kind)::TypedNodeId,
+                              decltype(SemIR::Namespace::Kind)::TypedNodeId>);
+    return true;
+  }
+  return false;
+}
+
+namespace Internal {
+
+auto CheckCompatibleImportedNodeKind(Context& context,
+                                     SemIR::ImportIRInstId imported_loc_id,
+                                     SemIR::InstKind kind) -> void {
+  auto& import_ir_inst = context.import_ir_insts().Get(imported_loc_id);
+  if (import_ir_inst.ir_id() == SemIR::ImportIRId::Cpp) {
+    // We don't require a matching node kind if the location is in C++, because
+    // there isn't a node.
+    return;
+  }
+  const auto* import_ir =
+      context.import_irs().Get(import_ir_inst.ir_id()).sem_ir;
+  auto imported_kind = import_ir->insts().Get(import_ir_inst.inst_id()).kind();
+  CARBON_CHECK(
+      HasCompatibleImportedNodeKind(imported_kind, kind),
+      "Node of kind {0} created with location of imported node of kind {1}",
+      kind, imported_kind);
+}
+
+}  // namespace Internal
 
 }  // namespace Carbon::Check

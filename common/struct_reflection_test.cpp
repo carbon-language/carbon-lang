@@ -6,6 +6,8 @@
 
 #include <gtest/gtest.h>
 
+#include <tuple>
+
 namespace Carbon::StructReflection {
 namespace {
 

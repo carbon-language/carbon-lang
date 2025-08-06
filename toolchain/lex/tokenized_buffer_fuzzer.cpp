@@ -35,7 +35,9 @@ extern "C" int LLVMFuzzerTestOneInput(const unsigned char* data, size_t size) {
       SourceBuffer::MakeFromFile(fs, TestFileName, Diagnostics::NullConsumer());
 
   SharedValueStores value_stores;
-  auto buffer = Lex::Lex(value_stores, *source, Diagnostics::NullConsumer());
+  Lex::LexOptions options;
+  options.consumer = &Diagnostics::NullConsumer();
+  auto buffer = Lex::Lex(value_stores, *source, options);
   if (buffer.has_errors()) {
     return 0;
   }

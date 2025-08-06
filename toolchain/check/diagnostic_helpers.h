@@ -18,15 +18,30 @@ namespace Carbon::Check {
 // explicitly construct a `LocId` from it first.
 class LocIdForDiagnostics {
  public:
+  // Constructs a token-only location for a diagnostic.
+  //
+  // This means the displayed location will include only the location's specific
+  // parse node, instead of also including its descendants.
+  static auto TokenOnly(Parse::NodeId node_id) -> LocIdForDiagnostics {
+    return LocIdForDiagnostics(SemIR::LocId(node_id), true);
+  }
+
   template <class LocT>
     requires std::constructible_from<SemIR::LocId, LocT>
   // NOLINTNEXTLINE(google-explicit-constructor)
-  LocIdForDiagnostics(LocT loc_id) : loc_id_(SemIR::LocId(loc_id)) {}
+  LocIdForDiagnostics(LocT loc_id)
+      : LocIdForDiagnostics(SemIR::LocId(loc_id), false) {}
 
-  explicit operator SemIR::LocId() const { return loc_id_; }
+  auto loc_id() const -> SemIR::LocId { return loc_id_; }
+
+  auto is_token_only() const -> bool { return is_token_only_; }
 
  private:
+  explicit LocIdForDiagnostics(SemIR::LocId loc_id, bool is_token_only)
+      : loc_id_(loc_id), is_token_only_(is_token_only) {}
+
   SemIR::LocId loc_id_;
+  bool is_token_only_;
 };
 
 // We define the emitter separately for dependencies, so only provide a base

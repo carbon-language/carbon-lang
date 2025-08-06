@@ -22,12 +22,7 @@ class Mangler {
  public:
   // Initialize a new Mangler instance for mangling entities within the
   // specified `FileContext`.
-  explicit Mangler(FileContext& file_context)
-      : file_context_(file_context),
-        cpp_mangle_context_(
-            file_context.cpp_ast()
-                ? file_context.cpp_ast()->getASTContext().createMangleContext()
-                : nullptr) {}
+  explicit Mangler(FileContext& file_context) : file_context_(file_context) {}
 
   // Produce a deterministically unique mangled name for the function specified
   // by `function_id` and `specific_id`.
@@ -42,11 +37,16 @@ class Mangler {
 
   // Produce a deterministically unique mangled name for the specified class's
   // vtable.
-  auto MangleVTable(const SemIR::Class& class_info) -> std::string;
+  auto MangleVTable(const SemIR::Class& class_info,
+                    SemIR::SpecificId specific_id) -> std::string;
 
  private:
   // Mangle this `NameId` as an individual name component.
   auto MangleNameId(llvm::raw_ostream& os, SemIR::NameId name_id) -> void;
+
+  // Mangle this `SpecificId`, or nothing if it is `SpecificId::None`.
+  auto MangleSpecificId(llvm::raw_ostream& os, SemIR::SpecificId specific_id)
+      -> void;
 
   // Mangle this qualified name with inner scope first, working outwards. This
   // may reduce the incidence of common prefixes in the name mangling. (i.e.:
@@ -76,11 +76,6 @@ class Mangler {
   // TODO: If `file_context_` has an `InstNamer`, we could share its
   // fingerprinter.
   SemIR::InstFingerprinter fingerprinter_;
-
-  // Clang Mangler lazily initialized when necessary. We create it once under
-  // the assumption all declarations we need to mangle can use the same Mangler
-  // (same AST Context).
-  std::unique_ptr<clang::MangleContext> cpp_mangle_context_;
 };
 
 }  // namespace Carbon::Lower

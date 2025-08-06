@@ -2,7 +2,7 @@
 // Exceptions. See /LICENSE for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
-// EXTRA-ARGS: --dump-sem-ir-ranges=only
+// INCLUDE-FILE: toolchain/testing/testdata/min_prelude/primitives.carbon
 //
 // AUTOUPDATE
 // TIP: To test this file alone, run:
@@ -37,8 +37,8 @@ fn RuntimeCallIsValid(a: i32, b: i32) -> bool {
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %int_32: Core.IntLiteral = int_value 32 [concrete]
 // CHECK:STDOUT:   %i32: type = class_type @Int, @Int(%int_32) [concrete]
-// CHECK:STDOUT:   %Less.type.3f8: type = fn_type @Less.1 [concrete]
-// CHECK:STDOUT:   %Less.f01: %Less.type.3f8 = struct_value () [concrete]
+// CHECK:STDOUT:   %Less.type: type = fn_type @Less [concrete]
+// CHECK:STDOUT:   %Less: %Less.type = struct_value () [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -46,12 +46,12 @@ fn RuntimeCallIsValid(a: i32, b: i32) -> bool {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @RuntimeCallIsValid(%a.param: %i32, %b.param: %i32) -> bool {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %Less.ref: %Less.type.3f8 = name_ref Less, file.%Less.decl [concrete = constants.%Less.f01]
+// CHECK:STDOUT:   %Less.ref: %Less.type = name_ref Less, file.%Less.decl [concrete = constants.%Less]
 // CHECK:STDOUT:   %a.ref: %i32 = name_ref a, %a
 // CHECK:STDOUT:   %b.ref: %i32 = name_ref b, %b
-// CHECK:STDOUT:   %int.less: init bool = call %Less.ref(%a.ref, %b.ref)
-// CHECK:STDOUT:   %.loc18_20.1: bool = value_of_initializer %int.less
-// CHECK:STDOUT:   %.loc18_20.2: bool = converted %int.less, %.loc18_20.1
+// CHECK:STDOUT:   %Less.call: init bool = call %Less.ref(%a.ref, %b.ref)
+// CHECK:STDOUT:   %.loc18_20.1: bool = value_of_initializer %Less.call
+// CHECK:STDOUT:   %.loc18_20.2: bool = converted %Less.call, %.loc18_20.1
 // CHECK:STDOUT:   return %.loc18_20.2
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

@@ -32,15 +32,53 @@ enum class ConstantDependence : uint8_t {
 
 // Information about a symbolic constant value. These are indexed by
 // `ConstantId`s for which `is_symbolic` is true.
+//
+// A constant value is defined by the canonical ID of a fully-evaluated inst,
+// called a "constant inst", which may depend on the canonical IDs of other
+// constant insts. "Canonical" here means that it is chosen such that equal
+// constants will have equal canonical IDs. This is typically achieved by
+// deduplication in `ConstantStore`, but certain kinds of constant insts are
+// canonicalized in other ways.
+//
+// That constant inst ID fully defines the constant value in itself, but for
+// symbolic constant values we sometimes need efficient access to metadata about
+// the mapping between the constant and corresponding constants in specifics of
+// its enclosing generic. As a result, the ID of a concrete constant directly
+// encodes the ID of the constant inst, but the ID of a symbolic constant is an
+// index into a table of `SymbolicConstant` entries containing that metadata, as
+// well as the constant inst ID.
+//
+// The price of this optimization is that the constant value's ID depends on the
+// enclosing generic, which isn't semantically relevant unless we're
+// specifically operating on the generic -> specific mapping. As a result, every
+// symbolic constant is represented by two `SymbolicConstant`s, with separate
+// IDs: one with that additional metadata, and one without it. The form with
+// additional metadata is called an "attached constant", and the form without it
+// is an "unattached constant". Note that constants in separate generics may be
+// represented by the same unattached constant. In general, only one of these
+// IDs is correct to use in a given situation; `ConstantValueStore` can be used
+// to map between them if necessary.
+//
+// Equivalently, you can think of an unattached constant as being implicitly
+// parameterized by the `bind_symbolic_name` constant insts that it depends on,
+// whereas an attached constant explicitly binds them to parameters of the
+// enclosing generic. It's the difference between "`Vector(T)` where `T` is some
+// value of type `type`" and "`Vector(T)` where `T` is the `T:! type` parameter
+// of this particular enclosing generic".
+//
+// TODO: consider instead keeping this metadata in a separate hash map keyed by
+// a `GenericId`/`ConstantId` pair, so that each constant has a single
+// `ConstantId`, rather than separate attached and unattached IDs.
 struct SymbolicConstant : Printable<SymbolicConstant> {
-  // The constant instruction that defines the value of this symbolic constant.
+  // The canonical ID of the inst that defines this constant.
   InstId inst_id;
-  // The enclosing generic. If this is `None`, then this is an abstract
-  // symbolic constant, such as a constant instruction in the constants block,
-  // rather than one associated with a particular generic.
+  // The generic that this constant is attached to, or `None` if this is an
+  // unattached constant.
   GenericId generic_id;
-  // The index of this symbolic constant within the generic's list of symbolic
-  // constants, or `None` if `generic_id` is `None`.
+  // The index of this constant within the generic's eval block, if this is an
+  // attached constant. For a given specific of that generic, this is also the
+  // index of this constant's value in the value block of that specific. If
+  // this constant is unattached, `index` will be `None`.
   GenericInstIndex index;
   // The kind of dependence this symbolic constant exhibits. Should never be
   // `None`.
@@ -87,7 +125,7 @@ class ConstantValueStore {
     CARBON_DCHECK(inst_id.index >= 0);
     return static_cast<size_t>(inst_id.index) >= values_.size()
                ? default_
-               : values_[inst_id.index];
+               : values_.Get(inst_id);
   }
 
   // Sets the constant value of the given instruction, or sets that it is known
@@ -95,14 +133,13 @@ class ConstantValueStore {
   auto Set(InstId inst_id, ConstantId const_id) -> void {
     CARBON_DCHECK(inst_id.index >= 0);
     if (static_cast<size_t>(inst_id.index) >= values_.size()) {
-      values_.resize(inst_id.index + 1, default_);
+      values_.Resize(inst_id.index + 1, default_);
     }
-    values_[inst_id.index] = const_id;
+    values_.Get(inst_id) = const_id;
   }
 
-  // Gets the instruction ID that defines the value of the given constant.
-  // Returns `None` if the constant ID is non-constant. Requires
-  // `const_id.has_value()`.
+  // Gets the ID of the underlying constant inst for the given constant. Returns
+  // `None` if the constant ID is non-constant. Requires `const_id.has_value()`.
   auto GetInstId(ConstantId const_id) const -> InstId {
     if (const_id.is_concrete()) {
       return const_id.concrete_inst_id();
@@ -113,8 +150,8 @@ class ConstantValueStore {
     return InstId::None;
   }
 
-  // Gets the instruction ID that defines the value of the given constant.
-  // Returns `None` if the constant ID is non-constant or `None`.
+  // Gets the ID of the underlying constant inst for the given constant. Returns
+  // `None` if the constant ID is non-constant or `None`.
   auto GetInstIdIfValid(ConstantId const_id) const -> InstId {
     return const_id.has_value() ? GetInstId(const_id) : InstId::None;
   }
@@ -135,17 +172,16 @@ class ConstantValueStore {
   }
 
   auto AddSymbolicConstant(SymbolicConstant constant) -> ConstantId {
-    symbolic_constants_.push_back(constant);
-    return ConstantId::ForSymbolicConstantIndex(symbolic_constants_.size() - 1);
+    return ConstantId::ForSymbolicConstantId(symbolic_constants_.Add(constant));
   }
 
   auto GetSymbolicConstant(ConstantId const_id) -> SymbolicConstant& {
-    return symbolic_constants_[const_id.symbolic_index()];
+    return symbolic_constants_.Get(const_id.symbolic_id());
   }
 
   auto GetSymbolicConstant(ConstantId const_id) const
       -> const SymbolicConstant& {
-    return symbolic_constants_[const_id.symbolic_index()];
+    return symbolic_constants_.Get(const_id.symbolic_id());
   }
 
   // Get the dependence of the given constant.
@@ -170,18 +206,24 @@ class ConstantValueStore {
 
   // Makes an iterable range over pairs of the instruction id and constant value
   // id for each value in the store.
-  auto enumerate() const -> auto {
-    auto index_to_id = [](auto pair) -> std::pair<InstId, ConstantId> {
-      auto [index, value] = pair;
-      return std::pair<InstId, ConstantId>(InstId(index), value);
-    };
-    return llvm::map_range(llvm::enumerate(values_), index_to_id);
-  }
+  auto enumerate() const -> auto { return values_.enumerate(); }
 
-  // Returns the symbolic constants mapping as an ArrayRef whose keys are
-  // symbolic indexes of constants.
-  auto symbolic_constants() const -> llvm::ArrayRef<SymbolicConstant> {
-    return symbolic_constants_;
+  // Outputs assigned constant values, and all symbolic constants.
+  auto OutputYaml(bool include_singletons) const -> Yaml::OutputMapping {
+    return Yaml::OutputMapping([&, include_singletons](
+                                   Yaml::OutputMapping::Map map) {
+      map.Add("values", Yaml::OutputMapping([&](Yaml::OutputMapping::Map map) {
+                for (auto [id, value] : values_.enumerate()) {
+                  if (!include_singletons && IsSingletonInstId(id)) {
+                    continue;
+                  }
+                  if (!value.has_value() || value.is_constant()) {
+                    map.Add(PrintToString(id), Yaml::OutputScalar(value));
+                  }
+                }
+              }));
+      map.Add("symbolic_constants", symbolic_constants_.OutputYaml());
+    });
   }
 
  private:
@@ -193,14 +235,14 @@ class ConstantValueStore {
   //
   // Set inline size to 0 because these will typically be too large for the
   // stack, while this does make File smaller.
-  llvm::SmallVector<ConstantId, 0> values_;
+  ValueStore<InstId, ConstantId> values_;
 
   // A mapping from a symbolic constant ID index to information about the
   // symbolic constant. For a concrete constant, the only information that we
   // track is the instruction ID, which is stored directly within the
   // `ConstantId`. For a symbolic constant, we also track information about
   // where the constant was used, which is stored here.
-  llvm::SmallVector<SymbolicConstant, 0> symbolic_constants_;
+  ValueStore<ConstantId::SymbolicId, SymbolicConstant> symbolic_constants_;
 };
 
 // Given a constant ID, returns an instruction that has that constant value.

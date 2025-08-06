@@ -79,6 +79,7 @@ auto TypeIterator::Next() -> Step {
 
       case SemIR::AssociatedEntityType::Kind:
       case SemIR::BoolType::Kind:
+      case SemIR::CharLiteralType::Kind:
       case SemIR::FacetType::Kind:
       case SemIR::FloatType::Kind:
       case SemIR::FunctionType::Kind:
@@ -127,6 +128,12 @@ auto TypeIterator::Next() -> Step {
         PushInstId(const_type.inner_id);
         break;
       }
+      case CARBON_KIND(SemIR::PartialType partial_type): {
+        // We don't stop at `partial` since it is a modifier; just move to the
+        // inner type.
+        PushInstId(partial_type.inner_id);
+        break;
+      }
       case CARBON_KIND(SemIR::ImplWitnessAssociatedConstant assoc): {
         Push(assoc.type_id);
         break;
@@ -160,6 +167,10 @@ auto TypeIterator::Next() -> Step {
           return Step::StructStart{.type_id = type_id};
         }
       }
+
+      case SemIR::ErrorInst::Kind:
+        return Step::Error();
+
       default:
         CARBON_FATAL("Unhandled type instruction {0}", inst_id);
     }

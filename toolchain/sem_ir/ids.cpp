@@ -4,6 +4,8 @@
 
 #include "toolchain/sem_ir/ids.h"
 
+#include "llvm/Support/ConvertUTF.h"
+#include "llvm/Support/NativeFormatting.h"
 #include "toolchain/base/value_ids.h"
 #include "toolchain/sem_ir/singleton_insts.h"
 #include "toolchain/sem_ir/typed_insts.h"
@@ -33,7 +35,7 @@ auto ConstantId::Print(llvm::raw_ostream& out, bool disambiguate) const
       out << ")";
     }
   } else if (is_symbolic()) {
-    out << "symbolic_constant" << symbolic_index();
+    out << symbolic_id();
   } else {
     CARBON_CHECK(!is_constant());
     out << "runtime";
@@ -57,6 +59,13 @@ auto BoolValue::Print(llvm::raw_ostream& out) const -> void {
   } else {
     CARBON_FATAL("Invalid bool value {0}", index);
   }
+}
+
+auto CharId::Print(llvm::raw_ostream& out) const -> void {
+  // TODO: If we switch to C++23, `std::format("`{:?}`")` might be a better
+  // choice.
+  out << "U+";
+  llvm::write_hex(out, index, llvm::HexPrintStyle::Upper, 4);
 }
 
 auto IntKind::Print(llvm::raw_ostream& out) const -> void {
@@ -121,8 +130,8 @@ auto InstBlockId::Print(llvm::raw_ostream& out) const -> void {
     out << Label << "_empty";
   } else if (*this == Exports) {
     out << "exports";
-  } else if (*this == ImportRefs) {
-    out << "import_refs";
+  } else if (*this == Imports) {
+    out << "imports";
   } else if (*this == GlobalInit) {
     out << "global_init";
   } else {
@@ -178,6 +187,9 @@ auto LocId::Print(llvm::raw_ostream& out) const -> void {
       break;
     case Kind::NodeId:
       out << Label << "_" << node_id();
+      if (is_desugared()) {
+        out << "_desugared";
+      }
       break;
   }
 }

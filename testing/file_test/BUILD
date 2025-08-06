@@ -48,7 +48,9 @@ cc_library(
         "//common:find",
         "//common:init_llvm",
         "//common:ostream",
+        "//common:pretty_stack_trace_function",
         "//common:raw_string_ostream",
+        "//common:set",
         "//testing/base:file_helpers",
         "@abseil-cpp//absl/flags:flag",
         "@abseil-cpp//absl/flags:parse",
@@ -62,7 +64,11 @@ file_test(
     name = "file_test_base_test",
     size = "small",
     srcs = ["file_test_base_test.cpp"],
-    tests = glob(["testdata/**"]),
+    data = glob(["testdata/include_files/**"]),
+    tests = glob(
+        ["testdata/**"],
+        exclude = ["testdata/include_files/**"],
+    ),
     deps = [
         ":file_test_base",
         "//common:ostream",

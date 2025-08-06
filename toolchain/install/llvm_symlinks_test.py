@@ -86,13 +86,16 @@ class LLVMSymlinksTest(unittest.TestCase):
         # the test file and writing to stdout. We define a macro that we'll
         # check is expanded.
         bin = self.install_root / "lib/carbon/llvm/bin/clang-cpp"
-        run = subprocess.run(
-            [bin, "-D", "TEST=SUCCESS", text_file, "-"],
-            check=True,
-            capture_output=True,
-            text=True,
-        )
-
+        try:
+            run = subprocess.run(
+                [bin, "-D", "TEST=SUCCESS", text_file, "-"],
+                check=True,
+                capture_output=True,
+                text=True,
+            )
+        except subprocess.CalledProcessError as err:
+            print(err.stderr, file=sys.stderr)
+            raise
         self.assertEqual(run.stderr, "")
         self.assertRegex(run.stdout, r"(^|\n)SUCCESS\n")
 

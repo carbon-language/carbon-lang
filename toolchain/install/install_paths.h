@@ -68,6 +68,12 @@ class InstallPaths {
   // files that define the prelude, and will always be non-empty on success.
   auto ReadPreludeManifest() const -> ErrorOr<llvm::SmallVector<std::string>>;
 
+  // Returns the contents of the clang builtin headers manifest file. This is
+  // the list of header files that are installed as part of the clang compiler,
+  // and will always be non-empty on success.
+  auto ReadClangHeadersManifest() const
+      -> ErrorOr<llvm::SmallVector<std::string>>;
+
   // Check for an error detecting the install paths correctly.
   //
   // A nullopt return means no errors encountered and the paths should work
@@ -110,6 +116,11 @@ class InstallPaths {
   // `prefix()/lib/carbon/carbon_install.txt". If not, calls `SetError` with the
   // relevant error message.
   auto CheckMarkerFile() -> void;
+
+  // Read a manifest file.
+  auto ReadManifest(llvm::StringRef manifest_path,
+                    llvm::StringRef manifest_file) const
+      -> ErrorOr<llvm::SmallVector<std::string>>;
 
   // The computed installation prefix. This will be an absolute path. We keep an
   // absolute path for when the command line uses a relative path

@@ -6,8 +6,14 @@
 #define CARBON_TOOLCHAIN_PARSE_TREE_AND_SUBTREES_H_
 
 #include "llvm/ADT/SmallVector.h"
+#include "toolchain/base/fixed_size_value_store.h"
 #include "toolchain/lex/token_index.h"
 #include "toolchain/parse/tree.h"
+
+namespace Carbon::SemIR {
+// Forward-declared here for `GetTreeAndSubtreesStore`.
+struct CheckIRId;
+}  // namespace Carbon::SemIR
 
 namespace Carbon::Parse {
 
@@ -184,11 +190,20 @@ class TreeAndSubtrees {
   // first child of its parent, this will be an offset to the node's parent's
   // next sibling, or if it the parent is also a first child, the grandparent's
   // next sibling, and so on.
-  llvm::SmallVector<int32_t> subtree_sizes_;
+  using SubtreeSizeStore = FixedSizeValueStore<NodeId, int32_t>;
+  SubtreeSizeStore subtree_sizes_;
 };
 
 // A standard signature for a callback to support lazy construction.
 using GetTreeAndSubtreesFn = llvm::function_ref<auto()->const TreeAndSubtrees&>;
+
+// The typical storage of `GetTreeAndSubtreesFn`. Note this stores non-owning
+// references.
+//
+// This is a commonly used alias, and while it depends on SemIR, it's difficult
+// to find a better home.
+using GetTreeAndSubtreesStore =
+    FixedSizeValueStore<SemIR::CheckIRId, Parse::GetTreeAndSubtreesFn>;
 
 // A forward iterator across the siblings at a particular level in the parse
 // tree. It produces `Tree::NodeId` objects which are opaque handles and must
@@ -218,7 +233,7 @@ class TreeAndSubtrees::SiblingIterator
 
   using iterator_facade_base::operator++;
   auto operator++() -> SiblingIterator& {
-    node_.index -= tree_->subtree_sizes_[node_.index];
+    node_.index -= tree_->subtree_sizes_.Get(node_);
     return *this;
   }
 

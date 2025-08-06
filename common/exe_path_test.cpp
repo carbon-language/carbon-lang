@@ -17,21 +17,28 @@ namespace Carbon {
 namespace {
 
 TEST(ExePath, FailureFallback) {
+  static int static_for_main_addr;
+  std::string running_binary =
+      llvm::sys::fs::getMainExecutable("exe_path_test", &static_for_main_addr);
+
   llvm::SmallString<128> path = llvm::StringRef(getenv("TEST_TMPDIR"));
   llvm::sys::path::append(path, "non_existant_binary");
-  std::string exe_path = FindExecutablePath(path);
-  EXPECT_EQ(path, exe_path);
+  std::string exe_path = FindExecutablePath(path.c_str());
+  EXPECT_EQ(running_binary, exe_path);
 }
 
-TEST(ExePath, File) {
+TEST(ExePath, Symlink) {
+  static int static_for_main_addr;
+  std::string running_binary =
+      llvm::sys::fs::getMainExecutable("exe_path_test", &static_for_main_addr);
+
   llvm::SmallString<128> path = llvm::StringRef(getenv("TEST_TMPDIR"));
   llvm::sys::path::append(path, "test_binary");
-  int fd = -1;
-  std::error_code ec = llvm::sys::fs::openFileForWrite(path, fd);
+  std::error_code ec;
+  std::filesystem::create_symlink(running_binary, path.c_str(), ec);
   ASSERT_TRUE(!ec) << "Error code: " << ec;
-  close(fd);
 
-  std::string exe_path = FindExecutablePath(path);
+  std::string exe_path = FindExecutablePath(path.c_str());
   EXPECT_EQ(path, exe_path);
 }
 

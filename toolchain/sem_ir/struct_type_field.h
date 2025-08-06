@@ -5,7 +5,7 @@
 #ifndef CARBON_TOOLCHAIN_SEM_IR_STRUCT_TYPE_FIELD_H_
 #define CARBON_TOOLCHAIN_SEM_IR_STRUCT_TYPE_FIELD_H_
 
-#include "toolchain/sem_ir/block_value_store.h"
+#include "toolchain/base/block_value_store.h"
 #include "toolchain/sem_ir/ids.h"
 
 namespace Carbon::SemIR {
@@ -24,7 +24,8 @@ struct StructTypeField : Printable<StructTypeField> {
   TypeInstId type_inst_id;
 };
 
-using StructTypeFieldsStore = BlockValueStore<StructTypeFieldsId>;
+using StructTypeFieldsStore =
+    BlockValueStore<StructTypeFieldsId, StructTypeField>;
 
 // See common/hashing.h. Supports canonicalization of fields.
 inline auto CarbonHashValue(const StructTypeField& value, uint64_t seed)

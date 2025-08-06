@@ -21,7 +21,18 @@ struct EntityName : public Printable<EntityName> {
 
   friend auto CarbonHashtableEq(const EntityName& lhs, const EntityName& rhs)
       -> bool {
+    // This requires that there are no padding bits in the type. This is upheld
+    // since it holds values all of the same size: each is 32 bits, with one
+    // split into 31 and 1 bits.
     return std::memcmp(&lhs, &rhs, sizeof(EntityName)) == 0;
+  }
+
+  // Hashing for EntityName. See common/hashing.h.
+  friend auto CarbonHashValue(const EntityName& value, uint64_t seed)
+      -> HashCode {
+    Hasher hasher(seed);
+    hasher.HashRaw(value);
+    return static_cast<HashCode>(hasher);
   }
 
   // The index of the binding, if this is the name of a symbolic binding, or
@@ -46,17 +57,9 @@ struct EntityName : public Printable<EntityName> {
   bool is_template : 1 = false;
 };
 
-// Hashing for EntityName. See common/hashing.h.
-inline auto CarbonHashValue(const EntityName& value, uint64_t seed)
-    -> HashCode {
-  Hasher hasher(seed);
-  hasher.HashRaw(value);
-  return static_cast<HashCode>(hasher);
-}
-
 // Value store for EntityName. In addition to the regular ValueStore
 // functionality, this can provide optional canonical IDs for EntityNames.
-struct EntityNameStore : public ValueStore<EntityNameId> {
+struct EntityNameStore : public ValueStore<EntityNameId, EntityName> {
  public:
   // Adds an entity name for a symbolic binding.
   auto AddSymbolicBindingName(NameId name_id, NameScopeId parent_scope_id,

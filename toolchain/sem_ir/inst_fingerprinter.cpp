@@ -150,6 +150,16 @@ struct Worklist {
     AddBlock(sem_ir->struct_type_fields().Get(struct_type_fields_id));
   }
 
+  auto Add(CustomLayoutId custom_layout_id) -> void {
+    if (!custom_layout_id.has_value()) {
+      AddInvalid();
+      return;
+    }
+    auto block = sem_ir->custom_layouts().Get(custom_layout_id);
+    contents.push_back(block.size());
+    contents.insert(contents.end(), block.begin(), block.end());
+  }
+
   auto Add(NameScopeId name_scope_id) -> void {
     if (!name_scope_id.has_value()) {
       AddInvalid();
@@ -177,6 +187,14 @@ struct Worklist {
 
   auto Add(ClassId class_id) -> void {
     AddEntity(sem_ir->classes().Get(class_id));
+  }
+
+  auto Add(VtableId vtable_id) -> void {
+    const auto& vtable = sem_ir->vtables().Get(vtable_id);
+    if (vtable.class_id.has_value()) {
+      Add(vtable.class_id);
+    }
+    Add(vtable.virtual_functions_id);
   }
 
   auto Add(InterfaceId interface_id) -> void {
@@ -299,8 +317,8 @@ struct Worklist {
   }
 
   template <typename T>
-    requires(SameAsOneOf<T, BoolValue, CompileTimeBindIndex, ElementIndex,
-                         FloatKind, IntKind, CallParamIndex>)
+    requires(SameAsOneOf<T, BoolValue, CharId, CompileTimeBindIndex,
+                         ElementIndex, FloatKind, IntKind, CallParamIndex>)
   auto Add(T arg) -> void {
     // Index-like ID: just include the value directly.
     contents.push_back(arg.index);
@@ -314,31 +332,23 @@ struct Worklist {
 
   using AddFnT = auto(Worklist& worklist, int32_t arg) -> void;
 
-  // Returns a lookup table to add an argument of the given kind. Requires a
-  // null IdKind as a parameter in order to get the type pack.
+  // Returns the arg handler for an `IdKind`.
   template <typename... Types>
-  static constexpr auto MakeAddTable(TypeEnum<Types...>* /*id_kind*/)
-      -> std::array<AddFnT*, IdKind::NumValues> {
-    std::array<AddFnT*, IdKind::NumValues> table = {};
-    ((table[IdKind::template For<Types>.ToIndex()] =
-          [](Worklist& worklist, int32_t arg) {
-            worklist.Add(Inst::FromRaw<Types>(arg));
-          }),
-     ...);
-    table[IdKind::Invalid.ToIndex()] = [](Worklist& /*worklist*/,
-                                          int32_t /*arg*/) {
-      CARBON_FATAL("Unexpected invalid argument kind");
+  static auto GetAddFn(TypeEnum<Types...> id_kind) -> AddFnT* {
+    static constexpr std::array<AddFnT*, IdKind::NumValues> Table = {
+        [](Worklist& worklist, int32_t arg) {
+          worklist.Add(Inst::FromRaw<Types>(arg));
+        }...,
+        // Invalid and None handling (ordering-sensitive).
+        [](auto...) { CARBON_FATAL("Unexpected invalid IdKind"); },
+        [](auto...) {},
     };
-    table[IdKind::None.ToIndex()] = [](Worklist& /*worklist*/,
-                                       int32_t /*arg*/) {};
-    return table;
+    return Table[id_kind.ToIndex()];
   }
 
   // Add an instruction argument to the contents of the current instruction.
   auto AddWithKind(Inst::ArgAndKind arg) -> void {
-    static constexpr auto Table = MakeAddTable(static_cast<IdKind*>(nullptr));
-
-    Table[arg.kind().ToIndex()](*this, arg.value());
+    GetAddFn(arg.kind())(*this, arg.value());
   }
 
   // Ensure all the instructions on the todo list have fingerprints. To avoid a

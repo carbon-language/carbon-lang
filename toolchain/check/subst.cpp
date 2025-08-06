@@ -19,6 +19,18 @@ auto SubstInstCallbacks::RebuildType(SemIR::TypeInstId type_inst_id) const
   return context().types().GetTypeIdForTypeInstId(type_inst_id);
 }
 
+auto SubstInstCallbacks::RebuildNewInst(SemIR::LocId loc_id,
+                                        SemIR::Inst new_inst) const
+    -> SemIR::InstId {
+  auto const_id = EvalOrAddInst(
+      context(), SemIR::LocIdAndInst::UncheckedLoc(loc_id, new_inst));
+  CARBON_CHECK(const_id.has_value(),
+               "Substitution into constant produced non-constant");
+  CARBON_CHECK(const_id.is_constant(),
+               "Substitution into constant produced runtime value");
+  return context().constant_values().GetInstId(const_id);
+}
+
 namespace {
 
 // Information about an instruction that we are substituting into.
@@ -27,6 +39,8 @@ struct WorklistItem {
   SemIR::InstId inst_id;
   // Whether the operands of this instruction have been added to the worklist.
   bool is_expanded : 1;
+  // Whether the instruction was subst'd and re-added to the worklist.
+  bool is_repeated : 1;
   // The index of the worklist item to process after we finish updating this
   // one. For the final child of an instruction, this is the parent. For any
   // other child, this is the index of the next child of the parent. For the
@@ -39,8 +53,10 @@ struct WorklistItem {
 class Worklist {
  public:
   explicit Worklist(SemIR::InstId root_id) {
-    worklist_.push_back(
-        {.inst_id = root_id, .is_expanded = false, .next_index = -1});
+    worklist_.push_back({.inst_id = root_id,
+                         .is_expanded = false,
+                         .is_repeated = false,
+                         .next_index = -1});
   }
 
   auto operator[](int index) -> WorklistItem& { return worklist_[index]; }
@@ -51,6 +67,7 @@ class Worklist {
     CARBON_CHECK(inst_id.has_value());
     worklist_.push_back({.inst_id = inst_id,
                          .is_expanded = false,
+                         .is_repeated = false,
                          .next_index = static_cast<int>(worklist_.size() + 1)});
     CARBON_CHECK(worklist_.back().next_index > 0, "Constant too large.");
   }
@@ -255,7 +272,7 @@ static auto PopOperand(Context& context, Worklist& worklist,
 // Pops the operands of the specified instruction off the worklist and rebuilds
 // the instruction with the updated operands if it has changed.
 static auto Rebuild(Context& context, Worklist& worklist, SemIR::InstId inst_id,
-                    const SubstInstCallbacks& callbacks) -> SemIR::InstId {
+                    SubstInstCallbacks& callbacks) -> SemIR::InstId {
   auto inst = context.insts().Get(inst_id);
 
   // Note that we pop in reverse order because we pushed them in forwards order.
@@ -276,7 +293,7 @@ static auto Rebuild(Context& context, Worklist& worklist, SemIR::InstId inst_id,
 }
 
 auto SubstInst(Context& context, SemIR::InstId inst_id,
-               const SubstInstCallbacks& callbacks) -> SemIR::InstId {
+               SubstInstCallbacks& callbacks) -> SemIR::InstId {
   Worklist worklist(inst_id);
 
   // For each instruction that forms part of the constant, we will visit it
@@ -298,14 +315,58 @@ auto SubstInst(Context& context, SemIR::InstId inst_id,
     if (item.is_expanded) {
       // Rebuild this item if necessary. Note that this might pop items from the
       // worklist but does not reallocate, so does not invalidate `item`.
-      item.inst_id = Rebuild(context, worklist, item.inst_id, callbacks);
+      auto old_inst_id = std::exchange(
+          item.inst_id, Rebuild(context, worklist, item.inst_id, callbacks));
+      if (item.is_repeated && old_inst_id != item.inst_id) {
+        // SubstOperandsAndRetry was returned for the item, and the instruction
+        // was rebuilt from new operands, so go through Subst() again. Note that
+        // we've already called Rebuild so we don't want to leave this item as
+        // repeated, and call back to ReuseUnchanged for it again later unless
+        // the next call to Subst() asks for that.
+        item.is_expanded = false;
+        item.is_repeated = false;
+      } else {
+        index = item.next_index;
+        continue;
+      }
+    }
+
+    if (item.is_repeated) {
+      // SubstAgain was returned for the item, and the result of that Subst() is
+      // at the back of the worklist, which we pop. Note that popping from the
+      // worklist does not reallocate, so does not invalidate `item`.
+      //
+      // When Subst returns SubstAgain, we must call back to Rebuild or
+      // ReuseUnchanged for that work item.
+      item.inst_id = callbacks.ReuseUnchanged(worklist.Pop());
       index = item.next_index;
       continue;
     }
 
-    if (callbacks.Subst(item.inst_id)) {
-      index = item.next_index;
-      continue;
+    switch (callbacks.Subst(item.inst_id)) {
+      case SubstInstCallbacks::SubstResult::FullySubstituted:
+        // If any instruction is an ErrorInst, combining it into another
+        // instruction will also produce an ErrorInst, so shortcut out here to
+        // save wasted work.
+        if (item.inst_id == SemIR::ErrorInst::InstId) {
+          return SemIR::ErrorInst::InstId;
+        }
+        index = item.next_index;
+        continue;
+      case SubstInstCallbacks::SubstResult::SubstAgain: {
+        item.is_repeated = true;
+
+        // This modifies `worklist` which invalidates `item`.
+        worklist.Push(item.inst_id);
+        worklist.back().next_index = index;
+        index = worklist.size() - 1;
+        continue;
+      }
+      case SubstInstCallbacks::SubstResult::SubstOperands:
+        break;
+      case SubstInstCallbacks::SubstResult::SubstOperandsAndRetry:
+        item.is_repeated = true;
+        break;
     }
 
     // Extract the operands of this item into the worklist. Note that this
@@ -324,6 +385,7 @@ auto SubstInst(Context& context, SemIR::InstId inst_id,
     } else {
       // No need to rebuild this instruction: its operands can't be changed by
       // substitution because it has none.
+      item.inst_id = callbacks.ReuseUnchanged(item.inst_id);
       index = next_index;
     }
   }
@@ -334,7 +396,7 @@ auto SubstInst(Context& context, SemIR::InstId inst_id,
 }
 
 auto SubstInst(Context& context, SemIR::TypeInstId inst_id,
-               const SubstInstCallbacks& callbacks) -> SemIR::TypeInstId {
+               SubstInstCallbacks& callbacks) -> SemIR::TypeInstId {
   return context.types().GetAsTypeInstId(
       SubstInst(context, static_cast<SemIR::InstId>(inst_id), callbacks));
 }
@@ -345,16 +407,19 @@ namespace {
 class SubstConstantCallbacks final : public SubstInstCallbacks {
  public:
   // `context` must not be null.
-  SubstConstantCallbacks(Context* context, Substitutions substitutions)
-      : SubstInstCallbacks(context), substitutions_(substitutions) {}
+  SubstConstantCallbacks(Context* context, SemIR::LocId loc_id,
+                         Substitutions substitutions)
+      : SubstInstCallbacks(context),
+        loc_id_(loc_id),
+        substitutions_(substitutions) {}
 
   // Applies the given Substitutions to an instruction, in order to replace
   // BindSymbolicName instructions with the value of the binding.
-  auto Subst(SemIR::InstId& inst_id) const -> bool override {
+  auto Subst(SemIR::InstId& inst_id) -> SubstResult override {
     if (context().constant_values().Get(inst_id).is_concrete()) {
       // This instruction is a concrete constant, so can't contain any
       // bindings that need to be substituted.
-      return true;
+      return SubstResult::FullySubstituted;
     }
 
     auto entity_name_id = SemIR::EntityNameId::None;
@@ -366,7 +431,7 @@ class SubstConstantCallbacks final : public SubstInstCallbacks {
                        inst_id)) {
       entity_name_id = bind->entity_name_id;
     } else {
-      return false;
+      return SubstResult::SubstOperands;
     }
 
     // This is a symbolic binding. Check if we're substituting it.
@@ -377,38 +442,31 @@ class SubstConstantCallbacks final : public SubstInstCallbacks {
           bind_index) {
         // This is the binding we're replacing. Perform substitution.
         inst_id = context().constant_values().GetInstId(replacement_id);
-        return true;
+        return SubstResult::FullySubstituted;
       }
     }
 
     // If it's not being substituted, we still need to look through it, as we
     // may need to substitute into its type (a `FacetType`, with one or more
     // `SpecificInterfaces` within).
-    return false;
+    return SubstResult::SubstOperands;
   }
 
   // Rebuilds an instruction by building a new constant.
-  auto Rebuild(SemIR::InstId old_inst_id, SemIR::Inst new_inst) const
+  auto Rebuild(SemIR::InstId /*old_inst_id*/, SemIR::Inst new_inst)
       -> SemIR::InstId override {
-    auto const_id = EvalOrAddInst(
-        context(),
-        SemIR::LocIdAndInst::UncheckedLoc(
-            context().insts().GetCanonicalLocId(old_inst_id).ToImplicit(),
-            new_inst));
-    CARBON_CHECK(const_id.has_value(),
-                 "Substitution into constant produced non-constant");
-    CARBON_CHECK(const_id.is_constant(),
-                 "Substitution into constant produced runtime value");
-    return context().constant_values().GetInstId(const_id);
+    return RebuildNewInst(loc_id_, new_inst);
   }
 
  private:
+  SemIR::LocId loc_id_;
   Substitutions substitutions_;
 };
 }  // namespace
 
-auto SubstConstant(Context& context, SemIR::ConstantId const_id,
-                   Substitutions substitutions) -> SemIR::ConstantId {
+auto SubstConstant(Context& context, SemIR::LocId loc_id,
+                   SemIR::ConstantId const_id, Substitutions substitutions)
+    -> SemIR::ConstantId {
   CARBON_CHECK(const_id.is_constant(), "Substituting into non-constant");
 
   if (substitutions.empty()) {
@@ -421,9 +479,9 @@ auto SubstConstant(Context& context, SemIR::ConstantId const_id,
     return const_id;
   }
 
-  auto subst_inst_id =
-      SubstInst(context, context.constant_values().GetInstId(const_id),
-                SubstConstantCallbacks(&context, substitutions));
+  auto callbacks = SubstConstantCallbacks(&context, loc_id, substitutions);
+  auto subst_inst_id = SubstInst(
+      context, context.constant_values().GetInstId(const_id), callbacks);
   return context.constant_values().Get(subst_inst_id);
 }
 

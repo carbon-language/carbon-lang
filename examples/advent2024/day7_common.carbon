@@ -16,8 +16,8 @@ fn Concat(a_val: i64, b_val: i64) -> i64 {
     return a * 10;
   }
   while (b != 0) {
-    a = a * 10;
-    b = b / 10;
+    a *= 10;
+    b /= 10;
   }
   return a + b_val;
 }

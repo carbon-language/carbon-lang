@@ -12,3 +12,8 @@ interface ImplicitAs(Dest:! type) {
   // TODO: extend As(Dest);
   fn Convert[self: Self]() -> Dest;
 }
+
+// TODO: This should only apply to copyable types.
+impl forall [T:! type] T as ImplicitAs(T) {
+  fn Convert[self: Self]() -> Self { return self; }
+}

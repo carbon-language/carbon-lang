@@ -24,11 +24,8 @@ namespace Carbon {
   CARBON_INTERNAL_CHECK_CONDITION(condition) \
   ? (void)0 : CARBON_INTERNAL_CHECK(condition __VA_OPT__(, ) __VA_ARGS__)
 
-// DCHECK calls CHECK in debug or fuzzing mode, and does nothing otherwise.
-//
-// Note FUZZING_BUILD_MODE_UNSAFE_FOR_PRODUCTION is a standard define coming
-// from LibFuzzer: https://llvm.org/docs/LibFuzzer.html
-#if !defined(NDEBUG) || defined(FUZZING_BUILD_MODE_UNSAFE_FOR_PRODUCTION)
+// DCHECK calls CHECK in debug mode, and does nothing otherwise.
+#ifndef NDEBUG
 #define CARBON_DCHECK(condition, ...) \
   CARBON_CHECK(condition __VA_OPT__(, ) __VA_ARGS__)
 #else

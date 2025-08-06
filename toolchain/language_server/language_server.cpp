@@ -44,9 +44,10 @@ class Logger : public clang::clangd::Logger {
   std::unique_ptr<clang::clangd::StreamLogger> vlog_logger_;
 };
 
-auto Run(FILE* input_stream, llvm::raw_ostream& output_stream,
-         llvm::raw_ostream& error_stream, llvm::raw_ostream* vlog_stream,
-         Diagnostics::Consumer& consumer) -> bool {
+auto Run(const InstallPaths& installation, FILE* input_stream,
+         llvm::raw_ostream& output_stream, llvm::raw_ostream& error_stream,
+         llvm::raw_ostream* vlog_stream, Diagnostics::Consumer& consumer)
+    -> bool {
   // The language server internally uses diagnostics for logging issues, but the
   // clangd parts have their own logging system. We intercept that here.
   Logger logger(&error_stream, vlog_stream);
@@ -58,7 +59,7 @@ auto Run(FILE* input_stream, llvm::raw_ostream& output_stream,
                                       /*InMirror=*/nullptr,
                                       /*Pretty=*/true));
   OutgoingMessages outgoing(transport.get());
-  Context context(vlog_stream, &consumer, &outgoing);
+  Context context(&installation, vlog_stream, &consumer, &outgoing);
   IncomingMessages incoming(transport.get(), &context);
 
   // Run the server loop.

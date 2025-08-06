@@ -45,7 +45,6 @@ auto GetExprCategory(const File& file, InstId inst_id) -> ExprCategory {
       case TuplePattern::Kind:
       case ValueParamPattern::Kind:
       case VarPattern::Kind:
-      case Vtable::Kind:
         return ExprCategory::NotExpr;
 
       case ImportRefUnloaded::Kind:
@@ -105,16 +104,19 @@ auto GetExprCategory(const File& file, InstId inst_id) -> ExprCategory {
       case BoolType::Kind:
       case BoundMethod::Kind:
       case BoundMethodType::Kind:
+      case CharLiteralType::Kind:
+      case CharLiteralValue::Kind:
       case ClassDecl::Kind:
       case ClassType::Kind:
       case CompleteTypeWitness::Kind:
       case ConstType::Kind:
       case ConvertToValueAction::Kind:
+      case CustomLayoutType::Kind:
       case FacetAccessType::Kind:
       case FacetType::Kind:
       case FacetValue::Kind:
-      case FloatLiteral::Kind:
       case FloatType::Kind:
+      case FloatValue::Kind:
       case FunctionType::Kind:
       case FunctionTypeWithSelfType::Kind:
       case GenericClassType::Kind:
@@ -134,6 +136,7 @@ auto GetExprCategory(const File& file, InstId inst_id) -> ExprCategory {
       case InterfaceDecl::Kind:
       case LegacyFloatType::Kind:
       case NamespaceType::Kind:
+      case PartialType::Kind:
       case PatternType::Kind:
       case PointerType::Kind:
       case RefineTypeAction::Kind:

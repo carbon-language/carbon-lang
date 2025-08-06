@@ -2,6 +2,10 @@
 // Exceptions. See /LICENSE for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
+// INCLUDE-FILE: toolchain/testing/testdata/min_prelude/convert.carbon
+// TODO: Add ranges and switch to "--dump-sem-ir-ranges=only".
+// EXTRA-ARGS: --dump-sem-ir-ranges=if-present
+//
 // AUTOUPDATE
 // TIP: To test this file alone, run:
 // TIP:   bazel test //toolchain/testing:file_test --test_arg=--file_tests=toolchain/check/testdata/pointer/fail_type_mismatch.carbon
@@ -41,7 +45,7 @@ fn ConstMismatch(p: const {}*) -> const ({}*) {
 // CHECK:STDOUT:     import Core//prelude
 // CHECK:STDOUT:     import Core//prelude/...
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %Core.ImplicitAs: %ImplicitAs.type.cc7 = import_ref Core//prelude/operators/as, ImplicitAs, loaded [concrete = constants.%ImplicitAs.generic]
+// CHECK:STDOUT:   %Core.ImplicitAs: %ImplicitAs.type.cc7 = import_ref Core//prelude/parts/as, ImplicitAs, loaded [concrete = constants.%ImplicitAs.generic]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -56,16 +60,16 @@ fn ConstMismatch(p: const {}*) -> const ({}*) {
 // CHECK:STDOUT:     %return.patt: %pattern_type.3c6 = return_slot_pattern [concrete]
 // CHECK:STDOUT:     %return.param_patt: %pattern_type.3c6 = out_param_pattern %return.patt, call_param1 [concrete]
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %.loc11_43: %empty_struct_type = struct_literal ()
-// CHECK:STDOUT:     %.loc11_44: type = converted %.loc11_43, constants.%empty_struct_type [concrete = constants.%empty_struct_type]
-// CHECK:STDOUT:     %ptr.loc11_44: type = ptr_type %.loc11_44 [concrete = constants.%ptr.c28]
-// CHECK:STDOUT:     %const.loc11_35: type = const_type %ptr.loc11_44 [concrete = constants.%const.987]
+// CHECK:STDOUT:     %.loc15_43: %empty_struct_type = struct_literal ()
+// CHECK:STDOUT:     %.loc15_44: type = converted %.loc15_43, constants.%empty_struct_type [concrete = constants.%empty_struct_type]
+// CHECK:STDOUT:     %ptr.loc15_44: type = ptr_type %.loc15_44 [concrete = constants.%ptr.c28]
+// CHECK:STDOUT:     %const.loc15_35: type = const_type %ptr.loc15_44 [concrete = constants.%const.987]
 // CHECK:STDOUT:     %p.param: %ptr.bf9 = value_param call_param0
-// CHECK:STDOUT:     %.loc11_29: type = splice_block %ptr.loc11_29 [concrete = constants.%ptr.bf9] {
-// CHECK:STDOUT:       %.loc11_28: %empty_struct_type = struct_literal ()
-// CHECK:STDOUT:       %.loc11_21: type = converted %.loc11_28, constants.%empty_struct_type [concrete = constants.%empty_struct_type]
-// CHECK:STDOUT:       %const.loc11_21: type = const_type %.loc11_21 [concrete = constants.%const.c48]
-// CHECK:STDOUT:       %ptr.loc11_29: type = ptr_type %const.loc11_21 [concrete = constants.%ptr.bf9]
+// CHECK:STDOUT:     %.loc15_29: type = splice_block %ptr.loc15_29 [concrete = constants.%ptr.bf9] {
+// CHECK:STDOUT:       %.loc15_28: %empty_struct_type = struct_literal ()
+// CHECK:STDOUT:       %.loc15_21: type = converted %.loc15_28, constants.%empty_struct_type [concrete = constants.%empty_struct_type]
+// CHECK:STDOUT:       %const.loc15_21: type = const_type %.loc15_21 [concrete = constants.%const.c48]
+// CHECK:STDOUT:       %ptr.loc15_29: type = ptr_type %const.loc15_21 [concrete = constants.%ptr.bf9]
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %p: %ptr.bf9 = bind_name p, %p.param
 // CHECK:STDOUT:     %return.param: ref %const.987 = out_param call_param1
@@ -76,7 +80,7 @@ fn ConstMismatch(p: const {}*) -> const ({}*) {
 // CHECK:STDOUT: fn @ConstMismatch(%p.param: %ptr.bf9) -> %const.987 {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %p.ref: %ptr.bf9 = name_ref p, %p
-// CHECK:STDOUT:   %.loc19: %const.987 = converted %p.ref, <error> [concrete = <error>]
+// CHECK:STDOUT:   %.loc23: %const.987 = converted %p.ref, <error> [concrete = <error>]
 // CHECK:STDOUT:   return <error>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

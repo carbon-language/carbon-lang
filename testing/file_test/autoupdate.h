@@ -47,13 +47,14 @@ class FileTestAutoupdater {
         test_command_(std::move(test_command)),
         dump_command_(std::move(dump_command)),
         input_content_(input_content),
-        filenames_(filenames),
         autoupdate_line_number_(autoupdate_line_number),
-        autoupdate_split_(autoupdate_split),
         non_check_lines_(non_check_lines),
         default_file_re_(default_file_re),
         line_number_replacements_(line_number_replacements),
         do_extra_check_replacements_(std::move(do_extra_check_replacements)),
+        autoupdate_split_file_(
+            autoupdate_split ? std::optional(filenames.size()) : std::nullopt),
+        file_to_number_map_(BuildFileToNumberMap(filenames)),
         // BuildCheckLines should only be called after other member
         // initialization.
         stdout_(BuildCheckLines(actual_stdout, "STDOUT")),
@@ -132,6 +133,7 @@ class FileTestAutoupdater {
     // When the location of all lines in a file are known, we can set the line
     // offset based on the target line.
     auto RemapLineNumbers(
+        const llvm::DenseMap<llvm::StringRef, int>& file_to_number_map,
         const llvm::DenseMap<std::pair<int, int>, int>& output_line_remap,
         const llvm::SmallVector<int>& new_last_line_numbers) -> void;
 
@@ -162,6 +164,16 @@ class FileTestAutoupdater {
       const llvm::DenseMap<llvm::StringRef, int>& file_to_number_map,
       int default_file_number, const std::string& check_line)
       -> FileAndLineNumber;
+
+  // Builds a mapping from file name to file number.
+  auto BuildFileToNumberMap(const llvm::SmallVector<llvm::StringRef>& filenames)
+      -> llvm::DenseMap<llvm::StringRef, int> {
+    llvm::DenseMap<llvm::StringRef, int> file_to_number_map;
+    for (auto [number, name] : llvm::enumerate(filenames)) {
+      file_to_number_map.insert({name, number});
+    }
+    return file_to_number_map;
+  }
 
   // Builds CheckLine lists for autoupdate.
   auto BuildCheckLines(llvm::StringRef output, const char* label) -> CheckLines;
@@ -197,16 +209,21 @@ class FileTestAutoupdater {
   std::string test_command_;
   std::string dump_command_;
   llvm::StringRef input_content_;
-  const llvm::SmallVector<llvm::StringRef>& filenames_;
   int autoupdate_line_number_;
-  bool autoupdate_split_;
   const llvm::SmallVector<FileTestLine>& non_check_lines_;
   const std::optional<RE2>& default_file_re_;
   const llvm::SmallVector<LineNumberReplacement>& line_number_replacements_;
   std::function<auto(std::string&)->void> do_extra_check_replacements_;
 
+  // If we have an autoupdate split that still needs to be processed, the file
+  // number of the autoupdate split. Otherwise, this is nullopt.
+  std::optional<int> autoupdate_split_file_;
+
   // Generated TIP lines, from AddTips.
   llvm::SmallVector<TipLine> tips_;
+
+  // Mapping from file names to file numbers.
+  llvm::DenseMap<llvm::StringRef, int> file_to_number_map_;
 
   // The constructed CheckLine list and cursor.
   CheckLines stdout_;
