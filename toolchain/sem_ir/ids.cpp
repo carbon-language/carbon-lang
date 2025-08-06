@@ -65,7 +65,7 @@ auto CharId::Print(llvm::raw_ostream& out) const -> void {
   // TODO: If we switch to C++23, `std::format("`{:?}`")` might be a better
   // choice.
   out << "U+";
-  llvm::write_hex(out, index, llvm::HexPrintStyle::Upper);
+  llvm::write_hex(out, index, llvm::HexPrintStyle::Upper, 4);
 }
 
 auto IntKind::Print(llvm::raw_ostream& out) const -> void {
