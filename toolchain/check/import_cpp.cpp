@@ -508,9 +508,9 @@ static auto IsDeclInjectedClassName(const Context& context,
   return true;
 }
 
-// Look ups the given name in the Clang AST in a specific scope, and returns the
+// Looks up the given name in the Clang AST in a specific scope, and returns the
 // found declaration and its access. If the found declaration is the injected
-// class name, look ups constructors instead. If not found, returns `nullopt`.
+// class name, looks up constructors instead. If not found, returns `nullopt`.
 // If there's not a single result, returns `nullptr` and default access.
 // Otherwise, returns the single declaration and its access.
 static auto ClangLookup(Context& context, SemIR::LocId loc_id,
