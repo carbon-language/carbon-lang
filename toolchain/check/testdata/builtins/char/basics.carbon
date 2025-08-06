@@ -26,7 +26,7 @@ let lit_as_char: Core.Char = c;
 
 library "[[@TEST_NAME]]";
 
-// CHECK:STDERR: fail_size_small.carbon:[[@LINE+4]]:20: error: character value U+80 too large for type `Core.Char` [CharTooLargeForType]
+// CHECK:STDERR: fail_size_small.carbon:[[@LINE+4]]:20: error: character value U+0080 too large for type `Core.Char` [CharTooLargeForType]
 // CHECK:STDERR: let c: Core.Char = '\u{80}';
 // CHECK:STDERR:                    ^~~~~~~~
 // CHECK:STDERR:
@@ -47,7 +47,7 @@ let c: Core.Char = '\u{1E15}';
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %Char: type = class_type @Char [concrete]
 // CHECK:STDOUT:   %pattern_type.b09: type = pattern_type %Char [concrete]
-// CHECK:STDOUT:   %.54f: Core.CharLiteral = char_value U+61 [concrete]
+// CHECK:STDOUT:   %.54f: Core.CharLiteral = char_value U+0061 [concrete]
 // CHECK:STDOUT:   %ImplicitAs.type.cc7: type = generic_interface_type @ImplicitAs [concrete]
 // CHECK:STDOUT:   %ImplicitAs.generic: %ImplicitAs.type.cc7 = struct_value () [concrete]
 // CHECK:STDOUT:   %ImplicitAs.type.715: type = facet_type <@ImplicitAs, @ImplicitAs(%Char)> [concrete]
@@ -60,7 +60,7 @@ let c: Core.Char = '\u{1E15}';
 // CHECK:STDOUT:   %pattern_type.8c6: type = pattern_type Core.CharLiteral [concrete]
 // CHECK:STDOUT:   %Core.CharLiteral.as.ImplicitAs.impl.Convert.bound.142: <bound method> = bound_method %.54f, %Core.CharLiteral.as.ImplicitAs.impl.Convert [concrete]
 // CHECK:STDOUT:   %int_97: %Char = int_value 97 [concrete]
-// CHECK:STDOUT:   %.dc9: Core.CharLiteral = char_value U+0 [concrete]
+// CHECK:STDOUT:   %.dc9: Core.CharLiteral = char_value U+0000 [concrete]
 // CHECK:STDOUT:   %Core.CharLiteral.as.ImplicitAs.impl.Convert.bound.f0f: <bound method> = bound_method %.dc9, %Core.CharLiteral.as.ImplicitAs.impl.Convert [concrete]
 // CHECK:STDOUT:   %int_0: %Char = int_value 0 [concrete]
 // CHECK:STDOUT:   %CharLiteral.type: type = fn_type @CharLiteral [concrete]
@@ -125,8 +125,8 @@ let c: Core.Char = '\u{1E15}';
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %.loc5: Core.CharLiteral = char_value U+61 [concrete = constants.%.54f]
-// CHECK:STDOUT:   %.loc6: Core.CharLiteral = char_value U+0 [concrete = constants.%.dc9]
+// CHECK:STDOUT:   %.loc5: Core.CharLiteral = char_value U+0061 [concrete = constants.%.54f]
+// CHECK:STDOUT:   %.loc6: Core.CharLiteral = char_value U+0000 [concrete = constants.%.dc9]
 // CHECK:STDOUT:   %.loc7: Core.CharLiteral = char_value U+1E15 [concrete = constants.%.a81]
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
