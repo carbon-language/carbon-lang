@@ -272,8 +272,7 @@ fn P(o: O) {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %HasG.impl_witness_table = impl_witness_table (@C.as.HasG.impl.%C.as.HasG.impl.G.decl), @C.as.HasG.impl [concrete]
 // CHECK:STDOUT:   %HasG.impl_witness: <witness> = impl_witness %HasG.impl_witness_table [concrete = constants.%HasG.impl_witness]
-// CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [concrete = constants.%empty_struct_type]
-// CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [concrete = constants.%complete_type]
+// CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness constants.%empty_struct_type [concrete = constants.%complete_type]
 // CHECK:STDOUT:   complete_type_witness = %complete_type
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
@@ -436,8 +435,7 @@ fn P(o: O) {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %HasA2.impl_witness_table = impl_witness_table (@D.as.HasA2.impl.%D.as.HasA2.impl.A.decl), @D.as.HasA2.impl [concrete]
 // CHECK:STDOUT:   %HasA2.impl_witness: <witness> = impl_witness %HasA2.impl_witness_table [concrete = constants.%HasA2.impl_witness]
-// CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [concrete = constants.%empty_struct_type]
-// CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [concrete = constants.%complete_type]
+// CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness constants.%empty_struct_type [concrete = constants.%complete_type]
 // CHECK:STDOUT:   complete_type_witness = %complete_type
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
@@ -555,8 +553,7 @@ fn P(o: O) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @B {
 // CHECK:STDOUT:   %B.J.decl: %B.J.type = fn_decl @B.J [concrete = constants.%B.J] {} {}
-// CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [concrete = constants.%empty_struct_type]
-// CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [concrete = constants.%complete_type.357]
+// CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness constants.%empty_struct_type [concrete = constants.%complete_type.357]
 // CHECK:STDOUT:   complete_type_witness = %complete_type
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
@@ -575,8 +572,7 @@ fn P(o: O) {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %HasI.impl_witness_table = impl_witness_table (@E.as.HasI.impl.%E.as.HasI.impl.I.decl), @E.as.HasI.impl [concrete]
 // CHECK:STDOUT:   %HasI.impl_witness: <witness> = impl_witness %HasI.impl_witness_table [concrete = constants.%HasI.impl_witness]
-// CHECK:STDOUT:   %struct_type.base: type = struct_type {.base: %B} [concrete = constants.%struct_type.base.0ff]
-// CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %struct_type.base [concrete = constants.%complete_type.98e]
+// CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness constants.%struct_type.base.0ff [concrete = constants.%complete_type.98e]
 // CHECK:STDOUT:   complete_type_witness = %complete_type
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
@@ -695,8 +691,7 @@ fn P(o: O) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @Base {
 // CHECK:STDOUT:   %Base.K.decl: %Base.K.type = fn_decl @Base.K [concrete = constants.%Base.K] {} {}
-// CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [concrete = constants.%empty_struct_type]
-// CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [concrete = constants.%complete_type.357]
+// CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness constants.%empty_struct_type [concrete = constants.%complete_type.357]
 // CHECK:STDOUT:   complete_type_witness = %complete_type
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
@@ -714,8 +709,7 @@ fn P(o: O) {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %HasK.impl_witness_table = impl_witness_table (@L.as.HasK.impl.%L.as.HasK.impl.K.decl), @L.as.HasK.impl [concrete]
 // CHECK:STDOUT:   %HasK.impl_witness: <witness> = impl_witness %HasK.impl_witness_table [concrete = constants.%HasK.impl_witness]
-// CHECK:STDOUT:   %struct_type.base: type = struct_type {.base: %Base} [concrete = constants.%struct_type.base.b1e]
-// CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %struct_type.base [concrete = constants.%complete_type.15c]
+// CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness constants.%struct_type.base.b1e [concrete = constants.%complete_type.15c]
 // CHECK:STDOUT:   complete_type_witness = %complete_type
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
@@ -858,8 +852,7 @@ fn P(o: O) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @NBase {
 // CHECK:STDOUT:   %NBase.N.decl: %NBase.N.type = fn_decl @NBase.N [concrete = constants.%NBase.N] {} {}
-// CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [concrete = constants.%empty_struct_type]
-// CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [concrete = constants.%complete_type.357]
+// CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness constants.%empty_struct_type [concrete = constants.%complete_type.357]
 // CHECK:STDOUT:   complete_type_witness = %complete_type
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
@@ -885,8 +878,7 @@ fn P(o: O) {
 // CHECK:STDOUT:   %HasN2.impl_witness_table = impl_witness_table (@O.as.HasN2.impl.%O.as.HasN2.impl.N.decl), @O.as.HasN2.impl [concrete]
 // CHECK:STDOUT:   %HasN2.impl_witness: <witness> = impl_witness %HasN2.impl_witness_table [concrete = constants.%HasN2.impl_witness]
 // CHECK:STDOUT:   %O.N.decl: %O.N.type = fn_decl @O.N [concrete = constants.%O.N] {} {}
-// CHECK:STDOUT:   %struct_type.base: type = struct_type {.base: %NBase} [concrete = constants.%struct_type.base.9c6]
-// CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %struct_type.base [concrete = constants.%complete_type.121]
+// CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness constants.%struct_type.base.9c6 [concrete = constants.%complete_type.121]
 // CHECK:STDOUT:   complete_type_witness = %complete_type
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:

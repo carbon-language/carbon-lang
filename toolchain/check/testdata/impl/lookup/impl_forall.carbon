@@ -335,8 +335,8 @@ fn TestSpecific(a: A({})) -> {} {
 // CHECK:STDOUT:   %require_complete: <witness> = require_complete_type %T.loc3_9.1 [symbolic = %require_complete (constants.%require_complete.4aeca8.1)]
 // CHECK:STDOUT:   %A: type = class_type @A, @A(%T.loc3_9.1) [symbolic = %A (constants.%A.13025a.1)]
 // CHECK:STDOUT:   %A.elem: type = unbound_element_type %A, %T.loc3_9.1 [symbolic = %A.elem (constants.%A.elem.1ceb36.1)]
-// CHECK:STDOUT:   %struct_type.n.loc5_1.2: type = struct_type {.n: @A.%T.loc3_9.1 (%T)} [symbolic = %struct_type.n.loc5_1.2 (constants.%struct_type.n.848971.1)]
-// CHECK:STDOUT:   %complete_type.loc5_1.2: <witness> = complete_type_witness %struct_type.n.loc5_1.2 [symbolic = %complete_type.loc5_1.2 (constants.%complete_type.84bb3d.1)]
+// CHECK:STDOUT:   %struct_type.n: type = struct_type {.n: @A.%T.loc3_9.1 (%T)} [symbolic = %struct_type.n (constants.%struct_type.n.848971.1)]
+// CHECK:STDOUT:   %complete_type.loc5_1.2: <witness> = complete_type_witness %struct_type.n [symbolic = %complete_type.loc5_1.2 (constants.%complete_type.84bb3d.1)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   class {
 // CHECK:STDOUT:     %T.ref: type = name_ref T, %T.loc3_9.2 [symbolic = %T.loc3_9.1 (constants.%T)]
@@ -344,8 +344,7 @@ fn TestSpecific(a: A({})) -> {} {
 // CHECK:STDOUT:     impl_decl @A.as.Destroy.impl [concrete] {} {}
 // CHECK:STDOUT:     %Destroy.impl_witness_table = impl_witness_table (@A.as.Destroy.impl.%A.as.Destroy.impl.Op.decl), @A.as.Destroy.impl [concrete]
 // CHECK:STDOUT:     %Destroy.impl_witness: <witness> = impl_witness %Destroy.impl_witness_table, @A.as.Destroy.impl(constants.%T) [symbolic = @A.as.Destroy.impl.%Destroy.impl_witness (constants.%Destroy.impl_witness.d93)]
-// CHECK:STDOUT:     %struct_type.n.loc5_1.1: type = struct_type {.n: %T} [symbolic = %struct_type.n.loc5_1.2 (constants.%struct_type.n.848971.1)]
-// CHECK:STDOUT:     %complete_type.loc5_1.1: <witness> = complete_type_witness %struct_type.n.loc5_1.1 [symbolic = %complete_type.loc5_1.2 (constants.%complete_type.84bb3d.1)]
+// CHECK:STDOUT:     %complete_type.loc5_1.1: <witness> = complete_type_witness constants.%struct_type.n.848971.1 [symbolic = %complete_type.loc5_1.2 (constants.%complete_type.84bb3d.1)]
 // CHECK:STDOUT:     complete_type_witness = %complete_type.loc5_1.1
 // CHECK:STDOUT:
 // CHECK:STDOUT:   !members:
@@ -499,7 +498,7 @@ fn TestSpecific(a: A({})) -> {} {
 // CHECK:STDOUT:   %require_complete => constants.%require_complete.4aeca8.2
 // CHECK:STDOUT:   %A => constants.%A.13025a.2
 // CHECK:STDOUT:   %A.elem => constants.%A.elem.1ceb36.2
-// CHECK:STDOUT:   %struct_type.n.loc5_1.2 => constants.%struct_type.n.848971.2
+// CHECK:STDOUT:   %struct_type.n => constants.%struct_type.n.848971.2
 // CHECK:STDOUT:   %complete_type.loc5_1.2 => constants.%complete_type.84bb3d.2
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -550,7 +549,7 @@ fn TestSpecific(a: A({})) -> {} {
 // CHECK:STDOUT:   %require_complete => constants.%require_complete.4aeca8.3
 // CHECK:STDOUT:   %A => constants.%A.13025a.3
 // CHECK:STDOUT:   %A.elem => constants.%A.elem.1ceb36.3
-// CHECK:STDOUT:   %struct_type.n.loc5_1.2 => constants.%struct_type.n.848971.3
+// CHECK:STDOUT:   %struct_type.n => constants.%struct_type.n.848971.3
 // CHECK:STDOUT:   %complete_type.loc5_1.2 => constants.%complete_type.84bb3d.3
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -601,7 +600,7 @@ fn TestSpecific(a: A({})) -> {} {
 // CHECK:STDOUT:   %require_complete => constants.%complete_type.357
 // CHECK:STDOUT:   %A => constants.%A.235
 // CHECK:STDOUT:   %A.elem => constants.%A.elem.2af
-// CHECK:STDOUT:   %struct_type.n.loc5_1.2 => constants.%struct_type.n.91c
+// CHECK:STDOUT:   %struct_type.n => constants.%struct_type.n.91c
 // CHECK:STDOUT:   %complete_type.loc5_1.2 => constants.%complete_type.0a6
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

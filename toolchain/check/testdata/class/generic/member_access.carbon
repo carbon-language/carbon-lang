@@ -232,8 +232,8 @@ fn StaticMemberFunctionCall(T:! type) -> Class(T) {
 // CHECK:STDOUT:   %Class.Get: @Class.%Class.Get.type (%Class.Get.type.fd9) = struct_value () [symbolic = %Class.Get (constants.%Class.Get.cf9)]
 // CHECK:STDOUT:   %Class.GetAddr.type: type = fn_type @Class.GetAddr, @Class(%T.loc2_13.1) [symbolic = %Class.GetAddr.type (constants.%Class.GetAddr.type.402)]
 // CHECK:STDOUT:   %Class.GetAddr: @Class.%Class.GetAddr.type (%Class.GetAddr.type.402) = struct_value () [symbolic = %Class.GetAddr (constants.%Class.GetAddr.102)]
-// CHECK:STDOUT:   %struct_type.x.loc8_1.2: type = struct_type {.x: @Class.%T.loc2_13.1 (%T)} [symbolic = %struct_type.x.loc8_1.2 (constants.%struct_type.x.2ac)]
-// CHECK:STDOUT:   %complete_type.loc8_1.2: <witness> = complete_type_witness %struct_type.x.loc8_1.2 [symbolic = %complete_type.loc8_1.2 (constants.%complete_type.433)]
+// CHECK:STDOUT:   %struct_type.x: type = struct_type {.x: @Class.%T.loc2_13.1 (%T)} [symbolic = %struct_type.x (constants.%struct_type.x.2ac)]
+// CHECK:STDOUT:   %complete_type.loc8_1.2: <witness> = complete_type_witness %struct_type.x [symbolic = %complete_type.loc8_1.2 (constants.%complete_type.433)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   class {
 // CHECK:STDOUT:     %T.ref: type = name_ref T, %T.loc2_13.2 [symbolic = %T.loc2_13.1 (constants.%T)]
@@ -276,8 +276,7 @@ fn StaticMemberFunctionCall(T:! type) -> Class(T) {
 // CHECK:STDOUT:     impl_decl @Class.as.Destroy.impl [concrete] {} {}
 // CHECK:STDOUT:     %Destroy.impl_witness_table = impl_witness_table (@Class.as.Destroy.impl.%Class.as.Destroy.impl.Op.decl), @Class.as.Destroy.impl [concrete]
 // CHECK:STDOUT:     %Destroy.impl_witness: <witness> = impl_witness %Destroy.impl_witness_table, @Class.as.Destroy.impl(constants.%T) [symbolic = @Class.as.Destroy.impl.%Destroy.impl_witness (constants.%Destroy.impl_witness)]
-// CHECK:STDOUT:     %struct_type.x.loc8_1.1: type = struct_type {.x: %T} [symbolic = %struct_type.x.loc8_1.2 (constants.%struct_type.x.2ac)]
-// CHECK:STDOUT:     %complete_type.loc8_1.1: <witness> = complete_type_witness %struct_type.x.loc8_1.1 [symbolic = %complete_type.loc8_1.2 (constants.%complete_type.433)]
+// CHECK:STDOUT:     %complete_type.loc8_1.1: <witness> = complete_type_witness constants.%struct_type.x.2ac [symbolic = %complete_type.loc8_1.2 (constants.%complete_type.433)]
 // CHECK:STDOUT:     complete_type_witness = %complete_type.loc8_1.1
 // CHECK:STDOUT:
 // CHECK:STDOUT:   !members:
@@ -398,7 +397,7 @@ fn StaticMemberFunctionCall(T:! type) -> Class(T) {
 // CHECK:STDOUT:   %Class.Get => constants.%Class.Get.cf9
 // CHECK:STDOUT:   %Class.GetAddr.type => constants.%Class.GetAddr.type.402
 // CHECK:STDOUT:   %Class.GetAddr => constants.%Class.GetAddr.102
-// CHECK:STDOUT:   %struct_type.x.loc8_1.2 => constants.%struct_type.x.2ac
+// CHECK:STDOUT:   %struct_type.x => constants.%struct_type.x.2ac
 // CHECK:STDOUT:   %complete_type.loc8_1.2 => constants.%complete_type.433
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -441,7 +440,7 @@ fn StaticMemberFunctionCall(T:! type) -> Class(T) {
 // CHECK:STDOUT:   %Class.Get => constants.%Class.Get.a40
 // CHECK:STDOUT:   %Class.GetAddr.type => constants.%Class.GetAddr.type.be7
 // CHECK:STDOUT:   %Class.GetAddr => constants.%Class.GetAddr.909
-// CHECK:STDOUT:   %struct_type.x.loc8_1.2 => constants.%struct_type.x.ed6
+// CHECK:STDOUT:   %struct_type.x => constants.%struct_type.x.ed6
 // CHECK:STDOUT:   %complete_type.loc8_1.2 => constants.%complete_type.1ec
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -589,8 +588,7 @@ fn StaticMemberFunctionCall(T:! type) -> Class(T) {
 // CHECK:STDOUT:     impl_decl @Class.as.Destroy.impl [concrete] {} {}
 // CHECK:STDOUT:     %Destroy.impl_witness_table = impl_witness_table (@Class.as.Destroy.impl.%Class.as.Destroy.impl.Op.decl), @Class.as.Destroy.impl [concrete]
 // CHECK:STDOUT:     %Destroy.impl_witness: <witness> = impl_witness %Destroy.impl_witness_table, @Class.as.Destroy.impl(constants.%T) [symbolic = @Class.as.Destroy.impl.%Destroy.impl_witness (constants.%Destroy.impl_witness.95a)]
-// CHECK:STDOUT:     %empty_struct_type: type = struct_type {} [concrete = constants.%empty_struct_type]
-// CHECK:STDOUT:     %complete_type: <witness> = complete_type_witness %empty_struct_type [concrete = constants.%complete_type]
+// CHECK:STDOUT:     %complete_type: <witness> = complete_type_witness constants.%empty_struct_type [concrete = constants.%complete_type]
 // CHECK:STDOUT:     complete_type_witness = %complete_type
 // CHECK:STDOUT:
 // CHECK:STDOUT:   !members:

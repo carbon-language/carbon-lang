@@ -59,8 +59,7 @@ export C.n;
 // CHECK:STDOUT:   %.loc5_11.1: %empty_struct_type = struct_literal ()
 // CHECK:STDOUT:   %.loc5_11.2: type = converted %.loc5_11.1, constants.%empty_struct_type [concrete = constants.%empty_struct_type]
 // CHECK:STDOUT:   %.loc5_8: %C.elem = field_decl n, element0 [concrete]
-// CHECK:STDOUT:   %struct_type.n: type = struct_type {.n: %empty_struct_type} [concrete = constants.%struct_type.n]
-// CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %struct_type.n [concrete = constants.%complete_type]
+// CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness constants.%struct_type.n [concrete = constants.%complete_type]
 // CHECK:STDOUT:   complete_type_witness = %complete_type
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:

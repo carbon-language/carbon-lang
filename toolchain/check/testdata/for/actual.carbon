@@ -394,8 +394,8 @@ fn Read() {
 // CHECK:STDOUT:   %require_complete: <witness> = require_complete_type %Int.loc22_32.2 [symbolic = %require_complete (constants.%require_complete.b4f426.3)]
 // CHECK:STDOUT:   %IntRange: type = class_type @IntRange, @IntRange(%N.loc4_16.1) [symbolic = %IntRange (constants.%IntRange.349)]
 // CHECK:STDOUT:   %IntRange.elem: type = unbound_element_type %IntRange, %Int.loc22_32.2 [symbolic = %IntRange.elem (constants.%IntRange.elem.e7c)]
-// CHECK:STDOUT:   %struct_type.start.end.loc24_1.2: type = struct_type {.start: @IntRange.%Int.loc22_32.2 (%Int.49d0e6.1), .end: @IntRange.%Int.loc22_32.2 (%Int.49d0e6.1)} [symbolic = %struct_type.start.end.loc24_1.2 (constants.%struct_type.start.end.78d)]
-// CHECK:STDOUT:   %complete_type.loc24_1.2: <witness> = complete_type_witness %struct_type.start.end.loc24_1.2 [symbolic = %complete_type.loc24_1.2 (constants.%complete_type.9d5)]
+// CHECK:STDOUT:   %struct_type.start.end: type = struct_type {.start: @IntRange.%Int.loc22_32.2 (%Int.49d0e6.1), .end: @IntRange.%Int.loc22_32.2 (%Int.49d0e6.1)} [symbolic = %struct_type.start.end (constants.%struct_type.start.end.78d)]
+// CHECK:STDOUT:   %complete_type.loc24_1.2: <witness> = complete_type_witness %struct_type.start.end [symbolic = %complete_type.loc24_1.2 (constants.%complete_type.9d5)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   class {
 // CHECK:STDOUT:     %IntRange.Make.decl: @IntRange.%IntRange.Make.type (%IntRange.Make.type.51f) = fn_decl @IntRange.Make [symbolic = @IntRange.%IntRange.Make (constants.%IntRange.Make.2ec)] {
@@ -472,8 +472,7 @@ fn Read() {
 // CHECK:STDOUT:     impl_decl @IntRange.as.Destroy.impl [concrete] {} {}
 // CHECK:STDOUT:     %Destroy.impl_witness_table = impl_witness_table (@IntRange.as.Destroy.impl.%IntRange.as.Destroy.impl.Op.decl), @IntRange.as.Destroy.impl [concrete]
 // CHECK:STDOUT:     %Destroy.impl_witness: <witness> = impl_witness %Destroy.impl_witness_table, @IntRange.as.Destroy.impl(constants.%N.c80) [symbolic = @IntRange.as.Destroy.impl.%Destroy.impl_witness (constants.%Destroy.impl_witness.0ef)]
-// CHECK:STDOUT:     %struct_type.start.end.loc24_1.1: type = struct_type {.start: %Int.49d0e6.1, .end: %Int.49d0e6.1} [symbolic = %struct_type.start.end.loc24_1.2 (constants.%struct_type.start.end.78d)]
-// CHECK:STDOUT:     %complete_type.loc24_1.1: <witness> = complete_type_witness %struct_type.start.end.loc24_1.1 [symbolic = %complete_type.loc24_1.2 (constants.%complete_type.9d5)]
+// CHECK:STDOUT:     %complete_type.loc24_1.1: <witness> = complete_type_witness constants.%struct_type.start.end.78d [symbolic = %complete_type.loc24_1.2 (constants.%complete_type.9d5)]
 // CHECK:STDOUT:     complete_type_witness = %complete_type.loc24_1.1
 // CHECK:STDOUT:
 // CHECK:STDOUT:   !members:
@@ -743,7 +742,7 @@ fn Read() {
 // CHECK:STDOUT:   %require_complete => constants.%require_complete.b4f426.3
 // CHECK:STDOUT:   %IntRange => constants.%IntRange.349
 // CHECK:STDOUT:   %IntRange.elem => constants.%IntRange.elem.e7c
-// CHECK:STDOUT:   %struct_type.start.end.loc24_1.2 => constants.%struct_type.start.end.78d
+// CHECK:STDOUT:   %struct_type.start.end => constants.%struct_type.start.end.78d
 // CHECK:STDOUT:   %complete_type.loc24_1.2 => constants.%complete_type.9d5
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -815,7 +814,7 @@ fn Read() {
 // CHECK:STDOUT:   %require_complete => constants.%complete_type.f8a
 // CHECK:STDOUT:   %IntRange => constants.%IntRange.365
 // CHECK:STDOUT:   %IntRange.elem => constants.%IntRange.elem.e33
-// CHECK:STDOUT:   %struct_type.start.end.loc24_1.2 => constants.%struct_type.start.end.d0a
+// CHECK:STDOUT:   %struct_type.start.end => constants.%struct_type.start.end.d0a
 // CHECK:STDOUT:   %complete_type.loc24_1.2 => constants.%complete_type.c45
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

@@ -131,8 +131,7 @@ fn Class.F[self: Self]() -> i32 {
 // CHECK:STDOUT:   impl_decl @Class.as.Destroy.impl [concrete] {} {}
 // CHECK:STDOUT:   %Destroy.impl_witness_table = impl_witness_table (@Class.as.Destroy.impl.%Class.as.Destroy.impl.Op.decl), @Class.as.Destroy.impl [concrete]
 // CHECK:STDOUT:   %Destroy.impl_witness: <witness> = impl_witness %Destroy.impl_witness_table [concrete = constants.%Destroy.impl_witness]
-// CHECK:STDOUT:   %struct_type.p: type = struct_type {.p: %ptr.e71} [concrete = constants.%struct_type.p]
-// CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %struct_type.p [concrete = constants.%complete_type.56d]
+// CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness constants.%struct_type.p [concrete = constants.%complete_type.56d]
 // CHECK:STDOUT:   complete_type_witness = %complete_type
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:

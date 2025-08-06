@@ -95,8 +95,7 @@ class Access {
 // CHECK:STDOUT:   impl_decl @Access.as.Destroy.impl [concrete] {} {}
 // CHECK:STDOUT:   %Destroy.impl_witness_table = impl_witness_table (@Access.as.Destroy.impl.%Access.as.Destroy.impl.Op.decl), @Access.as.Destroy.impl [concrete]
 // CHECK:STDOUT:   %Destroy.impl_witness: <witness> = impl_witness %Destroy.impl_witness_table [concrete = constants.%Destroy.impl_witness]
-// CHECK:STDOUT:   %struct_type.k.l: type = struct_type {.k: %i32, .l: %i32} [concrete = constants.%struct_type.k.l]
-// CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %struct_type.k.l [concrete = constants.%complete_type.48a]
+// CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness constants.%struct_type.k.l [concrete = constants.%complete_type.48a]
 // CHECK:STDOUT:   complete_type_witness = %complete_type
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:

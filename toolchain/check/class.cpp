@@ -314,16 +314,13 @@ static auto CheckCompleteClassType(
                                    .specific_id = self_specific_id});
   }
 
-  auto struct_type_inst_id = AddTypeInst<SemIR::StructType>(
-      context, node_id,
-      {.type_id = SemIR::TypeType::TypeId,
-       .fields_id =
-           AddStructTypeFields(context, struct_type_fields, field_decls)});
+  auto struct_type_id = GetStructType(
+      context, AddStructTypeFields(context, struct_type_fields, field_decls));
 
   return AddInst<SemIR::CompleteTypeWitness>(
       context, node_id,
       {.type_id = GetSingletonType(context, SemIR::WitnessType::TypeInstId),
-       .object_repr_type_inst_id = struct_type_inst_id});
+       .object_repr_type_inst_id = context.types().GetInstId(struct_type_id)});
 }
 
 auto ComputeClassObjectRepr(Context& context, Parse::ClassDefinitionId node_id,

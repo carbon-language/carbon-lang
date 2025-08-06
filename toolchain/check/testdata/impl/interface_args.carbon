@@ -402,8 +402,7 @@ fn InstanceC(a: A) -> C {
 // CHECK:STDOUT:   impl_decl @A.as.Destroy.impl [concrete] {} {}
 // CHECK:STDOUT:   %Destroy.impl_witness_table = impl_witness_table (@A.as.Destroy.impl.%A.as.Destroy.impl.Op.decl), @A.as.Destroy.impl [concrete]
 // CHECK:STDOUT:   %Destroy.impl_witness: <witness> = impl_witness %Destroy.impl_witness_table [concrete = constants.%Destroy.impl_witness.b44]
-// CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [concrete = constants.%empty_struct_type]
-// CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [concrete = constants.%complete_type]
+// CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness constants.%empty_struct_type [concrete = constants.%complete_type]
 // CHECK:STDOUT:   complete_type_witness = %complete_type
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
@@ -414,8 +413,7 @@ fn InstanceC(a: A) -> C {
 // CHECK:STDOUT:   impl_decl @B.as.Destroy.impl [concrete] {} {}
 // CHECK:STDOUT:   %Destroy.impl_witness_table = impl_witness_table (@B.as.Destroy.impl.%B.as.Destroy.impl.Op.decl), @B.as.Destroy.impl [concrete]
 // CHECK:STDOUT:   %Destroy.impl_witness: <witness> = impl_witness %Destroy.impl_witness_table [concrete = constants.%Destroy.impl_witness.40d]
-// CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [concrete = constants.%empty_struct_type]
-// CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [concrete = constants.%complete_type]
+// CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness constants.%empty_struct_type [concrete = constants.%complete_type]
 // CHECK:STDOUT:   complete_type_witness = %complete_type
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
@@ -426,8 +424,7 @@ fn InstanceC(a: A) -> C {
 // CHECK:STDOUT:   impl_decl @C.as.Destroy.impl [concrete] {} {}
 // CHECK:STDOUT:   %Destroy.impl_witness_table = impl_witness_table (@C.as.Destroy.impl.%C.as.Destroy.impl.Op.decl), @C.as.Destroy.impl [concrete]
 // CHECK:STDOUT:   %Destroy.impl_witness: <witness> = impl_witness %Destroy.impl_witness_table [concrete = constants.%Destroy.impl_witness.edd]
-// CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [concrete = constants.%empty_struct_type]
-// CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [concrete = constants.%complete_type]
+// CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness constants.%empty_struct_type [concrete = constants.%complete_type]
 // CHECK:STDOUT:   complete_type_witness = %complete_type
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
@@ -557,14 +554,14 @@ fn InstanceC(a: A) -> C {
 // CHECK:STDOUT:   %Main.import_ref.2d5 = import_ref Main//action, loc8_9, unloaded
 // CHECK:STDOUT:   %Main.import_ref.ae7 = import_ref Main//action, loc9_9, unloaded
 // CHECK:STDOUT:   %Main.import_ref.8f24d3.2: <witness> = import_ref Main//action, loc9_10, loaded [concrete = constants.%complete_type]
-// CHECK:STDOUT:   %Main.import_ref.54a = import_ref Main//action, inst102 [no loc], unloaded
-// CHECK:STDOUT:   %Main.import_ref.bfe: type = import_ref Main//action, inst102 [no loc], loaded [concrete = constants.%B]
+// CHECK:STDOUT:   %Main.import_ref.54a = import_ref Main//action, inst101 [no loc], unloaded
+// CHECK:STDOUT:   %Main.import_ref.bfe: type = import_ref Main//action, inst101 [no loc], loaded [concrete = constants.%B]
 // CHECK:STDOUT:   %Main.import_ref.cb9298.2: type = import_ref Main//action, inst61 [no loc], loaded [concrete = constants.%Destroy.type]
 // CHECK:STDOUT:   %Main.import_ref.fc3 = import_ref Main//action, loc9_9, unloaded
 // CHECK:STDOUT:   %Main.import_ref.34c = import_ref Main//action, loc10_9, unloaded
 // CHECK:STDOUT:   %Main.import_ref.8f24d3.3: <witness> = import_ref Main//action, loc10_10, loaded [concrete = constants.%complete_type]
-// CHECK:STDOUT:   %Main.import_ref.2c4 = import_ref Main//action, inst122 [no loc], unloaded
-// CHECK:STDOUT:   %Main.import_ref.c0c: type = import_ref Main//action, inst122 [no loc], loaded [concrete = constants.%C]
+// CHECK:STDOUT:   %Main.import_ref.2c4 = import_ref Main//action, inst120 [no loc], unloaded
+// CHECK:STDOUT:   %Main.import_ref.c0c: type = import_ref Main//action, inst120 [no loc], loaded [concrete = constants.%C]
 // CHECK:STDOUT:   %Main.import_ref.cb9298.3: type = import_ref Main//action, inst61 [no loc], loaded [concrete = constants.%Destroy.type]
 // CHECK:STDOUT:   %Main.import_ref.b3d = import_ref Main//action, loc10_9, unloaded
 // CHECK:STDOUT:   %Main.import_ref.5ab3ec.1: type = import_ref Main//action, loc4_18, loaded [symbolic = @Action.%T (constants.%T)]
@@ -777,14 +774,14 @@ fn InstanceC(a: A) -> C {
 // CHECK:STDOUT:   %Main.import_ref.2d5 = import_ref Main//action, loc8_9, unloaded
 // CHECK:STDOUT:   %Main.import_ref.ae7 = import_ref Main//action, loc9_9, unloaded
 // CHECK:STDOUT:   %Main.import_ref.8f24d3.2: <witness> = import_ref Main//action, loc9_10, loaded [concrete = constants.%complete_type]
-// CHECK:STDOUT:   %Main.import_ref.54a = import_ref Main//action, inst102 [no loc], unloaded
-// CHECK:STDOUT:   %Main.import_ref.bfe: type = import_ref Main//action, inst102 [no loc], loaded [concrete = constants.%B]
+// CHECK:STDOUT:   %Main.import_ref.54a = import_ref Main//action, inst101 [no loc], unloaded
+// CHECK:STDOUT:   %Main.import_ref.bfe: type = import_ref Main//action, inst101 [no loc], loaded [concrete = constants.%B]
 // CHECK:STDOUT:   %Main.import_ref.cb9298.2: type = import_ref Main//action, inst61 [no loc], loaded [concrete = constants.%Destroy.type]
 // CHECK:STDOUT:   %Main.import_ref.fc3 = import_ref Main//action, loc9_9, unloaded
 // CHECK:STDOUT:   %Main.import_ref.34c = import_ref Main//action, loc10_9, unloaded
 // CHECK:STDOUT:   %Main.import_ref.8f24d3.3: <witness> = import_ref Main//action, loc10_10, loaded [concrete = constants.%complete_type]
-// CHECK:STDOUT:   %Main.import_ref.2c4 = import_ref Main//action, inst122 [no loc], unloaded
-// CHECK:STDOUT:   %Main.import_ref.c0c: type = import_ref Main//action, inst122 [no loc], loaded [concrete = constants.%C]
+// CHECK:STDOUT:   %Main.import_ref.2c4 = import_ref Main//action, inst120 [no loc], unloaded
+// CHECK:STDOUT:   %Main.import_ref.c0c: type = import_ref Main//action, inst120 [no loc], loaded [concrete = constants.%C]
 // CHECK:STDOUT:   %Main.import_ref.cb9298.3: type = import_ref Main//action, inst61 [no loc], loaded [concrete = constants.%Destroy.type]
 // CHECK:STDOUT:   %Main.import_ref.b3d = import_ref Main//action, loc10_9, unloaded
 // CHECK:STDOUT:   %Main.import_ref.5ab3ec.1: type = import_ref Main//action, loc4_18, loaded [symbolic = @Action.%T (constants.%T)]
@@ -1154,8 +1151,7 @@ fn InstanceC(a: A) -> C {
 // CHECK:STDOUT:   impl_decl @A.as.Destroy.impl [concrete] {} {}
 // CHECK:STDOUT:   %Destroy.impl_witness_table = impl_witness_table (@A.as.Destroy.impl.%A.as.Destroy.impl.Op.decl), @A.as.Destroy.impl [concrete]
 // CHECK:STDOUT:   %Destroy.impl_witness: <witness> = impl_witness %Destroy.impl_witness_table [concrete = constants.%Destroy.impl_witness.b44]
-// CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [concrete = constants.%empty_struct_type]
-// CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [concrete = constants.%complete_type]
+// CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness constants.%empty_struct_type [concrete = constants.%complete_type]
 // CHECK:STDOUT:   complete_type_witness = %complete_type
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
@@ -1166,8 +1162,7 @@ fn InstanceC(a: A) -> C {
 // CHECK:STDOUT:   impl_decl @B.as.Destroy.impl [concrete] {} {}
 // CHECK:STDOUT:   %Destroy.impl_witness_table = impl_witness_table (@B.as.Destroy.impl.%B.as.Destroy.impl.Op.decl), @B.as.Destroy.impl [concrete]
 // CHECK:STDOUT:   %Destroy.impl_witness: <witness> = impl_witness %Destroy.impl_witness_table [concrete = constants.%Destroy.impl_witness.40d]
-// CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [concrete = constants.%empty_struct_type]
-// CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [concrete = constants.%complete_type]
+// CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness constants.%empty_struct_type [concrete = constants.%complete_type]
 // CHECK:STDOUT:   complete_type_witness = %complete_type
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
@@ -1319,8 +1314,8 @@ fn InstanceC(a: A) -> C {
 // CHECK:STDOUT:   %Main.import_ref.2d5 = import_ref Main//factory, loc11_9, unloaded
 // CHECK:STDOUT:   %Main.import_ref.6c7: <witness> = import_ref Main//factory, loc12_9, loaded [concrete = constants.%Destroy.impl_witness.5cf]
 // CHECK:STDOUT:   %Main.import_ref.8f24d3.2: <witness> = import_ref Main//factory, loc12_10, loaded [concrete = constants.%complete_type]
-// CHECK:STDOUT:   %Main.import_ref.54a = import_ref Main//factory, inst124 [no loc], unloaded
-// CHECK:STDOUT:   %Main.import_ref.bfe: type = import_ref Main//factory, inst124 [no loc], loaded [concrete = constants.%B]
+// CHECK:STDOUT:   %Main.import_ref.54a = import_ref Main//factory, inst123 [no loc], unloaded
+// CHECK:STDOUT:   %Main.import_ref.bfe: type = import_ref Main//factory, inst123 [no loc], loaded [concrete = constants.%B]
 // CHECK:STDOUT:   %Main.import_ref.cb9298.2: type = import_ref Main//factory, inst83 [no loc], loaded [concrete = constants.%Destroy.type]
 // CHECK:STDOUT:   %Main.import_ref.fc3 = import_ref Main//factory, loc12_9, unloaded
 // CHECK:STDOUT:   %Main.import_ref.5ab3ec.1: type = import_ref Main//factory, loc4_19, loaded [symbolic = @Factory.%T (constants.%T)]
@@ -1613,8 +1608,8 @@ fn InstanceC(a: A) -> C {
 // CHECK:STDOUT:   %Main.import_ref.2d5 = import_ref Main//factory, loc11_9, unloaded
 // CHECK:STDOUT:   %Main.import_ref.ae7 = import_ref Main//factory, loc12_9, unloaded
 // CHECK:STDOUT:   %Main.import_ref.8f24d3.2: <witness> = import_ref Main//factory, loc12_10, loaded [concrete = constants.%complete_type]
-// CHECK:STDOUT:   %Main.import_ref.54a = import_ref Main//factory, inst124 [no loc], unloaded
-// CHECK:STDOUT:   %Main.import_ref.bfe: type = import_ref Main//factory, inst124 [no loc], loaded [concrete = constants.%B]
+// CHECK:STDOUT:   %Main.import_ref.54a = import_ref Main//factory, inst123 [no loc], unloaded
+// CHECK:STDOUT:   %Main.import_ref.bfe: type = import_ref Main//factory, inst123 [no loc], loaded [concrete = constants.%B]
 // CHECK:STDOUT:   %Main.import_ref.cb9298.2: type = import_ref Main//factory, inst83 [no loc], loaded [concrete = constants.%Destroy.type]
 // CHECK:STDOUT:   %Main.import_ref.fc3 = import_ref Main//factory, loc12_9, unloaded
 // CHECK:STDOUT:   %Main.import_ref.5ab3ec.1: type = import_ref Main//factory, loc4_19, loaded [symbolic = @Factory.%T (constants.%T)]
@@ -1754,8 +1749,7 @@ fn InstanceC(a: A) -> C {
 // CHECK:STDOUT:   impl_decl @C.as.Destroy.impl [concrete] {} {}
 // CHECK:STDOUT:   %Destroy.impl_witness_table = impl_witness_table (@C.as.Destroy.impl.%C.as.Destroy.impl.Op.decl), @C.as.Destroy.impl [concrete]
 // CHECK:STDOUT:   %Destroy.impl_witness: <witness> = impl_witness %Destroy.impl_witness_table [concrete = constants.%Destroy.impl_witness]
-// CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [concrete = constants.%empty_struct_type]
-// CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [concrete = constants.%complete_type]
+// CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness constants.%empty_struct_type [concrete = constants.%complete_type]
 // CHECK:STDOUT:   complete_type_witness = %complete_type
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:

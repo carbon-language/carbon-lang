@@ -134,8 +134,7 @@ class C {
 // CHECK:STDOUT:   %GenericInterface.impl_witness_table = impl_witness_table (<error>), @C.as.GenericInterface.impl [concrete]
 // CHECK:STDOUT:   %GenericInterface.impl_witness: <witness> = impl_witness %GenericInterface.impl_witness_table, @C.as.GenericInterface.impl(constants.%T) [symbolic = @C.as.GenericInterface.impl.%GenericInterface.impl_witness (constants.%GenericInterface.impl_witness)]
 // CHECK:STDOUT:   %.loc24: type = specific_constant @C.as.GenericInterface.impl.%GenericInterface.type.loc24_54.2, @C.as.GenericInterface.impl(constants.%T) [symbolic = constants.%GenericInterface.type.3fe]
-// CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [concrete = constants.%empty_struct_type]
-// CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [concrete = constants.%complete_type]
+// CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness constants.%empty_struct_type [concrete = constants.%complete_type]
 // CHECK:STDOUT:   complete_type_witness = %complete_type
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:

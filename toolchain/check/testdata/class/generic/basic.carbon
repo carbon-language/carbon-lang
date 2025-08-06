@@ -128,8 +128,8 @@ class Declaration(T:! type);
 // CHECK:STDOUT:   %require_complete: <witness> = require_complete_type %T.loc15_13.1 [symbolic = %require_complete (constants.%require_complete.4ae)]
 // CHECK:STDOUT:   %Class: type = class_type @Class, @Class(%T.loc15_13.1) [symbolic = %Class (constants.%Class)]
 // CHECK:STDOUT:   %Class.elem: type = unbound_element_type %Class, %T.loc15_13.1 [symbolic = %Class.elem (constants.%Class.elem)]
-// CHECK:STDOUT:   %struct_type.k.loc26_1.2: type = struct_type {.k: @Class.%T.loc15_13.1 (%T)} [symbolic = %struct_type.k.loc26_1.2 (constants.%struct_type.k)]
-// CHECK:STDOUT:   %complete_type.loc26_1.2: <witness> = complete_type_witness %struct_type.k.loc26_1.2 [symbolic = %complete_type.loc26_1.2 (constants.%complete_type)]
+// CHECK:STDOUT:   %struct_type.k: type = struct_type {.k: @Class.%T.loc15_13.1 (%T)} [symbolic = %struct_type.k (constants.%struct_type.k)]
+// CHECK:STDOUT:   %complete_type.loc26_1.2: <witness> = complete_type_witness %struct_type.k [symbolic = %complete_type.loc26_1.2 (constants.%complete_type)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   class {
 // CHECK:STDOUT:     %Class.GetAddr.decl: @Class.%Class.GetAddr.type (%Class.GetAddr.type) = fn_decl @Class.GetAddr [symbolic = @Class.%Class.GetAddr (constants.%Class.GetAddr)] {
@@ -172,8 +172,7 @@ class Declaration(T:! type);
 // CHECK:STDOUT:     impl_decl @Class.as.Destroy.impl [concrete] {} {}
 // CHECK:STDOUT:     %Destroy.impl_witness_table = impl_witness_table (@Class.as.Destroy.impl.%Class.as.Destroy.impl.Op.decl), @Class.as.Destroy.impl [concrete]
 // CHECK:STDOUT:     %Destroy.impl_witness: <witness> = impl_witness %Destroy.impl_witness_table, @Class.as.Destroy.impl(constants.%T) [symbolic = @Class.as.Destroy.impl.%Destroy.impl_witness (constants.%Destroy.impl_witness)]
-// CHECK:STDOUT:     %struct_type.k.loc26_1.1: type = struct_type {.k: %T} [symbolic = %struct_type.k.loc26_1.2 (constants.%struct_type.k)]
-// CHECK:STDOUT:     %complete_type.loc26_1.1: <witness> = complete_type_witness %struct_type.k.loc26_1.1 [symbolic = %complete_type.loc26_1.2 (constants.%complete_type)]
+// CHECK:STDOUT:     %complete_type.loc26_1.1: <witness> = complete_type_witness constants.%struct_type.k [symbolic = %complete_type.loc26_1.2 (constants.%complete_type)]
 // CHECK:STDOUT:     complete_type_witness = %complete_type.loc26_1.1
 // CHECK:STDOUT:
 // CHECK:STDOUT:   !members:
@@ -259,7 +258,7 @@ class Declaration(T:! type);
 // CHECK:STDOUT:   %require_complete => constants.%require_complete.4ae
 // CHECK:STDOUT:   %Class => constants.%Class
 // CHECK:STDOUT:   %Class.elem => constants.%Class.elem
-// CHECK:STDOUT:   %struct_type.k.loc26_1.2 => constants.%struct_type.k
+// CHECK:STDOUT:   %struct_type.k => constants.%struct_type.k
 // CHECK:STDOUT:   %complete_type.loc26_1.2 => constants.%complete_type
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
