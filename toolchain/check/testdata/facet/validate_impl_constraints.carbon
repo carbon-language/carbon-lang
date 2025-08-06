@@ -129,6 +129,6 @@ fn F(T:! I(.Self) where .Self impls Z) {}
 // CHECK:STDERR: fn G(T:! Z & I(T)) {
 // CHECK:STDERR:                ^
 // CHECK:STDERR:
-fn G(T:! Z & I(T)) {
+fn G(T:! Z & I(.Self)) {
   F(T);
 }
