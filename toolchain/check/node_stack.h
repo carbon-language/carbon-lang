@@ -497,6 +497,8 @@ class NodeStack {
       case Parse::NodeKind::KeywordNameQualifierWithoutParams:
       case Parse::NodeKind::LibraryIntroducer:
       case Parse::NodeKind::LibrarySpecifier:
+      case Parse::NodeKind::InlineImportSpecifier:
+      case Parse::NodeKind::InlineImportBody:
       case Parse::NodeKind::MatchCase:
       case Parse::NodeKind::MatchCaseEqualGreater:
       case Parse::NodeKind::MatchCaseGuard:

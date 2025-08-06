@@ -39,7 +39,7 @@ fn Mismatch() -> i32 {
 // CHECK:STDOUT:   %Float.type: type = fn_type @Float [concrete]
 // CHECK:STDOUT:   %Float: %Float.type = struct_value () [concrete]
 // CHECK:STDOUT:   %pattern_type.3de: type = pattern_type f64 [concrete]
-// CHECK:STDOUT:   %float: f64 = float_literal 0 [concrete]
+// CHECK:STDOUT:   %float: f64 = float_value 0 [concrete]
 // CHECK:STDOUT:   %Destroy.type: type = facet_type <@Destroy> [concrete]
 // CHECK:STDOUT:   %T.as.Destroy.impl.Op.type.3ef: type = fn_type @T.as.Destroy.impl.Op, @T.as.Destroy.impl(f64) [concrete]
 // CHECK:STDOUT:   %T.as.Destroy.impl.Op.868: %T.as.Destroy.impl.Op.type.3ef = struct_value () [concrete]
@@ -84,7 +84,7 @@ fn Mismatch() -> i32 {
 // CHECK:STDOUT:     %v.var_patt: %pattern_type.3de = var_pattern %v.patt [concrete]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %v.var: ref f64 = var %v.var_patt
-// CHECK:STDOUT:   %float: f64 = float_literal 0 [concrete = constants.%float]
+// CHECK:STDOUT:   %float: f64 = float_value 0 [concrete = constants.%float]
 // CHECK:STDOUT:   assign %v.var, %float
 // CHECK:STDOUT:   %.loc23_19.1: type = splice_block %.loc23_19.3 [concrete = f64] {
 // CHECK:STDOUT:     %int_64: Core.IntLiteral = int_value 64 [concrete = constants.%int_64]

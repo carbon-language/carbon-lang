@@ -53,6 +53,16 @@
 
 namespace Carbon::Check {
 
+// Add a line marker directive pointing at the location of the `import Cpp`
+// declaration in the Carbon source file. This will cause Clang's diagnostics
+// machinery to track and report the location in Carbon code where the import
+// was written.
+static auto GenerateLineMarker(Context& context, llvm::raw_ostream& out,
+                               int line) {
+  out << "# " << line << " \""
+      << FormatEscaped(context.tokens().source().filename()) << "\"\n";
+}
+
 // Generates C++ file contents to #include all requested imports.
 static auto GenerateCppIncludesHeaderCode(
     Context& context, llvm::ArrayRef<Parse::Tree::PackagingNames> imports)
@@ -60,19 +70,36 @@ static auto GenerateCppIncludesHeaderCode(
   std::string code;
   llvm::raw_string_ostream code_stream(code);
   for (const Parse::Tree::PackagingNames& import : imports) {
-    // Add a line marker directive pointing at the location of the `import Cpp`
-    // declaration in the Carbon source file. This will cause Clang's
-    // diagnostics machinery to track and report the location in Carbon code
-    // where the import was written.
-    auto token = context.parse_tree().node_token(import.node_id);
-    code_stream << "# " << context.tokens().GetLineNumber(token) << " \""
-                << FormatEscaped(context.tokens().source().filename())
-                << "\"\n";
+    if (import.inline_body_id.has_value()) {
+      // Expand `import Cpp inline "code";` directly into the specified code.
+      auto code_token = context.parse_tree().node_token(import.inline_body_id);
 
-    code_stream << "#include \""
-                << FormatEscaped(
-                       context.string_literal_values().Get(import.library_id))
-                << "\"\n";
+      // Compute the line number on which the C++ code starts. Usually the code
+      // is specified as a block string literal and starts on the line after the
+      // start of the string token.
+      // TODO: Determine if this is a block string literal without calling
+      // `GetTokenText`, which re-lexes the string.
+      int line = context.tokens().GetLineNumber(code_token);
+      if (context.tokens().GetTokenText(code_token).contains('\n')) {
+        ++line;
+      }
+
+      GenerateLineMarker(context, code_stream, line);
+      code_stream << context.string_literal_values().Get(
+                         context.tokens().GetStringLiteralValue(code_token))
+                  << "\n";
+      // TODO: Inject a clang pragma here to produce an error if there are
+      // unclosed scopes at the end of this inline C++ fragment.
+    } else {
+      // Translate `import Cpp library "foo.h";` into `#include "foo.h"`.
+      GenerateLineMarker(context, code_stream,
+                         context.tokens().GetLineNumber(
+                             context.parse_tree().node_token(import.node_id)));
+      code_stream << "#include \""
+                  << FormatEscaped(
+                         context.string_literal_values().Get(import.library_id))
+                  << "\"\n";
+    }
   }
   return code;
 }
@@ -96,13 +123,12 @@ static auto AddIdentifierName(Context& context, llvm::StringRef name)
 
 // Adds the given source location and an `ImportIRInst` referring to it in
 // `ImportIRId::Cpp`.
-static auto AddImportIRInst(Context& context,
+static auto AddImportIRInst(SemIR::File& file,
                             clang::SourceLocation clang_source_loc)
     -> SemIR::ImportIRInstId {
   SemIR::ClangSourceLocId clang_source_loc_id =
-      context.sem_ir().clang_source_locs().Add(clang_source_loc);
-  return context.import_ir_insts().Add(
-      SemIR::ImportIRInst(clang_source_loc_id));
+      file.clang_source_locs().Add(clang_source_loc);
+  return file.import_ir_insts().Add(SemIR::ImportIRInst(clang_source_loc_id));
 }
 
 namespace {
@@ -119,15 +145,22 @@ namespace {
 // wrong C++ diagnostics, and at the end of the Carbon program.
 class CarbonClangDiagnosticConsumer : public clang::DiagnosticConsumer {
  public:
-  // Creates an instance with the location that triggers calling Clang.
-  // `context` must not be null.
+  // Creates an instance with the location that triggers calling Clang. The
+  // `context` is not stored here, and the diagnostics consumer is expected to
+  // outlive it.
   explicit CarbonClangDiagnosticConsumer(
-      Context* context, std::shared_ptr<clang::CompilerInvocation> invocation)
-      : context_(context), invocation_(std::move(invocation)) {
-    context->emitter().AddFlushFn([this] { EmitDiagnostics(); });
+      Context& context, std::shared_ptr<clang::CompilerInvocation> invocation)
+      : sem_ir_(&context.sem_ir()),
+        emitter_(&context.emitter()),
+        invocation_(std::move(invocation)) {
+    emitter_->AddFlushFn([this] { EmitDiagnostics(); });
   }
 
   ~CarbonClangDiagnosticConsumer() override {
+    // Do not inspect `emitter_` here; it's typically destroyed before the
+    // consumer is.
+    // TODO: If Clang produces diagnostics after check finishes, they'll get
+    // added to the list of pending diagnostics and never emitted.
     CARBON_CHECK(diagnostic_infos_.empty(),
                  "Missing flush before destroying diagnostic consumer");
   }
@@ -139,7 +172,7 @@ class CarbonClangDiagnosticConsumer : public clang::DiagnosticConsumer {
     DiagnosticConsumer::HandleDiagnostic(diag_level, info);
 
     SemIR::ImportIRInstId clang_import_ir_inst_id =
-        AddImportIRInst(*context_, info.getLocation());
+        AddImportIRInst(*sem_ir_, info.getLocation());
 
     llvm::SmallString<256> message;
     info.FormatDiagnostic(message);
@@ -166,57 +199,57 @@ class CarbonClangDiagnosticConsumer : public clang::DiagnosticConsumer {
                                  .snippet = snippet_stream.TakeStr()});
   }
 
+  // Returns the diagnostic to use for a given Clang diagnostic level.
+  static auto GetDiagnostic(clang::DiagnosticsEngine::Level level)
+      -> const Diagnostics::DiagnosticBase<std::string>& {
+    switch (level) {
+      case clang::DiagnosticsEngine::Ignored: {
+        CARBON_FATAL("Emitting an ignored diagnostic");
+        break;
+      }
+      case clang::DiagnosticsEngine::Note: {
+        CARBON_DIAGNOSTIC(CppInteropParseNote, Note, "{0}", std::string);
+        return CppInteropParseNote;
+      }
+      case clang::DiagnosticsEngine::Remark:
+      case clang::DiagnosticsEngine::Warning: {
+        // TODO: Add a distinct Remark level to Carbon diagnostics, and stop
+        // mapping remarks to warnings.
+        CARBON_DIAGNOSTIC(CppInteropParseWarning, Warning, "{0}", std::string);
+        return CppInteropParseWarning;
+      }
+      case clang::DiagnosticsEngine::Error:
+      case clang::DiagnosticsEngine::Fatal: {
+        CARBON_DIAGNOSTIC(CppInteropParseError, Error, "{0}", std::string);
+        return CppInteropParseError;
+      }
+    }
+  }
+
   // Outputs Carbon diagnostics based on the collected Clang diagnostics. Must
   // be called after the AST is set in the context.
   auto EmitDiagnostics() -> void {
-    CARBON_CHECK(context_->sem_ir().cpp_ast(),
+    CARBON_CHECK(sem_ir_->cpp_ast(),
                  "Attempted to emit diagnostics before the AST Unit is loaded");
 
     for (size_t i = 0; i != diagnostic_infos_.size(); ++i) {
       const ClangDiagnosticInfo& info = diagnostic_infos_[i];
-      switch (info.level) {
-        case clang::DiagnosticsEngine::Ignored:
-        case clang::DiagnosticsEngine::Note:
-        case clang::DiagnosticsEngine::Remark: {
-          context_->TODO(
-              SemIR::LocId(info.import_ir_inst_id),
-              llvm::formatv(
-                  "Unsupported: C++ diagnostic level for diagnostic\n{0}",
-                  info.message));
-          break;
-        }
-        case clang::DiagnosticsEngine::Warning:
-        case clang::DiagnosticsEngine::Error:
-        case clang::DiagnosticsEngine::Fatal: {
-          CARBON_DIAGNOSTIC(CppInteropParseWarning, Warning, "{0}",
-                            std::string);
-          CARBON_DIAGNOSTIC(CppInteropParseError, Error, "{0}", std::string);
-          auto builder = context_->emitter().Build(
-              SemIR::LocId(info.import_ir_inst_id),
-              info.level == clang::DiagnosticsEngine::Warning
-                  ? CppInteropParseWarning
-                  : CppInteropParseError,
-              info.message);
-          builder.OverrideSnippet(info.snippet);
-          for (;
-               i + 1 < diagnostic_infos_.size() &&
-               diagnostic_infos_[i + 1].level == clang::DiagnosticsEngine::Note;
-               ++i) {
-            const ClangDiagnosticInfo& note_info = diagnostic_infos_[i + 1];
-            CARBON_DIAGNOSTIC(CppInteropParseNote, Note, "{0}", std::string);
-            builder
-                .Note(SemIR::LocId(note_info.import_ir_inst_id),
-                      CppInteropParseNote, note_info.message)
-                .OverrideSnippet(note_info.snippet);
-          }
-          // TODO: This will apply all current Carbon annotation functions. We
-          // should instead track how Clang's context notes and Carbon's
-          // annotation functions are interleaved, and interleave the notes in
-          // the same order.
-          builder.Emit();
-          break;
-        }
+      auto builder = emitter_->Build(SemIR::LocId(info.import_ir_inst_id),
+                                     GetDiagnostic(info.level), info.message);
+      builder.OverrideSnippet(info.snippet);
+      for (; i + 1 < diagnostic_infos_.size() &&
+             diagnostic_infos_[i + 1].level == clang::DiagnosticsEngine::Note;
+           ++i) {
+        const ClangDiagnosticInfo& note_info = diagnostic_infos_[i + 1];
+        builder
+            .Note(SemIR::LocId(note_info.import_ir_inst_id),
+                  GetDiagnostic(note_info.level), note_info.message)
+            .OverrideSnippet(note_info.snippet);
       }
+      // TODO: This will apply all current Carbon annotation functions. We
+      // should instead track how Clang's context notes and Carbon's annotation
+      // functions are interleaved, and interleave the notes in the same order.
+      builder.Emit();
     }
     diagnostic_infos_.clear();
   }
@@ -270,8 +303,11 @@ class CarbonClangDiagnosticConsumer : public clang::DiagnosticConsumer {
     std::string snippet;
   };
 
-  // The type-checking context in which we're running Clang.
-  Context* context_;
+  // The Carbon file that this C++ compilation is attached to.
+  SemIR::File* sem_ir_;
+
+  // The diagnostic emitter that we're emitting diagnostics into.
+  DiagnosticEmitterBase* emitter_;
 
   // The compiler invocation that is producing the diagnostics.
   std::shared_ptr<clang::CompilerInvocation> invocation_;
@@ -319,7 +355,7 @@ static auto GenerateAst(
   llvm::IntrusiveRefCntPtr<clang::DiagnosticsEngine> diags(
       clang::CompilerInstance::createDiagnostics(
           *fs, invocation->getDiagnosticOpts(),
-          new CarbonClangDiagnosticConsumer(&context, invocation),
+          new CarbonClangDiagnosticConsumer(context, invocation),
           /*ShouldOwnClient=*/true));
 
   // Extract the input from the frontend invocation and make sure it makes
@@ -449,11 +485,10 @@ static auto ClangLookup(Context& context, SemIR::NameScopeId scope_id,
   auto scope_clang_decl_context_id =
       context.name_scopes().Get(scope_id).clang_decl_context_id();
   bool found = sema.LookupQualifiedName(
-      lookup,
-      clang::dyn_cast<clang::DeclContext>(context.sem_ir()
-                                              .clang_decls()
-                                              .Get(scope_clang_decl_context_id)
-                                              .decl));
+      lookup, dyn_cast<clang::DeclContext>(context.sem_ir()
+                                               .clang_decls()
+                                               .Get(scope_clang_decl_context_id)
+                                               .decl));
 
   if (!found) {
     return std::nullopt;
@@ -591,7 +626,8 @@ static auto BuildClassDecl(Context& context,
 static auto ImportCXXRecordDecl(Context& context,
                                 clang::CXXRecordDecl* clang_decl)
     -> SemIR::InstId {
-  auto import_ir_inst_id = AddImportIRInst(context, clang_decl->getLocation());
+  auto import_ir_inst_id =
+      AddImportIRInst(context.sem_ir(), clang_decl->getLocation());
 
   auto [class_id, class_inst_id] = BuildClassDecl(
       context, import_ir_inst_id, GetParentNameScopeId(context, clang_decl),
@@ -723,7 +759,7 @@ static auto ImportClassObjectRepr(Context& context, SemIR::ClassId class_id,
 
   // Import fields.
   for (auto* decl : clang_def->decls()) {
-    auto* field = clang::dyn_cast<clang::FieldDecl>(decl);
+    auto* field = dyn_cast<clang::FieldDecl>(decl);
 
     // Track the chain of fields from the class to this field. This chain is
     // only one element long unless the field is a member of an anonymous struct
@@ -734,7 +770,7 @@ static auto ImportClassObjectRepr(Context& context, SemIR::ClassId class_id,
     // If this isn't a field, it might be an indirect field in an anonymous
     // struct or union.
     if (!field) {
-      auto* indirect_field = clang::dyn_cast<clang::IndirectFieldDecl>(decl);
+      auto* indirect_field = dyn_cast<clang::IndirectFieldDecl>(decl);
       if (!indirect_field) {
         continue;
       }
@@ -776,12 +812,12 @@ static auto ImportClassObjectRepr(Context& context, SemIR::ClassId class_id,
 
     // Compute the offset to the field that appears directly in the class.
     uint64_t offset = clang_layout.getFieldOffset(
-        clang::cast<clang::FieldDecl>(chain.front())->getFieldIndex());
+        cast<clang::FieldDecl>(chain.front())->getFieldIndex());
 
     // If this is an indirect field, walk the path and accumulate the offset to
     // the named field.
     for (auto* inner_decl : chain.drop_front()) {
-      auto* inner_field = clang::cast<clang::FieldDecl>(inner_decl);
+      auto* inner_field = cast<clang::FieldDecl>(inner_decl);
       const auto& inner_layout =
           context.ast_context().getASTRecordLayout(inner_field->getParent());
       offset += inner_layout.getFieldOffset(inner_field->getFieldIndex());
@@ -945,7 +981,7 @@ static auto MapBuiltinType(Context& context, SemIR::LocId loc_id,
 // Maps a C++ record type to a Carbon type.
 static auto MapRecordType(Context& context, const clang::RecordType& type)
     -> TypeExpr {
-  auto* record_decl = clang::dyn_cast<clang::CXXRecordDecl>(type.getDecl());
+  auto* record_decl = dyn_cast<clang::CXXRecordDecl>(type.getDecl());
   if (!record_decl) {
     return {.inst_id = SemIR::TypeInstId::None, .type_id = SemIR::TypeId::None};
   }
@@ -1450,7 +1486,7 @@ static auto AddDependentUnimportedDecls(const Context& context,
 
   if (auto* clang_function_decl = clang_decl->getAsFunction()) {
     AddDependentUnimportedFunctionDecls(context, *clang_function_decl, decls);
-  } else if (auto* type_decl = clang::dyn_cast<clang::TypeDecl>(clang_decl)) {
+  } else if (auto* type_decl = dyn_cast<clang::TypeDecl>(clang_decl)) {
     AddDependentUnimportedTypeDecls(
         context, type_decl->getASTContext().getTypeDeclType(type_decl), decls);
   }
@@ -1465,11 +1501,10 @@ static auto ImportDeclAfterDependencies(Context& context, SemIR::LocId loc_id,
   if (auto* clang_function_decl = clang_decl->getAsFunction()) {
     return ImportFunctionDecl(context, loc_id, clang_function_decl);
   }
-  if (auto* clang_namespace_decl =
-          clang::dyn_cast<clang::NamespaceDecl>(clang_decl)) {
+  if (auto* clang_namespace_decl = dyn_cast<clang::NamespaceDecl>(clang_decl)) {
     return ImportNamespaceDecl(context, clang_namespace_decl);
   }
-  if (auto* type_decl = clang::dyn_cast<clang::TypeDecl>(clang_decl)) {
+  if (auto* type_decl = dyn_cast<clang::TypeDecl>(clang_decl)) {
     auto type = type_decl->getASTContext().getTypeDeclType(type_decl);
     auto type_inst_id = MapType(context, loc_id, type).inst_id;
     if (!type_inst_id.has_value()) {
@@ -1479,7 +1514,7 @@ static auto ImportDeclAfterDependencies(Context& context, SemIR::LocId loc_id,
     }
     return type_inst_id;
   }
-  if (clang::isa<clang::FieldDecl, clang::IndirectFieldDecl>(clang_decl)) {
+  if (isa<clang::FieldDecl, clang::IndirectFieldDecl>(clang_decl)) {
     // Usable fields get imported as a side effect of importing the class.
     if (SemIR::InstId existing_inst_id =
             LookupClangDeclInstId(context, clang_decl);

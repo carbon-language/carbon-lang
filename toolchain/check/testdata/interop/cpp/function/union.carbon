@@ -36,20 +36,19 @@ import Cpp library "decl_value_param_type.h";
 
 fn F() {
   //@dump-sem-ir-begin
-  // CHECK:STDERR: fail_import_decl_value_param_type.carbon:[[@LINE+13]]:3: note: in `Cpp` name lookup for `foo` [InCppNameLookup]
-  // CHECK:STDERR:   Cpp.foo({});
+  // CHECK:STDERR: fail_import_decl_value_param_type.carbon:[[@LINE+12]]:3: note: in `Cpp` name lookup for `foo` [InCppNameLookup]
+  // CHECK:STDERR:   Cpp.foo({} as Cpp.U);
   // CHECK:STDERR:   ^~~~~~~
   // CHECK:STDERR:
-  // CHECK:STDERR: fail_import_decl_value_param_type.carbon:[[@LINE+9]]:11: error: forming value of incomplete type `Cpp.U` [IncompleteTypeInValueConversion]
-  // CHECK:STDERR:   Cpp.foo({});
-  // CHECK:STDERR:           ^~
+  // CHECK:STDERR: fail_import_decl_value_param_type.carbon:[[@LINE+8]]:11: error: invalid use of incomplete type `Cpp.U` [IncompleteTypeInConversion]
+  // CHECK:STDERR:   Cpp.foo({} as Cpp.U);
+  // CHECK:STDERR:           ^~~~~~~~~~~
   // CHECK:STDERR: fail_import_decl_value_param_type.carbon:[[@LINE-11]]:10: in file included here [InCppInclude]
   // CHECK:STDERR: ./decl_value_param_type.h:2:7: note: class was forward declared here [ClassForwardDeclaredHere]
   // CHECK:STDERR: union U;
   // CHECK:STDERR:       ^
-  // CHECK:STDERR: fail_import_decl_value_param_type.carbon: note: initializing function parameter [InCallToFunctionParam]
   // CHECK:STDERR:
-  Cpp.foo({});
+  Cpp.foo({} as Cpp.U);
   //@dump-sem-ir-end
 }
 
@@ -115,7 +114,7 @@ import Cpp library "double_decl_value_param_type.h";
 
 fn F() {
   // CHECK:STDERR: fail_import_double_decl_value_param_type.carbon:[[@LINE+12]]:3: note: in `Cpp` name lookup for `foo1` [InCppNameLookup]
-  // CHECK:STDERR:   Cpp.foo1({});
+  // CHECK:STDERR:   Cpp.foo1({} as Cpp.U);
   // CHECK:STDERR:   ^~~~~~~~
   // CHECK:STDERR:
   // CHECK:STDERR: fail_import_double_decl_value_param_type.carbon:[[@LINE-7]]:10: in file included here [InCppInclude]
@@ -126,30 +125,28 @@ fn F() {
   // CHECK:STDERR: ./double_decl_value_param_type.h:2:7: note: forward declaration of 'U' [CppInteropParseNote]
   // CHECK:STDERR:     2 | union U;
   // CHECK:STDERR:       |       ^
-  Cpp.foo1({});
-  // CHECK:STDERR: fail_import_double_decl_value_param_type.carbon:[[@LINE+22]]:3: note: in `Cpp` name lookup for `foo2` [InCppNameLookup]
-  // CHECK:STDERR:   Cpp.foo2({});
+  Cpp.foo1({} as Cpp.U);
+  // CHECK:STDERR: fail_import_double_decl_value_param_type.carbon:[[@LINE+20]]:3: note: in `Cpp` name lookup for `foo2` [InCppNameLookup]
+  // CHECK:STDERR:   Cpp.foo2({} as Cpp.U);
   // CHECK:STDERR:   ^~~~~~~~
   // CHECK:STDERR:
-  // CHECK:STDERR: fail_import_double_decl_value_param_type.carbon:[[@LINE-5]]:12: error: forming value of incomplete type `Cpp.U` [IncompleteTypeInValueConversion]
-  // CHECK:STDERR:   Cpp.foo1({});
-  // CHECK:STDERR:            ^~
+  // CHECK:STDERR: fail_import_double_decl_value_param_type.carbon:[[@LINE-5]]:12: error: invalid use of incomplete type `Cpp.U` [IncompleteTypeInConversion]
+  // CHECK:STDERR:   Cpp.foo1({} as Cpp.U);
+  // CHECK:STDERR:            ^~~~~~~~~~~
   // CHECK:STDERR: fail_import_double_decl_value_param_type.carbon:[[@LINE-23]]:10: in file included here [InCppInclude]
   // CHECK:STDERR: ./double_decl_value_param_type.h:2:7: note: class was forward declared here [ClassForwardDeclaredHere]
   // CHECK:STDERR: union U;
   // CHECK:STDERR:       ^
-  // CHECK:STDERR: fail_import_double_decl_value_param_type.carbon: note: initializing function parameter [InCallToFunctionParam]
   // CHECK:STDERR:
-  // CHECK:STDERR: fail_import_double_decl_value_param_type.carbon:[[@LINE+9]]:12: error: forming value of incomplete type `Cpp.U` [IncompleteTypeInValueConversion]
-  // CHECK:STDERR:   Cpp.foo2({});
-  // CHECK:STDERR:            ^~
-  // CHECK:STDERR: fail_import_double_decl_value_param_type.carbon:[[@LINE-32]]:10: in file included here [InCppInclude]
+  // CHECK:STDERR: fail_import_double_decl_value_param_type.carbon:[[@LINE+8]]:12: error: invalid use of incomplete type `Cpp.U` [IncompleteTypeInConversion]
+  // CHECK:STDERR:   Cpp.foo2({} as Cpp.U);
+  // CHECK:STDERR:            ^~~~~~~~~~~
+  // CHECK:STDERR: fail_import_double_decl_value_param_type.carbon:[[@LINE-31]]:10: in file included here [InCppInclude]
   // CHECK:STDERR: ./double_decl_value_param_type.h:2:7: note: class was forward declared here [ClassForwardDeclaredHere]
   // CHECK:STDERR: union U;
   // CHECK:STDERR:       ^
-  // CHECK:STDERR: fail_import_double_decl_value_param_type.carbon: note: initializing function parameter [InCallToFunctionParam]
   // CHECK:STDERR:
-  Cpp.foo2({});
+  Cpp.foo2({} as Cpp.U);
 }
 
 // ============================================================================
@@ -170,7 +167,7 @@ import Cpp library "definition_no_data_members_value_param_type.h";
 
 fn F() {
   //@dump-sem-ir-begin
-  Cpp.foo({});
+  Cpp.foo({} as Cpp.U);
   //@dump-sem-ir-end
 }
 
@@ -196,15 +193,14 @@ import Cpp library "definition_single_data_member_value_param_type.h";
 
 fn F() {
   //@dump-sem-ir-begin
-  // CHECK:STDERR: fail_import_definition_single_data_member_value_param_type.carbon:[[@LINE+8]]:11: error: cannot implicitly convert expression of type `{}` to `Cpp.U` [ConversionFailure]
-  // CHECK:STDERR:   Cpp.foo({});
-  // CHECK:STDERR:           ^~
-  // CHECK:STDERR: fail_import_definition_single_data_member_value_param_type.carbon:[[@LINE+5]]:11: note: type `{}` does not implement interface `Core.ImplicitAs(Cpp.U)` [MissingImplInMemberAccessNote]
-  // CHECK:STDERR:   Cpp.foo({});
-  // CHECK:STDERR:           ^~
-  // CHECK:STDERR: fail_import_definition_single_data_member_value_param_type.carbon: note: initializing function parameter [InCallToFunctionParam]
+  // CHECK:STDERR: fail_import_definition_single_data_member_value_param_type.carbon:[[@LINE+7]]:11: error: cannot convert expression of type `{}` to `Cpp.U` with `as` [ConversionFailure]
+  // CHECK:STDERR:   Cpp.foo({} as Cpp.U);
+  // CHECK:STDERR:           ^~~~~~~~~~~
+  // CHECK:STDERR: fail_import_definition_single_data_member_value_param_type.carbon:[[@LINE+4]]:11: note: type `{}` does not implement interface `Core.As(Cpp.U)` [MissingImplInMemberAccessNote]
+  // CHECK:STDERR:   Cpp.foo({} as Cpp.U);
+  // CHECK:STDERR:           ^~~~~~~~~~~
   // CHECK:STDERR:
-  Cpp.foo({});
+  Cpp.foo({} as Cpp.U);
   //@dump-sem-ir-end
 }
 
@@ -232,15 +228,14 @@ import Cpp library "definition_multiple_data_members_value_param_type.h";
 
 fn F() {
   //@dump-sem-ir-begin
-  // CHECK:STDERR: fail_import_definition_multiple_data_members_value_param_type.carbon:[[@LINE+8]]:11: error: cannot implicitly convert expression of type `{}` to `Cpp.U` [ConversionFailure]
-  // CHECK:STDERR:   Cpp.foo({});
-  // CHECK:STDERR:           ^~
-  // CHECK:STDERR: fail_import_definition_multiple_data_members_value_param_type.carbon:[[@LINE+5]]:11: note: type `{}` does not implement interface `Core.ImplicitAs(Cpp.U)` [MissingImplInMemberAccessNote]
-  // CHECK:STDERR:   Cpp.foo({});
-  // CHECK:STDERR:           ^~
-  // CHECK:STDERR: fail_import_definition_multiple_data_members_value_param_type.carbon: note: initializing function parameter [InCallToFunctionParam]
+  // CHECK:STDERR: fail_import_definition_multiple_data_members_value_param_type.carbon:[[@LINE+7]]:11: error: cannot convert expression of type `{}` to `Cpp.U` with `as` [ConversionFailure]
+  // CHECK:STDERR:   Cpp.foo({} as Cpp.U);
+  // CHECK:STDERR:           ^~~~~~~~~~~
+  // CHECK:STDERR: fail_import_definition_multiple_data_members_value_param_type.carbon:[[@LINE+4]]:11: note: type `{}` does not implement interface `Core.As(Cpp.U)` [MissingImplInMemberAccessNote]
+  // CHECK:STDERR:   Cpp.foo({} as Cpp.U);
+  // CHECK:STDERR:           ^~~~~~~~~~~
   // CHECK:STDERR:
-  Cpp.foo({});
+  Cpp.foo({} as Cpp.U);
   //@dump-sem-ir-end
 }
 
@@ -262,7 +257,7 @@ import Cpp library "definition_in_namespace_value_param_type.h";
 
 fn F() {
   //@dump-sem-ir-begin
-  Cpp.foo({});
+  Cpp.foo({} as Cpp.N.U);
   // Check that the parameter type was imported correctly.
   var x: Cpp.N.U;
   //@dump-sem-ir-end
@@ -287,7 +282,7 @@ import Cpp library "definition_in_relative_namespace_value_param_type.h";
 
 fn F() {
   //@dump-sem-ir-begin
-  Cpp.N1.foo({});
+  Cpp.N1.foo({} as Cpp.N1.N2.U);
   //@dump-sem-ir-end
 }
 
@@ -312,7 +307,7 @@ import Cpp library "definition_in_outer_definition.h";
 
 fn F() {
   //@dump-sem-ir-begin
-  Cpp.foo({});
+  Cpp.foo({} as Cpp.O.U);
   var x: Cpp.O;
   //@dump-sem-ir-end
 }
@@ -338,7 +333,7 @@ import Cpp library "definition_with_static_method.h";
 fn F() {
   //@dump-sem-ir-begin
   Cpp.U.bar();
-  Cpp.foo({});
+  Cpp.foo({} as Cpp.U);
   //@dump-sem-ir-end
 }
 
@@ -350,7 +345,7 @@ import Cpp library "definition_with_static_method.h";
 
 fn F() {
   //@dump-sem-ir-begin
-  Cpp.foo({});
+  Cpp.foo({} as Cpp.U);
   Cpp.U.bar();
   //@dump-sem-ir-end
 }
@@ -498,6 +493,7 @@ fn F() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [concrete]
+// CHECK:STDOUT:   %U: type = class_type @U [concrete]
 // CHECK:STDOUT:   %foo.type: type = fn_type @foo [concrete]
 // CHECK:STDOUT:   %foo: %foo.type = struct_value () [concrete]
 // CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [concrete]
@@ -506,8 +502,10 @@ fn F() {
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT:   %Cpp: <namespace> = namespace file.%Cpp.import_cpp, [concrete] {
 // CHECK:STDOUT:     .foo = %foo.decl
+// CHECK:STDOUT:     .U = %U.decl
 // CHECK:STDOUT:     import Cpp//...
 // CHECK:STDOUT:   }
+// CHECK:STDOUT:   %U.decl: type = class_decl @U [concrete = constants.%U] {} {}
 // CHECK:STDOUT:   %foo.decl: %foo.type = fn_decl @foo [concrete = constants.%foo] {
 // CHECK:STDOUT:     <elided>
 // CHECK:STDOUT:   } {
@@ -517,9 +515,11 @@ fn F() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F() {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %Cpp.ref: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
+// CHECK:STDOUT:   %Cpp.ref.loc28_3: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
 // CHECK:STDOUT:   %foo.ref: %foo.type = name_ref foo, imports.%foo.decl [concrete = constants.%foo]
-// CHECK:STDOUT:   %.loc29: %empty_struct_type = struct_literal ()
+// CHECK:STDOUT:   %.loc28: %empty_struct_type = struct_literal ()
+// CHECK:STDOUT:   %Cpp.ref.loc28_17: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
+// CHECK:STDOUT:   %U.ref: type = name_ref U, imports.%U.decl [concrete = constants.%U]
 // CHECK:STDOUT:   %foo.call: init %empty_tuple.type = call %foo.ref(<error>)
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
@@ -543,8 +543,10 @@ fn F() {
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT:   %Cpp: <namespace> = namespace file.%Cpp.import_cpp, [concrete] {
 // CHECK:STDOUT:     .foo = %foo.decl
+// CHECK:STDOUT:     .U = %U.decl
 // CHECK:STDOUT:     import Cpp//...
 // CHECK:STDOUT:   }
+// CHECK:STDOUT:   %U.decl: type = class_decl @U [concrete = constants.%U] {} {}
 // CHECK:STDOUT:   %foo.decl: %foo.type = fn_decl @foo [concrete = constants.%foo] {
 // CHECK:STDOUT:     <elided>
 // CHECK:STDOUT:   } {
@@ -559,23 +561,25 @@ fn F() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F() {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %Cpp.ref: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
+// CHECK:STDOUT:   %Cpp.ref.loc8_3: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
 // CHECK:STDOUT:   %foo.ref: %foo.type = name_ref foo, imports.%foo.decl [concrete = constants.%foo]
 // CHECK:STDOUT:   %.loc8_12.1: %empty_struct_type = struct_literal ()
+// CHECK:STDOUT:   %Cpp.ref.loc8_17: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
+// CHECK:STDOUT:   %U.ref: type = name_ref U, imports.%U.decl [concrete = constants.%U]
 // CHECK:STDOUT:   %.loc8_12.2: ref %U = temporary_storage
 // CHECK:STDOUT:   %.loc8_12.3: init %U = class_init (), %.loc8_12.2 [concrete = constants.%U.val]
 // CHECK:STDOUT:   %.loc8_12.4: ref %U = temporary %.loc8_12.2, %.loc8_12.3
-// CHECK:STDOUT:   %.loc8_12.5: ref %U = converted %.loc8_12.1, %.loc8_12.4
-// CHECK:STDOUT:   %.loc8_12.6: %U = bind_value %.loc8_12.5
-// CHECK:STDOUT:   %.loc8_13.1: ref %U = temporary_storage
-// CHECK:STDOUT:   %.loc8_13.2: init %U = initialize_from %.loc8_12.6 to %.loc8_13.1
-// CHECK:STDOUT:   %addr.loc8_13.1: %ptr.86f = addr_of %.loc8_13.1
-// CHECK:STDOUT:   %foo__carbon_thunk.call: init %empty_tuple.type = call imports.%foo__carbon_thunk.decl(%addr.loc8_13.1)
-// CHECK:STDOUT:   %T.as.Destroy.impl.Op.bound.loc8_13: <bound method> = bound_method %.loc8_13.1, constants.%T.as.Destroy.impl.Op.2fa
+// CHECK:STDOUT:   %.loc8_14.1: ref %U = converted %.loc8_12.1, %.loc8_12.4
+// CHECK:STDOUT:   %.loc8_14.2: %U = bind_value %.loc8_14.1
+// CHECK:STDOUT:   %.loc8_22.1: ref %U = temporary_storage
+// CHECK:STDOUT:   %.loc8_22.2: init %U = initialize_from %.loc8_14.2 to %.loc8_22.1
+// CHECK:STDOUT:   %addr.loc8_22.1: %ptr.86f = addr_of %.loc8_22.1
+// CHECK:STDOUT:   %foo__carbon_thunk.call: init %empty_tuple.type = call imports.%foo__carbon_thunk.decl(%addr.loc8_22.1)
+// CHECK:STDOUT:   %T.as.Destroy.impl.Op.bound.loc8_22: <bound method> = bound_method %.loc8_22.1, constants.%T.as.Destroy.impl.Op.2fa
 // CHECK:STDOUT:   <elided>
-// CHECK:STDOUT:   %bound_method.loc8_13: <bound method> = bound_method %.loc8_13.1, %T.as.Destroy.impl.Op.specific_fn.1
-// CHECK:STDOUT:   %addr.loc8_13.2: %ptr.86f = addr_of %.loc8_13.1
-// CHECK:STDOUT:   %T.as.Destroy.impl.Op.call.loc8_13: init %empty_tuple.type = call %bound_method.loc8_13(%addr.loc8_13.2)
+// CHECK:STDOUT:   %bound_method.loc8_22: <bound method> = bound_method %.loc8_22.1, %T.as.Destroy.impl.Op.specific_fn.1
+// CHECK:STDOUT:   %addr.loc8_22.2: %ptr.86f = addr_of %.loc8_22.1
+// CHECK:STDOUT:   %T.as.Destroy.impl.Op.call.loc8_22: init %empty_tuple.type = call %bound_method.loc8_22(%addr.loc8_22.2)
 // CHECK:STDOUT:   %T.as.Destroy.impl.Op.bound.loc8_12: <bound method> = bound_method %.loc8_12.2, constants.%T.as.Destroy.impl.Op.2fa
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT:   %bound_method.loc8_12: <bound method> = bound_method %.loc8_12.2, %T.as.Destroy.impl.Op.specific_fn.2
@@ -602,8 +606,10 @@ fn F() {
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT:   %Cpp: <namespace> = namespace file.%Cpp.import_cpp, [concrete] {
 // CHECK:STDOUT:     .foo = %foo.decl
+// CHECK:STDOUT:     .U = %U.decl
 // CHECK:STDOUT:     import Cpp//...
 // CHECK:STDOUT:   }
+// CHECK:STDOUT:   %U.decl: type = class_decl @U [concrete = constants.%U] {} {}
 // CHECK:STDOUT:   %foo.decl: %foo.type = fn_decl @foo [concrete = constants.%foo] {
 // CHECK:STDOUT:     <elided>
 // CHECK:STDOUT:   } {
@@ -618,19 +624,21 @@ fn F() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F() {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %Cpp.ref: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
+// CHECK:STDOUT:   %Cpp.ref.loc15_3: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
 // CHECK:STDOUT:   %foo.ref: %foo.type = name_ref foo, imports.%foo.decl [concrete = constants.%foo]
-// CHECK:STDOUT:   %.loc16_12.1: %empty_struct_type = struct_literal ()
-// CHECK:STDOUT:   %.loc16_12.2: %U = converted %.loc16_12.1, <error> [concrete = <error>]
-// CHECK:STDOUT:   %.loc16_13.1: ref %U = temporary_storage
-// CHECK:STDOUT:   %.loc16_13.2: init %U = initialize_from <error> to %.loc16_13.1 [concrete = <error>]
-// CHECK:STDOUT:   %addr.loc16_13.1: %ptr.86f = addr_of %.loc16_13.1
-// CHECK:STDOUT:   %foo__carbon_thunk.call: init %empty_tuple.type = call imports.%foo__carbon_thunk.decl(%addr.loc16_13.1)
-// CHECK:STDOUT:   %T.as.Destroy.impl.Op.bound: <bound method> = bound_method %.loc16_13.1, constants.%T.as.Destroy.impl.Op.2fa
+// CHECK:STDOUT:   %.loc15_12: %empty_struct_type = struct_literal ()
+// CHECK:STDOUT:   %Cpp.ref.loc15_17: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
+// CHECK:STDOUT:   %U.ref: type = name_ref U, imports.%U.decl [concrete = constants.%U]
+// CHECK:STDOUT:   %.loc15_14: %U = converted %.loc15_12, <error> [concrete = <error>]
+// CHECK:STDOUT:   %.loc15_22.1: ref %U = temporary_storage
+// CHECK:STDOUT:   %.loc15_22.2: init %U = initialize_from <error> to %.loc15_22.1 [concrete = <error>]
+// CHECK:STDOUT:   %addr.loc15_22.1: %ptr.86f = addr_of %.loc15_22.1
+// CHECK:STDOUT:   %foo__carbon_thunk.call: init %empty_tuple.type = call imports.%foo__carbon_thunk.decl(%addr.loc15_22.1)
+// CHECK:STDOUT:   %T.as.Destroy.impl.Op.bound: <bound method> = bound_method %.loc15_22.1, constants.%T.as.Destroy.impl.Op.2fa
 // CHECK:STDOUT:   <elided>
-// CHECK:STDOUT:   %bound_method: <bound method> = bound_method %.loc16_13.1, %T.as.Destroy.impl.Op.specific_fn
-// CHECK:STDOUT:   %addr.loc16_13.2: %ptr.86f = addr_of %.loc16_13.1
-// CHECK:STDOUT:   %T.as.Destroy.impl.Op.call: init %empty_tuple.type = call %bound_method(%addr.loc16_13.2)
+// CHECK:STDOUT:   %bound_method: <bound method> = bound_method %.loc15_22.1, %T.as.Destroy.impl.Op.specific_fn
+// CHECK:STDOUT:   %addr.loc15_22.2: %ptr.86f = addr_of %.loc15_22.1
+// CHECK:STDOUT:   %T.as.Destroy.impl.Op.call: init %empty_tuple.type = call %bound_method(%addr.loc15_22.2)
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -652,8 +660,10 @@ fn F() {
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT:   %Cpp: <namespace> = namespace file.%Cpp.import_cpp, [concrete] {
 // CHECK:STDOUT:     .foo = %foo.decl
+// CHECK:STDOUT:     .U = %U.decl
 // CHECK:STDOUT:     import Cpp//...
 // CHECK:STDOUT:   }
+// CHECK:STDOUT:   %U.decl: type = class_decl @U [concrete = constants.%U] {} {}
 // CHECK:STDOUT:   %foo.decl: %foo.type = fn_decl @foo [concrete = constants.%foo] {
 // CHECK:STDOUT:     <elided>
 // CHECK:STDOUT:   } {
@@ -668,19 +678,21 @@ fn F() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F() {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %Cpp.ref: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
+// CHECK:STDOUT:   %Cpp.ref.loc15_3: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
 // CHECK:STDOUT:   %foo.ref: %foo.type = name_ref foo, imports.%foo.decl [concrete = constants.%foo]
-// CHECK:STDOUT:   %.loc16_12.1: %empty_struct_type = struct_literal ()
-// CHECK:STDOUT:   %.loc16_12.2: %U = converted %.loc16_12.1, <error> [concrete = <error>]
-// CHECK:STDOUT:   %.loc16_13.1: ref %U = temporary_storage
-// CHECK:STDOUT:   %.loc16_13.2: init %U = initialize_from <error> to %.loc16_13.1 [concrete = <error>]
-// CHECK:STDOUT:   %addr.loc16_13.1: %ptr.86f = addr_of %.loc16_13.1
-// CHECK:STDOUT:   %foo__carbon_thunk.call: init %empty_tuple.type = call imports.%foo__carbon_thunk.decl(%addr.loc16_13.1)
-// CHECK:STDOUT:   %T.as.Destroy.impl.Op.bound: <bound method> = bound_method %.loc16_13.1, constants.%T.as.Destroy.impl.Op.2fa
+// CHECK:STDOUT:   %.loc15_12: %empty_struct_type = struct_literal ()
+// CHECK:STDOUT:   %Cpp.ref.loc15_17: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
+// CHECK:STDOUT:   %U.ref: type = name_ref U, imports.%U.decl [concrete = constants.%U]
+// CHECK:STDOUT:   %.loc15_14: %U = converted %.loc15_12, <error> [concrete = <error>]
+// CHECK:STDOUT:   %.loc15_22.1: ref %U = temporary_storage
+// CHECK:STDOUT:   %.loc15_22.2: init %U = initialize_from <error> to %.loc15_22.1 [concrete = <error>]
+// CHECK:STDOUT:   %addr.loc15_22.1: %ptr.86f = addr_of %.loc15_22.1
+// CHECK:STDOUT:   %foo__carbon_thunk.call: init %empty_tuple.type = call imports.%foo__carbon_thunk.decl(%addr.loc15_22.1)
+// CHECK:STDOUT:   %T.as.Destroy.impl.Op.bound: <bound method> = bound_method %.loc15_22.1, constants.%T.as.Destroy.impl.Op.2fa
 // CHECK:STDOUT:   <elided>
-// CHECK:STDOUT:   %bound_method: <bound method> = bound_method %.loc16_13.1, %T.as.Destroy.impl.Op.specific_fn
-// CHECK:STDOUT:   %addr.loc16_13.2: %ptr.86f = addr_of %.loc16_13.1
-// CHECK:STDOUT:   %T.as.Destroy.impl.Op.call: init %empty_tuple.type = call %bound_method(%addr.loc16_13.2)
+// CHECK:STDOUT:   %bound_method: <bound method> = bound_method %.loc15_22.1, %T.as.Destroy.impl.Op.specific_fn
+// CHECK:STDOUT:   %addr.loc15_22.2: %ptr.86f = addr_of %.loc15_22.1
+// CHECK:STDOUT:   %T.as.Destroy.impl.Op.call: init %empty_tuple.type = call %bound_method(%addr.loc15_22.2)
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -726,27 +738,30 @@ fn F() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F() {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %Cpp.ref.loc8: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
+// CHECK:STDOUT:   %Cpp.ref.loc8_3: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
 // CHECK:STDOUT:   %foo.ref: %foo.type = name_ref foo, imports.%foo.decl [concrete = constants.%foo]
 // CHECK:STDOUT:   %.loc8_12.1: %empty_struct_type = struct_literal ()
+// CHECK:STDOUT:   %Cpp.ref.loc8_17: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
+// CHECK:STDOUT:   %N.ref.loc8: <namespace> = name_ref N, imports.%N [concrete = imports.%N]
+// CHECK:STDOUT:   %U.ref.loc8: type = name_ref U, imports.%U.decl [concrete = constants.%U]
 // CHECK:STDOUT:   %.loc8_12.2: ref %U = temporary_storage
 // CHECK:STDOUT:   %.loc8_12.3: init %U = class_init (), %.loc8_12.2 [concrete = constants.%U.val]
 // CHECK:STDOUT:   %.loc8_12.4: ref %U = temporary %.loc8_12.2, %.loc8_12.3
-// CHECK:STDOUT:   %.loc8_12.5: ref %U = converted %.loc8_12.1, %.loc8_12.4
-// CHECK:STDOUT:   %.loc8_12.6: %U = bind_value %.loc8_12.5
-// CHECK:STDOUT:   %.loc8_13.1: ref %U = temporary_storage
-// CHECK:STDOUT:   %.loc8_13.2: init %U = initialize_from %.loc8_12.6 to %.loc8_13.1
-// CHECK:STDOUT:   %addr.loc8_13.1: %ptr.87e = addr_of %.loc8_13.1
-// CHECK:STDOUT:   %foo__carbon_thunk.call: init %empty_tuple.type = call imports.%foo__carbon_thunk.decl(%addr.loc8_13.1)
+// CHECK:STDOUT:   %.loc8_14.1: ref %U = converted %.loc8_12.1, %.loc8_12.4
+// CHECK:STDOUT:   %.loc8_14.2: %U = bind_value %.loc8_14.1
+// CHECK:STDOUT:   %.loc8_24.1: ref %U = temporary_storage
+// CHECK:STDOUT:   %.loc8_24.2: init %U = initialize_from %.loc8_14.2 to %.loc8_24.1
+// CHECK:STDOUT:   %addr.loc8_24.1: %ptr.87e = addr_of %.loc8_24.1
+// CHECK:STDOUT:   %foo__carbon_thunk.call: init %empty_tuple.type = call imports.%foo__carbon_thunk.decl(%addr.loc8_24.1)
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %x.patt: %pattern_type.eb9 = binding_pattern x [concrete]
 // CHECK:STDOUT:     %x.var_patt: %pattern_type.eb9 = var_pattern %x.patt [concrete]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %x.var: ref %U = var %x.var_patt
-// CHECK:STDOUT:   %.loc10: type = splice_block %U.ref [concrete = constants.%U] {
+// CHECK:STDOUT:   %.loc10: type = splice_block %U.ref.loc10 [concrete = constants.%U] {
 // CHECK:STDOUT:     %Cpp.ref.loc10: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
-// CHECK:STDOUT:     %N.ref: <namespace> = name_ref N, imports.%N [concrete = imports.%N]
-// CHECK:STDOUT:     %U.ref: type = name_ref U, imports.%U.decl [concrete = constants.%U]
+// CHECK:STDOUT:     %N.ref.loc10: <namespace> = name_ref N, imports.%N [concrete = imports.%N]
+// CHECK:STDOUT:     %U.ref.loc10: type = name_ref U, imports.%U.decl [concrete = constants.%U]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %x: ref %U = bind_name x, %x.var
 // CHECK:STDOUT:   %T.as.Destroy.impl.Op.bound.loc10: <bound method> = bound_method %x.var, constants.%T.as.Destroy.impl.Op.d5d
@@ -754,11 +769,11 @@ fn F() {
 // CHECK:STDOUT:   %bound_method.loc10: <bound method> = bound_method %x.var, %T.as.Destroy.impl.Op.specific_fn.1
 // CHECK:STDOUT:   %addr.loc10: %ptr.87e = addr_of %x.var
 // CHECK:STDOUT:   %T.as.Destroy.impl.Op.call.loc10: init %empty_tuple.type = call %bound_method.loc10(%addr.loc10)
-// CHECK:STDOUT:   %T.as.Destroy.impl.Op.bound.loc8_13: <bound method> = bound_method %.loc8_13.1, constants.%T.as.Destroy.impl.Op.d5d
+// CHECK:STDOUT:   %T.as.Destroy.impl.Op.bound.loc8_24: <bound method> = bound_method %.loc8_24.1, constants.%T.as.Destroy.impl.Op.d5d
 // CHECK:STDOUT:   <elided>
-// CHECK:STDOUT:   %bound_method.loc8_13: <bound method> = bound_method %.loc8_13.1, %T.as.Destroy.impl.Op.specific_fn.2
-// CHECK:STDOUT:   %addr.loc8_13.2: %ptr.87e = addr_of %.loc8_13.1
-// CHECK:STDOUT:   %T.as.Destroy.impl.Op.call.loc8_13: init %empty_tuple.type = call %bound_method.loc8_13(%addr.loc8_13.2)
+// CHECK:STDOUT:   %bound_method.loc8_24: <bound method> = bound_method %.loc8_24.1, %T.as.Destroy.impl.Op.specific_fn.2
+// CHECK:STDOUT:   %addr.loc8_24.2: %ptr.87e = addr_of %.loc8_24.1
+// CHECK:STDOUT:   %T.as.Destroy.impl.Op.call.loc8_24: init %empty_tuple.type = call %bound_method.loc8_24(%addr.loc8_24.2)
 // CHECK:STDOUT:   %T.as.Destroy.impl.Op.bound.loc8_12: <bound method> = bound_method %.loc8_12.2, constants.%T.as.Destroy.impl.Op.d5d
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT:   %bound_method.loc8_12: <bound method> = bound_method %.loc8_12.2, %T.as.Destroy.impl.Op.specific_fn.3
@@ -790,8 +805,14 @@ fn F() {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %N1: <namespace> = namespace [concrete] {
 // CHECK:STDOUT:     .foo = %foo.decl
+// CHECK:STDOUT:     .N2 = %N2
 // CHECK:STDOUT:     import Cpp//...
 // CHECK:STDOUT:   }
+// CHECK:STDOUT:   %N2: <namespace> = namespace [concrete] {
+// CHECK:STDOUT:     .U = %U.decl
+// CHECK:STDOUT:     import Cpp//...
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %U.decl: type = class_decl @U [concrete = constants.%U] {} {}
 // CHECK:STDOUT:   %foo.decl: %foo.type = fn_decl @foo [concrete = constants.%foo] {
 // CHECK:STDOUT:     <elided>
 // CHECK:STDOUT:   } {
@@ -806,24 +827,28 @@ fn F() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F() {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %Cpp.ref: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
-// CHECK:STDOUT:   %N1.ref: <namespace> = name_ref N1, imports.%N1 [concrete = imports.%N1]
+// CHECK:STDOUT:   %Cpp.ref.loc8_3: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
+// CHECK:STDOUT:   %N1.ref.loc8_6: <namespace> = name_ref N1, imports.%N1 [concrete = imports.%N1]
 // CHECK:STDOUT:   %foo.ref: %foo.type = name_ref foo, imports.%foo.decl [concrete = constants.%foo]
 // CHECK:STDOUT:   %.loc8_15.1: %empty_struct_type = struct_literal ()
+// CHECK:STDOUT:   %Cpp.ref.loc8_20: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
+// CHECK:STDOUT:   %N1.ref.loc8_23: <namespace> = name_ref N1, imports.%N1 [concrete = imports.%N1]
+// CHECK:STDOUT:   %N2.ref: <namespace> = name_ref N2, imports.%N2 [concrete = imports.%N2]
+// CHECK:STDOUT:   %U.ref: type = name_ref U, imports.%U.decl [concrete = constants.%U]
 // CHECK:STDOUT:   %.loc8_15.2: ref %U = temporary_storage
 // CHECK:STDOUT:   %.loc8_15.3: init %U = class_init (), %.loc8_15.2 [concrete = constants.%U.val]
 // CHECK:STDOUT:   %.loc8_15.4: ref %U = temporary %.loc8_15.2, %.loc8_15.3
-// CHECK:STDOUT:   %.loc8_15.5: ref %U = converted %.loc8_15.1, %.loc8_15.4
-// CHECK:STDOUT:   %.loc8_15.6: %U = bind_value %.loc8_15.5
-// CHECK:STDOUT:   %.loc8_16.1: ref %U = temporary_storage
-// CHECK:STDOUT:   %.loc8_16.2: init %U = initialize_from %.loc8_15.6 to %.loc8_16.1
-// CHECK:STDOUT:   %addr.loc8_16.1: %ptr.8c1 = addr_of %.loc8_16.1
-// CHECK:STDOUT:   %foo__carbon_thunk.call: init %empty_tuple.type = call imports.%foo__carbon_thunk.decl(%addr.loc8_16.1)
-// CHECK:STDOUT:   %T.as.Destroy.impl.Op.bound.loc8_16: <bound method> = bound_method %.loc8_16.1, constants.%T.as.Destroy.impl.Op.28c
+// CHECK:STDOUT:   %.loc8_17.1: ref %U = converted %.loc8_15.1, %.loc8_15.4
+// CHECK:STDOUT:   %.loc8_17.2: %U = bind_value %.loc8_17.1
+// CHECK:STDOUT:   %.loc8_31.1: ref %U = temporary_storage
+// CHECK:STDOUT:   %.loc8_31.2: init %U = initialize_from %.loc8_17.2 to %.loc8_31.1
+// CHECK:STDOUT:   %addr.loc8_31.1: %ptr.8c1 = addr_of %.loc8_31.1
+// CHECK:STDOUT:   %foo__carbon_thunk.call: init %empty_tuple.type = call imports.%foo__carbon_thunk.decl(%addr.loc8_31.1)
+// CHECK:STDOUT:   %T.as.Destroy.impl.Op.bound.loc8_31: <bound method> = bound_method %.loc8_31.1, constants.%T.as.Destroy.impl.Op.28c
 // CHECK:STDOUT:   <elided>
-// CHECK:STDOUT:   %bound_method.loc8_16: <bound method> = bound_method %.loc8_16.1, %T.as.Destroy.impl.Op.specific_fn.1
-// CHECK:STDOUT:   %addr.loc8_16.2: %ptr.8c1 = addr_of %.loc8_16.1
-// CHECK:STDOUT:   %T.as.Destroy.impl.Op.call.loc8_16: init %empty_tuple.type = call %bound_method.loc8_16(%addr.loc8_16.2)
+// CHECK:STDOUT:   %bound_method.loc8_31: <bound method> = bound_method %.loc8_31.1, %T.as.Destroy.impl.Op.specific_fn.1
+// CHECK:STDOUT:   %addr.loc8_31.2: %ptr.8c1 = addr_of %.loc8_31.1
+// CHECK:STDOUT:   %T.as.Destroy.impl.Op.call.loc8_31: init %empty_tuple.type = call %bound_method.loc8_31(%addr.loc8_31.2)
 // CHECK:STDOUT:   %T.as.Destroy.impl.Op.bound.loc8_15: <bound method> = bound_method %.loc8_15.2, constants.%T.as.Destroy.impl.Op.28c
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT:   %bound_method.loc8_15: <bound method> = bound_method %.loc8_15.2, %T.as.Destroy.impl.Op.specific_fn.2
@@ -860,6 +885,7 @@ fn F() {
 // CHECK:STDOUT:     import Cpp//...
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %O.decl: type = class_decl @O [concrete = constants.%O] {} {}
+// CHECK:STDOUT:   %U.decl: type = class_decl @U [concrete = constants.%U] {} {}
 // CHECK:STDOUT:   %foo.decl: %foo.type = fn_decl @foo [concrete = constants.%foo] {
 // CHECK:STDOUT:     <elided>
 // CHECK:STDOUT:   } {
@@ -874,26 +900,29 @@ fn F() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F() {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %Cpp.ref.loc8: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
+// CHECK:STDOUT:   %Cpp.ref.loc8_3: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
 // CHECK:STDOUT:   %foo.ref: %foo.type = name_ref foo, imports.%foo.decl [concrete = constants.%foo]
 // CHECK:STDOUT:   %.loc8_12.1: %empty_struct_type = struct_literal ()
+// CHECK:STDOUT:   %Cpp.ref.loc8_17: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
+// CHECK:STDOUT:   %O.ref.loc8: type = name_ref O, imports.%O.decl [concrete = constants.%O]
+// CHECK:STDOUT:   %U.ref: type = name_ref U, imports.%U.decl [concrete = constants.%U]
 // CHECK:STDOUT:   %.loc8_12.2: ref %U = temporary_storage
 // CHECK:STDOUT:   %.loc8_12.3: init %U = class_init (), %.loc8_12.2 [concrete = constants.%U.val]
 // CHECK:STDOUT:   %.loc8_12.4: ref %U = temporary %.loc8_12.2, %.loc8_12.3
-// CHECK:STDOUT:   %.loc8_12.5: ref %U = converted %.loc8_12.1, %.loc8_12.4
-// CHECK:STDOUT:   %.loc8_12.6: %U = bind_value %.loc8_12.5
-// CHECK:STDOUT:   %.loc8_13.1: ref %U = temporary_storage
-// CHECK:STDOUT:   %.loc8_13.2: init %U = initialize_from %.loc8_12.6 to %.loc8_13.1
-// CHECK:STDOUT:   %addr.loc8_13.1: %ptr.a6c = addr_of %.loc8_13.1
-// CHECK:STDOUT:   %foo__carbon_thunk.call: init %empty_tuple.type = call imports.%foo__carbon_thunk.decl(%addr.loc8_13.1)
+// CHECK:STDOUT:   %.loc8_14.1: ref %U = converted %.loc8_12.1, %.loc8_12.4
+// CHECK:STDOUT:   %.loc8_14.2: %U = bind_value %.loc8_14.1
+// CHECK:STDOUT:   %.loc8_24.1: ref %U = temporary_storage
+// CHECK:STDOUT:   %.loc8_24.2: init %U = initialize_from %.loc8_14.2 to %.loc8_24.1
+// CHECK:STDOUT:   %addr.loc8_24.1: %ptr.a6c = addr_of %.loc8_24.1
+// CHECK:STDOUT:   %foo__carbon_thunk.call: init %empty_tuple.type = call imports.%foo__carbon_thunk.decl(%addr.loc8_24.1)
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %x.patt: %pattern_type.cff = binding_pattern x [concrete]
 // CHECK:STDOUT:     %x.var_patt: %pattern_type.cff = var_pattern %x.patt [concrete]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %x.var: ref %O = var %x.var_patt
-// CHECK:STDOUT:   %.loc9: type = splice_block %O.ref [concrete = constants.%O] {
+// CHECK:STDOUT:   %.loc9: type = splice_block %O.ref.loc9 [concrete = constants.%O] {
 // CHECK:STDOUT:     %Cpp.ref.loc9: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
-// CHECK:STDOUT:     %O.ref: type = name_ref O, imports.%O.decl [concrete = constants.%O]
+// CHECK:STDOUT:     %O.ref.loc9: type = name_ref O, imports.%O.decl [concrete = constants.%O]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %x: ref %O = bind_name x, %x.var
 // CHECK:STDOUT:   %T.as.Destroy.impl.Op.bound.loc9: <bound method> = bound_method %x.var, constants.%T.as.Destroy.impl.Op.2df
@@ -901,11 +930,11 @@ fn F() {
 // CHECK:STDOUT:   %bound_method.loc9: <bound method> = bound_method %x.var, %T.as.Destroy.impl.Op.specific_fn.1
 // CHECK:STDOUT:   %addr.loc9: %ptr.820 = addr_of %x.var
 // CHECK:STDOUT:   %T.as.Destroy.impl.Op.call.loc9: init %empty_tuple.type = call %bound_method.loc9(%addr.loc9)
-// CHECK:STDOUT:   %T.as.Destroy.impl.Op.bound.loc8_13: <bound method> = bound_method %.loc8_13.1, constants.%T.as.Destroy.impl.Op.f3b
+// CHECK:STDOUT:   %T.as.Destroy.impl.Op.bound.loc8_24: <bound method> = bound_method %.loc8_24.1, constants.%T.as.Destroy.impl.Op.f3b
 // CHECK:STDOUT:   <elided>
-// CHECK:STDOUT:   %bound_method.loc8_13: <bound method> = bound_method %.loc8_13.1, %T.as.Destroy.impl.Op.specific_fn.2
-// CHECK:STDOUT:   %addr.loc8_13.2: %ptr.a6c = addr_of %.loc8_13.1
-// CHECK:STDOUT:   %T.as.Destroy.impl.Op.call.loc8_13: init %empty_tuple.type = call %bound_method.loc8_13(%addr.loc8_13.2)
+// CHECK:STDOUT:   %bound_method.loc8_24: <bound method> = bound_method %.loc8_24.1, %T.as.Destroy.impl.Op.specific_fn.2
+// CHECK:STDOUT:   %addr.loc8_24.2: %ptr.a6c = addr_of %.loc8_24.1
+// CHECK:STDOUT:   %T.as.Destroy.impl.Op.call.loc8_24: init %empty_tuple.type = call %bound_method.loc8_24(%addr.loc8_24.2)
 // CHECK:STDOUT:   %T.as.Destroy.impl.Op.bound.loc8_12: <bound method> = bound_method %.loc8_12.2, constants.%T.as.Destroy.impl.Op.f3b
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT:   %bound_method.loc8_12: <bound method> = bound_method %.loc8_12.2, %T.as.Destroy.impl.Op.specific_fn.3
@@ -955,26 +984,28 @@ fn F() {
 // CHECK:STDOUT: fn @F() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %Cpp.ref.loc8: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
-// CHECK:STDOUT:   %U.ref: type = name_ref U, imports.%U.decl [concrete = constants.%U]
+// CHECK:STDOUT:   %U.ref.loc8: type = name_ref U, imports.%U.decl [concrete = constants.%U]
 // CHECK:STDOUT:   %bar.ref: %U.bar.type = name_ref bar, imports.%U.bar.decl [concrete = constants.%U.bar]
 // CHECK:STDOUT:   %U.bar.call: init %empty_tuple.type = call %bar.ref()
-// CHECK:STDOUT:   %Cpp.ref.loc9: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
+// CHECK:STDOUT:   %Cpp.ref.loc9_3: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
 // CHECK:STDOUT:   %foo.ref: %foo.type = name_ref foo, imports.%foo.decl [concrete = constants.%foo]
 // CHECK:STDOUT:   %.loc9_12.1: %empty_struct_type = struct_literal ()
+// CHECK:STDOUT:   %Cpp.ref.loc9_17: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
+// CHECK:STDOUT:   %U.ref.loc9: type = name_ref U, imports.%U.decl [concrete = constants.%U]
 // CHECK:STDOUT:   %.loc9_12.2: ref %U = temporary_storage
 // CHECK:STDOUT:   %.loc9_12.3: init %U = class_init (), %.loc9_12.2 [concrete = constants.%U.val]
 // CHECK:STDOUT:   %.loc9_12.4: ref %U = temporary %.loc9_12.2, %.loc9_12.3
-// CHECK:STDOUT:   %.loc9_12.5: ref %U = converted %.loc9_12.1, %.loc9_12.4
-// CHECK:STDOUT:   %.loc9_12.6: %U = bind_value %.loc9_12.5
-// CHECK:STDOUT:   %.loc9_13.1: ref %U = temporary_storage
-// CHECK:STDOUT:   %.loc9_13.2: init %U = initialize_from %.loc9_12.6 to %.loc9_13.1
-// CHECK:STDOUT:   %addr.loc9_13.1: %ptr.86f = addr_of %.loc9_13.1
-// CHECK:STDOUT:   %foo__carbon_thunk.call: init %empty_tuple.type = call imports.%foo__carbon_thunk.decl(%addr.loc9_13.1)
-// CHECK:STDOUT:   %T.as.Destroy.impl.Op.bound.loc9_13: <bound method> = bound_method %.loc9_13.1, constants.%T.as.Destroy.impl.Op.2fa
+// CHECK:STDOUT:   %.loc9_14.1: ref %U = converted %.loc9_12.1, %.loc9_12.4
+// CHECK:STDOUT:   %.loc9_14.2: %U = bind_value %.loc9_14.1
+// CHECK:STDOUT:   %.loc9_22.1: ref %U = temporary_storage
+// CHECK:STDOUT:   %.loc9_22.2: init %U = initialize_from %.loc9_14.2 to %.loc9_22.1
+// CHECK:STDOUT:   %addr.loc9_22.1: %ptr.86f = addr_of %.loc9_22.1
+// CHECK:STDOUT:   %foo__carbon_thunk.call: init %empty_tuple.type = call imports.%foo__carbon_thunk.decl(%addr.loc9_22.1)
+// CHECK:STDOUT:   %T.as.Destroy.impl.Op.bound.loc9_22: <bound method> = bound_method %.loc9_22.1, constants.%T.as.Destroy.impl.Op.2fa
 // CHECK:STDOUT:   <elided>
-// CHECK:STDOUT:   %bound_method.loc9_13: <bound method> = bound_method %.loc9_13.1, %T.as.Destroy.impl.Op.specific_fn.1
-// CHECK:STDOUT:   %addr.loc9_13.2: %ptr.86f = addr_of %.loc9_13.1
-// CHECK:STDOUT:   %T.as.Destroy.impl.Op.call.loc9_13: init %empty_tuple.type = call %bound_method.loc9_13(%addr.loc9_13.2)
+// CHECK:STDOUT:   %bound_method.loc9_22: <bound method> = bound_method %.loc9_22.1, %T.as.Destroy.impl.Op.specific_fn.1
+// CHECK:STDOUT:   %addr.loc9_22.2: %ptr.86f = addr_of %.loc9_22.1
+// CHECK:STDOUT:   %T.as.Destroy.impl.Op.call.loc9_22: init %empty_tuple.type = call %bound_method.loc9_22(%addr.loc9_22.2)
 // CHECK:STDOUT:   %T.as.Destroy.impl.Op.bound.loc9_12: <bound method> = bound_method %.loc9_12.2, constants.%T.as.Destroy.impl.Op.2fa
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT:   %bound_method.loc9_12: <bound method> = bound_method %.loc9_12.2, %T.as.Destroy.impl.Op.specific_fn.2
@@ -1023,27 +1054,29 @@ fn F() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F() {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %Cpp.ref.loc8: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
+// CHECK:STDOUT:   %Cpp.ref.loc8_3: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
 // CHECK:STDOUT:   %foo.ref: %foo.type = name_ref foo, imports.%foo.decl [concrete = constants.%foo]
 // CHECK:STDOUT:   %.loc8_12.1: %empty_struct_type = struct_literal ()
+// CHECK:STDOUT:   %Cpp.ref.loc8_17: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
+// CHECK:STDOUT:   %U.ref.loc8: type = name_ref U, imports.%U.decl [concrete = constants.%U]
 // CHECK:STDOUT:   %.loc8_12.2: ref %U = temporary_storage
 // CHECK:STDOUT:   %.loc8_12.3: init %U = class_init (), %.loc8_12.2 [concrete = constants.%U.val]
 // CHECK:STDOUT:   %.loc8_12.4: ref %U = temporary %.loc8_12.2, %.loc8_12.3
-// CHECK:STDOUT:   %.loc8_12.5: ref %U = converted %.loc8_12.1, %.loc8_12.4
-// CHECK:STDOUT:   %.loc8_12.6: %U = bind_value %.loc8_12.5
-// CHECK:STDOUT:   %.loc8_13.1: ref %U = temporary_storage
-// CHECK:STDOUT:   %.loc8_13.2: init %U = initialize_from %.loc8_12.6 to %.loc8_13.1
-// CHECK:STDOUT:   %addr.loc8_13.1: %ptr.86f = addr_of %.loc8_13.1
-// CHECK:STDOUT:   %foo__carbon_thunk.call: init %empty_tuple.type = call imports.%foo__carbon_thunk.decl(%addr.loc8_13.1)
+// CHECK:STDOUT:   %.loc8_14.1: ref %U = converted %.loc8_12.1, %.loc8_12.4
+// CHECK:STDOUT:   %.loc8_14.2: %U = bind_value %.loc8_14.1
+// CHECK:STDOUT:   %.loc8_22.1: ref %U = temporary_storage
+// CHECK:STDOUT:   %.loc8_22.2: init %U = initialize_from %.loc8_14.2 to %.loc8_22.1
+// CHECK:STDOUT:   %addr.loc8_22.1: %ptr.86f = addr_of %.loc8_22.1
+// CHECK:STDOUT:   %foo__carbon_thunk.call: init %empty_tuple.type = call imports.%foo__carbon_thunk.decl(%addr.loc8_22.1)
 // CHECK:STDOUT:   %Cpp.ref.loc9: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
-// CHECK:STDOUT:   %U.ref: type = name_ref U, imports.%U.decl [concrete = constants.%U]
+// CHECK:STDOUT:   %U.ref.loc9: type = name_ref U, imports.%U.decl [concrete = constants.%U]
 // CHECK:STDOUT:   %bar.ref: %U.bar.type = name_ref bar, imports.%U.bar.decl [concrete = constants.%U.bar]
 // CHECK:STDOUT:   %U.bar.call: init %empty_tuple.type = call %bar.ref()
-// CHECK:STDOUT:   %T.as.Destroy.impl.Op.bound.loc8_13: <bound method> = bound_method %.loc8_13.1, constants.%T.as.Destroy.impl.Op.2fa
+// CHECK:STDOUT:   %T.as.Destroy.impl.Op.bound.loc8_22: <bound method> = bound_method %.loc8_22.1, constants.%T.as.Destroy.impl.Op.2fa
 // CHECK:STDOUT:   <elided>
-// CHECK:STDOUT:   %bound_method.loc8_13: <bound method> = bound_method %.loc8_13.1, %T.as.Destroy.impl.Op.specific_fn.1
-// CHECK:STDOUT:   %addr.loc8_13.2: %ptr.86f = addr_of %.loc8_13.1
-// CHECK:STDOUT:   %T.as.Destroy.impl.Op.call.loc8_13: init %empty_tuple.type = call %bound_method.loc8_13(%addr.loc8_13.2)
+// CHECK:STDOUT:   %bound_method.loc8_22: <bound method> = bound_method %.loc8_22.1, %T.as.Destroy.impl.Op.specific_fn.1
+// CHECK:STDOUT:   %addr.loc8_22.2: %ptr.86f = addr_of %.loc8_22.1
+// CHECK:STDOUT:   %T.as.Destroy.impl.Op.call.loc8_22: init %empty_tuple.type = call %bound_method.loc8_22(%addr.loc8_22.2)
 // CHECK:STDOUT:   %T.as.Destroy.impl.Op.bound.loc8_12: <bound method> = bound_method %.loc8_12.2, constants.%T.as.Destroy.impl.Op.2fa
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT:   %bound_method.loc8_12: <bound method> = bound_method %.loc8_12.2, %T.as.Destroy.impl.Op.specific_fn.2

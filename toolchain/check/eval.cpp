@@ -336,7 +336,7 @@ static auto MakeFloatResult(Context& context, SemIR::TypeId type_id,
                             llvm::APFloat value) -> SemIR::ConstantId {
   auto result = context.floats().Add(std::move(value));
   return MakeConstantResult(
-      context, SemIR::FloatLiteral{.type_id = type_id, .float_id = result},
+      context, SemIR::FloatValue{.type_id = type_id, .float_id = result},
       Phase::Concrete);
 }
 
@@ -1405,7 +1405,7 @@ static auto PerformBuiltinUnaryFloatOp(Context& context,
                                        SemIR::BuiltinFunctionKind builtin_kind,
                                        SemIR::InstId arg_id)
     -> SemIR::ConstantId {
-  auto op = context.insts().GetAs<SemIR::FloatLiteral>(arg_id);
+  auto op = context.insts().GetAs<SemIR::FloatValue>(arg_id);
   auto op_val = context.floats().Get(op.float_id);
 
   switch (builtin_kind) {
@@ -1425,8 +1425,8 @@ static auto PerformBuiltinBinaryFloatOp(Context& context,
                                         SemIR::InstId lhs_id,
                                         SemIR::InstId rhs_id)
     -> SemIR::ConstantId {
-  auto lhs = context.insts().GetAs<SemIR::FloatLiteral>(lhs_id);
-  auto rhs = context.insts().GetAs<SemIR::FloatLiteral>(rhs_id);
+  auto lhs = context.insts().GetAs<SemIR::FloatValue>(lhs_id);
+  auto rhs = context.insts().GetAs<SemIR::FloatValue>(rhs_id);
   auto lhs_val = context.floats().Get(lhs.float_id);
   auto rhs_val = context.floats().Get(rhs.float_id);
 
@@ -1457,8 +1457,8 @@ static auto PerformBuiltinFloatComparison(
     Context& context, SemIR::BuiltinFunctionKind builtin_kind,
     SemIR::InstId lhs_id, SemIR::InstId rhs_id, SemIR::TypeId bool_type_id)
     -> SemIR::ConstantId {
-  auto lhs = context.insts().GetAs<SemIR::FloatLiteral>(lhs_id);
-  auto rhs = context.insts().GetAs<SemIR::FloatLiteral>(rhs_id);
+  auto lhs = context.insts().GetAs<SemIR::FloatValue>(lhs_id);
+  auto rhs = context.insts().GetAs<SemIR::FloatValue>(rhs_id);
   const auto& lhs_val = context.floats().Get(lhs.float_id);
   const auto& rhs_val = context.floats().Get(rhs.float_id);
 

@@ -82,9 +82,14 @@ static auto TrackImport(Map<ImportKey, UnitAndImports*>& api_map,
   const auto& [import_package_name, import_library_name] = import_key;
 
   if (import_package_name == CppPackageName) {
-    if (import_library_name.empty()) {
+    if (!explicit_import_map) {
+      // Don't diagnose the implicit import in `impl package Cpp`, because we'll
+      // have diagnosed the use of `Cpp` in the declaration.
+      return;
+    }
+    if (!import.library_id.has_value() && !import.inline_body_id.has_value()) {
       CARBON_DIAGNOSTIC(CppInteropMissingLibrary, Error,
-                        "`Cpp` import missing library");
+                        "`Cpp` import without `library` or `inline`");
       unit_info.emitter.Emit(import.node_id, CppInteropMissingLibrary);
       return;
     }
@@ -95,7 +100,12 @@ static auto TrackImport(Map<ImportKey, UnitAndImports*>& api_map,
       unit_info.emitter.Emit(import.node_id, CppInteropFuzzing);
       return;
     }
-    unit_info.cpp_import_names.push_back(import);
+    unit_info.cpp_imports.push_back(import);
+    return;
+  } else if (import.inline_body_id.has_value()) {
+    CARBON_DIAGNOSTIC(InlineImportNotCpp, Error,
+                      "`inline` import not in package `Cpp`");
+    unit_info.emitter.Emit(import.node_id, InlineImportNotCpp);
     return;
   }
 
@@ -216,11 +226,6 @@ static auto TrackImport(Map<ImportKey, UnitAndImports*>& api_map,
   } else {
     // The imported api is missing.
     package_imports.has_load_error = true;
-    if (!explicit_import_map && import_package_name == CppPackageName) {
-      // Don't diagnose the implicit import in `impl package Cpp`, because we'll
-      // have diagnosed the use of `Cpp` in the declaration.
-      return;
-    }
     CARBON_DIAGNOSTIC(LibraryApiNotFound, Error,
                       "corresponding API for '{0}' not found", std::string);
     CARBON_DIAGNOSTIC(ImportNotFound, Error, "imported API '{0}' not found",

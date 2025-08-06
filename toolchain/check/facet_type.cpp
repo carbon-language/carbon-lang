@@ -63,18 +63,12 @@ auto InitialFacetTypeImplWitness(
     SemIR::TypeInstId facet_type_inst_id, SemIR::TypeInstId self_type_inst_id,
     const SemIR::SpecificInterface& interface_to_witness,
     SemIR::SpecificId self_specific_id, bool is_definition) -> SemIR::InstId {
-  // TODO: Finish facet type resolution. This code currently only handles
-  // rewrite constraints that set associated constants to a concrete value.
-  // Need logic to topologically sort rewrites to respect dependencies, and
-  // afterwards reject duplicates that are not identical.
-
   auto facet_type_id =
       context.types().GetTypeIdForTypeInstId(facet_type_inst_id);
   CARBON_CHECK(facet_type_id != SemIR::ErrorInst::TypeId);
   auto facet_type = context.types().GetAs<SemIR::FacetType>(facet_type_id);
-  // TODO: This is currently a copy because I'm not sure whether anything could
-  // cause the facet type store to resize before we are done with it.
-  auto facet_type_info = context.facet_types().Get(facet_type.facet_type_id);
+  const auto& facet_type_info =
+      context.facet_types().Get(facet_type.facet_type_id);
 
   if (!is_definition && facet_type_info.rewrite_constraints.empty()) {
     auto witness_table_inst_id = AddInst<SemIR::ImplWitnessTable>(

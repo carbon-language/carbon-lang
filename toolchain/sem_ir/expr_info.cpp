@@ -113,8 +113,8 @@ auto GetExprCategory(const File& file, InstId inst_id) -> ExprCategory {
       case FacetAccessType::Kind:
       case FacetType::Kind:
       case FacetValue::Kind:
-      case FloatLiteral::Kind:
       case FloatType::Kind:
+      case FloatValue::Kind:
       case FunctionType::Kind:
       case FunctionTypeWithSelfType::Kind:
       case GenericClassType::Kind:
