@@ -1974,9 +1974,6 @@ static auto TryResolveTypedInst(ImportRefResolver& resolver,
 
   auto specific_data = GetLocalSpecificData(resolver, inst.specific_id);
 
-  auto class_const_inst = resolver.local_insts().Get(
-      resolver.local_constant_values().GetInstId(class_const_id));
-
   // TODO: Ensure the vtable is only imported once, in eg: if there's distinct
   // vtable constants (imported from multiple libraries using the vtable) that
   // refer to the same vtable, the vtable should still be singular.
@@ -2012,6 +2009,9 @@ static auto TryResolveTypedInst(ImportRefResolver& resolver,
           vtable_entry_id, local_attached_constant_id);
     }
   }
+
+  auto class_const_inst = resolver.local_insts().Get(
+      resolver.local_constant_values().GetInstId(class_const_id));
 
   auto class_id = SemIR::ClassId::None;
   if (class_const_inst.Is<SemIR::ClassType>()) {
