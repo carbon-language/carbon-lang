@@ -379,7 +379,6 @@ impl C as Z where .Z1 = C {}
 // Implied constraint: .Self impls Y. Should be verified against the type of the
 // facet value replacing T when calling F.
 //
-//
 // CHECK:STDERR: fail_todo_period_self_compared_with_concrete_self.carbon:[[@LINE+4]]:24: error: cannot convert type `.Self` that implements `Z` into type implementing `Y` [ConversionFailureFacetToFacet]
 // CHECK:STDERR: fn F(T:! Z where .Z1 = .Self) {}
 // CHECK:STDERR:                        ^~~~~
