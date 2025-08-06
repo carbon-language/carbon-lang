@@ -1974,22 +1974,8 @@ static auto TryResolveTypedInst(ImportRefResolver& resolver,
 
   auto specific_data = GetLocalSpecificData(resolver, inst.specific_id);
 
-  if (resolver.HasNewWork()) {
-    return ResolveResult::Retry();
-  }
-
   auto class_const_inst = resolver.local_insts().Get(
       resolver.local_constant_values().GetInstId(class_const_id));
-
-  auto class_id = SemIR::ClassId::None;
-  if (class_const_inst.Is<SemIR::ClassType>()) {
-    class_id = class_const_inst.As<SemIR::ClassType>().class_id;
-  } else {
-    auto generic_class_type =
-        resolver.local_types().GetAs<SemIR::GenericClassType>(
-            class_const_inst.type_id());
-    class_id = generic_class_type.class_id;
-  }
 
   // TODO: Ensure the vtable is only imported once, in eg: if there's distinct
   // vtable constants (imported from multiple libraries using the vtable) that
@@ -2025,6 +2011,16 @@ static auto TryResolveTypedInst(ImportRefResolver& resolver,
                            SemIR::SpecificFunctionType::TypeInstId),
           vtable_entry_id, local_attached_constant_id);
     }
+  }
+
+  auto class_id = SemIR::ClassId::None;
+  if (class_const_inst.Is<SemIR::ClassType>()) {
+    class_id = class_const_inst.As<SemIR::ClassType>().class_id;
+  } else {
+    auto generic_class_type =
+        resolver.local_types().GetAs<SemIR::GenericClassType>(
+            class_const_inst.type_id());
+    class_id = generic_class_type.class_id;
   }
 
   auto new_vtable_id = resolver.local_vtables().Add(
