@@ -132,6 +132,8 @@ static constexpr auto DeclIntroducers = [] {
       StateKind::Namespace);
   set_contextual(Lex::TokenKind::Let, OrdinaryContext, NodeKind::LetIntroducer,
                  StateKind::Let);
+  set_contextual(Lex::TokenKind::Let, ClassContext, NodeKind::LetIntroducer,
+                 StateKind::Let);
   set_contextual(Lex::TokenKind::Let, InterfaceContext,
                  NodeKind::AssociatedConstantIntroducer,
                  StateKind::AssociatedConstantDecl);
