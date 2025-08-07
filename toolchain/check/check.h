@@ -30,7 +30,7 @@ struct Unit {
 
   // Storage for the unit's Clang AST. The unique_ptr should start empty, and
   // can be assigned as part of checking.
-  std::unique_ptr<clang::ASTUnit>* cpp_ast;
+  std::unique_ptr<clang::ASTUnit>* clang_ast_unit;
 };
 
 struct CheckParseTreesOptions {

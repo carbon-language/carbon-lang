@@ -154,10 +154,11 @@ auto CheckUnit::InitPackageScopeAndImports() -> void {
 
   const auto& cpp_imports = unit_and_imports_->cpp_imports;
   if (!cpp_imports.empty()) {
-    auto* cpp_ast = unit_and_imports_->unit->cpp_ast;
-    CARBON_CHECK(cpp_ast);
-    CARBON_CHECK(!cpp_ast->get());
-    *cpp_ast = ImportCppFiles(context_, cpp_imports, fs_, clang_invocation_);
+    auto* clang_ast_unit = unit_and_imports_->unit->clang_ast_unit;
+    CARBON_CHECK(clang_ast_unit);
+    CARBON_CHECK(!clang_ast_unit->get());
+    *clang_ast_unit =
+        ImportCppFiles(context_, cpp_imports, fs_, clang_invocation_);
   }
 }
 

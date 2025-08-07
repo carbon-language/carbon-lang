@@ -126,7 +126,7 @@ auto DiagnosticLocConverter::ConvertWithImports(LocId loc_id,
 
   // Convert the C++ import locations.
   if (final_node_id.check_ir_id() == SemIR::CheckIRId::Cpp) {
-    const clang::ASTUnit* ast = sem_ir_->cpp_ast();
+    const clang::ASTUnit* ast = sem_ir_->clang_ast_unit();
     // Collect the location backtrace that Clang would use for an error here.
     ClangImportCollector(ast->getLangOpts(),
                          ast->getDiagnostics().getDiagnosticOptions(),
@@ -174,8 +174,8 @@ auto DiagnosticLocConverter::ConvertImpl(
   clang::SourceLocation clang_loc =
       sem_ir_->clang_source_locs().Get(clang_source_loc_id);
 
-  CARBON_CHECK(sem_ir_->cpp_ast());
-  const auto& src_mgr = sem_ir_->cpp_ast()->getSourceManager();
+  CARBON_CHECK(sem_ir_->clang_ast_unit());
+  const auto& src_mgr = sem_ir_->clang_ast_unit()->getSourceManager();
   clang::PresumedLoc presumed_loc = src_mgr.getPresumedLoc(clang_loc);
   if (presumed_loc.isInvalid()) {
     return Diagnostics::ConvertedLoc();

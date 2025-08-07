@@ -269,7 +269,7 @@ class Context {
     return sem_ir().import_ir_insts();
   }
   auto ast_context() -> clang::ASTContext& {
-    return sem_ir().cpp_ast()->getASTContext();
+    return sem_ir().clang_ast_unit()->getASTContext();
   }
   auto names() -> SemIR::NameStoreWrapper { return sem_ir().names(); }
   auto name_scopes() -> SemIR::NameScopeStore& {

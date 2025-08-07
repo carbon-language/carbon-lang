@@ -230,7 +230,7 @@ class CarbonClangDiagnosticConsumer : public clang::DiagnosticConsumer {
   // Outputs Carbon diagnostics based on the collected Clang diagnostics. Must
   // be called after the AST is set in the context.
   auto EmitDiagnostics() -> void {
-    CARBON_CHECK(sem_ir_->cpp_ast(),
+    CARBON_CHECK(sem_ir_->clang_ast_unit(),
                  "Attempted to emit diagnostics before the AST Unit is loaded");
 
     for (size_t i = 0; i != diagnostic_infos_.size(); ++i) {
@@ -386,7 +386,7 @@ static auto GenerateAst(
   // Attach the AST to SemIR. This needs to be done before we can emit any
   // diagnostics, so their locations can be properly interpreted by our
   // diagnostics machinery.
-  context.sem_ir().set_cpp_ast(ast.get());
+  context.sem_ir().set_clang_ast_unit(ast.get());
 
   // Emit any diagnostics we queued up while building the AST.
   context.emitter().Flush();
@@ -431,7 +431,7 @@ auto ImportCppFiles(Context& context,
     return nullptr;
   }
 
-  CARBON_CHECK(!context.sem_ir().cpp_ast());
+  CARBON_CHECK(!context.sem_ir().clang_ast_unit());
 
   PackageNameId package_id = imports.front().package_id;
   CARBON_CHECK(
@@ -468,7 +468,7 @@ static auto ClangLookupName(Context& context, SemIR::NameScopeId scope_id,
     return std::nullopt;
   }
 
-  clang::ASTUnit* ast = context.sem_ir().cpp_ast();
+  clang::ASTUnit* ast = context.sem_ir().clang_ast_unit();
   CARBON_CHECK(ast);
   clang::Sema& sema = ast->getSema();
 
@@ -504,7 +504,7 @@ static auto ClangConstructorLookup(const Context& context,
     -> clang::DeclContextLookupResult {
   const SemIR::NameScope& scope = context.sem_ir().name_scopes().Get(scope_id);
 
-  clang::Sema& sema = context.sem_ir().cpp_ast()->getSema();
+  clang::Sema& sema = context.sem_ir().clang_ast_unit()->getSema();
   clang::Decl* decl =
       context.sem_ir().clang_decls().Get(scope.clang_decl_context_id()).decl;
   return sema.LookupConstructors(cast<clang::CXXRecordDecl>(decl));
@@ -531,7 +531,7 @@ static auto IsDeclInjectedClassName(const Context& context,
   const auto* scope_record_decl = cast<clang::CXXRecordDecl>(clang_decl.decl);
 
   const clang::ASTContext& ast_context =
-      context.sem_ir().cpp_ast()->getASTContext();
+      context.sem_ir().clang_ast_unit()->getASTContext();
   CARBON_CHECK(
       ast_context.getCanonicalType(
           ast_context.getRecordType(scope_record_decl)) ==
@@ -974,7 +974,7 @@ static auto BuildClassDefinition(Context& context,
 auto ImportCppClassDefinition(Context& context, SemIR::LocId loc_id,
                               SemIR::ClassId class_id,
                               SemIR::ClangDeclId clang_decl_id) -> bool {
-  clang::ASTUnit* ast = context.sem_ir().cpp_ast();
+  clang::ASTUnit* ast = context.sem_ir().clang_ast_unit();
   CARBON_CHECK(ast);
 
   auto* clang_decl = cast<clang::CXXRecordDecl>(

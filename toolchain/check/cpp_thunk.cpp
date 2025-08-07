@@ -288,7 +288,7 @@ auto BuildCppThunk(Context& context, const SemIR::Function& callee_function)
       context, *callee_function_decl, thunk_param_types);
 
   // Build the thunk function body.
-  clang::Sema& sema = context.sem_ir().cpp_ast()->getSema();
+  clang::Sema& sema = context.sem_ir().clang_ast_unit()->getSema();
   clang::Sema::ContextRAII context_raii(sema, thunk_function_decl);
   sema.ActOnStartOfFunctionDef(nullptr, thunk_function_decl);
 
