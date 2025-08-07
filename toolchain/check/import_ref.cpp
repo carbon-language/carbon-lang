@@ -1828,6 +1828,19 @@ static auto TryResolveTypedInst(ImportRefResolver& resolver,
        .index = inst.index});
 }
 
+static auto TryResolveTypedInst(ImportRefResolver& resolver,
+                                SemIR::FloatType inst) -> ResolveResult {
+  CARBON_CHECK(inst.type_id == SemIR::TypeType::TypeId);
+  auto bit_width_id = GetLocalConstantInstId(resolver, inst.bit_width_id);
+  if (resolver.HasNewWork()) {
+    return ResolveResult::Retry();
+  }
+
+  return ResolveAsDeduplicated<SemIR::FloatType>(
+      resolver, {.type_id = SemIR::TypeType::TypeId,
+                 .bit_width_id = bit_width_id});
+}
+
 // Make a declaration of a function. This is done as a separate step from
 // importing the function declaration in order to resolve cycles.
 static auto MakeFunctionDecl(ImportContext& context,
@@ -3028,6 +3041,9 @@ static auto TryResolveInstCanonical(ImportRefResolver& resolver,
     }
     case CARBON_KIND(SemIR::FieldDecl inst): {
       return TryResolveTypedInst(resolver, inst, inst_id);
+    }
+    case CARBON_KIND(SemIR::FloatType inst): {
+      return TryResolveTypedInst(resolver, inst);
     }
     case CARBON_KIND(SemIR::FunctionDecl inst): {
       return TryResolveTypedInst(resolver, inst, const_id);
