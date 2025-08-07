@@ -197,8 +197,7 @@ fn CallFAndGIncomplete() {
 // CHECK:STDOUT:   impl_decl @D.as.Destroy.impl [concrete] {} {}
 // CHECK:STDOUT:   %Destroy.impl_witness_table = impl_witness_table (@D.as.Destroy.impl.%D.as.Destroy.impl.Op.decl), @D.as.Destroy.impl [concrete]
 // CHECK:STDOUT:   %Destroy.impl_witness: <witness> = impl_witness %Destroy.impl_witness_table [concrete = constants.%Destroy.impl_witness]
-// CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [concrete = constants.%empty_struct_type]
-// CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [concrete = constants.%complete_type]
+// CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness constants.%empty_struct_type [concrete = constants.%complete_type]
 // CHECK:STDOUT:   complete_type_witness = %complete_type
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
@@ -262,13 +261,13 @@ fn CallFAndGIncomplete() {
 // CHECK:STDOUT:     import Core//prelude/...
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Main.import_ref.8f24d3.1: <witness> = import_ref Main//incomplete_return, loc37_10, loaded [concrete = constants.%complete_type]
-// CHECK:STDOUT:   %Main.import_ref.cabe25.1 = import_ref Main//incomplete_return, inst20 [no loc], unloaded
+// CHECK:STDOUT:   %Main.import_ref.cabe25.1 = import_ref Main//incomplete_return, inst21 [no loc], unloaded
 // CHECK:STDOUT:   %Core.Destroy: type = import_ref Core//prelude/parts/destroy, Destroy, loaded [concrete = constants.%Destroy.type]
 // CHECK:STDOUT:   %Main.import_ref.7ba: <witness> = import_ref Main//incomplete_return, loc37_9, loaded [concrete = constants.%Destroy.impl_witness.b6f]
 // CHECK:STDOUT:   %Main.import_ref.8f24d3.2: <witness> = import_ref Main//incomplete_return, loc37_10, loaded [concrete = constants.%complete_type]
-// CHECK:STDOUT:   %Main.import_ref.cabe25.2 = import_ref Main//incomplete_return, inst20 [no loc], unloaded
-// CHECK:STDOUT:   %Main.import_ref.4aa: type = import_ref Main//incomplete_return, inst20 [no loc], loaded [concrete = constants.%D.b3dde2.1]
-// CHECK:STDOUT:   %Main.import_ref.cb9: type = import_ref Main//incomplete_return, inst67 [no loc], loaded [concrete = constants.%Destroy.type]
+// CHECK:STDOUT:   %Main.import_ref.cabe25.2 = import_ref Main//incomplete_return, inst21 [no loc], unloaded
+// CHECK:STDOUT:   %Main.import_ref.4aa: type = import_ref Main//incomplete_return, inst21 [no loc], loaded [concrete = constants.%D.b3dde2.1]
+// CHECK:STDOUT:   %Main.import_ref.cb9: type = import_ref Main//incomplete_return, inst68 [no loc], loaded [concrete = constants.%Destroy.type]
 // CHECK:STDOUT:   %Main.import_ref.283: %D.as.Destroy.impl.Op.type = import_ref Main//incomplete_return, loc37_9, loaded [concrete = constants.%D.as.Destroy.impl.Op]
 // CHECK:STDOUT:   %Destroy.impl_witness_table.cd7 = impl_witness_table (%Main.import_ref.283), @D.as.Destroy.impl [concrete]
 // CHECK:STDOUT: }

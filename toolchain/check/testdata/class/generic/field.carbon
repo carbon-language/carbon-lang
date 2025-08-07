@@ -198,8 +198,8 @@ fn H(U:! type, c: Class(U)) -> U {
 // CHECK:STDOUT:   %require_complete: <witness> = require_complete_type %T.loc15_13.1 [symbolic = %require_complete (constants.%require_complete.4aeca8.1)]
 // CHECK:STDOUT:   %Class: type = class_type @Class, @Class(%T.loc15_13.1) [symbolic = %Class (constants.%Class.fe1b2d.1)]
 // CHECK:STDOUT:   %Class.elem: type = unbound_element_type %Class, %T.loc15_13.1 [symbolic = %Class.elem (constants.%Class.elem.e262de.1)]
-// CHECK:STDOUT:   %struct_type.x.loc17_1.2: type = struct_type {.x: @Class.%T.loc15_13.1 (%T)} [symbolic = %struct_type.x.loc17_1.2 (constants.%struct_type.x.2ac3f0.1)]
-// CHECK:STDOUT:   %complete_type.loc17_1.2: <witness> = complete_type_witness %struct_type.x.loc17_1.2 [symbolic = %complete_type.loc17_1.2 (constants.%complete_type.4339b3.1)]
+// CHECK:STDOUT:   %struct_type.x: type = struct_type {.x: @Class.%T.loc15_13.1 (%T)} [symbolic = %struct_type.x (constants.%struct_type.x.2ac3f0.1)]
+// CHECK:STDOUT:   %complete_type.loc17_1.2: <witness> = complete_type_witness %struct_type.x [symbolic = %complete_type.loc17_1.2 (constants.%complete_type.4339b3.1)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   class {
 // CHECK:STDOUT:     %T.ref: type = name_ref T, %T.loc15_13.2 [symbolic = %T.loc15_13.1 (constants.%T)]
@@ -207,8 +207,7 @@ fn H(U:! type, c: Class(U)) -> U {
 // CHECK:STDOUT:     impl_decl @Class.as.Destroy.impl [concrete] {} {}
 // CHECK:STDOUT:     %Destroy.impl_witness_table = impl_witness_table (@Class.as.Destroy.impl.%Class.as.Destroy.impl.Op.decl), @Class.as.Destroy.impl [concrete]
 // CHECK:STDOUT:     %Destroy.impl_witness: <witness> = impl_witness %Destroy.impl_witness_table, @Class.as.Destroy.impl(constants.%T) [symbolic = @Class.as.Destroy.impl.%Destroy.impl_witness (constants.%Destroy.impl_witness)]
-// CHECK:STDOUT:     %struct_type.x.loc17_1.1: type = struct_type {.x: %T} [symbolic = %struct_type.x.loc17_1.2 (constants.%struct_type.x.2ac3f0.1)]
-// CHECK:STDOUT:     %complete_type.loc17_1.1: <witness> = complete_type_witness %struct_type.x.loc17_1.1 [symbolic = %complete_type.loc17_1.2 (constants.%complete_type.4339b3.1)]
+// CHECK:STDOUT:     %complete_type.loc17_1.1: <witness> = complete_type_witness constants.%struct_type.x.2ac3f0.1 [symbolic = %complete_type.loc17_1.2 (constants.%complete_type.4339b3.1)]
 // CHECK:STDOUT:     complete_type_witness = %complete_type.loc17_1.1
 // CHECK:STDOUT:
 // CHECK:STDOUT:   !members:
@@ -287,7 +286,7 @@ fn H(U:! type, c: Class(U)) -> U {
 // CHECK:STDOUT:   %require_complete => constants.%require_complete.4aeca8.1
 // CHECK:STDOUT:   %Class => constants.%Class.fe1b2d.1
 // CHECK:STDOUT:   %Class.elem => constants.%Class.elem.e262de.1
-// CHECK:STDOUT:   %struct_type.x.loc17_1.2 => constants.%struct_type.x.2ac3f0.1
+// CHECK:STDOUT:   %struct_type.x => constants.%struct_type.x.2ac3f0.1
 // CHECK:STDOUT:   %complete_type.loc17_1.2 => constants.%complete_type.4339b3.1
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -310,7 +309,7 @@ fn H(U:! type, c: Class(U)) -> U {
 // CHECK:STDOUT:   %require_complete => constants.%complete_type.f8a
 // CHECK:STDOUT:   %Class => constants.%Class.247
 // CHECK:STDOUT:   %Class.elem => constants.%Class.elem.2d8
-// CHECK:STDOUT:   %struct_type.x.loc17_1.2 => constants.%struct_type.x.ed6
+// CHECK:STDOUT:   %struct_type.x => constants.%struct_type.x.ed6
 // CHECK:STDOUT:   %complete_type.loc17_1.2 => constants.%complete_type.1ec
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -328,7 +327,7 @@ fn H(U:! type, c: Class(U)) -> U {
 // CHECK:STDOUT:   %require_complete => constants.%require_complete.4aeca8.2
 // CHECK:STDOUT:   %Class => constants.%Class.fe1b2d.2
 // CHECK:STDOUT:   %Class.elem => constants.%Class.elem.e262de.2
-// CHECK:STDOUT:   %struct_type.x.loc17_1.2 => constants.%struct_type.x.2ac3f0.2
+// CHECK:STDOUT:   %struct_type.x => constants.%struct_type.x.2ac3f0.2
 // CHECK:STDOUT:   %complete_type.loc17_1.2 => constants.%complete_type.4339b3.2
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

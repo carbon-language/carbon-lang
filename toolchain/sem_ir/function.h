@@ -19,7 +19,12 @@ namespace Carbon::SemIR {
 // Function-specific fields.
 struct FunctionFields {
   // Kinds of special functions.
-  enum class SpecialFunctionKind : uint8_t { None, Builtin, Thunk };
+  enum class SpecialFunctionKind : uint8_t {
+    None,
+    Builtin,
+    Thunk,
+    HasCppThunk,
+  };
 
   // Kinds of virtual modifiers that can apply to functions.
   enum class VirtualModifier : uint8_t { None, Virtual, Abstract, Impl };
@@ -64,7 +69,8 @@ struct FunctionFields {
   InstId self_param_id = InstId::None;
 
   // Data that is specific to the special function kind. Use
-  // `builtin_function_kind()` or `thunk_decl_id()` to access this.
+  // `builtin_function_kind()`, `thunk_decl_id()` or `cpp_thunk_decl_id()` to
+  // access this.
   AnyRawId special_function_kind_data = AnyRawId(AnyRawId::NoneIndex);
 
   // The following members are accumulated throughout the function definition.
@@ -116,10 +122,19 @@ struct Function : public EntityWithParamsBase,
                : BuiltinFunctionKind::None;
   }
 
-  // Returns the declaration that this is a thunk for, or None if this function
-  // is not a thunk.
+  // Returns the declaration that this is a non C++ thunk for, or None if this
+  // function is not a thunk.
   auto thunk_decl_id() const -> InstId {
     return special_function_kind == SpecialFunctionKind::Thunk
+               ? InstId(special_function_kind_data.index)
+               : InstId::None;
+  }
+
+  // Returns the declaration of the thunk that should be called to call this
+  // function, or None if this function is not a C++ function that requires
+  // calling a thunk.
+  auto cpp_thunk_decl_id() const -> InstId {
+    return special_function_kind == SpecialFunctionKind::HasCppThunk
                ? InstId(special_function_kind_data.index)
                : InstId::None;
   }
@@ -154,6 +169,14 @@ struct Function : public EntityWithParamsBase,
   auto SetThunk(InstId decl_id) -> void {
     CARBON_CHECK(special_function_kind == SpecialFunctionKind::None);
     special_function_kind = SpecialFunctionKind::Thunk;
+    special_function_kind_data = AnyRawId(decl_id.index);
+  }
+
+  // Sets that this function is a C++ function that should be called using a C++
+  // thunk.
+  auto SetHasCppThunk(InstId decl_id) -> void {
+    CARBON_CHECK(special_function_kind == SpecialFunctionKind::None);
+    special_function_kind = SpecialFunctionKind::HasCppThunk;
     special_function_kind_data = AnyRawId(decl_id.index);
   }
 };

@@ -96,7 +96,7 @@ struct UnitAndImports {
   Map<PackageNameId, int32_t> package_imports_map;
 
   // List of the `import Cpp` imports.
-  llvm::SmallVector<Parse::Tree::PackagingNames> cpp_import_names;
+  llvm::SmallVector<Parse::Tree::PackagingNames> cpp_imports;
 
   // The remaining number of imports which must be checked before this unit can
   // be processed.

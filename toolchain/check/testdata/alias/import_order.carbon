@@ -66,8 +66,7 @@ var a_val: a = {.v = b_val.v};
 // CHECK:STDOUT:   %.loc4_19.1: %empty_tuple.type = tuple_literal ()
 // CHECK:STDOUT:   %.loc4_19.2: type = converted %.loc4_19.1, constants.%empty_tuple.type [concrete = constants.%empty_tuple.type]
 // CHECK:STDOUT:   %.loc4_16: %C.elem = field_decl v, element0 [concrete]
-// CHECK:STDOUT:   %struct_type.v: type = struct_type {.v: %empty_tuple.type} [concrete = constants.%struct_type.v]
-// CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %struct_type.v [concrete = constants.%complete_type]
+// CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness constants.%struct_type.v [concrete = constants.%complete_type]
 // CHECK:STDOUT:   complete_type_witness = %complete_type
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
@@ -99,7 +98,7 @@ var a_val: a = {.v = b_val.v};
 // CHECK:STDOUT:   %Main.c: type = import_ref Main//a, c, loaded [concrete = constants.%C]
 // CHECK:STDOUT:   %Main.d: type = import_ref Main//a, d, loaded [concrete = constants.%C]
 // CHECK:STDOUT:   %Main.import_ref.146: <witness> = import_ref Main//a, loc4_22, loaded [concrete = constants.%complete_type]
-// CHECK:STDOUT:   %Main.import_ref.2c4 = import_ref Main//a, inst16 [no loc], unloaded
+// CHECK:STDOUT:   %Main.import_ref.2c4 = import_ref Main//a, inst17 [no loc], unloaded
 // CHECK:STDOUT:   %Main.import_ref.f99: %C.elem = import_ref Main//a, loc4_16, loaded [concrete = %.2fc]
 // CHECK:STDOUT:   %.2fc: %C.elem = field_decl v, element0 [concrete]
 // CHECK:STDOUT: }

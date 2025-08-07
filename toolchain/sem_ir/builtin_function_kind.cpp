@@ -95,6 +95,26 @@ struct NoReturn {
 // Constraint that a type is `bool`.
 using Bool = BuiltinType<BoolType::TypeInstId>;
 
+// Constraint that a type is `Core.CharLiteral`.
+using CharLiteral = BuiltinType<CharLiteralType::TypeInstId>;
+
+// Constraint that a type is `u8` or an adapted type, including `Core.Char`.
+struct CharCompatible {
+  static auto Check(const File& sem_ir, ValidateState& /*state*/,
+                    TypeId type_id) -> bool {
+    auto int_info = sem_ir.types().TryGetIntTypeInfo(type_id);
+    if (!int_info) {
+      // Not an integer.
+      return false;
+    }
+    if (!int_info->bit_width.has_value() || int_info->is_signed) {
+      // Must be unsigned.
+      return false;
+    }
+    return sem_ir.ints().Get(int_info->bit_width) == 8;
+  }
+};
+
 // Constraint that requires the type to be a sized integer type.
 struct AnySizedInt {
   static auto Check(const File& sem_ir, ValidateState& /*state*/,
@@ -248,6 +268,10 @@ constexpr BuiltinInfo PrintInt = {
 constexpr BuiltinInfo ReadChar = {"read.char",
                                   ValidateSignature<auto()->AnySizedInt>};
 
+// Returns the `Core.CharLiteral` type.
+constexpr BuiltinInfo CharLiteralMakeType = {"char_literal.make_type",
+                                             ValidateSignature<auto()->Type>};
+
 // Returns the `Core.IntLiteral` type.
 constexpr BuiltinInfo IntLiteralMakeType = {"int_literal.make_type",
                                             ValidateSignature<auto()->Type>};
@@ -268,6 +292,11 @@ constexpr BuiltinInfo FloatMakeType = {"float.make_type",
 // Returns the `bool` type.
 constexpr BuiltinInfo BoolMakeType = {"bool.make_type",
                                       ValidateSignature<auto()->Type>};
+
+// Converts between char types, with a diagnostic if the value doesn't fit.
+constexpr BuiltinInfo CharConvertChecked = {
+    "char.convert_checked",
+    ValidateSignature<auto(CharLiteral)->CharCompatible>};
 
 // Converts between integer types, truncating if necessary.
 constexpr BuiltinInfo IntConvert = {"int.convert",
@@ -578,8 +607,9 @@ auto BuiltinFunctionKind::IsCompTimeOnly(const File& sem_ir,
                                          llvm::ArrayRef<InstId> arg_ids,
                                          TypeId return_type_id) const -> bool {
   switch (*this) {
+    case CharConvertChecked:
     case IntConvertChecked:
-      // Checked integer conversions are compile-time only.
+      // Checked conversions are compile-time only.
       return true;
 
     case IntConvert:

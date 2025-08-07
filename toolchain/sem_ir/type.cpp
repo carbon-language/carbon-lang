@@ -81,34 +81,35 @@ auto TypeStore::GetUnqualifiedType(TypeId type_id) const -> TypeId {
   return type_id;
 }
 
-static auto TryGetIntTypeInfo(const File& file, TypeId type_id)
-    -> std::optional<TypeStore::IntTypeInfo> {
-  auto object_repr_id = file.types().GetObjectRepr(type_id);
+auto TypeStore::TryGetIntTypeInfo(TypeId int_type_id) const
+    -> std::optional<IntTypeInfo> {
+  auto object_repr_id = file_->types().GetObjectRepr(int_type_id);
   if (!object_repr_id.has_value()) {
     return std::nullopt;
   }
-  auto inst_id = file.types().GetInstId(object_repr_id);
+  auto inst_id = file_->types().GetInstId(object_repr_id);
   if (inst_id == IntLiteralType::TypeInstId) {
     // `Core.IntLiteral` has an unknown bit-width.
     return TypeStore::IntTypeInfo{.is_signed = true, .bit_width = IntId::None};
   }
-  auto int_type = file.insts().TryGetAs<IntType>(inst_id);
+  auto int_type = file_->insts().TryGetAs<IntType>(inst_id);
   if (!int_type) {
     return std::nullopt;
   }
-  auto bit_width_inst = file.insts().TryGetAs<IntValue>(int_type->bit_width_id);
+  auto bit_width_inst =
+      file_->insts().TryGetAs<IntValue>(int_type->bit_width_id);
   return TypeStore::IntTypeInfo{
       .is_signed = int_type->int_kind.is_signed(),
       .bit_width = bit_width_inst ? bit_width_inst->int_id : IntId::None};
 }
 
 auto TypeStore::IsSignedInt(TypeId int_type_id) const -> bool {
-  auto int_info = TryGetIntTypeInfo(*file_, int_type_id);
+  auto int_info = TryGetIntTypeInfo(int_type_id);
   return int_info && int_info->is_signed;
 }
 
 auto TypeStore::GetIntTypeInfo(TypeId int_type_id) const -> IntTypeInfo {
-  auto int_info = TryGetIntTypeInfo(*file_, int_type_id);
+  auto int_info = TryGetIntTypeInfo(int_type_id);
   CARBON_CHECK(int_info, "Type {0} is not an integer type", int_type_id);
   return *int_info;
 }

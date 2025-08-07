@@ -41,7 +41,7 @@ class StringLiteral {
   // Expand any escape sequences and compute the resulting character. This
   // handles error recovery internally, but can return nullopt for an invalid
   // character.
-  auto ComputeCharValue(Diagnostics::Emitter<const char*>& emitter) const
+  auto ComputeCharLiteralValue(Diagnostics::Emitter<const char*>& emitter) const
       -> std::optional<CharLiteralValue>;
 
   // Expand any escape sequences in the given string literal and compute the

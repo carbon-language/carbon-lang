@@ -52,6 +52,7 @@ struct CompileOptions {
   bool dump_parse_tree = false;
   bool dump_raw_sem_ir = false;
   bool dump_sem_ir = false;
+  bool dump_cpp_ast = false;
   bool dump_llvm_ir = false;
   bool dump_asm = false;
   bool dump_mem_usage = false;

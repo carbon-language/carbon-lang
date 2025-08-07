@@ -354,6 +354,10 @@ interface Z {
 
 class C;
 impl C as Y {}
+// Implied constraint: .Self impls Y. Should be verified when finishing the impl
+// decl (where we know .Self is C). See:
+// https://discord.com/channels/655572317891461132/941071822756143115/1400953094015160370
+//
 // CHECK:STDERR: fail_todo_period_self_impl_lookup.carbon:[[@LINE+4]]:25: error: cannot convert type `.Self` that implements `Z` into type implementing `Y` [ConversionFailureFacetToFacet]
 // CHECK:STDERR: impl C as Z where .Z1 = .Self {}
 // CHECK:STDERR:                         ^~~~~
@@ -372,6 +376,9 @@ class C;
 impl C as Y {}
 impl C as Z where .Z1 = C {}
 
+// Implied constraint: .Self impls Y. Should be verified against the type of the
+// facet value replacing T when calling F.
+//
 // CHECK:STDERR: fail_todo_period_self_compared_with_concrete_self.carbon:[[@LINE+4]]:24: error: cannot convert type `.Self` that implements `Z` into type implementing `Y` [ConversionFailureFacetToFacet]
 // CHECK:STDERR: fn F(T:! Z where .Z1 = .Self) {}
 // CHECK:STDERR:                        ^~~~~
@@ -380,6 +387,9 @@ fn F(T:! Z where .Z1 = .Self) {}
 fn G() {
   F(C);
 
+  // Implied constraint: .Self impls Y. Should be verified against the type of
+  // the facet value of C when casting.
+  //
   // CHECK:STDERR: fail_todo_period_self_compared_with_concrete_self.carbon:[[@LINE+4]]:23: error: cannot convert type `.Self` that implements `Z` into type implementing `Y` [ConversionFailureFacetToFacet]
   // CHECK:STDERR:   C as (Z where .Z1 = .Self);
   // CHECK:STDERR:                       ^~~~~

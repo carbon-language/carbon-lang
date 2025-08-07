@@ -262,8 +262,7 @@ var c_bad: C({.a = 3, .b = 4}) = F();
 // CHECK:STDOUT:     impl_decl @C.as.Destroy.impl [concrete] {} {}
 // CHECK:STDOUT:     %Destroy.impl_witness_table = impl_witness_table (@C.as.Destroy.impl.%C.as.Destroy.impl.Op.decl), @C.as.Destroy.impl [concrete]
 // CHECK:STDOUT:     %Destroy.impl_witness: <witness> = impl_witness %Destroy.impl_witness_table, @C.as.Destroy.impl(constants.%S) [symbolic = @C.as.Destroy.impl.%Destroy.impl_witness (constants.%Destroy.impl_witness.d9c)]
-// CHECK:STDOUT:     %empty_struct_type: type = struct_type {} [concrete = constants.%empty_struct_type]
-// CHECK:STDOUT:     %complete_type: <witness> = complete_type_witness %empty_struct_type [concrete = constants.%complete_type.357]
+// CHECK:STDOUT:     %complete_type: <witness> = complete_type_witness constants.%empty_struct_type [concrete = constants.%complete_type.357]
 // CHECK:STDOUT:     complete_type_witness = %complete_type
 // CHECK:STDOUT:
 // CHECK:STDOUT:   !members:
@@ -435,15 +434,15 @@ var c_bad: C({.a = 3, .b = 4}) = F();
 // CHECK:STDOUT:     import Core//prelude
 // CHECK:STDOUT:     import Core//prelude/...
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %Implicit.import_ref.773: @Core.IntLiteral.as.ImplicitAs.impl.%Core.IntLiteral.as.ImplicitAs.impl.Convert.type (%Core.IntLiteral.as.ImplicitAs.impl.Convert.type.9a6) = import_ref Implicit//default, inst149 [indirect], loaded [symbolic = @Core.IntLiteral.as.ImplicitAs.impl.%Core.IntLiteral.as.ImplicitAs.impl.Convert (constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.458)]
+// CHECK:STDOUT:   %Implicit.import_ref.773: @Core.IntLiteral.as.ImplicitAs.impl.%Core.IntLiteral.as.ImplicitAs.impl.Convert.type (%Core.IntLiteral.as.ImplicitAs.impl.Convert.type.9a6) = import_ref Implicit//default, inst150 [indirect], loaded [symbolic = @Core.IntLiteral.as.ImplicitAs.impl.%Core.IntLiteral.as.ImplicitAs.impl.Convert (constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.458)]
 // CHECK:STDOUT:   %ImplicitAs.impl_witness_table.1ad = impl_witness_table (%Implicit.import_ref.773), @Core.IntLiteral.as.ImplicitAs.impl [concrete]
 // CHECK:STDOUT:   %Implicit.import_ref.48d = import_ref Implicit//default, loc8_33, unloaded
 // CHECK:STDOUT:   %Implicit.import_ref.c81f8f.1: %struct_type.a.b.5ca = import_ref Implicit//default, loc8_9, loaded [symbolic = @C.%S (constants.%S)]
 // CHECK:STDOUT:   %Implicit.import_ref.8f2: <witness> = import_ref Implicit//default, loc8_34, loaded [concrete = constants.%complete_type.357]
-// CHECK:STDOUT:   %Implicit.import_ref.b8b = import_ref Implicit//default, inst488 [no loc], unloaded
+// CHECK:STDOUT:   %Implicit.import_ref.b8b = import_ref Implicit//default, inst489 [no loc], unloaded
 // CHECK:STDOUT:   %Implicit.import_ref.c81f8f.2: %struct_type.a.b.5ca = import_ref Implicit//default, loc8_9, loaded [symbolic = @C.%S (constants.%S)]
-// CHECK:STDOUT:   %Implicit.import_ref.4cf: type = import_ref Implicit//default, inst488 [no loc], loaded [symbolic = constants.%C.720]
-// CHECK:STDOUT:   %Implicit.import_ref.cb9: type = import_ref Implicit//default, inst108 [no loc], loaded [concrete = constants.%Destroy.type]
+// CHECK:STDOUT:   %Implicit.import_ref.4cf: type = import_ref Implicit//default, inst489 [no loc], loaded [symbolic = constants.%C.720]
+// CHECK:STDOUT:   %Implicit.import_ref.cb9: type = import_ref Implicit//default, inst109 [no loc], loaded [concrete = constants.%Destroy.type]
 // CHECK:STDOUT:   %Implicit.import_ref.7f2ca0.1 = import_ref Implicit//default, loc8_33, unloaded
 // CHECK:STDOUT:   %Implicit.import_ref.7f2ca0.2 = import_ref Implicit//default, loc8_33, unloaded
 // CHECK:STDOUT:   %Destroy.impl_witness_table.2ab = impl_witness_table (%Implicit.import_ref.7f2ca0.2), @C.as.Destroy.impl [concrete]
@@ -674,10 +673,10 @@ var c_bad: C({.a = 3, .b = 4}) = F();
 // CHECK:STDOUT:   %Implicit.import_ref.48d = import_ref Implicit//default, loc8_33, unloaded
 // CHECK:STDOUT:   %Implicit.import_ref.c81f8f.1: %struct_type.a.b = import_ref Implicit//default, loc8_9, loaded [symbolic = @C.%S (constants.%S)]
 // CHECK:STDOUT:   %Implicit.import_ref.8f2: <witness> = import_ref Implicit//default, loc8_34, loaded [concrete = constants.%complete_type.357]
-// CHECK:STDOUT:   %Implicit.import_ref.b8b = import_ref Implicit//default, inst488 [no loc], unloaded
+// CHECK:STDOUT:   %Implicit.import_ref.b8b = import_ref Implicit//default, inst489 [no loc], unloaded
 // CHECK:STDOUT:   %Implicit.import_ref.c81f8f.2: %struct_type.a.b = import_ref Implicit//default, loc8_9, loaded [symbolic = @C.%S (constants.%S)]
-// CHECK:STDOUT:   %Implicit.import_ref.4cf: type = import_ref Implicit//default, inst488 [no loc], loaded [symbolic = constants.%C.720]
-// CHECK:STDOUT:   %Implicit.import_ref.cb9: type = import_ref Implicit//default, inst108 [no loc], loaded [concrete = constants.%Destroy.type]
+// CHECK:STDOUT:   %Implicit.import_ref.4cf: type = import_ref Implicit//default, inst489 [no loc], loaded [symbolic = constants.%C.720]
+// CHECK:STDOUT:   %Implicit.import_ref.cb9: type = import_ref Implicit//default, inst109 [no loc], loaded [concrete = constants.%Destroy.type]
 // CHECK:STDOUT:   %Implicit.import_ref.7f2ca0.1 = import_ref Implicit//default, loc8_33, unloaded
 // CHECK:STDOUT:   %Implicit.import_ref.7f2ca0.2 = import_ref Implicit//default, loc8_33, unloaded
 // CHECK:STDOUT:   %Destroy.impl_witness_table.2ab = impl_witness_table (%Implicit.import_ref.7f2ca0.2), @C.as.Destroy.impl [concrete]
@@ -843,15 +842,15 @@ var c_bad: C({.a = 3, .b = 4}) = F();
 // CHECK:STDOUT:     import Core//prelude
 // CHECK:STDOUT:     import Core//prelude/...
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %Implicit.import_ref.773: @Core.IntLiteral.as.ImplicitAs.impl.%Core.IntLiteral.as.ImplicitAs.impl.Convert.type (%Core.IntLiteral.as.ImplicitAs.impl.Convert.type.9a6) = import_ref Implicit//default, inst149 [indirect], loaded [symbolic = @Core.IntLiteral.as.ImplicitAs.impl.%Core.IntLiteral.as.ImplicitAs.impl.Convert (constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.458)]
+// CHECK:STDOUT:   %Implicit.import_ref.773: @Core.IntLiteral.as.ImplicitAs.impl.%Core.IntLiteral.as.ImplicitAs.impl.Convert.type (%Core.IntLiteral.as.ImplicitAs.impl.Convert.type.9a6) = import_ref Implicit//default, inst150 [indirect], loaded [symbolic = @Core.IntLiteral.as.ImplicitAs.impl.%Core.IntLiteral.as.ImplicitAs.impl.Convert (constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.458)]
 // CHECK:STDOUT:   %ImplicitAs.impl_witness_table.1ad = impl_witness_table (%Implicit.import_ref.773), @Core.IntLiteral.as.ImplicitAs.impl [concrete]
 // CHECK:STDOUT:   %Implicit.import_ref.48d = import_ref Implicit//default, loc8_33, unloaded
 // CHECK:STDOUT:   %Implicit.import_ref.c81f8f.1: %struct_type.a.b.5ca = import_ref Implicit//default, loc8_9, loaded [symbolic = @C.%S (constants.%S)]
 // CHECK:STDOUT:   %Implicit.import_ref.8f2: <witness> = import_ref Implicit//default, loc8_34, loaded [concrete = constants.%complete_type.357]
-// CHECK:STDOUT:   %Implicit.import_ref.b8b = import_ref Implicit//default, inst488 [no loc], unloaded
+// CHECK:STDOUT:   %Implicit.import_ref.b8b = import_ref Implicit//default, inst489 [no loc], unloaded
 // CHECK:STDOUT:   %Implicit.import_ref.c81f8f.2: %struct_type.a.b.5ca = import_ref Implicit//default, loc8_9, loaded [symbolic = @C.%S (constants.%S)]
-// CHECK:STDOUT:   %Implicit.import_ref.4cf: type = import_ref Implicit//default, inst488 [no loc], loaded [symbolic = constants.%C.720]
-// CHECK:STDOUT:   %Implicit.import_ref.cb9: type = import_ref Implicit//default, inst108 [no loc], loaded [concrete = constants.%Destroy.type]
+// CHECK:STDOUT:   %Implicit.import_ref.4cf: type = import_ref Implicit//default, inst489 [no loc], loaded [symbolic = constants.%C.720]
+// CHECK:STDOUT:   %Implicit.import_ref.cb9: type = import_ref Implicit//default, inst109 [no loc], loaded [concrete = constants.%Destroy.type]
 // CHECK:STDOUT:   %Implicit.import_ref.7f2ca0.1 = import_ref Implicit//default, loc8_33, unloaded
 // CHECK:STDOUT:   %Implicit.import_ref.7f2ca0.2 = import_ref Implicit//default, loc8_33, unloaded
 // CHECK:STDOUT:   %Destroy.impl_witness_table.2ab = impl_witness_table (%Implicit.import_ref.7f2ca0.2), @C.as.Destroy.impl [concrete]

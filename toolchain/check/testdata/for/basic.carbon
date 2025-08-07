@@ -103,8 +103,8 @@ fn Run() {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
-// CHECK:STDOUT:   %Core.import_ref.cd6: @Optional.%Optional.HasValue.type (%Optional.HasValue.type.a15) = import_ref Core//prelude/parts/iterate, inst98 [indirect], loaded [symbolic = @Optional.%Optional.HasValue (constants.%Optional.HasValue.73f)]
-// CHECK:STDOUT:   %Core.import_ref.4fd: @Optional.%Optional.Get.type (%Optional.Get.type.e03) = import_ref Core//prelude/parts/iterate, inst99 [indirect], loaded [symbolic = @Optional.%Optional.Get (constants.%Optional.Get.971)]
+// CHECK:STDOUT:   %Core.import_ref.cd6: @Optional.%Optional.HasValue.type (%Optional.HasValue.type.a15) = import_ref Core//prelude/parts/iterate, inst99 [indirect], loaded [symbolic = @Optional.%Optional.HasValue (constants.%Optional.HasValue.73f)]
+// CHECK:STDOUT:   %Core.import_ref.4fd: @Optional.%Optional.Get.type (%Optional.Get.type.e03) = import_ref Core//prelude/parts/iterate, inst100 [indirect], loaded [symbolic = @Optional.%Optional.Get (constants.%Optional.Get.971)]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Run() {

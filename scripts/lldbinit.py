@@ -33,7 +33,7 @@ RunCommand(f"settings append target.source-map /proc/self/cwd {project_root}")
 
 # Matches the output of `print Dump(...)` and captures the stuff from inside the
 # std::string while discarding the std::string type.
-dump_re = re.compile('\\(std::string\\) "((:?.|\n)+)"', re.MULTILINE)
+dump_re = re.compile(r'\(std::string\) "([\s\S]+)"', re.MULTILINE)
 
 
 # A helper to ease calling the Dump() free functions.
