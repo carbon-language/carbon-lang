@@ -344,6 +344,17 @@ auto DirRef::Rmtree(const std::filesystem::path& path)
       if (rmdir_result.ok() || rmdir_result.error().no_entity()) {
         continue;
       }
+      // HACK for debugging
+      if (rmdir_result.error().not_empty()) {
+        llvm::errs() << "This shouldn't happen: `" << parent_it->name()
+                     << "`\n";
+        Dir d = *parent.OpenDir(parent_it->name());
+        DirRef::Reader r = *std::move(d).TakeAndRead();
+        for (auto entry : r) {
+          llvm::errs() << "  entry: " << entry.name();
+        }
+        CARBON_FATAL("Toast");
+      }
       // Otherwise, something went fundamentally wrong with removing the
       // directory, propagate that.
       return rmdir_result;
