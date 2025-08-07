@@ -24,13 +24,15 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 ## Overview
 
 One of Carbon's core goals is [practical safety]. This is referring to _[code
-safety]_ as opposed to the larger space of [systems safety]. The largest aspect
-of code safety at the language level is [memory safety], but this also applies
-to other aspects of code safety such as avoiding undefined behavior in other
-forms.
+safety]_
+as opposed to the larger space of [systems safety]. The largest aspect of code safety
+at the language level is [memory safety], but this also applies to other aspects
+of code safety such as avoiding undefined behavior in other forms.
 
-[practical safety]: /docs/project/goals.md#...
-[code safety]: /docs/design/safety/terminology.md#code-safety
+[practical safety]:
+    /docs/project/goals.md#practical-safety-and-testing-mechanisms
+[code safety]:
+    /docs/design/safety/terminology.md#code-software-or-program-safety
 [systems safety]: /docs/design/safety/terminology.md#safety
 
 However, Carbon also has a goal of fine grained, smooth interop-with and
@@ -50,12 +52,13 @@ C++.
 
 Carbon will have both _safe_ and _unsafe_ code. Safe code provides limits on the
 potential behavior of the program even in the face of bugs in order to prevent
-[safety bugs] from becoming [vulnerabilities]. Unsafe code is any code or
-operation which may lack limits or guarantees on behavior, and as a result may
-result in undefined behavior and a safety bug.
+[safety bugs] from becoming [vulnerabilities]. Unsafe code is any code or operation
+which may lack limits or guarantees on behavior, and as a result may result in undefined
+behavior and a safety bug.
 
 [safety bugs]: /docs/design/safety/terminology.md#safety-bugs
-[vulnerabilities]: /docs/design/safety/terminology.md#vuln
+[vulnerabilities]:
+    /docs/design/safety/terminology.md#vulnerability-or-security-vulnerability
 
 All things being equal, safe code constructs are preferable to unsafe
 constructs, but many unsafe constructs are necessary. Where unsafe constructs
@@ -79,8 +82,8 @@ The _safety mode_ of Carbon governs the extent to which unsafe code must include
 the local `unsafe` keyword in its syntax to delineate it from safe code.
 
 _Strict Carbon_ is the mode in which all unsafe code is marked with the `unsafe`
-keyword. This mode is designed to satisfy the requirements of a [memory safe
-language].
+keyword. This mode is designed to satisfy the requirements of a [memory
+safe language].
 
 _Permissive Carbon_ is a mode optimized for interop with C++ and automated
 migration from C++. In this mode, some unsafe code to not require an `unsafe`
@@ -93,18 +96,19 @@ permissive mode is designed to be minimal in the unsafe code allowed.
 Carbon will use a hybrid of different techniques to achieve memory safety in its
 safe code, largely broken down by the categories of memory safety:
 
--   [Type safety]: compile-time enforcement, the same as other statically typed
-    languages with generic type systems.
+-   [Type safety]: compile-time enforcement, the same as other statically typed languages
+    with generic type systems.
 -   [Initialization safety]: hybrid of run-time and compile-time enforcement.
 -   [Spatial safety]: run-time enforcement.
 -   [Temporal safety]: compile-time enforcement through its type system.
 -   [Data-race safety]: compile-time enforcement through its type system.
 
 [type safety]: /docs/design/safety/terminology.md#type-safety
-[initialization safety]: /docs/design/safety/terminology.md#init-safety
+[initialization safety]:
+    /docs/design/safety/terminology.md#initialization-safety
 [spatial safety]: /docs/design/safety/terminology.md#spatial-safety
 [temporal safety]: /docs/design/safety/terminology.md#temporal-safety
-[data-race safety]: /docs/design/safety/terminology.md#race-safety
+[data-race safety]: /docs/design/safety/terminology.md#data-race-safety
 
 **At this high level, this means Carbon's memory safety model will largely match
 Rust's.** The only minor deviation at this level from Rust is the use of
@@ -134,9 +138,8 @@ to our definition:
     free.
 
 However, preventing these data race bugs remains _highly valuable_ for
-correctness, debugging, and achieving [fearless concurrency]. But it is one
-aspect where Carbon can in theory afford a compromise based on the current
-security information.
+correctness, debugging, and achieving [fearless concurrency]. But it is one aspect
+where Carbon can in theory afford a compromise based on the current security information.
 
 [fearless concurrency]: https://doc.rust-lang.org/book/ch16-00-concurrency.html
 
@@ -171,12 +174,11 @@ run-time enforcement components of our
 [memory safety model](#memory-safety-model) above. This means, for example, that
 bounds checking is enabled in the release build. There is [evidence] that the
 cost of these hardening steps is low. Following the specific guidance of our top
-priority for [performance _control_], Carbon will provide ways to write unsafe
-code that disables the run-time enforcement, enabling the control of any
-overhead incurred.
+priority for [performance _control_], Carbon will provide ways to write unsafe code
+that disables the run-time enforcement, enabling the control of any overhead incurred.
 
 [evidence]: https://chandlerc.blog/posts/2024/11/story-time-bounds-checking/
-[performance control]: /docs/project/goals.html#performance-critical-software
+[performance control]: /docs/project/goals.md#performance-critical-software
 
 The debug build will work to cause bugs and any detectable undefined behavior to
 have [fail-stop] behavior and even detailed diagnostics to enable better
@@ -184,7 +186,7 @@ debugging. This mode will at least provide similar bug [detection] capabilities
 to [AddressSanitizer] and [MemorySanitizer].
 
 [fail-stop]: /docs/design/safety/terminology.md#fail-stop
-[detection]: /docs/design/safety/terminology.md#detection
+[detection]: /docs/design/safety/terminology.md#detecting
 [AddressSanitizer]: https://clang.llvm.org/docs/AddressSanitizer.html
 [MemorySanitizer]: https://clang.llvm.org/docs/MemorySanitizer.html
 
@@ -201,7 +203,7 @@ release build for that specific purpose. For example:
     address sanitizing ([HWASAN]).
 
 [ThreadSanitizer]: https://clang.llvm.org/docs/ThreadSanitizer.html
-[hardening]: /docs/design/safety/terminology.md#detection
+[hardening]: /docs/design/safety/terminology.md#hardening
 [cfi]: https://clang.llvm.org/docs/ControlFlowIntegrity.html
 [hwasan]:
     https://clang.llvm.org/docs/HardwareAssistedAddressSanitizerDesign.html
