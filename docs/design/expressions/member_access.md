@@ -737,31 +737,11 @@ of `x` and instance binding is performed if an instance member is found.
 If instance binding is to be performed, the result of instance binding depends
 on what instance member `M` was found:
 
--   For a field member of a struct type, `x` is required to have that struct
-    type, and `x.f` evaluates to the corresponding field of `x`. If `x` has a
-    [struct form](/docs/design/values.md#expression-forms), the form of `x.f` is
-    the value of the corresponding field of the struct form. Otherwise, `x` must
-    have a primitive form, and `x.f` has a primitive form as well. If `x` is an
-    [initializing expression](/docs/design/values.md#initializing-expressions),
-    then a
-    [temporary is materialized](/docs/design/values.md#temporary-materialization)
-    for `x`. The result of `x.f` has the same
-    [expression category](/docs/design/values.md#expression-categories) as the
-    possibly materialized `x`. The type of `x.f` is the declared type of the
-    field, and it has the same expression phase as `x`.
--   For an element member of a tuple type, `x` is required to have that tuple
-    type, and `x.f` evaluates to the corresponding element of `x`. If `x` has a
-    [tuple form](/docs/design/values.md#expression-forms), the form of `x.f` is
-    the value of the corresponding element of the tuple form. Otherwise, `x`
-    must have a primitive form, and `x.f` has a primitive form as well. If `x`
-    is an
-    [initializing expression](/docs/design/values.md#initializing-expressions),
-    then a
-    [temporary is materialized](/docs/design/values.md#temporary-materialization)
-    for `x`. The result of `x.f` has the same
-    [expression category](/docs/design/values.md#expression-categories) as the
-    possibly materialized `x`. The type of `x.f` is the declared type of the
-    element, and it has the same expression phase as `x`.
+-   For a field member of a struct type or tuple type, `x` is required to have
+    that type. `x` is converted to a struct or tuple form by
+    [form decomposition](/docs/design/values.md#category-conversions), and the
+    `.f` element of the outcome of that conversion becomes the outcome of `x.f`.
+    All other elements are [discarded](/docs/design/values.md#form-conversions).
 -   For a field member in class `C`, `x` is required to be of type `C` or of a
     type derived from `C`. The result is the corresponding subobject within `x`.
     If `x` is an

@@ -28,10 +28,14 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
     -   [Interop with C++ `const &` and `const` methods](#interop-with-c-const--and-const-methods)
     -   [Escape hatches for value addresses in Carbon](#escape-hatches-for-value-addresses-in-carbon)
 -   [Initializing expressions](#initializing-expressions)
+    -   [Initializing outcomes](#initializing-outcomes)
     -   [Function calls and returns](#function-calls-and-returns)
         -   [Deferred initialization from values and references](#deferred-initialization-from-values-and-references)
         -   [Declared `returned` variable](#declared-returned-variable)
-    -   [Expression forms](#expression-forms)
+-   [Expression forms](#expression-forms)
+    -   [Form conversions](#form-conversions)
+        -   [Type conversions](#type-conversions)
+        -   [Category conversions](#category-conversions)
 -   [Pointers](#pointers)
     -   [Reference types](#reference-types)
     -   [Pointer syntax](#pointer-syntax)
@@ -65,7 +69,7 @@ itself.
 
 ### Expression categories
 
-There are three expression categories in Carbon:
+There are three primary expression categories in Carbon:
 
 -   [_Value expressions_](#value-expressions) produce abstract, read-only
     _values_ that cannot be modified or have their address taken.
@@ -78,8 +82,8 @@ There are three expression categories in Carbon:
     returns, which can construct the returned value directly in the caller's
     storage.
 
-Expressions in one category can be converted to any other category when needed.
-The primitive conversion steps used are:
+Expressions in one category can be implicitly converted to any other primary
+category when needed. The primitive conversion steps used are:
 
 -   [_Value binding_](#value-binding) forms a value expression from the current
     value of the object referenced by a reference expression.
@@ -98,13 +102,29 @@ These conversion steps combine to provide the transitive conversion table:
 |    to **reference** | direct init + materialize | ==        | materialize        |
 | to **initializing** | direct init               | copy init | ==                 |
 
-Reference expressions formed through temporary materialization are called
-[_ephemeral reference expressions_](#ephemeral-reference-expressions) and have
-restrictions on how they are used. In contrast, reference expressions that refer
-to declared storage are called
-[_durable reference expressions_](#durable-reference-expressions). Beyond the
-restrictions on what is valid, there is no distinction in their behavior or
-semantics.
+Reference expressions are divided into 2x2 sub-categories: they can be either
+[_ephemeral_](#ephemeral-reference-expressions) or
+[_durable_](#durable-reference-expressions), and either _owning_ or
+_non-owning_.
+
+Ephemeral reference expressions are formed through temporary materialization,
+and have restrictions on how they are used. In contrast, durable reference
+expressions refer to storage that has a declared name. Owning reference
+expressions can only refer to complete objects, whereas non-owning reference
+expressions can refer to both complete objects and sub-objects. As a
+consequence, only owning reference expressions can be moved.
+
+Value binding and copy initialization can be applied to any reference
+expression, but materialization only produces owning ephemeral reference
+expressions. An owning reference expression can be implicitly converted to
+non-owning; this has no run-time effect because it merely discards static
+ownership information. Non-owning reference expressions can only be converted to
+owning reference expressions by round-tripping through copy-initialization and
+materialization. Non-durable-reference expressions cannot be implicitly
+converted to durable reference expressions at all.
+
+> **TODO:** Determine how these reference sub-categories relate to memory-safety
+> properties like uniqueness.
 
 #### Value binding
 
@@ -528,6 +548,30 @@ expression: the expression is first converted to an initializing expression if
 necessary, and then temporary storage is materialized to act as its output, and
 as the referent of the resulting ephemeral reference expression.
 
+### Initializing outcomes
+
+An _initializing outcome_ is the result of evaluating an initializing
+expression, and represents an obligation to provide storage for an object of the
+expression's type. This obligation can be fulfilled by allocating suitable
+storage and materializing the initializing outcome into it, or it can be
+delegated by returning it to some enclosing context, where it acts as an
+initializing expression.
+
+The holder of the initializing outcome must fulfill that obligation exactly
+once, and if it is nested within a larger composite outcome (see
+[below](#form-conversions)), the computation that fulfills the obligation must
+be independent of any values or references in the enclosing complete outcome,
+and free of other side-effects. These requirements are enforced during
+typechecking. This ensures that the storage location can actually be computed
+beforehand, and passed as an input to evaluation of the initializing expression.
+
+> **Future work:** At present these requirements are somewhat trivial because an
+> initializing outcome is always fulfilled immediately, but a forthcoming
+> proposal is expected to introduce a way to bind a name to an initializing
+> outcome. That proposal may impose stricter requirements than the ones
+> described here, which are just the minimum necessary for initializing outcomes
+> to be coherent.
+
 ### Function calls and returns
 
 Function calls in Carbon are modeled directly as initializing expressions --
@@ -545,10 +589,6 @@ var x: MyType = CreateMyObject();
 
 The `<return-expression>` in the `return` statement actually initializes the
 storage provided for `x`. There is no "copy" or other step.
-
-> **Future work:** Extend this to also apply when a variable pattern is
-> initialized from a tuple/struct literal, or a tuple/struct pattern with
-> variable subpatterns is initialized from a single function call.
 
 All `return` statement expressions are required to be initializing expressions
 and in fact initialize the storage provided to the function's call expression.
@@ -630,7 +670,7 @@ The model of initialization of returns also facilitates the use of
 [`returned var` declarations](control_flow/return.md#returned-var). These
 directly observe the storage provided for initialization of a function's return.
 
-### Expression forms
+## Expression forms
 
 We typically treat the category and type of an expression as independent
 properties. However, in some cases we need deal with them as an integrated
@@ -670,38 +710,189 @@ The _type component_ of a form is defined as follows:
     field names of the struct form and whose field types are the type components
     of the corresponding elements.
 
+The _category component_ and _phase component_ of a form are defined likewise.
+The category component of a struct form is called a _struct category_, and the
+category component of a tuple form is called a tuple category.
+
 The type of an expression is the type component of the expression's form.
 
-Almost all operations expect their expression operands to have a primitive form
-with a particular expression category, and possibly a particular phase and/or
-type. When an expression is used in such an operand position, it is implicitly
-converted to the expected type, if a suitable conversion is available. Note that
-this conversion takes place even if the expression already has the expected
-type, because the conversion can still change the expression's form. If the
-result of the conversion has a composite form, it is converted to the expected
-type again (this second conversion is guaranteed to exist, and have a primitive
-form). Finally, category and phase conversions are applied as needed to satisfy
-the expected category and phase.
+An _outcome_ is the result of evaluating an expression. It can be defined
+recursively in terms of the expression's form:
 
-> **TODO:** This presupposes that implicit conversions can take arbitrary source
-> forms, which is expected in a forthcoming proposal.
+-   The outcome of an initializing expression is an initializing outcome.
+-   The outcome of a value expression is a value.
+-   The outcome of a reference expression is a reference of the same kind.
+-   The outcome of an expression with tuple form is a tuple of outcomes.
+-   The outcome of an expression with struct form is a struct of outcomes.
 
-In some cases, such as when matching an
-[unused binding pattern](pattern_matching.md#unused-bindings), the operand's
-value is known to be unused. In those cases, the conversions may not actually be
-performed in the generated code, but the Carbon code is still typechecked as if
-they were.
+An expression and its outcome always have the same form.
 
-A few operations are "overloaded" for multiple operand forms:
+### Form conversions
 
--   [Member access](expressions/member_access.md#instance-binding) for structs
-    and tuples.
--   [Tuple](pattern_matching.md#tuple-patterns) and
-    [struct](pattern_matching.md#struct-patterns) pattern matching.
+A conversion between forms can be broken down into up to three steps: type
+conversion, category conversion, and phase conversion. These convert the form to
+a particular target type, category, and phase component (respectively). These
+steps aren't fully orthogonal: type conversions can change the category and
+phase components as a byproduct, and category conversions can change the phase
+component. However, category conversions can't change the type component, and
+phase conversions can't change either of the other two, so converting the type,
+then category, then phase, ensures that we converge on the desired result.
 
-In these cases, the individual operations specify what forms they accept, what
-conversions they apply (if any), and how the form affects the operation's
-behavior.
+Any of these steps may be omitted, depending on whether the context imposes
+requirements on the corresponding component. Most commonly, an operand position
+requires its operand to have a primitive form with a particular category,
+usually with a particular type, and sometimes with a particular phase.
+
+In some cases an expression's outcome is _discarded_, such as when the
+expression is used as a statement, or is matched with an
+[unused binding pattern](pattern_matching.md#unused-bindings). Discarding an
+outcome is a form conversion that does nothing except materialize any
+initializing sub-outcomes, in order to satisfy the requirement that every
+initializing outcome is materialized.
+
+Phase conversions are straightforward, because they cannot change the form
+structure; they can only apply primitive phase conversions to primitive
+sub-forms. Type and category conversions are more complex, and are covered in
+the next two sections.
+
+#### Type conversions
+
+See [here](expressions/implicit_conversions.md) for overall information about
+type conversions. Conversions involving struct, tuple, and array types are
+described here because of their unique interactions with expression forms.
+
+> **TODO:** A forthcoming proposal is expected to update the type conversion
+> interfaces to permit user-defined conversions to depend on the form of the
+> input, and customize the form of the output. Once that is done, these "built
+> in" conversions should be presented as implementations of those interfaces,
+> possibly with some "magic" for things like introspecting on struct field
+> names.
+
+Each of the conversions described in this section is explicit if and only if it
+invokes another explicit type conversion. Otherwise, it is implicit.
+
+An outcome `source` that has a struct type can be converted to a struct type
+`Dest` if they have the same set of field names:
+
+-   If the type of `source` is `Dest`, return `source`.
+-   If `source` is a struct outcome, for each field name `F` in `Dest`, in
+    `Dest`'s field order, type-convert `source.F` to `Dest.F`. Return a struct
+    outcome where each field `F` is set to the outcome of the corresponding
+    conversion.
+-   If `source` is a primitive outcome, convert it to a struct outcome by
+    [form decomposition](#category-conversions), type-convert the outcome to
+    `Dest`, category-convert the outcome to an initializing expression, and
+    return the result.
+
+The conversion to an initializing outcome in the last case is not formally
+necessary; its purpose is to ensure that the result of type conversion is not
+"less primitive" than the source form. Allowing conversions to add form
+structure that wasn't originally present would have surprising consequences. For
+example, if we have `fn F() -> (i32, i32)`, then `var a: array(i32, 2) = F();`
+is not valid because `F()` does not have a tuple form. That being the case, it
+would be surprising if `var a: array(i32, 2) = F() as (i16, i16);` were valid,
+so `F() as (i16, i16)` must not have a tuple form.
+
+**Open question:** We've chosen "initializing" as the default category for
+primitive sub-forms in a conversion, but in some cases "value" could be more
+efficient. Do we want a more nuanced rule? Alternatively, do we want a way of
+explicitly requesting conversion to a given form, rather than just a given type,
+in order to override this default when it's inefficient? Do we need to prevent
+_implicit_ conversions from adding form structure at all?
+
+There is a conversion to a class type `Dest` from an outcome `source` that has a
+struct type, if there is a conversion from `source` to a struct type that has
+the same field names as `Dest`, with the same types, in the same order. The
+conversion type-converts `source` to that struct type, category-converts that to
+an initializing expression of the struct type, and then reinterprets it as an
+initializing expression of `Dest` (which is layout-compatible with the struct
+type by construction).
+
+Note that some fields of an object may be initialized directly by the evaluation
+of the source expression, while others may be initialized by the conversions
+described here. The conversions initialize fields in their declaration order,
+but the evaluation of $S$ always happens before any of the conversions, and
+happens in the source expression's lexical order, so the fields of an object are
+not necessarily initialized in declaration order.
+
+Conversions between tuple types are defined in the same way, treating tuples as
+structs that have fields named `.0`, `.1`, etc, in numerical order.
+
+There is a conversion to `array(T, N)` from any expression with a tuple form of
+exactly `N` elements, whose type components are convertible to `T`. The
+conversion is an initializing expression, which type-converts each source
+element to `T`, and initializes the corresponding array element from the result
+of that conversion.
+
+#### Category conversions
+
+_Form composition_ converts a composite form with consistent category and phase
+to a primitive form as follows (where `min` as applied to phases uses the
+ordering "runtime" < "symbolic" < "template"):
+
+-   A tuple form `([T1, C, P1, V1], [T2, C, P2, V2], ... [TN, C, PN, VN])` can
+    be converted to a primitive form
+    `[(T1, T2, ..., TN), C, min(P1, P2, ..., PN), (V1, V2, ... VN)]`.
+-   A struct form
+    `{.a = [Ta, C, Pa, Va], .b = [Tb, C, Pb, Vb], ... .z = [Tz, C, Pz, Vz]}` can
+    be converted to a primitive form
+    `[{.a = Ta, .b = Tb, ... .z = Tz}, C, min(Pa, Pb, ... Pz), {.a = Va, .b = Vb, ... .z = Vz}]`.
+
+When `C` is "value", composition forms a value representation of the aggregate
+from value representations of the elements. When `C` is "initializing", it
+transforms initializing expressions for each element into a single initializing
+expression that initializes the whole aggregate. `C` cannot be a reference
+category, because an aggregate of references to independent objects can't be
+replaced by a reference to a single aggregate object in a single step.
+
+_Category conversion_ converts a form to have a given category component without
+changing its type, so long as the target category component is not "less
+primitive" than the source form. The conversion works by combining form
+composition with primitive category conversions, and is defined recursively:
+
+-   If the target category component is a tuple, the source form must be a tuple
+    form of the same arity. Recursively convert each source sub-form to the
+    corresponding target sub-category.
+-   If the target category component is a struct, the source form must be a
+    struct form with the same set of field names in the same order. Recursively
+    convert each source sub-form to the corresponding target sub-category.
+-   If the target category is a primitive category `C`:
+    -   If the source form is primitive, convert to `C` by applying primitive
+        category conversions.
+    -   If the source form is composite and `C` is a reference category,
+        recursively convert the source form to "initializing", and then convert
+        the result to `C` by applying primitive category conversions.
+    -   If the source form is composite and `C` is not a reference category,
+        recursively convert each source sub-form to `C`, and then convert the
+        aggregate result of these conversions to `C` by form composition.
+
+_Form decomposition_ is the inverse of form composition. It converts a primitive
+form to a composite form as follows:
+
+-   A primitive form `[(T1, T2, ..., TN), C, P, V]` can be converted to a tuple
+    form `([T1, CC, P, V.1], [T2, CC, P, V.2], ... [TN, CC, P, V.(N)])`.
+-   A primitive form `[{.a = Ta, .b = Tb, ... .z = Tz}, C, P, V]` can be
+    converted to a struct form
+    `{.a = [Ta, CC, P, V.a], .b = [Tb, CC, P, V.b], ... .z = [Tz, CC, P, V.z]}`.
+
+The category `CC` of the resulting sub-forms is the same as `C`, with two
+exceptions:
+
+-   If `C` is "owning durable reference", `CC` will be "non-owning durable
+    reference", because the sub-forms don't refer to complete objects. This
+    doesn't apply to owning ephemeral references, because in that case form
+    decomposition implicitly ends the lifetime of the original aggregate,
+    promoting its elements to complete objects with independent lifetimes.
+-   If `C` is "initializing", `CC` will be "owning ephemeral reference", because
+    the initializing outcome must be materialized before it can be decomposed.
+
+By convention, form decomposition is a no-op when applied to a struct or tuple
+form.
+
+Form decomposition occurs only where explicitly specified, because it adds
+structural information that may not have been originally present, so it is
+applied only in narrow contexts where that added information will be used
+safely.
 
 ## Pointers
 

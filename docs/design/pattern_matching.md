@@ -129,14 +129,16 @@ fn F() {
 
 A name binding pattern is a pattern.
 
--   _binding-pattern_ ::= _identifier_ `:` _expression_
+-   _binding-pattern_ ::= `ref`? _identifier_ `:` _expression_
 -   _binding-pattern_ ::= `template`? _identifier_ `:!` _expression_
 -   _proper-pattern_ ::= _binding-pattern_
 
 A name binding pattern declares a _binding_ with a name specified by the
 _identifier_, which can be used as an expression. If the binding pattern is
-enclosed by a `var` pattern, it is a _reference binding pattern_, and otherwise
-it is a _value binding pattern_, and the binding is a value expression.
+prefixed with `ref` or enclosed by a `var` pattern, it is a _reference binding
+pattern_, and otherwise it is a _value binding pattern_. A binding pattern
+enclosed by a `var` pattern cannot have a `ref` prefix, because it would be
+redundant.
 
 A _variable binding pattern_ is a special kind of reference binding pattern,
 which is the immediate subpattern of its enclosing `var` pattern.
@@ -157,7 +159,9 @@ is converted as needed to satisfy that expectation:
 
 -   The type is expected to be _expression_.
 -   The category is expected to be "value" if the pattern is a value binding
-    pattern, or "durable reference" if it's a reference binding pattern
+    pattern, "owning durable reference" if it's a variable binding pattern, or
+    "non-owning durable reference" if it's a non-variable reference binding
+    pattern.
 -   The phase is expected to be "runtime", "symbolic", or "template" depending
     on whether the pattern is a runtime, symbolic, or template binding pattern.
 
@@ -184,11 +188,11 @@ fn F() -> i32 {
 #### Unused bindings
 
 A syntax like a binding but with `_` in place of an identifier, or `unused`
-before the name, can be used to ignore part of a value. Names that are qualified
-with the `unused` keyword are visible for name lookup but uses are invalid,
-including when they cause ambiguous name lookup errors. If attempted to be used,
-a compiler error will be shown to the user, instructing them to either remove
-the `unused` qualifier or remove the use.
+before the name, [discards](values.md#form-conversions) the scrutinee. Names
+that are qualified with the `unused` keyword are visible for name lookup but
+uses are invalid, including when they cause ambiguous name lookup errors. If
+attempted to be used, a compiler error will be shown to the user, instructing
+them to either remove the `unused` qualifier or remove the use.
 
 -   _binding-pattern_ ::= `_` `:` _expression_
 -   _binding-pattern_ ::= `template`? `_` `:!` _expression_
@@ -283,17 +287,11 @@ scrutinee.
 -   _proper-pattern_ ::= `var` _proper-pattern_
 
 The scrutinee is expected to have the same type as the resolved type of the
-nested _proper-pattern_, and it is expected to be a runtime-phase initializing
-expression. The scrutinee expression is converted as needed to satisfy those
-expectations, and the resulting initializing expression is evaluated with a
-newly-allocated object of that type as its output. The `var` pattern then
-matches if the nested _proper-pattern_ matches a durable reference expression
-referring to that object. As a result, any reference binding patterns within the
-nested pattern refer to portions of the corresponding object rather than to the
-original scrutinee.
-
-> **TODO**: Factor out a separate definition of "initializing an object from an
-> expression", which can be reused in places like `return` statements.
+nested _proper-pattern_, and it is expected to be a runtime-phase owning
+ephemeral reference expression. The scrutinee expression is converted as needed
+to satisfy those expectations, and the `var` pattern takes ownership of the
+referenced object, promotes it to an owning _durable_ reference expression, and
+matches the nested _proper-pattern_ with it.
 
 The lifetime of the allocated object extends to the end of scope of the `var`
 pattern (that is the scope that any bindings declared within it would have).
@@ -334,21 +332,11 @@ contained _proper-pattern_ is matched directly against the scrutinee. Otherwise,
 the behavior is as follows.
 
 The scrutinee is required to be of tuple type, with the same arity as the number
-of nested _proper-patterns_. If the scrutinee is an
-[initializing expression](/docs/design/values.md#initializing-expressions), then
-a [temporary is materialized](/docs/design/values.md#temporary-materialization)
-for it. Then, each nested _proper-pattern_ is matched against `s.i`, where `s`
-is the possibly materialized scrutinee expression and `i` is the 0-based index
-of the nested pattern within the tuple pattern. The tuple pattern matches if all
-of these sub-matches succeed.
-
-Note that `s` will have the same [form](/docs/design/values.md#expression-forms)
-as the scrutinee, unless a temporary was materialized, which will affect the
-form of `s.i`.
-
-> **Future work:** Find a way to defer the temporary materialization, so that
-> code like `(var x: i32, var y: i32) = F();` doesn't need to perform copy
-> initialization. See also [here](values.md#function-calls-and-returns).
+of nested _proper-patterns_. It is converted to a tuple form by
+[form decomposition](values.md#form-conversions), and then each nested
+_proper-pattern_ in left-to-right order is matched against the corresponding
+element of the converted scrutinee's [outcome](values.md#expression-forms). The
+tuple pattern matches if all of these sub-matches succeed.
 
 Note that a tuple pattern must contain at least one _proper-pattern_. Otherwise,
 it is a tuple-valued expression. However, a tuple pattern and a corresponding
@@ -381,25 +369,21 @@ match ({.a = 1, .b = 2}) {
 }
 ```
 
-The scrutinee is required to be of struct type, with the same set of field names
-as the pattern. If the scrutinee is an
-[initializing expression](/docs/design/values.md#initializing-expressions), then
-a [temporary is materialized](/docs/design/values.md#temporary-materialization)
-for it. Then, for each subpattern of the struct pattern in left-to-right order,
-the subpattern is matched with `s.f`, where `s` is the possibly materialized
-scrutinee expression and `f` is the field name associated with the subpattern.
-The struct pattern matches if all of these sub-matches succeed.
+The scrutinee is required to be of struct type, and every field name in the
+pattern must be a field name in the scrutinee. It is converted to a struct form
+by [form decomposition](values.md#form-conversions) and then, for each
+subpattern of the struct pattern in left-to-right order, the subpattern is
+matched with the same-named element of the converted scrutinee's
+[outcome](values.md#expression-forms). If the scrutinee outcome has any field
+names not present in the pattern, those sub-outcomes are
+[discarded](values.md#form-conversions) in lexical order if the pattern has a
+trailing `_`, or diagnosed as an error if it does not. The struct pattern
+matches if all of these sub-matches succeed.
 
-Note that `s` will have the same [form](/docs/design/values.md#expression-forms)
-as the scrutinee, unless a temporary was materialized, which will affect the
-form of `s.f`. Note also that the left-to-right order is consistent with the
-behavior of matching against a struct-valued expression, where the expression
-pattern becomes the left operand of the `==` and so determines the order in
-which `==` comparisons for fields are performed.
-
-> **Future work:** Find a way to defer the temporary materialization, so that
-> code like `{var x: i32, var y: i32} = F();` doesn't need to perform copy
-> initialization. See also [here](values.md#function-calls-and-returns).
+Note that the left-to-right order is consistent with the behavior of matching
+against a struct-valued expression, where the expression pattern becomes the
+left operand of the `==` and so determines the order in which `==` comparisons
+for fields are performed.
 
 In the case where a field will be bound to an identifier with the same name, a
 shorthand syntax is available: `a: T` is synonymous with `.a = a: T`.
@@ -409,6 +393,9 @@ match ({.a = 1, .b = 2}) {
   case {a: i32, b: i32} => { return a + b; }
 }
 ```
+
+Likewise, `ref a: T` is synonymous with `.a = ref a: T`, and `var a: T` is
+synonymous with `.a = var a: T`.
 
 If some fields should be ignored when matching, a trailing `, _` can be added to
 specify this:
@@ -719,11 +706,11 @@ Using `auto` for a type will always match, making `_: auto` the wildcard
 pattern.
 
 If the scrutinee expression's [form](values.md#expression-forms) contains any
-primitive forms with category "initializing", they are converted to ephemeral
-reference expressions by [materialization](values.md#temporary-materialization)
-before pattern matching begins, so that the result can be reused by multiple
-`case`s. However, the objects created by `var` patterns are not reused by
-multiple `case`s:
+primitive forms with category "initializing", they are converted to non-owning
+ephemeral reference expressions by
+[materialization](values.md#temporary-materialization) before pattern matching
+begins, so that the result can be reused by multiple `case`s. However, the
+objects created by `var` patterns are not reused by multiple `case`s:
 
 ```carbon
 class X {

@@ -600,18 +600,14 @@ Assert(different_order.x == 3);
 Assert(different_order.y == 2);
 ```
 
-Initialization and assignment occur field-by-field. The order of fields is
-determined from the target on the left side of the `=`. This rule matches what
-we expect for classes with encapsulation more generally.
-
-More precisely, if $s$ is an expression whose type $S$ is a struct type, when
-$s$ is converted to a struct or class type $D$ that has the same set of field
-names, the conversion is an initializing expression of type $D$ that initializes
-each field in $D$'s field order. For a given field named $F$, that
-initialization consists of
-[resolving](expressions/member_access.md#member-resolution) the name $F$ in $S$
-and then [instance-binding](expressions/member_access.md#instance-binding) the
-resolved name to $s$.
+Initialization and assignment occur field-by-field. The overall order is that
+the initializer is fully evaluated in the order it's written, and then each
+field of the new object is initialized from the corresponding element of the
+result, in the new object's field order. However, in some cases evaluation of
+the initializer can directly initialize fields on the left-hand side, without
+any intervening conversions. When that happens, the order of initialization of
+those fields is determined by the evaluation order of the initializer. See
+[here](values.md#type-conversions) for details.
 
 **Open question:** What operations and in what order happen for assignment and
 initialization?
