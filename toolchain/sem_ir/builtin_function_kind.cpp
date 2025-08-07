@@ -151,6 +151,9 @@ struct AnyFloat {
   }
 };
 
+// Constraint that requires the type to be a legacy float type.
+using LegacyFloat = BuiltinType<LegacyFloatType::TypeInstId>;
+
 // Constraint that requires the type to be the type type.
 using Type = BuiltinType<TypeType::TypeInstId>;
 
@@ -281,6 +284,10 @@ constexpr BuiltinInfo CharLiteralMakeType = {"char_literal.make_type",
 // Returns the `Core.IntLiteral` type.
 constexpr BuiltinInfo IntLiteralMakeType = {"int_literal.make_type",
                                             ValidateSignature<auto()->Type>};
+
+// Returns the `Core.FloatLiteral` type.
+constexpr BuiltinInfo FloatLiteralMakeType = {"float_literal.make_type",
+                                              ValidateSignature<auto()->Type>};
 
 // Returns the `iN` type.
 // TODO: Should we use a more specific type as the type of the bit width?
@@ -522,6 +529,11 @@ constexpr BuiltinInfo FloatMulAssign = {
 constexpr BuiltinInfo FloatDivAssign = {
     "float.div_assign",
     ValidateSignature<auto(PointerTo<FloatT>, FloatT)->NoReturn>};
+
+// Converts from a legacy float literal to a sized float type.
+constexpr BuiltinInfo FloatFromLegacyFloat = {
+    "float.from_legacy_float",
+    ValidateSignature<auto(LegacyFloat)->AnySizedFloat>};
 
 // "float.eq": float equality comparison.
 constexpr BuiltinInfo FloatEq = {"float.eq",

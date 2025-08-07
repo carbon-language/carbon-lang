@@ -6,9 +6,13 @@ package Core library "prelude/types/float";
 
 import library "prelude/destroy";
 import library "prelude/operators";
+import library "prelude/types/float_literal";
 import library "prelude/types/int_literal";
 
 private fn MakeFloat(size: IntLiteral()) -> type = "float.make_type";
+
+fn ConvertFromLegacyFloat[T:! type](literal: FloatLiteral()) -> T =
+    "float.from_legacy_float";
 
 class Float(N:! IntLiteral()) {
   adapt MakeFloat(N);
