@@ -1874,6 +1874,15 @@ struct VtablePtr {
   SpecificId specific_id;
 };
 
+struct VtableDecl {
+  static constexpr auto Kind = InstKind::VtableDecl.Define<Parse::NodeId>(
+      {.ir_name = "vtable_decl",
+       .constant_kind = InstConstantKind::Always,
+       .is_lowered = false});
+  TypeId type_id;
+  VtableId vtable_id;
+};
+
 // An `expr where requirements` expression.
 struct WhereExpr {
   static constexpr auto Kind = InstKind::WhereExpr.Define<Parse::WhereExprId>(

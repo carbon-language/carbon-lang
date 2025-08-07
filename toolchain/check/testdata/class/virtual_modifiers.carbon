@@ -531,7 +531,7 @@ class T2(G2:! type) {
 // CHECK:STDOUT:   %Base.as.Destroy.impl.Op.type: type = fn_type @Base.as.Destroy.impl.Op [concrete]
 // CHECK:STDOUT:   %Base.as.Destroy.impl.Op: %Base.as.Destroy.impl.Op.type = struct_value () [concrete]
 // CHECK:STDOUT:   %ptr.454: type = ptr_type <vtable> [concrete]
-// CHECK:STDOUT:   %Base.vtable_ptr: ref %ptr.454 = vtable_ptr @Base.vtable [concrete]
+// CHECK:STDOUT:   %Base.vtable_decl: ref %ptr.454 = vtable_decl @Base.vtable [concrete]
 // CHECK:STDOUT:   %struct_type.vptr: type = struct_type {.<vptr>: %ptr.454} [concrete]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %struct_type.vptr [concrete]
 // CHECK:STDOUT:   %Abstract: type = class_type @Abstract [concrete]
@@ -545,7 +545,7 @@ class T2(G2:! type) {
 // CHECK:STDOUT:   %pattern_type.f31: type = pattern_type %ptr.404 [concrete]
 // CHECK:STDOUT:   %Abstract.as.Destroy.impl.Op.type: type = fn_type @Abstract.as.Destroy.impl.Op [concrete]
 // CHECK:STDOUT:   %Abstract.as.Destroy.impl.Op: %Abstract.as.Destroy.impl.Op.type = struct_value () [concrete]
-// CHECK:STDOUT:   %Abstract.vtable_ptr: ref %ptr.454 = vtable_ptr @Abstract.vtable [concrete]
+// CHECK:STDOUT:   %Abstract.vtable_decl: ref %ptr.454 = vtable_decl @Abstract.vtable [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -613,10 +613,10 @@ class T2(G2:! type) {
 // CHECK:STDOUT:   impl_decl @Base.as.Destroy.impl [concrete] {} {}
 // CHECK:STDOUT:   %Destroy.impl_witness_table = impl_witness_table (@Base.as.Destroy.impl.%Base.as.Destroy.impl.Op.decl), @Base.as.Destroy.impl [concrete]
 // CHECK:STDOUT:   %Destroy.impl_witness: <witness> = impl_witness %Destroy.impl_witness_table [concrete = constants.%Destroy.impl_witness.ae4]
-// CHECK:STDOUT:   %vtable_ptr: ref %ptr.454 = vtable_ptr @Base.vtable [concrete = constants.%Base.vtable_ptr]
+// CHECK:STDOUT:   %vtable_decl: ref %ptr.454 = vtable_decl @Base.vtable [concrete = constants.%Base.vtable_decl]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness constants.%struct_type.vptr [concrete = constants.%complete_type]
 // CHECK:STDOUT:   complete_type_witness = %complete_type
-// CHECK:STDOUT:   vtable_ptr = %vtable_ptr
+// CHECK:STDOUT:   vtable_decl = %vtable_decl
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%Base
@@ -644,10 +644,10 @@ class T2(G2:! type) {
 // CHECK:STDOUT:   impl_decl @Abstract.as.Destroy.impl [concrete] {} {}
 // CHECK:STDOUT:   %Destroy.impl_witness_table = impl_witness_table (@Abstract.as.Destroy.impl.%Abstract.as.Destroy.impl.Op.decl), @Abstract.as.Destroy.impl [concrete]
 // CHECK:STDOUT:   %Destroy.impl_witness: <witness> = impl_witness %Destroy.impl_witness_table [concrete = constants.%Destroy.impl_witness.9d1]
-// CHECK:STDOUT:   %vtable_ptr: ref %ptr.454 = vtable_ptr @Abstract.vtable [concrete = constants.%Abstract.vtable_ptr]
+// CHECK:STDOUT:   %vtable_decl: ref %ptr.454 = vtable_decl @Abstract.vtable [concrete = constants.%Abstract.vtable_decl]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness constants.%struct_type.vptr [concrete = constants.%complete_type]
 // CHECK:STDOUT:   complete_type_witness = %complete_type
-// CHECK:STDOUT:   vtable_ptr = %vtable_ptr
+// CHECK:STDOUT:   vtable_decl = %vtable_decl
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%Abstract
@@ -696,14 +696,15 @@ class T2(G2:! type) {
 // CHECK:STDOUT:   %Derived.as.Destroy.impl.Op: %Derived.as.Destroy.impl.Op.type = struct_value () [concrete]
 // CHECK:STDOUT:   %Base.H.type: type = fn_type @Base.H [concrete]
 // CHECK:STDOUT:   %Base.H: %Base.H.type = struct_value () [concrete]
-// CHECK:STDOUT:   %Base.vtable_ptr: ref %ptr.454 = vtable_ptr @Base.vtable [concrete]
-// CHECK:STDOUT:   %Derived.vtable_ptr: ref %ptr.454 = vtable_ptr @Derived.vtable [concrete]
+// CHECK:STDOUT:   %Base.vtable_decl: ref %ptr.454 = vtable_decl @Base.vtable [concrete]
+// CHECK:STDOUT:   %Derived.vtable_decl: ref %ptr.454 = vtable_decl @Derived.vtable [concrete]
 // CHECK:STDOUT:   %struct_type.base.96c: type = struct_type {.base: %Base} [concrete]
 // CHECK:STDOUT:   %complete_type.0e2: <witness> = complete_type_witness %struct_type.base.96c [concrete]
 // CHECK:STDOUT:   %Use.type: type = fn_type @Use [concrete]
 // CHECK:STDOUT:   %Use: %Use.type = struct_value () [concrete]
 // CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [concrete]
 // CHECK:STDOUT:   %struct_type.base.f5e: type = struct_type {.base: %empty_struct_type} [concrete]
+// CHECK:STDOUT:   %Derived.vtable_ptr: ref %ptr.454 = vtable_ptr @Derived.vtable [concrete]
 // CHECK:STDOUT:   %Base.val: %Base = struct_value (%Derived.vtable_ptr) [concrete]
 // CHECK:STDOUT:   %Derived.val: %Derived = struct_value (%Base.val) [concrete]
 // CHECK:STDOUT: }
@@ -719,7 +720,7 @@ class T2(G2:! type) {
 // CHECK:STDOUT:     import Modifiers//default
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Modifiers.Base: type = import_ref Modifiers//default, Base, loaded [concrete = constants.%Base]
-// CHECK:STDOUT:   %Modifiers.import_ref.be7: ref %ptr.454 = import_ref Modifiers//default, loc6_1, loaded [concrete = constants.%Base.vtable_ptr]
+// CHECK:STDOUT:   %Modifiers.import_ref.97a: ref %ptr.454 = import_ref Modifiers//default, loc6_1, loaded [concrete = constants.%Base.vtable_decl]
 // CHECK:STDOUT:   %Modifiers.import_ref.05e: <witness> = import_ref Modifiers//default, loc6_1, loaded [concrete = constants.%complete_type.513]
 // CHECK:STDOUT:   %Modifiers.import_ref.1f3 = import_ref Modifiers//default, inst19 [no loc], unloaded
 // CHECK:STDOUT:   %Modifiers.import_ref.2cc = import_ref Modifiers//default, loc5_29, unloaded
@@ -771,10 +772,10 @@ class T2(G2:! type) {
 // CHECK:STDOUT:   impl_decl @Derived.as.Destroy.impl [concrete] {} {}
 // CHECK:STDOUT:   %Destroy.impl_witness_table = impl_witness_table (@Derived.as.Destroy.impl.%Derived.as.Destroy.impl.Op.decl), @Derived.as.Destroy.impl [concrete]
 // CHECK:STDOUT:   %Destroy.impl_witness: <witness> = impl_witness %Destroy.impl_witness_table [concrete = constants.%Destroy.impl_witness.e52]
-// CHECK:STDOUT:   %vtable_ptr: ref %ptr.454 = vtable_ptr @Derived.vtable [concrete = constants.%Derived.vtable_ptr]
+// CHECK:STDOUT:   %vtable_decl: ref %ptr.454 = vtable_decl @Derived.vtable [concrete = constants.%Derived.vtable_decl]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness constants.%struct_type.base.96c [concrete = constants.%complete_type.0e2]
 // CHECK:STDOUT:   complete_type_witness = %complete_type
-// CHECK:STDOUT:   vtable_ptr = %vtable_ptr
+// CHECK:STDOUT:   vtable_decl = %vtable_decl
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%Derived
@@ -786,7 +787,7 @@ class T2(G2:! type) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @Base [from "modifiers.carbon"] {
 // CHECK:STDOUT:   complete_type_witness = imports.%Modifiers.import_ref.05e
-// CHECK:STDOUT:   vtable_ptr = imports.%Modifiers.import_ref.be7
+// CHECK:STDOUT:   vtable_decl = imports.%Modifiers.import_ref.97a
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = imports.%Modifiers.import_ref.1f3
@@ -818,7 +819,8 @@ class T2(G2:! type) {
 // CHECK:STDOUT:   %.loc12_31.1: %struct_type.base.f5e = struct_literal (%.loc12_30.1)
 // CHECK:STDOUT:   %.loc12_31.2: ref %Base = class_element_access %d.var, element0
 // CHECK:STDOUT:   %.loc12_30.2: ref %ptr.454 = class_element_access %.loc12_31.2, element0
-// CHECK:STDOUT:   %.loc12_30.3: init %ptr.454 = initialize_from @Derived.%vtable_ptr to %.loc12_30.2 [concrete = constants.%Derived.vtable_ptr]
+// CHECK:STDOUT:   %Derived.vtable_ptr: ref %ptr.454 = vtable_ptr @Derived.vtable [concrete = constants.%Derived.vtable_ptr]
+// CHECK:STDOUT:   %.loc12_30.3: init %ptr.454 = initialize_from %Derived.vtable_ptr to %.loc12_30.2 [concrete = constants.%Derived.vtable_ptr]
 // CHECK:STDOUT:   %.loc12_30.4: init %Base = class_init (%.loc12_30.3), %.loc12_31.2 [concrete = constants.%Base.val]
 // CHECK:STDOUT:   %.loc12_31.3: init %Base = converted %.loc12_30.1, %.loc12_30.4 [concrete = constants.%Base.val]
 // CHECK:STDOUT:   %.loc12_31.4: init %Derived = class_init (%.loc12_31.3), %d.var [concrete = constants.%Derived.val]
@@ -853,8 +855,8 @@ class T2(G2:! type) {
 // CHECK:STDOUT:   %Derived.as.Destroy.impl.Op: %Derived.as.Destroy.impl.Op.type = struct_value () [concrete]
 // CHECK:STDOUT:   %Base.H.type: type = fn_type @Base.H [concrete]
 // CHECK:STDOUT:   %Base.H: %Base.H.type = struct_value () [concrete]
-// CHECK:STDOUT:   %Base.vtable_ptr: ref %ptr.454 = vtable_ptr @Base.vtable [concrete]
-// CHECK:STDOUT:   %Derived.vtable_ptr: ref %ptr.454 = vtable_ptr @Derived.vtable [concrete]
+// CHECK:STDOUT:   %Base.vtable_decl: ref %ptr.454 = vtable_decl @Base.vtable [concrete]
+// CHECK:STDOUT:   %Derived.vtable_decl: ref %ptr.454 = vtable_decl @Derived.vtable [concrete]
 // CHECK:STDOUT:   %struct_type.base: type = struct_type {.base: %Base} [concrete]
 // CHECK:STDOUT:   %complete_type.0e2: <witness> = complete_type_witness %struct_type.base [concrete]
 // CHECK:STDOUT: }
@@ -870,7 +872,7 @@ class T2(G2:! type) {
 // CHECK:STDOUT:     import Modifiers//default
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Modifiers.Base: type = import_ref Modifiers//default, Base, loaded [concrete = constants.%Base]
-// CHECK:STDOUT:   %Modifiers.import_ref.be7: ref %ptr.454 = import_ref Modifiers//default, loc6_1, loaded [concrete = constants.%Base.vtable_ptr]
+// CHECK:STDOUT:   %Modifiers.import_ref.97a: ref %ptr.454 = import_ref Modifiers//default, loc6_1, loaded [concrete = constants.%Base.vtable_decl]
 // CHECK:STDOUT:   %Modifiers.import_ref.05e: <witness> = import_ref Modifiers//default, loc6_1, loaded [concrete = constants.%complete_type.513]
 // CHECK:STDOUT:   %Modifiers.import_ref.1f3 = import_ref Modifiers//default, inst19 [no loc], unloaded
 // CHECK:STDOUT:   %Modifiers.import_ref.2cc = import_ref Modifiers//default, loc5_29, unloaded
@@ -920,10 +922,10 @@ class T2(G2:! type) {
 // CHECK:STDOUT:   impl_decl @Derived.as.Destroy.impl [concrete] {} {}
 // CHECK:STDOUT:   %Destroy.impl_witness_table = impl_witness_table (@Derived.as.Destroy.impl.%Derived.as.Destroy.impl.Op.decl), @Derived.as.Destroy.impl [concrete]
 // CHECK:STDOUT:   %Destroy.impl_witness: <witness> = impl_witness %Destroy.impl_witness_table [concrete = constants.%Destroy.impl_witness]
-// CHECK:STDOUT:   %vtable_ptr: ref %ptr.454 = vtable_ptr @Derived.vtable [concrete = constants.%Derived.vtable_ptr]
+// CHECK:STDOUT:   %vtable_decl: ref %ptr.454 = vtable_decl @Derived.vtable [concrete = constants.%Derived.vtable_decl]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness constants.%struct_type.base [concrete = constants.%complete_type.0e2]
 // CHECK:STDOUT:   complete_type_witness = %complete_type
-// CHECK:STDOUT:   vtable_ptr = %vtable_ptr
+// CHECK:STDOUT:   vtable_decl = %vtable_decl
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%Derived
@@ -935,7 +937,7 @@ class T2(G2:! type) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @Base [from "modifiers.carbon"] {
 // CHECK:STDOUT:   complete_type_witness = imports.%Modifiers.import_ref.05e
-// CHECK:STDOUT:   vtable_ptr = imports.%Modifiers.import_ref.be7
+// CHECK:STDOUT:   vtable_decl = imports.%Modifiers.import_ref.97a
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = imports.%Modifiers.import_ref.1f3
@@ -971,6 +973,7 @@ class T2(G2:! type) {
 // CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [concrete]
 // CHECK:STDOUT:   %Base.H.type: type = fn_type @Base.H [concrete]
 // CHECK:STDOUT:   %Base.H: %Base.H.type = struct_value () [concrete]
+// CHECK:STDOUT:   %Base.vtable_decl: ref %ptr.454 = vtable_decl @Base.vtable [concrete]
 // CHECK:STDOUT:   %Base.vtable_ptr: ref %ptr.454 = vtable_ptr @Base.vtable [concrete]
 // CHECK:STDOUT:   %Base.val: %Base = struct_value (%Base.vtable_ptr) [concrete]
 // CHECK:STDOUT:   %Destroy.type: type = facet_type <@Destroy> [concrete]
@@ -992,7 +995,7 @@ class T2(G2:! type) {
 // CHECK:STDOUT:     import Modifiers//default
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Modifiers.Base: type = import_ref Modifiers//default, Base, loaded [concrete = constants.%Base]
-// CHECK:STDOUT:   %Modifiers.import_ref.be7: ref %ptr.454 = import_ref Modifiers//default, loc6_1, loaded [concrete = constants.%Base.vtable_ptr]
+// CHECK:STDOUT:   %Modifiers.import_ref.97a: ref %ptr.454 = import_ref Modifiers//default, loc6_1, loaded [concrete = constants.%Base.vtable_decl]
 // CHECK:STDOUT:   %Modifiers.import_ref.05ec96.1: <witness> = import_ref Modifiers//default, loc6_1, loaded [concrete = constants.%complete_type]
 // CHECK:STDOUT:   %Modifiers.import_ref.1f3 = import_ref Modifiers//default, inst19 [no loc], unloaded
 // CHECK:STDOUT:   %Modifiers.import_ref.2cc = import_ref Modifiers//default, loc5_29, unloaded
@@ -1001,7 +1004,7 @@ class T2(G2:! type) {
 // CHECK:STDOUT:   %Modifiers.import_ref.87c: type = import_ref Modifiers//default, loc4_17, loaded [concrete = constants.%Base]
 // CHECK:STDOUT:   %Modifiers.import_ref.cb9298.1: type = import_ref Modifiers//default, inst32 [no loc], loaded [concrete = constants.%Destroy.type]
 // CHECK:STDOUT:   %Modifiers.import_ref.5f6 = import_ref Modifiers//default, loc8_25, unloaded
-// CHECK:STDOUT:   %Modifiers.import_ref.e657ad.2 = import_ref Modifiers//default, loc12_1, unloaded
+// CHECK:STDOUT:   %Modifiers.import_ref.30bb79.2 = import_ref Modifiers//default, loc12_1, unloaded
 // CHECK:STDOUT:   %Modifiers.import_ref.05ec96.2: <witness> = import_ref Modifiers//default, loc12_1, loaded [concrete = constants.%complete_type]
 // CHECK:STDOUT:   %Modifiers.import_ref.ee1 = import_ref Modifiers//default, inst76 [no loc], unloaded
 // CHECK:STDOUT:   %Modifiers.import_ref.bf4 = import_ref Modifiers//default, loc9_30, unloaded
@@ -1035,7 +1038,7 @@ class T2(G2:! type) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @Base [from "modifiers.carbon"] {
 // CHECK:STDOUT:   complete_type_witness = imports.%Modifiers.import_ref.05ec96.1
-// CHECK:STDOUT:   vtable_ptr = imports.%Modifiers.import_ref.be7
+// CHECK:STDOUT:   vtable_decl = imports.%Modifiers.import_ref.97a
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = imports.%Modifiers.import_ref.1f3
@@ -1044,7 +1047,7 @@ class T2(G2:! type) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @Abstract [from "modifiers.carbon"] {
 // CHECK:STDOUT:   complete_type_witness = imports.%Modifiers.import_ref.05ec96.2
-// CHECK:STDOUT:   vtable_ptr = imports.%Modifiers.import_ref.e657ad.2
+// CHECK:STDOUT:   vtable_decl = imports.%Modifiers.import_ref.30bb79.2
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = imports.%Modifiers.import_ref.ee1
@@ -1065,7 +1068,8 @@ class T2(G2:! type) {
 // CHECK:STDOUT:   %v.var: ref %Base = var %v.var_patt
 // CHECK:STDOUT:   %.loc7_28.1: %empty_struct_type = struct_literal ()
 // CHECK:STDOUT:   %.loc7_28.2: ref %ptr.454 = class_element_access %v.var, element0
-// CHECK:STDOUT:   %.loc7_28.3: init %ptr.454 = initialize_from imports.%Modifiers.import_ref.be7 to %.loc7_28.2 [concrete = constants.%Base.vtable_ptr]
+// CHECK:STDOUT:   %Base.vtable_ptr: ref %ptr.454 = vtable_ptr @Base.vtable [concrete = constants.%Base.vtable_ptr]
+// CHECK:STDOUT:   %.loc7_28.3: init %ptr.454 = initialize_from %Base.vtable_ptr to %.loc7_28.2 [concrete = constants.%Base.vtable_ptr]
 // CHECK:STDOUT:   %.loc7_28.4: init %Base = class_init (%.loc7_28.3), %v.var [concrete = constants.%Base.val]
 // CHECK:STDOUT:   %.loc7_3: init %Base = converted %.loc7_28.1, %.loc7_28.4 [concrete = constants.%Base.val]
 // CHECK:STDOUT:   assign %v.var, %.loc7_3
@@ -1099,7 +1103,7 @@ class T2(G2:! type) {
 // CHECK:STDOUT:   %A1.as.Destroy.impl.Op.type: type = fn_type @A1.as.Destroy.impl.Op [concrete]
 // CHECK:STDOUT:   %A1.as.Destroy.impl.Op: %A1.as.Destroy.impl.Op.type = struct_value () [concrete]
 // CHECK:STDOUT:   %ptr.454: type = ptr_type <vtable> [concrete]
-// CHECK:STDOUT:   %A1.vtable_ptr: ref %ptr.454 = vtable_ptr @A1.vtable [concrete]
+// CHECK:STDOUT:   %A1.vtable_decl: ref %ptr.454 = vtable_decl @A1.vtable [concrete]
 // CHECK:STDOUT:   %struct_type.vptr: type = struct_type {.<vptr>: %ptr.454} [concrete]
 // CHECK:STDOUT:   %complete_type.513: <witness> = complete_type_witness %struct_type.vptr [concrete]
 // CHECK:STDOUT:   %A2: type = class_type @A2 [concrete]
@@ -1112,7 +1116,7 @@ class T2(G2:! type) {
 // CHECK:STDOUT:   %pattern_type.2c5: type = pattern_type %ptr.590 [concrete]
 // CHECK:STDOUT:   %A2.as.Destroy.impl.Op.type: type = fn_type @A2.as.Destroy.impl.Op [concrete]
 // CHECK:STDOUT:   %A2.as.Destroy.impl.Op: %A2.as.Destroy.impl.Op.type = struct_value () [concrete]
-// CHECK:STDOUT:   %A2.vtable_ptr: ref %ptr.454 = vtable_ptr @A2.vtable [concrete]
+// CHECK:STDOUT:   %A2.vtable_decl: ref %ptr.454 = vtable_decl @A2.vtable [concrete]
 // CHECK:STDOUT:   %struct_type.base: type = struct_type {.base: %A1} [concrete]
 // CHECK:STDOUT:   %complete_type.a6f: <witness> = complete_type_witness %struct_type.base [concrete]
 // CHECK:STDOUT: }
@@ -1182,10 +1186,10 @@ class T2(G2:! type) {
 // CHECK:STDOUT:   impl_decl @A1.as.Destroy.impl [concrete] {} {}
 // CHECK:STDOUT:   %Destroy.impl_witness_table = impl_witness_table (@A1.as.Destroy.impl.%A1.as.Destroy.impl.Op.decl), @A1.as.Destroy.impl [concrete]
 // CHECK:STDOUT:   %Destroy.impl_witness: <witness> = impl_witness %Destroy.impl_witness_table [concrete = constants.%Destroy.impl_witness.169]
-// CHECK:STDOUT:   %vtable_ptr: ref %ptr.454 = vtable_ptr @A1.vtable [concrete = constants.%A1.vtable_ptr]
+// CHECK:STDOUT:   %vtable_decl: ref %ptr.454 = vtable_decl @A1.vtable [concrete = constants.%A1.vtable_decl]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness constants.%struct_type.vptr [concrete = constants.%complete_type.513]
 // CHECK:STDOUT:   complete_type_witness = %complete_type
-// CHECK:STDOUT:   vtable_ptr = %vtable_ptr
+// CHECK:STDOUT:   vtable_decl = %vtable_decl
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%A1
@@ -1207,10 +1211,10 @@ class T2(G2:! type) {
 // CHECK:STDOUT:   impl_decl @A2.as.Destroy.impl [concrete] {} {}
 // CHECK:STDOUT:   %Destroy.impl_witness_table = impl_witness_table (@A2.as.Destroy.impl.%A2.as.Destroy.impl.Op.decl), @A2.as.Destroy.impl [concrete]
 // CHECK:STDOUT:   %Destroy.impl_witness: <witness> = impl_witness %Destroy.impl_witness_table [concrete = constants.%Destroy.impl_witness.ed9]
-// CHECK:STDOUT:   %vtable_ptr: ref %ptr.454 = vtable_ptr @A2.vtable [concrete = constants.%A2.vtable_ptr]
+// CHECK:STDOUT:   %vtable_decl: ref %ptr.454 = vtable_decl @A2.vtable [concrete = constants.%A2.vtable_decl]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness constants.%struct_type.base [concrete = constants.%complete_type.a6f]
 // CHECK:STDOUT:   complete_type_witness = %complete_type
-// CHECK:STDOUT:   vtable_ptr = %vtable_ptr
+// CHECK:STDOUT:   vtable_decl = %vtable_decl
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%A2
@@ -1252,7 +1256,7 @@ class T2(G2:! type) {
 // CHECK:STDOUT:   %B1.as.Destroy.impl.Op.type: type = fn_type @B1.as.Destroy.impl.Op [concrete]
 // CHECK:STDOUT:   %B1.as.Destroy.impl.Op: %B1.as.Destroy.impl.Op.type = struct_value () [concrete]
 // CHECK:STDOUT:   %ptr.454: type = ptr_type <vtable> [concrete]
-// CHECK:STDOUT:   %B1.vtable_ptr: ref %ptr.454 = vtable_ptr @B1.vtable [concrete]
+// CHECK:STDOUT:   %B1.vtable_decl: ref %ptr.454 = vtable_decl @B1.vtable [concrete]
 // CHECK:STDOUT:   %struct_type.vptr: type = struct_type {.<vptr>: %ptr.454} [concrete]
 // CHECK:STDOUT:   %complete_type.513: <witness> = complete_type_witness %struct_type.vptr [concrete]
 // CHECK:STDOUT:   %B2: type = class_type @B2 [concrete]
@@ -1265,7 +1269,7 @@ class T2(G2:! type) {
 // CHECK:STDOUT:   %pattern_type.98e: type = pattern_type %ptr.afe [concrete]
 // CHECK:STDOUT:   %B2.as.Destroy.impl.Op.type: type = fn_type @B2.as.Destroy.impl.Op [concrete]
 // CHECK:STDOUT:   %B2.as.Destroy.impl.Op: %B2.as.Destroy.impl.Op.type = struct_value () [concrete]
-// CHECK:STDOUT:   %B2.vtable_ptr: ref %ptr.454 = vtable_ptr @B2.vtable [concrete]
+// CHECK:STDOUT:   %B2.vtable_decl: ref %ptr.454 = vtable_decl @B2.vtable [concrete]
 // CHECK:STDOUT:   %struct_type.base.508: type = struct_type {.base: %B1} [concrete]
 // CHECK:STDOUT:   %complete_type.5ac: <witness> = complete_type_witness %struct_type.base.508 [concrete]
 // CHECK:STDOUT:   %C: type = class_type @C [concrete]
@@ -1278,17 +1282,20 @@ class T2(G2:! type) {
 // CHECK:STDOUT:   %pattern_type.44a: type = pattern_type %ptr.019 [concrete]
 // CHECK:STDOUT:   %C.as.Destroy.impl.Op.type: type = fn_type @C.as.Destroy.impl.Op [concrete]
 // CHECK:STDOUT:   %C.as.Destroy.impl.Op: %C.as.Destroy.impl.Op.type = struct_value () [concrete]
-// CHECK:STDOUT:   %C.vtable_ptr: ref %ptr.454 = vtable_ptr @C.vtable [concrete]
+// CHECK:STDOUT:   %C.vtable_decl: ref %ptr.454 = vtable_decl @C.vtable [concrete]
 // CHECK:STDOUT:   %struct_type.base.421: type = struct_type {.base: %B2} [concrete]
 // CHECK:STDOUT:   %complete_type.066: <witness> = complete_type_witness %struct_type.base.421 [concrete]
 // CHECK:STDOUT:   %Use.type: type = fn_type @Use [concrete]
 // CHECK:STDOUT:   %Use: %Use.type = struct_value () [concrete]
 // CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [concrete]
+// CHECK:STDOUT:   %B1.vtable_ptr: ref %ptr.454 = vtable_ptr @B1.vtable [concrete]
 // CHECK:STDOUT:   %B1.val.267: %B1 = struct_value (%B1.vtable_ptr) [concrete]
 // CHECK:STDOUT:   %struct_type.base.f5e: type = struct_type {.base: %empty_struct_type} [concrete]
+// CHECK:STDOUT:   %B2.vtable_ptr: ref %ptr.454 = vtable_ptr @B2.vtable [concrete]
 // CHECK:STDOUT:   %B1.val.d2f: %B1 = struct_value (%B2.vtable_ptr) [concrete]
 // CHECK:STDOUT:   %B2.val.e9e: %B2 = struct_value (%B1.val.d2f) [concrete]
 // CHECK:STDOUT:   %struct_type.base.a0c: type = struct_type {.base: %struct_type.base.f5e} [concrete]
+// CHECK:STDOUT:   %C.vtable_ptr: ref %ptr.454 = vtable_ptr @C.vtable [concrete]
 // CHECK:STDOUT:   %B1.val.b9d: %B1 = struct_value (%C.vtable_ptr) [concrete]
 // CHECK:STDOUT:   %B2.val.426: %B2 = struct_value (%B1.val.b9d) [concrete]
 // CHECK:STDOUT:   %C.val: %C = struct_value (%B2.val.426) [concrete]
@@ -1379,10 +1386,10 @@ class T2(G2:! type) {
 // CHECK:STDOUT:   impl_decl @B1.as.Destroy.impl [concrete] {} {}
 // CHECK:STDOUT:   %Destroy.impl_witness_table = impl_witness_table (@B1.as.Destroy.impl.%B1.as.Destroy.impl.Op.decl), @B1.as.Destroy.impl [concrete]
 // CHECK:STDOUT:   %Destroy.impl_witness: <witness> = impl_witness %Destroy.impl_witness_table [concrete = constants.%Destroy.impl_witness.20e]
-// CHECK:STDOUT:   %vtable_ptr: ref %ptr.454 = vtable_ptr @B1.vtable [concrete = constants.%B1.vtable_ptr]
+// CHECK:STDOUT:   %vtable_decl: ref %ptr.454 = vtable_decl @B1.vtable [concrete = constants.%B1.vtable_decl]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness constants.%struct_type.vptr [concrete = constants.%complete_type.513]
 // CHECK:STDOUT:   complete_type_witness = %complete_type
-// CHECK:STDOUT:   vtable_ptr = %vtable_ptr
+// CHECK:STDOUT:   vtable_decl = %vtable_decl
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%B1
@@ -1404,10 +1411,10 @@ class T2(G2:! type) {
 // CHECK:STDOUT:   impl_decl @B2.as.Destroy.impl [concrete] {} {}
 // CHECK:STDOUT:   %Destroy.impl_witness_table = impl_witness_table (@B2.as.Destroy.impl.%B2.as.Destroy.impl.Op.decl), @B2.as.Destroy.impl [concrete]
 // CHECK:STDOUT:   %Destroy.impl_witness: <witness> = impl_witness %Destroy.impl_witness_table [concrete = constants.%Destroy.impl_witness.594]
-// CHECK:STDOUT:   %vtable_ptr: ref %ptr.454 = vtable_ptr @B2.vtable [concrete = constants.%B2.vtable_ptr]
+// CHECK:STDOUT:   %vtable_decl: ref %ptr.454 = vtable_decl @B2.vtable [concrete = constants.%B2.vtable_decl]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness constants.%struct_type.base.508 [concrete = constants.%complete_type.5ac]
 // CHECK:STDOUT:   complete_type_witness = %complete_type
-// CHECK:STDOUT:   vtable_ptr = %vtable_ptr
+// CHECK:STDOUT:   vtable_decl = %vtable_decl
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%B2
@@ -1432,10 +1439,10 @@ class T2(G2:! type) {
 // CHECK:STDOUT:   impl_decl @C.as.Destroy.impl [concrete] {} {}
 // CHECK:STDOUT:   %Destroy.impl_witness_table = impl_witness_table (@C.as.Destroy.impl.%C.as.Destroy.impl.Op.decl), @C.as.Destroy.impl [concrete]
 // CHECK:STDOUT:   %Destroy.impl_witness: <witness> = impl_witness %Destroy.impl_witness_table [concrete = constants.%Destroy.impl_witness.edd]
-// CHECK:STDOUT:   %vtable_ptr: ref %ptr.454 = vtable_ptr @C.vtable [concrete = constants.%C.vtable_ptr]
+// CHECK:STDOUT:   %vtable_decl: ref %ptr.454 = vtable_decl @C.vtable [concrete = constants.%C.vtable_decl]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness constants.%struct_type.base.421 [concrete = constants.%complete_type.066]
 // CHECK:STDOUT:   complete_type_witness = %complete_type
-// CHECK:STDOUT:   vtable_ptr = %vtable_ptr
+// CHECK:STDOUT:   vtable_decl = %vtable_decl
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%C
@@ -1478,7 +1485,8 @@ class T2(G2:! type) {
 // CHECK:STDOUT:   %b1.var: ref %B1 = var %b1.var_patt
 // CHECK:STDOUT:   %.loc19_17.1: %empty_struct_type = struct_literal ()
 // CHECK:STDOUT:   %.loc19_17.2: ref %ptr.454 = class_element_access %b1.var, element0
-// CHECK:STDOUT:   %.loc19_17.3: init %ptr.454 = initialize_from @B1.%vtable_ptr to %.loc19_17.2 [concrete = constants.%B1.vtable_ptr]
+// CHECK:STDOUT:   %B1.vtable_ptr: ref %ptr.454 = vtable_ptr @B1.vtable [concrete = constants.%B1.vtable_ptr]
+// CHECK:STDOUT:   %.loc19_17.3: init %ptr.454 = initialize_from %B1.vtable_ptr to %.loc19_17.2 [concrete = constants.%B1.vtable_ptr]
 // CHECK:STDOUT:   %.loc19_17.4: init %B1 = class_init (%.loc19_17.3), %b1.var [concrete = constants.%B1.val.267]
 // CHECK:STDOUT:   %.loc19_3: init %B1 = converted %.loc19_17.1, %.loc19_17.4 [concrete = constants.%B1.val.267]
 // CHECK:STDOUT:   assign %b1.var, %.loc19_3
@@ -1493,7 +1501,8 @@ class T2(G2:! type) {
 // CHECK:STDOUT:   %.loc20_27.1: %struct_type.base.f5e = struct_literal (%.loc20_26.1)
 // CHECK:STDOUT:   %.loc20_27.2: ref %B1 = class_element_access %b2.var, element0
 // CHECK:STDOUT:   %.loc20_26.2: ref %ptr.454 = class_element_access %.loc20_27.2, element0
-// CHECK:STDOUT:   %.loc20_26.3: init %ptr.454 = initialize_from @B2.%vtable_ptr to %.loc20_26.2 [concrete = constants.%B2.vtable_ptr]
+// CHECK:STDOUT:   %B2.vtable_ptr: ref %ptr.454 = vtable_ptr @B2.vtable [concrete = constants.%B2.vtable_ptr]
+// CHECK:STDOUT:   %.loc20_26.3: init %ptr.454 = initialize_from %B2.vtable_ptr to %.loc20_26.2 [concrete = constants.%B2.vtable_ptr]
 // CHECK:STDOUT:   %.loc20_26.4: init %B1 = class_init (%.loc20_26.3), %.loc20_27.2 [concrete = constants.%B1.val.d2f]
 // CHECK:STDOUT:   %.loc20_27.3: init %B1 = converted %.loc20_26.1, %.loc20_26.4 [concrete = constants.%B1.val.d2f]
 // CHECK:STDOUT:   %.loc20_27.4: init %B2 = class_init (%.loc20_27.3), %b2.var [concrete = constants.%B2.val.e9e]
@@ -1512,7 +1521,8 @@ class T2(G2:! type) {
 // CHECK:STDOUT:   %.loc21_35.2: ref %B2 = class_element_access %c.var, element0
 // CHECK:STDOUT:   %.loc21_34.2: ref %B1 = class_element_access %.loc21_35.2, element0
 // CHECK:STDOUT:   %.loc21_33.2: ref %ptr.454 = class_element_access %.loc21_34.2, element0
-// CHECK:STDOUT:   %.loc21_33.3: init %ptr.454 = initialize_from @C.%vtable_ptr to %.loc21_33.2 [concrete = constants.%C.vtable_ptr]
+// CHECK:STDOUT:   %C.vtable_ptr: ref %ptr.454 = vtable_ptr @C.vtable [concrete = constants.%C.vtable_ptr]
+// CHECK:STDOUT:   %.loc21_33.3: init %ptr.454 = initialize_from %C.vtable_ptr to %.loc21_33.2 [concrete = constants.%C.vtable_ptr]
 // CHECK:STDOUT:   %.loc21_33.4: init %B1 = class_init (%.loc21_33.3), %.loc21_34.2 [concrete = constants.%B1.val.b9d]
 // CHECK:STDOUT:   %.loc21_34.3: init %B1 = converted %.loc21_33.1, %.loc21_33.4 [concrete = constants.%B1.val.b9d]
 // CHECK:STDOUT:   %.loc21_34.4: init %B2 = class_init (%.loc21_34.3), %.loc21_35.2 [concrete = constants.%B2.val.426]
@@ -1632,7 +1642,7 @@ class T2(G2:! type) {
 // CHECK:STDOUT:   %Base.as.Destroy.impl.Op.type: type = fn_type @Base.as.Destroy.impl.Op [concrete]
 // CHECK:STDOUT:   %Base.as.Destroy.impl.Op: %Base.as.Destroy.impl.Op.type = struct_value () [concrete]
 // CHECK:STDOUT:   %ptr.454: type = ptr_type <vtable> [concrete]
-// CHECK:STDOUT:   %Base.vtable_ptr: ref %ptr.454 = vtable_ptr @Base.vtable [concrete]
+// CHECK:STDOUT:   %Base.vtable_decl: ref %ptr.454 = vtable_decl @Base.vtable [concrete]
 // CHECK:STDOUT:   %struct_type.vptr.m1.m2: type = struct_type {.<vptr>: %ptr.454, .m1: %i32, .m2: %i32} [concrete]
 // CHECK:STDOUT:   %complete_type.cf7: <witness> = complete_type_witness %struct_type.vptr.m1.m2 [concrete]
 // CHECK:STDOUT:   %F.type: type = fn_type @F [concrete]
@@ -1656,6 +1666,7 @@ class T2(G2:! type) {
 // CHECK:STDOUT:   %bound_method.047: <bound method> = bound_method %int_3.1ba, %Core.IntLiteral.as.ImplicitAs.impl.Convert.specific_fn [concrete]
 // CHECK:STDOUT:   %int_3.822: %i32 = int_value 3 [concrete]
 // CHECK:STDOUT:   %struct_type.m2.m1.68c: type = struct_type {.m2: %i32, .m1: %i32} [concrete]
+// CHECK:STDOUT:   %Base.vtable_ptr: ref %ptr.454 = vtable_ptr @Base.vtable [concrete]
 // CHECK:STDOUT:   %int_5.64b: Core.IntLiteral = int_value 5 [concrete]
 // CHECK:STDOUT:   %struct_type.m2.m1.5f2: type = struct_type {.m2: Core.IntLiteral, .m1: Core.IntLiteral} [concrete]
 // CHECK:STDOUT:   %Core.IntLiteral.as.ImplicitAs.impl.Convert.bound.4e6: <bound method> = bound_method %int_5.64b, %Core.IntLiteral.as.ImplicitAs.impl.Convert.956 [concrete]
@@ -1733,10 +1744,10 @@ class T2(G2:! type) {
 // CHECK:STDOUT:   impl_decl @Base.as.Destroy.impl [concrete] {} {}
 // CHECK:STDOUT:   %Destroy.impl_witness_table = impl_witness_table (@Base.as.Destroy.impl.%Base.as.Destroy.impl.Op.decl), @Base.as.Destroy.impl [concrete]
 // CHECK:STDOUT:   %Destroy.impl_witness: <witness> = impl_witness %Destroy.impl_witness_table [concrete = constants.%Destroy.impl_witness.ae4]
-// CHECK:STDOUT:   %vtable_ptr: ref %ptr.454 = vtable_ptr @Base.vtable [concrete = constants.%Base.vtable_ptr]
+// CHECK:STDOUT:   %vtable_decl: ref %ptr.454 = vtable_decl @Base.vtable [concrete = constants.%Base.vtable_decl]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness constants.%struct_type.vptr.m1.m2 [concrete = constants.%complete_type.cf7]
 // CHECK:STDOUT:   complete_type_witness = %complete_type
-// CHECK:STDOUT:   vtable_ptr = %vtable_ptr
+// CHECK:STDOUT:   vtable_decl = %vtable_decl
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%Base
@@ -1782,7 +1793,8 @@ class T2(G2:! type) {
 // CHECK:STDOUT:   %i.ref.loc13_34: ref %i32 = name_ref i, %i
 // CHECK:STDOUT:   %.loc13_35.1: %struct_type.m2.m1.68c = struct_literal (%i.ref.loc13_25, %i.ref.loc13_34)
 // CHECK:STDOUT:   %.loc13_35.2: ref %ptr.454 = class_element_access %b1.var, element0
-// CHECK:STDOUT:   %.loc13_35.3: init %ptr.454 = initialize_from @Base.%vtable_ptr to %.loc13_35.2 [concrete = constants.%Base.vtable_ptr]
+// CHECK:STDOUT:   %Base.vtable_ptr.loc13: ref %ptr.454 = vtable_ptr @Base.vtable [concrete = constants.%Base.vtable_ptr]
+// CHECK:STDOUT:   %.loc13_35.3: init %ptr.454 = initialize_from %Base.vtable_ptr.loc13 to %.loc13_35.2 [concrete = constants.%Base.vtable_ptr]
 // CHECK:STDOUT:   %.loc13_34: %i32 = bind_value %i.ref.loc13_34
 // CHECK:STDOUT:   %.loc13_35.4: ref %i32 = class_element_access %b1.var, element2
 // CHECK:STDOUT:   %.loc13_35.5: init %i32 = initialize_from %.loc13_34 to %.loc13_35.4
@@ -1803,7 +1815,8 @@ class T2(G2:! type) {
 // CHECK:STDOUT:   %int_5: Core.IntLiteral = int_value 5 [concrete = constants.%int_5.64b]
 // CHECK:STDOUT:   %.loc14_35.1: %struct_type.m2.m1.5f2 = struct_literal (%int_3.loc14, %int_5)
 // CHECK:STDOUT:   %.loc14_35.2: ref %ptr.454 = class_element_access %b2.var, element0
-// CHECK:STDOUT:   %.loc14_35.3: init %ptr.454 = initialize_from @Base.%vtable_ptr to %.loc14_35.2 [concrete = constants.%Base.vtable_ptr]
+// CHECK:STDOUT:   %Base.vtable_ptr.loc14: ref %ptr.454 = vtable_ptr @Base.vtable [concrete = constants.%Base.vtable_ptr]
+// CHECK:STDOUT:   %.loc14_35.3: init %ptr.454 = initialize_from %Base.vtable_ptr.loc14 to %.loc14_35.2 [concrete = constants.%Base.vtable_ptr]
 // CHECK:STDOUT:   %impl.elem0.loc14_35.1: %.9c3 = impl_witness_access constants.%ImplicitAs.impl_witness.c75, element0 [concrete = constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.956]
 // CHECK:STDOUT:   %bound_method.loc14_35.1: <bound method> = bound_method %int_5, %impl.elem0.loc14_35.1 [concrete = constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.bound.4e6]
 // CHECK:STDOUT:   %specific_fn.loc14_35.1: <specific function> = specific_function %impl.elem0.loc14_35.1, @Core.IntLiteral.as.ImplicitAs.impl.Convert(constants.%int_32) [concrete = constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.specific_fn]
@@ -1874,7 +1887,7 @@ class T2(G2:! type) {
 // CHECK:STDOUT:   %Derived.as.Destroy.impl.Op.type: type = fn_type @Derived.as.Destroy.impl.Op [concrete]
 // CHECK:STDOUT:   %Derived.as.Destroy.impl.Op: %Derived.as.Destroy.impl.Op.type = struct_value () [concrete]
 // CHECK:STDOUT:   %ptr.454: type = ptr_type <vtable> [concrete]
-// CHECK:STDOUT:   %Derived.vtable_ptr: ref %ptr.454 = vtable_ptr @Derived.vtable [concrete]
+// CHECK:STDOUT:   %Derived.vtable_decl: ref %ptr.454 = vtable_decl @Derived.vtable [concrete]
 // CHECK:STDOUT:   %struct_type.vptr.base: type = struct_type {.<vptr>: %ptr.454, .base: %Base} [concrete]
 // CHECK:STDOUT:   %complete_type.336: <witness> = complete_type_witness %struct_type.vptr.base [concrete]
 // CHECK:STDOUT: }
@@ -1958,10 +1971,10 @@ class T2(G2:! type) {
 // CHECK:STDOUT:   impl_decl @Derived.as.Destroy.impl [concrete] {} {}
 // CHECK:STDOUT:   %Destroy.impl_witness_table = impl_witness_table (@Derived.as.Destroy.impl.%Derived.as.Destroy.impl.Op.decl), @Derived.as.Destroy.impl [concrete]
 // CHECK:STDOUT:   %Destroy.impl_witness: <witness> = impl_witness %Destroy.impl_witness_table [concrete = constants.%Destroy.impl_witness.e52]
-// CHECK:STDOUT:   %vtable_ptr: ref %ptr.454 = vtable_ptr @Derived.vtable [concrete = constants.%Derived.vtable_ptr]
+// CHECK:STDOUT:   %vtable_decl: ref %ptr.454 = vtable_decl @Derived.vtable [concrete = constants.%Derived.vtable_decl]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness constants.%struct_type.vptr.base [concrete = constants.%complete_type.336]
 // CHECK:STDOUT:   complete_type_witness = %complete_type
-// CHECK:STDOUT:   vtable_ptr = %vtable_ptr
+// CHECK:STDOUT:   vtable_decl = %vtable_decl
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%Derived
@@ -1994,7 +2007,7 @@ class T2(G2:! type) {
 // CHECK:STDOUT:   %AbstractBase.as.Destroy.impl.Op.type: type = fn_type @AbstractBase.as.Destroy.impl.Op [concrete]
 // CHECK:STDOUT:   %AbstractBase.as.Destroy.impl.Op: %AbstractBase.as.Destroy.impl.Op.type = struct_value () [concrete]
 // CHECK:STDOUT:   %ptr.454: type = ptr_type <vtable> [concrete]
-// CHECK:STDOUT:   %AbstractBase.vtable_ptr: ref %ptr.454 = vtable_ptr @AbstractBase.vtable [concrete]
+// CHECK:STDOUT:   %AbstractBase.vtable_decl: ref %ptr.454 = vtable_decl @AbstractBase.vtable [concrete]
 // CHECK:STDOUT:   %struct_type.vptr: type = struct_type {.<vptr>: %ptr.454} [concrete]
 // CHECK:STDOUT:   %complete_type.513: <witness> = complete_type_witness %struct_type.vptr [concrete]
 // CHECK:STDOUT:   %AbstractIntermediate: type = class_type @AbstractIntermediate [concrete]
@@ -2004,7 +2017,7 @@ class T2(G2:! type) {
 // CHECK:STDOUT:   %pattern_type.28b: type = pattern_type %ptr.fd8 [concrete]
 // CHECK:STDOUT:   %AbstractIntermediate.as.Destroy.impl.Op.type: type = fn_type @AbstractIntermediate.as.Destroy.impl.Op [concrete]
 // CHECK:STDOUT:   %AbstractIntermediate.as.Destroy.impl.Op: %AbstractIntermediate.as.Destroy.impl.Op.type = struct_value () [concrete]
-// CHECK:STDOUT:   %AbstractIntermediate.vtable_ptr: ref %ptr.454 = vtable_ptr @AbstractIntermediate.vtable [concrete]
+// CHECK:STDOUT:   %AbstractIntermediate.vtable_decl: ref %ptr.454 = vtable_decl @AbstractIntermediate.vtable [concrete]
 // CHECK:STDOUT:   %struct_type.base.efd: type = struct_type {.base: %AbstractBase} [concrete]
 // CHECK:STDOUT:   %complete_type.2d3: <witness> = complete_type_witness %struct_type.base.efd [concrete]
 // CHECK:STDOUT:   %Derived: type = class_type @Derived [concrete]
@@ -2017,7 +2030,7 @@ class T2(G2:! type) {
 // CHECK:STDOUT:   %pattern_type.605: type = pattern_type %ptr.404 [concrete]
 // CHECK:STDOUT:   %Derived.as.Destroy.impl.Op.type: type = fn_type @Derived.as.Destroy.impl.Op [concrete]
 // CHECK:STDOUT:   %Derived.as.Destroy.impl.Op: %Derived.as.Destroy.impl.Op.type = struct_value () [concrete]
-// CHECK:STDOUT:   %Derived.vtable_ptr: ref %ptr.454 = vtable_ptr @Derived.vtable [concrete]
+// CHECK:STDOUT:   %Derived.vtable_decl: ref %ptr.454 = vtable_decl @Derived.vtable [concrete]
 // CHECK:STDOUT:   %struct_type.base.da5: type = struct_type {.base: %AbstractIntermediate} [concrete]
 // CHECK:STDOUT:   %complete_type.f8c: <witness> = complete_type_witness %struct_type.base.da5 [concrete]
 // CHECK:STDOUT: }
@@ -2105,10 +2118,10 @@ class T2(G2:! type) {
 // CHECK:STDOUT:   impl_decl @AbstractBase.as.Destroy.impl [concrete] {} {}
 // CHECK:STDOUT:   %Destroy.impl_witness_table = impl_witness_table (@AbstractBase.as.Destroy.impl.%AbstractBase.as.Destroy.impl.Op.decl), @AbstractBase.as.Destroy.impl [concrete]
 // CHECK:STDOUT:   %Destroy.impl_witness: <witness> = impl_witness %Destroy.impl_witness_table [concrete = constants.%Destroy.impl_witness.ac3]
-// CHECK:STDOUT:   %vtable_ptr: ref %ptr.454 = vtable_ptr @AbstractBase.vtable [concrete = constants.%AbstractBase.vtable_ptr]
+// CHECK:STDOUT:   %vtable_decl: ref %ptr.454 = vtable_decl @AbstractBase.vtable [concrete = constants.%AbstractBase.vtable_decl]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness constants.%struct_type.vptr [concrete = constants.%complete_type.513]
 // CHECK:STDOUT:   complete_type_witness = %complete_type
-// CHECK:STDOUT:   vtable_ptr = %vtable_ptr
+// CHECK:STDOUT:   vtable_decl = %vtable_decl
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%AbstractBase
@@ -2122,10 +2135,10 @@ class T2(G2:! type) {
 // CHECK:STDOUT:   impl_decl @AbstractIntermediate.as.Destroy.impl [concrete] {} {}
 // CHECK:STDOUT:   %Destroy.impl_witness_table = impl_witness_table (@AbstractIntermediate.as.Destroy.impl.%AbstractIntermediate.as.Destroy.impl.Op.decl), @AbstractIntermediate.as.Destroy.impl [concrete]
 // CHECK:STDOUT:   %Destroy.impl_witness: <witness> = impl_witness %Destroy.impl_witness_table [concrete = constants.%Destroy.impl_witness.93a]
-// CHECK:STDOUT:   %vtable_ptr: ref %ptr.454 = vtable_ptr @AbstractIntermediate.vtable [concrete = constants.%AbstractIntermediate.vtable_ptr]
+// CHECK:STDOUT:   %vtable_decl: ref %ptr.454 = vtable_decl @AbstractIntermediate.vtable [concrete = constants.%AbstractIntermediate.vtable_decl]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness constants.%struct_type.base.efd [concrete = constants.%complete_type.2d3]
 // CHECK:STDOUT:   complete_type_witness = %complete_type
-// CHECK:STDOUT:   vtable_ptr = %vtable_ptr
+// CHECK:STDOUT:   vtable_decl = %vtable_decl
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%AbstractIntermediate
@@ -2149,10 +2162,10 @@ class T2(G2:! type) {
 // CHECK:STDOUT:   impl_decl @Derived.as.Destroy.impl [concrete] {} {}
 // CHECK:STDOUT:   %Destroy.impl_witness_table = impl_witness_table (@Derived.as.Destroy.impl.%Derived.as.Destroy.impl.Op.decl), @Derived.as.Destroy.impl [concrete]
 // CHECK:STDOUT:   %Destroy.impl_witness: <witness> = impl_witness %Destroy.impl_witness_table [concrete = constants.%Destroy.impl_witness.e52]
-// CHECK:STDOUT:   %vtable_ptr: ref %ptr.454 = vtable_ptr @Derived.vtable [concrete = constants.%Derived.vtable_ptr]
+// CHECK:STDOUT:   %vtable_decl: ref %ptr.454 = vtable_decl @Derived.vtable [concrete = constants.%Derived.vtable_decl]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness constants.%struct_type.base.da5 [concrete = constants.%complete_type.f8c]
 // CHECK:STDOUT:   complete_type_witness = %complete_type
-// CHECK:STDOUT:   vtable_ptr = %vtable_ptr
+// CHECK:STDOUT:   vtable_decl = %vtable_decl
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%Derived
@@ -2199,7 +2212,7 @@ class T2(G2:! type) {
 // CHECK:STDOUT:   %VirtualBase.as.Destroy.impl.Op.type: type = fn_type @VirtualBase.as.Destroy.impl.Op [concrete]
 // CHECK:STDOUT:   %VirtualBase.as.Destroy.impl.Op: %VirtualBase.as.Destroy.impl.Op.type = struct_value () [concrete]
 // CHECK:STDOUT:   %ptr.454: type = ptr_type <vtable> [concrete]
-// CHECK:STDOUT:   %VirtualBase.vtable_ptr: ref %ptr.454 = vtable_ptr @VirtualBase.vtable [concrete]
+// CHECK:STDOUT:   %VirtualBase.vtable_decl: ref %ptr.454 = vtable_decl @VirtualBase.vtable [concrete]
 // CHECK:STDOUT:   %struct_type.vptr: type = struct_type {.<vptr>: %ptr.454} [concrete]
 // CHECK:STDOUT:   %complete_type.513: <witness> = complete_type_witness %struct_type.vptr [concrete]
 // CHECK:STDOUT:   %VirtualIntermediate: type = class_type @VirtualIntermediate [concrete]
@@ -2209,7 +2222,7 @@ class T2(G2:! type) {
 // CHECK:STDOUT:   %pattern_type.906: type = pattern_type %ptr.7dc [concrete]
 // CHECK:STDOUT:   %VirtualIntermediate.as.Destroy.impl.Op.type: type = fn_type @VirtualIntermediate.as.Destroy.impl.Op [concrete]
 // CHECK:STDOUT:   %VirtualIntermediate.as.Destroy.impl.Op: %VirtualIntermediate.as.Destroy.impl.Op.type = struct_value () [concrete]
-// CHECK:STDOUT:   %VirtualIntermediate.vtable_ptr: ref %ptr.454 = vtable_ptr @VirtualIntermediate.vtable [concrete]
+// CHECK:STDOUT:   %VirtualIntermediate.vtable_decl: ref %ptr.454 = vtable_decl @VirtualIntermediate.vtable [concrete]
 // CHECK:STDOUT:   %struct_type.base.61e: type = struct_type {.base: %VirtualBase} [concrete]
 // CHECK:STDOUT:   %complete_type.f09: <witness> = complete_type_witness %struct_type.base.61e [concrete]
 // CHECK:STDOUT:   %Derived: type = class_type @Derived [concrete]
@@ -2222,7 +2235,7 @@ class T2(G2:! type) {
 // CHECK:STDOUT:   %pattern_type.605: type = pattern_type %ptr.404 [concrete]
 // CHECK:STDOUT:   %Derived.as.Destroy.impl.Op.type: type = fn_type @Derived.as.Destroy.impl.Op [concrete]
 // CHECK:STDOUT:   %Derived.as.Destroy.impl.Op: %Derived.as.Destroy.impl.Op.type = struct_value () [concrete]
-// CHECK:STDOUT:   %Derived.vtable_ptr: ref %ptr.454 = vtable_ptr @Derived.vtable [concrete]
+// CHECK:STDOUT:   %Derived.vtable_decl: ref %ptr.454 = vtable_decl @Derived.vtable [concrete]
 // CHECK:STDOUT:   %struct_type.base.43c: type = struct_type {.base: %VirtualIntermediate} [concrete]
 // CHECK:STDOUT:   %complete_type.fa6: <witness> = complete_type_witness %struct_type.base.43c [concrete]
 // CHECK:STDOUT: }
@@ -2310,10 +2323,10 @@ class T2(G2:! type) {
 // CHECK:STDOUT:   impl_decl @VirtualBase.as.Destroy.impl [concrete] {} {}
 // CHECK:STDOUT:   %Destroy.impl_witness_table = impl_witness_table (@VirtualBase.as.Destroy.impl.%VirtualBase.as.Destroy.impl.Op.decl), @VirtualBase.as.Destroy.impl [concrete]
 // CHECK:STDOUT:   %Destroy.impl_witness: <witness> = impl_witness %Destroy.impl_witness_table [concrete = constants.%Destroy.impl_witness.8a3]
-// CHECK:STDOUT:   %vtable_ptr: ref %ptr.454 = vtable_ptr @VirtualBase.vtable [concrete = constants.%VirtualBase.vtable_ptr]
+// CHECK:STDOUT:   %vtable_decl: ref %ptr.454 = vtable_decl @VirtualBase.vtable [concrete = constants.%VirtualBase.vtable_decl]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness constants.%struct_type.vptr [concrete = constants.%complete_type.513]
 // CHECK:STDOUT:   complete_type_witness = %complete_type
-// CHECK:STDOUT:   vtable_ptr = %vtable_ptr
+// CHECK:STDOUT:   vtable_decl = %vtable_decl
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%VirtualBase
@@ -2327,10 +2340,10 @@ class T2(G2:! type) {
 // CHECK:STDOUT:   impl_decl @VirtualIntermediate.as.Destroy.impl [concrete] {} {}
 // CHECK:STDOUT:   %Destroy.impl_witness_table = impl_witness_table (@VirtualIntermediate.as.Destroy.impl.%VirtualIntermediate.as.Destroy.impl.Op.decl), @VirtualIntermediate.as.Destroy.impl [concrete]
 // CHECK:STDOUT:   %Destroy.impl_witness: <witness> = impl_witness %Destroy.impl_witness_table [concrete = constants.%Destroy.impl_witness.3cb]
-// CHECK:STDOUT:   %vtable_ptr: ref %ptr.454 = vtable_ptr @VirtualIntermediate.vtable [concrete = constants.%VirtualIntermediate.vtable_ptr]
+// CHECK:STDOUT:   %vtable_decl: ref %ptr.454 = vtable_decl @VirtualIntermediate.vtable [concrete = constants.%VirtualIntermediate.vtable_decl]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness constants.%struct_type.base.61e [concrete = constants.%complete_type.f09]
 // CHECK:STDOUT:   complete_type_witness = %complete_type
-// CHECK:STDOUT:   vtable_ptr = %vtable_ptr
+// CHECK:STDOUT:   vtable_decl = %vtable_decl
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%VirtualIntermediate
@@ -2354,10 +2367,10 @@ class T2(G2:! type) {
 // CHECK:STDOUT:   impl_decl @Derived.as.Destroy.impl [concrete] {} {}
 // CHECK:STDOUT:   %Destroy.impl_witness_table = impl_witness_table (@Derived.as.Destroy.impl.%Derived.as.Destroy.impl.Op.decl), @Derived.as.Destroy.impl [concrete]
 // CHECK:STDOUT:   %Destroy.impl_witness: <witness> = impl_witness %Destroy.impl_witness_table [concrete = constants.%Destroy.impl_witness.e52]
-// CHECK:STDOUT:   %vtable_ptr: ref %ptr.454 = vtable_ptr @Derived.vtable [concrete = constants.%Derived.vtable_ptr]
+// CHECK:STDOUT:   %vtable_decl: ref %ptr.454 = vtable_decl @Derived.vtable [concrete = constants.%Derived.vtable_decl]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness constants.%struct_type.base.43c [concrete = constants.%complete_type.fa6]
 // CHECK:STDOUT:   complete_type_witness = %complete_type
-// CHECK:STDOUT:   vtable_ptr = %vtable_ptr
+// CHECK:STDOUT:   vtable_decl = %vtable_decl
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%Derived
@@ -2404,7 +2417,7 @@ class T2(G2:! type) {
 // CHECK:STDOUT:   %Base.as.Destroy.impl.Op.type: type = fn_type @Base.as.Destroy.impl.Op [concrete]
 // CHECK:STDOUT:   %Base.as.Destroy.impl.Op: %Base.as.Destroy.impl.Op.type = struct_value () [concrete]
 // CHECK:STDOUT:   %ptr.454: type = ptr_type <vtable> [concrete]
-// CHECK:STDOUT:   %Base.vtable_ptr: ref %ptr.454 = vtable_ptr @Base.vtable [concrete]
+// CHECK:STDOUT:   %Base.vtable_decl: ref %ptr.454 = vtable_decl @Base.vtable [concrete]
 // CHECK:STDOUT:   %struct_type.vptr: type = struct_type {.<vptr>: %ptr.454} [concrete]
 // CHECK:STDOUT:   %complete_type.513: <witness> = complete_type_witness %struct_type.vptr [concrete]
 // CHECK:STDOUT:   %Derived: type = class_type @Derived [concrete]
@@ -2422,7 +2435,7 @@ class T2(G2:! type) {
 // CHECK:STDOUT:   %pattern_type.605: type = pattern_type %ptr.404 [concrete]
 // CHECK:STDOUT:   %Derived.as.Destroy.impl.Op.type: type = fn_type @Derived.as.Destroy.impl.Op [concrete]
 // CHECK:STDOUT:   %Derived.as.Destroy.impl.Op: %Derived.as.Destroy.impl.Op.type = struct_value () [concrete]
-// CHECK:STDOUT:   %Derived.vtable_ptr: ref %ptr.454 = vtable_ptr @Derived.vtable [concrete]
+// CHECK:STDOUT:   %Derived.vtable_decl: ref %ptr.454 = vtable_decl @Derived.vtable [concrete]
 // CHECK:STDOUT:   %struct_type.base: type = struct_type {.base: %Base} [concrete]
 // CHECK:STDOUT:   %complete_type.15c: <witness> = complete_type_witness %struct_type.base [concrete]
 // CHECK:STDOUT: }
@@ -2494,10 +2507,10 @@ class T2(G2:! type) {
 // CHECK:STDOUT:   impl_decl @Base.as.Destroy.impl [concrete] {} {}
 // CHECK:STDOUT:   %Destroy.impl_witness_table = impl_witness_table (@Base.as.Destroy.impl.%Base.as.Destroy.impl.Op.decl), @Base.as.Destroy.impl [concrete]
 // CHECK:STDOUT:   %Destroy.impl_witness: <witness> = impl_witness %Destroy.impl_witness_table [concrete = constants.%Destroy.impl_witness.ae4]
-// CHECK:STDOUT:   %vtable_ptr: ref %ptr.454 = vtable_ptr @Base.vtable [concrete = constants.%Base.vtable_ptr]
+// CHECK:STDOUT:   %vtable_decl: ref %ptr.454 = vtable_decl @Base.vtable [concrete = constants.%Base.vtable_decl]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness constants.%struct_type.vptr [concrete = constants.%complete_type.513]
 // CHECK:STDOUT:   complete_type_witness = %complete_type
-// CHECK:STDOUT:   vtable_ptr = %vtable_ptr
+// CHECK:STDOUT:   vtable_decl = %vtable_decl
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%Base
@@ -2527,10 +2540,10 @@ class T2(G2:! type) {
 // CHECK:STDOUT:   impl_decl @Derived.as.Destroy.impl [concrete] {} {}
 // CHECK:STDOUT:   %Destroy.impl_witness_table = impl_witness_table (@Derived.as.Destroy.impl.%Derived.as.Destroy.impl.Op.decl), @Derived.as.Destroy.impl [concrete]
 // CHECK:STDOUT:   %Destroy.impl_witness: <witness> = impl_witness %Destroy.impl_witness_table [concrete = constants.%Destroy.impl_witness.e52]
-// CHECK:STDOUT:   %vtable_ptr: ref %ptr.454 = vtable_ptr @Derived.vtable [concrete = constants.%Derived.vtable_ptr]
+// CHECK:STDOUT:   %vtable_decl: ref %ptr.454 = vtable_decl @Derived.vtable [concrete = constants.%Derived.vtable_decl]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness constants.%struct_type.base [concrete = constants.%complete_type.15c]
 // CHECK:STDOUT:   complete_type_witness = %complete_type
-// CHECK:STDOUT:   vtable_ptr = %vtable_ptr
+// CHECK:STDOUT:   vtable_decl = %vtable_decl
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%Derived
@@ -2594,7 +2607,7 @@ class T2(G2:! type) {
 // CHECK:STDOUT:   %Base.as.Destroy.impl.Op.type: type = fn_type @Base.as.Destroy.impl.Op [concrete]
 // CHECK:STDOUT:   %Base.as.Destroy.impl.Op: %Base.as.Destroy.impl.Op.type = struct_value () [concrete]
 // CHECK:STDOUT:   %ptr.454: type = ptr_type <vtable> [concrete]
-// CHECK:STDOUT:   %Base.vtable_ptr: ref %ptr.454 = vtable_ptr @Base.vtable [concrete]
+// CHECK:STDOUT:   %Base.vtable_decl: ref %ptr.454 = vtable_decl @Base.vtable [concrete]
 // CHECK:STDOUT:   %struct_type.vptr: type = struct_type {.<vptr>: %ptr.454} [concrete]
 // CHECK:STDOUT:   %complete_type.513: <witness> = complete_type_witness %struct_type.vptr [concrete]
 // CHECK:STDOUT:   %Derived: type = class_type @Derived [concrete]
@@ -2607,7 +2620,7 @@ class T2(G2:! type) {
 // CHECK:STDOUT:   %pattern_type.605: type = pattern_type %ptr.404 [concrete]
 // CHECK:STDOUT:   %Derived.as.Destroy.impl.Op.type: type = fn_type @Derived.as.Destroy.impl.Op [concrete]
 // CHECK:STDOUT:   %Derived.as.Destroy.impl.Op: %Derived.as.Destroy.impl.Op.type = struct_value () [concrete]
-// CHECK:STDOUT:   %Derived.vtable_ptr: ref %ptr.454 = vtable_ptr @Derived.vtable [concrete]
+// CHECK:STDOUT:   %Derived.vtable_decl: ref %ptr.454 = vtable_decl @Derived.vtable [concrete]
 // CHECK:STDOUT:   %struct_type.base: type = struct_type {.base: %Base} [concrete]
 // CHECK:STDOUT:   %complete_type.15c: <witness> = complete_type_witness %struct_type.base [concrete]
 // CHECK:STDOUT: }
@@ -2774,10 +2787,10 @@ class T2(G2:! type) {
 // CHECK:STDOUT:   impl_decl @Base.as.Destroy.impl [concrete] {} {}
 // CHECK:STDOUT:   %Destroy.impl_witness_table = impl_witness_table (@Base.as.Destroy.impl.%Base.as.Destroy.impl.Op.decl), @Base.as.Destroy.impl [concrete]
 // CHECK:STDOUT:   %Destroy.impl_witness: <witness> = impl_witness %Destroy.impl_witness_table [concrete = constants.%Destroy.impl_witness.ae4]
-// CHECK:STDOUT:   %vtable_ptr: ref %ptr.454 = vtable_ptr @Base.vtable [concrete = constants.%Base.vtable_ptr]
+// CHECK:STDOUT:   %vtable_decl: ref %ptr.454 = vtable_decl @Base.vtable [concrete = constants.%Base.vtable_decl]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness constants.%struct_type.vptr [concrete = constants.%complete_type.513]
 // CHECK:STDOUT:   complete_type_witness = %complete_type
-// CHECK:STDOUT:   vtable_ptr = %vtable_ptr
+// CHECK:STDOUT:   vtable_decl = %vtable_decl
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%Base
@@ -2806,10 +2819,10 @@ class T2(G2:! type) {
 // CHECK:STDOUT:   impl_decl @Derived.as.Destroy.impl [concrete] {} {}
 // CHECK:STDOUT:   %Destroy.impl_witness_table = impl_witness_table (@Derived.as.Destroy.impl.%Derived.as.Destroy.impl.Op.decl), @Derived.as.Destroy.impl [concrete]
 // CHECK:STDOUT:   %Destroy.impl_witness: <witness> = impl_witness %Destroy.impl_witness_table [concrete = constants.%Destroy.impl_witness.e52]
-// CHECK:STDOUT:   %vtable_ptr: ref %ptr.454 = vtable_ptr @Derived.vtable [concrete = constants.%Derived.vtable_ptr]
+// CHECK:STDOUT:   %vtable_decl: ref %ptr.454 = vtable_decl @Derived.vtable [concrete = constants.%Derived.vtable_decl]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness constants.%struct_type.base [concrete = constants.%complete_type.15c]
 // CHECK:STDOUT:   complete_type_witness = %complete_type
-// CHECK:STDOUT:   vtable_ptr = %vtable_ptr
+// CHECK:STDOUT:   vtable_decl = %vtable_decl
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%Derived
@@ -2868,7 +2881,7 @@ class T2(G2:! type) {
 // CHECK:STDOUT:   %Base.as.Destroy.impl.Op: %Base.as.Destroy.impl.Op.type = struct_value () [symbolic]
 // CHECK:STDOUT:   %ptr.454: type = ptr_type <vtable> [concrete]
 // CHECK:STDOUT:   %Base.F.specific_fn: <specific function> = specific_function %Base.F, @Base.F(%T) [symbolic]
-// CHECK:STDOUT:   %Base.vtable_ptr: ref %ptr.454 = vtable_ptr @Base.vtable, @Base(%T) [symbolic]
+// CHECK:STDOUT:   %Base.vtable_decl: ref %ptr.454 = vtable_decl @Base.vtable [concrete]
 // CHECK:STDOUT:   %struct_type.vptr: type = struct_type {.<vptr>: %ptr.454} [concrete]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %struct_type.vptr [concrete]
 // CHECK:STDOUT: }
@@ -2931,7 +2944,6 @@ class T2(G2:! type) {
 // CHECK:STDOUT:   %Base.F.type: type = fn_type @Base.F, @Base(%T.loc7_17.1) [symbolic = %Base.F.type (constants.%Base.F.type)]
 // CHECK:STDOUT:   %Base.F: @Base.%Base.F.type (%Base.F.type) = struct_value () [symbolic = %Base.F (constants.%Base.F)]
 // CHECK:STDOUT:   %Base.F.specific_fn.loc13_1.2: <specific function> = specific_function %Base.F, @Base.F(%T.loc7_17.1) [symbolic = %Base.F.specific_fn.loc13_1.2 (constants.%Base.F.specific_fn)]
-// CHECK:STDOUT:   %vtable_ptr.loc13_1.2: ref %ptr.454 = vtable_ptr @Base.vtable, @Base(%T.loc7_17.1) [symbolic = %vtable_ptr.loc13_1.2 (constants.%Base.vtable_ptr)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   class {
 // CHECK:STDOUT:     %Base.F.decl: @Base.%Base.F.type (%Base.F.type) = fn_decl @Base.F [symbolic = @Base.%Base.F (constants.%Base.F)] {
@@ -2950,10 +2962,10 @@ class T2(G2:! type) {
 // CHECK:STDOUT:     %Destroy.impl_witness_table = impl_witness_table (@Base.as.Destroy.impl.%Base.as.Destroy.impl.Op.decl), @Base.as.Destroy.impl [concrete]
 // CHECK:STDOUT:     %Destroy.impl_witness: <witness> = impl_witness %Destroy.impl_witness_table, @Base.as.Destroy.impl(constants.%T) [symbolic = @Base.as.Destroy.impl.%Destroy.impl_witness (constants.%Destroy.impl_witness)]
 // CHECK:STDOUT:     %Base.F.specific_fn.loc13_1.1: <specific function> = specific_function %Base.F.decl, @Base.F(constants.%T) [symbolic = %Base.F.specific_fn.loc13_1.2 (constants.%Base.F.specific_fn)]
-// CHECK:STDOUT:     %vtable_ptr.loc13_1.1: ref %ptr.454 = vtable_ptr @Base.vtable, @Base(constants.%T) [symbolic = %vtable_ptr.loc13_1.2 (constants.%Base.vtable_ptr)]
+// CHECK:STDOUT:     %vtable_decl: ref %ptr.454 = vtable_decl @Base.vtable [concrete = constants.%Base.vtable_decl]
 // CHECK:STDOUT:     %complete_type: <witness> = complete_type_witness constants.%struct_type.vptr [concrete = constants.%complete_type]
 // CHECK:STDOUT:     complete_type_witness = %complete_type
-// CHECK:STDOUT:     vtable_ptr = %vtable_ptr.loc13_1.1
+// CHECK:STDOUT:     vtable_decl = %vtable_decl
 // CHECK:STDOUT:
 // CHECK:STDOUT:   !members:
 // CHECK:STDOUT:     .Self = constants.%Base
@@ -3036,7 +3048,7 @@ class T2(G2:! type) {
 // CHECK:STDOUT:   %Base.as.Destroy.impl.Op: %Base.as.Destroy.impl.Op.type = struct_value () [symbolic]
 // CHECK:STDOUT:   %ptr.454: type = ptr_type <vtable> [concrete]
 // CHECK:STDOUT:   %Base.F.specific_fn.892: <specific function> = specific_function %Base.F.e26, @Base.F(%T) [symbolic]
-// CHECK:STDOUT:   %Base.vtable_ptr.573: ref %ptr.454 = vtable_ptr @Base.vtable, @Base(%T) [symbolic]
+// CHECK:STDOUT:   %Base.vtable_decl: ref %ptr.454 = vtable_decl @Base.vtable [concrete]
 // CHECK:STDOUT:   %struct_type.vptr: type = struct_type {.<vptr>: %ptr.454} [concrete]
 // CHECK:STDOUT:   %complete_type.513: <witness> = complete_type_witness %struct_type.vptr [concrete]
 // CHECK:STDOUT:   %require_complete.97d: <witness> = require_complete_type %Base.370 [symbolic]
@@ -3048,7 +3060,6 @@ class T2(G2:! type) {
 // CHECK:STDOUT:   %pattern_type.3bf: type = pattern_type %Base.ea5 [concrete]
 // CHECK:STDOUT:   %pattern_type.28b: type = pattern_type %T1 [concrete]
 // CHECK:STDOUT:   %Base.F.specific_fn.210: <specific function> = specific_function %Base.F.d25, @Base.F(%T1) [concrete]
-// CHECK:STDOUT:   %Base.vtable_ptr.bfe: ref %ptr.454 = vtable_ptr @Base.vtable, @Base(%T1) [concrete]
 // CHECK:STDOUT:   %Derived.elem: type = unbound_element_type %Derived, %Base.ea5 [concrete]
 // CHECK:STDOUT:   %pattern_type.fb9: type = pattern_type %Derived [concrete]
 // CHECK:STDOUT:   %Derived.F.type: type = fn_type @Derived.F [concrete]
@@ -3058,7 +3069,7 @@ class T2(G2:! type) {
 // CHECK:STDOUT:   %pattern_type.605: type = pattern_type %ptr.404 [concrete]
 // CHECK:STDOUT:   %Derived.as.Destroy.impl.Op.type: type = fn_type @Derived.as.Destroy.impl.Op [concrete]
 // CHECK:STDOUT:   %Derived.as.Destroy.impl.Op: %Derived.as.Destroy.impl.Op.type = struct_value () [concrete]
-// CHECK:STDOUT:   %Derived.vtable_ptr: ref %ptr.454 = vtable_ptr @Derived.vtable [concrete]
+// CHECK:STDOUT:   %Derived.vtable_decl: ref %ptr.454 = vtable_decl @Derived.vtable [concrete]
 // CHECK:STDOUT:   %struct_type.base.fda: type = struct_type {.base: %Base.ea5} [concrete]
 // CHECK:STDOUT:   %complete_type.65a: <witness> = complete_type_witness %struct_type.base.fda [concrete]
 // CHECK:STDOUT: }
@@ -3169,7 +3180,6 @@ class T2(G2:! type) {
 // CHECK:STDOUT:   %Base.F.type: type = fn_type @Base.F, @Base(%T.loc7_17.1) [symbolic = %Base.F.type (constants.%Base.F.type.f17)]
 // CHECK:STDOUT:   %Base.F: @Base.%Base.F.type (%Base.F.type.f17) = struct_value () [symbolic = %Base.F (constants.%Base.F.e26)]
 // CHECK:STDOUT:   %Base.F.specific_fn.loc9_1.2: <specific function> = specific_function %Base.F, @Base.F(%T.loc7_17.1) [symbolic = %Base.F.specific_fn.loc9_1.2 (constants.%Base.F.specific_fn.892)]
-// CHECK:STDOUT:   %vtable_ptr.loc9_1.2: ref %ptr.454 = vtable_ptr @Base.vtable, @Base(%T.loc7_17.1) [symbolic = %vtable_ptr.loc9_1.2 (constants.%Base.vtable_ptr.573)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   class {
 // CHECK:STDOUT:     %Base.F.decl: @Base.%Base.F.type (%Base.F.type.f17) = fn_decl @Base.F [symbolic = @Base.%Base.F (constants.%Base.F.e26)] {
@@ -3193,10 +3203,10 @@ class T2(G2:! type) {
 // CHECK:STDOUT:     %Destroy.impl_witness_table = impl_witness_table (@Base.as.Destroy.impl.%Base.as.Destroy.impl.Op.decl), @Base.as.Destroy.impl [concrete]
 // CHECK:STDOUT:     %Destroy.impl_witness: <witness> = impl_witness %Destroy.impl_witness_table, @Base.as.Destroy.impl(constants.%T) [symbolic = @Base.as.Destroy.impl.%Destroy.impl_witness (constants.%Destroy.impl_witness.9f8)]
 // CHECK:STDOUT:     %Base.F.specific_fn.loc9_1.1: <specific function> = specific_function %Base.F.decl, @Base.F(constants.%T) [symbolic = %Base.F.specific_fn.loc9_1.2 (constants.%Base.F.specific_fn.892)]
-// CHECK:STDOUT:     %vtable_ptr.loc9_1.1: ref %ptr.454 = vtable_ptr @Base.vtable, @Base(constants.%T) [symbolic = %vtable_ptr.loc9_1.2 (constants.%Base.vtable_ptr.573)]
+// CHECK:STDOUT:     %vtable_decl: ref %ptr.454 = vtable_decl @Base.vtable [concrete = constants.%Base.vtable_decl]
 // CHECK:STDOUT:     %complete_type: <witness> = complete_type_witness constants.%struct_type.vptr [concrete = constants.%complete_type.513]
 // CHECK:STDOUT:     complete_type_witness = %complete_type
-// CHECK:STDOUT:     vtable_ptr = %vtable_ptr.loc9_1.1
+// CHECK:STDOUT:     vtable_decl = %vtable_decl
 // CHECK:STDOUT:
 // CHECK:STDOUT:   !members:
 // CHECK:STDOUT:     .Self = constants.%Base.370
@@ -3228,10 +3238,10 @@ class T2(G2:! type) {
 // CHECK:STDOUT:   impl_decl @Derived.as.Destroy.impl [concrete] {} {}
 // CHECK:STDOUT:   %Destroy.impl_witness_table = impl_witness_table (@Derived.as.Destroy.impl.%Derived.as.Destroy.impl.Op.decl), @Derived.as.Destroy.impl [concrete]
 // CHECK:STDOUT:   %Destroy.impl_witness: <witness> = impl_witness %Destroy.impl_witness_table [concrete = constants.%Destroy.impl_witness.e52]
-// CHECK:STDOUT:   %vtable_ptr: ref %ptr.454 = vtable_ptr @Derived.vtable [concrete = constants.%Derived.vtable_ptr]
+// CHECK:STDOUT:   %vtable_decl: ref %ptr.454 = vtable_decl @Derived.vtable [concrete = constants.%Derived.vtable_decl]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness constants.%struct_type.base.fda [concrete = constants.%complete_type.65a]
 // CHECK:STDOUT:   complete_type_witness = %complete_type
-// CHECK:STDOUT:   vtable_ptr = %vtable_ptr
+// CHECK:STDOUT:   vtable_decl = %vtable_decl
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%Derived
@@ -3293,7 +3303,6 @@ class T2(G2:! type) {
 // CHECK:STDOUT:   %Base.F.type => constants.%Base.F.type.f17
 // CHECK:STDOUT:   %Base.F => constants.%Base.F.e26
 // CHECK:STDOUT:   %Base.F.specific_fn.loc9_1.2 => constants.%Base.F.specific_fn.892
-// CHECK:STDOUT:   %vtable_ptr.loc9_1.2 => constants.%Base.vtable_ptr.573
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Base.F(constants.%T) {
@@ -3327,7 +3336,6 @@ class T2(G2:! type) {
 // CHECK:STDOUT:   %Base.F.type => constants.%Base.F.type.d82
 // CHECK:STDOUT:   %Base.F => constants.%Base.F.d25
 // CHECK:STDOUT:   %Base.F.specific_fn.loc9_1.2 => constants.%Base.F.specific_fn.210
-// CHECK:STDOUT:   %vtable_ptr.loc9_1.2 => constants.%Base.vtable_ptr.bfe
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Base.F(constants.%T1) {
@@ -3482,7 +3490,7 @@ class T2(G2:! type) {
 // CHECK:STDOUT:   %T1.as.Destroy.impl.Op.type: type = fn_type @T1.as.Destroy.impl.Op [concrete]
 // CHECK:STDOUT:   %T1.as.Destroy.impl.Op: %T1.as.Destroy.impl.Op.type = struct_value () [concrete]
 // CHECK:STDOUT:   %ptr.454: type = ptr_type <vtable> [concrete]
-// CHECK:STDOUT:   %T1.vtable_ptr: ref %ptr.454 = vtable_ptr @T1.vtable [concrete]
+// CHECK:STDOUT:   %T1.vtable_decl: ref %ptr.454 = vtable_decl @T1.vtable [concrete]
 // CHECK:STDOUT:   %struct_type.vptr: type = struct_type {.<vptr>: %ptr.454} [concrete]
 // CHECK:STDOUT:   %complete_type.513: <witness> = complete_type_witness %struct_type.vptr [concrete]
 // CHECK:STDOUT:   %T2: type = class_type @T2 [concrete]
@@ -3494,7 +3502,7 @@ class T2(G2:! type) {
 // CHECK:STDOUT:   %Destroy.impl_witness.658: <witness> = impl_witness @T2.%Destroy.impl_witness_table [concrete]
 // CHECK:STDOUT:   %T2.as.Destroy.impl.Op.type: type = fn_type @T2.as.Destroy.impl.Op [concrete]
 // CHECK:STDOUT:   %T2.as.Destroy.impl.Op: %T2.as.Destroy.impl.Op.type = struct_value () [concrete]
-// CHECK:STDOUT:   %T2.vtable_ptr: ref %ptr.454 = vtable_ptr @T2.vtable [concrete]
+// CHECK:STDOUT:   %T2.vtable_decl: ref %ptr.454 = vtable_decl @T2.vtable [concrete]
 // CHECK:STDOUT:   %struct_type.base: type = struct_type {.base: %T1} [concrete]
 // CHECK:STDOUT:   %complete_type.e14: <witness> = complete_type_witness %struct_type.base [concrete]
 // CHECK:STDOUT: }
@@ -3567,10 +3575,10 @@ class T2(G2:! type) {
 // CHECK:STDOUT:   impl_decl @T1.as.Destroy.impl [concrete] {} {}
 // CHECK:STDOUT:   %Destroy.impl_witness_table = impl_witness_table (@T1.as.Destroy.impl.%T1.as.Destroy.impl.Op.decl), @T1.as.Destroy.impl [concrete]
 // CHECK:STDOUT:   %Destroy.impl_witness: <witness> = impl_witness %Destroy.impl_witness_table [concrete = constants.%Destroy.impl_witness.ccf]
-// CHECK:STDOUT:   %vtable_ptr: ref %ptr.454 = vtable_ptr @T1.vtable [concrete = constants.%T1.vtable_ptr]
+// CHECK:STDOUT:   %vtable_decl: ref %ptr.454 = vtable_decl @T1.vtable [concrete = constants.%T1.vtable_decl]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness constants.%struct_type.vptr [concrete = constants.%complete_type.513]
 // CHECK:STDOUT:   complete_type_witness = %complete_type
-// CHECK:STDOUT:   vtable_ptr = %vtable_ptr
+// CHECK:STDOUT:   vtable_decl = %vtable_decl
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%T1
@@ -3596,10 +3604,10 @@ class T2(G2:! type) {
 // CHECK:STDOUT:   impl_decl @T2.as.Destroy.impl [concrete] {} {}
 // CHECK:STDOUT:   %Destroy.impl_witness_table = impl_witness_table (@T2.as.Destroy.impl.%T2.as.Destroy.impl.Op.decl), @T2.as.Destroy.impl [concrete]
 // CHECK:STDOUT:   %Destroy.impl_witness: <witness> = impl_witness %Destroy.impl_witness_table [concrete = constants.%Destroy.impl_witness.658]
-// CHECK:STDOUT:   %vtable_ptr: ref %ptr.454 = vtable_ptr @T2.vtable [concrete = constants.%T2.vtable_ptr]
+// CHECK:STDOUT:   %vtable_decl: ref %ptr.454 = vtable_decl @T2.vtable [concrete = constants.%T2.vtable_decl]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness constants.%struct_type.base [concrete = constants.%complete_type.e14]
 // CHECK:STDOUT:   complete_type_witness = %complete_type
-// CHECK:STDOUT:   vtable_ptr = %vtable_ptr
+// CHECK:STDOUT:   vtable_decl = %vtable_decl
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%T2
@@ -3886,7 +3894,7 @@ class T2(G2:! type) {
 // CHECK:STDOUT:   %T1.as.Destroy.impl.Op: %T1.as.Destroy.impl.Op.type = struct_value () [symbolic]
 // CHECK:STDOUT:   %ptr.454: type = ptr_type <vtable> [concrete]
 // CHECK:STDOUT:   %T1.F.specific_fn: <specific function> = specific_function %T1.F, @T1.F(%T) [symbolic]
-// CHECK:STDOUT:   %T1.vtable_ptr: ref %ptr.454 = vtable_ptr @T1.vtable, @T1(%T) [symbolic]
+// CHECK:STDOUT:   %T1.vtable_decl: ref %ptr.454 = vtable_decl @T1.vtable [concrete]
 // CHECK:STDOUT:   %struct_type.vptr: type = struct_type {.<vptr>: %ptr.454} [concrete]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %struct_type.vptr [concrete]
 // CHECK:STDOUT:   %require_complete: <witness> = require_complete_type %T1 [symbolic]
@@ -3950,7 +3958,6 @@ class T2(G2:! type) {
 // CHECK:STDOUT:   %T1.F.type: type = fn_type @T1.F, @T1(%T.loc4_15.1) [symbolic = %T1.F.type (constants.%T1.F.type)]
 // CHECK:STDOUT:   %T1.F: @T1.%T1.F.type (%T1.F.type) = struct_value () [symbolic = %T1.F (constants.%T1.F)]
 // CHECK:STDOUT:   %T1.F.specific_fn.loc6_1.2: <specific function> = specific_function %T1.F, @T1.F(%T.loc4_15.1) [symbolic = %T1.F.specific_fn.loc6_1.2 (constants.%T1.F.specific_fn)]
-// CHECK:STDOUT:   %vtable_ptr.loc6_1.2: ref %ptr.454 = vtable_ptr @T1.vtable, @T1(%T.loc4_15.1) [symbolic = %vtable_ptr.loc6_1.2 (constants.%T1.vtable_ptr)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   class {
 // CHECK:STDOUT:     %T1.F.decl: @T1.%T1.F.type (%T1.F.type) = fn_decl @T1.F [symbolic = @T1.%T1.F (constants.%T1.F)] {
@@ -3969,10 +3976,10 @@ class T2(G2:! type) {
 // CHECK:STDOUT:     %Destroy.impl_witness_table = impl_witness_table (@T1.as.Destroy.impl.%T1.as.Destroy.impl.Op.decl), @T1.as.Destroy.impl [concrete]
 // CHECK:STDOUT:     %Destroy.impl_witness: <witness> = impl_witness %Destroy.impl_witness_table, @T1.as.Destroy.impl(constants.%T) [symbolic = @T1.as.Destroy.impl.%Destroy.impl_witness (constants.%Destroy.impl_witness)]
 // CHECK:STDOUT:     %T1.F.specific_fn.loc6_1.1: <specific function> = specific_function %T1.F.decl, @T1.F(constants.%T) [symbolic = %T1.F.specific_fn.loc6_1.2 (constants.%T1.F.specific_fn)]
-// CHECK:STDOUT:     %vtable_ptr.loc6_1.1: ref %ptr.454 = vtable_ptr @T1.vtable, @T1(constants.%T) [symbolic = %vtable_ptr.loc6_1.2 (constants.%T1.vtable_ptr)]
+// CHECK:STDOUT:     %vtable_decl: ref %ptr.454 = vtable_decl @T1.vtable [concrete = constants.%T1.vtable_decl]
 // CHECK:STDOUT:     %complete_type: <witness> = complete_type_witness constants.%struct_type.vptr [concrete = constants.%complete_type]
 // CHECK:STDOUT:     complete_type_witness = %complete_type
-// CHECK:STDOUT:     vtable_ptr = %vtable_ptr.loc6_1.1
+// CHECK:STDOUT:     vtable_decl = %vtable_decl
 // CHECK:STDOUT:
 // CHECK:STDOUT:   !members:
 // CHECK:STDOUT:     .Self = constants.%T1
@@ -4016,7 +4023,6 @@ class T2(G2:! type) {
 // CHECK:STDOUT:   %T1.F.type => constants.%T1.F.type
 // CHECK:STDOUT:   %T1.F => constants.%T1.F
 // CHECK:STDOUT:   %T1.F.specific_fn.loc6_1.2 => constants.%T1.F.specific_fn
-// CHECK:STDOUT:   %vtable_ptr.loc6_1.2 => constants.%T1.vtable_ptr
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @T1.F(constants.%T) {
@@ -4062,7 +4068,7 @@ class T2(G2:! type) {
 // CHECK:STDOUT:   %T1.as.Destroy.impl.Op: %T1.as.Destroy.impl.Op.type = struct_value () [symbolic]
 // CHECK:STDOUT:   %ptr.454: type = ptr_type <vtable> [concrete]
 // CHECK:STDOUT:   %T1.F.specific_fn: <specific function> = specific_function %T1.F, @T1.F(%T) [symbolic]
-// CHECK:STDOUT:   %T1.vtable_ptr: ref %ptr.454 = vtable_ptr @T1.vtable, @T1(%T) [symbolic]
+// CHECK:STDOUT:   %T1.vtable_decl: ref %ptr.454 = vtable_decl @T1.vtable [concrete]
 // CHECK:STDOUT:   %struct_type.vptr: type = struct_type {.<vptr>: %ptr.454} [concrete]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %struct_type.vptr [concrete]
 // CHECK:STDOUT:   %require_complete.86d: <witness> = require_complete_type %T1 [symbolic]
@@ -4127,7 +4133,6 @@ class T2(G2:! type) {
 // CHECK:STDOUT:   %T1.F.type: type = fn_type @T1.F, @T1(%T.loc4_15.1) [symbolic = %T1.F.type (constants.%T1.F.type)]
 // CHECK:STDOUT:   %T1.F: @T1.%T1.F.type (%T1.F.type) = struct_value () [symbolic = %T1.F (constants.%T1.F)]
 // CHECK:STDOUT:   %T1.F.specific_fn.loc6_1.2: <specific function> = specific_function %T1.F, @T1.F(%T.loc4_15.1) [symbolic = %T1.F.specific_fn.loc6_1.2 (constants.%T1.F.specific_fn)]
-// CHECK:STDOUT:   %vtable_ptr.loc6_1.2: ref %ptr.454 = vtable_ptr @T1.vtable, @T1(%T.loc4_15.1) [symbolic = %vtable_ptr.loc6_1.2 (constants.%T1.vtable_ptr)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   class {
 // CHECK:STDOUT:     %T1.F.decl: @T1.%T1.F.type (%T1.F.type) = fn_decl @T1.F [symbolic = @T1.%T1.F (constants.%T1.F)] {
@@ -4151,10 +4156,10 @@ class T2(G2:! type) {
 // CHECK:STDOUT:     %Destroy.impl_witness_table = impl_witness_table (@T1.as.Destroy.impl.%T1.as.Destroy.impl.Op.decl), @T1.as.Destroy.impl [concrete]
 // CHECK:STDOUT:     %Destroy.impl_witness: <witness> = impl_witness %Destroy.impl_witness_table, @T1.as.Destroy.impl(constants.%T) [symbolic = @T1.as.Destroy.impl.%Destroy.impl_witness (constants.%Destroy.impl_witness)]
 // CHECK:STDOUT:     %T1.F.specific_fn.loc6_1.1: <specific function> = specific_function %T1.F.decl, @T1.F(constants.%T) [symbolic = %T1.F.specific_fn.loc6_1.2 (constants.%T1.F.specific_fn)]
-// CHECK:STDOUT:     %vtable_ptr.loc6_1.1: ref %ptr.454 = vtable_ptr @T1.vtable, @T1(constants.%T) [symbolic = %vtable_ptr.loc6_1.2 (constants.%T1.vtable_ptr)]
+// CHECK:STDOUT:     %vtable_decl: ref %ptr.454 = vtable_decl @T1.vtable [concrete = constants.%T1.vtable_decl]
 // CHECK:STDOUT:     %complete_type: <witness> = complete_type_witness constants.%struct_type.vptr [concrete = constants.%complete_type]
 // CHECK:STDOUT:     complete_type_witness = %complete_type
-// CHECK:STDOUT:     vtable_ptr = %vtable_ptr.loc6_1.1
+// CHECK:STDOUT:     vtable_decl = %vtable_decl
 // CHECK:STDOUT:
 // CHECK:STDOUT:   !members:
 // CHECK:STDOUT:     .Self = constants.%T1
@@ -4201,7 +4206,6 @@ class T2(G2:! type) {
 // CHECK:STDOUT:   %T1.F.type => constants.%T1.F.type
 // CHECK:STDOUT:   %T1.F => constants.%T1.F
 // CHECK:STDOUT:   %T1.F.specific_fn.loc6_1.2 => constants.%T1.F.specific_fn
-// CHECK:STDOUT:   %vtable_ptr.loc6_1.2 => constants.%T1.vtable_ptr
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @T1.F(constants.%T) {
@@ -4250,7 +4254,7 @@ class T2(G2:! type) {
 // CHECK:STDOUT:     import Modifiers//default
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Modifiers.Base: type = import_ref Modifiers//default, Base, loaded [concrete = constants.%Base]
-// CHECK:STDOUT:   %Modifiers.import_ref.39e92f.2 = import_ref Modifiers//default, loc6_1, unloaded
+// CHECK:STDOUT:   %Modifiers.import_ref.3e3fbe.2 = import_ref Modifiers//default, loc6_1, unloaded
 // CHECK:STDOUT:   %Modifiers.import_ref.05e: <witness> = import_ref Modifiers//default, loc6_1, loaded [concrete = constants.%complete_type]
 // CHECK:STDOUT:   %Modifiers.import_ref.1f3 = import_ref Modifiers//default, inst19 [no loc], unloaded
 // CHECK:STDOUT:   %Modifiers.import_ref.2cc = import_ref Modifiers//default, loc5_29, unloaded
@@ -4279,7 +4283,7 @@ class T2(G2:! type) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @Base [from "modifiers.carbon"] {
 // CHECK:STDOUT:   complete_type_witness = imports.%Modifiers.import_ref.05e
-// CHECK:STDOUT:   vtable_ptr = imports.%Modifiers.import_ref.39e92f.2
+// CHECK:STDOUT:   vtable_decl = imports.%Modifiers.import_ref.3e3fbe.2
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = imports.%Modifiers.import_ref.1f3
@@ -4305,7 +4309,7 @@ class T2(G2:! type) {
 // CHECK:STDOUT:   %NonGenericBase.as.Destroy.impl.Op.type: type = fn_type @NonGenericBase.as.Destroy.impl.Op [concrete]
 // CHECK:STDOUT:   %NonGenericBase.as.Destroy.impl.Op: %NonGenericBase.as.Destroy.impl.Op.type = struct_value () [concrete]
 // CHECK:STDOUT:   %ptr.454: type = ptr_type <vtable> [concrete]
-// CHECK:STDOUT:   %NonGenericBase.vtable_ptr: ref %ptr.454 = vtable_ptr @NonGenericBase.vtable [concrete]
+// CHECK:STDOUT:   %NonGenericBase.vtable_decl: ref %ptr.454 = vtable_decl @NonGenericBase.vtable [concrete]
 // CHECK:STDOUT:   %struct_type.vptr: type = struct_type {.<vptr>: %ptr.454} [concrete]
 // CHECK:STDOUT:   %complete_type.513: <witness> = complete_type_witness %struct_type.vptr [concrete]
 // CHECK:STDOUT:   %T: type = bind_symbolic_name T, 0 [symbolic]
@@ -4326,7 +4330,7 @@ class T2(G2:! type) {
 // CHECK:STDOUT:   %GenericDerived.as.Destroy.impl.Op: %GenericDerived.as.Destroy.impl.Op.type = struct_value () [symbolic]
 // CHECK:STDOUT:   %GenericDerived.F2.specific_fn: <specific function> = specific_function %GenericDerived.F2, @GenericDerived.F2(%T) [symbolic]
 // CHECK:STDOUT:   %GenericDerived.F3.specific_fn: <specific function> = specific_function %GenericDerived.F3, @GenericDerived.F3(%T) [symbolic]
-// CHECK:STDOUT:   %GenericDerived.vtable_ptr: ref %ptr.454 = vtable_ptr @GenericDerived.vtable, @GenericDerived(%T) [symbolic]
+// CHECK:STDOUT:   %GenericDerived.vtable_decl: ref %ptr.454 = vtable_decl @GenericDerived.vtable [concrete]
 // CHECK:STDOUT:   %struct_type.base.432: type = struct_type {.base: %NonGenericBase} [concrete]
 // CHECK:STDOUT:   %complete_type.099: <witness> = complete_type_witness %struct_type.base.432 [concrete]
 // CHECK:STDOUT:   %require_complete: <witness> = require_complete_type %GenericDerived [symbolic]
@@ -4422,10 +4426,10 @@ class T2(G2:! type) {
 // CHECK:STDOUT:   impl_decl @NonGenericBase.as.Destroy.impl [concrete] {} {}
 // CHECK:STDOUT:   %Destroy.impl_witness_table = impl_witness_table (@NonGenericBase.as.Destroy.impl.%NonGenericBase.as.Destroy.impl.Op.decl), @NonGenericBase.as.Destroy.impl [concrete]
 // CHECK:STDOUT:   %Destroy.impl_witness: <witness> = impl_witness %Destroy.impl_witness_table [concrete = constants.%Destroy.impl_witness.e51]
-// CHECK:STDOUT:   %vtable_ptr: ref %ptr.454 = vtable_ptr @NonGenericBase.vtable [concrete = constants.%NonGenericBase.vtable_ptr]
+// CHECK:STDOUT:   %vtable_decl: ref %ptr.454 = vtable_decl @NonGenericBase.vtable [concrete = constants.%NonGenericBase.vtable_decl]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness constants.%struct_type.vptr [concrete = constants.%complete_type.513]
 // CHECK:STDOUT:   complete_type_witness = %complete_type
-// CHECK:STDOUT:   vtable_ptr = %vtable_ptr
+// CHECK:STDOUT:   vtable_decl = %vtable_decl
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%NonGenericBase
@@ -4445,7 +4449,6 @@ class T2(G2:! type) {
 // CHECK:STDOUT:   %GenericDerived.F3: @GenericDerived.%GenericDerived.F3.type (%GenericDerived.F3.type) = struct_value () [symbolic = %GenericDerived.F3 (constants.%GenericDerived.F3)]
 // CHECK:STDOUT:   %GenericDerived.F2.specific_fn.loc13_1.2: <specific function> = specific_function %GenericDerived.F2, @GenericDerived.F2(%T.loc9_27.1) [symbolic = %GenericDerived.F2.specific_fn.loc13_1.2 (constants.%GenericDerived.F2.specific_fn)]
 // CHECK:STDOUT:   %GenericDerived.F3.specific_fn.loc13_1.2: <specific function> = specific_function %GenericDerived.F3, @GenericDerived.F3(%T.loc9_27.1) [symbolic = %GenericDerived.F3.specific_fn.loc13_1.2 (constants.%GenericDerived.F3.specific_fn)]
-// CHECK:STDOUT:   %vtable_ptr.loc13_1.2: ref %ptr.454 = vtable_ptr @GenericDerived.vtable, @GenericDerived(%T.loc9_27.1) [symbolic = %vtable_ptr.loc13_1.2 (constants.%GenericDerived.vtable_ptr)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   class {
 // CHECK:STDOUT:     %NonGenericBase.ref: type = name_ref NonGenericBase, file.%NonGenericBase.decl [concrete = constants.%NonGenericBase]
@@ -4478,10 +4481,10 @@ class T2(G2:! type) {
 // CHECK:STDOUT:     %Destroy.impl_witness: <witness> = impl_witness %Destroy.impl_witness_table, @GenericDerived.as.Destroy.impl(constants.%T) [symbolic = @GenericDerived.as.Destroy.impl.%Destroy.impl_witness (constants.%Destroy.impl_witness.885)]
 // CHECK:STDOUT:     %GenericDerived.F2.specific_fn.loc13_1.1: <specific function> = specific_function %GenericDerived.F2.decl, @GenericDerived.F2(constants.%T) [symbolic = %GenericDerived.F2.specific_fn.loc13_1.2 (constants.%GenericDerived.F2.specific_fn)]
 // CHECK:STDOUT:     %GenericDerived.F3.specific_fn.loc13_1.1: <specific function> = specific_function %GenericDerived.F3.decl, @GenericDerived.F3(constants.%T) [symbolic = %GenericDerived.F3.specific_fn.loc13_1.2 (constants.%GenericDerived.F3.specific_fn)]
-// CHECK:STDOUT:     %vtable_ptr.loc13_1.1: ref %ptr.454 = vtable_ptr @GenericDerived.vtable, @GenericDerived(constants.%T) [symbolic = %vtable_ptr.loc13_1.2 (constants.%GenericDerived.vtable_ptr)]
+// CHECK:STDOUT:     %vtable_decl: ref %ptr.454 = vtable_decl @GenericDerived.vtable [concrete = constants.%GenericDerived.vtable_decl]
 // CHECK:STDOUT:     %complete_type: <witness> = complete_type_witness constants.%struct_type.base.432 [concrete = constants.%complete_type.099]
 // CHECK:STDOUT:     complete_type_witness = %complete_type
-// CHECK:STDOUT:     vtable_ptr = %vtable_ptr.loc13_1.1
+// CHECK:STDOUT:     vtable_decl = %vtable_decl
 // CHECK:STDOUT:
 // CHECK:STDOUT:   !members:
 // CHECK:STDOUT:     .Self = constants.%GenericDerived
@@ -4567,7 +4570,6 @@ class T2(G2:! type) {
 // CHECK:STDOUT:   %GenericDerived.F3 => constants.%GenericDerived.F3
 // CHECK:STDOUT:   %GenericDerived.F2.specific_fn.loc13_1.2 => constants.%GenericDerived.F2.specific_fn
 // CHECK:STDOUT:   %GenericDerived.F3.specific_fn.loc13_1.2 => constants.%GenericDerived.F3.specific_fn
-// CHECK:STDOUT:   %vtable_ptr.loc13_1.2 => constants.%GenericDerived.vtable_ptr
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @GenericDerived.F2(constants.%T) {
@@ -4624,7 +4626,7 @@ class T2(G2:! type) {
 // CHECK:STDOUT:   %ptr.454: type = ptr_type <vtable> [concrete]
 // CHECK:STDOUT:   %GenericBase.F1.specific_fn.aea: <specific function> = specific_function %GenericBase.F1.80a, @GenericBase.F1(%T) [symbolic]
 // CHECK:STDOUT:   %GenericBase.F2.specific_fn.758: <specific function> = specific_function %GenericBase.F2.414, @GenericBase.F2(%T) [symbolic]
-// CHECK:STDOUT:   %GenericBase.vtable_ptr.e41: ref %ptr.454 = vtable_ptr @GenericBase.vtable, @GenericBase(%T) [symbolic]
+// CHECK:STDOUT:   %GenericBase.vtable_decl: ref %ptr.454 = vtable_decl @GenericBase.vtable [concrete]
 // CHECK:STDOUT:   %struct_type.vptr: type = struct_type {.<vptr>: %ptr.454} [concrete]
 // CHECK:STDOUT:   %complete_type.513: <witness> = complete_type_witness %struct_type.vptr [concrete]
 // CHECK:STDOUT:   %require_complete: <witness> = require_complete_type %GenericBase.018 [symbolic]
@@ -4638,7 +4640,6 @@ class T2(G2:! type) {
 // CHECK:STDOUT:   %pattern_type.7a9: type = pattern_type %GenericBase.f84 [concrete]
 // CHECK:STDOUT:   %GenericBase.F1.specific_fn.094: <specific function> = specific_function %GenericBase.F1.4d3, @GenericBase.F1(%T1) [concrete]
 // CHECK:STDOUT:   %GenericBase.F2.specific_fn.b8b: <specific function> = specific_function %GenericBase.F2.d59, @GenericBase.F2(%T1) [concrete]
-// CHECK:STDOUT:   %GenericBase.vtable_ptr.d41: ref %ptr.454 = vtable_ptr @GenericBase.vtable, @GenericBase(%T1) [concrete]
 // CHECK:STDOUT:   %NonGenericDerived.elem: type = unbound_element_type %NonGenericDerived, %GenericBase.f84 [concrete]
 // CHECK:STDOUT:   %pattern_type.5fc: type = pattern_type %NonGenericDerived [concrete]
 // CHECK:STDOUT:   %NonGenericDerived.F2.type: type = fn_type @NonGenericDerived.F2 [concrete]
@@ -4650,7 +4651,7 @@ class T2(G2:! type) {
 // CHECK:STDOUT:   %pattern_type.eb2: type = pattern_type %ptr.821 [concrete]
 // CHECK:STDOUT:   %NonGenericDerived.as.Destroy.impl.Op.type: type = fn_type @NonGenericDerived.as.Destroy.impl.Op [concrete]
 // CHECK:STDOUT:   %NonGenericDerived.as.Destroy.impl.Op: %NonGenericDerived.as.Destroy.impl.Op.type = struct_value () [concrete]
-// CHECK:STDOUT:   %NonGenericDerived.vtable_ptr: ref %ptr.454 = vtable_ptr @NonGenericDerived.vtable [concrete]
+// CHECK:STDOUT:   %NonGenericDerived.vtable_decl: ref %ptr.454 = vtable_decl @NonGenericDerived.vtable [concrete]
 // CHECK:STDOUT:   %struct_type.base.29a: type = struct_type {.base: %GenericBase.f84} [concrete]
 // CHECK:STDOUT:   %complete_type.b6e: <witness> = complete_type_witness %struct_type.base.29a [concrete]
 // CHECK:STDOUT: }
@@ -4736,7 +4737,6 @@ class T2(G2:! type) {
 // CHECK:STDOUT:   %GenericBase.F2: @GenericBase.%GenericBase.F2.type (%GenericBase.F2.type.2ca) = struct_value () [symbolic = %GenericBase.F2 (constants.%GenericBase.F2.414)]
 // CHECK:STDOUT:   %GenericBase.F1.specific_fn.loc7_1.2: <specific function> = specific_function %GenericBase.F1, @GenericBase.F1(%T.loc4_24.1) [symbolic = %GenericBase.F1.specific_fn.loc7_1.2 (constants.%GenericBase.F1.specific_fn.aea)]
 // CHECK:STDOUT:   %GenericBase.F2.specific_fn.loc7_1.2: <specific function> = specific_function %GenericBase.F2, @GenericBase.F2(%T.loc4_24.1) [symbolic = %GenericBase.F2.specific_fn.loc7_1.2 (constants.%GenericBase.F2.specific_fn.758)]
-// CHECK:STDOUT:   %vtable_ptr.loc7_1.2: ref %ptr.454 = vtable_ptr @GenericBase.vtable, @GenericBase(%T.loc4_24.1) [symbolic = %vtable_ptr.loc7_1.2 (constants.%GenericBase.vtable_ptr.e41)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   class {
 // CHECK:STDOUT:     %GenericBase.F1.decl: @GenericBase.%GenericBase.F1.type (%GenericBase.F1.type.2af) = fn_decl @GenericBase.F1 [symbolic = @GenericBase.%GenericBase.F1 (constants.%GenericBase.F1.80a)] {
@@ -4767,10 +4767,10 @@ class T2(G2:! type) {
 // CHECK:STDOUT:     %Destroy.impl_witness: <witness> = impl_witness %Destroy.impl_witness_table, @GenericBase.as.Destroy.impl(constants.%T) [symbolic = @GenericBase.as.Destroy.impl.%Destroy.impl_witness (constants.%Destroy.impl_witness.c7e)]
 // CHECK:STDOUT:     %GenericBase.F1.specific_fn.loc7_1.1: <specific function> = specific_function %GenericBase.F1.decl, @GenericBase.F1(constants.%T) [symbolic = %GenericBase.F1.specific_fn.loc7_1.2 (constants.%GenericBase.F1.specific_fn.aea)]
 // CHECK:STDOUT:     %GenericBase.F2.specific_fn.loc7_1.1: <specific function> = specific_function %GenericBase.F2.decl, @GenericBase.F2(constants.%T) [symbolic = %GenericBase.F2.specific_fn.loc7_1.2 (constants.%GenericBase.F2.specific_fn.758)]
-// CHECK:STDOUT:     %vtable_ptr.loc7_1.1: ref %ptr.454 = vtable_ptr @GenericBase.vtable, @GenericBase(constants.%T) [symbolic = %vtable_ptr.loc7_1.2 (constants.%GenericBase.vtable_ptr.e41)]
+// CHECK:STDOUT:     %vtable_decl: ref %ptr.454 = vtable_decl @GenericBase.vtable [concrete = constants.%GenericBase.vtable_decl]
 // CHECK:STDOUT:     %complete_type: <witness> = complete_type_witness constants.%struct_type.vptr [concrete = constants.%complete_type.513]
 // CHECK:STDOUT:     complete_type_witness = %complete_type
-// CHECK:STDOUT:     vtable_ptr = %vtable_ptr.loc7_1.1
+// CHECK:STDOUT:     vtable_decl = %vtable_decl
 // CHECK:STDOUT:
 // CHECK:STDOUT:   !members:
 // CHECK:STDOUT:     .Self = constants.%GenericBase.018
@@ -4806,10 +4806,10 @@ class T2(G2:! type) {
 // CHECK:STDOUT:   impl_decl @NonGenericDerived.as.Destroy.impl [concrete] {} {}
 // CHECK:STDOUT:   %Destroy.impl_witness_table = impl_witness_table (@NonGenericDerived.as.Destroy.impl.%NonGenericDerived.as.Destroy.impl.Op.decl), @NonGenericDerived.as.Destroy.impl [concrete]
 // CHECK:STDOUT:   %Destroy.impl_witness: <witness> = impl_witness %Destroy.impl_witness_table [concrete = constants.%Destroy.impl_witness.330]
-// CHECK:STDOUT:   %vtable_ptr: ref %ptr.454 = vtable_ptr @NonGenericDerived.vtable [concrete = constants.%NonGenericDerived.vtable_ptr]
+// CHECK:STDOUT:   %vtable_decl: ref %ptr.454 = vtable_decl @NonGenericDerived.vtable [concrete = constants.%NonGenericDerived.vtable_decl]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness constants.%struct_type.base.29a [concrete = constants.%complete_type.b6e]
 // CHECK:STDOUT:   complete_type_witness = %complete_type
-// CHECK:STDOUT:   vtable_ptr = %vtable_ptr
+// CHECK:STDOUT:   vtable_decl = %vtable_decl
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%NonGenericDerived
@@ -4893,7 +4893,6 @@ class T2(G2:! type) {
 // CHECK:STDOUT:   %GenericBase.F2 => constants.%GenericBase.F2.414
 // CHECK:STDOUT:   %GenericBase.F1.specific_fn.loc7_1.2 => constants.%GenericBase.F1.specific_fn.aea
 // CHECK:STDOUT:   %GenericBase.F2.specific_fn.loc7_1.2 => constants.%GenericBase.F2.specific_fn.758
-// CHECK:STDOUT:   %vtable_ptr.loc7_1.2 => constants.%GenericBase.vtable_ptr.e41
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @GenericBase.F1(constants.%T) {
@@ -4937,7 +4936,6 @@ class T2(G2:! type) {
 // CHECK:STDOUT:   %GenericBase.F2 => constants.%GenericBase.F2.d59
 // CHECK:STDOUT:   %GenericBase.F1.specific_fn.loc7_1.2 => constants.%GenericBase.F1.specific_fn.094
 // CHECK:STDOUT:   %GenericBase.F2.specific_fn.loc7_1.2 => constants.%GenericBase.F2.specific_fn.b8b
-// CHECK:STDOUT:   %vtable_ptr.loc7_1.2 => constants.%GenericBase.vtable_ptr.d41
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @GenericBase.F1(constants.%T1) {
@@ -4978,7 +4976,7 @@ class T2(G2:! type) {
 // CHECK:STDOUT:   %Base.as.Destroy.impl.Op: %Base.as.Destroy.impl.Op.type = struct_value () [symbolic]
 // CHECK:STDOUT:   %ptr.454: type = ptr_type <vtable> [concrete]
 // CHECK:STDOUT:   %Base.F.specific_fn.892: <specific function> = specific_function %Base.F.e26, @Base.F(%T) [symbolic]
-// CHECK:STDOUT:   %Base.vtable_ptr.573: ref %ptr.454 = vtable_ptr @Base.vtable, @Base(%T) [symbolic]
+// CHECK:STDOUT:   %Base.vtable_decl: ref %ptr.454 = vtable_decl @Base.vtable [concrete]
 // CHECK:STDOUT:   %struct_type.vptr: type = struct_type {.<vptr>: %ptr.454} [concrete]
 // CHECK:STDOUT:   %complete_type.513: <witness> = complete_type_witness %struct_type.vptr [concrete]
 // CHECK:STDOUT:   %require_complete.97d: <witness> = require_complete_type %Base.370 [symbolic]
@@ -4992,7 +4990,6 @@ class T2(G2:! type) {
 // CHECK:STDOUT:   %ptr.184: type = ptr_type %Base.ea5 [concrete]
 // CHECK:STDOUT:   %pattern_type.04d: type = pattern_type %ptr.184 [concrete]
 // CHECK:STDOUT:   %Base.F.specific_fn.210: <specific function> = specific_function %Base.F.d25, @Base.F(%T1) [concrete]
-// CHECK:STDOUT:   %Base.vtable_ptr.bfe: ref %ptr.454 = vtable_ptr @Base.vtable, @Base(%T1) [concrete]
 // CHECK:STDOUT:   %D1.elem: type = unbound_element_type %D1, %Base.ea5 [concrete]
 // CHECK:STDOUT:   %pattern_type.550: type = pattern_type %D1 [concrete]
 // CHECK:STDOUT:   %D1.F.type: type = fn_type @D1.F [concrete]
@@ -5002,7 +4999,7 @@ class T2(G2:! type) {
 // CHECK:STDOUT:   %pattern_type.138: type = pattern_type %ptr.7a4 [concrete]
 // CHECK:STDOUT:   %D1.as.Destroy.impl.Op.type: type = fn_type @D1.as.Destroy.impl.Op [concrete]
 // CHECK:STDOUT:   %D1.as.Destroy.impl.Op: %D1.as.Destroy.impl.Op.type = struct_value () [concrete]
-// CHECK:STDOUT:   %D1.vtable_ptr: ref %ptr.454 = vtable_ptr @D1.vtable [concrete]
+// CHECK:STDOUT:   %D1.vtable_decl: ref %ptr.454 = vtable_decl @D1.vtable [concrete]
 // CHECK:STDOUT:   %struct_type.base.fda: type = struct_type {.base: %Base.ea5} [concrete]
 // CHECK:STDOUT:   %complete_type.65a: <witness> = complete_type_witness %struct_type.base.fda [concrete]
 // CHECK:STDOUT:   %complete_type.093: <witness> = complete_type_witness %ptr.184 [concrete]
@@ -5086,7 +5083,6 @@ class T2(G2:! type) {
 // CHECK:STDOUT:   %Base.F.type: type = fn_type @Base.F, @Base(%T.loc4_17.1) [symbolic = %Base.F.type (constants.%Base.F.type.f17)]
 // CHECK:STDOUT:   %Base.F: @Base.%Base.F.type (%Base.F.type.f17) = struct_value () [symbolic = %Base.F (constants.%Base.F.e26)]
 // CHECK:STDOUT:   %Base.F.specific_fn.loc6_1.2: <specific function> = specific_function %Base.F, @Base.F(%T.loc4_17.1) [symbolic = %Base.F.specific_fn.loc6_1.2 (constants.%Base.F.specific_fn.892)]
-// CHECK:STDOUT:   %vtable_ptr.loc6_1.2: ref %ptr.454 = vtable_ptr @Base.vtable, @Base(%T.loc4_17.1) [symbolic = %vtable_ptr.loc6_1.2 (constants.%Base.vtable_ptr.573)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   class {
 // CHECK:STDOUT:     %Base.F.decl: @Base.%Base.F.type (%Base.F.type.f17) = fn_decl @Base.F [symbolic = @Base.%Base.F (constants.%Base.F.e26)] {
@@ -5115,10 +5111,10 @@ class T2(G2:! type) {
 // CHECK:STDOUT:     %Destroy.impl_witness_table = impl_witness_table (@Base.as.Destroy.impl.%Base.as.Destroy.impl.Op.decl), @Base.as.Destroy.impl [concrete]
 // CHECK:STDOUT:     %Destroy.impl_witness: <witness> = impl_witness %Destroy.impl_witness_table, @Base.as.Destroy.impl(constants.%T) [symbolic = @Base.as.Destroy.impl.%Destroy.impl_witness (constants.%Destroy.impl_witness.9f8)]
 // CHECK:STDOUT:     %Base.F.specific_fn.loc6_1.1: <specific function> = specific_function %Base.F.decl, @Base.F(constants.%T) [symbolic = %Base.F.specific_fn.loc6_1.2 (constants.%Base.F.specific_fn.892)]
-// CHECK:STDOUT:     %vtable_ptr.loc6_1.1: ref %ptr.454 = vtable_ptr @Base.vtable, @Base(constants.%T) [symbolic = %vtable_ptr.loc6_1.2 (constants.%Base.vtable_ptr.573)]
+// CHECK:STDOUT:     %vtable_decl: ref %ptr.454 = vtable_decl @Base.vtable [concrete = constants.%Base.vtable_decl]
 // CHECK:STDOUT:     %complete_type: <witness> = complete_type_witness constants.%struct_type.vptr [concrete = constants.%complete_type.513]
 // CHECK:STDOUT:     complete_type_witness = %complete_type
-// CHECK:STDOUT:     vtable_ptr = %vtable_ptr.loc6_1.1
+// CHECK:STDOUT:     vtable_decl = %vtable_decl
 // CHECK:STDOUT:
 // CHECK:STDOUT:   !members:
 // CHECK:STDOUT:     .Self = constants.%Base.370
@@ -5158,10 +5154,10 @@ class T2(G2:! type) {
 // CHECK:STDOUT:   impl_decl @D1.as.Destroy.impl [concrete] {} {}
 // CHECK:STDOUT:   %Destroy.impl_witness_table = impl_witness_table (@D1.as.Destroy.impl.%D1.as.Destroy.impl.Op.decl), @D1.as.Destroy.impl [concrete]
 // CHECK:STDOUT:   %Destroy.impl_witness: <witness> = impl_witness %Destroy.impl_witness_table [concrete = constants.%Destroy.impl_witness.087]
-// CHECK:STDOUT:   %vtable_ptr: ref %ptr.454 = vtable_ptr @D1.vtable [concrete = constants.%D1.vtable_ptr]
+// CHECK:STDOUT:   %vtable_decl: ref %ptr.454 = vtable_decl @D1.vtable [concrete = constants.%D1.vtable_decl]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness constants.%struct_type.base.fda [concrete = constants.%complete_type.65a]
 // CHECK:STDOUT:   complete_type_witness = %complete_type
-// CHECK:STDOUT:   vtable_ptr = %vtable_ptr
+// CHECK:STDOUT:   vtable_decl = %vtable_decl
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%D1
@@ -5222,7 +5218,6 @@ class T2(G2:! type) {
 // CHECK:STDOUT:   %Base.F.type => constants.%Base.F.type.f17
 // CHECK:STDOUT:   %Base.F => constants.%Base.F.e26
 // CHECK:STDOUT:   %Base.F.specific_fn.loc6_1.2 => constants.%Base.F.specific_fn.892
-// CHECK:STDOUT:   %vtable_ptr.loc6_1.2 => constants.%Base.vtable_ptr.573
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Base.F(constants.%T) {
@@ -5257,7 +5252,6 @@ class T2(G2:! type) {
 // CHECK:STDOUT:   %Base.F.type => constants.%Base.F.type.d82
 // CHECK:STDOUT:   %Base.F => constants.%Base.F.d25
 // CHECK:STDOUT:   %Base.F.specific_fn.loc6_1.2 => constants.%Base.F.specific_fn.210
-// CHECK:STDOUT:   %vtable_ptr.loc6_1.2 => constants.%Base.vtable_ptr.bfe
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Base.F(constants.%T1) {
@@ -5296,7 +5290,7 @@ class T2(G2:! type) {
 // CHECK:STDOUT:   %Base.as.Destroy.impl.Op: %Base.as.Destroy.impl.Op.type = struct_value () [symbolic]
 // CHECK:STDOUT:   %ptr.454: type = ptr_type <vtable> [concrete]
 // CHECK:STDOUT:   %Base.F.specific_fn.892: <specific function> = specific_function %Base.F.e26, @Base.F(%T) [symbolic]
-// CHECK:STDOUT:   %Base.vtable_ptr.573: ref %ptr.454 = vtable_ptr @Base.vtable, @Base(%T) [symbolic]
+// CHECK:STDOUT:   %Base.vtable_decl: ref %ptr.454 = vtable_decl @Base.vtable [concrete]
 // CHECK:STDOUT:   %struct_type.vptr: type = struct_type {.<vptr>: %ptr.454} [concrete]
 // CHECK:STDOUT:   %complete_type.513: <witness> = complete_type_witness %struct_type.vptr [concrete]
 // CHECK:STDOUT:   %require_complete: <witness> = require_complete_type %Base.370 [symbolic]
@@ -5306,7 +5300,6 @@ class T2(G2:! type) {
 // CHECK:STDOUT:   %Base.F.d25: %Base.F.type.d82 = struct_value () [concrete]
 // CHECK:STDOUT:   %pattern_type.3bf: type = pattern_type %Base.ea5 [concrete]
 // CHECK:STDOUT:   %Base.F.specific_fn.210: <specific function> = specific_function %Base.F.d25, @Base.F(%T1) [concrete]
-// CHECK:STDOUT:   %Base.vtable_ptr.bfe: ref %ptr.454 = vtable_ptr @Base.vtable, @Base(%T1) [concrete]
 // CHECK:STDOUT:   %D1.elem: type = unbound_element_type %D1, %Base.ea5 [concrete]
 // CHECK:STDOUT:   %pattern_type.550: type = pattern_type %D1 [concrete]
 // CHECK:STDOUT:   %ptr.63e: type = ptr_type %T2 [concrete]
@@ -5318,7 +5311,7 @@ class T2(G2:! type) {
 // CHECK:STDOUT:   %pattern_type.138: type = pattern_type %ptr.7a4 [concrete]
 // CHECK:STDOUT:   %D1.as.Destroy.impl.Op.type: type = fn_type @D1.as.Destroy.impl.Op [concrete]
 // CHECK:STDOUT:   %D1.as.Destroy.impl.Op: %D1.as.Destroy.impl.Op.type = struct_value () [concrete]
-// CHECK:STDOUT:   %D1.vtable_ptr: ref %ptr.454 = vtable_ptr @D1.vtable [concrete]
+// CHECK:STDOUT:   %D1.vtable_decl: ref %ptr.454 = vtable_decl @D1.vtable [concrete]
 // CHECK:STDOUT:   %struct_type.base.fda: type = struct_type {.base: %Base.ea5} [concrete]
 // CHECK:STDOUT:   %complete_type.65a: <witness> = complete_type_witness %struct_type.base.fda [concrete]
 // CHECK:STDOUT: }
@@ -5407,7 +5400,6 @@ class T2(G2:! type) {
 // CHECK:STDOUT:   %Base.F.type: type = fn_type @Base.F, @Base(%T.loc7_17.1) [symbolic = %Base.F.type (constants.%Base.F.type.f17)]
 // CHECK:STDOUT:   %Base.F: @Base.%Base.F.type (%Base.F.type.f17) = struct_value () [symbolic = %Base.F (constants.%Base.F.e26)]
 // CHECK:STDOUT:   %Base.F.specific_fn.loc9_1.2: <specific function> = specific_function %Base.F, @Base.F(%T.loc7_17.1) [symbolic = %Base.F.specific_fn.loc9_1.2 (constants.%Base.F.specific_fn.892)]
-// CHECK:STDOUT:   %vtable_ptr.loc9_1.2: ref %ptr.454 = vtable_ptr @Base.vtable, @Base(%T.loc7_17.1) [symbolic = %vtable_ptr.loc9_1.2 (constants.%Base.vtable_ptr.573)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   class {
 // CHECK:STDOUT:     %Base.F.decl: @Base.%Base.F.type (%Base.F.type.f17) = fn_decl @Base.F [symbolic = @Base.%Base.F (constants.%Base.F.e26)] {
@@ -5434,10 +5426,10 @@ class T2(G2:! type) {
 // CHECK:STDOUT:     %Destroy.impl_witness_table = impl_witness_table (@Base.as.Destroy.impl.%Base.as.Destroy.impl.Op.decl), @Base.as.Destroy.impl [concrete]
 // CHECK:STDOUT:     %Destroy.impl_witness: <witness> = impl_witness %Destroy.impl_witness_table, @Base.as.Destroy.impl(constants.%T) [symbolic = @Base.as.Destroy.impl.%Destroy.impl_witness (constants.%Destroy.impl_witness.9f8)]
 // CHECK:STDOUT:     %Base.F.specific_fn.loc9_1.1: <specific function> = specific_function %Base.F.decl, @Base.F(constants.%T) [symbolic = %Base.F.specific_fn.loc9_1.2 (constants.%Base.F.specific_fn.892)]
-// CHECK:STDOUT:     %vtable_ptr.loc9_1.1: ref %ptr.454 = vtable_ptr @Base.vtable, @Base(constants.%T) [symbolic = %vtable_ptr.loc9_1.2 (constants.%Base.vtable_ptr.573)]
+// CHECK:STDOUT:     %vtable_decl: ref %ptr.454 = vtable_decl @Base.vtable [concrete = constants.%Base.vtable_decl]
 // CHECK:STDOUT:     %complete_type: <witness> = complete_type_witness constants.%struct_type.vptr [concrete = constants.%complete_type.513]
 // CHECK:STDOUT:     complete_type_witness = %complete_type
-// CHECK:STDOUT:     vtable_ptr = %vtable_ptr.loc9_1.1
+// CHECK:STDOUT:     vtable_decl = %vtable_decl
 // CHECK:STDOUT:
 // CHECK:STDOUT:   !members:
 // CHECK:STDOUT:     .Self = constants.%Base.370
@@ -5472,10 +5464,10 @@ class T2(G2:! type) {
 // CHECK:STDOUT:   impl_decl @D1.as.Destroy.impl [concrete] {} {}
 // CHECK:STDOUT:   %Destroy.impl_witness_table = impl_witness_table (@D1.as.Destroy.impl.%D1.as.Destroy.impl.Op.decl), @D1.as.Destroy.impl [concrete]
 // CHECK:STDOUT:   %Destroy.impl_witness: <witness> = impl_witness %Destroy.impl_witness_table [concrete = constants.%Destroy.impl_witness.087]
-// CHECK:STDOUT:   %vtable_ptr: ref %ptr.454 = vtable_ptr @D1.vtable [concrete = constants.%D1.vtable_ptr]
+// CHECK:STDOUT:   %vtable_decl: ref %ptr.454 = vtable_decl @D1.vtable [concrete = constants.%D1.vtable_decl]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness constants.%struct_type.base.fda [concrete = constants.%complete_type.65a]
 // CHECK:STDOUT:   complete_type_witness = %complete_type
-// CHECK:STDOUT:   vtable_ptr = %vtable_ptr
+// CHECK:STDOUT:   vtable_decl = %vtable_decl
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%D1
@@ -5534,7 +5526,6 @@ class T2(G2:! type) {
 // CHECK:STDOUT:   %Base.F.type => constants.%Base.F.type.f17
 // CHECK:STDOUT:   %Base.F => constants.%Base.F.e26
 // CHECK:STDOUT:   %Base.F.specific_fn.loc9_1.2 => constants.%Base.F.specific_fn.892
-// CHECK:STDOUT:   %vtable_ptr.loc9_1.2 => constants.%Base.vtable_ptr.573
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Base.F(constants.%T) {
@@ -5566,7 +5557,6 @@ class T2(G2:! type) {
 // CHECK:STDOUT:   %Base.F.type => constants.%Base.F.type.d82
 // CHECK:STDOUT:   %Base.F => constants.%Base.F.d25
 // CHECK:STDOUT:   %Base.F.specific_fn.loc9_1.2 => constants.%Base.F.specific_fn.210
-// CHECK:STDOUT:   %vtable_ptr.loc9_1.2 => constants.%Base.vtable_ptr.bfe
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Base.F(constants.%T1) {
@@ -5600,7 +5590,7 @@ class T2(G2:! type) {
 // CHECK:STDOUT:   %Base.as.Destroy.impl.Op: %Base.as.Destroy.impl.Op.type = struct_value () [symbolic]
 // CHECK:STDOUT:   %ptr.454: type = ptr_type <vtable> [concrete]
 // CHECK:STDOUT:   %Base.F.specific_fn: <specific function> = specific_function %Base.F, @Base.F(%T) [symbolic]
-// CHECK:STDOUT:   %Base.vtable_ptr: ref %ptr.454 = vtable_ptr @Base.vtable, @Base(%T) [symbolic]
+// CHECK:STDOUT:   %Base.vtable_decl: ref %ptr.454 = vtable_decl @Base.vtable [concrete]
 // CHECK:STDOUT:   %struct_type.vptr: type = struct_type {.<vptr>: %ptr.454} [concrete]
 // CHECK:STDOUT:   %complete_type.513: <witness> = complete_type_witness %struct_type.vptr [concrete]
 // CHECK:STDOUT:   %require_complete.97d: <witness> = require_complete_type %Base [symbolic]
@@ -5619,7 +5609,7 @@ class T2(G2:! type) {
 // CHECK:STDOUT:   %Derived.as.Destroy.impl.Op.type: type = fn_type @Derived.as.Destroy.impl.Op, @Derived.as.Destroy.impl(%T) [symbolic]
 // CHECK:STDOUT:   %Derived.as.Destroy.impl.Op: %Derived.as.Destroy.impl.Op.type = struct_value () [symbolic]
 // CHECK:STDOUT:   %Derived.F.specific_fn: <specific function> = specific_function %Derived.F, @Derived.F(%T) [symbolic]
-// CHECK:STDOUT:   %Derived.vtable_ptr: ref %ptr.454 = vtable_ptr @Derived.vtable, @Derived(%T) [symbolic]
+// CHECK:STDOUT:   %Derived.vtable_decl: ref %ptr.454 = vtable_decl @Derived.vtable [concrete]
 // CHECK:STDOUT:   %struct_type.base.8ea: type = struct_type {.base: %Base} [symbolic]
 // CHECK:STDOUT:   %complete_type.d5d: <witness> = complete_type_witness %struct_type.base.8ea [symbolic]
 // CHECK:STDOUT:   %require_complete.5f4: <witness> = require_complete_type %Derived [symbolic]
@@ -5719,7 +5709,6 @@ class T2(G2:! type) {
 // CHECK:STDOUT:   %Base.F.type: type = fn_type @Base.F, @Base(%T.loc4_21.1) [symbolic = %Base.F.type (constants.%Base.F.type)]
 // CHECK:STDOUT:   %Base.F: @Base.%Base.F.type (%Base.F.type) = struct_value () [symbolic = %Base.F (constants.%Base.F)]
 // CHECK:STDOUT:   %Base.F.specific_fn.loc6_1.2: <specific function> = specific_function %Base.F, @Base.F(%T.loc4_21.1) [symbolic = %Base.F.specific_fn.loc6_1.2 (constants.%Base.F.specific_fn)]
-// CHECK:STDOUT:   %vtable_ptr.loc6_1.2: ref %ptr.454 = vtable_ptr @Base.vtable, @Base(%T.loc4_21.1) [symbolic = %vtable_ptr.loc6_1.2 (constants.%Base.vtable_ptr)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   class {
 // CHECK:STDOUT:     %Base.F.decl: @Base.%Base.F.type (%Base.F.type) = fn_decl @Base.F [symbolic = @Base.%Base.F (constants.%Base.F)] {
@@ -5746,10 +5735,10 @@ class T2(G2:! type) {
 // CHECK:STDOUT:     %Destroy.impl_witness_table = impl_witness_table (@Base.as.Destroy.impl.%Base.as.Destroy.impl.Op.decl), @Base.as.Destroy.impl [concrete]
 // CHECK:STDOUT:     %Destroy.impl_witness: <witness> = impl_witness %Destroy.impl_witness_table, @Base.as.Destroy.impl(constants.%T) [symbolic = @Base.as.Destroy.impl.%Destroy.impl_witness (constants.%Destroy.impl_witness.9f8)]
 // CHECK:STDOUT:     %Base.F.specific_fn.loc6_1.1: <specific function> = specific_function %Base.F.decl, @Base.F(constants.%T) [symbolic = %Base.F.specific_fn.loc6_1.2 (constants.%Base.F.specific_fn)]
-// CHECK:STDOUT:     %vtable_ptr.loc6_1.1: ref %ptr.454 = vtable_ptr @Base.vtable, @Base(constants.%T) [symbolic = %vtable_ptr.loc6_1.2 (constants.%Base.vtable_ptr)]
+// CHECK:STDOUT:     %vtable_decl: ref %ptr.454 = vtable_decl @Base.vtable [concrete = constants.%Base.vtable_decl]
 // CHECK:STDOUT:     %complete_type: <witness> = complete_type_witness constants.%struct_type.vptr [concrete = constants.%complete_type.513]
 // CHECK:STDOUT:     complete_type_witness = %complete_type
-// CHECK:STDOUT:     vtable_ptr = %vtable_ptr.loc6_1.1
+// CHECK:STDOUT:     vtable_decl = %vtable_decl
 // CHECK:STDOUT:
 // CHECK:STDOUT:   !members:
 // CHECK:STDOUT:     .Self = constants.%Base
@@ -5769,7 +5758,6 @@ class T2(G2:! type) {
 // CHECK:STDOUT:   %Derived.F.type: type = fn_type @Derived.F, @Derived(%T.loc7_15.1) [symbolic = %Derived.F.type (constants.%Derived.F.type)]
 // CHECK:STDOUT:   %Derived.F: @Derived.%Derived.F.type (%Derived.F.type) = struct_value () [symbolic = %Derived.F (constants.%Derived.F)]
 // CHECK:STDOUT:   %Derived.F.specific_fn.loc17_1.2: <specific function> = specific_function %Derived.F, @Derived.F(%T.loc7_15.1) [symbolic = %Derived.F.specific_fn.loc17_1.2 (constants.%Derived.F.specific_fn)]
-// CHECK:STDOUT:   %vtable_ptr.loc17_1.2: ref %ptr.454 = vtable_ptr @Derived.vtable, @Derived(%T.loc7_15.1) [symbolic = %vtable_ptr.loc17_1.2 (constants.%Derived.vtable_ptr)]
 // CHECK:STDOUT:   %struct_type.base: type = struct_type {.base: @Derived.%Base.loc8_22.2 (%Base)} [symbolic = %struct_type.base (constants.%struct_type.base.8ea)]
 // CHECK:STDOUT:   %complete_type.loc17_1.2: <witness> = complete_type_witness %struct_type.base [symbolic = %complete_type.loc17_1.2 (constants.%complete_type.d5d)]
 // CHECK:STDOUT:
@@ -5799,10 +5787,10 @@ class T2(G2:! type) {
 // CHECK:STDOUT:     %Destroy.impl_witness_table = impl_witness_table (@Derived.as.Destroy.impl.%Derived.as.Destroy.impl.Op.decl), @Derived.as.Destroy.impl [concrete]
 // CHECK:STDOUT:     %Destroy.impl_witness: <witness> = impl_witness %Destroy.impl_witness_table, @Derived.as.Destroy.impl(constants.%T) [symbolic = @Derived.as.Destroy.impl.%Destroy.impl_witness (constants.%Destroy.impl_witness.fa7)]
 // CHECK:STDOUT:     %Derived.F.specific_fn.loc17_1.1: <specific function> = specific_function %Derived.F.decl, @Derived.F(constants.%T) [symbolic = %Derived.F.specific_fn.loc17_1.2 (constants.%Derived.F.specific_fn)]
-// CHECK:STDOUT:     %vtable_ptr.loc17_1.1: ref %ptr.454 = vtable_ptr @Derived.vtable, @Derived(constants.%T) [symbolic = %vtable_ptr.loc17_1.2 (constants.%Derived.vtable_ptr)]
+// CHECK:STDOUT:     %vtable_decl: ref %ptr.454 = vtable_decl @Derived.vtable [concrete = constants.%Derived.vtable_decl]
 // CHECK:STDOUT:     %complete_type.loc17_1.1: <witness> = complete_type_witness constants.%struct_type.base.8ea [symbolic = %complete_type.loc17_1.2 (constants.%complete_type.d5d)]
 // CHECK:STDOUT:     complete_type_witness = %complete_type.loc17_1.1
-// CHECK:STDOUT:     vtable_ptr = %vtable_ptr.loc17_1.1
+// CHECK:STDOUT:     vtable_decl = %vtable_decl
 // CHECK:STDOUT:
 // CHECK:STDOUT:   !members:
 // CHECK:STDOUT:     .Self = constants.%Derived
@@ -5886,7 +5874,6 @@ class T2(G2:! type) {
 // CHECK:STDOUT:   %Base.F.type => constants.%Base.F.type
 // CHECK:STDOUT:   %Base.F => constants.%Base.F
 // CHECK:STDOUT:   %Base.F.specific_fn.loc6_1.2 => constants.%Base.F.specific_fn
-// CHECK:STDOUT:   %vtable_ptr.loc6_1.2 => constants.%Base.vtable_ptr
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Base.F(constants.%T) {
@@ -5925,7 +5912,6 @@ class T2(G2:! type) {
 // CHECK:STDOUT:   %Derived.F.type => constants.%Derived.F.type
 // CHECK:STDOUT:   %Derived.F => constants.%Derived.F
 // CHECK:STDOUT:   %Derived.F.specific_fn.loc17_1.2 => constants.%Derived.F.specific_fn
-// CHECK:STDOUT:   %vtable_ptr.loc17_1.2 => constants.%Derived.vtable_ptr
 // CHECK:STDOUT:   %struct_type.base => constants.%struct_type.base.8ea
 // CHECK:STDOUT:   %complete_type.loc17_1.2 => constants.%complete_type.d5d
 // CHECK:STDOUT: }
@@ -5977,7 +5963,7 @@ class T2(G2:! type) {
 // CHECK:STDOUT:   %Base.as.Destroy.impl.Op: %Base.as.Destroy.impl.Op.type = struct_value () [symbolic]
 // CHECK:STDOUT:   %ptr.454: type = ptr_type <vtable> [concrete]
 // CHECK:STDOUT:   %Base.F.specific_fn.892: <specific function> = specific_function %Base.F.e26, @Base.F(%T) [symbolic]
-// CHECK:STDOUT:   %Base.vtable_ptr.573: ref %ptr.454 = vtable_ptr @Base.vtable, @Base(%T) [symbolic]
+// CHECK:STDOUT:   %Base.vtable_decl: ref %ptr.454 = vtable_decl @Base.vtable [concrete]
 // CHECK:STDOUT:   %struct_type.vptr: type = struct_type {.<vptr>: %ptr.454} [concrete]
 // CHECK:STDOUT:   %complete_type.513: <witness> = complete_type_witness %struct_type.vptr [concrete]
 // CHECK:STDOUT:   %require_complete.97d: <witness> = require_complete_type %Base.370 [symbolic]
@@ -5992,7 +5978,6 @@ class T2(G2:! type) {
 // CHECK:STDOUT:   %pattern_type.4a0: type = pattern_type %Base.16b [symbolic]
 // CHECK:STDOUT:   %pattern_type.afe: type = pattern_type %ptr.79f [symbolic]
 // CHECK:STDOUT:   %Base.F.specific_fn.494: <specific function> = specific_function %Base.F.ad0, @Base.F(%ptr.79f) [symbolic]
-// CHECK:STDOUT:   %Base.vtable_ptr.f98: ref %ptr.454 = vtable_ptr @Base.vtable, @Base(%ptr.79f) [symbolic]
 // CHECK:STDOUT:   %require_complete.fce: <witness> = require_complete_type %Base.16b [symbolic]
 // CHECK:STDOUT:   %Derived.elem: type = unbound_element_type %Derived, %Base.16b [symbolic]
 // CHECK:STDOUT:   %pattern_type.423: type = pattern_type %Derived [symbolic]
@@ -6004,7 +5989,7 @@ class T2(G2:! type) {
 // CHECK:STDOUT:   %Derived.as.Destroy.impl.Op.type: type = fn_type @Derived.as.Destroy.impl.Op, @Derived.as.Destroy.impl(%T) [symbolic]
 // CHECK:STDOUT:   %Derived.as.Destroy.impl.Op: %Derived.as.Destroy.impl.Op.type = struct_value () [symbolic]
 // CHECK:STDOUT:   %Derived.F.specific_fn: <specific function> = specific_function %Derived.F, @Derived.F(%T) [symbolic]
-// CHECK:STDOUT:   %Derived.vtable_ptr: ref %ptr.454 = vtable_ptr @Derived.vtable, @Derived(%T) [symbolic]
+// CHECK:STDOUT:   %Derived.vtable_decl: ref %ptr.454 = vtable_decl @Derived.vtable [concrete]
 // CHECK:STDOUT:   %struct_type.base.d96: type = struct_type {.base: %Base.16b} [symbolic]
 // CHECK:STDOUT:   %complete_type.5dc: <witness> = complete_type_witness %struct_type.base.d96 [symbolic]
 // CHECK:STDOUT:   %require_complete.5f4: <witness> = require_complete_type %Derived [symbolic]
@@ -6104,7 +6089,6 @@ class T2(G2:! type) {
 // CHECK:STDOUT:   %Base.F.type: type = fn_type @Base.F, @Base(%T.loc4_21.1) [symbolic = %Base.F.type (constants.%Base.F.type.f17)]
 // CHECK:STDOUT:   %Base.F: @Base.%Base.F.type (%Base.F.type.f17) = struct_value () [symbolic = %Base.F (constants.%Base.F.e26)]
 // CHECK:STDOUT:   %Base.F.specific_fn.loc6_1.2: <specific function> = specific_function %Base.F, @Base.F(%T.loc4_21.1) [symbolic = %Base.F.specific_fn.loc6_1.2 (constants.%Base.F.specific_fn.892)]
-// CHECK:STDOUT:   %vtable_ptr.loc6_1.2: ref %ptr.454 = vtable_ptr @Base.vtable, @Base(%T.loc4_21.1) [symbolic = %vtable_ptr.loc6_1.2 (constants.%Base.vtable_ptr.573)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   class {
 // CHECK:STDOUT:     %Base.F.decl: @Base.%Base.F.type (%Base.F.type.f17) = fn_decl @Base.F [symbolic = @Base.%Base.F (constants.%Base.F.e26)] {
@@ -6128,10 +6112,10 @@ class T2(G2:! type) {
 // CHECK:STDOUT:     %Destroy.impl_witness_table = impl_witness_table (@Base.as.Destroy.impl.%Base.as.Destroy.impl.Op.decl), @Base.as.Destroy.impl [concrete]
 // CHECK:STDOUT:     %Destroy.impl_witness: <witness> = impl_witness %Destroy.impl_witness_table, @Base.as.Destroy.impl(constants.%T) [symbolic = @Base.as.Destroy.impl.%Destroy.impl_witness (constants.%Destroy.impl_witness.9f8)]
 // CHECK:STDOUT:     %Base.F.specific_fn.loc6_1.1: <specific function> = specific_function %Base.F.decl, @Base.F(constants.%T) [symbolic = %Base.F.specific_fn.loc6_1.2 (constants.%Base.F.specific_fn.892)]
-// CHECK:STDOUT:     %vtable_ptr.loc6_1.1: ref %ptr.454 = vtable_ptr @Base.vtable, @Base(constants.%T) [symbolic = %vtable_ptr.loc6_1.2 (constants.%Base.vtable_ptr.573)]
+// CHECK:STDOUT:     %vtable_decl: ref %ptr.454 = vtable_decl @Base.vtable [concrete = constants.%Base.vtable_decl]
 // CHECK:STDOUT:     %complete_type: <witness> = complete_type_witness constants.%struct_type.vptr [concrete = constants.%complete_type.513]
 // CHECK:STDOUT:     complete_type_witness = %complete_type
-// CHECK:STDOUT:     vtable_ptr = %vtable_ptr.loc6_1.1
+// CHECK:STDOUT:     vtable_decl = %vtable_decl
 // CHECK:STDOUT:
 // CHECK:STDOUT:   !members:
 // CHECK:STDOUT:     .Self = constants.%Base.370
@@ -6152,7 +6136,6 @@ class T2(G2:! type) {
 // CHECK:STDOUT:   %Derived.F.type: type = fn_type @Derived.F, @Derived(%T.loc7_15.1) [symbolic = %Derived.F.type (constants.%Derived.F.type)]
 // CHECK:STDOUT:   %Derived.F: @Derived.%Derived.F.type (%Derived.F.type) = struct_value () [symbolic = %Derived.F (constants.%Derived.F)]
 // CHECK:STDOUT:   %Derived.F.specific_fn.loc10_1.2: <specific function> = specific_function %Derived.F, @Derived.F(%T.loc7_15.1) [symbolic = %Derived.F.specific_fn.loc10_1.2 (constants.%Derived.F.specific_fn)]
-// CHECK:STDOUT:   %vtable_ptr.loc10_1.2: ref %ptr.454 = vtable_ptr @Derived.vtable, @Derived(%T.loc7_15.1) [symbolic = %vtable_ptr.loc10_1.2 (constants.%Derived.vtable_ptr)]
 // CHECK:STDOUT:   %struct_type.base: type = struct_type {.base: @Derived.%Base.loc8_23.2 (%Base.16b)} [symbolic = %struct_type.base (constants.%struct_type.base.d96)]
 // CHECK:STDOUT:   %complete_type.loc10_1.2: <witness> = complete_type_witness %struct_type.base [symbolic = %complete_type.loc10_1.2 (constants.%complete_type.5dc)]
 // CHECK:STDOUT:
@@ -6186,10 +6169,10 @@ class T2(G2:! type) {
 // CHECK:STDOUT:     %Destroy.impl_witness_table = impl_witness_table (@Derived.as.Destroy.impl.%Derived.as.Destroy.impl.Op.decl), @Derived.as.Destroy.impl [concrete]
 // CHECK:STDOUT:     %Destroy.impl_witness: <witness> = impl_witness %Destroy.impl_witness_table, @Derived.as.Destroy.impl(constants.%T) [symbolic = @Derived.as.Destroy.impl.%Destroy.impl_witness (constants.%Destroy.impl_witness.fa7)]
 // CHECK:STDOUT:     %Derived.F.specific_fn.loc10_1.1: <specific function> = specific_function %Derived.F.decl, @Derived.F(constants.%T) [symbolic = %Derived.F.specific_fn.loc10_1.2 (constants.%Derived.F.specific_fn)]
-// CHECK:STDOUT:     %vtable_ptr.loc10_1.1: ref %ptr.454 = vtable_ptr @Derived.vtable, @Derived(constants.%T) [symbolic = %vtable_ptr.loc10_1.2 (constants.%Derived.vtable_ptr)]
+// CHECK:STDOUT:     %vtable_decl: ref %ptr.454 = vtable_decl @Derived.vtable [concrete = constants.%Derived.vtable_decl]
 // CHECK:STDOUT:     %complete_type.loc10_1.1: <witness> = complete_type_witness constants.%struct_type.base.d96 [symbolic = %complete_type.loc10_1.2 (constants.%complete_type.5dc)]
 // CHECK:STDOUT:     complete_type_witness = %complete_type.loc10_1.1
-// CHECK:STDOUT:     vtable_ptr = %vtable_ptr.loc10_1.1
+// CHECK:STDOUT:     vtable_decl = %vtable_decl
 // CHECK:STDOUT:
 // CHECK:STDOUT:   !members:
 // CHECK:STDOUT:     .Self = constants.%Derived
@@ -6273,7 +6256,6 @@ class T2(G2:! type) {
 // CHECK:STDOUT:   %Base.F.type => constants.%Base.F.type.f17
 // CHECK:STDOUT:   %Base.F => constants.%Base.F.e26
 // CHECK:STDOUT:   %Base.F.specific_fn.loc6_1.2 => constants.%Base.F.specific_fn.892
-// CHECK:STDOUT:   %vtable_ptr.loc6_1.2 => constants.%Base.vtable_ptr.573
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Base.F(constants.%T) {
@@ -6312,7 +6294,6 @@ class T2(G2:! type) {
 // CHECK:STDOUT:   %Derived.F.type => constants.%Derived.F.type
 // CHECK:STDOUT:   %Derived.F => constants.%Derived.F
 // CHECK:STDOUT:   %Derived.F.specific_fn.loc10_1.2 => constants.%Derived.F.specific_fn
-// CHECK:STDOUT:   %vtable_ptr.loc10_1.2 => constants.%Derived.vtable_ptr
 // CHECK:STDOUT:   %struct_type.base => constants.%struct_type.base.d96
 // CHECK:STDOUT:   %complete_type.loc10_1.2 => constants.%complete_type.5dc
 // CHECK:STDOUT: }
@@ -6324,7 +6305,6 @@ class T2(G2:! type) {
 // CHECK:STDOUT:   %Base.F.type => constants.%Base.F.type.5df
 // CHECK:STDOUT:   %Base.F => constants.%Base.F.ad0
 // CHECK:STDOUT:   %Base.F.specific_fn.loc6_1.2 => constants.%Base.F.specific_fn.494
-// CHECK:STDOUT:   %vtable_ptr.loc6_1.2 => constants.%Base.vtable_ptr.f98
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Base.F(constants.%ptr.79f) {
@@ -6385,7 +6365,7 @@ class T2(G2:! type) {
 // CHECK:STDOUT:   %Base.as.Destroy.impl.Op: %Base.as.Destroy.impl.Op.type = struct_value () [symbolic]
 // CHECK:STDOUT:   %ptr.454: type = ptr_type <vtable> [concrete]
 // CHECK:STDOUT:   %Base.F.specific_fn.892: <specific function> = specific_function %Base.F.e26, @Base.F(%T) [symbolic]
-// CHECK:STDOUT:   %Base.vtable_ptr.573: ref %ptr.454 = vtable_ptr @Base.vtable, @Base(%T) [symbolic]
+// CHECK:STDOUT:   %Base.vtable_decl: ref %ptr.454 = vtable_decl @Base.vtable [concrete]
 // CHECK:STDOUT:   %struct_type.vptr: type = struct_type {.<vptr>: %ptr.454} [concrete]
 // CHECK:STDOUT:   %complete_type.513: <witness> = complete_type_witness %struct_type.vptr [concrete]
 // CHECK:STDOUT:   %T1: type = class_type @T1 [concrete]
@@ -6395,7 +6375,6 @@ class T2(G2:! type) {
 // CHECK:STDOUT:   %Base.F.d25: %Base.F.type.d82 = struct_value () [concrete]
 // CHECK:STDOUT:   %pattern_type.3bf: type = pattern_type %Base.ea5 [concrete]
 // CHECK:STDOUT:   %Base.F.specific_fn.210: <specific function> = specific_function %Base.F.d25, @Base.F(%T1) [concrete]
-// CHECK:STDOUT:   %Base.vtable_ptr.bfe: ref %ptr.454 = vtable_ptr @Base.vtable, @Base(%T1) [concrete]
 // CHECK:STDOUT:   %Derived.elem: type = unbound_element_type %Derived, %Base.ea5 [concrete]
 // CHECK:STDOUT:   %pattern_type.fb9: type = pattern_type %Derived [concrete]
 // CHECK:STDOUT:   %Derived.F.type: type = fn_type @Derived.F [concrete]
@@ -6405,7 +6384,7 @@ class T2(G2:! type) {
 // CHECK:STDOUT:   %pattern_type.605: type = pattern_type %ptr.404 [concrete]
 // CHECK:STDOUT:   %Derived.as.Destroy.impl.Op.type: type = fn_type @Derived.as.Destroy.impl.Op [concrete]
 // CHECK:STDOUT:   %Derived.as.Destroy.impl.Op: %Derived.as.Destroy.impl.Op.type = struct_value () [concrete]
-// CHECK:STDOUT:   %Derived.vtable_ptr: ref %ptr.454 = vtable_ptr @Derived.vtable [concrete]
+// CHECK:STDOUT:   %Derived.vtable_decl: ref %ptr.454 = vtable_decl @Derived.vtable [concrete]
 // CHECK:STDOUT:   %struct_type.base.fda: type = struct_type {.base: %Base.ea5} [concrete]
 // CHECK:STDOUT:   %complete_type.65a: <witness> = complete_type_witness %struct_type.base.fda [concrete]
 // CHECK:STDOUT: }
@@ -6488,7 +6467,6 @@ class T2(G2:! type) {
 // CHECK:STDOUT:   %Base.F.type: type = fn_type @Base.F, @Base(%T.loc4_21.1) [symbolic = %Base.F.type (constants.%Base.F.type.f17)]
 // CHECK:STDOUT:   %Base.F: @Base.%Base.F.type (%Base.F.type.f17) = struct_value () [symbolic = %Base.F (constants.%Base.F.e26)]
 // CHECK:STDOUT:   %Base.F.specific_fn.loc6_1.2: <specific function> = specific_function %Base.F, @Base.F(%T.loc4_21.1) [symbolic = %Base.F.specific_fn.loc6_1.2 (constants.%Base.F.specific_fn.892)]
-// CHECK:STDOUT:   %vtable_ptr.loc6_1.2: ref %ptr.454 = vtable_ptr @Base.vtable, @Base(%T.loc4_21.1) [symbolic = %vtable_ptr.loc6_1.2 (constants.%Base.vtable_ptr.573)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   class {
 // CHECK:STDOUT:     %Base.F.decl: @Base.%Base.F.type (%Base.F.type.f17) = fn_decl @Base.F [symbolic = @Base.%Base.F (constants.%Base.F.e26)] {
@@ -6507,10 +6485,10 @@ class T2(G2:! type) {
 // CHECK:STDOUT:     %Destroy.impl_witness_table = impl_witness_table (@Base.as.Destroy.impl.%Base.as.Destroy.impl.Op.decl), @Base.as.Destroy.impl [concrete]
 // CHECK:STDOUT:     %Destroy.impl_witness: <witness> = impl_witness %Destroy.impl_witness_table, @Base.as.Destroy.impl(constants.%T) [symbolic = @Base.as.Destroy.impl.%Destroy.impl_witness (constants.%Destroy.impl_witness.9f8)]
 // CHECK:STDOUT:     %Base.F.specific_fn.loc6_1.1: <specific function> = specific_function %Base.F.decl, @Base.F(constants.%T) [symbolic = %Base.F.specific_fn.loc6_1.2 (constants.%Base.F.specific_fn.892)]
-// CHECK:STDOUT:     %vtable_ptr.loc6_1.1: ref %ptr.454 = vtable_ptr @Base.vtable, @Base(constants.%T) [symbolic = %vtable_ptr.loc6_1.2 (constants.%Base.vtable_ptr.573)]
+// CHECK:STDOUT:     %vtable_decl: ref %ptr.454 = vtable_decl @Base.vtable [concrete = constants.%Base.vtable_decl]
 // CHECK:STDOUT:     %complete_type: <witness> = complete_type_witness constants.%struct_type.vptr [concrete = constants.%complete_type.513]
 // CHECK:STDOUT:     complete_type_witness = %complete_type
-// CHECK:STDOUT:     vtable_ptr = %vtable_ptr.loc6_1.1
+// CHECK:STDOUT:     vtable_decl = %vtable_decl
 // CHECK:STDOUT:
 // CHECK:STDOUT:   !members:
 // CHECK:STDOUT:     .Self = constants.%Base.370
@@ -6537,10 +6515,10 @@ class T2(G2:! type) {
 // CHECK:STDOUT:   impl_decl @Derived.as.Destroy.impl [concrete] {} {}
 // CHECK:STDOUT:   %Destroy.impl_witness_table = impl_witness_table (@Derived.as.Destroy.impl.%Derived.as.Destroy.impl.Op.decl), @Derived.as.Destroy.impl [concrete]
 // CHECK:STDOUT:   %Destroy.impl_witness: <witness> = impl_witness %Destroy.impl_witness_table [concrete = constants.%Destroy.impl_witness.e52]
-// CHECK:STDOUT:   %vtable_ptr: ref %ptr.454 = vtable_ptr @Derived.vtable [concrete = constants.%Derived.vtable_ptr]
+// CHECK:STDOUT:   %vtable_decl: ref %ptr.454 = vtable_decl @Derived.vtable [concrete = constants.%Derived.vtable_decl]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness constants.%struct_type.base.fda [concrete = constants.%complete_type.65a]
 // CHECK:STDOUT:   complete_type_witness = %complete_type
-// CHECK:STDOUT:   vtable_ptr = %vtable_ptr
+// CHECK:STDOUT:   vtable_decl = %vtable_decl
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%Derived
@@ -6615,7 +6593,6 @@ class T2(G2:! type) {
 // CHECK:STDOUT:   %Base.F.type => constants.%Base.F.type.d82
 // CHECK:STDOUT:   %Base.F => constants.%Base.F.d25
 // CHECK:STDOUT:   %Base.F.specific_fn.loc6_1.2 => constants.%Base.F.specific_fn.210
-// CHECK:STDOUT:   %vtable_ptr.loc6_1.2 => constants.%Base.vtable_ptr.bfe
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Base.F(constants.%T1) {
@@ -6644,7 +6621,7 @@ class T2(G2:! type) {
 // CHECK:STDOUT:   %Base.as.Destroy.impl.Op: %Base.as.Destroy.impl.Op.type = struct_value () [symbolic]
 // CHECK:STDOUT:   %ptr.454: type = ptr_type <vtable> [concrete]
 // CHECK:STDOUT:   %Base.F.specific_fn: <specific function> = specific_function %Base.F, @Base.F(%T) [symbolic]
-// CHECK:STDOUT:   %Base.vtable_ptr: ref %ptr.454 = vtable_ptr @Base.vtable, @Base(%T) [symbolic]
+// CHECK:STDOUT:   %Base.vtable_decl: ref %ptr.454 = vtable_decl @Base.vtable [concrete]
 // CHECK:STDOUT:   %struct_type.vptr: type = struct_type {.<vptr>: %ptr.454} [concrete]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %struct_type.vptr [concrete]
 // CHECK:STDOUT:   %require_complete: <witness> = require_complete_type %Base [symbolic]
@@ -6708,7 +6685,6 @@ class T2(G2:! type) {
 // CHECK:STDOUT:   %Base.F.type: type = fn_type @Base.F, @Base(%T.loc4_17.1) [symbolic = %Base.F.type (constants.%Base.F.type)]
 // CHECK:STDOUT:   %Base.F: @Base.%Base.F.type (%Base.F.type) = struct_value () [symbolic = %Base.F (constants.%Base.F)]
 // CHECK:STDOUT:   %Base.F.specific_fn.loc6_1.2: <specific function> = specific_function %Base.F, @Base.F(%T.loc4_17.1) [symbolic = %Base.F.specific_fn.loc6_1.2 (constants.%Base.F.specific_fn)]
-// CHECK:STDOUT:   %vtable_ptr.loc6_1.2: ref %ptr.454 = vtable_ptr @Base.vtable, @Base(%T.loc4_17.1) [symbolic = %vtable_ptr.loc6_1.2 (constants.%Base.vtable_ptr)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   class {
 // CHECK:STDOUT:     %Base.F.decl: @Base.%Base.F.type (%Base.F.type) = fn_decl @Base.F [symbolic = @Base.%Base.F (constants.%Base.F)] {
@@ -6727,10 +6703,10 @@ class T2(G2:! type) {
 // CHECK:STDOUT:     %Destroy.impl_witness_table = impl_witness_table (@Base.as.Destroy.impl.%Base.as.Destroy.impl.Op.decl), @Base.as.Destroy.impl [concrete]
 // CHECK:STDOUT:     %Destroy.impl_witness: <witness> = impl_witness %Destroy.impl_witness_table, @Base.as.Destroy.impl(constants.%T) [symbolic = @Base.as.Destroy.impl.%Destroy.impl_witness (constants.%Destroy.impl_witness)]
 // CHECK:STDOUT:     %Base.F.specific_fn.loc6_1.1: <specific function> = specific_function %Base.F.decl, @Base.F(constants.%T) [symbolic = %Base.F.specific_fn.loc6_1.2 (constants.%Base.F.specific_fn)]
-// CHECK:STDOUT:     %vtable_ptr.loc6_1.1: ref %ptr.454 = vtable_ptr @Base.vtable, @Base(constants.%T) [symbolic = %vtable_ptr.loc6_1.2 (constants.%Base.vtable_ptr)]
+// CHECK:STDOUT:     %vtable_decl: ref %ptr.454 = vtable_decl @Base.vtable [concrete = constants.%Base.vtable_decl]
 // CHECK:STDOUT:     %complete_type: <witness> = complete_type_witness constants.%struct_type.vptr [concrete = constants.%complete_type]
 // CHECK:STDOUT:     complete_type_witness = %complete_type
-// CHECK:STDOUT:     vtable_ptr = %vtable_ptr.loc6_1.1
+// CHECK:STDOUT:     vtable_decl = %vtable_decl
 // CHECK:STDOUT:
 // CHECK:STDOUT:   !members:
 // CHECK:STDOUT:     .Self = constants.%Base
@@ -6774,7 +6750,6 @@ class T2(G2:! type) {
 // CHECK:STDOUT:   %Base.F.type => constants.%Base.F.type
 // CHECK:STDOUT:   %Base.F => constants.%Base.F
 // CHECK:STDOUT:   %Base.F.specific_fn.loc6_1.2 => constants.%Base.F.specific_fn
-// CHECK:STDOUT:   %vtable_ptr.loc6_1.2 => constants.%Base.vtable_ptr
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Base.F(constants.%T) {
@@ -6814,19 +6789,17 @@ class T2(G2:! type) {
 // CHECK:STDOUT:   %Base.F.e26: %Base.F.type.f17 = struct_value () [symbolic]
 // CHECK:STDOUT:   %pattern_type.9f7: type = pattern_type %Base.370 [symbolic]
 // CHECK:STDOUT:   %Base.F.specific_fn.892: <specific function> = specific_function %Base.F.e26, @Base.F(%T) [symbolic]
-// CHECK:STDOUT:   %Base.vtable_ptr.16a6e1.1: ref %ptr.454 = vtable_ptr @Base.vtable.1, @Base(%T) [symbolic]
 // CHECK:STDOUT:   %require_complete: <witness> = require_complete_type %Base.370 [symbolic]
-// CHECK:STDOUT:   %Base.vtable_ptr.16a6e1.2: ref %ptr.454 = vtable_ptr @Base.vtable.2, @Base(%T) [symbolic]
 // CHECK:STDOUT:   %Base.ea5: type = class_type @Base, @Base(%T1) [concrete]
 // CHECK:STDOUT:   %Base.F.type.d82: type = fn_type @Base.F, @Base(%T1) [concrete]
 // CHECK:STDOUT:   %Base.F.d25: %Base.F.type.d82 = struct_value () [concrete]
 // CHECK:STDOUT:   %pattern_type.3bf: type = pattern_type %Base.ea5 [concrete]
 // CHECK:STDOUT:   %Base.F.specific_fn.210: <specific function> = specific_function %Base.F.d25, @Base.F(%T1) [concrete]
-// CHECK:STDOUT:   %Base.vtable_ptr.e8d: ref %ptr.454 = vtable_ptr @Base.vtable.1, @Base(%T1) [concrete]
 // CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [concrete]
-// CHECK:STDOUT:   %Base.vtable_ptr.16a6e1.3: ref %ptr.454 = vtable_ptr @Base.vtable.3, @Base(%T) [symbolic]
+// CHECK:STDOUT:   %Base.vtable_decl: ref %ptr.454 = vtable_decl @Base.vtable [concrete]
 // CHECK:STDOUT:   %.b74: ref %ptr.454 = class_element_access file.%v.var, element0 [concrete]
-// CHECK:STDOUT:   %Base.val: %Base.ea5 = struct_value (%Base.vtable_ptr.e8d) [concrete]
+// CHECK:STDOUT:   %Base.vtable_ptr: ref %ptr.454 = vtable_ptr @Base.vtable, @Base(%T1) [concrete]
+// CHECK:STDOUT:   %Base.val: %Base.ea5 = struct_value (%Base.vtable_ptr) [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -6835,15 +6808,13 @@ class T2(G2:! type) {
 // CHECK:STDOUT:     import Core//prelude
 // CHECK:STDOUT:     import Core//prelude/...
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %Main.import_ref.03f: ref %ptr.454 = import_ref Main//generic_lib, loc6_1, loaded [symbolic = @Base.%vtable_ptr (constants.%Base.vtable_ptr.16a6e1.3)]
+// CHECK:STDOUT:   %Main.import_ref.0e5: ref %ptr.454 = import_ref Main//generic_lib, loc6_1, loaded [concrete = constants.%Base.vtable_decl]
 // CHECK:STDOUT:   %Main.import_ref.5ab3ec.1: type = import_ref Main//generic_lib, loc4_17, loaded [symbolic = @Base.%T (constants.%T)]
 // CHECK:STDOUT:   %Main.import_ref.05e: <witness> = import_ref Main//generic_lib, loc6_1, loaded [concrete = constants.%complete_type]
 // CHECK:STDOUT:   %Main.import_ref.8e0 = import_ref Main//generic_lib, inst27 [no loc], unloaded
 // CHECK:STDOUT:   %Main.import_ref.e54 = import_ref Main//generic_lib, loc5_30, unloaded
 // CHECK:STDOUT:   %Main.import_ref.5ab3ec.2: type = import_ref Main//generic_lib, loc4_17, loaded [symbolic = @Base.%T (constants.%T)]
-// CHECK:STDOUT:   %Main.import_ref.78ad15.1: <specific function> = import_ref Main//generic_lib, loc6_1, loaded [symbolic = constants.%Base.F.specific_fn.892]
-// CHECK:STDOUT:   %Main.import_ref.78ad15.2: <specific function> = import_ref Main//generic_lib, loc6_1, loaded [symbolic = constants.%Base.F.specific_fn.892]
-// CHECK:STDOUT:   %Main.import_ref.78ad15.3: <specific function> = import_ref Main//generic_lib, loc6_1, loaded [symbolic = constants.%Base.F.specific_fn.892]
+// CHECK:STDOUT:   %Main.import_ref.4f4: <specific function> = import_ref Main//generic_lib, inst47 [no loc], loaded [symbolic = constants.%Base.F.specific_fn.892]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -6878,11 +6849,10 @@ class T2(G2:! type) {
 // CHECK:STDOUT:   %Base.F.type: type = fn_type @Base.F, @Base(%T) [symbolic = %Base.F.type (constants.%Base.F.type.f17)]
 // CHECK:STDOUT:   %Base.F: @Base.%Base.F.type (%Base.F.type.f17) = struct_value () [symbolic = %Base.F (constants.%Base.F.e26)]
 // CHECK:STDOUT:   %Base.F.specific_fn: <specific function> = specific_function %Base.F, @Base.F(%T) [symbolic = %Base.F.specific_fn (constants.%Base.F.specific_fn.892)]
-// CHECK:STDOUT:   %vtable_ptr: ref %ptr.454 = vtable_ptr @Base.vtable.1, @Base(%T) [symbolic = %vtable_ptr (constants.%Base.vtable_ptr.16a6e1.1)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   class {
 // CHECK:STDOUT:     complete_type_witness = imports.%Main.import_ref.05e
-// CHECK:STDOUT:     vtable_ptr = imports.%Main.import_ref.03f
+// CHECK:STDOUT:     vtable_decl = imports.%Main.import_ref.0e5
 // CHECK:STDOUT:
 // CHECK:STDOUT:   !members:
 // CHECK:STDOUT:     .Self = imports.%Main.import_ref.8e0
@@ -6890,16 +6860,8 @@ class T2(G2:! type) {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: vtable @Base.vtable.1 {
-// CHECK:STDOUT:   imports.%Main.import_ref.78ad15.1
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: vtable @Base.vtable.2 {
-// CHECK:STDOUT:   imports.%Main.import_ref.78ad15.2
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: vtable @Base.vtable.3 {
-// CHECK:STDOUT:   imports.%Main.import_ref.78ad15.3
+// CHECK:STDOUT: vtable @Base.vtable {
+// CHECK:STDOUT:   imports.%Main.import_ref.4f4
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic virtual fn @Base.F(imports.%Main.import_ref.5ab3ec.2: type) [from "generic_lib.carbon"] {
@@ -6916,8 +6878,10 @@ class T2(G2:! type) {
 // CHECK:STDOUT: fn @__global_init() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %.loc7_20.1: %empty_struct_type = struct_literal ()
+// CHECK:STDOUT:   %Base.vtable_decl: ref %ptr.454 = vtable_decl @Base.vtable [concrete = constants.%Base.vtable_decl]
 // CHECK:STDOUT:   %.loc7_20.2: ref %ptr.454 = class_element_access file.%v.var, element0 [concrete = constants.%.b74]
-// CHECK:STDOUT:   %.loc7_20.3: init %ptr.454 = initialize_from constants.%Base.vtable_ptr.e8d to %.loc7_20.2 [concrete = constants.%Base.vtable_ptr.e8d]
+// CHECK:STDOUT:   %Base.vtable_ptr: ref %ptr.454 = vtable_ptr @Base.vtable, @Base(constants.%T1) [concrete = constants.%Base.vtable_ptr]
+// CHECK:STDOUT:   %.loc7_20.3: init %ptr.454 = initialize_from %Base.vtable_ptr to %.loc7_20.2 [concrete = constants.%Base.vtable_ptr]
 // CHECK:STDOUT:   %.loc7_20.4: init %Base.ea5 = class_init (%.loc7_20.3), file.%v.var [concrete = constants.%Base.val]
 // CHECK:STDOUT:   %.loc7_1: init %Base.ea5 = converted %.loc7_20.1, %.loc7_20.4 [concrete = constants.%Base.val]
 // CHECK:STDOUT:   assign file.%v.var, %.loc7_1
@@ -6931,7 +6895,6 @@ class T2(G2:! type) {
 // CHECK:STDOUT:   %Base.F.type => constants.%Base.F.type.f17
 // CHECK:STDOUT:   %Base.F => constants.%Base.F.e26
 // CHECK:STDOUT:   %Base.F.specific_fn => constants.%Base.F.specific_fn.892
-// CHECK:STDOUT:   %vtable_ptr => constants.%Base.vtable_ptr.16a6e1.2
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Base.F(constants.%T) {
@@ -6950,7 +6913,6 @@ class T2(G2:! type) {
 // CHECK:STDOUT:   %Base.F.type => constants.%Base.F.type.d82
 // CHECK:STDOUT:   %Base.F => constants.%Base.F.d25
 // CHECK:STDOUT:   %Base.F.specific_fn => constants.%Base.F.specific_fn.210
-// CHECK:STDOUT:   %vtable_ptr => constants.%Base.vtable_ptr.e8d
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Base.F(constants.%T1) {
@@ -6982,7 +6944,7 @@ class T2(G2:! type) {
 // CHECK:STDOUT:   %T1.as.Destroy.impl.Op: %T1.as.Destroy.impl.Op.type = struct_value () [symbolic]
 // CHECK:STDOUT:   %ptr.454: type = ptr_type <vtable> [concrete]
 // CHECK:STDOUT:   %T1.F.specific_fn.1e2a8c.1: <specific function> = specific_function %T1.F.0df085.1, @T1.F(%G1) [symbolic]
-// CHECK:STDOUT:   %T1.vtable_ptr.b5fc91.1: ref %ptr.454 = vtable_ptr @T1.vtable, @T1(%G1) [symbolic]
+// CHECK:STDOUT:   %T1.vtable_decl: ref %ptr.454 = vtable_decl @T1.vtable [concrete]
 // CHECK:STDOUT:   %struct_type.vptr: type = struct_type {.<vptr>: %ptr.454} [concrete]
 // CHECK:STDOUT:   %complete_type.513: <witness> = complete_type_witness %struct_type.vptr [concrete]
 // CHECK:STDOUT:   %require_complete.86d019.1: <witness> = require_complete_type %T1.18aea2.1 [symbolic]
@@ -6995,7 +6957,6 @@ class T2(G2:! type) {
 // CHECK:STDOUT:   %T1.F.0df085.2: %T1.F.type.ebcc3f.2 = struct_value () [symbolic]
 // CHECK:STDOUT:   %pattern_type.48ecf1.2: type = pattern_type %T1.18aea2.2 [symbolic]
 // CHECK:STDOUT:   %T1.F.specific_fn.1e2a8c.2: <specific function> = specific_function %T1.F.0df085.2, @T1.F(%G2) [symbolic]
-// CHECK:STDOUT:   %T1.vtable_ptr.b5fc91.2: ref %ptr.454 = vtable_ptr @T1.vtable, @T1(%G2) [symbolic]
 // CHECK:STDOUT:   %require_complete.86d019.2: <witness> = require_complete_type %T1.18aea2.2 [symbolic]
 // CHECK:STDOUT:   %T2.elem: type = unbound_element_type %T2, %T1.18aea2.2 [symbolic]
 // CHECK:STDOUT:   %Destroy.impl_witness.fb2: <witness> = impl_witness @T2.%Destroy.impl_witness_table, @T2.as.Destroy.impl(%G2) [symbolic]
@@ -7003,7 +6964,7 @@ class T2(G2:! type) {
 // CHECK:STDOUT:   %pattern_type.8f6: type = pattern_type %ptr.112 [symbolic]
 // CHECK:STDOUT:   %T2.as.Destroy.impl.Op.type: type = fn_type @T2.as.Destroy.impl.Op, @T2.as.Destroy.impl(%G2) [symbolic]
 // CHECK:STDOUT:   %T2.as.Destroy.impl.Op: %T2.as.Destroy.impl.Op.type = struct_value () [symbolic]
-// CHECK:STDOUT:   %T2.vtable_ptr: ref %ptr.454 = vtable_ptr @T2.vtable, @T2(%G2) [symbolic]
+// CHECK:STDOUT:   %T2.vtable_decl: ref %ptr.454 = vtable_decl @T2.vtable [concrete]
 // CHECK:STDOUT:   %struct_type.base: type = struct_type {.base: %T1.18aea2.2} [symbolic]
 // CHECK:STDOUT:   %complete_type.987: <witness> = complete_type_witness %struct_type.base [symbolic]
 // CHECK:STDOUT: }
@@ -7101,7 +7062,6 @@ class T2(G2:! type) {
 // CHECK:STDOUT:   %T1.F.type: type = fn_type @T1.F, @T1(%G1.loc4_15.1) [symbolic = %T1.F.type (constants.%T1.F.type.ebcc3f.1)]
 // CHECK:STDOUT:   %T1.F: @T1.%T1.F.type (%T1.F.type.ebcc3f.1) = struct_value () [symbolic = %T1.F (constants.%T1.F.0df085.1)]
 // CHECK:STDOUT:   %T1.F.specific_fn.loc6_1.2: <specific function> = specific_function %T1.F, @T1.F(%G1.loc4_15.1) [symbolic = %T1.F.specific_fn.loc6_1.2 (constants.%T1.F.specific_fn.1e2a8c.1)]
-// CHECK:STDOUT:   %vtable_ptr.loc6_1.2: ref %ptr.454 = vtable_ptr @T1.vtable, @T1(%G1.loc4_15.1) [symbolic = %vtable_ptr.loc6_1.2 (constants.%T1.vtable_ptr.b5fc91.1)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   class {
 // CHECK:STDOUT:     %T1.F.decl: @T1.%T1.F.type (%T1.F.type.ebcc3f.1) = fn_decl @T1.F [symbolic = @T1.%T1.F (constants.%T1.F.0df085.1)] {
@@ -7120,10 +7080,10 @@ class T2(G2:! type) {
 // CHECK:STDOUT:     %Destroy.impl_witness_table = impl_witness_table (@T1.as.Destroy.impl.%T1.as.Destroy.impl.Op.decl), @T1.as.Destroy.impl [concrete]
 // CHECK:STDOUT:     %Destroy.impl_witness: <witness> = impl_witness %Destroy.impl_witness_table, @T1.as.Destroy.impl(constants.%G1) [symbolic = @T1.as.Destroy.impl.%Destroy.impl_witness (constants.%Destroy.impl_witness.fdd)]
 // CHECK:STDOUT:     %T1.F.specific_fn.loc6_1.1: <specific function> = specific_function %T1.F.decl, @T1.F(constants.%G1) [symbolic = %T1.F.specific_fn.loc6_1.2 (constants.%T1.F.specific_fn.1e2a8c.1)]
-// CHECK:STDOUT:     %vtable_ptr.loc6_1.1: ref %ptr.454 = vtable_ptr @T1.vtable, @T1(constants.%G1) [symbolic = %vtable_ptr.loc6_1.2 (constants.%T1.vtable_ptr.b5fc91.1)]
+// CHECK:STDOUT:     %vtable_decl: ref %ptr.454 = vtable_decl @T1.vtable [concrete = constants.%T1.vtable_decl]
 // CHECK:STDOUT:     %complete_type: <witness> = complete_type_witness constants.%struct_type.vptr [concrete = constants.%complete_type.513]
 // CHECK:STDOUT:     complete_type_witness = %complete_type
-// CHECK:STDOUT:     vtable_ptr = %vtable_ptr.loc6_1.1
+// CHECK:STDOUT:     vtable_decl = %vtable_decl
 // CHECK:STDOUT:
 // CHECK:STDOUT:   !members:
 // CHECK:STDOUT:     .Self = constants.%T1.18aea2.1
@@ -7142,7 +7102,6 @@ class T2(G2:! type) {
 // CHECK:STDOUT:   %T1.F.type: type = fn_type @T1.F, @T1(%G2.loc8_10.1) [symbolic = %T1.F.type (constants.%T1.F.type.ebcc3f.2)]
 // CHECK:STDOUT:   %T1.F: @T2.%T1.F.type (%T1.F.type.ebcc3f.2) = struct_value () [symbolic = %T1.F (constants.%T1.F.0df085.2)]
 // CHECK:STDOUT:   %T1.F.specific_fn.loc10_1.2: <specific function> = specific_function %T1.F, @T1.F(%G2.loc8_10.1) [symbolic = %T1.F.specific_fn.loc10_1.2 (constants.%T1.F.specific_fn.1e2a8c.2)]
-// CHECK:STDOUT:   %vtable_ptr.loc10_1.2: ref %ptr.454 = vtable_ptr @T2.vtable, @T2(%G2.loc8_10.1) [symbolic = %vtable_ptr.loc10_1.2 (constants.%T2.vtable_ptr)]
 // CHECK:STDOUT:   %struct_type.base: type = struct_type {.base: @T2.%T1.loc9_21.2 (%T1.18aea2.2)} [symbolic = %struct_type.base (constants.%struct_type.base)]
 // CHECK:STDOUT:   %complete_type.loc10_1.2: <witness> = complete_type_witness %struct_type.base [symbolic = %complete_type.loc10_1.2 (constants.%complete_type.987)]
 // CHECK:STDOUT:
@@ -7156,10 +7115,10 @@ class T2(G2:! type) {
 // CHECK:STDOUT:     %Destroy.impl_witness_table = impl_witness_table (@T2.as.Destroy.impl.%T2.as.Destroy.impl.Op.decl), @T2.as.Destroy.impl [concrete]
 // CHECK:STDOUT:     %Destroy.impl_witness: <witness> = impl_witness %Destroy.impl_witness_table, @T2.as.Destroy.impl(constants.%G2) [symbolic = @T2.as.Destroy.impl.%Destroy.impl_witness (constants.%Destroy.impl_witness.fb2)]
 // CHECK:STDOUT:     %T1.F.specific_fn.loc10_1.1: <specific function> = specific_function constants.%T1.F.0df085.2, @T1.F(constants.%G2) [symbolic = %T1.F.specific_fn.loc10_1.2 (constants.%T1.F.specific_fn.1e2a8c.2)]
-// CHECK:STDOUT:     %vtable_ptr.loc10_1.1: ref %ptr.454 = vtable_ptr @T2.vtable, @T2(constants.%G2) [symbolic = %vtable_ptr.loc10_1.2 (constants.%T2.vtable_ptr)]
+// CHECK:STDOUT:     %vtable_decl: ref %ptr.454 = vtable_decl @T2.vtable [concrete = constants.%T2.vtable_decl]
 // CHECK:STDOUT:     %complete_type.loc10_1.1: <witness> = complete_type_witness constants.%struct_type.base [symbolic = %complete_type.loc10_1.2 (constants.%complete_type.987)]
 // CHECK:STDOUT:     complete_type_witness = %complete_type.loc10_1.1
-// CHECK:STDOUT:     vtable_ptr = %vtable_ptr.loc10_1.1
+// CHECK:STDOUT:     vtable_decl = %vtable_decl
 // CHECK:STDOUT:
 // CHECK:STDOUT:   !members:
 // CHECK:STDOUT:     .Self = constants.%T2
@@ -7221,7 +7180,6 @@ class T2(G2:! type) {
 // CHECK:STDOUT:   %T1.F.type => constants.%T1.F.type.ebcc3f.1
 // CHECK:STDOUT:   %T1.F => constants.%T1.F.0df085.1
 // CHECK:STDOUT:   %T1.F.specific_fn.loc6_1.2 => constants.%T1.F.specific_fn.1e2a8c.1
-// CHECK:STDOUT:   %vtable_ptr.loc6_1.2 => constants.%T1.vtable_ptr.b5fc91.1
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @T1.F(constants.%G1) {
@@ -7257,7 +7215,6 @@ class T2(G2:! type) {
 // CHECK:STDOUT:   %T1.F.type => constants.%T1.F.type.ebcc3f.2
 // CHECK:STDOUT:   %T1.F => constants.%T1.F.0df085.2
 // CHECK:STDOUT:   %T1.F.specific_fn.loc6_1.2 => constants.%T1.F.specific_fn.1e2a8c.2
-// CHECK:STDOUT:   %vtable_ptr.loc6_1.2 => constants.%T1.vtable_ptr.b5fc91.2
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @T1.F(constants.%G2) {
@@ -7302,7 +7259,7 @@ class T2(G2:! type) {
 // CHECK:STDOUT:   %T1.as.Destroy.impl.Op: %T1.as.Destroy.impl.Op.type = struct_value () [symbolic]
 // CHECK:STDOUT:   %ptr.454: type = ptr_type <vtable> [concrete]
 // CHECK:STDOUT:   %T1.F.specific_fn.1e2a8c.1: <specific function> = specific_function %T1.F.0df085.1, @T1.F(%G1) [symbolic]
-// CHECK:STDOUT:   %T1.vtable_ptr.b5fc91.1: ref %ptr.454 = vtable_ptr @T1.vtable, @T1(%G1) [symbolic]
+// CHECK:STDOUT:   %T1.vtable_decl: ref %ptr.454 = vtable_decl @T1.vtable [concrete]
 // CHECK:STDOUT:   %struct_type.vptr: type = struct_type {.<vptr>: %ptr.454} [concrete]
 // CHECK:STDOUT:   %complete_type.513: <witness> = complete_type_witness %struct_type.vptr [concrete]
 // CHECK:STDOUT:   %require_complete.86d019.1: <witness> = require_complete_type %T1.18aea2.1 [symbolic]
@@ -7316,7 +7273,6 @@ class T2(G2:! type) {
 // CHECK:STDOUT:   %T1.F.0df085.2: %T1.F.type.ebcc3f.2 = struct_value () [symbolic]
 // CHECK:STDOUT:   %pattern_type.48ecf1.2: type = pattern_type %T1.18aea2.2 [symbolic]
 // CHECK:STDOUT:   %T1.F.specific_fn.1e2a8c.2: <specific function> = specific_function %T1.F.0df085.2, @T1.F(%G2) [symbolic]
-// CHECK:STDOUT:   %T1.vtable_ptr.b5fc91.2: ref %ptr.454 = vtable_ptr @T1.vtable, @T1(%G2) [symbolic]
 // CHECK:STDOUT:   %require_complete.86d019.2: <witness> = require_complete_type %T1.18aea2.2 [symbolic]
 // CHECK:STDOUT:   %T3.elem: type = unbound_element_type %T3, %T1.18aea2.2 [symbolic]
 // CHECK:STDOUT:   %Destroy.impl_witness.7f3: <witness> = impl_witness @T3.%Destroy.impl_witness_table, @T3.as.Destroy.impl(%G2) [symbolic]
@@ -7324,7 +7280,7 @@ class T2(G2:! type) {
 // CHECK:STDOUT:   %pattern_type.753: type = pattern_type %ptr.625 [symbolic]
 // CHECK:STDOUT:   %T3.as.Destroy.impl.Op.type: type = fn_type @T3.as.Destroy.impl.Op, @T3.as.Destroy.impl(%G2) [symbolic]
 // CHECK:STDOUT:   %T3.as.Destroy.impl.Op: %T3.as.Destroy.impl.Op.type = struct_value () [symbolic]
-// CHECK:STDOUT:   %T3.vtable_ptr: ref %ptr.454 = vtable_ptr @T3.vtable, @T3(%G2) [symbolic]
+// CHECK:STDOUT:   %T3.vtable_decl: ref %ptr.454 = vtable_decl @T3.vtable [concrete]
 // CHECK:STDOUT:   %struct_type.base: type = struct_type {.base: %T1.18aea2.2} [symbolic]
 // CHECK:STDOUT:   %complete_type.987: <witness> = complete_type_witness %struct_type.base [symbolic]
 // CHECK:STDOUT:   %Destroy.impl_witness.fb2: <witness> = impl_witness @T2.%Destroy.impl_witness_table, @T2.as.Destroy.impl(%G2) [symbolic]
@@ -7458,7 +7414,6 @@ class T2(G2:! type) {
 // CHECK:STDOUT:   %T1.F.type: type = fn_type @T1.F, @T1(%G1.loc4_15.1) [symbolic = %T1.F.type (constants.%T1.F.type.ebcc3f.1)]
 // CHECK:STDOUT:   %T1.F: @T1.%T1.F.type (%T1.F.type.ebcc3f.1) = struct_value () [symbolic = %T1.F (constants.%T1.F.0df085.1)]
 // CHECK:STDOUT:   %T1.F.specific_fn.loc6_1.2: <specific function> = specific_function %T1.F, @T1.F(%G1.loc4_15.1) [symbolic = %T1.F.specific_fn.loc6_1.2 (constants.%T1.F.specific_fn.1e2a8c.1)]
-// CHECK:STDOUT:   %vtable_ptr.loc6_1.2: ref %ptr.454 = vtable_ptr @T1.vtable, @T1(%G1.loc4_15.1) [symbolic = %vtable_ptr.loc6_1.2 (constants.%T1.vtable_ptr.b5fc91.1)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   class {
 // CHECK:STDOUT:     %T1.F.decl: @T1.%T1.F.type (%T1.F.type.ebcc3f.1) = fn_decl @T1.F [symbolic = @T1.%T1.F (constants.%T1.F.0df085.1)] {
@@ -7477,10 +7432,10 @@ class T2(G2:! type) {
 // CHECK:STDOUT:     %Destroy.impl_witness_table = impl_witness_table (@T1.as.Destroy.impl.%T1.as.Destroy.impl.Op.decl), @T1.as.Destroy.impl [concrete]
 // CHECK:STDOUT:     %Destroy.impl_witness: <witness> = impl_witness %Destroy.impl_witness_table, @T1.as.Destroy.impl(constants.%G1) [symbolic = @T1.as.Destroy.impl.%Destroy.impl_witness (constants.%Destroy.impl_witness.fdd)]
 // CHECK:STDOUT:     %T1.F.specific_fn.loc6_1.1: <specific function> = specific_function %T1.F.decl, @T1.F(constants.%G1) [symbolic = %T1.F.specific_fn.loc6_1.2 (constants.%T1.F.specific_fn.1e2a8c.1)]
-// CHECK:STDOUT:     %vtable_ptr.loc6_1.1: ref %ptr.454 = vtable_ptr @T1.vtable, @T1(constants.%G1) [symbolic = %vtable_ptr.loc6_1.2 (constants.%T1.vtable_ptr.b5fc91.1)]
+// CHECK:STDOUT:     %vtable_decl: ref %ptr.454 = vtable_decl @T1.vtable [concrete = constants.%T1.vtable_decl]
 // CHECK:STDOUT:     %complete_type: <witness> = complete_type_witness constants.%struct_type.vptr [concrete = constants.%complete_type.513]
 // CHECK:STDOUT:     complete_type_witness = %complete_type
-// CHECK:STDOUT:     vtable_ptr = %vtable_ptr.loc6_1.1
+// CHECK:STDOUT:     vtable_decl = %vtable_decl
 // CHECK:STDOUT:
 // CHECK:STDOUT:   !members:
 // CHECK:STDOUT:     .Self = constants.%T1.18aea2.1
@@ -7521,7 +7476,6 @@ class T2(G2:! type) {
 // CHECK:STDOUT:   %T1.F.type: type = fn_type @T1.F, @T1(%G2) [symbolic = %T1.F.type (constants.%T1.F.type.ebcc3f.2)]
 // CHECK:STDOUT:   %T1.F: @T3.%T1.F.type (%T1.F.type.ebcc3f.2) = struct_value () [symbolic = %T1.F (constants.%T1.F.0df085.2)]
 // CHECK:STDOUT:   %T1.F.specific_fn.loc11_3.2: <specific function> = specific_function %T1.F, @T1.F(%G2) [symbolic = %T1.F.specific_fn.loc11_3.2 (constants.%T1.F.specific_fn.1e2a8c.2)]
-// CHECK:STDOUT:   %vtable_ptr.loc11_3.2: ref %ptr.454 = vtable_ptr @T3.vtable, @T3(%G2) [symbolic = %vtable_ptr.loc11_3.2 (constants.%T3.vtable_ptr)]
 // CHECK:STDOUT:   %struct_type.base: type = struct_type {.base: @T3.%T1.loc10_24.2 (%T1.18aea2.2)} [symbolic = %struct_type.base (constants.%struct_type.base)]
 // CHECK:STDOUT:   %complete_type.loc11_3.2: <witness> = complete_type_witness %struct_type.base [symbolic = %complete_type.loc11_3.2 (constants.%complete_type.987)]
 // CHECK:STDOUT:
@@ -7535,10 +7489,10 @@ class T2(G2:! type) {
 // CHECK:STDOUT:     %Destroy.impl_witness_table = impl_witness_table (@T3.as.Destroy.impl.%T3.as.Destroy.impl.Op.decl), @T3.as.Destroy.impl [concrete]
 // CHECK:STDOUT:     %Destroy.impl_witness: <witness> = impl_witness %Destroy.impl_witness_table, @T3.as.Destroy.impl(constants.%G2) [symbolic = @T3.as.Destroy.impl.%Destroy.impl_witness (constants.%Destroy.impl_witness.7f3)]
 // CHECK:STDOUT:     %T1.F.specific_fn.loc11_3.1: <specific function> = specific_function constants.%T1.F.0df085.2, @T1.F(constants.%G2) [symbolic = %T1.F.specific_fn.loc11_3.2 (constants.%T1.F.specific_fn.1e2a8c.2)]
-// CHECK:STDOUT:     %vtable_ptr.loc11_3.1: ref %ptr.454 = vtable_ptr @T3.vtable, @T3(constants.%G2) [symbolic = %vtable_ptr.loc11_3.2 (constants.%T3.vtable_ptr)]
+// CHECK:STDOUT:     %vtable_decl: ref %ptr.454 = vtable_decl @T3.vtable [concrete = constants.%T3.vtable_decl]
 // CHECK:STDOUT:     %complete_type.loc11_3.1: <witness> = complete_type_witness constants.%struct_type.base [symbolic = %complete_type.loc11_3.2 (constants.%complete_type.987)]
 // CHECK:STDOUT:     complete_type_witness = %complete_type.loc11_3.1
-// CHECK:STDOUT:     vtable_ptr = %vtable_ptr.loc11_3.1
+// CHECK:STDOUT:     vtable_decl = %vtable_decl
 // CHECK:STDOUT:
 // CHECK:STDOUT:   !members:
 // CHECK:STDOUT:     .Self = constants.%T3
@@ -7611,7 +7565,6 @@ class T2(G2:! type) {
 // CHECK:STDOUT:   %T1.F.type => constants.%T1.F.type.ebcc3f.1
 // CHECK:STDOUT:   %T1.F => constants.%T1.F.0df085.1
 // CHECK:STDOUT:   %T1.F.specific_fn.loc6_1.2 => constants.%T1.F.specific_fn.1e2a8c.1
-// CHECK:STDOUT:   %vtable_ptr.loc6_1.2 => constants.%T1.vtable_ptr.b5fc91.1
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @T1.F(constants.%G1) {
@@ -7649,7 +7602,6 @@ class T2(G2:! type) {
 // CHECK:STDOUT:   %T1.F.type => constants.%T1.F.type.ebcc3f.2
 // CHECK:STDOUT:   %T1.F => constants.%T1.F.0df085.2
 // CHECK:STDOUT:   %T1.F.specific_fn.loc6_1.2 => constants.%T1.F.specific_fn.1e2a8c.2
-// CHECK:STDOUT:   %vtable_ptr.loc6_1.2 => constants.%T1.vtable_ptr.b5fc91.2
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @T1.F(constants.%G2) {

@@ -145,15 +145,15 @@ static auto BuildVtable(Context& context, Parse::ClassDefinitionId node_id,
   // Get some base class/type/specific info.
   if (base_class_type) {
     auto& base_class_info = context.classes().Get(base_class_type->class_id);
-    auto base_vtable_ptr_inst_id = base_class_info.vtable_ptr_id;
-    if (base_vtable_ptr_inst_id.has_value()) {
-      LoadImportRef(context, base_vtable_ptr_inst_id);
+    auto base_vtable_decl_inst_id = base_class_info.vtable_decl_id;
+    if (base_vtable_decl_inst_id.has_value()) {
+      LoadImportRef(context, base_vtable_decl_inst_id);
       auto canonical_base_vtable_inst_id =
-          context.constant_values().GetConstantInstId(base_vtable_ptr_inst_id);
-      const auto& base_vtable_ptr_inst =
-          context.insts().GetAs<SemIR::VtablePtr>(
+          context.constant_values().GetConstantInstId(base_vtable_decl_inst_id);
+      const auto& base_vtable_decl_inst =
+          context.insts().GetAs<SemIR::VtableDecl>(
               canonical_base_vtable_inst_id);
-      base_vtable_id = base_vtable_ptr_inst.vtable_id;
+      base_vtable_id = base_vtable_decl_inst.vtable_id;
       base_class_specific_id = base_class_type->specific_id;
     }
   }
@@ -303,15 +303,9 @@ static auto CheckCompleteClassType(
   if (class_info.is_dynamic) {
     auto vtable_id = BuildVtable(context, node_id, class_id, base_class_type,
                                  vtable_contents);
-
     auto vptr_type_id = GetPointerType(context, SemIR::VtableType::TypeInstId);
-    auto generic_id = class_info.generic_id;
-    auto self_specific_id = context.generics().GetSelfSpecific(generic_id);
-    class_info.vtable_ptr_id =
-        AddInst<SemIR::VtablePtr>(context, node_id,
-                                  {.type_id = vptr_type_id,
-                                   .vtable_id = vtable_id,
-                                   .specific_id = self_specific_id});
+    class_info.vtable_decl_id = AddInst<SemIR::VtableDecl>(
+        context, node_id, {.type_id = vptr_type_id, .vtable_id = vtable_id});
   }
 
   auto struct_type_id = GetStructType(
