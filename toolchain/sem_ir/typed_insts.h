@@ -1870,7 +1870,7 @@ struct VtablePtr {
   static constexpr auto Kind = InstKind::VtablePtr.Define<Parse::NodeId>(
       {.ir_name = "vtable_ptr", .constant_kind = InstConstantKind::Always});
   TypeId type_id;
-  VtableId vtable_id;
+  InstId vtable_decl_id;
   SpecificId specific_id;
 };
 
