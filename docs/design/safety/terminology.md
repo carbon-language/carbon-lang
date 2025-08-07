@@ -10,6 +10,10 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
 ## Table of contents
 
+-   [Core Terminology](#core-terminology)
+-   [Vulnerability Terminology](#vulnerability-terminology)
+-   [Memory Safety Specifics](#memory-safety-specifics)
+
 <!-- tocstop -->
 
 ## Core Terminology
@@ -47,9 +51,9 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
 -   <a name="vuln">**Vulnerability** or **security vulnerability**</a>: A subset
     of bugs that creates the possibility for a malicious actor to subvert a
-    program's intended behavior in a way that violates a security policy (e.g.,
-    confidentiality, integrity, availability). Vulnerabilities are often
-    exploitable manifestations of underlying bugs.
+    program's intended behavior in a way that violates a security policy (for
+    example, confidentiality, integrity, availability). Vulnerabilities are
+    often exploitable manifestations of underlying bugs.
 -   <a name="defense">**Vulnerability defense**</a>: The set of strategies and
     techniques employed to reduce the risks posed by vulnerabilities arising
     from bugs. These strategies operate at different levels and have varying
@@ -89,7 +93,7 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
     A computing platform or execution environment that provides mechanisms to
     prevent memory safety bugs in programs running on it from becoming
     vulnerabilities. This is a _systems_ path to achieving memory safety by
-    providing the well-defined and predictable behavior via the execution
+    providing the well-defined and predictable behavior by way of the execution
     environment.
 -   <a name="memory-safe-language">**Memory safe language**</a>: A programming
     language with sufficient defenses against memory safety bugs for them to not

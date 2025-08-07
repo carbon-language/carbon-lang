@@ -11,6 +11,13 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 ## Table of contents
 
 -   [Overview](#overview)
+-   [Safe and unsafe code](#safe-and-unsafe-code)
+-   [Safety modes](#safety-modes)
+-   [Memory safety model](#memory-safety-model)
+    -   [Data races versus unsynchronized temporal safety](#data-races-versus-unsynchronized-temporal-safety)
+-   [Safe library ecosystem](#safe-library-ecosystem)
+-   [Build modes](#build-modes)
+-   [References](#references)
 
 <!-- tocstop -->
 
@@ -108,7 +115,7 @@ semantics to improve the ergonomics in Carbon.
 However, Carbon and Rust will have substantial differences in the _details_ of
 how they approach both temporal and data-race safety.
 
-### Data races vs. unsynchronized temporal safety
+### Data races versus unsynchronized temporal safety
 
 Carbon has the option of distinguishing between two similar but importantly
 different classes of bugs: data races and unsynchronized temporal safety
@@ -140,7 +147,7 @@ currently investing a massive amount of effort to build out a sufficient
 ecosystem of such software using Rust, and it is critical that Carbon does not
 impede, slow down, or require duplicating that ecosystem.
 
-**Carbon's strategy for safe and generally re-usable libraries is to leverage
+**Carbon's strategy for safe and generally reusable libraries is to leverage
 Rust libraries through interop.** This is a major motivating reason for seamless
 and safe Rust interop. The Carbon project will work to avoid creating
 duplication between the growing Rust library ecosystem and any future Carbon
