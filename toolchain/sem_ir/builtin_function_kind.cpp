@@ -530,9 +530,9 @@ constexpr BuiltinInfo FloatDivAssign = {
     "float.div_assign",
     ValidateSignature<auto(PointerTo<FloatT>, FloatT)->NoReturn>};
 
-// Converts from a legacy float literal to a sized float type.
-constexpr BuiltinInfo FloatFromLegacyFloat = {
-    "float.from_legacy_float",
+// Converts from a float literal to a sized float type.
+constexpr BuiltinInfo FloatConvertChecked = {
+    "float.convert_checked",
     ValidateSignature<auto(LegacyFloat)->AnySizedFloat>};
 
 // "float.eq": float equality comparison.
@@ -646,6 +646,7 @@ auto BuiltinFunctionKind::IsCompTimeOnly(const File& sem_ir,
                                          TypeId return_type_id) const -> bool {
   switch (*this) {
     case CharConvertChecked:
+    case FloatConvertChecked:
     case IntConvertChecked:
       // Checked conversions are compile-time only.
       return true;

@@ -1635,6 +1635,10 @@ static auto MakeConstantForBuiltinCall(EvalContext& eval_context,
       return context.constant_values().Get(SemIR::CharLiteralType::TypeInstId);
     }
 
+    case SemIR::BuiltinFunctionKind::FloatLiteralMakeType: {
+      return context.constant_values().Get(SemIR::LegacyFloatType::TypeInstId);
+    }
+
     case SemIR::BuiltinFunctionKind::IntLiteralMakeType: {
       return context.constant_values().Get(SemIR::IntLiteralType::TypeInstId);
     }
@@ -1735,6 +1739,13 @@ static auto MakeConstantForBuiltinCall(EvalContext& eval_context,
       }
       return PerformBuiltinIntComparison(context, builtin_kind, arg_ids[0],
                                          arg_ids[1], call.type_id);
+    }
+
+    // Floating-point conversions.
+    case SemIR::BuiltinFunctionKind::FloatConvertChecked: {
+      // TODO: Perform a conversion if necessary. For now, all FloatValues are
+      // represented as double-precision APFloats, so no conversion is needed.
+      return context.constant_values().Get(arg_ids[0]);
     }
 
     // Unary float -> float operations.

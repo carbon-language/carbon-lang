@@ -4,10 +4,4 @@
 
 package Core library "prelude/types/float_literal";
 
-import library "prelude/destroy";
-
-private fn MakeFloatLiteral() -> type = "float_literal.make_type";
-
-class FloatLiteral() {
-  adapt MakeFloatLiteral();
-}
+fn FloatLiteral() -> type = "float_literal.make_type";
