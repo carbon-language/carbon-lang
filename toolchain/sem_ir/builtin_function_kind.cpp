@@ -497,6 +497,26 @@ constexpr BuiltinInfo FloatMul = {
 constexpr BuiltinInfo FloatDiv = {
     "float.div", ValidateSignature<auto(FloatT, FloatT)->FloatT>};
 
+// "float.add_assign": float in-place addition.
+constexpr BuiltinInfo FloatAddAssign = {
+    "float.add_assign",
+    ValidateSignature<auto(PointerTo<FloatT>, FloatT)->NoReturn>};
+
+// "float.sub_assign": float in-place subtraction.
+constexpr BuiltinInfo FloatSubAssign = {
+    "float.sub_assign",
+    ValidateSignature<auto(PointerTo<FloatT>, FloatT)->NoReturn>};
+
+// "float.mul_assign": float in-place multiplication.
+constexpr BuiltinInfo FloatMulAssign = {
+    "float.mul_assign",
+    ValidateSignature<auto(PointerTo<FloatT>, FloatT)->NoReturn>};
+
+// "float.div_assign": float in-place division.
+constexpr BuiltinInfo FloatDivAssign = {
+    "float.div_assign",
+    ValidateSignature<auto(PointerTo<FloatT>, FloatT)->NoReturn>};
+
 // "float.eq": float equality comparison.
 constexpr BuiltinInfo FloatEq = {"float.eq",
                                  ValidateSignature<auto(FloatT, FloatT)->Bool>};
