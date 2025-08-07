@@ -133,15 +133,21 @@ struct AnyInt {
   }
 };
 
+// Constraint that requires the type to be a sized floating-point type.
+struct AnySizedFloat {
+  static auto Check(const File& sem_ir, ValidateState& /*state*/,
+                    TypeId type_id) -> bool {
+    return sem_ir.types().Is<FloatType>(type_id);
+  }
+};
+
 // Constraint that requires the type to be a float type.
 struct AnyFloat {
   static auto Check(const File& sem_ir, ValidateState& state, TypeId type_id)
       -> bool {
-    if (BuiltinType<LegacyFloatType::TypeInstId>::Check(sem_ir, state,
-                                                        type_id)) {
-      return true;
-    }
-    return sem_ir.types().Is<FloatType>(type_id);
+    return AnySizedFloat::Check(sem_ir, state, type_id) ||
+           BuiltinType<LegacyFloatType::TypeInstId>::Check(sem_ir, state,
+                                                           type_id);
   }
 };
 
