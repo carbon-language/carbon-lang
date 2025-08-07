@@ -340,12 +340,13 @@ auto DirRef::Rmtree(const std::filesystem::path& path)
       auto& [parent, parent_it] = dir_stack.back();
       CARBON_CHECK(parent_it != parent.end());
       auto rmdir_result = parent.Rmdir(parent_it->name());
-      CARBON_CHECK(rmdir_result.ok() || !rmdir_result.error().not_empty(),
-                   "{0}", rmdir_result.error());
-      if (!rmdir_result.ok()) {
-        return rmdir_result;
+      // If this succeeded or something else removed the directory, keep going.
+      if (rmdir_result.ok() || rmdir_result.error().no_entity()) {
+        continue;
       }
-      continue;
+      // Otherwise, something went fundamentally wrong with removing the
+      // directory, propagate that.
+      return rmdir_result;
     }
 
     const DirRef::Reader::Entry& entry = *current_it;
