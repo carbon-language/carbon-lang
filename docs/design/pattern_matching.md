@@ -153,24 +153,24 @@ If the pattern syntax uses `:` it is a _runtime binding pattern_. If it uses
 pattern_ or a _template binding pattern_, depending on whether it is prefixed
 with `template`.
 
-The scrutinee expression is expected to have a
-[primitive form](values.md#expression-forms) with the following components, and
-is converted as needed to satisfy that expectation:
+The binding declared by a binding pattern has a
+[primitive form](values.md#expression-forms) with the following components:
 
--   The type is expected to be _expression_.
--   The category is expected to be "value" if the pattern is a value binding
-    pattern, "owning durable reference" if it's a variable binding pattern, or
-    "non-owning durable reference" if it's a non-variable reference binding
-    pattern.
--   The phase is expected to be "runtime", "symbolic", or "template" depending
-    on whether the pattern is a runtime, symbolic, or template binding pattern.
+-   The type is _expression_.
+-   The category is "value" if the pattern is a value binding pattern, "owning
+    durable reference" if it's a variable binding pattern, or "non-owning
+    durable reference" if it's a non-variable reference binding pattern.
+-   The phase is "runtime", "symbolic", or "template" depending on whether the
+    pattern is a runtime, symbolic, or template binding pattern.
 
-The binding is _bound_ to the result of these conversions. This makes a runtime
-or template binding an alias for the converted scrutinee expression, with the
-same form and value. Symbolic bindings are more complex: the binding will have
-the same type, category, and phase as the converted scrutinee expression, but
-its constant value is an opaque symbol introduced by the binding, which the type
-system knows to be equal to the converted scrutinee expression.
+During pattern matching, the scrutinee is converted as needed to have the same
+form, and then the binding is _bound_ to the result of these conversions. This
+makes a runtime or template binding an alias for the converted scrutinee
+expression, with the same form and value. Symbolic bindings are more complex:
+the binding will have the same type, category, and phase as the converted
+scrutinee expression, but its constant value is an opaque symbol introduced by
+the binding, which the type system knows to be equal to the converted scrutinee
+expression.
 
 ```carbon
 fn F() -> i32 {
