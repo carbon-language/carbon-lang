@@ -20,17 +20,11 @@ namespace Carbon::Check {
 
 // Returns the C++ thunk mangled name given the callee function.
 static auto GenerateThunkMangledName(
-    clang::ASTContext& ast_context,
+    clang::MangleContext& mangle_context,
     const clang::FunctionDecl& callee_function_decl) -> std::string {
   RawStringOstream mangled_name_stream;
-  {
-    // TODO: Create `MangleContext` once.
-    std::unique_ptr<clang::MangleContext> mangle_context(
-        ast_context.createMangleContext());
-    mangle_context->mangleName(clang::GlobalDecl(&callee_function_decl),
-                               mangled_name_stream);
-  }
-
+  mangle_context.mangleName(clang::GlobalDecl(&callee_function_decl),
+                            mangled_name_stream);
   mangled_name_stream << ".carbon_thunk";
 
   return mangled_name_stream.TakeStr();
@@ -185,9 +179,9 @@ static auto BuildThunkParameters(
 // Returns the thunk function declaration given the callee function and the
 // thunk parameter types.
 static auto CreateThunkFunctionDecl(
-    clang::ASTContext& ast_context,
-    const clang::FunctionDecl& callee_function_decl,
+    Context& context, const clang::FunctionDecl& callee_function_decl,
     llvm::ArrayRef<clang::QualType> thunk_param_types) -> clang::FunctionDecl* {
+  clang::ASTContext& ast_context = context.ast_context();
   clang::SourceLocation clang_loc = callee_function_decl.getLocation();
 
   clang::IdentifierInfo& identifier_info = ast_context.Idents.get(
@@ -216,7 +210,9 @@ static auto CreateThunkFunctionDecl(
 
   // Set asm("<callee function mangled name>.carbon_thunk").
   thunk_function_decl->addAttr(clang::AsmLabelAttr::CreateImplicit(
-      ast_context, GenerateThunkMangledName(ast_context, callee_function_decl),
+      ast_context,
+      GenerateThunkMangledName(*context.sem_ir().cpp_mangle_context(),
+                               callee_function_decl),
       clang_loc));
 
   return thunk_function_decl;
@@ -278,8 +274,6 @@ static auto BuildThunkBody(clang::Sema& sema,
 
 auto BuildCppThunk(Context& context, const SemIR::Function& callee_function)
     -> clang::FunctionDecl* {
-  clang::ASTContext& ast_context = context.ast_context();
-
   clang::FunctionDecl* callee_function_decl =
       context.sem_ir()
           .clang_decls()
@@ -289,9 +283,9 @@ auto BuildCppThunk(Context& context, const SemIR::Function& callee_function)
 
   // Build the thunk function declaration.
   auto [thunk_param_types, param_type_changed] =
-      BuildThunkParameterTypes(ast_context, *callee_function_decl);
+      BuildThunkParameterTypes(context.ast_context(), *callee_function_decl);
   clang::FunctionDecl* thunk_function_decl = CreateThunkFunctionDecl(
-      ast_context, *callee_function_decl, thunk_param_types);
+      context, *callee_function_decl, thunk_param_types);
 
   // Build the thunk function body.
   clang::Sema& sema = context.sem_ir().cpp_ast()->getSema();
