@@ -1525,6 +1525,10 @@ static auto MakeConstantForBuiltinCall(EvalContext& eval_context,
     case SemIR::BuiltinFunctionKind::PrintChar:
     case SemIR::BuiltinFunctionKind::PrintInt:
     case SemIR::BuiltinFunctionKind::ReadChar:
+    case SemIR::BuiltinFunctionKind::FloatAddAssign:
+    case SemIR::BuiltinFunctionKind::FloatSubAssign:
+    case SemIR::BuiltinFunctionKind::FloatMulAssign:
+    case SemIR::BuiltinFunctionKind::FloatDivAssign:
     case SemIR::BuiltinFunctionKind::IntSAddAssign:
     case SemIR::BuiltinFunctionKind::IntSSubAssign:
     case SemIR::BuiltinFunctionKind::IntSMulAssign:
