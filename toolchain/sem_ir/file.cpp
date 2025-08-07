@@ -152,7 +152,7 @@ auto File::CollectMemUsage(MemUsage& mem_usage, llvm::StringRef label) const
 
 auto File::set_cpp_ast(clang::ASTUnit* cpp_ast) -> void {
   cpp_ast_ = cpp_ast;
-  cpp_mangle_context_.reset(cpp_ast->getASTContext().createMangleContext());
+  clang_mangle_context_.reset(cpp_ast->getASTContext().createMangleContext());
 }
 
 }  // namespace Carbon::SemIR

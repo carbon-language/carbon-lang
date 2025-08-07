@@ -200,8 +200,8 @@ class File : public Printable<File> {
   // pointer in the constructor and remove this function. This is part of
   // https://github.com/carbon-language/carbon-lang/issues/4666
   auto set_cpp_ast(clang::ASTUnit* cpp_ast) -> void;
-  auto cpp_mangle_context() -> clang::MangleContext* {
-    return cpp_mangle_context_.get();
+  auto clang_mangle_context() -> clang::MangleContext* {
+    return clang_mangle_context_.get();
   }
   auto clang_decls() -> ClangDeclStore& { return clang_decls_; }
   auto clang_decls() const -> const ClangDeclStore& { return clang_decls_; }
@@ -339,7 +339,7 @@ class File : public Printable<File> {
 
   // The Clang mangle context for the target in the ASTContext. Initialized
   // together with `cpp_ast_`.
-  std::unique_ptr<clang::MangleContext> cpp_mangle_context_;
+  std::unique_ptr<clang::MangleContext> clang_mangle_context_;
 
   // Clang AST declarations pointing to the AST and their mapped Carbon
   // instructions. When calling `Lookup()`, `inst_id` is ignored. `Add()` will

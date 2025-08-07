@@ -211,7 +211,7 @@ static auto CreateThunkFunctionDecl(
   // Set asm("<callee function mangled name>.carbon_thunk").
   thunk_function_decl->addAttr(clang::AsmLabelAttr::CreateImplicit(
       ast_context,
-      GenerateThunkMangledName(*context.sem_ir().cpp_mangle_context(),
+      GenerateThunkMangledName(*context.sem_ir().clang_mangle_context(),
                                callee_function_decl),
       clang_loc));
 
