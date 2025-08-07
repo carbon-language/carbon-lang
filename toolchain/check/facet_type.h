@@ -100,8 +100,8 @@ auto ResolveFacetTypeRewriteConstraints(
 //
 // The `self_type_id` is either a facet type (as `FacetType`) or `type` (as
 // `TypeType`).
-auto MakePeriodSelfFacetValue(Context& context, SemIR::TypeId self_type_id)
-    -> SemIR::InstId;
+auto MakePeriodSelfFacetValue(Context& context, SemIR::TypeId self_type_id,
+                              int32_t period_self_distance) -> SemIR::InstId;
 
 }  // namespace Carbon::Check
 

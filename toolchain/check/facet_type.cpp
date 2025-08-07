@@ -614,11 +614,12 @@ auto ResolveFacetTypeRewriteConstraints(
   return true;
 }
 
-auto MakePeriodSelfFacetValue(Context& context, SemIR::TypeId self_type_id)
-    -> SemIR::InstId {
+auto MakePeriodSelfFacetValue(Context& context, SemIR::TypeId self_type_id,
+                              int32_t period_self_distance) -> SemIR::InstId {
   auto entity_name_id = context.entity_names().AddCanonical({
       .name_id = SemIR::NameId::PeriodSelf,
       .parent_scope_id = context.scope_stack().PeekNameScopeId(),
+      .period_self_distance = period_self_distance,
   });
   auto inst_id = AddInst(
       context, SemIR::LocIdAndInst::NoLoc<SemIR::BindSymbolicName>({

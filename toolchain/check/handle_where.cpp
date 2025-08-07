@@ -55,7 +55,9 @@ auto HandleParseNode(Context& context, Parse::WhereOperandId node_id) -> bool {
   // Introduce `.Self` as a symbolic binding. Its type is the value of the
   // expression to the left of `where`, so `MyInterface` in the example above.
   auto period_self_inst_id =
-      MakePeriodSelfFacetValue(context, self_without_constraints_type_id);
+      MakePeriodSelfFacetValue(context, self_without_constraints_type_id,
+                               // TODO: Give these a real distance.
+                               /*period_self_distance=*/0);
 
   // Save the `.Self` symbolic binding on the node stack. It will become the
   // first argument to the `WhereExpr` instruction.

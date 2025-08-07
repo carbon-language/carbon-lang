@@ -233,7 +233,8 @@ auto HandleParseNode(Context& context,
   // compile time binding. This is popped when handling the
   // CompileTimeBindingPatternId.
   context.scope_stack().PushForSameRegion();
-  MakePeriodSelfFacetValue(context, SemIR::TypeType::TypeId);
+  MakePeriodSelfFacetValue(context, SemIR::TypeType::TypeId,
+                           /*period_self_distance=*/0);
   return true;
 }
 

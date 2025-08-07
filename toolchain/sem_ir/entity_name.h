@@ -55,6 +55,9 @@ struct EntityName : public Printable<EntityName> {
   int32_t bind_index_value : 31 = CompileTimeBindIndex::None.index;
   // Whether this binding is a template parameter.
   bool is_template : 1 = false;
+  // The number of `where` keywords between a `.Self` binding in a facet type
+  // a facet value being substituted into the facet type.
+  int32_t period_self_distance = 0;
 };
 
 // Value store for EntityName. In addition to the regular ValueStore
@@ -63,12 +66,13 @@ struct EntityNameStore : public ValueStore<EntityNameId, EntityName> {
  public:
   // Adds an entity name for a symbolic binding.
   auto AddSymbolicBindingName(NameId name_id, NameScopeId parent_scope_id,
-                              CompileTimeBindIndex bind_index, bool is_template)
-      -> EntityNameId {
+                              CompileTimeBindIndex bind_index, bool is_template,
+                              int32_t period_self_distance) -> EntityNameId {
     return Add({.name_id = name_id,
                 .parent_scope_id = parent_scope_id,
                 .bind_index_value = bind_index.index,
-                .is_template = is_template});
+                .is_template = is_template,
+                .period_self_distance = period_self_distance});
   }
 
   // Convert an `EntityName` to a canonical ID. All calls to this with

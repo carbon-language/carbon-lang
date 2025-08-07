@@ -54,7 +54,8 @@ auto AddBindingPattern(Context& context, SemIR::LocId name_loc,
       name_id, context.scope_stack().PeekNameScopeId(),
       is_generic ? context.scope_stack().AddCompileTimeBinding()
                  : SemIR::CompileTimeBindIndex::None,
-      is_template);
+      is_template,
+      /*period_self_distance=*/0);
 
   auto bind_id = SemIR::InstId::None;
   if (is_generic) {
