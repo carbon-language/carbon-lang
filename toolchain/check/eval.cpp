@@ -989,6 +989,20 @@ static auto MakeIntTypeResult(Context& context, SemIR::LocId loc_id,
   return MakeConstantResult(context, result, phase);
 }
 
+// Forms a constant float type as an evaluation result. Requires that width_id is
+// constant.
+static auto MakeFloatTypeResult(Context& context, SemIR::LocId loc_id,
+                                SemIR::InstId width_id, Phase phase)
+    -> SemIR::ConstantId {
+  auto result = SemIR::FloatType{
+      .type_id = GetSingletonType(context, SemIR::TypeType::TypeInstId),
+      .bit_width_id = width_id};
+  if (!ValidateFloatType(context, loc_id, result)) {
+    return SemIR::ErrorInst::ConstantId;
+  }
+  return MakeConstantResult(context, result, phase);
+}
+
 // Performs a conversion between integer types, truncating if the value doesn't
 // fit in the destination type.
 static auto PerformIntConvert(Context& context, SemIR::InstId arg_id,
@@ -1636,14 +1650,7 @@ static auto MakeConstantForBuiltinCall(EvalContext& eval_context,
     }
 
     case SemIR::BuiltinFunctionKind::FloatMakeType: {
-      // TODO: Support a symbolic constant width.
-      if (phase != Phase::Concrete) {
-        break;
-      }
-      if (!ValidateFloatBitWidth(context, loc_id, arg_ids[0])) {
-        return SemIR::ErrorInst::ConstantId;
-      }
-      return context.constant_values().Get(SemIR::LegacyFloatType::TypeInstId);
+      return MakeFloatTypeResult(context, loc_id, arg_ids[0], phase);
     }
 
     case SemIR::BuiltinFunctionKind::BoolMakeType: {

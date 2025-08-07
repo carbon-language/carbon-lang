@@ -691,17 +691,6 @@ struct FieldDecl {
   ElementIndex index;
 };
 
-// A floating point value.
-struct FloatValue {
-  static constexpr auto Kind =
-      InstKind::FloatValue.Define<Parse::RealLiteralId>(
-          {.ir_name = "float_value",
-           .constant_kind = InstConstantKind::Always});
-
-  TypeId type_id;
-  FloatId float_id;
-};
-
 // A floating point type.
 struct FloatType {
   static constexpr auto Kind = InstKind::FloatType.Define<Parse::NoneNodeId>(
@@ -715,6 +704,17 @@ struct FloatType {
   // TODO: Consider adding a more compact way of representing either a small
   // float bit width or an inst_id.
   InstId bit_width_id;
+};
+
+// A floating point value.
+struct FloatValue {
+  static constexpr auto Kind =
+      InstKind::FloatValue.Define<Parse::RealLiteralId>(
+          {.ir_name = "float_value",
+           .constant_kind = InstConstantKind::Always});
+
+  TypeId type_id;
+  FloatId float_id;
 };
 
 // A function declaration.
