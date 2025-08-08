@@ -9,9 +9,6 @@
 // TIP:   bazel test //toolchain/testing:file_test --test_arg=--file_tests=toolchain/check/testdata/basics/type_literals.carbon
 // TIP: To dump output, run:
 // TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/check/testdata/basics/type_literals.carbon
-// CHECK:STDERR: min_prelude/parts/float.carbon:11:9: error: bit width must be 64 [CompileTimeFloatBitWidth]
-// CHECK:STDERR:   adapt MakeFloat(N);
-// CHECK:STDERR:         ^~~~~~~~~~~~
 
 // --- iN.carbon
 library "[[@TEST_NAME]]";
@@ -40,11 +37,31 @@ library "[[@TEST_NAME]]";
 var test_f64: f64;
 //@dump-sem-ir-end
 
-// --- fail_fN_todo_unsupported.carbon
+// --- fail_put_first_error_here.carbon
 library "[[@TEST_NAME]]";
 
+// Intentionally add an error here so that the first error message for the below
+// file shows up here rather than at the start of this file.
+// CHECK:STDERR: fail_put_first_error_here.carbon:[[@LINE+4]]:8: error: name `error` not found [NameNotFound]
+// CHECK:STDERR: var v: error;
+// CHECK:STDERR:        ^~~~~
+// CHECK:STDERR:
+var v: error;
+
+// --- fail_todo_fN_unsupported.carbon
+library "[[@TEST_NAME]]";
+
+// CHECK:STDERR: fail_todo_fN_unsupported.carbon:[[@LINE+7]]:8: error: name `error` not found [NameNotFound]
+// CHECK:STDERR: var v: error;
+// CHECK:STDERR:        ^~~~~
+// CHECK:STDERR:
+// CHECK:STDERR: min_prelude/parts/float.carbon:11:9: error: bit width must be 64 [CompileTimeFloatBitWidth]
+// CHECK:STDERR:   adapt MakeFloat(N);
+// CHECK:STDERR:         ^~~~~~~~~~~~
+var v: error;
+
 // TODO: Some or all of these should eventually work.
-// CHECK:STDERR: fail_fN_todo_unsupported.carbon:[[@LINE+7]]:15: note: in `f16` used here [ResolvingSpecificHere]
+// CHECK:STDERR: fail_todo_fN_unsupported.carbon:[[@LINE+7]]:15: note: in `f16` used here [ResolvingSpecificHere]
 // CHECK:STDERR: var test_f16: f16;
 // CHECK:STDERR:               ^~~
 // CHECK:STDERR:
@@ -52,7 +69,7 @@ library "[[@TEST_NAME]]";
 // CHECK:STDERR:   adapt MakeFloat(N);
 // CHECK:STDERR:         ^~~~~~~~~~~~
 var test_f16: f16;
-// CHECK:STDERR: fail_fN_todo_unsupported.carbon:[[@LINE+7]]:15: note: in `f32` used here [ResolvingSpecificHere]
+// CHECK:STDERR: fail_todo_fN_unsupported.carbon:[[@LINE+7]]:15: note: in `f32` used here [ResolvingSpecificHere]
 // CHECK:STDERR: var test_f32: f32;
 // CHECK:STDERR:               ^~~
 // CHECK:STDERR:
@@ -60,7 +77,7 @@ var test_f16: f16;
 // CHECK:STDERR:   adapt MakeFloat(N);
 // CHECK:STDERR:         ^~~~~~~~~~~~
 var test_f32: f32;
-// CHECK:STDERR: fail_fN_todo_unsupported.carbon:[[@LINE+4]]:16: note: in `f128` used here [ResolvingSpecificHere]
+// CHECK:STDERR: fail_todo_fN_unsupported.carbon:[[@LINE+4]]:16: note: in `f128` used here [ResolvingSpecificHere]
 // CHECK:STDERR: var test_f128: f128;
 // CHECK:STDERR:                ^~~~
 // CHECK:STDERR:

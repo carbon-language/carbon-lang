@@ -151,9 +151,6 @@ struct AnyFloat {
   }
 };
 
-// Constraint that requires the type to be a legacy float type.
-using LegacyFloat = BuiltinType<LegacyFloatType::TypeInstId>;
-
 // Constraint that requires the type to be the type type.
 using Type = BuiltinType<TypeType::TypeInstId>;
 
@@ -259,6 +256,10 @@ using SizedIntU = TypeParam<1, AnySizedInt>;
 // Convenience name used in the builtin type signatures below for a first
 // generic type parameter that is constrained to be an float type.
 using FloatT = TypeParam<0, AnyFloat>;
+
+// Convenience name used in the builtin type signatures below for a second
+// generic type parameter that is constrained to be an float type.
+using FloatU = TypeParam<1, AnyFloat>;
 
 // Not a builtin function.
 constexpr BuiltinInfo None = {"", nullptr};
@@ -530,10 +531,10 @@ constexpr BuiltinInfo FloatDivAssign = {
     "float.div_assign",
     ValidateSignature<auto(PointerTo<FloatT>, FloatT)->NoReturn>};
 
-// Converts from a float literal to a sized float type.
+// Converts between floating-point types, with a diagnostic if the value doesn't
+// fit.
 constexpr BuiltinInfo FloatConvertChecked = {
-    "float.convert_checked",
-    ValidateSignature<auto(LegacyFloat)->AnySizedFloat>};
+    "float.convert_checked", ValidateSignature<auto(FloatT)->FloatU>};
 
 // "float.eq": float equality comparison.
 constexpr BuiltinInfo FloatEq = {"float.eq",
