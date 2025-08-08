@@ -26,7 +26,6 @@ library "[[@TEST_NAME]]";
 import Cpp library "short_param.h";
 
 fn F() {
-  // TODO: Find a way to test the full C++ thunk AST.
   Cpp.foo(1 as i16);
 }
 
@@ -168,21 +167,21 @@ fn F() {
 // CHECK:STDOUT:   %int_16: Core.IntLiteral = int_value 16 [concrete = constants.%int_16]
 // CHECK:STDOUT:   %i16: type = class_type @Int, @Int(constants.%int_16) [concrete = constants.%i16]
 // CHECK:STDOUT:   %impl.elem0: %.91d = impl_witness_access constants.%As.impl_witness.0ef, element0 [concrete = constants.%Core.IntLiteral.as.As.impl.Convert.489]
-// CHECK:STDOUT:   %bound_method.loc8_13.1: <bound method> = bound_method %int_1, %impl.elem0 [concrete = constants.%Core.IntLiteral.as.As.impl.Convert.bound]
+// CHECK:STDOUT:   %bound_method.loc7_13.1: <bound method> = bound_method %int_1, %impl.elem0 [concrete = constants.%Core.IntLiteral.as.As.impl.Convert.bound]
 // CHECK:STDOUT:   %specific_fn: <specific function> = specific_function %impl.elem0, @Core.IntLiteral.as.As.impl.Convert(constants.%int_16) [concrete = constants.%Core.IntLiteral.as.As.impl.Convert.specific_fn]
-// CHECK:STDOUT:   %bound_method.loc8_13.2: <bound method> = bound_method %int_1, %specific_fn [concrete = constants.%bound_method]
-// CHECK:STDOUT:   %Core.IntLiteral.as.As.impl.Convert.call: init %i16 = call %bound_method.loc8_13.2(%int_1) [concrete = constants.%int_1.f90]
-// CHECK:STDOUT:   %.loc8_13.1: %i16 = value_of_initializer %Core.IntLiteral.as.As.impl.Convert.call [concrete = constants.%int_1.f90]
-// CHECK:STDOUT:   %.loc8_13.2: %i16 = converted %int_1, %.loc8_13.1 [concrete = constants.%int_1.f90]
-// CHECK:STDOUT:   %.loc8_19.1: ref %i16 = temporary_storage
-// CHECK:STDOUT:   %.loc8_19.2: init %i16 = initialize_from %.loc8_13.2 to %.loc8_19.1 [concrete = constants.%int_1.f90]
-// CHECK:STDOUT:   %addr.loc8_19.1: %ptr.251 = addr_of %.loc8_19.1
-// CHECK:STDOUT:   %foo__carbon_thunk.call: init %empty_tuple.type = call imports.%foo__carbon_thunk.decl(%addr.loc8_19.1)
-// CHECK:STDOUT:   %T.as.Destroy.impl.Op.bound: <bound method> = bound_method %.loc8_19.1, constants.%T.as.Destroy.impl.Op.507
+// CHECK:STDOUT:   %bound_method.loc7_13.2: <bound method> = bound_method %int_1, %specific_fn [concrete = constants.%bound_method]
+// CHECK:STDOUT:   %Core.IntLiteral.as.As.impl.Convert.call: init %i16 = call %bound_method.loc7_13.2(%int_1) [concrete = constants.%int_1.f90]
+// CHECK:STDOUT:   %.loc7_13.1: %i16 = value_of_initializer %Core.IntLiteral.as.As.impl.Convert.call [concrete = constants.%int_1.f90]
+// CHECK:STDOUT:   %.loc7_13.2: %i16 = converted %int_1, %.loc7_13.1 [concrete = constants.%int_1.f90]
+// CHECK:STDOUT:   %.loc7_19.1: ref %i16 = temporary_storage
+// CHECK:STDOUT:   %.loc7_19.2: init %i16 = initialize_from %.loc7_13.2 to %.loc7_19.1 [concrete = constants.%int_1.f90]
+// CHECK:STDOUT:   %addr.loc7_19.1: %ptr.251 = addr_of %.loc7_19.1
+// CHECK:STDOUT:   %foo__carbon_thunk.call: init %empty_tuple.type = call imports.%foo__carbon_thunk.decl(%addr.loc7_19.1)
+// CHECK:STDOUT:   %T.as.Destroy.impl.Op.bound: <bound method> = bound_method %.loc7_19.1, constants.%T.as.Destroy.impl.Op.507
 // CHECK:STDOUT:   %T.as.Destroy.impl.Op.specific_fn: <specific function> = specific_function constants.%T.as.Destroy.impl.Op.507, @T.as.Destroy.impl.Op(constants.%i16) [concrete = constants.%T.as.Destroy.impl.Op.specific_fn]
-// CHECK:STDOUT:   %bound_method.loc8_19: <bound method> = bound_method %.loc8_19.1, %T.as.Destroy.impl.Op.specific_fn
-// CHECK:STDOUT:   %addr.loc8_19.2: %ptr.251 = addr_of %.loc8_19.1
-// CHECK:STDOUT:   %T.as.Destroy.impl.Op.call: init %empty_tuple.type = call %bound_method.loc8_19(%addr.loc8_19.2)
+// CHECK:STDOUT:   %bound_method.loc7_19: <bound method> = bound_method %.loc7_19.1, %T.as.Destroy.impl.Op.specific_fn
+// CHECK:STDOUT:   %addr.loc7_19.2: %ptr.251 = addr_of %.loc7_19.1
+// CHECK:STDOUT:   %T.as.Destroy.impl.Op.call: init %empty_tuple.type = call %bound_method.loc7_19(%addr.loc7_19.2)
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

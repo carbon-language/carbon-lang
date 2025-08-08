@@ -392,6 +392,22 @@ static auto MaybeDumpSemIR(
   }
 }
 
+// Handles options for dumping C++ AST.
+static auto MaybeDumpCppAST(llvm::ArrayRef<Unit> units,
+                            const CheckParseTreesOptions& options) -> void {
+  if (!options.dump_cpp_ast_stream) {
+    return;
+  }
+
+  for (const Unit& unit : units) {
+    if (!unit.cpp_ast || !*unit.cpp_ast) {
+      continue;
+    }
+    clang::ASTContext& ast_context = (*unit.cpp_ast)->getASTContext();
+    ast_context.getTranslationUnitDecl()->dump(*options.dump_cpp_ast_stream);
+  }
+}
+
 auto CheckParseTrees(
     llvm::MutableArrayRef<Unit> units,
     const Parse::GetTreeAndSubtreesStore& tree_and_subtrees_getters,
@@ -509,6 +525,7 @@ auto CheckParseTrees(
   }
 
   MaybeDumpSemIR(units, tree_and_subtrees_getters, options);
+  MaybeDumpCppAST(units, options);
 }
 
 }  // namespace Carbon::Check

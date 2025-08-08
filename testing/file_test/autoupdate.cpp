@@ -201,6 +201,9 @@ auto FileTestAutoupdater::BuildCheckLines(llvm::StringRef output,
     }
 
     do_extra_check_replacements_(check_line);
+    if (check_line.empty()) {
+      continue;
+    }
 
     if (default_file_re_) {
       absl::string_view filename;

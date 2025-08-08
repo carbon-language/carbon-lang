@@ -60,6 +60,9 @@ struct CheckParseTreesOptions {
   // If set, SemIR will be dumped to this.
   llvm::raw_ostream* dump_stream = nullptr;
 
+  // If set, C++ AST will be dumped to this.
+  llvm::raw_ostream* dump_cpp_ast_stream = nullptr;
+
   // When dumping textual SemIR (or printing it to for verbose output), whether
   // to use ranges.
   enum class DumpSemIRRanges : int8_t {

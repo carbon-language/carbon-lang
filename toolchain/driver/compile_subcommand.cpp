@@ -208,6 +208,14 @@ Dump the full SemIR to stdout when built.
 )""",
       },
       [&](auto& arg_b) { arg_b.Set(&dump_sem_ir); });
+  b.AddFlag(
+      {
+          .name = "dump-cpp-ast",
+          .help = R"""(
+Dump the full C++ AST to stdout when built.
+)""",
+      },
+      [&](auto& arg_b) { arg_b.Set(&dump_cpp_ast); });
 
   b.AddOneOfOption(
       {
@@ -396,6 +404,11 @@ auto CompileSubcommand::ValidateOptions(
     case Phase::Parse:
       if (options_.dump_sem_ir) {
         emitter.Emit(CompilePhaseFlagConflict, "SemIR",
+                     PhaseToString(options_.phase));
+        return false;
+      }
+      if (options_.dump_cpp_ast) {
+        emitter.Emit(CompilePhaseFlagConflict, "C++ AST",
                      PhaseToString(options_.phase));
         return false;
       }
@@ -1015,10 +1028,14 @@ auto CompileSubcommand::Run(DriverEnv& driver_env) -> DriverResult {
   options.gen_implicit_type_impls = options_.gen_implicit_type_impls;
   options.vlog_stream = driver_env.vlog_stream;
   options.fuzzing = driver_env.fuzzing;
-  if (options.vlog_stream || options_.dump_sem_ir || options_.dump_raw_sem_ir) {
+  if (options.vlog_stream || options_.dump_sem_ir || options_.dump_cpp_ast ||
+      options_.dump_raw_sem_ir) {
     options.include_in_dumps = &cache.include_in_dumps();
     if (options_.dump_sem_ir) {
       options.dump_stream = driver_env.output_stream;
+    }
+    if (options_.dump_cpp_ast) {
+      options.dump_cpp_ast_stream = driver_env.output_stream;
     }
     if (options.vlog_stream || options_.dump_sem_ir) {
       options.dump_sem_ir_ranges = options_.dump_sem_ir_ranges;

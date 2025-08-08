@@ -263,6 +263,32 @@ auto ToolchainFileTest::GetLineNumberReplacements(
   return replacements;
 }
 
+// For Clang AST dump lines, we remove references to builtins because they're
+// inconsistent between systems and replace the ids since they're inconsistent
+// between runs.
+static auto DoClangASTCheckReplacements(std::string& check_line) -> void {
+  static constexpr llvm::StringRef ClangDeclIdRegex = "0x[a-f0-9]+";
+  static const RE2 is_clang_ast_line_re(
+      R"(^// CHECK:STDOUT: (TranslationUnitDecl|[ |]*`?\-))");
+  if (!RE2::PartialMatch(check_line, is_clang_ast_line_re)) {
+    return;
+  }
+
+  // Filter out references to builtins.
+  static const RE2 is_builtin_referring_re(
+      R"(`-BuiltinType |[ ']__[a-zA-Z]|\| `\-PointerType 0x[a-f0-9]+ 'char \*'$)");
+  if (RE2::PartialMatch(check_line, is_builtin_referring_re)) {
+    check_line.clear();
+    return;
+  }
+
+  // Replace the ids.
+  static const RE2 clang_decl_id_re(llvm::formatv(" {0} ", ClangDeclIdRegex));
+  static const std::string& clang_decl_id_replacement =
+      *new std::string(llvm::formatv(" {{{{{0}}} ", ClangDeclIdRegex));
+  RE2::GlobalReplace(&check_line, clang_decl_id_re, clang_decl_id_replacement);
+}
+
 auto ToolchainFileTest::DoExtraCheckReplacements(std::string& check_line) const
     -> void {
   if (component_ == "driver") {
@@ -286,6 +312,9 @@ auto ToolchainFileTest::DoExtraCheckReplacements(std::string& check_line) const
     // package to the VFS with a fixed name.
     absl::StrReplaceAll({{data_->installation.core_package(), "{{.*}}"}},
                         &check_line);
+    if (component_ == "check") {
+      DoClangASTCheckReplacements(check_line);
+    }
   } else {
     FileTestBase::DoExtraCheckReplacements(check_line);
   }
