@@ -17,6 +17,8 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
     -   [Data races versus unsynchronized temporal safety](#data-races-versus-unsynchronized-temporal-safety)
 -   [Safe library ecosystem](#safe-library-ecosystem)
 -   [Build modes](#build-modes)
+-   [Constraints](#constraints)
+    -   [Probabilistic techniques likely cannot stop attacks](#probabilistic-techniques-likely-cannot-stop-attacks)
 -   [References](#references)
 
 <!-- tocstop -->
@@ -236,6 +238,34 @@ release build for that specific purpose. For example:
 Carbon will provide a way to disable the default hardening in release builds,
 but not in a supported way. It's use is expected to be strictly for benchmarking
 purposes.
+
+## Constraints
+
+### Probabilistic techniques likely cannot stop attacks
+
+It's expected that probabilistic techniques that can be applied at the language
+level are attackable through a variety of techniques:
+
+-   The attacker might be able to attack repeatedly until it gets through.
+-   The attacker may be able to determine when the attack would be detected and
+    only run the attack when it would not be.
+-   The attacker might be able control the test condition to make detection much
+    less likely or avoid detection completely. For example, if detection is
+    based on the last 4 bits of a memory address, an attacker may be able to
+    generate memory allocations, viewing the address and only attacking when
+    there's a collision.
+
+Hardware vulnerabilities may make these attacks easier than they might otherwise
+appear. Future hardware vulnerabilities are difficult to predict.
+
+Note this statement focuses on what can be applied to the language level. Using
+a secure hash algorithm, such as SHA256, may be used to offer probabilistic
+defense in other situations. However, the overhead of a secure hash algorithm's
+calculation is significant in the context of most things that Carbon may do at
+the language level.
+
+Combining these issues, although it may seem like a probabilistic safety check
+could be proven to reliably detect attackers, it's likely infeasible to do so.
 
 ## References
 
