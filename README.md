@@ -250,7 +250,7 @@ We plan to support a two step migration process:
 
 1. Highly automated, minimal supervision migration from C++ to a dialect of
    Carbon designed for C++ interop and migration.
-2. Incremental refactoring of the Carbon code to adopt memory safe designs,
+2. Incremental refactoring of the Carbon code to adopt memory-safe designs,
    patterns, and APIs.
 
 We also want to address important, low-hanging fruit in the safety space

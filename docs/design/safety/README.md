@@ -42,11 +42,11 @@ guarantees. Our safety strategy has to address how C++ code fits into it, and
 provide an incremental path from where the code is at today towards increasing
 levels of safety.
 
-Ultimately, Carbon will both provide a [memory safe language], _and_ provide a
+Ultimately, Carbon will both provide a [memory-safe language], _and_ provide a
 language that can interop with C++ and be targeted for mechanical migration from
 C++.
 
-[memory safe language]: /docs/design/safety/terminology.md#memory-safe-language
+[memory-safe language]: /docs/design/safety/terminology.md#memory-safe-language
 
 ## Safe and unsafe code
 
@@ -86,7 +86,7 @@ keyword. This mode is designed to satisfy the requirements of a [memory
 safe language].
 
 _Permissive Carbon_ is a mode optimized for interop with C++ and automated
-migration from C++. In this mode, some unsafe code to not require an `unsafe`
+migration from C++. In this mode, some unsafe code does not require an `unsafe`
 keyword: specific aspects of C++ interop or pervasive patterns that occur when
 migrating from C++. However, not _all_ unsafe code will omit the keyword, the
 permissive mode is designed to be minimal in the unsafe code allowed.
@@ -123,7 +123,7 @@ how they approach both temporal and data-race safety.
 
 Carbon has the option of distinguishing between two similar but importantly
 different classes of bugs: data races and unsynchronized temporal safety
-violations. Specifically, there evidence from security teams that the second of
+violations. Specifically, there is evidence from security teams that the second of
 these has been a greater source of exploitation than first. As a consequence,
 Carbon has some flexibility while still being a [memory safe language] according
 to our definition:
@@ -145,7 +145,7 @@ where Carbon can in theory afford a compromise based on the current security inf
 
 ## Safe library ecosystem
 
-Carbon will need access to a memory safe library ecosystem. The industry is
+Carbon will need access to a memory-safe library ecosystem. The industry is
 currently investing a massive amount of effort to build out a sufficient
 ecosystem of such software using Rust, and it is critical that Carbon does not
 impede, slow down, or require duplicating that ecosystem.

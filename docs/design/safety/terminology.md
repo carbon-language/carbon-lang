@@ -79,7 +79,7 @@ Bugs where some aspect of program behavior has insufficient (often none)
 invariants or limits.
 
 For example, _undefined behavior_ definitionally has no invariant or limit, and
-is always a safety bug.
+reaching it is always a safety bug.
 
 ### _Initial bug_
 
@@ -165,7 +165,7 @@ Memory writes are synchronized with reads or writes on other threads.
 
 A safety bug that violates memory safety.
 
-### _Memory safe platform_ or _environment_
+### _Memory-safe platform_ or _environment_
 
 A computing platform or execution environment that provides mechanisms to
 prevent memory safety bugs in programs running on it from becoming
@@ -173,14 +173,14 @@ vulnerabilities. This is a _systems_ path to achieving memory safety by
 providing the well-defined and predictable behavior by way of the execution
 environment.
 
-### _Memory safe language_
+### _Memory-safe language_
 
 A programming language with sufficient defenses against memory safety bugs for
 them to not be a significant source of security vulnerabilities. This requires
 _preventing_ vulnerabilities or _ensuring_ correctness; mitigation is not
 sufficient to provide an adequate level of memory safety.
 
-We identify several key requirements for a language to be memory safe:
+We identify several key requirements for a language to be memory-safe:
 
 -   The default mode or subset of the language must provide guaranteed spatial,
     temporal, type, and initialization memory safety.
