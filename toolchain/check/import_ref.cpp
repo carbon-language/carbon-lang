@@ -2003,18 +2003,19 @@ static auto TryResolveTypedInst(ImportRefResolver& resolver,
     return ResolveResult::Retry();
   }
 
-  for (auto p : llvm::zip(virtual_functions, lazy_virtual_functions)) {
+  for (auto [import_vtable_entry_inst_id, local_vtable_entry_inst_id] :
+       llvm::zip(virtual_functions, lazy_virtual_functions)) {
     // Use LoadedImportRef for imported symbolic constant vtable entries so they
     // can carry attached constants necessary for applying specifics to these
     // constants when they are used.
     auto local_attached_constant_id =
-        resolver.local_constant_values().Get(std::get<1>(p));
+        resolver.local_constant_values().Get(local_vtable_entry_inst_id);
     if (local_attached_constant_id.is_symbolic()) {
-      std::get<1>(p) = AddLoadedImportRef(
+      local_vtable_entry_inst_id = AddLoadedImportRef(
           resolver,
           GetSingletonType(resolver.local_context(),
                            SemIR::SpecificFunctionType::TypeInstId),
-          std::get<0>(p), local_attached_constant_id);
+          import_vtable_entry_inst_id, local_attached_constant_id);
     }
   }
 
