@@ -669,6 +669,7 @@ class Stringifier {
 
 }  // namespace
 
+// NOLINTNEXTLINE(readability-function-size)
 static auto Stringify(const File& sem_ir, StepStack& step_stack)
     -> std::string {
   RawStringOstream out;
