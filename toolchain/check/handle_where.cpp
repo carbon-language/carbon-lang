@@ -94,6 +94,23 @@ auto HandleParseNode(Context& context, Parse::WhereOperandId node_id) -> bool {
   // allow later constraints to read from them eagerly.
   context.rewrites_stack().emplace_back();
 
+  // Make rewrite constraints from the self facet type available immediately to
+  // expressions in rewrite constraints for this `where` expression.
+  if (auto self_facet_type = context.types().TryGetAs<SemIR::FacetType>(
+          self_with_constraints_type_id)) {
+    const auto& base_facet_type_info =
+        context.facet_types().Get(self_facet_type->facet_type_id);
+    for (const auto& rewrite : base_facet_type_info.rewrite_constraints) {
+      if (rewrite.lhs_id != SemIR::ErrorInst::InstId) {
+        context.rewrites_stack().back().Insert(
+            context.constant_values().Get(
+                GetImplWitnessAccessWithoutSubstitution(context,
+                                                        rewrite.lhs_id)),
+            rewrite.rhs_id);
+      }
+    }
+  }
+
   return true;
 }
 

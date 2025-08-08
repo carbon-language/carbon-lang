@@ -277,7 +277,7 @@ interface M { let X:! type; let Y:! type; let Z:! type; }
 // The value of .X and .Y becomes <error> but .Z is still valid.
 //
 //@dump-sem-ir-begin
-// CHECK:STDERR: fail_cycle.carbon:[[@LINE+4]]:10: error: found cycle in facet type constraint for `.(M.X)` [FacetTypeConstraintCycle]
+// CHECK:STDERR: fail_cycle.carbon:[[@LINE+4]]:10: error: found cycle in facet type constraint for `.(M.Y)` [FacetTypeConstraintCycle]
 // CHECK:STDERR: fn F(T:! M where .X = .Y and .Y = .X and .Z = ()) {}
 // CHECK:STDERR:          ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 // CHECK:STDERR:
@@ -297,7 +297,7 @@ interface J {
 
 // This fails because it resolves to `.X1 = .X1` which is cyclical.
 //
-// CHECK:STDERR: fail_cycle_between_interfaces.carbon:[[@LINE+4]]:10: error: found cycle in facet type constraint for `.(I.X1)` [FacetTypeConstraintCycle]
+// CHECK:STDERR: fail_cycle_between_interfaces.carbon:[[@LINE+4]]:10: error: found cycle in facet type constraint for `.(J.X3)` [FacetTypeConstraintCycle]
 // CHECK:STDERR: fn G(T:! I & J where .X1 = .X3 and .X2 = .X1 and .X3 = .X2) {}
 // CHECK:STDERR:          ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 // CHECK:STDERR:
@@ -313,7 +313,7 @@ interface I {
 
 // This fails because it resolves to `.X1 = .X1**` which is cyclical.
 //
-// CHECK:STDERR: fail_indirect_cycle.carbon:[[@LINE+4]]:10: error: found cycle in facet type constraint for `.(I.X1)` [FacetTypeConstraintCycle]
+// CHECK:STDERR: fail_indirect_cycle.carbon:[[@LINE+4]]:10: error: found cycle in facet type constraint for `.(I.X2)` [FacetTypeConstraintCycle]
 // CHECK:STDERR: fn F(T:! I where .X1 = .X2* and .X2 = .X1*);
 // CHECK:STDERR:          ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 // CHECK:STDERR:
@@ -535,7 +535,7 @@ interface Z {
   let T3:! type;
 }
 
-// CHECK:STDERR: fail_cycle_with_unrelated_associated_constant.carbon:[[@LINE+4]]:10: error: found cycle in facet type constraint for `.(Z.T0)` [FacetTypeConstraintCycle]
+// CHECK:STDERR: fail_cycle_with_unrelated_associated_constant.carbon:[[@LINE+4]]:10: error: found cycle in facet type constraint for `.(Z.T1)` [FacetTypeConstraintCycle]
 // CHECK:STDERR: fn F(T:! Z where .T0 = .T1 and .T1 = .T0 and .T2 = .T3) {}
 // CHECK:STDERR:          ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 // CHECK:STDERR:
@@ -554,13 +554,13 @@ interface Z {
 
 // TODO: There should only be one diagnostic here.
 //
-// CHECK:STDERR: fail_cycle_with_branching_in_rhs.carbon:[[@LINE+4]]:10: error: found cycle in facet type constraint for `.(Z.T1)` [FacetTypeConstraintCycle]
+// CHECK:STDERR: fail_cycle_with_branching_in_rhs.carbon:[[@LINE+4]]:10: error: found cycle in facet type constraint for `.(Z.T3)` [FacetTypeConstraintCycle]
 // CHECK:STDERR: fn F(T:! Z where .T0 = .T1 and .T1 = (.T2, .T3) and .T2 = .T4 and .T3 = .T1) {}
 // CHECK:STDERR:          ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 // CHECK:STDERR:
 fn F(T:! Z where .T0 = .T1 and .T1 = (.T2, .T3) and .T2 = .T4 and .T3 = .T1) {}
 
-// CHECK:STDERR: fail_cycle_with_branching_in_rhs.carbon:[[@LINE+4]]:10: error: found cycle in facet type constraint for `.(Z.T0)` [FacetTypeConstraintCycle]
+// CHECK:STDERR: fail_cycle_with_branching_in_rhs.carbon:[[@LINE+4]]:10: error: found cycle in facet type constraint for `.(Z.T1)` [FacetTypeConstraintCycle]
 // CHECK:STDERR: fn G(T:! Z where .T0 = .T1 and .T1 = (.T2, .T3) and .T2 = .T4 and .T3 = .T0) {}
 // CHECK:STDERR:          ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 // CHECK:STDERR:

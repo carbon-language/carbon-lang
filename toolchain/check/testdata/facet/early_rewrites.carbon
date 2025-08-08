@@ -267,6 +267,32 @@ fn G(T:! J where .J1 = D) {
   F(T);
 }
 
+// --- early_rewrite_applied_from_nested_self.carbon
+library "[[@TEST_NAME]]";
+
+interface Z {
+  let Z1:! type;
+  let Z2:! type;
+}
+
+interface Tuple {}
+impl () as Tuple {}
+class C(T:! Tuple) {}
+
+interface J {
+  // Implied: .Z1 == (), but this is also explicitly required for J1.
+  let J1:! (Z where .Z1 = ()) where .Z2 = C(.Z1);
+}
+
+fn F(T:! J) {}
+
+class D;
+// Satisfies the implied constraint in J.J1.
+impl D as Z where .Z1 = () and .Z2 = C(()) {}
+fn G(T:! J where .J1 = D) {
+  F(T);
+}
+
 // --- fail_todo_early_rewrite_applied_extra_indirection.carbon
 library "[[@TEST_NAME]]";
 

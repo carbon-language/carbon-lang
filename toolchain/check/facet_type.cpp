@@ -451,25 +451,26 @@ class SubstImplWitnessAccessCallbacks : public SubstInstCallbacks {
       if (context().insts().Is<SemIR::FacetType>(rhs_inst_id)) {
         return SubstResult::FullySubstituted;
       }
-      // The reference to an associated constant was eagerly replaced with the
-      // value of an earlier rewrite constraint, but may need further
-      // replacement.
-      if (context().insts().Is<SemIR::ImplWitnessAccessSubstituted>(
-              rhs_inst_id)) {
-        substs_in_progress_.push_back(rhs_inst_id);
-        return SubstResult::SubstOperands;
-      }
       if (context().constant_values().Get(rhs_inst_id).is_concrete()) {
         // There's no ImplWitnessAccess that we care about inside this
         // instruction.
         return SubstResult::FullySubstituted;
-      } else {
-        // SubstOperands will result in a Rebuild or ReuseUnchanged callback, so
-        // push the non-ImplWitnessAccess to get proper bracketing, allowing us
-        // to pop it in the paired callback.
-        substs_in_progress_.push_back(rhs_inst_id);
-        return SubstResult::SubstOperands;
       }
+      if (auto subst =
+              context().insts().TryGetAs<SemIR::ImplWitnessAccessSubstituted>(
+                  rhs_inst_id)) {
+        // The reference to an associated constant was eagerly replaced with the
+        // value of an earlier rewrite constraint, but may need further
+        // substitution if it contains an `ImplWitnessAccess`.
+        rhs_inst_id = subst->value_id;
+        substs_in_progress_.push_back(rhs_inst_id);
+        return SubstResult::SubstAgain;
+      }
+      // SubstOperands will result in a Rebuild or ReuseUnchanged callback, so
+      // push the non-ImplWitnessAccess to get proper bracketing, allowing us
+      // to pop it in the paired callback.
+      substs_in_progress_.push_back(rhs_inst_id);
+      return SubstResult::SubstOperands;
     }
 
     // If the access is going through a nested `ImplWitnessAccess`, that

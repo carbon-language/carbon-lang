@@ -255,7 +255,7 @@ interface M { let X:! type; let Y:! type; let Z:! type; }
 // The value of .X and .Y becomes <error> but .Z is still valid.
 //
 //@dump-sem-ir-begin
-// CHECK:STDERR: fail_cycle.carbon:[[@LINE+4]]:12: error: found cycle in facet type constraint for `.(M.X)` [FacetTypeConstraintCycle]
+// CHECK:STDERR: fail_cycle.carbon:[[@LINE+4]]:12: error: found cycle in facet type constraint for `.(M.Y)` [FacetTypeConstraintCycle]
 // CHECK:STDERR: impl () as M where .X = .Y and .Y = .X and .Z = () {}
 // CHECK:STDERR:            ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 // CHECK:STDERR:
