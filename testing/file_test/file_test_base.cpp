@@ -194,6 +194,9 @@ static auto RunAutoupdater(FileTestBase* test_base, const TestFile& test_file,
              test_base->GetLineNumberReplacements(expected_filenames),
              [&](std::string& line) {
                test_base->DoExtraCheckReplacements(line);
+             },
+             [&](FileTestBase::CheckLineArray& lines, bool is_stderr) {
+               test_base->FinalizeCheckLines(lines, is_stderr);
              })
       .Run(dry_run);
 }

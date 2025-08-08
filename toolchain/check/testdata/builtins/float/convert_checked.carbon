@@ -37,34 +37,15 @@ fn Float64ToFloat64(a: f64) -> f64 = "float.convert_checked";
 fn Float64ToFloatLiteral(a: f64) -> FloatLiteral() = "float.convert_checked";
 fn FloatLiteralToFloat64(a: FloatLiteral()) -> f64 = "float.convert_checked";
 
-// --- fail_put_first_error_here.carbon
-
-library "[[@TEST_NAME]]";
-
-// Intentionally add an error here so that the first error message for the below
-// file shows up here rather than at the start of this file.
-// CHECK:STDERR: fail_put_first_error_here.carbon:[[@LINE+14]]:12: error: name `error` not found [NameNotFound]
-// CHECK:STDERR: var error: error;
-// CHECK:STDERR:            ^~~~~
-// CHECK:STDERR:
-// CHECK:STDERR: fail_put_first_error_here.carbon:[[@LINE+10]]:12: error: name `error` used before it was declared [NameUseBeforeDecl]
-// CHECK:STDERR: var error: error;
-// CHECK:STDERR:            ^~~~~
-// CHECK:STDERR: fail_put_first_error_here.carbon:[[@LINE+7]]:5: note: declared here [NameUseBeforeDeclNote]
-// CHECK:STDERR: var error: error;
-// CHECK:STDERR:     ^~~~~
-// CHECK:STDERR:
-// CHECK:STDERR: min_prelude/parts/float.carbon:11:9: error: bit width must be 64 [CompileTimeFloatBitWidth]
-// CHECK:STDERR:   adapt MakeFloat(N);
-// CHECK:STDERR:         ^~~~~~~~~~~~
-var error: error;
-
 // --- fail_todo_f32.carbon
 
 library "[[@TEST_NAME]]";
 export import library "literal";
 export import library "f64";
 
+// CHECK:STDERR: min_prelude/parts/float.carbon:11:9: error: bit width must be 64 [CompileTimeFloatBitWidth]
+// CHECK:STDERR:   adapt MakeFloat(N);
+// CHECK:STDERR:         ^~~~~~~~~~~~
 // CHECK:STDERR: fail_todo_f32.carbon:[[@LINE+8]]:29: note: in `f32` used here [ResolvingSpecificHere]
 // CHECK:STDERR: fn Float32ToFloat32(a: f32) -> f32 = "float.convert_checked";
 // CHECK:STDERR:                             ^~~~~~
@@ -90,13 +71,10 @@ fn FloatLiteralToFloat32(a: FloatLiteral()) -> f32 = "float.convert_checked";
 // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 // CHECK:STDERR:
 fn Float32ToFloat64(a: f32) -> f64 = "float.convert_checked";
-// CHECK:STDERR: fail_todo_f32.carbon:[[@LINE+7]]:1: error: invalid signature for builtin function "float.convert_checked" [InvalidBuiltinSignature]
+// CHECK:STDERR: fail_todo_f32.carbon:[[@LINE+4]]:1: error: invalid signature for builtin function "float.convert_checked" [InvalidBuiltinSignature]
 // CHECK:STDERR: fn Float64ToFloat32(a: f64) -> f32 = "float.convert_checked";
 // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 // CHECK:STDERR:
-// CHECK:STDERR: min_prelude/parts/float.carbon:11:9: error: bit width must be 64 [CompileTimeFloatBitWidth]
-// CHECK:STDERR:   adapt MakeFloat(N);
-// CHECK:STDERR:         ^~~~~~~~~~~~
 fn Float64ToFloat32(a: f64) -> f32 = "float.convert_checked";
 
 // --- literal_f64.carbon
@@ -127,13 +105,13 @@ library "[[@TEST_NAME]]";
 import library "f32";
 
 //@dump-sem-ir-begin
-// CHECK:STDERR: fail_todo_identity_f32.carbon:[[@LINE+7]]:8: note: in `f32` used here [ResolvingSpecificHere]
-// CHECK:STDERR: let a: f32 = Float32ToFloat32(0.0);
-// CHECK:STDERR:        ^~~
-// CHECK:STDERR:
 // CHECK:STDERR: min_prelude/parts/float.carbon:11:9: error: bit width must be 64 [CompileTimeFloatBitWidth]
 // CHECK:STDERR:   adapt MakeFloat(N);
 // CHECK:STDERR:         ^~~~~~~~~~~~
+// CHECK:STDERR: fail_todo_identity_f32.carbon:[[@LINE+4]]:8: note: in `f32` used here [ResolvingSpecificHere]
+// CHECK:STDERR: let a: f32 = Float32ToFloat32(0.0);
+// CHECK:STDERR:        ^~~
+// CHECK:STDERR:
 let a: f32 = Float32ToFloat32(0.0);
 let b: f32 = Float32ToFloat32(1.0);
 let c: f32 = Float32ToFloat32(1.0e38);
@@ -145,13 +123,13 @@ library "[[@TEST_NAME]]";
 import library "f32";
 
 //@dump-sem-ir-begin
-// CHECK:STDERR: fail_todo_truncate.carbon:[[@LINE+7]]:8: note: in `f32` used here [ResolvingSpecificHere]
-// CHECK:STDERR: let a: f32 = Float64ToFloat32(1.0);
-// CHECK:STDERR:        ^~~
-// CHECK:STDERR:
 // CHECK:STDERR: min_prelude/parts/float.carbon:11:9: error: bit width must be 64 [CompileTimeFloatBitWidth]
 // CHECK:STDERR:   adapt MakeFloat(N);
 // CHECK:STDERR:         ^~~~~~~~~~~~
+// CHECK:STDERR: fail_todo_truncate.carbon:[[@LINE+4]]:8: note: in `f32` used here [ResolvingSpecificHere]
+// CHECK:STDERR: let a: f32 = Float64ToFloat32(1.0);
+// CHECK:STDERR:        ^~~
+// CHECK:STDERR:
 let a: f32 = Float64ToFloat32(1.0);
 //@dump-sem-ir-end
 
@@ -161,6 +139,9 @@ library "[[@TEST_NAME]]";
 import library "f32";
 
 //@dump-sem-ir-begin
+// CHECK:STDERR: min_prelude/parts/float.carbon:11:9: error: bit width must be 64 [CompileTimeFloatBitWidth]
+// CHECK:STDERR:   adapt MakeFloat(N);
+// CHECK:STDERR:         ^~~~~~~~~~~~
 // CHECK:STDERR: fail_truncate_overflow.carbon:[[@LINE+4]]:8: note: in `f32` used here [ResolvingSpecificHere]
 // CHECK:STDERR: let b: f32 = Float64ToFloat32(1.0e100);
 // CHECK:STDERR:        ^~~
@@ -603,13 +584,13 @@ let convert_not_constant: f64 = Float64ToFloat64(not_constant_64);
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %b.patt: %pattern_type.201 = binding_pattern b [concrete]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %.loc10_8: type = splice_block %f32 [concrete = constants.%f32] {
+// CHECK:STDOUT:   %.loc13_8: type = splice_block %f32 [concrete = constants.%f32] {
 // CHECK:STDOUT:     %int_32: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
 // CHECK:STDOUT:     %f32: type = class_type @Float, @Float(constants.%int_32) [concrete = constants.%f32]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %.loc10_38.1: %f32 = value_of_initializer @__global_init.%Float64ToFloat32.call
-// CHECK:STDOUT:   %.loc10_38.2: %f32 = converted @__global_init.%Float64ToFloat32.call, %.loc10_38.1
-// CHECK:STDOUT:   %b: %f32 = bind_name b, %.loc10_38.2
+// CHECK:STDOUT:   %.loc13_38.1: %f32 = value_of_initializer @__global_init.%Float64ToFloat32.call
+// CHECK:STDOUT:   %.loc13_38.2: %f32 = converted @__global_init.%Float64ToFloat32.call, %.loc13_38.1
+// CHECK:STDOUT:   %b: %f32 = bind_name b, %.loc13_38.2
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {
@@ -617,13 +598,13 @@ let convert_not_constant: f64 = Float64ToFloat64(not_constant_64);
 // CHECK:STDOUT:   %Float64ToFloat32.ref: %Float64ToFloat32.type = name_ref Float64ToFloat32, imports.%Main.Float64ToFloat32 [concrete = constants.%Float64ToFloat32]
 // CHECK:STDOUT:   %float: Core.FloatLiteral = float_value 1.0E+100 [concrete = constants.%float]
 // CHECK:STDOUT:   %impl.elem0: %.678 = impl_witness_access constants.%ImplicitAs.impl_witness.857, element0 [concrete = constants.%Core.FloatLiteral.as.ImplicitAs.impl.Convert.a03]
-// CHECK:STDOUT:   %bound_method.loc10_31.1: <bound method> = bound_method %float, %impl.elem0 [concrete = constants.%Core.FloatLiteral.as.ImplicitAs.impl.Convert.bound]
+// CHECK:STDOUT:   %bound_method.loc13_31.1: <bound method> = bound_method %float, %impl.elem0 [concrete = constants.%Core.FloatLiteral.as.ImplicitAs.impl.Convert.bound]
 // CHECK:STDOUT:   %specific_fn: <specific function> = specific_function %impl.elem0, @Core.FloatLiteral.as.ImplicitAs.impl.Convert(constants.%int_64) [concrete = constants.%Core.FloatLiteral.as.ImplicitAs.impl.Convert.specific_fn]
-// CHECK:STDOUT:   %bound_method.loc10_31.2: <bound method> = bound_method %float, %specific_fn [concrete = constants.%bound_method]
-// CHECK:STDOUT:   %Core.FloatLiteral.as.ImplicitAs.impl.Convert.call: init %f64.d77 = call %bound_method.loc10_31.2(%float) [concrete = constants.%float]
-// CHECK:STDOUT:   %.loc10_31.1: %f64.d77 = value_of_initializer %Core.FloatLiteral.as.ImplicitAs.impl.Convert.call [concrete = constants.%float]
-// CHECK:STDOUT:   %.loc10_31.2: %f64.d77 = converted %float, %.loc10_31.1 [concrete = constants.%float]
-// CHECK:STDOUT:   %Float64ToFloat32.call: init %f32 = call %Float64ToFloat32.ref(%.loc10_31.2)
+// CHECK:STDOUT:   %bound_method.loc13_31.2: <bound method> = bound_method %float, %specific_fn [concrete = constants.%bound_method]
+// CHECK:STDOUT:   %Core.FloatLiteral.as.ImplicitAs.impl.Convert.call: init %f64.d77 = call %bound_method.loc13_31.2(%float) [concrete = constants.%float]
+// CHECK:STDOUT:   %.loc13_31.1: %f64.d77 = value_of_initializer %Core.FloatLiteral.as.ImplicitAs.impl.Convert.call [concrete = constants.%float]
+// CHECK:STDOUT:   %.loc13_31.2: %f64.d77 = converted %float, %.loc13_31.1 [concrete = constants.%float]
+// CHECK:STDOUT:   %Float64ToFloat32.call: init %f32 = call %Float64ToFloat32.ref(%.loc13_31.2)
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

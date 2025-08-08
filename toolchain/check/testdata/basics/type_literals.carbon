@@ -37,46 +37,29 @@ library "[[@TEST_NAME]]";
 var test_f64: f64;
 //@dump-sem-ir-end
 
-// --- fail_put_first_error_here.carbon
-library "[[@TEST_NAME]]";
-
-// Intentionally add an error here so that the first error message for the below
-// file shows up here rather than at the start of this file.
-// CHECK:STDERR: fail_put_first_error_here.carbon:[[@LINE+4]]:8: error: name `error` not found [NameNotFound]
-// CHECK:STDERR: var v: error;
-// CHECK:STDERR:        ^~~~~
-// CHECK:STDERR:
-var v: error;
-
 // --- fail_todo_fN_unsupported.carbon
 library "[[@TEST_NAME]]";
 
-// CHECK:STDERR: fail_todo_fN_unsupported.carbon:[[@LINE+7]]:8: error: name `error` not found [NameNotFound]
-// CHECK:STDERR: var v: error;
-// CHECK:STDERR:        ^~~~~
-// CHECK:STDERR:
+// TODO: Some or all of these should eventually work.
 // CHECK:STDERR: min_prelude/parts/float.carbon:11:9: error: bit width must be 64 [CompileTimeFloatBitWidth]
 // CHECK:STDERR:   adapt MakeFloat(N);
 // CHECK:STDERR:         ^~~~~~~~~~~~
-var v: error;
-
-// TODO: Some or all of these should eventually work.
-// CHECK:STDERR: fail_todo_fN_unsupported.carbon:[[@LINE+7]]:15: note: in `f16` used here [ResolvingSpecificHere]
+// CHECK:STDERR: fail_todo_fN_unsupported.carbon:[[@LINE+4]]:15: note: in `f16` used here [ResolvingSpecificHere]
 // CHECK:STDERR: var test_f16: f16;
 // CHECK:STDERR:               ^~~
 // CHECK:STDERR:
+var test_f16: f16;
 // CHECK:STDERR: min_prelude/parts/float.carbon:11:9: error: bit width must be 64 [CompileTimeFloatBitWidth]
 // CHECK:STDERR:   adapt MakeFloat(N);
 // CHECK:STDERR:         ^~~~~~~~~~~~
-var test_f16: f16;
-// CHECK:STDERR: fail_todo_fN_unsupported.carbon:[[@LINE+7]]:15: note: in `f32` used here [ResolvingSpecificHere]
+// CHECK:STDERR: fail_todo_fN_unsupported.carbon:[[@LINE+4]]:15: note: in `f32` used here [ResolvingSpecificHere]
 // CHECK:STDERR: var test_f32: f32;
 // CHECK:STDERR:               ^~~
 // CHECK:STDERR:
+var test_f32: f32;
 // CHECK:STDERR: min_prelude/parts/float.carbon:11:9: error: bit width must be 64 [CompileTimeFloatBitWidth]
 // CHECK:STDERR:   adapt MakeFloat(N);
 // CHECK:STDERR:         ^~~~~~~~~~~~
-var test_f32: f32;
 // CHECK:STDERR: fail_todo_fN_unsupported.carbon:[[@LINE+4]]:16: note: in `f128` used here [ResolvingSpecificHere]
 // CHECK:STDERR: var test_f128: f128;
 // CHECK:STDERR:                ^~~~
@@ -112,14 +95,14 @@ var test_i0: i0;
 // CHECK:STDERR:              ^~
 // CHECK:STDERR:
 var test_i1: i1;
-// CHECK:STDERR: fail_iN_bad_width.carbon:[[@LINE+7]]:15: error: bit width of integer type literal must be a multiple of 8; use `Core.Int(15)` instead [IntWidthNotMultipleOf8]
+// CHECK:STDERR: fail_iN_bad_width.carbon:[[@LINE+4]]:15: error: bit width of integer type literal must be a multiple of 8; use `Core.Int(15)` instead [IntWidthNotMultipleOf8]
 // CHECK:STDERR: var test_i15: i15;
 // CHECK:STDERR:               ^~~
 // CHECK:STDERR:
+var test_i15: i15;
 // CHECK:STDERR: min_prelude/parts/int.carbon:10:9: error: integer type width of 1000000000 is greater than the maximum supported width of 8388608 [IntWidthTooLarge]
 // CHECK:STDERR:   adapt MakeInt(N);
 // CHECK:STDERR:         ^~~~~~~~~~
-var test_i15: i15;
 // CHECK:STDERR: fail_iN_bad_width.carbon:[[@LINE+4]]:23: note: in `i1000000000` used here [ResolvingSpecificHere]
 // CHECK:STDERR: var test_i1000000000: i1000000000;
 // CHECK:STDERR:                       ^~~~~~~~~~~
@@ -149,14 +132,14 @@ var test_u0: u0;
 // CHECK:STDERR:              ^~
 // CHECK:STDERR:
 var test_u1: u1;
-// CHECK:STDERR: fail_uN_bad_width.carbon:[[@LINE+7]]:15: error: bit width of integer type literal must be a multiple of 8; use `Core.UInt(15)` instead [IntWidthNotMultipleOf8]
+// CHECK:STDERR: fail_uN_bad_width.carbon:[[@LINE+4]]:15: error: bit width of integer type literal must be a multiple of 8; use `Core.UInt(15)` instead [IntWidthNotMultipleOf8]
 // CHECK:STDERR: var test_u15: u15;
 // CHECK:STDERR:               ^~~
 // CHECK:STDERR:
+var test_u15: u15;
 // CHECK:STDERR: min_prelude/parts/uint.carbon:10:9: error: integer type width of 1000000000 is greater than the maximum supported width of 8388608 [IntWidthTooLarge]
 // CHECK:STDERR:   adapt MakeUInt(N);
 // CHECK:STDERR:         ^~~~~~~~~~~
-var test_u15: u15;
 // CHECK:STDERR: fail_uN_bad_width.carbon:[[@LINE+4]]:23: note: in `u1000000000` used here [ResolvingSpecificHere]
 // CHECK:STDERR: var test_u1000000000: u1000000000;
 // CHECK:STDERR:                       ^~~~~~~~~~~
@@ -176,46 +159,46 @@ var test_u10000000000000000000: u10000000000000000000;
 // --- fail_fN_bad_width.carbon
 library "[[@TEST_NAME]]";
 
-// CHECK:STDERR: fail_fN_bad_width.carbon:[[@LINE+7]]:14: error: name `f0` not found [NameNotFound]
+// CHECK:STDERR: fail_fN_bad_width.carbon:[[@LINE+4]]:14: error: name `f0` not found [NameNotFound]
 // CHECK:STDERR: var test_f0: f0;
 // CHECK:STDERR:              ^~
 // CHECK:STDERR:
+var test_f0: f0;
 // CHECK:STDERR: min_prelude/parts/float.carbon:11:9: error: bit width must be 64 [CompileTimeFloatBitWidth]
 // CHECK:STDERR:   adapt MakeFloat(N);
 // CHECK:STDERR:         ^~~~~~~~~~~~
-var test_f0: f0;
-// CHECK:STDERR: fail_fN_bad_width.carbon:[[@LINE+7]]:14: note: in `f1` used here [ResolvingSpecificHere]
+// CHECK:STDERR: fail_fN_bad_width.carbon:[[@LINE+4]]:14: note: in `f1` used here [ResolvingSpecificHere]
 // CHECK:STDERR: var test_f1: f1;
 // CHECK:STDERR:              ^~
 // CHECK:STDERR:
+var test_f1: f1;
 // CHECK:STDERR: min_prelude/parts/float.carbon:11:9: error: bit width must be 64 [CompileTimeFloatBitWidth]
 // CHECK:STDERR:   adapt MakeFloat(N);
 // CHECK:STDERR:         ^~~~~~~~~~~~
-var test_f1: f1;
-// CHECK:STDERR: fail_fN_bad_width.carbon:[[@LINE+7]]:15: note: in `f15` used here [ResolvingSpecificHere]
+// CHECK:STDERR: fail_fN_bad_width.carbon:[[@LINE+4]]:15: note: in `f15` used here [ResolvingSpecificHere]
 // CHECK:STDERR: var test_f15: f15;
 // CHECK:STDERR:               ^~~
 // CHECK:STDERR:
+var test_f15: f15;
 // CHECK:STDERR: min_prelude/parts/float.carbon:11:9: error: bit width must be 64 [CompileTimeFloatBitWidth]
 // CHECK:STDERR:   adapt MakeFloat(N);
 // CHECK:STDERR:         ^~~~~~~~~~~~
-var test_f15: f15;
-// CHECK:STDERR: fail_fN_bad_width.carbon:[[@LINE+7]]:16: note: in `f100` used here [ResolvingSpecificHere]
+// CHECK:STDERR: fail_fN_bad_width.carbon:[[@LINE+4]]:16: note: in `f100` used here [ResolvingSpecificHere]
 // CHECK:STDERR: var test_f100: f100;
 // CHECK:STDERR:                ^~~~
 // CHECK:STDERR:
+var test_f100: f100;
 // CHECK:STDERR: min_prelude/parts/float.carbon:11:9: error: bit width must be 64 [CompileTimeFloatBitWidth]
 // CHECK:STDERR:   adapt MakeFloat(N);
 // CHECK:STDERR:         ^~~~~~~~~~~~
-var test_f100: f100;
-// CHECK:STDERR: fail_fN_bad_width.carbon:[[@LINE+7]]:23: note: in `f1000000000` used here [ResolvingSpecificHere]
+// CHECK:STDERR: fail_fN_bad_width.carbon:[[@LINE+4]]:23: note: in `f1000000000` used here [ResolvingSpecificHere]
 // CHECK:STDERR: var test_f1000000000: f1000000000;
 // CHECK:STDERR:                       ^~~~~~~~~~~
 // CHECK:STDERR:
+var test_f1000000000: f1000000000;
 // CHECK:STDERR: min_prelude/parts/float.carbon:11:9: error: bit width must be 64 [CompileTimeFloatBitWidth]
 // CHECK:STDERR:   adapt MakeFloat(N);
 // CHECK:STDERR:         ^~~~~~~~~~~~
-var test_f1000000000: f1000000000;
 // CHECK:STDERR: fail_fN_bad_width.carbon:[[@LINE+4]]:26: note: in `f1000000000000` used here [ResolvingSpecificHere]
 // CHECK:STDERR: var test_f1000000000000: f1000000000000;
 // CHECK:STDERR:                          ^~~~~~~~~~~~~~
