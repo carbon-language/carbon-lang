@@ -58,6 +58,12 @@ static auto HandleAnyBindingPattern(Context& context, Parse::NodeId node_id,
         AddBindingPattern(context, name_node, name_id, cast_type_id,
                           type_expr_region_id, is_generic, is_template);
 
+    // TODO: If `is_generic`, then `binding.bind_id is a BindSymbolicName. Subst
+    // the `.Self` of type `type` in the `cast_type_id` type (a `FacetType`)
+    // with the `binding.bind_id` itself, and build a new pattern with that. //
+    // This is kind of cyclical. So we need to reuse the EntityNameId, which
+    // will also reuse the CompileTimeBinding for the new BindSymbolicName.
+
     if (name_id != SemIR::NameId::Underscore) {
       // Add name to lookup immediately, so it can be used in the rest of the
       // enclosing pattern.
