@@ -53,8 +53,8 @@ C++.
 Carbon will have both _safe_ and _unsafe_ code. Safe code provides limits on the
 potential behavior of the program even in the face of bugs in order to prevent
 [safety bugs] from becoming [vulnerabilities]. Unsafe code is any code or operation
-which may lack limits or guarantees on behavior, and as a result may result in undefined
-behavior and a safety bug.
+which lacks limits or guarantees on behavior, and as a result may result in undefined
+behavior or a safety bug.
 
 [safety bugs]: /docs/design/safety/terminology.md#safety-bugs
 [vulnerabilities]:
@@ -180,7 +180,7 @@ that disables the run-time enforcement, enabling the control of any overhead inc
 [evidence]: https://chandlerc.blog/posts/2024/11/story-time-bounds-checking/
 [performance control]: /docs/project/goals.md#performance-critical-software
 
-The debug build will work to cause bugs and any detectable undefined behavior to
+The debug build will work to cause bugs and any detectable undefined or erroneous behavior to
 have [fail-stop] behavior and even detailed diagnostics to enable better
 debugging. This mode will at least provide similar bug [detection] capabilities
 to [AddressSanitizer] and [MemorySanitizer].

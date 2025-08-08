@@ -51,7 +51,7 @@ Unsafe coding construct that may lead to a bug or vulnerability.
 
 Reachable program behavior contrary to the author's intent.
 
-#### _Patent_ or _active bug_
+#### _Active bug_
 
 Buggy behavior that is actively occurring for users of the program.
 
