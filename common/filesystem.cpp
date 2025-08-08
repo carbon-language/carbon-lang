@@ -331,6 +331,25 @@ auto DirRef::Rmtree(const std::filesystem::path& path)
   for (;; ++dir_stack.back().dir_it) {
     auto& [current, current_it] = dir_stack.back();
     if (current_it == current.end()) {
+      // See if we skipped over any entries.
+      rewinddir(current.dirp_);
+      current_it = current.begin();
+
+      if (current_it != current.end()) {
+        llvm::StringRef name = current_it->name();
+        if (name == "." || name == "..") {
+          ++current_it;
+        }
+
+        if (current_it != current.end()) {
+          llvm::StringRef name = current_it->name();
+          if (name == "." || name == "..") {
+            ++current_it;
+          }
+        }
+      }
+    }
+    if (current_it == current.end()) {
       dir_stack.pop_back();
       if (dir_stack.empty()) {
         break;

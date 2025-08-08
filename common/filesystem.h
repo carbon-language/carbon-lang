@@ -967,6 +967,7 @@ class DirRef::Reader : public DirRef {
   auto end() -> Iterator;
 
  private:
+  friend DirRef;
   friend Dir;
 
   explicit Reader(DIR* dirp) : DirRef(dirfd(dirp)), dirp_(dirp) {}
