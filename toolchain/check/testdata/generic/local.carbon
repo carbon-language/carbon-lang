@@ -165,8 +165,8 @@ class C(C:! type) {
 // CHECK:STDOUT:   %require_complete: <witness> = require_complete_type %T.loc5_11.1 [symbolic = %require_complete (constants.%require_complete.4ae)]
 // CHECK:STDOUT:   %C: type = class_type @C, @C(%T.loc5_11.1) [symbolic = %C (constants.%C.f06)]
 // CHECK:STDOUT:   %C.elem: type = unbound_element_type %C, %T.loc5_11.1 [symbolic = %C.elem (constants.%C.elem.cca)]
-// CHECK:STDOUT:   %struct_type.x.loc7_3.2: type = struct_type {.x: @C.%T.loc5_11.1 (%T)} [symbolic = %struct_type.x.loc7_3.2 (constants.%struct_type.x.2ac)]
-// CHECK:STDOUT:   %complete_type.loc7_3.2: <witness> = complete_type_witness %struct_type.x.loc7_3.2 [symbolic = %complete_type.loc7_3.2 (constants.%complete_type.4339)]
+// CHECK:STDOUT:   %struct_type.x: type = struct_type {.x: @C.%T.loc5_11.1 (%T)} [symbolic = %struct_type.x (constants.%struct_type.x.2ac)]
+// CHECK:STDOUT:   %complete_type.loc7_3.2: <witness> = complete_type_witness %struct_type.x [symbolic = %complete_type.loc7_3.2 (constants.%complete_type.4339)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   class {
 // CHECK:STDOUT:     %T.ref: type = name_ref T, %T.loc5_11.2 [symbolic = %T.loc5_11.1 (constants.%T)]
@@ -174,8 +174,7 @@ class C(C:! type) {
 // CHECK:STDOUT:     impl_decl @C.as.Destroy.impl [concrete] {} {}
 // CHECK:STDOUT:     %Destroy.impl_witness_table = impl_witness_table (@C.as.Destroy.impl.%C.as.Destroy.impl.Op.decl), @C.as.Destroy.impl [concrete]
 // CHECK:STDOUT:     %Destroy.impl_witness: <witness> = impl_witness %Destroy.impl_witness_table, @C.as.Destroy.impl(constants.%T) [symbolic = @C.as.Destroy.impl.%Destroy.impl_witness (constants.%Destroy.impl_witness.c0e)]
-// CHECK:STDOUT:     %struct_type.x.loc7_3.1: type = struct_type {.x: %T} [symbolic = %struct_type.x.loc7_3.2 (constants.%struct_type.x.2ac)]
-// CHECK:STDOUT:     %complete_type.loc7_3.1: <witness> = complete_type_witness %struct_type.x.loc7_3.1 [symbolic = %complete_type.loc7_3.2 (constants.%complete_type.4339)]
+// CHECK:STDOUT:     %complete_type.loc7_3.1: <witness> = complete_type_witness constants.%struct_type.x.2ac [symbolic = %complete_type.loc7_3.2 (constants.%complete_type.4339)]
 // CHECK:STDOUT:     complete_type_witness = %complete_type.loc7_3.1
 // CHECK:STDOUT:
 // CHECK:STDOUT:   !members:
@@ -259,7 +258,7 @@ class C(C:! type) {
 // CHECK:STDOUT:   %require_complete => constants.%complete_type.f8a
 // CHECK:STDOUT:   %C => constants.%C.d45
 // CHECK:STDOUT:   %C.elem => constants.%C.elem.f74
-// CHECK:STDOUT:   %struct_type.x.loc7_3.2 => constants.%struct_type.x.ed6
+// CHECK:STDOUT:   %struct_type.x => constants.%struct_type.x.ed6
 // CHECK:STDOUT:   %complete_type.loc7_3.2 => constants.%complete_type.1ec
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -344,8 +343,7 @@ class C(C:! type) {
 // CHECK:STDOUT:     impl_decl @C.as.Destroy.impl [concrete] {} {}
 // CHECK:STDOUT:     %Destroy.impl_witness_table = impl_witness_table (@C.as.Destroy.impl.%C.as.Destroy.impl.Op.decl), @C.as.Destroy.impl [concrete]
 // CHECK:STDOUT:     %Destroy.impl_witness: <witness> = impl_witness %Destroy.impl_witness_table, @C.as.Destroy.impl(constants.%C.8b3) [symbolic = @C.as.Destroy.impl.%Destroy.impl_witness (constants.%Destroy.impl_witness)]
-// CHECK:STDOUT:     %empty_struct_type: type = struct_type {} [concrete = constants.%empty_struct_type]
-// CHECK:STDOUT:     %complete_type: <witness> = complete_type_witness %empty_struct_type [concrete = constants.%complete_type]
+// CHECK:STDOUT:     %complete_type: <witness> = complete_type_witness constants.%empty_struct_type [concrete = constants.%complete_type]
 // CHECK:STDOUT:     complete_type_witness = %complete_type
 // CHECK:STDOUT:
 // CHECK:STDOUT:   !members:
@@ -468,8 +466,7 @@ class C(C:! type) {
 // CHECK:STDOUT:     impl_decl @C.as.Destroy.impl [concrete] {} {}
 // CHECK:STDOUT:     %Destroy.impl_witness_table = impl_witness_table (@C.as.Destroy.impl.%C.as.Destroy.impl.Op.decl), @C.as.Destroy.impl [concrete]
 // CHECK:STDOUT:     %Destroy.impl_witness: <witness> = impl_witness %Destroy.impl_witness_table, @C.as.Destroy.impl(constants.%C.8b3) [symbolic = @C.as.Destroy.impl.%Destroy.impl_witness (constants.%Destroy.impl_witness)]
-// CHECK:STDOUT:     %empty_struct_type: type = struct_type {} [concrete = constants.%empty_struct_type]
-// CHECK:STDOUT:     %complete_type: <witness> = complete_type_witness %empty_struct_type [concrete = constants.%complete_type]
+// CHECK:STDOUT:     %complete_type: <witness> = complete_type_witness constants.%empty_struct_type [concrete = constants.%complete_type]
 // CHECK:STDOUT:     complete_type_witness = %complete_type
 // CHECK:STDOUT:
 // CHECK:STDOUT:   !members:

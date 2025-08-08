@@ -7,6 +7,7 @@
 
 #include "toolchain/base/int.h"
 #include "toolchain/parse/node_ids.h"
+#include "toolchain/parse/typed_nodes.h"
 #include "toolchain/sem_ir/ids.h"
 #include "toolchain/sem_ir/inst_kind.h"
 #include "toolchain/sem_ir/singleton_insts.h"
@@ -428,6 +429,34 @@ struct Call {
   InstBlockId args_id;
 };
 
+// A unicode code point character literal. This type only provides compile-time
+// operations, and is represented as an empty type at runtime.
+struct CharLiteralType {
+  static constexpr auto Kind =
+      InstKind::CharLiteralType.Define<Parse::NoneNodeId>(
+          {.ir_name = "Core.CharLiteral",
+           .is_type = InstIsType::Always,
+           .constant_kind = InstConstantKind::Always});
+  // This is a singleton instruction. However, it may still evolve into a more
+  // standard type and be removed.
+  static constexpr auto TypeInstId = MakeSingletonTypeInstId<Kind>();
+  static constexpr auto TypeId =
+      TypeId::ForTypeConstant(ConstantId::ForConcreteConstant(TypeInstId));
+
+  SemIR::TypeId type_id;
+};
+
+// A unicode code point character value, whose type is `CharLiteralType`.
+struct CharLiteralValue {
+  // TODO: Make Parse::NodeId more specific.
+  static constexpr auto Kind = InstKind::CharLiteralValue.Define<Parse::NodeId>(
+      {.ir_name = "char_value", .constant_kind = InstConstantKind::Always});
+
+  TypeId type_id;
+
+  CharId value;
+};
+
 // A class declaration.
 struct ClassDecl {
   static constexpr auto Kind =
@@ -662,11 +691,11 @@ struct FieldDecl {
   ElementIndex index;
 };
 
-// A literal floating point value.
-struct FloatLiteral {
+// A floating point value.
+struct FloatValue {
   static constexpr auto Kind =
-      InstKind::FloatLiteral.Define<Parse::RealLiteralId>(
-          {.ir_name = "float_literal",
+      InstKind::FloatValue.Define<Parse::RealLiteralId>(
+          {.ir_name = "float_value",
            .constant_kind = InstConstantKind::Always});
 
   TypeId type_id;
@@ -1046,7 +1075,7 @@ struct IntType {
   InstId bit_width_id;
 };
 
-// A literal integer value.
+// An integer value.
 struct IntValue {
   // TODO: Make Parse::NodeId more specific.
   static constexpr auto Kind = InstKind::IntValue.Define<Parse::NodeId>(

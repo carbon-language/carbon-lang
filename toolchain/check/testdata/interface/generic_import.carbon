@@ -120,11 +120,11 @@ impl C as AddWith(C) {
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT:   %Main.AddWith: %AddWith.type.b35 = import_ref Main//a, AddWith, loaded [concrete = constants.%AddWith.generic]
 // CHECK:STDOUT:   %Main.import_ref.5ab3ec.1: type = import_ref Main//a, loc4_19, loaded [symbolic = @AddWith.%T (constants.%T)]
-// CHECK:STDOUT:   %Main.import_ref.476 = import_ref Main//a, inst25 [no loc], unloaded
+// CHECK:STDOUT:   %Main.import_ref.476 = import_ref Main//a, inst26 [no loc], unloaded
 // CHECK:STDOUT:   %Main.import_ref.c77 = import_ref Main//a, loc5_9, unloaded
 // CHECK:STDOUT:   %Main.F: @AddWith.%AddWith.F.type (%AddWith.F.type.fbc) = import_ref Main//a, F, loaded [symbolic = @AddWith.%AddWith.F (constants.%AddWith.F.be3)]
 // CHECK:STDOUT:   %Main.import_ref.5ab3ec.2: type = import_ref Main//a, loc4_19, loaded [symbolic = @AddWith.%T (constants.%T)]
-// CHECK:STDOUT:   %Main.import_ref.5a4: @AddWith.%AddWith.type (%AddWith.type.bc7) = import_ref Main//a, inst25 [no loc], loaded [symbolic = @AddWith.%Self (constants.%Self.deb)]
+// CHECK:STDOUT:   %Main.import_ref.5a4: @AddWith.%AddWith.type (%AddWith.type.bc7) = import_ref Main//a, inst26 [no loc], loaded [symbolic = @AddWith.%Self (constants.%Self.deb)]
 // CHECK:STDOUT:   %Main.import_ref.0c5 = import_ref Main//a, loc5_9, unloaded
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -173,8 +173,7 @@ impl C as AddWith(C) {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @C {
-// CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [concrete = constants.%empty_struct_type]
-// CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [concrete = constants.%complete_type]
+// CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness constants.%empty_struct_type [concrete = constants.%complete_type]
 // CHECK:STDOUT:   complete_type_witness = %complete_type
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:

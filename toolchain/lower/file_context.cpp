@@ -19,6 +19,7 @@
 #include "llvm/Transforms/Utils/BasicBlockUtils.h"
 #include "llvm/Transforms/Utils/ModuleUtils.h"
 #include "toolchain/base/kind_switch.h"
+#include "toolchain/lower/clang_global_decl.h"
 #include "toolchain/lower/constant.h"
 #include "toolchain/lower/function_context.h"
 #include "toolchain/lower/mangler.h"
@@ -380,7 +381,7 @@ auto FileContext::HandleReferencedCppFunction(clang::FunctionDecl* cpp_decl)
   // function name (`CodeGenModule::getMangledName()`), and will generate
   // its definition.
   llvm::Constant* function_address =
-      cpp_code_generator_->GetAddrOfGlobal(clang::GlobalDecl(cpp_def),
+      cpp_code_generator_->GetAddrOfGlobal(CreateGlobalDecl(cpp_def),
                                            /*isForDefinition=*/false);
   CARBON_CHECK(function_address);
 
@@ -871,9 +872,9 @@ static auto BuildTypeForInst(FileContext& context, InstT /*inst*/)
 }
 
 template <typename InstT>
-  requires(InstT::Kind
-               .template IsAnyOf<SemIR::BoundMethodType, SemIR::IntLiteralType,
-                                 SemIR::NamespaceType, SemIR::WitnessType>())
+  requires(InstT::Kind.template IsAnyOf<
+           SemIR::BoundMethodType, SemIR::CharLiteralType,
+           SemIR::IntLiteralType, SemIR::NamespaceType, SemIR::WitnessType>())
 static auto BuildTypeForInst(FileContext& context, InstT /*inst*/)
     -> llvm::Type* {
   // Return an empty struct as a placeholder.

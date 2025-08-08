@@ -132,8 +132,8 @@ class C(T:! type) {
 // CHECK:STDOUT:   %require_complete: <witness> = require_complete_type %T.loc4_13.1 [symbolic = %require_complete (constants.%require_complete.4ae)]
 // CHECK:STDOUT:   %Class: type = class_type @Class, @Class(%T.loc4_13.1) [symbolic = %Class (constants.%Class)]
 // CHECK:STDOUT:   %Class.elem: type = unbound_element_type %Class, %T.loc4_13.1 [symbolic = %Class.elem (constants.%Class.elem)]
-// CHECK:STDOUT:   %struct_type.n.loc14_1.2: type = struct_type {.n: @Class.%T.loc4_13.1 (%T)} [symbolic = %struct_type.n.loc14_1.2 (constants.%struct_type.n)]
-// CHECK:STDOUT:   %complete_type.loc14_1.2: <witness> = complete_type_witness %struct_type.n.loc14_1.2 [symbolic = %complete_type.loc14_1.2 (constants.%complete_type)]
+// CHECK:STDOUT:   %struct_type.n: type = struct_type {.n: @Class.%T.loc4_13.1 (%T)} [symbolic = %struct_type.n (constants.%struct_type.n)]
+// CHECK:STDOUT:   %complete_type.loc14_1.2: <witness> = complete_type_witness %struct_type.n [symbolic = %complete_type.loc14_1.2 (constants.%complete_type)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   class {
 // CHECK:STDOUT:     %Class.F.decl: @Class.%Class.F.type (%Class.F.type) = fn_decl @Class.F [symbolic = @Class.%Class.F (constants.%Class.F)] {
@@ -170,8 +170,7 @@ class C(T:! type) {
 // CHECK:STDOUT:     impl_decl @Class.as.Destroy.impl [concrete] {} {}
 // CHECK:STDOUT:     %Destroy.impl_witness_table = impl_witness_table (@Class.as.Destroy.impl.%Class.as.Destroy.impl.Op.decl), @Class.as.Destroy.impl [concrete]
 // CHECK:STDOUT:     %Destroy.impl_witness: <witness> = impl_witness %Destroy.impl_witness_table, @Class.as.Destroy.impl(constants.%T) [symbolic = @Class.as.Destroy.impl.%Destroy.impl_witness (constants.%Destroy.impl_witness)]
-// CHECK:STDOUT:     %struct_type.n.loc14_1.1: type = struct_type {.n: %T} [symbolic = %struct_type.n.loc14_1.2 (constants.%struct_type.n)]
-// CHECK:STDOUT:     %complete_type.loc14_1.1: <witness> = complete_type_witness %struct_type.n.loc14_1.1 [symbolic = %complete_type.loc14_1.2 (constants.%complete_type)]
+// CHECK:STDOUT:     %complete_type.loc14_1.1: <witness> = complete_type_witness constants.%struct_type.n [symbolic = %complete_type.loc14_1.2 (constants.%complete_type)]
 // CHECK:STDOUT:     complete_type_witness = %complete_type.loc14_1.1
 // CHECK:STDOUT:
 // CHECK:STDOUT:   !members:
@@ -240,7 +239,7 @@ class C(T:! type) {
 // CHECK:STDOUT:   %require_complete => constants.%require_complete.4ae
 // CHECK:STDOUT:   %Class => constants.%Class
 // CHECK:STDOUT:   %Class.elem => constants.%Class.elem
-// CHECK:STDOUT:   %struct_type.n.loc14_1.2 => constants.%struct_type.n
+// CHECK:STDOUT:   %struct_type.n => constants.%struct_type.n
 // CHECK:STDOUT:   %complete_type.loc14_1.2 => constants.%complete_type
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -358,8 +357,7 @@ class C(T:! type) {
 // CHECK:STDOUT:     impl_decl @C.as.Destroy.impl [concrete] {} {}
 // CHECK:STDOUT:     %Destroy.impl_witness_table = impl_witness_table (@C.as.Destroy.impl.%C.as.Destroy.impl.Op.decl), @C.as.Destroy.impl [concrete]
 // CHECK:STDOUT:     %Destroy.impl_witness: <witness> = impl_witness %Destroy.impl_witness_table, @C.as.Destroy.impl(constants.%T) [symbolic = @C.as.Destroy.impl.%Destroy.impl_witness (constants.%Destroy.impl_witness)]
-// CHECK:STDOUT:     %struct_type.data: type = struct_type {.data: %empty_struct_type} [concrete = constants.%struct_type.data]
-// CHECK:STDOUT:     %complete_type: <witness> = complete_type_witness %struct_type.data [concrete = constants.%complete_type]
+// CHECK:STDOUT:     %complete_type: <witness> = complete_type_witness constants.%struct_type.data [concrete = constants.%complete_type]
 // CHECK:STDOUT:     complete_type_witness = %complete_type
 // CHECK:STDOUT:
 // CHECK:STDOUT:   !members:

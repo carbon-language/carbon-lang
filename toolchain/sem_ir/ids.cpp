@@ -4,6 +4,8 @@
 
 #include "toolchain/sem_ir/ids.h"
 
+#include "llvm/Support/ConvertUTF.h"
+#include "llvm/Support/NativeFormatting.h"
 #include "toolchain/base/value_ids.h"
 #include "toolchain/sem_ir/singleton_insts.h"
 #include "toolchain/sem_ir/typed_insts.h"
@@ -57,6 +59,13 @@ auto BoolValue::Print(llvm::raw_ostream& out) const -> void {
   } else {
     CARBON_FATAL("Invalid bool value {0}", index);
   }
+}
+
+auto CharId::Print(llvm::raw_ostream& out) const -> void {
+  // TODO: If we switch to C++23, `std::format("`{:?}`")` might be a better
+  // choice.
+  out << "U+";
+  llvm::write_hex(out, index, llvm::HexPrintStyle::Upper, 4);
 }
 
 auto IntKind::Print(llvm::raw_ostream& out) const -> void {

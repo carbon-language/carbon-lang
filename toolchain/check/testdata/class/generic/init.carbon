@@ -190,8 +190,8 @@ fn InitFromAdaptedSpecific(x: i32) -> i32 {
 // CHECK:STDOUT:   %require_complete: <witness> = require_complete_type %T.loc4_13.1 [symbolic = %require_complete (constants.%require_complete.4ae)]
 // CHECK:STDOUT:   %Class: type = class_type @Class, @Class(%T.loc4_13.1) [symbolic = %Class (constants.%Class.fe1)]
 // CHECK:STDOUT:   %Class.elem: type = unbound_element_type %Class, %T.loc4_13.1 [symbolic = %Class.elem (constants.%Class.elem.e26)]
-// CHECK:STDOUT:   %struct_type.k.loc6_1.2: type = struct_type {.k: @Class.%T.loc4_13.1 (%T)} [symbolic = %struct_type.k.loc6_1.2 (constants.%struct_type.k.b21)]
-// CHECK:STDOUT:   %complete_type.loc6_1.2: <witness> = complete_type_witness %struct_type.k.loc6_1.2 [symbolic = %complete_type.loc6_1.2 (constants.%complete_type.b9e)]
+// CHECK:STDOUT:   %struct_type.k: type = struct_type {.k: @Class.%T.loc4_13.1 (%T)} [symbolic = %struct_type.k (constants.%struct_type.k.b21)]
+// CHECK:STDOUT:   %complete_type.loc6_1.2: <witness> = complete_type_witness %struct_type.k [symbolic = %complete_type.loc6_1.2 (constants.%complete_type.b9e)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   class {
 // CHECK:STDOUT:     %T.ref: type = name_ref T, %T.loc4_13.2 [symbolic = %T.loc4_13.1 (constants.%T)]
@@ -199,8 +199,7 @@ fn InitFromAdaptedSpecific(x: i32) -> i32 {
 // CHECK:STDOUT:     impl_decl @Class.as.Destroy.impl [concrete] {} {}
 // CHECK:STDOUT:     %Destroy.impl_witness_table = impl_witness_table (@Class.as.Destroy.impl.%Class.as.Destroy.impl.Op.decl), @Class.as.Destroy.impl [concrete]
 // CHECK:STDOUT:     %Destroy.impl_witness: <witness> = impl_witness %Destroy.impl_witness_table, @Class.as.Destroy.impl(constants.%T) [symbolic = @Class.as.Destroy.impl.%Destroy.impl_witness (constants.%Destroy.impl_witness.95a)]
-// CHECK:STDOUT:     %struct_type.k.loc6_1.1: type = struct_type {.k: %T} [symbolic = %struct_type.k.loc6_1.2 (constants.%struct_type.k.b21)]
-// CHECK:STDOUT:     %complete_type.loc6_1.1: <witness> = complete_type_witness %struct_type.k.loc6_1.1 [symbolic = %complete_type.loc6_1.2 (constants.%complete_type.b9e)]
+// CHECK:STDOUT:     %complete_type.loc6_1.1: <witness> = complete_type_witness constants.%struct_type.k.b21 [symbolic = %complete_type.loc6_1.2 (constants.%complete_type.b9e)]
 // CHECK:STDOUT:     complete_type_witness = %complete_type.loc6_1.1
 // CHECK:STDOUT:
 // CHECK:STDOUT:   !members:
@@ -315,7 +314,7 @@ fn InitFromAdaptedSpecific(x: i32) -> i32 {
 // CHECK:STDOUT:   %require_complete => constants.%require_complete.4ae
 // CHECK:STDOUT:   %Class => constants.%Class.fe1
 // CHECK:STDOUT:   %Class.elem => constants.%Class.elem.e26
-// CHECK:STDOUT:   %struct_type.k.loc6_1.2 => constants.%struct_type.k.b21
+// CHECK:STDOUT:   %struct_type.k => constants.%struct_type.k.b21
 // CHECK:STDOUT:   %complete_type.loc6_1.2 => constants.%complete_type.b9e
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -347,7 +346,7 @@ fn InitFromAdaptedSpecific(x: i32) -> i32 {
 // CHECK:STDOUT:   %require_complete => constants.%complete_type.f8a
 // CHECK:STDOUT:   %Class => constants.%Class.247
 // CHECK:STDOUT:   %Class.elem => constants.%Class.elem.2d8
-// CHECK:STDOUT:   %struct_type.k.loc6_1.2 => constants.%struct_type.k.0bf
+// CHECK:STDOUT:   %struct_type.k => constants.%struct_type.k.0bf
 // CHECK:STDOUT:   %complete_type.loc6_1.2 => constants.%complete_type.954
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

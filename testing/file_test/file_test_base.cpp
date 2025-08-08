@@ -246,15 +246,23 @@ auto FileTestCase::TestBody() -> void {
   }
   if (test_file.check_subset) {
     EXPECT_THAT(SplitOutput(test_file.actual_stdout),
-                IsSupersetOf(test_file.expected_stdout));
+                IsSupersetOf(test_file.expected_stdout))
+        << "Actual text:\n"
+        << test_file.actual_stdout;
     EXPECT_THAT(SplitOutput(test_file.actual_stderr),
-                IsSupersetOf(test_file.expected_stderr));
+                IsSupersetOf(test_file.expected_stderr))
+        << "Actual text:\n"
+        << test_file.actual_stderr;
 
   } else {
     EXPECT_THAT(SplitOutput(test_file.actual_stdout),
-                ElementsAreArray(test_file.expected_stdout));
+                ElementsAreArray(test_file.expected_stdout))
+        << "Actual text:\n"
+        << test_file.actual_stdout;
     EXPECT_THAT(SplitOutput(test_file.actual_stderr),
-                ElementsAreArray(test_file.expected_stderr));
+                ElementsAreArray(test_file.expected_stderr))
+        << "Actual text:\n"
+        << test_file.actual_stderr;
   }
 
   if (HasFailure()) {

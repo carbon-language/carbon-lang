@@ -302,6 +302,7 @@ static auto HandleBuiltinCall(FunctionContext& context, SemIR::InstId inst_id,
     }
 
     case SemIR::BuiltinFunctionKind::BoolMakeType:
+    case SemIR::BuiltinFunctionKind::CharLiteralMakeType:
     case SemIR::BuiltinFunctionKind::FloatMakeType:
     case SemIR::BuiltinFunctionKind::IntLiteralMakeType:
     case SemIR::BuiltinFunctionKind::IntMakeTypeSigned:
@@ -453,6 +454,7 @@ static auto HandleBuiltinCall(FunctionContext& context, SemIR::InstId inst_id,
       return;
     }
 
+    case SemIR::BuiltinFunctionKind::CharConvertChecked:
     case SemIR::BuiltinFunctionKind::IntConvertChecked: {
       // TODO: Check this statically.
       CARBON_CHECK(builtin_kind.IsCompTimeOnly(

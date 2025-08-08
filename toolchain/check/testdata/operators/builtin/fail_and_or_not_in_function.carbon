@@ -99,7 +99,7 @@ fn F() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F(%b.param: bool) -> type {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %b.ref: bool = name_ref b, <unexpected>.inst27.loc5_6
+// CHECK:STDOUT:   %b.ref: bool = name_ref b, <unexpected>.inst28.loc5_6
 // CHECK:STDOUT:   if %b.ref br !if.expr.then else br !if.expr.else
 // CHECK:STDOUT:
 // CHECK:STDOUT: !if.expr.then:
@@ -136,7 +136,7 @@ fn F() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F(%b.param: bool) -> type {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %b.ref: bool = name_ref b, <unexpected>.inst27.loc5_6
+// CHECK:STDOUT:   %b.ref: bool = name_ref b, <unexpected>.inst28.loc5_6
 // CHECK:STDOUT:   if %b.ref br !if.expr.then else br !if.expr.else
 // CHECK:STDOUT:
 // CHECK:STDOUT: !if.expr.then:
@@ -182,7 +182,7 @@ fn F() {
 // CHECK:STDOUT:   %false: bool = bool_literal false [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic impl @C.as.Destroy.impl(<unexpected>.inst27.loc4_14: bool) {
+// CHECK:STDOUT: generic impl @C.as.Destroy.impl(<unexpected>.inst28.loc4_14: bool) {
 // CHECK:STDOUT:   %B: bool = bind_symbolic_name B, 0 [symbolic = %B (constants.%B.7dd)]
 // CHECK:STDOUT:   %Destroy.impl_witness: <witness> = impl_witness @C.%Destroy.impl_witness_table, @C.as.Destroy.impl(%B) [symbolic = %Destroy.impl_witness (constants.%Destroy.impl_witness)]
 // CHECK:STDOUT:
@@ -210,7 +210,7 @@ fn F() {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic class @C(<unexpected>.inst27.loc4_14: bool) {
+// CHECK:STDOUT: generic class @C(<unexpected>.inst28.loc4_14: bool) {
 // CHECK:STDOUT:   %B: bool = bind_symbolic_name B, 0 [symbolic = %B (constants.%B.7dd)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
@@ -219,8 +219,7 @@ fn F() {
 // CHECK:STDOUT:     impl_decl @C.as.Destroy.impl [concrete] {} {}
 // CHECK:STDOUT:     %Destroy.impl_witness_table = impl_witness_table (@C.as.Destroy.impl.%C.as.Destroy.impl.Op.decl), @C.as.Destroy.impl [concrete]
 // CHECK:STDOUT:     %Destroy.impl_witness: <witness> = impl_witness %Destroy.impl_witness_table, @C.as.Destroy.impl(constants.%B.7dd) [symbolic = @C.as.Destroy.impl.%Destroy.impl_witness (constants.%Destroy.impl_witness)]
-// CHECK:STDOUT:     %empty_struct_type: type = struct_type {} [concrete = constants.%empty_struct_type]
-// CHECK:STDOUT:     %complete_type: <witness> = complete_type_witness %empty_struct_type [concrete = constants.%complete_type]
+// CHECK:STDOUT:     %complete_type: <witness> = complete_type_witness constants.%empty_struct_type [concrete = constants.%complete_type]
 // CHECK:STDOUT:     complete_type_witness = %complete_type
 // CHECK:STDOUT:
 // CHECK:STDOUT:   !members:
@@ -229,7 +228,7 @@ fn F() {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @B {
-// CHECK:STDOUT:   %C.ref: %C.type = name_ref C, <unexpected>.inst33.loc4_24 [concrete = constants.%C.generic]
+// CHECK:STDOUT:   %C.ref: %C.type = name_ref C, <unexpected>.inst34.loc4_24 [concrete = constants.%C.generic]
 // CHECK:STDOUT:   %true.loc12_20: bool = bool_literal true [concrete = constants.%true]
 // CHECK:STDOUT:   %.loc12: bool = not %true.loc12_20 [concrete = constants.%false]
 // CHECK:STDOUT:   %true.loc12_25: bool = bool_literal true [concrete = constants.%true]
@@ -241,7 +240,7 @@ fn F() {
 // CHECK:STDOUT:   .C = <poisoned>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic fn @C.as.Destroy.impl.Op(<unexpected>.inst27.loc4_14: bool) {
+// CHECK:STDOUT: generic fn @C.as.Destroy.impl.Op(<unexpected>.inst28.loc4_14: bool) {
 // CHECK:STDOUT:   %B: bool = bind_symbolic_name B, 0 [symbolic = %B (constants.%B.7dd)]
 // CHECK:STDOUT:   %C: type = class_type @C, @C(%B) [symbolic = %C (constants.%C)]
 // CHECK:STDOUT:   %ptr: type = ptr_type %C [symbolic = %ptr (constants.%ptr.1a8)]

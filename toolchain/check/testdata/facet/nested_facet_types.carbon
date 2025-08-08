@@ -139,7 +139,7 @@ interface Z {
   let U:! type;
 }
 
-// CHECK:STDERR: fail_nested_facet_type_cycle.carbon:[[@LINE+4]]:11: error: found cycle in facet type constraint for `.(Z.T)` [FacetTypeConstraintCycle]
+// CHECK:STDERR: fail_nested_facet_type_cycle.carbon:[[@LINE+4]]:11: error: found cycle in facet type constraint for `.(Z.U)` [FacetTypeConstraintCycle]
 // CHECK:STDERR: fn F(FF:! (Z where .T = .U) where .U = .T) {}
 // CHECK:STDERR:           ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 // CHECK:STDERR:

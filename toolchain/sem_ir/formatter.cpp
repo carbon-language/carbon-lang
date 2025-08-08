@@ -1023,7 +1023,7 @@ auto Formatter::FormatInstRhs(Inst inst) -> void {
       return;
     }
 
-    case CARBON_KIND(FloatLiteral value): {
+    case CARBON_KIND(FloatValue value): {
       llvm::SmallVector<char, 16> buffer;
       sem_ir_->floats().Get(value.float_id).toString(buffer);
       out_ << " " << buffer;

@@ -8,6 +8,7 @@
 #include <string>
 #include <utility>
 
+#include "clang/AST/Mangle.h"
 #include "common/check.h"
 #include "llvm/ADT/STLExtras.h"
 #include "llvm/ADT/SmallVector.h"
@@ -53,6 +54,8 @@ File::File(const Parse::Tree* parse_tree, CheckIRId check_ir_id,
     constant_values_.Set(inst_id, ConstantId::ForConcreteConstant(inst_id));
   }
 }
+
+File::~File() = default;
 
 auto File::Verify() const -> ErrorOr<Success> {
   // Invariants don't necessarily hold for invalid IR.
@@ -145,6 +148,11 @@ auto File::CollectMemUsage(MemUsage& mem_usage, llvm::StringRef label) const
   mem_usage.Collect(MemUsage::ConcatLabel(label, "inst_blocks_"), inst_blocks_);
   mem_usage.Collect(MemUsage::ConcatLabel(label, "constants_"), constants_);
   mem_usage.Collect(MemUsage::ConcatLabel(label, "types_"), types_);
+}
+
+auto File::set_cpp_ast(clang::ASTUnit* cpp_ast) -> void {
+  cpp_ast_ = cpp_ast;
+  clang_mangle_context_.reset(cpp_ast->getASTContext().createMangleContext());
 }
 
 }  // namespace Carbon::SemIR

@@ -121,8 +121,8 @@ fn Class(T:! type).F[self: Self](n: T) {}
 // CHECK:STDOUT:   %Class.elem: type = unbound_element_type %Class, %T.loc15_13.1 [symbolic = %Class.elem (constants.%Class.elem)]
 // CHECK:STDOUT:   %Class.F.type: type = fn_type @Class.F, @Class(%T.loc15_13.1) [symbolic = %Class.F.type (constants.%Class.F.type)]
 // CHECK:STDOUT:   %Class.F: @Class.%Class.F.type (%Class.F.type) = struct_value () [symbolic = %Class.F (constants.%Class.F)]
-// CHECK:STDOUT:   %struct_type.a.loc18_1.2: type = struct_type {.a: @Class.%T.loc15_13.1 (%T)} [symbolic = %struct_type.a.loc18_1.2 (constants.%struct_type.a)]
-// CHECK:STDOUT:   %complete_type.loc18_1.2: <witness> = complete_type_witness %struct_type.a.loc18_1.2 [symbolic = %complete_type.loc18_1.2 (constants.%complete_type)]
+// CHECK:STDOUT:   %struct_type.a: type = struct_type {.a: @Class.%T.loc15_13.1 (%T)} [symbolic = %struct_type.a (constants.%struct_type.a)]
+// CHECK:STDOUT:   %complete_type.loc18_1.2: <witness> = complete_type_witness %struct_type.a [symbolic = %complete_type.loc18_1.2 (constants.%complete_type)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   class {
 // CHECK:STDOUT:     %T.ref: type = name_ref T, %T.loc15_13.2 [symbolic = %T.loc15_13.1 (constants.%T)]
@@ -146,8 +146,7 @@ fn Class(T:! type).F[self: Self](n: T) {}
 // CHECK:STDOUT:     impl_decl @Class.as.Destroy.impl [concrete] {} {}
 // CHECK:STDOUT:     %Destroy.impl_witness_table = impl_witness_table (@Class.as.Destroy.impl.%Class.as.Destroy.impl.Op.decl), @Class.as.Destroy.impl [concrete]
 // CHECK:STDOUT:     %Destroy.impl_witness: <witness> = impl_witness %Destroy.impl_witness_table, @Class.as.Destroy.impl(constants.%T) [symbolic = @Class.as.Destroy.impl.%Destroy.impl_witness (constants.%Destroy.impl_witness)]
-// CHECK:STDOUT:     %struct_type.a.loc18_1.1: type = struct_type {.a: %T} [symbolic = %struct_type.a.loc18_1.2 (constants.%struct_type.a)]
-// CHECK:STDOUT:     %complete_type.loc18_1.1: <witness> = complete_type_witness %struct_type.a.loc18_1.1 [symbolic = %complete_type.loc18_1.2 (constants.%complete_type)]
+// CHECK:STDOUT:     %complete_type.loc18_1.1: <witness> = complete_type_witness constants.%struct_type.a [symbolic = %complete_type.loc18_1.2 (constants.%complete_type)]
 // CHECK:STDOUT:     complete_type_witness = %complete_type.loc18_1.1
 // CHECK:STDOUT:
 // CHECK:STDOUT:   !members:
@@ -194,7 +193,7 @@ fn Class(T:! type).F[self: Self](n: T) {}
 // CHECK:STDOUT:   %Class.elem => constants.%Class.elem
 // CHECK:STDOUT:   %Class.F.type => constants.%Class.F.type
 // CHECK:STDOUT:   %Class.F => constants.%Class.F
-// CHECK:STDOUT:   %struct_type.a.loc18_1.2 => constants.%struct_type.a
+// CHECK:STDOUT:   %struct_type.a => constants.%struct_type.a
 // CHECK:STDOUT:   %complete_type.loc18_1.2 => constants.%complete_type
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
