@@ -10,6 +10,7 @@
 #include "toolchain/check/call.h"
 #include "toolchain/check/context.h"
 #include "toolchain/check/control_flow.h"
+#include "toolchain/check/convert.h"
 #include "toolchain/check/literal.h"
 #include "toolchain/check/type.h"
 #include "toolchain/check/type_completion.h"
@@ -237,7 +238,10 @@ static auto BuildCalleeArgs(clang::Sema& sema,
     clang::Expr* call_arg = sema.BuildDeclRefExpr(
         thunk_param, thunk_param->getType(), clang::VK_LValue, clang_loc);
     if (param_type_changed[i]) {
-      // TODO: Insert a cast to an rvalue.
+      // TODO: Consider inserting a cast to an rvalue. Note that we currently
+      // pass pointers to non-temporary objects as the argument when calling a
+      // thunk, so we'll need to either change that or generate different thunks
+      // depending on whether we're moving from each parameter.
       clang::ExprResult deref_result =
           sema.BuildUnaryOp(nullptr, clang_loc, clang::UO_Deref, call_arg);
       CARBON_CHECK(deref_result.isUsable());
@@ -341,22 +345,12 @@ auto PerformCppThunkCall(Context& context, SemIR::LocId loc_id,
                    GetPointerType(context, context.types().GetInstId(
                                                callee_param_type_id)));
 
-      // TODO: Don't create storage if it's already in a storage (depends on
-      // expression category).
-      SemIR::InstId temporary_storage_inst_id = AddInstWithCleanup(
+      arg_id = Convert(context, loc_id, arg_id,
+                       {.kind = ConversionTarget::CppThunkRef,
+                        .type_id = callee_param_type_id});
+      arg_id = AddInst<SemIR::AddrOf>(
           context, loc_id,
-          SemIR::TemporaryStorage{.type_id = callee_param_type_id});
-      AddInst(context, loc_id,
-              SemIR::InitializeFrom{.type_id = callee_param_type_id,
-                                    .src_id = arg_id,
-                                    .dest_id = temporary_storage_inst_id});
-
-      // TODO: Do not use `InitializeFrom` directly. Use the `Initialize`
-      // machinery. See
-      // https://github.com/carbon-language/carbon-lang/pull/5850/files#r2249030529.
-      arg_id = AddInst(context, loc_id,
-                       SemIR::AddrOf{.type_id = thunk_param_type_id,
-                                     .lvalue_id = temporary_storage_inst_id});
+          {.type_id = thunk_param_type_id, .lvalue_id = arg_id});
     }
     thunk_arg_ids.push_back(arg_id);
   }

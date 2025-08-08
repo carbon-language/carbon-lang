@@ -1730,7 +1730,7 @@ struct UnboundElementType {
 // example, when indexing a value expression of array type, this is used to
 // form a reference to the array object.
 struct ValueAsRef {
-  static constexpr auto Kind = InstKind::ValueAsRef.Define<Parse::IndexExprId>(
+  static constexpr auto Kind = InstKind::ValueAsRef.Define<Parse::NodeId>(
       {.ir_name = "value_as_ref", .constant_kind = InstConstantKind::Never});
 
   TypeId type_id;

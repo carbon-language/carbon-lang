@@ -173,15 +173,15 @@ fn F() {
 // CHECK:STDOUT:   %Core.IntLiteral.as.As.impl.Convert.call: init %i16 = call %bound_method.loc7_13.2(%int_1) [concrete = constants.%int_1.f90]
 // CHECK:STDOUT:   %.loc7_13.1: %i16 = value_of_initializer %Core.IntLiteral.as.As.impl.Convert.call [concrete = constants.%int_1.f90]
 // CHECK:STDOUT:   %.loc7_13.2: %i16 = converted %int_1, %.loc7_13.1 [concrete = constants.%int_1.f90]
-// CHECK:STDOUT:   %.loc7_19.1: ref %i16 = temporary_storage
-// CHECK:STDOUT:   %.loc7_19.2: init %i16 = initialize_from %.loc7_13.2 to %.loc7_19.1 [concrete = constants.%int_1.f90]
-// CHECK:STDOUT:   %addr.loc7_19.1: %ptr.251 = addr_of %.loc7_19.1
-// CHECK:STDOUT:   %foo__carbon_thunk.call: init %empty_tuple.type = call imports.%foo__carbon_thunk.decl(%addr.loc7_19.1)
-// CHECK:STDOUT:   %T.as.Destroy.impl.Op.bound: <bound method> = bound_method %.loc7_19.1, constants.%T.as.Destroy.impl.Op.507
+// CHECK:STDOUT:   %.loc7_13.3: ref %i16 = temporary_storage
+// CHECK:STDOUT:   %.loc7_13.4: ref %i16 = temporary %.loc7_13.3, %.loc7_13.2
+// CHECK:STDOUT:   %addr.loc7_19: %ptr.251 = addr_of %.loc7_13.4
+// CHECK:STDOUT:   %foo__carbon_thunk.call: init %empty_tuple.type = call imports.%foo__carbon_thunk.decl(%addr.loc7_19)
+// CHECK:STDOUT:   %T.as.Destroy.impl.Op.bound: <bound method> = bound_method %.loc7_13.3, constants.%T.as.Destroy.impl.Op.507
 // CHECK:STDOUT:   %T.as.Destroy.impl.Op.specific_fn: <specific function> = specific_function constants.%T.as.Destroy.impl.Op.507, @T.as.Destroy.impl.Op(constants.%i16) [concrete = constants.%T.as.Destroy.impl.Op.specific_fn]
-// CHECK:STDOUT:   %bound_method.loc7_19: <bound method> = bound_method %.loc7_19.1, %T.as.Destroy.impl.Op.specific_fn
-// CHECK:STDOUT:   %addr.loc7_19.2: %ptr.251 = addr_of %.loc7_19.1
-// CHECK:STDOUT:   %T.as.Destroy.impl.Op.call: init %empty_tuple.type = call %bound_method.loc7_19(%addr.loc7_19.2)
+// CHECK:STDOUT:   %bound_method.loc7_13.3: <bound method> = bound_method %.loc7_13.3, %T.as.Destroy.impl.Op.specific_fn
+// CHECK:STDOUT:   %addr.loc7_13: %ptr.251 = addr_of %.loc7_13.3
+// CHECK:STDOUT:   %T.as.Destroy.impl.Op.call: init %empty_tuple.type = call %bound_method.loc7_13.3(%addr.loc7_13)
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
