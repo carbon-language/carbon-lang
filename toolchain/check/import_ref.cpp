@@ -1991,6 +1991,10 @@ static auto TryResolveTypedInst(ImportRefResolver& resolver,
   auto class_const_inst = resolver.local_insts().Get(
       resolver.local_constant_values().GetInstId(class_const_id));
 
+  if (resolver.HasNewWork()) {
+    return ResolveResult::Retry();
+  }
+
   // TODO: Ensure the vtable is only imported once, in eg: if there's distinct
   // vtable constants (imported from multiple libraries using the vtable) that
   // refer to the same vtable, the vtable should still be singular.
@@ -1999,34 +2003,12 @@ static auto TryResolveTypedInst(ImportRefResolver& resolver,
 
   llvm::SmallVector<SemIR::InstId> lazy_virtual_functions;
   lazy_virtual_functions.reserve(virtual_functions.size());
-  for (auto vtable_entry_id : virtual_functions) {
-    auto local_attached_constant_id = GetLocalConstantId(
-        resolver,
-        resolver.import_constant_values().GetAttached(vtable_entry_id));
-    lazy_virtual_functions.push_back(
-        resolver.local_constant_values().GetInstIdIfValid(
-            local_attached_constant_id));
-  }
-
-  if (resolver.HasNewWork()) {
-    return ResolveResult::Retry();
-  }
-
-  for (auto [import_vtable_entry_inst_id, local_vtable_entry_inst_id] :
-       llvm::zip(virtual_functions, lazy_virtual_functions)) {
+  for (auto vtable_entry_inst_id : virtual_functions) {
     // Use LoadedImportRef for imported symbolic constant vtable entries so they
     // can carry attached constants necessary for applying specifics to these
     // constants when they are used.
-    auto local_attached_constant_id =
-        resolver.local_constant_values().GetAttached(
-            local_vtable_entry_inst_id);
-    if (local_attached_constant_id.is_symbolic()) {
-      local_vtable_entry_inst_id = AddLoadedImportRef(
-          resolver,
-          GetSingletonType(resolver.local_context(),
-                           SemIR::SpecificFunctionType::TypeInstId),
-          import_vtable_entry_inst_id, local_attached_constant_id);
-    }
+    lazy_virtual_functions.push_back(
+        AddImportRef(resolver, vtable_entry_inst_id));
   }
 
   auto class_id = SemIR::ClassId::None;

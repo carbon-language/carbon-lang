@@ -189,7 +189,7 @@ fn Make() {
 // CHECK:STDOUT: @"_CIntermediate.Classes.$vtable" = external unnamed_addr constant ptr
 // CHECK:STDOUT: @"_CDerived.Classes.$vtable" = external unnamed_addr constant ptr
 // CHECK:STDOUT: @Base.val.loc7_3 = internal constant {} zeroinitializer
-// CHECK:STDOUT: @Intermediate.val.1d7.loc8_3 = internal constant { ptr, {} } { ptr @"_CIntermediate.Classes.$vtable", {} zeroinitializer }
+// CHECK:STDOUT: @Intermediate.val.ac9.loc8_3 = internal constant { ptr, {} } { ptr @"_CIntermediate.Classes.$vtable", {} zeroinitializer }
 // CHECK:STDOUT: @Derived.val.loc9_3 = internal constant { { ptr, {} } } { { ptr, {} } { ptr @"_CDerived.Classes.$vtable", {} zeroinitializer } }
 // CHECK:STDOUT:
 // CHECK:STDOUT: define void @_CCreate.Create() !dbg !4 {
@@ -203,7 +203,7 @@ fn Make() {
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(i64 8, ptr %i.var), !dbg !8
 // CHECK:STDOUT:   %.loc8_44.2.vptr = getelementptr inbounds nuw { ptr, {} }, ptr %i.var, i32 0, i32 0, !dbg !11
 // CHECK:STDOUT:   %.loc8_44.4.base = getelementptr inbounds nuw { ptr, {} }, ptr %i.var, i32 0, i32 1, !dbg !11
-// CHECK:STDOUT:   call void @llvm.memcpy.p0.p0.i64(ptr align 8 %i.var, ptr align 8 @Intermediate.val.1d7.loc8_3, i64 8, i1 false), !dbg !8
+// CHECK:STDOUT:   call void @llvm.memcpy.p0.p0.i64(ptr align 8 %i.var, ptr align 8 @Intermediate.val.ac9.loc8_3, i64 8, i1 false), !dbg !8
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(i64 8, ptr %d.var), !dbg !9
 // CHECK:STDOUT:   %.loc9_49.2.base = getelementptr inbounds nuw { { ptr, {} } }, ptr %d.var, i32 0, i32 0, !dbg !12
 // CHECK:STDOUT:   %.loc9_48.2.vptr = getelementptr inbounds nuw { ptr, {} }, ptr %.loc9_49.2.base, i32 0, i32 0, !dbg !13
@@ -213,10 +213,6 @@ fn Make() {
 // CHECK:STDOUT:   ret void, !dbg !14
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: declare void @_CFn.Intermediate.Classes(ptr)
-// CHECK:STDOUT:
-// CHECK:STDOUT: declare void @_CFn.Derived.Classes(ptr)
-// CHECK:STDOUT:
 // CHECK:STDOUT: define void @_CUse.Create(ptr %v) !dbg !15 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   %Intermediate.Fn.call.vtable = load ptr, ptr %v, align 8, !dbg !16
@@ -224,6 +220,8 @@ fn Make() {
 // CHECK:STDOUT:   call void %Intermediate.Fn.call(ptr %v), !dbg !16
 // CHECK:STDOUT:   ret void, !dbg !17
 // CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: declare void @_CFn.Intermediate.Classes(ptr)
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nocallback nofree nosync nounwind willreturn memory(argmem: readwrite)
 // CHECK:STDOUT: declare void @llvm.lifetime.start.p0(i64 immarg, ptr captures(none)) #0

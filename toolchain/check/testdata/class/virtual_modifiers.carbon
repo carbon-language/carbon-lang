@@ -680,6 +680,7 @@ class T2(G2:! type) {
 // CHECK:STDOUT:   %Derived: type = class_type @Derived [concrete]
 // CHECK:STDOUT:   %Base: type = class_type @Base [concrete]
 // CHECK:STDOUT:   %ptr.454: type = ptr_type <vtable> [concrete]
+// CHECK:STDOUT:   %Base.vtable_decl: ref %ptr.454 = vtable_decl @Base.vtable [concrete]
 // CHECK:STDOUT:   %struct_type.vptr: type = struct_type {.<vptr>: %ptr.454} [concrete]
 // CHECK:STDOUT:   %complete_type.513: <witness> = complete_type_witness %struct_type.vptr [concrete]
 // CHECK:STDOUT:   %Derived.elem: type = unbound_element_type %Derived, %Base [concrete]
@@ -696,7 +697,6 @@ class T2(G2:! type) {
 // CHECK:STDOUT:   %Derived.as.Destroy.impl.Op: %Derived.as.Destroy.impl.Op.type = struct_value () [concrete]
 // CHECK:STDOUT:   %Base.H.type: type = fn_type @Base.H [concrete]
 // CHECK:STDOUT:   %Base.H: %Base.H.type = struct_value () [concrete]
-// CHECK:STDOUT:   %Base.vtable_decl: ref %ptr.454 = vtable_decl @Base.vtable [concrete]
 // CHECK:STDOUT:   %Derived.vtable_decl: ref %ptr.454 = vtable_decl @Derived.vtable [concrete]
 // CHECK:STDOUT:   %struct_type.base.96c: type = struct_type {.base: %Base} [concrete]
 // CHECK:STDOUT:   %complete_type.0e2: <witness> = complete_type_witness %struct_type.base.96c [concrete]
@@ -704,7 +704,7 @@ class T2(G2:! type) {
 // CHECK:STDOUT:   %Use: %Use.type = struct_value () [concrete]
 // CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [concrete]
 // CHECK:STDOUT:   %struct_type.base.f5e: type = struct_type {.base: %empty_struct_type} [concrete]
-// CHECK:STDOUT:   %Derived.vtable_ptr: ref %ptr.454 = vtable_ptr @Derived.vtable [concrete]
+// CHECK:STDOUT:   %Derived.vtable_ptr: ref %ptr.454 = vtable_ptr %Derived.vtable_decl [concrete]
 // CHECK:STDOUT:   %Base.val: %Base = struct_value (%Derived.vtable_ptr) [concrete]
 // CHECK:STDOUT:   %Derived.val: %Derived = struct_value (%Base.val) [concrete]
 // CHECK:STDOUT: }
@@ -720,7 +720,7 @@ class T2(G2:! type) {
 // CHECK:STDOUT:     import Modifiers//default
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Modifiers.Base: type = import_ref Modifiers//default, Base, loaded [concrete = constants.%Base]
-// CHECK:STDOUT:   %Modifiers.import_ref.97a: ref %ptr.454 = import_ref Modifiers//default, loc6_1, loaded [concrete = constants.%Base.vtable_decl]
+// CHECK:STDOUT:   %Modifiers.import_ref.dd4: %Base.H.type = import_ref Modifiers//default, loc5_29, loaded [concrete = constants.%Base.H]
 // CHECK:STDOUT:   %Modifiers.import_ref.05e: <witness> = import_ref Modifiers//default, loc6_1, loaded [concrete = constants.%complete_type.513]
 // CHECK:STDOUT:   %Modifiers.import_ref.1f3 = import_ref Modifiers//default, inst19 [no loc], unloaded
 // CHECK:STDOUT:   %Modifiers.import_ref.2cc = import_ref Modifiers//default, loc5_29, unloaded
@@ -787,7 +787,7 @@ class T2(G2:! type) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @Base [from "modifiers.carbon"] {
 // CHECK:STDOUT:   complete_type_witness = imports.%Modifiers.import_ref.05e
-// CHECK:STDOUT:   vtable_decl = imports.%Modifiers.import_ref.97a
+// CHECK:STDOUT:   vtable_decl = constants.%Base.vtable_decl
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = imports.%Modifiers.import_ref.1f3
@@ -795,7 +795,7 @@ class T2(G2:! type) {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: vtable @Base.vtable {
-// CHECK:STDOUT:   constants.%Base.H
+// CHECK:STDOUT:   imports.%Modifiers.import_ref.dd4
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: vtable @Derived.vtable {
@@ -819,7 +819,7 @@ class T2(G2:! type) {
 // CHECK:STDOUT:   %.loc12_31.1: %struct_type.base.f5e = struct_literal (%.loc12_30.1)
 // CHECK:STDOUT:   %.loc12_31.2: ref %Base = class_element_access %d.var, element0
 // CHECK:STDOUT:   %.loc12_30.2: ref %ptr.454 = class_element_access %.loc12_31.2, element0
-// CHECK:STDOUT:   %Derived.vtable_ptr: ref %ptr.454 = vtable_ptr @Derived.vtable [concrete = constants.%Derived.vtable_ptr]
+// CHECK:STDOUT:   %Derived.vtable_ptr: ref %ptr.454 = vtable_ptr @Derived.%vtable_decl [concrete = constants.%Derived.vtable_ptr]
 // CHECK:STDOUT:   %.loc12_30.3: init %ptr.454 = initialize_from %Derived.vtable_ptr to %.loc12_30.2 [concrete = constants.%Derived.vtable_ptr]
 // CHECK:STDOUT:   %.loc12_30.4: init %Base = class_init (%.loc12_30.3), %.loc12_31.2 [concrete = constants.%Base.val]
 // CHECK:STDOUT:   %.loc12_31.3: init %Base = converted %.loc12_30.1, %.loc12_30.4 [concrete = constants.%Base.val]
@@ -843,6 +843,7 @@ class T2(G2:! type) {
 // CHECK:STDOUT:   %Derived.F: %Derived.F.type = struct_value () [concrete]
 // CHECK:STDOUT:   %Base: type = class_type @Base [concrete]
 // CHECK:STDOUT:   %ptr.454: type = ptr_type <vtable> [concrete]
+// CHECK:STDOUT:   %Base.vtable_decl: ref %ptr.454 = vtable_decl @Base.vtable [concrete]
 // CHECK:STDOUT:   %struct_type.vptr: type = struct_type {.<vptr>: %ptr.454} [concrete]
 // CHECK:STDOUT:   %complete_type.513: <witness> = complete_type_witness %struct_type.vptr [concrete]
 // CHECK:STDOUT:   %Derived.elem: type = unbound_element_type %Derived, %Base [concrete]
@@ -855,7 +856,6 @@ class T2(G2:! type) {
 // CHECK:STDOUT:   %Derived.as.Destroy.impl.Op: %Derived.as.Destroy.impl.Op.type = struct_value () [concrete]
 // CHECK:STDOUT:   %Base.H.type: type = fn_type @Base.H [concrete]
 // CHECK:STDOUT:   %Base.H: %Base.H.type = struct_value () [concrete]
-// CHECK:STDOUT:   %Base.vtable_decl: ref %ptr.454 = vtable_decl @Base.vtable [concrete]
 // CHECK:STDOUT:   %Derived.vtable_decl: ref %ptr.454 = vtable_decl @Derived.vtable [concrete]
 // CHECK:STDOUT:   %struct_type.base: type = struct_type {.base: %Base} [concrete]
 // CHECK:STDOUT:   %complete_type.0e2: <witness> = complete_type_witness %struct_type.base [concrete]
@@ -872,7 +872,7 @@ class T2(G2:! type) {
 // CHECK:STDOUT:     import Modifiers//default
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Modifiers.Base: type = import_ref Modifiers//default, Base, loaded [concrete = constants.%Base]
-// CHECK:STDOUT:   %Modifiers.import_ref.97a: ref %ptr.454 = import_ref Modifiers//default, loc6_1, loaded [concrete = constants.%Base.vtable_decl]
+// CHECK:STDOUT:   %Modifiers.import_ref.dd4: %Base.H.type = import_ref Modifiers//default, loc5_29, loaded [concrete = constants.%Base.H]
 // CHECK:STDOUT:   %Modifiers.import_ref.05e: <witness> = import_ref Modifiers//default, loc6_1, loaded [concrete = constants.%complete_type.513]
 // CHECK:STDOUT:   %Modifiers.import_ref.1f3 = import_ref Modifiers//default, inst19 [no loc], unloaded
 // CHECK:STDOUT:   %Modifiers.import_ref.2cc = import_ref Modifiers//default, loc5_29, unloaded
@@ -937,7 +937,7 @@ class T2(G2:! type) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @Base [from "modifiers.carbon"] {
 // CHECK:STDOUT:   complete_type_witness = imports.%Modifiers.import_ref.05e
-// CHECK:STDOUT:   vtable_decl = imports.%Modifiers.import_ref.97a
+// CHECK:STDOUT:   vtable_decl = constants.%Base.vtable_decl
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = imports.%Modifiers.import_ref.1f3
@@ -945,7 +945,7 @@ class T2(G2:! type) {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: vtable @Base.vtable {
-// CHECK:STDOUT:   constants.%Base.H
+// CHECK:STDOUT:   imports.%Modifiers.import_ref.dd4
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: vtable @Derived.vtable {
@@ -967,17 +967,16 @@ class T2(G2:! type) {
 // CHECK:STDOUT:   %F: %F.type = struct_value () [concrete]
 // CHECK:STDOUT:   %Base: type = class_type @Base [concrete]
 // CHECK:STDOUT:   %ptr.454: type = ptr_type <vtable> [concrete]
+// CHECK:STDOUT:   %Base.vtable_decl: ref %ptr.454 = vtable_decl @Base.vtable [concrete]
 // CHECK:STDOUT:   %struct_type.vptr: type = struct_type {.<vptr>: %ptr.454} [concrete]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %struct_type.vptr [concrete]
 // CHECK:STDOUT:   %pattern_type.80f: type = pattern_type %Base [concrete]
 // CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [concrete]
-// CHECK:STDOUT:   %Base.H.type: type = fn_type @Base.H [concrete]
-// CHECK:STDOUT:   %Base.H: %Base.H.type = struct_value () [concrete]
-// CHECK:STDOUT:   %Base.vtable_decl: ref %ptr.454 = vtable_decl @Base.vtable [concrete]
-// CHECK:STDOUT:   %Base.vtable_ptr: ref %ptr.454 = vtable_ptr @Base.vtable [concrete]
+// CHECK:STDOUT:   %Base.vtable_ptr: ref %ptr.454 = vtable_ptr %Base.vtable_decl [concrete]
 // CHECK:STDOUT:   %Base.val: %Base = struct_value (%Base.vtable_ptr) [concrete]
 // CHECK:STDOUT:   %Destroy.type: type = facet_type <@Destroy> [concrete]
 // CHECK:STDOUT:   %Abstract: type = class_type @Abstract [concrete]
+// CHECK:STDOUT:   %Abstract.vtable_decl: ref %ptr.454 = vtable_decl @Abstract.vtable [concrete]
 // CHECK:STDOUT:   %Destroy.impl_witness.2fb: <witness> = impl_witness imports.%Destroy.impl_witness_table.37d [concrete]
 // CHECK:STDOUT:   %Base.as.Destroy.impl.Op.type: type = fn_type @Base.as.Destroy.impl.Op [concrete]
 // CHECK:STDOUT:   %Base.as.Destroy.impl.Op: %Base.as.Destroy.impl.Op.type = struct_value () [concrete]
@@ -995,20 +994,21 @@ class T2(G2:! type) {
 // CHECK:STDOUT:     import Modifiers//default
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Modifiers.Base: type = import_ref Modifiers//default, Base, loaded [concrete = constants.%Base]
-// CHECK:STDOUT:   %Modifiers.import_ref.97a: ref %ptr.454 = import_ref Modifiers//default, loc6_1, loaded [concrete = constants.%Base.vtable_decl]
+// CHECK:STDOUT:   %Modifiers.import_ref.2cc4fe.1 = import_ref Modifiers//default, loc5_29, unloaded
 // CHECK:STDOUT:   %Modifiers.import_ref.05ec96.1: <witness> = import_ref Modifiers//default, loc6_1, loaded [concrete = constants.%complete_type]
 // CHECK:STDOUT:   %Modifiers.import_ref.1f3 = import_ref Modifiers//default, inst19 [no loc], unloaded
-// CHECK:STDOUT:   %Modifiers.import_ref.2cc = import_ref Modifiers//default, loc5_29, unloaded
+// CHECK:STDOUT:   %Modifiers.import_ref.2cc4fe.2 = import_ref Modifiers//default, loc5_29, unloaded
 // CHECK:STDOUT:   %Core.Destroy: type = import_ref Core//prelude/parts/destroy, Destroy, loaded [concrete = constants.%Destroy.type]
 // CHECK:STDOUT:   %Modifiers.import_ref.fe3: <witness> = import_ref Modifiers//default, loc4_17, loaded [concrete = constants.%Destroy.impl_witness.2fb]
 // CHECK:STDOUT:   %Modifiers.import_ref.87c: type = import_ref Modifiers//default, loc4_17, loaded [concrete = constants.%Base]
 // CHECK:STDOUT:   %Modifiers.import_ref.cb9298.1: type = import_ref Modifiers//default, inst32 [no loc], loaded [concrete = constants.%Destroy.type]
 // CHECK:STDOUT:   %Modifiers.import_ref.5f6 = import_ref Modifiers//default, loc8_25, unloaded
-// CHECK:STDOUT:   %Modifiers.import_ref.30bb79.2 = import_ref Modifiers//default, loc12_1, unloaded
+// CHECK:STDOUT:   %Modifiers.import_ref.bf432a.1 = import_ref Modifiers//default, loc9_30, unloaded
+// CHECK:STDOUT:   %Modifiers.import_ref.b8736b.1 = import_ref Modifiers//default, loc11_29, unloaded
 // CHECK:STDOUT:   %Modifiers.import_ref.05ec96.2: <witness> = import_ref Modifiers//default, loc12_1, loaded [concrete = constants.%complete_type]
 // CHECK:STDOUT:   %Modifiers.import_ref.ee1 = import_ref Modifiers//default, inst76 [no loc], unloaded
-// CHECK:STDOUT:   %Modifiers.import_ref.bf4 = import_ref Modifiers//default, loc9_30, unloaded
-// CHECK:STDOUT:   %Modifiers.import_ref.b87 = import_ref Modifiers//default, loc11_29, unloaded
+// CHECK:STDOUT:   %Modifiers.import_ref.bf432a.2 = import_ref Modifiers//default, loc9_30, unloaded
+// CHECK:STDOUT:   %Modifiers.import_ref.b8736b.2 = import_ref Modifiers//default, loc11_29, unloaded
 // CHECK:STDOUT:   %Modifiers.import_ref.462: type = import_ref Modifiers//default, loc8_25, loaded [concrete = constants.%Abstract]
 // CHECK:STDOUT:   %Modifiers.import_ref.cb9298.2: type = import_ref Modifiers//default, inst32 [no loc], loaded [concrete = constants.%Destroy.type]
 // CHECK:STDOUT:   %Modifiers.import_ref.39f: %Base.as.Destroy.impl.Op.type = import_ref Modifiers//default, loc4_17, loaded [concrete = constants.%Base.as.Destroy.impl.Op]
@@ -1038,25 +1038,30 @@ class T2(G2:! type) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @Base [from "modifiers.carbon"] {
 // CHECK:STDOUT:   complete_type_witness = imports.%Modifiers.import_ref.05ec96.1
-// CHECK:STDOUT:   vtable_decl = imports.%Modifiers.import_ref.97a
+// CHECK:STDOUT:   vtable_decl = constants.%Base.vtable_decl
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = imports.%Modifiers.import_ref.1f3
-// CHECK:STDOUT:   .H = imports.%Modifiers.import_ref.2cc
+// CHECK:STDOUT:   .H = imports.%Modifiers.import_ref.2cc4fe.2
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @Abstract [from "modifiers.carbon"] {
 // CHECK:STDOUT:   complete_type_witness = imports.%Modifiers.import_ref.05ec96.2
-// CHECK:STDOUT:   vtable_decl = imports.%Modifiers.import_ref.30bb79.2
+// CHECK:STDOUT:   vtable_decl = constants.%Abstract.vtable_decl
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = imports.%Modifiers.import_ref.ee1
-// CHECK:STDOUT:   .J = imports.%Modifiers.import_ref.bf4
-// CHECK:STDOUT:   .K = imports.%Modifiers.import_ref.b87
+// CHECK:STDOUT:   .J = imports.%Modifiers.import_ref.bf432a.2
+// CHECK:STDOUT:   .K = imports.%Modifiers.import_ref.b8736b.2
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: vtable @Base.vtable {
-// CHECK:STDOUT:   constants.%Base.H
+// CHECK:STDOUT:   imports.%Modifiers.import_ref.2cc4fe.1
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: vtable @Abstract.vtable {
+// CHECK:STDOUT:   imports.%Modifiers.import_ref.bf432a.1
+// CHECK:STDOUT:   imports.%Modifiers.import_ref.b8736b.1
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F() {
@@ -1068,7 +1073,7 @@ class T2(G2:! type) {
 // CHECK:STDOUT:   %v.var: ref %Base = var %v.var_patt
 // CHECK:STDOUT:   %.loc7_28.1: %empty_struct_type = struct_literal ()
 // CHECK:STDOUT:   %.loc7_28.2: ref %ptr.454 = class_element_access %v.var, element0
-// CHECK:STDOUT:   %Base.vtable_ptr: ref %ptr.454 = vtable_ptr @Base.vtable [concrete = constants.%Base.vtable_ptr]
+// CHECK:STDOUT:   %Base.vtable_ptr: ref %ptr.454 = vtable_ptr constants.%Base.vtable_decl [concrete = constants.%Base.vtable_ptr]
 // CHECK:STDOUT:   %.loc7_28.3: init %ptr.454 = initialize_from %Base.vtable_ptr to %.loc7_28.2 [concrete = constants.%Base.vtable_ptr]
 // CHECK:STDOUT:   %.loc7_28.4: init %Base = class_init (%.loc7_28.3), %v.var [concrete = constants.%Base.val]
 // CHECK:STDOUT:   %.loc7_3: init %Base = converted %.loc7_28.1, %.loc7_28.4 [concrete = constants.%Base.val]
@@ -1083,8 +1088,6 @@ class T2(G2:! type) {
 // CHECK:STDOUT:   %Base.as.Destroy.impl.Op.call: init %empty_tuple.type = call %Base.as.Destroy.impl.Op.bound(%addr)
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: virtual fn @Base.H [from "modifiers.carbon"];
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Base.as.Destroy.impl.Op = "no_op" [from "modifiers.carbon"];
 // CHECK:STDOUT:
@@ -1288,17 +1291,17 @@ class T2(G2:! type) {
 // CHECK:STDOUT:   %Use.type: type = fn_type @Use [concrete]
 // CHECK:STDOUT:   %Use: %Use.type = struct_value () [concrete]
 // CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [concrete]
-// CHECK:STDOUT:   %B1.vtable_ptr: ref %ptr.454 = vtable_ptr @B1.vtable [concrete]
-// CHECK:STDOUT:   %B1.val.267: %B1 = struct_value (%B1.vtable_ptr) [concrete]
+// CHECK:STDOUT:   %B1.vtable_ptr: ref %ptr.454 = vtable_ptr %B1.vtable_decl [concrete]
+// CHECK:STDOUT:   %B1.val.e1b: %B1 = struct_value (%B1.vtable_ptr) [concrete]
 // CHECK:STDOUT:   %struct_type.base.f5e: type = struct_type {.base: %empty_struct_type} [concrete]
-// CHECK:STDOUT:   %B2.vtable_ptr: ref %ptr.454 = vtable_ptr @B2.vtable [concrete]
-// CHECK:STDOUT:   %B1.val.d2f: %B1 = struct_value (%B2.vtable_ptr) [concrete]
-// CHECK:STDOUT:   %B2.val.e9e: %B2 = struct_value (%B1.val.d2f) [concrete]
+// CHECK:STDOUT:   %B2.vtable_ptr: ref %ptr.454 = vtable_ptr %B2.vtable_decl [concrete]
+// CHECK:STDOUT:   %B1.val.036: %B1 = struct_value (%B2.vtable_ptr) [concrete]
+// CHECK:STDOUT:   %B2.val.2b1: %B2 = struct_value (%B1.val.036) [concrete]
 // CHECK:STDOUT:   %struct_type.base.a0c: type = struct_type {.base: %struct_type.base.f5e} [concrete]
-// CHECK:STDOUT:   %C.vtable_ptr: ref %ptr.454 = vtable_ptr @C.vtable [concrete]
-// CHECK:STDOUT:   %B1.val.b9d: %B1 = struct_value (%C.vtable_ptr) [concrete]
-// CHECK:STDOUT:   %B2.val.426: %B2 = struct_value (%B1.val.b9d) [concrete]
-// CHECK:STDOUT:   %C.val: %C = struct_value (%B2.val.426) [concrete]
+// CHECK:STDOUT:   %C.vtable_ptr: ref %ptr.454 = vtable_ptr %C.vtable_decl [concrete]
+// CHECK:STDOUT:   %B1.val.b9e: %B1 = struct_value (%C.vtable_ptr) [concrete]
+// CHECK:STDOUT:   %B2.val.206: %B2 = struct_value (%B1.val.b9e) [concrete]
+// CHECK:STDOUT:   %C.val: %C = struct_value (%B2.val.206) [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -1485,10 +1488,10 @@ class T2(G2:! type) {
 // CHECK:STDOUT:   %b1.var: ref %B1 = var %b1.var_patt
 // CHECK:STDOUT:   %.loc19_17.1: %empty_struct_type = struct_literal ()
 // CHECK:STDOUT:   %.loc19_17.2: ref %ptr.454 = class_element_access %b1.var, element0
-// CHECK:STDOUT:   %B1.vtable_ptr: ref %ptr.454 = vtable_ptr @B1.vtable [concrete = constants.%B1.vtable_ptr]
+// CHECK:STDOUT:   %B1.vtable_ptr: ref %ptr.454 = vtable_ptr @B1.%vtable_decl [concrete = constants.%B1.vtable_ptr]
 // CHECK:STDOUT:   %.loc19_17.3: init %ptr.454 = initialize_from %B1.vtable_ptr to %.loc19_17.2 [concrete = constants.%B1.vtable_ptr]
-// CHECK:STDOUT:   %.loc19_17.4: init %B1 = class_init (%.loc19_17.3), %b1.var [concrete = constants.%B1.val.267]
-// CHECK:STDOUT:   %.loc19_3: init %B1 = converted %.loc19_17.1, %.loc19_17.4 [concrete = constants.%B1.val.267]
+// CHECK:STDOUT:   %.loc19_17.4: init %B1 = class_init (%.loc19_17.3), %b1.var [concrete = constants.%B1.val.e1b]
+// CHECK:STDOUT:   %.loc19_3: init %B1 = converted %.loc19_17.1, %.loc19_17.4 [concrete = constants.%B1.val.e1b]
 // CHECK:STDOUT:   assign %b1.var, %.loc19_3
 // CHECK:STDOUT:   %B1.ref: type = name_ref B1, file.%B1.decl [concrete = constants.%B1]
 // CHECK:STDOUT:   %b1: ref %B1 = bind_name b1, %b1.var
@@ -1501,12 +1504,12 @@ class T2(G2:! type) {
 // CHECK:STDOUT:   %.loc20_27.1: %struct_type.base.f5e = struct_literal (%.loc20_26.1)
 // CHECK:STDOUT:   %.loc20_27.2: ref %B1 = class_element_access %b2.var, element0
 // CHECK:STDOUT:   %.loc20_26.2: ref %ptr.454 = class_element_access %.loc20_27.2, element0
-// CHECK:STDOUT:   %B2.vtable_ptr: ref %ptr.454 = vtable_ptr @B2.vtable [concrete = constants.%B2.vtable_ptr]
+// CHECK:STDOUT:   %B2.vtable_ptr: ref %ptr.454 = vtable_ptr @B2.%vtable_decl [concrete = constants.%B2.vtable_ptr]
 // CHECK:STDOUT:   %.loc20_26.3: init %ptr.454 = initialize_from %B2.vtable_ptr to %.loc20_26.2 [concrete = constants.%B2.vtable_ptr]
-// CHECK:STDOUT:   %.loc20_26.4: init %B1 = class_init (%.loc20_26.3), %.loc20_27.2 [concrete = constants.%B1.val.d2f]
-// CHECK:STDOUT:   %.loc20_27.3: init %B1 = converted %.loc20_26.1, %.loc20_26.4 [concrete = constants.%B1.val.d2f]
-// CHECK:STDOUT:   %.loc20_27.4: init %B2 = class_init (%.loc20_27.3), %b2.var [concrete = constants.%B2.val.e9e]
-// CHECK:STDOUT:   %.loc20_3: init %B2 = converted %.loc20_27.1, %.loc20_27.4 [concrete = constants.%B2.val.e9e]
+// CHECK:STDOUT:   %.loc20_26.4: init %B1 = class_init (%.loc20_26.3), %.loc20_27.2 [concrete = constants.%B1.val.036]
+// CHECK:STDOUT:   %.loc20_27.3: init %B1 = converted %.loc20_26.1, %.loc20_26.4 [concrete = constants.%B1.val.036]
+// CHECK:STDOUT:   %.loc20_27.4: init %B2 = class_init (%.loc20_27.3), %b2.var [concrete = constants.%B2.val.2b1]
+// CHECK:STDOUT:   %.loc20_3: init %B2 = converted %.loc20_27.1, %.loc20_27.4 [concrete = constants.%B2.val.2b1]
 // CHECK:STDOUT:   assign %b2.var, %.loc20_3
 // CHECK:STDOUT:   %B2.ref: type = name_ref B2, file.%B2.decl [concrete = constants.%B2]
 // CHECK:STDOUT:   %b2: ref %B2 = bind_name b2, %b2.var
@@ -1521,12 +1524,12 @@ class T2(G2:! type) {
 // CHECK:STDOUT:   %.loc21_35.2: ref %B2 = class_element_access %c.var, element0
 // CHECK:STDOUT:   %.loc21_34.2: ref %B1 = class_element_access %.loc21_35.2, element0
 // CHECK:STDOUT:   %.loc21_33.2: ref %ptr.454 = class_element_access %.loc21_34.2, element0
-// CHECK:STDOUT:   %C.vtable_ptr: ref %ptr.454 = vtable_ptr @C.vtable [concrete = constants.%C.vtable_ptr]
+// CHECK:STDOUT:   %C.vtable_ptr: ref %ptr.454 = vtable_ptr @C.%vtable_decl [concrete = constants.%C.vtable_ptr]
 // CHECK:STDOUT:   %.loc21_33.3: init %ptr.454 = initialize_from %C.vtable_ptr to %.loc21_33.2 [concrete = constants.%C.vtable_ptr]
-// CHECK:STDOUT:   %.loc21_33.4: init %B1 = class_init (%.loc21_33.3), %.loc21_34.2 [concrete = constants.%B1.val.b9d]
-// CHECK:STDOUT:   %.loc21_34.3: init %B1 = converted %.loc21_33.1, %.loc21_33.4 [concrete = constants.%B1.val.b9d]
-// CHECK:STDOUT:   %.loc21_34.4: init %B2 = class_init (%.loc21_34.3), %.loc21_35.2 [concrete = constants.%B2.val.426]
-// CHECK:STDOUT:   %.loc21_35.3: init %B2 = converted %.loc21_34.1, %.loc21_34.4 [concrete = constants.%B2.val.426]
+// CHECK:STDOUT:   %.loc21_33.4: init %B1 = class_init (%.loc21_33.3), %.loc21_34.2 [concrete = constants.%B1.val.b9e]
+// CHECK:STDOUT:   %.loc21_34.3: init %B1 = converted %.loc21_33.1, %.loc21_33.4 [concrete = constants.%B1.val.b9e]
+// CHECK:STDOUT:   %.loc21_34.4: init %B2 = class_init (%.loc21_34.3), %.loc21_35.2 [concrete = constants.%B2.val.206]
+// CHECK:STDOUT:   %.loc21_35.3: init %B2 = converted %.loc21_34.1, %.loc21_34.4 [concrete = constants.%B2.val.206]
 // CHECK:STDOUT:   %.loc21_35.4: init %C = class_init (%.loc21_35.3), %c.var [concrete = constants.%C.val]
 // CHECK:STDOUT:   %.loc21_3: init %C = converted %.loc21_35.1, %.loc21_35.4 [concrete = constants.%C.val]
 // CHECK:STDOUT:   assign %c.var, %.loc21_3
@@ -1666,7 +1669,7 @@ class T2(G2:! type) {
 // CHECK:STDOUT:   %bound_method.047: <bound method> = bound_method %int_3.1ba, %Core.IntLiteral.as.ImplicitAs.impl.Convert.specific_fn [concrete]
 // CHECK:STDOUT:   %int_3.822: %i32 = int_value 3 [concrete]
 // CHECK:STDOUT:   %struct_type.m2.m1.68c: type = struct_type {.m2: %i32, .m1: %i32} [concrete]
-// CHECK:STDOUT:   %Base.vtable_ptr: ref %ptr.454 = vtable_ptr @Base.vtable [concrete]
+// CHECK:STDOUT:   %Base.vtable_ptr: ref %ptr.454 = vtable_ptr %Base.vtable_decl [concrete]
 // CHECK:STDOUT:   %int_5.64b: Core.IntLiteral = int_value 5 [concrete]
 // CHECK:STDOUT:   %struct_type.m2.m1.5f2: type = struct_type {.m2: Core.IntLiteral, .m1: Core.IntLiteral} [concrete]
 // CHECK:STDOUT:   %Core.IntLiteral.as.ImplicitAs.impl.Convert.bound.4e6: <bound method> = bound_method %int_5.64b, %Core.IntLiteral.as.ImplicitAs.impl.Convert.956 [concrete]
@@ -1793,7 +1796,7 @@ class T2(G2:! type) {
 // CHECK:STDOUT:   %i.ref.loc13_34: ref %i32 = name_ref i, %i
 // CHECK:STDOUT:   %.loc13_35.1: %struct_type.m2.m1.68c = struct_literal (%i.ref.loc13_25, %i.ref.loc13_34)
 // CHECK:STDOUT:   %.loc13_35.2: ref %ptr.454 = class_element_access %b1.var, element0
-// CHECK:STDOUT:   %Base.vtable_ptr.loc13: ref %ptr.454 = vtable_ptr @Base.vtable [concrete = constants.%Base.vtable_ptr]
+// CHECK:STDOUT:   %Base.vtable_ptr.loc13: ref %ptr.454 = vtable_ptr @Base.%vtable_decl [concrete = constants.%Base.vtable_ptr]
 // CHECK:STDOUT:   %.loc13_35.3: init %ptr.454 = initialize_from %Base.vtable_ptr.loc13 to %.loc13_35.2 [concrete = constants.%Base.vtable_ptr]
 // CHECK:STDOUT:   %.loc13_34: %i32 = bind_value %i.ref.loc13_34
 // CHECK:STDOUT:   %.loc13_35.4: ref %i32 = class_element_access %b1.var, element2
@@ -1815,7 +1818,7 @@ class T2(G2:! type) {
 // CHECK:STDOUT:   %int_5: Core.IntLiteral = int_value 5 [concrete = constants.%int_5.64b]
 // CHECK:STDOUT:   %.loc14_35.1: %struct_type.m2.m1.5f2 = struct_literal (%int_3.loc14, %int_5)
 // CHECK:STDOUT:   %.loc14_35.2: ref %ptr.454 = class_element_access %b2.var, element0
-// CHECK:STDOUT:   %Base.vtable_ptr.loc14: ref %ptr.454 = vtable_ptr @Base.vtable [concrete = constants.%Base.vtable_ptr]
+// CHECK:STDOUT:   %Base.vtable_ptr.loc14: ref %ptr.454 = vtable_ptr @Base.%vtable_decl [concrete = constants.%Base.vtable_ptr]
 // CHECK:STDOUT:   %.loc14_35.3: init %ptr.454 = initialize_from %Base.vtable_ptr.loc14 to %.loc14_35.2 [concrete = constants.%Base.vtable_ptr]
 // CHECK:STDOUT:   %impl.elem0.loc14_35.1: %.9c3 = impl_witness_access constants.%ImplicitAs.impl_witness.c75, element0 [concrete = constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.956]
 // CHECK:STDOUT:   %bound_method.loc14_35.1: <bound method> = bound_method %int_5, %impl.elem0.loc14_35.1 [concrete = constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.bound.4e6]
@@ -4237,6 +4240,7 @@ class T2(G2:! type) {
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %Base: type = class_type @Base [concrete]
 // CHECK:STDOUT:   %ptr: type = ptr_type <vtable> [concrete]
+// CHECK:STDOUT:   %Base.vtable_decl: ref %ptr = vtable_decl @Base.vtable [concrete]
 // CHECK:STDOUT:   %struct_type.vptr: type = struct_type {.<vptr>: %ptr} [concrete]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %struct_type.vptr [concrete]
 // CHECK:STDOUT:   %pattern_type: type = pattern_type %Base [concrete]
@@ -4254,10 +4258,10 @@ class T2(G2:! type) {
 // CHECK:STDOUT:     import Modifiers//default
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Modifiers.Base: type = import_ref Modifiers//default, Base, loaded [concrete = constants.%Base]
-// CHECK:STDOUT:   %Modifiers.import_ref.3e3fbe.2 = import_ref Modifiers//default, loc6_1, unloaded
+// CHECK:STDOUT:   %Modifiers.import_ref.2cc4fe.1 = import_ref Modifiers//default, loc5_29, unloaded
 // CHECK:STDOUT:   %Modifiers.import_ref.05e: <witness> = import_ref Modifiers//default, loc6_1, loaded [concrete = constants.%complete_type]
 // CHECK:STDOUT:   %Modifiers.import_ref.1f3 = import_ref Modifiers//default, inst19 [no loc], unloaded
-// CHECK:STDOUT:   %Modifiers.import_ref.2cc = import_ref Modifiers//default, loc5_29, unloaded
+// CHECK:STDOUT:   %Modifiers.import_ref.2cc4fe.2 = import_ref Modifiers//default, loc5_29, unloaded
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -4283,11 +4287,15 @@ class T2(G2:! type) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @Base [from "modifiers.carbon"] {
 // CHECK:STDOUT:   complete_type_witness = imports.%Modifiers.import_ref.05e
-// CHECK:STDOUT:   vtable_decl = imports.%Modifiers.import_ref.3e3fbe.2
+// CHECK:STDOUT:   vtable_decl = constants.%Base.vtable_decl
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = imports.%Modifiers.import_ref.1f3
-// CHECK:STDOUT:   .H = imports.%Modifiers.import_ref.2cc
+// CHECK:STDOUT:   .H = imports.%Modifiers.import_ref.2cc4fe.2
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: vtable @Base.vtable {
+// CHECK:STDOUT:   imports.%Modifiers.import_ref.2cc4fe.1
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F(%b.param: %Base);
@@ -6781,6 +6789,7 @@ class T2(G2:! type) {
 // CHECK:STDOUT:   %Base.type: type = generic_class_type @Base [concrete]
 // CHECK:STDOUT:   %Base.generic: %Base.type = struct_value () [concrete]
 // CHECK:STDOUT:   %ptr.454: type = ptr_type <vtable> [concrete]
+// CHECK:STDOUT:   %Base.vtable_decl: ref %ptr.454 = vtable_decl @Base.vtable [concrete]
 // CHECK:STDOUT:   %struct_type.vptr: type = struct_type {.<vptr>: %ptr.454} [concrete]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %struct_type.vptr [concrete]
 // CHECK:STDOUT:   %T: type = bind_symbolic_name T, 0 [symbolic]
@@ -6796,9 +6805,8 @@ class T2(G2:! type) {
 // CHECK:STDOUT:   %pattern_type.3bf: type = pattern_type %Base.ea5 [concrete]
 // CHECK:STDOUT:   %Base.F.specific_fn.210: <specific function> = specific_function %Base.F.d25, @Base.F(%T1) [concrete]
 // CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [concrete]
-// CHECK:STDOUT:   %Base.vtable_decl: ref %ptr.454 = vtable_decl @Base.vtable [concrete]
 // CHECK:STDOUT:   %.b74: ref %ptr.454 = class_element_access file.%v.var, element0 [concrete]
-// CHECK:STDOUT:   %Base.vtable_ptr: ref %ptr.454 = vtable_ptr @Base.vtable, @Base(%T1) [concrete]
+// CHECK:STDOUT:   %Base.vtable_ptr: ref %ptr.454 = vtable_ptr %Base.vtable_decl, @Base(%T1) [concrete]
 // CHECK:STDOUT:   %Base.val: %Base.ea5 = struct_value (%Base.vtable_ptr) [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -6808,13 +6816,12 @@ class T2(G2:! type) {
 // CHECK:STDOUT:     import Core//prelude
 // CHECK:STDOUT:     import Core//prelude/...
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %Main.import_ref.0e5: ref %ptr.454 = import_ref Main//generic_lib, loc6_1, loaded [concrete = constants.%Base.vtable_decl]
+// CHECK:STDOUT:   %Main.import_ref.ef2 = import_ref Main//generic_lib, loc6_1, unloaded
 // CHECK:STDOUT:   %Main.import_ref.5ab3ec.1: type = import_ref Main//generic_lib, loc4_17, loaded [symbolic = @Base.%T (constants.%T)]
 // CHECK:STDOUT:   %Main.import_ref.05e: <witness> = import_ref Main//generic_lib, loc6_1, loaded [concrete = constants.%complete_type]
 // CHECK:STDOUT:   %Main.import_ref.8e0 = import_ref Main//generic_lib, inst27 [no loc], unloaded
 // CHECK:STDOUT:   %Main.import_ref.e54 = import_ref Main//generic_lib, loc5_30, unloaded
 // CHECK:STDOUT:   %Main.import_ref.5ab3ec.2: type = import_ref Main//generic_lib, loc4_17, loaded [symbolic = @Base.%T (constants.%T)]
-// CHECK:STDOUT:   %Main.import_ref.4f4: <specific function> = import_ref Main//generic_lib, inst47 [no loc], loaded [symbolic = constants.%Base.F.specific_fn.892]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -6852,7 +6859,7 @@ class T2(G2:! type) {
 // CHECK:STDOUT:
 // CHECK:STDOUT:   class {
 // CHECK:STDOUT:     complete_type_witness = imports.%Main.import_ref.05e
-// CHECK:STDOUT:     vtable_decl = imports.%Main.import_ref.0e5
+// CHECK:STDOUT:     vtable_decl = constants.%Base.vtable_decl
 // CHECK:STDOUT:
 // CHECK:STDOUT:   !members:
 // CHECK:STDOUT:     .Self = imports.%Main.import_ref.8e0
@@ -6861,7 +6868,7 @@ class T2(G2:! type) {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: vtable @Base.vtable {
-// CHECK:STDOUT:   imports.%Main.import_ref.4f4
+// CHECK:STDOUT:   imports.%Main.import_ref.ef2
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic virtual fn @Base.F(imports.%Main.import_ref.5ab3ec.2: type) [from "generic_lib.carbon"] {
@@ -6880,7 +6887,7 @@ class T2(G2:! type) {
 // CHECK:STDOUT:   %.loc7_20.1: %empty_struct_type = struct_literal ()
 // CHECK:STDOUT:   %Base.vtable_decl: ref %ptr.454 = vtable_decl @Base.vtable [concrete = constants.%Base.vtable_decl]
 // CHECK:STDOUT:   %.loc7_20.2: ref %ptr.454 = class_element_access file.%v.var, element0 [concrete = constants.%.b74]
-// CHECK:STDOUT:   %Base.vtable_ptr: ref %ptr.454 = vtable_ptr @Base.vtable, @Base(constants.%T1) [concrete = constants.%Base.vtable_ptr]
+// CHECK:STDOUT:   %Base.vtable_ptr: ref %ptr.454 = vtable_ptr %Base.vtable_decl, @Base(constants.%T1) [concrete = constants.%Base.vtable_ptr]
 // CHECK:STDOUT:   %.loc7_20.3: init %ptr.454 = initialize_from %Base.vtable_ptr to %.loc7_20.2 [concrete = constants.%Base.vtable_ptr]
 // CHECK:STDOUT:   %.loc7_20.4: init %Base.ea5 = class_init (%.loc7_20.3), file.%v.var [concrete = constants.%Base.val]
 // CHECK:STDOUT:   %.loc7_1: init %Base.ea5 = converted %.loc7_20.1, %.loc7_20.4 [concrete = constants.%Base.val]
