@@ -989,8 +989,8 @@ static auto MakeIntTypeResult(Context& context, SemIR::LocId loc_id,
   return MakeConstantResult(context, result, phase);
 }
 
-// Forms a constant float type as an evaluation result. Requires that width_id is
-// constant.
+// Forms a constant float type as an evaluation result. Requires that width_id
+// is constant.
 static auto MakeFloatTypeResult(Context& context, SemIR::LocId loc_id,
                                 SemIR::InstId width_id, Phase phase)
     -> SemIR::ConstantId {

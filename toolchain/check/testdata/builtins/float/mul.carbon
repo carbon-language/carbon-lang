@@ -69,6 +69,8 @@ fn RuntimeCallIsValidBadReturnType(a: f64, b: f64) -> bool {
 // CHECK:STDOUT: --- mul_sub.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
+// CHECK:STDOUT:   %int_64: Core.IntLiteral = int_value 64 [concrete]
+// CHECK:STDOUT:   %f64.d77: type = class_type @Float, @Float(%int_64) [concrete]
 // CHECK:STDOUT:   %Mul.type: type = fn_type @Mul [concrete]
 // CHECK:STDOUT:   %Mul: %Mul.type = struct_value () [concrete]
 // CHECK:STDOUT: }
@@ -76,14 +78,14 @@ fn RuntimeCallIsValidBadReturnType(a: f64, b: f64) -> bool {
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @RuntimeCallIsValid(%a.param: f64, %b.param: f64) -> f64 {
+// CHECK:STDOUT: fn @RuntimeCallIsValid(%a.param: %f64.d77, %b.param: %f64.d77) -> %f64.d77 {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %Mul.ref: %Mul.type = name_ref Mul, file.%Mul.decl [concrete = constants.%Mul]
-// CHECK:STDOUT:   %a.ref: f64 = name_ref a, %a
-// CHECK:STDOUT:   %b.ref: f64 = name_ref b, %b
-// CHECK:STDOUT:   %Mul.call: init f64 = call %Mul.ref(%a.ref, %b.ref)
-// CHECK:STDOUT:   %.loc8_19.1: f64 = value_of_initializer %Mul.call
-// CHECK:STDOUT:   %.loc8_19.2: f64 = converted %Mul.call, %.loc8_19.1
+// CHECK:STDOUT:   %a.ref: %f64.d77 = name_ref a, %a
+// CHECK:STDOUT:   %b.ref: %f64.d77 = name_ref b, %b
+// CHECK:STDOUT:   %Mul.call: init %f64.d77 = call %Mul.ref(%a.ref, %b.ref)
+// CHECK:STDOUT:   %.loc8_19.1: %f64.d77 = value_of_initializer %Mul.call
+// CHECK:STDOUT:   %.loc8_19.2: %f64.d77 = converted %Mul.call, %.loc8_19.1
 // CHECK:STDOUT:   return %.loc8_19.2
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

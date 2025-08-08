@@ -56,7 +56,7 @@ fn G() {
 // CHECK:STDOUT:   %.loc27 = load i32, ptr %n.var, align 4, !dbg !13
 // CHECK:STDOUT:   call void @_CF.Main.b88d1103f417c6d4(i32 %.loc27), !dbg !14
 // CHECK:STDOUT:   %.loc28 = load double, ptr %m.var, align 8, !dbg !15
-// CHECK:STDOUT:   call void @_CF.Main.66be507887ceee78(double %.loc28), !dbg !16
+// CHECK:STDOUT:   call void @_CF.Main.d4b5665541d5d7a8(double %.loc28), !dbg !16
 // CHECK:STDOUT:   call void @_CF.Main.5754c7a55c7cbe4a(%type zeroinitializer), !dbg !17
 // CHECK:STDOUT:   ret void, !dbg !18
 // CHECK:STDOUT: }
@@ -77,7 +77,7 @@ fn G() {
 // CHECK:STDOUT:   ret void, !dbg !22
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: define linkonce_odr void @_CF.Main.66be507887ceee78(double %x) !dbg !23 {
+// CHECK:STDOUT: define linkonce_odr void @_CF.Main.d4b5665541d5d7a8(double %x) !dbg !23 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   ret void, !dbg !24
 // CHECK:STDOUT: }
@@ -121,7 +121,7 @@ fn G() {
 // CHECK:STDOUT: !20 = !DILocation(line: 13, column: 1, scope: !19)
 // CHECK:STDOUT: !21 = distinct !DISubprogram(name: "F", linkageName: "_CF.Main.b88d1103f417c6d4", scope: null, file: !3, line: 13, type: !5, spFlags: DISPFlagDefinition, unit: !2)
 // CHECK:STDOUT: !22 = !DILocation(line: 13, column: 1, scope: !21)
-// CHECK:STDOUT: !23 = distinct !DISubprogram(name: "F", linkageName: "_CF.Main.66be507887ceee78", scope: null, file: !3, line: 13, type: !5, spFlags: DISPFlagDefinition, unit: !2)
+// CHECK:STDOUT: !23 = distinct !DISubprogram(name: "F", linkageName: "_CF.Main.d4b5665541d5d7a8", scope: null, file: !3, line: 13, type: !5, spFlags: DISPFlagDefinition, unit: !2)
 // CHECK:STDOUT: !24 = !DILocation(line: 13, column: 1, scope: !23)
 // CHECK:STDOUT: !25 = distinct !DISubprogram(name: "F", linkageName: "_CF.Main.5754c7a55c7cbe4a", scope: null, file: !3, line: 13, type: !5, spFlags: DISPFlagDefinition, unit: !2)
 // CHECK:STDOUT: !26 = !DILocation(line: 13, column: 1, scope: !25)

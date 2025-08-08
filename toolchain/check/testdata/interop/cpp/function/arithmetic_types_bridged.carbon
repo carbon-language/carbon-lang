@@ -1345,16 +1345,28 @@ fn F() {
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [concrete]
 // CHECK:STDOUT:   %int_64: Core.IntLiteral = int_value 64 [concrete]
-// CHECK:STDOUT:   %Float.type: type = fn_type @Float [concrete]
-// CHECK:STDOUT:   %Float: %Float.type = struct_value () [concrete]
+// CHECK:STDOUT:   %f64.d77: type = class_type @Float, @Float(%int_64) [concrete]
 // CHECK:STDOUT:   %foo.type: type = fn_type @foo [concrete]
 // CHECK:STDOUT:   %foo: %foo.type = struct_value () [concrete]
-// CHECK:STDOUT:   %ptr.ef1: type = ptr_type f64 [concrete]
+// CHECK:STDOUT:   %ptr.bcc: type = ptr_type %f64.d77 [concrete]
 // CHECK:STDOUT:   %foo__carbon_thunk.type: type = fn_type @foo__carbon_thunk [concrete]
 // CHECK:STDOUT:   %foo__carbon_thunk: %foo__carbon_thunk.type = struct_value () [concrete]
-// CHECK:STDOUT:   %float: f64 = float_value 0.80000000000000004 [concrete]
-// CHECK:STDOUT:   %T.as.Destroy.impl.Op.type.3ef: type = fn_type @T.as.Destroy.impl.Op, @T.as.Destroy.impl(f64) [concrete]
-// CHECK:STDOUT:   %T.as.Destroy.impl.Op.868: %T.as.Destroy.impl.Op.type.3ef = struct_value () [concrete]
+// CHECK:STDOUT:   %float: Core.FloatLiteral = float_value 0.80000000000000004 [concrete]
+// CHECK:STDOUT:   %As.type.6d2: type = facet_type <@As, @As(%f64.d77)> [concrete]
+// CHECK:STDOUT:   %As.Convert.type.8fc: type = fn_type @As.Convert, @As(%f64.d77) [concrete]
+// CHECK:STDOUT:   %To: Core.IntLiteral = bind_symbolic_name To, 0 [symbolic]
+// CHECK:STDOUT:   %Core.FloatLiteral.as.As.impl.Convert.type.6a5: type = fn_type @Core.FloatLiteral.as.As.impl.Convert, @Core.FloatLiteral.as.As.impl(%To) [symbolic]
+// CHECK:STDOUT:   %Core.FloatLiteral.as.As.impl.Convert.6af: %Core.FloatLiteral.as.As.impl.Convert.type.6a5 = struct_value () [symbolic]
+// CHECK:STDOUT:   %As.impl_witness.a23: <witness> = impl_witness imports.%As.impl_witness_table, @Core.FloatLiteral.as.As.impl(%int_64) [concrete]
+// CHECK:STDOUT:   %Core.FloatLiteral.as.As.impl.Convert.type.12c: type = fn_type @Core.FloatLiteral.as.As.impl.Convert, @Core.FloatLiteral.as.As.impl(%int_64) [concrete]
+// CHECK:STDOUT:   %Core.FloatLiteral.as.As.impl.Convert.6ae: %Core.FloatLiteral.as.As.impl.Convert.type.12c = struct_value () [concrete]
+// CHECK:STDOUT:   %As.facet: %As.type.6d2 = facet_value Core.FloatLiteral, (%As.impl_witness.a23) [concrete]
+// CHECK:STDOUT:   %.d03: type = fn_type_with_self_type %As.Convert.type.8fc, %As.facet [concrete]
+// CHECK:STDOUT:   %Core.FloatLiteral.as.As.impl.Convert.bound: <bound method> = bound_method %float, %Core.FloatLiteral.as.As.impl.Convert.6ae [concrete]
+// CHECK:STDOUT:   %Core.FloatLiteral.as.As.impl.Convert.specific_fn: <specific function> = specific_function %Core.FloatLiteral.as.As.impl.Convert.6ae, @Core.FloatLiteral.as.As.impl.Convert(%int_64) [concrete]
+// CHECK:STDOUT:   %bound_method: <bound method> = bound_method %float, %Core.FloatLiteral.as.As.impl.Convert.specific_fn [concrete]
+// CHECK:STDOUT:   %T.as.Destroy.impl.Op.type.efe: type = fn_type @T.as.Destroy.impl.Op, @T.as.Destroy.impl(%f64.d77) [concrete]
+// CHECK:STDOUT:   %T.as.Destroy.impl.Op.c51: %T.as.Destroy.impl.Op.type.efe = struct_value () [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -1372,26 +1384,33 @@ fn F() {
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     <elided>
 // CHECK:STDOUT:   }
+// CHECK:STDOUT:   %Core.import_ref.2c9: @Core.FloatLiteral.as.As.impl.%Core.FloatLiteral.as.As.impl.Convert.type (%Core.FloatLiteral.as.As.impl.Convert.type.6a5) = import_ref Core//prelude/parts/float, loc20_41, loaded [symbolic = @Core.FloatLiteral.as.As.impl.%Core.FloatLiteral.as.As.impl.Convert (constants.%Core.FloatLiteral.as.As.impl.Convert.6af)]
+// CHECK:STDOUT:   %As.impl_witness_table = impl_witness_table (%Core.import_ref.2c9), @Core.FloatLiteral.as.As.impl [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %Cpp.ref: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
 // CHECK:STDOUT:   %foo.ref: %foo.type = name_ref foo, imports.%foo.decl [concrete = constants.%foo]
-// CHECK:STDOUT:   %float: f64 = float_value 0.80000000000000004 [concrete = constants.%float]
+// CHECK:STDOUT:   %float: Core.FloatLiteral = float_value 0.80000000000000004 [concrete = constants.%float]
 // CHECK:STDOUT:   %int_64: Core.IntLiteral = int_value 64 [concrete = constants.%int_64]
-// CHECK:STDOUT:   %Float.call: init type = call constants.%Float(%int_64) [concrete = f64]
-// CHECK:STDOUT:   %.loc8_18.1: type = value_of_initializer %Float.call [concrete = f64]
-// CHECK:STDOUT:   %.loc8_18.2: type = converted %Float.call, %.loc8_18.1 [concrete = f64]
-// CHECK:STDOUT:   %.loc8_21.1: ref f64 = temporary_storage
-// CHECK:STDOUT:   %.loc8_21.2: init f64 = initialize_from %float to %.loc8_21.1 [concrete = constants.%float]
-// CHECK:STDOUT:   %addr.loc8_21.1: %ptr.ef1 = addr_of %.loc8_21.1
+// CHECK:STDOUT:   %f64: type = class_type @Float, @Float(constants.%int_64) [concrete = constants.%f64.d77]
+// CHECK:STDOUT:   %impl.elem0: %.d03 = impl_witness_access constants.%As.impl_witness.a23, element0 [concrete = constants.%Core.FloatLiteral.as.As.impl.Convert.6ae]
+// CHECK:STDOUT:   %bound_method.loc8_15.1: <bound method> = bound_method %float, %impl.elem0 [concrete = constants.%Core.FloatLiteral.as.As.impl.Convert.bound]
+// CHECK:STDOUT:   %specific_fn: <specific function> = specific_function %impl.elem0, @Core.FloatLiteral.as.As.impl.Convert(constants.%int_64) [concrete = constants.%Core.FloatLiteral.as.As.impl.Convert.specific_fn]
+// CHECK:STDOUT:   %bound_method.loc8_15.2: <bound method> = bound_method %float, %specific_fn [concrete = constants.%bound_method]
+// CHECK:STDOUT:   %Core.FloatLiteral.as.As.impl.Convert.call: init %f64.d77 = call %bound_method.loc8_15.2(%float) [concrete = constants.%float]
+// CHECK:STDOUT:   %.loc8_15.1: %f64.d77 = value_of_initializer %Core.FloatLiteral.as.As.impl.Convert.call [concrete = constants.%float]
+// CHECK:STDOUT:   %.loc8_15.2: %f64.d77 = converted %float, %.loc8_15.1 [concrete = constants.%float]
+// CHECK:STDOUT:   %.loc8_21.1: ref %f64.d77 = temporary_storage
+// CHECK:STDOUT:   %.loc8_21.2: init %f64.d77 = initialize_from %.loc8_15.2 to %.loc8_21.1 [concrete = constants.%float]
+// CHECK:STDOUT:   %addr.loc8_21.1: %ptr.bcc = addr_of %.loc8_21.1
 // CHECK:STDOUT:   %foo__carbon_thunk.call: init %empty_tuple.type = call imports.%foo__carbon_thunk.decl(%addr.loc8_21.1)
-// CHECK:STDOUT:   %T.as.Destroy.impl.Op.bound: <bound method> = bound_method %.loc8_21.1, constants.%T.as.Destroy.impl.Op.868
+// CHECK:STDOUT:   %T.as.Destroy.impl.Op.bound: <bound method> = bound_method %.loc8_21.1, constants.%T.as.Destroy.impl.Op.c51
 // CHECK:STDOUT:   <elided>
-// CHECK:STDOUT:   %bound_method: <bound method> = bound_method %.loc8_21.1, %T.as.Destroy.impl.Op.specific_fn
-// CHECK:STDOUT:   %addr.loc8_21.2: %ptr.ef1 = addr_of %.loc8_21.1
-// CHECK:STDOUT:   %T.as.Destroy.impl.Op.call: init %empty_tuple.type = call %bound_method(%addr.loc8_21.2)
+// CHECK:STDOUT:   %bound_method.loc8_21: <bound method> = bound_method %.loc8_21.1, %T.as.Destroy.impl.Op.specific_fn
+// CHECK:STDOUT:   %addr.loc8_21.2: %ptr.bcc = addr_of %.loc8_21.1
+// CHECK:STDOUT:   %T.as.Destroy.impl.Op.call: init %empty_tuple.type = call %bound_method.loc8_21(%addr.loc8_21.2)
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -1574,9 +1593,8 @@ fn F() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %int_64: Core.IntLiteral = int_value 64 [concrete]
-// CHECK:STDOUT:   %Float.type: type = fn_type @Float [concrete]
-// CHECK:STDOUT:   %Float: %Float.type = struct_value () [concrete]
-// CHECK:STDOUT:   %pattern_type.3de: type = pattern_type f64 [concrete]
+// CHECK:STDOUT:   %f64.d77: type = class_type @Float, @Float(%int_64) [concrete]
+// CHECK:STDOUT:   %pattern_type.0ae: type = pattern_type %f64.d77 [concrete]
 // CHECK:STDOUT:   %foo_double.type: type = fn_type @foo_double [concrete]
 // CHECK:STDOUT:   %foo_double: %foo_double.type = struct_value () [concrete]
 // CHECK:STDOUT: }
@@ -1596,20 +1614,18 @@ fn F() {
 // CHECK:STDOUT: fn @F() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %x.patt: %pattern_type.3de = binding_pattern x [concrete]
+// CHECK:STDOUT:     %x.patt: %pattern_type.0ae = binding_pattern x [concrete]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Cpp.ref: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
 // CHECK:STDOUT:   %foo_double.ref: %foo_double.type = name_ref foo_double, imports.%foo_double.decl [concrete = constants.%foo_double]
-// CHECK:STDOUT:   %foo_double.call: init f64 = call %foo_double.ref()
-// CHECK:STDOUT:   %.loc8_10.1: type = splice_block %.loc8_10.3 [concrete = f64] {
+// CHECK:STDOUT:   %foo_double.call: init %f64.d77 = call %foo_double.ref()
+// CHECK:STDOUT:   %.loc8_10: type = splice_block %f64 [concrete = constants.%f64.d77] {
 // CHECK:STDOUT:     %int_64: Core.IntLiteral = int_value 64 [concrete = constants.%int_64]
-// CHECK:STDOUT:     %Float.call: init type = call constants.%Float(%int_64) [concrete = f64]
-// CHECK:STDOUT:     %.loc8_10.2: type = value_of_initializer %Float.call [concrete = f64]
-// CHECK:STDOUT:     %.loc8_10.3: type = converted %Float.call, %.loc8_10.2 [concrete = f64]
+// CHECK:STDOUT:     %f64: type = class_type @Float, @Float(constants.%int_64) [concrete = constants.%f64.d77]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %.loc8_31.1: f64 = value_of_initializer %foo_double.call
-// CHECK:STDOUT:   %.loc8_31.2: f64 = converted %foo_double.call, %.loc8_31.1
-// CHECK:STDOUT:   %x: f64 = bind_name x, %.loc8_31.2
+// CHECK:STDOUT:   %.loc8_31.1: %f64.d77 = value_of_initializer %foo_double.call
+// CHECK:STDOUT:   %.loc8_31.2: %f64.d77 = converted %foo_double.call, %.loc8_31.1
+// CHECK:STDOUT:   %x: %f64.d77 = bind_name x, %.loc8_31.2
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

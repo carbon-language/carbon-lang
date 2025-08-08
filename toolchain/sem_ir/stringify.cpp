@@ -369,7 +369,8 @@ class Stringifier {
   }
 
   auto StringifyInst(InstId /*inst_id*/, FloatType inst) -> void {
-    // TODO: Is this okay?
+    *out_ << "<builtin ";
+    step_stack_->PushString(">");
     if (auto width_value =
             sem_ir_->insts().TryGetAs<IntValue>(inst.bit_width_id)) {
       *out_ << "f";

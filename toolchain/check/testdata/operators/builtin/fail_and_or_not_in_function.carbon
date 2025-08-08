@@ -93,8 +93,7 @@ fn F() {
 // CHECK:STDOUT:   %int_32: Core.IntLiteral = int_value 32 [concrete]
 // CHECK:STDOUT:   %i32: type = class_type @Int, @Int(%int_32) [concrete]
 // CHECK:STDOUT:   %int_64: Core.IntLiteral = int_value 64 [concrete]
-// CHECK:STDOUT:   %Float.type: type = fn_type @Float [concrete]
-// CHECK:STDOUT:   %Float: %Float.type = struct_value () [concrete]
+// CHECK:STDOUT:   %f64: type = class_type @Float, @Float(%int_64) [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F(%b.param: bool) -> type {
@@ -109,14 +108,12 @@ fn F() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: !if.expr.else:
 // CHECK:STDOUT:   %int_64: Core.IntLiteral = int_value 64 [concrete = constants.%int_64]
-// CHECK:STDOUT:   %Float.call: init type = call constants.%Float(%int_64) [concrete = f64]
-// CHECK:STDOUT:   %.loc6_24.1: type = value_of_initializer %Float.call [concrete = f64]
-// CHECK:STDOUT:   %.loc6_24.2: type = converted %Float.call, %.loc6_24.1 [concrete = f64]
-// CHECK:STDOUT:   br !if.expr.result(%.loc6_24.2)
+// CHECK:STDOUT:   %f64: type = class_type @Float, @Float(constants.%int_64) [concrete = constants.%f64]
+// CHECK:STDOUT:   br !if.expr.result(%f64)
 // CHECK:STDOUT:
 // CHECK:STDOUT: !if.expr.result:
-// CHECK:STDOUT:   %.loc6_10: type = block_arg !if.expr.result
-// CHECK:STDOUT:   return %.loc6_10
+// CHECK:STDOUT:   %.loc6: type = block_arg !if.expr.result
+// CHECK:STDOUT:   return %.loc6
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- fail_and_val.carbon
@@ -130,8 +127,7 @@ fn F() {
 // CHECK:STDOUT:   %int_32: Core.IntLiteral = int_value 32 [concrete]
 // CHECK:STDOUT:   %i32: type = class_type @Int, @Int(%int_32) [concrete]
 // CHECK:STDOUT:   %int_64: Core.IntLiteral = int_value 64 [concrete]
-// CHECK:STDOUT:   %Float.type: type = fn_type @Float [concrete]
-// CHECK:STDOUT:   %Float: %Float.type = struct_value () [concrete]
+// CHECK:STDOUT:   %f64: type = class_type @Float, @Float(%int_64) [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F(%b.param: bool) -> type {
@@ -146,14 +142,12 @@ fn F() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: !if.expr.else:
 // CHECK:STDOUT:   %int_64: Core.IntLiteral = int_value 64 [concrete = constants.%int_64]
-// CHECK:STDOUT:   %Float.call: init type = call constants.%Float(%int_64) [concrete = f64]
-// CHECK:STDOUT:   %.loc6_24.1: type = value_of_initializer %Float.call [concrete = f64]
-// CHECK:STDOUT:   %.loc6_24.2: type = converted %Float.call, %.loc6_24.1 [concrete = f64]
-// CHECK:STDOUT:   br !if.expr.result(%.loc6_24.2)
+// CHECK:STDOUT:   %f64: type = class_type @Float, @Float(constants.%int_64) [concrete = constants.%f64]
+// CHECK:STDOUT:   br !if.expr.result(%f64)
 // CHECK:STDOUT:
 // CHECK:STDOUT: !if.expr.result:
-// CHECK:STDOUT:   %.loc6_10: type = block_arg !if.expr.result
-// CHECK:STDOUT:   return %.loc6_10
+// CHECK:STDOUT:   %.loc6: type = block_arg !if.expr.result
+// CHECK:STDOUT:   return %.loc6
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- fail_or_val.carbon

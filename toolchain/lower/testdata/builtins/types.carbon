@@ -11,14 +11,16 @@
 // TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/lower/testdata/builtins/types.carbon
 
 fn IntLiteral() -> type = "int_literal.make_type";
+fn FloatLiteral() -> type = "float_literal.make_type";
 fn Int(size: IntLiteral()) -> type = "int.make_type_signed";
 fn Float(size: IntLiteral()) -> type = "float.make_type";
 fn Bool() -> type = "bool.make_type";
 fn AsI32(n: IntLiteral()) -> Int(32) = "int.convert_checked";
+fn AsF64(f: FloatLiteral()) -> Float(64) = "float.convert_checked";
 
 fn F() {
   var i: Int(32) = AsI32(0);
-  var f: Float(64) = 0.0;
+  var f: Float(64) = AsF64(0.0);
   var b: Bool() = false;
 }
 
@@ -54,10 +56,10 @@ fn F() {
 // CHECK:STDOUT: !1 = !{i32 2, !"Debug Info Version", i32 3}
 // CHECK:STDOUT: !2 = distinct !DICompileUnit(language: DW_LANG_C, file: !3, producer: "carbon", isOptimized: false, runtimeVersion: 0, emissionKind: FullDebug)
 // CHECK:STDOUT: !3 = !DIFile(filename: "types.carbon", directory: "")
-// CHECK:STDOUT: !4 = distinct !DISubprogram(name: "F", linkageName: "_CF.Main", scope: null, file: !3, line: 19, type: !5, spFlags: DISPFlagDefinition, unit: !2)
+// CHECK:STDOUT: !4 = distinct !DISubprogram(name: "F", linkageName: "_CF.Main", scope: null, file: !3, line: 29, type: !5, spFlags: DISPFlagDefinition, unit: !2)
 // CHECK:STDOUT: !5 = !DISubroutineType(types: !6)
 // CHECK:STDOUT: !6 = !{}
-// CHECK:STDOUT: !7 = !DILocation(line: 20, column: 3, scope: !4)
-// CHECK:STDOUT: !8 = !DILocation(line: 21, column: 3, scope: !4)
-// CHECK:STDOUT: !9 = !DILocation(line: 22, column: 3, scope: !4)
-// CHECK:STDOUT: !10 = !DILocation(line: 19, column: 1, scope: !4)
+// CHECK:STDOUT: !7 = !DILocation(line: 30, column: 3, scope: !4)
+// CHECK:STDOUT: !8 = !DILocation(line: 31, column: 3, scope: !4)
+// CHECK:STDOUT: !9 = !DILocation(line: 32, column: 3, scope: !4)
+// CHECK:STDOUT: !10 = !DILocation(line: 29, column: 1, scope: !4)

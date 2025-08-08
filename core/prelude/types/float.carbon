@@ -11,24 +11,34 @@ import library "prelude/types/int_literal";
 
 private fn MakeFloat(size: IntLiteral()) -> type = "float.make_type";
 
-fn ConvertFromLegacyFloat[T:! type](literal: FloatLiteral()) -> T =
-    "float.from_legacy_float";
-
 class Float(N:! IntLiteral()) {
   adapt MakeFloat(N);
 }
 
-// Comparisons.
-final impl forall [N:! IntLiteral(), M:! IntLiteral()] Float(N) as EqWith(Float(M)) {
-  fn Equal[self: Self](other: Float(M)) -> bool = "float.eq";
-  fn NotEqual[self: Self](other: Float(M)) -> bool = "float.neq";
+// Conversions.
+// TODO: Support mixed-size conversions.
+// TODO: Support int-to-float conversions.
+impl forall [N:! IntLiteral()] FloatLiteral() as ImplicitAs(Float(N)) {
+  fn Convert[self: Self]() -> Float(N) = "float.convert_checked";
 }
 
-final impl forall [N:! IntLiteral(), M:! IntLiteral()] Float(N) as OrderedWith(Float(M)) {
-  fn Less[self: Self](other: Float(M)) -> bool = "float.less";
-  fn LessOrEquivalent[self: Self](other: Float(M)) -> bool = "float.less_eq";
-  fn Greater[self: Self](other: Float(M)) -> bool = "float.greater";
-  fn GreaterOrEquivalent[self: Self](other: Float(M)) -> bool = "float.greater_eq";
+// TODO: Remove this once ImplicitAs extends As.
+impl forall [N:! IntLiteral()] FloatLiteral() as As(Float(N)) {
+  fn Convert[self: Self]() -> Float(N) = "float.convert_checked";
+}
+
+// Comparisons.
+// TODO: Support mixed-type comparisons.
+final impl forall [N:! IntLiteral()] Float(N) as EqWith(Float(N)) {
+  fn Equal[self: Self](other: Float(N)) -> bool = "float.eq";
+  fn NotEqual[self: Self](other: Float(N)) -> bool = "float.neq";
+}
+
+final impl forall [N:! IntLiteral()] Float(N) as OrderedWith(Float(N)) {
+  fn Less[self: Self](other: Float(N)) -> bool = "float.less";
+  fn LessOrEquivalent[self: Self](other: Float(N)) -> bool = "float.less_eq";
+  fn Greater[self: Self](other: Float(N)) -> bool = "float.greater";
+  fn GreaterOrEquivalent[self: Self](other: Float(N)) -> bool = "float.greater_eq";
 }
 
 // Arithmetic.

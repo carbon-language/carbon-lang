@@ -94,7 +94,7 @@ fn M() {
 // CHECK:STDOUT:   %.loc42_5 = load double, ptr %val_f64.var, align 8, !dbg !32
 // CHECK:STDOUT:   %.loc42_14 = load ptr, ptr %ptr_bool.var, align 8, !dbg !33
 // CHECK:STDOUT:   %.loc42_24 = load ptr, ptr %ptr_bool.var, align 8, !dbg !34
-// CHECK:STDOUT:   %F.call.loc42 = call i32 @_CF.Main.f51a89281f4fb62e(double %.loc42_5, ptr %.loc42_14, ptr %.loc42_24, i32 0), !dbg !35
+// CHECK:STDOUT:   %F.call.loc42 = call i32 @_CF.Main.4dcab66ec095dfec(double %.loc42_5, ptr %.loc42_14, ptr %.loc42_24, i32 0), !dbg !35
 // CHECK:STDOUT:   %.loc46_5 = load ptr, ptr %ptr_bool.var, align 8, !dbg !36
 // CHECK:STDOUT:   %.loc46_15 = load ptr, ptr %ptr_i16.var, align 8, !dbg !37
 // CHECK:STDOUT:   %.loc46_24 = load ptr, ptr %ptr_i32.var, align 8, !dbg !38
@@ -185,7 +185,7 @@ fn M() {
 // CHECK:STDOUT:   ret i32 %F.call, !dbg !92
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: define linkonce_odr i32 @_CF.Main.f51a89281f4fb62e(double %x, ptr %y, ptr %z, i32 %count) !dbg !93 {
+// CHECK:STDOUT: define linkonce_odr i32 @_CF.Main.4dcab66ec095dfec(double %x, ptr %y, ptr %z, i32 %count) !dbg !93 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   %Int.as.OrderedWith.impl.Greater.call = icmp sgt i32 %count, 2, !dbg !94
 // CHECK:STDOUT:   br i1 %Int.as.OrderedWith.impl.Greater.call, label %if.then, label %if.else, !dbg !95
@@ -195,7 +195,7 @@ fn M() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: if.else:                                          ; preds = %entry
 // CHECK:STDOUT:   %Int.as.AddWith.impl.Op.call = add i32 %count, 1, !dbg !97
-// CHECK:STDOUT:   %F.call = call i32 @_CF.Main.f51a89281f4fb62e(double %x, ptr %z, ptr %y, i32 %Int.as.AddWith.impl.Op.call), !dbg !98
+// CHECK:STDOUT:   %F.call = call i32 @_CF.Main.4dcab66ec095dfec(double %x, ptr %z, ptr %y, i32 %Int.as.AddWith.impl.Op.call), !dbg !98
 // CHECK:STDOUT:   ret i32 %F.call, !dbg !99
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -329,7 +329,7 @@ fn M() {
 // CHECK:STDOUT: !90 = !DILocation(line: 19, column: 21, scope: !86)
 // CHECK:STDOUT: !91 = !DILocation(line: 19, column: 10, scope: !86)
 // CHECK:STDOUT: !92 = !DILocation(line: 19, column: 3, scope: !86)
-// CHECK:STDOUT: !93 = distinct !DISubprogram(name: "F", linkageName: "_CF.Main.f51a89281f4fb62e", scope: null, file: !3, line: 15, type: !5, spFlags: DISPFlagDefinition, unit: !2)
+// CHECK:STDOUT: !93 = distinct !DISubprogram(name: "F", linkageName: "_CF.Main.4dcab66ec095dfec", scope: null, file: !3, line: 15, type: !5, spFlags: DISPFlagDefinition, unit: !2)
 // CHECK:STDOUT: !94 = !DILocation(line: 16, column: 7, scope: !93)
 // CHECK:STDOUT: !95 = !DILocation(line: 16, column: 6, scope: !93)
 // CHECK:STDOUT: !96 = !DILocation(line: 17, column: 5, scope: !93)

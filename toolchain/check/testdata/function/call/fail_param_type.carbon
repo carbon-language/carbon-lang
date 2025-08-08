@@ -15,10 +15,10 @@
 fn G(a: i32) {}
 
 fn F() {
-  // CHECK:STDERR: fail_param_type.carbon:[[@LINE+10]]:5: error: cannot implicitly convert expression of type `f64` to `i32` [ConversionFailure]
+  // CHECK:STDERR: fail_param_type.carbon:[[@LINE+10]]:5: error: cannot implicitly convert expression of type `Core.FloatLiteral` to `i32` [ConversionFailure]
   // CHECK:STDERR:   G(1.0);
   // CHECK:STDERR:     ^~~
-  // CHECK:STDERR: fail_param_type.carbon:[[@LINE+7]]:5: note: type `f64` does not implement interface `Core.ImplicitAs(i32)` [MissingImplInMemberAccessNote]
+  // CHECK:STDERR: fail_param_type.carbon:[[@LINE+7]]:5: note: type `Core.FloatLiteral` does not implement interface `Core.ImplicitAs(i32)` [MissingImplInMemberAccessNote]
   // CHECK:STDERR:   G(1.0);
   // CHECK:STDERR:     ^~~
   // CHECK:STDERR: fail_param_type.carbon:[[@LINE-9]]:6: note: initializing function parameter [InCallToFunctionParam]
@@ -41,7 +41,7 @@ fn F() {
 // CHECK:STDOUT:   %G: %G.type = struct_value () [concrete]
 // CHECK:STDOUT:   %F.type: type = fn_type @F [concrete]
 // CHECK:STDOUT:   %F: %F.type = struct_value () [concrete]
-// CHECK:STDOUT:   %float: f64 = float_value 1 [concrete]
+// CHECK:STDOUT:   %float: Core.FloatLiteral = float_value 1 [concrete]
 // CHECK:STDOUT:   %ImplicitAs.type.cc7: type = generic_interface_type @ImplicitAs [concrete]
 // CHECK:STDOUT:   %ImplicitAs.generic: %ImplicitAs.type.cc7 = struct_value () [concrete]
 // CHECK:STDOUT: }
@@ -86,7 +86,7 @@ fn F() {
 // CHECK:STDOUT: fn @F() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %G.ref: %G.type = name_ref G, file.%G.decl [concrete = constants.%G]
-// CHECK:STDOUT:   %float: f64 = float_value 1 [concrete = constants.%float]
+// CHECK:STDOUT:   %float: Core.FloatLiteral = float_value 1 [concrete = constants.%float]
 // CHECK:STDOUT:   %.loc28: %i32 = converted %float, <error> [concrete = <error>]
 // CHECK:STDOUT:   %G.call: init %empty_tuple.type = call %G.ref(<error>)
 // CHECK:STDOUT:   return

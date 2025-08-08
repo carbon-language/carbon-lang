@@ -152,11 +152,6 @@ auto HandleParseNode(Context& context, Parse::UnsignedIntTypeLiteralId node_id)
 
 auto HandleParseNode(Context& context, Parse::FloatTypeLiteralId node_id)
     -> bool {
-  auto text =
-      context.tokens().GetTokenText(context.parse_tree().node_token(node_id));
-  if (text != "f64") {
-    return context.TODO(node_id, "Currently only f64 is allowed");
-  }
   auto tok_id = context.parse_tree().node_token(node_id);
   auto size_id = context.tokens().GetTypeLiteralSize(tok_id);
   auto type_inst_id =

@@ -22,7 +22,7 @@ library "[[@TEST_NAME]]";
 
 import library "types";
 
-var f: Float(64) = 0.0;
+var f: Float(64);
 
 fn GetFloat(dyn_size: i32) -> type {
   //@dump-sem-ir-begin
@@ -76,10 +76,5 @@ var dyn: Float(dyn_size);
 // CHECK:STDOUT:   %.loc10_25.1: type = value_of_initializer %Float.call
 // CHECK:STDOUT:   %.loc10_25.2: type = converted %Float.call, %.loc10_25.1
 // CHECK:STDOUT:   return %.loc10_25.2
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: fn @__global_init() {
-// CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

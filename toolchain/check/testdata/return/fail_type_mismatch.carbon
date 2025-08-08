@@ -13,10 +13,10 @@
 // TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/check/testdata/return/fail_type_mismatch.carbon
 
 fn Main() -> i32 {
-  // CHECK:STDERR: fail_type_mismatch.carbon:[[@LINE+7]]:3: error: cannot implicitly convert expression of type `f64` to `i32` [ConversionFailure]
+  // CHECK:STDERR: fail_type_mismatch.carbon:[[@LINE+7]]:3: error: cannot implicitly convert expression of type `Core.FloatLiteral` to `i32` [ConversionFailure]
   // CHECK:STDERR:   return 1.0;
   // CHECK:STDERR:   ^~~~~~~~~~~
-  // CHECK:STDERR: fail_type_mismatch.carbon:[[@LINE+4]]:3: note: type `f64` does not implement interface `Core.ImplicitAs(i32)` [MissingImplInMemberAccessNote]
+  // CHECK:STDERR: fail_type_mismatch.carbon:[[@LINE+4]]:3: note: type `Core.FloatLiteral` does not implement interface `Core.ImplicitAs(i32)` [MissingImplInMemberAccessNote]
   // CHECK:STDERR:   return 1.0;
   // CHECK:STDERR:   ^~~~~~~~~~~
   // CHECK:STDERR:
@@ -33,7 +33,7 @@ fn Main() -> i32 {
 // CHECK:STDOUT:   %pattern_type.7ce: type = pattern_type %i32 [concrete]
 // CHECK:STDOUT:   %Main.type: type = fn_type @Main [concrete]
 // CHECK:STDOUT:   %Main: %Main.type = struct_value () [concrete]
-// CHECK:STDOUT:   %float: f64 = float_value 1 [concrete]
+// CHECK:STDOUT:   %float: Core.FloatLiteral = float_value 1 [concrete]
 // CHECK:STDOUT:   %ImplicitAs.type.cc7: type = generic_interface_type @ImplicitAs [concrete]
 // CHECK:STDOUT:   %ImplicitAs.generic: %ImplicitAs.type.cc7 = struct_value () [concrete]
 // CHECK:STDOUT: }
@@ -68,7 +68,7 @@ fn Main() -> i32 {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Main() -> %i32 {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %float: f64 = float_value 1 [concrete = constants.%float]
+// CHECK:STDOUT:   %float: Core.FloatLiteral = float_value 1 [concrete = constants.%float]
 // CHECK:STDOUT:   %.loc23: %i32 = converted %float, <error> [concrete = <error>]
 // CHECK:STDOUT:   return <error>
 // CHECK:STDOUT: }

@@ -35,6 +35,8 @@ fn RuntimeCallIsValid(a: f64, b: f64) -> bool {
 // CHECK:STDOUT: --- float_less.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
+// CHECK:STDOUT:   %int_64: Core.IntLiteral = int_value 64 [concrete]
+// CHECK:STDOUT:   %f64.d77: type = class_type @Float, @Float(%int_64) [concrete]
 // CHECK:STDOUT:   %Less.type: type = fn_type @Less [concrete]
 // CHECK:STDOUT:   %Less: %Less.type = struct_value () [concrete]
 // CHECK:STDOUT: }
@@ -42,11 +44,11 @@ fn RuntimeCallIsValid(a: f64, b: f64) -> bool {
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @RuntimeCallIsValid(%a.param: f64, %b.param: f64) -> bool {
+// CHECK:STDOUT: fn @RuntimeCallIsValid(%a.param: %f64.d77, %b.param: %f64.d77) -> bool {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %Less.ref: %Less.type = name_ref Less, file.%Less.decl [concrete = constants.%Less]
-// CHECK:STDOUT:   %a.ref: f64 = name_ref a, %a
-// CHECK:STDOUT:   %b.ref: f64 = name_ref b, %b
+// CHECK:STDOUT:   %a.ref: %f64.d77 = name_ref a, %a
+// CHECK:STDOUT:   %b.ref: %f64.d77 = name_ref b, %b
 // CHECK:STDOUT:   %Less.call: init bool = call %Less.ref(%a.ref, %b.ref)
 // CHECK:STDOUT:   %.loc18_20.1: bool = value_of_initializer %Less.call
 // CHECK:STDOUT:   %.loc18_20.2: bool = converted %Less.call, %.loc18_20.1

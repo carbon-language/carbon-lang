@@ -13,10 +13,10 @@
 // TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/check/testdata/index/fail_array_non_int_indexing.carbon
 
 var a: array(i32, 1) = (12,);
-// CHECK:STDERR: fail_array_non_int_indexing.carbon:[[@LINE+7]]:16: error: cannot implicitly convert expression of type `f64` to `i32` [ConversionFailure]
+// CHECK:STDERR: fail_array_non_int_indexing.carbon:[[@LINE+7]]:16: error: cannot implicitly convert expression of type `Core.FloatLiteral` to `i32` [ConversionFailure]
 // CHECK:STDERR: var b: i32 = a[2.6];
 // CHECK:STDERR:                ^~~
-// CHECK:STDERR: fail_array_non_int_indexing.carbon:[[@LINE+4]]:16: note: type `f64` does not implement interface `Core.ImplicitAs(i32)` [MissingImplInMemberAccessNote]
+// CHECK:STDERR: fail_array_non_int_indexing.carbon:[[@LINE+4]]:16: note: type `Core.FloatLiteral` does not implement interface `Core.ImplicitAs(i32)` [MissingImplInMemberAccessNote]
 // CHECK:STDERR: var b: i32 = a[2.6];
 // CHECK:STDERR:                ^~~
 // CHECK:STDERR:
@@ -53,7 +53,7 @@ var b: i32 = a[2.6];
 // CHECK:STDOUT:   %bound_method: <bound method> = bound_method %int_12.6a3, %Core.IntLiteral.as.ImplicitAs.impl.Convert.specific_fn [concrete]
 // CHECK:STDOUT:   %int_12.1e1: %i32 = int_value 12 [concrete]
 // CHECK:STDOUT:   %array: %array_type = tuple_value (%int_12.1e1) [concrete]
-// CHECK:STDOUT:   %float: f64 = float_value 2.6000000000000001 [concrete]
+// CHECK:STDOUT:   %float: Core.FloatLiteral = float_value 2.6000000000000001 [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -117,7 +117,7 @@ var b: i32 = a[2.6];
 // CHECK:STDOUT:   %.loc15_1: init %array_type = converted %.loc15_28.1, %.loc15_28.5 [concrete = constants.%array]
 // CHECK:STDOUT:   assign file.%a.var, %.loc15_1
 // CHECK:STDOUT:   %a.ref: ref %array_type = name_ref a, file.%a [concrete = file.%a.var]
-// CHECK:STDOUT:   %float: f64 = float_value 2.6000000000000001 [concrete = constants.%float]
+// CHECK:STDOUT:   %float: Core.FloatLiteral = float_value 2.6000000000000001 [concrete = constants.%float]
 // CHECK:STDOUT:   %int_32: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
 // CHECK:STDOUT:   %i32: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
 // CHECK:STDOUT:   %.loc23_16: %i32 = converted %float, <error> [concrete = <error>]

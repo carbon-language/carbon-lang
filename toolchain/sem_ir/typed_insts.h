@@ -1065,13 +1065,13 @@ struct IntValue {
   IntId int_id;
 };
 
-// The legacy float type. This is currently used for real literals, and is
-// treated as f64. It's separate from `FloatType`, and should change to mirror
-// integers, likely replacing this with a `FloatLiteralType`.
+// The float literal type. This is currently represented as f64.
+// TODO: Rename this to FloatLiteralType.
+// TODO: Replace this with a rational number type, following the design.
 struct LegacyFloatType {
   static constexpr auto Kind =
       InstKind::LegacyFloatType.Define<Parse::NoneNodeId>(
-          {.ir_name = "f64",
+          {.ir_name = "Core.FloatLiteral",
            .is_type = InstIsType::Always,
            .constant_kind = InstConstantKind::Always});
   // This is a singleton instruction. However, it may still evolve into a more

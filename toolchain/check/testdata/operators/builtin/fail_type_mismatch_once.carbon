@@ -15,7 +15,7 @@
 fn Main() -> i32 {
   // The following line has two mismatches, but after the first, it shouldn't
   // keep erroring.
-  // CHECK:STDERR: fail_type_mismatch_once.carbon:[[@LINE+4]]:10: error: cannot access member of interface `Core.AddWith(f64)` in type `{}` that does not implement that interface [MissingImplInMemberAccess]
+  // CHECK:STDERR: fail_type_mismatch_once.carbon:[[@LINE+4]]:10: error: cannot access member of interface `Core.AddWith(Core.FloatLiteral)` in type `{}` that does not implement that interface [MissingImplInMemberAccess]
   // CHECK:STDERR:   return {} + 3.4 + 12;
   // CHECK:STDERR:          ^~~~~~~~
   // CHECK:STDERR:
@@ -33,7 +33,7 @@ fn Main() -> i32 {
 // CHECK:STDOUT:   %Main.type: type = fn_type @Main [concrete]
 // CHECK:STDOUT:   %Main: %Main.type = struct_value () [concrete]
 // CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [concrete]
-// CHECK:STDOUT:   %float: f64 = float_value 3.4000000000000004 [concrete]
+// CHECK:STDOUT:   %float: Core.FloatLiteral = float_value 3.4000000000000004 [concrete]
 // CHECK:STDOUT:   %AddWith.type.e05: type = generic_interface_type @AddWith [concrete]
 // CHECK:STDOUT:   %AddWith.generic: %AddWith.type.e05 = struct_value () [concrete]
 // CHECK:STDOUT:   %int_12: Core.IntLiteral = int_value 12 [concrete]
@@ -70,7 +70,7 @@ fn Main() -> i32 {
 // CHECK:STDOUT: fn @Main() -> %i32 {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %.loc22: %empty_struct_type = struct_literal ()
-// CHECK:STDOUT:   %float: f64 = float_value 3.4000000000000004 [concrete = constants.%float]
+// CHECK:STDOUT:   %float: Core.FloatLiteral = float_value 3.4000000000000004 [concrete = constants.%float]
 // CHECK:STDOUT:   %int_12: Core.IntLiteral = int_value 12 [concrete = constants.%int_12]
 // CHECK:STDOUT:   %impl.elem1: <error> = impl_witness_access <error>, element1 [concrete = <error>]
 // CHECK:STDOUT:   return <error>
