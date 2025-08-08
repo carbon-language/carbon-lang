@@ -59,6 +59,7 @@ fn CallSpecific(x: C) -> C {
 // CHECK:STDOUT: --- explicit.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
+// CHECK:STDOUT:   %.Self: type = bind_symbolic_name .Self [symbolic_self]
 // CHECK:STDOUT:   %T: type = bind_symbolic_name T, 0 [symbolic]
 // CHECK:STDOUT:   %pattern_type.98f: type = pattern_type type [concrete]
 // CHECK:STDOUT:   %pattern_type.7dc: type = pattern_type %T [symbolic]
@@ -118,6 +119,7 @@ fn CallSpecific(x: C) -> C {
 // CHECK:STDOUT:     %return.param_patt: @Function.%pattern_type (%pattern_type.7dc) = out_param_pattern %return.patt, call_param1 [concrete]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %T.ref.loc4_32: type = name_ref T, %T.loc4_13.2 [symbolic = %T.loc4_13.1 (constants.%T)]
+// CHECK:STDOUT:     %.Self: type = bind_symbolic_name .Self [symbolic_self = constants.%.Self]
 // CHECK:STDOUT:     %T.loc4_13.2: type = bind_symbolic_name T, 0 [symbolic = %T.loc4_13.1 (constants.%T)]
 // CHECK:STDOUT:     %x.param: @Function.%T.loc4_13.1 (%T) = value_param call_param0
 // CHECK:STDOUT:     %T.ref.loc4_26: type = name_ref T, %T.loc4_13.2 [symbolic = %T.loc4_13.1 (constants.%T)]
@@ -133,6 +135,7 @@ fn CallSpecific(x: C) -> C {
 // CHECK:STDOUT:     %return.param_patt: @CallGeneric.%pattern_type (%pattern_type.7dc) = out_param_pattern %return.patt, call_param1 [concrete]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %T.ref.loc8_35: type = name_ref T, %T.loc8_16.2 [symbolic = %T.loc8_16.1 (constants.%T)]
+// CHECK:STDOUT:     %.Self: type = bind_symbolic_name .Self [symbolic_self = constants.%.Self]
 // CHECK:STDOUT:     %T.loc8_16.2: type = bind_symbolic_name T, 0 [symbolic = %T.loc8_16.1 (constants.%T)]
 // CHECK:STDOUT:     %x.param: @CallGeneric.%T.loc8_16.1 (%T) = value_param call_param0
 // CHECK:STDOUT:     %T.ref.loc8_29: type = name_ref T, %T.loc8_16.2 [symbolic = %T.loc8_16.1 (constants.%T)]
@@ -149,6 +152,7 @@ fn CallSpecific(x: C) -> C {
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %T.ref.loc12_39: type = name_ref T, %T.loc12_19.2 [symbolic = %T.loc12_19.1 (constants.%T)]
 // CHECK:STDOUT:     %ptr.loc12_40: type = ptr_type %T.ref.loc12_39 [symbolic = %ptr.loc12_33.1 (constants.%ptr.79f)]
+// CHECK:STDOUT:     %.Self: type = bind_symbolic_name .Self [symbolic_self = constants.%.Self]
 // CHECK:STDOUT:     %T.loc12_19.2: type = bind_symbolic_name T, 0 [symbolic = %T.loc12_19.1 (constants.%T)]
 // CHECK:STDOUT:     %x.param: @CallGenericPtr.%ptr.loc12_33.1 (%ptr.79f) = value_param call_param0
 // CHECK:STDOUT:     %.loc12: type = splice_block %ptr.loc12_33.2 [symbolic = %ptr.loc12_33.1 (constants.%ptr.79f)] {
@@ -315,6 +319,7 @@ fn CallSpecific(x: C) -> C {
 // CHECK:STDOUT: --- deduced.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
+// CHECK:STDOUT:   %.Self: type = bind_symbolic_name .Self [symbolic_self]
 // CHECK:STDOUT:   %T: type = bind_symbolic_name T, 0 [symbolic]
 // CHECK:STDOUT:   %pattern_type.98f: type = pattern_type type [concrete]
 // CHECK:STDOUT:   %pattern_type.7dc: type = pattern_type %T [symbolic]
@@ -374,6 +379,7 @@ fn CallSpecific(x: C) -> C {
 // CHECK:STDOUT:     %return.param_patt: @Function.%pattern_type (%pattern_type.7dc) = out_param_pattern %return.patt, call_param1 [concrete]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %T.ref.loc4_32: type = name_ref T, %T.loc4_13.2 [symbolic = %T.loc4_13.1 (constants.%T)]
+// CHECK:STDOUT:     %.Self: type = bind_symbolic_name .Self [symbolic_self = constants.%.Self]
 // CHECK:STDOUT:     %T.loc4_13.2: type = bind_symbolic_name T, 0 [symbolic = %T.loc4_13.1 (constants.%T)]
 // CHECK:STDOUT:     %x.param: @Function.%T.loc4_13.1 (%T) = value_param call_param0
 // CHECK:STDOUT:     %T.ref.loc4_26: type = name_ref T, %T.loc4_13.2 [symbolic = %T.loc4_13.1 (constants.%T)]
@@ -389,6 +395,7 @@ fn CallSpecific(x: C) -> C {
 // CHECK:STDOUT:     %return.param_patt: @CallGeneric.%pattern_type (%pattern_type.7dc) = out_param_pattern %return.patt, call_param1 [concrete]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %T.ref.loc8_35: type = name_ref T, %T.loc8_16.2 [symbolic = %T.loc8_16.1 (constants.%T)]
+// CHECK:STDOUT:     %.Self: type = bind_symbolic_name .Self [symbolic_self = constants.%.Self]
 // CHECK:STDOUT:     %T.loc8_16.2: type = bind_symbolic_name T, 0 [symbolic = %T.loc8_16.1 (constants.%T)]
 // CHECK:STDOUT:     %x.param: @CallGeneric.%T.loc8_16.1 (%T) = value_param call_param0
 // CHECK:STDOUT:     %T.ref.loc8_29: type = name_ref T, %T.loc8_16.2 [symbolic = %T.loc8_16.1 (constants.%T)]
@@ -405,6 +412,7 @@ fn CallSpecific(x: C) -> C {
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %T.ref.loc12_39: type = name_ref T, %T.loc12_19.2 [symbolic = %T.loc12_19.1 (constants.%T)]
 // CHECK:STDOUT:     %ptr.loc12_40: type = ptr_type %T.ref.loc12_39 [symbolic = %ptr.loc12_33.1 (constants.%ptr.79f)]
+// CHECK:STDOUT:     %.Self: type = bind_symbolic_name .Self [symbolic_self = constants.%.Self]
 // CHECK:STDOUT:     %T.loc12_19.2: type = bind_symbolic_name T, 0 [symbolic = %T.loc12_19.1 (constants.%T)]
 // CHECK:STDOUT:     %x.param: @CallGenericPtr.%ptr.loc12_33.1 (%ptr.79f) = value_param call_param0
 // CHECK:STDOUT:     %.loc12: type = splice_block %ptr.loc12_33.2 [symbolic = %ptr.loc12_33.1 (constants.%ptr.79f)] {

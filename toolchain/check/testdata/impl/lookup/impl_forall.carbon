@@ -40,6 +40,7 @@ fn TestSpecific(a: A({})) -> {} {
 // CHECK:STDOUT: --- impl_forall.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
+// CHECK:STDOUT:   %.Self: type = bind_symbolic_name .Self [symbolic_self]
 // CHECK:STDOUT:   %T: type = bind_symbolic_name T, 0 [symbolic]
 // CHECK:STDOUT:   %pattern_type.98f: type = pattern_type type [concrete]
 // CHECK:STDOUT:   %A.type: type = generic_class_type @A [concrete]
@@ -166,11 +167,13 @@ fn TestSpecific(a: A({})) -> {} {
 // CHECK:STDOUT:   %A.decl: %A.type = class_decl @A [concrete = constants.%A.generic] {
 // CHECK:STDOUT:     %T.patt: %pattern_type.98f = symbolic_binding_pattern T, 0 [concrete]
 // CHECK:STDOUT:   } {
+// CHECK:STDOUT:     %.Self: type = bind_symbolic_name .Self [symbolic_self = constants.%.Self]
 // CHECK:STDOUT:     %T.loc3_9.2: type = bind_symbolic_name T, 0 [symbolic = %T.loc3_9.1 (constants.%T)]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %I.decl: %I.type.dac = interface_decl @I [concrete = constants.%I.generic] {
 // CHECK:STDOUT:     %U.patt: %pattern_type.98f = symbolic_binding_pattern U, 0 [concrete]
 // CHECK:STDOUT:   } {
+// CHECK:STDOUT:     %.Self: type = bind_symbolic_name .Self [symbolic_self = constants.%.Self]
 // CHECK:STDOUT:     %U.loc7_13.2: type = bind_symbolic_name U, 0 [symbolic = %U.loc7_13.1 (constants.%U)]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   impl_decl @A.as.I.impl [concrete] {
@@ -182,6 +185,7 @@ fn TestSpecific(a: A({})) -> {} {
 // CHECK:STDOUT:     %I.ref: %I.type.dac = name_ref I, file.%I.decl [concrete = constants.%I.generic]
 // CHECK:STDOUT:     %V.ref.loc11_34: type = name_ref V, %V.loc11_14.2 [symbolic = %V.loc11_14.1 (constants.%V)]
 // CHECK:STDOUT:     %I.type.loc11_35.2: type = facet_type <@I, @I(constants.%V)> [symbolic = %I.type.loc11_35.1 (constants.%I.type.325e65.2)]
+// CHECK:STDOUT:     %.Self: type = bind_symbolic_name .Self [symbolic_self = constants.%.Self]
 // CHECK:STDOUT:     %V.loc11_14.2: type = bind_symbolic_name V, 0 [symbolic = %V.loc11_14.1 (constants.%V)]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %I.impl_witness_table = impl_witness_table (@A.as.I.impl.%A.as.I.impl.F.decl), @A.as.I.impl [concrete]
@@ -194,6 +198,7 @@ fn TestSpecific(a: A({})) -> {} {
 // CHECK:STDOUT:     %return.param_patt: @TestGeneric.%pattern_type.loc17_35 (%pattern_type.7dcd0a.3) = out_param_pattern %return.patt, call_param1 [concrete]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %W.ref.loc17_38: type = name_ref W, %W.loc17_16.2 [symbolic = %W.loc17_16.1 (constants.%W)]
+// CHECK:STDOUT:     %.Self: type = bind_symbolic_name .Self [symbolic_self = constants.%.Self]
 // CHECK:STDOUT:     %W.loc17_16.2: type = bind_symbolic_name W, 0 [symbolic = %W.loc17_16.1 (constants.%W)]
 // CHECK:STDOUT:     %a.param: @TestGeneric.%A.loc17_32.1 (%A.13025a.3) = value_param call_param0
 // CHECK:STDOUT:     %.loc17: type = splice_block %A.loc17_32.2 [symbolic = %A.loc17_32.1 (constants.%A.13025a.3)] {

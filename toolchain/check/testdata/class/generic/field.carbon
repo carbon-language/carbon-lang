@@ -31,6 +31,7 @@ fn H(U:! type, c: Class(U)) -> U {
 // CHECK:STDOUT: --- field.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
+// CHECK:STDOUT:   %.Self: type = bind_symbolic_name .Self [symbolic_self]
 // CHECK:STDOUT:   %T: type = bind_symbolic_name T, 0 [symbolic]
 // CHECK:STDOUT:   %pattern_type.98f: type = pattern_type type [concrete]
 // CHECK:STDOUT:   %Class.type: type = generic_class_type @Class [concrete]
@@ -102,6 +103,7 @@ fn H(U:! type, c: Class(U)) -> U {
 // CHECK:STDOUT:   %Class.decl: %Class.type = class_decl @Class [concrete = constants.%Class.generic] {
 // CHECK:STDOUT:     %T.patt: %pattern_type.98f = symbolic_binding_pattern T, 0 [concrete]
 // CHECK:STDOUT:   } {
+// CHECK:STDOUT:     %.Self: type = bind_symbolic_name .Self [symbolic_self = constants.%.Self]
 // CHECK:STDOUT:     %T.loc15_13.2: type = bind_symbolic_name T, 0 [symbolic = %T.loc15_13.1 (constants.%T)]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [concrete = constants.%F] {
@@ -131,6 +133,7 @@ fn H(U:! type, c: Class(U)) -> U {
 // CHECK:STDOUT:     %return.param_patt: @G.%pattern_type.loc23_29 (%pattern_type.7dcd0a.1) = out_param_pattern %return.patt, call_param1 [concrete]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %T.ref.loc23_32: type = name_ref T, %T.loc23_6.2 [symbolic = %T.loc23_6.1 (constants.%T)]
+// CHECK:STDOUT:     %.Self: type = bind_symbolic_name .Self [symbolic_self = constants.%.Self]
 // CHECK:STDOUT:     %T.loc23_6.2: type = bind_symbolic_name T, 0 [symbolic = %T.loc23_6.1 (constants.%T)]
 // CHECK:STDOUT:     %c.param: @G.%Class.loc23_26.1 (%Class.fe1b2d.1) = value_param call_param0
 // CHECK:STDOUT:     %.loc23: type = splice_block %Class.loc23_26.2 [symbolic = %Class.loc23_26.1 (constants.%Class.fe1b2d.1)] {
@@ -150,6 +153,7 @@ fn H(U:! type, c: Class(U)) -> U {
 // CHECK:STDOUT:     %return.param_patt: @H.%pattern_type.loc27_29 (%pattern_type.7dcd0a.2) = out_param_pattern %return.patt, call_param1 [concrete]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %U.ref.loc27_32: type = name_ref U, %U.loc27_6.2 [symbolic = %U.loc27_6.1 (constants.%U)]
+// CHECK:STDOUT:     %.Self: type = bind_symbolic_name .Self [symbolic_self = constants.%.Self]
 // CHECK:STDOUT:     %U.loc27_6.2: type = bind_symbolic_name U, 0 [symbolic = %U.loc27_6.1 (constants.%U)]
 // CHECK:STDOUT:     %c.param: @H.%Class.loc27_26.1 (%Class.fe1b2d.2) = value_param call_param0
 // CHECK:STDOUT:     %.loc27: type = splice_block %Class.loc27_26.2 [symbolic = %Class.loc27_26.1 (constants.%Class.fe1b2d.2)] {

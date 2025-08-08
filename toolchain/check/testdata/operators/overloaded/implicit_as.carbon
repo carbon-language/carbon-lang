@@ -77,6 +77,7 @@ fn Test() {
 // CHECK:STDOUT:   %Sink_i32: %Sink_i32.type = struct_value () [concrete]
 // CHECK:STDOUT:   %Sink_X.type: type = fn_type @Sink_X [concrete]
 // CHECK:STDOUT:   %Sink_X: %Sink_X.type = struct_value () [concrete]
+// CHECK:STDOUT:   %.Self.644: type = bind_symbolic_name .Self [symbolic_self]
 // CHECK:STDOUT:   %T: type = bind_symbolic_name T, 0 [symbolic]
 // CHECK:STDOUT:   %pattern_type.7dcd0a.2: type = pattern_type %T [symbolic]
 // CHECK:STDOUT:   %Source.type: type = fn_type @Source [concrete]
@@ -160,6 +161,7 @@ fn Test() {
 // CHECK:STDOUT:     %return.param_patt: @Source.%pattern_type (%pattern_type.7dcd0a.2) = out_param_pattern %return.patt, call_param0 [concrete]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %T.ref.loc31_24: type = name_ref T, %T.loc31_11.2 [symbolic = %T.loc31_11.1 (constants.%T)]
+// CHECK:STDOUT:     %.Self: type = bind_symbolic_name .Self [symbolic_self = constants.%.Self.644]
 // CHECK:STDOUT:     %T.loc31_11.2: type = bind_symbolic_name T, 0 [symbolic = %T.loc31_11.1 (constants.%T)]
 // CHECK:STDOUT:     %return.param: ref @Source.%T.loc31_11.1 (%T) = out_param call_param0
 // CHECK:STDOUT:     %return: ref @Source.%T.loc31_11.1 (%T) = return_slot %return.param

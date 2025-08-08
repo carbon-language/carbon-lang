@@ -5,9 +5,11 @@
 #include "toolchain/check/pattern.h"
 
 #include "toolchain/check/control_flow.h"
+#include "toolchain/check/facet_type.h"
 #include "toolchain/check/inst.h"
 #include "toolchain/check/return.h"
 #include "toolchain/check/type.h"
+#include "toolchain/sem_ir/typed_insts.h"
 
 namespace Carbon::Check {
 

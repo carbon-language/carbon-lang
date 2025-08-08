@@ -101,6 +101,7 @@ var c_bad: C({.a = 3, .b = 4}) = F();
 // CHECK:STDOUT:   %struct.381: %struct_type.b.c.929 = struct_value (%int_0.6a9, %tuple) [concrete]
 // CHECK:STDOUT:   %.c6b: ref %i32 = struct_access file.%b_ref.var, element1 [concrete]
 // CHECK:STDOUT:   %struct.20d: %struct_type.a.d.3d9 = struct_value (%struct.381, %int_0.6a9) [concrete]
+// CHECK:STDOUT:   %.Self.644: type = bind_symbolic_name .Self [symbolic_self]
 // CHECK:STDOUT:   %struct_type.a.b.501: type = struct_type {.a: %i32, .b: %i32} [concrete]
 // CHECK:STDOUT:   %S: %struct_type.a.b.501 = bind_symbolic_name S, 0 [symbolic]
 // CHECK:STDOUT:   %pattern_type.851: type = pattern_type %struct_type.a.b.501 [concrete]
@@ -187,6 +188,7 @@ var c_bad: C({.a = 3, .b = 4}) = F();
 // CHECK:STDOUT:     %S.patt: %pattern_type.851 = symbolic_binding_pattern S, 0 [concrete]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %.loc8: type = splice_block %struct_type.a.b [concrete = constants.%struct_type.a.b.501] {
+// CHECK:STDOUT:       %.Self: type = bind_symbolic_name .Self [symbolic_self = constants.%.Self.644]
 // CHECK:STDOUT:       %int_32.loc8_18: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
 // CHECK:STDOUT:       %i32.loc8_18: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
 // CHECK:STDOUT:       %int_32.loc8_27: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
@@ -442,7 +444,7 @@ var c_bad: C({.a = 3, .b = 4}) = F();
 // CHECK:STDOUT:   %Implicit.import_ref.48d = import_ref Implicit//default, loc8_33, unloaded
 // CHECK:STDOUT:   %Implicit.import_ref.c81f8f.1: %struct_type.a.b.5ca = import_ref Implicit//default, loc8_9, loaded [symbolic = @C.%S (constants.%S)]
 // CHECK:STDOUT:   %Implicit.import_ref.8f2: <witness> = import_ref Implicit//default, loc8_34, loaded [concrete = constants.%complete_type.357]
-// CHECK:STDOUT:   %Implicit.import_ref.b8b = import_ref Implicit//default, inst490 [no loc], unloaded
+// CHECK:STDOUT:   %Implicit.import_ref.b8b = import_ref Implicit//default, inst492 [no loc], unloaded
 // CHECK:STDOUT:   %Implicit.import_ref.c81f8f.2: %struct_type.a.b.5ca = import_ref Implicit//default, loc8_9, loaded [symbolic = @C.%S (constants.%S)]
 // CHECK:STDOUT:   %Implicit.import_ref.ba3: type = import_ref Implicit//default, loc8_33, loaded [symbolic = @C.as.Destroy.impl.%C (constants.%C.720)]
 // CHECK:STDOUT:   %Implicit.import_ref.cb9: type = import_ref Implicit//default, inst109 [no loc], loaded [concrete = constants.%Destroy.type]
@@ -678,7 +680,7 @@ var c_bad: C({.a = 3, .b = 4}) = F();
 // CHECK:STDOUT:   %Implicit.import_ref.48d = import_ref Implicit//default, loc8_33, unloaded
 // CHECK:STDOUT:   %Implicit.import_ref.c81f8f.1: %struct_type.a.b = import_ref Implicit//default, loc8_9, loaded [symbolic = @C.%S (constants.%S)]
 // CHECK:STDOUT:   %Implicit.import_ref.8f2: <witness> = import_ref Implicit//default, loc8_34, loaded [concrete = constants.%complete_type.357]
-// CHECK:STDOUT:   %Implicit.import_ref.b8b = import_ref Implicit//default, inst490 [no loc], unloaded
+// CHECK:STDOUT:   %Implicit.import_ref.b8b = import_ref Implicit//default, inst492 [no loc], unloaded
 // CHECK:STDOUT:   %Implicit.import_ref.c81f8f.2: %struct_type.a.b = import_ref Implicit//default, loc8_9, loaded [symbolic = @C.%S (constants.%S)]
 // CHECK:STDOUT:   %Implicit.import_ref.ba3: type = import_ref Implicit//default, loc8_33, loaded [symbolic = @C.as.Destroy.impl.%C (constants.%C.720)]
 // CHECK:STDOUT:   %Implicit.import_ref.cb9: type = import_ref Implicit//default, inst109 [no loc], loaded [concrete = constants.%Destroy.type]
@@ -854,7 +856,7 @@ var c_bad: C({.a = 3, .b = 4}) = F();
 // CHECK:STDOUT:   %Implicit.import_ref.48d = import_ref Implicit//default, loc8_33, unloaded
 // CHECK:STDOUT:   %Implicit.import_ref.c81f8f.1: %struct_type.a.b.5ca = import_ref Implicit//default, loc8_9, loaded [symbolic = @C.%S (constants.%S)]
 // CHECK:STDOUT:   %Implicit.import_ref.8f2: <witness> = import_ref Implicit//default, loc8_34, loaded [concrete = constants.%complete_type.357]
-// CHECK:STDOUT:   %Implicit.import_ref.b8b = import_ref Implicit//default, inst490 [no loc], unloaded
+// CHECK:STDOUT:   %Implicit.import_ref.b8b = import_ref Implicit//default, inst492 [no loc], unloaded
 // CHECK:STDOUT:   %Implicit.import_ref.c81f8f.2: %struct_type.a.b.5ca = import_ref Implicit//default, loc8_9, loaded [symbolic = @C.%S (constants.%S)]
 // CHECK:STDOUT:   %Implicit.import_ref.ba3: type = import_ref Implicit//default, loc8_33, loaded [symbolic = @C.as.Destroy.impl.%C (constants.%C.720)]
 // CHECK:STDOUT:   %Implicit.import_ref.cb9: type = import_ref Implicit//default, inst109 [no loc], loaded [concrete = constants.%Destroy.type]

@@ -4,6 +4,7 @@
 
 #include "toolchain/check/context.h"
 #include "toolchain/check/convert.h"
+#include "toolchain/check/facet_type.h"
 #include "toolchain/check/handle.h"
 #include "toolchain/check/inst.h"
 #include "toolchain/check/interface.h"
@@ -274,10 +275,27 @@ auto HandleParseNode(Context& context, Parse::VarBindingPatternId node_id)
 }
 
 auto HandleParseNode(Context& context,
+                     Parse::CompileTimeBindingPatternStartId /*node_id*/)
+    -> bool {
+  // Make a scope to contain the `.Self` facet value for use in the type of the
+  // compile time binding. This is popped when handling the
+  // CompileTimeBindingPatternId.
+  context.scope_stack().PushForSameRegion();
+  MakePeriodSelfFacetValue(context, SemIR::TypeType::TypeId);
+  return true;
+}
+
+auto HandleParseNode(Context& context,
                      Parse::CompileTimeBindingPatternId node_id) -> bool {
+  // Pop the `.Self` facet value name introduced by the
+  // CompileTimeBindingPatternStart.
+  context.scope_stack().Pop();
+
   auto node_kind = Parse::NodeKind::CompileTimeBindingPattern;
-  if (context.decl_introducer_state_stack().innermost().kind ==
-      Lex::TokenKind::Let) {
+
+  const DeclIntroducerState& introducer =
+      context.decl_introducer_state_stack().innermost();
+  if (introducer.kind == Lex::TokenKind::Let) {
     // Disallow `let` outside of function and interface definitions.
     // TODO: Find a less brittle way of doing this. A `scope_inst_id` of `None`
     // can represent a block scope, but is also used for other kinds of scopes

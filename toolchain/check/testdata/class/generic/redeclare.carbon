@@ -100,6 +100,7 @@ class E(U:! type) {}
 // CHECK:STDOUT: --- valid.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
+// CHECK:STDOUT:   %.Self: type = bind_symbolic_name .Self [symbolic_self]
 // CHECK:STDOUT:   %T: type = bind_symbolic_name T, 0 [symbolic]
 // CHECK:STDOUT:   %pattern_type.98f: type = pattern_type type [concrete]
 // CHECK:STDOUT:   %Generic.type: type = generic_class_type @Generic [concrete]
@@ -134,11 +135,13 @@ class E(U:! type) {}
 // CHECK:STDOUT:   %Generic.decl.loc4: %Generic.type = class_decl @Generic [concrete = constants.%Generic.generic] {
 // CHECK:STDOUT:     %T.patt: %pattern_type.98f = symbolic_binding_pattern T, 0 [concrete]
 // CHECK:STDOUT:   } {
+// CHECK:STDOUT:     %.Self.2: type = bind_symbolic_name .Self [symbolic_self = constants.%.Self]
 // CHECK:STDOUT:     %T.loc4_15.2: type = bind_symbolic_name T, 0 [symbolic = %T.loc4_15.1 (constants.%T)]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Generic.decl.loc6: %Generic.type = class_decl @Generic [concrete = constants.%Generic.generic] {
 // CHECK:STDOUT:     %T.patt: %pattern_type.98f = symbolic_binding_pattern T, 0 [concrete]
 // CHECK:STDOUT:   } {
+// CHECK:STDOUT:     %.Self.1: type = bind_symbolic_name .Self [symbolic_self = constants.%.Self]
 // CHECK:STDOUT:     %T.loc6: type = bind_symbolic_name T, 0 [symbolic = %T.loc4_15.1 (constants.%T)]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
@@ -222,6 +225,7 @@ class E(U:! type) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %A.466: type = class_type @A.loc4 [concrete]
+// CHECK:STDOUT:   %.Self: type = bind_symbolic_name .Self [symbolic_self]
 // CHECK:STDOUT:   %T: type = bind_symbolic_name T, 0 [symbolic]
 // CHECK:STDOUT:   %pattern_type.98f: type = pattern_type type [concrete]
 // CHECK:STDOUT:   %A.type: type = generic_class_type @A.loc12 [concrete]
@@ -257,6 +261,7 @@ class E(U:! type) {}
 // CHECK:STDOUT:   %A.decl.loc12: %A.type = class_decl @A.loc12 [concrete = constants.%A.generic] {
 // CHECK:STDOUT:     %T.patt: %pattern_type.98f = symbolic_binding_pattern T, 0 [concrete]
 // CHECK:STDOUT:   } {
+// CHECK:STDOUT:     %.Self: type = bind_symbolic_name .Self [symbolic_self = constants.%.Self]
 // CHECK:STDOUT:     %T.loc12_9.2: type = bind_symbolic_name T, 0 [symbolic = %T.loc12_9.1 (constants.%T)]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
@@ -351,6 +356,7 @@ class E(U:! type) {}
 // CHECK:STDOUT:   %A.as.Destroy.impl.Op: %A.as.Destroy.impl.Op.type = struct_value () [concrete]
 // CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [concrete]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [concrete]
+// CHECK:STDOUT:   %.Self: type = bind_symbolic_name .Self [symbolic_self]
 // CHECK:STDOUT:   %N.9e6: %A = bind_symbolic_name N, 0 [symbolic]
 // CHECK:STDOUT:   %pattern_type.c10: type = pattern_type %A [concrete]
 // CHECK:STDOUT:   %B.type.844c0f.1: type = generic_class_type @B.loc6 [concrete]
@@ -390,15 +396,22 @@ class E(U:! type) {}
 // CHECK:STDOUT:   %B.decl.loc6: %B.type.844c0f.1 = class_decl @B.loc6 [concrete = constants.%B.generic.ba299b.1] {
 // CHECK:STDOUT:     %N.patt: %pattern_type.c10 = symbolic_binding_pattern N, 0 [concrete]
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %A.ref: type = name_ref A, file.%A.decl [concrete = constants.%A]
+// CHECK:STDOUT:     %.loc6: type = splice_block %A.ref [concrete = constants.%A] {
+// CHECK:STDOUT:       %.Self: type = bind_symbolic_name .Self [symbolic_self = constants.%.Self]
+// CHECK:STDOUT:       %A.ref: type = name_ref A, file.%A.decl [concrete = constants.%A]
+// CHECK:STDOUT:     }
 // CHECK:STDOUT:     %N.loc6_9.2: %A = bind_symbolic_name N, 0 [symbolic = %N.loc6_9.1 (constants.%N.9e6)]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %B.decl.loc14: %B.type.844c0f.2 = class_decl @B.loc14 [concrete = constants.%B.generic.ba299b.2] {
 // CHECK:STDOUT:     %T.patt: %pattern_type.98f = symbolic_binding_pattern T, 0 [concrete]
 // CHECK:STDOUT:     %N.patt: @B.loc14.%pattern_type (%pattern_type.7dc) = symbolic_binding_pattern N, 1 [concrete]
 // CHECK:STDOUT:   } {
+// CHECK:STDOUT:     %.Self.1: type = bind_symbolic_name .Self [symbolic_self = constants.%.Self]
 // CHECK:STDOUT:     %T.loc14_9.2: type = bind_symbolic_name T, 0 [symbolic = %T.loc14_9.1 (constants.%T)]
-// CHECK:STDOUT:     %T.ref: type = name_ref T, %T.loc14_9.2 [symbolic = %T.loc14_9.1 (constants.%T)]
+// CHECK:STDOUT:     %.loc14: type = splice_block %T.ref [symbolic = %T.loc14_9.1 (constants.%T)] {
+// CHECK:STDOUT:       %.Self.2: type = bind_symbolic_name .Self [symbolic_self = constants.%.Self]
+// CHECK:STDOUT:       %T.ref: type = name_ref T, %T.loc14_9.2 [symbolic = %T.loc14_9.1 (constants.%T)]
+// CHECK:STDOUT:     }
 // CHECK:STDOUT:     %N.loc14_19.2: @B.loc14.%T.loc14_9.1 (%T) = bind_symbolic_name N, 1 [symbolic = %N.loc14_19.1 (constants.%N.f22)]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
@@ -540,6 +553,7 @@ class E(U:! type) {}
 // CHECK:STDOUT:   %A.as.Destroy.impl.Op: %A.as.Destroy.impl.Op.type = struct_value () [concrete]
 // CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [concrete]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [concrete]
+// CHECK:STDOUT:   %.Self: type = bind_symbolic_name .Self [symbolic_self]
 // CHECK:STDOUT:   %T: type = bind_symbolic_name T, 0 [symbolic]
 // CHECK:STDOUT:   %pattern_type.98f: type = pattern_type type [concrete]
 // CHECK:STDOUT:   %C.type.e6e560.1: type = generic_class_type @C.loc6 [concrete]
@@ -576,14 +590,19 @@ class E(U:! type) {}
 // CHECK:STDOUT:   %C.decl.loc6: %C.type.e6e560.1 = class_decl @C.loc6 [concrete = constants.%C.generic.965b12.1] {
 // CHECK:STDOUT:     %T.patt: %pattern_type.98f = symbolic_binding_pattern T, 0 [concrete]
 // CHECK:STDOUT:   } {
+// CHECK:STDOUT:     %.Self: type = bind_symbolic_name .Self [symbolic_self = constants.%.Self]
 // CHECK:STDOUT:     %T.loc6_9.2: type = bind_symbolic_name T, 0 [symbolic = %T.loc6_9.1 (constants.%T)]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %C.decl.loc14: %C.type.e6e560.2 = class_decl @C.loc14 [concrete = constants.%C.generic.965b12.2] {
 // CHECK:STDOUT:     %T.patt: %pattern_type.98f = symbolic_binding_pattern T, 0 [concrete]
 // CHECK:STDOUT:     %U.patt: %pattern_type.c10 = symbolic_binding_pattern U, 1 [concrete]
 // CHECK:STDOUT:   } {
+// CHECK:STDOUT:     %.Self.1: type = bind_symbolic_name .Self [symbolic_self = constants.%.Self]
 // CHECK:STDOUT:     %T.loc14_9.2: type = bind_symbolic_name T, 0 [symbolic = %T.loc14_9.1 (constants.%T)]
-// CHECK:STDOUT:     %A.ref: type = name_ref A, file.%A.decl [concrete = constants.%A]
+// CHECK:STDOUT:     %.loc14: type = splice_block %A.ref [concrete = constants.%A] {
+// CHECK:STDOUT:       %.Self.2: type = bind_symbolic_name .Self [symbolic_self = constants.%.Self]
+// CHECK:STDOUT:       %A.ref: type = name_ref A, file.%A.decl [concrete = constants.%A]
+// CHECK:STDOUT:     }
 // CHECK:STDOUT:     %U.loc14_19.2: %A = bind_symbolic_name U, 1 [symbolic = %U.loc14_19.1 (constants.%U)]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
@@ -722,6 +741,7 @@ class E(U:! type) {}
 // CHECK:STDOUT:   %A.as.Destroy.impl.Op: %A.as.Destroy.impl.Op.type = struct_value () [concrete]
 // CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [concrete]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [concrete]
+// CHECK:STDOUT:   %.Self: type = bind_symbolic_name .Self [symbolic_self]
 // CHECK:STDOUT:   %T.8b3: type = bind_symbolic_name T, 0 [symbolic]
 // CHECK:STDOUT:   %pattern_type.98f: type = pattern_type type [concrete]
 // CHECK:STDOUT:   %D.type.bbd080.1: type = generic_class_type @D.loc6 [concrete]
@@ -758,12 +778,16 @@ class E(U:! type) {}
 // CHECK:STDOUT:   %D.decl.loc6: %D.type.bbd080.1 = class_decl @D.loc6 [concrete = constants.%D.generic.4e2319.1] {
 // CHECK:STDOUT:     %T.patt: %pattern_type.98f = symbolic_binding_pattern T, 0 [concrete]
 // CHECK:STDOUT:   } {
+// CHECK:STDOUT:     %.Self: type = bind_symbolic_name .Self [symbolic_self = constants.%.Self]
 // CHECK:STDOUT:     %T.loc6_9.2: type = bind_symbolic_name T, 0 [symbolic = %T.loc6_9.1 (constants.%T.8b3)]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %D.decl.loc14: %D.type.bbd080.2 = class_decl @D.loc14 [concrete = constants.%D.generic.4e2319.2] {
 // CHECK:STDOUT:     %T.patt: %pattern_type.c10 = symbolic_binding_pattern T, 0 [concrete]
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %A.ref: type = name_ref A, file.%A.decl [concrete = constants.%A]
+// CHECK:STDOUT:     %.loc14: type = splice_block %A.ref [concrete = constants.%A] {
+// CHECK:STDOUT:       %.Self: type = bind_symbolic_name .Self [symbolic_self = constants.%.Self]
+// CHECK:STDOUT:       %A.ref: type = name_ref A, file.%A.decl [concrete = constants.%A]
+// CHECK:STDOUT:     }
 // CHECK:STDOUT:     %T.loc14_9.2: %A = bind_symbolic_name T, 0 [symbolic = %T.loc14_9.1 (constants.%T.9e6)]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
@@ -886,6 +910,7 @@ class E(U:! type) {}
 // CHECK:STDOUT: --- fail_mismatch_param_name.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
+// CHECK:STDOUT:   %.Self: type = bind_symbolic_name .Self [symbolic_self]
 // CHECK:STDOUT:   %T: type = bind_symbolic_name T, 0 [symbolic]
 // CHECK:STDOUT:   %pattern_type.98f: type = pattern_type type [concrete]
 // CHECK:STDOUT:   %E.type.b0f8dc.1: type = generic_class_type @E.loc4 [concrete]
@@ -923,11 +948,13 @@ class E(U:! type) {}
 // CHECK:STDOUT:   %E.decl.loc4: %E.type.b0f8dc.1 = class_decl @E.loc4 [concrete = constants.%E.generic.f281ba.1] {
 // CHECK:STDOUT:     %T.patt: %pattern_type.98f = symbolic_binding_pattern T, 0 [concrete]
 // CHECK:STDOUT:   } {
+// CHECK:STDOUT:     %.Self: type = bind_symbolic_name .Self [symbolic_self = constants.%.Self]
 // CHECK:STDOUT:     %T.loc4_9.2: type = bind_symbolic_name T, 0 [symbolic = %T.loc4_9.1 (constants.%T)]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %E.decl.loc12: %E.type.b0f8dc.2 = class_decl @E.loc12 [concrete = constants.%E.generic.f281ba.2] {
 // CHECK:STDOUT:     %U.patt: %pattern_type.98f = symbolic_binding_pattern U, 0 [concrete]
 // CHECK:STDOUT:   } {
+// CHECK:STDOUT:     %.Self: type = bind_symbolic_name .Self [symbolic_self = constants.%.Self]
 // CHECK:STDOUT:     %U.loc12_9.2: type = bind_symbolic_name U, 0 [symbolic = %U.loc12_9.1 (constants.%U)]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }

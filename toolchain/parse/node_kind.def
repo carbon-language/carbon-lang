@@ -175,6 +175,7 @@ CARBON_PARSE_NODE_KIND(ArrayExpr)
 CARBON_PARSE_NODE_KIND(LetBindingPattern)
 CARBON_PARSE_NODE_KIND(VarBindingPattern)
 CARBON_PARSE_NODE_KIND(TemplateBindingName)
+CARBON_PARSE_NODE_KIND(CompileTimeBindingPatternStart)
 CARBON_PARSE_NODE_KIND(CompileTimeBindingPattern)
 CARBON_PARSE_NODE_KIND(Addr)
 
