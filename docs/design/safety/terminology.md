@@ -13,7 +13,7 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 -   [Core Terminology](#core-terminology)
     -   [_Hazard_](#hazard)
     -   [_Bug_ or _defect_](#bug-or-defect)
-        -   [_Patent_ or _active bug_](#patent-or-active-bug)
+        -   [_Active bug_](#active-bug)
         -   [_Latent bug_](#latent-bug)
     -   [_Safety_](#safety)
     -   [_Code_, _software_, or _program safety_](#code-software-or-program-safety)
@@ -36,8 +36,8 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
         -   [_Initialization safety_](#initialization-safety)
         -   [_Data-race safety_](#data-race-safety)
     -   [_Memory safety bug_](#memory-safety-bug)
-    -   [_Memory safe platform_ or _environment_](#memory-safe-platform-or-environment)
-    -   [_Memory safe language_](#memory-safe-language)
+    -   [_Memory-safe platform_ or _environment_](#memory-safe-platform-or-environment)
+    -   [_Memory-safe language_](#memory-safe-language)
 
 <!-- tocstop -->
 
