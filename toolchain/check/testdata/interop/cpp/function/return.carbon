@@ -47,29 +47,29 @@ fn F() {
 // CHECK:STDOUT:   %i32: type = class_type @Int, @Int(%int_32) [concrete]
 // CHECK:STDOUT:   %IngestI32.type: type = fn_type @IngestI32 [concrete]
 // CHECK:STDOUT:   %IngestI32: %IngestI32.type = struct_value () [concrete]
-// CHECK:STDOUT:   %.f2e: type = overloaded_fn_type @F [concrete]
-// CHECK:STDOUT:   %empty_struct.8a0: %.f2e = struct_value () [concrete]
+// CHECK:STDOUT:   %.dc2: type = overloaded_cpp_fn_type @F [concrete]
+// CHECK:STDOUT:   %empty_struct.ab6: %.dc2 = struct_value () [concrete]
 // CHECK:STDOUT:   %foo1.type: type = fn_type @foo1 [concrete]
 // CHECK:STDOUT:   %foo1: %foo1.type = struct_value () [concrete]
-// CHECK:STDOUT:   %.cc7: type = overloaded_fn_type @foo1 [concrete]
-// CHECK:STDOUT:   %empty_struct.8b3: %.cc7 = struct_value () [concrete]
+// CHECK:STDOUT:   %.273: type = overloaded_cpp_fn_type @foo1 [concrete]
+// CHECK:STDOUT:   %empty_struct.21c: %.273 = struct_value () [concrete]
 // CHECK:STDOUT:   %foo2.type: type = fn_type @foo2 [concrete]
 // CHECK:STDOUT:   %foo2: %foo2.type = struct_value () [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT:   %Cpp: <namespace> = namespace file.%Cpp.import_cpp, [concrete] {
-// CHECK:STDOUT:     .foo1 = %.fad
-// CHECK:STDOUT:     .foo2 = %.aba
+// CHECK:STDOUT:     .foo1 = %.7ba
+// CHECK:STDOUT:     .foo2 = %.e6d
 // CHECK:STDOUT:     import Cpp//...
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %.fad: %.f2e = overloaded_fn_decl @F [concrete = constants.%empty_struct.8a0]
+// CHECK:STDOUT:   %.7ba: %.dc2 = overloaded_cpp_fn_decl @F [concrete = constants.%empty_struct.ab6]
 // CHECK:STDOUT:   %foo1.decl: %foo1.type = fn_decl @foo1 [concrete = constants.%foo1] {
 // CHECK:STDOUT:     <elided>
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     <elided>
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %.aba: %.cc7 = overloaded_fn_decl @foo1 [concrete = constants.%empty_struct.8b3]
+// CHECK:STDOUT:   %.e6d: %.273 = overloaded_cpp_fn_decl @foo1 [concrete = constants.%empty_struct.21c]
 // CHECK:STDOUT:   %foo2.decl: %foo2.type = fn_decl @foo2 [concrete = constants.%foo2] {
 // CHECK:STDOUT:     <elided>
 // CHECK:STDOUT:   } {
@@ -81,14 +81,14 @@ fn F() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %IngestI16.ref: %IngestI16.type = name_ref IngestI16, file.%IngestI16.decl [concrete = constants.%IngestI16]
 // CHECK:STDOUT:   %Cpp.ref.loc11: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
-// CHECK:STDOUT:   %foo1.ref: %.f2e = name_ref foo1, imports.%.fad [concrete = constants.%empty_struct.8a0]
+// CHECK:STDOUT:   %foo1.ref: %.dc2 = name_ref foo1, imports.%.7ba [concrete = constants.%empty_struct.ab6]
 // CHECK:STDOUT:   %foo1.call: init %i16 = call imports.%foo1.decl()
 // CHECK:STDOUT:   %.loc11_22.1: %i16 = value_of_initializer %foo1.call
 // CHECK:STDOUT:   %.loc11_22.2: %i16 = converted %foo1.call, %.loc11_22.1
 // CHECK:STDOUT:   %IngestI16.call: init %empty_tuple.type = call %IngestI16.ref(%.loc11_22.2)
 // CHECK:STDOUT:   %IngestI32.ref: %IngestI32.type = name_ref IngestI32, file.%IngestI32.decl [concrete = constants.%IngestI32]
 // CHECK:STDOUT:   %Cpp.ref.loc12: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
-// CHECK:STDOUT:   %foo2.ref: %.cc7 = name_ref foo2, imports.%.aba [concrete = constants.%empty_struct.8b3]
+// CHECK:STDOUT:   %foo2.ref: %.273 = name_ref foo2, imports.%.e6d [concrete = constants.%empty_struct.21c]
 // CHECK:STDOUT:   %foo2.call: init %i32 = call imports.%foo2.decl()
 // CHECK:STDOUT:   %.loc12_22.1: %i32 = value_of_initializer %foo2.call
 // CHECK:STDOUT:   %.loc12_22.2: %i32 = converted %foo2.call, %.loc12_22.1

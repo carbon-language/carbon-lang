@@ -94,8 +94,8 @@ var y: Cpp.Xint.r#type = 0;
 // CHECK:STDOUT:   %i32: type = class_type @Int, @Int(%int_32) [concrete]
 // CHECK:STDOUT:   %Base: type = class_type @Base [concrete]
 // CHECK:STDOUT:   %A.elem.c3f: type = unbound_element_type %A.0bedf0.1, %i32 [concrete]
-// CHECK:STDOUT:   %.cb8: type = overloaded_fn_type @A.f [concrete]
-// CHECK:STDOUT:   %empty_struct: %.cb8 = struct_value () [concrete]
+// CHECK:STDOUT:   %.5c3: type = overloaded_cpp_fn_type @A.f [concrete]
+// CHECK:STDOUT:   %empty_struct: %.5c3 = struct_value () [concrete]
 // CHECK:STDOUT:   %A.f.type: type = fn_type @A.f [concrete]
 // CHECK:STDOUT:   %A.f: %A.f.type = struct_value () [concrete]
 // CHECK:STDOUT:   %A.0bedf0.2: type = class_type @A.2 [concrete]
@@ -104,7 +104,7 @@ var y: Cpp.Xint.r#type = 0;
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
-// CHECK:STDOUT:   %.51f: %.cb8 = overloaded_fn_decl @A.f [concrete = constants.%empty_struct]
+// CHECK:STDOUT:   %.2bd: %.5c3 = overloaded_cpp_fn_decl @A.f [concrete = constants.%empty_struct]
 // CHECK:STDOUT:   %A.f.decl: %A.f.type = fn_decl @A.f [concrete = constants.%A.f] {
 // CHECK:STDOUT:     <elided>
 // CHECK:STDOUT:   } {
@@ -115,7 +115,7 @@ var y: Cpp.Xint.r#type = 0;
 // CHECK:STDOUT: fn @F(%x.param: %A.0bedf0.1) -> %i32 {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %x.ref.loc14: %A.0bedf0.1 = name_ref x, %x
-// CHECK:STDOUT:   %f.ref: %.cb8 = name_ref f, imports.%.51f [concrete = constants.%empty_struct]
+// CHECK:STDOUT:   %f.ref: %.5c3 = name_ref f, imports.%.2bd [concrete = constants.%empty_struct]
 // CHECK:STDOUT:   %A.f.call: init %empty_tuple.type = call imports.%A.f.decl(<error>)
 // CHECK:STDOUT:   %x.ref.loc15: %A.0bedf0.1 = name_ref x, %x
 // CHECK:STDOUT:   %n.ref: %A.elem.c3f = name_ref n, @A.1.%.2 [concrete = @A.1.%.2]

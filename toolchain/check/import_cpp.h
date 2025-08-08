@@ -24,6 +24,12 @@ auto ImportCppFiles(Context& context,
                     std::shared_ptr<clang::CompilerInvocation> invocation)
     -> std::unique_ptr<clang::ASTUnit>;
 
+// Imports a declaration from Clang to Carbon. If successful, returns the
+// instruction for the new Carbon declaration. All unimported dependencies would
+// be imported first.
+auto ImportDeclAndDependencies(Context& context, SemIR::LocId loc_id,
+                               clang::Decl* clang_decl) -> SemIR::InstId;
+
 // Looks up the given name in the Clang AST generated when importing C++ code
 // and returns a lookup result.
 auto ImportNameFromCpp(Context& context, SemIR::LocId loc_id,
@@ -36,13 +42,6 @@ auto ImportNameFromCpp(Context& context, SemIR::LocId loc_id,
 auto ImportCppClassDefinition(Context& context, SemIR::LocId loc_id,
                               SemIR::ClassId class_id,
                               SemIR::ClangDeclId clang_decl_id) -> bool;
-
-// Imports a declaration from Clang to Carbon. If successful, returns the
-// instruction for the new Carbon declaration. All unimported dependencies would
-// be imported first.
-auto ImportDeclAndDependencies(Context& context, SemIR::LocId loc_id,
-                               clang::Decl* clang_decl) -> SemIR::InstId;
-
 }  // namespace Carbon::Check
 
 #endif  // CARBON_TOOLCHAIN_CHECK_IMPORT_CPP_H_

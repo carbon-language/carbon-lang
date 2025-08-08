@@ -182,44 +182,44 @@ fn Ref(p: Cpp.HasQualifiers*) {
 // CHECK:STDOUT:   %HasQualifiers: type = class_type @HasQualifiers [concrete]
 // CHECK:STDOUT:   %ptr.ec3: type = ptr_type %HasQualifiers [concrete]
 // CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [concrete]
-// CHECK:STDOUT:   %.acc: type = overloaded_fn_type @HasQualifiers.ref_this [concrete]
-// CHECK:STDOUT:   %empty_struct.1c7: %.acc = struct_value () [concrete]
+// CHECK:STDOUT:   %.0fd: type = overloaded_cpp_fn_type @HasQualifiers.ref_this [concrete]
+// CHECK:STDOUT:   %empty_struct.bce: %.0fd = struct_value () [concrete]
 // CHECK:STDOUT:   %HasQualifiers.const_this.type: type = fn_type @HasQualifiers.const_this [concrete]
 // CHECK:STDOUT:   %HasQualifiers.const_this: %HasQualifiers.const_this.type = struct_value () [concrete]
-// CHECK:STDOUT:   %.940: type = overloaded_fn_type @<null name> [concrete]
-// CHECK:STDOUT:   %empty_struct.97a: %.940 = struct_value () [concrete]
+// CHECK:STDOUT:   %.4ae: type = overloaded_cpp_fn_type @<null name> [concrete]
+// CHECK:STDOUT:   %empty_struct.930: %.4ae = struct_value () [concrete]
 // CHECK:STDOUT:   %HasQualifiers.const_ref_this.type: type = fn_type @HasQualifiers.const_ref_this [concrete]
 // CHECK:STDOUT:   %HasQualifiers.const_ref_this: %HasQualifiers.const_ref_this.type = struct_value () [concrete]
-// CHECK:STDOUT:   %.b92: type = overloaded_fn_type @<null name> [concrete]
-// CHECK:STDOUT:   %empty_struct.4fb: %.b92 = struct_value () [concrete]
+// CHECK:STDOUT:   %.b3d: type = overloaded_cpp_fn_type @<null name> [concrete]
+// CHECK:STDOUT:   %empty_struct.a36: %.b3d = struct_value () [concrete]
 // CHECK:STDOUT:   %HasQualifiers.plain.type: type = fn_type @HasQualifiers.plain [concrete]
 // CHECK:STDOUT:   %HasQualifiers.plain: %HasQualifiers.plain.type = struct_value () [concrete]
-// CHECK:STDOUT:   %.57d: type = overloaded_fn_type @<null name> [concrete]
-// CHECK:STDOUT:   %empty_struct.bf9: %.57d = struct_value () [concrete]
+// CHECK:STDOUT:   %.428: type = overloaded_cpp_fn_type @<null name> [concrete]
+// CHECK:STDOUT:   %empty_struct.d0d: %.428 = struct_value () [concrete]
 // CHECK:STDOUT:   %HasQualifiers.ref_this.type: type = fn_type @HasQualifiers.ref_this [concrete]
 // CHECK:STDOUT:   %HasQualifiers.ref_this: %HasQualifiers.ref_this.type = struct_value () [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
-// CHECK:STDOUT:   %.af4: %.acc = overloaded_fn_decl @HasQualifiers.ref_this [concrete = constants.%empty_struct.1c7]
+// CHECK:STDOUT:   %.15f: %.0fd = overloaded_cpp_fn_decl @HasQualifiers.ref_this [concrete = constants.%empty_struct.bce]
 // CHECK:STDOUT:   %HasQualifiers.const_this.decl: %HasQualifiers.const_this.type = fn_decl @HasQualifiers.const_this [concrete = constants.%HasQualifiers.const_this] {
 // CHECK:STDOUT:     <elided>
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     <elided>
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %.c9a: %.940 = overloaded_fn_decl @<null name> [concrete = constants.%empty_struct.97a]
+// CHECK:STDOUT:   %.e06: %.4ae = overloaded_cpp_fn_decl @<null name> [concrete = constants.%empty_struct.930]
 // CHECK:STDOUT:   %HasQualifiers.const_ref_this.decl: %HasQualifiers.const_ref_this.type = fn_decl @HasQualifiers.const_ref_this [concrete = constants.%HasQualifiers.const_ref_this] {
 // CHECK:STDOUT:     <elided>
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     <elided>
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %.490: %.b92 = overloaded_fn_decl @<null name> [concrete = constants.%empty_struct.4fb]
+// CHECK:STDOUT:   %.ed2: %.b3d = overloaded_cpp_fn_decl @<null name> [concrete = constants.%empty_struct.a36]
 // CHECK:STDOUT:   %HasQualifiers.plain.decl: %HasQualifiers.plain.type = fn_decl @HasQualifiers.plain [concrete = constants.%HasQualifiers.plain] {
 // CHECK:STDOUT:     <elided>
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     <elided>
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %.f60: %.57d = overloaded_fn_decl @<null name> [concrete = constants.%empty_struct.bf9]
+// CHECK:STDOUT:   %.f52: %.428 = overloaded_cpp_fn_decl @<null name> [concrete = constants.%empty_struct.d0d]
 // CHECK:STDOUT:   %HasQualifiers.ref_this.decl: %HasQualifiers.ref_this.type = fn_decl @HasQualifiers.ref_this [concrete = constants.%HasQualifiers.ref_this] {
 // CHECK:STDOUT:     <elided>
 // CHECK:STDOUT:   } {
@@ -230,28 +230,28 @@ fn Ref(p: Cpp.HasQualifiers*) {
 // CHECK:STDOUT: fn @F(%v.param: %HasQualifiers, %p.param: %ptr.ec3) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %v.ref.loc13: %HasQualifiers = name_ref v, %v
-// CHECK:STDOUT:   %const_this.ref.loc13: %.acc = name_ref const_this, imports.%.af4 [concrete = constants.%empty_struct.1c7]
+// CHECK:STDOUT:   %const_this.ref.loc13: %.0fd = name_ref const_this, imports.%.15f [concrete = constants.%empty_struct.bce]
 // CHECK:STDOUT:   %HasQualifiers.const_this.call.loc13: init %empty_tuple.type = call imports.%HasQualifiers.const_this.decl(<error>)
 // CHECK:STDOUT:   %v.ref.loc19: %HasQualifiers = name_ref v, %v
-// CHECK:STDOUT:   %const_ref_this.ref.loc19: %.940 = name_ref const_ref_this, imports.%.c9a [concrete = constants.%empty_struct.97a]
+// CHECK:STDOUT:   %const_ref_this.ref.loc19: %.4ae = name_ref const_ref_this, imports.%.e06 [concrete = constants.%empty_struct.930]
 // CHECK:STDOUT:   %HasQualifiers.const_ref_this.call.loc19: init %empty_tuple.type = call imports.%HasQualifiers.const_ref_this.decl(<error>)
 // CHECK:STDOUT:   %p.ref.loc26: %ptr.ec3 = name_ref p, %p
 // CHECK:STDOUT:   %.loc26: ref %HasQualifiers = deref %p.ref.loc26
-// CHECK:STDOUT:   %plain.ref: %.b92 = name_ref plain, imports.%.490 [concrete = constants.%empty_struct.4fb]
+// CHECK:STDOUT:   %plain.ref: %.b3d = name_ref plain, imports.%.ed2 [concrete = constants.%empty_struct.a36]
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT:   %HasQualifiers.plain.call: init %empty_tuple.type = call imports.%HasQualifiers.plain.decl(<error>)
 // CHECK:STDOUT:   %p.ref.loc32: %ptr.ec3 = name_ref p, %p
 // CHECK:STDOUT:   %.loc32: ref %HasQualifiers = deref %p.ref.loc32
-// CHECK:STDOUT:   %ref_this.ref: %.57d = name_ref ref_this, imports.%.f60 [concrete = constants.%empty_struct.bf9]
+// CHECK:STDOUT:   %ref_this.ref: %.428 = name_ref ref_this, imports.%.f52 [concrete = constants.%empty_struct.d0d]
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT:   %HasQualifiers.ref_this.call: init %empty_tuple.type = call imports.%HasQualifiers.ref_this.decl(<error>)
 // CHECK:STDOUT:   %p.ref.loc38: %ptr.ec3 = name_ref p, %p
 // CHECK:STDOUT:   %.loc38: ref %HasQualifiers = deref %p.ref.loc38
-// CHECK:STDOUT:   %const_this.ref.loc38: %.acc = name_ref const_this, imports.%.af4 [concrete = constants.%empty_struct.1c7]
+// CHECK:STDOUT:   %const_this.ref.loc38: %.0fd = name_ref const_this, imports.%.15f [concrete = constants.%empty_struct.bce]
 // CHECK:STDOUT:   %HasQualifiers.const_this.call.loc38: init %empty_tuple.type = call imports.%HasQualifiers.const_this.decl(<error>)
 // CHECK:STDOUT:   %p.ref.loc44: %ptr.ec3 = name_ref p, %p
 // CHECK:STDOUT:   %.loc44: ref %HasQualifiers = deref %p.ref.loc44
-// CHECK:STDOUT:   %const_ref_this.ref.loc44: %.940 = name_ref const_ref_this, imports.%.c9a [concrete = constants.%empty_struct.97a]
+// CHECK:STDOUT:   %const_ref_this.ref.loc44: %.4ae = name_ref const_ref_this, imports.%.e06 [concrete = constants.%empty_struct.930]
 // CHECK:STDOUT:   %HasQualifiers.const_ref_this.call.loc44: init %empty_tuple.type = call imports.%HasQualifiers.const_ref_this.decl(<error>)
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }

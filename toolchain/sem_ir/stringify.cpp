@@ -380,9 +380,10 @@ class Stringifier {
     }
   }
 
-  auto StringifyInst(InstId /*inst_id*/, OverloadedFunctionType inst) -> void {
+  auto StringifyInst(InstId /*inst_id*/, OverloadedCppFunctionType inst)
+      -> void {
     const auto& fn =
-        sem_ir_->overloaded_functions().Get(inst.overloaded_function_id);
+        sem_ir_->overloaded_cpp_functions().Get(inst.overloaded_function_id);
     *out_ << "<type of ";
     step_stack_->Push(
         StepStack::QualifiedNameItem{fn.parent_scope_id, fn.name_id}, ">");

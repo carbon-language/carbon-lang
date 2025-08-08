@@ -99,6 +99,7 @@ cc_library(
         "interface.h",
         "name.h",
         "name_scope.h",
+        "overloaded_cpp_function.h",
         "pattern.h",
         "struct_type_field.h",
         "type.h",

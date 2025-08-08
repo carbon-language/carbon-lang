@@ -1548,8 +1548,8 @@ auto ImportNameFromCpp(Context& context, SemIR::LocId loc_id,
 
   if (lookup->isOverloadedResult() ||
       (lookup->isSingleResult() && lookup->getFoundDecl()->getAsFunction())) {
-    auto overloaded_func_decl_inst = SemIR::OverloadedFunctionDecl{
-        SemIR::TypeId::None, SemIR::OverloadedFunctionId::None};
+    auto overloaded_func_decl_inst = SemIR::OverloadedCppFunctionDecl{
+        SemIR::TypeId::None, SemIR::OverloadedCppFunctionId::None};
     auto decl_inst_id = AddPlaceholderInstInNoBlock(
         context, Parse::NodeId::None, overloaded_func_decl_inst);
     context.imports().push_back(decl_inst_id);
@@ -1558,14 +1558,14 @@ auto ImportNameFromCpp(Context& context, SemIR::LocId loc_id,
     overload_set.append(lookup->begin(), lookup->end());
 
     auto overloaded_function_info =
-        SemIR::OverloadedFunction{.name_id = name_id,
-                                  .parent_scope_id = scope_id,
-                                  .candidate_functions = overload_set};
+        SemIR::OverloadedCppFunction{.name_id = name_id,
+                                     .parent_scope_id = scope_id,
+                                     .candidate_functions = overload_set};
 
     overloaded_func_decl_inst.overloaded_function_id =
-        context.overloaded_functions().Add(overloaded_function_info);
+        context.overloaded_cpp_functions().Add(overloaded_function_info);
 
-    overloaded_func_decl_inst.type_id = GetOverloadedFunctionType(
+    overloaded_func_decl_inst.type_id = GetOverloadedCppFunctionType(
         context, overloaded_func_decl_inst.overloaded_function_id,
         SemIR::SpecificId::None);
 

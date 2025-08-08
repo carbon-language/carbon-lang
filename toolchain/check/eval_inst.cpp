@@ -210,7 +210,8 @@ auto EvalConstantInst(Context& context, SemIR::InstId inst_id,
              : ConstantEvalResult::Error;
 }
 
-auto EvalConstantInst(Context& /*context*/, SemIR::OverloadedFunctionDecl inst)
+auto EvalConstantInst(Context& /*context*/,
+                      SemIR::OverloadedCppFunctionDecl inst)
     -> ConstantEvalResult {
   return ConstantEvalResult::NewSamePhase(SemIR::StructValue{
       .type_id = inst.type_id, .elements_id = SemIR::InstBlockId::Empty});

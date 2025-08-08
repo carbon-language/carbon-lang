@@ -41,9 +41,11 @@ enum class EntityKind : uint8_t {
 };
 }  // namespace
 
-// Performs overload resolution for a call to an overloaded function.
-// Uses clang to perform the overloading resolution.
-// Returns the resolved function, or `nullopt` if overload resolution failed.
+// Performs overloading resolution for a call to an overloaded C++ set. A set
+// with a single non-templated function is still considered to be an overload
+// set, and goes through the same rules for checking the viability of the
+// function. Uses Clang to find the best viable function for the call. Returns
+// the resolved function, or `nullopt` if overload resolution failed.
 static auto PerformOverloadResolution(Context& context, SemIR::LocId loc_id,
                                       SemIR::InstId callee_id,
                                       llvm::ArrayRef<SemIR::InstId> arg_ids)
@@ -55,7 +57,7 @@ static auto PerformOverloadResolution(Context& context, SemIR::LocId loc_id,
         builder.Note(loc_id, InCallToOverloadedCppFunction);
       });
 
-  // Map Carbon call argument types to Cpp types.
+  // Map Carbon call argument types to C++ types.
   llvm::SmallVector<clang::Expr*, 12> arg_exprs;
   for (SemIR::InstId arg_id : arg_ids) {
     auto arg_cpp_type = MapToCppType(context, arg_id);
@@ -73,14 +75,14 @@ static auto PerformOverloadResolution(Context& context, SemIR::LocId loc_id,
 
   auto fn_type_inst =
       context.types().GetAsInst(context.insts().Get(callee_id).type_id());
-  auto fn_type = fn_type_inst.TryAs<SemIR::OverloadedFunctionType>();
+  auto fn_type = fn_type_inst.TryAs<SemIR::OverloadedCppFunctionType>();
   if (!fn_type) {
     return std::nullopt;
   }
   auto overloaded_fn =
-      context.overloaded_functions().Get(fn_type->overloaded_function_id);
+      context.overloaded_cpp_functions().Get(fn_type->overloaded_function_id);
 
-  // add candidate functions
+  // Add candidate functions from the name lookup.
   clang::OverloadCandidateSet candidate_set(
       clang::SourceLocation(),
       clang::OverloadCandidateSet::CandidateSetKind::CSK_Normal);
@@ -92,7 +94,11 @@ static auto PerformOverloadResolution(Context& context, SemIR::LocId loc_id,
   sema.AddFunctionCandidates(overloaded_fn.candidate_functions, arg_exprs,
                              candidate_set);
 
-  // find best viable function
+  // Find best viable function among the candidates.
+  // Note: In C++, a single non-templated function is also treated as an
+  // overloaded set and goes through the overload resolution to ensure that the
+  // function is viable for the call. Keeping the same behavior here for
+  // consistency.
   clang::OverloadCandidateSet::iterator best_viable_fn;
   clang::OverloadingResult overloading_result =
       candidate_set.BestViableFunction(sema, clang::SourceLocation(),

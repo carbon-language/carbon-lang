@@ -33,6 +33,7 @@
 #include "toolchain/sem_ir/interface.h"
 #include "toolchain/sem_ir/name.h"
 #include "toolchain/sem_ir/name_scope.h"
+#include "toolchain/sem_ir/overloaded_cpp_function.h"
 #include "toolchain/sem_ir/singleton_insts.h"
 #include "toolchain/sem_ir/specific_interface.h"
 #include "toolchain/sem_ir/struct_type_field.h"
@@ -154,11 +155,11 @@ class File : public Printable<File> {
   auto entity_names() const -> const EntityNameStore& { return entity_names_; }
   auto functions() -> FunctionStore& { return functions_; }
   auto functions() const -> const FunctionStore& { return functions_; }
-  auto overloaded_functions() -> OverloadedFunctionStore& {
-    return overloaded_functions_;
+  auto overloaded_cpp_functions() -> OverloadedCppFunctionStore& {
+    return overloaded_cpp_functions_;
   }
-  auto overloaded_functions() const -> const OverloadedFunctionStore& {
-    return overloaded_functions_;
+  auto overloaded_cpp_functions() const -> const OverloadedCppFunctionStore& {
+    return overloaded_cpp_functions_;
   }
   auto classes() -> ClassStore& { return classes_; }
   auto classes() const -> const ClassStore& { return classes_; }
@@ -298,7 +299,7 @@ class File : public Printable<File> {
   FunctionStore functions_;
 
   // Storage for OverloadedFunctions.
-  OverloadedFunctionStore overloaded_functions_;
+  OverloadedCppFunctionStore overloaded_cpp_functions_;
 
   // Storage for classes.
   ClassStore classes_;

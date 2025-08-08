@@ -186,9 +186,9 @@ struct Worklist {
     AddEntity(sem_ir->functions().Get(function_id));
   }
 
-  auto Add(OverloadedFunctionId overloaded_function_id) -> void {
-    OverloadedFunction overloaded_function =
-        sem_ir->overloaded_functions().Get(overloaded_function_id);
+  auto Add(OverloadedCppFunctionId overloaded_function_id) -> void {
+    OverloadedCppFunction overloaded_function =
+        sem_ir->overloaded_cpp_functions().Get(overloaded_function_id);
     Add(overloaded_function.name_id);
     if (overloaded_function.parent_scope_id.has_value()) {
       Add(sem_ir->name_scopes()

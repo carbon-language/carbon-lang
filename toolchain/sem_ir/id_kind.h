@@ -58,7 +58,7 @@ using IdKind = TypeEnum<
     MetaInstId,
     NameId,
     NameScopeId,
-    OverloadedFunctionId,
+    OverloadedCppFunctionId,
     SpecificId,
     SpecificInterfaceId,
     StructTypeFieldsId,

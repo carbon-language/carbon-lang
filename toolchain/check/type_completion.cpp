@@ -122,7 +122,7 @@ class TypeCompleter {
 
   template <typename InstT>
     requires(InstT::Kind.template IsAnyOf<
-             SemIR::AssociatedEntityType, SemIR::OverloadedFunctionType,
+             SemIR::AssociatedEntityType, SemIR::OverloadedCppFunctionType,
              SemIR::FunctionType, SemIR::FunctionTypeWithSelfType,
              SemIR::GenericClassType, SemIR::GenericInterfaceType,
              SemIR::InstType, SemIR::UnboundElementType, SemIR::WhereExpr>())
