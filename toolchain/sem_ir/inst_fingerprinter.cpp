@@ -15,8 +15,8 @@
 #include "llvm/ADT/StableHashing.h"
 #include "toolchain/base/value_ids.h"
 #include "toolchain/sem_ir/entity_with_params_base.h"
-#include "toolchain/sem_ir/function.h"
 #include "toolchain/sem_ir/ids.h"
+#include "toolchain/sem_ir/overloaded_cpp_function.h"
 #include "toolchain/sem_ir/typed_insts.h"
 
 namespace Carbon::SemIR {

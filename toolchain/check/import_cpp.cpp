@@ -43,10 +43,10 @@
 #include "toolchain/diagnostics/format_providers.h"
 #include "toolchain/parse/node_ids.h"
 #include "toolchain/sem_ir/clang_decl.h"
-#include "toolchain/sem_ir/function.h"
 #include "toolchain/sem_ir/ids.h"
 #include "toolchain/sem_ir/inst.h"
 #include "toolchain/sem_ir/name_scope.h"
+#include "toolchain/sem_ir/overloaded_cpp_function.h"
 #include "toolchain/sem_ir/typed_insts.h"
 
 namespace Carbon::Check {
