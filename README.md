@@ -257,10 +257,10 @@ We also want to address important, low-hanging fruit in the safety space
 immediately when migrating into Carbon:
 
 -   Tracking uninitialized states better, increased enforcement of
-    initialization, and systematically providing hardening against
-    initialization bugs when desired.
--   Designing fundamental APIs and idioms to support dynamic bounds checks in
-    debug and hardened builds.
+    initialization, and hardening against initialization bugs when needed.
+-   Designing fundamental APIs and idioms to support dynamic bounds checking.
+-   Switching from undefined behavior to erroneous behavior wherever possible,
+    and marking the remaining undefined behavior with visible `unsafe` syntax.
 -   Having a default debug build mode that is both cheaper and more
     comprehensive than existing C++ build modes even when combined with
     [Address Sanitizer](https://github.com/google/sanitizers/wiki/AddressSanitizer).

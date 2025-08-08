@@ -34,6 +34,7 @@ of code safety such as avoiding undefined behavior in other forms.
 [code safety]:
     /docs/design/safety/terminology.md#code-software-or-program-safety
 [systems safety]: /docs/design/safety/terminology.md#safety
+[memory safety]: /docs/design/safety/terminology.md#memory-safety
 
 However, Carbon also has a goal of fine grained, smooth interop-with and
 migration-from existing C++ code, and C++ is a fundamentally unsafe language. It
@@ -42,9 +43,8 @@ guarantees. Our safety strategy has to address how C++ code fits into it, and
 provide an incremental path from where the code is at today towards increasing
 levels of safety.
 
-Ultimately, Carbon will both provide a [memory-safe language], _and_ provide a
-language that can interop with C++ and be targeted for mechanical migration from
-C++.
+Ultimately, Carbon will both provide a [memory-safe language], _and_ provide a language
+that can interop with C++ and be targeted for mechanical migration from C++.
 
 [memory-safe language]: /docs/design/safety/terminology.md#memory-safe-language
 
@@ -53,8 +53,8 @@ C++.
 Carbon will have both _safe_ and _unsafe_ code. Safe code provides limits on the
 potential behavior of the program even in the face of bugs in order to prevent
 [safety bugs] from becoming [vulnerabilities]. Unsafe code is any code or operation
-which lacks limits or guarantees on behavior, and as a result may result in undefined
-behavior or a safety bug.
+which lacks limits or guarantees on behavior, and as a consequence may have undefined
+behavior or be a safety bug.
 
 [safety bugs]: /docs/design/safety/terminology.md#safety-bugs
 [vulnerabilities]:
@@ -73,8 +73,9 @@ language:
     whatever syntax is used so that this keyword can be used as a common
     annotation in audits and review.
 
-The result is that Carbon does not have a "safe" mode and an "unsafe" mode, but
-rather narrow and specific unsafe operations and constructs.
+The result is that we don't model large regions or sections of Carbon code as
+"unsafe" or have a completely "unsafe" mode. We instead focus on the narrow and
+specific unsafe operations and constructs.
 
 ## Safety modes
 
@@ -90,6 +91,27 @@ migration from C++. In this mode, some unsafe code does not require an `unsafe`
 keyword: specific aspects of C++ interop or pervasive patterns that occur when
 migrating from C++. However, not _all_ unsafe code will omit the keyword, the
 permissive mode is designed to be minimal in the unsafe code allowed.
+
+Modes can be configured at build time, on an individual file as part of the
+package declaration, or an a function body as part of the function definition.
+More options such as regions of declarations or regions of statements can be
+explored in the future based on demand in practice when working with
+mixed-strictness code. More fine grained than statements is not expected given
+that the same core expressivity is already available at that finer granularity
+through explicitly marking `unsafe` operations.
+
+> **Future work**: Define the exact syntax for package declaration and function
+> definition control of strictness. The syntax for enabling the permissive mode
+> must include the `unsafe` keyword as it is standing in place of more granular
+> use of the `unsafe` keywords and needs to still be discovered when auditing
+> for safety.
+
+> **Future work**: Eventually, the build mode should be phased out and file
+> granularity should be the largest granularity of control.
+
+> **Future work**: Define how to mark `import`s of permissive libraries in
+> various contexts, balancing ergonomic burden against the potential for
+> surprising amounts af unsafety in dependencies.
 
 ## Memory safety model
 
@@ -123,10 +145,13 @@ how they approach both temporal and data-race safety.
 
 Carbon has the option of distinguishing between two similar but importantly
 different classes of bugs: data races and unsynchronized temporal safety
-violations. Specifically, there is evidence from security teams that the second of
-these has been a greater source of exploitation than first. As a consequence,
-Carbon has some flexibility while still being a [memory safe language] according
-to our definition:
+violations. Specifically, there is no evidence from security teams that the
+first of these have led to anything approaching the volume of vulnerabilities
+without the second. For example, the rate of memory safety vulnerabilities in Go
+or non-strict-concurrency Swift code entirely matches the low expectations for
+memory-safe languages despite both only defending against the second. As a
+consequence, Carbon has some flexibility while still being a [memory
+safe language] according to our definition:
 
 -   Carbon might choose to _not_ prevent data race bugs that are not
     _themselves_ also temporal safety bugs, even though the data race may lead
@@ -137,9 +162,9 @@ to our definition:
     synchronization directly allows temporal safety bugs, such as use after
     free.
 
-However, preventing these data race bugs remains _highly valuable_ for
-correctness, debugging, and achieving [fearless concurrency]. But it is one aspect
-where Carbon can in theory afford a compromise based on the current security information.
+Despite having this flexibility, preventing data race bugs remains _highly
+valuable_ for correctness, debugging, and achieving [fearless concurrency]. If Carbon
+can, it should work to prevent data races as well.
 
 [fearless concurrency]: https://doc.rust-lang.org/book/ch16-00-concurrency.html
 
@@ -180,10 +205,10 @@ that disables the run-time enforcement, enabling the control of any overhead inc
 [evidence]: https://chandlerc.blog/posts/2024/11/story-time-bounds-checking/
 [performance control]: /docs/project/goals.md#performance-critical-software
 
-The debug build will work to cause bugs and any detectable undefined or erroneous behavior to
-have [fail-stop] behavior and even detailed diagnostics to enable better
-debugging. This mode will at least provide similar bug [detection] capabilities
-to [AddressSanitizer] and [MemorySanitizer].
+The debug build will work to cause bugs and any detectable undefined or
+erroneous behavior to have [fail-stop] behavior and even detailed diagnostics to
+enable better debugging. This mode will at least provide similar bug [detection]
+capabilities to [AddressSanitizer] and [MemorySanitizer].
 
 [fail-stop]: /docs/design/safety/terminology.md#fail-stop
 [detection]: /docs/design/safety/terminology.md#detecting
