@@ -25,6 +25,11 @@ class FileTestLineBase : public Printable<FileTestLineBase> {
   auto file_number() const -> int { return file_number_; }
   auto line_number() const -> int { return line_number_; }
 
+  void set_location(int file_number, int line_number) {
+    file_number_ = file_number;
+    line_number_ = line_number;
+  }
+
  private:
   int file_number_;
   int line_number_;

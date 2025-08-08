@@ -11,9 +11,6 @@
 // TIP:   bazel test //toolchain/testing:file_test --test_arg=--file_tests=toolchain/check/testdata/function/generic/resolve_used.carbon
 // TIP: To dump output, run:
 // TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/check/testdata/function/generic/resolve_used.carbon
-// CHECK:STDERR: min_prelude/parts/int.carbon:10:9: error: integer type width of 0 is not positive [IntWidthNotPositive]
-// CHECK:STDERR:   adapt MakeInt(N);
-// CHECK:STDERR:         ^~~~~~~~~~
 
 // --- fail_todo_call_monomorphization_error.carbon
 
@@ -24,6 +21,9 @@ fn ErrorIfNIsZero(N:! Core.IntLiteral()) {
   // ensuring we produce an error when doing so. Notionally this error is
   // produced as a result of instantiating the `Core.Int` template, although
   // that's not how we currently model `Core.Int`.
+  // CHECK:STDERR: min_prelude/parts/int.carbon:10:9: error: integer type width of 0 is not positive [IntWidthNotPositive]
+  // CHECK:STDERR:   adapt MakeInt(N);
+  // CHECK:STDERR:         ^~~~~~~~~~
   // CHECK:STDERR: fail_todo_call_monomorphization_error.carbon:[[@LINE+3]]:10: note: in `i0` used here [ResolvingSpecificHere]
   // CHECK:STDERR:   var v: Core.Int(N);
   // CHECK:STDERR:          ^~~~~~~~~~~
@@ -121,17 +121,17 @@ fn CallNegative() {
 // CHECK:STDOUT:   %N.loc4_19.1: Core.IntLiteral = bind_symbolic_name N, 0 [symbolic = %N.loc4_19.1 (constants.%N)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
-// CHECK:STDOUT:   %Int.loc12_20.2: type = class_type @Int, @Int(%N.loc4_19.1) [symbolic = %Int.loc12_20.2 (constants.%Int.49d0e6.1)]
-// CHECK:STDOUT:   %require_complete.loc12_20: <witness> = require_complete_type %Int.loc12_20.2 [symbolic = %require_complete.loc12_20 (constants.%require_complete.b4f426.1)]
-// CHECK:STDOUT:   %pattern_type: type = pattern_type %Int.loc12_20.2 [symbolic = %pattern_type (constants.%pattern_type.8963eb.1)]
+// CHECK:STDOUT:   %Int.loc15_20.2: type = class_type @Int, @Int(%N.loc4_19.1) [symbolic = %Int.loc15_20.2 (constants.%Int.49d0e6.1)]
+// CHECK:STDOUT:   %require_complete.loc15_20: <witness> = require_complete_type %Int.loc15_20.2 [symbolic = %require_complete.loc15_20 (constants.%require_complete.b4f426.1)]
+// CHECK:STDOUT:   %pattern_type: type = pattern_type %Int.loc15_20.2 [symbolic = %pattern_type (constants.%pattern_type.8963eb.1)]
 // CHECK:STDOUT:   %Destroy.impl_witness: <witness> = impl_witness imports.%Destroy.impl_witness_table.72b, @Int.as.Destroy.impl(%N.loc4_19.1) [symbolic = %Destroy.impl_witness (constants.%Destroy.impl_witness.543)]
-// CHECK:STDOUT:   %Destroy.facet: %Destroy.type = facet_value %Int.loc12_20.2, (%Destroy.impl_witness) [symbolic = %Destroy.facet (constants.%Destroy.facet.abb)]
-// CHECK:STDOUT:   %.loc12_3: type = fn_type_with_self_type constants.%Destroy.Op.type, %Destroy.facet [symbolic = %.loc12_3 (constants.%.94a)]
+// CHECK:STDOUT:   %Destroy.facet: %Destroy.type = facet_value %Int.loc15_20.2, (%Destroy.impl_witness) [symbolic = %Destroy.facet (constants.%Destroy.facet.abb)]
+// CHECK:STDOUT:   %.loc15_3: type = fn_type_with_self_type constants.%Destroy.Op.type, %Destroy.facet [symbolic = %.loc15_3 (constants.%.94a)]
 // CHECK:STDOUT:   %Int.as.Destroy.impl.Op.type: type = fn_type @Int.as.Destroy.impl.Op, @Int.as.Destroy.impl(%N.loc4_19.1) [symbolic = %Int.as.Destroy.impl.Op.type (constants.%Int.as.Destroy.impl.Op.type.733)]
 // CHECK:STDOUT:   %Int.as.Destroy.impl.Op: @ErrorIfNIsZero.%Int.as.Destroy.impl.Op.type (%Int.as.Destroy.impl.Op.type.733) = struct_value () [symbolic = %Int.as.Destroy.impl.Op (constants.%Int.as.Destroy.impl.Op.011)]
 // CHECK:STDOUT:   %Int.as.Destroy.impl.Op.specific_fn: <specific function> = specific_function %Int.as.Destroy.impl.Op, @Int.as.Destroy.impl.Op(%N.loc4_19.1) [symbolic = %Int.as.Destroy.impl.Op.specific_fn (constants.%Int.as.Destroy.impl.Op.specific_fn.1f5)]
-// CHECK:STDOUT:   %ptr: type = ptr_type %Int.loc12_20.2 [symbolic = %ptr (constants.%ptr.784)]
-// CHECK:STDOUT:   %require_complete.loc12_3: <witness> = require_complete_type %ptr [symbolic = %require_complete.loc12_3 (constants.%require_complete.0f5)]
+// CHECK:STDOUT:   %ptr: type = ptr_type %Int.loc15_20.2 [symbolic = %ptr (constants.%ptr.784)]
+// CHECK:STDOUT:   %require_complete.loc15_3: <witness> = require_complete_type %ptr [symbolic = %require_complete.loc15_3 (constants.%require_complete.0f5)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   fn() {
 // CHECK:STDOUT:   !entry:
@@ -139,20 +139,20 @@ fn CallNegative() {
 // CHECK:STDOUT:       %v.patt: @ErrorIfNIsZero.%pattern_type (%pattern_type.8963eb.1) = binding_pattern v [concrete]
 // CHECK:STDOUT:       %v.var_patt: @ErrorIfNIsZero.%pattern_type (%pattern_type.8963eb.1) = var_pattern %v.patt [concrete]
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %v.var: ref @ErrorIfNIsZero.%Int.loc12_20.2 (%Int.49d0e6.1) = var %v.var_patt
-// CHECK:STDOUT:     %.loc12_20: type = splice_block %Int.loc12_20.1 [symbolic = %Int.loc12_20.2 (constants.%Int.49d0e6.1)] {
-// CHECK:STDOUT:       %Core.ref.loc12: <namespace> = name_ref Core, imports.%Core [concrete = imports.%Core]
+// CHECK:STDOUT:     %v.var: ref @ErrorIfNIsZero.%Int.loc15_20.2 (%Int.49d0e6.1) = var %v.var_patt
+// CHECK:STDOUT:     %.loc15_20: type = splice_block %Int.loc15_20.1 [symbolic = %Int.loc15_20.2 (constants.%Int.49d0e6.1)] {
+// CHECK:STDOUT:       %Core.ref.loc15: <namespace> = name_ref Core, imports.%Core [concrete = imports.%Core]
 // CHECK:STDOUT:       %Int.ref: %Int.type = name_ref Int, imports.%Core.Int [concrete = constants.%Int.generic]
 // CHECK:STDOUT:       %N.ref: Core.IntLiteral = name_ref N, %N.loc4_19.2 [symbolic = %N.loc4_19.1 (constants.%N)]
-// CHECK:STDOUT:       %Int.loc12_20.1: type = class_type @Int, @Int(constants.%N) [symbolic = %Int.loc12_20.2 (constants.%Int.49d0e6.1)]
+// CHECK:STDOUT:       %Int.loc15_20.1: type = class_type @Int, @Int(constants.%N) [symbolic = %Int.loc15_20.2 (constants.%Int.49d0e6.1)]
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %v: ref @ErrorIfNIsZero.%Int.loc12_20.2 (%Int.49d0e6.1) = bind_name v, %v.var
-// CHECK:STDOUT:     %impl.elem0: @ErrorIfNIsZero.%.loc12_3 (%.94a) = impl_witness_access constants.%Destroy.impl_witness.543, element0 [symbolic = %Int.as.Destroy.impl.Op (constants.%Int.as.Destroy.impl.Op.011)]
-// CHECK:STDOUT:     %bound_method.loc12_3.1: <bound method> = bound_method %v.var, %impl.elem0
+// CHECK:STDOUT:     %v: ref @ErrorIfNIsZero.%Int.loc15_20.2 (%Int.49d0e6.1) = bind_name v, %v.var
+// CHECK:STDOUT:     %impl.elem0: @ErrorIfNIsZero.%.loc15_3 (%.94a) = impl_witness_access constants.%Destroy.impl_witness.543, element0 [symbolic = %Int.as.Destroy.impl.Op (constants.%Int.as.Destroy.impl.Op.011)]
+// CHECK:STDOUT:     %bound_method.loc15_3.1: <bound method> = bound_method %v.var, %impl.elem0
 // CHECK:STDOUT:     %specific_fn: <specific function> = specific_function %impl.elem0, @Int.as.Destroy.impl.Op(constants.%N) [symbolic = %Int.as.Destroy.impl.Op.specific_fn (constants.%Int.as.Destroy.impl.Op.specific_fn.1f5)]
-// CHECK:STDOUT:     %bound_method.loc12_3.2: <bound method> = bound_method %v.var, %specific_fn
+// CHECK:STDOUT:     %bound_method.loc15_3.2: <bound method> = bound_method %v.var, %specific_fn
 // CHECK:STDOUT:     %addr: @ErrorIfNIsZero.%ptr (%ptr.784) = addr_of %v.var
-// CHECK:STDOUT:     %Int.as.Destroy.impl.Op.call: init %empty_tuple.type = call %bound_method.loc12_3.2(%addr)
+// CHECK:STDOUT:     %Int.as.Destroy.impl.Op.call: init %empty_tuple.type = call %bound_method.loc15_3.2(%addr)
 // CHECK:STDOUT:     return
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
@@ -174,16 +174,16 @@ fn CallNegative() {
 // CHECK:STDOUT:   %N.loc4_19.1 => constants.%int_0
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
-// CHECK:STDOUT:   %Int.loc12_20.2 => constants.%i0
-// CHECK:STDOUT:   %require_complete.loc12_20 => constants.%complete_type.d94
+// CHECK:STDOUT:   %Int.loc15_20.2 => constants.%i0
+// CHECK:STDOUT:   %require_complete.loc15_20 => constants.%complete_type.d94
 // CHECK:STDOUT:   %pattern_type => constants.%pattern_type.47b
 // CHECK:STDOUT:   %Destroy.impl_witness => constants.%Destroy.impl_witness.951
 // CHECK:STDOUT:   %Destroy.facet => constants.%Destroy.facet.4e0
-// CHECK:STDOUT:   %.loc12_3 => constants.%.53d
+// CHECK:STDOUT:   %.loc15_3 => constants.%.53d
 // CHECK:STDOUT:   %Int.as.Destroy.impl.Op.type => constants.%Int.as.Destroy.impl.Op.type.be2
 // CHECK:STDOUT:   %Int.as.Destroy.impl.Op => constants.%Int.as.Destroy.impl.Op.a22
 // CHECK:STDOUT:   %Int.as.Destroy.impl.Op.specific_fn => constants.%Int.as.Destroy.impl.Op.specific_fn.f1a
 // CHECK:STDOUT:   %ptr => constants.%ptr.3f1
-// CHECK:STDOUT:   %require_complete.loc12_3 => constants.%complete_type.588
+// CHECK:STDOUT:   %require_complete.loc15_3 => constants.%complete_type.588
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

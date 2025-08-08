@@ -18,6 +18,7 @@
 #include "llvm/ADT/StringRef.h"
 #include "llvm/Support/FormatVariadic.h"
 #include "llvm/Support/VirtualFileSystem.h"
+#include "testing/file_test/autoupdate.h"
 #include "testing/file_test/file_test_base.h"
 #include "toolchain/driver/driver.h"
 
@@ -102,6 +103,10 @@ class ToolchainFileTest : public FileTestBase {
   // Generally uses the parent implementation, with special handling for lex and
   // driver.
   auto DoExtraCheckReplacements(std::string& check_line) const -> void override;
+
+  // Do some final tweaks to check line locations.
+  auto FinalizeCheckLines(CheckLineArray& check_lines, bool is_stderr) const
+      -> void override;
 
   // Most tests can be run in parallel, but clangd has a global for its logging
   // system so we need language-server tests to be run in serial.
@@ -317,6 +322,26 @@ auto ToolchainFileTest::DoExtraCheckReplacements(std::string& check_line) const
     }
   } else {
     FileTestBase::DoExtraCheckReplacements(check_line);
+  }
+}
+
+auto ToolchainFileTest::FinalizeCheckLines(CheckLineArray& check_lines,
+                                           bool is_stderr) const -> void {
+  if (is_stderr) {
+    static const RE2 is_new_diagnostic_re(R"(.*:\d*:\d*: (error|warning): )");
+    // If a diagnostic isn't attached to a line, try to position it with its
+    // first note.
+    FileTestAutoupdater::CheckLine* diagnostic_without_loc = nullptr;
+    for (auto& check_line : check_lines) {
+      bool has_loc = check_line.line_number() != -1;
+      if (RE2::PartialMatch(check_line.line(), is_new_diagnostic_re)) {
+        diagnostic_without_loc = has_loc ? nullptr : &check_line;
+      } else if (has_loc && diagnostic_without_loc) {
+        diagnostic_without_loc->set_location(check_line.file_number(),
+                                             check_line.line_number());
+        diagnostic_without_loc = nullptr;
+      }
+    }
   }
 }
 

@@ -150,7 +150,7 @@ auto FileTestAutoupdater::GetFileAndLineNumber(
 }
 
 auto FileTestAutoupdater::BuildCheckLines(llvm::StringRef output,
-                                          const char* label) -> CheckLines {
+                                          bool is_stderr) -> CheckLines {
   if (output.empty()) {
     return CheckLines({});
   }
@@ -166,16 +166,19 @@ auto FileTestAutoupdater::BuildCheckLines(llvm::StringRef output,
     lines.pop_back();
   }
 
+  auto label =
+      is_stderr ? llvm::StringLiteral("STDERR") : llvm::StringLiteral("STDOUT");
+
   // The default file number for when no specific file is found.
   int default_file_number = 0;
 
-  llvm::SmallVector<CheckLine> check_lines;
+  CheckLineArray check_lines;
   for (const auto& line : lines) {
     // This code is relatively hot in our testing, and because when testing it
     // isn't run with an optimizer we benefit from making it use simple
     // constructs. For this reason, we avoid `llvm::formatv` and similar tools.
     std::string check_line;
-    check_line.reserve(line.size() + strlen(label) + strlen("// CHECK:: "));
+    check_line.reserve(line.size() + label.size() + strlen("// CHECK:: "));
     check_line.append("// CHECK:");
     check_line.append(label);
     check_line.append(":");
@@ -219,6 +222,7 @@ auto FileTestAutoupdater::BuildCheckLines(llvm::StringRef output,
                                               default_file_number, check_line);
     check_lines.push_back(CheckLine(file_and_line, check_line));
   }
+  finalize_check_lines_(check_lines, is_stderr);
   return CheckLines(check_lines);
 }
 
