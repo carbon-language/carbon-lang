@@ -2009,7 +2009,8 @@ static auto TryResolveTypedInst(ImportRefResolver& resolver,
     // can carry attached constants necessary for applying specifics to these
     // constants when they are used.
     auto local_attached_constant_id =
-        resolver.local_constant_values().Get(local_vtable_entry_inst_id);
+        resolver.local_constant_values().GetAttached(
+            local_vtable_entry_inst_id);
     if (local_attached_constant_id.is_symbolic()) {
       local_vtable_entry_inst_id = AddLoadedImportRef(
           resolver,
