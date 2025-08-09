@@ -322,7 +322,7 @@ auto DirRef::Rmtree(const std::filesystem::path& path)
 
   dir_entries.push_back(path);
   for (;;) {
-    // When we bottom out, we're removing the inital tree path and doing so
+    // When we bottom out, we're removing the initial tree path and doing so
     // relative to `this` directory.
     DirRef current = dir_stack.empty() ? *this : dir_stack.back().dir;
     ssize_t dir_entry_start =

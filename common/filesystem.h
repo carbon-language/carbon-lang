@@ -347,8 +347,9 @@ class Internal::FileRefBase {
   // provide a single, non-templated implementation.
   auto Close() && -> ErrorOr<Success, FdError>;
 
-  // Factored out code to destroy an open read-only file. This calls `Close` above
-  // but ignores any errors as there is no risk of data loss for a read-only file.
+  // Factored out code to destroy an open read-only file. This calls `Close`
+  // above but ignores any errors as there is no risk of data loss for a
+  // read-only file.
   //
   // Note: this is a private API that should not be made public, and should only
   // be used by the implementation of subclass destructors. It should also only
