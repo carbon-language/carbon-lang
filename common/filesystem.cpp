@@ -217,13 +217,21 @@ auto DirRef::WriteFileFromString(const std::filesystem::path& path,
                                  CreationOptions creation_options)
     -> ErrorOr<Success, PathError> {
   CARBON_ASSIGN_OR_RETURN(WriteFile f, OpenWriteOnly(path, creation_options));
-  auto result = f.WriteFromString(content);
-  if (result.ok()) {
-    return Success();
+  auto write_result = f.WriteFromString(content);
+  if (!write_result.ok()) {
+    return PathError(
+        write_result.error().unix_errnum(),
+        "Write error in Dir::WriteFileFromString on '{0}' relative to '{1}'",
+        path, dfd_);
   }
-  return PathError(result.error().unix_errnum(),
-                   "Dir::WriteFileFromString on '{0}' relative to '{1}'", path,
-                   dfd_);
+  auto close_result = std::move(f).Close();
+  if (!close_result.ok()) {
+    return PathError(
+        close_result.error().unix_errnum(),
+        "Close error in Dir::WriteFileFromString on '{0}' relative to '{1}'",
+        path, dfd_);
+  }
+  return Success();
 }
 
 auto DirRef::CreateDirectories(const std::filesystem::path& path,
@@ -309,35 +317,46 @@ auto DirRef::Rmtree(const std::filesystem::path& path)
   };
   llvm::SmallVector<DirAndIterator> dir_stack;
 
-  llvm::SmallVector<std::filesystem::path, 8> dir_entries;
-  llvm::SmallVector<std::filesystem::path> tmp_entries;
+  llvm::SmallVector<std::filesystem::path> dir_entries;
+  llvm::SmallVector<std::filesystem::path> unknown_entries;
 
   dir_entries.push_back(path);
   for (;;) {
+    // When we bottom out, we're removing the inital tree path and doing so
+    // relative to `this` directory.
     DirRef current = dir_stack.empty() ? *this : dir_stack.back().dir;
     ssize_t dir_entry_start =
         dir_stack.empty() ? 0 : dir_stack.back().dir_entry_start;
 
+    // If we've finished all the child directories of the current entry in the
+    // stack, pop it off and continue.
     if (dir_entry_start == static_cast<ssize_t>(dir_entries.size())) {
       dir_stack.pop_back();
       continue;
     }
     CARBON_CHECK(dir_entry_start < static_cast<ssize_t>(dir_entries.size()));
 
+    // Take the last entry under the current directory and try removing it.
     const std::filesystem::path& entry_path = dir_entries.back();
     auto rmdir_result = current.Rmdir(entry_path);
     if (rmdir_result.ok() || rmdir_result.error().no_entity()) {
+      // Removed here or elsewhere already, so pop the entry.
       dir_entries.pop_back();
       if (dir_entries.empty()) {
+        // The last entry is the input path with an empty stack, so we've
+        // finished at this point.
         CARBON_CHECK(dir_stack.empty());
-        break;
+        return Success();
       }
       continue;
     }
+    // If we get any error other than not-empty, just return that.
     if (!rmdir_result.error().not_empty()) {
       return std::move(rmdir_result).error();
     }
 
+    // Recurse into the subdirectory since it isn't empty, opening it, getting a
+    // reader, and pushing it onto our stack.
     CARBON_ASSIGN_OR_RETURN(Dir subdir, current.OpenDir(entry_path));
     auto read_result = std::move(subdir).TakeAndRead();
     if (!read_result.ok()) {
@@ -349,6 +368,13 @@ auto DirRef::Rmtree(const std::filesystem::path& path)
     dir_stack.push_back(
         {*std::move(read_result), static_cast<ssize_t>(dir_entries.size())});
 
+    // Now read the directory entries. It would be nice to be able to directly
+    // remove the files and empty directories as we find them when reading, and
+    // the POSIX spec appears to require that to work, but testing shows at
+    // least some Linux environments don't work reliably in this case and will
+    // fail to visit some entries entirely. As a consequence, we walk the entire
+    // directory and collect the entries into data structures before beginning
+    // to remove them.
     DirRef::Reader& subdir_reader = dir_stack.back().dir;
     for (const auto& entry : subdir_reader) {
       llvm::StringRef name = entry.name();
@@ -358,12 +384,14 @@ auto DirRef::Rmtree(const std::filesystem::path& path)
       if (entry.is_known_dir()) {
         dir_entries.push_back(name.str());
       } else {
-        tmp_entries.push_back(name.str());
+        unknown_entries.push_back(name.str());
       }
     }
 
-    while (!tmp_entries.empty()) {
-      std::filesystem::path name = tmp_entries.pop_back_val();
+    // We can immediately try to unlink all the unknown entries, and use the
+    // error to switch any to directories if the type above wasn't known.
+    while (!unknown_entries.empty()) {
+      std::filesystem::path name = unknown_entries.pop_back_val();
       auto unlink_result = subdir_reader.Unlink(name);
       if (unlink_result.ok() || unlink_result.error().no_entity()) {
         continue;
@@ -373,10 +401,6 @@ auto DirRef::Rmtree(const std::filesystem::path& path)
       dir_entries.push_back(std::move(name));
     }
   }
-
-  CARBON_CHECK(dir_entries.empty(), "Found excess entries, last one: {0}",
-               dir_entries.back());
-  return Success();
 }
 
 auto DirRef::ReadlinkSlow(const std::filesystem::path& path)

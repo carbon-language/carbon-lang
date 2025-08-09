@@ -103,6 +103,7 @@ TEST_F(FilesystemTest, BasicWriteAndRead) {
     ASSERT_THAT(f, IsSuccess(_));
     auto write_result = f->WriteFromString(content_str);
     EXPECT_THAT(write_result, IsSuccess(_));
+    (*std::move(f)).Close().Check();
   }
 
   {
@@ -151,6 +152,10 @@ TEST_F(FilesystemTest, CreateAndRemoveDirecotries) {
     ASSERT_THAT(f3, IsSuccess(_));
     auto f4 = d7->OpenWriteOnly("file4", CreateNew);
     ASSERT_THAT(f4, IsSuccess(_));
+    (*std::move(f1)).Close().Check();
+    (*std::move(f2)).Close().Check();
+    (*std::move(f3)).Close().Check();
+    (*std::move(f4)).Close().Check();
   }
 
   auto rm_result = Cwd().Rmtree(path() / "a");
@@ -228,6 +233,7 @@ TEST_F(FilesystemTest, StatAndAccess) {
   EXPECT_FALSE(file_stat_result->is_symlink());
   EXPECT_THAT(file_stat_result->size(), Eq(content_str.size()));
   EXPECT_THAT(file_stat_result->permissions(), Eq(permissions));
+  (*std::move(f)).Close().Check();
 }
 
 TEST_F(FilesystemTest, Symlinks) {
@@ -318,6 +324,7 @@ TEST_F(FilesystemTest, Chdir) {
   readlink_result = Cwd().Readlink("test");
   ASSERT_FALSE(readlink_result.ok());
   EXPECT_TRUE(readlink_result.error().no_entity());
+  (*std::move(f)).Close().Check();
 }
 
 }  // namespace

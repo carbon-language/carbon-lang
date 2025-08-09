@@ -347,15 +347,25 @@ class Internal::FileRefBase {
   // provide a single, non-templated implementation.
   auto Close() && -> ErrorOr<Success, FdError>;
 
-  // Factored out code to destroy an open file. This calls `Close` above, checks
-  // that it did not produce an error, and resets the reference to an invalid
-  // state similar to the default constructor.
+  // Factored out code to destroy an open read-only file. This calls `Close` above
+  // but ignores any errors as there is no risk of data loss for a read-only file.
   //
   // Note: this is a private API that should not be made public, and should only
   // be used by the implementation of subclass destructors. It should also only
   // be called for subclasses with *ownership* of the file reference, and is
   // provided here as a single non-template implementation.
-  auto Destroy() -> void;
+  auto ReadOnlyDestroy() -> void;
+
+  // Factored out code to destroy an open writable file. This _requires_ the
+  // file to have already been closed with an explicit `Close` call, where it
+  // can report any errors. Without that, destroying a writable file can easily
+  // result in unnoticed data loss.
+  //
+  // Note: this is a private API that should not be made public, and should only
+  // be used by the implementation of subclass destructors. It should also only
+  // be called for subclasses with *ownership* of the file reference, and is
+  // provided here as a single non-template implementation.
+  auto WriteableDestroy() -> void;
 
   // State representing a potentially open file.
   //
@@ -416,6 +426,14 @@ class FileRef : public Internal::FileRefBase {
 
   // Other constructors from the base are also available, but remain protected.
   using FileRefBase::FileRefBase;
+
+  // Destroy the file based on whether it is writable or readonly.
+  //
+  // Note: this is a private API that should not be made public, and should only
+  // be used by the implementation of subclass destructors. It should also only
+  // be called for subclasses with *ownership* of the file reference, and is
+  // provided here as a single non-template implementation.
+  auto Destroy() -> void;
 };
 
 // Convenience type defs for the three access combinations.
@@ -1184,13 +1202,21 @@ inline auto Internal::FileRefBase::Close() && -> ErrorOr<Success, FdError> {
   return FdError(errno, "File::Close on '{0}'", fd);
 }
 
-inline auto Internal::FileRefBase::Destroy() -> void {
+inline auto Internal::FileRefBase::ReadOnlyDestroy() -> void {
   if (fd_ >= 0) {
     auto result = std::move(*this).Close();
-    // Debug-only error check. For a non-debug build, we can just leak the
-    // file descriptor.
-    CARBON_DCHECK(result.ok(), "{0}", result.error());
+    // Intentionally drop errors, as there is no interesting error here. There
+    // is no risk of data loss, and the least bad thing we can do is to just
+    // leak the file descriptor.
+    static_cast<void>(result);
   }
+}
+
+inline auto Internal::FileRefBase::WriteableDestroy() -> void {
+  CARBON_CHECK(
+      fd_ == -1,
+      "Cannot destroy an open writable file, they _must_ be destroyed by "
+      "calling `Close` and handling any errors to avoid data loss.");
 }
 
 template <OpenAccess A>
@@ -1222,6 +1248,15 @@ auto FileRef<A>::WriteFromString(llvm::StringRef str)
   requires Writeable
 {
   return FileRefBase::WriteFromString(str);
+}
+
+template <OpenAccess A>
+auto FileRef<A>::Destroy() -> void {
+  if constexpr (Writeable) {
+    WriteableDestroy();
+  } else {
+    ReadOnlyDestroy();
+  }
 }
 
 inline auto DirRef::Read() & -> ErrorOr<Reader, FdError> {
