@@ -40,7 +40,7 @@ fn Mismatch() -> i32 {
 // CHECK:STDOUT:   %Float.generic: %Float.type = struct_value () [concrete]
 // CHECK:STDOUT:   %f64.d77: type = class_type @Float, @Float(%int_64) [concrete]
 // CHECK:STDOUT:   %pattern_type.0ae: type = pattern_type %f64.d77 [concrete]
-// CHECK:STDOUT:   %float: Core.FloatLiteral = float_value 0 [concrete]
+// CHECK:STDOUT:   %float.be6: Core.FloatLiteral = float_value 0 [concrete]
 // CHECK:STDOUT:   %ImplicitAs.type.cc7: type = generic_interface_type @ImplicitAs [concrete]
 // CHECK:STDOUT:   %ImplicitAs.generic: %ImplicitAs.type.cc7 = struct_value () [concrete]
 // CHECK:STDOUT:   %ImplicitAs.type.6ec: type = facet_type <@ImplicitAs, @ImplicitAs(%f64.d77)> [concrete]
@@ -54,9 +54,10 @@ fn Mismatch() -> i32 {
 // CHECK:STDOUT:   %Core.FloatLiteral.as.ImplicitAs.impl.Convert.a03: %Core.FloatLiteral.as.ImplicitAs.impl.Convert.type.baf = struct_value () [concrete]
 // CHECK:STDOUT:   %ImplicitAs.facet: %ImplicitAs.type.6ec = facet_value Core.FloatLiteral, (%ImplicitAs.impl_witness.857) [concrete]
 // CHECK:STDOUT:   %.678: type = fn_type_with_self_type %ImplicitAs.Convert.type.726, %ImplicitAs.facet [concrete]
-// CHECK:STDOUT:   %Core.FloatLiteral.as.ImplicitAs.impl.Convert.bound: <bound method> = bound_method %float, %Core.FloatLiteral.as.ImplicitAs.impl.Convert.a03 [concrete]
+// CHECK:STDOUT:   %Core.FloatLiteral.as.ImplicitAs.impl.Convert.bound: <bound method> = bound_method %float.be6, %Core.FloatLiteral.as.ImplicitAs.impl.Convert.a03 [concrete]
 // CHECK:STDOUT:   %Core.FloatLiteral.as.ImplicitAs.impl.Convert.specific_fn: <specific function> = specific_function %Core.FloatLiteral.as.ImplicitAs.impl.Convert.a03, @Core.FloatLiteral.as.ImplicitAs.impl.Convert(%int_64) [concrete]
-// CHECK:STDOUT:   %bound_method: <bound method> = bound_method %float, %Core.FloatLiteral.as.ImplicitAs.impl.Convert.specific_fn [concrete]
+// CHECK:STDOUT:   %bound_method: <bound method> = bound_method %float.be6, %Core.FloatLiteral.as.ImplicitAs.impl.Convert.specific_fn [concrete]
+// CHECK:STDOUT:   %float.0a8: %f64.d77 = float_value 0 [concrete]
 // CHECK:STDOUT:   %T.as.Destroy.impl.Op.type.efe: type = fn_type @T.as.Destroy.impl.Op, @T.as.Destroy.impl(%f64.d77) [concrete]
 // CHECK:STDOUT:   %T.as.Destroy.impl.Op.c51: %T.as.Destroy.impl.Op.type.efe = struct_value () [concrete]
 // CHECK:STDOUT:   %ptr.bcc: type = ptr_type %f64.d77 [concrete]
@@ -104,13 +105,13 @@ fn Mismatch() -> i32 {
 // CHECK:STDOUT:     %v.var_patt: %pattern_type.0ae = var_pattern %v.patt [concrete]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %v.var: ref %f64.d77 = var %v.var_patt
-// CHECK:STDOUT:   %float: Core.FloatLiteral = float_value 0 [concrete = constants.%float]
+// CHECK:STDOUT:   %float: Core.FloatLiteral = float_value 0 [concrete = constants.%float.be6]
 // CHECK:STDOUT:   %impl.elem0: %.678 = impl_witness_access constants.%ImplicitAs.impl_witness.857, element0 [concrete = constants.%Core.FloatLiteral.as.ImplicitAs.impl.Convert.a03]
 // CHECK:STDOUT:   %bound_method.loc23_12.1: <bound method> = bound_method %float, %impl.elem0 [concrete = constants.%Core.FloatLiteral.as.ImplicitAs.impl.Convert.bound]
 // CHECK:STDOUT:   %specific_fn: <specific function> = specific_function %impl.elem0, @Core.FloatLiteral.as.ImplicitAs.impl.Convert(constants.%int_64) [concrete = constants.%Core.FloatLiteral.as.ImplicitAs.impl.Convert.specific_fn]
 // CHECK:STDOUT:   %bound_method.loc23_12.2: <bound method> = bound_method %float, %specific_fn [concrete = constants.%bound_method]
-// CHECK:STDOUT:   %Core.FloatLiteral.as.ImplicitAs.impl.Convert.call: init %f64.d77 = call %bound_method.loc23_12.2(%float) [concrete = constants.%float]
-// CHECK:STDOUT:   %.loc23_12: init %f64.d77 = converted %float, %Core.FloatLiteral.as.ImplicitAs.impl.Convert.call [concrete = constants.%float]
+// CHECK:STDOUT:   %Core.FloatLiteral.as.ImplicitAs.impl.Convert.call: init %f64.d77 = call %bound_method.loc23_12.2(%float) [concrete = constants.%float.0a8]
+// CHECK:STDOUT:   %.loc23_12: init %f64.d77 = converted %float, %Core.FloatLiteral.as.ImplicitAs.impl.Convert.call [concrete = constants.%float.0a8]
 // CHECK:STDOUT:   assign %v.var, %.loc23_12
 // CHECK:STDOUT:   %.loc23_19: type = splice_block %f64 [concrete = constants.%f64.d77] {
 // CHECK:STDOUT:     %int_64: Core.IntLiteral = int_value 64 [concrete = constants.%int_64]

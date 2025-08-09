@@ -13,20 +13,13 @@ namespace Carbon::SemIR {
 // The canonical list of singleton kinds. The order of `TypeType` is
 // significant because other singletons use it as a type.
 static constexpr std::array SingletonInstKinds = {
-    InstKind::TypeType,
-    InstKind::AutoType,
-    InstKind::BoolType,
-    InstKind::BoundMethodType,
-    InstKind::CharLiteralType,
-    InstKind::ErrorInst,
-    InstKind::ImplWitnessTablePlaceholder,
-    InstKind::InstType,
-    InstKind::IntLiteralType,
-    InstKind::LegacyFloatType,
-    InstKind::NamespaceType,
-    InstKind::SpecificFunctionType,
-    InstKind::StringType,
-    InstKind::VtableType,
+    InstKind::TypeType,         InstKind::AutoType,
+    InstKind::BoolType,         InstKind::BoundMethodType,
+    InstKind::CharLiteralType,  InstKind::ErrorInst,
+    InstKind::FloatLiteralType, InstKind::ImplWitnessTablePlaceholder,
+    InstKind::InstType,         InstKind::IntLiteralType,
+    InstKind::NamespaceType,    InstKind::SpecificFunctionType,
+    InstKind::StringType,       InstKind::VtableType,
     InstKind::WitnessType,
 };
 

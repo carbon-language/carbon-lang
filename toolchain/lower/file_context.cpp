@@ -810,11 +810,6 @@ static auto BuildTypeForInst(FileContext& context, SemIR::IntType inst)
       context.sem_ir().ints().Get(width->int_id).getZExtValue());
 }
 
-static auto BuildTypeForInst(FileContext& context,
-                             SemIR::LegacyFloatType /*inst*/) -> llvm::Type* {
-  return llvm::Type::getDoubleTy(context.llvm_context());
-}
-
 static auto BuildTypeForInst(FileContext& context, SemIR::PointerType /*inst*/)
     -> llvm::Type* {
   return llvm::PointerType::get(context.llvm_context(), /*AddressSpace=*/0);
@@ -872,9 +867,10 @@ static auto BuildTypeForInst(FileContext& context, InstT /*inst*/)
 }
 
 template <typename InstT>
-  requires(InstT::Kind.template IsAnyOf<
-           SemIR::BoundMethodType, SemIR::CharLiteralType,
-           SemIR::IntLiteralType, SemIR::NamespaceType, SemIR::WitnessType>())
+  requires(InstT::Kind
+               .template IsAnyOf<SemIR::BoundMethodType, SemIR::CharLiteralType,
+                                 SemIR::FloatLiteralType, SemIR::IntLiteralType,
+                                 SemIR::NamespaceType, SemIR::WitnessType>())
 static auto BuildTypeForInst(FileContext& context, InstT /*inst*/)
     -> llvm::Type* {
   // Return an empty struct as a placeholder.

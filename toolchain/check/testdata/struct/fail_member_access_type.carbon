@@ -28,7 +28,7 @@ var y: i32 = x.b;
 // CHECK:STDOUT:   %f64.d77: type = class_type @Float, @Float(%int_64) [concrete]
 // CHECK:STDOUT:   %struct_type.a.5e8: type = struct_type {.a: %f64.d77} [concrete]
 // CHECK:STDOUT:   %pattern_type.8ce: type = pattern_type %struct_type.a.5e8 [concrete]
-// CHECK:STDOUT:   %float: Core.FloatLiteral = float_value 4 [concrete]
+// CHECK:STDOUT:   %float.3ab: Core.FloatLiteral = float_value 4 [concrete]
 // CHECK:STDOUT:   %struct_type.a.b4b: type = struct_type {.a: Core.FloatLiteral} [concrete]
 // CHECK:STDOUT:   %ImplicitAs.type.cc7: type = generic_interface_type @ImplicitAs [concrete]
 // CHECK:STDOUT:   %ImplicitAs.generic: %ImplicitAs.type.cc7 = struct_value () [concrete]
@@ -42,10 +42,11 @@ var y: i32 = x.b;
 // CHECK:STDOUT:   %Core.FloatLiteral.as.ImplicitAs.impl.Convert.a03: %Core.FloatLiteral.as.ImplicitAs.impl.Convert.type.baf = struct_value () [concrete]
 // CHECK:STDOUT:   %ImplicitAs.facet: %ImplicitAs.type.6ec = facet_value Core.FloatLiteral, (%ImplicitAs.impl_witness.857) [concrete]
 // CHECK:STDOUT:   %.678: type = fn_type_with_self_type %ImplicitAs.Convert.type.726, %ImplicitAs.facet [concrete]
-// CHECK:STDOUT:   %Core.FloatLiteral.as.ImplicitAs.impl.Convert.bound: <bound method> = bound_method %float, %Core.FloatLiteral.as.ImplicitAs.impl.Convert.a03 [concrete]
+// CHECK:STDOUT:   %Core.FloatLiteral.as.ImplicitAs.impl.Convert.bound: <bound method> = bound_method %float.3ab, %Core.FloatLiteral.as.ImplicitAs.impl.Convert.a03 [concrete]
 // CHECK:STDOUT:   %Core.FloatLiteral.as.ImplicitAs.impl.Convert.specific_fn: <specific function> = specific_function %Core.FloatLiteral.as.ImplicitAs.impl.Convert.a03, @Core.FloatLiteral.as.ImplicitAs.impl.Convert(%int_64) [concrete]
-// CHECK:STDOUT:   %bound_method: <bound method> = bound_method %float, %Core.FloatLiteral.as.ImplicitAs.impl.Convert.specific_fn [concrete]
-// CHECK:STDOUT:   %struct: %struct_type.a.5e8 = struct_value (%float) [concrete]
+// CHECK:STDOUT:   %bound_method: <bound method> = bound_method %float.3ab, %Core.FloatLiteral.as.ImplicitAs.impl.Convert.specific_fn [concrete]
+// CHECK:STDOUT:   %float.d15: %f64.d77 = float_value 4 [concrete]
+// CHECK:STDOUT:   %struct: %struct_type.a.5e8 = struct_value (%float.d15) [concrete]
 // CHECK:STDOUT:   %int_32: Core.IntLiteral = int_value 32 [concrete]
 // CHECK:STDOUT:   %Int.type: type = generic_class_type @Int [concrete]
 // CHECK:STDOUT:   %Int.generic: %Int.type = struct_value () [concrete]
@@ -100,14 +101,14 @@ var y: i32 = x.b;
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %float: Core.FloatLiteral = float_value 4 [concrete = constants.%float]
+// CHECK:STDOUT:   %float: Core.FloatLiteral = float_value 4 [concrete = constants.%float.3ab]
 // CHECK:STDOUT:   %.loc15_29.1: %struct_type.a.b4b = struct_literal (%float)
 // CHECK:STDOUT:   %impl.elem0: %.678 = impl_witness_access constants.%ImplicitAs.impl_witness.857, element0 [concrete = constants.%Core.FloatLiteral.as.ImplicitAs.impl.Convert.a03]
 // CHECK:STDOUT:   %bound_method.loc15_29.1: <bound method> = bound_method %float, %impl.elem0 [concrete = constants.%Core.FloatLiteral.as.ImplicitAs.impl.Convert.bound]
 // CHECK:STDOUT:   %specific_fn: <specific function> = specific_function %impl.elem0, @Core.FloatLiteral.as.ImplicitAs.impl.Convert(constants.%int_64) [concrete = constants.%Core.FloatLiteral.as.ImplicitAs.impl.Convert.specific_fn]
 // CHECK:STDOUT:   %bound_method.loc15_29.2: <bound method> = bound_method %float, %specific_fn [concrete = constants.%bound_method]
-// CHECK:STDOUT:   %Core.FloatLiteral.as.ImplicitAs.impl.Convert.call: init %f64.d77 = call %bound_method.loc15_29.2(%float) [concrete = constants.%float]
-// CHECK:STDOUT:   %.loc15_29.2: init %f64.d77 = converted %float, %Core.FloatLiteral.as.ImplicitAs.impl.Convert.call [concrete = constants.%float]
+// CHECK:STDOUT:   %Core.FloatLiteral.as.ImplicitAs.impl.Convert.call: init %f64.d77 = call %bound_method.loc15_29.2(%float) [concrete = constants.%float.d15]
+// CHECK:STDOUT:   %.loc15_29.2: init %f64.d77 = converted %float, %Core.FloatLiteral.as.ImplicitAs.impl.Convert.call [concrete = constants.%float.d15]
 // CHECK:STDOUT:   %.loc15_29.3: init %struct_type.a.5e8 = struct_init (%.loc15_29.2) to file.%x.var [concrete = constants.%struct]
 // CHECK:STDOUT:   %.loc15_1: init %struct_type.a.5e8 = converted %.loc15_29.1, %.loc15_29.3 [concrete = constants.%struct]
 // CHECK:STDOUT:   assign file.%x.var, %.loc15_1

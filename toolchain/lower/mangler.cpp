@@ -86,8 +86,8 @@ auto Mangler::MangleInverseQualifiedNameScope(llvm::raw_ostream& os,
           case SemIR::AutoType::Kind:
           case SemIR::BoolType::Kind:
           case SemIR::BoundMethodType::Kind:
+          case SemIR::FloatLiteralType::Kind:
           case SemIR::IntLiteralType::Kind:
-          case SemIR::LegacyFloatType::Kind:
           case SemIR::NamespaceType::Kind:
           case SemIR::SpecificFunctionType::Kind:
           case SemIR::StringType::Kind:

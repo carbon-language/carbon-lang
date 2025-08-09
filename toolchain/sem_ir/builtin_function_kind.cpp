@@ -148,8 +148,8 @@ struct AnyFloat {
   static auto Check(const File& sem_ir, ValidateState& state, TypeId type_id)
       -> bool {
     return AnySizedFloat::Check(sem_ir, state, type_id) ||
-           BuiltinType<LegacyFloatType::TypeInstId>::Check(sem_ir, state,
-                                                           type_id);
+           BuiltinType<FloatLiteralType::TypeInstId>::Check(sem_ir, state,
+                                                            type_id);
   }
 };
 

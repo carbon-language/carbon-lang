@@ -49,9 +49,9 @@ class ConstantContext {
     return nullptr;
   }
 
-  // Gets the value to use for an integer literal.
-  auto GetIntLiteralAsValue() const -> llvm::Constant* {
-    return file_context_->GetIntLiteralAsValue();
+  // Gets the value to use for a literal.
+  auto GetLiteralAsValue() const -> llvm::Constant* {
+    return file_context_->GetLiteralAsValue();
   }
 
   // Gets a callable's function. Returns nullptr for a builtin.
@@ -215,8 +215,7 @@ static auto EmitAsConstant(ConstantContext& context, SemIR::BoundMethod inst)
 static auto EmitAsConstant(ConstantContext& context,
                            SemIR::CharLiteralValue /*inst*/)
     -> llvm::Constant* {
-  return llvm::ConstantStruct::get(
-      llvm::StructType::get(context.llvm_context()));
+  return context.GetLiteralAsValue();
 }
 
 static auto EmitAsConstant(ConstantContext& context,
@@ -231,6 +230,16 @@ static auto EmitAsConstant(ConstantContext& context, SemIR::FieldDecl inst)
 
 static auto EmitAsConstant(ConstantContext& context, SemIR::FloatValue inst)
     -> llvm::Constant* {
+  auto* type = context.GetType(inst.type_id);
+
+  // FloatLiteral is represented as an empty struct. All other floating-point
+  // types are represented as LLVM floating-point types.
+  if (!type->isFloatingPointTy()) {
+    auto* literal_value = context.GetLiteralAsValue();
+    CARBON_CHECK(literal_value->getType() == type);
+    return literal_value;
+  }
+
   const llvm::APFloat& value = context.sem_ir().floats().Get(inst.float_id);
   return llvm::ConstantFP::get(context.GetType(inst.type_id), value);
 }
@@ -243,9 +252,9 @@ static auto EmitAsConstant(ConstantContext& context, SemIR::IntValue inst)
   // represented as an LLVM integer type.
   auto* int_type = dyn_cast<llvm::IntegerType>(type);
   if (!int_type) {
-    auto* int_literal_value = context.GetIntLiteralAsValue();
-    CARBON_CHECK(int_literal_value->getType() == type);
-    return int_literal_value;
+    auto* literal_value = context.GetLiteralAsValue();
+    CARBON_CHECK(literal_value->getType() == type);
+    return literal_value;
   }
 
   int bit_width = int_type->getBitWidth();

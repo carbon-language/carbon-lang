@@ -75,9 +75,9 @@ class Context {
     return llvm::ConstantStruct::get(GetTypeType());
   }
 
-  // Returns a lowered value to use for a value of int literal type.
-  auto GetIntLiteralAsValue() -> llvm::Constant* {
-    // TODO: Consider adding a named struct type for integer literals.
+  // Returns a lowered value to use for a value of literal type.
+  auto GetLiteralAsValue() -> llvm::Constant* {
+    // TODO: Consider adding a named struct type for literals.
     return llvm::ConstantStruct::get(llvm::StructType::get(llvm_context()));
   }
 

@@ -1071,6 +1071,22 @@ static auto PerformCheckedIntConvert(Context& context, SemIR::LocId loc_id,
       Phase::Concrete);
 }
 
+// Performs a conversion between floating-point types, diagnosing if the value
+// doesn't fit in the destination type.
+static auto PerformCheckedFloatConvert(Context& context,
+                                       SemIR::LocId /*loc_id*/,
+                                       SemIR::InstId arg_id,
+                                       SemIR::TypeId dest_type_id)
+    -> SemIR::ConstantId {
+  auto arg = context.insts().GetAs<SemIR::FloatValue>(arg_id);
+  // TODO: Perform a conversion if necessary. For now, all FloatValues are
+  // represented as double-precision APFloats, so no conversion is needed.
+  return MakeConstantResult(
+      context,
+      SemIR::FloatValue{.type_id = dest_type_id, .float_id = arg.float_id},
+      Phase::Concrete);
+}
+
 // Issues a diagnostic for a compile-time division by zero.
 static auto DiagnoseDivisionByZero(Context& context, SemIR::LocId loc_id)
     -> void {
@@ -1644,7 +1660,7 @@ static auto MakeConstantForBuiltinCall(EvalContext& eval_context,
     }
 
     case SemIR::BuiltinFunctionKind::FloatLiteralMakeType: {
-      return context.constant_values().Get(SemIR::LegacyFloatType::TypeInstId);
+      return context.constant_values().Get(SemIR::FloatLiteralType::TypeInstId);
     }
 
     case SemIR::BuiltinFunctionKind::IntLiteralMakeType: {
@@ -1751,9 +1767,11 @@ static auto MakeConstantForBuiltinCall(EvalContext& eval_context,
 
     // Floating-point conversions.
     case SemIR::BuiltinFunctionKind::FloatConvertChecked: {
-      // TODO: Perform a conversion if necessary. For now, all FloatValues are
-      // represented as double-precision APFloats, so no conversion is needed.
-      return context.constant_values().Get(arg_ids[0]);
+      if (phase != Phase::Concrete) {
+        return MakeConstantResult(context, call, phase);
+      }
+      return PerformCheckedFloatConvert(context, loc_id, arg_ids[0],
+                                        call.type_id);
     }
 
     // Unary float -> float operations.

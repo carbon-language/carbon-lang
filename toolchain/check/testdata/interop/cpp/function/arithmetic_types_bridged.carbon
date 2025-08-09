@@ -1342,7 +1342,7 @@ fn F() {
 // CHECK:STDOUT:   %ptr.bcc: type = ptr_type %f64.d77 [concrete]
 // CHECK:STDOUT:   %foo__carbon_thunk.type: type = fn_type @foo__carbon_thunk [concrete]
 // CHECK:STDOUT:   %foo__carbon_thunk: %foo__carbon_thunk.type = struct_value () [concrete]
-// CHECK:STDOUT:   %float: Core.FloatLiteral = float_value 0.80000000000000004 [concrete]
+// CHECK:STDOUT:   %float.c15: Core.FloatLiteral = float_value 0.80000000000000004 [concrete]
 // CHECK:STDOUT:   %As.type.6d2: type = facet_type <@As, @As(%f64.d77)> [concrete]
 // CHECK:STDOUT:   %As.Convert.type.8fc: type = fn_type @As.Convert, @As(%f64.d77) [concrete]
 // CHECK:STDOUT:   %To: Core.IntLiteral = bind_symbolic_name To, 0 [symbolic]
@@ -1353,9 +1353,10 @@ fn F() {
 // CHECK:STDOUT:   %Core.FloatLiteral.as.As.impl.Convert.6ae: %Core.FloatLiteral.as.As.impl.Convert.type.12c = struct_value () [concrete]
 // CHECK:STDOUT:   %As.facet: %As.type.6d2 = facet_value Core.FloatLiteral, (%As.impl_witness.a23) [concrete]
 // CHECK:STDOUT:   %.d03: type = fn_type_with_self_type %As.Convert.type.8fc, %As.facet [concrete]
-// CHECK:STDOUT:   %Core.FloatLiteral.as.As.impl.Convert.bound: <bound method> = bound_method %float, %Core.FloatLiteral.as.As.impl.Convert.6ae [concrete]
+// CHECK:STDOUT:   %Core.FloatLiteral.as.As.impl.Convert.bound: <bound method> = bound_method %float.c15, %Core.FloatLiteral.as.As.impl.Convert.6ae [concrete]
 // CHECK:STDOUT:   %Core.FloatLiteral.as.As.impl.Convert.specific_fn: <specific function> = specific_function %Core.FloatLiteral.as.As.impl.Convert.6ae, @Core.FloatLiteral.as.As.impl.Convert(%int_64) [concrete]
-// CHECK:STDOUT:   %bound_method: <bound method> = bound_method %float, %Core.FloatLiteral.as.As.impl.Convert.specific_fn [concrete]
+// CHECK:STDOUT:   %bound_method: <bound method> = bound_method %float.c15, %Core.FloatLiteral.as.As.impl.Convert.specific_fn [concrete]
+// CHECK:STDOUT:   %float.0fc: %f64.d77 = float_value 0.80000000000000004 [concrete]
 // CHECK:STDOUT:   %T.as.Destroy.impl.Op.type.efe: type = fn_type @T.as.Destroy.impl.Op, @T.as.Destroy.impl(%f64.d77) [concrete]
 // CHECK:STDOUT:   %T.as.Destroy.impl.Op.c51: %T.as.Destroy.impl.Op.type.efe = struct_value () [concrete]
 // CHECK:STDOUT: }
@@ -1383,16 +1384,16 @@ fn F() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %Cpp.ref: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
 // CHECK:STDOUT:   %foo.ref: %foo.type = name_ref foo, imports.%foo.decl [concrete = constants.%foo]
-// CHECK:STDOUT:   %float: Core.FloatLiteral = float_value 0.80000000000000004 [concrete = constants.%float]
+// CHECK:STDOUT:   %float: Core.FloatLiteral = float_value 0.80000000000000004 [concrete = constants.%float.c15]
 // CHECK:STDOUT:   %int_64: Core.IntLiteral = int_value 64 [concrete = constants.%int_64]
 // CHECK:STDOUT:   %f64: type = class_type @Float, @Float(constants.%int_64) [concrete = constants.%f64.d77]
 // CHECK:STDOUT:   %impl.elem0: %.d03 = impl_witness_access constants.%As.impl_witness.a23, element0 [concrete = constants.%Core.FloatLiteral.as.As.impl.Convert.6ae]
 // CHECK:STDOUT:   %bound_method.loc8_15.1: <bound method> = bound_method %float, %impl.elem0 [concrete = constants.%Core.FloatLiteral.as.As.impl.Convert.bound]
 // CHECK:STDOUT:   %specific_fn: <specific function> = specific_function %impl.elem0, @Core.FloatLiteral.as.As.impl.Convert(constants.%int_64) [concrete = constants.%Core.FloatLiteral.as.As.impl.Convert.specific_fn]
 // CHECK:STDOUT:   %bound_method.loc8_15.2: <bound method> = bound_method %float, %specific_fn [concrete = constants.%bound_method]
-// CHECK:STDOUT:   %Core.FloatLiteral.as.As.impl.Convert.call: init %f64.d77 = call %bound_method.loc8_15.2(%float) [concrete = constants.%float]
-// CHECK:STDOUT:   %.loc8_15.1: %f64.d77 = value_of_initializer %Core.FloatLiteral.as.As.impl.Convert.call [concrete = constants.%float]
-// CHECK:STDOUT:   %.loc8_15.2: %f64.d77 = converted %float, %.loc8_15.1 [concrete = constants.%float]
+// CHECK:STDOUT:   %Core.FloatLiteral.as.As.impl.Convert.call: init %f64.d77 = call %bound_method.loc8_15.2(%float) [concrete = constants.%float.0fc]
+// CHECK:STDOUT:   %.loc8_15.1: %f64.d77 = value_of_initializer %Core.FloatLiteral.as.As.impl.Convert.call [concrete = constants.%float.0fc]
+// CHECK:STDOUT:   %.loc8_15.2: %f64.d77 = converted %float, %.loc8_15.1 [concrete = constants.%float.0fc]
 // CHECK:STDOUT:   %.loc8_15.3: ref %f64.d77 = temporary_storage
 // CHECK:STDOUT:   %.loc8_15.4: ref %f64.d77 = temporary %.loc8_15.3, %.loc8_15.2
 // CHECK:STDOUT:   %addr.loc8_21: %ptr.bcc = addr_of %.loc8_15.4

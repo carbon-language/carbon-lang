@@ -72,9 +72,9 @@ class FileContext {
     return context().GetTypeAsValue();
   }
 
-  // Returns a lowered value to use for a value of int literal type.
-  auto GetIntLiteralAsValue() -> llvm::Constant* {
-    return context().GetIntLiteralAsValue();
+  // Returns a lowered value to use for a value of literal type.
+  auto GetLiteralAsValue() -> llvm::Constant* {
+    return context().GetLiteralAsValue();
   }
 
   // Returns a value for the given constant. If specified, `use_inst_id` is the

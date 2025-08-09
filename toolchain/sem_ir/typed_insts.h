@@ -691,6 +691,21 @@ struct FieldDecl {
   ElementIndex index;
 };
 
+// The float literal type. This is currently represented as f64.
+// TODO: Replace this with a rational number type, following the design.
+struct FloatLiteralType {
+  static constexpr auto Kind =
+      InstKind::FloatLiteralType.Define<Parse::NoneNodeId>(
+          {.ir_name = "Core.FloatLiteral",
+           .is_type = InstIsType::Always,
+           .constant_kind = InstConstantKind::Always});
+  // This is a singleton instruction. However, it may still evolve into a more
+  // standard type and be removed.
+  static constexpr auto TypeInstId = MakeSingletonTypeInstId<Kind>();
+
+  TypeId type_id;
+};
+
 // A floating point type.
 struct FloatType {
   static constexpr auto Kind = InstKind::FloatType.Define<Parse::NoneNodeId>(
@@ -1083,22 +1098,6 @@ struct IntValue {
 
   TypeId type_id;
   IntId int_id;
-};
-
-// The float literal type. This is currently represented as f64.
-// TODO: Rename this to FloatLiteralType.
-// TODO: Replace this with a rational number type, following the design.
-struct LegacyFloatType {
-  static constexpr auto Kind =
-      InstKind::LegacyFloatType.Define<Parse::NoneNodeId>(
-          {.ir_name = "Core.FloatLiteral",
-           .is_type = InstIsType::Always,
-           .constant_kind = InstConstantKind::Always});
-  // This is a singleton instruction. However, it may still evolve into a more
-  // standard type and be removed.
-  static constexpr auto TypeInstId = MakeSingletonTypeInstId<Kind>();
-
-  TypeId type_id;
 };
 
 // A symbolic instruction that takes the place of an `ImplWitness` when the
