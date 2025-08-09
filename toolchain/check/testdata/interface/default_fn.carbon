@@ -17,7 +17,21 @@ class C {
     // TODO: Use `default` here.
     fn F[self: Self]() {
       // I and F are both complete here, and the impl below is in scope.
+      // CHECK:STDERR: default_fn.carbon:[[@LINE+7]]:14: error: binding pattern has incomplete type `C` in name binding declaration [IncompleteTypeInBindingDecl]
+      // CHECK:STDERR:       var c: C = {};
+      // CHECK:STDERR:              ^
+      // CHECK:STDERR: default_fn.carbon:[[@LINE-8]]:1: note: class is incomplete within its definition [ClassIncompleteWithinDefinition]
+      // CHECK:STDERR: class C {
+      // CHECK:STDERR: ^~~~~~~~~
+      // CHECK:STDERR:
       var c: C = {};
+      // CHECK:STDERR: default_fn.carbon:[[@LINE+7]]:10: error: member access into incomplete facet type `I` [QualifiedExprInIncompleteFacetTypeScope]
+      // CHECK:STDERR:       c.(I.F)();
+      // CHECK:STDERR:          ^~~
+      // CHECK:STDERR: default_fn.carbon:[[@LINE-15]]:3: note: interface is currently being defined [InterfaceIncompleteWithinDefinition]
+      // CHECK:STDERR:   interface I {
+      // CHECK:STDERR:   ^~~~~~~~~~~~~
+      // CHECK:STDERR:
       c.(I.F)();
     }
   }
@@ -36,25 +50,18 @@ class C {
 // CHECK:STDOUT:   %Self.as_type.390: type = facet_access_type %Self.6ef [symbolic]
 // CHECK:STDOUT:   %pattern_type.b2f: type = pattern_type %Self.as_type.390 [symbolic]
 // CHECK:STDOUT:   %I.F.type: type = fn_type @I.F [concrete]
-// CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [concrete]
 // CHECK:STDOUT:   %I.F: %I.F.type = struct_value () [concrete]
 // CHECK:STDOUT:   %I.assoc_type: type = assoc_entity_type @I [concrete]
 // CHECK:STDOUT:   %assoc0.a33: %I.assoc_type = assoc_entity element0, @I.%I.F.decl [concrete]
+// CHECK:STDOUT:   %require_complete: <witness> = require_complete_type %Self.as_type.390 [symbolic]
+// CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [concrete]
+// CHECK:STDOUT:   %Destroy.type: type = facet_type <@Destroy> [concrete]
 // CHECK:STDOUT:   %I.impl_witness: <witness> = impl_witness @C.%I.impl_witness_table [concrete]
 // CHECK:STDOUT:   %pattern_type.c48: type = pattern_type %C [concrete]
 // CHECK:STDOUT:   %C.as.I.impl.F.type: type = fn_type @C.as.I.impl.F [concrete]
 // CHECK:STDOUT:   %C.as.I.impl.F: %C.as.I.impl.F.type = struct_value () [concrete]
 // CHECK:STDOUT:   %I.facet: %I.type = facet_value %C, (%I.impl_witness) [concrete]
-// CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [concrete]
-// CHECK:STDOUT:   %complete_type.357: <witness> = complete_type_witness %empty_struct_type [concrete]
-// CHECK:STDOUT:   %require_complete.8cb: <witness> = require_complete_type %Self.as_type.390 [symbolic]
-// CHECK:STDOUT:   %C.val: %C = struct_value () [concrete]
-// CHECK:STDOUT:   %.e5b: type = fn_type_with_self_type %I.F.type, %I.facet [concrete]
-// CHECK:STDOUT:   %Destroy.type: type = facet_type <@Destroy> [concrete]
-// CHECK:STDOUT:   %T.as.Destroy.impl.Op.type.153: type = fn_type @T.as.Destroy.impl.Op, @T.as.Destroy.impl(%C) [concrete]
-// CHECK:STDOUT:   %T.as.Destroy.impl.Op.5d7: %T.as.Destroy.impl.Op.type.153 = struct_value () [concrete]
-// CHECK:STDOUT:   %ptr.019: type = ptr_type %C [concrete]
-// CHECK:STDOUT:   %T.as.Destroy.impl.Op.specific_fn: <specific function> = specific_function %T.as.Destroy.impl.Op.5d7, @T.as.Destroy.impl.Op(%C) [concrete]
+// CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -123,7 +130,7 @@ class C {
 // CHECK:STDOUT:   %I.impl_witness_table = impl_witness_table (@C.as.I.impl.%C.as.I.impl.F.decl), @C.as.I.impl [concrete]
 // CHECK:STDOUT:   %I.impl_witness: <witness> = impl_witness %I.impl_witness_table [concrete = constants.%I.impl_witness]
 // CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [concrete = constants.%empty_struct_type]
-// CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [concrete = constants.%complete_type.357]
+// CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [concrete = constants.%complete_type]
 // CHECK:STDOUT:   complete_type_witness = %complete_type
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
@@ -138,33 +145,22 @@ class C {
 // CHECK:STDOUT:   %pattern_type: type = pattern_type %Self.as_type.loc18_16.1 [symbolic = %pattern_type (constants.%pattern_type.b2f)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
-// CHECK:STDOUT:   %require_complete: <witness> = require_complete_type %Self.as_type.loc18_16.1 [symbolic = %require_complete (constants.%require_complete.8cb)]
+// CHECK:STDOUT:   %require_complete: <witness> = require_complete_type %Self.as_type.loc18_16.1 [symbolic = %require_complete (constants.%require_complete)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   fn(%self.param: @I.F.%Self.as_type.loc18_16.1 (%Self.as_type.390)) {
 // CHECK:STDOUT:   !entry:
 // CHECK:STDOUT:     name_binding_decl {
-// CHECK:STDOUT:       %c.patt: %pattern_type.c48 = binding_pattern c [concrete]
-// CHECK:STDOUT:       %c.var_patt: %pattern_type.c48 = var_pattern %c.patt [concrete]
+// CHECK:STDOUT:       %c.patt: <error> = binding_pattern c [concrete]
+// CHECK:STDOUT:       %c.var_patt: <error> = var_pattern %c.patt [concrete]
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %c.var: ref %C = var %c.var_patt
-// CHECK:STDOUT:     %.loc20_19.1: %empty_struct_type = struct_literal ()
-// CHECK:STDOUT:     %.loc20_19.2: init %C = class_init (), %c.var [concrete = constants.%C.val]
-// CHECK:STDOUT:     %.loc20_7: init %C = converted %.loc20_19.1, %.loc20_19.2 [concrete = constants.%C.val]
-// CHECK:STDOUT:     assign %c.var, %.loc20_7
+// CHECK:STDOUT:     %c.var: ref <error> = var %c.var_patt [concrete = <error>]
+// CHECK:STDOUT:     %.loc27: %empty_struct_type = struct_literal ()
+// CHECK:STDOUT:     assign %c.var, <error>
 // CHECK:STDOUT:     %C.ref: type = name_ref C, file.%C.decl [concrete = constants.%C]
-// CHECK:STDOUT:     %c: ref %C = bind_name c, %c.var
-// CHECK:STDOUT:     %c.ref: ref %C = name_ref c, %c
+// CHECK:STDOUT:     %c: <error> = bind_name c, <error> [concrete = <error>]
+// CHECK:STDOUT:     %c.ref: <error> = name_ref c, %c [concrete = <error>]
 // CHECK:STDOUT:     %I.ref: type = name_ref I, @C.%I.decl [concrete = constants.%I.type]
-// CHECK:STDOUT:     %F.ref: %I.assoc_type = name_ref F, @I.%assoc0 [concrete = constants.%assoc0.a33]
-// CHECK:STDOUT:     %impl.elem0: %.e5b = impl_witness_access constants.%I.impl_witness, element0 [concrete = constants.%C.as.I.impl.F]
-// CHECK:STDOUT:     %bound_method.loc21: <bound method> = bound_method %c.ref, %impl.elem0
-// CHECK:STDOUT:     %.loc21: %C = bind_value %c.ref
-// CHECK:STDOUT:     %C.as.I.impl.F.call: init %empty_tuple.type = call %bound_method.loc21(%.loc21)
-// CHECK:STDOUT:     %T.as.Destroy.impl.Op.bound: <bound method> = bound_method %c.var, constants.%T.as.Destroy.impl.Op.5d7
-// CHECK:STDOUT:     %T.as.Destroy.impl.Op.specific_fn: <specific function> = specific_function constants.%T.as.Destroy.impl.Op.5d7, @T.as.Destroy.impl.Op(constants.%C) [concrete = constants.%T.as.Destroy.impl.Op.specific_fn]
-// CHECK:STDOUT:     %bound_method.loc20: <bound method> = bound_method %c.var, %T.as.Destroy.impl.Op.specific_fn
-// CHECK:STDOUT:     %addr: %ptr.019 = addr_of %c.var
-// CHECK:STDOUT:     %T.as.Destroy.impl.Op.call: init %empty_tuple.type = call %bound_method.loc20(%addr)
+// CHECK:STDOUT:     %F.ref: <error> = name_ref F, <error> [concrete = <error>]
 // CHECK:STDOUT:     return
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }

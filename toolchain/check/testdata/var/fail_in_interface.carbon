@@ -11,25 +11,21 @@
 // TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/check/testdata/var/fail_in_interface.carbon
 
 interface I {
-  // CHECK:STDERR: fail_in_interface.carbon:[[@LINE+4]]:11: error: found runtime binding pattern in associated constant declaration; expected a `:!` binding [ExpectedSymbolicBindingInAssociatedConstant]
+  // CHECK:STDERR: fail_in_interface.carbon:[[@LINE+8]]:7: error: expected identifier in associated constant declaration [ExpectedAssociatedConstantIdentifier]
   // CHECK:STDERR:   let var a: ();
-  // CHECK:STDERR:           ^~~~~
+  // CHECK:STDERR:       ^~~
+  // CHECK:STDERR:
+  // CHECK:STDERR: fail_in_interface.carbon:[[@LINE+4]]:3: error: semantics TODO: `handle invalid parse trees in `check`` [SemanticsTodo]
+  // CHECK:STDERR:   let var a: ();
+  // CHECK:STDERR:   ^~~~~~~~~~~~~~
   // CHECK:STDERR:
   let var a: ();
 
-  // CHECK:STDERR: fail_in_interface.carbon:[[@LINE+4]]:7: error: found runtime binding pattern in associated constant declaration; expected a `:!` binding [ExpectedSymbolicBindingInAssociatedConstant]
-  // CHECK:STDERR:   var b: ();
-  // CHECK:STDERR:       ^~~~~
-  // CHECK:STDERR:
   var b: ();
 
-  // CHECK:STDERR: fail_in_interface.carbon:[[@LINE+8]]:11: error: semantics TODO: `handle invalid parse trees in `check`` [SemanticsTodo]
+  // CHECK:STDERR: fail_in_interface.carbon:[[@LINE+4]]:7: error: expected identifier in associated constant declaration [ExpectedAssociatedConstantIdentifier]
   // CHECK:STDERR:   let var c:! ();
-  // CHECK:STDERR:           ^~~~~~
-  // CHECK:STDERR:
-  // CHECK:STDERR: fail_in_interface.carbon:[[@LINE+4]]:17: error: `var` pattern cannot declare a compile-time binding [CompileTimeBindingInVarDecl]
-  // CHECK:STDERR:   let var c:! ();
-  // CHECK:STDERR:                 ^
+  // CHECK:STDERR:       ^~~
   // CHECK:STDERR:
   let var c:! ();
 

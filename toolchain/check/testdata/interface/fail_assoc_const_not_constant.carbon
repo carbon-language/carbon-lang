@@ -11,9 +11,13 @@
 // TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/check/testdata/interface/fail_assoc_const_not_constant.carbon
 
 interface I {
-  // CHECK:STDERR: fail_assoc_const_not_constant.carbon:[[@LINE+4]]:7: error: found runtime binding pattern in associated constant declaration; expected a `:!` binding [ExpectedSymbolicBindingInAssociatedConstant]
+  // CHECK:STDERR: fail_assoc_const_not_constant.carbon:[[@LINE+8]]:8: error: expected `:!` in associated constant declaration [ExpectedAssociatedConstantColonExclaim]
   // CHECK:STDERR:   let a: {.b: ()};
-  // CHECK:STDERR:       ^~~~~~~~~~~
+  // CHECK:STDERR:        ^
+  // CHECK:STDERR:
+  // CHECK:STDERR: fail_assoc_const_not_constant.carbon:[[@LINE+4]]:3: error: semantics TODO: `handle invalid parse trees in `check`` [SemanticsTodo]
+  // CHECK:STDERR:   let a: {.b: ()};
+  // CHECK:STDERR:   ^~~~~~~~~~~~~~~~
   // CHECK:STDERR:
   let a: {.b: ()};
 }
