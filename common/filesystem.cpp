@@ -305,118 +305,78 @@ auto DirRef::Rmtree(const std::filesystem::path& path)
     -> ErrorOr<Success, PathError> {
   struct DirAndIterator {
     DirRef::Reader dir;
-    DirRef::Reader::Iterator dir_it;
+    ssize_t dir_entry_start;
   };
   llvm::SmallVector<DirAndIterator> dir_stack;
 
-  auto push_dir = [&](DirRef current_dir,
-                      const std::filesystem::path& entry_path)
-      -> ErrorOr<Success, PathError> {
-    CARBON_ASSIGN_OR_RETURN(Dir subdir, current_dir.OpenDir(entry_path));
+  llvm::SmallVector<std::filesystem::path, 8> dir_entries;
+  llvm::SmallVector<std::filesystem::path> tmp_entries;
 
+  dir_entries.push_back(path);
+  for (;;) {
+    DirRef current = dir_stack.empty() ? *this : dir_stack.back().dir;
+    ssize_t dir_entry_start =
+        dir_stack.empty() ? 0 : dir_stack.back().dir_entry_start;
+
+    if (dir_entry_start == static_cast<ssize_t>(dir_entries.size())) {
+      dir_stack.pop_back();
+      continue;
+    }
+    CARBON_CHECK(dir_entry_start < static_cast<ssize_t>(dir_entries.size()));
+
+    const std::filesystem::path& entry_path = dir_entries.back();
+    auto rmdir_result = current.Rmdir(entry_path);
+    if (rmdir_result.ok() || rmdir_result.error().no_entity()) {
+      dir_entries.pop_back();
+      if (dir_entries.empty()) {
+        CARBON_CHECK(dir_stack.empty());
+        break;
+      }
+      continue;
+    }
+    if (!rmdir_result.error().not_empty()) {
+      return std::move(rmdir_result).error();
+    }
+
+    CARBON_ASSIGN_OR_RETURN(Dir subdir, current.OpenDir(entry_path));
     auto read_result = std::move(subdir).TakeAndRead();
     if (!read_result.ok()) {
       return PathError(
           read_result.error().unix_errnum(),
           "Dir::Read on '{0}' relative to '{1}' during RmdirRecursively",
-          entry_path, current_dir.dfd_);
+          entry_path, current.dfd_);
     }
-    DirRef::Reader::Iterator dir_it = read_result->begin();
-    dir_stack.push_back({*std::move(read_result), dir_it});
-    return Success();
-  };
+    dir_stack.push_back(
+        {*std::move(read_result), static_cast<ssize_t>(dir_entries.size())});
 
-  CARBON_RETURN_IF_ERROR(push_dir(*this, path));
-
-  for (;; ++dir_stack.back().dir_it) {
-    auto& [current, current_it] = dir_stack.back();
-    if (current_it == current.end()) {
-      // See if we skipped over any entries.
-      rewinddir(current.dirp_);
-      current_it = current.begin();
-
-      if (current_it != current.end()) {
-        llvm::StringRef name = current_it->name();
-        if (name == "." || name == "..") {
-          ++current_it;
-        }
-
-        if (current_it != current.end()) {
-          llvm::StringRef name = current_it->name();
-          if (name == "." || name == "..") {
-            ++current_it;
-          }
-        }
-      }
-    }
-    if (current_it == current.end()) {
-      dir_stack.pop_back();
-      if (dir_stack.empty()) {
-        break;
-      }
-      // We know this was a directory, and that it is now empty, so can directly
-      // remove.
-      auto& [parent, parent_it] = dir_stack.back();
-      CARBON_CHECK(parent_it != parent.end());
-      auto rmdir_result = parent.Rmdir(parent_it->name());
-      // If this succeeded or something else removed the directory, keep going.
-      if (rmdir_result.ok() || rmdir_result.error().no_entity()) {
+    DirRef::Reader& subdir_reader = dir_stack.back().dir;
+    for (const auto& entry : subdir_reader) {
+      llvm::StringRef name = entry.name();
+      if (name == "." || name == "..") {
         continue;
       }
-      // HACK for debugging
-      if (rmdir_result.error().not_empty()) {
-        llvm::errs() << "This shouldn't happen: `" << parent_it->name()
-                     << "`\n";
-        Dir d = *parent.OpenDir(parent_it->name());
-        DirRef::Reader r = *std::move(d).TakeAndRead();
-        for (auto entry : r) {
-          llvm::errs() << "  entry: " << entry.name();
-        }
-        CARBON_FATAL("Toast");
+      if (entry.is_known_dir()) {
+        dir_entries.push_back(name.str());
+      } else {
+        tmp_entries.push_back(name.str());
       }
-      // Otherwise, something went fundamentally wrong with removing the
-      // directory, propagate that.
-      return rmdir_result;
     }
 
-    const DirRef::Reader::Entry& entry = *current_it;
-    llvm::StringRef name = entry.name();
-    if (name == "." || name == "..") {
-      continue;
-    }
-    std::filesystem::path name_path = name.str();
-
-    // If we don't know this is a directory form the entry, try unlinking. For
-    // unknown entries, the failure will tell us to fall through to the
-    // directory case if needed without an extra stat.
-    if (!entry.is_known_dir()) {
-      auto unlink_result = current.Unlink(name_path);
+    while (!tmp_entries.empty()) {
+      std::filesystem::path name = tmp_entries.pop_back_val();
+      auto unlink_result = subdir_reader.Unlink(name);
       if (unlink_result.ok() || unlink_result.error().no_entity()) {
         continue;
       } else if (!unlink_result.error().is_dir()) {
         return std::move(unlink_result).error();
       }
+      dir_entries.push_back(std::move(name));
     }
-
-    // This is a directory, so try to speculatively remove it. This will fail
-    // for non-empty directories, but avoids opening, reading, and closing the
-    // directory when already empty.
-    auto rmdir_result = current.Rmdir(name_path);
-    if (rmdir_result.ok() || rmdir_result.error().no_entity()) {
-      // Removed here or by something else.
-      continue;
-    }
-    if (rmdir_result.error().not_empty()) {
-      // Found a non-empty directory, add it to our list and continue.
-      CARBON_RETURN_IF_ERROR(push_dir(current, name_path));
-      continue;
-    }
-
-    // Otherwise, some unknown error, so propagate that.
-    return std::move(rmdir_result).error();
   }
 
-  return Rmdir(path);
+  CARBON_CHECK(dir_entries.empty(), "Found excess entries, last one: {0}",
+               dir_entries.back());
+  return Success();
 }
 
 auto DirRef::ReadlinkSlow(const std::filesystem::path& path)
