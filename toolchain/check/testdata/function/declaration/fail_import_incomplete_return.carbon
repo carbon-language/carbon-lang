@@ -175,7 +175,7 @@ fn CallFAndGIncomplete() {
 // CHECK:STDOUT:   %D.decl.loc37: type = class_decl @D [concrete = constants.%D] {} {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: impl @D.as.Destroy.impl: constants.%D as constants.%Destroy.type {
+// CHECK:STDOUT: impl @D.as.Destroy.impl: @D.%Self.ref as constants.%Destroy.type {
 // CHECK:STDOUT:   %D.as.Destroy.impl.Op.decl: %D.as.Destroy.impl.Op.type = fn_decl @D.as.Destroy.impl.Op [concrete = constants.%D.as.Destroy.impl.Op] {
 // CHECK:STDOUT:     %self.patt: %pattern_type.a94 = binding_pattern self [concrete]
 // CHECK:STDOUT:     %self.param_patt: %pattern_type.a94 = value_param_pattern %self.patt, call_param0 [concrete]
@@ -194,6 +194,7 @@ fn CallFAndGIncomplete() {
 // CHECK:STDOUT: class @C;
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @D {
+// CHECK:STDOUT:   %Self.ref: type = name_ref Self, constants.%D [concrete = constants.%D]
 // CHECK:STDOUT:   impl_decl @D.as.Destroy.impl [concrete] {} {}
 // CHECK:STDOUT:   %Destroy.impl_witness_table = impl_witness_table (@D.as.Destroy.impl.%D.as.Destroy.impl.Op.decl), @D.as.Destroy.impl [concrete]
 // CHECK:STDOUT:   %Destroy.impl_witness: <witness> = impl_witness %Destroy.impl_witness_table [concrete = constants.%Destroy.impl_witness]
@@ -266,7 +267,7 @@ fn CallFAndGIncomplete() {
 // CHECK:STDOUT:   %Main.import_ref.7ba: <witness> = import_ref Main//incomplete_return, loc37_9, loaded [concrete = constants.%Destroy.impl_witness.b6f]
 // CHECK:STDOUT:   %Main.import_ref.8f24d3.2: <witness> = import_ref Main//incomplete_return, loc37_10, loaded [concrete = constants.%complete_type]
 // CHECK:STDOUT:   %Main.import_ref.cabe25.2 = import_ref Main//incomplete_return, inst21 [no loc], unloaded
-// CHECK:STDOUT:   %Main.import_ref.4aa: type = import_ref Main//incomplete_return, inst21 [no loc], loaded [concrete = constants.%D.b3dde2.1]
+// CHECK:STDOUT:   %Main.import_ref.130: type = import_ref Main//incomplete_return, loc37_9, loaded [concrete = constants.%D.b3dde2.1]
 // CHECK:STDOUT:   %Main.import_ref.cb9: type = import_ref Main//incomplete_return, inst68 [no loc], loaded [concrete = constants.%Destroy.type]
 // CHECK:STDOUT:   %Main.import_ref.283: %D.as.Destroy.impl.Op.type = import_ref Main//incomplete_return, loc37_9, loaded [concrete = constants.%D.as.Destroy.impl.Op]
 // CHECK:STDOUT:   %Destroy.impl_witness_table.cd7 = impl_witness_table (%Main.import_ref.283), @D.as.Destroy.impl [concrete]
@@ -289,7 +290,7 @@ fn CallFAndGIncomplete() {
 // CHECK:STDOUT:   %CallFAndGIncomplete.decl: %CallFAndGIncomplete.type = fn_decl @CallFAndGIncomplete [concrete = constants.%CallFAndGIncomplete] {} {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: impl @D.as.Destroy.impl: imports.%Main.import_ref.4aa as imports.%Main.import_ref.cb9 [from "fail_incomplete_return.carbon"] {
+// CHECK:STDOUT: impl @D.as.Destroy.impl: imports.%Main.import_ref.130 as imports.%Main.import_ref.cb9 [from "fail_incomplete_return.carbon"] {
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   witness = imports.%Main.import_ref.7ba
 // CHECK:STDOUT: }

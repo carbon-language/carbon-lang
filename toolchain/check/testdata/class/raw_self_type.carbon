@@ -98,7 +98,7 @@ fn MemberNamedSelf.F(x: Self, y: r#Self) {}
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: impl @Class.as.Destroy.impl: constants.%Class as constants.%Destroy.type {
+// CHECK:STDOUT: impl @Class.as.Destroy.impl: @Class.%Self.ref as constants.%Destroy.type {
 // CHECK:STDOUT:   %Class.as.Destroy.impl.Op.decl: %Class.as.Destroy.impl.Op.type = fn_decl @Class.as.Destroy.impl.Op [concrete = constants.%Class.as.Destroy.impl.Op] {
 // CHECK:STDOUT:     %self.patt: %pattern_type.796 = binding_pattern self [concrete]
 // CHECK:STDOUT:     %self.param_patt: %pattern_type.796 = value_param_pattern %self.patt, call_param0 [concrete]
@@ -114,7 +114,7 @@ fn MemberNamedSelf.F(x: Self, y: r#Self) {}
 // CHECK:STDOUT:   witness = @Class.%Destroy.impl_witness
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: impl @Self.as.Destroy.impl: constants.%Self.362 as constants.%Destroy.type {
+// CHECK:STDOUT: impl @Self.as.Destroy.impl: @Self.%Self.ref as constants.%Destroy.type {
 // CHECK:STDOUT:   %Self.as.Destroy.impl.Op.decl: %Self.as.Destroy.impl.Op.type = fn_decl @Self.as.Destroy.impl.Op [concrete = constants.%Self.as.Destroy.impl.Op] {
 // CHECK:STDOUT:     %self.patt: %pattern_type.364 = binding_pattern self [concrete]
 // CHECK:STDOUT:     %self.param_patt: %pattern_type.364 = value_param_pattern %self.patt, call_param0 [concrete]
@@ -130,7 +130,7 @@ fn MemberNamedSelf.F(x: Self, y: r#Self) {}
 // CHECK:STDOUT:   witness = @Self.%Destroy.impl_witness
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: impl @MemberNamedSelf.as.Destroy.impl: constants.%MemberNamedSelf as constants.%Destroy.type {
+// CHECK:STDOUT: impl @MemberNamedSelf.as.Destroy.impl: @MemberNamedSelf.%Self.ref as constants.%Destroy.type {
 // CHECK:STDOUT:   %MemberNamedSelf.as.Destroy.impl.Op.decl: %MemberNamedSelf.as.Destroy.impl.Op.type = fn_decl @MemberNamedSelf.as.Destroy.impl.Op [concrete = constants.%MemberNamedSelf.as.Destroy.impl.Op] {
 // CHECK:STDOUT:     %self.patt: %pattern_type.64a = binding_pattern self [concrete]
 // CHECK:STDOUT:     %self.param_patt: %pattern_type.64a = value_param_pattern %self.patt, call_param0 [concrete]
@@ -148,6 +148,7 @@ fn MemberNamedSelf.F(x: Self, y: r#Self) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @Class {
 // CHECK:STDOUT:   %Class.F.decl: %Class.F.type = fn_decl @Class.F [concrete = constants.%Class.F] {} {}
+// CHECK:STDOUT:   %Self.ref: type = name_ref Self, constants.%Class [concrete = constants.%Class]
 // CHECK:STDOUT:   impl_decl @Class.as.Destroy.impl [concrete] {} {}
 // CHECK:STDOUT:   %Destroy.impl_witness_table = impl_witness_table (@Class.as.Destroy.impl.%Class.as.Destroy.impl.Op.decl), @Class.as.Destroy.impl [concrete]
 // CHECK:STDOUT:   %Destroy.impl_witness: <witness> = impl_witness %Destroy.impl_witness_table [concrete = constants.%Destroy.impl_witness.b40]
@@ -174,6 +175,7 @@ fn MemberNamedSelf.F(x: Self, y: r#Self) {}
 // CHECK:STDOUT:     %Self.ref.loc25_20: type = name_ref r#Self, @MemberNamedSelf.%Self.decl [concrete = constants.%Self.362]
 // CHECK:STDOUT:     %y.loc25: %Self.362 = bind_name y, %y.param.loc25
 // CHECK:STDOUT:   }
+// CHECK:STDOUT:   %Self.ref: type = name_ref Self, constants.%MemberNamedSelf [concrete = constants.%MemberNamedSelf]
 // CHECK:STDOUT:   impl_decl @MemberNamedSelf.as.Destroy.impl [concrete] {} {}
 // CHECK:STDOUT:   %Destroy.impl_witness_table = impl_witness_table (@MemberNamedSelf.as.Destroy.impl.%MemberNamedSelf.as.Destroy.impl.Op.decl), @MemberNamedSelf.as.Destroy.impl [concrete]
 // CHECK:STDOUT:   %Destroy.impl_witness: <witness> = impl_witness %Destroy.impl_witness_table [concrete = constants.%Destroy.impl_witness.a94]
@@ -187,6 +189,7 @@ fn MemberNamedSelf.F(x: Self, y: r#Self) {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @Self {
+// CHECK:STDOUT:   %Self.ref: type = name_ref Self, constants.%Self.362 [concrete = constants.%Self.362]
 // CHECK:STDOUT:   impl_decl @Self.as.Destroy.impl [concrete] {} {}
 // CHECK:STDOUT:   %Destroy.impl_witness_table = impl_witness_table (@Self.as.Destroy.impl.%Self.as.Destroy.impl.Op.decl), @Self.as.Destroy.impl [concrete]
 // CHECK:STDOUT:   %Destroy.impl_witness: <witness> = impl_witness %Destroy.impl_witness_table [concrete = constants.%Destroy.impl_witness.077]

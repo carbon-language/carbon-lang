@@ -193,13 +193,14 @@ fn Generic(T:! ()).WrongType() {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic impl @Class.as.Destroy.impl(@Class.%T.loc4_13.2: type) {
 // CHECK:STDOUT:   %T: type = bind_symbolic_name T, 0 [symbolic = %T (constants.%T)]
+// CHECK:STDOUT:   %Class: type = class_type @Class, @Class(%T) [symbolic = %Class (constants.%Class)]
 // CHECK:STDOUT:   %Destroy.impl_witness: <witness> = impl_witness @Class.%Destroy.impl_witness_table, @Class.as.Destroy.impl(%T) [symbolic = %Destroy.impl_witness (constants.%Destroy.impl_witness)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %Class.as.Destroy.impl.Op.type: type = fn_type @Class.as.Destroy.impl.Op, @Class.as.Destroy.impl(%T) [symbolic = %Class.as.Destroy.impl.Op.type (constants.%Class.as.Destroy.impl.Op.type)]
 // CHECK:STDOUT:   %Class.as.Destroy.impl.Op: @Class.as.Destroy.impl.%Class.as.Destroy.impl.Op.type (%Class.as.Destroy.impl.Op.type) = struct_value () [symbolic = %Class.as.Destroy.impl.Op (constants.%Class.as.Destroy.impl.Op)]
 // CHECK:STDOUT:
-// CHECK:STDOUT:   impl: constants.%Class as constants.%Destroy.type {
+// CHECK:STDOUT:   impl: @Class.%Self.ref as constants.%Destroy.type {
 // CHECK:STDOUT:     %Class.as.Destroy.impl.Op.decl: @Class.as.Destroy.impl.%Class.as.Destroy.impl.Op.type (%Class.as.Destroy.impl.Op.type) = fn_decl @Class.as.Destroy.impl.Op [symbolic = @Class.as.Destroy.impl.%Class.as.Destroy.impl.Op (constants.%Class.as.Destroy.impl.Op)] {
 // CHECK:STDOUT:       %self.patt: @Class.as.Destroy.impl.Op.%pattern_type (%pattern_type.9e0) = binding_pattern self [concrete]
 // CHECK:STDOUT:       %self.param_patt: @Class.as.Destroy.impl.Op.%pattern_type (%pattern_type.9e0) = value_param_pattern %self.patt, call_param0 [concrete]
@@ -265,6 +266,7 @@ fn Generic(T:! ()).WrongType() {}
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %T.ref: type = name_ref T, %T.loc4_13.2 [symbolic = %T.loc4_13.1 (constants.%T)]
 // CHECK:STDOUT:     %.loc7: @Class.%Class.elem (%Class.elem) = field_decl n, element0 [concrete]
+// CHECK:STDOUT:     %Self.ref: type = name_ref Self, constants.%Class [symbolic = @Class.as.Destroy.impl.%Class (constants.%Class)]
 // CHECK:STDOUT:     impl_decl @Class.as.Destroy.impl [concrete] {} {}
 // CHECK:STDOUT:     %Destroy.impl_witness_table = impl_witness_table (@Class.as.Destroy.impl.%Class.as.Destroy.impl.Op.decl), @Class.as.Destroy.impl [concrete]
 // CHECK:STDOUT:     %Destroy.impl_witness: <witness> = impl_witness %Destroy.impl_witness_table, @Class.as.Destroy.impl(constants.%T) [symbolic = @Class.as.Destroy.impl.%Destroy.impl_witness (constants.%Destroy.impl_witness)]
@@ -355,6 +357,7 @@ fn Generic(T:! ()).WrongType() {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Class.as.Destroy.impl(constants.%T) {
 // CHECK:STDOUT:   %T => constants.%T
+// CHECK:STDOUT:   %Class => constants.%Class
 // CHECK:STDOUT:   %Destroy.impl_witness => constants.%Destroy.impl_witness
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -443,13 +446,14 @@ fn Generic(T:! ()).WrongType() {}
 // CHECK:STDOUT: generic impl @B.as.Destroy.impl(@A.%T.loc4_9.2: type, @B.%N.loc5_11.2: @B.%T (%T)) {
 // CHECK:STDOUT:   %T: type = bind_symbolic_name T, 0 [symbolic = %T (constants.%T)]
 // CHECK:STDOUT:   %N: @B.as.Destroy.impl.%T (%T) = bind_symbolic_name N, 1 [symbolic = %N (constants.%N)]
+// CHECK:STDOUT:   %B: type = class_type @B, @B(%T, %N) [symbolic = %B (constants.%B)]
 // CHECK:STDOUT:   %Destroy.impl_witness: <witness> = impl_witness @B.%Destroy.impl_witness_table, @B.as.Destroy.impl(%T, %N) [symbolic = %Destroy.impl_witness (constants.%Destroy.impl_witness.e41)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %B.as.Destroy.impl.Op.type: type = fn_type @B.as.Destroy.impl.Op, @B.as.Destroy.impl(%T, %N) [symbolic = %B.as.Destroy.impl.Op.type (constants.%B.as.Destroy.impl.Op.type)]
 // CHECK:STDOUT:   %B.as.Destroy.impl.Op: @B.as.Destroy.impl.%B.as.Destroy.impl.Op.type (%B.as.Destroy.impl.Op.type) = struct_value () [symbolic = %B.as.Destroy.impl.Op (constants.%B.as.Destroy.impl.Op)]
 // CHECK:STDOUT:
-// CHECK:STDOUT:   impl: constants.%B as constants.%Destroy.type {
+// CHECK:STDOUT:   impl: @B.%Self.ref as constants.%Destroy.type {
 // CHECK:STDOUT:     %B.as.Destroy.impl.Op.decl: @B.as.Destroy.impl.%B.as.Destroy.impl.Op.type (%B.as.Destroy.impl.Op.type) = fn_decl @B.as.Destroy.impl.Op [symbolic = @B.as.Destroy.impl.%B.as.Destroy.impl.Op (constants.%B.as.Destroy.impl.Op)] {
 // CHECK:STDOUT:       %self.patt: @B.as.Destroy.impl.Op.%pattern_type (%pattern_type.fe8) = binding_pattern self [concrete]
 // CHECK:STDOUT:       %self.param_patt: @B.as.Destroy.impl.Op.%pattern_type (%pattern_type.fe8) = value_param_pattern %self.patt, call_param0 [concrete]
@@ -471,13 +475,14 @@ fn Generic(T:! ()).WrongType() {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic impl @A.as.Destroy.impl(@A.%T.loc4_9.2: type) {
 // CHECK:STDOUT:   %T: type = bind_symbolic_name T, 0 [symbolic = %T (constants.%T)]
+// CHECK:STDOUT:   %A: type = class_type @A, @A(%T) [symbolic = %A (constants.%A)]
 // CHECK:STDOUT:   %Destroy.impl_witness: <witness> = impl_witness @A.%Destroy.impl_witness_table, @A.as.Destroy.impl(%T) [symbolic = %Destroy.impl_witness (constants.%Destroy.impl_witness.d93)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %A.as.Destroy.impl.Op.type: type = fn_type @A.as.Destroy.impl.Op, @A.as.Destroy.impl(%T) [symbolic = %A.as.Destroy.impl.Op.type (constants.%A.as.Destroy.impl.Op.type)]
 // CHECK:STDOUT:   %A.as.Destroy.impl.Op: @A.as.Destroy.impl.%A.as.Destroy.impl.Op.type (%A.as.Destroy.impl.Op.type) = struct_value () [symbolic = %A.as.Destroy.impl.Op (constants.%A.as.Destroy.impl.Op)]
 // CHECK:STDOUT:
-// CHECK:STDOUT:   impl: constants.%A as constants.%Destroy.type {
+// CHECK:STDOUT:   impl: @A.%Self.ref as constants.%Destroy.type {
 // CHECK:STDOUT:     %A.as.Destroy.impl.Op.decl: @A.as.Destroy.impl.%A.as.Destroy.impl.Op.type (%A.as.Destroy.impl.Op.type) = fn_decl @A.as.Destroy.impl.Op [symbolic = @A.as.Destroy.impl.%A.as.Destroy.impl.Op (constants.%A.as.Destroy.impl.Op)] {
 // CHECK:STDOUT:       %self.patt: @A.as.Destroy.impl.Op.%pattern_type (%pattern_type.09b) = binding_pattern self [concrete]
 // CHECK:STDOUT:       %self.param_patt: @A.as.Destroy.impl.Op.%pattern_type (%pattern_type.09b) = value_param_pattern %self.patt, call_param0 [concrete]
@@ -511,6 +516,7 @@ fn Generic(T:! ()).WrongType() {}
 // CHECK:STDOUT:       %T.ref: type = name_ref T, @A.%T.loc4_9.2 [symbolic = %T (constants.%T)]
 // CHECK:STDOUT:       %N.loc5_11.2: @B.%T (%T) = bind_symbolic_name N, 1 [symbolic = %N.loc5_11.1 (constants.%N)]
 // CHECK:STDOUT:     }
+// CHECK:STDOUT:     %Self.ref: type = name_ref Self, constants.%A [symbolic = @A.as.Destroy.impl.%A (constants.%A)]
 // CHECK:STDOUT:     impl_decl @A.as.Destroy.impl [concrete] {} {}
 // CHECK:STDOUT:     %Destroy.impl_witness_table = impl_witness_table (@A.as.Destroy.impl.%A.as.Destroy.impl.Op.decl), @A.as.Destroy.impl [concrete]
 // CHECK:STDOUT:     %Destroy.impl_witness: <witness> = impl_witness %Destroy.impl_witness_table, @A.as.Destroy.impl(constants.%T) [symbolic = @A.as.Destroy.impl.%Destroy.impl_witness (constants.%Destroy.impl_witness.d93)]
@@ -551,6 +557,7 @@ fn Generic(T:! ()).WrongType() {}
 // CHECK:STDOUT:       %T.ref.loc6: type = name_ref T, @A.%T.loc4_9.2 [symbolic = %T.loc6 (constants.%T)]
 // CHECK:STDOUT:       %a.loc6: @B.F.%T.loc6 (%T) = bind_name a, %a.param.loc6
 // CHECK:STDOUT:     }
+// CHECK:STDOUT:     %Self.ref: type = name_ref Self, constants.%B [symbolic = @B.as.Destroy.impl.%B (constants.%B)]
 // CHECK:STDOUT:     impl_decl @B.as.Destroy.impl [concrete] {} {}
 // CHECK:STDOUT:     %Destroy.impl_witness_table = impl_witness_table (@B.as.Destroy.impl.%B.as.Destroy.impl.Op.decl), @B.as.Destroy.impl [concrete]
 // CHECK:STDOUT:     %Destroy.impl_witness: <witness> = impl_witness %Destroy.impl_witness_table, @B.as.Destroy.impl(constants.%T, constants.%N) [symbolic = @B.as.Destroy.impl.%Destroy.impl_witness (constants.%Destroy.impl_witness.e41)]
@@ -634,6 +641,7 @@ fn Generic(T:! ()).WrongType() {}
 // CHECK:STDOUT: specific @B.as.Destroy.impl(constants.%T, constants.%N) {
 // CHECK:STDOUT:   %T => constants.%T
 // CHECK:STDOUT:   %N => constants.%N
+// CHECK:STDOUT:   %B => constants.%B
 // CHECK:STDOUT:   %Destroy.impl_witness => constants.%Destroy.impl_witness.e41
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -647,6 +655,7 @@ fn Generic(T:! ()).WrongType() {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @A.as.Destroy.impl(constants.%T) {
 // CHECK:STDOUT:   %T => constants.%T
+// CHECK:STDOUT:   %A => constants.%A
 // CHECK:STDOUT:   %Destroy.impl_witness => constants.%Destroy.impl_witness.d93
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -698,7 +707,7 @@ fn Generic(T:! ()).WrongType() {}
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: impl @NotGeneric.as.Destroy.impl: constants.%NotGeneric as constants.%Destroy.type {
+// CHECK:STDOUT: impl @NotGeneric.as.Destroy.impl: @NotGeneric.%Self.ref as constants.%Destroy.type {
 // CHECK:STDOUT:   %NotGeneric.as.Destroy.impl.Op.decl: %NotGeneric.as.Destroy.impl.Op.type = fn_decl @NotGeneric.as.Destroy.impl.Op [concrete = constants.%NotGeneric.as.Destroy.impl.Op] {
 // CHECK:STDOUT:     %self.patt: %pattern_type.486 = binding_pattern self [concrete]
 // CHECK:STDOUT:     %self.param_patt: %pattern_type.486 = value_param_pattern %self.patt, call_param0 [concrete]
@@ -716,6 +725,7 @@ fn Generic(T:! ()).WrongType() {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @NotGeneric {
 // CHECK:STDOUT:   %NotGeneric.F.decl: %NotGeneric.F.type = fn_decl @NotGeneric.F [concrete = constants.%NotGeneric.F] {} {}
+// CHECK:STDOUT:   %Self.ref: type = name_ref Self, constants.%NotGeneric [concrete = constants.%NotGeneric]
 // CHECK:STDOUT:   impl_decl @NotGeneric.as.Destroy.impl [concrete] {} {}
 // CHECK:STDOUT:   %Destroy.impl_witness_table = impl_witness_table (@NotGeneric.as.Destroy.impl.%NotGeneric.as.Destroy.impl.Op.decl), @NotGeneric.as.Destroy.impl [concrete]
 // CHECK:STDOUT:   %Destroy.impl_witness: <witness> = impl_witness %Destroy.impl_witness_table [concrete = constants.%Destroy.impl_witness]
@@ -794,13 +804,14 @@ fn Generic(T:! ()).WrongType() {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic impl @Generic.as.Destroy.impl(@Generic.%T.loc4_15.2: type) {
 // CHECK:STDOUT:   %T: type = bind_symbolic_name T, 0 [symbolic = %T (constants.%T)]
+// CHECK:STDOUT:   %Generic: type = class_type @Generic, @Generic(%T) [symbolic = %Generic (constants.%Generic)]
 // CHECK:STDOUT:   %Destroy.impl_witness: <witness> = impl_witness @Generic.%Destroy.impl_witness_table, @Generic.as.Destroy.impl(%T) [symbolic = %Destroy.impl_witness (constants.%Destroy.impl_witness)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %Generic.as.Destroy.impl.Op.type: type = fn_type @Generic.as.Destroy.impl.Op, @Generic.as.Destroy.impl(%T) [symbolic = %Generic.as.Destroy.impl.Op.type (constants.%Generic.as.Destroy.impl.Op.type)]
 // CHECK:STDOUT:   %Generic.as.Destroy.impl.Op: @Generic.as.Destroy.impl.%Generic.as.Destroy.impl.Op.type (%Generic.as.Destroy.impl.Op.type) = struct_value () [symbolic = %Generic.as.Destroy.impl.Op (constants.%Generic.as.Destroy.impl.Op)]
 // CHECK:STDOUT:
-// CHECK:STDOUT:   impl: constants.%Generic as constants.%Destroy.type {
+// CHECK:STDOUT:   impl: @Generic.%Self.ref as constants.%Destroy.type {
 // CHECK:STDOUT:     %Generic.as.Destroy.impl.Op.decl: @Generic.as.Destroy.impl.%Generic.as.Destroy.impl.Op.type (%Generic.as.Destroy.impl.Op.type) = fn_decl @Generic.as.Destroy.impl.Op [symbolic = @Generic.as.Destroy.impl.%Generic.as.Destroy.impl.Op (constants.%Generic.as.Destroy.impl.Op)] {
 // CHECK:STDOUT:       %self.patt: @Generic.as.Destroy.impl.Op.%pattern_type (%pattern_type.b64) = binding_pattern self [concrete]
 // CHECK:STDOUT:       %self.param_patt: @Generic.as.Destroy.impl.Op.%pattern_type (%pattern_type.b64) = value_param_pattern %self.patt, call_param0 [concrete]
@@ -829,6 +840,7 @@ fn Generic(T:! ()).WrongType() {}
 // CHECK:STDOUT:
 // CHECK:STDOUT:   class {
 // CHECK:STDOUT:     %Generic.TooFew.decl: @Generic.%Generic.TooFew.type (%Generic.TooFew.type) = fn_decl @Generic.TooFew [symbolic = @Generic.%Generic.TooFew (constants.%Generic.TooFew)] {} {}
+// CHECK:STDOUT:     %Self.ref: type = name_ref Self, constants.%Generic [symbolic = @Generic.as.Destroy.impl.%Generic (constants.%Generic)]
 // CHECK:STDOUT:     impl_decl @Generic.as.Destroy.impl [concrete] {} {}
 // CHECK:STDOUT:     %Destroy.impl_witness_table = impl_witness_table (@Generic.as.Destroy.impl.%Generic.as.Destroy.impl.Op.decl), @Generic.as.Destroy.impl [concrete]
 // CHECK:STDOUT:     %Destroy.impl_witness: <witness> = impl_witness %Destroy.impl_witness_table, @Generic.as.Destroy.impl(constants.%T) [symbolic = @Generic.as.Destroy.impl.%Destroy.impl_witness (constants.%Destroy.impl_witness)]
@@ -869,6 +881,7 @@ fn Generic(T:! ()).WrongType() {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Generic.as.Destroy.impl(constants.%T) {
 // CHECK:STDOUT:   %T => constants.%T
+// CHECK:STDOUT:   %Generic => constants.%Generic
 // CHECK:STDOUT:   %Destroy.impl_witness => constants.%Destroy.impl_witness
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -931,13 +944,14 @@ fn Generic(T:! ()).WrongType() {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic impl @Generic.as.Destroy.impl(@Generic.%T.loc4_15.2: type) {
 // CHECK:STDOUT:   %T: type = bind_symbolic_name T, 0 [symbolic = %T (constants.%T)]
+// CHECK:STDOUT:   %Generic: type = class_type @Generic, @Generic(%T) [symbolic = %Generic (constants.%Generic)]
 // CHECK:STDOUT:   %Destroy.impl_witness: <witness> = impl_witness @Generic.%Destroy.impl_witness_table, @Generic.as.Destroy.impl(%T) [symbolic = %Destroy.impl_witness (constants.%Destroy.impl_witness)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %Generic.as.Destroy.impl.Op.type: type = fn_type @Generic.as.Destroy.impl.Op, @Generic.as.Destroy.impl(%T) [symbolic = %Generic.as.Destroy.impl.Op.type (constants.%Generic.as.Destroy.impl.Op.type)]
 // CHECK:STDOUT:   %Generic.as.Destroy.impl.Op: @Generic.as.Destroy.impl.%Generic.as.Destroy.impl.Op.type (%Generic.as.Destroy.impl.Op.type) = struct_value () [symbolic = %Generic.as.Destroy.impl.Op (constants.%Generic.as.Destroy.impl.Op)]
 // CHECK:STDOUT:
-// CHECK:STDOUT:   impl: constants.%Generic as constants.%Destroy.type {
+// CHECK:STDOUT:   impl: @Generic.%Self.ref as constants.%Destroy.type {
 // CHECK:STDOUT:     %Generic.as.Destroy.impl.Op.decl: @Generic.as.Destroy.impl.%Generic.as.Destroy.impl.Op.type (%Generic.as.Destroy.impl.Op.type) = fn_decl @Generic.as.Destroy.impl.Op [symbolic = @Generic.as.Destroy.impl.%Generic.as.Destroy.impl.Op (constants.%Generic.as.Destroy.impl.Op)] {
 // CHECK:STDOUT:       %self.patt: @Generic.as.Destroy.impl.Op.%pattern_type (%pattern_type.b64) = binding_pattern self [concrete]
 // CHECK:STDOUT:       %self.param_patt: @Generic.as.Destroy.impl.Op.%pattern_type (%pattern_type.b64) = value_param_pattern %self.patt, call_param0 [concrete]
@@ -966,6 +980,7 @@ fn Generic(T:! ()).WrongType() {}
 // CHECK:STDOUT:
 // CHECK:STDOUT:   class {
 // CHECK:STDOUT:     %Generic.TooMany.decl: @Generic.%Generic.TooMany.type (%Generic.TooMany.type) = fn_decl @Generic.TooMany [symbolic = @Generic.%Generic.TooMany (constants.%Generic.TooMany)] {} {}
+// CHECK:STDOUT:     %Self.ref: type = name_ref Self, constants.%Generic [symbolic = @Generic.as.Destroy.impl.%Generic (constants.%Generic)]
 // CHECK:STDOUT:     impl_decl @Generic.as.Destroy.impl [concrete] {} {}
 // CHECK:STDOUT:     %Destroy.impl_witness_table = impl_witness_table (@Generic.as.Destroy.impl.%Generic.as.Destroy.impl.Op.decl), @Generic.as.Destroy.impl [concrete]
 // CHECK:STDOUT:     %Destroy.impl_witness: <witness> = impl_witness %Destroy.impl_witness_table, @Generic.as.Destroy.impl(constants.%T) [symbolic = @Generic.as.Destroy.impl.%Destroy.impl_witness (constants.%Destroy.impl_witness)]
@@ -1013,6 +1028,7 @@ fn Generic(T:! ()).WrongType() {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Generic.as.Destroy.impl(constants.%T) {
 // CHECK:STDOUT:   %T => constants.%T
+// CHECK:STDOUT:   %Generic => constants.%Generic
 // CHECK:STDOUT:   %Destroy.impl_witness => constants.%Destroy.impl_witness
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -1084,13 +1100,14 @@ fn Generic(T:! ()).WrongType() {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic impl @Generic.as.Destroy.impl(@Generic.%T.loc4_15.2: type) {
 // CHECK:STDOUT:   %T: type = bind_symbolic_name T, 0 [symbolic = %T (constants.%T.8b3)]
+// CHECK:STDOUT:   %Generic: type = class_type @Generic, @Generic(%T) [symbolic = %Generic (constants.%Generic)]
 // CHECK:STDOUT:   %Destroy.impl_witness: <witness> = impl_witness @Generic.%Destroy.impl_witness_table, @Generic.as.Destroy.impl(%T) [symbolic = %Destroy.impl_witness (constants.%Destroy.impl_witness)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %Generic.as.Destroy.impl.Op.type: type = fn_type @Generic.as.Destroy.impl.Op, @Generic.as.Destroy.impl(%T) [symbolic = %Generic.as.Destroy.impl.Op.type (constants.%Generic.as.Destroy.impl.Op.type)]
 // CHECK:STDOUT:   %Generic.as.Destroy.impl.Op: @Generic.as.Destroy.impl.%Generic.as.Destroy.impl.Op.type (%Generic.as.Destroy.impl.Op.type) = struct_value () [symbolic = %Generic.as.Destroy.impl.Op (constants.%Generic.as.Destroy.impl.Op)]
 // CHECK:STDOUT:
-// CHECK:STDOUT:   impl: constants.%Generic as constants.%Destroy.type {
+// CHECK:STDOUT:   impl: @Generic.%Self.ref as constants.%Destroy.type {
 // CHECK:STDOUT:     %Generic.as.Destroy.impl.Op.decl: @Generic.as.Destroy.impl.%Generic.as.Destroy.impl.Op.type (%Generic.as.Destroy.impl.Op.type) = fn_decl @Generic.as.Destroy.impl.Op [symbolic = @Generic.as.Destroy.impl.%Generic.as.Destroy.impl.Op (constants.%Generic.as.Destroy.impl.Op)] {
 // CHECK:STDOUT:       %self.patt: @Generic.as.Destroy.impl.Op.%pattern_type (%pattern_type.b64) = binding_pattern self [concrete]
 // CHECK:STDOUT:       %self.param_patt: @Generic.as.Destroy.impl.Op.%pattern_type (%pattern_type.b64) = value_param_pattern %self.patt, call_param0 [concrete]
@@ -1119,6 +1136,7 @@ fn Generic(T:! ()).WrongType() {}
 // CHECK:STDOUT:
 // CHECK:STDOUT:   class {
 // CHECK:STDOUT:     %Generic.WrongType.decl: @Generic.%Generic.WrongType.type (%Generic.WrongType.type) = fn_decl @Generic.WrongType [symbolic = @Generic.%Generic.WrongType (constants.%Generic.WrongType)] {} {}
+// CHECK:STDOUT:     %Self.ref: type = name_ref Self, constants.%Generic [symbolic = @Generic.as.Destroy.impl.%Generic (constants.%Generic)]
 // CHECK:STDOUT:     impl_decl @Generic.as.Destroy.impl [concrete] {} {}
 // CHECK:STDOUT:     %Destroy.impl_witness_table = impl_witness_table (@Generic.as.Destroy.impl.%Generic.as.Destroy.impl.Op.decl), @Generic.as.Destroy.impl [concrete]
 // CHECK:STDOUT:     %Destroy.impl_witness: <witness> = impl_witness %Destroy.impl_witness_table, @Generic.as.Destroy.impl(constants.%T.8b3) [symbolic = @Generic.as.Destroy.impl.%Destroy.impl_witness (constants.%Destroy.impl_witness)]
@@ -1165,6 +1183,7 @@ fn Generic(T:! ()).WrongType() {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Generic.as.Destroy.impl(constants.%T.8b3) {
 // CHECK:STDOUT:   %T => constants.%T.8b3
+// CHECK:STDOUT:   %Generic => constants.%Generic
 // CHECK:STDOUT:   %Destroy.impl_witness => constants.%Destroy.impl_witness
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

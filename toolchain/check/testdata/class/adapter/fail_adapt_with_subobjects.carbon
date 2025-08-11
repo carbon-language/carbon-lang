@@ -127,7 +127,7 @@ class AdaptWithBaseAndFields {
 // CHECK:STDOUT:   %AdaptWithBase.decl: type = class_decl @AdaptWithBase [concrete = constants.%AdaptWithBase] {} {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: impl @Base.as.Destroy.impl: constants.%Base as constants.%Destroy.type {
+// CHECK:STDOUT: impl @Base.as.Destroy.impl: @Base.%Self.ref as constants.%Destroy.type {
 // CHECK:STDOUT:   %Base.as.Destroy.impl.Op.decl: %Base.as.Destroy.impl.Op.type = fn_decl @Base.as.Destroy.impl.Op [concrete = constants.%Base.as.Destroy.impl.Op] {
 // CHECK:STDOUT:     %self.patt: %pattern_type.1b9 = binding_pattern self [concrete]
 // CHECK:STDOUT:     %self.param_patt: %pattern_type.1b9 = value_param_pattern %self.patt, call_param0 [concrete]
@@ -143,7 +143,7 @@ class AdaptWithBaseAndFields {
 // CHECK:STDOUT:   witness = @Base.%Destroy.impl_witness
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: impl @AdaptWithBase.as.Destroy.impl: constants.%AdaptWithBase as constants.%Destroy.type {
+// CHECK:STDOUT: impl @AdaptWithBase.as.Destroy.impl: @AdaptWithBase.%Self.ref as constants.%Destroy.type {
 // CHECK:STDOUT:   %AdaptWithBase.as.Destroy.impl.Op.decl: %AdaptWithBase.as.Destroy.impl.Op.type = fn_decl @AdaptWithBase.as.Destroy.impl.Op [concrete = constants.%AdaptWithBase.as.Destroy.impl.Op] {
 // CHECK:STDOUT:     %self.patt: %pattern_type.d4d = binding_pattern self [concrete]
 // CHECK:STDOUT:     %self.param_patt: %pattern_type.d4d = value_param_pattern %self.patt, call_param0 [concrete]
@@ -160,6 +160,7 @@ class AdaptWithBaseAndFields {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @Base {
+// CHECK:STDOUT:   %Self.ref: type = name_ref Self, constants.%Base [concrete = constants.%Base]
 // CHECK:STDOUT:   impl_decl @Base.as.Destroy.impl [concrete] {} {}
 // CHECK:STDOUT:   %Destroy.impl_witness_table = impl_witness_table (@Base.as.Destroy.impl.%Base.as.Destroy.impl.Op.decl), @Base.as.Destroy.impl [concrete]
 // CHECK:STDOUT:   %Destroy.impl_witness: <witness> = impl_witness %Destroy.impl_witness_table [concrete = constants.%Destroy.impl_witness.ae4]
@@ -176,6 +177,7 @@ class AdaptWithBaseAndFields {
 // CHECK:STDOUT:   adapt_decl %i32 [concrete]
 // CHECK:STDOUT:   %Base.ref: type = name_ref Base, file.%Base.decl [concrete = constants.%Base]
 // CHECK:STDOUT:   %.loc15: %AdaptWithBase.elem = base_decl %Base.ref, element<none> [concrete]
+// CHECK:STDOUT:   %Self.ref: type = name_ref Self, constants.%AdaptWithBase [concrete = constants.%AdaptWithBase]
 // CHECK:STDOUT:   impl_decl @AdaptWithBase.as.Destroy.impl [concrete] {} {}
 // CHECK:STDOUT:   %Destroy.impl_witness_table = impl_witness_table (@AdaptWithBase.as.Destroy.impl.%AdaptWithBase.as.Destroy.impl.Op.decl), @AdaptWithBase.as.Destroy.impl [concrete]
 // CHECK:STDOUT:   %Destroy.impl_witness: <witness> = impl_witness %Destroy.impl_witness_table [concrete = constants.%Destroy.impl_witness.8b8]
@@ -239,7 +241,7 @@ class AdaptWithBaseAndFields {
 // CHECK:STDOUT:   %AdaptWithFields.decl: type = class_decl @AdaptWithFields [concrete = constants.%AdaptWithFields] {} {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: impl @AdaptWithField.as.Destroy.impl: constants.%AdaptWithField as constants.%Destroy.type {
+// CHECK:STDOUT: impl @AdaptWithField.as.Destroy.impl: @AdaptWithField.%Self.ref as constants.%Destroy.type {
 // CHECK:STDOUT:   %AdaptWithField.as.Destroy.impl.Op.decl: %AdaptWithField.as.Destroy.impl.Op.type = fn_decl @AdaptWithField.as.Destroy.impl.Op [concrete = constants.%AdaptWithField.as.Destroy.impl.Op] {
 // CHECK:STDOUT:     %self.patt: %pattern_type.55a = binding_pattern self [concrete]
 // CHECK:STDOUT:     %self.param_patt: %pattern_type.55a = value_param_pattern %self.patt, call_param0 [concrete]
@@ -255,7 +257,7 @@ class AdaptWithBaseAndFields {
 // CHECK:STDOUT:   witness = @AdaptWithField.%Destroy.impl_witness
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: impl @AdaptWithFields.as.Destroy.impl: constants.%AdaptWithFields as constants.%Destroy.type {
+// CHECK:STDOUT: impl @AdaptWithFields.as.Destroy.impl: @AdaptWithFields.%Self.ref as constants.%Destroy.type {
 // CHECK:STDOUT:   %AdaptWithFields.as.Destroy.impl.Op.decl: %AdaptWithFields.as.Destroy.impl.Op.type = fn_decl @AdaptWithFields.as.Destroy.impl.Op [concrete = constants.%AdaptWithFields.as.Destroy.impl.Op] {
 // CHECK:STDOUT:     %self.patt: %pattern_type.1a9 = binding_pattern self [concrete]
 // CHECK:STDOUT:     %self.param_patt: %pattern_type.1a9 = value_param_pattern %self.patt, call_param0 [concrete]
@@ -278,6 +280,7 @@ class AdaptWithBaseAndFields {
 // CHECK:STDOUT:   %int_32.loc13: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
 // CHECK:STDOUT:   %i32.loc13: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
 // CHECK:STDOUT:   %.loc13: %AdaptWithField.elem = field_decl n, element<none> [concrete]
+// CHECK:STDOUT:   %Self.ref: type = name_ref Self, constants.%AdaptWithField [concrete = constants.%AdaptWithField]
 // CHECK:STDOUT:   impl_decl @AdaptWithField.as.Destroy.impl [concrete] {} {}
 // CHECK:STDOUT:   %Destroy.impl_witness_table = impl_witness_table (@AdaptWithField.as.Destroy.impl.%AdaptWithField.as.Destroy.impl.Op.decl), @AdaptWithField.as.Destroy.impl [concrete]
 // CHECK:STDOUT:   %Destroy.impl_witness: <witness> = impl_witness %Destroy.impl_witness_table [concrete = constants.%Destroy.impl_witness.333]
@@ -301,6 +304,7 @@ class AdaptWithBaseAndFields {
 // CHECK:STDOUT:   %int_32.loc27: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
 // CHECK:STDOUT:   %i32.loc27: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
 // CHECK:STDOUT:   %.loc27: %AdaptWithFields.elem = field_decl c, element<none> [concrete]
+// CHECK:STDOUT:   %Self.ref: type = name_ref Self, constants.%AdaptWithFields [concrete = constants.%AdaptWithFields]
 // CHECK:STDOUT:   impl_decl @AdaptWithFields.as.Destroy.impl [concrete] {} {}
 // CHECK:STDOUT:   %Destroy.impl_witness_table = impl_witness_table (@AdaptWithFields.as.Destroy.impl.%AdaptWithFields.as.Destroy.impl.Op.decl), @AdaptWithFields.as.Destroy.impl [concrete]
 // CHECK:STDOUT:   %Destroy.impl_witness: <witness> = impl_witness %Destroy.impl_witness_table [concrete = constants.%Destroy.impl_witness.8f2]
@@ -366,7 +370,7 @@ class AdaptWithBaseAndFields {
 // CHECK:STDOUT:   %AdaptWithBaseAndFields.decl: type = class_decl @AdaptWithBaseAndFields [concrete = constants.%AdaptWithBaseAndFields] {} {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: impl @Base.as.Destroy.impl: constants.%Base as constants.%Destroy.type {
+// CHECK:STDOUT: impl @Base.as.Destroy.impl: @Base.%Self.ref as constants.%Destroy.type {
 // CHECK:STDOUT:   %Base.as.Destroy.impl.Op.decl: %Base.as.Destroy.impl.Op.type = fn_decl @Base.as.Destroy.impl.Op [concrete = constants.%Base.as.Destroy.impl.Op] {
 // CHECK:STDOUT:     %self.patt: %pattern_type.1b9 = binding_pattern self [concrete]
 // CHECK:STDOUT:     %self.param_patt: %pattern_type.1b9 = value_param_pattern %self.patt, call_param0 [concrete]
@@ -382,7 +386,7 @@ class AdaptWithBaseAndFields {
 // CHECK:STDOUT:   witness = @Base.%Destroy.impl_witness
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: impl @AdaptWithBaseAndFields.as.Destroy.impl: constants.%AdaptWithBaseAndFields as constants.%Destroy.type {
+// CHECK:STDOUT: impl @AdaptWithBaseAndFields.as.Destroy.impl: @AdaptWithBaseAndFields.%Self.ref as constants.%Destroy.type {
 // CHECK:STDOUT:   %AdaptWithBaseAndFields.as.Destroy.impl.Op.decl: %AdaptWithBaseAndFields.as.Destroy.impl.Op.type = fn_decl @AdaptWithBaseAndFields.as.Destroy.impl.Op [concrete = constants.%AdaptWithBaseAndFields.as.Destroy.impl.Op] {
 // CHECK:STDOUT:     %self.patt: %pattern_type.926 = binding_pattern self [concrete]
 // CHECK:STDOUT:     %self.param_patt: %pattern_type.926 = value_param_pattern %self.patt, call_param0 [concrete]
@@ -399,6 +403,7 @@ class AdaptWithBaseAndFields {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @Base {
+// CHECK:STDOUT:   %Self.ref: type = name_ref Self, constants.%Base [concrete = constants.%Base]
 // CHECK:STDOUT:   impl_decl @Base.as.Destroy.impl [concrete] {} {}
 // CHECK:STDOUT:   %Destroy.impl_witness_table = impl_witness_table (@Base.as.Destroy.impl.%Base.as.Destroy.impl.Op.decl), @Base.as.Destroy.impl [concrete]
 // CHECK:STDOUT:   %Destroy.impl_witness: <witness> = impl_witness %Destroy.impl_witness_table [concrete = constants.%Destroy.impl_witness.ae4]
@@ -418,6 +423,7 @@ class AdaptWithBaseAndFields {
 // CHECK:STDOUT:   %.loc16_10: %empty_struct_type = struct_literal ()
 // CHECK:STDOUT:   %.loc16_11: type = converted %.loc16_10, constants.%empty_struct_type [concrete = constants.%empty_struct_type]
 // CHECK:STDOUT:   adapt_decl %.loc16_11 [concrete]
+// CHECK:STDOUT:   %Self.ref: type = name_ref Self, constants.%AdaptWithBaseAndFields [concrete = constants.%AdaptWithBaseAndFields]
 // CHECK:STDOUT:   impl_decl @AdaptWithBaseAndFields.as.Destroy.impl [concrete] {} {}
 // CHECK:STDOUT:   %Destroy.impl_witness_table = impl_witness_table (@AdaptWithBaseAndFields.as.Destroy.impl.%AdaptWithBaseAndFields.as.Destroy.impl.Op.decl), @AdaptWithBaseAndFields.as.Destroy.impl [concrete]
 // CHECK:STDOUT:   %Destroy.impl_witness: <witness> = impl_witness %Destroy.impl_witness_table [concrete = constants.%Destroy.impl_witness.034]

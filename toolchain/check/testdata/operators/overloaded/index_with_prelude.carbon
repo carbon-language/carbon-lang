@@ -187,7 +187,7 @@ let x: i32 = c[0];
 // CHECK:STDOUT:   %x: %ElementType.e6b = bind_name x, %.loc16_25.2
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: impl @C.as.Destroy.impl: constants.%C as constants.%Destroy.type {
+// CHECK:STDOUT: impl @C.as.Destroy.impl: @C.%Self.ref as constants.%Destroy.type {
 // CHECK:STDOUT:   %C.as.Destroy.impl.Op.decl: %C.as.Destroy.impl.Op.type = fn_decl @C.as.Destroy.impl.Op [concrete = constants.%C.as.Destroy.impl.Op] {
 // CHECK:STDOUT:     %self.patt: %pattern_type.44a = binding_pattern self [concrete]
 // CHECK:STDOUT:     %self.param_patt: %pattern_type.44a = value_param_pattern %self.patt, call_param0 [concrete]
@@ -203,7 +203,7 @@ let x: i32 = c[0];
 // CHECK:STDOUT:   witness = @C.%Destroy.impl_witness
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: impl @ElementType.as.Destroy.impl: constants.%ElementType.e6b as constants.%Destroy.type {
+// CHECK:STDOUT: impl @ElementType.as.Destroy.impl: @ElementType.%Self.ref as constants.%Destroy.type {
 // CHECK:STDOUT:   %ElementType.as.Destroy.impl.Op.decl: %ElementType.as.Destroy.impl.Op.type = fn_decl @ElementType.as.Destroy.impl.Op [concrete = constants.%ElementType.as.Destroy.impl.Op] {
 // CHECK:STDOUT:     %self.patt: %pattern_type.b78 = binding_pattern self [concrete]
 // CHECK:STDOUT:     %self.param_patt: %pattern_type.b78 = value_param_pattern %self.patt, call_param0 [concrete]
@@ -219,7 +219,7 @@ let x: i32 = c[0];
 // CHECK:STDOUT:   witness = @ElementType.%Destroy.impl_witness
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: impl @SubscriptType.as.Destroy.impl: constants.%SubscriptType.8ee as constants.%Destroy.type {
+// CHECK:STDOUT: impl @SubscriptType.as.Destroy.impl: @SubscriptType.%Self.ref as constants.%Destroy.type {
 // CHECK:STDOUT:   %SubscriptType.as.Destroy.impl.Op.decl: %SubscriptType.as.Destroy.impl.Op.type = fn_decl @SubscriptType.as.Destroy.impl.Op [concrete = constants.%SubscriptType.as.Destroy.impl.Op] {
 // CHECK:STDOUT:     %self.patt: %pattern_type.17d = binding_pattern self [concrete]
 // CHECK:STDOUT:     %self.param_patt: %pattern_type.17d = value_param_pattern %self.patt, call_param0 [concrete]
@@ -263,6 +263,7 @@ let x: i32 = c[0];
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @C {
+// CHECK:STDOUT:   %Self.ref: type = name_ref Self, constants.%C [concrete = constants.%C]
 // CHECK:STDOUT:   impl_decl @C.as.Destroy.impl [concrete] {} {}
 // CHECK:STDOUT:   %Destroy.impl_witness_table = impl_witness_table (@C.as.Destroy.impl.%C.as.Destroy.impl.Op.decl), @C.as.Destroy.impl [concrete]
 // CHECK:STDOUT:   %Destroy.impl_witness: <witness> = impl_witness %Destroy.impl_witness_table [concrete = constants.%Destroy.impl_witness.edd]
@@ -274,6 +275,7 @@ let x: i32 = c[0];
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @ElementType {
+// CHECK:STDOUT:   %Self.ref: type = name_ref Self, constants.%ElementType.e6b [concrete = constants.%ElementType.e6b]
 // CHECK:STDOUT:   impl_decl @ElementType.as.Destroy.impl [concrete] {} {}
 // CHECK:STDOUT:   %Destroy.impl_witness_table = impl_witness_table (@ElementType.as.Destroy.impl.%ElementType.as.Destroy.impl.Op.decl), @ElementType.as.Destroy.impl [concrete]
 // CHECK:STDOUT:   %Destroy.impl_witness: <witness> = impl_witness %Destroy.impl_witness_table [concrete = constants.%Destroy.impl_witness.b20]
@@ -285,6 +287,7 @@ let x: i32 = c[0];
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @SubscriptType {
+// CHECK:STDOUT:   %Self.ref: type = name_ref Self, constants.%SubscriptType.8ee [concrete = constants.%SubscriptType.8ee]
 // CHECK:STDOUT:   impl_decl @SubscriptType.as.Destroy.impl [concrete] {} {}
 // CHECK:STDOUT:   %Destroy.impl_witness_table = impl_witness_table (@SubscriptType.as.Destroy.impl.%SubscriptType.as.Destroy.impl.Op.decl), @SubscriptType.as.Destroy.impl [concrete]
 // CHECK:STDOUT:   %Destroy.impl_witness: <witness> = impl_witness %Destroy.impl_witness_table [concrete = constants.%Destroy.impl_witness.63e]
@@ -606,7 +609,7 @@ let x: i32 = c[0];
 // CHECK:STDOUT:   %x: %ElementType.e6b = bind_name x, %.loc22_25.2
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: impl @C.as.Destroy.impl: constants.%C as constants.%Destroy.type {
+// CHECK:STDOUT: impl @C.as.Destroy.impl: @C.%Self.ref as constants.%Destroy.type {
 // CHECK:STDOUT:   %C.as.Destroy.impl.Op.decl: %C.as.Destroy.impl.Op.type = fn_decl @C.as.Destroy.impl.Op [concrete = constants.%C.as.Destroy.impl.Op] {
 // CHECK:STDOUT:     %self.patt: %pattern_type.44a = binding_pattern self [concrete]
 // CHECK:STDOUT:     %self.param_patt: %pattern_type.44a = value_param_pattern %self.patt, call_param0 [concrete]
@@ -622,7 +625,7 @@ let x: i32 = c[0];
 // CHECK:STDOUT:   witness = @C.%Destroy.impl_witness
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: impl @ElementType.as.Destroy.impl: constants.%ElementType.e6b as constants.%Destroy.type {
+// CHECK:STDOUT: impl @ElementType.as.Destroy.impl: @ElementType.%Self.ref as constants.%Destroy.type {
 // CHECK:STDOUT:   %ElementType.as.Destroy.impl.Op.decl: %ElementType.as.Destroy.impl.Op.type = fn_decl @ElementType.as.Destroy.impl.Op [concrete = constants.%ElementType.as.Destroy.impl.Op] {
 // CHECK:STDOUT:     %self.patt: %pattern_type.b78 = binding_pattern self [concrete]
 // CHECK:STDOUT:     %self.param_patt: %pattern_type.b78 = value_param_pattern %self.patt, call_param0 [concrete]
@@ -638,7 +641,7 @@ let x: i32 = c[0];
 // CHECK:STDOUT:   witness = @ElementType.%Destroy.impl_witness
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: impl @SubscriptType.as.Destroy.impl: constants.%SubscriptType.8ee as constants.%Destroy.type {
+// CHECK:STDOUT: impl @SubscriptType.as.Destroy.impl: @SubscriptType.%Self.ref as constants.%Destroy.type {
 // CHECK:STDOUT:   %SubscriptType.as.Destroy.impl.Op.decl: %SubscriptType.as.Destroy.impl.Op.type = fn_decl @SubscriptType.as.Destroy.impl.Op [concrete = constants.%SubscriptType.as.Destroy.impl.Op] {
 // CHECK:STDOUT:     %self.patt: %pattern_type.17d = binding_pattern self [concrete]
 // CHECK:STDOUT:     %self.param_patt: %pattern_type.17d = value_param_pattern %self.patt, call_param0 [concrete]
@@ -682,6 +685,7 @@ let x: i32 = c[0];
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @C {
+// CHECK:STDOUT:   %Self.ref: type = name_ref Self, constants.%C [concrete = constants.%C]
 // CHECK:STDOUT:   impl_decl @C.as.Destroy.impl [concrete] {} {}
 // CHECK:STDOUT:   %Destroy.impl_witness_table = impl_witness_table (@C.as.Destroy.impl.%C.as.Destroy.impl.Op.decl), @C.as.Destroy.impl [concrete]
 // CHECK:STDOUT:   %Destroy.impl_witness: <witness> = impl_witness %Destroy.impl_witness_table [concrete = constants.%Destroy.impl_witness.edd]
@@ -693,6 +697,7 @@ let x: i32 = c[0];
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @ElementType {
+// CHECK:STDOUT:   %Self.ref: type = name_ref Self, constants.%ElementType.e6b [concrete = constants.%ElementType.e6b]
 // CHECK:STDOUT:   impl_decl @ElementType.as.Destroy.impl [concrete] {} {}
 // CHECK:STDOUT:   %Destroy.impl_witness_table = impl_witness_table (@ElementType.as.Destroy.impl.%ElementType.as.Destroy.impl.Op.decl), @ElementType.as.Destroy.impl [concrete]
 // CHECK:STDOUT:   %Destroy.impl_witness: <witness> = impl_witness %Destroy.impl_witness_table [concrete = constants.%Destroy.impl_witness.b20]
@@ -704,6 +709,7 @@ let x: i32 = c[0];
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @SubscriptType {
+// CHECK:STDOUT:   %Self.ref: type = name_ref Self, constants.%SubscriptType.8ee [concrete = constants.%SubscriptType.8ee]
 // CHECK:STDOUT:   impl_decl @SubscriptType.as.Destroy.impl [concrete] {} {}
 // CHECK:STDOUT:   %Destroy.impl_witness_table = impl_witness_table (@SubscriptType.as.Destroy.impl.%SubscriptType.as.Destroy.impl.Op.decl), @SubscriptType.as.Destroy.impl [concrete]
 // CHECK:STDOUT:   %Destroy.impl_witness: <witness> = impl_witness %Destroy.impl_witness_table [concrete = constants.%Destroy.impl_witness.63e]
@@ -808,7 +814,7 @@ let x: i32 = c[0];
 // CHECK:STDOUT:   %x: %i32 = bind_name x, <error> [concrete = <error>]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: impl @C.as.Destroy.impl: constants.%C as constants.%Destroy.type {
+// CHECK:STDOUT: impl @C.as.Destroy.impl: @C.%Self.ref as constants.%Destroy.type {
 // CHECK:STDOUT:   %C.as.Destroy.impl.Op.decl: %C.as.Destroy.impl.Op.type = fn_decl @C.as.Destroy.impl.Op [concrete = constants.%C.as.Destroy.impl.Op] {
 // CHECK:STDOUT:     %self.patt: %pattern_type.44a = binding_pattern self [concrete]
 // CHECK:STDOUT:     %self.param_patt: %pattern_type.44a = value_param_pattern %self.patt, call_param0 [concrete]
@@ -825,6 +831,7 @@ let x: i32 = c[0];
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @C {
+// CHECK:STDOUT:   %Self.ref: type = name_ref Self, constants.%C [concrete = constants.%C]
 // CHECK:STDOUT:   impl_decl @C.as.Destroy.impl [concrete] {} {}
 // CHECK:STDOUT:   %Destroy.impl_witness_table = impl_witness_table (@C.as.Destroy.impl.%C.as.Destroy.impl.Op.decl), @C.as.Destroy.impl [concrete]
 // CHECK:STDOUT:   %Destroy.impl_witness: <witness> = impl_witness %Destroy.impl_witness_table [concrete = constants.%Destroy.impl_witness]

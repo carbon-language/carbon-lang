@@ -205,7 +205,7 @@ fn G() {
 // CHECK:STDOUT:   witness = (%Other.G.decl)
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: impl @GenericParam.as.Destroy.impl: constants.%GenericParam as constants.%Destroy.type {
+// CHECK:STDOUT: impl @GenericParam.as.Destroy.impl: @GenericParam.%Self.ref as constants.%Destroy.type {
 // CHECK:STDOUT:   %GenericParam.as.Destroy.impl.Op.decl: %GenericParam.as.Destroy.impl.Op.type = fn_decl @GenericParam.as.Destroy.impl.Op [concrete = constants.%GenericParam.as.Destroy.impl.Op] {
 // CHECK:STDOUT:     %self.patt: %pattern_type.7c3 = binding_pattern self [concrete]
 // CHECK:STDOUT:     %self.param_patt: %pattern_type.7c3 = value_param_pattern %self.patt, call_param0 [concrete]
@@ -221,7 +221,7 @@ fn G() {
 // CHECK:STDOUT:   witness = @GenericParam.%Destroy.impl_witness
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: impl @ImplsGeneric.as.Destroy.impl: constants.%ImplsGeneric as constants.%Destroy.type {
+// CHECK:STDOUT: impl @ImplsGeneric.as.Destroy.impl: @ImplsGeneric.%Self.ref as constants.%Destroy.type {
 // CHECK:STDOUT:   %ImplsGeneric.as.Destroy.impl.Op.decl: %ImplsGeneric.as.Destroy.impl.Op.type = fn_decl @ImplsGeneric.as.Destroy.impl.Op [concrete = constants.%ImplsGeneric.as.Destroy.impl.Op] {
 // CHECK:STDOUT:     %self.patt: %pattern_type.2db = binding_pattern self [concrete]
 // CHECK:STDOUT:     %self.param_patt: %pattern_type.2db = value_param_pattern %self.patt, call_param0 [concrete]
@@ -254,6 +254,7 @@ fn G() {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @GenericParam {
+// CHECK:STDOUT:   %Self.ref: type = name_ref Self, constants.%GenericParam [concrete = constants.%GenericParam]
 // CHECK:STDOUT:   impl_decl @GenericParam.as.Destroy.impl [concrete] {} {}
 // CHECK:STDOUT:   %Destroy.impl_witness_table = impl_witness_table (@GenericParam.as.Destroy.impl.%GenericParam.as.Destroy.impl.Op.decl), @GenericParam.as.Destroy.impl [concrete]
 // CHECK:STDOUT:   %Destroy.impl_witness: <witness> = impl_witness %Destroy.impl_witness_table [concrete = constants.%Destroy.impl_witness.884]
@@ -265,6 +266,7 @@ fn G() {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @ImplsGeneric {
+// CHECK:STDOUT:   %Self.ref: type = name_ref Self, constants.%ImplsGeneric [concrete = constants.%ImplsGeneric]
 // CHECK:STDOUT:   impl_decl @ImplsGeneric.as.Destroy.impl [concrete] {} {}
 // CHECK:STDOUT:   %Destroy.impl_witness_table = impl_witness_table (@ImplsGeneric.as.Destroy.impl.%ImplsGeneric.as.Destroy.impl.Op.decl), @ImplsGeneric.as.Destroy.impl [concrete]
 // CHECK:STDOUT:   %Destroy.impl_witness: <witness> = impl_witness %Destroy.impl_witness_table [concrete = constants.%Destroy.impl_witness.9ca]

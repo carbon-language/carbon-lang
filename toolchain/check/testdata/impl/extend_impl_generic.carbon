@@ -124,10 +124,10 @@ class X(U:! type) {
 // CHECK:STDOUT:   %G.type: type = fn_type @G [concrete]
 // CHECK:STDOUT:   %G: %G.type = struct_value () [concrete]
 // CHECK:STDOUT:   %.22c: type = fn_type_with_self_type %HasF.F.type.7f1, %HasF.facet [concrete]
-// CHECK:STDOUT:   %T.as.Destroy.impl.Op.type.a17: type = fn_type @T.as.Destroy.impl.Op, @T.as.Destroy.impl(%i32) [concrete]
-// CHECK:STDOUT:   %T.as.Destroy.impl.Op.e6a: %T.as.Destroy.impl.Op.type.a17 = struct_value () [concrete]
+// CHECK:STDOUT:   %Int.as.Destroy.impl.Op.type.b8f: type = fn_type @Int.as.Destroy.impl.Op, @Int.as.Destroy.impl(%int_32) [concrete]
+// CHECK:STDOUT:   %Int.as.Destroy.impl.Op.715: %Int.as.Destroy.impl.Op.type.b8f = struct_value () [concrete]
 // CHECK:STDOUT:   %ptr.235: type = ptr_type %i32 [concrete]
-// CHECK:STDOUT:   %T.as.Destroy.impl.Op.specific_fn: <specific function> = specific_function %T.as.Destroy.impl.Op.e6a, @T.as.Destroy.impl.Op(%i32) [concrete]
+// CHECK:STDOUT:   %Int.as.Destroy.impl.Op.specific_fn: <specific function> = specific_function %Int.as.Destroy.impl.Op.715, @Int.as.Destroy.impl.Op(%int_32) [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -203,7 +203,7 @@ class X(U:! type) {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: impl @Param.as.Destroy.impl: constants.%Param as constants.%Destroy.type {
+// CHECK:STDOUT: impl @Param.as.Destroy.impl: @Param.%Self.ref as constants.%Destroy.type {
 // CHECK:STDOUT:   %Param.as.Destroy.impl.Op.decl: %Param.as.Destroy.impl.Op.type = fn_decl @Param.as.Destroy.impl.Op [concrete = constants.%Param.as.Destroy.impl.Op] {
 // CHECK:STDOUT:     %self.patt: %pattern_type.fae = binding_pattern self [concrete]
 // CHECK:STDOUT:     %self.param_patt: %pattern_type.fae = value_param_pattern %self.patt, call_param0 [concrete]
@@ -235,7 +235,7 @@ class X(U:! type) {
 // CHECK:STDOUT:   witness = @C.%HasF.impl_witness
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: impl @C.as.Destroy.impl: constants.%C as constants.%Destroy.type {
+// CHECK:STDOUT: impl @C.as.Destroy.impl: @C.%Self.ref as constants.%Destroy.type {
 // CHECK:STDOUT:   %C.as.Destroy.impl.Op.decl: %C.as.Destroy.impl.Op.type = fn_decl @C.as.Destroy.impl.Op [concrete = constants.%C.as.Destroy.impl.Op] {
 // CHECK:STDOUT:     %self.patt: %pattern_type.44a = binding_pattern self [concrete]
 // CHECK:STDOUT:     %self.param_patt: %pattern_type.44a = value_param_pattern %self.patt, call_param0 [concrete]
@@ -255,6 +255,7 @@ class X(U:! type) {
 // CHECK:STDOUT:   %int_32: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
 // CHECK:STDOUT:   %i32: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
 // CHECK:STDOUT:   %.loc9: %Param.elem = field_decl x, element0 [concrete]
+// CHECK:STDOUT:   %Self.ref: type = name_ref Self, constants.%Param [concrete = constants.%Param]
 // CHECK:STDOUT:   impl_decl @Param.as.Destroy.impl [concrete] {} {}
 // CHECK:STDOUT:   %Destroy.impl_witness_table = impl_witness_table (@Param.as.Destroy.impl.%Param.as.Destroy.impl.Op.decl), @Param.as.Destroy.impl [concrete]
 // CHECK:STDOUT:   %Destroy.impl_witness: <witness> = impl_witness %Destroy.impl_witness_table [concrete = constants.%Destroy.impl_witness.2b9]
@@ -275,6 +276,7 @@ class X(U:! type) {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %HasF.impl_witness_table = impl_witness_table (@C.as.HasF.impl.%C.as.HasF.impl.F.decl), @C.as.HasF.impl [concrete]
 // CHECK:STDOUT:   %HasF.impl_witness: <witness> = impl_witness %HasF.impl_witness_table [concrete = constants.%HasF.impl_witness]
+// CHECK:STDOUT:   %Self.ref: type = name_ref Self, constants.%C [concrete = constants.%C]
 // CHECK:STDOUT:   impl_decl @C.as.Destroy.impl [concrete] {} {}
 // CHECK:STDOUT:   %Destroy.impl_witness_table = impl_witness_table (@C.as.Destroy.impl.%C.as.Destroy.impl.Op.decl), @C.as.Destroy.impl [concrete]
 // CHECK:STDOUT:   %Destroy.impl_witness: <witness> = impl_witness %Destroy.impl_witness_table [concrete = constants.%Destroy.impl_witness.edd]
@@ -361,11 +363,11 @@ class X(U:! type) {
 // CHECK:STDOUT:   %Param.as.Destroy.impl.Op.bound.loc22: <bound method> = bound_method %.loc22_20.1, constants.%Param.as.Destroy.impl.Op
 // CHECK:STDOUT:   %addr.loc22_20: %ptr.756 = addr_of %.loc22_20.1
 // CHECK:STDOUT:   %Param.as.Destroy.impl.Op.call.loc22: init %empty_tuple.type = call %Param.as.Destroy.impl.Op.bound.loc22(%addr.loc22_20)
-// CHECK:STDOUT:   %T.as.Destroy.impl.Op.bound: <bound method> = bound_method %b.var, constants.%T.as.Destroy.impl.Op.e6a
-// CHECK:STDOUT:   %T.as.Destroy.impl.Op.specific_fn: <specific function> = specific_function constants.%T.as.Destroy.impl.Op.e6a, @T.as.Destroy.impl.Op(constants.%i32) [concrete = constants.%T.as.Destroy.impl.Op.specific_fn]
-// CHECK:STDOUT:   %bound_method: <bound method> = bound_method %b.var, %T.as.Destroy.impl.Op.specific_fn
+// CHECK:STDOUT:   %Int.as.Destroy.impl.Op.bound: <bound method> = bound_method %b.var, constants.%Int.as.Destroy.impl.Op.715
+// CHECK:STDOUT:   %Int.as.Destroy.impl.Op.specific_fn: <specific function> = specific_function constants.%Int.as.Destroy.impl.Op.715, @Int.as.Destroy.impl.Op(constants.%int_32) [concrete = constants.%Int.as.Destroy.impl.Op.specific_fn]
+// CHECK:STDOUT:   %bound_method: <bound method> = bound_method %b.var, %Int.as.Destroy.impl.Op.specific_fn
 // CHECK:STDOUT:   %addr.loc22_3: %ptr.235 = addr_of %b.var
-// CHECK:STDOUT:   %T.as.Destroy.impl.Op.call: init %empty_tuple.type = call %bound_method(%addr.loc22_3)
+// CHECK:STDOUT:   %Int.as.Destroy.impl.Op.call: init %empty_tuple.type = call %bound_method(%addr.loc22_3)
 // CHECK:STDOUT:   %Param.as.Destroy.impl.Op.bound.loc21: <bound method> = bound_method %.loc21_20.1, constants.%Param.as.Destroy.impl.Op
 // CHECK:STDOUT:   %addr.loc21: %ptr.756 = addr_of %.loc21_20.1
 // CHECK:STDOUT:   %Param.as.Destroy.impl.Op.call.loc21: init %empty_tuple.type = call %Param.as.Destroy.impl.Op.bound.loc21(%addr.loc21)
@@ -552,13 +554,14 @@ class X(U:! type) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic impl @X.as.Destroy.impl(@X.%U.loc8_9.2: type) {
 // CHECK:STDOUT:   %U: type = bind_symbolic_name U, 0 [symbolic = %U (constants.%U)]
+// CHECK:STDOUT:   %X: type = class_type @X, @X(%U) [symbolic = %X (constants.%X)]
 // CHECK:STDOUT:   %Destroy.impl_witness: <witness> = impl_witness @X.%Destroy.impl_witness_table, @X.as.Destroy.impl(%U) [symbolic = %Destroy.impl_witness (constants.%Destroy.impl_witness)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %X.as.Destroy.impl.Op.type: type = fn_type @X.as.Destroy.impl.Op, @X.as.Destroy.impl(%U) [symbolic = %X.as.Destroy.impl.Op.type (constants.%X.as.Destroy.impl.Op.type)]
 // CHECK:STDOUT:   %X.as.Destroy.impl.Op: @X.as.Destroy.impl.%X.as.Destroy.impl.Op.type (%X.as.Destroy.impl.Op.type) = struct_value () [symbolic = %X.as.Destroy.impl.Op (constants.%X.as.Destroy.impl.Op)]
 // CHECK:STDOUT:
-// CHECK:STDOUT:   impl: constants.%X as constants.%Destroy.type {
+// CHECK:STDOUT:   impl: @X.%Self.ref as constants.%Destroy.type {
 // CHECK:STDOUT:     %X.as.Destroy.impl.Op.decl: @X.as.Destroy.impl.%X.as.Destroy.impl.Op.type (%X.as.Destroy.impl.Op.type) = fn_decl @X.as.Destroy.impl.Op [symbolic = @X.as.Destroy.impl.%X.as.Destroy.impl.Op (constants.%X.as.Destroy.impl.Op)] {
 // CHECK:STDOUT:       %self.patt: @X.as.Destroy.impl.Op.%pattern_type (%pattern_type.d72) = binding_pattern self [concrete]
 // CHECK:STDOUT:       %self.param_patt: @X.as.Destroy.impl.Op.%pattern_type (%pattern_type.d72) = value_param_pattern %self.patt, call_param0 [concrete]
@@ -595,6 +598,7 @@ class X(U:! type) {
 // CHECK:STDOUT:     %I.impl_witness_table = impl_witness_table (@X.as.I.impl.%X.as.I.impl.F.decl), @X.as.I.impl [concrete]
 // CHECK:STDOUT:     %I.impl_witness: <witness> = impl_witness %I.impl_witness_table, @X.as.I.impl(constants.%U) [symbolic = @X.as.I.impl.%I.impl_witness (constants.%I.impl_witness)]
 // CHECK:STDOUT:     %.loc9: type = specific_constant @X.as.I.impl.%I.type.loc9_21.2, @X.as.I.impl(constants.%U) [symbolic = %I.type (constants.%I.type.325e65.2)]
+// CHECK:STDOUT:     %Self.ref: type = name_ref Self, constants.%X [symbolic = @X.as.Destroy.impl.%X (constants.%X)]
 // CHECK:STDOUT:     impl_decl @X.as.Destroy.impl [concrete] {} {}
 // CHECK:STDOUT:     %Destroy.impl_witness_table = impl_witness_table (@X.as.Destroy.impl.%X.as.Destroy.impl.Op.decl), @X.as.Destroy.impl [concrete]
 // CHECK:STDOUT:     %Destroy.impl_witness: <witness> = impl_witness %Destroy.impl_witness_table, @X.as.Destroy.impl(constants.%U) [symbolic = @X.as.Destroy.impl.%Destroy.impl_witness (constants.%Destroy.impl_witness)]
@@ -714,6 +718,7 @@ class X(U:! type) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @X.as.Destroy.impl(constants.%U) {
 // CHECK:STDOUT:   %U => constants.%U
+// CHECK:STDOUT:   %X => constants.%X
 // CHECK:STDOUT:   %Destroy.impl_witness => constants.%Destroy.impl_witness
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

@@ -84,7 +84,7 @@ fn Run() {
 // CHECK:STDOUT:   %Cycle.decl.loc8: type = class_decl @Cycle [concrete = constants.%Cycle] {} {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: impl @Cycle.as.Destroy.impl: constants.%Cycle as constants.%Destroy.type {
+// CHECK:STDOUT: impl @Cycle.as.Destroy.impl: @Cycle.%Self.ref as constants.%Destroy.type {
 // CHECK:STDOUT:   %Cycle.as.Destroy.impl.Op.decl: %Cycle.as.Destroy.impl.Op.type = fn_decl @Cycle.as.Destroy.impl.Op [concrete = constants.%Cycle.as.Destroy.impl.Op] {
 // CHECK:STDOUT:     %self.patt: %pattern_type.d3d = binding_pattern self [concrete]
 // CHECK:STDOUT:     %self.param_patt: %pattern_type.d3d = value_param_pattern %self.patt, call_param0 [concrete]
@@ -105,6 +105,7 @@ fn Run() {
 // CHECK:STDOUT:   %ptr: type = ptr_type %Cycle.ref [concrete = constants.%ptr.257]
 // CHECK:STDOUT:   %struct_type.b: type = struct_type {.b: %ptr.257} [concrete = constants.%struct_type.b]
 // CHECK:STDOUT:   %.loc10: %Cycle.elem = field_decl c, element0 [concrete]
+// CHECK:STDOUT:   %Self.ref: type = name_ref Self, constants.%Cycle [concrete = constants.%Cycle]
 // CHECK:STDOUT:   impl_decl @Cycle.as.Destroy.impl [concrete] {} {}
 // CHECK:STDOUT:   %Destroy.impl_witness_table = impl_witness_table (@Cycle.as.Destroy.impl.%Cycle.as.Destroy.impl.Op.decl), @Cycle.as.Destroy.impl [concrete]
 // CHECK:STDOUT:   %Destroy.impl_witness: <witness> = impl_witness %Destroy.impl_witness_table [concrete = constants.%Destroy.impl_witness]

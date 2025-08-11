@@ -57,10 +57,10 @@ fn Mismatch() -> i32 {
 // CHECK:STDOUT:   %Core.FloatLiteral.as.ImplicitAs.impl.Convert.bound: <bound method> = bound_method %float, %Core.FloatLiteral.as.ImplicitAs.impl.Convert.a03 [concrete]
 // CHECK:STDOUT:   %Core.FloatLiteral.as.ImplicitAs.impl.Convert.specific_fn: <specific function> = specific_function %Core.FloatLiteral.as.ImplicitAs.impl.Convert.a03, @Core.FloatLiteral.as.ImplicitAs.impl.Convert(%int_64) [concrete]
 // CHECK:STDOUT:   %bound_method: <bound method> = bound_method %float, %Core.FloatLiteral.as.ImplicitAs.impl.Convert.specific_fn [concrete]
-// CHECK:STDOUT:   %T.as.Destroy.impl.Op.type.efe: type = fn_type @T.as.Destroy.impl.Op, @T.as.Destroy.impl(%f64.d77) [concrete]
-// CHECK:STDOUT:   %T.as.Destroy.impl.Op.c51: %T.as.Destroy.impl.Op.type.efe = struct_value () [concrete]
+// CHECK:STDOUT:   %Float.as.Destroy.impl.Op.type.cd5: type = fn_type @Float.as.Destroy.impl.Op, @Float.as.Destroy.impl(%int_64) [concrete]
+// CHECK:STDOUT:   %Float.as.Destroy.impl.Op.b8c: %Float.as.Destroy.impl.Op.type.cd5 = struct_value () [concrete]
 // CHECK:STDOUT:   %ptr.bcc: type = ptr_type %f64.d77 [concrete]
-// CHECK:STDOUT:   %T.as.Destroy.impl.Op.specific_fn: <specific function> = specific_function %T.as.Destroy.impl.Op.c51, @T.as.Destroy.impl.Op(%f64.d77) [concrete]
+// CHECK:STDOUT:   %Float.as.Destroy.impl.Op.specific_fn: <specific function> = specific_function %Float.as.Destroy.impl.Op.b8c, @Float.as.Destroy.impl.Op(%int_64) [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -118,11 +118,11 @@ fn Mismatch() -> i32 {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %v: ref %f64.d77 = bind_name v, %v.var
 // CHECK:STDOUT:   %.loc23_16: %f64.d77 = bind_value %v
-// CHECK:STDOUT:   %T.as.Destroy.impl.Op.bound: <bound method> = bound_method %v.var, constants.%T.as.Destroy.impl.Op.c51
-// CHECK:STDOUT:   %T.as.Destroy.impl.Op.specific_fn: <specific function> = specific_function constants.%T.as.Destroy.impl.Op.c51, @T.as.Destroy.impl.Op(constants.%f64.d77) [concrete = constants.%T.as.Destroy.impl.Op.specific_fn]
-// CHECK:STDOUT:   %bound_method.loc23_12.3: <bound method> = bound_method %v.var, %T.as.Destroy.impl.Op.specific_fn
+// CHECK:STDOUT:   %Float.as.Destroy.impl.Op.bound: <bound method> = bound_method %v.var, constants.%Float.as.Destroy.impl.Op.b8c
+// CHECK:STDOUT:   %Float.as.Destroy.impl.Op.specific_fn: <specific function> = specific_function constants.%Float.as.Destroy.impl.Op.b8c, @Float.as.Destroy.impl.Op(constants.%int_64) [concrete = constants.%Float.as.Destroy.impl.Op.specific_fn]
+// CHECK:STDOUT:   %bound_method.loc23_12.3: <bound method> = bound_method %v.var, %Float.as.Destroy.impl.Op.specific_fn
 // CHECK:STDOUT:   %addr: %ptr.bcc = addr_of %v.var
-// CHECK:STDOUT:   %T.as.Destroy.impl.Op.call: init %empty_tuple.type = call %bound_method.loc23_12.3(%addr)
+// CHECK:STDOUT:   %Float.as.Destroy.impl.Op.call: init %empty_tuple.type = call %bound_method.loc23_12.3(%addr)
 // CHECK:STDOUT:   return %.loc23_16
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

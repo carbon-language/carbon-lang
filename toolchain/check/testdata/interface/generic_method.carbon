@@ -288,7 +288,7 @@ fn CallIndirect() {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: impl @X.as.Destroy.impl: constants.%X as constants.%Destroy.type {
+// CHECK:STDOUT: impl @X.as.Destroy.impl: @X.%Self.ref as constants.%Destroy.type {
 // CHECK:STDOUT:   %X.as.Destroy.impl.Op.decl: %X.as.Destroy.impl.Op.type = fn_decl @X.as.Destroy.impl.Op [concrete = constants.%X.as.Destroy.impl.Op] {
 // CHECK:STDOUT:     %self.patt: %pattern_type.1c6 = binding_pattern self [concrete]
 // CHECK:STDOUT:     %self.param_patt: %pattern_type.1c6 = value_param_pattern %self.patt, call_param0 [concrete]
@@ -304,7 +304,7 @@ fn CallIndirect() {
 // CHECK:STDOUT:   witness = @X.%Destroy.impl_witness
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: impl @Y.as.Destroy.impl: constants.%Y as constants.%Destroy.type {
+// CHECK:STDOUT: impl @Y.as.Destroy.impl: @Y.%Self.ref as constants.%Destroy.type {
 // CHECK:STDOUT:   %Y.as.Destroy.impl.Op.decl: %Y.as.Destroy.impl.Op.type = fn_decl @Y.as.Destroy.impl.Op [concrete = constants.%Y.as.Destroy.impl.Op] {
 // CHECK:STDOUT:     %self.patt: %pattern_type.0ae = binding_pattern self [concrete]
 // CHECK:STDOUT:     %self.param_patt: %pattern_type.0ae = value_param_pattern %self.patt, call_param0 [concrete]
@@ -320,7 +320,7 @@ fn CallIndirect() {
 // CHECK:STDOUT:   witness = @Y.%Destroy.impl_witness
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: impl @Z.as.Destroy.impl: constants.%Z as constants.%Destroy.type {
+// CHECK:STDOUT: impl @Z.as.Destroy.impl: @Z.%Self.ref as constants.%Destroy.type {
 // CHECK:STDOUT:   %Z.as.Destroy.impl.Op.decl: %Z.as.Destroy.impl.Op.type = fn_decl @Z.as.Destroy.impl.Op [concrete = constants.%Z.as.Destroy.impl.Op] {
 // CHECK:STDOUT:     %self.patt: %pattern_type.f76 = binding_pattern self [concrete]
 // CHECK:STDOUT:     %self.param_patt: %pattern_type.f76 = value_param_pattern %self.patt, call_param0 [concrete]
@@ -365,6 +365,7 @@ fn CallIndirect() {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @X {
+// CHECK:STDOUT:   %Self.ref: type = name_ref Self, constants.%X [concrete = constants.%X]
 // CHECK:STDOUT:   impl_decl @X.as.Destroy.impl [concrete] {} {}
 // CHECK:STDOUT:   %Destroy.impl_witness_table = impl_witness_table (@X.as.Destroy.impl.%X.as.Destroy.impl.Op.decl), @X.as.Destroy.impl [concrete]
 // CHECK:STDOUT:   %Destroy.impl_witness: <witness> = impl_witness %Destroy.impl_witness_table [concrete = constants.%Destroy.impl_witness.807]
@@ -376,6 +377,7 @@ fn CallIndirect() {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @Y {
+// CHECK:STDOUT:   %Self.ref: type = name_ref Self, constants.%Y [concrete = constants.%Y]
 // CHECK:STDOUT:   impl_decl @Y.as.Destroy.impl [concrete] {} {}
 // CHECK:STDOUT:   %Destroy.impl_witness_table = impl_witness_table (@Y.as.Destroy.impl.%Y.as.Destroy.impl.Op.decl), @Y.as.Destroy.impl [concrete]
 // CHECK:STDOUT:   %Destroy.impl_witness: <witness> = impl_witness %Destroy.impl_witness_table [concrete = constants.%Destroy.impl_witness.621]
@@ -387,6 +389,7 @@ fn CallIndirect() {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @Z {
+// CHECK:STDOUT:   %Self.ref: type = name_ref Self, constants.%Z [concrete = constants.%Z]
 // CHECK:STDOUT:   impl_decl @Z.as.Destroy.impl [concrete] {} {}
 // CHECK:STDOUT:   %Destroy.impl_witness_table = impl_witness_table (@Z.as.Destroy.impl.%Z.as.Destroy.impl.Op.decl), @Z.as.Destroy.impl [concrete]
 // CHECK:STDOUT:   %Destroy.impl_witness: <witness> = impl_witness %Destroy.impl_witness_table [concrete = constants.%Destroy.impl_witness.2a0]
@@ -902,7 +905,7 @@ fn CallIndirect() {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: impl @X.as.Destroy.impl: constants.%X as constants.%Destroy.type {
+// CHECK:STDOUT: impl @X.as.Destroy.impl: @X.%Self.ref as constants.%Destroy.type {
 // CHECK:STDOUT:   %X.as.Destroy.impl.Op.decl: %X.as.Destroy.impl.Op.type = fn_decl @X.as.Destroy.impl.Op [concrete = constants.%X.as.Destroy.impl.Op] {
 // CHECK:STDOUT:     %self.patt: %pattern_type.1c6 = binding_pattern self [concrete]
 // CHECK:STDOUT:     %self.param_patt: %pattern_type.1c6 = value_param_pattern %self.patt, call_param0 [concrete]
@@ -918,7 +921,7 @@ fn CallIndirect() {
 // CHECK:STDOUT:   witness = @X.%Destroy.impl_witness
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: impl @Y1.as.Destroy.impl: constants.%Y1 as constants.%Destroy.type {
+// CHECK:STDOUT: impl @Y1.as.Destroy.impl: @Y1.%Self.ref as constants.%Destroy.type {
 // CHECK:STDOUT:   %Y1.as.Destroy.impl.Op.decl: %Y1.as.Destroy.impl.Op.type = fn_decl @Y1.as.Destroy.impl.Op [concrete = constants.%Y1.as.Destroy.impl.Op] {
 // CHECK:STDOUT:     %self.patt: %pattern_type.273 = binding_pattern self [concrete]
 // CHECK:STDOUT:     %self.param_patt: %pattern_type.273 = value_param_pattern %self.patt, call_param0 [concrete]
@@ -934,7 +937,7 @@ fn CallIndirect() {
 // CHECK:STDOUT:   witness = @Y1.%Destroy.impl_witness
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: impl @Y2.as.Destroy.impl: constants.%Y2 as constants.%Destroy.type {
+// CHECK:STDOUT: impl @Y2.as.Destroy.impl: @Y2.%Self.ref as constants.%Destroy.type {
 // CHECK:STDOUT:   %Y2.as.Destroy.impl.Op.decl: %Y2.as.Destroy.impl.Op.type = fn_decl @Y2.as.Destroy.impl.Op [concrete = constants.%Y2.as.Destroy.impl.Op] {
 // CHECK:STDOUT:     %self.patt: %pattern_type.484 = binding_pattern self [concrete]
 // CHECK:STDOUT:     %self.param_patt: %pattern_type.484 = value_param_pattern %self.patt, call_param0 [concrete]
@@ -950,7 +953,7 @@ fn CallIndirect() {
 // CHECK:STDOUT:   witness = @Y2.%Destroy.impl_witness
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: impl @Z.as.Destroy.impl: constants.%Z as constants.%Destroy.type {
+// CHECK:STDOUT: impl @Z.as.Destroy.impl: @Z.%Self.ref as constants.%Destroy.type {
 // CHECK:STDOUT:   %Z.as.Destroy.impl.Op.decl: %Z.as.Destroy.impl.Op.type = fn_decl @Z.as.Destroy.impl.Op [concrete = constants.%Z.as.Destroy.impl.Op] {
 // CHECK:STDOUT:     %self.patt: %pattern_type.f76 = binding_pattern self [concrete]
 // CHECK:STDOUT:     %self.param_patt: %pattern_type.f76 = value_param_pattern %self.patt, call_param0 [concrete]
@@ -1013,6 +1016,7 @@ fn CallIndirect() {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @X {
+// CHECK:STDOUT:   %Self.ref: type = name_ref Self, constants.%X [concrete = constants.%X]
 // CHECK:STDOUT:   impl_decl @X.as.Destroy.impl [concrete] {} {}
 // CHECK:STDOUT:   %Destroy.impl_witness_table = impl_witness_table (@X.as.Destroy.impl.%X.as.Destroy.impl.Op.decl), @X.as.Destroy.impl [concrete]
 // CHECK:STDOUT:   %Destroy.impl_witness: <witness> = impl_witness %Destroy.impl_witness_table [concrete = constants.%Destroy.impl_witness.807]
@@ -1024,6 +1028,7 @@ fn CallIndirect() {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @Y1 {
+// CHECK:STDOUT:   %Self.ref: type = name_ref Self, constants.%Y1 [concrete = constants.%Y1]
 // CHECK:STDOUT:   impl_decl @Y1.as.Destroy.impl [concrete] {} {}
 // CHECK:STDOUT:   %Destroy.impl_witness_table = impl_witness_table (@Y1.as.Destroy.impl.%Y1.as.Destroy.impl.Op.decl), @Y1.as.Destroy.impl [concrete]
 // CHECK:STDOUT:   %Destroy.impl_witness: <witness> = impl_witness %Destroy.impl_witness_table [concrete = constants.%Destroy.impl_witness.614]
@@ -1035,6 +1040,7 @@ fn CallIndirect() {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @Y2 {
+// CHECK:STDOUT:   %Self.ref: type = name_ref Self, constants.%Y2 [concrete = constants.%Y2]
 // CHECK:STDOUT:   impl_decl @Y2.as.Destroy.impl [concrete] {} {}
 // CHECK:STDOUT:   %Destroy.impl_witness_table = impl_witness_table (@Y2.as.Destroy.impl.%Y2.as.Destroy.impl.Op.decl), @Y2.as.Destroy.impl [concrete]
 // CHECK:STDOUT:   %Destroy.impl_witness: <witness> = impl_witness %Destroy.impl_witness_table [concrete = constants.%Destroy.impl_witness.7b0]
@@ -1046,6 +1052,7 @@ fn CallIndirect() {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @Z {
+// CHECK:STDOUT:   %Self.ref: type = name_ref Self, constants.%Z [concrete = constants.%Z]
 // CHECK:STDOUT:   impl_decl @Z.as.Destroy.impl [concrete] {} {}
 // CHECK:STDOUT:   %Destroy.impl_witness_table = impl_witness_table (@Z.as.Destroy.impl.%Z.as.Destroy.impl.Op.decl), @Z.as.Destroy.impl [concrete]
 // CHECK:STDOUT:   %Destroy.impl_witness: <witness> = impl_witness %Destroy.impl_witness_table [concrete = constants.%Destroy.impl_witness.2a0]

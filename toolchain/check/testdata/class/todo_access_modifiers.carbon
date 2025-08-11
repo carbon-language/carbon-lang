@@ -67,7 +67,7 @@ class Access {
 // CHECK:STDOUT:   %Access.decl: type = class_decl @Access [concrete = constants.%Access] {} {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: impl @Access.as.Destroy.impl: constants.%Access as constants.%Destroy.type {
+// CHECK:STDOUT: impl @Access.as.Destroy.impl: @Access.%Self.ref as constants.%Destroy.type {
 // CHECK:STDOUT:   %Access.as.Destroy.impl.Op.decl: %Access.as.Destroy.impl.Op.type = fn_decl @Access.as.Destroy.impl.Op [concrete = constants.%Access.as.Destroy.impl.Op] {
 // CHECK:STDOUT:     %self.patt: %pattern_type.010 = binding_pattern self [concrete]
 // CHECK:STDOUT:     %self.param_patt: %pattern_type.010 = value_param_pattern %self.patt, call_param0 [concrete]
@@ -92,6 +92,7 @@ class Access {
 // CHECK:STDOUT:   %int_32.loc23: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
 // CHECK:STDOUT:   %i32.loc23: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
 // CHECK:STDOUT:   %.loc23: %Access.elem = field_decl l, element1 [concrete]
+// CHECK:STDOUT:   %Self.ref: type = name_ref Self, constants.%Access [concrete = constants.%Access]
 // CHECK:STDOUT:   impl_decl @Access.as.Destroy.impl [concrete] {} {}
 // CHECK:STDOUT:   %Destroy.impl_witness_table = impl_witness_table (@Access.as.Destroy.impl.%Access.as.Destroy.impl.Op.decl), @Access.as.Destroy.impl [concrete]
 // CHECK:STDOUT:   %Destroy.impl_witness: <witness> = impl_witness %Destroy.impl_witness_table [concrete = constants.%Destroy.impl_witness]

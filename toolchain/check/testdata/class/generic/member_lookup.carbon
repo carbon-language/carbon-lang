@@ -226,13 +226,14 @@ fn AccessMissingConcrete(x: Derived(i32)) -> i32 {
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic impl @Base.as.Destroy.impl(@Base.%T.loc4_17.2: type) {
 // CHECK:STDOUT:   %T: type = bind_symbolic_name T, 0 [symbolic = %T (constants.%T)]
+// CHECK:STDOUT:   %Base: type = class_type @Base, @Base(%T) [symbolic = %Base (constants.%Base.370)]
 // CHECK:STDOUT:   %Destroy.impl_witness: <witness> = impl_witness @Base.%Destroy.impl_witness_table, @Base.as.Destroy.impl(%T) [symbolic = %Destroy.impl_witness (constants.%Destroy.impl_witness.9f8)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %Base.as.Destroy.impl.Op.type: type = fn_type @Base.as.Destroy.impl.Op, @Base.as.Destroy.impl(%T) [symbolic = %Base.as.Destroy.impl.Op.type (constants.%Base.as.Destroy.impl.Op.type)]
 // CHECK:STDOUT:   %Base.as.Destroy.impl.Op: @Base.as.Destroy.impl.%Base.as.Destroy.impl.Op.type (%Base.as.Destroy.impl.Op.type) = struct_value () [symbolic = %Base.as.Destroy.impl.Op (constants.%Base.as.Destroy.impl.Op)]
 // CHECK:STDOUT:
-// CHECK:STDOUT:   impl: constants.%Base.370 as constants.%Destroy.type {
+// CHECK:STDOUT:   impl: @Base.%Self.ref as constants.%Destroy.type {
 // CHECK:STDOUT:     %Base.as.Destroy.impl.Op.decl: @Base.as.Destroy.impl.%Base.as.Destroy.impl.Op.type (%Base.as.Destroy.impl.Op.type) = fn_decl @Base.as.Destroy.impl.Op [symbolic = @Base.as.Destroy.impl.%Base.as.Destroy.impl.Op (constants.%Base.as.Destroy.impl.Op)] {
 // CHECK:STDOUT:       %self.patt: @Base.as.Destroy.impl.Op.%pattern_type (%pattern_type.8d4) = binding_pattern self [concrete]
 // CHECK:STDOUT:       %self.param_patt: @Base.as.Destroy.impl.Op.%pattern_type (%pattern_type.8d4) = value_param_pattern %self.patt, call_param0 [concrete]
@@ -254,13 +255,14 @@ fn AccessMissingConcrete(x: Derived(i32)) -> i32 {
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic impl @Derived.as.Destroy.impl(@Derived.%T.loc8_15.2: type) {
 // CHECK:STDOUT:   %T: type = bind_symbolic_name T, 0 [symbolic = %T (constants.%T)]
+// CHECK:STDOUT:   %Derived: type = class_type @Derived, @Derived(%T) [symbolic = %Derived (constants.%Derived.85c)]
 // CHECK:STDOUT:   %Destroy.impl_witness: <witness> = impl_witness @Derived.%Destroy.impl_witness_table, @Derived.as.Destroy.impl(%T) [symbolic = %Destroy.impl_witness (constants.%Destroy.impl_witness.fa7)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %Derived.as.Destroy.impl.Op.type: type = fn_type @Derived.as.Destroy.impl.Op, @Derived.as.Destroy.impl(%T) [symbolic = %Derived.as.Destroy.impl.Op.type (constants.%Derived.as.Destroy.impl.Op.type)]
 // CHECK:STDOUT:   %Derived.as.Destroy.impl.Op: @Derived.as.Destroy.impl.%Derived.as.Destroy.impl.Op.type (%Derived.as.Destroy.impl.Op.type) = struct_value () [symbolic = %Derived.as.Destroy.impl.Op (constants.%Derived.as.Destroy.impl.Op)]
 // CHECK:STDOUT:
-// CHECK:STDOUT:   impl: constants.%Derived.85c as constants.%Destroy.type {
+// CHECK:STDOUT:   impl: @Derived.%Self.ref as constants.%Destroy.type {
 // CHECK:STDOUT:     %Derived.as.Destroy.impl.Op.decl: @Derived.as.Destroy.impl.%Derived.as.Destroy.impl.Op.type (%Derived.as.Destroy.impl.Op.type) = fn_decl @Derived.as.Destroy.impl.Op [symbolic = @Derived.as.Destroy.impl.%Derived.as.Destroy.impl.Op (constants.%Derived.as.Destroy.impl.Op)] {
 // CHECK:STDOUT:       %self.patt: @Derived.as.Destroy.impl.Op.%pattern_type (%pattern_type.520) = binding_pattern self [concrete]
 // CHECK:STDOUT:       %self.param_patt: @Derived.as.Destroy.impl.Op.%pattern_type (%pattern_type.520) = value_param_pattern %self.patt, call_param0 [concrete]
@@ -293,6 +295,7 @@ fn AccessMissingConcrete(x: Derived(i32)) -> i32 {
 // CHECK:STDOUT:   class {
 // CHECK:STDOUT:     %T.ref: type = name_ref T, %T.loc4_17.2 [symbolic = %T.loc4_17.1 (constants.%T)]
 // CHECK:STDOUT:     %.loc5: @Base.%Base.elem (%Base.elem.9af) = field_decl b, element0 [concrete]
+// CHECK:STDOUT:     %Self.ref: type = name_ref Self, constants.%Base.370 [symbolic = @Base.as.Destroy.impl.%Base (constants.%Base.370)]
 // CHECK:STDOUT:     impl_decl @Base.as.Destroy.impl [concrete] {} {}
 // CHECK:STDOUT:     %Destroy.impl_witness_table = impl_witness_table (@Base.as.Destroy.impl.%Base.as.Destroy.impl.Op.decl), @Base.as.Destroy.impl [concrete]
 // CHECK:STDOUT:     %Destroy.impl_witness: <witness> = impl_witness %Destroy.impl_witness_table, @Base.as.Destroy.impl(constants.%T) [symbolic = @Base.as.Destroy.impl.%Destroy.impl_witness (constants.%Destroy.impl_witness.9f8)]
@@ -326,6 +329,7 @@ fn AccessMissingConcrete(x: Derived(i32)) -> i32 {
 // CHECK:STDOUT:     %.loc9: @Derived.%Derived.elem.loc9 (%Derived.elem.8b3) = base_decl %Base.loc9_22.1, element0 [concrete]
 // CHECK:STDOUT:     %T.ref.loc10: type = name_ref T, %T.loc8_15.2 [symbolic = %T.loc8_15.1 (constants.%T)]
 // CHECK:STDOUT:     %.loc10: @Derived.%Derived.elem.loc10 (%Derived.elem.6d2) = field_decl d, element1 [concrete]
+// CHECK:STDOUT:     %Self.ref: type = name_ref Self, constants.%Derived.85c [symbolic = @Derived.as.Destroy.impl.%Derived (constants.%Derived.85c)]
 // CHECK:STDOUT:     impl_decl @Derived.as.Destroy.impl [concrete] {} {}
 // CHECK:STDOUT:     %Destroy.impl_witness_table = impl_witness_table (@Derived.as.Destroy.impl.%Derived.as.Destroy.impl.Op.decl), @Derived.as.Destroy.impl [concrete]
 // CHECK:STDOUT:     %Destroy.impl_witness: <witness> = impl_witness %Destroy.impl_witness_table, @Derived.as.Destroy.impl(constants.%T) [symbolic = @Derived.as.Destroy.impl.%Destroy.impl_witness (constants.%Destroy.impl_witness.fa7)]
@@ -435,6 +439,7 @@ fn AccessMissingConcrete(x: Derived(i32)) -> i32 {
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Base.as.Destroy.impl(constants.%T) {
 // CHECK:STDOUT:   %T => constants.%T
+// CHECK:STDOUT:   %Base => constants.%Base.370
 // CHECK:STDOUT:   %Destroy.impl_witness => constants.%Destroy.impl_witness.9f8
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -461,6 +466,7 @@ fn AccessMissingConcrete(x: Derived(i32)) -> i32 {
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Derived.as.Destroy.impl(constants.%T) {
 // CHECK:STDOUT:   %T => constants.%T
+// CHECK:STDOUT:   %Derived => constants.%Derived.85c
 // CHECK:STDOUT:   %Destroy.impl_witness => constants.%Destroy.impl_witness.fa7
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -663,13 +669,14 @@ fn AccessMissingConcrete(x: Derived(i32)) -> i32 {
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic impl @Base.as.Destroy.impl(@Base.%T.loc4_17.2: type) {
 // CHECK:STDOUT:   %T: type = bind_symbolic_name T, 0 [symbolic = %T (constants.%T)]
+// CHECK:STDOUT:   %Base: type = class_type @Base, @Base(%T) [symbolic = %Base (constants.%Base.370)]
 // CHECK:STDOUT:   %Destroy.impl_witness: <witness> = impl_witness @Base.%Destroy.impl_witness_table, @Base.as.Destroy.impl(%T) [symbolic = %Destroy.impl_witness (constants.%Destroy.impl_witness.9f8)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %Base.as.Destroy.impl.Op.type: type = fn_type @Base.as.Destroy.impl.Op, @Base.as.Destroy.impl(%T) [symbolic = %Base.as.Destroy.impl.Op.type (constants.%Base.as.Destroy.impl.Op.type)]
 // CHECK:STDOUT:   %Base.as.Destroy.impl.Op: @Base.as.Destroy.impl.%Base.as.Destroy.impl.Op.type (%Base.as.Destroy.impl.Op.type) = struct_value () [symbolic = %Base.as.Destroy.impl.Op (constants.%Base.as.Destroy.impl.Op)]
 // CHECK:STDOUT:
-// CHECK:STDOUT:   impl: constants.%Base.370 as constants.%Destroy.type {
+// CHECK:STDOUT:   impl: @Base.%Self.ref as constants.%Destroy.type {
 // CHECK:STDOUT:     %Base.as.Destroy.impl.Op.decl: @Base.as.Destroy.impl.%Base.as.Destroy.impl.Op.type (%Base.as.Destroy.impl.Op.type) = fn_decl @Base.as.Destroy.impl.Op [symbolic = @Base.as.Destroy.impl.%Base.as.Destroy.impl.Op (constants.%Base.as.Destroy.impl.Op)] {
 // CHECK:STDOUT:       %self.patt: @Base.as.Destroy.impl.Op.%pattern_type (%pattern_type.8d4) = binding_pattern self [concrete]
 // CHECK:STDOUT:       %self.param_patt: @Base.as.Destroy.impl.Op.%pattern_type (%pattern_type.8d4) = value_param_pattern %self.patt, call_param0 [concrete]
@@ -691,13 +698,14 @@ fn AccessMissingConcrete(x: Derived(i32)) -> i32 {
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic impl @Derived.as.Destroy.impl(@Derived.%T.loc8_15.2: type) {
 // CHECK:STDOUT:   %T: type = bind_symbolic_name T, 0 [symbolic = %T (constants.%T)]
+// CHECK:STDOUT:   %Derived: type = class_type @Derived, @Derived(%T) [symbolic = %Derived (constants.%Derived.85c)]
 // CHECK:STDOUT:   %Destroy.impl_witness: <witness> = impl_witness @Derived.%Destroy.impl_witness_table, @Derived.as.Destroy.impl(%T) [symbolic = %Destroy.impl_witness (constants.%Destroy.impl_witness.fa7)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %Derived.as.Destroy.impl.Op.type: type = fn_type @Derived.as.Destroy.impl.Op, @Derived.as.Destroy.impl(%T) [symbolic = %Derived.as.Destroy.impl.Op.type (constants.%Derived.as.Destroy.impl.Op.type)]
 // CHECK:STDOUT:   %Derived.as.Destroy.impl.Op: @Derived.as.Destroy.impl.%Derived.as.Destroy.impl.Op.type (%Derived.as.Destroy.impl.Op.type) = struct_value () [symbolic = %Derived.as.Destroy.impl.Op (constants.%Derived.as.Destroy.impl.Op)]
 // CHECK:STDOUT:
-// CHECK:STDOUT:   impl: constants.%Derived.85c as constants.%Destroy.type {
+// CHECK:STDOUT:   impl: @Derived.%Self.ref as constants.%Destroy.type {
 // CHECK:STDOUT:     %Derived.as.Destroy.impl.Op.decl: @Derived.as.Destroy.impl.%Derived.as.Destroy.impl.Op.type (%Derived.as.Destroy.impl.Op.type) = fn_decl @Derived.as.Destroy.impl.Op [symbolic = @Derived.as.Destroy.impl.%Derived.as.Destroy.impl.Op (constants.%Derived.as.Destroy.impl.Op)] {
 // CHECK:STDOUT:       %self.patt: @Derived.as.Destroy.impl.Op.%pattern_type (%pattern_type.520) = binding_pattern self [concrete]
 // CHECK:STDOUT:       %self.param_patt: @Derived.as.Destroy.impl.Op.%pattern_type (%pattern_type.520) = value_param_pattern %self.patt, call_param0 [concrete]
@@ -730,6 +738,7 @@ fn AccessMissingConcrete(x: Derived(i32)) -> i32 {
 // CHECK:STDOUT:   class {
 // CHECK:STDOUT:     %T.ref: type = name_ref T, %T.loc4_17.2 [symbolic = %T.loc4_17.1 (constants.%T)]
 // CHECK:STDOUT:     %.loc5: @Base.%Base.elem (%Base.elem.9af) = field_decl b, element0 [concrete]
+// CHECK:STDOUT:     %Self.ref: type = name_ref Self, constants.%Base.370 [symbolic = @Base.as.Destroy.impl.%Base (constants.%Base.370)]
 // CHECK:STDOUT:     impl_decl @Base.as.Destroy.impl [concrete] {} {}
 // CHECK:STDOUT:     %Destroy.impl_witness_table = impl_witness_table (@Base.as.Destroy.impl.%Base.as.Destroy.impl.Op.decl), @Base.as.Destroy.impl [concrete]
 // CHECK:STDOUT:     %Destroy.impl_witness: <witness> = impl_witness %Destroy.impl_witness_table, @Base.as.Destroy.impl(constants.%T) [symbolic = @Base.as.Destroy.impl.%Destroy.impl_witness (constants.%Destroy.impl_witness.9f8)]
@@ -764,6 +773,7 @@ fn AccessMissingConcrete(x: Derived(i32)) -> i32 {
 // CHECK:STDOUT:     %.loc9: @Derived.%Derived.elem.loc9 (%Derived.elem.8b3) = base_decl %Base.loc9_22.1, element0 [concrete]
 // CHECK:STDOUT:     %T.ref.loc10: type = name_ref T, %T.loc8_15.2 [symbolic = %T.loc8_15.1 (constants.%T)]
 // CHECK:STDOUT:     %.loc10: @Derived.%Derived.elem.loc10 (%Derived.elem.6d2) = field_decl d, element1 [concrete]
+// CHECK:STDOUT:     %Self.ref: type = name_ref Self, constants.%Derived.85c [symbolic = @Derived.as.Destroy.impl.%Derived (constants.%Derived.85c)]
 // CHECK:STDOUT:     impl_decl @Derived.as.Destroy.impl [concrete] {} {}
 // CHECK:STDOUT:     %Destroy.impl_witness_table = impl_witness_table (@Derived.as.Destroy.impl.%Derived.as.Destroy.impl.Op.decl), @Derived.as.Destroy.impl [concrete]
 // CHECK:STDOUT:     %Destroy.impl_witness: <witness> = impl_witness %Destroy.impl_witness_table, @Derived.as.Destroy.impl(constants.%T) [symbolic = @Derived.as.Destroy.impl.%Destroy.impl_witness (constants.%Destroy.impl_witness.fa7)]
@@ -859,6 +869,7 @@ fn AccessMissingConcrete(x: Derived(i32)) -> i32 {
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Base.as.Destroy.impl(constants.%T) {
 // CHECK:STDOUT:   %T => constants.%T
+// CHECK:STDOUT:   %Base => constants.%Base.370
 // CHECK:STDOUT:   %Destroy.impl_witness => constants.%Destroy.impl_witness.9f8
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -885,6 +896,7 @@ fn AccessMissingConcrete(x: Derived(i32)) -> i32 {
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Derived.as.Destroy.impl(constants.%T) {
 // CHECK:STDOUT:   %T => constants.%T
+// CHECK:STDOUT:   %Derived => constants.%Derived.85c
 // CHECK:STDOUT:   %Destroy.impl_witness => constants.%Destroy.impl_witness.fa7
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

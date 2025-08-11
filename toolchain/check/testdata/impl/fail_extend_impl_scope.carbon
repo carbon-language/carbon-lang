@@ -255,7 +255,7 @@ fn F() {
 // CHECK:STDOUT:   witness = @Point.%Z.impl_witness
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: impl @Point.as.Destroy.impl: constants.%Point as constants.%Destroy.type {
+// CHECK:STDOUT: impl @Point.as.Destroy.impl: @Point.%Self.ref as constants.%Destroy.type {
 // CHECK:STDOUT:   %Point.as.Destroy.impl.Op.decl: %Point.as.Destroy.impl.Op.type = fn_decl @Point.as.Destroy.impl.Op [concrete = constants.%Point.as.Destroy.impl.Op] {
 // CHECK:STDOUT:     %self.patt: %pattern_type.bbc = binding_pattern self [concrete]
 // CHECK:STDOUT:     %self.param_patt: %pattern_type.bbc = value_param_pattern %self.patt, call_param0 [concrete]
@@ -278,6 +278,7 @@ fn F() {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Z.impl_witness_table = impl_witness_table (@Point.as.Z.impl.%Point.as.Z.impl.Zero.decl), @Point.as.Z.impl [concrete]
 // CHECK:STDOUT:   %Z.impl_witness: <witness> = impl_witness %Z.impl_witness_table [concrete = constants.%Z.impl_witness]
+// CHECK:STDOUT:   %Self.ref: type = name_ref Self, constants.%Point [concrete = constants.%Point]
 // CHECK:STDOUT:   impl_decl @Point.as.Destroy.impl [concrete] {} {}
 // CHECK:STDOUT:   %Destroy.impl_witness_table = impl_witness_table (@Point.as.Destroy.impl.%Point.as.Destroy.impl.Op.decl), @Point.as.Destroy.impl [concrete]
 // CHECK:STDOUT:   %Destroy.impl_witness: <witness> = impl_witness %Destroy.impl_witness_table [concrete = constants.%Destroy.impl_witness.e19]

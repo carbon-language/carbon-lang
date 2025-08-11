@@ -176,7 +176,7 @@ fn Call() {
 // CHECK:STDOUT:   witness = (imports.%Main.F)
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: impl @C.as.Destroy.impl: constants.%C as constants.%Destroy.type {
+// CHECK:STDOUT: impl @C.as.Destroy.impl: @C.%Self.ref as constants.%Destroy.type {
 // CHECK:STDOUT:   %C.as.Destroy.impl.Op.decl: %C.as.Destroy.impl.Op.type = fn_decl @C.as.Destroy.impl.Op [concrete = constants.%C.as.Destroy.impl.Op] {
 // CHECK:STDOUT:     %self.patt: %pattern_type.44a = binding_pattern self [concrete]
 // CHECK:STDOUT:     %self.param_patt: %pattern_type.44a = value_param_pattern %self.patt, call_param0 [concrete]
@@ -208,6 +208,7 @@ fn Call() {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @C {
+// CHECK:STDOUT:   %Self.ref: type = name_ref Self, constants.%C [concrete = constants.%C]
 // CHECK:STDOUT:   impl_decl @C.as.Destroy.impl [concrete] {} {}
 // CHECK:STDOUT:   %Destroy.impl_witness_table = impl_witness_table (@C.as.Destroy.impl.%C.as.Destroy.impl.Op.decl), @C.as.Destroy.impl [concrete]
 // CHECK:STDOUT:   %Destroy.impl_witness: <witness> = impl_witness %Destroy.impl_witness_table [concrete = constants.%Destroy.impl_witness]
@@ -340,7 +341,7 @@ fn Call() {
 // CHECK:STDOUT:   %Main.import_ref.e03: %I.F.type = import_ref Main//i, loc4_33, loaded [concrete = constants.%I.F]
 // CHECK:STDOUT:   %Main.import_ref.5dd: %I.type = import_ref Main//i, inst20 [no loc], loaded [symbolic = constants.%Self.826]
 // CHECK:STDOUT:   %Main.import_ref.4c7: <witness> = import_ref Main//c, loc6_9, loaded [concrete = constants.%Destroy.impl_witness.0cc]
-// CHECK:STDOUT:   %Main.import_ref.c0c: type = import_ref Main//c, inst21 [no loc], loaded [concrete = constants.%C]
+// CHECK:STDOUT:   %Main.import_ref.0ed: type = import_ref Main//c, loc6_9, loaded [concrete = constants.%C]
 // CHECK:STDOUT:   %Main.import_ref.cb9: type = import_ref Main//c, inst24 [no loc], loaded [concrete = constants.%Destroy.type]
 // CHECK:STDOUT:   %Main.import_ref.f0d: <witness> = import_ref Main//c, loc7_13, loaded [concrete = constants.%I.impl_witness]
 // CHECK:STDOUT:   %Main.import_ref.29a: type = import_ref Main//c, loc7_6, loaded [concrete = constants.%C]
@@ -371,7 +372,7 @@ fn Call() {
 // CHECK:STDOUT:   witness = (imports.%Main.F)
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: impl @C.as.Destroy.impl: imports.%Main.import_ref.c0c as imports.%Main.import_ref.cb9 [from "c.carbon"] {
+// CHECK:STDOUT: impl @C.as.Destroy.impl: imports.%Main.import_ref.0ed as imports.%Main.import_ref.cb9 [from "c.carbon"] {
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   witness = imports.%Main.import_ref.4c7
 // CHECK:STDOUT: }
