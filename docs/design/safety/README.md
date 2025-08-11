@@ -173,17 +173,28 @@ Carbon can, it should work to prevent data races as well.
 
 ## Safe library ecosystem
 
-Carbon will need access to a memory-safe library ecosystem. The industry is
-currently investing a massive amount of effort to build out a sufficient
-ecosystem of such software using Rust, and it is critical that Carbon does not
-impede, slow down, or require duplicating that ecosystem.
+Carbon will need access to memory-safe library ecosystems, both for
+general-purpose, multi-platform functionality and for platform-specific
+functionality. Currently, the industry is currently investing a massive amount
+of effort to build out a sufficient ecosystem of general, multi-platform
+software using Rust, and it is critical that Carbon does not impede, slow down,
+or require duplicating that ecosystem. Similarly, if any other cross-platform
+library ecosystems emerge in a viable memory safe languages given our
+performance constraints, we should work to reuse them and avoid duplication.
 
-**Carbon's strategy for safe and generally reusable libraries is to leverage
-Rust libraries through interop.** This is a major motivating reason for seamless
-and safe Rust interop. The Carbon project will work to avoid creating
-duplication between the growing Rust library ecosystem and any future Carbon
-library ecosystem. Carbon's ecosystem will be focused instead on libraries and
-functionality that would either be missing or only available in C++.
+**Carbon's strategy for safe and generally reusable cross-platform libraries is
+to leverage Rust libraries through interop.** This is a major motivating reason
+for seamless and safe Rust interop. The Carbon project will work to avoid
+creating duplication between the growing Rust library ecosystem and any future
+Carbon library ecosystem. Carbon's ecosystem will be focused instead on
+libraries and functionality that would either be missing or only available in
+C++.
+
+Platform-specific functionality is typically developed in that platform's native
+language, whether that is Swift for Apple platforms or Kotlin for Android.
+Again, the goal of Carbon should be to avoid duplicating functionality, and
+instead to prioritize high quality interop with the existing platform libraries
+in the relevant languages on those platforms.
 
 ## Build modes
 
