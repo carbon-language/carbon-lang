@@ -328,8 +328,8 @@ auto PerformCppThunkCall(Context& context, SemIR::LocId loc_id,
   CARBON_CHECK(thunk_function_params.size() == num_params);
   CARBON_CHECK(callee_arg_ids.size() == num_params);
   llvm::SmallVector<SemIR::InstId> thunk_arg_ids;
-  thunk_arg_ids.reserve(callee_arg_ids.size());
-  for (size_t i = 0; i < callee_function_params.size(); ++i) {
+  thunk_arg_ids.reserve(num_params);
+  for (size_t i = 0; i < num_params; ++i) {
     SemIR::TypeId callee_param_type_id =
         context.insts()
             .GetAs<SemIR::AnyParam>(callee_function_params[i])
