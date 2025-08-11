@@ -329,17 +329,15 @@ auto PerformCppThunkCall(Context& context, SemIR::LocId loc_id,
   CARBON_CHECK(callee_arg_ids.size() == num_params);
   llvm::SmallVector<SemIR::InstId> thunk_arg_ids;
   thunk_arg_ids.reserve(num_params);
-  for (size_t i = 0; i < num_params; ++i) {
+  for (auto [callee_param_inst_id, thunk_param_inst_id, callee_arg_id] :
+       llvm::zip(callee_function_params, thunk_function_params,
+                 callee_arg_ids)) {
     SemIR::TypeId callee_param_type_id =
-        context.insts()
-            .GetAs<SemIR::AnyParam>(callee_function_params[i])
-            .type_id;
+        context.insts().GetAs<SemIR::AnyParam>(callee_param_inst_id).type_id;
     SemIR::TypeId thunk_param_type_id =
-        context.insts()
-            .GetAs<SemIR::AnyParam>(thunk_function_params[i])
-            .type_id;
+        context.insts().GetAs<SemIR::AnyParam>(thunk_param_inst_id).type_id;
 
-    SemIR::InstId arg_id = callee_arg_ids[i];
+    SemIR::InstId arg_id = callee_arg_id;
     if (callee_param_type_id != thunk_param_type_id) {
       CARBON_CHECK(thunk_param_type_id ==
                    GetPointerType(context, context.types().GetInstId(
