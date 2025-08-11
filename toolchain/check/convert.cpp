@@ -762,25 +762,6 @@ static auto CanUseValueOfInitializer(const SemIR::File& sem_ir,
   return InitReprIsCopyOfValueRepr(sem_ir, type_id);
 }
 
-// Returns the non-adapter type that is compatible with the specified type.
-static auto GetTransitiveAdaptedType(Context& context, SemIR::TypeId type_id)
-    -> SemIR::TypeId {
-  // If the type is an adapter, its object representation type is its compatible
-  // non-adapter type.
-  while (auto class_type =
-             context.types().TryGetAs<SemIR::ClassType>(type_id)) {
-    auto& class_info = context.classes().Get(class_type->class_id);
-    auto adapted_type_id =
-        class_info.GetAdaptedType(context.sem_ir(), class_type->specific_id);
-    if (!adapted_type_id.has_value()) {
-      break;
-    }
-    type_id = adapted_type_id;
-  }
-
-  // Otherwise, the type itself is a non-adapter type.
-  return type_id;
-}
 static auto DiagnoseConversionFailureToConstraintValue(
     Context& context, SemIR::LocId loc_id, SemIR::InstId expr_id,
     SemIR::TypeId target_type_id) -> void {
@@ -885,7 +866,7 @@ static auto PerformBuiltinConversion(
     // shortcut to doing the explicit calls to walk the parts of the
     // tuple/struct which happens inside PerformBuiltinConversion().
     if (auto foundation_type_id =
-            GetTransitiveAdaptedType(context, value_type_id);
+            context.types().GetTransitiveAdaptedType(value_type_id);
         foundation_type_id != value_type_id &&
         (context.types().Is<SemIR::TupleType>(foundation_type_id) ||
          context.types().Is<SemIR::StructType>(foundation_type_id))) {
@@ -932,8 +913,9 @@ static auto PerformBuiltinConversion(
   if (target.kind == ConversionTarget::Kind::ExplicitAs &&
       target.type_id != value_type_id) {
     auto target_foundation_id =
-        GetTransitiveAdaptedType(context, target.type_id);
-    auto value_foundation_id = GetTransitiveAdaptedType(context, value_type_id);
+        context.types().GetTransitiveAdaptedType(target.type_id);
+    auto value_foundation_id =
+        context.types().GetTransitiveAdaptedType(value_type_id);
     if (target_foundation_id == value_foundation_id) {
       // For a struct or tuple literal, perform a category conversion if
       // necessary.

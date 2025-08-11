@@ -38,6 +38,41 @@ library "[[@TEST_NAME]]";
 // CHECK:STDERR:
 fn WrongResult(a: f64, b: f64) -> f64 = "float.eq";
 
+// --- fail_runtime_literal.carbon
+
+library "[[@TEST_NAME]]";
+
+fn Eq(a: Core.FloatLiteral(), b: Core.FloatLiteral()) -> bool = "float.eq";
+
+fn Test(n: Core.FloatLiteral()) {
+  // OK
+  Eq(1.0, 1.0);
+  // CHECK:STDERR: fail_runtime_literal.carbon:[[@LINE+7]]:3: error: non-constant call to compile-time-only function [NonConstantCallToCompTimeOnlyFunction]
+  // CHECK:STDERR:   Eq(n, 1.0);
+  // CHECK:STDERR:   ^~~~~~~~~~
+  // CHECK:STDERR: fail_runtime_literal.carbon:[[@LINE-8]]:1: note: compile-time-only function declared here [CompTimeOnlyFunctionHere]
+  // CHECK:STDERR: fn Eq(a: Core.FloatLiteral(), b: Core.FloatLiteral()) -> bool = "float.eq";
+  // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+  // CHECK:STDERR:
+  Eq(n, 1.0);
+  // CHECK:STDERR: fail_runtime_literal.carbon:[[@LINE+7]]:3: error: non-constant call to compile-time-only function [NonConstantCallToCompTimeOnlyFunction]
+  // CHECK:STDERR:   Eq(1.0, n);
+  // CHECK:STDERR:   ^~~~~~~~~~
+  // CHECK:STDERR: fail_runtime_literal.carbon:[[@LINE-16]]:1: note: compile-time-only function declared here [CompTimeOnlyFunctionHere]
+  // CHECK:STDERR: fn Eq(a: Core.FloatLiteral(), b: Core.FloatLiteral()) -> bool = "float.eq";
+  // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+  // CHECK:STDERR:
+  Eq(1.0, n);
+  // CHECK:STDERR: fail_runtime_literal.carbon:[[@LINE+7]]:3: error: non-constant call to compile-time-only function [NonConstantCallToCompTimeOnlyFunction]
+  // CHECK:STDERR:   Eq(n, n);
+  // CHECK:STDERR:   ^~~~~~~~
+  // CHECK:STDERR: fail_runtime_literal.carbon:[[@LINE-24]]:1: note: compile-time-only function declared here [CompTimeOnlyFunctionHere]
+  // CHECK:STDERR: fn Eq(a: Core.FloatLiteral(), b: Core.FloatLiteral()) -> bool = "float.eq";
+  // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+  // CHECK:STDERR:
+  Eq(n, n);
+}
+
 // CHECK:STDOUT: --- float_eq.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {

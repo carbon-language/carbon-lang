@@ -32,6 +32,41 @@ fn RuntimeCallIsValid(a: f64, b: f64) -> bool {
   //@dump-sem-ir-end
 }
 
+// --- fail_runtime_literal.carbon
+
+library "[[@TEST_NAME]]";
+
+fn LessEq(a: Core.FloatLiteral(), b: Core.FloatLiteral()) -> bool = "float.less_eq";
+
+fn Test(n: Core.FloatLiteral()) {
+  // OK
+  LessEq(1.0, 1.0);
+  // CHECK:STDERR: fail_runtime_literal.carbon:[[@LINE+7]]:3: error: non-constant call to compile-time-only function [NonConstantCallToCompTimeOnlyFunction]
+  // CHECK:STDERR:   LessEq(n, 1.0);
+  // CHECK:STDERR:   ^~~~~~~~~~~~~~
+  // CHECK:STDERR: fail_runtime_literal.carbon:[[@LINE-8]]:1: note: compile-time-only function declared here [CompTimeOnlyFunctionHere]
+  // CHECK:STDERR: fn LessEq(a: Core.FloatLiteral(), b: Core.FloatLiteral()) -> bool = "float.less_eq";
+  // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+  // CHECK:STDERR:
+  LessEq(n, 1.0);
+  // CHECK:STDERR: fail_runtime_literal.carbon:[[@LINE+7]]:3: error: non-constant call to compile-time-only function [NonConstantCallToCompTimeOnlyFunction]
+  // CHECK:STDERR:   LessEq(1.0, n);
+  // CHECK:STDERR:   ^~~~~~~~~~~~~~
+  // CHECK:STDERR: fail_runtime_literal.carbon:[[@LINE-16]]:1: note: compile-time-only function declared here [CompTimeOnlyFunctionHere]
+  // CHECK:STDERR: fn LessEq(a: Core.FloatLiteral(), b: Core.FloatLiteral()) -> bool = "float.less_eq";
+  // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+  // CHECK:STDERR:
+  LessEq(1.0, n);
+  // CHECK:STDERR: fail_runtime_literal.carbon:[[@LINE+7]]:3: error: non-constant call to compile-time-only function [NonConstantCallToCompTimeOnlyFunction]
+  // CHECK:STDERR:   LessEq(n, n);
+  // CHECK:STDERR:   ^~~~~~~~~~~~
+  // CHECK:STDERR: fail_runtime_literal.carbon:[[@LINE-24]]:1: note: compile-time-only function declared here [CompTimeOnlyFunctionHere]
+  // CHECK:STDERR: fn LessEq(a: Core.FloatLiteral(), b: Core.FloatLiteral()) -> bool = "float.less_eq";
+  // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+  // CHECK:STDERR:
+  LessEq(n, n);
+}
+
 // CHECK:STDOUT: --- float_less_eq.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {

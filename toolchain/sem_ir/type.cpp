@@ -73,6 +73,26 @@ auto TypeStore::GetObjectRepr(TypeId type_id) const -> TypeId {
   return class_info.GetObjectRepr(*file_, class_type->specific_id);
 }
 
+auto TypeStore::GetAdaptedType(TypeId type_id) const -> TypeId {
+  if (auto class_type = TryGetAs<ClassType>(type_id)) {
+    return file_->classes()
+        .Get(class_type->class_id)
+        .GetAdaptedType(*file_, class_type->specific_id);
+  }
+  return TypeId::None;
+}
+
+auto TypeStore::GetTransitiveAdaptedType(TypeId type_id) const -> TypeId {
+  while (true) {
+    auto adapted_type_id = GetAdaptedType(type_id);
+    if (!adapted_type_id.has_value()) {
+      break;
+    }
+    type_id = adapted_type_id;
+  }
+  return type_id;
+}
+
 auto TypeStore::GetUnqualifiedType(TypeId type_id) const -> TypeId {
   if (auto const_type = TryGetAs<ConstType>(type_id)) {
     return file_->types().GetTypeIdForTypeInstId(const_type->inner_id);

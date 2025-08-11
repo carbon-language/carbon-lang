@@ -12,7 +12,7 @@
 
 // --- call.carbon
 
-library "call";
+library "[[@TEST_NAME]]";
 
 fn Builtin(a: f64*, b: f64) = "float.div_assign";
 
@@ -22,7 +22,7 @@ fn Call(a: f64*, b: f64) {
 
 // --- fail_bad_decl.carbon
 
-library "fail_bad_decl";
+library "[[@TEST_NAME]]";
 
 // CHECK:STDERR: fail_bad_decl.carbon:[[@LINE+4]]:1: error: invalid signature for builtin function "float.div_assign" [InvalidBuiltinSignature]
 // CHECK:STDERR: fn NotPtr(a: f64, b: f64) = "float.div_assign";
@@ -42,3 +42,14 @@ fn NotPtr(a: f64, b: f64) = "float.div_assign";
 // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 // CHECK:STDERR:
 fn MixedTypes(a: f64*, b: f32) = "float.div_assign";
+
+// --- fail_literal.carbon
+
+library "[[@TEST_NAME]]";
+
+fn Literal() -> type = "float_literal.make_type";
+// CHECK:STDERR: fail_literal.carbon:[[@LINE+4]]:1: error: invalid signature for builtin function "float.div_assign" [InvalidBuiltinSignature]
+// CHECK:STDERR: fn LiteralRuntime(a: Literal()*, b: Literal()) = "float.div_assign";
+// CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+// CHECK:STDERR:
+fn LiteralRuntime(a: Literal()*, b: Literal()) = "float.div_assign";

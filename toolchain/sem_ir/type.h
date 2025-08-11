@@ -147,6 +147,13 @@ class TypeStore : public Yaml::Printable<TypeStore> {
   // cannot be determined because the type is not complete.
   auto GetObjectRepr(TypeId type_id) const -> TypeId;
 
+  // Get the type that the given type adapts, or `None` if the type is not known
+  // to be an adapter, including the case where the type is an incomplete class.
+  auto GetAdaptedType(TypeId type_id) const -> TypeId;
+
+  // Returns the non-adapter type that is compatible with the specified type.
+  auto GetTransitiveAdaptedType(TypeId type_id) const -> TypeId;
+
   // Determines whether the given type is known to be complete. This does not
   // determine whether the type could be completed, only whether it has been.
   auto IsComplete(TypeId type_id) const -> bool {

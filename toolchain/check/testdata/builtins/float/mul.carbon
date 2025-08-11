@@ -66,6 +66,36 @@ fn RuntimeCallIsValidBadReturnType(a: f64, b: f64) -> bool {
   return BadReturnType(a, b);
 }
 
+// --- literal.carbon
+
+library "[[@TEST_NAME]]";
+
+fn Literal() -> type = "float_literal.make_type";
+fn MulLiteral(a: Literal(), b: Literal()) -> Literal() = "float.mul";
+
+// --- literal_comptime.carbon
+
+library "[[@TEST_NAME]]";
+import library "literal";
+
+let n: Literal() = MulLiteral(1.0, 2.0);
+
+// --- fail_literal_runtime.carbon
+
+library "[[@TEST_NAME]]";
+import library "literal";
+
+var m: Literal();
+// CHECK:STDERR: fail_literal_runtime.carbon:[[@LINE+8]]:20: error: non-constant call to compile-time-only function [NonConstantCallToCompTimeOnlyFunction]
+// CHECK:STDERR: let n: Literal() = MulLiteral(1.0, m);
+// CHECK:STDERR:                    ^~~~~~~~~~~~~~~~~~
+// CHECK:STDERR: fail_literal_runtime.carbon:[[@LINE-6]]:1: in import [InImport]
+// CHECK:STDERR: literal.carbon:5:1: note: compile-time-only function declared here [CompTimeOnlyFunctionHere]
+// CHECK:STDERR: fn MulLiteral(a: Literal(), b: Literal()) -> Literal() = "float.mul";
+// CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+// CHECK:STDERR:
+let n: Literal() = MulLiteral(1.0, m);
+
 // CHECK:STDOUT: --- mul_sub.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
