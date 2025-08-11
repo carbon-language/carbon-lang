@@ -18,6 +18,16 @@ namespace Carbon::Check {
 auto FacetTypeFromInterface(Context& context, SemIR::InterfaceId interface_id,
                             SemIR::SpecificId specific_id) -> SemIR::FacetType;
 
+// Given an ImplWitnessAccessSubstituted, returns the InstId of the
+// ImplWitnessAccess. Otherwise, returns the input `inst_id` unchanged.
+//
+// This must be used when accessing the LHS of a rewrite constraint which has
+// not yet been resolved in order to preserve which associated constant is being
+// rewritten.
+auto GetImplWitnessAccessWithoutSubstitution(Context& context,
+                                             SemIR::InstId inst_id)
+    -> SemIR::InstId;
+
 // Creates a impl witness instruction for a facet type. The facet type is
 // required to be complete if `is_definition` is true or the facet type has
 // rewrites. Otherwise a placeholder witness is created, and

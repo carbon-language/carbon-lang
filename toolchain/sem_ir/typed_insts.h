@@ -844,6 +844,26 @@ struct ImplWitnessAccess {
   ElementIndex index;
 };
 
+// A substituted value to use in place of an ImplWitnessAccess (which comes from
+// the RHS of a rewrite constraint in the same facet type), while preserving the
+// original reference to an associated constant as an ImplWitnessAccess. This
+// allows the substitution to occur on the LHS of rewrite constraints without
+// losing what is being rewritten by them.
+struct ImplWitnessAccessSubstituted {
+  static constexpr auto Kind =
+      InstKind::ImplWitnessAccessSubstituted.Define<Parse::NodeId>(
+          {.ir_name = "impl_witness_access_substituted",
+           .is_type = InstIsType::Maybe,
+           .constant_kind = InstConstantKind::SymbolicOnly,
+           .is_lowered = false});
+
+  TypeId type_id;
+  // The ImplWitnessAccess instruction that this was created from.
+  InstId impl_witness_access_id;
+  // The value instruction to use in place of the ImplWitnessAccess.
+  InstId value_id;
+};
+
 // An instruction that just points to an associated constant, which exists to
 // live inside the generic for an `impl` and be rewritten in the generic eval
 // block, unlike the instruction which it points to. This allows a symbolic
@@ -1273,7 +1293,29 @@ struct RequireCompleteType {
   TypeInstId complete_type_inst_id;
 };
 
-// An `expr == expr` clause in a `where` expression or `require` declaration.
+// A requirement that `.Self` implements a facet type, specified as the first
+// operand of a `where` expression. This is always the first requirement in a
+// requirement block for a `where` expression.
+//
+// Any constraints in the base facet type are available to other constraint
+// operands in the `where` expression, and also become a part of the resulting
+// facet type.
+struct RequirementBaseFacetType {
+  static constexpr auto Kind =
+      InstKind::RequirementBaseFacetType.Define<Parse::NodeId>(
+          {.ir_name = "requirement_base_facet_type",
+           .constant_kind = InstConstantKind::Never,
+           .is_lowered = false});
+
+  // No type since not an expression
+
+  // A FacetType, the TypeType singleton, or an ErrorInst.
+  TypeInstId base_type_inst_id;
+};
+
+// A requirement that two expressions evaluate to the same constant, as
+// specified by an `expr == expr` clause in a `where` expression or `require`
+// declaration.
 struct RequirementEquivalent {
   static constexpr auto Kind =
       InstKind::RequirementEquivalent.Define<Parse::RequirementEqualEqualId>(
@@ -1286,7 +1328,9 @@ struct RequirementEquivalent {
   InstId rhs_id;
 };
 
-// An `expr impls expr` clause in a `where` expression or `require` declaration.
+// A requirement that the LHS expression is a facet type that implements the
+// interface on the RHS and meets any constraints in the RHS, as specified by an
+// `expr impls expr` clause in a `where` expression or `require` declaration.
 struct RequirementImpls {
   static constexpr auto Kind =
       InstKind::RequirementImpls.Define<Parse::RequirementImplsId>(
@@ -1299,7 +1343,9 @@ struct RequirementImpls {
   InstId rhs_id;
 };
 
-// A `.M = expr` clause in a `where` expression or `require` declaration.
+// A requirement that assigns the expression on the RHS to the associated
+// constant named on the LHS, as specified by a `.M = expr` clause in a `where`
+// expression or `require` declaration.
 struct RequirementRewrite {
   static constexpr auto Kind =
       InstKind::RequirementRewrite.Define<Parse::RequirementEqualId>(
@@ -1730,7 +1776,7 @@ struct UnboundElementType {
 // example, when indexing a value expression of array type, this is used to
 // form a reference to the array object.
 struct ValueAsRef {
-  static constexpr auto Kind = InstKind::ValueAsRef.Define<Parse::IndexExprId>(
+  static constexpr auto Kind = InstKind::ValueAsRef.Define<Parse::NodeId>(
       {.ir_name = "value_as_ref", .constant_kind = InstConstantKind::Never});
 
   TypeId type_id;

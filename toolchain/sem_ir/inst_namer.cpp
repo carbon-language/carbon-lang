@@ -895,6 +895,15 @@ auto InstNamer::NamingContext::NameInst() -> void {
       AddInstName(out.TakeStr());
       return;
     }
+    case CARBON_KIND(ImplWitnessAccessSubstituted inst): {
+      // TODO: Include information about the impl?
+      RawStringOstream out;
+      auto access = sem_ir().insts().GetAs<ImplWitnessAccess>(
+          inst.impl_witness_access_id);
+      out << "impl.elem" << access.index.index << ".subst";
+      AddInstName(out.TakeStr());
+      return;
+    }
     case ImplWitnessAssociatedConstant::Kind: {
       AddInstName("impl_witness_assoc_constant");
       return;

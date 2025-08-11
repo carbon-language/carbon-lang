@@ -173,6 +173,7 @@ fn G(T:! type where C(()) impls I(.Self)) {}
 // CHECK:STDOUT:       %.Self.ref: %I.type = name_ref .Self, %.Self [symbolic_self = constants.%.Self.258]
 // CHECK:STDOUT:       %.loc9_37: %empty_tuple.type = tuple_literal ()
 // CHECK:STDOUT:       %.loc9_21.2: type = where_expr %.Self [concrete = constants.%I_where.type] {
+// CHECK:STDOUT:         requirement_base_facet_type constants.%I.type
 // CHECK:STDOUT:         requirement_equivalent %.Self.ref, %.loc9_37
 // CHECK:STDOUT:       }
 // CHECK:STDOUT:     }
@@ -191,6 +192,7 @@ fn G(T:! type where C(()) impls I(.Self)) {}
 // CHECK:STDOUT:       %impl.elem0: type = impl_witness_access constants.%I.lookup_impl_witness, element0 [symbolic_self = constants.%impl.elem0]
 // CHECK:STDOUT:       %.loc11_41: %empty_tuple.type = tuple_literal ()
 // CHECK:STDOUT:       %.loc11_23.2: type = where_expr %.Self [concrete = constants.%I_where.type] {
+// CHECK:STDOUT:         requirement_base_facet_type constants.%I.type
 // CHECK:STDOUT:         requirement_equivalent %impl.elem0, %.loc11_41
 // CHECK:STDOUT:       }
 // CHECK:STDOUT:     }
@@ -204,6 +206,7 @@ fn G(T:! type where C(()) impls I(.Self)) {}
 // CHECK:STDOUT:       %.Self.ref: type = name_ref .Self, %.Self [symbolic_self = constants.%.Self.644]
 // CHECK:STDOUT:       %I.ref: type = name_ref I, file.%I.decl [concrete = constants.%I.type]
 // CHECK:STDOUT:       %.loc13_27.2: type = where_expr %.Self [concrete = constants.%type_where] {
+// CHECK:STDOUT:         requirement_base_facet_type type
 // CHECK:STDOUT:         requirement_impls %.Self.ref, %I.ref
 // CHECK:STDOUT:       }
 // CHECK:STDOUT:     }

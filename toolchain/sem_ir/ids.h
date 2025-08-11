@@ -37,11 +37,10 @@ struct InstId : public IdBase<InstId> {
 
 constexpr InstId InstId::InitTombstone = InstId(NoneIndex - 1);
 
-// An InstId whose value is a type. The fact it's a type is CHECKed on
-// construction, and this allows that check to be represented in the type
-// system.
+// An InstId whose value is a type. The fact it's a type must be validated
+// before construction, and this allows that validation to be represented in the
+// type system.
 struct TypeInstId : public InstId {
-  static constexpr llvm::StringLiteral Label = "type_inst";
   static const TypeInstId None;
 
   using InstId::InstId;
@@ -57,6 +56,33 @@ struct TypeInstId : public InstId {
 };
 
 constexpr TypeInstId TypeInstId::None = TypeInstId::UnsafeMake(InstId::None);
+
+// An InstId whose type is known to be T. The fact it's a type must be validated
+// before construction, and this allows that validation to be represented in the
+// type system.
+//
+// Unlike TypeInstId, this type can *not* be an operand in instructions, since
+// being a template prevents it from being used in non-generic contexts such as
+// switches.
+template <class T>
+struct KnownInstId : public InstId {
+  static const KnownInstId None;
+
+  using InstId::InstId;
+
+  static constexpr auto UnsafeMake(InstId id) -> KnownInstId {
+    return KnownInstId(UnsafeCtor(), id);
+  }
+
+ private:
+  struct UnsafeCtor {};
+  explicit constexpr KnownInstId(UnsafeCtor /*unsafe*/, InstId id)
+      : InstId(id) {}
+};
+
+template <class T>
+constexpr KnownInstId<T> KnownInstId<T>::None =
+    KnownInstId<T>::UnsafeMake(InstId::None);
 
 // An ID of an instruction that is referenced absolutely by another instruction.
 // This should only be used as the type of a field within a typed instruction

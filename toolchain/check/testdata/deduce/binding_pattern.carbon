@@ -390,6 +390,7 @@ fn F(U:! type, V:! type where {} impls Core.ImplicitAs(.Self)) {
 // CHECK:STDOUT:       %ImplicitAs.type.loc9: type = facet_type <@ImplicitAs, @ImplicitAs(constants.%.Self)> [symbolic_self = constants.%ImplicitAs.type.aba]
 // CHECK:STDOUT:       %.loc9_32.2: type = converted %.loc9_32.1, constants.%empty_struct_type [concrete = constants.%empty_struct_type]
 // CHECK:STDOUT:       %.loc9_25.2: type = where_expr %.Self [concrete = constants.%type_where] {
+// CHECK:STDOUT:         requirement_base_facet_type type
 // CHECK:STDOUT:         requirement_impls %.loc9_32.2, %ImplicitAs.type.loc9
 // CHECK:STDOUT:       }
 // CHECK:STDOUT:     }

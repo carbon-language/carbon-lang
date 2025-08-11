@@ -138,3 +138,7 @@ CheckOptions:
   # https://github.com/llvm/llvm-project/issues/46097
   - key: readability-identifier-naming.TemplateParameterIgnoredRegexp
     value: '^expr-type$'
+
+  # Don't require writing a return type on lambdas.
+  - key: modernize-use-trailing-return-type.TransformLambdas
+    value: none

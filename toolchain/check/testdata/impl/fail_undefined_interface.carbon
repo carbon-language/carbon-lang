@@ -170,6 +170,7 @@ impl C as J where .Self impls Incomplete and .T = ();
 // CHECK:STDOUT:     %.Self.as_type: type = facet_access_type %.Self.ref [symbolic_self = constants.%.Self.as_type]
 // CHECK:STDOUT:     %.loc15_19: type = converted %.Self.ref, %.Self.as_type [symbolic_self = constants.%.Self.as_type]
 // CHECK:STDOUT:     %.loc15_13: type = where_expr %.Self [concrete = constants.%I_where.type] {
+// CHECK:STDOUT:       requirement_base_facet_type constants.%I.type
 // CHECK:STDOUT:       requirement_impls %.loc15_19, %Incomplete.ref
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:   }
@@ -243,6 +244,7 @@ impl C as J where .Self impls Incomplete and .T = ();
 // CHECK:STDOUT:     %.loc15_52.1: %empty_tuple.type = tuple_literal ()
 // CHECK:STDOUT:     %.loc15_52.2: type = converted %.loc15_52.1, constants.%empty_tuple.type [concrete = constants.%empty_tuple.type]
 // CHECK:STDOUT:     %.loc15_13: type = where_expr %.Self [concrete = constants.%J_where.type] {
+// CHECK:STDOUT:       requirement_base_facet_type constants.%J.type
 // CHECK:STDOUT:       requirement_impls %.loc15_19, %Incomplete.ref
 // CHECK:STDOUT:       requirement_rewrite %impl.elem0, %.loc15_52.2
 // CHECK:STDOUT:     }

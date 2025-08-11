@@ -229,6 +229,13 @@ class Context {
     return poisoned_concrete_impl_lookup_queries_;
   }
 
+  // A stack that tracks the rewrite constraints from a `where` expression being
+  // checked. The back of the stack is the currently checked `where` expression.
+  auto rewrites_stack()
+      -> llvm::SmallVector<Map<SemIR::ConstantId, SemIR::InstId>>& {
+    return rewrites_stack_;
+  }
+
   // --------------------------------------------------------------------------
   // Directly expose SemIR::File data accessors for brevity in calls.
   // --------------------------------------------------------------------------
@@ -269,7 +276,7 @@ class Context {
     return sem_ir().import_ir_insts();
   }
   auto ast_context() -> clang::ASTContext& {
-    return sem_ir().cpp_ast()->getASTContext();
+    return sem_ir().clang_ast_unit()->getASTContext();
   }
   auto names() -> SemIR::NameStoreWrapper { return sem_ir().names(); }
   auto name_scopes() -> SemIR::NameScopeStore& {
@@ -423,6 +430,11 @@ class Context {
   // results at the end of the file. Any difference is diagnosed.
   llvm::SmallVector<PoisonedConcreteImplLookupQuery>
       poisoned_concrete_impl_lookup_queries_;
+
+  // A map from an ImplWitnessAccess on the LHS of a rewrite constraint to its
+  // value on the RHS. Used during checking of a `where` expression to allow
+  // constraints to access values from earlier constraints.
+  llvm::SmallVector<Map<SemIR::ConstantId, SemIR::InstId>> rewrites_stack_;
 };
 
 }  // namespace Carbon::Check

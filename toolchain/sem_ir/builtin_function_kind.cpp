@@ -123,7 +123,8 @@ struct AnySizedInt {
   }
 };
 
-// Constraint that requires the type to be an integer type.
+// Constraint that requires the type to be an integer type: either a sized
+// integer type or a literal.
 struct AnyInt {
   static auto Check(const File& sem_ir, ValidateState& state, TypeId type_id)
       -> bool {
@@ -141,7 +142,8 @@ struct AnySizedFloat {
   }
 };
 
-// Constraint that requires the type to be a float type.
+// Constraint that requires the type to be a float type: either a sized float
+// type or a literal.
 struct AnyFloat {
   static auto Check(const File& sem_ir, ValidateState& state, TypeId type_id)
       -> bool {

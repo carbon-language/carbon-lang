@@ -71,7 +71,7 @@ auto FileContext::PrepareToLower() -> void {
     // Clang code generation should not actually modify the AST, but isn't
     // const-correct.
     cpp_code_generator_->Initialize(
-        const_cast<clang::ASTContext&>(cpp_ast()->getASTContext()));
+        const_cast<clang::ASTContext&>(clang_ast_unit()->getASTContext()));
   }
 
   // Lower all types that were required to be complete.
@@ -158,7 +158,7 @@ auto FileContext::Finalize() -> void {
     // Clang code generation should not actually modify the AST, but isn't
     // const-correct.
     cpp_code_generator_->HandleTranslationUnit(
-        const_cast<clang::ASTContext&>(cpp_ast()->getASTContext()));
+        const_cast<clang::ASTContext&>(clang_ast_unit()->getASTContext()));
     bool link_error = llvm::Linker::linkModules(
         /*Dest=*/llvm_module(),
         /*Src=*/std::unique_ptr<llvm::Module>(
@@ -174,7 +174,7 @@ auto FileContext::Finalize() -> void {
 
 auto FileContext::CreateCppCodeGenerator()
     -> std::unique_ptr<clang::CodeGenerator> {
-  if (!cpp_ast()) {
+  if (!clang_ast_unit()) {
     return nullptr;
   }
 
@@ -185,7 +185,7 @@ auto FileContext::CreateCppCodeGenerator()
   cpp_code_gen_options_.EmitVersionIdentMetadata = false;
 
   return std::unique_ptr<clang::CodeGenerator>(clang::CreateLLVMCodeGen(
-      cpp_ast()->getASTContext().getDiagnostics(),
+      clang_ast_unit()->getASTContext().getDiagnostics(),
       clang_module_name_stream.TakeStr(), context().file_system(),
       cpp_header_search_options_, cpp_preprocessor_options_,
       cpp_code_gen_options_, llvm_context()));

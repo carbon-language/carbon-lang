@@ -400,10 +400,10 @@ static auto MaybeDumpCppAST(llvm::ArrayRef<Unit> units,
   }
 
   for (const Unit& unit : units) {
-    if (!unit.cpp_ast || !*unit.cpp_ast) {
+    if (!unit.clang_ast_unit || !*unit.clang_ast_unit) {
       continue;
     }
-    clang::ASTContext& ast_context = (*unit.cpp_ast)->getASTContext();
+    clang::ASTContext& ast_context = (*unit.clang_ast_unit)->getASTContext();
     ast_context.getTranslationUnitDecl()->dump(*options.dump_cpp_ast_stream);
   }
 }

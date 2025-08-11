@@ -89,6 +89,7 @@ fn G(U: Empty(i32) where .A = i32*) {
 // CHECK:STDOUT:       %T.ref.loc21_39: type = name_ref T, %T.loc21_6.2 [symbolic = %T.loc21_6.1 (constants.%T)]
 // CHECK:STDOUT:       %ptr.loc21_40.2: type = ptr_type %T.ref.loc21_39 [symbolic = %ptr.loc21_40.1 (constants.%ptr.79f)]
 // CHECK:STDOUT:       %.loc21_28.2: type = where_expr %.Self.2 [symbolic = %Empty_where.type (constants.%Empty_where.type.b73)] {
+// CHECK:STDOUT:         requirement_base_facet_type constants.%Empty.type.3e5fde.2
 // CHECK:STDOUT:         requirement_rewrite %impl.elem0.loc21_34.2, %ptr.loc21_40.2
 // CHECK:STDOUT:       }
 // CHECK:STDOUT:     }

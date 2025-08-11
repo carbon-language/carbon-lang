@@ -7,6 +7,7 @@
 #include "toolchain/check/eval.h"
 #include "toolchain/check/facet_type.h"
 #include "toolchain/check/type_completion.h"
+#include "toolchain/sem_ir/facet_type_info.h"
 
 namespace Carbon::Check {
 
@@ -155,6 +156,12 @@ auto GetInterfaceType(Context& context, SemIR::InterfaceId interface_id,
   return GetTypeImpl<SemIR::FacetType>(
       context,
       FacetTypeFromInterface(context, interface_id, specific_id).facet_type_id);
+}
+
+auto GetFacetType(Context& context, const SemIR::FacetTypeInfo& info)
+    -> SemIR::TypeId {
+  return GetTypeImpl<SemIR::FacetType>(context,
+                                       context.facet_types().Add(info));
 }
 
 auto GetPointerType(Context& context, SemIR::TypeInstId pointee_type_id)

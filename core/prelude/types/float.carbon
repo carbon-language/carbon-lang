@@ -68,22 +68,22 @@ final impl forall [N:! IntLiteral()]
 }
 
 // Compound assignments.
-impl forall [N:! IntLiteral()]
+final impl forall [N:! IntLiteral()]
     Float(N) as AddAssignWith(Self) {
   fn Op[addr self: Self*](other: Self) = "float.add_assign";
 }
 
-impl forall [N:! IntLiteral()]
+final impl forall [N:! IntLiteral()]
     Float(N) as DivAssignWith(Self) {
   fn Op[addr self: Self*](other: Self) = "float.div_assign";
 }
 
-impl forall [N:! IntLiteral()]
+final impl forall [N:! IntLiteral()]
     Float(N) as MulAssignWith(Self) {
   fn Op[addr self: Self*](other: Self) = "float.mul_assign";
 }
 
-impl forall [N:! IntLiteral()]
+final impl forall [N:! IntLiteral()]
     Float(N) as SubAssignWith(Self) {
   fn Op[addr self: Self*](other: Self) = "float.sub_assign";
 }
