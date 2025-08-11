@@ -60,7 +60,7 @@ static auto HandleAnyBindingPattern(Context& context, Parse::NodeId node_id,
 
     // TODO: If `is_generic`, then `binding.bind_id is a BindSymbolicName. Subst
     // the `.Self` of type `type` in the `cast_type_id` type (a `FacetType`)
-    // with the `binding.bind_id` itself, and build a new pattern with that. //
+    // with the `binding.bind_id` itself, and build a new pattern with that.
     // This is kind of cyclical. So we need to reuse the EntityNameId, which
     // will also reuse the CompileTimeBinding for the new BindSymbolicName.
 
