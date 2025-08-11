@@ -28,6 +28,8 @@ static auto TryDeclareImpl(Context& context, SemIR::LocId loc_id,
   StartGenericDecl(context);
 
   // Build the implicit access to the enclosing `Self`.
+  // TODO: This mirrors code in handle_impl that also suggests using
+  // BuildNameRef.
   auto self_inst_id = AddTypeInst(
       context, loc_id,
       SemIR::NameRef{.type_id = SemIR::TypeType::TypeId,
