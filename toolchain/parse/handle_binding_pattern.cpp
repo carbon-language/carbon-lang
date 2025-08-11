@@ -75,7 +75,7 @@ auto HandleBindingPattern(Context& context) -> void {
     state.token = context.Consume();
 
     if (token_kind == Lex::TokenKind::ColonExclaim) {
-      // A virtual node to come before the compile time binding's type
+      // Add a virtual node before the compile time binding's type
       // expression.
       context.AddNode(NodeKind::CompileTimeBindingPatternStart, state.token,
                       state.has_error);
