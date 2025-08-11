@@ -794,15 +794,11 @@ auto InstNamer::NamingContext::NameInst() -> void {
       return;
     }
     case CARBON_KIND(VtablePtr inst): {
-      const auto& class_info = sem_ir().classes().Get(inst.class_id);
-      const auto& vtable_decl =
-          sem_ir().insts().GetAs<SemIR::VtableDecl>(class_info.vtable_decl_id);
-      const auto& vtable = sem_ir().vtables().Get(vtable_decl.vtable_id);
-      if (inst_namer_->GetScopeFor(vtable.class_id) == scope_id_) {
+      if (inst_namer_->GetScopeFor(inst.class_id) == scope_id_) {
         inst_namer_->MaybePushEntity(inst.class_id);
         AddInstName("vtable_ptr");
       } else {
-        AddEntityNameAndMaybePush(vtable_decl.vtable_id, "_ptr");
+        AddEntityNameAndMaybePush(inst.class_id, ".vtable_ptr");
       }
       return;
     }

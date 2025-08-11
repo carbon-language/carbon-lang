@@ -162,7 +162,8 @@ static auto EmitAsConstant(ConstantContext& context, SemIR::VtablePtr inst)
       context.sem_ir()
           .insts()
           .GetAs<SemIR::VtableDecl>(
-              context.sem_ir().classes().Get(inst.class_id).vtable_decl_id)
+              context.sem_ir().constant_values().GetConstantInstId(
+                  context.sem_ir().classes().Get(inst.class_id).vtable_decl_id))
           .vtable_id,
       inst.specific_id);
 }

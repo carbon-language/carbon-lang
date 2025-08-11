@@ -480,6 +480,9 @@ static auto ConvertStructToStructOrClass(
                                              {.type_id = vptr_type_id,
                                               .base_id = target.init_id,
                                               .index = SemIR::ElementIndex(i)});
+      auto class_id =
+          context.types().GetAs<SemIR::ClassType>(target.type_id).class_id;
+      LoadImportRef(context, context.classes().Get(class_id).vtable_decl_id);
       auto vtable_ptr_id = AddInst<SemIR::VtablePtr>(
           context, value_loc_id,
           {.type_id = GetPointerType(context, SemIR::VtableType::TypeInstId),
@@ -608,7 +611,7 @@ static auto ConvertStructToClass(
     dest_vtable_decl_inst_id = dest_class_info.vtable_decl_id;
     if (dest_type.specific_id.has_value() &&
         dest_vtable_decl_inst_id.has_value()) {
-      // LoadImportRef(context, dest_vtable_decl_inst_id);
+      LoadImportRef(context, dest_vtable_decl_inst_id);
       const auto& vtable_decl = context.insts().GetAs<SemIR::VtableDecl>(
           context.constant_values().GetConstantInstId(
               dest_vtable_decl_inst_id));

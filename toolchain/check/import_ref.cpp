@@ -1715,7 +1715,7 @@ static auto TryResolveTypedInst(ImportRefResolver& resolver,
                       : SemIR::InstId::None;
   auto vtable_decl_id =
       import_class.vtable_decl_id.has_value()
-          ? GetLocalConstantInstId(resolver, import_class.vtable_decl_id)
+          ? AddImportRef(resolver, import_class.vtable_decl_id)
           : SemIR::InstId::None;
   auto& new_class = resolver.local_classes().Get(class_id);
 

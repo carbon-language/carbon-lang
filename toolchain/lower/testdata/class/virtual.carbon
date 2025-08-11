@@ -187,7 +187,6 @@ fn Make() {
 // CHECK:STDOUT: source_filename = "create.carbon"
 // CHECK:STDOUT:
 // CHECK:STDOUT: @"_CIntermediate.Classes.$vtable" = external unnamed_addr constant ptr
-// CHECK:STDOUT: @"_CDerived.Classes.$vtable" = external unnamed_addr constant ptr
 // CHECK:STDOUT: @Base.val.loc7_3 = internal constant {} zeroinitializer
 // CHECK:STDOUT: @Intermediate.val.loc8_3 = internal constant { ptr, {} } { ptr @"_CIntermediate.Classes.$vtable", {} zeroinitializer }
 // CHECK:STDOUT: @Derived.val.loc9_3 = internal constant { { ptr, {} } } { { ptr, {} } { ptr @"_CIntermediate.Classes.$vtable", {} zeroinitializer } }
