@@ -66,9 +66,7 @@ struct ConversionTarget {
 // of the object of non-partial class type from the object of partial class
 // type.
 auto Convert(Context& context, SemIR::LocId loc_id, SemIR::InstId expr_id,
-             ConversionTarget target,
-             SemIR::InstId vtable_ptr_inst_id = SemIR::InstId::None)
-    -> SemIR::InstId;
+             ConversionTarget target) -> SemIR::InstId;
 
 // Performs initialization of `target_id` from `value_id`. Returns the
 // possibly-converted initializing expression, which should be assigned to the

@@ -2038,16 +2038,29 @@ static auto TryResolveTypedInst(ImportRefResolver& resolver,
     -> ResolveResult {
   auto specific_data = GetLocalSpecificData(resolver, inst.specific_id);
 
-  auto local_vtable_decl_id =
-      GetLocalConstantInstId(resolver, inst.vtable_decl_id);
+  auto class_const_id = GetLocalConstantId(
+      resolver,
+      resolver.import_classes().Get(inst.class_id).first_owning_decl_id);
+  auto class_const_inst = resolver.local_insts().Get(
+      resolver.local_constant_values().GetInstId(class_const_id));
   if (resolver.HasNewWork()) {
     return ResolveResult::Retry();
+  }
+
+  auto class_id = SemIR::ClassId::None;
+  if (class_const_inst.Is<SemIR::ClassType>()) {
+    class_id = class_const_inst.As<SemIR::ClassType>().class_id;
+  } else {
+    auto generic_class_type =
+        resolver.local_types().GetAs<SemIR::GenericClassType>(
+            class_const_inst.type_id());
+    class_id = generic_class_type.class_id;
   }
 
   return ResolveAsDeduplicated<SemIR::VtablePtr>(
       resolver, {.type_id = GetPointerType(resolver.local_context(),
                                            SemIR::VtableType::TypeInstId),
-                 .vtable_decl_id = local_vtable_decl_id,
+                 .class_id = class_id,
                  .specific_id = GetOrAddLocalSpecific(
                      resolver, inst.specific_id, specific_data)});
 }

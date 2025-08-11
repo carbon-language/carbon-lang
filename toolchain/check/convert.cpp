@@ -164,8 +164,7 @@ static auto ConvertAggregateElement(
     llvm::ArrayRef<SemIR::InstId> src_literal_elems,
     ConversionTarget::Kind kind, SemIR::InstId target_id,
     SemIR::TypeInstId target_elem_type_inst, PendingBlock* target_block,
-    size_t src_field_index, size_t target_field_index,
-    SemIR::InstId vtable_decl_inst_id = SemIR::InstId::None) -> SemIR::InstId {
+    size_t src_field_index, size_t target_field_index) -> SemIR::InstId {
   auto src_elem_type =
       context.types().GetTypeIdForTypeInstId(src_elem_type_inst);
   auto target_elem_type =
@@ -193,7 +192,7 @@ static auto ConvertAggregateElement(
   target.init_id = MakeElementAccessInst<TargetAccessInstT>(
       context, loc_id, target_id, target_elem_type, *target_block,
       target_field_index);
-  return Convert(context, loc_id, src_elem_id, target, vtable_decl_inst_id);
+  return Convert(context, loc_id, src_elem_id, target);
 }
 
 // Performs a conversion from a tuple to an array type. This function only
@@ -390,7 +389,6 @@ template <typename TargetAccessInstT>
 static auto ConvertStructToStructOrClass(
     Context& context, SemIR::StructType src_type, SemIR::StructType dest_type,
     SemIR::InstId value_id, ConversionTarget target,
-    SemIR::InstId vtable_decl_inst_id = SemIR::InstId::None,
     SemIR::SpecificId vtable_specific_id = SemIR::SpecificId::None)
     -> SemIR::InstId {
   static_assert(std::is_same_v<SemIR::ClassElementAccess, TargetAccessInstT> ||
@@ -482,11 +480,11 @@ static auto ConvertStructToStructOrClass(
                                              {.type_id = vptr_type_id,
                                               .base_id = target.init_id,
                                               .index = SemIR::ElementIndex(i)});
-      // LoadImportRef(context, vtable_decl_inst_id);
       auto vtable_ptr_id = AddInst<SemIR::VtablePtr>(
           context, value_loc_id,
           {.type_id = GetPointerType(context, SemIR::VtableType::TypeInstId),
-           .vtable_decl_id = vtable_decl_inst_id,
+           .class_id =
+               context.types().GetAs<SemIR::ClassType>(target.type_id).class_id,
            .specific_id = vtable_specific_id});
       auto init_id = AddInst<SemIR::InitializeFrom>(context, value_loc_id,
                                                     {.type_id = vptr_type_id,
@@ -533,7 +531,7 @@ static auto ConvertStructToStructOrClass(
             context, value_loc_id, value_id, src_field.type_inst_id,
             literal_elems, inner_kind, target.init_id, dest_field.type_inst_id,
             target.init_block, src_field_index,
-            src_field_index + dest_vptr_offset, vtable_decl_inst_id);
+            src_field_index + dest_vptr_offset);
     if (init_id == SemIR::ErrorInst::InstId) {
       return SemIR::ErrorInst::InstId;
     }
@@ -628,7 +626,7 @@ static auto ConvertStructToClass(
 
   auto result_id = ConvertStructToStructOrClass<SemIR::ClassElementAccess>(
       context, src_type, dest_struct_type, value_id, target,
-      dest_vtable_decl_inst_id, vtable_specific_id);
+      vtable_specific_id);
 
   if (need_temporary) {
     target_block.InsertHere();
@@ -829,10 +827,9 @@ static auto DiagnoseConversionFailureToConstraintValue(
   }
 }
 
-static auto PerformBuiltinConversion(
-    Context& context, SemIR::LocId loc_id, SemIR::InstId value_id,
-    ConversionTarget target,
-    SemIR::InstId vtable_decl_inst_id = SemIR::InstId::None) -> SemIR::InstId {
+static auto PerformBuiltinConversion(Context& context, SemIR::LocId loc_id,
+                                     SemIR::InstId value_id,
+                                     ConversionTarget target) -> SemIR::InstId {
   auto& sem_ir = context.sem_ir();
   auto value = sem_ir.insts().Get(value_id);
   auto value_type_id = value.type_id();
@@ -1004,8 +1001,7 @@ static auto PerformBuiltinConversion(
                .Get(target_class_type->class_id)
                .adapt_id.has_value()) {
         return ConvertStructToClass(context, *src_struct_type,
-                                    *target_class_type, value_id, target,
-                                    vtable_decl_inst_id);
+                                    *target_class_type, value_id, target);
       }
     }
 
@@ -1232,8 +1228,7 @@ auto PerformAction(Context& context, SemIR::LocId loc_id,
 }
 
 auto Convert(Context& context, SemIR::LocId loc_id, SemIR::InstId expr_id,
-             ConversionTarget target, SemIR::InstId vtable_decl_inst_id)
-    -> SemIR::InstId {
+             ConversionTarget target) -> SemIR::InstId {
   auto& sem_ir = context.sem_ir();
   auto orig_expr_id = expr_id;
 
@@ -1296,8 +1291,7 @@ auto Convert(Context& context, SemIR::LocId loc_id, SemIR::InstId expr_id,
   }
 
   // Check whether any builtin conversion applies.
-  expr_id = PerformBuiltinConversion(context, loc_id, expr_id, target,
-                                     vtable_decl_inst_id);
+  expr_id = PerformBuiltinConversion(context, loc_id, expr_id, target);
   if (expr_id == SemIR::ErrorInst::InstId) {
     return expr_id;
   }

@@ -158,11 +158,13 @@ static auto EmitAsConstant(ConstantContext& context, SemIR::AddrOf inst)
 
 static auto EmitAsConstant(ConstantContext& context, SemIR::VtablePtr inst)
     -> llvm::Constant* {
-  return context.GetVtable(context.sem_ir()
-                               .insts()
-                               .GetAs<SemIR::VtableDecl>(inst.vtable_decl_id)
-                               .vtable_id,
-                           inst.specific_id);
+  return context.GetVtable(
+      context.sem_ir()
+          .insts()
+          .GetAs<SemIR::VtableDecl>(
+              context.sem_ir().classes().Get(inst.class_id).vtable_decl_id)
+          .vtable_id,
+      inst.specific_id);
 }
 
 static auto EmitAsConstant(ConstantContext& context,
