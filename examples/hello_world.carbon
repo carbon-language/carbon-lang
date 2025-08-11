@@ -2,7 +2,7 @@
 // Exceptions. See /LICENSE for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
-import Cpp library "stdio.h";
+import Cpp inline "#include <cstdio>";
 
 fn Run() {
   // TODO: This should be a string, and just print directly.
