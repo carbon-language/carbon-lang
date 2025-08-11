@@ -6732,19 +6732,19 @@ class T2(G2:! type) {
 // CHECK:STDOUT:   %Base.F.e26: %Base.F.type.f17 = struct_value () [symbolic]
 // CHECK:STDOUT:   %pattern_type.9f7: type = pattern_type %Base.370 [symbolic]
 // CHECK:STDOUT:   %Base.F.specific_fn.892: <specific function> = specific_function %Base.F.e26, @Base.F(%T) [symbolic]
-// CHECK:STDOUT:   %Base.vtable_ptr.f15b84.1: ref %ptr.454 = vtable_ptr @Base.vtable.1, @Base(%T) [symbolic]
+// CHECK:STDOUT:   %Base.vtable_ptr.16a6e1.1: ref %ptr.454 = vtable_ptr @Base.vtable.1, @Base(%T) [symbolic]
 // CHECK:STDOUT:   %require_complete: <witness> = require_complete_type %Base.370 [symbolic]
-// CHECK:STDOUT:   %Base.vtable_ptr.f15b84.2: ref %ptr.454 = vtable_ptr @Base.vtable.2, @Base(%T) [symbolic]
+// CHECK:STDOUT:   %Base.vtable_ptr.16a6e1.2: ref %ptr.454 = vtable_ptr @Base.vtable.2, @Base(%T) [symbolic]
 // CHECK:STDOUT:   %Base.ea5: type = class_type @Base, @Base(%T1) [concrete]
 // CHECK:STDOUT:   %Base.F.type.d82: type = fn_type @Base.F, @Base(%T1) [concrete]
 // CHECK:STDOUT:   %Base.F.d25: %Base.F.type.d82 = struct_value () [concrete]
 // CHECK:STDOUT:   %pattern_type.3bf: type = pattern_type %Base.ea5 [concrete]
 // CHECK:STDOUT:   %Base.F.specific_fn.210: <specific function> = specific_function %Base.F.d25, @Base.F(%T1) [concrete]
-// CHECK:STDOUT:   %Base.vtable_ptr.88e: ref %ptr.454 = vtable_ptr @Base.vtable.1, @Base(%T1) [concrete]
+// CHECK:STDOUT:   %Base.vtable_ptr.e8d: ref %ptr.454 = vtable_ptr @Base.vtable.1, @Base(%T1) [concrete]
 // CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [concrete]
-// CHECK:STDOUT:   %Base.vtable_ptr.f15b84.3: ref %ptr.454 = vtable_ptr @Base.vtable.3, @Base(%T) [symbolic]
+// CHECK:STDOUT:   %Base.vtable_ptr.16a6e1.3: ref %ptr.454 = vtable_ptr @Base.vtable.3, @Base(%T) [symbolic]
 // CHECK:STDOUT:   %.b74: ref %ptr.454 = class_element_access file.%v.var, element0 [concrete]
-// CHECK:STDOUT:   %Base.val: %Base.ea5 = struct_value (%Base.vtable_ptr.88e) [concrete]
+// CHECK:STDOUT:   %Base.val: %Base.ea5 = struct_value (%Base.vtable_ptr.e8d) [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -6753,15 +6753,15 @@ class T2(G2:! type) {
 // CHECK:STDOUT:     import Core//prelude
 // CHECK:STDOUT:     import Core//prelude/...
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %Main.import_ref.03f: ref %ptr.454 = import_ref Main//generic_lib, loc6_1, loaded [symbolic = @Base.%vtable_ptr (constants.%Base.vtable_ptr.f15b84.3)]
+// CHECK:STDOUT:   %Main.import_ref.03f: ref %ptr.454 = import_ref Main//generic_lib, loc6_1, loaded [symbolic = @Base.%vtable_ptr (constants.%Base.vtable_ptr.16a6e1.3)]
 // CHECK:STDOUT:   %Main.import_ref.5ab3ec.1: type = import_ref Main//generic_lib, loc4_17, loaded [symbolic = @Base.%T (constants.%T)]
 // CHECK:STDOUT:   %Main.import_ref.05e: <witness> = import_ref Main//generic_lib, loc6_1, loaded [concrete = constants.%complete_type]
 // CHECK:STDOUT:   %Main.import_ref.8e0 = import_ref Main//generic_lib, inst27 [no loc], unloaded
 // CHECK:STDOUT:   %Main.import_ref.e54 = import_ref Main//generic_lib, loc5_30, unloaded
 // CHECK:STDOUT:   %Main.import_ref.5ab3ec.2: type = import_ref Main//generic_lib, loc4_17, loaded [symbolic = @Base.%T (constants.%T)]
-// CHECK:STDOUT:   %Main.import_ref.4f4e13.1: <specific function> = import_ref Main//generic_lib, inst47 [no loc], loaded [symbolic = constants.%Base.F.specific_fn.892]
-// CHECK:STDOUT:   %Main.import_ref.4f4e13.2: <specific function> = import_ref Main//generic_lib, inst47 [no loc], loaded [symbolic = constants.%Base.F.specific_fn.892]
-// CHECK:STDOUT:   %Main.import_ref.4f4e13.3: <specific function> = import_ref Main//generic_lib, inst47 [no loc], loaded [symbolic = constants.%Base.F.specific_fn.892]
+// CHECK:STDOUT:   %Main.import_ref.78ad15.1: <specific function> = import_ref Main//generic_lib, loc6_1, loaded [symbolic = constants.%Base.F.specific_fn.892]
+// CHECK:STDOUT:   %Main.import_ref.78ad15.2: <specific function> = import_ref Main//generic_lib, loc6_1, loaded [symbolic = constants.%Base.F.specific_fn.892]
+// CHECK:STDOUT:   %Main.import_ref.78ad15.3: <specific function> = import_ref Main//generic_lib, loc6_1, loaded [symbolic = constants.%Base.F.specific_fn.892]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -6796,7 +6796,7 @@ class T2(G2:! type) {
 // CHECK:STDOUT:   %Base.F.type: type = fn_type @Base.F, @Base(%T) [symbolic = %Base.F.type (constants.%Base.F.type.f17)]
 // CHECK:STDOUT:   %Base.F: @Base.%Base.F.type (%Base.F.type.f17) = struct_value () [symbolic = %Base.F (constants.%Base.F.e26)]
 // CHECK:STDOUT:   %Base.F.specific_fn: <specific function> = specific_function %Base.F, @Base.F(%T) [symbolic = %Base.F.specific_fn (constants.%Base.F.specific_fn.892)]
-// CHECK:STDOUT:   %vtable_ptr: ref %ptr.454 = vtable_ptr @Base.vtable.1, @Base(%T) [symbolic = %vtable_ptr (constants.%Base.vtable_ptr.f15b84.1)]
+// CHECK:STDOUT:   %vtable_ptr: ref %ptr.454 = vtable_ptr @Base.vtable.1, @Base(%T) [symbolic = %vtable_ptr (constants.%Base.vtable_ptr.16a6e1.1)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   class {
 // CHECK:STDOUT:     complete_type_witness = imports.%Main.import_ref.05e
@@ -6809,15 +6809,15 @@ class T2(G2:! type) {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: vtable @Base.vtable.1 {
-// CHECK:STDOUT:   imports.%Main.import_ref.4f4e13.1
+// CHECK:STDOUT:   imports.%Main.import_ref.78ad15.1
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: vtable @Base.vtable.2 {
-// CHECK:STDOUT:   imports.%Main.import_ref.4f4e13.2
+// CHECK:STDOUT:   imports.%Main.import_ref.78ad15.2
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: vtable @Base.vtable.3 {
-// CHECK:STDOUT:   imports.%Main.import_ref.4f4e13.3
+// CHECK:STDOUT:   imports.%Main.import_ref.78ad15.3
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic virtual fn @Base.F(imports.%Main.import_ref.5ab3ec.2: type) [from "generic_lib.carbon"] {
@@ -6835,7 +6835,7 @@ class T2(G2:! type) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %.loc7_20.1: %empty_struct_type = struct_literal ()
 // CHECK:STDOUT:   %.loc7_20.2: ref %ptr.454 = class_element_access file.%v.var, element0 [concrete = constants.%.b74]
-// CHECK:STDOUT:   %.loc7_20.3: init %ptr.454 = initialize_from constants.%Base.vtable_ptr.88e to %.loc7_20.2 [concrete = constants.%Base.vtable_ptr.88e]
+// CHECK:STDOUT:   %.loc7_20.3: init %ptr.454 = initialize_from constants.%Base.vtable_ptr.e8d to %.loc7_20.2 [concrete = constants.%Base.vtable_ptr.e8d]
 // CHECK:STDOUT:   %.loc7_20.4: init %Base.ea5 = class_init (%.loc7_20.3), file.%v.var [concrete = constants.%Base.val]
 // CHECK:STDOUT:   %.loc7_1: init %Base.ea5 = converted %.loc7_20.1, %.loc7_20.4 [concrete = constants.%Base.val]
 // CHECK:STDOUT:   assign file.%v.var, %.loc7_1
@@ -6849,7 +6849,7 @@ class T2(G2:! type) {
 // CHECK:STDOUT:   %Base.F.type => constants.%Base.F.type.f17
 // CHECK:STDOUT:   %Base.F => constants.%Base.F.e26
 // CHECK:STDOUT:   %Base.F.specific_fn => constants.%Base.F.specific_fn.892
-// CHECK:STDOUT:   %vtable_ptr => constants.%Base.vtable_ptr.f15b84.2
+// CHECK:STDOUT:   %vtable_ptr => constants.%Base.vtable_ptr.16a6e1.2
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Base.F(constants.%T) {
@@ -6868,7 +6868,7 @@ class T2(G2:! type) {
 // CHECK:STDOUT:   %Base.F.type => constants.%Base.F.type.d82
 // CHECK:STDOUT:   %Base.F => constants.%Base.F.d25
 // CHECK:STDOUT:   %Base.F.specific_fn => constants.%Base.F.specific_fn.210
-// CHECK:STDOUT:   %vtable_ptr => constants.%Base.vtable_ptr.88e
+// CHECK:STDOUT:   %vtable_ptr => constants.%Base.vtable_ptr.e8d
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Base.F(constants.%T1) {
