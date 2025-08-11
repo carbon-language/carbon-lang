@@ -119,20 +119,13 @@ static auto IsSimpleAbiType(clang::ASTContext& ast_context,
   return false;
 }
 
-// Creates the thunk parameter types given the callee function. Also returns for
-// each type whether it is different from the matching callee function parameter
-// type.
+// Creates the thunk parameter types given the callee function.
 static auto BuildThunkParameterTypes(
     clang::ASTContext& ast_context,
     const clang::FunctionDecl& callee_function_decl)
-    -> std::tuple<llvm::SmallVector<clang::QualType>, llvm::SmallVector<bool>> {
-  std::tuple<llvm::SmallVector<clang::QualType>, llvm::SmallVector<bool>>
-      result;
-  auto& [thunk_param_types, param_type_changed] = result;
-
-  unsigned num_params = callee_function_decl.getNumParams();
-  thunk_param_types.reserve(num_params);
-  param_type_changed.reserve(num_params);
+    -> llvm::SmallVector<clang::QualType> {
+  llvm::SmallVector<clang::QualType> thunk_param_types;
+  thunk_param_types.reserve(callee_function_decl.getNumParams());
 
   for (const clang::ParmVarDecl* callee_param :
        callee_function_decl.parameters()) {
@@ -143,11 +136,10 @@ static auto BuildThunkParameterTypes(
       param_type = ast_context.getAttributedType(
           clang::NullabilityKind::NonNull, pointer_type, pointer_type);
     }
-    param_type_changed.push_back(!is_simple_abi_type);
     thunk_param_types.push_back(param_type);
   }
 
-  return result;
+  return thunk_param_types;
 }
 
 // Returns the thunk parameters using the callee function parameter identifiers.
@@ -225,11 +217,11 @@ static auto CreateThunkFunctionDecl(
 // callee function which is the thunk parameter or its address.
 static auto BuildCalleeArgs(clang::Sema& sema,
                             clang::FunctionDecl* thunk_function_decl,
-                            llvm::ArrayRef<bool> param_type_changed)
+                            const clang::FunctionDecl& callee_function_decl)
     -> llvm::SmallVector<clang::Expr*> {
   llvm::SmallVector<clang::Expr*> call_args;
   size_t num_params = thunk_function_decl->getNumParams();
-  CARBON_CHECK(param_type_changed.size() == num_params);
+  CARBON_CHECK(callee_function_decl.getNumParams() == num_params);
   call_args.reserve(num_params);
   for (unsigned i = 0; i < num_params; ++i) {
     clang::ParmVarDecl* thunk_param = thunk_function_decl->getParamDecl(i);
@@ -237,7 +229,8 @@ static auto BuildCalleeArgs(clang::Sema& sema,
 
     clang::Expr* call_arg = sema.BuildDeclRefExpr(
         thunk_param, thunk_param->getType(), clang::VK_LValue, clang_loc);
-    if (param_type_changed[i]) {
+    if (thunk_param->getType() !=
+        callee_function_decl.getParamDecl(i)->getType()) {
       // TODO: Consider inserting a cast to an rvalue. Note that we currently
       // pass pointers to non-temporary objects as the argument when calling a
       // thunk, so we'll need to either change that or generate different thunks
@@ -288,7 +281,7 @@ auto BuildCppThunk(Context& context, const SemIR::Function& callee_function)
   CARBON_CHECK(callee_function_decl);
 
   // Build the thunk function declaration.
-  auto [thunk_param_types, param_type_changed] =
+  auto thunk_param_types =
       BuildThunkParameterTypes(context.ast_context(), *callee_function_decl);
   clang::FunctionDecl* thunk_function_decl = CreateThunkFunctionDecl(
       context, *callee_function_decl, thunk_param_types);
@@ -299,7 +292,7 @@ auto BuildCppThunk(Context& context, const SemIR::Function& callee_function)
   sema.ActOnStartOfFunctionDef(nullptr, thunk_function_decl);
 
   llvm::SmallVector<clang::Expr*> call_args =
-      BuildCalleeArgs(sema, thunk_function_decl, param_type_changed);
+      BuildCalleeArgs(sema, thunk_function_decl, *callee_function_decl);
   clang::Stmt* body = BuildThunkBody(sema, callee_function_decl, call_args);
   sema.ActOnFinishFunctionBody(thunk_function_decl, body);
   if (!body) {
