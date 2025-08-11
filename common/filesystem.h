@@ -1466,10 +1466,10 @@ constexpr auto Dir::Destroy() -> void {
     //        here, there is no potentially dropped data to report.
     //
     // If we ever discover a platform that fails here, we should adjust this
-    // code to not fail in the face of that, likely be dropping the error. If we
+    // code to not fail in the face of that, likely by dropping the error. If we
     // end up supporting a platform that actually requires well-specified
     // retries, this code should handle that. Until then, we require these to
-    // succeed so we will learn about any issues.
+    // succeed so we will learn about any issues during porting to new platforms.
     CARBON_CHECK(result == 0, "{0}",
                  FdError(errno, "Dir::Destroy on '{0}'", dfd_));
   }
