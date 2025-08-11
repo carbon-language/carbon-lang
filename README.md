@@ -262,7 +262,7 @@ immediately when migrating into Carbon:
 -   Switching from undefined behavior to erroneous behavior wherever possible,
     and marking the remaining undefined behavior with visible `unsafe` syntax.
 -   Having a default debug build mode that is both cheaper and more
-    comprehensive than existing C++ build modes even when combined with
+    comprehensive than existing C++ debug build modes when combined with
     [Address Sanitizer](https://github.com/google/sanitizers/wiki/AddressSanitizer).
 
 For more details, see our [safety design](/docs/design/safety).

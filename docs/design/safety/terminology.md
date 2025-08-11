@@ -171,7 +171,8 @@ A computing platform or execution environment that provides mechanisms to
 prevent memory safety bugs in programs running on it from becoming
 vulnerabilities. This is a _systems_ path to achieving memory safety by
 providing the well-defined and predictable behavior by way of the execution
-environment.
+environment. For example, a strongly sandboxed WebAssembly runtime environment
+can allow a program that is itself unsafe to be executed safely
 
 ### _Memory-safe language_
 
