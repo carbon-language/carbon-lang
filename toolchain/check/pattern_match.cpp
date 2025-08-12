@@ -442,18 +442,18 @@ auto MatchContext::DoEmitPatternMatch(
     Context& context, SemIR::ReturnSlotPattern return_slot_pattern,
     SemIR::InstId pattern_inst_id, WorkItem entry) -> void {
   CARBON_CHECK(kind_ == MatchKind::Callee);
-  auto type_id =
-      ExtractScrutineeType(context.sem_ir(), return_slot_pattern.type_id);
-  auto return_slot_id = AddInst<SemIR::ReturnSlot>(
-      context, SemIR::LocId(pattern_inst_id),
-      {.type_id = type_id,
-       .type_inst_id = context.types().GetInstId(type_id),
-       .storage_id = entry.scrutinee_id});
-  bool already_in_lookup =
-      context.scope_stack()
-          .LookupOrAddName(SemIR::NameId::ReturnSlot, return_slot_id)
-          .has_value();
-  CARBON_CHECK(!already_in_lookup);
+  auto [added, _] =
+      context.scope_stack().LookupOrAddNameWith(SemIR::NameId::ReturnSlot, [&] {
+        auto type_id =
+            ExtractScrutineeType(context.sem_ir(), return_slot_pattern.type_id);
+        auto return_slot_id = AddInst<SemIR::ReturnSlot>(
+            context, SemIR::LocId(pattern_inst_id),
+            {.type_id = type_id,
+             .type_inst_id = context.types().GetInstId(type_id),
+             .storage_id = entry.scrutinee_id});
+        return return_slot_id;
+      });
+  CARBON_CHECK(added);
 }
 
 auto MatchContext::DoEmitPatternMatch(Context& context,

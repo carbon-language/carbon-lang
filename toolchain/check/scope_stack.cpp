@@ -195,8 +195,10 @@ auto ScopeStack::LookupInLexicalScopes(SemIR::NameId name_id)
       llvm::ArrayRef(first_non_lexical_scope, non_lexical_scope_stack_.end())};
 }
 
-auto ScopeStack::LookupOrAddName(SemIR::NameId name_id, SemIR::InstId target_id,
-                                 ScopeIndex scope_index) -> SemIR::InstId {
+auto ScopeStack::LookupOrAddNameWith(
+    SemIR::NameId name_id,
+    llvm::function_ref<auto()->SemIR::InstId> make_target_inst_id,
+    ScopeIndex scope_index) -> std::pair<bool, SemIR::InstId> {
   // Find the corresponding scope depth.
   //
   // TODO: Consider passing in the depth rather than performing a scan for it.
@@ -222,7 +224,7 @@ auto ScopeStack::LookupOrAddName(SemIR::NameId name_id, SemIR::InstId target_id,
   auto& lexical_results = lexical_lookup_.Get(name_id);
   if (!lexical_results.empty() &&
       lexical_results.back().scope_index >= scope_index) {
-    return lexical_results.back().inst_id;
+    return {false, lexical_results.back().inst_id};
   }
 
   // Add the name into the scope.
@@ -231,8 +233,10 @@ auto ScopeStack::LookupOrAddName(SemIR::NameId name_id, SemIR::InstId target_id,
   ++scope_stack_[scope_depth].num_names;
 
   // Add a corresponding lexical lookup result.
-  lexical_results.push_back({.inst_id = target_id, .scope_index = scope_index});
-  return SemIR::InstId::None;
+  auto target_inst_id = make_target_inst_id();
+  lexical_results.push_back(
+      {.inst_id = target_inst_id, .scope_index = scope_index});
+  return {true, target_inst_id};
 }
 
 auto ScopeStack::SetReturnedVarOrGetExisting(SemIR::InstId inst_id)

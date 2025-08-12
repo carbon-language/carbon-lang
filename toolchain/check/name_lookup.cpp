@@ -20,13 +20,13 @@ namespace Carbon::Check {
 
 auto AddNameToLookup(Context& context, SemIR::NameId name_id,
                      SemIR::InstId target_id, ScopeIndex scope_index) -> void {
-  if (auto existing = context.scope_stack().LookupOrAddName(name_id, target_id,
-                                                            scope_index);
-      existing.has_value()) {
+  auto [added, inst_id] = context.scope_stack().LookupOrAddNameWith(
+      name_id, [=] { return target_id; }, scope_index);
+  if (!added) {
     // TODO: Add coverage to this use case and use the location of the name
     // instead of the target.
     DiagnoseDuplicateName(context, name_id, SemIR::LocId(target_id),
-                          SemIR::LocId(existing));
+                          SemIR::LocId(inst_id));
   }
 }
 

@@ -100,6 +100,9 @@ auto ResolveFacetTypeRewriteConstraints(
 //
 // The `self_type_id` is either a facet type (as `FacetType`) or `type` (as
 // `TypeType`).
+//
+// It is required that `.Self` is not already a name in scope, which usually
+// means making a fresh scope with `ScopeStack::PushForSameRegion()` first.
 auto MakePeriodSelfFacetValue(Context& context, SemIR::TypeId self_type_id)
     -> SemIR::InstId;
 

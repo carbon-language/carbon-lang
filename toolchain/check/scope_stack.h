@@ -5,6 +5,9 @@
 #ifndef CARBON_TOOLCHAIN_CHECK_SCOPE_STACK_H_
 #define CARBON_TOOLCHAIN_CHECK_SCOPE_STACK_H_
 
+#include <concepts>
+#include <type_traits>
+
 #include "common/array_stack.h"
 #include "common/move_only.h"
 #include "common/set.h"
@@ -145,12 +148,15 @@ class ScopeStack {
       -> std::pair<SemIR::InstId, llvm::ArrayRef<NonLexicalScope>>;
 
   // Looks up the name `name_id` in the current scope, or in `scope_index` if
-  // specified. Returns the existing instruction if the name is already declared
-  // in that scope or any unfinished scope within it, and otherwise adds the
-  // name with the value `target_id` and returns `None`.
-  auto LookupOrAddName(SemIR::NameId name_id, SemIR::InstId target_id,
-                       ScopeIndex scope_index = ScopeIndex::None)
-      -> SemIR::InstId;
+  // specified. Returns `false` with the existing instruction if the name is
+  // already declared in that scope or any unfinished scope within it, and
+  // otherwise calls `make_target_inst_id` to generate an `InstId`, adds the
+  // name with that `InstId` and returns `true` along with it.
+  auto LookupOrAddNameWith(
+      SemIR::NameId name_id,
+      llvm::function_ref<auto()->SemIR::InstId> make_target_inst_id,
+      ScopeIndex scope_index = ScopeIndex::None)
+      -> std::pair<bool /*added*/, SemIR::InstId>;
 
   // Prepares to add a compile-time binding in the current scope, and returns
   // its index. The added binding must then be pushed using
