@@ -96,7 +96,7 @@ termination, continuing execution, or unwinding.
 
 ### _Vulnerability_ or _security vulnerability_
 
-A subset of bugs that creates the possibility for a malicious actor to subvert a
+A bug that creates the possibility for a malicious actor to subvert a
 program's intended behavior in a way that violates a security policy (for
 example, confidentiality, integrity, availability). Vulnerabilities are often
 exploitable manifestations of underlying bugs.
