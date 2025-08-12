@@ -111,7 +111,7 @@ auto InstallPaths::ReadManifest(std::filesystem::path manifest_path,
     if (token.empty()) {
       break;
     }
-    result->push_back((manifest_path / token.str()).native());
+    result->push_back((manifest_path / std::string_view(token)).native());
     buffer = remainder;
   }
 
@@ -131,9 +131,8 @@ auto InstallPaths::MakeFromFile(std::filesystem::path file_path)
   // FHS-like install prefix. We remove the filename and walk up to find the
   // expected install prefix.
   std::error_code ec;
-  auto install = std::filesystem::absolute(
-      std::move(file_path).remove_filename() / "../..", ec);
-  InstallPaths paths(std::move(install));
+  InstallPaths paths(std::filesystem::absolute(
+      std::move(file_path).remove_filename() / "../..", ec));
   if (ec) {
     paths.SetError(ec.message());
     return paths;
@@ -171,7 +170,7 @@ auto InstallPaths::CheckMarkerFile() -> void {
   }
   if (!*access_result) {
     SetError(llvm::Twine("No install marker at path: ") +
-             (prefix_ / MarkerPath.str()).native());
+             (prefix_ / std::string_view(MarkerPath)).native());
     return;
   }
 
@@ -211,7 +210,7 @@ auto InstallPaths::ld64_lld_path() const -> std::filesystem::path {
 auto InstallPaths::llvm_tool_path(LLVMTool tool) const
     -> std::filesystem::path {
   // TODO: Adjust this to work equally well on Windows.
-  return prefix_ / "lib/carbon/llvm/bin" / tool.bin_name().str();
+  return prefix_ / "lib/carbon/llvm/bin" / std::string_view(tool.bin_name());
 }
 
 }  // namespace Carbon

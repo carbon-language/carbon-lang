@@ -108,13 +108,13 @@ TEST_F(InstallPathsTest, PrefixRootExplicit) {
   CARBON_CHECK(prefix_path.consume_back("lib/carbon/carbon_install.txt"),
                "Unexpected suffix of the marker path: {0}", marker_path);
 
-  auto paths = InstallPaths::Make(prefix_path.str());
+  auto paths = InstallPaths::Make(prefix_path);
   ASSERT_THAT(paths.error(), Eq(std::nullopt)) << *paths.error();
   TestInstallPaths(paths);
 }
 
 TEST_F(InstallPathsTest, TestRunfiles) {
-  auto paths = InstallPaths::MakeForBazelRunfiles(Testing::GetExePath().str());
+  auto paths = InstallPaths::MakeForBazelRunfiles(Testing::GetExePath());
   ASSERT_THAT(paths.error(), Eq(std::nullopt)) << *paths.error();
   TestInstallPaths(paths);
 }
