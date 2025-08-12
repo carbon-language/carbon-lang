@@ -410,6 +410,7 @@ class NodeStack {
       -> std::optional<Id::Kind> {
     switch (node_kind) {
       case Parse::NodeKind::CallExprStart:
+      case Parse::NodeKind::CompileTimeBindingPatternStart:
       case Parse::NodeKind::FieldNameAndType:
       case Parse::NodeKind::IfExprThen:
       case Parse::NodeKind::ReturnType:
@@ -481,7 +482,6 @@ class NodeStack {
       case Parse::NodeKind::CallExprComma:
       case Parse::NodeKind::ChoiceAlternativeListComma:
       case Parse::NodeKind::CodeBlock:
-      case Parse::NodeKind::CompileTimeBindingPatternStart:
       case Parse::NodeKind::ContinueStatementStart:
       case Parse::NodeKind::CorePackageName:
       case Parse::NodeKind::ExportIntroducer:

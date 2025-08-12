@@ -103,6 +103,21 @@ auto ResolveFacetTypeRewriteConstraints(
 auto MakePeriodSelfFacetValue(Context& context, SemIR::TypeId self_type_id,
                               int32_t period_self_distance) -> SemIR::InstId;
 
+// Substitute references to `.Self` in `inst_id` with `self_facet_value`.
+//
+// Typically `inst_id` is a `FacetType` or a facet value, which has type
+// `FacetType`, with the `.Self` references found in the `FacetType`.
+//
+// This substitutes any `.Self` reference with a distance of 0 with the given
+// `self_facet_value` and re-numbers other `.Self` references with higher
+// distance to be one less, so that on the next substitution, the next level of
+// `.Self` references would be substituted.
+//
+// TODO: Write a more thorough design for this and link to it.
+auto SubstPeriodSelf(Context& context, SemIR::LocId loc_id,
+                     SemIR::InstId inst_id, SemIR::InstId self_facet_value)
+    -> SemIR::InstId;
+
 }  // namespace Carbon::Check
 
 #endif  // CARBON_TOOLCHAIN_CHECK_FACET_TYPE_H_
