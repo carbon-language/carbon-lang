@@ -228,10 +228,11 @@ that disables the run-time enforcement, enabling the control of any overhead inc
 [evidence]: https://chandlerc.blog/posts/2024/11/story-time-bounds-checking/
 [performance control]: /docs/project/goals.md#performance-critical-software
 
-The debug build will work to cause bugs and any detectable undefined or
-erroneous behavior to have [fail-stop] behavior and even detailed diagnostics to
-enable better debugging. This mode will at least provide similar bug [detection]
-capabilities to [AddressSanitizer] and [MemorySanitizer].
+The debug build will work to cause bugs, in both safe and unsafe code, and any
+detectable undefined or erroneous behavior to have [fail-stop] behavior and even
+detailed diagnostics to enable better debugging. This mode will at least provide
+similar bug [detection] capabilities to [AddressSanitizer] and
+[MemorySanitizer].
 
 [fail-stop]: /docs/design/safety/terminology.md#fail-stop
 [detection]: /docs/design/safety/terminology.md#detecting
