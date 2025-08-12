@@ -212,6 +212,8 @@ fn Make() {
 // CHECK:STDOUT:   ret void, !dbg !14
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
+// CHECK:STDOUT: declare void @_CFn.Intermediate.Classes(ptr)
+// CHECK:STDOUT:
 // CHECK:STDOUT: define void @_CUse.Create(ptr %v) !dbg !15 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   %Intermediate.Fn.call.vtable = load ptr, ptr %v, align 8, !dbg !16
@@ -219,8 +221,6 @@ fn Make() {
 // CHECK:STDOUT:   call void %Intermediate.Fn.call(ptr %v), !dbg !16
 // CHECK:STDOUT:   ret void, !dbg !17
 // CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: declare void @_CFn.Intermediate.Classes(ptr)
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nocallback nofree nosync nounwind willreturn memory(argmem: readwrite)
 // CHECK:STDOUT: declare void @llvm.lifetime.start.p0(i64 immarg, ptr captures(none)) #0

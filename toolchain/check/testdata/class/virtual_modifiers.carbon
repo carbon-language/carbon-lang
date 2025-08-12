@@ -694,9 +694,9 @@ class T2(G2:! type) {
 // CHECK:STDOUT:   %pattern_type.605: type = pattern_type %ptr.404 [concrete]
 // CHECK:STDOUT:   %Derived.as.Destroy.impl.Op.type: type = fn_type @Derived.as.Destroy.impl.Op [concrete]
 // CHECK:STDOUT:   %Derived.as.Destroy.impl.Op: %Derived.as.Destroy.impl.Op.type = struct_value () [concrete]
-// CHECK:STDOUT:   %Base.vtable_decl: ref %ptr.454 = vtable_decl @Base.vtable [concrete]
 // CHECK:STDOUT:   %Base.H.type: type = fn_type @Base.H [concrete]
 // CHECK:STDOUT:   %Base.H: %Base.H.type = struct_value () [concrete]
+// CHECK:STDOUT:   %Base.vtable_decl: ref %ptr.454 = vtable_decl @Base.vtable [concrete]
 // CHECK:STDOUT:   %Derived.vtable_decl: ref %ptr.454 = vtable_decl @Derived.vtable [concrete]
 // CHECK:STDOUT:   %struct_type.base.96c: type = struct_type {.base: %Base} [concrete]
 // CHECK:STDOUT:   %complete_type.0e2: <witness> = complete_type_witness %struct_type.base.96c [concrete]
@@ -725,7 +725,6 @@ class T2(G2:! type) {
 // CHECK:STDOUT:   %Modifiers.import_ref.1f3 = import_ref Modifiers//default, inst19 [no loc], unloaded
 // CHECK:STDOUT:   %Modifiers.import_ref.2cc = import_ref Modifiers//default, loc5_29, unloaded
 // CHECK:STDOUT:   %Core.Destroy: type = import_ref Core//prelude/parts/destroy, Destroy, loaded [concrete = constants.%Destroy.type]
-// CHECK:STDOUT:   %Modifiers.import_ref.dd4: %Base.H.type = import_ref Modifiers//default, loc5_29, loaded [concrete = constants.%Base.H]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -796,7 +795,7 @@ class T2(G2:! type) {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: vtable @Base.vtable {
-// CHECK:STDOUT:   imports.%Modifiers.import_ref.dd4
+// CHECK:STDOUT:   constants.%Base.H
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: vtable @Derived.vtable {
@@ -854,9 +853,9 @@ class T2(G2:! type) {
 // CHECK:STDOUT:   %pattern_type.605: type = pattern_type %ptr.404 [concrete]
 // CHECK:STDOUT:   %Derived.as.Destroy.impl.Op.type: type = fn_type @Derived.as.Destroy.impl.Op [concrete]
 // CHECK:STDOUT:   %Derived.as.Destroy.impl.Op: %Derived.as.Destroy.impl.Op.type = struct_value () [concrete]
-// CHECK:STDOUT:   %Base.vtable_decl: ref %ptr.454 = vtable_decl @Base.vtable [concrete]
 // CHECK:STDOUT:   %Base.H.type: type = fn_type @Base.H [concrete]
 // CHECK:STDOUT:   %Base.H: %Base.H.type = struct_value () [concrete]
+// CHECK:STDOUT:   %Base.vtable_decl: ref %ptr.454 = vtable_decl @Base.vtable [concrete]
 // CHECK:STDOUT:   %Derived.vtable_decl: ref %ptr.454 = vtable_decl @Derived.vtable [concrete]
 // CHECK:STDOUT:   %struct_type.base: type = struct_type {.base: %Base} [concrete]
 // CHECK:STDOUT:   %complete_type.0e2: <witness> = complete_type_witness %struct_type.base [concrete]
@@ -878,7 +877,6 @@ class T2(G2:! type) {
 // CHECK:STDOUT:   %Modifiers.import_ref.1f3 = import_ref Modifiers//default, inst19 [no loc], unloaded
 // CHECK:STDOUT:   %Modifiers.import_ref.2cc = import_ref Modifiers//default, loc5_29, unloaded
 // CHECK:STDOUT:   %Core.Destroy: type = import_ref Core//prelude/parts/destroy, Destroy, loaded [concrete = constants.%Destroy.type]
-// CHECK:STDOUT:   %Modifiers.import_ref.dd4: %Base.H.type = import_ref Modifiers//default, loc5_29, loaded [concrete = constants.%Base.H]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -947,7 +945,7 @@ class T2(G2:! type) {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: vtable @Base.vtable {
-// CHECK:STDOUT:   imports.%Modifiers.import_ref.dd4
+// CHECK:STDOUT:   constants.%Base.H
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: vtable @Derived.vtable {
@@ -973,6 +971,8 @@ class T2(G2:! type) {
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %struct_type.vptr [concrete]
 // CHECK:STDOUT:   %pattern_type.80f: type = pattern_type %Base [concrete]
 // CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [concrete]
+// CHECK:STDOUT:   %Base.H.type: type = fn_type @Base.H [concrete]
+// CHECK:STDOUT:   %Base.H: %Base.H.type = struct_value () [concrete]
 // CHECK:STDOUT:   %Base.vtable_decl: ref %ptr.454 = vtable_decl @Base.vtable [concrete]
 // CHECK:STDOUT:   %Base.vtable_ptr: ref %ptr.454 = vtable_ptr @Base [concrete]
 // CHECK:STDOUT:   %Base.val: %Base = struct_value (%Base.vtable_ptr) [concrete]
@@ -998,8 +998,7 @@ class T2(G2:! type) {
 // CHECK:STDOUT:   %Modifiers.import_ref.97a: ref %ptr.454 = import_ref Modifiers//default, loc6_1, loaded [concrete = constants.%Base.vtable_decl]
 // CHECK:STDOUT:   %Modifiers.import_ref.05ec96.1: <witness> = import_ref Modifiers//default, loc6_1, loaded [concrete = constants.%complete_type]
 // CHECK:STDOUT:   %Modifiers.import_ref.1f3 = import_ref Modifiers//default, inst19 [no loc], unloaded
-// CHECK:STDOUT:   %Modifiers.import_ref.2cc4fe.1 = import_ref Modifiers//default, loc5_29, unloaded
-// CHECK:STDOUT:   %Modifiers.import_ref.2cc4fe.2 = import_ref Modifiers//default, loc5_29, unloaded
+// CHECK:STDOUT:   %Modifiers.import_ref.2cc = import_ref Modifiers//default, loc5_29, unloaded
 // CHECK:STDOUT:   %Core.Destroy: type = import_ref Core//prelude/parts/destroy, Destroy, loaded [concrete = constants.%Destroy.type]
 // CHECK:STDOUT:   %Modifiers.import_ref.fe3: <witness> = import_ref Modifiers//default, loc4_17, loaded [concrete = constants.%Destroy.impl_witness.2fb]
 // CHECK:STDOUT:   %Modifiers.import_ref.87c: type = import_ref Modifiers//default, loc4_17, loaded [concrete = constants.%Base]
@@ -1043,7 +1042,7 @@ class T2(G2:! type) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = imports.%Modifiers.import_ref.1f3
-// CHECK:STDOUT:   .H = imports.%Modifiers.import_ref.2cc4fe.1
+// CHECK:STDOUT:   .H = imports.%Modifiers.import_ref.2cc
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @Abstract [from "modifiers.carbon"] {
@@ -1057,7 +1056,7 @@ class T2(G2:! type) {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: vtable @Base.vtable {
-// CHECK:STDOUT:   imports.%Modifiers.import_ref.2cc4fe.2
+// CHECK:STDOUT:   constants.%Base.H
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F() {
@@ -1084,6 +1083,8 @@ class T2(G2:! type) {
 // CHECK:STDOUT:   %Base.as.Destroy.impl.Op.call: init %empty_tuple.type = call %Base.as.Destroy.impl.Op.bound(%addr)
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: virtual fn @Base.H [from "modifiers.carbon"];
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Base.as.Destroy.impl.Op = "no_op" [from "modifiers.carbon"];
 // CHECK:STDOUT:
@@ -6808,7 +6809,7 @@ class T2(G2:! type) {
 // CHECK:STDOUT:   %Main.import_ref.8e0 = import_ref Main//generic_lib, inst27 [no loc], unloaded
 // CHECK:STDOUT:   %Main.import_ref.e54 = import_ref Main//generic_lib, loc5_30, unloaded
 // CHECK:STDOUT:   %Main.import_ref.5ab3ec.2: type = import_ref Main//generic_lib, loc4_17, loaded [symbolic = @Base.%T (constants.%T)]
-// CHECK:STDOUT:   %Main.import_ref.ef2 = import_ref Main//generic_lib, loc6_1, unloaded
+// CHECK:STDOUT:   %Main.import_ref.78a: <specific function> = import_ref Main//generic_lib, loc6_1, loaded [symbolic = constants.%Base.F.specific_fn.892]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -6855,7 +6856,7 @@ class T2(G2:! type) {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: vtable @Base.vtable {
-// CHECK:STDOUT:   imports.%Main.import_ref.ef2
+// CHECK:STDOUT:   imports.%Main.import_ref.78a
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic virtual fn @Base.F(imports.%Main.import_ref.5ab3ec.2: type) [from "generic_lib.carbon"] {
