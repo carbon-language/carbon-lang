@@ -76,8 +76,8 @@ language:
     annotation in audits and review.
 
 The result is that we don't model large regions or sections of Carbon code as
-"unsafe" or have a completely "unsafe" mode. We instead focus on the narrow and
-specific unsafe operations and constructs.
+"unsafe" or have a parallel "unsafe" variant language. We instead focus on the
+narrow and specific unsafe operations and constructs.
 
 Note that when we're talking about the narrow semantics of an unsafe capability,
 these are the semantics of the specific unsafe operation. For example, an unsafe
