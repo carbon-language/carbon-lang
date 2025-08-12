@@ -261,7 +261,12 @@ sh_test(
     name = "filesystem_benchmark_test",
     size = "small",
     srcs = [":filesystem_benchmark"],
-    args = ["--benchmark_min_time=1x"],
+    args = [
+        "--benchmark_min_time=1x",
+        # Restrict the sizes to 4-digit ones or smaller to keep test times low.
+        # The `$$` is repeated for Bazel escaping of `$`.
+        "--benchmark_filter=^[^/]+(/[0-9]{1,4}(/[0-9]+)?)?/real_time$$",
+    ],
 )
 
 cc_library(
