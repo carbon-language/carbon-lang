@@ -57,8 +57,9 @@ Buggy behavior that is actively occurring for users of the program.
 
 #### _Latent bug_
 
-Buggy behavior that does not currently occur for users, but can occur. Behaviors
-that can happen but don't today in practice _are always still bugs_!
+Buggy behavior that does not currently occur for users, but is reachable.
+Behaviors that are reachable, and so _can_ happen, but don't happen today in
+practice _are always still bugs_!
 
 ### _Safety_
 
@@ -96,10 +97,10 @@ termination, continuing execution, or unwinding.
 
 ### _Vulnerability_ or _security vulnerability_
 
-A bug that creates the possibility for a malicious actor to subvert a
-program's intended behavior in a way that violates a security policy (for
-example, confidentiality, integrity, availability). Vulnerabilities are often
-exploitable manifestations of underlying bugs.
+A bug that creates the possibility for a malicious actor to subvert a program's
+intended behavior in a way that violates a security policy (for example,
+confidentiality, integrity, availability). Vulnerabilities are often exploitable
+manifestations of underlying bugs.
 
 ### _Vulnerability defense_
 

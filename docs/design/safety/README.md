@@ -26,10 +26,10 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 ## Overview
 
 One of Carbon's core goals is [practical safety]. This is referring to _[code
-safety]_
-as opposed to the larger space of [systems safety]. The largest aspect of code safety
-at the language level is [memory safety], but this also applies to other aspects
-of code safety such as avoiding undefined behavior in other forms.
+safety]_ as opposed to the larger space of [systems safety]. The largest aspect
+of code safety at the language level is [memory safety], but this also applies
+to other aspects of code safety such as avoiding undefined behavior in other
+forms.
 
 [practical safety]:
     /docs/project/goals.md#practical-safety-and-testing-mechanisms
@@ -45,8 +45,9 @@ guarantees. Our safety strategy has to address how C++ code fits into it, and
 provide an incremental path from where the code is at today towards increasing
 levels of safety.
 
-Ultimately, Carbon will both provide a [memory-safe language], _and_ provide a language
-that can interop with C++ and be targeted for mechanical migration from C++.
+Ultimately, Carbon will both provide a [memory-safe language], _and_ provide a
+language that can interop with C++ and be targeted for mechanical migration from
+C++.
 
 [memory-safe language]: /docs/design/safety/terminology.md#memory-safe-language
 
@@ -54,9 +55,9 @@ that can interop with C++ and be targeted for mechanical migration from C++.
 
 Carbon will have both _safe_ and _unsafe_ code. Safe code provides limits on the
 potential behavior of the program even in the face of bugs in order to prevent
-[safety bugs] from becoming [vulnerabilities]. Unsafe code is any code or operation
-which lacks limits or guarantees on behavior, and as a consequence may have undefined
-behavior or be a safety bug.
+[safety bugs] from becoming [vulnerabilities]. Unsafe code is any code or
+operation which lacks limits or guarantees on behavior, and as a consequence may
+have undefined behavior or be a safety bug.
 
 [safety bugs]: /docs/design/safety/terminology.md#safety-bugs
 [vulnerabilities]:
@@ -79,14 +80,24 @@ The result is that we don't model large regions or sections of Carbon code as
 "unsafe" or have a completely "unsafe" mode. We instead focus on the narrow and
 specific unsafe operations and constructs.
 
+Note that when we're talking about the narrow semantics of an unsafe capability,
+these are the semantics of the specific unsafe operation. For example, an unsafe
+type conversion shouldn't also allow unsafe out-of-lifetime access. This is
+separate from the _soundness_ implications of an unsafe operation, which may not
+be as easily narrowed.
+
+> **Future work**: More fully expand on the soundness principles and model for
+> safe Carbon code. This is an interesting and important area of the design that
+> isn't currently fleshed out in detail.
+
 ## Safety modes
 
 The _safety mode_ of Carbon governs the extent to which unsafe code must include
 the local `unsafe` keyword in its syntax to delineate it from safe code.
 
 _Strict Carbon_ is the mode in which all unsafe code is marked with the `unsafe`
-keyword. This mode is designed to satisfy the requirements of a [memory
-safe language].
+keyword. This mode is designed to satisfy the requirements of a [memory safe
+language].
 
 _Permissive Carbon_ is a mode optimized for interop with C++ and automated
 migration from C++. In this mode, some unsafe code does not require an `unsafe`
@@ -120,8 +131,8 @@ through explicitly marking `unsafe` operations.
 Carbon will use a hybrid of different techniques to achieve memory safety in its
 safe code, largely broken down by the categories of memory safety:
 
--   [Type safety]: compile-time enforcement, the same as other statically typed languages
-    with generic type systems.
+-   [Type safety]: compile-time enforcement, the same as other statically typed
+    languages with generic type systems.
 -   [Initialization safety]: hybrid of run-time and compile-time enforcement.
 -   [Spatial safety]: run-time enforcement.
 -   [Temporal safety]: compile-time enforcement through its type system.
@@ -165,8 +176,8 @@ while still being a [memory safe language] according to our definition:
     free.
 
 Despite having this flexibility, preventing data race bugs remains _highly
-valuable_ for correctness, debugging, and achieving [fearless concurrency]. If Carbon
-can, it should work to prevent data races as well.
+valuable_ for correctness, debugging, and achieving [fearless concurrency]. If
+Carbon can, it should work to prevent data races as well.
 
 [fearless concurrency]: https://doc.rust-lang.org/book/ch16-00-concurrency.html
 
@@ -212,8 +223,9 @@ run-time enforcement components of our
 [memory safety model](#memory-safety-model) above. This means, for example, that
 bounds checking is enabled in the release build. There is [evidence] that the
 cost of these hardening steps is low. Following the specific guidance of our top
-priority for [performance _control_], Carbon will provide ways to write unsafe code
-that disables the run-time enforcement, enabling the control of any overhead incurred.
+priority for [performance _control_], Carbon will provide ways to write unsafe
+code that disables the run-time enforcement, enabling the control of any
+overhead incurred.
 
 [evidence]: https://chandlerc.blog/posts/2024/11/story-time-bounds-checking/
 [performance control]: /docs/project/goals.md#performance-critical-software
