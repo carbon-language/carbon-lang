@@ -45,11 +45,11 @@ TEST_F(FilesystemTest, CreateOpenCloseAndUnlink) {
   auto unlink_result = dir_.Unlink("test");
   ASSERT_FALSE(unlink_result.ok());
   EXPECT_TRUE(unlink_result.error().no_entity());
-#ifdef _GNU_SOURCE
+#if defined(_GNU_SOURCE) && \
+    (__GLIBC__ > 2 || (__GLIBC__ == 2 && __GLIBC_MINOR__ >= 32))
   EXPECT_THAT(unlink_result, IsError(HasSubstr("ENOENT")));
-#elif defined(__APPLE__) || defined(_POSIX_SOURCE)
-  EXPECT_THAT(unlink_result, IsError(HasSubstr("No such file")));
 #endif
+  EXPECT_THAT(unlink_result, IsError(HasSubstr("No such file")));
 
   auto f = dir_.OpenWriteOnly("test", CreationOptions::CreateNew);
   ASSERT_THAT(f, IsSuccess(_));
@@ -59,11 +59,11 @@ TEST_F(FilesystemTest, CreateOpenCloseAndUnlink) {
   f = dir_.OpenWriteOnly("test", CreationOptions::CreateNew);
   ASSERT_FALSE(f.ok());
   EXPECT_TRUE(f.error().already_exists());
-#ifdef _GNU_SOURCE
+#if defined(_GNU_SOURCE) && \
+    (__GLIBC__ > 2 || (__GLIBC__ == 2 && __GLIBC_MINOR__ >= 32))
   EXPECT_THAT(f, IsError(HasSubstr("EEXIST")));
-#elif defined(__APPLE__) || defined(_POSIX_SOURCE)
-  EXPECT_THAT(f, IsError(HasSubstr("File exists")));
 #endif
+  EXPECT_THAT(f, IsError(HasSubstr("File exists")));
 
   f = dir_.OpenWriteOnly("test");
   ASSERT_THAT(f, IsSuccess(_));
@@ -81,11 +81,11 @@ TEST_F(FilesystemTest, CreateOpenCloseAndUnlink) {
   f = dir_.OpenWriteOnly("test");
   EXPECT_FALSE(f.ok());
   EXPECT_TRUE(f.error().no_entity());
-#ifdef _GNU_SOURCE
+#if defined(_GNU_SOURCE) && \
+    (__GLIBC__ > 2 || (__GLIBC__ == 2 && __GLIBC_MINOR__ >= 32))
   EXPECT_THAT(f, IsError(HasSubstr("ENOENT")));
-#elif defined(__APPLE__) || defined(_POSIX_SOURCE)
-  EXPECT_THAT(f, IsError(HasSubstr("No such file")));
 #endif
+  EXPECT_THAT(f, IsError(HasSubstr("No such file")));
 
   f = dir_.OpenWriteOnly("test", CreationOptions::OpenAlways);
   ASSERT_THAT(f, IsSuccess(_));

@@ -15,17 +15,27 @@ namespace Carbon::Filesystem {
 // Render an error number from `errno` to the provided stream using the richest
 // rendering available on the platform.
 static auto PrintErrorNumber(llvm::raw_ostream& out, int errnum) -> void {
-#ifdef _GNU_SOURCE
-  // Use GNU-specific routines to compute the error name and description.
+#if defined(_GNU_SOURCE) && \
+    (__GLIBC__ > 2 || (__GLIBC__ == 2 && __GLIBC_MINOR__ >= 32))
+  // For sufficiently recent glibc versions, use GNU-specific routines to
+  // compute the error name and description.
   llvm::StringRef name = strerrordesc_np(errnum);
   llvm::StringRef desc = strerrorname_np(errnum);
 
   out << llvm::formatv("{0}: {1}", name, desc);
-#elif defined(__APPLE__) || defined(_POSIX_SOURCE)
+#elif defined(__APPLE__) || defined(_GNU_SOURCE) || defined(_POSIX_SOURCE)
+  // Broadly portable fallback for Unix-like systems.
   char buffer[4096];
+#ifdef _GNU_SOURCE
+  const char* str = strerror_r(errnum, buffer, sizeof(buffer));
+  // The GNU version doesn't report a meta-error.
+  int meta_error = 0;
+#else
   int meta_error = strerror_r(errnum, buffer, sizeof(buffer));
+  const char* str = buffer;
+#endif
   if (meta_error == 0) {
-    out << llvm::formatv("errno {0}: {1}", errnum, llvm::StringRef(buffer));
+    out << llvm::formatv("errno {0}: {1}", errnum, llvm::StringRef(str));
   } else {
     out << llvm::formatv(
         "error number {0}; encountered meta-error number {1} while rendering "
@@ -479,7 +489,7 @@ auto MakeTmpDir() -> ErrorOr<RemovingDir, Error> {
     if (tmpdir_env_cstr == nullptr) {
       continue;
     }
-    std::filesystem::path tmpdir_env = std::string(tmpdir_env_cstr);
+    std::filesystem::path tmpdir_env = tmpdir_env_cstr;
     if (!tmpdir_env.is_absolute()) {
       continue;
     }
@@ -488,10 +498,8 @@ auto MakeTmpDir() -> ErrorOr<RemovingDir, Error> {
   }
 
   std::filesystem::path target = BuildData::BuildTarget.str();
-  std::string dir_name = target.filename().native();
-  dir_name += ".XXXXXX";
-
-  tmpdir_path /= dir_name;
+  tmpdir_path /= target.filename();
+  tmpdir_path += ".XXXXXX";
 
   std::string tmpdir_path_buffer = tmpdir_path.native();
   char* result = mkdtemp(tmpdir_path_buffer.data());

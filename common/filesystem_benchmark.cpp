@@ -71,7 +71,7 @@ struct BenchContext {
   std::array<std::filesystem::path, NumFiles> file_paths;
   std::array<std::filesystem::path, NumFiles> missing_paths;
 
-  BenchContext() : tmpdir(std::move(*MakeTmpDir())) {
+  BenchContext() : tmpdir(*MakeTmpDir()) {
     for (int i : llvm::seq(NumFiles)) {
       file_paths[i] = llvm::formatv("file_{0}", i).str();
       auto result = tmpdir.WriteFileFromString(file_paths[i], Text);
