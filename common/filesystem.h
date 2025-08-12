@@ -427,14 +427,6 @@ class FileRef : public Internal::FileRefBase {
 
   // Other constructors from the base are also available, but remain protected.
   using FileRefBase::FileRefBase;
-
-  // Destroy the file based on whether it is writable or readonly.
-  //
-  // Note: this is a private API that should not be made public, and should only
-  // be used by the implementation of subclass destructors. It should also only
-  // be called for subclasses with *ownership* of the file reference, and is
-  // provided here as a single non-template implementation.
-  auto Destroy() -> void;
 };
 
 // Convenience type defs for the three access combinations.
@@ -473,13 +465,13 @@ class File : public FileRef<A> {
   // File objects are move-only as they model ownership.
   File(File&& arg) noexcept : FileRef<A>(std::exchange(arg.fd_, -1)) {}
   auto operator=(File&& arg) noexcept -> File& {
-    this->Destroy();
+    Destroy();
     this->fd_ = std::exchange(arg.fd_, -1);
     return *this;
   }
   File(const File&) = delete;
   auto operator=(const File&) -> File& = delete;
-  ~File() { this->Destroy(); }
+  ~File() { Destroy(); }
 
   // Closes the open file and leaves the file in a moved-from state.
   //
@@ -495,6 +487,13 @@ class File : public FileRef<A> {
 
  private:
   friend DirRef;
+
+  // Destroy the file.
+  //
+  // This dispatches to non-template code in `FileRefBase` based on whether the
+  // file is writable or readonly. The core logic is in the non-template
+  // methods.
+  auto Destroy() -> void;
 
   explicit File(int fd) : FileRef<A>(fd) {}
 };
@@ -1252,11 +1251,11 @@ auto FileRef<A>::WriteFromString(llvm::StringRef str)
 }
 
 template <OpenAccess A>
-auto FileRef<A>::Destroy() -> void {
+auto File<A>::Destroy() -> void {
   if constexpr (Writeable) {
-    WriteableDestroy();
+    this->WriteableDestroy();
   } else {
-    ReadOnlyDestroy();
+    this->ReadOnlyDestroy();
   }
 }
 
@@ -1469,7 +1468,8 @@ constexpr auto Dir::Destroy() -> void {
     // code to not fail in the face of that, likely by dropping the error. If we
     // end up supporting a platform that actually requires well-specified
     // retries, this code should handle that. Until then, we require these to
-    // succeed so we will learn about any issues during porting to new platforms.
+    // succeed so we will learn about any issues during porting to new
+    // platforms.
     CARBON_CHECK(result == 0, "{0}",
                  FdError(errno, "Dir::Destroy on '{0}'", dfd_));
   }

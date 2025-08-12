@@ -384,12 +384,20 @@ auto DirRef::Rmtree(const std::filesystem::path& path)
       if (entry.is_known_dir()) {
         dir_entries.push_back(name.str());
       } else {
+        // We end up here for entries known to be regular files, other kinds of
+        // non-directory entries, or when the entry kind isn't known.
+        //
+        // Unless we *know* the entry is a directory, we put it into the unknown
+        // entries. For these, we unlink them first in case they are
+        // non-directory entries and use the failure of that to move any
+        // directories that end up here to the directory entries list.
         unknown_entries.push_back(name.str());
       }
     }
 
-    // We can immediately try to unlink all the unknown entries, and use the
-    // error to switch any to directories if the type above wasn't known.
+    // We can immediately try to unlink all the unknown entries, which will
+    // include any regular files, and use an error on directories that were
+    // unknown above to switch them to the `dir_entries` list.
     while (!unknown_entries.empty()) {
       std::filesystem::path name = unknown_entries.pop_back_val();
       auto unlink_result = subdir_reader.Unlink(name);
@@ -400,6 +408,9 @@ auto DirRef::Rmtree(const std::filesystem::path& path)
       }
       dir_entries.push_back(std::move(name));
     }
+
+    // We'll handle the directory entries we've queued here in the next
+    // iteration, removing them or recursing as needed.
   }
 }
 
