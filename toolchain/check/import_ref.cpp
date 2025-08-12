@@ -1837,8 +1837,9 @@ static auto TryResolveTypedInst(ImportRefResolver& resolver,
   }
 
   return ResolveAsDeduplicated<SemIR::FloatType>(
-      resolver,
-      {.type_id = SemIR::TypeType::TypeId, .bit_width_id = bit_width_id});
+      resolver, {.type_id = SemIR::TypeType::TypeId,
+                 .bit_width_id = bit_width_id,
+                 .float_kind = inst.float_kind});
 }
 
 // Make a declaration of a function. This is done as a separate step from

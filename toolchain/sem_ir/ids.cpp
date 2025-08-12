@@ -78,6 +78,54 @@ auto IntKind::Print(llvm::raw_ostream& out) const -> void {
   }
 }
 
+auto FloatKind::AsString() const -> llvm::StringLiteral {
+  switch (this->index) {
+    case None.index:
+      return "<none>";
+    case Binary16.index:
+      return "f16";
+    case Binary32.index:
+      return "f32";
+    case Binary64.index:
+      return "f64";
+    case Binary128.index:
+      return "f128";
+    case BFloat16.index:
+      return "f16_brain";
+    case X87Float80.index:
+      return "f80_x87";
+    case PPCFloat128.index:
+      return "f128_ppc";
+    default:
+      return "<invalid>";
+  }
+}
+
+auto FloatKind::Print(llvm::raw_ostream& out) const -> void {
+  out << AsString();
+}
+
+auto FloatKind::Semantics() const -> const llvm::fltSemantics& {
+  switch (this->index) {
+    case Binary16.index:
+      return llvm::APFloat::IEEEhalf();
+    case Binary32.index:
+      return llvm::APFloat::IEEEsingle();
+    case Binary64.index:
+      return llvm::APFloat::IEEEdouble();
+    case Binary128.index:
+      return llvm::APFloat::IEEEquad();
+    case BFloat16.index:
+      return llvm::APFloat::BFloat();
+    case X87Float80.index:
+      return llvm::APFloat::x87DoubleExtended();
+    case PPCFloat128.index:
+      return llvm::APFloat::PPCDoubleDouble();
+    default:
+      CARBON_FATAL("Unexpected float kind {0}", AsString());
+  }
+}
+
 // Double-check the special value mapping and constexpr evaluation.
 static_assert(NameId::SpecialNameId::Vptr == *NameId::Vptr.AsSpecialNameId());
 

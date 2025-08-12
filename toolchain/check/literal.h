@@ -27,8 +27,7 @@ auto MakeIntType(Context& context, Parse::NodeId node_id,
 
 // Forms a floating point type expression for `fN` literal.
 auto MakeFloatTypeLiteral(Context& context, Parse::NodeId node_id,
-                          SemIR::FloatKind float_kind, IntId size_id)
-    -> SemIR::InstId;
+                          IntId size_id) -> SemIR::InstId;
 
 }  // namespace Carbon::Check
 

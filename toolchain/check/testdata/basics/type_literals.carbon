@@ -34,37 +34,11 @@ var test_u64: u64;
 library "[[@TEST_NAME]]";
 
 //@dump-sem-ir-begin
-var test_f64: f64;
-//@dump-sem-ir-end
-
-// --- fail_todo_fN_unsupported.carbon
-library "[[@TEST_NAME]]";
-
-// TODO: Some or all of these should eventually work.
-// CHECK:STDERR: min_prelude/parts/float.carbon:11:9: error: bit width must be 64 [CompileTimeFloatBitWidth]
-// CHECK:STDERR:   adapt MakeFloat(N);
-// CHECK:STDERR:         ^~~~~~~~~~~~
-// CHECK:STDERR: fail_todo_fN_unsupported.carbon:[[@LINE+4]]:15: note: in `f16` used here [ResolvingSpecificHere]
-// CHECK:STDERR: var test_f16: f16;
-// CHECK:STDERR:               ^~~
-// CHECK:STDERR:
 var test_f16: f16;
-// CHECK:STDERR: min_prelude/parts/float.carbon:11:9: error: bit width must be 64 [CompileTimeFloatBitWidth]
-// CHECK:STDERR:   adapt MakeFloat(N);
-// CHECK:STDERR:         ^~~~~~~~~~~~
-// CHECK:STDERR: fail_todo_fN_unsupported.carbon:[[@LINE+4]]:15: note: in `f32` used here [ResolvingSpecificHere]
-// CHECK:STDERR: var test_f32: f32;
-// CHECK:STDERR:               ^~~
-// CHECK:STDERR:
 var test_f32: f32;
-// CHECK:STDERR: min_prelude/parts/float.carbon:11:9: error: bit width must be 64 [CompileTimeFloatBitWidth]
-// CHECK:STDERR:   adapt MakeFloat(N);
-// CHECK:STDERR:         ^~~~~~~~~~~~
-// CHECK:STDERR: fail_todo_fN_unsupported.carbon:[[@LINE+4]]:16: note: in `f128` used here [ResolvingSpecificHere]
-// CHECK:STDERR: var test_f128: f128;
-// CHECK:STDERR:                ^~~~
-// CHECK:STDERR:
+var test_f64: f64;
 var test_f128: f128;
+//@dump-sem-ir-end
 
 // --- string.carbon
 
@@ -164,7 +138,7 @@ library "[[@TEST_NAME]]";
 // CHECK:STDERR:              ^~
 // CHECK:STDERR:
 var test_f0: f0;
-// CHECK:STDERR: min_prelude/parts/float.carbon:11:9: error: bit width must be 64 [CompileTimeFloatBitWidth]
+// CHECK:STDERR: min_prelude/parts/float.carbon:11:9: error: unsupported floating-point bit width 1 [CompileTimeFloatBitWidth]
 // CHECK:STDERR:   adapt MakeFloat(N);
 // CHECK:STDERR:         ^~~~~~~~~~~~
 // CHECK:STDERR: fail_fN_bad_width.carbon:[[@LINE+4]]:14: note: in `f1` used here [ResolvingSpecificHere]
@@ -172,7 +146,7 @@ var test_f0: f0;
 // CHECK:STDERR:              ^~
 // CHECK:STDERR:
 var test_f1: f1;
-// CHECK:STDERR: min_prelude/parts/float.carbon:11:9: error: bit width must be 64 [CompileTimeFloatBitWidth]
+// CHECK:STDERR: min_prelude/parts/float.carbon:11:9: error: unsupported floating-point bit width 15 [CompileTimeFloatBitWidth]
 // CHECK:STDERR:   adapt MakeFloat(N);
 // CHECK:STDERR:         ^~~~~~~~~~~~
 // CHECK:STDERR: fail_fN_bad_width.carbon:[[@LINE+4]]:15: note: in `f15` used here [ResolvingSpecificHere]
@@ -180,7 +154,16 @@ var test_f1: f1;
 // CHECK:STDERR:               ^~~
 // CHECK:STDERR:
 var test_f15: f15;
-// CHECK:STDERR: min_prelude/parts/float.carbon:11:9: error: bit width must be 64 [CompileTimeFloatBitWidth]
+// TODO: Decide if we want to expose the x87 80-bit floating point type this way.
+// CHECK:STDERR: min_prelude/parts/float.carbon:11:9: error: unsupported floating-point bit width 80 [CompileTimeFloatBitWidth]
+// CHECK:STDERR:   adapt MakeFloat(N);
+// CHECK:STDERR:         ^~~~~~~~~~~~
+// CHECK:STDERR: fail_fN_bad_width.carbon:[[@LINE+4]]:15: note: in `f80` used here [ResolvingSpecificHere]
+// CHECK:STDERR: var test_f80: f80;
+// CHECK:STDERR:               ^~~
+// CHECK:STDERR:
+var test_f80: f80;
+// CHECK:STDERR: min_prelude/parts/float.carbon:11:9: error: unsupported floating-point bit width 100 [CompileTimeFloatBitWidth]
 // CHECK:STDERR:   adapt MakeFloat(N);
 // CHECK:STDERR:         ^~~~~~~~~~~~
 // CHECK:STDERR: fail_fN_bad_width.carbon:[[@LINE+4]]:16: note: in `f100` used here [ResolvingSpecificHere]
@@ -188,7 +171,7 @@ var test_f15: f15;
 // CHECK:STDERR:                ^~~~
 // CHECK:STDERR:
 var test_f100: f100;
-// CHECK:STDERR: min_prelude/parts/float.carbon:11:9: error: bit width must be 64 [CompileTimeFloatBitWidth]
+// CHECK:STDERR: min_prelude/parts/float.carbon:11:9: error: unsupported floating-point bit width 1000000000 [CompileTimeFloatBitWidth]
 // CHECK:STDERR:   adapt MakeFloat(N);
 // CHECK:STDERR:         ^~~~~~~~~~~~
 // CHECK:STDERR: fail_fN_bad_width.carbon:[[@LINE+4]]:23: note: in `f1000000000` used here [ResolvingSpecificHere]
@@ -196,7 +179,7 @@ var test_f100: f100;
 // CHECK:STDERR:                       ^~~~~~~~~~~
 // CHECK:STDERR:
 var test_f1000000000: f1000000000;
-// CHECK:STDERR: min_prelude/parts/float.carbon:11:9: error: bit width must be 64 [CompileTimeFloatBitWidth]
+// CHECK:STDERR: min_prelude/parts/float.carbon:11:9: error: unsupported floating-point bit width 1000000000000 [CompileTimeFloatBitWidth]
 // CHECK:STDERR:   adapt MakeFloat(N);
 // CHECK:STDERR:         ^~~~~~~~~~~~
 // CHECK:STDERR: fail_fN_bad_width.carbon:[[@LINE+4]]:26: note: in `f1000000000000` used here [ResolvingSpecificHere]
@@ -347,9 +330,18 @@ var x: type = 42;
 // CHECK:STDOUT: --- fN.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
+// CHECK:STDOUT:   %int_16: Core.IntLiteral = int_value 16 [concrete]
+// CHECK:STDOUT:   %f16.a6a: type = class_type @Float, @Float(%int_16) [concrete]
+// CHECK:STDOUT:   %pattern_type.cd1: type = pattern_type %f16.a6a [concrete]
+// CHECK:STDOUT:   %int_32: Core.IntLiteral = int_value 32 [concrete]
+// CHECK:STDOUT:   %f32.97e: type = class_type @Float, @Float(%int_32) [concrete]
+// CHECK:STDOUT:   %pattern_type.201: type = pattern_type %f32.97e [concrete]
 // CHECK:STDOUT:   %int_64: Core.IntLiteral = int_value 64 [concrete]
 // CHECK:STDOUT:   %f64.d77: type = class_type @Float, @Float(%int_64) [concrete]
 // CHECK:STDOUT:   %pattern_type.0ae: type = pattern_type %f64.d77 [concrete]
+// CHECK:STDOUT:   %int_128: Core.IntLiteral = int_value 128 [concrete]
+// CHECK:STDOUT:   %f128.b8c: type = class_type @Float, @Float(%int_128) [concrete]
+// CHECK:STDOUT:   %pattern_type.22c: type = pattern_type %f128.b8c [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -357,15 +349,45 @@ var x: type = 42;
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   name_binding_decl {
+// CHECK:STDOUT:     %test_f16.patt: %pattern_type.cd1 = binding_pattern test_f16 [concrete]
+// CHECK:STDOUT:     %test_f16.var_patt: %pattern_type.cd1 = var_pattern %test_f16.patt [concrete]
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %test_f16.var: ref %f16.a6a = var %test_f16.var_patt [concrete]
+// CHECK:STDOUT:   %.loc4: type = splice_block %f16 [concrete = constants.%f16.a6a] {
+// CHECK:STDOUT:     %int_16: Core.IntLiteral = int_value 16 [concrete = constants.%int_16]
+// CHECK:STDOUT:     %f16: type = class_type @Float, @Float(constants.%int_16) [concrete = constants.%f16.a6a]
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %test_f16: ref %f16.a6a = bind_name test_f16, %test_f16.var [concrete = %test_f16.var]
+// CHECK:STDOUT:   name_binding_decl {
+// CHECK:STDOUT:     %test_f32.patt: %pattern_type.201 = binding_pattern test_f32 [concrete]
+// CHECK:STDOUT:     %test_f32.var_patt: %pattern_type.201 = var_pattern %test_f32.patt [concrete]
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %test_f32.var: ref %f32.97e = var %test_f32.var_patt [concrete]
+// CHECK:STDOUT:   %.loc5: type = splice_block %f32 [concrete = constants.%f32.97e] {
+// CHECK:STDOUT:     %int_32: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
+// CHECK:STDOUT:     %f32: type = class_type @Float, @Float(constants.%int_32) [concrete = constants.%f32.97e]
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %test_f32: ref %f32.97e = bind_name test_f32, %test_f32.var [concrete = %test_f32.var]
+// CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %test_f64.patt: %pattern_type.0ae = binding_pattern test_f64 [concrete]
 // CHECK:STDOUT:     %test_f64.var_patt: %pattern_type.0ae = var_pattern %test_f64.patt [concrete]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %test_f64.var: ref %f64.d77 = var %test_f64.var_patt [concrete]
-// CHECK:STDOUT:   %.loc4: type = splice_block %f64 [concrete = constants.%f64.d77] {
+// CHECK:STDOUT:   %.loc6: type = splice_block %f64 [concrete = constants.%f64.d77] {
 // CHECK:STDOUT:     %int_64: Core.IntLiteral = int_value 64 [concrete = constants.%int_64]
 // CHECK:STDOUT:     %f64: type = class_type @Float, @Float(constants.%int_64) [concrete = constants.%f64.d77]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %test_f64: ref %f64.d77 = bind_name test_f64, %test_f64.var [concrete = %test_f64.var]
+// CHECK:STDOUT:   name_binding_decl {
+// CHECK:STDOUT:     %test_f128.patt: %pattern_type.22c = binding_pattern test_f128 [concrete]
+// CHECK:STDOUT:     %test_f128.var_patt: %pattern_type.22c = var_pattern %test_f128.patt [concrete]
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %test_f128.var: ref %f128.b8c = var %test_f128.var_patt [concrete]
+// CHECK:STDOUT:   %.loc7: type = splice_block %f128 [concrete = constants.%f128.b8c] {
+// CHECK:STDOUT:     %int_128: Core.IntLiteral = int_value 128 [concrete = constants.%int_128]
+// CHECK:STDOUT:     %f128: type = class_type @Float, @Float(constants.%int_128) [concrete = constants.%f128.b8c]
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %test_f128: ref %f128.b8c = bind_name test_f128, %test_f128.var [concrete = %test_f128.var]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- string.carbon

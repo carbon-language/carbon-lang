@@ -194,8 +194,8 @@ fn G(a: f64) -> Core.IntLiteral() {
 // CHECK:STDOUT:   %pattern_type.0ae: type = pattern_type %f64.d77 [concrete]
 // CHECK:STDOUT:   %G.type: type = fn_type @G [concrete]
 // CHECK:STDOUT:   %G: %G.type = struct_value () [concrete]
-// CHECK:STDOUT:   %f64.cae: type = float_type %int_64 [concrete]
-// CHECK:STDOUT:   %complete_type.3f9: <witness> = complete_type_witness %f64.cae [concrete]
+// CHECK:STDOUT:   %f64.794: type = float_type %int_64, f64 [concrete]
+// CHECK:STDOUT:   %complete_type.7b9: <witness> = complete_type_witness %f64.794 [concrete]
 // CHECK:STDOUT:   %F.specific_fn: <specific function> = specific_function %F, @F(%int_64) [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -309,6 +309,6 @@ fn G(a: f64) -> Core.IntLiteral() {
 // CHECK:STDOUT:   %pattern_type => constants.%pattern_type.0ae
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
-// CHECK:STDOUT:   %require_complete => constants.%complete_type.3f9
+// CHECK:STDOUT:   %require_complete => constants.%complete_type.7b9
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

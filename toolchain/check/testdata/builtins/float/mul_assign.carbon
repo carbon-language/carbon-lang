@@ -30,13 +30,6 @@ library "[[@TEST_NAME]]";
 // CHECK:STDERR:
 fn NotPtr(a: f64, b: f64) = "float.mul_assign";
 
-// CHECK:STDERR: min_prelude/parts/float.carbon:11:9: error: bit width must be 64 [CompileTimeFloatBitWidth]
-// CHECK:STDERR:   adapt MakeFloat(N);
-// CHECK:STDERR:         ^~~~~~~~~~~~
-// CHECK:STDERR: fail_bad_decl.carbon:[[@LINE+8]]:24: note: in `f32` used here [ResolvingSpecificHere]
-// CHECK:STDERR: fn MixedTypes(a: f64*, b: f32) = "float.mul_assign";
-// CHECK:STDERR:                        ^~~~~~
-// CHECK:STDERR:
 // CHECK:STDERR: fail_bad_decl.carbon:[[@LINE+4]]:1: error: invalid signature for builtin function "float.mul_assign" [InvalidBuiltinSignature]
 // CHECK:STDERR: fn MixedTypes(a: f64*, b: f32) = "float.mul_assign";
 // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
