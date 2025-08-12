@@ -79,6 +79,7 @@ fn F() {
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [concrete]
 // CHECK:STDOUT:   %Animal.impl_witness: <witness> = impl_witness file.%Animal.impl_witness_table [concrete]
 // CHECK:STDOUT:   %Eats.impl_witness: <witness> = impl_witness file.%Eats.impl_witness_table [concrete]
+// CHECK:STDOUT:   %.Self: type = bind_symbolic_name .Self [symbolic_self]
 // CHECK:STDOUT:   %e: %Eats.type = bind_symbolic_name e, 0 [symbolic]
 // CHECK:STDOUT:   %pattern_type.a05: type = pattern_type %Eats.type [concrete]
 // CHECK:STDOUT:   %Feed.type: type = fn_type @Feed [concrete]
@@ -127,7 +128,10 @@ fn F() {
 // CHECK:STDOUT:   %Feed.decl: %Feed.type = fn_decl @Feed [concrete = constants.%Feed] {
 // CHECK:STDOUT:     %e.patt: %pattern_type.a05 = symbolic_binding_pattern e, 0 [concrete]
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %Eats.ref: type = name_ref Eats, file.%Eats.decl [concrete = constants.%Eats.type]
+// CHECK:STDOUT:     %.loc11: type = splice_block %Eats.ref [concrete = constants.%Eats.type] {
+// CHECK:STDOUT:       %.Self: type = bind_symbolic_name .Self [symbolic_self = constants.%.Self]
+// CHECK:STDOUT:       %Eats.ref: type = name_ref Eats, file.%Eats.decl [concrete = constants.%Eats.type]
+// CHECK:STDOUT:     }
 // CHECK:STDOUT:     %e.loc11_9.2: %Eats.type = bind_symbolic_name e, 0 [symbolic = %e.loc11_9.1 (constants.%e)]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [concrete = constants.%F] {} {}
@@ -149,7 +153,7 @@ fn F() {
 // CHECK:STDOUT:   witness = ()
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: impl @Goat.as.Destroy.impl: constants.%Goat as constants.%Destroy.type {
+// CHECK:STDOUT: impl @Goat.as.Destroy.impl: @Goat.%Self.ref as constants.%Destroy.type {
 // CHECK:STDOUT:   %Goat.as.Destroy.impl.Op.decl: %Goat.as.Destroy.impl.Op.type = fn_decl @Goat.as.Destroy.impl.Op [concrete = constants.%Goat.as.Destroy.impl.Op] {
 // CHECK:STDOUT:     %self.patt: %pattern_type.396 = binding_pattern self [concrete]
 // CHECK:STDOUT:     %self.param_patt: %pattern_type.396 = value_param_pattern %self.patt, call_param0 [concrete]
@@ -176,6 +180,7 @@ fn F() {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @Goat {
+// CHECK:STDOUT:   %Self.ref: type = name_ref Self, constants.%Goat [concrete = constants.%Goat]
 // CHECK:STDOUT:   impl_decl @Goat.as.Destroy.impl [concrete] {} {}
 // CHECK:STDOUT:   %Destroy.impl_witness_table = impl_witness_table (@Goat.as.Destroy.impl.%Goat.as.Destroy.impl.Op.decl), @Goat.as.Destroy.impl [concrete]
 // CHECK:STDOUT:   %Destroy.impl_witness: <witness> = impl_witness %Destroy.impl_witness_table [concrete = constants.%Destroy.impl_witness]
@@ -318,7 +323,7 @@ fn F() {
 // CHECK:STDOUT:   witness = @Goat.%Eats.impl_witness
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: impl @Goat.as.Destroy.impl: constants.%Goat as constants.%Destroy.type {
+// CHECK:STDOUT: impl @Goat.as.Destroy.impl: @Goat.%Self.ref as constants.%Destroy.type {
 // CHECK:STDOUT:   %Goat.as.Destroy.impl.Op.decl: %Goat.as.Destroy.impl.Op.type = fn_decl @Goat.as.Destroy.impl.Op [concrete = constants.%Goat.as.Destroy.impl.Op] {
 // CHECK:STDOUT:     %self.patt: %pattern_type.396 = binding_pattern self [concrete]
 // CHECK:STDOUT:     %self.param_patt: %pattern_type.396 = value_param_pattern %self.patt, call_param0 [concrete]
@@ -348,6 +353,7 @@ fn F() {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Eats.impl_witness_table = impl_witness_table (@Goat.as.Eats.impl.%Goat.as.Eats.impl.Eat.decl), @Goat.as.Eats.impl [concrete]
 // CHECK:STDOUT:   %Eats.impl_witness: <witness> = impl_witness %Eats.impl_witness_table [concrete = constants.%Eats.impl_witness]
+// CHECK:STDOUT:   %Self.ref: type = name_ref Self, constants.%Goat [concrete = constants.%Goat]
 // CHECK:STDOUT:   impl_decl @Goat.as.Destroy.impl [concrete] {} {}
 // CHECK:STDOUT:   %Destroy.impl_witness_table = impl_witness_table (@Goat.as.Destroy.impl.%Goat.as.Destroy.impl.Op.decl), @Goat.as.Destroy.impl [concrete]
 // CHECK:STDOUT:   %Destroy.impl_witness: <witness> = impl_witness %Destroy.impl_witness_table [concrete = constants.%Destroy.impl_witness.943]

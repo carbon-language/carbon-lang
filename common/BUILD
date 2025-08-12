@@ -215,6 +215,56 @@ cc_test(
 )
 
 cc_library(
+    name = "filesystem",
+    srcs = ["filesystem.cpp"],
+    hdrs = ["filesystem.h"],
+    deps = [
+        ":build_data",
+        ":check",
+        ":error",
+        ":ostream",
+        ":raw_string_ostream",
+        ":template_string",
+        "@llvm-project//llvm:Support",
+    ],
+)
+
+cc_test(
+    name = "filesystem_test",
+    size = "small",
+    srcs = ["filesystem_test.cpp"],
+    deps = [
+        ":error_test_helpers",
+        ":filesystem",
+        "//testing/base:gtest_main",
+        "@googletest//:gtest",
+        "@llvm-project//llvm:Support",
+    ],
+)
+
+cc_binary(
+    name = "filesystem_benchmark",
+    testonly = 1,
+    srcs = ["filesystem_benchmark.cpp"],
+    deps = [
+        ":check",
+        ":filesystem",
+        "//testing/base:benchmark_main",
+        "@abseil-cpp//absl/hash",
+        "@abseil-cpp//absl/random",
+        "@google_benchmark//:benchmark",
+        "@llvm-project//llvm:Support",
+    ],
+)
+
+sh_test(
+    name = "filesystem_benchmark_test",
+    size = "small",
+    srcs = [":filesystem_benchmark"],
+    args = ["--benchmark_min_time=1x"],
+)
+
+cc_library(
     name = "find",
     hdrs = ["find.h"],
     deps = [

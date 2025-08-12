@@ -77,6 +77,7 @@ fn G(pair: (C, D)) -> D {
 // CHECK:STDOUT:   %pattern_type.a94: type = pattern_type %ptr.19c [concrete]
 // CHECK:STDOUT:   %D.as.Destroy.impl.Op.type: type = fn_type @D.as.Destroy.impl.Op [concrete]
 // CHECK:STDOUT:   %D.as.Destroy.impl.Op: %D.as.Destroy.impl.Op.type = struct_value () [concrete]
+// CHECK:STDOUT:   %.Self: type = bind_symbolic_name .Self [symbolic_self]
 // CHECK:STDOUT:   %T: type = bind_symbolic_name T, 0 [symbolic]
 // CHECK:STDOUT:   %pattern_type.98f: type = pattern_type type [concrete]
 // CHECK:STDOUT:   %U: type = bind_symbolic_name U, 1 [symbolic]
@@ -127,7 +128,9 @@ fn G(pair: (C, D)) -> D {
 // CHECK:STDOUT:     %return.param_patt: @F.%pattern_type.loc7_40 (%pattern_type.a32) = out_param_pattern %return.patt, call_param1 [concrete]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %U.ref.loc7_43: type = name_ref U, %U.loc7_16.2 [symbolic = %U.loc7_16.1 (constants.%U)]
+// CHECK:STDOUT:     %.Self.1: type = bind_symbolic_name .Self [symbolic_self = constants.%.Self]
 // CHECK:STDOUT:     %T.loc7_6.2: type = bind_symbolic_name T, 0 [symbolic = %T.loc7_6.1 (constants.%T)]
+// CHECK:STDOUT:     %.Self.2: type = bind_symbolic_name .Self [symbolic_self = constants.%.Self]
 // CHECK:STDOUT:     %U.loc7_16.2: type = bind_symbolic_name U, 1 [symbolic = %U.loc7_16.1 (constants.%U)]
 // CHECK:STDOUT:     %pair.param: @F.%tuple.type (%tuple.type.30b) = value_param call_param0
 // CHECK:STDOUT:     %.loc7_37.1: type = splice_block %.loc7_37.3 [symbolic = %tuple.type (constants.%tuple.type.30b)] {
@@ -160,7 +163,7 @@ fn G(pair: (C, D)) -> D {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: impl @C.as.Destroy.impl: constants.%C as constants.%Destroy.type {
+// CHECK:STDOUT: impl @C.as.Destroy.impl: @C.%Self.ref as constants.%Destroy.type {
 // CHECK:STDOUT:   %C.as.Destroy.impl.Op.decl: %C.as.Destroy.impl.Op.type = fn_decl @C.as.Destroy.impl.Op [concrete = constants.%C.as.Destroy.impl.Op] {
 // CHECK:STDOUT:     %self.patt: %pattern_type.44a = binding_pattern self [concrete]
 // CHECK:STDOUT:     %self.param_patt: %pattern_type.44a = value_param_pattern %self.patt, call_param0 [concrete]
@@ -176,7 +179,7 @@ fn G(pair: (C, D)) -> D {
 // CHECK:STDOUT:   witness = @C.%Destroy.impl_witness
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: impl @D.as.Destroy.impl: constants.%D as constants.%Destroy.type {
+// CHECK:STDOUT: impl @D.as.Destroy.impl: @D.%Self.ref as constants.%Destroy.type {
 // CHECK:STDOUT:   %D.as.Destroy.impl.Op.decl: %D.as.Destroy.impl.Op.type = fn_decl @D.as.Destroy.impl.Op [concrete = constants.%D.as.Destroy.impl.Op] {
 // CHECK:STDOUT:     %self.patt: %pattern_type.a94 = binding_pattern self [concrete]
 // CHECK:STDOUT:     %self.param_patt: %pattern_type.a94 = value_param_pattern %self.patt, call_param0 [concrete]
@@ -193,6 +196,7 @@ fn G(pair: (C, D)) -> D {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @C {
+// CHECK:STDOUT:   %Self.ref: type = name_ref Self, constants.%C [concrete = constants.%C]
 // CHECK:STDOUT:   impl_decl @C.as.Destroy.impl [concrete] {} {}
 // CHECK:STDOUT:   %Destroy.impl_witness_table = impl_witness_table (@C.as.Destroy.impl.%C.as.Destroy.impl.Op.decl), @C.as.Destroy.impl [concrete]
 // CHECK:STDOUT:   %Destroy.impl_witness: <witness> = impl_witness %Destroy.impl_witness_table [concrete = constants.%Destroy.impl_witness.edd]
@@ -204,6 +208,7 @@ fn G(pair: (C, D)) -> D {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @D {
+// CHECK:STDOUT:   %Self.ref: type = name_ref Self, constants.%D [concrete = constants.%D]
 // CHECK:STDOUT:   impl_decl @D.as.Destroy.impl [concrete] {} {}
 // CHECK:STDOUT:   %Destroy.impl_witness_table = impl_witness_table (@D.as.Destroy.impl.%D.as.Destroy.impl.Op.decl), @D.as.Destroy.impl [concrete]
 // CHECK:STDOUT:   %Destroy.impl_witness: <witness> = impl_witness %Destroy.impl_witness_table [concrete = constants.%Destroy.impl_witness.73d]
@@ -284,6 +289,7 @@ fn G(pair: (C, D)) -> D {
 // CHECK:STDOUT: --- tuple_value.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
+// CHECK:STDOUT:   %.Self.644: type = bind_symbolic_name .Self [symbolic_self]
 // CHECK:STDOUT:   %int_32: Core.IntLiteral = int_value 32 [concrete]
 // CHECK:STDOUT:   %Int.type: type = generic_class_type @Int [concrete]
 // CHECK:STDOUT:   %Int.generic: %Int.type = struct_value () [concrete]
@@ -370,6 +376,7 @@ fn G(pair: (C, D)) -> D {
 // CHECK:STDOUT:     %Pair.patt: %pattern_type.511 = symbolic_binding_pattern Pair, 0 [concrete]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %.loc4_31.1: type = splice_block %.loc4_31.3 [concrete = constants.%tuple.type.d07] {
+// CHECK:STDOUT:       %.Self: type = bind_symbolic_name .Self [symbolic_self = constants.%.Self.644]
 // CHECK:STDOUT:       %int_32.loc4_23: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
 // CHECK:STDOUT:       %i32.loc4_23: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
 // CHECK:STDOUT:       %int_32.loc4_28: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
@@ -390,11 +397,13 @@ fn G(pair: (C, D)) -> D {
 // CHECK:STDOUT:     %int_32.loc6_47: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
 // CHECK:STDOUT:     %i32.loc6_47: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
 // CHECK:STDOUT:     %.loc6_10: type = splice_block %i32.loc6_10 [concrete = constants.%i32] {
+// CHECK:STDOUT:       %.Self.2: type = bind_symbolic_name .Self [symbolic_self = constants.%.Self.644]
 // CHECK:STDOUT:       %int_32.loc6_10: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
 // CHECK:STDOUT:       %i32.loc6_10: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %A.loc6_6.2: %i32 = bind_symbolic_name A, 0 [symbolic = %A.loc6_6.1 (constants.%A)]
 // CHECK:STDOUT:     %.loc6_19: type = splice_block %i32.loc6_19 [concrete = constants.%i32] {
+// CHECK:STDOUT:       %.Self.1: type = bind_symbolic_name .Self [symbolic_self = constants.%.Self.644]
 // CHECK:STDOUT:       %int_32.loc6_19: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
 // CHECK:STDOUT:       %i32.loc6_19: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
 // CHECK:STDOUT:     }
@@ -453,13 +462,14 @@ fn G(pair: (C, D)) -> D {
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic impl @HasPair.as.Destroy.impl(@HasPair.%Pair.loc4_15.2: %tuple.type.d07) {
 // CHECK:STDOUT:   %Pair: %tuple.type.d07 = bind_symbolic_name Pair, 0 [symbolic = %Pair (constants.%Pair)]
+// CHECK:STDOUT:   %HasPair: type = class_type @HasPair, @HasPair(%Pair) [symbolic = %HasPair (constants.%HasPair.920)]
 // CHECK:STDOUT:   %Destroy.impl_witness: <witness> = impl_witness @HasPair.%Destroy.impl_witness_table, @HasPair.as.Destroy.impl(%Pair) [symbolic = %Destroy.impl_witness (constants.%Destroy.impl_witness.347)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %HasPair.as.Destroy.impl.Op.type: type = fn_type @HasPair.as.Destroy.impl.Op, @HasPair.as.Destroy.impl(%Pair) [symbolic = %HasPair.as.Destroy.impl.Op.type (constants.%HasPair.as.Destroy.impl.Op.type)]
 // CHECK:STDOUT:   %HasPair.as.Destroy.impl.Op: @HasPair.as.Destroy.impl.%HasPair.as.Destroy.impl.Op.type (%HasPair.as.Destroy.impl.Op.type) = struct_value () [symbolic = %HasPair.as.Destroy.impl.Op (constants.%HasPair.as.Destroy.impl.Op)]
 // CHECK:STDOUT:
-// CHECK:STDOUT:   impl: constants.%HasPair.920 as constants.%Destroy.type {
+// CHECK:STDOUT:   impl: @HasPair.%Self.ref as constants.%Destroy.type {
 // CHECK:STDOUT:     %HasPair.as.Destroy.impl.Op.decl: @HasPair.as.Destroy.impl.%HasPair.as.Destroy.impl.Op.type (%HasPair.as.Destroy.impl.Op.type) = fn_decl @HasPair.as.Destroy.impl.Op [symbolic = @HasPair.as.Destroy.impl.%HasPair.as.Destroy.impl.Op (constants.%HasPair.as.Destroy.impl.Op)] {
 // CHECK:STDOUT:       %self.patt: @HasPair.as.Destroy.impl.Op.%pattern_type (%pattern_type.ba5) = binding_pattern self [concrete]
 // CHECK:STDOUT:       %self.param_patt: @HasPair.as.Destroy.impl.Op.%pattern_type (%pattern_type.ba5) = value_param_pattern %self.patt, call_param0 [concrete]
@@ -485,6 +495,7 @@ fn G(pair: (C, D)) -> D {
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:
 // CHECK:STDOUT:   class {
+// CHECK:STDOUT:     %Self.ref: type = name_ref Self, constants.%HasPair.920 [symbolic = @HasPair.as.Destroy.impl.%HasPair (constants.%HasPair.920)]
 // CHECK:STDOUT:     impl_decl @HasPair.as.Destroy.impl [concrete] {} {}
 // CHECK:STDOUT:     %Destroy.impl_witness_table = impl_witness_table (@HasPair.as.Destroy.impl.%HasPair.as.Destroy.impl.Op.decl), @HasPair.as.Destroy.impl [concrete]
 // CHECK:STDOUT:     %Destroy.impl_witness: <witness> = impl_witness %Destroy.impl_witness_table, @HasPair.as.Destroy.impl(constants.%Pair) [symbolic = @HasPair.as.Destroy.impl.%Destroy.impl_witness (constants.%Destroy.impl_witness.347)]
@@ -541,6 +552,7 @@ fn G(pair: (C, D)) -> D {
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @HasPair.as.Destroy.impl(constants.%Pair) {
 // CHECK:STDOUT:   %Pair => constants.%Pair
+// CHECK:STDOUT:   %HasPair => constants.%HasPair.920
 // CHECK:STDOUT:   %Destroy.impl_witness => constants.%Destroy.impl_witness.347
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -601,6 +613,7 @@ fn G(pair: (C, D)) -> D {
 // CHECK:STDOUT:   %pattern_type.a94: type = pattern_type %ptr.19c [concrete]
 // CHECK:STDOUT:   %D.as.Destroy.impl.Op.type: type = fn_type @D.as.Destroy.impl.Op [concrete]
 // CHECK:STDOUT:   %D.as.Destroy.impl.Op: %D.as.Destroy.impl.Op.type = struct_value () [concrete]
+// CHECK:STDOUT:   %.Self: type = bind_symbolic_name .Self [symbolic_self]
 // CHECK:STDOUT:   %T: type = bind_symbolic_name T, 0 [symbolic]
 // CHECK:STDOUT:   %pattern_type.98f: type = pattern_type type [concrete]
 // CHECK:STDOUT:   %tuple.type.24b: type = tuple_type (type, type) [concrete]
@@ -644,6 +657,7 @@ fn G(pair: (C, D)) -> D {
 // CHECK:STDOUT:     %return.param_patt: @F.%pattern_type.loc7_30 (%pattern_type.7dc) = out_param_pattern %return.patt, call_param1 [concrete]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %T.ref.loc7_33: type = name_ref T, %T.loc7_6.2 [symbolic = %T.loc7_6.1 (constants.%T)]
+// CHECK:STDOUT:     %.Self: type = bind_symbolic_name .Self [symbolic_self = constants.%.Self]
 // CHECK:STDOUT:     %T.loc7_6.2: type = bind_symbolic_name T, 0 [symbolic = %T.loc7_6.1 (constants.%T)]
 // CHECK:STDOUT:     %pair.param: @F.%tuple.type (%tuple.type.d00) = value_param call_param0
 // CHECK:STDOUT:     %.loc7_27.1: type = splice_block %.loc7_27.3 [symbolic = %tuple.type (constants.%tuple.type.d00)] {
@@ -676,7 +690,7 @@ fn G(pair: (C, D)) -> D {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: impl @C.as.Destroy.impl: constants.%C as constants.%Destroy.type {
+// CHECK:STDOUT: impl @C.as.Destroy.impl: @C.%Self.ref as constants.%Destroy.type {
 // CHECK:STDOUT:   %C.as.Destroy.impl.Op.decl: %C.as.Destroy.impl.Op.type = fn_decl @C.as.Destroy.impl.Op [concrete = constants.%C.as.Destroy.impl.Op] {
 // CHECK:STDOUT:     %self.patt: %pattern_type.44a = binding_pattern self [concrete]
 // CHECK:STDOUT:     %self.param_patt: %pattern_type.44a = value_param_pattern %self.patt, call_param0 [concrete]
@@ -692,7 +706,7 @@ fn G(pair: (C, D)) -> D {
 // CHECK:STDOUT:   witness = @C.%Destroy.impl_witness
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: impl @D.as.Destroy.impl: constants.%D as constants.%Destroy.type {
+// CHECK:STDOUT: impl @D.as.Destroy.impl: @D.%Self.ref as constants.%Destroy.type {
 // CHECK:STDOUT:   %D.as.Destroy.impl.Op.decl: %D.as.Destroy.impl.Op.type = fn_decl @D.as.Destroy.impl.Op [concrete = constants.%D.as.Destroy.impl.Op] {
 // CHECK:STDOUT:     %self.patt: %pattern_type.a94 = binding_pattern self [concrete]
 // CHECK:STDOUT:     %self.param_patt: %pattern_type.a94 = value_param_pattern %self.patt, call_param0 [concrete]
@@ -709,6 +723,7 @@ fn G(pair: (C, D)) -> D {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @C {
+// CHECK:STDOUT:   %Self.ref: type = name_ref Self, constants.%C [concrete = constants.%C]
 // CHECK:STDOUT:   impl_decl @C.as.Destroy.impl [concrete] {} {}
 // CHECK:STDOUT:   %Destroy.impl_witness_table = impl_witness_table (@C.as.Destroy.impl.%C.as.Destroy.impl.Op.decl), @C.as.Destroy.impl [concrete]
 // CHECK:STDOUT:   %Destroy.impl_witness: <witness> = impl_witness %Destroy.impl_witness_table [concrete = constants.%Destroy.impl_witness.edd]
@@ -720,6 +735,7 @@ fn G(pair: (C, D)) -> D {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @D {
+// CHECK:STDOUT:   %Self.ref: type = name_ref Self, constants.%D [concrete = constants.%D]
 // CHECK:STDOUT:   impl_decl @D.as.Destroy.impl [concrete] {} {}
 // CHECK:STDOUT:   %Destroy.impl_witness_table = impl_witness_table (@D.as.Destroy.impl.%D.as.Destroy.impl.Op.decl), @D.as.Destroy.impl [concrete]
 // CHECK:STDOUT:   %Destroy.impl_witness: <witness> = impl_witness %Destroy.impl_witness_table [concrete = constants.%Destroy.impl_witness.73d]

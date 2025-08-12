@@ -77,6 +77,7 @@ fn Test() {
 // CHECK:STDOUT:   %Sink_i32: %Sink_i32.type = struct_value () [concrete]
 // CHECK:STDOUT:   %Sink_X.type: type = fn_type @Sink_X [concrete]
 // CHECK:STDOUT:   %Sink_X: %Sink_X.type = struct_value () [concrete]
+// CHECK:STDOUT:   %.Self.644: type = bind_symbolic_name .Self [symbolic_self]
 // CHECK:STDOUT:   %T: type = bind_symbolic_name T, 0 [symbolic]
 // CHECK:STDOUT:   %pattern_type.7dcd0a.2: type = pattern_type %T [symbolic]
 // CHECK:STDOUT:   %Source.type: type = fn_type @Source [concrete]
@@ -160,6 +161,7 @@ fn Test() {
 // CHECK:STDOUT:     %return.param_patt: @Source.%pattern_type (%pattern_type.7dcd0a.2) = out_param_pattern %return.patt, call_param0 [concrete]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %T.ref.loc31_24: type = name_ref T, %T.loc31_11.2 [symbolic = %T.loc31_11.1 (constants.%T)]
+// CHECK:STDOUT:     %.Self: type = bind_symbolic_name .Self [symbolic_self = constants.%.Self.644]
 // CHECK:STDOUT:     %T.loc31_11.2: type = bind_symbolic_name T, 0 [symbolic = %T.loc31_11.1 (constants.%T)]
 // CHECK:STDOUT:     %return.param: ref @Source.%T.loc31_11.1 (%T) = out_param call_param0
 // CHECK:STDOUT:     %return: ref @Source.%T.loc31_11.1 (%T) = return_slot %return.param
@@ -167,7 +169,7 @@ fn Test() {
 // CHECK:STDOUT:   %Test.decl: %Test.type = fn_decl @Test [concrete = constants.%Test] {} {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: impl @X.as.Destroy.impl: constants.%X as constants.%Destroy.type {
+// CHECK:STDOUT: impl @X.as.Destroy.impl: @X.%Self.ref as constants.%Destroy.type {
 // CHECK:STDOUT:   %X.as.Destroy.impl.Op.decl: %X.as.Destroy.impl.Op.type = fn_decl @X.as.Destroy.impl.Op [concrete = constants.%X.as.Destroy.impl.Op] {
 // CHECK:STDOUT:     %self.patt: %pattern_type.1c6 = binding_pattern self [concrete]
 // CHECK:STDOUT:     %self.param_patt: %pattern_type.1c6 = value_param_pattern %self.patt, call_param0 [concrete]
@@ -233,6 +235,7 @@ fn Test() {
 // CHECK:STDOUT:   %int_32: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
 // CHECK:STDOUT:   %i32: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
 // CHECK:STDOUT:   %.loc16: %X.elem = field_decl n, element0 [concrete]
+// CHECK:STDOUT:   %Self.ref: type = name_ref Self, constants.%X [concrete = constants.%X]
 // CHECK:STDOUT:   impl_decl @X.as.Destroy.impl [concrete] {} {}
 // CHECK:STDOUT:   %Destroy.impl_witness_table = impl_witness_table (@X.as.Destroy.impl.%X.as.Destroy.impl.Op.decl), @X.as.Destroy.impl [concrete]
 // CHECK:STDOUT:   %Destroy.impl_witness: <witness> = impl_witness %Destroy.impl_witness_table [concrete = constants.%Destroy.impl_witness.807]

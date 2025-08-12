@@ -614,7 +614,7 @@ class SelfNestedBadReturnType {
 // CHECK:STDOUT:   witness = @NoF.%I.impl_witness
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: impl @NoF.as.Destroy.impl: constants.%NoF as constants.%Destroy.type {
+// CHECK:STDOUT: impl @NoF.as.Destroy.impl: @NoF.%Self.ref as constants.%Destroy.type {
 // CHECK:STDOUT:   %NoF.as.Destroy.impl.Op.decl: %NoF.as.Destroy.impl.Op.type = fn_decl @NoF.as.Destroy.impl.Op [concrete = constants.%NoF.as.Destroy.impl.Op] {
 // CHECK:STDOUT:     %self.patt: %pattern_type.7b5 = binding_pattern self [concrete]
 // CHECK:STDOUT:     %self.param_patt: %pattern_type.7b5 = value_param_pattern %self.patt, call_param0 [concrete]
@@ -638,7 +638,7 @@ class SelfNestedBadReturnType {
 // CHECK:STDOUT:   witness = @FNotFunction.%I.impl_witness
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: impl @FNotFunction.as.Destroy.impl: constants.%FNotFunction as constants.%Destroy.type {
+// CHECK:STDOUT: impl @FNotFunction.as.Destroy.impl: @FNotFunction.%Self.ref as constants.%Destroy.type {
 // CHECK:STDOUT:   %FNotFunction.as.Destroy.impl.Op.decl: %FNotFunction.as.Destroy.impl.Op.type = fn_decl @FNotFunction.as.Destroy.impl.Op [concrete = constants.%FNotFunction.as.Destroy.impl.Op] {
 // CHECK:STDOUT:     %self.patt: %pattern_type.27c = binding_pattern self [concrete]
 // CHECK:STDOUT:     %self.param_patt: %pattern_type.27c = value_param_pattern %self.patt, call_param0 [concrete]
@@ -664,7 +664,7 @@ class SelfNestedBadReturnType {
 // CHECK:STDOUT:   witness = @FAlias.%I.impl_witness
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: impl @FAlias.as.Destroy.impl: constants.%FAlias as constants.%Destroy.type {
+// CHECK:STDOUT: impl @FAlias.as.Destroy.impl: @FAlias.%Self.ref as constants.%Destroy.type {
 // CHECK:STDOUT:   %FAlias.as.Destroy.impl.Op.decl: %FAlias.as.Destroy.impl.Op.type = fn_decl @FAlias.as.Destroy.impl.Op [concrete = constants.%FAlias.as.Destroy.impl.Op] {
 // CHECK:STDOUT:     %self.patt: %pattern_type.310 = binding_pattern self [concrete]
 // CHECK:STDOUT:     %self.param_patt: %pattern_type.310 = value_param_pattern %self.patt, call_param0 [concrete]
@@ -700,7 +700,7 @@ class SelfNestedBadReturnType {
 // CHECK:STDOUT:   witness = @FExtraParam.%I.impl_witness
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: impl @FExtraParam.as.Destroy.impl: constants.%FExtraParam as constants.%Destroy.type {
+// CHECK:STDOUT: impl @FExtraParam.as.Destroy.impl: @FExtraParam.%Self.ref as constants.%Destroy.type {
 // CHECK:STDOUT:   %FExtraParam.as.Destroy.impl.Op.decl: %FExtraParam.as.Destroy.impl.Op.type = fn_decl @FExtraParam.as.Destroy.impl.Op [concrete = constants.%FExtraParam.as.Destroy.impl.Op] {
 // CHECK:STDOUT:     %self.patt: %pattern_type.8d3 = binding_pattern self [concrete]
 // CHECK:STDOUT:     %self.param_patt: %pattern_type.8d3 = value_param_pattern %self.patt, call_param0 [concrete]
@@ -732,7 +732,7 @@ class SelfNestedBadReturnType {
 // CHECK:STDOUT:   witness = @FExtraImplicitParam.%I.impl_witness
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: impl @FExtraImplicitParam.as.Destroy.impl: constants.%FExtraImplicitParam as constants.%Destroy.type {
+// CHECK:STDOUT: impl @FExtraImplicitParam.as.Destroy.impl: @FExtraImplicitParam.%Self.ref as constants.%Destroy.type {
 // CHECK:STDOUT:   %FExtraImplicitParam.as.Destroy.impl.Op.decl: %FExtraImplicitParam.as.Destroy.impl.Op.type = fn_decl @FExtraImplicitParam.as.Destroy.impl.Op [concrete = constants.%FExtraImplicitParam.as.Destroy.impl.Op] {
 // CHECK:STDOUT:     %self.patt: %pattern_type.ab8 = binding_pattern self [concrete]
 // CHECK:STDOUT:     %self.param_patt: %pattern_type.ab8 = value_param_pattern %self.patt, call_param0 [concrete]
@@ -765,7 +765,7 @@ class SelfNestedBadReturnType {
 // CHECK:STDOUT:   witness = @FExtraReturnType.%I.impl_witness
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: impl @FExtraReturnType.as.Destroy.impl: constants.%FExtraReturnType as constants.%Destroy.type {
+// CHECK:STDOUT: impl @FExtraReturnType.as.Destroy.impl: @FExtraReturnType.%Self.ref as constants.%Destroy.type {
 // CHECK:STDOUT:   %FExtraReturnType.as.Destroy.impl.Op.decl: %FExtraReturnType.as.Destroy.impl.Op.type = fn_decl @FExtraReturnType.as.Destroy.impl.Op [concrete = constants.%FExtraReturnType.as.Destroy.impl.Op] {
 // CHECK:STDOUT:     %self.patt: %pattern_type.f1c = binding_pattern self [concrete]
 // CHECK:STDOUT:     %self.param_patt: %pattern_type.f1c = value_param_pattern %self.patt, call_param0 [concrete]
@@ -822,7 +822,7 @@ class SelfNestedBadReturnType {
 // CHECK:STDOUT:   witness = @FMissingParam.%J.impl_witness
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: impl @FMissingParam.as.Destroy.impl: constants.%FMissingParam as constants.%Destroy.type {
+// CHECK:STDOUT: impl @FMissingParam.as.Destroy.impl: @FMissingParam.%Self.ref as constants.%Destroy.type {
 // CHECK:STDOUT:   %FMissingParam.as.Destroy.impl.Op.decl: %FMissingParam.as.Destroy.impl.Op.type = fn_decl @FMissingParam.as.Destroy.impl.Op [concrete = constants.%FMissingParam.as.Destroy.impl.Op] {
 // CHECK:STDOUT:     %self.patt: %pattern_type.c8f = binding_pattern self [concrete]
 // CHECK:STDOUT:     %self.param_patt: %pattern_type.c8f = value_param_pattern %self.patt, call_param0 [concrete]
@@ -879,7 +879,7 @@ class SelfNestedBadReturnType {
 // CHECK:STDOUT:   witness = @FMissingImplicitParam.%J.impl_witness
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: impl @FMissingImplicitParam.as.Destroy.impl: constants.%FMissingImplicitParam as constants.%Destroy.type {
+// CHECK:STDOUT: impl @FMissingImplicitParam.as.Destroy.impl: @FMissingImplicitParam.%Self.ref as constants.%Destroy.type {
 // CHECK:STDOUT:   %FMissingImplicitParam.as.Destroy.impl.Op.decl: %FMissingImplicitParam.as.Destroy.impl.Op.type = fn_decl @FMissingImplicitParam.as.Destroy.impl.Op [concrete = constants.%FMissingImplicitParam.as.Destroy.impl.Op] {
 // CHECK:STDOUT:     %self.patt: %pattern_type.575 = binding_pattern self [concrete]
 // CHECK:STDOUT:     %self.param_patt: %pattern_type.575 = value_param_pattern %self.patt, call_param0 [concrete]
@@ -938,7 +938,7 @@ class SelfNestedBadReturnType {
 // CHECK:STDOUT:   witness = @FMissingReturnType.%J.impl_witness
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: impl @FMissingReturnType.as.Destroy.impl: constants.%FMissingReturnType as constants.%Destroy.type {
+// CHECK:STDOUT: impl @FMissingReturnType.as.Destroy.impl: @FMissingReturnType.%Self.ref as constants.%Destroy.type {
 // CHECK:STDOUT:   %FMissingReturnType.as.Destroy.impl.Op.decl: %FMissingReturnType.as.Destroy.impl.Op.type = fn_decl @FMissingReturnType.as.Destroy.impl.Op [concrete = constants.%FMissingReturnType.as.Destroy.impl.Op] {
 // CHECK:STDOUT:     %self.patt: %pattern_type.585 = binding_pattern self [concrete]
 // CHECK:STDOUT:     %self.param_patt: %pattern_type.585 = value_param_pattern %self.patt, call_param0 [concrete]
@@ -1000,7 +1000,7 @@ class SelfNestedBadReturnType {
 // CHECK:STDOUT:   witness = @FDifferentParamType.%J.impl_witness
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: impl @FDifferentParamType.as.Destroy.impl: constants.%FDifferentParamType as constants.%Destroy.type {
+// CHECK:STDOUT: impl @FDifferentParamType.as.Destroy.impl: @FDifferentParamType.%Self.ref as constants.%Destroy.type {
 // CHECK:STDOUT:   %FDifferentParamType.as.Destroy.impl.Op.decl: %FDifferentParamType.as.Destroy.impl.Op.type = fn_decl @FDifferentParamType.as.Destroy.impl.Op [concrete = constants.%FDifferentParamType.as.Destroy.impl.Op] {
 // CHECK:STDOUT:     %self.patt: %pattern_type.e0c = binding_pattern self [concrete]
 // CHECK:STDOUT:     %self.param_patt: %pattern_type.e0c = value_param_pattern %self.patt, call_param0 [concrete]
@@ -1062,7 +1062,7 @@ class SelfNestedBadReturnType {
 // CHECK:STDOUT:   witness = @FDifferentImplicitParamType.%J.impl_witness
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: impl @FDifferentImplicitParamType.as.Destroy.impl: constants.%FDifferentImplicitParamType as constants.%Destroy.type {
+// CHECK:STDOUT: impl @FDifferentImplicitParamType.as.Destroy.impl: @FDifferentImplicitParamType.%Self.ref as constants.%Destroy.type {
 // CHECK:STDOUT:   %FDifferentImplicitParamType.as.Destroy.impl.Op.decl: %FDifferentImplicitParamType.as.Destroy.impl.Op.type = fn_decl @FDifferentImplicitParamType.as.Destroy.impl.Op [concrete = constants.%FDifferentImplicitParamType.as.Destroy.impl.Op] {
 // CHECK:STDOUT:     %self.patt: %pattern_type.986 = binding_pattern self [concrete]
 // CHECK:STDOUT:     %self.param_patt: %pattern_type.986 = value_param_pattern %self.patt, call_param0 [concrete]
@@ -1126,7 +1126,7 @@ class SelfNestedBadReturnType {
 // CHECK:STDOUT:   witness = @FDifferentReturnType.%J.impl_witness
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: impl @FDifferentReturnType.as.Destroy.impl: constants.%FDifferentReturnType as constants.%Destroy.type {
+// CHECK:STDOUT: impl @FDifferentReturnType.as.Destroy.impl: @FDifferentReturnType.%Self.ref as constants.%Destroy.type {
 // CHECK:STDOUT:   %FDifferentReturnType.as.Destroy.impl.Op.decl: %FDifferentReturnType.as.Destroy.impl.Op.type = fn_decl @FDifferentReturnType.as.Destroy.impl.Op [concrete = constants.%FDifferentReturnType.as.Destroy.impl.Op] {
 // CHECK:STDOUT:     %self.patt: %pattern_type.246 = binding_pattern self [concrete]
 // CHECK:STDOUT:     %self.param_patt: %pattern_type.246 = value_param_pattern %self.patt, call_param0 [concrete]
@@ -1186,7 +1186,7 @@ class SelfNestedBadReturnType {
 // CHECK:STDOUT:   witness = @SelfNestedBadParam.%SelfNested.impl_witness
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: impl @SelfNestedBadParam.as.Destroy.impl: constants.%SelfNestedBadParam as constants.%Destroy.type {
+// CHECK:STDOUT: impl @SelfNestedBadParam.as.Destroy.impl: @SelfNestedBadParam.%Self.ref as constants.%Destroy.type {
 // CHECK:STDOUT:   %SelfNestedBadParam.as.Destroy.impl.Op.decl: %SelfNestedBadParam.as.Destroy.impl.Op.type = fn_decl @SelfNestedBadParam.as.Destroy.impl.Op [concrete = constants.%SelfNestedBadParam.as.Destroy.impl.Op] {
 // CHECK:STDOUT:     %self.patt: %pattern_type.2a7 = binding_pattern self [concrete]
 // CHECK:STDOUT:     %self.param_patt: %pattern_type.2a7 = value_param_pattern %self.patt, call_param0 [concrete]
@@ -1246,7 +1246,7 @@ class SelfNestedBadReturnType {
 // CHECK:STDOUT:   witness = @SelfNestedBadReturnType.%SelfNested.impl_witness
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: impl @SelfNestedBadReturnType.as.Destroy.impl: constants.%SelfNestedBadReturnType as constants.%Destroy.type {
+// CHECK:STDOUT: impl @SelfNestedBadReturnType.as.Destroy.impl: @SelfNestedBadReturnType.%Self.ref as constants.%Destroy.type {
 // CHECK:STDOUT:   %SelfNestedBadReturnType.as.Destroy.impl.Op.decl: %SelfNestedBadReturnType.as.Destroy.impl.Op.type = fn_decl @SelfNestedBadReturnType.as.Destroy.impl.Op [concrete = constants.%SelfNestedBadReturnType.as.Destroy.impl.Op] {
 // CHECK:STDOUT:     %self.patt: %pattern_type.4de = binding_pattern self [concrete]
 // CHECK:STDOUT:     %self.param_patt: %pattern_type.4de = value_param_pattern %self.patt, call_param0 [concrete]
@@ -1269,6 +1269,7 @@ class SelfNestedBadReturnType {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %I.impl_witness_table = impl_witness_table (<error>), @NoF.as.I.impl [concrete]
 // CHECK:STDOUT:   %I.impl_witness: <witness> = impl_witness %I.impl_witness_table [concrete = constants.%I.impl_witness.901]
+// CHECK:STDOUT:   %Self.ref: type = name_ref Self, constants.%NoF [concrete = constants.%NoF]
 // CHECK:STDOUT:   impl_decl @NoF.as.Destroy.impl [concrete] {} {}
 // CHECK:STDOUT:   %Destroy.impl_witness_table = impl_witness_table (@NoF.as.Destroy.impl.%NoF.as.Destroy.impl.Op.decl), @NoF.as.Destroy.impl [concrete]
 // CHECK:STDOUT:   %Destroy.impl_witness: <witness> = impl_witness %Destroy.impl_witness_table [concrete = constants.%Destroy.impl_witness.9b3]
@@ -1287,6 +1288,7 @@ class SelfNestedBadReturnType {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %I.impl_witness_table = impl_witness_table (<error>), @FNotFunction.as.I.impl [concrete]
 // CHECK:STDOUT:   %I.impl_witness: <witness> = impl_witness %I.impl_witness_table [concrete = constants.%I.impl_witness.44e]
+// CHECK:STDOUT:   %Self.ref: type = name_ref Self, constants.%FNotFunction [concrete = constants.%FNotFunction]
 // CHECK:STDOUT:   impl_decl @FNotFunction.as.Destroy.impl [concrete] {} {}
 // CHECK:STDOUT:   %Destroy.impl_witness_table = impl_witness_table (@FNotFunction.as.Destroy.impl.%FNotFunction.as.Destroy.impl.Op.decl), @FNotFunction.as.Destroy.impl [concrete]
 // CHECK:STDOUT:   %Destroy.impl_witness: <witness> = impl_witness %Destroy.impl_witness_table [concrete = constants.%Destroy.impl_witness.f9b]
@@ -1307,6 +1309,7 @@ class SelfNestedBadReturnType {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %I.impl_witness_table = impl_witness_table (<error>), @FAlias.as.I.impl [concrete]
 // CHECK:STDOUT:   %I.impl_witness: <witness> = impl_witness %I.impl_witness_table [concrete = constants.%I.impl_witness.c80]
+// CHECK:STDOUT:   %Self.ref: type = name_ref Self, constants.%FAlias [concrete = constants.%FAlias]
 // CHECK:STDOUT:   impl_decl @FAlias.as.Destroy.impl [concrete] {} {}
 // CHECK:STDOUT:   %Destroy.impl_witness_table = impl_witness_table (@FAlias.as.Destroy.impl.%FAlias.as.Destroy.impl.Op.decl), @FAlias.as.Destroy.impl [concrete]
 // CHECK:STDOUT:   %Destroy.impl_witness: <witness> = impl_witness %Destroy.impl_witness_table [concrete = constants.%Destroy.impl_witness.740]
@@ -1326,6 +1329,7 @@ class SelfNestedBadReturnType {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %I.impl_witness_table = impl_witness_table (@FExtraParam.as.I.impl.%FExtraParam.as.I.impl.F.decl.loc69_18.2), @FExtraParam.as.I.impl [concrete]
 // CHECK:STDOUT:   %I.impl_witness: <witness> = impl_witness %I.impl_witness_table [concrete = constants.%I.impl_witness.1f3]
+// CHECK:STDOUT:   %Self.ref: type = name_ref Self, constants.%FExtraParam [concrete = constants.%FExtraParam]
 // CHECK:STDOUT:   impl_decl @FExtraParam.as.Destroy.impl [concrete] {} {}
 // CHECK:STDOUT:   %Destroy.impl_witness_table = impl_witness_table (@FExtraParam.as.Destroy.impl.%FExtraParam.as.Destroy.impl.Op.decl), @FExtraParam.as.Destroy.impl [concrete]
 // CHECK:STDOUT:   %Destroy.impl_witness: <witness> = impl_witness %Destroy.impl_witness_table [concrete = constants.%Destroy.impl_witness.44a]
@@ -1344,6 +1348,7 @@ class SelfNestedBadReturnType {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %I.impl_witness_table = impl_witness_table (@FExtraImplicitParam.as.I.impl.%FExtraImplicitParam.as.I.impl.F.decl.loc85_23.2), @FExtraImplicitParam.as.I.impl [concrete]
 // CHECK:STDOUT:   %I.impl_witness: <witness> = impl_witness %I.impl_witness_table [concrete = constants.%I.impl_witness.a7b]
+// CHECK:STDOUT:   %Self.ref: type = name_ref Self, constants.%FExtraImplicitParam [concrete = constants.%FExtraImplicitParam]
 // CHECK:STDOUT:   impl_decl @FExtraImplicitParam.as.Destroy.impl [concrete] {} {}
 // CHECK:STDOUT:   %Destroy.impl_witness_table = impl_witness_table (@FExtraImplicitParam.as.Destroy.impl.%FExtraImplicitParam.as.Destroy.impl.Op.decl), @FExtraImplicitParam.as.Destroy.impl [concrete]
 // CHECK:STDOUT:   %Destroy.impl_witness: <witness> = impl_witness %Destroy.impl_witness_table [concrete = constants.%Destroy.impl_witness.a05]
@@ -1362,6 +1367,7 @@ class SelfNestedBadReturnType {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %I.impl_witness_table = impl_witness_table (<error>), @FExtraReturnType.as.I.impl [concrete]
 // CHECK:STDOUT:   %I.impl_witness: <witness> = impl_witness %I.impl_witness_table [concrete = constants.%I.impl_witness.59a]
+// CHECK:STDOUT:   %Self.ref: type = name_ref Self, constants.%FExtraReturnType [concrete = constants.%FExtraReturnType]
 // CHECK:STDOUT:   impl_decl @FExtraReturnType.as.Destroy.impl [concrete] {} {}
 // CHECK:STDOUT:   %Destroy.impl_witness_table = impl_witness_table (@FExtraReturnType.as.Destroy.impl.%FExtraReturnType.as.Destroy.impl.Op.decl), @FExtraReturnType.as.Destroy.impl [concrete]
 // CHECK:STDOUT:   %Destroy.impl_witness: <witness> = impl_witness %Destroy.impl_witness_table [concrete = constants.%Destroy.impl_witness.3ea]
@@ -1380,6 +1386,7 @@ class SelfNestedBadReturnType {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %J.impl_witness_table = impl_witness_table (@FMissingParam.as.J.impl.%FMissingParam.as.J.impl.F.decl.loc117_31.2), @FMissingParam.as.J.impl [concrete]
 // CHECK:STDOUT:   %J.impl_witness: <witness> = impl_witness %J.impl_witness_table [concrete = constants.%J.impl_witness.4e9]
+// CHECK:STDOUT:   %Self.ref: type = name_ref Self, constants.%FMissingParam [concrete = constants.%FMissingParam]
 // CHECK:STDOUT:   impl_decl @FMissingParam.as.Destroy.impl [concrete] {} {}
 // CHECK:STDOUT:   %Destroy.impl_witness_table = impl_witness_table (@FMissingParam.as.Destroy.impl.%FMissingParam.as.Destroy.impl.Op.decl), @FMissingParam.as.Destroy.impl [concrete]
 // CHECK:STDOUT:   %Destroy.impl_witness: <witness> = impl_witness %Destroy.impl_witness_table [concrete = constants.%Destroy.impl_witness.672]
@@ -1398,6 +1405,7 @@ class SelfNestedBadReturnType {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %J.impl_witness_table = impl_witness_table (@FMissingImplicitParam.as.J.impl.%FMissingImplicitParam.as.J.impl.F.decl.loc130_26.2), @FMissingImplicitParam.as.J.impl [concrete]
 // CHECK:STDOUT:   %J.impl_witness: <witness> = impl_witness %J.impl_witness_table [concrete = constants.%J.impl_witness.841]
+// CHECK:STDOUT:   %Self.ref: type = name_ref Self, constants.%FMissingImplicitParam [concrete = constants.%FMissingImplicitParam]
 // CHECK:STDOUT:   impl_decl @FMissingImplicitParam.as.Destroy.impl [concrete] {} {}
 // CHECK:STDOUT:   %Destroy.impl_witness_table = impl_witness_table (@FMissingImplicitParam.as.Destroy.impl.%FMissingImplicitParam.as.Destroy.impl.Op.decl), @FMissingImplicitParam.as.Destroy.impl [concrete]
 // CHECK:STDOUT:   %Destroy.impl_witness: <witness> = impl_witness %Destroy.impl_witness_table [concrete = constants.%Destroy.impl_witness.ae6]
@@ -1416,6 +1424,7 @@ class SelfNestedBadReturnType {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %J.impl_witness_table = impl_witness_table (@FMissingReturnType.as.J.impl.%FMissingReturnType.as.J.impl.F.decl.loc152_30.2), @FMissingReturnType.as.J.impl [concrete]
 // CHECK:STDOUT:   %J.impl_witness: <witness> = impl_witness %J.impl_witness_table [concrete = constants.%J.impl_witness.e75]
+// CHECK:STDOUT:   %Self.ref: type = name_ref Self, constants.%FMissingReturnType [concrete = constants.%FMissingReturnType]
 // CHECK:STDOUT:   impl_decl @FMissingReturnType.as.Destroy.impl [concrete] {} {}
 // CHECK:STDOUT:   %Destroy.impl_witness_table = impl_witness_table (@FMissingReturnType.as.Destroy.impl.%FMissingReturnType.as.Destroy.impl.Op.decl), @FMissingReturnType.as.Destroy.impl [concrete]
 // CHECK:STDOUT:   %Destroy.impl_witness: <witness> = impl_witness %Destroy.impl_witness_table [concrete = constants.%Destroy.impl_witness.8d8]
@@ -1434,6 +1443,7 @@ class SelfNestedBadReturnType {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %J.impl_witness_table = impl_witness_table (@FDifferentParamType.as.J.impl.%FDifferentParamType.as.J.impl.F.decl.loc171_38.2), @FDifferentParamType.as.J.impl [concrete]
 // CHECK:STDOUT:   %J.impl_witness: <witness> = impl_witness %J.impl_witness_table [concrete = constants.%J.impl_witness.cbe]
+// CHECK:STDOUT:   %Self.ref: type = name_ref Self, constants.%FDifferentParamType [concrete = constants.%FDifferentParamType]
 // CHECK:STDOUT:   impl_decl @FDifferentParamType.as.Destroy.impl [concrete] {} {}
 // CHECK:STDOUT:   %Destroy.impl_witness_table = impl_witness_table (@FDifferentParamType.as.Destroy.impl.%FDifferentParamType.as.Destroy.impl.Op.decl), @FDifferentParamType.as.Destroy.impl [concrete]
 // CHECK:STDOUT:   %Destroy.impl_witness: <witness> = impl_witness %Destroy.impl_witness_table [concrete = constants.%Destroy.impl_witness.443]
@@ -1452,6 +1462,7 @@ class SelfNestedBadReturnType {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %J.impl_witness_table = impl_witness_table (@FDifferentImplicitParamType.as.J.impl.%FDifferentImplicitParamType.as.J.impl.F.decl.loc184_38.2), @FDifferentImplicitParamType.as.J.impl [concrete]
 // CHECK:STDOUT:   %J.impl_witness: <witness> = impl_witness %J.impl_witness_table [concrete = constants.%J.impl_witness.af2]
+// CHECK:STDOUT:   %Self.ref: type = name_ref Self, constants.%FDifferentImplicitParamType [concrete = constants.%FDifferentImplicitParamType]
 // CHECK:STDOUT:   impl_decl @FDifferentImplicitParamType.as.Destroy.impl [concrete] {} {}
 // CHECK:STDOUT:   %Destroy.impl_witness_table = impl_witness_table (@FDifferentImplicitParamType.as.Destroy.impl.%FDifferentImplicitParamType.as.Destroy.impl.Op.decl), @FDifferentImplicitParamType.as.Destroy.impl [concrete]
 // CHECK:STDOUT:   %Destroy.impl_witness: <witness> = impl_witness %Destroy.impl_witness_table [concrete = constants.%Destroy.impl_witness.c2a]
@@ -1470,6 +1481,7 @@ class SelfNestedBadReturnType {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %J.impl_witness_table = impl_witness_table (@FDifferentReturnType.as.J.impl.%FDifferentReturnType.as.J.impl.F.decl.loc200_38.2), @FDifferentReturnType.as.J.impl [concrete]
 // CHECK:STDOUT:   %J.impl_witness: <witness> = impl_witness %J.impl_witness_table [concrete = constants.%J.impl_witness.bc1]
+// CHECK:STDOUT:   %Self.ref: type = name_ref Self, constants.%FDifferentReturnType [concrete = constants.%FDifferentReturnType]
 // CHECK:STDOUT:   impl_decl @FDifferentReturnType.as.Destroy.impl [concrete] {} {}
 // CHECK:STDOUT:   %Destroy.impl_witness_table = impl_witness_table (@FDifferentReturnType.as.Destroy.impl.%FDifferentReturnType.as.Destroy.impl.Op.decl), @FDifferentReturnType.as.Destroy.impl [concrete]
 // CHECK:STDOUT:   %Destroy.impl_witness: <witness> = impl_witness %Destroy.impl_witness_table [concrete = constants.%Destroy.impl_witness.6d2]
@@ -1488,6 +1500,7 @@ class SelfNestedBadReturnType {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %SelfNested.impl_witness_table = impl_witness_table (@SelfNestedBadParam.as.SelfNested.impl.%SelfNestedBadParam.as.SelfNested.impl.F.decl.loc223_87.2), @SelfNestedBadParam.as.SelfNested.impl [concrete]
 // CHECK:STDOUT:   %SelfNested.impl_witness: <witness> = impl_witness %SelfNested.impl_witness_table [concrete = constants.%SelfNested.impl_witness.e31]
+// CHECK:STDOUT:   %Self.ref: type = name_ref Self, constants.%SelfNestedBadParam [concrete = constants.%SelfNestedBadParam]
 // CHECK:STDOUT:   impl_decl @SelfNestedBadParam.as.Destroy.impl [concrete] {} {}
 // CHECK:STDOUT:   %Destroy.impl_witness_table = impl_witness_table (@SelfNestedBadParam.as.Destroy.impl.%SelfNestedBadParam.as.Destroy.impl.Op.decl), @SelfNestedBadParam.as.Destroy.impl [concrete]
 // CHECK:STDOUT:   %Destroy.impl_witness: <witness> = impl_witness %Destroy.impl_witness_table [concrete = constants.%Destroy.impl_witness.908]
@@ -1507,6 +1520,7 @@ class SelfNestedBadReturnType {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %SelfNested.impl_witness_table = impl_witness_table (@SelfNestedBadReturnType.as.SelfNested.impl.%SelfNestedBadReturnType.as.SelfNested.impl.F.decl.loc239_112.2), @SelfNestedBadReturnType.as.SelfNested.impl [concrete]
 // CHECK:STDOUT:   %SelfNested.impl_witness: <witness> = impl_witness %SelfNested.impl_witness_table [concrete = constants.%SelfNested.impl_witness.d5e]
+// CHECK:STDOUT:   %Self.ref: type = name_ref Self, constants.%SelfNestedBadReturnType [concrete = constants.%SelfNestedBadReturnType]
 // CHECK:STDOUT:   impl_decl @SelfNestedBadReturnType.as.Destroy.impl [concrete] {} {}
 // CHECK:STDOUT:   %Destroy.impl_witness_table = impl_witness_table (@SelfNestedBadReturnType.as.Destroy.impl.%SelfNestedBadReturnType.as.Destroy.impl.Op.decl), @SelfNestedBadReturnType.as.Destroy.impl [concrete]
 // CHECK:STDOUT:   %Destroy.impl_witness: <witness> = impl_witness %Destroy.impl_witness_table [concrete = constants.%Destroy.impl_witness.9f5]

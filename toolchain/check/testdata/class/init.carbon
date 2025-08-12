@@ -123,7 +123,7 @@ fn MakeReorder(n: i32, next: Class*) -> Class {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: impl @Class.as.Destroy.impl: constants.%Class as constants.%Destroy.type {
+// CHECK:STDOUT: impl @Class.as.Destroy.impl: @Class.%Self.ref as constants.%Destroy.type {
 // CHECK:STDOUT:   %Class.as.Destroy.impl.Op.decl: %Class.as.Destroy.impl.Op.type = fn_decl @Class.as.Destroy.impl.Op [concrete = constants.%Class.as.Destroy.impl.Op] {
 // CHECK:STDOUT:     %self.patt: %pattern_type.796 = binding_pattern self [concrete]
 // CHECK:STDOUT:     %self.param_patt: %pattern_type.796 = value_param_pattern %self.patt, call_param0 [concrete]
@@ -146,6 +146,7 @@ fn MakeReorder(n: i32, next: Class*) -> Class {
 // CHECK:STDOUT:   %Class.ref: type = name_ref Class, file.%Class.decl [concrete = constants.%Class]
 // CHECK:STDOUT:   %ptr: type = ptr_type %Class.ref [concrete = constants.%ptr.e71]
 // CHECK:STDOUT:   %.loc17: %Class.elem.0c0 = field_decl next, element1 [concrete]
+// CHECK:STDOUT:   %Self.ref: type = name_ref Self, constants.%Class [concrete = constants.%Class]
 // CHECK:STDOUT:   impl_decl @Class.as.Destroy.impl [concrete] {} {}
 // CHECK:STDOUT:   %Destroy.impl_witness_table = impl_witness_table (@Class.as.Destroy.impl.%Class.as.Destroy.impl.Op.decl), @Class.as.Destroy.impl [concrete]
 // CHECK:STDOUT:   %Destroy.impl_witness: <witness> = impl_witness %Destroy.impl_witness_table [concrete = constants.%Destroy.impl_witness]

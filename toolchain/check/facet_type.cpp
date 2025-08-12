@@ -614,4 +614,26 @@ auto ResolveFacetTypeRewriteConstraints(
   return true;
 }
 
+auto MakePeriodSelfFacetValue(Context& context, SemIR::TypeId self_type_id)
+    -> SemIR::InstId {
+  auto entity_name_id = context.entity_names().AddCanonical({
+      .name_id = SemIR::NameId::PeriodSelf,
+      .parent_scope_id = context.scope_stack().PeekNameScopeId(),
+  });
+  auto inst_id = AddInst(
+      context, SemIR::LocIdAndInst::NoLoc<SemIR::BindSymbolicName>({
+                   .type_id = self_type_id,
+                   .entity_name_id = entity_name_id,
+                   // `None` because there is no equivalent non-symbolic value.
+                   .value_id = SemIR::InstId::None,
+               }));
+  // TODO: LookupOrAddName should (optionally?) take a callback to run and
+  // construct the `inst_id` only if it's not found by lookup.
+  auto existing =
+      context.scope_stack().LookupOrAddName(SemIR::NameId::PeriodSelf, inst_id);
+  // Shouldn't have any names in newly created scope.
+  CARBON_CHECK(!existing.has_value());
+  return inst_id;
+}
+
 }  // namespace Carbon::Check

@@ -84,7 +84,7 @@ fn F(x: X) {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: impl @X.as.Destroy.impl: constants.%X as constants.%Destroy.type {
+// CHECK:STDOUT: impl @X.as.Destroy.impl: @X.%Self.ref as constants.%Destroy.type {
 // CHECK:STDOUT:   %X.as.Destroy.impl.Op.decl: %X.as.Destroy.impl.Op.type = fn_decl @X.as.Destroy.impl.Op [concrete = constants.%X.as.Destroy.impl.Op] {
 // CHECK:STDOUT:     %self.patt: %pattern_type.1c6 = binding_pattern self [concrete]
 // CHECK:STDOUT:     %self.param_patt: %pattern_type.1c6 = value_param_pattern %self.patt, call_param0 [concrete]
@@ -101,6 +101,7 @@ fn F(x: X) {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @X {
+// CHECK:STDOUT:   %Self.ref: type = name_ref Self, constants.%X [concrete = constants.%X]
 // CHECK:STDOUT:   impl_decl @X.as.Destroy.impl [concrete] {} {}
 // CHECK:STDOUT:   %Destroy.impl_witness_table = impl_witness_table (@X.as.Destroy.impl.%X.as.Destroy.impl.Op.decl), @X.as.Destroy.impl [concrete]
 // CHECK:STDOUT:   %Destroy.impl_witness: <witness> = impl_witness %Destroy.impl_witness_table [concrete = constants.%Destroy.impl_witness.807]

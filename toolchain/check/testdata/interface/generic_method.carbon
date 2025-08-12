@@ -84,6 +84,7 @@ fn CallIndirect() {
 // CHECK:STDOUT: --- generic_method_fewer_params.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
+// CHECK:STDOUT:   %.Self: type = bind_symbolic_name .Self [symbolic_self]
 // CHECK:STDOUT:   %T.8b3: type = bind_symbolic_name T, 0 [symbolic]
 // CHECK:STDOUT:   %pattern_type.98f: type = pattern_type type [concrete]
 // CHECK:STDOUT:   %A.type.495: type = generic_interface_type @A [concrete]
@@ -216,6 +217,7 @@ fn CallIndirect() {
 // CHECK:STDOUT:   %A.decl: %A.type.495 = interface_decl @A [concrete = constants.%A.generic] {
 // CHECK:STDOUT:     %T.patt: %pattern_type.98f = symbolic_binding_pattern T, 0 [concrete]
 // CHECK:STDOUT:   } {
+// CHECK:STDOUT:     %.Self: type = bind_symbolic_name .Self [symbolic_self = constants.%.Self]
 // CHECK:STDOUT:     %T.loc5_13.2: type = bind_symbolic_name T, 0 [symbolic = %T.loc5_13.1 (constants.%T.8b3)]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %X.decl: type = class_decl @X [concrete = constants.%X] {} {}
@@ -234,6 +236,7 @@ fn CallIndirect() {
 // CHECK:STDOUT:     %T.patt: %pattern_type.817 = symbolic_binding_pattern T, 0 [concrete]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %.loc25: type = splice_block %A.type [concrete = constants.%A.type.91f] {
+// CHECK:STDOUT:       %.Self: type = bind_symbolic_name .Self [symbolic_self = constants.%.Self]
 // CHECK:STDOUT:       %A.ref: %A.type.495 = name_ref A, file.%A.decl [concrete = constants.%A.generic]
 // CHECK:STDOUT:       %X.ref: type = name_ref X, file.%X.decl [concrete = constants.%X]
 // CHECK:STDOUT:       %A.type: type = facet_type <@A, @A(constants.%X)> [concrete = constants.%A.type.91f]
@@ -271,6 +274,7 @@ fn CallIndirect() {
 // CHECK:STDOUT:       %Self.as_type.loc6_38.2: type = facet_access_type %Self.ref [symbolic = %Self.as_type.loc6_38.1 (constants.%Self.as_type.81d)]
 // CHECK:STDOUT:       %.loc6_38.2: type = converted %Self.ref, %Self.as_type.loc6_38.2 [symbolic = %Self.as_type.loc6_38.1 (constants.%Self.as_type.81d)]
 // CHECK:STDOUT:       %.loc6_38.3: type = converted %.loc6_38.1, constants.%tuple.type.bd2 [symbolic = %tuple.type.loc6_38.2 (constants.%tuple.type.bd2)]
+// CHECK:STDOUT:       %.Self: type = bind_symbolic_name .Self [symbolic_self = constants.%.Self]
 // CHECK:STDOUT:       %U.loc6_8.2: type = bind_symbolic_name U, 2 [symbolic = %U.loc6_8.1 (constants.%U.2cb)]
 // CHECK:STDOUT:       %u.param: @A.F.%U.loc6_8.1 (%U.2cb) = value_param call_param0
 // CHECK:STDOUT:       %U.ref.loc6_21: type = name_ref U, %U.loc6_8.2 [symbolic = %U.loc6_8.1 (constants.%U.2cb)]
@@ -288,7 +292,7 @@ fn CallIndirect() {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: impl @X.as.Destroy.impl: constants.%X as constants.%Destroy.type {
+// CHECK:STDOUT: impl @X.as.Destroy.impl: @X.%Self.ref as constants.%Destroy.type {
 // CHECK:STDOUT:   %X.as.Destroy.impl.Op.decl: %X.as.Destroy.impl.Op.type = fn_decl @X.as.Destroy.impl.Op [concrete = constants.%X.as.Destroy.impl.Op] {
 // CHECK:STDOUT:     %self.patt: %pattern_type.1c6 = binding_pattern self [concrete]
 // CHECK:STDOUT:     %self.param_patt: %pattern_type.1c6 = value_param_pattern %self.patt, call_param0 [concrete]
@@ -304,7 +308,7 @@ fn CallIndirect() {
 // CHECK:STDOUT:   witness = @X.%Destroy.impl_witness
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: impl @Y.as.Destroy.impl: constants.%Y as constants.%Destroy.type {
+// CHECK:STDOUT: impl @Y.as.Destroy.impl: @Y.%Self.ref as constants.%Destroy.type {
 // CHECK:STDOUT:   %Y.as.Destroy.impl.Op.decl: %Y.as.Destroy.impl.Op.type = fn_decl @Y.as.Destroy.impl.Op [concrete = constants.%Y.as.Destroy.impl.Op] {
 // CHECK:STDOUT:     %self.patt: %pattern_type.0ae = binding_pattern self [concrete]
 // CHECK:STDOUT:     %self.param_patt: %pattern_type.0ae = value_param_pattern %self.patt, call_param0 [concrete]
@@ -320,7 +324,7 @@ fn CallIndirect() {
 // CHECK:STDOUT:   witness = @Y.%Destroy.impl_witness
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: impl @Z.as.Destroy.impl: constants.%Z as constants.%Destroy.type {
+// CHECK:STDOUT: impl @Z.as.Destroy.impl: @Z.%Self.ref as constants.%Destroy.type {
 // CHECK:STDOUT:   %Z.as.Destroy.impl.Op.decl: %Z.as.Destroy.impl.Op.type = fn_decl @Z.as.Destroy.impl.Op [concrete = constants.%Z.as.Destroy.impl.Op] {
 // CHECK:STDOUT:     %self.patt: %pattern_type.f76 = binding_pattern self [concrete]
 // CHECK:STDOUT:     %self.param_patt: %pattern_type.f76 = value_param_pattern %self.patt, call_param0 [concrete]
@@ -349,6 +353,7 @@ fn CallIndirect() {
 // CHECK:STDOUT:     %U.ref.loc16_34: type = name_ref U, %U.loc16_8.2 [symbolic = %U.loc16_8.1 (constants.%U.8b3)]
 // CHECK:STDOUT:     %.loc16_35.1: %tuple.type.ff9 = tuple_literal (%X.ref, %Y.ref, %U.ref.loc16_34)
 // CHECK:STDOUT:     %.loc16_35.2: type = converted %.loc16_35.1, constants.%tuple.type.765 [symbolic = %tuple.type.loc16 (constants.%tuple.type.765)]
+// CHECK:STDOUT:     %.Self: type = bind_symbolic_name .Self [symbolic_self = constants.%.Self]
 // CHECK:STDOUT:     %U.loc16_8.2: type = bind_symbolic_name U, 0 [symbolic = %U.loc16_8.1 (constants.%U.8b3)]
 // CHECK:STDOUT:     %u.param: @Y.as.A.impl.F.%U.loc16_8.1 (%U.8b3) = value_param call_param0
 // CHECK:STDOUT:     %U.ref.loc16_21: type = name_ref U, %U.loc16_8.2 [symbolic = %U.loc16_8.1 (constants.%U.8b3)]
@@ -365,6 +370,7 @@ fn CallIndirect() {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @X {
+// CHECK:STDOUT:   %Self.ref: type = name_ref Self, constants.%X [concrete = constants.%X]
 // CHECK:STDOUT:   impl_decl @X.as.Destroy.impl [concrete] {} {}
 // CHECK:STDOUT:   %Destroy.impl_witness_table = impl_witness_table (@X.as.Destroy.impl.%X.as.Destroy.impl.Op.decl), @X.as.Destroy.impl [concrete]
 // CHECK:STDOUT:   %Destroy.impl_witness: <witness> = impl_witness %Destroy.impl_witness_table [concrete = constants.%Destroy.impl_witness.807]
@@ -376,6 +382,7 @@ fn CallIndirect() {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @Y {
+// CHECK:STDOUT:   %Self.ref: type = name_ref Self, constants.%Y [concrete = constants.%Y]
 // CHECK:STDOUT:   impl_decl @Y.as.Destroy.impl [concrete] {} {}
 // CHECK:STDOUT:   %Destroy.impl_witness_table = impl_witness_table (@Y.as.Destroy.impl.%Y.as.Destroy.impl.Op.decl), @Y.as.Destroy.impl [concrete]
 // CHECK:STDOUT:   %Destroy.impl_witness: <witness> = impl_witness %Destroy.impl_witness_table [concrete = constants.%Destroy.impl_witness.621]
@@ -387,6 +394,7 @@ fn CallIndirect() {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @Z {
+// CHECK:STDOUT:   %Self.ref: type = name_ref Self, constants.%Z [concrete = constants.%Z]
 // CHECK:STDOUT:   impl_decl @Z.as.Destroy.impl [concrete] {} {}
 // CHECK:STDOUT:   %Destroy.impl_witness_table = impl_witness_table (@Z.as.Destroy.impl.%Z.as.Destroy.impl.Op.decl), @Z.as.Destroy.impl [concrete]
 // CHECK:STDOUT:   %Destroy.impl_witness: <witness> = impl_witness %Destroy.impl_witness_table [concrete = constants.%Destroy.impl_witness.2a0]
@@ -657,6 +665,7 @@ fn CallIndirect() {
 // CHECK:STDOUT: --- generic_method_more_params.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
+// CHECK:STDOUT:   %.Self: type = bind_symbolic_name .Self [symbolic_self]
 // CHECK:STDOUT:   %T.8b3: type = bind_symbolic_name T, 0 [symbolic]
 // CHECK:STDOUT:   %pattern_type.98f: type = pattern_type type [concrete]
 // CHECK:STDOUT:   %A.type.495: type = generic_interface_type @A [concrete]
@@ -819,6 +828,7 @@ fn CallIndirect() {
 // CHECK:STDOUT:   %A.decl: %A.type.495 = interface_decl @A [concrete = constants.%A.generic] {
 // CHECK:STDOUT:     %T.patt: %pattern_type.98f = symbolic_binding_pattern T, 0 [concrete]
 // CHECK:STDOUT:   } {
+// CHECK:STDOUT:     %.Self: type = bind_symbolic_name .Self [symbolic_self = constants.%.Self]
 // CHECK:STDOUT:     %T.loc5_13.2: type = bind_symbolic_name T, 0 [symbolic = %T.loc5_13.1 (constants.%T.8b3)]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %X.decl: type = class_decl @X [concrete = constants.%X] {} {}
@@ -837,8 +847,11 @@ fn CallIndirect() {
 // CHECK:STDOUT:     %A.ref: %A.type.495 = name_ref A, file.%A.decl [concrete = constants.%A.generic]
 // CHECK:STDOUT:     %W.ref: type = name_ref W, %W.loc14_36.2 [symbolic = %W.loc14_36.1 (constants.%W)]
 // CHECK:STDOUT:     %A.type.loc14_61.2: type = facet_type <@A, @A(constants.%W)> [symbolic = %A.type.loc14_61.1 (constants.%A.type.f21)]
+// CHECK:STDOUT:     %.Self.1: type = bind_symbolic_name .Self [symbolic_self = constants.%.Self]
 // CHECK:STDOUT:     %V1.loc14_14.2: type = bind_symbolic_name V1, 0 [symbolic = %V1.loc14_14.1 (constants.%V1)]
+// CHECK:STDOUT:     %.Self.2: type = bind_symbolic_name .Self [symbolic_self = constants.%.Self]
 // CHECK:STDOUT:     %V2.loc14_25.2: type = bind_symbolic_name V2, 1 [symbolic = %V2.loc14_25.1 (constants.%V2)]
+// CHECK:STDOUT:     %.Self.3: type = bind_symbolic_name .Self [symbolic_self = constants.%.Self]
 // CHECK:STDOUT:     %W.loc14_36.2: type = bind_symbolic_name W, 2 [symbolic = %W.loc14_36.1 (constants.%W)]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %A.impl_witness_table = impl_witness_table (@tuple.type.as.A.impl.%tuple.type.as.A.impl.F.decl), @tuple.type.as.A.impl [concrete]
@@ -848,6 +861,7 @@ fn CallIndirect() {
 // CHECK:STDOUT:     %T.patt: %pattern_type.817 = symbolic_binding_pattern T, 0 [concrete]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %.loc27: type = splice_block %A.type [concrete = constants.%A.type.91f] {
+// CHECK:STDOUT:       %.Self: type = bind_symbolic_name .Self [symbolic_self = constants.%.Self]
 // CHECK:STDOUT:       %A.ref: %A.type.495 = name_ref A, file.%A.decl [concrete = constants.%A.generic]
 // CHECK:STDOUT:       %X.ref: type = name_ref X, file.%X.decl [concrete = constants.%X]
 // CHECK:STDOUT:       %A.type: type = facet_type <@A, @A(constants.%X)> [concrete = constants.%A.type.91f]
@@ -885,6 +899,7 @@ fn CallIndirect() {
 // CHECK:STDOUT:       %Self.as_type.loc6_38.2: type = facet_access_type %Self.ref [symbolic = %Self.as_type.loc6_38.1 (constants.%Self.as_type.81d)]
 // CHECK:STDOUT:       %.loc6_38.2: type = converted %Self.ref, %Self.as_type.loc6_38.2 [symbolic = %Self.as_type.loc6_38.1 (constants.%Self.as_type.81d)]
 // CHECK:STDOUT:       %.loc6_38.3: type = converted %.loc6_38.1, constants.%tuple.type.bd2 [symbolic = %tuple.type.loc6_38.2 (constants.%tuple.type.bd2)]
+// CHECK:STDOUT:       %.Self: type = bind_symbolic_name .Self [symbolic_self = constants.%.Self]
 // CHECK:STDOUT:       %U.loc6_8.2: type = bind_symbolic_name U, 2 [symbolic = %U.loc6_8.1 (constants.%U.2cb)]
 // CHECK:STDOUT:       %u.param: @A.F.%U.loc6_8.1 (%U.2cb) = value_param call_param0
 // CHECK:STDOUT:       %U.ref.loc6_21: type = name_ref U, %U.loc6_8.2 [symbolic = %U.loc6_8.1 (constants.%U.2cb)]
@@ -902,7 +917,7 @@ fn CallIndirect() {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: impl @X.as.Destroy.impl: constants.%X as constants.%Destroy.type {
+// CHECK:STDOUT: impl @X.as.Destroy.impl: @X.%Self.ref as constants.%Destroy.type {
 // CHECK:STDOUT:   %X.as.Destroy.impl.Op.decl: %X.as.Destroy.impl.Op.type = fn_decl @X.as.Destroy.impl.Op [concrete = constants.%X.as.Destroy.impl.Op] {
 // CHECK:STDOUT:     %self.patt: %pattern_type.1c6 = binding_pattern self [concrete]
 // CHECK:STDOUT:     %self.param_patt: %pattern_type.1c6 = value_param_pattern %self.patt, call_param0 [concrete]
@@ -918,7 +933,7 @@ fn CallIndirect() {
 // CHECK:STDOUT:   witness = @X.%Destroy.impl_witness
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: impl @Y1.as.Destroy.impl: constants.%Y1 as constants.%Destroy.type {
+// CHECK:STDOUT: impl @Y1.as.Destroy.impl: @Y1.%Self.ref as constants.%Destroy.type {
 // CHECK:STDOUT:   %Y1.as.Destroy.impl.Op.decl: %Y1.as.Destroy.impl.Op.type = fn_decl @Y1.as.Destroy.impl.Op [concrete = constants.%Y1.as.Destroy.impl.Op] {
 // CHECK:STDOUT:     %self.patt: %pattern_type.273 = binding_pattern self [concrete]
 // CHECK:STDOUT:     %self.param_patt: %pattern_type.273 = value_param_pattern %self.patt, call_param0 [concrete]
@@ -934,7 +949,7 @@ fn CallIndirect() {
 // CHECK:STDOUT:   witness = @Y1.%Destroy.impl_witness
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: impl @Y2.as.Destroy.impl: constants.%Y2 as constants.%Destroy.type {
+// CHECK:STDOUT: impl @Y2.as.Destroy.impl: @Y2.%Self.ref as constants.%Destroy.type {
 // CHECK:STDOUT:   %Y2.as.Destroy.impl.Op.decl: %Y2.as.Destroy.impl.Op.type = fn_decl @Y2.as.Destroy.impl.Op [concrete = constants.%Y2.as.Destroy.impl.Op] {
 // CHECK:STDOUT:     %self.patt: %pattern_type.484 = binding_pattern self [concrete]
 // CHECK:STDOUT:     %self.param_patt: %pattern_type.484 = value_param_pattern %self.patt, call_param0 [concrete]
@@ -950,7 +965,7 @@ fn CallIndirect() {
 // CHECK:STDOUT:   witness = @Y2.%Destroy.impl_witness
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: impl @Z.as.Destroy.impl: constants.%Z as constants.%Destroy.type {
+// CHECK:STDOUT: impl @Z.as.Destroy.impl: @Z.%Self.ref as constants.%Destroy.type {
 // CHECK:STDOUT:   %Z.as.Destroy.impl.Op.decl: %Z.as.Destroy.impl.Op.type = fn_decl @Z.as.Destroy.impl.Op [concrete = constants.%Z.as.Destroy.impl.Op] {
 // CHECK:STDOUT:     %self.patt: %pattern_type.f76 = binding_pattern self [concrete]
 // CHECK:STDOUT:     %self.param_patt: %pattern_type.f76 = value_param_pattern %self.patt, call_param0 [concrete]
@@ -995,6 +1010,7 @@ fn CallIndirect() {
 // CHECK:STDOUT:       %.loc17_42.1: %tuple.type.11f = tuple_literal (%W.ref, %.loc17_38, %U.ref.loc17_41)
 // CHECK:STDOUT:       %.loc17_42.2: type = converted %.loc17_38, constants.%tuple.type.30b [symbolic = %tuple.type.loc17_42.1 (constants.%tuple.type.30b)]
 // CHECK:STDOUT:       %.loc17_42.3: type = converted %.loc17_42.1, constants.%tuple.type.8ae [symbolic = %tuple.type.loc17_42.2 (constants.%tuple.type.8ae)]
+// CHECK:STDOUT:       %.Self: type = bind_symbolic_name .Self [symbolic_self = constants.%.Self]
 // CHECK:STDOUT:       %U.loc17_8.2: type = bind_symbolic_name U, 3 [symbolic = %U.loc17_8.1 (constants.%U.753)]
 // CHECK:STDOUT:       %u.param: @tuple.type.as.A.impl.F.%U.loc17_8.1 (%U.753) = value_param call_param0
 // CHECK:STDOUT:       %U.ref.loc17_21: type = name_ref U, %U.loc17_8.2 [symbolic = %U.loc17_8.1 (constants.%U.753)]
@@ -1013,6 +1029,7 @@ fn CallIndirect() {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @X {
+// CHECK:STDOUT:   %Self.ref: type = name_ref Self, constants.%X [concrete = constants.%X]
 // CHECK:STDOUT:   impl_decl @X.as.Destroy.impl [concrete] {} {}
 // CHECK:STDOUT:   %Destroy.impl_witness_table = impl_witness_table (@X.as.Destroy.impl.%X.as.Destroy.impl.Op.decl), @X.as.Destroy.impl [concrete]
 // CHECK:STDOUT:   %Destroy.impl_witness: <witness> = impl_witness %Destroy.impl_witness_table [concrete = constants.%Destroy.impl_witness.807]
@@ -1024,6 +1041,7 @@ fn CallIndirect() {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @Y1 {
+// CHECK:STDOUT:   %Self.ref: type = name_ref Self, constants.%Y1 [concrete = constants.%Y1]
 // CHECK:STDOUT:   impl_decl @Y1.as.Destroy.impl [concrete] {} {}
 // CHECK:STDOUT:   %Destroy.impl_witness_table = impl_witness_table (@Y1.as.Destroy.impl.%Y1.as.Destroy.impl.Op.decl), @Y1.as.Destroy.impl [concrete]
 // CHECK:STDOUT:   %Destroy.impl_witness: <witness> = impl_witness %Destroy.impl_witness_table [concrete = constants.%Destroy.impl_witness.614]
@@ -1035,6 +1053,7 @@ fn CallIndirect() {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @Y2 {
+// CHECK:STDOUT:   %Self.ref: type = name_ref Self, constants.%Y2 [concrete = constants.%Y2]
 // CHECK:STDOUT:   impl_decl @Y2.as.Destroy.impl [concrete] {} {}
 // CHECK:STDOUT:   %Destroy.impl_witness_table = impl_witness_table (@Y2.as.Destroy.impl.%Y2.as.Destroy.impl.Op.decl), @Y2.as.Destroy.impl [concrete]
 // CHECK:STDOUT:   %Destroy.impl_witness: <witness> = impl_witness %Destroy.impl_witness_table [concrete = constants.%Destroy.impl_witness.7b0]
@@ -1046,6 +1065,7 @@ fn CallIndirect() {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @Z {
+// CHECK:STDOUT:   %Self.ref: type = name_ref Self, constants.%Z [concrete = constants.%Z]
 // CHECK:STDOUT:   impl_decl @Z.as.Destroy.impl [concrete] {} {}
 // CHECK:STDOUT:   %Destroy.impl_witness_table = impl_witness_table (@Z.as.Destroy.impl.%Z.as.Destroy.impl.Op.decl), @Z.as.Destroy.impl [concrete]
 // CHECK:STDOUT:   %Destroy.impl_witness: <witness> = impl_witness %Destroy.impl_witness_table [concrete = constants.%Destroy.impl_witness.2a0]

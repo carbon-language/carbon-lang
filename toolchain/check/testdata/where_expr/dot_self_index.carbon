@@ -73,6 +73,7 @@ fn G(U: Empty(i32) where .A = i32*) {
 // CHECK:STDOUT:     %U.param_patt: @H.%pattern_type (%pattern_type.668) = value_param_pattern %U.patt, call_param0 [concrete]
 // CHECK:STDOUT:     %V.patt: %pattern_type.98f = symbolic_binding_pattern V, 1 [concrete]
 // CHECK:STDOUT:   } {
+// CHECK:STDOUT:     <elided>
 // CHECK:STDOUT:     %T.loc21_6.2: type = bind_symbolic_name T, 0 [symbolic = %T.loc21_6.1 (constants.%T)]
 // CHECK:STDOUT:     %U.param: @H.%Empty_where.type (%Empty_where.type.b73) = value_param call_param0
 // CHECK:STDOUT:     %.loc21_28.1: type = splice_block %.loc21_28.2 [symbolic = %Empty_where.type (constants.%Empty_where.type.b73)] {
@@ -80,7 +81,7 @@ fn G(U: Empty(i32) where .A = i32*) {
 // CHECK:STDOUT:       %T.ref.loc21_25: type = name_ref T, %T.loc21_6.2 [symbolic = %T.loc21_6.1 (constants.%T)]
 // CHECK:STDOUT:       %Empty.type.loc21_26.2: type = facet_type <@Empty, @Empty(constants.%T)> [symbolic = %Empty.type.loc21_26.1 (constants.%Empty.type.3e5fde.2)]
 // CHECK:STDOUT:       <elided>
-// CHECK:STDOUT:       %.Self.ref: @H.%Empty.type.loc21_26.1 (%Empty.type.3e5fde.2) = name_ref .Self, %.Self.2 [symbolic = %.Self.1 (constants.%.Self.c95)]
+// CHECK:STDOUT:       %.Self.ref: @H.%Empty.type.loc21_26.1 (%Empty.type.3e5fde.2) = name_ref .Self, %.Self.4 [symbolic = %.Self.1 (constants.%.Self.c95)]
 // CHECK:STDOUT:       %.loc21_34.1: @H.%Empty.assoc_type (%Empty.assoc_type.3cf698.2) = specific_constant @A.%assoc0, @Empty(constants.%T) [symbolic = %assoc0 (constants.%assoc0.3715ce.2)]
 // CHECK:STDOUT:       %A.ref: @H.%Empty.assoc_type (%Empty.assoc_type.3cf698.2) = name_ref A, %.loc21_34.1 [symbolic = %assoc0 (constants.%assoc0.3715ce.2)]
 // CHECK:STDOUT:       %.Self.as_type.loc21_34.2: type = facet_access_type %.Self.ref [symbolic = %.Self.as_type.loc21_34.1 (constants.%.Self.as_type.a75)]
@@ -88,12 +89,13 @@ fn G(U: Empty(i32) where .A = i32*) {
 // CHECK:STDOUT:       %impl.elem0.loc21_34.2: type = impl_witness_access constants.%Empty.lookup_impl_witness.b1d, element0 [symbolic = %impl.elem0.loc21_34.1 (constants.%impl.elem0.c6e)]
 // CHECK:STDOUT:       %T.ref.loc21_39: type = name_ref T, %T.loc21_6.2 [symbolic = %T.loc21_6.1 (constants.%T)]
 // CHECK:STDOUT:       %ptr.loc21_40.2: type = ptr_type %T.ref.loc21_39 [symbolic = %ptr.loc21_40.1 (constants.%ptr.79f)]
-// CHECK:STDOUT:       %.loc21_28.2: type = where_expr %.Self.2 [symbolic = %Empty_where.type (constants.%Empty_where.type.b73)] {
+// CHECK:STDOUT:       %.loc21_28.2: type = where_expr %.Self.4 [symbolic = %Empty_where.type (constants.%Empty_where.type.b73)] {
 // CHECK:STDOUT:         requirement_base_facet_type constants.%Empty.type.3e5fde.2
 // CHECK:STDOUT:         requirement_rewrite %impl.elem0.loc21_34.2, %ptr.loc21_40.2
 // CHECK:STDOUT:       }
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %U: @H.%Empty_where.type (%Empty_where.type.b73) = bind_name U, %U.param
+// CHECK:STDOUT:     <elided>
 // CHECK:STDOUT:     %V.loc21_43.2: type = bind_symbolic_name V, 1 [symbolic = %V.loc21_43.1 (constants.%V)]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }

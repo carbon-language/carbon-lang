@@ -119,9 +119,9 @@ fn Main() {
 // CHECK:STDOUT:   %Core.IntLiteral.as.ImplicitAs.impl.Convert.bound.491: <bound method> = bound_method %int_10.64f, %Core.IntLiteral.as.ImplicitAs.impl.Convert.956 [concrete]
 // CHECK:STDOUT:   %bound_method.5ba: <bound method> = bound_method %int_10.64f, %Core.IntLiteral.as.ImplicitAs.impl.Convert.specific_fn [concrete]
 // CHECK:STDOUT:   %int_10.265: %i32 = int_value 10 [concrete]
-// CHECK:STDOUT:   %T.as.Destroy.impl.Op.type.a17: type = fn_type @T.as.Destroy.impl.Op, @T.as.Destroy.impl(%i32) [concrete]
-// CHECK:STDOUT:   %T.as.Destroy.impl.Op.e6a: %T.as.Destroy.impl.Op.type.a17 = struct_value () [concrete]
-// CHECK:STDOUT:   %T.as.Destroy.impl.Op.specific_fn: <specific function> = specific_function %T.as.Destroy.impl.Op.e6a, @T.as.Destroy.impl.Op(%i32) [concrete]
+// CHECK:STDOUT:   %Int.as.Destroy.impl.Op.type.b8f: type = fn_type @Int.as.Destroy.impl.Op, @Int.as.Destroy.impl(%int_32) [concrete]
+// CHECK:STDOUT:   %Int.as.Destroy.impl.Op.715: %Int.as.Destroy.impl.Op.type.b8f = struct_value () [concrete]
+// CHECK:STDOUT:   %Int.as.Destroy.impl.Op.specific_fn: <specific function> = specific_function %Int.as.Destroy.impl.Op.715, @Int.as.Destroy.impl.Op(%int_32) [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -328,16 +328,16 @@ fn Main() {
 // CHECK:STDOUT:   %Core.IntLiteral.as.ImplicitAs.impl.Convert.call.loc61: init %i32 = call %bound_method.loc61_27.2(%int_10) [concrete = constants.%int_10.265]
 // CHECK:STDOUT:   %.loc61_27: init %i32 = converted %int_10, %Core.IntLiteral.as.ImplicitAs.impl.Convert.call.loc61 [concrete = constants.%int_10.265]
 // CHECK:STDOUT:   assign %.loc61_4, %.loc61_27
-// CHECK:STDOUT:   %T.as.Destroy.impl.Op.bound.loc56: <bound method> = bound_method %a.var, constants.%T.as.Destroy.impl.Op.e6a
-// CHECK:STDOUT:   %T.as.Destroy.impl.Op.specific_fn.1: <specific function> = specific_function constants.%T.as.Destroy.impl.Op.e6a, @T.as.Destroy.impl.Op(constants.%i32) [concrete = constants.%T.as.Destroy.impl.Op.specific_fn]
-// CHECK:STDOUT:   %bound_method.loc56: <bound method> = bound_method %a.var, %T.as.Destroy.impl.Op.specific_fn.1
+// CHECK:STDOUT:   %Int.as.Destroy.impl.Op.bound.loc56: <bound method> = bound_method %a.var, constants.%Int.as.Destroy.impl.Op.715
+// CHECK:STDOUT:   %Int.as.Destroy.impl.Op.specific_fn.1: <specific function> = specific_function constants.%Int.as.Destroy.impl.Op.715, @Int.as.Destroy.impl.Op(constants.%int_32) [concrete = constants.%Int.as.Destroy.impl.Op.specific_fn]
+// CHECK:STDOUT:   %bound_method.loc56: <bound method> = bound_method %a.var, %Int.as.Destroy.impl.Op.specific_fn.1
 // CHECK:STDOUT:   %addr.loc56: %ptr.235 = addr_of %a.var
-// CHECK:STDOUT:   %T.as.Destroy.impl.Op.call.loc56: init %empty_tuple.type = call %bound_method.loc56(%addr.loc56)
-// CHECK:STDOUT:   %T.as.Destroy.impl.Op.bound.loc33: <bound method> = bound_method %n.var, constants.%T.as.Destroy.impl.Op.e6a
-// CHECK:STDOUT:   %T.as.Destroy.impl.Op.specific_fn.2: <specific function> = specific_function constants.%T.as.Destroy.impl.Op.e6a, @T.as.Destroy.impl.Op(constants.%i32) [concrete = constants.%T.as.Destroy.impl.Op.specific_fn]
-// CHECK:STDOUT:   %bound_method.loc33_3.3: <bound method> = bound_method %n.var, %T.as.Destroy.impl.Op.specific_fn.2
+// CHECK:STDOUT:   %Int.as.Destroy.impl.Op.call.loc56: init %empty_tuple.type = call %bound_method.loc56(%addr.loc56)
+// CHECK:STDOUT:   %Int.as.Destroy.impl.Op.bound.loc33: <bound method> = bound_method %n.var, constants.%Int.as.Destroy.impl.Op.715
+// CHECK:STDOUT:   %Int.as.Destroy.impl.Op.specific_fn.2: <specific function> = specific_function constants.%Int.as.Destroy.impl.Op.715, @Int.as.Destroy.impl.Op(constants.%int_32) [concrete = constants.%Int.as.Destroy.impl.Op.specific_fn]
+// CHECK:STDOUT:   %bound_method.loc33_3.3: <bound method> = bound_method %n.var, %Int.as.Destroy.impl.Op.specific_fn.2
 // CHECK:STDOUT:   %addr.loc33: %ptr.235 = addr_of %n.var
-// CHECK:STDOUT:   %T.as.Destroy.impl.Op.call.loc33: init %empty_tuple.type = call %bound_method.loc33_3.3(%addr.loc33)
+// CHECK:STDOUT:   %Int.as.Destroy.impl.Op.call.loc33: init %empty_tuple.type = call %bound_method.loc33_3.3(%addr.loc33)
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

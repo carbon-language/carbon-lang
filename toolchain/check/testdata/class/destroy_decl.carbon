@@ -30,7 +30,7 @@ class C {
 
 library "[[@TEST_NAME]]";
 
-// CHECK:STDERR: fail_define_impl.carbon:[[@LINE+3]]:1: error: redefinition of `impl C as Core.Destroy` [ImplRedefinition]
+// CHECK:STDERR: fail_define_impl.carbon:[[@LINE+3]]:1: error: redefinition of `impl Self as Core.Destroy` [ImplRedefinition]
 // CHECK:STDERR: class C {
 // CHECK:STDERR: ^~~~~~~~~
 class C {

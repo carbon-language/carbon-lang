@@ -104,7 +104,7 @@ fn MakeOuter() -> Outer {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: impl @Inner.as.Destroy.impl: constants.%Inner as constants.%Destroy.type {
+// CHECK:STDOUT: impl @Inner.as.Destroy.impl: @Inner.%Self.ref as constants.%Destroy.type {
 // CHECK:STDOUT:   %Inner.as.Destroy.impl.Op.decl: %Inner.as.Destroy.impl.Op.type = fn_decl @Inner.as.Destroy.impl.Op [concrete = constants.%Inner.as.Destroy.impl.Op] {
 // CHECK:STDOUT:     %self.patt: %pattern_type.6f5 = binding_pattern self [concrete]
 // CHECK:STDOUT:     %self.param_patt: %pattern_type.6f5 = value_param_pattern %self.patt, call_param0 [concrete]
@@ -120,7 +120,7 @@ fn MakeOuter() -> Outer {
 // CHECK:STDOUT:   witness = @Inner.%Destroy.impl_witness
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: impl @Outer.as.Destroy.impl: constants.%Outer as constants.%Destroy.type {
+// CHECK:STDOUT: impl @Outer.as.Destroy.impl: @Outer.%Self.ref as constants.%Destroy.type {
 // CHECK:STDOUT:   %Outer.as.Destroy.impl.Op.decl: %Outer.as.Destroy.impl.Op.type = fn_decl @Outer.as.Destroy.impl.Op [concrete = constants.%Outer.as.Destroy.impl.Op] {
 // CHECK:STDOUT:     %self.patt: %pattern_type.95c = binding_pattern self [concrete]
 // CHECK:STDOUT:     %self.param_patt: %pattern_type.95c = value_param_pattern %self.patt, call_param0 [concrete]
@@ -143,6 +143,7 @@ fn MakeOuter() -> Outer {
 // CHECK:STDOUT:   %int_32.loc17: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
 // CHECK:STDOUT:   %i32.loc17: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
 // CHECK:STDOUT:   %.loc17: %Inner.elem = field_decl b, element1 [concrete]
+// CHECK:STDOUT:   %Self.ref: type = name_ref Self, constants.%Inner [concrete = constants.%Inner]
 // CHECK:STDOUT:   impl_decl @Inner.as.Destroy.impl [concrete] {} {}
 // CHECK:STDOUT:   %Destroy.impl_witness_table = impl_witness_table (@Inner.as.Destroy.impl.%Inner.as.Destroy.impl.Op.decl), @Inner.as.Destroy.impl [concrete]
 // CHECK:STDOUT:   %Destroy.impl_witness: <witness> = impl_witness %Destroy.impl_witness_table [concrete = constants.%Destroy.impl_witness.def]
@@ -160,6 +161,7 @@ fn MakeOuter() -> Outer {
 // CHECK:STDOUT:   %.loc23: %Outer.elem = field_decl c, element0 [concrete]
 // CHECK:STDOUT:   %Inner.ref.loc24: type = name_ref Inner, file.%Inner.decl [concrete = constants.%Inner]
 // CHECK:STDOUT:   %.loc24: %Outer.elem = field_decl d, element1 [concrete]
+// CHECK:STDOUT:   %Self.ref: type = name_ref Self, constants.%Outer [concrete = constants.%Outer]
 // CHECK:STDOUT:   impl_decl @Outer.as.Destroy.impl [concrete] {} {}
 // CHECK:STDOUT:   %Destroy.impl_witness_table = impl_witness_table (@Outer.as.Destroy.impl.%Outer.as.Destroy.impl.Op.decl), @Outer.as.Destroy.impl [concrete]
 // CHECK:STDOUT:   %Destroy.impl_witness: <witness> = impl_witness %Destroy.impl_witness_table [concrete = constants.%Destroy.impl_witness.d28]

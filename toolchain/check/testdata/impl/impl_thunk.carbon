@@ -700,6 +700,7 @@ impl () as I({}) {
 // CHECK:STDOUT:     %return.param_patt: @empty_tuple.type.as.I.impl.F.loc10_29.1.%pattern_type (%pattern_type.7dc) = out_param_pattern %return.patt, call_param1 [concrete]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %U.ref.loc10_27: type = name_ref U, %U.loc10_8.2 [symbolic = %U.loc10_8.1 (constants.%U)]
+// CHECK:STDOUT:     <elided>
 // CHECK:STDOUT:     %U.loc10_8.2: type = bind_symbolic_name U, 0 [symbolic = %U.loc10_8.1 (constants.%U)]
 // CHECK:STDOUT:     %x.param: @empty_tuple.type.as.I.impl.F.loc10_29.1.%U.loc10_8.1 (%U) = value_param call_param0
 // CHECK:STDOUT:     %U.ref.loc10_21: type = name_ref U, %U.loc10_8.2 [symbolic = %U.loc10_8.1 (constants.%U)]
@@ -808,6 +809,7 @@ impl () as I({}) {
 // CHECK:STDOUT:       %.loc19_15.3: type = converted %.loc19_15.2, constants.%empty_tuple.type [concrete = constants.%empty_tuple.type]
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %self: %empty_tuple.type = bind_name self, %self.param
+// CHECK:STDOUT:     <elided>
 // CHECK:STDOUT:     %U.loc19_18.2: type = bind_symbolic_name U, 0 [symbolic = %U.loc19_18.1 (constants.%U)]
 // CHECK:STDOUT:     %x.param: @empty_tuple.type.as.I.impl.F.loc19_39.1.%U.loc19_18.1 (%U) = value_param call_param1
 // CHECK:STDOUT:     %U.ref.loc19_31: type = name_ref U, %U.loc19_18.2 [symbolic = %U.loc19_18.1 (constants.%U)]

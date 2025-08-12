@@ -60,6 +60,7 @@ fn F(U:! type, V:! type where {} impls Core.ImplicitAs(.Self)) {
 // CHECK:STDOUT: --- fail_incompatible_deduce.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
+// CHECK:STDOUT:   %.Self: type = bind_symbolic_name .Self [symbolic_self]
 // CHECK:STDOUT:   %T: type = bind_symbolic_name T, 0 [symbolic]
 // CHECK:STDOUT:   %pattern_type.98f: type = pattern_type type [concrete]
 // CHECK:STDOUT:   %C.type: type = generic_class_type @C [concrete]
@@ -127,26 +128,30 @@ fn F(U:! type, V:! type where {} impls Core.ImplicitAs(.Self)) {
 // CHECK:STDOUT:   %C.decl: %C.type = class_decl @C [concrete = constants.%C.generic] {
 // CHECK:STDOUT:     %T.patt: %pattern_type.98f = symbolic_binding_pattern T, 0 [concrete]
 // CHECK:STDOUT:   } {
+// CHECK:STDOUT:     %.Self: type = bind_symbolic_name .Self [symbolic_self = constants.%.Self]
 // CHECK:STDOUT:     %T.loc4_9.2: type = bind_symbolic_name T, 0 [symbolic = %T.loc4_9.1 (constants.%T)]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [concrete = constants.%F] {
 // CHECK:STDOUT:     %U.patt: %pattern_type.98f = symbolic_binding_pattern U, 0 [concrete]
 // CHECK:STDOUT:     %V.patt: %pattern_type.98f = symbolic_binding_pattern V, 1 [concrete]
 // CHECK:STDOUT:   } {
+// CHECK:STDOUT:     %.Self.1: type = bind_symbolic_name .Self [symbolic_self = constants.%.Self]
 // CHECK:STDOUT:     %U.loc8_6.2: type = bind_symbolic_name U, 0 [symbolic = %U.loc8_6.1 (constants.%U)]
+// CHECK:STDOUT:     %.Self.2: type = bind_symbolic_name .Self [symbolic_self = constants.%.Self]
 // CHECK:STDOUT:     %V.loc8_16.2: type = bind_symbolic_name V, 1 [symbolic = %V.loc8_16.1 (constants.%V)]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic impl @C.as.Destroy.impl(@C.%T.loc4_9.2: type) {
 // CHECK:STDOUT:   %T: type = bind_symbolic_name T, 0 [symbolic = %T (constants.%T)]
+// CHECK:STDOUT:   %C: type = class_type @C, @C(%T) [symbolic = %C (constants.%C.f2e)]
 // CHECK:STDOUT:   %Destroy.impl_witness: <witness> = impl_witness @C.%Destroy.impl_witness_table, @C.as.Destroy.impl(%T) [symbolic = %Destroy.impl_witness (constants.%Destroy.impl_witness)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %C.as.Destroy.impl.Op.type: type = fn_type @C.as.Destroy.impl.Op, @C.as.Destroy.impl(%T) [symbolic = %C.as.Destroy.impl.Op.type (constants.%C.as.Destroy.impl.Op.type)]
 // CHECK:STDOUT:   %C.as.Destroy.impl.Op: @C.as.Destroy.impl.%C.as.Destroy.impl.Op.type (%C.as.Destroy.impl.Op.type) = struct_value () [symbolic = %C.as.Destroy.impl.Op (constants.%C.as.Destroy.impl.Op)]
 // CHECK:STDOUT:
-// CHECK:STDOUT:   impl: constants.%C.f2e as constants.%Destroy.type {
+// CHECK:STDOUT:   impl: @C.%Self.ref as constants.%Destroy.type {
 // CHECK:STDOUT:     %C.as.Destroy.impl.Op.decl: @C.as.Destroy.impl.%C.as.Destroy.impl.Op.type (%C.as.Destroy.impl.Op.type) = fn_decl @C.as.Destroy.impl.Op [symbolic = @C.as.Destroy.impl.%C.as.Destroy.impl.Op (constants.%C.as.Destroy.impl.Op)] {
 // CHECK:STDOUT:       %self.patt: @C.as.Destroy.impl.Op.%pattern_type (%pattern_type.1d2) = binding_pattern self [concrete]
 // CHECK:STDOUT:       %self.param_patt: @C.as.Destroy.impl.Op.%pattern_type (%pattern_type.1d2) = value_param_pattern %self.patt, call_param0 [concrete]
@@ -182,6 +187,7 @@ fn F(U:! type, V:! type where {} impls Core.ImplicitAs(.Self)) {
 // CHECK:STDOUT:       %T.ref: type = name_ref T, @C.%T.loc4_9.2 [symbolic = %T (constants.%T)]
 // CHECK:STDOUT:       %value: @C.Create.%T (%T) = bind_name value, %value.param
 // CHECK:STDOUT:     }
+// CHECK:STDOUT:     %Self.ref: type = name_ref Self, constants.%C.f2e [symbolic = @C.as.Destroy.impl.%C (constants.%C.f2e)]
 // CHECK:STDOUT:     impl_decl @C.as.Destroy.impl [concrete] {} {}
 // CHECK:STDOUT:     %Destroy.impl_witness_table = impl_witness_table (@C.as.Destroy.impl.%C.as.Destroy.impl.Op.decl), @C.as.Destroy.impl [concrete]
 // CHECK:STDOUT:     %Destroy.impl_witness: <witness> = impl_witness %Destroy.impl_witness_table, @C.as.Destroy.impl(constants.%T) [symbolic = @C.as.Destroy.impl.%Destroy.impl_witness (constants.%Destroy.impl_witness)]
@@ -268,6 +274,7 @@ fn F(U:! type, V:! type where {} impls Core.ImplicitAs(.Self)) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @C.as.Destroy.impl(constants.%T) {
 // CHECK:STDOUT:   %T => constants.%T
+// CHECK:STDOUT:   %C => constants.%C.f2e
 // CHECK:STDOUT:   %Destroy.impl_witness => constants.%Destroy.impl_witness
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -302,6 +309,7 @@ fn F(U:! type, V:! type where {} impls Core.ImplicitAs(.Self)) {
 // CHECK:STDOUT: --- fail_todo_compatible_deduce.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
+// CHECK:STDOUT:   %.Self: type = bind_symbolic_name .Self [symbolic_self]
 // CHECK:STDOUT:   %T: type = bind_symbolic_name T, 0 [symbolic]
 // CHECK:STDOUT:   %pattern_type.98f: type = pattern_type type [concrete]
 // CHECK:STDOUT:   %C.type: type = generic_class_type @C [concrete]
@@ -322,7 +330,6 @@ fn F(U:! type, V:! type where {} impls Core.ImplicitAs(.Self)) {
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [concrete]
 // CHECK:STDOUT:   %require_complete.4ae: <witness> = require_complete_type %T [symbolic]
 // CHECK:STDOUT:   %U: type = bind_symbolic_name U, 0 [symbolic]
-// CHECK:STDOUT:   %.Self: type = bind_symbolic_name .Self [symbolic_self]
 // CHECK:STDOUT:   %ImplicitAs.type.cc7: type = generic_interface_type @ImplicitAs [concrete]
 // CHECK:STDOUT:   %ImplicitAs.generic: %ImplicitAs.type.cc7 = struct_value () [concrete]
 // CHECK:STDOUT:   %Dest: type = bind_symbolic_name Dest, 0 [symbolic]
@@ -374,22 +381,25 @@ fn F(U:! type, V:! type where {} impls Core.ImplicitAs(.Self)) {
 // CHECK:STDOUT:   %C.decl: %C.type = class_decl @C [concrete = constants.%C.generic] {
 // CHECK:STDOUT:     %T.patt: %pattern_type.98f = symbolic_binding_pattern T, 0 [concrete]
 // CHECK:STDOUT:   } {
+// CHECK:STDOUT:     %.Self: type = bind_symbolic_name .Self [symbolic_self = constants.%.Self]
 // CHECK:STDOUT:     %T.loc4_9.2: type = bind_symbolic_name T, 0 [symbolic = %T.loc4_9.1 (constants.%T)]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [concrete = constants.%F] {
 // CHECK:STDOUT:     %U.patt: %pattern_type.98f = symbolic_binding_pattern U, 0 [concrete]
 // CHECK:STDOUT:     %V.patt: %pattern_type.344 = symbolic_binding_pattern V, 1 [concrete]
 // CHECK:STDOUT:   } {
+// CHECK:STDOUT:     %.Self.1: type = bind_symbolic_name .Self [symbolic_self = constants.%.Self]
 // CHECK:STDOUT:     %U.loc9_6.2: type = bind_symbolic_name U, 0 [symbolic = %U.loc9_6.1 (constants.%U)]
 // CHECK:STDOUT:     %.loc9_25.1: type = splice_block %.loc9_25.2 [concrete = constants.%type_where] {
-// CHECK:STDOUT:       %.Self: type = bind_symbolic_name .Self [symbolic_self = constants.%.Self]
+// CHECK:STDOUT:       %.Self.2: type = bind_symbolic_name .Self [symbolic_self = constants.%.Self]
+// CHECK:STDOUT:       %.Self.3: type = bind_symbolic_name .Self [symbolic_self = constants.%.Self]
 // CHECK:STDOUT:       %.loc9_32.1: %empty_struct_type = struct_literal ()
 // CHECK:STDOUT:       %Core.ref: <namespace> = name_ref Core, imports.%Core [concrete = imports.%Core]
 // CHECK:STDOUT:       %ImplicitAs.ref: %ImplicitAs.type.cc7 = name_ref ImplicitAs, imports.%Core.ImplicitAs [concrete = constants.%ImplicitAs.generic]
-// CHECK:STDOUT:       %.Self.ref: type = name_ref .Self, %.Self [symbolic_self = constants.%.Self]
+// CHECK:STDOUT:       %.Self.ref: type = name_ref .Self, %.Self.3 [symbolic_self = constants.%.Self]
 // CHECK:STDOUT:       %ImplicitAs.type.loc9: type = facet_type <@ImplicitAs, @ImplicitAs(constants.%.Self)> [symbolic_self = constants.%ImplicitAs.type.aba]
 // CHECK:STDOUT:       %.loc9_32.2: type = converted %.loc9_32.1, constants.%empty_struct_type [concrete = constants.%empty_struct_type]
-// CHECK:STDOUT:       %.loc9_25.2: type = where_expr %.Self [concrete = constants.%type_where] {
+// CHECK:STDOUT:       %.loc9_25.2: type = where_expr %.Self.3 [concrete = constants.%type_where] {
 // CHECK:STDOUT:         requirement_base_facet_type type
 // CHECK:STDOUT:         requirement_impls %.loc9_32.2, %ImplicitAs.type.loc9
 // CHECK:STDOUT:       }
@@ -400,13 +410,14 @@ fn F(U:! type, V:! type where {} impls Core.ImplicitAs(.Self)) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic impl @C.as.Destroy.impl(@C.%T.loc4_9.2: type) {
 // CHECK:STDOUT:   %T: type = bind_symbolic_name T, 0 [symbolic = %T (constants.%T)]
+// CHECK:STDOUT:   %C: type = class_type @C, @C(%T) [symbolic = %C (constants.%C.f2e)]
 // CHECK:STDOUT:   %Destroy.impl_witness: <witness> = impl_witness @C.%Destroy.impl_witness_table, @C.as.Destroy.impl(%T) [symbolic = %Destroy.impl_witness (constants.%Destroy.impl_witness)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %C.as.Destroy.impl.Op.type: type = fn_type @C.as.Destroy.impl.Op, @C.as.Destroy.impl(%T) [symbolic = %C.as.Destroy.impl.Op.type (constants.%C.as.Destroy.impl.Op.type)]
 // CHECK:STDOUT:   %C.as.Destroy.impl.Op: @C.as.Destroy.impl.%C.as.Destroy.impl.Op.type (%C.as.Destroy.impl.Op.type) = struct_value () [symbolic = %C.as.Destroy.impl.Op (constants.%C.as.Destroy.impl.Op)]
 // CHECK:STDOUT:
-// CHECK:STDOUT:   impl: constants.%C.f2e as constants.%Destroy.type {
+// CHECK:STDOUT:   impl: @C.%Self.ref as constants.%Destroy.type {
 // CHECK:STDOUT:     %C.as.Destroy.impl.Op.decl: @C.as.Destroy.impl.%C.as.Destroy.impl.Op.type (%C.as.Destroy.impl.Op.type) = fn_decl @C.as.Destroy.impl.Op [symbolic = @C.as.Destroy.impl.%C.as.Destroy.impl.Op (constants.%C.as.Destroy.impl.Op)] {
 // CHECK:STDOUT:       %self.patt: @C.as.Destroy.impl.Op.%pattern_type (%pattern_type.1d2) = binding_pattern self [concrete]
 // CHECK:STDOUT:       %self.param_patt: @C.as.Destroy.impl.Op.%pattern_type (%pattern_type.1d2) = value_param_pattern %self.patt, call_param0 [concrete]
@@ -442,6 +453,7 @@ fn F(U:! type, V:! type where {} impls Core.ImplicitAs(.Self)) {
 // CHECK:STDOUT:       %T.ref: type = name_ref T, @C.%T.loc4_9.2 [symbolic = %T (constants.%T)]
 // CHECK:STDOUT:       %value: @C.Create.%T (%T) = bind_name value, %value.param
 // CHECK:STDOUT:     }
+// CHECK:STDOUT:     %Self.ref: type = name_ref Self, constants.%C.f2e [symbolic = @C.as.Destroy.impl.%C (constants.%C.f2e)]
 // CHECK:STDOUT:     impl_decl @C.as.Destroy.impl [concrete] {} {}
 // CHECK:STDOUT:     %Destroy.impl_witness_table = impl_witness_table (@C.as.Destroy.impl.%C.as.Destroy.impl.Op.decl), @C.as.Destroy.impl [concrete]
 // CHECK:STDOUT:     %Destroy.impl_witness: <witness> = impl_witness %Destroy.impl_witness_table, @C.as.Destroy.impl(constants.%T) [symbolic = @C.as.Destroy.impl.%Destroy.impl_witness (constants.%Destroy.impl_witness)]
@@ -531,6 +543,7 @@ fn F(U:! type, V:! type where {} impls Core.ImplicitAs(.Self)) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @C.as.Destroy.impl(constants.%T) {
 // CHECK:STDOUT:   %T => constants.%T
+// CHECK:STDOUT:   %C => constants.%C.f2e
 // CHECK:STDOUT:   %Destroy.impl_witness => constants.%Destroy.impl_witness
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

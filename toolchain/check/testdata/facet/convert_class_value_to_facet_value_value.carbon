@@ -28,6 +28,7 @@ fn F() {
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %Animal.type: type = facet_type <@Animal> [concrete]
 // CHECK:STDOUT:   %Self.fd4: %Animal.type = bind_symbolic_name Self, 0 [symbolic]
+// CHECK:STDOUT:   %.Self: type = bind_symbolic_name .Self [symbolic_self]
 // CHECK:STDOUT:   %T.fd4: %Animal.type = bind_symbolic_name T, 0 [symbolic]
 // CHECK:STDOUT:   %pattern_type.3b0: type = pattern_type %Animal.type [concrete]
 // CHECK:STDOUT:   %T.as_type: type = facet_access_type %T.fd4 [symbolic]
@@ -79,7 +80,10 @@ fn F() {
 // CHECK:STDOUT:     %a.patt: @WalkAnimal.%pattern_type (%pattern_type.36a) = binding_pattern a [concrete]
 // CHECK:STDOUT:     %a.param_patt: @WalkAnimal.%pattern_type (%pattern_type.36a) = value_param_pattern %a.patt, call_param0 [concrete]
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %Animal.ref: type = name_ref Animal, file.%Animal.decl [concrete = constants.%Animal.type]
+// CHECK:STDOUT:     %.loc17_19: type = splice_block %Animal.ref [concrete = constants.%Animal.type] {
+// CHECK:STDOUT:       %.Self: type = bind_symbolic_name .Self [symbolic_self = constants.%.Self]
+// CHECK:STDOUT:       %Animal.ref: type = name_ref Animal, file.%Animal.decl [concrete = constants.%Animal.type]
+// CHECK:STDOUT:     }
 // CHECK:STDOUT:     %T.loc17_15.2: %Animal.type = bind_symbolic_name T, 0 [symbolic = %T.loc17_15.1 (constants.%T.fd4)]
 // CHECK:STDOUT:     %a.param: @WalkAnimal.%T.as_type.loc17_30.1 (%T.as_type) = value_param call_param0
 // CHECK:STDOUT:     %.loc17_30.1: type = splice_block %.loc17_30.2 [symbolic = %T.as_type.loc17_30.1 (constants.%T.as_type)] {
@@ -107,7 +111,7 @@ fn F() {
 // CHECK:STDOUT:   witness = ()
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: impl @Goat.as.Destroy.impl: constants.%Goat as constants.%Destroy.type {
+// CHECK:STDOUT: impl @Goat.as.Destroy.impl: @Goat.%Self.ref as constants.%Destroy.type {
 // CHECK:STDOUT:   %Goat.as.Destroy.impl.Op.decl: %Goat.as.Destroy.impl.Op.type = fn_decl @Goat.as.Destroy.impl.Op [concrete = constants.%Goat.as.Destroy.impl.Op] {
 // CHECK:STDOUT:     %self.patt: %pattern_type.396 = binding_pattern self [concrete]
 // CHECK:STDOUT:     %self.param_patt: %pattern_type.396 = value_param_pattern %self.patt, call_param0 [concrete]
@@ -129,6 +133,7 @@ fn F() {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @Goat {
+// CHECK:STDOUT:   %Self.ref: type = name_ref Self, constants.%Goat [concrete = constants.%Goat]
 // CHECK:STDOUT:   impl_decl @Goat.as.Destroy.impl [concrete] {} {}
 // CHECK:STDOUT:   %Destroy.impl_witness_table = impl_witness_table (@Goat.as.Destroy.impl.%Goat.as.Destroy.impl.Op.decl), @Goat.as.Destroy.impl [concrete]
 // CHECK:STDOUT:   %Destroy.impl_witness: <witness> = impl_witness %Destroy.impl_witness_table [concrete = constants.%Destroy.impl_witness.943]

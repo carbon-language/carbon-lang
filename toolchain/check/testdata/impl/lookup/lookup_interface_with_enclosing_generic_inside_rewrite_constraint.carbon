@@ -103,6 +103,7 @@ fn F() {
 // CHECK:STDOUT: --- lookup_interface_with_encenclosing_specific_is_concrete_type.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
+// CHECK:STDOUT:   %.Self.644: type = bind_symbolic_name .Self [symbolic_self]
 // CHECK:STDOUT:   %OuterParam: type = bind_symbolic_name OuterParam, 0 [symbolic]
 // CHECK:STDOUT:   %pattern_type.98f: type = pattern_type type [concrete]
 // CHECK:STDOUT:   %Outer.type: type = generic_class_type @Outer [concrete]
@@ -176,6 +177,7 @@ fn F() {
 // CHECK:STDOUT:   %Outer.decl: %Outer.type = class_decl @Outer [concrete = constants.%Outer.generic] {
 // CHECK:STDOUT:     %OuterParam.patt: %pattern_type.98f = symbolic_binding_pattern OuterParam, 0 [concrete]
 // CHECK:STDOUT:   } {
+// CHECK:STDOUT:     %.Self: type = bind_symbolic_name .Self [symbolic_self = constants.%.Self.644]
 // CHECK:STDOUT:     %OuterParam.loc49_13.2: type = bind_symbolic_name OuterParam, 0 [symbolic = %OuterParam.loc49_13.1 (constants.%OuterParam)]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %C.decl: type = class_decl @C [concrete = constants.%C] {} {}
@@ -234,13 +236,14 @@ fn F() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic impl @Outer.as.Destroy.impl(@Outer.%OuterParam.loc49_13.2: type) {
 // CHECK:STDOUT:   %OuterParam: type = bind_symbolic_name OuterParam, 0 [symbolic = %OuterParam (constants.%OuterParam)]
+// CHECK:STDOUT:   %Outer: type = class_type @Outer, @Outer(%OuterParam) [symbolic = %Outer (constants.%Outer.9d6)]
 // CHECK:STDOUT:   %Destroy.impl_witness: <witness> = impl_witness @Outer.%Destroy.impl_witness_table, @Outer.as.Destroy.impl(%OuterParam) [symbolic = %Destroy.impl_witness (constants.%Destroy.impl_witness)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %Outer.as.Destroy.impl.Op.type: type = fn_type @Outer.as.Destroy.impl.Op, @Outer.as.Destroy.impl(%OuterParam) [symbolic = %Outer.as.Destroy.impl.Op.type (constants.%Outer.as.Destroy.impl.Op.type)]
 // CHECK:STDOUT:   %Outer.as.Destroy.impl.Op: @Outer.as.Destroy.impl.%Outer.as.Destroy.impl.Op.type (%Outer.as.Destroy.impl.Op.type) = struct_value () [symbolic = %Outer.as.Destroy.impl.Op (constants.%Outer.as.Destroy.impl.Op)]
 // CHECK:STDOUT:
-// CHECK:STDOUT:   impl: constants.%Outer.9d6 as constants.%Destroy.type {
+// CHECK:STDOUT:   impl: @Outer.%Self.ref as constants.%Destroy.type {
 // CHECK:STDOUT:     %Outer.as.Destroy.impl.Op.decl: @Outer.as.Destroy.impl.%Outer.as.Destroy.impl.Op.type (%Outer.as.Destroy.impl.Op.type) = fn_decl @Outer.as.Destroy.impl.Op [symbolic = @Outer.as.Destroy.impl.%Outer.as.Destroy.impl.Op (constants.%Outer.as.Destroy.impl.Op)] {
 // CHECK:STDOUT:       %self.patt: @Outer.as.Destroy.impl.Op.%pattern_type (%pattern_type.07e) = binding_pattern self [concrete]
 // CHECK:STDOUT:       %self.param_patt: @Outer.as.Destroy.impl.Op.%pattern_type (%pattern_type.07e) = value_param_pattern %self.patt, call_param0 [concrete]
@@ -279,10 +282,11 @@ fn F() {
 // CHECK:STDOUT:       %H.patt: @Outer.G.%pattern_type (%pattern_type.f71) = symbolic_binding_pattern H, 1 [concrete]
 // CHECK:STDOUT:     } {
 // CHECK:STDOUT:       %.loc54_14.1: type = splice_block %.loc54_14.2 [symbolic = %Y_where.type (constants.%Y_where.type.324)] {
+// CHECK:STDOUT:         %.Self.2: type = bind_symbolic_name .Self [symbolic_self = constants.%.Self.644]
 // CHECK:STDOUT:         %.loc54_12: type = specific_constant @Outer.%Y.decl, @Outer(constants.%OuterParam) [symbolic = %Y.type (constants.%Y.type.49b)]
 // CHECK:STDOUT:         %Y.ref: type = name_ref Y, %.loc54_12 [symbolic = %Y.type (constants.%Y.type.49b)]
-// CHECK:STDOUT:         %.Self.2: @Outer.G.%Y.type (%Y.type.49b) = bind_symbolic_name .Self [symbolic = %.Self.1 (constants.%.Self.c19)]
-// CHECK:STDOUT:         %.Self.ref: @Outer.G.%Y.type (%Y.type.49b) = name_ref .Self, %.Self.2 [symbolic = %.Self.1 (constants.%.Self.c19)]
+// CHECK:STDOUT:         %.Self.3: @Outer.G.%Y.type (%Y.type.49b) = bind_symbolic_name .Self [symbolic = %.Self.1 (constants.%.Self.c19)]
+// CHECK:STDOUT:         %.Self.ref: @Outer.G.%Y.type (%Y.type.49b) = name_ref .Self, %.Self.3 [symbolic = %.Self.1 (constants.%.Self.c19)]
 // CHECK:STDOUT:         %.loc54_20.1: @Outer.G.%Y.assoc_type (%Y.assoc_type.56e) = specific_constant @T.%assoc0, @Y(constants.%OuterParam) [symbolic = %assoc0 (constants.%assoc0.044)]
 // CHECK:STDOUT:         %T.ref: @Outer.G.%Y.assoc_type (%Y.assoc_type.56e) = name_ref T, %.loc54_20.1 [symbolic = %assoc0 (constants.%assoc0.044)]
 // CHECK:STDOUT:         %.Self.as_type.loc54_20.2: type = facet_access_type %.Self.ref [symbolic = %.Self.as_type.loc54_20.1 (constants.%.Self.as_type.4b2)]
@@ -290,13 +294,14 @@ fn F() {
 // CHECK:STDOUT:         %impl.elem0.loc54_20.2: type = impl_witness_access constants.%Y.lookup_impl_witness.369, element0 [symbolic = %impl.elem0.loc54_20.1 (constants.%impl.elem0.409)]
 // CHECK:STDOUT:         %.loc54_26.1: %empty_tuple.type = tuple_literal ()
 // CHECK:STDOUT:         %.loc54_26.2: type = converted %.loc54_26.1, constants.%empty_tuple.type [concrete = constants.%empty_tuple.type]
-// CHECK:STDOUT:         %.loc54_14.2: type = where_expr %.Self.2 [symbolic = %Y_where.type (constants.%Y_where.type.324)] {
+// CHECK:STDOUT:         %.loc54_14.2: type = where_expr %.Self.3 [symbolic = %Y_where.type (constants.%Y_where.type.324)] {
 // CHECK:STDOUT:           requirement_base_facet_type constants.%Y.type.49b
 // CHECK:STDOUT:           requirement_rewrite %impl.elem0.loc54_20.2, %.loc54_26.2
 // CHECK:STDOUT:         }
 // CHECK:STDOUT:       }
 // CHECK:STDOUT:       %H.loc54_8.2: @Outer.G.%Y_where.type (%Y_where.type.324) = bind_symbolic_name H, 1 [symbolic = %H.loc54_8.1 (constants.%H)]
 // CHECK:STDOUT:     }
+// CHECK:STDOUT:     %Self.ref: type = name_ref Self, constants.%Outer.9d6 [symbolic = @Outer.as.Destroy.impl.%Outer (constants.%Outer.9d6)]
 // CHECK:STDOUT:     impl_decl @Outer.as.Destroy.impl [concrete] {} {}
 // CHECK:STDOUT:     %Destroy.impl_witness_table = impl_witness_table (@Outer.as.Destroy.impl.%Outer.as.Destroy.impl.Op.decl), @Outer.as.Destroy.impl [concrete]
 // CHECK:STDOUT:     %Destroy.impl_witness: <witness> = impl_witness %Destroy.impl_witness_table, @Outer.as.Destroy.impl(constants.%OuterParam) [symbolic = @Outer.as.Destroy.impl.%Destroy.impl_witness (constants.%Destroy.impl_witness)]
@@ -400,6 +405,7 @@ fn F() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Outer.as.Destroy.impl(constants.%OuterParam) {
 // CHECK:STDOUT:   %OuterParam => constants.%OuterParam
+// CHECK:STDOUT:   %Outer => constants.%Outer.9d6
 // CHECK:STDOUT:   %Destroy.impl_witness => constants.%Destroy.impl_witness
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -454,6 +460,7 @@ fn F() {
 // CHECK:STDOUT:   %Self.875: %Z1.type = bind_symbolic_name Self, 0 [symbolic]
 // CHECK:STDOUT:   %Z2.type: type = facet_type <@Z2> [concrete]
 // CHECK:STDOUT:   %Self.14e: %Z2.type = bind_symbolic_name Self, 0 [symbolic]
+// CHECK:STDOUT:   %.Self.644: type = bind_symbolic_name .Self [symbolic_self]
 // CHECK:STDOUT:   %OuterParam: %Z1.type = bind_symbolic_name OuterParam, 0 [symbolic]
 // CHECK:STDOUT:   %pattern_type.79b: type = pattern_type %Z1.type [concrete]
 // CHECK:STDOUT:   %Outer.type: type = generic_class_type @Outer [concrete]
@@ -552,7 +559,10 @@ fn F() {
 // CHECK:STDOUT:   %Outer.decl: %Outer.type = class_decl @Outer [concrete = constants.%Outer.generic] {
 // CHECK:STDOUT:     %OuterParam.patt: %pattern_type.79b = symbolic_binding_pattern OuterParam, 0 [concrete]
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %Z1.ref: type = name_ref Z1, file.%Z1.decl [concrete = constants.%Z1.type]
+// CHECK:STDOUT:     %.loc6: type = splice_block %Z1.ref [concrete = constants.%Z1.type] {
+// CHECK:STDOUT:       %.Self: type = bind_symbolic_name .Self [symbolic_self = constants.%.Self.644]
+// CHECK:STDOUT:       %Z1.ref: type = name_ref Z1, file.%Z1.decl [concrete = constants.%Z1.type]
+// CHECK:STDOUT:     }
 // CHECK:STDOUT:     %OuterParam.loc6_13.2: %Z1.type = bind_symbolic_name OuterParam, 0 [symbolic = %OuterParam.loc6_13.1 (constants.%OuterParam)]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   impl_decl @empty_tuple.type.as.Z1.impl [concrete] {} {
@@ -638,13 +648,14 @@ fn F() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic impl @Outer.as.Destroy.impl(@Outer.%OuterParam.loc6_13.2: %Z1.type) {
 // CHECK:STDOUT:   %OuterParam: %Z1.type = bind_symbolic_name OuterParam, 0 [symbolic = %OuterParam (constants.%OuterParam)]
+// CHECK:STDOUT:   %Outer: type = class_type @Outer, @Outer(%OuterParam) [symbolic = %Outer (constants.%Outer.fea)]
 // CHECK:STDOUT:   %Destroy.impl_witness: <witness> = impl_witness @Outer.%Destroy.impl_witness_table, @Outer.as.Destroy.impl(%OuterParam) [symbolic = %Destroy.impl_witness (constants.%Destroy.impl_witness)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %Outer.as.Destroy.impl.Op.type: type = fn_type @Outer.as.Destroy.impl.Op, @Outer.as.Destroy.impl(%OuterParam) [symbolic = %Outer.as.Destroy.impl.Op.type (constants.%Outer.as.Destroy.impl.Op.type)]
 // CHECK:STDOUT:   %Outer.as.Destroy.impl.Op: @Outer.as.Destroy.impl.%Outer.as.Destroy.impl.Op.type (%Outer.as.Destroy.impl.Op.type) = struct_value () [symbolic = %Outer.as.Destroy.impl.Op (constants.%Outer.as.Destroy.impl.Op)]
 // CHECK:STDOUT:
-// CHECK:STDOUT:   impl: constants.%Outer.fea as constants.%Destroy.type {
+// CHECK:STDOUT:   impl: @Outer.%Self.ref as constants.%Destroy.type {
 // CHECK:STDOUT:     %Outer.as.Destroy.impl.Op.decl: @Outer.as.Destroy.impl.%Outer.as.Destroy.impl.Op.type (%Outer.as.Destroy.impl.Op.type) = fn_decl @Outer.as.Destroy.impl.Op [symbolic = @Outer.as.Destroy.impl.%Outer.as.Destroy.impl.Op (constants.%Outer.as.Destroy.impl.Op)] {
 // CHECK:STDOUT:       %self.patt: @Outer.as.Destroy.impl.Op.%pattern_type (%pattern_type.f97) = binding_pattern self [concrete]
 // CHECK:STDOUT:       %self.param_patt: @Outer.as.Destroy.impl.Op.%pattern_type (%pattern_type.f97) = value_param_pattern %self.patt, call_param0 [concrete]
@@ -689,10 +700,11 @@ fn F() {
 // CHECK:STDOUT:       %H.patt: @Outer.G.%pattern_type (%pattern_type.b86) = symbolic_binding_pattern H, 1 [concrete]
 // CHECK:STDOUT:     } {
 // CHECK:STDOUT:       %.loc11_14.1: type = splice_block %.loc11_14.2 [symbolic = %Y_where.type (constants.%Y_where.type.fee)] {
+// CHECK:STDOUT:         %.Self.2: type = bind_symbolic_name .Self [symbolic_self = constants.%.Self.644]
 // CHECK:STDOUT:         %.loc11_12: type = specific_constant @Outer.%Y.decl, @Outer(constants.%OuterParam) [symbolic = %Y.type (constants.%Y.type.5e4)]
 // CHECK:STDOUT:         %Y.ref: type = name_ref Y, %.loc11_12 [symbolic = %Y.type (constants.%Y.type.5e4)]
-// CHECK:STDOUT:         %.Self.2: @Outer.G.%Y.type (%Y.type.5e4) = bind_symbolic_name .Self [symbolic = %.Self.1 (constants.%.Self.99e)]
-// CHECK:STDOUT:         %.Self.ref: @Outer.G.%Y.type (%Y.type.5e4) = name_ref .Self, %.Self.2 [symbolic = %.Self.1 (constants.%.Self.99e)]
+// CHECK:STDOUT:         %.Self.3: @Outer.G.%Y.type (%Y.type.5e4) = bind_symbolic_name .Self [symbolic = %.Self.1 (constants.%.Self.99e)]
+// CHECK:STDOUT:         %.Self.ref: @Outer.G.%Y.type (%Y.type.5e4) = name_ref .Self, %.Self.3 [symbolic = %.Self.1 (constants.%.Self.99e)]
 // CHECK:STDOUT:         %.loc11_20.1: @Outer.G.%Y.assoc_type (%Y.assoc_type.2a6) = specific_constant @T.%assoc0, @Y(constants.%OuterParam) [symbolic = %assoc0 (constants.%assoc0.603)]
 // CHECK:STDOUT:         %T.ref: @Outer.G.%Y.assoc_type (%Y.assoc_type.2a6) = name_ref T, %.loc11_20.1 [symbolic = %assoc0 (constants.%assoc0.603)]
 // CHECK:STDOUT:         %.Self.as_type.loc11_20.2: type = facet_access_type %.Self.ref [symbolic = %.Self.as_type.loc11_20.1 (constants.%.Self.as_type.3b9)]
@@ -700,7 +712,7 @@ fn F() {
 // CHECK:STDOUT:         %impl.elem0.loc11_20.2: type = impl_witness_access constants.%Y.lookup_impl_witness.c65, element0 [symbolic = %impl.elem0.loc11_20.1 (constants.%impl.elem0.23d)]
 // CHECK:STDOUT:         %.loc11_26.1: %empty_tuple.type = tuple_literal ()
 // CHECK:STDOUT:         %.loc11_26.2: type = converted %.loc11_26.1, constants.%empty_tuple.type [concrete = constants.%empty_tuple.type]
-// CHECK:STDOUT:         %.loc11_14.2: type = where_expr %.Self.2 [symbolic = %Y_where.type (constants.%Y_where.type.fee)] {
+// CHECK:STDOUT:         %.loc11_14.2: type = where_expr %.Self.3 [symbolic = %Y_where.type (constants.%Y_where.type.fee)] {
 // CHECK:STDOUT:           requirement_base_facet_type constants.%Y.type.5e4
 // CHECK:STDOUT:           requirement_rewrite %impl.elem0.loc11_20.2, %.loc11_26.2
 // CHECK:STDOUT:         }
@@ -730,6 +742,7 @@ fn F() {
 // CHECK:STDOUT:     %Y.impl_witness_table = impl_witness_table (%impl_witness_assoc_constant), @C.as.Y.impl [concrete]
 // CHECK:STDOUT:     %Y.impl_witness: <witness> = impl_witness %Y.impl_witness_table, @C.as.Y.impl(constants.%OuterParam) [symbolic = @C.as.Y.impl.%Y.impl_witness (constants.%Y.impl_witness.f45)]
 // CHECK:STDOUT:     %impl_witness_assoc_constant: type = impl_witness_assoc_constant constants.%empty_tuple.type [concrete = constants.%empty_tuple.type]
+// CHECK:STDOUT:     %Self.ref: type = name_ref Self, constants.%Outer.fea [symbolic = @Outer.as.Destroy.impl.%Outer (constants.%Outer.fea)]
 // CHECK:STDOUT:     impl_decl @Outer.as.Destroy.impl [concrete] {} {}
 // CHECK:STDOUT:     %Destroy.impl_witness_table = impl_witness_table (@Outer.as.Destroy.impl.%Outer.as.Destroy.impl.Op.decl), @Outer.as.Destroy.impl [concrete]
 // CHECK:STDOUT:     %Destroy.impl_witness: <witness> = impl_witness %Destroy.impl_witness_table, @Outer.as.Destroy.impl(constants.%OuterParam) [symbolic = @Outer.as.Destroy.impl.%Destroy.impl_witness (constants.%Destroy.impl_witness)]
@@ -882,6 +895,7 @@ fn F() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Outer.as.Destroy.impl(constants.%OuterParam) {
 // CHECK:STDOUT:   %OuterParam => constants.%OuterParam
+// CHECK:STDOUT:   %Outer => constants.%Outer.fea
 // CHECK:STDOUT:   %Destroy.impl_witness => constants.%Destroy.impl_witness
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

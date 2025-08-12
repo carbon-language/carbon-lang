@@ -121,7 +121,7 @@ fn F(a: Outer*) {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: impl @Inner.as.Destroy.impl: constants.%Inner as constants.%Destroy.type {
+// CHECK:STDOUT: impl @Inner.as.Destroy.impl: @Inner.%Self.ref.loc22 as constants.%Destroy.type {
 // CHECK:STDOUT:   %Inner.as.Destroy.impl.Op.decl: %Inner.as.Destroy.impl.Op.type = fn_decl @Inner.as.Destroy.impl.Op [concrete = constants.%Inner.as.Destroy.impl.Op] {
 // CHECK:STDOUT:     %self.patt: %pattern_type.27f = binding_pattern self [concrete]
 // CHECK:STDOUT:     %self.param_patt: %pattern_type.27f = value_param_pattern %self.patt, call_param0 [concrete]
@@ -137,7 +137,7 @@ fn F(a: Outer*) {
 // CHECK:STDOUT:   witness = @Inner.%Destroy.impl_witness
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: impl @Outer.as.Destroy.impl: constants.%Outer as constants.%Destroy.type {
+// CHECK:STDOUT: impl @Outer.as.Destroy.impl: @Outer.%Self.ref.loc15 as constants.%Destroy.type {
 // CHECK:STDOUT:   %Outer.as.Destroy.impl.Op.decl: %Outer.as.Destroy.impl.Op.type = fn_decl @Outer.as.Destroy.impl.Op [concrete = constants.%Outer.as.Destroy.impl.Op] {
 // CHECK:STDOUT:     %self.patt: %pattern_type.95c = binding_pattern self [concrete]
 // CHECK:STDOUT:     %self.param_patt: %pattern_type.95c = value_param_pattern %self.patt, call_param0 [concrete]
@@ -157,8 +157,8 @@ fn F(a: Outer*) {
 // CHECK:STDOUT:   %Outer.F.decl: %Outer.F.type = fn_decl @Outer.F [concrete = constants.%Outer.F] {} {}
 // CHECK:STDOUT:   %Inner.decl: type = class_decl @Inner [concrete = constants.%Inner] {} {}
 // CHECK:STDOUT:   %Outer.H.decl: %Outer.H.type = fn_decl @Outer.H [concrete = constants.%Outer.H] {} {}
-// CHECK:STDOUT:   %Self.ref: type = name_ref Self, constants.%Outer [concrete = constants.%Outer]
-// CHECK:STDOUT:   %ptr.loc40: type = ptr_type %Self.ref [concrete = constants.%ptr.5df]
+// CHECK:STDOUT:   %Self.ref.loc40: type = name_ref Self, constants.%Outer [concrete = constants.%Outer]
+// CHECK:STDOUT:   %ptr.loc40: type = ptr_type %Self.ref.loc40 [concrete = constants.%ptr.5df]
 // CHECK:STDOUT:   %.loc40: %Outer.elem.a16 = field_decl po, element0 [concrete]
 // CHECK:STDOUT:   %Outer.ref: type = name_ref Outer, file.%Outer.decl [concrete = constants.%Outer]
 // CHECK:STDOUT:   %ptr.loc41: type = ptr_type %Outer.ref [concrete = constants.%ptr.5df]
@@ -166,6 +166,7 @@ fn F(a: Outer*) {
 // CHECK:STDOUT:   %Inner.ref: type = name_ref Inner, %Inner.decl [concrete = constants.%Inner]
 // CHECK:STDOUT:   %ptr.loc42: type = ptr_type %Inner.ref [concrete = constants.%ptr.36a]
 // CHECK:STDOUT:   %.loc42: %Outer.elem.fe9 = field_decl pi, element2 [concrete]
+// CHECK:STDOUT:   %Self.ref.loc15: type = name_ref Self, constants.%Outer [concrete = constants.%Outer]
 // CHECK:STDOUT:   impl_decl @Outer.as.Destroy.impl [concrete] {} {}
 // CHECK:STDOUT:   %Destroy.impl_witness_table = impl_witness_table (@Outer.as.Destroy.impl.%Outer.as.Destroy.impl.Op.decl), @Outer.as.Destroy.impl [concrete]
 // CHECK:STDOUT:   %Destroy.impl_witness: <witness> = impl_witness %Destroy.impl_witness_table [concrete = constants.%Destroy.impl_witness.d28]
@@ -184,8 +185,8 @@ fn F(a: Outer*) {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @Inner {
-// CHECK:STDOUT:   %Self.ref: type = name_ref Self, constants.%Inner [concrete = constants.%Inner]
-// CHECK:STDOUT:   %ptr.loc23: type = ptr_type %Self.ref [concrete = constants.%ptr.36a]
+// CHECK:STDOUT:   %Self.ref.loc23: type = name_ref Self, constants.%Inner [concrete = constants.%Inner]
+// CHECK:STDOUT:   %ptr.loc23: type = ptr_type %Self.ref.loc23 [concrete = constants.%ptr.36a]
 // CHECK:STDOUT:   %.loc23: %Inner.elem.640 = field_decl pi, element0 [concrete]
 // CHECK:STDOUT:   %Outer.ref: type = name_ref Outer, file.%Outer.decl [concrete = constants.%Outer]
 // CHECK:STDOUT:   %ptr.loc24: type = ptr_type %Outer.ref [concrete = constants.%ptr.5df]
@@ -194,6 +195,7 @@ fn F(a: Outer*) {
 // CHECK:STDOUT:   %ptr.loc25: type = ptr_type %Inner.ref [concrete = constants.%ptr.36a]
 // CHECK:STDOUT:   %.loc25: %Inner.elem.640 = field_decl qi, element2 [concrete]
 // CHECK:STDOUT:   %Inner.G.decl: %Inner.G.type = fn_decl @Inner.G [concrete = constants.%Inner.G] {} {}
+// CHECK:STDOUT:   %Self.ref.loc22: type = name_ref Self, constants.%Inner [concrete = constants.%Inner]
 // CHECK:STDOUT:   impl_decl @Inner.as.Destroy.impl [concrete] {} {}
 // CHECK:STDOUT:   %Destroy.impl_witness_table = impl_witness_table (@Inner.as.Destroy.impl.%Inner.as.Destroy.impl.Op.decl), @Inner.as.Destroy.impl [concrete]
 // CHECK:STDOUT:   %Destroy.impl_witness: <witness> = impl_witness %Destroy.impl_witness_table [concrete = constants.%Destroy.impl_witness.75f]

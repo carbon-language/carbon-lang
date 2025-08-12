@@ -105,6 +105,7 @@ fn G() {
 // CHECK:STDOUT: --- tuple_access.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
+// CHECK:STDOUT:   %.Self: type = bind_symbolic_name .Self [symbolic_self]
 // CHECK:STDOUT:   %tuple.type: type = tuple_type (type) [concrete]
 // CHECK:STDOUT:   %T.6eb: %tuple.type = bind_symbolic_name T, 0 [symbolic]
 // CHECK:STDOUT:   %pattern_type.f1e: type = pattern_type %tuple.type [concrete]
@@ -117,10 +118,10 @@ fn G() {
 // CHECK:STDOUT:   %Destroy.impl_witness.d43: <witness> = impl_witness @HoldsType.%Destroy.impl_witness_table, @HoldsType.as.Destroy.impl(%T.6eb) [symbolic]
 // CHECK:STDOUT:   %ptr.47e: type = ptr_type %HoldsType.cc9 [symbolic]
 // CHECK:STDOUT:   %pattern_type.c39: type = pattern_type %ptr.47e [symbolic]
-// CHECK:STDOUT:   %HoldsType.as.Destroy.impl.Op.type: type = fn_type @HoldsType.as.Destroy.impl.Op, @HoldsType.as.Destroy.impl(%T.6eb) [symbolic]
-// CHECK:STDOUT:   %HoldsType.as.Destroy.impl.Op: %HoldsType.as.Destroy.impl.Op.type = struct_value () [symbolic]
+// CHECK:STDOUT:   %HoldsType.as.Destroy.impl.Op.type.939: type = fn_type @HoldsType.as.Destroy.impl.Op, @HoldsType.as.Destroy.impl(%T.6eb) [symbolic]
+// CHECK:STDOUT:   %HoldsType.as.Destroy.impl.Op.2fb: %HoldsType.as.Destroy.impl.Op.type.939 = struct_value () [symbolic]
 // CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [concrete]
-// CHECK:STDOUT:   %complete_type.357: <witness> = complete_type_witness %empty_struct_type [concrete]
+// CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [concrete]
 // CHECK:STDOUT:   %pattern_type.ec6: type = pattern_type %HoldsType.cc9 [symbolic]
 // CHECK:STDOUT:   %int_0: Core.IntLiteral = int_value 0 [concrete]
 // CHECK:STDOUT:   %tuple.elem0: type = tuple_access %T.6eb, element0 [symbolic]
@@ -145,10 +146,11 @@ fn G() {
 // CHECK:STDOUT:   %F.specific_fn: <specific function> = specific_function %F, @F(%tuple) [concrete]
 // CHECK:STDOUT:   %C.val: %C = struct_value () [concrete]
 // CHECK:STDOUT:   %Destroy.impl_witness.7a6: <witness> = impl_witness @HoldsType.%Destroy.impl_witness_table, @HoldsType.as.Destroy.impl(%tuple) [concrete]
-// CHECK:STDOUT:   %T.as.Destroy.impl.Op.type.431: type = fn_type @T.as.Destroy.impl.Op, @T.as.Destroy.impl(%HoldsType.c09) [concrete]
-// CHECK:STDOUT:   %T.as.Destroy.impl.Op.f20: %T.as.Destroy.impl.Op.type.431 = struct_value () [concrete]
+// CHECK:STDOUT:   %HoldsType.as.Destroy.impl.Op.type.c3f: type = fn_type @HoldsType.as.Destroy.impl.Op, @HoldsType.as.Destroy.impl(%tuple) [concrete]
+// CHECK:STDOUT:   %HoldsType.as.Destroy.impl.Op.26d: %HoldsType.as.Destroy.impl.Op.type.c3f = struct_value () [concrete]
 // CHECK:STDOUT:   %ptr.79a: type = ptr_type %HoldsType.c09 [concrete]
-// CHECK:STDOUT:   %T.as.Destroy.impl.Op.specific_fn: <specific function> = specific_function %T.as.Destroy.impl.Op.f20, @T.as.Destroy.impl.Op(%HoldsType.c09) [concrete]
+// CHECK:STDOUT:   %pattern_type.bb8: type = pattern_type %ptr.79a [concrete]
+// CHECK:STDOUT:   %HoldsType.as.Destroy.impl.Op.specific_fn: <specific function> = specific_function %HoldsType.as.Destroy.impl.Op.26d, @HoldsType.as.Destroy.impl.Op(%tuple) [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -173,6 +175,7 @@ fn G() {
 // CHECK:STDOUT:     %T.patt: %pattern_type.f1e = symbolic_binding_pattern T, 0 [concrete]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %.loc4_28.1: type = splice_block %.loc4_28.3 [concrete = constants.%tuple.type] {
+// CHECK:STDOUT:       %.Self: type = bind_symbolic_name .Self [symbolic_self = constants.%.Self]
 // CHECK:STDOUT:       %.loc4_28.2: %tuple.type = tuple_literal (type)
 // CHECK:STDOUT:       %.loc4_28.3: type = converted %.loc4_28.2, constants.%tuple.type [concrete = constants.%tuple.type]
 // CHECK:STDOUT:     }
@@ -186,6 +189,7 @@ fn G() {
 // CHECK:STDOUT:     %a.param_patt: @F.%pattern_type.loc8_37 (%pattern_type.08e) = value_param_pattern %a.patt, call_param1 [concrete]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %.loc8_17.1: type = splice_block %.loc8_17.3 [concrete = constants.%tuple.type] {
+// CHECK:STDOUT:       %.Self: type = bind_symbolic_name .Self [symbolic_self = constants.%.Self]
 // CHECK:STDOUT:       %.loc8_17.2: %tuple.type = tuple_literal (type)
 // CHECK:STDOUT:       %.loc8_17.3: type = converted %.loc8_17.2, constants.%tuple.type [concrete = constants.%tuple.type]
 // CHECK:STDOUT:     }
@@ -211,14 +215,15 @@ fn G() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic impl @HoldsType.as.Destroy.impl(@HoldsType.%T.loc4_17.2: %tuple.type) {
 // CHECK:STDOUT:   %T: %tuple.type = bind_symbolic_name T, 0 [symbolic = %T (constants.%T.6eb)]
+// CHECK:STDOUT:   %HoldsType: type = class_type @HoldsType, @HoldsType(%T) [symbolic = %HoldsType (constants.%HoldsType.cc9)]
 // CHECK:STDOUT:   %Destroy.impl_witness: <witness> = impl_witness @HoldsType.%Destroy.impl_witness_table, @HoldsType.as.Destroy.impl(%T) [symbolic = %Destroy.impl_witness (constants.%Destroy.impl_witness.d43)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
-// CHECK:STDOUT:   %HoldsType.as.Destroy.impl.Op.type: type = fn_type @HoldsType.as.Destroy.impl.Op, @HoldsType.as.Destroy.impl(%T) [symbolic = %HoldsType.as.Destroy.impl.Op.type (constants.%HoldsType.as.Destroy.impl.Op.type)]
-// CHECK:STDOUT:   %HoldsType.as.Destroy.impl.Op: @HoldsType.as.Destroy.impl.%HoldsType.as.Destroy.impl.Op.type (%HoldsType.as.Destroy.impl.Op.type) = struct_value () [symbolic = %HoldsType.as.Destroy.impl.Op (constants.%HoldsType.as.Destroy.impl.Op)]
+// CHECK:STDOUT:   %HoldsType.as.Destroy.impl.Op.type: type = fn_type @HoldsType.as.Destroy.impl.Op, @HoldsType.as.Destroy.impl(%T) [symbolic = %HoldsType.as.Destroy.impl.Op.type (constants.%HoldsType.as.Destroy.impl.Op.type.939)]
+// CHECK:STDOUT:   %HoldsType.as.Destroy.impl.Op: @HoldsType.as.Destroy.impl.%HoldsType.as.Destroy.impl.Op.type (%HoldsType.as.Destroy.impl.Op.type.939) = struct_value () [symbolic = %HoldsType.as.Destroy.impl.Op (constants.%HoldsType.as.Destroy.impl.Op.2fb)]
 // CHECK:STDOUT:
-// CHECK:STDOUT:   impl: constants.%HoldsType.cc9 as constants.%Destroy.type {
-// CHECK:STDOUT:     %HoldsType.as.Destroy.impl.Op.decl: @HoldsType.as.Destroy.impl.%HoldsType.as.Destroy.impl.Op.type (%HoldsType.as.Destroy.impl.Op.type) = fn_decl @HoldsType.as.Destroy.impl.Op [symbolic = @HoldsType.as.Destroy.impl.%HoldsType.as.Destroy.impl.Op (constants.%HoldsType.as.Destroy.impl.Op)] {
+// CHECK:STDOUT:   impl: @HoldsType.%Self.ref as constants.%Destroy.type {
+// CHECK:STDOUT:     %HoldsType.as.Destroy.impl.Op.decl: @HoldsType.as.Destroy.impl.%HoldsType.as.Destroy.impl.Op.type (%HoldsType.as.Destroy.impl.Op.type.939) = fn_decl @HoldsType.as.Destroy.impl.Op [symbolic = @HoldsType.as.Destroy.impl.%HoldsType.as.Destroy.impl.Op (constants.%HoldsType.as.Destroy.impl.Op.2fb)] {
 // CHECK:STDOUT:       %self.patt: @HoldsType.as.Destroy.impl.Op.%pattern_type (%pattern_type.c39) = binding_pattern self [concrete]
 // CHECK:STDOUT:       %self.param_patt: @HoldsType.as.Destroy.impl.Op.%pattern_type (%pattern_type.c39) = value_param_pattern %self.patt, call_param0 [concrete]
 // CHECK:STDOUT:       %.loc4_31.1: %pattern_type.f6d = addr_pattern %self.param_patt [concrete]
@@ -237,7 +242,7 @@ fn G() {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: impl @C.as.Destroy.impl: constants.%C as constants.%Destroy.type {
+// CHECK:STDOUT: impl @C.as.Destroy.impl: @C.%Self.ref as constants.%Destroy.type {
 // CHECK:STDOUT:   %C.as.Destroy.impl.Op.decl: %C.as.Destroy.impl.Op.type = fn_decl @C.as.Destroy.impl.Op [concrete = constants.%C.as.Destroy.impl.Op] {
 // CHECK:STDOUT:     %self.patt: %pattern_type.44a = binding_pattern self [concrete]
 // CHECK:STDOUT:     %self.param_patt: %pattern_type.44a = value_param_pattern %self.patt, call_param0 [concrete]
@@ -259,10 +264,11 @@ fn G() {
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:
 // CHECK:STDOUT:   class {
+// CHECK:STDOUT:     %Self.ref: type = name_ref Self, constants.%HoldsType.cc9 [symbolic = @HoldsType.as.Destroy.impl.%HoldsType (constants.%HoldsType.cc9)]
 // CHECK:STDOUT:     impl_decl @HoldsType.as.Destroy.impl [concrete] {} {}
 // CHECK:STDOUT:     %Destroy.impl_witness_table = impl_witness_table (@HoldsType.as.Destroy.impl.%HoldsType.as.Destroy.impl.Op.decl), @HoldsType.as.Destroy.impl [concrete]
 // CHECK:STDOUT:     %Destroy.impl_witness: <witness> = impl_witness %Destroy.impl_witness_table, @HoldsType.as.Destroy.impl(constants.%T.6eb) [symbolic = @HoldsType.as.Destroy.impl.%Destroy.impl_witness (constants.%Destroy.impl_witness.d43)]
-// CHECK:STDOUT:     %complete_type: <witness> = complete_type_witness constants.%empty_struct_type [concrete = constants.%complete_type.357]
+// CHECK:STDOUT:     %complete_type: <witness> = complete_type_witness constants.%empty_struct_type [concrete = constants.%complete_type]
 // CHECK:STDOUT:     complete_type_witness = %complete_type
 // CHECK:STDOUT:
 // CHECK:STDOUT:   !members:
@@ -271,10 +277,11 @@ fn G() {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @C {
+// CHECK:STDOUT:   %Self.ref: type = name_ref Self, constants.%C [concrete = constants.%C]
 // CHECK:STDOUT:   impl_decl @C.as.Destroy.impl [concrete] {} {}
 // CHECK:STDOUT:   %Destroy.impl_witness_table = impl_witness_table (@C.as.Destroy.impl.%C.as.Destroy.impl.Op.decl), @C.as.Destroy.impl [concrete]
 // CHECK:STDOUT:   %Destroy.impl_witness: <witness> = impl_witness %Destroy.impl_witness_table [concrete = constants.%Destroy.impl_witness.edd]
-// CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness constants.%empty_struct_type [concrete = constants.%complete_type.357]
+// CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness constants.%empty_struct_type [concrete = constants.%complete_type]
 // CHECK:STDOUT:   complete_type_witness = %complete_type
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
@@ -337,11 +344,11 @@ fn G() {
 // CHECK:STDOUT:   %C.as.Destroy.impl.Op.bound: <bound method> = bound_method %.loc13_30.2, constants.%C.as.Destroy.impl.Op
 // CHECK:STDOUT:   %addr.loc13_30: %ptr.019 = addr_of %.loc13_30.2
 // CHECK:STDOUT:   %C.as.Destroy.impl.Op.call: init %empty_tuple.type = call %C.as.Destroy.impl.Op.bound(%addr.loc13_30)
-// CHECK:STDOUT:   %T.as.Destroy.impl.Op.bound: <bound method> = bound_method %.loc13_6.2, constants.%T.as.Destroy.impl.Op.f20
-// CHECK:STDOUT:   %T.as.Destroy.impl.Op.specific_fn: <specific function> = specific_function constants.%T.as.Destroy.impl.Op.f20, @T.as.Destroy.impl.Op(constants.%HoldsType.c09) [concrete = constants.%T.as.Destroy.impl.Op.specific_fn]
-// CHECK:STDOUT:   %bound_method: <bound method> = bound_method %.loc13_6.2, %T.as.Destroy.impl.Op.specific_fn
+// CHECK:STDOUT:   %HoldsType.as.Destroy.impl.Op.bound: <bound method> = bound_method %.loc13_6.2, constants.%HoldsType.as.Destroy.impl.Op.26d
+// CHECK:STDOUT:   %HoldsType.as.Destroy.impl.Op.specific_fn: <specific function> = specific_function constants.%HoldsType.as.Destroy.impl.Op.26d, @HoldsType.as.Destroy.impl.Op(constants.%tuple) [concrete = constants.%HoldsType.as.Destroy.impl.Op.specific_fn]
+// CHECK:STDOUT:   %bound_method: <bound method> = bound_method %.loc13_6.2, %HoldsType.as.Destroy.impl.Op.specific_fn
 // CHECK:STDOUT:   %addr.loc13_6: %ptr.79a = addr_of %.loc13_6.2
-// CHECK:STDOUT:   %T.as.Destroy.impl.Op.call: init %empty_tuple.type = call %bound_method(%addr.loc13_6)
+// CHECK:STDOUT:   %HoldsType.as.Destroy.impl.Op.call: init %empty_tuple.type = call %bound_method(%addr.loc13_6)
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -353,6 +360,7 @@ fn G() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @HoldsType.as.Destroy.impl(constants.%T.6eb) {
 // CHECK:STDOUT:   %T => constants.%T.6eb
+// CHECK:STDOUT:   %HoldsType => constants.%HoldsType.cc9
 // CHECK:STDOUT:   %Destroy.impl_witness => constants.%Destroy.impl_witness.d43
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -385,18 +393,31 @@ fn G() {
 // CHECK:STDOUT:   %pattern_type.loc8_37 => constants.%pattern_type.c48
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
-// CHECK:STDOUT:   %require_complete.loc8_21 => constants.%complete_type.357
-// CHECK:STDOUT:   %require_complete.loc8_38 => constants.%complete_type.357
+// CHECK:STDOUT:   %require_complete.loc8_21 => constants.%complete_type
+// CHECK:STDOUT:   %require_complete.loc8_38 => constants.%complete_type
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @HoldsType.as.Destroy.impl(constants.%tuple) {
 // CHECK:STDOUT:   %T => constants.%tuple
+// CHECK:STDOUT:   %HoldsType => constants.%HoldsType.c09
 // CHECK:STDOUT:   %Destroy.impl_witness => constants.%Destroy.impl_witness.7a6
+// CHECK:STDOUT:
+// CHECK:STDOUT: !definition:
+// CHECK:STDOUT:   %HoldsType.as.Destroy.impl.Op.type => constants.%HoldsType.as.Destroy.impl.Op.type.c3f
+// CHECK:STDOUT:   %HoldsType.as.Destroy.impl.Op => constants.%HoldsType.as.Destroy.impl.Op.26d
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: specific @HoldsType.as.Destroy.impl.Op(constants.%tuple) {
+// CHECK:STDOUT:   %T => constants.%tuple
+// CHECK:STDOUT:   %HoldsType => constants.%HoldsType.c09
+// CHECK:STDOUT:   %ptr => constants.%ptr.79a
+// CHECK:STDOUT:   %pattern_type => constants.%pattern_type.bb8
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- struct_access.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
+// CHECK:STDOUT:   %.Self: type = bind_symbolic_name .Self [symbolic_self]
 // CHECK:STDOUT:   %struct_type.t: type = struct_type {.t: type} [concrete]
 // CHECK:STDOUT:   %T.08d: %struct_type.t = bind_symbolic_name T, 0 [symbolic]
 // CHECK:STDOUT:   %pattern_type.7f2: type = pattern_type %struct_type.t [concrete]
@@ -409,10 +430,10 @@ fn G() {
 // CHECK:STDOUT:   %Destroy.impl_witness.715: <witness> = impl_witness @HoldsType.%Destroy.impl_witness_table, @HoldsType.as.Destroy.impl(%T.08d) [symbolic]
 // CHECK:STDOUT:   %ptr.ca6: type = ptr_type %HoldsType.843 [symbolic]
 // CHECK:STDOUT:   %pattern_type.051: type = pattern_type %ptr.ca6 [symbolic]
-// CHECK:STDOUT:   %HoldsType.as.Destroy.impl.Op.type: type = fn_type @HoldsType.as.Destroy.impl.Op, @HoldsType.as.Destroy.impl(%T.08d) [symbolic]
-// CHECK:STDOUT:   %HoldsType.as.Destroy.impl.Op: %HoldsType.as.Destroy.impl.Op.type = struct_value () [symbolic]
+// CHECK:STDOUT:   %HoldsType.as.Destroy.impl.Op.type.151: type = fn_type @HoldsType.as.Destroy.impl.Op, @HoldsType.as.Destroy.impl(%T.08d) [symbolic]
+// CHECK:STDOUT:   %HoldsType.as.Destroy.impl.Op.12d: %HoldsType.as.Destroy.impl.Op.type.151 = struct_value () [symbolic]
 // CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [concrete]
-// CHECK:STDOUT:   %complete_type.357: <witness> = complete_type_witness %empty_struct_type [concrete]
+// CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [concrete]
 // CHECK:STDOUT:   %pattern_type.aa4: type = pattern_type %HoldsType.843 [symbolic]
 // CHECK:STDOUT:   %.20a: type = struct_access %T.08d, element0 [symbolic]
 // CHECK:STDOUT:   %pattern_type.9f0: type = pattern_type %.20a [symbolic]
@@ -436,10 +457,11 @@ fn G() {
 // CHECK:STDOUT:   %F.specific_fn: <specific function> = specific_function %F, @F(%struct) [concrete]
 // CHECK:STDOUT:   %C.val: %C = struct_value () [concrete]
 // CHECK:STDOUT:   %Destroy.impl_witness.131: <witness> = impl_witness @HoldsType.%Destroy.impl_witness_table, @HoldsType.as.Destroy.impl(%struct) [concrete]
-// CHECK:STDOUT:   %T.as.Destroy.impl.Op.type.8ea: type = fn_type @T.as.Destroy.impl.Op, @T.as.Destroy.impl(%HoldsType.705) [concrete]
-// CHECK:STDOUT:   %T.as.Destroy.impl.Op.180: %T.as.Destroy.impl.Op.type.8ea = struct_value () [concrete]
+// CHECK:STDOUT:   %HoldsType.as.Destroy.impl.Op.type.d13: type = fn_type @HoldsType.as.Destroy.impl.Op, @HoldsType.as.Destroy.impl(%struct) [concrete]
+// CHECK:STDOUT:   %HoldsType.as.Destroy.impl.Op.7b8: %HoldsType.as.Destroy.impl.Op.type.d13 = struct_value () [concrete]
 // CHECK:STDOUT:   %ptr.5d1: type = ptr_type %HoldsType.705 [concrete]
-// CHECK:STDOUT:   %T.as.Destroy.impl.Op.specific_fn: <specific function> = specific_function %T.as.Destroy.impl.Op.180, @T.as.Destroy.impl.Op(%HoldsType.705) [concrete]
+// CHECK:STDOUT:   %pattern_type.c97: type = pattern_type %ptr.5d1 [concrete]
+// CHECK:STDOUT:   %HoldsType.as.Destroy.impl.Op.specific_fn: <specific function> = specific_function %HoldsType.as.Destroy.impl.Op.7b8, @HoldsType.as.Destroy.impl.Op(%struct) [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -463,7 +485,10 @@ fn G() {
 // CHECK:STDOUT:   %HoldsType.decl: %HoldsType.type = class_decl @HoldsType [concrete = constants.%HoldsType.generic] {
 // CHECK:STDOUT:     %T.patt: %pattern_type.7f2 = symbolic_binding_pattern T, 0 [concrete]
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %struct_type.t: type = struct_type {.t: type} [concrete = constants.%struct_type.t]
+// CHECK:STDOUT:     %.loc4: type = splice_block %struct_type.t [concrete = constants.%struct_type.t] {
+// CHECK:STDOUT:       %.Self: type = bind_symbolic_name .Self [symbolic_self = constants.%.Self]
+// CHECK:STDOUT:       %struct_type.t: type = struct_type {.t: type} [concrete = constants.%struct_type.t]
+// CHECK:STDOUT:     }
 // CHECK:STDOUT:     %T.loc4_17.2: %struct_type.t = bind_symbolic_name T, 0 [symbolic = %T.loc4_17.1 (constants.%T.08d)]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [concrete = constants.%F] {
@@ -473,7 +498,10 @@ fn G() {
 // CHECK:STDOUT:     %a.patt: @F.%pattern_type.loc8_39 (%pattern_type.9f0) = binding_pattern a [concrete]
 // CHECK:STDOUT:     %a.param_patt: @F.%pattern_type.loc8_39 (%pattern_type.9f0) = value_param_pattern %a.patt, call_param1 [concrete]
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %struct_type.t: type = struct_type {.t: type} [concrete = constants.%struct_type.t]
+// CHECK:STDOUT:     %.loc8_19: type = splice_block %struct_type.t [concrete = constants.%struct_type.t] {
+// CHECK:STDOUT:       %.Self: type = bind_symbolic_name .Self [symbolic_self = constants.%.Self]
+// CHECK:STDOUT:       %struct_type.t: type = struct_type {.t: type} [concrete = constants.%struct_type.t]
+// CHECK:STDOUT:     }
 // CHECK:STDOUT:     %T.loc8_6.2: %struct_type.t = bind_symbolic_name T, 0 [symbolic = %T.loc8_6.1 (constants.%T.08d)]
 // CHECK:STDOUT:     %x.param: @F.%HoldsType.loc8_36.1 (%HoldsType.843) = value_param call_param0
 // CHECK:STDOUT:     %.loc8_36: type = splice_block %HoldsType.loc8_36.2 [symbolic = %HoldsType.loc8_36.1 (constants.%HoldsType.843)] {
@@ -495,14 +523,15 @@ fn G() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic impl @HoldsType.as.Destroy.impl(@HoldsType.%T.loc4_17.2: %struct_type.t) {
 // CHECK:STDOUT:   %T: %struct_type.t = bind_symbolic_name T, 0 [symbolic = %T (constants.%T.08d)]
+// CHECK:STDOUT:   %HoldsType: type = class_type @HoldsType, @HoldsType(%T) [symbolic = %HoldsType (constants.%HoldsType.843)]
 // CHECK:STDOUT:   %Destroy.impl_witness: <witness> = impl_witness @HoldsType.%Destroy.impl_witness_table, @HoldsType.as.Destroy.impl(%T) [symbolic = %Destroy.impl_witness (constants.%Destroy.impl_witness.715)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
-// CHECK:STDOUT:   %HoldsType.as.Destroy.impl.Op.type: type = fn_type @HoldsType.as.Destroy.impl.Op, @HoldsType.as.Destroy.impl(%T) [symbolic = %HoldsType.as.Destroy.impl.Op.type (constants.%HoldsType.as.Destroy.impl.Op.type)]
-// CHECK:STDOUT:   %HoldsType.as.Destroy.impl.Op: @HoldsType.as.Destroy.impl.%HoldsType.as.Destroy.impl.Op.type (%HoldsType.as.Destroy.impl.Op.type) = struct_value () [symbolic = %HoldsType.as.Destroy.impl.Op (constants.%HoldsType.as.Destroy.impl.Op)]
+// CHECK:STDOUT:   %HoldsType.as.Destroy.impl.Op.type: type = fn_type @HoldsType.as.Destroy.impl.Op, @HoldsType.as.Destroy.impl(%T) [symbolic = %HoldsType.as.Destroy.impl.Op.type (constants.%HoldsType.as.Destroy.impl.Op.type.151)]
+// CHECK:STDOUT:   %HoldsType.as.Destroy.impl.Op: @HoldsType.as.Destroy.impl.%HoldsType.as.Destroy.impl.Op.type (%HoldsType.as.Destroy.impl.Op.type.151) = struct_value () [symbolic = %HoldsType.as.Destroy.impl.Op (constants.%HoldsType.as.Destroy.impl.Op.12d)]
 // CHECK:STDOUT:
-// CHECK:STDOUT:   impl: constants.%HoldsType.843 as constants.%Destroy.type {
-// CHECK:STDOUT:     %HoldsType.as.Destroy.impl.Op.decl: @HoldsType.as.Destroy.impl.%HoldsType.as.Destroy.impl.Op.type (%HoldsType.as.Destroy.impl.Op.type) = fn_decl @HoldsType.as.Destroy.impl.Op [symbolic = @HoldsType.as.Destroy.impl.%HoldsType.as.Destroy.impl.Op (constants.%HoldsType.as.Destroy.impl.Op)] {
+// CHECK:STDOUT:   impl: @HoldsType.%Self.ref as constants.%Destroy.type {
+// CHECK:STDOUT:     %HoldsType.as.Destroy.impl.Op.decl: @HoldsType.as.Destroy.impl.%HoldsType.as.Destroy.impl.Op.type (%HoldsType.as.Destroy.impl.Op.type.151) = fn_decl @HoldsType.as.Destroy.impl.Op [symbolic = @HoldsType.as.Destroy.impl.%HoldsType.as.Destroy.impl.Op (constants.%HoldsType.as.Destroy.impl.Op.12d)] {
 // CHECK:STDOUT:       %self.patt: @HoldsType.as.Destroy.impl.Op.%pattern_type (%pattern_type.051) = binding_pattern self [concrete]
 // CHECK:STDOUT:       %self.param_patt: @HoldsType.as.Destroy.impl.Op.%pattern_type (%pattern_type.051) = value_param_pattern %self.patt, call_param0 [concrete]
 // CHECK:STDOUT:       %.loc4_33.1: %pattern_type.f6d = addr_pattern %self.param_patt [concrete]
@@ -521,7 +550,7 @@ fn G() {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: impl @C.as.Destroy.impl: constants.%C as constants.%Destroy.type {
+// CHECK:STDOUT: impl @C.as.Destroy.impl: @C.%Self.ref as constants.%Destroy.type {
 // CHECK:STDOUT:   %C.as.Destroy.impl.Op.decl: %C.as.Destroy.impl.Op.type = fn_decl @C.as.Destroy.impl.Op [concrete = constants.%C.as.Destroy.impl.Op] {
 // CHECK:STDOUT:     %self.patt: %pattern_type.44a = binding_pattern self [concrete]
 // CHECK:STDOUT:     %self.param_patt: %pattern_type.44a = value_param_pattern %self.patt, call_param0 [concrete]
@@ -543,10 +572,11 @@ fn G() {
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:
 // CHECK:STDOUT:   class {
+// CHECK:STDOUT:     %Self.ref: type = name_ref Self, constants.%HoldsType.843 [symbolic = @HoldsType.as.Destroy.impl.%HoldsType (constants.%HoldsType.843)]
 // CHECK:STDOUT:     impl_decl @HoldsType.as.Destroy.impl [concrete] {} {}
 // CHECK:STDOUT:     %Destroy.impl_witness_table = impl_witness_table (@HoldsType.as.Destroy.impl.%HoldsType.as.Destroy.impl.Op.decl), @HoldsType.as.Destroy.impl [concrete]
 // CHECK:STDOUT:     %Destroy.impl_witness: <witness> = impl_witness %Destroy.impl_witness_table, @HoldsType.as.Destroy.impl(constants.%T.08d) [symbolic = @HoldsType.as.Destroy.impl.%Destroy.impl_witness (constants.%Destroy.impl_witness.715)]
-// CHECK:STDOUT:     %complete_type: <witness> = complete_type_witness constants.%empty_struct_type [concrete = constants.%complete_type.357]
+// CHECK:STDOUT:     %complete_type: <witness> = complete_type_witness constants.%empty_struct_type [concrete = constants.%complete_type]
 // CHECK:STDOUT:     complete_type_witness = %complete_type
 // CHECK:STDOUT:
 // CHECK:STDOUT:   !members:
@@ -555,10 +585,11 @@ fn G() {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @C {
+// CHECK:STDOUT:   %Self.ref: type = name_ref Self, constants.%C [concrete = constants.%C]
 // CHECK:STDOUT:   impl_decl @C.as.Destroy.impl [concrete] {} {}
 // CHECK:STDOUT:   %Destroy.impl_witness_table = impl_witness_table (@C.as.Destroy.impl.%C.as.Destroy.impl.Op.decl), @C.as.Destroy.impl [concrete]
 // CHECK:STDOUT:   %Destroy.impl_witness: <witness> = impl_witness %Destroy.impl_witness_table [concrete = constants.%Destroy.impl_witness.edd]
-// CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness constants.%empty_struct_type [concrete = constants.%complete_type.357]
+// CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness constants.%empty_struct_type [concrete = constants.%complete_type]
 // CHECK:STDOUT:   complete_type_witness = %complete_type
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
@@ -621,11 +652,11 @@ fn G() {
 // CHECK:STDOUT:   %C.as.Destroy.impl.Op.bound: <bound method> = bound_method %.loc13_33.2, constants.%C.as.Destroy.impl.Op
 // CHECK:STDOUT:   %addr.loc13_33: %ptr.019 = addr_of %.loc13_33.2
 // CHECK:STDOUT:   %C.as.Destroy.impl.Op.call: init %empty_tuple.type = call %C.as.Destroy.impl.Op.bound(%addr.loc13_33)
-// CHECK:STDOUT:   %T.as.Destroy.impl.Op.bound: <bound method> = bound_method %.loc13_6.2, constants.%T.as.Destroy.impl.Op.180
-// CHECK:STDOUT:   %T.as.Destroy.impl.Op.specific_fn: <specific function> = specific_function constants.%T.as.Destroy.impl.Op.180, @T.as.Destroy.impl.Op(constants.%HoldsType.705) [concrete = constants.%T.as.Destroy.impl.Op.specific_fn]
-// CHECK:STDOUT:   %bound_method: <bound method> = bound_method %.loc13_6.2, %T.as.Destroy.impl.Op.specific_fn
+// CHECK:STDOUT:   %HoldsType.as.Destroy.impl.Op.bound: <bound method> = bound_method %.loc13_6.2, constants.%HoldsType.as.Destroy.impl.Op.7b8
+// CHECK:STDOUT:   %HoldsType.as.Destroy.impl.Op.specific_fn: <specific function> = specific_function constants.%HoldsType.as.Destroy.impl.Op.7b8, @HoldsType.as.Destroy.impl.Op(constants.%struct) [concrete = constants.%HoldsType.as.Destroy.impl.Op.specific_fn]
+// CHECK:STDOUT:   %bound_method: <bound method> = bound_method %.loc13_6.2, %HoldsType.as.Destroy.impl.Op.specific_fn
 // CHECK:STDOUT:   %addr.loc13_6: %ptr.5d1 = addr_of %.loc13_6.2
-// CHECK:STDOUT:   %T.as.Destroy.impl.Op.call: init %empty_tuple.type = call %bound_method(%addr.loc13_6)
+// CHECK:STDOUT:   %HoldsType.as.Destroy.impl.Op.call: init %empty_tuple.type = call %bound_method(%addr.loc13_6)
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -637,6 +668,7 @@ fn G() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @HoldsType.as.Destroy.impl(constants.%T.08d) {
 // CHECK:STDOUT:   %T => constants.%T.08d
+// CHECK:STDOUT:   %HoldsType => constants.%HoldsType.843
 // CHECK:STDOUT:   %Destroy.impl_witness => constants.%Destroy.impl_witness.715
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -669,13 +701,25 @@ fn G() {
 // CHECK:STDOUT:   %pattern_type.loc8_39 => constants.%pattern_type.c48
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
-// CHECK:STDOUT:   %require_complete.loc8_23 => constants.%complete_type.357
-// CHECK:STDOUT:   %require_complete.loc8_40 => constants.%complete_type.357
+// CHECK:STDOUT:   %require_complete.loc8_23 => constants.%complete_type
+// CHECK:STDOUT:   %require_complete.loc8_40 => constants.%complete_type
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @HoldsType.as.Destroy.impl(constants.%struct) {
 // CHECK:STDOUT:   %T => constants.%struct
+// CHECK:STDOUT:   %HoldsType => constants.%HoldsType.705
 // CHECK:STDOUT:   %Destroy.impl_witness => constants.%Destroy.impl_witness.131
+// CHECK:STDOUT:
+// CHECK:STDOUT: !definition:
+// CHECK:STDOUT:   %HoldsType.as.Destroy.impl.Op.type => constants.%HoldsType.as.Destroy.impl.Op.type.d13
+// CHECK:STDOUT:   %HoldsType.as.Destroy.impl.Op => constants.%HoldsType.as.Destroy.impl.Op.7b8
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: specific @HoldsType.as.Destroy.impl.Op(constants.%struct) {
+// CHECK:STDOUT:   %T => constants.%struct
+// CHECK:STDOUT:   %HoldsType => constants.%HoldsType.705
+// CHECK:STDOUT:   %ptr => constants.%ptr.5d1
+// CHECK:STDOUT:   %pattern_type => constants.%pattern_type.c97
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- fail_todo_class_access.carbon
@@ -694,6 +738,7 @@ fn G() {
 // CHECK:STDOUT:   %Class.as.Destroy.impl.Op: %Class.as.Destroy.impl.Op.type = struct_value () [concrete]
 // CHECK:STDOUT:   %struct_type.t: type = struct_type {.t: type} [concrete]
 // CHECK:STDOUT:   %complete_type.509: <witness> = complete_type_witness %struct_type.t [concrete]
+// CHECK:STDOUT:   %.Self: type = bind_symbolic_name .Self [symbolic_self]
 // CHECK:STDOUT:   %T.0de: %Class = bind_symbolic_name T, 0 [symbolic]
 // CHECK:STDOUT:   %pattern_type.761: type = pattern_type %Class [concrete]
 // CHECK:STDOUT:   %HoldsType.type: type = generic_class_type @HoldsType [concrete]
@@ -702,8 +747,8 @@ fn G() {
 // CHECK:STDOUT:   %Destroy.impl_witness.2b4af8.1: <witness> = impl_witness @HoldsType.%Destroy.impl_witness_table, @HoldsType.as.Destroy.impl(%T.0de) [symbolic]
 // CHECK:STDOUT:   %ptr.deb697.1: type = ptr_type %HoldsType.f95cf2.1 [symbolic]
 // CHECK:STDOUT:   %pattern_type.dc9093.1: type = pattern_type %ptr.deb697.1 [symbolic]
-// CHECK:STDOUT:   %HoldsType.as.Destroy.impl.Op.type: type = fn_type @HoldsType.as.Destroy.impl.Op, @HoldsType.as.Destroy.impl(%T.0de) [symbolic]
-// CHECK:STDOUT:   %HoldsType.as.Destroy.impl.Op: %HoldsType.as.Destroy.impl.Op.type = struct_value () [symbolic]
+// CHECK:STDOUT:   %HoldsType.as.Destroy.impl.Op.type.8c02a9.1: type = fn_type @HoldsType.as.Destroy.impl.Op, @HoldsType.as.Destroy.impl(%T.0de) [symbolic]
+// CHECK:STDOUT:   %HoldsType.as.Destroy.impl.Op.138e7c.1: %HoldsType.as.Destroy.impl.Op.type.8c02a9.1 = struct_value () [symbolic]
 // CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [concrete]
 // CHECK:STDOUT:   %complete_type.357: <witness> = complete_type_witness %empty_struct_type [concrete]
 // CHECK:STDOUT:   %pattern_type.937: type = pattern_type %HoldsType.f95cf2.1 [symbolic]
@@ -724,12 +769,13 @@ fn G() {
 // CHECK:STDOUT:   %HoldsType.f95cf2.2: type = class_type @HoldsType, @HoldsType(%c) [symbolic]
 // CHECK:STDOUT:   %HoldsType.val: %HoldsType.f95cf2.2 = struct_value () [symbolic]
 // CHECK:STDOUT:   %Destroy.impl_witness.2b4af8.2: <witness> = impl_witness @HoldsType.%Destroy.impl_witness_table, @HoldsType.as.Destroy.impl(%c) [symbolic]
+// CHECK:STDOUT:   %HoldsType.as.Destroy.impl.Op.type.8c02a9.2: type = fn_type @HoldsType.as.Destroy.impl.Op, @HoldsType.as.Destroy.impl(%c) [symbolic]
+// CHECK:STDOUT:   %HoldsType.as.Destroy.impl.Op.138e7c.2: %HoldsType.as.Destroy.impl.Op.type.8c02a9.2 = struct_value () [symbolic]
+// CHECK:STDOUT:   %Destroy.facet.d8aee7.2: %Destroy.type = facet_value %HoldsType.f95cf2.2, (%Destroy.impl_witness.2b4af8.2) [symbolic]
+// CHECK:STDOUT:   %.e9e: type = fn_type_with_self_type %Destroy.Op.type, %Destroy.facet.d8aee7.2 [symbolic]
 // CHECK:STDOUT:   %ptr.deb697.2: type = ptr_type %HoldsType.f95cf2.2 [symbolic]
-// CHECK:STDOUT:   %Destroy.lookup_impl_witness: <witness> = lookup_impl_witness %HoldsType.f95cf2.2, @Destroy [symbolic]
-// CHECK:STDOUT:   %Destroy.facet.088: %Destroy.type = facet_value %HoldsType.f95cf2.2, (%Destroy.lookup_impl_witness) [symbolic]
-// CHECK:STDOUT:   %.da6: type = fn_type_with_self_type %Destroy.Op.type, %Destroy.facet.088 [symbolic]
-// CHECK:STDOUT:   %impl.elem0: %.da6 = impl_witness_access %Destroy.lookup_impl_witness, element0 [symbolic]
-// CHECK:STDOUT:   %specific_impl_fn: <specific function> = specific_impl_function %impl.elem0, @Destroy.Op(%Destroy.facet.088) [symbolic]
+// CHECK:STDOUT:   %pattern_type.dc9093.2: type = pattern_type %ptr.deb697.2 [symbolic]
+// CHECK:STDOUT:   %HoldsType.as.Destroy.impl.Op.specific_fn: <specific function> = specific_function %HoldsType.as.Destroy.impl.Op.138e7c.2, @HoldsType.as.Destroy.impl.Op(%c) [symbolic]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -755,7 +801,10 @@ fn G() {
 // CHECK:STDOUT:   %HoldsType.decl: %HoldsType.type = class_decl @HoldsType [concrete = constants.%HoldsType.generic] {
 // CHECK:STDOUT:     %T.patt: %pattern_type.761 = symbolic_binding_pattern T, 0 [concrete]
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %Class.ref: type = name_ref Class, file.%Class.decl [concrete = constants.%Class]
+// CHECK:STDOUT:     %.loc8: type = splice_block %Class.ref [concrete = constants.%Class] {
+// CHECK:STDOUT:       %.Self: type = bind_symbolic_name .Self [symbolic_self = constants.%.Self]
+// CHECK:STDOUT:       %Class.ref: type = name_ref Class, file.%Class.decl [concrete = constants.%Class]
+// CHECK:STDOUT:     }
 // CHECK:STDOUT:     %T.loc8_17.2: %Class = bind_symbolic_name T, 0 [symbolic = %T.loc8_17.1 (constants.%T.0de)]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [concrete = constants.%F] {
@@ -765,7 +814,10 @@ fn G() {
 // CHECK:STDOUT:     %a.patt: <error> = binding_pattern a [concrete]
 // CHECK:STDOUT:     %a.param_patt: <error> = value_param_pattern %a.patt, call_param1 [concrete]
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %Class.ref: type = name_ref Class, file.%Class.decl [concrete = constants.%Class]
+// CHECK:STDOUT:     %.loc21_10: type = splice_block %Class.ref [concrete = constants.%Class] {
+// CHECK:STDOUT:       %.Self: type = bind_symbolic_name .Self [symbolic_self = constants.%.Self]
+// CHECK:STDOUT:       %Class.ref: type = name_ref Class, file.%Class.decl [concrete = constants.%Class]
+// CHECK:STDOUT:     }
 // CHECK:STDOUT:     %T.loc21_6.2: %Class = bind_symbolic_name T, 0 [symbolic = %T.loc21_6.1 (constants.%T.0de)]
 // CHECK:STDOUT:     %x.param: @F.%HoldsType.loc21_31.1 (%HoldsType.f95cf2.1) = value_param call_param0
 // CHECK:STDOUT:     %.loc21_31: type = splice_block %HoldsType.loc21_31.2 [symbolic = %HoldsType.loc21_31.1 (constants.%HoldsType.f95cf2.1)] {
@@ -787,7 +839,7 @@ fn G() {
 // CHECK:STDOUT:   %G.decl: %G.type = fn_decl @G [concrete = constants.%G] {} {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: impl @Class.as.Destroy.impl: constants.%Class as constants.%Destroy.type {
+// CHECK:STDOUT: impl @Class.as.Destroy.impl: @Class.%Self.ref as constants.%Destroy.type {
 // CHECK:STDOUT:   %Class.as.Destroy.impl.Op.decl: %Class.as.Destroy.impl.Op.type = fn_decl @Class.as.Destroy.impl.Op [concrete = constants.%Class.as.Destroy.impl.Op] {
 // CHECK:STDOUT:     %self.patt: %pattern_type.796 = binding_pattern self [concrete]
 // CHECK:STDOUT:     %self.param_patt: %pattern_type.796 = value_param_pattern %self.patt, call_param0 [concrete]
@@ -805,14 +857,15 @@ fn G() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic impl @HoldsType.as.Destroy.impl(@HoldsType.%T.loc8_17.2: %Class) {
 // CHECK:STDOUT:   %T: %Class = bind_symbolic_name T, 0 [symbolic = %T (constants.%T.0de)]
+// CHECK:STDOUT:   %HoldsType: type = class_type @HoldsType, @HoldsType(%T) [symbolic = %HoldsType (constants.%HoldsType.f95cf2.1)]
 // CHECK:STDOUT:   %Destroy.impl_witness: <witness> = impl_witness @HoldsType.%Destroy.impl_witness_table, @HoldsType.as.Destroy.impl(%T) [symbolic = %Destroy.impl_witness (constants.%Destroy.impl_witness.2b4af8.1)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
-// CHECK:STDOUT:   %HoldsType.as.Destroy.impl.Op.type: type = fn_type @HoldsType.as.Destroy.impl.Op, @HoldsType.as.Destroy.impl(%T) [symbolic = %HoldsType.as.Destroy.impl.Op.type (constants.%HoldsType.as.Destroy.impl.Op.type)]
-// CHECK:STDOUT:   %HoldsType.as.Destroy.impl.Op: @HoldsType.as.Destroy.impl.%HoldsType.as.Destroy.impl.Op.type (%HoldsType.as.Destroy.impl.Op.type) = struct_value () [symbolic = %HoldsType.as.Destroy.impl.Op (constants.%HoldsType.as.Destroy.impl.Op)]
+// CHECK:STDOUT:   %HoldsType.as.Destroy.impl.Op.type: type = fn_type @HoldsType.as.Destroy.impl.Op, @HoldsType.as.Destroy.impl(%T) [symbolic = %HoldsType.as.Destroy.impl.Op.type (constants.%HoldsType.as.Destroy.impl.Op.type.8c02a9.1)]
+// CHECK:STDOUT:   %HoldsType.as.Destroy.impl.Op: @HoldsType.as.Destroy.impl.%HoldsType.as.Destroy.impl.Op.type (%HoldsType.as.Destroy.impl.Op.type.8c02a9.1) = struct_value () [symbolic = %HoldsType.as.Destroy.impl.Op (constants.%HoldsType.as.Destroy.impl.Op.138e7c.1)]
 // CHECK:STDOUT:
-// CHECK:STDOUT:   impl: constants.%HoldsType.f95cf2.1 as constants.%Destroy.type {
-// CHECK:STDOUT:     %HoldsType.as.Destroy.impl.Op.decl: @HoldsType.as.Destroy.impl.%HoldsType.as.Destroy.impl.Op.type (%HoldsType.as.Destroy.impl.Op.type) = fn_decl @HoldsType.as.Destroy.impl.Op [symbolic = @HoldsType.as.Destroy.impl.%HoldsType.as.Destroy.impl.Op (constants.%HoldsType.as.Destroy.impl.Op)] {
+// CHECK:STDOUT:   impl: @HoldsType.%Self.ref as constants.%Destroy.type {
+// CHECK:STDOUT:     %HoldsType.as.Destroy.impl.Op.decl: @HoldsType.as.Destroy.impl.%HoldsType.as.Destroy.impl.Op.type (%HoldsType.as.Destroy.impl.Op.type.8c02a9.1) = fn_decl @HoldsType.as.Destroy.impl.Op [symbolic = @HoldsType.as.Destroy.impl.%HoldsType.as.Destroy.impl.Op (constants.%HoldsType.as.Destroy.impl.Op.138e7c.1)] {
 // CHECK:STDOUT:       %self.patt: @HoldsType.as.Destroy.impl.Op.%pattern_type (%pattern_type.dc9093.1) = binding_pattern self [concrete]
 // CHECK:STDOUT:       %self.param_patt: @HoldsType.as.Destroy.impl.Op.%pattern_type (%pattern_type.dc9093.1) = value_param_pattern %self.patt, call_param0 [concrete]
 // CHECK:STDOUT:       %.loc8_28.1: %pattern_type.f6d = addr_pattern %self.param_patt [concrete]
@@ -831,7 +884,7 @@ fn G() {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: impl @C.as.Destroy.impl: constants.%C as constants.%Destroy.type {
+// CHECK:STDOUT: impl @C.as.Destroy.impl: @C.%Self.ref as constants.%Destroy.type {
 // CHECK:STDOUT:   %C.as.Destroy.impl.Op.decl: %C.as.Destroy.impl.Op.type = fn_decl @C.as.Destroy.impl.Op [concrete = constants.%C.as.Destroy.impl.Op] {
 // CHECK:STDOUT:     %self.patt: %pattern_type.44a = binding_pattern self [concrete]
 // CHECK:STDOUT:     %self.param_patt: %pattern_type.44a = value_param_pattern %self.patt, call_param0 [concrete]
@@ -849,6 +902,7 @@ fn G() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @Class {
 // CHECK:STDOUT:   %.loc5: %Class.elem = field_decl t, element0 [concrete]
+// CHECK:STDOUT:   %Self.ref: type = name_ref Self, constants.%Class [concrete = constants.%Class]
 // CHECK:STDOUT:   impl_decl @Class.as.Destroy.impl [concrete] {} {}
 // CHECK:STDOUT:   %Destroy.impl_witness_table = impl_witness_table (@Class.as.Destroy.impl.%Class.as.Destroy.impl.Op.decl), @Class.as.Destroy.impl [concrete]
 // CHECK:STDOUT:   %Destroy.impl_witness: <witness> = impl_witness %Destroy.impl_witness_table [concrete = constants.%Destroy.impl_witness.b40]
@@ -866,6 +920,7 @@ fn G() {
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:
 // CHECK:STDOUT:   class {
+// CHECK:STDOUT:     %Self.ref: type = name_ref Self, constants.%HoldsType.f95cf2.1 [symbolic = @HoldsType.as.Destroy.impl.%HoldsType (constants.%HoldsType.f95cf2.1)]
 // CHECK:STDOUT:     impl_decl @HoldsType.as.Destroy.impl [concrete] {} {}
 // CHECK:STDOUT:     %Destroy.impl_witness_table = impl_witness_table (@HoldsType.as.Destroy.impl.%HoldsType.as.Destroy.impl.Op.decl), @HoldsType.as.Destroy.impl [concrete]
 // CHECK:STDOUT:     %Destroy.impl_witness: <witness> = impl_witness %Destroy.impl_witness_table, @HoldsType.as.Destroy.impl(constants.%T.0de) [symbolic = @HoldsType.as.Destroy.impl.%Destroy.impl_witness (constants.%Destroy.impl_witness.2b4af8.1)]
@@ -878,6 +933,7 @@ fn G() {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @C {
+// CHECK:STDOUT:   %Self.ref: type = name_ref Self, constants.%C [concrete = constants.%C]
 // CHECK:STDOUT:   impl_decl @C.as.Destroy.impl [concrete] {} {}
 // CHECK:STDOUT:   %Destroy.impl_witness_table = impl_witness_table (@C.as.Destroy.impl.%C.as.Destroy.impl.Op.decl), @C.as.Destroy.impl [concrete]
 // CHECK:STDOUT:   %Destroy.impl_witness: <witness> = impl_witness %Destroy.impl_witness_table [concrete = constants.%Destroy.impl_witness.edd]
@@ -932,7 +988,10 @@ fn G() {
 // CHECK:STDOUT:   %.loc26_26.5: init %Class = class_init (%.loc26_26.4), %.loc26_26.2 [concrete = constants.%Class.val]
 // CHECK:STDOUT:   %.loc26_26.6: ref %Class = temporary %.loc26_26.2, %.loc26_26.5
 // CHECK:STDOUT:   %.loc26_28.1: ref %Class = converted %.loc26_26.1, %.loc26_26.6
-// CHECK:STDOUT:   %Class.ref.loc26_11: type = name_ref Class, file.%Class.decl [concrete = constants.%Class]
+// CHECK:STDOUT:   %.loc26_11: type = splice_block %Class.ref.loc26_11 [concrete = constants.%Class] {
+// CHECK:STDOUT:     %.Self: type = bind_symbolic_name .Self [symbolic_self = constants.%.Self]
+// CHECK:STDOUT:     %Class.ref.loc26_11: type = name_ref Class, file.%Class.decl [concrete = constants.%Class]
+// CHECK:STDOUT:   }
 // CHECK:STDOUT:   %.loc26_28.2: %Class = bind_value %.loc26_28.1
 // CHECK:STDOUT:   %c: %Class = bind_symbolic_name c, 0, %.loc26_28.2 [symbolic = constants.%c]
 // CHECK:STDOUT:   %F.ref: %F.type = name_ref F, file.%F.decl [concrete = constants.%F]
@@ -945,12 +1004,12 @@ fn G() {
 // CHECK:STDOUT:   %.loc27_6.4: ref %HoldsType.f95cf2.2 = temporary %.loc27_6.2, %.loc27_6.3
 // CHECK:STDOUT:   %.loc27_8: ref %HoldsType.f95cf2.2 = converted %.loc27_6.1, %.loc27_6.4
 // CHECK:STDOUT:   %.loc27_26: %empty_struct_type = struct_literal ()
-// CHECK:STDOUT:   %impl.elem0: %.da6 = impl_witness_access constants.%Destroy.lookup_impl_witness, element0 [symbolic = constants.%impl.elem0]
+// CHECK:STDOUT:   %impl.elem0: %.e9e = impl_witness_access constants.%Destroy.impl_witness.2b4af8.2, element0 [symbolic = constants.%HoldsType.as.Destroy.impl.Op.138e7c.2]
 // CHECK:STDOUT:   %bound_method.loc27_6.1: <bound method> = bound_method %.loc27_6.2, %impl.elem0
-// CHECK:STDOUT:   %specific_impl_fn: <specific function> = specific_impl_function %impl.elem0, @Destroy.Op(constants.%Destroy.facet.088) [symbolic = constants.%specific_impl_fn]
-// CHECK:STDOUT:   %bound_method.loc27_6.2: <bound method> = bound_method %.loc27_6.2, %specific_impl_fn
+// CHECK:STDOUT:   %specific_fn: <specific function> = specific_function %impl.elem0, @HoldsType.as.Destroy.impl.Op(constants.%c) [symbolic = constants.%HoldsType.as.Destroy.impl.Op.specific_fn]
+// CHECK:STDOUT:   %bound_method.loc27_6.2: <bound method> = bound_method %.loc27_6.2, %specific_fn
 // CHECK:STDOUT:   %addr.loc27: %ptr.deb697.2 = addr_of %.loc27_6.2
-// CHECK:STDOUT:   %.loc27_6.5: init %empty_tuple.type = call %bound_method.loc27_6.2(%addr.loc27)
+// CHECK:STDOUT:   %HoldsType.as.Destroy.impl.Op.call: init %empty_tuple.type = call %bound_method.loc27_6.2(%addr.loc27)
 // CHECK:STDOUT:   %Class.as.Destroy.impl.Op.bound: <bound method> = bound_method %.loc26_26.2, constants.%Class.as.Destroy.impl.Op
 // CHECK:STDOUT:   %addr.loc26: %ptr.e71 = addr_of %.loc26_26.2
 // CHECK:STDOUT:   %Class.as.Destroy.impl.Op.call: init %empty_tuple.type = call %Class.as.Destroy.impl.Op.bound(%addr.loc26)
@@ -965,6 +1024,7 @@ fn G() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @HoldsType.as.Destroy.impl(constants.%T.0de) {
 // CHECK:STDOUT:   %T => constants.%T.0de
+// CHECK:STDOUT:   %HoldsType => constants.%HoldsType.f95cf2.1
 // CHECK:STDOUT:   %Destroy.impl_witness => constants.%Destroy.impl_witness.2b4af8.1
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -990,12 +1050,25 @@ fn G() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @HoldsType.as.Destroy.impl(constants.%c) {
 // CHECK:STDOUT:   %T => constants.%c
+// CHECK:STDOUT:   %HoldsType => constants.%HoldsType.f95cf2.2
 // CHECK:STDOUT:   %Destroy.impl_witness => constants.%Destroy.impl_witness.2b4af8.2
+// CHECK:STDOUT:
+// CHECK:STDOUT: !definition:
+// CHECK:STDOUT:   %HoldsType.as.Destroy.impl.Op.type => constants.%HoldsType.as.Destroy.impl.Op.type.8c02a9.2
+// CHECK:STDOUT:   %HoldsType.as.Destroy.impl.Op => constants.%HoldsType.as.Destroy.impl.Op.138e7c.2
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: specific @HoldsType.as.Destroy.impl.Op(constants.%c) {
+// CHECK:STDOUT:   %T => constants.%c
+// CHECK:STDOUT:   %HoldsType => constants.%HoldsType.f95cf2.2
+// CHECK:STDOUT:   %ptr => constants.%ptr.deb697.2
+// CHECK:STDOUT:   %pattern_type => constants.%pattern_type.dc9093.2
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- fail_todo_array_index.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
+// CHECK:STDOUT:   %.Self.644: type = bind_symbolic_name .Self [symbolic_self]
 // CHECK:STDOUT:   %int_1: Core.IntLiteral = int_value 1 [concrete]
 // CHECK:STDOUT:   %array_type: type = array_type %int_1, type [concrete]
 // CHECK:STDOUT:   %T.eb6: %array_type = bind_symbolic_name T, 0 [symbolic]
@@ -1082,6 +1155,7 @@ fn G() {
 // CHECK:STDOUT:     %T.patt: %pattern_type.dcb = symbolic_binding_pattern T, 0 [concrete]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %.loc4: type = splice_block %array_type [concrete = constants.%array_type] {
+// CHECK:STDOUT:       %.Self: type = bind_symbolic_name .Self [symbolic_self = constants.%.Self.644]
 // CHECK:STDOUT:       %int_1: Core.IntLiteral = int_value 1 [concrete = constants.%int_1]
 // CHECK:STDOUT:       %array_type: type = array_type %int_1, type [concrete = constants.%array_type]
 // CHECK:STDOUT:     }
@@ -1095,6 +1169,7 @@ fn G() {
 // CHECK:STDOUT:     %a.param_patt: <error> = value_param_pattern %a.patt, call_param1 [concrete]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %.loc12_23: type = splice_block %array_type [concrete = constants.%array_type] {
+// CHECK:STDOUT:       %.Self: type = bind_symbolic_name .Self [symbolic_self = constants.%.Self.644]
 // CHECK:STDOUT:       %int_1: Core.IntLiteral = int_value 1 [concrete = constants.%int_1]
 // CHECK:STDOUT:       %array_type: type = array_type %int_1, type [concrete = constants.%array_type]
 // CHECK:STDOUT:     }
@@ -1131,13 +1206,14 @@ fn G() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic impl @HoldsType.as.Destroy.impl(@HoldsType.%T.loc4_17.2: %array_type) {
 // CHECK:STDOUT:   %T: %array_type = bind_symbolic_name T, 0 [symbolic = %T (constants.%T.eb6)]
+// CHECK:STDOUT:   %HoldsType: type = class_type @HoldsType, @HoldsType(%T) [symbolic = %HoldsType (constants.%HoldsType)]
 // CHECK:STDOUT:   %Destroy.impl_witness: <witness> = impl_witness @HoldsType.%Destroy.impl_witness_table, @HoldsType.as.Destroy.impl(%T) [symbolic = %Destroy.impl_witness (constants.%Destroy.impl_witness.139)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %HoldsType.as.Destroy.impl.Op.type: type = fn_type @HoldsType.as.Destroy.impl.Op, @HoldsType.as.Destroy.impl(%T) [symbolic = %HoldsType.as.Destroy.impl.Op.type (constants.%HoldsType.as.Destroy.impl.Op.type)]
 // CHECK:STDOUT:   %HoldsType.as.Destroy.impl.Op: @HoldsType.as.Destroy.impl.%HoldsType.as.Destroy.impl.Op.type (%HoldsType.as.Destroy.impl.Op.type) = struct_value () [symbolic = %HoldsType.as.Destroy.impl.Op (constants.%HoldsType.as.Destroy.impl.Op)]
 // CHECK:STDOUT:
-// CHECK:STDOUT:   impl: constants.%HoldsType as constants.%Destroy.type {
+// CHECK:STDOUT:   impl: @HoldsType.%Self.ref as constants.%Destroy.type {
 // CHECK:STDOUT:     %HoldsType.as.Destroy.impl.Op.decl: @HoldsType.as.Destroy.impl.%HoldsType.as.Destroy.impl.Op.type (%HoldsType.as.Destroy.impl.Op.type) = fn_decl @HoldsType.as.Destroy.impl.Op [symbolic = @HoldsType.as.Destroy.impl.%HoldsType.as.Destroy.impl.Op (constants.%HoldsType.as.Destroy.impl.Op)] {
 // CHECK:STDOUT:       %self.patt: @HoldsType.as.Destroy.impl.Op.%pattern_type (%pattern_type.34f) = binding_pattern self [concrete]
 // CHECK:STDOUT:       %self.param_patt: @HoldsType.as.Destroy.impl.Op.%pattern_type (%pattern_type.34f) = value_param_pattern %self.patt, call_param0 [concrete]
@@ -1157,7 +1233,7 @@ fn G() {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: impl @C.as.Destroy.impl: constants.%C as constants.%Destroy.type {
+// CHECK:STDOUT: impl @C.as.Destroy.impl: @C.%Self.ref as constants.%Destroy.type {
 // CHECK:STDOUT:   %C.as.Destroy.impl.Op.decl: %C.as.Destroy.impl.Op.type = fn_decl @C.as.Destroy.impl.Op [concrete = constants.%C.as.Destroy.impl.Op] {
 // CHECK:STDOUT:     %self.patt: %pattern_type.44a = binding_pattern self [concrete]
 // CHECK:STDOUT:     %self.param_patt: %pattern_type.44a = value_param_pattern %self.patt, call_param0 [concrete]
@@ -1179,6 +1255,7 @@ fn G() {
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:
 // CHECK:STDOUT:   class {
+// CHECK:STDOUT:     %Self.ref: type = name_ref Self, constants.%HoldsType [symbolic = @HoldsType.as.Destroy.impl.%HoldsType (constants.%HoldsType)]
 // CHECK:STDOUT:     impl_decl @HoldsType.as.Destroy.impl [concrete] {} {}
 // CHECK:STDOUT:     %Destroy.impl_witness_table = impl_witness_table (@HoldsType.as.Destroy.impl.%HoldsType.as.Destroy.impl.Op.decl), @HoldsType.as.Destroy.impl [concrete]
 // CHECK:STDOUT:     %Destroy.impl_witness: <witness> = impl_witness %Destroy.impl_witness_table, @HoldsType.as.Destroy.impl(constants.%T.eb6) [symbolic = @HoldsType.as.Destroy.impl.%Destroy.impl_witness (constants.%Destroy.impl_witness.139)]
@@ -1191,6 +1268,7 @@ fn G() {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @C {
+// CHECK:STDOUT:   %Self.ref: type = name_ref Self, constants.%C [concrete = constants.%C]
 // CHECK:STDOUT:   impl_decl @C.as.Destroy.impl [concrete] {} {}
 // CHECK:STDOUT:   %Destroy.impl_witness_table = impl_witness_table (@C.as.Destroy.impl.%C.as.Destroy.impl.Op.decl), @C.as.Destroy.impl [concrete]
 // CHECK:STDOUT:   %Destroy.impl_witness: <witness> = impl_witness %Destroy.impl_witness_table [concrete = constants.%Destroy.impl_witness.edd]
@@ -1262,6 +1340,7 @@ fn G() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @HoldsType.as.Destroy.impl(constants.%T.eb6) {
 // CHECK:STDOUT:   %T => constants.%T.eb6
+// CHECK:STDOUT:   %HoldsType => constants.%HoldsType
 // CHECK:STDOUT:   %Destroy.impl_witness => constants.%Destroy.impl_witness.139
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

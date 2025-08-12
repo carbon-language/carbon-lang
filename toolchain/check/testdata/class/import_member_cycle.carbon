@@ -64,7 +64,7 @@ fn Run() {
 // CHECK:STDOUT:   %Cycle.decl: type = class_decl @Cycle [concrete = constants.%Cycle] {} {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: impl @Cycle.as.Destroy.impl: constants.%Cycle as constants.%Destroy.type {
+// CHECK:STDOUT: impl @Cycle.as.Destroy.impl: @Cycle.%Self.ref as constants.%Destroy.type {
 // CHECK:STDOUT:   %Cycle.as.Destroy.impl.Op.decl: %Cycle.as.Destroy.impl.Op.type = fn_decl @Cycle.as.Destroy.impl.Op [concrete = constants.%Cycle.as.Destroy.impl.Op] {
 // CHECK:STDOUT:     %self.patt: %pattern_type.d3d = binding_pattern self [concrete]
 // CHECK:STDOUT:     %self.param_patt: %pattern_type.d3d = value_param_pattern %self.patt, call_param0 [concrete]
@@ -84,6 +84,7 @@ fn Run() {
 // CHECK:STDOUT:   %Cycle.ref: type = name_ref Cycle, file.%Cycle.decl [concrete = constants.%Cycle]
 // CHECK:STDOUT:   %ptr: type = ptr_type %Cycle.ref [concrete = constants.%ptr.257]
 // CHECK:STDOUT:   %.loc5: %Cycle.elem = field_decl a, element0 [concrete]
+// CHECK:STDOUT:   %Self.ref: type = name_ref Self, constants.%Cycle [concrete = constants.%Cycle]
 // CHECK:STDOUT:   impl_decl @Cycle.as.Destroy.impl [concrete] {} {}
 // CHECK:STDOUT:   %Destroy.impl_witness_table = impl_witness_table (@Cycle.as.Destroy.impl.%Cycle.as.Destroy.impl.Op.decl), @Cycle.as.Destroy.impl [concrete]
 // CHECK:STDOUT:   %Destroy.impl_witness: <witness> = impl_witness %Destroy.impl_witness_table [concrete = constants.%Destroy.impl_witness]
@@ -128,7 +129,7 @@ fn Run() {
 // CHECK:STDOUT:   %Main.import_ref.4e0 = import_ref Main//a, loc5_8, unloaded
 // CHECK:STDOUT:   %Core.Destroy: type = import_ref Core//prelude/parts/destroy, Destroy, loaded [concrete = constants.%Destroy.type]
 // CHECK:STDOUT:   %Main.import_ref.4ac = import_ref Main//a, loc4_13, unloaded
-// CHECK:STDOUT:   %Main.import_ref.8fb: type = import_ref Main//a, inst19 [no loc], loaded [concrete = constants.%Cycle]
+// CHECK:STDOUT:   %Main.import_ref.f64: type = import_ref Main//a, loc4_13, loaded [concrete = constants.%Cycle]
 // CHECK:STDOUT:   %Main.import_ref.cb9: type = import_ref Main//a, inst27 [no loc], loaded [concrete = constants.%Destroy.type]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -143,7 +144,7 @@ fn Run() {
 // CHECK:STDOUT:   %Run.decl: %Run.type = fn_decl @Run [concrete = constants.%Run] {} {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: impl @Cycle.as.Destroy.impl: imports.%Main.import_ref.8fb as imports.%Main.import_ref.cb9 [from "a.carbon"] {
+// CHECK:STDOUT: impl @Cycle.as.Destroy.impl: imports.%Main.import_ref.f64 as imports.%Main.import_ref.cb9 [from "a.carbon"] {
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   witness = imports.%Main.import_ref.4ac
 // CHECK:STDOUT: }

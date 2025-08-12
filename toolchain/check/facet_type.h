@@ -95,6 +95,14 @@ auto ResolveFacetTypeRewriteConstraints(
     llvm::SmallVector<SemIR::FacetTypeInfo::RewriteConstraint>& rewrites)
     -> bool;
 
+// Introduce `.Self` as a symbolic binding into the current scope, and return
+// the `BindSymbolicName` instruction.
+//
+// The `self_type_id` is either a facet type (as `FacetType`) or `type` (as
+// `TypeType`).
+auto MakePeriodSelfFacetValue(Context& context, SemIR::TypeId self_type_id)
+    -> SemIR::InstId;
+
 }  // namespace Carbon::Check
 
 #endif  // CARBON_TOOLCHAIN_CHECK_FACET_TYPE_H_

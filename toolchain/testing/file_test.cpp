@@ -224,7 +224,7 @@ auto ToolchainFileTest::GetDefaultArgs() const
                               "--phase=" + component_.str(),
                               // Use the install path to exclude prelude files.
                               "--exclude-dump-file-prefix=" +
-                                  data_->installation.core_package(),
+                                  data_->installation.core_package().native(),
                           });
 
   if (component_ == "lex") {
@@ -315,8 +315,8 @@ auto ToolchainFileTest::DoExtraCheckReplacements(std::string& check_line) const
     // TODO: Consider adding a content keyword to name the core package, and
     // replace with that instead. Alternatively, consider adding the core
     // package to the VFS with a fixed name.
-    absl::StrReplaceAll({{data_->installation.core_package(), "{{.*}}"}},
-                        &check_line);
+    absl::StrReplaceAll(
+        {{data_->installation.core_package().native(), "{{.*}}"}}, &check_line);
     if (component_ == "check") {
       DoClangASTCheckReplacements(check_line);
     }

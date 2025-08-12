@@ -375,15 +375,24 @@ struct TemplateBindingName {
   AnyRuntimeBindingPatternName name;
 };
 
+struct CompileTimeBindingPatternStart {
+  static constexpr auto Kind =
+      NodeKind::CompileTimeBindingPatternStart.Define({.child_count = 1});
+  // TODO: is there some way to reuse AnyRuntimeBindingPatternName here?
+  NodeIdOneOf<IdentifierNameNotBeforeParams, SelfValueName, UnderscoreName,
+              TemplateBindingName>
+      name;
+  // This is a virtual token. The `:!` token is owned by the
+  // CompileTimeBindingPattern node.
+  Lex::ColonExclaimTokenIndex token;
+};
+
 // `name:! Type`
 struct CompileTimeBindingPattern {
   static constexpr auto Kind = NodeKind::CompileTimeBindingPattern.Define(
       {.category = NodeCategory::Pattern, .child_count = 2});
 
-  // TODO: is there some way to reuse AnyRuntimeBindingPatternName here?
-  NodeIdOneOf<IdentifierNameNotBeforeParams, SelfValueName, UnderscoreName,
-              TemplateBindingName>
-      name;
+  CompileTimeBindingPatternStartId introducer;
   Lex::ColonExclaimTokenIndex token;
   AnyExprId type;
 };

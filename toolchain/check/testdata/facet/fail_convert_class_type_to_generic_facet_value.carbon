@@ -40,6 +40,7 @@ fn G() {
 // CHECK:STDOUT: --- fail_convert_class_type_to_generic_facet_value.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
+// CHECK:STDOUT:   %.Self: type = bind_symbolic_name .Self [symbolic_self]
 // CHECK:STDOUT:   %Scalar: type = bind_symbolic_name Scalar, 0 [symbolic]
 // CHECK:STDOUT:   %pattern_type.98f: type = pattern_type type [concrete]
 // CHECK:STDOUT:   %Generic.type.c21: type = generic_interface_type @Generic [concrete]
@@ -115,6 +116,7 @@ fn G() {
 // CHECK:STDOUT:   %Generic.decl: %Generic.type.c21 = interface_decl @Generic [concrete = constants.%Generic.generic] {
 // CHECK:STDOUT:     %Scalar.patt: %pattern_type.98f = symbolic_binding_pattern Scalar, 0 [concrete]
 // CHECK:STDOUT:   } {
+// CHECK:STDOUT:     %.Self: type = bind_symbolic_name .Self [symbolic_self = constants.%.Self]
 // CHECK:STDOUT:     %Scalar.loc15_19.2: type = bind_symbolic_name Scalar, 0 [symbolic = %Scalar.loc15_19.1 (constants.%Scalar)]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %GenericParam.decl: type = class_decl @GenericParam [concrete = constants.%GenericParam] {} {}
@@ -132,8 +134,10 @@ fn G() {
 // CHECK:STDOUT:     %T.patt: %pattern_type.98f = symbolic_binding_pattern T, 0 [concrete]
 // CHECK:STDOUT:     %U.patt: @CallGenericMethod.%pattern_type (%pattern_type.80f) = symbolic_binding_pattern U, 1 [concrete]
 // CHECK:STDOUT:   } {
+// CHECK:STDOUT:     %.Self.1: type = bind_symbolic_name .Self [symbolic_self = constants.%.Self]
 // CHECK:STDOUT:     %T.loc27_22.2: type = bind_symbolic_name T, 0 [symbolic = %T.loc27_22.1 (constants.%T)]
 // CHECK:STDOUT:     %.loc27: type = splice_block %Generic.type.loc27_45.2 [symbolic = %Generic.type.loc27_45.1 (constants.%Generic.type.91ccba.2)] {
+// CHECK:STDOUT:       %.Self.2: type = bind_symbolic_name .Self [symbolic_self = constants.%.Self]
 // CHECK:STDOUT:       %Generic.ref: %Generic.type.c21 = name_ref Generic, file.%Generic.decl [concrete = constants.%Generic.generic]
 // CHECK:STDOUT:       %T.ref: type = name_ref T, %T.loc27_22.2 [symbolic = %T.loc27_22.1 (constants.%T)]
 // CHECK:STDOUT:       %Generic.type.loc27_45.2: type = facet_type <@Generic, @Generic(constants.%T)> [symbolic = %Generic.type.loc27_45.1 (constants.%Generic.type.91ccba.2)]
@@ -166,7 +170,7 @@ fn G() {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: impl @GenericParam.as.Destroy.impl: constants.%GenericParam as constants.%Destroy.type {
+// CHECK:STDOUT: impl @GenericParam.as.Destroy.impl: @GenericParam.%Self.ref as constants.%Destroy.type {
 // CHECK:STDOUT:   %GenericParam.as.Destroy.impl.Op.decl: %GenericParam.as.Destroy.impl.Op.type = fn_decl @GenericParam.as.Destroy.impl.Op [concrete = constants.%GenericParam.as.Destroy.impl.Op] {
 // CHECK:STDOUT:     %self.patt: %pattern_type.7c3 = binding_pattern self [concrete]
 // CHECK:STDOUT:     %self.param_patt: %pattern_type.7c3 = value_param_pattern %self.patt, call_param0 [concrete]
@@ -182,7 +186,7 @@ fn G() {
 // CHECK:STDOUT:   witness = @GenericParam.%Destroy.impl_witness
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: impl @WrongGenericParam.as.Destroy.impl: constants.%WrongGenericParam as constants.%Destroy.type {
+// CHECK:STDOUT: impl @WrongGenericParam.as.Destroy.impl: @WrongGenericParam.%Self.ref as constants.%Destroy.type {
 // CHECK:STDOUT:   %WrongGenericParam.as.Destroy.impl.Op.decl: %WrongGenericParam.as.Destroy.impl.Op.type = fn_decl @WrongGenericParam.as.Destroy.impl.Op [concrete = constants.%WrongGenericParam.as.Destroy.impl.Op] {
 // CHECK:STDOUT:     %self.patt: %pattern_type.396 = binding_pattern self [concrete]
 // CHECK:STDOUT:     %self.param_patt: %pattern_type.396 = value_param_pattern %self.patt, call_param0 [concrete]
@@ -198,7 +202,7 @@ fn G() {
 // CHECK:STDOUT:   witness = @WrongGenericParam.%Destroy.impl_witness
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: impl @ImplsGeneric.as.Destroy.impl: constants.%ImplsGeneric as constants.%Destroy.type {
+// CHECK:STDOUT: impl @ImplsGeneric.as.Destroy.impl: @ImplsGeneric.%Self.ref as constants.%Destroy.type {
 // CHECK:STDOUT:   %ImplsGeneric.as.Destroy.impl.Op.decl: %ImplsGeneric.as.Destroy.impl.Op.type = fn_decl @ImplsGeneric.as.Destroy.impl.Op [concrete = constants.%ImplsGeneric.as.Destroy.impl.Op] {
 // CHECK:STDOUT:     %self.patt: %pattern_type.2db = binding_pattern self [concrete]
 // CHECK:STDOUT:     %self.param_patt: %pattern_type.2db = value_param_pattern %self.patt, call_param0 [concrete]
@@ -223,6 +227,7 @@ fn G() {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @GenericParam {
+// CHECK:STDOUT:   %Self.ref: type = name_ref Self, constants.%GenericParam [concrete = constants.%GenericParam]
 // CHECK:STDOUT:   impl_decl @GenericParam.as.Destroy.impl [concrete] {} {}
 // CHECK:STDOUT:   %Destroy.impl_witness_table = impl_witness_table (@GenericParam.as.Destroy.impl.%GenericParam.as.Destroy.impl.Op.decl), @GenericParam.as.Destroy.impl [concrete]
 // CHECK:STDOUT:   %Destroy.impl_witness: <witness> = impl_witness %Destroy.impl_witness_table [concrete = constants.%Destroy.impl_witness.884]
@@ -234,6 +239,7 @@ fn G() {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @WrongGenericParam {
+// CHECK:STDOUT:   %Self.ref: type = name_ref Self, constants.%WrongGenericParam [concrete = constants.%WrongGenericParam]
 // CHECK:STDOUT:   impl_decl @WrongGenericParam.as.Destroy.impl [concrete] {} {}
 // CHECK:STDOUT:   %Destroy.impl_witness_table = impl_witness_table (@WrongGenericParam.as.Destroy.impl.%WrongGenericParam.as.Destroy.impl.Op.decl), @WrongGenericParam.as.Destroy.impl [concrete]
 // CHECK:STDOUT:   %Destroy.impl_witness: <witness> = impl_witness %Destroy.impl_witness_table [concrete = constants.%Destroy.impl_witness.01c]
@@ -245,6 +251,7 @@ fn G() {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @ImplsGeneric {
+// CHECK:STDOUT:   %Self.ref: type = name_ref Self, constants.%ImplsGeneric [concrete = constants.%ImplsGeneric]
 // CHECK:STDOUT:   impl_decl @ImplsGeneric.as.Destroy.impl [concrete] {} {}
 // CHECK:STDOUT:   %Destroy.impl_witness_table = impl_witness_table (@ImplsGeneric.as.Destroy.impl.%ImplsGeneric.as.Destroy.impl.Op.decl), @ImplsGeneric.as.Destroy.impl [concrete]
 // CHECK:STDOUT:   %Destroy.impl_witness: <witness> = impl_witness %Destroy.impl_witness_table [concrete = constants.%Destroy.impl_witness.9ca]

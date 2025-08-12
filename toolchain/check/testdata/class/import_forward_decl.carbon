@@ -84,7 +84,7 @@ class ForwardDecl {
 // CHECK:STDOUT:   %ForwardDecl.decl: type = class_decl @ForwardDecl [concrete = constants.%ForwardDecl] {} {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: impl @ForwardDecl.as.Destroy.impl: constants.%ForwardDecl as constants.%Destroy.type {
+// CHECK:STDOUT: impl @ForwardDecl.as.Destroy.impl: @ForwardDecl.%Self.ref as constants.%Destroy.type {
 // CHECK:STDOUT:   %ForwardDecl.as.Destroy.impl.Op.decl: %ForwardDecl.as.Destroy.impl.Op.type = fn_decl @ForwardDecl.as.Destroy.impl.Op [concrete = constants.%ForwardDecl.as.Destroy.impl.Op] {
 // CHECK:STDOUT:     %self.patt: %pattern_type.fd7 = binding_pattern self [concrete]
 // CHECK:STDOUT:     %self.param_patt: %pattern_type.fd7 = value_param_pattern %self.patt, call_param0 [concrete]
@@ -101,6 +101,7 @@ class ForwardDecl {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @ForwardDecl {
+// CHECK:STDOUT:   %Self.ref: type = name_ref Self, constants.%ForwardDecl [concrete = constants.%ForwardDecl]
 // CHECK:STDOUT:   impl_decl @ForwardDecl.as.Destroy.impl [concrete] {} {}
 // CHECK:STDOUT:   %Destroy.impl_witness_table = impl_witness_table (@ForwardDecl.as.Destroy.impl.%ForwardDecl.as.Destroy.impl.Op.decl), @ForwardDecl.as.Destroy.impl [concrete]
 // CHECK:STDOUT:   %Destroy.impl_witness: <witness> = impl_witness %Destroy.impl_witness_table [concrete = constants.%Destroy.impl_witness]

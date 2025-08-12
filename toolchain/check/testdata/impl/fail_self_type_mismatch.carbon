@@ -46,6 +46,7 @@ impl i32 as I {
 // CHECK:STDOUT: --- fail_self_type_mismatch.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
+// CHECK:STDOUT:   %.Self.644: type = bind_symbolic_name .Self [symbolic_self]
 // CHECK:STDOUT:   %T: type = bind_symbolic_name T, 0 [symbolic]
 // CHECK:STDOUT:   %pattern_type.98f: type = pattern_type type [concrete]
 // CHECK:STDOUT:   %X: %T = bind_symbolic_name X, 1 [symbolic]
@@ -127,8 +128,12 @@ impl i32 as I {
 // CHECK:STDOUT:     %T.patt: %pattern_type.98f = symbolic_binding_pattern T, 0 [concrete]
 // CHECK:STDOUT:     %X.patt: @C.%pattern_type (%pattern_type.7dcd0a.1) = symbolic_binding_pattern X, 1 [concrete]
 // CHECK:STDOUT:   } {
+// CHECK:STDOUT:     %.Self.1: type = bind_symbolic_name .Self [symbolic_self = constants.%.Self.644]
 // CHECK:STDOUT:     %T.loc15_9.2: type = bind_symbolic_name T, 0 [symbolic = %T.loc15_9.1 (constants.%T)]
-// CHECK:STDOUT:     %T.ref: type = name_ref T, %T.loc15_9.2 [symbolic = %T.loc15_9.1 (constants.%T)]
+// CHECK:STDOUT:     %.loc15: type = splice_block %T.ref [symbolic = %T.loc15_9.1 (constants.%T)] {
+// CHECK:STDOUT:       %.Self.2: type = bind_symbolic_name .Self [symbolic_self = constants.%.Self.644]
+// CHECK:STDOUT:       %T.ref: type = name_ref T, %T.loc15_9.2 [symbolic = %T.loc15_9.1 (constants.%T)]
+// CHECK:STDOUT:     }
 // CHECK:STDOUT:     %X.loc15_19.2: @C.%T.loc15_9.1 (%T) = bind_symbolic_name X, 1 [symbolic = %X.loc15_19.1 (constants.%X)]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %I.decl: type = interface_decl @I [concrete = constants.%I.type] {} {}
@@ -175,13 +180,14 @@ impl i32 as I {
 // CHECK:STDOUT: generic impl @C.as.Destroy.impl(@C.%T.loc15_9.2: type, @C.%X.loc15_19.2: @C.%T.loc15_9.1 (%T)) {
 // CHECK:STDOUT:   %T: type = bind_symbolic_name T, 0 [symbolic = %T (constants.%T)]
 // CHECK:STDOUT:   %X: @C.as.Destroy.impl.%T (%T) = bind_symbolic_name X, 1 [symbolic = %X (constants.%X)]
+// CHECK:STDOUT:   %C: type = class_type @C, @C(%T, %X) [symbolic = %C (constants.%C.b36)]
 // CHECK:STDOUT:   %Destroy.impl_witness: <witness> = impl_witness @C.%Destroy.impl_witness_table, @C.as.Destroy.impl(%T, %X) [symbolic = %Destroy.impl_witness (constants.%Destroy.impl_witness.e7a)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %C.as.Destroy.impl.Op.type: type = fn_type @C.as.Destroy.impl.Op, @C.as.Destroy.impl(%T, %X) [symbolic = %C.as.Destroy.impl.Op.type (constants.%C.as.Destroy.impl.Op.type)]
 // CHECK:STDOUT:   %C.as.Destroy.impl.Op: @C.as.Destroy.impl.%C.as.Destroy.impl.Op.type (%C.as.Destroy.impl.Op.type) = struct_value () [symbolic = %C.as.Destroy.impl.Op (constants.%C.as.Destroy.impl.Op)]
 // CHECK:STDOUT:
-// CHECK:STDOUT:   impl: constants.%C.b36 as constants.%Destroy.type {
+// CHECK:STDOUT:   impl: @C.%Self.ref as constants.%Destroy.type {
 // CHECK:STDOUT:     %C.as.Destroy.impl.Op.decl: @C.as.Destroy.impl.%C.as.Destroy.impl.Op.type (%C.as.Destroy.impl.Op.type) = fn_decl @C.as.Destroy.impl.Op [symbolic = @C.as.Destroy.impl.%C.as.Destroy.impl.Op (constants.%C.as.Destroy.impl.Op)] {
 // CHECK:STDOUT:       %self.patt: @C.as.Destroy.impl.Op.%pattern_type (%pattern_type.7e5) = binding_pattern self [concrete]
 // CHECK:STDOUT:       %self.param_patt: @C.as.Destroy.impl.Op.%pattern_type (%pattern_type.7e5) = value_param_pattern %self.patt, call_param0 [concrete]
@@ -262,6 +268,7 @@ impl i32 as I {
 // CHECK:STDOUT:   %require_complete: <witness> = require_complete_type %T.loc15_9.1 [symbolic = %require_complete (constants.%require_complete.4ae)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   class {
+// CHECK:STDOUT:     %Self.ref: type = name_ref Self, constants.%C.b36 [symbolic = @C.as.Destroy.impl.%C (constants.%C.b36)]
 // CHECK:STDOUT:     impl_decl @C.as.Destroy.impl [concrete] {} {}
 // CHECK:STDOUT:     %Destroy.impl_witness_table = impl_witness_table (@C.as.Destroy.impl.%C.as.Destroy.impl.Op.decl), @C.as.Destroy.impl [concrete]
 // CHECK:STDOUT:     %Destroy.impl_witness: <witness> = impl_witness %Destroy.impl_witness_table, @C.as.Destroy.impl(constants.%T, constants.%X) [symbolic = @C.as.Destroy.impl.%Destroy.impl_witness (constants.%Destroy.impl_witness.e7a)]
@@ -315,6 +322,7 @@ impl i32 as I {
 // CHECK:STDOUT: specific @C.as.Destroy.impl(constants.%T, constants.%X) {
 // CHECK:STDOUT:   %T => constants.%T
 // CHECK:STDOUT:   %X => constants.%X
+// CHECK:STDOUT:   %C => constants.%C.b36
 // CHECK:STDOUT:   %Destroy.impl_witness => constants.%Destroy.impl_witness.e7a
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

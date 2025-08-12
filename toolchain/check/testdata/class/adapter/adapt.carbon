@@ -124,7 +124,7 @@ interface I {
 // CHECK:STDOUT:   %StructAdapter.decl: type = class_decl @StructAdapter [concrete = constants.%StructAdapter] {} {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: impl @SomeClass.as.Destroy.impl: constants.%SomeClass as constants.%Destroy.type {
+// CHECK:STDOUT: impl @SomeClass.as.Destroy.impl: @SomeClass.%Self.ref as constants.%Destroy.type {
 // CHECK:STDOUT:   %SomeClass.as.Destroy.impl.Op.decl: %SomeClass.as.Destroy.impl.Op.type = fn_decl @SomeClass.as.Destroy.impl.Op [concrete = constants.%SomeClass.as.Destroy.impl.Op] {
 // CHECK:STDOUT:     %self.patt: %pattern_type.a47 = binding_pattern self [concrete]
 // CHECK:STDOUT:     %self.param_patt: %pattern_type.a47 = value_param_pattern %self.patt, call_param0 [concrete]
@@ -140,7 +140,7 @@ interface I {
 // CHECK:STDOUT:   witness = @SomeClass.%Destroy.impl_witness
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: impl @SomeClassAdapter.as.Destroy.impl: constants.%SomeClassAdapter as constants.%Destroy.type {
+// CHECK:STDOUT: impl @SomeClassAdapter.as.Destroy.impl: @SomeClassAdapter.%Self.ref as constants.%Destroy.type {
 // CHECK:STDOUT:   %SomeClassAdapter.as.Destroy.impl.Op.decl: %SomeClassAdapter.as.Destroy.impl.Op.type = fn_decl @SomeClassAdapter.as.Destroy.impl.Op [concrete = constants.%SomeClassAdapter.as.Destroy.impl.Op] {
 // CHECK:STDOUT:     %self.patt: %pattern_type.76d = binding_pattern self [concrete]
 // CHECK:STDOUT:     %self.param_patt: %pattern_type.76d = value_param_pattern %self.patt, call_param0 [concrete]
@@ -156,7 +156,7 @@ interface I {
 // CHECK:STDOUT:   witness = @SomeClassAdapter.%Destroy.impl_witness
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: impl @StructAdapter.as.Destroy.impl: constants.%StructAdapter as constants.%Destroy.type {
+// CHECK:STDOUT: impl @StructAdapter.as.Destroy.impl: @StructAdapter.%Self.ref as constants.%Destroy.type {
 // CHECK:STDOUT:   %StructAdapter.as.Destroy.impl.Op.decl: %StructAdapter.as.Destroy.impl.Op.type = fn_decl @StructAdapter.as.Destroy.impl.Op [concrete = constants.%StructAdapter.as.Destroy.impl.Op] {
 // CHECK:STDOUT:     %self.patt: %pattern_type.671 = binding_pattern self [concrete]
 // CHECK:STDOUT:     %self.param_patt: %pattern_type.671 = value_param_pattern %self.patt, call_param0 [concrete]
@@ -179,6 +179,7 @@ interface I {
 // CHECK:STDOUT:   %int_32.loc6: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
 // CHECK:STDOUT:   %i32.loc6: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
 // CHECK:STDOUT:   %.loc6: %SomeClass.elem = field_decl b, element1 [concrete]
+// CHECK:STDOUT:   %Self.ref: type = name_ref Self, constants.%SomeClass [concrete = constants.%SomeClass]
 // CHECK:STDOUT:   impl_decl @SomeClass.as.Destroy.impl [concrete] {} {}
 // CHECK:STDOUT:   %Destroy.impl_witness_table = impl_witness_table (@SomeClass.as.Destroy.impl.%SomeClass.as.Destroy.impl.Op.decl), @SomeClass.as.Destroy.impl [concrete]
 // CHECK:STDOUT:   %Destroy.impl_witness: <witness> = impl_witness %Destroy.impl_witness_table [concrete = constants.%Destroy.impl_witness.ab1]
@@ -194,6 +195,7 @@ interface I {
 // CHECK:STDOUT: class @SomeClassAdapter {
 // CHECK:STDOUT:   %SomeClass.ref: type = name_ref SomeClass, file.%SomeClass.decl [concrete = constants.%SomeClass]
 // CHECK:STDOUT:   adapt_decl %SomeClass.ref [concrete]
+// CHECK:STDOUT:   %Self.ref: type = name_ref Self, constants.%SomeClassAdapter [concrete = constants.%SomeClassAdapter]
 // CHECK:STDOUT:   impl_decl @SomeClassAdapter.as.Destroy.impl [concrete] {} {}
 // CHECK:STDOUT:   %Destroy.impl_witness_table = impl_witness_table (@SomeClassAdapter.as.Destroy.impl.%SomeClassAdapter.as.Destroy.impl.Op.decl), @SomeClassAdapter.as.Destroy.impl [concrete]
 // CHECK:STDOUT:   %Destroy.impl_witness: <witness> = impl_witness %Destroy.impl_witness_table [concrete = constants.%Destroy.impl_witness.84c]
@@ -212,6 +214,7 @@ interface I {
 // CHECK:STDOUT:   %i32.loc14_23: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
 // CHECK:STDOUT:   %struct_type.a.b: type = struct_type {.a: %i32, .b: %i32} [concrete = constants.%struct_type.a.b]
 // CHECK:STDOUT:   adapt_decl %struct_type.a.b [concrete]
+// CHECK:STDOUT:   %Self.ref: type = name_ref Self, constants.%StructAdapter [concrete = constants.%StructAdapter]
 // CHECK:STDOUT:   impl_decl @StructAdapter.as.Destroy.impl [concrete] {} {}
 // CHECK:STDOUT:   %Destroy.impl_witness_table = impl_witness_table (@StructAdapter.as.Destroy.impl.%StructAdapter.as.Destroy.impl.Op.decl), @StructAdapter.as.Destroy.impl [concrete]
 // CHECK:STDOUT:   %Destroy.impl_witness: <witness> = impl_witness %Destroy.impl_witness_table [concrete = constants.%Destroy.impl_witness.6e0]
@@ -283,7 +286,7 @@ interface I {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: impl @Adapted.as.Destroy.impl: constants.%Adapted as constants.%Destroy.type {
+// CHECK:STDOUT: impl @Adapted.as.Destroy.impl: @Adapted.%Self.ref as constants.%Destroy.type {
 // CHECK:STDOUT:   %Adapted.as.Destroy.impl.Op.decl: %Adapted.as.Destroy.impl.Op.type = fn_decl @Adapted.as.Destroy.impl.Op [concrete = constants.%Adapted.as.Destroy.impl.Op] {
 // CHECK:STDOUT:     %self.patt: %pattern_type.c04 = binding_pattern self [concrete]
 // CHECK:STDOUT:     %self.param_patt: %pattern_type.c04 = value_param_pattern %self.patt, call_param0 [concrete]
@@ -299,7 +302,7 @@ interface I {
 // CHECK:STDOUT:   witness = @Adapted.%Destroy.impl_witness
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: impl @AdaptNotExtend.as.Destroy.impl: constants.%AdaptNotExtend as constants.%Destroy.type {
+// CHECK:STDOUT: impl @AdaptNotExtend.as.Destroy.impl: @AdaptNotExtend.%Self.ref as constants.%Destroy.type {
 // CHECK:STDOUT:   %AdaptNotExtend.as.Destroy.impl.Op.decl: %AdaptNotExtend.as.Destroy.impl.Op.type = fn_decl @AdaptNotExtend.as.Destroy.impl.Op [concrete = constants.%AdaptNotExtend.as.Destroy.impl.Op] {
 // CHECK:STDOUT:     %self.patt: %pattern_type.73e = binding_pattern self [concrete]
 // CHECK:STDOUT:     %self.param_patt: %pattern_type.73e = value_param_pattern %self.patt, call_param0 [concrete]
@@ -317,6 +320,7 @@ interface I {
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @Adapted {
 // CHECK:STDOUT:   %Adapted.F.decl: %Adapted.F.type = fn_decl @Adapted.F [concrete = constants.%Adapted.F] {} {}
+// CHECK:STDOUT:   %Self.ref: type = name_ref Self, constants.%Adapted [concrete = constants.%Adapted]
 // CHECK:STDOUT:   impl_decl @Adapted.as.Destroy.impl [concrete] {} {}
 // CHECK:STDOUT:   %Destroy.impl_witness_table = impl_witness_table (@Adapted.as.Destroy.impl.%Adapted.as.Destroy.impl.Op.decl), @Adapted.as.Destroy.impl [concrete]
 // CHECK:STDOUT:   %Destroy.impl_witness: <witness> = impl_witness %Destroy.impl_witness_table [concrete = constants.%Destroy.impl_witness.d23]
@@ -331,6 +335,7 @@ interface I {
 // CHECK:STDOUT: class @AdaptNotExtend {
 // CHECK:STDOUT:   %Adapted.ref: type = name_ref Adapted, file.%Adapted.decl [concrete = constants.%Adapted]
 // CHECK:STDOUT:   adapt_decl %Adapted.ref [concrete]
+// CHECK:STDOUT:   %Self.ref: type = name_ref Self, constants.%AdaptNotExtend [concrete = constants.%AdaptNotExtend]
 // CHECK:STDOUT:   impl_decl @AdaptNotExtend.as.Destroy.impl [concrete] {} {}
 // CHECK:STDOUT:   %Destroy.impl_witness_table = impl_witness_table (@AdaptNotExtend.as.Destroy.impl.%AdaptNotExtend.as.Destroy.impl.Op.decl), @AdaptNotExtend.as.Destroy.impl [concrete]
 // CHECK:STDOUT:   %Destroy.impl_witness: <witness> = impl_witness %Destroy.impl_witness_table [concrete = constants.%Destroy.impl_witness.f9b]

@@ -31,6 +31,7 @@ cc_library(
     deps = [
         "//common:check",
         "//common:error",
+        "//common:filesystem",
         "//toolchain/base:llvm_tools",
         "@bazel_tools//tools/cpp/runfiles",
         "@llvm-project//llvm:Support",
@@ -55,6 +56,8 @@ cc_test(
     deps = [
         ":install_paths",
         "//common:check",
+        "//common:error_test_helpers",
+        "//common:filesystem",
         "//common:ostream",
         "//testing/base:global_exe_path",
         "//testing/base:gtest_main",
@@ -83,6 +86,7 @@ cc_library(
     deps = [
         "//common:error",
         "//common:exe_path",
+        "//common:filesystem",
         "@llvm-project//llvm:Support",
     ],
 )
@@ -94,6 +98,7 @@ cc_test(
     deps = [
         ":busybox_info",
         "//common:check",
+        "//common:filesystem",
         "//testing/base:gtest_main",
         "@googletest//:gtest",
         "@llvm-project//llvm:Support",

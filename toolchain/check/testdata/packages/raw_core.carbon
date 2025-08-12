@@ -263,7 +263,7 @@ var c: r#Core = {.n = 0 as Core.Int(32)};
 // CHECK:STDOUT:   %c: ref %Core = bind_name c, %c.var [concrete = %c.var]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: impl @Core.as.Destroy.impl: constants.%Core as constants.%Destroy.type {
+// CHECK:STDOUT: impl @Core.as.Destroy.impl: @Core.%Self.ref as constants.%Destroy.type {
 // CHECK:STDOUT:   %Core.as.Destroy.impl.Op.decl: %Core.as.Destroy.impl.Op.type = fn_decl @Core.as.Destroy.impl.Op [concrete = constants.%Core.as.Destroy.impl.Op] {
 // CHECK:STDOUT:     %self.patt: %pattern_type.c58 = binding_pattern self [concrete]
 // CHECK:STDOUT:     %self.param_patt: %pattern_type.c58 = value_param_pattern %self.patt, call_param0 [concrete]
@@ -285,6 +285,7 @@ var c: r#Core = {.n = 0 as Core.Int(32)};
 // CHECK:STDOUT:   %int_32: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
 // CHECK:STDOUT:   %i32: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
 // CHECK:STDOUT:   %.loc3: %Core.elem = field_decl n, element0 [concrete]
+// CHECK:STDOUT:   %Self.ref: type = name_ref Self, constants.%Core [concrete = constants.%Core]
 // CHECK:STDOUT:   impl_decl @Core.as.Destroy.impl [concrete] {} {}
 // CHECK:STDOUT:   %Destroy.impl_witness_table = impl_witness_table (@Core.as.Destroy.impl.%Core.as.Destroy.impl.Op.decl), @Core.as.Destroy.impl [concrete]
 // CHECK:STDOUT:   %Destroy.impl_witness: <witness> = impl_witness %Destroy.impl_witness_table [concrete = constants.%Destroy.impl_witness.987]

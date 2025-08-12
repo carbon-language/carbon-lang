@@ -62,6 +62,7 @@ fn Test(d: D) -> i32 {
 // CHECK:STDOUT: --- convert.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
+// CHECK:STDOUT:   %.Self.644: type = bind_symbolic_name .Self [symbolic_self]
 // CHECK:STDOUT:   %T: type = bind_symbolic_name T, 0, template [template]
 // CHECK:STDOUT:   %pattern_type.98f: type = pattern_type type [concrete]
 // CHECK:STDOUT:   %pattern_type.7dcd0a.1: type = pattern_type %T [template]
@@ -153,6 +154,7 @@ fn Test(d: D) -> i32 {
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %int_32: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
 // CHECK:STDOUT:     %i32: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
+// CHECK:STDOUT:     %.Self: type = bind_symbolic_name .Self [symbolic_self = constants.%.Self.644]
 // CHECK:STDOUT:     %T.loc4_15.2: type = bind_symbolic_name T, 0, template [template = %T.loc4_15.1 (constants.%T)]
 // CHECK:STDOUT:     %x.param: @F.%T.loc4_15.1 (%T) = value_param call_param0
 // CHECK:STDOUT:     %T.ref: type = name_ref T, %T.loc4_15.2 [template = %T.loc4_15.1 (constants.%T)]
@@ -215,7 +217,7 @@ fn Test(d: D) -> i32 {
 // CHECK:STDOUT:   witness = @C.%ImplicitAs.impl_witness
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: impl @C.as.Destroy.impl: constants.%C as constants.%Destroy.type {
+// CHECK:STDOUT: impl @C.as.Destroy.impl: @C.%Self.ref as constants.%Destroy.type {
 // CHECK:STDOUT:   %C.as.Destroy.impl.Op.decl: %C.as.Destroy.impl.Op.type = fn_decl @C.as.Destroy.impl.Op [concrete = constants.%C.as.Destroy.impl.Op] {
 // CHECK:STDOUT:     %self.patt: %pattern_type.44a = binding_pattern self [concrete]
 // CHECK:STDOUT:     %self.param_patt: %pattern_type.44a = value_param_pattern %self.patt, call_param0 [concrete]
@@ -245,6 +247,7 @@ fn Test(d: D) -> i32 {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %ImplicitAs.impl_witness_table = impl_witness_table (@C.as.ImplicitAs.impl.%C.as.ImplicitAs.impl.Convert.decl), @C.as.ImplicitAs.impl [concrete]
 // CHECK:STDOUT:   %ImplicitAs.impl_witness: <witness> = impl_witness %ImplicitAs.impl_witness_table [concrete = constants.%ImplicitAs.impl_witness.96d]
+// CHECK:STDOUT:   %Self.ref: type = name_ref Self, constants.%C [concrete = constants.%C]
 // CHECK:STDOUT:   impl_decl @C.as.Destroy.impl [concrete] {} {}
 // CHECK:STDOUT:   %Destroy.impl_witness_table = impl_witness_table (@C.as.Destroy.impl.%C.as.Destroy.impl.Op.decl), @C.as.Destroy.impl [concrete]
 // CHECK:STDOUT:   %Destroy.impl_witness: <witness> = impl_witness %Destroy.impl_witness_table [concrete = constants.%Destroy.impl_witness.edd]
@@ -335,6 +338,7 @@ fn Test(d: D) -> i32 {
 // CHECK:STDOUT: --- fail_cannot_convert.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
+// CHECK:STDOUT:   %.Self.644: type = bind_symbolic_name .Self [symbolic_self]
 // CHECK:STDOUT:   %T: type = bind_symbolic_name T, 0, template [template]
 // CHECK:STDOUT:   %pattern_type.98f: type = pattern_type type [concrete]
 // CHECK:STDOUT:   %pattern_type.7dcd0a.1: type = pattern_type %T [template]
@@ -402,6 +406,7 @@ fn Test(d: D) -> i32 {
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %int_32: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
 // CHECK:STDOUT:     %i32: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
+// CHECK:STDOUT:     %.Self: type = bind_symbolic_name .Self [symbolic_self = constants.%.Self.644]
 // CHECK:STDOUT:     %T.loc4_15.2: type = bind_symbolic_name T, 0, template [template = %T.loc4_15.1 (constants.%T)]
 // CHECK:STDOUT:     %x.param: @F.%T.loc4_15.1 (%T) = value_param call_param0
 // CHECK:STDOUT:     %T.ref: type = name_ref T, %T.loc4_15.2 [template = %T.loc4_15.1 (constants.%T)]
@@ -426,7 +431,7 @@ fn Test(d: D) -> i32 {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: impl @D.as.Destroy.impl: constants.%D as constants.%Destroy.type {
+// CHECK:STDOUT: impl @D.as.Destroy.impl: @D.%Self.ref as constants.%Destroy.type {
 // CHECK:STDOUT:   %D.as.Destroy.impl.Op.decl: %D.as.Destroy.impl.Op.type = fn_decl @D.as.Destroy.impl.Op [concrete = constants.%D.as.Destroy.impl.Op] {
 // CHECK:STDOUT:     %self.patt: %pattern_type.a94 = binding_pattern self [concrete]
 // CHECK:STDOUT:     %self.param_patt: %pattern_type.a94 = value_param_pattern %self.patt, call_param0 [concrete]
@@ -443,6 +448,7 @@ fn Test(d: D) -> i32 {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @D {
+// CHECK:STDOUT:   %Self.ref: type = name_ref Self, constants.%D [concrete = constants.%D]
 // CHECK:STDOUT:   impl_decl @D.as.Destroy.impl [concrete] {} {}
 // CHECK:STDOUT:   %Destroy.impl_witness_table = impl_witness_table (@D.as.Destroy.impl.%D.as.Destroy.impl.Op.decl), @D.as.Destroy.impl [concrete]
 // CHECK:STDOUT:   %Destroy.impl_witness: <witness> = impl_witness %Destroy.impl_witness_table [concrete = constants.%Destroy.impl_witness.73d]

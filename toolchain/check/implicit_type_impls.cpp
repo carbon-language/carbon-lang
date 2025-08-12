@@ -25,13 +25,24 @@ static auto TryDeclareImpl(Context& context, SemIR::LocId loc_id,
                            SemIR::TypeId self_type_id,
                            SemIR::InstId interface_id)
     -> std::pair<SemIR::ImplId, SemIR::InstId> {
+  StartGenericDecl(context);
+
+  // Build the implicit access to the enclosing `Self`.
+  // TODO: This mirrors code in handle_impl that also suggests using
+  // BuildNameRef.
+  auto self_inst_id = AddTypeInst(
+      context, loc_id,
+      SemIR::NameRef{.type_id = SemIR::TypeType::TypeId,
+                     .name_id = SemIR::NameId::SelfType,
+                     .value_id = context.types().GetInstId(self_type_id)});
+  AddNameToLookup(context, SemIR::NameId::SelfType, self_inst_id);
+
   auto impl_decl_id = AddPlaceholderInst(
       context,
       SemIR::LocIdAndInst::UncheckedLoc(
           loc_id, SemIR::ImplDecl{.impl_id = SemIR::ImplId::None,
                                   .decl_block_id = SemIR::InstBlockId::Empty}));
 
-  auto self_id = context.types().GetInstId(self_type_id);
   auto constraint_id = ExprAsType(context, loc_id, interface_id).inst_id;
 
   SemIR::Impl impl = {
@@ -50,14 +61,13 @@ static auto TryDeclareImpl(Context& context, SemIR::LocId loc_id,
           .first_owning_decl_id = impl_decl_id,
       },
       {
-          .self_id = self_id,
+          .self_id = self_inst_id,
           .constraint_id = constraint_id,
           .interface =
               CheckConstraintIsInterface(context, impl_decl_id, constraint_id),
           .is_final = true,
       }};
 
-  StartGenericDecl(context);
   return StartImplDecl(context, loc_id,
                        /*implicit_params_loc_id=*/SemIR::LocId::None, impl,
                        /*is_definition=*/true, /*extend_impl=*/std::nullopt);
