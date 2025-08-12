@@ -27,7 +27,7 @@ var x: {.a: i32} = {.b = 1.0};
 // CHECK:STDOUT:   %i32: type = class_type @Int, @Int(%int_32) [concrete]
 // CHECK:STDOUT:   %struct_type.a: type = struct_type {.a: %i32} [concrete]
 // CHECK:STDOUT:   %pattern_type.268: type = pattern_type %struct_type.a [concrete]
-// CHECK:STDOUT:   %.674: Core.FloatLiteral = float_literal_value 10e-1 [concrete]
+// CHECK:STDOUT:   %float: Core.FloatLiteral = float_literal_value 10e-1 [concrete]
 // CHECK:STDOUT:   %struct_type.b: type = struct_type {.b: Core.FloatLiteral} [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -61,8 +61,8 @@ var x: {.a: i32} = {.b = 1.0};
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %.loc19_26: Core.FloatLiteral = float_literal_value 10e-1 [concrete = constants.%.674]
-// CHECK:STDOUT:   %.loc19_29: %struct_type.b = struct_literal (%.loc19_26)
+// CHECK:STDOUT:   %float: Core.FloatLiteral = float_literal_value 10e-1 [concrete = constants.%float]
+// CHECK:STDOUT:   %.loc19: %struct_type.b = struct_literal (%float)
 // CHECK:STDOUT:   assign file.%x.var, <error>
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }

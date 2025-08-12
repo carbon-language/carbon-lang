@@ -849,6 +849,7 @@ auto InstNamer::NamingContext::NameInst() -> void {
       AddIntOrFloatTypeName('f', inst.bit_width_id);
       return;
     }
+    case FloatLiteralValue::Kind:
     case FloatValue::Kind: {
       AddInstName("float");
       return;

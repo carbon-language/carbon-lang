@@ -67,7 +67,7 @@ fn F() {
 // CHECK:STDOUT: --- fail_todo_import_unsupported_primitive_type.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
-// CHECK:STDOUT:   %.a92: Core.FloatLiteral = float_literal_value 11e-1 [concrete]
+// CHECK:STDOUT:   %float: Core.FloatLiteral = float_literal_value 11e-1 [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -81,7 +81,7 @@ fn F() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %Cpp.ref: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
 // CHECK:STDOUT:   %foo.ref: <error> = name_ref foo, <error> [concrete = <error>]
-// CHECK:STDOUT:   %.loc15: Core.FloatLiteral = float_literal_value 11e-1 [concrete = constants.%.a92]
+// CHECK:STDOUT:   %float: Core.FloatLiteral = float_literal_value 11e-1 [concrete = constants.%float]
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -89,7 +89,7 @@ fn F() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %int_1: Core.IntLiteral = int_value 1 [concrete]
-// CHECK:STDOUT:   %.17d: Core.FloatLiteral = float_literal_value 20e-1 [concrete]
+// CHECK:STDOUT:   %float: Core.FloatLiteral = float_literal_value 20e-1 [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -104,7 +104,7 @@ fn F() {
 // CHECK:STDOUT:   %Cpp.ref: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
 // CHECK:STDOUT:   %foo.ref: <error> = name_ref foo, <error> [concrete = <error>]
 // CHECK:STDOUT:   %int_1: Core.IntLiteral = int_value 1 [concrete = constants.%int_1]
-// CHECK:STDOUT:   %.loc15: Core.FloatLiteral = float_literal_value 20e-1 [concrete = constants.%.17d]
+// CHECK:STDOUT:   %float: Core.FloatLiteral = float_literal_value 20e-1 [concrete = constants.%float]
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

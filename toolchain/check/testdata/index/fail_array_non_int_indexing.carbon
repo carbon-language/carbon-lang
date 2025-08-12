@@ -53,7 +53,7 @@ var b: i32 = a[2.6];
 // CHECK:STDOUT:   %bound_method: <bound method> = bound_method %int_12.6a3, %Core.IntLiteral.as.ImplicitAs.impl.Convert.specific_fn [concrete]
 // CHECK:STDOUT:   %int_12.1e1: %i32 = int_value 12 [concrete]
 // CHECK:STDOUT:   %array: %array_type = tuple_value (%int_12.1e1) [concrete]
-// CHECK:STDOUT:   %.9ff: Core.FloatLiteral = float_literal_value 26e-1 [concrete]
+// CHECK:STDOUT:   %float: Core.FloatLiteral = float_literal_value 26e-1 [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -117,10 +117,10 @@ var b: i32 = a[2.6];
 // CHECK:STDOUT:   %.loc15_1: init %array_type = converted %.loc15_28.1, %.loc15_28.5 [concrete = constants.%array]
 // CHECK:STDOUT:   assign file.%a.var, %.loc15_1
 // CHECK:STDOUT:   %a.ref: ref %array_type = name_ref a, file.%a [concrete = file.%a.var]
-// CHECK:STDOUT:   %.loc23_16.1: Core.FloatLiteral = float_literal_value 26e-1 [concrete = constants.%.9ff]
+// CHECK:STDOUT:   %float: Core.FloatLiteral = float_literal_value 26e-1 [concrete = constants.%float]
 // CHECK:STDOUT:   %int_32: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
 // CHECK:STDOUT:   %i32: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
-// CHECK:STDOUT:   %.loc23_16.2: %i32 = converted %.loc23_16.1, <error> [concrete = <error>]
+// CHECK:STDOUT:   %.loc23_16: %i32 = converted %float, <error> [concrete = <error>]
 // CHECK:STDOUT:   %.loc23_19.1: ref %i32 = array_index %a.ref, <error> [concrete = <error>]
 // CHECK:STDOUT:   %.loc23_19.2: %i32 = bind_value %.loc23_19.1 [concrete = <error>]
 // CHECK:STDOUT:   assign file.%b.var, %.loc23_19.2
