@@ -163,7 +163,7 @@ vulnerabilities without temporal safety violations. For example, the rate of
 memory safety vulnerabilities in Go or non-strict-concurrency Swift code
 entirely matches the low expectations for memory-safe languages despite both
 only providing temporal safety. As a consequence, Carbon has some flexibility
-while still being a [memory safe language] according to our definition:
+while still being a [memory-safe language] according to our definition:
 
 -   Carbon might choose to _not_ prevent data race bugs that are not
     _themselves_ also temporal safety bugs, even though the data race may lead
@@ -188,7 +188,7 @@ functionality. Currently, the industry is currently investing a massive amount
 of effort to build out a sufficient ecosystem of general, multi-platform
 software using Rust, and it is critical that Carbon does not impede, slow down,
 or require duplicating that ecosystem. Similarly, if any other cross-platform
-library ecosystems emerge in a viable memory safe languages given our
+library ecosystems emerge in a viable memory-safe languages given our
 performance constraints, we should work to reuse them and avoid duplication.
 
 **Carbon's strategy for safe and generally reusable cross-platform libraries is
