@@ -69,21 +69,65 @@ library "[[@TEST_NAME]]";
 // CHECK:STDERR:
 let c: i32 = 0x8000_0000;
 
+// --- very_large_mantissa.carbon
+
+library "[[@TEST_NAME]]";
+
+let large: f64 = 99999999999999999999999999999999999999999999999999999999999999999999999.0e237;
+let max_trunc: f64 = 17976931348623157081452742373170435679807056752584499659891747680315726.0e238;
+let max: f64 = 179769313486231570814527423731704356798070567525844996598917476803157260780028538760589558632766878171540458953514382464234321326889464182768467546703537516986049910576551282076245490090389328944075868508455133942304583236903222948165808559332123348274797826204144723168738177180919299881250404026184124858368.0;
+
+let max_hex: f64 = 0x1.FFFFFFFFFFFFFp+1023;
+
+// The largest number that wouldn't round to have an out-of-bounds exponent.
+// This is 2^1024 - 2^54 - epsilon.
+// TODO: The design says that we should treat this as an error. Decide if that's
+// right or if we want to round before checking for overflow.
+let max_rounds_down: f64 = 179769313486231580793728971405303415079934132710037826936173778980444968292764750946649017977587207096330286416692887910946555547851940402630657488671505820681908902000708383676273854845817711531764475730270069855571366959622842914819860834936475292719074168444365510704342711559699508093042880177904174497791.9999999999999;
+let max_rounds_down_trunc: f64 = 17976931348623158079372897140530341507993413271003782693617377898044496.8e238;
+
+let max_rounds_down_hex: f64 = 0x1.FFFFFFFFFFFFF7FFFFFFFFFFp+1023;
+
 // --- fail_overflow_very_large_mantissa.carbon
 
 library "[[@TEST_NAME]]";
 
-// CHECK:STDERR: fail_overflow_very_large_mantissa.carbon:[[@LINE+4]]:14: error: real mantissa with value 399999999999999999930 does not fit in i64 [RealMantissaTooLargeForI64]
-// CHECK:STDERR: let d: f64 = 39999999999999999993.0e3;
-// CHECK:STDERR:              ^~~~~~~~~~~~~~~~~~~~~~~~
+// CHECK:STDERR: fail_overflow_very_large_mantissa.carbon:[[@LINE+4]]:22: error: value 399999999999999999999999999999999999999999999999999999999999999999999990*10^237 too large for floating-point type `f64` [FloatTooLargeForType]
+// CHECK:STDERR: let too_large: f64 = 39999999999999999999999999999999999999999999999999999999999999999999999.0e238;
+// CHECK:STDERR:                      ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 // CHECK:STDERR:
-let d: f64 = 39999999999999999993.0e3;
+let too_large: f64 = 39999999999999999999999999999999999999999999999999999999999999999999999.0e238;
+
+// TODO: These are larger than DBL_MAX but would still round to DBL_MAX if f64
+// had a wider exponent field. The design says these are invalid.
+let above_max_trunc: f64 = 17976931348623157081452742373170435679807056752584499659891747680315727.0e238;
+let max_plus_one: f64 = 179769313486231570814527423731704356798070567525844996598917476803157260780028538760589558632766878171540458953514382464234321326889464182768467546703537516986049910576551282076245490090389328944075868508455133942304583236903222948165808559332123348274797826204144723168738177180919299881250404026184124858369.0;
+let max_plus_a_bit_hex: f64 = 0x1.FFFFFFFFFFFFF00000000000000000000001p+1023;
+
+// The smallest number that would round to having an over-large exponent.
+// CHECK:STDERR: fail_overflow_very_large_mantissa.carbon:[[@LINE+4]]:30: error: value 1797693134862315807937289714053034150799341327100378269361737789804449682927647509466490179775872070963302864166928879109465555478519404026306574886715058206819089020007083836762738548458177115317644757302700698555713669596228429148198608349364752927190741684443655107043427115596995080930428801779041744977920*10^-1 too large for floating-point type `f64` [FloatTooLargeForType]
+// CHECK:STDERR: let min_rounds_to_inf: f64 = 179769313486231580793728971405303415079934132710037826936173778980444968292764750946649017977587207096330286416692887910946555547851940402630657488671505820681908902000708383676273854845817711531764475730270069855571366959622842914819860834936475292719074168444365510704342711559699508093042880177904174497792.0;
+// CHECK:STDERR:                              ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+// CHECK:STDERR:
+let min_rounds_to_inf: f64 = 179769313486231580793728971405303415079934132710037826936173778980444968292764750946649017977587207096330286416692887910946555547851940402630657488671505820681908902000708383676273854845817711531764475730270069855571366959622842914819860834936475292719074168444365510704342711559699508093042880177904174497792.0;
+
+// CHECK:STDERR: fail_overflow_very_large_mantissa.carbon:[[@LINE+4]]:41: error: value 179769313486231580793728971405303415079934132710037826936173778980444969*10^237 too large for floating-point type `f64` [FloatTooLargeForType]
+// CHECK:STDERR: let min_rounds_to_inf_rounded_up: f64 = 17976931348623158079372897140530341507993413271003782693617377898044496.9e238;
+// CHECK:STDERR:                                         ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+// CHECK:STDERR:
+let min_rounds_to_inf_rounded_up: f64 = 17976931348623158079372897140530341507993413271003782693617377898044496.9e238;
+
+// CHECK:STDERR: fail_overflow_very_large_mantissa.carbon:[[@LINE+4]]:34: error: value 144115188075855864*2^967 too large for floating-point type `f64` [FloatTooLargeForType]
+// CHECK:STDERR: let min_rounds_to_inf_hex: f64 = 0x1.FFFFFFFFFFFFF8p+1023;
+// CHECK:STDERR:                                  ^~~~~~~~~~~~~~~~~~~~~~~~
+// CHECK:STDERR:
+let min_rounds_to_inf_hex: f64 = 0x1.FFFFFFFFFFFFF8p+1023;
 
 // --- fail_overflow_very_large_exponent.carbon
 
 library "[[@TEST_NAME]]";
 
-// CHECK:STDERR: fail_overflow_very_large_exponent.carbon:[[@LINE+4]]:14: error: real exponent with value 39999999999999999992 does not fit in i64 [RealExponentTooLargeForI64]
+// CHECK:STDERR: fail_overflow_very_large_exponent.carbon:[[@LINE+4]]:14: error: value 50*10^39999999999999999992 too large for floating-point type `f64` [FloatTooLargeForType]
 // CHECK:STDERR: let e: f64 = 5.0e39999999999999999993;
 // CHECK:STDERR:              ^~~~~~~~~~~~~~~~~~~~~~~~
 // CHECK:STDERR:
@@ -95,12 +139,12 @@ let e: f64 = 5.0e39999999999999999993;
 // CHECK:STDOUT:   %int_8.b85: Core.IntLiteral = int_value 8 [concrete]
 // CHECK:STDOUT:   %int_9.988: Core.IntLiteral = int_value 9 [concrete]
 // CHECK:STDOUT:   %int_2147483647.d89: Core.IntLiteral = int_value 2147483647 [concrete]
-// CHECK:STDOUT:   %float.8ca: Core.FloatLiteral = float_value 0.90000000000000002 [concrete]
-// CHECK:STDOUT:   %float.fde: Core.FloatLiteral = float_value 8 [concrete]
-// CHECK:STDOUT:   %float.7a6: Core.FloatLiteral = float_value 80 [concrete]
-// CHECK:STDOUT:   %float.23b: Core.FloatLiteral = float_value 1.0E+7 [concrete]
-// CHECK:STDOUT:   %float.b98: Core.FloatLiteral = float_value 1.0E+8 [concrete]
-// CHECK:STDOUT:   %float.34d: Core.FloatLiteral = float_value 1.0E-8 [concrete]
+// CHECK:STDOUT:   %.7d0: Core.FloatLiteral = float_literal_value 9e-1 [concrete]
+// CHECK:STDOUT:   %.4bc: Core.FloatLiteral = float_literal_value 80e-1 [concrete]
+// CHECK:STDOUT:   %.24e: Core.FloatLiteral = float_literal_value 800e-1 [concrete]
+// CHECK:STDOUT:   %.4d9: Core.FloatLiteral = float_literal_value 10e6 [concrete]
+// CHECK:STDOUT:   %.150: Core.FloatLiteral = float_literal_value 10e7 [concrete]
+// CHECK:STDOUT:   %.07e: Core.FloatLiteral = float_literal_value 10e-9 [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -116,12 +160,12 @@ let e: f64 = 5.0e39999999999999999993;
 // CHECK:STDOUT:   %int_2147483647.loc13: Core.IntLiteral = int_value 2147483647 [concrete = constants.%int_2147483647.d89]
 // CHECK:STDOUT:   %int_2147483647.loc14: Core.IntLiteral = int_value 2147483647 [concrete = constants.%int_2147483647.d89]
 // CHECK:STDOUT:   <elided>
-// CHECK:STDOUT:   %float.loc19: Core.FloatLiteral = float_value 0.90000000000000002 [concrete = constants.%float.8ca]
-// CHECK:STDOUT:   %float.loc20: Core.FloatLiteral = float_value 8 [concrete = constants.%float.fde]
-// CHECK:STDOUT:   %float.loc21: Core.FloatLiteral = float_value 80 [concrete = constants.%float.7a6]
-// CHECK:STDOUT:   %float.loc22: Core.FloatLiteral = float_value 1.0E+7 [concrete = constants.%float.23b]
-// CHECK:STDOUT:   %float.loc23: Core.FloatLiteral = float_value 1.0E+8 [concrete = constants.%float.b98]
-// CHECK:STDOUT:   %float.loc24: Core.FloatLiteral = float_value 1.0E-8 [concrete = constants.%float.34d]
+// CHECK:STDOUT:   %.loc19: Core.FloatLiteral = float_literal_value 9e-1 [concrete = constants.%.7d0]
+// CHECK:STDOUT:   %.loc20: Core.FloatLiteral = float_literal_value 80e-1 [concrete = constants.%.4bc]
+// CHECK:STDOUT:   %.loc21: Core.FloatLiteral = float_literal_value 800e-1 [concrete = constants.%.24e]
+// CHECK:STDOUT:   %.loc22: Core.FloatLiteral = float_literal_value 10e6 [concrete = constants.%.4d9]
+// CHECK:STDOUT:   %.loc23: Core.FloatLiteral = float_literal_value 10e7 [concrete = constants.%.150]
+// CHECK:STDOUT:   %.loc24: Core.FloatLiteral = float_literal_value 10e-9 [concrete = constants.%.07e]
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

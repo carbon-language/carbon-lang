@@ -19,8 +19,10 @@ namespace Carbon {
 // This is either a dyadic fraction (mantissa * 2^exponent) or a decadic
 // fraction (mantissa * 10^exponent).
 //
-// These values are not canonicalized, because we don't expect them to repeat
-// and don't use them in SemIR values.
+// These values are not canonicalized, because we don't expect them to repeat.
+// We use RealIds in SemIR::FloatLiteralValues, and this results in all real
+// literals being distinct constants, even if they represent the same value.
+// TODO: Address this by using a different representation in SemIR.
 struct Real : public Printable<Real> {
   auto Print(llvm::raw_ostream& output_stream) const -> void {
     mantissa.print(output_stream, /*isSigned=*/false);
@@ -51,6 +53,11 @@ constexpr FloatId FloatId::None(FloatId::NoneIndex);
 
 // Corresponds to a Real value.
 struct RealId : public IdBase<RealId> {
+  // TODO: We don't use Diagnostics::TypeInfo here for layering reasons.
+  struct DiagnosticType {
+    using StorageType = std::string;
+  };
+
   static constexpr llvm::StringLiteral Label = "real";
   static const RealId None;
   using IdBase::IdBase;

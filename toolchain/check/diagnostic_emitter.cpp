@@ -122,6 +122,11 @@ auto DiagnosticEmitter::ConvertArg(llvm::Any arg) const -> llvm::Any {
     return llvm::APSInt(typed_int->value,
                         !sem_ir_->types().IsSignedInt(typed_int->type));
   }
+  if (auto* real_id = llvm::any_cast<RealId>(&arg)) {
+    RawStringOstream out;
+    sem_ir_->reals().Get(*real_id).Print(out);
+    return out.TakeStr();
+  }
   if (auto* specific_interface_id =
           llvm::any_cast<SemIR::SpecificInterfaceId>(&arg)) {
     auto specific_interface =

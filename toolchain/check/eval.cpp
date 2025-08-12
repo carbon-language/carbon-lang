@@ -9,6 +9,7 @@
 #include <optional>
 #include <utility>
 
+#include "common/raw_string_ostream.h"
 #include "llvm/Support/ConvertUTF.h"
 #include "toolchain/base/canonical_value_store.h"
 #include "toolchain/base/kind_switch.h"
@@ -1073,14 +1074,68 @@ static auto PerformCheckedIntConvert(Context& context, SemIR::LocId loc_id,
 
 // Performs a conversion between floating-point types, diagnosing if the value
 // doesn't fit in the destination type.
-static auto PerformCheckedFloatConvert(Context& context,
-                                       SemIR::LocId /*loc_id*/,
+static auto PerformCheckedFloatConvert(Context& context, SemIR::LocId loc_id,
                                        SemIR::InstId arg_id,
                                        SemIR::TypeId dest_type_id)
     -> SemIR::ConstantId {
+  if (auto literal =
+          context.insts().TryGetAs<SemIR::FloatLiteralValue>(arg_id)) {
+    if (context.types().Is<SemIR::FloatLiteralType>(dest_type_id)) {
+      return MakeConstantResult(
+          context,
+          SemIR::FloatLiteralValue{.type_id = dest_type_id,
+                                   .real_id = literal->real_id},
+          Phase::Concrete);
+    }
+
+    // Convert the real literal to an llvm::APFloat and add it to the floats
+    // ValueStore. In the future this would use an arbitrary precision Rational
+    // type.
+    //
+    // TODO: Implement Carbon's actual implicit conversion rules for
+    // floating-point constants, as per the design
+    // docs/design/expressions/implicit_conversions.md
+    auto real_value = context.sem_ir().reals().Get(literal->real_id);
+
+    // Convert the real value to a string.
+    llvm::SmallString<64> str;
+    real_value.mantissa.toString(str, real_value.is_decimal ? 10 : 16,
+                                 /*signed=*/false, /*formatAsCLiteral=*/true);
+    str += real_value.is_decimal ? "e" : "p";
+    real_value.exponent.toStringSigned(str);
+
+    // Convert the string to an APFloat.
+    // TODO: Compute the fltSemantics from the type.
+    llvm::APFloat result(llvm::APFloat::IEEEdouble());
+    // TODO: The implementation of this conversion effectively converts back to
+    // APInts, but unfortunately the conversion from integer mantissa and
+    // exponent in IEEEFloat::roundSignificandWithExponent is not part of the
+    // public API.
+    auto status =
+        result.convertFromString(str, llvm::APFloat::rmNearestTiesToEven);
+    if (auto error = status.takeError()) {
+      // The literal we create should always successfully parse.
+      CARBON_FATAL("Float literal parsing failed: {0}",
+                   toString(std::move(error)));
+    }
+    if (status.get() & llvm::APFloat::opOverflow) {
+      CARBON_DIAGNOSTIC(FloatTooLargeForType, Error,
+                        "value {0} too large for floating-point type {1}",
+                        RealId, SemIR::TypeId);
+      context.emitter().Emit(loc_id, FloatTooLargeForType, literal->real_id,
+                             dest_type_id);
+      return SemIR::ErrorInst::ConstantId;
+    }
+    return MakeFloatResult(context, dest_type_id, std::move(result));
+  }
+
+  // TODO: Perform a conversion if necessary.
+  if (context.types().Is<SemIR::FloatLiteralType>(dest_type_id)) {
+    context.TODO(loc_id, "conversion from float to float literal");
+    return SemIR::ErrorInst::ConstantId;
+  }
+
   auto arg = context.insts().GetAs<SemIR::FloatValue>(arg_id);
-  // TODO: Perform a conversion if necessary. For now, all FloatValues are
-  // represented as double-precision APFloats, so no conversion is needed.
   return MakeConstantResult(
       context,
       SemIR::FloatValue{.type_id = dest_type_id, .float_id = arg.float_id},

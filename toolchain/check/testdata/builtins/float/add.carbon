@@ -57,35 +57,16 @@ fn RuntimeCallIsValidBadReturnType(a: f64, b: f64) -> bool {
   return BadReturnType(a, b);
 }
 
-// --- literal.carbon
+// --- fail_literal.carbon
 
 library "[[@TEST_NAME]]";
 
 fn Literal() -> type = "float_literal.make_type";
-fn AddLiteral(a: Literal(), b: Literal()) -> Literal() = "float.add";
-
-// --- literal_comptime.carbon
-
-library "[[@TEST_NAME]]";
-import library "literal";
-
-let n: Literal() = AddLiteral(1.0, 2.0);
-
-// --- fail_literal_runtime.carbon
-
-library "[[@TEST_NAME]]";
-import library "literal";
-
-var m: Literal();
-// CHECK:STDERR: fail_literal_runtime.carbon:[[@LINE+8]]:20: error: non-constant call to compile-time-only function [NonConstantCallToCompTimeOnlyFunction]
-// CHECK:STDERR: let n: Literal() = AddLiteral(1.0, m);
-// CHECK:STDERR:                    ^~~~~~~~~~~~~~~~~~
-// CHECK:STDERR: fail_literal_runtime.carbon:[[@LINE-6]]:1: in import [InImport]
-// CHECK:STDERR: literal.carbon:5:1: note: compile-time-only function declared here [CompTimeOnlyFunctionHere]
+// CHECK:STDERR: fail_literal.carbon:[[@LINE+4]]:1: error: invalid signature for builtin function "float.add" [InvalidBuiltinSignature]
 // CHECK:STDERR: fn AddLiteral(a: Literal(), b: Literal()) -> Literal() = "float.add";
 // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 // CHECK:STDERR:
-let n: Literal() = AddLiteral(1.0, m);
+fn AddLiteral(a: Literal(), b: Literal()) -> Literal() = "float.add";
 
 // CHECK:STDOUT: --- float_add.carbon
 // CHECK:STDOUT:

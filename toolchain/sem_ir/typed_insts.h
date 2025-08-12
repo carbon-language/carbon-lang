@@ -691,7 +691,7 @@ struct FieldDecl {
   ElementIndex index;
 };
 
-// The float literal type. This is currently represented as f64.
+// The float literal type.
 // TODO: Replace this with a rational number type, following the design.
 struct FloatLiteralType {
   static constexpr auto Kind =
@@ -704,6 +704,21 @@ struct FloatLiteralType {
   static constexpr auto TypeInstId = MakeSingletonTypeInstId<Kind>();
 
   TypeId type_id;
+};
+
+// A floating point literal value.
+// TODO: Eventually this should be represented as a rational number, and should
+// support arithmetic. For now, we preserve the exact form of the literal
+// produced by the lexer, and don't support any operations, not even unary
+// negation.
+struct FloatLiteralValue {
+  static constexpr auto Kind =
+      InstKind::FloatLiteralValue.Define<Parse::RealLiteralId>(
+          {.ir_name = "float_literal_value",
+           .constant_kind = InstConstantKind::Always});
+
+  TypeId type_id;
+  RealId real_id;
 };
 
 // A floating point type.

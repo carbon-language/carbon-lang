@@ -492,24 +492,28 @@ constexpr BuiltinInfo IntGreaterEq = {
     "int.greater_eq", ValidateSignature<auto(IntT, IntU)->Bool>};
 
 // "float.negate": float negation.
-constexpr BuiltinInfo FloatNegate = {"float.negate",
-                                     ValidateSignature<auto(FloatT)->FloatT>};
+constexpr BuiltinInfo FloatNegate = {
+    "float.negate", ValidateSignature<auto(SizedFloatT)->SizedFloatT>};
 
 // "float.add": float addition.
 constexpr BuiltinInfo FloatAdd = {
-    "float.add", ValidateSignature<auto(FloatT, FloatT)->FloatT>};
+    "float.add",
+    ValidateSignature<auto(SizedFloatT, SizedFloatT)->SizedFloatT>};
 
 // "float.sub": float subtraction.
 constexpr BuiltinInfo FloatSub = {
-    "float.sub", ValidateSignature<auto(FloatT, FloatT)->FloatT>};
+    "float.sub",
+    ValidateSignature<auto(SizedFloatT, SizedFloatT)->SizedFloatT>};
 
 // "float.mul": float multiplication.
 constexpr BuiltinInfo FloatMul = {
-    "float.mul", ValidateSignature<auto(FloatT, FloatT)->FloatT>};
+    "float.mul",
+    ValidateSignature<auto(SizedFloatT, SizedFloatT)->SizedFloatT>};
 
 // "float.div": float division.
 constexpr BuiltinInfo FloatDiv = {
-    "float.div", ValidateSignature<auto(FloatT, FloatT)->FloatT>};
+    "float.div",
+    ValidateSignature<auto(SizedFloatT, SizedFloatT)->SizedFloatT>};
 
 // "float.add_assign": float in-place addition.
 constexpr BuiltinInfo FloatAddAssign = {
@@ -537,28 +541,29 @@ constexpr BuiltinInfo FloatConvertChecked = {
     "float.convert_checked", ValidateSignature<auto(FloatT)->FloatU>};
 
 // "float.eq": float equality comparison.
-constexpr BuiltinInfo FloatEq = {"float.eq",
-                                 ValidateSignature<auto(FloatT, FloatT)->Bool>};
+constexpr BuiltinInfo FloatEq = {
+    "float.eq", ValidateSignature<auto(SizedFloatT, SizedFloatT)->Bool>};
 
 // "float.neq": float non-equality comparison.
 constexpr BuiltinInfo FloatNeq = {
-    "float.neq", ValidateSignature<auto(FloatT, FloatT)->Bool>};
+    "float.neq", ValidateSignature<auto(SizedFloatT, SizedFloatT)->Bool>};
 
 // "float.less": float less than comparison.
 constexpr BuiltinInfo FloatLess = {
-    "float.less", ValidateSignature<auto(FloatT, FloatT)->Bool>};
+    "float.less", ValidateSignature<auto(SizedFloatT, SizedFloatT)->Bool>};
 
 // "float.less_eq": float less than or equal comparison.
 constexpr BuiltinInfo FloatLessEq = {
-    "float.less_eq", ValidateSignature<auto(FloatT, FloatT)->Bool>};
+    "float.less_eq", ValidateSignature<auto(SizedFloatT, SizedFloatT)->Bool>};
 
 // "float.greater": float greater than comparison.
 constexpr BuiltinInfo FloatGreater = {
-    "float.greater", ValidateSignature<auto(FloatT, FloatT)->Bool>};
+    "float.greater", ValidateSignature<auto(SizedFloatT, SizedFloatT)->Bool>};
 
 // "float.greater_eq": float greater than or equal comparison.
 constexpr BuiltinInfo FloatGreaterEq = {
-    "float.greater_eq", ValidateSignature<auto(FloatT, FloatT)->Bool>};
+    "float.greater_eq",
+    ValidateSignature<auto(SizedFloatT, SizedFloatT)->Bool>};
 
 // "bool.eq": bool equality comparison.
 constexpr BuiltinInfo BoolEq = {"bool.eq",
@@ -677,19 +682,8 @@ auto BuiltinFunctionKind::IsCompTimeOnly(const File& sem_ir,
     case IntLessEq:
     case IntGreater:
     case IntGreaterEq:
-    case FloatNegate:
-    case FloatAdd:
-    case FloatSub:
-    case FloatMul:
-    case FloatDiv:
-    case FloatEq:
-    case FloatNeq:
-    case FloatLess:
-    case FloatLessEq:
-    case FloatGreater:
-    case FloatGreaterEq:
-      // Integer and floating-point operations are compile-time-only if they
-      // involve literal types. See AnyLiteralTypes comment for explanation.
+      // Integer operations are compile-time-only if they involve literal types.
+      // See AnyLiteralTypes comment for explanation.
       return AnyLiteralTypes(sem_ir, arg_ids, return_type_id);
 
     case TypeAnd:

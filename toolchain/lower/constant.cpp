@@ -228,18 +228,14 @@ static auto EmitAsConstant(ConstantContext& context, SemIR::FieldDecl inst)
   return context.GetUnusedConstant(inst.type_id);
 }
 
+static auto EmitAsConstant(ConstantContext& context,
+                           SemIR::FloatLiteralValue /*inst*/)
+    -> llvm::Constant* {
+  return context.GetLiteralAsValue();
+}
+
 static auto EmitAsConstant(ConstantContext& context, SemIR::FloatValue inst)
     -> llvm::Constant* {
-  auto* type = context.GetType(inst.type_id);
-
-  // FloatLiteral is represented as an empty struct. All other floating-point
-  // types are represented as LLVM floating-point types.
-  if (!type->isFloatingPointTy()) {
-    auto* literal_value = context.GetLiteralAsValue();
-    CARBON_CHECK(literal_value->getType() == type);
-    return literal_value;
-  }
-
   const llvm::APFloat& value = context.sem_ir().floats().Get(inst.float_id);
   return llvm::ConstantFP::get(context.GetType(inst.type_id), value);
 }

@@ -269,10 +269,13 @@ struct Worklist {
   }
 
   auto Add(const llvm::APInt& value) -> void {
-    contents.push_back(value.getBitWidth());
-    for (auto word : llvm::seq((value.getBitWidth() + 63) / 64)) {
+    unsigned width = value.getBitWidth();
+    contents.push_back(width);
+    for (auto word : llvm::seq((width + 63) / 64)) {
       // TODO: Is there a better way to copy the words from an APInt?
-      contents.push_back(value.extractBitsAsZExtValue(64, 64 * word));
+      unsigned start = 64 * word;
+      contents.push_back(
+          value.extractBitsAsZExtValue(std::min(64U, width - start), start));
     }
   }
 
@@ -280,6 +283,13 @@ struct Worklist {
 
   auto Add(FloatId float_id) -> void {
     Add(sem_ir->floats().Get(float_id).bitcastToAPInt());
+  }
+
+  auto Add(RealId real_id) -> void {
+    const auto& real = sem_ir->reals().Get(real_id);
+    Add(real.mantissa);
+    Add(real.exponent);
+    contents.push_back(real.is_decimal);
   }
 
   auto Add(PackageNameId package_id) -> void {
@@ -325,7 +335,7 @@ struct Worklist {
   }
 
   template <typename T>
-    requires(SameAsOneOf<T, AnyRawId, ExprRegionId, LocId, RealId>)
+    requires(SameAsOneOf<T, AnyRawId, ExprRegionId, LocId>)
   auto Add(T /*arg*/) -> void {
     CARBON_FATAL("Unexpected instruction operand kind {0}", typeid(T).name());
   }

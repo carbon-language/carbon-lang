@@ -55,47 +55,13 @@ auto HandleParseNode(Context& context, Parse::IntLiteralId node_id) -> bool {
 }
 
 auto HandleParseNode(Context& context, Parse::RealLiteralId node_id) -> bool {
-  // Convert the real literal to an llvm::APFloat and add it to the floats
-  // ValueStore. In the future this would use an arbitrary precision Rational
-  // type.
-  //
-  // TODO: Implement Carbon's actual implicit conversion rules for
-  // floating-point constants, as per the design
-  // docs/design/expressions/implicit_conversions.md
   auto real_id =
       context.tokens().GetRealLiteral(context.parse_tree().node_token(node_id));
-  auto real_value = context.sem_ir().reals().Get(real_id);
-
-  if (real_value.mantissa.getActiveBits() > 64) {
-    CARBON_DIAGNOSTIC(RealMantissaTooLargeForI64, Error,
-                      "real mantissa with value {0} does not fit in i64",
-                      llvm::APSInt);
-    context.emitter().Emit(node_id, RealMantissaTooLargeForI64,
-                           llvm::APSInt(real_value.mantissa, true));
-    context.node_stack().Push(node_id, SemIR::ErrorInst::InstId);
-    return true;
-  }
-
-  if (real_value.exponent.getSignificantBits() > 64) {
-    CARBON_DIAGNOSTIC(RealExponentTooLargeForI64, Error,
-                      "real exponent with value {0} does not fit in i64",
-                      llvm::APSInt);
-    context.emitter().Emit(node_id, RealExponentTooLargeForI64,
-                           llvm::APSInt(real_value.exponent, false));
-    context.node_stack().Push(node_id, SemIR::ErrorInst::InstId);
-    return true;
-  }
-
-  double double_val = real_value.mantissa.getZExtValue() *
-                      std::pow((real_value.is_decimal ? 10 : 2),
-                               real_value.exponent.getSExtValue());
-
-  auto float_id = context.sem_ir().floats().Add(llvm::APFloat(double_val));
-  AddInstAndPush<SemIR::FloatValue>(
+  AddInstAndPush<SemIR::FloatLiteralValue>(
       context, node_id,
       {.type_id =
            GetSingletonType(context, SemIR::FloatLiteralType::TypeInstId),
-       .float_id = float_id});
+       .real_id = real_id});
   return true;
 }
 
