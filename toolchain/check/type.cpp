@@ -233,8 +233,9 @@ auto GetUnboundElementType(Context& context, SemIR::TypeInstId class_type_id,
 
 auto GetCanonicalizedFacetOrTypeValue(Context& context, SemIR::InstId inst_id)
     -> SemIR::InstId {
+      // FIXME: Remove? 
   if (auto access_self =
-          context.insts().TryGetAs<SemIR::FacetAccessPeriodSelfType>(inst_id)) {
+          context.insts().TryGetAs<SemIR::DeferredBindSymbolicName>(inst_id)) {
     auto& entity_name = context.entity_names().Get(access_self->entity_name_id);
     // FIXME: Can be None for the `.Self.I1` in `U:! I(.Self) where .I1 = ()`.
     // Do we want to prevent making the FacetAccessPeriodSelfType instruction in
@@ -265,7 +266,7 @@ auto GetCanonicalizedFacetOrTypeValue(Context& context, SemIR::InstId inst_id)
     }
   }
 
-  CARBON_CHECK(!context.insts().Is<SemIR::FacetAccessPeriodSelfType>(inst_id));
+  // FIXME: Remove? CARBON_CHECK(!context.insts().Is<SemIR::FacetAccessPeriodSelfType>(inst_id));
   CARBON_CHECK(!context.insts().Is<SemIR::FacetAccessType>(inst_id));
   CARBON_CHECK(!context.insts().Is<SemIR::FacetValue>(inst_id));
 

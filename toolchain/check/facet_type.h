@@ -102,7 +102,7 @@ auto ResolveFacetTypeRewriteConstraints(
 // `TypeType`).
 auto MakePeriodSelfFacetValue(Context& context, SemIR::TypeId self_type_id,
                               int32_t period_self_distance,
-                            bool as_type = false) -> SemIR::InstId;
+                            bool is_deferred = false) -> SemIR::InstId;
 
 }  // namespace Carbon::Check
 

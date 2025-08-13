@@ -646,22 +646,11 @@ struct FacetAccessType {
   InstId facet_value_inst_id;
 };
 
-// Represents accessing the `type` field in a facet value through a `.Self`
-// facet value (a `BindSymbolicName`) that refers to a binding (another
-// `BindSymbolicName`).
-//
-// For example in `fn F(U:! I(.Self)`, the `U` facet value is a BindSymbolicName
-// that will eventually be resolved to a `FacetValue`. The `.Self` name refers
-// to a different BindSymbolicName that is never resolved, but which provides a
-// level of indirection to the `U` facet value through its `EntityName`.
-//
-// Unlike FacetAccessType, this instruction never evaluates to a type directly,
-// since a `.Self` facet value also never evaluates to a `FacetValue`. But it
-// can be used to find the facet value that does evaluate to a `FacetValue`
-// through the `EntityName` after that facet value has been fully constructed.
-struct FacetAccessPeriodSelfType {
-  static constexpr auto Kind = InstKind::FacetAccessPeriodSelfType.Define<Parse::NodeId>(
-      {.ir_name = "facet_access_period_self_type",
+// A deferred reference to a BindSymbolicName of type `FacetType` through a
+// `.Self` reference.
+struct DeferredBindSymbolicName {
+  static constexpr auto Kind = InstKind::DeferredBindSymbolicName.Define<Parse::NodeId>(
+      {.ir_name = "deferred_bind_symbolic_self",
        .is_type = InstIsType::Always,
        .constant_kind = InstConstantKind::SymbolicOnly});
 

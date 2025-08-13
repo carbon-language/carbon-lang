@@ -301,6 +301,13 @@ static auto LookupMemberNameInScope(Context& context, SemIR::LocId loc_id,
           context.types().TryGetAs<SemIR::AssociatedEntityType>(type_id)) {
     if (lookup_in_type_of_base) {
       SemIR::TypeId base_type_id = context.insts().Get(base_id).type_id();
+      // TODO: Combine with the FacetAccessType condition by calling
+      // GetCanonicalizedFacetOrTypeValue unconditionally?
+      if (context.types().Is<SemIR::DeferredBindSymbolicName>(base_type_id)) {
+        base_id = GetCanonicalizedFacetOrTypeValue(
+            context, context.types().GetInstId(base_type_id));
+        base_type_id = context.insts().Get(base_id).type_id();
+      }
       if (auto facet_access_type =
               context.types().TryGetAs<SemIR::FacetAccessType>(base_type_id)) {
         // Move from the type of a symbolic facet value up in typish-ness to its

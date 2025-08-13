@@ -71,8 +71,8 @@ static auto HandleAnyBindingPattern(Context& context, Parse::NodeId node_id,
     // the `BindSymbolicName`.
     if (period_self_inst_id.has_value()) {
       auto period_self = context.insts().GetAs<SemIR::BindSymbolicName>(
-          // period_self_inst_id);
-          GetCanonicalizedFacetOrTypeValue(context, period_self_inst_id));
+           period_self_inst_id);
+          //GetCanonicalizedFacetOrTypeValue(context, period_self_inst_id));
       auto& period_self_entity_name =
           context.entity_names().Get(period_self.entity_name_id);
       period_self_entity_name.decl_bind_name_id = binding.bind_id;
@@ -258,11 +258,17 @@ auto HandleParseNode(Context& context,
   // compile time binding. This is popped when handling the
   // CompileTimeBindingPatternId.
   context.scope_stack().PushForSameRegion();
+
+  SemIR::FacetTypeId facet_type_id = context.facet_types().Add(SemIR::FacetTypeInfo{});
+  auto const_id = EvalOrAddInst<SemIR::FacetType>(context, node_id, {.type_id = SemIR::TypeType::TypeId, .facet_type_id = facet_type_id});
+  auto type_id = context.types().GetTypeIdForTypeConstantId(const_id);
+
   auto period_self_inst_id = MakePeriodSelfFacetValue(
-      context, SemIR::TypeType::TypeId,
+      context, 
+      type_id,
       // FIXME: Change to 0 when we increment on `where`.
       /*period_self_distance=*/-1,
-      /*as_type=*/true);
+      /*is_deferred=*/false);
   context.node_stack().Push(node_id, period_self_inst_id);
   return true;
 }

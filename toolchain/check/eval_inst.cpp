@@ -208,7 +208,7 @@ auto EvalConstantInst(Context& context, SemIR::FacetAccessType inst)
     if (entity_name.name_id == SemIR::NameId::PeriodSelf &&
         // FIXME: Change to 0 when we increment on `where`.
         entity_name.period_self_distance == -1) {
-      return ConstantEvalResult::NewSamePhase(SemIR::FacetAccessPeriodSelfType{
+      return ConstantEvalResult::NewSamePhase(SemIR::DeferredBindSymbolicName{
           .type_id = SemIR::TypeType::TypeId,
           .entity_name_id = bind_name->entity_name_id});
     }
@@ -217,7 +217,8 @@ auto EvalConstantInst(Context& context, SemIR::FacetAccessType inst)
   return ConstantEvalResult::NewSamePhase(inst);
 }
 
-auto EvalConstantInst(Context& /*context*/, SemIR::FacetAccessPeriodSelfType inst)
+auto EvalConstantInst(Context& /*context*/,
+                      SemIR::DeferredBindSymbolicName inst)
     -> ConstantEvalResult {
   return ConstantEvalResult::NewSamePhase(inst);
 }

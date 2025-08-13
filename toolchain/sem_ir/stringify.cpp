@@ -315,15 +315,15 @@ class Stringifier {
           << layout[CustomLayoutId::AlignIndex] << ">";
   }
 
+  auto StringifyInst(InstId /*inst_id*/, DeferredBindSymbolicName inst)
+      -> void {
+    // Given `T:! I(.Self)`, forward the deferred `.Self` to the entity name.
+    step_stack_->PushEntityNameId(inst.entity_name_id);
+  }
+
   auto StringifyInst(InstId /*inst_id*/, FacetAccessType inst) -> void {
     // Given `T:! I`, print `T as type` as simply `T`.
     step_stack_->PushInstId(inst.facet_value_inst_id);
-  }
-
-  auto StringifyInst(InstId /*inst_id*/, FacetAccessPeriodSelfType inst)
-      -> void {
-    // Given `T:! I(.Self)`, print `.Self as type` as simply `.Self`.
-    step_stack_->PushEntityNameId(inst.entity_name_id);
   }
 
   auto StringifyInst(InstId /*inst_id*/, FacetType inst) -> void {

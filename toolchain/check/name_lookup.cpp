@@ -11,10 +11,12 @@
 #include "toolchain/check/import_cpp.h"
 #include "toolchain/check/import_ref.h"
 #include "toolchain/check/member_access.h"
+#include "toolchain/check/type.h"
 #include "toolchain/check/type_completion.h"
 #include "toolchain/diagnostics/format_providers.h"
 #include "toolchain/sem_ir/generic.h"
 #include "toolchain/sem_ir/name_scope.h"
+#include "toolchain/sem_ir/typed_insts.h"
 
 namespace Carbon::Check {
 
@@ -272,6 +274,19 @@ auto AppendLookupScopesForConstant(Context& context, SemIR::LocId loc_id,
     -> bool {
   auto base_id = context.constant_values().GetInstId(base_const_id);
   auto base = context.insts().Get(base_id);
+
+  // TODO: Combine thie branch with the FacetAccessType one by just calling
+  // GetCanonicalizedFacetOrTypeValue unconditionally?
+  if (auto deferred = base.TryAs<SemIR::DeferredBindSymbolicName>()) {
+    auto facet_type_type_id =
+        context.insts()
+            .Get(context.constant_values().GetInstId(
+                GetCanonicalizedFacetOrTypeValue(context, base_const_id)))
+            .type_id();
+    base_const_id = context.types().GetConstantId(facet_type_type_id);
+    base_id = context.constant_values().GetInstId(base_const_id);
+    base = context.insts().Get(base_id);
+  }
 
   if (auto base_as_facet_access_type = base.TryAs<SemIR::FacetAccessType>()) {
     // Move from the symbolic facet value up in typish-ness to its FacetType to

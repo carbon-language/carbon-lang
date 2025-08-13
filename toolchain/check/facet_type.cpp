@@ -615,25 +615,33 @@ auto ResolveFacetTypeRewriteConstraints(
 }
 
 auto MakePeriodSelfFacetValue(Context& context, SemIR::TypeId self_type_id,
-                              int32_t period_self_distance, bool as_type)
+                              int32_t period_self_distance, bool is_deferred)
     -> SemIR::InstId {
-  auto entity_name_id = context.entity_names().AddCanonical({
-      .name_id = SemIR::NameId::PeriodSelf,
-      .parent_scope_id = context.scope_stack().PeekNameScopeId(),
-      .period_self_distance = period_self_distance,
-  });
-  auto inst_id = AddInst(
-      context, SemIR::LocIdAndInst::NoLoc<SemIR::BindSymbolicName>({
-                   .type_id = self_type_id,
-                   .entity_name_id = entity_name_id,
-                   // `None` because there is no equivalent non-symbolic value.
-                   .value_id = SemIR::InstId::None,
-               }));
-  if (as_type) {
+  auto inst_id = SemIR::InstId::None;
+  if (!is_deferred) {
+    auto entity_name_id = context.entity_names().AddCanonical({
+        .name_id = SemIR::NameId::PeriodSelf,
+        .parent_scope_id = context.scope_stack().PeekNameScopeId(),
+        .period_self_distance = period_self_distance,
+    });
     inst_id =
-        AddInst(context, SemIR::LocIdAndInst::NoLoc<SemIR::FacetAccessType>(
-                             {.type_id = SemIR::TypeType::TypeId,
-                              .facet_value_inst_id = inst_id}));
+        AddInst(context,
+                SemIR::LocIdAndInst::NoLoc<SemIR::BindSymbolicName>({
+                    .type_id = self_type_id,
+                    .entity_name_id = entity_name_id,
+                    // `None` because there is no equivalent non-symbolic value.
+                    .value_id = SemIR::InstId::None,
+                }));
+  } else {
+    auto entity_name_id = context.entity_names().Add({
+        .name_id = SemIR::NameId::PeriodSelf,
+        .parent_scope_id = context.scope_stack().PeekNameScopeId(),
+        .period_self_distance = period_self_distance,
+    });
+    inst_id = AddInst(
+        context,
+        SemIR::LocIdAndInst::NoLoc<SemIR::DeferredBindSymbolicName>(
+            {.type_id = self_type_id, .entity_name_id = entity_name_id}));
   }
   auto existing =
       context.scope_stack().LookupOrAddName(SemIR::NameId::PeriodSelf, inst_id);
