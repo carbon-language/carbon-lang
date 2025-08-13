@@ -1152,6 +1152,7 @@ static auto MapPointerType(Context& context, clang::QualType type,
   if (auto nullability = type->getNullability();
       !nullability.has_value() ||
       *nullability != clang::NullabilityKind::NonNull) {
+    // TODO: Support nullable pointers.
     return {.inst_id = SemIR::TypeInstId::None, .type_id = SemIR::TypeId::None};
   }
 
