@@ -533,12 +533,6 @@ struct FloatKind : public IdBase<FloatKind> {
 
   using IdBase::IdBase;
 
-  // Determines whether this is a concrete floating-point kind, with associated
-  // semantics, not `None`.
-  auto is_concrete() const -> bool { return index >= 0; }
-
-  auto AsString() const -> llvm::StringLiteral;
-
   auto Print(llvm::raw_ostream& out) const -> void;
 
   // Query the LLVM semantics model associated with this kind of floating-point

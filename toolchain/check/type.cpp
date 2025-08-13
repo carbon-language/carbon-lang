@@ -44,8 +44,8 @@ auto ValidateIntType(Context& context, SemIR::LocId loc_id,
   return true;
 }
 
-auto ValidateFloatType(Context& context, SemIR::LocId loc_id,
-                       SemIR::FloatType& result) -> bool {
+auto ValidateFloatTypeAndSetKind(Context& context, SemIR::LocId loc_id,
+                                 SemIR::FloatType& result) -> bool {
   // Get the bit width value.
   auto bit_width_inst =
       context.insts().TryGetAs<SemIR::IntValue>(result.bit_width_id);

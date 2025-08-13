@@ -1007,7 +1007,7 @@ static auto MakeFloatTypeResult(Context& context, SemIR::LocId loc_id,
       .type_id = GetSingletonType(context, SemIR::TypeType::TypeInstId),
       .bit_width_id = width_id,
       .float_kind = SemIR::FloatKind::None};
-  if (!ValidateFloatType(context, loc_id, result)) {
+  if (!ValidateFloatTypeAndSetKind(context, loc_id, result)) {
     return SemIR::ErrorInst::ConstantId;
   }
   return MakeConstantResult(context, result, phase);
@@ -1114,7 +1114,6 @@ static auto PerformCheckedFloatConvert(Context& context, SemIR::LocId loc_id,
     real_value.exponent.toStringSigned(str);
 
     // Convert the string to an APFloat.
-    // TODO: Compute the fltSemantics from the type.
     llvm::APFloat result(dest_float_type->float_kind.Semantics());
     // TODO: The implementation of this conversion effectively converts back to
     // APInts, but unfortunately the conversion from integer mantissa and

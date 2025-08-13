@@ -78,23 +78,23 @@ auto IntKind::Print(llvm::raw_ostream& out) const -> void {
   }
 }
 
-auto FloatKind::AsString() const -> llvm::StringLiteral {
-  switch (this->index) {
-    case None.index:
+static auto FloatKindToStringLiteral(FloatKind kind) -> llvm::StringLiteral {
+  switch (kind.index) {
+    case FloatKind::None.index:
       return "<none>";
-    case Binary16.index:
+    case FloatKind::Binary16.index:
       return "f16";
-    case Binary32.index:
+    case FloatKind::Binary32.index:
       return "f32";
-    case Binary64.index:
+    case FloatKind::Binary64.index:
       return "f64";
-    case Binary128.index:
+    case FloatKind::Binary128.index:
       return "f128";
-    case BFloat16.index:
+    case FloatKind::BFloat16.index:
       return "f16_brain";
-    case X87Float80.index:
+    case FloatKind::X87Float80.index:
       return "f80_x87";
-    case PPCFloat128.index:
+    case FloatKind::PPCFloat128.index:
       return "f128_ppc";
     default:
       return "<invalid>";
@@ -102,7 +102,7 @@ auto FloatKind::AsString() const -> llvm::StringLiteral {
 }
 
 auto FloatKind::Print(llvm::raw_ostream& out) const -> void {
-  out << AsString();
+  out << FloatKindToStringLiteral(*this);
 }
 
 auto FloatKind::Semantics() const -> const llvm::fltSemantics& {
@@ -122,7 +122,7 @@ auto FloatKind::Semantics() const -> const llvm::fltSemantics& {
     case PPCFloat128.index:
       return llvm::APFloat::PPCDoubleDouble();
     default:
-      CARBON_FATAL("Unexpected float kind {0}", AsString());
+      CARBON_FATAL("Unexpected float kind {0}", *this);
   }
 }
 
