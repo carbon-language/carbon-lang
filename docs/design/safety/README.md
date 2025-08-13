@@ -188,7 +188,7 @@ functionality. Currently, the industry is currently investing a massive amount
 of effort to build out a sufficient ecosystem of general, multi-platform
 software using Rust, and it is critical that Carbon does not impede, slow down,
 or require duplicating that ecosystem. Similarly, if any other cross-platform
-library ecosystems emerge in a viable memory-safe languages given our
+library ecosystems emerge in any viable memory-safe languages given our
 performance constraints, we should work to reuse them and avoid duplication.
 
 **Carbon's strategy for safe and generally reusable cross-platform libraries is

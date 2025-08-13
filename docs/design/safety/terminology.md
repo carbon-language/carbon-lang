@@ -137,7 +137,7 @@ practical risk of vulnerabilities due to bugs.
 ### _Memory safety_
 
 Having well-defined and predictable behavior regarding memory access, even in
-the face of bugs. Memory safety encompass several key aspects:
+the face of bugs. Memory safety encompasses several key aspects:
 
 #### _Temporal safety_
 
