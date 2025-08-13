@@ -1531,6 +1531,19 @@ static auto TryResolveTypedInst(ImportRefResolver& resolver,
 }
 
 static auto TryResolveTypedInst(ImportRefResolver& resolver,
+                                SemIR::BoolLiteral inst) -> ResolveResult {
+  CARBON_CHECK(resolver.import_types().GetInstId(inst.type_id) ==
+               SemIR::BoolType::TypeInstId);
+
+  CARBON_CHECK(!resolver.HasNewWork());
+
+  return ResolveAsDeduplicated<SemIR::BoolLiteral>(
+      resolver, {.type_id = GetSingletonType(resolver.local_context(),
+                                             SemIR::BoolType::TypeInstId),
+                 .value = inst.value});
+}
+
+static auto TryResolveTypedInst(ImportRefResolver& resolver,
                                 SemIR::BoundMethod inst) -> ResolveResult {
   CARBON_CHECK(resolver.import_types().GetInstId(inst.type_id) ==
                SemIR::BoundMethodType::TypeInstId);
@@ -1566,6 +1579,20 @@ static auto TryResolveTypedInst(ImportRefResolver& resolver, SemIR::Call inst)
            resolver.local_context().types().GetTypeIdForTypeConstantId(type_id),
        .callee_id = callee_id,
        .args_id = GetLocalCanonicalInstBlockId(resolver, inst.args_id, args)});
+}
+
+static auto TryResolveTypedInst(ImportRefResolver& resolver,
+                                SemIR::CharLiteralValue inst) -> ResolveResult {
+  CARBON_CHECK(resolver.import_types().GetInstId(inst.type_id) ==
+               SemIR::CharLiteralType::TypeInstId);
+
+  CARBON_CHECK(!resolver.HasNewWork());
+
+  return ResolveAsDeduplicated<SemIR::CharLiteralValue>(
+      resolver,
+      {.type_id = GetSingletonType(resolver.local_context(),
+                                   SemIR::CharLiteralType::TypeInstId),
+       .value = inst.value});
 }
 
 static auto AddPlaceholderNameScope(ImportContext& context)
@@ -1829,6 +1856,24 @@ static auto TryResolveTypedInst(ImportRefResolver& resolver,
 }
 
 static auto TryResolveTypedInst(ImportRefResolver& resolver,
+                                SemIR::FloatLiteralValue inst)
+    -> ResolveResult {
+  CARBON_CHECK(resolver.import_types().GetInstId(inst.type_id) ==
+               SemIR::FloatLiteralType::TypeInstId);
+
+  CARBON_CHECK(!resolver.HasNewWork());
+
+  auto real_id = resolver.local_ir().reals().Add(
+      resolver.import_ir().reals().Get(inst.real_id));
+
+  return ResolveAsDeduplicated<SemIR::FloatLiteralValue>(
+      resolver,
+      {.type_id = GetSingletonType(resolver.local_context(),
+                                   SemIR::FloatLiteralType::TypeInstId),
+       .real_id = real_id});
+}
+
+static auto TryResolveTypedInst(ImportRefResolver& resolver,
                                 SemIR::FloatType inst) -> ResolveResult {
   CARBON_CHECK(inst.type_id == SemIR::TypeType::TypeId);
   auto bit_width_id = GetLocalConstantInstId(resolver, inst.bit_width_id);
@@ -1839,6 +1884,23 @@ static auto TryResolveTypedInst(ImportRefResolver& resolver,
   return ResolveAsDeduplicated<SemIR::FloatType>(
       resolver,
       {.type_id = SemIR::TypeType::TypeId, .bit_width_id = bit_width_id});
+}
+
+static auto TryResolveTypedInst(ImportRefResolver& resolver,
+                                SemIR::FloatValue inst) -> ResolveResult {
+  auto type_id = GetLocalConstantId(resolver, inst.type_id);
+  if (resolver.HasNewWork()) {
+    return ResolveResult::Retry();
+  }
+
+  auto float_id = resolver.local_ir().floats().Add(
+      resolver.import_ir().floats().Get(inst.float_id));
+
+  return ResolveAsDeduplicated<SemIR::FloatValue>(
+      resolver,
+      {.type_id =
+           resolver.local_context().types().GetTypeIdForTypeConstantId(type_id),
+       .float_id = float_id});
 }
 
 // Make a declaration of a function. This is done as a separate step from
@@ -3011,10 +3073,16 @@ static auto TryResolveInstCanonical(ImportRefResolver& resolver,
     case CARBON_KIND(SemIR::BindSymbolicName inst): {
       return TryResolveTypedInst(resolver, inst);
     }
+    case CARBON_KIND(SemIR::BoolLiteral inst): {
+      return TryResolveTypedInst(resolver, inst);
+    }
     case CARBON_KIND(SemIR::BoundMethod inst): {
       return TryResolveTypedInst(resolver, inst);
     }
     case CARBON_KIND(SemIR::Call inst): {
+      return TryResolveTypedInst(resolver, inst);
+    }
+    case CARBON_KIND(SemIR::CharLiteralValue inst): {
       return TryResolveTypedInst(resolver, inst);
     }
     case CARBON_KIND(SemIR::ClassDecl inst): {
@@ -3044,7 +3112,13 @@ static auto TryResolveInstCanonical(ImportRefResolver& resolver,
     case CARBON_KIND(SemIR::FieldDecl inst): {
       return TryResolveTypedInst(resolver, inst, inst_id);
     }
+    case CARBON_KIND(SemIR::FloatLiteralValue inst): {
+      return TryResolveTypedInst(resolver, inst);
+    }
     case CARBON_KIND(SemIR::FloatType inst): {
+      return TryResolveTypedInst(resolver, inst);
+    }
+    case CARBON_KIND(SemIR::FloatValue inst): {
       return TryResolveTypedInst(resolver, inst);
     }
     case CARBON_KIND(SemIR::FunctionDecl inst): {
