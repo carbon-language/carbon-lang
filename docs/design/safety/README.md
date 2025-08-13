@@ -26,10 +26,10 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 ## Overview
 
 One of Carbon's core goals is [practical safety]. This is referring to _[code
-safety]_
-as opposed to the larger space of [systems safety]. The largest aspect of code safety
-at the language level is [memory safety], but this also applies to other aspects
-of code safety such as avoiding undefined behavior in other forms.
+safety]_ as opposed to the larger space of [systems safety]. The largest aspect
+of code safety at the language level is [memory safety], but this also applies
+to other aspects of code safety such as avoiding undefined behavior in other
+forms.
 
 [practical safety]:
     /docs/project/goals.md#practical-safety-and-testing-mechanisms
@@ -45,8 +45,9 @@ guarantees. Our safety strategy has to address how C++ code fits into it, and
 provide an incremental path from where the code is at today towards increasing
 levels of safety.
 
-Ultimately, Carbon will both provide a [memory-safe language], _and_ provide a language
-that can interop with C++ and be targeted for mechanical migration from C++.
+Ultimately, Carbon will both provide a [memory-safe language], _and_ provide a
+language that can interop with C++ and be targeted for mechanical migration from
+C++.
 
 [memory-safe language]: /docs/design/safety/terminology.md#memory-safe-language
 
@@ -54,9 +55,9 @@ that can interop with C++ and be targeted for mechanical migration from C++.
 
 Carbon will have both _safe_ and _unsafe_ code. Safe code provides limits on the
 potential behavior of the program even in the face of bugs in order to prevent
-[safety bugs] from becoming [vulnerabilities]. Unsafe code is any code or operation
-which lacks limits or guarantees on behavior, and as a consequence may have undefined
-behavior or be a safety bug.
+[safety bugs] from becoming [vulnerabilities]. Unsafe code is any code or
+operation which lacks limits or guarantees on behavior, and as a consequence may
+have undefined behavior or be a safety bug.
 
 [safety bugs]: /docs/design/safety/terminology.md#safety-bugs
 [vulnerabilities]:
@@ -95,8 +96,8 @@ The _safety mode_ of Carbon governs the extent to which unsafe code must include
 the local `unsafe` keyword in its syntax to delineate it from safe code.
 
 _Strict Carbon_ is the mode in which all unsafe code is marked with the `unsafe`
-keyword. This mode is designed to satisfy the requirements of a [memory
-safe language].
+keyword. This mode is designed to satisfy the requirements of a [memory safe
+language].
 
 _Permissive Carbon_ is a mode optimized for interop with C++ and automated
 migration from C++. In this mode, some unsafe code does not require an `unsafe`
@@ -104,22 +105,19 @@ keyword: specific aspects of C++ interop or pervasive patterns that occur when
 migrating from C++. However, not _all_ unsafe code will omit the keyword, the
 permissive mode is designed to be minimal in the unsafe code allowed.
 
-Modes can be configured at build time, on an individual file as part of the
-package declaration, or an a function body as part of the function definition.
-More options such as regions of declarations or regions of statements can be
-explored in the future based on demand in practice when working with
-mixed-strictness code. More fine grained than statements is not expected given
-that the same core expressivity is already available at that finer granularity
-through explicitly marking `unsafe` operations.
+Modes can be configured on an individual file as part of the package
+declaration, or an a function body as part of the function definition. More
+options such as regions of declarations or regions of statements can be explored
+in the future based on demand in practice when working with mixed-strictness
+code. More fine grained than statements is not expected given that the same core
+expressivity is available at that finer granularity through explicitly marking
+`unsafe` operations.
 
 > **Future work**: Define the exact syntax for package declaration and function
 > definition control of strictness. The syntax for enabling the permissive mode
 > must include the `unsafe` keyword as it is standing in place of more granular
 > use of the `unsafe` keywords and needs to still be discovered when auditing
 > for safety.
-
-> **Future work**: Eventually, the build mode should be phased out and file
-> granularity should be the largest granularity of control.
 
 > **Future work**: Define how to mark `import`s of permissive libraries in
 > various contexts, balancing ergonomic burden against the potential for
@@ -130,8 +128,8 @@ through explicitly marking `unsafe` operations.
 Carbon will use a hybrid of different techniques to achieve memory safety in its
 safe code, largely broken down by the categories of memory safety:
 
--   [Type safety]: compile-time enforcement, the same as other statically typed languages
-    with generic type systems.
+-   [Type safety]: compile-time enforcement, the same as other statically typed
+    languages with generic type systems.
 -   [Initialization safety]: hybrid of run-time and compile-time enforcement.
 -   [Spatial safety]: run-time enforcement.
 -   [Temporal safety]: compile-time enforcement through its type system.
@@ -159,11 +157,12 @@ Carbon has the option of distinguishing between two similar but importantly
 different classes of bugs: data races and unsynchronized temporal safety
 violations. Specifically, there is no evidence from security teams that data
 races in isolation have led to anything approaching the volume of
-vulnerabilities without temporal safety violations. For example, the rate of
-memory safety vulnerabilities in Go or non-strict-concurrency Swift code
-entirely matches the low expectations for memory-safe languages despite both
-only providing temporal safety. As a consequence, Carbon has some flexibility
-while still being a [memory-safe language] according to our definition:
+vulnerabilities in software when excluding temporal safety violations. For
+example, despite both Go and non-strict-concurrency Swift only providing
+temporal safety, the rate of memory safety vulnerabilities in software written
+in both matches the expected low rate for memory-safe languages. As a
+consequence, Carbon has some flexibility while still being a [memory-safe
+language] according to our definition:
 
 -   Carbon might choose to _not_ prevent data race bugs that are not
     _themselves_ also temporal safety bugs, even though the data race may lead
@@ -175,8 +174,8 @@ while still being a [memory-safe language] according to our definition:
     free.
 
 Despite having this flexibility, preventing data race bugs remains _highly
-valuable_ for correctness, debugging, and achieving [fearless concurrency]. If Carbon
-can, it should work to prevent data races as well.
+valuable_ for correctness, debugging, and achieving [fearless concurrency]. If
+Carbon can, it should work to prevent data races as well.
 
 [fearless concurrency]: https://doc.rust-lang.org/book/ch16-00-concurrency.html
 
@@ -222,17 +221,18 @@ run-time enforcement components of our
 [memory safety model](#memory-safety-model) above. This means, for example, that
 bounds checking is enabled in the release build. There is [evidence] that the
 cost of these hardening steps is low. Following the specific guidance of our top
-priority for [performance _control_], Carbon will provide ways to write unsafe code
-that disables the run-time enforcement, enabling the control of any overhead incurred.
+priority for [performance _control_], Carbon will provide ways to write unsafe
+code that disables the run-time enforcement, enabling the control of any
+overhead incurred.
 
 [evidence]: https://chandlerc.blog/posts/2024/11/story-time-bounds-checking/
 [performance control]: /docs/project/goals.md#performance-critical-software
 
-The debug build will work to cause bugs, in both safe and unsafe code, and any
-detectable undefined or erroneous behavior to have [fail-stop] behavior and even
-detailed diagnostics to enable better debugging. This mode will at least provide
-similar bug [detection] capabilities to [AddressSanitizer] and
-[MemorySanitizer].
+The debug build will change the actual behavior of both safe and unsafe code
+with detectable bugs or detectable undefined or erroneous behavior to have
+[fail-stop] behavior and provide detailed diagnostics to enable better
+debugging. This mode will at least provide similar bug [detection] capabilities
+to [AddressSanitizer] and [MemorySanitizer].
 
 [fail-stop]: /docs/design/safety/terminology.md#fail-stop
 [detection]: /docs/design/safety/terminology.md#detecting
@@ -265,8 +265,8 @@ purposes.
 
 ### Probabilistic techniques likely cannot stop attacks
 
-It's expected that probabilistic techniques that can be applied at the language
-level are attackable through a variety of techniques:
+It's expected that non-cryptographic probabilistic techniques that can be
+applied at the language level are attackable through a variety of techniques:
 
 -   The attacker might be able to attack repeatedly until it gets through.
 -   The attacker may be able to determine when the attack would be detected and
@@ -278,16 +278,19 @@ level are attackable through a variety of techniques:
     there's a collision.
 
 Hardware vulnerabilities may make these attacks easier than they might otherwise
-appear. Future hardware vulnerabilities are difficult to predict.
+appear. Future hardware vulnerabilities are difficult to predict. In general, we
+do not expect non-cryptographic probabilistic techniques to be an effective
+approach to achieving safety.
 
-Note this statement focuses on what can be applied to the language level. Using
-a secure hash algorithm, such as SHA256, may be used to offer probabilistic
-defense in other situations. However, the overhead of a secure hash algorithm's
-calculation is significant in the context of most things that Carbon may do at
-the language level.
+While _cryptographic_ probabilistic techniques can, and typically do, work
+carefully to not be subject to these weaknesses, they face a very different
+challenge. The overhead of a cryptographically secure hash is generally
+prohibitive for use in language level constructs. Further, some of the defenses
+against hardware vulnerabilities and improvements further exacerbate these
+overheads. However, when these can be applied usefully such as with [PKeys],
+they are robust.
 
-Combining these issues, although it may seem like a probabilistic safety check
-could be proven to reliably detect attackers, it's likely infeasible to do so.
+[PKeys]: https://docs.kernel.org/core-api/protection-keys.html
 
 ## References
 

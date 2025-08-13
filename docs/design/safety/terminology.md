@@ -63,9 +63,12 @@ practice _are always still bugs_!
 
 ### _Safety_
 
-Absent a qualifier or narrow context, refers to _system safety_, and _safety
-engineering_. Always a property of a system or product as a whole, including
+Absent a qualifier or narrow context, refers to _[system safety]_, and _[safety
+engineering]_. Always a property of a system or product as a whole, including
 human factors, etc.
+
+[system safety]: https://en.wikipedia.org/wiki/System_safety
+[safety engineering]: https://en.wikipedia.org/wiki/Safety_engineering
 
 ### _Code_, _software_, or _program safety_
 
@@ -73,6 +76,9 @@ Invariants or limits on program behavior in the face of bugs.
 
 -   Very narrow and specific meaning.
 -   Often necessary but not sufficient for system safety.
+
+This is a specific subset of [safety](#safety) concerns, and the ones we are
+most often focused on with programming language and library design.
 
 ### _Safety bugs_
 
@@ -110,7 +116,8 @@ and have varying degrees of effectiveness.
 
 #### _Detecting_
 
-While still vulnerable, detecting or tracking the exploit of a bug. Requires
+While still leaving the code vulnerable, a defense that attempts to recognize
+and potentially track when a specific bug has occurred dynamically. Requires
 _some_ invariant or limit, but very minimal.
 
 #### _Mitigating_
@@ -120,12 +127,17 @@ be exploited.
 
 #### _Preventing_ vulnerabilities
 
-While still a bug, making it impossible to be a vulnerability. Often this is
-done by defining behavior to [fail-stop](#fail-stop).
+Making it impossible for a bug to be exploited as a vulnerability without
+resolving the underlying bug -- the program still doesn't behave as intended, it
+just cannot be exploited. Often this is done by defining behavior to
+[fail-stop](#fail-stop).
 
 #### _Ensuring_ correctness
 
-No longer a bug, much less a vulnerability.
+Ensures that if the program compiles successfully, it behaves as intended. This
+typically prevents a bug being written and compiled into a program in the first
+place. For example, statically typed languages typically ensure that the types
+used in the program are correct.
 
 #### _Hardening_
 
