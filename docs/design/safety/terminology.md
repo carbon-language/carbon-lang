@@ -64,8 +64,9 @@ practice _are always still bugs_!
 ### _Safety_
 
 Absent a qualifier or narrow context, refers to _[system safety]_, and _[safety
-engineering]_. Always a property of a system or product as a whole, including
-human factors, etc.
+engineering]_.
+Always a property of a system or product as a whole, including human factors,
+etc.
 
 [system safety]: https://en.wikipedia.org/wiki/System_safety
 [safety engineering]: https://en.wikipedia.org/wiki/Safety_engineering
