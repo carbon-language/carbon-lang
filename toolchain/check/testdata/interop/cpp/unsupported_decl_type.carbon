@@ -18,18 +18,15 @@ template<typename T> class C {};
 
 library "[[@TEST_NAME]]";
 
+// CHECK:STDERR: fail_todo_use_template.carbon:[[@LINE+4]]:10: in file included here [InCppInclude]
+// CHECK:STDERR: ./template.h:2:28: error: semantics TODO: `Unsupported: Declaration type ClassTemplate` [SemanticsTodo]
+// CHECK:STDERR: template<typename T> class C {};
+// CHECK:STDERR:                            ^
 import Cpp library "template.h";
 
 fn F() {
   //@dump-sem-ir-begin
-  // CHECK:STDERR: fail_todo_use_template.carbon:[[@LINE+11]]:10: error: semantics TODO: `Unsupported: Declaration type ClassTemplate` [SemanticsTodo]
-  // CHECK:STDERR:   var c: Cpp.C({});
-  // CHECK:STDERR:          ^~~~~
-  // CHECK:STDERR: fail_todo_use_template.carbon:[[@LINE+8]]:10: note: in `Cpp` name lookup for `C` [InCppNameLookup]
-  // CHECK:STDERR:   var c: Cpp.C({});
-  // CHECK:STDERR:          ^~~~~
-  // CHECK:STDERR:
-  // CHECK:STDERR: fail_todo_use_template.carbon:[[@LINE+4]]:10: error: member name `C` not found in `Cpp` [MemberNameNotFoundInInstScope]
+  // CHECK:STDERR: fail_todo_use_template.carbon:[[@LINE+4]]:10: note: in `Cpp` name lookup for `C` [InCppNameLookup]
   // CHECK:STDERR:   var c: Cpp.C({});
   // CHECK:STDERR:          ^~~~~
   // CHECK:STDERR:

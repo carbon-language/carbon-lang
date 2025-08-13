@@ -1125,9 +1125,8 @@ static auto MapNonWrapperType(Context& context, SemIR::LocId loc_id,
 }
 
 // Maps a qualified C++ type to a Carbon type.
-static auto MapQualifiedType(Context& context, SemIR::LocId loc_id,
-                             clang::QualType type, TypeExpr type_expr)
-    -> TypeExpr {
+static auto MapQualifiedType(Context& context, clang::QualType type,
+                             TypeExpr type_expr) -> TypeExpr {
   auto quals = type.getQualifiers();
 
   if (quals.hasConst()) {
@@ -1139,28 +1138,21 @@ static auto MapQualifiedType(Context& context, SemIR::LocId loc_id,
 
   // TODO: Support other qualifiers.
   if (!quals.empty()) {
-    context.TODO(loc_id, llvm::formatv("Unsupported: qualified type: {0}",
-                                       type.getAsString()));
-    return {.inst_id = SemIR::ErrorInst::TypeInstId,
-            .type_id = SemIR::ErrorInst::TypeId};
+    return {.inst_id = SemIR::TypeInstId::None, .type_id = SemIR::TypeId::None};
   }
 
   return type_expr;
 }
 
 // Maps a C++ pointer type to a Carbon pointer type.
-static auto MapPointerType(Context& context, SemIR::LocId loc_id,
-                           clang::QualType type, TypeExpr pointee_type_expr)
-    -> TypeExpr {
+static auto MapPointerType(Context& context, clang::QualType type,
+                           TypeExpr pointee_type_expr) -> TypeExpr {
   CARBON_CHECK(type->isPointerType());
 
   if (auto nullability = type->getNullability();
       !nullability.has_value() ||
       *nullability != clang::NullabilityKind::NonNull) {
-    context.TODO(loc_id, llvm::formatv("Unsupported: nullable pointer: {0}",
-                                       type.getAsString()));
-    return {.inst_id = SemIR::ErrorInst::TypeInstId,
-            .type_id = SemIR::ErrorInst::TypeId};
+    return {.inst_id = SemIR::TypeInstId::None, .type_id = SemIR::TypeId::None};
   }
 
   SemIR::TypeId pointer_type_id =
@@ -1197,9 +1189,9 @@ static auto MapType(Context& context, SemIR::LocId loc_id, clang::QualType type)
     }
 
     if (wrapper.hasQualifiers()) {
-      mapped = MapQualifiedType(context, loc_id, wrapper, mapped);
+      mapped = MapQualifiedType(context, wrapper, mapped);
     } else if (wrapper->isPointerType()) {
-      mapped = MapPointerType(context, loc_id, wrapper, mapped);
+      mapped = MapPointerType(context, wrapper, mapped);
     } else {
       CARBON_FATAL("Unexpected wrapper type {0}", wrapper.getAsString());
     }
@@ -1656,11 +1648,12 @@ static auto ImportDeclAfterDependencies(Context& context, SemIR::LocId loc_id,
     return ImportNamespaceDecl(context, clang_namespace_decl);
   }
   if (auto* type_decl = dyn_cast<clang::TypeDecl>(clang_decl)) {
-    auto type = type_decl->getASTContext().getTypeDeclType(type_decl);
+    auto type = clang_decl->getASTContext().getTypeDeclType(type_decl);
     auto type_inst_id = MapType(context, loc_id, type).inst_id;
     if (!type_inst_id.has_value()) {
-      context.TODO(loc_id, llvm::formatv("Unsupported: Type declaration: {0}",
-                                         type.getAsString()));
+      context.TODO(AddImportIRInst(context.sem_ir(), type_decl->getLocation()),
+                   llvm::formatv("Unsupported: Type declaration: {0}",
+                                 type.getAsString()));
       return SemIR::ErrorInst::InstId;
     }
     return type_inst_id;
@@ -1672,13 +1665,15 @@ static auto ImportDeclAfterDependencies(Context& context, SemIR::LocId loc_id,
         existing_inst_id.has_value()) {
       return existing_inst_id;
     }
-    context.TODO(loc_id, "Unsupported: Unhandled kind of field declaration");
-    return SemIR::InstId::None;
+    context.TODO(AddImportIRInst(context.sem_ir(), clang_decl->getLocation()),
+                 "Unsupported: field declaration has unhandled type or kind");
+    return SemIR::ErrorInst::InstId;
   }
 
-  context.TODO(loc_id, llvm::formatv("Unsupported: Declaration type {0}",
-                                     clang_decl->getDeclKindName()));
-  return SemIR::InstId::None;
+  context.TODO(AddImportIRInst(context.sem_ir(), clang_decl->getLocation()),
+               llvm::formatv("Unsupported: Declaration type {0}",
+                             clang_decl->getDeclKindName()));
+  return SemIR::ErrorInst::InstId;
 }
 
 // Imports a declaration from Clang to Carbon. If successful, returns the
