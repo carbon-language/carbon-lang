@@ -649,10 +649,11 @@ struct FacetAccessType {
 // A deferred reference to a BindSymbolicName of type `FacetType` through a
 // `.Self` reference.
 struct DeferredBindSymbolicName {
-  static constexpr auto Kind = InstKind::DeferredBindSymbolicName.Define<Parse::NodeId>(
-      {.ir_name = "deferred_bind_symbolic_self",
-       .is_type = InstIsType::Always,
-       .constant_kind = InstConstantKind::SymbolicOnly});
+  static constexpr auto Kind =
+      InstKind::DeferredBindSymbolicName.Define<Parse::NodeId>(
+          {.ir_name = "deferred_bind_symbolic_self",
+           .is_type = InstIsType::Always,
+           .constant_kind = InstConstantKind::SymbolicOnly});
 
   // Always the builtin type TypeType.
   TypeId type_id;

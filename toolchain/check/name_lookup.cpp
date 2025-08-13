@@ -275,7 +275,7 @@ auto AppendLookupScopesForConstant(Context& context, SemIR::LocId loc_id,
   auto base_id = context.constant_values().GetInstId(base_const_id);
   auto base = context.insts().Get(base_id);
 
-  // TODO: Combine thie branch with the FacetAccessType one by just calling
+  // TODO: Combine this branch with the FacetAccessType one by just calling
   // GetCanonicalizedFacetOrTypeValue unconditionally?
   if (auto deferred = base.TryAs<SemIR::DeferredBindSymbolicName>()) {
     auto facet_type_type_id =

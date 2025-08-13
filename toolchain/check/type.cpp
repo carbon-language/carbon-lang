@@ -233,7 +233,7 @@ auto GetUnboundElementType(Context& context, SemIR::TypeInstId class_type_id,
 
 auto GetCanonicalizedFacetOrTypeValue(Context& context, SemIR::InstId inst_id)
     -> SemIR::InstId {
-      // FIXME: Remove? 
+  // FIXME: Remove?
   if (auto access_self =
           context.insts().TryGetAs<SemIR::DeferredBindSymbolicName>(inst_id)) {
     auto& entity_name = context.entity_names().Get(access_self->entity_name_id);
@@ -266,7 +266,8 @@ auto GetCanonicalizedFacetOrTypeValue(Context& context, SemIR::InstId inst_id)
     }
   }
 
-  // FIXME: Remove? CARBON_CHECK(!context.insts().Is<SemIR::FacetAccessPeriodSelfType>(inst_id));
+  // FIXME: Remove?
+  // CARBON_CHECK(!context.insts().Is<SemIR::FacetAccessPeriodSelfType>(inst_id));
   CARBON_CHECK(!context.insts().Is<SemIR::FacetAccessType>(inst_id));
   CARBON_CHECK(!context.insts().Is<SemIR::FacetValue>(inst_id));
 
