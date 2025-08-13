@@ -2,7 +2,7 @@
 // Exceptions. See /LICENSE for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
-// INCLUDE-FILE: toolchain/testing/testdata/min_prelude/destroy.carbon
+// INCLUDE-FILE: toolchain/testing/testdata/min_prelude/primitives.carbon
 //
 // AUTOUPDATE
 // TIP: To test this file alone, run:
@@ -205,6 +205,32 @@ fn MyF() {
   //@dump-sem-ir-begin
   Cpp.r#base.foo();
   //@dump-sem-ir-end
+}
+
+// ============================================================================
+// Nested namespaces.
+// ============================================================================
+
+// --- nested.carbon
+
+library "[[@TEST_NAME]]";
+
+import Cpp inline '''
+namespace A {
+namespace B {
+namespace C {
+struct X { int n; };
+}
+}
+}
+
+struct Y {
+  A::B::C::X x;
+};
+''';
+
+fn Use(y: Cpp.Y) -> i32 {
+  return y.x.n;
 }
 
 // CHECK:STDOUT: --- import_single.carbon
