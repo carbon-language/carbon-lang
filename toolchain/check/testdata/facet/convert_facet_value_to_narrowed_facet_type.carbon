@@ -897,7 +897,7 @@ fn CallsWithTypeExplicit(U:! type) {
 // CHECK:STDOUT: --- no_interfaces_success.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
-// CHECK:STDOUT:   %.Self.6442b1.1: type = bind_symbolic_name .Self [symbolic_self]
+// CHECK:STDOUT:   %.Self: type = bind_symbolic_name .Self [symbolic_self]
 // CHECK:STDOUT:   %T: type = bind_symbolic_name T, 0 [symbolic]
 // CHECK:STDOUT:   %pattern_type.98f: type = pattern_type type [concrete]
 // CHECK:STDOUT:   %pattern_type.7dc: type = pattern_type %T [symbolic]
@@ -905,7 +905,6 @@ fn CallsWithTypeExplicit(U:! type) {
 // CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [concrete]
 // CHECK:STDOUT:   %TakesTypeDeduced: %TakesTypeDeduced.type = struct_value () [concrete]
 // CHECK:STDOUT:   %require_complete.4ae: <witness> = require_complete_type %T [symbolic]
-// CHECK:STDOUT:   %.Self.6442b1.2: type = bind_symbolic_name .Self [symbolic_self]
 // CHECK:STDOUT:   %type: type = facet_type <type> [concrete]
 // CHECK:STDOUT:   %U: %type = bind_symbolic_name U, 0 [symbolic]
 // CHECK:STDOUT:   %pattern_type.d06: type = pattern_type %type [concrete]
@@ -943,7 +942,7 @@ fn CallsWithTypeExplicit(U:! type) {
 // CHECK:STDOUT:     %x.patt: @TakesTypeDeduced.%pattern_type (%pattern_type.7dc) = binding_pattern x [concrete]
 // CHECK:STDOUT:     %x.param_patt: @TakesTypeDeduced.%pattern_type (%pattern_type.7dc) = value_param_pattern %x.patt, call_param0 [concrete]
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %.Self: type = bind_symbolic_name .Self [symbolic_self = constants.%.Self.6442b1.1]
+// CHECK:STDOUT:     %.Self: type = bind_symbolic_name .Self [symbolic_self = constants.%.Self]
 // CHECK:STDOUT:     %T.loc3_21.2: type = bind_symbolic_name T, 0 [symbolic = %T.loc3_21.1 (constants.%T)]
 // CHECK:STDOUT:     %x.param: @TakesTypeDeduced.%T.loc3_21.1 (%T) = value_param call_param0
 // CHECK:STDOUT:     %T.ref: type = name_ref T, %T.loc3_21.2 [symbolic = %T.loc3_21.1 (constants.%T)]
@@ -955,9 +954,9 @@ fn CallsWithTypeExplicit(U:! type) {
 // CHECK:STDOUT:     %y.param_patt: @CallsWithExtraWhere.%pattern_type (%pattern_type.772) = value_param_pattern %y.patt, call_param0 [concrete]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %.loc4_33.1: type = splice_block %.loc4_33.2 [concrete = constants.%type] {
-// CHECK:STDOUT:       %.Self.1: type = bind_symbolic_name .Self [symbolic_self = constants.%.Self.6442b1.1]
-// CHECK:STDOUT:       %.Self.2: type = bind_symbolic_name .Self [symbolic_self = constants.%.Self.6442b1.2]
-// CHECK:STDOUT:       %.Self.ref: type = name_ref .Self, %.Self.2 [symbolic_self = constants.%.Self.6442b1.2]
+// CHECK:STDOUT:       %.Self.1: type = bind_symbolic_name .Self [symbolic_self = constants.%.Self]
+// CHECK:STDOUT:       %.Self.2: type = bind_symbolic_name .Self [symbolic_self = constants.%.Self]
+// CHECK:STDOUT:       %.Self.ref: type = name_ref .Self, %.Self.2 [symbolic_self = constants.%.Self]
 // CHECK:STDOUT:       %.loc4_33.2: type = where_expr %.Self.2 [concrete = constants.%type] {
 // CHECK:STDOUT:         requirement_base_facet_type type
 // CHECK:STDOUT:         requirement_impls %.Self.ref, type
@@ -975,16 +974,16 @@ fn CallsWithTypeExplicit(U:! type) {
 // CHECK:STDOUT:   %TakesTypeExplicit.decl: %TakesTypeExplicit.type = fn_decl @TakesTypeExplicit [concrete = constants.%TakesTypeExplicit] {
 // CHECK:STDOUT:     %T.patt: %pattern_type.98f = symbolic_binding_pattern T, 0 [concrete]
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %.Self: type = bind_symbolic_name .Self [symbolic_self = constants.%.Self.6442b1.1]
+// CHECK:STDOUT:     %.Self: type = bind_symbolic_name .Self [symbolic_self = constants.%.Self]
 // CHECK:STDOUT:     %T.loc8_22.2: type = bind_symbolic_name T, 0 [symbolic = %T.loc8_22.1 (constants.%T)]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %CallsWithExtraWhereExplicit.decl: %CallsWithExtraWhereExplicit.type = fn_decl @CallsWithExtraWhereExplicit [concrete = constants.%CallsWithExtraWhereExplicit] {
 // CHECK:STDOUT:     %U.patt: %pattern_type.d06 = symbolic_binding_pattern U, 0 [concrete]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %.loc9_41.1: type = splice_block %.loc9_41.2 [concrete = constants.%type] {
-// CHECK:STDOUT:       %.Self.1: type = bind_symbolic_name .Self [symbolic_self = constants.%.Self.6442b1.1]
-// CHECK:STDOUT:       %.Self.2: type = bind_symbolic_name .Self [symbolic_self = constants.%.Self.6442b1.2]
-// CHECK:STDOUT:       %.Self.ref: type = name_ref .Self, %.Self.2 [symbolic_self = constants.%.Self.6442b1.2]
+// CHECK:STDOUT:       %.Self.1: type = bind_symbolic_name .Self [symbolic_self = constants.%.Self]
+// CHECK:STDOUT:       %.Self.2: type = bind_symbolic_name .Self [symbolic_self = constants.%.Self]
+// CHECK:STDOUT:       %.Self.ref: type = name_ref .Self, %.Self.2 [symbolic_self = constants.%.Self]
 // CHECK:STDOUT:       %.loc9_41.2: type = where_expr %.Self.2 [concrete = constants.%type] {
 // CHECK:STDOUT:         requirement_base_facet_type type
 // CHECK:STDOUT:         requirement_impls %.Self.ref, type
@@ -1092,8 +1091,7 @@ fn CallsWithTypeExplicit(U:! type) {
 // CHECK:STDOUT: --- no_interfaces.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
-// CHECK:STDOUT:   %.Self.6442b1.1: type = bind_symbolic_name .Self [symbolic_self]
-// CHECK:STDOUT:   %.Self.6442b1.2: type = bind_symbolic_name .Self [symbolic_self]
+// CHECK:STDOUT:   %.Self: type = bind_symbolic_name .Self [symbolic_self]
 // CHECK:STDOUT:   %type: type = facet_type <type> [concrete]
 // CHECK:STDOUT:   %T: %type = bind_symbolic_name T, 0 [symbolic]
 // CHECK:STDOUT:   %pattern_type.d06: type = pattern_type %type [concrete]
@@ -1140,9 +1138,9 @@ fn CallsWithTypeExplicit(U:! type) {
 // CHECK:STDOUT:     %x.param_patt: @TakesExtraWhereDeduced.%pattern_type (%pattern_type.772) = value_param_pattern %x.patt, call_param0 [concrete]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %.loc3_36.1: type = splice_block %.loc3_36.2 [concrete = constants.%type] {
-// CHECK:STDOUT:       %.Self.1: type = bind_symbolic_name .Self [symbolic_self = constants.%.Self.6442b1.1]
-// CHECK:STDOUT:       %.Self.2: type = bind_symbolic_name .Self [symbolic_self = constants.%.Self.6442b1.2]
-// CHECK:STDOUT:       %.Self.ref: type = name_ref .Self, %.Self.2 [symbolic_self = constants.%.Self.6442b1.2]
+// CHECK:STDOUT:       %.Self.1: type = bind_symbolic_name .Self [symbolic_self = constants.%.Self]
+// CHECK:STDOUT:       %.Self.2: type = bind_symbolic_name .Self [symbolic_self = constants.%.Self]
+// CHECK:STDOUT:       %.Self.ref: type = name_ref .Self, %.Self.2 [symbolic_self = constants.%.Self]
 // CHECK:STDOUT:       %.loc3_36.2: type = where_expr %.Self.2 [concrete = constants.%type] {
 // CHECK:STDOUT:         requirement_base_facet_type type
 // CHECK:STDOUT:         requirement_impls %.Self.ref, type
@@ -1162,7 +1160,7 @@ fn CallsWithTypeExplicit(U:! type) {
 // CHECK:STDOUT:     %y.patt: @CallsWithType.%pattern_type (%pattern_type.7dc) = binding_pattern y [concrete]
 // CHECK:STDOUT:     %y.param_patt: @CallsWithType.%pattern_type (%pattern_type.7dc) = value_param_pattern %y.patt, call_param0 [concrete]
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %.Self: type = bind_symbolic_name .Self [symbolic_self = constants.%.Self.6442b1.1]
+// CHECK:STDOUT:     %.Self: type = bind_symbolic_name .Self [symbolic_self = constants.%.Self]
 // CHECK:STDOUT:     %U.loc4_18.2: type = bind_symbolic_name U, 0 [symbolic = %U.loc4_18.1 (constants.%U)]
 // CHECK:STDOUT:     %y.param: @CallsWithType.%U.loc4_18.1 (%U) = value_param call_param0
 // CHECK:STDOUT:     %U.ref: type = name_ref U, %U.loc4_18.2 [symbolic = %U.loc4_18.1 (constants.%U)]
@@ -1172,9 +1170,9 @@ fn CallsWithTypeExplicit(U:! type) {
 // CHECK:STDOUT:     %T.patt: %pattern_type.d06 = symbolic_binding_pattern T, 0 [concrete]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %.loc8_37.1: type = splice_block %.loc8_37.2 [concrete = constants.%type] {
-// CHECK:STDOUT:       %.Self.1: type = bind_symbolic_name .Self [symbolic_self = constants.%.Self.6442b1.1]
-// CHECK:STDOUT:       %.Self.2: type = bind_symbolic_name .Self [symbolic_self = constants.%.Self.6442b1.2]
-// CHECK:STDOUT:       %.Self.ref: type = name_ref .Self, %.Self.2 [symbolic_self = constants.%.Self.6442b1.2]
+// CHECK:STDOUT:       %.Self.1: type = bind_symbolic_name .Self [symbolic_self = constants.%.Self]
+// CHECK:STDOUT:       %.Self.2: type = bind_symbolic_name .Self [symbolic_self = constants.%.Self]
+// CHECK:STDOUT:       %.Self.ref: type = name_ref .Self, %.Self.2 [symbolic_self = constants.%.Self]
 // CHECK:STDOUT:       %.loc8_37.2: type = where_expr %.Self.2 [concrete = constants.%type] {
 // CHECK:STDOUT:         requirement_base_facet_type type
 // CHECK:STDOUT:         requirement_impls %.Self.ref, type
@@ -1185,7 +1183,7 @@ fn CallsWithTypeExplicit(U:! type) {
 // CHECK:STDOUT:   %CallsWithTypeExplicit.decl: %CallsWithTypeExplicit.type = fn_decl @CallsWithTypeExplicit [concrete = constants.%CallsWithTypeExplicit] {
 // CHECK:STDOUT:     %U.patt: %pattern_type.98f = symbolic_binding_pattern U, 0 [concrete]
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %.Self: type = bind_symbolic_name .Self [symbolic_self = constants.%.Self.6442b1.1]
+// CHECK:STDOUT:     %.Self: type = bind_symbolic_name .Self [symbolic_self = constants.%.Self]
 // CHECK:STDOUT:     %U.loc9_26.2: type = bind_symbolic_name U, 0 [symbolic = %U.loc9_26.1 (constants.%U)]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }

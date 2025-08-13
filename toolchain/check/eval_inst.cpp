@@ -200,6 +200,25 @@ auto EvalConstantInst(Context& context, SemIR::FacetAccessType inst)
     return ConstantEvalResult::Existing(
         context.constant_values().Get(facet_value->type_inst_id));
   }
+
+  if (auto bind_name = context.insts().TryGetAs<SemIR::BindSymbolicName>(
+          inst.facet_value_inst_id)) {
+    const auto& entity_name =
+        context.entity_names().Get(bind_name->entity_name_id);
+    if (entity_name.name_id == SemIR::NameId::PeriodSelf &&
+        // FIXME: Change to 0 when we increment on `where`.
+        entity_name.period_self_distance == -1) {
+      return ConstantEvalResult::NewSamePhase(SemIR::FacetAccessPeriodSelfType{
+          .type_id = SemIR::TypeType::TypeId,
+          .entity_name_id = bind_name->entity_name_id});
+    }
+  }
+
+  return ConstantEvalResult::NewSamePhase(inst);
+}
+
+auto EvalConstantInst(Context& /*context*/, SemIR::FacetAccessPeriodSelfType inst)
+    -> ConstantEvalResult {
   return ConstantEvalResult::NewSamePhase(inst);
 }
 

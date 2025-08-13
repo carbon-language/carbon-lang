@@ -615,7 +615,8 @@ auto ResolveFacetTypeRewriteConstraints(
 }
 
 auto MakePeriodSelfFacetValue(Context& context, SemIR::TypeId self_type_id,
-                              int32_t period_self_distance) -> SemIR::InstId {
+                              int32_t period_self_distance, bool as_type)
+    -> SemIR::InstId {
   auto entity_name_id = context.entity_names().AddCanonical({
       .name_id = SemIR::NameId::PeriodSelf,
       .parent_scope_id = context.scope_stack().PeekNameScopeId(),
@@ -628,41 +629,17 @@ auto MakePeriodSelfFacetValue(Context& context, SemIR::TypeId self_type_id,
                    // `None` because there is no equivalent non-symbolic value.
                    .value_id = SemIR::InstId::None,
                }));
+  if (as_type) {
+    inst_id =
+        AddInst(context, SemIR::LocIdAndInst::NoLoc<SemIR::FacetAccessType>(
+                             {.type_id = SemIR::TypeType::TypeId,
+                              .facet_value_inst_id = inst_id}));
+  }
   auto existing =
       context.scope_stack().LookupOrAddName(SemIR::NameId::PeriodSelf, inst_id);
   // Shouldn't have any names in newly created scope.
   CARBON_CHECK(!existing.has_value());
   return inst_id;
-}
-
-class SubstPeriodSelfCallbacks : public SubstInstCallbacks {
- public:
-  SubstPeriodSelfCallbacks(Context* context, SemIR::LocId loc_id,
-                           SemIR::InstId self_facet_value)
-      : SubstInstCallbacks(context),
-        loc_id_(loc_id),
-        self_facet_value_(self_facet_value) {}
-
-  auto Subst(SemIR::InstId& inst_id) -> SubstResult override {
-    (void)inst_id;
-    return SubstResult::FullySubstituted;
-  }
-
-  auto Rebuild(SemIR::InstId /*orig_inst_id*/, SemIR::Inst new_inst)
-      -> SemIR::InstId override {
-    return RebuildNewInst(loc_id_, new_inst);
-  }
-
- private:
-  SemIR::LocId loc_id_;
-  [[maybe_unused]] SemIR::InstId self_facet_value_;
-};
-
-auto SubstPeriodSelf(Context& context, SemIR::LocId loc_id,
-                     SemIR::InstId inst_id, SemIR::InstId self_facet_value)
-    -> SemIR::InstId {
-  SubstPeriodSelfCallbacks callbacks(&context, loc_id, self_facet_value);
-  return SubstInst(context, inst_id, callbacks);
 }
 
 }  // namespace Carbon::Check

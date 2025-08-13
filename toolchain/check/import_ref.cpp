@@ -739,7 +739,8 @@ static auto GetLocalConstantId(ImportRefResolver& resolver,
                             resolver.import_types().GetConstantId(type_id));
 }
 
-// Translates a NameId from the import IR to a local NameId.
+// Translates a NameId from the import IR to a local NameId. Always succeeds
+// without adding pending work to the work_stack_.
 static auto GetLocalNameId(ImportContext& context, SemIR::NameId import_name_id)
     -> SemIR::NameId {
   if (auto ident_id = import_name_id.AsIdentifierId(); ident_id.has_value()) {
@@ -1485,16 +1486,19 @@ static auto TryResolveTypedInst(ImportRefResolver& resolver,
 static auto TryResolveTypedInst(ImportRefResolver& resolver,
                                 SemIR::BindSymbolicName inst) -> ResolveResult {
   auto type_id = GetLocalConstantId(resolver, inst.type_id);
+  const auto& import_entity_name =
+      resolver.import_entity_names().Get(inst.entity_name_id);
+  auto decl_bind_name_id =
+      GetLocalConstantInstId(resolver, import_entity_name.decl_bind_name_id);
   if (resolver.HasNewWork()) {
     return ResolveResult::Retry();
   }
 
-  const auto& import_entity_name =
-      resolver.import_entity_names().Get(inst.entity_name_id);
   auto name_id = GetLocalNameId(resolver, import_entity_name.name_id);
-  auto entity_name_id = resolver.local_entity_names().AddSymbolicBindingName(
+  auto entity_name_id = resolver.local_entity_names().ImportSymbolicBindingName(
       name_id, SemIR::NameScopeId::None, import_entity_name.bind_index(),
-      import_entity_name.is_template, import_entity_name.period_self_distance);
+      import_entity_name.is_template, import_entity_name.period_self_distance,
+      decl_bind_name_id);
   return ResolveAsDeduplicated<SemIR::BindSymbolicName>(
       resolver,
       {.type_id =

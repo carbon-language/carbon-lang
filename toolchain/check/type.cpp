@@ -233,6 +233,24 @@ auto GetUnboundElementType(Context& context, SemIR::TypeInstId class_type_id,
 
 auto GetCanonicalizedFacetOrTypeValue(Context& context, SemIR::InstId inst_id)
     -> SemIR::InstId {
+  if (auto access_self =
+          context.insts().TryGetAs<SemIR::FacetAccessPeriodSelfType>(inst_id)) {
+    auto& entity_name = context.entity_names().Get(access_self->entity_name_id);
+    // FIXME: Can be None for the `.Self.I1` in `U:! I(.Self) where .I1 = ()`.
+    // Do we want to prevent making the FacetAccessPeriodSelfType instruction in
+    // that case, so it's only for things that refer to the binding itself? Or
+    // should we just put an EntityNameId on FacetAccessType and it's only set
+    // for .Self on the left side of `where`? Or should we be setting the
+    // decl_bind_name_id on all `.Self` references in a pattern?
+    //
+    // `fn F(U:! I(.Self) where .I1 = .Self)`
+    //
+    // Does the `.Self` on the RHS of `.I1` benefit from knowing all of `U`?
+    if (entity_name.decl_bind_name_id.has_value()) {
+      inst_id = entity_name.decl_bind_name_id;
+    }
+  }
+
   // We can have FacetAccessType of a FacetValue, and a FacetValue of a
   // FacetAccessType, but they don't nest indefinitely.
   if (auto access = context.insts().TryGetAs<SemIR::FacetAccessType>(inst_id)) {
@@ -247,6 +265,7 @@ auto GetCanonicalizedFacetOrTypeValue(Context& context, SemIR::InstId inst_id)
     }
   }
 
+  CARBON_CHECK(!context.insts().Is<SemIR::FacetAccessPeriodSelfType>(inst_id));
   CARBON_CHECK(!context.insts().Is<SemIR::FacetAccessType>(inst_id));
   CARBON_CHECK(!context.insts().Is<SemIR::FacetValue>(inst_id));
 

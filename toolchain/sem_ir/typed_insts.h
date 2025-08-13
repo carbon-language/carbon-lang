@@ -646,6 +646,32 @@ struct FacetAccessType {
   InstId facet_value_inst_id;
 };
 
+// Represents accessing the `type` field in a facet value through a `.Self`
+// facet value (a `BindSymbolicName`) that refers to a binding (another
+// `BindSymbolicName`).
+//
+// For example in `fn F(U:! I(.Self)`, the `U` facet value is a BindSymbolicName
+// that will eventually be resolved to a `FacetValue`. The `.Self` name refers
+// to a different BindSymbolicName that is never resolved, but which provides a
+// level of indirection to the `U` facet value through its `EntityName`.
+//
+// Unlike FacetAccessType, this instruction never evaluates to a type directly,
+// since a `.Self` facet value also never evaluates to a `FacetValue`. But it
+// can be used to find the facet value that does evaluate to a `FacetValue`
+// through the `EntityName` after that facet value has been fully constructed.
+struct FacetAccessPeriodSelfType {
+  static constexpr auto Kind = InstKind::FacetAccessPeriodSelfType.Define<Parse::NodeId>(
+      {.ir_name = "facet_access_period_self_type",
+       .is_type = InstIsType::Always,
+       .constant_kind = InstConstantKind::SymbolicOnly});
+
+  // Always the builtin type TypeType.
+  TypeId type_id;
+  // The entity name of the `.Self` reference, which is given a path to find the
+  // facet value from the binding declaration.
+  EntityNameId entity_name_id;
+};
+
 // A facet type value.
 struct FacetType {
   static constexpr auto Kind = InstKind::FacetType.Define<Parse::NodeId>(

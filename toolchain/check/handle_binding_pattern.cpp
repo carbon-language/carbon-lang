@@ -61,26 +61,33 @@ static auto HandleAnyBindingPattern(Context& context, Parse::NodeId node_id,
       context.decl_introducer_state_stack().innermost();
 
   auto make_binding_pattern = [&]() -> SemIR::InstId {
-    auto subst_period_self = [&](SemIR::InstId inst_id) -> SemIR::InstId {
-      if (!is_generic) {
-        return inst_id;
-      }
-
-      inst_id = SubstPeriodSelf(context, node_id, inst_id, inst_id);
-      // TODO: If `is_generic`, then `binding.bind_id is a BindSymbolicName.
-      // Subst the `.Self` of type `type` in the `cast_type_id` type (a
-      // `FacetType`) with the `binding.bind_id` itself, and build a new
-      // pattern with that. This is kind of cyclical. So we need to reuse the
-      // EntityNameId, which will also reuse the CompileTimeBinding for the
-      // new BindSymbolicName.
-      (void)period_self_inst_id;
-    };
-
     // TODO: Eventually the name will need to support associations with other
     // scopes, but right now we don't support qualified names here.
-    auto binding = AddBindingPattern(context, name_node, name_id, cast_type_id,
-                                     subst_period_self, type_expr_region_id,
-                                     is_generic, is_template);
+    auto binding =
+        AddBindingPattern(context, name_node, name_id, cast_type_id,
+                          type_expr_region_id, is_generic, is_template);
+
+    // Connect any `.Self` references to the binding itself by pointing them to
+    // the `BindSymbolicName`.
+    if (period_self_inst_id.has_value()) {
+      auto period_self = context.insts().GetAs<SemIR::BindSymbolicName>(
+          // period_self_inst_id);
+          GetCanonicalizedFacetOrTypeValue(context, period_self_inst_id));
+      auto& period_self_entity_name =
+          context.entity_names().Get(period_self.entity_name_id);
+      period_self_entity_name.decl_bind_name_id = binding.bind_id;
+    }
+
+    // FIXME: Remove?
+#if 0
+    // Point the entity name for the identifier to itself.
+    if (auto bind_name = context.insts().TryGetAs<SemIR::BindSymbolicName>(
+            binding.bind_id)) {
+      auto& period_self_entity_name =
+          context.entity_names().Get(bind_name->entity_name_id);
+      period_self_entity_name.decl_bind_name_id = binding.bind_id;
+    }
+#endif
 
     if (name_id != SemIR::NameId::Underscore) {
       // Add name to lookup immediately, so it can be used in the rest of the
@@ -251,9 +258,11 @@ auto HandleParseNode(Context& context,
   // compile time binding. This is popped when handling the
   // CompileTimeBindingPatternId.
   context.scope_stack().PushForSameRegion();
-  auto period_self_inst_id =
-      MakePeriodSelfFacetValue(context, SemIR::TypeType::TypeId,
-                               /*period_self_distance=*/0);
+  auto period_self_inst_id = MakePeriodSelfFacetValue(
+      context, SemIR::TypeType::TypeId,
+      // FIXME: Change to 0 when we increment on `where`.
+      /*period_self_distance=*/-1,
+      /*as_type=*/true);
   context.node_stack().Push(node_id, period_self_inst_id);
   return true;
 }

@@ -1162,6 +1162,11 @@ static auto PerformBuiltinConversion(
         {.type_id = target.type_id, .facet_value_inst_id = value_id});
   }
 
+  if (target.type_id != value_type_id &&
+      sem_ir.types().Is<SemIR::FacetAccessPeriodSelfType>(target.type_id) &&
+      sem_ir.types().Is<SemIR::FacetType>(value_type_id)) {
+  }
+
   // Type values can convert to facet values, and facet values can convert to
   // other facet values, as long as they satisfy the required interfaces of the
   // target `FacetType`.
@@ -1177,6 +1182,21 @@ static auto PerformBuiltinConversion(
     if (!const_value_id.has_value()) {
       context.TODO(loc_id, "conversion of runtime facet value");
       const_value_id = SemIR::ErrorInst::InstId;
+    }
+
+    if (auto access_self_type_inst =
+            sem_ir.insts().TryGetAs<SemIR::FacetAccessPeriodSelfType>(
+                const_value_id)) {
+      const auto& entity_name =
+          sem_ir.entity_names().Get(access_self_type_inst->entity_name_id);
+      if (entity_name.decl_bind_name_id.has_value()) {
+        auto type_id =
+            context.insts().Get(entity_name.decl_bind_name_id).type_id();
+        if (sem_ir.types().Is<SemIR::FacetType>(type_id)) {
+          const_value_id = sem_ir.constant_values().GetConstantInstId(
+              entity_name.decl_bind_name_id);
+        }
+      }
     }
 
     if (auto facet_access_type_inst =

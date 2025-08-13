@@ -1272,6 +1272,9 @@ auto Formatter::FormatArg(EntityNameId id) -> void {
   }
   const auto& info = sem_ir_->entity_names().Get(id);
   FormatName(info.name_id);
+  if (info.name_id == NameId::PeriodSelf) {
+    out_ << "(" << info.period_self_distance << ")";
+  }
   if (info.bind_index().has_value()) {
     out_ << ", " << info.bind_index().index;
   }

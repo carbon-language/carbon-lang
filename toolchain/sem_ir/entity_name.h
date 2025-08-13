@@ -58,6 +58,11 @@ struct EntityName : public Printable<EntityName> {
   // The number of `where` keywords between a `.Self` binding in a facet type
   // a facet value being substituted into the facet type.
   int32_t period_self_distance = 0;
+  // The declaration of the entity. Initially set to None, but filled in with a
+  // `BindSymbolicName` once the declaration is complete. Can be used to get the
+  // full facet type for `.Self` references to the entity that were constructed
+  // before the declaration was complete.
+  InstId decl_bind_name_id = InstId::None;
 };
 
 // Value store for EntityName. In addition to the regular ValueStore
@@ -66,13 +71,25 @@ struct EntityNameStore : public ValueStore<EntityNameId, EntityName> {
  public:
   // Adds an entity name for a symbolic binding.
   auto AddSymbolicBindingName(NameId name_id, NameScopeId parent_scope_id,
-                              CompileTimeBindIndex bind_index, bool is_template,
-                              int32_t period_self_distance) -> EntityNameId {
+                              CompileTimeBindIndex bind_index, bool is_template)
+      -> EntityNameId {
+    return Add({.name_id = name_id,
+                .parent_scope_id = parent_scope_id,
+                .bind_index_value = bind_index.index,
+                .is_template = is_template});
+  }
+
+  auto ImportSymbolicBindingName(NameId name_id, NameScopeId parent_scope_id,
+                                 CompileTimeBindIndex bind_index,
+                                 bool is_template, int32_t period_self_distance,
+                                 SemIR::InstId decl_bind_name_id)
+      -> EntityNameId {
     return Add({.name_id = name_id,
                 .parent_scope_id = parent_scope_id,
                 .bind_index_value = bind_index.index,
                 .is_template = is_template,
-                .period_self_distance = period_self_distance});
+                .period_self_distance = period_self_distance,
+                .decl_bind_name_id = decl_bind_name_id});
   }
 
   // Convert an `EntityName` to a canonical ID. All calls to this with

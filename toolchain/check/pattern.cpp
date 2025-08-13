@@ -46,19 +46,15 @@ auto EndSubpatternAsNonExpr(Context& context) -> void {
   context.region_stack().PopAndDiscardRegion();
 }
 
-auto AddBindingPattern(
-    Context& context, SemIR::LocId name_loc, SemIR::NameId name_id,
-    SemIR::TypeId type_id,
-    llvm::function_ref<auto(SemIR::InstId)->SemIR::InstId> build_binding_inst,
-    SemIR::ExprRegionId type_region_id, bool is_generic, bool is_template)
-    -> BindingPatternInfo {
+auto AddBindingPattern(Context& context, SemIR::LocId name_loc,
+                       SemIR::NameId name_id, SemIR::TypeId type_id,
+                       SemIR::ExprRegionId type_region_id, bool is_generic,
+                       bool is_template) -> BindingPatternInfo {
   auto entity_name_id = context.entity_names().AddSymbolicBindingName(
       name_id, context.scope_stack().PeekNameScopeId(),
       is_generic ? context.scope_stack().AddCompileTimeBinding()
                  : SemIR::CompileTimeBindIndex::None,
-      is_template,
-      // This binding is for a pattern with user-provided name, not `.Self`.
-      /*period_self_distance=*/0);
+      is_template);
 
   auto bind_id = SemIR::InstId::None;
   if (is_generic) {
@@ -73,10 +69,6 @@ auto AddBindingPattern(
                                           {.type_id = type_id,
                                            .entity_name_id = entity_name_id,
                                            .value_id = SemIR::InstId::None});
-  }
-
-  if (build_binding_inst) {
-    bind_id = build_binding_inst(bind_id);
   }
 
   auto pattern_type_id = GetPatternType(context, type_id);
@@ -146,7 +138,7 @@ auto AddSelfParamPattern(Context& context, SemIR::LocId loc_id,
                          SemIR::TypeId type_id) -> SemIR::InstId {
   SemIR::InstId pattern_id =
       AddBindingPattern(context, loc_id, SemIR::NameId::SelfValue, type_id,
-                        nullptr, type_expr_region_id, /*is_generic=*/false,
+                        type_expr_region_id, /*is_generic=*/false,
                         /*is_template=*/false)
           .pattern_id;
 

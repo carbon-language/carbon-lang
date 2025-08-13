@@ -137,6 +137,7 @@ fn G(T:! type where C(()) impls I(.Self)) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %I.type: type = facet_type <@I> [concrete]
+// CHECK:STDOUT:   %.Self.644: type = bind_symbolic_name .Self [symbolic_self]
 // CHECK:STDOUT:   %I.assoc_type: type = assoc_entity_type @I [concrete]
 // CHECK:STDOUT:   %assoc0: %I.assoc_type = assoc_entity element0, @I.%Member [concrete]
 // CHECK:STDOUT:   %.Self.644: type = bind_symbolic_name .Self [symbolic_self]
@@ -153,7 +154,6 @@ fn G(T:! type where C(()) impls I(.Self)) {}
 // CHECK:STDOUT:   %U: %I_where.type = bind_symbolic_name U, 0 [symbolic]
 // CHECK:STDOUT:   %PeriodMember.type: type = fn_type @PeriodMember [concrete]
 // CHECK:STDOUT:   %PeriodMember: %PeriodMember.type = struct_value () [concrete]
-// CHECK:STDOUT:   %.Self.6442b1.2: type = bind_symbolic_name .Self [symbolic_self]
 // CHECK:STDOUT:   %type_where: type = facet_type <type where .Self impls @I> [concrete]
 // CHECK:STDOUT:   %V: %type_where = bind_symbolic_name V, 0 [symbolic]
 // CHECK:STDOUT:   %pattern_type.2b5: type = pattern_type %type_where [concrete]
@@ -206,7 +206,7 @@ fn G(T:! type where C(()) impls I(.Self)) {}
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %.loc13_27.1: type = splice_block %.loc13_27.2 [concrete = constants.%type_where] {
 // CHECK:STDOUT:       <elided>
-// CHECK:STDOUT:       %.Self.ref: type = name_ref .Self, %.Self.2 [symbolic_self = constants.%.Self.6442b1.2]
+// CHECK:STDOUT:       %.Self.ref: type = name_ref .Self, %.Self.2 [symbolic_self = constants.%.Self.644]
 // CHECK:STDOUT:       %I.ref: type = name_ref I, file.%I.decl [concrete = constants.%I.type]
 // CHECK:STDOUT:       %.loc13_27.2: type = where_expr %.Self.2 [concrete = constants.%type_where] {
 // CHECK:STDOUT:         requirement_base_facet_type type

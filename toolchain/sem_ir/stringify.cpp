@@ -320,6 +320,12 @@ class Stringifier {
     step_stack_->PushInstId(inst.facet_value_inst_id);
   }
 
+  auto StringifyInst(InstId /*inst_id*/, FacetAccessPeriodSelfType inst)
+      -> void {
+    // Given `T:! I(.Self)`, print `.Self as type` as simply `.Self`.
+    step_stack_->PushEntityNameId(inst.entity_name_id);
+  }
+
   auto StringifyInst(InstId /*inst_id*/, FacetType inst) -> void {
     const FacetTypeInfo& facet_type_info =
         sem_ir_->facet_types().Get(inst.facet_type_id);
