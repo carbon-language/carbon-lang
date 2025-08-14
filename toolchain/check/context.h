@@ -304,6 +304,8 @@ class Context {
   // End of SemIR::File members.
   // --------------------------------------------------------------------------
 
+  int period_self_distance_ = -1;
+
  private:
   // Handles diagnostics.
   DiagnosticEmitterBase* emitter_;

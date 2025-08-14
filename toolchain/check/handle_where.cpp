@@ -49,6 +49,8 @@ auto HandleParseNode(Context& context, Parse::WhereOperandId node_id) -> bool {
     self_without_constraints_type_id = GetFacetType(context, stripped_info);
   }
 
+  context.period_self_distance_++;
+
   // Introduce a name scope so that we can remove the `.Self` entry we are
   // adding to name lookup at the end of the `where` expression.
   context.scope_stack().PushForSameRegion();
@@ -57,7 +59,7 @@ auto HandleParseNode(Context& context, Parse::WhereOperandId node_id) -> bool {
   auto period_self_inst_id =
       MakePeriodSelfFacetValue(context, self_without_constraints_type_id,
                                // TODO: Give these a real distance.
-                               /*period_self_distance=*/0);
+                               context.period_self_distance_);
 
   // Save the `.Self` symbolic binding on the node stack. It will become the
   // first argument to the `WhereExpr` instruction.
@@ -188,6 +190,7 @@ auto HandleParseNode(Context& /*context*/, Parse::RequirementAndId /*node_id*/)
 }
 
 auto HandleParseNode(Context& context, Parse::WhereExprId node_id) -> bool {
+  context.period_self_distance_--;
   context.rewrites_stack().pop_back();
   // Remove `PeriodSelf` from name lookup, undoing the `Push` done for the
   // `WhereOperand`.

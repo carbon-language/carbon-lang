@@ -268,8 +268,7 @@ auto HandleParseNode(Context& context,
 
   auto period_self_inst_id = MakePeriodSelfFacetValue(
       context, type_id,
-      // FIXME: Change to 0 when we increment on `where`.
-      /*period_self_distance=*/-1,
+      /*period_self_distance=*/0,
       /*is_deferred=*/false);
   context.node_stack().Push(node_id, period_self_inst_id);
   return true;
