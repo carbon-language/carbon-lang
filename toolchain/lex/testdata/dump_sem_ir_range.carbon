@@ -126,21 +126,28 @@ e
 // CHECK:STDOUT:   tokens:
 
 a
-// CHECK:STDOUT:   - { index: 1, kind: "Identifier", line: {{ *}}[[@LINE-1]], column:  1, indent: 1, spelling: "a", identifier: 0, has_leading_space: true }
+// CHECK:STDOUT:   - { index: 1, kind: "Identifier", line: {{ *}}[[@LINE-1]], column: 1, indent: 1, spelling: "a", identifier: 0, has_leading_space: true }
 //@dump-sem-ir-begin
 b
-// CHECK:STDOUT:   - { index: 2, kind: "Identifier", line: {{ *}}[[@LINE-1]], column:  1, indent: 1, spelling: "b", identifier: 1, has_leading_space: true }
+// CHECK:STDOUT:   - { index: 2, kind: "Identifier", line: {{ *}}[[@LINE-1]], column: 1, indent: 1, spelling: "b", identifier: 1, has_leading_space: true }
 //@dump-sem-ir-end
 c
-// CHECK:STDOUT:   - { index: 3, kind: "Identifier", line: {{ *}}[[@LINE-1]], column:  1, indent: 1, spelling: "c", identifier: 2, has_leading_space: true }
+// CHECK:STDOUT:   - { index: 3, kind: "Identifier", line: {{ *}}[[@LINE-1]], column: 1, indent: 1, spelling: "c", identifier: 2, has_leading_space: true }
 //@dump-sem-ir-begin
 d
-// CHECK:STDOUT:   - { index: 4, kind: "Identifier", line: {{ *}}[[@LINE-1]], column:  1, indent: 1, spelling: "d", identifier: 3, has_leading_space: true }
+// CHECK:STDOUT:   - { index: 4, kind: "Identifier", line: {{ *}}[[@LINE-1]], column: 1, indent: 1, spelling: "d", identifier: 3, has_leading_space: true }
 // CHECK:STDOUT:   dump_sem_ir_ranges:
 // CHECK:STDOUT:   - {begin: 2, end: 2}
 // CHECK:STDOUT:   - {begin: 4, end: 4}
 
-// CHECK:STDERR: fail_count_mismatch.carbon:[[@LINE+3]]:17: error: missing `//@dump-sem-ir-end` to match `//@dump-sem-ir-begin` [DumpSemIRRangeMissingEnd]
-// CHECK:STDERR: // CHECK:STDERR:
-// CHECK:STDERR:                 ^
+// CHECK:STDERR: fail_count_mismatch.carbon:[[@LINE+4]]:1: error: missing `//@dump-sem-ir-end` to match `//@dump-sem-ir-begin` [DumpSemIRRangeMissingEnd]
 // CHECK:STDERR:
+// CHECK:STDERR: ^
+// CHECK:STDERR:
+
+// --- dump_file.carbon
+// CHECK:STDOUT: - filename: dump_file.carbon
+// CHECK:STDOUT:   tokens:
+// CHECK:STDOUT:   dump_sem_ir_file: true
+
+//@dump-sem-ir-file

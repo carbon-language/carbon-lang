@@ -539,8 +539,11 @@ automatically included as well. A small amount of SemIR may include a number of
 related instructions, such as an in-range instruction referencing an import_ref
 referencing a constant referencing another constant.
 
-> NOTE: In a test, if full SemIR is desired for files, add
-> `// EXTRA-ARGS: --dump-sem-ir-ranges=if-present` with an explanation why.
+If full SemIR is desired for a file, adding `//@dump-sem-ir-file` will cause it
+to be dumped even if it would otherwise be excluded, even with
+`--exclude-dump-file-prefix`. It's also possible to change to printing SemIR by
+default with `// EXTRA-ARGS: --dump-sem-ir-ranges=if-present`. These should be
+rare, and are worth comments if they're used in tests.
 
 ##### Example uses
 

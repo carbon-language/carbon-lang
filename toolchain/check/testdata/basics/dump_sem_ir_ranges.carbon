@@ -91,6 +91,12 @@ library "[[@TEST_NAME]]";
 
 fn F();
 
+// --- explicit_dump_file.carbon
+
+library "[[@TEST_NAME]]";
+
+//@dump-sem-ir-file
+
 // CHECK:STDOUT: --- function.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
@@ -319,4 +325,20 @@ fn F();
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F();
+// CHECK:STDOUT:
+// CHECK:STDOUT: --- explicit_dump_file.carbon
+// CHECK:STDOUT:
+// CHECK:STDOUT: imports {
+// CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [concrete] {
+// CHECK:STDOUT:     import Core//prelude
+// CHECK:STDOUT:     import Core//prelude/...
+// CHECK:STDOUT:   }
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: file {
+// CHECK:STDOUT:   package: <namespace> = namespace [concrete] {
+// CHECK:STDOUT:     .Core = imports.%Core
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %Core.import = import Core
+// CHECK:STDOUT: }
 // CHECK:STDOUT:

@@ -221,6 +221,9 @@ class [[clang::internal_linkage]] Lexer {
  private:
   class ErrorRecoveryBuffer;
 
+  // Handles `//@dump-sem-ir-file`.
+  auto DumpSemIRFile() -> void;
+
   // Handles `//@dump-sem-ir-begin` for a `DumpSemIRRange`.
   auto BeginDumpSemIRRange(const char* diag_loc) -> void;
 
@@ -974,6 +977,11 @@ auto Lexer::LexComment(llvm::StringRef source_text, ssize_t& position) -> void {
   if (position + 2 < static_cast<ssize_t>(source_text.size()) &&
       LLVM_UNLIKELY(!IsSpace(source_text[position + 2]))) {
     llvm::StringRef comment_text = source_text.substr(position);
+    if (comment_text.starts_with("//@dump-sem-ir-file\n")) {
+      buffer_.dump_sem_ir_file_ = true;
+      AdvanceToLine(source_text, position, next_line());
+      return;
+    }
     if (comment_text.starts_with("//@dump-sem-ir-begin\n")) {
       BeginDumpSemIRRange(comment_text.begin());
       AdvanceToLine(source_text, position, next_line());
@@ -984,7 +992,6 @@ auto Lexer::LexComment(llvm::StringRef source_text, ssize_t& position) -> void {
       AdvanceToLine(source_text, position, next_line());
       return;
     }
-
     CARBON_DIAGNOSTIC(NoWhitespaceAfterCommentIntroducer, Error,
                       "whitespace is required after '//'");
     emitter_.Emit(comment_text.begin() + 2, NoWhitespaceAfterCommentIntroducer);

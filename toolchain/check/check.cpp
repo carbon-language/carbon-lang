@@ -335,22 +335,23 @@ static auto MaybeDumpFormattedSemIR(
     const SemIR::File& sem_ir,
     Parse::GetTreeAndSubtreesFn tree_and_subtrees_getter, bool include_in_dumps,
     const CheckParseTreesOptions& options) -> void {
-  bool dump = options.dump_stream && include_in_dumps;
+  const auto& tokens = sem_ir.parse_tree().tokens();
+  bool dump =
+      options.dump_stream && (include_in_dumps || tokens.dump_sem_ir_file());
   if (!options.vlog_stream && !dump) {
     return;
   }
 
-  bool has_ranges = sem_ir.parse_tree().tokens().has_dump_sem_ir_ranges();
   if (options.dump_sem_ir_ranges ==
           CheckParseTreesOptions::DumpSemIRRanges::Only &&
-      !has_ranges) {
+      !tokens.dump_sem_ir_file() && !tokens.has_dump_sem_ir_ranges()) {
     return;
   }
 
   bool use_dump_sem_ir_ranges =
       options.dump_sem_ir_ranges !=
           CheckParseTreesOptions::DumpSemIRRanges::Ignore &&
-      has_ranges;
+      tokens.has_dump_sem_ir_ranges();
   SemIR::Formatter formatter(&sem_ir, tree_and_subtrees_getter,
                              options.include_in_dumps, use_dump_sem_ir_ranges);
   formatter.Format();
