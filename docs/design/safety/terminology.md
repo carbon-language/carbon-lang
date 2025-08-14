@@ -45,7 +45,8 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
 ### _Hazard_
 
-Unsafe coding construct that may lead to a bug or vulnerability.
+Unsafe coding construct that may lead to a bug or vulnerability. For example,
+indexing an array with a user-supplied and unvalidated index is a hazard.
 
 ### _Bug_ or _defect_
 

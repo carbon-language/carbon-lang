@@ -46,7 +46,8 @@ provide an incremental path from where the code is at today towards increasing
 levels of safety.
 
 Ultimately, Carbon will both provide a [memory-safe language], _and_ provide a language
-that can interop with C++ and be targeted for mechanical migration from C++.
+that provides a target for mechanical migration from C++ and optimizes even further
+for interop with unsafe C++ with minimal friction.
 
 [memory-safe language]: /docs/design/safety/terminology.md#memory-safe-language
 
@@ -154,14 +155,13 @@ how they approach both temporal and data-race safety.
 
 Carbon has the option of distinguishing between two similar but importantly
 different classes of bugs: data races and unsynchronized temporal safety
-violations. Specifically, there is no evidence from security teams that data
-races in isolation have led to anything approaching the volume of
-vulnerabilities in software when excluding temporal safety violations. For
-example, despite both Go and non-strict-concurrency Swift only providing
-temporal safety, the rate of memory safety vulnerabilities in software written
-in both matches the expected low rate for memory-safe languages. As a
-consequence, Carbon has some flexibility while still being a [memory-safe
-language] according to our definition:
+violations. Specifically, there is no evidence from security teams that there is
+any significant volume of vulnerabilities that involve a data race bug but don't
+also involve a temporal memory safety violation. For example, despite both Go
+and non-strict-concurrency Swift only providing temporal safety, the rate of
+memory safety vulnerabilities in software written in both matches the expected
+low rate for memory-safe languages. As a consequence, Carbon has some
+flexibility while still being a [memory-safe language] according to our definition:
 
 -   Carbon might choose to _not_ prevent data race bugs that are not
     _themselves_ also temporal safety bugs, even though the data race may lead
