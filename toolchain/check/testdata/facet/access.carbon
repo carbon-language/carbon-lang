@@ -80,6 +80,55 @@ fn UseIndirect[T:! I](x: T) -> T {
 //@dump-sem-ir-end
 }
 
+// --- fail_todo_access_through_call.carbon
+library "[[@TEST_NAME]]";
+
+interface I {
+  let X:! type;
+  fn G() -> X;
+}
+
+fn F(U:! I where .X = .Self) {
+  U.G().G();
+
+  // TODO: This should typecheck.
+  // - The first `.` is on a NameRef of type FacetType for `I where .X = .Self`.
+  //   - This finds `G` through the FacetType.
+  // - The second `.` is on a Call of type FacetAccessType into `BindSymbolicName` with type FacetType for `I`.
+  //   - This finds `G` through the FacetType (impl lookup strips off FacetAccessType).
+  // - The second `.` is on a Call of type FacetAccessType into `ImplWitnessAccess` of `I.X` into `LookupImplWitness`, which has type `type`
+  //   - Can't make calls on an `ImplWitnessAccess`.
+  //
+  // CHECK:STDERR: fail_todo_access_through_call.carbon:[[@LINE+4]]:3: error: type `.(I.X)` does not support qualified expressions [QualifiedExprUnsupported]
+  // CHECK:STDERR:   U.G().G().G();
+  // CHECK:STDERR:   ^~~~~~~~~~~
+  // CHECK:STDERR:
+  U.G().G().G();
+}
+
+// --- fail_todo_access_through_call_converts_is_a_type.carbon
+library "[[@TEST_NAME]]";
+
+interface I {
+  let X:! type;
+  fn G() -> X;
+}
+
+fn F(U:! I where .X = .Self) {
+  // TODO: The return type of G() is a FacetAccessType of a BindSymbolicName. We
+  // try to convert a Call of type FacetAccessType (of type `type`) to `type`
+  // which fails.
+  //
+  // CHECK:STDERR: fail_todo_access_through_call_converts_is_a_type.carbon:[[@LINE+7]]:3: error: cannot convert non-type value of type `.Self` to `type` with `as` [ConversionFailureNonTypeToFacet]
+  // CHECK:STDERR:   U.G() as type;
+  // CHECK:STDERR:   ^~~~~~~~~~~~~
+  // CHECK:STDERR: fail_todo_access_through_call_converts_is_a_type.carbon:[[@LINE+4]]:3: note: type `.Self` does not implement interface `Core.As(type)` [MissingImplInMemberAccessNote]
+  // CHECK:STDERR:   U.G() as type;
+  // CHECK:STDERR:   ^~~~~~~~~~~~~
+  // CHECK:STDERR:
+  U.G() as type;
+}
+
 // --- fail_non_const_associated.carbon
 library "[[@TEST_NAME]]";
 
