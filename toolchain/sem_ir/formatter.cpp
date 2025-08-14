@@ -605,7 +605,6 @@ auto Formatter::FormatSpecific(SpecificId id) -> void {
   out_ << "specific ";
   FormatName(id);
   out_ << " ";
-  //  out_ << id << " ";
 
   OpenBrace();
   FormatSpecificRegion(generic, specific, GenericInstIndex::Region::Declaration,
