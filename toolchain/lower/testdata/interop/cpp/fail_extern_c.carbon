@@ -26,17 +26,14 @@ extern "C" int foo;
 
 library "[[@TEST_NAME]]";
 
+// CHECK:STDERR: fail_todo_import_extern_c_variable.carbon:[[@LINE+4]]:10: in file included here [InCppInclude]
+// CHECK:STDERR: ./extern_c_variable.h:2:16: error: semantics TODO: `Unsupported: Declaration type Var` [SemanticsTodo]
+// CHECK:STDERR: extern "C" int foo;
+// CHECK:STDERR:                ^
 import Cpp library "extern_c_variable.h";
 
 fn MyF() -> i32 {
-  // CHECK:STDERR: fail_todo_import_extern_c_variable.carbon:[[@LINE+11]]:10: error: semantics TODO: `Unsupported: Declaration type Var` [SemanticsTodo]
-  // CHECK:STDERR:   return Cpp.foo;
-  // CHECK:STDERR:          ^~~~~~~
-  // CHECK:STDERR: fail_todo_import_extern_c_variable.carbon:[[@LINE+8]]:10: note: in `Cpp` name lookup for `foo` [InCppNameLookup]
-  // CHECK:STDERR:   return Cpp.foo;
-  // CHECK:STDERR:          ^~~~~~~
-  // CHECK:STDERR:
-  // CHECK:STDERR: fail_todo_import_extern_c_variable.carbon:[[@LINE+4]]:10: error: member name `foo` not found in `Cpp` [MemberNameNotFoundInInstScope]
+  // CHECK:STDERR: fail_todo_import_extern_c_variable.carbon:[[@LINE+4]]:10: note: in `Cpp` name lookup for `foo` [InCppNameLookup]
   // CHECK:STDERR:   return Cpp.foo;
   // CHECK:STDERR:          ^~~~~~~
   // CHECK:STDERR:

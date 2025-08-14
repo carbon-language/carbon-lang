@@ -123,40 +123,100 @@ fn G(s: Cpp.Union) -> i32 {
 
 library "[[@TEST_NAME]]";
 
+// CHECK:STDERR: fail_todo_use_bitfields.carbon:[[@LINE+4]]:10: in file included here [InCppInclude]
+// CHECK:STDERR: ./with_bitfields.h:4:7: error: semantics TODO: `Unsupported: field declaration has unhandled type or kind` [SemanticsTodo]
+// CHECK:STDERR:   int b : 2;
+// CHECK:STDERR:       ^
 import Cpp library "with_bitfields.h";
 
 fn F(s: Cpp.Struct) -> i32 {
   //@dump-sem-ir-begin
-  // CHECK:STDERR: fail_todo_use_bitfields.carbon:[[@LINE+11]]:10: error: semantics TODO: `Unsupported: Unhandled kind of field declaration` [SemanticsTodo]
-  // CHECK:STDERR:   return s.b;
-  // CHECK:STDERR:          ^~~
   // CHECK:STDERR: fail_todo_use_bitfields.carbon:[[@LINE+8]]:10: note: in `Cpp` name lookup for `b` [InCppNameLookup]
   // CHECK:STDERR:   return s.b;
   // CHECK:STDERR:          ^~~
   // CHECK:STDERR:
-  // CHECK:STDERR: fail_todo_use_bitfields.carbon:[[@LINE+4]]:10: error: member name `b` not found in `Cpp.Struct` [MemberNameNotFoundInInstScope]
-  // CHECK:STDERR:   return s.b;
-  // CHECK:STDERR:          ^~~
-  // CHECK:STDERR:
+  // CHECK:STDERR: fail_todo_use_bitfields.carbon:[[@LINE-8]]:10: in file included here [InCppInclude]
+  // CHECK:STDERR: ./with_bitfields.h:9:7: error: semantics TODO: `Unsupported: field declaration has unhandled type or kind` [SemanticsTodo]
+  // CHECK:STDERR:   int d : 3;
+  // CHECK:STDERR:       ^
   return s.b;
   //@dump-sem-ir-end
 }
 
 fn G(s: Cpp.Union) -> i32 {
   //@dump-sem-ir-begin
-  // CHECK:STDERR: fail_todo_use_bitfields.carbon:[[@LINE+11]]:10: error: semantics TODO: `Unsupported: Unhandled kind of field declaration` [SemanticsTodo]
-  // CHECK:STDERR:   return s.d;
-  // CHECK:STDERR:          ^~~
-  // CHECK:STDERR: fail_todo_use_bitfields.carbon:[[@LINE+8]]:10: note: in `Cpp` name lookup for `d` [InCppNameLookup]
-  // CHECK:STDERR:   return s.d;
-  // CHECK:STDERR:          ^~~
-  // CHECK:STDERR:
-  // CHECK:STDERR: fail_todo_use_bitfields.carbon:[[@LINE+4]]:10: error: member name `d` not found in `Cpp.Union` [MemberNameNotFoundInInstScope]
+  // CHECK:STDERR: fail_todo_use_bitfields.carbon:[[@LINE+4]]:10: note: in `Cpp` name lookup for `d` [InCppNameLookup]
   // CHECK:STDERR:   return s.d;
   // CHECK:STDERR:          ^~~
   // CHECK:STDERR:
   return s.d;
   //@dump-sem-ir-end
+}
+
+// --- unsupported_members.h
+
+struct UnsupportedMembers {
+  // Volatile is not supported.
+  volatile int is_volatile;
+  // Nullable pointers are not supported.
+  int *is_nullable;
+  // References are not supported.
+  int &is_reference;
+  // But this should be fine.
+  int integer;
+};
+
+void Consume(UnsupportedMembers);
+
+// --- supported_members_in_type_with_unsupported_members.carbon
+
+library "[[@TEST_NAME]]";
+
+import Cpp library "unsupported_members.h";
+
+fn Test(m: Cpp.UnsupportedMembers*) {
+  // OK: Can still access supported members.
+  m->integer = 42;
+  // OK: Can still pass the class to a C++ function.
+  Cpp.Consume(*m);
+}
+
+// --- fail_use_unsupported_members.carbon
+
+library "[[@TEST_NAME]]";
+
+// CHECK:STDERR: fail_use_unsupported_members.carbon:[[@LINE+4]]:10: in file included here [InCppInclude]
+// CHECK:STDERR: ./unsupported_members.h:4:16: error: semantics TODO: `Unsupported: field declaration has unhandled type or kind` [SemanticsTodo]
+// CHECK:STDERR:   volatile int is_volatile;
+// CHECK:STDERR:                ^
+import Cpp library "unsupported_members.h";
+
+fn Test(m: Cpp.UnsupportedMembers*) {
+  // CHECK:STDERR: fail_use_unsupported_members.carbon:[[@LINE+8]]:16: note: in `Cpp` name lookup for `is_volatile` [InCppNameLookup]
+  // CHECK:STDERR:   let a: i32 = m->is_volatile;
+  // CHECK:STDERR:                ^~~~~~~~~~~~~~
+  // CHECK:STDERR:
+  // CHECK:STDERR: fail_use_unsupported_members.carbon:[[@LINE-7]]:10: in file included here [InCppInclude]
+  // CHECK:STDERR: ./unsupported_members.h:6:8: error: semantics TODO: `Unsupported: field declaration has unhandled type or kind` [SemanticsTodo]
+  // CHECK:STDERR:   int *is_nullable;
+  // CHECK:STDERR:        ^
+  let a: i32 = m->is_volatile;
+
+  // CHECK:STDERR: fail_use_unsupported_members.carbon:[[@LINE+8]]:17: note: in `Cpp` name lookup for `is_nullable` [InCppNameLookup]
+  // CHECK:STDERR:   let b: i32 = *m->is_nullable;
+  // CHECK:STDERR:                 ^~~~~~~~~~~~~~
+  // CHECK:STDERR:
+  // CHECK:STDERR: fail_use_unsupported_members.carbon:[[@LINE-17]]:10: in file included here [InCppInclude]
+  // CHECK:STDERR: ./unsupported_members.h:8:8: error: semantics TODO: `Unsupported: field declaration has unhandled type or kind` [SemanticsTodo]
+  // CHECK:STDERR:   int &is_reference;
+  // CHECK:STDERR:        ^
+  let b: i32 = *m->is_nullable;
+
+  // CHECK:STDERR: fail_use_unsupported_members.carbon:[[@LINE+4]]:16: note: in `Cpp` name lookup for `is_reference` [InCppNameLookup]
+  // CHECK:STDERR:   let c: i32 = m->is_reference;
+  // CHECK:STDERR:                ^~~~~~~~~~~~~~~
+  // CHECK:STDERR:
+  let c: i32 = m->is_reference;
 }
 
 // CHECK:STDOUT: --- use_struct_fields.carbon
