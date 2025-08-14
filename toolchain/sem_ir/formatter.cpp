@@ -168,7 +168,8 @@ auto Formatter::IncludeChunkInOutput(size_t chunk) -> void {
 
 auto Formatter::ShouldIncludeInstByIR(InstId inst_id) -> bool {
   const auto* import_ir = GetCanonicalFileAndInstId(sem_ir_, inst_id).first;
-  return include_ir_in_dumps_->Get(import_ir->check_ir_id());
+  return (import_ir == sem_ir_) ||
+         include_ir_in_dumps_->Get(import_ir->check_ir_id());
 }
 
 // Returns true for a `DefinitionStart` node.
