@@ -39,9 +39,10 @@ static auto Main(int argc, char** argv) -> ErrorOr<int> {
   // If `LLVM_SYMBOLIZER_PATH` is unset, sets it. Signals.cpp would do some more
   // path resolution which this overrides in favor of using the busybox itself
   // for symbolization.
-  setenv("LLVM_SYMBOLIZER_PATH",
-         (install_paths.llvm_install_bin() + "llvm-symbolizer").c_str(),
-         /*overwrite=*/0);
+  setenv(
+      "LLVM_SYMBOLIZER_PATH",
+      (install_paths.llvm_install_bin().native() + "llvm-symbolizer").c_str(),
+      /*overwrite=*/0);
 
   SetWorkingDirForBazel();
 

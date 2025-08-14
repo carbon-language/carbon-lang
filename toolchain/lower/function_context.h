@@ -170,9 +170,9 @@ class FunctionContext {
     return file_context_->GetTypeAsValue();
   }
 
-  // Returns a lowered value to use for a value of int literal type.
-  auto GetIntLiteralAsValue() -> llvm::Constant* {
-    return file_context_->GetIntLiteralAsValue();
+  // Returns a lowered value to use for a value of literal type.
+  auto GetLiteralAsValue() -> llvm::Constant* {
+    return file_context_->GetLiteralAsValue();
   }
 
   // Create a synthetic block that corresponds to no SemIR::InstBlockId. Such

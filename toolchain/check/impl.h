@@ -35,6 +35,36 @@ auto AssignImplIdInWitness(Context& context, SemIR::ImplId impl_id,
 // being concrete.
 auto IsImplEffectivelyFinal(Context& context, const SemIR::Impl& impl) -> bool;
 
+// Checks that the constraint specified for the impl is valid and identified.
+// Returns the interface that the impl implements. On error, issues a diagnostic
+// and returns `None`.
+auto CheckConstraintIsInterface(Context& context, SemIR::InstId impl_decl_id,
+                                SemIR::TypeInstId constraint_id)
+    -> SemIR::SpecificInterface;
+
+// Returns the implicit `Self` type for an `impl` when it's in a `class`
+// declaration.
+auto GetImplDefaultSelfType(Context& context) -> SemIR::TypeId;
+
+// For `StartImplDecl`, additional details for an `extend impl` declaration.
+struct ExtendImplDecl {
+  Parse::NodeId self_type_node_id;
+  SemIR::TypeId constraint_type_id;
+  Parse::NodeId extend_node_id;
+};
+
+// Starts an impl declaration. The caller is responsible for ensuring a generic
+// declaration has been started. This returns the produced `ImplId` and
+// `ImplDecl`'s `InstId`.
+//
+// The `impl` should be constructed with a placeholder `ImplDecl` which this
+// will add the `ImplId` to.
+auto StartImplDecl(Context& context, SemIR::LocId loc_id,
+                   SemIR::LocId implicit_params_loc_id, SemIR::Impl impl,
+                   bool is_definition,
+                   std::optional<ExtendImplDecl> extend_impl)
+    -> std::pair<SemIR::ImplId, SemIR::InstId>;
+
 }  // namespace Carbon::Check
 
 #endif  // CARBON_TOOLCHAIN_CHECK_IMPL_H_

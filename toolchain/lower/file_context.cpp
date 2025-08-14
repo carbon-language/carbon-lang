@@ -19,6 +19,7 @@
 #include "llvm/Transforms/Utils/BasicBlockUtils.h"
 #include "llvm/Transforms/Utils/ModuleUtils.h"
 #include "toolchain/base/kind_switch.h"
+#include "toolchain/lower/clang_global_decl.h"
 #include "toolchain/lower/constant.h"
 #include "toolchain/lower/function_context.h"
 #include "toolchain/lower/mangler.h"
@@ -70,7 +71,7 @@ auto FileContext::PrepareToLower() -> void {
     // Clang code generation should not actually modify the AST, but isn't
     // const-correct.
     cpp_code_generator_->Initialize(
-        const_cast<clang::ASTContext&>(cpp_ast()->getASTContext()));
+        const_cast<clang::ASTContext&>(clang_ast_unit()->getASTContext()));
   }
 
   // Lower all types that were required to be complete.
@@ -157,7 +158,7 @@ auto FileContext::Finalize() -> void {
     // Clang code generation should not actually modify the AST, but isn't
     // const-correct.
     cpp_code_generator_->HandleTranslationUnit(
-        const_cast<clang::ASTContext&>(cpp_ast()->getASTContext()));
+        const_cast<clang::ASTContext&>(clang_ast_unit()->getASTContext()));
     bool link_error = llvm::Linker::linkModules(
         /*Dest=*/llvm_module(),
         /*Src=*/std::unique_ptr<llvm::Module>(
@@ -173,7 +174,7 @@ auto FileContext::Finalize() -> void {
 
 auto FileContext::CreateCppCodeGenerator()
     -> std::unique_ptr<clang::CodeGenerator> {
-  if (!cpp_ast()) {
+  if (!clang_ast_unit()) {
     return nullptr;
   }
 
@@ -184,7 +185,7 @@ auto FileContext::CreateCppCodeGenerator()
   cpp_code_gen_options_.EmitVersionIdentMetadata = false;
 
   return std::unique_ptr<clang::CodeGenerator>(clang::CreateLLVMCodeGen(
-      cpp_ast()->getASTContext().getDiagnostics(),
+      clang_ast_unit()->getASTContext().getDiagnostics(),
       clang_module_name_stream.TakeStr(), context().file_system(),
       cpp_header_search_options_, cpp_preprocessor_options_,
       cpp_code_gen_options_, llvm_context()));
@@ -380,7 +381,7 @@ auto FileContext::HandleReferencedCppFunction(clang::FunctionDecl* cpp_decl)
   // function name (`CodeGenModule::getMangledName()`), and will generate
   // its definition.
   llvm::Constant* function_address =
-      cpp_code_generator_->GetAddrOfGlobal(clang::GlobalDecl(cpp_def),
+      cpp_code_generator_->GetAddrOfGlobal(CreateGlobalDecl(cpp_def),
                                            /*isForDefinition=*/false);
   CARBON_CHECK(function_address);
 
@@ -710,7 +711,7 @@ auto FileContext::BuildDISubprogram(const SemIR::Function& function,
       /*File=*/context().di_builder().createFile(loc.filename, ""),
       /*LineNo=*/loc.line_number,
       context().di_builder().createSubroutineType(
-          context().di_builder().getOrCreateTypeArray(std::nullopt)),
+          context().di_builder().getOrCreateTypeArray({})),
       /*ScopeLine=*/0, llvm::DINode::FlagZero,
       llvm::DISubprogram::SPFlagDefinition);
 }
@@ -768,6 +769,13 @@ static auto BuildTypeForInst(FileContext& context, SemIR::ConstType inst)
       context.sem_ir().types().GetTypeIdForTypeInstId(inst.inner_id));
 }
 
+static auto BuildTypeForInst(FileContext& context, SemIR::CustomLayoutType inst)
+    -> llvm::Type* {
+  auto layout = context.sem_ir().custom_layouts().Get(inst.layout_id);
+  return llvm::ArrayType::get(llvm::Type::getInt8Ty(context.llvm_context()),
+                              layout[SemIR::CustomLayoutId::SizeIndex]);
+}
+
 static auto BuildTypeForInst(FileContext& context, SemIR::PartialType inst)
     -> llvm::Type* {
   return context.GetType(
@@ -786,10 +794,10 @@ static auto BuildTypeForInst(FileContext& /*context*/,
   return nullptr;
 }
 
-static auto BuildTypeForInst(FileContext& context, SemIR::FloatType /*inst*/)
+static auto BuildTypeForInst(FileContext& context, SemIR::FloatType inst)
     -> llvm::Type* {
-  // TODO: Handle different sizes.
-  return llvm::Type::getDoubleTy(context.llvm_context());
+  return llvm::Type::getFloatingPointTy(context.llvm_context(),
+                                        inst.float_kind.Semantics());
 }
 
 static auto BuildTypeForInst(FileContext& context, SemIR::IntType inst)
@@ -800,11 +808,6 @@ static auto BuildTypeForInst(FileContext& context, SemIR::IntType inst)
   return llvm::IntegerType::get(
       context.llvm_context(),
       context.sem_ir().ints().Get(width->int_id).getZExtValue());
-}
-
-static auto BuildTypeForInst(FileContext& context,
-                             SemIR::LegacyFloatType /*inst*/) -> llvm::Type* {
-  return llvm::Type::getDoubleTy(context.llvm_context());
 }
 
 static auto BuildTypeForInst(FileContext& context, SemIR::PointerType /*inst*/)
@@ -865,7 +868,8 @@ static auto BuildTypeForInst(FileContext& context, InstT /*inst*/)
 
 template <typename InstT>
   requires(InstT::Kind
-               .template IsAnyOf<SemIR::BoundMethodType, SemIR::IntLiteralType,
+               .template IsAnyOf<SemIR::BoundMethodType, SemIR::CharLiteralType,
+                                 SemIR::FloatLiteralType, SemIR::IntLiteralType,
                                  SemIR::NamespaceType, SemIR::WitnessType>())
 static auto BuildTypeForInst(FileContext& context, InstT /*inst*/)
     -> llvm::Type* {
@@ -971,7 +975,7 @@ auto FileContext::BuildVtable(const SemIR::Vtable& vtable,
   vfuncs.reserve(vtable_inst_block.size());
 
   for (auto fn_decl_id : vtable_inst_block) {
-    auto [fn_decl, fn_id, fn_specific_id] =
+    auto [_1, _2, fn_id, fn_specific_id] =
         DecomposeVirtualFunction(sem_ir(), fn_decl_id, specific_id);
 
     vfuncs.push_back(llvm::ConstantExpr::getTrunc(

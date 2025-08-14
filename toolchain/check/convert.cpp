@@ -55,6 +55,21 @@ static auto MarkInitializerFor(SemIR::File& sem_ir, SemIR::InstId init_id,
   }
 }
 
+// For a value or initializing expression using a copy value representation,
+// copy the value into a temporary object.
+static auto CopyValueToTemporary(Context& context, SemIR::InstId init_id)
+    -> SemIR::InstId {
+  // TODO: Consider using `None` to mean that we immediately materialize and
+  // initialize a temporary, rather than two separate instructions.
+  auto init = context.sem_ir().insts().Get(init_id);
+  auto temporary_id = AddInstWithCleanup<SemIR::TemporaryStorage>(
+      context, SemIR::LocId(init_id), {.type_id = init.type_id()});
+  return AddInst<SemIR::Temporary>(context, SemIR::LocId(init_id),
+                                   {.type_id = init.type_id(),
+                                    .storage_id = temporary_id,
+                                    .init_id = init_id});
+}
+
 // Commits to using a temporary to store the result of the initializing
 // expression described by `init_id`, and returns the location of the
 // temporary. If `discarded` is `true`, the result is discarded, and no
@@ -85,15 +100,7 @@ static auto FinalizeTemporary(Context& context, SemIR::InstId init_id,
 
   // The initializer has no return slot, but we want to produce a temporary
   // object. Materialize one now.
-  // TODO: Consider using `None` to mean that we immediately materialize and
-  // initialize a temporary, rather than two separate instructions.
-  auto init = sem_ir.insts().Get(init_id);
-  auto temporary_id = AddInstWithCleanup<SemIR::TemporaryStorage>(
-      context, SemIR::LocId(init_id), {.type_id = init.type_id()});
-  return AddInst<SemIR::Temporary>(context, SemIR::LocId(init_id),
-                                   {.type_id = init.type_id(),
-                                    .storage_id = temporary_id,
-                                    .init_id = init_id});
+  return CopyValueToTemporary(context, init_id);
 }
 
 // Materialize a temporary to hold the result of the given expression if it is
@@ -574,6 +581,10 @@ static auto ConvertStructToClass(
   if (object_repr_id == SemIR::ErrorInst::TypeId) {
     return SemIR::ErrorInst::InstId;
   }
+  if (context.types().Is<SemIR::CustomLayoutType>(object_repr_id)) {
+    // Builtin conversion does not apply.
+    return value_id;
+  }
   auto dest_struct_type =
       context.types().GetAs<SemIR::StructType>(object_repr_id);
 
@@ -713,6 +724,8 @@ static auto IsValidExprCategoryForConversionTarget(
              category == SemIR::ExprCategory::Initializing;
     case ConversionTarget::DurableRef:
       return category == SemIR::ExprCategory::DurableRef;
+    case ConversionTarget::CppThunkRef:
+      return category == SemIR::ExprCategory::EphemeralRef;
     case ConversionTarget::ExplicitAs:
       return true;
     case ConversionTarget::Initializer:
@@ -749,25 +762,6 @@ static auto CanUseValueOfInitializer(const SemIR::File& sem_ir,
   return InitReprIsCopyOfValueRepr(sem_ir, type_id);
 }
 
-// Returns the non-adapter type that is compatible with the specified type.
-static auto GetTransitiveAdaptedType(Context& context, SemIR::TypeId type_id)
-    -> SemIR::TypeId {
-  // If the type is an adapter, its object representation type is its compatible
-  // non-adapter type.
-  while (auto class_type =
-             context.types().TryGetAs<SemIR::ClassType>(type_id)) {
-    auto& class_info = context.classes().Get(class_type->class_id);
-    auto adapted_type_id =
-        class_info.GetAdaptedType(context.sem_ir(), class_type->specific_id);
-    if (!adapted_type_id.has_value()) {
-      break;
-    }
-    type_id = adapted_type_id;
-  }
-
-  // Otherwise, the type itself is a non-adapter type.
-  return type_id;
-}
 static auto DiagnoseConversionFailureToConstraintValue(
     Context& context, SemIR::LocId loc_id, SemIR::InstId expr_id,
     SemIR::TypeId target_type_id) -> void {
@@ -872,7 +866,7 @@ static auto PerformBuiltinConversion(
     // shortcut to doing the explicit calls to walk the parts of the
     // tuple/struct which happens inside PerformBuiltinConversion().
     if (auto foundation_type_id =
-            GetTransitiveAdaptedType(context, value_type_id);
+            context.types().GetTransitiveAdaptedType(value_type_id);
         foundation_type_id != value_type_id &&
         (context.types().Is<SemIR::TupleType>(foundation_type_id) ||
          context.types().Is<SemIR::StructType>(foundation_type_id))) {
@@ -919,8 +913,9 @@ static auto PerformBuiltinConversion(
   if (target.kind == ConversionTarget::Kind::ExplicitAs &&
       target.type_id != value_type_id) {
     auto target_foundation_id =
-        GetTransitiveAdaptedType(context, target.type_id);
-    auto value_foundation_id = GetTransitiveAdaptedType(context, value_type_id);
+        context.types().GetTransitiveAdaptedType(target.type_id);
+    auto value_foundation_id =
+        context.types().GetTransitiveAdaptedType(value_type_id);
     if (target_foundation_id == value_foundation_id) {
       // For a struct or tuple literal, perform a category conversion if
       // necessary.
@@ -1169,6 +1164,34 @@ static auto PerformCopy(Context& context, SemIR::InstId expr_id, bool diagnose)
   return SemIR::ErrorInst::InstId;
 }
 
+// Convert a value expression so that it can be used to initialize a C++ thunk
+// parameter.
+static auto ConvertValueForCppThunkRef(Context& context, SemIR::InstId expr_id,
+                                       bool diagnose) -> SemIR::InstId {
+  auto expr = context.insts().Get(expr_id);
+
+  // If the expression has a pointer value representation, extract that and use
+  // it directly.
+  if (SemIR::ValueRepr::ForType(context.sem_ir(), expr.type_id()).kind ==
+      SemIR::ValueRepr::Pointer) {
+    return AddInst<SemIR::ValueAsRef>(
+        context, SemIR::LocId(expr_id),
+        {.type_id = expr.type_id(), .value_id = expr_id});
+  }
+
+  // Otherwise, we need a temporary to pass as the thunk argument. Create a copy
+  // and initialize a temporary from it.
+  expr_id = PerformCopy(context, expr_id, diagnose);
+  if (SemIR::GetExprCategory(context.sem_ir(), expr_id) ==
+      SemIR::ExprCategory::Value) {
+    // If we still have a value expression, then it's a value expression
+    // whose value is being used directly to initialize the object. Copy
+    // it into a temporary to form an ephemeral reference.
+    expr_id = CopyValueToTemporary(context, expr_id);
+  }
+  return expr_id;
+}
+
 auto PerformAction(Context& context, SemIR::LocId loc_id,
                    SemIR::ConvertToValueAction action) -> SemIR::InstId {
   return Convert(context, loc_id, action.inst_id,
@@ -1373,7 +1396,8 @@ auto Convert(Context& context, SemIR::LocId loc_id, SemIR::InstId expr_id,
     case SemIR::ExprCategory::EphemeralRef:
       // If a reference expression is an acceptable result, we're done.
       if (target.kind == ConversionTarget::ValueOrRef ||
-          target.kind == ConversionTarget::Discarded) {
+          target.kind == ConversionTarget::Discarded ||
+          target.kind == ConversionTarget::CppThunkRef) {
         break;
       }
 
@@ -1402,6 +1426,13 @@ auto Convert(Context& context, SemIR::LocId loc_id, SemIR::InstId expr_id,
       if (target.is_initializer()) {
         expr_id = PerformCopy(context, expr_id, target.diagnose);
       }
+
+      // When initializing a C++ thunk parameter, form a reference, creating a
+      // temporary if needed.
+      if (target.kind == ConversionTarget::CppThunkRef) {
+        expr_id = ConvertValueForCppThunkRef(context, expr_id, target.diagnose);
+      }
+
       break;
   }
 

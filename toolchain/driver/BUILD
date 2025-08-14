@@ -4,6 +4,7 @@
 
 load("@rules_shell//shell:sh_test.bzl", "sh_test")
 load("//bazel/cc_rules:defs.bzl", "cc_binary", "cc_library", "cc_test")
+load("//bazel/cc_toolchains:defs.bzl", "cc_env")
 load("//testing/fuzzing:rules.bzl", "cc_fuzz_test")
 
 package(default_visibility = ["//visibility:public"])
@@ -62,6 +63,7 @@ cc_binary(
     srcs = ["compile_benchmark.cpp"],
     deps = [
         ":driver",
+        "//common:all_llvm_targets",
         "//testing/base:benchmark_main",
         "//testing/base:global_exe_path",
         "//testing/base:source_gen_lib",
@@ -81,6 +83,7 @@ sh_test(
         # The `$$` is repeated for Bazel escaping of `$`.
         "--benchmark_filter=/256$$",
     ],
+    env = cc_env(),
 )
 
 cc_library(
@@ -144,6 +147,7 @@ cc_library(
         "//toolchain/sem_ir:typed_insts",
         "//toolchain/source:source_buffer",
         "@llvm-project//llvm:Core",
+        "@llvm-project//llvm:MC",
         "@llvm-project//llvm:Support",
         "@llvm-project//llvm:TargetParser",
     ],

@@ -258,6 +258,18 @@ struct LibrarySpecifier {
   NodeIdOneOf<LibraryName, DefaultLibrary> name;
 };
 
+using InlineImportBody =
+    LeafNode<NodeKind::InlineImportBody, Lex::StringLiteralTokenIndex>;
+
+// `inline` in `import`.
+struct InlineImportSpecifier {
+  static constexpr auto Kind =
+      NodeKind::InlineImportSpecifier.Define({.child_count = 1});
+
+  Lex::InlineTokenIndex token;
+  InlineImportBodyId body;
+};
+
 // First line of the file, such as:
 //   `impl package MyPackage library "MyLibrary";`
 struct PackageDecl {
@@ -272,7 +284,7 @@ struct PackageDecl {
   Lex::SemiTokenIndex token;
 };
 
-// `import TheirPackage library "TheirLibrary";`
+// `import [TheirPackage] [library "TheirLibrary" | inline "code"];`
 using ImportIntroducer =
     LeafNode<NodeKind::ImportIntroducer, Lex::ImportTokenIndex>;
 struct ImportDecl {
@@ -283,6 +295,7 @@ struct ImportDecl {
   llvm::SmallVector<AnyModifierId> modifiers;
   std::optional<AnyPackageNameId> name;
   std::optional<LibrarySpecifierId> library;
+  std::optional<InlineImportSpecifierId> inline_specifier;
   Lex::SemiTokenIndex token;
 };
 
@@ -362,15 +375,24 @@ struct TemplateBindingName {
   AnyRuntimeBindingPatternName name;
 };
 
+struct CompileTimeBindingPatternStart {
+  static constexpr auto Kind =
+      NodeKind::CompileTimeBindingPatternStart.Define({.child_count = 1});
+  // TODO: is there some way to reuse AnyRuntimeBindingPatternName here?
+  NodeIdOneOf<IdentifierNameNotBeforeParams, SelfValueName, UnderscoreName,
+              TemplateBindingName>
+      name;
+  // This is a virtual token. The `:!` token is owned by the
+  // CompileTimeBindingPattern node.
+  Lex::ColonExclaimTokenIndex token;
+};
+
 // `name:! Type`
 struct CompileTimeBindingPattern {
   static constexpr auto Kind = NodeKind::CompileTimeBindingPattern.Define(
       {.category = NodeCategory::Pattern, .child_count = 2});
 
-  // TODO: is there some way to reuse AnyRuntimeBindingPatternName here?
-  NodeIdOneOf<IdentifierNameNotBeforeParams, SelfValueName, UnderscoreName,
-              TemplateBindingName>
-      name;
+  CompileTimeBindingPatternStartId introducer;
   Lex::ColonExclaimTokenIndex token;
   AnyExprId type;
 };

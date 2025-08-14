@@ -61,6 +61,8 @@ struct ExprRegion {
 
 using ExprRegionStore = ValueStore<ExprRegionId, ExprRegion>;
 
+using CustomLayoutStore = BlockValueStore<CustomLayoutId, uint64_t>;
+
 // Provides semantic analysis on a Parse::Tree.
 class File : public Printable<File> {
  public:
@@ -74,6 +76,7 @@ class File : public Printable<File> {
                 SharedValueStores& value_stores, std::string filename);
 
   File(const File&) = delete;
+  ~File();
   auto operator=(const File&) -> File& = delete;
 
   // Verifies that invariants of the semantics IR hold.
@@ -191,12 +194,17 @@ class File : public Printable<File> {
   }
   auto import_cpps() -> ImportCppStore& { return import_cpps_; }
   auto import_cpps() const -> const ImportCppStore& { return import_cpps_; }
-  auto cpp_ast() -> clang::ASTUnit* { return cpp_ast_; }
-  auto cpp_ast() const -> const clang::ASTUnit* { return cpp_ast_; }
+  auto clang_ast_unit() -> clang::ASTUnit* { return clang_ast_unit_; }
+  auto clang_ast_unit() const -> const clang::ASTUnit* {
+    return clang_ast_unit_;
+  }
   // TODO: When the AST can be created before creating `File`, initialize the
   // pointer in the constructor and remove this function. This is part of
   // https://github.com/carbon-language/carbon-lang/issues/4666
-  auto set_cpp_ast(clang::ASTUnit* cpp_ast) -> void { cpp_ast_ = cpp_ast; }
+  auto set_clang_ast_unit(clang::ASTUnit* clang_ast_unit) -> void;
+  auto clang_mangle_context() -> clang::MangleContext* {
+    return clang_mangle_context_.get();
+  }
   auto clang_decls() -> ClangDeclStore& { return clang_decls_; }
   auto clang_decls() const -> const ClangDeclStore& { return clang_decls_; }
   auto names() const -> NameStoreWrapper {
@@ -209,6 +217,10 @@ class File : public Printable<File> {
   }
   auto struct_type_fields() const -> const StructTypeFieldsStore& {
     return struct_type_fields_;
+  }
+  auto custom_layouts() -> CustomLayoutStore& { return custom_layouts_; }
+  auto custom_layouts() const -> const CustomLayoutStore& {
+    return custom_layouts_;
   }
   auto types() -> TypeStore& { return types_; }
   auto types() const -> const TypeStore& { return types_; }
@@ -325,7 +337,11 @@ class File : public Printable<File> {
 
   // The Clang AST to use when looking up `Cpp` names. Null if there are no
   // `Cpp` imports.
-  clang::ASTUnit* cpp_ast_ = nullptr;
+  clang::ASTUnit* clang_ast_unit_ = nullptr;
+
+  // The Clang mangle context for the target in the ASTContext. Initialized
+  // together with `clang_ast_unit_`.
+  std::unique_ptr<clang::MangleContext> clang_mangle_context_;
 
   // Clang AST declarations pointing to the AST and their mapped Carbon
   // instructions. When calling `Lookup()`, `inst_id` is ignored. `Add()` will
@@ -360,6 +376,9 @@ class File : public Printable<File> {
 
   // Storage for StructTypeField lists.
   StructTypeFieldsStore struct_type_fields_ = StructTypeFieldsStore(allocator_);
+
+  // Storage for custom layouts.
+  CustomLayoutStore custom_layouts_ = CustomLayoutStore(allocator_);
 
   // Descriptions of types used in this file.
   TypeStore types_ = TypeStore(this);

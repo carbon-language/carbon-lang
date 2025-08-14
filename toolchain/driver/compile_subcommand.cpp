@@ -15,6 +15,7 @@
 #include "common/vlog.h"
 #include "llvm/ADT/STLExtras.h"
 #include "llvm/ADT/ScopeExit.h"
+#include "llvm/MC/TargetRegistry.h"
 #include "toolchain/base/clang_invocation.h"
 #include "toolchain/base/timings.h"
 #include "toolchain/check/check.h"
@@ -207,6 +208,14 @@ Dump the full SemIR to stdout when built.
 )""",
       },
       [&](auto& arg_b) { arg_b.Set(&dump_sem_ir); });
+  b.AddFlag(
+      {
+          .name = "dump-cpp-ast",
+          .help = R"""(
+Dump the full C++ AST to stdout when built.
+)""",
+      },
+      [&](auto& arg_b) { arg_b.Set(&dump_cpp_ast); });
 
   b.AddOneOfOption(
       {
@@ -280,6 +289,19 @@ Whether to use the implicit prelude import. Enabled by default.
       [&](auto& arg_b) {
         arg_b.Default(true);
         arg_b.Set(&prelude_import);
+      });
+  b.AddFlag(
+      {
+          .name = "gen-implicit-type-impls",
+          .help = R"""(
+Whether to generate standard `impl`s for types, such as `Core.Destroy`. This
+only controls generation of the `impl`; code which expects the `impl` is
+expected to fail. Enabled by default.
+)""",
+      },
+      [&](auto& arg_b) {
+        arg_b.Default(true);
+        arg_b.Set(&gen_implicit_type_impls);
       });
   b.AddFlag(
       {
@@ -382,6 +404,11 @@ auto CompileSubcommand::ValidateOptions(
     case Phase::Parse:
       if (options_.dump_sem_ir) {
         emitter.Emit(CompilePhaseFlagConflict, "SemIR",
+                     PhaseToString(options_.phase));
+        return false;
+      }
+      if (options_.dump_cpp_ast) {
+        emitter.Emit(CompilePhaseFlagConflict, "C++ AST",
                      PhaseToString(options_.phase));
         return false;
       }
@@ -505,7 +532,7 @@ class CompilationUnit {
   std::optional<std::function<auto()->const Parse::TreeAndSubtrees&>>
       tree_and_subtrees_getter_;
   std::optional<SemIR::File> sem_ir_;
-  std::unique_ptr<clang::ASTUnit> cpp_ast_;
+  std::unique_ptr<clang::ASTUnit> clang_ast_unit_;
   std::unique_ptr<llvm::LLVMContext> llvm_context_;
   std::unique_ptr<llvm::Module> module_;
 };
@@ -676,7 +703,7 @@ auto CompilationUnit::GetCheckUnit() -> Check::Unit {
           .value_stores = &value_stores_,
           .timings = timings_ ? &*timings_ : nullptr,
           .sem_ir = &*sem_ir_,
-          .cpp_ast = &cpp_ast_};
+          .clang_ast_unit = &clang_ast_unit_};
 }
 
 auto CompilationUnit::PostCheck() -> void {
@@ -740,8 +767,7 @@ auto CompilationUnit::PostCompile() -> void {
 
 auto CompilationUnit::RunCodeGenHelper() -> bool {
   std::optional<CodeGen> codegen =
-      CodeGen::Make(module_.get(), options_->codegen_options.target,
-                    driver_env_->error_stream);
+      CodeGen::Make(module_.get(), options_->codegen_options.target, consumer_);
   if (!codegen) {
     return false;
   }
@@ -844,6 +870,17 @@ auto CompileSubcommand::Run(DriverEnv& driver_env) -> DriverResult {
     return {.success = false};
   }
 
+  // Validate the target before passing it to Clang.
+  std::string target_error;
+  const llvm::Target* target = llvm::TargetRegistry::lookupTarget(
+      options_.codegen_options.target, target_error);
+  if (!target) {
+    CARBON_DIAGNOSTIC(CompileTargetInvalid, Error, "invalid target: {0}",
+                      std::string);
+    driver_env.emitter.Emit(CompileTargetInvalid, target_error);
+    return {.success = false};
+  }
+
   std::shared_ptr<clang::CompilerInvocation> clang_invocation;
   // Build a clang invocation. We do this regardless of whether we're running
   // check, because this is essentially performing further option validation,
@@ -862,6 +899,12 @@ auto CompileSubcommand::Run(DriverEnv& driver_env) -> DriverResult {
         // TODO: Decide if we want this.
         "-fPIE",
     };
+    if (driver_env.fuzzing && !options_.clang_args.empty()) {
+      // Parsing specific Clang arguments can reach deep into
+      // external libraries that aren't fuzz clean.
+      DisableFuzzingExternalLibraries(driver_env, "compile");
+      return {.success = false};
+    }
     for (auto str : options_.clang_args) {
       clang_path_and_args.push_back(str.str());
     }
@@ -982,12 +1025,17 @@ auto CompileSubcommand::Run(DriverEnv& driver_env) -> DriverResult {
   CARBON_VLOG_TO(driver_env.vlog_stream, "*** Check::CheckParseTrees ***\n");
   Check::CheckParseTreesOptions options;
   options.prelude_import = options_.prelude_import;
+  options.gen_implicit_type_impls = options_.gen_implicit_type_impls;
   options.vlog_stream = driver_env.vlog_stream;
   options.fuzzing = driver_env.fuzzing;
-  if (options.vlog_stream || options_.dump_sem_ir || options_.dump_raw_sem_ir) {
+  if (options.vlog_stream || options_.dump_sem_ir || options_.dump_cpp_ast ||
+      options_.dump_raw_sem_ir) {
     options.include_in_dumps = &cache.include_in_dumps();
     if (options_.dump_sem_ir) {
       options.dump_stream = driver_env.output_stream;
+    }
+    if (options_.dump_cpp_ast) {
+      options.dump_cpp_ast_stream = driver_env.output_stream;
     }
     if (options.vlog_stream || options_.dump_sem_ir) {
       options.dump_sem_ir_ranges = options_.dump_sem_ir_ranges;

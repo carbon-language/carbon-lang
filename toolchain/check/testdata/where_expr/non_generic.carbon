@@ -55,6 +55,7 @@ fn NotGenericF(U: I where .T == i32) {}
 // CHECK:STDOUT:       %int_32: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
 // CHECK:STDOUT:       %i32: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
 // CHECK:STDOUT:       %.loc17_21.2: type = where_expr %.Self [concrete = constants.%I_where.type] {
+// CHECK:STDOUT:         requirement_base_facet_type constants.%I.type
 // CHECK:STDOUT:         requirement_equivalent %impl.elem0, %i32
 // CHECK:STDOUT:       }
 // CHECK:STDOUT:     }

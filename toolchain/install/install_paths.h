@@ -5,7 +5,10 @@
 #ifndef CARBON_TOOLCHAIN_INSTALL_INSTALL_PATHS_H_
 #define CARBON_TOOLCHAIN_INSTALL_INSTALL_PATHS_H_
 
+#include <filesystem>
+
 #include "common/error.h"
+#include "common/filesystem.h"
 #include "llvm/ADT/SmallString.h"
 #include "llvm/ADT/StringRef.h"
 #include "llvm/ADT/Twine.h"
@@ -86,27 +89,30 @@ class InstallPaths {
   }
 
   // The directory containing the `Core` package. Computed on demand.
-  auto core_package() const -> std::string;
+  auto core_package() const -> std::filesystem::path;
 
   // The directory containing LLVM install binaries. Computed on demand.
-  auto llvm_install_bin() const -> std::string;
+  auto llvm_install_bin() const -> std::filesystem::path;
 
   // The path to `clang`.
-  auto clang_path() const -> std::string;
+  auto clang_path() const -> std::filesystem::path;
 
   // The path to `lld' and various aliases of `lld`.
-  auto lld_path() const -> std::string;
-  auto ld_lld_path() const -> std::string;
-  auto ld64_lld_path() const -> std::string;
+  auto lld_path() const -> std::filesystem::path;
+  auto ld_lld_path() const -> std::filesystem::path;
+  auto ld64_lld_path() const -> std::filesystem::path;
 
   // The path to any of the LLVM tools.
-  auto llvm_tool_path(LLVMTool tool) const -> std::string;
+  auto llvm_tool_path(LLVMTool tool) const -> std::filesystem::path;
 
  private:
   friend class InstallPathsTestPeer;
 
   InstallPaths() { SetError("No prefix provided!"); }
-  explicit InstallPaths(llvm::StringRef prefix) : prefix_(prefix) {}
+  explicit InstallPaths(std::filesystem::path prefix)
+      : prefix_(std::move(prefix)) {}
+
+  static auto MakeFromFile(std::filesystem::path file) -> InstallPaths;
 
   // Set an error message on the install paths and reset the prefix to empty,
   // which should use the current working directory.
@@ -118,8 +124,8 @@ class InstallPaths {
   auto CheckMarkerFile() -> void;
 
   // Read a manifest file.
-  auto ReadManifest(llvm::StringRef manifest_path,
-                    llvm::StringRef manifest_file) const
+  auto ReadManifest(std::filesystem::path manifest_path,
+                    std::filesystem::path manifest_file) const
       -> ErrorOr<llvm::SmallVector<std::string>>;
 
   // The computed installation prefix. This will be an absolute path. We keep an
@@ -144,7 +150,10 @@ class InstallPaths {
   //
   // The hierarchy of files beneath the install prefix can be found in the
   // BUILD's `install_dirs`.
-  llvm::SmallString<256> prefix_;
+  std::filesystem::path prefix_;
+
+  // The opened prefix directory, suitable for relative path access.
+  Filesystem::Dir prefix_dir_;
 
   std::optional<std::string> error_;
 };

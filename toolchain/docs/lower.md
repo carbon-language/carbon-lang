@@ -136,6 +136,9 @@ function should follow the same pattern, adding a getter on `FunctionContext`
 that adds the information to the fingerprint, and returns a `*InFile` wrapper
 struct if the result contains any `TypeId`s.
 
+Additional details can be found in:
+[Coalescing generic functions emitted when lowering to LLVM IR](coalesce_generic_lowering.md).
+
 ## Mangling
 
 Part of lowering is choosing deterministically unique identifiers for each

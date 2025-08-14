@@ -245,6 +245,7 @@ cc_library(
         ":typed_insts",
         "//toolchain/diagnostics:diagnostic_emitter",
         "//toolchain/parse:tree",
+        "@llvm-project//clang:frontend",
         "@llvm-project//llvm:Support",
     ],
 )
@@ -292,6 +293,7 @@ cc_test(
     size = "small",
     srcs = ["yaml_test.cpp"],
     deps = [
+        "//common:all_llvm_targets",
         "//common:ostream",
         "//common:raw_string_ostream",
         "//testing/base:global_exe_path",

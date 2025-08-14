@@ -4,6 +4,7 @@
 
 package Core library "prelude/types/optional";
 
+import library "prelude/destroy";
 import library "prelude/types/bool";
 
 // For now, an `Optional(T)` is stored as a pair of a `bool` and a `T`, with

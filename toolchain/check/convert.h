@@ -21,6 +21,9 @@ struct ConversionTarget {
     ValueOrRef,
     // Convert to a durable reference of type `type_id`.
     DurableRef,
+    // Convert to a reference of type `type_id`, for use as the argument to a
+    // C++ thunk.
+    CppThunkRef,
     // Convert for an explicit `as` cast. This allows any expression category
     // as the result, and uses the `As` interface instead of the `ImplicitAs`
     // interface.
