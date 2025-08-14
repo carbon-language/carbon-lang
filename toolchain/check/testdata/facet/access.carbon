@@ -80,6 +80,51 @@ fn UseIndirect[T:! I](x: T) -> T {
 //@dump-sem-ir-end
 }
 
+// --- fail_todo_access_through_call.carbon
+library "[[@TEST_NAME]]";
+
+interface I {
+  let X:! type;
+  fn G() -> X;
+}
+
+fn F(U:! I where .X = .Self) {
+  U.G().G();
+
+  // TODO: This should typecheck.
+  // - The first `.` is on a NameRef of type FacetType for `I where .X = .Self`.
+  //   - This finds `G` through the FacetType.
+  // - The second `.` is on a Call of type FacetAccessType into `BindSymbolicName` with type FacetType for `I`.
+  //   - This finds `G` through the FacetType (impl lookup strips off FacetAccessType).
+  // - The second `.` is on a Call of type FacetAccessType into `ImplWitnessAccess` of `I.X` into `LookupImplWitness`, which has type `type`
+  //   - Can't make calls on an `ImplWitnessAccess`.
+  //
+  // CHECK:STDERR: fail_todo_access_through_call.carbon:[[@LINE+4]]:3: error: type `.(I.X)` does not support qualified expressions [QualifiedExprUnsupported]
+  // CHECK:STDERR:   U.G().G().G();
+  // CHECK:STDERR:   ^~~~~~~~~~~
+  // CHECK:STDERR:
+  U.G().G().G();
+}
+
+// --- fail_todo_access_through_call_converts_is_a_type.carbon
+library "[[@TEST_NAME]]";
+
+interface I {
+  let X:! type;
+  fn G() -> X;
+}
+
+fn F(U:! I where .X = .Self) {
+  // CHECK:STDERR: fail_todo_access_through_call_converts_is_a_type.carbon:[[@LINE+7]]:3: error: cannot convert non-type value of type `.Self` to `type` with `as` [ConversionFailureNonTypeToFacet]
+  // CHECK:STDERR:   U.G() as type;
+  // CHECK:STDERR:   ^~~~~~~~~~~~~
+  // CHECK:STDERR: fail_todo_access_through_call_converts_is_a_type.carbon:[[@LINE+4]]:3: note: type `.Self` does not implement interface `Core.As(type)` [MissingImplInMemberAccessNote]
+  // CHECK:STDERR:   U.G() as type;
+  // CHECK:STDERR:   ^~~~~~~~~~~~~
+  // CHECK:STDERR:
+  U.G() as type;
+}
+
 // --- fail_non_const_associated.carbon
 library "[[@TEST_NAME]]";
 
@@ -486,7 +531,7 @@ fn G(AB:! A & B where .X = () and .Y = {}) -> AB.Y {
 // CHECK:STDOUT:   %A.type: type = facet_type <@A> [concrete]
 // CHECK:STDOUT:   %A.assoc_type: type = assoc_entity_type @A [concrete]
 // CHECK:STDOUT:   %assoc0: %A.assoc_type = assoc_entity element0, @A.%X [concrete]
-// CHECK:STDOUT:   %.Self.3ca: %A.type = bind_symbolic_name .Self [symbolic_self]
+// CHECK:STDOUT:   %.Self.3ca: %A.type = bind_symbolic_name .Self(0) [symbolic_self]
 // CHECK:STDOUT:   %.Self.as_type: type = facet_access_type %.Self.3ca [symbolic_self]
 // CHECK:STDOUT:   %A.lookup_impl_witness.5ad: <witness> = lookup_impl_witness %.Self.3ca, @A [symbolic_self]
 // CHECK:STDOUT:   %impl.elem0: type = impl_witness_access %A.lookup_impl_witness.5ad, element0 [symbolic_self]
@@ -579,7 +624,7 @@ fn G(AB:! A & B where .X = () and .Y = {}) -> AB.Y {
 // CHECK:STDOUT:   %type.as.BitAndWith.impl.Op: %type.as.BitAndWith.impl.Op.type = struct_value () [concrete]
 // CHECK:STDOUT:   %type.as.BitAndWith.impl.Op.bound: <bound method> = bound_method %A.type, %type.as.BitAndWith.impl.Op [concrete]
 // CHECK:STDOUT:   %facet_type.938: type = facet_type <@A & @B> [concrete]
-// CHECK:STDOUT:   %.Self.680: %facet_type.938 = bind_symbolic_name .Self [symbolic_self]
+// CHECK:STDOUT:   %.Self.680: %facet_type.938 = bind_symbolic_name .Self(0) [symbolic_self]
 // CHECK:STDOUT:   %.Self.as_type: type = facet_access_type %.Self.680 [symbolic_self]
 // CHECK:STDOUT:   %A.lookup_impl_witness.878: <witness> = lookup_impl_witness %.Self.680, @A [symbolic_self]
 // CHECK:STDOUT:   %impl.elem0.c9d: type = impl_witness_access %A.lookup_impl_witness.878, element0 [symbolic_self]
