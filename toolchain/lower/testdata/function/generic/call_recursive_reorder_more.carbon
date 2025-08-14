@@ -66,15 +66,15 @@ fn M() {
 // CHECK:STDOUT:   %ptr_i32.var = alloca ptr, align 8, !dbg !13
 // CHECK:STDOUT:   %ptr_i64.var = alloca ptr, align 8, !dbg !14
 // CHECK:STDOUT:   %ptr_bool.var = alloca ptr, align 8, !dbg !15
-// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(i64 2, ptr %val_i16.var), !dbg !7
-// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(i64 4, ptr %val_i32.var), !dbg !8
-// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(i64 8, ptr %val_i64.var), !dbg !9
-// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(i64 8, ptr %val_f64.var), !dbg !10
-// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(i64 1, ptr %val_bool.var), !dbg !11
-// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(i64 8, ptr %ptr_i16.var), !dbg !12
-// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(i64 8, ptr %ptr_i32.var), !dbg !13
-// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(i64 8, ptr %ptr_i64.var), !dbg !14
-// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(i64 8, ptr %ptr_bool.var), !dbg !15
+// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %val_i16.var), !dbg !7
+// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %val_i32.var), !dbg !8
+// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %val_i64.var), !dbg !9
+// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %val_f64.var), !dbg !10
+// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %val_bool.var), !dbg !11
+// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %ptr_i16.var), !dbg !12
+// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %ptr_i32.var), !dbg !13
+// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %ptr_i64.var), !dbg !14
+// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %ptr_bool.var), !dbg !15
 // CHECK:STDOUT:   %.loc38_5 = load i16, ptr %val_i16.var, align 2, !dbg !16
 // CHECK:STDOUT:   %.loc38_14 = load ptr, ptr %ptr_i32.var, align 8, !dbg !17
 // CHECK:STDOUT:   %.loc38_23 = load ptr, ptr %ptr_bool.var, align 8, !dbg !18
@@ -127,7 +127,7 @@ fn M() {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nocallback nofree nosync nounwind willreturn memory(argmem: readwrite)
-// CHECK:STDOUT: declare void @llvm.lifetime.start.p0(i64 immarg, ptr captures(none)) #0
+// CHECK:STDOUT: declare void @llvm.lifetime.start.p0(ptr captures(none)) #0
 // CHECK:STDOUT:
 // CHECK:STDOUT: define linkonce_odr i32 @_CF.Main.077d2bb2ab5eee86(i16 %x, ptr %y, ptr %z, i32 %count) !dbg !65 {
 // CHECK:STDOUT: entry:

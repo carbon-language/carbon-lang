@@ -27,16 +27,16 @@ fn Run() -> i32 {
 // CHECK:STDOUT:   %a.var = alloca { i32, i32, i32 }, align 8, !dbg !7
 // CHECK:STDOUT:   %b.var = alloca i32, align 4, !dbg !8
 // CHECK:STDOUT:   %c.var = alloca i32, align 4, !dbg !9
-// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(i64 12, ptr %a.var), !dbg !7
+// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %a.var), !dbg !7
 // CHECK:STDOUT:   %tuple.elem0.loc14.tuple.elem = getelementptr inbounds nuw { i32, i32, i32 }, ptr %a.var, i32 0, i32 0, !dbg !10
 // CHECK:STDOUT:   %tuple.elem1.tuple.elem = getelementptr inbounds nuw { i32, i32, i32 }, ptr %a.var, i32 0, i32 1, !dbg !10
 // CHECK:STDOUT:   %tuple.elem2.loc14.tuple.elem = getelementptr inbounds nuw { i32, i32, i32 }, ptr %a.var, i32 0, i32 2, !dbg !10
 // CHECK:STDOUT:   call void @llvm.memcpy.p0.p0.i64(ptr align 4 %a.var, ptr align 4 @tuple.loc14_3, i64 12, i1 false), !dbg !7
-// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(i64 4, ptr %b.var), !dbg !8
+// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %b.var), !dbg !8
 // CHECK:STDOUT:   %tuple.elem0.loc15.tuple.elem = getelementptr inbounds nuw { i32, i32, i32 }, ptr %a.var, i32 0, i32 0, !dbg !11
 // CHECK:STDOUT:   %.loc15_17 = load i32, ptr %tuple.elem0.loc15.tuple.elem, align 4, !dbg !11
 // CHECK:STDOUT:   store i32 %.loc15_17, ptr %b.var, align 4, !dbg !8
-// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(i64 4, ptr %c.var), !dbg !9
+// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %c.var), !dbg !9
 // CHECK:STDOUT:   %tuple.elem2.loc16.tuple.elem = getelementptr inbounds nuw { i32, i32, i32 }, ptr %a.var, i32 0, i32 2, !dbg !12
 // CHECK:STDOUT:   %.loc16_17 = load i32, ptr %tuple.elem2.loc16.tuple.elem, align 4, !dbg !12
 // CHECK:STDOUT:   store i32 %.loc16_17, ptr %c.var, align 4, !dbg !9
@@ -44,7 +44,7 @@ fn Run() -> i32 {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nocallback nofree nosync nounwind willreturn memory(argmem: readwrite)
-// CHECK:STDOUT: declare void @llvm.lifetime.start.p0(i64 immarg, ptr captures(none)) #0
+// CHECK:STDOUT: declare void @llvm.lifetime.start.p0(ptr captures(none)) #0
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nocallback nofree nounwind willreturn memory(argmem: readwrite)
 // CHECK:STDOUT: declare void @llvm.memcpy.p0.p0.i64(ptr noalias writeonly captures(none), ptr noalias readonly captures(none), i64, i1 immarg) #1

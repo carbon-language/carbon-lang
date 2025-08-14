@@ -41,23 +41,23 @@ fn F() {
 // CHECK:STDOUT:   %g.var = alloca double, align 8, !dbg !10
 // CHECK:STDOUT:   %h.var = alloca fp128, align 16, !dbg !11
 // CHECK:STDOUT:   %b.var = alloca i1, align 1, !dbg !12
-// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(i64 4, ptr %i.var), !dbg !7
+// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %i.var), !dbg !7
 // CHECK:STDOUT:   store i32 1, ptr %i.var, align 4, !dbg !7
-// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(i64 2, ptr %e.var), !dbg !8
+// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %e.var), !dbg !8
 // CHECK:STDOUT:   store half 0xH3C00, ptr %e.var, align 2, !dbg !8
-// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(i64 4, ptr %f.var), !dbg !9
+// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %f.var), !dbg !9
 // CHECK:STDOUT:   store float 1.000000e+00, ptr %f.var, align 4, !dbg !9
-// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(i64 8, ptr %g.var), !dbg !10
+// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %g.var), !dbg !10
 // CHECK:STDOUT:   store double 1.000000e+00, ptr %g.var, align 8, !dbg !10
-// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(i64 16, ptr %h.var), !dbg !11
+// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %h.var), !dbg !11
 // CHECK:STDOUT:   store fp128 0xL00000000000000003FFF000000000000, ptr %h.var, align 16, !dbg !11
-// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(i64 1, ptr %b.var), !dbg !12
+// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %b.var), !dbg !12
 // CHECK:STDOUT:   store i1 false, ptr %b.var, align 1, !dbg !12
 // CHECK:STDOUT:   ret void, !dbg !13
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nocallback nofree nosync nounwind willreturn memory(argmem: readwrite)
-// CHECK:STDOUT: declare void @llvm.lifetime.start.p0(i64 immarg, ptr captures(none)) #0
+// CHECK:STDOUT: declare void @llvm.lifetime.start.p0(ptr captures(none)) #0
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; uselistorder directives
 // CHECK:STDOUT: uselistorder ptr @llvm.lifetime.start.p0, { 5, 4, 3, 2, 1, 0 }
