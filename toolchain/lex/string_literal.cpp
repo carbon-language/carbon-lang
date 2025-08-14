@@ -434,6 +434,8 @@ static auto ExpandEscapeSequencesAndRemoveIndent(
         break;
       }
 
+      // TODO: Also reject vertical whitespace other than \n, but ignore a \r
+      // before a \n.
       if (IsHorizontalWhitespace(contents.front())) {
         // Horizontal whitespace other than ` ` is valid only at the end of a
         // line.
@@ -486,6 +488,25 @@ auto StringLiteral::ComputeCharLiteralValue(
     CARBON_DIAGNOSTIC(CharLiteralRaw, Error,
                       "unexpected `#` before character literal");
     emitter.Emit(text_.begin(), CharLiteralRaw);
+  }
+
+  if (content_.starts_with("\\x")) {
+    CARBON_DIAGNOSTIC(CharLiteralHexEscape, Error,
+                      "escape sequence `\\x` in character literal");
+    emitter.Emit(text_.begin(), CharLiteralHexEscape);
+    return std::nullopt;
+  }
+
+  if (content_.size() == 1 &&
+      static_cast<unsigned char>(content_.front()) < 0x20) {
+    // TODO: For characters with a shorter spelling (eg, \0, \t), suggest using
+    // that instead.
+    CARBON_DIAGNOSTIC(CharLiteralControlCharacter, Error,
+                      "control character in character literal; specify as "
+                      "escape sequence `\\u{{{0:X-2}}`",
+                      int);
+    emitter.Emit(text_.begin(), CharLiteralControlCharacter, content_.front());
+    return std::nullopt;
   }
 
   // Allocate a buffer sized to the content. Note it's possible this could be

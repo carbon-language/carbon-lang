@@ -78,6 +78,8 @@ CARBON_DIAGNOSTIC_KIND(CharLiteralEmpty)
 CARBON_DIAGNOSTIC_KIND(CharLiteralInvalidUTF8)
 CARBON_DIAGNOSTIC_KIND(CharLiteralOverflow)
 CARBON_DIAGNOSTIC_KIND(CharLiteralRaw)
+CARBON_DIAGNOSTIC_KIND(CharLiteralHexEscape)
+CARBON_DIAGNOSTIC_KIND(CharLiteralControlCharacter)
 CARBON_DIAGNOSTIC_KIND(CharLiteralUnderflow)
 
 // ============================================================================
