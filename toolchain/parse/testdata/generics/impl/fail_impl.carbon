@@ -70,11 +70,11 @@ impl forall [invalid] i8;
 // CHECK:STDERR:
 impl forall f16 as Quux;
 
-// CHECK:STDERR: fail_impl.carbon:[[@LINE+4]]:30: error: expected `as` in `impl` declaration [ImplExpectedAs]
-// CHECK:STDERR: impl forall [T:! type] String;
-// CHECK:STDERR:                              ^
+// CHECK:STDERR: fail_impl.carbon:[[@LINE+4]]:27: error: expected `as` in `impl` declaration [ImplExpectedAs]
+// CHECK:STDERR: impl forall [T:! type] str;
+// CHECK:STDERR:                           ^
 // CHECK:STDERR:
-impl forall [T:! type] String;
+impl forall [T:! type] str;
 
 // CHECK:STDERR: fail_impl.carbon:[[@LINE+4]]:26: error: expected `as` in `impl` declaration [ImplExpectedAs]
 // CHECK:STDERR: impl forall [T:! type] T missing_as;
@@ -157,7 +157,7 @@ impl
 // CHECK:STDOUT:           {kind: 'TypeTypeLiteral', text: 'type'},
 // CHECK:STDOUT:         {kind: 'CompileTimeBindingPattern', text: ':!', subtree_size: 4},
 // CHECK:STDOUT:       {kind: 'ImplicitParamList', text: ']', subtree_size: 6},
-// CHECK:STDOUT:       {kind: 'StringTypeLiteral', text: 'String'},
+// CHECK:STDOUT:       {kind: 'StringTypeLiteral', text: 'str'},
 // CHECK:STDOUT:     {kind: 'ImplDecl', text: ';', has_error: yes, subtree_size: 10},
 // CHECK:STDOUT:       {kind: 'ImplIntroducer', text: 'impl'},
 // CHECK:STDOUT:       {kind: 'Forall', text: 'forall'},

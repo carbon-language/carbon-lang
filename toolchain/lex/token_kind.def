@@ -207,8 +207,8 @@ CARBON_KEYWORD_TOKEN(Return,              "return")
 CARBON_KEYWORD_TOKEN(Returned,            "returned")
 CARBON_KEYWORD_TOKEN(SelfTypeIdentifier,  "Self")
 CARBON_KEYWORD_TOKEN(SelfValueIdentifier, "self")
-// TODO: Although we provide a String type literal, it's not standardized.
-CARBON_KEYWORD_TOKEN(StringTypeLiteral,   "String")
+// TODO: Although we provide a `str` type literal, it's not standardized.
+CARBON_KEYWORD_TOKEN(StringTypeLiteral,   "str")
 CARBON_KEYWORD_TOKEN(Template,            "template")
 CARBON_KEYWORD_TOKEN(Then,                "then")
 CARBON_KEYWORD_TOKEN(True,                "true")

@@ -45,7 +45,7 @@ var test_f128: f128;
 library "[[@TEST_NAME]]";
 
 //@dump-sem-ir-begin
-let test_str: String = "Test";
+let test_str: str = "Test";
 //@dump-sem-ir-end
 
 // --- type.carbon
@@ -393,8 +393,9 @@ var x: type = 42;
 // CHECK:STDOUT: --- string.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
-// CHECK:STDOUT:   %pattern_type: type = pattern_type String [concrete]
-// CHECK:STDOUT:   %str: String = string_literal "Test" [concrete]
+// CHECK:STDOUT:   %String: type = class_type @String [concrete]
+// CHECK:STDOUT:   %pattern_type.461: type = pattern_type %String [concrete]
+// CHECK:STDOUT:   %str: %String = string_literal "Test" [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -402,14 +403,14 @@ var x: type = 42;
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %test_str.patt: %pattern_type = binding_pattern test_str [concrete]
+// CHECK:STDOUT:     %test_str.patt: %pattern_type.461 = binding_pattern test_str [concrete]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %test_str: String = bind_name test_str, @__global_init.%str
+// CHECK:STDOUT:   %test_str: %String = bind_name test_str, @__global_init.%str
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %str: String = string_literal "Test" [concrete = constants.%str]
+// CHECK:STDOUT:   %str: %String = string_literal "Test" [concrete = constants.%str]
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

@@ -6,6 +6,7 @@
 
 #include "toolchain/check/call.h"
 #include "toolchain/check/context.h"
+#include "toolchain/check/convert.h"
 #include "toolchain/check/handle.h"
 #include "toolchain/check/inst.h"
 #include "toolchain/check/literal.h"
@@ -66,9 +67,12 @@ auto HandleParseNode(Context& context, Parse::RealLiteralId node_id) -> bool {
 }
 
 auto HandleParseNode(Context& context, Parse::StringLiteralId node_id) -> bool {
+  auto type_inst_id = LookupNameInCore(context, node_id, "String");
+  auto str_type = ExprAsType(context, node_id, type_inst_id);
+  // TODO: Build a class value.
   AddInstAndPush<SemIR::StringLiteral>(
       context, node_id,
-      {.type_id = GetSingletonType(context, SemIR::StringType::TypeInstId),
+      {.type_id = str_type.type_id,
        .string_literal_id = context.tokens().GetStringLiteralValue(
            context.parse_tree().node_token(node_id))});
   return true;
@@ -128,7 +132,8 @@ auto HandleParseNode(Context& context, Parse::FloatTypeLiteralId node_id)
 
 auto HandleParseNode(Context& context, Parse::StringTypeLiteralId node_id)
     -> bool {
-  context.node_stack().Push(node_id, SemIR::StringType::TypeInstId);
+  auto type_inst_id = LookupNameInCore(context, node_id, "String");
+  context.node_stack().Push(node_id, type_inst_id);
   return true;
 }
 

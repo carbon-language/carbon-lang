@@ -8,14 +8,14 @@
 // TIP: To dump output, run:
 // TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/parse/testdata/generics/impl/empty_body.carbon
 
-impl String as Interface {
+impl str as Interface {
 }
 
 // CHECK:STDOUT: - filename: empty_body.carbon
 // CHECK:STDOUT:   parse_tree: [
 // CHECK:STDOUT:     {kind: 'FileStart', text: ''},
 // CHECK:STDOUT:         {kind: 'ImplIntroducer', text: 'impl'},
-// CHECK:STDOUT:           {kind: 'StringTypeLiteral', text: 'String'},
+// CHECK:STDOUT:           {kind: 'StringTypeLiteral', text: 'str'},
 // CHECK:STDOUT:         {kind: 'TypeImplAs', text: 'as', subtree_size: 2},
 // CHECK:STDOUT:         {kind: 'IdentifierNameExpr', text: 'Interface'},
 // CHECK:STDOUT:       {kind: 'ImplDefinitionStart', text: '{', subtree_size: 5},

@@ -11,4 +11,5 @@ export import library "prelude/types/float_literal";
 export import library "prelude/types/int";
 export import library "prelude/types/int_literal";
 export import library "prelude/types/optional";
+export import library "prelude/types/string";
 export import library "prelude/types/uint";
