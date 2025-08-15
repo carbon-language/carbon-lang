@@ -797,12 +797,7 @@ auto InstNamer::NamingContext::NameInst() -> void {
     case CARBON_KIND(VtablePtr inst): {
       const auto& vtable = sem_ir().vtables().Get(inst.vtable_id);
       inst_namer_->MaybePushEntity(inst.vtable_id);
-      if (inst_namer_->GetScopeFor(vtable.class_id) == scope_id_) {
-        inst_namer_->MaybePushEntity(vtable.class_id);
-        AddInstName("vtable_ptr");
-      } else {
-        AddEntityNameAndMaybePush(vtable.class_id, ".vtable_ptr");
-      }
+      AddEntityNameAndMaybePush(vtable.class_id, ".vtable_ptr");
       return;
     }
     case ConstType::Kind: {
