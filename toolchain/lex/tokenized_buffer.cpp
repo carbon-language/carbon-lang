@@ -236,8 +236,8 @@ auto TokenizedBuffer::Print(llvm::raw_ostream& output_stream,
     output_stream << "\n";
   }
 
-  if (dump_sem_ir_file_) {
-    output_stream << "  dump_sem_ir_file: true\n";
+  if (has_dump_sem_ir_enable_) {
+    output_stream << "  has_dump_sem_ir_enable: true\n";
   }
 
   if (!dump_sem_ir_ranges_.empty()) {

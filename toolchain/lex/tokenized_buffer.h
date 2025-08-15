@@ -232,7 +232,9 @@ class TokenizedBuffer : public Printable<TokenizedBuffer> {
 
   auto comments_size() const -> size_t { return comments_.size(); }
 
-  auto dump_sem_ir_file() const -> bool { return dump_sem_ir_file_; }
+  auto has_dump_sem_ir_enable() const -> bool {
+    return has_dump_sem_ir_enable_;
+  }
 
   // Returns true if any `DumpSemIRRange`s were provided.
   auto has_dump_sem_ir_ranges() const -> bool {
@@ -335,10 +337,10 @@ class TokenizedBuffer : public Printable<TokenizedBuffer> {
   // Comments in the file.
   ValueStore<CommentIndex, CommentData> comments_;
 
-  // Whether to dump the file's SemIR. This is marked by `//@dump-sem-ir-file`,
-  // and overrides other file-inclusion selection choices. It can be combined
-  // with ranges.
-  bool dump_sem_ir_file_ = false;
+  // Whether SemIR dumping is explicitly enabled for this file. This is marked
+  // by `//@dump-sem-ir-enable`, and overrides other file-inclusion selection
+  // choices. It can be combined with ranges.
+  bool has_dump_sem_ir_enable_ = false;
 
   // A range of tokens marked by `//@dump-sem-ir-[begin|end]`.
   //

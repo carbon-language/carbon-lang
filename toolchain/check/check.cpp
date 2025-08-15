@@ -336,15 +336,15 @@ static auto MaybeDumpFormattedSemIR(
     Parse::GetTreeAndSubtreesFn tree_and_subtrees_getter, bool include_in_dumps,
     const CheckParseTreesOptions& options) -> void {
   const auto& tokens = sem_ir.parse_tree().tokens();
-  bool dump =
-      options.dump_stream && (include_in_dumps || tokens.dump_sem_ir_file());
+  bool dump = options.dump_stream &&
+              (include_in_dumps || tokens.has_dump_sem_ir_enable());
   if (!options.vlog_stream && !dump) {
     return;
   }
 
   if (options.dump_sem_ir_ranges ==
           CheckParseTreesOptions::DumpSemIRRanges::Only &&
-      !tokens.dump_sem_ir_file() && !tokens.has_dump_sem_ir_ranges()) {
+      !tokens.has_dump_sem_ir_enable() && !tokens.has_dump_sem_ir_ranges()) {
     return;
   }
 

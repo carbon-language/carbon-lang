@@ -145,9 +145,9 @@ d
 // CHECK:STDERR: ^
 // CHECK:STDERR:
 
-// --- dump_file.carbon
-// CHECK:STDOUT: - filename: dump_file.carbon
+// --- enable.carbon
+// CHECK:STDOUT: - filename: enable.carbon
 // CHECK:STDOUT:   tokens:
-// CHECK:STDOUT:   dump_sem_ir_file: true
+// CHECK:STDOUT:   has_dump_sem_ir_enable: true
 
-//@dump-sem-ir-file
+//@dump-sem-ir-enable

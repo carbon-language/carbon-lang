@@ -7,35 +7,35 @@
 //
 // AUTOUPDATE
 // TIP: To test this file alone, run:
-// TIP:   bazel test //toolchain/testing:file_test --test_arg=--file_tests=toolchain/check/testdata/basics/dump_sem_ir_file_override_exclude.carbon
+// TIP:   bazel test //toolchain/testing:file_test --test_arg=--file_tests=toolchain/check/testdata/basics/dump_sem_ir_enable_override_exclude.carbon
 // TIP: To dump output, run:
-// TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/check/testdata/basics/dump_sem_ir_file_override_exclude.carbon
+// TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/check/testdata/basics/dump_sem_ir_enable_override_exclude.carbon
 
-// --- file.carbon
+// --- enable.carbon
 
 library "[[@TEST_NAME]]";
 
-//@dump-sem-ir-file
+//@dump-sem-ir-enable
 
 interface I {}
 
-// --- file_with_range.carbon
+// --- enable_with_range.carbon
 
 library "[[@TEST_NAME]]";
 
-//@dump-sem-ir-file
+//@dump-sem-ir-enable
 
 //@dump-sem-ir-begin
 interface I {}
 //@dump-sem-ir-end
 
-// --- excluded_file.carbon
+// --- excluded_enable.carbon
 
 library "[[@TEST_NAME]]";
 
 interface I {}
 
-// --- excluded_file_with_range.carbon
+// --- excluded_enable_with_range.carbon
 
 library "[[@TEST_NAME]]";
 
@@ -43,7 +43,7 @@ library "[[@TEST_NAME]]";
 interface I {}
 //@dump-sem-ir-end
 
-// CHECK:STDOUT: --- file.carbon
+// CHECK:STDOUT: --- enable.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %I.type: type = facet_type <@I> [concrete]
@@ -65,7 +65,7 @@ interface I {}
 // CHECK:STDOUT:   witness = ()
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- file_with_range.carbon
+// CHECK:STDOUT: --- enable_with_range.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %I.type: type = facet_type <@I> [concrete]
