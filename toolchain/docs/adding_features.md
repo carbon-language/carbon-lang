@@ -628,8 +628,9 @@ these will lack contextual information.
 #### Dumping prelude files
 
 By default, prelude files are excluded from dumps by
-`--exclude-dump-file-prefix`. This works for every phase after lex, but may be
-most helpful to debug check and lower output. To enable dumps for specific
-files, add `//@include-in-dumps`.This can also be used to view cross-file SemIR,
-such as imports from a prelude, by adding `//@include-in-dumps` to the prelude
-file and looking at the SemIR of the importing file.
+`--exclude-dump-file-prefix`. To enable dumps for specific files, add
+`//@include-in-dumps`. This works for every phase after lex, but may be most
+helpful to debug check and lower output. This can also be used to view
+cross-file SemIR, such as imports from a prelude, by adding
+`//@include-in-dumps` to the prelude file and looking at the SemIR of the
+importing file.
