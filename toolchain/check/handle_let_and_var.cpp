@@ -343,8 +343,8 @@ auto HandleParseNode(Context& context, Parse::LetDeclId node_id) -> bool {
 
 auto HandleParseNode(Context& context, Parse::AssociatedConstantDeclId node_id) -> bool {
     auto decl_info =
-      HandleDecl<Lex::TokenKind::Let, Parse::NodeKind::LetIntroducer,
-                 Parse::NodeKind::LetInitializer>(context);
+      HandleDecl<Lex::TokenKind::Let, Parse::NodeKind::AssociatedConstantIntroducer,
+                 Parse::NodeKind::AssociatedConstantInitializer>(context);
 
   LimitModifiersOnDecl(
       context, decl_info.introducer,
