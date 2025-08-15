@@ -6,6 +6,7 @@
 
 #include "llvm/ADT/STLExtras.h"
 #include "llvm/IR/Constants.h"
+#include "llvm/IR/IRBuilder.h"
 #include "llvm/IR/Value.h"
 #include "toolchain/base/kind_switch.h"
 #include "toolchain/lower/file_context.h"
@@ -268,9 +269,12 @@ static auto EmitAsConstant(ConstantContext& context,
   return context.GetUnusedConstant(inst.type_id);
 }
 
-static auto EmitAsConstant(ConstantContext& /*context*/,
-                           SemIR::StringLiteral inst) -> llvm::Constant* {
-  CARBON_FATAL("TODO: Add support: {0}", inst);
+static auto EmitAsConstant(ConstantContext& context, SemIR::StringLiteral inst)
+    -> llvm::Constant* {
+  return llvm::IRBuilder<>(context.llvm_context())
+      .CreateGlobalString(
+          context.sem_ir().string_literal_values().Get(inst.string_literal_id),
+          /*name=*/"", /*address_space=*/0, &context.llvm_module());
 }
 
 static auto EmitAsConstant(ConstantContext& context, SemIR::VarStorage inst)

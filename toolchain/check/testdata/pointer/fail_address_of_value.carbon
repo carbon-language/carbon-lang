@@ -101,4 +101,3 @@ fn AddressOfParam(param: i32) {
   // CHECK:STDERR:
   var param_addr: i32* = &param;
 }
-

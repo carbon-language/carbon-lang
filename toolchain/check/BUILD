@@ -126,6 +126,7 @@ cc_library(
         "//toolchain/base:canonical_value_store",
         "//toolchain/base:index_base",
         "//toolchain/base:kind_switch",
+        "//toolchain/base:value_ids",
         "//toolchain/base:value_store",
         "//toolchain/check:generic_region_stack",
         "//toolchain/check:scope_stack",

@@ -17,4 +17,3 @@ fn Run() {
   // CHECK:STDERR:
   var x: i32 = "hello"();
 }
-

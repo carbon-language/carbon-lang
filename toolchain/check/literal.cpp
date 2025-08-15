@@ -62,7 +62,8 @@ static auto GetStringLiteralRepr(Context& context, SemIR::LocId loc_id,
     -> std::optional<StringRepr> {
   // The object representation should be a struct type.
   auto object_repr_id = context.types().GetObjectRepr(type_id);
-  auto struct_repr = context.types().TryGetAs<SemIR::StructType>(object_repr_id);
+  auto struct_repr =
+      context.types().TryGetAs<SemIR::StructType>(object_repr_id);
   if (!struct_repr) {
     return std::nullopt;
   }
@@ -74,7 +75,8 @@ static auto GetStringLiteralRepr(Context& context, SemIR::LocId loc_id,
   }
 
   // The first field should be a pointer to 8-bit integers.
-  auto ptr_type = context.insts().TryGetAs<SemIR::PointerType>(fields[0].type_inst_id);
+  auto ptr_type =
+      context.insts().TryGetAs<SemIR::PointerType>(fields[0].type_inst_id);
   if (!ptr_type) {
     return std::nullopt;
   }
@@ -118,7 +120,8 @@ auto MakeStringLiteral(Context& context, Parse::StringLiteralId node_id,
   if (!repr) {
     if (str_type_id != SemIR::ErrorInst::TypeId) {
       CARBON_DIAGNOSTIC(StringLiteralTypeUnexpected, Error,
-                        "unexpected representation for type {0}", SemIR::TypeId);
+                        "unexpected representation for type {0}",
+                        SemIR::TypeId);
       context.emitter().Emit(node_id, StringLiteralTypeUnexpected, str_type_id);
     }
     return SemIR::ErrorInst::InstId;
@@ -147,7 +150,9 @@ auto MakeStringLiteral(Context& context, Parse::StringLiteralId node_id,
     }
   }
   auto size_value_id =
-      MakeIntLiteral(context, node_id, context.ints().Add(size));
+      AddInst<SemIR::IntValue>(context, node_id,
+                               {.type_id = repr->size_field_type_id,
+                                .int_id = context.ints().Add(size)});
 
   // Build the representation struct.
   auto elements_id = context.inst_blocks().Add({ptr_value_id, size_value_id});

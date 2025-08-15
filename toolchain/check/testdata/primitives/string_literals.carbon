@@ -120,7 +120,7 @@ This string contains 256 characters. Among them are:
 // CHECK:STDOUT:   %ptr.3e8: type = ptr_type %u8 [concrete]
 // CHECK:STDOUT:   %pattern_type.461: type = pattern_type %String [concrete]
 // CHECK:STDOUT:   %str: %ptr.3e8 = string_literal "hello" [concrete]
-// CHECK:STDOUT:   %int_5: Core.IntLiteral = int_value 5 [concrete]
+// CHECK:STDOUT:   %int_5: %u8 = int_value 5 [concrete]
 // CHECK:STDOUT:   %String.val: %String = struct_value (%str, %int_5) [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -137,7 +137,7 @@ This string contains 256 characters. Among them are:
 // CHECK:STDOUT: fn @__global_init() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %str: %ptr.3e8 = string_literal "hello" [concrete = constants.%str]
-// CHECK:STDOUT:   %int_5: Core.IntLiteral = int_value 5 [concrete = constants.%int_5]
+// CHECK:STDOUT:   %int_5: %u8 = int_value 5 [concrete = constants.%int_5]
 // CHECK:STDOUT:   %String.val: %String = struct_value (%str, %int_5) [concrete = constants.%String.val]
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }

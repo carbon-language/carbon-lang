@@ -21,4 +21,3 @@ fn F(x: X) {
   // CHECK:STDERR:
   var y: X = x;
 }
-
