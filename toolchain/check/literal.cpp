@@ -49,45 +49,43 @@ auto MakeFloatTypeLiteral(Context& context, Parse::NodeId node_id,
 namespace {
 // The extracted representation of the type `Core.String`.
 struct StringRepr {
-  SemIR::TypeId ptr_field_type_id = SemIR::TypeId::None;
-  SemIR::TypeId size_field_type_id = SemIR::TypeId::None;
-
-  auto has_value() const -> bool {
-    return ptr_field_type_id.has_value() && size_field_type_id.has_value();
-  }
+  SemIR::TypeId ptr_field_type_id;
+  SemIR::TypeId size_field_type_id;
+  SemIR::TypeStore::IntTypeInfo size_field_type_info;
 };
 }  // namespace
 
 // Extracts information about the representation of the `Core.String` type
 // necessary for building a string literal.
 static auto GetStringLiteralRepr(Context& context, SemIR::LocId loc_id,
-                                 SemIR::TypeId type_id) -> StringRepr {
+                                 SemIR::TypeId type_id)
+    -> std::optional<StringRepr> {
   // The object representation should be a struct type.
   auto object_repr_id = context.types().GetObjectRepr(type_id);
   auto struct_repr = context.types().TryGetAs<SemIR::StructType>(object_repr_id);
   if (!struct_repr) {
-    return StringRepr();
+    return std::nullopt;
   }
 
   // The struct should have two fields.
   auto fields = context.struct_type_fields().Get(struct_repr->fields_id);
   if (fields.size() != 2) {
-    return StringRepr();
+    return std::nullopt;
   }
 
   // The first field should be a pointer to 8-bit integers.
   auto ptr_type = context.insts().TryGetAs<SemIR::PointerType>(fields[0].type_inst_id);
   if (!ptr_type) {
-    return StringRepr();
+    return std::nullopt;
   }
   auto pointee_type_id =
       context.types().GetTypeIdForTypeInstId(ptr_type->pointee_id);
   if (!TryToCompleteType(context, pointee_type_id, loc_id)) {
-    return StringRepr();
+    return std::nullopt;
   }
   auto elem_type_info = context.types().TryGetIntTypeInfo(pointee_type_id);
   if (!elem_type_info || context.ints().Get(elem_type_info->bit_width) != 8) {
-    return StringRepr();
+    return std::nullopt;
   }
 
   // The second field should be an integer type.
@@ -95,12 +93,13 @@ static auto GetStringLiteralRepr(Context& context, SemIR::LocId loc_id,
       context.types().GetTypeIdForTypeInstId(fields[1].type_inst_id);
   auto size_type_info = context.types().TryGetIntTypeInfo(size_field_type_id);
   if (!size_type_info) {
-    return StringRepr();
+    return std::nullopt;
   }
 
-  return {.ptr_field_type_id =
-              context.types().GetTypeIdForTypeInstId(fields[0].type_inst_id),
-          .size_field_type_id = size_field_type_id};
+  return StringRepr{.ptr_field_type_id = context.types().GetTypeIdForTypeInstId(
+                        fields[0].type_inst_id),
+                    .size_field_type_id = size_field_type_id,
+                    .size_field_type_info = *size_type_info};
 }
 
 auto MakeStringLiteral(Context& context, Parse::StringLiteralId node_id,
@@ -116,7 +115,7 @@ auto MakeStringLiteral(Context& context, Parse::StringLiteralId node_id,
   }
 
   auto repr = GetStringLiteralRepr(context, node_id, str_type_id);
-  if (!repr.has_value()) {
+  if (!repr) {
     if (str_type_id != SemIR::ErrorInst::TypeId) {
       CARBON_DIAGNOSTIC(StringLiteralTypeUnexpected, Error,
                         "unexpected representation for type {0}", SemIR::TypeId);
@@ -130,10 +129,23 @@ auto MakeStringLiteral(Context& context, Parse::StringLiteralId node_id,
   // and we should take its address here?
   auto ptr_value_id = AddInst<SemIR::StringLiteral>(
       context, node_id,
-      {.type_id = repr.ptr_field_type_id, .string_literal_id = value_id});
+      {.type_id = repr->ptr_field_type_id, .string_literal_id = value_id});
 
   // The size field is an integer literal.
   auto size = context.string_literal_values().Get(value_id).size();
+  if (repr->size_field_type_info.bit_width.has_value()) {
+    // Check that the size value fits in the size field.
+    auto width = context.ints()
+                     .Get(repr->size_field_type_info.bit_width)
+                     .getLimitedValue();
+    if (repr->size_field_type_info.is_signed ? !llvm::isIntN(width, size)
+                                             : !llvm::isUIntN(width, size)) {
+      CARBON_DIAGNOSTIC(StringLiteralTooLong, Error,
+                        "string literal is too long");
+      context.emitter().Emit(node_id, StringLiteralTooLong);
+      return SemIR::ErrorInst::InstId;
+    }
+  }
   auto size_value_id =
       MakeIntLiteral(context, node_id, context.ints().Add(size));
 
