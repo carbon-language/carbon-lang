@@ -105,8 +105,8 @@
 
 // This literal contains a raw tab character.
 // CHECK:STDERR: fail_invalid.carbon:[[@LINE+4]]:2: error: whitespace other than plain space must be expressed with an escape sequence in a string literal [InvalidHorizontalWhitespaceInString]
-// CHECK:STDERR: '{{\t}}'
-// CHECK:STDERR:  ^
+// CHECK:STDERR: '<09>'
+// CHECK:STDERR:  ^~~~
 // CHECK:STDERR:
 '	'
 // CHECK:STDOUT:   - { index: 11, kind: "CharLiteral", line: {{ *}}[[@LINE-1]], column:   1, indent: 1, spelling: "'\t'", has_leading_space: true }

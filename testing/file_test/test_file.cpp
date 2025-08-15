@@ -237,6 +237,27 @@ static auto ReplaceLspKeywordAt(std::string& content, size_t keyword_pos,
   return keyword_pos + json_with_header.size();
 }
 
+// Replaces `[[@0xAB]]` with the raw byte with value 0xAB.
+static auto ReplaceRawByteKeywordAt(std::string& content, size_t keyword_pos)
+    -> ErrorOr<size_t> {
+  llvm::StringRef content_at_keyword =
+      llvm::StringRef(content).substr(keyword_pos);
+  auto [keyword, rest] = content_at_keyword.split("]]");
+  if (keyword.empty()) {
+    return ErrorBuilder() << "Missing `]]` after " << keyword.take_front(10)
+                          << "`";
+  }
+
+  unsigned char byte_value;
+  if (keyword.substr(std::size("[[@0x") - 1).getAsInteger(16, byte_value)) {
+    return ErrorBuilder() << "Invalid raw byte specifier `"
+                          << keyword.take_front(10) << "`";
+  }
+
+  content.replace(keyword_pos, keyword.size() + 2, 1, byte_value);
+  return keyword_pos + 1;
+}
+
 // Replaces the keyword at the given position. Returns the position to start a
 // find for the next keyword.
 static auto ReplaceContentKeywordAt(std::string& content, size_t keyword_pos,
@@ -263,14 +284,18 @@ static auto ReplaceContentKeywordAt(std::string& content, size_t keyword_pos,
     return ReplaceLspKeywordAt(content, keyword_pos, lsp_call_id, splits);
   }
 
+  if (keyword.starts_with("[[@0x")) {
+    return ReplaceRawByteKeywordAt(content, keyword_pos);
+  }
+
   return ErrorBuilder() << "Unexpected use of `[[@` at `"
                         << keyword.substr(0, 5) << "`";
 }
 
 // Replaces the content keywords.
 //
-// TEST_NAME is the only content keyword at present, but we do validate that
-// other names are reserved.
+// This handles content keywords such as [[@TEST_NAME]] and [[@LSP*]]. Unknown
+// content keywords are diagnosed.
 static auto ReplaceContentKeywords(llvm::StringRef filename,
                                    std::string& content,
                                    llvm::ArrayRef<TestFile::Split> splits)
