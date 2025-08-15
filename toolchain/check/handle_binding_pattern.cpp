@@ -249,6 +249,9 @@ auto HandleParseNode(Context& context, Parse::AssociatedConstantBindingPatternId
   auto [type_node, parsed_type_id] = context.node_stack().PopExprWithNodeId();
   auto [cast_type_inst_id, cast_type_id] =
       ExprAsType(context, type_node, parsed_type_id);
+
+  EndSubpatternAsExpr(context, cast_type_inst_id);
+  
   auto is_template =
       context.node_stack()
           .PopAndDiscardSoloNodeIdIf<Parse::NodeKind::TemplateBindingName>();
