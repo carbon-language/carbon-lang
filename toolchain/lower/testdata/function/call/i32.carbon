@@ -29,14 +29,14 @@ fn Main() {
 // CHECK:STDOUT: define void @_CMain.Main() !dbg !8 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   %b.var = alloca i32, align 4, !dbg !9
-// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(i64 4, ptr %b.var), !dbg !9
+// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %b.var), !dbg !9
 // CHECK:STDOUT:   %Echo.call = call i32 @_CEcho.Main(i32 1), !dbg !10
 // CHECK:STDOUT:   store i32 %Echo.call, ptr %b.var, align 4, !dbg !9
 // CHECK:STDOUT:   ret void, !dbg !11
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nocallback nofree nosync nounwind willreturn memory(argmem: readwrite)
-// CHECK:STDOUT: declare void @llvm.lifetime.start.p0(i64 immarg, ptr captures(none)) #0
+// CHECK:STDOUT: declare void @llvm.lifetime.start.p0(ptr captures(none)) #0
 // CHECK:STDOUT:
 // CHECK:STDOUT: attributes #0 = { nocallback nofree nosync nounwind willreturn memory(argmem: readwrite) }
 // CHECK:STDOUT:

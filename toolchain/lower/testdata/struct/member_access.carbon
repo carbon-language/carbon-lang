@@ -27,22 +27,22 @@ fn Run() -> i32 {
 // CHECK:STDOUT:   %x.var = alloca { double, i32 }, align 8, !dbg !7
 // CHECK:STDOUT:   %y.var = alloca i32, align 4, !dbg !8
 // CHECK:STDOUT:   %z.var = alloca i32, align 4, !dbg !9
-// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(i64 16, ptr %x.var), !dbg !7
+// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %x.var), !dbg !7
 // CHECK:STDOUT:   %.loc14_48.3.a = getelementptr inbounds nuw { double, i32 }, ptr %x.var, i32 0, i32 0, !dbg !10
 // CHECK:STDOUT:   %.loc14_48.6.b = getelementptr inbounds nuw { double, i32 }, ptr %x.var, i32 0, i32 1, !dbg !10
 // CHECK:STDOUT:   call void @llvm.memcpy.p0.p0.i64(ptr align 8 %x.var, ptr align 8 @struct.loc14_3, i64 16, i1 false), !dbg !7
-// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(i64 4, ptr %y.var), !dbg !8
+// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %y.var), !dbg !8
 // CHECK:STDOUT:   %.loc15_17.1.b = getelementptr inbounds nuw { double, i32 }, ptr %x.var, i32 0, i32 1, !dbg !11
 // CHECK:STDOUT:   %.loc15_17.2 = load i32, ptr %.loc15_17.1.b, align 4, !dbg !11
 // CHECK:STDOUT:   store i32 %.loc15_17.2, ptr %y.var, align 4, !dbg !8
-// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(i64 4, ptr %z.var), !dbg !9
+// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %z.var), !dbg !9
 // CHECK:STDOUT:   %.loc16_16 = load i32, ptr %y.var, align 4, !dbg !12
 // CHECK:STDOUT:   store i32 %.loc16_16, ptr %z.var, align 4, !dbg !9
 // CHECK:STDOUT:   ret i32 0, !dbg !13
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nocallback nofree nosync nounwind willreturn memory(argmem: readwrite)
-// CHECK:STDOUT: declare void @llvm.lifetime.start.p0(i64 immarg, ptr captures(none)) #0
+// CHECK:STDOUT: declare void @llvm.lifetime.start.p0(ptr captures(none)) #0
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nocallback nofree nounwind willreturn memory(argmem: readwrite)
 // CHECK:STDOUT: declare void @llvm.memcpy.p0.p0.i64(ptr noalias writeonly captures(none), ptr noalias readonly captures(none), i64, i1 immarg) #1

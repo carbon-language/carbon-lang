@@ -121,8 +121,7 @@ auto HandleParseNode(Context& context, Parse::FloatTypeLiteralId node_id)
     -> bool {
   auto tok_id = context.parse_tree().node_token(node_id);
   auto size_id = context.tokens().GetTypeLiteralSize(tok_id);
-  auto type_inst_id =
-      MakeFloatTypeLiteral(context, node_id, SemIR::FloatKind::None, size_id);
+  auto type_inst_id = MakeFloatTypeLiteral(context, node_id, size_id);
   context.node_stack().Push(node_id, type_inst_id);
   return true;
 }

@@ -1882,8 +1882,9 @@ static auto TryResolveTypedInst(ImportRefResolver& resolver,
   }
 
   return ResolveAsDeduplicated<SemIR::FloatType>(
-      resolver,
-      {.type_id = SemIR::TypeType::TypeId, .bit_width_id = bit_width_id});
+      resolver, {.type_id = SemIR::TypeType::TypeId,
+                 .bit_width_id = bit_width_id,
+                 .float_kind = inst.float_kind});
 }
 
 static auto TryResolveTypedInst(ImportRefResolver& resolver,

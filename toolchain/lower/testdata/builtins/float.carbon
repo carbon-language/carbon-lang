@@ -63,6 +63,22 @@ fn TestMul(a: f64*, b: f64) { Mul(a, b); }
 fn Div(a: f64*, b: f64) = "float.div_assign";
 fn TestDiv(a: f64*, b: f64) { Div(a, b); }
 
+// --- types.carbon
+
+library "[[@TEST_NAME]]";
+
+fn F16(a: f16, b: f16) -> f16 = "float.add";
+fn TestF16(a: f16, b: f16) -> f16 { return F16(a, b); }
+
+fn F32(a: f32, b: f32) -> f32 = "float.add";
+fn TestF32(a: f32, b: f32) -> f32 { return F32(a, b); }
+
+fn F64(a: f64, b: f64) -> f64 = "float.add";
+fn TestF64(a: f64, b: f64) -> f64 { return F64(a, b); }
+
+fn F128(a: f128, b: f128) -> f128 = "float.add";
+fn TestF128(a: f128, b: f128) -> f128 { return F128(a, b); }
+
 // CHECK:STDOUT: ; ModuleID = 'basic.carbon'
 // CHECK:STDOUT: source_filename = "basic.carbon"
 // CHECK:STDOUT:
@@ -230,3 +246,51 @@ fn TestDiv(a: f64*, b: f64) { Div(a, b); }
 // CHECK:STDOUT: !15 = distinct !DISubprogram(name: "TestDiv", linkageName: "_CTestDiv.Main", scope: null, file: !3, line: 14, type: !5, spFlags: DISPFlagDefinition, unit: !2)
 // CHECK:STDOUT: !16 = !DILocation(line: 14, column: 31, scope: !15)
 // CHECK:STDOUT: !17 = !DILocation(line: 14, column: 1, scope: !15)
+// CHECK:STDOUT: ; ModuleID = 'types.carbon'
+// CHECK:STDOUT: source_filename = "types.carbon"
+// CHECK:STDOUT:
+// CHECK:STDOUT: define half @_CTestF16.Main(half %a, half %b) !dbg !4 {
+// CHECK:STDOUT: entry:
+// CHECK:STDOUT:   %F16.call = fadd half %a, %b, !dbg !7
+// CHECK:STDOUT:   ret half %F16.call, !dbg !8
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: define float @_CTestF32.Main(float %a, float %b) !dbg !9 {
+// CHECK:STDOUT: entry:
+// CHECK:STDOUT:   %F32.call = fadd float %a, %b, !dbg !10
+// CHECK:STDOUT:   ret float %F32.call, !dbg !11
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: define double @_CTestF64.Main(double %a, double %b) !dbg !12 {
+// CHECK:STDOUT: entry:
+// CHECK:STDOUT:   %F64.call = fadd double %a, %b, !dbg !13
+// CHECK:STDOUT:   ret double %F64.call, !dbg !14
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: define fp128 @_CTestF128.Main(fp128 %a, fp128 %b) !dbg !15 {
+// CHECK:STDOUT: entry:
+// CHECK:STDOUT:   %F128.call = fadd fp128 %a, %b, !dbg !16
+// CHECK:STDOUT:   ret fp128 %F128.call, !dbg !17
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: !llvm.module.flags = !{!0, !1}
+// CHECK:STDOUT: !llvm.dbg.cu = !{!2}
+// CHECK:STDOUT:
+// CHECK:STDOUT: !0 = !{i32 7, !"Dwarf Version", i32 5}
+// CHECK:STDOUT: !1 = !{i32 2, !"Debug Info Version", i32 3}
+// CHECK:STDOUT: !2 = distinct !DICompileUnit(language: DW_LANG_C, file: !3, producer: "carbon", isOptimized: false, runtimeVersion: 0, emissionKind: FullDebug)
+// CHECK:STDOUT: !3 = !DIFile(filename: "types.carbon", directory: "")
+// CHECK:STDOUT: !4 = distinct !DISubprogram(name: "TestF16", linkageName: "_CTestF16.Main", scope: null, file: !3, line: 5, type: !5, spFlags: DISPFlagDefinition, unit: !2)
+// CHECK:STDOUT: !5 = !DISubroutineType(types: !6)
+// CHECK:STDOUT: !6 = !{}
+// CHECK:STDOUT: !7 = !DILocation(line: 5, column: 44, scope: !4)
+// CHECK:STDOUT: !8 = !DILocation(line: 5, column: 37, scope: !4)
+// CHECK:STDOUT: !9 = distinct !DISubprogram(name: "TestF32", linkageName: "_CTestF32.Main", scope: null, file: !3, line: 8, type: !5, spFlags: DISPFlagDefinition, unit: !2)
+// CHECK:STDOUT: !10 = !DILocation(line: 8, column: 44, scope: !9)
+// CHECK:STDOUT: !11 = !DILocation(line: 8, column: 37, scope: !9)
+// CHECK:STDOUT: !12 = distinct !DISubprogram(name: "TestF64", linkageName: "_CTestF64.Main", scope: null, file: !3, line: 11, type: !5, spFlags: DISPFlagDefinition, unit: !2)
+// CHECK:STDOUT: !13 = !DILocation(line: 11, column: 44, scope: !12)
+// CHECK:STDOUT: !14 = !DILocation(line: 11, column: 37, scope: !12)
+// CHECK:STDOUT: !15 = distinct !DISubprogram(name: "TestF128", linkageName: "_CTestF128.Main", scope: null, file: !3, line: 14, type: !5, spFlags: DISPFlagDefinition, unit: !2)
+// CHECK:STDOUT: !16 = !DILocation(line: 14, column: 48, scope: !15)
+// CHECK:STDOUT: !17 = !DILocation(line: 14, column: 41, scope: !15)

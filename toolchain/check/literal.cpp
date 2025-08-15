@@ -38,9 +38,7 @@ auto MakeIntType(Context& context, Parse::NodeId node_id,
 }
 
 auto MakeFloatTypeLiteral(Context& context, Parse::NodeId node_id,
-                          SemIR::FloatKind float_kind, IntId size_id)
-    -> SemIR::InstId {
-  CARBON_CHECK(float_kind == SemIR::FloatKind::None);
+                          IntId size_id) -> SemIR::InstId {
   auto width_id = MakeIntLiteral(context, node_id, size_id);
   auto fn_inst_id = LookupNameInCore(context, node_id, "Float");
   return PerformCall(context, node_id, fn_inst_id, {width_id});

@@ -1071,15 +1071,16 @@ static auto MapBuiltinType(Context& context, SemIR::LocId loc_id,
       return type_expr;
     }
     // TODO: Handle integer types that map to named aliases.
-  } else if (type.isDoubleType()) {
-    // TODO: Handle other floating point types when Carbon supports fN where N
-    // != 64.
-    CARBON_CHECK(ast_context.getTypeSize(qual_type) == 64);
-    CARBON_CHECK(ast_context.hasSameType(qual_type, ast_context.DoubleTy));
-    return ExprAsType(
-        context, Parse::NodeId::None,
-        MakeFloatTypeLiteral(context, Parse::NodeId::None,
-                             SemIR::FloatKind::None, context.ints().Add(64)));
+  } else if (type.isFloatingPoint()) {
+    if (type.isFloat16Type() || type.isFloat32Type() || type.isDoubleType() ||
+        type.isFloat128Type()) {
+      return ExprAsType(
+          context, Parse::NodeId::None,
+          MakeFloatTypeLiteral(
+              context, Parse::NodeId::None,
+              context.ints().Add(ast_context.getTypeSize(qual_type))));
+    }
+    // TODO: Handle floating-point types that map to named aliases.
   }
 
   return {.inst_id = SemIR::TypeInstId::None, .type_id = SemIR::TypeId::None};

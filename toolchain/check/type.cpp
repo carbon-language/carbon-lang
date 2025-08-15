@@ -8,10 +8,10 @@
 #include "toolchain/check/facet_type.h"
 #include "toolchain/check/type_completion.h"
 #include "toolchain/sem_ir/facet_type_info.h"
+#include "toolchain/sem_ir/ids.h"
 
 namespace Carbon::Check {
 
-// Enforces that an integer type has a valid bit width.
 auto ValidateIntType(Context& context, SemIR::LocId loc_id,
                      SemIR::IntType result) -> bool {
   auto bit_width =
@@ -44,29 +44,54 @@ auto ValidateIntType(Context& context, SemIR::LocId loc_id,
   return true;
 }
 
-// Enforces that the bit width is 64 for a float.
-auto ValidateFloatBitWidth(Context& context, SemIR::LocId loc_id,
-                           SemIR::InstId inst_id) -> bool {
-  auto inst = context.insts().GetAs<SemIR::IntValue>(inst_id);
-  if (context.ints().Get(inst.int_id) == 64) {
-    return true;
-  }
-
-  CARBON_DIAGNOSTIC(CompileTimeFloatBitWidth, Error, "bit width must be 64");
-  context.emitter().Emit(loc_id, CompileTimeFloatBitWidth);
-  return false;
-}
-
-// Enforces that a float type has a valid bit width.
-auto ValidateFloatType(Context& context, SemIR::LocId loc_id,
-                       SemIR::FloatType result) -> bool {
-  auto bit_width =
+auto ValidateFloatTypeAndSetKind(Context& context, SemIR::LocId loc_id,
+                                 SemIR::FloatType& result) -> bool {
+  // Get the bit width value.
+  auto bit_width_inst =
       context.insts().TryGetAs<SemIR::IntValue>(result.bit_width_id);
-  if (!bit_width) {
-    // Symbolic bit width.
+  if (!bit_width_inst) {
+    // Symbolic bit width. Defer checking until we have a concrete value.
     return true;
   }
-  return ValidateFloatBitWidth(context, loc_id, result.bit_width_id);
+  auto bit_width = context.ints().Get(bit_width_inst->int_id);
+
+  // If no kind is specified, infer kind from width.
+  if (!result.float_kind.has_value()) {
+    switch (bit_width.getLimitedValue()) {
+      case 16:
+        result.float_kind = SemIR::FloatKind::Binary16;
+        break;
+      case 32:
+        result.float_kind = SemIR::FloatKind::Binary32;
+        break;
+      case 64:
+        result.float_kind = SemIR::FloatKind::Binary64;
+        break;
+      case 128:
+        result.float_kind = SemIR::FloatKind::Binary128;
+        break;
+      default:
+        CARBON_DIAGNOSTIC(CompileTimeFloatBitWidth, Error,
+                          "unsupported floating-point bit width {0}", TypedInt);
+        context.emitter().Emit(loc_id, CompileTimeFloatBitWidth,
+                               TypedInt(bit_width_inst->type_id, bit_width));
+        return false;
+    }
+  }
+
+  if (llvm::APFloat::semanticsSizeInBits(result.float_kind.Semantics()) !=
+      bit_width) {
+    // This can't currently happen because we don't provide any way to set the
+    // float kind other than through the bit width.
+    // TODO: Add a float_type.make builtin that takes a float kind, and add a
+    // diagnostic here if the size is wrong.
+    context.TODO(loc_id, "wrong size for float type");
+    return false;
+  }
+
+  // TODO: Diagnose if the floating-point type is not supported on this target?
+
+  return true;
 }
 
 // Gets or forms a type_id for a type, given the instruction kind and arguments.

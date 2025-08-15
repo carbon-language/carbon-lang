@@ -1005,8 +1005,9 @@ static auto MakeFloatTypeResult(Context& context, SemIR::LocId loc_id,
     -> SemIR::ConstantId {
   auto result = SemIR::FloatType{
       .type_id = GetSingletonType(context, SemIR::TypeType::TypeInstId),
-      .bit_width_id = width_id};
-  if (!ValidateFloatType(context, loc_id, result)) {
+      .bit_width_id = width_id,
+      .float_kind = SemIR::FloatKind::None};
+  if (!ValidateFloatTypeAndSetKind(context, loc_id, result)) {
     return SemIR::ErrorInst::ConstantId;
   }
   return MakeConstantResult(context, result, phase);
@@ -1078,9 +1079,17 @@ static auto PerformCheckedFloatConvert(Context& context, SemIR::LocId loc_id,
                                        SemIR::InstId arg_id,
                                        SemIR::TypeId dest_type_id)
     -> SemIR::ConstantId {
+  auto dest_type_object_rep_id = context.types().GetObjectRepr(dest_type_id);
+  CARBON_CHECK(dest_type_object_rep_id.has_value(),
+               "Conversion to incomplete type");
+  auto dest_float_type =
+      context.types().TryGetAs<SemIR::FloatType>(dest_type_object_rep_id);
+  CARBON_CHECK(dest_float_type || context.types().Is<SemIR::FloatLiteralType>(
+                                      dest_type_object_rep_id));
+
   if (auto literal =
           context.insts().TryGetAs<SemIR::FloatLiteralValue>(arg_id)) {
-    if (context.types().Is<SemIR::FloatLiteralType>(dest_type_id)) {
+    if (!dest_float_type) {
       return MakeConstantResult(
           context,
           SemIR::FloatLiteralValue{.type_id = dest_type_id,
@@ -1105,8 +1114,7 @@ static auto PerformCheckedFloatConvert(Context& context, SemIR::LocId loc_id,
     real_value.exponent.toStringSigned(str);
 
     // Convert the string to an APFloat.
-    // TODO: Compute the fltSemantics from the type.
-    llvm::APFloat result(llvm::APFloat::IEEEdouble());
+    llvm::APFloat result(dest_float_type->float_kind.Semantics());
     // TODO: The implementation of this conversion effectively converts back to
     // APInts, but unfortunately the conversion from integer mantissa and
     // exponent in IEEEFloat::roundSignificandWithExponent is not part of the
@@ -1119,27 +1127,37 @@ static auto PerformCheckedFloatConvert(Context& context, SemIR::LocId loc_id,
                    toString(std::move(error)));
     }
     if (status.get() & llvm::APFloat::opOverflow) {
-      CARBON_DIAGNOSTIC(FloatTooLargeForType, Error,
+      CARBON_DIAGNOSTIC(FloatLiteralTooLargeForType, Error,
                         "value {0} too large for floating-point type {1}",
                         RealId, SemIR::TypeId);
-      context.emitter().Emit(loc_id, FloatTooLargeForType, literal->real_id,
-                             dest_type_id);
+      context.emitter().Emit(loc_id, FloatLiteralTooLargeForType,
+                             literal->real_id, dest_type_id);
       return SemIR::ErrorInst::ConstantId;
     }
     return MakeFloatResult(context, dest_type_id, std::move(result));
   }
 
-  // TODO: Perform a conversion if necessary.
-  if (context.types().Is<SemIR::FloatLiteralType>(dest_type_id)) {
+  if (!dest_float_type) {
     context.TODO(loc_id, "conversion from float to float literal");
     return SemIR::ErrorInst::ConstantId;
   }
 
+  // Convert to the destination float semantics.
   auto arg = context.insts().GetAs<SemIR::FloatValue>(arg_id);
-  return MakeConstantResult(
-      context,
-      SemIR::FloatValue{.type_id = dest_type_id, .float_id = arg.float_id},
-      Phase::Concrete);
+  llvm::APFloat result = context.floats().Get(arg.float_id);
+  bool loses_info;
+  auto status = result.convert(dest_float_type->float_kind.Semantics(),
+                               llvm::APFloat::rmNearestTiesToEven, &loses_info);
+  if (status & llvm::APFloat::opOverflow) {
+    CARBON_DIAGNOSTIC(FloatTooLargeForType, Error,
+                      "value {0} too large for floating-point type {1}",
+                      llvm::APFloat, SemIR::TypeId);
+    context.emitter().Emit(loc_id, FloatTooLargeForType,
+                           context.floats().Get(arg.float_id), dest_type_id);
+    return SemIR::ErrorInst::ConstantId;
+  }
+
+  return MakeFloatResult(context, dest_type_id, std::move(result));
 }
 
 // Issues a diagnostic for a compile-time division by zero.

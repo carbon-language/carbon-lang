@@ -49,13 +49,13 @@ fn F() {
 // CHECK:STDOUT: define void @_CF.Main() !dbg !7 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   %.loc7_26.1.temp = alloca [8 x i8], align 1, !dbg !10
-// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(i64 8, ptr %.loc7_26.1.temp), !dbg !10
+// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %.loc7_26.1.temp), !dbg !10
 // CHECK:STDOUT:   call void @_ZN1CC1Ev(ptr %.loc7_26.1.temp), !dbg !10
 // CHECK:STDOUT:   ret void, !dbg !11
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nocallback nofree nosync nounwind willreturn memory(argmem: readwrite)
-// CHECK:STDOUT: declare void @llvm.lifetime.start.p0(i64 immarg, ptr captures(none)) #0
+// CHECK:STDOUT: declare void @llvm.lifetime.start.p0(ptr captures(none)) #0
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: mustprogress noinline optnone
 // CHECK:STDOUT: define linkonce_odr dso_local void @_ZN1CC1Ev(ptr nonnull align 4 dereferenceable(8) %this) #1 comdat align 2 {

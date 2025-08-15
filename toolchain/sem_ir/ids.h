@@ -9,6 +9,7 @@
 
 #include "common/check.h"
 #include "common/ostream.h"
+#include "llvm/ADT/APFloat.h"
 #include "toolchain/base/index_base.h"
 #include "toolchain/base/value_ids.h"
 #include "toolchain/diagnostics/diagnostic_emitter.h"
@@ -503,15 +504,51 @@ struct IntKind : public IdBase<IntKind> {
 constexpr IntKind IntKind::Unsigned = IntKind(0);
 constexpr IntKind IntKind::Signed = IntKind(1);
 
-// A float kind value.
+// A float kind value. This describes the semantics of the floating-point type.
+// This represents very similar information to the bit-width, but is more
+// precise. In particular, there is in general more than one floating-point type
+// with a given bit-width, and while only one such type can be named with the
+// `fN` notation, the others should still be modeled as `FloatType`s.
 struct FloatKind : public IdBase<FloatKind> {
   // Not used by `Print`, but for `IdKind`.
   static constexpr llvm::StringLiteral Label = "float_kind";
 
+  // An explicitly absent kind. Used when the kind has not been determined.
+  static const FloatKind None;
+
+  // Supported IEEE-754 interchange formats. These correspond to Carbon `fN`
+  // type literal syntax.
+  static const FloatKind Binary16;
+  static const FloatKind Binary32;
+  static const FloatKind Binary64;
+  static const FloatKind Binary128;
+  // Note, binary256 is not supported by LLVM and hence not by us.
+
+  // Other formats supported by LLVM. Support for these may be
+  // target-dependent.
+  // TODO: Add a mechanism to use these types from Carbon code.
+  static const FloatKind BFloat16;
+  static const FloatKind X87Float80;
+  static const FloatKind PPCFloat128;
+
   using IdBase::IdBase;
 
-  auto Print(llvm::raw_ostream& out) const -> void { out << "float"; }
+  auto Print(llvm::raw_ostream& out) const -> void;
+
+  // Query the LLVM semantics model associated with this kind of floating-point
+  // type. This kind must be concrete.
+  auto Semantics() const -> const llvm::fltSemantics&;
 };
+
+constexpr FloatKind FloatKind::None = FloatKind(NoneIndex);
+
+constexpr FloatKind FloatKind::Binary16 = FloatKind(0);
+constexpr FloatKind FloatKind::Binary32 = FloatKind(1);
+constexpr FloatKind FloatKind::Binary64 = FloatKind(2);
+constexpr FloatKind FloatKind::Binary128 = FloatKind(3);
+constexpr FloatKind FloatKind::BFloat16 = FloatKind(4);
+constexpr FloatKind FloatKind::X87Float80 = FloatKind(5);
+constexpr FloatKind FloatKind::PPCFloat128 = FloatKind(6);
 
 // An X-macro for special names. Uses should look like:
 //

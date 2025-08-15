@@ -794,10 +794,10 @@ static auto BuildTypeForInst(FileContext& /*context*/,
   return nullptr;
 }
 
-static auto BuildTypeForInst(FileContext& context, SemIR::FloatType /*inst*/)
+static auto BuildTypeForInst(FileContext& context, SemIR::FloatType inst)
     -> llvm::Type* {
-  // TODO: Handle different sizes.
-  return llvm::Type::getDoubleTy(context.llvm_context());
+  return llvm::Type::getFloatingPointTy(context.llvm_context(),
+                                        inst.float_kind.Semantics());
 }
 
 static auto BuildTypeForInst(FileContext& context, SemIR::IntType inst)

@@ -15,13 +15,10 @@ namespace Carbon::Check {
 auto ValidateIntType(Context& context, SemIR::LocId loc_id,
                      SemIR::IntType result) -> bool;
 
-// Enforces that the bit width is 64 for a float.
-auto ValidateFloatBitWidth(Context& context, SemIR::LocId loc_id,
-                           SemIR::InstId inst_id) -> bool;
-
-// Enforces that a float type has a valid bit width.
-auto ValidateFloatType(Context& context, SemIR::LocId loc_id,
-                       SemIR::FloatType result) -> bool;
+// Enforces that a float type has a valid bit width. If the `float_kind` field
+// is `None`, sets it to a suitable kind for the bit width.
+auto ValidateFloatTypeAndSetKind(Context& context, SemIR::LocId loc_id,
+                                 SemIR::FloatType& result) -> bool;
 
 // Gets the type to use for an unbound associated entity declared in this
 // interface. For example, this is the type of `I.T` after

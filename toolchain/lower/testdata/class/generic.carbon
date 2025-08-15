@@ -246,7 +246,7 @@ fn AccessTuple() -> (i32, i32, i32) {
 // CHECK:STDOUT: define i1 @_CAccessBool.Main() !dbg !4 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   %c.var = alloca { i1, i32 }, align 8, !dbg !7
-// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(i64 8, ptr %c.var), !dbg !7
+// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %c.var), !dbg !7
 // CHECK:STDOUT:   %.loc19_37.2.v = getelementptr inbounds nuw { i1, i32 }, ptr %c.var, i32 0, i32 0, !dbg !8
 // CHECK:STDOUT:   %.loc19_37.5.w = getelementptr inbounds nuw { i1, i32 }, ptr %c.var, i32 0, i32 1, !dbg !8
 // CHECK:STDOUT:   call void @llvm.memcpy.p0.p0.i64(ptr align 4 %c.var, ptr align 4 @C.val.98f.loc19_3, i64 8, i1 false), !dbg !7
@@ -257,7 +257,7 @@ fn AccessTuple() -> (i32, i32, i32) {
 // CHECK:STDOUT: define i32 @_CAccessInt.Main() !dbg !11 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   %c.var = alloca { i1, i32 }, align 8, !dbg !12
-// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(i64 8, ptr %c.var), !dbg !12
+// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %c.var), !dbg !12
 // CHECK:STDOUT:   %.loc24_37.2.v = getelementptr inbounds nuw { i1, i32 }, ptr %c.var, i32 0, i32 0, !dbg !13
 // CHECK:STDOUT:   %.loc24_37.5.w = getelementptr inbounds nuw { i1, i32 }, ptr %c.var, i32 0, i32 1, !dbg !13
 // CHECK:STDOUT:   call void @llvm.memcpy.p0.p0.i64(ptr align 4 %c.var, ptr align 4 @C.val.98f.loc19_3, i64 8, i1 false), !dbg !12
@@ -269,19 +269,19 @@ fn AccessTuple() -> (i32, i32, i32) {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   %c.var = alloca { i1, {} }, align 8, !dbg !17
 // CHECK:STDOUT:   %.loc30_17.1.temp = alloca {}, align 8, !dbg !18
-// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(i64 1, ptr %c.var), !dbg !17
+// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %c.var), !dbg !17
 // CHECK:STDOUT:   %.loc29_37.2.v = getelementptr inbounds nuw { i1, {} }, ptr %c.var, i32 0, i32 0, !dbg !19
 // CHECK:STDOUT:   %.loc29_37.4.w = getelementptr inbounds nuw { i1, {} }, ptr %c.var, i32 0, i32 1, !dbg !19
 // CHECK:STDOUT:   call void @llvm.memcpy.p0.p0.i64(ptr align 1 %c.var, ptr align 1 @C.val.dcc.loc29_3, i64 1, i1 false), !dbg !17
 // CHECK:STDOUT:   call void @_CGetT.C.Main.e43630e9a6c38c3f(ptr %c.var), !dbg !18
-// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(i64 0, ptr %.loc30_17.1.temp), !dbg !18
+// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %.loc30_17.1.temp), !dbg !18
 // CHECK:STDOUT:   ret void, !dbg !20
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: define void @_CAccessTuple.Main(ptr sret({ i32, i32, i32 }) %return) !dbg !21 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   %c.var = alloca { i1, { i32, i32, i32 } }, align 8, !dbg !22
-// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(i64 16, ptr %c.var), !dbg !22
+// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %c.var), !dbg !22
 // CHECK:STDOUT:   %.loc34_57.2.v = getelementptr inbounds nuw { i1, { i32, i32, i32 } }, ptr %c.var, i32 0, i32 0, !dbg !23
 // CHECK:STDOUT:   %.loc34_57.4.w = getelementptr inbounds nuw { i1, { i32, i32, i32 } }, ptr %c.var, i32 0, i32 1, !dbg !23
 // CHECK:STDOUT:   %tuple.elem0.tuple.elem = getelementptr inbounds nuw { i32, i32, i32 }, ptr %.loc34_57.4.w, i32 0, i32 0, !dbg !24
@@ -293,7 +293,7 @@ fn AccessTuple() -> (i32, i32, i32) {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nocallback nofree nosync nounwind willreturn memory(argmem: readwrite)
-// CHECK:STDOUT: declare void @llvm.lifetime.start.p0(i64 immarg, ptr captures(none)) #0
+// CHECK:STDOUT: declare void @llvm.lifetime.start.p0(ptr captures(none)) #0
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nocallback nofree nounwind willreturn memory(argmem: readwrite)
 // CHECK:STDOUT: declare void @llvm.memcpy.p0.p0.i64(ptr noalias writeonly captures(none), ptr noalias readonly captures(none), i64, i1 immarg) #1

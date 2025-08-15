@@ -32,7 +32,7 @@ fn Call() -> i32 {
 // CHECK:STDOUT: define i32 @_CCall.Main() !dbg !7 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   %n.var = alloca i32, align 4, !dbg !10
-// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(i64 4, ptr %n.var), !dbg !10
+// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %n.var), !dbg !10
 // CHECK:STDOUT:   store i32 0, ptr %n.var, align 4, !dbg !10
 // CHECK:STDOUT:   call void @_Z1FPi(ptr %n.var), !dbg !11
 // CHECK:STDOUT:   %.loc24 = load i32, ptr %n.var, align 4, !dbg !12
@@ -40,7 +40,7 @@ fn Call() -> i32 {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nocallback nofree nosync nounwind willreturn memory(argmem: readwrite)
-// CHECK:STDOUT: declare void @llvm.lifetime.start.p0(i64 immarg, ptr captures(none)) #0
+// CHECK:STDOUT: declare void @llvm.lifetime.start.p0(ptr captures(none)) #0
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: mustprogress noinline nounwind optnone
 // CHECK:STDOUT: define dso_local void @_Z1FPi(ptr %p) #1 {

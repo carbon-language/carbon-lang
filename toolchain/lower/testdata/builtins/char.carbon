@@ -25,14 +25,14 @@ fn Example() -> Core.Char {
 // CHECK:STDOUT: define i8 @_CExample.Main() !dbg !4 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   %c.var = alloca i8, align 1, !dbg !7
-// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(i64 1, ptr %c.var), !dbg !7
+// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %c.var), !dbg !7
 // CHECK:STDOUT:   store i8 97, ptr %c.var, align 1, !dbg !7
 // CHECK:STDOUT:   %.loc6 = load i8, ptr %c.var, align 1, !dbg !8
 // CHECK:STDOUT:   ret i8 %.loc6, !dbg !9
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nocallback nofree nosync nounwind willreturn memory(argmem: readwrite)
-// CHECK:STDOUT: declare void @llvm.lifetime.start.p0(i64 immarg, ptr captures(none)) #0
+// CHECK:STDOUT: declare void @llvm.lifetime.start.p0(ptr captures(none)) #0
 // CHECK:STDOUT:
 // CHECK:STDOUT: attributes #0 = { nocallback nofree nosync nounwind willreturn memory(argmem: readwrite) }
 // CHECK:STDOUT:

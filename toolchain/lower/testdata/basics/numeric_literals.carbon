@@ -39,13 +39,13 @@ fn F() {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   %ints.var = alloca [4 x i32], align 4, !dbg !7
 // CHECK:STDOUT:   %floats.var = alloca [6 x double], align 8, !dbg !8
-// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(i64 16, ptr %ints.var), !dbg !7
+// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %ints.var), !dbg !7
 // CHECK:STDOUT:   %.loc21_3.3.array.index = getelementptr inbounds [4 x i32], ptr %ints.var, i32 0, i64 0, !dbg !9
 // CHECK:STDOUT:   %.loc21_3.6.array.index = getelementptr inbounds [4 x i32], ptr %ints.var, i32 0, i64 1, !dbg !9
 // CHECK:STDOUT:   %.loc21_3.9.array.index = getelementptr inbounds [4 x i32], ptr %ints.var, i32 0, i64 2, !dbg !9
 // CHECK:STDOUT:   %.loc21_3.12.array.index = getelementptr inbounds [4 x i32], ptr %ints.var, i32 0, i64 3, !dbg !9
 // CHECK:STDOUT:   call void @llvm.memcpy.p0.p0.i64(ptr align 4 %ints.var, ptr align 4 @array.712.loc16_3, i64 16, i1 false), !dbg !7
-// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(i64 48, ptr %floats.var), !dbg !8
+// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %floats.var), !dbg !8
 // CHECK:STDOUT:   %.loc29_3.3.array.index = getelementptr inbounds [6 x double], ptr %floats.var, i32 0, i64 0, !dbg !10
 // CHECK:STDOUT:   %.loc29_3.6.array.index = getelementptr inbounds [6 x double], ptr %floats.var, i32 0, i64 1, !dbg !10
 // CHECK:STDOUT:   %.loc29_3.9.array.index = getelementptr inbounds [6 x double], ptr %floats.var, i32 0, i64 2, !dbg !10
@@ -57,7 +57,7 @@ fn F() {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nocallback nofree nosync nounwind willreturn memory(argmem: readwrite)
-// CHECK:STDOUT: declare void @llvm.lifetime.start.p0(i64 immarg, ptr captures(none)) #0
+// CHECK:STDOUT: declare void @llvm.lifetime.start.p0(ptr captures(none)) #0
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nocallback nofree nounwind willreturn memory(argmem: readwrite)
 // CHECK:STDOUT: declare void @llvm.memcpy.p0.p0.i64(ptr noalias writeonly captures(none), ptr noalias readonly captures(none), i64, i1 immarg) #1
