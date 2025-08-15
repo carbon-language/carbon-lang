@@ -224,18 +224,17 @@ auto HandleParseNode(Context& context,
   auto node_kind = Parse::NodeKind::CompileTimeBindingPattern;
   if (context.decl_introducer_state_stack().innermost().kind ==
       Lex::TokenKind::Let) {
-    // Disallow `let` outside of function and interface definitions.
+    // Disallow `let` outside of function definitions.
     // TODO: Find a less brittle way of doing this. A `scope_inst_id` of `None`
     // can represent a block scope, but is also used for other kinds of scopes
-    // that aren't necessarily part of an interface or function decl.
+    // that aren't necessarily part of a function decl.
     auto scope_inst_id = context.scope_stack().PeekInstId();
     if (scope_inst_id.has_value()) {
       auto scope_inst = context.insts().Get(scope_inst_id);
-      if (!scope_inst.Is<SemIR::InterfaceDecl>() &&
-          !scope_inst.Is<SemIR::FunctionDecl>()) {
+      if (!scope_inst.Is<SemIR::FunctionDecl>()) {
         context.TODO(
             node_id,
-            "`let` compile time binding outside function or interface");
+            "`let` compile time binding outside function");
         node_kind = Parse::NodeKind::LetBindingPattern;
       }
     }
@@ -251,7 +250,7 @@ auto HandleParseNode(Context& context, Parse::AssociatedConstantBindingPatternId
       ExprAsType(context, type_node, parsed_type_id);
 
   EndSubpatternAsExpr(context, cast_type_inst_id);
-  
+
   auto is_template =
       context.node_stack()
           .PopAndDiscardSoloNodeIdIf<Parse::NodeKind::TemplateBindingName>();
