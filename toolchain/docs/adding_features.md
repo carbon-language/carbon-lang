@@ -29,6 +29,7 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
         -   [Verbose output](#verbose-output)
         -   [Stack traces](#stack-traces)
         -   [Dumping objects in interactive debuggers](#dumping-objects-in-interactive-debuggers)
+        -   [Dumping prelude files](#dumping-prelude-files)
 
 <!-- tocstop -->
 
@@ -539,11 +540,10 @@ automatically included as well. A small amount of SemIR may include a number of
 related instructions, such as an in-range instruction referencing an import_ref
 referencing a constant referencing another constant.
 
-If full SemIR is desired for a file, adding `//@dump-sem-ir-enable` will cause
-it to be dumped even if it would otherwise be excluded, even with
-`--exclude-dump-file-prefix`. It's also possible to change to printing SemIR by
-default with `// EXTRA-ARGS: --dump-sem-ir-ranges=if-present`. These should be
-rare, and are worth comments if they're used in tests.
+SemIR dumps for files that don't have explicit ranges can be enabled through
+either `//@include-in-dumps` (per-file) or
+`// EXTRA-ARGS: --dump-sem-ir-ranges=if-present`. These should be rare, and are
+worth comments when they're used.
 
 ##### Example uses
 
@@ -624,3 +624,12 @@ regarding support.
 
 Objects which inherit from `Printable` also have `Dump` member functions, but
 these will lack contextual information.
+
+#### Dumping prelude files
+
+By default, prelude files are excluded from dumps by
+`--exclude-dump-file-prefix`. However, seeing their output can still be helpful
+during check and lower in particular. To enable dumps for specific files, add
+`//@include-in-dumps`.This can also be used to view cross-file SemIR, such as
+imports from a prelude, by adding `//@include-in-dumps` to the prelude file and
+looking at the SemIR of the importing file.

@@ -29,7 +29,7 @@ fn F();
 
 library "[[@TEST_NAME]]";
 
-//@dump-sem-ir-enable
+//@include-in-dumps
 
 // CHECK:STDOUT: --- with-range.carbon
 // CHECK:STDOUT:

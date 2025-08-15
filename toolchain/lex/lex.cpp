@@ -974,8 +974,8 @@ auto Lexer::LexComment(llvm::StringRef source_text, ssize_t& position) -> void {
   if (position + 2 < static_cast<ssize_t>(source_text.size()) &&
       LLVM_UNLIKELY(!IsSpace(source_text[position + 2]))) {
     llvm::StringRef comment_text = source_text.substr(position);
-    if (comment_text.starts_with("//@dump-sem-ir-enable\n")) {
-      buffer_.has_dump_sem_ir_enable_ = true;
+    if (comment_text.starts_with("//@include-in-dumps\n")) {
+      buffer_.has_include_in_dumps_ = true;
       AdvanceToLine(source_text, position, next_line());
       return;
     }

@@ -470,6 +470,9 @@ class CompilationUnit {
   auto FlushForStackTrace() -> void { consumer_->Flush(); }
 
   auto input_filename() -> llvm::StringRef { return input_filename_; }
+  auto has_include_in_dumps() -> bool {
+    return tokens_ && tokens_->has_include_in_dumps();
+  }
   auto success() -> bool { return success_; }
   auto has_source() -> bool { return source_.has_value(); }
   auto get_trees_and_subtrees() -> Parse::GetTreeAndSubtreesFn {
@@ -551,17 +554,35 @@ class MultiUnitCache {
       llvm::ArrayRef<std::unique_ptr<CompilationUnit>> units)
       : options_(options), units_(units) {}
 
+  // If `include_in_dumps` is in use, we need to apply per-file include
+  // settings.
+  auto ApplyPerFileIncludeInDumps() -> void {
+    if (!include_in_dumps_) {
+      // No cached value to update.
+      return;
+    }
+    for (const auto& [i, unit] : llvm::enumerate(units_)) {
+      if (unit->has_include_in_dumps()) {
+        include_in_dumps_->Set(SemIR::CheckIRId(i), true);
+      }
+    }
+  }
+
   auto include_in_dumps() -> const IncludeInDumpsStore& {
     if (!include_in_dumps_) {
       include_in_dumps_.emplace(
           IncludeInDumpsStore::MakeWithExplicitSize(units_.size(), false));
       for (const auto& [i, unit] : llvm::enumerate(units_)) {
-        include_in_dumps_->Set(
-            SemIR::CheckIRId(i),
+        // If this is first accessed after lexing is complete, we need to apply
+        // per-file includes. Otherwise, this is based only on the exclude
+        // option.
+        bool include =
+            unit->has_include_in_dumps() ||
             llvm::none_of(options_->exclude_dump_file_prefixes,
                           [&](auto prefix) {
                             return unit->input_filename().starts_with(prefix);
-                          }));
+                          });
+        include_in_dumps_->Set(SemIR::CheckIRId(i), include);
       }
     }
     return *include_in_dumps_;
@@ -998,6 +1019,7 @@ auto CompileSubcommand::Run(DriverEnv& driver_env) -> DriverResult {
   if (options_.phase == CompileOptions::Phase::Lex) {
     return make_result();
   }
+  cache.ApplyPerFileIncludeInDumps();
   // Parse and check phases examine `has_source` because they want to proceed if
   // lex failed, but not if source doesn't exist. Later steps are skipped if
   // anything failed, so don't need this.

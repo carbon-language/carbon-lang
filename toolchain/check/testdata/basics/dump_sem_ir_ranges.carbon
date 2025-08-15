@@ -95,7 +95,7 @@ fn F();
 
 library "[[@TEST_NAME]]";
 
-//@dump-sem-ir-enable
+//@include-in-dumps
 
 // CHECK:STDOUT: --- function.carbon
 // CHECK:STDOUT:
