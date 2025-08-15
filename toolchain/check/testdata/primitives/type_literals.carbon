@@ -394,8 +394,13 @@ var x: type = 42;
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %String: type = class_type @String [concrete]
+// CHECK:STDOUT:   %int_8: Core.IntLiteral = int_value 8 [concrete]
+// CHECK:STDOUT:   %u8: type = class_type @UInt, @UInt(%int_8) [concrete]
+// CHECK:STDOUT:   %ptr.3e8: type = ptr_type %u8 [concrete]
 // CHECK:STDOUT:   %pattern_type.461: type = pattern_type %String [concrete]
-// CHECK:STDOUT:   %str: %String = string_literal "Test" [concrete]
+// CHECK:STDOUT:   %str: %ptr.3e8 = string_literal "Test" [concrete]
+// CHECK:STDOUT:   %int_4: Core.IntLiteral = int_value 4 [concrete]
+// CHECK:STDOUT:   %String.val: %String = struct_value (%str, %int_4) [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -405,12 +410,14 @@ var x: type = 42;
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %test_str.patt: %pattern_type.461 = binding_pattern test_str [concrete]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %test_str: %String = bind_name test_str, @__global_init.%str
+// CHECK:STDOUT:   %test_str: %String = bind_name test_str, @__global_init.%String.val
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %str: %String = string_literal "Test" [concrete = constants.%str]
+// CHECK:STDOUT:   %str: %ptr.3e8 = string_literal "Test" [concrete = constants.%str]
+// CHECK:STDOUT:   %int_4: Core.IntLiteral = int_value 4 [concrete = constants.%int_4]
+// CHECK:STDOUT:   %String.val: %String = struct_value (%str, %int_4) [concrete = constants.%String.val]
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
