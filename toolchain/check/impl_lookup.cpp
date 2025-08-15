@@ -301,8 +301,24 @@ static auto GetWitnessIdForImpl(Context& context, SemIR::LocId loc_id,
 // non-canonical facet value.
 static auto UnwrapFacetAccessType(Context& context, SemIR::InstId inst_id)
     -> SemIR::InstId {
+  // FIXME: Combine with the FacetAccessType one - no, remove this function and
+  // use GetCanonicalizedFacetOrTypeValue directly, asking it not to unwrap
+  // `FacetValue`.
+  if (context.insts().Is<SemIR::FacetAccessPeriodSelfType>(inst_id)) {
+    inst_id = GetCanonicalizedFacetOrTypeValue(context, inst_id);
+  }
   if (auto access = context.insts().TryGetAs<SemIR::FacetAccessType>(inst_id)) {
-    return access->facet_value_inst_id;
+    inst_id = access->facet_value_inst_id;
+#if 0
+    if (auto bind =
+            context.insts().TryGetAs<SemIR::BindSymbolicName>(inst_id)) {
+      const auto& entity_name =
+          context.entity_names().Get(bind->entity_name_id);
+      if (entity_name.decl_bind_name_id.has_value()) {
+        inst_id = entity_name.decl_bind_name_id;
+      }
+    }
+#endif
   }
   return inst_id;
 }

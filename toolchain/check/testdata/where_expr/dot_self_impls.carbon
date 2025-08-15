@@ -35,7 +35,15 @@ fn INotJ[T:! I where .Self impls J](x: T) {
   // Can still find members of `J` using compound member access,
   // even though they are not available via `T.GNonInstance` or
   // `x.GSelf`.
+  // CHECK:STDERR: compound_member_access_through_where_self_impls.carbon:[[@LINE+4]]:3: error: cannot convert type `T` that implements `I where...` into type implementing `J` [ConversionFailureFacetToFacet]
+  // CHECK:STDERR:   T.(J.GNonInstance)();
+  // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~
+  // CHECK:STDERR:
   T.(J.GNonInstance)();
+  // CHECK:STDERR: compound_member_access_through_where_self_impls.carbon:[[@LINE+4]]:3: error: cannot access member of interface `J` in type `T` that does not implement that interface [MissingImplInMemberAccess]
+  // CHECK:STDERR:   x.(J.GSelf)();
+  // CHECK:STDERR:   ^~~~~~~~~~~
+  // CHECK:STDERR:
   x.(J.GSelf)();
 }
 
@@ -153,10 +161,45 @@ interface J;
 interface K;
 
 fn Test() {
+  // CHECK:STDERR: compare_equal.carbon:[[@LINE+7]]:3: error: inconsistent deductions for value of generic parameter `T` [DeductionInconsistent]
+  // CHECK:STDERR:   AssertSame(Type(I), Type(I where .Self impls I));
+  // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+  // CHECK:STDERR: compare_equal.carbon:[[@LINE-11]]:1: note: while deducing parameters of generic declared here [DeductionGenericHere]
+  // CHECK:STDERR: fn AssertSame[T:! type](a: WrapType(T), b: WrapType(T)) {}
+  // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+  // CHECK:STDERR:
   AssertSame(Type(I), Type(I where .Self impls I));
+  // CHECK:STDERR: compare_equal.carbon:[[@LINE+7]]:3: error: inconsistent deductions for value of generic parameter `T` [DeductionInconsistent]
+  // CHECK:STDERR:   AssertSame(Type(I), Type(I where .Self impls I & I));
+  // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+  // CHECK:STDERR: compare_equal.carbon:[[@LINE-19]]:1: note: while deducing parameters of generic declared here [DeductionGenericHere]
+  // CHECK:STDERR: fn AssertSame[T:! type](a: WrapType(T), b: WrapType(T)) {}
+  // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+  // CHECK:STDERR:
   AssertSame(Type(I), Type(I where .Self impls I & I));
+  // CHECK:STDERR: compare_equal.carbon:[[@LINE+7]]:3: error: inconsistent deductions for value of generic parameter `T` [DeductionInconsistent]
+  // CHECK:STDERR:   AssertSame(Type(I & J), Type(J & I where .Self impls I));
+  // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+  // CHECK:STDERR: compare_equal.carbon:[[@LINE-27]]:1: note: while deducing parameters of generic declared here [DeductionGenericHere]
+  // CHECK:STDERR: fn AssertSame[T:! type](a: WrapType(T), b: WrapType(T)) {}
+  // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+  // CHECK:STDERR:
   AssertSame(Type(I & J), Type(J & I where .Self impls I));
+  // CHECK:STDERR: compare_equal.carbon:[[@LINE+7]]:3: error: inconsistent deductions for value of generic parameter `T` [DeductionInconsistent]
+  // CHECK:STDERR:   AssertSame(Type(I & J), Type(J & I where .Self impls J));
+  // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+  // CHECK:STDERR: compare_equal.carbon:[[@LINE-35]]:1: note: while deducing parameters of generic declared here [DeductionGenericHere]
+  // CHECK:STDERR: fn AssertSame[T:! type](a: WrapType(T), b: WrapType(T)) {}
+  // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+  // CHECK:STDERR:
   AssertSame(Type(I & J), Type(J & I where .Self impls J));
+  // CHECK:STDERR: compare_equal.carbon:[[@LINE+7]]:3: error: inconsistent deductions for value of generic parameter `T` [DeductionInconsistent]
+  // CHECK:STDERR:   AssertSame(Type(I & J), Type(J & I where .Self impls I & J));
+  // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+  // CHECK:STDERR: compare_equal.carbon:[[@LINE-43]]:1: note: while deducing parameters of generic declared here [DeductionGenericHere]
+  // CHECK:STDERR: fn AssertSame[T:! type](a: WrapType(T), b: WrapType(T)) {}
+  // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+  // CHECK:STDERR:
   AssertSame(Type(I & J), Type(J & I where .Self impls I & J));
   AssertSame(Type(I & J where .Self impls K), Type(J & I where .Self impls I & K));
   AssertSame(Type(I & J where .Self impls K), Type(J & I where .Self impls J & K));
@@ -185,14 +228,42 @@ interface I { let A:! type; }
 interface J { let A:! type; }
 
 fn Test() {
+  // CHECK:STDERR: compare_equal_with_associated_constant.carbon:[[@LINE+7]]:3: error: inconsistent deductions for value of generic parameter `T` [DeductionInconsistent]
+  // CHECK:STDERR:   AssertSame(Type((I where .A = ()) & J),
+  // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+  // CHECK:STDERR: compare_equal_with_associated_constant.carbon:[[@LINE-10]]:1: note: while deducing parameters of generic declared here [DeductionGenericHere]
+  // CHECK:STDERR: fn AssertSame[T:! type](a: WrapType(T), b: WrapType(T)) {}
+  // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+  // CHECK:STDERR:
   AssertSame(Type((I where .A = ()) & J),
              Type(I & J where .Self impls (I where .A = ())));
+  // CHECK:STDERR: compare_equal_with_associated_constant.carbon:[[@LINE+7]]:3: error: inconsistent deductions for value of generic parameter `T` [DeductionInconsistent]
+  // CHECK:STDERR:   AssertSame(Type(I & (J where .A = {})),
+  // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+  // CHECK:STDERR: compare_equal_with_associated_constant.carbon:[[@LINE-19]]:1: note: while deducing parameters of generic declared here [DeductionGenericHere]
+  // CHECK:STDERR: fn AssertSame[T:! type](a: WrapType(T), b: WrapType(T)) {}
+  // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+  // CHECK:STDERR:
   AssertSame(Type(I & (J where .A = {})),
              Type(I & J where .Self impls (J where .A = {})));
 
+  // CHECK:STDERR: compare_equal_with_associated_constant.carbon:[[@LINE+7]]:3: error: inconsistent deductions for value of generic parameter `T` [DeductionInconsistent]
+  // CHECK:STDERR:   AssertSame(Type((I where .A = ()) & (J where .A = {})),
+  // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+  // CHECK:STDERR: compare_equal_with_associated_constant.carbon:[[@LINE-29]]:1: note: while deducing parameters of generic declared here [DeductionGenericHere]
+  // CHECK:STDERR: fn AssertSame[T:! type](a: WrapType(T), b: WrapType(T)) {}
+  // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+  // CHECK:STDERR:
   AssertSame(Type((I where .A = ()) & (J where .A = {})),
              Type(I & J where .Self impls (I where .A = ())
                     and .Self impls (J where .A = {})));
+  // CHECK:STDERR: compare_equal_with_associated_constant.carbon:[[@LINE+7]]:3: error: inconsistent deductions for value of generic parameter `T` [DeductionInconsistent]
+  // CHECK:STDERR:   AssertSame(Type((I where .A = ()) & (J where .A = {})),
+  // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+  // CHECK:STDERR: compare_equal_with_associated_constant.carbon:[[@LINE-39]]:1: note: while deducing parameters of generic declared here [DeductionGenericHere]
+  // CHECK:STDERR: fn AssertSame[T:! type](a: WrapType(T), b: WrapType(T)) {}
+  // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+  // CHECK:STDERR:
   AssertSame(Type((I where .A = ()) & (J where .A = {})),
              Type(I & J where .Self impls (I where .A = ()) & (J where .A = {})));
 }
@@ -234,6 +305,13 @@ impl {.a: C} as I where .Self impls J {}
 impl {.b: C} as J where .Self impls I and .T = () {}
 
 // Rewrite constraints can appear inside the `where .Self impls`.
+// CHECK:STDERR: impl_as.carbon:[[@LINE+7]]:1: error: associated constant T not given a value in impl of interface J [ImplAssociatedConstantNeedsValue]
+// CHECK:STDERR: impl {.c: C} as J where .Self impls (I & J where .T = ()) {}
+// CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+// CHECK:STDERR: impl_as.carbon:[[@LINE-13]]:19: note: associated constant declared here [AssociatedConstantHere]
+// CHECK:STDERR: interface J { let T:! type; }
+// CHECK:STDERR:                   ^~~~~~~~
+// CHECK:STDERR:
 impl {.c: C} as J where .Self impls (I & J where .T = ()) {}
 
 // --- impl_with_rewrite_of_interface_not_being_implemented.carbon
@@ -251,8 +329,19 @@ impl C as J where .A = {} {}
 // that `C` also impls `J where .A = {}` is an additional constraint
 // that must be satisfied (and is satisfied by the impl above, though
 // that currently isn't checked), but doesn't affect `C as I`.
+// CHECK:STDERR: impl_with_rewrite_of_interface_not_being_implemented.carbon:[[@LINE+7]]:1: error: associated constant A not given a value in impl of interface I [ImplAssociatedConstantNeedsValue]
+// CHECK:STDERR: impl C as I where .Self impls
+// CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+// CHECK:STDERR: impl_with_rewrite_of_interface_not_being_implemented.carbon:[[@LINE-15]]:19: note: associated constant declared here [AssociatedConstantHere]
+// CHECK:STDERR: interface I { let A:! type; }
+// CHECK:STDERR:                   ^~~~~~~~
+// CHECK:STDERR:
 impl C as I where .Self impls
     (J where .A = {} and .Self impls (I where .A = ())) {}
 
+// CHECK:STDERR: impl_with_rewrite_of_interface_not_being_implemented.carbon:[[@LINE+4]]:8: error: cannot convert type `C` into type implementing `I` [ConversionFailureTypeToFacet]
+// CHECK:STDERR: let x: C.(I.A) = ();
+// CHECK:STDERR:        ^~~~~~~
+// CHECK:STDERR:
 let x: C.(I.A) = ();
 let y: C.(J.A) = {};

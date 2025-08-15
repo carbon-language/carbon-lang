@@ -265,6 +265,10 @@ interface Z {
 }
 class C(T:! type) { adapt (); }
 
+// CHECK:STDERR: nested_impl_unique.carbon:[[@LINE+4]]:90: error: cannot convert type `FF` that implements `Y where .(Y.Y1) = () and...` into type implementing `Z` [ConversionFailureFacetToFacet]
+// CHECK:STDERR: fn F(FF:! ((Y where .Y1 = ()) where .Self impls (Z where .Z1 = C(.Z2) and .Z2 = ()))) -> FF.(Z.Z1) {
+// CHECK:STDERR:                                                                                          ^~~~~~~~~
+// CHECK:STDERR:
 fn F(FF:! ((Y where .Y1 = ()) where .Self impls (Z where .Z1 = C(.Z2) and .Z2 = ()))) -> FF.(Z.Z1) {
   return () as C(());
 }

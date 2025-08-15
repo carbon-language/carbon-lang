@@ -8,7 +8,7 @@
 #include "toolchain/check/facet_type.h"
 #include "toolchain/check/type_completion.h"
 #include "toolchain/sem_ir/facet_type_info.h"
-#include "toolchain/sem_ir/ids.h"
+#include "toolchain/sem_ir/typed_insts.h"
 
 namespace Carbon::Check {
 
@@ -231,11 +231,12 @@ auto GetUnboundElementType(Context& context, SemIR::TypeInstId class_type_id,
                                                 element_type_id);
 }
 
+// FIXME: Take a bool for looking through `FacetValue` or not, so we can use
+// this in all the places, including impl lookup into the facet type.
 auto GetCanonicalizedFacetOrTypeValue(Context& context, SemIR::InstId inst_id)
     -> SemIR::InstId {
-  // FIXME: Remove?
   if (auto access_self =
-          context.insts().TryGetAs<SemIR::DeferredBindSymbolicName>(inst_id)) {
+          context.insts().TryGetAs<SemIR::FacetAccessPeriodSelfType>(inst_id)) {
     auto& entity_name = context.entity_names().Get(access_self->entity_name_id);
     // FIXME: Can be None for the `.Self.I1` in `U:! I(.Self) where .I1 = ()`.
     // Do we want to prevent making the FacetAccessPeriodSelfType instruction in
@@ -249,6 +250,8 @@ auto GetCanonicalizedFacetOrTypeValue(Context& context, SemIR::InstId inst_id)
     // Does the `.Self` on the RHS of `.I1` benefit from knowing all of `U`?
     if (entity_name.decl_bind_name_id.has_value()) {
       inst_id = entity_name.decl_bind_name_id;
+    } else {
+      inst_id = access_self->facet_value_inst_id;
     }
   }
 
@@ -256,6 +259,14 @@ auto GetCanonicalizedFacetOrTypeValue(Context& context, SemIR::InstId inst_id)
   // FacetAccessType, but they don't nest indefinitely.
   if (auto access = context.insts().TryGetAs<SemIR::FacetAccessType>(inst_id)) {
     inst_id = access->facet_value_inst_id;
+#if 0
+    if (auto bind = context.insts().TryGetAs<SemIR::BindSymbolicName>(inst_id)) {
+      const auto& entity_name = context.entity_names().Get(bind->entity_name_id);
+      if (entity_name.decl_bind_name_id.has_value()) {
+        inst_id = entity_name.decl_bind_name_id;
+      }
+    }
+#endif
   }
   if (auto value = context.insts().TryGetAs<SemIR::FacetValue>(inst_id)) {
     inst_id = value->type_inst_id;

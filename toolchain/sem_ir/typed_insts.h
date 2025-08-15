@@ -648,15 +648,23 @@ struct FacetAccessType {
 
 // A deferred reference to a BindSymbolicName of type `FacetType` through a
 // `.Self` reference.
-struct DeferredBindSymbolicName {
+struct FacetAccessPeriodSelfType {
   static constexpr auto Kind =
-      InstKind::DeferredBindSymbolicName.Define<Parse::NodeId>(
+      InstKind::FacetAccessPeriodSelfType.Define<Parse::NodeId>(
           {.ir_name = "deferred_bind_symbolic_self",
            .is_type = InstIsType::Always,
            .constant_kind = InstConstantKind::SymbolicOnly});
 
   // Always the builtin type TypeType.
   TypeId type_id;
+  // The original BindSymbolicName of `.Self`, which is replaced by the decl pointed to by
+  // the EntityName when a complete facet value is available for the `.Self`.
+  InstId facet_value_inst_id;
+  // FIXME: We can derive this from the facet value, so is it worth keeping it
+  // as an operand? Maybe the facet value can go away and we can point the
+  // EntityName to that facet value initially though, once import is fixed to
+  // not loop forever?
+  //
   // The entity name of the `.Self` reference, which is given a path to find the
   // facet value from the binding declaration.
   EntityNameId entity_name_id;

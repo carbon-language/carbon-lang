@@ -104,6 +104,15 @@ auto MakePeriodSelfFacetValue(Context& context, SemIR::TypeId self_type_id,
                               int32_t period_self_distance,
                               bool is_deferred = false) -> SemIR::InstId;
 
+// Given a facet value instruction, it points `.Self` facet values inside its
+// FacetType to the facet value instruction so that they can see the full
+// FacetType.
+//
+// Any `.Self` references in nested FacetTypes have their distance reduced by
+// one, so that they will be pointed to a facet value on the next such call.
+auto SubstSelfFacetValues(Context& context, SemIR::InstId facet_value_inst_id)
+    -> SemIR::InstId;
+
 }  // namespace Carbon::Check
 
 #endif  // CARBON_TOOLCHAIN_CHECK_FACET_TYPE_H_

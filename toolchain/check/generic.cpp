@@ -146,6 +146,7 @@ class RebuildGenericConstantInEvalBlockCallbacks : public SubstInstCallbacks {
     auto inst = context().insts().Get(orig_inst_id);
     CARBON_CHECK(
         inst.Is<SemIR::BindSymbolicName>() ||
+            inst.Is<SemIR::FacetAccessPeriodSelfType>() ||
             inst.Is<SemIR::SymbolicBindingPattern>(),
         "Instruction {0} has symbolic constant value but no symbolic operands",
         inst);

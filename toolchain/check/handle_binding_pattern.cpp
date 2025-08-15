@@ -61,14 +61,29 @@ static auto HandleAnyBindingPattern(Context& context, Parse::NodeId node_id,
       context.decl_introducer_state_stack().innermost();
 
   auto make_binding_pattern = [&]() -> SemIR::InstId {
+    auto subst = [&](SemIR::InstId bind_id) {
+      if (is_generic) {
+        return SubstSelfFacetValues(context, bind_id);
+      } else {
+        return bind_id;
+      }
+    };
+
     // TODO: Eventually the name will need to support associations with other
     // scopes, but right now we don't support qualified names here.
     auto binding =
         AddBindingPattern(context, name_node, name_id, cast_type_id,
-                          type_expr_region_id, is_generic, is_template);
+                          type_expr_region_id, is_generic, is_template, subst);
+    (void)subst;
 
+#if 0
     // Connect any `.Self` references to the binding itself by pointing them to
     // the `BindSymbolicName`.
+    //
+    // This is *not* done though substitution because we need the `.Self` to
+    // point at the `pattern.bind_id`, but substituting would change the
+    // `pattern.bind_id` making it have a different (substituted) type than the
+    // instruction pointed to from `.Self`.
     if (period_self_inst_id.has_value()) {
       auto period_self =
           context.insts().GetAs<SemIR::BindSymbolicName>(period_self_inst_id);
@@ -77,6 +92,7 @@ static auto HandleAnyBindingPattern(Context& context, Parse::NodeId node_id,
           context.entity_names().Get(period_self.entity_name_id);
       period_self_entity_name.decl_bind_name_id = binding.bind_id;
     }
+#endif
 
     // FIXME: Remove?
 #if 0
@@ -259,6 +275,12 @@ auto HandleParseNode(Context& context,
   // CompileTimeBindingPatternId.
   context.scope_stack().PushForSameRegion();
 
+  // The `.Self` facet value's type must be FacetType so that it is converted to
+  // `TypeType` when performing member access. This causes a FacetAccessType
+  // instruction to be made that will evaluate to a FacetAccessPeriodSelfType
+  // since this `.Self` always knows its facet value, which is the pattern
+  // binding. And that allows lookup to find the facet value through the
+  // FacetAccessPeriodSelfType.
   SemIR::FacetTypeId facet_type_id =
       context.facet_types().Add(SemIR::FacetTypeInfo{});
   auto const_id = EvalOrAddInst<SemIR::FacetType>(
@@ -266,10 +288,13 @@ auto HandleParseNode(Context& context,
       {.type_id = SemIR::TypeType::TypeId, .facet_type_id = facet_type_id});
   auto type_id = context.types().GetTypeIdForTypeConstantId(const_id);
 
-  auto period_self_inst_id = MakePeriodSelfFacetValue(
-      context, type_id,
-      /*period_self_distance=*/0,
-      /*is_deferred=*/false);
+  // We use a distance of -1 here because we point the entity name for the
+  // `.Self` facet value to the pattern's binding facet value directly, so it
+  // never needs to be re-pointed later. Anything 0 or above would be re-pointed
+  // when a facet value is found for them.
+  auto period_self_inst_id =
+      MakePeriodSelfFacetValue(context, type_id,
+                               /*period_self_distance=*/0, false);
   context.node_stack().Push(node_id, period_self_inst_id);
   return true;
 }

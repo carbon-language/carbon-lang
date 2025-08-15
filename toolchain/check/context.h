@@ -304,7 +304,7 @@ class Context {
   // End of SemIR::File members.
   // --------------------------------------------------------------------------
 
-  int period_self_distance_ = -1;
+  int period_self_distance_ = 0;
 
  private:
   // Handles diagnostics.

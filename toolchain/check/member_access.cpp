@@ -303,7 +303,7 @@ static auto LookupMemberNameInScope(Context& context, SemIR::LocId loc_id,
       SemIR::TypeId base_type_id = context.insts().Get(base_id).type_id();
       // TODO: Combine with the FacetAccessType condition by calling
       // GetCanonicalizedFacetOrTypeValue unconditionally?
-      if (context.types().Is<SemIR::DeferredBindSymbolicName>(base_type_id)) {
+      if (context.types().Is<SemIR::FacetAccessPeriodSelfType>(base_type_id)) {
         base_id = GetCanonicalizedFacetOrTypeValue(
             context, context.types().GetInstId(base_type_id));
         base_type_id = context.insts().Get(base_id).type_id();
@@ -314,6 +314,17 @@ static auto LookupMemberNameInScope(Context& context, SemIR::LocId loc_id,
         // FacetType to find the type to work with.
         base_id = facet_access_type->facet_value_inst_id;
         base_type_id = context.insts().Get(base_id).type_id();
+#if 0
+        if (auto bind =
+                context.insts().TryGetAs<SemIR::BindSymbolicName>(base_id)) {
+          const auto& entity_name =
+              context.entity_names().Get(bind->entity_name_id);
+          if (entity_name.decl_bind_name_id.has_value()) {
+            base_id = entity_name.decl_bind_name_id;
+            base_type_id = context.insts().Get(base_id).type_id();
+          }
+        }
+#endif
       }
 
       if (auto facet_type =

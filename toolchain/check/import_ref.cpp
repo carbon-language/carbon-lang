@@ -210,6 +210,12 @@ class ImportContext {
     SemIR::SpecificId local_id;
   };
 
+  // An entity name that we have partially imported.
+  struct PendingEntityName {
+    SemIR::InstId import_decl_bind_name_id;
+    SemIR::EntityNameId local_id;
+  };
+
   // `context` must not be null.
   explicit ImportContext(Context* context, SemIR::ImportIRId import_ir_id)
       : context_(context),
@@ -334,12 +340,21 @@ class ImportContext {
     pending_specifics_.push_back(pending);
   }
 
+  // Add an entity name that has been partially imported but needs to be
+  // finished.
+  auto AddPendingEntityName(PendingEntityName pending) -> void {
+    pending_entity_names_.push_back(pending);
+  }
+
  protected:
   auto pending_generics() -> llvm::SmallVector<PendingGeneric>& {
     return pending_generics_;
   }
   auto pending_specifics() -> llvm::SmallVector<PendingSpecific>& {
     return pending_specifics_;
+  }
+  auto pending_entity_names() -> llvm::SmallVector<PendingEntityName>& {
+    return pending_entity_names_;
   }
 
  private:
@@ -355,6 +370,9 @@ class ImportContext {
   llvm::SmallVector<PendingGeneric> pending_generics_;
   // Specifics that we have partially imported but not yet finished importing.
   llvm::SmallVector<PendingSpecific> pending_specifics_;
+  // Entity names that we have partially imported but not yet finished
+  // importing.
+  llvm::SmallVector<PendingEntityName> pending_entity_names_;
 };
 
 // Resolves an instruction from an imported IR into a constant referring to the
@@ -1486,25 +1504,68 @@ static auto TryResolveTypedInst(ImportRefResolver& resolver,
 static auto TryResolveTypedInst(ImportRefResolver& resolver,
                                 SemIR::BindSymbolicName inst) -> ResolveResult {
   auto type_id = GetLocalConstantId(resolver, inst.type_id);
-  const auto& import_entity_name =
-      resolver.import_entity_names().Get(inst.entity_name_id);
-  auto decl_bind_name_id =
-      GetLocalConstantInstId(resolver, import_entity_name.decl_bind_name_id);
   if (resolver.HasNewWork()) {
     return ResolveResult::Retry();
   }
 
+  const auto& import_entity_name =
+      resolver.import_entity_names().Get(inst.entity_name_id);
   auto name_id = GetLocalNameId(resolver, import_entity_name.name_id);
   auto entity_name_id = resolver.local_entity_names().ImportSymbolicBindingName(
       name_id, SemIR::NameScopeId::None, import_entity_name.bind_index(),
       import_entity_name.is_template, import_entity_name.period_self_distance,
-      decl_bind_name_id);
+      SemIR::InstId::None);
+
+  if (import_entity_name.decl_bind_name_id.has_value()) {
+    // This instruction is the binding whose facet type we are currently
+    // importing. We will have to finish importing the instruction before we can
+    // resolve it in the EntityName.
+    resolver.AddPendingEntityName(
+        {.import_decl_bind_name_id = import_entity_name.decl_bind_name_id,
+         .local_id = entity_name_id});
+  }
+
   return ResolveAsDeduplicated<SemIR::BindSymbolicName>(
       resolver,
       {.type_id =
            resolver.local_context().types().GetTypeIdForTypeConstantId(type_id),
        .entity_name_id = entity_name_id,
        .value_id = SemIR::InstId::None});
+}
+
+static auto TryResolveTypedInst(ImportRefResolver& resolver,
+                                SemIR::FacetAccessPeriodSelfType inst)
+    -> ResolveResult {
+  auto type_id = GetLocalConstantId(resolver, inst.type_id);
+  auto facet_value_inst_id =
+      GetLocalConstantInstId(resolver, inst.facet_value_inst_id);
+  if (resolver.HasNewWork()) {
+    return ResolveResult::Retry();
+  }
+
+  const auto& import_entity_name =
+      resolver.import_entity_names().Get(inst.entity_name_id);
+  auto name_id = GetLocalNameId(resolver, import_entity_name.name_id);
+  auto entity_name_id = resolver.local_entity_names().ImportSymbolicBindingName(
+      name_id, SemIR::NameScopeId::None, import_entity_name.bind_index(),
+      import_entity_name.is_template, import_entity_name.period_self_distance,
+      SemIR::InstId::None);
+
+  if (import_entity_name.decl_bind_name_id.has_value()) {
+    // This instruction is the binding whose facet type we are currently
+    // importing. We will have to finish importing the instruction before we can
+    // resolve it in the EntityName.
+    resolver.AddPendingEntityName(
+        {.import_decl_bind_name_id = import_entity_name.decl_bind_name_id,
+         .local_id = entity_name_id});
+  }
+
+  return ResolveAsDeduplicated<SemIR::FacetAccessPeriodSelfType>(
+      resolver,
+      {.type_id =
+           resolver.local_context().types().GetTypeIdForTypeConstantId(type_id),
+       .facet_value_inst_id = facet_value_inst_id,
+       .entity_name_id = entity_name_id});
 }
 
 template <typename BindingPatternT>
@@ -3162,6 +3223,9 @@ static auto TryResolveInstCanonical(ImportRefResolver& resolver,
     case CARBON_KIND(SemIR::ConstType inst): {
       return TryResolveTypedInst(resolver, inst);
     }
+    case CARBON_KIND(SemIR::FacetAccessPeriodSelfType inst): {
+      return TryResolveTypedInst(resolver, inst);
+    }
     case CARBON_KIND(SemIR::ExportDecl inst): {
       return TryResolveTypedInst(resolver, inst);
     }
@@ -3493,6 +3557,18 @@ static auto FinishPendingSpecific(ImportRefResolver& resolver,
   }
 }
 
+static auto FinishPendingEntityName(ImportRefResolver& resolver,
+                                    ImportContext::PendingEntityName pending) {
+  // The instruction in `import_decl_bind_name_id` must have already been
+  // imported. It's only used to refer to a BindSymbolicName from within its own
+  // type.
+  auto local_inst_id =
+      GetLocalConstantInstId(resolver, pending.import_decl_bind_name_id);
+  CARBON_CHECK(local_inst_id.has_value());
+  resolver.local_entity_names().Get(pending.local_id).decl_bind_name_id =
+      local_inst_id;
+}
+
 // Perform any work that we deferred until the end of the main Resolve loop.
 // NOLINTNEXTLINE(misc-no-recursion)
 auto ImportRefResolver::PerformPendingWork() -> void {
@@ -3514,6 +3590,13 @@ auto ImportRefResolver::PerformPendingWork() -> void {
       FinishPendingSpecific(*this, pending_specifics().pop_back_val());
     }
   }
+
+  auto work_size = work_stack_.size();
+  for (auto pending : pending_entity_names()) {
+    FinishPendingEntityName(*this, pending);
+  }
+  CARBON_CHECK(work_size == work_stack_.size(),
+               "Unexpected new work was introduced");
 }
 
 // Returns a list of ImportIRInsts equivalent to the ImportRef currently being

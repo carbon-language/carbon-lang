@@ -277,7 +277,7 @@ auto AppendLookupScopesForConstant(Context& context, SemIR::LocId loc_id,
 
   // TODO: Combine this branch with the FacetAccessType one by just calling
   // GetCanonicalizedFacetOrTypeValue unconditionally?
-  if (auto deferred = base.TryAs<SemIR::DeferredBindSymbolicName>()) {
+  if (auto deferred = base.TryAs<SemIR::FacetAccessPeriodSelfType>()) {
     auto facet_type_type_id =
         context.insts()
             .Get(context.constant_values().GetInstId(
@@ -289,12 +289,21 @@ auto AppendLookupScopesForConstant(Context& context, SemIR::LocId loc_id,
   }
 
   if (auto base_as_facet_access_type = base.TryAs<SemIR::FacetAccessType>()) {
+    auto facet_value_inst_id = base_as_facet_access_type->facet_value_inst_id;
+#if 0
+    if (auto bind = context.insts().TryGetAs<SemIR::BindSymbolicName>(
+            facet_value_inst_id)) {
+      const auto& entity_name =
+          context.entity_names().Get(bind->entity_name_id);
+      if (entity_name.decl_bind_name_id.has_value()) {
+        facet_value_inst_id = entity_name.decl_bind_name_id;
+      }
+    }
+#endif
     // Move from the symbolic facet value up in typish-ness to its FacetType to
     // find a lookup scope.
     auto facet_type_type_id =
-        context.insts()
-            .Get(base_as_facet_access_type->facet_value_inst_id)
-            .type_id();
+        context.insts().Get(facet_value_inst_id).type_id();
     base_const_id = context.types().GetConstantId(facet_type_type_id);
     base_id = context.constant_values().GetInstId(base_const_id);
     base = context.insts().Get(base_id);

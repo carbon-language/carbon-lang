@@ -46,10 +46,12 @@ auto EndSubpatternAsNonExpr(Context& context) -> void {
   context.region_stack().PopAndDiscardRegion();
 }
 
-auto AddBindingPattern(Context& context, SemIR::LocId name_loc,
-                       SemIR::NameId name_id, SemIR::TypeId type_id,
-                       SemIR::ExprRegionId type_region_id, bool is_generic,
-                       bool is_template) -> BindingPatternInfo {
+auto AddBindingPattern(
+    Context& context, SemIR::LocId name_loc, SemIR::NameId name_id,
+    SemIR::TypeId type_id, SemIR::ExprRegionId type_region_id, bool is_generic,
+    bool is_template,
+    llvm::function_ref<auto(SemIR::InstId)->SemIR::InstId> build_binding_inst)
+    -> BindingPatternInfo {
   auto entity_name_id = context.entity_names().AddSymbolicBindingName(
       name_id, context.scope_stack().PeekNameScopeId(),
       is_generic ? context.scope_stack().AddCompileTimeBinding()
@@ -69,6 +71,10 @@ auto AddBindingPattern(Context& context, SemIR::LocId name_loc,
                                           {.type_id = type_id,
                                            .entity_name_id = entity_name_id,
                                            .value_id = SemIR::InstId::None});
+  }
+
+  if (build_binding_inst) {
+    bind_id = build_binding_inst(bind_id);
   }
 
   auto pattern_type_id = GetPatternType(context, type_id);

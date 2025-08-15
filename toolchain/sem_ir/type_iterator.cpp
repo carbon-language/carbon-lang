@@ -69,12 +69,14 @@ auto TypeIterator::Next() -> Step {
         return Step::TemplateType();
       }
 
-      case CARBON_KIND(SemIR::DeferredBindSymbolicName deferred): {
-        auto facet_type_id = sem_ir_->insts()
-                                 .Get(sem_ir_->entity_names()
-                                          .Get(deferred.entity_name_id)
-                                          .decl_bind_name_id)
-                                 .type_id();
+      case CARBON_KIND(SemIR::FacetAccessPeriodSelfType deferred): {
+        auto decl_id = sem_ir_->entity_names()
+                           .Get(deferred.entity_name_id)
+                           .decl_bind_name_id;
+        auto facet_value_inst_id =
+            decl_id.has_value() ? decl_id : deferred.facet_value_inst_id;
+        auto facet_type_id =
+            sem_ir_->insts().Get(facet_value_inst_id).type_id();
         return Step::SymbolicType{.facet_type_id = facet_type_id};
       }
 

@@ -13,7 +13,6 @@
 #include "toolchain/check/impl_lookup.h"
 #include "toolchain/check/import_ref.h"
 #include "toolchain/check/inst.h"
-#include "toolchain/check/subst.h"
 #include "toolchain/check/type.h"
 #include "toolchain/check/type_completion.h"
 #include "toolchain/diagnostics/diagnostic.h"
@@ -187,58 +186,6 @@ auto EvalConstantInst(Context& /*context*/, SemIR::Deref /*inst*/)
   return ConstantEvalResult::TODO;
 }
 
-class SubstSelfFacetValuesCallbacks : public SubstInstCallbacks {
- public:
-  explicit SubstSelfFacetValuesCallbacks(Context* context,
-                                         SemIR::InstId facet_value_inst_id)
-      : SubstInstCallbacks(context),
-        facet_value_inst_id_(facet_value_inst_id) {}
-
-  auto Subst(SemIR::InstId& inst_id) -> SubstResult override {
-    // FacetTypes are considered concrete even when they have symbolic `.Self`
-    // facet values in their constraints, which are what we want to substitute,
-    // so we recurse inside concrete `FacetTypes`.
-    if (context().insts().Is<SemIR::FacetType>(inst_id)) {
-      return SubstOperands;
-    }
-    if (context().constant_values().Get(inst_id).is_concrete()) {
-      return FullySubstituted;
-    }
-
-    if (auto bind_name =
-            context().insts().TryGetAs<SemIR::BindSymbolicName>(inst_id)) {
-      auto& entity_name =
-          context().entity_names().Get(bind_name->entity_name_id);
-      if (entity_name.name_id == SemIR::NameId::PeriodSelf) {
-        if (entity_name.period_self_distance >= 0) {
-          auto subst_entity_name = entity_name;
-          if (subst_entity_name.period_self_distance == 0) {
-            subst_entity_name.decl_bind_name_id = facet_value_inst_id_;
-          }
-          subst_entity_name.period_self_distance--;
-          auto subst_entity_name_id =
-              context().entity_names().Add(subst_entity_name);
-          inst_id = Rebuild(inst_id, SemIR::BindSymbolicName{
-                                         .type_id = bind_name->type_id,
-                                         .entity_name_id = subst_entity_name_id,
-                                         .value_id = bind_name->value_id});
-          return FullySubstituted;
-        }
-      }
-    }
-
-    return SubstOperands;
-  }
-
-  auto Rebuild(SemIR::InstId orig_inst_id, SemIR::Inst new_inst)
-      -> SemIR::InstId override {
-    return RebuildNewInst(SemIR::LocId(orig_inst_id), new_inst);
-  }
-
- private:
-  SemIR::InstId facet_value_inst_id_;
-};
-
 auto EvalConstantInst(Context& context, SemIR::ExportDecl inst)
     -> ConstantEvalResult {
   // An export instruction evaluates to the exported declaration.
@@ -259,25 +206,19 @@ auto EvalConstantInst(Context& context, SemIR::FacetAccessType inst)
     const auto& entity_name =
         context.entity_names().Get(bind_name->entity_name_id);
     if (entity_name.name_id != SemIR::NameId::PeriodSelf) {
+      inst.facet_value_inst_id =
+          SubstSelfFacetValues(context, inst.facet_value_inst_id);
+    } else if (entity_name.name_id == SemIR::NameId::PeriodSelf
+       // && entity_name.period_self_distance < 0
+              ) {
 #if 0
-      auto facet_type_id =
-          context.insts().Get(inst.facet_value_inst_id).type_id();
-      auto facet_type_inst_id = context.types().GetInstId(facet_type_id);
-#endif
-      auto callbacks =
-          SubstSelfFacetValuesCallbacks(&context, inst.facet_value_inst_id);
-      auto subst_inst_id =
-          SubstInst(context, inst.facet_value_inst_id, callbacks);
-      inst.facet_value_inst_id = subst_inst_id;
-    } else if (entity_name.name_id == SemIR::NameId::PeriodSelf &&
-               entity_name.decl_bind_name_id.has_value()) {
-#if 1
       return ConstantEvalResult::NewSamePhase(SemIR::FacetAccessType{
           .type_id = SemIR::TypeType::TypeId,
           .facet_value_inst_id = entity_name.decl_bind_name_id});
-#else
-      return ConstantEvalResult::NewSamePhase(SemIR::DeferredBindSymbolicName{
+#elif 1
+      return ConstantEvalResult::NewSamePhase(SemIR::FacetAccessPeriodSelfType{
           .type_id = SemIR::TypeType::TypeId,
+          .facet_value_inst_id = inst.facet_value_inst_id,
           .entity_name_id = bind_name->entity_name_id});
 #endif
     }
@@ -287,7 +228,7 @@ auto EvalConstantInst(Context& context, SemIR::FacetAccessType inst)
 }
 
 auto EvalConstantInst(Context& /*context*/,
-                      SemIR::DeferredBindSymbolicName inst)
+                      SemIR::FacetAccessPeriodSelfType inst)
     -> ConstantEvalResult {
   return ConstantEvalResult::NewSamePhase(inst);
 }

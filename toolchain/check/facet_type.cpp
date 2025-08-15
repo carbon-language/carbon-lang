@@ -617,36 +617,145 @@ auto ResolveFacetTypeRewriteConstraints(
 auto MakePeriodSelfFacetValue(Context& context, SemIR::TypeId self_type_id,
                               int32_t period_self_distance, bool is_deferred)
     -> SemIR::InstId {
-  auto inst_id = SemIR::InstId::None;
-  if (!is_deferred) {
-    auto entity_name_id = context.entity_names().AddCanonical({
-        .name_id = SemIR::NameId::PeriodSelf,
-        .parent_scope_id = context.scope_stack().PeekNameScopeId(),
-        .period_self_distance = period_self_distance,
-    });
+  // Must not be a canonical entity name, so that SubstSelfFacetValues can
+  // change the distance without changing unrelated entity names.
+  auto entity_name_id = context.entity_names().Add({
+      .name_id = SemIR::NameId::PeriodSelf,
+      .parent_scope_id = context.scope_stack().PeekNameScopeId(),
+      .period_self_distance = period_self_distance,
+  });
+  auto bind_inst_id = AddInst(
+      context, SemIR::LocIdAndInst::NoLoc<SemIR::BindSymbolicName>({
+                   .type_id = self_type_id,
+                   .entity_name_id = entity_name_id,
+                   // `None` because there is no equivalent non-symbolic value.
+                   .value_id = SemIR::InstId::None,
+               }));
+  // This causes a loop in import.
+#if 0
+  // This will be replaced with a pointer to the facet type that is to be used
+  // as .Self later.
+  context.entity_names().Get(entity_name_id).decl_bind_name_id = bind_inst_id;
+#endif
+  auto inst_id = bind_inst_id;
+#if 0
+  if (is_deferred) {
     inst_id =
-        AddInst(context,
-                SemIR::LocIdAndInst::NoLoc<SemIR::BindSymbolicName>({
-                    .type_id = self_type_id,
-                    .entity_name_id = entity_name_id,
-                    // `None` because there is no equivalent non-symbolic value.
-                    .value_id = SemIR::InstId::None,
-                }));
-  } else {
-    auto entity_name_id = context.entity_names().Add({
-        .name_id = SemIR::NameId::PeriodSelf,
-        .parent_scope_id = context.scope_stack().PeekNameScopeId(),
-        .period_self_distance = period_self_distance,
-    });
-    inst_id = AddInst(
-        context,
-        SemIR::LocIdAndInst::NoLoc<SemIR::DeferredBindSymbolicName>(
-            {.type_id = self_type_id, .entity_name_id = entity_name_id}));
+        AddInst(context, SemIR::LocIdAndInst::NoLoc<SemIR::FacetAccessType>(
+                             {.type_id = SemIR::TypeType::TypeId,
+                              .facet_value_inst_id = bind_inst_id}));
   }
+#else
+  (void)is_deferred;
+#endif
   auto existing =
       context.scope_stack().LookupOrAddName(SemIR::NameId::PeriodSelf, inst_id);
   // Shouldn't have any names in newly created scope.
   CARBON_CHECK(!existing.has_value());
+  return bind_inst_id;
+}
+
+class SubstSelfFacetValuesCallbacks : public SubstInstCallbacks {
+ public:
+  explicit SubstSelfFacetValuesCallbacks(
+      Context* context, SemIR::InstId facet_value_inst_id,
+      llvm::SmallVector<SemIR::EntityNameId, 16>* entity_name_ids)
+      : SubstInstCallbacks(context),
+        facet_value_inst_id_(facet_value_inst_id),
+        entity_name_ids_(entity_name_ids) {}
+
+  auto Subst(SemIR::InstId& inst_id) -> SubstResult override {
+    // FacetTypes are considered concrete even when they have symbolic `.Self`
+    // facet values in their constraints, which are what we want to substitute,
+    // so we recurse inside concrete `FacetTypes`.
+    if (context().insts().Is<SemIR::FacetType>(inst_id)) {
+      return SubstOperands;
+    }
+    if (context().constant_values().Get(inst_id).is_concrete()) {
+      return FullySubstituted;
+    }
+
+    if (auto bind_name =
+            context().insts().TryGetAs<SemIR::FacetAccessPeriodSelfType>(
+                inst_id)) {
+      auto& entity_name =
+          context().entity_names().Get(bind_name->entity_name_id);
+      if (entity_name.name_id == SemIR::NameId::PeriodSelf) {
+        // We bottom out at -2. -1 indicates that it was just 0 and we just
+        // assigned a facet value declaration.
+        if (entity_name.period_self_distance >= -1) {
+          if (entity_name.period_self_distance == 0) {
+            entity_name.decl_bind_name_id = facet_value_inst_id_;
+          }
+          entity_name.period_self_distance--;
+        }
+      }
+    }
+
+    if (auto bind_name =
+            context().insts().TryGetAs<SemIR::BindSymbolicName>(inst_id)) {
+      auto& entity_name =
+          context().entity_names().Get(bind_name->entity_name_id);
+      if (entity_name.name_id == SemIR::NameId::PeriodSelf) {
+        // FIXME: Does this even happen now??
+
+        // We bottom out at -2. -1 indicates that it was just 0 and we just
+        // assigned a facet value declaration.
+        if (entity_name.period_self_distance >= -1) {
+          if (entity_name.period_self_distance == 0) {
+            entity_name.decl_bind_name_id = facet_value_inst_id_;
+          }
+          entity_name.period_self_distance--;
+#if 0
+          if (entity_name_ids_->size() <=
+              static_cast<size_t>(entity_name.period_self_distance)) {
+            entity_name_ids_->resize(entity_name.period_self_distance + 1,
+                                     SemIR::EntityNameId::None);
+          }
+          if (!(*entity_name_ids_)[entity_name.period_self_distance]
+                   .has_value()) {
+            (*entity_name_ids_)[entity_name.period_self_distance] =
+                bind_name->entity_name_id;
+            entity_name.period_self_distance--;
+          }
+#endif
+          // We modify the entity name's distance, but the instruction ids don't
+          // need to change.
+          return SubstOperands;
+        }
+      }
+    }
+
+    return SubstOperands;
+  }
+
+  auto Rebuild(SemIR::InstId orig_inst_id, SemIR::Inst new_inst)
+      -> SemIR::InstId override {
+    return RebuildNewInst(SemIR::LocId(orig_inst_id), new_inst);
+  }
+
+ private:
+  SemIR::InstId facet_value_inst_id_;
+  [[maybe_unused]] llvm::SmallVector<SemIR::EntityNameId, 16>* entity_name_ids_;
+};
+
+// FIXME: Stop returning an InstId. Rename this from "Subst" to "Attach" or
+// something.
+auto SubstSelfFacetValues(Context& context, SemIR::InstId facet_value_inst_id)
+    -> SemIR::InstId {
+  llvm::SmallVector<SemIR::EntityNameId, 16> entity_name_ids;
+  auto callbacks = SubstSelfFacetValuesCallbacks(&context, facet_value_inst_id,
+                                                 &entity_name_ids);
+  auto inst_id = SubstInst(context, facet_value_inst_id, callbacks);
+#if 0
+  if (!entity_name_ids.empty()) {
+    // Point the `.Self` that were at distance 0 at the resulting facet value,
+    // this gives consistent type between the returned facet value and the .Self
+    // facet values in its type.
+    context.entity_names().Get(entity_name_ids[0]).decl_bind_name_id = inst_id;
+  }
+#endif
+  CARBON_CHECK(inst_id == facet_value_inst_id);
   return inst_id;
 }
 

@@ -15,8 +15,13 @@ namespace Carbon::SemIR {
 struct EntityName : public Printable<EntityName> {
   auto Print(llvm::raw_ostream& out) const -> void {
     out << "{name: " << name_id << ", parent_scope: " << parent_scope_id
-        << ", index: " << bind_index_value << ", is_template: " << is_template
-        << "}";
+        << ", index: " << bind_index_value << ", is_template: " << is_template;
+    if (name_id == SemIR::NameId::PeriodSelf) {
+      out << ", period_self_distance: " << period_self_distance;
+      out << ", decl_bind_name_id: ";
+      decl_bind_name_id.Print(out);
+    }
+    out << "}";
   }
 
   friend auto CarbonHashtableEq(const EntityName& lhs, const EntityName& rhs)

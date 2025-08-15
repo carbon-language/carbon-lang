@@ -315,10 +315,14 @@ class Stringifier {
           << layout[CustomLayoutId::AlignIndex] << ">";
   }
 
-  auto StringifyInst(InstId /*inst_id*/, DeferredBindSymbolicName inst)
+  auto StringifyInst(InstId /*inst_id*/, FacetAccessPeriodSelfType inst)
       -> void {
-    // Given `T:! I(.Self)`, forward the deferred `.Self` to the entity name.
-    step_stack_->PushEntityNameId(inst.entity_name_id);
+    const auto& entity_name = sem_ir_->entity_names().Get(inst.entity_name_id);
+    if (entity_name.decl_bind_name_id.has_value()) {
+      step_stack_->PushInstId(entity_name.decl_bind_name_id);
+    } else {
+      step_stack_->PushEntityNameId(inst.entity_name_id);
+    }
   }
 
   auto StringifyInst(InstId /*inst_id*/, FacetAccessType inst) -> void {
