@@ -692,11 +692,12 @@ fn Foo(a: const (const C)) {}
 // CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [concrete]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [concrete]
 // CHECK:STDOUT:   %type: type = facet_type <type> [concrete]
-// CHECK:STDOUT:   %.Self: %type = bind_symbolic_name .Self(0) [symbolic_self]
+// CHECK:STDOUT:   %.Self.186b81.1: %type = bind_symbolic_name .Self(0) [symbolic_self]
 // CHECK:STDOUT:   %a: %C = bind_symbolic_name a, 0 [symbolic]
 // CHECK:STDOUT:   %pattern_type: type = pattern_type %C [concrete]
 // CHECK:STDOUT:   %Foo.type.a02530.1: type = fn_type @Foo.loc7 [concrete]
 // CHECK:STDOUT:   %Foo.ddeb7d.1: %Foo.type.a02530.1 = struct_value () [concrete]
+// CHECK:STDOUT:   %.Self.186b81.2: %type = bind_symbolic_name .Self(0) [symbolic_self]
 // CHECK:STDOUT:   %Foo.type.a02530.2: type = fn_type @Foo.loc15 [concrete]
 // CHECK:STDOUT:   %Foo.ddeb7d.2: %Foo.type.a02530.2 = struct_value () [concrete]
 // CHECK:STDOUT: }
@@ -714,7 +715,7 @@ fn Foo(a: const (const C)) {}
 // CHECK:STDOUT:     %a.patt: %pattern_type = symbolic_binding_pattern a, 0 [concrete]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %.loc7: type = splice_block %C.ref [concrete = constants.%C] {
-// CHECK:STDOUT:       %.Self: %type = bind_symbolic_name .Self(0) [symbolic_self = constants.%.Self]
+// CHECK:STDOUT:       %.Self: %type = bind_symbolic_name .Self(0) [symbolic_self = constants.%.Self.186b81.1]
 // CHECK:STDOUT:       %C.ref: type = name_ref C, file.%C.decl [concrete = constants.%C]
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %a.loc7_8.2: %C = bind_symbolic_name a, 0 [symbolic = %a.loc7_8.1 (constants.%a)]
@@ -723,7 +724,7 @@ fn Foo(a: const (const C)) {}
 // CHECK:STDOUT:     %a.patt: %pattern_type = symbolic_binding_pattern a, 0 [concrete]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %.loc15: type = splice_block %D.ref [concrete = constants.%C] {
-// CHECK:STDOUT:       %.Self: %type = bind_symbolic_name .Self(0) [symbolic_self = constants.%.Self]
+// CHECK:STDOUT:       %.Self: %type = bind_symbolic_name .Self(0) [symbolic_self = constants.%.Self.186b81.2]
 // CHECK:STDOUT:       %D.ref: type = name_ref D, file.%D [concrete = constants.%C]
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %a.loc15_8.2: %C = bind_symbolic_name a, 0 [symbolic = %a.loc15_8.1 (constants.%a)]

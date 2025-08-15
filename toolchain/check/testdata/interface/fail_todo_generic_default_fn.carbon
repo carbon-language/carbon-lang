@@ -30,7 +30,7 @@ fn I(T:! type).F[self: Self]() -> Self { return self; }
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %type: type = facet_type <type> [concrete]
-// CHECK:STDOUT:   %.Self: %type = bind_symbolic_name .Self(0) [symbolic_self]
+// CHECK:STDOUT:   %.Self.186b81.1: %type = bind_symbolic_name .Self(0) [symbolic_self]
 // CHECK:STDOUT:   %T: type = bind_symbolic_name T, 0 [symbolic]
 // CHECK:STDOUT:   %pattern_type.98f: type = pattern_type type [concrete]
 // CHECK:STDOUT:   %I.type.dac: type = generic_interface_type @I [concrete]
@@ -43,6 +43,7 @@ fn I(T:! type).F[self: Self]() -> Self { return self; }
 // CHECK:STDOUT:   %I.F.bb2dd4.1: %I.F.type.2aef59.1 = struct_value () [symbolic]
 // CHECK:STDOUT:   %I.assoc_type: type = assoc_entity_type @I, @I(%T) [symbolic]
 // CHECK:STDOUT:   %assoc0: %I.assoc_type = assoc_entity element0, @I.%I.F.decl [symbolic]
+// CHECK:STDOUT:   %.Self.186b81.2: %type = bind_symbolic_name .Self(0) [symbolic_self]
 // CHECK:STDOUT:   %I.F.type.2aef59.2: type = fn_type @I.F.loc27, @I(%T) [symbolic]
 // CHECK:STDOUT:   %I.F.bb2dd4.2: %I.F.type.2aef59.2 = struct_value () [symbolic]
 // CHECK:STDOUT:   %require_complete: <witness> = require_complete_type %Self.as_type [symbolic]
@@ -55,7 +56,7 @@ fn I(T:! type).F[self: Self]() -> Self { return self; }
 // CHECK:STDOUT:   %I.decl: %I.type.dac = interface_decl @I [concrete = constants.%I.generic] {
 // CHECK:STDOUT:     %T.patt: %pattern_type.98f = symbolic_binding_pattern T, 0 [concrete]
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %.Self: %type = bind_symbolic_name .Self(0) [symbolic_self = constants.%.Self]
+// CHECK:STDOUT:     %.Self: %type = bind_symbolic_name .Self(0) [symbolic_self = constants.%.Self.186b81.1]
 // CHECK:STDOUT:     %T.loc15_13.2: type = bind_symbolic_name T, 0 [symbolic = %T.loc15_13.1 (constants.%T)]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %I.F.decl: %I.F.type.2aef59.2 = fn_decl @I.F.loc27 [symbolic = constants.%I.F.bb2dd4.2] {
@@ -64,7 +65,7 @@ fn I(T:! type).F[self: Self]() -> Self { return self; }
 // CHECK:STDOUT:     %return.patt: @I.F.loc27.%pattern_type (%pattern_type.4be) = return_slot_pattern [concrete]
 // CHECK:STDOUT:     %return.param_patt: @I.F.loc27.%pattern_type (%pattern_type.4be) = out_param_pattern %return.patt, call_param1 [concrete]
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %.Self: %type = bind_symbolic_name .Self(0) [symbolic_self = constants.%.Self]
+// CHECK:STDOUT:     %.Self: %type = bind_symbolic_name .Self(0) [symbolic_self = constants.%.Self.186b81.2]
 // CHECK:STDOUT:     %T.loc27_6: type = bind_symbolic_name T, 0 [symbolic = @I.%T.loc15_13.1 (constants.%T)]
 // CHECK:STDOUT:     %.loc27_35.1: @I.F.loc27.%I.type (%I.type.325) = specific_constant @I.%Self.1, @I(constants.%T) [symbolic = %Self (constants.%Self)]
 // CHECK:STDOUT:     %Self.ref.loc27_35: @I.F.loc27.%I.type (%I.type.325) = name_ref Self, %.loc27_35.1 [symbolic = %Self (constants.%Self)]

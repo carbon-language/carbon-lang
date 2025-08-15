@@ -632,10 +632,13 @@ auto MakePeriodSelfFacetValue(Context& context, SemIR::TypeId self_type_id,
                    .value_id = SemIR::InstId::None,
                }));
   // This causes a loop in import.
-#if 0
+#if 1
   // This will be replaced with a pointer to the facet type that is to be used
-  // as .Self later.
-  context.entity_names().Get(entity_name_id).decl_bind_name_id = bind_inst_id;
+  // as .Self later. It must be the canonical instruction in order to be
+  // imported.
+  context.entity_names().Get(entity_name_id).decl_bind_name_id =
+      // FIXME: Delete this: bind_inst_id;
+      context.constant_values().GetConstantInstId(bind_inst_id);
 #endif
   auto inst_id = bind_inst_id;
 #if 0
@@ -744,8 +747,10 @@ class SubstSelfFacetValuesCallbacks : public SubstInstCallbacks {
 auto SubstSelfFacetValues(Context& context, SemIR::InstId facet_value_inst_id)
     -> SemIR::InstId {
   llvm::SmallVector<SemIR::EntityNameId, 16> entity_name_ids;
-  auto callbacks = SubstSelfFacetValuesCallbacks(&context, facet_value_inst_id,
-                                                 &entity_name_ids);
+  auto callbacks = SubstSelfFacetValuesCallbacks(
+      &context,
+      context.constant_values().GetConstantInstId(facet_value_inst_id),
+      &entity_name_ids);
   auto inst_id = SubstInst(context, facet_value_inst_id, callbacks);
 #if 0
   if (!entity_name_ids.empty()) {

@@ -276,9 +276,9 @@ interface C {
 // CHECK:STDOUT:   %pattern_type.f47: type = pattern_type %J2.type [concrete]
 // CHECK:STDOUT:   %V.as_type: type = facet_access_type %V [symbolic]
 // CHECK:STDOUT:   %.Self.04c: %I2.type = bind_symbolic_name .Self(1) [symbolic_self]
-// CHECK:STDOUT:   %.38f: type = deferred_bind_symbolic_self %.Self.04c, .Self(1) [symbolic_self]
+// CHECK:STDOUT:   %.c09: type = facet_access_period_self_type .Self(1) [symbolic_self]
 // CHECK:STDOUT:   %I2.lookup_impl_witness.ebe: <witness> = lookup_impl_witness %.Self.04c, @I2 [symbolic_self]
-// CHECK:STDOUT:   %I2.facet.bdd: %I2.type = facet_value %.38f, (%I2.lookup_impl_witness.ebe) [symbolic_self]
+// CHECK:STDOUT:   %I2.facet.86b: %I2.type = facet_value %.c09, (%I2.lookup_impl_witness.ebe) [symbolic_self]
 // CHECK:STDOUT:   %impl.elem0.dde: type = impl_witness_access %I2.lookup_impl_witness.ebe, element0 [symbolic_self]
 // CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [concrete]
 // CHECK:STDOUT:   %I2_where.type: type = facet_type <@I2 where %impl.elem0.dde = %empty_tuple.type> [concrete]
@@ -321,8 +321,8 @@ interface C {
 // CHECK:STDOUT:     %.Self.1: %I2.type = bind_symbolic_name .Self(1) [symbolic_self = constants.%.Self.04c]
 // CHECK:STDOUT:     %.Self.ref: %I2.type = name_ref .Self, %.Self.1 [symbolic_self = constants.%.Self.04c]
 // CHECK:STDOUT:     %T2.ref: %I2.assoc_type = name_ref T2, @T2.%assoc0 [concrete = constants.%assoc0.25f]
-// CHECK:STDOUT:     %.Self.as_type: type = facet_access_type %.Self.ref [symbolic_self = constants.%.38f]
-// CHECK:STDOUT:     %.loc11_36: type = converted %.Self.ref, %.Self.as_type [symbolic_self = constants.%.38f]
+// CHECK:STDOUT:     %.Self.as_type: type = facet_access_type %.Self.ref [symbolic_self = constants.%.c09]
+// CHECK:STDOUT:     %.loc11_36: type = converted %.Self.ref, %.Self.as_type [symbolic_self = constants.%.c09]
 // CHECK:STDOUT:     %impl.elem0: type = impl_witness_access constants.%I2.lookup_impl_witness.ebe, element0 [symbolic_self = constants.%impl.elem0.dde]
 // CHECK:STDOUT:     %.loc11_43.1: %empty_tuple.type = tuple_literal ()
 // CHECK:STDOUT:     %.loc11_43.2: type = converted %.loc11_43.1, constants.%empty_tuple.type [concrete = constants.%empty_tuple.type]
@@ -417,7 +417,7 @@ interface C {
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @T2(constants.%Self.c7b) {}
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @T2(constants.%I2.facet.bdd) {}
+// CHECK:STDOUT: specific @T2(constants.%I2.facet.86b) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @V.as_type.as.I2.impl(constants.%V) {
 // CHECK:STDOUT:   %V.loc11_14.2 => constants.%V

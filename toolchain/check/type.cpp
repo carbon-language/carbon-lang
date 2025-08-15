@@ -248,11 +248,15 @@ auto GetCanonicalizedFacetOrTypeValue(Context& context, SemIR::InstId inst_id)
     // `fn F(U:! I(.Self) where .I1 = .Self)`
     //
     // Does the `.Self` on the RHS of `.I1` benefit from knowing all of `U`?
+#if 0
     if (entity_name.decl_bind_name_id.has_value()) {
       inst_id = entity_name.decl_bind_name_id;
     } else {
       inst_id = access_self->facet_value_inst_id;
     }
+#else
+    inst_id = entity_name.decl_bind_name_id;
+#endif
   }
 
   // We can have FacetAccessType of a FacetValue, and a FacetValue of a

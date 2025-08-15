@@ -74,7 +74,11 @@ auto TypeIterator::Next() -> Step {
                            .Get(deferred.entity_name_id)
                            .decl_bind_name_id;
         auto facet_value_inst_id =
+#if 0
             decl_id.has_value() ? decl_id : deferred.facet_value_inst_id;
+#else
+            decl_id;
+#endif
         auto facet_type_id =
             sem_ir_->insts().Get(facet_value_inst_id).type_id();
         return Step::SymbolicType{.facet_type_id = facet_type_id};

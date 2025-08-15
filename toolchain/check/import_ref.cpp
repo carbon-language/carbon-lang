@@ -1513,8 +1513,7 @@ static auto TryResolveTypedInst(ImportRefResolver& resolver,
   auto name_id = GetLocalNameId(resolver, import_entity_name.name_id);
   auto entity_name_id = resolver.local_entity_names().ImportSymbolicBindingName(
       name_id, SemIR::NameScopeId::None, import_entity_name.bind_index(),
-      import_entity_name.is_template, import_entity_name.period_self_distance,
-      SemIR::InstId::None);
+      import_entity_name.is_template, import_entity_name.period_self_distance);
 
   if (import_entity_name.decl_bind_name_id.has_value()) {
     // This instruction is the binding whose facet type we are currently
@@ -1537,8 +1536,10 @@ static auto TryResolveTypedInst(ImportRefResolver& resolver,
                                 SemIR::FacetAccessPeriodSelfType inst)
     -> ResolveResult {
   auto type_id = GetLocalConstantId(resolver, inst.type_id);
+#if 0
   auto facet_value_inst_id =
       GetLocalConstantInstId(resolver, inst.facet_value_inst_id);
+#endif
   if (resolver.HasNewWork()) {
     return ResolveResult::Retry();
   }
@@ -1548,8 +1549,7 @@ static auto TryResolveTypedInst(ImportRefResolver& resolver,
   auto name_id = GetLocalNameId(resolver, import_entity_name.name_id);
   auto entity_name_id = resolver.local_entity_names().ImportSymbolicBindingName(
       name_id, SemIR::NameScopeId::None, import_entity_name.bind_index(),
-      import_entity_name.is_template, import_entity_name.period_self_distance,
-      SemIR::InstId::None);
+      import_entity_name.is_template, import_entity_name.period_self_distance);
 
   if (import_entity_name.decl_bind_name_id.has_value()) {
     // This instruction is the binding whose facet type we are currently
@@ -1564,7 +1564,9 @@ static auto TryResolveTypedInst(ImportRefResolver& resolver,
       resolver,
       {.type_id =
            resolver.local_context().types().GetTypeIdForTypeConstantId(type_id),
+#if 0
        .facet_value_inst_id = facet_value_inst_id,
+#endif
        .entity_name_id = entity_name_id});
 }
 
@@ -3562,6 +3564,7 @@ static auto FinishPendingEntityName(ImportRefResolver& resolver,
   // The instruction in `import_decl_bind_name_id` must have already been
   // imported. It's only used to refer to a BindSymbolicName from within its own
   // type.
+  CARBON_CHECK(pending.import_decl_bind_name_id.has_value());
   auto local_inst_id =
       GetLocalConstantInstId(resolver, pending.import_decl_bind_name_id);
   CARBON_CHECK(local_inst_id.has_value());

@@ -651,15 +651,17 @@ struct FacetAccessType {
 struct FacetAccessPeriodSelfType {
   static constexpr auto Kind =
       InstKind::FacetAccessPeriodSelfType.Define<Parse::NodeId>(
-          {.ir_name = "deferred_bind_symbolic_self",
+          {.ir_name = "facet_access_period_self_type",
            .is_type = InstIsType::Always,
-           .constant_kind = InstConstantKind::SymbolicOnly});
+           .constant_kind = InstConstantKind::Always});  // Always?
 
   // Always the builtin type TypeType.
   TypeId type_id;
+#if 0
   // The original BindSymbolicName of `.Self`, which is replaced by the decl pointed to by
   // the EntityName when a complete facet value is available for the `.Self`.
   InstId facet_value_inst_id;
+#endif
   // FIXME: We can derive this from the facet value, so is it worth keeping it
   // as an operand? Maybe the facet value can go away and we can point the
   // EntityName to that facet value initially though, once import is fixed to

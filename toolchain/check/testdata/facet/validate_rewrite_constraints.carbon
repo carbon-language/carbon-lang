@@ -566,6 +566,13 @@ interface K(Y:! type) {  }
 fn F(T:! I where .X = {.k: K(I where .X = ())}) {}
 
 fn G(T:! I where .X = {.k: K(I where .X = ())}) {
+  // CHECK:STDERR: recursive_facet.carbon:[[@LINE+7]]:3: error: cannot convert type `T` that implements `I where .(I.X) = {.k: K(I where .(I.X) = ())}` into type implementing `I where .(I.X) = {.k: K(I where .(I.X) = ())}` [ConversionFailureFacetToFacet]
+  // CHECK:STDERR:   F(T);
+  // CHECK:STDERR:   ^~~~
+  // CHECK:STDERR: recursive_facet.carbon:[[@LINE-6]]:6: note: initializing generic parameter `T` declared here [InitializingGenericParam]
+  // CHECK:STDERR: fn F(T:! I where .X = {.k: K(I where .X = ())}) {}
+  // CHECK:STDERR:      ^
+  // CHECK:STDERR:
   F(T);
 }
 

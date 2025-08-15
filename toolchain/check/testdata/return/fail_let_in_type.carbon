@@ -55,9 +55,10 @@ fn FirstPerfectNumber() -> z { return 6; }
 // CHECK:STDOUT:   %Six: %Six.type = struct_value () [concrete]
 // CHECK:STDOUT:   %int_6: Core.IntLiteral = int_value 6 [concrete]
 // CHECK:STDOUT:   %type: type = facet_type <type> [concrete]
-// CHECK:STDOUT:   %.Self: %type = bind_symbolic_name .Self(0) [symbolic_self]
+// CHECK:STDOUT:   %.Self.186b81.1: %type = bind_symbolic_name .Self(0) [symbolic_self]
 // CHECK:STDOUT:   %HalfDozen.type: type = fn_type @HalfDozen [concrete]
 // CHECK:STDOUT:   %HalfDozen: %HalfDozen.type = struct_value () [concrete]
+// CHECK:STDOUT:   %.Self.186b81.2: %type = bind_symbolic_name .Self(0) [symbolic_self]
 // CHECK:STDOUT:   %FirstPerfectNumber.type: type = fn_type @FirstPerfectNumber [concrete]
 // CHECK:STDOUT:   %FirstPerfectNumber: %FirstPerfectNumber.type = struct_value () [concrete]
 // CHECK:STDOUT: }
@@ -97,7 +98,7 @@ fn FirstPerfectNumber() -> z { return 6; }
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %y.patt: %pattern_type.98f = binding_pattern y [concrete]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %.Self.1: %type = bind_symbolic_name .Self(0) [symbolic_self = constants.%.Self]
+// CHECK:STDOUT:   %.Self.1: %type = bind_symbolic_name .Self(0) [symbolic_self = constants.%.Self.186b81.1]
 // CHECK:STDOUT:   %y: type = bind_name y, @__global_init.%i32.loc27
 // CHECK:STDOUT:   %HalfDozen.decl: %HalfDozen.type = fn_decl @HalfDozen [concrete = constants.%HalfDozen] {
 // CHECK:STDOUT:     %return.patt: <error> = return_slot_pattern [concrete]
@@ -110,7 +111,7 @@ fn FirstPerfectNumber() -> z { return 6; }
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %z.patt: %pattern_type.98f = binding_pattern z [concrete]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %.Self.2: %type = bind_symbolic_name .Self(0) [symbolic_self = constants.%.Self]
+// CHECK:STDOUT:   %.Self.2: %type = bind_symbolic_name .Self(0) [symbolic_self = constants.%.Self.186b81.2]
 // CHECK:STDOUT:   %z: type = bind_name z, @__global_init.%i32.loc39
 // CHECK:STDOUT:   %FirstPerfectNumber.decl: %FirstPerfectNumber.type = fn_decl @FirstPerfectNumber [concrete = constants.%FirstPerfectNumber] {
 // CHECK:STDOUT:     %return.patt: <error> = return_slot_pattern [concrete]

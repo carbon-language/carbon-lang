@@ -281,6 +281,13 @@ class C(T:! Tuple) {}
 
 interface J {
   // Implied: .Z1 == (), but this is also explicitly required for J1.
+  // CHECK:STDERR: early_rewrite_applied_from_nested_self.carbon:[[@LINE+7]]:43: error: cannot convert type `.(Z.Z1)` into type implementing `Tuple` [ConversionFailureTypeToFacet]
+  // CHECK:STDERR:   let J1:! (Z where .Z1 = ()) where .Z2 = C(.Z1);
+  // CHECK:STDERR:                                           ^~~~~~
+  // CHECK:STDERR: early_rewrite_applied_from_nested_self.carbon:[[@LINE-7]]:9: note: initializing generic parameter `T` declared here [InitializingGenericParam]
+  // CHECK:STDERR: class C(T:! Tuple) {}
+  // CHECK:STDERR:         ^
+  // CHECK:STDERR:
   let J1:! (Z where .Z1 = ()) where .Z2 = C(.Z1);
 }
 

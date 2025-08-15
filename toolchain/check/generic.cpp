@@ -56,6 +56,9 @@ static auto AddGenericConstantInstToEvalBlock(
   auto [generic_id, region] = GetOrCreatePendingGeneric(context);
   auto index = SemIR::GenericInstIndex(
       region, context.generic_region_stack().PeekEvalBlock().size());
+  if (context.insts().Is<SemIR::FacetAccessPeriodSelfType>(generic_inst_id)) {
+    CARBON_FATAL();
+  }
   context.generic_region_stack().AddInstToEvalBlock(generic_inst_id);
   return context.constant_values().AddSymbolicConstant(
       {.inst_id = const_inst_id,
@@ -262,6 +265,9 @@ static auto AddTemplateActionToEvalBlock(Context& context,
   symbolic_constant.generic_id = generic_id;
   symbolic_constant.index = SemIR::GenericInstIndex(
       region, context.generic_region_stack().PeekEvalBlock().size());
+  if (context.insts().Is<SemIR::FacetAccessPeriodSelfType>(inst_id)) {
+    CARBON_FATAL();
+  }
   context.generic_region_stack().AddInstToEvalBlock(inst_id);
 }
 

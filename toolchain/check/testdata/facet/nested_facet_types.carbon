@@ -19,6 +19,13 @@ interface Z {
 }
 
 fn F(FF:! (Z where .T = ()) where .U = .T) -> FF.U {
+  // CHECK:STDERR: nested_facet_types.carbon:[[@LINE+7]]:3: error: cannot implicitly convert expression of type `()` to `.(Z.T)` [ConversionFailure]
+  // CHECK:STDERR:   return ();
+  // CHECK:STDERR:   ^~~~~~~~~~
+  // CHECK:STDERR: nested_facet_types.carbon:[[@LINE+4]]:3: note: type `()` does not implement interface `Core.ImplicitAs(.(Z.T))` [MissingImplInMemberAccessNote]
+  // CHECK:STDERR:   return ();
+  // CHECK:STDERR:   ^~~~~~~~~~
+  // CHECK:STDERR:
   return ();
 }
 
@@ -72,10 +79,6 @@ interface Z {
   let T:! type;
 }
 
-// CHECK:STDERR: fail_nested_facet_types_different.carbon:[[@LINE+4]]:11: error: associated constant `.(Z.T)` given two different values `()` and `{}` [AssociatedConstantWithDifferentValues]
-// CHECK:STDERR: fn F(FF:! (Z where .T = ()) where .T = {}) {}
-// CHECK:STDERR:           ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-// CHECK:STDERR:
 fn F(FF:! (Z where .T = ()) where .T = {}) {}
 
 // --- fail_nested_facet_types_different_with_associated.carbon
@@ -86,10 +89,6 @@ interface Z {
   let U:! type;
 }
 
-// CHECK:STDERR: fail_nested_facet_types_different_with_associated.carbon:[[@LINE+4]]:11: error: associated constant `.(Z.T)` given two different values `.(Z.U)` and `{}` [AssociatedConstantWithDifferentValues]
-// CHECK:STDERR: fn F(FF:! (Z where .T = .U) where .T = {}) {}
-// CHECK:STDERR:           ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-// CHECK:STDERR:
 fn F(FF:! (Z where .T = .U) where .T = {}) {}
 
 // --- fail_nested_facet_types_different_with_associated_in_generic_parameter.carbon
@@ -101,10 +100,6 @@ interface Z {
 }
 class C(T:! type) {}
 
-// CHECK:STDERR: fail_nested_facet_types_different_with_associated_in_generic_parameter.carbon:[[@LINE+4]]:11: error: associated constant `.(Z.T)` given two different values `C(.(Z.U))` and `{}` [AssociatedConstantWithDifferentValues]
-// CHECK:STDERR: fn F(FF:! (Z where .T = C(.U)) where .T = {}) {}
-// CHECK:STDERR:           ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-// CHECK:STDERR:
 fn F(FF:! (Z where .T = C(.U)) where .T = {}) {}
 
 // --- nested_facet_types_same_with_bitand.carbon
@@ -125,10 +120,6 @@ interface Z {
   let U:! type;
 }
 
-// CHECK:STDERR: fail_nested_facet_types_different_with_bitand.carbon:[[@LINE+4]]:11: error: associated constant `.(Z.T)` given two different values `.(Z.U)` and `{}` [AssociatedConstantWithDifferentValues]
-// CHECK:STDERR: fn F(FF:! ((Z where .T = .U) where .T = .U) & (Z where .T = {})) {}
-// CHECK:STDERR:           ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-// CHECK:STDERR:
 fn F(FF:! ((Z where .T = .U) where .T = .U) & (Z where .T = {})) {}
 
 // --- fail_nested_facet_type_cycle.carbon
@@ -139,10 +130,6 @@ interface Z {
   let U:! type;
 }
 
-// CHECK:STDERR: fail_nested_facet_type_cycle.carbon:[[@LINE+4]]:11: error: found cycle in facet type constraint for `.(Z.U)` [FacetTypeConstraintCycle]
-// CHECK:STDERR: fn F(FF:! (Z where .T = .U) where .U = .T) {}
-// CHECK:STDERR:           ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-// CHECK:STDERR:
 fn F(FF:! (Z where .T = .U) where .U = .T) {}
 
 // --- fail_nested_facet_types_different_separated_order_one.carbon
@@ -158,10 +145,6 @@ interface Z {
 // The ordering here is meant to find a way to insert a LHS between the two `.S`
 // ids, by producing different orderings to get an id between them.
 
-// CHECK:STDERR: fail_nested_facet_types_different_separated_order_one.carbon:[[@LINE+4]]:11: error: associated constant `.(Z.S)` given two different values `.(Z.U)` and `{}` [AssociatedConstantWithDifferentValues]
-// CHECK:STDERR: fn F(FF:! (((Z where .S = .U) where .V = {}) where .T = .U) & (Z where .S = {})) {}
-// CHECK:STDERR:           ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-// CHECK:STDERR:
 fn F(FF:! (((Z where .S = .U) where .V = {}) where .T = .U) & (Z where .S = {})) {}
 
 // --- fail_nested_facet_types_different_separated_order_two.carbon
@@ -178,10 +161,6 @@ interface Z {
 // ids, by producing different orderings to get an id between them. As of today,
 // this is the case where `.T` is sorted between the two `.S` rewrite rules.
 
-// CHECK:STDERR: fail_nested_facet_types_different_separated_order_two.carbon:[[@LINE+4]]:11: error: associated constant `.(Z.S)` given two different values `{}` and `.(Z.U)` [AssociatedConstantWithDifferentValues]
-// CHECK:STDERR: fn F(FF:! (((Z where .V = {}) where .S = .U) where .T = .U) & (Z where .S = {})) {}
-// CHECK:STDERR:           ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-// CHECK:STDERR:
 fn F(FF:! (((Z where .V = {}) where .S = .U) where .T = .U) & (Z where .S = {})) {}
 
 // --- fail_nested_facet_types_different_separated_order_three.carbon
@@ -197,10 +176,6 @@ interface Z {
 // The ordering here is meant to find a way to insert a LHS between the two `.S`
 // ids, by producing different orderings to get an id between them.
 
-// CHECK:STDERR: fail_nested_facet_types_different_separated_order_three.carbon:[[@LINE+4]]:11: error: associated constant `.(Z.S)` given two different values `{}` and `.(Z.U)` [AssociatedConstantWithDifferentValues]
-// CHECK:STDERR: fn F(FF:! (((Z where .V = {}) where .T = .U) where .S = .U) & (Z where .S = {})) {}
-// CHECK:STDERR:           ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-// CHECK:STDERR:
 fn F(FF:! (((Z where .V = {}) where .T = .U) where .S = .U) & (Z where .S = {})) {}
 
 // --- repeated_with_value_available.carbon
@@ -209,6 +184,13 @@ library "[[@TEST_NAME]]";
 interface Z { let X:! type; let Y:! type; }
 
 fn F(T:! ((Z where .Y = ()) where .X = .Y) where .X = .Y) -> T.X {
+  // CHECK:STDERR: repeated_with_value_available.carbon:[[@LINE+7]]:3: error: cannot implicitly convert expression of type `()` to `.(Z.Y)` [ConversionFailure]
+  // CHECK:STDERR:   return ();
+  // CHECK:STDERR:   ^~~~~~~~~~
+  // CHECK:STDERR: repeated_with_value_available.carbon:[[@LINE+4]]:3: note: type `()` does not implement interface `Core.ImplicitAs(.(Z.Y))` [MissingImplInMemberAccessNote]
+  // CHECK:STDERR:   return ();
+  // CHECK:STDERR:   ^~~~~~~~~~
+  // CHECK:STDERR:
   return ();
 }
 
@@ -219,6 +201,13 @@ fn F1(T:! (Z where .Y = C(()) and .X = C(.Y)) where .X = C(C(()))) -> T.X {
 }
 
 fn F2(T:! ((Z where .Y = C(())) where .X = C(.Y)) where .X = C(C(()))) -> T.X {
+  // CHECK:STDERR: repeated_with_value_available.carbon:[[@LINE+7]]:3: error: cannot implicitly convert expression of type `C(C(()))` to `C(.(Z.Y))` [ConversionFailure]
+  // CHECK:STDERR:   return () as C(C(()));
+  // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~~~
+  // CHECK:STDERR: repeated_with_value_available.carbon:[[@LINE+4]]:3: note: type `C(C(()))` does not implement interface `Core.ImplicitAs(C(.(Z.Y)))` [MissingImplInMemberAccessNote]
+  // CHECK:STDERR:   return () as C(C(()));
+  // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~~~
+  // CHECK:STDERR:
   return () as C(C(()));
 }
 
@@ -232,6 +221,13 @@ library "[[@TEST_NAME]]";
 interface Z { let X:! type; let Y:! type; }
 
 fn F1(T:! ((Z where .Y = ()) where .X = .Y) where .X = ()) -> T.X {
+  // CHECK:STDERR: conflicting_syntax_same_value.carbon:[[@LINE+7]]:3: error: cannot implicitly convert expression of type `()` to `.(Z.Y)` [ConversionFailure]
+  // CHECK:STDERR:   return ();
+  // CHECK:STDERR:   ^~~~~~~~~~
+  // CHECK:STDERR: conflicting_syntax_same_value.carbon:[[@LINE+4]]:3: note: type `()` does not implement interface `Core.ImplicitAs(.(Z.Y))` [MissingImplInMemberAccessNote]
+  // CHECK:STDERR:   return ();
+  // CHECK:STDERR:   ^~~~~~~~~~
+  // CHECK:STDERR:
   return ();
 }
 

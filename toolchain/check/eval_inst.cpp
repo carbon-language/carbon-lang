@@ -209,16 +209,20 @@ auto EvalConstantInst(Context& context, SemIR::FacetAccessType inst)
       inst.facet_value_inst_id =
           SubstSelfFacetValues(context, inst.facet_value_inst_id);
     } else if (entity_name.name_id == SemIR::NameId::PeriodSelf
-       // && entity_name.period_self_distance < 0
-              ) {
+               // && entity_name.period_self_distance < 0
+    ) {
 #if 0
       return ConstantEvalResult::NewSamePhase(SemIR::FacetAccessType{
           .type_id = SemIR::TypeType::TypeId,
           .facet_value_inst_id = entity_name.decl_bind_name_id});
 #elif 1
-      return ConstantEvalResult::NewSamePhase(SemIR::FacetAccessPeriodSelfType{
+      // NewAnyPhase because FacetAccessPeriodSelfType is always concrete but
+      // the `facet_value_inst_id` in `FacetAccessType` can be symbolic.
+      return ConstantEvalResult::NewAnyPhase(SemIR::FacetAccessPeriodSelfType{
           .type_id = SemIR::TypeType::TypeId,
+#if 0
           .facet_value_inst_id = inst.facet_value_inst_id,
+#endif
           .entity_name_id = bind_name->entity_name_id});
 #endif
     }
@@ -227,11 +231,14 @@ auto EvalConstantInst(Context& context, SemIR::FacetAccessType inst)
   return ConstantEvalResult::NewSamePhase(inst);
 }
 
+// Not for Always
+#if 0
 auto EvalConstantInst(Context& /*context*/,
                       SemIR::FacetAccessPeriodSelfType inst)
     -> ConstantEvalResult {
   return ConstantEvalResult::NewSamePhase(inst);
 }
+#endif
 
 auto EvalConstantInst(Context& context, SemIR::InstId inst_id,
                       SemIR::FloatType inst) -> ConstantEvalResult {

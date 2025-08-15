@@ -138,7 +138,7 @@ impl C as J where .Self impls Incomplete and .T = ();
 // CHECK:STDOUT:   %Self: %I.type = bind_symbolic_name Self, 0 [symbolic]
 // CHECK:STDOUT:   %Incomplete.type: type = facet_type <@Incomplete> [concrete]
 // CHECK:STDOUT:   %.Self: %I.type = bind_symbolic_name .Self(1) [symbolic_self]
-// CHECK:STDOUT:   %.759: type = deferred_bind_symbolic_self %.Self, .Self(1) [symbolic_self]
+// CHECK:STDOUT:   %.c09: type = facet_access_period_self_type .Self(1) [symbolic_self]
 // CHECK:STDOUT:   %I_where.type: type = facet_type <@I where TODO> [concrete]
 // CHECK:STDOUT:   %I.impl_witness: <witness> = impl_witness file.%I.impl_witness_table [concrete]
 // CHECK:STDOUT: }
@@ -158,8 +158,8 @@ impl C as J where .Self impls Incomplete and .T = ();
 // CHECK:STDOUT:     %.Self: %I.type = bind_symbolic_name .Self(1) [symbolic_self = constants.%.Self]
 // CHECK:STDOUT:     %.Self.ref: %I.type = name_ref .Self, %.Self [symbolic_self = constants.%.Self]
 // CHECK:STDOUT:     %Incomplete.ref: type = name_ref Incomplete, file.%Incomplete.decl [concrete = constants.%Incomplete.type]
-// CHECK:STDOUT:     %.Self.as_type: type = facet_access_type %.Self.ref [symbolic_self = constants.%.759]
-// CHECK:STDOUT:     %.loc8_19: type = converted %.Self.ref, %.Self.as_type [symbolic_self = constants.%.759]
+// CHECK:STDOUT:     %.Self.as_type: type = facet_access_type %.Self.ref [symbolic_self = constants.%.c09]
+// CHECK:STDOUT:     %.loc8_19: type = converted %.Self.ref, %.Self.as_type [symbolic_self = constants.%.c09]
 // CHECK:STDOUT:     %.loc8_13: type = where_expr %.Self [concrete = constants.%I_where.type] {
 // CHECK:STDOUT:       requirement_base_facet_type constants.%I.type
 // CHECK:STDOUT:       requirement_impls %.loc8_19, %Incomplete.ref
@@ -204,9 +204,9 @@ impl C as J where .Self impls Incomplete and .T = ();
 // CHECK:STDOUT:   %assoc0: %J.assoc_type = assoc_entity element0, @J.%T [concrete]
 // CHECK:STDOUT:   %Incomplete.type: type = facet_type <@Incomplete> [concrete]
 // CHECK:STDOUT:   %.Self: %J.type = bind_symbolic_name .Self(1) [symbolic_self]
-// CHECK:STDOUT:   %.3c7: type = deferred_bind_symbolic_self %.Self, .Self(1) [symbolic_self]
+// CHECK:STDOUT:   %.c09: type = facet_access_period_self_type .Self(1) [symbolic_self]
 // CHECK:STDOUT:   %J.lookup_impl_witness: <witness> = lookup_impl_witness %.Self, @J [symbolic_self]
-// CHECK:STDOUT:   %J.facet: %J.type = facet_value %.3c7, (%J.lookup_impl_witness) [symbolic_self]
+// CHECK:STDOUT:   %J.facet: %J.type = facet_value %.c09, (%J.lookup_impl_witness) [symbolic_self]
 // CHECK:STDOUT:   %impl.elem0: type = impl_witness_access %J.lookup_impl_witness, element0 [symbolic_self]
 // CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [concrete]
 // CHECK:STDOUT:   %J_where.type: type = facet_type <@J where %impl.elem0 = %empty_tuple.type and TODO> [concrete]
@@ -228,12 +228,12 @@ impl C as J where .Self impls Incomplete and .T = ();
 // CHECK:STDOUT:     %.Self: %J.type = bind_symbolic_name .Self(1) [symbolic_self = constants.%.Self]
 // CHECK:STDOUT:     %.Self.ref.loc12_19: %J.type = name_ref .Self, %.Self [symbolic_self = constants.%.Self]
 // CHECK:STDOUT:     %Incomplete.ref: type = name_ref Incomplete, file.%Incomplete.decl [concrete = constants.%Incomplete.type]
-// CHECK:STDOUT:     %.Self.as_type.loc12_19: type = facet_access_type %.Self.ref.loc12_19 [symbolic_self = constants.%.3c7]
-// CHECK:STDOUT:     %.loc12_19: type = converted %.Self.ref.loc12_19, %.Self.as_type.loc12_19 [symbolic_self = constants.%.3c7]
+// CHECK:STDOUT:     %.Self.as_type.loc12_19: type = facet_access_type %.Self.ref.loc12_19 [symbolic_self = constants.%.c09]
+// CHECK:STDOUT:     %.loc12_19: type = converted %.Self.ref.loc12_19, %.Self.as_type.loc12_19 [symbolic_self = constants.%.c09]
 // CHECK:STDOUT:     %.Self.ref.loc12_46: %J.type = name_ref .Self, %.Self [symbolic_self = constants.%.Self]
 // CHECK:STDOUT:     %T.ref: %J.assoc_type = name_ref T, @T.%assoc0 [concrete = constants.%assoc0]
-// CHECK:STDOUT:     %.Self.as_type.loc12_46: type = facet_access_type %.Self.ref.loc12_46 [symbolic_self = constants.%.3c7]
-// CHECK:STDOUT:     %.loc12_46: type = converted %.Self.ref.loc12_46, %.Self.as_type.loc12_46 [symbolic_self = constants.%.3c7]
+// CHECK:STDOUT:     %.Self.as_type.loc12_46: type = facet_access_type %.Self.ref.loc12_46 [symbolic_self = constants.%.c09]
+// CHECK:STDOUT:     %.loc12_46: type = converted %.Self.ref.loc12_46, %.Self.as_type.loc12_46 [symbolic_self = constants.%.c09]
 // CHECK:STDOUT:     %impl.elem0: type = impl_witness_access constants.%J.lookup_impl_witness, element0 [symbolic_self = constants.%impl.elem0]
 // CHECK:STDOUT:     %.loc12_52.1: %empty_tuple.type = tuple_literal ()
 // CHECK:STDOUT:     %.loc12_52.2: type = converted %.loc12_52.1, constants.%empty_tuple.type [concrete = constants.%empty_tuple.type]
