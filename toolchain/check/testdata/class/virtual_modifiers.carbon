@@ -722,7 +722,7 @@ class T2(G2:! type) {
 // CHECK:STDOUT:   %Modifiers.Base: type = import_ref Modifiers//default, Base, loaded [concrete = constants.%Base]
 // CHECK:STDOUT:   %Modifiers.import_ref.97a: ref %ptr.454 = import_ref Modifiers//default, loc6_1, loaded [concrete = constants.%Base.vtable_decl]
 // CHECK:STDOUT:   %Modifiers.import_ref.05e: <witness> = import_ref Modifiers//default, loc6_1, loaded [concrete = constants.%complete_type.513]
-// CHECK:STDOUT:   %Modifiers.import_ref.1f3 = import_ref Modifiers//default, inst19 [no loc], unloaded
+// CHECK:STDOUT:   %Modifiers.import_ref.1f3 = import_ref Modifiers//default, inst18 [no loc], unloaded
 // CHECK:STDOUT:   %Modifiers.import_ref.2cc = import_ref Modifiers//default, loc5_29, unloaded
 // CHECK:STDOUT:   %Core.Destroy: type = import_ref Core//prelude/parts/destroy, Destroy, loaded [concrete = constants.%Destroy.type]
 // CHECK:STDOUT: }
@@ -874,7 +874,7 @@ class T2(G2:! type) {
 // CHECK:STDOUT:   %Modifiers.Base: type = import_ref Modifiers//default, Base, loaded [concrete = constants.%Base]
 // CHECK:STDOUT:   %Modifiers.import_ref.97a: ref %ptr.454 = import_ref Modifiers//default, loc6_1, loaded [concrete = constants.%Base.vtable_decl]
 // CHECK:STDOUT:   %Modifiers.import_ref.05e: <witness> = import_ref Modifiers//default, loc6_1, loaded [concrete = constants.%complete_type.513]
-// CHECK:STDOUT:   %Modifiers.import_ref.1f3 = import_ref Modifiers//default, inst19 [no loc], unloaded
+// CHECK:STDOUT:   %Modifiers.import_ref.1f3 = import_ref Modifiers//default, inst18 [no loc], unloaded
 // CHECK:STDOUT:   %Modifiers.import_ref.2cc = import_ref Modifiers//default, loc5_29, unloaded
 // CHECK:STDOUT:   %Core.Destroy: type = import_ref Core//prelude/parts/destroy, Destroy, loaded [concrete = constants.%Destroy.type]
 // CHECK:STDOUT: }
@@ -997,20 +997,20 @@ class T2(G2:! type) {
 // CHECK:STDOUT:   %Modifiers.Base: type = import_ref Modifiers//default, Base, loaded [concrete = constants.%Base]
 // CHECK:STDOUT:   %Modifiers.import_ref.97a: ref %ptr.454 = import_ref Modifiers//default, loc6_1, loaded [concrete = constants.%Base.vtable_decl]
 // CHECK:STDOUT:   %Modifiers.import_ref.05ec96.1: <witness> = import_ref Modifiers//default, loc6_1, loaded [concrete = constants.%complete_type]
-// CHECK:STDOUT:   %Modifiers.import_ref.1f3 = import_ref Modifiers//default, inst19 [no loc], unloaded
+// CHECK:STDOUT:   %Modifiers.import_ref.1f3 = import_ref Modifiers//default, inst18 [no loc], unloaded
 // CHECK:STDOUT:   %Modifiers.import_ref.2cc = import_ref Modifiers//default, loc5_29, unloaded
 // CHECK:STDOUT:   %Core.Destroy: type = import_ref Core//prelude/parts/destroy, Destroy, loaded [concrete = constants.%Destroy.type]
 // CHECK:STDOUT:   %Modifiers.import_ref.fe3: <witness> = import_ref Modifiers//default, loc4_17, loaded [concrete = constants.%Destroy.impl_witness.2fb]
 // CHECK:STDOUT:   %Modifiers.import_ref.87c: type = import_ref Modifiers//default, loc4_17, loaded [concrete = constants.%Base]
-// CHECK:STDOUT:   %Modifiers.import_ref.cb9298.1: type = import_ref Modifiers//default, inst32 [no loc], loaded [concrete = constants.%Destroy.type]
+// CHECK:STDOUT:   %Modifiers.import_ref.cb9298.1: type = import_ref Modifiers//default, inst31 [no loc], loaded [concrete = constants.%Destroy.type]
 // CHECK:STDOUT:   %Modifiers.import_ref.5f6 = import_ref Modifiers//default, loc8_25, unloaded
 // CHECK:STDOUT:   %Modifiers.import_ref.30bb79.2 = import_ref Modifiers//default, loc12_1, unloaded
 // CHECK:STDOUT:   %Modifiers.import_ref.05ec96.2: <witness> = import_ref Modifiers//default, loc12_1, loaded [concrete = constants.%complete_type]
-// CHECK:STDOUT:   %Modifiers.import_ref.ee1 = import_ref Modifiers//default, inst76 [no loc], unloaded
+// CHECK:STDOUT:   %Modifiers.import_ref.ee1 = import_ref Modifiers//default, inst75 [no loc], unloaded
 // CHECK:STDOUT:   %Modifiers.import_ref.bf4 = import_ref Modifiers//default, loc9_30, unloaded
 // CHECK:STDOUT:   %Modifiers.import_ref.b87 = import_ref Modifiers//default, loc11_29, unloaded
 // CHECK:STDOUT:   %Modifiers.import_ref.462: type = import_ref Modifiers//default, loc8_25, loaded [concrete = constants.%Abstract]
-// CHECK:STDOUT:   %Modifiers.import_ref.cb9298.2: type = import_ref Modifiers//default, inst32 [no loc], loaded [concrete = constants.%Destroy.type]
+// CHECK:STDOUT:   %Modifiers.import_ref.cb9298.2: type = import_ref Modifiers//default, inst31 [no loc], loaded [concrete = constants.%Destroy.type]
 // CHECK:STDOUT:   %Modifiers.import_ref.39f: %Base.as.Destroy.impl.Op.type = import_ref Modifiers//default, loc4_17, loaded [concrete = constants.%Base.as.Destroy.impl.Op]
 // CHECK:STDOUT:   %Destroy.impl_witness_table.37d = impl_witness_table (%Modifiers.import_ref.39f), @Base.as.Destroy.impl [concrete]
 // CHECK:STDOUT: }
@@ -4269,7 +4269,7 @@ class T2(G2:! type) {
 // CHECK:STDOUT:   %Modifiers.Base: type = import_ref Modifiers//default, Base, loaded [concrete = constants.%Base]
 // CHECK:STDOUT:   %Modifiers.import_ref.3e3fbe.2 = import_ref Modifiers//default, loc6_1, unloaded
 // CHECK:STDOUT:   %Modifiers.import_ref.05e: <witness> = import_ref Modifiers//default, loc6_1, loaded [concrete = constants.%complete_type]
-// CHECK:STDOUT:   %Modifiers.import_ref.1f3 = import_ref Modifiers//default, inst19 [no loc], unloaded
+// CHECK:STDOUT:   %Modifiers.import_ref.1f3 = import_ref Modifiers//default, inst18 [no loc], unloaded
 // CHECK:STDOUT:   %Modifiers.import_ref.2cc = import_ref Modifiers//default, loc5_29, unloaded
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -6842,7 +6842,7 @@ class T2(G2:! type) {
 // CHECK:STDOUT:   %Main.import_ref.0e5: ref %ptr.454 = import_ref Main//generic_lib, loc6_1, loaded [concrete = constants.%Base.vtable_decl]
 // CHECK:STDOUT:   %Main.import_ref.5ab3ec.1: type = import_ref Main//generic_lib, loc4_17, loaded [symbolic = @Base.%T (constants.%T)]
 // CHECK:STDOUT:   %Main.import_ref.05e: <witness> = import_ref Main//generic_lib, loc6_1, loaded [concrete = constants.%complete_type]
-// CHECK:STDOUT:   %Main.import_ref.8e0 = import_ref Main//generic_lib, inst29 [no loc], unloaded
+// CHECK:STDOUT:   %Main.import_ref.8e0 = import_ref Main//generic_lib, inst28 [no loc], unloaded
 // CHECK:STDOUT:   %Main.import_ref.e54 = import_ref Main//generic_lib, loc5_30, unloaded
 // CHECK:STDOUT:   %Main.import_ref.5ab3ec.2: type = import_ref Main//generic_lib, loc4_17, loaded [symbolic = @Base.%T (constants.%T)]
 // CHECK:STDOUT:   %Main.import_ref.78a: <specific function> = import_ref Main//generic_lib, loc6_1, loaded [symbolic = constants.%Base.F.specific_fn.892]

@@ -857,12 +857,9 @@ static auto BuildTypeForInst(FileContext& context, SemIR::VtableType /*inst*/)
   return llvm::Type::getVoidTy(context.llvm_context());
 }
 
-template <typename InstT>
-  requires(InstT::Kind.template IsAnyOf<SemIR::SpecificFunctionType,
-                                        SemIR::StringType>())
-static auto BuildTypeForInst(FileContext& context, InstT /*inst*/)
+static auto BuildTypeForInst(FileContext& context,
+                             SemIR::SpecificFunctionType /*inst*/)
     -> llvm::Type* {
-  // TODO: Decide how we want to represent `StringType`.
   return llvm::PointerType::get(context.llvm_context(), 0);
 }
 

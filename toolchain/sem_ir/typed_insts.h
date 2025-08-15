@@ -1551,19 +1551,6 @@ struct StringLiteral {
   StringLiteralValueId string_literal_id;
 };
 
-// The type of string values and String literals.
-struct StringType {
-  static constexpr auto Kind = InstKind::StringType.Define<Parse::NoneNodeId>(
-      {.ir_name = "String",
-       .is_type = InstIsType::Always,
-       .constant_kind = InstConstantKind::Always});
-  // This is a singleton instruction. However, it may still evolve into a more
-  // standard type and be removed.
-  static constexpr auto TypeInstId = MakeSingletonTypeInstId<Kind>();
-
-  TypeId type_id;
-};
-
 // Access to a struct type, with the index into the struct_id representation.
 struct StructAccess {
   // TODO: Make Parse::NodeId more specific.

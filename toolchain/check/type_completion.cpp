@@ -98,9 +98,6 @@ class TypeCompleter {
     return {.value_repr = MakeCopyValueRepr(type_id)};
   }
 
-  auto BuildInfoForInst(SemIR::TypeId type_id, SemIR::StringType /*inst*/) const
-      -> SemIR::CompleteTypeInfo;
-
   auto BuildStructOrTupleValueRepr(size_t num_elements,
                                    SemIR::TypeId elementwise_rep,
                                    bool same_as_object_rep) const
@@ -383,15 +380,6 @@ auto TypeCompleter::GetNestedInfo(SemIR::TypeId nested_type_id) const
   CARBON_CHECK(info.value_repr.kind != SemIR::ValueRepr::Unknown,
                "Complete type should have a value representation");
   return info;
-}
-
-auto TypeCompleter::BuildInfoForInst(SemIR::TypeId type_id,
-                                     SemIR::StringType /*inst*/) const
-    -> SemIR::CompleteTypeInfo {
-  // TODO: Decide on string value semantics. This should probably be a
-  // custom value representation carrying a pointer and size or
-  // similar.
-  return {.value_repr = MakePointerValueRepr(type_id)};
 }
 
 auto TypeCompleter::BuildStructOrTupleValueRepr(size_t num_elements,

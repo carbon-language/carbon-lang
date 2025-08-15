@@ -145,7 +145,7 @@ fn Run() {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.Destroy: type = import_ref Core//prelude/parts/destroy, Destroy, loaded [concrete = constants.%Destroy.type]
 // CHECK:STDOUT:   %Other.import_ref.8f2: <witness> = import_ref Other//a, loc5_14, loaded [concrete = constants.%complete_type]
-// CHECK:STDOUT:   %Other.import_ref.ca8 = import_ref Other//a, inst20 [no loc], unloaded
+// CHECK:STDOUT:   %Other.import_ref.ca8 = import_ref Other//a, inst19 [no loc], unloaded
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -249,8 +249,8 @@ fn Run() {
 // CHECK:STDOUT:     import Other//a
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Other.F: %F.type = import_ref Other//b, F, loaded [concrete = constants.%F]
-// CHECK:STDOUT:   %Other.import_ref.8db: <witness> = import_ref Other//b, inst71 [indirect], loaded [concrete = constants.%complete_type]
-// CHECK:STDOUT:   %Other.import_ref.bbd = import_ref Other//b, inst72 [indirect], unloaded
+// CHECK:STDOUT:   %Other.import_ref.8db: <witness> = import_ref Other//b, inst70 [indirect], loaded [concrete = constants.%complete_type]
+// CHECK:STDOUT:   %Other.import_ref.bbd = import_ref Other//b, inst71 [indirect], unloaded
 // CHECK:STDOUT:   %Other.NS1: <namespace> = import_ref Other//b, NS1, loaded
 // CHECK:STDOUT:   %NS1.b9a: <namespace> = namespace %Other.NS1, [concrete] {
 // CHECK:STDOUT:     .A = %Other.A
@@ -261,7 +261,7 @@ fn Run() {
 // CHECK:STDOUT:   %Core.Destroy: type = import_ref Core//prelude/parts/destroy, Destroy, loaded [concrete = constants.%Destroy.type]
 // CHECK:STDOUT:   %Other.import_ref.af3: <witness> = import_ref Other//a, loc5_13, loaded [concrete = constants.%Destroy.impl_witness.90d]
 // CHECK:STDOUT:   %Other.import_ref.ea8: type = import_ref Other//a, loc5_13, loaded [concrete = constants.%A]
-// CHECK:STDOUT:   %Other.import_ref.cb9: type = import_ref Other//a, inst23 [no loc], loaded [concrete = constants.%Destroy.type]
+// CHECK:STDOUT:   %Other.import_ref.cb9: type = import_ref Other//a, inst22 [no loc], loaded [concrete = constants.%Destroy.type]
 // CHECK:STDOUT:   %Other.import_ref.788: %A.as.Destroy.impl.Op.type = import_ref Other//a, loc5_13, loaded [concrete = constants.%A.as.Destroy.impl.Op]
 // CHECK:STDOUT:   %Destroy.impl_witness_table.8a3 = impl_witness_table (%Other.import_ref.788), @A.as.Destroy.impl [concrete]
 // CHECK:STDOUT: }

@@ -329,32 +329,32 @@ fn Run() {
 // CHECK:STDOUT:     import Core//prelude/...
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Main.import_ref.8f24d3.1: <witness> = import_ref Main//a, loc5_1, loaded [concrete = constants.%complete_type.357]
-// CHECK:STDOUT:   %Main.import_ref.fd7 = import_ref Main//a, inst19 [no loc], unloaded
+// CHECK:STDOUT:   %Main.import_ref.fd7 = import_ref Main//a, inst18 [no loc], unloaded
 // CHECK:STDOUT:   %Main.import_ref.709: <witness> = import_ref Main//a, loc9_1, loaded [concrete = constants.%complete_type.c07]
-// CHECK:STDOUT:   %Main.import_ref.845 = import_ref Main//a, inst64 [no loc], unloaded
+// CHECK:STDOUT:   %Main.import_ref.845 = import_ref Main//a, inst63 [no loc], unloaded
 // CHECK:STDOUT:   %Main.import_ref.4d2: %Field.elem = import_ref Main//a, loc8_8, loaded [concrete = %.d33]
 // CHECK:STDOUT:   %Core.ImplicitAs: %ImplicitAs.type.cc7 = import_ref Core//prelude/parts/as, ImplicitAs, loaded [concrete = constants.%ImplicitAs.generic]
 // CHECK:STDOUT:   %Core.import_ref.a86c: @Core.IntLiteral.as.ImplicitAs.impl.%Core.IntLiteral.as.ImplicitAs.impl.Convert.type (%Core.IntLiteral.as.ImplicitAs.impl.Convert.type.0b2) = import_ref Core//prelude/parts/int, loc16_39, loaded [symbolic = @Core.IntLiteral.as.ImplicitAs.impl.%Core.IntLiteral.as.ImplicitAs.impl.Convert (constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.6d7)]
 // CHECK:STDOUT:   %ImplicitAs.impl_witness_table.e36 = impl_witness_table (%Core.import_ref.a86c), @Core.IntLiteral.as.ImplicitAs.impl [concrete]
 // CHECK:STDOUT:   %.d33: %Field.elem = field_decl x, element0 [concrete]
 // CHECK:STDOUT:   %Main.import_ref.8f24d3.2: <witness> = import_ref Main//a, loc16_1, loaded [concrete = constants.%complete_type.357]
-// CHECK:STDOUT:   %Main.import_ref.39e731.1 = import_ref Main//a, inst114 [no loc], unloaded
+// CHECK:STDOUT:   %Main.import_ref.39e731.1 = import_ref Main//a, inst113 [no loc], unloaded
 // CHECK:STDOUT:   %Main.import_ref.760: %ForwardDeclared.F.type = import_ref Main//a, loc14_21, loaded [concrete = constants.%ForwardDeclared.F]
 // CHECK:STDOUT:   %Main.import_ref.26e: %ForwardDeclared.G.type = import_ref Main//a, loc15_27, loaded [concrete = constants.%ForwardDeclared.G]
 // CHECK:STDOUT:   %Main.import_ref.8f24d3.3: <witness> = import_ref Main//a, loc16_1, loaded [concrete = constants.%complete_type.357]
-// CHECK:STDOUT:   %Main.import_ref.39e731.2 = import_ref Main//a, inst114 [no loc], unloaded
+// CHECK:STDOUT:   %Main.import_ref.39e731.2 = import_ref Main//a, inst113 [no loc], unloaded
 // CHECK:STDOUT:   %Main.import_ref.42a = import_ref Main//a, loc14_21, unloaded
 // CHECK:STDOUT:   %Main.import_ref.67a = import_ref Main//a, loc15_27, unloaded
 // CHECK:STDOUT:   %Core.Destroy: type = import_ref Core//prelude/parts/destroy, Destroy, loaded [concrete = constants.%Destroy.type]
 // CHECK:STDOUT:   %Main.import_ref.9a0: <witness> = import_ref Main//a, loc4_13, loaded [concrete = constants.%Destroy.impl_witness.b5a]
 // CHECK:STDOUT:   %Main.import_ref.75f: type = import_ref Main//a, loc4_13, loaded [concrete = constants.%Empty]
-// CHECK:STDOUT:   %Main.import_ref.cb9298.1: type = import_ref Main//a, inst22 [no loc], loaded [concrete = constants.%Destroy.type]
+// CHECK:STDOUT:   %Main.import_ref.cb9298.1: type = import_ref Main//a, inst21 [no loc], loaded [concrete = constants.%Destroy.type]
 // CHECK:STDOUT:   %Main.import_ref.d40: <witness> = import_ref Main//a, loc7_13, loaded [concrete = constants.%Destroy.impl_witness.7bf]
 // CHECK:STDOUT:   %Main.import_ref.6de: type = import_ref Main//a, loc7_13, loaded [concrete = constants.%Field]
-// CHECK:STDOUT:   %Main.import_ref.cb9298.2: type = import_ref Main//a, inst22 [no loc], loaded [concrete = constants.%Destroy.type]
+// CHECK:STDOUT:   %Main.import_ref.cb9298.2: type = import_ref Main//a, inst21 [no loc], loaded [concrete = constants.%Destroy.type]
 // CHECK:STDOUT:   %Main.import_ref.8eb: <witness> = import_ref Main//a, loc13_23, loaded [concrete = constants.%Destroy.impl_witness.c7e]
 // CHECK:STDOUT:   %Main.import_ref.805: type = import_ref Main//a, loc13_23, loaded [concrete = constants.%ForwardDeclared.7b34f2.1]
-// CHECK:STDOUT:   %Main.import_ref.cb9298.3: type = import_ref Main//a, inst22 [no loc], loaded [concrete = constants.%Destroy.type]
+// CHECK:STDOUT:   %Main.import_ref.cb9298.3: type = import_ref Main//a, inst21 [no loc], loaded [concrete = constants.%Destroy.type]
 // CHECK:STDOUT:   %Main.import_ref.dd3: %ForwardDeclared.as.Destroy.impl.Op.type = import_ref Main//a, loc13_23, loaded [concrete = constants.%ForwardDeclared.as.Destroy.impl.Op]
 // CHECK:STDOUT:   %Destroy.impl_witness_table.e4f = impl_witness_table (%Main.import_ref.dd3), @ForwardDeclared.as.Destroy.impl [concrete]
 // CHECK:STDOUT:   %Main.import_ref.006: %Field.as.Destroy.impl.Op.type = import_ref Main//a, loc7_13, loaded [concrete = constants.%Field.as.Destroy.impl.Op]

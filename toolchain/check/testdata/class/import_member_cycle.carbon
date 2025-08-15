@@ -125,12 +125,12 @@ fn Run() {
 // CHECK:STDOUT:     import Core//prelude/...
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Main.import_ref.72d: <witness> = import_ref Main//a, loc6_1, loaded [concrete = constants.%complete_type.e4b]
-// CHECK:STDOUT:   %Main.import_ref.3a6 = import_ref Main//a, inst19 [no loc], unloaded
+// CHECK:STDOUT:   %Main.import_ref.3a6 = import_ref Main//a, inst18 [no loc], unloaded
 // CHECK:STDOUT:   %Main.import_ref.4e0 = import_ref Main//a, loc5_8, unloaded
 // CHECK:STDOUT:   %Core.Destroy: type = import_ref Core//prelude/parts/destroy, Destroy, loaded [concrete = constants.%Destroy.type]
 // CHECK:STDOUT:   %Main.import_ref.4ac = import_ref Main//a, loc4_13, unloaded
 // CHECK:STDOUT:   %Main.import_ref.f64: type = import_ref Main//a, loc4_13, loaded [concrete = constants.%Cycle]
-// CHECK:STDOUT:   %Main.import_ref.cb9: type = import_ref Main//a, inst27 [no loc], loaded [concrete = constants.%Destroy.type]
+// CHECK:STDOUT:   %Main.import_ref.cb9: type = import_ref Main//a, inst26 [no loc], loaded [concrete = constants.%Destroy.type]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {

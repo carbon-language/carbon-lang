@@ -281,10 +281,10 @@ impl forall [T:! type] D as J(T*) {}
 // CHECK:STDOUT:   %Main.C: type = import_ref Main//import_generic, C, loaded [concrete = constants.%C]
 // CHECK:STDOUT:   %Main.I: %I.type.dac = import_ref Main//import_generic, I, loaded [concrete = constants.%I.generic]
 // CHECK:STDOUT:   %Main.import_ref.5ab3ec.1: type = import_ref Main//import_generic, loc5_13, loaded [symbolic = @I.%T (constants.%T)]
-// CHECK:STDOUT:   %Main.import_ref.884 = import_ref Main//import_generic, inst33 [no loc], unloaded
+// CHECK:STDOUT:   %Main.import_ref.884 = import_ref Main//import_generic, inst32 [no loc], unloaded
 // CHECK:STDOUT:   %Main.import_ref.cc6 = import_ref Main//import_generic, loc8_33, unloaded
 // CHECK:STDOUT:   %Main.import_ref.8f2: <witness> = import_ref Main//import_generic, loc4_10, loaded [concrete = constants.%complete_type]
-// CHECK:STDOUT:   %Main.import_ref.2c4 = import_ref Main//import_generic, inst17 [no loc], unloaded
+// CHECK:STDOUT:   %Main.import_ref.2c4 = import_ref Main//import_generic, inst16 [no loc], unloaded
 // CHECK:STDOUT:   %Main.import_ref.5ab3ec.2: type = import_ref Main//import_generic, loc8_14, loaded [symbolic = @C.as.I.impl.08450a.1.%T (constants.%T)]
 // CHECK:STDOUT:   %Main.import_ref.29aca8.1: type = import_ref Main//import_generic, loc8_24, loaded [concrete = constants.%C]
 // CHECK:STDOUT:   %Main.import_ref.4be: type = import_ref Main//import_generic, loc8_32, loaded [symbolic = @C.as.I.impl.08450a.1.%I.type (constants.%I.type.325)]
@@ -632,9 +632,9 @@ impl forall [T:! type] D as J(T*) {}
 // CHECK:STDOUT:   %Main.D: type = import_ref Main//import_generic_decl, D, loaded [concrete = constants.%D]
 // CHECK:STDOUT:   %Main.J: %J.type.2b8 = import_ref Main//import_generic_decl, J, loaded [concrete = constants.%J.generic]
 // CHECK:STDOUT:   %Main.import_ref.5ab3ec.1: type = import_ref Main//import_generic_decl, loc5_13, loaded [symbolic = @J.%T (constants.%T)]
-// CHECK:STDOUT:   %Main.import_ref.ff5 = import_ref Main//import_generic_decl, inst33 [no loc], unloaded
+// CHECK:STDOUT:   %Main.import_ref.ff5 = import_ref Main//import_generic_decl, inst32 [no loc], unloaded
 // CHECK:STDOUT:   %Main.import_ref.8f2: <witness> = import_ref Main//import_generic_decl, loc4_10, loaded [concrete = constants.%complete_type]
-// CHECK:STDOUT:   %Main.import_ref.cab = import_ref Main//import_generic_decl, inst17 [no loc], unloaded
+// CHECK:STDOUT:   %Main.import_ref.cab = import_ref Main//import_generic_decl, inst16 [no loc], unloaded
 // CHECK:STDOUT:   %Main.import_ref.5ab3ec.2: type = import_ref Main//import_generic_decl, loc11_14, loaded [symbolic = @D.as.J.impl.199bba.1.%T (constants.%T)]
 // CHECK:STDOUT:   %Main.import_ref.aa9f8a.1: type = import_ref Main//import_generic_decl, loc11_24, loaded [concrete = constants.%D]
 // CHECK:STDOUT:   %Main.import_ref.ded: type = import_ref Main//import_generic_decl, loc11_32, loaded [symbolic = @D.as.J.impl.199bba.1.%J.type (constants.%J.type.b72)]

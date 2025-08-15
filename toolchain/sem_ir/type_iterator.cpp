@@ -90,7 +90,6 @@ auto TypeIterator::Next() -> Step {
       case SemIR::ImplWitnessAccess::Kind:
       case SemIR::IntLiteralType::Kind:
       case SemIR::NamespaceType::Kind:
-      case SemIR::StringType::Kind:
       case SemIR::TypeType::Kind:
       case SemIR::WitnessType::Kind: {
         return Step::ConcreteType{.type_id = type_id};

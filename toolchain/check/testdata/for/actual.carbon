@@ -222,28 +222,28 @@ fn Read() {
 // CHECK:STDOUT:   %Core.import_ref.1c9: %Iterate.assoc_type = import_ref Core//prelude/iterate, loc12_18, loaded [concrete = constants.%assoc0.724]
 // CHECK:STDOUT:   %Core.import_ref.ed6: %Iterate.assoc_type = import_ref Core//prelude/iterate, loc13_17, loaded [concrete = constants.%assoc1.02e]
 // CHECK:STDOUT:   %Core.import_ref.9e6: type = import_ref Core//prelude/iterate, loc13_17, loaded [concrete = %CursorType]
-// CHECK:STDOUT:   %Core.import_ref.f49: @Optional.%Optional.None.type (%Optional.None.type.ef2) = import_ref Core//prelude/iterate, inst139 [indirect], loaded [symbolic = @Optional.%Optional.None (constants.%Optional.None.fd6)]
-// CHECK:STDOUT:   %Core.import_ref.1a8: @Optional.%Optional.Some.type (%Optional.Some.type.b2c) = import_ref Core//prelude/iterate, inst140 [indirect], loaded [symbolic = @Optional.%Optional.Some (constants.%Optional.Some.d0d)]
-// CHECK:STDOUT:   %Core.import_ref.36a9: @Optional.as.Destroy.impl.%Optional.as.Destroy.impl.Op.type (%Optional.as.Destroy.impl.Op.type.764) = import_ref Core//prelude/iterate, inst6890 [indirect], loaded [symbolic = @Optional.as.Destroy.impl.%Optional.as.Destroy.impl.Op (constants.%Optional.as.Destroy.impl.Op.bf8)]
+// CHECK:STDOUT:   %Core.import_ref.f49: @Optional.%Optional.None.type (%Optional.None.type.ef2) = import_ref Core//prelude/iterate, inst138 [indirect], loaded [symbolic = @Optional.%Optional.None (constants.%Optional.None.fd6)]
+// CHECK:STDOUT:   %Core.import_ref.1a8: @Optional.%Optional.Some.type (%Optional.Some.type.b2c) = import_ref Core//prelude/iterate, inst139 [indirect], loaded [symbolic = @Optional.%Optional.Some (constants.%Optional.Some.d0d)]
+// CHECK:STDOUT:   %Core.import_ref.36a9: @Optional.as.Destroy.impl.%Optional.as.Destroy.impl.Op.type (%Optional.as.Destroy.impl.Op.type.764) = import_ref Core//prelude/iterate, inst6889 [indirect], loaded [symbolic = @Optional.as.Destroy.impl.%Optional.as.Destroy.impl.Op (constants.%Optional.as.Destroy.impl.Op.bf8)]
 // CHECK:STDOUT:   %Destroy.impl_witness_table.2ff = impl_witness_table (%Core.import_ref.36a9), @Optional.as.Destroy.impl [concrete]
-// CHECK:STDOUT:   %Core.import_ref.cf4: @Core.IntLiteral.as.ImplicitAs.impl.%Core.IntLiteral.as.ImplicitAs.impl.Convert.type (%Core.IntLiteral.as.ImplicitAs.impl.Convert.type.0f9) = import_ref Core//prelude/iterate, inst483 [indirect], loaded [symbolic = @Core.IntLiteral.as.ImplicitAs.impl.%Core.IntLiteral.as.ImplicitAs.impl.Convert (constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.f06)]
+// CHECK:STDOUT:   %Core.import_ref.cf4: @Core.IntLiteral.as.ImplicitAs.impl.%Core.IntLiteral.as.ImplicitAs.impl.Convert.type (%Core.IntLiteral.as.ImplicitAs.impl.Convert.type.0f9) = import_ref Core//prelude/iterate, inst482 [indirect], loaded [symbolic = @Core.IntLiteral.as.ImplicitAs.impl.%Core.IntLiteral.as.ImplicitAs.impl.Convert (constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.f06)]
 // CHECK:STDOUT:   %ImplicitAs.impl_witness_table.2b9 = impl_witness_table (%Core.import_ref.cf4), @Core.IntLiteral.as.ImplicitAs.impl [concrete]
-// CHECK:STDOUT:   %Core.import_ref.741: @Int.as.Destroy.impl.%Int.as.Destroy.impl.Op.type (%Int.as.Destroy.impl.Op.type) = import_ref Core//prelude/iterate, inst451 [indirect], loaded [symbolic = @Int.as.Destroy.impl.%Int.as.Destroy.impl.Op (constants.%Int.as.Destroy.impl.Op)]
+// CHECK:STDOUT:   %Core.import_ref.741: @Int.as.Destroy.impl.%Int.as.Destroy.impl.Op.type (%Int.as.Destroy.impl.Op.type) = import_ref Core//prelude/iterate, inst450 [indirect], loaded [symbolic = @Int.as.Destroy.impl.%Int.as.Destroy.impl.Op (constants.%Int.as.Destroy.impl.Op)]
 // CHECK:STDOUT:   %Destroy.impl_witness_table.1b4 = impl_witness_table (%Core.import_ref.741), @Int.as.Destroy.impl [concrete]
-// CHECK:STDOUT:   %Core.import_ref.19a: @OrderedWith.%OrderedWith.assoc_type (%OrderedWith.assoc_type.03c) = import_ref Core//prelude/iterate, inst863 [indirect], loaded [symbolic = @OrderedWith.%assoc0 (constants.%assoc0.5db)]
-// CHECK:STDOUT:   %Core.import_ref.b2b: @Int.as.OrderedWith.impl.db3.%Int.as.OrderedWith.impl.Less.type (%Int.as.OrderedWith.impl.Less.type.2c7) = import_ref Core//prelude/iterate, inst952 [indirect], loaded [symbolic = @Int.as.OrderedWith.impl.db3.%Int.as.OrderedWith.impl.Less (constants.%Int.as.OrderedWith.impl.Less.a5a)]
-// CHECK:STDOUT:   %Core.import_ref.ab6 = import_ref Core//prelude/iterate, inst953 [indirect], unloaded
-// CHECK:STDOUT:   %Core.import_ref.875 = import_ref Core//prelude/iterate, inst954 [indirect], unloaded
-// CHECK:STDOUT:   %Core.import_ref.82b = import_ref Core//prelude/iterate, inst955 [indirect], unloaded
+// CHECK:STDOUT:   %Core.import_ref.19a: @OrderedWith.%OrderedWith.assoc_type (%OrderedWith.assoc_type.03c) = import_ref Core//prelude/iterate, inst862 [indirect], loaded [symbolic = @OrderedWith.%assoc0 (constants.%assoc0.5db)]
+// CHECK:STDOUT:   %Core.import_ref.b2b: @Int.as.OrderedWith.impl.db3.%Int.as.OrderedWith.impl.Less.type (%Int.as.OrderedWith.impl.Less.type.2c7) = import_ref Core//prelude/iterate, inst951 [indirect], loaded [symbolic = @Int.as.OrderedWith.impl.db3.%Int.as.OrderedWith.impl.Less (constants.%Int.as.OrderedWith.impl.Less.a5a)]
+// CHECK:STDOUT:   %Core.import_ref.ab6 = import_ref Core//prelude/iterate, inst952 [indirect], unloaded
+// CHECK:STDOUT:   %Core.import_ref.875 = import_ref Core//prelude/iterate, inst953 [indirect], unloaded
+// CHECK:STDOUT:   %Core.import_ref.82b = import_ref Core//prelude/iterate, inst954 [indirect], unloaded
 // CHECK:STDOUT:   %OrderedWith.impl_witness_table.476 = impl_witness_table (%Core.import_ref.b2b, %Core.import_ref.ab6, %Core.import_ref.875, %Core.import_ref.82b), @Int.as.OrderedWith.impl.db3 [concrete]
-// CHECK:STDOUT:   %Core.import_ref.13d: @OrderedWith.%OrderedWith.Less.type (%OrderedWith.Less.type.f19) = import_ref Core//prelude/iterate, inst1927 [indirect], loaded [symbolic = @OrderedWith.%OrderedWith.Less (constants.%OrderedWith.Less.02e)]
+// CHECK:STDOUT:   %Core.import_ref.13d: @OrderedWith.%OrderedWith.Less.type (%OrderedWith.Less.type.f19) = import_ref Core//prelude/iterate, inst1926 [indirect], loaded [symbolic = @OrderedWith.%OrderedWith.Less (constants.%OrderedWith.Less.02e)]
 // CHECK:STDOUT:   %CursorType: type = assoc_const_decl @CursorType [concrete] {}
 // CHECK:STDOUT:   %Core.import_ref.4f9: type = import_ref Core//prelude/iterate, loc12_18, loaded [concrete = %ElementType]
 // CHECK:STDOUT:   %ElementType: type = assoc_const_decl @ElementType [concrete] {}
 // CHECK:STDOUT:   %Core.Optional: %Optional.type = import_ref Core//prelude/types/optional, Optional, loaded [concrete = constants.%Optional.generic]
 // CHECK:STDOUT:   %Core.Destroy: type = import_ref Core//prelude/destroy, Destroy, loaded [concrete = constants.%Destroy.type]
 // CHECK:STDOUT:   %Core.OrderedWith: %OrderedWith.type.270 = import_ref Core//prelude/operators/comparison, OrderedWith, loaded [concrete = constants.%OrderedWith.generic]
-// CHECK:STDOUT:   %Core.import_ref.d49 = import_ref Core//prelude/iterate, inst6645 [indirect], unloaded
+// CHECK:STDOUT:   %Core.import_ref.d49 = import_ref Core//prelude/iterate, inst6644 [indirect], unloaded
 // CHECK:STDOUT:   %Core.Inc: type = import_ref Core//prelude/operators/arithmetic, Inc, loaded [concrete = constants.%Inc.type]
 // CHECK:STDOUT:   %Core.ImplicitAs: %ImplicitAs.type.cc7 = import_ref Core//prelude/operators/as, ImplicitAs, loaded [concrete = constants.%ImplicitAs.generic]
 // CHECK:STDOUT: }
@@ -1004,7 +1004,7 @@ fn Read() {
 // CHECK:STDOUT:   %Core.IntLiteral: %IntLiteral.type = import_ref Core//prelude/types/int_literal, IntLiteral, loaded [concrete = constants.%IntLiteral]
 // CHECK:STDOUT:   %Main.import_ref.f1e294.1: Core.IntLiteral = import_ref Main//lib, loc4_16, loaded [symbolic = @IntRange.%N (constants.%N.c80)]
 // CHECK:STDOUT:   %Main.import_ref.30f: <witness> = import_ref Main//lib, loc24_1, loaded [symbolic = @IntRange.%complete_type (constants.%complete_type.c76)]
-// CHECK:STDOUT:   %Main.import_ref.d13 = import_ref Main//lib, inst42 [no loc], unloaded
+// CHECK:STDOUT:   %Main.import_ref.d13 = import_ref Main//lib, inst41 [no loc], unloaded
 // CHECK:STDOUT:   %Main.import_ref.d98 = import_ref Main//lib, loc5_57, unloaded
 // CHECK:STDOUT:   %Main.import_ref.e58 = import_ref Main//lib, loc22_20, unloaded
 // CHECK:STDOUT:   %Main.import_ref.261 = import_ref Main//lib, loc23_18, unloaded
@@ -1020,7 +1020,7 @@ fn Read() {
 // CHECK:STDOUT:   %Core.import_ref.c4c = import_ref Core//prelude/types/int, loc55_61, unloaded
 // CHECK:STDOUT:   %OrderedWith.impl_witness_table.0e1 = impl_witness_table (%Core.import_ref.e33, %Core.import_ref.a58, %Core.import_ref.a39, %Core.import_ref.c4c), @Int.as.OrderedWith.impl.5b6 [concrete]
 // CHECK:STDOUT:   %Core.Destroy: type = import_ref Core//prelude/destroy, Destroy, loaded [concrete = constants.%Destroy.type]
-// CHECK:STDOUT:   %Main.import_ref.03a = import_ref Main//lib, inst311 [indirect], unloaded
+// CHECK:STDOUT:   %Main.import_ref.03a = import_ref Main//lib, inst310 [indirect], unloaded
 // CHECK:STDOUT:   %Destroy.impl_witness_table.954 = impl_witness_table (%Main.import_ref.03a), @Optional.as.Destroy.impl [concrete]
 // CHECK:STDOUT:   %Main.import_ref.0c8 = import_ref Main//lib, loc9_87, unloaded
 // CHECK:STDOUT:   %Main.import_ref.f1e294.3: Core.IntLiteral = import_ref Main//lib, loc4_16, loaded [symbolic = @IntRange.%N (constants.%N.c80)]
@@ -1033,11 +1033,11 @@ fn Read() {
 // CHECK:STDOUT:   %Iterate.impl_witness_table.b32 = impl_witness_table (%Main.import_ref.e3faa9.1, %Main.import_ref.e3faa9.2, %Main.import_ref.11c, %Main.import_ref.f97), @IntRange.as.Iterate.impl [concrete]
 // CHECK:STDOUT:   %Main.import_ref.f1e294.4: Core.IntLiteral = import_ref Main//lib, loc4_16, loaded [symbolic = @IntRange.%N (constants.%N.c80)]
 // CHECK:STDOUT:   %Main.import_ref.f1e294.5: Core.IntLiteral = import_ref Main//lib, loc4_16, loaded [symbolic = @IntRange.%N (constants.%N.c80)]
-// CHECK:STDOUT:   %Main.import_ref.026 = import_ref Main//lib, inst1896 [indirect], unloaded
+// CHECK:STDOUT:   %Main.import_ref.026 = import_ref Main//lib, inst1895 [indirect], unloaded
 // CHECK:STDOUT:   %Main.import_ref.bdb: <witness> = import_ref Main//lib, loc4_39, loaded [symbolic = @IntRange.as.Destroy.impl.%Destroy.impl_witness (constants.%Destroy.impl_witness.45d)]
 // CHECK:STDOUT:   %Main.import_ref.f1e294.6: Core.IntLiteral = import_ref Main//lib, loc4_16, loaded [symbolic = @IntRange.%N (constants.%N.c80)]
 // CHECK:STDOUT:   %Main.import_ref.daedfd.2: type = import_ref Main//lib, loc4_39, loaded [symbolic = @IntRange.as.Destroy.impl.%IntRange (constants.%IntRange.349)]
-// CHECK:STDOUT:   %Main.import_ref.cb9: type = import_ref Main//lib, inst301 [no loc], loaded [concrete = constants.%Destroy.type]
+// CHECK:STDOUT:   %Main.import_ref.cb9: type = import_ref Main//lib, inst300 [no loc], loaded [concrete = constants.%Destroy.type]
 // CHECK:STDOUT:   %Main.import_ref.967: @IntRange.as.Destroy.impl.%IntRange.as.Destroy.impl.Op.type (%IntRange.as.Destroy.impl.Op.type.3e7) = import_ref Main//lib, loc4_39, loaded [symbolic = @IntRange.as.Destroy.impl.%IntRange.as.Destroy.impl.Op (constants.%IntRange.as.Destroy.impl.Op.8a1)]
 // CHECK:STDOUT:   %Destroy.impl_witness_table.68d = impl_witness_table (%Main.import_ref.967), @IntRange.as.Destroy.impl [concrete]
 // CHECK:STDOUT:   %Main.import_ref.f1e294.7: Core.IntLiteral = import_ref Main//lib, loc4_16, loaded [symbolic = @IntRange.%N (constants.%N.c80)]
