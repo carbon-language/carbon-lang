@@ -7,6 +7,7 @@
 
 #include "toolchain/base/value_ids.h"
 #include "toolchain/check/context.h"
+#include "toolchain/check/convert.h"
 #include "toolchain/lex/token_info.h"
 #include "toolchain/sem_ir/ids.h"
 
@@ -35,11 +36,11 @@ auto MakeStringLiteral(Context& context, Parse::StringLiteralId node_id,
                        StringLiteralValueId value_id) -> SemIR::InstId;
 
 // Forms a string literal type expression for a `str` literal.
-auto MakeStringTypeLiteral(Context& context, Parse::NodeId node_id)
+auto MakeStringTypeLiteral(Context& context, SemIR::LocId loc_id)
     -> SemIR::InstId;
 
 // Forms a string type.
-auto MakeStringType(Context& context, Parse::NodeId node_id) -> SemIR::TypeId;
+auto MakeStringType(Context& context, SemIR::LocId) -> TypeExpr;
 
 }  // namespace Carbon::Check
 

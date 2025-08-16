@@ -1083,7 +1083,109 @@ static auto MapBuiltinType(Context& context, SemIR::LocId loc_id,
     // TODO: Handle floating-point types that map to named aliases.
   }
 
-  return {.inst_id = SemIR::TypeInstId::None, .type_id = SemIR::TypeId::None};
+  return TypeExpr::None;
+}
+
+// A small, lightweight library of AST matchers. Unlike clang's ASTMatchers,
+// this avoids heap allocations and is suitable for one-off matching rather than
+// matching against a whole AST.
+namespace Matchers {
+// A matcher for a type T is just a function that takes a T and returns whether
+// it matched. Matchers should be invoked immediately, and are not expected to
+// outlive the arguments of the call that created them.
+template <typename T>
+using Matcher = llvm::function_ref<auto(T)->bool>;
+
+// Returns a matcher for class declarations that determines whether the given
+// class is a class template specialization in namespace std with the specified
+// name and template arguments matching the given predicate.
+static auto StdClassTemplate(
+    llvm::StringLiteral name,
+    Matcher<const clang::TemplateArgumentList&> args_matcher
+    [[clang::lifetimebound]]) -> auto {
+  return [=](const clang::CXXRecordDecl* class_decl) -> bool {
+    const auto* specialization =
+        dyn_cast<clang::ClassTemplateSpecializationDecl>(class_decl);
+    const auto* identifier = class_decl->getIdentifier();
+    return specialization && identifier && identifier->isStr(name) &&
+           specialization->isInStdNamespace() &&
+           args_matcher(specialization->getTemplateArgs());
+  };
+}
+
+// Returns a matcher that matches types if they are class types whose class
+// matches the given matcher.
+static auto Class(Matcher<const clang::CXXRecordDecl*> class_matcher
+                  [[clang::lifetimebound]]) -> auto {
+  return [=](clang::QualType type) -> bool {
+    const auto* class_decl = type->getAsCXXRecordDecl();
+    return !type.hasQualifiers() && class_decl && class_matcher(class_decl);
+  };
+}
+
+// Returns a matcher that determines whether the given template argument is a
+// type matching the given predicate.
+static auto TypeTemplateArgument(
+    llvm::function_ref<auto(clang::QualType)->bool> type_matcher
+    [[clang::lifetimebound]]) -> auto {
+  return [=](clang::TemplateArgument arg) -> bool {
+    return arg.getKind() == clang::TemplateArgument::Type &&
+           type_matcher(arg.getAsType());
+  };
+}
+
+// A matcher that determines whether the given type is `char`.
+static auto Char(clang::QualType type) -> bool {
+  return !type.hasQualifiers() && type->isCharType();
+}
+
+// Returns a matcher that determines whether the given template argument list
+// matches the given sequence of template argument matchers.
+static auto TemplateArgumentsAre(
+    std::initializer_list<
+        llvm::function_ref<auto(clang::TemplateArgument)->bool>>
+        arg_matchers [[clang::lifetimebound]]) -> auto {
+  return [=](const clang::TemplateArgumentList& args) -> bool {
+    if (args.size() != arg_matchers.size()) {
+      return false;
+    }
+    for (auto [arg, matcher] : llvm::zip_equal(args.asArray(), arg_matchers)) {
+      if (!matcher(arg)) {
+        return false;
+      }
+    }
+    return true;
+  };
+}
+
+// A matcher for `std::char_traits<char>`.
+static auto StdCharTraitsChar(clang::QualType type) -> bool {
+  return Class(StdClassTemplate(
+      "char_traits", TemplateArgumentsAre({TypeTemplateArgument(Char)})))(type);
+}
+
+// A matcher for `std::string_view`.
+static auto StdStringView(const clang::CXXRecordDecl* record_decl) -> bool {
+  return StdClassTemplate(
+      "basic_string_view",
+      TemplateArgumentsAre({TypeTemplateArgument(Char),
+                            TypeTemplateArgument(StdCharTraitsChar)}))(
+      record_decl);
+}
+}  // end namespace Matchers
+
+// Determines whether record_decl is a C++ class that has a custom mapping into
+// Carbon, and if so, returns the corresponding Carbon type. Otherwise returns
+// None.
+static auto LookupCustomRecordType(Context& context,
+                                   const clang::CXXRecordDecl* record_decl)
+    -> TypeExpr {
+  if (Matchers::StdStringView(record_decl)) {
+    return MakeStringType(
+        context, AddImportIRInst(context.sem_ir(), record_decl->getLocation()));
+  }
+
+  return TypeExpr::None;
 }
 
 // Maps a C++ record type to a Carbon type.
@@ -1091,11 +1193,19 @@ static auto MapRecordType(Context& context, const clang::RecordType& type)
     -> TypeExpr {
   auto* record_decl = dyn_cast<clang::CXXRecordDecl>(type.getDecl());
   if (!record_decl) {
-    return {.inst_id = SemIR::TypeInstId::None, .type_id = SemIR::TypeId::None};
+    return TypeExpr::None;
   }
 
   // Check if the declaration is already mapped.
   SemIR::InstId record_inst_id = LookupClangDeclInstId(context, record_decl);
+  if (!record_inst_id.has_value()) {
+    auto custom_type = LookupCustomRecordType(context, record_decl);
+    if (custom_type.inst_id.has_value()) {
+      context.sem_ir().clang_decls().Add(
+          {.decl = record_decl, .inst_id = custom_type.inst_id});
+      return custom_type;
+    }
+  }
   if (!record_inst_id.has_value()) {
     record_inst_id = ImportCXXRecordDecl(context, record_decl);
   }
@@ -1122,7 +1232,7 @@ static auto MapNonWrapperType(Context& context, SemIR::LocId loc_id,
   CARBON_CHECK(!type.hasQualifiers() && !type->isPointerType(),
                "Should not see wrapper types here");
 
-  return {.inst_id = SemIR::TypeInstId::None, .type_id = SemIR::TypeId::None};
+  return TypeExpr::None;
 }
 
 // Maps a qualified C++ type to a Carbon type.
@@ -1139,7 +1249,7 @@ static auto MapQualifiedType(Context& context, clang::QualType type,
 
   // TODO: Support other qualifiers.
   if (!quals.empty()) {
-    return {.inst_id = SemIR::TypeInstId::None, .type_id = SemIR::TypeId::None};
+    return TypeExpr::None;
   }
 
   return type_expr;
@@ -1154,7 +1264,7 @@ static auto MapPointerType(Context& context, clang::QualType type,
       !nullability.has_value() ||
       *nullability != clang::NullabilityKind::NonNull) {
     // TODO: Support nullable pointers.
-    return {.inst_id = SemIR::TypeInstId::None, .type_id = SemIR::TypeId::None};
+    return TypeExpr::None;
   }
 
   SemIR::TypeId pointer_type_id =
@@ -1349,7 +1459,7 @@ static auto GetReturnTypeExpr(Context& context, SemIR::LocId loc_id,
 
   if (!isa<clang::CXXConstructorDecl>(clang_decl)) {
     // void.
-    return {.inst_id = SemIR::TypeInstId::None, .type_id = SemIR::TypeId::None};
+    return TypeExpr::None;
   }
 
   // TODO: Make this a `PartialType`.
