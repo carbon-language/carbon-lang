@@ -585,7 +585,7 @@ struct AssociatedConstantNameAndType {
   static constexpr auto Kind =
       NodeKind::AssociatedConstantNameAndType.Define({.child_count = 2});
 
-  IdentifierNameNotBeforeParamsId name;
+  CompileTimeBindingPatternStartId introducer;
   Lex::ColonExclaimTokenIndex token;
   AnyExprId type;
 };

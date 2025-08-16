@@ -8,6 +8,8 @@
 // TIP: To dump output, run:
 // TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/parse/testdata/let/associated_const.carbon
 
+let secretMessageRegular:! String;
+
 interface MagicBox {
   let secretMessage:! String;
 
@@ -18,21 +20,29 @@ interface MagicBox {
 // CHECK:STDOUT: - filename: associated_const.carbon
 // CHECK:STDOUT:   parse_tree: [
 // CHECK:STDOUT:     {kind: 'FileStart', text: ''},
+// CHECK:STDOUT:       {kind: 'LetIntroducer', text: 'let'},
+// CHECK:STDOUT:           {kind: 'IdentifierNameNotBeforeParams', text: 'secretMessageRegular'},
+// CHECK:STDOUT:         {kind: 'CompileTimeBindingPatternStart', text: ':!', subtree_size: 2},
+// CHECK:STDOUT:         {kind: 'StringTypeLiteral', text: 'String'},
+// CHECK:STDOUT:       {kind: 'CompileTimeBindingPattern', text: ':!', subtree_size: 4},
+// CHECK:STDOUT:     {kind: 'LetDecl', text: ';', subtree_size: 6},
 // CHECK:STDOUT:         {kind: 'InterfaceIntroducer', text: 'interface'},
 // CHECK:STDOUT:         {kind: 'IdentifierNameNotBeforeParams', text: 'MagicBox'},
 // CHECK:STDOUT:       {kind: 'InterfaceDefinitionStart', text: '{', subtree_size: 3},
 // CHECK:STDOUT:         {kind: 'AssociatedConstantIntroducer', text: 'let'},
-// CHECK:STDOUT:           {kind: 'IdentifierNameNotBeforeParams', text: 'secretMessage'},
+// CHECK:STDOUT:             {kind: 'IdentifierNameNotBeforeParams', text: 'secretMessage'},
+// CHECK:STDOUT:           {kind: 'CompileTimeBindingPatternStart', text: ':!', subtree_size: 2},
 // CHECK:STDOUT:           {kind: 'StringTypeLiteral', text: 'String'},
-// CHECK:STDOUT:         {kind: 'AssociatedConstantNameAndType', text: ':!', subtree_size: 3},
-// CHECK:STDOUT:       {kind: 'AssociatedConstantDecl', text: ';', subtree_size: 5},
+// CHECK:STDOUT:         {kind: 'AssociatedConstantNameAndType', text: ':!', subtree_size: 4},
+// CHECK:STDOUT:       {kind: 'AssociatedConstantDecl', text: ';', subtree_size: 6},
 // CHECK:STDOUT:         {kind: 'AssociatedConstantIntroducer', text: 'let'},
-// CHECK:STDOUT:           {kind: 'IdentifierNameNotBeforeParams', text: 'notASecretMessage'},
+// CHECK:STDOUT:             {kind: 'IdentifierNameNotBeforeParams', text: 'notASecretMessage'},
+// CHECK:STDOUT:           {kind: 'CompileTimeBindingPatternStart', text: ':!', subtree_size: 2},
 // CHECK:STDOUT:           {kind: 'StringTypeLiteral', text: 'String'},
-// CHECK:STDOUT:         {kind: 'AssociatedConstantNameAndType', text: ':!', subtree_size: 3},
+// CHECK:STDOUT:         {kind: 'AssociatedConstantNameAndType', text: ':!', subtree_size: 4},
 // CHECK:STDOUT:         {kind: 'AssociatedConstantInitializer', text: '='},
 // CHECK:STDOUT:         {kind: 'StringLiteral', text: '"This is not a secret message"'},
-// CHECK:STDOUT:       {kind: 'AssociatedConstantDecl', text: ';', subtree_size: 7},
-// CHECK:STDOUT:     {kind: 'InterfaceDefinition', text: '}', subtree_size: 16},
+// CHECK:STDOUT:       {kind: 'AssociatedConstantDecl', text: ';', subtree_size: 8},
+// CHECK:STDOUT:     {kind: 'InterfaceDefinition', text: '}', subtree_size: 18},
 // CHECK:STDOUT:     {kind: 'FileEnd', text: ''},
 // CHECK:STDOUT:   ]

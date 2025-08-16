@@ -45,6 +45,8 @@ auto HandleAssociatedConstantDecl(Context& context) -> void {
   context.PushState(state, StateKind::LetFinishAsAssociatedConstant);
   context.AddLeafNode(NodeKind::IdentifierNameNotBeforeParams, *identifier);
   state.token = *colon;
+  context.AddNode(NodeKind::CompileTimeBindingPatternStart, state.token,
+                  state.has_error);
   context.PushState(state, StateKind::LetAfterPatternAsAssociatedConstant);
   context.PushState(StateKind::Expr);
 }
