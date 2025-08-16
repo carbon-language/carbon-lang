@@ -4,17 +4,29 @@
 //
 // AUTOUPDATE
 // TIP: To test this file alone, run:
-// TIP:   bazel test //toolchain/testing:file_test --test_arg=--file_tests=toolchain/parse/testdata/generics/interface/associated_constants.carbon
+// TIP:   bazel test //toolchain/testing:file_test --test_arg=--file_tests=toolchain/parse/testdata/generics/interface/fail_associated_constants.carbon
 // TIP: To dump output, run:
-// TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/parse/testdata/generics/interface/associated_constants.carbon
+// TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/parse/testdata/generics/interface/fail_associated_constants.carbon
 
 interface Foo {
-  let T:! type;
-  final let I:! i32;
-  default let D:! bool;
+  // CHECK:STDERR: fail_associated_constants.carbon:[[@LINE+4]]:16: error: expected `;`; associated constants cannot be initialized [ExpectedDeclSemi]
+  // CHECK:STDERR:   let T:! type = i32;
+  // CHECK:STDERR:                ^
+  // CHECK:STDERR:
+  let T:! type = i32;
+  // CHECK:STDERR: fail_associated_constants.carbon:[[@LINE+4]]:21: error: expected `;`; associated constants cannot be initialized [ExpectedDeclSemi]
+  // CHECK:STDERR:   final let I:! i32 = 4;
+  // CHECK:STDERR:                     ^
+  // CHECK:STDERR:
+  final let I:! i32 = 4;
+  // CHECK:STDERR: fail_associated_constants.carbon:[[@LINE+4]]:24: error: expected `;`; associated constants cannot be initialized [ExpectedDeclSemi]
+  // CHECK:STDERR:   default let D:! bool = true;
+  // CHECK:STDERR:                        ^
+  // CHECK:STDERR:
+  default let D:! bool = true;
 }
 
-// CHECK:STDOUT: - filename: associated_constants.carbon
+// CHECK:STDOUT: - filename: fail_associated_constants.carbon
 // CHECK:STDOUT:   parse_tree: [
 // CHECK:STDOUT:     {kind: 'FileStart', text: ''},
 // CHECK:STDOUT:         {kind: 'InterfaceIntroducer', text: 'interface'},

@@ -2,6 +2,7 @@
 // Exceptions. See /LICENSE for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
+#include "toolchain/diagnostics/diagnostic.h"
 #include "toolchain/lex/token_kind.h"
 #include "toolchain/parse/context.h"
 #include "toolchain/parse/handle.h"
@@ -78,7 +79,22 @@ auto HandleLetAfterPatternAsRegular(Context& context) -> void {
 }
 
 auto HandleLetAfterPatternAsAssociatedConstant(Context& context) -> void {
-  HandleLetAfterPattern(context, NodeKind::AssociatedConstantBindingPattern, NodeKind::AssociatedConstantInitializer);
+  auto state = context.PopState();
+
+  context.AddNode(NodeKind::AssociatedConstantBindingPattern, state.token, state.has_error);
+
+  if (context.PositionIs(Lex::TokenKind::Equal)) {
+    CARBON_DIAGNOSTIC(ExpectedDeclSemi, Error, "expected `;`; associated constants cannot be initialized");
+    context.emitter().Emit(*context.position(), ExpectedDeclSemi);
+    state.has_error = true;
+  }
+
+  if (state.has_error) {
+    if (auto after_pattern =
+            context.FindNextOf({Lex::TokenKind::Semi})) {
+      context.SkipTo(*after_pattern);
+    }
+  }
 }
 
 static auto HandleLetFinish(Context& context, NodeKind node_kind) -> void {
