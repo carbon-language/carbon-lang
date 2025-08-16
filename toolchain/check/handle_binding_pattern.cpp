@@ -284,6 +284,10 @@ auto HandleParseNode(Context& context, Parse::VarBindingPatternId node_id)
 
 auto HandleParseNode(Context& context,
                      Parse::AssociatedConstantNameAndTypeId node_id) -> bool {
+  // Pop the `.Self` facet value name introduced by the
+  // CompileTimeBindingPatternStart.
+  context.scope_stack().Pop();
+
   return HandleAnyBindingPattern(
       context, node_id, Parse::NodeKind::AssociatedConstantNameAndType);
 }
