@@ -182,12 +182,12 @@ auto FinishImplWitness(Context& context, SemIR::ImplId impl_id) -> void {
   auto self_type_id = context.types().GetTypeIdForTypeInstId(impl.self_id);
   const auto& interface = context.interfaces().Get(impl.interface.interface_id);
 
-  // I'm really confused how the changes that I've made are requiring this change,
-  // It doesn't require checking this on the trunk.
+  // I'm really confused how the changes that I've made are requiring this
+  // change, It doesn't require checking this on the trunk.
   if (interface.associated_entities_id == SemIR::InstBlockId::None) {
     return;
   }
- 
+
   auto assoc_entities =
       context.inst_blocks().Get(interface.associated_entities_id);
   llvm::SmallVector<SemIR::InstId> used_decl_ids;
