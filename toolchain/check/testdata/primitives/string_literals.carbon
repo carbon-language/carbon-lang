@@ -74,6 +74,8 @@ import library "prelude/parts/uint";
 
 class String {
   var ptr: u8*;
+  // An intentionally small `size` field to test the behavior when a string
+  // literal is large enough that its size can't be represented.
   var size: u8;
 }
 
