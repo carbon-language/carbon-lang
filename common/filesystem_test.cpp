@@ -327,5 +327,68 @@ TEST_F(FilesystemTest, Chdir) {
   (*std::move(f)).Close().Check();
 }
 
+TEST_F(FilesystemTest, WriteStream) {
+  std::string content_str = "0123456789";
+  auto write = dir_.OpenWriteOnly("test", CreationOptions::CreateNew);
+  ASSERT_THAT(write, IsSuccess(_));
+  {
+    llvm::raw_fd_ostream os = write->WriteStream();
+    os << content_str;
+    EXPECT_FALSE(os.has_error()) << os.error();
+  }
+  (*std::move(write)).Close().Check();
+
+  EXPECT_THAT(dir_.ReadFileToString("test"), IsSuccess(Eq(content_str)));
+}
+
+TEST_F(FilesystemTest, Rename) {
+  // Rename a file within a directory.
+  ASSERT_THAT(dir_.WriteFileFromString("file1", "content1"), IsSuccess(_));
+  EXPECT_THAT(dir_.Rename("file1", dir_, "file2"), IsSuccess(_));
+  EXPECT_THAT(dir_.ReadFileToString("file2"), IsSuccess(Eq("content1")));
+  auto read_missing = dir_.ReadFileToString("file1");
+  EXPECT_FALSE(read_missing.ok());
+  EXPECT_TRUE(read_missing.error().no_entity());
+
+  // Rename a file between two directories.
+  auto d1 = *dir_.CreateDirectories("subdir1");
+  EXPECT_THAT(dir_.Rename("file2", d1, "file1"), IsSuccess(_));
+  EXPECT_THAT(d1.ReadFileToString("file1"), IsSuccess(Eq("content1")));
+  auto d2 = *dir_.CreateDirectories("subdir2");
+  EXPECT_THAT(d1.Rename("file1", d2, "file1"), IsSuccess(_));
+  EXPECT_THAT(d2.ReadFileToString("file1"), IsSuccess(Eq("content1")));
+  // Close the first directory.
+  d1 = Filesystem::Dir();
+  EXPECT_THAT(dir_.Rmdir("subdir1"), IsSuccess(_))
+      << "Directory should have bene empty!";
+
+  // Rename directories.
+  ASSERT_THAT(dir_.ReadFileToString(std::filesystem::path("subdir2") / "file1"),
+              IsSuccess(Eq("content1")));
+  EXPECT_THAT(dir_.Rename("subdir2", dir_, "subdir1"), IsSuccess(_));
+  EXPECT_THAT(dir_.ReadFileToString(std::filesystem::path("subdir1") / "file1"),
+              IsSuccess(Eq("content1")));
+
+  // The open directory should survive the rename and point at the same
+  // directory.
+  EXPECT_THAT(d2.ReadFileToString("file1"), IsSuccess(Eq("content1")));
+  EXPECT_THAT(d2.WriteFileFromString("file2", "content2"), IsSuccess(_));
+  EXPECT_THAT(dir_.ReadFileToString(std::filesystem::path("subdir1") / "file2"),
+              IsSuccess(Eq("content2")));
+
+  // Rename over an existing file.
+  EXPECT_THAT(d2.Rename("file2", d2, "file1"), IsSuccess(_));
+  EXPECT_THAT(d2.ReadFileToString("file1"), IsSuccess(Eq("content2")));
+
+  // Test error calls as well.
+  auto result = dir_.Rename("missing1", dir_, "missing2");
+  EXPECT_TRUE(result.error().no_entity()) << result.error();
+  result = d2.Rename("file1", dir_,
+                     std::filesystem::path("missing_subdir") / "file2");
+  EXPECT_TRUE(result.error().no_entity()) << result.error();
+  result = dir_.Rename("subdir1", d2, "infinite_subdirs");
+  EXPECT_THAT(result.error().unix_errnum(), EINVAL) << result.error();
+}
+
 }  // namespace
 }  // namespace Carbon::Filesystem

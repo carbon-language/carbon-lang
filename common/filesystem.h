@@ -323,6 +323,13 @@ class Internal::FileRefBase {
   auto WriteFromBuffer(llvm::ArrayRef<std::byte> buffer)
       -> ErrorOr<llvm::ArrayRef<std::byte>, FdError>;
 
+  // Returns an LLVM `raw_fd_ostream` that writes to this file.
+  //
+  // Note that this doesn't expose any write errors here, those will surface
+  // through the `raw_fd_ostream` API. The stream will also not close the file
+  // which remains owned by the owning `File` object.
+  auto WriteStream() -> llvm::raw_fd_ostream;
+
   // Reads the file until EOF into the returned string.
   //
   // This method will retry any recoverable errors and work to completely read
@@ -415,6 +422,8 @@ class FileRef : public Internal::FileRefBase {
     requires Readable;
   auto WriteFromBuffer(llvm::ArrayRef<std::byte> buffer)
       -> ErrorOr<llvm::ArrayRef<std::byte>, FdError>
+    requires Writeable;
+  auto WriteStream() -> llvm::raw_fd_ostream
     requires Writeable;
   auto ReadToString() -> ErrorOr<std::string, FdError>
     requires Readable;
@@ -671,6 +680,11 @@ class DirRef {
   auto WriteFileFromString(const std::filesystem::path& path,
                            llvm::StringRef content,
                            CreationOptions creation_options = CreateAlways)
+      -> ErrorOr<Success, PathError>;
+
+  // Moves a file from one directory to another directory.
+  auto Rename(const std::filesystem::path& path, DirRef target_dir,
+              const std::filesystem::path& target_path)
       -> ErrorOr<Success, PathError>;
 
   // Changes the current working directory to this directory.
@@ -1189,6 +1203,10 @@ inline auto Internal::FileRefBase::WriteFromBuffer(
   }
 }
 
+inline auto Internal::FileRefBase::WriteStream() -> llvm::raw_fd_ostream {
+  return llvm::raw_fd_ostream(fd_, /*shouldClose=*/false);
+}
+
 inline auto Internal::FileRefBase::Close() && -> ErrorOr<Success, FdError> {
   // Put the file in a moved-from state immediately as it is invalid to
   // retry closing or use the file in any way even if the close fails.
@@ -1240,6 +1258,13 @@ auto FileRef<A>::WriteFromBuffer(llvm::ArrayRef<std::byte> buffer)
   requires Writeable
 {
   return FileRefBase::WriteFromBuffer(buffer);
+}
+
+template <OpenAccess A>
+auto FileRef<A>::WriteStream() -> llvm::raw_fd_ostream
+  requires Writeable
+{
+  return FileRefBase::WriteStream();
 }
 
 template <OpenAccess A>
@@ -1349,6 +1374,17 @@ inline auto DirRef::OpenReadWrite(const std::filesystem::path& path,
     -> ErrorOr<ReadWriteFile, PathError> {
   return OpenImpl<OpenAccess::ReadWrite>(path, creation_options, creation_mode,
                                          flags);
+}
+
+inline auto DirRef::Rename(const std::filesystem::path& path, DirRef target_dir,
+                           const std::filesystem::path& target_path)
+    -> ErrorOr<Success, PathError> {
+  if (renameat(dfd_, path.c_str(), target_dir.dfd_, target_path.c_str()) ==
+      -1) {
+    return PathError(errno, "Dir::Rename on '{0}' relative to '{1}'", path,
+                     dfd_);
+  }
+  return Success();
 }
 
 inline auto DirRef::Chdir() -> ErrorOr<Success, FdError> {
