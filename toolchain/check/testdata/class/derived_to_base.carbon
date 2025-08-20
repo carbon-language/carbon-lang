@@ -57,17 +57,17 @@ class B {
   extend base: A;
 }
 
-fn TakeConstA(p: const A*);
+fn TakeConstAPtr(p: const A*);
 
-fn PassNonConstB(p: B*) {
+fn PassNonConstBPtr(p: B*) {
   //@dump-sem-ir-begin
-  TakeConstA(p);
+  TakeConstAPtr(p);
   //@dump-sem-ir-end
 }
 
-fn PassConstB(p: const B*) {
+fn PassConstBPtr(p: const B*) {
   //@dump-sem-ir-begin
-  TakeConstA(p);
+  TakeConstAPtr(p);
   //@dump-sem-ir-end
 }
 
