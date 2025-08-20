@@ -364,7 +364,7 @@ fn F() {
 
 auto foo(const int* _Nonnull a) -> int;
 
-// --- fail_todo_import_const_int_pointer_param.carbon
+// --- import_const_int_pointer_param.carbon
 
 library "[[@TEST_NAME]]";
 
@@ -373,14 +373,6 @@ import Cpp library "const_int_pointer_param.h";
 fn F() {
   var a : i32 = 1;
   //@dump-sem-ir-begin
-  // CHECK:STDERR: fail_todo_import_const_int_pointer_param.carbon:[[@LINE+8]]:11: error: cannot implicitly convert expression of type `i32*` to `const i32*` [ConversionFailure]
-  // CHECK:STDERR:   Cpp.foo(&a);
-  // CHECK:STDERR:           ^~
-  // CHECK:STDERR: fail_todo_import_const_int_pointer_param.carbon:[[@LINE+5]]:11: note: type `i32*` does not implement interface `Core.ImplicitAs(const i32*)` [MissingImplInMemberAccessNote]
-  // CHECK:STDERR:   Cpp.foo(&a);
-  // CHECK:STDERR:           ^~
-  // CHECK:STDERR: fail_todo_import_const_int_pointer_param.carbon: note: initializing function parameter [InCallToFunctionParam]
-  // CHECK:STDERR:
   Cpp.foo(&a);
   //@dump-sem-ir-end
 }
@@ -1138,7 +1130,7 @@ fn F() {
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- fail_todo_import_const_int_pointer_param.carbon
+// CHECK:STDOUT: --- import_const_int_pointer_param.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %int_32: Core.IntLiteral = int_value 32 [concrete]
@@ -1168,9 +1160,10 @@ fn F() {
 // CHECK:STDOUT:   %Cpp.ref: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
 // CHECK:STDOUT:   %foo.ref: %foo.type = name_ref foo, imports.%foo.decl [concrete = constants.%foo]
 // CHECK:STDOUT:   %a.ref: ref %i32 = name_ref a, %a
-// CHECK:STDOUT:   %addr.loc17: %ptr.235 = addr_of %a.ref
-// CHECK:STDOUT:   %.loc17: %ptr.36b = converted %addr.loc17, <error> [concrete = <error>]
-// CHECK:STDOUT:   %foo.call: init %i32 = call %foo.ref(<error>)
+// CHECK:STDOUT:   %addr.loc9: %ptr.235 = addr_of %a.ref
+// CHECK:STDOUT:   %.loc9_11.1: %ptr.36b = as_compatible %addr.loc9
+// CHECK:STDOUT:   %.loc9_11.2: %ptr.36b = converted %addr.loc9, %.loc9_11.1
+// CHECK:STDOUT:   %foo.call: init %i32 = call %foo.ref(%.loc9_11.2)
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
