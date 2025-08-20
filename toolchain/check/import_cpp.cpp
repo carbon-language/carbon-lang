@@ -1577,23 +1577,24 @@ static auto ImportFunctionDecl(Context& context, SemIR::LocId loc_id,
 }
 
 namespace {
-// A worklist of declarations to import.
-struct ImportWorklist {
-  struct Item {
-    // A declaration that we want to import.
-    clang::Decl* decl;
-    // Whether we have added `decl`'s dependencies to the worklist.
-    bool added_dependencies;
-  };
-  llvm::SmallVector<Item> worklist;
+// An item to be imported in an import worklist.
+// TODO: If worklists ever become particularly large, consider changing this
+// to use a `PointerIntPair`.
+struct ImportItem {
+  // A declaration that we want to import.
+  clang::Decl* decl;
+  // Whether we have added `decl`'s dependencies to the worklist.
+  bool added_dependencies;
 };
+// A worklist of declarations to import.
+using ImportWorklist = llvm::SmallVector<ImportItem>;
 }  // namespace
 
 // Adds the given declaration to our list of declarations to import.
 static auto AddDependentDecl(const Context& context, clang::Decl* decl,
-                             ImportWorklist& decls) -> void {
+                             ImportWorklist& worklist) -> void {
   if (!IsClangDeclImported(context, decl)) {
-    decls.worklist.push_back({.decl = decl, .added_dependencies = false});
+    worklist.push_back({.decl = decl, .added_dependencies = false});
   }
 }
 
@@ -1601,7 +1602,7 @@ static auto AddDependentDecl(const Context& context, clang::Decl* decl,
 // adds them to the given set.
 static auto AddDependentUnimportedTypeDecls(const Context& context,
                                             clang::QualType type,
-                                            ImportWorklist& decls) -> void {
+                                            ImportWorklist& worklist) -> void {
   while (true) {
     if (type->isPointerType() || type->isReferenceType()) {
       type = type->getPointeeType();
@@ -1614,7 +1615,7 @@ static auto AddDependentUnimportedTypeDecls(const Context& context,
   }
 
   if (const auto* record_type = type->getAs<clang::RecordType>()) {
-    AddDependentDecl(context, record_type->getDecl(), decls);
+    AddDependentDecl(context, record_type->getDecl(), worklist);
   }
 }
 
@@ -1622,29 +1623,31 @@ static auto AddDependentUnimportedTypeDecls(const Context& context,
 // and adds them to the given set.
 static auto AddDependentUnimportedFunctionDecls(
     const Context& context, const clang::FunctionDecl& clang_decl,
-    ImportWorklist& decls) -> void {
+    ImportWorklist& worklist) -> void {
   for (const auto* param : clang_decl.parameters()) {
-    AddDependentUnimportedTypeDecls(context, param->getType(), decls);
+    AddDependentUnimportedTypeDecls(context, param->getType(), worklist);
   }
-  AddDependentUnimportedTypeDecls(context, clang_decl.getReturnType(), decls);
+  AddDependentUnimportedTypeDecls(context, clang_decl.getReturnType(),
+                                  worklist);
 }
 
 // Finds all decls that need to be imported before importing the given
 // declaration and adds them to the given set.
 static auto AddDependentUnimportedDecls(const Context& context,
                                         clang::Decl* clang_decl,
-                                        ImportWorklist& decls) -> void {
+                                        ImportWorklist& worklist) -> void {
   if (auto* clang_function_decl = clang_decl->getAsFunction()) {
-    AddDependentUnimportedFunctionDecls(context, *clang_function_decl, decls);
+    AddDependentUnimportedFunctionDecls(context, *clang_function_decl,
+                                        worklist);
   } else if (auto* type_decl = dyn_cast<clang::TypeDecl>(clang_decl)) {
     if (!isa<clang::RecordDecl>(clang_decl)) {
       AddDependentUnimportedTypeDecls(
           context, type_decl->getASTContext().getTypeDeclType(type_decl),
-          decls);
+          worklist);
     }
   }
   if (!isa<clang::TranslationUnitDecl>(clang_decl)) {
-    AddDependentDecl(context, GetParentDecl(clang_decl), decls);
+    AddDependentDecl(context, GetParentDecl(clang_decl), worklist);
   }
 }
 
@@ -1694,27 +1697,29 @@ static auto ImportDeclAfterDependencies(Context& context, SemIR::LocId loc_id,
 // Attempts to import a set of declarations. Returns `false` if an error was
 // produced, `true` otherwise.
 static auto ImportDeclSet(Context& context, SemIR::LocId loc_id,
-                          ImportWorklist& decls) -> bool {
+                          ImportWorklist& worklist) -> bool {
   // Walk the dependency graph in depth-first order, and import declarations
   // once we've imported all of their dependencies.
-  while (!decls.worklist.empty()) {
-    auto& item = decls.worklist.back();
+  while (!worklist.empty()) {
+    auto& item = worklist.back();
     if (!item.added_dependencies) {
-      // We might have already imported this declaration as a dependency of
-      // another declaration in the worklist. If so, don't visit it again.
+      // Skip items we've already imported. We checked this when initially
+      // adding the item to the worklist, but it might have been added to the
+      // worklist twice before the first time we visited it. For example, this
+      // happens for `fn F(a: Cpp.T, b: Cpp.T)`.
       if (IsClangDeclImported(context, item.decl)) {
-        decls.worklist.pop_back();
+        worklist.pop_back();
         continue;
       }
 
       // First time visiting this declaration (preorder): add its dependencies
       // to the work list.
       item.added_dependencies = true;
-      AddDependentUnimportedDecls(context, item.decl, decls);
+      AddDependentUnimportedDecls(context, item.decl, worklist);
     } else {
       // Second time visiting this declaration (postorder): its dependencies are
       // already imported, so we can import it now.
-      auto* decl = decls.worklist.pop_back_val().decl;
+      auto* decl = worklist.pop_back_val().decl;
       auto inst_id = ImportDeclAfterDependencies(context, loc_id, decl);
       CARBON_CHECK(inst_id.has_value());
       if (inst_id == SemIR::ErrorInst::InstId) {
@@ -1734,9 +1739,9 @@ static auto ImportDeclAndDependencies(Context& context, SemIR::LocId loc_id,
                                       clang::Decl* clang_decl)
     -> SemIR::InstId {
   // Collect dependencies by walking the dependency graph in depth-first order.
-  ImportWorklist clang_decls;
-  AddDependentDecl(context, clang_decl, clang_decls);
-  if (!ImportDeclSet(context, loc_id, clang_decls)) {
+  ImportWorklist worklist;
+  AddDependentDecl(context, clang_decl, worklist);
+  if (!ImportDeclSet(context, loc_id, worklist)) {
     return SemIR::ErrorInst::InstId;
   }
   return LookupClangDeclInstId(context, clang_decl);
@@ -1747,9 +1752,9 @@ static auto ImportDeclAndDependencies(Context& context, SemIR::LocId loc_id,
 static auto ImportTypeAndDependencies(Context& context, SemIR::LocId loc_id,
                                       clang::QualType type) -> TypeExpr {
   // Collect dependencies by walking the dependency graph in depth-first order.
-  ImportWorklist clang_decls;
-  AddDependentUnimportedTypeDecls(context, type, clang_decls);
-  if (!ImportDeclSet(context, loc_id, clang_decls)) {
+  ImportWorklist worklist;
+  AddDependentUnimportedTypeDecls(context, type, worklist);
+  if (!ImportDeclSet(context, loc_id, worklist)) {
     return {.inst_id = SemIR::ErrorInst::TypeInstId,
             .type_id = SemIR::ErrorInst::TypeId};
   }
