@@ -1277,8 +1277,9 @@ static auto MakeParamPatternsBlockId(Context& context, SemIR::LocId loc_id,
     return SemIR::InstBlockId::Empty;
   }
   llvm::SmallVector<SemIR::InstId> params;
-  params.reserve(clang_decl.parameters().size());
-  for (const clang::ParmVarDecl* param : clang_decl.parameters()) {
+  params.reserve(clang_decl.getNumNonObjectParams());
+  for (unsigned i : llvm::seq(clang_decl.getNumNonObjectParams())) {
+    const auto* param = clang_decl.getNonObjectParameter(i);
     // TODO: Get the parameter type from the function, not from the
     // `ParmVarDecl`. The type of the `ParmVarDecl` is the type within the
     // function, and isn't in general the same as the type that's exposed to

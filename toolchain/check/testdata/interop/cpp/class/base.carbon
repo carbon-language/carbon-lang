@@ -407,8 +407,15 @@ class V {
 // CHECK:STDOUT:   %Base: type = class_type @Base [concrete]
 // CHECK:STDOUT:   %Base.f.type: type = fn_type @Base.f [concrete]
 // CHECK:STDOUT:   %Base.f: %Base.f.type = struct_value () [concrete]
+// CHECK:STDOUT:   %const: type = const_type %Base [concrete]
+// CHECK:STDOUT:   %ptr.a97: type = ptr_type %const [concrete]
+// CHECK:STDOUT:   %f__carbon_thunk.type: type = fn_type @f__carbon_thunk [concrete]
+// CHECK:STDOUT:   %f__carbon_thunk: %f__carbon_thunk.type = struct_value () [concrete]
+// CHECK:STDOUT:   %ptr.fb2: type = ptr_type %Base [concrete]
 // CHECK:STDOUT:   %Base.g.type: type = fn_type @Base.g [concrete]
 // CHECK:STDOUT:   %Base.g: %Base.g.type = struct_value () [concrete]
+// CHECK:STDOUT:   %g__carbon_thunk.type: type = fn_type @g__carbon_thunk [concrete]
+// CHECK:STDOUT:   %g__carbon_thunk: %g__carbon_thunk.type = struct_value () [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -424,7 +431,17 @@ class V {
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     <elided>
 // CHECK:STDOUT:   }
+// CHECK:STDOUT:   %f__carbon_thunk.decl: %f__carbon_thunk.type = fn_decl @f__carbon_thunk [concrete = constants.%f__carbon_thunk] {
+// CHECK:STDOUT:     <elided>
+// CHECK:STDOUT:   } {
+// CHECK:STDOUT:     <elided>
+// CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Base.g.decl: %Base.g.type = fn_decl @Base.g [concrete = constants.%Base.g] {
+// CHECK:STDOUT:     <elided>
+// CHECK:STDOUT:   } {
+// CHECK:STDOUT:     <elided>
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %g__carbon_thunk.decl: %g__carbon_thunk.type = fn_decl @g__carbon_thunk [concrete = constants.%g__carbon_thunk] {
 // CHECK:STDOUT:     <elided>
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     <elided>
@@ -439,7 +456,11 @@ class V {
 // CHECK:STDOUT:   %.loc8_3.1: ref %Base = class_element_access %d.ref, element0
 // CHECK:STDOUT:   %.loc8_3.2: ref %Base = converted %d.ref, %.loc8_3.1
 // CHECK:STDOUT:   %.loc8_3.3: %Base = bind_value %.loc8_3.2
-// CHECK:STDOUT:   %Base.f.call: init %empty_tuple.type = call %Base.f.bound(%.loc8_3.3)
+// CHECK:STDOUT:   %.loc8_3.4: ref %Base = value_as_ref %.loc8_3.3
+// CHECK:STDOUT:   %addr: %ptr.fb2 = addr_of %.loc8_3.4
+// CHECK:STDOUT:   %.loc8_7.1: %ptr.a97 = as_compatible %addr
+// CHECK:STDOUT:   %.loc8_7.2: %ptr.a97 = converted %addr, %.loc8_7.1
+// CHECK:STDOUT:   %f__carbon_thunk.call: init %empty_tuple.type = call imports.%f__carbon_thunk.decl(%.loc8_7.2)
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -453,7 +474,11 @@ class V {
 // CHECK:STDOUT:   %.loc14_3.1: ref %Base = class_element_access %d.ref, element0
 // CHECK:STDOUT:   %.loc14_3.2: ref %Base = converted %d.ref, %.loc14_3.1
 // CHECK:STDOUT:   %.loc14_3.3: %Base = bind_value %.loc14_3.2
-// CHECK:STDOUT:   %Base.g.call: init %empty_tuple.type = call %Base.g.bound(%.loc14_3.3)
+// CHECK:STDOUT:   %.loc14_3.4: ref %Base = value_as_ref %.loc14_3.3
+// CHECK:STDOUT:   %addr: %ptr.fb2 = addr_of %.loc14_3.4
+// CHECK:STDOUT:   %.loc14_18.1: %ptr.a97 = as_compatible %addr
+// CHECK:STDOUT:   %.loc14_18.2: %ptr.a97 = converted %addr, %.loc14_18.1
+// CHECK:STDOUT:   %g__carbon_thunk.call: init %empty_tuple.type = call imports.%g__carbon_thunk.decl(%.loc14_18.2)
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
