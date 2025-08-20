@@ -388,8 +388,8 @@ fn PassConstB(p: const B) {
 // CHECK:STDOUT:   %ptr.e79: type = ptr_type %B [concrete]
 // CHECK:STDOUT:   %const.d98: type = const_type %A [concrete]
 // CHECK:STDOUT:   %ptr.985: type = ptr_type %const.d98 [concrete]
-// CHECK:STDOUT:   %TakeConstA.type: type = fn_type @TakeConstA [concrete]
-// CHECK:STDOUT:   %TakeConstA: %TakeConstA.type = struct_value () [concrete]
+// CHECK:STDOUT:   %TakeConstAPtr.type: type = fn_type @TakeConstAPtr [concrete]
+// CHECK:STDOUT:   %TakeConstAPtr: %TakeConstAPtr.type = struct_value () [concrete]
 // CHECK:STDOUT:   %const.44f: type = const_type %B [concrete]
 // CHECK:STDOUT:   %ptr.eb4: type = ptr_type %const.44f [concrete]
 // CHECK:STDOUT: }
@@ -397,28 +397,28 @@ fn PassConstB(p: const B) {
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @PassNonConstB(%p.param: %ptr.e79) {
+// CHECK:STDOUT: fn @PassNonConstBPtr(%p.param: %ptr.e79) {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %TakeConstA.ref: %TakeConstA.type = name_ref TakeConstA, file.%TakeConstA.decl [concrete = constants.%TakeConstA]
+// CHECK:STDOUT:   %TakeConstAPtr.ref: %TakeConstAPtr.type = name_ref TakeConstAPtr, file.%TakeConstAPtr.decl [concrete = constants.%TakeConstAPtr]
 // CHECK:STDOUT:   %p.ref: %ptr.e79 = name_ref p, %p
-// CHECK:STDOUT:   %.loc15_14.1: ref %B = deref %p.ref
-// CHECK:STDOUT:   %.loc15_14.2: ref %A = class_element_access %.loc15_14.1, element0
-// CHECK:STDOUT:   %addr: %ptr.985 = addr_of %.loc15_14.2
-// CHECK:STDOUT:   %.loc15_14.3: %ptr.985 = as_compatible %addr
-// CHECK:STDOUT:   %.loc15_14.4: %ptr.985 = converted %p.ref, %.loc15_14.3
-// CHECK:STDOUT:   %TakeConstA.call: init %empty_tuple.type = call %TakeConstA.ref(%.loc15_14.4)
+// CHECK:STDOUT:   %.loc15_17.1: ref %B = deref %p.ref
+// CHECK:STDOUT:   %.loc15_17.2: ref %A = class_element_access %.loc15_17.1, element0
+// CHECK:STDOUT:   %addr: %ptr.985 = addr_of %.loc15_17.2
+// CHECK:STDOUT:   %.loc15_17.3: %ptr.985 = as_compatible %addr
+// CHECK:STDOUT:   %.loc15_17.4: %ptr.985 = converted %p.ref, %.loc15_17.3
+// CHECK:STDOUT:   %TakeConstAPtr.call: init %empty_tuple.type = call %TakeConstAPtr.ref(%.loc15_17.4)
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @PassConstB(%p.param: %ptr.eb4) {
+// CHECK:STDOUT: fn @PassConstBPtr(%p.param: %ptr.eb4) {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %TakeConstA.ref: %TakeConstA.type = name_ref TakeConstA, file.%TakeConstA.decl [concrete = constants.%TakeConstA]
+// CHECK:STDOUT:   %TakeConstAPtr.ref: %TakeConstAPtr.type = name_ref TakeConstAPtr, file.%TakeConstAPtr.decl [concrete = constants.%TakeConstAPtr]
 // CHECK:STDOUT:   %p.ref: %ptr.eb4 = name_ref p, %p
-// CHECK:STDOUT:   %.loc21_14.1: ref %const.44f = deref %p.ref
-// CHECK:STDOUT:   %.loc21_14.2: ref %const.d98 = class_element_access %.loc21_14.1, element0
-// CHECK:STDOUT:   %addr: %ptr.985 = addr_of %.loc21_14.2
-// CHECK:STDOUT:   %.loc21_14.3: %ptr.985 = converted %p.ref, %addr
-// CHECK:STDOUT:   %TakeConstA.call: init %empty_tuple.type = call %TakeConstA.ref(%.loc21_14.3)
+// CHECK:STDOUT:   %.loc21_17.1: ref %const.44f = deref %p.ref
+// CHECK:STDOUT:   %.loc21_17.2: ref %const.d98 = class_element_access %.loc21_17.1, element0
+// CHECK:STDOUT:   %addr: %ptr.985 = addr_of %.loc21_17.2
+// CHECK:STDOUT:   %.loc21_17.3: %ptr.985 = converted %p.ref, %addr
+// CHECK:STDOUT:   %TakeConstAPtr.call: init %empty_tuple.type = call %TakeConstAPtr.ref(%.loc21_17.3)
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
