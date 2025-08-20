@@ -46,8 +46,8 @@ provide an incremental path from where the code is at today towards increasing
 levels of safety.
 
 Ultimately, Carbon will both provide a [memory-safe language], _and_ provide a language
-that is a target for mechanical migration from C++ and optimizes even further
-for interop with unsafe C++ with minimal friction.
+that is a target for mechanical migration from C++ and optimizes even further for
+interop with unsafe C++ with minimal friction.
 
 [memory-safe language]: /docs/design/safety/terminology.md#memory-safe-language
 
