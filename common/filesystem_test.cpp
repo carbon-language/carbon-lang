@@ -369,7 +369,7 @@ TEST_F(FilesystemTest, Rename) {
   EXPECT_THAT(dir_.ReadFileToString(std::filesystem::path("subdir1") / "file1"),
               IsSuccess(Eq("content1")));
 
-  // The open directory should survive the rename and point at the same
+  // The open directory `d2` should survive the rename and point at the same
   // directory.
   EXPECT_THAT(d2.ReadFileToString("file1"), IsSuccess(Eq("content1")));
   EXPECT_THAT(d2.WriteFileFromString("file2", "content2"), IsSuccess(_));
@@ -386,6 +386,8 @@ TEST_F(FilesystemTest, Rename) {
   result = d2.Rename("file1", dir_,
                      std::filesystem::path("missing_subdir") / "file2");
   EXPECT_TRUE(result.error().no_entity()) << result.error();
+  // Note that `d2` was renamed `subdir1` above, which is why this creates
+  // infinite subdirectories.
   result = dir_.Rename("subdir1", d2, "infinite_subdirs");
   EXPECT_THAT(result.error().unix_errnum(), EINVAL) << result.error();
 }
