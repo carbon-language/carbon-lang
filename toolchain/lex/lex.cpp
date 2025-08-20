@@ -16,11 +16,13 @@
 #include "llvm/Support/Compiler.h"
 #include "toolchain/base/kind_switch.h"
 #include "toolchain/base/shared_value_stores.h"
+#include "toolchain/diagnostics/format_providers.h"
 #include "toolchain/lex/character_set.h"
 #include "toolchain/lex/helpers.h"
 #include "toolchain/lex/numeric_literal.h"
 #include "toolchain/lex/string_literal.h"
 #include "toolchain/lex/token_index.h"
+#include "toolchain/lex/token_info.h"
 #include "toolchain/lex/token_kind.h"
 #include "toolchain/lex/tokenized_buffer.h"
 
@@ -972,6 +974,11 @@ auto Lexer::LexComment(llvm::StringRef source_text, ssize_t& position) -> void {
   if (position + 2 < static_cast<ssize_t>(source_text.size()) &&
       LLVM_UNLIKELY(!IsSpace(source_text[position + 2]))) {
     llvm::StringRef comment_text = source_text.substr(position);
+    if (comment_text.starts_with("//@include-in-dumps\n")) {
+      buffer_.has_include_in_dumps_ = true;
+      AdvanceToLine(source_text, position, next_line());
+      return;
+    }
     if (comment_text.starts_with("//@dump-sem-ir-begin\n")) {
       BeginDumpSemIRRange(comment_text.begin());
       AdvanceToLine(source_text, position, next_line());
@@ -982,7 +989,6 @@ auto Lexer::LexComment(llvm::StringRef source_text, ssize_t& position) -> void {
       AdvanceToLine(source_text, position, next_line());
       return;
     }
-
     CARBON_DIAGNOSTIC(NoWhitespaceAfterCommentIntroducer, Error,
                       "whitespace is required after '//'");
     emitter_.Emit(comment_text.begin() + 2, NoWhitespaceAfterCommentIntroducer);
@@ -1105,12 +1111,13 @@ auto Lexer::LexNumericLiteral(llvm::StringRef source_text, ssize_t& position)
   position += token_size;
 
   CARBON_KIND_SWITCH(literal->ComputeValue(emitter_)) {
-    case CARBON_KIND(NumericLiteral::IntValue && value):
+    case CARBON_KIND(NumericLiteral::IntValue && value): {
       return LexTokenWithPayload(TokenKind::IntLiteral,
                                  buffer_.value_stores_->ints()
                                      .AddUnsigned(std::move(value.value))
                                      .AsTokenPayload(),
                                  byte_offset);
+    }
     case CARBON_KIND(NumericLiteral::RealValue && value): {
       auto real_id = buffer_.value_stores_->reals().Add(
           Real{.mantissa = value.mantissa,
@@ -1119,9 +1126,19 @@ auto Lexer::LexNumericLiteral(llvm::StringRef source_text, ssize_t& position)
       return LexTokenWithPayload(TokenKind::RealLiteral, real_id.index,
                                  byte_offset);
     }
-    case CARBON_KIND(NumericLiteral::UnrecoverableError _):
+    case CARBON_KIND(NumericLiteral::UnrecoverableError _): {
       return LexTokenWithPayload(TokenKind::Error, token_size, byte_offset);
+    }
   }
+}
+
+static auto DiagnoseUnterminatedString(
+    Diagnostics::Emitter<const char*>& emitter, const StringLiteral& literal,
+    bool is_char) -> void {
+  CARBON_DIAGNOSTIC(UnterminatedString, Error,
+                    "{0:character|string} literal is missing a terminator",
+                    Diagnostics::BoolAsSelect);
+  emitter.Emit(literal.text().begin(), UnterminatedString, is_char);
 }
 
 auto Lexer::LexStringLiteral(llvm::StringRef source_text, ssize_t& position)
@@ -1135,11 +1152,28 @@ auto Lexer::LexStringLiteral(llvm::StringRef source_text, ssize_t& position)
   // Capture the position before we step past the token.
   int32_t byte_offset = position;
   int string_column = byte_offset - current_line_info().start;
-  ssize_t literal_size = literal->text().size();
-  position += literal_size;
+  position += literal->text().size();
+
+  // Helper for error paths.
+  auto lex_as_error = [&]() {
+    return LexTokenWithPayload(TokenKind::Error, literal->text().size(),
+                               byte_offset);
+  };
+
+  if (literal->kind() == StringLiteral::Kind::Char) {
+    if (!literal->is_terminated()) {
+      DiagnoseUnterminatedString(emitter_, *literal, /*is_char=*/true);
+      return lex_as_error();
+    }
+    if (auto value = literal->ComputeCharLiteralValue(emitter_)) {
+      return LexTokenWithPayload(TokenKind::CharLiteral, value->value,
+                                 byte_offset);
+    }
+    return lex_as_error();
+  }
 
   // Update line and column information.
-  if (literal->is_multi_line()) {
+  if (literal->kind() != StringLiteral::Kind::SingleLine) {
     while (next_line_info().start < position) {
       ++line_index_.index;
       current_line_info().indent = string_column;
@@ -1149,17 +1183,14 @@ auto Lexer::LexStringLiteral(llvm::StringRef source_text, ssize_t& position)
     // last line of the multi-line literal *also* has its indent set.
   }
 
-  if (literal->is_terminated()) {
-    auto string_id = buffer_.value_stores_->string_literal_values().Add(
-        literal->ComputeValue(buffer_.allocator_, emitter_));
-    return LexTokenWithPayload(TokenKind::StringLiteral, string_id.index,
-                               byte_offset);
-  } else {
-    CARBON_DIAGNOSTIC(UnterminatedString, Error,
-                      "string is missing a terminator");
-    emitter_.Emit(literal->text().begin(), UnterminatedString);
-    return LexTokenWithPayload(TokenKind::Error, literal_size, byte_offset);
+  if (!literal->is_terminated()) {
+    DiagnoseUnterminatedString(emitter_, *literal, /*is_char=*/false);
+    return lex_as_error();
   }
+  auto string_id = buffer_.value_stores_->string_literal_values().Add(
+      literal->ComputeStringValue(buffer_.allocator_, emitter_));
+  return LexTokenWithPayload(TokenKind::StringLiteral, string_id.index,
+                             byte_offset);
 }
 
 auto Lexer::LexOneCharSymbolToken(llvm::StringRef source_text, TokenKind kind,

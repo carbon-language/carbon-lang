@@ -53,6 +53,7 @@ production of SemIR. It also does any validation that requires context.
 Some particular topics have their own documentation:
 
 -   [Associated constants](associated_constant.md)
+-   [Pattern matching](pattern_matching.md)
 
 ## Postorder processing
 

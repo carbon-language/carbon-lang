@@ -48,6 +48,19 @@ auto AddBindingPattern(Context& context, SemIR::LocId name_loc,
 auto AddPatternVarStorage(Context& context, SemIR::InstBlockId pattern_block_id,
                           bool is_returned_var) -> void;
 
+// Adds a `self` parameter pattern with the specified type information. This
+// only sets up the binding pattern and type; callers are expected to add the
+// returned instruction to appropriate blocks. This is used when generating
+// functions, rather than processing a user-authored `self: Self`.
+auto AddSelfParamPattern(Context& context, SemIR::LocId loc_id,
+                         SemIR::ExprRegionId type_expr_region_id,
+                         SemIR::TypeId type_id) -> SemIR::InstId;
+
+// As the above, but for `addr self: Self*`.
+auto AddAddrSelfParamPattern(Context& context, SemIR::LocId loc_id,
+                             SemIR::ExprRegionId type_expr_region_id,
+                             SemIR::TypeInstId type_inst_id) -> SemIR::InstId;
+
 }  // namespace Carbon::Check
 
 #endif  // CARBON_TOOLCHAIN_CHECK_PATTERN_H_

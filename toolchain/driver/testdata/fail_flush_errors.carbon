@@ -25,6 +25,10 @@ fn F() {
   // Add the name into the string table from the tokenized buffer's string
   // literal storage. Use a hex escape to ensure that the tokenized buffer
   // allocates separate storage for the result.
+  // CHECK:STDERR: fail_flush_errors.carbon:[[@LINE+4]]:3: error: `Core.String` implicitly referenced here, but package `Core` not found [CoreNotFound]
+  // CHECK:STDERR:   "undec\x6Cared2";
+  // CHECK:STDERR:   ^~~~~~~~~~~~~~~~
+  // CHECK:STDERR:
   "undec\x6Cared2";
   // CHECK:STDERR: fail_flush_errors.carbon:[[@LINE+4]]:3: error: name `undeclared2` not found [NameNotFound]
   // CHECK:STDERR:   undeclared2;

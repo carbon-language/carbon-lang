@@ -121,6 +121,7 @@ cc_library(
     srcs = ["dump.cpp"],
     hdrs = ["dump.h"],
     deps = [
+        ":context",
         ":tree",
         "//common:ostream",
         "//common:raw_string_ostream",

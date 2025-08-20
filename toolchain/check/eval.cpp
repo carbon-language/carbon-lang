@@ -9,6 +9,8 @@
 #include <optional>
 #include <utility>
 
+#include "common/raw_string_ostream.h"
+#include "llvm/Support/ConvertUTF.h"
 #include "toolchain/base/canonical_value_store.h"
 #include "toolchain/base/kind_switch.h"
 #include "toolchain/check/action.h"
@@ -17,6 +19,7 @@
 #include "toolchain/check/facet_type.h"
 #include "toolchain/check/generic.h"
 #include "toolchain/check/import_ref.h"
+#include "toolchain/check/name_lookup.h"
 #include "toolchain/check/type.h"
 #include "toolchain/check/type_completion.h"
 #include "toolchain/diagnostics/diagnostic.h"
@@ -336,7 +339,7 @@ static auto MakeFloatResult(Context& context, SemIR::TypeId type_id,
                             llvm::APFloat value) -> SemIR::ConstantId {
   auto result = context.floats().Add(std::move(value));
   return MakeConstantResult(
-      context, SemIR::FloatLiteral{.type_id = type_id, .float_id = result},
+      context, SemIR::FloatValue{.type_id = type_id, .float_id = result},
       Phase::Concrete);
 }
 
@@ -635,13 +638,19 @@ static auto GetConstantFacetTypeInfo(EvalContext& eval_context,
   // Rewrite constraints are resolved first before replacing them with their
   // canonical instruction, so that in a `WhereExpr` we can work with the
   // `ImplWitnessAccess` references to `.Self` on the LHS of the constraints
-  // rather than the value of the associated constant they reference. It also
-  // ensures that any errors inserted during resolution will be seen by
-  // GetConstantValueIgnoringPeriodSelf() which will update the phase
-  // accordingly.
+  // rather than the value of the associated constant they reference.
+  //
+  // This also implies that we may find `ImplWitnessAccessSubstituted`
+  // instructions in the LHS and RHS of these constraints, which are preserved
+  // to maintain them as an unresolved reference to an associated constant, but
+  // which must be handled gracefully during resolution. They will be replaced
+  // with the constant value of the `ImplWitnessAccess` below when they are
+  // substituted with a constant value.
   info.rewrite_constraints = orig.rewrite_constraints;
-  ResolveFacetTypeRewriteConstraints(eval_context.context(), loc_id,
-                                     info.rewrite_constraints);
+  if (!ResolveFacetTypeRewriteConstraints(eval_context.context(), loc_id,
+                                          info.rewrite_constraints)) {
+    *phase = Phase::UnknownDueToError;
+  }
 
   for (auto& rewrite : info.rewrite_constraints) {
     // `where` requirements using `.Self` should not be considered symbolic.
@@ -952,6 +961,28 @@ static auto PerformArrayIndex(EvalContext& eval_context, SemIR::ArrayIndex inst)
   return eval_context.GetConstantValue(elements[index_val.getZExtValue()]);
 }
 
+// Performs a conversion between character types, diagnosing if the value
+// doesn't fit in the destination type.
+static auto PerformCheckedCharConvert(Context& context, SemIR::LocId loc_id,
+                                      SemIR::InstId arg_id,
+                                      SemIR::TypeId dest_type_id)
+    -> SemIR::ConstantId {
+  auto arg = context.insts().GetAs<SemIR::CharLiteralValue>(arg_id);
+
+  // Values over 0x80 require multiple code units in UTF-8.
+  if (arg.value.index >= 0x80) {
+    CARBON_DIAGNOSTIC(CharTooLargeForType, Error,
+                      "character value {0} too large for type {1}",
+                      SemIR::CharId, SemIR::TypeId);
+    context.emitter().Emit(loc_id, CharTooLargeForType, arg.value,
+                           dest_type_id);
+    return SemIR::ErrorInst::ConstantId;
+  }
+
+  llvm::APInt int_val(8, arg.value.index, /*isSigned=*/false);
+  return MakeIntResult(context, dest_type_id, /*is_signed=*/false, int_val);
+}
+
 // Forms a constant int type as an evaluation result. Requires that width_id is
 // constant.
 static auto MakeIntTypeResult(Context& context, SemIR::LocId loc_id,
@@ -962,6 +993,21 @@ static auto MakeIntTypeResult(Context& context, SemIR::LocId loc_id,
       .int_kind = int_kind,
       .bit_width_id = width_id};
   if (!ValidateIntType(context, loc_id, result)) {
+    return SemIR::ErrorInst::ConstantId;
+  }
+  return MakeConstantResult(context, result, phase);
+}
+
+// Forms a constant float type as an evaluation result. Requires that width_id
+// is constant.
+static auto MakeFloatTypeResult(Context& context, SemIR::LocId loc_id,
+                                SemIR::InstId width_id, Phase phase)
+    -> SemIR::ConstantId {
+  auto result = SemIR::FloatType{
+      .type_id = GetSingletonType(context, SemIR::TypeType::TypeInstId),
+      .bit_width_id = width_id,
+      .float_kind = SemIR::FloatKind::None};
+  if (!ValidateFloatTypeAndSetKind(context, loc_id, result)) {
     return SemIR::ErrorInst::ConstantId;
   }
   return MakeConstantResult(context, result, phase);
@@ -1025,6 +1071,93 @@ static auto PerformCheckedIntConvert(Context& context, SemIR::LocId loc_id,
   return MakeConstantResult(
       context, SemIR::IntValue{.type_id = dest_type_id, .int_id = arg.int_id},
       Phase::Concrete);
+}
+
+// Performs a conversion between floating-point types, diagnosing if the value
+// doesn't fit in the destination type.
+static auto PerformCheckedFloatConvert(Context& context, SemIR::LocId loc_id,
+                                       SemIR::InstId arg_id,
+                                       SemIR::TypeId dest_type_id)
+    -> SemIR::ConstantId {
+  auto dest_type_object_rep_id = context.types().GetObjectRepr(dest_type_id);
+  CARBON_CHECK(dest_type_object_rep_id.has_value(),
+               "Conversion to incomplete type");
+  auto dest_float_type =
+      context.types().TryGetAs<SemIR::FloatType>(dest_type_object_rep_id);
+  CARBON_CHECK(dest_float_type || context.types().Is<SemIR::FloatLiteralType>(
+                                      dest_type_object_rep_id));
+
+  if (auto literal =
+          context.insts().TryGetAs<SemIR::FloatLiteralValue>(arg_id)) {
+    if (!dest_float_type) {
+      return MakeConstantResult(
+          context,
+          SemIR::FloatLiteralValue{.type_id = dest_type_id,
+                                   .real_id = literal->real_id},
+          Phase::Concrete);
+    }
+
+    // Convert the real literal to an llvm::APFloat and add it to the floats
+    // ValueStore. In the future this would use an arbitrary precision Rational
+    // type.
+    //
+    // TODO: Implement Carbon's actual implicit conversion rules for
+    // floating-point constants, as per the design
+    // docs/design/expressions/implicit_conversions.md
+    auto real_value = context.sem_ir().reals().Get(literal->real_id);
+
+    // Convert the real value to a string.
+    llvm::SmallString<64> str;
+    real_value.mantissa.toString(str, real_value.is_decimal ? 10 : 16,
+                                 /*signed=*/false, /*formatAsCLiteral=*/true);
+    str += real_value.is_decimal ? "e" : "p";
+    real_value.exponent.toStringSigned(str);
+
+    // Convert the string to an APFloat.
+    llvm::APFloat result(dest_float_type->float_kind.Semantics());
+    // TODO: The implementation of this conversion effectively converts back to
+    // APInts, but unfortunately the conversion from integer mantissa and
+    // exponent in IEEEFloat::roundSignificandWithExponent is not part of the
+    // public API.
+    auto status =
+        result.convertFromString(str, llvm::APFloat::rmNearestTiesToEven);
+    if (auto error = status.takeError()) {
+      // The literal we create should always successfully parse.
+      CARBON_FATAL("Float literal parsing failed: {0}",
+                   toString(std::move(error)));
+    }
+    if (status.get() & llvm::APFloat::opOverflow) {
+      CARBON_DIAGNOSTIC(FloatLiteralTooLargeForType, Error,
+                        "value {0} too large for floating-point type {1}",
+                        RealId, SemIR::TypeId);
+      context.emitter().Emit(loc_id, FloatLiteralTooLargeForType,
+                             literal->real_id, dest_type_id);
+      return SemIR::ErrorInst::ConstantId;
+    }
+    return MakeFloatResult(context, dest_type_id, std::move(result));
+  }
+
+  if (!dest_float_type) {
+    context.TODO(loc_id, "conversion from float to float literal");
+    return SemIR::ErrorInst::ConstantId;
+  }
+
+  // Convert to the destination float semantics.
+  auto arg = context.insts().GetAs<SemIR::FloatValue>(arg_id);
+  llvm::APFloat result = context.floats().Get(arg.float_id);
+  bool loses_info;
+  auto status = result.convert(dest_float_type->float_kind.Semantics(),
+                               llvm::APFloat::rmNearestTiesToEven, &loses_info);
+  if (status & llvm::APFloat::opOverflow) {
+    CARBON_DIAGNOSTIC(FloatTooLargeForType, Error,
+                      "value {0} too large for floating-point type {1}",
+                      llvm::APFloat, SemIR::TypeId);
+    context.emitter().Emit(loc_id, FloatTooLargeForType,
+                           context.floats().Get(arg.float_id), dest_type_id);
+    return SemIR::ErrorInst::ConstantId;
+  }
+
+  return MakeFloatResult(context, dest_type_id, std::move(result));
 }
 
 // Issues a diagnostic for a compile-time division by zero.
@@ -1406,7 +1539,7 @@ static auto PerformBuiltinUnaryFloatOp(Context& context,
                                        SemIR::BuiltinFunctionKind builtin_kind,
                                        SemIR::InstId arg_id)
     -> SemIR::ConstantId {
-  auto op = context.insts().GetAs<SemIR::FloatLiteral>(arg_id);
+  auto op = context.insts().GetAs<SemIR::FloatValue>(arg_id);
   auto op_val = context.floats().Get(op.float_id);
 
   switch (builtin_kind) {
@@ -1426,8 +1559,8 @@ static auto PerformBuiltinBinaryFloatOp(Context& context,
                                         SemIR::InstId lhs_id,
                                         SemIR::InstId rhs_id)
     -> SemIR::ConstantId {
-  auto lhs = context.insts().GetAs<SemIR::FloatLiteral>(lhs_id);
-  auto rhs = context.insts().GetAs<SemIR::FloatLiteral>(rhs_id);
+  auto lhs = context.insts().GetAs<SemIR::FloatValue>(lhs_id);
+  auto rhs = context.insts().GetAs<SemIR::FloatValue>(rhs_id);
   auto lhs_val = context.floats().Get(lhs.float_id);
   auto rhs_val = context.floats().Get(rhs.float_id);
 
@@ -1458,8 +1591,8 @@ static auto PerformBuiltinFloatComparison(
     Context& context, SemIR::BuiltinFunctionKind builtin_kind,
     SemIR::InstId lhs_id, SemIR::InstId rhs_id, SemIR::TypeId bool_type_id)
     -> SemIR::ConstantId {
-  auto lhs = context.insts().GetAs<SemIR::FloatLiteral>(lhs_id);
-  auto rhs = context.insts().GetAs<SemIR::FloatLiteral>(rhs_id);
+  auto lhs = context.insts().GetAs<SemIR::FloatValue>(lhs_id);
+  auto rhs = context.insts().GetAs<SemIR::FloatValue>(rhs_id);
   const auto& lhs_val = context.floats().Get(lhs.float_id);
   const auto& rhs_val = context.floats().Get(rhs.float_id);
 
@@ -1526,6 +1659,10 @@ static auto MakeConstantForBuiltinCall(EvalContext& eval_context,
     case SemIR::BuiltinFunctionKind::PrintChar:
     case SemIR::BuiltinFunctionKind::PrintInt:
     case SemIR::BuiltinFunctionKind::ReadChar:
+    case SemIR::BuiltinFunctionKind::FloatAddAssign:
+    case SemIR::BuiltinFunctionKind::FloatSubAssign:
+    case SemIR::BuiltinFunctionKind::FloatMulAssign:
+    case SemIR::BuiltinFunctionKind::FloatDivAssign:
     case SemIR::BuiltinFunctionKind::IntSAddAssign:
     case SemIR::BuiltinFunctionKind::IntSSubAssign:
     case SemIR::BuiltinFunctionKind::IntSMulAssign:
@@ -1582,21 +1719,21 @@ static auto MakeConstantForBuiltinCall(EvalContext& eval_context,
       auto combined_info = SemIR::FacetTypeInfo::Combine(
           context.facet_types().Get(lhs_facet_type_id),
           context.facet_types().Get(rhs_facet_type_id));
-      // TODO: The instructions in the rewrite constraints have already been
-      // canonicalized before coming here, and it leads to incorrect diagnostics
-      // in resolve when assigning the same thing to an associated constant
-      // in both facet types being combined.
-      ResolveFacetTypeRewriteConstraints(eval_context.context(), loc_id,
-                                         combined_info.rewrite_constraints);
-      for (auto& rewrite : combined_info.rewrite_constraints) {
-        if (rewrite.lhs_id == SemIR::ErrorInst::InstId ||
-            rewrite.rhs_id == SemIR::ErrorInst::InstId) {
-          phase = Phase::UnknownDueToError;
-          break;
-        }
+      if (!ResolveFacetTypeRewriteConstraints(
+              eval_context.context(), loc_id,
+              combined_info.rewrite_constraints)) {
+        phase = Phase::UnknownDueToError;
       }
       combined_info.Canonicalize();
       return MakeFacetTypeResult(eval_context.context(), combined_info, phase);
+    }
+
+    case SemIR::BuiltinFunctionKind::CharLiteralMakeType: {
+      return context.constant_values().Get(SemIR::CharLiteralType::TypeInstId);
+    }
+
+    case SemIR::BuiltinFunctionKind::FloatLiteralMakeType: {
+      return context.constant_values().Get(SemIR::FloatLiteralType::TypeInstId);
     }
 
     case SemIR::BuiltinFunctionKind::IntLiteralMakeType: {
@@ -1614,18 +1751,20 @@ static auto MakeConstantForBuiltinCall(EvalContext& eval_context,
     }
 
     case SemIR::BuiltinFunctionKind::FloatMakeType: {
-      // TODO: Support a symbolic constant width.
-      if (phase != Phase::Concrete) {
-        break;
-      }
-      if (!ValidateFloatBitWidth(context, loc_id, arg_ids[0])) {
-        return SemIR::ErrorInst::ConstantId;
-      }
-      return context.constant_values().Get(SemIR::LegacyFloatType::TypeInstId);
+      return MakeFloatTypeResult(context, loc_id, arg_ids[0], phase);
     }
 
     case SemIR::BuiltinFunctionKind::BoolMakeType: {
       return context.constant_values().Get(SemIR::BoolType::TypeInstId);
+    }
+
+    // Character conversions.
+    case SemIR::BuiltinFunctionKind::CharConvertChecked: {
+      if (phase != Phase::Concrete) {
+        return MakeConstantResult(context, call, phase);
+      }
+      return PerformCheckedCharConvert(context, loc_id, arg_ids[0],
+                                       call.type_id);
     }
 
     // Integer conversions.
@@ -1697,6 +1836,15 @@ static auto MakeConstantForBuiltinCall(EvalContext& eval_context,
       }
       return PerformBuiltinIntComparison(context, builtin_kind, arg_ids[0],
                                          arg_ids[1], call.type_id);
+    }
+
+    // Floating-point conversions.
+    case SemIR::BuiltinFunctionKind::FloatConvertChecked: {
+      if (phase != Phase::Concrete) {
+        return MakeConstantResult(context, call, phase);
+      }
+      return PerformCheckedFloatConvert(context, loc_id, arg_ids[0],
+                                        call.type_id);
     }
 
     // Unary float -> float operations.
@@ -2022,31 +2170,32 @@ auto TryEvalTypedInst<SemIR::WhereExpr>(EvalContext& eval_context,
   auto typed_inst = inst.As<SemIR::WhereExpr>();
 
   Phase phase = Phase::Concrete;
-  SemIR::TypeId base_facet_type_id =
-      eval_context.GetTypeOfInst(typed_inst.period_self_id);
-  SemIR::Inst base_facet_inst =
-      eval_context.types().GetAsInst(base_facet_type_id);
   SemIR::FacetTypeInfo info = {.other_requirements = false};
-
-  // `where` provides that the base facet is an error, `type`, or a facet
-  // type.
-  if (auto facet_type = base_facet_inst.TryAs<SemIR::FacetType>()) {
-    info = eval_context.facet_types().Get(facet_type->facet_type_id);
-  } else if (base_facet_type_id == SemIR::ErrorInst::TypeId) {
-    return SemIR::ErrorInst::ConstantId;
-  } else {
-    CARBON_CHECK(base_facet_type_id == SemIR::TypeType::TypeId,
-                 "Unexpected type_id: {0}, inst: {1}", base_facet_type_id,
-                 base_facet_inst);
-  }
 
   // Add the constraints from the `WhereExpr` instruction into `info`.
   if (typed_inst.requirements_id.has_value()) {
     auto insts = eval_context.inst_blocks().Get(typed_inst.requirements_id);
     for (auto inst_id : insts) {
-      if (auto rewrite =
-              eval_context.insts().TryGetAs<SemIR::RequirementRewrite>(
+      if (auto base =
+              eval_context.insts().TryGetAs<SemIR::RequirementBaseFacetType>(
                   inst_id)) {
+        if (base->base_type_inst_id == SemIR::ErrorInst::TypeInstId) {
+          return SemIR::ErrorInst::ConstantId;
+        }
+
+        if (auto base_facet_type =
+                eval_context.insts().TryGetAs<SemIR::FacetType>(
+                    base->base_type_inst_id)) {
+          const auto& base_info =
+              eval_context.facet_types().Get(base_facet_type->facet_type_id);
+          info.extend_constraints.append(base_info.extend_constraints);
+          info.self_impls_constraints.append(base_info.self_impls_constraints);
+          info.rewrite_constraints.append(base_info.rewrite_constraints);
+          info.other_requirements |= base_info.other_requirements;
+        }
+      } else if (auto rewrite =
+                     eval_context.insts().TryGetAs<SemIR::RequirementRewrite>(
+                         inst_id)) {
         info.rewrite_constraints.push_back(
             {.lhs_id = rewrite->lhs_id, .rhs_id = rewrite->rhs_id});
       } else if (auto impls =

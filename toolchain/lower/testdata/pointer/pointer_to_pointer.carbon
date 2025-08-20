@@ -25,12 +25,12 @@ fn F(p: i32**) -> i32 {
 // CHECK:STDOUT:   %a.var = alloca ptr, align 8, !dbg !7
 // CHECK:STDOUT:   %b.var = alloca ptr, align 8, !dbg !8
 // CHECK:STDOUT:   %c.var = alloca ptr, align 8, !dbg !9
-// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(i64 8, ptr %a.var), !dbg !7
+// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %a.var), !dbg !7
 // CHECK:STDOUT:   store ptr %p, ptr %a.var, align 8, !dbg !7
-// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(i64 8, ptr %b.var), !dbg !8
+// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %b.var), !dbg !8
 // CHECK:STDOUT:   %.loc15_17.2 = load ptr, ptr %p, align 8, !dbg !10
 // CHECK:STDOUT:   store ptr %.loc15_17.2, ptr %b.var, align 8, !dbg !8
-// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(i64 8, ptr %c.var), !dbg !9
+// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %c.var), !dbg !9
 // CHECK:STDOUT:   store ptr %b.var, ptr %c.var, align 8, !dbg !9
 // CHECK:STDOUT:   %.loc17_12 = load ptr, ptr %c.var, align 8, !dbg !11
 // CHECK:STDOUT:   %.loc17_11.2 = load ptr, ptr %.loc17_12, align 8, !dbg !12
@@ -39,7 +39,7 @@ fn F(p: i32**) -> i32 {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nocallback nofree nosync nounwind willreturn memory(argmem: readwrite)
-// CHECK:STDOUT: declare void @llvm.lifetime.start.p0(i64 immarg, ptr captures(none)) #0
+// CHECK:STDOUT: declare void @llvm.lifetime.start.p0(ptr captures(none)) #0
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; uselistorder directives
 // CHECK:STDOUT: uselistorder ptr @llvm.lifetime.start.p0, { 2, 1, 0 }

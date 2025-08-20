@@ -91,12 +91,16 @@ class [[nodiscard]] ErrorBase : public Printable<ErrorT> {
 //
 // This is nodiscard to enforce error handling prior to destruction.
 template <typename T, typename ErrorT = Error>
-  requires(!std::is_reference_v<ErrorT> &&
-           (std::same_as<ErrorT, Error> ||
-            std::derived_from<ErrorT, ErrorBase<ErrorT>>))
 class [[nodiscard]] ErrorOr {
  public:
   using ValueT = std::remove_reference_t<T>;
+
+  // Check that the custom error type is structured the way we expect. These
+  // need to be `static_assert`s to enable forward declared error types to be
+  // used with `ErrorOr` in function signatures.
+  static_assert(!std::is_reference_v<ErrorT>);
+  static_assert(std::same_as<ErrorT, Error> ||
+                std::derived_from<ErrorT, ErrorBase<ErrorT>>);
 
   // Constructs with an error; the error must not be Error::Success().
   // Implicit for easy construction on returns.
@@ -154,18 +158,29 @@ class [[nodiscard]] ErrorOr {
     return std::get<ErrorT>(std::move(val_));
   }
 
+  // Checks that `ok()` is true.
+  // REQUIRES: `ok()` is true.
+  auto Check() const -> void { CARBON_CHECK(ok(), "{0}", error()); }
+
   // Returns the contained value.
   // REQUIRES: `ok()` is true.
-  auto operator*() -> ValueT& {
-    CARBON_CHECK(ok());
+  [[nodiscard]] auto operator*() & -> ValueT& {
+    Check();
     return std::get<StoredT>(val_);
   }
 
   // Returns the contained value.
   // REQUIRES: `ok()` is true.
-  auto operator*() const -> const ValueT& {
-    CARBON_CHECK(ok());
+  [[nodiscard]] auto operator*() const& -> const ValueT& {
+    Check();
     return std::get<StoredT>(val_);
+  }
+
+  // Returns the contained value.
+  // REQUIRES: `ok()` is true.
+  [[nodiscard]] auto operator*() && -> ValueT&& {
+    Check();
+    return std::get<StoredT>(std::move(val_));
   }
 
   // Returns the contained value.

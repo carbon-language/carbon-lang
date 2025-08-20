@@ -55,6 +55,21 @@ static auto MarkInitializerFor(SemIR::File& sem_ir, SemIR::InstId init_id,
   }
 }
 
+// For a value or initializing expression using a copy value representation,
+// copy the value into a temporary object.
+static auto CopyValueToTemporary(Context& context, SemIR::InstId init_id)
+    -> SemIR::InstId {
+  // TODO: Consider using `None` to mean that we immediately materialize and
+  // initialize a temporary, rather than two separate instructions.
+  auto init = context.sem_ir().insts().Get(init_id);
+  auto temporary_id = AddInstWithCleanup<SemIR::TemporaryStorage>(
+      context, SemIR::LocId(init_id), {.type_id = init.type_id()});
+  return AddInst<SemIR::Temporary>(context, SemIR::LocId(init_id),
+                                   {.type_id = init.type_id(),
+                                    .storage_id = temporary_id,
+                                    .init_id = init_id});
+}
+
 // Commits to using a temporary to store the result of the initializing
 // expression described by `init_id`, and returns the location of the
 // temporary. If `discarded` is `true`, the result is discarded, and no
@@ -85,15 +100,7 @@ static auto FinalizeTemporary(Context& context, SemIR::InstId init_id,
 
   // The initializer has no return slot, but we want to produce a temporary
   // object. Materialize one now.
-  // TODO: Consider using `None` to mean that we immediately materialize and
-  // initialize a temporary, rather than two separate instructions.
-  auto init = sem_ir.insts().Get(init_id);
-  auto temporary_id = AddInstWithCleanup<SemIR::TemporaryStorage>(
-      context, SemIR::LocId(init_id), {.type_id = init.type_id()});
-  return AddInst<SemIR::Temporary>(context, SemIR::LocId(init_id),
-                                   {.type_id = init.type_id(),
-                                    .storage_id = temporary_id,
-                                    .init_id = init_id});
+  return CopyValueToTemporary(context, init_id);
 }
 
 // Materialize a temporary to hold the result of the given expression if it is
@@ -158,7 +165,7 @@ static auto ConvertAggregateElement(
     ConversionTarget::Kind kind, SemIR::InstId target_id,
     SemIR::TypeInstId target_elem_type_inst, PendingBlock* target_block,
     size_t src_field_index, size_t target_field_index,
-    SemIR::InstId vtable_ptr_inst_id = SemIR::InstId::None) -> SemIR::InstId {
+    SemIR::ClassType* vtable_class_type = nullptr) -> SemIR::InstId {
   auto src_elem_type =
       context.types().GetTypeIdForTypeInstId(src_elem_type_inst);
   auto target_elem_type =
@@ -186,7 +193,7 @@ static auto ConvertAggregateElement(
   target.init_id = MakeElementAccessInst<TargetAccessInstT>(
       context, loc_id, target_id, target_elem_type, *target_block,
       target_field_index);
-  return Convert(context, loc_id, src_elem_id, target, vtable_ptr_inst_id);
+  return Convert(context, loc_id, src_elem_id, target, vtable_class_type);
 }
 
 // Performs a conversion from a tuple to an array type. This function only
@@ -383,7 +390,7 @@ template <typename TargetAccessInstT>
 static auto ConvertStructToStructOrClass(
     Context& context, SemIR::StructType src_type, SemIR::StructType dest_type,
     SemIR::InstId value_id, ConversionTarget target,
-    SemIR::InstId vtable_ptr_inst_id = SemIR::InstId::None) -> SemIR::InstId {
+    SemIR::ClassType* vtable_class_type = nullptr) -> SemIR::InstId {
   static_assert(std::is_same_v<SemIR::ClassElementAccess, TargetAccessInstT> ||
                 std::is_same_v<SemIR::StructAccess, TargetAccessInstT>);
   constexpr bool ToClass =
@@ -473,11 +480,22 @@ static auto ConvertStructToStructOrClass(
                                              {.type_id = vptr_type_id,
                                               .base_id = target.init_id,
                                               .index = SemIR::ElementIndex(i)});
-      auto init_id =
-          AddInst<SemIR::InitializeFrom>(context, value_loc_id,
-                                         {.type_id = vptr_type_id,
-                                          .src_id = vtable_ptr_inst_id,
-                                          .dest_id = dest_id});
+      auto vtable_decl_id =
+          context.classes().Get(vtable_class_type->class_id).vtable_decl_id;
+      LoadImportRef(context, vtable_decl_id);
+      auto canonical_vtable_decl_id =
+          context.constant_values().GetConstantInstId(vtable_decl_id);
+      auto vtable_ptr_id = AddInst<SemIR::VtablePtr>(
+          context, value_loc_id,
+          {.type_id = GetPointerType(context, SemIR::VtableType::TypeInstId),
+           .vtable_id = context.insts()
+                            .GetAs<SemIR::VtableDecl>(canonical_vtable_decl_id)
+                            .vtable_id,
+           .specific_id = vtable_class_type->specific_id});
+      auto init_id = AddInst<SemIR::InitializeFrom>(context, value_loc_id,
+                                                    {.type_id = vptr_type_id,
+                                                     .src_id = vtable_ptr_id,
+                                                     .dest_id = dest_id});
       new_block.Set(i, init_id);
       continue;
     }
@@ -519,7 +537,7 @@ static auto ConvertStructToStructOrClass(
             context, value_loc_id, value_id, src_field.type_inst_id,
             literal_elems, inner_kind, target.init_id, dest_field.type_inst_id,
             target.init_block, src_field_index,
-            src_field_index + dest_vptr_offset, vtable_ptr_inst_id);
+            src_field_index + dest_vptr_offset, vtable_class_type);
     if (init_id == SemIR::ErrorInst::InstId) {
       return SemIR::ErrorInst::InstId;
     }
@@ -561,10 +579,11 @@ static auto ConvertStructToStruct(Context& context, SemIR::StructType src_type,
 // Performs a conversion from a struct to a class type. This function only
 // converts the type, and does not perform a final conversion to the requested
 // expression category.
-static auto ConvertStructToClass(
-    Context& context, SemIR::StructType src_type, SemIR::ClassType dest_type,
-    SemIR::InstId value_id, ConversionTarget target,
-    SemIR::InstId dest_vtable_ptr_inst_id = SemIR::InstId::None)
+static auto ConvertStructToClass(Context& context, SemIR::StructType src_type,
+                                 SemIR::ClassType dest_type,
+                                 SemIR::InstId value_id,
+                                 ConversionTarget target,
+                                 SemIR::ClassType* vtable_class_type)
     -> SemIR::InstId {
   PendingBlock target_block(&context);
   auto& dest_class_info = context.classes().Get(dest_type.class_id);
@@ -591,24 +610,9 @@ static auto ConvertStructToClass(
         SemIR::LocId(value_id), {.type_id = target.type_id});
   }
 
-  if (!dest_vtable_ptr_inst_id.has_value()) {
-    dest_vtable_ptr_inst_id = dest_class_info.vtable_ptr_id;
-    if (dest_type.specific_id.has_value() &&
-        dest_vtable_ptr_inst_id.has_value()) {
-      LoadImportRef(context, dest_vtable_ptr_inst_id);
-      dest_vtable_ptr_inst_id = context.constant_values().GetInstId(
-          GetConstantValueInSpecific(context.sem_ir(), dest_type.specific_id,
-                                     dest_vtable_ptr_inst_id));
-    }
-  }
-
-  if (dest_vtable_ptr_inst_id.has_value()) {
-    LoadImportRef(context, dest_vtable_ptr_inst_id);
-  }
-
   auto result_id = ConvertStructToStructOrClass<SemIR::ClassElementAccess>(
       context, src_type, dest_struct_type, value_id, target,
-      dest_vtable_ptr_inst_id);
+      vtable_class_type ? vtable_class_type : &dest_type);
 
   if (need_temporary) {
     target_block.InsertHere();
@@ -717,6 +721,8 @@ static auto IsValidExprCategoryForConversionTarget(
              category == SemIR::ExprCategory::Initializing;
     case ConversionTarget::DurableRef:
       return category == SemIR::ExprCategory::DurableRef;
+    case ConversionTarget::CppThunkRef:
+      return category == SemIR::ExprCategory::EphemeralRef;
     case ConversionTarget::ExplicitAs:
       return true;
     case ConversionTarget::Initializer:
@@ -753,25 +759,6 @@ static auto CanUseValueOfInitializer(const SemIR::File& sem_ir,
   return InitReprIsCopyOfValueRepr(sem_ir, type_id);
 }
 
-// Returns the non-adapter type that is compatible with the specified type.
-static auto GetTransitiveAdaptedType(Context& context, SemIR::TypeId type_id)
-    -> SemIR::TypeId {
-  // If the type is an adapter, its object representation type is its compatible
-  // non-adapter type.
-  while (auto class_type =
-             context.types().TryGetAs<SemIR::ClassType>(type_id)) {
-    auto& class_info = context.classes().Get(class_type->class_id);
-    auto adapted_type_id =
-        class_info.GetAdaptedType(context.sem_ir(), class_type->specific_id);
-    if (!adapted_type_id.has_value()) {
-      break;
-    }
-    type_id = adapted_type_id;
-  }
-
-  // Otherwise, the type itself is a non-adapter type.
-  return type_id;
-}
 static auto DiagnoseConversionFailureToConstraintValue(
     Context& context, SemIR::LocId loc_id, SemIR::InstId expr_id,
     SemIR::TypeId target_type_id) -> void {
@@ -809,8 +796,8 @@ static auto DiagnoseConversionFailureToConstraintValue(
 
 static auto PerformBuiltinConversion(
     Context& context, SemIR::LocId loc_id, SemIR::InstId value_id,
-    ConversionTarget target,
-    SemIR::InstId vtable_ptr_inst_id = SemIR::InstId::None) -> SemIR::InstId {
+    ConversionTarget target, SemIR::ClassType* vtable_class_type = nullptr)
+    -> SemIR::InstId {
   auto& sem_ir = context.sem_ir();
   auto value = sem_ir.insts().Get(value_id);
   auto value_type_id = value.type_id();
@@ -876,7 +863,7 @@ static auto PerformBuiltinConversion(
     // shortcut to doing the explicit calls to walk the parts of the
     // tuple/struct which happens inside PerformBuiltinConversion().
     if (auto foundation_type_id =
-            GetTransitiveAdaptedType(context, value_type_id);
+            context.types().GetTransitiveAdaptedType(value_type_id);
         foundation_type_id != value_type_id &&
         (context.types().Is<SemIR::TupleType>(foundation_type_id) ||
          context.types().Is<SemIR::StructType>(foundation_type_id))) {
@@ -923,8 +910,9 @@ static auto PerformBuiltinConversion(
   if (target.kind == ConversionTarget::Kind::ExplicitAs &&
       target.type_id != value_type_id) {
     auto target_foundation_id =
-        GetTransitiveAdaptedType(context, target.type_id);
-    auto value_foundation_id = GetTransitiveAdaptedType(context, value_type_id);
+        context.types().GetTransitiveAdaptedType(target.type_id);
+    auto value_foundation_id =
+        context.types().GetTransitiveAdaptedType(value_type_id);
     if (target_foundation_id == value_foundation_id) {
       // For a struct or tuple literal, perform a category conversion if
       // necessary.
@@ -983,7 +971,7 @@ static auto PerformBuiltinConversion(
                .adapt_id.has_value()) {
         return ConvertStructToClass(context, *src_struct_type,
                                     *target_class_type, value_id, target,
-                                    vtable_ptr_inst_id);
+                                    vtable_class_type);
       }
     }
 
@@ -1173,6 +1161,34 @@ static auto PerformCopy(Context& context, SemIR::InstId expr_id, bool diagnose)
   return SemIR::ErrorInst::InstId;
 }
 
+// Convert a value expression so that it can be used to initialize a C++ thunk
+// parameter.
+static auto ConvertValueForCppThunkRef(Context& context, SemIR::InstId expr_id,
+                                       bool diagnose) -> SemIR::InstId {
+  auto expr = context.insts().Get(expr_id);
+
+  // If the expression has a pointer value representation, extract that and use
+  // it directly.
+  if (SemIR::ValueRepr::ForType(context.sem_ir(), expr.type_id()).kind ==
+      SemIR::ValueRepr::Pointer) {
+    return AddInst<SemIR::ValueAsRef>(
+        context, SemIR::LocId(expr_id),
+        {.type_id = expr.type_id(), .value_id = expr_id});
+  }
+
+  // Otherwise, we need a temporary to pass as the thunk argument. Create a copy
+  // and initialize a temporary from it.
+  expr_id = PerformCopy(context, expr_id, diagnose);
+  if (SemIR::GetExprCategory(context.sem_ir(), expr_id) ==
+      SemIR::ExprCategory::Value) {
+    // If we still have a value expression, then it's a value expression
+    // whose value is being used directly to initialize the object. Copy
+    // it into a temporary to form an ephemeral reference.
+    expr_id = CopyValueToTemporary(context, expr_id);
+  }
+  return expr_id;
+}
+
 auto PerformAction(Context& context, SemIR::LocId loc_id,
                    SemIR::ConvertToValueAction action) -> SemIR::InstId {
   return Convert(context, loc_id, action.inst_id,
@@ -1182,7 +1198,7 @@ auto PerformAction(Context& context, SemIR::LocId loc_id,
 }
 
 auto Convert(Context& context, SemIR::LocId loc_id, SemIR::InstId expr_id,
-             ConversionTarget target, SemIR::InstId vtable_ptr_inst_id)
+             ConversionTarget target, SemIR::ClassType* vtable_class_type)
     -> SemIR::InstId {
   auto& sem_ir = context.sem_ir();
   auto orig_expr_id = expr_id;
@@ -1247,7 +1263,7 @@ auto Convert(Context& context, SemIR::LocId loc_id, SemIR::InstId expr_id,
 
   // Check whether any builtin conversion applies.
   expr_id = PerformBuiltinConversion(context, loc_id, expr_id, target,
-                                     vtable_ptr_inst_id);
+                                     vtable_class_type);
   if (expr_id == SemIR::ErrorInst::InstId) {
     return expr_id;
   }
@@ -1377,7 +1393,8 @@ auto Convert(Context& context, SemIR::LocId loc_id, SemIR::InstId expr_id,
     case SemIR::ExprCategory::EphemeralRef:
       // If a reference expression is an acceptable result, we're done.
       if (target.kind == ConversionTarget::ValueOrRef ||
-          target.kind == ConversionTarget::Discarded) {
+          target.kind == ConversionTarget::Discarded ||
+          target.kind == ConversionTarget::CppThunkRef) {
         break;
       }
 
@@ -1406,6 +1423,13 @@ auto Convert(Context& context, SemIR::LocId loc_id, SemIR::InstId expr_id,
       if (target.is_initializer()) {
         expr_id = PerformCopy(context, expr_id, target.diagnose);
       }
+
+      // When initializing a C++ thunk parameter, form a reference, creating a
+      // temporary if needed.
+      if (target.kind == ConversionTarget::CppThunkRef) {
+        expr_id = ConvertValueForCppThunkRef(context, expr_id, target.diagnose);
+      }
+
       break;
   }
 

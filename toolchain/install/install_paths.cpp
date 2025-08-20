@@ -4,10 +4,12 @@
 
 #include "toolchain/install/install_paths.h"
 
+#include <filesystem>
 #include <memory>
 #include <string>
 
 #include "common/check.h"
+#include "common/filesystem.h"
 #include "llvm/ADT/StringExtras.h"
 #include "llvm/ADT/StringRef.h"
 #include "llvm/Support/FileSystem.h"
@@ -28,31 +30,18 @@ static constexpr llvm::StringLiteral MarkerPath =
 auto InstallPaths::MakeExeRelative(llvm::StringRef exe_path) -> InstallPaths {
   InstallPaths paths;
 
-  // Map from the executable path from the executable path to an install
-  // prefix path.
-  if (!llvm::sys::fs::exists(exe_path)) {
-    paths.SetError(llvm::Twine("No file at executable path: ") + exe_path);
+  // Double check the exe was present.
+  auto exe_access_result = Filesystem::Cwd().Access(exe_path.str());
+  if (!exe_access_result.ok()) {
+    paths.SetError(llvm::Twine("Failed to test for access executable: ") +
+                   exe_access_result.error().ToString());
     return paths;
-  }
-  paths = InstallPaths(exe_path);
-
-  // TODO: Detect a Windows executable path and use custom logic to map to the
-  // correct install prefix for that platform.
-
-  // We assume an executable will be in a `bin` directory and this is a
-  // FHS-like install prefix. We remove the filename and walk up to find the
-  // expected install prefix.
-  llvm::sys::path::remove_filename(paths.prefix_);
-  llvm::sys::path::append(paths.prefix_, llvm::sys::path::Style::posix,
-                          "../../");
-
-  if (auto error = llvm::sys::fs::make_absolute(paths.prefix_)) {
-    paths.SetError(error.message());
+  } else if (!*exe_access_result) {
+    paths.SetError(llvm::Twine("Unable to access executable: ") + exe_path);
     return paths;
   }
 
-  paths.CheckMarkerFile();
-  return paths;
+  return MakeFromFile(exe_path.str());
 }
 
 auto InstallPaths::MakeForBazelRunfiles(llvm::StringRef exe_path)
@@ -65,28 +54,23 @@ auto InstallPaths::MakeForBazelRunfiles(llvm::StringRef exe_path)
                runtimes_error);
 
   std::string relative_marker_path = (PrefixRoot.str() + MarkerPath).str();
-  std::string runtimes_marker_path = runfiles->Rlocation(relative_marker_path);
+  std::filesystem::path runtimes_marker_path =
+      runfiles->Rlocation(relative_marker_path);
 
   // Start from the marker, remove that filename, and walk up to find the
   // install prefix.
-  InstallPaths paths(runtimes_marker_path);
-  llvm::sys::path::remove_filename(paths.prefix_);
-  llvm::sys::path::append(paths.prefix_, llvm::sys::path::Style::posix,
-                          "../../");
-
-  if (auto error = llvm::sys::fs::make_absolute(paths.prefix_)) {
-    paths.SetError(error.message());
-    return paths;
-  }
-
-  paths.CheckMarkerFile();
-  CARBON_CHECK(!paths.error(), "{0}", *paths.error());
-  return paths;
+  return MakeFromFile(std::move(runtimes_marker_path));
 }
 
 auto InstallPaths::Make(llvm::StringRef install_prefix) -> InstallPaths {
-  InstallPaths paths(install_prefix);
-  paths.CheckMarkerFile();
+  InstallPaths paths(install_prefix.str());
+  auto open_result = Filesystem::Cwd().OpenDir(paths.prefix_);
+  if (!open_result.ok()) {
+    paths.SetError(open_result.error().ToString());
+  } else {
+    paths.prefix_dir_ = *std::move(open_result);
+    paths.CheckMarkerFile();
+  }
   return paths;
 }
 
@@ -97,124 +81,136 @@ auto InstallPaths::ReadPreludeManifest() const
 
 auto InstallPaths::ReadClangHeadersManifest() const
     -> ErrorOr<llvm::SmallVector<std::string>> {
-  llvm::SmallString<256> manifest_path(prefix_);
-  llvm::sys::path::append(manifest_path, llvm::sys::path::Style::posix, "..");
-  return ReadManifest(manifest_path, "clang_headers_manifest.txt");
+  return ReadManifest(prefix_ / "..", "clang_headers_manifest.txt");
 }
 
-auto InstallPaths::ReadManifest(llvm::StringRef manifest_path,
-                                llvm::StringRef manifest_file) const
+auto InstallPaths::ReadManifest(std::filesystem::path manifest_path,
+                                std::filesystem::path manifest_file) const
     -> ErrorOr<llvm::SmallVector<std::string>> {
   // This is structured to avoid a vector copy on success.
   ErrorOr<llvm::SmallVector<std::string>> result =
       llvm::SmallVector<std::string>();
 
-  llvm::SmallString<256> manifest;
-  llvm::sys::path::append(manifest, llvm::sys::path::Style::posix,
-                          manifest_path, manifest_file);
-
-  auto fs = llvm::vfs::getRealFileSystem();
-  llvm::ErrorOr<std::unique_ptr<llvm::MemoryBuffer>> file =
-      fs->getBufferForFile(manifest);
-  if (!file) {
-    result = ErrorBuilder() << "Loading manifest `" << manifest
-                            << "`: " << file.getError().message();
+  // TODO: It would be nice to adjust the manifests to be within the install
+  // prefix and use that open directory to access the manifest. Also to update
+  // callers to be able to use the relative paths via an open directory rather
+  // than having to form absolute paths for all the entries.
+  auto read_result =
+      Filesystem::Cwd().ReadFileToString(manifest_path / manifest_file);
+  if (!read_result.ok()) {
+    result = ErrorBuilder()
+             << "Loading manifest `" << (manifest_path / manifest_file)
+             << "`: " << read_result.error();
     return result;
   }
 
   // The manifest should have one file per line.
-  llvm::StringRef buffer = file.get()->getBuffer();
+  llvm::StringRef buffer = *read_result;
   while (true) {
     auto [token, remainder] = llvm::getToken(buffer, "\n");
     if (token.empty()) {
       break;
     }
-    llvm::SmallString<256> path;
-    llvm::sys::path::append(path, llvm::sys::path::Style::posix, manifest_path,
-                            token);
-    result->push_back(path.str().str());
+    result->push_back((manifest_path / std::string_view(token)).native());
     buffer = remainder;
   }
 
   if (result->empty()) {
-    result = ErrorBuilder() << "Manifest `" << manifest << "` is empty";
+    result = ErrorBuilder()
+             << "Manifest `" << (manifest_path / manifest_file) << "` is empty";
   }
   return result;
+}
+
+auto InstallPaths::MakeFromFile(std::filesystem::path file_path)
+    -> InstallPaths {
+  // TODO: Detect a Windows executable path and use custom logic to map to the
+  // correct install prefix for that platform.
+  //
+  // We assume an executable will be in a `bin` directory and this is a
+  // FHS-like install prefix. We remove the filename and walk up to find the
+  // expected install prefix.
+  std::error_code ec;
+  InstallPaths paths(std::filesystem::absolute(
+      std::move(file_path).remove_filename() / "../..", ec));
+  if (ec) {
+    paths.SetError(ec.message());
+    return paths;
+  }
+
+  auto open_result = Filesystem::Cwd().OpenDir(paths.prefix_);
+  if (!open_result.ok()) {
+    paths.SetError(open_result.error().ToString());
+    return paths;
+  }
+
+  paths.prefix_dir_ = *std::move(open_result);
+  paths.CheckMarkerFile();
+  return paths;
 }
 
 auto InstallPaths::SetError(llvm::Twine message) -> void {
   // Use an empty prefix on error as that should use the working directory which
   // is the least likely problematic.
   prefix_ = "";
+  prefix_dir_ = Filesystem::Dir();
   error_ = {message.str()};
 }
 
 auto InstallPaths::CheckMarkerFile() -> void {
-  if (!llvm::sys::path::is_absolute(prefix_)) {
-    SetError(llvm::Twine("Not an absolute path: ") + prefix_);
+  if (!prefix_.is_absolute()) {
+    SetError(llvm::Twine("Not an absolute path: ") + prefix_.native());
+    return;
   }
 
-  llvm::SmallString<256> path(prefix_);
-  llvm::sys::path::append(path, llvm::sys::path::Style::posix, MarkerPath);
-  if (!llvm::sys::fs::exists(path)) {
-    SetError(llvm::Twine("No install marker at path: ") + path);
+  auto access_result = prefix_dir_.Access(MarkerPath.str());
+  if (!access_result.ok()) {
+    SetError(access_result.error().ToString());
+    return;
   }
+  if (!*access_result) {
+    SetError(llvm::Twine("No install marker at path: ") +
+             (prefix_ / std::string_view(MarkerPath)).native());
+    return;
+  }
+
+  // Success!
 }
 
-auto InstallPaths::core_package() const -> std::string {
-  llvm::SmallString<256> path(prefix_);
+auto InstallPaths::core_package() const -> std::filesystem::path {
   // TODO: Adjust this to work equally well on Windows.
-  llvm::sys::path::append(path, llvm::sys::path::Style::posix,
-                          "lib/carbon/core");
-  return path.str().str();
+  return prefix_ / "lib/carbon/core";
 }
 
-auto InstallPaths::llvm_install_bin() const -> std::string {
-  llvm::SmallString<256> path(prefix_);
+auto InstallPaths::llvm_install_bin() const -> std::filesystem::path {
   // TODO: Adjust this to work equally well on Windows.
-  llvm::sys::path::append(path, llvm::sys::path::Style::posix,
-                          "lib/carbon/llvm/bin/");
-  return path.str().str();
+  return prefix_ / "lib/carbon/llvm/bin/";
 }
 
-auto InstallPaths::clang_path() const -> std::string {
-  llvm::SmallString<256> path(prefix_);
+auto InstallPaths::clang_path() const -> std::filesystem::path {
   // TODO: Adjust this to work equally well on Windows.
-  llvm::sys::path::append(path, llvm::sys::path::Style::posix,
-                          "lib/carbon/llvm/bin/clang");
-  return path.str().str();
+  return prefix_ / "lib/carbon/llvm/bin/clang";
 }
 
-auto InstallPaths::lld_path() const -> std::string {
-  llvm::SmallString<256> path(prefix_);
+auto InstallPaths::lld_path() const -> std::filesystem::path {
   // TODO: Adjust this to work equally well on Windows.
-  llvm::sys::path::append(path, llvm::sys::path::Style::posix,
-                          "lib/carbon/llvm/bin/lld");
-  return path.str().str();
+  return prefix_ / "lib/carbon/llvm/bin/lld";
 }
 
-auto InstallPaths::ld_lld_path() const -> std::string {
-  llvm::SmallString<256> path(prefix_);
+auto InstallPaths::ld_lld_path() const -> std::filesystem::path {
   // TODO: Adjust this to work equally well on Windows.
-  llvm::sys::path::append(path, llvm::sys::path::Style::posix,
-                          "lib/carbon/llvm/bin/ld.lld");
-  return path.str().str();
+  return prefix_ / "lib/carbon/llvm/bin/ld.lld";
 }
 
-auto InstallPaths::ld64_lld_path() const -> std::string {
-  llvm::SmallString<256> path(prefix_);
+auto InstallPaths::ld64_lld_path() const -> std::filesystem::path {
   // TODO: Adjust this to work equally well on Windows.
-  llvm::sys::path::append(path, llvm::sys::path::Style::posix,
-                          "lib/carbon/llvm/bin/ld64.lld");
-  return path.str().str();
+  return prefix_ / "lib/carbon/llvm/bin/ld64.lld";
 }
 
-auto InstallPaths::llvm_tool_path(LLVMTool tool) const -> std::string {
-  llvm::SmallString<256> path(prefix_);
+auto InstallPaths::llvm_tool_path(LLVMTool tool) const
+    -> std::filesystem::path {
   // TODO: Adjust this to work equally well on Windows.
-  llvm::sys::path::append(path, llvm::sys::path::Style::posix,
-                          "lib/carbon/llvm/bin", tool.bin_name());
-  return path.str().str();
+  return prefix_ / "lib/carbon/llvm/bin" / std::string_view(tool.bin_name());
 }
 
 }  // namespace Carbon

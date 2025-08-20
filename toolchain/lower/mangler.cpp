@@ -8,6 +8,7 @@
 
 #include "common/raw_string_ostream.h"
 #include "toolchain/base/kind_switch.h"
+#include "toolchain/lower/clang_global_decl.h"
 #include "toolchain/sem_ir/entry_point.h"
 #include "toolchain/sem_ir/ids.h"
 #include "toolchain/sem_ir/pattern.h"
@@ -85,11 +86,10 @@ auto Mangler::MangleInverseQualifiedNameScope(llvm::raw_ostream& os,
           case SemIR::AutoType::Kind:
           case SemIR::BoolType::Kind:
           case SemIR::BoundMethodType::Kind:
+          case SemIR::FloatLiteralType::Kind:
           case SemIR::IntLiteralType::Kind:
-          case SemIR::LegacyFloatType::Kind:
           case SemIR::NamespaceType::Kind:
           case SemIR::SpecificFunctionType::Kind:
-          case SemIR::StringType::Kind:
           case SemIR::TypeType::Kind:
           case SemIR::VtableType::Kind:
           case SemIR::WitnessType::Kind: {
@@ -151,7 +151,7 @@ auto Mangler::Mangle(SemIR::FunctionId function_id,
     return "main";
   }
   if (function.clang_decl_id.has_value()) {
-    return MangleCppClang(llvm::dyn_cast<clang::NamedDecl>(
+    return MangleCppClang(dyn_cast<clang::NamedDecl>(
         sem_ir().clang_decls().Get(function.clang_decl_id).decl));
   }
   RawStringOstream os;
@@ -169,6 +169,8 @@ auto Mangler::Mangle(SemIR::FunctionId function_id,
     case SemIR::Function::SpecialFunctionKind::Thunk:
       os << ":thunk";
       break;
+    case SemIR::Function::SpecialFunctionKind::HasCppThunk:
+      CARBON_FATAL("C++ functions should have been handled earlier");
   }
 
   // TODO: If the function is private, also include the library name as part of
@@ -216,7 +218,7 @@ auto Mangler::MangleGlobalVariable(SemIR::InstId pattern_id) -> std::string {
 
 auto Mangler::MangleCppClang(const clang::NamedDecl* decl) -> std::string {
   return file_context_.cpp_code_generator()
-      .GetMangledName(clang::GlobalDecl(decl))
+      .GetMangledName(CreateGlobalDecl(decl))
       .str();
 }
 

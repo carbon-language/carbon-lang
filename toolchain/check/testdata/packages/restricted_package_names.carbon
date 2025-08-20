@@ -65,11 +65,7 @@ package Cpp;
 
 // --- fail_cpp.impl.carbon
 
-// CHECK:STDERR: fail_cpp.impl.carbon:[[@LINE+8]]:1: error: `Cpp` cannot be used by a `package` declaration [CppPackageDeclaration]
-// CHECK:STDERR: impl package Cpp;
-// CHECK:STDERR: ^~~~~~~~~~~~~~~~~
-// CHECK:STDERR:
-// CHECK:STDERR: fail_cpp.impl.carbon:[[@LINE+4]]:1: error: `Cpp` import missing library [CppInteropMissingLibrary]
+// CHECK:STDERR: fail_cpp.impl.carbon:[[@LINE+4]]:1: error: `Cpp` cannot be used by a `package` declaration [CppPackageDeclaration]
 // CHECK:STDERR: impl package Cpp;
 // CHECK:STDERR: ^~~~~~~~~~~~~~~~~
 // CHECK:STDERR:

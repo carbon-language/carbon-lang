@@ -65,27 +65,27 @@ fn M() {
 // CHECK:STDOUT:   %m.var = alloca i32, align 4, !dbg !8
 // CHECK:STDOUT:   %p.var = alloca double, align 8, !dbg !9
 // CHECK:STDOUT:   %q.var = alloca double, align 8, !dbg !10
-// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(i64 4, ptr %n.var), !dbg !7
+// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %n.var), !dbg !7
 // CHECK:STDOUT:   store i32 0, ptr %n.var, align 4, !dbg !7
-// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(i64 4, ptr %m.var), !dbg !8
-// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(i64 8, ptr %p.var), !dbg !9
+// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %m.var), !dbg !8
+// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %p.var), !dbg !9
 // CHECK:STDOUT:   store double 1.000000e+00, ptr %p.var, align 8, !dbg !9
-// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(i64 8, ptr %q.var), !dbg !10
+// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %q.var), !dbg !10
 // CHECK:STDOUT:   %.loc51 = load i32, ptr %n.var, align 4, !dbg !11
 // CHECK:STDOUT:   call void @_CF.Main.b88d1103f417c6d4(i32 %.loc51), !dbg !12
 // CHECK:STDOUT:   %.loc52 = load i32, ptr %n.var, align 4, !dbg !13
 // CHECK:STDOUT:   %G.call.loc52 = call i32 @_CG.Main.b88d1103f417c6d4(i32 %.loc52), !dbg !14
 // CHECK:STDOUT:   store i32 %G.call.loc52, ptr %m.var, align 4, !dbg !15
 // CHECK:STDOUT:   %.loc53 = load double, ptr %p.var, align 8, !dbg !16
-// CHECK:STDOUT:   call void @_CF.Main.66be507887ceee78(double %.loc53), !dbg !17
+// CHECK:STDOUT:   call void @_CF.Main.d4b5665541d5d7a8(double %.loc53), !dbg !17
 // CHECK:STDOUT:   %.loc54 = load double, ptr %p.var, align 8, !dbg !18
-// CHECK:STDOUT:   %G.call.loc54 = call double @_CG.Main.66be507887ceee78(double %.loc54), !dbg !19
+// CHECK:STDOUT:   %G.call.loc54 = call double @_CG.Main.d4b5665541d5d7a8(double %.loc54), !dbg !19
 // CHECK:STDOUT:   store double %G.call.loc54, ptr %q.var, align 8, !dbg !20
 // CHECK:STDOUT:   ret void, !dbg !21
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nocallback nofree nosync nounwind willreturn memory(argmem: readwrite)
-// CHECK:STDOUT: declare void @llvm.lifetime.start.p0(i64 immarg, ptr captures(none)) #0
+// CHECK:STDOUT: declare void @llvm.lifetime.start.p0(ptr captures(none)) #0
 // CHECK:STDOUT:
 // CHECK:STDOUT: define linkonce_odr void @_CF.Main.b88d1103f417c6d4(i32 %x) !dbg !22 {
 // CHECK:STDOUT: entry:
@@ -105,30 +105,30 @@ fn M() {
 // CHECK:STDOUT:   %H.call.loc27 = call %type @_CH.Main.5754c7a55c7cbe4a(%type zeroinitializer), !dbg !33
 // CHECK:STDOUT:   %G.call = call i32 @_CG.Main.b88d1103f417c6d4(i32 %x), !dbg !34
 // CHECK:STDOUT:   %H.call.loc28 = call i32 @_CH.Main.b88d1103f417c6d4(i32 %G.call), !dbg !35
-// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(i64 8, ptr %var_f64.var), !dbg !25
+// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %var_f64.var), !dbg !25
 // CHECK:STDOUT:   %.loc32 = load double, ptr %var_f64.var, align 8, !dbg !36
-// CHECK:STDOUT:   %H.call.loc32 = call double @_CH.Main.66be507887ceee78(double %.loc32), !dbg !37
-// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(i64 8, ptr %ptr_i32.var), !dbg !26
+// CHECK:STDOUT:   %H.call.loc32 = call double @_CH.Main.d4b5665541d5d7a8(double %.loc32), !dbg !37
+// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %ptr_i32.var), !dbg !26
 // CHECK:STDOUT:   %.loc34 = load ptr, ptr %ptr_i32.var, align 8, !dbg !38
 // CHECK:STDOUT:   %H.call.loc34 = call ptr @_CH.Main.e8193710fd35b608(ptr %.loc34), !dbg !39
-// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(i64 8, ptr %ptr_f64.var), !dbg !27
+// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %ptr_f64.var), !dbg !27
 // CHECK:STDOUT:   %.loc36 = load ptr, ptr %ptr_f64.var, align 8, !dbg !40
 // CHECK:STDOUT:   %H.call.loc36 = call ptr @_CH.Main.e8193710fd35b608(ptr %.loc36), !dbg !41
-// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(i64 8, ptr %ptr_i8.var), !dbg !28
+// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %ptr_i8.var), !dbg !28
 // CHECK:STDOUT:   %.loc38 = load ptr, ptr %ptr_i8.var, align 8, !dbg !42
 // CHECK:STDOUT:   %H.call.loc38 = call ptr @_CH.Main.e8193710fd35b608(ptr %.loc38), !dbg !43
-// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(i64 0, ptr %c.var), !dbg !29
-// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(i64 0, ptr %.loc40_6.1.temp), !dbg !30
+// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %c.var), !dbg !29
+// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %.loc40_6.1.temp), !dbg !30
 // CHECK:STDOUT:   call void @_CH.Main.15b1f98bd9cc0c5b(ptr %.loc40_6.1.temp, ptr %c.var), !dbg !30
 // CHECK:STDOUT:   ret i32 %x, !dbg !44
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: define linkonce_odr void @_CF.Main.66be507887ceee78(double %x) !dbg !45 {
+// CHECK:STDOUT: define linkonce_odr void @_CF.Main.d4b5665541d5d7a8(double %x) !dbg !45 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   ret void, !dbg !46
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: define linkonce_odr double @_CG.Main.66be507887ceee78(double %x) !dbg !47 {
+// CHECK:STDOUT: define linkonce_odr double @_CG.Main.d4b5665541d5d7a8(double %x) !dbg !47 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   %var_f64.var = alloca double, align 8, !dbg !48
 // CHECK:STDOUT:   %ptr_i32.var = alloca ptr, align 8, !dbg !49
@@ -136,25 +136,25 @@ fn M() {
 // CHECK:STDOUT:   %ptr_i8.var = alloca ptr, align 8, !dbg !51
 // CHECK:STDOUT:   %c.var = alloca {}, align 8, !dbg !52
 // CHECK:STDOUT:   %.loc40_6.1.temp = alloca {}, align 8, !dbg !53
-// CHECK:STDOUT:   %H.call.loc25 = call double @_CH.Main.66be507887ceee78(double %x), !dbg !54
+// CHECK:STDOUT:   %H.call.loc25 = call double @_CH.Main.d4b5665541d5d7a8(double %x), !dbg !54
 // CHECK:STDOUT:   %H.call.loc26 = call %type @_CH.Main.5754c7a55c7cbe4a(%type zeroinitializer), !dbg !55
 // CHECK:STDOUT:   %H.call.loc27 = call %type @_CH.Main.5754c7a55c7cbe4a(%type zeroinitializer), !dbg !56
-// CHECK:STDOUT:   %G.call = call double @_CG.Main.66be507887ceee78(double %x), !dbg !57
-// CHECK:STDOUT:   %H.call.loc28 = call double @_CH.Main.66be507887ceee78(double %G.call), !dbg !58
-// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(i64 8, ptr %var_f64.var), !dbg !48
+// CHECK:STDOUT:   %G.call = call double @_CG.Main.d4b5665541d5d7a8(double %x), !dbg !57
+// CHECK:STDOUT:   %H.call.loc28 = call double @_CH.Main.d4b5665541d5d7a8(double %G.call), !dbg !58
+// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %var_f64.var), !dbg !48
 // CHECK:STDOUT:   %.loc32 = load double, ptr %var_f64.var, align 8, !dbg !59
-// CHECK:STDOUT:   %H.call.loc32 = call double @_CH.Main.66be507887ceee78(double %.loc32), !dbg !60
-// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(i64 8, ptr %ptr_i32.var), !dbg !49
+// CHECK:STDOUT:   %H.call.loc32 = call double @_CH.Main.d4b5665541d5d7a8(double %.loc32), !dbg !60
+// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %ptr_i32.var), !dbg !49
 // CHECK:STDOUT:   %.loc34 = load ptr, ptr %ptr_i32.var, align 8, !dbg !61
 // CHECK:STDOUT:   %H.call.loc34 = call ptr @_CH.Main.e8193710fd35b608(ptr %.loc34), !dbg !62
-// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(i64 8, ptr %ptr_f64.var), !dbg !50
+// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %ptr_f64.var), !dbg !50
 // CHECK:STDOUT:   %.loc36 = load ptr, ptr %ptr_f64.var, align 8, !dbg !63
 // CHECK:STDOUT:   %H.call.loc36 = call ptr @_CH.Main.e8193710fd35b608(ptr %.loc36), !dbg !64
-// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(i64 8, ptr %ptr_i8.var), !dbg !51
+// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %ptr_i8.var), !dbg !51
 // CHECK:STDOUT:   %.loc38 = load ptr, ptr %ptr_i8.var, align 8, !dbg !65
 // CHECK:STDOUT:   %H.call.loc38 = call ptr @_CH.Main.e8193710fd35b608(ptr %.loc38), !dbg !66
-// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(i64 0, ptr %c.var), !dbg !52
-// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(i64 0, ptr %.loc40_6.1.temp), !dbg !53
+// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %c.var), !dbg !52
+// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %.loc40_6.1.temp), !dbg !53
 // CHECK:STDOUT:   call void @_CH.Main.15b1f98bd9cc0c5b(ptr %.loc40_6.1.temp, ptr %c.var), !dbg !53
 // CHECK:STDOUT:   ret double %x, !dbg !67
 // CHECK:STDOUT: }
@@ -169,7 +169,7 @@ fn M() {
 // CHECK:STDOUT:   ret %type %x, !dbg !71
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: define linkonce_odr double @_CH.Main.66be507887ceee78(double %x) !dbg !72 {
+// CHECK:STDOUT: define linkonce_odr double @_CH.Main.d4b5665541d5d7a8(double %x) !dbg !72 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   ret double %x, !dbg !73
 // CHECK:STDOUT: }
@@ -188,7 +188,7 @@ fn M() {
 // CHECK:STDOUT: uselistorder ptr @llvm.lifetime.start.p0, { 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 15, 14, 13, 12 }
 // CHECK:STDOUT: uselistorder ptr @_CH.Main.b88d1103f417c6d4, { 1, 0 }
 // CHECK:STDOUT: uselistorder ptr @_CH.Main.5754c7a55c7cbe4a, { 3, 2, 1, 0 }
-// CHECK:STDOUT: uselistorder ptr @_CH.Main.66be507887ceee78, { 3, 2, 1, 0 }
+// CHECK:STDOUT: uselistorder ptr @_CH.Main.d4b5665541d5d7a8, { 3, 2, 1, 0 }
 // CHECK:STDOUT: uselistorder ptr @_CH.Main.e8193710fd35b608, { 5, 2, 0, 4, 3, 1 }
 // CHECK:STDOUT: uselistorder ptr @_CH.Main.15b1f98bd9cc0c5b, { 1, 0 }
 // CHECK:STDOUT:
@@ -242,9 +242,9 @@ fn M() {
 // CHECK:STDOUT: !42 = !DILocation(line: 38, column: 5, scope: !24)
 // CHECK:STDOUT: !43 = !DILocation(line: 38, column: 3, scope: !24)
 // CHECK:STDOUT: !44 = !DILocation(line: 42, column: 3, scope: !24)
-// CHECK:STDOUT: !45 = distinct !DISubprogram(name: "F", linkageName: "_CF.Main.66be507887ceee78", scope: null, file: !3, line: 15, type: !5, spFlags: DISPFlagDefinition, unit: !2)
+// CHECK:STDOUT: !45 = distinct !DISubprogram(name: "F", linkageName: "_CF.Main.d4b5665541d5d7a8", scope: null, file: !3, line: 15, type: !5, spFlags: DISPFlagDefinition, unit: !2)
 // CHECK:STDOUT: !46 = !DILocation(line: 15, column: 1, scope: !45)
-// CHECK:STDOUT: !47 = distinct !DISubprogram(name: "G", linkageName: "_CG.Main.66be507887ceee78", scope: null, file: !3, line: 24, type: !5, spFlags: DISPFlagDefinition, unit: !2)
+// CHECK:STDOUT: !47 = distinct !DISubprogram(name: "G", linkageName: "_CG.Main.d4b5665541d5d7a8", scope: null, file: !3, line: 24, type: !5, spFlags: DISPFlagDefinition, unit: !2)
 // CHECK:STDOUT: !48 = !DILocation(line: 31, column: 3, scope: !47)
 // CHECK:STDOUT: !49 = !DILocation(line: 33, column: 3, scope: !47)
 // CHECK:STDOUT: !50 = !DILocation(line: 35, column: 3, scope: !47)
@@ -269,7 +269,7 @@ fn M() {
 // CHECK:STDOUT: !69 = !DILocation(line: 19, column: 3, scope: !68)
 // CHECK:STDOUT: !70 = distinct !DISubprogram(name: "H", linkageName: "_CH.Main.5754c7a55c7cbe4a", scope: null, file: !3, line: 18, type: !5, spFlags: DISPFlagDefinition, unit: !2)
 // CHECK:STDOUT: !71 = !DILocation(line: 19, column: 3, scope: !70)
-// CHECK:STDOUT: !72 = distinct !DISubprogram(name: "H", linkageName: "_CH.Main.66be507887ceee78", scope: null, file: !3, line: 18, type: !5, spFlags: DISPFlagDefinition, unit: !2)
+// CHECK:STDOUT: !72 = distinct !DISubprogram(name: "H", linkageName: "_CH.Main.d4b5665541d5d7a8", scope: null, file: !3, line: 18, type: !5, spFlags: DISPFlagDefinition, unit: !2)
 // CHECK:STDOUT: !73 = !DILocation(line: 19, column: 3, scope: !72)
 // CHECK:STDOUT: !74 = distinct !DISubprogram(name: "H", linkageName: "_CH.Main.e8193710fd35b608", scope: null, file: !3, line: 18, type: !5, spFlags: DISPFlagDefinition, unit: !2)
 // CHECK:STDOUT: !75 = !DILocation(line: 19, column: 3, scope: !74)

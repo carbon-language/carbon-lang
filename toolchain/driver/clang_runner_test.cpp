@@ -55,7 +55,7 @@ TEST(ClangRunnerTest, Version) {
   EXPECT_THAT(out, HasSubstr((llvm::Twine("Target: ") + target).str()));
   // Clang's install should be our private LLVM install bin directory.
   EXPECT_THAT(out, HasSubstr(std::string("InstalledDir: ") +
-                             install_paths.llvm_install_bin()));
+                             install_paths.llvm_install_bin().native()));
 }
 
 // It's hard to write a portable and reliable unittest for all the layers of the

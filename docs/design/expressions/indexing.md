@@ -40,18 +40,8 @@ implement that interface, or to method calls on `IndexWith` otherwise.
 `IndirectIndexWith` provides a final blanket `impl` of `IndexWith`, so a type
 can implement at most one of those two interfaces.
 
-The `Addr` methods of these interfaces, which are used to form durable reference
-expressions on indexing, must return a pointer and work similarly to the
-[pointer dereference customization interface](/docs/design/values.md#dereferencing-customization).
-The returned pointer is then dereferenced by the language to form the reference
-expression referring to the pointed-to object. These methods must return a raw
-pointer, and do not automatically chain with customized dereference interfaces.
-
-**Open question:** It's not clear that the lack of chaining is necessary, and it
-might be more expressive for the pointer type returned by the `Addr` methods to
-be an associated facet with a default to allow types to produce custom
-pointer-like types on their indexing boundary and have them still be
-automatically dereferenced.
+The `Ref` methods of these interfaces, which are used to form durable reference
+expressions on indexing, must return by `ref`.
 
 ## Details
 
@@ -64,13 +54,13 @@ Its semantics are defined in terms of the following interfaces:
 ```
 interface IndexWith(SubscriptType:! type) {
   let ElementType:! type;
-  fn At[self: Self](subscript: SubscriptType) -> ElementType;
-  fn Addr[addr self: Self*](subscript: SubscriptType) -> ElementType*;
+  fn At[bound self: Self](subscript: SubscriptType) -> val ElementType;
+  fn Ref[bound ref self: Self](subscript: SubscriptType) -> ref ElementType;
 }
 
 interface IndirectIndexWith(SubscriptType:! type) {
   require Self impls IndexWith(SubscriptType);
-  fn Addr[self: Self](subscript: SubscriptType) -> ElementType*;
+  fn Ref[bound self: Self](subscript: SubscriptType) -> ref ElementType;
 }
 ```
 
@@ -79,11 +69,11 @@ rewritten based on the expression category of _lhs_ and whether `T` is known to
 implement `IndirectIndexWith(I)`:
 
 -   If `T` implements `IndirectIndexWith(I)`, the expression is rewritten to
-    "`*((` _lhs_ `).(IndirectIndexWith(I).Addr)(` _index_ `))`".
+    "`(` _lhs_ `).(IndirectIndexWith(I).Ref)(` _index_ `)`".
 -   Otherwise, if _lhs_ is a
     [_durable reference expression_](/docs/design/values.md#durable-reference-expressions),
-    the expression is rewritten to "`*((` _lhs_ `).(IndexWith(I).Addr)(` _index_
-    `))`".
+    the expression is rewritten to "`(` _lhs_ `).(IndexWith(I).Ref)(` _index_
+    `)`".
 -   Otherwise, the expression is rewritten to "`(` _lhs_ `).(IndexWith(I).At)(`
     _index_ `)`".
 
@@ -93,18 +83,18 @@ implement `IndirectIndexWith(I)`:
 final impl forall
     [SubscriptType:! type, T:! IndirectIndexWith(SubscriptType)]
     T as IndexWith(SubscriptType) {
-  let ElementType:! type = T.(IndirectIndexWith(SubscriptType)).ElementType;
-  fn At[self: Self](subscript: SubscriptType) -> ElementType {
-    return *(self.(IndirectIndexWith(SubscriptType).Addr)(index));
+  where ElementType = T.(IndirectIndexWith(SubscriptType).ElementType);
+  fn At[bound self: Self](subscript: SubscriptType) -> val ElementType {
+    return self.(IndirectIndexWith(SubscriptType).Ref)(index);
   }
-  fn Addr[addr self: Self*](subscript: SubscriptType) -> ElementType* {
-    return self->(IndirectIndexWith(SubscriptType).Addr)(index);
+  fn Ref[bound ref self: Self](subscript: SubscriptType) -> ref ElementType {
+    return self.(IndirectIndexWith(SubscriptType).Ref)(index);
   }
 }
 ```
 
 Thus, a type that implements `IndirectIndexWith` need not, and cannot, provide
-its own definitions of `IndexWith.At` and `IndexWith.Addr`.
+its own definitions of `IndexWith.At` and `IndexWith.Ref`.
 
 ### Examples
 
@@ -114,8 +104,8 @@ An array type could implement subscripting like so:
 class Array(template T:! type) {
   impl as IndexWith(like i64) {
     let ElementType:! type = T;
-    fn At[self: Self](subscript: i64) -> T;
-    fn Addr[addr self: Self*](subscript: i64) -> T*;
+    fn At[bound self: Self](subscript: i64) -> val T;
+    fn Ref[bound ref self: Self](subscript: i64) -> ref T;
   }
 }
 ```
@@ -126,7 +116,7 @@ And a type such as `std::span` could look like this:
 class Span(T:! type) {
   impl as IndirectIndexWith(like i64) {
     let ElementType:! type = T;
-    fn Addr[self: Self](subscript: i64) -> T*;
+    fn Ref[bound ref self: Self](subscript: i64) -> ref T;
   }
 }
 ```

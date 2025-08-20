@@ -236,6 +236,22 @@ static auto CreateBinaryOperatorForBuiltin(
                                 : llvm::Instruction::LShr,
                             lhs, rhs);
     }
+    case SemIR::BuiltinFunctionKind::FloatAdd:
+    case SemIR::BuiltinFunctionKind::FloatAddAssign: {
+      return context.builder().CreateFAdd(lhs, rhs);
+    }
+    case SemIR::BuiltinFunctionKind::FloatSub:
+    case SemIR::BuiltinFunctionKind::FloatSubAssign: {
+      return context.builder().CreateFSub(lhs, rhs);
+    }
+    case SemIR::BuiltinFunctionKind::FloatMul:
+    case SemIR::BuiltinFunctionKind::FloatMulAssign: {
+      return context.builder().CreateFMul(lhs, rhs);
+    }
+    case SemIR::BuiltinFunctionKind::FloatDiv:
+    case SemIR::BuiltinFunctionKind::FloatDivAssign: {
+      return context.builder().CreateFDiv(lhs, rhs);
+    }
     default: {
       CARBON_FATAL("Unexpected binary operator {0}", builtin_kind);
     }
@@ -302,6 +318,8 @@ static auto HandleBuiltinCall(FunctionContext& context, SemIR::InstId inst_id,
     }
 
     case SemIR::BuiltinFunctionKind::BoolMakeType:
+    case SemIR::BuiltinFunctionKind::CharLiteralMakeType:
+    case SemIR::BuiltinFunctionKind::FloatLiteralMakeType:
     case SemIR::BuiltinFunctionKind::FloatMakeType:
     case SemIR::BuiltinFunctionKind::IntLiteralMakeType:
     case SemIR::BuiltinFunctionKind::IntMakeTypeSigned:
@@ -360,7 +378,11 @@ static auto HandleBuiltinCall(FunctionContext& context, SemIR::InstId inst_id,
     case SemIR::BuiltinFunctionKind::IntOr:
     case SemIR::BuiltinFunctionKind::IntXor:
     case SemIR::BuiltinFunctionKind::IntLeftShift:
-    case SemIR::BuiltinFunctionKind::IntRightShift: {
+    case SemIR::BuiltinFunctionKind::IntRightShift:
+    case SemIR::BuiltinFunctionKind::FloatAdd:
+    case SemIR::BuiltinFunctionKind::FloatSub:
+    case SemIR::BuiltinFunctionKind::FloatMul:
+    case SemIR::BuiltinFunctionKind::FloatDiv: {
       context.SetLocal(inst_id, CreateBinaryOperatorForBuiltin(
                                     context, inst_id, builtin_kind,
                                     context.GetValue(arg_ids[0]),
@@ -381,7 +403,11 @@ static auto HandleBuiltinCall(FunctionContext& context, SemIR::InstId inst_id,
     case SemIR::BuiltinFunctionKind::IntOrAssign:
     case SemIR::BuiltinFunctionKind::IntXorAssign:
     case SemIR::BuiltinFunctionKind::IntLeftShiftAssign:
-    case SemIR::BuiltinFunctionKind::IntRightShiftAssign: {
+    case SemIR::BuiltinFunctionKind::IntRightShiftAssign:
+    case SemIR::BuiltinFunctionKind::FloatAddAssign:
+    case SemIR::BuiltinFunctionKind::FloatSubAssign:
+    case SemIR::BuiltinFunctionKind::FloatMulAssign:
+    case SemIR::BuiltinFunctionKind::FloatDivAssign: {
       auto* lhs_ptr = context.GetValue(arg_ids[0]);
       auto [lhs_type_file, lhs_type_id] = context.GetTypeIdOfInst(arg_ids[0]);
       auto pointee_type_id = lhs_type_file->GetPointeeType(lhs_type_id);
@@ -416,30 +442,6 @@ static auto HandleBuiltinCall(FunctionContext& context, SemIR::InstId inst_id,
           inst_id, context.builder().CreateFNeg(context.GetValue(arg_ids[0])));
       return;
     }
-    case SemIR::BuiltinFunctionKind::FloatAdd: {
-      context.SetLocal(
-          inst_id, context.builder().CreateFAdd(context.GetValue(arg_ids[0]),
-                                                context.GetValue(arg_ids[1])));
-      return;
-    }
-    case SemIR::BuiltinFunctionKind::FloatSub: {
-      context.SetLocal(
-          inst_id, context.builder().CreateFSub(context.GetValue(arg_ids[0]),
-                                                context.GetValue(arg_ids[1])));
-      return;
-    }
-    case SemIR::BuiltinFunctionKind::FloatMul: {
-      context.SetLocal(
-          inst_id, context.builder().CreateFMul(context.GetValue(arg_ids[0]),
-                                                context.GetValue(arg_ids[1])));
-      return;
-    }
-    case SemIR::BuiltinFunctionKind::FloatDiv: {
-      context.SetLocal(
-          inst_id, context.builder().CreateFDiv(context.GetValue(arg_ids[0]),
-                                                context.GetValue(arg_ids[1])));
-      return;
-    }
     case SemIR::BuiltinFunctionKind::FloatEq:
     case SemIR::BuiltinFunctionKind::FloatNeq:
     case SemIR::BuiltinFunctionKind::FloatLess:
@@ -453,6 +455,8 @@ static auto HandleBuiltinCall(FunctionContext& context, SemIR::InstId inst_id,
       return;
     }
 
+    case SemIR::BuiltinFunctionKind::CharConvertChecked:
+    case SemIR::BuiltinFunctionKind::FloatConvertChecked:
     case SemIR::BuiltinFunctionKind::IntConvertChecked: {
       // TODO: Check this statically.
       CARBON_CHECK(builtin_kind.IsCompTimeOnly(

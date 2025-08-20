@@ -783,14 +783,21 @@ auto InstNamer::NamingContext::NameInst() -> void {
       AddInstName("complete_type");
       return;
     }
+    case CARBON_KIND(VtableDecl inst): {
+      const auto& vtable = sem_ir().vtables().Get(inst.vtable_id);
+      inst_namer_->MaybePushEntity(inst.vtable_id);
+      if (inst_namer_->GetScopeFor(vtable.class_id) == scope_id_) {
+        inst_namer_->MaybePushEntity(vtable.class_id);
+        AddInstName("vtable_decl");
+      } else {
+        AddEntityNameAndMaybePush(vtable.class_id, ".vtable_decl");
+      }
+      return;
+    }
     case CARBON_KIND(VtablePtr inst): {
       const auto& vtable = sem_ir().vtables().Get(inst.vtable_id);
-      if (inst_namer_->GetScopeFor(vtable.class_id) == scope_id_) {
-        inst_namer_->MaybePushEntity(inst.vtable_id);
-        AddInstName("vtable_ptr");
-      } else {
-        AddEntityNameAndMaybePush(inst.vtable_id, "_ptr");
-      }
+      inst_namer_->MaybePushEntity(inst.vtable_id);
+      AddEntityNameAndMaybePush(vtable.class_id, ".vtable_ptr");
       return;
     }
     case ConstType::Kind: {
@@ -845,12 +852,13 @@ auto InstNamer::NamingContext::NameInst() -> void {
       AddInstName("facet_value");
       return;
     }
-    case FloatLiteral::Kind: {
-      AddInstName("float");
-      return;
-    }
     case CARBON_KIND(FloatType inst): {
       AddIntOrFloatTypeName('f', inst.bit_width_id);
+      return;
+    }
+    case FloatLiteralValue::Kind:
+    case FloatValue::Kind: {
+      AddInstName("float");
       return;
     }
     case CARBON_KIND(FunctionDecl inst): {
@@ -892,6 +900,15 @@ auto InstNamer::NamingContext::NameInst() -> void {
       // TODO: Include information about the impl?
       RawStringOstream out;
       out << "impl.elem" << inst.index.index;
+      AddInstName(out.TakeStr());
+      return;
+    }
+    case CARBON_KIND(ImplWitnessAccessSubstituted inst): {
+      // TODO: Include information about the impl?
+      RawStringOstream out;
+      auto access = sem_ir().insts().GetAs<ImplWitnessAccess>(
+          inst.impl_witness_access_id);
+      out << "impl.elem" << access.index.index << ".subst";
       AddInstName(out.TakeStr());
       return;
     }

@@ -128,6 +128,9 @@ CARBON_PARSE_NODE_KIND(LibraryDecl)
 
 CARBON_PARSE_NODE_KIND(LibrarySpecifier)
 
+CARBON_PARSE_NODE_KIND(InlineImportSpecifier)
+CARBON_PARSE_NODE_KIND(InlineImportBody)
+
 CARBON_PARSE_NODE_KIND(IdentifierNameQualifierWithParams)
 CARBON_PARSE_NODE_KIND(IdentifierNameQualifierWithoutParams)
 CARBON_PARSE_NODE_KIND(KeywordNameQualifierWithParams)
@@ -173,6 +176,7 @@ CARBON_PARSE_NODE_KIND(LetBindingPattern)
 CARBON_PARSE_NODE_KIND(AssociatedConstantBindingPattern)
 CARBON_PARSE_NODE_KIND(VarBindingPattern)
 CARBON_PARSE_NODE_KIND(TemplateBindingName)
+CARBON_PARSE_NODE_KIND(CompileTimeBindingPatternStart)
 CARBON_PARSE_NODE_KIND(CompileTimeBindingPattern)
 CARBON_PARSE_NODE_KIND(Addr)
 
@@ -243,6 +247,7 @@ CARBON_PARSE_NODE_KIND(IntLiteral)
 
 CARBON_PARSE_NODE_KIND_TOKEN_LITERAL(BoolLiteralFalse, False)
 CARBON_PARSE_NODE_KIND_TOKEN_LITERAL(BoolLiteralTrue, True)
+CARBON_PARSE_NODE_KIND_TOKEN_LITERAL(CharLiteral, CharLiteral)
 CARBON_PARSE_NODE_KIND_TOKEN_LITERAL(RealLiteral, RealLiteral)
 CARBON_PARSE_NODE_KIND_TOKEN_LITERAL(StringLiteral, StringLiteral)
 

@@ -11,4 +11,4 @@
 // TIP: To dump output, run:
 // TIP:   bazel run //testing/file_test:file_test_base_test -- --dump_output --file_tests=testing/file_test/testdata/include_extra_args.carbon
 
-// CHECK:STDOUT: 6 args: `default_args`, `include_extra_args.carbon`, `include_files/extra_args.carbon`, `foo`, `bar`, `baz`
+// CHECK:STDOUT: 6 args: `default_args`, `include_extra_args.carbon`, `include_files/extra_args.carbon`, `bar`, `baz`, `foo`
