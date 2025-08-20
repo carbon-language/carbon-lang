@@ -345,8 +345,9 @@ struct LetBindingPattern {
 
 // A pattern binding, such as `name: Type`, that isn't inside a `var` pattern.
 struct AssociatedConstantBindingPattern {
-  static constexpr auto Kind = NodeKind::AssociatedConstantBindingPattern.Define(
-      {.category = NodeCategory::Pattern, .child_count = 2});
+  static constexpr auto Kind =
+      NodeKind::AssociatedConstantBindingPattern.Define(
+          {.category = NodeCategory::Pattern, .child_count = 2});
 
   AnyRuntimeBindingPatternName name;
   Lex::ColonExclaimTokenIndex token;
@@ -532,7 +533,7 @@ struct LetDecl {
 
   LetIntroducerId introducer;
   llvm::SmallVector<AnyModifierId> modifiers;
-  LetBindingPatternId pattern;
+  AnyPatternId pattern;
 
   struct Initializer {
     LetInitializerId equals;
@@ -543,17 +544,26 @@ struct LetDecl {
 };
 
 // Associated constant nodes
-using AssociatedConstantIntroducer = LeafNode<NodeKind::AssociatedConstantIntroducer, Lex::LetTokenIndex>;
-using AssociatedConstantInitializer = LeafNode<NodeKind::AssociatedConstantInitializer, Lex::EqualTokenIndex>;
+using AssociatedConstantIntroducer =
+    LeafNode<NodeKind::AssociatedConstantIntroducer, Lex::LetTokenIndex>;
+using AssociatedConstantInitializer =
+    LeafNode<NodeKind::AssociatedConstantInitializer, Lex::EqualTokenIndex>;
 
 // An associated constant declaration: `let a:! i32;`.
 struct AssociatedConstantDecl {
   static constexpr auto Kind = NodeKind::AssociatedConstantDecl.Define(
-      {.category = NodeCategory::Decl, .bracketed_by = AssociatedConstantIntroducer::Kind});
+      {.category = NodeCategory::Decl,
+       .bracketed_by = AssociatedConstantIntroducer::Kind});
 
   AssociatedConstantIntroducerId introducer;
   llvm::SmallVector<AnyModifierId> modifiers;
   AssociatedConstantBindingPatternId pattern;
+
+  struct Initializer {
+    AssociatedConstantInitializerId equals;
+    AnyExprId initializer;
+  };
+  std::optional<Initializer> initializer;
   Lex::SemiTokenIndex token;
 };
 

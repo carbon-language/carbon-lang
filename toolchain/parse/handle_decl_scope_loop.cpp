@@ -131,13 +131,16 @@ static constexpr auto DeclIntroducers = [] {
   set(Lex::TokenKind::Namespace, NodeKind::NamespaceStart,
       StateKind::Namespace);
   set_contextual(Lex::TokenKind::Let, NonClassOrInterfaceContext,
-                 NodeKind::LetIntroducer, StateKind::LetFinishAsRegular);
-  set_contextual(Lex::TokenKind::Let, InterfaceContext, 
-                 NodeKind::AssociatedConstantIntroducer, StateKind::AssociatedConstant);
+                 NodeKind::LetIntroducer, StateKind::Let);
+  set_contextual(Lex::TokenKind::Let, ClassContext, NodeKind::LetIntroducer,
+                 StateKind::Let);
+  set_contextual(Lex::TokenKind::Let, InterfaceContext,
+                 NodeKind::AssociatedConstantIntroducer,
+                 StateKind::AssociatedConstant);
   set_contextual(Lex::TokenKind::Var, NonClassOrInterfaceContext,
                  NodeKind::VariableIntroducer, StateKind::VarAsRegular);
-  set_contextual(Lex::TokenKind::Var, ClassContext,
-                 NodeKind::FieldIntroducer, StateKind::FieldDecl);
+  set_contextual(Lex::TokenKind::Var, ClassContext, NodeKind::FieldIntroducer,
+                 StateKind::FieldDecl);
 
   set_packaging(Lex::TokenKind::Package, NodeKind::PackageIntroducer,
                 StateKind::Package);

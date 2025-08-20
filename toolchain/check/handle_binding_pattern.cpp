@@ -234,7 +234,7 @@ auto HandleParseNode(Context& context,
       if (!scope_inst.Is<SemIR::FunctionDecl>()) {
         context.TODO(
             node_id,
-            "`let` compile time binding outside function");
+            "`let` compile time binding outside function or interface");
         node_kind = Parse::NodeKind::LetBindingPattern;
       }
     }
@@ -243,7 +243,8 @@ auto HandleParseNode(Context& context,
   return HandleAnyBindingPattern(context, node_id, node_kind);
 }
 
-auto HandleParseNode(Context& context, Parse::AssociatedConstantBindingPatternId node_id)
+auto HandleParseNode(Context& context,
+                     Parse::AssociatedConstantBindingPatternId node_id)
     -> bool {
   auto [type_node, parsed_type_id] = context.node_stack().PopExprWithNodeId();
   auto [cast_type_inst_id, cast_type_id] =
@@ -251,9 +252,6 @@ auto HandleParseNode(Context& context, Parse::AssociatedConstantBindingPatternId
 
   EndSubpatternAsExpr(context, cast_type_inst_id);
 
-  auto is_template =
-      context.node_stack()
-          .PopAndDiscardSoloNodeIdIf<Parse::NodeKind::TemplateBindingName>();
   auto [name_node, name_id] = context.node_stack().PopNameWithNodeId();
 
   if (name_id == SemIR::NameId::Underscore) {
@@ -268,27 +266,19 @@ auto HandleParseNode(Context& context, Parse::AssociatedConstantBindingPatternId
     return context.emitter().Build(
         type_node, IncompleteTypeInAssociatedConstantDecl, cast_type_id);
   });
-  if (is_template) {
-    CARBON_DIAGNOSTIC(TemplateBindingInAssociatedConstantDecl, Error,
-                      "associated constant has `template` binding");
-    context.emitter().Emit(type_node,
-                            TemplateBindingInAssociatedConstantDecl);
-  }
 
   SemIR::AssociatedConstantDecl assoc_const_decl = {
       .type_id = cast_type_id,
       .assoc_const_id = SemIR::AssociatedConstantId::None,
       .decl_block_id = SemIR::InstBlockId::None};
-  auto decl_id = AddPlaceholderInstInNoBlock(
-      context,
-      node_id,
-      assoc_const_decl);
+  auto decl_id =
+      AddPlaceholderInstInNoBlock(context, node_id, assoc_const_decl);
   assoc_const_decl.assoc_const_id = context.associated_constants().Add(
       {.name_id = name_id,
-        .parent_scope_id = context.scope_stack().PeekNameScopeId(),
-        .decl_id = decl_id,
-        .generic_id = SemIR::GenericId::None,
-        .default_value_id = SemIR::InstId::None});
+       .parent_scope_id = context.scope_stack().PeekNameScopeId(),
+       .decl_id = decl_id,
+       .generic_id = SemIR::GenericId::None,
+       .default_value_id = SemIR::InstId::None});
   ReplaceInstBeforeConstantUse(context, decl_id, assoc_const_decl);
 
   context.node_stack().Push(node_id, decl_id);

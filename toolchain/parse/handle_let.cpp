@@ -29,26 +29,28 @@ auto HandleAssociatedConstant(Context& context) -> void {
   if (!identifier) {
     CARBON_DIAGNOSTIC(ExpectedAssociatedConstantIdentifier, Error,
                       "expected identifier in associated constant declaration");
-    context.emitter().Emit(*context.position(), ExpectedAssociatedConstantIdentifier);
+    context.emitter().Emit(*context.position(),
+                           ExpectedAssociatedConstantIdentifier);
     state.has_error = true;
   }
-  
+
   auto colon_exclaim = context.ConsumeIf(Lex::TokenKind::ColonExclaim);
   if (identifier && !colon_exclaim) {
     CARBON_DIAGNOSTIC(ExpectedAssociatedConstantColonExclaim, Error,
                       "expected `:!` in associated constant declaration");
-    context.emitter().Emit(*context.position(), ExpectedAssociatedConstantColonExclaim);
+    context.emitter().Emit(*context.position(),
+                           ExpectedAssociatedConstantColonExclaim);
     state.has_error = true;
   }
-  
+
   if (!identifier || !colon_exclaim) {
-    // Skip to the end and let the error recovery handle it
     auto end_token = context.SkipPastLikelyEnd(*(context.position() - 1));
-    context.AddLeafNode(NodeKind::EmptyDecl, end_token, /*has_error=*/true);
-    context.PopAndDiscardState();
+    context.AddNode(NodeKind::AssociatedConstantDecl, end_token,
+                    /*has_error=*/true);
+    state.has_error = true;
     return;
   }
-  
+
   context.AddLeafNode(NodeKind::IdentifierNameNotBeforeParams, *identifier);
   state.token = *colon_exclaim;
   context.PushState(state, StateKind::LetFinishAsAssociatedConstant);
@@ -56,7 +58,8 @@ auto HandleAssociatedConstant(Context& context) -> void {
   context.PushState(StateKind::Expr);
 }
 
-static auto HandleLetAfterPattern(Context& context, NodeKind pattern_kind, NodeKind init_kind) -> void {
+static auto HandleLetAfterPattern(Context& context, NodeKind init_kind)
+    -> void {
   auto state = context.PopState();
 
   if (state.has_error) {
@@ -66,35 +69,22 @@ static auto HandleLetAfterPattern(Context& context, NodeKind pattern_kind, NodeK
     }
   }
 
-  context.AddNode(pattern_kind, state.token, state.has_error);
-
-  if (context.PositionIs(Lex::TokenKind::Equal)) {
-    context.AddLeafNode(init_kind, context.ConsumeChecked(Lex::TokenKind::Equal));
+  if (auto equals = context.ConsumeIf(Lex::TokenKind::Equal)) {
+    context.AddLeafNode(init_kind, *equals);
     context.PushState(StateKind::Expr);
   }
 }
 
 auto HandleLetAfterPatternAsRegular(Context& context) -> void {
-  HandleLetAfterPattern(context, NodeKind::LetBindingPattern, NodeKind::LetInitializer);
+  HandleLetAfterPattern(context, NodeKind::LetInitializer);
 }
 
 auto HandleLetAfterPatternAsAssociatedConstant(Context& context) -> void {
   auto state = context.PopState();
-
-  context.AddNode(NodeKind::AssociatedConstantBindingPattern, state.token, state.has_error);
-
-  if (context.PositionIs(Lex::TokenKind::Equal)) {
-    CARBON_DIAGNOSTIC(ExpectedDeclSemi, Error, "expected `;`; associated constants cannot be initialized");
-    context.emitter().Emit(*context.position(), ExpectedDeclSemi);
-    state.has_error = true;
-  }
-
-  if (state.has_error) {
-    if (auto after_pattern =
-            context.FindNextOf({Lex::TokenKind::Semi})) {
-      context.SkipTo(*after_pattern);
-    }
-  }
+  context.AddNode(NodeKind::AssociatedConstantBindingPattern, state.token,
+                  state.has_error);
+  context.PushState(state);
+  HandleLetAfterPattern(context, NodeKind::AssociatedConstantInitializer);
 }
 
 static auto HandleLetFinish(Context& context, NodeKind node_kind) -> void {
