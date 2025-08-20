@@ -30,13 +30,12 @@ static constexpr CommandLine::CommandInfo SubcommandInfo = {
 Build Carbon's runtime libraries.
 
 This subcommand builds Carbon's runtime libraries for a particular code
-generation target. These can be built into their default location or into a
-specified location.
+generation target, either in their default location or a specified one.
 
-Directly running this command is not necessary as Carbon will work to build the
-runtimes needed on-demand when linking, but directly building them can aid in
-debugging issues or allow building them with a specific set of code generation
-flags and then reusing them in links explicitly.
+Running this command directly is not necessary as Carbon will build and cache
+runtimes as needed when linking, but building them directly can aid in
+debugging issues or allow them to be prebuilt, possibly with customized code
+generation flags, and used explicitly when linking.
 )""",
 };
 

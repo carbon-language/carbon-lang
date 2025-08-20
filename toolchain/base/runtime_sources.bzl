@@ -8,7 +8,7 @@ These are organized into groups based on the runtime functionality:
 - CRT: The C language runtimes not provided by the C standard library, currently
   just infrastructure for global initialization and teardown.
 - Builtins: The compiler builtins library mirroring `libgcc` that provides
-  function definitions for operations not reliably available in hardware bet
+  function definitions for operations not reliably available in hardware but
   needed by Clang.
 
 Future runtimes we plan to add support for but not yet included:
