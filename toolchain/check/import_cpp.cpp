@@ -70,6 +70,26 @@ static auto GenerateCppIncludesHeaderCode(
     -> std::string {
   std::string code;
   llvm::raw_string_ostream code_stream(code);
+
+  // Inject a declaration of placement operator new, because the code we
+  // generate in thunks depends on it for placement new expressions. Clang has
+  // special-case logic for lowering a new-expression using this, so a
+  // definition is not required.
+  // TODO: This is a hack. We should be able to directly generate Clang AST to
+  // construct objects in-place without this.
+  code_stream << R"(# 1 "<carbon-internal>"
+#if __cplusplus > 202302L
+constexpr
+#endif
+void* operator new(__SIZE_TYPE__, void*)
+#if __cplusplus < 201103L
+throw()
+#else
+noexcept
+#endif
+;
+)";
+
   for (const Parse::Tree::PackagingNames& import : imports) {
     if (import.inline_body_id.has_value()) {
       // Expand `import Cpp inline "code";` directly into the specified code.
