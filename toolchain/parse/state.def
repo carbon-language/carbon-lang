@@ -342,7 +342,7 @@ CARBON_PARSE_STATE(DeclNameAndParamsAfterParams)
 // let ...
 // ^~~
 //   1. Let
-// 
+//
 // let ...        (in interface)
 // ^~~
 //   1. AssociatedConstant
@@ -390,7 +390,8 @@ CARBON_PARSE_STATE_VARIANTS3(Decl, Class, Interface, NonClassOrInterface)
 //   1. DeclAs(Class|Interface|NonClassOrInterface)
 //   2. DeclScopeLoopAs(Class|Interface|NonClassOrInterface)
 //
-CARBON_PARSE_STATE_VARIANTS3(DeclScopeLoop, Class, Interface, NonClassOrInterface)
+CARBON_PARSE_STATE_VARIANTS3(DeclScopeLoop, Class, Interface,
+                             NonClassOrInterface)
 
 // Handles periods. Only does one `.<expression>` segment; the source is
 // responsible for handling chaining.
