@@ -361,13 +361,13 @@ fn F() {
 // CHECK:STDOUT:   %.loc7_30.1: ref %i16 = temporary_storage
 // CHECK:STDOUT:   %addr.loc7_30.1: %ptr.251 = addr_of %.loc7_30.1
 // CHECK:STDOUT:   %foo_short__carbon_thunk.call: init %empty_tuple.type = call imports.%foo_short__carbon_thunk.decl(%addr.loc7_30.1)
-// CHECK:STDOUT:   %.loc7_30.2: %i16 = bind_value %.loc7_30.1
-// CHECK:STDOUT:   %.loc7_30.3: ref %i16 = temporary %.loc7_30.1, %.loc7_30.2
+// CHECK:STDOUT:   %.loc7_30.2: init %i16 = in_place_init %foo_short__carbon_thunk.call, %.loc7_30.1
 // CHECK:STDOUT:   %.loc7_10: type = splice_block %i16 [concrete = constants.%i16] {
 // CHECK:STDOUT:     %int_16: Core.IntLiteral = int_value 16 [concrete = constants.%int_16]
 // CHECK:STDOUT:     %i16: type = class_type @Int, @Int(constants.%int_16) [concrete = constants.%i16]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %.loc7_30.4: %i16 = bind_value %.loc7_30.3
+// CHECK:STDOUT:   %.loc7_30.3: %i16 = value_of_initializer %.loc7_30.2
+// CHECK:STDOUT:   %.loc7_30.4: %i16 = converted %.loc7_30.2, %.loc7_30.3
 // CHECK:STDOUT:   %x: %i16 = bind_name x, %.loc7_30.4
 // CHECK:STDOUT:   %Int.as.Destroy.impl.Op.bound: <bound method> = bound_method %.loc7_30.1, constants.%Int.as.Destroy.impl.Op.536
 // CHECK:STDOUT:   %Int.as.Destroy.impl.Op.specific_fn: <specific function> = specific_function constants.%Int.as.Destroy.impl.Op.536, @Int.as.Destroy.impl.Op(constants.%int_16) [concrete = constants.%Int.as.Destroy.impl.Op.specific_fn]

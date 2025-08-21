@@ -1017,6 +1017,26 @@ struct ImportRefLoaded {
   EntityNameId entity_name_id;
 };
 
+// Tracks that an object has been initialized in-place to form the result of
+// this expression, even if its type's initializing representation is not
+// normally in-place. If the type does not use in-place initialization,
+// initialization from this expression will copy the value out of the
+// destination.
+//
+// This is used to model the initialization performed by C++ thunks, where
+// in-place initialization is used even for types that would normally have a
+// copy initializing representation.
+struct InPlaceInit {
+  static constexpr auto Kind = InstKind::InPlaceInit.Define<Parse::NodeId>(
+      {.ir_name = "in_place_init", .constant_kind = InstConstantKind::Never});
+
+  TypeId type_id;
+  // Used only to track the source of the initialization; this has no semantic
+  // meaning.
+  InstId src_id;
+  DestInstId dest_id;
+};
+
 // Finalizes the initialization of `dest_id` from the initializer expression
 // `src_id`, by performing a final copy from source to destination, for types
 // whose initialization is not in-place.

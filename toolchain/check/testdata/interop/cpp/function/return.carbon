@@ -89,9 +89,9 @@ fn F() {
 // CHECK:STDOUT:   %.loc11_22.1: ref %i16 = temporary_storage
 // CHECK:STDOUT:   %addr.loc11_22.1: %ptr.251 = addr_of %.loc11_22.1
 // CHECK:STDOUT:   %foo1__carbon_thunk.call: init %empty_tuple.type = call imports.%foo1__carbon_thunk.decl(%addr.loc11_22.1)
-// CHECK:STDOUT:   %.loc11_22.2: %i16 = bind_value %.loc11_22.1
-// CHECK:STDOUT:   %.loc11_22.3: ref %i16 = temporary %.loc11_22.1, %.loc11_22.2
-// CHECK:STDOUT:   %.loc11_22.4: %i16 = bind_value %.loc11_22.3
+// CHECK:STDOUT:   %.loc11_22.2: init %i16 = in_place_init %foo1__carbon_thunk.call, %.loc11_22.1
+// CHECK:STDOUT:   %.loc11_22.3: %i16 = value_of_initializer %.loc11_22.2
+// CHECK:STDOUT:   %.loc11_22.4: %i16 = converted %.loc11_22.2, %.loc11_22.3
 // CHECK:STDOUT:   %IngestI16.call: init %empty_tuple.type = call %IngestI16.ref(%.loc11_22.4)
 // CHECK:STDOUT:   %IngestI32.ref: %IngestI32.type = name_ref IngestI32, file.%IngestI32.decl [concrete = constants.%IngestI32]
 // CHECK:STDOUT:   %Cpp.ref.loc12: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]

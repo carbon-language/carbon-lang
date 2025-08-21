@@ -385,7 +385,7 @@ fn Use(y: Cpp.Y) -> i32 {
 // CHECK:STDOUT:   %.loc8_11.1: ref %X = temporary_storage
 // CHECK:STDOUT:   %addr.loc8_11.1: %ptr.13d = addr_of %.loc8_11.1
 // CHECK:STDOUT:   %foo__carbon_thunk.call: init %empty_tuple.type = call imports.%foo__carbon_thunk.decl(%addr.loc8_11.1)
-// CHECK:STDOUT:   %.loc8_11.2: %X = bind_value %.loc8_11.1
+// CHECK:STDOUT:   %.loc8_11.2: init %X = in_place_init %foo__carbon_thunk.call, %.loc8_11.1
 // CHECK:STDOUT:   %.loc8_11.3: ref %X = temporary %.loc8_11.1, %.loc8_11.2
 // CHECK:STDOUT:   %T.as.Destroy.impl.Op.bound: <bound method> = bound_method %.loc8_11.1, constants.%T.as.Destroy.impl.Op.cbf
 // CHECK:STDOUT:   <elided>

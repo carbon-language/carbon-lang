@@ -584,11 +584,10 @@ auto PerformCppThunkCall(Context& context, SemIR::LocId loc_id,
 
   // Produce the result of the call, taking the value from the return storage.
   if (thunk_takes_return_address) {
-    auto return_value_id = ConvertToValueExpr(context, return_slot_id);
-    result_id = AddInst<SemIR::Temporary>(context, loc_id,
-                                          {.type_id = return_type_id,
-                                           .storage_id = return_slot_id,
-                                           .init_id = return_value_id});
+    result_id = AddInst<SemIR::InPlaceInit>(context, loc_id,
+                                            {.type_id = return_type_id,
+                                             .src_id = result_id,
+                                             .dest_id = return_slot_id});
   }
 
   return result_id;
