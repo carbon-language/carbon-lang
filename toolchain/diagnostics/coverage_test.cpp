@@ -33,6 +33,9 @@ constexpr Kind UntestedKinds[] = {
     Kind::ErrorReadingFile,
     Kind::ErrorStattingFile,
     Kind::FileTooLarge,
+    Kind::FailureBuildingRuntimes,
+    Kind::FailureRunningClang,
+    Kind::FailureRunningClangToLink,
 
     // These aren't feasible to test with a normal testcase, but are tested in
     // lex/tokenized_buffer_test.cpp.

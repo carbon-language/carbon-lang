@@ -132,7 +132,8 @@ static auto IsNonLinkCommand(llvm::ArrayRef<llvm::StringRef> args) -> bool {
 
 auto ClangRunner::Run(
     llvm::ArrayRef<llvm::StringRef> args,
-    std::optional<std::filesystem::path> prebuilt_resource_dir_path) -> bool {
+    std::optional<std::filesystem::path> prebuilt_resource_dir_path)
+    -> ErrorOr<bool> {
   // Check the args to see if we have a known target-independent command. If so,
   // directly dispatch it to avoid the cost of building the target resource
   // directory.
@@ -158,12 +159,8 @@ auto ClangRunner::Run(
   // with using an on-disk cache so that only the first execution has to build
   // the runtimes and subsequently the cached build can be used.
   CARBON_VLOG("Building target resource dir...\n");
-  auto tmp_result = Filesystem::MakeTmpDir();
-  if (!tmp_result.ok()) {
-    CARBON_VLOG("Error making a temporary directory: {0}", tmp_result.error());
-    return false;
-  }
-  Filesystem::RemovingDir tmp_dir = *std::move(tmp_result);
+  CARBON_ASSIGN_OR_RETURN(Filesystem::RemovingDir tmp_dir,
+                          Filesystem::MakeTmpDir());
 
   // Hard code the subdirectory for the resource-dir runtimes.
   //
@@ -172,13 +169,13 @@ auto ClangRunner::Run(
   std::filesystem::path resource_dir_path =
       tmp_dir.abs_path() / "clang_resource_dir";
 
-  auto result =
-      BuildTargetResourceDir(target, resource_dir_path, tmp_dir.abs_path());
-  if (!result.ok()) {
-    // FIXME: Need to diagnose this.
-    return false;
-  }
+  CARBON_RETURN_IF_ERROR(
+      BuildTargetResourceDir(target, resource_dir_path, tmp_dir.abs_path()));
 
+  // Note that this function always successfully runs `clang` and returns a bool
+  // to indicate whether `clang` itself succeeded, not whether the runner was
+  // able to run it. As a consequence, even a `false` here is a non-`Error`
+  // return.
   return RunInternal(args, target, resource_dir_path.native());
 }
 
@@ -211,43 +208,31 @@ auto ClangRunner::BuildTargetResourceDir(
       resource_dir.Symlink("share", install_resource_path / "share"));
 
   // Create the target's `lib` directory.
-  CARBON_ASSIGN_OR_RETURN(
-      Filesystem::Dir lib_dir,
-      resource_dir.CreateDirectories(std::filesystem::path("lib") /
-                                     std::string_view(target)));
+  std::filesystem::path lib_path =
+      std::filesystem::path("lib") / std::string_view(target);
+  CARBON_ASSIGN_OR_RETURN(Filesystem::Dir lib_dir,
+                          resource_dir.CreateDirectories(lib_path));
 
   llvm::Triple target_triple(target);
-  CARBON_CHECK(!target_triple.isOSWindows(),
-               "TODO: Windows runtimes are untested and not yet supported.");
-
-  // Create a directory with a known path that we can use for object files. We
-  // use an explicit `_objs` subdirectory for clarity when debugging.
-  CARBON_ASSIGN_OR_RETURN(Filesystem::Dir tmp_dir,
-                          Filesystem::Cwd().OpenDir(tmp_path));
-  CARBON_ASSIGN_OR_RETURN(Filesystem::Dir objs_dir,
-                          tmp_dir.OpenDir("_objs", Filesystem::OpenAlways));
-  std::filesystem::path objs_path = tmp_path / "_objs";
+  if (target_triple.isOSWindows()) {
+    return Error("TODO: Windows runtimes are untested and not yet supported.");
+  }
 
   // For Linux targets, the system libc (typically glibc) doesn't necessarily
   // provide the CRT begin/end files, and so we need to build them.
   if (target_triple.isOSLinux()) {
-    std::filesystem::path begin_o_path = "clang_rt.crtbegin.o";
-    BuildCrtFile(target, RuntimeSources::CrtBegin, objs_path / begin_o_path);
-    CARBON_RETURN_IF_ERROR(
-        objs_dir.Rename(begin_o_path, lib_dir, begin_o_path));
-
-    std::filesystem::path end_o_path = "clang_rt.crtend.o";
-    BuildCrtFile(target, RuntimeSources::CrtEnd, objs_path / end_o_path);
-    CARBON_RETURN_IF_ERROR(objs_dir.Rename(end_o_path, lib_dir, end_o_path));
+    BuildCrtFile(target, RuntimeSources::CrtBegin,
+                 resource_dir_path / lib_path / "clang_rt.crtbegin.o");
+    BuildCrtFile(target, RuntimeSources::CrtEnd,
+                 resource_dir_path / lib_path / "clang_rt.crtend.o");
   }
 
   CARBON_RETURN_IF_ERROR(
-      BuildBuiltinsLib(target, target_triple, tmp_dir, tmp_path, lib_dir));
+      BuildBuiltinsLib(target, target_triple, tmp_path, lib_dir));
 
   return Success();
 }
 
-// Handles building the Clang driver and passing the arguments down to it.
 auto ClangRunner::RunInternal(
     llvm::ArrayRef<llvm::StringRef> args, llvm::StringRef target,
     std::optional<llvm::StringRef> target_resource_dir_path) -> bool {
@@ -493,12 +478,14 @@ auto ClangRunner::BuildBuiltinsFile(llvm::StringRef target,
 
 auto ClangRunner::BuildBuiltinsLib(llvm::StringRef target,
                                    const llvm::Triple& target_triple,
-                                   Filesystem::DirRef tmp_dir,
                                    const std::filesystem::path& tmp_path,
                                    Filesystem::DirRef lib_dir)
     -> ErrorOr<Success> {
   llvm::SmallVector<llvm::StringRef> src_files =
       CollectBuiltinsSrcFiles(target_triple);
+
+  CARBON_ASSIGN_OR_RETURN(Filesystem::Dir tmp_dir,
+                          Filesystem::Cwd().OpenDir(tmp_path));
 
   llvm::SmallVector<llvm::NewArchiveMember> objs;
   objs.reserve(src_files.size());

@@ -104,7 +104,19 @@ auto ClangSubcommand::Run(DriverEnv& driver_env) -> DriverResult {
     *prebuilt_resource_dir_path /= "clang_resource_dir";
   }
 
-  return {.success = runner.Run(options_.args, prebuilt_resource_dir_path)};
+  ErrorOr<bool> run_result =
+      runner.Run(options_.args, prebuilt_resource_dir_path);
+  if (!run_result.ok()) {
+    // This is not a Clang failure, but a failure to even run Clang, so we need
+    // to diagnose it here.
+    CARBON_DIAGNOSTIC(FailureRunningClang, Error,
+                      "failure running `clang` subcommand: {0}", std::string);
+    driver_env.emitter.Emit(FailureRunningClang, run_result.error().message());
+    return {.success = false};
+  }
+
+  // Successfully ran Clang, but return whether Clang itself succeeded.
+  return {.success = *run_result};
 }
 
 }  // namespace Carbon

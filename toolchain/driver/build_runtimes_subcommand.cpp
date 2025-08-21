@@ -52,9 +52,14 @@ auto BuildRuntimesSubcommand::Run(DriverEnv& driver_env) -> DriverResult {
     return {.success = false};
   }
 
+  // For diagnosing filesystem or other errors when building runtimes.
+  CARBON_DIAGNOSTIC(FailureBuildingRuntimes, Error,
+                    "failure building runtimes: {0}", std::string);
+
   auto tmp_result = Filesystem::MakeTmpDir();
   if (!tmp_result.ok()) {
-    // FIXME: diagnose
+    driver_env.emitter.Emit(FailureBuildingRuntimes,
+                            tmp_result.error().message());
     return {.success = false};
   }
   Filesystem::RemovingDir tmp_dir = *std::move(tmp_result);
@@ -78,6 +83,10 @@ auto BuildRuntimesSubcommand::Run(DriverEnv& driver_env) -> DriverResult {
 
   auto build_result = runner.BuildTargetResourceDir(
       options_.codegen_options.target, resource_dir_path, tmp_dir.abs_path());
+  if (!build_result.ok()) {
+    driver_env.emitter.Emit(FailureBuildingRuntimes,
+                            build_result.error().message());
+  }
 
   return {.success = build_result.ok()};
 }

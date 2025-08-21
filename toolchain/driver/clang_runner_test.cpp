@@ -72,8 +72,9 @@ TEST_F(ClangRunnerTest, Version) {
 
   std::string out;
   std::string err;
-  EXPECT_TRUE(Testing::CallWithCapturedOutput(
-      out, err, [&] { return runner.Run({"--version"}); }));
+  EXPECT_TRUE(Testing::CallWithCapturedOutput(out, err, [&] {
+    return runner.RunTargetIndependentCommand({"--version"});
+  }));
   // The arguments to Clang should be part of the verbose log.
   EXPECT_THAT(test_os.TakeStr(), HasSubstr("--version"));
 
@@ -104,7 +105,7 @@ TEST_F(ClangRunnerTest, DashC) {
   EXPECT_TRUE(Testing::CallWithCapturedOutput(
       out, err,
       [&] {
-        return runner.Run(
+        return runner.RunTargetIndependentCommand(
             {"-c", test_file.string(), "-o", test_output.string()});
       }))
       << "Verbose output from runner:\n"
@@ -133,7 +134,7 @@ TEST_F(ClangRunnerTest, BuitinHeaders) {
   EXPECT_TRUE(Testing::CallWithCapturedOutput(
       out, err,
       [&] {
-        return runner.Run(
+        return runner.RunTargetIndependentCommand(
             {"-c", test_file.string(), "-o", test_output.string()});
       }))
       << "Verbose output from runner:\n"
@@ -160,7 +161,8 @@ TEST_F(ClangRunnerTest, CompileMultipleFiles) {
     EXPECT_TRUE(Testing::CallWithCapturedOutput(
         out, err,
         [&] {
-          return runner.Run({"-c", file.string(), "-o", output.string()});
+          return runner.RunTargetIndependentCommand(
+              {"-c", file.string(), "-o", output.string()});
         }))
         << "Verbose output from runner:\n"
         << verbose_out.TakeStr() << "\n";

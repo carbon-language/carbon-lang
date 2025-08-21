@@ -120,7 +120,19 @@ auto LinkSubcommand::Run(DriverEnv& driver_env) -> DriverResult {
 
   ClangRunner runner(driver_env.installation, driver_env.fs,
                      driver_env.vlog_stream);
-  return {.success = runner.Run(clang_args)};
+  ErrorOr<bool> run_result = runner.Run(clang_args);
+  if (!run_result.ok()) {
+    // This is not a Clang failure, but a failure to even run Clang, so we need
+    // to diagnose it here.
+    CARBON_DIAGNOSTIC(FailureRunningClangToLink, Error,
+                      "failure running `clang` to perform linking: {0}",
+                      std::string);
+    driver_env.emitter.Emit(FailureRunningClangToLink,
+                            run_result.error().message());
+    return {.success = false};
+  }
+  // Successfully ran Clang to perform the link, return its result.
+  return {.success = *run_result};
 }
 
 }  // namespace Carbon

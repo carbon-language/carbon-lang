@@ -217,7 +217,7 @@ make_install_filegroups(
 
 py_test(
     name = "llvm_symlinks_test",
-    size = "medium",
+    size = "small",
     srcs = ["llvm_symlinks_test.py"],
     data = [":install_data"],
 )

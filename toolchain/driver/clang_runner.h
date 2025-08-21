@@ -59,11 +59,15 @@ class ClangRunner : ToolRunnerBase {
   // it will either use the provided target resource-dir path, or if building
   // runtimes on demand is enabled it will build the needed resource-dir.
   //
+  // Returns an error only if unable to successfully run Clang with the
+  // arguments. If able to run Clang, no error is returned a bool indicating
+  // whether than Clang invocation succeeded is returned.
+  //
   // TODO: Eventually, this will need to accept an abstraction that can
   // represent multiple different pre-built runtimes.
   auto Run(llvm::ArrayRef<llvm::StringRef> args,
            std::optional<std::filesystem::path> prebuilt_resource_dir_path = {})
-      -> bool;
+      -> ErrorOr<bool>;
 
   // Run Clang with the provided arguments and without any target-dependent
   // resources.
@@ -97,17 +101,8 @@ class ClangRunner : ToolRunnerBase {
   // behavior.
   auto EnableLeakingMemory() -> void { enable_leaking_ = true; }
 
-  // Set a pre-built target runtimes directory to use for target-specific
-  // invocations.
-  //
-  // This is provided as a method so that clients can use
-  // `BuildTargetResourceDir` to construct the desired runtimes directory first,
-  // and then set it here for subsequent use. Note that setting this disables
-  // any on-demand building of runtimes.
-  auto SetTargetRuntimesDir(const std::filesystem::path& target_runtimes_path)
-      -> void;
-
  private:
+  // Handles building the Clang driver and passing the arguments down to it.
   auto RunInternal(llvm::ArrayRef<llvm::StringRef> args, llvm::StringRef target,
                    std::optional<llvm::StringRef> target_resource_dir_path)
       -> bool;
@@ -128,7 +123,6 @@ class ClangRunner : ToolRunnerBase {
   // using the provided objects path for intermediate object files.
   auto BuildBuiltinsLib(llvm::StringRef target,
                         const llvm::Triple& target_triple,
-                        Filesystem::DirRef tmp_dir,
                         const std::filesystem::path& tmp_path,
                         Filesystem::DirRef lib_dir) -> ErrorOr<Success>;
 
