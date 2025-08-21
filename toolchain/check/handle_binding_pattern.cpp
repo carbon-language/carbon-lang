@@ -251,6 +251,9 @@ auto HandleParseNode(Context& context,
     // TODO: Find a less brittle way of doing this. A `scope_inst_id` of `None`
     // can represent a block scope, but is also used for other kinds of scopes
     // that aren't necessarily part of a function decl.
+    // We don't need to check if the scope is an interface here as this is
+    // already caught in the parse phase by the separated associated constant
+    // logic.
     auto scope_inst_id = context.scope_stack().PeekInstId();
     if (scope_inst_id.has_value()) {
       auto scope_inst = context.insts().Get(scope_inst_id);
