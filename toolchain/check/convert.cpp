@@ -673,13 +673,20 @@ static auto ConvertDerivedToBase(Context& context, SemIR::LocId loc_id,
   // Materialize a temporary if necessary.
   value_id = ConvertToValueOrRefExpr(context, value_id);
 
+  // Preserve type qualifiers.
+  auto quals = context.types()
+                   .GetUnqualifiedTypeAndQualifiers(
+                       context.insts().Get(value_id).type_id())
+                   .second;
+
   // Add a series of `.base` accesses.
   for (auto [base_id, base_type_id] : path) {
     auto base_decl = context.insts().GetAs<SemIR::BaseDecl>(base_id);
-    value_id = AddInst<SemIR::ClassElementAccess>(context, loc_id,
-                                                  {.type_id = base_type_id,
-                                                   .base_id = value_id,
-                                                   .index = base_decl.index});
+    value_id = AddInst<SemIR::ClassElementAccess>(
+        context, loc_id,
+        {.type_id = GetQualifiedType(context, base_type_id, quals),
+         .base_id = value_id,
+         .index = base_decl.index});
   }
   return value_id;
 }
@@ -689,13 +696,13 @@ static auto ConvertDerivedPointerToBasePointer(
     Context& context, SemIR::LocId loc_id, SemIR::PointerType src_ptr_type,
     SemIR::TypeId dest_ptr_type_id, SemIR::InstId ptr_id,
     const InheritancePath& path) -> SemIR::InstId {
+  auto pointee_type_id =
+      context.types().GetTypeIdForTypeInstId(src_ptr_type.pointee_id);
+
   // Form `*p`.
   ptr_id = ConvertToValueExpr(context, ptr_id);
   auto ref_id = AddInst<SemIR::Deref>(
-      context, loc_id,
-      {.type_id =
-           context.types().GetTypeIdForTypeInstId(src_ptr_type.pointee_id),
-       .pointer_id = ptr_id});
+      context, loc_id, {.type_id = pointee_type_id, .pointer_id = ptr_id});
 
   // Convert as a reference expression.
   ref_id = ConvertDerivedToBase(context, loc_id, ref_id, path);
@@ -950,6 +957,12 @@ static auto PerformBuiltinConversion(
     }
   }
 
+  // No other conversions apply when the source and destination types are the
+  // same.
+  if (value_type_id == target.type_id) {
+    return value_id;
+  }
+
   // A tuple (T1, T2, ..., Tn) converts to array(T, n) if each Ti converts to T.
   if (auto target_array_type = target_type_inst.TryAs<SemIR::ArrayType>()) {
     if (auto src_tuple_type =
@@ -983,21 +996,50 @@ static auto PerformBuiltinConversion(
     }
   }
 
-  // A pointer T* converts to U* if T is a class derived from U.
+  // A pointer T* converts to [const] U* if T is the same as U, or is a class
+  // derived from U.
   if (auto target_pointer_type = target_type_inst.TryAs<SemIR::PointerType>()) {
     if (auto src_pointer_type =
             sem_ir.types().TryGetAs<SemIR::PointerType>(value_type_id)) {
-      if (auto path =
-              ComputeInheritancePath(context, loc_id,
-                                     context.types().GetTypeIdForTypeInstId(
-                                         src_pointer_type->pointee_id),
-                                     context.types().GetTypeIdForTypeInstId(
-                                         target_pointer_type->pointee_id));
-          path && !path->empty()) {
-        return ConvertDerivedPointerToBasePointer(
-            context, loc_id, *src_pointer_type, target.type_id, value_id,
-            *path);
+      auto [unqual_target_pointee_type_id, target_quals] =
+          sem_ir.types().GetUnqualifiedTypeAndQualifiers(
+              context.types().GetTypeIdForTypeInstId(
+                  target_pointer_type->pointee_id));
+      auto [unqual_src_pointee_type_id, src_quals] =
+          sem_ir.types().GetUnqualifiedTypeAndQualifiers(
+              context.types().GetTypeIdForTypeInstId(
+                  src_pointer_type->pointee_id));
+
+      // If the qualifiers are incompatible, we can't perform a conversion.
+      if ((src_quals & ~target_quals) != SemIR::TypeQualifiers::None) {
+        // TODO: Consider producing a custom diagnostic here for a cast that
+        // discards constness. We should allow this with `unsafe as`.
+        return value_id;
       }
+
+      if (unqual_target_pointee_type_id != unqual_src_pointee_type_id) {
+        // If there's an inheritance path from target to source, this is a
+        // derived to base conversion.
+        if (auto path = ComputeInheritancePath(context, loc_id,
+                                               unqual_src_pointee_type_id,
+                                               unqual_target_pointee_type_id);
+            path && !path->empty()) {
+          value_id = ConvertDerivedPointerToBasePointer(
+              context, loc_id, *src_pointer_type, target.type_id, value_id,
+              *path);
+        } else {
+          // No conversion was possible.
+          return value_id;
+        }
+      }
+
+      // Perform a compatible conversion to add any new qualifiers.
+      if (src_quals != target_quals) {
+        return AddInst<SemIR::AsCompatible>(
+            context, loc_id,
+            {.type_id = target.type_id, .source_id = value_id});
+      }
+      return value_id;
     }
   }
 
