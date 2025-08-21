@@ -39,6 +39,10 @@ auto GetSingletonType(Context& context, SemIR::TypeInstId singleton_id)
 auto GetConstType(Context& context, SemIR::TypeInstId inner_type_id)
     -> SemIR::TypeId;
 
+// Gets a qualified version of a type.
+auto GetQualifiedType(Context& context, SemIR::TypeId type_id,
+                      SemIR::TypeQualifiers quals) -> SemIR::TypeId;
+
 // Gets a class type.
 auto GetClassType(Context& context, SemIR::ClassId class_id,
                   SemIR::SpecificId specific_id) -> SemIR::TypeId;

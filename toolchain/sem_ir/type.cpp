@@ -93,12 +93,14 @@ auto TypeStore::GetTransitiveAdaptedType(TypeId type_id) const -> TypeId {
   return type_id;
 }
 
-auto TypeStore::GetUnqualifiedType(TypeId type_id) const -> TypeId {
+auto TypeStore::GetUnqualifiedTypeAndQualifiers(TypeId type_id) const
+    -> std::pair<TypeId, TypeQualifiers> {
   if (auto const_type = TryGetAs<ConstType>(type_id)) {
-    return file_->types().GetTypeIdForTypeInstId(const_type->inner_id);
+    return {file_->types().GetTypeIdForTypeInstId(const_type->inner_id),
+            TypeQualifiers::Const};
   }
   // TODO: Look through PartialType when this is reachable/testable
-  return type_id;
+  return {type_id, TypeQualifiers::None};
 }
 
 auto TypeStore::TryGetIntTypeInfo(TypeId int_type_id) const

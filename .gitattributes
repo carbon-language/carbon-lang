@@ -5,7 +5,3 @@
 # This tells Github to detect files having the extension `.def` as `C++` files, which
 # ensures that these files get syntax highlighted properly.
 *.def linguist-language=C++
-
-# This tells Git to treat lexer tests as text when producing diffs, even if
-# they contain non-printable characters.
-toolchain/lex/testdata/*.carbon diff

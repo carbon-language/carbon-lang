@@ -5,6 +5,7 @@
 #ifndef CARBON_TOOLCHAIN_SEM_IR_TYPE_H_
 #define CARBON_TOOLCHAIN_SEM_IR_TYPE_H_
 
+#include "llvm/ADT/BitmaskEnum.h"
 #include "llvm/ADT/STLExtras.h"
 #include "toolchain/base/shared_value_stores.h"
 #include "toolchain/sem_ir/constant.h"
@@ -13,6 +14,17 @@
 #include "toolchain/sem_ir/type_info.h"
 
 namespace Carbon::SemIR {
+
+LLVM_ENABLE_BITMASK_ENUMS_IN_NAMESPACE();
+
+// A bitmask of type qualifiers.
+enum class TypeQualifiers {
+  None = 0,
+  Const = 1 << 0,
+  // TODO: Partial
+
+  LLVM_MARK_AS_BITMASK_ENUM(Const)
+};
 
 // Provides a ValueStore wrapper with an API specific to types.
 class TypeStore : public Yaml::Printable<TypeStore> {
@@ -160,8 +172,15 @@ class TypeStore : public Yaml::Printable<TypeStore> {
     return complete_type_info_.Contains(type_id);
   }
 
-  // Removes any top-level `const` qualifiers from a type.
-  auto GetUnqualifiedType(TypeId type_id) const -> TypeId;
+  // Removes any top-level qualifiers from a type.
+  auto GetUnqualifiedType(TypeId type_id) const -> TypeId {
+    return GetUnqualifiedTypeAndQualifiers(type_id).first;
+  }
+
+  // Removes any top-level qualifiers from a type and returns the unqualified
+  // type and qualifiers.
+  auto GetUnqualifiedTypeAndQualifiers(TypeId type_id) const
+      -> std::pair<TypeId, TypeQualifiers>;
 
   // Determines whether the given type is a signed integer type. This includes
   // the case where the type is `Core.IntLiteral` or a class type whose object

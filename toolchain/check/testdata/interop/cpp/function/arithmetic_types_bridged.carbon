@@ -337,7 +337,7 @@ fn F() {
 
 auto foo(const short* _Nonnull a) -> void;
 
-// --- fail_todo_import_const_short_pointer_param.carbon
+// --- import_const_short_pointer_param.carbon
 
 library "[[@TEST_NAME]]";
 
@@ -346,14 +346,6 @@ import Cpp library "const_short_pointer_param.h";
 fn F() {
   var a: i16 = 1;
   //@dump-sem-ir-begin
-  // CHECK:STDERR: fail_todo_import_const_short_pointer_param.carbon:[[@LINE+8]]:11: error: cannot implicitly convert expression of type `i16*` to `const i16*` [ConversionFailure]
-  // CHECK:STDERR:   Cpp.foo(&a);
-  // CHECK:STDERR:           ^~
-  // CHECK:STDERR: fail_todo_import_const_short_pointer_param.carbon:[[@LINE+5]]:11: note: type `i16*` does not implement interface `Core.ImplicitAs(const i16*)` [MissingImplInMemberAccessNote]
-  // CHECK:STDERR:   Cpp.foo(&a);
-  // CHECK:STDERR:           ^~
-  // CHECK:STDERR: fail_todo_import_const_short_pointer_param.carbon: note: initializing function parameter [InCallToFunctionParam]
-  // CHECK:STDERR:
   Cpp.foo(&a);
   //@dump-sem-ir-end
 }
@@ -1355,7 +1347,7 @@ fn F() {
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- fail_todo_import_const_short_pointer_param.carbon
+// CHECK:STDOUT: --- import_const_short_pointer_param.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [concrete]
@@ -1386,9 +1378,10 @@ fn F() {
 // CHECK:STDOUT:   %Cpp.ref: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
 // CHECK:STDOUT:   %foo.ref: %foo.type = name_ref foo, imports.%foo.decl [concrete = constants.%foo]
 // CHECK:STDOUT:   %a.ref: ref %i16 = name_ref a, %a
-// CHECK:STDOUT:   %addr.loc17: %ptr.251 = addr_of %a.ref
-// CHECK:STDOUT:   %.loc17: %ptr.758 = converted %addr.loc17, <error> [concrete = <error>]
-// CHECK:STDOUT:   %foo.call: init %empty_tuple.type = call %foo.ref(<error>)
+// CHECK:STDOUT:   %addr.loc9: %ptr.251 = addr_of %a.ref
+// CHECK:STDOUT:   %.loc9_11.1: %ptr.758 = as_compatible %addr.loc9
+// CHECK:STDOUT:   %.loc9_11.2: %ptr.758 = converted %addr.loc9, %.loc9_11.1
+// CHECK:STDOUT:   %foo.call: init %empty_tuple.type = call %foo.ref(%.loc9_11.2)
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

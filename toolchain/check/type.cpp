@@ -136,6 +136,16 @@ auto GetConstType(Context& context, SemIR::TypeInstId inner_type_id)
   return GetTypeImpl<SemIR::ConstType>(context, inner_type_id);
 }
 
+auto GetQualifiedType(Context& context, SemIR::TypeId type_id,
+                      SemIR::TypeQualifiers quals) -> SemIR::TypeId {
+  if ((quals & SemIR::TypeQualifiers::Const) != SemIR::TypeQualifiers::None) {
+    type_id = GetConstType(context, context.types().GetInstId(type_id));
+    quals &= ~SemIR::TypeQualifiers::Const;
+  }
+  CARBON_CHECK(quals == SemIR::TypeQualifiers::None);
+  return type_id;
+}
+
 auto GetSingletonType(Context& context, SemIR::TypeInstId singleton_id)
     -> SemIR::TypeId {
   CARBON_CHECK(SemIR::IsSingletonInstId(singleton_id));
