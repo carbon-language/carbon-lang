@@ -179,7 +179,7 @@ static auto RunAutoupdater(FileTestBase* test_base, const TestFile& test_file,
 
   llvm::ArrayRef expected_filenames = filenames;
   if (filenames.size() > 1) {
-    expected_filenames = expected_filenames.drop_front();
+    expected_filenames.consume_front();
   }
 
   return FileTestAutoupdater(

@@ -694,7 +694,7 @@ static auto IsValidBuiltinDeclaration(Context& context,
   // Find the list of call parameters other than the implicit return slot.
   auto call_params = context.inst_blocks().Get(function.call_params_id);
   if (function.return_slot_pattern_id.has_value()) {
-    call_params = call_params.drop_back();
+    call_params.consume_back();
   }
 
   // Form the list of parameter types for the declaration.

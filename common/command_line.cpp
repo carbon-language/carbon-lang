@@ -1218,8 +1218,7 @@ auto Parser::ParsePositionalSuffix(
   // arguments.
   bool empty_positional = false;
   while (!unparsed_args.empty()) {
-    llvm::StringRef unparsed_arg = unparsed_args.front();
-    unparsed_args = unparsed_args.drop_front();
+    llvm::StringRef unparsed_arg = unparsed_args.consume_front();
 
     if (unparsed_arg != "--") {
       CARBON_RETURN_IF_ERROR(ParsePositionalArg(unparsed_arg));
@@ -1260,11 +1259,9 @@ auto Parser::Parse(llvm::ArrayRef<llvm::StringRef> unparsed_args)
   PopulateMaps(*command_);
 
   while (!unparsed_args.empty()) {
-    llvm::StringRef unparsed_arg = unparsed_args.front();
-
     // Peak at the front for an exact `--` argument that switches to a
     // positional suffix parsing without dropping this argument.
-    if (unparsed_arg == "--") {
+    if (unparsed_args.front() == "--") {
       if (command_->positional_args.empty()) {
         return Error(
             "cannot meaningfully end option and subcommand arguments with a "
@@ -1284,7 +1281,7 @@ auto Parser::Parse(llvm::ArrayRef<llvm::StringRef> unparsed_args)
 
     // Now that we're not switching parse modes, drop the current unparsed
     // argument and parse it.
-    unparsed_args = unparsed_args.drop_front();
+    llvm::StringRef unparsed_arg = unparsed_args.consume_front();
 
     if (unparsed_arg.starts_with("--")) {
       // Note that the exact argument "--" has been handled above already.

@@ -516,8 +516,7 @@ auto HandleInst(FunctionContext& context, SemIR::InstId inst_id,
 
   auto inst_type = context.GetTypeIdOfInst(inst_id);
   if (context.GetReturnTypeInfo(inst_type).info.has_return_slot()) {
-    args.push_back(context.GetValue(arg_ids.back()));
-    arg_ids = arg_ids.drop_back();
+    args.push_back(context.GetValue(arg_ids.consume_back()));
   }
 
   for (auto arg_id : arg_ids) {

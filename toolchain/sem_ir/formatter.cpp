@@ -1189,8 +1189,7 @@ auto Formatter::FormatCallRhs(Call inst) -> void {
   bool has_return_slot = return_info.has_return_slot();
   InstId return_slot_arg_id = InstId::None;
   if (has_return_slot) {
-    return_slot_arg_id = args.back();
-    args = args.drop_back();
+    return_slot_arg_id = args.consume_back();
   }
 
   llvm::ListSeparator sep;

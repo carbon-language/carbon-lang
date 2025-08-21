@@ -140,7 +140,7 @@ auto CheckFunctionDefinitionSignature(Context& context,
                             SemIR::LocId(function.return_slot_pattern_id),
                             function, SemIR::SpecificId::None);
     // Don't re-check the return type below.
-    params_to_complete = params_to_complete.drop_back();
+    params_to_complete.consume_back();
   }
 
   // Check the parameter types are complete.
