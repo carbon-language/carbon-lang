@@ -181,7 +181,7 @@ fn Convert(p: Cpp.B*) -> Cpp.A* {
   // CHECK:STDERR: fail_todo_use_virtual_inheritance.carbon:[[@LINE+14]]:3: error: semantics TODO: `class with virtual bases` [SemanticsTodo]
   // CHECK:STDERR:   return p;
   // CHECK:STDERR:   ^~~~~~~~~
-  // CHECK:STDERR: fail_todo_use_virtual_inheritance.carbon:[[@LINE+11]]:3: note: while completing C++ class type `Cpp.B` [InCppTypeCompletion]
+  // CHECK:STDERR: fail_todo_use_virtual_inheritance.carbon:[[@LINE+11]]:3: note: while completing C++ type `Cpp.B` [InCppTypeCompletion]
   // CHECK:STDERR:   return p;
   // CHECK:STDERR:   ^~~~~~~~~
   // CHECK:STDERR:

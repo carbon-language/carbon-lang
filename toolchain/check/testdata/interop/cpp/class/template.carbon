@@ -73,7 +73,7 @@ import Cpp library "instantiation_error.h";
 //@dump-sem-ir-begin
 var x: Cpp.XY.r#type = 0;
 
-// CHECK:STDERR: fail_use_instantiation_error.carbon:[[@LINE+4]]:8: note: while completing C++ class type `Cpp.X` [InCppTypeCompletion]
+// CHECK:STDERR: fail_use_instantiation_error.carbon:[[@LINE+4]]:8: note: while completing C++ type `Cpp.X` [InCppTypeCompletion]
 // CHECK:STDERR: var y: Cpp.Xint.r#type = 0;
 // CHECK:STDERR:        ^~~~~~~~~~~~~
 // CHECK:STDERR:
