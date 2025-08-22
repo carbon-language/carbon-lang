@@ -1370,6 +1370,8 @@ static auto GetReturnTypeExpr(Context& context, SemIR::LocId loc_id,
   if (!ret_type->isVoidType()) {
     TypeExpr mapped_type = MapType(context, loc_id, ret_type);
     if (!mapped_type.inst_id.has_value()) {
+      context.TODO(loc_id, llvm::formatv("Unsupported: return type: {0}",
+                                         ret_type.getAsString()));
       return {.inst_id = SemIR::ErrorInst::TypeInstId,
               .type_id = SemIR::ErrorInst::TypeId};
     }
@@ -1403,12 +1405,6 @@ static auto GetReturnPattern(Context& context, SemIR::LocId loc_id,
   if (!type_inst_id.has_value()) {
     // void.
     return SemIR::InstId::None;
-  }
-  if (type_inst_id == SemIR::ErrorInst::TypeInstId) {
-    context.TODO(loc_id,
-                 llvm::formatv("Unsupported: return type: {0}",
-                               clang_decl->getReturnType().getAsString()));
-    return SemIR::ErrorInst::InstId;
   }
   auto pattern_type_id = GetPatternType(context, type_id);
   SemIR::InstId return_slot_pattern_id = AddPatternInst(

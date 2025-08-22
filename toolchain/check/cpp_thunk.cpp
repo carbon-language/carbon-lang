@@ -7,6 +7,7 @@
 #include "clang/AST/GlobalDecl.h"
 #include "clang/AST/Mangle.h"
 #include "clang/Sema/Lookup.h"
+#include "clang/Sema/Overload.h"
 #include "clang/Sema/Sema.h"
 #include "toolchain/check/call.h"
 #include "toolchain/check/context.h"
@@ -20,12 +21,22 @@
 
 namespace Carbon::Check {
 
+// Returns the GlobalDecl to use to represent the given function declaration.
+// TODO: Refactor with `Lower::CreateGlobalDecl`.
+static auto GetGlobalDecl(const clang::FunctionDecl* decl)
+    -> clang::GlobalDecl {
+  if (const auto* ctor = dyn_cast<clang::CXXConstructorDecl>(decl)) {
+    return clang::GlobalDecl(ctor, clang::CXXCtorType::Ctor_Complete);
+  }
+  return clang::GlobalDecl(decl);
+}
+
 // Returns the C++ thunk mangled name given the callee function.
 static auto GenerateThunkMangledName(
     clang::MangleContext& mangle_context,
     const clang::FunctionDecl& callee_function_decl) -> std::string {
   RawStringOstream mangled_name_stream;
-  mangle_context.mangleName(clang::GlobalDecl(&callee_function_decl),
+  mangle_context.mangleName(GetGlobalDecl(&callee_function_decl),
                             mangled_name_stream);
   mangled_name_stream << ".carbon_thunk";
 
@@ -71,12 +82,6 @@ static auto IsThunkRequiredForType(Context& context, SemIR::TypeId type_id)
 auto IsCppThunkRequired(Context& context, const SemIR::Function& function)
     -> bool {
   if (!function.clang_decl_id.has_value()) {
-    return false;
-  }
-
-  if (isa<clang::CXXConstructorDecl>(
-          context.sem_ir().clang_decls().Get(function.clang_decl_id).decl)) {
-    // TODO: Support generating thunks for constructors.
     return false;
   }
 
@@ -131,14 +136,18 @@ namespace {
 // Information about the callee of a thunk.
 struct CalleeFunctionInfo {
   explicit CalleeFunctionInfo(clang::FunctionDecl* decl) : decl(decl) {
+    auto& ast_context = decl->getASTContext();
     const auto* method_decl = dyn_cast<clang::CXXMethodDecl>(decl);
-    has_object_parameter = method_decl && !method_decl->isStatic() &&
-                           !isa<clang::CXXConstructorDecl>(method_decl);
+    bool is_ctor = isa<clang::CXXConstructorDecl>(decl);
+    has_object_parameter = method_decl && !method_decl->isStatic() && !is_ctor;
     if (has_object_parameter && method_decl->isImplicitObjectMemberFunction()) {
       implicit_this_type = method_decl->getThisType();
     }
+    effective_return_type =
+        is_ctor ? ast_context.getRecordType(method_decl->getParent())
+                : decl->getReturnType();
     has_simple_return_type =
-        IsSimpleAbiType(decl->getASTContext(), decl->getReturnType());
+        IsSimpleAbiType(ast_context, effective_return_type);
   }
 
   // Returns whether this callee has an implicit `this` parameter.
@@ -180,6 +189,11 @@ struct CalleeFunctionInfo {
   // If the callee has an implicit object parameter, the corresponding `this`
   // type. Otherwise a null type.
   clang::QualType implicit_this_type;
+
+  // The return type that the callee has when viewed from Carbon. This is the
+  // C++ return type, except that constructors return the class type in Carbon
+  // and return void in Clang's AST.
+  clang::QualType effective_return_type;
 
   // Whether the callee has a simple return type, that we can return directly.
   // If not, we'll return through an out parameter instead.
@@ -228,7 +242,7 @@ static auto BuildThunkParameterTypes(clang::ASTContext& ast_context,
   if (!callee_info.has_simple_return_type) {
     thunk_param_types.push_back(GetNonnullType(
         ast_context,
-        ast_context.getPointerType(callee_info.decl->getReturnType())));
+        ast_context.getPointerType(callee_info.effective_return_type)));
   }
 
   CARBON_CHECK(thunk_param_types.size() == callee_info.num_thunk_params());
@@ -295,7 +309,7 @@ static auto CreateThunkFunctionDecl(
 
   auto ext_proto_info = clang::FunctionProtoType::ExtProtoInfo();
   clang::QualType thunk_function_type = ast_context.getFunctionType(
-      callee_info.has_simple_return_type ? callee_info.decl->getReturnType()
+      callee_info.has_simple_return_type ? callee_info.effective_return_type
                                          : ast_context.VoidTy,
       thunk_param_types, ext_proto_info);
 
@@ -418,7 +432,7 @@ static auto BuildThunkBody(clang::Sema& sema,
         /*HadMultipleCandidates=*/false, clang::DeclarationNameInfo(),
         sema.getASTContext().BoundMemberTy, clang::VK_PRValue,
         clang::OK_Ordinary);
-  } else {
+  } else if (!isa<clang::CXXConstructorDecl>(callee_info.decl)) {
     callee =
         sema.BuildDeclRefExpr(callee_info.decl, callee_info.decl->getType(),
                               clang::VK_PRValue, clang_loc);
@@ -432,8 +446,27 @@ static auto BuildThunkBody(clang::Sema& sema,
   llvm::SmallVector<clang::Expr*> call_args =
       BuildCalleeArgs(sema, thunk_function_decl, callee_info);
 
-  clang::ExprResult call = sema.BuildCallExpr(nullptr, callee.get(), clang_loc,
-                                              call_args, clang_loc);
+  clang::ExprResult call;
+  if (auto info = clang::getConstructorInfo(callee_info.decl);
+      info.Constructor) {
+    // In C++, there are no direct calls to constructors, only initialization,
+    // so we need to type-check and build the call ourselves.
+    auto type = sema.Context.getRecordType(
+        cast<clang::CXXRecordDecl>(callee_info.decl->getParent()));
+    llvm::SmallVector<clang::Expr*> converted_args;
+    converted_args.reserve(call_args.size());
+    if (sema.CompleteConstructorCall(info.Constructor, type, call_args,
+                                     clang_loc, converted_args)) {
+      return clang::StmtError();
+    }
+    call = sema.BuildCXXConstructExpr(
+        clang_loc, type, callee_info.decl, info.Constructor, converted_args,
+        false, false, false, false, clang::CXXConstructionKind::Complete,
+        clang_loc);
+  } else {
+    call = sema.BuildCallExpr(nullptr, callee.get(), clang_loc, call_args,
+                              clang_loc);
+  }
   if (!call.isUsable()) {
     return clang::StmtError();
   }
@@ -444,7 +477,7 @@ static auto BuildThunkBody(clang::Sema& sema,
 
   auto* return_object_addr = BuildThunkParamRef(
       sema, thunk_function_decl, callee_info.GetThunkReturnParamIndex());
-  auto return_type = callee_info.decl->getReturnType();
+  auto return_type = callee_info.effective_return_type;
   auto* return_type_info =
       sema.Context.getTrivialTypeSourceInfo(return_type, clang_loc);
   auto placement_new = sema.BuildCXXNew(
