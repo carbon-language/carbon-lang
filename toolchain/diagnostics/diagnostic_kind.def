@@ -22,6 +22,8 @@
 // ============================================================================
 
 CARBON_DIAGNOSTIC_KIND(DriverInstallInvalid)
+CARBON_DIAGNOSTIC_KIND(DriverRuntimesCacheInvalid)
+CARBON_DIAGNOSTIC_KIND(DriverPrebuiltRuntimesInvalid)
 CARBON_DIAGNOSTIC_KIND(DriverCommandLineParseFailed)
 CARBON_DIAGNOSTIC_KIND(CompilePhaseFlagConflict)
 CARBON_DIAGNOSTIC_KIND(CompilePreludeManifestError)
