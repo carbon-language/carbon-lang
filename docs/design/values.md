@@ -619,6 +619,11 @@ function, and also the expected form of `return` expressions in the function
 body. `return` expressions are [converted](#form-conversions) to that form if
 possible.
 
+> **TODO:** Clarify the role of `auto`: as of
+> (p5434)[/proposals/p5434.md#ref-and-val-returns], `ref auto`, `val auto`, and
+> `var auto` are supported, but perhaps only at the top level. Are these form
+> literals, or something else?
+
 #### Deferred initialization from values and references
 
 TODO: This section needs to be updated to reflect the addition of `-> val`
@@ -843,6 +848,9 @@ An outcome `source` that has a struct type can be converted to a struct type
     `Dest`, category-convert the outcome to an initializing expression, and
     return the result.
 
+Note that the sub-conversions invoked here are not necessarily defined; if so,
+the conversion itself is not defined.
+
 The conversion to an initializing outcome in the last case is not formally
 necessary; its purpose is to ensure that the result of type conversion is not
 "less primitive" than the source form. Allowing conversions to add form
@@ -854,10 +862,9 @@ so `F() as (i16, i16)` must not have a tuple form.
 
 **Open question:** We've chosen "initializing" as the default category for
 primitive sub-forms in a conversion, but in some cases "value" could be more
-efficient. Do we want a more nuanced rule? Alternatively, do we want a way of
-explicitly requesting conversion to a given form, rather than just a given type,
-in order to override this default when it's inefficient? Do we need to prevent
-_implicit_ conversions from adding form structure at all?
+efficient. Do we want a way of explicitly requesting conversion to a given form,
+rather than just a given type, in order to override this default when it's
+inefficient?
 
 There is a conversion to a class type `Dest` from an outcome `source` that has a
 struct type, if there is a conversion from `source` to a struct type that has
@@ -1369,6 +1376,9 @@ itself.
 -   [Exclusively using references](/proposals/p2006.md#exclusively-using-references)
 -   [Alternative pointer syntaxes](/proposals/p2006.md#alternative-pointer-syntaxes)
 -   [Alternative syntaxes for locals](/proposals/p2006.md#alternative-syntaxes-for-locals)
+-   [Mixed expression categories](/proposals/p5545.md#mixed-expression-categories)
+-   [Use composite forms in more or fewer places](/proposals/p5545.md#use-composite-forms-in-more-or-fewer-places)
+-   [Materialize temporaries to preserve struct initialization order](/proposals/p5545.md#materialize-temporaries-to-preserve-struct-initialization-order)
 
 ## References
 
@@ -1377,9 +1387,11 @@ itself.
 -   [Proposal #618: `var` ordering][p0618]
 -   [Proposal #851: auto keyword for vars][p0851]
 -   [Proposal #2006: Values, variables, and pointers][p2006]
+-   [Proposal #5545: Expression form basics][p5545]
 
 [p0257]: /proposals/p0257.md
 [p0339]: /proposals/p0339.md
 [p0618]: /proposals/p0618.md
 [p0851]: /proposals/p0851.md
 [p2006]: /proposals/p2006.md
+[p5545]: /proposals/p5545.md

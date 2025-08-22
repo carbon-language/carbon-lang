@@ -90,6 +90,10 @@ possible syntaxes:
         `fn Sleep(seconds: i64) -> ();`.
     -   `()` is similar to a `void` return type in C++.
 
+> **TODO:** Update this section to cover form literals and
+> `ref`/`val`/`var`-qualified `auto`, as discussed
+> [here](values.md#function-calls-and-returns).
+
 ### `return` statements
 
 The [`return` statement](control_flow/return.md) is essential to function
@@ -103,6 +107,8 @@ statement in the function's body as if `return;` were present.
 When the return clause is provided, including when it is `-> ()`, the `return`
 statement must have an expression that is convertible to the return type, and a
 `return` statement must be used to end control flow of the function.
+
+> **TODO:** Update this section to cover the form
 
 ## Function declarations
 
