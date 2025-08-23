@@ -3,7 +3,6 @@
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
 // INCLUDE-FILE: toolchain/testing/testdata/min_prelude/convert.carbon
-// EXTRA-ARGS: --clang-arg=-fms-compatibility
 //
 // AUTOUPDATE
 // TIP: To test this file alone, run:
@@ -24,7 +23,7 @@ class C {
   void F(decltype(d));
 };
 
-// --- fail_todo_copy_enum.carbon
+// --- copy_enum.carbon
 
 library "[[@TEST_NAME]]";
 
@@ -38,7 +37,7 @@ fn G() {
 }
 //@dump-sem-ir-end
 
-// CHECK:STDOUT: --- fail_todo_copy_enum.carbon
+// CHECK:STDOUT: --- copy_enum.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %G.type: type = fn_type @G [concrete]
