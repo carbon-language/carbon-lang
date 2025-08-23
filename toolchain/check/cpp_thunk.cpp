@@ -53,12 +53,12 @@ static auto IsThunkRequiredForType(Context& context, SemIR::TypeId type_id)
         return true;
       }
 
-      if (!context.types().IsSignedInt(type_id)) {
+      auto int_info = context.types().TryGetIntTypeInfo(type_id);
+      if (!int_info || !int_info->bit_width.has_value()) {
         return true;
       }
 
-      llvm::APInt bit_width =
-          context.ints().Get(context.types().GetIntTypeInfo(type_id).bit_width);
+      llvm::APInt bit_width = context.ints().Get(int_info->bit_width);
       return bit_width != 32 && bit_width != 64;
     }
 

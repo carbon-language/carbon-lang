@@ -1062,7 +1062,7 @@ static auto MapBuiltinType(Context& context, SemIR::LocId loc_id,
           MakeIntType(context, context.ints().Add(width), is_signed);
       // Try to make sure signed integer of 32 or 64 bits are complete so we can
       // check against them when deciding whether we need to generate a thunk.
-      if (is_signed && (width == 32 || width == 64)) {
+      if (width == 32 || width == 64) {
         SemIR::TypeId type_id = type_expr.type_id;
         if (!context.types().IsComplete(type_id)) {
           TryToCompleteType(context, type_id, loc_id);
