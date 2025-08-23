@@ -37,7 +37,8 @@ auto HandleAssociatedConstant(Context& context) -> void {
   auto colon_exclaim = context.ConsumeIf(Lex::TokenKind::ColonExclaim);
   if (identifier && !colon_exclaim) {
     CARBON_DIAGNOSTIC(ExpectedAssociatedConstantColonExclaim, Error,
-                      "expected `:!` in associated constant declaration");
+                      "found runtime binding pattern in associated constant "
+                      "declaration; expected a `:!` binding");
     context.emitter().Emit(*context.position(),
                            ExpectedAssociatedConstantColonExclaim);
     state.has_error = true;
@@ -81,7 +82,7 @@ auto HandleLetAfterPatternAsRegular(Context& context) -> void {
 
 auto HandleLetAfterPatternAsAssociatedConstant(Context& context) -> void {
   auto state = context.PopState();
-  context.AddNode(NodeKind::AssociatedConstantBindingPattern, state.token,
+  context.AddNode(NodeKind::AssociatedConstantNameAndType, state.token,
                   state.has_error);
   context.PushState(state);
   HandleLetAfterPattern(context, NodeKind::AssociatedConstantInitializer);

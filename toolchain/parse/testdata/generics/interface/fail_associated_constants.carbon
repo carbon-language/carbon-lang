@@ -61,7 +61,7 @@ interface I {
 library "[[@TEST_NAME]]";
 
 interface I {
-  // CHECK:STDERR: fail_not_constant.carbon:[[@LINE+4]]:8: error: expected `:!` in associated constant declaration [ExpectedAssociatedConstantColonExclaim]
+  // CHECK:STDERR: fail_not_constant.carbon:[[@LINE+4]]:8: error: found runtime binding pattern in associated constant declaration; expected a `:!` binding [ExpectedAssociatedConstantColonExclaim]
   // CHECK:STDERR:   let a: {.b: ()};
   // CHECK:STDERR:        ^
   // CHECK:STDERR:

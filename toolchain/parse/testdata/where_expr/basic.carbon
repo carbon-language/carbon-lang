@@ -49,7 +49,7 @@ fn F() {
 // CHECK:STDOUT:               {kind: 'IdentifierNameExpr', text: 'Bar'},
 // CHECK:STDOUT:             {kind: 'RequirementImpls', text: 'impls', subtree_size: 4},
 // CHECK:STDOUT:           {kind: 'WhereExpr', text: 'where', subtree_size: 7},
-// CHECK:STDOUT:         {kind: 'AssociatedConstantBindingPattern', text: ':!', subtree_size: 9},
+// CHECK:STDOUT:         {kind: 'AssociatedConstantNameAndType', text: ':!', subtree_size: 9},
 // CHECK:STDOUT:       {kind: 'AssociatedConstantDecl', text: ';', subtree_size: 11},
 // CHECK:STDOUT:     {kind: 'InterfaceDefinition', text: '}', subtree_size: 15},
 // CHECK:STDOUT:       {kind: 'LetIntroducer', text: 'let'},

@@ -356,17 +356,6 @@ struct LetBindingPattern {
   AnyExprId type;
 };
 
-// A pattern binding, such as `name: Type`, that isn't inside a `var` pattern.
-struct AssociatedConstantBindingPattern {
-  static constexpr auto Kind =
-      NodeKind::AssociatedConstantBindingPattern.Define(
-          {.category = NodeCategory::Pattern, .child_count = 2});
-
-  AnyRuntimeBindingPatternName name;
-  Lex::ColonExclaimTokenIndex token;
-  AnyExprId type;
-};
-
 // A pattern binding, such as `name: Type`, that is inside a `var` pattern.
 struct VarBindingPattern {
   static constexpr auto Kind = NodeKind::VarBindingPattern.Define(
@@ -571,6 +560,15 @@ using AssociatedConstantIntroducer =
 using AssociatedConstantInitializer =
     LeafNode<NodeKind::AssociatedConstantInitializer, Lex::EqualTokenIndex>;
 
+struct AssociatedConstantNameAndType {
+  static constexpr auto Kind = NodeKind::AssociatedConstantNameAndType.Define(
+      {.category = NodeCategory::Pattern, .child_count = 2});
+
+  AnyRuntimeBindingPatternName name;
+  Lex::ColonExclaimTokenIndex token;
+  AnyExprId type;
+};
+
 // An associated constant declaration: `let a:! i32;`.
 struct AssociatedConstantDecl {
   static constexpr auto Kind = NodeKind::AssociatedConstantDecl.Define(
@@ -579,7 +577,7 @@ struct AssociatedConstantDecl {
 
   AssociatedConstantIntroducerId introducer;
   llvm::SmallVector<AnyModifierId> modifiers;
-  AssociatedConstantBindingPatternId pattern;
+  AssociatedConstantNameAndTypeId pattern;
 
   struct Initializer {
     AssociatedConstantInitializerId equals;
