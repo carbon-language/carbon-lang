@@ -18,7 +18,7 @@
 auto foo(short a) -> void;
 // CHECK:STDOUT: |-FunctionDecl {{0x[a-f0-9]+}} <./thunk_required.h:[[@LINE-1]]:1, col:22> col:6 used foo 'auto (short) -> void'
 // CHECK:STDOUT: | `-ParmVarDecl {{0x[a-f0-9]+}} <col:10, col:16> col:16 a 'short'
-// CHECK:STDOUT: `-FunctionDecl {{0x[a-f0-9]+}} <col:6> col:6 foo__carbon_thunk 'auto (short * _Nonnull) -> void' extern
+// CHECK:STDOUT: `-FunctionDecl {{0x[a-f0-9]+}} <col:6> col:6 foo__carbon_thunk 'void (short * _Nonnull)' extern
 // CHECK:STDOUT:   |-ParmVarDecl {{0x[a-f0-9]+}} <col:6> col:6 used a 'short * _Nonnull':'short *'
 // CHECK:STDOUT:   |-ReturnStmt {{0x[a-f0-9]+}} <col:6>
 // CHECK:STDOUT:   | `-CallExpr {{0x[a-f0-9]+}} <col:6> 'void'

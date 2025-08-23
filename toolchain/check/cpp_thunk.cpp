@@ -235,13 +235,9 @@ static auto CreateThunkFunctionDecl(
   clang::IdentifierInfo& identifier_info = ast_context.Idents.get(
       callee_info.decl->getNameAsString() + "__carbon_thunk");
 
-  const auto* callee_function_type =
-      callee_info.decl->getFunctionType()->castAs<clang::FunctionProtoType>();
-
-  // TODO: Check whether we need to modify `ExtParameterInfo` in `ExtProtoInfo`.
+  auto ext_proto_info = clang::FunctionProtoType::ExtProtoInfo();
   clang::QualType thunk_function_type = ast_context.getFunctionType(
-      callee_info.decl->getReturnType(), thunk_param_types,
-      callee_function_type->getExtProtoInfo());
+      callee_info.decl->getReturnType(), thunk_param_types, ext_proto_info);
 
   clang::DeclContext* decl_context = ast_context.getTranslationUnitDecl();
   // TODO: Thunks should not have external linkage, consider using `SC_Static`.
