@@ -48,9 +48,9 @@ fn F() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: define void @_CF.Main() !dbg !7 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %.loc15_26.1.temp = alloca [8 x i8], align 1, !dbg !10
-// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %.loc15_26.1.temp), !dbg !10
-// CHECK:STDOUT:   call void @_ZN1CC1Ev.carbon_thunk(ptr %.loc15_26.1.temp), !dbg !10
+// CHECK:STDOUT:   %.loc7_26.1.temp = alloca [8 x i8], align 1, !dbg !10
+// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %.loc7_26.1.temp), !dbg !10
+// CHECK:STDOUT:   call void @_ZN1CC1Ev.carbon_thunk(ptr %.loc7_26.1.temp), !dbg !10
 // CHECK:STDOUT:   ret void, !dbg !11
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -105,8 +105,8 @@ fn F() {
 // CHECK:STDOUT: !4 = !{i32 7, !"PIE Level", i32 2}
 // CHECK:STDOUT: !5 = distinct !DICompileUnit(language: DW_LANG_C, file: !6, producer: "carbon", isOptimized: false, runtimeVersion: 0, emissionKind: FullDebug)
 // CHECK:STDOUT: !6 = !DIFile(filename: "import_default.carbon", directory: "")
-// CHECK:STDOUT: !7 = distinct !DISubprogram(name: "F", linkageName: "_CF.Main", scope: null, file: !6, line: 10, type: !8, spFlags: DISPFlagDefinition, unit: !5)
+// CHECK:STDOUT: !7 = distinct !DISubprogram(name: "F", linkageName: "_CF.Main", scope: null, file: !6, line: 6, type: !8, spFlags: DISPFlagDefinition, unit: !5)
 // CHECK:STDOUT: !8 = !DISubroutineType(types: !9)
 // CHECK:STDOUT: !9 = !{}
-// CHECK:STDOUT: !10 = !DILocation(line: 15, column: 18, scope: !7)
-// CHECK:STDOUT: !11 = !DILocation(line: 10, column: 1, scope: !7)
+// CHECK:STDOUT: !10 = !DILocation(line: 7, column: 18, scope: !7)
+// CHECK:STDOUT: !11 = !DILocation(line: 6, column: 1, scope: !7)
