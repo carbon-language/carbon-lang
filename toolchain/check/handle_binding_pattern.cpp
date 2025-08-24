@@ -275,8 +275,6 @@ auto HandleParseNode(Context& context,
   auto [cast_type_inst_id, cast_type_id] =
       ExprAsType(context, type_node, parsed_type_id);
 
-  EndSubpatternAsExpr(context, cast_type_inst_id);
-
   auto [name_node, name_id] = context.node_stack().PopNameWithNodeId();
 
   if (name_id == SemIR::NameId::Underscore) {

@@ -269,6 +269,9 @@ impl CD as IF where .F = 0 {
 // CHECK:STDOUT: interface @NonType {
 // CHECK:STDOUT:   %Self: %NonType.type = bind_symbolic_name Self, 0 [symbolic = constants.%Self.ca7]
 // CHECK:STDOUT:   %Y: %struct_type.a.225 = assoc_const_decl @Y [concrete] {
+// CHECK:STDOUT:     %.loc12_17.1: %empty_struct_type = struct_literal ()
+// CHECK:STDOUT:     %.loc12_17.2: type = converted %.loc12_17.1, constants.%empty_struct_type [concrete = constants.%empty_struct_type]
+// CHECK:STDOUT:     %struct_type.a: type = struct_type {.a: %empty_struct_type} [concrete = constants.%struct_type.a.225]
 // CHECK:STDOUT:     %assoc0: %NonType.assoc_type = assoc_entity element0, @NonType.%Y [concrete = constants.%assoc0.290]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:

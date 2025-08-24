@@ -170,6 +170,7 @@ fn AccessMissingConcrete(I:! Interface(i32)) -> i32 {
 // CHECK:STDOUT:   interface {
 // CHECK:STDOUT:     %Self.1: @Interface.%Interface.type (%Interface.type.d32) = bind_symbolic_name Self, 1 [symbolic = %Self.2 (constants.%Self.a5f)]
 // CHECK:STDOUT:     %X: @X.%T (%T) = assoc_const_decl @X [concrete] {
+// CHECK:STDOUT:       %T.ref: type = name_ref T, @Interface.%T.loc4_21.2 [symbolic = %T (constants.%T)]
 // CHECK:STDOUT:       %assoc0: @Interface.%Interface.assoc_type (%Interface.assoc_type.0d9) = assoc_entity element0, @Interface.%X [symbolic = @Interface.%assoc0 (constants.%assoc0.dbe)]
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:
@@ -391,6 +392,7 @@ fn AccessMissingConcrete(I:! Interface(i32)) -> i32 {
 // CHECK:STDOUT:   interface {
 // CHECK:STDOUT:     %Self.1: @Interface.%Interface.type (%Interface.type.d32) = bind_symbolic_name Self, 1 [symbolic = %Self.2 (constants.%Self.a5f)]
 // CHECK:STDOUT:     %X: @X.%T (%T) = assoc_const_decl @X [concrete] {
+// CHECK:STDOUT:       %T.ref: type = name_ref T, @Interface.%T.loc4_21.2 [symbolic = %T (constants.%T)]
 // CHECK:STDOUT:       %assoc0: @Interface.%Interface.assoc_type (%Interface.assoc_type.0d9) = assoc_entity element0, @Interface.%X [symbolic = @Interface.%assoc0 (constants.%assoc0.dbe)]
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:
