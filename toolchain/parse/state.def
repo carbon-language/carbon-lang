@@ -359,7 +359,7 @@ CARBON_PARSE_STATE(DeclNameAndParamsAfterParams)
 // ^~~~~~~
 //   1. Package
 //
-// var ...        (variant is NonClass)
+// var ...        (variant is Regular)
 // ^~~
 //   1. VarAsRegular
 //
@@ -374,7 +374,7 @@ CARBON_PARSE_STATE(DeclNameAndParamsAfterParams)
 // ??? ;
 // ^~~~~
 //   (state done)
-CARBON_PARSE_STATE_VARIANTS3(Decl, Class, Interface, NonClassOrInterface)
+CARBON_PARSE_STATE_VARIANTS3(Decl, Class, Interface, Regular)
 
 // Handles processing of a declaration scope, which contains a sequence of
 // declarations.
@@ -387,11 +387,10 @@ CARBON_PARSE_STATE_VARIANTS3(Decl, Class, Interface, NonClassOrInterface)
 //
 //  ...
 // ^
-//   1. DeclAs(Class|Interface|NonClassOrInterface)
-//   2. DeclScopeLoopAs(Class|Interface|NonClassOrInterface)
+//   1. DeclAs(Class|Interface|Regular)
+//   2. DeclScopeLoopAs(Class|Interface|Regular)
 //
-CARBON_PARSE_STATE_VARIANTS3(DeclScopeLoop, Class, Interface,
-                             NonClassOrInterface)
+CARBON_PARSE_STATE_VARIANTS3(DeclScopeLoop, Class, Interface, Regular)
 
 // Handles periods. Only does one `.<expression>` segment; the source is
 // responsible for handling chaining.
@@ -1278,7 +1277,7 @@ CARBON_PARSE_STATE_VARIANTS3(TypeAfterIntroducer, Class, Interface,
 //
 // class/impl/interface/constraint name ( ... ) {
 //                                              ^
-//   1. DeclScopeLoopAs(Class|NonClass)
+//   1. DeclScopeLoopAs(Class|Regular)
 //   2. DeclDefinitionFinishAs(Class|Impl|Interface|NamedConstraint)
 //
 // class/impl/interface/constraint name ( ... ) ;

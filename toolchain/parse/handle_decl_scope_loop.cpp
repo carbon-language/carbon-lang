@@ -46,7 +46,7 @@ static auto ApplyIntroducer(Context& context, Context::State state,
 namespace {
 // The kind of context in which a declaration appears.
 enum DeclContextKind : int8_t {
-  NonClassOrInterfaceContext = 0,
+  RegularContext = 0,
   ClassContext = 1,
   InterfaceContext = 2,
   MaxDeclContextKind = InterfaceContext,
@@ -130,14 +130,14 @@ static constexpr auto DeclIntroducers = [] {
       StateKind::TypeAfterIntroducerAsInterface);
   set(Lex::TokenKind::Namespace, NodeKind::NamespaceStart,
       StateKind::Namespace);
-  set_contextual(Lex::TokenKind::Let, NonClassOrInterfaceContext,
-                 NodeKind::LetIntroducer, StateKind::Let);
+  set_contextual(Lex::TokenKind::Let, RegularContext, NodeKind::LetIntroducer,
+                 StateKind::Let);
   set_contextual(Lex::TokenKind::Let, ClassContext, NodeKind::LetIntroducer,
                  StateKind::Let);
   set_contextual(Lex::TokenKind::Let, InterfaceContext,
                  NodeKind::AssociatedConstantIntroducer,
                  StateKind::AssociatedConstant);
-  set_contextual(Lex::TokenKind::Var, NonClassOrInterfaceContext,
+  set_contextual(Lex::TokenKind::Var, RegularContext,
                  NodeKind::VariableIntroducer, StateKind::VarAsRegular);
   set_contextual(Lex::TokenKind::Var, ClassContext, NodeKind::FieldIntroducer,
                  StateKind::FieldDecl);
@@ -308,8 +308,8 @@ auto HandleDeclAsInterface(Context& context) -> void {
   HandleDecl(context, InterfaceContext);
 }
 
-auto HandleDeclAsNonClassOrInterface(Context& context) -> void {
-  HandleDecl(context, NonClassOrInterfaceContext);
+auto HandleDeclAsRegular(Context& context) -> void {
+  HandleDecl(context, RegularContext);
 }
 
 static auto HandleDeclScopeLoop(Context& context, StateKind decl_state_kind)
@@ -333,8 +333,8 @@ auto HandleDeclScopeLoopAsInterface(Context& context) -> void {
   HandleDeclScopeLoop(context, StateKind::DeclAsInterface);
 }
 
-auto HandleDeclScopeLoopAsNonClassOrInterface(Context& context) -> void {
-  HandleDeclScopeLoop(context, StateKind::DeclAsNonClassOrInterface);
+auto HandleDeclScopeLoopAsRegular(Context& context) -> void {
+  HandleDeclScopeLoop(context, StateKind::DeclAsRegular);
 }
 
 }  // namespace Carbon::Parse
