@@ -339,11 +339,11 @@ CARBON_PARSE_STATE(DeclNameAndParamsAfterParams)
 // ^~~~~~~~~
 //   1. TypeAfterIntroducerAsInterface
 //
-// let ...
+// let ...        (variant is Regular)
 // ^~~
 //   1. Let
 //
-// let ...        (in interface)
+// let ...        (variant is Interface)
 // ^~~
 //   1. AssociatedConstant
 //
