@@ -445,6 +445,7 @@ auto foo() -> S;
 
 library "[[@TEST_NAME]]";
 
+// TODO: We should only produce one error here.
 // CHECK:STDERR: fail_import_decl_value_return_type.carbon:[[@LINE+12]]:10: in file included here [InCppInclude]
 // CHECK:STDERR: ./decl_value_return_type.h:4:6: error: calling 'foo' with incomplete return type 'S' [CppInteropParseError]
 // CHECK:STDERR:     4 | auto foo() -> S;
