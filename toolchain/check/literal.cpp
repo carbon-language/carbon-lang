@@ -121,8 +121,7 @@ auto MakeStringLiteral(Context& context, Parse::StringLiteralId node_id,
   if (!repr) {
     if (str_type.type_id != SemIR::ErrorInst::TypeId) {
       CARBON_DIAGNOSTIC(StringLiteralTypeUnexpected, Error,
-                        "unexpected representation for type {0}",
-                        InstIdAsType);
+                        "unexpected representation for type {0}", InstIdAsType);
       context.emitter().Emit(node_id, StringLiteralTypeUnexpected,
                              str_type.inst_id);
     }
