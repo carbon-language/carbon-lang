@@ -309,6 +309,9 @@ static auto BuildCalleeArgs(clang::Sema& sema,
                             CalleeFunctionInfo callee_info)
     -> llvm::SmallVector<clang::Expr*> {
   llvm::SmallVector<clang::Expr*> call_args;
+  // The object parameter is always passed as `self`, not in the callee argument
+  // list, so the first argument corresponds to the second parameter if there is
+  // an explicit object parameter and the first parameter otherwise.
   unsigned first_param = callee_info.has_explicit_object_parameter();
   unsigned num_params = callee_info.decl->getNumParams();
   call_args.reserve(num_params - first_param);
