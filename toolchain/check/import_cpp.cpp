@@ -29,6 +29,7 @@
 #include "toolchain/check/class.h"
 #include "toolchain/check/context.h"
 #include "toolchain/check/convert.h"
+#include "toolchain/check/cpp_matchers.h"
 #include "toolchain/check/cpp_thunk.h"
 #include "toolchain/check/diagnostic_helpers.h"
 #include "toolchain/check/eval.h"
@@ -1086,106 +1087,21 @@ static auto MapBuiltinType(Context& context, SemIR::LocId loc_id,
   return TypeExpr::None;
 }
 
-// A small, lightweight library of AST matchers. Unlike clang's ASTMatchers,
-// this avoids heap allocations and is suitable for one-off matching rather than
-// matching against a whole AST.
-namespace Matchers {
-// A matcher for a type T is just a function that takes a T and returns whether
-// it matched. Matchers should be invoked immediately, and are not expected to
-// outlive the arguments of the call that created them.
-template <typename T>
-using Matcher = llvm::function_ref<auto(T)->bool>;
-
-// Returns a matcher for class declarations that determines whether the given
-// class is a class template specialization in namespace std with the specified
-// name and template arguments matching the given predicate.
-static auto StdClassTemplate(
-    llvm::StringLiteral name,
-    Matcher<const clang::TemplateArgumentList&> args_matcher
-    [[clang::lifetimebound]]) -> auto {
-  return [=](const clang::CXXRecordDecl* class_decl) -> bool {
-    const auto* specialization =
-        dyn_cast<clang::ClassTemplateSpecializationDecl>(class_decl);
-    const auto* identifier = class_decl->getIdentifier();
-    return specialization && identifier && identifier->isStr(name) &&
-           specialization->isInStdNamespace() &&
-           args_matcher(specialization->getTemplateArgs());
-  };
-}
-
-// Returns a matcher that matches types if they are class types whose class
-// matches the given matcher.
-static auto Class(Matcher<const clang::CXXRecordDecl*> class_matcher
-                  [[clang::lifetimebound]]) -> auto {
-  return [=](clang::QualType type) -> bool {
-    const auto* class_decl = type->getAsCXXRecordDecl();
-    return !type.hasQualifiers() && class_decl && class_matcher(class_decl);
-  };
-}
-
-// Returns a matcher that determines whether the given template argument is a
-// type matching the given predicate.
-static auto TypeTemplateArgument(
-    llvm::function_ref<auto(clang::QualType)->bool> type_matcher
-    [[clang::lifetimebound]]) -> auto {
-  return [=](clang::TemplateArgument arg) -> bool {
-    return arg.getKind() == clang::TemplateArgument::Type &&
-           type_matcher(arg.getAsType());
-  };
-}
-
-// A matcher that determines whether the given type is `char`.
-static auto Char(clang::QualType type) -> bool {
-  return !type.hasQualifiers() && type->isCharType();
-}
-
-// Returns a matcher that determines whether the given template argument list
-// matches the given sequence of template argument matchers.
-static auto TemplateArgumentsAre(
-    std::initializer_list<
-        llvm::function_ref<auto(clang::TemplateArgument)->bool>>
-        arg_matchers [[clang::lifetimebound]]) -> auto {
-  return [=](const clang::TemplateArgumentList& args) -> bool {
-    if (args.size() != arg_matchers.size()) {
-      return false;
-    }
-    for (auto [arg, matcher] : llvm::zip_equal(args.asArray(), arg_matchers)) {
-      if (!matcher(arg)) {
-        return false;
-      }
-    }
-    return true;
-  };
-}
-
-// A matcher for `std::char_traits<char>`.
-static auto StdCharTraitsChar(clang::QualType type) -> bool {
-  return Class(StdClassTemplate(
-      "char_traits", TemplateArgumentsAre({TypeTemplateArgument(Char)})))(type);
-}
-
-// A matcher for `std::string_view`.
-static auto StdStringView(const clang::CXXRecordDecl* record_decl) -> bool {
-  return StdClassTemplate(
-      "basic_string_view",
-      TemplateArgumentsAre({TypeTemplateArgument(Char),
-                            TypeTemplateArgument(StdCharTraitsChar)}))(
-      record_decl);
-}
-}  // end namespace Matchers
-
 // Determines whether record_decl is a C++ class that has a custom mapping into
 // Carbon, and if so, returns the corresponding Carbon type. Otherwise returns
 // None.
 static auto LookupCustomRecordType(Context& context,
                                    const clang::CXXRecordDecl* record_decl)
     -> TypeExpr {
-  if (Matchers::StdStringView(record_decl)) {
-    return MakeStringType(
-        context, AddImportIRInst(context.sem_ir(), record_decl->getLocation()));
-  }
+  switch (GetCustomCppTypeMapping(record_decl)) {
+    case CustomCppTypeMapping::None:
+      return TypeExpr::None;
 
-  return TypeExpr::None;
+    case CustomCppTypeMapping::Str:
+      return MakeStringType(
+          context,
+          AddImportIRInst(context.sem_ir(), record_decl->getLocation()));
+  }
 }
 
 // Maps a C++ record type to a Carbon type.
