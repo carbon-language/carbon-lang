@@ -1303,6 +1303,14 @@ auto Convert(Context& context, SemIR::LocId loc_id, SemIR::InstId expr_id,
     return SemIR::ErrorInst::InstId;
   }
 
+  // The source type doesn't need to be complete, but its completeness can
+  // affect the result. For example, we don't know what type it adapts or
+  // derives from unless it's complete.
+  // TODO: Is there a risk of coherence problems if the source type is
+  // incomplete, but a conversion would have been possible or would have behaved
+  // differently if it were complete?
+  TryToCompleteType(context, context.insts().Get(expr_id).type_id(), loc_id);
+
   // Check whether any builtin conversion applies.
   expr_id = PerformBuiltinConversion(context, loc_id, expr_id, target,
                                      vtable_class_type);

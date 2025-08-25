@@ -381,7 +381,7 @@ fn G(T:! Generic(B)) {
 // CHECK:STDOUT:   %Generic.type.c21: type = generic_interface_type @Generic [concrete]
 // CHECK:STDOUT:   %Generic.generic: %Generic.type.c21 = struct_value () [concrete]
 // CHECK:STDOUT:   %Generic.type.91c: type = facet_type <@Generic, @Generic(%T.8b3)> [symbolic]
-// CHECK:STDOUT:   %Self: %Generic.type.91c = bind_symbolic_name Self, 1 [symbolic]
+// CHECK:STDOUT:   %Self.dee: %Generic.type.91c = bind_symbolic_name Self, 1 [symbolic]
 // CHECK:STDOUT:   %A: type = class_type @A [concrete]
 // CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [concrete]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [concrete]
@@ -396,6 +396,7 @@ fn G(T:! Generic(B)) {
 // CHECK:STDOUT:   %pattern_type.f4a: type = pattern_type %Generic.type.4ce [concrete]
 // CHECK:STDOUT:   %G.type: type = fn_type @G [concrete]
 // CHECK:STDOUT:   %G: %G.type = struct_value () [concrete]
+// CHECK:STDOUT:   %Self.52f: %Generic.type.4ce = bind_symbolic_name Self, 1 [symbolic]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -443,10 +444,10 @@ fn G(T:! Generic(B)) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %Generic.type: type = facet_type <@Generic, @Generic(%T.loc4_19.1)> [symbolic = %Generic.type (constants.%Generic.type.91c)]
-// CHECK:STDOUT:   %Self.2: @Generic.%Generic.type (%Generic.type.91c) = bind_symbolic_name Self, 1 [symbolic = %Self.2 (constants.%Self)]
+// CHECK:STDOUT:   %Self.2: @Generic.%Generic.type (%Generic.type.91c) = bind_symbolic_name Self, 1 [symbolic = %Self.2 (constants.%Self.dee)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   interface {
-// CHECK:STDOUT:     %Self.1: @Generic.%Generic.type (%Generic.type.91c) = bind_symbolic_name Self, 1 [symbolic = %Self.2 (constants.%Self)]
+// CHECK:STDOUT:     %Self.1: @Generic.%Generic.type (%Generic.type.91c) = bind_symbolic_name Self, 1 [symbolic = %Self.2 (constants.%Self.dee)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   !members:
 // CHECK:STDOUT:     .Self = %Self.1
@@ -503,6 +504,10 @@ fn G(T:! Generic(B)) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Generic(constants.%B) {
 // CHECK:STDOUT:   %T.loc4_19.1 => constants.%B
+// CHECK:STDOUT:
+// CHECK:STDOUT: !definition:
+// CHECK:STDOUT:   %Generic.type => constants.%Generic.type.4ce
+// CHECK:STDOUT:   %Self.2 => constants.%Self.52f
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @G(constants.%T.bae) {

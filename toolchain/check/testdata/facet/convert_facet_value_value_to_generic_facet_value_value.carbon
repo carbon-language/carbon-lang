@@ -83,6 +83,7 @@ fn F() {
 // CHECK:STDOUT:   %Eats.type.b39: type = facet_type <@Eats, @Eats(%Food.as_type.952)> [symbolic]
 // CHECK:STDOUT:   %T.223: %Eats.type.b39 = bind_symbolic_name T, 1 [symbolic]
 // CHECK:STDOUT:   %pattern_type.ed7: type = pattern_type %Eats.type.b39 [symbolic]
+// CHECK:STDOUT:   %Self.223: %Eats.type.b39 = bind_symbolic_name Self, 1 [symbolic]
 // CHECK:STDOUT:   %T.as_type.212: type = facet_access_type %T.223 [symbolic]
 // CHECK:STDOUT:   %pattern_type.1a1: type = pattern_type %T.as_type.212 [symbolic]
 // CHECK:STDOUT:   %pattern_type.54f: type = pattern_type %Food.as_type.952 [symbolic]
@@ -503,6 +504,10 @@ fn F() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Eats(constants.%Food.as_type.952) {
 // CHECK:STDOUT:   %Food.loc21_16.1 => constants.%Food.as_type.952
+// CHECK:STDOUT:
+// CHECK:STDOUT: !definition:
+// CHECK:STDOUT:   %Eats.type => constants.%Eats.type.b39
+// CHECK:STDOUT:   %Self.2 => constants.%Self.223
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Feed(constants.%Food.9af, constants.%T.223) {
