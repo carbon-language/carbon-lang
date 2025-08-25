@@ -57,7 +57,7 @@ fn ConvertI16ToEnum(n: i16) {
   Cpp.C.F(n as Cpp.C.E);
 }
 
-// --- bitfield.h
+// --- bitmask.h
 
 enum Bits {
   A = 1 << 0,
@@ -67,18 +67,18 @@ enum Bits {
 
 void Take(Bits b);
 
-// --- use_bitfield.carbon
+// --- use_bitmask.carbon
 
 library "[[@TEST_NAME]]";
 
-import Cpp library "bitfield.h";
+import Cpp library "bitmask.h";
 
-impl Cpp.Bits as Core.BitOrWith(Cpp.Bits) where .Result = Cpp.Bits {
-  fn Op[self: Self](other: Self) -> Self = "int.or";
-}
+// TODO: Once we support interop with C++-defined operators, we should be able
+// to use `|` below rather than declaring our own builtin.
+fn BitOr(a: Cpp.Bits, b: Cpp.Bits) -> Cpp.Bits = "int.or";
 
 fn Call() {
-  Cpp.Take(Cpp.A | Cpp.C);
+  Cpp.Take(BitOr(Cpp.A, Cpp.C));
 }
 
 // CHECK:STDOUT: ; ModuleID = 'pass_as_arg.carbon'
@@ -232,17 +232,17 @@ fn Call() {
 // CHECK:STDOUT: !16 = !DILocation(line: 17, column: 11, scope: !15)
 // CHECK:STDOUT: !17 = !DILocation(line: 17, column: 3, scope: !15)
 // CHECK:STDOUT: !18 = !DILocation(line: 16, column: 1, scope: !15)
-// CHECK:STDOUT: ; ModuleID = 'use_bitfield.carbon'
-// CHECK:STDOUT: source_filename = "use_bitfield.carbon"
+// CHECK:STDOUT: ; ModuleID = 'use_bitmask.carbon'
+// CHECK:STDOUT: source_filename = "use_bitmask.carbon"
 // CHECK:STDOUT: target datalayout = "e-m:e-p270:32:32-p271:32:32-p272:64:64-i64:64-i128:128-f80:128-n8:16:32:64-S128"
 // CHECK:STDOUT: target triple = "x86_64-unknown-linux-gnu"
 // CHECK:STDOUT:
 // CHECK:STDOUT: define void @_CCall.Main() !dbg !7 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %.loc11_18.3.temp = alloca i32, align 4, !dbg !10
-// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %.loc11_18.3.temp), !dbg !10
-// CHECK:STDOUT:   store i32 5, ptr %.loc11_18.3.temp, align 4, !dbg !10
-// CHECK:STDOUT:   call void @_Z4Take4Bits.carbon_thunk(ptr %.loc11_18.3.temp), !dbg !11
+// CHECK:STDOUT:   %.loc11_30.3.temp = alloca i32, align 4, !dbg !10
+// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %.loc11_30.3.temp), !dbg !10
+// CHECK:STDOUT:   store i32 5, ptr %.loc11_30.3.temp, align 4, !dbg !10
+// CHECK:STDOUT:   call void @_Z4Take4Bits.carbon_thunk(ptr %.loc11_30.3.temp), !dbg !11
 // CHECK:STDOUT:   ret void, !dbg !12
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -274,7 +274,7 @@ fn Call() {
 // CHECK:STDOUT: !3 = !{i32 8, !"PIC Level", i32 0}
 // CHECK:STDOUT: !4 = !{i32 7, !"PIE Level", i32 2}
 // CHECK:STDOUT: !5 = distinct !DICompileUnit(language: DW_LANG_C, file: !6, producer: "carbon", isOptimized: false, runtimeVersion: 0, emissionKind: FullDebug)
-// CHECK:STDOUT: !6 = !DIFile(filename: "use_bitfield.carbon", directory: "")
+// CHECK:STDOUT: !6 = !DIFile(filename: "use_bitmask.carbon", directory: "")
 // CHECK:STDOUT: !7 = distinct !DISubprogram(name: "Call", linkageName: "_CCall.Main", scope: null, file: !6, line: 10, type: !8, spFlags: DISPFlagDefinition, unit: !5)
 // CHECK:STDOUT: !8 = !DISubroutineType(types: !9)
 // CHECK:STDOUT: !9 = !{}
