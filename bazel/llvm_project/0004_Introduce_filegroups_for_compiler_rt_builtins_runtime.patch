@@ -1,0 +1,194 @@
+From 19d5d9913778ca95da272f41c5916907154a5e73 Mon Sep 17 00:00:00 2001
+From: Chandler Carruth <chandlerc@gmail.com>
+Date: Thu, 24 Apr 2025 05:03:43 +0000
+Subject: [PATCH] Introduce filegroups for compiler-rt builtins runtimes
+
+These filegroups allow downstream projects to package and build
+customized runtime libraries.
+
+The filegroups work hard to use globs and a careful structuring to
+create the structured breakdown of sources needed to target different
+architectures and platforms without having to maintain a complete
+parallel list of sources from CMake.
+---
+ .../compiler-rt/BUILD.bazel                   | 167 ++++++++++++++++++
+ 1 file changed, 167 insertions(+)
+
+diff --git a/utils/bazel/llvm-project-overlay/compiler-rt/BUILD.bazel b/utils/bazel/llvm-project-overlay/compiler-rt/BUILD.bazel
+index 6a5a89fdee40..7d158f0c13f2 100644
+--- a/utils/bazel/llvm-project-overlay/compiler-rt/BUILD.bazel
++++ b/utils/bazel/llvm-project-overlay/compiler-rt/BUILD.bazel
+@@ -128,3 +128,170 @@ cc_library(
+     ],
+     includes = ["lib/fuzzer"],
+ )
++
++BUILTINS_CRTBEGIN_SRCS = ["lib/builtins/crtbegin.c"]
++
++filegroup(
++    name = "builtins_crtbegin_src",
++    srcs = BUILTINS_CRTBEGIN_SRCS,
++)
++
++BUILTINS_CRTEND_SRCS = ["lib/builtins/crtend.c"]
++
++filegroup(
++    name = "builtins_crtend_src",
++    srcs = BUILTINS_CRTEND_SRCS,
++)
++
++# Note that while LLVM's CompilerRT provides a few hosted sources, we don't
++# currently build them:
++#
++# - `emutls.c`: Unclear we need to support targets with software emulated
++#   TLS rather than hardware support.
++# - `enable_execute_stack.c`: Used to implement support for a builtin that
++#   marks part of the stack as *executable* to support the GCC extension of
++#   nested functions. This extension was never implemented in Clang, and is
++#   generally considered a security issue to include. We expect to be able
++#   to avoid even linking the support code for this into binaries at this
++#   point.
++# - `eprintf.c`: This provided a legacy `__eprintf` builtin used by old
++#   versions of `assert.h` in its macros, but does not appear to be needed
++#   when building with modern versions of this header.
++BUILTINS_HOSTED_SRCS = [
++    "lib/builtins/emutls.c",
++    "lib/builtins/enable_execute_stack.c",
++    "lib/builtins/eprintf.c",
++]
++
++filegroup(
++    name = "builtins_hosted_srcs",
++    srcs = BUILTINS_HOSTED_SRCS,
++)
++
++BUILTINS_BF16_SRCS_PATTERNS = [
++    # `bf` marks 16-bit Brain floating-point number builtins.
++    "lib/builtins/*bf*.c",
++]
++
++filegroup(
++    name = "builtins_bf16_srcs",
++    srcs = glob(BUILTINS_BF16_SRCS_PATTERNS),
++)
++
++BUILTINS_X86_FP80_SRCS_PATTERNS = [
++    # `xc` marks 80-bit complex number builtins.
++    "lib/builtins/*xc*.c",
++
++    # `xf` marks 80-bit floating-point builtins.
++    "lib/builtins/*xf*.c",
++]
++
++filegroup(
++    name = "builtins_x86_fp80_srcs",
++    srcs = glob(
++        BUILTINS_X86_FP80_SRCS_PATTERNS,
++        exclude = BUILTINS_BF16_SRCS_PATTERNS,
++    ),
++)
++
++BUILTINS_TF_SRCS_PATTERNS = [
++    # `tc` marks 128-bit complex number builtins.
++    "lib/builtins/*tc*.c",
++
++    # `tf` marks 128-bit floating-point builtins.
++    "lib/builtins/*tf*.c",
++]
++
++BUILTINS_TF_EXCLUDES = (
++    BUILTINS_HOSTED_SRCS +
++    BUILTINS_BF16_SRCS_PATTERNS +
++    BUILTINS_X86_FP80_SRCS_PATTERNS
++)
++
++filegroup(
++    name = "builtins_tf_srcs",
++    srcs = glob(
++        BUILTINS_TF_SRCS_PATTERNS,
++        exclude = BUILTINS_TF_EXCLUDES,
++    ),
++)
++
++BUILTINS_MACOS_ATOMIC_SRCS_PATTERNS = [
++    "lib/builtins/atomic_*.c",
++]
++
++filegroup(
++    name = "builtins_macos_atomic_srcs",
++    srcs = glob(BUILTINS_MACOS_ATOMIC_SRCS_PATTERNS),
++)
++
++filegroup(
++    name = "builtins_aarch64_srcs",
++    srcs = [
++        "lib/builtins/cpu_model/aarch64.c",
++        "lib/builtins/cpu_model/aarch64.h",
++    ] + glob(
++        [
++            "lib/builtins/cpu_model/AArch64*.inc",
++            "lib/builtins/cpu_model/aarch64/**/*.inc",
++            "lib/builtins/aarch64/*.S",
++            "lib/builtins/aarch64/*.c",
++        ],
++        exclude = [
++            # This file isn't intended to directly compile, but to be used to
++            # generate a collection of outline atomic helpers.
++            # TODO: Add support for generating the sources for these helpers if
++            # there are users that need this functionality from the builtins
++            # library.
++            "lib/builtins/aarch64/lse.S",
++        ],
++    ),
++)
++
++filegroup(
++    name = "builtins_x86_arch_srcs",
++    srcs = [
++        "lib/builtins/cpu_model/x86.c",
++        "lib/builtins/i386/fp_mode.c",
++    ],
++)
++
++filegroup(
++    name = "builtins_x86_64_srcs",
++    srcs = glob([
++        "lib/builtins/x86_64/*.c",
++        "lib/builtins/x86_64/*.S",
++    ]),
++)
++
++filegroup(
++    name = "builtins_i386_srcs",
++    srcs = glob(
++        [
++            "lib/builtins/i386/*.c",
++            "lib/builtins/i386/*.S",
++        ],
++        exclude = [
++            # This file is used for both i386 and x86_64.
++            "lib/builtins/i386/fp_mode.c",
++        ],
++    ),
++)
++
++filegroup(
++    name = "builtins_generic_srcs",
++    srcs = ["lib/builtins/cpu_model/cpu_model.h"] + glob(
++        [
++            "lib/builtins/*.c",
++            "lib/builtins/*.h",
++            "lib/builtins/*.inc",
++        ],
++        exclude = (
++            BUILTINS_CRTBEGIN_SRCS +
++            BUILTINS_CRTEND_SRCS +
++            BUILTINS_TF_EXCLUDES +
++            BUILTINS_TF_SRCS_PATTERNS +
++            BUILTINS_MACOS_ATOMIC_SRCS_PATTERNS
++        ),
++    ),
++)
+-- 
+2.49.0.850.g28803427d3-goog
+

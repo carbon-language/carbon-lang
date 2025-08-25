@@ -33,6 +33,7 @@ fn HandleAnimal[T:! Animal](a: T) { Feed(a); }
 // CHECK:STDOUT:   %Self.1b5: %Eats.type = bind_symbolic_name Self, 0 [symbolic]
 // CHECK:STDOUT:   %Animal.type: type = facet_type <@Animal> [concrete]
 // CHECK:STDOUT:   %Self.fd4: %Animal.type = bind_symbolic_name Self, 0 [symbolic]
+// CHECK:STDOUT:   %.Self: type = bind_symbolic_name .Self [symbolic_self]
 // CHECK:STDOUT:   %T.1b5: %Eats.type = bind_symbolic_name T, 0 [symbolic]
 // CHECK:STDOUT:   %pattern_type.a05: type = pattern_type %Eats.type [concrete]
 // CHECK:STDOUT:   %T.as_type.27d: type = facet_access_type %T.1b5 [symbolic]
@@ -72,7 +73,10 @@ fn HandleAnimal[T:! Animal](a: T) { Feed(a); }
 // CHECK:STDOUT:     %e.patt: @Feed.%pattern_type (%pattern_type.2b4) = binding_pattern e [concrete]
 // CHECK:STDOUT:     %e.param_patt: @Feed.%pattern_type (%pattern_type.2b4) = value_param_pattern %e.patt, call_param0 [concrete]
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %Eats.ref: type = name_ref Eats, file.%Eats.decl [concrete = constants.%Eats.type]
+// CHECK:STDOUT:     %.loc18_13: type = splice_block %Eats.ref [concrete = constants.%Eats.type] {
+// CHECK:STDOUT:       %.Self: type = bind_symbolic_name .Self [symbolic_self = constants.%.Self]
+// CHECK:STDOUT:       %Eats.ref: type = name_ref Eats, file.%Eats.decl [concrete = constants.%Eats.type]
+// CHECK:STDOUT:     }
 // CHECK:STDOUT:     %T.loc18_9.2: %Eats.type = bind_symbolic_name T, 0 [symbolic = %T.loc18_9.1 (constants.%T.1b5)]
 // CHECK:STDOUT:     %e.param: @Feed.%T.as_type.loc18_22.1 (%T.as_type.27d) = value_param call_param0
 // CHECK:STDOUT:     %.loc18_22.1: type = splice_block %.loc18_22.2 [symbolic = %T.as_type.loc18_22.1 (constants.%T.as_type.27d)] {
@@ -87,7 +91,10 @@ fn HandleAnimal[T:! Animal](a: T) { Feed(a); }
 // CHECK:STDOUT:     %a.patt: @HandleAnimal.%pattern_type (%pattern_type.36a) = binding_pattern a [concrete]
 // CHECK:STDOUT:     %a.param_patt: @HandleAnimal.%pattern_type (%pattern_type.36a) = value_param_pattern %a.patt, call_param0 [concrete]
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %Animal.ref: type = name_ref Animal, file.%Animal.decl [concrete = constants.%Animal.type]
+// CHECK:STDOUT:     %.loc27_21: type = splice_block %Animal.ref [concrete = constants.%Animal.type] {
+// CHECK:STDOUT:       %.Self: type = bind_symbolic_name .Self [symbolic_self = constants.%.Self]
+// CHECK:STDOUT:       %Animal.ref: type = name_ref Animal, file.%Animal.decl [concrete = constants.%Animal.type]
+// CHECK:STDOUT:     }
 // CHECK:STDOUT:     %T.loc27_17.2: %Animal.type = bind_symbolic_name T, 0 [symbolic = %T.loc27_17.1 (constants.%T.fd4)]
 // CHECK:STDOUT:     %a.param: @HandleAnimal.%T.as_type.loc27_32.1 (%T.as_type.2ad) = value_param call_param0
 // CHECK:STDOUT:     %.loc27_32.1: type = splice_block %.loc27_32.2 [symbolic = %T.as_type.loc27_32.1 (constants.%T.as_type.2ad)] {

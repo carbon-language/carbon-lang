@@ -16,8 +16,8 @@ var int2: i32 = 8;
 var real1: f64 = 1.0;
 var real2: f64 = 0.8e8;
 var real3: f64 = 0.8e9;
-var str1: String = "abc";
-var str2: String = "ab'\"c";
+var str1: str = "abc";
+var str2: str = "ab'\"c";
 
 // CHECK:STDOUT: ---
 // CHECK:STDOUT: filename:        dump_shared_values.carbon

@@ -23,9 +23,29 @@ class DiagnosticLocConverter {
  public:
   // Information about an import within which the location was found.
   struct ImportLoc {
+    enum Kind {
+      // A regular Carbon `import`.
+      Import,
+      // A C++ `#include`.
+      CppInclude,
+      // A C++ module import.
+      CppModuleImport,
+      // A C++ macro expansion.
+      CppMacroExpansion,
+    };
+
+    // The location of the import.
     Diagnostics::Loc loc;
-    // TODO: Include the name of the imported library in this information so it
-    // can be included in the diagnostic.
+
+    // The kind of import.
+    Kind kind;
+
+    // The name of the imported module for CppInclude, or the complete macro
+    // expansion diagnostic message for CppMacroExpansion.
+    // TODO: In the latter case, provide just the macro name.
+    // TODO: Include the name of the imported library in this information for
+    // Import so it can be mentioned in the diagnostic.
+    llvm::StringRef imported_name;
   };
 
   // Information about a location that has been converted from a LocId to a

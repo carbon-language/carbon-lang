@@ -235,8 +235,7 @@ private export C;
 // CHECK:STDOUT:   %.loc5_11.1: %empty_tuple.type = tuple_literal ()
 // CHECK:STDOUT:   %.loc5_11.2: type = converted %.loc5_11.1, constants.%empty_tuple.type [concrete = constants.%empty_tuple.type]
 // CHECK:STDOUT:   %.loc5_8: %C.elem = field_decl x, element0 [concrete]
-// CHECK:STDOUT:   %struct_type.x: type = struct_type {.x: %empty_tuple.type} [concrete = constants.%struct_type.x]
-// CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %struct_type.x [concrete = constants.%complete_type.9be]
+// CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness constants.%struct_type.x [concrete = constants.%complete_type.9be]
 // CHECK:STDOUT:   complete_type_witness = %complete_type
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
@@ -248,8 +247,7 @@ private export C;
 // CHECK:STDOUT:   %.loc10_11.1: %empty_tuple.type = tuple_literal ()
 // CHECK:STDOUT:   %.loc10_11.2: type = converted %.loc10_11.1, constants.%empty_tuple.type [concrete = constants.%empty_tuple.type]
 // CHECK:STDOUT:   %.loc10_8: %NSC.elem = field_decl y, element0 [concrete]
-// CHECK:STDOUT:   %struct_type.y: type = struct_type {.y: %empty_tuple.type} [concrete = constants.%struct_type.y]
-// CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %struct_type.y [concrete = constants.%complete_type.9f4]
+// CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness constants.%struct_type.y [concrete = constants.%complete_type.9f4]
 // CHECK:STDOUT:   complete_type_witness = %complete_type
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
@@ -280,7 +278,7 @@ private export C;
 // CHECK:STDOUT:   %Main.import_ref.2c4 = import_ref Main//base, inst16 [no loc], unloaded
 // CHECK:STDOUT:   %Main.import_ref.276 = import_ref Main//base, loc5_8, unloaded
 // CHECK:STDOUT:   %Main.import_ref.5ab: <witness> = import_ref Main//base, loc11_1, loaded [concrete = constants.%complete_type.9f4]
-// CHECK:STDOUT:   %Main.import_ref.31c = import_ref Main//base, inst28 [no loc], unloaded
+// CHECK:STDOUT:   %Main.import_ref.31c = import_ref Main//base, inst27 [no loc], unloaded
 // CHECK:STDOUT:   %Main.import_ref.be6 = import_ref Main//base, loc10_8, unloaded
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -718,8 +716,7 @@ private export C;
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @Local {
-// CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [concrete = constants.%empty_struct_type]
-// CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [concrete = constants.%complete_type]
+// CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness constants.%empty_struct_type [concrete = constants.%complete_type]
 // CHECK:STDOUT:   complete_type_witness = %complete_type
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
@@ -793,7 +790,7 @@ private export C;
 // CHECK:STDOUT:   %Main.import_ref.2c4 = import_ref Main//base, inst16 [no loc], unloaded
 // CHECK:STDOUT:   %Main.import_ref.276 = import_ref Main//base, loc5_8, unloaded
 // CHECK:STDOUT:   %Main.import_ref.5ab: <witness> = import_ref Main//base, loc11_1, loaded [concrete = constants.%complete_type.9f4]
-// CHECK:STDOUT:   %Main.import_ref.31c = import_ref Main//base, inst28 [no loc], unloaded
+// CHECK:STDOUT:   %Main.import_ref.31c = import_ref Main//base, inst27 [no loc], unloaded
 // CHECK:STDOUT:   %Main.import_ref.be6 = import_ref Main//base, loc10_8, unloaded
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

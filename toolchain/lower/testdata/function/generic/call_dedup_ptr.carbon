@@ -34,20 +34,20 @@ fn M() {
 // CHECK:STDOUT:   %ptr_i32.var = alloca ptr, align 8, !dbg !7
 // CHECK:STDOUT:   %ptr_f64.var = alloca ptr, align 8, !dbg !8
 // CHECK:STDOUT:   %ptr_i8.var = alloca ptr, align 8, !dbg !9
-// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(i64 8, ptr %ptr_i32.var), !dbg !7
+// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %ptr_i32.var), !dbg !7
 // CHECK:STDOUT:   %.loc22 = load ptr, ptr %ptr_i32.var, align 8, !dbg !10
 // CHECK:STDOUT:   %F.call.loc22 = call ptr @_CF.Main.e8193710fd35b608(ptr %.loc22), !dbg !11
-// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(i64 8, ptr %ptr_f64.var), !dbg !8
+// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %ptr_f64.var), !dbg !8
 // CHECK:STDOUT:   %.loc24 = load ptr, ptr %ptr_f64.var, align 8, !dbg !12
 // CHECK:STDOUT:   %F.call.loc24 = call ptr @_CF.Main.e8193710fd35b608(ptr %.loc24), !dbg !13
-// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(i64 8, ptr %ptr_i8.var), !dbg !9
+// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %ptr_i8.var), !dbg !9
 // CHECK:STDOUT:   %.loc26 = load ptr, ptr %ptr_i8.var, align 8, !dbg !14
 // CHECK:STDOUT:   %F.call.loc26 = call ptr @_CF.Main.e8193710fd35b608(ptr %.loc26), !dbg !15
 // CHECK:STDOUT:   ret void, !dbg !16
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nocallback nofree nosync nounwind willreturn memory(argmem: readwrite)
-// CHECK:STDOUT: declare void @llvm.lifetime.start.p0(i64 immarg, ptr captures(none)) #0
+// CHECK:STDOUT: declare void @llvm.lifetime.start.p0(ptr captures(none)) #0
 // CHECK:STDOUT:
 // CHECK:STDOUT: define linkonce_odr ptr @_CF.Main.e8193710fd35b608(ptr %x) !dbg !17 {
 // CHECK:STDOUT: entry:

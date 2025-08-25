@@ -208,6 +208,14 @@ Dump the full SemIR to stdout when built.
 )""",
       },
       [&](auto& arg_b) { arg_b.Set(&dump_sem_ir); });
+  b.AddFlag(
+      {
+          .name = "dump-cpp-ast",
+          .help = R"""(
+Dump the full C++ AST to stdout when built.
+)""",
+      },
+      [&](auto& arg_b) { arg_b.Set(&dump_cpp_ast); });
 
   b.AddOneOfOption(
       {
@@ -281,6 +289,19 @@ Whether to use the implicit prelude import. Enabled by default.
       [&](auto& arg_b) {
         arg_b.Default(true);
         arg_b.Set(&prelude_import);
+      });
+  b.AddFlag(
+      {
+          .name = "gen-implicit-type-impls",
+          .help = R"""(
+Whether to generate standard `impl`s for types, such as `Core.Destroy`. This
+only controls generation of the `impl`; code which expects the `impl` is
+expected to fail. Enabled by default.
+)""",
+      },
+      [&](auto& arg_b) {
+        arg_b.Default(true);
+        arg_b.Set(&gen_implicit_type_impls);
       });
   b.AddFlag(
       {
@@ -386,6 +407,11 @@ auto CompileSubcommand::ValidateOptions(
                      PhaseToString(options_.phase));
         return false;
       }
+      if (options_.dump_cpp_ast) {
+        emitter.Emit(CompilePhaseFlagConflict, "C++ AST",
+                     PhaseToString(options_.phase));
+        return false;
+      }
       [[fallthrough]];
     case Phase::Check:
       if (options_.dump_llvm_ir) {
@@ -444,6 +470,9 @@ class CompilationUnit {
   auto FlushForStackTrace() -> void { consumer_->Flush(); }
 
   auto input_filename() -> llvm::StringRef { return input_filename_; }
+  auto has_include_in_dumps() -> bool {
+    return tokens_ && tokens_->has_include_in_dumps();
+  }
   auto success() -> bool { return success_; }
   auto has_source() -> bool { return source_.has_value(); }
   auto get_trees_and_subtrees() -> Parse::GetTreeAndSubtreesFn {
@@ -506,7 +535,7 @@ class CompilationUnit {
   std::optional<std::function<auto()->const Parse::TreeAndSubtrees&>>
       tree_and_subtrees_getter_;
   std::optional<SemIR::File> sem_ir_;
-  std::unique_ptr<clang::ASTUnit> cpp_ast_;
+  std::unique_ptr<clang::ASTUnit> clang_ast_unit_;
   std::unique_ptr<llvm::LLVMContext> llvm_context_;
   std::unique_ptr<llvm::Module> module_;
 };
@@ -525,17 +554,35 @@ class MultiUnitCache {
       llvm::ArrayRef<std::unique_ptr<CompilationUnit>> units)
       : options_(options), units_(units) {}
 
+  // If `include_in_dumps` is in use, we need to apply per-file include
+  // settings.
+  auto ApplyPerFileIncludeInDumps() -> void {
+    if (!include_in_dumps_) {
+      // No cached value to update.
+      return;
+    }
+    for (const auto& [i, unit] : llvm::enumerate(units_)) {
+      if (unit->has_include_in_dumps()) {
+        include_in_dumps_->Set(SemIR::CheckIRId(i), true);
+      }
+    }
+  }
+
   auto include_in_dumps() -> const IncludeInDumpsStore& {
     if (!include_in_dumps_) {
       include_in_dumps_.emplace(
           IncludeInDumpsStore::MakeWithExplicitSize(units_.size(), false));
       for (const auto& [i, unit] : llvm::enumerate(units_)) {
-        include_in_dumps_->Set(
-            SemIR::CheckIRId(i),
+        // If this is first accessed after lexing is complete, we need to apply
+        // per-file includes. Otherwise, this is based only on the exclude
+        // option.
+        bool include =
+            unit->has_include_in_dumps() ||
             llvm::none_of(options_->exclude_dump_file_prefixes,
                           [&](auto prefix) {
                             return unit->input_filename().starts_with(prefix);
-                          }));
+                          });
+        include_in_dumps_->Set(SemIR::CheckIRId(i), include);
       }
     }
     return *include_in_dumps_;
@@ -677,7 +724,7 @@ auto CompilationUnit::GetCheckUnit() -> Check::Unit {
           .value_stores = &value_stores_,
           .timings = timings_ ? &*timings_ : nullptr,
           .sem_ir = &*sem_ir_,
-          .cpp_ast = &cpp_ast_};
+          .clang_ast_unit = &clang_ast_unit_};
 }
 
 auto CompilationUnit::PostCheck() -> void {
@@ -876,7 +923,7 @@ auto CompileSubcommand::Run(DriverEnv& driver_env) -> DriverResult {
     if (driver_env.fuzzing && !options_.clang_args.empty()) {
       // Parsing specific Clang arguments can reach deep into
       // external libraries that aren't fuzz clean.
-      DisableFuzzingExternalLibraries(driver_env, "compile");
+      TestAndDiagnoseIfFuzzingExternalLibraries(driver_env, "compile");
       return {.success = false};
     }
     for (auto str : options_.clang_args) {
@@ -972,6 +1019,7 @@ auto CompileSubcommand::Run(DriverEnv& driver_env) -> DriverResult {
   if (options_.phase == CompileOptions::Phase::Lex) {
     return make_result();
   }
+  cache.ApplyPerFileIncludeInDumps();
   // Parse and check phases examine `has_source` because they want to proceed if
   // lex failed, but not if source doesn't exist. Later steps are skipped if
   // anything failed, so don't need this.
@@ -999,12 +1047,17 @@ auto CompileSubcommand::Run(DriverEnv& driver_env) -> DriverResult {
   CARBON_VLOG_TO(driver_env.vlog_stream, "*** Check::CheckParseTrees ***\n");
   Check::CheckParseTreesOptions options;
   options.prelude_import = options_.prelude_import;
+  options.gen_implicit_type_impls = options_.gen_implicit_type_impls;
   options.vlog_stream = driver_env.vlog_stream;
   options.fuzzing = driver_env.fuzzing;
-  if (options.vlog_stream || options_.dump_sem_ir || options_.dump_raw_sem_ir) {
+  if (options.vlog_stream || options_.dump_sem_ir || options_.dump_cpp_ast ||
+      options_.dump_raw_sem_ir) {
     options.include_in_dumps = &cache.include_in_dumps();
     if (options_.dump_sem_ir) {
       options.dump_stream = driver_env.output_stream;
+    }
+    if (options_.dump_cpp_ast) {
+      options.dump_cpp_ast_stream = driver_env.output_stream;
     }
     if (options.vlog_stream || options_.dump_sem_ir) {
       options.dump_sem_ir_ranges = options_.dump_sem_ir_ranges;

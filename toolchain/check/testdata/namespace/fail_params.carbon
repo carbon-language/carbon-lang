@@ -53,6 +53,7 @@ fn D(T:! type).F() {}
 // CHECK:STDOUT:   %F.type.bd7: type = fn_type @F.loc22 [concrete]
 // CHECK:STDOUT:   %F.199: %F.type.bd7 = struct_value () [concrete]
 // CHECK:STDOUT:   %int_32: Core.IntLiteral = int_value 32 [concrete]
+// CHECK:STDOUT:   %.Self: type = bind_symbolic_name .Self [symbolic_self]
 // CHECK:STDOUT:   %T: type = bind_symbolic_name T, 0 [symbolic]
 // CHECK:STDOUT:   %F.type.b25: type = fn_type @F.loc48 [concrete]
 // CHECK:STDOUT:   %F.c41: %F.type.b25 = struct_value () [concrete]
@@ -83,6 +84,7 @@ fn D(T:! type).F() {}
 // CHECK:STDOUT:   %int_32: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
 // CHECK:STDOUT:   %n: <error> = bind_name n, %n.param
 // CHECK:STDOUT:   %B: <namespace> = namespace [concrete] {}
+// CHECK:STDOUT:   %.Self: type = bind_symbolic_name .Self [symbolic_self = constants.%.Self]
 // CHECK:STDOUT:   %T: type = bind_symbolic_name T, 0 [symbolic = constants.%T]
 // CHECK:STDOUT:   %x.param: %T = value_param call_param0
 // CHECK:STDOUT:   %T.ref: type = name_ref T, %T [symbolic = constants.%T]
@@ -90,6 +92,7 @@ fn D(T:! type).F() {}
 // CHECK:STDOUT:   %C: <namespace> = namespace [concrete] {}
 // CHECK:STDOUT:   %D: <namespace> = namespace [concrete] {}
 // CHECK:STDOUT:   %F.decl.loc48: %F.type.b25 = fn_decl @F.loc48 [concrete = constants.%F.c41] {} {
+// CHECK:STDOUT:     %.Self: type = bind_symbolic_name .Self [symbolic_self = constants.%.Self]
 // CHECK:STDOUT:     %T.loc48_6.2: type = bind_symbolic_name T, 0 [symbolic = %T.loc48_6.1 (constants.%T)]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }

@@ -25,7 +25,8 @@ auto ImportCppFiles(Context& context,
     -> std::unique_ptr<clang::ASTUnit>;
 
 // Looks up the given name in the Clang AST generated when importing C++ code
-// and returns a lookup result.
+// and returns a lookup result. If using the injected class name (`X.X()`),
+// imports the class constructor as a function named as the class.
 auto ImportNameFromCpp(Context& context, SemIR::LocId loc_id,
                        SemIR::NameScopeId scope_id, SemIR::NameId name_id)
     -> SemIR::ScopeLookupResult;

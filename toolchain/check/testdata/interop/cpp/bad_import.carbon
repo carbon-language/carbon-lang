@@ -14,7 +14,7 @@
 
 library "[[@TEST_NAME]]";
 
-// CHECK:STDERR: fail_import_cpp.carbon:[[@LINE+4]]:1: error: `Cpp` import missing library [CppInteropMissingLibrary]
+// CHECK:STDERR: fail_import_cpp.carbon:[[@LINE+4]]:1: error: `Cpp` import without `library` or `inline` [CppInteropMissingLibrary]
 // CHECK:STDERR: import Cpp;
 // CHECK:STDERR: ^~~~~~~~~~~
 // CHECK:STDERR:
@@ -24,9 +24,9 @@ import Cpp;
 
 library "[[@TEST_NAME]]";
 
-// CHECK:STDERR: fail_import_cpp_library_empty.carbon:[[@LINE+4]]:1: error: `Cpp` import missing library [CppInteropMissingLibrary]
-// CHECK:STDERR: import Cpp library "";
-// CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~
+// CHECK:STDERR: fail_import_cpp_library_empty.carbon:[[@LINE+4]]:10: error: empty filename [CppInteropParseError]
+// CHECK:STDERR:     8 | #include ""
+// CHECK:STDERR:       |          ^
 // CHECK:STDERR:
 import Cpp library "";
 
@@ -34,10 +34,21 @@ import Cpp library "";
 
 library "[[@TEST_NAME]]";
 
-// CHECK:STDERR: fail_import_cpp_library_file_with_quotes.carbon:[[@LINE+6]]:1: in import [InImport]
-// CHECK:STDERR: fail_import_cpp_library_file_with_quotes.carbon:[[@LINE+5]]: error: fail_import_cpp_library_file_with_quotes.carbon:[[@LINE+5]]:10: fatal error: '\"foo.h\"' file not found
-// CHECK:STDERR:    10 | #include "\"foo.h\""
+// CHECK:STDERR: fail_import_cpp_library_file_with_quotes.carbon:[[@LINE+4]]:10: error: '\"foo.h\"' file not found [CppInteropParseError]
+// CHECK:STDERR:     8 | #include "\"foo.h\""
 // CHECK:STDERR:       |          ^~~~~~~~~~~
-// CHECK:STDERR:  [CppInteropParseError]
 // CHECK:STDERR:
 import Cpp library "\"foo.h\"";
+
+// --- todo_fail_unterminated_import_inline.carbon
+
+import Cpp inline '''c++
+void f() {
+''';
+
+// TODO: We should diagnose that the inline C++ code didn't leave us at the top
+// level.
+
+import Cpp inline '''c++
+}
+''';

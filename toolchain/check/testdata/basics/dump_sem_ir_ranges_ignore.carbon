@@ -25,6 +25,12 @@ library "[[@TEST_NAME]]";
 
 fn F();
 
+// --- explicit_dump_file.carbon
+
+library "[[@TEST_NAME]]";
+
+//@include-in-dumps
+
 // CHECK:STDOUT: --- with-range.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
@@ -56,4 +62,10 @@ fn F();
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F();
+// CHECK:STDOUT:
+// CHECK:STDOUT: --- explicit_dump_file.carbon
+// CHECK:STDOUT:
+// CHECK:STDOUT: file {
+// CHECK:STDOUT:   package: <namespace> = namespace [concrete] {}
+// CHECK:STDOUT: }
 // CHECK:STDOUT:

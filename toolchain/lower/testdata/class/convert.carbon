@@ -45,7 +45,7 @@ fn DoIt() {
 // CHECK:STDOUT: define void @_CDoIt.Main() !dbg !11 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   %w.var = alloca { i32 }, align 8, !dbg !12
-// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(i64 4, ptr %w.var), !dbg !12
+// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %w.var), !dbg !12
 // CHECK:STDOUT:   %.loc24_31.3.n = getelementptr inbounds nuw { i32 }, ptr %w.var, i32 0, i32 0, !dbg !13
 // CHECK:STDOUT:   call void @llvm.memcpy.p0.p0.i64(ptr align 4 %w.var, ptr align 4 @IntWrapper.val.loc24_3, i64 4, i1 false), !dbg !12
 // CHECK:STDOUT:   %IntWrapper.as.ImplicitAs.impl.Convert.call = call i32 @"_CConvert.IntWrapper.Main:ImplicitAs.Core"(ptr %w.var), !dbg !14
@@ -54,7 +54,7 @@ fn DoIt() {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nocallback nofree nosync nounwind willreturn memory(argmem: readwrite)
-// CHECK:STDOUT: declare void @llvm.lifetime.start.p0(i64 immarg, ptr captures(none)) #0
+// CHECK:STDOUT: declare void @llvm.lifetime.start.p0(ptr captures(none)) #0
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nocallback nofree nounwind willreturn memory(argmem: readwrite)
 // CHECK:STDOUT: declare void @llvm.memcpy.p0.p0.i64(ptr noalias writeonly captures(none), ptr noalias readonly captures(none), i64, i1 immarg) #1

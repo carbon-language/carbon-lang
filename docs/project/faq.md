@@ -458,12 +458,7 @@ space.
 
 ### How will Carbon achieve memory safety?
 
-See [memory safety in the project README](/README.md#memory-safety).
-
-References:
-
--   [Lifetime annotations for C++](https://discourse.llvm.org/t/rfc-lifetime-annotations-for-c/61377)
--   [Carbon principle: Safety strategy](principles/safety_strategy.md)
+See our [safety design](/docs/design/safety).
 
 ### How will language version upgrades work?
 

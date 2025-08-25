@@ -54,7 +54,7 @@ interface Z {
 
 fn F(FF:! ((Z where .T = .U and .U = .V) where .T = .U and .U = .V) where .T = .U and .U = .V) {}
 
-// --- fail_todo_nested_facet_types_same_associated_in_generic_parameter.carbon
+// --- nested_facet_types_same_associated_in_generic_parameter.carbon
 library "[[@TEST_NAME]]";
 
 interface Z {
@@ -63,10 +63,6 @@ interface Z {
 }
 class C(T:! type) {}
 
-// CHECK:STDERR: fail_todo_nested_facet_types_same_associated_in_generic_parameter.carbon:[[@LINE+4]]:12: error: associated constant `.(Z.T)` given two different values `C(.(Z.U))` and `C(.(Z.U))` [AssociatedConstantWithDifferentValues]
-// CHECK:STDERR: fn F(FF:! ((Z where .T = C(.U)) where .T = C(.U)) where .T = C(.U)) {}
-// CHECK:STDERR:            ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-// CHECK:STDERR:
 fn F(FF:! ((Z where .T = C(.U)) where .T = C(.U)) where .T = C(.U)) {}
 
 // --- fail_nested_facet_types_different.carbon
@@ -143,7 +139,7 @@ interface Z {
   let U:! type;
 }
 
-// CHECK:STDERR: fail_nested_facet_type_cycle.carbon:[[@LINE+4]]:11: error: found cycle in facet type constraint for `.(Z.T)` [FacetTypeConstraintCycle]
+// CHECK:STDERR: fail_nested_facet_type_cycle.carbon:[[@LINE+4]]:11: error: found cycle in facet type constraint for `.(Z.U)` [FacetTypeConstraintCycle]
 // CHECK:STDERR: fn F(FF:! (Z where .T = .U) where .U = .T) {}
 // CHECK:STDERR:           ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 // CHECK:STDERR:
@@ -231,7 +227,6 @@ fn F3(T:! Z where .Y = C(()) and .X = C(.Y) and .X = C(C(()))) -> T.X {
 }
 
 // --- conflicting_syntax_same_value.carbon
-
 library "[[@TEST_NAME]]";
 
 interface Z { let X:! type; let Y:! type; }
@@ -242,4 +237,34 @@ fn F1(T:! ((Z where .Y = ()) where .X = .Y) where .X = ()) -> T.X {
 
 fn F2(T:! ((Z where .Y = ()) where .X = ()) where .X = .Y) -> T.X {
   return ();
+}
+
+// --- nested_impls_repeated.carbon
+library "[[@TEST_NAME]]";
+
+interface Y {}
+interface Z {
+  let T:! type;
+  let U:! type;
+}
+class C(T:! type) {}
+
+fn F(FF:! ((Y where .Self impls (Z where .T = C(.U)))
+                where .Self impls (Z where .T = C(.U)))
+                  where .Self impls (Z where .T = C(.U))) {}
+
+// --- nested_impl_unique.carbon
+library "[[@TEST_NAME]]";
+
+interface Y {
+  let Y1:! type;
+}
+interface Z {
+  let Z1:! type;
+  let Z2:! type;
+}
+class C(T:! type) { adapt (); }
+
+fn F(FF:! ((Y where .Y1 = ()) where .Self impls (Z where .Z1 = C(.Z2) and .Z2 = ()))) -> FF.(Z.Z1) {
+  return () as C(());
 }

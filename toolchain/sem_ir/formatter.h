@@ -277,6 +277,7 @@ class Formatter {
   }
 
   auto FormatArg(BoolValue v) -> void { out_ << v; }
+  auto FormatArg(CharId c) -> void { out_ << c; }
   auto FormatArg(EntityNameId id) -> void;
   auto FormatArg(FacetTypeId id) -> void;
   auto FormatArg(IntKind k) -> void { k.Print(out_); }
