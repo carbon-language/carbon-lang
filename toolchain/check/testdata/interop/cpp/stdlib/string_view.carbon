@@ -79,6 +79,8 @@ fn G() -> str {
 // CHECK:STDOUT:   %G: %G.type = struct_value () [concrete]
 // CHECK:STDOUT:   %Produce.type: type = fn_type @Produce [concrete]
 // CHECK:STDOUT:   %Produce: %Produce.type = struct_value () [concrete]
+// CHECK:STDOUT:   %Produce__carbon_thunk.type: type = fn_type @Produce__carbon_thunk [concrete]
+// CHECK:STDOUT:   %Produce__carbon_thunk: %Produce__carbon_thunk.type = struct_value () [concrete]
 // CHECK:STDOUT:   %String.as.Destroy.impl.Op.type: type = fn_type @String.as.Destroy.impl.Op [concrete]
 // CHECK:STDOUT:   %String.as.Destroy.impl.Op: %String.as.Destroy.impl.Op.type = struct_value () [concrete]
 // CHECK:STDOUT: }
@@ -100,6 +102,11 @@ fn G() -> str {
 // CHECK:STDOUT:     <elided>
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Produce.decl: %Produce.type = fn_decl @Produce [concrete = constants.%Produce] {
+// CHECK:STDOUT:     <elided>
+// CHECK:STDOUT:   } {
+// CHECK:STDOUT:     <elided>
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %Produce__carbon_thunk.decl: %Produce__carbon_thunk.type = fn_decl @Produce__carbon_thunk [concrete = constants.%Produce__carbon_thunk] {
 // CHECK:STDOUT:     <elided>
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     <elided>
@@ -135,10 +142,12 @@ fn G() -> str {
 // CHECK:STDOUT:   %Cpp.ref: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
 // CHECK:STDOUT:   %Produce.ref: %Produce.type = name_ref Produce, imports.%Produce.decl [concrete = constants.%Produce]
 // CHECK:STDOUT:   %.loc13: ref %String = splice_block %return {}
-// CHECK:STDOUT:   %Produce.call: init %String = call %Produce.ref() to %.loc13
+// CHECK:STDOUT:   %addr.loc14: %ptr.85f = addr_of %.loc13
+// CHECK:STDOUT:   %Produce__carbon_thunk.call: init %empty_tuple.type = call imports.%Produce__carbon_thunk.decl(%addr.loc14)
+// CHECK:STDOUT:   %.loc14: init %String = in_place_init %Produce__carbon_thunk.call, %.loc13
 // CHECK:STDOUT:   %String.as.Destroy.impl.Op.bound: <bound method> = bound_method %.loc13, constants.%String.as.Destroy.impl.Op
-// CHECK:STDOUT:   %addr: %ptr.85f = addr_of %.loc13
-// CHECK:STDOUT:   %String.as.Destroy.impl.Op.call: init %empty_tuple.type = call %String.as.Destroy.impl.Op.bound(%addr)
-// CHECK:STDOUT:   return %Produce.call to %return
+// CHECK:STDOUT:   %addr.loc13: %ptr.85f = addr_of %.loc13
+// CHECK:STDOUT:   %String.as.Destroy.impl.Op.call: init %empty_tuple.type = call %String.as.Destroy.impl.Op.bound(%addr.loc13)
+// CHECK:STDOUT:   return %.loc14 to %return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
