@@ -3,7 +3,7 @@
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
 // INCLUDE-FILE: toolchain/testing/testdata/min_prelude/int.carbon
-// EXTRA-ARGS: --dump-cpp-ast
+// EXTRA-ARGS: --dump-cpp-ast --target=x86_64-linux-gnu
 // SET-CHECK-SUBSET
 //
 // AUTOUPDATE
@@ -12,6 +12,12 @@
 // TIP: To dump output, run:
 // TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/check/testdata/interop/cpp/function/thunk_ast.carbon
 // CHECK:STDOUT: TranslationUnitDecl {{0x[a-f0-9]+}} <<invalid sloc>> <invalid sloc>
+
+// --- thunk_required.h
+
+auto foo(short a) -> void;
+// CHECK:STDOUT: |-FunctionDecl {{0x[a-f0-9]+}} <./thunk_required.h:[[@LINE-1]]:1, col:22> col:6 used foo 'auto (short) -> void'
+// CHECK:STDOUT: | `-ParmVarDecl {{0x[a-f0-9]+}} <col:10, col:16> col:16 a 'short'
 // CHECK:STDOUT: |-NamespaceDecl {{0x[a-f0-9]+}} <<invalid sloc>> <invalid sloc> implicit std
 // CHECK:STDOUT: |-FunctionDecl {{0x[a-f0-9]+}} <<invalid sloc>> <invalid sloc> implicit operator new 'void *(__size_t)'
 // CHECK:STDOUT: | |-VisibilityAttr {{0x[a-f0-9]+}} <<invalid sloc>> Implicit Default
@@ -57,16 +63,10 @@
 // CHECK:STDOUT: | |-ParmVarDecl {{0x[a-f0-9]+}} <<invalid sloc>> <invalid sloc> implicit 'void *'
 // CHECK:STDOUT: | |-ParmVarDecl {{0x[a-f0-9]+}} <<invalid sloc>> <invalid sloc> implicit 'std::align_val_t'
 // CHECK:STDOUT: | `-VisibilityAttr {{0x[a-f0-9]+}} <<invalid sloc>> Implicit Default
-// CHECK:STDOUT: |-FunctionDecl {{0x[a-f0-9]+}} <<carbon-internal>:4:1, line:8:1> line:4:7 operator new 'void *(unsigned long, void *) noexcept'
-// CHECK:STDOUT: | |-ParmVarDecl {{0x[a-f0-9]+}} <<built-in>:173:23, col:37> <carbon-internal>:4:33 'unsigned long'
+// CHECK:STDOUT: |-FunctionDecl {{0x[a-f0-9]+}} <<carbon-internal>:8:1, line:14:1> line:8:7 operator new 'void *(unsigned long, void *) noexcept'
+// CHECK:STDOUT: | |-ParmVarDecl {{0x[a-f0-9]+}} <<built-in>:173:23, col:37> <carbon-internal>:8:33 'unsigned long'
 // CHECK:STDOUT: | `-ParmVarDecl {{0x[a-f0-9]+}} <col:35, col:39> col:40 'void *'
-
-// --- thunk_required.h
-
-auto foo(short a) -> void;
-// CHECK:STDOUT: |-FunctionDecl {{0x[a-f0-9]+}} <./thunk_required.h:[[@LINE-1]]:1, col:22> col:6 used foo 'auto (short) -> void'
-// CHECK:STDOUT: | `-ParmVarDecl {{0x[a-f0-9]+}} <col:10, col:16> col:16 a 'short'
-// CHECK:STDOUT: `-FunctionDecl {{0x[a-f0-9]+}} <col:6> col:6 foo__carbon_thunk 'void (short * _Nonnull)' extern
+// CHECK:STDOUT: `-FunctionDecl {{0x[a-f0-9]+}} <./thunk_required.h:[[@LINE-51]]:6> col:6 foo__carbon_thunk 'void (short * _Nonnull)' extern
 // CHECK:STDOUT:   |-ParmVarDecl {{0x[a-f0-9]+}} <col:6> col:6 used a 'short * _Nonnull':'short *'
 // CHECK:STDOUT:   |-ReturnStmt {{0x[a-f0-9]+}} <col:6>
 // CHECK:STDOUT:   | `-CallExpr {{0x[a-f0-9]+}} <col:6> 'void'
