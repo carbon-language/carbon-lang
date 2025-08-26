@@ -521,6 +521,10 @@ class Stringifier {
         sem_ir_->specific_interfaces().Get(inst.query_specific_interface_id));
   }
 
+  auto StringifyInst(InstId /*inst_id*/, MaybeUnformedType inst) -> void {
+    step_stack_->Push("<builtin MaybeUnformed(", inst.inner_id, ")>");
+  }
+
   auto StringifyInst(InstId /*inst_id*/, NameRef inst) -> void {
     *out_ << sem_ir_->names().GetFormatted(inst.name_id);
   }
