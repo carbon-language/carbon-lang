@@ -53,7 +53,7 @@ static auto Class(Matcher<const clang::CXXRecordDecl*> class_matcher
 // Returns a matcher that determines whether the given template argument is a
 // type matching the given predicate.
 static auto TypeTemplateArgument(
-    llvm::function_ref<auto(clang::QualType)->bool> type_matcher
+    Matcher<clang::QualType> type_matcher
     [[clang::lifetimebound]]) -> auto {
   return [=](clang::TemplateArgument arg) -> bool {
     return arg.getKind() == clang::TemplateArgument::Type &&
@@ -70,7 +70,7 @@ static auto Char(clang::QualType type) -> bool {
 // matches the given sequence of template argument matchers.
 static auto TemplateArgumentsAre(
     std::initializer_list<
-        llvm::function_ref<auto(clang::TemplateArgument)->bool>>
+        llvm::function_ref<Matcher<clang::TemplateArgument>>
         arg_matchers [[clang::lifetimebound]]) -> auto {
   return [=](const clang::TemplateArgumentList& args) -> bool {
     if (args.size() != arg_matchers.size()) {
