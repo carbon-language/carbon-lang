@@ -28,7 +28,7 @@ fn Main() {
 // CHECK:STDOUT: define void @_CMain.Main() !dbg !8 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   %a.var = alloca i32, align 4, !dbg !9
-// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(i64 4, ptr %a.var), !dbg !9
+// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %a.var), !dbg !9
 // CHECK:STDOUT:   store i32 0, ptr %a.var, align 4, !dbg !9
 // CHECK:STDOUT:   %.loc17 = load i32, ptr %a.var, align 4, !dbg !10
 // CHECK:STDOUT:   call void @_CDoNothing.Main(i32 %.loc17), !dbg !11
@@ -36,7 +36,7 @@ fn Main() {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nocallback nofree nosync nounwind willreturn memory(argmem: readwrite)
-// CHECK:STDOUT: declare void @llvm.lifetime.start.p0(i64 immarg, ptr captures(none)) #0
+// CHECK:STDOUT: declare void @llvm.lifetime.start.p0(ptr captures(none)) #0
 // CHECK:STDOUT:
 // CHECK:STDOUT: attributes #0 = { nocallback nofree nosync nounwind willreturn memory(argmem: readwrite) }
 // CHECK:STDOUT:

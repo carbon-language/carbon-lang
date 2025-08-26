@@ -57,11 +57,11 @@ fn G() { F(Animal); }
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %Eats.decl: type = interface_decl @Eats [concrete = constants.%Eats.type] {} {}
 // CHECK:STDOUT:   %Animal.decl: type = interface_decl @Animal [concrete = constants.%Animal.type] {} {}
-// CHECK:STDOUT:   impl_decl @Eats.impl [concrete] {} {
+// CHECK:STDOUT:   impl_decl @Animal.type.as.Eats.impl [concrete] {} {
 // CHECK:STDOUT:     %Animal.ref: type = name_ref Animal, file.%Animal.decl [concrete = constants.%Animal.type]
 // CHECK:STDOUT:     %Eats.ref: type = name_ref Eats, file.%Eats.decl [concrete = constants.%Eats.type]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %Eats.impl_witness_table = impl_witness_table (), @Eats.impl [concrete]
+// CHECK:STDOUT:   %Eats.impl_witness_table = impl_witness_table (), @Animal.type.as.Eats.impl [concrete]
 // CHECK:STDOUT:   %Eats.impl_witness: <witness> = impl_witness %Eats.impl_witness_table [concrete = constants.%Eats.impl_witness]
 // CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [concrete = constants.%F] {
 // CHECK:STDOUT:     %e.patt: %pattern_type = binding_pattern e [concrete]
@@ -90,7 +90,7 @@ fn G() { F(Animal); }
 // CHECK:STDOUT:   witness = ()
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: impl @Eats.impl: %Animal.ref as %Eats.ref {
+// CHECK:STDOUT: impl @Animal.type.as.Eats.impl: %Animal.ref as %Eats.ref {
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   witness = file.%Eats.impl_witness
 // CHECK:STDOUT: }

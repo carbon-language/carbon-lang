@@ -34,21 +34,21 @@ fn Main() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: define void @_CMain.Main() !dbg !4 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %print.int = call i32 (ptr, ...) @printf(ptr @printf.int.format, i32 1), !dbg !7
+// CHECK:STDOUT:   %Print.call = call i32 (ptr, ...) @printf(ptr @printf.int.format, i32 1), !dbg !7
 // CHECK:STDOUT:   br label %while.cond, !dbg !8
 // CHECK:STDOUT:
 // CHECK:STDOUT: while.cond:                                       ; preds = %if.else, %entry
-// CHECK:STDOUT:   %read.char = call i32 @getchar(), !dbg !9
-// CHECK:STDOUT:   %int.neq.loc22 = icmp ne i32 %read.char, -1, !dbg !9
-// CHECK:STDOUT:   br i1 %int.neq.loc22, label %while.body, label %while.done, !dbg !8
+// CHECK:STDOUT:   %ReadChar.call = call i32 @getchar(), !dbg !9
+// CHECK:STDOUT:   %Int.as.EqWith.impl.NotEqual.call.loc22 = icmp ne i32 %ReadChar.call, -1, !dbg !9
+// CHECK:STDOUT:   br i1 %Int.as.EqWith.impl.NotEqual.call.loc22, label %while.body, label %while.done, !dbg !8
 // CHECK:STDOUT:
 // CHECK:STDOUT: while.body:                                       ; preds = %while.cond
-// CHECK:STDOUT:   %print.char.loc24 = call i32 @putchar(i32 72), !dbg !10
-// CHECK:STDOUT:   %int.neq.loc24 = icmp ne i32 %print.char.loc24, -1, !dbg !10
-// CHECK:STDOUT:   br i1 %int.neq.loc24, label %if.then, label %if.else, !dbg !11
+// CHECK:STDOUT:   %PrintChar.call.loc24 = call i32 @putchar(i32 72), !dbg !10
+// CHECK:STDOUT:   %Int.as.EqWith.impl.NotEqual.call.loc24 = icmp ne i32 %PrintChar.call.loc24, -1, !dbg !10
+// CHECK:STDOUT:   br i1 %Int.as.EqWith.impl.NotEqual.call.loc24, label %if.then, label %if.else, !dbg !11
 // CHECK:STDOUT:
 // CHECK:STDOUT: if.then:                                          ; preds = %while.body
-// CHECK:STDOUT:   %print.char.loc25 = call i32 @putchar(i32 105), !dbg !12
+// CHECK:STDOUT:   %PrintChar.call.loc25 = call i32 @putchar(i32 105), !dbg !12
 // CHECK:STDOUT:   br label %if.else, !dbg !13
 // CHECK:STDOUT:
 // CHECK:STDOUT: if.else:                                          ; preds = %if.then, %while.body

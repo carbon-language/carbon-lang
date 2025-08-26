@@ -11,7 +11,7 @@
 var v: i32 = 0;
 var w: i32;
 fn F() {
-  var s: String = "hello";
+  var s: str = "hello";
 }
 
 // CHECK:STDOUT: - filename: var.carbon
@@ -38,7 +38,7 @@ fn F() {
 // CHECK:STDOUT:       {kind: 'FunctionDefinitionStart', text: '{', subtree_size: 5},
 // CHECK:STDOUT:         {kind: 'VariableIntroducer', text: 'var'},
 // CHECK:STDOUT:             {kind: 'IdentifierNameNotBeforeParams', text: 's'},
-// CHECK:STDOUT:             {kind: 'StringTypeLiteral', text: 'String'},
+// CHECK:STDOUT:             {kind: 'StringTypeLiteral', text: 'str'},
 // CHECK:STDOUT:           {kind: 'VarBindingPattern', text: ':', subtree_size: 3},
 // CHECK:STDOUT:         {kind: 'VariablePattern', text: 'var', subtree_size: 4},
 // CHECK:STDOUT:         {kind: 'VariableInitializer', text: '='},

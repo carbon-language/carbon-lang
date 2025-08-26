@@ -148,13 +148,13 @@ auto Context::File::SetText(Context& context, std::optional<int64_t> version,
 
   SemIR::File sem_ir(tree_.get(), SemIR::CheckIRId(0), tree_->packaging_decl(),
                      *value_stores_, uri_.file().str());
-  std::unique_ptr<clang::ASTUnit> cpp_ast;
+  std::unique_ptr<clang::ASTUnit> clang_ast_unt;
   // TODO: Support cross-file checking when multiple files have edits.
   llvm::SmallVector<Check::Unit> units = {{{.consumer = &consumer,
                                             .value_stores = value_stores_.get(),
                                             .timings = nullptr,
                                             .sem_ir = &sem_ir,
-                                            .cpp_ast = &cpp_ast}}};
+                                            .clang_ast_unit = &clang_ast_unt}}};
 
   auto getter = [this]() -> const Parse::TreeAndSubtrees& {
     return *tree_and_subtrees_;
@@ -166,13 +166,14 @@ auto Context::File::SetText(Context& context, std::optional<int64_t> version,
   // TODO: Include the prelude.
   Check::CheckParseTreesOptions check_options;
   check_options.vlog_stream = context.vlog_stream();
+  auto getters =
+      Parse::GetTreeAndSubtreesStore::MakeWithExplicitSize(1, getter);
 
   auto clang_invocation =
       BuildClangInvocation(consumer, fs, {context.installation().clang_path()});
 
-  Check::CheckParseTrees(units,
-                         llvm::ArrayRef<Parse::GetTreeAndSubtreesFn>(getter),
-                         fs, check_options, std::move(clang_invocation));
+  Check::CheckParseTrees(units, getters, fs, check_options,
+                         std::move(clang_invocation));
 
   // Note we need to publish diagnostics even when empty.
   // TODO: Consider caching previously published diagnostics and only publishing

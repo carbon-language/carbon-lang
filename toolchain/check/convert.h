@@ -21,6 +21,9 @@ struct ConversionTarget {
     ValueOrRef,
     // Convert to a durable reference of type `type_id`.
     DurableRef,
+    // Convert to a reference of type `type_id`, for use as the argument to a
+    // C++ thunk.
+    CppThunkRef,
     // Convert for an explicit `as` cast. This allows any expression category
     // as the result, and uses the `As` interface instead of the `ImplicitAs`
     // interface.
@@ -64,8 +67,7 @@ struct ConversionTarget {
 // type.
 auto Convert(Context& context, SemIR::LocId loc_id, SemIR::InstId expr_id,
              ConversionTarget target,
-             SemIR::InstId vtable_ptr_inst_id = SemIR::InstId::None)
-    -> SemIR::InstId;
+             SemIR::ClassType* vtable_class_type = nullptr) -> SemIR::InstId;
 
 // Performs initialization of `target_id` from `value_id`. Returns the
 // possibly-converted initializing expression, which should be assigned to the

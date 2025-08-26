@@ -2,6 +2,7 @@
 # Exceptions. See /LICENSE for license information.
 # SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
+ArchType
 atleast
 circularly
 compiletime
@@ -14,6 +15,7 @@ forin
 groupt
 indext
 inout
+isELF
 parameteras
 pullrequest
 rightt

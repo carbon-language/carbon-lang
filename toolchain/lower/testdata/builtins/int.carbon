@@ -227,116 +227,116 @@ fn TestUint32ToUint64(a: u32) -> u64 { return Uint32ToUint64(a); }
 // CHECK:STDOUT:
 // CHECK:STDOUT: define i32 @_CTestNegate.Main(i32 %a) !dbg !4 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %int.snegate = sub i32 0, %a, !dbg !7
-// CHECK:STDOUT:   ret i32 %int.snegate, !dbg !8
+// CHECK:STDOUT:   %Negate.call = sub i32 0, %a, !dbg !7
+// CHECK:STDOUT:   ret i32 %Negate.call, !dbg !8
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: define i32 @_CTestAdd.Main(i32 %a, i32 %b) !dbg !9 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %int.sadd = add i32 %a, %b, !dbg !10
-// CHECK:STDOUT:   ret i32 %int.sadd, !dbg !11
+// CHECK:STDOUT:   %Add.call = add i32 %a, %b, !dbg !10
+// CHECK:STDOUT:   ret i32 %Add.call, !dbg !11
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: define i32 @_CTestSub.Main(i32 %a, i32 %b) !dbg !12 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %int.ssub = sub i32 %a, %b, !dbg !13
-// CHECK:STDOUT:   ret i32 %int.ssub, !dbg !14
+// CHECK:STDOUT:   %Sub.call = sub i32 %a, %b, !dbg !13
+// CHECK:STDOUT:   ret i32 %Sub.call, !dbg !14
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: define i32 @_CTestMul.Main(i32 %a, i32 %b) !dbg !15 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %int.smul = mul i32 %a, %b, !dbg !16
-// CHECK:STDOUT:   ret i32 %int.smul, !dbg !17
+// CHECK:STDOUT:   %Mul.call = mul i32 %a, %b, !dbg !16
+// CHECK:STDOUT:   ret i32 %Mul.call, !dbg !17
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: define i32 @_CTestDiv.Main(i32 %a, i32 %b) !dbg !18 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %int.sdiv = sdiv i32 %a, %b, !dbg !19
-// CHECK:STDOUT:   ret i32 %int.sdiv, !dbg !20
+// CHECK:STDOUT:   %Div.call = sdiv i32 %a, %b, !dbg !19
+// CHECK:STDOUT:   ret i32 %Div.call, !dbg !20
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: define i32 @_CTestMod.Main(i32 %a, i32 %b) !dbg !21 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %int.smod = srem i32 %a, %b, !dbg !22
-// CHECK:STDOUT:   ret i32 %int.smod, !dbg !23
+// CHECK:STDOUT:   %Mod.call = srem i32 %a, %b, !dbg !22
+// CHECK:STDOUT:   ret i32 %Mod.call, !dbg !23
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: define i32 @_CTestComplement.Main(i32 %a) !dbg !24 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %int.complement = xor i32 -1, %a, !dbg !25
-// CHECK:STDOUT:   ret i32 %int.complement, !dbg !26
+// CHECK:STDOUT:   %Complement.call = xor i32 -1, %a, !dbg !25
+// CHECK:STDOUT:   ret i32 %Complement.call, !dbg !26
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: define i32 @_CTestAnd.Main(i32 %a, i32 %b) !dbg !27 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %int.and = and i32 %a, %b, !dbg !28
-// CHECK:STDOUT:   ret i32 %int.and, !dbg !29
+// CHECK:STDOUT:   %And.call = and i32 %a, %b, !dbg !28
+// CHECK:STDOUT:   ret i32 %And.call, !dbg !29
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: define i32 @_CTestOr.Main(i32 %a, i32 %b) !dbg !30 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %int.or = or i32 %a, %b, !dbg !31
-// CHECK:STDOUT:   ret i32 %int.or, !dbg !32
+// CHECK:STDOUT:   %Or.call = or i32 %a, %b, !dbg !31
+// CHECK:STDOUT:   ret i32 %Or.call, !dbg !32
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: define i32 @_CTestXor.Main(i32 %a, i32 %b) !dbg !33 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %int.xor = xor i32 %a, %b, !dbg !34
-// CHECK:STDOUT:   ret i32 %int.xor, !dbg !35
+// CHECK:STDOUT:   %Xor.call = xor i32 %a, %b, !dbg !34
+// CHECK:STDOUT:   ret i32 %Xor.call, !dbg !35
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: define i32 @_CTestLeftShift.Main(i32 %a, i32 %b) !dbg !36 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %int.left_shift = shl i32 %a, %b, !dbg !37
-// CHECK:STDOUT:   ret i32 %int.left_shift, !dbg !38
+// CHECK:STDOUT:   %LeftShift.call = shl i32 %a, %b, !dbg !37
+// CHECK:STDOUT:   ret i32 %LeftShift.call, !dbg !38
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: define i32 @_CTestArithmeticRightShift.Main(i32 %a, i32 %b) !dbg !39 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %int.right_shift = ashr i32 %a, %b, !dbg !40
-// CHECK:STDOUT:   ret i32 %int.right_shift, !dbg !41
+// CHECK:STDOUT:   %ArithmeticRightShift.call = ashr i32 %a, %b, !dbg !40
+// CHECK:STDOUT:   ret i32 %ArithmeticRightShift.call, !dbg !41
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: define i32 @_CTestLogicalRightShift.Main(i32 %a, i32 %b) !dbg !42 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %int.right_shift = lshr i32 %a, %b, !dbg !43
-// CHECK:STDOUT:   ret i32 %int.right_shift, !dbg !44
+// CHECK:STDOUT:   %LogicalRightShift.call = lshr i32 %a, %b, !dbg !43
+// CHECK:STDOUT:   ret i32 %LogicalRightShift.call, !dbg !44
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: define i1 @_CTestEq.Main(i32 %a, i32 %b) !dbg !45 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %int.eq = icmp eq i32 %a, %b, !dbg !46
-// CHECK:STDOUT:   ret i1 %int.eq, !dbg !47
+// CHECK:STDOUT:   %Eq.call = icmp eq i32 %a, %b, !dbg !46
+// CHECK:STDOUT:   ret i1 %Eq.call, !dbg !47
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: define i1 @_CTestNeq.Main(i32 %a, i32 %b) !dbg !48 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %int.neq = icmp ne i32 %a, %b, !dbg !49
-// CHECK:STDOUT:   ret i1 %int.neq, !dbg !50
+// CHECK:STDOUT:   %Neq.call = icmp ne i32 %a, %b, !dbg !49
+// CHECK:STDOUT:   ret i1 %Neq.call, !dbg !50
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: define i1 @_CTestLess.Main(i32 %a, i32 %b) !dbg !51 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %int.less = icmp slt i32 %a, %b, !dbg !52
-// CHECK:STDOUT:   ret i1 %int.less, !dbg !53
+// CHECK:STDOUT:   %Less.call = icmp slt i32 %a, %b, !dbg !52
+// CHECK:STDOUT:   ret i1 %Less.call, !dbg !53
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: define i1 @_CTestLessEq.Main(i32 %a, i32 %b) !dbg !54 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %int.less_eq = icmp sle i32 %a, %b, !dbg !55
-// CHECK:STDOUT:   ret i1 %int.less_eq, !dbg !56
+// CHECK:STDOUT:   %LessEq.call = icmp sle i32 %a, %b, !dbg !55
+// CHECK:STDOUT:   ret i1 %LessEq.call, !dbg !56
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: define i1 @_CTestGreater.Main(i32 %a, i32 %b) !dbg !57 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %int.greater = icmp sgt i32 %a, %b, !dbg !58
-// CHECK:STDOUT:   ret i1 %int.greater, !dbg !59
+// CHECK:STDOUT:   %Greater.call = icmp sgt i32 %a, %b, !dbg !58
+// CHECK:STDOUT:   ret i1 %Greater.call, !dbg !59
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: define i1 @_CTestGreaterEq.Main(i32 %a, i32 %b) !dbg !60 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %int.greater_eq = icmp sge i32 %a, %b, !dbg !61
-// CHECK:STDOUT:   ret i1 %int.greater_eq, !dbg !62
+// CHECK:STDOUT:   %GreaterEq.call = icmp sge i32 %a, %b, !dbg !61
+// CHECK:STDOUT:   ret i1 %GreaterEq.call, !dbg !62
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: !llvm.module.flags = !{!0, !1}
@@ -410,129 +410,129 @@ fn TestUint32ToUint64(a: u32) -> u64 { return Uint32ToUint64(a); }
 // CHECK:STDOUT:
 // CHECK:STDOUT: define void @_CTestSAdd.Main(ptr %a, i32 %b) !dbg !4 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %int.sadd_assign = load i32, ptr %a, align 4, !dbg !7
-// CHECK:STDOUT:   %int.sadd_assign1 = add i32 %int.sadd_assign, %b, !dbg !7
-// CHECK:STDOUT:   store i32 %int.sadd_assign1, ptr %a, align 4, !dbg !7
+// CHECK:STDOUT:   %SAdd.call = load i32, ptr %a, align 4, !dbg !7
+// CHECK:STDOUT:   %SAdd.call1 = add i32 %SAdd.call, %b, !dbg !7
+// CHECK:STDOUT:   store i32 %SAdd.call1, ptr %a, align 4, !dbg !7
 // CHECK:STDOUT:   ret void, !dbg !8
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: define void @_CTestSSub.Main(ptr %a, i32 %b) !dbg !9 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %int.ssub_assign = load i32, ptr %a, align 4, !dbg !10
-// CHECK:STDOUT:   %int.ssub_assign1 = sub i32 %int.ssub_assign, %b, !dbg !10
-// CHECK:STDOUT:   store i32 %int.ssub_assign1, ptr %a, align 4, !dbg !10
+// CHECK:STDOUT:   %SSub.call = load i32, ptr %a, align 4, !dbg !10
+// CHECK:STDOUT:   %SSub.call1 = sub i32 %SSub.call, %b, !dbg !10
+// CHECK:STDOUT:   store i32 %SSub.call1, ptr %a, align 4, !dbg !10
 // CHECK:STDOUT:   ret void, !dbg !11
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: define void @_CTestSMul.Main(ptr %a, i32 %b) !dbg !12 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %int.smul_assign = load i32, ptr %a, align 4, !dbg !13
-// CHECK:STDOUT:   %int.smul_assign1 = mul i32 %int.smul_assign, %b, !dbg !13
-// CHECK:STDOUT:   store i32 %int.smul_assign1, ptr %a, align 4, !dbg !13
+// CHECK:STDOUT:   %SMul.call = load i32, ptr %a, align 4, !dbg !13
+// CHECK:STDOUT:   %SMul.call1 = mul i32 %SMul.call, %b, !dbg !13
+// CHECK:STDOUT:   store i32 %SMul.call1, ptr %a, align 4, !dbg !13
 // CHECK:STDOUT:   ret void, !dbg !14
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: define void @_CTestSDiv.Main(ptr %a, i32 %b) !dbg !15 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %int.sdiv_assign = load i32, ptr %a, align 4, !dbg !16
-// CHECK:STDOUT:   %int.sdiv_assign1 = sdiv i32 %int.sdiv_assign, %b, !dbg !16
-// CHECK:STDOUT:   store i32 %int.sdiv_assign1, ptr %a, align 4, !dbg !16
+// CHECK:STDOUT:   %SDiv.call = load i32, ptr %a, align 4, !dbg !16
+// CHECK:STDOUT:   %SDiv.call1 = sdiv i32 %SDiv.call, %b, !dbg !16
+// CHECK:STDOUT:   store i32 %SDiv.call1, ptr %a, align 4, !dbg !16
 // CHECK:STDOUT:   ret void, !dbg !17
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: define void @_CTestSMod.Main(ptr %a, i32 %b) !dbg !18 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %int.smod_assign = load i32, ptr %a, align 4, !dbg !19
-// CHECK:STDOUT:   %int.smod_assign1 = srem i32 %int.smod_assign, %b, !dbg !19
-// CHECK:STDOUT:   store i32 %int.smod_assign1, ptr %a, align 4, !dbg !19
+// CHECK:STDOUT:   %SMod.call = load i32, ptr %a, align 4, !dbg !19
+// CHECK:STDOUT:   %SMod.call1 = srem i32 %SMod.call, %b, !dbg !19
+// CHECK:STDOUT:   store i32 %SMod.call1, ptr %a, align 4, !dbg !19
 // CHECK:STDOUT:   ret void, !dbg !20
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: define void @_CTestUAdd.Main(ptr %a, i32 %b) !dbg !21 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %int.uadd_assign = load i32, ptr %a, align 4, !dbg !22
-// CHECK:STDOUT:   %int.uadd_assign1 = add i32 %int.uadd_assign, %b, !dbg !22
-// CHECK:STDOUT:   store i32 %int.uadd_assign1, ptr %a, align 4, !dbg !22
+// CHECK:STDOUT:   %UAdd.call = load i32, ptr %a, align 4, !dbg !22
+// CHECK:STDOUT:   %UAdd.call1 = add i32 %UAdd.call, %b, !dbg !22
+// CHECK:STDOUT:   store i32 %UAdd.call1, ptr %a, align 4, !dbg !22
 // CHECK:STDOUT:   ret void, !dbg !23
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: define void @_CTestUSub.Main(ptr %a, i32 %b) !dbg !24 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %int.usub_assign = load i32, ptr %a, align 4, !dbg !25
-// CHECK:STDOUT:   %int.usub_assign1 = sub i32 %int.usub_assign, %b, !dbg !25
-// CHECK:STDOUT:   store i32 %int.usub_assign1, ptr %a, align 4, !dbg !25
+// CHECK:STDOUT:   %USub.call = load i32, ptr %a, align 4, !dbg !25
+// CHECK:STDOUT:   %USub.call1 = sub i32 %USub.call, %b, !dbg !25
+// CHECK:STDOUT:   store i32 %USub.call1, ptr %a, align 4, !dbg !25
 // CHECK:STDOUT:   ret void, !dbg !26
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: define void @_CTestUMul.Main(ptr %a, i32 %b) !dbg !27 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %int.umul_assign = load i32, ptr %a, align 4, !dbg !28
-// CHECK:STDOUT:   %int.umul_assign1 = mul i32 %int.umul_assign, %b, !dbg !28
-// CHECK:STDOUT:   store i32 %int.umul_assign1, ptr %a, align 4, !dbg !28
+// CHECK:STDOUT:   %UMul.call = load i32, ptr %a, align 4, !dbg !28
+// CHECK:STDOUT:   %UMul.call1 = mul i32 %UMul.call, %b, !dbg !28
+// CHECK:STDOUT:   store i32 %UMul.call1, ptr %a, align 4, !dbg !28
 // CHECK:STDOUT:   ret void, !dbg !29
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: define void @_CTestUDiv.Main(ptr %a, i32 %b) !dbg !30 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %int.udiv_assign = load i32, ptr %a, align 4, !dbg !31
-// CHECK:STDOUT:   %int.udiv_assign1 = udiv i32 %int.udiv_assign, %b, !dbg !31
-// CHECK:STDOUT:   store i32 %int.udiv_assign1, ptr %a, align 4, !dbg !31
+// CHECK:STDOUT:   %UDiv.call = load i32, ptr %a, align 4, !dbg !31
+// CHECK:STDOUT:   %UDiv.call1 = udiv i32 %UDiv.call, %b, !dbg !31
+// CHECK:STDOUT:   store i32 %UDiv.call1, ptr %a, align 4, !dbg !31
 // CHECK:STDOUT:   ret void, !dbg !32
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: define void @_CTestUMod.Main(ptr %a, i32 %b) !dbg !33 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %int.umod_assign = load i32, ptr %a, align 4, !dbg !34
-// CHECK:STDOUT:   %int.umod_assign1 = urem i32 %int.umod_assign, %b, !dbg !34
-// CHECK:STDOUT:   store i32 %int.umod_assign1, ptr %a, align 4, !dbg !34
+// CHECK:STDOUT:   %UMod.call = load i32, ptr %a, align 4, !dbg !34
+// CHECK:STDOUT:   %UMod.call1 = urem i32 %UMod.call, %b, !dbg !34
+// CHECK:STDOUT:   store i32 %UMod.call1, ptr %a, align 4, !dbg !34
 // CHECK:STDOUT:   ret void, !dbg !35
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: define void @_CTestAnd.Main(ptr %a, i32 %b) !dbg !36 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %int.and_assign = load i32, ptr %a, align 4, !dbg !37
-// CHECK:STDOUT:   %int.and_assign1 = and i32 %int.and_assign, %b, !dbg !37
-// CHECK:STDOUT:   store i32 %int.and_assign1, ptr %a, align 4, !dbg !37
+// CHECK:STDOUT:   %And.call = load i32, ptr %a, align 4, !dbg !37
+// CHECK:STDOUT:   %And.call1 = and i32 %And.call, %b, !dbg !37
+// CHECK:STDOUT:   store i32 %And.call1, ptr %a, align 4, !dbg !37
 // CHECK:STDOUT:   ret void, !dbg !38
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: define void @_CTestOr.Main(ptr %a, i32 %b) !dbg !39 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %int.or_assign = load i32, ptr %a, align 4, !dbg !40
-// CHECK:STDOUT:   %int.or_assign1 = or i32 %int.or_assign, %b, !dbg !40
-// CHECK:STDOUT:   store i32 %int.or_assign1, ptr %a, align 4, !dbg !40
+// CHECK:STDOUT:   %Or.call = load i32, ptr %a, align 4, !dbg !40
+// CHECK:STDOUT:   %Or.call1 = or i32 %Or.call, %b, !dbg !40
+// CHECK:STDOUT:   store i32 %Or.call1, ptr %a, align 4, !dbg !40
 // CHECK:STDOUT:   ret void, !dbg !41
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: define void @_CTestXor.Main(ptr %a, i32 %b) !dbg !42 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %int.xor_assign = load i32, ptr %a, align 4, !dbg !43
-// CHECK:STDOUT:   %int.xor_assign1 = xor i32 %int.xor_assign, %b, !dbg !43
-// CHECK:STDOUT:   store i32 %int.xor_assign1, ptr %a, align 4, !dbg !43
+// CHECK:STDOUT:   %Xor.call = load i32, ptr %a, align 4, !dbg !43
+// CHECK:STDOUT:   %Xor.call1 = xor i32 %Xor.call, %b, !dbg !43
+// CHECK:STDOUT:   store i32 %Xor.call1, ptr %a, align 4, !dbg !43
 // CHECK:STDOUT:   ret void, !dbg !44
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: define void @_CTestLeftShift.Main(ptr %a, i32 %b) !dbg !45 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %int.left_shift_assign = load i32, ptr %a, align 4, !dbg !46
-// CHECK:STDOUT:   %int.left_shift_assign1 = shl i32 %int.left_shift_assign, %b, !dbg !46
-// CHECK:STDOUT:   store i32 %int.left_shift_assign1, ptr %a, align 4, !dbg !46
+// CHECK:STDOUT:   %LeftShift.call = load i32, ptr %a, align 4, !dbg !46
+// CHECK:STDOUT:   %LeftShift.call1 = shl i32 %LeftShift.call, %b, !dbg !46
+// CHECK:STDOUT:   store i32 %LeftShift.call1, ptr %a, align 4, !dbg !46
 // CHECK:STDOUT:   ret void, !dbg !47
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: define void @_CTestArithmeticRightShift.Main(ptr %a, i32 %b) !dbg !48 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %int.right_shift_assign = load i32, ptr %a, align 4, !dbg !49
-// CHECK:STDOUT:   %int.right_shift_assign1 = ashr i32 %int.right_shift_assign, %b, !dbg !49
-// CHECK:STDOUT:   store i32 %int.right_shift_assign1, ptr %a, align 4, !dbg !49
+// CHECK:STDOUT:   %ArithmeticRightShift.call = load i32, ptr %a, align 4, !dbg !49
+// CHECK:STDOUT:   %ArithmeticRightShift.call1 = ashr i32 %ArithmeticRightShift.call, %b, !dbg !49
+// CHECK:STDOUT:   store i32 %ArithmeticRightShift.call1, ptr %a, align 4, !dbg !49
 // CHECK:STDOUT:   ret void, !dbg !50
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: define void @_CTestLogicalRightShift.Main(ptr %a, i32 %b) !dbg !51 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %int.right_shift_assign = load i32, ptr %a, align 4, !dbg !52
-// CHECK:STDOUT:   %int.right_shift_assign1 = lshr i32 %int.right_shift_assign, %b, !dbg !52
-// CHECK:STDOUT:   store i32 %int.right_shift_assign1, ptr %a, align 4, !dbg !52
+// CHECK:STDOUT:   %LogicalRightShift.call = load i32, ptr %a, align 4, !dbg !52
+// CHECK:STDOUT:   %LogicalRightShift.call1 = lshr i32 %LogicalRightShift.call, %b, !dbg !52
+// CHECK:STDOUT:   store i32 %LogicalRightShift.call1, ptr %a, align 4, !dbg !52
 // CHECK:STDOUT:   ret void, !dbg !53
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -598,72 +598,72 @@ fn TestUint32ToUint64(a: u32) -> u64 { return Uint32ToUint64(a); }
 // CHECK:STDOUT:
 // CHECK:STDOUT: define i32 @_CTestLeftShiftSmaller.Main(i32 %a, i16 %b) !dbg !4 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %int.left_shift.rhs = zext i16 %b to i32, !dbg !7
-// CHECK:STDOUT:   %int.left_shift = shl i32 %a, %int.left_shift.rhs, !dbg !7
-// CHECK:STDOUT:   ret i32 %int.left_shift, !dbg !8
+// CHECK:STDOUT:   %LeftShiftSmaller.call.rhs = zext i16 %b to i32, !dbg !7
+// CHECK:STDOUT:   %LeftShiftSmaller.call = shl i32 %a, %LeftShiftSmaller.call.rhs, !dbg !7
+// CHECK:STDOUT:   ret i32 %LeftShiftSmaller.call, !dbg !8
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: define i32 @_CTestRightShiftSmaller.Main(i32 %a, i16 %b) !dbg !9 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %int.right_shift.rhs = zext i16 %b to i32, !dbg !10
-// CHECK:STDOUT:   %int.right_shift = ashr i32 %a, %int.right_shift.rhs, !dbg !10
-// CHECK:STDOUT:   ret i32 %int.right_shift, !dbg !11
+// CHECK:STDOUT:   %RightShiftSmaller.call.rhs = zext i16 %b to i32, !dbg !10
+// CHECK:STDOUT:   %RightShiftSmaller.call = ashr i32 %a, %RightShiftSmaller.call.rhs, !dbg !10
+// CHECK:STDOUT:   ret i32 %RightShiftSmaller.call, !dbg !11
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: define i16 @_CTestLeftShiftLargerII.Main(i16 %a, i32 %b) !dbg !12 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %int.left_shift.rhs = trunc i32 %b to i16, !dbg !13
-// CHECK:STDOUT:   %int.left_shift = shl i16 %a, %int.left_shift.rhs, !dbg !13
-// CHECK:STDOUT:   ret i16 %int.left_shift, !dbg !14
+// CHECK:STDOUT:   %LeftShiftLargerII.call.rhs = trunc i32 %b to i16, !dbg !13
+// CHECK:STDOUT:   %LeftShiftLargerII.call = shl i16 %a, %LeftShiftLargerII.call.rhs, !dbg !13
+// CHECK:STDOUT:   ret i16 %LeftShiftLargerII.call, !dbg !14
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: define i16 @_CTestRightShiftLargerII.Main(i16 %a, i32 %b) !dbg !15 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %int.right_shift.rhs = trunc i32 %b to i16, !dbg !16
-// CHECK:STDOUT:   %int.right_shift = ashr i16 %a, %int.right_shift.rhs, !dbg !16
-// CHECK:STDOUT:   ret i16 %int.right_shift, !dbg !17
+// CHECK:STDOUT:   %RightShiftLargerII.call.rhs = trunc i32 %b to i16, !dbg !16
+// CHECK:STDOUT:   %RightShiftLargerII.call = ashr i16 %a, %RightShiftLargerII.call.rhs, !dbg !16
+// CHECK:STDOUT:   ret i16 %RightShiftLargerII.call, !dbg !17
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: define i16 @_CTestLeftShiftLargerIU.Main(i16 %a, i32 %b) !dbg !18 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %int.left_shift.rhs = trunc i32 %b to i16, !dbg !19
-// CHECK:STDOUT:   %int.left_shift = shl i16 %a, %int.left_shift.rhs, !dbg !19
-// CHECK:STDOUT:   ret i16 %int.left_shift, !dbg !20
+// CHECK:STDOUT:   %LeftShiftLargerIU.call.rhs = trunc i32 %b to i16, !dbg !19
+// CHECK:STDOUT:   %LeftShiftLargerIU.call = shl i16 %a, %LeftShiftLargerIU.call.rhs, !dbg !19
+// CHECK:STDOUT:   ret i16 %LeftShiftLargerIU.call, !dbg !20
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: define i16 @_CTestRightShiftLargerIU.Main(i16 %a, i32 %b) !dbg !21 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %int.right_shift.rhs = trunc i32 %b to i16, !dbg !22
-// CHECK:STDOUT:   %int.right_shift = ashr i16 %a, %int.right_shift.rhs, !dbg !22
-// CHECK:STDOUT:   ret i16 %int.right_shift, !dbg !23
+// CHECK:STDOUT:   %RightShiftLargerIU.call.rhs = trunc i32 %b to i16, !dbg !22
+// CHECK:STDOUT:   %RightShiftLargerIU.call = ashr i16 %a, %RightShiftLargerIU.call.rhs, !dbg !22
+// CHECK:STDOUT:   ret i16 %RightShiftLargerIU.call, !dbg !23
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: define i16 @_CTestLeftShiftLargerUI.Main(i16 %a, i32 %b) !dbg !24 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %int.left_shift.rhs = trunc i32 %b to i16, !dbg !25
-// CHECK:STDOUT:   %int.left_shift = shl i16 %a, %int.left_shift.rhs, !dbg !25
-// CHECK:STDOUT:   ret i16 %int.left_shift, !dbg !26
+// CHECK:STDOUT:   %LeftShiftLargerUI.call.rhs = trunc i32 %b to i16, !dbg !25
+// CHECK:STDOUT:   %LeftShiftLargerUI.call = shl i16 %a, %LeftShiftLargerUI.call.rhs, !dbg !25
+// CHECK:STDOUT:   ret i16 %LeftShiftLargerUI.call, !dbg !26
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: define i16 @_CTestRightShiftLargerUI.Main(i16 %a, i32 %b) !dbg !27 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %int.right_shift.rhs = trunc i32 %b to i16, !dbg !28
-// CHECK:STDOUT:   %int.right_shift = lshr i16 %a, %int.right_shift.rhs, !dbg !28
-// CHECK:STDOUT:   ret i16 %int.right_shift, !dbg !29
+// CHECK:STDOUT:   %RightShiftLargerUI.call.rhs = trunc i32 %b to i16, !dbg !28
+// CHECK:STDOUT:   %RightShiftLargerUI.call = lshr i16 %a, %RightShiftLargerUI.call.rhs, !dbg !28
+// CHECK:STDOUT:   ret i16 %RightShiftLargerUI.call, !dbg !29
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: define i16 @_CTestLeftShiftLargerUU.Main(i16 %a, i32 %b) !dbg !30 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %int.left_shift.rhs = trunc i32 %b to i16, !dbg !31
-// CHECK:STDOUT:   %int.left_shift = shl i16 %a, %int.left_shift.rhs, !dbg !31
-// CHECK:STDOUT:   ret i16 %int.left_shift, !dbg !32
+// CHECK:STDOUT:   %LeftShiftLargerUU.call.rhs = trunc i32 %b to i16, !dbg !31
+// CHECK:STDOUT:   %LeftShiftLargerUU.call = shl i16 %a, %LeftShiftLargerUU.call.rhs, !dbg !31
+// CHECK:STDOUT:   ret i16 %LeftShiftLargerUU.call, !dbg !32
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: define i16 @_CTestRightShiftLargerUU.Main(i16 %a, i32 %b) !dbg !33 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %int.right_shift.rhs = trunc i32 %b to i16, !dbg !34
-// CHECK:STDOUT:   %int.right_shift = lshr i16 %a, %int.right_shift.rhs, !dbg !34
-// CHECK:STDOUT:   ret i16 %int.right_shift, !dbg !35
+// CHECK:STDOUT:   %RightShiftLargerUU.call.rhs = trunc i32 %b to i16, !dbg !34
+// CHECK:STDOUT:   %RightShiftLargerUU.call = lshr i16 %a, %RightShiftLargerUU.call.rhs, !dbg !34
+// CHECK:STDOUT:   ret i16 %RightShiftLargerUU.call, !dbg !35
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: !llvm.module.flags = !{!0, !1}
@@ -710,76 +710,76 @@ fn TestUint32ToUint64(a: u32) -> u64 { return Uint32ToUint64(a); }
 // CHECK:STDOUT:
 // CHECK:STDOUT: define i1 @_CTestEq_u16_u32.Main(i16 %a, i32 %b) !dbg !4 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %int.eq.lhs = zext i16 %a to i32, !dbg !7
-// CHECK:STDOUT:   %int.eq = icmp eq i32 %int.eq.lhs, %b, !dbg !7
-// CHECK:STDOUT:   ret i1 %int.eq, !dbg !8
+// CHECK:STDOUT:   %Eq_u16_u32.call.lhs = zext i16 %a to i32, !dbg !7
+// CHECK:STDOUT:   %Eq_u16_u32.call = icmp eq i32 %Eq_u16_u32.call.lhs, %b, !dbg !7
+// CHECK:STDOUT:   ret i1 %Eq_u16_u32.call, !dbg !8
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: define i1 @_CTestEq_i16_u32.Main(i16 %a, i32 %b) !dbg !9 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %int.eq.lhs = sext i16 %a to i33, !dbg !10
-// CHECK:STDOUT:   %int.eq.rhs = zext i32 %b to i33, !dbg !10
-// CHECK:STDOUT:   %int.eq = icmp eq i33 %int.eq.lhs, %int.eq.rhs, !dbg !10
-// CHECK:STDOUT:   ret i1 %int.eq, !dbg !11
+// CHECK:STDOUT:   %Eq_i16_u32.call.lhs = sext i16 %a to i33, !dbg !10
+// CHECK:STDOUT:   %Eq_i16_u32.call.rhs = zext i32 %b to i33, !dbg !10
+// CHECK:STDOUT:   %Eq_i16_u32.call = icmp eq i33 %Eq_i16_u32.call.lhs, %Eq_i16_u32.call.rhs, !dbg !10
+// CHECK:STDOUT:   ret i1 %Eq_i16_u32.call, !dbg !11
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: define i1 @_CTestEq_u16_i32.Main(i16 %a, i32 %b) !dbg !12 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %int.eq.lhs = zext i16 %a to i32, !dbg !13
-// CHECK:STDOUT:   %int.eq = icmp eq i32 %int.eq.lhs, %b, !dbg !13
-// CHECK:STDOUT:   ret i1 %int.eq, !dbg !14
+// CHECK:STDOUT:   %Eq_u16_i32.call.lhs = zext i16 %a to i32, !dbg !13
+// CHECK:STDOUT:   %Eq_u16_i32.call = icmp eq i32 %Eq_u16_i32.call.lhs, %b, !dbg !13
+// CHECK:STDOUT:   ret i1 %Eq_u16_i32.call, !dbg !14
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: define i1 @_CTestEq_i16_i32.Main(i16 %a, i32 %b) !dbg !15 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %int.eq.lhs = sext i16 %a to i32, !dbg !16
-// CHECK:STDOUT:   %int.eq = icmp eq i32 %int.eq.lhs, %b, !dbg !16
-// CHECK:STDOUT:   ret i1 %int.eq, !dbg !17
+// CHECK:STDOUT:   %Eq_i16_i32.call.lhs = sext i16 %a to i32, !dbg !16
+// CHECK:STDOUT:   %Eq_i16_i32.call = icmp eq i32 %Eq_i16_i32.call.lhs, %b, !dbg !16
+// CHECK:STDOUT:   ret i1 %Eq_i16_i32.call, !dbg !17
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: define i1 @_CTestEq_i32_u32.Main(i32 %a, i32 %b) !dbg !18 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %int.eq.lhs = sext i32 %a to i33, !dbg !19
-// CHECK:STDOUT:   %int.eq.rhs = zext i32 %b to i33, !dbg !19
-// CHECK:STDOUT:   %int.eq = icmp eq i33 %int.eq.lhs, %int.eq.rhs, !dbg !19
-// CHECK:STDOUT:   ret i1 %int.eq, !dbg !20
+// CHECK:STDOUT:   %Eq_i32_u32.call.lhs = sext i32 %a to i33, !dbg !19
+// CHECK:STDOUT:   %Eq_i32_u32.call.rhs = zext i32 %b to i33, !dbg !19
+// CHECK:STDOUT:   %Eq_i32_u32.call = icmp eq i33 %Eq_i32_u32.call.lhs, %Eq_i32_u32.call.rhs, !dbg !19
+// CHECK:STDOUT:   ret i1 %Eq_i32_u32.call, !dbg !20
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: define i1 @_CTestLess_u16_u32.Main(i16 %a, i32 %b) !dbg !21 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %int.less.lhs = zext i16 %a to i32, !dbg !22
-// CHECK:STDOUT:   %int.less = icmp ult i32 %int.less.lhs, %b, !dbg !22
-// CHECK:STDOUT:   ret i1 %int.less, !dbg !23
+// CHECK:STDOUT:   %Less_u16_u32.call.lhs = zext i16 %a to i32, !dbg !22
+// CHECK:STDOUT:   %Less_u16_u32.call = icmp ult i32 %Less_u16_u32.call.lhs, %b, !dbg !22
+// CHECK:STDOUT:   ret i1 %Less_u16_u32.call, !dbg !23
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: define i1 @_CTestLess_i16_u32.Main(i16 %a, i32 %b) !dbg !24 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %int.less.lhs = sext i16 %a to i33, !dbg !25
-// CHECK:STDOUT:   %int.less.rhs = zext i32 %b to i33, !dbg !25
-// CHECK:STDOUT:   %int.less = icmp slt i33 %int.less.lhs, %int.less.rhs, !dbg !25
-// CHECK:STDOUT:   ret i1 %int.less, !dbg !26
+// CHECK:STDOUT:   %Less_i16_u32.call.lhs = sext i16 %a to i33, !dbg !25
+// CHECK:STDOUT:   %Less_i16_u32.call.rhs = zext i32 %b to i33, !dbg !25
+// CHECK:STDOUT:   %Less_i16_u32.call = icmp slt i33 %Less_i16_u32.call.lhs, %Less_i16_u32.call.rhs, !dbg !25
+// CHECK:STDOUT:   ret i1 %Less_i16_u32.call, !dbg !26
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: define i1 @_CTestLess_u16_i32.Main(i16 %a, i32 %b) !dbg !27 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %int.less.lhs = zext i16 %a to i32, !dbg !28
-// CHECK:STDOUT:   %int.less = icmp slt i32 %int.less.lhs, %b, !dbg !28
-// CHECK:STDOUT:   ret i1 %int.less, !dbg !29
+// CHECK:STDOUT:   %Less_u16_i32.call.lhs = zext i16 %a to i32, !dbg !28
+// CHECK:STDOUT:   %Less_u16_i32.call = icmp slt i32 %Less_u16_i32.call.lhs, %b, !dbg !28
+// CHECK:STDOUT:   ret i1 %Less_u16_i32.call, !dbg !29
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: define i1 @_CTestLess_i16_i32.Main(i16 %a, i32 %b) !dbg !30 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %int.less.lhs = sext i16 %a to i32, !dbg !31
-// CHECK:STDOUT:   %int.less = icmp slt i32 %int.less.lhs, %b, !dbg !31
-// CHECK:STDOUT:   ret i1 %int.less, !dbg !32
+// CHECK:STDOUT:   %Less_i16_i32.call.lhs = sext i16 %a to i32, !dbg !31
+// CHECK:STDOUT:   %Less_i16_i32.call = icmp slt i32 %Less_i16_i32.call.lhs, %b, !dbg !31
+// CHECK:STDOUT:   ret i1 %Less_i16_i32.call, !dbg !32
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: define i1 @_CTestLess_i32_u32.Main(i32 %a, i32 %b) !dbg !33 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %int.less.lhs = sext i32 %a to i33, !dbg !34
-// CHECK:STDOUT:   %int.less.rhs = zext i32 %b to i33, !dbg !34
-// CHECK:STDOUT:   %int.less = icmp slt i33 %int.less.lhs, %int.less.rhs, !dbg !34
-// CHECK:STDOUT:   ret i1 %int.less, !dbg !35
+// CHECK:STDOUT:   %Less_i32_u32.call.lhs = sext i32 %a to i33, !dbg !34
+// CHECK:STDOUT:   %Less_i32_u32.call.rhs = zext i32 %b to i33, !dbg !34
+// CHECK:STDOUT:   %Less_i32_u32.call = icmp slt i33 %Less_i32_u32.call.lhs, %Less_i32_u32.call.rhs, !dbg !34
+// CHECK:STDOUT:   ret i1 %Less_i32_u32.call, !dbg !35
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: !llvm.module.flags = !{!0, !1}
@@ -846,50 +846,50 @@ fn TestUint32ToUint64(a: u32) -> u64 { return Uint32ToUint64(a); }
 // CHECK:STDOUT:
 // CHECK:STDOUT: define i16 @_CTestInt32ToInt16.Main(i32 %a) !dbg !14 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %int.convert = trunc i32 %a to i16, !dbg !15
-// CHECK:STDOUT:   ret i16 %int.convert, !dbg !16
+// CHECK:STDOUT:   %Int32ToInt16.call = trunc i32 %a to i16, !dbg !15
+// CHECK:STDOUT:   ret i16 %Int32ToInt16.call, !dbg !16
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: define i16 @_CTestInt32ToUint16.Main(i32 %a) !dbg !17 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %int.convert = trunc i32 %a to i16, !dbg !18
-// CHECK:STDOUT:   ret i16 %int.convert, !dbg !19
+// CHECK:STDOUT:   %Int32ToUint16.call = trunc i32 %a to i16, !dbg !18
+// CHECK:STDOUT:   ret i16 %Int32ToUint16.call, !dbg !19
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: define i16 @_CTestUint32ToInt16.Main(i32 %a) !dbg !20 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %int.convert = trunc i32 %a to i16, !dbg !21
-// CHECK:STDOUT:   ret i16 %int.convert, !dbg !22
+// CHECK:STDOUT:   %Uint32ToInt16.call = trunc i32 %a to i16, !dbg !21
+// CHECK:STDOUT:   ret i16 %Uint32ToInt16.call, !dbg !22
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: define i16 @_CTestUint32ToUint16.Main(i32 %a) !dbg !23 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %int.convert = trunc i32 %a to i16, !dbg !24
-// CHECK:STDOUT:   ret i16 %int.convert, !dbg !25
+// CHECK:STDOUT:   %Uint32ToUint16.call = trunc i32 %a to i16, !dbg !24
+// CHECK:STDOUT:   ret i16 %Uint32ToUint16.call, !dbg !25
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: define i64 @_CTestInt32ToInt64.Main(i32 %a) !dbg !26 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %int.convert = sext i32 %a to i64, !dbg !27
-// CHECK:STDOUT:   ret i64 %int.convert, !dbg !28
+// CHECK:STDOUT:   %Int32ToInt64.call = sext i32 %a to i64, !dbg !27
+// CHECK:STDOUT:   ret i64 %Int32ToInt64.call, !dbg !28
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: define i64 @_CTestInt32ToUint64.Main(i32 %a) !dbg !29 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %int.convert = sext i32 %a to i64, !dbg !30
-// CHECK:STDOUT:   ret i64 %int.convert, !dbg !31
+// CHECK:STDOUT:   %Int32ToUint64.call = sext i32 %a to i64, !dbg !30
+// CHECK:STDOUT:   ret i64 %Int32ToUint64.call, !dbg !31
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: define i64 @_CTestUint32ToInt64.Main(i32 %a) !dbg !32 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %int.convert = zext i32 %a to i64, !dbg !33
-// CHECK:STDOUT:   ret i64 %int.convert, !dbg !34
+// CHECK:STDOUT:   %Uint32ToInt64.call = zext i32 %a to i64, !dbg !33
+// CHECK:STDOUT:   ret i64 %Uint32ToInt64.call, !dbg !34
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: define i64 @_CTestUint32ToUint64.Main(i32 %a) !dbg !35 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %int.convert = zext i32 %a to i64, !dbg !36
-// CHECK:STDOUT:   ret i64 %int.convert, !dbg !37
+// CHECK:STDOUT:   %Uint32ToUint64.call = zext i32 %a to i64, !dbg !36
+// CHECK:STDOUT:   ret i64 %Uint32ToUint64.call, !dbg !37
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: !llvm.module.flags = !{!0, !1}

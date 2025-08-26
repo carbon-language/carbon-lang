@@ -9,7 +9,7 @@
 // TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/parse/testdata/let/let_tuple.carbon
 
 fn F() {
-  let (s: String, i: i32) = ("hello", 0);
+  let (s: str, i: i32) = ("hello", 0);
 }
 
 // CHECK:STDOUT: - filename: let_tuple.carbon
@@ -23,7 +23,7 @@ fn F() {
 // CHECK:STDOUT:         {kind: 'LetIntroducer', text: 'let'},
 // CHECK:STDOUT:           {kind: 'TuplePatternStart', text: '('},
 // CHECK:STDOUT:             {kind: 'IdentifierNameNotBeforeParams', text: 's'},
-// CHECK:STDOUT:             {kind: 'StringTypeLiteral', text: 'String'},
+// CHECK:STDOUT:             {kind: 'StringTypeLiteral', text: 'str'},
 // CHECK:STDOUT:           {kind: 'LetBindingPattern', text: ':', subtree_size: 3},
 // CHECK:STDOUT:           {kind: 'PatternListComma', text: ','},
 // CHECK:STDOUT:             {kind: 'IdentifierNameNotBeforeParams', text: 'i'},

@@ -23,9 +23,29 @@ class DiagnosticLocConverter {
  public:
   // Information about an import within which the location was found.
   struct ImportLoc {
+    enum Kind {
+      // A regular Carbon `import`.
+      Import,
+      // A C++ `#include`.
+      CppInclude,
+      // A C++ module import.
+      CppModuleImport,
+      // A C++ macro expansion.
+      CppMacroExpansion,
+    };
+
+    // The location of the import.
     Diagnostics::Loc loc;
-    // TODO: Include the name of the imported library in this information so it
-    // can be included in the diagnostic.
+
+    // The kind of import.
+    Kind kind;
+
+    // The name of the imported module for CppInclude, or the complete macro
+    // expansion diagnostic message for CppMacroExpansion.
+    // TODO: In the latter case, provide just the macro name.
+    // TODO: Include the name of the imported library in this information for
+    // Import so it can be mentioned in the diagnostic.
+    llvm::StringRef imported_name;
   };
 
   // Information about a location that has been converted from a LocId to a
@@ -35,9 +55,9 @@ class DiagnosticLocConverter {
     Diagnostics::ConvertedLoc loc;
   };
 
-  // `sem_ir` must not be null.
+  // `tree_and_subtrees_getters` and `sem_ir` must not be null.
   explicit DiagnosticLocConverter(
-      llvm::ArrayRef<Parse::GetTreeAndSubtreesFn> tree_and_subtrees_getters,
+      const Parse::GetTreeAndSubtreesStore* tree_and_subtrees_getters,
       const File* sem_ir)
       : tree_and_subtrees_getters_(tree_and_subtrees_getters),
         sem_ir_(sem_ir) {}
@@ -66,7 +86,7 @@ class DiagnosticLocConverter {
       -> Diagnostics::ConvertedLoc;
 
   // Converters for each SemIR.
-  llvm::ArrayRef<Parse::GetTreeAndSubtreesFn> tree_and_subtrees_getters_;
+  const Parse::GetTreeAndSubtreesStore* tree_and_subtrees_getters_;
 
   // The current SemIR being processed.
   const File* sem_ir_;

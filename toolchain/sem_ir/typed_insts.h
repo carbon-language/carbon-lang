@@ -7,6 +7,7 @@
 
 #include "toolchain/base/int.h"
 #include "toolchain/parse/node_ids.h"
+#include "toolchain/parse/typed_nodes.h"
 #include "toolchain/sem_ir/ids.h"
 #include "toolchain/sem_ir/inst_kind.h"
 #include "toolchain/sem_ir/singleton_insts.h"
@@ -428,6 +429,34 @@ struct Call {
   InstBlockId args_id;
 };
 
+// A unicode code point character literal. This type only provides compile-time
+// operations, and is represented as an empty type at runtime.
+struct CharLiteralType {
+  static constexpr auto Kind =
+      InstKind::CharLiteralType.Define<Parse::NoneNodeId>(
+          {.ir_name = "Core.CharLiteral",
+           .is_type = InstIsType::Always,
+           .constant_kind = InstConstantKind::Always});
+  // This is a singleton instruction. However, it may still evolve into a more
+  // standard type and be removed.
+  static constexpr auto TypeInstId = MakeSingletonTypeInstId<Kind>();
+  static constexpr auto TypeId =
+      TypeId::ForTypeConstant(ConstantId::ForConcreteConstant(TypeInstId));
+
+  SemIR::TypeId type_id;
+};
+
+// A unicode code point character value, whose type is `CharLiteralType`.
+struct CharLiteralValue {
+  // TODO: Make Parse::NodeId more specific.
+  static constexpr auto Kind = InstKind::CharLiteralValue.Define<Parse::NodeId>(
+      {.ir_name = "char_value", .constant_kind = InstConstantKind::Always});
+
+  TypeId type_id;
+
+  CharId value;
+};
+
 // A class declaration.
 struct ClassDecl {
   static constexpr auto Kind =
@@ -552,6 +581,20 @@ struct ConvertToValueAction {
   TypeInstId target_type_inst_id;
 };
 
+// A type whose layout is determined externally. This is used as the object
+// representation of class types imported from C++.
+struct CustomLayoutType {
+  static constexpr auto Kind = InstKind::CustomLayoutType.Define<Parse::NodeId>(
+      {.ir_name = "custom_layout_type",
+       .is_type = InstIsType::Always,
+       .constant_kind = InstConstantKind::WheneverPossible,
+       .deduce_through = true});
+
+  TypeId type_id;
+  StructTypeFieldsId fields_id;
+  CustomLayoutId layout_id;
+};
+
 // The `*` dereference operator, as in `*pointer`.
 struct Deref {
   static constexpr auto Kind =
@@ -648,15 +691,34 @@ struct FieldDecl {
   ElementIndex index;
 };
 
-// A literal floating point value.
-struct FloatLiteral {
+// The float literal type.
+// TODO: Replace this with a rational number type, following the design.
+struct FloatLiteralType {
   static constexpr auto Kind =
-      InstKind::FloatLiteral.Define<Parse::RealLiteralId>(
-          {.ir_name = "float_literal",
+      InstKind::FloatLiteralType.Define<Parse::NoneNodeId>(
+          {.ir_name = "Core.FloatLiteral",
+           .is_type = InstIsType::Always,
+           .constant_kind = InstConstantKind::Always});
+  // This is a singleton instruction. However, it may still evolve into a more
+  // standard type and be removed.
+  static constexpr auto TypeInstId = MakeSingletonTypeInstId<Kind>();
+
+  TypeId type_id;
+};
+
+// A floating point literal value.
+// TODO: Eventually this should be represented as a rational number, and should
+// support arithmetic. For now, we preserve the exact form of the literal
+// produced by the lexer, and don't support any operations, not even unary
+// negation.
+struct FloatLiteralValue {
+  static constexpr auto Kind =
+      InstKind::FloatLiteralValue.Define<Parse::RealLiteralId>(
+          {.ir_name = "float_literal_value",
            .constant_kind = InstConstantKind::Always});
 
   TypeId type_id;
-  FloatId float_id;
+  RealId real_id;
 };
 
 // A floating point type.
@@ -672,6 +734,18 @@ struct FloatType {
   // TODO: Consider adding a more compact way of representing either a small
   // float bit width or an inst_id.
   InstId bit_width_id;
+  FloatKind float_kind;
+};
+
+// A floating point value.
+struct FloatValue {
+  static constexpr auto Kind =
+      InstKind::FloatValue.Define<Parse::RealLiteralId>(
+          {.ir_name = "float_value",
+           .constant_kind = InstConstantKind::Always});
+
+  TypeId type_id;
+  FloatId float_id;
 };
 
 // A function declaration.
@@ -801,6 +875,26 @@ struct ImplWitnessAccess {
   ElementIndex index;
 };
 
+// A substituted value to use in place of an ImplWitnessAccess (which comes from
+// the RHS of a rewrite constraint in the same facet type), while preserving the
+// original reference to an associated constant as an ImplWitnessAccess. This
+// allows the substitution to occur on the LHS of rewrite constraints without
+// losing what is being rewritten by them.
+struct ImplWitnessAccessSubstituted {
+  static constexpr auto Kind =
+      InstKind::ImplWitnessAccessSubstituted.Define<Parse::NodeId>(
+          {.ir_name = "impl_witness_access_substituted",
+           .is_type = InstIsType::Maybe,
+           .constant_kind = InstConstantKind::SymbolicOnly,
+           .is_lowered = false});
+
+  TypeId type_id;
+  // The ImplWitnessAccess instruction that this was created from.
+  InstId impl_witness_access_id;
+  // The value instruction to use in place of the ImplWitnessAccess.
+  InstId value_id;
+};
+
 // An instruction that just points to an associated constant, which exists to
 // live inside the generic for an `impl` and be rewritten in the generic eval
 // block, unlike the instruction which it points to. This allows a symbolic
@@ -923,6 +1017,26 @@ struct ImportRefLoaded {
   EntityNameId entity_name_id;
 };
 
+// Tracks that an object has been initialized in-place to form the result of
+// this expression, even if its type's initializing representation is not
+// normally in-place. If the type does not use in-place initialization,
+// initialization from this expression will copy the value out of the
+// destination.
+//
+// This is used to model the initialization performed by C++ thunks, where
+// in-place initialization is used even for types that would normally have a
+// copy initializing representation.
+struct InPlaceInit {
+  static constexpr auto Kind = InstKind::InPlaceInit.Define<Parse::NodeId>(
+      {.ir_name = "in_place_init", .constant_kind = InstConstantKind::Never});
+
+  TypeId type_id;
+  // Used only to track the source of the initialization; this has no semantic
+  // meaning.
+  InstId src_id;
+  DestInstId dest_id;
+};
+
 // Finalizes the initialization of `dest_id` from the initializer expression
 // `src_id`, by performing a final copy from source to destination, for types
 // whose initialization is not in-place.
@@ -1012,7 +1126,7 @@ struct IntType {
   InstId bit_width_id;
 };
 
-// A literal integer value.
+// An integer value.
 struct IntValue {
   // TODO: Make Parse::NodeId more specific.
   static constexpr auto Kind = InstKind::IntValue.Define<Parse::NodeId>(
@@ -1020,22 +1134,6 @@ struct IntValue {
 
   TypeId type_id;
   IntId int_id;
-};
-
-// The legacy float type. This is currently used for real literals, and is
-// treated as f64. It's separate from `FloatType`, and should change to mirror
-// integers, likely replacing this with a `FloatLiteralType`.
-struct LegacyFloatType {
-  static constexpr auto Kind =
-      InstKind::LegacyFloatType.Define<Parse::NoneNodeId>(
-          {.ir_name = "f64",
-           .is_type = InstIsType::Always,
-           .constant_kind = InstConstantKind::Always});
-  // This is a singleton instruction. However, it may still evolve into a more
-  // standard type and be removed.
-  static constexpr auto TypeInstId = MakeSingletonTypeInstId<Kind>();
-
-  TypeId type_id;
 };
 
 // A symbolic instruction that takes the place of an `ImplWitness` when the
@@ -1230,7 +1328,29 @@ struct RequireCompleteType {
   TypeInstId complete_type_inst_id;
 };
 
-// An `expr == expr` clause in a `where` expression or `require` declaration.
+// A requirement that `.Self` implements a facet type, specified as the first
+// operand of a `where` expression. This is always the first requirement in a
+// requirement block for a `where` expression.
+//
+// Any constraints in the base facet type are available to other constraint
+// operands in the `where` expression, and also become a part of the resulting
+// facet type.
+struct RequirementBaseFacetType {
+  static constexpr auto Kind =
+      InstKind::RequirementBaseFacetType.Define<Parse::NodeId>(
+          {.ir_name = "requirement_base_facet_type",
+           .constant_kind = InstConstantKind::Never,
+           .is_lowered = false});
+
+  // No type since not an expression
+
+  // A FacetType, the TypeType singleton, or an ErrorInst.
+  TypeInstId base_type_inst_id;
+};
+
+// A requirement that two expressions evaluate to the same constant, as
+// specified by an `expr == expr` clause in a `where` expression or `require`
+// declaration.
 struct RequirementEquivalent {
   static constexpr auto Kind =
       InstKind::RequirementEquivalent.Define<Parse::RequirementEqualEqualId>(
@@ -1243,7 +1363,9 @@ struct RequirementEquivalent {
   InstId rhs_id;
 };
 
-// An `expr impls expr` clause in a `where` expression or `require` declaration.
+// A requirement that the LHS expression is a facet type that implements the
+// interface on the RHS and meets any constraints in the RHS, as specified by an
+// `expr impls expr` clause in a `where` expression or `require` declaration.
 struct RequirementImpls {
   static constexpr auto Kind =
       InstKind::RequirementImpls.Define<Parse::RequirementImplsId>(
@@ -1256,7 +1378,9 @@ struct RequirementImpls {
   InstId rhs_id;
 };
 
-// A `.M = expr` clause in a `where` expression or `require` declaration.
+// A requirement that assigns the expression on the RHS to the associated
+// constant named on the LHS, as specified by a `.M = expr` clause in a `where`
+// expression or `require` declaration.
 struct RequirementRewrite {
   static constexpr auto Kind =
       InstKind::RequirementRewrite.Define<Parse::RequirementEqualId>(
@@ -1445,19 +1569,6 @@ struct StringLiteral {
 
   TypeId type_id;
   StringLiteralValueId string_literal_id;
-};
-
-// The type of string values and String literals.
-struct StringType {
-  static constexpr auto Kind = InstKind::StringType.Define<Parse::NoneNodeId>(
-      {.ir_name = "String",
-       .is_type = InstIsType::Always,
-       .constant_kind = InstConstantKind::Always});
-  // This is a singleton instruction. However, it may still evolve into a more
-  // standard type and be removed.
-  static constexpr auto TypeInstId = MakeSingletonTypeInstId<Kind>();
-
-  TypeId type_id;
 };
 
 // Access to a struct type, with the index into the struct_id representation.
@@ -1687,7 +1798,7 @@ struct UnboundElementType {
 // example, when indexing a value expression of array type, this is used to
 // form a reference to the array object.
 struct ValueAsRef {
-  static constexpr auto Kind = InstKind::ValueAsRef.Define<Parse::IndexExprId>(
+  static constexpr auto Kind = InstKind::ValueAsRef.Define<Parse::NodeId>(
       {.ir_name = "value_as_ref", .constant_kind = InstConstantKind::Never});
 
   TypeId type_id;
@@ -1779,11 +1890,19 @@ struct VtableType {
 // Initializer for virtual function table pointers in object initialization.
 struct VtablePtr {
   static constexpr auto Kind = InstKind::VtablePtr.Define<Parse::NodeId>(
-      {.ir_name = "vtable_ptr",
-       .constant_kind = InstConstantKind::WheneverPossible});
+      {.ir_name = "vtable_ptr", .constant_kind = InstConstantKind::Always});
   TypeId type_id;
   VtableId vtable_id;
   SpecificId specific_id;
+};
+
+struct VtableDecl {
+  static constexpr auto Kind = InstKind::VtableDecl.Define<Parse::NodeId>(
+      {.ir_name = "vtable_decl",
+       .constant_kind = InstConstantKind::Always,
+       .is_lowered = false});
+  TypeId type_id;
+  VtableId vtable_id;
 };
 
 // An `expr where requirements` expression.

@@ -45,21 +45,21 @@ fn For() {
 // CHECK:STDOUT:   %.loc29_33.1.temp = alloca { i1, { i32, i32 } }, align 8, !dbg !8
 // CHECK:STDOUT:   %n.var = alloca i32, align 4, !dbg !9
 // CHECK:STDOUT:   %.loc29_33.8.temp = alloca { i32, i32 }, align 8, !dbg !8
-// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(i64 0, ptr %r.var), !dbg !7
+// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %r.var), !dbg !7
 // CHECK:STDOUT:   call void @llvm.memcpy.p0.p0.i64(ptr align 1 %r.var, ptr align 1 @EmptyRange.val.loc27_3, i64 0, i1 false), !dbg !7
 // CHECK:STDOUT:   call void @"_CNewCursor.EmptyRange.Main:Iterate.Core.29d34654e802e24e"(ptr %r.var), !dbg !8
-// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(i64 0, ptr %var), !dbg !8
+// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %var), !dbg !8
 // CHECK:STDOUT:   br label %for.next, !dbg !8
 // CHECK:STDOUT:
 // CHECK:STDOUT: for.next:                                         ; preds = %for.body, %entry
-// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(i64 12, ptr %.loc29_33.1.temp), !dbg !8
+// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %.loc29_33.1.temp), !dbg !8
 // CHECK:STDOUT:   call void @"_CNext.EmptyRange.Main:Iterate.Core.29d34654e802e24e"(ptr %.loc29_33.1.temp, ptr %r.var, ptr %var), !dbg !8
-// CHECK:STDOUT:   %HasValue.call = call i1 @_CHasValue.Optional.Core.29d34654e802e24e(ptr %.loc29_33.1.temp), !dbg !8
-// CHECK:STDOUT:   br i1 %HasValue.call, label %for.body, label %for.done, !dbg !8
+// CHECK:STDOUT:   %Optional.HasValue.call = call i1 @_CHasValue.Optional.Core.29d34654e802e24e(ptr %.loc29_33.1.temp), !dbg !8
+// CHECK:STDOUT:   br i1 %Optional.HasValue.call, label %for.body, label %for.done, !dbg !8
 // CHECK:STDOUT:
 // CHECK:STDOUT: for.body:                                         ; preds = %for.next
-// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(i64 4, ptr %n.var), !dbg !9
-// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(i64 8, ptr %.loc29_33.8.temp), !dbg !8
+// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %n.var), !dbg !9
+// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %.loc29_33.8.temp), !dbg !8
 // CHECK:STDOUT:   call void @_CGet.Optional.Core.29d34654e802e24e(ptr %.loc29_33.8.temp, ptr %.loc29_33.1.temp), !dbg !8
 // CHECK:STDOUT:   %tuple.elem0.tuple.elem = getelementptr inbounds nuw { i32, i32 }, ptr %.loc29_33.8.temp, i32 0, i32 0, !dbg !8
 // CHECK:STDOUT:   %tuple.elem1.tuple.elem = getelementptr inbounds nuw { i32, i32 }, ptr %.loc29_33.8.temp, i32 0, i32 1, !dbg !8
@@ -74,7 +74,7 @@ fn For() {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nocallback nofree nosync nounwind willreturn memory(argmem: readwrite)
-// CHECK:STDOUT: declare void @llvm.lifetime.start.p0(i64 immarg, ptr captures(none)) #0
+// CHECK:STDOUT: declare void @llvm.lifetime.start.p0(ptr captures(none)) #0
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nocallback nofree nounwind willreturn memory(argmem: readwrite)
 // CHECK:STDOUT: declare void @llvm.memcpy.p0.p0.i64(ptr noalias writeonly captures(none), ptr noalias readonly captures(none), i64, i1 immarg) #1
@@ -134,13 +134,13 @@ fn For() {
 // CHECK:STDOUT: !15 = distinct !DISubprogram(name: "Next", linkageName: "_CNext.EmptyRange.Main:Iterate.Core.29d34654e802e24e", scope: null, file: !3, line: 18, type: !5, spFlags: DISPFlagDefinition, unit: !2)
 // CHECK:STDOUT: !16 = !DILocation(line: 19, column: 14, scope: !15)
 // CHECK:STDOUT: !17 = !DILocation(line: 19, column: 7, scope: !15)
-// CHECK:STDOUT: !18 = distinct !DISubprogram(name: "HasValue", linkageName: "_CHasValue.Optional.Core.29d34654e802e24e", scope: null, file: !19, line: 28, type: !5, spFlags: DISPFlagDefinition, unit: !2)
+// CHECK:STDOUT: !18 = distinct !DISubprogram(name: "HasValue", linkageName: "_CHasValue.Optional.Core.29d34654e802e24e", scope: null, file: !19, line: 29, type: !5, spFlags: DISPFlagDefinition, unit: !2)
 // CHECK:STDOUT: !19 = !DIFile(filename: "{{.*}}/prelude/types/optional.carbon", directory: "")
-// CHECK:STDOUT: !20 = !DILocation(line: 28, column: 46, scope: !18)
-// CHECK:STDOUT: !21 = !DILocation(line: 28, column: 39, scope: !18)
-// CHECK:STDOUT: !22 = distinct !DISubprogram(name: "Get", linkageName: "_CGet.Optional.Core.29d34654e802e24e", scope: null, file: !19, line: 29, type: !5, spFlags: DISPFlagDefinition, unit: !2)
-// CHECK:STDOUT: !23 = !DILocation(line: 29, column: 38, scope: !22)
-// CHECK:STDOUT: !24 = !DILocation(line: 29, column: 31, scope: !22)
-// CHECK:STDOUT: !25 = distinct !DISubprogram(name: "None", linkageName: "_CNone.Optional.Core.29d34654e802e24e", scope: null, file: !19, line: 18, type: !5, spFlags: DISPFlagDefinition, unit: !2)
-// CHECK:STDOUT: !26 = !DILocation(line: 20, column: 5, scope: !25)
-// CHECK:STDOUT: !27 = !DILocation(line: 21, column: 5, scope: !25)
+// CHECK:STDOUT: !20 = !DILocation(line: 29, column: 46, scope: !18)
+// CHECK:STDOUT: !21 = !DILocation(line: 29, column: 39, scope: !18)
+// CHECK:STDOUT: !22 = distinct !DISubprogram(name: "Get", linkageName: "_CGet.Optional.Core.29d34654e802e24e", scope: null, file: !19, line: 30, type: !5, spFlags: DISPFlagDefinition, unit: !2)
+// CHECK:STDOUT: !23 = !DILocation(line: 30, column: 38, scope: !22)
+// CHECK:STDOUT: !24 = !DILocation(line: 30, column: 31, scope: !22)
+// CHECK:STDOUT: !25 = distinct !DISubprogram(name: "None", linkageName: "_CNone.Optional.Core.29d34654e802e24e", scope: null, file: !19, line: 19, type: !5, spFlags: DISPFlagDefinition, unit: !2)
+// CHECK:STDOUT: !26 = !DILocation(line: 21, column: 5, scope: !25)
+// CHECK:STDOUT: !27 = !DILocation(line: 22, column: 5, scope: !25)

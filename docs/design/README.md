@@ -372,14 +372,11 @@ required to be the only non-whitespace on the line.
 
 The behavior of the Carbon compiler depends on the _build mode_:
 
--   In a _development build_, the priority is diagnosing problems and fast build
-    time.
--   In a _performance build_, the priority is fastest execution time and lowest
+-   In a _debug build_, the priority is diagnosing problems and fast build time.
+-   In a _release build_, the priority is fastest execution time and lowest
     memory usage.
--   In a _hardened build_, the first priority is safety and second is
-    performance.
 
-> References: [Safety strategy](/docs/project/principles/safety_strategy.md)
+> References: [Safety design](/docs/design/safety#build-modes)
 
 ## Types are values
 
@@ -3746,7 +3743,7 @@ This leads to Carbon's incremental path to safety:
 -   Shift the Carbon code onto an incremental path towards memory safety over
     the next decade.
 
-> References: [Safety strategy](/docs/project/principles/safety_strategy.md)
+> References: [Safety design](/docs/design/safety)
 
 ### Lifetime and move semantics
 

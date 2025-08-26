@@ -32,15 +32,53 @@ enum class ConstantDependence : uint8_t {
 
 // Information about a symbolic constant value. These are indexed by
 // `ConstantId`s for which `is_symbolic` is true.
+//
+// A constant value is defined by the canonical ID of a fully-evaluated inst,
+// called a "constant inst", which may depend on the canonical IDs of other
+// constant insts. "Canonical" here means that it is chosen such that equal
+// constants will have equal canonical IDs. This is typically achieved by
+// deduplication in `ConstantStore`, but certain kinds of constant insts are
+// canonicalized in other ways.
+//
+// That constant inst ID fully defines the constant value in itself, but for
+// symbolic constant values we sometimes need efficient access to metadata about
+// the mapping between the constant and corresponding constants in specifics of
+// its enclosing generic. As a result, the ID of a concrete constant directly
+// encodes the ID of the constant inst, but the ID of a symbolic constant is an
+// index into a table of `SymbolicConstant` entries containing that metadata, as
+// well as the constant inst ID.
+//
+// The price of this optimization is that the constant value's ID depends on the
+// enclosing generic, which isn't semantically relevant unless we're
+// specifically operating on the generic -> specific mapping. As a result, every
+// symbolic constant is represented by two `SymbolicConstant`s, with separate
+// IDs: one with that additional metadata, and one without it. The form with
+// additional metadata is called an "attached constant", and the form without it
+// is an "unattached constant". Note that constants in separate generics may be
+// represented by the same unattached constant. In general, only one of these
+// IDs is correct to use in a given situation; `ConstantValueStore` can be used
+// to map between them if necessary.
+//
+// Equivalently, you can think of an unattached constant as being implicitly
+// parameterized by the `bind_symbolic_name` constant insts that it depends on,
+// whereas an attached constant explicitly binds them to parameters of the
+// enclosing generic. It's the difference between "`Vector(T)` where `T` is some
+// value of type `type`" and "`Vector(T)` where `T` is the `T:! type` parameter
+// of this particular enclosing generic".
+//
+// TODO: consider instead keeping this metadata in a separate hash map keyed by
+// a `GenericId`/`ConstantId` pair, so that each constant has a single
+// `ConstantId`, rather than separate attached and unattached IDs.
 struct SymbolicConstant : Printable<SymbolicConstant> {
-  // The constant instruction that defines the value of this symbolic constant.
+  // The canonical ID of the inst that defines this constant.
   InstId inst_id;
-  // The enclosing generic. If this is `None`, then this is an abstract
-  // symbolic constant, such as a constant instruction in the constants block,
-  // rather than one associated with a particular generic.
+  // The generic that this constant is attached to, or `None` if this is an
+  // unattached constant.
   GenericId generic_id;
-  // The index of this symbolic constant within the generic's list of symbolic
-  // constants, or `None` if `generic_id` is `None`.
+  // The index of this constant within the generic's eval block, if this is an
+  // attached constant. For a given specific of that generic, this is also the
+  // index of this constant's value in the value block of that specific. If
+  // this constant is unattached, `index` will be `None`.
   GenericInstIndex index;
   // The kind of dependence this symbolic constant exhibits. Should never be
   // `None`.
@@ -100,9 +138,8 @@ class ConstantValueStore {
     values_.Get(inst_id) = const_id;
   }
 
-  // Gets the instruction ID that defines the value of the given constant.
-  // Returns `None` if the constant ID is non-constant. Requires
-  // `const_id.has_value()`.
+  // Gets the ID of the underlying constant inst for the given constant. Returns
+  // `None` if the constant ID is non-constant. Requires `const_id.has_value()`.
   auto GetInstId(ConstantId const_id) const -> InstId {
     if (const_id.is_concrete()) {
       return const_id.concrete_inst_id();
@@ -113,8 +150,8 @@ class ConstantValueStore {
     return InstId::None;
   }
 
-  // Gets the instruction ID that defines the value of the given constant.
-  // Returns `None` if the constant ID is non-constant or `None`.
+  // Gets the ID of the underlying constant inst for the given constant. Returns
+  // `None` if the constant ID is non-constant or `None`.
   auto GetInstIdIfValid(ConstantId const_id) const -> InstId {
     return const_id.has_value() ? GetInstId(const_id) : InstId::None;
   }

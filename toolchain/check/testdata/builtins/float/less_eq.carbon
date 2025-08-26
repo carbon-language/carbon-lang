@@ -32,9 +32,21 @@ fn RuntimeCallIsValid(a: f64, b: f64) -> bool {
   //@dump-sem-ir-end
 }
 
+// --- fail_literal.carbon
+
+library "[[@TEST_NAME]]";
+
+// CHECK:STDERR: fail_literal.carbon:[[@LINE+4]]:1: error: invalid signature for builtin function "float.less_eq" [InvalidBuiltinSignature]
+// CHECK:STDERR: fn LessEq(a: Core.FloatLiteral(), b: Core.FloatLiteral()) -> bool = "float.less_eq";
+// CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+// CHECK:STDERR:
+fn LessEq(a: Core.FloatLiteral(), b: Core.FloatLiteral()) -> bool = "float.less_eq";
+
 // CHECK:STDOUT: --- float_less_eq.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
+// CHECK:STDOUT:   %int_64: Core.IntLiteral = int_value 64 [concrete]
+// CHECK:STDOUT:   %f64.d77: type = class_type @Float, @Float(%int_64) [concrete]
 // CHECK:STDOUT:   %LessEq.type: type = fn_type @LessEq [concrete]
 // CHECK:STDOUT:   %LessEq: %LessEq.type = struct_value () [concrete]
 // CHECK:STDOUT: }
@@ -42,14 +54,14 @@ fn RuntimeCallIsValid(a: f64, b: f64) -> bool {
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @RuntimeCallIsValid(%a.param: f64, %b.param: f64) -> bool {
+// CHECK:STDOUT: fn @RuntimeCallIsValid(%a.param: %f64.d77, %b.param: %f64.d77) -> bool {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %LessEq.ref: %LessEq.type = name_ref LessEq, file.%LessEq.decl [concrete = constants.%LessEq]
-// CHECK:STDOUT:   %a.ref: f64 = name_ref a, %a
-// CHECK:STDOUT:   %b.ref: f64 = name_ref b, %b
-// CHECK:STDOUT:   %float.less_eq: init bool = call %LessEq.ref(%a.ref, %b.ref)
-// CHECK:STDOUT:   %.loc18_22.1: bool = value_of_initializer %float.less_eq
-// CHECK:STDOUT:   %.loc18_22.2: bool = converted %float.less_eq, %.loc18_22.1
+// CHECK:STDOUT:   %a.ref: %f64.d77 = name_ref a, %a
+// CHECK:STDOUT:   %b.ref: %f64.d77 = name_ref b, %b
+// CHECK:STDOUT:   %LessEq.call: init bool = call %LessEq.ref(%a.ref, %b.ref)
+// CHECK:STDOUT:   %.loc18_22.1: bool = value_of_initializer %LessEq.call
+// CHECK:STDOUT:   %.loc18_22.2: bool = converted %LessEq.call, %.loc18_22.1
 // CHECK:STDOUT:   return %.loc18_22.2
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

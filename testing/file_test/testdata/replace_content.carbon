@@ -11,3 +11,6 @@
 
 library "[[@TEST_NAME]]";
 // CHECK:STDOUT: replace_content.carbon:[[@LINE-1]]: library "replace_content";
+
+var x: str = "[[@0x48]][[@0x65]][[@0x6C]][[@0x6C]][[@0x6F]]";
+// CHECK:STDOUT: replace_content.carbon:[[@LINE-1]]: var x: str = "Hello";

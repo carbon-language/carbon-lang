@@ -4,8 +4,9 @@
 
 package Core library "prelude/types/int";
 
-import library "prelude/types/int_literal";
+import library "prelude/destroy";
 import library "prelude/operators";
+import library "prelude/types/int_literal";
 
 private fn MakeInt(size: IntLiteral()) -> type = "int.make_type_signed";
 

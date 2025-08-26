@@ -82,9 +82,14 @@ static auto TrackImport(Map<ImportKey, UnitAndImports*>& api_map,
   const auto& [import_package_name, import_library_name] = import_key;
 
   if (import_package_name == CppPackageName) {
-    if (import_library_name.empty()) {
+    if (!explicit_import_map) {
+      // Don't diagnose the implicit import in `impl package Cpp`, because we'll
+      // have diagnosed the use of `Cpp` in the declaration.
+      return;
+    }
+    if (!import.library_id.has_value() && !import.inline_body_id.has_value()) {
       CARBON_DIAGNOSTIC(CppInteropMissingLibrary, Error,
-                        "`Cpp` import missing library");
+                        "`Cpp` import without `library` or `inline`");
       unit_info.emitter.Emit(import.node_id, CppInteropMissingLibrary);
       return;
     }
@@ -95,7 +100,12 @@ static auto TrackImport(Map<ImportKey, UnitAndImports*>& api_map,
       unit_info.emitter.Emit(import.node_id, CppInteropFuzzing);
       return;
     }
-    unit_info.cpp_import_names.push_back(import);
+    unit_info.cpp_imports.push_back(import);
+    return;
+  } else if (import.inline_body_id.has_value()) {
+    CARBON_DIAGNOSTIC(InlineImportNotCpp, Error,
+                      "`inline` import not in package `Cpp`");
+    unit_info.emitter.Emit(import.node_id, InlineImportNotCpp);
     return;
   }
 
@@ -216,11 +226,6 @@ static auto TrackImport(Map<ImportKey, UnitAndImports*>& api_map,
   } else {
     // The imported api is missing.
     package_imports.has_load_error = true;
-    if (!explicit_import_map && import_package_name == CppPackageName) {
-      // Don't diagnose the implicit import in `impl package Cpp`, because we'll
-      // have diagnosed the use of `Cpp` in the declaration.
-      return;
-    }
     CARBON_DIAGNOSTIC(LibraryApiNotFound, Error,
                       "corresponding API for '{0}' not found", std::string);
     CARBON_DIAGNOSTIC(ImportNotFound, Error, "imported API '{0}' not found",
@@ -335,17 +340,17 @@ static auto MaybeDumpFormattedSemIR(
     return;
   }
 
-  bool has_ranges = sem_ir.parse_tree().tokens().has_dump_sem_ir_ranges();
+  const auto& tokens = sem_ir.parse_tree().tokens();
   if (options.dump_sem_ir_ranges ==
           CheckParseTreesOptions::DumpSemIRRanges::Only &&
-      !has_ranges) {
+      !tokens.has_dump_sem_ir_ranges() && !tokens.has_include_in_dumps()) {
     return;
   }
 
   bool use_dump_sem_ir_ranges =
       options.dump_sem_ir_ranges !=
           CheckParseTreesOptions::DumpSemIRRanges::Ignore &&
-      has_ranges;
+      tokens.has_dump_sem_ir_ranges();
   SemIR::Formatter formatter(&sem_ir, tree_and_subtrees_getter,
                              options.include_in_dumps, use_dump_sem_ir_ranges);
   formatter.Format();
@@ -361,7 +366,7 @@ static auto MaybeDumpFormattedSemIR(
 // Handles options for dumping SemIR, including verbose output.
 static auto MaybeDumpSemIR(
     llvm::ArrayRef<Unit> units,
-    llvm::ArrayRef<Parse::GetTreeAndSubtreesFn> tree_and_subtrees_getters,
+    const Parse::GetTreeAndSubtreesStore& tree_and_subtrees_getters,
     const CheckParseTreesOptions& options) -> void {
   if (!options.vlog_stream && !options.dump_stream &&
       !options.raw_dump_stream) {
@@ -375,22 +380,37 @@ static auto MaybeDumpSemIR(
 
   for (const auto& unit : units) {
     bool include_in_dumps =
-        options.include_in_dumps[unit.sem_ir->check_ir_id().index];
+        options.include_in_dumps->Get(unit.sem_ir->check_ir_id());
     if (include_in_dumps && options.raw_dump_stream) {
       unit.sem_ir->Print(*options.raw_dump_stream,
                          options.dump_raw_sem_ir_builtins);
     }
 
     MaybeDumpFormattedSemIR(
-        *unit.sem_ir,
-        tree_and_subtrees_getters[unit.sem_ir->check_ir_id().index],
+        *unit.sem_ir, tree_and_subtrees_getters.Get(unit.sem_ir->check_ir_id()),
         include_in_dumps, options);
+  }
+}
+
+// Handles options for dumping C++ AST.
+static auto MaybeDumpCppAST(llvm::ArrayRef<Unit> units,
+                            const CheckParseTreesOptions& options) -> void {
+  if (!options.dump_cpp_ast_stream) {
+    return;
+  }
+
+  for (const Unit& unit : units) {
+    if (!unit.clang_ast_unit || !*unit.clang_ast_unit) {
+      continue;
+    }
+    clang::ASTContext& ast_context = (*unit.clang_ast_unit)->getASTContext();
+    ast_context.getTranslationUnitDecl()->dump(*options.dump_cpp_ast_stream);
   }
 }
 
 auto CheckParseTrees(
     llvm::MutableArrayRef<Unit> units,
-    llvm::ArrayRef<Parse::GetTreeAndSubtreesFn> tree_and_subtrees_getters,
+    const Parse::GetTreeAndSubtreesStore& tree_and_subtrees_getters,
     llvm::IntrusiveRefCntPtr<llvm::vfs::FileSystem> fs,
     const CheckParseTreesOptions& options,
     std::shared_ptr<clang::CompilerInvocation> clang_invocation) -> void {
@@ -399,7 +419,7 @@ auto CheckParseTrees(
   llvm::SmallVector<UnitAndImports, 0> unit_infos(
       llvm::map_range(units, [&](Unit& unit) {
         return UnitAndImports(
-            &unit, tree_and_subtrees_getters[unit.sem_ir->check_ir_id().index]);
+            &unit, tree_and_subtrees_getters.Get(unit.sem_ir->check_ir_id()));
       }));
 
   Map<ImportKey, UnitAndImports*> api_map =
@@ -448,8 +468,8 @@ auto CheckParseTrees(
   for (int check_index = 0;
        check_index < static_cast<int>(ready_to_check.size()); ++check_index) {
     auto* unit_info = ready_to_check[check_index];
-    CheckUnit(unit_info, tree_and_subtrees_getters, fs, clang_invocation,
-              options.vlog_stream)
+    CheckUnit(unit_info, &tree_and_subtrees_getters, fs, clang_invocation,
+              options.gen_implicit_type_impls, options.vlog_stream)
         .Run();
     for (auto* incoming_import : unit_info->incoming_imports) {
       --incoming_import->imports_remaining;
@@ -497,14 +517,15 @@ auto CheckParseTrees(
     // incomplete imports.
     for (auto& unit_info : unit_infos) {
       if (unit_info.imports_remaining > 0) {
-        CheckUnit(&unit_info, tree_and_subtrees_getters, fs, clang_invocation,
-                  options.vlog_stream)
+        CheckUnit(&unit_info, &tree_and_subtrees_getters, fs, clang_invocation,
+                  options.gen_implicit_type_impls, options.vlog_stream)
             .Run();
       }
     }
   }
 
   MaybeDumpSemIR(units, tree_and_subtrees_getters, options);
+  MaybeDumpCppAST(units, options);
 }
 
 }  // namespace Carbon::Check

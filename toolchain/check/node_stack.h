@@ -479,6 +479,7 @@ class NodeStack {
       case Parse::NodeKind::CallExprComma:
       case Parse::NodeKind::ChoiceAlternativeListComma:
       case Parse::NodeKind::CodeBlock:
+      case Parse::NodeKind::CompileTimeBindingPatternStart:
       case Parse::NodeKind::ContinueStatementStart:
       case Parse::NodeKind::CorePackageName:
       case Parse::NodeKind::ExportIntroducer:
@@ -497,6 +498,8 @@ class NodeStack {
       case Parse::NodeKind::KeywordNameQualifierWithoutParams:
       case Parse::NodeKind::LibraryIntroducer:
       case Parse::NodeKind::LibrarySpecifier:
+      case Parse::NodeKind::InlineImportSpecifier:
+      case Parse::NodeKind::InlineImportBody:
       case Parse::NodeKind::MatchCase:
       case Parse::NodeKind::MatchCaseEqualGreater:
       case Parse::NodeKind::MatchCaseGuard:

@@ -85,9 +85,9 @@ fn ChosenBranchIsNonConstant(t: type) {
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %b.param: bool = value_param call_param0
 // CHECK:STDOUT:     %.loc4_30.1: type = splice_block %.loc4_30.3 [concrete = bool] {
-// CHECK:STDOUT:       %bool.make_type: init type = call constants.%Bool() [concrete = bool]
-// CHECK:STDOUT:       %.loc4_30.2: type = value_of_initializer %bool.make_type [concrete = bool]
-// CHECK:STDOUT:       %.loc4_30.3: type = converted %bool.make_type, %.loc4_30.2 [concrete = bool]
+// CHECK:STDOUT:       %Bool.call: init type = call constants.%Bool() [concrete = bool]
+// CHECK:STDOUT:       %.loc4_30.2: type = value_of_initializer %Bool.call [concrete = bool]
+// CHECK:STDOUT:       %.loc4_30.3: type = converted %Bool.call, %.loc4_30.2 [concrete = bool]
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %b: bool = bind_name b, %b.param
 // CHECK:STDOUT:   }

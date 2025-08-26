@@ -36,6 +36,40 @@ auto HandleInst(FunctionContext& context, SemIR::InstId inst_id,
 }
 
 auto HandleInst(FunctionContext& context, SemIR::InstId inst_id,
+                SemIR::InPlaceInit inst) -> void {
+  auto type = context.GetTypeIdOfInst(inst_id);
+  auto* value = context.GetValue(inst.dest_id);
+
+  // If the initializing representation is by-value, and the value
+  // representation is by-copy, then we need to load from the storage. Otherwise
+  // we want a pointer to the result.
+  switch (context.GetInitRepr(type).kind) {
+    case SemIR::InitRepr::None:
+    case SemIR::InitRepr::InPlace:
+      break;
+    case SemIR::InitRepr::ByCopy:
+      switch (context.GetValueRepr(type).repr.kind) {
+        case SemIR::ValueRepr::Unknown:
+          CARBON_FATAL("Unexpected incomplete type");
+        case SemIR::ValueRepr::None:
+        case SemIR::ValueRepr::Pointer:
+          break;
+        case SemIR::ValueRepr::Copy:
+          value = context.builder().CreateLoad(context.GetType(type), value);
+          break;
+        case SemIR::ValueRepr::Custom:
+          CARBON_FATAL(
+              "TODO: Add support for InPlaceInit with custom value rep");
+      }
+      break;
+    case SemIR::InitRepr::Incomplete:
+      CARBON_FATAL("Unexpected incomplete type");
+  }
+
+  context.SetLocal(inst_id, value);
+}
+
+auto HandleInst(FunctionContext& context, SemIR::InstId inst_id,
                 SemIR::Temporary inst) -> void {
   context.FinishInit(context.GetTypeIdOfInst(inst_id), inst.storage_id,
                      inst.init_id);

@@ -7,6 +7,7 @@
 #include <iterator>
 
 #include "common/exe_path.h"
+#include "common/filesystem.h"
 #include "llvm/ADT/StringRef.h"
 
 namespace Carbon {
@@ -46,7 +47,8 @@ auto GetBusyboxInfo(const char* argv0) -> ErrorOr<BusyboxInfo> {
       // handled in the other return path.
       std::string prefix_root = info.bin_path.parent_path().string() +
                                 "/prefix_root/lib/carbon/carbon-busybox";
-      if (std::filesystem::exists(prefix_root)) {
+      if (auto access = Filesystem::Cwd().Access(prefix_root);
+          access.ok() && *access) {
         info.bin_path = prefix_root;
       }
       return info;
@@ -75,8 +77,8 @@ auto GetBusyboxInfo(const char* argv0) -> ErrorOr<BusyboxInfo> {
                           ? parent_path / ".." / "lib" / "carbon"
                           : parent_path / ".." / "..";
       auto busybox_path = lib_path / "carbon-busybox";
-      std::error_code ec;
-      if (std::filesystem::exists(busybox_path, ec)) {
+      if (auto access = Filesystem::Cwd().Access(busybox_path);
+          access.ok() && *access) {
         info.bin_path = busybox_path;
         return info;
       }
@@ -84,15 +86,14 @@ auto GetBusyboxInfo(const char* argv0) -> ErrorOr<BusyboxInfo> {
 
     // Try to walk through another layer of symlinks and see if we can find the
     // installation there or are linked directly to the busybox.
-    std::error_code ec;
-    auto symlink_target = std::filesystem::read_symlink(info.bin_path, ec);
-    if (ec) {
+    auto readlink = Filesystem::Cwd().Readlink(info.bin_path);
+    if (!readlink.ok()) {
       return ErrorBuilder()
              << "expected carbon-busybox symlink at `" << info.bin_path << "`";
     }
 
     // Do a path join, to handle relative symlinks.
-    info.bin_path = parent_path / symlink_target;
+    info.bin_path = parent_path / *readlink;
   }
 }
 

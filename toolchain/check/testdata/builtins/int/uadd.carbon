@@ -127,9 +127,9 @@ let b: i32 = Add(0x7FFFFFFF, 1);
 // CHECK:STDOUT:   %Add.ref: %Add.type = name_ref Add, file.%Add.decl [concrete = constants.%Add]
 // CHECK:STDOUT:   %a.ref: %i32 = name_ref a, %a
 // CHECK:STDOUT:   %b.ref: %i32 = name_ref b, %b
-// CHECK:STDOUT:   %int.uadd: init %i32 = call %Add.ref(%a.ref, %b.ref)
-// CHECK:STDOUT:   %.loc11_19.1: %i32 = value_of_initializer %int.uadd
-// CHECK:STDOUT:   %.loc11_19.2: %i32 = converted %int.uadd, %.loc11_19.1
+// CHECK:STDOUT:   %Add.call: init %i32 = call %Add.ref(%a.ref, %b.ref)
+// CHECK:STDOUT:   %.loc11_19.1: %i32 = value_of_initializer %Add.call
+// CHECK:STDOUT:   %.loc11_19.2: %i32 = converted %Add.call, %.loc11_19.1
 // CHECK:STDOUT:   return %.loc11_19.2
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

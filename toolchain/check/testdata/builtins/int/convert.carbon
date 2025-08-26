@@ -277,9 +277,9 @@ let convert_not_constant: i16 = IntLiteralToInt16(not_constant);
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %Int32ToUint32.ref: %Int32ToUint32.type = name_ref Int32ToUint32, imports.%Main.Int32ToUint32 [concrete = constants.%Int32ToUint32]
 // CHECK:STDOUT:   %a.ref: %i32 = name_ref a, %a
-// CHECK:STDOUT:   %int.convert: init %u32 = call %Int32ToUint32.ref(%a.ref)
-// CHECK:STDOUT:   %.loc7_26.1: %u32 = value_of_initializer %int.convert
-// CHECK:STDOUT:   %.loc7_26.2: %u32 = converted %int.convert, %.loc7_26.1
+// CHECK:STDOUT:   %Int32ToUint32.call: init %u32 = call %Int32ToUint32.ref(%a.ref)
+// CHECK:STDOUT:   %.loc7_26.1: %u32 = value_of_initializer %Int32ToUint32.call
+// CHECK:STDOUT:   %.loc7_26.2: %u32 = converted %Int32ToUint32.call, %.loc7_26.1
 // CHECK:STDOUT:   return %.loc7_26.2
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -287,9 +287,9 @@ let convert_not_constant: i16 = IntLiteralToInt16(not_constant);
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %Int32ToInt16.ref: %Int32ToInt16.type = name_ref Int32ToInt16, imports.%Main.Int32ToInt16 [concrete = constants.%Int32ToInt16]
 // CHECK:STDOUT:   %a.ref: %i32 = name_ref a, %a
-// CHECK:STDOUT:   %int.convert: init %i16 = call %Int32ToInt16.ref(%a.ref)
-// CHECK:STDOUT:   %.loc13_25.1: %i16 = value_of_initializer %int.convert
-// CHECK:STDOUT:   %.loc13_25.2: %i16 = converted %int.convert, %.loc13_25.1
+// CHECK:STDOUT:   %Int32ToInt16.call: init %i16 = call %Int32ToInt16.ref(%a.ref)
+// CHECK:STDOUT:   %.loc13_25.1: %i16 = value_of_initializer %Int32ToInt16.call
+// CHECK:STDOUT:   %.loc13_25.2: %i16 = converted %Int32ToInt16.call, %.loc13_25.1
 // CHECK:STDOUT:   return %.loc13_25.2
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -297,9 +297,9 @@ let convert_not_constant: i16 = IntLiteralToInt16(not_constant);
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %Int32ToInt64.ref: %Int32ToInt64.type = name_ref Int32ToInt64, imports.%Main.Int32ToInt64 [concrete = constants.%Int32ToInt64]
 // CHECK:STDOUT:   %a.ref: %i32 = name_ref a, %a
-// CHECK:STDOUT:   %int.convert: init %i64 = call %Int32ToInt64.ref(%a.ref)
-// CHECK:STDOUT:   %.loc19_25.1: %i64 = value_of_initializer %int.convert
-// CHECK:STDOUT:   %.loc19_25.2: %i64 = converted %int.convert, %.loc19_25.1
+// CHECK:STDOUT:   %Int32ToInt64.call: init %i64 = call %Int32ToInt64.ref(%a.ref)
+// CHECK:STDOUT:   %.loc19_25.1: %i64 = value_of_initializer %Int32ToInt64.call
+// CHECK:STDOUT:   %.loc19_25.2: %i64 = converted %Int32ToInt64.call, %.loc19_25.1
 // CHECK:STDOUT:   return %.loc19_25.2
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

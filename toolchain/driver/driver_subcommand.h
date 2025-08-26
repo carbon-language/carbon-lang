@@ -61,13 +61,13 @@ class DriverSubcommand {
   virtual auto Run(DriverEnv& driver_env) -> DriverResult = 0;
 
  protected:
-  // Diagnoses and returns false if currently fuzzing.
+  // Tests if fuzzing and if so diagnose and returns true.
   //
-  // This should be used in subcommands to check and diagnose rather than
+  // This should be used in subcommands to diagnose and exit early rather than
   // entering them during fuzzing when they use external libraries that we can't
   // keep fuzz-clean.
-  auto DisableFuzzingExternalLibraries(DriverEnv& driver_env,
-                                       llvm::StringRef name) -> bool;
+  auto TestAndDiagnoseIfFuzzingExternalLibraries(DriverEnv& driver_env,
+                                                 llvm::StringRef name) -> bool;
 
  private:
   // Subcommand information.

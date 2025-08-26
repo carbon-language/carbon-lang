@@ -14,6 +14,7 @@
 #include "llvm/ADT/IntrusiveRefCntPtr.h"
 #include "llvm/ADT/StringRef.h"
 #include "llvm/Support/VirtualFileSystem.h"
+#include "toolchain/base/fixed_size_value_store.h"
 #include "toolchain/base/kind_switch.h"
 #include "toolchain/check/diagnostic_helpers.h"
 #include "toolchain/check/generic.h"
@@ -46,7 +47,7 @@ static auto GetImportedIRCount(UnitAndImports* unit_and_imports) -> int {
     // Leave an empty slot for `ImportIRId::ApiForImpl`.
     ++count;
   }
-  if (!unit_and_imports->cpp_import_names.empty()) {
+  if (!unit_and_imports->cpp_imports.empty()) {
     // Leave an empty slot for `ImportIRId::Cpp`.
     ++count;
   }
@@ -55,22 +56,22 @@ static auto GetImportedIRCount(UnitAndImports* unit_and_imports) -> int {
 
 CheckUnit::CheckUnit(
     UnitAndImports* unit_and_imports,
-    llvm::ArrayRef<Parse::GetTreeAndSubtreesFn> tree_and_subtrees_getters,
+    const Parse::GetTreeAndSubtreesStore* tree_and_subtrees_getters,
     llvm::IntrusiveRefCntPtr<llvm::vfs::FileSystem> fs,
     std::shared_ptr<clang::CompilerInvocation> clang_invocation,
-    llvm::raw_ostream* vlog_stream)
+    bool gen_implicit_type_impls, llvm::raw_ostream* vlog_stream)
     : unit_and_imports_(unit_and_imports),
-      tree_and_subtrees_getter_(
-          tree_and_subtrees_getters
-              [unit_and_imports->unit->sem_ir->check_ir_id().index]),
-      total_ir_count_(tree_and_subtrees_getters.size()),
+      tree_and_subtrees_getter_(tree_and_subtrees_getters->Get(
+          unit_and_imports->unit->sem_ir->check_ir_id())),
+      total_ir_count_(tree_and_subtrees_getters->size()),
       fs_(std::move(fs)),
       clang_invocation_(std::move(clang_invocation)),
       emitter_(&unit_and_imports_->err_tracker, tree_and_subtrees_getters,
                unit_and_imports_->unit->sem_ir),
-      context_(
-          &emitter_, tree_and_subtrees_getter_, unit_and_imports_->unit->sem_ir,
-          GetImportedIRCount(unit_and_imports), total_ir_count_, vlog_stream) {}
+      context_(&emitter_, tree_and_subtrees_getter_,
+               unit_and_imports_->unit->sem_ir,
+               GetImportedIRCount(unit_and_imports), total_ir_count_,
+               gen_implicit_type_impls, vlog_stream) {}
 
 auto CheckUnit::Run() -> void {
   Timings::ScopedTiming timing(unit_and_imports_->unit->timings, "check");
@@ -151,23 +152,24 @@ auto CheckUnit::InitPackageScopeAndImports() -> void {
   CARBON_CHECK(context_.scope_stack().PeekIndex() == ScopeIndex::Package);
   ImportOtherPackages(namespace_type_id);
 
-  const auto& cpp_import_names = unit_and_imports_->cpp_import_names;
-  if (!cpp_import_names.empty()) {
-    auto* cpp_ast = unit_and_imports_->unit->cpp_ast;
-    CARBON_CHECK(cpp_ast);
-    CARBON_CHECK(!cpp_ast->get());
-    *cpp_ast =
-        ImportCppFiles(context_, cpp_import_names, fs_, clang_invocation_);
+  const auto& cpp_imports = unit_and_imports_->cpp_imports;
+  if (!cpp_imports.empty()) {
+    auto* clang_ast_unit = unit_and_imports_->unit->clang_ast_unit;
+    CARBON_CHECK(clang_ast_unit);
+    CARBON_CHECK(!clang_ast_unit->get());
+    *clang_ast_unit =
+        ImportCppFiles(context_, cpp_imports, fs_, clang_invocation_);
   }
 }
 
 auto CheckUnit::CollectDirectImports(
     llvm::SmallVector<SemIR::ImportIR>& results,
-    llvm::MutableArrayRef<int> ir_to_result_index, SemIR::InstId import_decl_id,
-    const PackageImports& imports, bool is_local) -> void {
+    FixedSizeValueStore<SemIR::CheckIRId, int>& ir_to_result_index,
+    SemIR::InstId import_decl_id, const PackageImports& imports, bool is_local)
+    -> void {
   for (const auto& import : imports.imports) {
     const auto& direct_ir = *import.unit_info->unit->sem_ir;
-    auto& index = ir_to_result_index[direct_ir.check_ir_id().index];
+    auto& index = ir_to_result_index.Get(direct_ir.check_ir_id());
     if (index != -1) {
       // This should only happen when doing API imports for an implementation
       // file. Don't change the entry; is_export doesn't matter.
@@ -191,7 +193,9 @@ auto CheckUnit::CollectTransitiveImports(SemIR::InstId import_decl_id,
   // Track whether an IR was imported in full, including `export import`. This
   // distinguishes from IRs that are indirectly added without all names being
   // exported to this IR.
-  llvm::SmallVector<int> ir_to_result_index(total_ir_count_, -1);
+  auto ir_to_result_index =
+      FixedSizeValueStore<SemIR::CheckIRId, int>::MakeWithExplicitSize(
+          total_ir_count_, -1);
 
   // First add direct imports. This means that if an entity is imported both
   // directly and indirectly, the import path will reflect the direct import.
@@ -219,7 +223,7 @@ auto CheckUnit::CollectTransitiveImports(SemIR::InstId import_decl_id,
       }
 
       auto& indirect_index =
-          ir_to_result_index[indirect_ir.sem_ir->check_ir_id().index];
+          ir_to_result_index.Get(indirect_ir.sem_ir->check_ir_id());
       if (indirect_index == -1) {
         indirect_index = results.size();
         // TODO: In the case of a recursive `export import`, this only points at

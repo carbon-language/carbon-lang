@@ -41,10 +41,12 @@ class Context {
     SemIR::SpecificId specific_id;
   };
 
+  // `llvm_context` and `tree_and_subtrees_getters` must be non-null.
+  // `vlog_stream` is optional.
   explicit Context(
-      llvm::LLVMContext& llvm_context,
+      llvm::LLVMContext* llvm_context,
       llvm::IntrusiveRefCntPtr<llvm::vfs::FileSystem> fs, bool want_debug_info,
-      llvm::ArrayRef<Parse::GetTreeAndSubtreesFn> tree_and_subtrees_getters,
+      const Parse::GetTreeAndSubtreesStore* tree_and_subtrees_getters,
       llvm::StringRef module_name, llvm::raw_ostream* vlog_stream);
 
   // Gets or creates the `FileContext` for a given SemIR file. If an
@@ -73,9 +75,9 @@ class Context {
     return llvm::ConstantStruct::get(GetTypeType());
   }
 
-  // Returns a lowered value to use for a value of int literal type.
-  auto GetIntLiteralAsValue() -> llvm::Constant* {
-    // TODO: Consider adding a named struct type for integer literals.
+  // Returns a lowered value to use for a value of literal type.
+  auto GetLiteralAsValue() -> llvm::Constant* {
+    // TODO: Consider adding a named struct type for literals.
     return llvm::ConstantStruct::get(llvm::StructType::get(llvm_context()));
   }
 
@@ -95,9 +97,8 @@ class Context {
   }
   auto di_builder() -> llvm::DIBuilder& { return di_builder_; }
   auto di_compile_unit() -> llvm::DICompileUnit* { return di_compile_unit_; }
-  auto tree_and_subtrees_getters()
-      -> llvm::ArrayRef<Parse::GetTreeAndSubtreesFn> {
-    return tree_and_subtrees_getters_;
+  auto tree_and_subtrees_getters() -> const Parse::GetTreeAndSubtreesStore& {
+    return *tree_and_subtrees_getters_;
   }
 
   auto printf_int_format_string() -> llvm::Value* {
@@ -133,7 +134,7 @@ class Context {
   llvm::DICompileUnit* di_compile_unit_;
 
   // Parse trees. Used for debug information and crash diagnostics.
-  llvm::ArrayRef<Parse::GetTreeAndSubtreesFn> tree_and_subtrees_getters_;
+  const Parse::GetTreeAndSubtreesStore* tree_and_subtrees_getters_;
 
   // The optional vlog stream.
   llvm::raw_ostream* vlog_stream_;

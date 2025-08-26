@@ -79,9 +79,9 @@ let b: i32 = Mod(0, 0);
 // CHECK:STDOUT:   %Mod.ref: %Mod.type = name_ref Mod, file.%Mod.decl [concrete = constants.%Mod]
 // CHECK:STDOUT:   %a.ref: %i32 = name_ref a, %a
 // CHECK:STDOUT:   %b.ref: %i32 = name_ref b, %b
-// CHECK:STDOUT:   %int.umod: init %i32 = call %Mod.ref(%a.ref, %b.ref)
-// CHECK:STDOUT:   %.loc11_19.1: %i32 = value_of_initializer %int.umod
-// CHECK:STDOUT:   %.loc11_19.2: %i32 = converted %int.umod, %.loc11_19.1
+// CHECK:STDOUT:   %Mod.call: init %i32 = call %Mod.ref(%a.ref, %b.ref)
+// CHECK:STDOUT:   %.loc11_19.1: %i32 = value_of_initializer %Mod.call
+// CHECK:STDOUT:   %.loc11_19.2: %i32 = converted %Mod.call, %.loc11_19.1
 // CHECK:STDOUT:   return %.loc11_19.2
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

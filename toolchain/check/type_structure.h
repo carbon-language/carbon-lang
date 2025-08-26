@@ -180,8 +180,12 @@ class TypeStructure : public Printable<TypeStructure> {
 //
 // Given `impl C as Z {}` the `self_const_id` would be a `C` and the interface
 // constraint would be `Z`.
+//
+// Returns nullopt if an ErrorInst is encountered in the self type or facet
+// value.
 auto BuildTypeStructure(Context& context, SemIR::InstId self_inst_id,
-                        SemIR::SpecificInterface interface) -> TypeStructure;
+                        SemIR::SpecificInterface interface)
+    -> std::optional<TypeStructure>;
 
 }  // namespace Carbon::Check
 

@@ -19,9 +19,9 @@ fn AddThreeIntegers(a: i32, b: i32, c: i32) -> i32 {
 // CHECK:STDOUT:
 // CHECK:STDOUT: define i32 @_CAddThreeIntegers.Main(i32 %a, i32 %b, i32 %c) !dbg !4 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %int.sadd.loc14_12 = add i32 %a, %b, !dbg !7
-// CHECK:STDOUT:   %int.sadd.loc14_16 = add i32 %int.sadd.loc14_12, %c, !dbg !7
-// CHECK:STDOUT:   ret i32 %int.sadd.loc14_16, !dbg !8
+// CHECK:STDOUT:   %Int.as.AddWith.impl.Op.call.loc14_12 = add i32 %a, %b, !dbg !7
+// CHECK:STDOUT:   %Int.as.AddWith.impl.Op.call.loc14_16 = add i32 %Int.as.AddWith.impl.Op.call.loc14_12, %c, !dbg !7
+// CHECK:STDOUT:   ret i32 %Int.as.AddWith.impl.Op.call.loc14_16, !dbg !8
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: !llvm.module.flags = !{!0, !1}

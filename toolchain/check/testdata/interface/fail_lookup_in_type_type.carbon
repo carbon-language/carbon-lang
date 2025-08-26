@@ -73,6 +73,7 @@ let U: (type where .Self impls type).missing = {};
 // CHECK:STDOUT:     %.Self: type = bind_symbolic_name .Self [symbolic_self = constants.%.Self]
 // CHECK:STDOUT:     %.Self.ref: type = name_ref .Self, %.Self [symbolic_self = constants.%.Self]
 // CHECK:STDOUT:     %.loc8: type = where_expr %.Self [concrete = constants.%type] {
+// CHECK:STDOUT:       requirement_base_facet_type type
 // CHECK:STDOUT:       requirement_impls %.Self.ref, type
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %missing.ref: <error> = name_ref missing, <error> [concrete = <error>]

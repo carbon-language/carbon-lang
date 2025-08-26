@@ -17,11 +17,11 @@ namespace Carbon::Lower {
 auto LowerToLLVM(
     llvm::LLVMContext& llvm_context,
     llvm::IntrusiveRefCntPtr<llvm::vfs::FileSystem> fs,
-    llvm::ArrayRef<Parse::GetTreeAndSubtreesFn> tree_and_subtrees_getters,
+    const Parse::GetTreeAndSubtreesStore& tree_and_subtrees_getters,
     const SemIR::File& sem_ir, const LowerToLLVMOptions& options)
     -> std::unique_ptr<llvm::Module> {
-  Context context(llvm_context, std::move(fs), options.want_debug_info,
-                  tree_and_subtrees_getters, sem_ir.filename(),
+  Context context(&llvm_context, std::move(fs), options.want_debug_info,
+                  &tree_and_subtrees_getters, sem_ir.filename(),
                   options.vlog_stream);
 
   // TODO: Consider disabling instruction naming by default if we're not

@@ -133,4 +133,33 @@ auto AddPatternVarStorage(Context& context, SemIR::InstBlockId pattern_block_id,
   }
 }
 
+auto AddSelfParamPattern(Context& context, SemIR::LocId loc_id,
+                         SemIR::ExprRegionId type_expr_region_id,
+                         SemIR::TypeId type_id) -> SemIR::InstId {
+  SemIR::InstId pattern_id =
+      AddBindingPattern(context, loc_id, SemIR::NameId::SelfValue, type_id,
+                        type_expr_region_id, /*is_generic=*/false,
+                        /*is_template=*/false)
+          .pattern_id;
+
+  pattern_id = AddPatternInst<SemIR::ValueParamPattern>(
+      context, loc_id,
+      {.type_id = context.insts().Get(pattern_id).type_id(),
+       .subpattern_id = pattern_id,
+       .index = SemIR::CallParamIndex::None});
+
+  return pattern_id;
+}
+
+auto AddAddrSelfParamPattern(Context& context, SemIR::LocId loc_id,
+                             SemIR::ExprRegionId type_expr_region_id,
+                             SemIR::TypeInstId type_inst_id) -> SemIR::InstId {
+  auto pattern_id = AddSelfParamPattern(context, loc_id, type_expr_region_id,
+                                        GetPointerType(context, type_inst_id));
+  return AddPatternInst<SemIR::AddrPattern>(
+      context, loc_id,
+      {.type_id = GetPatternType(context, SemIR::AutoType::TypeId),
+       .inner_id = pattern_id});
+}
+
 }  // namespace Carbon::Check

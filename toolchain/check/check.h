@@ -13,6 +13,7 @@
 #include "toolchain/diagnostics/diagnostic_emitter.h"
 #include "toolchain/parse/tree_and_subtrees.h"
 #include "toolchain/sem_ir/file.h"
+#include "toolchain/sem_ir/ids.h"
 
 namespace Carbon::Check {
 
@@ -29,7 +30,7 @@ struct Unit {
 
   // Storage for the unit's Clang AST. The unique_ptr should start empty, and
   // can be assigned as part of checking.
-  std::unique_ptr<clang::ASTUnit>* cpp_ast;
+  std::unique_ptr<clang::ASTUnit>* clang_ast_unit;
 };
 
 struct CheckParseTreesOptions {
@@ -38,6 +39,11 @@ struct CheckParseTreesOptions {
 
   // Whether to import the prelude.
   bool prelude_import = false;
+
+  // Whether to generate standard `impl`s for types, such as `Core.Destroy`.
+  // This only controls generation of the `impl`; code which expects the `impl`
+  // is expected to fail.
+  bool gen_implicit_type_impls = true;
 
   // If set, enables verbose output.
   llvm::raw_ostream* vlog_stream = nullptr;
@@ -49,10 +55,13 @@ struct CheckParseTreesOptions {
   // Whether to include each unit in dumps. This is required when dumping
   // (either of `dump_stream` or `raw_dump_stream`), and must have entries based
   // on CheckIRId.
-  llvm::ArrayRef<bool> include_in_dumps = {};
+  const FixedSizeValueStore<SemIR::CheckIRId, bool>* include_in_dumps = nullptr;
 
   // If set, SemIR will be dumped to this.
   llvm::raw_ostream* dump_stream = nullptr;
+
+  // If set, C++ AST will be dumped to this.
+  llvm::raw_ostream* dump_cpp_ast_stream = nullptr;
 
   // When dumping textual SemIR (or printing it to for verbose output), whether
   // to use ranges.
@@ -72,9 +81,12 @@ struct CheckParseTreesOptions {
 
 // Checks a group of parse trees. This will use imports to decide the order of
 // checking.
+//
+// `units` will only contain units which should be checked, and is not indexed
+// by `CheckIRId`.
 auto CheckParseTrees(
     llvm::MutableArrayRef<Unit> units,
-    llvm::ArrayRef<Parse::GetTreeAndSubtreesFn> tree_and_subtrees_getters,
+    const Parse::GetTreeAndSubtreesStore& tree_and_subtrees_getters,
     llvm::IntrusiveRefCntPtr<llvm::vfs::FileSystem> fs,
     const CheckParseTreesOptions& options,
     std::shared_ptr<clang::CompilerInvocation> clang_invocation) -> void;

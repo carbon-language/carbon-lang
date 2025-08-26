@@ -62,7 +62,7 @@ auto FunctionContext::LowerBlockContents(SemIR::InstBlockId block_id) -> void {
   // On crash, report the instruction we were lowering.
   PrettyStackTraceFunction stack_trace_entry([&](llvm::raw_ostream& output) {
     SemIR::DiagnosticLocConverter converter(
-        file_context_->context().tree_and_subtrees_getters(), &sem_ir());
+        &file_context_->context().tree_and_subtrees_getters(), &sem_ir());
     auto converted = converter.Convert(SemIR::LocId(inst_id_for_stack_trace),
                                        /*token_only=*/false);
     converted.loc.FormatLocation(output);
@@ -218,14 +218,14 @@ auto FunctionContext::CreateAlloca(llvm::Type* type, const llvm::Twine& name)
     builder().SetCurrentDebugLocation(debug_loc);
 
     // Create an alloca for this variable in the entry block.
+    // TODO: Compute alignment of the type, which may be greater than the
+    // alignment computed by LLVM.
     alloca = builder().CreateAlloca(type, /*ArraySize=*/nullptr, name);
   }
 
   // Create a lifetime start intrinsic here to indicate where its scope really
   // begins.
-  auto size = llvm_module().getDataLayout().getTypeAllocSize(type);
-  builder().CreateLifetimeStart(
-      alloca, llvm::ConstantInt::get(llvm_context(), llvm::APInt(64, size)));
+  builder().CreateLifetimeStart(alloca);
 
   // If we just created the first alloca, there is now definitely at least one
   // instruction after it -- there is a lifetime start instruction if nothing

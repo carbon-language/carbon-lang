@@ -15,12 +15,12 @@
 namespace Carbon::Lower {
 
 Context::Context(
-    llvm::LLVMContext& llvm_context,
+    llvm::LLVMContext* llvm_context,
     llvm::IntrusiveRefCntPtr<llvm::vfs::FileSystem> fs, bool want_debug_info,
-    llvm::ArrayRef<Parse::GetTreeAndSubtreesFn> tree_and_subtrees_getters,
+    const Parse::GetTreeAndSubtreesStore* tree_and_subtrees_getters,
     llvm::StringRef module_name, llvm::raw_ostream* vlog_stream)
-    : llvm_context_(&llvm_context),
-      llvm_module_(std::make_unique<llvm::Module>(module_name, llvm_context)),
+    : llvm_context_(llvm_context),
+      llvm_module_(std::make_unique<llvm::Module>(module_name, *llvm_context)),
       file_system_(std::move(fs)),
       di_builder_(*llvm_module_),
       di_compile_unit_(
@@ -80,7 +80,7 @@ auto Context::BuildDICompileUnit(llvm::StringRef module_name,
 
 auto Context::GetLocForDI(SemIR::AbsoluteNodeId abs_node_id) -> LocForDI {
   const auto& tree_and_subtrees =
-      tree_and_subtrees_getters()[abs_node_id.check_ir_id().index]();
+      tree_and_subtrees_getters().Get(abs_node_id.check_ir_id())();
   const auto& tokens = tree_and_subtrees.tree().tokens();
 
   if (abs_node_id.node_id().has_value()) {

@@ -51,9 +51,9 @@ let b: i32 = Mul(0x8000, 0x10000);
 // CHECK:STDOUT:   %Mul.ref: %Mul.type = name_ref Mul, file.%Mul.decl [concrete = constants.%Mul]
 // CHECK:STDOUT:   %a.ref: %i32 = name_ref a, %a
 // CHECK:STDOUT:   %b.ref: %i32 = name_ref b, %b
-// CHECK:STDOUT:   %int.umul: init %i32 = call %Mul.ref(%a.ref, %b.ref)
-// CHECK:STDOUT:   %.loc11_19.1: %i32 = value_of_initializer %int.umul
-// CHECK:STDOUT:   %.loc11_19.2: %i32 = converted %int.umul, %.loc11_19.1
+// CHECK:STDOUT:   %Mul.call: init %i32 = call %Mul.ref(%a.ref, %b.ref)
+// CHECK:STDOUT:   %.loc11_19.1: %i32 = value_of_initializer %Mul.call
+// CHECK:STDOUT:   %.loc11_19.2: %i32 = converted %Mul.call, %.loc11_19.1
 // CHECK:STDOUT:   return %.loc11_19.2
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

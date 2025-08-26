@@ -2,7 +2,7 @@
 // Exceptions. See /LICENSE for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
-// INCLUDE-FILE: toolchain/testing/testdata/min_prelude/destroy.carbon
+// INCLUDE-FILE: toolchain/testing/testdata/min_prelude/primitives.carbon
 //
 // AUTOUPDATE
 // TIP: To test this file alone, run:
@@ -124,9 +124,26 @@ library "[[@TEST_NAME]]";
 import Cpp library "inline_ambiguity.h";
 
 fn MyF() {
-  // CHECK:STDERR: fail_import_inline_ambiguity.carbon:[[@LINE+7]]:3: error: semantics TODO: `Unsupported: Lookup succeeded but couldn't find a single result; LookupResultKind: 5` [SemanticsTodo]
-  // CHECK:STDERR:   Cpp.N.foo();
+  // Artificially create an error message here so that the first error line for
+  // this file (which otherwise has no source location) is associated with this
+  // file split.
+  // TODO: Pass a location into Clang when performing C++ name lookup so that
+  // its error has a location attached.
+  // CHECK:STDERR: fail_import_inline_ambiguity.carbon:[[@LINE+13]]:3: error: name `error` not found [NameNotFound]
+  // CHECK:STDERR:   error;
   // CHECK:STDERR:   ^~~~~
+  // CHECK:STDERR:
+  // CHECK:STDERR: error: reference to 'N' is ambiguous [CppInteropParseError]
+  // CHECK:STDERR: fail_import_inline_ambiguity.carbon:[[@LINE-13]]:10: in file included here [InCppInclude]
+  // CHECK:STDERR: ./inline_ambiguity.h:2:11: note: candidate found by name lookup is 'N' [CppInteropParseNote]
+  // CHECK:STDERR:     2 | namespace N { void foo(); }
+  // CHECK:STDERR:       |           ^
+  // CHECK:STDERR: fail_import_inline_ambiguity.carbon:[[@LINE-17]]:10: in file included here [InCppInclude]
+  // CHECK:STDERR: ./inline_ambiguity.h:3:30: note: candidate found by name lookup is '(anonymous namespace)::N' [CppInteropParseNote]
+  // CHECK:STDERR:     3 | inline namespace { namespace N {} }
+  // CHECK:STDERR:       |                              ^
+  error;
+
   // CHECK:STDERR: fail_import_inline_ambiguity.carbon:[[@LINE+4]]:3: note: in `Cpp` name lookup for `N` [InCppNameLookup]
   // CHECK:STDERR:   Cpp.N.foo();
   // CHECK:STDERR:   ^~~~~
@@ -188,6 +205,32 @@ fn MyF() {
   //@dump-sem-ir-begin
   Cpp.r#base.foo();
   //@dump-sem-ir-end
+}
+
+// ============================================================================
+// Nested namespaces.
+// ============================================================================
+
+// --- nested.carbon
+
+library "[[@TEST_NAME]]";
+
+import Cpp inline '''
+namespace A {
+namespace B {
+namespace C {
+struct X { int n; };
+}
+}
+}
+
+struct Y {
+  A::B::C::X x;
+};
+''';
+
+fn Use(y: Cpp.Y) -> i32 {
+  return y.x.n;
 }
 
 // CHECK:STDOUT: --- import_single.carbon
@@ -311,9 +354,11 @@ fn MyF() {
 // CHECK:STDOUT:   %X: type = class_type @X [concrete]
 // CHECK:STDOUT:   %foo.type: type = fn_type @foo [concrete]
 // CHECK:STDOUT:   %foo: %foo.type = struct_value () [concrete]
-// CHECK:STDOUT:   %Op.type.0e5: type = fn_type @Op.2, @Destroy.impl(%X) [concrete]
-// CHECK:STDOUT:   %Op.cbf: %Op.type.0e5 = struct_value () [concrete]
 // CHECK:STDOUT:   %ptr.13d: type = ptr_type %X [concrete]
+// CHECK:STDOUT:   %foo__carbon_thunk.type: type = fn_type @foo__carbon_thunk [concrete]
+// CHECK:STDOUT:   %foo__carbon_thunk: %foo__carbon_thunk.type = struct_value () [concrete]
+// CHECK:STDOUT:   %T.as.Destroy.impl.Op.type.0e5: type = fn_type @T.as.Destroy.impl.Op, @T.as.Destroy.impl(%X) [concrete]
+// CHECK:STDOUT:   %T.as.Destroy.impl.Op.cbf: %T.as.Destroy.impl.Op.type.0e5 = struct_value () [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -326,21 +371,27 @@ fn MyF() {
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     <elided>
 // CHECK:STDOUT:   }
+// CHECK:STDOUT:   %foo__carbon_thunk.decl: %foo__carbon_thunk.type = fn_decl @foo__carbon_thunk [concrete = constants.%foo__carbon_thunk] {
+// CHECK:STDOUT:     <elided>
+// CHECK:STDOUT:   } {
+// CHECK:STDOUT:     <elided>
+// CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @MyF() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %Cpp.ref: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
-// CHECK:STDOUT:   <elided>
 // CHECK:STDOUT:   %foo.ref: %foo.type = name_ref foo, imports.%foo.decl [concrete = constants.%foo]
 // CHECK:STDOUT:   %.loc8_11.1: ref %X = temporary_storage
-// CHECK:STDOUT:   %foo.call: init %X = call %foo.ref() to %.loc8_11.1
-// CHECK:STDOUT:   %.loc8_11.2: ref %X = temporary %.loc8_11.1, %foo.call
-// CHECK:STDOUT:   %Op.bound: <bound method> = bound_method %.loc8_11.1, constants.%Op.cbf
+// CHECK:STDOUT:   %addr.loc8_11.1: %ptr.13d = addr_of %.loc8_11.1
+// CHECK:STDOUT:   %foo__carbon_thunk.call: init %empty_tuple.type = call imports.%foo__carbon_thunk.decl(%addr.loc8_11.1)
+// CHECK:STDOUT:   %.loc8_11.2: init %X = in_place_init %foo__carbon_thunk.call, %.loc8_11.1
+// CHECK:STDOUT:   %.loc8_11.3: ref %X = temporary %.loc8_11.1, %.loc8_11.2
+// CHECK:STDOUT:   %T.as.Destroy.impl.Op.bound: <bound method> = bound_method %.loc8_11.1, constants.%T.as.Destroy.impl.Op.cbf
 // CHECK:STDOUT:   <elided>
-// CHECK:STDOUT:   %bound_method: <bound method> = bound_method %.loc8_11.1, %Op.specific_fn
-// CHECK:STDOUT:   %addr: %ptr.13d = addr_of %.loc8_11.1
-// CHECK:STDOUT:   %no_op: init %empty_tuple.type = call %bound_method(%addr)
+// CHECK:STDOUT:   %bound_method: <bound method> = bound_method %.loc8_11.1, %T.as.Destroy.impl.Op.specific_fn
+// CHECK:STDOUT:   %addr.loc8_11.2: %ptr.13d = addr_of %.loc8_11.1
+// CHECK:STDOUT:   %T.as.Destroy.impl.Op.call: init %empty_tuple.type = call %bound_method(%addr.loc8_11.2)
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

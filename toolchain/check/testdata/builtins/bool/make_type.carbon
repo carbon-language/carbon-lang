@@ -47,9 +47,9 @@ var b: Bool() = false;
 // CHECK:STDOUT:   %b.var: ref bool = var %b.var_patt [concrete]
 // CHECK:STDOUT:   %.loc7_13.1: type = splice_block %.loc7_13.3 [concrete = bool] {
 // CHECK:STDOUT:     %Bool.ref: %Bool.type = name_ref Bool, imports.%Main.Bool [concrete = constants.%Bool]
-// CHECK:STDOUT:     %bool.make_type: init type = call %Bool.ref() [concrete = bool]
-// CHECK:STDOUT:     %.loc7_13.2: type = value_of_initializer %bool.make_type [concrete = bool]
-// CHECK:STDOUT:     %.loc7_13.3: type = converted %bool.make_type, %.loc7_13.2 [concrete = bool]
+// CHECK:STDOUT:     %Bool.call: init type = call %Bool.ref() [concrete = bool]
+// CHECK:STDOUT:     %.loc7_13.2: type = value_of_initializer %Bool.call [concrete = bool]
+// CHECK:STDOUT:     %.loc7_13.3: type = converted %Bool.call, %.loc7_13.2 [concrete = bool]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %b: ref bool = bind_name b, %b.var [concrete = %b.var]
 // CHECK:STDOUT: }

@@ -48,8 +48,8 @@ fn G() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: define i32 @"_CF.ImplsSomeInterface.Main:SomeInterface.Main"(i32 %x) !dbg !4 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %int.snegate = sub i32 0, %x, !dbg !7
-// CHECK:STDOUT:   ret i32 %int.snegate, !dbg !8
+// CHECK:STDOUT:   %Int.as.Negate.impl.Op.call = sub i32 0, %x, !dbg !7
+// CHECK:STDOUT:   ret i32 %Int.as.Negate.impl.Op.call, !dbg !8
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: define void @_CG.Main() !dbg !9 {

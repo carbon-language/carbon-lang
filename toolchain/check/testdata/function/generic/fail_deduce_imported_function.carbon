@@ -50,6 +50,7 @@ fn B() {
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %Z.type: type = facet_type <@Z> [concrete]
 // CHECK:STDOUT:   %Self: %Z.type = bind_symbolic_name Self, 0 [symbolic]
+// CHECK:STDOUT:   %.Self: type = bind_symbolic_name .Self [symbolic_self]
 // CHECK:STDOUT:   %T: %Z.type = bind_symbolic_name T, 0 [symbolic]
 // CHECK:STDOUT:   %pattern_type.5af: type = pattern_type %Z.type [concrete]
 // CHECK:STDOUT:   %T.as_type: type = facet_access_type %T [symbolic]
@@ -71,16 +72,19 @@ fn B() {
 // CHECK:STDOUT:     %x.patt: @A.%pattern_type (%pattern_type.64f) = binding_pattern x [concrete]
 // CHECK:STDOUT:     %x.param_patt: @A.%pattern_type (%pattern_type.64f) = value_param_pattern %x.patt, call_param0 [concrete]
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %Z.ref: type = name_ref Z, file.%Z.decl [concrete = constants.%Z.type]
-// CHECK:STDOUT:     %T.loc4_6.1: %Z.type = bind_symbolic_name T, 0 [symbolic = %T.loc4_6.2 (constants.%T)]
-// CHECK:STDOUT:     %x.param: @A.%struct_type.a.loc4_22.2 (%struct_type.a) = value_param call_param0
-// CHECK:STDOUT:     %.loc4_22: type = splice_block %struct_type.a.loc4_22.1 [symbolic = %struct_type.a.loc4_22.2 (constants.%struct_type.a)] {
-// CHECK:STDOUT:       %T.ref: %Z.type = name_ref T, %T.loc4_6.1 [symbolic = %T.loc4_6.2 (constants.%T)]
-// CHECK:STDOUT:       %T.as_type.loc4_21.1: type = facet_access_type %T.ref [symbolic = %T.as_type.loc4_21.2 (constants.%T.as_type)]
-// CHECK:STDOUT:       %.loc4_21: type = converted %T.ref, %T.as_type.loc4_21.1 [symbolic = %T.as_type.loc4_21.2 (constants.%T.as_type)]
-// CHECK:STDOUT:       %struct_type.a.loc4_22.1: type = struct_type {.a: @A.%T.as_type.loc4_21.2 (%T.as_type)} [symbolic = %struct_type.a.loc4_22.2 (constants.%struct_type.a)]
+// CHECK:STDOUT:     %.loc4_10: type = splice_block %Z.ref [concrete = constants.%Z.type] {
+// CHECK:STDOUT:       %.Self: type = bind_symbolic_name .Self [symbolic_self = constants.%.Self]
+// CHECK:STDOUT:       %Z.ref: type = name_ref Z, file.%Z.decl [concrete = constants.%Z.type]
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %x: @A.%struct_type.a.loc4_22.2 (%struct_type.a) = bind_name x, %x.param
+// CHECK:STDOUT:     %T.loc4_6.2: %Z.type = bind_symbolic_name T, 0 [symbolic = %T.loc4_6.1 (constants.%T)]
+// CHECK:STDOUT:     %x.param: @A.%struct_type.a.loc4_22.1 (%struct_type.a) = value_param call_param0
+// CHECK:STDOUT:     %.loc4_22: type = splice_block %struct_type.a.loc4_22.2 [symbolic = %struct_type.a.loc4_22.1 (constants.%struct_type.a)] {
+// CHECK:STDOUT:       %T.ref: %Z.type = name_ref T, %T.loc4_6.2 [symbolic = %T.loc4_6.1 (constants.%T)]
+// CHECK:STDOUT:       %T.as_type.loc4_21.2: type = facet_access_type %T.ref [symbolic = %T.as_type.loc4_21.1 (constants.%T.as_type)]
+// CHECK:STDOUT:       %.loc4_21: type = converted %T.ref, %T.as_type.loc4_21.2 [symbolic = %T.as_type.loc4_21.1 (constants.%T.as_type)]
+// CHECK:STDOUT:       %struct_type.a.loc4_22.2: type = struct_type {.a: @A.%T.as_type.loc4_21.1 (%T.as_type)} [symbolic = %struct_type.a.loc4_22.1 (constants.%struct_type.a)]
+// CHECK:STDOUT:     }
+// CHECK:STDOUT:     %x: @A.%struct_type.a.loc4_22.1 (%struct_type.a) = bind_name x, %x.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -92,31 +96,32 @@ fn B() {
 // CHECK:STDOUT:   witness = ()
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic fn @A(%T.loc4_6.1: %Z.type) {
-// CHECK:STDOUT:   %T.loc4_6.2: %Z.type = bind_symbolic_name T, 0 [symbolic = %T.loc4_6.2 (constants.%T)]
-// CHECK:STDOUT:   %T.as_type.loc4_21.2: type = facet_access_type %T.loc4_6.2 [symbolic = %T.as_type.loc4_21.2 (constants.%T.as_type)]
-// CHECK:STDOUT:   %struct_type.a.loc4_22.2: type = struct_type {.a: @A.%T.as_type.loc4_21.2 (%T.as_type)} [symbolic = %struct_type.a.loc4_22.2 (constants.%struct_type.a)]
-// CHECK:STDOUT:   %pattern_type: type = pattern_type %struct_type.a.loc4_22.2 [symbolic = %pattern_type (constants.%pattern_type.64f)]
+// CHECK:STDOUT: generic fn @A(%T.loc4_6.2: %Z.type) {
+// CHECK:STDOUT:   %T.loc4_6.1: %Z.type = bind_symbolic_name T, 0 [symbolic = %T.loc4_6.1 (constants.%T)]
+// CHECK:STDOUT:   %T.as_type.loc4_21.1: type = facet_access_type %T.loc4_6.1 [symbolic = %T.as_type.loc4_21.1 (constants.%T.as_type)]
+// CHECK:STDOUT:   %struct_type.a.loc4_22.1: type = struct_type {.a: @A.%T.as_type.loc4_21.1 (%T.as_type)} [symbolic = %struct_type.a.loc4_22.1 (constants.%struct_type.a)]
+// CHECK:STDOUT:   %pattern_type: type = pattern_type %struct_type.a.loc4_22.1 [symbolic = %pattern_type (constants.%pattern_type.64f)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
-// CHECK:STDOUT:   %require_complete: <witness> = require_complete_type %struct_type.a.loc4_22.2 [symbolic = %require_complete (constants.%require_complete)]
+// CHECK:STDOUT:   %require_complete: <witness> = require_complete_type %struct_type.a.loc4_22.1 [symbolic = %require_complete (constants.%require_complete)]
 // CHECK:STDOUT:
-// CHECK:STDOUT:   fn(%x.param: @A.%struct_type.a.loc4_22.2 (%struct_type.a)) {
+// CHECK:STDOUT:   fn(%x.param: @A.%struct_type.a.loc4_22.1 (%struct_type.a)) {
 // CHECK:STDOUT:   !entry:
 // CHECK:STDOUT:     return
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @A(constants.%T) {
-// CHECK:STDOUT:   %T.loc4_6.2 => constants.%T
-// CHECK:STDOUT:   %T.as_type.loc4_21.2 => constants.%T.as_type
-// CHECK:STDOUT:   %struct_type.a.loc4_22.2 => constants.%struct_type.a
+// CHECK:STDOUT:   %T.loc4_6.1 => constants.%T
+// CHECK:STDOUT:   %T.as_type.loc4_21.1 => constants.%T.as_type
+// CHECK:STDOUT:   %struct_type.a.loc4_22.1 => constants.%struct_type.a
 // CHECK:STDOUT:   %pattern_type => constants.%pattern_type.64f
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- fail_deduce_imported_function.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
+// CHECK:STDOUT:   %.Self: type = bind_symbolic_name .Self [symbolic_self]
 // CHECK:STDOUT:   %Z.type: type = facet_type <@Z> [concrete]
 // CHECK:STDOUT:   %T: %Z.type = bind_symbolic_name T, 0 [symbolic]
 // CHECK:STDOUT:   %pattern_type.3dd: type = pattern_type %Z.type [concrete]
@@ -159,18 +164,19 @@ fn B() {
 // CHECK:STDOUT:     %x.param_patt: @A.loc4.%pattern_type (%pattern_type.ea1) = value_param_pattern %x.patt, call_param0 [concrete]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %.loc4_13: type = splice_block %Z.ref [concrete = constants.%Z.type] {
+// CHECK:STDOUT:       %.Self: type = bind_symbolic_name .Self [symbolic_self = constants.%.Self]
 // CHECK:STDOUT:       %Lib.ref: <namespace> = name_ref Lib, imports.%Lib [concrete = imports.%Lib]
 // CHECK:STDOUT:       %Z.ref: type = name_ref Z, imports.%Lib.Z [concrete = constants.%Z.type]
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %T.loc4_6.1: %Z.type = bind_symbolic_name T, 0 [symbolic = %T.loc4_6.2 (constants.%T)]
-// CHECK:STDOUT:     %x.param: @A.loc4.%struct_type.a.loc4_26.2 (%struct_type.a) = value_param call_param0
-// CHECK:STDOUT:     %.loc4_26: type = splice_block %struct_type.a.loc4_26.1 [symbolic = %struct_type.a.loc4_26.2 (constants.%struct_type.a)] {
-// CHECK:STDOUT:       %T.ref: %Z.type = name_ref T, %T.loc4_6.1 [symbolic = %T.loc4_6.2 (constants.%T)]
-// CHECK:STDOUT:       %T.as_type.loc4_25.1: type = facet_access_type %T.ref [symbolic = %T.as_type.loc4_25.2 (constants.%T.as_type)]
-// CHECK:STDOUT:       %.loc4_25: type = converted %T.ref, %T.as_type.loc4_25.1 [symbolic = %T.as_type.loc4_25.2 (constants.%T.as_type)]
-// CHECK:STDOUT:       %struct_type.a.loc4_26.1: type = struct_type {.a: @A.loc4.%T.as_type.loc4_25.2 (%T.as_type)} [symbolic = %struct_type.a.loc4_26.2 (constants.%struct_type.a)]
+// CHECK:STDOUT:     %T.loc4_6.2: %Z.type = bind_symbolic_name T, 0 [symbolic = %T.loc4_6.1 (constants.%T)]
+// CHECK:STDOUT:     %x.param: @A.loc4.%struct_type.a.loc4_26.1 (%struct_type.a) = value_param call_param0
+// CHECK:STDOUT:     %.loc4_26: type = splice_block %struct_type.a.loc4_26.2 [symbolic = %struct_type.a.loc4_26.1 (constants.%struct_type.a)] {
+// CHECK:STDOUT:       %T.ref: %Z.type = name_ref T, %T.loc4_6.2 [symbolic = %T.loc4_6.1 (constants.%T)]
+// CHECK:STDOUT:       %T.as_type.loc4_25.2: type = facet_access_type %T.ref [symbolic = %T.as_type.loc4_25.1 (constants.%T.as_type)]
+// CHECK:STDOUT:       %.loc4_25: type = converted %T.ref, %T.as_type.loc4_25.2 [symbolic = %T.as_type.loc4_25.1 (constants.%T.as_type)]
+// CHECK:STDOUT:       %struct_type.a.loc4_26.2: type = struct_type {.a: @A.loc4.%T.as_type.loc4_25.1 (%T.as_type)} [symbolic = %struct_type.a.loc4_26.1 (constants.%struct_type.a)]
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %x: @A.loc4.%struct_type.a.loc4_26.2 (%struct_type.a) = bind_name x, %x.param
+// CHECK:STDOUT:     %x: @A.loc4.%struct_type.a.loc4_26.1 (%struct_type.a) = bind_name x, %x.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %B.decl: %B.type = fn_decl @B [concrete = constants.%B] {} {}
 // CHECK:STDOUT: }
@@ -181,16 +187,16 @@ fn B() {
 // CHECK:STDOUT:   witness = ()
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic fn @A.loc4(%T.loc4_6.1: %Z.type) {
-// CHECK:STDOUT:   %T.loc4_6.2: %Z.type = bind_symbolic_name T, 0 [symbolic = %T.loc4_6.2 (constants.%T)]
-// CHECK:STDOUT:   %T.as_type.loc4_25.2: type = facet_access_type %T.loc4_6.2 [symbolic = %T.as_type.loc4_25.2 (constants.%T.as_type)]
-// CHECK:STDOUT:   %struct_type.a.loc4_26.2: type = struct_type {.a: @A.loc4.%T.as_type.loc4_25.2 (%T.as_type)} [symbolic = %struct_type.a.loc4_26.2 (constants.%struct_type.a)]
-// CHECK:STDOUT:   %pattern_type: type = pattern_type %struct_type.a.loc4_26.2 [symbolic = %pattern_type (constants.%pattern_type.ea1)]
+// CHECK:STDOUT: generic fn @A.loc4(%T.loc4_6.2: %Z.type) {
+// CHECK:STDOUT:   %T.loc4_6.1: %Z.type = bind_symbolic_name T, 0 [symbolic = %T.loc4_6.1 (constants.%T)]
+// CHECK:STDOUT:   %T.as_type.loc4_25.1: type = facet_access_type %T.loc4_6.1 [symbolic = %T.as_type.loc4_25.1 (constants.%T.as_type)]
+// CHECK:STDOUT:   %struct_type.a.loc4_26.1: type = struct_type {.a: @A.loc4.%T.as_type.loc4_25.1 (%T.as_type)} [symbolic = %struct_type.a.loc4_26.1 (constants.%struct_type.a)]
+// CHECK:STDOUT:   %pattern_type: type = pattern_type %struct_type.a.loc4_26.1 [symbolic = %pattern_type (constants.%pattern_type.ea1)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
-// CHECK:STDOUT:   %require_complete: <witness> = require_complete_type %struct_type.a.loc4_26.2 [symbolic = %require_complete (constants.%require_complete)]
+// CHECK:STDOUT:   %require_complete: <witness> = require_complete_type %struct_type.a.loc4_26.1 [symbolic = %require_complete (constants.%require_complete)]
 // CHECK:STDOUT:
-// CHECK:STDOUT:   fn(%x.param: @A.loc4.%struct_type.a.loc4_26.2 (%struct_type.a)) {
+// CHECK:STDOUT:   fn(%x.param: @A.loc4.%struct_type.a.loc4_26.1 (%struct_type.a)) {
 // CHECK:STDOUT:   !entry:
 // CHECK:STDOUT:     return
 // CHECK:STDOUT:   }
@@ -221,9 +227,9 @@ fn B() {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @A.loc4(constants.%T) {
-// CHECK:STDOUT:   %T.loc4_6.2 => constants.%T
-// CHECK:STDOUT:   %T.as_type.loc4_25.2 => constants.%T.as_type
-// CHECK:STDOUT:   %struct_type.a.loc4_26.2 => constants.%struct_type.a
+// CHECK:STDOUT:   %T.loc4_6.1 => constants.%T
+// CHECK:STDOUT:   %T.as_type.loc4_25.1 => constants.%T.as_type
+// CHECK:STDOUT:   %struct_type.a.loc4_26.1 => constants.%struct_type.a
 // CHECK:STDOUT:   %pattern_type => constants.%pattern_type.ea1
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

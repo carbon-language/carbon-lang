@@ -80,6 +80,7 @@ cc_test(
         ":global_exe_path",
         ":gtest_main",
         ":source_gen_lib",
+        "//common:all_llvm_targets",
         "//common:set",
         "//toolchain/driver",
         "//toolchain/install:install_paths_test_helpers",

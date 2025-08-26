@@ -10,12 +10,11 @@
 
 namespace Carbon {
 
-auto DriverSubcommand::DisableFuzzingExternalLibraries(DriverEnv& driver_env,
-                                                       llvm::StringRef name)
-    -> bool {
+auto DriverSubcommand::TestAndDiagnoseIfFuzzingExternalLibraries(
+    DriverEnv& driver_env, llvm::StringRef name) -> bool {
   // Only need to do anything when fuzzing.
   if (!driver_env.fuzzing) {
-    return true;
+    return false;
   }
 
   CARBON_DIAGNOSTIC(
@@ -23,7 +22,7 @@ auto DriverSubcommand::DisableFuzzingExternalLibraries(DriverEnv& driver_env,
       "preventing fuzzing of `{0}` subcommand due to external library",
       std::string);
   driver_env.emitter.Emit(ToolFuzzingDisallowed, name.str());
-  return false;
+  return true;
 }
 
 }  // namespace Carbon

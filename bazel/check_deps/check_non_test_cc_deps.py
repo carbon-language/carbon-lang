@@ -46,6 +46,9 @@ for dep in deps:
             "clang",
             "clang-tools-extra/clangd",
             "libunwind",
+            # While this is in a `third_party` directory, its code is documented
+            # as part of LLVM and for use in compiler-rt.
+            "third-party/siphash",
         ):
             sys.exit(
                 "ERROR: unexpected dependency into the LLVM project: %s" % dep

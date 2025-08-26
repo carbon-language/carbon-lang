@@ -36,9 +36,9 @@ fn M() {
 // CHECK:STDOUT:   %ptr_i32.var = alloca ptr, align 8, !dbg !7
 // CHECK:STDOUT:   %ptr_f64.var = alloca ptr, align 8, !dbg !8
 // CHECK:STDOUT:   %ptr_bool.var = alloca ptr, align 8, !dbg !9
-// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(i64 8, ptr %ptr_i32.var), !dbg !7
-// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(i64 8, ptr %ptr_f64.var), !dbg !8
-// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(i64 8, ptr %ptr_bool.var), !dbg !9
+// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %ptr_i32.var), !dbg !7
+// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %ptr_f64.var), !dbg !8
+// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %ptr_bool.var), !dbg !9
 // CHECK:STDOUT:   %.loc27_5 = load ptr, ptr %ptr_i32.var, align 8, !dbg !10
 // CHECK:STDOUT:   %.loc27_14 = load ptr, ptr %ptr_bool.var, align 8, !dbg !11
 // CHECK:STDOUT:   %F.call.loc27 = call i32 @_CF.Main.2fe87eb83f5a4614(ptr %.loc27_5, ptr %.loc27_14, i32 0), !dbg !12
@@ -49,19 +49,19 @@ fn M() {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nocallback nofree nosync nounwind willreturn memory(argmem: readwrite)
-// CHECK:STDOUT: declare void @llvm.lifetime.start.p0(i64 immarg, ptr captures(none)) #0
+// CHECK:STDOUT: declare void @llvm.lifetime.start.p0(ptr captures(none)) #0
 // CHECK:STDOUT:
 // CHECK:STDOUT: define linkonce_odr i32 @_CF.Main.2fe87eb83f5a4614(ptr %x, ptr %y, i32 %count) !dbg !17 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %int.greater = icmp sgt i32 %count, 2, !dbg !18
-// CHECK:STDOUT:   br i1 %int.greater, label %if.then, label %if.else, !dbg !19
+// CHECK:STDOUT:   %Int.as.OrderedWith.impl.Greater.call = icmp sgt i32 %count, 2, !dbg !18
+// CHECK:STDOUT:   br i1 %Int.as.OrderedWith.impl.Greater.call, label %if.then, label %if.else, !dbg !19
 // CHECK:STDOUT:
 // CHECK:STDOUT: if.then:                                          ; preds = %entry
 // CHECK:STDOUT:   ret i32 %count, !dbg !20
 // CHECK:STDOUT:
 // CHECK:STDOUT: if.else:                                          ; preds = %entry
-// CHECK:STDOUT:   %int.sadd = add i32 %count, 1, !dbg !21
-// CHECK:STDOUT:   %F.call = call i32 @_CF.Main.2fe87eb83f5a4614(ptr %y, ptr %x, i32 %int.sadd), !dbg !22
+// CHECK:STDOUT:   %Int.as.AddWith.impl.Op.call = add i32 %count, 1, !dbg !21
+// CHECK:STDOUT:   %F.call = call i32 @_CF.Main.2fe87eb83f5a4614(ptr %y, ptr %x, i32 %Int.as.AddWith.impl.Op.call), !dbg !22
 // CHECK:STDOUT:   ret i32 %F.call, !dbg !23
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

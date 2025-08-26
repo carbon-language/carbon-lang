@@ -35,27 +35,23 @@ auto HandleBindingPattern(Context& context) -> void {
   // A `template` keyword may precede the name.
   auto template_token = context.ConsumeIf(Lex::TokenKind::Template);
 
-  // The first item should be an identifier or `self`.
-  bool has_name = false;
+  // The first item should be an identifier, the placeholder `_`, or `self`.
   if (auto identifier = context.ConsumeIf(Lex::TokenKind::Identifier)) {
     context.AddLeafNode(NodeKind::IdentifierNameNotBeforeParams, *identifier);
-    has_name = true;
   } else if (auto self =
                  context.ConsumeIf(Lex::TokenKind::SelfValueIdentifier)) {
     // Checking will validate the `self` is only declared in the implicit
     // parameter list of a function.
     context.AddLeafNode(NodeKind::SelfValueName, *self);
-    has_name = true;
   } else if (auto underscore = context.ConsumeIf(Lex::TokenKind::Underscore)) {
     context.AddLeafNode(NodeKind::UnderscoreName, *underscore);
-    has_name = true;
-  }
-  if (!has_name) {
+  } else {
     // Add a placeholder for the name.
     context.AddLeafNode(NodeKind::IdentifierNameNotBeforeParams,
                         *context.position(), /*has_error=*/true);
     on_error(/*expected_name=*/true);
   }
+
   if (auto token_kind = context.PositionKind();
       token_kind == Lex::TokenKind::Colon ||
       token_kind == Lex::TokenKind::ColonExclaim) {
@@ -77,6 +73,14 @@ auto HandleBindingPattern(Context& context) -> void {
                      : StateKind::BindingPatternFinishAsGeneric;
     // Use the `:` or `:!` for the root node.
     state.token = context.Consume();
+
+    if (token_kind == Lex::TokenKind::ColonExclaim) {
+      // Add a virtual node before the compile time binding's type
+      // expression.
+      context.AddNode(NodeKind::CompileTimeBindingPatternStart, state.token,
+                      state.has_error);
+    }
+
     context.PushState(state);
     context.PushStateForExpr(PrecedenceGroup::ForType());
   } else {

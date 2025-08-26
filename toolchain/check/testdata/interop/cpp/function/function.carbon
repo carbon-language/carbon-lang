@@ -107,12 +107,12 @@ fn F() {
 }
 
 // ============================================================================
-// Variadic
+// Variadic arguments
 // ============================================================================
 
 // --- variadic.h
 
-auto foo(int...) -> void;
+auto foo(int x, ...) -> void;
 
 // --- fail_todo_import_variadic.carbon
 
@@ -123,13 +123,13 @@ import Cpp library "variadic.h";
 fn F() {
   //@dump-sem-ir-begin
   // CHECK:STDERR: fail_todo_import_variadic.carbon:[[@LINE+7]]:3: error: semantics TODO: `Unsupported: Variadic function` [SemanticsTodo]
-  // CHECK:STDERR:   Cpp.foo();
+  // CHECK:STDERR:   Cpp.foo(8);
   // CHECK:STDERR:   ^~~~~~~
   // CHECK:STDERR: fail_todo_import_variadic.carbon:[[@LINE+4]]:3: note: in `Cpp` name lookup for `foo` [InCppNameLookup]
-  // CHECK:STDERR:   Cpp.foo();
+  // CHECK:STDERR:   Cpp.foo(8);
   // CHECK:STDERR:   ^~~~~~~
   // CHECK:STDERR:
-  Cpp.foo();
+  Cpp.foo(8);
   //@dump-sem-ir-end
 }
 
@@ -232,6 +232,7 @@ fn F() {
 // CHECK:STDOUT: --- fail_todo_import_variadic.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
+// CHECK:STDOUT:   %int_8: Core.IntLiteral = int_value 8 [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -245,6 +246,7 @@ fn F() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %Cpp.ref: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
 // CHECK:STDOUT:   %foo.ref: <error> = name_ref foo, <error> [concrete = <error>]
+// CHECK:STDOUT:   %int_8: Core.IntLiteral = int_value 8 [concrete = constants.%int_8]
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

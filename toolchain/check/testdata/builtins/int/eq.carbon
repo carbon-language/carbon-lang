@@ -124,9 +124,9 @@ fn Test(n: Core.IntLiteral()) {
 // CHECK:STDOUT:   %Eq.ref: %Eq.type = name_ref Eq, file.%Eq.decl [concrete = constants.%Eq]
 // CHECK:STDOUT:   %a.ref: %i32 = name_ref a, %a
 // CHECK:STDOUT:   %b.ref: %i32 = name_ref b, %b
-// CHECK:STDOUT:   %int.eq: init bool = call %Eq.ref(%a.ref, %b.ref)
-// CHECK:STDOUT:   %.loc16_18.1: bool = value_of_initializer %int.eq
-// CHECK:STDOUT:   %.loc16_18.2: bool = converted %int.eq, %.loc16_18.1
+// CHECK:STDOUT:   %Eq.call: init bool = call %Eq.ref(%a.ref, %b.ref)
+// CHECK:STDOUT:   %.loc16_18.1: bool = value_of_initializer %Eq.call
+// CHECK:STDOUT:   %.loc16_18.2: bool = converted %Eq.call, %.loc16_18.1
 // CHECK:STDOUT:   return %.loc16_18.2
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

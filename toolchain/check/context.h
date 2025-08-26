@@ -58,7 +58,8 @@ class Context {
   explicit Context(DiagnosticEmitterBase* emitter,
                    Parse::GetTreeAndSubtreesFn tree_and_subtrees_getter,
                    SemIR::File* sem_ir, int imported_ir_count,
-                   int total_ir_count, llvm::raw_ostream* vlog_stream);
+                   int total_ir_count, bool gen_implicit_type_impls,
+                   llvm::raw_ostream* vlog_stream);
 
   // Marks an implementation TODO. Always returns false.
   auto TODO(SemIR::LocId loc_id, std::string label) -> bool;
@@ -91,6 +92,8 @@ class Context {
   auto tokens() const -> const Lex::TokenizedBuffer& {
     return parse_tree().tokens();
   }
+
+  auto gen_implicit_type_impls() -> bool { return gen_implicit_type_impls_; }
 
   auto vlog_stream() -> llvm::raw_ostream* { return vlog_stream_; }
 
@@ -144,7 +147,8 @@ class Context {
 
   auto exports() -> llvm::SmallVector<SemIR::InstId>& { return exports_; }
 
-  auto check_ir_map() -> llvm::MutableArrayRef<SemIR::ImportIRId> {
+  auto check_ir_map()
+      -> FixedSizeValueStore<SemIR::CheckIRId, SemIR::ImportIRId>& {
     return check_ir_map_;
   }
 
@@ -225,6 +229,13 @@ class Context {
     return poisoned_concrete_impl_lookup_queries_;
   }
 
+  // A stack that tracks the rewrite constraints from a `where` expression being
+  // checked. The back of the stack is the currently checked `where` expression.
+  auto rewrites_stack()
+      -> llvm::SmallVector<Map<SemIR::ConstantId, SemIR::InstId>>& {
+    return rewrites_stack_;
+  }
+
   // --------------------------------------------------------------------------
   // Directly expose SemIR::File data accessors for brevity in calls.
   // --------------------------------------------------------------------------
@@ -265,7 +276,7 @@ class Context {
     return sem_ir().import_ir_insts();
   }
   auto ast_context() -> clang::ASTContext& {
-    return sem_ir().cpp_ast()->getASTContext();
+    return sem_ir().clang_ast_unit()->getASTContext();
   }
   auto names() -> SemIR::NameStoreWrapper { return sem_ir().names(); }
   auto name_scopes() -> SemIR::NameScopeStore& {
@@ -273,6 +284,9 @@ class Context {
   }
   auto struct_type_fields() -> SemIR::StructTypeFieldsStore& {
     return sem_ir().struct_type_fields();
+  }
+  auto custom_layouts() -> SemIR::CustomLayoutStore& {
+    return sem_ir().custom_layouts();
   }
   auto types() -> SemIR::TypeStore& { return sem_ir().types(); }
   // Instructions should be added with `AddInst` or `AddInstInNoBlock` from
@@ -299,6 +313,10 @@ class Context {
 
   // The SemIR::File being added to.
   SemIR::File* sem_ir_;
+
+  // Whether to generate standard `impl`s for types, such as `Core.Destroy`; see
+  // `CheckParseTreesOptions`.
+  bool gen_implicit_type_impls_;
 
   // Whether to print verbose output.
   llvm::raw_ostream* vlog_stream_;
@@ -353,7 +371,7 @@ class Context {
   llvm::SmallVector<SemIR::InstId> exports_;
 
   // Maps CheckIRId to ImportIRId.
-  llvm::SmallVector<SemIR::ImportIRId> check_ir_map_;
+  FixedSizeValueStore<SemIR::CheckIRId, SemIR::ImportIRId> check_ir_map_;
 
   // Per-import constant values. These refer to the main IR and mainly serve as
   // a lookup table for quick access.
@@ -412,6 +430,11 @@ class Context {
   // results at the end of the file. Any difference is diagnosed.
   llvm::SmallVector<PoisonedConcreteImplLookupQuery>
       poisoned_concrete_impl_lookup_queries_;
+
+  // A map from an ImplWitnessAccess on the LHS of a rewrite constraint to its
+  // value on the RHS. Used during checking of a `where` expression to allow
+  // constraints to access values from earlier constraints.
+  llvm::SmallVector<Map<SemIR::ConstantId, SemIR::InstId>> rewrites_stack_;
 };
 
 }  // namespace Carbon::Check

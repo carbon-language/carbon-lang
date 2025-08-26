@@ -33,8 +33,8 @@ fn Run() {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   %t.var = alloca i32, align 4, !dbg !10
 // CHECK:STDOUT:   %.loc16_18.1.temp = alloca { i32, i32 }, align 8, !dbg !11
-// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(i64 4, ptr %t.var), !dbg !10
-// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(i64 8, ptr %.loc16_18.1.temp), !dbg !11
+// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %t.var), !dbg !10
+// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %.loc16_18.1.temp), !dbg !11
 // CHECK:STDOUT:   call void @_CF.Main(ptr %.loc16_18.1.temp), !dbg !11
 // CHECK:STDOUT:   %tuple.elem1.tuple.elem = getelementptr inbounds nuw { i32, i32 }, ptr %.loc16_18.1.temp, i32 0, i32 1, !dbg !11
 // CHECK:STDOUT:   %.loc16_19 = load i32, ptr %tuple.elem1.tuple.elem, align 4, !dbg !11
@@ -46,7 +46,7 @@ fn Run() {
 // CHECK:STDOUT: declare void @llvm.memcpy.p0.p0.i64(ptr noalias writeonly captures(none), ptr noalias readonly captures(none), i64, i1 immarg) #0
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nocallback nofree nosync nounwind willreturn memory(argmem: readwrite)
-// CHECK:STDOUT: declare void @llvm.lifetime.start.p0(i64 immarg, ptr captures(none)) #1
+// CHECK:STDOUT: declare void @llvm.lifetime.start.p0(ptr captures(none)) #1
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; uselistorder directives
 // CHECK:STDOUT: uselistorder ptr @llvm.lifetime.start.p0, { 1, 0 }

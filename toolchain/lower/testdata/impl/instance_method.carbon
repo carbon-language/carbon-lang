@@ -38,8 +38,8 @@ fn Call(a: A*) -> A* {
 // CHECK:STDOUT:
 // CHECK:STDOUT: define ptr @_CCall.Main(ptr %a) !dbg !8 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %Get.call = call ptr @"_CGet.A.Main:GetSelf.Main"(ptr %a), !dbg !9
-// CHECK:STDOUT:   ret ptr %Get.call, !dbg !10
+// CHECK:STDOUT:   %A.as.GetSelf.impl.Get.call = call ptr @"_CGet.A.Main:GetSelf.Main"(ptr %a), !dbg !9
+// CHECK:STDOUT:   ret ptr %A.as.GetSelf.impl.Get.call, !dbg !10
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: !llvm.module.flags = !{!0, !1}

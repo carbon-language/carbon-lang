@@ -29,6 +29,8 @@ cc_library(
 cc_library(
     name = "context",
     srcs = [
+        "clang_global_decl.cpp",
+        "clang_global_decl.h",
         "constant.cpp",
         "constant.h",
         "context.cpp",

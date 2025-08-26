@@ -4,6 +4,7 @@
 
 load("@rules_shell//shell:sh_test.bzl", "sh_test")
 load("//bazel/cc_rules:defs.bzl", "cc_binary", "cc_library", "cc_test")
+load("//bazel/cc_toolchains:defs.bzl", "cc_env")
 load("//testing/fuzzing:rules.bzl", "cc_fuzz_test")
 
 package(default_visibility = ["//visibility:public"])
@@ -21,15 +22,20 @@ cc_library(
     srcs = ["clang_runner.cpp"],
     hdrs = ["clang_runner.h"],
     deps = [
+        ":llvm_runner",
         ":tool_runner_base",
+        "//common:error",
+        "//common:filesystem",
         "//common:ostream",
         "//common:vlog",
+        "//toolchain/base:runtime_sources",
         "//toolchain/install:install_paths",
         "@llvm-project//clang:basic",
         "@llvm-project//clang:clang-driver",
         "@llvm-project//clang:driver",
         "@llvm-project//clang:frontend",
         "@llvm-project//llvm:Core",
+        "@llvm-project//llvm:Object",
         "@llvm-project//llvm:Support",
         "@llvm-project//llvm:TargetParser",
     ],
@@ -39,8 +45,10 @@ cc_test(
     name = "clang_runner_test",
     size = "small",
     srcs = ["clang_runner_test.cpp"],
+    data = ["//toolchain/install:install_data"],
     deps = [
         ":clang_runner",
+        ":llvm_runner",
         "//common:all_llvm_targets",
         "//common:check",
         "//common:ostream",
@@ -62,6 +70,7 @@ cc_binary(
     srcs = ["compile_benchmark.cpp"],
     deps = [
         ":driver",
+        "//common:all_llvm_targets",
         "//testing/base:benchmark_main",
         "//testing/base:global_exe_path",
         "//testing/base:source_gen_lib",
@@ -81,11 +90,14 @@ sh_test(
         # The `$$` is repeated for Bazel escaping of `$`.
         "--benchmark_filter=/256$$",
     ],
+    env = cc_env(),
 )
 
 cc_library(
     name = "driver",
     srcs = [
+        "build_runtimes_subcommand.cpp",
+        "build_runtimes_subcommand.h",
         "clang_subcommand.cpp",
         "clang_subcommand.h",
         "codegen_options.cpp",
@@ -141,8 +153,10 @@ cc_library(
         "//toolchain/parse",
         "//toolchain/parse:tree",
         "//toolchain/sem_ir:file",
+        "//toolchain/sem_ir:typed_insts",
         "//toolchain/source:source_buffer",
         "@llvm-project//llvm:Core",
+        "@llvm-project//llvm:MC",
         "@llvm-project//llvm:Support",
         "@llvm-project//llvm:TargetParser",
     ],

@@ -7,14 +7,15 @@
 #include <gmock/gmock.h>
 #include <gtest/gtest.h>
 
+#include <filesystem>
 #include <memory>
 #include <string>
 
 #include "common/check.h"
+#include "common/error_test_helpers.h"
+#include "common/filesystem.h"
 #include "llvm/ADT/SmallString.h"
-#include "llvm/Support/FileSystem.h"
 #include "llvm/Support/FormatVariadic.h"
-#include "llvm/Support/Path.h"
 #include "testing/base/global_exe_path.h"
 #include "tools/cpp/runfiles/runfiles.h"
 
@@ -22,7 +23,7 @@ namespace Carbon {
 
 class InstallPathsTestPeer {
  public:
-  static auto GetPrefix(const InstallPaths& paths) -> llvm::StringRef {
+  static auto GetPrefix(const InstallPaths& paths) -> std::filesystem::path {
     return paths.prefix_;
   }
 };
@@ -30,8 +31,10 @@ class InstallPathsTestPeer {
 namespace {
 
 using ::bazel::tools::cpp::runfiles::Runfiles;
+using ::testing::_;
 using ::testing::Eq;
 using ::testing::HasSubstr;
+using Testing::IsSuccess;
 using ::testing::Optional;
 using ::testing::StartsWith;
 
@@ -48,43 +51,40 @@ class InstallPathsTest : public ::testing::Test {
   // check that the path accessors point to the right kind of file or
   // directory.
   auto TestInstallPaths(const InstallPaths& paths) -> void {
-    auto prefix = InstallPathsTestPeer::GetPrefix(paths);
+    std::filesystem::path prefix_path = InstallPathsTestPeer::GetPrefix(paths);
 
-    SCOPED_TRACE(llvm::formatv("Install prefix: '{0}'", prefix));
+    SCOPED_TRACE(llvm::formatv("Install prefix: '{0}'", prefix_path));
 
-    // Grab a the prefix into a string to make it easier to use in the test.
-    EXPECT_TRUE(llvm::sys::fs::exists(prefix));
-    EXPECT_TRUE(llvm::sys::fs::is_directory(prefix));
+    // Open the prefix directory.
+    auto prefix_result = Filesystem::Cwd().OpenDir(prefix_path);
+    ASSERT_THAT(prefix_result, IsSuccess(_));
+    Filesystem::Dir prefix = *std::move(prefix_result);
 
     // Now check that all the expected parts of the toolchain's install are in
     // fact found using the API.
-    llvm::SmallString<256> driver_path(prefix);
     // TODO: Adjust this to work equally well on Windows.
-    llvm::sys::path::append(driver_path, llvm::sys::path::Style::posix,
-                            "bin/carbon");
-    EXPECT_TRUE(llvm::sys::fs::exists(driver_path)) << "path: " << driver_path;
-    EXPECT_TRUE(llvm::sys::fs::can_execute(driver_path))
-        << "path: " << driver_path;
+    EXPECT_THAT(
+        prefix.Access("bin/carbon", Filesystem::AccessCheckFlags::Execute),
+        IsSuccess(Eq(true)))
+        << "path: " << (prefix_path / "bin/carbon");
 
-    std::string core_package_path = paths.core_package();
-    ASSERT_THAT(core_package_path, StartsWith(prefix));
-    EXPECT_TRUE(llvm::sys::fs::exists(core_package_path + "/prelude.carbon"))
+    std::filesystem::path core_package_path = paths.core_package();
+    ASSERT_THAT(core_package_path, StartsWith(prefix_path));
+    EXPECT_THAT(Filesystem::Cwd().Access(core_package_path / "prelude.carbon"),
+                IsSuccess(Eq(true)))
         << "path: " << core_package_path;
 
-    std::string llvm_bin_path = paths.llvm_install_bin();
-    ASSERT_THAT(llvm_bin_path, StartsWith(prefix));
-    EXPECT_TRUE(llvm::sys::fs::exists(llvm_bin_path))
-        << "path: " << llvm_bin_path;
-    EXPECT_TRUE(llvm::sys::fs::is_directory(llvm_bin_path))
-        << "path: " << llvm_bin_path;
+    std::filesystem::path llvm_bin_path = paths.llvm_install_bin();
+    ASSERT_THAT(llvm_bin_path, StartsWith(prefix_path));
+    auto open_result = Filesystem::Cwd().OpenDir(llvm_bin_path);
+    ASSERT_THAT(open_result, IsSuccess(_));
+    Filesystem::Dir llvm_bin = *std::move(open_result);
 
-    for (llvm::StringRef llvm_bin : {"ld.lld", "ld64.lld"}) {
-      llvm::SmallString<128> bin_path;
-      bin_path.assign(llvm_bin_path);
-      llvm::sys::path::append(bin_path, llvm_bin);
-
-      EXPECT_TRUE(llvm::sys::fs::exists(bin_path)) << "path: " << bin_path;
-      EXPECT_TRUE(llvm::sys::fs::can_execute(bin_path)) << "path: " << bin_path;
+    for (std::filesystem::path bin_name : {"ld.lld", "ld64.lld"}) {
+      EXPECT_THAT(
+          llvm_bin.Access(bin_name, Filesystem::AccessCheckFlags::Execute),
+          IsSuccess(Eq(true)))
+          << "path: " << (llvm_bin_path / bin_name);
     }
   }
 
@@ -120,12 +120,14 @@ TEST_F(InstallPathsTest, TestRunfiles) {
 }
 
 TEST_F(InstallPathsTest, BinaryRunfiles) {
-  std::string test_binary_path =
+  std::filesystem::path test_binary_path =
       test_runfiles_->Rlocation("carbon/toolchain/install/test_binary");
-  CARBON_CHECK(llvm::sys::fs::can_execute(test_binary_path), "{0}",
-               test_binary_path);
+  ASSERT_THAT(Filesystem::Cwd().Access(test_binary_path,
+                                       Filesystem::AccessCheckFlags::Execute),
+              IsSuccess(Eq(true)))
+      << "path: " << test_binary_path;
 
-  auto paths = InstallPaths::MakeForBazelRunfiles(test_binary_path);
+  auto paths = InstallPaths::MakeForBazelRunfiles(test_binary_path.native());
   ASSERT_THAT(paths.error(), Eq(std::nullopt)) << *paths.error();
   TestInstallPaths(paths);
 }
