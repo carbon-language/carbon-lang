@@ -97,13 +97,7 @@ auto HandleParseNode(Context& context,
   // Collect the declarations nested in the associated constant in a decl
   // block. This is popped by FinishAssociatedConstantDecl.
   context.inst_block_stack().Push();
-
-  context.decl_introducer_state_stack().Push<Lex::TokenKind::Let>();
-  context.node_stack().Push(node_id);
-  context.pattern_block_stack().Push();
-  context.full_pattern_stack().PushFullPattern(
-      FullPatternStack::Kind::NameBindingDecl);
-  return true;
+  return HandleIntroducer<Lex::TokenKind::Let>(context, node_id);
 }
 
 auto HandleParseNode(Context& context, Parse::VariableIntroducerId node_id)
@@ -238,6 +232,15 @@ static auto HandleDecl(Context& context) -> DeclInfo {
     }
     context.full_pattern_stack().EndPatternInitializer();
   } else {
+    // For an associated constant declaration, handle the completed declaration
+    // now. We will have done this at the `=` if there was an initializer.
+    if (IntroducerTokenKind == Lex::TokenKind::Let) {
+      if (auto interface_decl =
+              context.scope_stack().GetCurrentScopeAs<SemIR::InterfaceDecl>()) {
+        EndAssociatedConstantDeclRegion(context, interface_decl->interface_id);
+      }
+    }
+
     EndFullPattern(context);
   }
   context.full_pattern_stack().PopFullPattern();
@@ -289,41 +292,10 @@ auto HandleParseNode(Context& context, Parse::LetDeclId node_id) -> bool {
 
 auto HandleParseNode(Context& context, Parse::AssociatedConstantDeclId node_id)
     -> bool {
-  DeclInfo decl_info = DeclInfo();
-
-  // Handle the optional initializer.
-  if (context.node_stack().PeekNextIs(
-          Parse::NodeKind::AssociatedConstantInitializer)) {
-    decl_info.init_id = context.node_stack().PopExpr();
-    context.node_stack()
-        .PopAndDiscardSoloNodeId<
-            Parse::NodeKind::AssociatedConstantInitializer>();
-    if (context.scope_stack().PeekIndex() == ScopeIndex::Package) {
-      context.global_init().Suspend();
-    }
-    context.full_pattern_stack().EndPatternInitializer();
-  } else {
-    // Handle the completed declaration now. We will have done this at the `=`
-    // if there was an initializer.
-    auto interface_decl =
-        context.scope_stack().GetCurrentScopeAs<SemIR::InterfaceDecl>();
-    EndAssociatedConstantDeclRegion(context, interface_decl->interface_id);
-    EndFullPattern(context);
-  }
-  context.full_pattern_stack().PopFullPattern();
-
-  decl_info.pattern_id = context.node_stack().PopPattern();
-
-  context.node_stack()
-      .PopAndDiscardSoloNodeId<Parse::NodeKind::AssociatedConstantIntroducer>();
-
-  auto parent_scope_inst =
-      context.name_scopes()
-          .GetInstIfValid(context.scope_stack().PeekNameScopeId())
-          .second;
-  decl_info.introducer =
-      context.decl_introducer_state_stack().Pop<Lex::TokenKind::Let>();
-  CheckAccessModifiersOnDecl(context, decl_info.introducer, parent_scope_inst);
+  auto decl_info =
+      HandleDecl<Lex::TokenKind::Let,
+                 Parse::NodeKind::AssociatedConstantIntroducer,
+                 Parse::NodeKind::AssociatedConstantInitializer>(context);
 
   LimitModifiersOnDecl(
       context, decl_info.introducer,
