@@ -239,31 +239,11 @@ fn Call() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: define void @_CCall.Main() !dbg !7 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %.loc11_30.3.temp = alloca i32, align 4, !dbg !10
-// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %.loc11_30.3.temp), !dbg !10
-// CHECK:STDOUT:   store i32 5, ptr %.loc11_30.3.temp, align 4, !dbg !10
-// CHECK:STDOUT:   call void @_Z4Take4Bits.carbon_thunk(ptr %.loc11_30.3.temp), !dbg !11
-// CHECK:STDOUT:   ret void, !dbg !12
+// CHECK:STDOUT:   call void @_Z4Take4Bits(i32 5), !dbg !10
+// CHECK:STDOUT:   ret void, !dbg !11
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: declare void @_Z4Take4Bits(i32)
-// CHECK:STDOUT:
-// CHECK:STDOUT: ; Function Attrs: nocallback nofree nosync nounwind willreturn memory(argmem: readwrite)
-// CHECK:STDOUT: declare void @llvm.lifetime.start.p0(ptr captures(none)) #0
-// CHECK:STDOUT:
-// CHECK:STDOUT: ; Function Attrs: alwaysinline mustprogress
-// CHECK:STDOUT: define dso_local void @_Z4Take4Bits.carbon_thunk(ptr %b) #1 {
-// CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %b.addr = alloca ptr, align 8
-// CHECK:STDOUT:   store ptr %b, ptr %b.addr, align 8
-// CHECK:STDOUT:   %0 = load ptr, ptr %b.addr, align 8
-// CHECK:STDOUT:   %1 = load i32, ptr %0, align 4
-// CHECK:STDOUT:   call void @_Z4Take4Bits(i32 %1)
-// CHECK:STDOUT:   ret void
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: attributes #0 = { nocallback nofree nosync nounwind willreturn memory(argmem: readwrite) }
-// CHECK:STDOUT: attributes #1 = { alwaysinline mustprogress "min-legal-vector-width"="0" "no-trapping-math"="true" "stack-protector-buffer-size"="0" "target-cpu"="x86-64" "target-features"="+cmov,+cx8,+fxsr,+mmx,+sse,+sse2,+x87" "tune-cpu"="generic" }
 // CHECK:STDOUT:
 // CHECK:STDOUT: !llvm.module.flags = !{!0, !1, !2, !3, !4}
 // CHECK:STDOUT: !llvm.dbg.cu = !{!5}
@@ -278,6 +258,5 @@ fn Call() {
 // CHECK:STDOUT: !7 = distinct !DISubprogram(name: "Call", linkageName: "_CCall.Main", scope: null, file: !6, line: 10, type: !8, spFlags: DISPFlagDefinition, unit: !5)
 // CHECK:STDOUT: !8 = !DISubroutineType(types: !9)
 // CHECK:STDOUT: !9 = !{}
-// CHECK:STDOUT: !10 = !DILocation(line: 11, column: 12, scope: !7)
-// CHECK:STDOUT: !11 = !DILocation(line: 11, column: 3, scope: !7)
-// CHECK:STDOUT: !12 = !DILocation(line: 10, column: 1, scope: !7)
+// CHECK:STDOUT: !10 = !DILocation(line: 11, column: 3, scope: !7)
+// CHECK:STDOUT: !11 = !DILocation(line: 10, column: 1, scope: !7)
