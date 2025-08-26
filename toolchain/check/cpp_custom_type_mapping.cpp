@@ -2,7 +2,7 @@
 // Exceptions. See /LICENSE for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
-#include "toolchain/check/cpp_matchers.h"
+#include "toolchain/check/cpp_custom_type_mapping.h"
 
 #include "clang/AST/DeclCXX.h"
 #include "clang/AST/DeclTemplate.h"
@@ -52,9 +52,8 @@ static auto Class(Matcher<const clang::CXXRecordDecl*> class_matcher
 
 // Returns a matcher that determines whether the given template argument is a
 // type matching the given predicate.
-static auto TypeTemplateArgument(
-    Matcher<clang::QualType> type_matcher
-    [[clang::lifetimebound]]) -> auto {
+static auto TypeTemplateArgument(Matcher<clang::QualType> type_matcher
+                                 [[clang::lifetimebound]]) -> auto {
   return [=](clang::TemplateArgument arg) -> bool {
     return arg.getKind() == clang::TemplateArgument::Type &&
            type_matcher(arg.getAsType());
@@ -69,9 +68,8 @@ static auto Char(clang::QualType type) -> bool {
 // Returns a matcher that determines whether the given template argument list
 // matches the given sequence of template argument matchers.
 static auto TemplateArgumentsAre(
-    std::initializer_list<
-        llvm::function_ref<Matcher<clang::TemplateArgument>>
-        arg_matchers [[clang::lifetimebound]]) -> auto {
+    std::initializer_list<Matcher<clang::TemplateArgument>> arg_matchers
+    [[clang::lifetimebound]]) -> auto {
   return [=](const clang::TemplateArgumentList& args) -> bool {
     if (args.size() != arg_matchers.size()) {
       return false;

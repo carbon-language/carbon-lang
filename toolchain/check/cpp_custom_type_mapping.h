@@ -2,8 +2,8 @@
 // Exceptions. See /LICENSE for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
-#ifndef CARBON_TOOLCHAIN_CHECK_CPP_MATCHERS_H_
-#define CARBON_TOOLCHAIN_CHECK_CPP_MATCHERS_H_
+#ifndef CARBON_TOOLCHAIN_CHECK_CPP_CUSTOM_TYPE_MAPPING_H_
+#define CARBON_TOOLCHAIN_CHECK_CPP_CUSTOM_TYPE_MAPPING_H_
 
 #include "clang/AST/DeclCXX.h"
 
@@ -26,4 +26,4 @@ auto GetCustomCppTypeMapping(const clang::CXXRecordDecl* record_decl)
 
 }  // namespace Carbon::Check
 
-#endif  // CARBON_TOOLCHAIN_CHECK_CPP_MATCHERS_H_
+#endif  // CARBON_TOOLCHAIN_CHECK_CPP_CUSTOM_TYPE_MAPPING_H_
