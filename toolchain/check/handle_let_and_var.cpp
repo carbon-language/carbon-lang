@@ -234,11 +234,10 @@ static auto HandleDecl(Context& context) -> DeclInfo {
   } else {
     // For an associated constant declaration, handle the completed declaration
     // now. We will have done this at the `=` if there was an initializer.
-    if (IntroducerTokenKind == Lex::TokenKind::Let) {
-      if (auto interface_decl =
-              context.scope_stack().GetCurrentScopeAs<SemIR::InterfaceDecl>()) {
-        EndAssociatedConstantDeclRegion(context, interface_decl->interface_id);
-      }
+    if (IntroducerNodeKind == Parse::NodeKind::AssociatedConstantIntroducer) {
+      auto interface_decl =
+          context.scope_stack().GetCurrentScopeAs<SemIR::InterfaceDecl>();
+      EndAssociatedConstantDeclRegion(context, interface_decl->interface_id);
     }
 
     EndFullPattern(context);
