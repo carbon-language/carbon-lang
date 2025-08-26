@@ -103,8 +103,8 @@ static auto GetAggregateElement(FunctionContext& context,
           // `elem_ptr` points to a value representation. Load it.
           auto result_type = context.GetTypeIdOfInst(result_inst_id);
           auto result_value_type = context.GetValueRepr(result_type).type();
-          return context.builder().CreateLoad(
-              context.GetType(result_value_type), elem_ptr, name + ".load");
+          return context.LoadObject(result_value_type, elem_ptr,
+                                    name + ".load");
         }
         case SemIR::ValueRepr::Custom:
           CARBON_FATAL(
@@ -265,10 +265,11 @@ static auto EmitAggregateValueRepr(FunctionContext& context,
       // Write the value representation to a local alloca so we can produce a
       // pointer to it as the value representation of the struct or tuple.
       auto* alloca = context.builder().CreateAlloca(llvm_value_rep_type);
-      for (auto [i, ref] :
+      for (auto [i, ref_id] :
            llvm::enumerate(context.sem_ir().inst_blocks().Get(refs_id))) {
-        context.builder().CreateStore(
-            context.GetValue(ref),
+        context.StoreObject(
+            context.GetValueRepr(context.GetTypeIdOfInst(ref_id)).type(),
+            context.GetValue(ref_id),
             context.builder().CreateStructGEP(llvm_value_rep_type, alloca, i));
       }
       return alloca;

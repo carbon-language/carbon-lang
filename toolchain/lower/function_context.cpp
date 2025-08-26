@@ -318,6 +318,19 @@ auto FunctionContext::GetReturnTypeInfo(TypeInFile type)
   return result;
 }
 
+auto FunctionContext::LoadObject(TypeInFile type, llvm::Value* addr,
+                                 llvm::Twine name) -> llvm::Value* {
+  // TODO: Include alias and alignment information.
+  return builder().CreateLoad(GetType(type), addr, name);
+}
+
+auto FunctionContext::StoreObject(TypeInFile type, llvm::Value* value,
+                                  llvm::Value* addr) -> void {
+  // TODO: Include alias and alignment information.
+  CARBON_CHECK(value->getType() == GetType(type));
+  builder().CreateStore(value, addr);
+}
+
 auto FunctionContext::CopyValue(TypeInFile type, SemIR::InstId source_id,
                                 SemIR::InstId dest_id) -> void {
   switch (GetValueRepr(type).repr.kind) {
@@ -326,7 +339,7 @@ auto FunctionContext::CopyValue(TypeInFile type, SemIR::InstId source_id,
     case SemIR::ValueRepr::None:
       break;
     case SemIR::ValueRepr::Copy:
-      builder().CreateStore(GetValue(source_id), GetValue(dest_id));
+      StoreObject(type, GetValue(source_id), GetValue(dest_id));
       break;
     case SemIR::ValueRepr::Pointer:
       CopyObject(type, source_id, dest_id);
