@@ -1058,9 +1058,10 @@ static auto BuildEnumDefinition(Context& context,
   class_info.body_block_id = context.inst_block_stack().Pop();
 }
 
-auto ImportCppClassDefinition(Context& context, SemIR::LocId loc_id,
-                              SemIR::ClassId class_id,
-                              SemIR::ClangDeclId clang_decl_id) -> bool {
+auto ImportClassDefinitionForClangDecl(Context& context, SemIR::LocId loc_id,
+                                       SemIR::ClassId class_id,
+                                       SemIR::ClangDeclId clang_decl_id)
+    -> bool {
   clang::ASTUnit* ast = context.sem_ir().clang_ast_unit();
   CARBON_CHECK(ast);
 
