@@ -24,7 +24,7 @@ var x: {.a: {}} = {.b = {}};
 // CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [concrete]
 // CHECK:STDOUT:   %struct_type.a.225: type = struct_type {.a: %empty_struct_type} [concrete]
 // CHECK:STDOUT:   %pattern_type: type = pattern_type %struct_type.a.225 [concrete]
-// CHECK:STDOUT:   %struct_type.b: type = struct_type {.b: %empty_struct_type} [concrete]
+// CHECK:STDOUT:   %struct_type.b.347: type = struct_type {.b: %empty_struct_type} [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -47,7 +47,7 @@ var x: {.a: {}} = {.b = {}};
 // CHECK:STDOUT: fn @__global_init() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %.loc19_26: %empty_struct_type = struct_literal ()
-// CHECK:STDOUT:   %.loc19_27: %struct_type.b = struct_literal (%.loc19_26)
+// CHECK:STDOUT:   %.loc19_27: %struct_type.b.347 = struct_literal (%.loc19_26)
 // CHECK:STDOUT:   assign file.%x.var, <error>
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }

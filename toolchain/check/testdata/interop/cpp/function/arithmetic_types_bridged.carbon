@@ -471,52 +471,6 @@ fn F() {
 }
 
 // ============================================================================
-// unsigned int param
-// ============================================================================
-
-// --- unsigned_int_param.h
-
-auto foo(unsigned int a) -> void;
-
-// --- import_unsigned_int_param.carbon
-
-library "[[@TEST_NAME]]";
-
-import Cpp library "unsigned_int_param.h";
-
-fn F() {
-  //@dump-sem-ir-begin
-  Cpp.foo(1);
-  //@dump-sem-ir-end
-}
-
-// --- fail_import_unsigned_int_param_overflow.carbon
-
-library "[[@TEST_NAME]]";
-
-import Cpp library "unsigned_int_param.h";
-
-fn F() {
-  Cpp.foo(0);
-
-  // CHECK:STDERR: fail_import_unsigned_int_param_overflow.carbon:[[@LINE+5]]:11: error: negative integer value -1 converted to unsigned type `u32` [NegativeIntInUnsignedType]
-  // CHECK:STDERR:   Cpp.foo(-1);
-  // CHECK:STDERR:           ^~
-  // CHECK:STDERR: fail_import_unsigned_int_param_overflow.carbon: note: initializing function parameter [InCallToFunctionParam]
-  // CHECK:STDERR:
-  Cpp.foo(-1);
-
-  Cpp.foo(0x0_FFFF_FFFF);
-
-  // CHECK:STDERR: fail_import_unsigned_int_param_overflow.carbon:[[@LINE+5]]:11: error: integer value 4294967296 too large for type `u32` [IntTooLargeForType]
-  // CHECK:STDERR:   Cpp.foo(0x1_0000_0000);
-  // CHECK:STDERR:           ^~~~~~~~~~~~~
-  // CHECK:STDERR: fail_import_unsigned_int_param_overflow.carbon: note: initializing function parameter [InCallToFunctionParam]
-  // CHECK:STDERR:
-  Cpp.foo(0x1_0000_0000);
-}
-
-// ============================================================================
 // _BitInt(24) param
 // ============================================================================
 
@@ -1688,11 +1642,17 @@ fn F() {
 // CHECK:STDOUT: --- import_bool_return.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
+// CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [concrete]
 // CHECK:STDOUT:   %Bool.type: type = fn_type @Bool [concrete]
 // CHECK:STDOUT:   %Bool: %Bool.type = struct_value () [concrete]
 // CHECK:STDOUT:   %pattern_type.831: type = pattern_type bool [concrete]
 // CHECK:STDOUT:   %foo_bool.type: type = fn_type @foo_bool [concrete]
 // CHECK:STDOUT:   %foo_bool: %foo_bool.type = struct_value () [concrete]
+// CHECK:STDOUT:   %ptr.bb2: type = ptr_type bool [concrete]
+// CHECK:STDOUT:   %foo_bool__carbon_thunk.type: type = fn_type @foo_bool__carbon_thunk [concrete]
+// CHECK:STDOUT:   %foo_bool__carbon_thunk: %foo_bool__carbon_thunk.type = struct_value () [concrete]
+// CHECK:STDOUT:   %T.as.Destroy.impl.Op.type.655: type = fn_type @T.as.Destroy.impl.Op, @T.as.Destroy.impl(bool) [concrete]
+// CHECK:STDOUT:   %T.as.Destroy.impl.Op.8b7: %T.as.Destroy.impl.Op.type.655 = struct_value () [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -1701,6 +1661,11 @@ fn F() {
 // CHECK:STDOUT:     import Cpp//...
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %foo_bool.decl: %foo_bool.type = fn_decl @foo_bool [concrete = constants.%foo_bool] {
+// CHECK:STDOUT:     <elided>
+// CHECK:STDOUT:   } {
+// CHECK:STDOUT:     <elided>
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %foo_bool__carbon_thunk.decl: %foo_bool__carbon_thunk.type = fn_decl @foo_bool__carbon_thunk [concrete = constants.%foo_bool__carbon_thunk] {
 // CHECK:STDOUT:     <elided>
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     <elided>
@@ -1714,26 +1679,40 @@ fn F() {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Cpp.ref: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
 // CHECK:STDOUT:   %foo_bool.ref: %foo_bool.type = name_ref foo_bool, imports.%foo_bool.decl [concrete = constants.%foo_bool]
-// CHECK:STDOUT:   %foo_bool.call: init bool = call %foo_bool.ref()
+// CHECK:STDOUT:   %.loc8_30.1: ref bool = temporary_storage
+// CHECK:STDOUT:   %addr.loc8_30.1: %ptr.bb2 = addr_of %.loc8_30.1
+// CHECK:STDOUT:   %foo_bool__carbon_thunk.call: init %empty_tuple.type = call imports.%foo_bool__carbon_thunk.decl(%addr.loc8_30.1)
+// CHECK:STDOUT:   %.loc8_30.2: init bool = in_place_init %foo_bool__carbon_thunk.call, %.loc8_30.1
 // CHECK:STDOUT:   %.loc8_10.1: type = splice_block %.loc8_10.3 [concrete = bool] {
 // CHECK:STDOUT:     %Bool.call: init type = call constants.%Bool() [concrete = bool]
 // CHECK:STDOUT:     %.loc8_10.2: type = value_of_initializer %Bool.call [concrete = bool]
 // CHECK:STDOUT:     %.loc8_10.3: type = converted %Bool.call, %.loc8_10.2 [concrete = bool]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %.loc8_30.1: bool = value_of_initializer %foo_bool.call
-// CHECK:STDOUT:   %.loc8_30.2: bool = converted %foo_bool.call, %.loc8_30.1
-// CHECK:STDOUT:   %x: bool = bind_name x, %.loc8_30.2
+// CHECK:STDOUT:   %.loc8_30.3: bool = value_of_initializer %.loc8_30.2
+// CHECK:STDOUT:   %.loc8_30.4: bool = converted %.loc8_30.2, %.loc8_30.3
+// CHECK:STDOUT:   %x: bool = bind_name x, %.loc8_30.4
+// CHECK:STDOUT:   %T.as.Destroy.impl.Op.bound: <bound method> = bound_method %.loc8_30.1, constants.%T.as.Destroy.impl.Op.8b7
+// CHECK:STDOUT:   <elided>
+// CHECK:STDOUT:   %bound_method: <bound method> = bound_method %.loc8_30.1, %T.as.Destroy.impl.Op.specific_fn
+// CHECK:STDOUT:   %addr.loc8_30.2: %ptr.bb2 = addr_of %.loc8_30.1
+// CHECK:STDOUT:   %T.as.Destroy.impl.Op.call: init %empty_tuple.type = call %bound_method(%addr.loc8_30.2)
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- import_short_return.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
+// CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [concrete]
 // CHECK:STDOUT:   %int_16: Core.IntLiteral = int_value 16 [concrete]
 // CHECK:STDOUT:   %i16: type = class_type @Int, @Int(%int_16) [concrete]
 // CHECK:STDOUT:   %pattern_type.2f8: type = pattern_type %i16 [concrete]
 // CHECK:STDOUT:   %foo_short.type: type = fn_type @foo_short [concrete]
 // CHECK:STDOUT:   %foo_short: %foo_short.type = struct_value () [concrete]
+// CHECK:STDOUT:   %ptr.251: type = ptr_type %i16 [concrete]
+// CHECK:STDOUT:   %foo_short__carbon_thunk.type: type = fn_type @foo_short__carbon_thunk [concrete]
+// CHECK:STDOUT:   %foo_short__carbon_thunk: %foo_short__carbon_thunk.type = struct_value () [concrete]
+// CHECK:STDOUT:   %Int.as.Destroy.impl.Op.type.613: type = fn_type @Int.as.Destroy.impl.Op, @Int.as.Destroy.impl(%int_16) [concrete]
+// CHECK:STDOUT:   %Int.as.Destroy.impl.Op.536: %Int.as.Destroy.impl.Op.type.613 = struct_value () [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -1742,6 +1721,11 @@ fn F() {
 // CHECK:STDOUT:     import Cpp//...
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %foo_short.decl: %foo_short.type = fn_decl @foo_short [concrete = constants.%foo_short] {
+// CHECK:STDOUT:     <elided>
+// CHECK:STDOUT:   } {
+// CHECK:STDOUT:     <elided>
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %foo_short__carbon_thunk.decl: %foo_short__carbon_thunk.type = fn_decl @foo_short__carbon_thunk [concrete = constants.%foo_short__carbon_thunk] {
 // CHECK:STDOUT:     <elided>
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     <elided>
@@ -1755,87 +1739,22 @@ fn F() {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Cpp.ref: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
 // CHECK:STDOUT:   %foo_short.ref: %foo_short.type = name_ref foo_short, imports.%foo_short.decl [concrete = constants.%foo_short]
-// CHECK:STDOUT:   %foo_short.call: init %i16 = call %foo_short.ref()
+// CHECK:STDOUT:   %.loc8_30.1: ref %i16 = temporary_storage
+// CHECK:STDOUT:   %addr.loc8_30.1: %ptr.251 = addr_of %.loc8_30.1
+// CHECK:STDOUT:   %foo_short__carbon_thunk.call: init %empty_tuple.type = call imports.%foo_short__carbon_thunk.decl(%addr.loc8_30.1)
+// CHECK:STDOUT:   %.loc8_30.2: init %i16 = in_place_init %foo_short__carbon_thunk.call, %.loc8_30.1
 // CHECK:STDOUT:   %.loc8_10: type = splice_block %i16 [concrete = constants.%i16] {
 // CHECK:STDOUT:     %int_16: Core.IntLiteral = int_value 16 [concrete = constants.%int_16]
 // CHECK:STDOUT:     %i16: type = class_type @Int, @Int(constants.%int_16) [concrete = constants.%i16]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %.loc8_30.1: %i16 = value_of_initializer %foo_short.call
-// CHECK:STDOUT:   %.loc8_30.2: %i16 = converted %foo_short.call, %.loc8_30.1
-// CHECK:STDOUT:   %x: %i16 = bind_name x, %.loc8_30.2
+// CHECK:STDOUT:   %.loc8_30.3: %i16 = value_of_initializer %.loc8_30.2
+// CHECK:STDOUT:   %.loc8_30.4: %i16 = converted %.loc8_30.2, %.loc8_30.3
+// CHECK:STDOUT:   %x: %i16 = bind_name x, %.loc8_30.4
+// CHECK:STDOUT:   %Int.as.Destroy.impl.Op.bound: <bound method> = bound_method %.loc8_30.1, constants.%Int.as.Destroy.impl.Op.536
 // CHECK:STDOUT:   <elided>
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: --- import_unsigned_int_param.carbon
-// CHECK:STDOUT:
-// CHECK:STDOUT: constants {
-// CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [concrete]
-// CHECK:STDOUT:   %int_32: Core.IntLiteral = int_value 32 [concrete]
-// CHECK:STDOUT:   %u32: type = class_type @UInt, @UInt(%int_32) [concrete]
-// CHECK:STDOUT:   %foo.type: type = fn_type @foo [concrete]
-// CHECK:STDOUT:   %foo: %foo.type = struct_value () [concrete]
-// CHECK:STDOUT:   %ptr.6fd: type = ptr_type %u32 [concrete]
-// CHECK:STDOUT:   %foo__carbon_thunk.type: type = fn_type @foo__carbon_thunk [concrete]
-// CHECK:STDOUT:   %foo__carbon_thunk: %foo__carbon_thunk.type = struct_value () [concrete]
-// CHECK:STDOUT:   %int_1.5b8: Core.IntLiteral = int_value 1 [concrete]
-// CHECK:STDOUT:   %ImplicitAs.type.9b4: type = facet_type <@ImplicitAs, @ImplicitAs(%u32)> [concrete]
-// CHECK:STDOUT:   %ImplicitAs.Convert.type.92a: type = fn_type @ImplicitAs.Convert, @ImplicitAs(%u32) [concrete]
-// CHECK:STDOUT:   %To: Core.IntLiteral = bind_symbolic_name To, 0 [symbolic]
-// CHECK:STDOUT:   %Core.IntLiteral.as.ImplicitAs.impl.Convert.type.30e: type = fn_type @Core.IntLiteral.as.ImplicitAs.impl.Convert, @Core.IntLiteral.as.ImplicitAs.impl(%To) [symbolic]
-// CHECK:STDOUT:   %Core.IntLiteral.as.ImplicitAs.impl.Convert.d1a: %Core.IntLiteral.as.ImplicitAs.impl.Convert.type.30e = struct_value () [symbolic]
-// CHECK:STDOUT:   %ImplicitAs.impl_witness.ac5: <witness> = impl_witness imports.%ImplicitAs.impl_witness_table.bb8, @Core.IntLiteral.as.ImplicitAs.impl(%int_32) [concrete]
-// CHECK:STDOUT:   %Core.IntLiteral.as.ImplicitAs.impl.Convert.type.feb: type = fn_type @Core.IntLiteral.as.ImplicitAs.impl.Convert, @Core.IntLiteral.as.ImplicitAs.impl(%int_32) [concrete]
-// CHECK:STDOUT:   %Core.IntLiteral.as.ImplicitAs.impl.Convert.319: %Core.IntLiteral.as.ImplicitAs.impl.Convert.type.feb = struct_value () [concrete]
-// CHECK:STDOUT:   %ImplicitAs.facet: %ImplicitAs.type.9b4 = facet_value Core.IntLiteral, (%ImplicitAs.impl_witness.ac5) [concrete]
-// CHECK:STDOUT:   %.bd1: type = fn_type_with_self_type %ImplicitAs.Convert.type.92a, %ImplicitAs.facet [concrete]
-// CHECK:STDOUT:   %Core.IntLiteral.as.ImplicitAs.impl.Convert.bound: <bound method> = bound_method %int_1.5b8, %Core.IntLiteral.as.ImplicitAs.impl.Convert.319 [concrete]
-// CHECK:STDOUT:   %Core.IntLiteral.as.ImplicitAs.impl.Convert.specific_fn: <specific function> = specific_function %Core.IntLiteral.as.ImplicitAs.impl.Convert.319, @Core.IntLiteral.as.ImplicitAs.impl.Convert(%int_32) [concrete]
-// CHECK:STDOUT:   %bound_method: <bound method> = bound_method %int_1.5b8, %Core.IntLiteral.as.ImplicitAs.impl.Convert.specific_fn [concrete]
-// CHECK:STDOUT:   %int_1.c1d: %u32 = int_value 1 [concrete]
-// CHECK:STDOUT:   %UInt.as.Destroy.impl.Op.type.308: type = fn_type @UInt.as.Destroy.impl.Op, @UInt.as.Destroy.impl(%int_32) [concrete]
-// CHECK:STDOUT:   %UInt.as.Destroy.impl.Op.e70: %UInt.as.Destroy.impl.Op.type.308 = struct_value () [concrete]
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: imports {
-// CHECK:STDOUT:   %Cpp: <namespace> = namespace file.%Cpp.import_cpp, [concrete] {
-// CHECK:STDOUT:     .foo = %foo.decl
-// CHECK:STDOUT:     import Cpp//...
-// CHECK:STDOUT:   }
-// CHECK:STDOUT:   %foo.decl: %foo.type = fn_decl @foo [concrete = constants.%foo] {
-// CHECK:STDOUT:     <elided>
-// CHECK:STDOUT:   } {
-// CHECK:STDOUT:     <elided>
-// CHECK:STDOUT:   }
-// CHECK:STDOUT:   %foo__carbon_thunk.decl: %foo__carbon_thunk.type = fn_decl @foo__carbon_thunk [concrete = constants.%foo__carbon_thunk] {
-// CHECK:STDOUT:     <elided>
-// CHECK:STDOUT:   } {
-// CHECK:STDOUT:     <elided>
-// CHECK:STDOUT:   }
-// CHECK:STDOUT:   %Core.import_ref.c3d: @Core.IntLiteral.as.ImplicitAs.impl.%Core.IntLiteral.as.ImplicitAs.impl.Convert.type (%Core.IntLiteral.as.ImplicitAs.impl.Convert.type.30e) = import_ref Core//prelude/parts/uint, loc16_40, loaded [symbolic = @Core.IntLiteral.as.ImplicitAs.impl.%Core.IntLiteral.as.ImplicitAs.impl.Convert (constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.d1a)]
-// CHECK:STDOUT:   %ImplicitAs.impl_witness_table.bb8 = impl_witness_table (%Core.import_ref.c3d), @Core.IntLiteral.as.ImplicitAs.impl [concrete]
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: fn @F() {
-// CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %Cpp.ref: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
-// CHECK:STDOUT:   %foo.ref: %foo.type = name_ref foo, imports.%foo.decl [concrete = constants.%foo]
-// CHECK:STDOUT:   %int_1: Core.IntLiteral = int_value 1 [concrete = constants.%int_1.5b8]
-// CHECK:STDOUT:   %impl.elem0: %.bd1 = impl_witness_access constants.%ImplicitAs.impl_witness.ac5, element0 [concrete = constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.319]
-// CHECK:STDOUT:   %bound_method.loc8_11.1: <bound method> = bound_method %int_1, %impl.elem0 [concrete = constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.bound]
-// CHECK:STDOUT:   %specific_fn: <specific function> = specific_function %impl.elem0, @Core.IntLiteral.as.ImplicitAs.impl.Convert(constants.%int_32) [concrete = constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.specific_fn]
-// CHECK:STDOUT:   %bound_method.loc8_11.2: <bound method> = bound_method %int_1, %specific_fn [concrete = constants.%bound_method]
-// CHECK:STDOUT:   %Core.IntLiteral.as.ImplicitAs.impl.Convert.call: init %u32 = call %bound_method.loc8_11.2(%int_1) [concrete = constants.%int_1.c1d]
-// CHECK:STDOUT:   %.loc8_11.1: %u32 = value_of_initializer %Core.IntLiteral.as.ImplicitAs.impl.Convert.call [concrete = constants.%int_1.c1d]
-// CHECK:STDOUT:   %.loc8_11.2: %u32 = converted %int_1, %.loc8_11.1 [concrete = constants.%int_1.c1d]
-// CHECK:STDOUT:   %.loc8_11.3: ref %u32 = temporary_storage
-// CHECK:STDOUT:   %.loc8_11.4: ref %u32 = temporary %.loc8_11.3, %.loc8_11.2
-// CHECK:STDOUT:   %addr.loc8_12: %ptr.6fd = addr_of %.loc8_11.4
-// CHECK:STDOUT:   %foo__carbon_thunk.call: init %empty_tuple.type = call imports.%foo__carbon_thunk.decl(%addr.loc8_12)
-// CHECK:STDOUT:   %UInt.as.Destroy.impl.Op.bound: <bound method> = bound_method %.loc8_11.3, constants.%UInt.as.Destroy.impl.Op.e70
-// CHECK:STDOUT:   <elided>
-// CHECK:STDOUT:   %bound_method.loc8_11.3: <bound method> = bound_method %.loc8_11.3, %UInt.as.Destroy.impl.Op.specific_fn
-// CHECK:STDOUT:   %addr.loc8_11: %ptr.6fd = addr_of %.loc8_11.3
-// CHECK:STDOUT:   %UInt.as.Destroy.impl.Op.call: init %empty_tuple.type = call %bound_method.loc8_11.3(%addr.loc8_11)
+// CHECK:STDOUT:   %bound_method: <bound method> = bound_method %.loc8_30.1, %Int.as.Destroy.impl.Op.specific_fn
+// CHECK:STDOUT:   %addr.loc8_30.2: %ptr.251 = addr_of %.loc8_30.1
+// CHECK:STDOUT:   %Int.as.Destroy.impl.Op.call: init %empty_tuple.type = call %bound_method(%addr.loc8_30.2)
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -1863,11 +1782,17 @@ fn F() {
 // CHECK:STDOUT: --- import_double_return.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
+// CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [concrete]
 // CHECK:STDOUT:   %int_64: Core.IntLiteral = int_value 64 [concrete]
 // CHECK:STDOUT:   %f64.d77: type = class_type @Float, @Float(%int_64) [concrete]
 // CHECK:STDOUT:   %pattern_type.0ae: type = pattern_type %f64.d77 [concrete]
 // CHECK:STDOUT:   %foo_double.type: type = fn_type @foo_double [concrete]
 // CHECK:STDOUT:   %foo_double: %foo_double.type = struct_value () [concrete]
+// CHECK:STDOUT:   %ptr.bcc: type = ptr_type %f64.d77 [concrete]
+// CHECK:STDOUT:   %foo_double__carbon_thunk.type: type = fn_type @foo_double__carbon_thunk [concrete]
+// CHECK:STDOUT:   %foo_double__carbon_thunk: %foo_double__carbon_thunk.type = struct_value () [concrete]
+// CHECK:STDOUT:   %Float.as.Destroy.impl.Op.type.cd5: type = fn_type @Float.as.Destroy.impl.Op, @Float.as.Destroy.impl(%int_64) [concrete]
+// CHECK:STDOUT:   %Float.as.Destroy.impl.Op.b8c: %Float.as.Destroy.impl.Op.type.cd5 = struct_value () [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -1876,6 +1801,11 @@ fn F() {
 // CHECK:STDOUT:     import Cpp//...
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %foo_double.decl: %foo_double.type = fn_decl @foo_double [concrete = constants.%foo_double] {
+// CHECK:STDOUT:     <elided>
+// CHECK:STDOUT:   } {
+// CHECK:STDOUT:     <elided>
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %foo_double__carbon_thunk.decl: %foo_double__carbon_thunk.type = fn_decl @foo_double__carbon_thunk [concrete = constants.%foo_double__carbon_thunk] {
 // CHECK:STDOUT:     <elided>
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     <elided>
@@ -1889,14 +1819,22 @@ fn F() {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Cpp.ref: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
 // CHECK:STDOUT:   %foo_double.ref: %foo_double.type = name_ref foo_double, imports.%foo_double.decl [concrete = constants.%foo_double]
-// CHECK:STDOUT:   %foo_double.call: init %f64.d77 = call %foo_double.ref()
+// CHECK:STDOUT:   %.loc8_31.1: ref %f64.d77 = temporary_storage
+// CHECK:STDOUT:   %addr.loc8_31.1: %ptr.bcc = addr_of %.loc8_31.1
+// CHECK:STDOUT:   %foo_double__carbon_thunk.call: init %empty_tuple.type = call imports.%foo_double__carbon_thunk.decl(%addr.loc8_31.1)
+// CHECK:STDOUT:   %.loc8_31.2: init %f64.d77 = in_place_init %foo_double__carbon_thunk.call, %.loc8_31.1
 // CHECK:STDOUT:   %.loc8_10: type = splice_block %f64 [concrete = constants.%f64.d77] {
 // CHECK:STDOUT:     %int_64: Core.IntLiteral = int_value 64 [concrete = constants.%int_64]
 // CHECK:STDOUT:     %f64: type = class_type @Float, @Float(constants.%int_64) [concrete = constants.%f64.d77]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %.loc8_31.1: %f64.d77 = value_of_initializer %foo_double.call
-// CHECK:STDOUT:   %.loc8_31.2: %f64.d77 = converted %foo_double.call, %.loc8_31.1
-// CHECK:STDOUT:   %x: %f64.d77 = bind_name x, %.loc8_31.2
+// CHECK:STDOUT:   %.loc8_31.3: %f64.d77 = value_of_initializer %.loc8_31.2
+// CHECK:STDOUT:   %.loc8_31.4: %f64.d77 = converted %.loc8_31.2, %.loc8_31.3
+// CHECK:STDOUT:   %x: %f64.d77 = bind_name x, %.loc8_31.4
+// CHECK:STDOUT:   %Float.as.Destroy.impl.Op.bound: <bound method> = bound_method %.loc8_31.1, constants.%Float.as.Destroy.impl.Op.b8c
+// CHECK:STDOUT:   <elided>
+// CHECK:STDOUT:   %bound_method: <bound method> = bound_method %.loc8_31.1, %Float.as.Destroy.impl.Op.specific_fn
+// CHECK:STDOUT:   %addr.loc8_31.2: %ptr.bcc = addr_of %.loc8_31.1
+// CHECK:STDOUT:   %Float.as.Destroy.impl.Op.call: init %empty_tuple.type = call %bound_method(%addr.loc8_31.2)
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

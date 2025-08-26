@@ -615,9 +615,9 @@ impl CD as IF where .F = 0 {
 // CHECK:STDOUT:   %I.lookup_impl_witness: <witness> = lookup_impl_witness %.Self, @I [symbolic_self]
 // CHECK:STDOUT:   %I.facet: %I.type = facet_value %.Self.as_type, (%I.lookup_impl_witness) [symbolic_self]
 // CHECK:STDOUT:   %impl.elem0: type = impl_witness_access %I.lookup_impl_witness, element0 [symbolic_self]
+// CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [concrete]
 // CHECK:STDOUT:   %I_where.type.8c8: type = facet_type <@I where %impl.elem0 = %empty_struct_type> [concrete]
 // CHECK:STDOUT:   %I.impl_witness.b54: <witness> = impl_witness file.%I.impl_witness_table.loc9 [concrete]
-// CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [concrete]
 // CHECK:STDOUT:   %I_where.type.cba: type = facet_type <@I where %impl.elem0 = %empty_tuple.type> [concrete]
 // CHECK:STDOUT:   %I.impl_witness.ac6: <witness> = impl_witness file.%I.impl_witness_table.loc10 [concrete]
 // CHECK:STDOUT: }

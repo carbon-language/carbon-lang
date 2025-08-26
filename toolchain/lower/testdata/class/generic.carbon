@@ -301,8 +301,9 @@ fn AccessTuple() -> (i32, i32, i32) {
 // CHECK:STDOUT: define linkonce_odr i1 @_CGetBool.C.Main.b88d1103f417c6d4(ptr %self) !dbg !27 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   %.loc6_16.1.v = getelementptr inbounds nuw { i1, i32 }, ptr %self, i32 0, i32 0, !dbg !28
-// CHECK:STDOUT:   %.loc6_16.2 = load i1, ptr %.loc6_16.1.v, align 1, !dbg !28
-// CHECK:STDOUT:   ret i1 %.loc6_16.2, !dbg !29
+// CHECK:STDOUT:   %.loc6_16.2 = load i8, ptr %.loc6_16.1.v, align 1, !dbg !28
+// CHECK:STDOUT:   %.loc6_16.21 = trunc i8 %.loc6_16.2 to i1, !dbg !28
+// CHECK:STDOUT:   ret i1 %.loc6_16.21, !dbg !29
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: define linkonce_odr i32 @_CGetT.C.Main.b88d1103f417c6d4(ptr %self) !dbg !30 {

@@ -48,43 +48,68 @@ class IsError {
   ::testing::Matcher<std::string> matcher_;
 };
 
-// Matches the value for a non-error state of `ErrorOr<T>`. For example:
-//   EXPECT_THAT(my_result, IsSuccess(Eq(3)));
-template <typename InnerMatcher>
-class IsSuccessMatcher {
+// Implementation of a success matcher for a specific `T` and `ErrorT` in an
+// `ErrorOr`. Supports a nested matcher for the `T` value.
+template <typename T, typename ErrorT>
+class IsSuccessMatcherImpl
+    : public ::testing::MatcherInterface<const ErrorOr<T, ErrorT>&> {
  public:
-  // NOLINTNEXTLINE(readability-identifier-naming)
-  using is_gtest_matcher = void;
+  explicit IsSuccessMatcherImpl(const ::testing::Matcher<T>& matcher)
+      : matcher_(matcher) {}
 
-  explicit IsSuccessMatcher(InnerMatcher matcher)
-      : matcher_(std::move(matcher)) {}
-
-  template <typename T, typename ErrorT>
   auto MatchAndExplain(const ErrorOr<T, ErrorT>& result,
-                       ::testing::MatchResultListener* listener) const -> bool {
+                       ::testing::MatchResultListener* listener) const
+      -> bool override {
     if (result.ok()) {
-      return ::testing::Matcher<T>(matcher_).MatchAndExplain(*result, listener);
+      return matcher_.MatchAndExplain(*result, listener);
     } else {
       *listener << "is an error with `" << result.error() << "`";
       return false;
     }
   }
 
-  auto DescribeTo(std::ostream* os) const -> void {
+  auto DescribeTo(std::ostream* os) const -> void override {
     *os << "is a success and matches ";
     matcher_.DescribeTo(os);
   }
 
-  auto DescribeNegationTo(std::ostream* os) const -> void {
+  auto DescribeNegationTo(std::ostream* os) const -> void override {
     *os << "is an error or does not match ";
-    matcher_.DescribeTo(os);
+    matcher_.DescribeNegationTo(os);
+  }
+
+ private:
+  ::testing::Matcher<T> matcher_;
+};
+
+// Polymorphic match implementation for GoogleTest.
+//
+// To support matching arbitrary types that `InnerMatcher` can also match, this
+// itself must match arbitrary types. This is accomplished by not being a
+// matcher itself, but by being convertible into matchers for any particular
+// `ErrorOr`.
+template <typename InnerMatcher>
+class IsSuccessMatcher {
+ public:
+  explicit IsSuccessMatcher(InnerMatcher matcher)
+      : matcher_(std::move(matcher)) {}
+
+  template <typename T, typename ErrorT>
+  // NOLINTNEXTLINE(google-explicit-constructor): Required for matcher APIs.
+  operator ::testing::Matcher<const ErrorOr<T, ErrorT>&>() const {
+    return ::testing::Matcher<const ErrorOr<T, ErrorT>&>(
+        new IsSuccessMatcherImpl<T, ErrorT>(
+            ::testing::SafeMatcherCast<T>(matcher_)));
   }
 
  private:
   InnerMatcher matcher_;
 };
 
-// Wraps `IsSuccessMatcher` for the inner matcher deduction.
+// Returns a matcher the value for a non-error state of `ErrorOr<T>`.
+//
+// For example:
+//   EXPECT_THAT(my_result, IsSuccess(Eq(3)));
 template <typename InnerMatcher>
 auto IsSuccess(InnerMatcher matcher) -> IsSuccessMatcher<InnerMatcher> {
   return IsSuccessMatcher<InnerMatcher>(matcher);

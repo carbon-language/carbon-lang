@@ -177,7 +177,7 @@ fn G() -> i32 {
 // CHECK:STDOUT:   %array_type.002: type = array_type %int_3, %C [concrete]
 // CHECK:STDOUT:   %ptr.301: type = ptr_type %array_type.002 [concrete]
 // CHECK:STDOUT:   %pattern_type.a63: type = pattern_type %array_type.002 [concrete]
-// CHECK:STDOUT:   %tuple.type: type = tuple_type (%empty_struct_type, %empty_struct_type, %empty_struct_type) [concrete]
+// CHECK:STDOUT:   %tuple.type.8d4: type = tuple_type (%empty_struct_type, %empty_struct_type, %empty_struct_type) [concrete]
 // CHECK:STDOUT:   %C.val: %C = struct_value () [concrete]
 // CHECK:STDOUT:   %int_1: Core.IntLiteral = int_value 1 [concrete]
 // CHECK:STDOUT:   %int_2: Core.IntLiteral = int_value 2 [concrete]
@@ -313,7 +313,7 @@ fn G() -> i32 {
 // CHECK:STDOUT:   %.loc9_26.1: %empty_struct_type = struct_literal ()
 // CHECK:STDOUT:   %.loc9_30.1: %empty_struct_type = struct_literal ()
 // CHECK:STDOUT:   %.loc9_34.1: %empty_struct_type = struct_literal ()
-// CHECK:STDOUT:   %.loc9_35.1: %tuple.type = tuple_literal (%.loc9_26.1, %.loc9_30.1, %.loc9_34.1)
+// CHECK:STDOUT:   %.loc9_35.1: %tuple.type.8d4 = tuple_literal (%.loc9_26.1, %.loc9_30.1, %.loc9_34.1)
 // CHECK:STDOUT:   %int_0: Core.IntLiteral = int_value 0 [concrete = constants.%int_0.5c6]
 // CHECK:STDOUT:   %.loc9_35.2: ref %C = array_index %a.var, %int_0
 // CHECK:STDOUT:   %.loc9_26.2: init %C = class_init (), %.loc9_35.2 [concrete = constants.%C.val]
@@ -421,7 +421,7 @@ fn G() -> i32 {
 // CHECK:STDOUT:   %array_type.002: type = array_type %int_3.1ba, %C [concrete]
 // CHECK:STDOUT:   %ptr.301: type = ptr_type %array_type.002 [concrete]
 // CHECK:STDOUT:   %pattern_type.a63: type = pattern_type %array_type.002 [concrete]
-// CHECK:STDOUT:   %tuple.type: type = tuple_type (%empty_struct_type, %empty_struct_type, %empty_struct_type) [concrete]
+// CHECK:STDOUT:   %tuple.type.8d4: type = tuple_type (%empty_struct_type, %empty_struct_type, %empty_struct_type) [concrete]
 // CHECK:STDOUT:   %int_0: Core.IntLiteral = int_value 0 [concrete]
 // CHECK:STDOUT:   %C.val: %C = struct_value () [concrete]
 // CHECK:STDOUT:   %int_1: Core.IntLiteral = int_value 1 [concrete]
@@ -567,7 +567,7 @@ fn G() -> i32 {
 // CHECK:STDOUT:   %.loc9_26.1: %empty_struct_type = struct_literal ()
 // CHECK:STDOUT:   %.loc9_30.1: %empty_struct_type = struct_literal ()
 // CHECK:STDOUT:   %.loc9_34.1: %empty_struct_type = struct_literal ()
-// CHECK:STDOUT:   %.loc9_35.1: %tuple.type = tuple_literal (%.loc9_26.1, %.loc9_30.1, %.loc9_34.1)
+// CHECK:STDOUT:   %.loc9_35.1: %tuple.type.8d4 = tuple_literal (%.loc9_26.1, %.loc9_30.1, %.loc9_34.1)
 // CHECK:STDOUT:   %int_0: Core.IntLiteral = int_value 0 [concrete = constants.%int_0]
 // CHECK:STDOUT:   %.loc9_35.2: ref %C = array_index %a.var, %int_0
 // CHECK:STDOUT:   %.loc9_26.2: init %C = class_init (), %.loc9_35.2 [concrete = constants.%C.val]
@@ -654,7 +654,7 @@ fn G() -> i32 {
 // CHECK:STDOUT:   %array_type.002: type = array_type %int_3, %C [concrete]
 // CHECK:STDOUT:   %ptr.301: type = ptr_type %array_type.002 [concrete]
 // CHECK:STDOUT:   %pattern_type.a63: type = pattern_type %array_type.002 [concrete]
-// CHECK:STDOUT:   %tuple.type: type = tuple_type (%empty_struct_type, %empty_struct_type, %empty_struct_type) [concrete]
+// CHECK:STDOUT:   %tuple.type.8d4: type = tuple_type (%empty_struct_type, %empty_struct_type, %empty_struct_type) [concrete]
 // CHECK:STDOUT:   %int_0: Core.IntLiteral = int_value 0 [concrete]
 // CHECK:STDOUT:   %C.val: %C = struct_value () [concrete]
 // CHECK:STDOUT:   %int_1: Core.IntLiteral = int_value 1 [concrete]
@@ -770,7 +770,7 @@ fn G() -> i32 {
 // CHECK:STDOUT:   %.loc9_26.1: %empty_struct_type = struct_literal ()
 // CHECK:STDOUT:   %.loc9_30.1: %empty_struct_type = struct_literal ()
 // CHECK:STDOUT:   %.loc9_34.1: %empty_struct_type = struct_literal ()
-// CHECK:STDOUT:   %.loc9_35.1: %tuple.type = tuple_literal (%.loc9_26.1, %.loc9_30.1, %.loc9_34.1)
+// CHECK:STDOUT:   %.loc9_35.1: %tuple.type.8d4 = tuple_literal (%.loc9_26.1, %.loc9_30.1, %.loc9_34.1)
 // CHECK:STDOUT:   %int_0: Core.IntLiteral = int_value 0 [concrete = constants.%int_0]
 // CHECK:STDOUT:   %.loc9_35.2: ref %C = array_index %a.var, %int_0
 // CHECK:STDOUT:   %.loc9_26.2: init %C = class_init (), %.loc9_35.2 [concrete = constants.%C.val]
@@ -875,7 +875,7 @@ fn G() -> i32 {
 // CHECK:STDOUT:   %array_type.002: type = array_type %int_3, %C [concrete]
 // CHECK:STDOUT:   %ptr.301: type = ptr_type %array_type.002 [concrete]
 // CHECK:STDOUT:   %pattern_type.a63: type = pattern_type %array_type.002 [concrete]
-// CHECK:STDOUT:   %tuple.type: type = tuple_type (%empty_struct_type, %empty_struct_type, %empty_struct_type) [concrete]
+// CHECK:STDOUT:   %tuple.type.8d4: type = tuple_type (%empty_struct_type, %empty_struct_type, %empty_struct_type) [concrete]
 // CHECK:STDOUT:   %C.val: %C = struct_value () [concrete]
 // CHECK:STDOUT:   %int_1: Core.IntLiteral = int_value 1 [concrete]
 // CHECK:STDOUT:   %array: %array_type.002 = tuple_value (%C.val, %C.val, %C.val) [concrete]
@@ -1012,7 +1012,7 @@ fn G() -> i32 {
 // CHECK:STDOUT:   %.loc10_26.1: %empty_struct_type = struct_literal ()
 // CHECK:STDOUT:   %.loc10_30.1: %empty_struct_type = struct_literal ()
 // CHECK:STDOUT:   %.loc10_34.1: %empty_struct_type = struct_literal ()
-// CHECK:STDOUT:   %.loc10_35.1: %tuple.type = tuple_literal (%.loc10_26.1, %.loc10_30.1, %.loc10_34.1)
+// CHECK:STDOUT:   %.loc10_35.1: %tuple.type.8d4 = tuple_literal (%.loc10_26.1, %.loc10_30.1, %.loc10_34.1)
 // CHECK:STDOUT:   %int_0: Core.IntLiteral = int_value 0 [concrete = constants.%int_0.5c6]
 // CHECK:STDOUT:   %.loc10_35.2: ref %C = array_index %a.var, %int_0
 // CHECK:STDOUT:   %.loc10_26.2: init %C = class_init (), %.loc10_35.2 [concrete = constants.%C.val]
@@ -1126,7 +1126,7 @@ fn G() -> i32 {
 // CHECK:STDOUT:   %array_type.fe4: type = array_type %int_3.1ba, %D [concrete]
 // CHECK:STDOUT:   %ptr.af6: type = ptr_type %array_type.fe4 [concrete]
 // CHECK:STDOUT:   %pattern_type.f30: type = pattern_type %array_type.fe4 [concrete]
-// CHECK:STDOUT:   %tuple.type: type = tuple_type (%empty_struct_type, %empty_struct_type, %empty_struct_type) [concrete]
+// CHECK:STDOUT:   %tuple.type.8d4: type = tuple_type (%empty_struct_type, %empty_struct_type, %empty_struct_type) [concrete]
 // CHECK:STDOUT:   %int_0: Core.IntLiteral = int_value 0 [concrete]
 // CHECK:STDOUT:   %D.val: %D = struct_value () [concrete]
 // CHECK:STDOUT:   %int_1: Core.IntLiteral = int_value 1 [concrete]
@@ -1306,7 +1306,7 @@ fn G() -> i32 {
 // CHECK:STDOUT:   %.loc11_26.1: %empty_struct_type = struct_literal ()
 // CHECK:STDOUT:   %.loc11_30.1: %empty_struct_type = struct_literal ()
 // CHECK:STDOUT:   %.loc11_34.1: %empty_struct_type = struct_literal ()
-// CHECK:STDOUT:   %.loc11_35.1: %tuple.type = tuple_literal (%.loc11_26.1, %.loc11_30.1, %.loc11_34.1)
+// CHECK:STDOUT:   %.loc11_35.1: %tuple.type.8d4 = tuple_literal (%.loc11_26.1, %.loc11_30.1, %.loc11_34.1)
 // CHECK:STDOUT:   %int_0: Core.IntLiteral = int_value 0 [concrete = constants.%int_0]
 // CHECK:STDOUT:   %.loc11_35.2: ref %D = array_index %a.var, %int_0
 // CHECK:STDOUT:   %.loc11_26.2: init %D = class_init (), %.loc11_35.2 [concrete = constants.%D.val]
@@ -1409,7 +1409,7 @@ fn G() -> i32 {
 // CHECK:STDOUT:   %array_type.002: type = array_type %int_3, %C [concrete]
 // CHECK:STDOUT:   %ptr.301: type = ptr_type %array_type.002 [concrete]
 // CHECK:STDOUT:   %pattern_type.a63: type = pattern_type %array_type.002 [concrete]
-// CHECK:STDOUT:   %tuple.type: type = tuple_type (%empty_struct_type, %empty_struct_type, %empty_struct_type) [concrete]
+// CHECK:STDOUT:   %tuple.type.8d4: type = tuple_type (%empty_struct_type, %empty_struct_type, %empty_struct_type) [concrete]
 // CHECK:STDOUT:   %int_0: Core.IntLiteral = int_value 0 [concrete]
 // CHECK:STDOUT:   %C.val: %C = struct_value () [concrete]
 // CHECK:STDOUT:   %int_1: Core.IntLiteral = int_value 1 [concrete]
@@ -1545,7 +1545,7 @@ fn G() -> i32 {
 // CHECK:STDOUT:   %.loc9_26.1: %empty_struct_type = struct_literal ()
 // CHECK:STDOUT:   %.loc9_30.1: %empty_struct_type = struct_literal ()
 // CHECK:STDOUT:   %.loc9_34.1: %empty_struct_type = struct_literal ()
-// CHECK:STDOUT:   %.loc9_35.1: %tuple.type = tuple_literal (%.loc9_26.1, %.loc9_30.1, %.loc9_34.1)
+// CHECK:STDOUT:   %.loc9_35.1: %tuple.type.8d4 = tuple_literal (%.loc9_26.1, %.loc9_30.1, %.loc9_34.1)
 // CHECK:STDOUT:   %int_0: Core.IntLiteral = int_value 0 [concrete = constants.%int_0]
 // CHECK:STDOUT:   %.loc9_35.2: ref %C = array_index %a.var, %int_0
 // CHECK:STDOUT:   %.loc9_26.2: init %C = class_init (), %.loc9_35.2 [concrete = constants.%C.val]

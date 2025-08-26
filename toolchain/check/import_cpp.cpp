@@ -103,6 +103,34 @@ static auto GenerateCppIncludesHeaderCode(
                   << "\"\n";
     }
   }
+
+  // Inject a declaration of placement operator new, because the code we
+  // generate in thunks depends on it for placement new expressions. Clang has
+  // special-case logic for lowering a new-expression using this, so a
+  // definition is not required.
+  // TODO: This is a hack. We should be able to directly generate Clang AST to
+  // construct objects in-place without this.
+  // TODO: Once we can rely on libc++ being available, consider including
+  // `<__new/placement_new_delete.h>` instead.
+  code_stream << R"(# 1 "<carbon-internal>"
+#undef constexpr
+#if __cplusplus > 202302L
+constexpr
+#endif
+#undef void
+#undef operator
+#undef new
+void* operator new(__SIZE_TYPE__, void*)
+#if __cplusplus < 201103L
+#undef throw
+throw()
+#else
+#undef noexcept
+noexcept
+#endif
+;
+)";
+
   return code;
 }
 
@@ -1061,9 +1089,9 @@ static auto MapBuiltinType(Context& context, SemIR::LocId loc_id,
     if (context.ast_context().hasSameType(qual_type, int_n_type)) {
       TypeExpr type_expr =
           MakeIntType(context, context.ints().Add(width), is_signed);
-      // Try to make sure signed integer of 32 or 64 bits are complete so we can
+      // Try to make sure integer types of 32 or 64 bits are complete so we can
       // check against them when deciding whether we need to generate a thunk.
-      if (is_signed && (width == 32 || width == 64)) {
+      if (width == 32 || width == 64) {
         SemIR::TypeId type_id = type_expr.type_id;
         if (!context.types().IsComplete(type_id)) {
           TryToCompleteType(context, type_id, loc_id);
@@ -1303,8 +1331,9 @@ static auto MakeParamPatternsBlockId(Context& context, SemIR::LocId loc_id,
     return SemIR::InstBlockId::Empty;
   }
   llvm::SmallVector<SemIR::InstId> params;
-  params.reserve(clang_decl.parameters().size());
-  for (const clang::ParmVarDecl* param : clang_decl.parameters()) {
+  params.reserve(clang_decl.getNumNonObjectParams());
+  for (unsigned i : llvm::seq(clang_decl.getNumNonObjectParams())) {
+    const auto* param = clang_decl.getNonObjectParameter(i);
     // TODO: Get the parameter type from the function, not from the
     // `ParmVarDecl`. The type of the `ParmVarDecl` is the type within the
     // function, and isn't in general the same as the type that's exposed to
@@ -1367,6 +1396,8 @@ static auto GetReturnTypeExpr(Context& context, SemIR::LocId loc_id,
   if (!ret_type->isVoidType()) {
     TypeExpr mapped_type = MapType(context, loc_id, ret_type);
     if (!mapped_type.inst_id.has_value()) {
+      context.TODO(loc_id, llvm::formatv("Unsupported: return type: {0}",
+                                         ret_type.getAsString()));
       return {.inst_id = SemIR::ErrorInst::TypeInstId,
               .type_id = SemIR::ErrorInst::TypeId};
     }
@@ -1400,12 +1431,6 @@ static auto GetReturnPattern(Context& context, SemIR::LocId loc_id,
   if (!type_inst_id.has_value()) {
     // void.
     return SemIR::InstId::None;
-  }
-  if (type_inst_id == SemIR::ErrorInst::TypeInstId) {
-    context.TODO(loc_id,
-                 llvm::formatv("Unsupported: return type: {0}",
-                               clang_decl->getReturnType().getAsString()));
-    return SemIR::ErrorInst::InstId;
   }
   auto pattern_type_id = GetPatternType(context, type_id);
   SemIR::InstId return_slot_pattern_id = AddPatternInst(
