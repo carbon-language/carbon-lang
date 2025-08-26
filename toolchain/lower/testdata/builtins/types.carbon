@@ -52,7 +52,7 @@ fn F() {
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %h.var), !dbg !11
 // CHECK:STDOUT:   store fp128 0xL00000000000000003FFF000000000000, ptr %h.var, align 16, !dbg !11
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %b.var), !dbg !12
-// CHECK:STDOUT:   store i1 false, ptr %b.var, align 1, !dbg !12
+// CHECK:STDOUT:   store i8 0, ptr %b.var, align 1, !dbg !12
 // CHECK:STDOUT:   ret void, !dbg !13
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

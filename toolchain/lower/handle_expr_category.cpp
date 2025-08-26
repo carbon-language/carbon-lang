@@ -22,11 +22,11 @@ auto HandleInst(FunctionContext& context, SemIR::InstId inst_id,
       context.SetLocal(inst_id,
                        llvm::PoisonValue::get(context.GetType(inst_type)));
       break;
-    case SemIR::ValueRepr::Copy: {
-      auto* type = context.GetType(inst_type);
-      context.SetLocal(inst_id, context.builder().CreateLoad(
-                                    type, context.GetValue(inst.value_id)));
-    } break;
+    case SemIR::ValueRepr::Copy:
+      context.SetLocal(
+          inst_id,
+          context.LoadObject(inst_type, context.GetValue(inst.value_id)));
+      break;
     case SemIR::ValueRepr::Pointer:
       context.SetLocal(inst_id, context.GetValue(inst.value_id));
       break;
