@@ -186,6 +186,6 @@ fn F() {
 // CHECK:STDOUT: !42 = distinct !DISubprogram(name: "Op", linkageName: "_COp:thunk.Int.Core:AddAssignWith.Core.a6f9794233e6e547", scope: null, file: !33, line: 268, type: !5, spFlags: DISPFlagDefinition, unit: !2)
 // CHECK:STDOUT: !43 = !DILocation(line: 4294967295, scope: !42)
 // CHECK:STDOUT: !44 = !DILocation(line: 268, column: 3, scope: !42)
-// CHECK:STDOUT: !45 = distinct !DISubprogram(name: "Convert", linkageName: "_CConvert.8b3d5d6a6c17be04:ImplicitAs.Core.1abd39b699024258", scope: null, file: !46, line: 18, type: !5, spFlags: DISPFlagDefinition, unit: !2)
+// CHECK:STDOUT: !45 = distinct !DISubprogram(name: "Convert", linkageName: "_CConvert.8b3d5d6a6c17be04:ImplicitAs.Core.1abd39b699024258", scope: null, file: !46, line: 23, type: !5, spFlags: DISPFlagDefinition, unit: !2)
 // CHECK:STDOUT: !46 = !DIFile(filename: "{{.*}}/prelude/operators/as.carbon", directory: "")
-// CHECK:STDOUT: !47 = !DILocation(line: 18, column: 38, scope: !45)
+// CHECK:STDOUT: !47 = !DILocation(line: 23, column: 38, scope: !45)
