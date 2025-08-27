@@ -825,6 +825,11 @@ static auto ImportClassObjectRepr(Context& context, SemIR::ClassId class_id,
                                   SemIR::TypeInstId class_type_inst_id,
                                   const clang::CXXRecordDecl* clang_def)
     -> SemIR::TypeInstId {
+  if (clang_def->isInvalidDecl()) {
+    // Clang already diagnosed this error.
+    return SemIR::ErrorInst::TypeInstId;
+  }
+
   // For now, if the class is empty, produce an empty struct as the object
   // representation. This allows our tests to continue to pass while we don't
   // properly support initializing imported C++ classes.
