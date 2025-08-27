@@ -1184,7 +1184,7 @@ static auto MapBuiltinIntegerType(Context& context, SemIR::LocId loc_id,
     return ExprAsType(context, Parse::NodeId::None,
                       MakeCharTypeLiteral(context, Parse::NodeId::None));
   }
-  return {.inst_id = SemIR::TypeInstId::None, .type_id = SemIR::TypeId::None};
+  return TypeExpr::None;
 }
 
 // Maps a C++ builtin type to a Carbon type.
