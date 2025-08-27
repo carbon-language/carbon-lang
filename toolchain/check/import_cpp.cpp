@@ -1158,6 +1158,35 @@ static auto MakeIntType(Context& context, IntId size_id, bool is_signed)
   return ExprAsType(context, Parse::NodeId::None, type_inst_id);
 }
 
+// Maps a C++ builtin integer type to a Carbon type.
+// TODO: Handle integer types that map to named aliases.
+static auto MapBuiltinIntegerType(Context& context, SemIR::LocId loc_id,
+                                  clang::QualType qual_type,
+                                  const clang::BuiltinType& type) -> TypeExpr {
+  clang::ASTContext& ast_context = context.ast_context();
+  unsigned width = ast_context.getIntWidth(qual_type);
+  bool is_signed = type.isSignedInteger();
+  auto int_n_type = ast_context.getIntTypeForBitwidth(width, is_signed);
+  if (ast_context.hasSameType(qual_type, int_n_type)) {
+    TypeExpr type_expr =
+        MakeIntType(context, context.ints().Add(width), is_signed);
+    // Try to make sure integer types of 32 or 64 bits are complete so we can
+    // check against them when deciding whether we need to generate a thunk.
+    if (width == 32 || width == 64) {
+      SemIR::TypeId type_id = type_expr.type_id;
+      if (!context.types().IsComplete(type_id)) {
+        TryToCompleteType(context, type_id, loc_id);
+      }
+    }
+    return type_expr;
+  }
+  if (ast_context.hasSameType(qual_type, ast_context.CharTy)) {
+    return ExprAsType(context, Parse::NodeId::None,
+                      MakeCharTypeLiteral(context, Parse::NodeId::None));
+  }
+  return {.inst_id = SemIR::TypeInstId::None, .type_id = SemIR::TypeId::None};
+}
+
 // Maps a C++ builtin type to a Carbon type.
 // TODO: Support more builtin types.
 static auto MapBuiltinType(Context& context, SemIR::LocId loc_id,
@@ -1171,25 +1200,9 @@ static auto MapBuiltinType(Context& context, SemIR::LocId loc_id,
                           context, SemIR::BoolType::TypeInstId)));
   }
   if (type.isInteger()) {
-    unsigned width = context.ast_context().getIntWidth(qual_type);
-    bool is_signed = type.isSignedInteger();
-    auto int_n_type =
-        context.ast_context().getIntTypeForBitwidth(width, is_signed);
-    if (context.ast_context().hasSameType(qual_type, int_n_type)) {
-      TypeExpr type_expr =
-          MakeIntType(context, context.ints().Add(width), is_signed);
-      // Try to make sure integer types of 32 or 64 bits are complete so we can
-      // check against them when deciding whether we need to generate a thunk.
-      if (width == 32 || width == 64) {
-        SemIR::TypeId type_id = type_expr.type_id;
-        if (!context.types().IsComplete(type_id)) {
-          TryToCompleteType(context, type_id, loc_id);
-        }
-      }
-      return type_expr;
-    }
-    // TODO: Handle integer types that map to named aliases.
-  } else if (type.isFloatingPoint()) {
+    return MapBuiltinIntegerType(context, loc_id, qual_type, type);
+  }
+  if (type.isFloatingPoint()) {
     if (type.isFloat16Type() || type.isFloat32Type() || type.isDoubleType() ||
         type.isFloat128Type()) {
       return ExprAsType(
