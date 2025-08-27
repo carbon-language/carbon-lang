@@ -22,7 +22,7 @@ struct WrapRE2 : re2::RE2 {
 class RE2 {
   extend adapt Cpp.WrapRE2;
   fn Make(re: str) -> Self {
-    return Cpp.WrapRE2.WrapRE2(re) as Self;
+    return WrapRE2(re) as Self;
   }
   fn Match[self: Self](text: str) -> bool {
     var submatches: str;
