@@ -657,8 +657,11 @@ static auto LookupClangDeclInstId(const Context& context, clang::Decl* decl)
 // Returns the parent of the given declaration. Skips declaration types we
 // ignore.
 static auto GetParentDecl(clang::Decl* clang_decl) -> clang::Decl* {
-  return cast<clang::Decl>(
-      clang_decl->getDeclContext()->getNonTransparentContext());
+  auto* parent_dc = clang_decl->getDeclContext();
+  while (!parent_dc->isLookupContext()) {
+    parent_dc = parent_dc->getParent();
+  }
+  return cast<clang::Decl>(parent_dc);
 }
 
 // Returns the given declaration's parent scope. Assumes the parent declaration
@@ -757,10 +760,10 @@ static auto BuildClassDecl(Context& context,
   return {class_decl.class_id, context.types().GetAsTypeInstId(class_decl_id)};
 }
 
-// Imports a record declaration from Clang to Carbon. If successful, returns
-// the new Carbon class declaration `InstId`.
-static auto ImportCXXRecordDecl(Context& context,
-                                clang::CXXRecordDecl* clang_decl)
+// Imports a tag declaration from Clang to Carbon. This covers classes (which
+// includes structs and unions) as well as enums. If successful, returns the new
+// Carbon class declaration `InstId`.
+static auto ImportTagDecl(Context& context, clang::TagDecl* clang_decl)
     -> SemIR::InstId {
   auto import_ir_inst_id =
       AddImportIRInst(context.sem_ir(), clang_decl->getLocation());
@@ -974,8 +977,8 @@ static auto ImportClassObjectRepr(Context& context, SemIR::ClassId class_id,
        .layout_id = context.custom_layouts().Add(layout)});
 }
 
-// Creates a class definition based on the information in the given Clang
-// declaration, which is assumed to be for a class definition.
+// Creates a Carbon class definition based on the information in the given Clang
+// class declaration, which is assumed to be for a class definition.
 static auto BuildClassDefinition(Context& context,
                                  SemIR::ImportIRInstId import_ir_inst_id,
                                  SemIR::ClassId class_id,
@@ -1000,13 +1003,70 @@ static auto BuildClassDefinition(Context& context,
   class_info.body_block_id = context.inst_block_stack().Pop();
 }
 
-auto ImportCppClassDefinition(Context& context, SemIR::LocId loc_id,
-                              SemIR::ClassId class_id,
-                              SemIR::ClangDeclId clang_decl_id) -> bool {
+// Computes and returns the Carbon type to use as the object representation of
+// the given C++ enum type. This is a builtin int type matching the enum's
+// representation.
+static auto ImportEnumObjectRepresentation(
+    Context& context, SemIR::ImportIRInstId import_ir_inst_id,
+    clang::EnumDecl* enum_decl) -> SemIR::TypeInstId {
+  auto int_type = enum_decl->getIntegerType();
+  CARBON_CHECK(!int_type.isNull(), "incomplete enum type {0}",
+               enum_decl->getNameAsString());
+
+  auto int_kind = int_type->isSignedIntegerType() ? SemIR::IntKind::Signed
+                                                  : SemIR::IntKind::Unsigned;
+  auto bit_width_id = GetOrAddInst<SemIR::IntValue>(
+      context, import_ir_inst_id,
+      {.type_id = GetSingletonType(context, SemIR::IntLiteralType::TypeInstId),
+       .int_id = context.ints().AddUnsigned(
+           llvm::APInt(64, context.ast_context().getIntWidth(int_type)))});
+  return context.types().GetAsTypeInstId(
+      GetOrAddInst(context, SemIR::LocIdAndInst::NoLoc(SemIR::IntType{
+                                .type_id = SemIR::TypeType::TypeId,
+                                .int_kind = int_kind,
+                                .bit_width_id = bit_width_id})));
+}
+
+// Creates a Carbon class definition based on the information in the given Clang
+// enum declaration.
+static auto BuildEnumDefinition(Context& context,
+                                SemIR::ImportIRInstId import_ir_inst_id,
+                                SemIR::ClassId class_id,
+                                SemIR::TypeInstId class_inst_id,
+                                clang::EnumDecl* enum_decl) -> void {
+  auto& class_info = context.classes().Get(class_id);
+  CARBON_CHECK(!class_info.has_definition_started());
+  class_info.definition_id = class_inst_id;
+
+  context.inst_block_stack().Push();
+
+  // Don't allow inheritance from C++ enums, to match the behavior in C++.
+  class_info.inheritance_kind = SemIR::Class::Final;
+
+  // Compute the enum type's object representation. An enum is an adapter for
+  // the corresponding builtin integer type.
+  auto object_repr_id =
+      ImportEnumObjectRepresentation(context, import_ir_inst_id, enum_decl);
+  class_info.adapt_id = AddInst(
+      context, SemIR::LocIdAndInst::UncheckedLoc(
+                   import_ir_inst_id,
+                   SemIR::AdaptDecl{.adapted_type_inst_id = object_repr_id}));
+  class_info.complete_type_witness_id = AddInst<SemIR::CompleteTypeWitness>(
+      context, import_ir_inst_id,
+      {.type_id = GetSingletonType(context, SemIR::WitnessType::TypeInstId),
+       .object_repr_type_inst_id = object_repr_id});
+
+  class_info.body_block_id = context.inst_block_stack().Pop();
+}
+
+auto ImportClassDefinitionForClangDecl(Context& context, SemIR::LocId loc_id,
+                                       SemIR::ClassId class_id,
+                                       SemIR::ClangDeclId clang_decl_id)
+    -> bool {
   clang::ASTUnit* ast = context.sem_ir().clang_ast_unit();
   CARBON_CHECK(ast);
 
-  auto* clang_decl = cast<clang::CXXRecordDecl>(
+  auto* clang_decl = cast<clang::TagDecl>(
       context.sem_ir().clang_decls().Get(clang_decl_id).decl);
   auto class_inst_id = context.types().GetAsTypeInstId(
       context.classes().Get(class_id).first_owning_decl_id);
@@ -1018,7 +1078,7 @@ auto ImportCppClassDefinition(Context& context, SemIR::LocId loc_id,
   Diagnostics::AnnotationScope annotate_diagnostics(
       &context.emitter(), [&](auto& builder) {
         CARBON_DIAGNOSTIC(InCppTypeCompletion, Note,
-                          "while completing C++ class type {0}", SemIR::TypeId);
+                          "while completing C++ type {0}", SemIR::TypeId);
         builder.Note(loc_id, InCppTypeCompletion,
                      context.classes().Get(class_id).self_type_id);
       });
@@ -1027,31 +1087,60 @@ auto ImportCppClassDefinition(Context& context, SemIR::LocId loc_id,
   // instantiation if necessary.
   clang::DiagnosticErrorTrap trap(ast->getDiagnostics());
   if (!ast->getSema().isCompleteType(
-          loc, context.ast_context().getRecordType(clang_decl))) {
+          loc, context.ast_context().getTypeDeclType(clang_decl))) {
     // Type is incomplete. Nothing more to do, but tell the caller if we
     // produced an error.
     return !trap.hasErrorOccurred();
   }
 
-  clang::CXXRecordDecl* clang_def = clang_decl->getDefinition();
-  CARBON_CHECK(clang_def, "Complete type has no definition");
-
-  if (clang_def->getNumVBases()) {
-    // TODO: Handle virtual bases. We don't actually know where they go in the
-    // layout. We may also want to use a different size in the layout for
-    // `partial C`, excluding the virtual base. It's also not entirely safe to
-    // just skip over the virtual base, as the type we would construct would
-    // have a misleading size. For now, treat a C++ class with vbases as
-    // incomplete in Carbon.
-    context.TODO(loc_id, "class with virtual bases");
-    return false;
-  }
-
   auto import_ir_inst_id =
       context.insts().GetCanonicalLocId(class_inst_id).import_ir_inst_id();
-  BuildClassDefinition(context, import_ir_inst_id, class_id, class_inst_id,
-                       clang_def);
+
+  if (auto* class_decl = dyn_cast<clang::CXXRecordDecl>(clang_decl)) {
+    auto* class_def = class_decl->getDefinition();
+    CARBON_CHECK(class_def, "Complete type has no definition");
+
+    if (class_def->getNumVBases()) {
+      // TODO: Handle virtual bases. We don't actually know where they go in the
+      // layout. We may also want to use a different size in the layout for
+      // `partial C`, excluding the virtual base. It's also not entirely safe to
+      // just skip over the virtual base, as the type we would construct would
+      // have a misleading size. For now, treat a C++ class with vbases as
+      // incomplete in Carbon.
+      context.TODO(loc_id, "class with virtual bases");
+      return false;
+    }
+
+    BuildClassDefinition(context, import_ir_inst_id, class_id, class_inst_id,
+                         class_def);
+  } else if (auto* enum_decl = dyn_cast<clang::EnumDecl>(clang_decl)) {
+    BuildEnumDefinition(context, import_ir_inst_id, class_id, class_inst_id,
+                        enum_decl);
+  }
   return true;
+}
+
+// Imports an enumerator declaration from Clang to Carbon.
+static auto ImportEnumConstantDecl(Context& context,
+                                   clang::EnumConstantDecl* enumerator_decl)
+    -> SemIR::InstId {
+  CARBON_CHECK(!IsClangDeclImported(context, enumerator_decl));
+
+  // Find the enclosing enum type.
+  auto type_inst_id = LookupClangDeclInstId(
+      context, cast<clang::EnumDecl>(enumerator_decl->getDeclContext()));
+  auto type_id = context.types().GetTypeIdForTypeInstId(type_inst_id);
+
+  // Build a corresponding IntValue.
+  auto int_id = context.ints().Add(enumerator_decl->getInitVal());
+  auto loc_id =
+      AddImportIRInst(context.sem_ir(), enumerator_decl->getLocation());
+  auto inst_id = AddInstInNoBlock<SemIR::IntValue>(
+      context, loc_id, {.type_id = type_id, .int_id = int_id});
+  context.imports().push_back(inst_id);
+  context.sem_ir().clang_decls().Add(
+      {.decl = enumerator_decl->getCanonicalDecl(), .inst_id = inst_id});
+  return inst_id;
 }
 
 // Mark the given `Decl` as failed in `clang_decls`.
@@ -1132,29 +1221,28 @@ static auto LookupCustomRecordType(Context& context,
   }
 }
 
-// Maps a C++ record type to a Carbon type.
-static auto MapRecordType(Context& context, const clang::RecordType& type)
+// Maps a C++ tag type (class, struct, union, enum) to a Carbon type.
+static auto MapTagType(Context& context, const clang::TagType& type)
     -> TypeExpr {
-  auto* record_decl = dyn_cast<clang::CXXRecordDecl>(type.getDecl());
-  if (!record_decl) {
-    return TypeExpr::None;
-  }
+  auto* tag_decl = type.getDecl();
+  CARBON_CHECK(tag_decl);
 
   // Check if the declaration is already mapped.
-  SemIR::InstId record_inst_id = LookupClangDeclInstId(context, record_decl);
-  if (!record_inst_id.has_value()) {
-    auto custom_type = LookupCustomRecordType(context, record_decl);
-    if (custom_type.inst_id.has_value()) {
-      context.sem_ir().clang_decls().Add(
-          {.decl = record_decl, .inst_id = custom_type.inst_id});
-      return custom_type;
+  SemIR::InstId tag_inst_id = LookupClangDeclInstId(context, tag_decl);
+  if (!tag_inst_id.has_value()) {
+    if (auto* record_decl = dyn_cast<clang::CXXRecordDecl>(tag_decl)) {
+      auto custom_type = LookupCustomRecordType(context, record_decl);
+      if (custom_type.inst_id.has_value()) {
+        context.sem_ir().clang_decls().Add(
+            {.decl = record_decl, .inst_id = custom_type.inst_id});
+        return custom_type;
+      }
     }
-  }
-  if (!record_inst_id.has_value()) {
-    record_inst_id = ImportCXXRecordDecl(context, record_decl);
+
+    tag_inst_id = ImportTagDecl(context, tag_decl);
   }
   SemIR::TypeInstId record_type_inst_id =
-      context.types().GetAsTypeInstId(record_inst_id);
+      context.types().GetAsTypeInstId(tag_inst_id);
   return {
       .inst_id = record_type_inst_id,
       .type_id = context.types().GetTypeIdForTypeInstId(record_type_inst_id)};
@@ -1169,8 +1257,8 @@ static auto MapNonWrapperType(Context& context, SemIR::LocId loc_id,
     return MapBuiltinType(context, loc_id, type, *builtin_type);
   }
 
-  if (const auto* record_type = type->getAs<clang::RecordType>()) {
-    return MapRecordType(context, *record_type);
+  if (const auto* tag_type = type->getAs<clang::TagType>()) {
+    return MapTagType(context, *tag_type);
   }
 
   CARBON_CHECK(!type.hasQualifiers() && !type->isPointerType(),
@@ -1666,8 +1754,8 @@ static auto AddDependentUnimportedTypeDecls(const Context& context,
     }
   }
 
-  if (const auto* record_type = type->getAs<clang::RecordType>()) {
-    AddDependentDecl(context, record_type->getDecl(), worklist);
+  if (const auto* tag_type = type->getAs<clang::TagType>()) {
+    AddDependentDecl(context, tag_type->getDecl(), worklist);
   }
 }
 
@@ -1692,7 +1780,7 @@ static auto AddDependentUnimportedDecls(const Context& context,
     AddDependentUnimportedFunctionDecls(context, *clang_function_decl,
                                         worklist);
   } else if (auto* type_decl = dyn_cast<clang::TypeDecl>(clang_decl)) {
-    if (!isa<clang::RecordDecl>(clang_decl)) {
+    if (!isa<clang::TagDecl>(clang_decl)) {
       AddDependentUnimportedTypeDecls(
           context, type_decl->getASTContext().getTypeDeclType(type_decl),
           worklist);
@@ -1738,6 +1826,9 @@ static auto ImportDeclAfterDependencies(Context& context, SemIR::LocId loc_id,
     context.TODO(AddImportIRInst(context.sem_ir(), clang_decl->getLocation()),
                  "Unsupported: field declaration has unhandled type or kind");
     return SemIR::ErrorInst::InstId;
+  }
+  if (auto* enum_const_decl = dyn_cast<clang::EnumConstantDecl>(clang_decl)) {
+    return ImportEnumConstantDecl(context, enum_const_decl);
   }
 
   context.TODO(AddImportIRInst(context.sem_ir(), clang_decl->getLocation()),
