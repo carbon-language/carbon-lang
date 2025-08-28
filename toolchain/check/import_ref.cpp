@@ -26,6 +26,7 @@
 #include "toolchain/sem_ir/ids.h"
 #include "toolchain/sem_ir/import_ir.h"
 #include "toolchain/sem_ir/inst.h"
+#include "toolchain/sem_ir/inst_categories.h"
 #include "toolchain/sem_ir/inst_kind.h"
 #include "toolchain/sem_ir/type_info.h"
 #include "toolchain/sem_ir/typed_insts.h"
@@ -1823,14 +1824,16 @@ static auto TryResolveTypedInst(ImportRefResolver& resolver,
                  .object_repr_type_inst_id = object_repr_type_inst_id});
 }
 
-static auto TryResolveTypedInst(ImportRefResolver& resolver,
-                                SemIR::ConstType inst) -> ResolveResult {
+template <typename InstT>
+  requires SemIR::Internal::HasInstCategory<SemIR::AnyQualifiedType, InstT>
+static auto TryResolveTypedInst(ImportRefResolver& resolver, InstT inst)
+    -> ResolveResult {
   CARBON_CHECK(inst.type_id == SemIR::TypeType::TypeId);
   auto inner_id = GetLocalTypeInstId(resolver, inst.inner_id);
   if (resolver.HasNewWork()) {
     return ResolveResult::Retry();
   }
-  return ResolveAsDeduplicated<SemIR::ConstType>(
+  return ResolveAsDeduplicated<InstT>(
       resolver, {.type_id = SemIR::TypeType::TypeId, .inner_id = inner_id});
 }
 
@@ -3183,11 +3186,17 @@ static auto TryResolveInstCanonical(ImportRefResolver& resolver,
     case CARBON_KIND(SemIR::IntType inst): {
       return TryResolveTypedInst(resolver, inst);
     }
+    case CARBON_KIND(SemIR::MaybeUnformedType inst): {
+      return TryResolveTypedInst(resolver, inst);
+    }
     case CARBON_KIND(SemIR::Namespace inst): {
       return TryResolveTypedInst(resolver, inst, inst_id);
     }
     case CARBON_KIND(SemIR::OutParamPattern inst): {
       return TryResolveTypedInst(resolver, inst, inst_id);
+    }
+    case CARBON_KIND(SemIR::PartialType inst): {
+      return TryResolveTypedInst(resolver, inst);
     }
     case CARBON_KIND(SemIR::PatternType inst): {
       return TryResolveTypedInst(resolver, inst);

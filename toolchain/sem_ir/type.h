@@ -21,9 +21,10 @@ LLVM_ENABLE_BITMASK_ENUMS_IN_NAMESPACE();
 enum class TypeQualifiers {
   None = 0,
   Const = 1 << 0,
-  // TODO: Partial
+  Partial = 1 << 1,
+  MaybeUnformed = 1 << 2,
 
-  LLVM_MARK_AS_BITMASK_ENUM(Const)
+  LLVM_MARK_AS_BITMASK_ENUM(MaybeUnformed)
 };
 
 // Provides a ValueStore wrapper with an API specific to types.
@@ -180,6 +181,11 @@ class TypeStore : public Yaml::Printable<TypeStore> {
   // Removes any top-level qualifiers from a type and returns the unqualified
   // type and qualifiers.
   auto GetUnqualifiedTypeAndQualifiers(TypeId type_id) const
+      -> std::pair<TypeId, TypeQualifiers>;
+
+  // Returns the non-adapter unqualified type that is compatible with the
+  // specified type.
+  auto GetTransitiveUnqualifiedAdaptedType(TypeId type_id) const
       -> std::pair<TypeId, TypeQualifiers>;
 
   // Determines whether the given type is a signed integer type. This includes

@@ -764,8 +764,7 @@ static auto BuildTypeForInst(FileContext& context, SemIR::ClassType inst)
 }
 
 template <typename InstT>
-  requires(InstT::Kind.template IsAnyOf<
-           SemIR::ConstType, SemIR::MaybeUnformedType, SemIR::PartialType>())
+  requires(SemIR::Internal::HasInstCategory<SemIR::AnyQualifiedType, InstT>)
 static auto BuildTypeForInst(FileContext& context, InstT inst) -> llvm::Type* {
   return context.GetType(
       context.sem_ir().types().GetTypeIdForTypeInstId(inst.inner_id));
