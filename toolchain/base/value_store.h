@@ -136,18 +136,14 @@ class ValueStore
 
   // Returns a mutable value for an ID.
   auto Get(IdType id) -> RefType {
-    auto index = tag_.Remove(id.index);
-    CARBON_DCHECK(index >= 0, "{0}", index);
-    CARBON_DCHECK(index < size_, "{0}", index);
+    auto index = GetRawIndex(id);
     auto [chunk_index, pos] = IdToChunkIndices(index);
     return chunks_[chunk_index].Get(pos);
   }
 
   // Returns the value for an ID.
   auto Get(IdType id) const -> ConstRefType {
-    auto index = tag_.Remove(id.index);
-    CARBON_DCHECK(index >= 0, "{0}", index);
-    CARBON_DCHECK(index < size_, "{0}", index);
+    auto index = GetRawIndex(id);
     auto [chunk_index, pos] = IdToChunkIndices(index);
     return chunks_[chunk_index].Get(pos);
   }
@@ -237,6 +233,14 @@ class ValueStore
     // Because indices into `ValueStore` are all sequential values from 0, we
     // can use llvm::seq to walk all indices in the store.
     return llvm::map_range(llvm::seq(size_), index_to_id);
+  }
+
+  auto GetCheckIRIdTag() const -> CheckIRIdTag { return tag_; }
+  auto GetRawIndex(IdT id) const -> int32_t {
+    auto index = tag_.Remove(id.index);
+    CARBON_DCHECK(index >= 0, "{0}", index);
+    CARBON_DCHECK(index < size_, "{0}", index);
+    return index;
   }
 
  private:
@@ -378,10 +382,8 @@ class ValueStore
   // fits in an `int32_t`, which is checked in non-optimized builds in Add().
   int32_t size_ = 0;
 
- public:
   CheckIRIdTag tag_;
 
- private:
   // Storage for the `ValueType` objects, indexed by the id. We use a vector of
   // chunks of `ValueType` instead of just a vector of `ValueType` so that
   // addresses of `ValueType` objects are stable. This allows the rest of the

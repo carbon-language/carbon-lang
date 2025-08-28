@@ -611,7 +611,7 @@ class InstStore {
 
   // Overwrites a given instruction's location with a new value.
   auto SetLocId(InstId inst_id, LocId loc_id) -> void {
-    auto index = values_.tag_.Remove(inst_id.index);
+    auto index = values_.GetRawIndex(inst_id);
     loc_ids_[index] = loc_id;
   }
 
@@ -643,6 +643,14 @@ class InstStore {
     return values_.enumerate();
   }
 
+  auto GetRawIndex(InstId id) const -> int32_t {
+    return values_.GetRawIndex(id);
+  }
+
+  auto GetCheckIRIdTag() const -> CheckIRIdTag {
+    return values_.GetCheckIRIdTag();
+  }
+
  private:
   // Given a symbolic type, get the corresponding unattached type.
   auto GetUnattachedType(TypeId type_id) const -> TypeId;
@@ -650,7 +658,7 @@ class InstStore {
   // Gets the specified location for an instruction, without performing any
   // canonicalization.
   auto GetNonCanonicalLocId(InstId inst_id) const -> LocId {
-    auto index = values_.tag_.Remove(inst_id.index);
+    auto index = values_.GetRawIndex(inst_id);
     CARBON_CHECK(static_cast<size_t>(index) < loc_ids_.size(), "{0} {1}", index,
                  loc_ids_.size());
     return loc_ids_[index];
@@ -658,8 +666,6 @@ class InstStore {
 
   File* file_;
   llvm::SmallVector<LocId> loc_ids_;
-
- public:
   ValueStore<InstId, Inst> values_;
 };
 
@@ -719,7 +725,7 @@ namespace Carbon {
 template <>
 inline auto GetCheckIRIdTag<SemIR::InstStore>(
     const SemIR::InstStore& value_store) {
-  return value_store.values_.tag_;
+  return value_store.GetCheckIRIdTag();
 }
 }  // namespace Carbon
 

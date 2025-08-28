@@ -38,9 +38,7 @@ static auto InternalAddImportIR(Context& context, SemIR::ImportIR import_ir)
     -> SemIR::ImportIRId {
   context.import_ir_constant_values().push_back(SemIR::ConstantValueStore(
       SemIR::ConstantId::None,
-      import_ir.sem_ir ? CheckIRIdTag(import_ir.sem_ir->check_ir_id().index,
-                                      SemIR::SingletonInstKinds.size() + 1)
-                       : CheckIRIdTag(0, std::numeric_limits<int32_t>::max())));
+      import_ir.sem_ir ? &import_ir.sem_ir->insts() : nullptr));
   return context.import_irs().Add(import_ir);
 }
 
@@ -646,7 +644,6 @@ static auto AddImportRef(ImportContext& context, SemIR::InstId inst_id,
 static auto AddLoadedImportRef(ImportContext& context, SemIR::TypeId type_id,
                                SemIR::InstId inst_id,
                                SemIR::ConstantId const_id) -> SemIR::InstId {
-  context.import_insts().Get(inst_id);
   return AddLoadedImportRef(
       context.local_context(), type_id,
       SemIR::ImportIRInst(context.import_ir_id(), inst_id), const_id);
@@ -2093,8 +2090,7 @@ static auto TryResolveTypedInst(ImportRefResolver& resolver,
           resolver,
           GetSingletonType(resolver.local_context(),
                            SemIR::SpecificFunctionType::TypeInstId),
-          /* bad: local_vtable_entry_inst_id */ import_vtable_entry_inst_id,
-          local_attached_constant_id);
+          import_vtable_entry_inst_id, local_attached_constant_id);
     }
   }
 

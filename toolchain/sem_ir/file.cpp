@@ -37,9 +37,7 @@ File::File(const Parse::Tree* parse_tree, CheckIRId check_ir_id,
       filename_(std::move(filename)),
       impls_(*this),
       insts_(this, SingletonInstKinds.size() + 1),
-      constant_values_(
-          ConstantId::NotConstant,
-          CheckIRIdTag(check_ir_id.index, SingletonInstKinds.size() + 1)),
+      constant_values_(ConstantId::NotConstant, &insts_),
       inst_blocks_(allocator_),
       constants_(this) {
   // `type` and the error type are both complete & concrete types.

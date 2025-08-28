@@ -109,8 +109,10 @@ struct SymbolicConstant : Printable<SymbolicConstant> {
 // instructions.
 class ConstantValueStore {
  public:
-  explicit ConstantValueStore(ConstantId default_value, CheckIRIdTag tag)
-      : default_(default_value), values_(tag), tag_(tag) {}
+  explicit ConstantValueStore(ConstantId default_value, const InstStore* insts)
+      : default_(default_value),
+        values_(insts->GetCheckIRIdTag()),
+        insts_(insts) {}
 
   // Returns the constant value of the requested instruction, which is default_
   // if unallocated. Always returns an unattached constant.
@@ -122,8 +124,7 @@ class ConstantValueStore {
   // Returns the constant value of the requested instruction, which is default_
   // if unallocated. This may be an attached constant.
   auto GetAttached(InstId inst_id) const -> ConstantId {
-    auto index = tag_.Remove(inst_id.index);
-    CARBON_DCHECK(index >= 0);
+    auto index = insts_ ? inst_id.index : insts_->GetRawIndex(inst_id);
     return static_cast<size_t>(index) >= values_.size() ? default_
                                                         : values_.Get(inst_id);
   }
@@ -131,8 +132,7 @@ class ConstantValueStore {
   // Sets the constant value of the given instruction, or sets that it is known
   // to not be a constant.
   auto Set(InstId inst_id, ConstantId const_id) -> void {
-    auto index = tag_.Remove(inst_id.index);
-    CARBON_DCHECK(index >= 0);
+    auto index = insts_ ? inst_id.index : insts_->GetRawIndex(inst_id);
     if (static_cast<size_t>(index) >= values_.size()) {
       values_.Resize(index + 1, default_);
     }
@@ -245,7 +245,7 @@ class ConstantValueStore {
   // where the constant was used, which is stored here.
   ValueStore<ConstantId::SymbolicId, SymbolicConstant> symbolic_constants_;
 
-  CheckIRIdTag tag_;
+  const InstStore* insts_;
 };
 
 // Given a constant ID, returns an instruction that has that constant value.

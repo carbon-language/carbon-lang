@@ -185,7 +185,7 @@ auto InstNamer::GetUnscopedNameFor(InstId inst_id) const -> llvm::StringRef {
   if (IsSingletonInstId(inst_id)) {
     return sem_ir_->insts().Get(inst_id).kind().ir_name();
   }
-  auto index = sem_ir_->insts().values_.tag_.Remove(inst_id.index);
+  auto index = sem_ir_->insts().GetRawIndex(inst_id);
   const auto& inst_name = insts_[index].second;
   return inst_name ? inst_name.GetFullName() : "";
 }
@@ -205,7 +205,7 @@ auto InstNamer::GetNameFor(ScopeId scope_id, InstId inst_id) const
     return "package";
   }
 
-  auto index = sem_ir_->insts().values_.tag_.Remove(inst_id.index);
+  auto index = sem_ir_->insts().GetRawIndex(inst_id);
   const auto& [inst_scope, inst_name] = insts_[index];
   if (!inst_name) {
     // This should not happen in valid IR.
@@ -575,7 +575,7 @@ auto InstNamer::PushEntity(ImplId impl_id, ScopeId scope_id, Scope& scope)
   llvm::StringRef self_name;
   auto self_const_id =
       sem_ir_->constant_values().GetConstantInstId(impl.self_id);
-  auto index = sem_ir_->insts().values_.tag_.Remove(self_const_id.index);
+  auto index = sem_ir_->insts().GetRawIndex(self_const_id);
   if (IsSingletonInstId(self_const_id)) {
     self_name = sem_ir_->insts().Get(self_const_id).kind().ir_name();
   } else if (const auto& inst_name = insts_[index].second) {
@@ -638,7 +638,7 @@ InstNamer::NamingContext::NamingContext(InstNamer* inst_namer,
       inst_(sem_ir().insts().Get(inst_id)) {}
 
 auto InstNamer::NamingContext::AddInstName(std::string name) -> void {
-  auto index = sem_ir().insts().values_.tag_.Remove(inst_id_.index);
+  auto index = sem_ir().insts().GetRawIndex(inst_id_);
   ScopeId old_scope_id = inst_namer_->insts_[index].first;
   if (old_scope_id == ScopeId::None) {
     std::variant<LocId, uint64_t> loc_id_or_fingerprint = LocId::None;
@@ -979,7 +979,7 @@ auto InstNamer::NamingContext::NameInst() -> void {
       auto const_id = sem_ir().constant_values().Get(inst_id_);
       if (const_id.has_value() && const_id.is_concrete()) {
         auto const_inst_id = sem_ir().constant_values().GetInstId(const_id);
-        auto index = sem_ir().insts().values_.tag_.Remove(const_inst_id.index);
+        auto index = sem_ir().insts().GetRawIndex(const_inst_id);
         if (!inst_namer_->insts_[index].second) {
           inst_namer_->PushBlockInsts(ScopeId::Imports, const_inst_id);
         }
@@ -1183,6 +1183,6 @@ auto InstNamer::NamingContext::NameInst() -> void {
 
 auto InstNamer::has_name(InstId inst_id) const -> bool {
   return static_cast<bool>(
-      insts_[sem_ir_->insts().values_.tag_.Remove(inst_id.index)].second);
+      insts_[sem_ir_->insts().GetRawIndex(inst_id)].second);
 }
 }  // namespace Carbon::SemIR

@@ -51,9 +51,9 @@ FileContext::FileContext(Context& context, const SemIR::File& sem_ir,
       functions_(LoweredFunctionStore::MakeForOverwrite(sem_ir.functions())),
       specific_functions_(sem_ir.specifics(), nullptr),
       types_(LoweredTypeStore::MakeWithExplicitSize(
-          sem_ir.insts().values_.tag_, sem_ir.insts().size(), nullptr)),
+          sem_ir.insts().GetCheckIRIdTag(), sem_ir.insts().size(), nullptr)),
       constants_(LoweredConstantStore::MakeWithExplicitSize(
-          sem_ir.insts().values_.tag_, sem_ir.insts().size(), nullptr)),
+          sem_ir.insts().GetCheckIRIdTag(), sem_ir.insts().size(), nullptr)),
       lowered_specifics_(sem_ir.generics(),
                          llvm::SmallVector<SemIR::SpecificId>()),
       coalescer_(vlog_stream_, sem_ir.specifics()),
