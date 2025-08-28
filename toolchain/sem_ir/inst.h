@@ -443,7 +443,7 @@ class InstStore {
  public:
   using IdType = InstId;
 
-  explicit InstStore(File* file) : file_(file) {}
+  explicit InstStore(File* file, int32_t reserved_inst_ids);
 
   // Adds an instruction to the instruction list, returning an ID to reference
   // the instruction. Note that this doesn't add the instruction to any
@@ -611,7 +611,8 @@ class InstStore {
 
   // Overwrites a given instruction's location with a new value.
   auto SetLocId(InstId inst_id, LocId loc_id) -> void {
-    loc_ids_[inst_id.index] = loc_id;
+    auto index = values_.tag_.Remove(inst_id.index);
+    loc_ids_[index] = loc_id;
   }
 
   // Overwrites a given instruction and location ID with a new value.
@@ -649,13 +650,16 @@ class InstStore {
   // Gets the specified location for an instruction, without performing any
   // canonicalization.
   auto GetNonCanonicalLocId(InstId inst_id) const -> LocId {
-    CARBON_CHECK(static_cast<size_t>(inst_id.index) < loc_ids_.size(),
-                 "{0} {1}", inst_id.index, loc_ids_.size());
-    return loc_ids_[inst_id.index];
+    auto index = values_.tag_.Remove(inst_id.index);
+    CARBON_CHECK(static_cast<size_t>(index) < loc_ids_.size(), "{0} {1}", index,
+                 loc_ids_.size());
+    return loc_ids_[index];
   }
 
   File* file_;
   llvm::SmallVector<LocId> loc_ids_;
+
+ public:
   ValueStore<InstId, Inst> values_;
 };
 
@@ -710,5 +714,13 @@ inline auto CarbonHashValue(const Inst& value, uint64_t seed) -> HashCode {
 }
 
 }  // namespace Carbon::SemIR
+
+namespace Carbon {
+template <>
+inline auto GetCheckIRIdTag<SemIR::InstStore>(
+    const SemIR::InstStore& value_store) {
+  return value_store.values_.tag_;
+}
+}  // namespace Carbon
 
 #endif  // CARBON_TOOLCHAIN_SEM_IR_INST_H_

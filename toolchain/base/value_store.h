@@ -32,6 +32,42 @@ class ValueStoreNotPrintable {};
 
 }  // namespace Internal
 
+struct CheckIRIdTag {
+  CheckIRIdTag()
+      : check_id_tag_(0),
+        initial_reserved_ids_(std::numeric_limits<int32_t>::max()) {}
+  explicit CheckIRIdTag(int32_t check_id_index, int32_t initial_reserved_ids)
+      : initial_reserved_ids_(initial_reserved_ids) {
+    // Shift down by 1 to get out of the high bit to avoid using any negative
+    // ids, since they have special uses.
+    check_id_tag_ = llvm::reverseBits((((check_id_index + 1) << 1) | 1) << 1);
+  }
+  auto Apply(int32_t index) const -> int32_t {
+    if (index < initial_reserved_ids_) {
+      return index;
+    }
+    // assert that check_id_tag_ doesn't have the second highest bit set
+    return index ^ check_id_tag_;
+  }
+  auto Remove(int32_t tagged_index) const -> int32_t {
+    if ((llvm::reverseBits(2) & tagged_index) == 0) {
+      CARBON_CHECK(tagged_index < initial_reserved_ids_);
+      return tagged_index;
+    }
+    auto index = tagged_index ^ check_id_tag_;
+    CARBON_CHECK(index >= initial_reserved_ids_);
+    return index;
+  }
+  int32_t check_id_tag_;
+  int32_t initial_reserved_ids_;
+};
+
+template <typename ValueStoreT>
+auto GetCheckIRIdTag(const ValueStoreT& value_store) {
+  (void)value_store;
+  return CheckIRIdTag();
+}
+
 // A simple wrapper for accumulating values, providing IDs to later retrieve the
 // value. This does not do deduplication.
 template <typename IdT, typename ValueT>
@@ -74,6 +110,7 @@ class ValueStore
   };
 
   ValueStore() = default;
+  explicit ValueStore(CheckIRIdTag tag) : tag_(tag) {}
 
   // Stores the value and returns an ID to reference it.
   auto Add(ValueType value) -> IdType {
@@ -82,8 +119,8 @@ class ValueStore
     // tracking down issues easier.
     CARBON_DCHECK(size_ < std::numeric_limits<int32_t>::max(), "Id overflow");
 
-    IdType id(size_);
-    auto [chunk_index, pos] = IdToChunkIndices(id);
+    IdType id(tag_.Apply(size_));
+    auto [chunk_index, pos] = IdToChunkIndices(size_);
     ++size_;
 
     CARBON_DCHECK(static_cast<size_t>(chunk_index) <= chunks_.size(),
@@ -99,17 +136,19 @@ class ValueStore
 
   // Returns a mutable value for an ID.
   auto Get(IdType id) -> RefType {
-    CARBON_DCHECK(id.index >= 0, "{0}", id);
-    CARBON_DCHECK(id.index < size_, "{0}", id);
-    auto [chunk_index, pos] = IdToChunkIndices(id);
+    auto index = tag_.Remove(id.index);
+    CARBON_DCHECK(index >= 0, "{0}", index);
+    CARBON_DCHECK(index < size_, "{0}", index);
+    auto [chunk_index, pos] = IdToChunkIndices(index);
     return chunks_[chunk_index].Get(pos);
   }
 
   // Returns the value for an ID.
   auto Get(IdType id) const -> ConstRefType {
-    CARBON_DCHECK(id.index >= 0, "{0}", id);
-    CARBON_DCHECK(id.index < size_, "{0}", id);
-    auto [chunk_index, pos] = IdToChunkIndices(id);
+    auto index = tag_.Remove(id.index);
+    CARBON_DCHECK(index >= 0, "{0}", index);
+    CARBON_DCHECK(index < size_, "{0}", index);
+    auto [chunk_index, pos] = IdToChunkIndices(index);
     return chunks_[chunk_index].Get(pos);
   }
 
@@ -118,7 +157,7 @@ class ValueStore
     if (size <= size_) {
       return;
     }
-    auto [final_chunk_index, _] = IdToChunkIndices(IdType(size - 1));
+    auto [final_chunk_index, _] = IdToChunkIndices(size - 1);
     chunks_.resize(final_chunk_index + 1);
   }
 
@@ -128,10 +167,10 @@ class ValueStore
       return;
     }
 
-    auto [begin_chunk_index, begin_pos] = IdToChunkIndices(IdType(size_));
+    auto [begin_chunk_index, begin_pos] = IdToChunkIndices(size_);
     // Use an inclusive range so that if `size` would be the next chunk, we
     // don't try doing something with it.
-    auto [end_chunk_index, end_pos] = IdToChunkIndices(IdType(size - 1));
+    auto [end_chunk_index, end_pos] = IdToChunkIndices(size - 1);
     chunks_.resize(end_chunk_index + 1);
 
     // If the begin and end chunks are the same, we only fill from begin to end.
@@ -192,7 +231,8 @@ class ValueStore
     // `mapped_iterator` incorrectly infers the pointer type for `PointerProxy`.
     // NOLINTNEXTLINE(readability-const-return-type)
     auto index_to_id = [&](int32_t i) -> const std::pair<IdType, ConstRefType> {
-      return std::pair<IdType, ConstRefType>(IdType(i), Get(IdType(i)));
+      IdType id(tag_.Apply(i));
+      return std::pair<IdType, ConstRefType>(id, Get(id));
     };
     // Because indices into `ValueStore` are all sequential values from 0, we
     // can use llvm::seq to walk all indices in the store.
@@ -314,7 +354,7 @@ class ValueStore
 
   // Converts an id into an index into the set of chunks, and an offset into
   // that specific chunk. Looks for index overflow in non-optimized builds.
-  static auto IdToChunkIndices(IdType id) -> std::pair<int32_t, int32_t> {
+  static auto IdToChunkIndices(int32_t index) -> std::pair<int32_t, int32_t> {
     constexpr auto LowBits = Chunk::IndexBits();
 
     // Verify there are no unused bits when indexing up to the `Capacity`. This
@@ -328,9 +368,9 @@ class ValueStore
     static_assert(LowBits < 30);
 
     // The index of the chunk is the high bits.
-    auto chunk = id.index >> LowBits;
+    auto chunk = index >> LowBits;
     // The index into the chunk is the low bits.
-    auto pos = id.index & ((1 << LowBits) - 1);
+    auto pos = index & ((1 << LowBits) - 1);
     return {chunk, pos};
   }
 
@@ -338,6 +378,10 @@ class ValueStore
   // fits in an `int32_t`, which is checked in non-optimized builds in Add().
   int32_t size_ = 0;
 
+ public:
+  CheckIRIdTag tag_;
+
+ private:
   // Storage for the `ValueType` objects, indexed by the id. We use a vector of
   // chunks of `ValueType` instead of just a vector of `ValueType` so that
   // addresses of `ValueType` objects are stable. This allows the rest of the

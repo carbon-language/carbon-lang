@@ -109,8 +109,8 @@ struct SymbolicConstant : Printable<SymbolicConstant> {
 // instructions.
 class ConstantValueStore {
  public:
-  explicit ConstantValueStore(ConstantId default_value)
-      : default_(default_value) {}
+  explicit ConstantValueStore(ConstantId default_value, CheckIRIdTag tag)
+      : default_(default_value), values_(tag), tag_(tag) {}
 
   // Returns the constant value of the requested instruction, which is default_
   // if unallocated. Always returns an unattached constant.
@@ -122,18 +122,19 @@ class ConstantValueStore {
   // Returns the constant value of the requested instruction, which is default_
   // if unallocated. This may be an attached constant.
   auto GetAttached(InstId inst_id) const -> ConstantId {
-    CARBON_DCHECK(inst_id.index >= 0);
-    return static_cast<size_t>(inst_id.index) >= values_.size()
-               ? default_
-               : values_.Get(inst_id);
+    auto index = tag_.Remove(inst_id.index);
+    CARBON_DCHECK(index >= 0);
+    return static_cast<size_t>(index) >= values_.size() ? default_
+                                                        : values_.Get(inst_id);
   }
 
   // Sets the constant value of the given instruction, or sets that it is known
   // to not be a constant.
   auto Set(InstId inst_id, ConstantId const_id) -> void {
-    CARBON_DCHECK(inst_id.index >= 0);
-    if (static_cast<size_t>(inst_id.index) >= values_.size()) {
-      values_.Resize(inst_id.index + 1, default_);
+    auto index = tag_.Remove(inst_id.index);
+    CARBON_DCHECK(index >= 0);
+    if (static_cast<size_t>(index) >= values_.size()) {
+      values_.Resize(index + 1, default_);
     }
     values_.Get(inst_id) = const_id;
   }
@@ -243,6 +244,8 @@ class ConstantValueStore {
   // `ConstantId`. For a symbolic constant, we also track information about
   // where the constant was used, which is stored here.
   ValueStore<ConstantId::SymbolicId, SymbolicConstant> symbolic_constants_;
+
+  CheckIRIdTag tag_;
 };
 
 // Given a constant ID, returns an instruction that has that constant value.
