@@ -70,7 +70,6 @@ fn Read() {
 // CHECK:STDOUT:   %IntRange.Make.type.51f: type = fn_type @IntRange.Make, @IntRange(%N.c80) [symbolic]
 // CHECK:STDOUT:   %IntRange.Make.2ec: %IntRange.Make.type.51f = struct_value () [symbolic]
 // CHECK:STDOUT:   %Iterate.type: type = facet_type <@Iterate> [concrete]
-// CHECK:STDOUT:   %Self.a96: %Iterate.type = bind_symbolic_name Self, 0 [symbolic]
 // CHECK:STDOUT:   %.Self.ef1: %Iterate.type = bind_symbolic_name .Self [symbolic_self]
 // CHECK:STDOUT:   %Iterate.assoc_type: type = assoc_entity_type @Iterate [concrete]
 // CHECK:STDOUT:   %assoc1.02e: %Iterate.assoc_type = assoc_entity element1, imports.%Core.import_ref.9e6 [concrete]
@@ -128,7 +127,6 @@ fn Read() {
 // CHECK:STDOUT:   %assoc0.8dc: %OrderedWith.assoc_type.d92 = assoc_entity element0, imports.%Core.import_ref.13d [symbolic]
 // CHECK:STDOUT:   %require_complete.0f5: <witness> = require_complete_type %ptr.784 [symbolic]
 // CHECK:STDOUT:   %Inc.type: type = facet_type <@Inc> [concrete]
-// CHECK:STDOUT:   %Iterate.facet.7f1: %Iterate.type = facet_value %.Self.as_type.935, (%Iterate.lookup_impl_witness.65a) [symbolic_self]
 // CHECK:STDOUT:   %assoc0.724: %Iterate.assoc_type = assoc_entity element0, imports.%Core.import_ref.4f9 [concrete]
 // CHECK:STDOUT:   %Iterate_where.type.fce: type = facet_type <@Iterate where %impl.elem1.164 = %Int.49d0e6.1 and %impl.elem0.19f = %Int.49d0e6.1> [symbolic]
 // CHECK:STDOUT:   %require_complete.d96: <witness> = require_complete_type %Iterate_where.type.fce [symbolic]
@@ -765,14 +763,6 @@ fn Read() {
 // CHECK:STDOUT:   %IntRange => constants.%IntRange.349
 // CHECK:STDOUT:   %pattern_type.loc5_49 => constants.%pattern_type.dcd
 // CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: specific @CursorType(constants.%Self.a96) {}
-// CHECK:STDOUT:
-// CHECK:STDOUT: specific @CursorType(constants.%Iterate.facet.7f1) {}
-// CHECK:STDOUT:
-// CHECK:STDOUT: specific @ElementType(constants.%Self.a96) {}
-// CHECK:STDOUT:
-// CHECK:STDOUT: specific @ElementType(constants.%Iterate.facet.7f1) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @IntRange.as.Iterate.impl(constants.%N.c80) {
 // CHECK:STDOUT:   %N => constants.%N.c80
