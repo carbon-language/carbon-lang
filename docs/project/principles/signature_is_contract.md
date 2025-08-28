@@ -87,19 +87,15 @@ the full definition. This is instead of forward references, which are counter to
 the ["information accumulation" principle](information_accumulation.md).
 
 Allowing a definition to override aspects of the corresponding declaration would
-open the door to inconsistency. An example of how this is a problem in C++
+open the door to inconsistency. This is something that can happen in C++
+(potentially leading to ODR violations):
 
-```cpp
-class Base {};
-
-class Derived;
-
-// FIXME: commit to Derived not extending Base
-
-class Derived : public Base {};
-
-// Inconsistency!
-```
+-   The behaviour of `&x` where `x` is an lvalue of an incomplete class type,
+    where you can't do the lookup for a member named `operator&`, see
+    [this note on C++ unary operators](https://eel.is/c++draft/expr#unary.op-5).
+-   The MSVC ABI has different member pointer representations for different
+    kinds of classes, but you can use a pointer to member before the class is
+    defined.
 
 ## Exceptions
 
