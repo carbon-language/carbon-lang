@@ -347,10 +347,10 @@ auto Formatter::FormatClass(ClassId id) -> void {
     out_ << "complete_type_witness = ";
     FormatName(class_info.complete_type_witness_id);
     out_ << "\n";
-    if (class_info.vtable_ptr_id.has_value()) {
+    if (class_info.vtable_decl_id.has_value()) {
       Indent();
-      out_ << "vtable_ptr = ";
-      FormatName(class_info.vtable_ptr_id);
+      out_ << "vtable_decl = ";
+      FormatName(class_info.vtable_decl_id);
       out_ << "\n";
     }
 
@@ -1023,7 +1023,7 @@ auto Formatter::FormatInstRhs(Inst inst) -> void {
       return;
     }
 
-    case CARBON_KIND(FloatLiteral value): {
+    case CARBON_KIND(FloatValue value): {
       llvm::SmallVector<char, 16> buffer;
       sem_ir_->floats().Get(value.float_id).toString(buffer);
       out_ << " " << buffer;
@@ -1189,8 +1189,7 @@ auto Formatter::FormatCallRhs(Call inst) -> void {
   bool has_return_slot = return_info.has_return_slot();
   InstId return_slot_arg_id = InstId::None;
   if (has_return_slot) {
-    return_slot_arg_id = args.back();
-    args = args.drop_back();
+    return_slot_arg_id = args.consume_back();
   }
 
   llvm::ListSeparator sep;

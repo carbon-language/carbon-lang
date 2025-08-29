@@ -85,14 +85,14 @@ fn Calculate(a: Number, b: Number) -> Number {
 // CHECK:STDOUT: define void @_CCalculate.Main(ptr sret({ i1 }) %return, ptr %a, ptr %b) !dbg !21 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   %.loc30_10.1.temp = alloca { i1 }, align 8, !dbg !22
-// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(i64 1, ptr %.loc30_10.1.temp), !dbg !22
+// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %.loc30_10.1.temp), !dbg !22
 // CHECK:STDOUT:   call void @"_COp.Number.Main:Negate.Core"(ptr %.loc30_10.1.temp, ptr %a), !dbg !22
 // CHECK:STDOUT:   call void @"_COp.Number.Main:MulWith.Core"(ptr %return, ptr %.loc30_10.1.temp, ptr %b), !dbg !22
 // CHECK:STDOUT:   ret void, !dbg !23
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nocallback nofree nosync nounwind willreturn memory(argmem: readwrite)
-// CHECK:STDOUT: declare void @llvm.lifetime.start.p0(i64 immarg, ptr captures(none)) #0
+// CHECK:STDOUT: declare void @llvm.lifetime.start.p0(ptr captures(none)) #0
 // CHECK:STDOUT:
 // CHECK:STDOUT: attributes #0 = { nocallback nofree nosync nounwind willreturn memory(argmem: readwrite) }
 // CHECK:STDOUT:

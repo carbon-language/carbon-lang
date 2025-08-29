@@ -40,11 +40,12 @@ let :! bool = true;
 // CHECK:STDOUT:   parse_tree: [
 // CHECK:STDOUT:     {kind: 'FileStart', text: ''},
 // CHECK:STDOUT:       {kind: 'LetIntroducer', text: 'let'},
-// CHECK:STDOUT:         {kind: 'IdentifierNameNotBeforeParams', text: ':!', has_error: yes},
+// CHECK:STDOUT:           {kind: 'IdentifierNameNotBeforeParams', text: ':!', has_error: yes},
+// CHECK:STDOUT:         {kind: 'CompileTimeBindingPatternStart', text: ':!', has_error: yes, subtree_size: 2},
 // CHECK:STDOUT:         {kind: 'BoolTypeLiteral', text: 'bool'},
-// CHECK:STDOUT:       {kind: 'CompileTimeBindingPattern', text: ':!', has_error: yes, subtree_size: 3},
+// CHECK:STDOUT:       {kind: 'CompileTimeBindingPattern', text: ':!', has_error: yes, subtree_size: 4},
 // CHECK:STDOUT:       {kind: 'LetInitializer', text: '='},
 // CHECK:STDOUT:       {kind: 'BoolLiteralTrue', text: 'true'},
-// CHECK:STDOUT:     {kind: 'LetDecl', text: ';', subtree_size: 7},
+// CHECK:STDOUT:     {kind: 'LetDecl', text: ';', subtree_size: 8},
 // CHECK:STDOUT:     {kind: 'FileEnd', text: ''},
 // CHECK:STDOUT:   ]

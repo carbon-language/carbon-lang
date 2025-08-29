@@ -82,7 +82,7 @@ fn DoStuff(a: Int) -> Int {
 // CHECK:STDOUT: define i32 @_CUse.Main() !dbg !15 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   %pa.var = alloca { i32, i32 }, align 8, !dbg !16
-// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(i64 8, ptr %pa.var), !dbg !16
+// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %pa.var), !dbg !16
 // CHECK:STDOUT:   call void @_CMake.PairAdapter.Main(ptr %pa.var), !dbg !17
 // CHECK:STDOUT:   %PairAdapter.GetB.call = call i32 @_CGetB.PairAdapter.Main(ptr %pa.var), !dbg !18
 // CHECK:STDOUT:   ret i32 %PairAdapter.GetB.call, !dbg !19
@@ -92,7 +92,7 @@ fn DoStuff(a: Int) -> Int {
 // CHECK:STDOUT: declare void @llvm.memcpy.p0.p0.i64(ptr noalias writeonly captures(none), ptr noalias readonly captures(none), i64, i1 immarg) #0
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nocallback nofree nosync nounwind willreturn memory(argmem: readwrite)
-// CHECK:STDOUT: declare void @llvm.lifetime.start.p0(i64 immarg, ptr captures(none)) #1
+// CHECK:STDOUT: declare void @llvm.lifetime.start.p0(ptr captures(none)) #1
 // CHECK:STDOUT:
 // CHECK:STDOUT: attributes #0 = { nocallback nofree nounwind willreturn memory(argmem: readwrite) }
 // CHECK:STDOUT: attributes #1 = { nocallback nofree nosync nounwind willreturn memory(argmem: readwrite) }

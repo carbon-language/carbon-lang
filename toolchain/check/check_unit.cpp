@@ -47,7 +47,7 @@ static auto GetImportedIRCount(UnitAndImports* unit_and_imports) -> int {
     // Leave an empty slot for `ImportIRId::ApiForImpl`.
     ++count;
   }
-  if (!unit_and_imports->cpp_import_names.empty()) {
+  if (!unit_and_imports->cpp_imports.empty()) {
     // Leave an empty slot for `ImportIRId::Cpp`.
     ++count;
   }
@@ -59,7 +59,7 @@ CheckUnit::CheckUnit(
     const Parse::GetTreeAndSubtreesStore* tree_and_subtrees_getters,
     llvm::IntrusiveRefCntPtr<llvm::vfs::FileSystem> fs,
     std::shared_ptr<clang::CompilerInvocation> clang_invocation,
-    llvm::raw_ostream* vlog_stream)
+    bool gen_implicit_type_impls, llvm::raw_ostream* vlog_stream)
     : unit_and_imports_(unit_and_imports),
       tree_and_subtrees_getter_(tree_and_subtrees_getters->Get(
           unit_and_imports->unit->sem_ir->check_ir_id())),
@@ -68,9 +68,10 @@ CheckUnit::CheckUnit(
       clang_invocation_(std::move(clang_invocation)),
       emitter_(&unit_and_imports_->err_tracker, tree_and_subtrees_getters,
                unit_and_imports_->unit->sem_ir),
-      context_(
-          &emitter_, tree_and_subtrees_getter_, unit_and_imports_->unit->sem_ir,
-          GetImportedIRCount(unit_and_imports), total_ir_count_, vlog_stream) {}
+      context_(&emitter_, tree_and_subtrees_getter_,
+               unit_and_imports_->unit->sem_ir,
+               GetImportedIRCount(unit_and_imports), total_ir_count_,
+               gen_implicit_type_impls, vlog_stream) {}
 
 auto CheckUnit::Run() -> void {
   Timings::ScopedTiming timing(unit_and_imports_->unit->timings, "check");
@@ -151,13 +152,13 @@ auto CheckUnit::InitPackageScopeAndImports() -> void {
   CARBON_CHECK(context_.scope_stack().PeekIndex() == ScopeIndex::Package);
   ImportOtherPackages(namespace_type_id);
 
-  const auto& cpp_import_names = unit_and_imports_->cpp_import_names;
-  if (!cpp_import_names.empty()) {
-    auto* cpp_ast = unit_and_imports_->unit->cpp_ast;
-    CARBON_CHECK(cpp_ast);
-    CARBON_CHECK(!cpp_ast->get());
-    *cpp_ast =
-        ImportCppFiles(context_, cpp_import_names, fs_, clang_invocation_);
+  const auto& cpp_imports = unit_and_imports_->cpp_imports;
+  if (!cpp_imports.empty()) {
+    auto* clang_ast_unit = unit_and_imports_->unit->clang_ast_unit;
+    CARBON_CHECK(clang_ast_unit);
+    CARBON_CHECK(!clang_ast_unit->get());
+    *clang_ast_unit =
+        ImportCppFiles(context_, cpp_imports, fs_, clang_invocation_);
   }
 }
 

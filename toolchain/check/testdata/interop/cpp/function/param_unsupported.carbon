@@ -16,7 +16,7 @@
 
 // --- unsupported_primitive_type.h
 
-auto foo(float a) -> void;
+auto foo(_BitInt(23) a) -> void;
 
 // --- fail_todo_import_unsupported_primitive_type.carbon
 
@@ -26,14 +26,14 @@ import Cpp library "unsupported_primitive_type.h";
 
 fn F() {
   //@dump-sem-ir-begin
-  // CHECK:STDERR: fail_todo_import_unsupported_primitive_type.carbon:[[@LINE+7]]:3: error: semantics TODO: `Unsupported: parameter type: float` [SemanticsTodo]
-  // CHECK:STDERR:   Cpp.foo(1.1);
-  // CHECK:STDERR:   ^~~~~~~~~~~~
+  // CHECK:STDERR: fail_todo_import_unsupported_primitive_type.carbon:[[@LINE+7]]:3: error: semantics TODO: `Unsupported: parameter type: _BitInt(23)` [SemanticsTodo]
+  // CHECK:STDERR:   Cpp.foo(11);
+  // CHECK:STDERR:   ^~~~~~~~~~~
   // CHECK:STDERR: fail_todo_import_unsupported_primitive_type.carbon:[[@LINE+4]]:3: note: in call to a Cpp (overloaded) function here [InCallToOverloadedCppFunction]
-  // CHECK:STDERR:   Cpp.foo(1.1);
-  // CHECK:STDERR:   ^~~~~~~~~~~~
+  // CHECK:STDERR:   Cpp.foo(11);
+  // CHECK:STDERR:   ^~~~~~~~~~~
   // CHECK:STDERR:
-  Cpp.foo(1.1);
+  Cpp.foo(11);
   //@dump-sem-ir-end
 }
 
@@ -43,7 +43,7 @@ fn F() {
 
 // --- unsupported_primitive_type_among_params.h
 
-auto foo(int a, float b) -> void;
+auto foo(int a, _BitInt(23) b) -> void;
 
 // --- fail_todo_import_unsupported_primitive_type_among_params.carbon
 
@@ -53,14 +53,14 @@ import Cpp library "unsupported_primitive_type_among_params.h";
 
 fn F() {
   //@dump-sem-ir-begin
-  // CHECK:STDERR: fail_todo_import_unsupported_primitive_type_among_params.carbon:[[@LINE+7]]:3: error: semantics TODO: `Unsupported: parameter type: float` [SemanticsTodo]
-  // CHECK:STDERR:   Cpp.foo(1, 2.0);
-  // CHECK:STDERR:   ^~~~~~~~~~~~~~~
+  // CHECK:STDERR: fail_todo_import_unsupported_primitive_type_among_params.carbon:[[@LINE+7]]:3: error: semantics TODO: `Unsupported: parameter type: _BitInt(23)` [SemanticsTodo]
+  // CHECK:STDERR:   Cpp.foo(1, 20);
+  // CHECK:STDERR:   ^~~~~~~~~~~~~~
   // CHECK:STDERR: fail_todo_import_unsupported_primitive_type_among_params.carbon:[[@LINE+4]]:3: note: in call to a Cpp (overloaded) function here [InCallToOverloadedCppFunction]
-  // CHECK:STDERR:   Cpp.foo(1, 2.0);
-  // CHECK:STDERR:   ^~~~~~~~~~~~~~~
+  // CHECK:STDERR:   Cpp.foo(1, 20);
+  // CHECK:STDERR:   ^~~~~~~~~~~~~~
   // CHECK:STDERR:
-  Cpp.foo(1, 2.0);
+  Cpp.foo(1, 20);
   //@dump-sem-ir-end
 }
 
@@ -69,7 +69,7 @@ fn F() {
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %.e8d: type = overloaded_cpp_fn_type @<null name> [concrete]
 // CHECK:STDOUT:   %empty_struct: %.e8d = struct_value () [concrete]
-// CHECK:STDOUT:   %float: f64 = float_literal 1.1000000000000001 [concrete]
+// CHECK:STDOUT:   %int_11: Core.IntLiteral = int_value 11 [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -84,7 +84,7 @@ fn F() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %Cpp.ref: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
 // CHECK:STDOUT:   %foo.ref: %.e8d = name_ref foo, imports.%.cbc [concrete = constants.%empty_struct]
-// CHECK:STDOUT:   %float: f64 = float_literal 1.1000000000000001 [concrete = constants.%float]
+// CHECK:STDOUT:   %int_11: Core.IntLiteral = int_value 11 [concrete = constants.%int_11]
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -94,7 +94,7 @@ fn F() {
 // CHECK:STDOUT:   %.e8d: type = overloaded_cpp_fn_type @<null name> [concrete]
 // CHECK:STDOUT:   %empty_struct: %.e8d = struct_value () [concrete]
 // CHECK:STDOUT:   %int_1: Core.IntLiteral = int_value 1 [concrete]
-// CHECK:STDOUT:   %float: f64 = float_literal 2 [concrete]
+// CHECK:STDOUT:   %int_20: Core.IntLiteral = int_value 20 [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -110,7 +110,7 @@ fn F() {
 // CHECK:STDOUT:   %Cpp.ref: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
 // CHECK:STDOUT:   %foo.ref: %.e8d = name_ref foo, imports.%.cbc [concrete = constants.%empty_struct]
 // CHECK:STDOUT:   %int_1: Core.IntLiteral = int_value 1 [concrete = constants.%int_1]
-// CHECK:STDOUT:   %float: f64 = float_literal 2 [concrete = constants.%float]
+// CHECK:STDOUT:   %int_20: Core.IntLiteral = int_value 20 [concrete = constants.%int_20]
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

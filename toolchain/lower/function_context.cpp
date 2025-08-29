@@ -225,9 +225,7 @@ auto FunctionContext::CreateAlloca(llvm::Type* type, const llvm::Twine& name)
 
   // Create a lifetime start intrinsic here to indicate where its scope really
   // begins.
-  auto size = llvm_module().getDataLayout().getTypeAllocSize(type);
-  builder().CreateLifetimeStart(
-      alloca, llvm::ConstantInt::get(llvm_context(), llvm::APInt(64, size)));
+  builder().CreateLifetimeStart(alloca);
 
   // If we just created the first alloca, there is now definitely at least one
   // instruction after it -- there is a lifetime start instruction if nothing

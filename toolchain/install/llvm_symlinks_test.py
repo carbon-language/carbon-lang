@@ -11,6 +11,7 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 from pathlib import Path
 import subprocess
 import os
+import platform
 import sys
 import unittest
 
@@ -26,8 +27,6 @@ class LLVMSymlinksTest(unittest.TestCase):
     def get_link_cmd(self, clang: Path) -> list[str | Path]:
         return [
             clang,
-            # We pick an arbitrary linux target to get stable results.
-            "--target=aarch64-unknown-linux-gnu",
             # Verbose printing to help with debugging.
             "-v",
             # Print out the link command rather than running it.
@@ -39,27 +38,46 @@ class LLVMSymlinksTest(unittest.TestCase):
             self.test_o_file,
         ]
 
+    def unsupported(self, stderr: str) -> None:
+        self.fail(f"Unsupported platform '{platform.uname()}':\n{stderr}")
+
+    # Note that we can't test `clang` vs. `clang++` portably. The only commands
+    # with useful differences are _link_ commands, and those need to build
+    # runtime libraries on demand, which requires the host to be able to compile
+    # and link for the target. Instead, we test linking with the default target
+    # (the host), as that is the one that should reliably work if we're
+    # developing Carbon, and encode all the different platform results in the
+    # test expectations.
     def test_clang(self) -> None:
         bin = self.install_root / "lib/carbon/llvm/bin/clang"
+        # Most errors are caught by ensuring the command succeeds.
         run = subprocess.run(
             self.get_link_cmd(bin), check=True, capture_output=True, text=True
         )
-        # Check that we do have a plausible link command.
-        self.assertRegex(run.stderr, r'"-m" "aarch64linux"')
 
-        # Ensure it doesn't contain the C++ standard library.
-        self.assertNotRegex(run.stderr, r'"-lstdc++"')
+        # Also ensure that it correctly didn't imply a C++ link.
+        if platform.system() == "Linux":
+            self.assertNotRegex(run.stderr, r'"-lstdc\+\+"')
+        elif platform.system() == "Darwin":
+            self.assertNotRegex(run.stderr, r'"-lc\+\+"')
+        else:
+            self.unsupported(run.stderr)
 
+    # Note that we can't test `clang` vs. `clang++` portably. See the comment on
+    # `test_clang` for details.
     def test_clangplusplus(self) -> None:
         bin = self.install_root / "lib/carbon/llvm/bin/clang++"
         run = subprocess.run(
             self.get_link_cmd(bin), check=True, capture_output=True, text=True
         )
-        # Check that we do have a plausible link command.
-        self.assertRegex(run.stderr, r'"-m" "aarch64linux"')
 
-        # Ensure it doesn't contain the C++ standard library.
-        self.assertNotRegex(run.stderr, r'"-lstdc++"')
+        # Ensure that this binary _does_ imply a C++ link.
+        if platform.system() == "Linux":
+            self.assertRegex(run.stderr, r'"-lstdc\+\+"')
+        elif platform.system() == "Darwin":
+            self.assertRegex(run.stderr, r'"-lc\+\+"')
+        else:
+            self.unsupported(run.stderr)
 
     def test_clang_cl(self) -> None:
         bin = self.install_root / "lib/carbon/llvm/bin/clang-cl"

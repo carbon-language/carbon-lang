@@ -236,6 +236,10 @@ auto TokenizedBuffer::Print(llvm::raw_ostream& output_stream,
     output_stream << "\n";
   }
 
+  if (has_include_in_dumps_) {
+    output_stream << "  has_include_in_dumps: true\n";
+  }
+
   if (!dump_sem_ir_ranges_.empty()) {
     output_stream << "  dump_sem_ir_ranges:\n";
     for (auto range : dump_sem_ir_ranges_) {

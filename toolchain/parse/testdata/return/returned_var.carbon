@@ -8,8 +8,8 @@
 // TIP: To dump output, run:
 // TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/parse/testdata/return/returned_var.carbon
 
-fn F() -> String {
-  returned var s: String = "hello";
+fn F() -> str {
+  returned var s: str = "hello";
   return var;
 }
 
@@ -20,13 +20,13 @@ fn F() -> String {
 // CHECK:STDOUT:         {kind: 'IdentifierNameBeforeParams', text: 'F'},
 // CHECK:STDOUT:           {kind: 'ExplicitParamListStart', text: '('},
 // CHECK:STDOUT:         {kind: 'ExplicitParamList', text: ')', subtree_size: 2},
-// CHECK:STDOUT:           {kind: 'StringTypeLiteral', text: 'String'},
+// CHECK:STDOUT:           {kind: 'StringTypeLiteral', text: 'str'},
 // CHECK:STDOUT:         {kind: 'ReturnType', text: '->', subtree_size: 2},
 // CHECK:STDOUT:       {kind: 'FunctionDefinitionStart', text: '{', subtree_size: 7},
 // CHECK:STDOUT:         {kind: 'VariableIntroducer', text: 'var'},
 // CHECK:STDOUT:         {kind: 'ReturnedModifier', text: 'returned'},
 // CHECK:STDOUT:             {kind: 'IdentifierNameNotBeforeParams', text: 's'},
-// CHECK:STDOUT:             {kind: 'StringTypeLiteral', text: 'String'},
+// CHECK:STDOUT:             {kind: 'StringTypeLiteral', text: 'str'},
 // CHECK:STDOUT:           {kind: 'VarBindingPattern', text: ':', subtree_size: 3},
 // CHECK:STDOUT:         {kind: 'VariablePattern', text: 'var', subtree_size: 4},
 // CHECK:STDOUT:         {kind: 'VariableInitializer', text: '='},

@@ -69,8 +69,8 @@
 // CHECK:STDOUT:   tokens:
 
 // CHECK:STDERR: fail_literal_tab_in_string.carbon:[[@LINE+4]]:2: error: whitespace other than plain space must be expressed with an escape sequence in a string literal [InvalidHorizontalWhitespaceInString]
-// CHECK:STDERR: "{{\t}}"
-// CHECK:STDERR:  ^
+// CHECK:STDERR: "<09>"
+// CHECK:STDERR:  ^~~~
 // CHECK:STDERR:
 "	"
 // CHECK:STDOUT:   - { index: 1, kind: "StringLiteral", line: {{ *}}[[@LINE-1]], column: 1, indent: 1, spelling: "\"\t\"", value: "\t", has_leading_space: true }

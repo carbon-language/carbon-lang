@@ -6,6 +6,7 @@
 
 #include "toolchain/check/call.h"
 #include "toolchain/check/context.h"
+#include "toolchain/check/convert.h"
 #include "toolchain/check/handle.h"
 #include "toolchain/check/inst.h"
 #include "toolchain/check/literal.h"
@@ -35,6 +36,17 @@ auto HandleParseNode(Context& context, Parse::BoolLiteralTrueId node_id)
   return true;
 }
 
+auto HandleParseNode(Context& context, Parse::CharLiteralId node_id) -> bool {
+  auto value = context.tokens().GetCharLiteralValue(
+      context.parse_tree().node_token(node_id));
+  auto inst_id = AddInst<SemIR::CharLiteralValue>(
+      context, node_id,
+      {.type_id = GetSingletonType(context, SemIR::CharLiteralType::TypeInstId),
+       .value = SemIR::CharId(value.value)});
+  context.node_stack().Push(node_id, inst_id);
+  return true;
+}
+
 auto HandleParseNode(Context& context, Parse::IntLiteralId node_id) -> bool {
   auto int_literal_id = MakeIntLiteral(
       context, node_id,
@@ -44,55 +56,22 @@ auto HandleParseNode(Context& context, Parse::IntLiteralId node_id) -> bool {
 }
 
 auto HandleParseNode(Context& context, Parse::RealLiteralId node_id) -> bool {
-  // Convert the real literal to an llvm::APFloat and add it to the floats
-  // ValueStore. In the future this would use an arbitrary precision Rational
-  // type.
-  //
-  // TODO: Implement Carbon's actual implicit conversion rules for
-  // floating-point constants, as per the design
-  // docs/design/expressions/implicit_conversions.md
   auto real_id =
       context.tokens().GetRealLiteral(context.parse_tree().node_token(node_id));
-  auto real_value = context.sem_ir().reals().Get(real_id);
-
-  if (real_value.mantissa.getActiveBits() > 64) {
-    CARBON_DIAGNOSTIC(RealMantissaTooLargeForI64, Error,
-                      "real mantissa with value {0} does not fit in i64",
-                      llvm::APSInt);
-    context.emitter().Emit(node_id, RealMantissaTooLargeForI64,
-                           llvm::APSInt(real_value.mantissa, true));
-    context.node_stack().Push(node_id, SemIR::ErrorInst::InstId);
-    return true;
-  }
-
-  if (real_value.exponent.getSignificantBits() > 64) {
-    CARBON_DIAGNOSTIC(RealExponentTooLargeForI64, Error,
-                      "real exponent with value {0} does not fit in i64",
-                      llvm::APSInt);
-    context.emitter().Emit(node_id, RealExponentTooLargeForI64,
-                           llvm::APSInt(real_value.exponent, false));
-    context.node_stack().Push(node_id, SemIR::ErrorInst::InstId);
-    return true;
-  }
-
-  double double_val = real_value.mantissa.getZExtValue() *
-                      std::pow((real_value.is_decimal ? 10 : 2),
-                               real_value.exponent.getSExtValue());
-
-  auto float_id = context.sem_ir().floats().Add(llvm::APFloat(double_val));
-  AddInstAndPush<SemIR::FloatLiteral>(
+  AddInstAndPush<SemIR::FloatLiteralValue>(
       context, node_id,
-      {.type_id = GetSingletonType(context, SemIR::LegacyFloatType::TypeInstId),
-       .float_id = float_id});
+      {.type_id =
+           GetSingletonType(context, SemIR::FloatLiteralType::TypeInstId),
+       .real_id = real_id});
   return true;
 }
 
 auto HandleParseNode(Context& context, Parse::StringLiteralId node_id) -> bool {
-  AddInstAndPush<SemIR::StringLiteral>(
-      context, node_id,
-      {.type_id = GetSingletonType(context, SemIR::StringType::TypeInstId),
-       .string_literal_id = context.tokens().GetStringLiteralValue(
-           context.parse_tree().node_token(node_id))});
+  auto str_literal_id =
+      MakeStringLiteral(context, node_id,
+                        context.tokens().GetStringLiteralValue(
+                            context.parse_tree().node_token(node_id)));
+  context.node_stack().Push(node_id, str_literal_id);
   return true;
 }
 
@@ -141,22 +120,17 @@ auto HandleParseNode(Context& context, Parse::UnsignedIntTypeLiteralId node_id)
 
 auto HandleParseNode(Context& context, Parse::FloatTypeLiteralId node_id)
     -> bool {
-  auto text =
-      context.tokens().GetTokenText(context.parse_tree().node_token(node_id));
-  if (text != "f64") {
-    return context.TODO(node_id, "Currently only f64 is allowed");
-  }
   auto tok_id = context.parse_tree().node_token(node_id);
   auto size_id = context.tokens().GetTypeLiteralSize(tok_id);
-  auto type_inst_id =
-      MakeFloatTypeLiteral(context, node_id, SemIR::FloatKind::None, size_id);
+  auto type_inst_id = MakeFloatTypeLiteral(context, node_id, size_id);
   context.node_stack().Push(node_id, type_inst_id);
   return true;
 }
 
 auto HandleParseNode(Context& context, Parse::StringTypeLiteralId node_id)
     -> bool {
-  context.node_stack().Push(node_id, SemIR::StringType::TypeInstId);
+  auto type_inst_id = MakeStringTypeLiteral(context, node_id);
+  context.node_stack().Push(node_id, type_inst_id);
   return true;
 }
 

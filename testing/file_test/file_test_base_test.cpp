@@ -76,7 +76,7 @@ static auto GetFilesFromArgs(llvm::ArrayRef<llvm::StringRef> args,
   if (args.empty() || args.front() != "default_args") {
     return ErrorBuilder() << "missing `default_args` argument";
   }
-  args = args.drop_front();
+  args.consume_front();
 
   for (auto arg : args) {
     if (!fs.exists(arg)) {

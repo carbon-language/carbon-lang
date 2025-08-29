@@ -15,13 +15,10 @@ namespace Carbon::Check {
 auto ValidateIntType(Context& context, SemIR::LocId loc_id,
                      SemIR::IntType result) -> bool;
 
-// Enforces that the bit width is 64 for a float.
-auto ValidateFloatBitWidth(Context& context, SemIR::LocId loc_id,
-                           SemIR::InstId inst_id) -> bool;
-
-// Enforces that a float type has a valid bit width.
-auto ValidateFloatType(Context& context, SemIR::LocId loc_id,
-                       SemIR::FloatType result) -> bool;
+// Enforces that a float type has a valid bit width. If the `float_kind` field
+// is `None`, sets it to a suitable kind for the bit width.
+auto ValidateFloatTypeAndSetKind(Context& context, SemIR::LocId loc_id,
+                                 SemIR::FloatType& result) -> bool;
 
 // Gets the type to use for an unbound associated entity declared in this
 // interface. For example, this is the type of `I.T` after
@@ -41,6 +38,10 @@ auto GetSingletonType(Context& context, SemIR::TypeInstId singleton_id)
 // Gets a const-qualified version of a type.
 auto GetConstType(Context& context, SemIR::TypeInstId inner_type_id)
     -> SemIR::TypeId;
+
+// Gets a qualified version of a type.
+auto GetQualifiedType(Context& context, SemIR::TypeId type_id,
+                      SemIR::TypeQualifiers quals) -> SemIR::TypeId;
 
 // Gets a class type.
 auto GetClassType(Context& context, SemIR::ClassId class_id,
@@ -81,6 +82,10 @@ auto GetGenericInterfaceType(Context& context, SemIR::InterfaceId interface_id,
 // Gets the facet type corresponding to a particular interface.
 auto GetInterfaceType(Context& context, SemIR::InterfaceId interface_id,
                       SemIR::SpecificId specific_id) -> SemIR::TypeId;
+
+// Gets the facet type for the given `info`.
+auto GetFacetType(Context& context, const SemIR::FacetTypeInfo& info)
+    -> SemIR::TypeId;
 
 // Returns a pointer type whose pointee type is `pointee_type_id`.
 auto GetPointerType(Context& context, SemIR::TypeInstId pointee_type_id)

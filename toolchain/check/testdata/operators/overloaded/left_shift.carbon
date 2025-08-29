@@ -43,6 +43,7 @@ fn TestAssign(a: C*, b: C) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %C: type = class_type @C [concrete]
+// CHECK:STDOUT:   %ptr.019: type = ptr_type %C [concrete]
 // CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [concrete]
 // CHECK:STDOUT:   %LeftShiftWith.type.f92: type = facet_type <@LeftShiftWith, @LeftShiftWith(%C)> [concrete]
 // CHECK:STDOUT:   %LeftShiftWith.Op.type.097: type = fn_type @LeftShiftWith.Op, @LeftShiftWith(%C) [concrete]
@@ -53,7 +54,6 @@ fn TestAssign(a: C*, b: C) {
 // CHECK:STDOUT:   %LeftShiftAssignWith.type.56d: type = facet_type <@LeftShiftAssignWith, @LeftShiftAssignWith(%C)> [concrete]
 // CHECK:STDOUT:   %LeftShiftAssignWith.Op.type.30f: type = fn_type @LeftShiftAssignWith.Op, @LeftShiftAssignWith(%C) [concrete]
 // CHECK:STDOUT:   %LeftShiftAssignWith.impl_witness: <witness> = impl_witness file.%LeftShiftAssignWith.impl_witness_table [concrete]
-// CHECK:STDOUT:   %ptr.019: type = ptr_type %C [concrete]
 // CHECK:STDOUT:   %C.as.LeftShiftAssignWith.impl.Op.type: type = fn_type @C.as.LeftShiftAssignWith.impl.Op [concrete]
 // CHECK:STDOUT:   %C.as.LeftShiftAssignWith.impl.Op: %C.as.LeftShiftAssignWith.impl.Op.type = struct_value () [concrete]
 // CHECK:STDOUT:   %LeftShiftAssignWith.facet: %LeftShiftAssignWith.type.56d = facet_value %C, (%LeftShiftAssignWith.impl_witness) [concrete]
@@ -69,9 +69,9 @@ fn TestAssign(a: C*, b: C) {
 // CHECK:STDOUT:   %a.ref: %C = name_ref a, %a
 // CHECK:STDOUT:   %b.ref: %C = name_ref b, %b
 // CHECK:STDOUT:   %impl.elem1: %.cd9 = impl_witness_access constants.%LeftShiftWith.impl_witness, element1 [concrete = constants.%C.as.LeftShiftWith.impl.Op]
-// CHECK:STDOUT:   %bound_method.loc32: <bound method> = bound_method %a.ref, %impl.elem1
+// CHECK:STDOUT:   %bound_method: <bound method> = bound_method %a.ref, %impl.elem1
 // CHECK:STDOUT:   <elided>
-// CHECK:STDOUT:   %C.as.LeftShiftWith.impl.Op.call: init %C = call %bound_method.loc32(%a.ref, %b.ref) to %.loc30
+// CHECK:STDOUT:   %C.as.LeftShiftWith.impl.Op.call: init %C = call %bound_method(%a.ref, %b.ref) to %.loc30
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT:   return %C.as.LeftShiftWith.impl.Op.call to %return
 // CHECK:STDOUT: }

@@ -96,7 +96,7 @@ struct UnitAndImports {
   Map<PackageNameId, int32_t> package_imports_map;
 
   // List of the `import Cpp` imports.
-  llvm::SmallVector<Parse::Tree::PackagingNames> cpp_import_names;
+  llvm::SmallVector<Parse::Tree::PackagingNames> cpp_imports;
 
   // The remaining number of imports which must be checked before this unit can
   // be processed.
@@ -128,7 +128,7 @@ class CheckUnit {
       const Parse::GetTreeAndSubtreesStore* tree_and_subtrees_getters,
       llvm::IntrusiveRefCntPtr<llvm::vfs::FileSystem> fs,
       std::shared_ptr<clang::CompilerInvocation> clang_invocation,
-      llvm::raw_ostream* vlog_stream);
+      bool gen_implicit_type_impls, llvm::raw_ostream* vlog_stream);
 
   // Produces and checks the IR for the provided unit.
   auto Run() -> void;

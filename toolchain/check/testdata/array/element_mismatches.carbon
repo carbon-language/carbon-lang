@@ -16,14 +16,14 @@ library "[[@TEST_NAME]]";
 
 class C {}
 
-// CHECK:STDERR: fail_arg_wrong_type.carbon:[[@LINE+7]]:22: error: cannot implicitly convert expression of type `String` to `C` [ConversionFailure]
-// CHECK:STDERR: var a: array(C, 3) = ({}, "Hello", "World");
-// CHECK:STDERR:                      ^~~~~~~~~~~~~~~~~~~~~~
-// CHECK:STDERR: fail_arg_wrong_type.carbon:[[@LINE+4]]:22: note: type `String` does not implement interface `Core.ImplicitAs(C)` [MissingImplInMemberAccessNote]
-// CHECK:STDERR: var a: array(C, 3) = ({}, "Hello", "World");
-// CHECK:STDERR:                      ^~~~~~~~~~~~~~~~~~~~~~
+// CHECK:STDERR: fail_arg_wrong_type.carbon:[[@LINE+7]]:22: error: cannot implicitly convert expression of type `()` to `C` [ConversionFailure]
+// CHECK:STDERR: var a: array(C, 3) = ({}, (), true);
+// CHECK:STDERR:                      ^~~~~~~~~~~~~~
+// CHECK:STDERR: fail_arg_wrong_type.carbon:[[@LINE+4]]:22: note: type `()` does not implement interface `Core.ImplicitAs(C)` [MissingImplInMemberAccessNote]
+// CHECK:STDERR: var a: array(C, 3) = ({}, (), true);
+// CHECK:STDERR:                      ^~~~~~~~~~~~~~
 // CHECK:STDERR:
-var a: array(C, 3) = ({}, "Hello", "World");
+var a: array(C, 3) = ({}, (), true);
 
 // --- fail_var_wrong_type.carbon
 

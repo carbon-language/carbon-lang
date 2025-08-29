@@ -9,6 +9,7 @@
 
 #include "common/check.h"
 #include "common/ostream.h"
+#include "llvm/ADT/APFloat.h"
 #include "toolchain/base/index_base.h"
 #include "toolchain/base/value_ids.h"
 #include "toolchain/diagnostics/diagnostic_emitter.h"
@@ -37,11 +38,10 @@ struct InstId : public IdBase<InstId> {
 
 constexpr InstId InstId::InitTombstone = InstId(NoneIndex - 1);
 
-// An InstId whose value is a type. The fact it's a type is CHECKed on
-// construction, and this allows that check to be represented in the type
-// system.
+// An InstId whose value is a type. The fact it's a type must be validated
+// before construction, and this allows that validation to be represented in the
+// type system.
 struct TypeInstId : public InstId {
-  static constexpr llvm::StringLiteral Label = "type_inst";
   static const TypeInstId None;
 
   using InstId::InstId;
@@ -57,6 +57,33 @@ struct TypeInstId : public InstId {
 };
 
 constexpr TypeInstId TypeInstId::None = TypeInstId::UnsafeMake(InstId::None);
+
+// An InstId whose type is known to be T. The fact it's a type must be validated
+// before construction, and this allows that validation to be represented in the
+// type system.
+//
+// Unlike TypeInstId, this type can *not* be an operand in instructions, since
+// being a template prevents it from being used in non-generic contexts such as
+// switches.
+template <class T>
+struct KnownInstId : public InstId {
+  static const KnownInstId None;
+
+  using InstId::InstId;
+
+  static constexpr auto UnsafeMake(InstId id) -> KnownInstId {
+    return KnownInstId(UnsafeCtor(), id);
+  }
+
+ private:
+  struct UnsafeCtor {};
+  explicit constexpr KnownInstId(UnsafeCtor /*unsafe*/, InstId id)
+      : InstId(id) {}
+};
+
+template <class T>
+constexpr KnownInstId<T> KnownInstId<T>::None =
+    KnownInstId<T>::UnsafeMake(InstId::None);
 
 // An ID of an instruction that is referenced absolutely by another instruction.
 // This should only be used as the type of a field within a typed instruction
@@ -453,6 +480,15 @@ struct BoolValue : public IdBase<BoolValue> {
 constexpr BoolValue BoolValue::False = BoolValue(0);
 constexpr BoolValue BoolValue::True = BoolValue(1);
 
+// A character literal value as a unicode codepoint.
+struct CharId : public IdBase<CharId> {
+  // Not used by `Print`, but for `IdKind`.
+  static constexpr llvm::StringLiteral Label = "";
+
+  using IdBase::IdBase;
+  auto Print(llvm::raw_ostream& out) const -> void;
+};
+
 // An integer kind value -- either "signed" or "unsigned".
 //
 // This might eventually capture any other properties of an integer type that
@@ -475,15 +511,51 @@ struct IntKind : public IdBase<IntKind> {
 constexpr IntKind IntKind::Unsigned = IntKind(0);
 constexpr IntKind IntKind::Signed = IntKind(1);
 
-// A float kind value.
+// A float kind value. This describes the semantics of the floating-point type.
+// This represents very similar information to the bit-width, but is more
+// precise. In particular, there is in general more than one floating-point type
+// with a given bit-width, and while only one such type can be named with the
+// `fN` notation, the others should still be modeled as `FloatType`s.
 struct FloatKind : public IdBase<FloatKind> {
   // Not used by `Print`, but for `IdKind`.
   static constexpr llvm::StringLiteral Label = "float_kind";
 
+  // An explicitly absent kind. Used when the kind has not been determined.
+  static const FloatKind None;
+
+  // Supported IEEE-754 interchange formats. These correspond to Carbon `fN`
+  // type literal syntax.
+  static const FloatKind Binary16;
+  static const FloatKind Binary32;
+  static const FloatKind Binary64;
+  static const FloatKind Binary128;
+  // Note, binary256 is not supported by LLVM and hence not by us.
+
+  // Other formats supported by LLVM. Support for these may be
+  // target-dependent.
+  // TODO: Add a mechanism to use these types from Carbon code.
+  static const FloatKind BFloat16;
+  static const FloatKind X87Float80;
+  static const FloatKind PPCFloat128;
+
   using IdBase::IdBase;
 
-  auto Print(llvm::raw_ostream& out) const -> void { out << "float"; }
+  auto Print(llvm::raw_ostream& out) const -> void;
+
+  // Query the LLVM semantics model associated with this kind of floating-point
+  // type. This kind must be concrete.
+  auto Semantics() const -> const llvm::fltSemantics&;
 };
+
+constexpr FloatKind FloatKind::None = FloatKind(NoneIndex);
+
+constexpr FloatKind FloatKind::Binary16 = FloatKind(0);
+constexpr FloatKind FloatKind::Binary32 = FloatKind(1);
+constexpr FloatKind FloatKind::Binary64 = FloatKind(2);
+constexpr FloatKind FloatKind::Binary128 = FloatKind(3);
+constexpr FloatKind FloatKind::BFloat16 = FloatKind(4);
+constexpr FloatKind FloatKind::X87Float80 = FloatKind(5);
+constexpr FloatKind FloatKind::PPCFloat128 = FloatKind(6);
 
 // An X-macro for special names. Uses should look like:
 //

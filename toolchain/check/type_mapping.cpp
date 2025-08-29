@@ -9,6 +9,7 @@
 #include <optional>
 
 #include "clang/AST/Type.h"
+#include "clang/Basic/TargetInfo.h"
 #include "toolchain/base/int.h"
 #include "toolchain/base/kind_switch.h"
 #include "toolchain/base/value_ids.h"
@@ -97,8 +98,15 @@ static auto TryMapBuiltInType(Context& context, SemIR::InstId inst_id,
           bit_width_inst->int_id.AsValue(), int_type.int_kind.is_signed());
       break;
     }
-    case SemIR::LegacyFloatType::Kind: {
+    case SemIR::FloatLiteralType::Kind: {
       mapped_type = context.ast_context().DoubleTy;
+      break;
+    }
+    case CARBON_KIND(SemIR::FloatType float_type): {
+      auto bit_width_inst = context.sem_ir().insts().TryGetAs<SemIR::IntValue>(
+          float_type.bit_width_id);
+      mapped_type = context.ast_context().getRealTypeForBitwidth(
+          bit_width_inst->int_id.AsValue(), clang::FloatModeKind::NoFloat);
       break;
     }
     default: {

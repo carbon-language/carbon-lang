@@ -101,6 +101,13 @@ class C(T:! Z where .Z1 = ()) {}
 
 interface J {
   // Implied: .Z1 == (), but this is also explicitly required for J1.
+  // CHECK:STDERR: fail_todo_nested_constraint_visible_in_type_parameter.carbon:[[@LINE+7]]:43: error: cannot convert type `.Self` that implements `Z` into type implementing `Z where .(Z.Z1) = ()` [ConversionFailureFacetToFacet]
+  // CHECK:STDERR:   let J1:! (Z where .Z1 = ()) where .Z2 = C(.Self);
+  // CHECK:STDERR:                                           ^~~~~~~~
+  // CHECK:STDERR: fail_todo_nested_constraint_visible_in_type_parameter.carbon:[[@LINE-7]]:9: note: initializing generic parameter `T` declared here [InitializingGenericParam]
+  // CHECK:STDERR: class C(T:! Z where .Z1 = ()) {}
+  // CHECK:STDERR:         ^
+  // CHECK:STDERR:
   let J1:! (Z where .Z1 = ()) where .Z2 = C(.Self);
 }
 
@@ -111,15 +118,11 @@ class D;
 // CHECK:STDERR: fail_todo_nested_constraint_visible_in_type_parameter.carbon:[[@LINE+7]]:38: error: cannot convert type `.Self` that implements `Z` into type implementing `Z where .(Z.Z1) = ()` [ConversionFailureFacetToFacet]
 // CHECK:STDERR: impl D as Z where .Z1 = () and .Z2 = C(.Self) {}
 // CHECK:STDERR:                                      ^~~~~~~~
-// CHECK:STDERR: fail_todo_nested_constraint_visible_in_type_parameter.carbon:[[@LINE-14]]:9: note: initializing generic parameter `T` declared here [InitializingGenericParam]
+// CHECK:STDERR: fail_todo_nested_constraint_visible_in_type_parameter.carbon:[[@LINE-21]]:9: note: initializing generic parameter `T` declared here [InitializingGenericParam]
 // CHECK:STDERR: class C(T:! Z where .Z1 = ()) {}
 // CHECK:STDERR:         ^
 // CHECK:STDERR:
 impl D as Z where .Z1 = () and .Z2 = C(.Self) {}
-// CHECK:STDERR: fail_todo_nested_constraint_visible_in_type_parameter.carbon:[[@LINE+4]]:24: error: cannot convert type `D` into type implementing `Z where .(Z.Z1) = () and .(Z.Z2) = C(.Self)` [ConversionFailureTypeToFacet]
-// CHECK:STDERR: fn G(T:! J where .J1 = D) {
-// CHECK:STDERR:                        ^
-// CHECK:STDERR:
 fn G(T:! J where .J1 = D) {
   F(T);
 }
@@ -238,7 +241,7 @@ fn G(T:! J where .J1 = D) {
   F(T);
 }
 
-// --- fail_todo_early_rewrite_applied.carbon
+// --- early_rewrite_applied.carbon
 library "[[@TEST_NAME]]";
 
 interface Z {
@@ -252,14 +255,33 @@ class C(T:! Tuple) {}
 
 interface J {
   // Implied: .Z1 == (), but this is also explicitly required for J1.
-  // CHECK:STDERR: fail_todo_early_rewrite_applied.carbon:[[@LINE+7]]:39: error: cannot convert type `.(Z.Z1)` into type implementing `Tuple` [ConversionFailureTypeToFacet]
-  // CHECK:STDERR:   let J1:! Z where .Z1 = () and .Z2 = C(.Z1);
-  // CHECK:STDERR:                                       ^~~~~~
-  // CHECK:STDERR: fail_todo_early_rewrite_applied.carbon:[[@LINE-7]]:9: note: initializing generic parameter `T` declared here [InitializingGenericParam]
-  // CHECK:STDERR: class C(T:! Tuple) {}
-  // CHECK:STDERR:         ^
-  // CHECK:STDERR:
   let J1:! Z where .Z1 = () and .Z2 = C(.Z1);
+}
+
+fn F(T:! J) {}
+
+class D;
+// Satisfies the implied constraint in J.J1.
+impl D as Z where .Z1 = () and .Z2 = C(()) {}
+fn G(T:! J where .J1 = D) {
+  F(T);
+}
+
+// --- early_rewrite_applied_from_nested_self.carbon
+library "[[@TEST_NAME]]";
+
+interface Z {
+  let Z1:! type;
+  let Z2:! type;
+}
+
+interface Tuple {}
+impl () as Tuple {}
+class C(T:! Tuple) {}
+
+interface J {
+  // Implied: .Z1 == (), but this is also explicitly required for J1.
+  let J1:! (Z where .Z1 = ()) where .Z2 = C(.Z1);
 }
 
 fn F(T:! J) {}
@@ -289,13 +311,6 @@ class C(T:! Tuple) {}
 
 interface J {
   // Implied: .Z1 == (), but this is also explicitly required for J1.
-  // CHECK:STDERR: fail_todo_early_rewrite_applied_extra_indirection.carbon:[[@LINE+7]]:59: error: cannot convert type `.(Y.Y1).(Z.Z1)` into type implementing `Tuple` [ConversionFailureTypeToFacet]
-  // CHECK:STDERR:   let J1:! Y & Z where .Y1 = .Self and .Z1 = () and .Z2 = C(.Y1.Z1);
-  // CHECK:STDERR:                                                           ^~~~~~~~~
-  // CHECK:STDERR: fail_todo_early_rewrite_applied_extra_indirection.carbon:[[@LINE-7]]:9: note: initializing generic parameter `T` declared here [InitializingGenericParam]
-  // CHECK:STDERR: class C(T:! Tuple) {}
-  // CHECK:STDERR:         ^
-  // CHECK:STDERR:
   let J1:! Y & Z where .Y1 = .Self and .Z1 = () and .Z2 = C(.Y1.Z1);
 }
 
@@ -305,6 +320,10 @@ class D;
 // Satisfies the implied constraint in J.J1.
 impl D as Z where .Z1 = () and .Z2 = C(()) {}
 impl D as Y where .Y1 = D {}
+// CHECK:STDERR: fail_todo_early_rewrite_applied_extra_indirection.carbon:[[@LINE+4]]:24: error: cannot convert type `D` into type implementing `Z & Y where .(Y.Y1) = .Self as Z and .(Z.Z1) = () and .(Z.Z2) = C(() as Tuple)` [ConversionFailureTypeToFacet]
+// CHECK:STDERR: fn G(T:! J where .J1 = D) {
+// CHECK:STDERR:                        ^
+// CHECK:STDERR:
 fn G(T:! J where .J1 = D) {
   F(T);
 }
@@ -328,13 +347,6 @@ class C(T:! Tuple) {}
 
 interface J {
   // Implied: .Y1 impls Tuple, but this is also explicitly required for J1.
-  // CHECK:STDERR: fail_todo_resolved_constraint_visible_in_type_parameter.carbon:[[@LINE+7]]:76: error: cannot convert type `.(Z.Z2)` into type implementing `Tuple` [ConversionFailureTypeToFacet]
-  // CHECK:STDERR:   let J1:! Z & Y where .Y1 = () and .Z1 = .Self and .Z2 = .Z1.Y1 and .Z3 = C(.Z2);
-  // CHECK:STDERR:                                                                            ^~~~~~
-  // CHECK:STDERR: fail_todo_resolved_constraint_visible_in_type_parameter.carbon:[[@LINE-7]]:9: note: initializing generic parameter `T` declared here [InitializingGenericParam]
-  // CHECK:STDERR: class C(T:! Tuple) {}
-  // CHECK:STDERR:         ^
-  // CHECK:STDERR:
   let J1:! Z & Y where .Y1 = () and .Z1 = .Self and .Z2 = .Z1.Y1 and .Z3 = C(.Z2);
 }
 
@@ -348,6 +360,10 @@ impl D as Y where .Y1 = () {}
 // CHECK:STDERR:                         ^~~~~
 // CHECK:STDERR:
 impl D as Z where .Z1 = .Self and .Z2 = () and .Z3 = C(()) {}
+// CHECK:STDERR: fail_todo_resolved_constraint_visible_in_type_parameter.carbon:[[@LINE+4]]:24: error: cannot convert type `D` into type implementing `Y & Z where .(Y.Y1) = () and .(Z.Z1) = .Self as Y and .(Z.Z2) = () and .(Z.Z3) = C(() as Tuple)` [ConversionFailureTypeToFacet]
+// CHECK:STDERR: fn G(T:! J where .J1 = D) {
+// CHECK:STDERR:                        ^
+// CHECK:STDERR:
 fn G(T:! J where .J1 = D) {
   F(T);
 }

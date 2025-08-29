@@ -32,6 +32,7 @@ using IdKind = TypeEnum<
     AssociatedConstantId,
     BoolValue,
     CallParamIndex,
+    CharId,
     ClassId,
     CompileTimeBindIndex,
     ConstantId,

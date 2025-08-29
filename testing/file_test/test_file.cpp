@@ -145,7 +145,8 @@ static auto AutoFillDidOpenParams(llvm::json::Object& params,
   return Success();
 }
 
-// Reformats `[[@LSP:` and similar keyword as an LSP call with headers.
+// Reformats `[[@LSP:` and similar keyword as an LSP call with headers. Returns
+// the position to start a find for the next keyword.
 static auto ReplaceLspKeywordAt(std::string& content, size_t keyword_pos,
                                 int& lsp_call_id,
                                 llvm::ArrayRef<TestFile::Split> splits)
@@ -154,7 +155,7 @@ static auto ReplaceLspKeywordAt(std::string& content, size_t keyword_pos,
       llvm::StringRef(content).substr(keyword_pos);
 
   auto [keyword, body_start] = content_at_keyword.split(":");
-  if (body_start.empty()) {
+  if (keyword.size() == content_at_keyword.size()) {
     return ErrorBuilder() << "Missing `:` for `"
                           << content_at_keyword.take_front(10) << "`";
   }
@@ -179,12 +180,11 @@ static auto ReplaceLspKeywordAt(std::string& content, size_t keyword_pos,
   }
 
   static constexpr llvm::StringLiteral LspEnd = "]]";
-  auto body_end = body_start.find(LspEnd);
-  if (body_end == std::string::npos) {
+  auto [body, rest] = body_start.split("]]");
+  if (body.size() == body_start.size()) {
     return ErrorBuilder() << "Missing `" << LspEnd << "` after `" << keyword
                           << "`";
   }
-  llvm::StringRef body = body_start.take_front(body_end);
   auto [method_or_id, extra_content] = body.split(":");
 
   llvm::json::Value parsed_extra_content = nullptr;
@@ -231,10 +231,31 @@ static auto ReplaceLspKeywordAt(std::string& content, size_t keyword_pos,
   auto json_with_header = llvm::formatv("Content-Length: {0}\n\n{1}\n",
                                         content_length, buffer.TakeStr())
                               .str();
-  int keyword_len =
-      (body_start.data() + body_end + LspEnd.size()) - keyword.data();
+  size_t keyword_len = rest.data() - keyword.data();
   content.replace(keyword_pos, keyword_len, json_with_header);
   return keyword_pos + json_with_header.size();
+}
+
+// Replaces `[[@0xAB]]` with the raw byte with value 0xAB. Returns the position
+// to start a find for the next keyword.
+static auto ReplaceRawByteKeywordAt(std::string& content, size_t keyword_pos)
+    -> ErrorOr<size_t> {
+  llvm::StringRef content_at_keyword =
+      llvm::StringRef(content).substr(keyword_pos);
+  auto [keyword, rest] = content_at_keyword.split("]]");
+  if (keyword.size() == content_at_keyword.size()) {
+    return ErrorBuilder() << "Missing `]]` after " << keyword.take_front(10)
+                          << "`";
+  }
+
+  unsigned char byte_value;
+  if (keyword.substr(std::size("[[@0x") - 1).getAsInteger(16, byte_value)) {
+    return ErrorBuilder() << "Invalid raw byte specifier `"
+                          << keyword.take_front(10) << "`";
+  }
+
+  content.replace(keyword_pos, keyword.size() + 2, 1, byte_value);
+  return keyword_pos + 1;
 }
 
 // Replaces the keyword at the given position. Returns the position to start a
@@ -263,14 +284,18 @@ static auto ReplaceContentKeywordAt(std::string& content, size_t keyword_pos,
     return ReplaceLspKeywordAt(content, keyword_pos, lsp_call_id, splits);
   }
 
+  if (keyword.starts_with("[[@0x")) {
+    return ReplaceRawByteKeywordAt(content, keyword_pos);
+  }
+
   return ErrorBuilder() << "Unexpected use of `[[@` at `"
                         << keyword.substr(0, 5) << "`";
 }
 
 // Replaces the content keywords.
 //
-// TEST_NAME is the only content keyword at present, but we do validate that
-// other names are reserved.
+// This handles content keywords such as [[@TEST_NAME]] and [[@LSP*]]. Unknown
+// content keywords are diagnosed.
 static auto ReplaceContentKeywords(llvm::StringRef filename,
                                    std::string& content,
                                    llvm::ArrayRef<TestFile::Split> splits)

@@ -347,6 +347,20 @@ static auto LookupMemberNameInScope(Context& context, SemIR::LocId loc_id,
     }
   }
 
+  if (!context.rewrites_stack().empty()) {
+    if (auto access =
+            context.insts().TryGetAs<SemIR::ImplWitnessAccess>(member_id)) {
+      if (auto result = context.rewrites_stack().back().Lookup(
+              context.constant_values().Get(member_id))) {
+        return GetOrAddInst<SemIR::ImplWitnessAccessSubstituted>(
+            context, loc_id,
+            {.type_id = access->type_id,
+             .impl_witness_access_id = member_id,
+             .value_id = result.value()});
+      }
+    }
+  }
+
   return member_id;
 }
 

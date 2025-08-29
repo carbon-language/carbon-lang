@@ -251,7 +251,7 @@ import Cpp library "overload_set.h";
 
 fn F() {
   //@dump-sem-ir-begin
-  // CHECK:STDERR: fail_todo_import_overload_set_public.carbon:[[@LINE+7]]:3: error: semantics TODO: `Unsupported: Overloaded set with mixed access found: 3` [SemanticsTodo]
+  // CHECK:STDERR: fail_todo_import_overload_set_public.carbon:[[@LINE+7]]:3: error: semantics TODO: `Unsupported: Overloaded set with mixed access` [SemanticsTodo]
   // CHECK:STDERR:   Cpp.C.foo();
   // CHECK:STDERR:   ^~~~~~~~~
   // CHECK:STDERR: fail_todo_import_overload_set_public.carbon:[[@LINE+4]]:3: note: in `Cpp` name lookup for `foo` [InCppNameLookup]
@@ -270,7 +270,7 @@ import Cpp library "overload_set.h";
 
 // TODO: this should not be accessed!
 fn F() {
-  // CHECK:STDERR: fail_todo_import_overload_set_protected.carbon:[[@LINE+7]]:3: error: semantics TODO: `Unsupported: Overloaded set with mixed access found: 3` [SemanticsTodo]
+  // CHECK:STDERR: fail_todo_import_overload_set_protected.carbon:[[@LINE+7]]:3: error: semantics TODO: `Unsupported: Overloaded set with mixed access` [SemanticsTodo]
   // CHECK:STDERR:   Cpp.C.foo(1 as i32);
   // CHECK:STDERR:   ^~~~~~~~~
   // CHECK:STDERR: fail_todo_import_overload_set_protected.carbon:[[@LINE+4]]:3: note: in `Cpp` name lookup for `foo` [InCppNameLookup]
@@ -288,7 +288,7 @@ import Cpp library "overload_set.h";
 
 // TODO: this should not be accessed!
 fn F() {
-  // CHECK:STDERR: fail_todo_import_overload_set_private.carbon:[[@LINE+7]]:3: error: semantics TODO: `Unsupported: Overloaded set with mixed access found: 3` [SemanticsTodo]
+  // CHECK:STDERR: fail_todo_import_overload_set_private.carbon:[[@LINE+7]]:3: error: semantics TODO: `Unsupported: Overloaded set with mixed access` [SemanticsTodo]
   // CHECK:STDERR:   Cpp.C.foo(1 as i32, 2 as i32);
   // CHECK:STDERR:   ^~~~~~~~~
   // CHECK:STDERR: fail_todo_import_overload_set_private.carbon:[[@LINE+4]]:3: note: in `Cpp` name lookup for `foo` [InCppNameLookup]

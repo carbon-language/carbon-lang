@@ -205,7 +205,7 @@ auto EvalConstantInst(Context& context, SemIR::FacetAccessType inst)
 
 auto EvalConstantInst(Context& context, SemIR::InstId inst_id,
                       SemIR::FloatType inst) -> ConstantEvalResult {
-  return ValidateFloatType(context, SemIR::LocId(inst_id), inst)
+  return ValidateFloatTypeAndSetKind(context, SemIR::LocId(inst_id), inst)
              ? ConstantEvalResult::NewSamePhase(inst)
              : ConstantEvalResult::Error;
 }
@@ -338,6 +338,13 @@ auto EvalConstantInst(Context& context, SemIR::InstId inst_id,
   }
 
   return ConstantEvalResult::NewSamePhase(inst);
+}
+
+auto EvalConstantInst(Context& context,
+                      SemIR::ImplWitnessAccessSubstituted inst)
+    -> ConstantEvalResult {
+  return ConstantEvalResult::Existing(
+      context.constant_values().Get(inst.value_id));
 }
 
 auto EvalConstantInst(Context& context,
