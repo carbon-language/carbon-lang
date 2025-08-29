@@ -90,7 +90,7 @@ fn Value(v: Cpp.HasQualifiers) {
   // CHECK:STDERR: fail_bad_object_param_qualifiers_by_value.carbon:[[@LINE+7]]:3: error: semantics TODO: `Unsupported: object parameter type: volatile struct HasQualifiers` [SemanticsTodo]
   // CHECK:STDERR:   v.volatile_this();
   // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~
-  // CHECK:STDERR: fail_bad_object_param_qualifiers_by_value.carbon:[[@LINE+4]]:3: note: in call to a Cpp function here [InCallToOverloadedCppFunction]
+  // CHECK:STDERR: fail_bad_object_param_qualifiers_by_value.carbon:[[@LINE+4]]:3: note: in call to a Cpp function here [InCallToCppFunction]
   // CHECK:STDERR:   v.volatile_this();
   // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~
   // CHECK:STDERR:
@@ -106,7 +106,7 @@ fn Value(v: Cpp.HasQualifiers) {
   // CHECK:STDERR: fail_bad_object_param_qualifiers_by_value.carbon:[[@LINE+7]]:3: error: semantics TODO: `Unsupported: object parameter type: struct HasQualifiers &&` [SemanticsTodo]
   // CHECK:STDERR:   v.ref_ref_this();
   // CHECK:STDERR:   ^~~~~~~~~~~~~~~~
-  // CHECK:STDERR: fail_bad_object_param_qualifiers_by_value.carbon:[[@LINE+4]]:3: note: in call to a Cpp function here [InCallToOverloadedCppFunction]
+  // CHECK:STDERR: fail_bad_object_param_qualifiers_by_value.carbon:[[@LINE+4]]:3: note: in call to a Cpp function here [InCallToCppFunction]
   // CHECK:STDERR:   v.ref_ref_this();
   // CHECK:STDERR:   ^~~~~~~~~~~~~~~~
   // CHECK:STDERR:
@@ -115,7 +115,7 @@ fn Value(v: Cpp.HasQualifiers) {
   // CHECK:STDERR: fail_bad_object_param_qualifiers_by_value.carbon:[[@LINE+7]]:3: error: semantics TODO: `Unsupported: object parameter type: const struct HasQualifiers &&` [SemanticsTodo]
   // CHECK:STDERR:   v.const_ref_ref_this();
   // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~~~
-  // CHECK:STDERR: fail_bad_object_param_qualifiers_by_value.carbon:[[@LINE+4]]:3: note: in call to a Cpp function here [InCallToOverloadedCppFunction]
+  // CHECK:STDERR: fail_bad_object_param_qualifiers_by_value.carbon:[[@LINE+4]]:3: note: in call to a Cpp function here [InCallToCppFunction]
   // CHECK:STDERR:   v.const_ref_ref_this();
   // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~~~
   // CHECK:STDERR:
@@ -133,7 +133,7 @@ fn Ref(p: Cpp.HasQualifiers*) {
   // CHECK:STDERR: fail_todo_bad_object_param_qualifiers_by_ref.carbon:[[@LINE+7]]:3: error: semantics TODO: `Unsupported: object parameter type: volatile struct HasQualifiers` [SemanticsTodo]
   // CHECK:STDERR:   p->volatile_this();
   // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~
-  // CHECK:STDERR: fail_todo_bad_object_param_qualifiers_by_ref.carbon:[[@LINE+4]]:3: note: in call to a Cpp function here [InCallToOverloadedCppFunction]
+  // CHECK:STDERR: fail_todo_bad_object_param_qualifiers_by_ref.carbon:[[@LINE+4]]:3: note: in call to a Cpp function here [InCallToCppFunction]
   // CHECK:STDERR:   p->volatile_this();
   // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~
   // CHECK:STDERR:
@@ -150,7 +150,7 @@ fn Ref(p: Cpp.HasQualifiers*) {
   // CHECK:STDERR: fail_bad_object_param_qualifiers_ref_ref.carbon:[[@LINE+7]]:3: error: semantics TODO: `Unsupported: object parameter type: struct HasQualifiers &&` [SemanticsTodo]
   // CHECK:STDERR:   p->ref_ref_this();
   // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~
-  // CHECK:STDERR: fail_bad_object_param_qualifiers_ref_ref.carbon:[[@LINE+4]]:3: note: in call to a Cpp function here [InCallToOverloadedCppFunction]
+  // CHECK:STDERR: fail_bad_object_param_qualifiers_ref_ref.carbon:[[@LINE+4]]:3: note: in call to a Cpp function here [InCallToCppFunction]
   // CHECK:STDERR:   p->ref_ref_this();
   // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~
   // CHECK:STDERR:
@@ -159,7 +159,7 @@ fn Ref(p: Cpp.HasQualifiers*) {
   // CHECK:STDERR: fail_bad_object_param_qualifiers_ref_ref.carbon:[[@LINE+7]]:3: error: semantics TODO: `Unsupported: object parameter type: const struct HasQualifiers &&` [SemanticsTodo]
   // CHECK:STDERR:   p->const_ref_ref_this();
   // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~~~~
-  // CHECK:STDERR: fail_bad_object_param_qualifiers_ref_ref.carbon:[[@LINE+4]]:3: note: in call to a Cpp function here [InCallToOverloadedCppFunction]
+  // CHECK:STDERR: fail_bad_object_param_qualifiers_ref_ref.carbon:[[@LINE+4]]:3: note: in call to a Cpp function here [InCallToCppFunction]
   // CHECK:STDERR:   p->const_ref_ref_this();
   // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~~~~
   // CHECK:STDERR:

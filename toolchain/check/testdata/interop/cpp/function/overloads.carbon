@@ -167,7 +167,7 @@ fn F() {
   // CHECK:STDERR: fail_todo_import_struct_literal_call_arg.carbon:[[@LINE+7]]:3: error: call arg of type `{}` is not supported [CallArgTypeNotSupported]
   // CHECK:STDERR:   Cpp.foo({});
   // CHECK:STDERR:   ^~~~~~~~~~~
-  // CHECK:STDERR: fail_todo_import_struct_literal_call_arg.carbon:[[@LINE+4]]:3: note: in call to a Cpp function here [InCallToOverloadedCppFunction]
+  // CHECK:STDERR: fail_todo_import_struct_literal_call_arg.carbon:[[@LINE+4]]:3: note: in call to a Cpp function here [InCallToCppFunction]
   // CHECK:STDERR:   Cpp.foo({});
   // CHECK:STDERR:   ^~~~~~~~~~~
   // CHECK:STDERR:
@@ -288,7 +288,7 @@ fn F() {
   // CHECK:STDERR: fail_import_no_viable_function.carbon:[[@LINE+7]]:3: error: no viable function found during overloading resolution [OverloadingNoViableFunctionFound]
   // CHECK:STDERR:   Cpp.foo(1 as i64);
   // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~
-  // CHECK:STDERR: fail_import_no_viable_function.carbon:[[@LINE+4]]:3: note: in call to a Cpp function here [InCallToOverloadedCppFunction]
+  // CHECK:STDERR: fail_import_no_viable_function.carbon:[[@LINE+4]]:3: note: in call to a Cpp function here [InCallToCppFunction]
   // CHECK:STDERR:   Cpp.foo(1 as i64);
   // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~
   // CHECK:STDERR:
@@ -314,7 +314,7 @@ fn F() {
   // CHECK:STDERR: fail_import_ambiguous_overload.carbon:[[@LINE+7]]:3: error: ambiguous candidates found during overloading resolution [OverloadingAmbiguousCandidatesFound]
   // CHECK:STDERR:   Cpp.foo(1 as i64);
   // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~
-  // CHECK:STDERR: fail_import_ambiguous_overload.carbon:[[@LINE+4]]:3: note: in call to a Cpp function here [InCallToOverloadedCppFunction]
+  // CHECK:STDERR: fail_import_ambiguous_overload.carbon:[[@LINE+4]]:3: note: in call to a Cpp function here [InCallToCppFunction]
   // CHECK:STDERR:   Cpp.foo(1 as i64);
   // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~
   // CHECK:STDERR:
@@ -340,7 +340,7 @@ fn F() {
   // CHECK:STDERR: fail_import_deleted_function.carbon:[[@LINE+7]]:3: error: overloading resolution succeeded, but refers to a deleted function [OverloadingDeletedFunctionFound]
   // CHECK:STDERR:   Cpp.foo(1 as i32);
   // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~
-  // CHECK:STDERR: fail_import_deleted_function.carbon:[[@LINE+4]]:3: note: in call to a Cpp function here [InCallToOverloadedCppFunction]
+  // CHECK:STDERR: fail_import_deleted_function.carbon:[[@LINE+4]]:3: note: in call to a Cpp function here [InCallToCppFunction]
   // CHECK:STDERR:   Cpp.foo(1 as i32);
   // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~
   // CHECK:STDERR:

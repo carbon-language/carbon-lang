@@ -179,7 +179,7 @@ fn F() {
   // CHECK:STDERR: fail_todo_import_nullable_pointer_param.carbon:[[@LINE+7]]:3: error: semantics TODO: `Unsupported: parameter type: S *` [SemanticsTodo]
   // CHECK:STDERR:   Cpp.foo(&s);
   // CHECK:STDERR:   ^~~~~~~~~~~
-  // CHECK:STDERR: fail_todo_import_nullable_pointer_param.carbon:[[@LINE+4]]:3: note: in call to a Cpp function here [InCallToOverloadedCppFunction]
+  // CHECK:STDERR: fail_todo_import_nullable_pointer_param.carbon:[[@LINE+4]]:3: note: in call to a Cpp function here [InCallToCppFunction]
   // CHECK:STDERR:   Cpp.foo(&s);
   // CHECK:STDERR:   ^~~~~~~~~~~
   // CHECK:STDERR:

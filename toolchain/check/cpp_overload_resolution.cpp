@@ -17,13 +17,13 @@ auto PerformCppOverloadResolution(Context& context, SemIR::LocId loc_id,
     -> std::optional<SemIR::InstId> {
   Diagnostics::AnnotationScope annotate_diagnostics(
       &context.emitter(), [&](auto& builder) {
-        CARBON_DIAGNOSTIC(InCallToOverloadedCppFunction, Note,
+        CARBON_DIAGNOSTIC(InCallToCppFunction, Note,
                           "in call to a Cpp function here");
-        builder.Note(loc_id, InCallToOverloadedCppFunction);
+        builder.Note(loc_id, InCallToCppFunction);
       });
 
   // Map Carbon call argument types to C++ types.
-  llvm::SmallVector<clang::Expr*, 12> arg_exprs;
+  llvm::SmallVector<clang::Expr*> arg_exprs;
   arg_exprs.reserve(arg_ids.size());
   for (SemIR::InstId arg_id : arg_ids) {
     auto arg_cpp_type = MapToCppType(context, arg_id);
