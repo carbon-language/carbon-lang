@@ -199,7 +199,7 @@ struct CalleeFunction : public Printable<CalleeFunction> {
   // True if an error instruction was found.
   bool is_error;
   // True if the function is an overloaded c++ function.
-  bool is_overloaded_function;
+  bool is_cpp_overloaded_function;
 
   auto Print(llvm::raw_ostream& out) const -> void {
     out << "{function_id: " << function_id

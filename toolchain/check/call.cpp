@@ -6,17 +6,15 @@
 
 #include <optional>
 
-#include "clang/Sema/Overload.h"
-#include "clang/Sema/Sema.h"
 #include "toolchain/base/kind_switch.h"
 #include "toolchain/check/context.h"
 #include "toolchain/check/control_flow.h"
 #include "toolchain/check/convert.h"
+#include "toolchain/check/cpp_overload_resolution.h"
 #include "toolchain/check/cpp_thunk.h"
 #include "toolchain/check/deduce.h"
 #include "toolchain/check/facet_type.h"
 #include "toolchain/check/function.h"
-#include "toolchain/check/import_cpp.h"
 #include "toolchain/check/import_ref.h"
 #include "toolchain/check/inst.h"
 #include "toolchain/check/name_ref.h"
@@ -41,106 +39,6 @@ enum class EntityKind : uint8_t {
   GenericInterface = 2,
 };
 }  // namespace
-
-// Performs overloading resolution for a call to an overloaded C++ set. A set
-// with a single non-templated function is still considered to be an overload
-// set, and goes through the same rules for checking the viability of the
-// function. Uses Clang to find the best viable function for the call. Returns
-// the resolved function, or `nullopt` if overload resolution failed.
-static auto PerformOverloadResolution(Context& context, SemIR::LocId loc_id,
-                                      SemIR::InstId callee_id,
-                                      llvm::ArrayRef<SemIR::InstId> arg_ids)
-    -> std::optional<SemIR::InstId> {
-  Diagnostics::AnnotationScope annotate_diagnostics(
-      &context.emitter(), [&](auto& builder) {
-        CARBON_DIAGNOSTIC(InCallToOverloadedCppFunction, Note,
-                          "in call to a Cpp (overloaded) function here");
-        builder.Note(loc_id, InCallToOverloadedCppFunction);
-      });
-
-  // Map Carbon call argument types to C++ types.
-  llvm::SmallVector<clang::Expr*, 12> arg_exprs;
-  for (SemIR::InstId arg_id : arg_ids) {
-    auto arg_cpp_type = MapToCppType(context, arg_id);
-    if (!arg_cpp_type) {
-      CARBON_DIAGNOSTIC(CallArgTypeNotSupported, Error,
-                        "call arg of type {0} is not supported", TypeOfInstId);
-      context.emitter().Emit(loc_id, CallArgTypeNotSupported, arg_id);
-      return std::nullopt;
-    }
-    auto* arg_expr = new (context.ast_context()) clang::OpaqueValueExpr(
-        clang::SourceLocation(), arg_cpp_type->getNonReferenceType(),
-        clang::ExprValueKind::VK_LValue);
-    arg_exprs.emplace_back(arg_expr);
-  }
-
-  auto fn_type_inst =
-      context.types().GetAsInst(context.insts().Get(callee_id).type_id());
-  auto fn_type = fn_type_inst.TryAs<SemIR::OverloadedCppFunctionType>();
-  if (!fn_type) {
-    return std::nullopt;
-  }
-  auto overloaded_fn =
-      context.overloaded_cpp_functions().Get(fn_type->overloaded_function_id);
-
-  // Add candidate functions from the name lookup.
-  clang::OverloadCandidateSet candidate_set(
-      clang::SourceLocation(),
-      clang::OverloadCandidateSet::CandidateSetKind::CSK_Normal);
-
-  clang::ASTUnit* ast = context.sem_ir().clang_ast_unit();
-  CARBON_CHECK(ast);
-  clang::Sema& sema = ast->getSema();
-
-  for (clang::NamedDecl* candidate : overloaded_fn.candidate_functions) {
-    if (auto* fn_decl = dyn_cast<clang::FunctionDecl>(candidate)) {
-      sema.AddOverloadCandidate(
-          fn_decl, clang::DeclAccessPair::make(fn_decl, candidate->getAccess()),
-          arg_exprs, candidate_set);
-    }
-  }
-
-  // Find best viable function among the candidates.
-  // Note: In C++, a single non-templated function is also treated as an
-  // overloaded set and goes through the overload resolution to ensure that the
-  // function is viable for the call. Keeping the same behavior here for
-  // consistency.
-  clang::OverloadCandidateSet::iterator best_viable_fn;
-  clang::OverloadingResult overloading_result =
-      candidate_set.BestViableFunction(sema, clang::SourceLocation(),
-                                       best_viable_fn);
-
-  switch (overloading_result) {
-    case clang::OverloadingResult::OR_Success: {
-      SemIR::InstId result =
-          ImportDeclAndDependencies(context, loc_id, best_viable_fn->Function);
-      return result;
-    }
-    case clang::OverloadingResult::OR_No_Viable_Function: {
-      CARBON_DIAGNOSTIC(
-          OverloadingNoViableFunctionFound, Error,
-          "no viable function found during overloading resolution ");
-      context.emitter().Emit(loc_id, OverloadingNoViableFunctionFound);
-      return std::nullopt;
-    }
-    case clang::OverloadingResult::OR_Ambiguous: {
-      CARBON_DIAGNOSTIC(
-          OverloadingAmbiguousCandidatesFound, Error,
-          "ambiguous candidates found during overloading resolution ");
-      context.emitter().Emit(loc_id, OverloadingAmbiguousCandidatesFound);
-      return std::nullopt;
-    }
-    case clang::OverloadingResult::OR_Deleted: {
-      CARBON_DIAGNOSTIC(
-          OverloadingDeletedFunctionFound, Error,
-          "overloading resolution succeeded, but refers to a deleted function");
-      context.emitter().Emit(loc_id, OverloadingDeletedFunctionFound);
-      return std::nullopt;
-    }
-    default:
-      return std::nullopt;
-  }
-}
 
 // Resolves the callee expression in a call to a specific callee, or diagnoses
 // if no specific callee can be identified. This verifies the arity of the
@@ -402,9 +300,9 @@ auto PerformCall(Context& context, SemIR::LocId loc_id, SemIR::InstId callee_id,
   if (callee_function.is_error) {
     return SemIR::ErrorInst::InstId;
   }
-  if (callee_function.is_overloaded_function) {
+  if (callee_function.is_cpp_overloaded_function) {
     auto resolved_fn =
-        PerformOverloadResolution(context, loc_id, callee_id, arg_ids);
+        PerformCppOverloadResolution(context, loc_id, callee_id, arg_ids);
     if (!resolved_fn) {
       return SemIR::ErrorInst::InstId;
     }

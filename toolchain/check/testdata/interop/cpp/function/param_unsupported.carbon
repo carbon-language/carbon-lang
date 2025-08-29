@@ -29,7 +29,7 @@ fn F() {
   // CHECK:STDERR: fail_todo_import_unsupported_primitive_type.carbon:[[@LINE+7]]:3: error: semantics TODO: `Unsupported: parameter type: _BitInt(23)` [SemanticsTodo]
   // CHECK:STDERR:   Cpp.foo(11);
   // CHECK:STDERR:   ^~~~~~~~~~~
-  // CHECK:STDERR: fail_todo_import_unsupported_primitive_type.carbon:[[@LINE+4]]:3: note: in call to a Cpp (overloaded) function here [InCallToOverloadedCppFunction]
+  // CHECK:STDERR: fail_todo_import_unsupported_primitive_type.carbon:[[@LINE+4]]:3: note: in call to a Cpp function here [InCallToOverloadedCppFunction]
   // CHECK:STDERR:   Cpp.foo(11);
   // CHECK:STDERR:   ^~~~~~~~~~~
   // CHECK:STDERR:
@@ -56,7 +56,7 @@ fn F() {
   // CHECK:STDERR: fail_todo_import_unsupported_primitive_type_among_params.carbon:[[@LINE+7]]:3: error: semantics TODO: `Unsupported: parameter type: _BitInt(23)` [SemanticsTodo]
   // CHECK:STDERR:   Cpp.foo(1, 20);
   // CHECK:STDERR:   ^~~~~~~~~~~~~~
-  // CHECK:STDERR: fail_todo_import_unsupported_primitive_type_among_params.carbon:[[@LINE+4]]:3: note: in call to a Cpp (overloaded) function here [InCallToOverloadedCppFunction]
+  // CHECK:STDERR: fail_todo_import_unsupported_primitive_type_among_params.carbon:[[@LINE+4]]:3: note: in call to a Cpp function here [InCallToOverloadedCppFunction]
   // CHECK:STDERR:   Cpp.foo(1, 20);
   // CHECK:STDERR:   ^~~~~~~~~~~~~~
   // CHECK:STDERR:

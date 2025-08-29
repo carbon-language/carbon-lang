@@ -118,7 +118,7 @@ fn F() {
   // CHECK:STDERR: fail_todo_import_variadic.carbon:[[@LINE+7]]:3: error: semantics TODO: `Unsupported: Variadic function` [SemanticsTodo]
   // CHECK:STDERR:   Cpp.foo(8);
   // CHECK:STDERR:   ^~~~~~~~~~
-  // CHECK:STDERR: fail_todo_import_variadic.carbon:[[@LINE+4]]:3: note: in call to a Cpp (overloaded) function here [InCallToOverloadedCppFunction]
+  // CHECK:STDERR: fail_todo_import_variadic.carbon:[[@LINE+4]]:3: note: in call to a Cpp function here [InCallToOverloadedCppFunction]
   // CHECK:STDERR:   Cpp.foo(8);
   // CHECK:STDERR:   ^~~~~~~~~~
   // CHECK:STDERR:

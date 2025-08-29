@@ -21,7 +21,7 @@ auto GetCalleeFunction(const File& sem_ir, InstId callee_id,
                            .self_type_id = InstId::None,
                            .self_id = InstId::None,
                            .is_error = false,
-                           .is_overloaded_function = false};
+                           .is_cpp_overloaded_function = false};
   if (auto bound_method = sem_ir.insts().TryGetAs<BoundMethod>(callee_id)) {
     result.self_id = bound_method->object_id;
     callee_id = bound_method->function_decl_id;
@@ -49,7 +49,7 @@ auto GetCalleeFunction(const File& sem_ir, InstId callee_id,
       sem_ir.types().GetAsInst(sem_ir.insts().Get(val_id).type_id());
 
   if (fn_type_inst.TryAs<OverloadedCppFunctionType>()) {
-    result.is_overloaded_function = true;
+    result.is_cpp_overloaded_function = true;
     return result;
   }
 
