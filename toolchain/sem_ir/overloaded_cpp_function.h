@@ -13,7 +13,7 @@
 
 namespace Carbon::SemIR {
 
-// An overloaded function.
+// An overloaded C++ function.
 struct OverloadedCppFunction : public Printable<OverloadedCppFunction> {
   // The function's name.
   NameId name_id;

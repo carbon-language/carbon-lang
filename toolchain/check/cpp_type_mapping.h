@@ -2,8 +2,8 @@
 // Exceptions. See /LICENSE for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
-#ifndef CARBON_TOOLCHAIN_CHECK_TYPE_MAPPING_H_
-#define CARBON_TOOLCHAIN_CHECK_TYPE_MAPPING_H_
+#ifndef CARBON_TOOLCHAIN_CHECK_CPP_TYPE_MAPPING_H_
+#define CARBON_TOOLCHAIN_CHECK_CPP_TYPE_MAPPING_H_
 
 #include "clang/AST/Type.h"
 #include "toolchain/check/context.h"
@@ -16,4 +16,4 @@ auto MapToCppType(Context& context, SemIR::InstId inst_id)
     -> std::optional<clang::QualType>;
 }  // namespace Carbon::Check
 
-#endif  // CARBON_TOOLCHAIN_CHECK_TYPE_MAPPING_H_
+#endif  // CARBON_TOOLCHAIN_CHECK_CPP_TYPE_MAPPING_H_

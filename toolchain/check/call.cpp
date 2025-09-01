@@ -20,7 +20,6 @@
 #include "toolchain/check/name_ref.h"
 #include "toolchain/check/thunk.h"
 #include "toolchain/check/type.h"
-#include "toolchain/check/type_mapping.h"
 #include "toolchain/diagnostics/format_providers.h"
 #include "toolchain/sem_ir/builtin_function_kind.h"
 #include "toolchain/sem_ir/entity_with_params_base.h"

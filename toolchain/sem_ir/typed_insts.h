@@ -748,29 +748,6 @@ struct FloatValue {
   FloatId float_id;
 };
 
-// An overloaded cpp function declaration.
-struct OverloadedCppFunctionDecl {
-  static constexpr auto Kind =
-      InstKind::OverloadedCppFunctionDecl.Define<Parse::AnyFunctionDeclId>(
-          {.ir_name = "overloaded_cpp_fn_decl", .is_lowered = false});
-
-  TypeId type_id;
-  OverloadedCppFunctionId overloaded_function_id;
-};
-
-// The type of an overloaded function.
-struct OverloadedCppFunctionType {
-  static constexpr auto Kind =
-      InstKind::OverloadedCppFunctionType.Define<Parse::AnyFunctionDeclId>(
-          {.ir_name = "overloaded_cpp_fn_type",
-           .is_type = InstIsType::Always,
-           .constant_kind = InstConstantKind::WheneverPossible});
-
-  TypeId type_id;
-  OverloadedCppFunctionId overloaded_function_id;
-  SpecificId specific_id;
-};
-
 // A function declaration.
 struct FunctionDecl {
   static constexpr auto Kind =
@@ -816,6 +793,29 @@ struct FunctionTypeWithSelfType {
   // The value to use for `Self` in this function. May be a type or a facet
   // value.
   InstId self_id;
+};
+
+// An overloaded C++ function declaration.
+struct OverloadedCppFunctionDecl {
+  static constexpr auto Kind =
+      InstKind::OverloadedCppFunctionDecl.Define<Parse::AnyFunctionDeclId>(
+          {.ir_name = "overloaded_cpp_fn_decl", .is_lowered = false});
+
+  TypeId type_id;
+  OverloadedCppFunctionId overloaded_function_id;
+};
+
+// The type of an overloaded C++ function.
+struct OverloadedCppFunctionType {
+  static constexpr auto Kind =
+      InstKind::OverloadedCppFunctionType.Define<Parse::AnyFunctionDeclId>(
+          {.ir_name = "overloaded_cpp_fn_type",
+           .is_type = InstIsType::Always,
+           .constant_kind = InstConstantKind::WheneverPossible});
+
+  TypeId type_id;
+  OverloadedCppFunctionId overloaded_function_id;
+  SpecificId specific_id;
 };
 
 // The type of the name of a generic class. The corresponding value is an empty

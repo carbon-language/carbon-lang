@@ -1023,6 +1023,7 @@ static auto MapBuiltinType(Context& context, SemIR::LocId loc_id,
     }
     // TODO: Handle floating-point types that map to named aliases.
   }
+
   return {.inst_id = SemIR::TypeInstId::None, .type_id = SemIR::TypeId::None};
 }
 

@@ -49,6 +49,7 @@ auto GetCalleeFunction(const File& sem_ir, InstId callee_id,
       sem_ir.types().GetAsInst(sem_ir.insts().Get(val_id).type_id());
 
   if (fn_type_inst.TryAs<OverloadedCppFunctionType>()) {
+    // TODO: Consider evaluating this at runtime instead of having a field.
     result.is_cpp_overloaded_function = true;
     return result;
   }

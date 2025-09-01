@@ -23,6 +23,7 @@ cc_library(
         "convert.cpp",
         "cpp_overload_resolution.cpp",
         "cpp_thunk.cpp",
+        "cpp_type_mapping.cpp",
         "decl_name_stack.cpp",
         "deduce.cpp",
         "deferred_definition_worklist.cpp",
@@ -58,7 +59,6 @@ cc_library(
         "thunk.cpp",
         "type.cpp",
         "type_completion.cpp",
-        "type_mapping.cpp",
         "type_structure.cpp",
     ],
     hdrs = [
@@ -70,6 +70,7 @@ cc_library(
         "convert.h",
         "cpp_overload_resolution.h",
         "cpp_thunk.h",
+        "cpp_type_mapping.h",
         "decl_introducer_state.h",
         "decl_name_stack.h",
         "deduce.h",
@@ -111,7 +112,6 @@ cc_library(
         "thunk.h",
         "type.h",
         "type_completion.h",
-        "type_mapping.h",
         "type_structure.h",
     ],
     deps = [
