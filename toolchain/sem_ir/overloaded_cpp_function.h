@@ -22,7 +22,7 @@ struct OverloadedCppFunction : public Printable<OverloadedCppFunction> {
   NameScopeId parent_scope_id;
 
   // List of all named decls found at name lookup.
-  clang::UnresolvedSet<8> candidate_functions;
+  clang::UnresolvedSet<1> candidate_functions;
 
   auto Print(llvm::raw_ostream& out) const -> void {
     out << "name: " << name_id << ", parent_scope: " << parent_scope_id;
