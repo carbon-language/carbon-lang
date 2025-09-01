@@ -268,7 +268,6 @@ library "[[@TEST_NAME]]";
 
 import Cpp library "overload_set.h";
 
-// TODO: this should not be accessed!
 fn F() {
   // CHECK:STDERR: fail_todo_import_overload_set_protected.carbon:[[@LINE+7]]:3: error: semantics TODO: `Unsupported: Overloaded set with mixed access` [SemanticsTodo]
   // CHECK:STDERR:   Cpp.C.foo(1 as i32);
@@ -286,7 +285,6 @@ library "[[@TEST_NAME]]";
 
 import Cpp library "overload_set.h";
 
-// TODO: this should not be accessed!
 fn F() {
   // CHECK:STDERR: fail_todo_import_overload_set_private.carbon:[[@LINE+7]]:3: error: semantics TODO: `Unsupported: Overloaded set with mixed access` [SemanticsTodo]
   // CHECK:STDERR:   Cpp.C.foo(1 as i32, 2 as i32);
