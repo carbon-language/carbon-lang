@@ -18,7 +18,7 @@
 // --- negate.h
 
 class C {};
-auto operator- (C c) -> C;
+auto operator- (C operand) -> C;
 
 // --- fail_todo_import_negate.carbon
 
@@ -44,7 +44,7 @@ fn F() {
 // --- add_with.h
 
 class C {};
-auto operator+ (C c1, C c2) -> C;
+auto operator+ (C lhs, C rhs) -> C;
 
 // --- import_add_with.carbon
 
@@ -114,7 +114,7 @@ class C {
  public:
   C(int);
 };
-auto operator+ (C c1, C c2) -> C;
+auto operator+ (C lhs, C rhs) -> C;
 
 // --- fail_todo_plus_with_int_conversion.carbon
 
@@ -175,7 +175,7 @@ class C {
  public:
   C(std::string_view s);
 };
-auto operator+ (C c1, C c2) -> C;
+auto operator+ (C lhs, C rhs) -> C;
 
 // --- fail_todo_import_plus_with_string_view_conversion.carbon
 
@@ -200,7 +200,7 @@ fn F() {
 // --- sub_with.h
 
 class C {};
-auto operator- (C c1, C c2) -> C;
+auto operator- (C lhs, C rhs) -> C;
 
 // --- fail_todo_import_sub_with.carbon
 
@@ -235,7 +235,7 @@ fn F() {
 
 class C {
  public:
-  auto operator+ (C c) -> C;
+  auto operator+ (C rhs) -> C;
 };
 
 // --- fail_todo_import_member__add_with.carbon
@@ -287,9 +287,9 @@ fn F() {
 // --- overloading.h
 
 class C {};
-auto operator+ (C c1, C c2) -> C;
+auto operator+ (C lhs, C rhs) -> C;
 class D {};
-auto operator+ (D d1, D d2) -> D;
+auto operator+ (D lhs, D rhs) -> D;
 
 // --- fail_todo_import_overloading.carbon
 
