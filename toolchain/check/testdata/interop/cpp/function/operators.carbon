@@ -228,6 +228,35 @@ fn F() {
 }
 
 // ============================================================================
+// Member operator
+// ============================================================================
+
+// --- member_add_with.h
+
+class C {
+ public:
+  auto operator+ (C c) -> C;
+};
+
+// --- fail_todo_import_member__add_with.carbon
+
+library "[[@TEST_NAME]]";
+
+import Cpp library "member_add_with.h";
+
+fn F() {
+  //@dump-sem-ir-begin
+  let c1: Cpp.C = Cpp.C.C();
+  let c2: Cpp.C = Cpp.C.C();
+  // CHECK:STDERR: fail_todo_import_member__add_with.carbon:[[@LINE+4]]:19: error: cannot access member of interface `Core.AddWith(Cpp.C)` in type `Cpp.C` that does not implement that interface [MissingImplInMemberAccess]
+  // CHECK:STDERR:   let c3: Cpp.C = c1 + c2;
+  // CHECK:STDERR:                   ^~~~~~~
+  // CHECK:STDERR:
+  let c3: Cpp.C = c1 + c2;
+  //@dump-sem-ir-end
+}
+
+// ============================================================================
 // Operator not found
 // ============================================================================
 
@@ -705,6 +734,98 @@ fn F() {
 // CHECK:STDOUT:   %.loc21: type = splice_block %C.ref.loc21 [concrete = constants.%C] {
 // CHECK:STDOUT:     %Cpp.ref.loc21: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
 // CHECK:STDOUT:     %C.ref.loc21: type = name_ref C, imports.%C.decl [concrete = constants.%C]
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %c3: %C = bind_name c3, <error> [concrete = <error>]
+// CHECK:STDOUT:   %T.as.Destroy.impl.Op.bound.loc9: <bound method> = bound_method %.loc9_27.1, constants.%T.as.Destroy.impl.Op.21b
+// CHECK:STDOUT:   <elided>
+// CHECK:STDOUT:   %bound_method.loc9: <bound method> = bound_method %.loc9_27.1, %T.as.Destroy.impl.Op.specific_fn.1
+// CHECK:STDOUT:   %addr.loc9_27.2: %ptr.d9e = addr_of %.loc9_27.1
+// CHECK:STDOUT:   %T.as.Destroy.impl.Op.call.loc9: init %empty_tuple.type = call %bound_method.loc9(%addr.loc9_27.2)
+// CHECK:STDOUT:   %T.as.Destroy.impl.Op.bound.loc8: <bound method> = bound_method %.loc8_27.1, constants.%T.as.Destroy.impl.Op.21b
+// CHECK:STDOUT:   <elided>
+// CHECK:STDOUT:   %bound_method.loc8: <bound method> = bound_method %.loc8_27.1, %T.as.Destroy.impl.Op.specific_fn.2
+// CHECK:STDOUT:   %addr.loc8_27.2: %ptr.d9e = addr_of %.loc8_27.1
+// CHECK:STDOUT:   %T.as.Destroy.impl.Op.call.loc8: init %empty_tuple.type = call %bound_method.loc8(%addr.loc8_27.2)
+// CHECK:STDOUT:   <elided>
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: --- fail_todo_import_member__add_with.carbon
+// CHECK:STDOUT:
+// CHECK:STDOUT: constants {
+// CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [concrete]
+// CHECK:STDOUT:   %C: type = class_type @C [concrete]
+// CHECK:STDOUT:   %pattern_type.217: type = pattern_type %C [concrete]
+// CHECK:STDOUT:   %C.C.type: type = fn_type @C.C [concrete]
+// CHECK:STDOUT:   %C.C: %C.C.type = struct_value () [concrete]
+// CHECK:STDOUT:   %ptr.d9e: type = ptr_type %C [concrete]
+// CHECK:STDOUT:   %C__carbon_thunk.type: type = fn_type @C__carbon_thunk [concrete]
+// CHECK:STDOUT:   %C__carbon_thunk: %C__carbon_thunk.type = struct_value () [concrete]
+// CHECK:STDOUT:   %T.as.Destroy.impl.Op.type.1b3: type = fn_type @T.as.Destroy.impl.Op, @T.as.Destroy.impl(%C) [concrete]
+// CHECK:STDOUT:   %T.as.Destroy.impl.Op.21b: %T.as.Destroy.impl.Op.type.1b3 = struct_value () [concrete]
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: imports {
+// CHECK:STDOUT:   %Cpp: <namespace> = namespace file.%Cpp.import_cpp, [concrete] {
+// CHECK:STDOUT:     .C = %C.decl
+// CHECK:STDOUT:     import Cpp//...
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %C.decl: type = class_decl @C [concrete = constants.%C] {} {}
+// CHECK:STDOUT:   %C.C.decl: %C.C.type = fn_decl @C.C [concrete = constants.%C.C] {
+// CHECK:STDOUT:     <elided>
+// CHECK:STDOUT:   } {
+// CHECK:STDOUT:     <elided>
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %C__carbon_thunk.decl: %C__carbon_thunk.type = fn_decl @C__carbon_thunk [concrete = constants.%C__carbon_thunk] {
+// CHECK:STDOUT:     <elided>
+// CHECK:STDOUT:   } {
+// CHECK:STDOUT:     <elided>
+// CHECK:STDOUT:   }
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: fn @F() {
+// CHECK:STDOUT: !entry:
+// CHECK:STDOUT:   name_binding_decl {
+// CHECK:STDOUT:     %c1.patt: %pattern_type.217 = binding_pattern c1 [concrete]
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %Cpp.ref.loc8_19: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
+// CHECK:STDOUT:   %C.ref.loc8_22: type = name_ref C, imports.%C.decl [concrete = constants.%C]
+// CHECK:STDOUT:   %C.ref.loc8_24: %C.C.type = name_ref C, imports.%C.C.decl [concrete = constants.%C.C]
+// CHECK:STDOUT:   %.loc8_27.1: ref %C = temporary_storage
+// CHECK:STDOUT:   %addr.loc8_27.1: %ptr.d9e = addr_of %.loc8_27.1
+// CHECK:STDOUT:   %C__carbon_thunk.call.loc8: init %empty_tuple.type = call imports.%C__carbon_thunk.decl(%addr.loc8_27.1)
+// CHECK:STDOUT:   %.loc8_27.2: init %C = in_place_init %C__carbon_thunk.call.loc8, %.loc8_27.1
+// CHECK:STDOUT:   %.loc8_14: type = splice_block %C.ref.loc8_14 [concrete = constants.%C] {
+// CHECK:STDOUT:     %Cpp.ref.loc8_11: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
+// CHECK:STDOUT:     %C.ref.loc8_14: type = name_ref C, imports.%C.decl [concrete = constants.%C]
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %.loc8_27.3: ref %C = temporary %.loc8_27.1, %.loc8_27.2
+// CHECK:STDOUT:   %.loc8_27.4: %C = bind_value %.loc8_27.3
+// CHECK:STDOUT:   %c1: %C = bind_name c1, %.loc8_27.4
+// CHECK:STDOUT:   name_binding_decl {
+// CHECK:STDOUT:     %c2.patt: %pattern_type.217 = binding_pattern c2 [concrete]
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %Cpp.ref.loc9_19: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
+// CHECK:STDOUT:   %C.ref.loc9_22: type = name_ref C, imports.%C.decl [concrete = constants.%C]
+// CHECK:STDOUT:   %C.ref.loc9_24: %C.C.type = name_ref C, imports.%C.C.decl [concrete = constants.%C.C]
+// CHECK:STDOUT:   %.loc9_27.1: ref %C = temporary_storage
+// CHECK:STDOUT:   %addr.loc9_27.1: %ptr.d9e = addr_of %.loc9_27.1
+// CHECK:STDOUT:   %C__carbon_thunk.call.loc9: init %empty_tuple.type = call imports.%C__carbon_thunk.decl(%addr.loc9_27.1)
+// CHECK:STDOUT:   %.loc9_27.2: init %C = in_place_init %C__carbon_thunk.call.loc9, %.loc9_27.1
+// CHECK:STDOUT:   %.loc9_14: type = splice_block %C.ref.loc9_14 [concrete = constants.%C] {
+// CHECK:STDOUT:     %Cpp.ref.loc9_11: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
+// CHECK:STDOUT:     %C.ref.loc9_14: type = name_ref C, imports.%C.decl [concrete = constants.%C]
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %.loc9_27.3: ref %C = temporary %.loc9_27.1, %.loc9_27.2
+// CHECK:STDOUT:   %.loc9_27.4: %C = bind_value %.loc9_27.3
+// CHECK:STDOUT:   %c2: %C = bind_name c2, %.loc9_27.4
+// CHECK:STDOUT:   name_binding_decl {
+// CHECK:STDOUT:     %c3.patt: %pattern_type.217 = binding_pattern c3 [concrete]
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %c1.ref: %C = name_ref c1, %c1
+// CHECK:STDOUT:   %c2.ref: %C = name_ref c2, %c2
+// CHECK:STDOUT:   %.loc14: type = splice_block %C.ref.loc14 [concrete = constants.%C] {
+// CHECK:STDOUT:     %Cpp.ref.loc14: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
+// CHECK:STDOUT:     %C.ref.loc14: type = name_ref C, imports.%C.decl [concrete = constants.%C]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %c3: %C = bind_name c3, <error> [concrete = <error>]
 // CHECK:STDOUT:   %T.as.Destroy.impl.Op.bound.loc9: <bound method> = bound_method %.loc9_27.1, constants.%T.as.Destroy.impl.Op.21b
