@@ -1185,4 +1185,5 @@ auto InstNamer::has_name(InstId inst_id) const -> bool {
   return static_cast<bool>(
       insts_[sem_ir_->insts().GetRawIndex(inst_id)].second);
 }
+
 }  // namespace Carbon::SemIR
