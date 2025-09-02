@@ -1162,6 +1162,21 @@ struct LookupImplWitness {
   SpecificInterfaceId query_specific_interface_id;
 };
 
+// A type that holds an object representation of another type, that may or may
+// not be a valid representation. In particular, it may also hold an unformed
+// state.
+struct MaybeUnformedType {
+  static constexpr auto Kind =
+      InstKind::MaybeUnformedType.Define<Parse::NodeId>({
+          .ir_name = "maybe_unformed_type",
+          .is_type = InstIsType::Always,
+          .constant_kind = InstConstantKind::WheneverPossible,
+      });
+
+  TypeId type_id;
+  TypeInstId inner_id;
+};
+
 // A name-binding declaration, i.e. a declaration introduced with `let` or
 // `var`.
 struct NameBindingDecl {

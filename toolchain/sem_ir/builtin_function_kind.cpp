@@ -307,6 +307,10 @@ constexpr BuiltinInfo FloatMakeType = {"float.make_type",
 constexpr BuiltinInfo BoolMakeType = {"bool.make_type",
                                       ValidateSignature<auto()->Type>};
 
+// Returns the `MaybeUnformed(T)` type.
+constexpr BuiltinInfo MaybeUnformedMakeType = {
+    "maybe_unformed.make_type", ValidateSignature<auto(Type)->Type>};
+
 // Converts between char types, with a diagnostic if the value doesn't fit.
 constexpr BuiltinInfo CharConvertChecked = {
     "char.convert_checked",

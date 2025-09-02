@@ -1758,6 +1758,15 @@ static auto MakeConstantForBuiltinCall(EvalContext& eval_context,
       return context.constant_values().Get(SemIR::BoolType::TypeInstId);
     }
 
+    case SemIR::BuiltinFunctionKind::MaybeUnformedMakeType: {
+      return MakeConstantResult(
+          context,
+          SemIR::MaybeUnformedType{
+              .type_id = SemIR::TypeType::TypeId,
+              .inner_id = context.types().GetAsTypeInstId(arg_ids[0])},
+          phase);
+    }
+
     // Character conversions.
     case SemIR::BuiltinFunctionKind::CharConvertChecked: {
       if (phase != Phase::Concrete) {
