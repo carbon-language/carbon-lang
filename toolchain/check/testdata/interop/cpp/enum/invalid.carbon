@@ -22,5 +22,6 @@ import Cpp inline '''
 enum InvalidEnum : no_such_type {};
 ''';
 
-// Use of an invalid enum should not cause the toolchain to crash.
+// Use of an invalid enum should not cause the toolchain to crash or produce
+// redundant diagnostics.
 var x: Cpp.InvalidEnum;

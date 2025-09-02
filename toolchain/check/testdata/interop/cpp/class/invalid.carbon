@@ -26,5 +26,6 @@ struct Base {
 struct Derived : Base {};
 ''';
 
-// Use of an invalid class should not cause the toolchain to crash.
+// Use of an invalid class should not cause the toolchain to crash or produce
+// redundant diagnostics.
 var x: Cpp.Derived;
