@@ -1100,8 +1100,7 @@ static auto PerformBuiltinConversion(
   // Type values can convert to facet values, and facet values can convert to
   // other facet values, as long as they satisfy the required interfaces of the
   // target `FacetType`.
-  if (target.type_id != value_type_id &&
-      sem_ir.types().Is<SemIR::FacetType>(target.type_id) &&
+  if (sem_ir.types().Is<SemIR::FacetType>(target.type_id) &&
       (sem_ir.types().Is<SemIR::TypeType>(value_type_id) ||
        sem_ir.types().Is<SemIR::FacetType>(value_type_id))) {
     // The value is a type or facet value, so it has a constant value. We get
