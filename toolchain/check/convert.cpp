@@ -731,6 +731,7 @@ static auto IsValidExprCategoryForConversionTarget(
     case ConversionTarget::CppThunkRef:
       return category == SemIR::ExprCategory::EphemeralRef;
     case ConversionTarget::ExplicitAs:
+    case ConversionTarget::ExplicitUnsafeAs:
       return true;
     case ConversionTarget::Initializer:
     case ConversionTarget::FullInitializer:
@@ -914,8 +915,7 @@ static auto PerformBuiltinConversion(
   }
 
   // T explicitly converts to U if T is compatible with U.
-  if (target.kind == ConversionTarget::Kind::ExplicitAs &&
-      target.type_id != value_type_id) {
+  if (target.is_explicit_as() && target.type_id != value_type_id) {
     auto target_foundation_id =
         context.types().GetTransitiveAdaptedType(target.type_id);
     auto value_foundation_id =
@@ -1010,10 +1010,12 @@ static auto PerformBuiltinConversion(
               context.types().GetTypeIdForTypeInstId(
                   src_pointer_type->pointee_id));
 
-      // If the qualifiers are incompatible, we can't perform a conversion.
-      if ((src_quals & ~target_quals) != SemIR::TypeQualifiers::None) {
+      // If the qualifiers are incompatible, we can't perform a conversion,
+      // except with `unsafe as`.
+      if ((src_quals & ~target_quals) != SemIR::TypeQualifiers::None &&
+          target.kind != ConversionTarget::ExplicitUnsafeAs) {
         // TODO: Consider producing a custom diagnostic here for a cast that
-        // discards constness. We should allow this with `unsafe as`.
+        // discards constness.
         return value_id;
       }
 
@@ -1098,8 +1100,7 @@ static auto PerformBuiltinConversion(
   // Type values can convert to facet values, and facet values can convert to
   // other facet values, as long as they satisfy the required interfaces of the
   // target `FacetType`.
-  if (target.type_id != value_type_id &&
-      sem_ir.types().Is<SemIR::FacetType>(target.type_id) &&
+  if (sem_ir.types().Is<SemIR::FacetType>(target.type_id) &&
       (sem_ir.types().Is<SemIR::TypeType>(value_type_id) ||
        sem_ir.types().Is<SemIR::FacetType>(value_type_id))) {
     // The value is a type or facet value, so it has a constant value. We get
@@ -1231,6 +1232,19 @@ static auto ConvertValueForCppThunkRef(Context& context, SemIR::InstId expr_id,
   return expr_id;
 }
 
+// Returns the Core interface name to use for a given kind of conversion.
+static auto GetConversionInterfaceName(ConversionTarget::Kind kind)
+    -> llvm::StringLiteral {
+  switch (kind) {
+    case ConversionTarget::ExplicitAs:
+      return "As";
+    case ConversionTarget::ExplicitUnsafeAs:
+      return "UnsafeAs";
+    default:
+      return "ImplicitAs";
+  }
+}
+
 auto PerformAction(Context& context, SemIR::LocId loc_id,
                    SemIR::ConvertToValueAction action) -> SemIR::InstId {
   return Convert(context, loc_id, action.inst_id,
@@ -1303,6 +1317,14 @@ auto Convert(Context& context, SemIR::LocId loc_id, SemIR::InstId expr_id,
     return SemIR::ErrorInst::InstId;
   }
 
+  // The source type doesn't need to be complete, but its completeness can
+  // affect the result. For example, we don't know what type it adapts or
+  // derives from unless it's complete.
+  // TODO: Is there a risk of coherence problems if the source type is
+  // incomplete, but a conversion would have been possible or would have behaved
+  // differently if it were complete?
+  TryToCompleteType(context, context.insts().Get(expr_id).type_id(), loc_id);
+
   // Check whether any builtin conversion applies.
   expr_id = PerformBuiltinConversion(context, loc_id, expr_id, target,
                                      vtable_class_type);
@@ -1336,9 +1358,7 @@ auto Convert(Context& context, SemIR::LocId loc_id, SemIR::InstId expr_id,
     SemIR::InstId interface_args[] = {
         context.types().GetInstId(target.type_id)};
     Operator op = {
-        .interface_name = target.kind == ConversionTarget::ExplicitAs
-                              ? llvm::StringLiteral("As")
-                              : llvm::StringLiteral("ImplicitAs"),
+        .interface_name = GetConversionInterfaceName(target.kind),
         .interface_args_ref = interface_args,
         .op_name = "Convert",
     };
@@ -1355,19 +1375,17 @@ auto Convert(Context& context, SemIR::LocId loc_id, SemIR::InstId expr_id,
             Diagnostics::BoolAsSelect, TypeOfInstId, Diagnostics::BoolAsSelect,
             SemIR::TypeId);
         return context.emitter().Build(
-            loc_id, ConversionFailureNonTypeToFacet,
-            target.kind == ConversionTarget::ExplicitAs, expr_id,
-            target.type_id == SemIR::TypeType::TypeId, target.type_id);
+            loc_id, ConversionFailureNonTypeToFacet, target.is_explicit_as(),
+            expr_id, target.type_id == SemIR::TypeType::TypeId, target.type_id);
       } else {
         CARBON_DIAGNOSTIC(ConversionFailure, Error,
                           "cannot{0:| implicitly} convert expression of type "
                           "{1} to {2}{0: with `as`|}",
                           Diagnostics::BoolAsSelect, TypeOfInstId,
                           SemIR::TypeId);
-        return context.emitter().Build(
-            loc_id, ConversionFailure,
-            target.kind == ConversionTarget::ExplicitAs, expr_id,
-            target.type_id);
+        return context.emitter().Build(loc_id, ConversionFailure,
+                                       target.is_explicit_as(), expr_id,
+                                       target.type_id);
       }
     });
 
@@ -1389,7 +1407,7 @@ auto Convert(Context& context, SemIR::LocId loc_id, SemIR::InstId expr_id,
 
   // For `as`, don't perform any value category conversions. In particular, an
   // identity conversion shouldn't change the expression category.
-  if (target.kind == ConversionTarget::ExplicitAs) {
+  if (target.is_explicit_as()) {
     return expr_id;
   }
 
@@ -1546,10 +1564,12 @@ auto ConvertToBoolValue(Context& context, SemIR::LocId loc_id,
 }
 
 auto ConvertForExplicitAs(Context& context, Parse::NodeId as_node,
-                          SemIR::InstId value_id, SemIR::TypeId type_id)
-    -> SemIR::InstId {
+                          SemIR::InstId value_id, SemIR::TypeId type_id,
+                          bool unsafe) -> SemIR::InstId {
   return Convert(context, as_node, value_id,
-                 {.kind = ConversionTarget::ExplicitAs, .type_id = type_id});
+                 {.kind = unsafe ? ConversionTarget::ExplicitUnsafeAs
+                                 : ConversionTarget::ExplicitAs,
+                  .type_id = type_id});
 }
 
 // TODO: Consider moving this to pattern_match.h.

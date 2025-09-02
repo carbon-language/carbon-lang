@@ -5,11 +5,15 @@
 #ifndef CARBON_TOOLCHAIN_DRIVER_CLANG_RUNNER_H_
 #define CARBON_TOOLCHAIN_DRIVER_CLANG_RUNNER_H_
 
+#include <filesystem>
+
 #include "clang/Basic/DiagnosticIDs.h"
+#include "common/error.h"
 #include "common/ostream.h"
 #include "llvm/ADT/ArrayRef.h"
 #include "llvm/ADT/StringRef.h"
 #include "llvm/Support/VirtualFileSystem.h"
+#include "llvm/TargetParser/Triple.h"
 #include "toolchain/driver/tool_runner_base.h"
 #include "toolchain/install/install_paths.h"
 
@@ -43,12 +47,48 @@ class ClangRunner : ToolRunnerBase {
   //
   // If `verbose` is passed as true, will enable verbose logging to the
   // `err_stream` both from the runner and Clang itself.
-  ClangRunner(const InstallPaths* install_paths, llvm::StringRef target,
+  ClangRunner(const InstallPaths* install_paths,
               llvm::IntrusiveRefCntPtr<llvm::vfs::FileSystem> fs,
-              llvm::raw_ostream* vlog_stream = nullptr);
+              llvm::raw_ostream* vlog_stream = nullptr,
+              bool build_runtimes_on_demand = false);
 
   // Run Clang with the provided arguments.
-  auto Run(llvm::ArrayRef<llvm::StringRef> args) -> bool;
+  //
+  // This works to support all of the Clang commandline, including commands that
+  // use target-dependent resources like linking. When it detects such commands,
+  // it will either use the provided target resource-dir path, or if building
+  // runtimes on demand is enabled it will build the needed resource-dir.
+  //
+  // Returns an error only if unable to successfully run Clang with the
+  // arguments. If able to run Clang, no error is returned a bool indicating
+  // whether than Clang invocation succeeded is returned.
+  //
+  // TODO: Eventually, this will need to accept an abstraction that can
+  // represent multiple different pre-built runtimes.
+  auto Run(llvm::ArrayRef<llvm::StringRef> args,
+           std::optional<std::filesystem::path> prebuilt_resource_dir_path = {})
+      -> ErrorOr<bool>;
+
+  // Run Clang with the provided arguments and without any target-dependent
+  // resources.
+  //
+  // This method can be used to avoid building target-dependent resources when
+  // unnecessary, but not all Clang command lines will work correctly.
+  // Specifically, compile-only commands will typically work, while linking will
+  // not.
+  auto RunTargetIndependentCommand(llvm::ArrayRef<llvm::StringRef> args)
+      -> bool;
+
+  // Builds the target-specific resource directory for Clang.
+  //
+  // There is a resource directory installed along side the Clang binary that
+  // contains all the target independent files such as headers. However, for
+  // target-specific files like runtimes, we build those on demand here and
+  // return the path.
+  auto BuildTargetResourceDir(llvm::StringRef target,
+                              const std::filesystem::path& resource_dir_path,
+                              const std::filesystem::path& tmp_path)
+      -> ErrorOr<Success>;
 
   // Enable leaking memory.
   //
@@ -62,11 +102,36 @@ class ClangRunner : ToolRunnerBase {
   auto EnableLeakingMemory() -> void { enable_leaking_ = true; }
 
  private:
-  llvm::StringRef target_;
-  llvm::IntrusiveRefCntPtr<llvm::vfs::FileSystem> fs_;
+  // Handles building the Clang driver and passing the arguments down to it.
+  auto RunInternal(llvm::ArrayRef<llvm::StringRef> args, llvm::StringRef target,
+                   std::optional<llvm::StringRef> target_resource_dir_path)
+      -> bool;
 
+  // Helper to compile a single file of the CRT runtimes.
+  auto BuildCrtFile(llvm::StringRef target, llvm::StringRef src_file,
+                    const std::filesystem::path& out_path) -> void;
+
+  // Returns the target-specific source files for the builtins runtime library.
+  auto CollectBuiltinsSrcFiles(const llvm::Triple& target_triple)
+      -> llvm::SmallVector<llvm::StringRef>;
+
+  // Helper to compile a single file of the compiler builtins runtimes.
+  auto BuildBuiltinsFile(llvm::StringRef target, llvm::StringRef src_file,
+                         const std::filesystem::path& out_path) -> void;
+
+  // Builds the builtins runtime library into the provided archive file path,
+  // using the provided objects path for intermediate object files.
+  auto BuildBuiltinsLib(llvm::StringRef target,
+                        const llvm::Triple& target_triple,
+                        const std::filesystem::path& tmp_path,
+                        Filesystem::DirRef lib_dir) -> ErrorOr<Success>;
+
+  llvm::IntrusiveRefCntPtr<llvm::vfs::FileSystem> fs_;
   llvm::IntrusiveRefCntPtr<clang::DiagnosticIDs> diagnostic_ids_;
 
+  std::optional<std::filesystem::path> prebuilt_runtimes_path_;
+
+  bool build_runtimes_on_demand_;
   bool enable_leaking_ = false;
 };
 

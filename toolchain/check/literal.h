@@ -7,6 +7,7 @@
 
 #include "toolchain/base/value_ids.h"
 #include "toolchain/check/context.h"
+#include "toolchain/check/convert.h"
 #include "toolchain/lex/token_info.h"
 #include "toolchain/sem_ir/ids.h"
 
@@ -15,6 +16,10 @@ namespace Carbon::Check {
 // Forms an IntValue instruction with type `IntLiteral` for a given literal
 // integer value, which is assumed to be unsigned.
 auto MakeIntLiteral(Context& context, Parse::NodeId node_id, IntId int_id)
+    -> SemIR::InstId;
+
+// Forms a char type expression for `char` literal.
+auto MakeCharTypeLiteral(Context& context, Parse::NodeId node_id)
     -> SemIR::InstId;
 
 // Forms an integer type expression for either an `iN` or `uN` literal.
@@ -35,11 +40,11 @@ auto MakeStringLiteral(Context& context, Parse::StringLiteralId node_id,
                        StringLiteralValueId value_id) -> SemIR::InstId;
 
 // Forms a string literal type expression for a `str` literal.
-auto MakeStringTypeLiteral(Context& context, Parse::NodeId node_id)
+auto MakeStringTypeLiteral(Context& context, SemIR::LocId loc_id)
     -> SemIR::InstId;
 
 // Forms a string type.
-auto MakeStringType(Context& context, Parse::NodeId node_id) -> SemIR::TypeId;
+auto MakeStringType(Context& context, SemIR::LocId) -> TypeExpr;
 
 }  // namespace Carbon::Check
 

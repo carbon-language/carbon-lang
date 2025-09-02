@@ -63,7 +63,7 @@ auto LLVMSubcommand::Run(DriverEnv& driver_env) -> DriverResult {
   LLVMRunner runner(driver_env.installation, driver_env.vlog_stream);
 
   // Don't run arbitrary LLVM tools and libraries when fuzzing.
-  if (!DisableFuzzingExternalLibraries(driver_env, "llvm")) {
+  if (TestAndDiagnoseIfFuzzingExternalLibraries(driver_env, "llvm")) {
     return {.success = false};
   }
 

@@ -215,6 +215,7 @@ CARBON_KEYWORD_TOKEN(True,                "true")
 CARBON_KEYWORD_TOKEN(Type,                "type")
 // Underscore is tokenized as a keyword because it's part of identifiers.
 CARBON_KEYWORD_TOKEN(Underscore,          "_")
+CARBON_KEYWORD_TOKEN(Unsafe,              "unsafe")
 CARBON_KEYWORD_TOKEN(Virtual,             "virtual")
 CARBON_TOKEN_WITH_VIRTUAL_NODE(
   CARBON_KEYWORD_TOKEN(Where,             "where"))

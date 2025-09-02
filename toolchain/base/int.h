@@ -255,6 +255,11 @@ class IntStore {
     return AddLarge(value);
   }
 
+  // Returns the ID corresponding to this integer value.
+  auto Add(llvm::APSInt value) -> IntId {
+    return value.isSigned() ? AddSigned(value) : AddUnsigned(value);
+  }
+
   // Returns the ID corresponding to this signed integer value, storing an
   // `APInt` if necessary to represent it.
   auto AddSigned(llvm::APInt value) -> IntId {

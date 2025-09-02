@@ -97,8 +97,9 @@ fn For() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: define linkonce_odr i1 @_CHasValue.Optional.Core.b88d1103f417c6d4(ptr %self) !dbg !30 {
 // CHECK:STDOUT:   %has_value = getelementptr inbounds nuw { i1, i32 }, ptr %self, i32 0, i32 0, !dbg !32
-// CHECK:STDOUT:   %1 = load i1, ptr %has_value, align 1, !dbg !32
-// CHECK:STDOUT:   ret i1 %1, !dbg !33
+// CHECK:STDOUT:   %1 = load i8, ptr %has_value, align 1, !dbg !32
+// CHECK:STDOUT:   %2 = trunc i8 %1 to i1, !dbg !32
+// CHECK:STDOUT:   ret i1 %2, !dbg !33
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: define linkonce_odr i32 @_CGet.Optional.Core.b88d1103f417c6d4(ptr %self) !dbg !34 {
@@ -118,13 +119,13 @@ fn For() {
 // CHECK:STDOUT:   %has_value = getelementptr inbounds nuw { i1, i32 }, ptr %return, i32 0, i32 0, !dbg !42
 // CHECK:STDOUT:   %value1 = getelementptr inbounds nuw { i1, i32 }, ptr %return, i32 0, i32 1, !dbg !42
 // CHECK:STDOUT:   store i32 %value, ptr %value1, align 4, !dbg !42
-// CHECK:STDOUT:   store i1 true, ptr %has_value, align 1, !dbg !42
+// CHECK:STDOUT:   store i8 1, ptr %has_value, align 1, !dbg !42
 // CHECK:STDOUT:   ret void, !dbg !43
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: define linkonce_odr void @_CNone.Optional.Core.b88d1103f417c6d4(ptr sret({ i1, i32 }) %return) !dbg !44 {
 // CHECK:STDOUT:   %has_value = getelementptr inbounds nuw { i1, i32 }, ptr %return, i32 0, i32 0, !dbg !45
-// CHECK:STDOUT:   store i1 false, ptr %has_value, align 1, !dbg !45
+// CHECK:STDOUT:   store i8 0, ptr %has_value, align 1, !dbg !45
 // CHECK:STDOUT:   ret void, !dbg !46
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -198,6 +199,6 @@ fn For() {
 // CHECK:STDOUT: !47 = distinct !DISubprogram(name: "Op", linkageName: "_COp:thunk.Int.Core:AddAssignWith.Core.abc639a111145970", scope: null, file: !38, line: 268, type: !5, spFlags: DISPFlagDefinition, unit: !2)
 // CHECK:STDOUT: !48 = !DILocation(line: 4294967295, scope: !47)
 // CHECK:STDOUT: !49 = !DILocation(line: 268, column: 3, scope: !47)
-// CHECK:STDOUT: !50 = distinct !DISubprogram(name: "Convert", linkageName: "_CConvert.8b3d5d6a6c17be04:ImplicitAs.Core.b88d1103f417c6d4", scope: null, file: !51, line: 18, type: !5, spFlags: DISPFlagDefinition, unit: !2)
+// CHECK:STDOUT: !50 = distinct !DISubprogram(name: "Convert", linkageName: "_CConvert.8b3d5d6a6c17be04:ImplicitAs.Core.b88d1103f417c6d4", scope: null, file: !51, line: 23, type: !5, spFlags: DISPFlagDefinition, unit: !2)
 // CHECK:STDOUT: !51 = !DIFile(filename: "{{.*}}/prelude/operators/as.carbon", directory: "")
-// CHECK:STDOUT: !52 = !DILocation(line: 18, column: 38, scope: !50)
+// CHECK:STDOUT: !52 = !DILocation(line: 23, column: 38, scope: !50)

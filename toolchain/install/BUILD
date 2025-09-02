@@ -10,6 +10,7 @@ load("@rules_python//python:defs.bzl", "py_test")
 load("//bazel/cc_rules:defs.bzl", "cc_binary", "cc_library", "cc_test")
 load("//bazel/manifest:defs.bzl", "manifest")
 load("//toolchain/base:llvm_tools.bzl", "LLVM_MAIN_TOOLS", "LLVM_TOOL_ALIASES")
+load("//toolchain/base:runtime_sources.bzl", "BUILTINS_FILEGROUPS", "CRT_FILES")
 load("install_filegroups.bzl", "install_filegroup", "install_symlink", "install_target", "make_install_filegroups")
 load("pkg_helpers.bzl", "pkg_naming_variables", "pkg_tar_and_test")
 
@@ -34,6 +35,7 @@ cc_library(
         "//common:filesystem",
         "//toolchain/base:llvm_tools",
         "@bazel_tools//tools/cpp/runfiles",
+        "@llvm-project//clang:basic",
         "@llvm-project//llvm:Support",
     ],
 )
@@ -153,6 +155,13 @@ filegroup(
     srcs = ["@llvm-project//clang:builtin_headers_gen"],
 )
 
+# Collect the runtime sources that are collectively installed into the
+# `builtins` directory.
+filegroup(
+    name = "clang_builtins_runtimes",
+    srcs = CRT_FILES.values() + BUILTINS_FILEGROUPS.values(),
+)
+
 # Given a root `prefix_root`, the hierarchy looks like:
 #
 # - prefix_root/bin: Binaries intended for direct use.
@@ -192,6 +201,9 @@ install_dirs = {
             label = "installed_clang_headers",
             remove_prefix = "staging/include/",
         ),
+    ],
+    "lib/carbon/llvm/lib/clang/" + LLVM_VERSION_MAJOR + "/src": [
+        install_filegroup("builtins", ":clang_builtins_runtimes", "lib/builtins/"),
     ],
 }
 

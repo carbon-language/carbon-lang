@@ -8,6 +8,7 @@
 #include <memory>
 #include <string>
 
+#include "clang/Basic/Version.h"
 #include "common/check.h"
 #include "common/filesystem.h"
 #include "llvm/ADT/StringExtras.h"
@@ -211,6 +212,17 @@ auto InstallPaths::llvm_tool_path(LLVMTool tool) const
     -> std::filesystem::path {
   // TODO: Adjust this to work equally well on Windows.
   return prefix_ / "lib/carbon/llvm/bin" / std::string_view(tool.bin_name());
+}
+
+auto InstallPaths::clang_resource_path() const -> std::filesystem::path {
+  // TODO: Adjust this to work equally well on Windows.
+  return prefix_ / "lib/carbon/llvm/lib/clang/" CLANG_VERSION_MAJOR_STRING;
+}
+
+auto InstallPaths::llvm_runtime_srcs() const -> std::filesystem::path {
+  // TODO: Adjust this to work equally well on Windows.
+  return prefix_ / "lib/carbon/llvm/lib/clang/" CLANG_VERSION_MAJOR_STRING
+                   "/src";
 }
 
 }  // namespace Carbon

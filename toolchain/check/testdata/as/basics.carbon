@@ -175,7 +175,7 @@ let n: {.x: ()} = {.x = ()} as {.x = ()};
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %pattern_type: type = pattern_type type [concrete]
 // CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [concrete]
-// CHECK:STDOUT:   %tuple.type: type = tuple_type (%empty_struct_type, %empty_struct_type) [concrete]
+// CHECK:STDOUT:   %tuple.type.b6b: type = tuple_type (%empty_struct_type, %empty_struct_type) [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -192,10 +192,10 @@ let n: {.x: ()} = {.x = ()} as {.x = ()};
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %.loc5_17: %empty_struct_type = struct_literal ()
 // CHECK:STDOUT:   %.loc5_21: %empty_struct_type = struct_literal ()
-// CHECK:STDOUT:   %.loc5_22: %tuple.type = tuple_literal (%.loc5_17, %.loc5_21)
+// CHECK:STDOUT:   %.loc5_22: %tuple.type.b6b = tuple_literal (%.loc5_17, %.loc5_21)
 // CHECK:STDOUT:   %.loc5_24.1: type = converted %.loc5_17, constants.%empty_struct_type [concrete = constants.%empty_struct_type]
 // CHECK:STDOUT:   %.loc5_24.2: type = converted %.loc5_21, constants.%empty_struct_type [concrete = constants.%empty_struct_type]
-// CHECK:STDOUT:   %.loc5_24.3: type = converted %.loc5_22, constants.%tuple.type [concrete = constants.%tuple.type]
+// CHECK:STDOUT:   %.loc5_24.3: type = converted %.loc5_22, constants.%tuple.type.b6b [concrete = constants.%tuple.type.b6b]
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

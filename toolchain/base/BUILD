@@ -4,6 +4,7 @@
 
 load("//bazel/cc_rules:defs.bzl", "cc_library", "cc_test")
 load("llvm_tools.bzl", "LLVM_MAIN_TOOLS", "generate_llvm_tools_def")
+load("runtime_sources.bzl", "generate_runtime_sources_cc_library")
 
 package(default_visibility = ["//visibility:public"])
 
@@ -247,6 +248,8 @@ cc_library(
         "@llvm-project//llvm:Support",
     ] + [info.lib for info in LLVM_MAIN_TOOLS.values()],
 )
+
+generate_runtime_sources_cc_library(name = "runtime_sources")
 
 cc_library(
     name = "shared_value_stores",

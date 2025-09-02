@@ -318,6 +318,51 @@ auto FunctionContext::GetReturnTypeInfo(TypeInFile type)
   return result;
 }
 
+// Given a type used for an LLVM value, return the type that we use to store
+// that value in memory. This is the same type unless the type is a
+// non-multiple-of-8 integer type, which we explicitly widen to a multiple of 8
+// for Clang compatibility and to make our generated IR easier for LLVM to
+// handle.
+static auto GetWidenedMemoryType(llvm::Type* type) -> llvm::Type* {
+  if (auto* int_type = dyn_cast<llvm::IntegerType>(type)) {
+    auto width = llvm::alignToPowerOf2(int_type->getBitWidth(), 8);
+    if (width != int_type->getBitWidth()) {
+      return llvm::IntegerType::get(type->getContext(), width);
+    }
+  }
+  return type;
+}
+
+auto FunctionContext::LoadObject(TypeInFile type, llvm::Value* addr,
+                                 llvm::Twine name) -> llvm::Value* {
+  auto* llvm_type = GetType(type);
+  auto* load_type = GetWidenedMemoryType(llvm_type);
+
+  // TODO: Include alias and alignment information.
+  llvm::Value* value = builder().CreateLoad(load_type, addr, name);
+
+  if (load_type != llvm_type) {
+    value = builder().CreateTrunc(value, llvm_type);
+  }
+  return value;
+}
+
+auto FunctionContext::StoreObject(TypeInFile type, llvm::Value* value,
+                                  llvm::Value* addr) -> void {
+  // TODO: Include alias and alignment information.
+  auto* llvm_type = GetType(type);
+  CARBON_CHECK(value->getType() == llvm_type);
+
+  // Don't emit a store of `iN` if N is not a multiple of 8. See `LoadObject`.
+  auto* store_type = GetWidenedMemoryType(llvm_type);
+  if (store_type != llvm_type) {
+    // TODO: Should we consider creating a sext if the value is signed?
+    value = builder().CreateZExt(value, store_type);
+  }
+
+  builder().CreateStore(value, addr);
+}
+
 auto FunctionContext::CopyValue(TypeInFile type, SemIR::InstId source_id,
                                 SemIR::InstId dest_id) -> void {
   switch (GetValueRepr(type).repr.kind) {
@@ -326,7 +371,7 @@ auto FunctionContext::CopyValue(TypeInFile type, SemIR::InstId source_id,
     case SemIR::ValueRepr::None:
       break;
     case SemIR::ValueRepr::Copy:
-      builder().CreateStore(GetValue(source_id), GetValue(dest_id));
+      StoreObject(type, GetValue(source_id), GetValue(dest_id));
       break;
     case SemIR::ValueRepr::Pointer:
       CopyObject(type, source_id, dest_id);

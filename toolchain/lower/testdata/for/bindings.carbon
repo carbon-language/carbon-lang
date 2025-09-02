@@ -92,8 +92,9 @@ fn For() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: define linkonce_odr i1 @_CHasValue.Optional.Core.29d34654e802e24e(ptr %self) !dbg !18 {
 // CHECK:STDOUT:   %has_value = getelementptr inbounds nuw { i1, { i32, i32 } }, ptr %self, i32 0, i32 0, !dbg !20
-// CHECK:STDOUT:   %1 = load i1, ptr %has_value, align 1, !dbg !20
-// CHECK:STDOUT:   ret i1 %1, !dbg !21
+// CHECK:STDOUT:   %1 = load i8, ptr %has_value, align 1, !dbg !20
+// CHECK:STDOUT:   %2 = trunc i8 %1 to i1, !dbg !20
+// CHECK:STDOUT:   ret i1 %2, !dbg !21
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: define linkonce_odr void @_CGet.Optional.Core.29d34654e802e24e(ptr sret({ i32, i32 }) %return, ptr %self) !dbg !22 {
@@ -103,7 +104,7 @@ fn For() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: define linkonce_odr void @_CNone.Optional.Core.29d34654e802e24e(ptr sret({ i1, { i32, i32 } }) %return) !dbg !25 {
 // CHECK:STDOUT:   %has_value = getelementptr inbounds nuw { i1, { i32, i32 } }, ptr %return, i32 0, i32 0, !dbg !26
-// CHECK:STDOUT:   store i1 false, ptr %has_value, align 1, !dbg !26
+// CHECK:STDOUT:   store i8 0, ptr %has_value, align 1, !dbg !26
 // CHECK:STDOUT:   ret void, !dbg !27
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

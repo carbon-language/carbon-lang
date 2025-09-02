@@ -105,6 +105,12 @@ class InstallPaths {
   // The path to any of the LLVM tools.
   auto llvm_tool_path(LLVMTool tool) const -> std::filesystem::path;
 
+  // The path to the Clang resources.
+  auto clang_resource_path() const -> std::filesystem::path;
+
+  // The path to the root of LLVM runtime sources.
+  auto llvm_runtime_srcs() const -> std::filesystem::path;
+
  private:
   friend class InstallPathsTestPeer;
 

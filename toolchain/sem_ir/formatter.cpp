@@ -1189,8 +1189,7 @@ auto Formatter::FormatCallRhs(Call inst) -> void {
   bool has_return_slot = return_info.has_return_slot();
   InstId return_slot_arg_id = InstId::None;
   if (has_return_slot) {
-    return_slot_arg_id = args.back();
-    args = args.drop_back();
+    return_slot_arg_id = args.consume_back();
   }
 
   llvm::ListSeparator sep;
@@ -1211,10 +1210,16 @@ auto Formatter::FormatImportCppDeclRhs() -> void {
   OpenBrace();
   for (ImportCpp import_cpp : sem_ir_->import_cpps().values()) {
     Indent();
-    out_ << "import Cpp \""
-         << FormatEscaped(
-                sem_ir_->string_literal_values().Get(import_cpp.library_id))
-         << "\"\n";
+    out_ << "import Cpp ";
+    if (import_cpp.library_id.has_value()) {
+      out_ << "\""
+           << FormatEscaped(
+                  sem_ir_->string_literal_values().Get(import_cpp.library_id))
+           << "\"";
+    } else {
+      out_ << "inline";
+    }
+    out_ << "\n";
   }
   CloseBrace();
 }

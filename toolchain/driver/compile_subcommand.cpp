@@ -923,7 +923,7 @@ auto CompileSubcommand::Run(DriverEnv& driver_env) -> DriverResult {
     if (driver_env.fuzzing && !options_.clang_args.empty()) {
       // Parsing specific Clang arguments can reach deep into
       // external libraries that aren't fuzz clean.
-      DisableFuzzingExternalLibraries(driver_env, "compile");
+      TestAndDiagnoseIfFuzzingExternalLibraries(driver_env, "compile");
       return {.success = false};
     }
     for (auto str : options_.clang_args) {

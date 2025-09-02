@@ -28,6 +28,9 @@ CARBON_DIAGNOSTIC_KIND(CompilePreludeManifestError)
 CARBON_DIAGNOSTIC_KIND(CompileInputNotRegularFile)
 CARBON_DIAGNOSTIC_KIND(CompileOutputFileOpenError)
 CARBON_DIAGNOSTIC_KIND(CompileTargetInvalid)
+CARBON_DIAGNOSTIC_KIND(FailureBuildingRuntimes)
+CARBON_DIAGNOSTIC_KIND(FailureRunningClang)
+CARBON_DIAGNOSTIC_KIND(FailureRunningClangToLink)
 CARBON_DIAGNOSTIC_KIND(FormatMultipleFilesToOneOutput)
 CARBON_DIAGNOSTIC_KIND(ToolFuzzingDisallowed)
 
@@ -488,6 +491,9 @@ CARBON_DIAGNOSTIC_KIND(ModifierMustAppearBefore)
 CARBON_DIAGNOSTIC_KIND(ModifierPrevious)
 CARBON_DIAGNOSTIC_KIND(ExternLibraryOnDefinition)
 CARBON_DIAGNOSTIC_KIND(ExternLibraryIsCurrentLibrary)
+
+// Operator modifier checking.
+CARBON_DIAGNOSTIC_KIND(ModifierNotAllowedOnOperator)
 
 // Access modifiers.
 CARBON_DIAGNOSTIC_KIND(ClassMemberDeclaration)

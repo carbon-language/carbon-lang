@@ -286,6 +286,9 @@ TEST_F(BusyboxInfoTest, EnvBinaryPathOverride) {
   ASSERT_TRUE(info.ok()) << info.error();
   EXPECT_THAT(info->bin_path, Eq(path_ / "carbon-busybox"));
   EXPECT_THAT(info->mode, Eq(std::nullopt));
+
+  // Make sure that we cleaned up the environment afterward.
+  EXPECT_THAT(getenv(Argv0OverrideEnv), Eq(nullptr));
 }
 
 }  // namespace

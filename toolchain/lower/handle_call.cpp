@@ -409,17 +409,13 @@ static auto HandleBuiltinCall(FunctionContext& context, SemIR::InstId inst_id,
     case SemIR::BuiltinFunctionKind::FloatMulAssign:
     case SemIR::BuiltinFunctionKind::FloatDivAssign: {
       auto* lhs_ptr = context.GetValue(arg_ids[0]);
-      auto [lhs_type_file, lhs_type_id] = context.GetTypeIdOfInst(arg_ids[0]);
-      auto pointee_type_id = lhs_type_file->GetPointeeType(lhs_type_id);
-      // TODO: Factor out the code to create loads and stores, and include alias
-      // and alignment information.
-      auto* lhs_value = context.builder().CreateLoad(
-          context.GetFileContext(lhs_type_file).GetType(pointee_type_id),
-          lhs_ptr);
+      auto lhs_type = context.GetTypeIdOfInst(arg_ids[0]);
+      auto pointee_type = lhs_type.GetPointeeType();
+      auto* lhs_value = context.LoadObject(pointee_type, lhs_ptr);
       auto* result = CreateBinaryOperatorForBuiltin(
           context, inst_id, builtin_kind, lhs_value,
           context.GetValue(arg_ids[1]));
-      context.builder().CreateStore(result, lhs_ptr);
+      context.StoreObject(pointee_type, result, lhs_ptr);
       // TODO: Add a helper to get a "no value representation" value.
       context.SetLocal(inst_id,
                        llvm::PoisonValue::get(context.GetTypeOfInst(inst_id)));
@@ -516,8 +512,7 @@ auto HandleInst(FunctionContext& context, SemIR::InstId inst_id,
 
   auto inst_type = context.GetTypeIdOfInst(inst_id);
   if (context.GetReturnTypeInfo(inst_type).info.has_return_slot()) {
-    args.push_back(context.GetValue(arg_ids.back()));
-    arg_ids = arg_ids.drop_back();
+    args.push_back(context.GetValue(arg_ids.consume_back()));
   }
 
   for (auto arg_id : arg_ids) {
@@ -536,6 +531,7 @@ auto HandleInst(FunctionContext& context, SemIR::InstId inst_id,
     // The vtable pointer is always at the start of the object in the Carbon
     // ABI, so a pointer to the object is a pointer to the vtable pointer - load
     // that to get a pointer to the vtable.
+    // TODO: Use `context.LoadObject`.
     auto* vtable =
         context.builder().CreateLoad(ptr_type, args.front(), "vtable");
     auto* i32_type = llvm::IntegerType::getInt32Ty(context.llvm_context());
