@@ -7,5 +7,6 @@ load("//bazel/carbon_rules:defs.bzl", "carbon_binary")
 carbon_binary(
     name = "re2_playground",
     srcs = ["re2_playground.carbon"],
+    tags = ["manual"],
     deps = ["@re2"],
 )

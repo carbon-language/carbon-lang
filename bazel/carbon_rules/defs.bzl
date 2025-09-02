@@ -130,19 +130,21 @@ _carbon_binary_internal = rule(
     executable = True,
 )
 
-def carbon_binary(name, srcs, deps = []):
+def carbon_binary(name, srcs, deps = [], tags = []):
     """Compiles a Carbon binary.
 
     Args:
       name: The name of the build target.
       srcs: List of Carbon source files to compile.
       deps: List of dependencies.
+      tags: Tags to apply to the rule.
     """
     _carbon_binary_internal(
         name = name,
         srcs = srcs,
         prelude_srcs = ["//core:prelude_files"],
         deps = deps,
+        tags = tags,
 
         # We synthesize two sets of attributes from mirrored `select`s here
         # because we want to select on an internal property of these attributes
