@@ -21,11 +21,17 @@ LLVM_ENABLE_BITMASK_ENUMS_IN_NAMESPACE();
 enum class TypeQualifiers {
   None = 0,
   Const = 1 << 0,
-  Partial = 1 << 1,
-  MaybeUnformed = 1 << 2,
+  MaybeUnformed = 1 << 1,
+  Partial = 1 << 2,
 
-  LLVM_MARK_AS_BITMASK_ENUM(MaybeUnformed)
+  LLVM_MARK_AS_BITMASK_ENUM(Partial)
 };
+
+// Returns whether the type qualifier set `quals` contains `qual`.
+inline auto HasTypeQualifier(TypeQualifiers quals, TypeQualifiers qual)
+    -> bool {
+  return (quals & qual) != TypeQualifiers::None;
+}
 
 // Provides a ValueStore wrapper with an API specific to types.
 class TypeStore : public Yaml::Printable<TypeStore> {

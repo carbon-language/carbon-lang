@@ -103,11 +103,11 @@ auto TypeStore::GetUnqualifiedTypeAndQualifiers(TypeId type_id) const
         case ConstType::Kind:
           quals |= TypeQualifiers::Const;
           break;
-        case PartialType::Kind:
-          quals |= TypeQualifiers::Partial;
-          break;
         case MaybeUnformedType::Kind:
           quals |= TypeQualifiers::MaybeUnformed;
+          break;
+        case PartialType::Kind:
+          quals |= TypeQualifiers::Partial;
           break;
         default:
           CARBON_FATAL("Unknown type qualifier {0}", qualified_type->kind);
