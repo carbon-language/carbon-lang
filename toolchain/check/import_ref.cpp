@@ -3291,13 +3291,12 @@ static auto TryResolveInstCanonical(ImportRefResolver& resolver,
       return TryResolveTypedInst(resolver, inst);
     }
     default:
-      // Produce a diagnostic to provide a source location with the CHECK
-      // failure.
-      resolver.local_context().TODO(
-          SemIR::LocId(AddImportIRInst(resolver, inst_id)),
-          llvm::formatv("TryResolveInst on {0}", untyped_constant_inst.kind()));
+      // Found a canonical instruction which needs to be resolved, but which is
+      // not yet handled.
+      //
+      // TODO: Could we turn this into a compile-time error?
       CARBON_FATAL(
-          "TryResolveInst on unsupported canonical instruction kind {0}",
+          "Missing case in TryResolveInstCanonical for instruction kind {0}",
           untyped_constant_inst.kind());
   }
 }
