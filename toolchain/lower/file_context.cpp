@@ -327,9 +327,19 @@ auto FileContext::BuildFunctionTypeInfo(const SemIR::Function& function,
   }
   for (auto param_pattern_id : llvm::concat<const SemIR::InstId>(
            implicit_param_patterns, param_patterns)) {
+    // TODO: Handle a general pattern here, rather than assuming that each
+    // parameter pattern contains at most one binding.
     auto param_pattern_info = SemIR::Function::GetParamPatternInfoFromPatternId(
         sem_ir(), param_pattern_id);
     if (!param_pattern_info) {
+      continue;
+    }
+    // TODO: Use a more general mechanism to determine if the binding is a
+    // reference binding.
+    if (param_pattern_info->var_pattern_id.has_value()) {
+      param_types.push_back(
+          llvm::PointerType::get(llvm_context(), /*AddressSpace=*/0));
+      param_inst_ids.push_back(param_pattern_id);
       continue;
     }
     auto param_type_id = ExtractScrutineeType(

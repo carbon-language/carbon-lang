@@ -524,7 +524,7 @@ class InstStore {
 
   template <class InstT>
   struct GetAsWithIdResult {
-    SemIR::KnownInstId<InstT> inst_id;
+    KnownInstId<InstT> inst_id;
     InstT inst;
   };
 
@@ -534,8 +534,7 @@ class InstStore {
   template <typename InstT>
   auto GetAsWithId(InstId inst_id) const -> GetAsWithIdResult<InstT> {
     auto inst = GetAs<InstT>(inst_id);
-    return {.inst_id = SemIR::KnownInstId<InstT>::UnsafeMake(inst_id),
-            .inst = inst};
+    return {.inst_id = KnownInstId<InstT>::UnsafeMake(inst_id), .inst = inst};
   }
 
   // Returns the requested instruction, if it is of that type, along with the
@@ -548,8 +547,8 @@ class InstStore {
     if (!inst) {
       return std::nullopt;
     }
-    return {{.inst_id = SemIR::KnownInstId<InstT>::UnsafeMake(inst_id),
-             .inst = *inst}};
+    return {
+        {.inst_id = KnownInstId<InstT>::UnsafeMake(inst_id), .inst = *inst}};
   }
 
   // Attempts to convert the given instruction to the type that contains
@@ -559,14 +558,14 @@ class InstStore {
   template <typename InstT, typename InstIdT>
     requires std::derived_from<InstIdT, InstId>
   auto TryUnwrap(Inst& inst, InstId& inst_id, InstIdT InstT::* member) const
-      -> std::pair<std::optional<InstT>, InstId> {
+      -> std::pair<std::optional<InstT>, KnownInstId<InstT>> {
     if (auto wrapped_inst = inst.TryAs<InstT>()) {
-      auto wrapped_inst_id = inst_id;
+      auto wrapped_inst_id = KnownInstId<InstT>::UnsafeMake(inst_id);
       inst_id = (*wrapped_inst).*member;
       inst = Get(inst_id);
       return {wrapped_inst, wrapped_inst_id};
     }
-    return {std::nullopt, InstId::None};
+    return {std::nullopt, KnownInstId<InstT>::None};
   }
 
   // Returns a resolved LocId, which will point to a parse node, an import, or
