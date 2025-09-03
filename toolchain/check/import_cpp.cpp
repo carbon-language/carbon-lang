@@ -593,7 +593,7 @@ static auto IsDeclInjectedClassName(const Context& context,
   return true;
 }
 
-// Returns a Clang DeclarartionName for the given `NameId`.
+// Returns a Clang DeclarationName for the given `NameId`.
 static auto GetDeclarationName(Context& context, SemIR::NameId name_id)
     -> std::optional<clang::DeclarationName> {
   std::optional<llvm::StringRef> name =
