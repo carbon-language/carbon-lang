@@ -2025,6 +2025,10 @@ auto ImportOperatorFromCpp(Context& context, SemIR::LocId loc_id, Operator op)
     return SemIR::ScopeLookupResult::MakeNotFound();
   }
 
+  // TODO: We should do ADL-only lookup for operators
+  // (`Sema::ArgumentDependentLookup`), when we support mapping Carbon types
+  // into C++ types. See
+  // https://github.com/carbon-language/carbon-lang/pull/5996/files/5d01fa69511b76f87efbc0387f5e40abcf4c911a#r2316950123
   auto decl_and_access = ClangLookupDeclarationName(
       context, loc_id, SemIR::NameScopeId::None,
       context.ast_context().DeclarationNames.getCXXOperatorName(*op_kind));
