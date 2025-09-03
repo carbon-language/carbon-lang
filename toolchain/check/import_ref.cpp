@@ -3295,8 +3295,7 @@ static auto TryResolveInstCanonical(ImportRefResolver& resolver,
       // failure.
       resolver.local_context().TODO(
           SemIR::LocId(AddImportIRInst(resolver, inst_id)),
-          llvm::formatv("TryResolveInst on {0}", untyped_constant_inst.kind())
-              .str());
+          llvm::formatv("TryResolveInst on {0}", untyped_constant_inst.kind()));
       CARBON_FATAL(
           "TryResolveInst on unsupported canonical instruction kind {0}",
           untyped_constant_inst.kind());
