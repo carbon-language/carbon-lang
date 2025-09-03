@@ -40,7 +40,7 @@ static auto GetSpecialName(NameId name_id, bool for_ir) -> llvm::StringRef {
     case NameId::SpecialNameId::Vptr:
       return for_ir ? "vptr" : "<vptr>";
     case NameId::SpecialNameId::CppOperator:
-      return "cpp_operator";
+      return for_ir ? "cpp_operator" : "<C++ operator>";
   }
 }
 
