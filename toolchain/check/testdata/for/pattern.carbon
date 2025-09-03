@@ -254,23 +254,23 @@ fn Run() {
 // CHECK:STDOUT:   br !for.next
 // CHECK:STDOUT:
 // CHECK:STDOUT: !for.done:
-// CHECK:STDOUT:   %C.as.Destroy.impl.Op.bound: <bound method> = bound_method %.loc12_36.8, constants.%C.as.Destroy.impl.Op
-// CHECK:STDOUT:   %addr.loc12_36.2: %ptr.019 = addr_of %.loc12_36.8
+// CHECK:STDOUT:   %C.as.Destroy.impl.Op.bound: <bound method> = bound_method %.loc12_36.10, constants.%C.as.Destroy.impl.Op
+// CHECK:STDOUT:   %addr.loc12_36.2: %ptr.019 = addr_of %.loc12_36.10
 // CHECK:STDOUT:   %C.as.Destroy.impl.Op.call: init %empty_tuple.type = call %C.as.Destroy.impl.Op.bound(%addr.loc12_36.2)
-// CHECK:STDOUT:   %Optional.as.Destroy.impl.Op.bound: <bound method> = bound_method %.loc12_36.1, constants.%Optional.as.Destroy.impl.Op.793
+// CHECK:STDOUT:   %Optional.as.Destroy.impl.Op.bound: <bound method> = bound_method %.loc12_36.2, constants.%Optional.as.Destroy.impl.Op.793
 // CHECK:STDOUT:   <elided>
-// CHECK:STDOUT:   %bound_method.loc12_36.7: <bound method> = bound_method %.loc12_36.1, %Optional.as.Destroy.impl.Op.specific_fn
-// CHECK:STDOUT:   %addr.loc12_36.3: %ptr.8e6 = addr_of %.loc12_36.1
+// CHECK:STDOUT:   %bound_method.loc12_36.7: <bound method> = bound_method %.loc12_36.2, %Optional.as.Destroy.impl.Op.specific_fn
+// CHECK:STDOUT:   %addr.loc12_36.3: %ptr.8e6 = addr_of %.loc12_36.2
 // CHECK:STDOUT:   %Optional.as.Destroy.impl.Op.call: init %empty_tuple.type = call %bound_method.loc12_36.7(%addr.loc12_36.3)
 // CHECK:STDOUT:   %T.as.Destroy.impl.Op.bound: <bound method> = bound_method %var, constants.%T.as.Destroy.impl.Op.d5a
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT:   %bound_method.loc12_36.8: <bound method> = bound_method %var, %T.as.Destroy.impl.Op.specific_fn
 // CHECK:STDOUT:   %addr.loc12_36.4: %ptr.c28 = addr_of %var
 // CHECK:STDOUT:   %T.as.Destroy.impl.Op.call: init %empty_tuple.type = call %bound_method.loc12_36.8(%addr.loc12_36.4)
-// CHECK:STDOUT:   %EmptyRange.as.Destroy.impl.Op.bound: <bound method> = bound_method %.loc12_35.1, constants.%EmptyRange.as.Destroy.impl.Op.256
+// CHECK:STDOUT:   %EmptyRange.as.Destroy.impl.Op.bound: <bound method> = bound_method %.loc12_35.2, constants.%EmptyRange.as.Destroy.impl.Op.256
 // CHECK:STDOUT:   <elided>
-// CHECK:STDOUT:   %bound_method.loc12_35: <bound method> = bound_method %.loc12_35.1, %EmptyRange.as.Destroy.impl.Op.specific_fn
-// CHECK:STDOUT:   %addr.loc12_35: %ptr.35d = addr_of %.loc12_35.1
+// CHECK:STDOUT:   %bound_method.loc12_35: <bound method> = bound_method %.loc12_35.2, %EmptyRange.as.Destroy.impl.Op.specific_fn
+// CHECK:STDOUT:   %addr.loc12_35: %ptr.35d = addr_of %.loc12_35.2
 // CHECK:STDOUT:   %EmptyRange.as.Destroy.impl.Op.call: init %empty_tuple.type = call %bound_method.loc12_35(%addr.loc12_35)
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
@@ -413,26 +413,23 @@ fn Run() {
 // CHECK:STDOUT:   br !for.next
 // CHECK:STDOUT:
 // CHECK:STDOUT: !for.done:
-// CHECK:STDOUT:   %C.as.Destroy.impl.Op.bound.loc12_8.1: <bound method> = bound_method %.loc12_8, constants.%C.as.Destroy.impl.Op
-// CHECK:STDOUT:   %addr.loc12_8.1: %ptr.019 = addr_of %.loc12_8
-// CHECK:STDOUT:   %C.as.Destroy.impl.Op.call.loc12_8.1: init %empty_tuple.type = call %C.as.Destroy.impl.Op.bound.loc12_8.1(%addr.loc12_8.1)
-// CHECK:STDOUT:   %C.as.Destroy.impl.Op.bound.loc12_8.2: <bound method> = bound_method %c.var, constants.%C.as.Destroy.impl.Op
-// CHECK:STDOUT:   %addr.loc12_8.2: %ptr.019 = addr_of %c.var
-// CHECK:STDOUT:   %C.as.Destroy.impl.Op.call.loc12_8.2: init %empty_tuple.type = call %C.as.Destroy.impl.Op.bound.loc12_8.2(%addr.loc12_8.2)
-// CHECK:STDOUT:   %Optional.as.Destroy.impl.Op.bound: <bound method> = bound_method %.loc12_40.1, constants.%Optional.as.Destroy.impl.Op.793
+// CHECK:STDOUT:   %C.as.Destroy.impl.Op.bound: <bound method> = bound_method %c.var, constants.%C.as.Destroy.impl.Op
+// CHECK:STDOUT:   %addr.loc12_8: %ptr.019 = addr_of %c.var
+// CHECK:STDOUT:   %C.as.Destroy.impl.Op.call: init %empty_tuple.type = call %C.as.Destroy.impl.Op.bound(%addr.loc12_8)
+// CHECK:STDOUT:   %Optional.as.Destroy.impl.Op.bound: <bound method> = bound_method %.loc12_40.2, constants.%Optional.as.Destroy.impl.Op.793
 // CHECK:STDOUT:   <elided>
-// CHECK:STDOUT:   %bound_method.loc12_40.7: <bound method> = bound_method %.loc12_40.1, %Optional.as.Destroy.impl.Op.specific_fn
-// CHECK:STDOUT:   %addr.loc12_40.2: %ptr.8e6 = addr_of %.loc12_40.1
+// CHECK:STDOUT:   %bound_method.loc12_40.7: <bound method> = bound_method %.loc12_40.2, %Optional.as.Destroy.impl.Op.specific_fn
+// CHECK:STDOUT:   %addr.loc12_40.2: %ptr.8e6 = addr_of %.loc12_40.2
 // CHECK:STDOUT:   %Optional.as.Destroy.impl.Op.call: init %empty_tuple.type = call %bound_method.loc12_40.7(%addr.loc12_40.2)
 // CHECK:STDOUT:   %T.as.Destroy.impl.Op.bound: <bound method> = bound_method %var, constants.%T.as.Destroy.impl.Op.d5a
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT:   %bound_method.loc12_40.8: <bound method> = bound_method %var, %T.as.Destroy.impl.Op.specific_fn
 // CHECK:STDOUT:   %addr.loc12_40.3: %ptr.c28 = addr_of %var
 // CHECK:STDOUT:   %T.as.Destroy.impl.Op.call: init %empty_tuple.type = call %bound_method.loc12_40.8(%addr.loc12_40.3)
-// CHECK:STDOUT:   %EmptyRange.as.Destroy.impl.Op.bound: <bound method> = bound_method %.loc12_39.1, constants.%EmptyRange.as.Destroy.impl.Op.256
+// CHECK:STDOUT:   %EmptyRange.as.Destroy.impl.Op.bound: <bound method> = bound_method %.loc12_39.2, constants.%EmptyRange.as.Destroy.impl.Op.256
 // CHECK:STDOUT:   <elided>
-// CHECK:STDOUT:   %bound_method.loc12_39: <bound method> = bound_method %.loc12_39.1, %EmptyRange.as.Destroy.impl.Op.specific_fn
-// CHECK:STDOUT:   %addr.loc12_39: %ptr.35d = addr_of %.loc12_39.1
+// CHECK:STDOUT:   %bound_method.loc12_39: <bound method> = bound_method %.loc12_39.2, %EmptyRange.as.Destroy.impl.Op.specific_fn
+// CHECK:STDOUT:   %addr.loc12_39: %ptr.35d = addr_of %.loc12_39.2
 // CHECK:STDOUT:   %EmptyRange.as.Destroy.impl.Op.call: init %empty_tuple.type = call %bound_method.loc12_39(%addr.loc12_39)
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
@@ -600,25 +597,25 @@ fn Run() {
 // CHECK:STDOUT:   br !for.next
 // CHECK:STDOUT:
 // CHECK:STDOUT: !for.done:
-// CHECK:STDOUT:   %T.as.Destroy.impl.Op.bound.loc10_61.1: <bound method> = bound_method %.loc10_61.8, constants.%T.as.Destroy.impl.Op.149
+// CHECK:STDOUT:   %T.as.Destroy.impl.Op.bound.loc10_61.1: <bound method> = bound_method %.loc10_61.10, constants.%T.as.Destroy.impl.Op.149
 // CHECK:STDOUT:   <elided>
-// CHECK:STDOUT:   %bound_method.loc10_61.7: <bound method> = bound_method %.loc10_61.8, %T.as.Destroy.impl.Op.specific_fn.1
-// CHECK:STDOUT:   %addr.loc10_61.2: %ptr.b85 = addr_of %.loc10_61.8
+// CHECK:STDOUT:   %bound_method.loc10_61.7: <bound method> = bound_method %.loc10_61.10, %T.as.Destroy.impl.Op.specific_fn.1
+// CHECK:STDOUT:   %addr.loc10_61.2: %ptr.b85 = addr_of %.loc10_61.10
 // CHECK:STDOUT:   %T.as.Destroy.impl.Op.call.loc10_61.1: init %empty_tuple.type = call %bound_method.loc10_61.7(%addr.loc10_61.2)
-// CHECK:STDOUT:   %Optional.as.Destroy.impl.Op.bound: <bound method> = bound_method %.loc10_61.1, constants.%Optional.as.Destroy.impl.Op.060
+// CHECK:STDOUT:   %Optional.as.Destroy.impl.Op.bound: <bound method> = bound_method %.loc10_61.2, constants.%Optional.as.Destroy.impl.Op.060
 // CHECK:STDOUT:   <elided>
-// CHECK:STDOUT:   %bound_method.loc10_61.8: <bound method> = bound_method %.loc10_61.1, %Optional.as.Destroy.impl.Op.specific_fn
-// CHECK:STDOUT:   %addr.loc10_61.3: %ptr.07d = addr_of %.loc10_61.1
+// CHECK:STDOUT:   %bound_method.loc10_61.8: <bound method> = bound_method %.loc10_61.2, %Optional.as.Destroy.impl.Op.specific_fn
+// CHECK:STDOUT:   %addr.loc10_61.3: %ptr.07d = addr_of %.loc10_61.2
 // CHECK:STDOUT:   %Optional.as.Destroy.impl.Op.call: init %empty_tuple.type = call %bound_method.loc10_61.8(%addr.loc10_61.3)
 // CHECK:STDOUT:   %T.as.Destroy.impl.Op.bound.loc10_61.2: <bound method> = bound_method %var, constants.%T.as.Destroy.impl.Op.ca6
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT:   %bound_method.loc10_61.9: <bound method> = bound_method %var, %T.as.Destroy.impl.Op.specific_fn.2
 // CHECK:STDOUT:   %addr.loc10_61.4: %ptr.c28 = addr_of %var
 // CHECK:STDOUT:   %T.as.Destroy.impl.Op.call.loc10_61.2: init %empty_tuple.type = call %bound_method.loc10_61.9(%addr.loc10_61.4)
-// CHECK:STDOUT:   %EmptyRange.as.Destroy.impl.Op.bound: <bound method> = bound_method %.loc10_60.1, constants.%EmptyRange.as.Destroy.impl.Op.fb4
+// CHECK:STDOUT:   %EmptyRange.as.Destroy.impl.Op.bound: <bound method> = bound_method %.loc10_60.2, constants.%EmptyRange.as.Destroy.impl.Op.fb4
 // CHECK:STDOUT:   <elided>
-// CHECK:STDOUT:   %bound_method.loc10_60: <bound method> = bound_method %.loc10_60.1, %EmptyRange.as.Destroy.impl.Op.specific_fn
-// CHECK:STDOUT:   %addr.loc10_60: %ptr.5cf = addr_of %.loc10_60.1
+// CHECK:STDOUT:   %bound_method.loc10_60: <bound method> = bound_method %.loc10_60.2, %EmptyRange.as.Destroy.impl.Op.specific_fn
+// CHECK:STDOUT:   %addr.loc10_60: %ptr.5cf = addr_of %.loc10_60.2
 // CHECK:STDOUT:   %EmptyRange.as.Destroy.impl.Op.call: init %empty_tuple.type = call %bound_method.loc10_60(%addr.loc10_60)
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
@@ -773,25 +770,25 @@ fn Run() {
 // CHECK:STDOUT:   br !for.next
 // CHECK:STDOUT:
 // CHECK:STDOUT: !for.done:
-// CHECK:STDOUT:   %T.as.Destroy.impl.Op.bound.loc12_49.1: <bound method> = bound_method %.loc12_49.8, constants.%T.as.Destroy.impl.Op.34b
+// CHECK:STDOUT:   %T.as.Destroy.impl.Op.bound.loc12_49.1: <bound method> = bound_method %.loc12_49.10, constants.%T.as.Destroy.impl.Op.34b
 // CHECK:STDOUT:   <elided>
-// CHECK:STDOUT:   %bound_method.loc12_49.7: <bound method> = bound_method %.loc12_49.8, %T.as.Destroy.impl.Op.specific_fn.1
-// CHECK:STDOUT:   %addr.loc12_49.2: %ptr.9f0 = addr_of %.loc12_49.8
+// CHECK:STDOUT:   %bound_method.loc12_49.7: <bound method> = bound_method %.loc12_49.10, %T.as.Destroy.impl.Op.specific_fn.1
+// CHECK:STDOUT:   %addr.loc12_49.2: %ptr.9f0 = addr_of %.loc12_49.10
 // CHECK:STDOUT:   %T.as.Destroy.impl.Op.call.loc12_49.1: init %empty_tuple.type = call %bound_method.loc12_49.7(%addr.loc12_49.2)
-// CHECK:STDOUT:   %Optional.as.Destroy.impl.Op.bound: <bound method> = bound_method %.loc12_49.1, constants.%Optional.as.Destroy.impl.Op.7d3
+// CHECK:STDOUT:   %Optional.as.Destroy.impl.Op.bound: <bound method> = bound_method %.loc12_49.2, constants.%Optional.as.Destroy.impl.Op.7d3
 // CHECK:STDOUT:   <elided>
-// CHECK:STDOUT:   %bound_method.loc12_49.8: <bound method> = bound_method %.loc12_49.1, %Optional.as.Destroy.impl.Op.specific_fn
-// CHECK:STDOUT:   %addr.loc12_49.3: %ptr.036 = addr_of %.loc12_49.1
+// CHECK:STDOUT:   %bound_method.loc12_49.8: <bound method> = bound_method %.loc12_49.2, %Optional.as.Destroy.impl.Op.specific_fn
+// CHECK:STDOUT:   %addr.loc12_49.3: %ptr.036 = addr_of %.loc12_49.2
 // CHECK:STDOUT:   %Optional.as.Destroy.impl.Op.call: init %empty_tuple.type = call %bound_method.loc12_49.8(%addr.loc12_49.3)
 // CHECK:STDOUT:   %T.as.Destroy.impl.Op.bound.loc12_49.2: <bound method> = bound_method %var, constants.%T.as.Destroy.impl.Op.d5a
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT:   %bound_method.loc12_49.9: <bound method> = bound_method %var, %T.as.Destroy.impl.Op.specific_fn.2
 // CHECK:STDOUT:   %addr.loc12_49.4: %ptr.c28 = addr_of %var
 // CHECK:STDOUT:   %T.as.Destroy.impl.Op.call.loc12_49.2: init %empty_tuple.type = call %bound_method.loc12_49.9(%addr.loc12_49.4)
-// CHECK:STDOUT:   %EmptyRange.as.Destroy.impl.Op.bound: <bound method> = bound_method %.loc12_48.1, constants.%EmptyRange.as.Destroy.impl.Op.e9a
+// CHECK:STDOUT:   %EmptyRange.as.Destroy.impl.Op.bound: <bound method> = bound_method %.loc12_48.2, constants.%EmptyRange.as.Destroy.impl.Op.e9a
 // CHECK:STDOUT:   <elided>
-// CHECK:STDOUT:   %bound_method.loc12_48: <bound method> = bound_method %.loc12_48.1, %EmptyRange.as.Destroy.impl.Op.specific_fn
-// CHECK:STDOUT:   %addr.loc12_48: %ptr.f9b = addr_of %.loc12_48.1
+// CHECK:STDOUT:   %bound_method.loc12_48: <bound method> = bound_method %.loc12_48.2, %EmptyRange.as.Destroy.impl.Op.specific_fn
+// CHECK:STDOUT:   %addr.loc12_48: %ptr.f9b = addr_of %.loc12_48.2
 // CHECK:STDOUT:   %EmptyRange.as.Destroy.impl.Op.call: init %empty_tuple.type = call %bound_method.loc12_48(%addr.loc12_48)
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }

@@ -378,16 +378,11 @@ fn F() {
 // CHECK:STDOUT:   %s.ref: ref %const = name_ref s, %s
 // CHECK:STDOUT:   %addr.loc11: %ptr.ff5 = addr_of %s.ref
 // CHECK:STDOUT:   %foo.call: init %empty_tuple.type = call %foo.ref(%addr.loc11)
-// CHECK:STDOUT:   %T.as.Destroy.impl.Op.bound.loc10_3.1: <bound method> = bound_method %.loc10_3, constants.%T.as.Destroy.impl.Op.af7
+// CHECK:STDOUT:   %T.as.Destroy.impl.Op.bound: <bound method> = bound_method %s.var, constants.%T.as.Destroy.impl.Op.af7
 // CHECK:STDOUT:   <elided>
-// CHECK:STDOUT:   %bound_method.loc10_3.1: <bound method> = bound_method %.loc10_3, %T.as.Destroy.impl.Op.specific_fn.1
-// CHECK:STDOUT:   %addr.loc10_3.1: %ptr.ff5 = addr_of %.loc10_3
-// CHECK:STDOUT:   %T.as.Destroy.impl.Op.call.loc10_3.1: init %empty_tuple.type = call %bound_method.loc10_3.1(%addr.loc10_3.1)
-// CHECK:STDOUT:   %T.as.Destroy.impl.Op.bound.loc10_3.2: <bound method> = bound_method %s.var, constants.%T.as.Destroy.impl.Op.af7
-// CHECK:STDOUT:   <elided>
-// CHECK:STDOUT:   %bound_method.loc10_3.2: <bound method> = bound_method %s.var, %T.as.Destroy.impl.Op.specific_fn.2
-// CHECK:STDOUT:   %addr.loc10_3.2: %ptr.ff5 = addr_of %s.var
-// CHECK:STDOUT:   %T.as.Destroy.impl.Op.call.loc10_3.2: init %empty_tuple.type = call %bound_method.loc10_3.2(%addr.loc10_3.2)
+// CHECK:STDOUT:   %bound_method: <bound method> = bound_method %s.var, %T.as.Destroy.impl.Op.specific_fn
+// CHECK:STDOUT:   %addr.loc10: %ptr.ff5 = addr_of %s.var
+// CHECK:STDOUT:   %T.as.Destroy.impl.Op.call: init %empty_tuple.type = call %bound_method(%addr.loc10)
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

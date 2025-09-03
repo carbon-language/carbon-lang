@@ -406,8 +406,8 @@ fn CallGOnInitializingExpr() -> i32 {
 // CHECK:STDOUT:   %Class.F.call: init %i32 = call %Class.F.bound(%.loc39_20.2)
 // CHECK:STDOUT:   %.loc39_33.1: %i32 = value_of_initializer %Class.F.call
 // CHECK:STDOUT:   %.loc39_33.2: %i32 = converted %Class.F.call, %.loc39_33.1
-// CHECK:STDOUT:   %Class.as.Destroy.impl.Op.bound: <bound method> = bound_method %.loc39_18.3, constants.%Class.as.Destroy.impl.Op
-// CHECK:STDOUT:   %addr: %ptr.e71 = addr_of %.loc39_18.3
+// CHECK:STDOUT:   %Class.as.Destroy.impl.Op.bound: <bound method> = bound_method %.loc39_18.7, constants.%Class.as.Destroy.impl.Op
+// CHECK:STDOUT:   %addr: %ptr.e71 = addr_of %.loc39_18.7
 // CHECK:STDOUT:   %Class.as.Destroy.impl.Op.call: init %empty_tuple.type = call %Class.as.Destroy.impl.Op.bound(%addr)
 // CHECK:STDOUT:   return %.loc39_33.2
 // CHECK:STDOUT: }
@@ -474,8 +474,8 @@ fn CallGOnInitializingExpr() -> i32 {
 // CHECK:STDOUT:   %Class.F.call: init %i32 = call %Class.F.bound(%.loc58_15.3)
 // CHECK:STDOUT:   %.loc58_20.1: %i32 = value_of_initializer %Class.F.call
 // CHECK:STDOUT:   %.loc58_20.2: %i32 = converted %Class.F.call, %.loc58_20.1
-// CHECK:STDOUT:   %Class.as.Destroy.impl.Op.bound: <bound method> = bound_method %.loc58_15.1, constants.%Class.as.Destroy.impl.Op
-// CHECK:STDOUT:   %addr: %ptr.e71 = addr_of %.loc58_15.1
+// CHECK:STDOUT:   %Class.as.Destroy.impl.Op.bound: <bound method> = bound_method %.loc58_15.2, constants.%Class.as.Destroy.impl.Op
+// CHECK:STDOUT:   %addr: %ptr.e71 = addr_of %.loc58_15.2
 // CHECK:STDOUT:   %Class.as.Destroy.impl.Op.call: init %empty_tuple.type = call %Class.as.Destroy.impl.Op.bound(%addr)
 // CHECK:STDOUT:   return %.loc58_20.2
 // CHECK:STDOUT: }
@@ -492,8 +492,8 @@ fn CallGOnInitializingExpr() -> i32 {
 // CHECK:STDOUT:   %Class.G.call: init %i32 = call %Class.G.bound(%addr.loc62_15.1)
 // CHECK:STDOUT:   %.loc62_20.1: %i32 = value_of_initializer %Class.G.call
 // CHECK:STDOUT:   %.loc62_20.2: %i32 = converted %Class.G.call, %.loc62_20.1
-// CHECK:STDOUT:   %Class.as.Destroy.impl.Op.bound: <bound method> = bound_method %.loc62_15.1, constants.%Class.as.Destroy.impl.Op
-// CHECK:STDOUT:   %addr.loc62_15.2: %ptr.e71 = addr_of %.loc62_15.1
+// CHECK:STDOUT:   %Class.as.Destroy.impl.Op.bound: <bound method> = bound_method %.loc62_15.2, constants.%Class.as.Destroy.impl.Op
+// CHECK:STDOUT:   %addr.loc62_15.2: %ptr.e71 = addr_of %.loc62_15.2
 // CHECK:STDOUT:   %Class.as.Destroy.impl.Op.call: init %empty_tuple.type = call %Class.as.Destroy.impl.Op.bound(%addr.loc62_15.2)
 // CHECK:STDOUT:   return %.loc62_20.2
 // CHECK:STDOUT: }

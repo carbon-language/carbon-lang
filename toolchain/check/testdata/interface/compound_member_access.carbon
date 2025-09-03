@@ -1430,14 +1430,14 @@ fn Works() {
 // CHECK:STDOUT:   %A.ref.loc38_34: type = name_ref A, file.%A.decl [concrete = constants.%A.type]
 // CHECK:STDOUT:   %G.ref.loc38: %A.assoc_type = name_ref G, @A.%assoc0 [concrete = constants.%assoc0.d52]
 // CHECK:STDOUT:   %.loc38_32: %A.type = converted %.loc38_8, <error> [concrete = <error>]
-// CHECK:STDOUT:   %C.as.Destroy.impl.Op.bound.loc38: <bound method> = bound_method %.loc38_6.2, constants.%C.as.Destroy.impl.Op
-// CHECK:STDOUT:   %addr.loc38: %ptr.019 = addr_of %.loc38_6.2
+// CHECK:STDOUT:   %C.as.Destroy.impl.Op.bound.loc38: <bound method> = bound_method %.loc38_6.4, constants.%C.as.Destroy.impl.Op
+// CHECK:STDOUT:   %addr.loc38: %ptr.019 = addr_of %.loc38_6.4
 // CHECK:STDOUT:   %C.as.Destroy.impl.Op.call.loc38: init %empty_tuple.type = call %C.as.Destroy.impl.Op.bound.loc38(%addr.loc38)
-// CHECK:STDOUT:   %C.as.Destroy.impl.Op.bound.loc30: <bound method> = bound_method %.loc30_6.2, constants.%C.as.Destroy.impl.Op
-// CHECK:STDOUT:   %addr.loc30: %ptr.019 = addr_of %.loc30_6.2
+// CHECK:STDOUT:   %C.as.Destroy.impl.Op.bound.loc30: <bound method> = bound_method %.loc30_6.4, constants.%C.as.Destroy.impl.Op
+// CHECK:STDOUT:   %addr.loc30: %ptr.019 = addr_of %.loc30_6.4
 // CHECK:STDOUT:   %C.as.Destroy.impl.Op.call.loc30: init %empty_tuple.type = call %C.as.Destroy.impl.Op.bound.loc30(%addr.loc30)
-// CHECK:STDOUT:   %C.as.Destroy.impl.Op.bound.loc22: <bound method> = bound_method %.loc22_5.2, constants.%C.as.Destroy.impl.Op
-// CHECK:STDOUT:   %addr.loc22: %ptr.019 = addr_of %.loc22_5.2
+// CHECK:STDOUT:   %C.as.Destroy.impl.Op.bound.loc22: <bound method> = bound_method %.loc22_5.4, constants.%C.as.Destroy.impl.Op
+// CHECK:STDOUT:   %addr.loc22: %ptr.019 = addr_of %.loc22_5.4
 // CHECK:STDOUT:   %C.as.Destroy.impl.Op.call.loc22: init %empty_tuple.type = call %C.as.Destroy.impl.Op.bound.loc22(%addr.loc22)
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }

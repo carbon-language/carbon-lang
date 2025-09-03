@@ -438,10 +438,6 @@ class SelfNestedBadReturnType {
 // CHECK:STDOUT:   %pattern_type.2a7: type = pattern_type %ptr.4cd [concrete]
 // CHECK:STDOUT:   %SelfNestedBadParam.as.Destroy.impl.Op.type: type = fn_type @SelfNestedBadParam.as.Destroy.impl.Op [concrete]
 // CHECK:STDOUT:   %SelfNestedBadParam.as.Destroy.impl.Op: %SelfNestedBadParam.as.Destroy.impl.Op.type = struct_value () [concrete]
-// CHECK:STDOUT:   %ptr.f40: type = ptr_type %array_type.a41 [concrete]
-// CHECK:STDOUT:   %T.as.Destroy.impl.Op.type.ba3: type = fn_type @T.as.Destroy.impl.Op, @T.as.Destroy.impl(%array_type.a41) [concrete]
-// CHECK:STDOUT:   %T.as.Destroy.impl.Op.d25: %T.as.Destroy.impl.Op.type.ba3 = struct_value () [concrete]
-// CHECK:STDOUT:   %T.as.Destroy.impl.Op.specific_fn: <specific function> = specific_function %T.as.Destroy.impl.Op.d25, @T.as.Destroy.impl.Op(%array_type.a41) [concrete]
 // CHECK:STDOUT:   %SelfNestedBadReturnType: type = class_type @SelfNestedBadReturnType [concrete]
 // CHECK:STDOUT:   %SelfNested.impl_witness.d5e: <witness> = impl_witness @SelfNestedBadReturnType.%SelfNested.impl_witness_table [concrete]
 // CHECK:STDOUT:   %ptr.612: type = ptr_type %SelfNestedBadReturnType [concrete]
@@ -1669,9 +1665,6 @@ class SelfNestedBadReturnType {
 // CHECK:STDOUT:   %.loc200_38.1: ref %FDifferentReturnType = temporary_storage
 // CHECK:STDOUT:   %FDifferentReturnType.as.J.impl.F.call: init %FDifferentReturnType = call %FDifferentReturnType.as.J.impl.F.bound(%self.ref, %b.ref) to %.loc200_38.1
 // CHECK:STDOUT:   %.loc200_38.2: bool = converted %FDifferentReturnType.as.J.impl.F.call, <error> [concrete = <error>]
-// CHECK:STDOUT:   %FDifferentReturnType.as.Destroy.impl.Op.bound: <bound method> = bound_method %.loc200_38.1, constants.%FDifferentReturnType.as.Destroy.impl.Op
-// CHECK:STDOUT:   %addr: %ptr.954 = addr_of %.loc200_38.1
-// CHECK:STDOUT:   %FDifferentReturnType.as.Destroy.impl.Op.call: init %empty_tuple.type = call %FDifferentReturnType.as.Destroy.impl.Op.bound(%addr)
 // CHECK:STDOUT:   return <error>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -1703,11 +1696,6 @@ class SelfNestedBadReturnType {
 // CHECK:STDOUT:   %.loc211_9.1: %SelfNestedBadParam = struct_access %tuple.elem1, element0
 // CHECK:STDOUT:   %.loc211_9.2: %i32 = converted %.loc211_9.1, <error> [concrete = <error>]
 // CHECK:STDOUT:   %SelfNestedBadParam.as.SelfNested.impl.F.call: init %array_type.a41 = call %F.ref(<error>) to %.loc211_41
-// CHECK:STDOUT:   %T.as.Destroy.impl.Op.bound: <bound method> = bound_method %.loc211_41, constants.%T.as.Destroy.impl.Op.d25
-// CHECK:STDOUT:   %T.as.Destroy.impl.Op.specific_fn: <specific function> = specific_function constants.%T.as.Destroy.impl.Op.d25, @T.as.Destroy.impl.Op(constants.%array_type.a41) [concrete = constants.%T.as.Destroy.impl.Op.specific_fn]
-// CHECK:STDOUT:   %bound_method: <bound method> = bound_method %.loc211_41, %T.as.Destroy.impl.Op.specific_fn
-// CHECK:STDOUT:   %addr: %ptr.f40 = addr_of %.loc211_41
-// CHECK:STDOUT:   %T.as.Destroy.impl.Op.call: init %empty_tuple.type = call %bound_method(%addr)
 // CHECK:STDOUT:   return %SelfNestedBadParam.as.SelfNested.impl.F.call to %return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -1723,11 +1711,6 @@ class SelfNestedBadReturnType {
 // CHECK:STDOUT:   %.loc239_112.1: ref %array_type.a41 = temporary_storage
 // CHECK:STDOUT:   %SelfNestedBadReturnType.as.SelfNested.impl.F.call: init %array_type.a41 = call %F.ref(%x.ref) to %.loc239_112.1
 // CHECK:STDOUT:   %.loc239_112.2: %array_type.126 = converted %SelfNestedBadReturnType.as.SelfNested.impl.F.call, <error> [concrete = <error>]
-// CHECK:STDOUT:   %T.as.Destroy.impl.Op.bound: <bound method> = bound_method %.loc239_112.1, constants.%T.as.Destroy.impl.Op.d25
-// CHECK:STDOUT:   %T.as.Destroy.impl.Op.specific_fn: <specific function> = specific_function constants.%T.as.Destroy.impl.Op.d25, @T.as.Destroy.impl.Op(constants.%array_type.a41) [concrete = constants.%T.as.Destroy.impl.Op.specific_fn]
-// CHECK:STDOUT:   %bound_method: <bound method> = bound_method %.loc239_112.1, %T.as.Destroy.impl.Op.specific_fn
-// CHECK:STDOUT:   %addr: %ptr.f40 = addr_of %.loc239_112.1
-// CHECK:STDOUT:   %T.as.Destroy.impl.Op.call: init %empty_tuple.type = call %bound_method(%addr)
 // CHECK:STDOUT:   return <error> to %return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
