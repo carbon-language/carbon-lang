@@ -182,7 +182,7 @@ struct Assign {
 struct AssociatedConstantDecl {
   static constexpr auto Kind =
       InstKind::AssociatedConstantDecl
-          .Define<Parse::CompileTimeBindingPatternId>(
+          .Define<Parse::AssociatedConstantNameAndTypeId>(
               {.ir_name = "assoc_const_decl",
                .constant_kind = InstConstantKind::AlwaysUnique,
                .is_lowered = false});

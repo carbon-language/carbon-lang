@@ -173,6 +173,7 @@ CARBON_PARSE_NODE_KIND(ArrayExprComma)
 CARBON_PARSE_NODE_KIND(ArrayExpr)
 
 CARBON_PARSE_NODE_KIND(LetBindingPattern)
+CARBON_PARSE_NODE_KIND(AssociatedConstantNameAndType)
 CARBON_PARSE_NODE_KIND(VarBindingPattern)
 CARBON_PARSE_NODE_KIND(TemplateBindingName)
 CARBON_PARSE_NODE_KIND(CompileTimeBindingPatternStart)
@@ -182,6 +183,10 @@ CARBON_PARSE_NODE_KIND(Addr)
 CARBON_PARSE_NODE_KIND(LetIntroducer)
 CARBON_PARSE_NODE_KIND(LetInitializer)
 CARBON_PARSE_NODE_KIND(LetDecl)
+
+CARBON_PARSE_NODE_KIND(AssociatedConstantIntroducer)
+CARBON_PARSE_NODE_KIND(AssociatedConstantInitializer)
+CARBON_PARSE_NODE_KIND(AssociatedConstantDecl)
 
 CARBON_PARSE_NODE_KIND(VariableIntroducer)
 CARBON_PARSE_NODE_KIND(ReturnedModifier)

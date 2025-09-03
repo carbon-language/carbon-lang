@@ -158,6 +158,8 @@ CARBON_DIAGNOSTIC_KIND(ExpectedFieldIdentifier)
 CARBON_DIAGNOSTIC_KIND(ExpectedFieldColon)
 CARBON_DIAGNOSTIC_KIND(ImplExpectedAfterForall)
 CARBON_DIAGNOSTIC_KIND(ImplExpectedAs)
+CARBON_DIAGNOSTIC_KIND(ExpectedAssociatedConstantIdentifier)
+CARBON_DIAGNOSTIC_KIND(ExpectedAssociatedConstantColonExclaim)
 
 // Alias diagnostics.
 CARBON_DIAGNOSTIC_KIND(ExpectedAliasInitializer)
@@ -351,11 +353,6 @@ CARBON_DIAGNOSTIC_KIND(MissingImplInMemberAccessNote)
 
 // Let declaration checking.
 CARBON_DIAGNOSTIC_KIND(ExpectedInitializerAfterLet)
-CARBON_DIAGNOSTIC_KIND(ExpectedSymbolicBindingInAssociatedConstant)
-CARBON_DIAGNOSTIC_KIND(ExpectedSingleBindingInAssociatedConstant)
-
-// Pattern checking.
-CARBON_DIAGNOSTIC_KIND(TemplateBindingInAssociatedConstantDecl)
 
 // Qualified declaration name checking.
 CARBON_DIAGNOSTIC_KIND(QualifiedDeclOutsidePackage)
@@ -366,6 +363,7 @@ CARBON_DIAGNOSTIC_KIND(QualifiedDeclInUndefinedInterfaceScope)
 
 // Name lookup.
 CARBON_DIAGNOSTIC_KIND(InCppNameLookup)
+CARBON_DIAGNOSTIC_KIND(InCppOperatorLookup)
 CARBON_DIAGNOSTIC_KIND(InNameLookup)
 CARBON_DIAGNOSTIC_KIND(NameAmbiguousDueToExtend)
 CARBON_DIAGNOSTIC_KIND(NameNotFound)

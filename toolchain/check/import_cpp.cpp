@@ -37,6 +37,7 @@
 #include "toolchain/check/import.h"
 #include "toolchain/check/inst.h"
 #include "toolchain/check/literal.h"
+#include "toolchain/check/operator.h"
 #include "toolchain/check/pattern.h"
 #include "toolchain/check/pattern_match.h"
 #include "toolchain/check/type.h"
@@ -485,18 +486,27 @@ auto ImportCppFiles(Context& context,
   return std::move(generated_ast);
 }
 
-// Looks up the given name in the Clang AST in a specific scope. Returns the
-// lookup result if lookup was successful.
-static auto ClangLookupName(Context& context, SemIR::NameScopeId scope_id,
-                            SemIR::NameId name_id)
-    -> std::optional<clang::LookupResult> {
-  std::optional<llvm::StringRef> name =
-      context.names().GetAsStringIfIdentifier(name_id);
-  if (!name) {
-    // Special names never exist in C++ code.
-    return std::nullopt;
+// Returns the Clang `DeclContext` for the given name scope. Return the
+// translation unit decl if no scope is provided.
+static auto GetDeclContext(Context& context, SemIR::NameScopeId scope_id)
+    -> clang::DeclContext* {
+  if (!scope_id.has_value()) {
+    return context.ast_context().getTranslationUnitDecl();
   }
+  auto scope_clang_decl_context_id =
+      context.name_scopes().Get(scope_id).clang_decl_context_id();
+  return dyn_cast<clang::DeclContext>(
+      context.sem_ir().clang_decls().Get(scope_clang_decl_context_id).decl);
+}
 
+// Looks up the given declaration name in the Clang AST in a specific scope.
+// Returns the found declaration and its access. If not found, returns
+// `nullopt`. If there's not a single result, returns `nullptr` and default
+// access.
+static auto ClangLookupDeclarationName(Context& context, SemIR::LocId loc_id,
+                                       SemIR::NameScopeId scope_id,
+                                       clang::DeclarationName name)
+    -> std::optional<std::tuple<clang::NamedDecl*, clang::AccessSpecifier>> {
   clang::ASTUnit* ast = context.sem_ir().clang_ast_unit();
   CARBON_CHECK(ast);
   clang::Sema& sema = ast->getSema();
@@ -505,26 +515,36 @@ static auto ClangLookupName(Context& context, SemIR::NameScopeId scope_id,
   // here so that clang's diagnostics can point into the carbon code that uses
   // the name.
   clang::LookupResult lookup(
-      sema,
-      clang::DeclarationNameInfo(
-          clang::DeclarationName(
-              sema.getPreprocessor().getIdentifierInfo(*name)),
-          clang::SourceLocation()),
+      sema, clang::DeclarationNameInfo(name, clang::SourceLocation()),
       clang::Sema::LookupNameKind::LookupOrdinaryName);
 
-  auto scope_clang_decl_context_id =
-      context.name_scopes().Get(scope_id).clang_decl_context_id();
-  bool found = sema.LookupQualifiedName(
-      lookup, dyn_cast<clang::DeclContext>(context.sem_ir()
-                                               .clang_decls()
-                                               .Get(scope_clang_decl_context_id)
-                                               .decl));
+  bool found =
+      sema.LookupQualifiedName(lookup, GetDeclContext(context, scope_id));
 
   if (!found) {
     return std::nullopt;
   }
 
-  return lookup;
+  std::tuple<clang::NamedDecl*, clang::AccessSpecifier> result{
+      nullptr, clang::AccessSpecifier::AS_none};
+
+  // Access checks are performed separately by the Carbon name lookup logic.
+  lookup.suppressAccessDiagnostics();
+
+  if (!lookup.isSingleResult()) {
+    // Clang will diagnose ambiguous lookup results for us.
+    if (!lookup.isAmbiguous()) {
+      context.TODO(loc_id,
+                   llvm::formatv("Unsupported: Lookup succeeded but couldn't "
+                                 "find a single result; LookupResultKind: {0}",
+                                 static_cast<int>(lookup.getResultKind())));
+    }
+
+    return result;
+  }
+
+  result = {lookup.getFoundDecl(), lookup.begin().getAccess()};
+  return result;
 }
 
 // Looks up for constructors in the class scope and returns the lookup result.
@@ -573,42 +593,47 @@ static auto IsDeclInjectedClassName(const Context& context,
   return true;
 }
 
+// Returns a Clang DeclarationName for the given `NameId`.
+static auto GetDeclarationName(Context& context, SemIR::NameId name_id)
+    -> std::optional<clang::DeclarationName> {
+  std::optional<llvm::StringRef> name =
+      context.names().GetAsStringIfIdentifier(name_id);
+  if (!name) {
+    // Special names never exist in C++ code.
+    return std::nullopt;
+  }
+
+  return clang::DeclarationName(context.sem_ir()
+                                    .clang_ast_unit()
+                                    ->getSema()
+                                    .getPreprocessor()
+                                    .getIdentifierInfo(*name));
+}
+
 // Looks up the given name in the Clang AST in a specific scope, and returns the
 // found declaration and its access. If the found declaration is the injected
 // class name, looks up constructors instead. If not found, returns `nullopt`.
 // If there's not a single result, returns `nullptr` and default access.
 // Otherwise, returns the single declaration and its access.
-static auto ClangLookup(Context& context, SemIR::LocId loc_id,
-                        SemIR::NameScopeId scope_id, SemIR::NameId name_id)
+static auto ClangLookupName(Context& context, SemIR::LocId loc_id,
+                            SemIR::NameScopeId scope_id, SemIR::NameId name_id)
     -> std::optional<std::tuple<clang::NamedDecl*, clang::AccessSpecifier>> {
-  auto lookup = ClangLookupName(context, scope_id, name_id);
-  if (!lookup) {
+  auto declaration_name = GetDeclarationName(context, name_id);
+  if (!declaration_name) {
     return std::nullopt;
   }
-
-  std::tuple<clang::NamedDecl*, clang::AccessSpecifier> result{
-      nullptr, clang::AccessSpecifier::AS_none};
-
-  // Access checks are performed separately by the Carbon name lookup logic.
-  lookup->suppressAccessDiagnostics();
-
-  if (!lookup->isSingleResult()) {
-    // Clang will diagnose ambiguous lookup results for us.
-    if (!lookup->isAmbiguous()) {
-      context.TODO(loc_id,
-                   llvm::formatv("Unsupported: Lookup succeeded but couldn't "
-                                 "find a single result; LookupResultKind: {0}",
-                                 static_cast<int>(lookup->getResultKind())));
-    }
-
+  auto result =
+      ClangLookupDeclarationName(context, loc_id, scope_id, *declaration_name);
+  if (!result) {
     return result;
   }
 
-  if (!IsDeclInjectedClassName(context, scope_id, name_id,
-                               lookup->getFoundDecl())) {
-    result = {lookup->getFoundDecl(), lookup->begin().getAccess()};
+  clang::NamedDecl* decl = std::get<0>(*result);
+  if (!decl || !IsDeclInjectedClassName(context, scope_id, name_id, decl)) {
     return result;
   }
+
+  result = {nullptr, clang::AccessSpecifier::AS_none};
 
   clang::DeclContextLookupResult constructors_lookup =
       ClangConstructorLookup(context, scope_id);
@@ -825,6 +850,11 @@ static auto ImportClassObjectRepr(Context& context, SemIR::ClassId class_id,
                                   SemIR::TypeInstId class_type_inst_id,
                                   const clang::CXXRecordDecl* clang_def)
     -> SemIR::TypeInstId {
+  if (clang_def->isInvalidDecl()) {
+    // Clang already diagnosed this error.
+    return SemIR::ErrorInst::TypeInstId;
+  }
+
   // For now, if the class is empty, produce an empty struct as the object
   // representation. This allows our tests to continue to pass while we don't
   // properly support initializing imported C++ classes.
@@ -1158,6 +1188,35 @@ static auto MakeIntType(Context& context, IntId size_id, bool is_signed)
   return ExprAsType(context, Parse::NodeId::None, type_inst_id);
 }
 
+// Maps a C++ builtin integer type to a Carbon type.
+// TODO: Handle integer types that map to named aliases.
+static auto MapBuiltinIntegerType(Context& context, SemIR::LocId loc_id,
+                                  clang::QualType qual_type,
+                                  const clang::BuiltinType& type) -> TypeExpr {
+  clang::ASTContext& ast_context = context.ast_context();
+  unsigned width = ast_context.getIntWidth(qual_type);
+  bool is_signed = type.isSignedInteger();
+  auto int_n_type = ast_context.getIntTypeForBitwidth(width, is_signed);
+  if (ast_context.hasSameType(qual_type, int_n_type)) {
+    TypeExpr type_expr =
+        MakeIntType(context, context.ints().Add(width), is_signed);
+    // Try to make sure integer types of 32 or 64 bits are complete so we can
+    // check against them when deciding whether we need to generate a thunk.
+    if (width == 32 || width == 64) {
+      SemIR::TypeId type_id = type_expr.type_id;
+      if (!context.types().IsComplete(type_id)) {
+        TryToCompleteType(context, type_id, loc_id);
+      }
+    }
+    return type_expr;
+  }
+  if (ast_context.hasSameType(qual_type, ast_context.CharTy)) {
+    return ExprAsType(context, Parse::NodeId::None,
+                      MakeCharTypeLiteral(context, Parse::NodeId::None));
+  }
+  return TypeExpr::None;
+}
+
 // Maps a C++ builtin type to a Carbon type.
 // TODO: Support more builtin types.
 static auto MapBuiltinType(Context& context, SemIR::LocId loc_id,
@@ -1171,25 +1230,9 @@ static auto MapBuiltinType(Context& context, SemIR::LocId loc_id,
                           context, SemIR::BoolType::TypeInstId)));
   }
   if (type.isInteger()) {
-    unsigned width = context.ast_context().getIntWidth(qual_type);
-    bool is_signed = type.isSignedInteger();
-    auto int_n_type =
-        context.ast_context().getIntTypeForBitwidth(width, is_signed);
-    if (context.ast_context().hasSameType(qual_type, int_n_type)) {
-      TypeExpr type_expr =
-          MakeIntType(context, context.ints().Add(width), is_signed);
-      // Try to make sure integer types of 32 or 64 bits are complete so we can
-      // check against them when deciding whether we need to generate a thunk.
-      if (width == 32 || width == 64) {
-        SemIR::TypeId type_id = type_expr.type_id;
-        if (!context.types().IsComplete(type_id)) {
-          TryToCompleteType(context, type_id, loc_id);
-        }
-      }
-      return type_expr;
-    }
-    // TODO: Handle integer types that map to named aliases.
-  } else if (type.isFloatingPoint()) {
+    return MapBuiltinIntegerType(context, loc_id, qual_type, type);
+  }
+  if (type.isFloatingPoint()) {
     if (type.isFloat16Type() || type.isFloat32Type() || type.isDoubleType() ||
         type.isFloat128Type()) {
       return ExprAsType(
@@ -1588,6 +1631,29 @@ static auto CreateFunctionParamsInsts(Context& context, SemIR::LocId loc_id,
            .call_params_id = call_params_id}};
 }
 
+// Returns the Carbon function name for the given function.
+static auto GetFunctionName(Context& context, clang::FunctionDecl* clang_decl)
+    -> SemIR::NameId {
+  switch (clang_decl->getDeclName().getNameKind()) {
+    case clang::DeclarationName::CXXConstructorName: {
+      return context.classes()
+          .Get(context.insts()
+                   .GetAs<SemIR::ClassDecl>(LookupClangDeclInstId(
+                       context, cast<clang::Decl>(clang_decl->getParent())))
+                   .class_id)
+          .name_id;
+    }
+
+    case clang::DeclarationName::CXXOperatorName: {
+      return SemIR::NameId::CppOperator;
+    }
+
+    default: {
+      return AddIdentifierName(context, clang_decl->getName());
+    }
+  }
+}
+
 // Creates a `FunctionDecl` and a `Function` without C++ thunk information.
 // Returns std::nullopt on failure. The given Clang declaration is assumed to:
 // * Have not been imported before.
@@ -1616,19 +1682,8 @@ static auto ImportFunction(Context& context, SemIR::LocId loc_id,
       AddPlaceholderInstInNoBlock(context, Parse::NodeId::None, function_decl);
   context.imports().push_back(decl_id);
 
-  SemIR::NameId function_name_id =
-      isa<clang::CXXConstructorDecl>(clang_decl)
-          ? context.classes()
-                .Get(context.insts()
-                         .GetAs<SemIR::ClassDecl>(LookupClangDeclInstId(
-                             context,
-                             cast<clang::Decl>(clang_decl->getParent())))
-                         .class_id)
-                .name_id
-          : AddIdentifierName(context, clang_decl->getName());
-
   auto function_info = SemIR::Function{
-      {.name_id = function_name_id,
+      {.name_id = GetFunctionName(context, clang_decl),
        .parent_scope_id = GetParentNameScopeId(context, clang_decl),
        .generic_id = SemIR::GenericId::None,
        .first_param_node_id = Parse::NodeId::None,
@@ -1947,7 +2002,7 @@ auto ImportNameFromCpp(Context& context, SemIR::LocId loc_id,
         builder.Note(loc_id, InCppNameLookup, name_id);
       });
 
-  auto decl_and_access = ClangLookup(context, loc_id, scope_id, name_id);
+  auto decl_and_access = ClangLookupName(context, loc_id, scope_id, name_id);
   if (!decl_and_access) {
     return SemIR::ScopeLookupResult::MakeNotFound();
   }
@@ -1960,6 +2015,58 @@ auto ImportNameFromCpp(Context& context, SemIR::LocId loc_id,
 
   return ImportNameDeclIntoScope(context, loc_id, scope_id, name_id, decl,
                                  access);
+}
+
+static auto GetOperatorKind(Context& context, SemIR::LocId loc_id,
+                            llvm::StringLiteral interface_name)
+    -> std::optional<clang::OverloadedOperatorKind> {
+  if (interface_name == "AddWith") {
+    return clang::OO_Plus;
+  }
+
+  context.TODO(loc_id, llvm::formatv("Unsupported operator interface `{0}`",
+                                     interface_name));
+  return std::nullopt;
+}
+
+auto ImportOperatorFromCpp(Context& context, SemIR::LocId loc_id, Operator op)
+    -> SemIR::ScopeLookupResult {
+  Diagnostics::AnnotationScope annotate_diagnostics(
+      &context.emitter(), [&](auto& builder) {
+        CARBON_DIAGNOSTIC(InCppOperatorLookup, Note,
+                          "in `Cpp` operator `{0}` lookup", std::string);
+        builder.Note(loc_id, InCppOperatorLookup, op.interface_name.str());
+      });
+
+  auto op_kind = GetOperatorKind(context, loc_id, op.interface_name);
+  if (!op_kind) {
+    return SemIR::ScopeLookupResult::MakeNotFound();
+  }
+
+  // TODO: We should do ADL-only lookup for operators
+  // (`Sema::ArgumentDependentLookup`), when we support mapping Carbon types
+  // into C++ types. See
+  // https://github.com/carbon-language/carbon-lang/pull/5996/files/5d01fa69511b76f87efbc0387f5e40abcf4c911a#r2316950123
+  auto decl_and_access = ClangLookupDeclarationName(
+      context, loc_id, SemIR::NameScopeId::None,
+      context.ast_context().DeclarationNames.getCXXOperatorName(*op_kind));
+
+  if (!decl_and_access) {
+    return SemIR::ScopeLookupResult::MakeNotFound();
+  }
+  auto [decl, access] = *decl_and_access;
+  if (!decl) {
+    return SemIR::ScopeLookupResult::MakeError();
+  }
+
+  SemIR::InstId inst_id = ImportDeclAndDependencies(context, loc_id, decl);
+  if (!inst_id.has_value()) {
+    return SemIR::ScopeLookupResult::MakeNotFound();
+  }
+
+  SemIR::AccessKind access_kind = MapAccess(access);
+  return SemIR::ScopeLookupResult::MakeWrappedLookupResult(inst_id,
+                                                           access_kind);
 }
 
 }  // namespace Carbon::Check

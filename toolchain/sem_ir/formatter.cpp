@@ -1210,10 +1210,16 @@ auto Formatter::FormatImportCppDeclRhs() -> void {
   OpenBrace();
   for (ImportCpp import_cpp : sem_ir_->import_cpps().values()) {
     Indent();
-    out_ << "import Cpp \""
-         << FormatEscaped(
-                sem_ir_->string_literal_values().Get(import_cpp.library_id))
-         << "\"\n";
+    out_ << "import Cpp ";
+    if (import_cpp.library_id.has_value()) {
+      out_ << "\""
+           << FormatEscaped(
+                  sem_ir_->string_literal_values().Get(import_cpp.library_id))
+           << "\"";
+    } else {
+      out_ << "inline";
+    }
+    out_ << "\n";
   }
   CloseBrace();
 }

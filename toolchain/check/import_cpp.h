@@ -11,6 +11,7 @@
 #include "llvm/Support/VirtualFileSystem.h"
 #include "toolchain/check/context.h"
 #include "toolchain/check/diagnostic_helpers.h"
+#include "toolchain/check/operator.h"
 #include "toolchain/diagnostics/diagnostic_emitter.h"
 
 namespace Carbon::Check {
@@ -29,6 +30,11 @@ auto ImportCppFiles(Context& context,
 // imports the class constructor as a function named as the class.
 auto ImportNameFromCpp(Context& context, SemIR::LocId loc_id,
                        SemIR::NameScopeId scope_id, SemIR::NameId name_id)
+    -> SemIR::ScopeLookupResult;
+
+// Looks up the given operator in the Clang AST generated when importing C++
+// code and returns a lookup result.
+auto ImportOperatorFromCpp(Context& context, SemIR::LocId loc_id, Operator op)
     -> SemIR::ScopeLookupResult;
 
 // Given a Carbon class declaration that was imported from some kind of C++

@@ -266,10 +266,10 @@ interface C {
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %I2.type: type = facet_type <@I2> [concrete]
 // CHECK:STDOUT:   %Self.c7b: %I2.type = bind_symbolic_name Self, 0 [symbolic]
-// CHECK:STDOUT:   %.Self.644: type = bind_symbolic_name .Self [symbolic_self]
 // CHECK:STDOUT:   %I2.assoc_type: type = assoc_entity_type @I2 [concrete]
 // CHECK:STDOUT:   %assoc0.25f: %I2.assoc_type = assoc_entity element0, @I2.%T2 [concrete]
 // CHECK:STDOUT:   %J2.type: type = facet_type <@J2> [concrete]
+// CHECK:STDOUT:   %.Self.644: type = bind_symbolic_name .Self [symbolic_self]
 // CHECK:STDOUT:   %V: %J2.type = bind_symbolic_name V, 0 [symbolic]
 // CHECK:STDOUT:   %pattern_type.f47: type = pattern_type %J2.type [concrete]
 // CHECK:STDOUT:   %V.as_type: type = facet_access_type %V [symbolic]

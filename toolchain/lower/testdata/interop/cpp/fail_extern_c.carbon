@@ -50,16 +50,12 @@ struct X {};
 
 extern "C" X operator+(X, X);
 
-// --- fail_todo_import_extern_c_with_special_name.carbon
+// --- import_extern_c_with_special_name.carbon
 
 library "[[@TEST_NAME]]";
 
 import Cpp library "extern_c_with_special_name.h";
 
 fn MyF(a: Cpp.X, b: Cpp.X) -> Cpp.X {
-  // CHECK:STDERR: fail_todo_import_extern_c_with_special_name.carbon:[[@LINE+4]]:10: error: cannot access member of interface `Core.AddWith(Cpp.X)` in type `Cpp.X` that does not implement that interface [MissingImplInMemberAccess]
-  // CHECK:STDERR:   return a + b;
-  // CHECK:STDERR:          ^~~~~
-  // CHECK:STDERR:
   return a + b;
 }

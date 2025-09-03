@@ -7,6 +7,7 @@
 #include "toolchain/check/call.h"
 #include "toolchain/check/context.h"
 #include "toolchain/check/generic.h"
+#include "toolchain/check/import_cpp.h"
 #include "toolchain/check/member_access.h"
 #include "toolchain/check/name_lookup.h"
 #include "toolchain/sem_ir/ids.h"
@@ -52,10 +53,41 @@ auto BuildUnaryOperator(Context& context, SemIR::LocId loc_id, Operator op,
   return PerformCall(context, loc_id, bound_op_id, {});
 }
 
+// Returns whether the type of the instruction is a C++ class.
+static auto IsOfCppClassType(Context& context, SemIR::InstId inst_id) -> bool {
+  auto class_type = context.insts().TryGetAs<SemIR::ClassType>(
+      context.types().GetInstId(context.insts().Get(inst_id).type_id()));
+  if (!class_type) {
+    // Not a class.
+    return false;
+  }
+
+  return context.name_scopes()
+      .Get(context.classes().Get(class_type->class_id).scope_id)
+      .is_cpp_scope();
+}
+
 auto BuildBinaryOperator(Context& context, SemIR::LocId loc_id, Operator op,
                          SemIR::InstId lhs_id, SemIR::InstId rhs_id,
                          MakeDiagnosticBuilderFn missing_impl_diagnoser)
     -> SemIR::InstId {
+  // For binary operators with a C++ class as at least one of the operands, try
+  // to import and call the C++ operator.
+  // TODO: Instead of hooking this here, change impl lookup, so that a generic
+  // constraint such as `T:! Core.Add` is satisfied by C++ class types that are
+  // addable. See
+  // https://github.com/carbon-language/carbon-lang/pull/5996/files/5d01fa69511b76f87efbc0387f5e40abcf4c911a#r2308666348
+  // and
+  // https://github.com/carbon-language/carbon-lang/pull/5996/files/5d01fa69511b76f87efbc0387f5e40abcf4c911a#r2308664536
+  if (IsOfCppClassType(context, lhs_id) || IsOfCppClassType(context, rhs_id)) {
+    SemIR::ScopeLookupResult cpp_lookup_result =
+        ImportOperatorFromCpp(context, loc_id, op);
+    if (cpp_lookup_result.is_found()) {
+      return PerformCall(context, loc_id, cpp_lookup_result.target_inst_id(),
+                         {lhs_id, rhs_id});
+    }
+  }
+
   // Look up the operator function.
   auto op_fn = GetOperatorOpFunction(context, loc_id, op);
 
