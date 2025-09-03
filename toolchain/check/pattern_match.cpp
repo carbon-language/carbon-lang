@@ -497,22 +497,22 @@ auto MatchContext::DoEmitPatternMatch(Context& context,
   if (entry.scrutinee_id.has_value()) {
     auto init_id = Initialize(context, SemIR::LocId(pattern_inst_id),
                               storage_id, entry.scrutinee_id);
-    // TODO: Consider using different instruction kinds for assignment
-    // versus initialization.
-    AddInst<SemIR::Assign>(context, SemIR::LocId(pattern_inst_id),
-                           {.lhs_id = storage_id, .rhs_id = init_id});
-
     // If we created a `TemporaryStorage` to hold the var, create a
     // corresponding `Temporary` to model that its initialization is complete.
     // TODO: If the subpattern is a binding, we may want to destroy the
     // parameter variable in the callee instead of the caller so that we can
     // support destructive move from it.
     if (kind_ == MatchKind::Caller) {
-      init_id = AddInstWithCleanup<SemIR::Temporary>(
+      storage_id = AddInstWithCleanup<SemIR::Temporary>(
           context, SemIR::LocId(pattern_inst_id),
           {.type_id = context.insts().Get(storage_id).type_id(),
            .storage_id = storage_id,
            .init_id = init_id});
+    } else {
+      // TODO: Consider using different instruction kinds for assignment
+      // versus initialization.
+      AddInst<SemIR::Assign>(context, SemIR::LocId(pattern_inst_id),
+                             {.lhs_id = storage_id, .rhs_id = init_id});
     }
   }
   AddWork({.pattern_id = var_pattern.subpattern_id,

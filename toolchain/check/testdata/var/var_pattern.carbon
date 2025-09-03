@@ -508,9 +508,8 @@ fn G() {
 // CHECK:STDOUT:   %.loc4_13.1: ref %empty_tuple.type = temporary_storage
 // CHECK:STDOUT:   %.loc8_9.2: init %empty_tuple.type = tuple_init () to %.loc4_13.1 [concrete = constants.%empty_tuple]
 // CHECK:STDOUT:   %.loc4_13.2: init %empty_tuple.type = converted %.loc8_9.1, %.loc8_9.2 [concrete = constants.%empty_tuple]
-// CHECK:STDOUT:   assign %.loc4_13.1, %.loc4_13.2
 // CHECK:STDOUT:   %.loc4_13.3: ref %empty_tuple.type = temporary %.loc4_13.1, %.loc4_13.2
-// CHECK:STDOUT:   %F.call: init %empty_tuple.type = call %F.ref(%.loc8_5, %.loc4_13.1)
+// CHECK:STDOUT:   %F.call: init %empty_tuple.type = call %F.ref(%.loc8_5, %.loc4_13.3)
 // CHECK:STDOUT:   %T.as.Destroy.impl.Op.bound.loc4: <bound method> = bound_method %.loc4_13.3, constants.%T.as.Destroy.impl.Op.ea3
 // CHECK:STDOUT:   %T.as.Destroy.impl.Op.specific_fn.1: <specific function> = specific_function constants.%T.as.Destroy.impl.Op.ea3, @T.as.Destroy.impl.Op(constants.%empty_tuple.type) [concrete = constants.%T.as.Destroy.impl.Op.specific_fn]
 // CHECK:STDOUT:   %bound_method.loc4: <bound method> = bound_method %.loc4_13.3, %T.as.Destroy.impl.Op.specific_fn.1
@@ -687,9 +686,8 @@ fn G() {
 // CHECK:STDOUT:   %.1: ref %empty_tuple.type = temporary_storage
 // CHECK:STDOUT:   %.loc7_12.2: init %empty_tuple.type = tuple_init () to %.1 [concrete = constants.%empty_tuple]
 // CHECK:STDOUT:   %.2: init %empty_tuple.type = converted %.loc7_12.1, %.loc7_12.2 [concrete = constants.%empty_tuple]
-// CHECK:STDOUT:   assign %.1, %.2
 // CHECK:STDOUT:   %.3: ref %empty_tuple.type = temporary %.1, %.2
-// CHECK:STDOUT:   %F.call: init %empty_tuple.type = call %F.ref(%.loc7_8.2, %.1)
+// CHECK:STDOUT:   %F.call: init %empty_tuple.type = call %F.ref(%.loc7_8.2, %.3)
 // CHECK:STDOUT:   %Op.ref: %Destroy.assoc_type = name_ref Op, imports.%Core.import_ref.f99 [concrete = constants.%assoc0]
 // CHECK:STDOUT:   %impl.elem0: %.346 = impl_witness_access constants.%Destroy.impl_witness.1dc, element0 [concrete = constants.%T.as.Destroy.impl.Op.ea3]
 // CHECK:STDOUT:   %bound_method.1: <bound method> = bound_method %.3, %impl.elem0

@@ -172,7 +172,6 @@ fn InitLet() {
 // CHECK:STDOUT:   %.loc5_6.1.temp = alloca {}, align 8, !dbg !9
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %.loc5_6.1.temp), !dbg !9
 // CHECK:STDOUT:   call void @llvm.memcpy.p0.p0.i64(ptr align 1 %.loc5_6.1.temp, ptr align 1 @HasDestroy.val.loc5_6.2, i64 0, i1 false), !dbg !9
-// CHECK:STDOUT:   call void @llvm.memcpy.p0.p0.i64(ptr align 1 %.loc5_6.1.temp, ptr align 1 @HasDestroy.val.loc5_6.2, i64 0, i1 false), !dbg !9
 // CHECK:STDOUT:   call void @_CF.Main(ptr %.loc5_6.1.temp), !dbg !10
 // CHECK:STDOUT:   call void @_CG.Main(), !dbg !11
 // CHECK:STDOUT:   call void @"_COp.HasDestroy.Main:Destroy.Core"(ptr %.loc5_6.1.temp), !dbg !9
@@ -188,9 +187,6 @@ fn InitLet() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nocallback nofree nounwind willreturn memory(argmem: readwrite)
 // CHECK:STDOUT: declare void @llvm.memcpy.p0.p0.i64(ptr noalias writeonly captures(none), ptr noalias readonly captures(none), i64, i1 immarg) #1
-// CHECK:STDOUT:
-// CHECK:STDOUT: ; uselistorder directives
-// CHECK:STDOUT: uselistorder ptr @llvm.memcpy.p0.p0.i64, { 1, 0 }
 // CHECK:STDOUT:
 // CHECK:STDOUT: attributes #0 = { nocallback nofree nosync nounwind willreturn memory(argmem: readwrite) }
 // CHECK:STDOUT: attributes #1 = { nocallback nofree nounwind willreturn memory(argmem: readwrite) }
