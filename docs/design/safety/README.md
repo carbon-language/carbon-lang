@@ -106,7 +106,7 @@ migrating from C++. However, not _all_ unsafe code will omit the keyword, the
 permissive mode is designed to be minimal in the unsafe code allowed.
 
 Modes can be configured on an individual file as part of the package
-declaration, or an a function body as part of the function definition. More
+declaration, or on a function body as part of the function definition. More
 options such as regions of declarations or regions of statements can be explored
 in the future based on demand in practice when working with mixed-strictness
 code. More fine grained than statements is not expected given that the same core
@@ -283,10 +283,9 @@ approach to achieving safety.
 While _cryptographic_ probabilistic techniques can, and typically do, work
 carefully to not be subject to these weaknesses, they face a very different
 challenge. The overhead of a cryptographically secure hash is generally
-prohibitive for use in language level constructs. Further, some of the defenses
-against hardware vulnerabilities and improvements further exacerbate these
-overheads. However, when these can be applied usefully such as with [PKeys],
-they are robust.
+prohibitive for use in language-level constructs. Further, some of the defenses
+against hardware vulnerabilities further exacerbate these overheads. However,
+when these can be applied usefully such as with [PKeys], they are robust.
 
 [PKeys]: https://docs.kernel.org/core-api/protection-keys.html
 
