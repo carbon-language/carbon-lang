@@ -46,11 +46,11 @@ import Cpp library "abstract.h";
 
 class C {
   extend base: Cpp.A;
-  // CHECK:STDERR: fail_todo_impl_abstract_member.carbon:[[@LINE+4]]:3: error: impl without compatible virtual in base class [ImplWithoutVirtualInBase]
-  // CHECK:STDERR:   impl fn f[addr self: Self*]() {}
-  // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+  // CHECK:STDERR: fail_todo_impl_abstract_member.carbon:[[@LINE+4]]:3: error: override without compatible virtual in base class [OverrideWithoutVirtualInBase]
+  // CHECK:STDERR:   override fn f[addr self: Self*]() {}
+  // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
   // CHECK:STDERR:
-  impl fn f[addr self: Self*]() {}
+  override fn f[addr self: Self*]() {}
 }
 
 // --- abstract_final.h

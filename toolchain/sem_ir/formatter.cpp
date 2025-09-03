@@ -498,8 +498,8 @@ auto Formatter::FormatFunction(FunctionId id) -> void {
     case FunctionFields::VirtualModifier::Abstract:
       function_start += "abstract ";
       break;
-    case FunctionFields::VirtualModifier::Impl:
-      function_start += "impl ";
+    case FunctionFields::VirtualModifier::Override:
+      function_start += "override ";
       break;
     case FunctionFields::VirtualModifier::None:
       break;

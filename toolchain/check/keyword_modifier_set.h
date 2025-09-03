@@ -47,17 +47,19 @@ class KeywordModifierSet {
     Impl = 1 << 9,
     Virtual = 1 << 10,
     Returned = 1 << 11,
+    Override = 1 << 12,
 
     // Sets of modifiers:
     Access = Private | Protected,
     Class = Abstract | Base,
-    Method = Abstract | Impl | Virtual,
+    Method = Abstract | Override | Virtual,
     ImplDecl = Extend | Final,
     Interface = Default | Final,
-    Decl = Class | Method | Interface | Export | Returned,
+    Decl = Class | Method | Interface | Export | Returned | Impl,
+
     None = 0,
 
-    LLVM_MARK_AS_BITMASK_ENUM(/*LargestValue=*/Returned)
+    LLVM_MARK_AS_BITMASK_ENUM(/*LargestValue=*/Override)
   };
 
   // Default construct to empty.
