@@ -778,8 +778,8 @@ static auto CanAddQualifiers(SemIR::TypeQualifiers quals,
     // initializing representation from `T`, so only allow it to be added for a
     // reference expression.
     // TODO: We should allow converting an initializing expression of type `T`
-    // to `MaybeUnformed(T)` by generating an `InPlaceInit` instruction when
-    // needed.
+    // to `MaybeUnformed(T)`. `PerformBuiltinConversion` will need to generate
+    // an `InPlaceInit` instruction when needed.
     // NOLINTNEXTLINE(readability-simplify-boolean-expr)
     return false;
   }
@@ -802,7 +802,8 @@ static auto CanRemoveQualifiers(SemIR::TypeQualifiers quals,
   if (HasTypeQualifier(quals, SemIR::TypeQualifiers::Partial) &&
       (!allow_unsafe || cat == SemIR::ExprCategory::Initializing)) {
     // TODO: Allow removing `partial` for initializing expressions as a safe
-    // conversion, and initialize the vptr as part of the conversion.
+    // conversion. `PerformBuiltinConversion` will need to initialize the vptr
+    // as part of the conversion.
     return false;
   }
 
