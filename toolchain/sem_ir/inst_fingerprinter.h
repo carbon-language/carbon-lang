@@ -5,6 +5,7 @@
 #ifndef CARBON_TOOLCHAIN_SEM_IR_INST_FINGERPRINTER_H_
 #define CARBON_TOOLCHAIN_SEM_IR_INST_FINGERPRINTER_H_
 
+#include "toolchain/base/fixed_size_value_store.h"
 #include "toolchain/sem_ir/file.h"
 #include "toolchain/sem_ir/ids.h"
 
@@ -32,7 +33,9 @@ class InstFingerprinter {
   // the `GetOrCompute` overload for `InstBlockId`s, and may save some work if
   // the same canonical inst block is used by multiple instructions, for example
   // as a specific argument list.
-  Map<std::pair<const File*, InstId>, uint64_t> fingerprints_;
+  llvm::SmallVector<
+      std::pair<const File*, FixedSizeValueStore<InstId, uint64_t>>>
+      fingerprints_;
 };
 
 }  // namespace Carbon::SemIR

@@ -13,6 +13,7 @@
 #include "llvm/ADT/STLExtras.h"
 #include "llvm/ADT/SmallVector.h"
 #include "llvm/ADT/StableHashing.h"
+#include "toolchain/base/fixed_size_value_store.h"
 #include "toolchain/base/value_ids.h"
 #include "toolchain/sem_ir/entity_with_params_base.h"
 #include "toolchain/sem_ir/ids.h"
@@ -34,10 +35,38 @@ struct Worklist {
   llvm::SmallVector<llvm::stable_hash> contents = {};
   // Known cached instruction fingerprints. Each item in `todo` will be added to
   // the cache if not already present.
-  Map<std::pair<const File*, InstId>, uint64_t>* fingerprints;
+  llvm::SmallVector<
+      std::pair<const File*, FixedSizeValueStore<InstId, uint64_t>>>*
+      fingerprints;
 
   // Finish fingerprinting and compute the fingerprint.
   auto Finish() -> uint64_t { return llvm::stable_hash_combine(contents); }
+
+  // Gets the known fingerprint from the cache, or returns 0.
+  auto GetFingerprint(const File* file, InstId inst_id) -> uint64_t {
+    for (auto& [f, values] : *fingerprints) {
+      if (f == file) {
+        return values.Get(inst_id);
+      }
+    }
+    return 0;
+  }
+
+  // Sets the fingerprint for an instruction in the cache. Since 0 is used to
+  // indicate empty, we map 0 to another fixed value.
+  auto SetFingerprint(const File* file, InstId inst_id, uint64_t fingerprint) {
+    for (auto& [f, values] : *fingerprints) {
+      if (f == file) {
+        values.Set(inst_id, fingerprint ? fingerprint : 1);
+        return;
+      }
+    }
+
+    fingerprints->emplace_back(
+        file, FixedSizeValueStore<InstId, uint64_t>::MakeWithExplicitSize(
+                  file->insts().size(), 0));
+    fingerprints->back().second.Set(inst_id, fingerprint ? fingerprint : 1);
+  }
 
   // Add an invalid marker to the contents. This is used when the entity
   // contains a `None` ID. This uses an arbitrary fixed value that is assumed
@@ -96,11 +125,11 @@ struct Worklist {
       AddInvalid();
       return;
     }
-    if (auto lookup = fingerprints->Lookup(std::pair(file, inner_id))) {
-      contents.push_back(lookup.value());
-    } else {
-      todo.push_back({file, inner_id});
+    if (auto fingerprint = GetFingerprint(file, inner_id)) {
+      contents.push_back(fingerprint);
+      return;
     }
+    todo.push_back({file, inner_id});
   }
 
   auto Add(InstId inner_id) -> void { AddInFile(sem_ir, inner_id); }
@@ -406,11 +435,10 @@ struct Worklist {
 
       // If we already have a fingerprint for this instruction, we have nothing
       // to do. Just pop it from `todo`.
-      if (auto lookup =
-              fingerprints->Lookup(std::pair(next_sem_ir, next_inst_id))) {
+      if (auto fingerprint = GetFingerprint(next_sem_ir, next_inst_id)) {
         todo.pop_back();
         if (todo.empty()) {
-          return lookup.value();
+          return fingerprint;
         }
         continue;
       }
@@ -438,7 +466,7 @@ struct Worklist {
       // we can compute its fingerprint once we've finished the work we added.
       if (todo.size() == init_size) {
         uint64_t fingerprint = Finish();
-        fingerprints->Insert(std::pair(next_sem_ir, next_inst_id), fingerprint);
+        SetFingerprint(next_sem_ir, next_inst_id, fingerprint);
         todo.pop_back();
         if (todo.empty()) {
           return fingerprint;

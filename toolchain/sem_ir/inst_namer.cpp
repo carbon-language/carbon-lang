@@ -644,7 +644,7 @@ auto InstNamer::NamingContext::AddInstName(std::string name) -> void {
       loc_id_or_fingerprint = LocId(inst_id_);
     }
     auto scoped_name = inst_namer_->GetScopeInfo(scope_id_).insts.AllocateName(
-        *inst_namer_, loc_id_or_fingerprint, name);
+        *inst_namer_, loc_id_or_fingerprint, std::move(name));
     inst_namer_->insts_[inst_id_.index] = {scope_id_, scoped_name};
   } else {
     CARBON_CHECK(old_scope_id == scope_id_,
