@@ -707,6 +707,12 @@ var n: Int(64) = MakeFromClass(FromLiteral(64) as OtherInt);
 // CHECK:STDOUT:   %pattern_type => constants.%pattern_type.a71
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
+// CHECK:STDOUT: specific @Add.Op(constants.%Add.facet.5a7) {
+// CHECK:STDOUT:   %Self => constants.%Add.facet.5a7
+// CHECK:STDOUT:   %Self.as_type => constants.%MyInt.09f
+// CHECK:STDOUT:   %pattern_type => constants.%pattern_type.a71
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
 // CHECK:STDOUT: specific @Double(constants.%int_64) {
 // CHECK:STDOUT:   %N => constants.%int_64
 // CHECK:STDOUT:   %MyInt => constants.%MyInt.f30

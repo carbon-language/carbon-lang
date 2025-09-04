@@ -138,9 +138,19 @@ auto GetConstType(Context& context, SemIR::TypeInstId inner_type_id)
 
 auto GetQualifiedType(Context& context, SemIR::TypeId type_id,
                       SemIR::TypeQualifiers quals) -> SemIR::TypeId {
-  if ((quals & SemIR::TypeQualifiers::Const) != SemIR::TypeQualifiers::None) {
+  if (HasTypeQualifier(quals, SemIR::TypeQualifiers::Const)) {
     type_id = GetConstType(context, context.types().GetInstId(type_id));
     quals &= ~SemIR::TypeQualifiers::Const;
+  }
+  if (HasTypeQualifier(quals, SemIR::TypeQualifiers::MaybeUnformed)) {
+    type_id = GetTypeImpl<SemIR::MaybeUnformedType>(
+        context, context.types().GetInstId(type_id));
+    quals &= ~SemIR::TypeQualifiers::MaybeUnformed;
+  }
+  if (HasTypeQualifier(quals, SemIR::TypeQualifiers::Partial)) {
+    type_id = GetTypeImpl<SemIR::PartialType>(
+        context, context.types().GetInstId(type_id));
+    quals &= ~SemIR::TypeQualifiers::Partial;
   }
   CARBON_CHECK(quals == SemIR::TypeQualifiers::None);
   return type_id;
