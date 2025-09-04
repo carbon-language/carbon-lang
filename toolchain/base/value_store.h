@@ -40,7 +40,15 @@ struct CheckIRIdTag {
       : initial_reserved_ids_(initial_reserved_ids) {
     // Shift down by 1 to get out of the high bit to avoid using any negative
     // ids, since they have special uses.
+    // Shift down by another 1 to free up the second highest bit for a marker to
+    // indicate whether the index is tagged (& needs to be untagged) or not.
+    // Add one to the index so it's not zero-based, to make it a bit less likely
+    // this doesn't collide with anything else (though with the
+    // second-highest-bit-tagging this might not be needed).
     check_id_tag_ = llvm::reverseBits((((check_id_index + 1) << 1) | 1) << 1);
+  }
+  auto GetCheckIRId() const -> int32_t {
+    return (llvm::reverseBits(check_id_tag_) >> 2) - 1;
   }
   auto Apply(int32_t index) const -> int32_t {
     if (index < initial_reserved_ids_) {
@@ -49,13 +57,50 @@ struct CheckIRIdTag {
     // assert that check_id_tag_ doesn't have the second highest bit set
     return index ^ check_id_tag_;
   }
+  static auto DecomposeWithBestEffort(int32_t tagged_index)
+      -> std::pair<int32_t, int32_t> {
+    if (tagged_index < 0) {
+      return {-1, tagged_index};
+    }
+    if ((llvm::reverseBits(2) & tagged_index) == 0) {
+      return {-1, tagged_index};
+    }
+    int length = 0;
+    int location = 0;
+    for (int i = 0; i != 32; ++i) {
+      int current_run = 0;
+      int location_of_current_run = i;
+      while (i != 32 && (tagged_index & (1 << i)) == 0) {
+        ++current_run;
+        ++i;
+      }
+      if (current_run != 0) {
+        --i;
+      }
+      if (current_run > length) {
+        length = current_run;
+        location = location_of_current_run;
+      }
+    }
+    if (length < 8) {
+      return {-1, tagged_index};
+    }
+    auto index_mask = llvm::maskTrailingOnes<uint32_t>(location);
+    auto check_ir_id = (llvm::reverseBits(tagged_index & ~index_mask) >> 2) - 1;
+    auto index = tagged_index & index_mask;
+    return {check_ir_id, index};
+  }
   auto Remove(int32_t tagged_index) const -> int32_t {
     if ((llvm::reverseBits(2) & tagged_index) == 0) {
-      CARBON_CHECK(tagged_index < initial_reserved_ids_);
+      CARBON_DCHECK(tagged_index < initial_reserved_ids_,
+                    "This untagged index is outside the initial reserved ids "
+                    "and should have been tagged.");
       return tagged_index;
     }
     auto index = tagged_index ^ check_id_tag_;
-    CARBON_CHECK(index >= initial_reserved_ids_);
+    CARBON_DCHECK(index >= initial_reserved_ids_,
+                  "When removing tagging bits, found an index that "
+                  "shouldn't've been tagged in the first place.");
     return index;
   }
   int32_t check_id_tag_;
@@ -239,7 +284,19 @@ class ValueStore
   auto GetRawIndex(IdT id) const -> int32_t {
     auto index = tag_.Remove(id.index);
     CARBON_DCHECK(index >= 0, "{0}", index);
-    CARBON_DCHECK(index < size_, "{0}", index);
+    // Attempt to decompose id.index to include extra detail in the check here
+#ifndef NDEBUG
+    if (index >= size_) {
+      auto [check_ir_id, decomposed_index] =
+          CheckIRIdTag::DecomposeWithBestEffort(id.index);
+      CARBON_DCHECK(
+          index < size_,
+          "Untagged index was outside of container range. Possibly tagged "
+          "index {0}. Best-effort decomposition: CheckIRId: {1}, index: {2}. "
+          "The CheckIRIdTag for this container is: {3}",
+          id.index, check_ir_id, decomposed_index, tag_.GetCheckIRId());
+    }
+#endif
     return index;
   }
 
