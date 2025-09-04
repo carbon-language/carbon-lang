@@ -49,7 +49,7 @@ auto LookupMatchesImpl(Context& context, SemIR::LocId loc_id,
 
 // The result of EvalLookupSingleImplWitness(). It can be one of:
 // - No value. Lookup failed to find an impl declaration.
-// - A template constant. Lookup found a concrete impl declaration that can be
+// - A constant. Lookup found a concrete impl declaration that can be
 //   used definitively.
 // - A symbolic value. Lookup found an impl but it is not returned since
 // lookup
