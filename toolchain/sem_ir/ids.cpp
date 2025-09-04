@@ -15,8 +15,36 @@ namespace Carbon::SemIR {
 auto InstId::Print(llvm::raw_ostream& out) const -> void {
   if (IsSingletonInstId(*this)) {
     out << Label << "(" << SingletonInstKinds[index] << ")";
-  } else {
+  } else if ((index & (1L << 30)) == 0 || *this == InstId::None) {
     IdBase::Print(out);
+  } else {
+    out << "inst";
+    int length = 0;
+    int location = 0;
+    for (int i = 0; i != 32; ++i) {
+      int current_run = 0;
+      int location_of_current_run = i;
+      while (i != 32 && (index & (1 << i)) == 0) {
+        ++current_run;
+        ++i;
+      }
+      if (current_run != 0) {
+        --i;
+      }
+      if (current_run > length) {
+        length = current_run;
+        location = location_of_current_run;
+      }
+    }
+    if (length > 8) {
+      auto index_mask = llvm::maskTrailingOnes<uint32_t>(location);
+      out << '.' << ((llvm::reverseBits(index & ~index_mask) >> 2) - 1) << '.'
+          << (index & llvm::maskTrailingOnes<unsigned int>(location));
+      // split the number
+    } else {
+      (out << "0x").write_hex(index);
+      // print in hex
+    }
   }
 }
 
