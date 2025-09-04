@@ -78,6 +78,8 @@ fn Use() {
   // CHECK:STDERR:              ^~~~~~~~~~~
   // CHECK:STDERR:
   var i: X = Init() as X;
+  // TODO: The diagnostic should explain that the reason we can't perform this
+  // conversion is due to the expression category.
   // CHECK:STDERR: fail_cannot_remove_unformed.carbon:[[@LINE+7]]:14: error: cannot convert expression of type `Core.MaybeUnformed(X)` to `X` with `unsafe as` [ConversionFailure]
   // CHECK:STDERR:   var j: X = Init() unsafe as X;
   // CHECK:STDERR:              ^~~~~~~~~~~~~~~~~~

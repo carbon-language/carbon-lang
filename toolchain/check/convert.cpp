@@ -973,8 +973,9 @@ static auto PerformBuiltinConversion(
         context.types().GetTransitiveUnqualifiedAdaptedType(value_type_id);
     if (target_foundation_id == value_foundation_id) {
       auto category = SemIR::GetExprCategory(context.sem_ir(), value_id);
+      auto added_quals = target_quals & ~value_quals;
       auto removed_quals = value_quals & ~target_quals;
-      if (CanAddQualifiers(target_quals & ~value_quals, category) &&
+      if (CanAddQualifiers(added_quals, category) &&
           CanRemoveQualifiers(
               removed_quals, category,
               target.kind == ConversionTarget::ExplicitUnsafeAs)) {
@@ -1009,6 +1010,10 @@ static auto PerformBuiltinConversion(
               {.type_id = target.type_id, .value_id = value_id});
         }
         return value_id;
+      } else {
+        // TODO: Produce a custom diagnostic explaining that we can't perform
+        // this conversion due to the change in qualifiers and/or the expression
+        // category.
       }
     }
   }
