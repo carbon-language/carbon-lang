@@ -737,11 +737,9 @@ namespace NS.MemberNS;
 class NS.MemberNS.MemberClassT {}
 ```
 
-When multiple names are declared by binding patterns in the same pattern, all
-names must be in the same namespace. Because namespace members can only be
-declared in the same scope as the namespace, a namespace-qualified pattern
-binding can only be used in the pattern of a `var` or `let` declaration. For
-example:
+Multiple names cannot be declared in a pattern using a namespace-qualified
+pattern binding. When declaring a namespace-qualified name, only one variable
+can be declared at a time:
 
 ```carbon
 namespace NS;
@@ -749,15 +747,13 @@ namespace NS;
 // ✅ Allowed: `a` and `b` use the default namespace.
 var (a: i32, b: i32) = (1, 2);
 
-// ✅ Allowed: `c` and `d` are in the same namespace.
+// ❌ Error: `c` and `d` are namespace-qualified.
 var (NS.c: i32, NS.d: i32) = (3, 4);
 
-// ❌ Error: `e` and `f` are not in the same namespace.
-var (e: i32, NS.f: i32) = (5, 6);
+// ✅ Allowed: `e` and `f` are not in a pattern.
+var NS.e: i32 = 5;
+var NS.f: i32 = 6;
 ```
-
-This restriction only applies when declaring names in binding patterns, not
-other name uses in patterns.
 
 #### Aliasing
 
