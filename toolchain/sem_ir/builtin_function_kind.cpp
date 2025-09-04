@@ -600,18 +600,14 @@ constexpr BuiltinInfo TypeAnd = {"type.and",
                                  ValidateSignature<auto(Type, Type)->Type>};
 
 // Struct query.
-constexpr BuiltinInfo TypeIsStruct = {"type.is_struct",
-                                      ValidateSignature<auto(Type)->Bool>};
-
-// Tuple query.
-constexpr BuiltinInfo TypeIsTuple = {"type.is_tuple",
-                                     ValidateSignature<auto(Type)->Bool>};
+constexpr BuiltinInfo TypeIsStructOrTuple = {
+    "type.is_struct_or_tuple", ValidateSignature<auto(Type)->Bool>};
 
 // Destroys a struct or tuple. Both need to be supported by a single function.
 // TODO: The argument should be `addr self: Self*`. Consider modifying
 // `ValidateSignature` to more fully enforce the structure.
-constexpr BuiltinInfo TypeDestroyStructAndTuple = {
-    "type.destroy_struct_and_tuple",
+constexpr BuiltinInfo TypeDestroyStructOrTuple = {
+    "type.destroy_struct_or_tuple",
     ValidateSignature<auto(PointerTo<AnySymbolicName>)->NoReturn>};
 
 }  // namespace BuiltinFunctionInfo
@@ -726,8 +722,7 @@ auto BuiltinFunctionKind::IsCompTimeOnly(const File& sem_ir,
     case TypeAnd:
       return true;
 
-    case TypeIsStruct:
-    case TypeIsTuple:
+    case TypeIsStructOrTuple:
       // Type queries must be compile-time.
       return true;
 

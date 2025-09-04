@@ -455,8 +455,7 @@ static auto HandleBuiltinCall(FunctionContext& context, SemIR::InstId inst_id,
     case SemIR::BuiltinFunctionKind::CharConvertChecked:
     case SemIR::BuiltinFunctionKind::FloatConvertChecked:
     case SemIR::BuiltinFunctionKind::IntConvertChecked:
-    case SemIR::BuiltinFunctionKind::TypeIsStruct:
-    case SemIR::BuiltinFunctionKind::TypeIsTuple: {
+    case SemIR::BuiltinFunctionKind::TypeIsStructOrTuple: {
       // TODO: Check this statically.
       CARBON_CHECK(builtin_kind.IsCompTimeOnly(
           context.sem_ir(), arg_ids,
@@ -464,7 +463,7 @@ static auto HandleBuiltinCall(FunctionContext& context, SemIR::InstId inst_id,
       CARBON_FATAL("Missing constant value for call to comptime-only function");
     }
 
-    case SemIR::BuiltinFunctionKind::TypeDestroyStructAndTuple:
+    case SemIR::BuiltinFunctionKind::TypeDestroyStructOrTuple:
       // TODO: Destroy aggregate members.
       return;
   }
