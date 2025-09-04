@@ -407,7 +407,7 @@ fn Make() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: @"_CBase.Main.$vtable" = unnamed_addr constant [1 x i32] [i32 trunc (i64 sub (i64 ptrtoint (ptr @_CF.Base.Main to i64), i64 ptrtoint (ptr @"_CBase.Main.$vtable" to i64)) to i32)]
 // CHECK:STDOUT: @"_CDerived.Main.$vtable" = unnamed_addr constant [1 x i32] [i32 trunc (i64 sub (i64 ptrtoint (ptr @_CF.Derived.Main to i64), i64 ptrtoint (ptr @"_CDerived.Main.$vtable" to i64)) to i32)]
-// CHECK:STDOUT: @Derived.val.loc18_3 = internal constant { { ptr } } { { ptr } { ptr @"_CDerived.Main.$vtable" } }
+// CHECK:STDOUT: @Derived.val.loc14_3 = internal constant { { ptr } } { { ptr } { ptr @"_CDerived.Main.$vtable" } }
 // CHECK:STDOUT:
 // CHECK:STDOUT: declare void @_CF.Base.Main(ptr)
 // CHECK:STDOUT:
@@ -417,9 +417,9 @@ fn Make() {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   %v.var = alloca { { ptr } }, align 8, !dbg !7
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %v.var), !dbg !7
-// CHECK:STDOUT:   %.loc18_32.2.base = getelementptr inbounds nuw { { ptr } }, ptr %v.var, i32 0, i32 0, !dbg !8
-// CHECK:STDOUT:   %.loc18_31.2.vptr = getelementptr inbounds nuw { ptr }, ptr %.loc18_32.2.base, i32 0, i32 0, !dbg !9
-// CHECK:STDOUT:   call void @llvm.memcpy.p0.p0.i64(ptr align 8 %v.var, ptr align 8 @Derived.val.loc18_3, i64 8, i1 false), !dbg !7
+// CHECK:STDOUT:   %.loc14_32.2.base = getelementptr inbounds nuw { { ptr } }, ptr %v.var, i32 0, i32 0, !dbg !8
+// CHECK:STDOUT:   %.loc14_31.2.vptr = getelementptr inbounds nuw { ptr }, ptr %.loc14_32.2.base, i32 0, i32 0, !dbg !9
+// CHECK:STDOUT:   call void @llvm.memcpy.p0.p0.i64(ptr align 8 %v.var, ptr align 8 @Derived.val.loc14_3, i64 8, i1 false), !dbg !7
 // CHECK:STDOUT:   %Derived.F.call.vtable = load ptr, ptr %v.var, align 8, !dbg !10
 // CHECK:STDOUT:   %Derived.F.call = call ptr @llvm.load.relative.i32(ptr %Derived.F.call.vtable, i32 0), !dbg !10
 // CHECK:STDOUT:   call void %Derived.F.call(ptr %v.var), !dbg !10
@@ -446,14 +446,14 @@ fn Make() {
 // CHECK:STDOUT: !1 = !{i32 2, !"Debug Info Version", i32 3}
 // CHECK:STDOUT: !2 = distinct !DICompileUnit(language: DW_LANG_C, file: !3, producer: "carbon", isOptimized: false, runtimeVersion: 0, emissionKind: FullDebug)
 // CHECK:STDOUT: !3 = !DIFile(filename: "call_impl.carbon", directory: "")
-// CHECK:STDOUT: !4 = distinct !DISubprogram(name: "Use", linkageName: "_CUse.Main", scope: null, file: !3, line: 17, type: !5, spFlags: DISPFlagDefinition, unit: !2)
+// CHECK:STDOUT: !4 = distinct !DISubprogram(name: "Use", linkageName: "_CUse.Main", scope: null, file: !3, line: 13, type: !5, spFlags: DISPFlagDefinition, unit: !2)
 // CHECK:STDOUT: !5 = !DISubroutineType(types: !6)
 // CHECK:STDOUT: !6 = !{}
-// CHECK:STDOUT: !7 = !DILocation(line: 18, column: 3, scope: !4)
-// CHECK:STDOUT: !8 = !DILocation(line: 18, column: 21, scope: !4)
-// CHECK:STDOUT: !9 = !DILocation(line: 18, column: 30, scope: !4)
-// CHECK:STDOUT: !10 = !DILocation(line: 19, column: 3, scope: !4)
-// CHECK:STDOUT: !11 = !DILocation(line: 17, column: 1, scope: !4)
+// CHECK:STDOUT: !7 = !DILocation(line: 14, column: 3, scope: !4)
+// CHECK:STDOUT: !8 = !DILocation(line: 14, column: 21, scope: !4)
+// CHECK:STDOUT: !9 = !DILocation(line: 14, column: 30, scope: !4)
+// CHECK:STDOUT: !10 = !DILocation(line: 15, column: 3, scope: !4)
+// CHECK:STDOUT: !11 = !DILocation(line: 13, column: 1, scope: !4)
 // CHECK:STDOUT: ; ModuleID = 'generic_noop.carbon'
 // CHECK:STDOUT: source_filename = "generic_noop.carbon"
 // CHECK:STDOUT:
