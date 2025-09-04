@@ -808,12 +808,9 @@ static auto CanRemoveQualifiers(SemIR::TypeQualifiers quals,
   }
 
   if (HasTypeQualifier(quals, SemIR::TypeQualifiers::MaybeUnformed) &&
-      (!allow_unsafe || !SemIR::IsRefCategory(cat))) {
-    // As an unsafe conversion, `MaybeUnformed` can be removed from a reference
-    // expression.
-    // TODO: We should allow this for any kind of expression, and convert the
-    // result as needed if the representation of `T` differs from that of
-    // `MaybeUnformed(T)`.
+      (!allow_unsafe || cat == SemIR::ExprCategory::Initializing)) {
+    // As an unsafe conversion, `MaybeUnformed` can be removed from a value or
+    // reference expression.
     return false;
   }
 
@@ -976,9 +973,10 @@ static auto PerformBuiltinConversion(
         context.types().GetTransitiveUnqualifiedAdaptedType(value_type_id);
     if (target_foundation_id == value_foundation_id) {
       auto category = SemIR::GetExprCategory(context.sem_ir(), value_id);
+      auto removed_quals = value_quals & ~target_quals;
       if (CanAddQualifiers(target_quals & ~value_quals, category) &&
           CanRemoveQualifiers(
-              value_quals & ~target_quals, category,
+              removed_quals, category,
               target.kind == ConversionTarget::ExplicitUnsafeAs)) {
         // For a struct or tuple literal, perform a category conversion if
         // necessary.
@@ -989,9 +987,28 @@ static auto PerformBuiltinConversion(
                                                .diagnose = target.diagnose});
         }
 
-        return AddInst<SemIR::AsCompatible>(
+        // `MaybeUnformed(T)` has a pointer value representation, and `T` might
+        // not, so convert as needed when removing `MaybeUnformed`.
+        bool need_value_binding = false;
+        if ((removed_quals & SemIR::TypeQualifiers::MaybeUnformed) !=
+                SemIR::TypeQualifiers::None &&
+            category == SemIR::ExprCategory::Value) {
+          value_id = AddInst<SemIR::ValueAsRef>(
+              context, loc_id,
+              {.type_id = value_type_id, .value_id = value_id});
+          need_value_binding = true;
+        }
+
+        value_id = AddInst<SemIR::AsCompatible>(
             context, loc_id,
             {.type_id = target.type_id, .source_id = value_id});
+
+        if (need_value_binding) {
+          value_id = AddInst<SemIR::BindValue>(
+              context, loc_id,
+              {.type_id = target.type_id, .value_id = value_id});
+        }
+        return value_id;
       }
     }
   }
