@@ -833,8 +833,7 @@ auto ProcessTestFile(llvm::StringRef test_name, bool running_autoupdate)
       test_file.file_splits, include_files));
 
   if (!found_autoupdate) {
-    return ErrorBuilder() << "Missing AUTOUPDATE/NOAUTOUPDATE setting: "
-                          << test_name;
+    return ErrorBuilder() << "Missing AUTOUPDATE/NOAUTOUPDATE setting";
   }
 
   constexpr llvm::StringLiteral AutoupdateSplit = "AUTOUPDATE-SPLIT";

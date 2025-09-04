@@ -167,6 +167,18 @@ struct AnyParamPattern {
   CallParamIndex index;
 };
 
+// A type qualifier that wraps another type and has the same object
+// representation. Qualifiers are arranged so that adding a qualifier is
+// generally safe, and removing a qualifier is not necessarily safe or correct.
+struct AnyQualifiedType {
+  using CategoryInfo = CategoryOf<ConstType, PartialType, MaybeUnformedType>;
+
+  InstKind kind;
+
+  TypeId type_id;
+  TypeInstId inner_id;
+};
+
 // A struct-like type with a list of named fields.
 struct AnyStructType {
   using CategoryInfo = CategoryOf<StructType, CustomLayoutType>;
