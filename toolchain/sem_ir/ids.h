@@ -577,7 +577,9 @@ constexpr FloatKind FloatKind::PPCFloat128 = FloatKind(6);
   /* The name of `_`. */                                         \
   X(Underscore)                                                  \
   /* The name of `vptr`. */                                      \
-  X(Vptr)
+  X(Vptr)                                                        \
+  /* The name of imported C++ operator functions */              \
+  X(CppOperator)
 
 // The ID of a name. A name is either a string or a special name such as
 // `self`, `Self`, or `base`.

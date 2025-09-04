@@ -29,6 +29,7 @@
 #include "toolchain/check/class.h"
 #include "toolchain/check/context.h"
 #include "toolchain/check/convert.h"
+#include "toolchain/check/cpp_custom_type_mapping.h"
 #include "toolchain/check/cpp_thunk.h"
 #include "toolchain/check/diagnostic_helpers.h"
 #include "toolchain/check/eval.h"
@@ -36,6 +37,7 @@
 #include "toolchain/check/import.h"
 #include "toolchain/check/inst.h"
 #include "toolchain/check/literal.h"
+#include "toolchain/check/operator.h"
 #include "toolchain/check/pattern.h"
 #include "toolchain/check/pattern_match.h"
 #include "toolchain/check/type.h"
@@ -102,6 +104,34 @@ static auto GenerateCppIncludesHeaderCode(
                   << "\"\n";
     }
   }
+
+  // Inject a declaration of placement operator new, because the code we
+  // generate in thunks depends on it for placement new expressions. Clang has
+  // special-case logic for lowering a new-expression using this, so a
+  // definition is not required.
+  // TODO: This is a hack. We should be able to directly generate Clang AST to
+  // construct objects in-place without this.
+  // TODO: Once we can rely on libc++ being available, consider including
+  // `<__new/placement_new_delete.h>` instead.
+  code_stream << R"(# 1 "<carbon-internal>"
+#undef constexpr
+#if __cplusplus > 202302L
+constexpr
+#endif
+#undef void
+#undef operator
+#undef new
+void* operator new(__SIZE_TYPE__, void*)
+#if __cplusplus < 201103L
+#undef throw
+throw()
+#else
+#undef noexcept
+noexcept
+#endif
+;
+)";
+
   return code;
 }
 
@@ -456,18 +486,27 @@ auto ImportCppFiles(Context& context,
   return std::move(generated_ast);
 }
 
-// Looks up the given name in the Clang AST in a specific scope. Returns the
-// lookup result if lookup was successful.
-static auto ClangLookupName(Context& context, SemIR::NameScopeId scope_id,
-                            SemIR::NameId name_id)
-    -> std::optional<clang::LookupResult> {
-  std::optional<llvm::StringRef> name =
-      context.names().GetAsStringIfIdentifier(name_id);
-  if (!name) {
-    // Special names never exist in C++ code.
-    return std::nullopt;
+// Returns the Clang `DeclContext` for the given name scope. Return the
+// translation unit decl if no scope is provided.
+static auto GetDeclContext(Context& context, SemIR::NameScopeId scope_id)
+    -> clang::DeclContext* {
+  if (!scope_id.has_value()) {
+    return context.ast_context().getTranslationUnitDecl();
   }
+  auto scope_clang_decl_context_id =
+      context.name_scopes().Get(scope_id).clang_decl_context_id();
+  return dyn_cast<clang::DeclContext>(
+      context.sem_ir().clang_decls().Get(scope_clang_decl_context_id).decl);
+}
 
+// Looks up the given declaration name in the Clang AST in a specific scope.
+// Returns the found declaration and its access. If not found, returns
+// `nullopt`. If there's not a single result, returns `nullptr` and default
+// access.
+static auto ClangLookupDeclarationName(Context& context, SemIR::LocId loc_id,
+                                       SemIR::NameScopeId scope_id,
+                                       clang::DeclarationName name)
+    -> std::optional<std::tuple<clang::NamedDecl*, clang::AccessSpecifier>> {
   clang::ASTUnit* ast = context.sem_ir().clang_ast_unit();
   CARBON_CHECK(ast);
   clang::Sema& sema = ast->getSema();
@@ -476,26 +515,36 @@ static auto ClangLookupName(Context& context, SemIR::NameScopeId scope_id,
   // here so that clang's diagnostics can point into the carbon code that uses
   // the name.
   clang::LookupResult lookup(
-      sema,
-      clang::DeclarationNameInfo(
-          clang::DeclarationName(
-              sema.getPreprocessor().getIdentifierInfo(*name)),
-          clang::SourceLocation()),
+      sema, clang::DeclarationNameInfo(name, clang::SourceLocation()),
       clang::Sema::LookupNameKind::LookupOrdinaryName);
 
-  auto scope_clang_decl_context_id =
-      context.name_scopes().Get(scope_id).clang_decl_context_id();
-  bool found = sema.LookupQualifiedName(
-      lookup, dyn_cast<clang::DeclContext>(context.sem_ir()
-                                               .clang_decls()
-                                               .Get(scope_clang_decl_context_id)
-                                               .decl));
+  bool found =
+      sema.LookupQualifiedName(lookup, GetDeclContext(context, scope_id));
 
   if (!found) {
     return std::nullopt;
   }
 
-  return lookup;
+  std::tuple<clang::NamedDecl*, clang::AccessSpecifier> result{
+      nullptr, clang::AccessSpecifier::AS_none};
+
+  // Access checks are performed separately by the Carbon name lookup logic.
+  lookup.suppressAccessDiagnostics();
+
+  if (!lookup.isSingleResult()) {
+    // Clang will diagnose ambiguous lookup results for us.
+    if (!lookup.isAmbiguous()) {
+      context.TODO(loc_id,
+                   llvm::formatv("Unsupported: Lookup succeeded but couldn't "
+                                 "find a single result; LookupResultKind: {0}",
+                                 static_cast<int>(lookup.getResultKind())));
+    }
+
+    return result;
+  }
+
+  result = {lookup.getFoundDecl(), lookup.begin().getAccess()};
+  return result;
 }
 
 // Looks up for constructors in the class scope and returns the lookup result.
@@ -544,42 +593,47 @@ static auto IsDeclInjectedClassName(const Context& context,
   return true;
 }
 
+// Returns a Clang DeclarationName for the given `NameId`.
+static auto GetDeclarationName(Context& context, SemIR::NameId name_id)
+    -> std::optional<clang::DeclarationName> {
+  std::optional<llvm::StringRef> name =
+      context.names().GetAsStringIfIdentifier(name_id);
+  if (!name) {
+    // Special names never exist in C++ code.
+    return std::nullopt;
+  }
+
+  return clang::DeclarationName(context.sem_ir()
+                                    .clang_ast_unit()
+                                    ->getSema()
+                                    .getPreprocessor()
+                                    .getIdentifierInfo(*name));
+}
+
 // Looks up the given name in the Clang AST in a specific scope, and returns the
 // found declaration and its access. If the found declaration is the injected
 // class name, looks up constructors instead. If not found, returns `nullopt`.
 // If there's not a single result, returns `nullptr` and default access.
 // Otherwise, returns the single declaration and its access.
-static auto ClangLookup(Context& context, SemIR::LocId loc_id,
-                        SemIR::NameScopeId scope_id, SemIR::NameId name_id)
+static auto ClangLookupName(Context& context, SemIR::LocId loc_id,
+                            SemIR::NameScopeId scope_id, SemIR::NameId name_id)
     -> std::optional<std::tuple<clang::NamedDecl*, clang::AccessSpecifier>> {
-  auto lookup = ClangLookupName(context, scope_id, name_id);
-  if (!lookup) {
+  auto declaration_name = GetDeclarationName(context, name_id);
+  if (!declaration_name) {
     return std::nullopt;
   }
-
-  std::tuple<clang::NamedDecl*, clang::AccessSpecifier> result{
-      nullptr, clang::AccessSpecifier::AS_none};
-
-  // Access checks are performed separately by the Carbon name lookup logic.
-  lookup->suppressAccessDiagnostics();
-
-  if (!lookup->isSingleResult()) {
-    // Clang will diagnose ambiguous lookup results for us.
-    if (!lookup->isAmbiguous()) {
-      context.TODO(loc_id,
-                   llvm::formatv("Unsupported: Lookup succeeded but couldn't "
-                                 "find a single result; LookupResultKind: {0}",
-                                 static_cast<int>(lookup->getResultKind())));
-    }
-
+  auto result =
+      ClangLookupDeclarationName(context, loc_id, scope_id, *declaration_name);
+  if (!result) {
     return result;
   }
 
-  if (!IsDeclInjectedClassName(context, scope_id, name_id,
-                               lookup->getFoundDecl())) {
-    result = {lookup->getFoundDecl(), lookup->begin().getAccess()};
+  clang::NamedDecl* decl = std::get<0>(*result);
+  if (!decl || !IsDeclInjectedClassName(context, scope_id, name_id, decl)) {
     return result;
   }
+
+  result = {nullptr, clang::AccessSpecifier::AS_none};
 
   clang::DeclContextLookupResult constructors_lookup =
       ClangConstructorLookup(context, scope_id);
@@ -628,8 +682,11 @@ static auto LookupClangDeclInstId(const Context& context, clang::Decl* decl)
 // Returns the parent of the given declaration. Skips declaration types we
 // ignore.
 static auto GetParentDecl(clang::Decl* clang_decl) -> clang::Decl* {
-  return cast<clang::Decl>(
-      clang_decl->getDeclContext()->getNonTransparentContext());
+  auto* parent_dc = clang_decl->getDeclContext();
+  while (!parent_dc->isLookupContext()) {
+    parent_dc = parent_dc->getParent();
+  }
+  return cast<clang::Decl>(parent_dc);
 }
 
 // Returns the given declaration's parent scope. Assumes the parent declaration
@@ -728,10 +785,10 @@ static auto BuildClassDecl(Context& context,
   return {class_decl.class_id, context.types().GetAsTypeInstId(class_decl_id)};
 }
 
-// Imports a record declaration from Clang to Carbon. If successful, returns
-// the new Carbon class declaration `InstId`.
-static auto ImportCXXRecordDecl(Context& context,
-                                clang::CXXRecordDecl* clang_decl)
+// Imports a tag declaration from Clang to Carbon. This covers classes (which
+// includes structs and unions) as well as enums. If successful, returns the new
+// Carbon class declaration `InstId`.
+static auto ImportTagDecl(Context& context, clang::TagDecl* clang_decl)
     -> SemIR::InstId {
   auto import_ir_inst_id =
       AddImportIRInst(context.sem_ir(), clang_decl->getLocation());
@@ -793,6 +850,11 @@ static auto ImportClassObjectRepr(Context& context, SemIR::ClassId class_id,
                                   SemIR::TypeInstId class_type_inst_id,
                                   const clang::CXXRecordDecl* clang_def)
     -> SemIR::TypeInstId {
+  if (clang_def->isInvalidDecl()) {
+    // Clang already diagnosed this error.
+    return SemIR::ErrorInst::TypeInstId;
+  }
+
   // For now, if the class is empty, produce an empty struct as the object
   // representation. This allows our tests to continue to pass while we don't
   // properly support initializing imported C++ classes.
@@ -945,8 +1007,8 @@ static auto ImportClassObjectRepr(Context& context, SemIR::ClassId class_id,
        .layout_id = context.custom_layouts().Add(layout)});
 }
 
-// Creates a class definition based on the information in the given Clang
-// declaration, which is assumed to be for a class definition.
+// Creates a Carbon class definition based on the information in the given Clang
+// class declaration, which is assumed to be for a class definition.
 static auto BuildClassDefinition(Context& context,
                                  SemIR::ImportIRInstId import_ir_inst_id,
                                  SemIR::ClassId class_id,
@@ -971,13 +1033,70 @@ static auto BuildClassDefinition(Context& context,
   class_info.body_block_id = context.inst_block_stack().Pop();
 }
 
-auto ImportCppClassDefinition(Context& context, SemIR::LocId loc_id,
-                              SemIR::ClassId class_id,
-                              SemIR::ClangDeclId clang_decl_id) -> bool {
+// Computes and returns the Carbon type to use as the object representation of
+// the given C++ enum type. This is a builtin int type matching the enum's
+// representation.
+static auto ImportEnumObjectRepresentation(
+    Context& context, SemIR::ImportIRInstId import_ir_inst_id,
+    clang::EnumDecl* enum_decl) -> SemIR::TypeInstId {
+  auto int_type = enum_decl->getIntegerType();
+  CARBON_CHECK(!int_type.isNull(), "incomplete enum type {0}",
+               enum_decl->getNameAsString());
+
+  auto int_kind = int_type->isSignedIntegerType() ? SemIR::IntKind::Signed
+                                                  : SemIR::IntKind::Unsigned;
+  auto bit_width_id = GetOrAddInst<SemIR::IntValue>(
+      context, import_ir_inst_id,
+      {.type_id = GetSingletonType(context, SemIR::IntLiteralType::TypeInstId),
+       .int_id = context.ints().AddUnsigned(
+           llvm::APInt(64, context.ast_context().getIntWidth(int_type)))});
+  return context.types().GetAsTypeInstId(
+      GetOrAddInst(context, SemIR::LocIdAndInst::NoLoc(SemIR::IntType{
+                                .type_id = SemIR::TypeType::TypeId,
+                                .int_kind = int_kind,
+                                .bit_width_id = bit_width_id})));
+}
+
+// Creates a Carbon class definition based on the information in the given Clang
+// enum declaration.
+static auto BuildEnumDefinition(Context& context,
+                                SemIR::ImportIRInstId import_ir_inst_id,
+                                SemIR::ClassId class_id,
+                                SemIR::TypeInstId class_inst_id,
+                                clang::EnumDecl* enum_decl) -> void {
+  auto& class_info = context.classes().Get(class_id);
+  CARBON_CHECK(!class_info.has_definition_started());
+  class_info.definition_id = class_inst_id;
+
+  context.inst_block_stack().Push();
+
+  // Don't allow inheritance from C++ enums, to match the behavior in C++.
+  class_info.inheritance_kind = SemIR::Class::Final;
+
+  // Compute the enum type's object representation. An enum is an adapter for
+  // the corresponding builtin integer type.
+  auto object_repr_id =
+      ImportEnumObjectRepresentation(context, import_ir_inst_id, enum_decl);
+  class_info.adapt_id = AddInst(
+      context, SemIR::LocIdAndInst::UncheckedLoc(
+                   import_ir_inst_id,
+                   SemIR::AdaptDecl{.adapted_type_inst_id = object_repr_id}));
+  class_info.complete_type_witness_id = AddInst<SemIR::CompleteTypeWitness>(
+      context, import_ir_inst_id,
+      {.type_id = GetSingletonType(context, SemIR::WitnessType::TypeInstId),
+       .object_repr_type_inst_id = object_repr_id});
+
+  class_info.body_block_id = context.inst_block_stack().Pop();
+}
+
+auto ImportClassDefinitionForClangDecl(Context& context, SemIR::LocId loc_id,
+                                       SemIR::ClassId class_id,
+                                       SemIR::ClangDeclId clang_decl_id)
+    -> bool {
   clang::ASTUnit* ast = context.sem_ir().clang_ast_unit();
   CARBON_CHECK(ast);
 
-  auto* clang_decl = cast<clang::CXXRecordDecl>(
+  auto* clang_decl = cast<clang::TagDecl>(
       context.sem_ir().clang_decls().Get(clang_decl_id).decl);
   auto class_inst_id = context.types().GetAsTypeInstId(
       context.classes().Get(class_id).first_owning_decl_id);
@@ -989,7 +1108,7 @@ auto ImportCppClassDefinition(Context& context, SemIR::LocId loc_id,
   Diagnostics::AnnotationScope annotate_diagnostics(
       &context.emitter(), [&](auto& builder) {
         CARBON_DIAGNOSTIC(InCppTypeCompletion, Note,
-                          "while completing C++ class type {0}", SemIR::TypeId);
+                          "while completing C++ type {0}", SemIR::TypeId);
         builder.Note(loc_id, InCppTypeCompletion,
                      context.classes().Get(class_id).self_type_id);
       });
@@ -998,31 +1117,60 @@ auto ImportCppClassDefinition(Context& context, SemIR::LocId loc_id,
   // instantiation if necessary.
   clang::DiagnosticErrorTrap trap(ast->getDiagnostics());
   if (!ast->getSema().isCompleteType(
-          loc, context.ast_context().getRecordType(clang_decl))) {
+          loc, context.ast_context().getTypeDeclType(clang_decl))) {
     // Type is incomplete. Nothing more to do, but tell the caller if we
     // produced an error.
     return !trap.hasErrorOccurred();
   }
 
-  clang::CXXRecordDecl* clang_def = clang_decl->getDefinition();
-  CARBON_CHECK(clang_def, "Complete type has no definition");
-
-  if (clang_def->getNumVBases()) {
-    // TODO: Handle virtual bases. We don't actually know where they go in the
-    // layout. We may also want to use a different size in the layout for
-    // `partial C`, excluding the virtual base. It's also not entirely safe to
-    // just skip over the virtual base, as the type we would construct would
-    // have a misleading size. For now, treat a C++ class with vbases as
-    // incomplete in Carbon.
-    context.TODO(loc_id, "class with virtual bases");
-    return false;
-  }
-
   auto import_ir_inst_id =
       context.insts().GetCanonicalLocId(class_inst_id).import_ir_inst_id();
-  BuildClassDefinition(context, import_ir_inst_id, class_id, class_inst_id,
-                       clang_def);
+
+  if (auto* class_decl = dyn_cast<clang::CXXRecordDecl>(clang_decl)) {
+    auto* class_def = class_decl->getDefinition();
+    CARBON_CHECK(class_def, "Complete type has no definition");
+
+    if (class_def->getNumVBases()) {
+      // TODO: Handle virtual bases. We don't actually know where they go in the
+      // layout. We may also want to use a different size in the layout for
+      // `partial C`, excluding the virtual base. It's also not entirely safe to
+      // just skip over the virtual base, as the type we would construct would
+      // have a misleading size. For now, treat a C++ class with vbases as
+      // incomplete in Carbon.
+      context.TODO(loc_id, "class with virtual bases");
+      return false;
+    }
+
+    BuildClassDefinition(context, import_ir_inst_id, class_id, class_inst_id,
+                         class_def);
+  } else if (auto* enum_decl = dyn_cast<clang::EnumDecl>(clang_decl)) {
+    BuildEnumDefinition(context, import_ir_inst_id, class_id, class_inst_id,
+                        enum_decl);
+  }
   return true;
+}
+
+// Imports an enumerator declaration from Clang to Carbon.
+static auto ImportEnumConstantDecl(Context& context,
+                                   clang::EnumConstantDecl* enumerator_decl)
+    -> SemIR::InstId {
+  CARBON_CHECK(!IsClangDeclImported(context, enumerator_decl));
+
+  // Find the enclosing enum type.
+  auto type_inst_id = LookupClangDeclInstId(
+      context, cast<clang::EnumDecl>(enumerator_decl->getDeclContext()));
+  auto type_id = context.types().GetTypeIdForTypeInstId(type_inst_id);
+
+  // Build a corresponding IntValue.
+  auto int_id = context.ints().Add(enumerator_decl->getInitVal());
+  auto loc_id =
+      AddImportIRInst(context.sem_ir(), enumerator_decl->getLocation());
+  auto inst_id = AddInstInNoBlock<SemIR::IntValue>(
+      context, loc_id, {.type_id = type_id, .int_id = int_id});
+  context.imports().push_back(inst_id);
+  context.sem_ir().clang_decls().Add(
+      {.decl = enumerator_decl->getCanonicalDecl(), .inst_id = inst_id});
+  return inst_id;
 }
 
 // Mark the given `Decl` as failed in `clang_decls`.
@@ -1040,6 +1188,35 @@ static auto MakeIntType(Context& context, IntId size_id, bool is_signed)
   return ExprAsType(context, Parse::NodeId::None, type_inst_id);
 }
 
+// Maps a C++ builtin integer type to a Carbon type.
+// TODO: Handle integer types that map to named aliases.
+static auto MapBuiltinIntegerType(Context& context, SemIR::LocId loc_id,
+                                  clang::QualType qual_type,
+                                  const clang::BuiltinType& type) -> TypeExpr {
+  clang::ASTContext& ast_context = context.ast_context();
+  unsigned width = ast_context.getIntWidth(qual_type);
+  bool is_signed = type.isSignedInteger();
+  auto int_n_type = ast_context.getIntTypeForBitwidth(width, is_signed);
+  if (ast_context.hasSameType(qual_type, int_n_type)) {
+    TypeExpr type_expr =
+        MakeIntType(context, context.ints().Add(width), is_signed);
+    // Try to make sure integer types of 32 or 64 bits are complete so we can
+    // check against them when deciding whether we need to generate a thunk.
+    if (width == 32 || width == 64) {
+      SemIR::TypeId type_id = type_expr.type_id;
+      if (!context.types().IsComplete(type_id)) {
+        TryToCompleteType(context, type_id, loc_id);
+      }
+    }
+    return type_expr;
+  }
+  if (ast_context.hasSameType(qual_type, ast_context.CharTy)) {
+    return ExprAsType(context, Parse::NodeId::None,
+                      MakeCharTypeLiteral(context, Parse::NodeId::None));
+  }
+  return TypeExpr::None;
+}
+
 // Maps a C++ builtin type to a Carbon type.
 // TODO: Support more builtin types.
 static auto MapBuiltinType(Context& context, SemIR::LocId loc_id,
@@ -1053,25 +1230,9 @@ static auto MapBuiltinType(Context& context, SemIR::LocId loc_id,
                           context, SemIR::BoolType::TypeInstId)));
   }
   if (type.isInteger()) {
-    unsigned width = context.ast_context().getIntWidth(qual_type);
-    bool is_signed = type.isSignedInteger();
-    auto int_n_type =
-        context.ast_context().getIntTypeForBitwidth(width, is_signed);
-    if (context.ast_context().hasSameType(qual_type, int_n_type)) {
-      TypeExpr type_expr =
-          MakeIntType(context, context.ints().Add(width), is_signed);
-      // Try to make sure signed integer of 32 or 64 bits are complete so we can
-      // check against them when deciding whether we need to generate a thunk.
-      if (is_signed && (width == 32 || width == 64)) {
-        SemIR::TypeId type_id = type_expr.type_id;
-        if (!context.types().IsComplete(type_id)) {
-          TryToCompleteType(context, type_id, loc_id);
-        }
-      }
-      return type_expr;
-    }
-    // TODO: Handle integer types that map to named aliases.
-  } else if (type.isFloatingPoint()) {
+    return MapBuiltinIntegerType(context, loc_id, qual_type, type);
+  }
+  if (type.isFloatingPoint()) {
     if (type.isFloat16Type() || type.isFloat32Type() || type.isDoubleType() ||
         type.isFloat128Type()) {
       return ExprAsType(
@@ -1083,24 +1244,48 @@ static auto MapBuiltinType(Context& context, SemIR::LocId loc_id,
     // TODO: Handle floating-point types that map to named aliases.
   }
 
-  return {.inst_id = SemIR::TypeInstId::None, .type_id = SemIR::TypeId::None};
+  return TypeExpr::None;
 }
 
-// Maps a C++ record type to a Carbon type.
-static auto MapRecordType(Context& context, const clang::RecordType& type)
+// Determines whether record_decl is a C++ class that has a custom mapping into
+// Carbon, and if so, returns the corresponding Carbon type. Otherwise returns
+// None.
+static auto LookupCustomRecordType(Context& context,
+                                   const clang::CXXRecordDecl* record_decl)
     -> TypeExpr {
-  auto* record_decl = dyn_cast<clang::CXXRecordDecl>(type.getDecl());
-  if (!record_decl) {
-    return {.inst_id = SemIR::TypeInstId::None, .type_id = SemIR::TypeId::None};
+  switch (GetCustomCppTypeMapping(record_decl)) {
+    case CustomCppTypeMapping::None:
+      return TypeExpr::None;
+
+    case CustomCppTypeMapping::Str:
+      return MakeStringType(
+          context,
+          AddImportIRInst(context.sem_ir(), record_decl->getLocation()));
   }
+}
+
+// Maps a C++ tag type (class, struct, union, enum) to a Carbon type.
+static auto MapTagType(Context& context, const clang::TagType& type)
+    -> TypeExpr {
+  auto* tag_decl = type.getDecl();
+  CARBON_CHECK(tag_decl);
 
   // Check if the declaration is already mapped.
-  SemIR::InstId record_inst_id = LookupClangDeclInstId(context, record_decl);
-  if (!record_inst_id.has_value()) {
-    record_inst_id = ImportCXXRecordDecl(context, record_decl);
+  SemIR::InstId tag_inst_id = LookupClangDeclInstId(context, tag_decl);
+  if (!tag_inst_id.has_value()) {
+    if (auto* record_decl = dyn_cast<clang::CXXRecordDecl>(tag_decl)) {
+      auto custom_type = LookupCustomRecordType(context, record_decl);
+      if (custom_type.inst_id.has_value()) {
+        context.sem_ir().clang_decls().Add(
+            {.decl = record_decl, .inst_id = custom_type.inst_id});
+        return custom_type;
+      }
+    }
+
+    tag_inst_id = ImportTagDecl(context, tag_decl);
   }
   SemIR::TypeInstId record_type_inst_id =
-      context.types().GetAsTypeInstId(record_inst_id);
+      context.types().GetAsTypeInstId(tag_inst_id);
   return {
       .inst_id = record_type_inst_id,
       .type_id = context.types().GetTypeIdForTypeInstId(record_type_inst_id)};
@@ -1115,14 +1300,14 @@ static auto MapNonWrapperType(Context& context, SemIR::LocId loc_id,
     return MapBuiltinType(context, loc_id, type, *builtin_type);
   }
 
-  if (const auto* record_type = type->getAs<clang::RecordType>()) {
-    return MapRecordType(context, *record_type);
+  if (const auto* tag_type = type->getAs<clang::TagType>()) {
+    return MapTagType(context, *tag_type);
   }
 
   CARBON_CHECK(!type.hasQualifiers() && !type->isPointerType(),
                "Should not see wrapper types here");
 
-  return {.inst_id = SemIR::TypeInstId::None, .type_id = SemIR::TypeId::None};
+  return TypeExpr::None;
 }
 
 // Maps a qualified C++ type to a Carbon type.
@@ -1139,7 +1324,7 @@ static auto MapQualifiedType(Context& context, clang::QualType type,
 
   // TODO: Support other qualifiers.
   if (!quals.empty()) {
-    return {.inst_id = SemIR::TypeInstId::None, .type_id = SemIR::TypeId::None};
+    return TypeExpr::None;
   }
 
   return type_expr;
@@ -1154,7 +1339,7 @@ static auto MapPointerType(Context& context, clang::QualType type,
       !nullability.has_value() ||
       *nullability != clang::NullabilityKind::NonNull) {
     // TODO: Support nullable pointers.
-    return {.inst_id = SemIR::TypeInstId::None, .type_id = SemIR::TypeId::None};
+    return TypeExpr::None;
   }
 
   SemIR::TypeId pointer_type_id =
@@ -1277,8 +1462,9 @@ static auto MakeParamPatternsBlockId(Context& context, SemIR::LocId loc_id,
     return SemIR::InstBlockId::Empty;
   }
   llvm::SmallVector<SemIR::InstId> params;
-  params.reserve(clang_decl.parameters().size());
-  for (const clang::ParmVarDecl* param : clang_decl.parameters()) {
+  params.reserve(clang_decl.getNumNonObjectParams());
+  for (unsigned i : llvm::seq(clang_decl.getNumNonObjectParams())) {
+    const auto* param = clang_decl.getNonObjectParameter(i);
     // TODO: Get the parameter type from the function, not from the
     // `ParmVarDecl`. The type of the `ParmVarDecl` is the type within the
     // function, and isn't in general the same as the type that's exposed to
@@ -1341,6 +1527,8 @@ static auto GetReturnTypeExpr(Context& context, SemIR::LocId loc_id,
   if (!ret_type->isVoidType()) {
     TypeExpr mapped_type = MapType(context, loc_id, ret_type);
     if (!mapped_type.inst_id.has_value()) {
+      context.TODO(loc_id, llvm::formatv("Unsupported: return type: {0}",
+                                         ret_type.getAsString()));
       return {.inst_id = SemIR::ErrorInst::TypeInstId,
               .type_id = SemIR::ErrorInst::TypeId};
     }
@@ -1349,7 +1537,7 @@ static auto GetReturnTypeExpr(Context& context, SemIR::LocId loc_id,
 
   if (!isa<clang::CXXConstructorDecl>(clang_decl)) {
     // void.
-    return {.inst_id = SemIR::TypeInstId::None, .type_id = SemIR::TypeId::None};
+    return TypeExpr::None;
   }
 
   // TODO: Make this a `PartialType`.
@@ -1374,12 +1562,6 @@ static auto GetReturnPattern(Context& context, SemIR::LocId loc_id,
   if (!type_inst_id.has_value()) {
     // void.
     return SemIR::InstId::None;
-  }
-  if (type_inst_id == SemIR::ErrorInst::TypeInstId) {
-    context.TODO(loc_id,
-                 llvm::formatv("Unsupported: return type: {0}",
-                               clang_decl->getReturnType().getAsString()));
-    return SemIR::ErrorInst::InstId;
   }
   auto pattern_type_id = GetPatternType(context, type_id);
   SemIR::InstId return_slot_pattern_id = AddPatternInst(
@@ -1449,6 +1631,29 @@ static auto CreateFunctionParamsInsts(Context& context, SemIR::LocId loc_id,
            .call_params_id = call_params_id}};
 }
 
+// Returns the Carbon function name for the given function.
+static auto GetFunctionName(Context& context, clang::FunctionDecl* clang_decl)
+    -> SemIR::NameId {
+  switch (clang_decl->getDeclName().getNameKind()) {
+    case clang::DeclarationName::CXXConstructorName: {
+      return context.classes()
+          .Get(context.insts()
+                   .GetAs<SemIR::ClassDecl>(LookupClangDeclInstId(
+                       context, cast<clang::Decl>(clang_decl->getParent())))
+                   .class_id)
+          .name_id;
+    }
+
+    case clang::DeclarationName::CXXOperatorName: {
+      return SemIR::NameId::CppOperator;
+    }
+
+    default: {
+      return AddIdentifierName(context, clang_decl->getName());
+    }
+  }
+}
+
 // Creates a `FunctionDecl` and a `Function` without C++ thunk information.
 // Returns std::nullopt on failure. The given Clang declaration is assumed to:
 // * Have not been imported before.
@@ -1477,19 +1682,8 @@ static auto ImportFunction(Context& context, SemIR::LocId loc_id,
       AddPlaceholderInstInNoBlock(context, Parse::NodeId::None, function_decl);
   context.imports().push_back(decl_id);
 
-  SemIR::NameId function_name_id =
-      isa<clang::CXXConstructorDecl>(clang_decl)
-          ? context.classes()
-                .Get(context.insts()
-                         .GetAs<SemIR::ClassDecl>(LookupClangDeclInstId(
-                             context,
-                             cast<clang::Decl>(clang_decl->getParent())))
-                         .class_id)
-                .name_id
-          : AddIdentifierName(context, clang_decl->getName());
-
   auto function_info = SemIR::Function{
-      {.name_id = function_name_id,
+      {.name_id = GetFunctionName(context, clang_decl),
        .parent_scope_id = GetParentNameScopeId(context, clang_decl),
        .generic_id = SemIR::GenericId::None,
        .first_param_node_id = Parse::NodeId::None,
@@ -1615,8 +1809,8 @@ static auto AddDependentUnimportedTypeDecls(const Context& context,
     }
   }
 
-  if (const auto* record_type = type->getAs<clang::RecordType>()) {
-    AddDependentDecl(context, record_type->getDecl(), worklist);
+  if (const auto* tag_type = type->getAs<clang::TagType>()) {
+    AddDependentDecl(context, tag_type->getDecl(), worklist);
   }
 }
 
@@ -1641,7 +1835,7 @@ static auto AddDependentUnimportedDecls(const Context& context,
     AddDependentUnimportedFunctionDecls(context, *clang_function_decl,
                                         worklist);
   } else if (auto* type_decl = dyn_cast<clang::TypeDecl>(clang_decl)) {
-    if (!isa<clang::RecordDecl>(clang_decl)) {
+    if (!isa<clang::TagDecl>(clang_decl)) {
       AddDependentUnimportedTypeDecls(
           context, type_decl->getASTContext().getTypeDeclType(type_decl),
           worklist);
@@ -1687,6 +1881,9 @@ static auto ImportDeclAfterDependencies(Context& context, SemIR::LocId loc_id,
     context.TODO(AddImportIRInst(context.sem_ir(), clang_decl->getLocation()),
                  "Unsupported: field declaration has unhandled type or kind");
     return SemIR::ErrorInst::InstId;
+  }
+  if (auto* enum_const_decl = dyn_cast<clang::EnumConstantDecl>(clang_decl)) {
+    return ImportEnumConstantDecl(context, enum_const_decl);
   }
 
   context.TODO(AddImportIRInst(context.sem_ir(), clang_decl->getLocation()),
@@ -1805,7 +2002,7 @@ auto ImportNameFromCpp(Context& context, SemIR::LocId loc_id,
         builder.Note(loc_id, InCppNameLookup, name_id);
       });
 
-  auto decl_and_access = ClangLookup(context, loc_id, scope_id, name_id);
+  auto decl_and_access = ClangLookupName(context, loc_id, scope_id, name_id);
   if (!decl_and_access) {
     return SemIR::ScopeLookupResult::MakeNotFound();
   }
@@ -1818,6 +2015,58 @@ auto ImportNameFromCpp(Context& context, SemIR::LocId loc_id,
 
   return ImportNameDeclIntoScope(context, loc_id, scope_id, name_id, decl,
                                  access);
+}
+
+static auto GetOperatorKind(Context& context, SemIR::LocId loc_id,
+                            llvm::StringLiteral interface_name)
+    -> std::optional<clang::OverloadedOperatorKind> {
+  if (interface_name == "AddWith") {
+    return clang::OO_Plus;
+  }
+
+  context.TODO(loc_id, llvm::formatv("Unsupported operator interface `{0}`",
+                                     interface_name));
+  return std::nullopt;
+}
+
+auto ImportOperatorFromCpp(Context& context, SemIR::LocId loc_id, Operator op)
+    -> SemIR::ScopeLookupResult {
+  Diagnostics::AnnotationScope annotate_diagnostics(
+      &context.emitter(), [&](auto& builder) {
+        CARBON_DIAGNOSTIC(InCppOperatorLookup, Note,
+                          "in `Cpp` operator `{0}` lookup", std::string);
+        builder.Note(loc_id, InCppOperatorLookup, op.interface_name.str());
+      });
+
+  auto op_kind = GetOperatorKind(context, loc_id, op.interface_name);
+  if (!op_kind) {
+    return SemIR::ScopeLookupResult::MakeNotFound();
+  }
+
+  // TODO: We should do ADL-only lookup for operators
+  // (`Sema::ArgumentDependentLookup`), when we support mapping Carbon types
+  // into C++ types. See
+  // https://github.com/carbon-language/carbon-lang/pull/5996/files/5d01fa69511b76f87efbc0387f5e40abcf4c911a#r2316950123
+  auto decl_and_access = ClangLookupDeclarationName(
+      context, loc_id, SemIR::NameScopeId::None,
+      context.ast_context().DeclarationNames.getCXXOperatorName(*op_kind));
+
+  if (!decl_and_access) {
+    return SemIR::ScopeLookupResult::MakeNotFound();
+  }
+  auto [decl, access] = *decl_and_access;
+  if (!decl) {
+    return SemIR::ScopeLookupResult::MakeError();
+  }
+
+  SemIR::InstId inst_id = ImportDeclAndDependencies(context, loc_id, decl);
+  if (!inst_id.has_value()) {
+    return SemIR::ScopeLookupResult::MakeNotFound();
+  }
+
+  SemIR::AccessKind access_kind = MapAccess(access);
+  return SemIR::ScopeLookupResult::MakeWrappedLookupResult(inst_id,
+                                                           access_kind);
 }
 
 }  // namespace Carbon::Check

@@ -62,6 +62,10 @@ class FunctionContext {
   struct TypeInFile {
     const SemIR::File* file;
     SemIR::TypeId type_id;
+
+    auto GetPointeeType() -> TypeInFile {
+      return {.file = file, .type_id = file->GetPointeeType(type_id)};
+    }
   };
 
   // A value representation in a particular file. By convention, this represents
@@ -193,6 +197,14 @@ class FunctionContext {
 
   // Returns the debug location to associate with the specified instruction.
   auto GetDebugLoc(SemIR::InstId inst_id) -> llvm::DebugLoc;
+
+  // Emits a load of an object representation of type `type`.
+  auto LoadObject(TypeInFile type, llvm::Value* addr, llvm::Twine name = "")
+      -> llvm::Value*;
+
+  // Emits a store of an object representation of type `type`.
+  auto StoreObject(TypeInFile type, llvm::Value* value, llvm::Value* addr)
+      -> void;
 
   // After emitting an initializer `init_id`, finishes performing the
   // initialization of `dest_id` from that initializer. This is a no-op if the

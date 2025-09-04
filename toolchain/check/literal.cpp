@@ -7,6 +7,7 @@
 #include "toolchain/check/call.h"
 #include "toolchain/check/context.h"
 #include "toolchain/check/convert.h"
+#include "toolchain/check/diagnostic_helpers.h"
 #include "toolchain/check/name_lookup.h"
 #include "toolchain/check/type.h"
 #include "toolchain/check/type_completion.h"
@@ -22,6 +23,11 @@ auto MakeIntLiteral(Context& context, Parse::NodeId node_id, IntId int_id)
       context, node_id,
       {.type_id = GetSingletonType(context, SemIR::IntLiteralType::TypeInstId),
        .int_id = int_id});
+}
+
+auto MakeCharTypeLiteral(Context& context, Parse::NodeId node_id)
+    -> SemIR::InstId {
+  return LookupNameInCore(context, node_id, "Char");
 }
 
 auto MakeIntTypeLiteral(Context& context, Parse::NodeId node_id,
@@ -106,23 +112,23 @@ static auto GetStringLiteralRepr(Context& context, SemIR::LocId loc_id,
 
 auto MakeStringLiteral(Context& context, Parse::StringLiteralId node_id,
                        StringLiteralValueId value_id) -> SemIR::InstId {
-  auto str_type_id = MakeStringType(context, node_id);
-  if (!RequireCompleteType(context, str_type_id, node_id, [&] {
+  auto str_type = MakeStringType(context, node_id);
+  if (!RequireCompleteType(context, str_type.type_id, node_id, [&] {
         CARBON_DIAGNOSTIC(StringLiteralTypeIncomplete, Error,
-                          "type {0} is incomplete", SemIR::TypeId);
+                          "type {0} is incomplete", InstIdAsType);
         return context.emitter().Build(node_id, StringLiteralTypeIncomplete,
-                                       str_type_id);
+                                       str_type.inst_id);
       })) {
     return SemIR::ErrorInst::InstId;
   }
 
-  auto repr = GetStringLiteralRepr(context, node_id, str_type_id);
+  auto repr = GetStringLiteralRepr(context, node_id, str_type.type_id);
   if (!repr) {
-    if (str_type_id != SemIR::ErrorInst::TypeId) {
+    if (str_type.type_id != SemIR::ErrorInst::TypeId) {
       CARBON_DIAGNOSTIC(StringLiteralTypeUnexpected, Error,
-                        "unexpected representation for type {0}",
-                        SemIR::TypeId);
-      context.emitter().Emit(node_id, StringLiteralTypeUnexpected, str_type_id);
+                        "unexpected representation for type {0}", InstIdAsType);
+      context.emitter().Emit(node_id, StringLiteralTypeUnexpected,
+                             str_type.inst_id);
     }
     return SemIR::ErrorInst::InstId;
   }
@@ -157,17 +163,18 @@ auto MakeStringLiteral(Context& context, Parse::StringLiteralId node_id,
   // Build the representation struct.
   auto elements_id = context.inst_blocks().Add({ptr_value_id, size_value_id});
   return AddInst<SemIR::StructValue>(
-      context, node_id, {.type_id = str_type_id, .elements_id = elements_id});
+      context, node_id,
+      {.type_id = str_type.type_id, .elements_id = elements_id});
 }
 
-auto MakeStringTypeLiteral(Context& context, Parse::NodeId node_id)
+auto MakeStringTypeLiteral(Context& context, SemIR::LocId loc_id)
     -> SemIR::InstId {
-  return LookupNameInCore(context, node_id, "String");
+  return LookupNameInCore(context, loc_id, "String");
 }
 
-auto MakeStringType(Context& context, Parse::NodeId node_id) -> SemIR::TypeId {
-  auto type_inst_id = MakeStringTypeLiteral(context, node_id);
-  return ExprAsType(context, node_id, type_inst_id).type_id;
+auto MakeStringType(Context& context, SemIR::LocId loc_id) -> TypeExpr {
+  auto type_inst_id = MakeStringTypeLiteral(context, loc_id);
+  return ExprAsType(context, loc_id, type_inst_id);
 }
 
 }  // namespace Carbon::Check

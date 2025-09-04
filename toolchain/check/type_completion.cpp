@@ -143,6 +143,10 @@ class TypeCompleter {
       -> SemIR::CompleteTypeInfo;
 
   auto BuildInfoForInst(SemIR::TypeId /*type_id*/,
+                        SemIR::MaybeUnformedType inst) const
+      -> SemIR::CompleteTypeInfo;
+
+  auto BuildInfoForInst(SemIR::TypeId /*type_id*/,
                         SemIR::PartialType inst) const
       -> SemIR::CompleteTypeInfo;
 
@@ -276,8 +280,9 @@ auto TypeCompleter::AddNestedIncompleteTypes(SemIR::Inst type_inst) -> bool {
       if (!class_info.is_complete() && class_info.scope_id.has_value()) {
         auto& scope = context_->name_scopes().Get(class_info.scope_id);
         if (scope.clang_decl_context_id().has_value()) {
-          if (!ImportCppClassDefinition(*context_, loc_id_, inst.class_id,
-                                        scope.clang_decl_context_id())) {
+          if (!ImportClassDefinitionForClangDecl(
+                  *context_, loc_id_, inst.class_id,
+                  scope.clang_decl_context_id())) {
             // Clang produced a diagnostic. Don't produce one of our own.
             return false;
           }
@@ -311,6 +316,10 @@ auto TypeCompleter::AddNestedIncompleteTypes(SemIR::Inst type_inst) -> bool {
       for (auto field : context_->struct_type_fields().Get(inst.fields_id)) {
         Push(context_->types().GetTypeIdForTypeInstId(field.type_inst_id));
       }
+      break;
+    }
+    case CARBON_KIND(SemIR::MaybeUnformedType inst): {
+      Push(context_->types().GetTypeIdForTypeInstId(inst.inner_id));
       break;
     }
     case CARBON_KIND(SemIR::PartialType inst): {
@@ -535,6 +544,14 @@ auto TypeCompleter::BuildInfoForInst(SemIR::TypeId type_id,
     -> SemIR::CompleteTypeInfo {
   // TODO: Should we support other value representations for custom layout
   // types?
+  return {.value_repr = MakePointerValueRepr(type_id)};
+}
+
+auto TypeCompleter::BuildInfoForInst(SemIR::TypeId type_id,
+                                     SemIR::MaybeUnformedType /*inst*/) const
+    -> SemIR::CompleteTypeInfo {
+  // `MaybeUnformed(T)` always has a pointer value representation, regardless of
+  // `T`'s value representation.
   return {.value_repr = MakePointerValueRepr(type_id)};
 }
 

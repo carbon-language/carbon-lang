@@ -182,7 +182,7 @@ struct Assign {
 struct AssociatedConstantDecl {
   static constexpr auto Kind =
       InstKind::AssociatedConstantDecl
-          .Define<Parse::CompileTimeBindingPatternId>(
+          .Define<Parse::AssociatedConstantNameAndTypeId>(
               {.ir_name = "assoc_const_decl",
                .constant_kind = InstConstantKind::AlwaysUnique,
                .is_lowered = false});
@@ -1017,6 +1017,26 @@ struct ImportRefLoaded {
   EntityNameId entity_name_id;
 };
 
+// Tracks that an object has been initialized in-place to form the result of
+// this expression, even if its type's initializing representation is not
+// normally in-place. If the type does not use in-place initialization,
+// initialization from this expression will copy the value out of the
+// destination.
+//
+// This is used to model the initialization performed by C++ thunks, where
+// in-place initialization is used even for types that would normally have a
+// copy initializing representation.
+struct InPlaceInit {
+  static constexpr auto Kind = InstKind::InPlaceInit.Define<Parse::NodeId>(
+      {.ir_name = "in_place_init", .constant_kind = InstConstantKind::Never});
+
+  TypeId type_id;
+  // Used only to track the source of the initialization; this has no semantic
+  // meaning.
+  InstId src_id;
+  DestInstId dest_id;
+};
+
 // Finalizes the initialization of `dest_id` from the initializer expression
 // `src_id`, by performing a final copy from source to destination, for types
 // whose initialization is not in-place.
@@ -1140,6 +1160,21 @@ struct LookupImplWitness {
   // The self type (or facet value) and interface of the impl lookup query.
   InstId query_self_inst_id;
   SpecificInterfaceId query_specific_interface_id;
+};
+
+// A type that holds an object representation of another type, that may or may
+// not be a valid representation. In particular, it may also hold an unformed
+// state.
+struct MaybeUnformedType {
+  static constexpr auto Kind =
+      InstKind::MaybeUnformedType.Define<Parse::NodeId>({
+          .ir_name = "maybe_unformed_type",
+          .is_type = InstIsType::Always,
+          .constant_kind = InstConstantKind::WheneverPossible,
+      });
+
+  TypeId type_id;
+  TypeInstId inner_id;
 };
 
 // A name-binding declaration, i.e. a declaration introduced with `let` or
