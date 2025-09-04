@@ -1635,6 +1635,21 @@ static auto PerformBuiltinBoolComparison(
                             : lhs != rhs);
 }
 
+// Performs a builtin query of whether the type of the arg is `InstT`. Used for
+// `TypeIsStruct` and `TypeIsTuple`.
+template <typename InstT>
+static auto TypeIs(EvalContext& eval_context, SemIR::Call call,
+                   llvm::ArrayRef<SemIR::InstId> arg_ids, Phase phase)
+    -> SemIR::ConstantId {
+  if (phase != Phase::Concrete) {
+    return MakeConstantResult(eval_context.context(), call, phase);
+  }
+  CARBON_CHECK(arg_ids.size() == 1);
+  auto arg = eval_context.insts().Get(
+      eval_context.constant_values().GetConstantInstId(arg_ids[0]));
+  return MakeBoolResult(eval_context.context(), call.type_id, arg.Is<InstT>());
+}
+
 // Returns a constant for a call to a builtin function.
 static auto MakeConstantForBuiltinCall(EvalContext& eval_context,
                                        SemIR::LocId loc_id, SemIR::Call call,
@@ -1646,7 +1661,8 @@ static auto MakeConstantForBuiltinCall(EvalContext& eval_context,
     case SemIR::BuiltinFunctionKind::None:
       CARBON_FATAL("Not a builtin function.");
 
-    case SemIR::BuiltinFunctionKind::NoOp: {
+    case SemIR::BuiltinFunctionKind::NoOp:
+    case SemIR::BuiltinFunctionKind::TypeDestroyStructAndTuple: {
       // Return an empty tuple value.
       auto type_id = GetTupleType(eval_context.context(), {});
       return MakeConstantResult(
@@ -1654,6 +1670,13 @@ static auto MakeConstantForBuiltinCall(EvalContext& eval_context,
           SemIR::TupleValue{.type_id = type_id,
                             .elements_id = SemIR::InstBlockId::Empty},
           phase);
+    }
+
+    case SemIR::BuiltinFunctionKind::TypeIsStruct: {
+      return TypeIs<SemIR::StructType>(eval_context, call, arg_ids, phase);
+    }
+    case SemIR::BuiltinFunctionKind::TypeIsTuple: {
+      return TypeIs<SemIR::TupleType>(eval_context, call, arg_ids, phase);
     }
 
     case SemIR::BuiltinFunctionKind::PrintChar:

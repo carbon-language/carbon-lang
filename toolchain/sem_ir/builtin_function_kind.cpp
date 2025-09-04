@@ -153,6 +153,24 @@ struct AnyFloat {
   }
 };
 
+// Constraint that requires the type to be a tuple type.
+struct AnySymbolicName {
+  static auto Check(const File& sem_ir, ValidateState& /*state*/,
+                    TypeId type_id) -> bool {
+    auto name = sem_ir.types().TryGetAs<BindSymbolicName>(type_id);
+    return name && !name->value_id.has_value();
+  }
+};
+
+// Constraint that allows an arbitrary type.
+// TODO: May be able to do this better.
+struct AnyType {
+  static auto Check(const File& /*sem_ir*/, ValidateState& /*state*/,
+                    TypeId /*type_id*/) -> bool {
+    return true;
+  }
+};
+
 // Constraint that requires the type to be the type type.
 using Type = BuiltinType<TypeType::TypeInstId>;
 
@@ -581,6 +599,21 @@ constexpr BuiltinInfo BoolNeq = {"bool.neq",
 constexpr BuiltinInfo TypeAnd = {"type.and",
                                  ValidateSignature<auto(Type, Type)->Type>};
 
+// Struct query.
+constexpr BuiltinInfo TypeIsStruct = {"type.is_struct",
+                                      ValidateSignature<auto(Type)->Bool>};
+
+// Tuple query.
+constexpr BuiltinInfo TypeIsTuple = {"type.is_tuple",
+                                     ValidateSignature<auto(Type)->Bool>};
+
+// Destroys a struct or tuple. Both need to be supported by a single function.
+// TODO: The argument should be `addr self: Self*`. Consider modifying
+// `ValidateSignature` to more fully enforce the structure.
+constexpr BuiltinInfo TypeDestroyStructAndTuple = {
+    "type.destroy_struct_and_tuple",
+    ValidateSignature<auto(PointerTo<AnySymbolicName>)->NoReturn>};
+
 }  // namespace BuiltinFunctionInfo
 
 CARBON_DEFINE_ENUM_CLASS_NAMES(BuiltinFunctionKind) = {
@@ -691,6 +724,11 @@ auto BuiltinFunctionKind::IsCompTimeOnly(const File& sem_ir,
       return AnyLiteralTypes(sem_ir, arg_ids, return_type_id);
 
     case TypeAnd:
+      return true;
+
+    case TypeIsStruct:
+    case TypeIsTuple:
+      // Type queries must be compile-time.
       return true;
 
     default:

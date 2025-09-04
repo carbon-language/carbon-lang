@@ -122,4 +122,11 @@ CARBON_SEM_IR_BUILTIN_FUNCTION_KIND(BoolNeq)
 // Facet type combination.
 CARBON_SEM_IR_BUILTIN_FUNCTION_KIND(TypeAnd)
 
+// Struct and tuple queries.
+CARBON_SEM_IR_BUILTIN_FUNCTION_KIND(TypeIsStruct)
+CARBON_SEM_IR_BUILTIN_FUNCTION_KIND(TypeIsTuple)
+
+// Struct and tuple destruction.
+CARBON_SEM_IR_BUILTIN_FUNCTION_KIND(TypeDestroyStructAndTuple)
+
 #undef CARBON_SEM_IR_BUILTIN_FUNCTION_KIND
