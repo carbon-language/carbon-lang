@@ -23,7 +23,7 @@ class C {
   void F(decltype(d));
 };
 
-// --- copy_enum.carbon
+// --- fail_todo_copy_enum.carbon
 
 library "[[@TEST_NAME]]";
 
@@ -37,7 +37,7 @@ fn G() {
 }
 //@dump-sem-ir-end
 
-// CHECK:STDOUT: --- copy_enum.carbon
+// CHECK:STDOUT: --- fail_todo_copy_enum.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %G.type: type = fn_type @G [concrete]

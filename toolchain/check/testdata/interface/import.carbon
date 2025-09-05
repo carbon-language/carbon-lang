@@ -2,7 +2,7 @@
 // Exceptions. See /LICENSE for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
-// INCLUDE-FILE: toolchain/testing/testdata/min_prelude/none.carbon
+// INCLUDE-FILE: toolchain/testing/testdata/min_prelude/convert.carbon
 // TODO: Add ranges and switch to "--dump-sem-ir-ranges=only".
 // EXTRA-ARGS: --dump-sem-ir-ranges=if-present
 //
@@ -75,13 +75,22 @@ var f: ForwardDeclared* = &f_ref.f;
 // CHECK:STDOUT:   %pattern_type: type = pattern_type %struct_type.f [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
+// CHECK:STDOUT: imports {
+// CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [concrete] {
+// CHECK:STDOUT:     import Core//prelude
+// CHECK:STDOUT:     import Core//prelude/...
+// CHECK:STDOUT:   }
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace [concrete] {
+// CHECK:STDOUT:     .Core = imports.%Core
 // CHECK:STDOUT:     .Empty = %Empty.decl
 // CHECK:STDOUT:     .Basic = %Basic.decl
 // CHECK:STDOUT:     .ForwardDeclared = %ForwardDeclared.decl
 // CHECK:STDOUT:     .f_ref = %f_ref
 // CHECK:STDOUT:   }
+// CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %Empty.decl: type = interface_decl @Empty [concrete = constants.%Empty.type] {} {}
 // CHECK:STDOUT:   %Basic.decl: type = interface_decl @Basic [concrete = constants.%Basic.type] {} {}
 // CHECK:STDOUT:   %ForwardDeclared.decl: type = interface_decl @ForwardDeclared [concrete = constants.%ForwardDeclared.type] {} {}
@@ -180,12 +189,25 @@ var f: ForwardDeclared* = &f_ref.f;
 // CHECK:STDOUT:   %ForwardDeclared.assoc_type: type = assoc_entity_type @ForwardDeclared [concrete]
 // CHECK:STDOUT:   %assoc0.d40: %ForwardDeclared.assoc_type = assoc_entity element0, imports.%Main.import_ref.69a [concrete]
 // CHECK:STDOUT:   %assoc1.e3d: %ForwardDeclared.assoc_type = assoc_entity element1, imports.%Main.import_ref.1cc [concrete]
-// CHECK:STDOUT:   %ptr: type = ptr_type %ForwardDeclared.type [concrete]
-// CHECK:STDOUT:   %pattern_type.97e: type = pattern_type %ptr [concrete]
+// CHECK:STDOUT:   %ptr.fce: type = ptr_type %ForwardDeclared.type [concrete]
+// CHECK:STDOUT:   %pattern_type.97e: type = pattern_type %ptr.fce [concrete]
 // CHECK:STDOUT:   %struct_type.f: type = struct_type {.f: %ForwardDeclared.type} [concrete]
 // CHECK:STDOUT:   %pattern_type.e3b: type = pattern_type %struct_type.f [concrete]
 // CHECK:STDOUT:   %.7e4: ref %ForwardDeclared.type = struct_access imports.%f_ref.var, element0 [concrete]
-// CHECK:STDOUT:   %addr: %ptr = addr_of %.7e4 [concrete]
+// CHECK:STDOUT:   %addr: %ptr.fce = addr_of %.7e4 [concrete]
+// CHECK:STDOUT:   %Copy.type: type = facet_type <@Copy> [concrete]
+// CHECK:STDOUT:   %Copy.Op.type: type = fn_type @Copy.Op [concrete]
+// CHECK:STDOUT:   %T.8b3: type = bind_symbolic_name T, 0 [symbolic]
+// CHECK:STDOUT:   %ptr.as.Copy.impl.Op.type.915: type = fn_type @ptr.as.Copy.impl.Op, @ptr.as.Copy.impl(%T.8b3) [symbolic]
+// CHECK:STDOUT:   %ptr.as.Copy.impl.Op.895: %ptr.as.Copy.impl.Op.type.915 = struct_value () [symbolic]
+// CHECK:STDOUT:   %Copy.impl_witness.5b1: <witness> = impl_witness imports.%Copy.impl_witness_table.5cd, @ptr.as.Copy.impl(%ForwardDeclared.type) [concrete]
+// CHECK:STDOUT:   %ptr.as.Copy.impl.Op.type.780: type = fn_type @ptr.as.Copy.impl.Op, @ptr.as.Copy.impl(%ForwardDeclared.type) [concrete]
+// CHECK:STDOUT:   %ptr.as.Copy.impl.Op.f1b: %ptr.as.Copy.impl.Op.type.780 = struct_value () [concrete]
+// CHECK:STDOUT:   %Copy.facet.6f6: %Copy.type = facet_value %ptr.fce, (%Copy.impl_witness.5b1) [concrete]
+// CHECK:STDOUT:   %.165: type = fn_type_with_self_type %Copy.Op.type, %Copy.facet.6f6 [concrete]
+// CHECK:STDOUT:   %ptr.as.Copy.impl.Op.bound: <bound method> = bound_method %addr, %ptr.as.Copy.impl.Op.f1b [concrete]
+// CHECK:STDOUT:   %ptr.as.Copy.impl.Op.specific_fn: <specific function> = specific_function %ptr.as.Copy.impl.Op.f1b, @ptr.as.Copy.impl.Op(%ForwardDeclared.type) [concrete]
+// CHECK:STDOUT:   %bound_method: <bound method> = bound_method %addr, %ptr.as.Copy.impl.Op.specific_fn [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -193,13 +215,18 @@ var f: ForwardDeclared* = &f_ref.f;
 // CHECK:STDOUT:   %Main.Basic: type = import_ref Main//a, Basic, loaded [concrete = constants.%Basic.type]
 // CHECK:STDOUT:   %Main.ForwardDeclared: type = import_ref Main//a, ForwardDeclared, loaded [concrete = constants.%ForwardDeclared.type]
 // CHECK:STDOUT:   %Main.f_ref: ref %struct_type.f = import_ref Main//a, f_ref, loaded [concrete = %f_ref.var]
-// CHECK:STDOUT:   %Main.import_ref.cc0 = import_ref Main//a, inst17 [no loc], unloaded
-// CHECK:STDOUT:   %Main.import_ref.37f = import_ref Main//a, inst22 [no loc], unloaded
+// CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [concrete] {
+// CHECK:STDOUT:     .Copy = %Core.Copy
+// CHECK:STDOUT:     import Core//prelude
+// CHECK:STDOUT:     import Core//prelude/...
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %Main.import_ref.cc0 = import_ref Main//a, inst19 [no loc], unloaded
+// CHECK:STDOUT:   %Main.import_ref.37f = import_ref Main//a, inst24 [no loc], unloaded
 // CHECK:STDOUT:   %Main.import_ref.3d5: %Basic.assoc_type = import_ref Main//a, loc8_8, loaded [concrete = constants.%assoc0.fee]
 // CHECK:STDOUT:   %Main.import_ref.760: %Basic.assoc_type = import_ref Main//a, loc9_9, loaded [concrete = constants.%assoc1.4ea]
 // CHECK:STDOUT:   %Main.T.44f = import_ref Main//a, T, unloaded
 // CHECK:STDOUT:   %Main.F.eea = import_ref Main//a, F, unloaded
-// CHECK:STDOUT:   %Main.import_ref.52b = import_ref Main//a, inst37 [no loc], unloaded
+// CHECK:STDOUT:   %Main.import_ref.52b = import_ref Main//a, inst39 [no loc], unloaded
 // CHECK:STDOUT:   %Main.import_ref.ad1: %ForwardDeclared.assoc_type = import_ref Main//a, loc16_8, loaded [concrete = constants.%assoc0.d40]
 // CHECK:STDOUT:   %Main.import_ref.339: %ForwardDeclared.assoc_type = import_ref Main//a, loc17_9, loaded [concrete = constants.%assoc1.e3d]
 // CHECK:STDOUT:   %Main.T.6ee = import_ref Main//a, T, unloaded
@@ -211,6 +238,9 @@ var f: ForwardDeclared* = &f_ref.f;
 // CHECK:STDOUT:   %f_ref.patt: %pattern_type.e3b = binding_pattern f_ref [concrete]
 // CHECK:STDOUT:   %f_ref.var_patt: %pattern_type.e3b = var_pattern %f_ref.patt [concrete]
 // CHECK:STDOUT:   %f_ref.var: ref %struct_type.f = var %f_ref.var_patt [concrete]
+// CHECK:STDOUT:   %Core.Copy: type = import_ref Core//prelude/parts/copy, Copy, loaded [concrete = constants.%Copy.type]
+// CHECK:STDOUT:   %Core.import_ref.27b: @ptr.as.Copy.impl.%ptr.as.Copy.impl.Op.type (%ptr.as.Copy.impl.Op.type.915) = import_ref Core//prelude/parts/copy, loc32_31, loaded [symbolic = @ptr.as.Copy.impl.%ptr.as.Copy.impl.Op (constants.%ptr.as.Copy.impl.Op.895)]
+// CHECK:STDOUT:   %Copy.impl_witness_table.5cd = impl_witness_table (%Core.import_ref.27b), @ptr.as.Copy.impl [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -219,6 +249,7 @@ var f: ForwardDeclared* = &f_ref.f;
 // CHECK:STDOUT:     .Basic = imports.%Main.Basic
 // CHECK:STDOUT:     .ForwardDeclared = imports.%Main.ForwardDeclared
 // CHECK:STDOUT:     .f_ref = imports.%Main.f_ref
+// CHECK:STDOUT:     .Core = imports.%Core
 // CHECK:STDOUT:     .UseEmpty = %UseEmpty.decl
 // CHECK:STDOUT:     .UseBasic = %UseBasic.decl
 // CHECK:STDOUT:     .UseForwardDeclared = %UseForwardDeclared.decl
@@ -228,6 +259,7 @@ var f: ForwardDeclared* = &f_ref.f;
 // CHECK:STDOUT:     .UseForwardDeclaredF = %UseForwardDeclaredF
 // CHECK:STDOUT:     .f = %f
 // CHECK:STDOUT:   }
+// CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %default.import = import <none>
 // CHECK:STDOUT:   %UseEmpty.decl: %UseEmpty.type = fn_decl @UseEmpty [concrete = constants.%UseEmpty] {
 // CHECK:STDOUT:     %e.patt: %pattern_type.6c3 = binding_pattern e [concrete]
@@ -269,12 +301,12 @@ var f: ForwardDeclared* = &f_ref.f;
 // CHECK:STDOUT:     %f.patt: %pattern_type.97e = binding_pattern f [concrete]
 // CHECK:STDOUT:     %f.var_patt: %pattern_type.97e = var_pattern %f.patt [concrete]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %f.var: ref %ptr = var %f.var_patt [concrete]
-// CHECK:STDOUT:   %.loc16: type = splice_block %ptr [concrete = constants.%ptr] {
+// CHECK:STDOUT:   %f.var: ref %ptr.fce = var %f.var_patt [concrete]
+// CHECK:STDOUT:   %.loc16: type = splice_block %ptr [concrete = constants.%ptr.fce] {
 // CHECK:STDOUT:     %ForwardDeclared.ref.loc16: type = name_ref ForwardDeclared, imports.%Main.ForwardDeclared [concrete = constants.%ForwardDeclared.type]
-// CHECK:STDOUT:     %ptr: type = ptr_type %ForwardDeclared.ref.loc16 [concrete = constants.%ptr]
+// CHECK:STDOUT:     %ptr: type = ptr_type %ForwardDeclared.ref.loc16 [concrete = constants.%ptr.fce]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %f: ref %ptr = bind_name f, %f.var [concrete = %f.var]
+// CHECK:STDOUT:   %f: ref %ptr.fce = bind_name f, %f.var [concrete = %f.var]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: interface @Empty [from "a.carbon"] {
@@ -318,8 +350,13 @@ var f: ForwardDeclared* = &f_ref.f;
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %f_ref.ref: ref %struct_type.f = name_ref f_ref, imports.%Main.f_ref [concrete = imports.%f_ref.var]
 // CHECK:STDOUT:   %.loc16: ref %ForwardDeclared.type = struct_access %f_ref.ref, element0 [concrete = constants.%.7e4]
-// CHECK:STDOUT:   %addr: %ptr = addr_of %.loc16 [concrete = constants.%addr]
-// CHECK:STDOUT:   assign file.%f.var, %addr
+// CHECK:STDOUT:   %addr: %ptr.fce = addr_of %.loc16 [concrete = constants.%addr]
+// CHECK:STDOUT:   %impl.elem0: %.165 = impl_witness_access constants.%Copy.impl_witness.5b1, element0 [concrete = constants.%ptr.as.Copy.impl.Op.f1b]
+// CHECK:STDOUT:   %bound_method.loc16_27.1: <bound method> = bound_method %addr, %impl.elem0 [concrete = constants.%ptr.as.Copy.impl.Op.bound]
+// CHECK:STDOUT:   %specific_fn: <specific function> = specific_function %impl.elem0, @ptr.as.Copy.impl.Op(constants.%ForwardDeclared.type) [concrete = constants.%ptr.as.Copy.impl.Op.specific_fn]
+// CHECK:STDOUT:   %bound_method.loc16_27.2: <bound method> = bound_method %addr, %specific_fn [concrete = constants.%bound_method]
+// CHECK:STDOUT:   %ptr.as.Copy.impl.Op.call: init %ptr.fce = call %bound_method.loc16_27.2(%addr) [concrete = constants.%addr]
+// CHECK:STDOUT:   assign file.%f.var, %ptr.as.Copy.impl.Op.call
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
