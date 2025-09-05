@@ -32,7 +32,8 @@ Context::Context(
       vlog_stream_(vlog_stream),
       total_ir_count_(total_ir_count),
       file_contexts_(
-          FileContexts::MakeForOverwriteWithExplicitSize(total_ir_count_)) {}
+          FileContextStore::MakeForOverwriteWithExplicitSize(total_ir_count_)) {
+}
 
 auto Context::GetFileContext(const SemIR::File* file,
                              const SemIR::InstNamer* inst_namer)

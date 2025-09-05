@@ -146,9 +146,9 @@ class Context {
   int total_ir_count_;
 
   // The `FileContext`s for each IR that is involved in this lowering action.
-  using FileContexts =
+  using FileContextStore =
       FixedSizeValueStore<SemIR::CheckIRId, std::unique_ptr<FileContext>>;
-  FileContexts file_contexts_;
+  FileContextStore file_contexts_;
 
   // Lowered version of the builtin type `type`.
   llvm::StructType* type_type_ = nullptr;
