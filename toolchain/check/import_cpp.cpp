@@ -2017,9 +2017,9 @@ auto ImportNameFromCpp(Context& context, SemIR::LocId loc_id,
                                  access);
 }
 
-static auto GetOperatorKind(Context& context, SemIR::LocId loc_id,
-                            llvm::StringLiteral interface_name,
-                            llvm::StringLiteral op_name)
+static auto GetClangOperatorKind(Context& context, SemIR::LocId loc_id,
+                                 llvm::StringLiteral interface_name,
+                                 llvm::StringLiteral op_name)
     -> std::optional<clang::OverloadedOperatorKind> {
   // Arithmetic Operators.
   if (interface_name == "AddWith") {
@@ -2141,7 +2141,7 @@ auto ImportOperatorFromCpp(Context& context, SemIR::LocId loc_id, Operator op)
       });
 
   auto op_kind =
-      GetOperatorKind(context, loc_id, op.interface_name, op.op_name);
+      GetClangOperatorKind(context, loc_id, op.interface_name, op.op_name);
   if (!op_kind) {
     return SemIR::ScopeLookupResult::MakeNotFound();
   }
