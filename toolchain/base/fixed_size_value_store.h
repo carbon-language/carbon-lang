@@ -56,9 +56,8 @@ class FixedSizeValueStore {
 
   // Makes a ValueStore of the specified size, initialized to values returned
   // from a callback. This allows initializing non-copyable values.
-  template <typename Callable>
-    requires std::convertible_to<std::invoke_result_t<Callable>, ValueT>
-  static auto MakeWithExplicitSizeFrom(size_t size, Callable callable)
+  static auto MakeWithExplicitSizeFrom(
+      size_t size, llvm::function_ref<auto()->ValueT> callable)
       -> FixedSizeValueStore {
     FixedSizeValueStore store;
     store.values_.reserve(size);
