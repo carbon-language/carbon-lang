@@ -21,6 +21,7 @@
 #include "toolchain/sem_ir/associated_constant.h"
 #include "toolchain/sem_ir/class.h"
 #include "toolchain/sem_ir/constant.h"
+#include "toolchain/sem_ir/cpp_overload_set.h"
 #include "toolchain/sem_ir/entity_name.h"
 #include "toolchain/sem_ir/facet_type_info.h"
 #include "toolchain/sem_ir/function.h"
@@ -33,7 +34,6 @@
 #include "toolchain/sem_ir/interface.h"
 #include "toolchain/sem_ir/name.h"
 #include "toolchain/sem_ir/name_scope.h"
-#include "toolchain/sem_ir/overloaded_cpp_function.h"
 #include "toolchain/sem_ir/singleton_insts.h"
 #include "toolchain/sem_ir/specific_interface.h"
 #include "toolchain/sem_ir/struct_type_field.h"
@@ -156,11 +156,11 @@ class File : public Printable<File> {
   auto entity_names() const -> const EntityNameStore& { return entity_names_; }
   auto functions() -> FunctionStore& { return functions_; }
   auto functions() const -> const FunctionStore& { return functions_; }
-  auto overloaded_cpp_functions() -> OverloadedCppFunctionStore& {
-    return overloaded_cpp_functions_;
+  auto cpp_overload_sets() -> CppOverloadSetStore& {
+    return cpp_overload_sets_;
   }
-  auto overloaded_cpp_functions() const -> const OverloadedCppFunctionStore& {
-    return overloaded_cpp_functions_;
+  auto cpp_overload_sets() const -> const CppOverloadSetStore& {
+    return cpp_overload_sets_;
   }
   auto classes() -> ClassStore& { return classes_; }
   auto classes() const -> const ClassStore& { return classes_; }
@@ -304,8 +304,8 @@ class File : public Printable<File> {
   // Storage for callable objects.
   FunctionStore functions_;
 
-  // Storage for OverloadedFunctions.
-  OverloadedCppFunctionStore overloaded_cpp_functions_;
+  // Storage for CppOverloadSet.
+  CppOverloadSetStore cpp_overload_sets_;
 
   // Storage for classes.
   ClassStore classes_;

@@ -2,8 +2,8 @@
 // Exceptions. See /LICENSE for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
-#ifndef CARBON_TOOLCHAIN_SEM_IR_OVERLOADED_CPP_FUNCTION_H_
-#define CARBON_TOOLCHAIN_SEM_IR_OVERLOADED_CPP_FUNCTION_H_
+#ifndef CARBON_TOOLCHAIN_SEM_IR_CPP_OVERLOAD_SET_H_
+#define CARBON_TOOLCHAIN_SEM_IR_CPP_OVERLOAD_SET_H_
 
 #include "clang/AST/Decl.h"
 #include "clang/AST/UnresolvedSet.h"
@@ -14,7 +14,7 @@
 namespace Carbon::SemIR {
 
 // An overloaded C++ function.
-struct OverloadedCppFunction : public Printable<OverloadedCppFunction> {
+struct CppOverloadSet : public Printable<CppOverloadSet> {
   // The function's name.
   NameId name_id;
 
@@ -29,9 +29,8 @@ struct OverloadedCppFunction : public Printable<OverloadedCppFunction> {
   }
 };
 
-using OverloadedCppFunctionStore =
-    ValueStore<OverloadedCppFunctionId, OverloadedCppFunction>;
+using CppOverloadSetStore = ValueStore<CppOverloadSetId, CppOverloadSet>;
 
 }  // namespace Carbon::SemIR
 
-#endif  // CARBON_TOOLCHAIN_SEM_IR_OVERLOADED_CPP_FUNCTION_H_
+#endif  // CARBON_TOOLCHAIN_SEM_IR_CPP_OVERLOAD_SET_H_

@@ -381,13 +381,13 @@ class Stringifier {
     }
   }
 
-  auto StringifyInst(InstId /*inst_id*/, OverloadedCppFunctionType inst)
-      -> void {
-    const auto& fn =
-        sem_ir_->overloaded_cpp_functions().Get(inst.overloaded_function_id);
+  auto StringifyInst(InstId /*inst_id*/, CppOverloadSetType inst) -> void {
+    const auto& overload_set =
+        sem_ir_->cpp_overload_sets().Get(inst.overload_set_id);
     *out_ << "<type of ";
-    step_stack_->Push(
-        StepStack::QualifiedNameItem{fn.parent_scope_id, fn.name_id}, ">");
+    step_stack_->Push(StepStack::QualifiedNameItem{overload_set.parent_scope_id,
+                                                   overload_set.name_id},
+                      ">");
   }
 
   auto StringifyInst(InstId /*inst_id*/, FunctionType inst) -> void {

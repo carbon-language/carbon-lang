@@ -73,16 +73,16 @@ fn G() -> str {
 // CHECK:STDOUT:   %int_8: Core.IntLiteral = int_value 8 [concrete]
 // CHECK:STDOUT:   %u8: type = class_type @UInt, @UInt(%int_8) [concrete]
 // CHECK:STDOUT:   %ptr.3e8: type = ptr_type %u8 [concrete]
-// CHECK:STDOUT:   %.f1f: type = overloaded_cpp_fn_type @Produce [concrete]
-// CHECK:STDOUT:   %empty_struct.aeb: %.f1f = struct_value () [concrete]
+// CHECK:STDOUT:   %.fd2: type = cpp_overload_set_type @Produce [concrete]
+// CHECK:STDOUT:   %empty_struct.c28: %.fd2 = struct_value () [concrete]
 // CHECK:STDOUT:   %str: %ptr.3e8 = string_literal "hello" [concrete]
 // CHECK:STDOUT:   %int_5: %u64 = int_value 5 [concrete]
 // CHECK:STDOUT:   %String.val: %String = struct_value (%str, %int_5) [concrete]
 // CHECK:STDOUT:   %pattern_type.461: type = pattern_type %String [concrete]
 // CHECK:STDOUT:   %G.type: type = fn_type @G [concrete]
 // CHECK:STDOUT:   %G: %G.type = struct_value () [concrete]
-// CHECK:STDOUT:   %.b53: type = overloaded_cpp_fn_type @Produce__carbon_thunk [concrete]
-// CHECK:STDOUT:   %empty_struct.848: %.b53 = struct_value () [concrete]
+// CHECK:STDOUT:   %.a47: type = cpp_overload_set_type @Produce__carbon_thunk [concrete]
+// CHECK:STDOUT:   %empty_struct.ab9: %.a47 = struct_value () [concrete]
 // CHECK:STDOUT:   %ptr.85f: type = ptr_type %String [concrete]
 // CHECK:STDOUT:   %Produce__carbon_thunk.type: type = fn_type @Produce__carbon_thunk [concrete]
 // CHECK:STDOUT:   %Produce__carbon_thunk: %Produce__carbon_thunk.type = struct_value () [concrete]
@@ -92,12 +92,12 @@ fn G() -> str {
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT:   %Cpp: <namespace> = namespace file.%Cpp.import_cpp, [concrete] {
-// CHECK:STDOUT:     .Consume = %.345
-// CHECK:STDOUT:     .Produce = %.9e9
+// CHECK:STDOUT:     .Consume = %.f17
+// CHECK:STDOUT:     .Produce = %.5d1
 // CHECK:STDOUT:     import Cpp//...
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %.345: %.f1f = overloaded_cpp_fn_decl @Produce [concrete = constants.%empty_struct.aeb]
-// CHECK:STDOUT:   %.9e9: %.b53 = overloaded_cpp_fn_decl @Produce__carbon_thunk [concrete = constants.%empty_struct.848]
+// CHECK:STDOUT:   %.f17: %.fd2 = cpp_overload_set_value @Produce [concrete = constants.%empty_struct.c28]
+// CHECK:STDOUT:   %.5d1: %.a47 = cpp_overload_set_value @Produce__carbon_thunk [concrete = constants.%empty_struct.ab9]
 // CHECK:STDOUT:   %Produce__carbon_thunk.decl: %Produce__carbon_thunk.type = fn_decl @Produce__carbon_thunk [concrete = constants.%Produce__carbon_thunk] {
 // CHECK:STDOUT:     <elided>
 // CHECK:STDOUT:   } {
@@ -119,7 +119,7 @@ fn G() -> str {
 // CHECK:STDOUT: fn @F() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %Cpp.ref: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
-// CHECK:STDOUT:   %Consume.ref: %.f1f = name_ref Consume, imports.%.345 [concrete = constants.%empty_struct.aeb]
+// CHECK:STDOUT:   %Consume.ref: %.fd2 = name_ref Consume, imports.%.f17 [concrete = constants.%empty_struct.c28]
 // CHECK:STDOUT:   %str: %ptr.3e8 = string_literal "hello" [concrete = constants.%str]
 // CHECK:STDOUT:   %int_5: %u64 = int_value 5 [concrete = constants.%int_5]
 // CHECK:STDOUT:   %String.val: %String = struct_value (%str, %int_5) [concrete = constants.%String.val]
@@ -129,7 +129,7 @@ fn G() -> str {
 // CHECK:STDOUT: fn @G() -> %return.param: %String {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %Cpp.ref: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
-// CHECK:STDOUT:   %Produce.ref: %.b53 = name_ref Produce, imports.%.9e9 [concrete = constants.%empty_struct.848]
+// CHECK:STDOUT:   %Produce.ref: %.a47 = name_ref Produce, imports.%.5d1 [concrete = constants.%empty_struct.ab9]
 // CHECK:STDOUT:   %.loc20: ref %String = splice_block %return {}
 // CHECK:STDOUT:   %addr.loc21: %ptr.85f = addr_of %.loc20
 // CHECK:STDOUT:   %Produce__carbon_thunk.call: init %empty_tuple.type = call imports.%Produce__carbon_thunk.decl(%addr.loc21)

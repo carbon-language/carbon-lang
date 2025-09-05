@@ -796,25 +796,25 @@ struct FunctionTypeWithSelfType {
 };
 
 // An overloaded C++ function declaration.
-struct OverloadedCppFunctionDecl {
+struct CppOverloadSetValue {
   static constexpr auto Kind =
-      InstKind::OverloadedCppFunctionDecl.Define<Parse::AnyFunctionDeclId>(
-          {.ir_name = "overloaded_cpp_fn_decl", .is_lowered = false});
+      InstKind::CppOverloadSetValue.Define<Parse::AnyFunctionDeclId>(
+          {.ir_name = "cpp_overload_set_value", .is_lowered = false});
 
   TypeId type_id;
-  OverloadedCppFunctionId overloaded_function_id;
+  CppOverloadSetId overload_set_id;
 };
 
 // The type of an overloaded C++ function.
-struct OverloadedCppFunctionType {
+struct CppOverloadSetType {
   static constexpr auto Kind =
-      InstKind::OverloadedCppFunctionType.Define<Parse::AnyFunctionDeclId>(
-          {.ir_name = "overloaded_cpp_fn_type",
+      InstKind::CppOverloadSetType.Define<Parse::AnyFunctionDeclId>(
+          {.ir_name = "cpp_overload_set_type",
            .is_type = InstIsType::Always,
            .constant_kind = InstConstantKind::WheneverPossible});
 
   TypeId type_id;
-  OverloadedCppFunctionId overloaded_function_id;
+  CppOverloadSetId overload_set_id;
   SpecificId specific_id;
 };
 

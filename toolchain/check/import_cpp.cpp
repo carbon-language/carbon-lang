@@ -48,11 +48,11 @@
 #include "toolchain/parse/node_ids.h"
 #include "toolchain/sem_ir/clang_decl.h"
 #include "toolchain/sem_ir/class.h"
+#include "toolchain/sem_ir/cpp_overload_set.h"
 #include "toolchain/sem_ir/function.h"
 #include "toolchain/sem_ir/ids.h"
 #include "toolchain/sem_ir/inst.h"
 #include "toolchain/sem_ir/name_scope.h"
-#include "toolchain/sem_ir/overloaded_cpp_function.h"
 #include "toolchain/sem_ir/typed_insts.h"
 
 namespace Carbon::Check {
@@ -1891,38 +1891,40 @@ static auto ImportNameDeclIntoScope(Context& context, SemIR::LocId loc_id,
 }
 
 // Imports an overloaded function set from Clang to Carbon.
-static auto ImportOverloadedFunctionSet(
-    Context& context, SemIR::NameScopeId scope_id, SemIR::NameId name_id,
-    const clang::UnresolvedSet<1>& overload_set) -> SemIR::InstId {
-  auto fn_decl_inst = SemIR::OverloadedCppFunctionDecl{
-      SemIR::TypeId::None, SemIR::OverloadedCppFunctionId::None};
+static auto ImportCppOverloadSet(Context& context, SemIR::NameScopeId scope_id,
+                                 SemIR::NameId name_id,
+                                 const clang::UnresolvedSet<1>& overload_set)
+    -> SemIR::InstId {
+  auto overload_set_inst = SemIR::CppOverloadSetValue{
+      SemIR::TypeId::None, SemIR::CppOverloadSetId::None};
 
-  fn_decl_inst.overloaded_function_id = context.overloaded_cpp_functions().Add(
-      SemIR::OverloadedCppFunction{.name_id = name_id,
-                                   .parent_scope_id = scope_id,
-                                   .candidate_functions = overload_set});
+  overload_set_inst.overload_set_id = context.cpp_overload_sets().Add(
+      SemIR::CppOverloadSet{.name_id = name_id,
+                            .parent_scope_id = scope_id,
+                            .candidate_functions = overload_set});
 
-  auto fn_decl_inst_id =
+  auto overload_set_inst_id =
       // TODO: Add a location.
-      AddPlaceholderInstInNoBlock(context, Parse::NodeId::None, fn_decl_inst);
+      AddPlaceholderInstInNoBlock(context, Parse::NodeId::None,
+                                  overload_set_inst);
 
   // TODO: Check if this can be moved before adding the instruction, so that the
   // placeholder is removed.
-  fn_decl_inst.type_id = GetOverloadedCppFunctionType(
-      context, fn_decl_inst.overloaded_function_id, SemIR::SpecificId::None);
+  overload_set_inst.type_id = GetCppOverloadSetType(
+      context, overload_set_inst.overload_set_id, SemIR::SpecificId::None);
 
-  ReplaceInstBeforeConstantUse(context, fn_decl_inst_id, fn_decl_inst);
+  ReplaceInstBeforeConstantUse(context, overload_set_inst_id,
+                               overload_set_inst);
 
-  context.imports().push_back(fn_decl_inst_id);
-  return fn_decl_inst_id;
+  context.imports().push_back(overload_set_inst_id);
+  return overload_set_inst_id;
 }
 
 // Gets the access for an overloaded function set. Returns std::nullopt
 // if the access is not the same for all functions in the overload set.
 // TODO: Fix to support functions with different access levels.
-static auto GetOverloadedFunctionSetAccess(
-    Context& context, SemIR::LocId loc_id,
-    const clang::UnresolvedSet<1>& overload_set)
+static auto GetOverloadSetAccess(Context& context, SemIR::LocId loc_id,
+                                 const clang::UnresolvedSet<1>& overload_set)
     -> std::optional<SemIR::AccessKind> {
   auto access = overload_set.begin().getAccess();
   for (auto it = overload_set.begin(); it != overload_set.end(); ++it) {
@@ -1936,7 +1938,7 @@ static auto GetOverloadedFunctionSetAccess(
   return MapAccess(access);
 }
 
-static auto ImportOverloadedSetAndDependencies(
+static auto ImportOverloadSetAndDependencies(
     Context& context, SemIR::LocId loc_id, SemIR::NameScopeId scope_id,
     SemIR::NameId name_id, const clang::UnresolvedSet<1>& overloaded_set)
     -> SemIR::InstId {
@@ -1947,23 +1949,22 @@ static auto ImportOverloadedSetAndDependencies(
   if (!ImportDeclSet(context, loc_id, worklist)) {
     return SemIR::ErrorInst::InstId;
   }
-  return ImportOverloadedFunctionSet(context, scope_id, name_id,
-                                     overloaded_set);
+  return ImportCppOverloadSet(context, scope_id, name_id, overloaded_set);
 }
 
 // Imports an overloaded function set from Clang to Carbon and adds the
 // name into the `NameScope`.
-static auto ImportOverloadedFunctionSetIntoScope(
+static auto ImportOverloadSetIntoScope(
     Context& context, SemIR::LocId loc_id, SemIR::NameScopeId scope_id,
     SemIR::NameId name_id, const clang::UnresolvedSet<1>& overload_set)
     -> SemIR::ScopeLookupResult {
   std::optional<SemIR::AccessKind> access_kind =
-      GetOverloadedFunctionSetAccess(context, loc_id, overload_set);
+      GetOverloadSetAccess(context, loc_id, overload_set);
   if (!access_kind.has_value()) {
     return SemIR::ScopeLookupResult::MakeError();
   }
 
-  SemIR::InstId inst_id = ImportOverloadedSetAndDependencies(
+  SemIR::InstId inst_id = ImportOverloadSetAndDependencies(
       context, loc_id, scope_id, name_id, overload_set);
   AddNameToScope(context, scope_id, name_id, access_kind.value(), inst_id);
   return SemIR::ScopeLookupResult::MakeWrappedLookupResult(inst_id,
@@ -1994,8 +1995,8 @@ auto ImportNameFromCpp(Context& context, SemIR::LocId loc_id,
        lookup->getFoundDecl()->isFunctionOrFunctionTemplate())) {
     clang::UnresolvedSet<1> overload_set;
     overload_set.append(lookup->begin(), lookup->end());
-    return ImportOverloadedFunctionSetIntoScope(context, loc_id, scope_id,
-                                                name_id, overload_set);
+    return ImportOverloadSetIntoScope(context, loc_id, scope_id, name_id,
+                                      overload_set);
   }
 
   if (!lookup->isSingleResult()) {
@@ -2034,8 +2035,8 @@ auto ImportNameFromCpp(Context& context, SemIR::LocId loc_id,
     return SemIR::ScopeLookupResult::MakeNotFound();
   }
 
-  return ImportOverloadedFunctionSetIntoScope(context, loc_id, scope_id,
-                                              name_id, overload_set);
+  return ImportOverloadSetIntoScope(context, loc_id, scope_id, name_id,
+                                    overload_set);
 }
 
 }  // namespace Carbon::Check

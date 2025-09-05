@@ -252,8 +252,8 @@ class Context {
   auto entity_names() -> SemIR::EntityNameStore& {
     return sem_ir().entity_names();
   }
-  auto overloaded_cpp_functions() -> SemIR::OverloadedCppFunctionStore& {
-    return sem_ir().overloaded_cpp_functions();
+  auto cpp_overload_sets() -> SemIR::CppOverloadSetStore& {
+    return sem_ir().cpp_overload_sets();
   }
   auto functions() -> SemIR::FunctionStore& { return sem_ir().functions(); }
   auto classes() -> SemIR::ClassStore& { return sem_ir().classes(); }

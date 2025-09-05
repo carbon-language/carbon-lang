@@ -47,10 +47,10 @@ auto GetQualifiedType(Context& context, SemIR::TypeId type_id,
 auto GetClassType(Context& context, SemIR::ClassId class_id,
                   SemIR::SpecificId specific_id) -> SemIR::TypeId;
 
-// Gets an overloaded cpp function type. The returned type will be complete.
-auto GetOverloadedCppFunctionType(
-    Context& context, SemIR::OverloadedCppFunctionId overloaded_fn_id,
-    SemIR::SpecificId specific_id) -> SemIR::TypeId;
+// Gets a C++ overload set type. The returned type will be complete.
+auto GetCppOverloadSetType(Context& context,
+                           SemIR::CppOverloadSetId overloaded_set_id,
+                           SemIR::SpecificId specific_id) -> SemIR::TypeId;
 
 // Gets a function type. The returned type will be complete.
 auto GetFunctionType(Context& context, SemIR::FunctionId fn_id,

@@ -40,14 +40,15 @@ auto PerformCppOverloadResolution(Context& context, SemIR::LocId loc_id,
     arg_exprs.emplace_back(arg_expr);
   }
 
-  auto fn_type_inst =
+  auto overload_set_type_inst =
       context.types().GetAsInst(context.insts().Get(callee_id).type_id());
-  auto fn_type = fn_type_inst.TryAs<SemIR::OverloadedCppFunctionType>();
-  if (!fn_type) {
+  auto overload_set_type =
+      overload_set_type_inst.TryAs<SemIR::CppOverloadSetType>();
+  if (!overload_set_type) {
     return std::nullopt;
   }
-  const SemIR::OverloadedCppFunction& overloaded_fn =
-      context.overloaded_cpp_functions().Get(fn_type->overloaded_function_id);
+  const SemIR::CppOverloadSet& overload_set =
+      context.cpp_overload_sets().Get(overload_set_type->overload_set_id);
 
   // Add candidate functions from the name lookup.
   clang::OverloadCandidateSet candidate_set(
@@ -59,7 +60,7 @@ auto PerformCppOverloadResolution(Context& context, SemIR::LocId loc_id,
   CARBON_CHECK(ast);
   clang::Sema& sema = ast->getSema();
 
-  for (clang::NamedDecl* candidate : overloaded_fn.candidate_functions) {
+  for (clang::NamedDecl* candidate : overload_set.candidate_functions) {
     if (auto* fn_decl = dyn_cast<clang::FunctionDecl>(candidate)) {
       sema.AddOverloadCandidate(
           fn_decl, clang::DeclAccessPair::make(fn_decl, candidate->getAccess()),

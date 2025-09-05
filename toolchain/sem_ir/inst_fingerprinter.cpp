@@ -14,9 +14,9 @@
 #include "llvm/ADT/SmallVector.h"
 #include "llvm/ADT/StableHashing.h"
 #include "toolchain/base/value_ids.h"
+#include "toolchain/sem_ir/cpp_overload_set.h"
 #include "toolchain/sem_ir/entity_with_params_base.h"
 #include "toolchain/sem_ir/ids.h"
-#include "toolchain/sem_ir/overloaded_cpp_function.h"
 #include "toolchain/sem_ir/typed_insts.h"
 
 namespace Carbon::SemIR {
@@ -186,13 +186,13 @@ struct Worklist {
     AddEntity(sem_ir->functions().Get(function_id));
   }
 
-  auto Add(OverloadedCppFunctionId overloaded_function_id) -> void {
-    OverloadedCppFunction overloaded_function =
-        sem_ir->overloaded_cpp_functions().Get(overloaded_function_id);
-    Add(overloaded_function.name_id);
-    if (overloaded_function.parent_scope_id.has_value()) {
+  auto Add(CppOverloadSetId cpp_overload_set_id) -> void {
+    CppOverloadSet cpp_overload_set =
+        sem_ir->cpp_overload_sets().Get(cpp_overload_set_id);
+    Add(cpp_overload_set.name_id);
+    if (cpp_overload_set.parent_scope_id.has_value()) {
       Add(sem_ir->name_scopes()
-              .Get(overloaded_function.parent_scope_id)
+              .Get(cpp_overload_set.parent_scope_id)
               .inst_id());
     }
   }

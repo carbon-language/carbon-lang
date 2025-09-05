@@ -28,8 +28,8 @@ auto GetExprCategory(const File& file, InstId inst_id) -> ExprCategory {
       case Branch::Kind:
       case BranchIf::Kind:
       case BranchWithArg::Kind:
+      case CppOverloadSetValue::Kind:
       case FieldDecl::Kind:
-      case OverloadedCppFunctionDecl::Kind:
       case FunctionDecl::Kind:
       case ImplDecl::Kind:
       case NameBindingDecl::Kind:
@@ -113,6 +113,7 @@ auto GetExprCategory(const File& file, InstId inst_id) -> ExprCategory {
       case CompleteTypeWitness::Kind:
       case ConstType::Kind:
       case ConvertToValueAction::Kind:
+      case CppOverloadSetType::Kind:
       case CustomLayoutType::Kind:
       case FacetAccessType::Kind:
       case FacetType::Kind:
@@ -140,7 +141,6 @@ auto GetExprCategory(const File& file, InstId inst_id) -> ExprCategory {
       case IntValue::Kind:
       case InterfaceDecl::Kind:
       case NamespaceType::Kind:
-      case OverloadedCppFunctionType::Kind:
       case PartialType::Kind:
       case PatternType::Kind:
       case PointerType::Kind:

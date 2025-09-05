@@ -274,9 +274,9 @@ struct CallParamIndex : public IndexBase<CallParamIndex> {
   using IndexBase::IndexBase;
 };
 
-// The ID of an overloaded function.
-struct OverloadedCppFunctionId : public IdBase<OverloadedCppFunctionId> {
-  static constexpr llvm::StringLiteral Label = "overloaded_cpp_function";
+// The ID of a C++ overload set.
+struct CppOverloadSetId : public IdBase<CppOverloadSetId> {
+  static constexpr llvm::StringLiteral Label = "cpp_overload_set";
 
   using IdBase::IdBase;
 };

@@ -52,18 +52,18 @@ fn Run() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [concrete]
-// CHECK:STDOUT:   %.054: type = overloaded_cpp_fn_type @func [concrete]
-// CHECK:STDOUT:   %empty_struct: %.054 = struct_value () [concrete]
+// CHECK:STDOUT:   %.19f: type = cpp_overload_set_type @func [concrete]
+// CHECK:STDOUT:   %empty_struct: %.19f = struct_value () [concrete]
 // CHECK:STDOUT:   %func.type: type = fn_type @func [concrete]
 // CHECK:STDOUT:   %func: %func.type = struct_value () [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT:   %Cpp: <namespace> = namespace file.%Cpp.import_cpp, [concrete] {
-// CHECK:STDOUT:     .func = %.3b0
+// CHECK:STDOUT:     .func = %.ddc
 // CHECK:STDOUT:     import Cpp//...
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %.3b0: %.054 = overloaded_cpp_fn_decl @func [concrete = constants.%empty_struct]
+// CHECK:STDOUT:   %.ddc: %.19f = cpp_overload_set_value @func [concrete = constants.%empty_struct]
 // CHECK:STDOUT:   %func.decl: %func.type = fn_decl @func [concrete = constants.%func] {} {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -76,7 +76,7 @@ fn Run() {
 // CHECK:STDOUT: fn @Run() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %Cpp.ref: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
-// CHECK:STDOUT:   %func.ref: %.054 = name_ref func, imports.%.3b0 [concrete = constants.%empty_struct]
+// CHECK:STDOUT:   %func.ref: %.19f = name_ref func, imports.%.ddc [concrete = constants.%empty_struct]
 // CHECK:STDOUT:   %func.call: init %empty_tuple.type = call imports.%func.decl()
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
@@ -85,18 +85,18 @@ fn Run() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [concrete]
-// CHECK:STDOUT:   %.36a: type = overloaded_cpp_fn_type @another_func [concrete]
-// CHECK:STDOUT:   %empty_struct: %.36a = struct_value () [concrete]
+// CHECK:STDOUT:   %.bcd: type = cpp_overload_set_type @another_func [concrete]
+// CHECK:STDOUT:   %empty_struct: %.bcd = struct_value () [concrete]
 // CHECK:STDOUT:   %another_func.type: type = fn_type @another_func [concrete]
 // CHECK:STDOUT:   %another_func: %another_func.type = struct_value () [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT:   %Cpp: <namespace> = namespace file.%Cpp.import_cpp, [concrete] {
-// CHECK:STDOUT:     .another_func = %.ce8
+// CHECK:STDOUT:     .another_func = %.b52
 // CHECK:STDOUT:     import Cpp//...
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %.ce8: %.36a = overloaded_cpp_fn_decl @another_func [concrete = constants.%empty_struct]
+// CHECK:STDOUT:   %.b52: %.bcd = cpp_overload_set_value @another_func [concrete = constants.%empty_struct]
 // CHECK:STDOUT:   %another_func.decl: %another_func.type = fn_decl @another_func [concrete = constants.%another_func] {} {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -109,7 +109,7 @@ fn Run() {
 // CHECK:STDOUT: fn @Run() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %Cpp.ref: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
-// CHECK:STDOUT:   %another_func.ref: %.36a = name_ref another_func, imports.%.ce8 [concrete = constants.%empty_struct]
+// CHECK:STDOUT:   %another_func.ref: %.bcd = name_ref another_func, imports.%.b52 [concrete = constants.%empty_struct]
 // CHECK:STDOUT:   %another_func.call: init %empty_tuple.type = call imports.%another_func.decl()
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }

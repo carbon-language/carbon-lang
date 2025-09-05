@@ -3117,6 +3117,21 @@ static auto TryResolveInstCanonical(ImportRefResolver& resolver,
     case CARBON_KIND(SemIR::ConstType inst): {
       return TryResolveTypedInst(resolver, inst);
     }
+    // TODO: Fix this properly. This is a WIP attempt to overcome the failing
+    // `toolchain/check/testdata/interop/cpp/import.carbon` test. However part
+    // of the issue is still present and this needs more work.
+    case CARBON_KIND(SemIR::CppOverloadSetType inst): {
+      resolver.local_context().TODO(SemIR::LocId::None,
+                                    "Unsupported: Importing C++ functions that "
+                                    "require thunks indirectly called here");
+      auto inst_constant_id = resolver.import_constant_values().Get(inst_id);
+      if (!inst_constant_id.is_constant()) {
+        CARBON_CHECK(untyped_inst.Is<SemIR::BindName>(),
+                     "TryResolveInst on non-constant instruction {0}", inst);
+        return ResolveResult::Done(SemIR::ConstantId::NotConstant);
+      }
+      return ResolveResult::Done(inst_constant_id);
+    }
     case CARBON_KIND(SemIR::ExportDecl inst): {
       return TryResolveTypedInst(resolver, inst);
     }
@@ -3146,21 +3161,6 @@ static auto TryResolveInstCanonical(ImportRefResolver& resolver,
     }
     case CARBON_KIND(SemIR::FunctionType inst): {
       return TryResolveTypedInst(resolver, inst);
-    }
-    // TODO: Fix this properly. This is a WIP attempt to overcome the failing
-    // `toolchain/check/testdata/interop/cpp/import.carbon` test. However part
-    // of the issue is still present and this needs more work.
-    case CARBON_KIND(SemIR::OverloadedCppFunctionType inst): {
-      resolver.local_context().TODO(SemIR::LocId::None,
-                                    "Unsupported: Importing C++ functions that "
-                                    "require thunks indirectly called here");
-      auto inst_constant_id = resolver.import_constant_values().Get(inst_id);
-      if (!inst_constant_id.is_constant()) {
-        CARBON_CHECK(untyped_inst.Is<SemIR::BindName>(),
-                     "TryResolveInst on non-constant instruction {0}", inst);
-        return ResolveResult::Done(SemIR::ConstantId::NotConstant);
-      }
-      return ResolveResult::Done(inst_constant_id);
     }
     case CARBON_KIND(SemIR::FunctionTypeWithSelfType inst): {
       return TryResolveTypedInst(resolver, inst);
