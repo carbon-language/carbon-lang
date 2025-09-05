@@ -6,10 +6,12 @@
 
 #include <algorithm>
 #include <optional>
+#include <variant>
 
+#include "common/emplace_by_calling.h"
 #include "common/vlog.h"
 #include "toolchain/base/kind_switch.h"
-#include "toolchain/check/handle.h"
+#include "toolchain/check/context.h"
 
 namespace Carbon::Check {
 
@@ -23,13 +25,21 @@ DeferredDefinitionWorklist::DeferredDefinitionWorklist(
 }
 
 auto DeferredDefinitionWorklist::SuspendFunctionAndPush(
-    Context& context, Parse::DeferredDefinitionIndex index,
-    Parse::FunctionDefinitionStartId node_id) -> void {
-  // TODO: Investigate factoring out `HandleFunctionDefinitionSuspend` to make
-  // `DeferredDefinitionWorklist` reusable.
-  worklist_.push_back(CheckSkippedDefinition{
-      index, HandleFunctionDefinitionSuspend(context, node_id)});
+    Parse::DeferredDefinitionIndex index,
+    llvm::function_ref<auto()->SuspendedFunction> suspend) -> void {
+  worklist_.emplace_back(EmplaceByCalling([&] {
+    return CheckSkippedDefinition{.definition_index = index,
+                                  .suspended_fn = suspend()};
+  }));
   CARBON_VLOG("{0}Push CheckSkippedDefinition {1}\n", VlogPrefix, index.index);
+}
+
+auto DeferredDefinitionWorklist::SuspendThunkAndPush(Context& context,
+                                                     ThunkInfo info) -> void {
+  worklist_.emplace_back(EmplaceByCalling([&] {
+    return DefineThunk{.info = info, .scope = context.scope_stack().Suspend()};
+  }));
+  CARBON_VLOG("{0}Push DefineThunk {1}\n", VlogPrefix, info.function_id);
 }
 
 auto DeferredDefinitionWorklist::PushEnterDeferredDefinitionScope(
@@ -37,96 +47,68 @@ auto DeferredDefinitionWorklist::PushEnterDeferredDefinitionScope(
   bool nested = !entered_scopes_.empty() &&
                 entered_scopes_.back().scope_index ==
                     context.decl_name_stack().PeekInitialScopeIndex();
-  entered_scopes_.push_back({.worklist_start_index = worklist_.size(),
+  entered_scopes_.push_back({.nested = nested,
+                             .worklist_start_index = worklist_.size(),
                              .scope_index = context.scope_stack().PeekIndex()});
-  worklist_.push_back(EnterDeferredDefinitionScope{
-      .suspended_name = std::nullopt, .in_deferred_definition_scope = nested});
-  CARBON_VLOG("{0}Push EnterDeferredDefinitionScope {1}\n", VlogPrefix,
-              nested ? "(nested)" : "(non-nested)");
+  if (nested) {
+    worklist_.emplace_back(EmplaceByCalling([&] {
+      return EnterNestedDeferredDefinitionScope{.suspended_name = std::nullopt};
+    }));
+    CARBON_VLOG("{0}Push EnterDeferredDefinitionScope (nested)\n", VlogPrefix);
+  } else {
+    // Don't push a task to re-enter a non-nested scope. Instead,
+    // SuspendFinishedScopeAndPush will remain in the scope when executing the
+    // worklist tasks.
+    CARBON_VLOG("{0}Entered non-nested deferred definition scope\n",
+                VlogPrefix);
+  }
   return !nested;
 }
 
 auto DeferredDefinitionWorklist::SuspendFinishedScopeAndPush(Context& context)
     -> FinishedScopeKind {
-  auto start_index = entered_scopes_.pop_back_val().worklist_start_index;
+  auto [nested, start_index, _] = entered_scopes_.pop_back_val();
 
-  // If we've not found any deferred definitions in this scope, clean up the
-  // stack.
-  if (start_index == worklist_.size() - 1) {
+  // If we've not found any tasks to perform in this scope, clean up the stack.
+  // For non-nested scope, there will be no tasks on the worklist for this scope
+  // in this case; for a nested scope, there will just be a task to re-enter the
+  // nested scope.
+  if (!nested && start_index == worklist_.size()) {
     context.decl_name_stack().PopScope();
-    auto enter_scope =
-        get<EnterDeferredDefinitionScope>(worklist_.pop_back_val());
-    CARBON_VLOG("{0}Pop EnterDeferredDefinitionScope (empty)\n", VlogPrefix);
-    return enter_scope.in_deferred_definition_scope
-               ? FinishedScopeKind::Nested
-               : FinishedScopeKind::NonNestedEmpty;
+    CARBON_VLOG("{0}Left non-nested empty deferred definition scope\n",
+                VlogPrefix);
+    return FinishedScopeKind::NonNestedEmpty;
+  }
+  if (nested && start_index == worklist_.size() - 1) {
+    CARBON_CHECK(std::holds_alternative<EnterNestedDeferredDefinitionScope>(
+        worklist_.back()));
+    worklist_.pop_back();
+    context.decl_name_stack().PopScope();
+    CARBON_VLOG("{0}Pop EnterNestedDeferredDefinitionScope (empty)\n",
+                VlogPrefix);
+    return FinishedScopeKind::Nested;
   }
 
   // If we're finishing a nested deferred definition scope, keep track of that
   // but don't type-check deferred definitions now.
-  if (auto& enter_scope =
-          get<EnterDeferredDefinitionScope>(worklist_[start_index]);
-      enter_scope.in_deferred_definition_scope) {
+  if (nested) {
+    auto& enter_scope =
+        get<EnterNestedDeferredDefinitionScope>(worklist_[start_index]);
     // This is a nested deferred definition scope. Suspend the inner scope so we
     // can restore it when we come to type-check the deferred definitions.
-    enter_scope.suspended_name = context.decl_name_stack().Suspend();
+    enter_scope.suspended_name.emplace(
+        EmplaceByCalling([&] { return context.decl_name_stack().Suspend(); }));
 
     // Enqueue a task to leave the nested scope.
-    worklist_.push_back(
-        LeaveDeferredDefinitionScope{.in_deferred_definition_scope = true});
-    CARBON_VLOG("{0}Push LeaveDeferredDefinitionScope (nested)\n", VlogPrefix);
+    worklist_.emplace_back(LeaveNestedDeferredDefinitionScope{});
+    CARBON_VLOG("{0}Push LeaveNestedDeferredDefinitionScope\n", VlogPrefix);
     return FinishedScopeKind::Nested;
   }
 
-  // We're at the end of a non-nested deferred definition scope. Prepare to
-  // start checking deferred definitions. Enqueue a task to leave this outer
-  // scope and end checking deferred definitions.
-  worklist_.push_back(
-      LeaveDeferredDefinitionScope{.in_deferred_definition_scope = false});
-  CARBON_VLOG("{0}Push LeaveDeferredDefinitionScope (non-nested)\n",
-              VlogPrefix);
-
-  // We'll process the worklist in reverse index order, so reverse the part of
-  // it we're about to execute so we run our tasks in the order in which they
-  // were pushed.
-  std::reverse(worklist_.begin() + start_index, worklist_.end());
-
-  // Pop the `EnterDeferredDefinitionScope` that's now on the end of the
-  // worklist. We stay in that scope rather than suspending then immediately
-  // resuming it.
-  CARBON_CHECK(
-      holds_alternative<EnterDeferredDefinitionScope>(worklist_.back()),
-      "Unexpected task in worklist.");
-  worklist_.pop_back();
-  CARBON_VLOG("{0}Handle EnterDeferredDefinitionScope (non-nested)\n",
-              VlogPrefix);
+  // We're at the end of a non-nested deferred definition scope. Start checking
+  // deferred definitions.
+  CARBON_VLOG("{0}Starting deferred definition processing\n", VlogPrefix);
   return FinishedScopeKind::NonNestedWithWork;
-}
-
-auto DeferredDefinitionWorklist::Pop(
-    llvm::function_ref<auto(Task&&)->void> handle_fn) -> void {
-  if (vlog_stream_) {
-    CARBON_KIND_SWITCH(worklist_.back()) {
-      case CARBON_KIND(const CheckSkippedDefinition& definition):
-        CARBON_VLOG("{0}Handle CheckSkippedDefinition {1}\n", VlogPrefix,
-                    definition.definition_index.index);
-        break;
-      case CARBON_KIND(const EnterDeferredDefinitionScope& enter):
-        CARBON_CHECK(enter.in_deferred_definition_scope);
-        CARBON_VLOG("{0}Handle EnterDeferredDefinitionScope (nested)\n",
-                    VlogPrefix);
-        break;
-      case CARBON_KIND(const LeaveDeferredDefinitionScope& leave): {
-        bool nested = leave.in_deferred_definition_scope;
-        CARBON_VLOG("{0}Handle LeaveDeferredDefinitionScope {1}\n", VlogPrefix,
-                    nested ? "(nested)" : "(non-nested)");
-        break;
-      }
-    }
-  }
-
-  handle_fn(std::move(worklist_.back()));
-  worklist_.pop_back();
 }
 
 }  // namespace Carbon::Check

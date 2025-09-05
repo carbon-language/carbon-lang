@@ -2,7 +2,7 @@
 // Exceptions. See /LICENSE for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
-// EXTRA-ARGS: --dump-sem-ir-ranges=only
+// INCLUDE-FILE: toolchain/testing/testdata/min_prelude/int.carbon
 //
 // AUTOUPDATE
 // TIP: To test this file alone, run:
@@ -39,8 +39,8 @@ let b: i32 = Mul(0x8000, 0x10000);
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %int_32: Core.IntLiteral = int_value 32 [concrete]
 // CHECK:STDOUT:   %i32: type = class_type @Int, @Int(%int_32) [concrete]
-// CHECK:STDOUT:   %Mul.type.b2a: type = fn_type @Mul.1 [concrete]
-// CHECK:STDOUT:   %Mul: %Mul.type.b2a = struct_value () [concrete]
+// CHECK:STDOUT:   %Mul.type: type = fn_type @Mul [concrete]
+// CHECK:STDOUT:   %Mul: %Mul.type = struct_value () [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -48,12 +48,12 @@ let b: i32 = Mul(0x8000, 0x10000);
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @RuntimeCallIsValid(%a.param: %i32, %b.param: %i32) -> %i32 {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %Mul.ref: %Mul.type.b2a = name_ref Mul, file.%Mul.decl [concrete = constants.%Mul]
+// CHECK:STDOUT:   %Mul.ref: %Mul.type = name_ref Mul, file.%Mul.decl [concrete = constants.%Mul]
 // CHECK:STDOUT:   %a.ref: %i32 = name_ref a, %a
 // CHECK:STDOUT:   %b.ref: %i32 = name_ref b, %b
-// CHECK:STDOUT:   %int.umul: init %i32 = call %Mul.ref(%a.ref, %b.ref)
-// CHECK:STDOUT:   %.loc11_19.1: %i32 = value_of_initializer %int.umul
-// CHECK:STDOUT:   %.loc11_19.2: %i32 = converted %int.umul, %.loc11_19.1
+// CHECK:STDOUT:   %Mul.call: init %i32 = call %Mul.ref(%a.ref, %b.ref)
+// CHECK:STDOUT:   %.loc11_19.1: %i32 = value_of_initializer %Mul.call
+// CHECK:STDOUT:   %.loc11_19.2: %i32 = converted %Mul.call, %.loc11_19.1
 // CHECK:STDOUT:   return %.loc11_19.2
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

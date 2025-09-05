@@ -52,6 +52,11 @@ _binding patterns_. When a pattern is executed by giving it a value called the
 _scrutinee_, it determines whether the scrutinee matches the pattern, and if so,
 determines the values of the bindings.
 
+A _full pattern_ is a complete input to a pattern matching operation, that is a
+pattern that is not a subpattern of another pattern. If it's preceded by a
+deduced parameter list or followed by a return type expression, those are part
+of the full pattern as well.
+
 ## Pattern Syntax and Semantics
 
 Expressions are patterns, as described below. A pattern that is not an

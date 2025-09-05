@@ -13,7 +13,7 @@ fn Run() {
   var total_cost: i64 = 0;
   while (true) {
     var m: Machine = Machine.Read();
-    total_cost = total_cost + CostIfPossible(m);
+    total_cost += CostIfPossible(m);
     if (not SkipNewline()) {
       break;
     }

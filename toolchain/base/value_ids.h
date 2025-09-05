@@ -7,7 +7,6 @@
 
 #include "common/check.h"
 #include "common/ostream.h"
-#include "llvm/ADT/APFloat.h"
 #include "llvm/ADT/APInt.h"
 #include "llvm/ADT/StringExtras.h"
 #include "llvm/Support/YAMLParser.h"
@@ -20,8 +19,10 @@ namespace Carbon {
 // This is either a dyadic fraction (mantissa * 2^exponent) or a decadic
 // fraction (mantissa * 10^exponent).
 //
-// These values are not canonicalized, because we don't expect them to repeat
-// and don't use them in SemIR values.
+// These values are not canonicalized, because we don't expect them to repeat.
+// We use RealIds in SemIR::FloatLiteralValues, and this results in all real
+// literals being distinct constants, even if they represent the same value.
+// TODO: Address this by using a different representation in SemIR.
 struct Real : public Printable<Real> {
   auto Print(llvm::raw_ostream& output_stream) const -> void {
     mantissa.print(output_stream, /*isSigned=*/false);
@@ -45,7 +46,6 @@ struct Real : public Printable<Real> {
 // floating-point values in SemIR.
 struct FloatId : public IdBase<FloatId> {
   static constexpr llvm::StringLiteral Label = "float";
-  using ValueType = llvm::APFloat;
   static const FloatId None;
   using IdBase::IdBase;
 };
@@ -53,8 +53,12 @@ constexpr FloatId FloatId::None(FloatId::NoneIndex);
 
 // Corresponds to a Real value.
 struct RealId : public IdBase<RealId> {
+  // TODO: We don't use Diagnostics::TypeInfo here for layering reasons.
+  struct DiagnosticType {
+    using StorageType = std::string;
+  };
+
   static constexpr llvm::StringLiteral Label = "real";
-  using ValueType = Real;
   static const RealId None;
   using IdBase::IdBase;
 };
@@ -66,7 +70,6 @@ constexpr RealId RealId::None(RealId::NoneIndex);
 // non-negative.
 struct IdentifierId : public IdBase<IdentifierId> {
   static constexpr llvm::StringLiteral Label = "identifier";
-  using ValueType = llvm::StringRef;
   static const IdentifierId None;
   using IdBase::IdBase;
 };
@@ -112,7 +115,6 @@ constexpr PackageNameId PackageNameId::Core(PackageNameId::NoneIndex - 1);
 // Corresponds to StringRefs for string literals.
 struct StringLiteralValueId : public IdBase<StringLiteralValueId> {
   static constexpr llvm::StringLiteral Label = "string";
-  using ValueType = llvm::StringRef;
   static const StringLiteralValueId None;
   using IdBase::IdBase;
 };

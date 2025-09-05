@@ -64,22 +64,23 @@ graph BT
 
     top((" "))
 
-    suffixOps{"x.y<br>
-               x.(...)<br>
-               x->y<br>
-               x->(...)<br>
-               x(...)<br>
+    suffixOps{"x.y
+               x.(...)
+               x->y
+               x->(...)
+               x(...)
                x[y]"}
     click suffixOps "https://github.com/carbon-language/carbon-lang/blob/trunk/docs/design/expressions/README.md#suffix-operators"
 
-    constType["const T"]
+    qualifiedType["const T
+                   partial T"]
     click pointer-type "https://github.com/carbon-language/carbon-lang/blob/trunk/docs/design/expressions/type_operators.md"
 
     pointerType{"T*"}
     click pointer-type "https://github.com/carbon-language/carbon-lang/blob/trunk/docs/design/expressions/type_operators.md"
 
-    pointer{"*x<br>
-             &x<br>"}
+    pointer{"*x
+             &x"}
     click pointer "https://github.com/carbon-language/carbon-lang/blob/trunk/docs/design/expressions/pointer.md"
 
     negation["-x"]
@@ -88,7 +89,8 @@ graph BT
     complement["^x"]
     click complement "https://github.com/carbon-language/carbon-lang/blob/trunk/docs/design/expressions/bitwise.md"
 
-    incDec["++x;<br>--x;"]
+    incDec["++x;
+            --x;"]
     click incDec "https://github.com/carbon-language/carbon-lang/blob/trunk/docs/design/assignment.md"
 
     unary((" "))
@@ -96,11 +98,11 @@ graph BT
     as["x as T"]
     click as "https://github.com/carbon-language/carbon-lang/blob/trunk/docs/design/expressions/implicit_conversions.md"
 
-    multiplication>"x * y<br>
+    multiplication>"x * y
                     x / y"]
     click multiplication "https://github.com/carbon-language/carbon-lang/blob/trunk/docs/design/expressions/arithmetic.md"
 
-    addition>"x + y<br>
+    addition>"x + y
               x - y"]
     click addition "https://github.com/carbon-language/carbon-lang/blob/trunk/docs/design/expressions/arithmetic.md"
 
@@ -114,7 +116,7 @@ graph BT
     click bitwise_or "https://github.com/carbon-language/carbon-lang/blob/trunk/docs/design/expressions/bitwise.md"
     click bitwise_xor "https://github.com/carbon-language/carbon-lang/blob/trunk/docs/design/expressions/bitwise.md"
 
-    shift["x << y<br>
+    shift["x << y
            x >> y"]
     click shift "https://github.com/carbon-language/carbon-lang/blob/trunk/docs/design/expressions/bitwise.md"
 
@@ -122,11 +124,11 @@ graph BT
 
     where["T where R"]
 
-    comparison["x == y<br>
-                x != y<br>
-                x < y<br>
-                x <= y<br>
-                x > y<br>
+    comparison["x == y
+                x != y
+                x < y
+                x <= y
+                x > y
                 x >= y"]
     click comparison "https://github.com/carbon-language/carbon-lang/blob/trunk/docs/design/expressions/comparison_operators.md"
 
@@ -148,7 +150,8 @@ graph BT
 
     insideParens["(...)"]
 
-    assignment["x = y;<br>x $= y;"]
+    assignment["x = y;
+                x $= y;"]
     click assignment "https://github.com/carbon-language/carbon-lang/blob/trunk/docs/design/assignment.md"
 
     expressionStatement["x;"]
@@ -157,8 +160,8 @@ graph BT
 
     suffixOps --> top
 
-    constType --> suffixOps
-    pointerType --> constType
+    qualifiedType --> suffixOps
+    pointerType --> qualifiedType
 
     pointer --> suffixOps
     negation & complement & incDec --> pointer

@@ -10,7 +10,7 @@
 namespace Carbon::Parse {
 
 // Declare handlers for each parse state.
-#define CARBON_PARSE_STATE(Name) auto Handle##Name(Context& context)->void;
+#define CARBON_PARSE_STATE(Name) auto Handle##Name(Context& context) -> void;
 #include "toolchain/parse/state.def"
 
 }  // namespace Carbon::Parse

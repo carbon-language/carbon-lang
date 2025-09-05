@@ -95,6 +95,26 @@ struct NoReturn {
 // Constraint that a type is `bool`.
 using Bool = BuiltinType<BoolType::TypeInstId>;
 
+// Constraint that a type is `Core.CharLiteral`.
+using CharLiteral = BuiltinType<CharLiteralType::TypeInstId>;
+
+// Constraint that a type is `u8` or an adapted type, including `Core.Char`.
+struct CharCompatible {
+  static auto Check(const File& sem_ir, ValidateState& /*state*/,
+                    TypeId type_id) -> bool {
+    auto int_info = sem_ir.types().TryGetIntTypeInfo(type_id);
+    if (!int_info) {
+      // Not an integer.
+      return false;
+    }
+    if (!int_info->bit_width.has_value() || int_info->is_signed) {
+      // Must be unsigned.
+      return false;
+    }
+    return sem_ir.ints().Get(int_info->bit_width) == 8;
+  }
+};
+
 // Constraint that requires the type to be a sized integer type.
 struct AnySizedInt {
   static auto Check(const File& sem_ir, ValidateState& /*state*/,
@@ -103,7 +123,8 @@ struct AnySizedInt {
   }
 };
 
-// Constraint that requires the type to be an integer type.
+// Constraint that requires the type to be an integer type: either a sized
+// integer type or a literal.
 struct AnyInt {
   static auto Check(const File& sem_ir, ValidateState& state, TypeId type_id)
       -> bool {
@@ -113,32 +134,27 @@ struct AnyInt {
   }
 };
 
-// Constraint that requires the type to be a float type.
+// Constraint that requires the type to be a sized floating-point type.
+struct AnySizedFloat {
+  static auto Check(const File& sem_ir, ValidateState& /*state*/,
+                    TypeId type_id) -> bool {
+    return sem_ir.types().Is<FloatType>(type_id);
+  }
+};
+
+// Constraint that requires the type to be a float type: either a sized float
+// type or a literal.
 struct AnyFloat {
   static auto Check(const File& sem_ir, ValidateState& state, TypeId type_id)
       -> bool {
-    if (BuiltinType<LegacyFloatType::TypeInstId>::Check(sem_ir, state,
-                                                        type_id)) {
-      return true;
-    }
-    return sem_ir.types().Is<FloatType>(type_id);
+    return AnySizedFloat::Check(sem_ir, state, type_id) ||
+           BuiltinType<FloatLiteralType::TypeInstId>::Check(sem_ir, state,
+                                                            type_id);
   }
 };
 
 // Constraint that requires the type to be the type type.
 using Type = BuiltinType<TypeType::TypeInstId>;
-
-// Constraint that requires the type to be a type value, whose type is type
-// type. Also accepts symbolic constant value types.
-struct AnyType {
-  static auto Check(const File& sem_ir, ValidateState& state, TypeId type_id)
-      -> bool {
-    if (BuiltinType<TypeType::TypeInstId>::Check(sem_ir, state, type_id)) {
-      return true;
-    }
-    return sem_ir.types().GetAsInst(type_id).type_id() == TypeType::TypeId;
-  }
-};
 
 // Checks that the specified type matches the given type constraint.
 template <typename TypeConstraint>
@@ -150,13 +166,7 @@ auto Check(const File& sem_ir, ValidateState& state, TypeId type_id) -> bool {
     }
 
     // Also allow a class type that adapts a matching type.
-    auto class_type = sem_ir.types().TryGetAs<ClassType>(type_id);
-    if (!class_type) {
-      break;
-    }
-    type_id = sem_ir.classes()
-                  .Get(class_type->class_id)
-                  .GetAdaptedType(sem_ir, class_type->specific_id);
+    type_id = sem_ir.types().GetAdaptedType(type_id);
   }
   return false;
 }
@@ -243,6 +253,14 @@ using SizedIntU = TypeParam<1, AnySizedInt>;
 // generic type parameter that is constrained to be an float type.
 using FloatT = TypeParam<0, AnyFloat>;
 
+// Convenience name used in the builtin type signatures below for a second
+// generic type parameter that is constrained to be an float type.
+using FloatU = TypeParam<1, AnyFloat>;
+
+// Convenience name used in the builtin type signatures below for a first
+// generic type parameter that is constrained to be a sized float type.
+using SizedFloatT = TypeParam<0, AnySizedFloat>;
+
 // Not a builtin function.
 constexpr BuiltinInfo None = {"", nullptr};
 
@@ -260,9 +278,17 @@ constexpr BuiltinInfo PrintInt = {
 constexpr BuiltinInfo ReadChar = {"read.char",
                                   ValidateSignature<auto()->AnySizedInt>};
 
+// Returns the `Core.CharLiteral` type.
+constexpr BuiltinInfo CharLiteralMakeType = {"char_literal.make_type",
+                                             ValidateSignature<auto()->Type>};
+
 // Returns the `Core.IntLiteral` type.
 constexpr BuiltinInfo IntLiteralMakeType = {"int_literal.make_type",
                                             ValidateSignature<auto()->Type>};
+
+// Returns the `Core.FloatLiteral` type.
+constexpr BuiltinInfo FloatLiteralMakeType = {"float_literal.make_type",
+                                              ValidateSignature<auto()->Type>};
 
 // Returns the `iN` type.
 // TODO: Should we use a more specific type as the type of the bit width?
@@ -280,6 +306,15 @@ constexpr BuiltinInfo FloatMakeType = {"float.make_type",
 // Returns the `bool` type.
 constexpr BuiltinInfo BoolMakeType = {"bool.make_type",
                                       ValidateSignature<auto()->Type>};
+
+// Returns the `MaybeUnformed(T)` type.
+constexpr BuiltinInfo MaybeUnformedMakeType = {
+    "maybe_unformed.make_type", ValidateSignature<auto(Type)->Type>};
+
+// Converts between char types, with a diagnostic if the value doesn't fit.
+constexpr BuiltinInfo CharConvertChecked = {
+    "char.convert_checked",
+    ValidateSignature<auto(CharLiteral)->CharCompatible>};
 
 // Converts between integer types, truncating if necessary.
 constexpr BuiltinInfo IntConvert = {"int.convert",
@@ -461,48 +496,78 @@ constexpr BuiltinInfo IntGreaterEq = {
     "int.greater_eq", ValidateSignature<auto(IntT, IntU)->Bool>};
 
 // "float.negate": float negation.
-constexpr BuiltinInfo FloatNegate = {"float.negate",
-                                     ValidateSignature<auto(FloatT)->FloatT>};
+constexpr BuiltinInfo FloatNegate = {
+    "float.negate", ValidateSignature<auto(SizedFloatT)->SizedFloatT>};
 
 // "float.add": float addition.
 constexpr BuiltinInfo FloatAdd = {
-    "float.add", ValidateSignature<auto(FloatT, FloatT)->FloatT>};
+    "float.add",
+    ValidateSignature<auto(SizedFloatT, SizedFloatT)->SizedFloatT>};
 
 // "float.sub": float subtraction.
 constexpr BuiltinInfo FloatSub = {
-    "float.sub", ValidateSignature<auto(FloatT, FloatT)->FloatT>};
+    "float.sub",
+    ValidateSignature<auto(SizedFloatT, SizedFloatT)->SizedFloatT>};
 
 // "float.mul": float multiplication.
 constexpr BuiltinInfo FloatMul = {
-    "float.mul", ValidateSignature<auto(FloatT, FloatT)->FloatT>};
+    "float.mul",
+    ValidateSignature<auto(SizedFloatT, SizedFloatT)->SizedFloatT>};
 
 // "float.div": float division.
 constexpr BuiltinInfo FloatDiv = {
-    "float.div", ValidateSignature<auto(FloatT, FloatT)->FloatT>};
+    "float.div",
+    ValidateSignature<auto(SizedFloatT, SizedFloatT)->SizedFloatT>};
+
+// "float.add_assign": float in-place addition.
+constexpr BuiltinInfo FloatAddAssign = {
+    "float.add_assign",
+    ValidateSignature<auto(PointerTo<SizedFloatT>, SizedFloatT)->NoReturn>};
+
+// "float.sub_assign": float in-place subtraction.
+constexpr BuiltinInfo FloatSubAssign = {
+    "float.sub_assign",
+    ValidateSignature<auto(PointerTo<SizedFloatT>, SizedFloatT)->NoReturn>};
+
+// "float.mul_assign": float in-place multiplication.
+constexpr BuiltinInfo FloatMulAssign = {
+    "float.mul_assign",
+    ValidateSignature<auto(PointerTo<SizedFloatT>, SizedFloatT)->NoReturn>};
+
+// "float.div_assign": float in-place division.
+constexpr BuiltinInfo FloatDivAssign = {
+    "float.div_assign",
+    ValidateSignature<auto(PointerTo<SizedFloatT>, SizedFloatT)->NoReturn>};
+
+// Converts between floating-point types, with a diagnostic if the value doesn't
+// fit.
+constexpr BuiltinInfo FloatConvertChecked = {
+    "float.convert_checked", ValidateSignature<auto(FloatT)->FloatU>};
 
 // "float.eq": float equality comparison.
-constexpr BuiltinInfo FloatEq = {"float.eq",
-                                 ValidateSignature<auto(FloatT, FloatT)->Bool>};
+constexpr BuiltinInfo FloatEq = {
+    "float.eq", ValidateSignature<auto(SizedFloatT, SizedFloatT)->Bool>};
 
 // "float.neq": float non-equality comparison.
 constexpr BuiltinInfo FloatNeq = {
-    "float.neq", ValidateSignature<auto(FloatT, FloatT)->Bool>};
+    "float.neq", ValidateSignature<auto(SizedFloatT, SizedFloatT)->Bool>};
 
 // "float.less": float less than comparison.
 constexpr BuiltinInfo FloatLess = {
-    "float.less", ValidateSignature<auto(FloatT, FloatT)->Bool>};
+    "float.less", ValidateSignature<auto(SizedFloatT, SizedFloatT)->Bool>};
 
 // "float.less_eq": float less than or equal comparison.
 constexpr BuiltinInfo FloatLessEq = {
-    "float.less_eq", ValidateSignature<auto(FloatT, FloatT)->Bool>};
+    "float.less_eq", ValidateSignature<auto(SizedFloatT, SizedFloatT)->Bool>};
 
 // "float.greater": float greater than comparison.
 constexpr BuiltinInfo FloatGreater = {
-    "float.greater", ValidateSignature<auto(FloatT, FloatT)->Bool>};
+    "float.greater", ValidateSignature<auto(SizedFloatT, SizedFloatT)->Bool>};
 
 // "float.greater_eq": float greater than or equal comparison.
 constexpr BuiltinInfo FloatGreaterEq = {
-    "float.greater_eq", ValidateSignature<auto(FloatT, FloatT)->Bool>};
+    "float.greater_eq",
+    ValidateSignature<auto(SizedFloatT, SizedFloatT)->Bool>};
 
 // "bool.eq": bool equality comparison.
 constexpr BuiltinInfo BoolEq = {"bool.eq",
@@ -513,8 +578,8 @@ constexpr BuiltinInfo BoolNeq = {"bool.neq",
                                  ValidateSignature<auto(Bool, Bool)->Bool>};
 
 // "type.and": facet type combination.
-constexpr BuiltinInfo TypeAnd = {
-    "type.and", ValidateSignature<auto(AnyType, AnyType)->AnyType>};
+constexpr BuiltinInfo TypeAnd = {"type.and",
+                                 ValidateSignature<auto(Type, Type)->Type>};
 
 }  // namespace BuiltinFunctionInfo
 
@@ -547,39 +612,45 @@ auto BuiltinFunctionKind::IsValidType(const File& sem_ir,
   return ValidateFns[AsInt()](sem_ir, arg_types, return_type);
 }
 
-// Determines whether a builtin call involves an integer literal in its
-// arguments or return type. If so, for many builtins we want to treat the call
-// as being compile-time-only. This is because `Core.IntLiteral` has an empty
-// runtime representation, and a value of that type isn't necessarily a
-// compile-time constant, so an arbitrary runtime value of type
-// `Core.IntLiteral` may not have a value available for the builtin to use. For
-// example, given:
+static auto IsLiteralType(const File& sem_ir, TypeId type_id) -> bool {
+  // Unwrap adapters.
+  type_id = sem_ir.types().GetTransitiveAdaptedType(type_id);
+  auto type_inst_id = sem_ir.types().GetAsInst(type_id);
+  return type_inst_id.Is<IntLiteralType>() ||
+         type_inst_id.Is<FloatLiteralType>();
+}
+
+// Determines whether a builtin call involves an integer or floating-point
+// literal in its arguments or return type. If so, for many builtins we want to
+// treat the call as being compile-time-only. This is because `Core.IntLiteral`
+// and `Core.FloatLiteral` have an empty runtime representation, and a value of
+// such a type isn't necessarily a compile-time constant, so an arbitrary
+// runtime value of such a type may not have a value available for the builtin
+// to use. For example, given:
 //
 // var n: Core.IntLiteral() = 123;
 //
 // we would be unable to lower a runtime operation such as `(1 as i32) << n`
 // because the runtime representation of `n` doesn't track its value at all.
 //
-// For now, we treat all operations involving `Core.IntLiteral` as being
-// compile-time-only.
+// For now, we treat all operations involving `Core.IntLiteral` or
+// `Core.FloatLiteral` as being compile-time-only.
 //
 // TODO: We will need to accept things like `some_i32 << 5` eventually. We could
 // allow builtin calls at runtime if all the IntLiteral arguments have constant
 // values, or add logic to the prelude to promote the `IntLiteral` operand to a
 // different type in such cases.
 //
-// TODO: For now, we also treat builtins *returning* `Core.IntLiteral` as being
-// compile-time-only. This is mostly done for simplicity, but should probably be
-// revisited.
-static auto AnyIntLiteralTypes(const File& sem_ir,
-                               llvm::ArrayRef<InstId> arg_ids,
-                               TypeId return_type_id) -> bool {
-  if (sem_ir.types().Is<IntLiteralType>(return_type_id)) {
+// TODO: For now, we also treat builtins *returning* `Core.IntLiteral` or
+// `Core.FloatLiteral` as being compile-time-only. This is mostly done for
+// simplicity, but should probably be revisited.
+static auto AnyLiteralTypes(const File& sem_ir, llvm::ArrayRef<InstId> arg_ids,
+                            TypeId return_type_id) -> bool {
+  if (IsLiteralType(sem_ir, return_type_id)) {
     return true;
   }
   for (auto arg_id : arg_ids) {
-    if (sem_ir.types().Is<IntLiteralType>(
-            sem_ir.insts().Get(arg_id).type_id())) {
+    if (IsLiteralType(sem_ir, sem_ir.insts().Get(arg_id).type_id())) {
       return true;
     }
   }
@@ -590,8 +661,10 @@ auto BuiltinFunctionKind::IsCompTimeOnly(const File& sem_ir,
                                          llvm::ArrayRef<InstId> arg_ids,
                                          TypeId return_type_id) const -> bool {
   switch (*this) {
+    case CharConvertChecked:
+    case FloatConvertChecked:
     case IntConvertChecked:
-      // Checked integer conversions are compile-time only.
+      // Checked conversions are compile-time only.
       return true;
 
     case IntConvert:
@@ -613,9 +686,9 @@ auto BuiltinFunctionKind::IsCompTimeOnly(const File& sem_ir,
     case IntLessEq:
     case IntGreater:
     case IntGreaterEq:
-      // Integer operations are compile-time-only if they involve integer
-      // literal types. See AnyIntLiteralTypes comment for explanation.
-      return AnyIntLiteralTypes(sem_ir, arg_ids, return_type_id);
+      // Integer operations are compile-time-only if they involve literal types.
+      // See AnyLiteralTypes comment for explanation.
+      return AnyLiteralTypes(sem_ir, arg_ids, return_type_id);
 
     case TypeAnd:
       return true;

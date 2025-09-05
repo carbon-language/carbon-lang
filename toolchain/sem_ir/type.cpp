@@ -73,41 +73,95 @@ auto TypeStore::GetObjectRepr(TypeId type_id) const -> TypeId {
   return class_info.GetObjectRepr(*file_, class_type->specific_id);
 }
 
-auto TypeStore::GetUnqualifiedType(TypeId type_id) const -> TypeId {
-  if (auto const_type = TryGetAs<ConstType>(type_id)) {
-    return file_->types().GetTypeIdForTypeInstId(const_type->inner_id);
+auto TypeStore::GetAdaptedType(TypeId type_id) const -> TypeId {
+  if (auto class_type = TryGetAs<ClassType>(type_id)) {
+    return file_->classes()
+        .Get(class_type->class_id)
+        .GetAdaptedType(*file_, class_type->specific_id);
+  }
+  return TypeId::None;
+}
+
+auto TypeStore::GetTransitiveAdaptedType(TypeId type_id) const -> TypeId {
+  while (true) {
+    auto adapted_type_id = GetAdaptedType(type_id);
+    if (!adapted_type_id.has_value()) {
+      break;
+    }
+    type_id = adapted_type_id;
   }
   return type_id;
 }
 
-static auto TryGetIntTypeInfo(const File& file, TypeId type_id)
-    -> std::optional<TypeStore::IntTypeInfo> {
-  auto object_repr_id = file.types().GetObjectRepr(type_id);
+auto TypeStore::GetUnqualifiedTypeAndQualifiers(TypeId type_id) const
+    -> std::pair<TypeId, TypeQualifiers> {
+  TypeQualifiers quals = TypeQualifiers::None;
+  while (true) {
+    if (auto qualified_type = TryGetAs<AnyQualifiedType>(type_id)) {
+      type_id = file_->types().GetTypeIdForTypeInstId(qualified_type->inner_id);
+      switch (qualified_type->kind) {
+        case ConstType::Kind:
+          quals |= TypeQualifiers::Const;
+          break;
+        case MaybeUnformedType::Kind:
+          quals |= TypeQualifiers::MaybeUnformed;
+          break;
+        case PartialType::Kind:
+          quals |= TypeQualifiers::Partial;
+          break;
+        default:
+          CARBON_FATAL("Unknown type qualifier {0}", qualified_type->kind);
+      }
+    } else {
+      return {type_id, quals};
+    }
+  }
+}
+
+auto TypeStore::GetTransitiveUnqualifiedAdaptedType(TypeId type_id) const
+    -> std::pair<TypeId, TypeQualifiers> {
+  TypeQualifiers quals = TypeQualifiers::None;
+  while (true) {
+    type_id = GetTransitiveAdaptedType(type_id);
+    auto [unqual_type_id, inner_quals] =
+        GetUnqualifiedTypeAndQualifiers(type_id);
+    if (unqual_type_id == type_id) {
+      return {type_id, quals};
+    }
+    type_id = unqual_type_id;
+    quals |= inner_quals;
+  }
+}
+
+auto TypeStore::TryGetIntTypeInfo(TypeId int_type_id) const
+    -> std::optional<IntTypeInfo> {
+  auto object_repr_id = file_->types().GetObjectRepr(int_type_id);
   if (!object_repr_id.has_value()) {
     return std::nullopt;
   }
-  auto inst_id = file.types().GetInstId(object_repr_id);
+  auto inst_id = file_->types().GetInstId(object_repr_id);
   if (inst_id == IntLiteralType::TypeInstId) {
     // `Core.IntLiteral` has an unknown bit-width.
     return TypeStore::IntTypeInfo{.is_signed = true, .bit_width = IntId::None};
   }
-  auto int_type = file.insts().TryGetAs<IntType>(inst_id);
+  auto int_type = file_->insts().TryGetAs<IntType>(inst_id);
   if (!int_type) {
     return std::nullopt;
   }
-  auto bit_width_inst = file.insts().TryGetAs<IntValue>(int_type->bit_width_id);
+  auto bit_width_inst =
+      file_->insts().TryGetAs<IntValue>(int_type->bit_width_id);
   return TypeStore::IntTypeInfo{
       .is_signed = int_type->int_kind.is_signed(),
       .bit_width = bit_width_inst ? bit_width_inst->int_id : IntId::None};
 }
 
 auto TypeStore::IsSignedInt(TypeId int_type_id) const -> bool {
-  auto int_info = TryGetIntTypeInfo(*file_, int_type_id);
+  auto int_info = TryGetIntTypeInfo(int_type_id);
   return int_info && int_info->is_signed;
 }
 
 auto TypeStore::GetIntTypeInfo(TypeId int_type_id) const -> IntTypeInfo {
-  auto int_info = TryGetIntTypeInfo(*file_, int_type_id);
+  auto int_info = TryGetIntTypeInfo(int_type_id);
   CARBON_CHECK(int_info, "Type {0} is not an integer type", int_type_id);
   return *int_info;
 }

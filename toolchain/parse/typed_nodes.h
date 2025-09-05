@@ -258,6 +258,18 @@ struct LibrarySpecifier {
   NodeIdOneOf<LibraryName, DefaultLibrary> name;
 };
 
+using InlineImportBody =
+    LeafNode<NodeKind::InlineImportBody, Lex::StringLiteralTokenIndex>;
+
+// `inline` in `import`.
+struct InlineImportSpecifier {
+  static constexpr auto Kind =
+      NodeKind::InlineImportSpecifier.Define({.child_count = 1});
+
+  Lex::InlineTokenIndex token;
+  InlineImportBodyId body;
+};
+
 // First line of the file, such as:
 //   `impl package MyPackage library "MyLibrary";`
 struct PackageDecl {
@@ -272,7 +284,7 @@ struct PackageDecl {
   Lex::SemiTokenIndex token;
 };
 
-// `import TheirPackage library "TheirLibrary";`
+// `import [TheirPackage] [library "TheirLibrary" | inline "code"];`
 using ImportIntroducer =
     LeafNode<NodeKind::ImportIntroducer, Lex::ImportTokenIndex>;
 struct ImportDecl {
@@ -283,6 +295,7 @@ struct ImportDecl {
   llvm::SmallVector<AnyModifierId> modifiers;
   std::optional<AnyPackageNameId> name;
   std::optional<LibrarySpecifierId> library;
+  std::optional<InlineImportSpecifierId> inline_specifier;
   Lex::SemiTokenIndex token;
 };
 
@@ -362,15 +375,24 @@ struct TemplateBindingName {
   AnyRuntimeBindingPatternName name;
 };
 
+struct CompileTimeBindingPatternStart {
+  static constexpr auto Kind =
+      NodeKind::CompileTimeBindingPatternStart.Define({.child_count = 1});
+  // TODO: is there some way to reuse AnyRuntimeBindingPatternName here?
+  NodeIdOneOf<IdentifierNameNotBeforeParams, SelfValueName, UnderscoreName,
+              TemplateBindingName>
+      name;
+  // This is a virtual token. The `:!` token is owned by the
+  // CompileTimeBindingPattern node.
+  Lex::ColonExclaimTokenIndex token;
+};
+
 // `name:! Type`
 struct CompileTimeBindingPattern {
   static constexpr auto Kind = NodeKind::CompileTimeBindingPattern.Define(
       {.category = NodeCategory::Pattern, .child_count = 2});
 
-  // TODO: is there some way to reuse AnyRuntimeBindingPatternName here?
-  NodeIdOneOf<IdentifierNameNotBeforeParams, SelfValueName, UnderscoreName,
-              TemplateBindingName>
-      name;
+  CompileTimeBindingPatternStartId introducer;
   Lex::ColonExclaimTokenIndex token;
   AnyExprId type;
 };
@@ -532,6 +554,39 @@ struct LetDecl {
   Lex::SemiTokenIndex token;
 };
 
+// Associated constant nodes
+using AssociatedConstantIntroducer =
+    LeafNode<NodeKind::AssociatedConstantIntroducer, Lex::LetTokenIndex>;
+using AssociatedConstantInitializer =
+    LeafNode<NodeKind::AssociatedConstantInitializer, Lex::EqualTokenIndex>;
+
+struct AssociatedConstantNameAndType {
+  static constexpr auto Kind = NodeKind::AssociatedConstantNameAndType.Define(
+      {.category = NodeCategory::Pattern, .child_count = 2});
+
+  AnyRuntimeBindingPatternName name;
+  Lex::ColonExclaimTokenIndex token;
+  AnyExprId type;
+};
+
+// An associated constant declaration: `let a:! i32;`.
+struct AssociatedConstantDecl {
+  static constexpr auto Kind = NodeKind::AssociatedConstantDecl.Define(
+      {.category = NodeCategory::Decl,
+       .bracketed_by = AssociatedConstantIntroducer::Kind});
+
+  AssociatedConstantIntroducerId introducer;
+  llvm::SmallVector<AnyModifierId> modifiers;
+  AssociatedConstantNameAndTypeId pattern;
+
+  struct Initializer {
+    AssociatedConstantInitializerId equals;
+    AnyExprId initializer;
+  };
+  std::optional<Initializer> initializer;
+  Lex::SemiTokenIndex token;
+};
+
 // `var` nodes
 // -----------
 
@@ -675,17 +730,15 @@ struct ReturnStatement {
 using ForHeaderStart =
     LeafNode<NodeKind::ForHeaderStart, Lex::OpenParenTokenIndex>;
 
-// The `var ... in` portion of a `for` statement.
+// The `... in` portion of a `for` statement.
 struct ForIn {
-  static constexpr auto Kind = NodeKind::ForIn.Define(
-      {.bracketed_by = VariableIntroducer::Kind, .child_count = 2});
+  static constexpr auto Kind = NodeKind::ForIn.Define({.child_count = 1});
 
-  VariableIntroducerId introducer;
   AnyPatternId pattern;
   Lex::InTokenIndex token;
 };
 
-// The `for (var ... in ...)` portion of a `for` statement.
+// The `(... in ...)` portion of a `for` statement.
 struct ForHeader {
   static constexpr auto Kind =
       NodeKind::ForHeader.Define({.bracketed_by = ForHeaderStart::Kind});
@@ -1014,6 +1067,16 @@ struct PostfixOperator {
 
   AnyExprId operand;
   TokenKind token;
+};
+
+// An `unsafe` modifier: `a unsafe <operator> b`. This is modeled in the parse
+// tree as a postfix operator applied to `a`.
+struct UnsafeModifier {
+  static constexpr auto Kind = NodeKind::UnsafeModifier.Define(
+      {.category = NodeCategory::Expr, .child_count = 1});
+
+  AnyExprId operand;
+  Lex::UnsafeTokenIndex token;
 };
 
 // Literals, operators, and modifiers

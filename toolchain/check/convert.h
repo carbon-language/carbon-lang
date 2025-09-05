@@ -19,10 +19,19 @@ struct ConversionTarget {
     Value,
     // Convert to either a value or a reference of type `type_id`.
     ValueOrRef,
+    // Convert to a durable reference of type `type_id`.
+    DurableRef,
+    // Convert to a reference of type `type_id`, for use as the argument to a
+    // C++ thunk.
+    CppThunkRef,
     // Convert for an explicit `as` cast. This allows any expression category
     // as the result, and uses the `As` interface instead of the `ImplicitAs`
     // interface.
     ExplicitAs,
+    // Convert for an explicit `unsafe as` cast. This allows any expression
+    // category as the result, and uses the `UnsafeAs` interface instead of the
+    // `As` or `ImplicitAs` interface.
+    ExplicitUnsafeAs,
     // The result of the conversion is discarded. It can't be an initializing
     // expression, but can be anything else.
     Discarded,
@@ -52,17 +61,21 @@ struct ConversionTarget {
   auto is_initializer() const -> bool {
     return kind == Initializer || kind == FullInitializer;
   }
+  // Is this some kind of explicit `as` conversion?
+  auto is_explicit_as() const -> bool {
+    return kind == ExplicitAs || kind == ExplicitUnsafeAs;
+  }
 };
 
 // Convert a value to another type and expression category.
 // TODO: The `vtable_id` parameter is too much of a special case here, and
 // should be removed - once partial classes are implemented, the vtable pointer
 // initialization will be done not in this conversion, but during initialization
-// of the object of non-partial class time from the object of partial class
+// of the object of non-partial class type from the object of partial class
 // type.
 auto Convert(Context& context, SemIR::LocId loc_id, SemIR::InstId expr_id,
              ConversionTarget target,
-             SemIR::InstId vtable_id = SemIR::InstId::None) -> SemIR::InstId;
+             SemIR::ClassType* vtable_class_type = nullptr) -> SemIR::InstId;
 
 // Performs initialization of `target_id` from `value_id`. Returns the
 // possibly-converted initializing expression, which should be assigned to the
@@ -103,8 +116,8 @@ auto ConvertToBoolValue(Context& context, SemIR::LocId loc_id,
 
 // Converts `value_id` to type `type_id` for an `as` expression.
 auto ConvertForExplicitAs(Context& context, Parse::NodeId as_node,
-                          SemIR::InstId value_id, SemIR::TypeId type_id)
-    -> SemIR::InstId;
+                          SemIR::InstId value_id, SemIR::TypeId type_id,
+                          bool unsafe) -> SemIR::InstId;
 
 // Implicitly converts a set of arguments to match the parameter types in a
 // function call. Returns a block containing the converted implicit and explicit
@@ -119,11 +132,16 @@ auto ConvertCallArgs(Context& context, SemIR::LocId call_loc_id,
 
 // A type that has been converted for use as a type expression.
 struct TypeExpr {
+  static const TypeExpr None;
+
   // The converted expression of type `type`, or `ErrorInst::InstId`.
   SemIR::TypeInstId inst_id;
   // The corresponding type, or `ErrorInst::TypeId`.
   SemIR::TypeId type_id;
 };
+
+constexpr inline TypeExpr TypeExpr::None = {.inst_id = SemIR::TypeInstId::None,
+                                            .type_id = SemIR::TypeId::None};
 
 // Converts an expression for use as a type.
 //

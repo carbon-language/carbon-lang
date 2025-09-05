@@ -4,8 +4,10 @@
 
 #include "toolchain/lower/function_context.h"
 
+#include "common/pretty_stack_trace_function.h"
 #include "common/vlog.h"
 #include "toolchain/base/kind_switch.h"
+#include "toolchain/sem_ir/diagnostic_loc_converter.h"
 #include "toolchain/sem_ir/file.h"
 #include "toolchain/sem_ir/generic.h"
 
@@ -13,11 +15,12 @@ namespace Carbon::Lower {
 
 FunctionContext::FunctionContext(
     FileContext& file_context, llvm::Function* function,
-    SemIR::SpecificId specific_id,
-    FileContext::SpecificFunctionFingerprint* function_fingerprint,
+    FileContext& specific_file_context, SemIR::SpecificId specific_id,
+    SpecificCoalescer::SpecificFunctionFingerprint* function_fingerprint,
     llvm::DISubprogram* di_subprogram, llvm::raw_ostream* vlog_stream)
     : file_context_(&file_context),
       function_(function),
+      specific_file_context_(&specific_file_context),
       specific_id_(specific_id),
       builder_(file_context.llvm_context(), llvm::ConstantFolder(),
                Inserter(file_context.inst_namer())),
@@ -54,7 +57,25 @@ auto FunctionContext::TryToReuseBlock(SemIR::InstBlockId block_id,
 }
 
 auto FunctionContext::LowerBlockContents(SemIR::InstBlockId block_id) -> void {
+  auto inst_id_for_stack_trace = SemIR::InstId::None;
+
+  // On crash, report the instruction we were lowering.
+  PrettyStackTraceFunction stack_trace_entry([&](llvm::raw_ostream& output) {
+    SemIR::DiagnosticLocConverter converter(
+        &file_context_->context().tree_and_subtrees_getters(), &sem_ir());
+    auto converted = converter.Convert(SemIR::LocId(inst_id_for_stack_trace),
+                                       /*token_only=*/false);
+    converted.loc.FormatLocation(output);
+    // TODO: Format SemIR for the instruction we were lowering?
+    output << "Lowering "
+           << sem_ir().insts().Get(inst_id_for_stack_trace).kind().ir_name()
+           << "\n";
+    // Crash output has a tab indent; try to indent slightly past that.
+    converted.loc.FormatSnippet(output, /*indent=*/10);
+  });
+
   for (auto inst_id : sem_ir().inst_blocks().Get(block_id)) {
+    inst_id_for_stack_trace = inst_id;
     LowerInst(inst_id);
   }
 }
@@ -124,8 +145,8 @@ auto FunctionContext::LowerInst(SemIR::InstId inst_id) -> void {
   builder_.getInserter().SetCurrentInstId(SemIR::InstId::None);
 }
 
-auto FunctionContext::GetBlockArg(SemIR::InstBlockId block_id,
-                                  SemIR::TypeId type_id) -> llvm::PHINode* {
+auto FunctionContext::GetBlockArg(SemIR::InstBlockId block_id, TypeInFile type)
+    -> llvm::PHINode* {
   llvm::BasicBlock* block = GetBlock(block_id);
 
   // Find the existing phi, if any.
@@ -139,7 +160,7 @@ auto FunctionContext::GetBlockArg(SemIR::InstBlockId block_id,
 
   // The number of predecessor slots to reserve.
   static constexpr unsigned NumReservedPredecessors = 2;
-  auto* phi = llvm::PHINode::Create(GetType(type_id), NumReservedPredecessors);
+  auto* phi = llvm::PHINode::Create(GetType(type), NumReservedPredecessors);
   phi->insertInto(block, block->begin());
   return phi;
 }
@@ -158,7 +179,16 @@ auto FunctionContext::GetValue(SemIR::InstId inst_id) -> llvm::Value* {
     return result.value();
   }
 
-  auto* global = file_context_->GetGlobal(inst_id, specific_id_);
+  auto [const_ir, const_id] = GetConstantValueInSpecific(
+      specific_sem_ir(), specific_id_, sem_ir(), inst_id);
+  CARBON_CHECK(const_ir == &sem_ir() || const_ir == &specific_sem_ir());
+  CARBON_CHECK(const_id.is_concrete(),
+               "Missing value: {0} {1} in {2} has non-concrete value {3}",
+               inst_id, sem_ir().insts().Get(inst_id), specific_id_, const_id);
+  // We can only pass on the InstId if it refers to the file in which the
+  // constant value was provided.
+  auto* global = GetFileContext(const_ir).GetConstant(
+      const_id, const_ir == &sem_ir() ? inst_id : SemIR::InstId::None);
   AddGlobalToCurrentFingerprint(global);
   return global;
 }
@@ -166,6 +196,50 @@ auto FunctionContext::GetValue(SemIR::InstId inst_id) -> llvm::Value* {
 auto FunctionContext::MakeSyntheticBlock() -> llvm::BasicBlock* {
   synthetic_block_ = llvm::BasicBlock::Create(llvm_context(), "", function_);
   return synthetic_block_;
+}
+
+auto FunctionContext::CreateAlloca(llvm::Type* type, const llvm::Twine& name)
+    -> llvm::AllocaInst* {
+  // Position the first alloca right before the start of the executable code in
+  // the function.
+  llvm::AllocaInst* alloca;
+  {
+    llvm::IRBuilderBase::InsertPointGuard guard(builder());
+
+    auto debug_loc = builder().getCurrentDebugLocation();
+    if (after_allocas_) {
+      builder().SetInsertPoint(after_allocas_);
+    } else {
+      builder().SetInsertPointPastAllocas(&llvm_function());
+    }
+
+    // IRBuilder tramples over our debug location when setting the insert point,
+    // so undo that.
+    builder().SetCurrentDebugLocation(debug_loc);
+
+    // Create an alloca for this variable in the entry block.
+    // TODO: Compute alignment of the type, which may be greater than the
+    // alignment computed by LLVM.
+    alloca = builder().CreateAlloca(type, /*ArraySize=*/nullptr, name);
+  }
+
+  // Create a lifetime start intrinsic here to indicate where its scope really
+  // begins.
+  builder().CreateLifetimeStart(alloca);
+
+  // If we just created the first alloca, there is now definitely at least one
+  // instruction after it -- there is a lifetime start instruction if nothing
+  // else. Use that instruction as our insert point for all future allocas.
+  if (!after_allocas_) {
+    auto loc = alloca->getIterator();
+    ++loc;
+    after_allocas_ = &*loc;
+  }
+
+  // TODO: Create a matching `@llvm.lifetime.end` intrinsic call when the
+  // variable goes out of scope.
+
+  return alloca;
 }
 
 auto FunctionContext::GetDebugLoc(SemIR::InstId inst_id) -> llvm::DebugLoc {
@@ -181,67 +255,144 @@ auto FunctionContext::GetDebugLoc(SemIR::InstId inst_id) -> llvm::DebugLoc {
     // duplicated from the original signature.
     //
     // TODO: Handle this case better.
+    if (sem_ir().insts().Is<SemIR::Call>(inst_id)) {
+      // Return a stub location for calls, because they may be inlineable (an
+      // LLVM verifier issue).
+      return llvm::DILocation::get(builder_.getContext(), -1, -1,
+                                   di_subprogram_);
+    }
     return llvm::DebugLoc();
   }
   return llvm::DILocation::get(builder_.getContext(), loc.line_number,
                                loc.column_number, di_subprogram_);
 }
 
-auto FunctionContext::FinishInit(SemIR::TypeId type_id, SemIR::InstId dest_id,
+auto FunctionContext::FinishInit(TypeInFile type, SemIR::InstId dest_id,
                                  SemIR::InstId source_id) -> void {
-  switch (SemIR::InitRepr::ForType(sem_ir(), type_id).kind) {
+  switch (GetInitRepr(type).kind) {
     case SemIR::InitRepr::None:
       break;
     case SemIR::InitRepr::InPlace:
       if (sem_ir().constant_values().Get(source_id).is_constant()) {
         // When initializing from a constant, emission of the source doesn't
         // initialize the destination. Copy the constant value instead.
-        CopyValue(type_id, source_id, dest_id);
+        CopyValue(type, source_id, dest_id);
       }
       break;
     case SemIR::InitRepr::ByCopy:
-      CopyValue(type_id, source_id, dest_id);
+      CopyValue(type, source_id, dest_id);
       break;
     case SemIR::InitRepr::Incomplete:
       CARBON_FATAL("Lowering aggregate initialization of incomplete type {0}",
-                   sem_ir().types().GetAsInst(type_id));
+                   type.file->types().GetAsInst(type.type_id));
   }
 }
 
-auto FunctionContext::GetTypeOfInst(SemIR::InstId inst_id) -> SemIR::TypeId {
-  return SemIR::GetTypeOfInstInSpecific(sem_ir(), specific_id(), inst_id);
+auto FunctionContext::GetTypeIdOfInst(SemIR::InstId inst_id) -> TypeInFile {
+  auto [file, type_id] = SemIR::GetTypeOfInstInSpecific(
+      specific_sem_ir(), specific_id(), sem_ir(), inst_id);
+  return {.file = file, .type_id = type_id};
 }
 
-auto FunctionContext::CopyValue(SemIR::TypeId type_id, SemIR::InstId source_id,
+auto FunctionContext::GetValueRepr(TypeInFile type) -> ValueReprInFile {
+  ValueReprInFile result = {
+      .file = type.file,
+      .repr = SemIR::ValueRepr::ForType(*type.file, type.type_id)};
+  AddEnumToCurrentFingerprint(result.repr.kind);
+  AddEnumToCurrentFingerprint(result.repr.aggregate_kind);
+  return result;
+}
+
+auto FunctionContext::GetInitRepr(TypeInFile type) -> SemIR::InitRepr {
+  auto result = SemIR::InitRepr::ForType(*type.file, type.type_id);
+  AddEnumToCurrentFingerprint(result.kind);
+  return result;
+}
+
+auto FunctionContext::GetReturnTypeInfo(TypeInFile type)
+    -> ReturnTypeInfoInFile {
+  ReturnTypeInfoInFile result = {
+      .file = type.file,
+      .info = SemIR::ReturnTypeInfo::ForType(*type.file, type.type_id)};
+  AddEnumToCurrentFingerprint(result.info.init_repr.kind);
+  return result;
+}
+
+// Given a type used for an LLVM value, return the type that we use to store
+// that value in memory. This is the same type unless the type is a
+// non-multiple-of-8 integer type, which we explicitly widen to a multiple of 8
+// for Clang compatibility and to make our generated IR easier for LLVM to
+// handle.
+static auto GetWidenedMemoryType(llvm::Type* type) -> llvm::Type* {
+  if (auto* int_type = dyn_cast<llvm::IntegerType>(type)) {
+    auto width = llvm::alignToPowerOf2(int_type->getBitWidth(), 8);
+    if (width != int_type->getBitWidth()) {
+      return llvm::IntegerType::get(type->getContext(), width);
+    }
+  }
+  return type;
+}
+
+auto FunctionContext::LoadObject(TypeInFile type, llvm::Value* addr,
+                                 llvm::Twine name) -> llvm::Value* {
+  auto* llvm_type = GetType(type);
+  auto* load_type = GetWidenedMemoryType(llvm_type);
+
+  // TODO: Include alias and alignment information.
+  llvm::Value* value = builder().CreateLoad(load_type, addr, name);
+
+  if (load_type != llvm_type) {
+    value = builder().CreateTrunc(value, llvm_type);
+  }
+  return value;
+}
+
+auto FunctionContext::StoreObject(TypeInFile type, llvm::Value* value,
+                                  llvm::Value* addr) -> void {
+  // TODO: Include alias and alignment information.
+  auto* llvm_type = GetType(type);
+  CARBON_CHECK(value->getType() == llvm_type);
+
+  // Don't emit a store of `iN` if N is not a multiple of 8. See `LoadObject`.
+  auto* store_type = GetWidenedMemoryType(llvm_type);
+  if (store_type != llvm_type) {
+    // TODO: Should we consider creating a sext if the value is signed?
+    value = builder().CreateZExt(value, store_type);
+  }
+
+  builder().CreateStore(value, addr);
+}
+
+auto FunctionContext::CopyValue(TypeInFile type, SemIR::InstId source_id,
                                 SemIR::InstId dest_id) -> void {
-  switch (auto rep = SemIR::ValueRepr::ForType(sem_ir(), type_id); rep.kind) {
+  switch (GetValueRepr(type).repr.kind) {
     case SemIR::ValueRepr::Unknown:
       CARBON_FATAL("Attempt to copy incomplete type");
     case SemIR::ValueRepr::None:
       break;
     case SemIR::ValueRepr::Copy:
-      builder().CreateStore(GetValue(source_id), GetValue(dest_id));
+      StoreObject(type, GetValue(source_id), GetValue(dest_id));
       break;
     case SemIR::ValueRepr::Pointer:
-      CopyObject(type_id, source_id, dest_id);
+      CopyObject(type, source_id, dest_id);
       break;
     case SemIR::ValueRepr::Custom:
       CARBON_FATAL("TODO: Add support for CopyValue with custom value rep");
   }
 }
 
-auto FunctionContext::CopyObject(SemIR::TypeId type_id, SemIR::InstId source_id,
+auto FunctionContext::CopyObject(TypeInFile type, SemIR::InstId source_id,
                                  SemIR::InstId dest_id) -> void {
   const auto& layout = llvm_module().getDataLayout();
-  auto* type = GetType(type_id);
+  auto* llvm_type = GetType(type);
   // TODO: Compute known alignment of the source and destination, which may
   // be greater than the alignment computed by LLVM.
-  auto align = layout.getABITypeAlign(type);
+  auto align = layout.getABITypeAlign(llvm_type);
 
   // TODO: Attach !tbaa.struct metadata indicating which portions of the
   // type we actually need to copy and which are padding.
   builder().CreateMemCpy(GetValue(dest_id), align, GetValue(source_id), align,
-                         layout.getTypeAllocSize(type));
+                         layout.getTypeAllocSize(llvm_type));
 }
 
 auto FunctionContext::Inserter::InsertHelper(
@@ -260,7 +411,8 @@ auto FunctionContext::Inserter::InsertHelper(
                                          insert_pt);
 }
 
-auto FunctionContext::AddCallToCurrentFingerprint(SemIR::FunctionId function_id,
+auto FunctionContext::AddCallToCurrentFingerprint(SemIR::CheckIRId file_id,
+                                                  SemIR::FunctionId function_id,
                                                   SemIR::SpecificId specific_id)
     -> void {
   if (!function_fingerprint_) {
@@ -268,9 +420,10 @@ auto FunctionContext::AddCallToCurrentFingerprint(SemIR::FunctionId function_id,
   }
 
   RawStringOstream os;
-  // TODO: Replace index with info that is translation unit independent.
+  // TODO: Replace indexes with info that is translation unit independent.
   // Using a string that includes the `FunctionId` string and the index to
   // avoid possible collisions. This needs revisiting.
+  os << "file_id" << file_id.index << "\n";
   os << "function_id" << function_id.index << "\n";
   current_fingerprint_.common_fingerprint.update(os.TakeStr());
   // TODO: Replace index with info that is translation unit independent.
@@ -280,6 +433,17 @@ auto FunctionContext::AddCallToCurrentFingerprint(SemIR::FunctionId function_id,
     current_fingerprint_.specific_fingerprint.update(-1);
     function_fingerprint_->calls.push_back(specific_id);
   }
+}
+
+auto FunctionContext::AddIntToCurrentFingerprint(uint64_t value) -> void {
+  if (!function_fingerprint_) {
+    return;
+  }
+
+  // TODO: Instead just include the raw bytes of the integer?
+  RawStringOstream os;
+  os << value << "\n";
+  current_fingerprint_.common_fingerprint.update(os.TakeStr());
 }
 
 auto FunctionContext::AddTypeToCurrentFingerprint(llvm::Type* type) -> void {

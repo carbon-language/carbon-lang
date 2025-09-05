@@ -79,7 +79,9 @@ auto TypeIterator::Next() -> Step {
 
       case SemIR::AssociatedEntityType::Kind:
       case SemIR::BoolType::Kind:
+      case SemIR::CharLiteralType::Kind:
       case SemIR::FacetType::Kind:
+      case SemIR::FloatLiteralType::Kind:
       case SemIR::FloatType::Kind:
       case SemIR::FunctionType::Kind:
       case SemIR::FunctionTypeWithSelfType::Kind:
@@ -87,9 +89,7 @@ auto TypeIterator::Next() -> Step {
       case SemIR::GenericInterfaceType::Kind:
       case SemIR::ImplWitnessAccess::Kind:
       case SemIR::IntLiteralType::Kind:
-      case SemIR::LegacyFloatType::Kind:
       case SemIR::NamespaceType::Kind:
-      case SemIR::StringType::Kind:
       case SemIR::TypeType::Kind:
       case SemIR::WitnessType::Kind: {
         return Step::ConcreteType{.type_id = type_id};
@@ -127,6 +127,18 @@ auto TypeIterator::Next() -> Step {
         PushInstId(const_type.inner_id);
         break;
       }
+      case CARBON_KIND(SemIR::MaybeUnformedType partial_type): {
+        // We don't stop at `MaybeUnformed` since it is a modifier; just move to
+        // the inner type.
+        PushInstId(partial_type.inner_id);
+        break;
+      }
+      case CARBON_KIND(SemIR::PartialType partial_type): {
+        // We don't stop at `partial` since it is a modifier; just move to the
+        // inner type.
+        PushInstId(partial_type.inner_id);
+        break;
+      }
       case CARBON_KIND(SemIR::ImplWitnessAssociatedConstant assoc): {
         Push(assoc.type_id);
         break;
@@ -160,7 +172,13 @@ auto TypeIterator::Next() -> Step {
           return Step::StructStart{.type_id = type_id};
         }
       }
+
+      case SemIR::ErrorInst::Kind:
+        return Step::Error();
+
       default:
+        // TODO: Rearrange this so that missing instruction kinds are detected
+        // at compile-time not runtime.
         CARBON_FATAL("Unhandled type instruction {0}", inst_id);
     }
   }

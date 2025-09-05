@@ -33,6 +33,9 @@ constexpr Kind UntestedKinds[] = {
     Kind::ErrorReadingFile,
     Kind::ErrorStattingFile,
     Kind::FileTooLarge,
+    Kind::FailureBuildingRuntimes,
+    Kind::FailureRunningClang,
+    Kind::FailureRunningClangToLink,
 
     // These aren't feasible to test with a normal testcase, but are tested in
     // lex/tokenized_buffer_test.cpp.
@@ -43,6 +46,14 @@ constexpr Kind UntestedKinds[] = {
     // This is a little long but is tested in lex/numeric_literal_test.cpp.
     Kind::TooManyDigits,
 
+    // Producing an emit failure may be infeasible.
+    Kind::CodeGenUnableToEmit,
+
+    // TODO: This is currently hard to test because it requires building and
+    // importing a module, which attempts to create additional files with
+    // unpredictable names in the module cache, which bazel doesn't permit.
+    Kind::InCppModule,
+
     // TODO: This can only fire if the first message in a diagnostic is rooted
     // in a file other than the file being compiled. The language server
     // currently only supports compiling one file at a time. Do one of:
@@ -51,6 +62,13 @@ constexpr Kind UntestedKinds[] = {
     // - Require all diagnostics produced by compiling have their first location
     //   be in the file being compiled, never an import.
     Kind::LanguageServerDiagnosticInWrongFile,
+
+    // TODO: This can only fire if we attempt to convert a non-reference
+    // expression to a durable reference binding. At the moment, the only time
+    // we attempt reference binding is within a `var` pattern, where the
+    // conversion cannot fail. This should be covered once we support `ref`
+    // binding syntax.
+    Kind::ConversionFailureNonRefToRef,
 };
 
 // Looks for diagnostic kinds that aren't covered by a file_test.

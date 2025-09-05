@@ -16,6 +16,9 @@ cc_library(
     srcs = ["codegen.cpp"],
     hdrs = ["codegen.h"],
     deps = [
+        "//common:check",
+        "//toolchain/diagnostics:diagnostic_emitter",
+        "//toolchain/diagnostics:file_diagnostics",
         "@llvm-project//llvm:Core",
         "@llvm-project//llvm:MC",
         "@llvm-project//llvm:Support",

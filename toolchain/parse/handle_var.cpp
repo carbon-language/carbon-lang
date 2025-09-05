@@ -50,15 +50,6 @@ auto HandleVarAsReturned(Context& context) -> void {
   HandleVar(context, StateKind::VarFinishAsRegular, returned_token);
 }
 
-auto HandleVarAsFor(Context& context) -> void {
-  auto state = context.PopState();
-
-  // The finished variable declaration will start at the `var`.
-  context.PushState(state, StateKind::VarFinishAsFor);
-
-  context.PushState(StateKind::Pattern);
-}
-
 auto HandleFieldDecl(Context& context) -> void {
   auto state = context.PopState();
 
@@ -139,30 +130,6 @@ auto HandleVarFinishAsRegular(Context& context) -> void {
 
 auto HandleVarFinishAsField(Context& context) -> void {
   HandleVarFinish(context, NodeKind::FieldDecl);
-}
-
-auto HandleVarFinishAsFor(Context& context) -> void {
-  auto state = context.PopState();
-
-  context.AddNode(NodeKind::VariablePattern, state.token, state.has_error);
-
-  auto end_token = state.token;
-  if (context.PositionIs(Lex::TokenKind::In)) {
-    end_token = context.Consume();
-  } else if (context.PositionIs(Lex::TokenKind::Colon)) {
-    CARBON_DIAGNOSTIC(ExpectedInNotColon, Error,
-                      "`:` should be replaced by `in`");
-    context.emitter().Emit(*context.position(), ExpectedInNotColon);
-    state.has_error = true;
-    end_token = context.Consume();
-  } else {
-    CARBON_DIAGNOSTIC(ExpectedIn, Error,
-                      "expected `in` after loop `var` declaration");
-    context.emitter().Emit(*context.position(), ExpectedIn);
-    state.has_error = true;
-  }
-
-  context.AddNode(NodeKind::ForIn, end_token, state.has_error);
 }
 
 auto HandleVariablePattern(Context& context) -> void {

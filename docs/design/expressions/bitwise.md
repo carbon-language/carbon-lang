@@ -59,7 +59,7 @@ graph BT
     bitwise_and>"x & y"]
     bitwise_or>"x | y"]
     bitwise_xor>"x ^ y"]
-    shift["x << y<br>
+    shift["x << y
            x >> y"]
     bitwise_and & bitwise_or & bitwise_xor & shift --> complement
 ```

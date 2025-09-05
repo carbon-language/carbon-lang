@@ -117,6 +117,21 @@ cc_library(
 )
 
 cc_library(
+    name = "emplace_by_calling",
+    hdrs = ["emplace_by_calling.h"],
+)
+
+cc_test(
+    name = "emplace_by_calling_test",
+    srcs = ["emplace_by_calling_test.cpp"],
+    deps = [
+        ":emplace_by_calling",
+        "//testing/base:gtest_main",
+        "@googletest//:gtest",
+    ],
+)
+
+cc_library(
     name = "enum_base",
     hdrs = ["enum_base.h"],
     deps = [
@@ -200,6 +215,61 @@ cc_test(
 )
 
 cc_library(
+    name = "filesystem",
+    srcs = ["filesystem.cpp"],
+    hdrs = ["filesystem.h"],
+    deps = [
+        ":build_data",
+        ":check",
+        ":error",
+        ":ostream",
+        ":raw_string_ostream",
+        ":template_string",
+        "@llvm-project//llvm:Support",
+    ],
+)
+
+cc_test(
+    name = "filesystem_test",
+    size = "small",
+    srcs = ["filesystem_test.cpp"],
+    deps = [
+        ":error_test_helpers",
+        ":filesystem",
+        "//testing/base:gtest_main",
+        "@googletest//:gtest",
+        "@llvm-project//llvm:Support",
+    ],
+)
+
+cc_binary(
+    name = "filesystem_benchmark",
+    testonly = 1,
+    srcs = ["filesystem_benchmark.cpp"],
+    deps = [
+        ":check",
+        ":filesystem",
+        "//testing/base:benchmark_main",
+        "@abseil-cpp//absl/hash",
+        "@abseil-cpp//absl/random",
+        "@google_benchmark//:benchmark",
+        "@llvm-project//llvm:Support",
+    ],
+)
+
+sh_test(
+    name = "filesystem_benchmark_test",
+    size = "small",
+    srcs = [":filesystem_benchmark"],
+    args = [
+        "--benchmark_min_time=1x",
+        # Restrict the sizes to 4-digit ones or smaller to keep test times low.
+        # The `$$` is repeated for Bazel escaping of `$`.
+        "--benchmark_filter=^[^/]+(/[0-9]{1,4}(/[0-9]+)?)?/real_time$$",
+    ],
+)
+
+cc_library(
     name = "find",
     hdrs = ["find.h"],
     deps = [
@@ -216,6 +286,22 @@ cc_test(
     srcs = ["find_test.cpp"],
     deps = [
         ":find",
+        "//testing/base:gtest_main",
+        "@googletest//:gtest",
+    ],
+)
+
+cc_library(
+    name = "growing_range",
+    hdrs = ["growing_range.h"],
+)
+
+cc_test(
+    name = "growing_range_test",
+    size = "small",
+    srcs = ["growing_range_test.cpp"],
+    deps = [
+        ":growing_range",
         "//testing/base:gtest_main",
         "@googletest//:gtest",
     ],
@@ -375,6 +461,14 @@ cc_library(
 )
 
 cc_library(
+    name = "pretty_stack_trace_function",
+    hdrs = ["pretty_stack_trace_function.h"],
+    deps = [
+        "@llvm-project//llvm:Support",
+    ],
+)
+
+cc_library(
     name = "raw_hashtable",
     srcs = ["raw_hashtable.cpp"],
     hdrs = ["raw_hashtable.h"],
@@ -437,6 +531,7 @@ cc_library(
         "@abseil-cpp//absl/base:no_destructor",
         "@abseil-cpp//absl/hash",
         "@abseil-cpp//absl/random",
+        "@boost_unordered",
         "@google_benchmark//:benchmark",
         "@llvm-project//llvm:Support",
     ],

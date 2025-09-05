@@ -2,7 +2,7 @@
 // Exceptions. See /LICENSE for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
-// EXTRA-ARGS: --dump-sem-ir-ranges=only
+// INCLUDE-FILE: toolchain/testing/testdata/min_prelude/int.carbon
 //
 // AUTOUPDATE
 // TIP: To test this file alone, run:
@@ -67,7 +67,7 @@ fn MixedTypes(a: i32*, b: i64) = "int.udiv_assign";
 // CHECK:STDOUT:   %Builtin.ref: %Builtin.type = name_ref Builtin, file.%Builtin.decl [concrete = constants.%Builtin]
 // CHECK:STDOUT:   %a.ref: %ptr = name_ref a, %a
 // CHECK:STDOUT:   %b.ref: %i32 = name_ref b, %b
-// CHECK:STDOUT:   %int.udiv_assign: init %empty_tuple.type = call %Builtin.ref(%a.ref, %b.ref)
+// CHECK:STDOUT:   %Builtin.call: init %empty_tuple.type = call %Builtin.ref(%a.ref, %b.ref)
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

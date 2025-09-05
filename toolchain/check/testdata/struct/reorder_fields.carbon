@@ -2,6 +2,7 @@
 // Exceptions. See /LICENSE for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
+// INCLUDE-FILE: toolchain/testing/testdata/min_prelude/primitives.carbon
 // TODO: Add ranges and switch to "--dump-sem-ir-ranges=only".
 // EXTRA-ARGS: --dump-sem-ir-ranges=if-present
 //
@@ -31,17 +32,18 @@ fn F() -> {.a: i32, .b: f64} {
 // CHECK:STDOUT:   %MakeI32.type: type = fn_type @MakeI32 [concrete]
 // CHECK:STDOUT:   %MakeI32: %MakeI32.type = struct_value () [concrete]
 // CHECK:STDOUT:   %int_64: Core.IntLiteral = int_value 64 [concrete]
-// CHECK:STDOUT:   %Float.type: type = fn_type @Float [concrete]
-// CHECK:STDOUT:   %Float: %Float.type = struct_value () [concrete]
-// CHECK:STDOUT:   %pattern_type.3de: type = pattern_type f64 [concrete]
+// CHECK:STDOUT:   %Float.type: type = generic_class_type @Float [concrete]
+// CHECK:STDOUT:   %Float.generic: %Float.type = struct_value () [concrete]
+// CHECK:STDOUT:   %f64.d77: type = class_type @Float, @Float(%int_64) [concrete]
+// CHECK:STDOUT:   %pattern_type.0ae: type = pattern_type %f64.d77 [concrete]
 // CHECK:STDOUT:   %MakeF64.type: type = fn_type @MakeF64 [concrete]
 // CHECK:STDOUT:   %MakeF64: %MakeF64.type = struct_value () [concrete]
-// CHECK:STDOUT:   %struct_type.a.b: type = struct_type {.a: %i32, .b: f64} [concrete]
-// CHECK:STDOUT:   %pattern_type.59f: type = pattern_type %struct_type.a.b [concrete]
+// CHECK:STDOUT:   %struct_type.a.b: type = struct_type {.a: %i32, .b: %f64.d77} [concrete]
+// CHECK:STDOUT:   %pattern_type.a5c: type = pattern_type %struct_type.a.b [concrete]
 // CHECK:STDOUT:   %F.type: type = fn_type @F [concrete]
 // CHECK:STDOUT:   %F: %F.type = struct_value () [concrete]
-// CHECK:STDOUT:   %struct_type.b.a: type = struct_type {.b: f64, .a: %i32} [concrete]
-// CHECK:STDOUT:   %pattern_type.a24: type = pattern_type %struct_type.b.a [concrete]
+// CHECK:STDOUT:   %struct_type.b.a: type = struct_type {.b: %f64.d77, .a: %i32} [concrete]
+// CHECK:STDOUT:   %pattern_type.b43: type = pattern_type %struct_type.b.a [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -51,8 +53,8 @@ fn F() -> {.a: i32, .b: f64} {
 // CHECK:STDOUT:     import Core//prelude
 // CHECK:STDOUT:     import Core//prelude/...
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %Core.Int: %Int.type = import_ref Core//prelude/types/int, Int, loaded [concrete = constants.%Int.generic]
-// CHECK:STDOUT:   %Core.Float: %Float.type = import_ref Core//prelude/types, Float, loaded [concrete = constants.%Float]
+// CHECK:STDOUT:   %Core.Int: %Int.type = import_ref Core//prelude/parts/int, Int, loaded [concrete = constants.%Int.generic]
+// CHECK:STDOUT:   %Core.Float: %Float.type = import_ref Core//prelude/parts/float, Float, loaded [concrete = constants.%Float.generic]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -73,27 +75,23 @@ fn F() -> {.a: i32, .b: f64} {
 // CHECK:STDOUT:     %return: ref %i32 = return_slot %return.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %MakeF64.decl: %MakeF64.type = fn_decl @MakeF64 [concrete = constants.%MakeF64] {
-// CHECK:STDOUT:     %return.patt: %pattern_type.3de = return_slot_pattern [concrete]
-// CHECK:STDOUT:     %return.param_patt: %pattern_type.3de = out_param_pattern %return.patt, call_param0 [concrete]
+// CHECK:STDOUT:     %return.patt: %pattern_type.0ae = return_slot_pattern [concrete]
+// CHECK:STDOUT:     %return.param_patt: %pattern_type.0ae = out_param_pattern %return.patt, call_param0 [concrete]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %int_64: Core.IntLiteral = int_value 64 [concrete = constants.%int_64]
-// CHECK:STDOUT:     %float.make_type: init type = call constants.%Float(%int_64) [concrete = f64]
-// CHECK:STDOUT:     %.loc15_17.1: type = value_of_initializer %float.make_type [concrete = f64]
-// CHECK:STDOUT:     %.loc15_17.2: type = converted %float.make_type, %.loc15_17.1 [concrete = f64]
-// CHECK:STDOUT:     %return.param: ref f64 = out_param call_param0
-// CHECK:STDOUT:     %return: ref f64 = return_slot %return.param
+// CHECK:STDOUT:     %f64: type = class_type @Float, @Float(constants.%int_64) [concrete = constants.%f64.d77]
+// CHECK:STDOUT:     %return.param: ref %f64.d77 = out_param call_param0
+// CHECK:STDOUT:     %return: ref %f64.d77 = return_slot %return.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [concrete = constants.%F] {
-// CHECK:STDOUT:     %return.patt: %pattern_type.59f = return_slot_pattern [concrete]
-// CHECK:STDOUT:     %return.param_patt: %pattern_type.59f = out_param_pattern %return.patt, call_param0 [concrete]
+// CHECK:STDOUT:     %return.patt: %pattern_type.a5c = return_slot_pattern [concrete]
+// CHECK:STDOUT:     %return.param_patt: %pattern_type.a5c = out_param_pattern %return.patt, call_param0 [concrete]
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %int_32.loc17: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
-// CHECK:STDOUT:     %i32.loc17: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
-// CHECK:STDOUT:     %int_64.loc17: Core.IntLiteral = int_value 64 [concrete = constants.%int_64]
-// CHECK:STDOUT:     %float.make_type.loc17: init type = call constants.%Float(%int_64.loc17) [concrete = f64]
-// CHECK:STDOUT:     %.loc17_25.1: type = value_of_initializer %float.make_type.loc17 [concrete = f64]
-// CHECK:STDOUT:     %.loc17_25.2: type = converted %float.make_type.loc17, %.loc17_25.1 [concrete = f64]
-// CHECK:STDOUT:     %struct_type.a.b.loc17: type = struct_type {.a: %i32, .b: f64} [concrete = constants.%struct_type.a.b]
+// CHECK:STDOUT:     %int_32.loc18: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
+// CHECK:STDOUT:     %i32.loc18: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
+// CHECK:STDOUT:     %int_64.loc18: Core.IntLiteral = int_value 64 [concrete = constants.%int_64]
+// CHECK:STDOUT:     %f64.loc18: type = class_type @Float, @Float(constants.%int_64) [concrete = constants.%f64.d77]
+// CHECK:STDOUT:     %struct_type.a.b.loc18: type = struct_type {.a: %i32, .b: %f64.d77} [concrete = constants.%struct_type.a.b]
 // CHECK:STDOUT:     %return.param: ref %struct_type.a.b = out_param call_param0
 // CHECK:STDOUT:     %return: ref %struct_type.a.b = return_slot %return.param
 // CHECK:STDOUT:   }
@@ -101,61 +99,57 @@ fn F() -> {.a: i32, .b: f64} {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @MakeI32() -> %i32;
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @MakeF64() -> f64;
+// CHECK:STDOUT: fn @MakeF64() -> %f64.d77;
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F() -> %return.param: %struct_type.a.b {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %x.patt: %pattern_type.59f = binding_pattern x [concrete]
+// CHECK:STDOUT:     %x.patt: %pattern_type.a5c = binding_pattern x [concrete]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %MakeF64.ref: %MakeF64.type = name_ref MakeF64, file.%MakeF64.decl [concrete = constants.%MakeF64]
-// CHECK:STDOUT:   %MakeF64.call: init f64 = call %MakeF64.ref()
+// CHECK:STDOUT:   %MakeF64.call: init %f64.d77 = call %MakeF64.ref()
 // CHECK:STDOUT:   %MakeI32.ref: %MakeI32.type = name_ref MakeI32, file.%MakeI32.decl [concrete = constants.%MakeI32]
 // CHECK:STDOUT:   %MakeI32.call: init %i32 = call %MakeI32.ref()
-// CHECK:STDOUT:   %.loc18_62.1: %struct_type.b.a = struct_literal (%MakeF64.call, %MakeI32.call)
-// CHECK:STDOUT:   %.loc18_27: type = splice_block %struct_type.a.b.loc18 [concrete = constants.%struct_type.a.b] {
-// CHECK:STDOUT:     %int_32.loc18: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
-// CHECK:STDOUT:     %i32.loc18: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
-// CHECK:STDOUT:     %int_64.loc18: Core.IntLiteral = int_value 64 [concrete = constants.%int_64]
-// CHECK:STDOUT:     %float.make_type.loc18: init type = call constants.%Float(%int_64.loc18) [concrete = f64]
-// CHECK:STDOUT:     %.loc18_24.1: type = value_of_initializer %float.make_type.loc18 [concrete = f64]
-// CHECK:STDOUT:     %.loc18_24.2: type = converted %float.make_type.loc18, %.loc18_24.1 [concrete = f64]
-// CHECK:STDOUT:     %struct_type.a.b.loc18: type = struct_type {.a: %i32, .b: f64} [concrete = constants.%struct_type.a.b]
-// CHECK:STDOUT:   }
-// CHECK:STDOUT:   %.loc18_62.2: %i32 = value_of_initializer %MakeI32.call
-// CHECK:STDOUT:   %.loc18_62.3: %i32 = converted %MakeI32.call, %.loc18_62.2
-// CHECK:STDOUT:   %.loc18_62.4: f64 = value_of_initializer %MakeF64.call
-// CHECK:STDOUT:   %.loc18_62.5: f64 = converted %MakeF64.call, %.loc18_62.4
-// CHECK:STDOUT:   %struct.loc18: %struct_type.a.b = struct_value (%.loc18_62.3, %.loc18_62.5)
-// CHECK:STDOUT:   %.loc18_62.6: %struct_type.a.b = converted %.loc18_62.1, %struct.loc18
-// CHECK:STDOUT:   %x: %struct_type.a.b = bind_name x, %.loc18_62.6
-// CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %y.patt: %pattern_type.a24 = binding_pattern y [concrete]
-// CHECK:STDOUT:   }
-// CHECK:STDOUT:   %x.ref: %struct_type.a.b = name_ref x, %x
-// CHECK:STDOUT:   %.loc19_27: type = splice_block %struct_type.b.a [concrete = constants.%struct_type.b.a] {
-// CHECK:STDOUT:     %int_64.loc19: Core.IntLiteral = int_value 64 [concrete = constants.%int_64]
-// CHECK:STDOUT:     %float.make_type.loc19: init type = call constants.%Float(%int_64.loc19) [concrete = f64]
-// CHECK:STDOUT:     %.loc19_15.1: type = value_of_initializer %float.make_type.loc19 [concrete = f64]
-// CHECK:STDOUT:     %.loc19_15.2: type = converted %float.make_type.loc19, %.loc19_15.1 [concrete = f64]
+// CHECK:STDOUT:   %.loc19_62.1: %struct_type.b.a = struct_literal (%MakeF64.call, %MakeI32.call)
+// CHECK:STDOUT:   %.loc19_27: type = splice_block %struct_type.a.b.loc19 [concrete = constants.%struct_type.a.b] {
 // CHECK:STDOUT:     %int_32.loc19: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
 // CHECK:STDOUT:     %i32.loc19: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
-// CHECK:STDOUT:     %struct_type.b.a: type = struct_type {.b: f64, .a: %i32} [concrete = constants.%struct_type.b.a]
+// CHECK:STDOUT:     %int_64.loc19: Core.IntLiteral = int_value 64 [concrete = constants.%int_64]
+// CHECK:STDOUT:     %f64.loc19: type = class_type @Float, @Float(constants.%int_64) [concrete = constants.%f64.d77]
+// CHECK:STDOUT:     %struct_type.a.b.loc19: type = struct_type {.a: %i32, .b: %f64.d77} [concrete = constants.%struct_type.a.b]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %.loc19_31.1: f64 = struct_access %x.ref, element1
-// CHECK:STDOUT:   %.loc19_31.2: %i32 = struct_access %x.ref, element0
-// CHECK:STDOUT:   %struct.loc19: %struct_type.b.a = struct_value (%.loc19_31.1, %.loc19_31.2)
-// CHECK:STDOUT:   %.loc19_31.3: %struct_type.b.a = converted %x.ref, %struct.loc19
-// CHECK:STDOUT:   %y: %struct_type.b.a = bind_name y, %.loc19_31.3
+// CHECK:STDOUT:   %.loc19_62.2: %i32 = value_of_initializer %MakeI32.call
+// CHECK:STDOUT:   %.loc19_62.3: %i32 = converted %MakeI32.call, %.loc19_62.2
+// CHECK:STDOUT:   %.loc19_62.4: %f64.d77 = value_of_initializer %MakeF64.call
+// CHECK:STDOUT:   %.loc19_62.5: %f64.d77 = converted %MakeF64.call, %.loc19_62.4
+// CHECK:STDOUT:   %struct.loc19: %struct_type.a.b = struct_value (%.loc19_62.3, %.loc19_62.5)
+// CHECK:STDOUT:   %.loc19_62.6: %struct_type.a.b = converted %.loc19_62.1, %struct.loc19
+// CHECK:STDOUT:   %x: %struct_type.a.b = bind_name x, %.loc19_62.6
+// CHECK:STDOUT:   name_binding_decl {
+// CHECK:STDOUT:     %y.patt: %pattern_type.b43 = binding_pattern y [concrete]
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %x.ref: %struct_type.a.b = name_ref x, %x
+// CHECK:STDOUT:   %.loc20_27: type = splice_block %struct_type.b.a [concrete = constants.%struct_type.b.a] {
+// CHECK:STDOUT:     %int_64.loc20: Core.IntLiteral = int_value 64 [concrete = constants.%int_64]
+// CHECK:STDOUT:     %f64.loc20: type = class_type @Float, @Float(constants.%int_64) [concrete = constants.%f64.d77]
+// CHECK:STDOUT:     %int_32.loc20: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
+// CHECK:STDOUT:     %i32.loc20: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
+// CHECK:STDOUT:     %struct_type.b.a: type = struct_type {.b: %f64.d77, .a: %i32} [concrete = constants.%struct_type.b.a]
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %.loc20_31.1: %f64.d77 = struct_access %x.ref, element1
+// CHECK:STDOUT:   %.loc20_31.2: %i32 = struct_access %x.ref, element0
+// CHECK:STDOUT:   %struct.loc20: %struct_type.b.a = struct_value (%.loc20_31.1, %.loc20_31.2)
+// CHECK:STDOUT:   %.loc20_31.3: %struct_type.b.a = converted %x.ref, %struct.loc20
+// CHECK:STDOUT:   %y: %struct_type.b.a = bind_name y, %.loc20_31.3
 // CHECK:STDOUT:   %y.ref: %struct_type.b.a = name_ref y, %y
-// CHECK:STDOUT:   %.loc20_10.1: %i32 = struct_access %y.ref, element1
-// CHECK:STDOUT:   %.loc20_10.2: ref %i32 = struct_access %return, element1
-// CHECK:STDOUT:   %.loc20_10.3: init %i32 = initialize_from %.loc20_10.1 to %.loc20_10.2
-// CHECK:STDOUT:   %.loc20_10.4: f64 = struct_access %y.ref, element0
-// CHECK:STDOUT:   %.loc20_10.5: ref f64 = struct_access %return, element0
-// CHECK:STDOUT:   %.loc20_10.6: init f64 = initialize_from %.loc20_10.4 to %.loc20_10.5
-// CHECK:STDOUT:   %.loc20_10.7: init %struct_type.a.b = struct_init (%.loc20_10.3, %.loc20_10.6) to %return
-// CHECK:STDOUT:   %.loc20_11: init %struct_type.a.b = converted %y.ref, %.loc20_10.7
-// CHECK:STDOUT:   return %.loc20_11 to %return
+// CHECK:STDOUT:   %.loc21_10.1: %i32 = struct_access %y.ref, element1
+// CHECK:STDOUT:   %.loc21_10.2: ref %i32 = struct_access %return, element1
+// CHECK:STDOUT:   %.loc21_10.3: init %i32 = initialize_from %.loc21_10.1 to %.loc21_10.2
+// CHECK:STDOUT:   %.loc21_10.4: %f64.d77 = struct_access %y.ref, element0
+// CHECK:STDOUT:   %.loc21_10.5: ref %f64.d77 = struct_access %return, element0
+// CHECK:STDOUT:   %.loc21_10.6: init %f64.d77 = initialize_from %.loc21_10.4 to %.loc21_10.5
+// CHECK:STDOUT:   %.loc21_10.7: init %struct_type.a.b = struct_init (%.loc21_10.3, %.loc21_10.6) to %return
+// CHECK:STDOUT:   %.loc21_11: init %struct_type.a.b = converted %y.ref, %.loc21_10.7
+// CHECK:STDOUT:   return %.loc21_11 to %return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

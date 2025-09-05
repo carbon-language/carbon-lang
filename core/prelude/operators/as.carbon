@@ -4,11 +4,21 @@
 
 package Core library "prelude/operators/as";
 
+interface UnsafeAs(Dest:! type) {
+  fn Convert[self: Self]() -> Dest;
+}
+
 interface As(Dest:! type) {
+  // TODO: extend UnsafeAs(Dest);
   fn Convert[self: Self]() -> Dest;
 }
 
 interface ImplicitAs(Dest:! type) {
   // TODO: extend As(Dest);
   fn Convert[self: Self]() -> Dest;
+}
+
+// TODO: This should only apply to copyable types.
+impl forall [T:! type] T as ImplicitAs(T) {
+  fn Convert[self: Self]() -> Self { return self; }
 }

@@ -6,6 +6,7 @@
 #define CARBON_TOOLCHAIN_LOWER_CONSTANT_H_
 
 #include "llvm/ADT/ArrayRef.h"
+#include "toolchain/base/fixed_size_value_store.h"
 #include "toolchain/lower/file_context.h"
 
 namespace Carbon::Lower {
@@ -15,7 +16,7 @@ namespace Carbon::Lower {
 // concrete constant instructions are populated with corresponding constant
 // values.
 auto LowerConstants(FileContext& file_context,
-                    llvm::MutableArrayRef<llvm::Constant*> constants) -> void;
+                    FileContext::LoweredConstantStore& constants) -> void;
 
 }  // namespace Carbon::Lower
 

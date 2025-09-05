@@ -170,7 +170,9 @@ TEST_F(TreeTest, HighRecursion) {
   Lex::TokenizedBuffer& tokens = compile_helper_.GetTokenizedBuffer(code);
   ASSERT_FALSE(tokens.has_errors());
   Testing::MockDiagnosticConsumer consumer;
-  Tree tree = Parse(tokens, consumer, /*vlog_stream=*/nullptr);
+  Parse::ParseOptions options;
+  options.consumer = &consumer;
+  Tree tree = Parse(tokens, options);
   EXPECT_FALSE(tree.has_errors());
 }
 

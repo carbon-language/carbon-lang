@@ -2,6 +2,7 @@
 // Exceptions. See /LICENSE for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
+// INCLUDE-FILE: toolchain/testing/testdata/min_prelude/int.carbon
 // TODO: Add ranges and switch to "--dump-sem-ir-ranges=only".
 // EXTRA-ARGS: --dump-sem-ir-ranges=if-present
 //
@@ -38,7 +39,7 @@ fn F(n: i32, n: i32);
 // CHECK:STDOUT:     import Core//prelude
 // CHECK:STDOUT:     import Core//prelude/...
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %Core.Int: %Int.type = import_ref Core//prelude/types/int, Int, loaded [concrete = constants.%Int.generic]
+// CHECK:STDOUT:   %Core.Int: %Int.type = import_ref Core//prelude/parts/int, Int, loaded [concrete = constants.%Int.generic]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -48,25 +49,25 @@ fn F(n: i32, n: i32);
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [concrete = constants.%F] {
-// CHECK:STDOUT:     %n.patt.loc21_6: %pattern_type.7ce = binding_pattern n [concrete]
-// CHECK:STDOUT:     %n.param_patt.loc21_7: %pattern_type.7ce = value_param_pattern %n.patt.loc21_6, call_param0 [concrete]
-// CHECK:STDOUT:     %n.patt.loc21_14: %pattern_type.7ce = binding_pattern n [concrete]
-// CHECK:STDOUT:     %n.param_patt.loc21_15: %pattern_type.7ce = value_param_pattern %n.patt.loc21_14, call_param1 [concrete]
+// CHECK:STDOUT:     %n.patt.loc22_6: %pattern_type.7ce = binding_pattern n [concrete]
+// CHECK:STDOUT:     %n.param_patt.loc22_7: %pattern_type.7ce = value_param_pattern %n.patt.loc22_6, call_param0 [concrete]
+// CHECK:STDOUT:     %n.patt.loc22_14: %pattern_type.7ce = binding_pattern n [concrete]
+// CHECK:STDOUT:     %n.param_patt.loc22_15: %pattern_type.7ce = value_param_pattern %n.patt.loc22_14, call_param1 [concrete]
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %n.param.loc21_7: %i32 = value_param call_param0
-// CHECK:STDOUT:     %.loc21_9: type = splice_block %i32.loc21_9 [concrete = constants.%i32] {
-// CHECK:STDOUT:       %int_32.loc21_9: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
-// CHECK:STDOUT:       %i32.loc21_9: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
+// CHECK:STDOUT:     %n.param.loc22_7: %i32 = value_param call_param0
+// CHECK:STDOUT:     %.loc22_9: type = splice_block %i32.loc22_9 [concrete = constants.%i32] {
+// CHECK:STDOUT:       %int_32.loc22_9: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
+// CHECK:STDOUT:       %i32.loc22_9: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %n.loc21_6: %i32 = bind_name n, %n.param.loc21_7
-// CHECK:STDOUT:     %n.param.loc21_15: %i32 = value_param call_param1
-// CHECK:STDOUT:     %.loc21_17: type = splice_block %i32.loc21_17 [concrete = constants.%i32] {
-// CHECK:STDOUT:       %int_32.loc21_17: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
-// CHECK:STDOUT:       %i32.loc21_17: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
+// CHECK:STDOUT:     %n.loc22_6: %i32 = bind_name n, %n.param.loc22_7
+// CHECK:STDOUT:     %n.param.loc22_15: %i32 = value_param call_param1
+// CHECK:STDOUT:     %.loc22_17: type = splice_block %i32.loc22_17 [concrete = constants.%i32] {
+// CHECK:STDOUT:       %int_32.loc22_17: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
+// CHECK:STDOUT:       %i32.loc22_17: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %n.loc21_14: %i32 = bind_name n, %n.param.loc21_15
+// CHECK:STDOUT:     %n.loc22_14: %i32 = bind_name n, %n.param.loc22_15
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @F(%n.param.loc21_7: %i32, %n.param.loc21_15: %i32);
+// CHECK:STDOUT: fn @F(%n.param.loc22_7: %i32, %n.param.loc22_15: %i32);
 // CHECK:STDOUT:

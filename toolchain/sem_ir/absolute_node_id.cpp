@@ -8,14 +8,15 @@
 
 namespace Carbon::SemIR {
 
-// Notes an import on the diagnostic. For `Cpp` imports, returns true. Otherwise
-// updates cursors to point at the imported IR and returns false.
+// Follows an imported instruction location to find the sequence of import
+// locations and the ultimately imported location.
 static auto FollowImportRef(
     llvm::SmallVector<AbsoluteNodeId>& absolute_node_ids,
     const File*& cursor_ir, InstId& cursor_inst_id,
     ImportIRInstId import_ir_inst_id) -> bool {
   auto import_ir_inst = cursor_ir->import_ir_insts().Get(import_ir_inst_id);
   if (import_ir_inst.ir_id() == ImportIRId::Cpp) {
+    CARBON_CHECK(cursor_ir->import_cpps().size() > 0);
     absolute_node_ids.push_back(
         AbsoluteNodeId(import_ir_inst.clang_source_loc_id()));
     return true;

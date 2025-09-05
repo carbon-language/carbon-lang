@@ -7,20 +7,17 @@
 library "day12_common";
 
 import Core library "io";
+import Core library "range";
 import library "io_utils";
 
 class Map {
   fn Read() -> Map {
     returned var me: Self;
-    var y: i32 = 0;
-    while (y < 140) {
-      var x: i32 = 0;
-      while (x < 140) {
+    for (y: i32 in Core.Range(140)) {
+      for (x: i32 in Core.Range(140)) {
         me.kind[x][y] = ReadChar();
-        ++x;
       }
       SkipNewline();
-      ++y;
     }
     return var;
   }
@@ -37,12 +34,10 @@ class Map {
 class DisjointSetForest {
   fn Make() -> DisjointSetForest {
     returned var me: Self;
-    var i: i32 = 0;
-    while (i < 140 * 140) {
+    for (i: i32 in Core.Range(140 * 140)) {
       me.nodes[i].next = i;
       me.nodes[i].weight = 1;
       me.nodes[i].unions = 0;
-      ++i;
     }
     return var;
   }
@@ -93,12 +88,9 @@ fn MakeRegions(map: Map) -> DisjointSetForest {
   returned var forest: DisjointSetForest =
     DisjointSetForest.Make();
 
-  var x: i32 = 0;
-  while (x < 140) {
-    var y: i32 = 0;
-    while (y < 140) {
-      var a: i32 = 0;
-      while (a < 2) {
+  for (x: i32 in Core.Range(140)) {
+    for (y: i32 in Core.Range(140)) {
+      for (a: i32 in Core.Range(2)) {
         // TODO: Crashes toolchain:
         // let adj: (i32, i32) = if a == 0 then (x - 1, y) else (x, y - 1);
         // if (map.At(adj.0, adj.1) == map.At(x, y)) {
@@ -109,11 +101,8 @@ fn MakeRegions(map: Map) -> DisjointSetForest {
         if (map.At(adj_x, adj_y) == map.At(x, y)) {
           forest.Union(y * 140 + x, adj_y * 140 + adj_x);
         }
-        ++a;
       }
-      ++y;
     }
-    ++x;
   }
 
   return var;

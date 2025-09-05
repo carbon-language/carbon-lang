@@ -5,6 +5,7 @@
 // https://adventofcode.com/2024/day/1
 
 import Core library "io";
+import Core library "range";
 
 import library "day1_common";
 import library "sort";
@@ -18,11 +19,9 @@ fn Run() {
   Quicksort(&a, 0, n);
   Quicksort(&b, 0, n);
 
-  var i: i32 = 0;
   var difference: i32 = 0;
-  while (i < n) {
+  for (i: i32 in Core.Range(n)) {
     difference += Abs(a[i] - b[i]);
-    i += 1;
   }
   Core.Print(difference);
 }

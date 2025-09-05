@@ -6,6 +6,7 @@
 
 #include "llvm/ADT/STLExtras.h"
 #include "llvm/IR/Constants.h"
+#include "llvm/IR/IRBuilder.h"
 #include "llvm/IR/Value.h"
 #include "toolchain/base/kind_switch.h"
 #include "toolchain/lower/file_context.h"
@@ -18,7 +19,7 @@ namespace Carbon::Lower {
 class ConstantContext {
  public:
   explicit ConstantContext(FileContext& file_context,
-                           llvm::MutableArrayRef<llvm::Constant*> constants)
+                           const FileContext::LoweredConstantStore* constants)
       : file_context_(&file_context), constants_(constants) {}
 
   // Gets the lowered constant value for an instruction, which must have a
@@ -40,8 +41,7 @@ class ConstantContext {
       // This constant hasn't been lowered.
       return nullptr;
     }
-    CARBON_CHECK(inst_id.index >= 0);
-    return constants_[inst_id.index];
+    return constants_->Get(inst_id);
   }
 
   // Returns a constant for the case of a value that should never be used.
@@ -50,14 +50,19 @@ class ConstantContext {
     return nullptr;
   }
 
-  // Gets the value to use for an integer literal.
-  auto GetIntLiteralAsValue() const -> llvm::Constant* {
-    return file_context_->GetIntLiteralAsValue();
+  // Gets the value to use for a literal.
+  auto GetLiteralAsValue() const -> llvm::Constant* {
+    return file_context_->GetLiteralAsValue();
   }
 
   // Gets a callable's function. Returns nullptr for a builtin.
   auto GetFunction(SemIR::FunctionId function_id) -> llvm::Function* {
     return file_context_->GetFunction(function_id);
+  }
+
+  auto GetVtable(SemIR::VtableId vtable_id, SemIR::SpecificId specific_id)
+      -> llvm::GlobalVariable* {
+    return file_context_->GetVtable(vtable_id, specific_id);
   }
 
   // Returns a lowered type for the given type_id.
@@ -91,7 +96,7 @@ class ConstantContext {
 
  private:
   FileContext* file_context_;
-  llvm::MutableArrayRef<llvm::Constant*> constants_;
+  const FileContext::LoweredConstantStore* constants_;
   int32_t last_lowered_constant_index_ = -1;
 };
 
@@ -152,6 +157,11 @@ static auto EmitAsConstant(ConstantContext& context, SemIR::AddrOf inst)
   return context.GetConstant(inst.lvalue_id);
 }
 
+static auto EmitAsConstant(ConstantContext& context, SemIR::VtablePtr inst)
+    -> llvm::Constant* {
+  return context.GetVtable(inst.vtable_id, inst.specific_id);
+}
+
 static auto EmitAsConstant(ConstantContext& context,
                            SemIR::AnyAggregateAccess inst) -> llvm::Constant* {
   auto* aggr_addr = context.GetConstant(inst.aggregate_id);
@@ -204,6 +214,12 @@ static auto EmitAsConstant(ConstantContext& context, SemIR::BoundMethod inst)
 }
 
 static auto EmitAsConstant(ConstantContext& context,
+                           SemIR::CharLiteralValue /*inst*/)
+    -> llvm::Constant* {
+  return context.GetLiteralAsValue();
+}
+
+static auto EmitAsConstant(ConstantContext& context,
                            SemIR::CompleteTypeWitness inst) -> llvm::Constant* {
   return context.GetUnusedConstant(inst.type_id);
 }
@@ -213,7 +229,13 @@ static auto EmitAsConstant(ConstantContext& context, SemIR::FieldDecl inst)
   return context.GetUnusedConstant(inst.type_id);
 }
 
-static auto EmitAsConstant(ConstantContext& context, SemIR::FloatLiteral inst)
+static auto EmitAsConstant(ConstantContext& context,
+                           SemIR::FloatLiteralValue /*inst*/)
+    -> llvm::Constant* {
+  return context.GetLiteralAsValue();
+}
+
+static auto EmitAsConstant(ConstantContext& context, SemIR::FloatValue inst)
     -> llvm::Constant* {
   const llvm::APFloat& value = context.sem_ir().floats().Get(inst.float_id);
   return llvm::ConstantFP::get(context.GetType(inst.type_id), value);
@@ -225,11 +247,11 @@ static auto EmitAsConstant(ConstantContext& context, SemIR::IntValue inst)
 
   // IntLiteral is represented as an empty struct. All other integer types are
   // represented as an LLVM integer type.
-  auto* int_type = llvm::dyn_cast<llvm::IntegerType>(type);
+  auto* int_type = dyn_cast<llvm::IntegerType>(type);
   if (!int_type) {
-    auto* int_literal_value = context.GetIntLiteralAsValue();
-    CARBON_CHECK(int_literal_value->getType() == type);
-    return int_literal_value;
+    auto* literal_value = context.GetLiteralAsValue();
+    CARBON_CHECK(literal_value->getType() == type);
+    return literal_value;
   }
 
   int bit_width = int_type->getBitWidth();
@@ -247,9 +269,12 @@ static auto EmitAsConstant(ConstantContext& context,
   return context.GetUnusedConstant(inst.type_id);
 }
 
-static auto EmitAsConstant(ConstantContext& /*context*/,
-                           SemIR::StringLiteral inst) -> llvm::Constant* {
-  CARBON_FATAL("TODO: Add support: {0}", inst);
+static auto EmitAsConstant(ConstantContext& context, SemIR::StringLiteral inst)
+    -> llvm::Constant* {
+  return llvm::IRBuilder<>(context.llvm_context())
+      .CreateGlobalString(
+          context.sem_ir().string_literal_values().Get(inst.string_literal_id),
+          /*name=*/"", /*address_space=*/0, &context.llvm_module());
 }
 
 static auto EmitAsConstant(ConstantContext& context, SemIR::VarStorage inst)
@@ -282,9 +307,10 @@ static auto MaybeEmitAsConstant(ConstantContext& context, InstT inst)
   }
 }
 
+// NOLINTNEXTLINE(readability-function-size): Macro-generated.
 auto LowerConstants(FileContext& file_context,
-                    llvm::MutableArrayRef<llvm::Constant*> constants) -> void {
-  ConstantContext context(file_context, constants);
+                    FileContext::LoweredConstantStore& constants) -> void {
+  ConstantContext context(file_context, &constants);
   // Lower each constant in InstId order. This guarantees we lower the
   // dependencies of a constant before we lower the constant itself.
   for (auto [inst_id, const_id] :
@@ -317,7 +343,7 @@ auto LowerConstants(FileContext& file_context,
 #include "toolchain/sem_ir/inst_kind.def"
     }
 
-    constants[inst_id.index] = value;
+    constants.Set(inst_id, value);
     context.SetLastLoweredConstantIndex(inst_id.index);
   }
 }

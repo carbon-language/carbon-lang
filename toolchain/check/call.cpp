@@ -10,10 +10,14 @@
 #include "toolchain/check/context.h"
 #include "toolchain/check/control_flow.h"
 #include "toolchain/check/convert.h"
+#include "toolchain/check/cpp_thunk.h"
 #include "toolchain/check/deduce.h"
 #include "toolchain/check/facet_type.h"
 #include "toolchain/check/function.h"
+#include "toolchain/check/import_ref.h"
 #include "toolchain/check/inst.h"
+#include "toolchain/check/name_ref.h"
+#include "toolchain/check/thunk.h"
 #include "toolchain/check/type.h"
 #include "toolchain/diagnostics/format_providers.h"
 #include "toolchain/sem_ir/builtin_function_kind.h"
@@ -226,7 +230,7 @@ static auto PerformCallToFunction(Context& context, SemIR::LocId loc_id,
     case SemIR::InitRepr::InPlace:
       // Tentatively put storage for a temporary in the function's return slot.
       // This will be replaced if necessary when we perform initialization.
-      return_slot_arg_id = AddInstWithCleanup<SemIR::TemporaryStorage>(
+      return_slot_arg_id = AddInst<SemIR::TemporaryStorage>(
           context, loc_id, {.type_id = return_info.type_id});
       break;
     case SemIR::InitRepr::None:
@@ -245,17 +249,46 @@ static auto PerformCallToFunction(Context& context, SemIR::LocId loc_id,
       break;
   }
 
-  // Convert the arguments to match the parameters.
-  auto converted_args_id = ConvertCallArgs(
-      context, loc_id, callee_function.self_id, arg_ids, return_slot_arg_id,
-      context.functions().Get(callee_function.function_id),
-      *callee_specific_id);
-  auto call_inst_id = GetOrAddInst<SemIR::Call>(context, loc_id,
-                                                {.type_id = return_info.type_id,
-                                                 .callee_id = callee_id,
-                                                 .args_id = converted_args_id});
+  auto& callee = context.functions().Get(callee_function.function_id);
 
-  return call_inst_id;
+  // Convert the arguments to match the parameters.
+  auto converted_args_id =
+      ConvertCallArgs(context, loc_id, callee_function.self_id, arg_ids,
+                      return_slot_arg_id, callee, *callee_specific_id);
+
+  switch (callee.special_function_kind) {
+    case SemIR::Function::SpecialFunctionKind::Thunk: {
+      // If we're about to form a direct call to a thunk, inline it.
+      LoadImportRef(context, callee.thunk_decl_id());
+
+      // Name the thunk target within the enclosing scope of the thunk.
+      auto thunk_ref_id =
+          BuildNameRef(context, loc_id, callee.name_id, callee.thunk_decl_id(),
+                       callee_function.enclosing_specific_id);
+
+      // This recurses back into `PerformCall`. However, we never form a thunk
+      // to a thunk, so we only recurse once.
+      return PerformThunkCall(context, loc_id, callee_function.function_id,
+                              context.inst_blocks().Get(converted_args_id),
+                              thunk_ref_id);
+    }
+
+    case SemIR::Function::SpecialFunctionKind::HasCppThunk: {
+      // This recurses back into `PerformCall`. However, we never form a C++
+      // thunk to a C++ thunk, so we only recurse once.
+      return PerformCppThunkCall(context, loc_id, callee_function.function_id,
+                                 context.inst_blocks().Get(converted_args_id),
+                                 callee.cpp_thunk_decl_id());
+    }
+
+    case SemIR::Function::SpecialFunctionKind::None:
+    case SemIR::Function::SpecialFunctionKind::Builtin: {
+      return GetOrAddInst<SemIR::Call>(context, loc_id,
+                                       {.type_id = return_info.type_id,
+                                        .callee_id = callee_id,
+                                        .args_id = converted_args_id});
+    }
+  }
 }
 
 auto PerformCall(Context& context, SemIR::LocId loc_id, SemIR::InstId callee_id,

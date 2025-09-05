@@ -5,6 +5,7 @@
 library "io_utils";
 
 import Core library "io";
+import Core library "range";
 
 // If non-zero, this is the most recently read character plus 2.
 // The +2 is necessary to distinguish the case of no unread character
@@ -114,12 +115,10 @@ fn SkipNewline() -> bool {
 }
 
 fn SkipNChars(n: i32) -> bool {
-  var i: i32 = 0;
-  while (i < n) {
+  for (_: i32 in Core.Range(n)) {
     if (ReadChar() == Core.EOF()) {
       return false;
     }
-    ++i;
   }
   return true;
 }

@@ -4,6 +4,7 @@
 
 #include "toolchain/check/context.h"
 #include "toolchain/check/convert.h"
+#include "toolchain/check/facet_type.h"
 #include "toolchain/check/handle.h"
 #include "toolchain/check/inst.h"
 #include "toolchain/check/interface.h"
@@ -13,6 +14,7 @@
 #include "toolchain/check/type.h"
 #include "toolchain/check/type_completion.h"
 #include "toolchain/diagnostics/format_providers.h"
+#include "toolchain/parse/node_ids.h"
 #include "toolchain/sem_ir/ids.h"
 #include "toolchain/sem_ir/inst.h"
 #include "toolchain/sem_ir/pattern.h"
@@ -57,6 +59,12 @@ static auto HandleAnyBindingPattern(Context& context, Parse::NodeId node_id,
         AddBindingPattern(context, name_node, name_id, cast_type_id,
                           type_expr_region_id, is_generic, is_template);
 
+    // TODO: If `is_generic`, then `binding.bind_id is a BindSymbolicName. Subst
+    // the `.Self` of type `type` in the `cast_type_id` type (a `FacetType`)
+    // with the `binding.bind_id` itself, and build a new pattern with that.
+    // This is kind of cyclical. So we need to reuse the EntityNameId, which
+    // will also reuse the CompileTimeBinding for the new BindSymbolicName.
+
     if (name_id != SemIR::NameId::Underscore) {
       // Add name to lookup immediately, so it can be used in the rest of the
       // enclosing pattern.
@@ -78,61 +86,6 @@ static auto HandleAnyBindingPattern(Context& context, Parse::NodeId node_id,
         SelfOutsideImplicitParamList, Error,
         "`self` can only be declared in an implicit parameter list");
     context.emitter().Emit(node_id, SelfOutsideImplicitParamList);
-  }
-
-  // A binding in an interface scope declares an associated constant, not a
-  // true binding, so we handle it separately.
-  if (auto parent_interface_decl =
-          context.scope_stack().GetCurrentScopeAs<SemIR::InterfaceDecl>();
-      parent_interface_decl.has_value()) {
-    // TODO: diagnose this during parsing, to avoid near-duplicate error
-    // messages.
-    if (!is_generic) {
-      CARBON_DIAGNOSTIC(ExpectedSymbolicBindingInAssociatedConstant, Error,
-                        "found runtime binding pattern in associated constant "
-                        "declaration; expected a `:!` binding");
-      context.emitter().Emit(node_id,
-                             ExpectedSymbolicBindingInAssociatedConstant);
-      context.node_stack().Push(node_id, SemIR::ErrorInst::InstId);
-      return true;
-    }
-    if (name_id == SemIR::NameId::Underscore) {
-      // The action item here may be to document this as not allowed, and
-      // add a proper diagnostic.
-      context.TODO(node_id, "_ used as associated constant name");
-    }
-    cast_type_id = AsCompleteType(context, cast_type_id, type_node, [&] {
-      CARBON_DIAGNOSTIC(IncompleteTypeInAssociatedConstantDecl, Error,
-                        "associated constant has incomplete type {0}",
-                        SemIR::TypeId);
-      return context.emitter().Build(
-          type_node, IncompleteTypeInAssociatedConstantDecl, cast_type_id);
-    });
-    if (is_template) {
-      CARBON_DIAGNOSTIC(TemplateBindingInAssociatedConstantDecl, Error,
-                        "associated constant has `template` binding");
-      context.emitter().Emit(type_node,
-                             TemplateBindingInAssociatedConstantDecl);
-    }
-
-    SemIR::AssociatedConstantDecl assoc_const_decl = {
-        .type_id = cast_type_id,
-        .assoc_const_id = SemIR::AssociatedConstantId::None,
-        .decl_block_id = SemIR::InstBlockId::None};
-    auto decl_id = AddPlaceholderInstInNoBlock(
-        context,
-        context.parse_tree().As<Parse::CompileTimeBindingPatternId>(node_id),
-        assoc_const_decl);
-    assoc_const_decl.assoc_const_id = context.associated_constants().Add(
-        {.name_id = name_id,
-         .parent_scope_id = context.scope_stack().PeekNameScopeId(),
-         .decl_id = decl_id,
-         .generic_id = SemIR::GenericId::None,
-         .default_value_id = SemIR::InstId::None});
-    ReplaceInstBeforeConstantUse(context, decl_id, assoc_const_decl);
-
-    context.node_stack().Push(node_id, decl_id);
-    return true;
   }
 
   // Allocate an instruction of the appropriate kind, linked to the name for
@@ -274,19 +227,37 @@ auto HandleParseNode(Context& context, Parse::VarBindingPatternId node_id)
 }
 
 auto HandleParseNode(Context& context,
+                     Parse::CompileTimeBindingPatternStartId /*node_id*/)
+    -> bool {
+  // Make a scope to contain the `.Self` facet value for use in the type of the
+  // compile time binding. This is popped when handling the
+  // CompileTimeBindingPatternId.
+  context.scope_stack().PushForSameRegion();
+  MakePeriodSelfFacetValue(context, SemIR::TypeType::TypeId);
+  return true;
+}
+
+auto HandleParseNode(Context& context,
                      Parse::CompileTimeBindingPatternId node_id) -> bool {
+  // Pop the `.Self` facet value name introduced by the
+  // CompileTimeBindingPatternStart.
+  context.scope_stack().Pop();
+
   auto node_kind = Parse::NodeKind::CompileTimeBindingPattern;
-  if (context.decl_introducer_state_stack().innermost().kind ==
-      Lex::TokenKind::Let) {
+  const DeclIntroducerState& introducer =
+      context.decl_introducer_state_stack().innermost();
+  if (introducer.kind == Lex::TokenKind::Let) {
     // Disallow `let` outside of function and interface definitions.
     // TODO: Find a less brittle way of doing this. A `scope_inst_id` of `None`
     // can represent a block scope, but is also used for other kinds of scopes
-    // that aren't necessarily part of an interface or function decl.
+    // that aren't necessarily part of a function decl.
+    // We don't need to check if the scope is an interface here as this is
+    // already caught in the parse phase by the separated associated constant
+    // logic.
     auto scope_inst_id = context.scope_stack().PeekInstId();
     if (scope_inst_id.has_value()) {
       auto scope_inst = context.insts().Get(scope_inst_id);
-      if (!scope_inst.Is<SemIR::InterfaceDecl>() &&
-          !scope_inst.Is<SemIR::FunctionDecl>()) {
+      if (!scope_inst.Is<SemIR::FunctionDecl>()) {
         context.TODO(
             node_id,
             "`let` compile time binding outside function or interface");
@@ -296,6 +267,47 @@ auto HandleParseNode(Context& context,
   }
 
   return HandleAnyBindingPattern(context, node_id, node_kind);
+}
+
+auto HandleParseNode(Context& context,
+                     Parse::AssociatedConstantNameAndTypeId node_id) -> bool {
+  auto [type_node, parsed_type_id] = context.node_stack().PopExprWithNodeId();
+  auto [cast_type_inst_id, cast_type_id] =
+      ExprAsType(context, type_node, parsed_type_id);
+
+  EndSubpatternAsExpr(context, cast_type_inst_id);
+
+  auto [name_node, name_id] = context.node_stack().PopNameWithNodeId();
+
+  if (name_id == SemIR::NameId::Underscore) {
+    // The action item here may be to document this as not allowed, and
+    // add a proper diagnostic.
+    context.TODO(node_id, "_ used as associated constant name");
+  }
+  cast_type_id = AsCompleteType(context, cast_type_id, type_node, [&] {
+    CARBON_DIAGNOSTIC(IncompleteTypeInAssociatedConstantDecl, Error,
+                      "associated constant has incomplete type {0}",
+                      SemIR::TypeId);
+    return context.emitter().Build(
+        type_node, IncompleteTypeInAssociatedConstantDecl, cast_type_id);
+  });
+
+  SemIR::AssociatedConstantDecl assoc_const_decl = {
+      .type_id = cast_type_id,
+      .assoc_const_id = SemIR::AssociatedConstantId::None,
+      .decl_block_id = SemIR::InstBlockId::None};
+  auto decl_id =
+      AddPlaceholderInstInNoBlock(context, node_id, assoc_const_decl);
+  assoc_const_decl.assoc_const_id = context.associated_constants().Add(
+      {.name_id = name_id,
+       .parent_scope_id = context.scope_stack().PeekNameScopeId(),
+       .decl_id = decl_id,
+       .generic_id = SemIR::GenericId::None,
+       .default_value_id = SemIR::InstId::None});
+  ReplaceInstBeforeConstantUse(context, decl_id, assoc_const_decl);
+
+  context.node_stack().Push(node_id, decl_id);
+  return true;
 }
 
 auto HandleParseNode(Context& context, Parse::FieldNameAndTypeId node_id)
@@ -369,7 +381,7 @@ auto HandleParseNode(Context& context, Parse::AddrId node_id) -> bool {
   } else {
     CARBON_DIAGNOSTIC(AddrOnNonSelfParam, Error,
                       "`addr` can only be applied to a `self` parameter");
-    context.emitter().Emit(SemIR::LocId(node_id).ToTokenOnly(),
+    context.emitter().Emit(LocIdForDiagnostics::TokenOnly(node_id),
                            AddrOnNonSelfParam);
     context.node_stack().Push(node_id, param_pattern_id);
   }

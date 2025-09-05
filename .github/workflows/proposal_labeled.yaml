@@ -22,6 +22,10 @@ on:
 permissions:
   pull-requests: write # For gh to edit labels.
 
+# TODO: `--repo carbon-language/carbon-lang` is a temporary workaround for:
+# https://github.com/cli/cli/issues/11055
+# Once a later version is released on runners, maybe August 2025, we should be
+# able to remove the extra flag.
 jobs:
   proposal_labeled:
     runs-on: ubuntu-latest
@@ -44,7 +48,8 @@ jobs:
             --remove-label "proposal accepted" \
             --remove-label "proposal declined" \
             --remove-label "proposal deferred" \
-            --add-label "proposal"
+            --add-label "proposal" \
+            --repo carbon-language/carbon-lang
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           PR: ${{ github.event.pull_request.html_url }}
@@ -58,7 +63,8 @@ jobs:
             --remove-label "proposal accepted" \
             --remove-label "proposal declined" \
             --remove-label "proposal deferred" \
-            --add-label "proposal"
+            --add-label "proposal" \
+            --repo carbon-language/carbon-lang
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           PR: ${{ github.event.pull_request.html_url }}
@@ -72,7 +78,8 @@ jobs:
             --remove-label "proposal rfc" \
             --remove-label "proposal declined" \
             --remove-label "proposal deferred" \
-            --add-label "proposal"
+            --add-label "proposal" \
+            --repo carbon-language/carbon-lang
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           PR: ${{ github.event.pull_request.html_url }}
@@ -86,7 +93,8 @@ jobs:
             --remove-label "proposal rfc" \
             --remove-label "proposal accepted" \
             --remove-label "proposal deferred" \
-            --add-label "proposal"
+            --add-label "proposal" \
+            --repo carbon-language/carbon-lang
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           PR: ${{ github.event.pull_request.html_url }}
@@ -100,7 +108,8 @@ jobs:
             --remove-label "proposal rfc" \
             --remove-label "proposal accepted" \
             --remove-label "proposal declined" \
-            --add-label "proposal"
+            --add-label "proposal" \
+            --repo carbon-language/carbon-lang
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           PR: ${{ github.event.pull_request.html_url }}

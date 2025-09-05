@@ -2,6 +2,7 @@
 // Exceptions. See /LICENSE for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
+// INCLUDE-FILE: toolchain/testing/testdata/min_prelude/int.carbon
 // TODO: Add ranges and switch to "--dump-sem-ir-ranges=only".
 // EXTRA-ARGS: --dump-sem-ir-ranges=if-present
 //
@@ -44,9 +45,9 @@ var x: {} = {.a = 1};
 // CHECK:STDOUT:     %x.var_patt: %pattern_type = var_pattern %x.patt [concrete]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %x.var: ref %empty_struct_type = var %x.var_patt [concrete]
-// CHECK:STDOUT:   %.loc18_9.1: type = splice_block %.loc18_9.3 [concrete = constants.%empty_struct_type] {
-// CHECK:STDOUT:     %.loc18_9.2: %empty_struct_type = struct_literal ()
-// CHECK:STDOUT:     %.loc18_9.3: type = converted %.loc18_9.2, constants.%empty_struct_type [concrete = constants.%empty_struct_type]
+// CHECK:STDOUT:   %.loc19_9.1: type = splice_block %.loc19_9.3 [concrete = constants.%empty_struct_type] {
+// CHECK:STDOUT:     %.loc19_9.2: %empty_struct_type = struct_literal ()
+// CHECK:STDOUT:     %.loc19_9.3: type = converted %.loc19_9.2, constants.%empty_struct_type [concrete = constants.%empty_struct_type]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %x: ref %empty_struct_type = bind_name x, %x.var [concrete = %x.var]
 // CHECK:STDOUT: }
@@ -54,7 +55,7 @@ var x: {} = {.a = 1};
 // CHECK:STDOUT: fn @__global_init() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %int_1: Core.IntLiteral = int_value 1 [concrete = constants.%int_1]
-// CHECK:STDOUT:   %.loc18: %struct_type.a = struct_literal (%int_1)
+// CHECK:STDOUT:   %.loc19: %struct_type.a = struct_literal (%int_1)
 // CHECK:STDOUT:   assign file.%x.var, <error>
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }

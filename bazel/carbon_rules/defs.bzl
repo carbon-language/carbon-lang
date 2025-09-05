@@ -4,6 +4,8 @@
 
 """Provides rules for building Carbon files using the toolchain."""
 
+load("@rules_cc//cc/common:cc_info.bzl", "CcInfo")
+
 def _carbon_binary_impl(ctx):
     toolchain_driver = ctx.executable.internal_exec_toolchain_driver
     toolchain_data = ctx.files.internal_exec_toolchain_data
@@ -14,12 +16,40 @@ def _carbon_binary_impl(ctx):
         toolchain_driver = ctx.executable.internal_target_toolchain_driver
         toolchain_data = ctx.files.internal_target_toolchain_data
 
+    # Pass any C++ flags from our dependencies onto Carbon.
+    dep_flags = []
+    dep_hdrs = []
+    dep_link_flags = []
+    dep_link_inputs = []
+    for dep in ctx.attr.deps:
+        if CcInfo in dep:
+            cc_info = dep[CcInfo]
+
+            # TODO: We should reuse the feature-based flag generation in
+            # bazel/cc_toolchains here.
+            dep_flags += ["--clang-arg=-D{0}".format(define) for define in cc_info.compilation_context.defines.to_list()]
+            dep_flags += ["--clang-arg=-I{0}".format(path) for path in cc_info.compilation_context.includes.to_list()]
+            dep_flags += ["--clang-arg=-iquote{0}".format(path) for path in cc_info.compilation_context.quote_includes.to_list()]
+            dep_flags += ["--clang-arg=-isystem{0}".format(path) for path in cc_info.compilation_context.system_includes.to_list()]
+            dep_hdrs.append(cc_info.compilation_context.headers)
+            for link_input in cc_info.linking_context.linker_inputs.to_list():
+                # TODO: `carbon link` doesn't support linker flags yet.
+                # dep_link_flags += link_input.user_link_flags
+                dep_link_inputs += link_input.additional_inputs
+                for lib in link_input.libraries:
+                    dep_link_inputs += [dep for dep in [lib.dynamic_library, lib.static_library] if dep]
+                    dep_link_inputs += lib.objects
+        if DefaultInfo in dep:
+            dep_link_inputs += dep[DefaultInfo].files.to_list()
+    dep_link_flags += [dep.path for dep in dep_link_inputs]
+
     # Build object files for the prelude and for the binary itself.
     # TODO: Eventually the prelude should be build as a separate `carbon_library`.
     srcs_and_flags = [
         (ctx.files.prelude_srcs, ["--no-prelude-import"]),
-        (ctx.files.srcs, []),
+        (ctx.files.srcs, dep_flags),
     ]
+
     objs = []
     for (srcs, extra_flags) in srcs_and_flags:
         for src in srcs:
@@ -42,10 +72,10 @@ def _carbon_binary_impl(ctx):
             srcs_reordered = [s for s in srcs if s != src] + [src]
             ctx.actions.run(
                 outputs = [out],
-                inputs = srcs_reordered,
+                inputs = depset(direct = srcs_reordered, transitive = dep_hdrs),
                 executable = toolchain_driver,
                 tools = depset(toolchain_data),
-                arguments = ["compile", "--output=" + out.path] + [s.path for s in srcs_reordered] + extra_flags,
+                arguments = ["compile", "--output=" + out.path, "--clang-arg=-stdlib=libc++"] + [s.path for s in srcs_reordered] + extra_flags,
                 mnemonic = "CarbonCompile",
                 progress_message = "Compiling " + src.short_path,
             )
@@ -53,10 +83,10 @@ def _carbon_binary_impl(ctx):
     bin = ctx.actions.declare_file(ctx.label.name)
     ctx.actions.run(
         outputs = [bin],
-        inputs = objs,
+        inputs = objs + dep_link_inputs,
         executable = toolchain_driver,
         tools = depset(toolchain_data),
-        arguments = ["link", "--output=" + bin.path] + [o.path for o in objs],
+        arguments = ["link", "--output=" + bin.path] + dep_link_flags + [o.path for o in objs],
         mnemonic = "CarbonLink",
         progress_message = "Linking " + bin.short_path,
     )
@@ -65,6 +95,7 @@ def _carbon_binary_impl(ctx):
 _carbon_binary_internal = rule(
     implementation = _carbon_binary_impl,
     attrs = {
+        "deps": attr.label_list(allow_files = True, providers = [[CcInfo]]),
         # The exec config toolchain driver and data. These will be `None` when
         # using the target config and populated when using the exec config. We
         # have to use duplicate attributes here and below to have different
@@ -94,21 +125,26 @@ _carbon_binary_internal = rule(
         ),
         "prelude_srcs": attr.label_list(allow_files = [".carbon"]),
         "srcs": attr.label_list(allow_files = [".carbon"]),
+        "_cc_toolchain": attr.label(default = "@bazel_tools//tools/cpp:current_cc_toolchain"),
     },
     executable = True,
 )
 
-def carbon_binary(name, srcs):
+def carbon_binary(name, srcs, deps = [], tags = []):
     """Compiles a Carbon binary.
 
     Args:
       name: The name of the build target.
       srcs: List of Carbon source files to compile.
+      deps: List of dependencies.
+      tags: Tags to apply to the rule.
     """
     _carbon_binary_internal(
         name = name,
         srcs = srcs,
         prelude_srcs = ["//core:prelude_files"],
+        deps = deps,
+        tags = tags,
 
         # We synthesize two sets of attributes from mirrored `select`s here
         # because we want to select on an internal property of these attributes

@@ -2,6 +2,7 @@
 // Exceptions. See /LICENSE for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
+// INCLUDE-FILE: toolchain/testing/testdata/min_prelude/convert.carbon
 // TODO: Add ranges and switch to "--dump-sem-ir-ranges=only".
 // EXTRA-ARGS: --dump-sem-ir-ranges=if-present
 //
@@ -53,10 +54,10 @@ fn F() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F() {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %A.ref.loc21: <namespace> = name_ref A, file.%A [concrete = file.%A]
-// CHECK:STDOUT:   %.loc21: ref <error> = deref <error> [concrete = <error>]
-// CHECK:STDOUT:   %A.ref.loc26: <namespace> = name_ref A, file.%A [concrete = file.%A]
-// CHECK:STDOUT:   %.loc26: ref <error> = deref <error> [concrete = <error>]
+// CHECK:STDOUT:   %A.ref.loc22: <namespace> = name_ref A, file.%A [concrete = file.%A]
+// CHECK:STDOUT:   %.loc22: ref <error> = deref <error> [concrete = <error>]
+// CHECK:STDOUT:   %A.ref.loc27: <namespace> = name_ref A, file.%A [concrete = file.%A]
+// CHECK:STDOUT:   %.loc27: ref <error> = deref <error> [concrete = <error>]
 // CHECK:STDOUT:   %foo.ref: <error> = name_ref foo, <error> [concrete = <error>]
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }

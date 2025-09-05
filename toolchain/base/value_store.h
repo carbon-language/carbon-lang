@@ -5,19 +5,21 @@
 #ifndef CARBON_TOOLCHAIN_BASE_VALUE_STORE_H_
 #define CARBON_TOOLCHAIN_BASE_VALUE_STORE_H_
 
+#include <bit>
+#include <cstddef>
+#include <limits>
 #include <memory>
 #include <type_traits>
+#include <utility>
 
 #include "common/check.h"
-#include "common/hashtable_key_context.h"
 #include "common/ostream.h"
-#include "common/set.h"
 #include "llvm/ADT/STLExtras.h"
 #include "llvm/ADT/Sequence.h"
 #include "llvm/ADT/SmallVector.h"
-#include "llvm/ADT/iterator_range.h"
-#include "llvm/Support/Compiler.h"
+#include "llvm/Support/MemAlloc.h"
 #include "toolchain/base/mem_usage.h"
+#include "toolchain/base/value_store_types.h"
 #include "toolchain/base/yaml.h"
 
 namespace Carbon {
@@ -27,120 +29,132 @@ namespace Internal {
 // Used as a parent class for non-printable types. This is just for
 // std::conditional, not as an API.
 class ValueStoreNotPrintable {};
-}  // namespace Internal
 
-// Setup our compile time condition controlling poisoning of value stores. This
-// is set to one by the Bazel flag `--features=poison_value_stores`.
-//
-// TODO: Eventually, this will always enabled when ASan is enabled, but we can't
-// do that until we clean up all of the latent bugs.
-#ifndef CARBON_POISON_VALUE_STORES
-#define CARBON_POISON_VALUE_STORES 0
-#elif !LLVM_ADDRESS_SANITIZER_BUILD
-#error "CARBON_POISON_VALUE_STORES requires address sanitizer"
-#endif
+}  // namespace Internal
 
 // A simple wrapper for accumulating values, providing IDs to later retrieve the
 // value. This does not do deduplication.
-//
-// IdT::ValueType must represent the type being indexed.
-template <typename IdT>
+template <typename IdT, typename ValueT>
 class ValueStore
-    : public std::conditional<
-          std::is_base_of_v<Printable<typename IdT::ValueType>,
-                            typename IdT::ValueType>,
-          Yaml::Printable<ValueStore<IdT>>, Internal::ValueStoreNotPrintable> {
+    : public std::conditional<std::is_base_of_v<Printable<ValueT>, ValueT>,
+                              Yaml::Printable<ValueStore<IdT, ValueT>>,
+                              Internal::ValueStoreNotPrintable> {
  public:
-  using ValueType = typename IdT::ValueType;
+  using IdType = IdT;
+  using ValueType = ValueStoreTypes<ValueT>::ValueType;
+  using RefType = ValueStoreTypes<ValueT>::RefType;
+  using ConstRefType = ValueStoreTypes<ValueT>::ConstRefType;
 
-  // Typically we want to use `ValueType&` and `const ValueType& to avoid
-  // copies, but when the value type is a `StringRef`, we assume external
-  // storage for the string data and both our value type and ref type will be
-  // `StringRef`. This will preclude mutation of the string data.
-  using RefType = std::conditional_t<std::same_as<llvm::StringRef, ValueType>,
-                                     llvm::StringRef, ValueType&>;
-  using ConstRefType =
-      std::conditional_t<std::same_as<llvm::StringRef, ValueType>,
-                         llvm::StringRef, const ValueType&>;
+  // A range over references to the values in a ValueStore, returned from
+  // `ValueStore::values()`. Hides the complex type name of the iterator
+  // internally to provide a type name (`Range`) that can be
+  // referred to without auto and templates.
+  class Range {
+   public:
+    explicit Range(const ValueStore& store [[clang::lifetimebound]])
+        : flattened_range_(MakeFlattenedRange(store)) {}
+
+    auto begin() const -> auto { return flattened_range_.begin(); }
+    auto end() const -> auto { return flattened_range_.end(); }
+
+   private:
+    // Flattens the range of `Chunk`s of `ValueType`s into a single
+    // range of `ValueType`s.
+    static auto MakeFlattenedRange(const ValueStore& store) -> auto {
+      // Because indices into `ValueStore` are all sequential values from 0, we
+      // can use llvm::seq to walk all indices in the store.
+      return llvm::map_range(
+          llvm::seq(store.size_),
+          [&](int32_t i) -> ConstRefType { return store.Get(IdType(i)); });
+    }
+
+    using FlattenedRangeType =
+        decltype(MakeFlattenedRange(std::declval<const ValueStore&>()));
+    FlattenedRangeType flattened_range_;
+  };
 
   ValueStore() = default;
-  ValueStore(ValueStore&& other) noexcept
-      : values_((other.UnpoisonAll(), std::move(other.values_)))
-#if CARBON_POISON_VALUE_STORES
-        ,
-        all_poisoned_(false)
-#endif
-  {
-    PoisonAll();
-  }
-  auto operator=(ValueStore&& other) noexcept -> ValueStore& {
-    UnpoisonAll();
-    other.UnpoisonAll();
-    values_ = std::move(other.values_);
-#if CARBON_POISON_VALUE_STORES
-    all_poisoned_ = false;
-#endif
-    PoisonAll();
-    return *this;
-  }
-  ~ValueStore() { UnpoisonAll(); }
 
   // Stores the value and returns an ID to reference it.
-  auto Add(ValueType value) -> IdT {
-    IdT id(values_.size());
+  auto Add(ValueType value) -> IdType {
     // This routine is especially hot and the check here relatively expensive
-    // for the value provided, so only do this in debug builds to make tracking
-    // down issues easier.
-    CARBON_DCHECK(id.index >= 0, "Id overflow");
+    // for the value provided, so only do this in non-optimized builds to make
+    // tracking down issues easier.
+    CARBON_DCHECK(size_ < std::numeric_limits<int32_t>::max(), "Id overflow");
 
-    bool realloc = values_.capacity() == values_.size();
-    if (realloc) {
-      // Unpoison everything if the push will reallocate, in order to allow the
-      // vector to make a copy of the elements.
-      UnpoisonAll();
-    } else {
-      PoisonAll();
+    IdType id(size_);
+    auto [chunk_index, pos] = IdToChunkIndices(id);
+    ++size_;
+
+    CARBON_DCHECK(static_cast<size_t>(chunk_index) <= chunks_.size(),
+                  "{0} <= {1}", chunk_index, chunks_.size());
+    if (static_cast<size_t>(chunk_index) == chunks_.size()) {
+      chunks_.emplace_back();
     }
 
-    values_.push_back(std::move(value));
-
-    if (realloc) {
-      PoisonAll();
-    } else {
-      PoisonElement(id.index);
-    }
-
+    CARBON_DCHECK(pos == chunks_[chunk_index].size());
+    chunks_[chunk_index].Add(std::move(value));
     return id;
   }
 
   // Returns a mutable value for an ID.
-  auto Get(IdT id) -> RefType {
+  auto Get(IdType id) -> RefType {
     CARBON_DCHECK(id.index >= 0, "{0}", id);
-    UnpoisonElement(id.index);
-    return values_[id.index];
+    CARBON_DCHECK(id.index < size_, "{0}", id);
+    auto [chunk_index, pos] = IdToChunkIndices(id);
+    return chunks_[chunk_index].Get(pos);
   }
 
   // Returns the value for an ID.
-  auto Get(IdT id) const -> ConstRefType {
+  auto Get(IdType id) const -> ConstRefType {
     CARBON_DCHECK(id.index >= 0, "{0}", id);
-    UnpoisonElement(id.index);
-    return values_[id.index];
+    CARBON_DCHECK(id.index < size_, "{0}", id);
+    auto [chunk_index, pos] = IdToChunkIndices(id);
+    return chunks_[chunk_index].Get(pos);
   }
 
   // Reserves space.
-  auto Reserve(size_t size) -> void {
-    UnpoisonAll();
-    values_.reserve(size);
-    PoisonAll();
+  auto Reserve(int32_t size) -> void {
+    if (size <= size_) {
+      return;
+    }
+    auto [final_chunk_index, _] = IdToChunkIndices(IdType(size - 1));
+    chunks_.resize(final_chunk_index + 1);
   }
 
-  // Invalidates all current pointers and references into the value store. Used
-  // in debug builds to trigger use-after-invalidation bugs.
-  auto Invalidate() -> void { PoisonAll(); }
+  // Grows the ValueStore to `size`. Fills entries with `default_value`.
+  auto Resize(int32_t size, ConstRefType default_value) -> void {
+    if (size <= size_) {
+      return;
+    }
+
+    auto [begin_chunk_index, begin_pos] = IdToChunkIndices(IdType(size_));
+    // Use an inclusive range so that if `size` would be the next chunk, we
+    // don't try doing something with it.
+    auto [end_chunk_index, end_pos] = IdToChunkIndices(IdType(size - 1));
+    chunks_.resize(end_chunk_index + 1);
+
+    // If the begin and end chunks are the same, we only fill from begin to end.
+    if (begin_chunk_index == end_chunk_index) {
+      chunks_[begin_chunk_index].UninitializedFill(end_pos - begin_pos + 1,
+                                                   default_value);
+    } else {
+      // Otherwise, we do partial fills on the begin and end chunk, and full
+      // fills on intermediate chunks.
+      chunks_[begin_chunk_index].UninitializedFill(
+          Chunk::Capacity() - begin_pos, default_value);
+      for (auto i = begin_chunk_index + 1; i < end_chunk_index; ++i) {
+        chunks_[i].UninitializedFill(Chunk::Capacity(), default_value);
+      }
+      chunks_[end_chunk_index].UninitializedFill(end_pos + 1, default_value);
+    }
+
+    // Update size.
+    size_ = size;
+  }
 
   // These are to support printable structures, and are not guaranteed.
   auto OutputYaml() const -> Yaml::OutputMapping {
-    UnpoisonAll();
     return Yaml::OutputMapping([&](Yaml::OutputMapping::Map map) {
       for (auto [id, value] : enumerate()) {
         map.Add(PrintToString(id), Yaml::OutputScalar(value));
@@ -151,15 +165,18 @@ class ValueStore
   // Collects memory usage of the values.
   auto CollectMemUsage(MemUsage& mem_usage, llvm::StringRef label) const
       -> void {
-    UnpoisonAll();
-    mem_usage.Collect(label.str(), values_);
+    mem_usage.Add(label.str(), size_ * sizeof(ValueType),
+                  Chunk::CapacityBytes * chunks_.size());
   }
 
-  auto array_ref() const -> llvm::ArrayRef<ValueType> {
-    UnpoisonAll();
-    return values_;
+  auto size() const -> size_t { return size_; }
+
+  // Makes an iterable range over references to all values in the ValueStore.
+  auto values() [[clang::lifetimebound]] -> auto {
+    return llvm::map_range(
+        llvm::seq(size_), [&](int32_t i) -> RefType { return Get(IdType(i)); });
   }
-  auto size() const -> size_t { return values_.size(); }
+  auto values() const [[clang::lifetimebound]] -> Range { return Range(*this); }
 
   // Makes an iterable range over pairs of the index and a reference to the
   // value for each value in the store.
@@ -170,222 +187,165 @@ class ValueStore
   // ```
   // for (auto [id, value] : store.enumerate()) { ... }
   // ```
-  auto enumerate() const -> auto {
-    UnpoisonAll();
-    auto index_to_id = [](auto pair) -> std::pair<IdT, ConstRefType> {
-      auto [index, value] = pair;
-      return std::pair<IdT, ConstRefType>(IdT(index), value);
+  auto enumerate() const [[clang::lifetimebound]] -> auto {
+    // For `it->val`, writing `const std::pair` is required; otherwise
+    // `mapped_iterator` incorrectly infers the pointer type for `PointerProxy`.
+    // NOLINTNEXTLINE(readability-const-return-type)
+    auto index_to_id = [&](int32_t i) -> const std::pair<IdType, ConstRefType> {
+      return std::pair<IdType, ConstRefType>(IdType(i), Get(IdType(i)));
     };
-    return llvm::map_range(llvm::enumerate(values_), index_to_id);
+    // Because indices into `ValueStore` are all sequential values from 0, we
+    // can use llvm::seq to walk all indices in the store.
+    return llvm::map_range(llvm::seq(size_), index_to_id);
   }
 
  private:
-  // Poison the entire contents of the value store. This is used to detect cases
-  // where references to elements in a value store are used across calls that
-  // might modify the store.
-  auto PoisonAll() const -> void {
-#if CARBON_POISON_VALUE_STORES
-    if (!all_poisoned_) {
-      __asan_poison_memory_region(values_.data(),
-                                  values_.size() * sizeof(values_[0]));
-      all_poisoned_ = true;
+  // A chunk of `ValueType`s which has a fixed capacity, but variable size.
+  // Tracks the size internally for verifying bounds.
+  struct Chunk {
+   public:
+    // The max size of each chunk allocation for `ValueStore`. This is based on
+    // TLB page sizes for the target platform.
+    //
+    // See https://docs.kernel.org/admin-guide/mm/hugetlbpage.html
+    //
+    // A 4K chunk size outperforms a 1M chunk size on Linux-x64 and MacOS-arm64
+    // in benchmarks and when running file_test.
+    //
+    // Linux-x64: x64 CPUs support 4K and 2M page sizes, but we see 1M is slower
+    // than 4K with tcmalloc in opt builds for our tests.
+    //
+    // Mac-arm64: arm64 CPUs support 4K, 8K, 64K, 256K, 1M, 4M and up. Like for
+    // Linux-x64, 4K outperformed 1M. We didn't try other sizes yet.
+    //
+    // TODO: Is there a more optimize size for Mac-arm64? What should
+    // Linux-arm64 and Mac-x64 use? What should Windows use?
+    //
+    // TODO: The previous SmallVector<ValueType> seems to outperform 4K chunks
+    // (they may be slower by up to 5%) in benchmarks. Find ways to make
+    // chunking faster. Should successive chunks get larger in size? That will
+    // greatly complicate math for choosing a chunk though.
+    static constexpr auto MaxAllocationBytes() -> int32_t {
+#if !defined(NDEBUG) || LLVM_ADDRESS_SANITIZER_BUILD
+      // Use a small size in unoptimized builds to ensure multiple chunks get
+      // used. And do the same in ASAN builds to reduce bookkeeping overheads.
+      // Using large allocations (e.g. 1M+) incurs a 10x runtime cost for our
+      // tests under ASAN.
+      return sizeof(ValueType) * 5;
+#else
+      return 4 * 1024;
+#endif
     }
-#endif
-  }
-  // Unpoison the entire contents of the value store.
-  auto UnpoisonAll() const -> void {
-#if CARBON_POISON_VALUE_STORES
-    __asan_unpoison_memory_region(values_.data(),
-                                  values_.size() * sizeof(values_[0]));
-    all_poisoned_ = false;
-#endif
-  }
-  // Poison a single element.
-  auto PoisonElement([[maybe_unused]] int element) const -> void {
-#if CARBON_POISON_VALUE_STORES
-    __asan_unpoison_memory_region(values_.data() + element, sizeof(values_[0]));
-#endif
-  }
-  // Unpoison a single element.
-  auto UnpoisonElement([[maybe_unused]] int element) const -> void {
-#if CARBON_POISON_VALUE_STORES
-    __asan_unpoison_memory_region(values_.data() + element, sizeof(values_[0]));
-    all_poisoned_ = false;
-#endif
-  }
 
-  // Set inline size to 0 because these will typically be too large for the
-  // stack, while this does make File smaller.
-  llvm::SmallVector<std::decay_t<ValueType>, 0> values_;
-
-#if CARBON_POISON_VALUE_STORES
-  // Whether the vector is currently fully poisoned.
-  //
-  // We use this to avoid repeated re-poisoning of the entire store. Doing so is
-  // linear in the size of the store, and we trigger re-poisoning frequently,
-  // for example on each import. Tracking that here allows us to coalesce these
-  // into a single linear operation.
-  mutable bool all_poisoned_ = true;
-#endif
-};
-
-// A wrapper for accumulating immutable values with deduplication, providing IDs
-// to later retrieve the value.
-//
-// IdT::ValueType must represent the type being indexed.
-template <typename IdT>
-class CanonicalValueStore {
- public:
-  using ValueType = typename IdT::ValueType;
-  using RefType = typename ValueStore<IdT>::RefType;
-  using ConstRefType = typename ValueStore<IdT>::ConstRefType;
-
-  // Stores a canonical copy of the value and returns an ID to reference it.
-  auto Add(ValueType value) -> IdT;
-
-  // Returns the value for an ID.
-  auto Get(IdT id) const -> ConstRefType { return values_.Get(id); }
-
-  // Looks up the canonical ID for a value, or returns `None` if not in the
-  // store.
-  auto Lookup(ValueType value) const -> IdT;
-
-  // Reserves space.
-  auto Reserve(size_t size) -> void;
-
-  // Invalidates all current pointers and references into the value store. Used
-  // in debug builds to trigger use-after-invalidation bugs.
-  auto Invalidate() -> void { values_.Invalidate(); }
-
-  // These are to support printable structures, and are not guaranteed.
-  auto OutputYaml() const -> Yaml::OutputMapping {
-    return values_.OutputYaml();
-  }
-
-  auto array_ref() const -> llvm::ArrayRef<ValueType> {
-    return values_.array_ref();
-  }
-  auto size() const -> size_t { return values_.size(); }
-
-  // Collects memory usage of the values and deduplication set.
-  auto CollectMemUsage(MemUsage& mem_usage, llvm::StringRef label) const
-      -> void {
-    mem_usage.Collect(MemUsage::ConcatLabel(label, "values_"), values_);
-    auto bytes =
-        set_.ComputeMetrics(KeyContext(values_.array_ref())).storage_bytes;
-    mem_usage.Add(MemUsage::ConcatLabel(label, "set_"), bytes, bytes);
-  }
-
- private:
-  class KeyContext;
-
-  ValueStore<IdT> values_;
-  Set<IdT, /*SmallSize=*/0, KeyContext> set_;
-};
-
-template <typename IdT>
-class CanonicalValueStore<IdT>::KeyContext
-    : public TranslatingKeyContext<KeyContext> {
- public:
-  explicit KeyContext(llvm::ArrayRef<ValueType> values) : values_(values) {}
-
-  // Note that it is safe to return a `const` reference here as the underlying
-  // object's lifetime is provided by the `store_`.
-  auto TranslateKey(IdT id) const -> const ValueType& {
-    return values_[id.index];
-  }
-
- private:
-  llvm::ArrayRef<ValueType> values_;
-};
-
-template <typename IdT>
-auto CanonicalValueStore<IdT>::Add(ValueType value) -> IdT {
-  auto make_key = [&] { return IdT(values_.Add(std::move(value))); };
-  return set_.Insert(value, make_key, KeyContext(values_.array_ref())).key();
-}
-
-template <typename IdT>
-auto CanonicalValueStore<IdT>::Lookup(ValueType value) const -> IdT {
-  if (auto result = set_.Lookup(value, KeyContext(values_.array_ref()))) {
-    return result.key();
-  }
-  return IdT::None;
-}
-
-template <typename IdT>
-auto CanonicalValueStore<IdT>::Reserve(size_t size) -> void {
-  // Compute the resulting new insert count using the size of values -- the
-  // set doesn't have a fast to compute current size.
-  if (size > values_.size()) {
-    set_.GrowForInsertCount(size - values_.size(),
-                            KeyContext(values_.array_ref()));
-  }
-  values_.Reserve(size);
-}
-
-// A ValueStore that builds a 1:1 relationship between two IDs.
-// * `RelatedIdT` represents a related ID that can be used to find values in the
-//   store.
-// * `IdT` is the actual ID of values in this store, and `IdT::ValueType` is the
-//   value type being stored.
-//
-// The value store builds a mapping so that either ID can be used later to find
-// a value. And the user can query if a related `RelatedIdT` has been used to
-// add a value to the store or not.
-//
-// When adding to the store, the user provides the related `RelatedIdT` along
-// with the value being stored, and gets back the ID of the value in the store.
-//
-// This store requires more storage space than normal ValueStore does, as it
-// requires storing a bit for presence of each `RelatedIdT`. And it allocates
-// memory for values for all IDs up largest ID present in the store, even if
-// they are not yet used.
-template <typename RelatedIdT, typename IdT>
-class RelationalValueStore {
- public:
-  using ValueType = IdT::ValueType;
-  using ConstRefType = ValueStore<IdT>::ConstRefType;
-
-  // Given the related ID and a value, stores the value and returns a mapped ID
-  // to reference it in the store.
-  auto Add(RelatedIdT related_id, ValueType value) -> IdT {
-    CARBON_DCHECK(related_id.index >= 0, "{0}", related_id);
-    IdT id(related_id.index);
-    if (static_cast<size_t>(id.index) >= values_.size()) {
-      values_.resize(id.index + 1);
+    // The number of elements stored in each chunk allocation.
+    //
+    // The number must be a power of two so that that there are no unused values
+    // in bits indexing into the allocation.
+    static constexpr auto Capacity() -> int32_t {
+      constexpr auto MaxElements = MaxAllocationBytes() / sizeof(ValueType);
+      return std::bit_floor(MaxElements);
     }
-    auto& opt = values_[id.index];
-    CARBON_CHECK(!opt.has_value(),
-                 "Add with `related_id` that was already added to the store");
-    opt.emplace(std::move(value));
-    return id;
-  }
 
-  // Returns the ID of a value in the store if the `related_id` was previously
-  // used to add a value to the store, or None.
-  auto TryGetId(RelatedIdT related_id) const -> IdT {
-    CARBON_DCHECK(related_id.index >= 0, "{0}", related_id);
-    if (static_cast<size_t>(related_id.index) >= values_.size()) {
-      return IdT::None;
+    // The number of bits needed to index each element in a chunk allocation.
+    static constexpr auto IndexBits() -> int32_t {
+      static_assert(Capacity() > 0);
+      return std::bit_width(uint32_t{Capacity() - 1});
     }
-    auto& opt = values_[related_id.index];
-    if (!opt.has_value()) {
-      return IdT::None;
+
+    static constexpr auto CapacityBytes = Capacity() * sizeof(ValueType);
+
+    explicit Chunk()
+        : buf_(reinterpret_cast<ValueType*>(
+              llvm::allocate_buffer(CapacityBytes, alignof(ValueType)))) {}
+
+    // Moving leaves nullptr behind in the moved-from object so that the
+    // destructor is a no-op (preventing double free).
+    Chunk(Chunk&& rhs) noexcept
+        : buf_(std::exchange(rhs.buf_, nullptr)), num_(rhs.num_) {}
+
+    auto operator=(Chunk&& rhs) noexcept -> Chunk& {
+      buf_ = std::exchange(rhs.buf_, nullptr);
+      num_ = rhs.num_;
+      return *this;
     }
-    return IdT(related_id.index);
+
+    ~Chunk() {
+      if (buf_) {
+        if constexpr (!std::is_trivially_destructible_v<ValueType>) {
+          std::destroy_n(buf_, num_);
+        }
+        llvm::deallocate_buffer(buf_, CapacityBytes, alignof(ValueType));
+      }
+    }
+
+    auto Get(int32_t i) -> ValueType& {
+      CARBON_DCHECK(i < num_, "{0}", i);
+      return buf_[i];
+    }
+    auto Get(int32_t i) const -> const ValueType& {
+      CARBON_DCHECK(i < num_, "{0}", i);
+      return buf_[i];
+    }
+
+    auto Add(ValueType&& value) -> void {
+      CARBON_DCHECK(num_ < Capacity());
+      std::construct_at(buf_ + num_, std::move(value));
+      ++num_;
+    }
+
+    // Fills `fill_count` entries with `default_value`, increasing the size
+    // respectively.
+    auto UninitializedFill(int32_t fill_count, ConstRefType default_value)
+        -> void {
+      CARBON_DCHECK(num_ + fill_count <= Capacity());
+      std::uninitialized_fill_n(buf_ + num_, fill_count, default_value);
+      num_ += fill_count;
+    }
+
+    auto size() const -> int32_t { return num_; }
+
+   private:
+    // Verify using an `int32_t` for `num_` is sound.
+    static_assert(Capacity() <= std::numeric_limits<int32_t>::max());
+
+    ValueType* buf_;
+    int32_t num_ = 0;
+  };
+
+  // Converts an id into an index into the set of chunks, and an offset into
+  // that specific chunk. Looks for index overflow in non-optimized builds.
+  static auto IdToChunkIndices(IdType id) -> std::pair<int32_t, int32_t> {
+    constexpr auto LowBits = Chunk::IndexBits();
+
+    // Verify there are no unused bits when indexing up to the `Capacity`. This
+    // ensures that ids are contiguous values from 0, as if the values were all
+    // stored in a single array, and allows using the ids to index into other
+    // arrays.
+    static_assert((1 << LowBits) == Chunk::Capacity());
+    // Simple check to make sure nothing went wildly wrong with the `Capacity`,
+    // and we have some room for a chunk index, and that shifting by the number
+    // of bits won't be UB in an int32_t.
+    static_assert(LowBits < 30);
+
+    // The index of the chunk is the high bits.
+    auto chunk = id.index >> LowBits;
+    // The index into the chunk is the low bits.
+    auto pos = id.index & ((1 << LowBits) - 1);
+    return {chunk, pos};
   }
 
-  // Returns a value for an ID.
-  auto Get(IdT id) const -> ConstRefType {
-    CARBON_DCHECK(id.index >= 0, "{0}", id);
-    return *values_[id.index];
-  }
+  // Number of elements added to the store. The number should never exceed what
+  // fits in an `int32_t`, which is checked in non-optimized builds in Add().
+  int32_t size_ = 0;
 
- private:
-  // Set inline size to 0 because these will typically be too large for the
-  // stack, while this does make File smaller.
-  llvm::SmallVector<std::optional<std::decay_t<ValueType>>, 0> values_;
+  // Storage for the `ValueType` objects, indexed by the id. We use a vector of
+  // chunks of `ValueType` instead of just a vector of `ValueType` so that
+  // addresses of `ValueType` objects are stable. This allows the rest of the
+  // toolchain to hold references into `ValueStore` without having to worry
+  // about invalidation and use-after-free. We ensure at least one Chunk is held
+  // inline so that in the case where there is only a single Chunk (i.e. small
+  // files) we can avoid one indirection.
+  llvm::SmallVector<Chunk, 1> chunks_;
 };
 
 }  // namespace Carbon

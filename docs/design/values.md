@@ -415,9 +415,9 @@ the available implementation strategies.
 > **Future work:** The interaction between a
 > [custom value representation](#value-representation-and-customization) and a
 > value expression used with a polymorphic type needs to be fully captured.
-> Either it needs to restrict to a `const Self*` style representation (to
-> prevent slicing) or it needs to have a model for the semantics when a
-> different value representation is used.
+> Either it needs to restrict to a `const ref` style representation (to prevent
+> slicing) or it needs to have a model for the semantics when a different value
+> representation is used.
 
 ### Interop with C++ `const &` and `const` methods
 
@@ -560,6 +560,12 @@ functions with a `()` return type for the purpose of expression categories.
 
 #### Deferred initialization from values and references
 
+TODO: This section needs to be updated to reflect the addition of `-> val`
+returns in [proposal #5434](/proposals/p5434.md). This section could be replaced
+by a statement that initializing returns may be replaced by value returns when
+that is safe and correct, moving much of this content into a description of how
+value returns works.
+
 Carbon also makes the evaluation of function calls and return statements tightly
 linked in order to enable more efficiency improvements. It allows the actual
 initialization performed by the `return` statement with its expression to be
@@ -644,6 +650,9 @@ specialized constructs given the specialized nature of these operations.
 **Future work:** Add explicit designs for these use cases and link to them here.
 
 ### Reference types
+
+TODO: This section needs to be updated to reflect
+[proposal #5434](/proposals/p5434.md).
 
 Unlike C++, Carbon does not currently have reference types. The only form of
 indirect access are pointers. There are a few aspects to this decision that need
@@ -888,12 +897,12 @@ keyword. It isn't final at all and likely will need to change to read well.
 The provided representation type must be one of the following:
 
 -   `const Self` -- this forces the use of a _copy_ of the object.
--   `const Self *` -- this forces the use of a [_pointer_](#pointers) to the
-    original object.
+-   `const ref` -- this forces the use of a [_pointer_](#pointers) to the
+    original object, but with the `const` API subset.
 -   A custom type that is not `Self`, `const Self`, or a pointer to either.
 
-If the representation is `const Self` or `const Self *`, then the type fields
-will be accessible as [_value expressions_](#value-expressions) using the normal
+If the representation is `const Self` or `const ref`, then the type fields will
+be accessible as [_value expressions_](#value-expressions) using the normal
 member access syntax for value expressions of a type. These will be implemented
 by either accessing a copy of the object in the non-pointer case or a pointer to
 the original object in the pointer case. A representation of `const Self`
@@ -904,7 +913,7 @@ used.
 If no customization is provided, the implementation will select one based on a
 set of heuristics. Some examples:
 
--   Non-copyable types and polymorphic types would use a `const Self*`.
+-   Non-copyable types and polymorphic types would use a `const ref`.
 -   Small objects that are trivially copied in a machine register would use
     `const Self`.
 

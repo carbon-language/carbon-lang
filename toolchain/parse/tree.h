@@ -23,11 +23,9 @@ namespace Carbon::Parse {
 
 struct DeferredDefinition;
 
-// The index of a deferred function definition within the parse tree's deferred
-// definition store.
+// The index of a `DeferredDefinition` within the parse tree.
 struct DeferredDefinitionIndex : public IndexBase<DeferredDefinitionIndex> {
   static constexpr llvm::StringLiteral Label = "deferred_def";
-  using ValueType = DeferredDefinition;
 
   using IndexBase::IndexBase;
 };
@@ -82,6 +80,7 @@ class Tree : public Printable<Tree> {
     PackageNameId package_id = PackageNameId::None;
     // TODO: Move LibraryNameId to Base and use it here.
     StringLiteralValueId library_id = StringLiteralValueId::None;
+    InlineImportBodyId inline_body_id = InlineImportBodyId::None;
     // Whether an import is exported. This is on the file's packaging
     // declaration even though it doesn't apply, for consistency in structure.
     bool is_export = false;
@@ -167,7 +166,7 @@ class Tree : public Printable<Tree> {
   }
   auto imports() const -> llvm::ArrayRef<PackagingNames> { return imports_; }
   auto deferred_definitions() const
-      -> const ValueStore<DeferredDefinitionIndex>& {
+      -> const ValueStore<DeferredDefinitionIndex, DeferredDefinition>& {
     return deferred_definitions_;
   }
 
@@ -263,7 +262,7 @@ class Tree : public Printable<Tree> {
 
   std::optional<PackagingDecl> packaging_decl_;
   llvm::SmallVector<PackagingNames> imports_;
-  ValueStore<DeferredDefinitionIndex> deferred_definitions_;
+  ValueStore<DeferredDefinitionIndex, DeferredDefinition> deferred_definitions_;
 };
 
 // A random-access iterator to the depth-first postorder sequence of parse nodes

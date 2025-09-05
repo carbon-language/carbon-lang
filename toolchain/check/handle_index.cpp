@@ -55,7 +55,7 @@ static auto GetIndexWithArgs(Context& context, Parse::NodeId node_id,
     return std::nullopt;
   }
 
-  for (const auto& impl : context.impls().array_ref()) {
+  for (const auto& impl : context.impls().values()) {
     auto impl_self_type_id =
         context.types().GetTypeIdForTypeInstId(impl.self_id);
     auto impl_constraint_type_id =

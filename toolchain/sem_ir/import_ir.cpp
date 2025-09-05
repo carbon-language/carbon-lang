@@ -33,9 +33,13 @@ auto GetCanonicalFileAndInstId(const File* sem_ir, SemIR::InstId inst_id)
     if (auto import_ir_inst_id = sem_ir->insts().GetImportSource(inst_id);
         import_ir_inst_id.has_value()) {
       auto import_ir_inst = sem_ir->import_ir_insts().Get(import_ir_inst_id);
-      sem_ir = sem_ir->import_irs().Get(import_ir_inst.ir_id()).sem_ir;
-      inst_id = import_ir_inst.inst_id();
-      continue;
+      // TODO: For imports from C++, we return the importing instruction, which
+      // isn't necessarily canonical.
+      if (import_ir_inst.ir_id() != ImportIRId::Cpp) {
+        sem_ir = sem_ir->import_irs().Get(import_ir_inst.ir_id()).sem_ir;
+        inst_id = import_ir_inst.inst_id();
+        continue;
+      }
     }
 
     // Step through export declarations to their exported value.

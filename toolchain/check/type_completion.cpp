@@ -7,6 +7,7 @@
 #include "llvm/ADT/SmallVector.h"
 #include "toolchain/base/kind_switch.h"
 #include "toolchain/check/generic.h"
+#include "toolchain/check/import_cpp.h"
 #include "toolchain/check/inst.h"
 #include "toolchain/check/type.h"
 #include "toolchain/diagnostics/format_providers.h"
@@ -87,18 +88,15 @@ class TypeCompleter {
   template <typename InstT>
     requires(InstT::Kind.template IsAnyOf<
              SemIR::AutoType, SemIR::BoolType, SemIR::BoundMethodType,
-             SemIR::ErrorInst, SemIR::FacetType, SemIR::FloatType,
-             SemIR::IntType, SemIR::IntLiteralType, SemIR::LegacyFloatType,
-             SemIR::NamespaceType, SemIR::PatternType, SemIR::PointerType,
-             SemIR::SpecificFunctionType, SemIR::TypeType, SemIR::VtableType,
-             SemIR::WitnessType>())
+             SemIR::CharLiteralType, SemIR::ErrorInst, SemIR::FacetType,
+             SemIR::FloatLiteralType, SemIR::FloatType, SemIR::IntType,
+             SemIR::IntLiteralType, SemIR::NamespaceType, SemIR::PatternType,
+             SemIR::PointerType, SemIR::SpecificFunctionType, SemIR::TypeType,
+             SemIR::VtableType, SemIR::WitnessType>())
   auto BuildInfoForInst(SemIR::TypeId type_id, InstT /*inst*/) const
       -> SemIR::CompleteTypeInfo {
     return {.value_repr = MakeCopyValueRepr(type_id)};
   }
-
-  auto BuildInfoForInst(SemIR::TypeId type_id, SemIR::StringType /*inst*/) const
-      -> SemIR::CompleteTypeInfo;
 
   auto BuildStructOrTupleValueRepr(size_t num_elements,
                                    SemIR::TypeId elementwise_rep,
@@ -138,6 +136,18 @@ class TypeCompleter {
   }
 
   auto BuildInfoForInst(SemIR::TypeId /*type_id*/, SemIR::ConstType inst) const
+      -> SemIR::CompleteTypeInfo;
+
+  auto BuildInfoForInst(SemIR::TypeId type_id,
+                        SemIR::CustomLayoutType inst) const
+      -> SemIR::CompleteTypeInfo;
+
+  auto BuildInfoForInst(SemIR::TypeId /*type_id*/,
+                        SemIR::MaybeUnformedType inst) const
+      -> SemIR::CompleteTypeInfo;
+
+  auto BuildInfoForInst(SemIR::TypeId /*type_id*/,
+                        SemIR::PartialType inst) const
       -> SemIR::CompleteTypeInfo;
 
   auto BuildInfoForInst(SemIR::TypeId /*type_id*/,
@@ -266,6 +276,18 @@ auto TypeCompleter::AddNestedIncompleteTypes(SemIR::Inst type_inst) -> bool {
     }
     case CARBON_KIND(SemIR::ClassType inst): {
       auto& class_info = context_->classes().Get(inst.class_id);
+      // If the class was imported from C++, ask Clang to try to complete it.
+      if (!class_info.is_complete() && class_info.scope_id.has_value()) {
+        auto& scope = context_->name_scopes().Get(class_info.scope_id);
+        if (scope.clang_decl_context_id().has_value()) {
+          if (!ImportClassDefinitionForClangDecl(
+                  *context_, loc_id_, inst.class_id,
+                  scope.clang_decl_context_id())) {
+            // Clang produced a diagnostic. Don't produce one of our own.
+            return false;
+          }
+        }
+      }
       if (!class_info.is_complete()) {
         if (diagnoser_) {
           auto builder = diagnoser_();
@@ -287,6 +309,20 @@ auto TypeCompleter::AddNestedIncompleteTypes(SemIR::Inst type_inst) -> bool {
       break;
     }
     case CARBON_KIND(SemIR::ConstType inst): {
+      Push(context_->types().GetTypeIdForTypeInstId(inst.inner_id));
+      break;
+    }
+    case CARBON_KIND(SemIR::CustomLayoutType inst): {
+      for (auto field : context_->struct_type_fields().Get(inst.fields_id)) {
+        Push(context_->types().GetTypeIdForTypeInstId(field.type_inst_id));
+      }
+      break;
+    }
+    case CARBON_KIND(SemIR::MaybeUnformedType inst): {
+      Push(context_->types().GetTypeIdForTypeInstId(inst.inner_id));
+      break;
+    }
+    case CARBON_KIND(SemIR::PartialType inst): {
       Push(context_->types().GetTypeIdForTypeInstId(inst.inner_id));
       break;
     }
@@ -353,15 +389,6 @@ auto TypeCompleter::GetNestedInfo(SemIR::TypeId nested_type_id) const
   CARBON_CHECK(info.value_repr.kind != SemIR::ValueRepr::Unknown,
                "Complete type should have a value representation");
   return info;
-}
-
-auto TypeCompleter::BuildInfoForInst(SemIR::TypeId type_id,
-                                     SemIR::StringType /*inst*/) const
-    -> SemIR::CompleteTypeInfo {
-  // TODO: Decide on string value semantics. This should probably be a
-  // custom value representation carrying a pointer and size or
-  // similar.
-  return {.value_repr = MakePointerValueRepr(type_id)};
 }
 
 auto TypeCompleter::BuildStructOrTupleValueRepr(size_t num_elements,
@@ -508,6 +535,30 @@ auto TypeCompleter::BuildInfoForInst(SemIR::TypeId /*type_id*/,
                                      SemIR::ConstType inst) const
     -> SemIR::CompleteTypeInfo {
   // The value representation of `const T` is the same as that of `T`.
+  // Objects are not modifiable through their value representations.
+  return GetNestedInfo(context_->types().GetTypeIdForTypeInstId(inst.inner_id));
+}
+
+auto TypeCompleter::BuildInfoForInst(SemIR::TypeId type_id,
+                                     SemIR::CustomLayoutType /*inst*/) const
+    -> SemIR::CompleteTypeInfo {
+  // TODO: Should we support other value representations for custom layout
+  // types?
+  return {.value_repr = MakePointerValueRepr(type_id)};
+}
+
+auto TypeCompleter::BuildInfoForInst(SemIR::TypeId type_id,
+                                     SemIR::MaybeUnformedType /*inst*/) const
+    -> SemIR::CompleteTypeInfo {
+  // `MaybeUnformed(T)` always has a pointer value representation, regardless of
+  // `T`'s value representation.
+  return {.value_repr = MakePointerValueRepr(type_id)};
+}
+
+auto TypeCompleter::BuildInfoForInst(SemIR::TypeId /*type_id*/,
+                                     SemIR::PartialType inst) const
+    -> SemIR::CompleteTypeInfo {
+  // The value representation of `partial T` is the same as that of `T`.
   // Objects are not modifiable through their value representations.
   return GetNestedInfo(context_->types().GetTypeIdForTypeInstId(inst.inner_id));
 }

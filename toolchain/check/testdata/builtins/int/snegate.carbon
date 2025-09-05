@@ -2,7 +2,7 @@
 // Exceptions. See /LICENSE for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
-// EXTRA-ARGS: --dump-sem-ir-ranges=only
+// INCLUDE-FILE: toolchain/testing/testdata/min_prelude/primitives.carbon
 //
 // AUTOUPDATE
 // TIP: To test this file alone, run:
@@ -32,14 +32,15 @@ fn RuntimeCallIsValid(a: i32, b: i32) -> i32 {
 library "[[@TEST_NAME]]";
 
 fn Negate(a: Core.IntLiteral()) -> Core.IntLiteral() = "int.snegate";
+fn Sub(a: Core.IntLiteral(), b: Core.IntLiteral()) -> Core.IntLiteral() = "int.ssub";
 
 class Expect(N:! Core.IntLiteral()) {}
 fn Test(N:! Core.IntLiteral()) -> Expect(N) { return {}; }
 
 fn F() {
   Test(Negate(0)) as Expect(0);
-  Test(Negate(1)) as Expect(0 - 1);
-  Test(Negate(0 - 0x8000_0000_0000_0000)) as Expect(0x8000_0000_0000_0000);
+  Test(Negate(1)) as Expect(Sub(0, 1));
+  Test(Negate(Sub(0, 0x8000_0000_0000_0000))) as Expect(0x8000_0000_0000_0000);
 }
 
 // --- fail_too_few.carbon
@@ -139,7 +140,7 @@ let b: i32 = Negate(-0x8000_0000);
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %int_32: Core.IntLiteral = int_value 32 [concrete]
 // CHECK:STDOUT:   %i32: type = class_type @Int, @Int(%int_32) [concrete]
-// CHECK:STDOUT:   %Negate.type.15b: type = fn_type @Negate.1 [concrete]
+// CHECK:STDOUT:   %Negate.type.15b: type = fn_type @Negate.loc4 [concrete]
 // CHECK:STDOUT:   %Negate: %Negate.type.15b = struct_value () [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -150,9 +151,9 @@ let b: i32 = Negate(-0x8000_0000);
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %Negate.ref: %Negate.type.15b = name_ref Negate, file.%Negate.decl [concrete = constants.%Negate]
 // CHECK:STDOUT:   %a.ref: %i32 = name_ref a, %a
-// CHECK:STDOUT:   %int.snegate: init %i32 = call %Negate.ref(%a.ref)
-// CHECK:STDOUT:   %.loc13_19.1: %i32 = value_of_initializer %int.snegate
-// CHECK:STDOUT:   %.loc13_19.2: %i32 = converted %int.snegate, %.loc13_19.1
+// CHECK:STDOUT:   %Negate.call: init %i32 = call %Negate.ref(%a.ref)
+// CHECK:STDOUT:   %.loc13_19.1: %i32 = value_of_initializer %Negate.call
+// CHECK:STDOUT:   %.loc13_19.2: %i32 = converted %Negate.call, %.loc13_19.1
 // CHECK:STDOUT:   return %.loc13_19.2
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

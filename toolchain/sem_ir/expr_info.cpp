@@ -35,6 +35,7 @@ auto GetExprCategory(const File& file, InstId inst_id) -> ExprCategory {
       case Namespace::Kind:
       case OutParamPattern::Kind:
       case RefParamPattern::Kind:
+      case RequirementBaseFacetType::Kind:
       case RequirementEquivalent::Kind:
       case RequirementImpls::Kind:
       case RequirementRewrite::Kind:
@@ -45,7 +46,6 @@ auto GetExprCategory(const File& file, InstId inst_id) -> ExprCategory {
       case TuplePattern::Kind:
       case ValueParamPattern::Kind:
       case VarPattern::Kind:
-      case Vtable::Kind:
         return ExprCategory::NotExpr;
 
       case ImportRefUnloaded::Kind:
@@ -105,16 +105,21 @@ auto GetExprCategory(const File& file, InstId inst_id) -> ExprCategory {
       case BoolType::Kind:
       case BoundMethod::Kind:
       case BoundMethodType::Kind:
+      case CharLiteralType::Kind:
+      case CharLiteralValue::Kind:
       case ClassDecl::Kind:
       case ClassType::Kind:
       case CompleteTypeWitness::Kind:
       case ConstType::Kind:
       case ConvertToValueAction::Kind:
+      case CustomLayoutType::Kind:
       case FacetAccessType::Kind:
       case FacetType::Kind:
       case FacetValue::Kind:
-      case FloatLiteral::Kind:
+      case FloatLiteralType::Kind:
+      case FloatLiteralValue::Kind:
       case FloatType::Kind:
+      case FloatValue::Kind:
       case FunctionType::Kind:
       case FunctionTypeWithSelfType::Kind:
       case GenericClassType::Kind:
@@ -122,6 +127,7 @@ auto GetExprCategory(const File& file, InstId inst_id) -> ExprCategory {
       case LookupImplWitness::Kind:
       case ImplWitness::Kind:
       case ImplWitnessAccess::Kind:
+      case ImplWitnessAccessSubstituted::Kind:
       case ImplWitnessTable::Kind:
       case ImplWitnessTablePlaceholder::Kind:
       case ImportCppDecl::Kind:
@@ -132,8 +138,9 @@ auto GetExprCategory(const File& file, InstId inst_id) -> ExprCategory {
       case IntType::Kind:
       case IntValue::Kind:
       case InterfaceDecl::Kind:
-      case LegacyFloatType::Kind:
+      case MaybeUnformedType::Kind:
       case NamespaceType::Kind:
+      case PartialType::Kind:
       case PatternType::Kind:
       case PointerType::Kind:
       case RefineTypeAction::Kind:
@@ -142,7 +149,6 @@ auto GetExprCategory(const File& file, InstId inst_id) -> ExprCategory {
       case SpecificFunctionType::Kind:
       case SpecificImplFunction::Kind:
       case StringLiteral::Kind:
-      case StringType::Kind:
       case StructType::Kind:
       case StructValue::Kind:
       case TupleType::Kind:
@@ -178,6 +184,7 @@ auto GetExprCategory(const File& file, InstId inst_id) -> ExprCategory {
       }
 
       case VtablePtr::Kind:
+      case VtableDecl::Kind:
         return ExprCategory::EphemeralRef;
 
       case CARBON_KIND(ClassElementAccess inst): {
@@ -215,6 +222,7 @@ auto GetExprCategory(const File& file, InstId inst_id) -> ExprCategory {
       case ArrayInit::Kind:
       case Call::Kind:
       case InitializeFrom::Kind:
+      case InPlaceInit::Kind:
       case ClassInit::Kind:
       case StructInit::Kind:
       case TupleInit::Kind:
@@ -265,6 +273,12 @@ auto FindReturnSlotArgForInitializer(const File& sem_ir, InstId init_id)
         return init.dest_id;
       }
       case CARBON_KIND(InitializeFrom init): {
+        return init.dest_id;
+      }
+      case CARBON_KIND(InPlaceInit init): {
+        if (!ReturnTypeInfo::ForType(sem_ir, init.type_id).has_return_slot()) {
+          return InstId::None;
+        }
         return init.dest_id;
       }
       case CARBON_KIND(Call call): {

@@ -25,6 +25,7 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
     -   [Collaboration systems](#collaboration-systems)
         -   [Getting access](#getting-access)
     -   [Contribution tools](#contribution-tools)
+        -   [Using AI-based contribution tools](#using-ai-based-contribution-tools)
     -   [Contribution guidelines and standards](#contribution-guidelines-and-standards)
         -   [Guidelines and philosophy for contributions](#guidelines-and-philosophy-for-contributions)
         -   [How to say things](#how-to-say-things)
@@ -227,6 +228,25 @@ documentation for information on setting up a git client for Carbon development,
 as well as helpful tooling that will ease the contribution process. For example,
 [pre-commit](https://pre-commit.com) is used to simplify
 [code review](/docs/project/code_review.md).
+
+#### Using AI-based contribution tools
+
+All submissions to Carbon need to follow our
+[Contributor License Agreement (CLA)](#contributor-license-agreements-clas), in
+which contributors agree that their contribution is an original work of
+authorship. This doesn’t prohibit the use of coding assistance tools, but what’s
+submitted does need to be a contributor’s original creation.
+
+All contributions, regardless of what tools are used, are also still subject to
+normal code review and our
+[guidelines and standards](#contribution-guidelines-and-standards) below.
+
+Additionally, we want contributions to Carbon to also be viable as contributions
+to LLVM so that we can move things between these projects where relevant. We
+selected our license in part for this reason, and the same should be true for
+the use of AI-based coding tools. Any contributions to Carbon should also abide
+by the guidance in the
+[LLVM Developer Policy around AI generated code](https://llvm.org/docs/DeveloperPolicy.html#ai-generated-contributions).
 
 ### Contribution guidelines and standards
 

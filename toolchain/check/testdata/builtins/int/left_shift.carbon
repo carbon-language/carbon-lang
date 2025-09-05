@@ -2,7 +2,7 @@
 // Exceptions. See /LICENSE for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
-// EXTRA-ARGS: --dump-sem-ir-ranges=only
+// INCLUDE-FILE: toolchain/testing/testdata/min_prelude/uint.carbon
 //
 // AUTOUPDATE
 // TIP: To test this file alone, run:
@@ -233,8 +233,8 @@ let bad4: Core.IntLiteral() = LeftShiftOfLit(12, an_i32);
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %int_32: Core.IntLiteral = int_value 32 [concrete]
 // CHECK:STDOUT:   %i32: type = class_type @Int, @Int(%int_32) [concrete]
-// CHECK:STDOUT:   %LeftShift.type.ed3: type = fn_type @LeftShift.1 [concrete]
-// CHECK:STDOUT:   %LeftShift: %LeftShift.type.ed3 = struct_value () [concrete]
+// CHECK:STDOUT:   %LeftShift.type: type = fn_type @LeftShift [concrete]
+// CHECK:STDOUT:   %LeftShift: %LeftShift.type = struct_value () [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -242,12 +242,12 @@ let bad4: Core.IntLiteral() = LeftShiftOfLit(12, an_i32);
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @RuntimeCallIsValid(%a.param: %i32, %b.param: %i32) -> %i32 {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %LeftShift.ref: %LeftShift.type.ed3 = name_ref LeftShift, file.%LeftShift.decl [concrete = constants.%LeftShift]
+// CHECK:STDOUT:   %LeftShift.ref: %LeftShift.type = name_ref LeftShift, file.%LeftShift.decl [concrete = constants.%LeftShift]
 // CHECK:STDOUT:   %a.ref: %i32 = name_ref a, %a
 // CHECK:STDOUT:   %b.ref: %i32 = name_ref b, %b
-// CHECK:STDOUT:   %int.left_shift: init %i32 = call %LeftShift.ref(%a.ref, %b.ref)
-// CHECK:STDOUT:   %.loc22_25.1: %i32 = value_of_initializer %int.left_shift
-// CHECK:STDOUT:   %.loc22_25.2: %i32 = converted %int.left_shift, %.loc22_25.1
+// CHECK:STDOUT:   %LeftShift.call: init %i32 = call %LeftShift.ref(%a.ref, %b.ref)
+// CHECK:STDOUT:   %.loc22_25.1: %i32 = value_of_initializer %LeftShift.call
+// CHECK:STDOUT:   %.loc22_25.2: %i32 = converted %LeftShift.call, %.loc22_25.1
 // CHECK:STDOUT:   return %.loc22_25.2
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -257,8 +257,8 @@ let bad4: Core.IntLiteral() = LeftShiftOfLit(12, an_i32);
 // CHECK:STDOUT:   %int_32: Core.IntLiteral = int_value 32 [concrete]
 // CHECK:STDOUT:   %u32: type = class_type @UInt, @UInt(%int_32) [concrete]
 // CHECK:STDOUT:   %i32: type = class_type @Int, @Int(%int_32) [concrete]
-// CHECK:STDOUT:   %LeftShift.type.ed3: type = fn_type @LeftShift.1 [concrete]
-// CHECK:STDOUT:   %LeftShift: %LeftShift.type.ed3 = struct_value () [concrete]
+// CHECK:STDOUT:   %LeftShift.type: type = fn_type @LeftShift [concrete]
+// CHECK:STDOUT:   %LeftShift: %LeftShift.type = struct_value () [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -266,12 +266,12 @@ let bad4: Core.IntLiteral() = LeftShiftOfLit(12, an_i32);
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @RuntimeCall(%a.param: %u32, %b.param: %i32) -> %u32 {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %LeftShift.ref: %LeftShift.type.ed3 = name_ref LeftShift, file.%LeftShift.decl [concrete = constants.%LeftShift]
+// CHECK:STDOUT:   %LeftShift.ref: %LeftShift.type = name_ref LeftShift, file.%LeftShift.decl [concrete = constants.%LeftShift]
 // CHECK:STDOUT:   %a.ref: %u32 = name_ref a, %a
 // CHECK:STDOUT:   %b.ref: %i32 = name_ref b, %b
-// CHECK:STDOUT:   %int.left_shift: init %u32 = call %LeftShift.ref(%a.ref, %b.ref)
-// CHECK:STDOUT:   %.loc22_25.1: %u32 = value_of_initializer %int.left_shift
-// CHECK:STDOUT:   %.loc22_25.2: %u32 = converted %int.left_shift, %.loc22_25.1
+// CHECK:STDOUT:   %LeftShift.call: init %u32 = call %LeftShift.ref(%a.ref, %b.ref)
+// CHECK:STDOUT:   %.loc22_25.1: %u32 = value_of_initializer %LeftShift.call
+// CHECK:STDOUT:   %.loc22_25.2: %u32 = converted %LeftShift.call, %.loc22_25.1
 // CHECK:STDOUT:   return %.loc22_25.2
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

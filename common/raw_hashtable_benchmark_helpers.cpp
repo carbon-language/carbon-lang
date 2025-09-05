@@ -221,6 +221,16 @@ static absl::NoDestructor<llvm::OwningArrayRef<int>> raw_int_keys{[] {
   return keys;
 }()};
 
+template <int LowZeroBits>
+static absl::NoDestructor<llvm::OwningArrayRef<LowZeroBitInt<LowZeroBits>>>
+    raw_low_zero_bit_int_keys{[] {
+      llvm::OwningArrayRef<LowZeroBitInt<LowZeroBits>> keys(MaxNumKeys);
+      for (auto [index, key] : llvm::enumerate(keys)) {
+        key = LowZeroBitInt<LowZeroBits>(index + 1);
+      }
+      return keys;
+    }()};
+
 namespace {
 
 // Allow generically dispatching over the specific key types we build and
@@ -231,6 +241,12 @@ auto GetRawKeys() -> llvm::ArrayRef<T> {
     return *raw_str_keys;
   } else if constexpr (std::is_pointer_v<T>) {
     return *raw_ptr_keys;
+  } else if constexpr (std::is_same_v<T, LowZeroBitInt<12>>) {
+    return *raw_low_zero_bit_int_keys<12>;
+  } else if constexpr (std::is_same_v<T, LowZeroBitInt<24>>) {
+    return *raw_low_zero_bit_int_keys<24>;
+  } else if constexpr (std::is_same_v<T, LowZeroBitInt<32>>) {
+    return *raw_low_zero_bit_int_keys<32>;
   } else {
     return *raw_int_keys;
   }
@@ -305,6 +321,15 @@ template auto GetKeysAndMissKeys<int*>(ssize_t size)
 template auto GetKeysAndMissKeys<llvm::StringRef>(ssize_t size)
     -> std::pair<llvm::ArrayRef<llvm::StringRef>,
                  llvm::ArrayRef<llvm::StringRef>>;
+template auto GetKeysAndMissKeys<LowZeroBitInt<12>>(ssize_t size)
+    -> std::pair<llvm::ArrayRef<LowZeroBitInt<12>>,
+                 llvm::ArrayRef<LowZeroBitInt<12>>>;
+template auto GetKeysAndMissKeys<LowZeroBitInt<24>>(ssize_t size)
+    -> std::pair<llvm::ArrayRef<LowZeroBitInt<24>>,
+                 llvm::ArrayRef<LowZeroBitInt<24>>>;
+template auto GetKeysAndMissKeys<LowZeroBitInt<32>>(ssize_t size)
+    -> std::pair<llvm::ArrayRef<LowZeroBitInt<32>>,
+                 llvm::ArrayRef<LowZeroBitInt<32>>>;
 
 template <typename T>
 auto GetKeysAndHitKeys(ssize_t table_keys_size, ssize_t lookup_keys_size)
@@ -322,6 +347,18 @@ template auto GetKeysAndHitKeys<llvm::StringRef>(ssize_t size,
                                                  ssize_t lookup_keys_size)
     -> std::pair<llvm::ArrayRef<llvm::StringRef>,
                  llvm::ArrayRef<llvm::StringRef>>;
+template auto GetKeysAndHitKeys<LowZeroBitInt<12>>(ssize_t size,
+                                                   ssize_t lookup_keys_size)
+    -> std::pair<llvm::ArrayRef<LowZeroBitInt<12>>,
+                 llvm::ArrayRef<LowZeroBitInt<12>>>;
+template auto GetKeysAndHitKeys<LowZeroBitInt<24>>(ssize_t size,
+                                                   ssize_t lookup_keys_size)
+    -> std::pair<llvm::ArrayRef<LowZeroBitInt<24>>,
+                 llvm::ArrayRef<LowZeroBitInt<24>>>;
+template auto GetKeysAndHitKeys<LowZeroBitInt<32>>(ssize_t size,
+                                                   ssize_t lookup_keys_size)
+    -> std::pair<llvm::ArrayRef<LowZeroBitInt<32>>,
+                 llvm::ArrayRef<LowZeroBitInt<32>>>;
 
 template <typename T>
 auto DumpHashStatistics(llvm::ArrayRef<T> keys) -> void {
@@ -381,6 +418,12 @@ auto DumpHashStatistics(llvm::ArrayRef<T> keys) -> void {
   }
 }
 template auto DumpHashStatistics(llvm::ArrayRef<int> keys) -> void;
+template auto DumpHashStatistics(llvm::ArrayRef<LowZeroBitInt<12>> keys)
+    -> void;
+template auto DumpHashStatistics(llvm::ArrayRef<LowZeroBitInt<24>> keys)
+    -> void;
+template auto DumpHashStatistics(llvm::ArrayRef<LowZeroBitInt<32>> keys)
+    -> void;
 template auto DumpHashStatistics(llvm::ArrayRef<int*> keys) -> void;
 template auto DumpHashStatistics(llvm::ArrayRef<llvm::StringRef> keys) -> void;
 

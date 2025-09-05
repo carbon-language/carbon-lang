@@ -43,6 +43,7 @@ FileTestAutoupdater::FileAndLineNumber::FileAndLineNumber(
       line_number(ParseLineNumber(line_number)) {}
 
 auto FileTestAutoupdater::CheckLine::RemapLineNumbers(
+    const llvm::DenseMap<llvm::StringRef, int>& file_to_number_map,
     const llvm::DenseMap<std::pair<int, int>, int>& output_line_remap,
     const llvm::SmallVector<int>& new_last_line_numbers) -> void {
   // Only need to do remappings when there's a line number replacement.
@@ -60,9 +61,10 @@ auto FileTestAutoupdater::CheckLine::RemapLineNumbers(
     line_cursor.remove_prefix(line_offset);
     // Look for a line number to replace. There may be multiple, so we
     // repeatedly check.
+    absl::string_view matched_filename;
     absl::string_view matched_line_number;
     if (replacement_->has_file) {
-      RE2::PartialMatch(line_cursor, *replacement_->re, nullptr,
+      RE2::PartialMatch(line_cursor, *replacement_->re, &matched_filename,
                         &matched_line_number);
     } else {
       RE2::PartialMatch(line_cursor, *replacement_->re, &matched_line_number);
@@ -71,25 +73,31 @@ auto FileTestAutoupdater::CheckLine::RemapLineNumbers(
       return;
     }
 
-    // Update the cursor offset from the match.
-    line_offset = matched_line_number.begin() - line_.c_str();
+    // Map the matched filename to its file number.
+    auto matched_file_number = file_number();
+    if (replacement_->has_file) {
+      auto it = file_to_number_map.find(matched_filename);
+      if (it != file_to_number_map.end()) {
+        matched_file_number = it->second;
+      }
+    }
 
     // Calculate the new line number (possibly with new CHECK lines added, or
     // some removed).
     int old_line_number = ParseLineNumber(matched_line_number);
     int new_line_number = -1;
     if (auto remapped =
-            output_line_remap.find({file_number(), old_line_number});
+            output_line_remap.find({matched_file_number, old_line_number});
         remapped != output_line_remap.end()) {
       // Map old non-check lines to their new line numbers.
       new_line_number = remapped->second;
     } else {
       // We assume unmapped references point to the end-of-file.
-      new_line_number = new_last_line_numbers[file_number()];
+      new_line_number = new_last_line_numbers[matched_file_number];
     }
 
     std::string replacement;
-    if (output_file_number_ == file_number()) {
+    if (matched_file_number == output_file_number_) {
       int offset = new_line_number - output_line_number_;
       // Update the line offset in the CHECK line.
       const char* offset_prefix = offset < 0 ? "" : "+";
@@ -103,8 +111,11 @@ auto FileTestAutoupdater::CheckLine::RemapLineNumbers(
       replacement =
           llvm::formatv(replacement_->line_formatv.c_str(), new_line_number);
     }
-    line_.replace(matched_line_number.data() - line_.data(),
-                  matched_line_number.size(), replacement);
+    auto line_number_offset = matched_line_number.data() - line_.data();
+    line_.replace(line_number_offset, matched_line_number.size(), replacement);
+
+    // Resume matching from the end of the replacement line number.
+    line_offset = line_number_offset + replacement.size();
   }
 }
 
@@ -139,15 +150,9 @@ auto FileTestAutoupdater::GetFileAndLineNumber(
 }
 
 auto FileTestAutoupdater::BuildCheckLines(llvm::StringRef output,
-                                          const char* label) -> CheckLines {
+                                          bool is_stderr) -> CheckLines {
   if (output.empty()) {
     return CheckLines({});
-  }
-
-  // Prepare to look for filenames in lines.
-  llvm::DenseMap<llvm::StringRef, int> file_to_number_map;
-  for (auto [number, name] : llvm::enumerate(filenames_)) {
-    file_to_number_map.insert({name, number});
   }
 
   // %t substitution means we may see the temporary directory's path in output.
@@ -161,16 +166,19 @@ auto FileTestAutoupdater::BuildCheckLines(llvm::StringRef output,
     lines.pop_back();
   }
 
+  auto label =
+      is_stderr ? llvm::StringLiteral("STDERR") : llvm::StringLiteral("STDOUT");
+
   // The default file number for when no specific file is found.
   int default_file_number = 0;
 
-  llvm::SmallVector<CheckLine> check_lines;
+  CheckLineArray check_lines;
   for (const auto& line : lines) {
     // This code is relatively hot in our testing, and because when testing it
     // isn't run with an optimizer we benefit from making it use simple
     // constructs. For this reason, we avoid `llvm::formatv` and similar tools.
     std::string check_line;
-    check_line.reserve(line.size() + strlen(label) + strlen("// CHECK:: "));
+    check_line.reserve(line.size() + label.size() + strlen("// CHECK:: "));
     check_line.append("// CHECK:");
     check_line.append(label);
     check_line.append(":");
@@ -196,21 +204,25 @@ auto FileTestAutoupdater::BuildCheckLines(llvm::StringRef output,
     }
 
     do_extra_check_replacements_(check_line);
+    if (check_line.empty()) {
+      continue;
+    }
 
     if (default_file_re_) {
       absl::string_view filename;
       if (RE2::PartialMatch(line, *default_file_re_, &filename)) {
-        auto it = file_to_number_map.find(filename);
-        CARBON_CHECK(it != file_to_number_map.end(),
+        auto it = file_to_number_map_.find(filename);
+        CARBON_CHECK(it != file_to_number_map_.end(),
                      "default_file_re had unexpected match in '{0}' (`{1}`)",
                      line, default_file_re_->pattern());
         default_file_number = it->second;
       }
     }
-    auto file_and_line = GetFileAndLineNumber(file_to_number_map,
+    auto file_and_line = GetFileAndLineNumber(file_to_number_map_,
                                               default_file_number, check_line);
     check_lines.push_back(CheckLine(file_and_line, check_line));
   }
+  finalize_check_lines_(check_lines, is_stderr);
   return CheckLines(check_lines);
 }
 
@@ -241,7 +253,8 @@ auto FileTestAutoupdater::AddTips() -> void {
 
 auto FileTestAutoupdater::ShouldAddCheckLine(const CheckLines& check_lines,
                                              bool to_file_end) const -> bool {
-  return !autoupdate_split_ && check_lines.cursor != check_lines.lines.end() &&
+  return !autoupdate_split_file_ &&
+         check_lines.cursor != check_lines.lines.end() &&
          (check_lines.cursor->file_number() < output_file_number_ ||
           (check_lines.cursor->file_number() == output_file_number_ &&
            (to_file_end || check_lines.cursor->line_number() <=
@@ -318,7 +331,7 @@ auto FileTestAutoupdater::Run(bool dry_run) -> bool {
   // lines after AUTOUPDATE.
   AddRemappedNonCheckLine();
   AddTips();
-  if (!autoupdate_split_) {
+  if (!autoupdate_split_file_) {
     AddCheckLines(stderr_, /*to_file_end=*/false);
     if (any_attached_stdout_lines_) {
       AddCheckLines(stdout_, /*to_file_end=*/false);
@@ -331,8 +344,7 @@ auto FileTestAutoupdater::Run(bool dry_run) -> bool {
     if (output_file_number_ < non_check_line_->file_number()) {
       FinishFile(/*is_last_file=*/false);
       StartSplitFile();
-      if (autoupdate_split_ &&
-          output_file_number_ == static_cast<int>(filenames_.size())) {
+      if (output_file_number_ == autoupdate_split_file_) {
         break;
       }
       continue;
@@ -353,18 +365,22 @@ auto FileTestAutoupdater::Run(bool dry_run) -> bool {
     ++non_check_line_;
   }
 
-  // When autoupdate_split_ was true, this will result in all check lines (and
-  // only check lines) being added to the split by FinishFile. We don't use
-  // autoupdate_split_ past this point.
-  autoupdate_split_ = false;
+  // Clear out the autoupdate split, which would otherwise prevent check lines
+  // being written to the autoupdate file. When autoupdate_split_file_ was set,
+  // this will result in all check lines (and only check lines) being added to
+  // the split by FinishFile. We don't use autoupdate_split_file_ past this
+  // point.
+  autoupdate_split_file_ = std::nullopt;
 
   FinishFile(/*is_last_file=*/true);
 
   for (auto& check_line : stdout_.lines) {
-    check_line.RemapLineNumbers(output_line_remap_, new_last_line_numbers_);
+    check_line.RemapLineNumbers(file_to_number_map_, output_line_remap_,
+                                new_last_line_numbers_);
   }
   for (auto& check_line : stderr_.lines) {
-    check_line.RemapLineNumbers(output_line_remap_, new_last_line_numbers_);
+    check_line.RemapLineNumbers(file_to_number_map_, output_line_remap_,
+                                new_last_line_numbers_);
   }
 
   // Generate the autoupdated file.

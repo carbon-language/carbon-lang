@@ -6,6 +6,7 @@
 #define CARBON_TOOLCHAIN_CHECK_HANDLE_H_
 
 #include "toolchain/check/context.h"
+#include "toolchain/check/deferred_definition_worklist.h"
 #include "toolchain/check/function.h"
 #include "toolchain/parse/node_ids.h"
 
@@ -23,12 +24,12 @@ namespace Carbon::Check {
 // cleared out in between.
 auto HandleFunctionDefinitionSuspend(Context& context,
                                      Parse::FunctionDefinitionStartId node_id)
-    -> SuspendedFunction;
+    -> DeferredDefinitionWorklist::SuspendedFunction;
 
 // Handle resuming the definition of a function, after a previous suspension.
-auto HandleFunctionDefinitionResume(Context& context,
-                                    Parse::FunctionDefinitionStartId node_id,
-                                    SuspendedFunction&& suspended_fn) -> void;
+auto HandleFunctionDefinitionResume(
+    Context& context, Parse::FunctionDefinitionStartId node_id,
+    DeferredDefinitionWorklist::SuspendedFunction&& suspended_fn) -> void;
 
 }  // namespace Carbon::Check
 

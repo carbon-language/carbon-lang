@@ -9,7 +9,9 @@
 #include <optional>
 
 #include "common/command_line.h"
+#include "common/pretty_stack_trace_function.h"
 #include "common/version.h"
+#include "toolchain/driver/build_runtimes_subcommand.h"
 #include "toolchain/driver/clang_subcommand.h"
 #include "toolchain/driver/compile_subcommand.h"
 #include "toolchain/driver/format_subcommand.h"
@@ -30,6 +32,7 @@ struct Options {
   bool fuzzing = false;
   bool include_diagnostic_kind = false;
 
+  BuildRuntimesSubcommand runtimes;
   ClangSubcommand clang;
   CompileSubcommand compile;
   FormatSubcommand format;
@@ -88,6 +91,7 @@ applies to each message that forms a diagnostic, not just the primary message.
       },
       [&](auto& arg_b) { arg_b.Set(&include_diagnostic_kind); });
 
+  runtimes.AddTo(b, &selected_subcommand);
   clang.AddTo(b, &selected_subcommand);
   compile.AddTo(b, &selected_subcommand);
   format.AddTo(b, &selected_subcommand);
@@ -100,6 +104,10 @@ applies to each message that forms a diagnostic, not just the primary message.
 }
 
 auto Driver::RunCommand(llvm::ArrayRef<llvm::StringRef> args) -> DriverResult {
+  PrettyStackTraceFunction trace_version([&](llvm::raw_ostream& out) {
+    out << "Carbon version: " << Version::String << "\n";
+  });
+
   if (driver_env_.installation->error()) {
     CARBON_DIAGNOSTIC(DriverInstallInvalid, Error, "{0}", std::string);
     driver_env_.emitter.Emit(DriverInstallInvalid,

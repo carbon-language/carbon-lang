@@ -8,6 +8,8 @@
 #include <benchmark/benchmark.h>
 #include <sys/types.h>
 
+#include <boost/unordered/unordered_flat_map.hpp>
+#include <compare>
 #include <limits>
 #include <map>
 #include <vector>
@@ -54,6 +56,42 @@ auto GetKeysAndHitKeys(ssize_t table_keys_size, ssize_t lookup_keys_size)
 // Dump statistics about hashing the given keys.
 template <typename T>
 auto DumpHashStatistics(llvm::ArrayRef<T> keys) -> void;
+
+// A type that works like an `int` but shifting in the specified number of low
+// zero bits. This is only intended for testing hash tables with especially
+// difficult to hash integer values, it isn't meant to be used otherwise.
+template <int LowZeroBits>
+struct LowZeroBitInt {
+  int64_t shifted_value = 0;
+
+  explicit constexpr LowZeroBitInt() = default;
+  explicit constexpr LowZeroBitInt(int64_t value)
+      : shifted_value(value << LowZeroBits) {}
+
+  friend auto operator<<(llvm::raw_ostream& out, const LowZeroBitInt& value)
+      -> llvm::raw_ostream& {
+    return out << value.shifted_value;
+  }
+
+  constexpr auto operator==(const LowZeroBitInt& rhs) const -> bool = default;
+  constexpr auto operator<=>(const LowZeroBitInt& rhs) const
+      -> std::strong_ordering = default;
+
+  friend auto CarbonHashValue(const LowZeroBitInt& value, uint64_t seed)
+      -> HashCode {
+    return HashValue(value.shifted_value, seed);
+  }
+
+  template <typename H>
+  friend auto AbslHashValue(H h, const LowZeroBitInt& value) -> H {
+    return H::combine(std::move(h), value.shifted_value);
+  }
+
+  friend auto hash_value(const LowZeroBitInt& value) -> size_t {
+    boost::hash<int64_t> hasher;
+    return hasher(value.shifted_value);
+  }
+};
 
 // Convert values used in hashtable benchmarking to a bool. This is used to form
 // dependencies between values stored in the hashtable between benchmark
@@ -151,6 +189,19 @@ struct CarbonHashDI<int> {
   }
 };
 
+template <int LowZeroBits>
+struct CarbonHashDI<LowZeroBitInt<LowZeroBits>> {
+  using IntT = LowZeroBitInt<LowZeroBits>;
+  static auto getEmptyKey() -> IntT { return IntT(-1); }
+  static auto getTombstoneKey() -> IntT { return IntT(-2); }
+  static auto getHashValue(const IntT val) -> unsigned {
+    return static_cast<uint64_t>(HashValue(val));
+  }
+  static auto isEqual(const IntT lhs, const IntT rhs) -> bool {
+    return lhs == rhs;
+  }
+};
+
 template <typename T>
 struct CarbonHashDI<T*> {
   static constexpr uintptr_t Log2MaxAlign = 12;
@@ -237,5 +288,23 @@ auto ReportTableMetrics(const TableT& table, benchmark::State& state) -> void {
 }
 
 }  // namespace Carbon::RawHashtable
+
+namespace llvm {
+
+// Enable LLVM to hash our special stress testing integer type.
+template <int LowZeroBits>
+struct DenseMapInfo<Carbon::RawHashtable::LowZeroBitInt<LowZeroBits>> {
+  using IntT = Carbon::RawHashtable::LowZeroBitInt<LowZeroBits>;
+  static auto getEmptyKey() -> IntT { return IntT(-1); }
+  static auto getTombstoneKey() -> IntT { return IntT(-2); }
+  static auto getHashValue(const IntT val) -> unsigned {
+    return DenseMapInfo<int64_t>::getHashValue(val.shifted_value);
+  }
+  static auto isEqual(const IntT lhs, const IntT rhs) -> bool {
+    return lhs == rhs;
+  }
+};
+
+}  // namespace llvm
 
 #endif  // CARBON_COMMON_RAW_HASHTABLE_BENCHMARK_HELPERS_H_

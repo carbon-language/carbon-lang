@@ -7,20 +7,17 @@
 library "day10_common";
 
 import Core library "io";
+import Core library "range";
 import library "io_utils";
 
 class Terrain {
   fn Read() -> Terrain {
     returned var me: Terrain;
-    var y: i32 = 0;
-    while (y < 43) {
-      var x: i32 = 0;
-      while (x < 43) {
+    for (y: i32 in Core.Range(43)) {
+      for (x: i32 in Core.Range(43)) {
         me.height[x][y] = ReadChar() - 0x30;
-        ++x;
       }
       SkipNewline();
-      ++y;
     }
     return var;
   }

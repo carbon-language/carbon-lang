@@ -5,6 +5,7 @@
 #ifndef CARBON_TOOLCHAIN_SEM_IR_TYPE_H_
 #define CARBON_TOOLCHAIN_SEM_IR_TYPE_H_
 
+#include "llvm/ADT/BitmaskEnum.h"
 #include "llvm/ADT/STLExtras.h"
 #include "toolchain/base/shared_value_stores.h"
 #include "toolchain/sem_ir/constant.h"
@@ -13,6 +14,24 @@
 #include "toolchain/sem_ir/type_info.h"
 
 namespace Carbon::SemIR {
+
+LLVM_ENABLE_BITMASK_ENUMS_IN_NAMESPACE();
+
+// A bitmask of type qualifiers.
+enum class TypeQualifiers {
+  None = 0,
+  Const = 1 << 0,
+  MaybeUnformed = 1 << 1,
+  Partial = 1 << 2,
+
+  LLVM_MARK_AS_BITMASK_ENUM(Partial)
+};
+
+// Returns whether the type qualifier set `quals` contains `qual`.
+inline auto HasTypeQualifier(TypeQualifiers quals, TypeQualifiers qual)
+    -> bool {
+  return (quals & qual) != TypeQualifiers::None;
+}
 
 // Provides a ValueStore wrapper with an API specific to types.
 class TypeStore : public Yaml::Printable<TypeStore> {
@@ -147,14 +166,33 @@ class TypeStore : public Yaml::Printable<TypeStore> {
   // cannot be determined because the type is not complete.
   auto GetObjectRepr(TypeId type_id) const -> TypeId;
 
+  // Get the type that the given type adapts, or `None` if the type is not known
+  // to be an adapter, including the case where the type is an incomplete class.
+  auto GetAdaptedType(TypeId type_id) const -> TypeId;
+
+  // Returns the non-adapter type that is compatible with the specified type.
+  auto GetTransitiveAdaptedType(TypeId type_id) const -> TypeId;
+
   // Determines whether the given type is known to be complete. This does not
   // determine whether the type could be completed, only whether it has been.
   auto IsComplete(TypeId type_id) const -> bool {
     return complete_type_info_.Contains(type_id);
   }
 
-  // Removes any top-level `const` qualifiers from a type.
-  auto GetUnqualifiedType(TypeId type_id) const -> TypeId;
+  // Removes any top-level qualifiers from a type.
+  auto GetUnqualifiedType(TypeId type_id) const -> TypeId {
+    return GetUnqualifiedTypeAndQualifiers(type_id).first;
+  }
+
+  // Removes any top-level qualifiers from a type and returns the unqualified
+  // type and qualifiers.
+  auto GetUnqualifiedTypeAndQualifiers(TypeId type_id) const
+      -> std::pair<TypeId, TypeQualifiers>;
+
+  // Returns the non-adapter unqualified type that is compatible with the
+  // specified type.
+  auto GetTransitiveUnqualifiedAdaptedType(TypeId type_id) const
+      -> std::pair<TypeId, TypeQualifiers>;
 
   // Determines whether the given type is a signed integer type. This includes
   // the case where the type is `Core.IntLiteral` or a class type whose object
@@ -167,6 +205,11 @@ class TypeStore : public Yaml::Printable<TypeStore> {
   // adapting such a type. Uses IntId::None for types that have a
   // non-constant width and for IntLiteral.
   auto GetIntTypeInfo(TypeId int_type_id) const -> IntTypeInfo;
+
+  // Similar to `GetIntTypeInfo`, except allows non-`IntType` types to be
+  // handled.
+  auto TryGetIntTypeInfo(TypeId int_type_id) const
+      -> std::optional<IntTypeInfo>;
 
   // Returns whether `type_id` represents a facet type.
   auto IsFacetType(TypeId type_id) const -> bool {

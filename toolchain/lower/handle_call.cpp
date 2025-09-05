@@ -64,7 +64,8 @@ static auto GetBuiltinFCmpPredicate(SemIR::BuiltinFunctionKind builtin_kind)
 // Returns whether the specified instruction has a signed integer type.
 static auto IsSignedInt(FunctionContext& context, SemIR::InstId int_id)
     -> bool {
-  return context.sem_ir().types().IsSignedInt(context.GetTypeOfInst(int_id));
+  auto [file, type_id] = context.GetTypeIdOfInst(int_id);
+  return file->types().IsSignedInt(type_id);
 }
 
 // Creates a zext or sext instruction depending on the signedness of the
@@ -225,15 +226,31 @@ static auto CreateBinaryOperatorForBuiltin(
       // arithmetic or logical shift.
       auto lhs_id = context.sem_ir().inst_blocks().Get(
           context.sem_ir().insts().GetAs<SemIR::Call>(inst_id).args_id)[0];
-      auto lhs_type_id = context.GetTypeOfInst(lhs_id);
+      auto [lhs_type_file, lhs_type_id] = context.GetTypeIdOfInst(lhs_id);
       if (builtin_kind == SemIR::BuiltinFunctionKind::IntRightShiftAssign) {
-        lhs_type_id = context.sem_ir().GetPointeeType(lhs_type_id);
+        lhs_type_id = lhs_type_file->GetPointeeType(lhs_type_id);
       }
       return CreateIntShift(context,
-                            context.sem_ir().types().IsSignedInt(lhs_type_id)
+                            lhs_type_file->types().IsSignedInt(lhs_type_id)
                                 ? llvm::Instruction::AShr
                                 : llvm::Instruction::LShr,
                             lhs, rhs);
+    }
+    case SemIR::BuiltinFunctionKind::FloatAdd:
+    case SemIR::BuiltinFunctionKind::FloatAddAssign: {
+      return context.builder().CreateFAdd(lhs, rhs);
+    }
+    case SemIR::BuiltinFunctionKind::FloatSub:
+    case SemIR::BuiltinFunctionKind::FloatSubAssign: {
+      return context.builder().CreateFSub(lhs, rhs);
+    }
+    case SemIR::BuiltinFunctionKind::FloatMul:
+    case SemIR::BuiltinFunctionKind::FloatMulAssign: {
+      return context.builder().CreateFMul(lhs, rhs);
+    }
+    case SemIR::BuiltinFunctionKind::FloatDiv:
+    case SemIR::BuiltinFunctionKind::FloatDivAssign: {
+      return context.builder().CreateFDiv(lhs, rhs);
     }
     default: {
       CARBON_FATAL("Unexpected binary operator {0}", builtin_kind);
@@ -255,7 +272,7 @@ static auto HandleBuiltinCall(FunctionContext& context, SemIR::InstId inst_id,
       CARBON_FATAL("No callee in function call.");
 
     case SemIR::BuiltinFunctionKind::NoOp:
-      CARBON_FATAL("NoOp is a constant expression and won't reach this.");
+      return;
 
     case SemIR::BuiltinFunctionKind::PrintChar: {
       auto* i32_type = llvm::IntegerType::getInt32Ty(context.llvm_context());
@@ -264,11 +281,8 @@ static auto HandleBuiltinCall(FunctionContext& context, SemIR::InstId inst_id,
       auto putchar = context.llvm_module().getOrInsertFunction(
           "putchar", i32_type, i32_type);
       auto* result = context.builder().CreateCall(putchar, {arg_value});
-      context.SetLocal(
-          inst_id,
-          context.builder().CreateSExtOrTrunc(
-              result, context.GetType(
-                          context.sem_ir().insts().Get(inst_id).type_id())));
+      context.SetLocal(inst_id, context.builder().CreateSExtOrTrunc(
+                                    result, context.GetTypeOfInst(inst_id)));
       return;
     }
 
@@ -293,11 +307,8 @@ static auto HandleBuiltinCall(FunctionContext& context, SemIR::InstId inst_id,
       auto getchar =
           context.llvm_module().getOrInsertFunction("getchar", i32_type);
       auto* result = context.builder().CreateCall(getchar, {});
-      context.SetLocal(
-          inst_id,
-          context.builder().CreateSExtOrTrunc(
-              result, context.GetType(
-                          context.sem_ir().insts().Get(inst_id).type_id())));
+      context.SetLocal(inst_id, context.builder().CreateSExtOrTrunc(
+                                    result, context.GetTypeOfInst(inst_id)));
       return;
     }
 
@@ -307,20 +318,21 @@ static auto HandleBuiltinCall(FunctionContext& context, SemIR::InstId inst_id,
     }
 
     case SemIR::BuiltinFunctionKind::BoolMakeType:
+    case SemIR::BuiltinFunctionKind::CharLiteralMakeType:
+    case SemIR::BuiltinFunctionKind::FloatLiteralMakeType:
     case SemIR::BuiltinFunctionKind::FloatMakeType:
     case SemIR::BuiltinFunctionKind::IntLiteralMakeType:
     case SemIR::BuiltinFunctionKind::IntMakeTypeSigned:
     case SemIR::BuiltinFunctionKind::IntMakeTypeUnsigned:
+    case SemIR::BuiltinFunctionKind::MaybeUnformedMakeType:
       context.SetLocal(inst_id, context.GetTypeAsValue());
       return;
 
     case SemIR::BuiltinFunctionKind::IntConvert: {
-      context.SetLocal(
-          inst_id,
-          CreateExtOrTrunc(
-              context, context.GetValue(arg_ids[0]),
-              context.GetType(context.sem_ir().insts().Get(inst_id).type_id()),
-              IsSignedInt(context, arg_ids[0])));
+      context.SetLocal(inst_id,
+                       CreateExtOrTrunc(context, context.GetValue(arg_ids[0]),
+                                        context.GetTypeOfInst(inst_id),
+                                        IsSignedInt(context, arg_ids[0])));
       return;
     }
 
@@ -367,7 +379,11 @@ static auto HandleBuiltinCall(FunctionContext& context, SemIR::InstId inst_id,
     case SemIR::BuiltinFunctionKind::IntOr:
     case SemIR::BuiltinFunctionKind::IntXor:
     case SemIR::BuiltinFunctionKind::IntLeftShift:
-    case SemIR::BuiltinFunctionKind::IntRightShift: {
+    case SemIR::BuiltinFunctionKind::IntRightShift:
+    case SemIR::BuiltinFunctionKind::FloatAdd:
+    case SemIR::BuiltinFunctionKind::FloatSub:
+    case SemIR::BuiltinFunctionKind::FloatMul:
+    case SemIR::BuiltinFunctionKind::FloatDiv: {
       context.SetLocal(inst_id, CreateBinaryOperatorForBuiltin(
                                     context, inst_id, builtin_kind,
                                     context.GetValue(arg_ids[0]),
@@ -388,21 +404,22 @@ static auto HandleBuiltinCall(FunctionContext& context, SemIR::InstId inst_id,
     case SemIR::BuiltinFunctionKind::IntOrAssign:
     case SemIR::BuiltinFunctionKind::IntXorAssign:
     case SemIR::BuiltinFunctionKind::IntLeftShiftAssign:
-    case SemIR::BuiltinFunctionKind::IntRightShiftAssign: {
+    case SemIR::BuiltinFunctionKind::IntRightShiftAssign:
+    case SemIR::BuiltinFunctionKind::FloatAddAssign:
+    case SemIR::BuiltinFunctionKind::FloatSubAssign:
+    case SemIR::BuiltinFunctionKind::FloatMulAssign:
+    case SemIR::BuiltinFunctionKind::FloatDivAssign: {
       auto* lhs_ptr = context.GetValue(arg_ids[0]);
-      auto lhs_type_id = context.GetTypeOfInst(arg_ids[0]);
-      auto pointee_type_id = context.sem_ir().GetPointeeType(lhs_type_id);
-      // TODO: Factor out the code to create loads and stores, and include alias
-      // and alignment information.
-      auto* lhs_value = context.builder().CreateLoad(
-          context.GetType(pointee_type_id), lhs_ptr);
+      auto lhs_type = context.GetTypeIdOfInst(arg_ids[0]);
+      auto pointee_type = lhs_type.GetPointeeType();
+      auto* lhs_value = context.LoadObject(pointee_type, lhs_ptr);
       auto* result = CreateBinaryOperatorForBuiltin(
           context, inst_id, builtin_kind, lhs_value,
           context.GetValue(arg_ids[1]));
-      context.builder().CreateStore(result, lhs_ptr);
+      context.StoreObject(pointee_type, result, lhs_ptr);
       // TODO: Add a helper to get a "no value representation" value.
-      context.SetLocal(inst_id, llvm::PoisonValue::get(context.GetType(
-                                    context.GetTypeOfInst(inst_id))));
+      context.SetLocal(inst_id,
+                       llvm::PoisonValue::get(context.GetTypeOfInst(inst_id)));
       return;
     }
     case SemIR::BuiltinFunctionKind::IntEq:
@@ -422,30 +439,6 @@ static auto HandleBuiltinCall(FunctionContext& context, SemIR::InstId inst_id,
           inst_id, context.builder().CreateFNeg(context.GetValue(arg_ids[0])));
       return;
     }
-    case SemIR::BuiltinFunctionKind::FloatAdd: {
-      context.SetLocal(
-          inst_id, context.builder().CreateFAdd(context.GetValue(arg_ids[0]),
-                                                context.GetValue(arg_ids[1])));
-      return;
-    }
-    case SemIR::BuiltinFunctionKind::FloatSub: {
-      context.SetLocal(
-          inst_id, context.builder().CreateFSub(context.GetValue(arg_ids[0]),
-                                                context.GetValue(arg_ids[1])));
-      return;
-    }
-    case SemIR::BuiltinFunctionKind::FloatMul: {
-      context.SetLocal(
-          inst_id, context.builder().CreateFMul(context.GetValue(arg_ids[0]),
-                                                context.GetValue(arg_ids[1])));
-      return;
-    }
-    case SemIR::BuiltinFunctionKind::FloatDiv: {
-      context.SetLocal(
-          inst_id, context.builder().CreateFDiv(context.GetValue(arg_ids[0]),
-                                                context.GetValue(arg_ids[1])));
-      return;
-    }
     case SemIR::BuiltinFunctionKind::FloatEq:
     case SemIR::BuiltinFunctionKind::FloatNeq:
     case SemIR::BuiltinFunctionKind::FloatLess:
@@ -459,6 +452,8 @@ static auto HandleBuiltinCall(FunctionContext& context, SemIR::InstId inst_id,
       return;
     }
 
+    case SemIR::BuiltinFunctionKind::CharConvertChecked:
+    case SemIR::BuiltinFunctionKind::FloatConvertChecked:
     case SemIR::BuiltinFunctionKind::IntConvertChecked: {
       // TODO: Check this statically.
       CARBON_CHECK(builtin_kind.IsCompTimeOnly(
@@ -476,16 +471,39 @@ auto HandleInst(FunctionContext& context, SemIR::InstId inst_id,
   llvm::ArrayRef<SemIR::InstId> arg_ids =
       context.sem_ir().inst_blocks().Get(inst.args_id);
 
-  auto callee_function = SemIR::GetCalleeFunction(
-      context.sem_ir(), inst.callee_id, context.specific_id());
+  // TODO: This duplicates the SpecificId handling in `GetCalleeFunction`.
+
+  // TODO: Should the `bound_method` be removed when forming the `call`
+  // instruction? The `self` parameter is transferred into the call argument
+  // list.
+  auto callee_id = inst.callee_id;
+  if (auto bound_method =
+          context.sem_ir().insts().TryGetAs<SemIR::BoundMethod>(callee_id)) {
+    callee_id = bound_method->function_decl_id;
+  }
+
+  // Map to the callee in the specific. This might be in a different file than
+  // the one we're currently lowering.
+  const auto* callee_file = &context.sem_ir();
+  if (context.specific_id().has_value()) {
+    auto [const_file, const_id] = GetConstantValueInSpecific(
+        context.specific_sem_ir(), context.specific_id(), context.sem_ir(),
+        callee_id);
+    callee_file = const_file;
+    callee_id = const_file->constant_values().GetInstIdIfValid(const_id);
+    CARBON_CHECK(callee_id.has_value());
+  }
+
+  auto callee_function = SemIR::GetCalleeFunction(*callee_file, callee_id);
   CARBON_CHECK(callee_function.function_id.has_value());
 
   const SemIR::Function& function =
-      context.sem_ir().functions().Get(callee_function.function_id);
-  context.AddCallToCurrentFingerprint(callee_function.function_id,
+      callee_file->functions().Get(callee_function.function_id);
+  context.AddCallToCurrentFingerprint(callee_file->check_ir_id(),
+                                      callee_function.function_id,
                                       callee_function.resolved_specific_id);
 
-  if (auto builtin_kind = function.builtin_function_kind;
+  if (auto builtin_kind = function.builtin_function_kind();
       builtin_kind != SemIR::BuiltinFunctionKind::None) {
     HandleBuiltinCall(context, inst_id, builtin_kind, arg_ids);
     return;
@@ -493,18 +511,14 @@ auto HandleInst(FunctionContext& context, SemIR::InstId inst_id,
 
   std::vector<llvm::Value*> args;
 
-  auto inst_type_id = context.GetTypeOfInst(inst_id);
-
-  if (SemIR::ReturnTypeInfo::ForType(context.sem_ir(), inst_type_id)
-          .has_return_slot()) {
-    args.push_back(context.GetValue(arg_ids.back()));
-    arg_ids = arg_ids.drop_back();
+  auto inst_type = context.GetTypeIdOfInst(inst_id);
+  if (context.GetReturnTypeInfo(inst_type).info.has_return_slot()) {
+    args.push_back(context.GetValue(arg_ids.consume_back()));
   }
 
   for (auto arg_id : arg_ids) {
-    auto arg_type_id = context.GetTypeOfInst(arg_id);
-    if (SemIR::ValueRepr::ForType(context.sem_ir(), arg_type_id).kind !=
-        SemIR::ValueRepr::None) {
+    auto arg_type = context.GetTypeIdOfInst(arg_id);
+    if (context.GetValueRepr(arg_type).repr.kind != SemIR::ValueRepr::None) {
       args.push_back(context.GetValue(arg_id));
     }
   }
@@ -518,11 +532,14 @@ auto HandleInst(FunctionContext& context, SemIR::InstId inst_id,
     // The vtable pointer is always at the start of the object in the Carbon
     // ABI, so a pointer to the object is a pointer to the vtable pointer - load
     // that to get a pointer to the vtable.
+    // TODO: Use `context.LoadObject`.
     auto* vtable =
         context.builder().CreateLoad(ptr_type, args.front(), "vtable");
     auto* i32_type = llvm::IntegerType::getInt32Ty(context.llvm_context());
-    auto function_type_info = context.BuildFunctionTypeInfo(
-        function, callee_function.resolved_specific_id);
+    auto function_type_info =
+        context.GetFileContext(callee_file)
+            .BuildFunctionTypeInfo(function,
+                                   callee_function.resolved_specific_id);
     call = context.builder().CreateCall(
         function_type_info.type,
         context.builder().CreateCall(
@@ -535,8 +552,9 @@ auto HandleInst(FunctionContext& context, SemIR::InstId inst_id,
         args);
   } else {
     call = context.builder().CreateCall(
-        context.GetOrCreateFunction(callee_function.function_id,
-                                    callee_function.resolved_specific_id),
+        context.GetFileContext(callee_file)
+            .GetOrCreateFunction(callee_function.function_id,
+                                 callee_function.resolved_specific_id),
         args);
   }
 

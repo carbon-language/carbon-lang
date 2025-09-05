@@ -13,7 +13,7 @@ fn Run() {
   var n: i64;
   var total: i32 = 0;
   while (ReadInt64(&n)) {
-    total = total + Count(n, 25);
+    total += Count(n, 25);
     SkipSpaces();
   }
   Core.Print(total);
