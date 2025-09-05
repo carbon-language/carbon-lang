@@ -146,8 +146,10 @@ auto Context::File::SetText(Context& context, std::optional<int64_t> version,
   tree_and_subtrees_ =
       std::make_unique<Parse::TreeAndSubtrees>(*tokens_, *tree_);
 
-  SemIR::File sem_ir(tree_.get(), SemIR::CheckIRId(0), tree_->packaging_decl(),
-                     *value_stores_, uri_.file().str());
+  int total_ir_count = 1;
+  SemIR::File sem_ir(tree_.get(), SemIR::CheckIRId(0), total_ir_count,
+                     tree_->packaging_decl(), *value_stores_,
+                     uri_.file().str());
   std::unique_ptr<clang::ASTUnit> clang_ast_unt;
   // TODO: Support cross-file checking when multiple files have edits.
   llvm::SmallVector<Check::Unit> units = {{{.consumer = &consumer,
@@ -155,6 +157,7 @@ auto Context::File::SetText(Context& context, std::optional<int64_t> version,
                                             .timings = nullptr,
                                             .sem_ir = &sem_ir,
                                             .clang_ast_unit = &clang_ast_unt}}};
+  CARBON_CHECK(units.size() == static_cast<size_t>(total_ir_count));
 
   auto getter = [this]() -> const Parse::TreeAndSubtrees& {
     return *tree_and_subtrees_;
@@ -163,7 +166,7 @@ auto Context::File::SetText(Context& context, std::optional<int64_t> version,
   llvm::IntrusiveRefCntPtr<llvm::vfs::FileSystem> fs =
       llvm::vfs::getRealFileSystem();
 
-  // TODO: Include the prelude.
+  // TODO: Include the prelude. Make sure `total_ir_count` includes the files.
   Check::CheckParseTreesOptions check_options;
   check_options.vlog_stream = context.vlog_stream();
   auto getters =

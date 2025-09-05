@@ -58,7 +58,7 @@ class Context {
   explicit Context(DiagnosticEmitterBase* emitter,
                    Parse::GetTreeAndSubtreesFn tree_and_subtrees_getter,
                    SemIR::File* sem_ir, int imported_ir_count,
-                   int total_ir_count, bool gen_implicit_type_impls,
+                   bool gen_implicit_type_impls,
                    llvm::raw_ostream* vlog_stream);
 
   // Marks an implementation TODO. Always returns false.

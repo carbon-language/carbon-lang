@@ -23,6 +23,10 @@ namespace Carbon::SemIR {
 
 namespace {
 struct Worklist {
+  using FingerprintStore = FixedSizeValueStore<InstId, uint64_t>;
+  using FilesFingerprintStores =
+      FixedSizeValueStore<CheckIRId, FingerprintStore>;
+
   // The file containing the instruction we're currently processing.
   const File* sem_ir = nullptr;
   // The instructions we need to compute fingerprints for.
@@ -35,37 +39,29 @@ struct Worklist {
   llvm::SmallVector<llvm::stable_hash> contents = {};
   // Known cached instruction fingerprints. Each item in `todo` will be added to
   // the cache if not already present.
-  llvm::SmallVector<
-      std::pair<const File*, FixedSizeValueStore<InstId, uint64_t>>>*
-      fingerprints;
+  FilesFingerprintStores* fingerprints;
 
   // Finish fingerprinting and compute the fingerprint.
   auto Finish() -> uint64_t { return llvm::stable_hash_combine(contents); }
 
   // Gets the known fingerprint from the cache, or returns 0.
   auto GetFingerprint(const File* file, InstId inst_id) -> uint64_t {
-    for (auto& [f, values] : *fingerprints) {
-      if (f == file) {
-        return values.Get(inst_id);
-      }
+    auto& store = fingerprints->Get(file->check_ir_id());
+    if (store.size() == 0) {
+      return 0;
     }
-    return 0;
+    return store.Get(inst_id);
   }
 
   // Sets the fingerprint for an instruction in the cache. Since 0 is used to
   // indicate empty, we map 0 to another fixed value.
   auto SetFingerprint(const File* file, InstId inst_id, uint64_t fingerprint) {
-    for (auto& [f, values] : *fingerprints) {
-      if (f == file) {
-        values.Set(inst_id, fingerprint ? fingerprint : 1);
-        return;
-      }
+    auto& store = fingerprints->Get(file->check_ir_id());
+    if (store.size() == 0) {
+      store = FixedSizeValueStore<InstId, uint64_t>::MakeWithExplicitSize(
+          file->insts().size(), 0);
     }
-
-    fingerprints->emplace_back(
-        file, FixedSizeValueStore<InstId, uint64_t>::MakeWithExplicitSize(
-                  file->insts().size(), 0));
-    fingerprints->back().second.Set(inst_id, fingerprint ? fingerprint : 1);
+    store.Set(inst_id, fingerprint ? fingerprint : 1);
   }
 
   // Add an invalid marker to the contents. This is used when the entity
