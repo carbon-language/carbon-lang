@@ -16,6 +16,7 @@
 #include "toolchain/check/context.h"
 #include "toolchain/check/convert.h"
 #include "toolchain/check/literal.h"
+#include "toolchain/sem_ir/class.h"
 #include "toolchain/sem_ir/ids.h"
 #include "toolchain/sem_ir/inst.h"
 #include "toolchain/sem_ir/type.h"
@@ -55,7 +56,8 @@ static auto TryMapRecordType(Context& context, SemIR::TypeId type_id)
   if (!class_type) {
     return std::nullopt;
   }
-  const auto& class_info = context.sem_ir().classes().Get(class_type->class_id);
+  const SemIR::Class& class_info =
+      context.sem_ir().classes().Get(class_type->class_id);
   auto clang_decl_id =
       context.name_scopes().Get(class_info.scope_id).clang_decl_context_id();
   if (!clang_decl_id.has_value()) {
@@ -63,8 +65,8 @@ static auto TryMapRecordType(Context& context, SemIR::TypeId type_id)
   }
   clang::Decl* clang_decl =
       context.sem_ir().clang_decls().Get(clang_decl_id).decl;
-  auto* record_type_decl = clang::dyn_cast<clang::CXXRecordDecl>(clang_decl);
-  return context.ast_context().getRecordType(record_type_decl);
+  auto* record_type_decl = clang::dyn_cast<clang::TagDecl>(clang_decl);
+  return context.ast_context().getTagDeclType(record_type_decl);
 }
 
 // Maps a Carbon builtin type to a Cpp type.
@@ -83,6 +85,10 @@ static auto TryMapBuiltInType(Context& context, SemIR::InstId inst_id,
   CARBON_KIND_SWITCH(inst) {
     case SemIR::BoolType::Kind: {
       mapped_type = context.ast_context().BoolTy;
+      break;
+    }
+    case Carbon::SemIR::CharLiteralType::Kind: {
+      mapped_type = context.ast_context().CharTy;
       break;
     }
     case SemIR::IntLiteralType::Kind: {

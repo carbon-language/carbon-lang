@@ -10,7 +10,12 @@ package Core library "prelude/parts/as";
 
 export import library "prelude/parts/destroy";
 
+interface UnsafeAs(Dest:! type) {
+  fn Convert[self: Self]() -> Dest;
+}
+
 interface As(Dest:! type) {
+  // TODO: extend UnsafeAs(Dest);
   fn Convert[self: Self]() -> Dest;
 }
 

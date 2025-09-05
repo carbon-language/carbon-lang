@@ -223,6 +223,7 @@ auto GetExprCategory(const File& file, InstId inst_id) -> ExprCategory {
       case ArrayInit::Kind:
       case Call::Kind:
       case InitializeFrom::Kind:
+      case InPlaceInit::Kind:
       case ClassInit::Kind:
       case StructInit::Kind:
       case TupleInit::Kind:
@@ -273,6 +274,12 @@ auto FindReturnSlotArgForInitializer(const File& sem_ir, InstId init_id)
         return init.dest_id;
       }
       case CARBON_KIND(InitializeFrom init): {
+        return init.dest_id;
+      }
+      case CARBON_KIND(InPlaceInit init): {
+        if (!ReturnTypeInfo::ForType(sem_ir, init.type_id).has_return_slot()) {
+          return InstId::None;
+        }
         return init.dest_id;
       }
       case CARBON_KIND(Call call): {

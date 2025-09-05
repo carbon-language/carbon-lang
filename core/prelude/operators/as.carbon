@@ -4,7 +4,12 @@
 
 package Core library "prelude/operators/as";
 
+interface UnsafeAs(Dest:! type) {
+  fn Convert[self: Self]() -> Dest;
+}
+
 interface As(Dest:! type) {
+  // TODO: extend UnsafeAs(Dest);
   fn Convert[self: Self]() -> Dest;
 }
 

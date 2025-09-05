@@ -276,8 +276,9 @@ auto TypeCompleter::AddNestedIncompleteTypes(SemIR::Inst type_inst) -> bool {
       if (!class_info.is_complete() && class_info.scope_id.has_value()) {
         auto& scope = context_->name_scopes().Get(class_info.scope_id);
         if (scope.clang_decl_context_id().has_value()) {
-          if (!ImportCppClassDefinition(*context_, loc_id_, inst.class_id,
-                                        scope.clang_decl_context_id())) {
+          if (!ImportClassDefinitionForClangDecl(
+                  *context_, loc_id_, inst.class_id,
+                  scope.clang_decl_context_id())) {
             // Clang produced a diagnostic. Don't produce one of our own.
             return false;
           }

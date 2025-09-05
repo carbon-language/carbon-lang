@@ -28,6 +28,10 @@ struct ConversionTarget {
     // as the result, and uses the `As` interface instead of the `ImplicitAs`
     // interface.
     ExplicitAs,
+    // Convert for an explicit `unsafe as` cast. This allows any expression
+    // category as the result, and uses the `UnsafeAs` interface instead of the
+    // `As` or `ImplicitAs` interface.
+    ExplicitUnsafeAs,
     // The result of the conversion is discarded. It can't be an initializing
     // expression, but can be anything else.
     Discarded,
@@ -56,6 +60,10 @@ struct ConversionTarget {
   // Are we converting this value into an initializer for an object?
   auto is_initializer() const -> bool {
     return kind == Initializer || kind == FullInitializer;
+  }
+  // Is this some kind of explicit `as` conversion?
+  auto is_explicit_as() const -> bool {
+    return kind == ExplicitAs || kind == ExplicitUnsafeAs;
   }
 };
 
@@ -108,8 +116,8 @@ auto ConvertToBoolValue(Context& context, SemIR::LocId loc_id,
 
 // Converts `value_id` to type `type_id` for an `as` expression.
 auto ConvertForExplicitAs(Context& context, Parse::NodeId as_node,
-                          SemIR::InstId value_id, SemIR::TypeId type_id)
-    -> SemIR::InstId;
+                          SemIR::InstId value_id, SemIR::TypeId type_id,
+                          bool unsafe) -> SemIR::InstId;
 
 // Implicitly converts a set of arguments to match the parameter types in a
 // function call. Returns a block containing the converted implicit and explicit
@@ -124,11 +132,16 @@ auto ConvertCallArgs(Context& context, SemIR::LocId call_loc_id,
 
 // A type that has been converted for use as a type expression.
 struct TypeExpr {
+  static const TypeExpr None;
+
   // The converted expression of type `type`, or `ErrorInst::InstId`.
   SemIR::TypeInstId inst_id;
   // The corresponding type, or `ErrorInst::TypeId`.
   SemIR::TypeId type_id;
 };
+
+constexpr inline TypeExpr TypeExpr::None = {.inst_id = SemIR::TypeInstId::None,
+                                            .type_id = SemIR::TypeId::None};
 
 // Converts an expression for use as a type.
 //

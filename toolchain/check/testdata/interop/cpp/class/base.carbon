@@ -195,7 +195,7 @@ fn Convert(p: Cpp.B*) -> Cpp.A* {
   // CHECK:STDERR: fail_todo_use_virtual_inheritance.carbon:[[@LINE+14]]:3: error: semantics TODO: `class with virtual bases` [SemanticsTodo]
   // CHECK:STDERR:   return p;
   // CHECK:STDERR:   ^~~~~~~~~
-  // CHECK:STDERR: fail_todo_use_virtual_inheritance.carbon:[[@LINE+11]]:3: note: while completing C++ class type `Cpp.B` [InCppTypeCompletion]
+  // CHECK:STDERR: fail_todo_use_virtual_inheritance.carbon:[[@LINE+11]]:3: note: while completing C++ type `Cpp.B` [InCppTypeCompletion]
   // CHECK:STDERR:   return p;
   // CHECK:STDERR:   ^~~~~~~~~
   // CHECK:STDERR:
@@ -428,14 +428,17 @@ class V {
 // CHECK:STDOUT:   %Derived: type = class_type @Derived [concrete]
 // CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [concrete]
 // CHECK:STDOUT:   %Base: type = class_type @Base [concrete]
-// CHECK:STDOUT:   %.3cf: type = overloaded_cpp_fn_type @CallQualified [concrete]
+// CHECK:STDOUT:   %.3cf: type = overloaded_cpp_fn_type @f__carbon_thunk [concrete]
 // CHECK:STDOUT:   %empty_struct.d07: %.3cf = struct_value () [concrete]
-// CHECK:STDOUT:   %Base.f.type: type = fn_type @Base.f [concrete]
-// CHECK:STDOUT:   %Base.f: %Base.f.type = struct_value () [concrete]
-// CHECK:STDOUT:   %.b92: type = overloaded_cpp_fn_type @Base.g [concrete]
+// CHECK:STDOUT:   %const: type = const_type %Base [concrete]
+// CHECK:STDOUT:   %ptr.a97: type = ptr_type %const [concrete]
+// CHECK:STDOUT:   %f__carbon_thunk.type: type = fn_type @f__carbon_thunk [concrete]
+// CHECK:STDOUT:   %f__carbon_thunk: %f__carbon_thunk.type = struct_value () [concrete]
+// CHECK:STDOUT:   %ptr.fb2: type = ptr_type %Base [concrete]
+// CHECK:STDOUT:   %.b92: type = overloaded_cpp_fn_type @CallQualified [concrete]
 // CHECK:STDOUT:   %empty_struct.271: %.b92 = struct_value () [concrete]
-// CHECK:STDOUT:   %Base.g.type: type = fn_type @Base.g [concrete]
-// CHECK:STDOUT:   %Base.g: %Base.g.type = struct_value () [concrete]
+// CHECK:STDOUT:   %g__carbon_thunk.type: type = fn_type @g__carbon_thunk [concrete]
+// CHECK:STDOUT:   %g__carbon_thunk: %g__carbon_thunk.type = struct_value () [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -446,14 +449,14 @@ class V {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Derived.decl: type = class_decl @Derived [concrete = constants.%Derived] {} {}
 // CHECK:STDOUT:   %Base.decl: type = class_decl @Base [concrete = constants.%Base] {} {}
-// CHECK:STDOUT:   %.c0b: %.3cf = overloaded_cpp_fn_decl @CallQualified [concrete = constants.%empty_struct.d07]
-// CHECK:STDOUT:   %Base.f.decl: %Base.f.type = fn_decl @Base.f [concrete = constants.%Base.f] {
+// CHECK:STDOUT:   %.c0b: %.3cf = overloaded_cpp_fn_decl @f__carbon_thunk [concrete = constants.%empty_struct.d07]
+// CHECK:STDOUT:   %f__carbon_thunk.decl: %f__carbon_thunk.type = fn_decl @f__carbon_thunk [concrete = constants.%f__carbon_thunk] {
 // CHECK:STDOUT:     <elided>
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     <elided>
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %.7b4: %.b92 = overloaded_cpp_fn_decl @Base.g [concrete = constants.%empty_struct.271]
-// CHECK:STDOUT:   %Base.g.decl: %Base.g.type = fn_decl @Base.g [concrete = constants.%Base.g] {
+// CHECK:STDOUT:   %.7b4: %.b92 = overloaded_cpp_fn_decl @CallQualified [concrete = constants.%empty_struct.271]
+// CHECK:STDOUT:   %g__carbon_thunk.decl: %g__carbon_thunk.type = fn_decl @g__carbon_thunk [concrete = constants.%g__carbon_thunk] {
 // CHECK:STDOUT:     <elided>
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     <elided>
@@ -464,7 +467,10 @@ class V {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %d.ref: %Derived = name_ref d, %d
 // CHECK:STDOUT:   %f.ref: %.3cf = name_ref f, imports.%.c0b [concrete = constants.%empty_struct.d07]
-// CHECK:STDOUT:   %Base.f.call: init %empty_tuple.type = call imports.%Base.f.decl(<error>)
+// CHECK:STDOUT:   %addr: %ptr.fb2 = addr_of <error> [concrete = <error>]
+// CHECK:STDOUT:   %.loc13_7.1: %ptr.a97 = as_compatible %addr [concrete = <error>]
+// CHECK:STDOUT:   %.loc13_7.2: %ptr.a97 = converted %addr, %.loc13_7.1 [concrete = <error>]
+// CHECK:STDOUT:   %f__carbon_thunk.call: init %empty_tuple.type = call imports.%f__carbon_thunk.decl(%.loc13_7.2)
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -474,7 +480,10 @@ class V {
 // CHECK:STDOUT:   %Cpp.ref.loc28: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
 // CHECK:STDOUT:   %Base.ref: type = name_ref Base, imports.%Base.decl [concrete = constants.%Base]
 // CHECK:STDOUT:   %g.ref: %.b92 = name_ref g, imports.%.7b4 [concrete = constants.%empty_struct.271]
-// CHECK:STDOUT:   %Base.g.call: init %empty_tuple.type = call imports.%Base.g.decl(<error>)
+// CHECK:STDOUT:   %addr: %ptr.fb2 = addr_of <error> [concrete = <error>]
+// CHECK:STDOUT:   %.loc28_18.1: %ptr.a97 = as_compatible %addr [concrete = <error>]
+// CHECK:STDOUT:   %.loc28_18.2: %ptr.a97 = converted %addr, %.loc28_18.1 [concrete = <error>]
+// CHECK:STDOUT:   %g__carbon_thunk.call: init %empty_tuple.type = call imports.%g__carbon_thunk.decl(%.loc28_18.2)
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

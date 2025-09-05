@@ -81,7 +81,7 @@ auto PerformCppOverloadResolution(Context& context, SemIR::LocId loc_id,
   switch (overloading_result) {
     case clang::OverloadingResult::OR_Success: {
       SemIR::InstId result =
-          ImportDeclAndDependencies(context, loc_id, best_viable_fn->Function);
+          ImportFunctionDecl(context, loc_id, best_viable_fn->Function);
       return result;
     }
     case clang::OverloadingResult::OR_No_Viable_Function: {

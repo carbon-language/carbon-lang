@@ -14,12 +14,14 @@
 
 library "[[@TEST_NAME]]";
 
+//@dump-sem-ir-begin
 import Cpp inline '''
 
 // A C++ function.
 inline void func() {}
 
 ''';
+//@dump-sem-ir-end
 
 fn Run() {
   //@dump-sem-ir-begin
@@ -31,12 +33,14 @@ fn Run() {
 
 library "[[@TEST_NAME]]";
 
+//@dump-sem-ir-begin
 import Cpp inline '''c++
 
 // A C++ function.
 inline void another_func() {}
 
 ''';
+//@dump-sem-ir-end
 
 fn Run() {
   //@dump-sem-ir-begin
@@ -61,6 +65,12 @@ fn Run() {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %.3b0: %.054 = overloaded_cpp_fn_decl @func [concrete = constants.%empty_struct]
 // CHECK:STDOUT:   %func.decl: %func.type = fn_decl @func [concrete = constants.%func] {} {}
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: file {
+// CHECK:STDOUT:   %Cpp.import_cpp = import_cpp {
+// CHECK:STDOUT:     import Cpp inline
+// CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Run() {
@@ -88,6 +98,12 @@ fn Run() {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %.ce8: %.36a = overloaded_cpp_fn_decl @another_func [concrete = constants.%empty_struct]
 // CHECK:STDOUT:   %another_func.decl: %another_func.type = fn_decl @another_func [concrete = constants.%another_func] {} {}
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: file {
+// CHECK:STDOUT:   %Cpp.import_cpp = import_cpp {
+// CHECK:STDOUT:     import Cpp inline
+// CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Run() {

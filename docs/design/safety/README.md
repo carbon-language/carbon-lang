@@ -121,7 +121,7 @@ expressivity is available at that finer granularity through explicitly marking
 
 > **Future work**: Define how to mark `import`s of permissive libraries in
 > various contexts, balancing ergonomic burden against the potential for
-> surprising amounts af unsafety in dependencies.
+> surprising amounts of unsafety in dependencies.
 
 ## Memory safety model
 

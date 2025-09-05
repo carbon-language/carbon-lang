@@ -78,7 +78,7 @@ import Cpp library "instantiation_error.h";
 //@dump-sem-ir-begin
 var x: Cpp.XY.r#type = 0;
 
-// CHECK:STDERR: fail_use_instantiation_error.carbon:[[@LINE+4]]:8: note: while completing C++ class type `Cpp.X` [InCppTypeCompletion]
+// CHECK:STDERR: fail_use_instantiation_error.carbon:[[@LINE+4]]:8: note: while completing C++ type `Cpp.X` [InCppTypeCompletion]
 // CHECK:STDERR: var y: Cpp.Xint.r#type = 0;
 // CHECK:STDERR:        ^~~~~~~~~~~~~
 // CHECK:STDERR:
@@ -96,16 +96,19 @@ var y: Cpp.Xint.r#type = 0;
 // CHECK:STDOUT:   %A.elem.c3f: type = unbound_element_type %A.0bedf0.1, %i32 [concrete]
 // CHECK:STDOUT:   %.5c3: type = overloaded_cpp_fn_type @A.f [concrete]
 // CHECK:STDOUT:   %empty_struct: %.5c3 = struct_value () [concrete]
-// CHECK:STDOUT:   %A.f.type: type = fn_type @A.f [concrete]
-// CHECK:STDOUT:   %A.f: %A.f.type = struct_value () [concrete]
+// CHECK:STDOUT:   %const: type = const_type %A.0bedf0.1 [concrete]
+// CHECK:STDOUT:   %ptr.703: type = ptr_type %const [concrete]
+// CHECK:STDOUT:   %f__carbon_thunk.type: type = fn_type @f__carbon_thunk [concrete]
+// CHECK:STDOUT:   %f__carbon_thunk: %f__carbon_thunk.type = struct_value () [concrete]
+// CHECK:STDOUT:   %ptr.270828.1: type = ptr_type %A.0bedf0.1 [concrete]
 // CHECK:STDOUT:   %A.0bedf0.2: type = class_type @A.2 [concrete]
-// CHECK:STDOUT:   %ptr.270: type = ptr_type %A.0bedf0.2 [concrete]
+// CHECK:STDOUT:   %ptr.270828.2: type = ptr_type %A.0bedf0.2 [concrete]
 // CHECK:STDOUT:   %ptr.fb2: type = ptr_type %Base [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT:   %.2bd: %.5c3 = overloaded_cpp_fn_decl @A.f [concrete = constants.%empty_struct]
-// CHECK:STDOUT:   %A.f.decl: %A.f.type = fn_decl @A.f [concrete = constants.%A.f] {
+// CHECK:STDOUT:   %f__carbon_thunk.decl: %f__carbon_thunk.type = fn_decl @f__carbon_thunk [concrete = constants.%f__carbon_thunk] {
 // CHECK:STDOUT:     <elided>
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     <elided>
@@ -116,7 +119,10 @@ var y: Cpp.Xint.r#type = 0;
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %x.ref.loc14: %A.0bedf0.1 = name_ref x, %x
 // CHECK:STDOUT:   %f.ref: %.5c3 = name_ref f, imports.%.2bd [concrete = constants.%empty_struct]
-// CHECK:STDOUT:   %A.f.call: init %empty_tuple.type = call imports.%A.f.decl(<error>)
+// CHECK:STDOUT:   %addr: %ptr.270828.1 = addr_of <error> [concrete = <error>]
+// CHECK:STDOUT:   %.loc14_7.1: %ptr.703 = as_compatible %addr [concrete = <error>]
+// CHECK:STDOUT:   %.loc14_7.2: %ptr.703 = converted %addr, %.loc14_7.1 [concrete = <error>]
+// CHECK:STDOUT:   %f__carbon_thunk.call: init %empty_tuple.type = call imports.%f__carbon_thunk.decl(%.loc14_7.2)
 // CHECK:STDOUT:   %x.ref.loc15: %A.0bedf0.1 = name_ref x, %x
 // CHECK:STDOUT:   %n.ref: %A.elem.c3f = name_ref n, @A.1.%.2 [concrete = @A.1.%.2]
 // CHECK:STDOUT:   %.loc15_11.1: ref %i32 = class_element_access %x.ref.loc15, element1
@@ -124,9 +130,9 @@ var y: Cpp.Xint.r#type = 0;
 // CHECK:STDOUT:   return %.loc15_11.2
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @G(%p.param: %ptr.270) -> %ptr.fb2 {
+// CHECK:STDOUT: fn @G(%p.param: %ptr.270828.2) -> %ptr.fb2 {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %p.ref: %ptr.270 = name_ref p, %p
+// CHECK:STDOUT:   %p.ref: %ptr.270828.2 = name_ref p, %p
 // CHECK:STDOUT:   %.loc22_11.1: ref %A.0bedf0.2 = deref %p.ref
 // CHECK:STDOUT:   %.loc22_11.2: ref %Base = class_element_access %.loc22_11.1, element0
 // CHECK:STDOUT:   %addr: %ptr.fb2 = addr_of %.loc22_11.2

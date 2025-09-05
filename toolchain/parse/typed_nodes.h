@@ -1036,6 +1036,16 @@ struct PostfixOperator {
   TokenKind token;
 };
 
+// An `unsafe` modifier: `a unsafe <operator> b`. This is modeled in the parse
+// tree as a postfix operator applied to `a`.
+struct UnsafeModifier {
+  static constexpr auto Kind = NodeKind::UnsafeModifier.Define(
+      {.category = NodeCategory::Expr, .child_count = 1});
+
+  AnyExprId operand;
+  Lex::UnsafeTokenIndex token;
+};
+
 // Literals, operators, and modifiers
 
 #define CARBON_PARSE_NODE_KIND(Name)
