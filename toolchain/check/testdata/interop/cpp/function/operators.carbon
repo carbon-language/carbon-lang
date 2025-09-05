@@ -364,7 +364,7 @@ library "[[@TEST_NAME]]";
 import Cpp library "pointer_and_memory_operators.h";
 
 fn F() {
-  let c: Cpp.C = Cpp.C.C();
+  var c: Cpp.C = Cpp.C.C();
 
   // Pointer and Memory.
   // CHECK:STDERR: fail_import_pointer_and_memory_operators.carbon:[[@LINE+4]]:28: error: cannot dereference operand of non-pointer type `Cpp.C` [DerefOfNonPointer]
@@ -372,10 +372,6 @@ fn F() {
   // CHECK:STDERR:                            ^
   // CHECK:STDERR:
   let dereference: Cpp.C = *c;
-  // CHECK:STDERR: fail_import_pointer_and_memory_operators.carbon:[[@LINE+11]]:24: error: cannot take the address of non-reference expression [AddrOfNonRef]
-  // CHECK:STDERR:   let address: Cpp.C = &c;
-  // CHECK:STDERR:                        ^
-  // CHECK:STDERR:
   // CHECK:STDERR: fail_import_pointer_and_memory_operators.carbon:[[@LINE+7]]:24: error: cannot implicitly convert expression of type `Cpp.C*` to `Cpp.C` [ConversionFailure]
   // CHECK:STDERR:   let address: Cpp.C = &c;
   // CHECK:STDERR:                        ^~
