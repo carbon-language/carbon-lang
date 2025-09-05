@@ -13,6 +13,7 @@
 #include "llvm/IR/DIBuilder.h"
 #include "llvm/IR/LLVMContext.h"
 #include "llvm/IR/Module.h"
+#include "toolchain/base/fixed_size_value_store.h"
 #include "toolchain/parse/tree_and_subtrees.h"
 #include "toolchain/sem_ir/absolute_node_id.h"
 #include "toolchain/sem_ir/ids.h"
@@ -145,7 +146,9 @@ class Context {
   int total_ir_count_;
 
   // The `FileContext`s for each IR that is involved in this lowering action.
-  Map<SemIR::CheckIRId, std::unique_ptr<FileContext>> file_contexts_;
+  using FileContexts =
+      FixedSizeValueStore<SemIR::CheckIRId, std::unique_ptr<FileContext>>;
+  FileContexts file_contexts_;
 
   // Lowered version of the builtin type `type`.
   llvm::StructType* type_type_ = nullptr;
