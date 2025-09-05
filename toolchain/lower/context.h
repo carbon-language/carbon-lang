@@ -47,7 +47,8 @@ class Context {
       llvm::LLVMContext* llvm_context,
       llvm::IntrusiveRefCntPtr<llvm::vfs::FileSystem> fs, bool want_debug_info,
       const Parse::GetTreeAndSubtreesStore* tree_and_subtrees_getters,
-      llvm::StringRef module_name, llvm::raw_ostream* vlog_stream);
+      llvm::StringRef module_name, int total_ir_count,
+      llvm::raw_ostream* vlog_stream);
 
   // Gets or creates the `FileContext` for a given SemIR file. If an
   // `inst_namer` is specified the first time this is called for a file, it will
@@ -100,6 +101,7 @@ class Context {
   auto tree_and_subtrees_getters() -> const Parse::GetTreeAndSubtreesStore& {
     return *tree_and_subtrees_getters_;
   }
+  auto total_ir_count() -> int { return total_ir_count_; }
 
   auto printf_int_format_string() -> llvm::Value* {
     return printf_int_format_string_;
@@ -138,6 +140,9 @@ class Context {
 
   // The optional vlog stream.
   llvm::raw_ostream* vlog_stream_;
+
+  // The total number of files.
+  int total_ir_count_;
 
   // The `FileContext`s for each IR that is involved in this lowering action.
   Map<SemIR::CheckIRId, std::unique_ptr<FileContext>> file_contexts_;

@@ -24,12 +24,10 @@
 namespace Carbon::SemIR {
 
 File::File(const Parse::Tree* parse_tree, CheckIRId check_ir_id,
-           int total_ir_count,
            const std::optional<Parse::Tree::PackagingDecl>& packaging_decl,
            SharedValueStores& value_stores, std::string filename)
     : parse_tree_(parse_tree),
       check_ir_id_(check_ir_id),
-      total_ir_count_(total_ir_count),
       package_id_(packaging_decl ? packaging_decl->names.package_id
                                  : PackageNameId::None),
       library_id_(packaging_decl ? LibraryNameId::ForStringLiteralValueId(

@@ -6,6 +6,7 @@
 #define CARBON_TOOLCHAIN_BASE_FIXED_SIZE_VALUE_STORE_H_
 
 #include <concepts>
+#include <type_traits>
 
 #include "common/check.h"
 #include "llvm/ADT/SmallVector.h"
@@ -55,11 +56,9 @@ class FixedSizeValueStore {
 
   // Makes a ValueStore of the specified size, initialized to values returned
   // from a callback. This allows initializing non-copyable values.
-  template <class F>
-    requires requires(F callable) {
-      { callable() } -> std::convertible_to<ValueT>;
-    }
-  static auto MakeWithExplicitSizeFrom(size_t size, F callable)
+  template <typename Callable>
+    requires std::convertible_to<std::invoke_result_t<Callable>, ValueT>
+  static auto MakeWithExplicitSizeFrom(size_t size, Callable callable)
       -> FixedSizeValueStore {
     FixedSizeValueStore store;
     store.values_.reserve(size);

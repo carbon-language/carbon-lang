@@ -24,7 +24,7 @@ class Mangler {
   // specified `FileContext`.
   explicit Mangler(FileContext& file_context)
       : file_context_(file_context),
-        fingerprinter_(file_context_.sem_ir().total_ir_count()) {}
+        fingerprinter_(file_context_.context().total_ir_count()) {}
 
   // Produce a deterministically unique mangled name for the function specified
   // by `function_id` and `specific_id`.

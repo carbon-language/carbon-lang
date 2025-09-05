@@ -72,7 +72,6 @@ class File : public Printable<File> {
 
   // Starts a new file for Check::CheckParseTree.
   explicit File(const Parse::Tree* parse_tree, CheckIRId check_ir_id,
-                int total_ir_count,
                 const std::optional<Parse::Tree::PackagingDecl>& packaging_decl,
                 SharedValueStores& value_stores, std::string filename);
 
@@ -118,7 +117,6 @@ class File : public Printable<File> {
   }
 
   auto check_ir_id() const -> CheckIRId { return check_ir_id_; }
-  auto total_ir_count() const -> int { return total_ir_count_; }
   auto package_id() const -> PackageNameId { return package_id_; }
   auto library_id() const -> LibraryNameId { return library_id_; }
 
@@ -276,8 +274,6 @@ class File : public Printable<File> {
 
   // The file's ID.
   CheckIRId check_ir_id_;
-  // The total number of files.
-  int total_ir_count_;
 
   // The file's package.
   PackageNameId package_id_ = PackageNameId::None;

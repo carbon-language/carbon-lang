@@ -721,13 +721,13 @@ auto CompilationUnit::GetCheckUnit() -> Check::Unit {
   tree_and_subtrees_getter_ = [this]() -> const Parse::TreeAndSubtrees& {
     return this->GetParseTreeAndSubtrees();
   };
-  sem_ir_.emplace(&*parse_tree_, check_ir_id_, total_ir_count_,
-                  parse_tree_->packaging_decl(), value_stores_,
-                  input_filename_);
+  sem_ir_.emplace(&*parse_tree_, check_ir_id_, parse_tree_->packaging_decl(),
+                  value_stores_, input_filename_);
   return {.consumer = consumer_,
           .value_stores = &value_stores_,
           .timings = timings_ ? &*timings_ : nullptr,
           .sem_ir = &*sem_ir_,
+          .total_ir_count = total_ir_count_,
           .clang_ast_unit = &clang_ast_unit_};
 }
 
@@ -761,7 +761,7 @@ auto CompilationUnit::RunLower() -> void {
     }
     module_ = Lower::LowerToLLVM(*llvm_context_, driver_env_->fs,
                                  cache_->tree_and_subtrees_getters(), *sem_ir_,
-                                 options);
+                                 total_ir_count_, options);
   });
 }
 

@@ -78,8 +78,8 @@ class InstNamer::NamingContext {
   Inst inst_;
 };
 
-InstNamer::InstNamer(const File* sem_ir)
-    : sem_ir_(sem_ir), fingerprinter_(sem_ir_->total_ir_count()) {
+InstNamer::InstNamer(const File* sem_ir, int total_ir_count)
+    : sem_ir_(sem_ir), fingerprinter_(total_ir_count) {
   insts_.resize(sem_ir->insts().size(), {ScopeId::None, Namespace::Name()});
   labels_.resize(sem_ir->inst_blocks().size());
   scopes_.resize(GetScopeIdOffset(ScopeIdTypeEnum::None));
