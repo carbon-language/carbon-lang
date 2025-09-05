@@ -442,14 +442,14 @@ fn F() {
 // CHECK:STDOUT:   %Eat.ref.loc27: %Eats.assoc_type = name_ref Eat, @Eats.%assoc0 [concrete = constants.%assoc0.e43]
 // CHECK:STDOUT:   %impl.elem0.loc27: %.f6e = impl_witness_access constants.%Eats.impl_witness, element0 [concrete = constants.%Goat.as.Eats.impl.Eat]
 // CHECK:STDOUT:   %Goat.as.Eats.impl.Eat.call.loc27: init %empty_tuple.type = call %impl.elem0.loc27()
-// CHECK:STDOUT:   %Goat.as.Destroy.impl.Op.bound.loc27: <bound method> = bound_method %.loc27_6.2, constants.%Goat.as.Destroy.impl.Op
-// CHECK:STDOUT:   %addr.loc27: %ptr.940 = addr_of %.loc27_6.2
+// CHECK:STDOUT:   %Goat.as.Destroy.impl.Op.bound.loc27: <bound method> = bound_method %.loc27_6.4, constants.%Goat.as.Destroy.impl.Op
+// CHECK:STDOUT:   %addr.loc27: %ptr.940 = addr_of %.loc27_6.4
 // CHECK:STDOUT:   %Goat.as.Destroy.impl.Op.call.loc27: init %empty_tuple.type = call %Goat.as.Destroy.impl.Op.bound.loc27(%addr.loc27)
-// CHECK:STDOUT:   %Goat.as.Destroy.impl.Op.bound.loc26: <bound method> = bound_method %.loc26_6.2, constants.%Goat.as.Destroy.impl.Op
-// CHECK:STDOUT:   %addr.loc26: %ptr.940 = addr_of %.loc26_6.2
+// CHECK:STDOUT:   %Goat.as.Destroy.impl.Op.bound.loc26: <bound method> = bound_method %.loc26_6.4, constants.%Goat.as.Destroy.impl.Op
+// CHECK:STDOUT:   %addr.loc26: %ptr.940 = addr_of %.loc26_6.4
 // CHECK:STDOUT:   %Goat.as.Destroy.impl.Op.call.loc26: init %empty_tuple.type = call %Goat.as.Destroy.impl.Op.bound.loc26(%addr.loc26)
-// CHECK:STDOUT:   %Goat.as.Destroy.impl.Op.bound.loc22: <bound method> = bound_method %.loc22_28.2, constants.%Goat.as.Destroy.impl.Op
-// CHECK:STDOUT:   %addr.loc22: %ptr.940 = addr_of %.loc22_28.2
+// CHECK:STDOUT:   %Goat.as.Destroy.impl.Op.bound.loc22: <bound method> = bound_method %.loc22_28.4, constants.%Goat.as.Destroy.impl.Op
+// CHECK:STDOUT:   %addr.loc22: %ptr.940 = addr_of %.loc22_28.4
 // CHECK:STDOUT:   %Goat.as.Destroy.impl.Op.call.loc22: init %empty_tuple.type = call %Goat.as.Destroy.impl.Op.bound.loc22(%addr.loc22)
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }

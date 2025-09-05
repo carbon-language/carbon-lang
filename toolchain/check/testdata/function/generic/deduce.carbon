@@ -658,8 +658,8 @@ fn F() {
 // CHECK:STDOUT:   %ExplicitAndAlsoDeduced.call: init %ptr.6db = call %ExplicitAndAlsoDeduced.specific_fn(%.loc11_37.6)
 // CHECK:STDOUT:   %.loc11_39.1: %ptr.6db = value_of_initializer %ExplicitAndAlsoDeduced.call
 // CHECK:STDOUT:   %.loc11_39.2: %ptr.6db = converted %ExplicitAndAlsoDeduced.call, %.loc11_39.1
-// CHECK:STDOUT:   %A.as.Destroy.impl.Op.bound: <bound method> = bound_method %.loc11_37.2, constants.%A.as.Destroy.impl.Op
-// CHECK:STDOUT:   %addr: %ptr.6db = addr_of %.loc11_37.2
+// CHECK:STDOUT:   %A.as.Destroy.impl.Op.bound: <bound method> = bound_method %.loc11_37.4, constants.%A.as.Destroy.impl.Op
+// CHECK:STDOUT:   %addr: %ptr.6db = addr_of %.loc11_37.4
 // CHECK:STDOUT:   %A.as.Destroy.impl.Op.call: init %empty_tuple.type = call %A.as.Destroy.impl.Op.bound(%addr)
 // CHECK:STDOUT:   return %.loc11_39.2
 // CHECK:STDOUT: }

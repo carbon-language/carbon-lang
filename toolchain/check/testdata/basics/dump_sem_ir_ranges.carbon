@@ -287,16 +287,16 @@ library "[[@TEST_NAME]]";
 // CHECK:STDOUT:   %tuple.loc17: %empty_tuple.type = tuple_value () [concrete = constants.%empty_tuple]
 // CHECK:STDOUT:   %.loc17_7.3: %empty_tuple.type = converted %C.call, %tuple.loc17 [concrete = constants.%empty_tuple]
 // CHECK:STDOUT:   <elided>
-// CHECK:STDOUT:   %T.as.Destroy.impl.Op.bound.loc17: <bound method> = bound_method %.loc17_7.1, constants.%T.as.Destroy.impl.Op.ea3
+// CHECK:STDOUT:   %T.as.Destroy.impl.Op.bound.loc17: <bound method> = bound_method %.loc17_7.2, constants.%T.as.Destroy.impl.Op.ea3
 // CHECK:STDOUT:   <elided>
-// CHECK:STDOUT:   %bound_method.loc17: <bound method> = bound_method %.loc17_7.1, %T.as.Destroy.impl.Op.specific_fn.1
-// CHECK:STDOUT:   %addr.loc17: %ptr.843 = addr_of %.loc17_7.1
+// CHECK:STDOUT:   %bound_method.loc17: <bound method> = bound_method %.loc17_7.2, %T.as.Destroy.impl.Op.specific_fn.1
+// CHECK:STDOUT:   %addr.loc17: %ptr.843 = addr_of %.loc17_7.2
 // CHECK:STDOUT:   %T.as.Destroy.impl.Op.call.loc17: init %empty_tuple.type = call %bound_method.loc17(%addr.loc17)
 // CHECK:STDOUT:   <elided>
-// CHECK:STDOUT:   %T.as.Destroy.impl.Op.bound.loc13: <bound method> = bound_method %.loc13_7.1, constants.%T.as.Destroy.impl.Op.ea3
+// CHECK:STDOUT:   %T.as.Destroy.impl.Op.bound.loc13: <bound method> = bound_method %.loc13_7.2, constants.%T.as.Destroy.impl.Op.ea3
 // CHECK:STDOUT:   <elided>
-// CHECK:STDOUT:   %bound_method.loc13: <bound method> = bound_method %.loc13_7.1, %T.as.Destroy.impl.Op.specific_fn.3
-// CHECK:STDOUT:   %addr.loc13: %ptr.843 = addr_of %.loc13_7.1
+// CHECK:STDOUT:   %bound_method.loc13: <bound method> = bound_method %.loc13_7.2, %T.as.Destroy.impl.Op.specific_fn.3
+// CHECK:STDOUT:   %addr.loc13: %ptr.843 = addr_of %.loc13_7.2
 // CHECK:STDOUT:   %T.as.Destroy.impl.Op.call.loc13: init %empty_tuple.type = call %bound_method.loc13(%addr.loc13)
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }

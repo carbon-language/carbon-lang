@@ -4103,10 +4103,10 @@ fn F() {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %.loc12_23.2: %C.131 = bind_value %.loc12_23.1
 // CHECK:STDOUT:   %a: %C.131 = bind_name a, %.loc12_23.2
-// CHECK:STDOUT:   %C.as.Destroy.impl.Op.bound: <bound method> = bound_method %.loc12_21.2, constants.%C.as.Destroy.impl.Op.e2a
+// CHECK:STDOUT:   %C.as.Destroy.impl.Op.bound: <bound method> = bound_method %.loc12_21.4, constants.%C.as.Destroy.impl.Op.e2a
 // CHECK:STDOUT:   %C.as.Destroy.impl.Op.specific_fn: <specific function> = specific_function constants.%C.as.Destroy.impl.Op.e2a, @C.as.Destroy.impl.Op(constants.%D) [concrete = constants.%C.as.Destroy.impl.Op.specific_fn]
-// CHECK:STDOUT:   %bound_method: <bound method> = bound_method %.loc12_21.2, %C.as.Destroy.impl.Op.specific_fn
-// CHECK:STDOUT:   %addr: %ptr.aaa = addr_of %.loc12_21.2
+// CHECK:STDOUT:   %bound_method: <bound method> = bound_method %.loc12_21.4, %C.as.Destroy.impl.Op.specific_fn
+// CHECK:STDOUT:   %addr: %ptr.aaa = addr_of %.loc12_21.4
 // CHECK:STDOUT:   %C.as.Destroy.impl.Op.call: init %empty_tuple.type = call %bound_method(%addr)
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }

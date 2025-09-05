@@ -78,6 +78,16 @@ fn Use() {
   // CHECK:STDERR:              ^~~~~~~~~~~
   // CHECK:STDERR:
   var i: X = Init() as X;
+  // TODO: The diagnostic should explain that the reason we can't perform this
+  // conversion is due to the expression category.
+  // CHECK:STDERR: fail_cannot_remove_unformed.carbon:[[@LINE+7]]:14: error: cannot convert expression of type `Core.MaybeUnformed(X)` to `X` with `unsafe as` [ConversionFailure]
+  // CHECK:STDERR:   var j: X = Init() unsafe as X;
+  // CHECK:STDERR:              ^~~~~~~~~~~~~~~~~~
+  // CHECK:STDERR: fail_cannot_remove_unformed.carbon:[[@LINE+4]]:14: note: type `Core.MaybeUnformed(X)` does not implement interface `Core.UnsafeAs(X)` [MissingImplInMemberAccessNote]
+  // CHECK:STDERR:   var j: X = Init() unsafe as X;
+  // CHECK:STDERR:              ^~~~~~~~~~~~~~~~~~
+  // CHECK:STDERR:
+  var j: X = Init() unsafe as X;
   // CHECK:STDERR: fail_cannot_remove_unformed.carbon:[[@LINE+7]]:14: error: cannot convert expression of type `Core.MaybeUnformed(X)` to `X` with `as` [ConversionFailure]
   // CHECK:STDERR:   let v: X = value as X;
   // CHECK:STDERR:              ^~~~~~~~~~
@@ -110,43 +120,17 @@ library "[[@TEST_NAME]]";
 
 class X {}
 
+fn Init() -> Core.MaybeUnformed(X);
+let value: Core.MaybeUnformed(X) = Init();
 var reference: Core.MaybeUnformed(X);
 let ptr: Core.MaybeUnformed(X)* = &reference;
 
 fn Use() {
   //@dump-sem-ir-begin
+  let v: X = value unsafe as X;
   let a: X* = &(reference unsafe as X);
   let b: X* = ptr unsafe as X*;
   //@dump-sem-ir-end
-}
-
-// --- fail_todo_remove_unformed_unsafe_notref.carbon
-
-library "[[@TEST_NAME]]";
-
-class X {}
-
-fn Init() -> Core.MaybeUnformed(X);
-let value: Core.MaybeUnformed(X) = Init();
-
-fn Use() {
-  // TODO: These should probably be valid.
-  // CHECK:STDERR: fail_todo_remove_unformed_unsafe_notref.carbon:[[@LINE+7]]:14: error: cannot convert expression of type `Core.MaybeUnformed(X)` to `X` with `unsafe as` [ConversionFailure]
-  // CHECK:STDERR:   var i: X = Init() unsafe as X;
-  // CHECK:STDERR:              ^~~~~~~~~~~~~~~~~~
-  // CHECK:STDERR: fail_todo_remove_unformed_unsafe_notref.carbon:[[@LINE+4]]:14: note: type `Core.MaybeUnformed(X)` does not implement interface `Core.UnsafeAs(X)` [MissingImplInMemberAccessNote]
-  // CHECK:STDERR:   var i: X = Init() unsafe as X;
-  // CHECK:STDERR:              ^~~~~~~~~~~~~~~~~~
-  // CHECK:STDERR:
-  var i: X = Init() unsafe as X;
-  // CHECK:STDERR: fail_todo_remove_unformed_unsafe_notref.carbon:[[@LINE+7]]:14: error: cannot convert expression of type `Core.MaybeUnformed(X)` to `X` with `unsafe as` [ConversionFailure]
-  // CHECK:STDERR:   let v: X = value unsafe as X;
-  // CHECK:STDERR:              ^~~~~~~~~~~~~~~~~
-  // CHECK:STDERR: fail_todo_remove_unformed_unsafe_notref.carbon:[[@LINE+4]]:14: note: type `Core.MaybeUnformed(X)` does not implement interface `Core.UnsafeAs(X)` [MissingImplInMemberAccessNote]
-  // CHECK:STDERR:   let v: X = value unsafe as X;
-  // CHECK:STDERR:              ^~~~~~~~~~~~~~~~~
-  // CHECK:STDERR:
-  let v: X = value unsafe as X;
 }
 
 // CHECK:STDOUT: --- add_unformed.carbon
@@ -228,10 +212,7 @@ fn Use() {
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %X: type = class_type @X [concrete]
 // CHECK:STDOUT:   %Destroy.type: type = facet_type <@Destroy> [concrete]
-// CHECK:STDOUT:   %ptr.d17: type = ptr_type %X [concrete]
-// CHECK:STDOUT:   %X.as.Destroy.impl.Op.type: type = fn_type @X.as.Destroy.impl.Op [concrete]
 // CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [concrete]
-// CHECK:STDOUT:   %X.as.Destroy.impl.Op: %X.as.Destroy.impl.Op.type = struct_value () [concrete]
 // CHECK:STDOUT:   %Init.type: type = fn_type @Init [concrete]
 // CHECK:STDOUT:   %Init: %Init.type = struct_value () [concrete]
 // CHECK:STDOUT:   %MaybeUnformed.type: type = generic_class_type @MaybeUnformed [concrete]
@@ -297,14 +278,11 @@ fn Use() {
 // CHECK:STDOUT:     %MaybeUnformed.loc27_30: type = class_type @MaybeUnformed, @MaybeUnformed(constants.%X) [concrete = constants.%MaybeUnformed.275]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %v: %MaybeUnformed.275 = bind_name v, <error> [concrete = <error>]
-// CHECK:STDOUT:   %X.as.Destroy.impl.Op.bound: <bound method> = bound_method %.loc19_39, constants.%X.as.Destroy.impl.Op
-// CHECK:STDOUT:   %addr.loc19_39: %ptr.d17 = addr_of %.loc19_39
-// CHECK:STDOUT:   %X.as.Destroy.impl.Op.call: init %empty_tuple.type = call %X.as.Destroy.impl.Op.bound(%addr.loc19_39)
 // CHECK:STDOUT:   %MaybeUnformed.as.Destroy.impl.Op.bound: <bound method> = bound_method %i.var, constants.%MaybeUnformed.as.Destroy.impl.Op.b85
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT:   %bound_method: <bound method> = bound_method %i.var, %MaybeUnformed.as.Destroy.impl.Op.specific_fn
-// CHECK:STDOUT:   %addr.loc19_3: %ptr.58e = addr_of %i.var
-// CHECK:STDOUT:   %MaybeUnformed.as.Destroy.impl.Op.call: init %empty_tuple.type = call %bound_method(%addr.loc19_3)
+// CHECK:STDOUT:   %addr: %ptr.58e = addr_of %i.var
+// CHECK:STDOUT:   %MaybeUnformed.as.Destroy.impl.Op.call: init %empty_tuple.type = call %bound_method(%addr)
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -321,6 +299,7 @@ fn Use() {
 // CHECK:STDOUT:   %pattern_type.1c6: type = pattern_type %ptr.d17 [concrete]
 // CHECK:STDOUT:   %MaybeUnformed.275: type = class_type @MaybeUnformed, @MaybeUnformed(%X) [concrete]
 // CHECK:STDOUT:   %ptr.58e: type = ptr_type %MaybeUnformed.275 [concrete]
+// CHECK:STDOUT:   %pattern_type.019: type = pattern_type %X [concrete]
 // CHECK:STDOUT:   %reference.var: ref %X = var file.%reference.var_patt [concrete]
 // CHECK:STDOUT:   %addr.a46: %ptr.d17 = addr_of %reference.var [concrete]
 // CHECK:STDOUT: }
@@ -331,31 +310,42 @@ fn Use() {
 // CHECK:STDOUT: fn @Use() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   name_binding_decl {
+// CHECK:STDOUT:     %v.patt: %pattern_type.019 = binding_pattern v [concrete]
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %value.ref: %MaybeUnformed.275 = name_ref value, file.%value
+// CHECK:STDOUT:   %X.ref.loc13_30: type = name_ref X, file.%X.decl [concrete = constants.%X]
+// CHECK:STDOUT:   %.loc13_27.1: ref %MaybeUnformed.275 = value_as_ref %value.ref
+// CHECK:STDOUT:   %.loc13_27.2: ref %X = as_compatible %.loc13_27.1
+// CHECK:STDOUT:   %.loc13_27.3: %X = bind_value %.loc13_27.2
+// CHECK:STDOUT:   %.loc13_27.4: %X = converted %value.ref, %.loc13_27.3
+// CHECK:STDOUT:   %X.ref.loc13_10: type = name_ref X, file.%X.decl [concrete = constants.%X]
+// CHECK:STDOUT:   %v: %X = bind_name v, %.loc13_27.4
+// CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %a.patt: %pattern_type.1c6 = binding_pattern a [concrete]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %reference.ref: ref %MaybeUnformed.275 = name_ref reference, file.%reference [concrete = file.%reference.var]
-// CHECK:STDOUT:   %X.ref.loc11_37: type = name_ref X, file.%X.decl [concrete = constants.%X]
-// CHECK:STDOUT:   %.loc11_34.1: ref %X = as_compatible %reference.ref [concrete = constants.%reference.var]
-// CHECK:STDOUT:   %.loc11_34.2: ref %X = converted %reference.ref, %.loc11_34.1 [concrete = constants.%reference.var]
-// CHECK:STDOUT:   %addr: %ptr.d17 = addr_of %.loc11_34.2 [concrete = constants.%addr.a46]
-// CHECK:STDOUT:   %.loc11_11: type = splice_block %ptr.loc11 [concrete = constants.%ptr.d17] {
-// CHECK:STDOUT:     %X.ref.loc11_10: type = name_ref X, file.%X.decl [concrete = constants.%X]
-// CHECK:STDOUT:     %ptr.loc11: type = ptr_type %X.ref.loc11_10 [concrete = constants.%ptr.d17]
+// CHECK:STDOUT:   %X.ref.loc14_37: type = name_ref X, file.%X.decl [concrete = constants.%X]
+// CHECK:STDOUT:   %.loc14_34.1: ref %X = as_compatible %reference.ref [concrete = constants.%reference.var]
+// CHECK:STDOUT:   %.loc14_34.2: ref %X = converted %reference.ref, %.loc14_34.1 [concrete = constants.%reference.var]
+// CHECK:STDOUT:   %addr: %ptr.d17 = addr_of %.loc14_34.2 [concrete = constants.%addr.a46]
+// CHECK:STDOUT:   %.loc14_11: type = splice_block %ptr.loc14 [concrete = constants.%ptr.d17] {
+// CHECK:STDOUT:     %X.ref.loc14_10: type = name_ref X, file.%X.decl [concrete = constants.%X]
+// CHECK:STDOUT:     %ptr.loc14: type = ptr_type %X.ref.loc14_10 [concrete = constants.%ptr.d17]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %a: %ptr.d17 = bind_name a, %addr
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %b.patt: %pattern_type.1c6 = binding_pattern b [concrete]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %ptr.ref: %ptr.58e = name_ref ptr, file.%ptr.loc7_5
-// CHECK:STDOUT:   %X.ref.loc12_29: type = name_ref X, file.%X.decl [concrete = constants.%X]
-// CHECK:STDOUT:   %ptr.loc12_30: type = ptr_type %X.ref.loc12_29 [concrete = constants.%ptr.d17]
-// CHECK:STDOUT:   %.loc12_26.1: %ptr.d17 = as_compatible %ptr.ref
-// CHECK:STDOUT:   %.loc12_26.2: %ptr.d17 = converted %ptr.ref, %.loc12_26.1
-// CHECK:STDOUT:   %.loc12_11: type = splice_block %ptr.loc12_11 [concrete = constants.%ptr.d17] {
-// CHECK:STDOUT:     %X.ref.loc12_10: type = name_ref X, file.%X.decl [concrete = constants.%X]
-// CHECK:STDOUT:     %ptr.loc12_11: type = ptr_type %X.ref.loc12_10 [concrete = constants.%ptr.d17]
+// CHECK:STDOUT:   %ptr.ref: %ptr.58e = name_ref ptr, file.%ptr.loc9_5
+// CHECK:STDOUT:   %X.ref.loc15_29: type = name_ref X, file.%X.decl [concrete = constants.%X]
+// CHECK:STDOUT:   %ptr.loc15_30: type = ptr_type %X.ref.loc15_29 [concrete = constants.%ptr.d17]
+// CHECK:STDOUT:   %.loc15_26.1: %ptr.d17 = as_compatible %ptr.ref
+// CHECK:STDOUT:   %.loc15_26.2: %ptr.d17 = converted %ptr.ref, %.loc15_26.1
+// CHECK:STDOUT:   %.loc15_11: type = splice_block %ptr.loc15_11 [concrete = constants.%ptr.d17] {
+// CHECK:STDOUT:     %X.ref.loc15_10: type = name_ref X, file.%X.decl [concrete = constants.%X]
+// CHECK:STDOUT:     %ptr.loc15_11: type = ptr_type %X.ref.loc15_10 [concrete = constants.%ptr.d17]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %b: %ptr.d17 = bind_name b, %.loc12_26.2
+// CHECK:STDOUT:   %b: %ptr.d17 = bind_name b, %.loc15_26.2
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

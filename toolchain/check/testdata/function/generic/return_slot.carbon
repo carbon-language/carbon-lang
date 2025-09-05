@@ -306,12 +306,9 @@ fn G() {
 // CHECK:STDOUT:   assign %c.var, %Wrap.Make.call.loc24
 // CHECK:STDOUT:   %C.ref.loc24_10: type = name_ref C, file.%C.decl [concrete = constants.%C]
 // CHECK:STDOUT:   %c: ref %C = bind_name c, %c.var
-// CHECK:STDOUT:   %C.as.Destroy.impl.Op.bound.loc24_3.1: <bound method> = bound_method %.loc24_3, constants.%C.as.Destroy.impl.Op
-// CHECK:STDOUT:   %addr.loc24_3.1: %ptr.019 = addr_of %.loc24_3
-// CHECK:STDOUT:   %C.as.Destroy.impl.Op.call.loc24_3.1: init %empty_tuple.type = call %C.as.Destroy.impl.Op.bound.loc24_3.1(%addr.loc24_3.1)
-// CHECK:STDOUT:   %C.as.Destroy.impl.Op.bound.loc24_3.2: <bound method> = bound_method %c.var, constants.%C.as.Destroy.impl.Op
-// CHECK:STDOUT:   %addr.loc24_3.2: %ptr.019 = addr_of %c.var
-// CHECK:STDOUT:   %C.as.Destroy.impl.Op.call.loc24_3.2: init %empty_tuple.type = call %C.as.Destroy.impl.Op.bound.loc24_3.2(%addr.loc24_3.2)
+// CHECK:STDOUT:   %C.as.Destroy.impl.Op.bound: <bound method> = bound_method %c.var, constants.%C.as.Destroy.impl.Op
+// CHECK:STDOUT:   %addr.loc24: %ptr.019 = addr_of %c.var
+// CHECK:STDOUT:   %C.as.Destroy.impl.Op.call: init %empty_tuple.type = call %C.as.Destroy.impl.Op.bound(%addr.loc24)
 // CHECK:STDOUT:   %T.as.Destroy.impl.Op.bound: <bound method> = bound_method %b.var, constants.%T.as.Destroy.impl.Op.ea3
 // CHECK:STDOUT:   %T.as.Destroy.impl.Op.specific_fn: <specific function> = specific_function constants.%T.as.Destroy.impl.Op.ea3, @T.as.Destroy.impl.Op(constants.%empty_tuple.type) [concrete = constants.%T.as.Destroy.impl.Op.specific_fn]
 // CHECK:STDOUT:   %bound_method.loc23: <bound method> = bound_method %b.var, %T.as.Destroy.impl.Op.specific_fn

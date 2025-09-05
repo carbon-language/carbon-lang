@@ -383,16 +383,11 @@ let (a: {}, b: {}) = ({}, {}, {});
 // CHECK:STDOUT:     %.loc22_19.3: type = converted %.loc22_19.2, constants.%empty_struct_type [concrete = constants.%empty_struct_type]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %y: ref %empty_struct_type = bind_name y, %tuple.elem1
-// CHECK:STDOUT:   %T.as.Destroy.impl.Op.bound.loc22_3.1: <bound method> = bound_method %.loc22_3, constants.%T.as.Destroy.impl.Op.973
+// CHECK:STDOUT:   %T.as.Destroy.impl.Op.bound: <bound method> = bound_method %.var, constants.%T.as.Destroy.impl.Op.973
 // CHECK:STDOUT:   <elided>
-// CHECK:STDOUT:   %bound_method.loc22_3.1: <bound method> = bound_method %.loc22_3, %T.as.Destroy.impl.Op.specific_fn.1
-// CHECK:STDOUT:   %addr.loc22_3.1: %ptr.8fc = addr_of %.loc22_3
-// CHECK:STDOUT:   %T.as.Destroy.impl.Op.call.loc22_3.1: init %empty_tuple.type = call %bound_method.loc22_3.1(%addr.loc22_3.1)
-// CHECK:STDOUT:   %T.as.Destroy.impl.Op.bound.loc22_3.2: <bound method> = bound_method %.var, constants.%T.as.Destroy.impl.Op.973
-// CHECK:STDOUT:   <elided>
-// CHECK:STDOUT:   %bound_method.loc22_3.2: <bound method> = bound_method %.var, %T.as.Destroy.impl.Op.specific_fn.2
-// CHECK:STDOUT:   %addr.loc22_3.2: %ptr.8fc = addr_of %.var
-// CHECK:STDOUT:   %T.as.Destroy.impl.Op.call.loc22_3.2: init %empty_tuple.type = call %bound_method.loc22_3.2(%addr.loc22_3.2)
+// CHECK:STDOUT:   %bound_method: <bound method> = bound_method %.var, %T.as.Destroy.impl.Op.specific_fn
+// CHECK:STDOUT:   %addr: %ptr.8fc = addr_of %.var
+// CHECK:STDOUT:   %T.as.Destroy.impl.Op.call: init %empty_tuple.type = call %bound_method(%addr)
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

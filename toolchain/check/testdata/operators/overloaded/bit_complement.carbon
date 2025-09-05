@@ -53,7 +53,6 @@ fn TestOp(a: C) -> C {
 // CHECK:STDOUT:   %bound_method: <bound method> = bound_method %a.ref, %impl.elem1
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT:   %C.as.BitComplement.impl.Op.call: init %C = call %bound_method(%a.ref) to %.loc27
-// CHECK:STDOUT:   <elided>
 // CHECK:STDOUT:   return %C.as.BitComplement.impl.Op.call to %return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

@@ -434,7 +434,10 @@ static auto RunSingleTest(FileTestInfo& test, bool single_threaded,
 
   if (!test.test_result->ok()) {
     std::unique_lock<std::mutex> lock(output_mutex);
-    llvm::errs() << "\n" << test.test_result->error().message() << "\n";
+    if (!single_threaded) {
+      llvm::errs() << "\n" << test.test_name << ": ";
+    }
+    llvm::errs() << test.test_result->error().message() << "\n";
     return true;
   }
 

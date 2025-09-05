@@ -471,11 +471,11 @@ fn F() {
 // CHECK:STDOUT:   %.loc35_19.2: %Goat = bind_value %.loc35_19.1
 // CHECK:STDOUT:   %.loc35_31.2: %Grass = bind_value %.loc35_31.1
 // CHECK:STDOUT:   %HandleAnimal.call: init %empty_tuple.type = call %HandleAnimal.specific_fn(%.loc35_19.2, %.loc35_31.2)
-// CHECK:STDOUT:   %Grass.as.Destroy.impl.Op.bound: <bound method> = bound_method %.loc35_29.2, constants.%Grass.as.Destroy.impl.Op
-// CHECK:STDOUT:   %addr.loc35_29: %ptr.2bd = addr_of %.loc35_29.2
+// CHECK:STDOUT:   %Grass.as.Destroy.impl.Op.bound: <bound method> = bound_method %.loc35_29.4, constants.%Grass.as.Destroy.impl.Op
+// CHECK:STDOUT:   %addr.loc35_29: %ptr.2bd = addr_of %.loc35_29.4
 // CHECK:STDOUT:   %Grass.as.Destroy.impl.Op.call: init %empty_tuple.type = call %Grass.as.Destroy.impl.Op.bound(%addr.loc35_29)
-// CHECK:STDOUT:   %Goat.as.Destroy.impl.Op.bound: <bound method> = bound_method %.loc35_17.2, constants.%Goat.as.Destroy.impl.Op
-// CHECK:STDOUT:   %addr.loc35_17: %ptr.940 = addr_of %.loc35_17.2
+// CHECK:STDOUT:   %Goat.as.Destroy.impl.Op.bound: <bound method> = bound_method %.loc35_17.4, constants.%Goat.as.Destroy.impl.Op
+// CHECK:STDOUT:   %addr.loc35_17: %ptr.940 = addr_of %.loc35_17.4
 // CHECK:STDOUT:   %Goat.as.Destroy.impl.Op.call: init %empty_tuple.type = call %Goat.as.Destroy.impl.Op.bound(%addr.loc35_17)
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }

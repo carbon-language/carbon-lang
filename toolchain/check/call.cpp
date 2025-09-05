@@ -230,7 +230,7 @@ static auto PerformCallToFunction(Context& context, SemIR::LocId loc_id,
     case SemIR::InitRepr::InPlace:
       // Tentatively put storage for a temporary in the function's return slot.
       // This will be replaced if necessary when we perform initialization.
-      return_slot_arg_id = AddInstWithCleanup<SemIR::TemporaryStorage>(
+      return_slot_arg_id = AddInst<SemIR::TemporaryStorage>(
           context, loc_id, {.type_id = return_info.type_id});
       break;
     case SemIR::InitRepr::None:

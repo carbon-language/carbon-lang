@@ -411,11 +411,11 @@ fn G() {
 // CHECK:STDOUT:   %F.specific_fn: <specific function> = specific_function %F.ref, @F(constants.%facet_value) [concrete = constants.%F.specific_fn]
 // CHECK:STDOUT:   %.loc46_11.2: %C = bind_value %.loc46_11.1
 // CHECK:STDOUT:   %F.call: init %empty_tuple.type = call %F.specific_fn(%.loc46_11.2)
-// CHECK:STDOUT:   %C.as.Destroy.impl.Op.bound.loc46: <bound method> = bound_method %.loc46_9.2, constants.%C.as.Destroy.impl.Op
-// CHECK:STDOUT:   %addr.loc46: %ptr.8e6 = addr_of %.loc46_9.2
+// CHECK:STDOUT:   %C.as.Destroy.impl.Op.bound.loc46: <bound method> = bound_method %.loc46_9.4, constants.%C.as.Destroy.impl.Op
+// CHECK:STDOUT:   %addr.loc46: %ptr.8e6 = addr_of %.loc46_9.4
 // CHECK:STDOUT:   %C.as.Destroy.impl.Op.call.loc46: init %empty_tuple.type = call %C.as.Destroy.impl.Op.bound.loc46(%addr.loc46)
-// CHECK:STDOUT:   %C.as.Destroy.impl.Op.bound.loc40: <bound method> = bound_method %.loc40_6.2, constants.%C.as.Destroy.impl.Op
-// CHECK:STDOUT:   %addr.loc40: %ptr.8e6 = addr_of %.loc40_6.2
+// CHECK:STDOUT:   %C.as.Destroy.impl.Op.bound.loc40: <bound method> = bound_method %.loc40_6.4, constants.%C.as.Destroy.impl.Op
+// CHECK:STDOUT:   %addr.loc40: %ptr.8e6 = addr_of %.loc40_6.4
 // CHECK:STDOUT:   %C.as.Destroy.impl.Op.call.loc40: init %empty_tuple.type = call %C.as.Destroy.impl.Op.bound.loc40(%addr.loc40)
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }

@@ -382,11 +382,11 @@ fn G(holds_to: HoldsType((RuntimeConvertTo, ))) {
 // CHECK:STDOUT:   %.loc41_19.4: %RuntimeConvertTo = bind_value %.loc41_19.3
 // CHECK:STDOUT:   %F.specific_fn: <specific function> = specific_function %F.ref, @F(constants.%tuple, <error>) [concrete = <error>]
 // CHECK:STDOUT:   %F.call: init %empty_tuple.type = call %F.specific_fn(%holds_to.ref)
-// CHECK:STDOUT:   %RuntimeConvertTo.as.Destroy.impl.Op.bound: <bound method> = bound_method %.loc41_19.1, constants.%RuntimeConvertTo.as.Destroy.impl.Op
-// CHECK:STDOUT:   %addr.loc41: %ptr.339 = addr_of %.loc41_19.1
+// CHECK:STDOUT:   %RuntimeConvertTo.as.Destroy.impl.Op.bound: <bound method> = bound_method %.loc41_19.3, constants.%RuntimeConvertTo.as.Destroy.impl.Op
+// CHECK:STDOUT:   %addr.loc41: %ptr.339 = addr_of %.loc41_19.3
 // CHECK:STDOUT:   %RuntimeConvertTo.as.Destroy.impl.Op.call: init %empty_tuple.type = call %RuntimeConvertTo.as.Destroy.impl.Op.bound(%addr.loc41)
-// CHECK:STDOUT:   %RuntimeConvertFrom.as.Destroy.impl.Op.bound: <bound method> = bound_method %.loc30_36.2, constants.%RuntimeConvertFrom.as.Destroy.impl.Op
-// CHECK:STDOUT:   %addr.loc30: %ptr.415 = addr_of %.loc30_36.2
+// CHECK:STDOUT:   %RuntimeConvertFrom.as.Destroy.impl.Op.bound: <bound method> = bound_method %.loc30_36.4, constants.%RuntimeConvertFrom.as.Destroy.impl.Op
+// CHECK:STDOUT:   %addr.loc30: %ptr.415 = addr_of %.loc30_36.4
 // CHECK:STDOUT:   %RuntimeConvertFrom.as.Destroy.impl.Op.call: init %empty_tuple.type = call %RuntimeConvertFrom.as.Destroy.impl.Op.bound(%addr.loc30)
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
