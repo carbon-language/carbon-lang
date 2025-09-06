@@ -359,8 +359,8 @@ class A {
 // CHECK:STDOUT:   %SOME_INTERNAL_CONSTANT.ref: <error> = name_ref SOME_INTERNAL_CONSTANT, <error> [concrete = <error>]
 // CHECK:STDOUT:   %circle.ref.loc51: %Circle = name_ref circle, %circle
 // CHECK:STDOUT:   %SomeInternalFunction.ref: <error> = name_ref SomeInternalFunction, <error> [concrete = <error>]
-// CHECK:STDOUT:   %Circle.as.Destroy.impl.Op.bound: <bound method> = bound_method %.loc18_36.1, constants.%Circle.as.Destroy.impl.Op
-// CHECK:STDOUT:   %addr: %ptr.54d = addr_of %.loc18_36.1
+// CHECK:STDOUT:   %Circle.as.Destroy.impl.Op.bound: <bound method> = bound_method %.loc18_36.2, constants.%Circle.as.Destroy.impl.Op
+// CHECK:STDOUT:   %addr: %ptr.54d = addr_of %.loc18_36.2
 // CHECK:STDOUT:   %Circle.as.Destroy.impl.Op.call: init %empty_tuple.type = call %Circle.as.Destroy.impl.Op.bound(%addr)
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }

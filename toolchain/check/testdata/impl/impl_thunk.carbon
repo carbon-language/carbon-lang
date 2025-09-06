@@ -392,10 +392,10 @@ impl () as I({}) {
 // CHECK:STDOUT:   %.loc10_48.10: init %empty_struct_type = converted %.loc10_48.7, %.loc10_48.9 [concrete = constants.%empty_struct]
 // CHECK:STDOUT:   %.loc10_48.11: init %struct_type.c.d.15a = struct_init (%.loc10_48.6, %.loc10_48.10) to %return [concrete = constants.%struct]
 // CHECK:STDOUT:   %.loc10_48.12: init %struct_type.c.d.15a = converted %empty_tuple.type.as.I.impl.F.call, %.loc10_48.11 [concrete = constants.%struct]
-// CHECK:STDOUT:   %T.as.Destroy.impl.Op.bound: <bound method> = bound_method %.loc10_48.1, constants.%T.as.Destroy.impl.Op.742
+// CHECK:STDOUT:   %T.as.Destroy.impl.Op.bound: <bound method> = bound_method %.loc10_48.2, constants.%T.as.Destroy.impl.Op.742
 // CHECK:STDOUT:   <elided>
-// CHECK:STDOUT:   %bound_method: <bound method> = bound_method %.loc10_48.1, %T.as.Destroy.impl.Op.specific_fn
-// CHECK:STDOUT:   %addr: %ptr.eab = addr_of %.loc10_48.1
+// CHECK:STDOUT:   %bound_method: <bound method> = bound_method %.loc10_48.2, %T.as.Destroy.impl.Op.specific_fn
+// CHECK:STDOUT:   %addr: %ptr.eab = addr_of %.loc10_48.2
 // CHECK:STDOUT:   %T.as.Destroy.impl.Op.call: init %empty_tuple.type = call %bound_method(%addr)
 // CHECK:STDOUT:   return %.loc10_48.12 to %return
 // CHECK:STDOUT: }
@@ -664,8 +664,8 @@ impl () as I({}) {
 // CHECK:STDOUT:   %.loc20_14.3: ref %A = class_element_access %.loc20_14.2, element0
 // CHECK:STDOUT:   %.loc20_14.4: ref %A = converted %A.as.X.impl.F.call, %.loc20_14.3
 // CHECK:STDOUT:   %.loc20_14.5: %A = bind_value %.loc20_14.4
-// CHECK:STDOUT:   %B.as.Destroy.impl.Op.bound: <bound method> = bound_method %.loc20_14.1, constants.%B.as.Destroy.impl.Op
-// CHECK:STDOUT:   %addr: %ptr.e79 = addr_of %.loc20_14.1
+// CHECK:STDOUT:   %B.as.Destroy.impl.Op.bound: <bound method> = bound_method %.loc20_14.2, constants.%B.as.Destroy.impl.Op
+// CHECK:STDOUT:   %addr: %ptr.e79 = addr_of %.loc20_14.2
 // CHECK:STDOUT:   %B.as.Destroy.impl.Op.call: init %empty_tuple.type = call %B.as.Destroy.impl.Op.bound(%addr)
 // CHECK:STDOUT:   return <error> to %return
 // CHECK:STDOUT: }
@@ -931,10 +931,10 @@ impl () as I({}) {
 // CHECK:STDOUT:   %.loc10_29.10: init %empty_struct_type = converted %.loc10_29.7, %.loc10_29.9 [concrete = constants.%empty_struct]
 // CHECK:STDOUT:   %.loc10_29.11: init %struct_type.a.b.f95 = struct_init (%.loc10_29.6, %.loc10_29.10) to %return [concrete = constants.%struct]
 // CHECK:STDOUT:   %.loc10_29.12: init %struct_type.a.b.f95 = converted %empty_tuple.type.as.I.impl.F.call, %.loc10_29.11 [concrete = constants.%struct]
-// CHECK:STDOUT:   %T.as.Destroy.impl.Op.bound: <bound method> = bound_method %.loc10_29.1, constants.%T.as.Destroy.impl.Op.eab
+// CHECK:STDOUT:   %T.as.Destroy.impl.Op.bound: <bound method> = bound_method %.loc10_29.2, constants.%T.as.Destroy.impl.Op.eab
 // CHECK:STDOUT:   <elided>
-// CHECK:STDOUT:   %bound_method: <bound method> = bound_method %.loc10_29.1, %T.as.Destroy.impl.Op.specific_fn
-// CHECK:STDOUT:   %addr: %ptr.30d = addr_of %.loc10_29.1
+// CHECK:STDOUT:   %bound_method: <bound method> = bound_method %.loc10_29.2, %T.as.Destroy.impl.Op.specific_fn
+// CHECK:STDOUT:   %addr: %ptr.30d = addr_of %.loc10_29.2
 // CHECK:STDOUT:   %T.as.Destroy.impl.Op.call: init %empty_tuple.type = call %bound_method(%addr)
 // CHECK:STDOUT:   return %.loc10_29.12 to %return
 // CHECK:STDOUT: }

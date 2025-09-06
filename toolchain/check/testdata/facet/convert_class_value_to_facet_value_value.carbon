@@ -176,8 +176,8 @@ fn F() {
 // CHECK:STDOUT:   %WalkAnimal.specific_fn: <specific function> = specific_function %WalkAnimal.ref, @WalkAnimal(constants.%Animal.facet) [concrete = constants.%WalkAnimal.specific_fn]
 // CHECK:STDOUT:   %.loc23_17.2: %Goat = bind_value %.loc23_17.1
 // CHECK:STDOUT:   %WalkAnimal.call: init %empty_tuple.type = call %WalkAnimal.specific_fn(%.loc23_17.2)
-// CHECK:STDOUT:   %Goat.as.Destroy.impl.Op.bound: <bound method> = bound_method %.loc23_15.2, constants.%Goat.as.Destroy.impl.Op
-// CHECK:STDOUT:   %addr: %ptr.940 = addr_of %.loc23_15.2
+// CHECK:STDOUT:   %Goat.as.Destroy.impl.Op.bound: <bound method> = bound_method %.loc23_15.4, constants.%Goat.as.Destroy.impl.Op
+// CHECK:STDOUT:   %addr: %ptr.940 = addr_of %.loc23_15.4
 // CHECK:STDOUT:   %Goat.as.Destroy.impl.Op.call: init %empty_tuple.type = call %Goat.as.Destroy.impl.Op.bound(%addr)
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }

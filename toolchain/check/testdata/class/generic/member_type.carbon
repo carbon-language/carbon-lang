@@ -378,16 +378,11 @@ fn Test() -> i32 {
 // CHECK:STDOUT:   %n.ref: %Inner.elem.6c2 = name_ref n, @Inner.%.loc6 [concrete = @Inner.%.loc6]
 // CHECK:STDOUT:   %.loc14_11.1: ref %i32 = class_element_access %c.ref, element0
 // CHECK:STDOUT:   %.loc14_11.2: %i32 = bind_value %.loc14_11.1
-// CHECK:STDOUT:   %Inner.as.Destroy.impl.Op.bound.loc13_3.1: <bound method> = bound_method %.loc13_3, constants.%Inner.as.Destroy.impl.Op.ae2
-// CHECK:STDOUT:   %Inner.as.Destroy.impl.Op.specific_fn.1: <specific function> = specific_function constants.%Inner.as.Destroy.impl.Op.ae2, @Inner.as.Destroy.impl.Op(constants.%i32) [concrete = constants.%Inner.as.Destroy.impl.Op.specific_fn]
-// CHECK:STDOUT:   %bound_method.loc13_3.1: <bound method> = bound_method %.loc13_3, %Inner.as.Destroy.impl.Op.specific_fn.1
-// CHECK:STDOUT:   %addr.loc13_3.1: %ptr.416 = addr_of %.loc13_3
-// CHECK:STDOUT:   %Inner.as.Destroy.impl.Op.call.loc13_3.1: init %empty_tuple.type = call %bound_method.loc13_3.1(%addr.loc13_3.1)
-// CHECK:STDOUT:   %Inner.as.Destroy.impl.Op.bound.loc13_3.2: <bound method> = bound_method %c.var, constants.%Inner.as.Destroy.impl.Op.ae2
-// CHECK:STDOUT:   %Inner.as.Destroy.impl.Op.specific_fn.2: <specific function> = specific_function constants.%Inner.as.Destroy.impl.Op.ae2, @Inner.as.Destroy.impl.Op(constants.%i32) [concrete = constants.%Inner.as.Destroy.impl.Op.specific_fn]
-// CHECK:STDOUT:   %bound_method.loc13_3.2: <bound method> = bound_method %c.var, %Inner.as.Destroy.impl.Op.specific_fn.2
-// CHECK:STDOUT:   %addr.loc13_3.2: %ptr.416 = addr_of %c.var
-// CHECK:STDOUT:   %Inner.as.Destroy.impl.Op.call.loc13_3.2: init %empty_tuple.type = call %bound_method.loc13_3.2(%addr.loc13_3.2)
+// CHECK:STDOUT:   %Inner.as.Destroy.impl.Op.bound: <bound method> = bound_method %c.var, constants.%Inner.as.Destroy.impl.Op.ae2
+// CHECK:STDOUT:   %Inner.as.Destroy.impl.Op.specific_fn: <specific function> = specific_function constants.%Inner.as.Destroy.impl.Op.ae2, @Inner.as.Destroy.impl.Op(constants.%i32) [concrete = constants.%Inner.as.Destroy.impl.Op.specific_fn]
+// CHECK:STDOUT:   %bound_method.loc13_3: <bound method> = bound_method %c.var, %Inner.as.Destroy.impl.Op.specific_fn
+// CHECK:STDOUT:   %addr: %ptr.416 = addr_of %c.var
+// CHECK:STDOUT:   %Inner.as.Destroy.impl.Op.call: init %empty_tuple.type = call %bound_method.loc13_3(%addr)
 // CHECK:STDOUT:   return %.loc14_11.2
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

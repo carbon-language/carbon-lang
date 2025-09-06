@@ -600,7 +600,7 @@ auto PerformCppThunkCall(Context& context, SemIR::LocId loc_id,
   if (thunk_takes_return_address) {
     // Create a temporary if the caller didn't provide a return slot.
     if (!return_slot_id.has_value()) {
-      return_slot_id = AddInstWithCleanup<SemIR::TemporaryStorage>(
+      return_slot_id = AddInst<SemIR::TemporaryStorage>(
           context, loc_id, {.type_id = return_type_id});
     }
 

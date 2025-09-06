@@ -169,8 +169,8 @@ fn F() -> i32 {
 // CHECK:STDOUT:   %a.ref: %Class.elem = name_ref a, @Class.%.loc16 [concrete = @Class.%.loc16]
 // CHECK:STDOUT:   %.loc21_37.1: ref %i32 = class_element_access %.loc21_28, element0
 // CHECK:STDOUT:   %.loc21_37.2: %i32 = bind_value %.loc21_37.1
-// CHECK:STDOUT:   %Class.as.Destroy.impl.Op.bound: <bound method> = bound_method %.loc21_26.3, constants.%Class.as.Destroy.impl.Op
-// CHECK:STDOUT:   %addr: %ptr.e71 = addr_of %.loc21_26.3
+// CHECK:STDOUT:   %Class.as.Destroy.impl.Op.bound: <bound method> = bound_method %.loc21_26.10, constants.%Class.as.Destroy.impl.Op
+// CHECK:STDOUT:   %addr: %ptr.e71 = addr_of %.loc21_26.10
 // CHECK:STDOUT:   %Class.as.Destroy.impl.Op.call: init %empty_tuple.type = call %Class.as.Destroy.impl.Op.bound(%addr)
 // CHECK:STDOUT:   return %.loc21_37.2
 // CHECK:STDOUT: }

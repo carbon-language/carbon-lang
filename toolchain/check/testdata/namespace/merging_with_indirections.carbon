@@ -313,14 +313,11 @@ fn Run() {
 // CHECK:STDOUT:   %.loc13: ref %A = splice_block %a.ref {}
 // CHECK:STDOUT:   %F.call.loc13: init %A = call %F.ref.loc13() to %.loc13
 // CHECK:STDOUT:   assign %a.ref, %F.call.loc13
-// CHECK:STDOUT:   %A.as.Destroy.impl.Op.bound.loc13: <bound method> = bound_method %.loc13, constants.%A.as.Destroy.impl.Op
-// CHECK:STDOUT:   %addr.loc13: %ptr.07e = addr_of %.loc13
-// CHECK:STDOUT:   %A.as.Destroy.impl.Op.call.loc13: init %empty_tuple.type = call %A.as.Destroy.impl.Op.bound.loc13(%addr.loc13)
 // CHECK:STDOUT:   %A.as.Destroy.impl.Op.bound.loc10: <bound method> = bound_method %a.var, constants.%A.as.Destroy.impl.Op
 // CHECK:STDOUT:   %addr.loc10: %ptr.07e = addr_of %a.var
 // CHECK:STDOUT:   %A.as.Destroy.impl.Op.call.loc10: init %empty_tuple.type = call %A.as.Destroy.impl.Op.bound.loc10(%addr.loc10)
-// CHECK:STDOUT:   %A.as.Destroy.impl.Op.bound.loc7: <bound method> = bound_method %.loc7_11.1, constants.%A.as.Destroy.impl.Op
-// CHECK:STDOUT:   %addr.loc7: %ptr.07e = addr_of %.loc7_11.1
+// CHECK:STDOUT:   %A.as.Destroy.impl.Op.bound.loc7: <bound method> = bound_method %.loc7_11.2, constants.%A.as.Destroy.impl.Op
+// CHECK:STDOUT:   %addr.loc7: %ptr.07e = addr_of %.loc7_11.2
 // CHECK:STDOUT:   %A.as.Destroy.impl.Op.call.loc7: init %empty_tuple.type = call %A.as.Destroy.impl.Op.bound.loc7(%addr.loc7)
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }

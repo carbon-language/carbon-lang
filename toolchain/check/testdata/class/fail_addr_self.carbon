@@ -53,7 +53,7 @@ fn F(c: Class, p: Class*) {
 // CHECK:STDOUT:   %Class.G.type: type = fn_type @Class.G [concrete]
 // CHECK:STDOUT:   %Class.G: %Class.G.type = struct_value () [concrete]
 // CHECK:STDOUT:   %Destroy.type: type = facet_type <@Destroy> [concrete]
-// CHECK:STDOUT:   %Destroy.impl_witness.b40: <witness> = impl_witness @Class.%Destroy.impl_witness_table [concrete]
+// CHECK:STDOUT:   %Destroy.impl_witness: <witness> = impl_witness @Class.%Destroy.impl_witness_table [concrete]
 // CHECK:STDOUT:   %Class.as.Destroy.impl.Op.type: type = fn_type @Class.as.Destroy.impl.Op [concrete]
 // CHECK:STDOUT:   %Class.as.Destroy.impl.Op: %Class.as.Destroy.impl.Op.type = struct_value () [concrete]
 // CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [concrete]
@@ -137,7 +137,7 @@ fn F(c: Class, p: Class*) {
 // CHECK:STDOUT:   %Self.ref: type = name_ref Self, constants.%Class [concrete = constants.%Class]
 // CHECK:STDOUT:   impl_decl @Class.as.Destroy.impl [concrete] {} {}
 // CHECK:STDOUT:   %Destroy.impl_witness_table = impl_witness_table (@Class.as.Destroy.impl.%Class.as.Destroy.impl.Op.decl), @Class.as.Destroy.impl [concrete]
-// CHECK:STDOUT:   %Destroy.impl_witness: <witness> = impl_witness %Destroy.impl_witness_table [concrete = constants.%Destroy.impl_witness.b40]
+// CHECK:STDOUT:   %Destroy.impl_witness: <witness> = impl_witness %Destroy.impl_witness_table [concrete = constants.%Destroy.impl_witness]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness constants.%empty_struct_type [concrete = constants.%complete_type]
 // CHECK:STDOUT:   complete_type_witness = %complete_type
 // CHECK:STDOUT:
@@ -160,8 +160,8 @@ fn F(c: Class, p: Class*) {
 // CHECK:STDOUT:   %F.ref.loc32: %Class.F.type = name_ref F, @Class.%Class.F.decl [concrete = constants.%Class.F]
 // CHECK:STDOUT:   %Class.F.bound.loc32: <bound method> = bound_method %c.ref.loc32, %F.ref.loc32
 // CHECK:STDOUT:   %.loc32: ref %Class = temporary_storage
-// CHECK:STDOUT:   %addr.loc32_3.1: %ptr.e71 = addr_of %.loc32
-// CHECK:STDOUT:   %Class.F.call.loc32: init %empty_tuple.type = call %Class.F.bound.loc32(%addr.loc32_3.1)
+// CHECK:STDOUT:   %addr.loc32: %ptr.e71 = addr_of %.loc32
+// CHECK:STDOUT:   %Class.F.call.loc32: init %empty_tuple.type = call %Class.F.bound.loc32(%addr.loc32)
 // CHECK:STDOUT:   %c.ref.loc34: %Class = name_ref c, %c
 // CHECK:STDOUT:   %G.ref.loc34: %Class.G.type = name_ref G, @Class.%Class.G.decl [concrete = constants.%Class.G]
 // CHECK:STDOUT:   %Class.G.bound.loc34: <bound method> = bound_method %c.ref.loc34, %G.ref.loc34
@@ -178,9 +178,6 @@ fn F(c: Class, p: Class*) {
 // CHECK:STDOUT:   %Class.G.bound.loc39: <bound method> = bound_method %.loc39_4.1, %G.ref.loc39
 // CHECK:STDOUT:   %.loc39_4.2: %Class = bind_value %.loc39_4.1
 // CHECK:STDOUT:   %Class.G.call.loc39: init %empty_tuple.type = call %Class.G.bound.loc39(%.loc39_4.2)
-// CHECK:STDOUT:   %Class.as.Destroy.impl.Op.bound: <bound method> = bound_method %.loc32, constants.%Class.as.Destroy.impl.Op
-// CHECK:STDOUT:   %addr.loc32_3.2: %ptr.e71 = addr_of %.loc32
-// CHECK:STDOUT:   %Class.as.Destroy.impl.Op.call: init %empty_tuple.type = call %Class.as.Destroy.impl.Op.bound(%addr.loc32_3.2)
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

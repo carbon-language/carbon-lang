@@ -2017,11 +2017,113 @@ auto ImportNameFromCpp(Context& context, SemIR::LocId loc_id,
                                  access);
 }
 
-static auto GetOperatorKind(Context& context, SemIR::LocId loc_id,
-                            llvm::StringLiteral interface_name)
+static auto GetClangOperatorKind(Context& context, SemIR::LocId loc_id,
+                                 llvm::StringLiteral interface_name,
+                                 llvm::StringLiteral op_name)
     -> std::optional<clang::OverloadedOperatorKind> {
+  // Arithmetic Operators.
   if (interface_name == "AddWith") {
+    CARBON_CHECK(op_name == "Op");
     return clang::OO_Plus;
+  }
+  if (interface_name == "SubWith") {
+    CARBON_CHECK(op_name == "Op");
+    return clang::OO_Minus;
+  }
+  if (interface_name == "MulWith") {
+    CARBON_CHECK(op_name == "Op");
+    return clang::OO_Star;
+  }
+  if (interface_name == "DivWith") {
+    CARBON_CHECK(op_name == "Op");
+    return clang::OO_Slash;
+  }
+  if (interface_name == "ModWith") {
+    CARBON_CHECK(op_name == "Op");
+    return clang::OO_Percent;
+  }
+
+  // Bitwise Operators.
+  if (interface_name == "BitAndWith") {
+    CARBON_CHECK(op_name == "Op");
+    return clang::OO_Amp;
+  }
+  if (interface_name == "BitOrWith") {
+    CARBON_CHECK(op_name == "Op");
+    return clang::OO_Pipe;
+  }
+  if (interface_name == "BitXorWith") {
+    CARBON_CHECK(op_name == "Op");
+    return clang::OO_Caret;
+  }
+  if (interface_name == "LeftShiftWith") {
+    CARBON_CHECK(op_name == "Op");
+    return clang::OO_LessLess;
+  }
+  if (interface_name == "RightShiftWith") {
+    CARBON_CHECK(op_name == "Op");
+    return clang::OO_GreaterGreater;
+  }
+
+  // Compound Assignment Arithmetic Operators.
+  if (interface_name == "AddAssignWith") {
+    CARBON_CHECK(op_name == "Op");
+    return clang::OO_PlusEqual;
+  }
+  if (interface_name == "SubAssignWith") {
+    CARBON_CHECK(op_name == "Op");
+    return clang::OO_MinusEqual;
+  }
+  if (interface_name == "MulAssignWith") {
+    CARBON_CHECK(op_name == "Op");
+    return clang::OO_StarEqual;
+  }
+  if (interface_name == "DivAssignWith") {
+    CARBON_CHECK(op_name == "Op");
+    return clang::OO_SlashEqual;
+  }
+  if (interface_name == "ModAssignWith") {
+    CARBON_CHECK(op_name == "Op");
+    return clang::OO_PercentEqual;
+  }
+
+  // Compound Assignment Bitwise Operators.
+  if (interface_name == "BitAndAssignWith") {
+    CARBON_CHECK(op_name == "Op");
+    return clang::OO_AmpEqual;
+  }
+  if (interface_name == "BitOrAssignWith") {
+    CARBON_CHECK(op_name == "Op");
+    return clang::OO_PipeEqual;
+  }
+  if (interface_name == "BitXorAssignWith") {
+    CARBON_CHECK(op_name == "Op");
+    return clang::OO_CaretEqual;
+  }
+  // TODO: Add support for `LeftShiftAssignWith` (`OO_LessLessEqual`) and
+  // `RightShiftAssignWith` (`OO_GreaterGreaterEqual`) when references are
+  // supported.
+
+  // Relational Operators.
+  if (interface_name == "EqWith") {
+    if (op_name == "Equal") {
+      return clang::OO_EqualEqual;
+    }
+    CARBON_CHECK(op_name == "NotEqual");
+    return clang::OO_ExclaimEqual;
+  }
+  if (interface_name == "OrderedWith") {
+    if (op_name == "Less") {
+      return clang::OO_Less;
+    }
+    if (op_name == "Greater") {
+      return clang::OO_Greater;
+    }
+    if (op_name == "LessOrEquivalent") {
+      return clang::OO_LessEqual;
+    }
+    CARBON_CHECK(op_name == "GreaterOrEquivalent");
+    return clang::OO_GreaterEqual;
   }
 
   context.TODO(loc_id, llvm::formatv("Unsupported operator interface `{0}`",
@@ -2038,7 +2140,8 @@ auto ImportOperatorFromCpp(Context& context, SemIR::LocId loc_id, Operator op)
         builder.Note(loc_id, InCppOperatorLookup, op.interface_name.str());
       });
 
-  auto op_kind = GetOperatorKind(context, loc_id, op.interface_name);
+  auto op_kind =
+      GetClangOperatorKind(context, loc_id, op.interface_name, op.op_name);
   if (!op_kind) {
     return SemIR::ScopeLookupResult::MakeNotFound();
   }
