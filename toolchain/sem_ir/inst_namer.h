@@ -110,7 +110,7 @@ class InstNamer {
     class Name {
      public:
       explicit Name() : value_(nullptr) {}
-      explicit Name(llvm::StringMapIterator<NameResult> it,
+      explicit Name(llvm::StringMap<NameResult>::iterator it,
                     size_t base_name_size)
           : value_(&*it), base_name_size_(base_name_size) {}
 
