@@ -581,10 +581,8 @@ static auto IsDeclInjectedClassName(const Context& context,
 
   const clang::ASTContext& ast_context =
       context.sem_ir().clang_ast_unit()->getASTContext();
-  CARBON_CHECK(
-      ast_context.getCanonicalType(
-          ast_context.getRecordType(scope_record_decl)) ==
-      ast_context.getCanonicalType(ast_context.getRecordType(record_decl)));
+  CARBON_CHECK(ast_context.getCanonicalTagType(scope_record_decl) ==
+               ast_context.getCanonicalTagType(record_decl));
 
   auto class_decl =
       context.sem_ir().insts().GetAs<SemIR::ClassDecl>(clang_decl.inst_id);
@@ -1117,7 +1115,7 @@ auto ImportClassDefinitionForClangDecl(Context& context, SemIR::LocId loc_id,
   // instantiation if necessary.
   clang::DiagnosticErrorTrap trap(ast->getDiagnostics());
   if (!ast->getSema().isCompleteType(
-          loc, context.ast_context().getTypeDeclType(clang_decl))) {
+          loc, context.ast_context().getCanonicalTagType(clang_decl))) {
     // Type is incomplete. Nothing more to do, but tell the caller if we
     // produced an error.
     return !trap.hasErrorOccurred();
@@ -1267,7 +1265,7 @@ static auto LookupCustomRecordType(Context& context,
 // Maps a C++ tag type (class, struct, union, enum) to a Carbon type.
 static auto MapTagType(Context& context, const clang::TagType& type)
     -> TypeExpr {
-  auto* tag_decl = type.getDecl();
+  auto* tag_decl = type.getOriginalDecl();
   CARBON_CHECK(tag_decl);
 
   // Check if the declaration is already mapped.
@@ -1810,7 +1808,7 @@ static auto AddDependentUnimportedTypeDecls(const Context& context,
   }
 
   if (const auto* tag_type = type->getAs<clang::TagType>()) {
-    AddDependentDecl(context, tag_type->getDecl(), worklist);
+    AddDependentDecl(context, tag_type->getOriginalDecl(), worklist);
   }
 }
 
