@@ -28,6 +28,7 @@
 #include "toolchain/base/kind_switch.h"
 #include "toolchain/check/class.h"
 #include "toolchain/check/context.h"
+#include "toolchain/check/control_flow.h"
 #include "toolchain/check/convert.h"
 #include "toolchain/check/cpp_custom_type_mapping.h"
 #include "toolchain/check/cpp_thunk.h"
@@ -1844,6 +1845,59 @@ static auto AddDependentUnimportedDecls(const Context& context,
   }
 }
 
+static auto ImportVarDecl(Context& context, SemIR::LocId loc_id,
+                          clang::VarDecl* var_decl) -> SemIR::InstId {
+  if (SemIR::InstId existing_inst_id = LookupClangDeclInstId(context, var_decl);
+      existing_inst_id.has_value()) {
+    return existing_inst_id;
+  }
+
+  // Extract type and name.
+  clang::QualType var_type = var_decl->getType();
+  SemIR::TypeId var_type_id = MapType(context, loc_id, var_type).type_id;
+  if (!var_type_id.has_value()) {
+    context.TODO(loc_id, llvm::formatv("Unsupported: var type: {0}",
+                                       var_type.getAsString()));
+    return SemIR::ErrorInst::InstId;
+  }
+  SemIR::NameId var_name_id = AddIdentifierName(context, var_decl->getName());
+
+  SemIR::VarStorage var_storage{.type_id = var_type_id,
+                                .pattern_id = SemIR::InstId::None};
+  // We can't use the convenience for `AddPlaceholderInstInNoBlock()` with typed
+  // nodes because it doesn't support insts with cleanup.
+  SemIR::InstId var_storage_inst_id =
+      AddPlaceholderInstInNoBlock(context, {loc_id, var_storage});
+
+  auto clang_decl_id = context.sem_ir().clang_decls().Add(
+      {.decl = var_decl, .inst_id = var_storage_inst_id});
+
+  // Entity name referring to a Clang decl for mangling.
+  SemIR::EntityNameId entity_name_id =
+      context.entity_names().AddSymbolicBindingName(
+          var_name_id, GetParentNameScopeId(context, var_decl),
+          SemIR::CompileTimeBindIndex::None, false, clang_decl_id);
+
+  // Create `BindingPattern` and `VarPattern` in a `NameBindingDecl`.
+  context.pattern_block_stack().Push();
+  SemIR::TypeId pattern_type_id = GetPatternType(context, var_type_id);
+  SemIR::InstId binding_pattern_inst_id = AddPatternInst<SemIR::BindingPattern>(
+      context, loc_id,
+      {.type_id = pattern_type_id, .entity_name_id = entity_name_id});
+  var_storage.pattern_id = AddPatternInst<SemIR::VarPattern>(
+      context, Parse::VariablePatternId::None,
+      {.type_id = pattern_type_id, .subpattern_id = binding_pattern_inst_id});
+  context.imports().push_back(AddInstInNoBlock<SemIR::NameBindingDecl>(
+      context, loc_id,
+      {.pattern_block_id = context.pattern_block_stack().Pop()}));
+
+  // Finalize the `VarStorage` instruction.
+  ReplaceInstBeforeConstantUse(context, var_storage_inst_id, var_storage);
+  context.imports().push_back(var_storage_inst_id);
+
+  return var_storage_inst_id;
+}
+
 // Imports a declaration from Clang to Carbon. Returns the instruction for the
 // new Carbon declaration, which will be an ErrorInst on failure. Assumes all
 // dependencies have already been imported.
@@ -1882,6 +1936,9 @@ static auto ImportDeclAfterDependencies(Context& context, SemIR::LocId loc_id,
   }
   if (auto* enum_const_decl = dyn_cast<clang::EnumConstantDecl>(clang_decl)) {
     return ImportEnumConstantDecl(context, enum_const_decl);
+  }
+  if (auto* var_decl = dyn_cast<clang::VarDecl>(clang_decl)) {
+    return ImportVarDecl(context, loc_id, var_decl);
   }
 
   context.TODO(AddImportIRInst(context.sem_ir(), clang_decl->getLocation()),
