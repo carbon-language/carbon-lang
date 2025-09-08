@@ -444,7 +444,7 @@ class Internal::FileRefBase {
   // this layer, if a back-off heuristic is desired the caller should manage the
   // polling themselves. The goal is to allow simple cases of spurious failures
   // to be easily handled without unbounded blocking calls. Typically, callers
-  // should use duration that is a reasonable upper bound on the latency to
+  // should use a duration that is a reasonable upper bound on the latency to
   // begin the locked operation and a poll interval that is a reasonably low
   // median latency to begin the operation as 1-2 polls is expected to be
   // common. These should not be set anywhere near the cost of acquiring a file
@@ -672,7 +672,7 @@ class DirRef {
 
   // Reads all of the entries in this directory into a vector.
   //
-  // A helper function wrapping `Read` and walking the resulting readers entries
+  // A helper function wrapping `Read` and walking the resulting reader's entries
   // to produce a container.
   //
   // For details on errors, see the documentation of `Read` and `Reader`.
@@ -680,7 +680,8 @@ class DirRef {
       -> ErrorOr<llvm::SmallVector<std::filesystem::path>, FdError>;
 
   // Reads the directory and appends entries to a container if they pass a
-  // predicate.
+  // predicate. The predicate can be null, which is treated as if it always returns
+  // true.
   //
   // For details on errors, see the documentation of `Read` and `Reader`.
   auto AppendEntriesIf(
@@ -689,7 +690,8 @@ class DirRef {
       -> ErrorOr<Success, FdError>;
 
   // Reads the directory and appends entries to one of two containers if they
-  // pass a predicate.
+  // pass a predicate.  The predicate can be null, which is treated as if it always
+  // returns true.
   //
   // Which container an entry is appended to depends on its kind -- directories
   // go to the first and non-directories go to the second. This turns out to be
