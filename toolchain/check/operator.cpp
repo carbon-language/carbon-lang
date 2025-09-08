@@ -4,12 +4,15 @@
 
 #include "toolchain/check/operator.h"
 
+#include <optional>
+
 #include "toolchain/check/call.h"
 #include "toolchain/check/context.h"
 #include "toolchain/check/generic.h"
 #include "toolchain/check/import_cpp.h"
 #include "toolchain/check/member_access.h"
 #include "toolchain/check/name_lookup.h"
+#include "toolchain/sem_ir/class.h"
 #include "toolchain/sem_ir/ids.h"
 #include "toolchain/sem_ir/typed_insts.h"
 
@@ -53,18 +56,24 @@ auto BuildUnaryOperator(Context& context, SemIR::LocId loc_id, Operator op,
   return PerformCall(context, loc_id, bound_op_id, {});
 }
 
-// Returns whether the type of the instruction is a C++ class.
-static auto IsOfCppClassType(Context& context, SemIR::InstId inst_id) -> bool {
+// If the instruction is a C++ class, returns its parent scope id. Otherwise
+// returns `std::nullopt`.
+static auto GetCppClassTypeParentScope(Context& context, SemIR::InstId inst_id)
+    -> std::optional<SemIR::NameScopeId> {
   auto class_type = context.insts().TryGetAs<SemIR::ClassType>(
       context.types().GetInstId(context.insts().Get(inst_id).type_id()));
   if (!class_type) {
     // Not a class.
-    return false;
+    return std::nullopt;
   }
 
-  return context.name_scopes()
-      .Get(context.classes().Get(class_type->class_id).scope_id)
-      .is_cpp_scope();
+  const SemIR::Class& class_info = context.classes().Get(class_type->class_id);
+  if (!context.name_scopes().Get(class_info.scope_id).is_cpp_scope()) {
+    // Not a C++ class.
+    return std::nullopt;
+  }
+
+  return class_info.parent_scope_id;
 }
 
 auto BuildBinaryOperator(Context& context, SemIR::LocId loc_id, Operator op,
@@ -79,9 +88,16 @@ auto BuildBinaryOperator(Context& context, SemIR::LocId loc_id, Operator op,
   // https://github.com/carbon-language/carbon-lang/pull/5996/files/5d01fa69511b76f87efbc0387f5e40abcf4c911a#r2308666348
   // and
   // https://github.com/carbon-language/carbon-lang/pull/5996/files/5d01fa69511b76f87efbc0387f5e40abcf4c911a#r2308664536
-  if (IsOfCppClassType(context, lhs_id) || IsOfCppClassType(context, rhs_id)) {
+  llvm::SmallVector<SemIR::NameScopeId, 2> cpp_operand_parent_scope_ids;
+  for (SemIR::InstId operand_id : {lhs_id, rhs_id}) {
+    auto cpp_parent_scope_id = GetCppClassTypeParentScope(context, operand_id);
+    if (!cpp_parent_scope_id || llvm::is_contained(cpp_operand_parent_scope_ids,
+                                                   *cpp_parent_scope_id)) {
+      continue;
+    }
+    cpp_operand_parent_scope_ids.push_back(*cpp_parent_scope_id);
     SemIR::ScopeLookupResult cpp_lookup_result =
-        ImportOperatorFromCpp(context, loc_id, op);
+        ImportOperatorFromCpp(context, loc_id, *cpp_parent_scope_id, op);
     if (cpp_lookup_result.is_found()) {
       return PerformCall(context, loc_id, cpp_lookup_result.target_inst_id(),
                          {lhs_id, rhs_id});
