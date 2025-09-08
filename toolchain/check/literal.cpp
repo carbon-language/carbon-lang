@@ -25,6 +25,11 @@ auto MakeIntLiteral(Context& context, Parse::NodeId node_id, IntId int_id)
        .int_id = int_id});
 }
 
+auto MakeCharTypeLiteral(Context& context, Parse::NodeId node_id)
+    -> SemIR::InstId {
+  return LookupNameInCore(context, node_id, "Char");
+}
+
 auto MakeIntTypeLiteral(Context& context, Parse::NodeId node_id,
                         SemIR::IntKind int_kind, IntId size_id)
     -> SemIR::InstId {

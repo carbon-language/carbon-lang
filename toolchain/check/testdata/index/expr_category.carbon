@@ -356,10 +356,10 @@ fn ValueBinding(b: array(i32, 3)) {
 // CHECK:STDOUT:   %.loc32_7.2: %i32 = converted %int_0.loc32, %.loc32_7.1 [concrete = constants.%int_0.6a9]
 // CHECK:STDOUT:   %.loc32_8.1: ref %i32 = array_index %.loc32_5.2, %.loc32_7.2
 // CHECK:STDOUT:   %.loc32_8.2: %i32 = bind_value %.loc32_8.1
-// CHECK:STDOUT:   %T.as.Destroy.impl.Op.bound.loc32: <bound method> = bound_method %.loc32_5.1, constants.%T.as.Destroy.impl.Op.f0b
+// CHECK:STDOUT:   %T.as.Destroy.impl.Op.bound.loc32: <bound method> = bound_method %.loc32_5.2, constants.%T.as.Destroy.impl.Op.f0b
 // CHECK:STDOUT:   %T.as.Destroy.impl.Op.specific_fn.1: <specific function> = specific_function constants.%T.as.Destroy.impl.Op.f0b, @T.as.Destroy.impl.Op(constants.%array_type) [concrete = constants.%T.as.Destroy.impl.Op.specific_fn.c51]
-// CHECK:STDOUT:   %bound_method.loc32_5: <bound method> = bound_method %.loc32_5.1, %T.as.Destroy.impl.Op.specific_fn.1
-// CHECK:STDOUT:   %addr.loc32: %ptr.f01 = addr_of %.loc32_5.1
+// CHECK:STDOUT:   %bound_method.loc32_5: <bound method> = bound_method %.loc32_5.2, %T.as.Destroy.impl.Op.specific_fn.1
+// CHECK:STDOUT:   %addr.loc32: %ptr.f01 = addr_of %.loc32_5.2
 // CHECK:STDOUT:   %T.as.Destroy.impl.Op.call.loc32: init %empty_tuple.type = call %bound_method.loc32_5(%addr.loc32)
 // CHECK:STDOUT:   %T.as.Destroy.impl.Op.bound.loc26: <bound method> = bound_method %a.var, constants.%T.as.Destroy.impl.Op.f0b
 // CHECK:STDOUT:   %T.as.Destroy.impl.Op.specific_fn.2: <specific function> = specific_function constants.%T.as.Destroy.impl.Op.f0b, @T.as.Destroy.impl.Op(constants.%array_type) [concrete = constants.%T.as.Destroy.impl.Op.specific_fn.c51]

@@ -325,11 +325,11 @@ fn CallFAndGIncomplete() {
 // CHECK:STDOUT:   %.loc34_15.1: ref %D.b3dde2.1 = temporary_storage
 // CHECK:STDOUT:   %ReturnDUsed.call: init %D.b3dde2.1 = call %ReturnDUsed.ref() to %.loc34_15.1
 // CHECK:STDOUT:   %.loc34_15.2: ref %D.b3dde2.1 = temporary %.loc34_15.1, %ReturnDUsed.call
-// CHECK:STDOUT:   %D.as.Destroy.impl.Op.bound.loc34: <bound method> = bound_method %.loc34_15.1, constants.%D.as.Destroy.impl.Op
-// CHECK:STDOUT:   %addr.loc34: %ptr.19c = addr_of %.loc34_15.1
+// CHECK:STDOUT:   %D.as.Destroy.impl.Op.bound.loc34: <bound method> = bound_method %.loc34_15.2, constants.%D.as.Destroy.impl.Op
+// CHECK:STDOUT:   %addr.loc34: %ptr.19c = addr_of %.loc34_15.2
 // CHECK:STDOUT:   %D.as.Destroy.impl.Op.call.loc34: init %empty_tuple.type = call %D.as.Destroy.impl.Op.bound.loc34(%addr.loc34)
-// CHECK:STDOUT:   %D.as.Destroy.impl.Op.bound.loc33: <bound method> = bound_method %.loc33_17.1, constants.%D.as.Destroy.impl.Op
-// CHECK:STDOUT:   %addr.loc33: %ptr.19c = addr_of %.loc33_17.1
+// CHECK:STDOUT:   %D.as.Destroy.impl.Op.bound.loc33: <bound method> = bound_method %.loc33_17.2, constants.%D.as.Destroy.impl.Op
+// CHECK:STDOUT:   %addr.loc33: %ptr.19c = addr_of %.loc33_17.2
 // CHECK:STDOUT:   %D.as.Destroy.impl.Op.call.loc33: init %empty_tuple.type = call %D.as.Destroy.impl.Op.bound.loc33(%addr.loc33)
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }

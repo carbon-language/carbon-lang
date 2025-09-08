@@ -109,10 +109,10 @@ fn F() -> i32 {
 // CHECK:STDOUT:   %.loc18_35.3: %struct_type.a.b.c.4ca = converted %.loc18_35.1, %struct.loc18_35
 // CHECK:STDOUT:   %.loc18_36: %struct_type.x.y.z = struct_access %.loc18_35.3, element1
 // CHECK:STDOUT:   %.loc18_38: %i32 = struct_access %.loc18_36, element1
-// CHECK:STDOUT:   %T.as.Destroy.impl.Op.bound: <bound method> = bound_method %.loc18_26.1, constants.%T.as.Destroy.impl.Op.1a4
+// CHECK:STDOUT:   %T.as.Destroy.impl.Op.bound: <bound method> = bound_method %.loc18_26.2, constants.%T.as.Destroy.impl.Op.1a4
 // CHECK:STDOUT:   %T.as.Destroy.impl.Op.specific_fn: <specific function> = specific_function constants.%T.as.Destroy.impl.Op.1a4, @T.as.Destroy.impl.Op(constants.%struct_type.x.y.z) [concrete = constants.%T.as.Destroy.impl.Op.specific_fn]
-// CHECK:STDOUT:   %bound_method: <bound method> = bound_method %.loc18_26.1, %T.as.Destroy.impl.Op.specific_fn
-// CHECK:STDOUT:   %addr: %ptr.6eb = addr_of %.loc18_26.1
+// CHECK:STDOUT:   %bound_method: <bound method> = bound_method %.loc18_26.2, %T.as.Destroy.impl.Op.specific_fn
+// CHECK:STDOUT:   %addr: %ptr.6eb = addr_of %.loc18_26.2
 // CHECK:STDOUT:   %T.as.Destroy.impl.Op.call: init %empty_tuple.type = call %bound_method(%addr)
 // CHECK:STDOUT:   return %.loc18_38
 // CHECK:STDOUT: }

@@ -195,8 +195,8 @@ class A {
 // CHECK:STDOUT:   %n.ref: %B.elem = name_ref n, @B.%.loc23 [concrete = @B.%.loc23]
 // CHECK:STDOUT:   %.loc26_20.1: ref %i32 = class_element_access %.loc26_19.2, element0
 // CHECK:STDOUT:   %.loc26_20.2: %i32 = bind_value %.loc26_20.1
-// CHECK:STDOUT:   %B.as.Destroy.impl.Op.bound: <bound method> = bound_method %.loc26_19.1, constants.%B.as.Destroy.impl.Op
-// CHECK:STDOUT:   %addr: %ptr.bac = addr_of %.loc26_19.1
+// CHECK:STDOUT:   %B.as.Destroy.impl.Op.bound: <bound method> = bound_method %.loc26_19.2, constants.%B.as.Destroy.impl.Op
+// CHECK:STDOUT:   %addr: %ptr.bac = addr_of %.loc26_19.2
 // CHECK:STDOUT:   %B.as.Destroy.impl.Op.call: init %empty_tuple.type = call %B.as.Destroy.impl.Op.bound(%addr)
 // CHECK:STDOUT:   return %.loc26_20.2
 // CHECK:STDOUT: }

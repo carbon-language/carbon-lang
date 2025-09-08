@@ -355,10 +355,10 @@ fn G() {
 // CHECK:STDOUT:     %C.as.I.impl.F.call: init %empty_tuple.type = call %C.as.I.impl.F.specific_fn.loc8_17.1(%.5)
 // CHECK:STDOUT:     %Op.ref: %Destroy.assoc_type = name_ref Op, imports.%Core.import_ref.f99 [concrete = constants.%assoc0]
 // CHECK:STDOUT:     %impl.elem0: @C.as.I.impl.F.loc8_17.2.%.6 (%.926) = impl_witness_access constants.%Destroy.impl_witness.35ec57.2, element0 [symbolic = %C.as.Destroy.impl.Op (constants.%C.as.Destroy.impl.Op.c1f409.2)]
-// CHECK:STDOUT:     %bound_method.1: <bound method> = bound_method %.1, %impl.elem0
+// CHECK:STDOUT:     %bound_method.1: <bound method> = bound_method %.3, %impl.elem0
 // CHECK:STDOUT:     %specific_fn: <specific function> = specific_function %impl.elem0, @C.as.Destroy.impl.Op(constants.%Y) [symbolic = %C.as.Destroy.impl.Op.specific_fn (constants.%C.as.Destroy.impl.Op.specific_fn)]
-// CHECK:STDOUT:     %bound_method.2: <bound method> = bound_method %.1, %specific_fn
-// CHECK:STDOUT:     %addr: @C.as.I.impl.F.loc8_17.2.%ptr (%ptr.40dc71.2) = addr_of %.1
+// CHECK:STDOUT:     %bound_method.2: <bound method> = bound_method %.3, %specific_fn
+// CHECK:STDOUT:     %addr: @C.as.I.impl.F.loc8_17.2.%ptr (%ptr.40dc71.2) = addr_of %.3
 // CHECK:STDOUT:     %C.as.Destroy.impl.Op.call: init %empty_tuple.type = call %bound_method.2(%addr)
 // CHECK:STDOUT:     return
 // CHECK:STDOUT:   }
@@ -456,7 +456,7 @@ fn G() {
 // CHECK:STDOUT:   %C.as.Destroy.impl.Op.type.1b919a.1: type = fn_type @C.as.Destroy.impl.Op, @C.as.Destroy.impl(%X) [symbolic]
 // CHECK:STDOUT:   %C.as.Destroy.impl.Op.65ca93.1: %C.as.Destroy.impl.Op.type.1b919a.1 = struct_value () [symbolic]
 // CHECK:STDOUT:   %ptr.40dc71.1: type = ptr_type %C.13320f.1 [symbolic]
-// CHECK:STDOUT:   %pattern_type.2a1: type = pattern_type %ptr.40dc71.1 [symbolic]
+// CHECK:STDOUT:   %pattern_type.2a1e48.1: type = pattern_type %ptr.40dc71.1 [symbolic]
 // CHECK:STDOUT:   %Y: %empty_tuple.type = bind_symbolic_name Y, 0 [symbolic]
 // CHECK:STDOUT:   %C.13320f.2: type = class_type @C, @C(%Y) [symbolic]
 // CHECK:STDOUT:   %I.impl_witness.7d9: <witness> = impl_witness imports.%I.impl_witness_table, @C.as.I.impl(%Y) [symbolic]
@@ -477,6 +477,7 @@ fn G() {
 // CHECK:STDOUT:   %C.as.Destroy.impl.Op.specific_fn.c52: <specific function> = specific_function %C.as.Destroy.impl.Op.65ca93.2, @C.as.Destroy.impl.Op(%Y) [symbolic]
 // CHECK:STDOUT:   %ptr.40dc71.2: type = ptr_type %C.13320f.2 [symbolic]
 // CHECK:STDOUT:   %require_complete.0b0: <witness> = require_complete_type %ptr.40dc71.2 [symbolic]
+// CHECK:STDOUT:   %pattern_type.2a1e48.2: type = pattern_type %ptr.40dc71.2 [symbolic]
 // CHECK:STDOUT:   %I.impl_witness.02b: <witness> = impl_witness imports.%I.impl_witness_table, @C.as.I.impl(%empty_tuple) [concrete]
 // CHECK:STDOUT:   %C.as.I.impl.F.type.af4856.1: type = fn_type @C.as.I.impl.F.1, @C.as.I.impl(%empty_tuple) [concrete]
 // CHECK:STDOUT:   %C.as.I.impl.F.5fa954.1: %C.as.I.impl.F.type.af4856.1 = struct_value () [concrete]
@@ -626,10 +627,10 @@ fn G() {
 // CHECK:STDOUT:   %.loc7_16.6: ref %C.607 = converted %.loc7_16.2, %.loc7_16.5
 // CHECK:STDOUT:   %.loc7_16.7: %C.607 = bind_value %.loc7_16.6
 // CHECK:STDOUT:   %C.as.I.impl.F.call: init %empty_tuple.type = call %C.as.I.impl.F.specific_fn(%.loc7_16.7)
-// CHECK:STDOUT:   %C.as.Destroy.impl.Op.bound: <bound method> = bound_method %.loc7_16.3, constants.%C.as.Destroy.impl.Op.8db
+// CHECK:STDOUT:   %C.as.Destroy.impl.Op.bound: <bound method> = bound_method %.loc7_16.5, constants.%C.as.Destroy.impl.Op.8db
 // CHECK:STDOUT:   %C.as.Destroy.impl.Op.specific_fn: <specific function> = specific_function constants.%C.as.Destroy.impl.Op.8db, @C.as.Destroy.impl.Op(constants.%empty_tuple) [concrete = constants.%C.as.Destroy.impl.Op.specific_fn.e84]
-// CHECK:STDOUT:   %bound_method: <bound method> = bound_method %.loc7_16.3, %C.as.Destroy.impl.Op.specific_fn
-// CHECK:STDOUT:   %addr: %ptr.2ce = addr_of %.loc7_16.3
+// CHECK:STDOUT:   %bound_method: <bound method> = bound_method %.loc7_16.5, %C.as.Destroy.impl.Op.specific_fn
+// CHECK:STDOUT:   %addr: %ptr.2ce = addr_of %.loc7_16.5
 // CHECK:STDOUT:   %C.as.Destroy.impl.Op.call: init %empty_tuple.type = call %bound_method(%addr)
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
@@ -642,7 +643,7 @@ fn G() {
 // CHECK:STDOUT:   %X: %empty_tuple.type = bind_symbolic_name X, 0 [symbolic = %X (constants.%X)]
 // CHECK:STDOUT:   %C: type = class_type @C, @C(%X) [symbolic = %C (constants.%C.13320f.1)]
 // CHECK:STDOUT:   %ptr: type = ptr_type %C [symbolic = %ptr (constants.%ptr.40dc71.1)]
-// CHECK:STDOUT:   %pattern_type: type = pattern_type %ptr [symbolic = %pattern_type (constants.%pattern_type.2a1)]
+// CHECK:STDOUT:   %pattern_type: type = pattern_type %ptr [symbolic = %pattern_type (constants.%pattern_type.2a1e48.1)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:
@@ -703,7 +704,7 @@ fn G() {
 // CHECK:STDOUT:   %X => constants.%X
 // CHECK:STDOUT:   %C => constants.%C.13320f.1
 // CHECK:STDOUT:   %ptr => constants.%ptr.40dc71.1
-// CHECK:STDOUT:   %pattern_type => constants.%pattern_type.2a1
+// CHECK:STDOUT:   %pattern_type => constants.%pattern_type.2a1e48.1
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @C(constants.%Y) {
@@ -734,6 +735,23 @@ fn G() {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @C.as.I.impl.F.2(constants.%Y) {}
+// CHECK:STDOUT:
+// CHECK:STDOUT: specific @C.as.Destroy.impl(constants.%Y) {
+// CHECK:STDOUT:   %X => constants.%Y
+// CHECK:STDOUT:   %C => constants.%C.13320f.2
+// CHECK:STDOUT:   %Destroy.impl_witness => constants.%Destroy.impl_witness.5d03b3.2
+// CHECK:STDOUT:
+// CHECK:STDOUT: !definition:
+// CHECK:STDOUT:   %C.as.Destroy.impl.Op.type => constants.%C.as.Destroy.impl.Op.type.1b919a.2
+// CHECK:STDOUT:   %C.as.Destroy.impl.Op => constants.%C.as.Destroy.impl.Op.65ca93.2
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: specific @C.as.Destroy.impl.Op(constants.%Y) {
+// CHECK:STDOUT:   %X => constants.%Y
+// CHECK:STDOUT:   %C => constants.%C.13320f.2
+// CHECK:STDOUT:   %ptr => constants.%ptr.40dc71.2
+// CHECK:STDOUT:   %pattern_type => constants.%pattern_type.2a1e48.2
+// CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @C.as.I.impl(constants.%empty_tuple) {
 // CHECK:STDOUT:   %Y => constants.%empty_tuple

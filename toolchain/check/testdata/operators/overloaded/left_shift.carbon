@@ -72,7 +72,6 @@ fn TestAssign(a: C*, b: C) {
 // CHECK:STDOUT:   %bound_method: <bound method> = bound_method %a.ref, %impl.elem1
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT:   %C.as.LeftShiftWith.impl.Op.call: init %C = call %bound_method(%a.ref, %b.ref) to %.loc30
-// CHECK:STDOUT:   <elided>
 // CHECK:STDOUT:   return %C.as.LeftShiftWith.impl.Op.call to %return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

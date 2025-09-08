@@ -31,6 +31,7 @@
 #include "toolchain/sem_ir/generic.h"
 #include "toolchain/sem_ir/ids.h"
 #include "toolchain/sem_ir/inst.h"
+#include "toolchain/sem_ir/type.h"
 #include "toolchain/sem_ir/typed_insts.h"
 
 // TODO: This contains a lot of recursion. Consider removing it in order to
@@ -62,12 +63,12 @@ static auto CopyValueToTemporary(Context& context, SemIR::InstId init_id)
   // TODO: Consider using `None` to mean that we immediately materialize and
   // initialize a temporary, rather than two separate instructions.
   auto init = context.sem_ir().insts().Get(init_id);
-  auto temporary_id = AddInstWithCleanup<SemIR::TemporaryStorage>(
+  auto temporary_id = AddInst<SemIR::TemporaryStorage>(
       context, SemIR::LocId(init_id), {.type_id = init.type_id()});
-  return AddInst<SemIR::Temporary>(context, SemIR::LocId(init_id),
-                                   {.type_id = init.type_id(),
-                                    .storage_id = temporary_id,
-                                    .init_id = init_id});
+  return AddInstWithCleanup<SemIR::Temporary>(context, SemIR::LocId(init_id),
+                                              {.type_id = init.type_id(),
+                                               .storage_id = temporary_id,
+                                               .init_id = init_id});
 }
 
 // Commits to using a temporary to store the result of the initializing
@@ -87,10 +88,11 @@ static auto FinalizeTemporary(Context& context, SemIR::InstId init_id,
                  "initialized multiple times? Have {0}",
                  sem_ir.insts().Get(return_slot_arg_id));
     auto init = sem_ir.insts().Get(init_id);
-    return AddInst<SemIR::Temporary>(context, SemIR::LocId(init_id),
-                                     {.type_id = init.type_id(),
-                                      .storage_id = return_slot_arg_id,
-                                      .init_id = init_id});
+    return AddInstWithCleanup<SemIR::Temporary>(
+        context, SemIR::LocId(init_id),
+        {.type_id = init.type_id(),
+         .storage_id = return_slot_arg_id,
+         .init_id = init_id});
   }
 
   if (discarded) {
@@ -260,9 +262,8 @@ static auto ConvertTupleToArray(Context& context, SemIR::TupleType tuple_type,
   // destination for the array initialization if we weren't given one.
   SemIR::InstId return_slot_arg_id = target.init_id;
   if (!target.init_id.has_value()) {
-    return_slot_arg_id =
-        target_block->AddInstWithCleanup<SemIR::TemporaryStorage>(
-            value_loc_id, {.type_id = target.type_id});
+    return_slot_arg_id = target_block->AddInst<SemIR::TemporaryStorage>(
+        value_loc_id, {.type_id = target.type_id});
   }
 
   // Initialize each element of the array from the corresponding element of the
@@ -606,7 +607,7 @@ static auto ConvertStructToClass(Context& context, SemIR::StructType src_type,
   if (need_temporary) {
     target.kind = ConversionTarget::Initializer;
     target.init_block = &target_block;
-    target.init_id = target_block.AddInstWithCleanup<SemIR::TemporaryStorage>(
+    target.init_id = target_block.AddInst<SemIR::TemporaryStorage>(
         SemIR::LocId(value_id), {.type_id = target.type_id});
   }
 
@@ -616,10 +617,11 @@ static auto ConvertStructToClass(Context& context, SemIR::StructType src_type,
 
   if (need_temporary) {
     target_block.InsertHere();
-    result_id = AddInst<SemIR::Temporary>(context, SemIR::LocId(value_id),
-                                          {.type_id = target.type_id,
-                                           .storage_id = target.init_id,
-                                           .init_id = result_id});
+    result_id =
+        AddInstWithCleanup<SemIR::Temporary>(context, SemIR::LocId(value_id),
+                                             {.type_id = target.type_id,
+                                              .storage_id = target.init_id,
+                                              .init_id = result_id});
   }
   return result_id;
 }
@@ -731,6 +733,7 @@ static auto IsValidExprCategoryForConversionTarget(
     case ConversionTarget::CppThunkRef:
       return category == SemIR::ExprCategory::EphemeralRef;
     case ConversionTarget::ExplicitAs:
+    case ConversionTarget::ExplicitUnsafeAs:
       return true;
     case ConversionTarget::Initializer:
     case ConversionTarget::FullInitializer:
@@ -764,6 +767,55 @@ static auto CanUseValueOfInitializer(const SemIR::File& sem_ir,
 
   // We can pull a value out of an initializing expression if it holds one.
   return InitReprIsCopyOfValueRepr(sem_ir, type_id);
+}
+
+// Determine whether the given set of qualifiers can be added by a conversion
+// of an expression of the given category.
+static auto CanAddQualifiers(SemIR::TypeQualifiers quals,
+                             SemIR::ExprCategory cat) -> bool {
+  if (HasTypeQualifier(quals, SemIR::TypeQualifiers::MaybeUnformed) &&
+      !SemIR::IsRefCategory(cat)) {
+    // `MaybeUnformed(T)` may have a different value representation or
+    // initializing representation from `T`, so only allow it to be added for a
+    // reference expression.
+    // TODO: We should allow converting an initializing expression of type `T`
+    // to `MaybeUnformed(T)`. `PerformBuiltinConversion` will need to generate
+    // an `InPlaceInit` instruction when needed.
+    // NOLINTNEXTLINE(readability-simplify-boolean-expr)
+    return false;
+  }
+
+  // `const` and `partial` can always be added.
+  return true;
+}
+
+// Determine whether the given set of qualifiers can be removed by a conversion
+// of an expression of the given category.
+static auto CanRemoveQualifiers(SemIR::TypeQualifiers quals,
+                                SemIR::ExprCategory cat, bool allow_unsafe)
+    -> bool {
+  if (HasTypeQualifier(quals, SemIR::TypeQualifiers::Const) && !allow_unsafe &&
+      SemIR::IsRefCategory(cat)) {
+    // Removing `const` is an unsafe conversion for a reference expression.
+    return false;
+  }
+
+  if (HasTypeQualifier(quals, SemIR::TypeQualifiers::Partial) &&
+      (!allow_unsafe || cat == SemIR::ExprCategory::Initializing)) {
+    // TODO: Allow removing `partial` for initializing expressions as a safe
+    // conversion. `PerformBuiltinConversion` will need to initialize the vptr
+    // as part of the conversion.
+    return false;
+  }
+
+  if (HasTypeQualifier(quals, SemIR::TypeQualifiers::MaybeUnformed) &&
+      (!allow_unsafe || cat == SemIR::ExprCategory::Initializing)) {
+    // As an unsafe conversion, `MaybeUnformed` can be removed from a value or
+    // reference expression.
+    return false;
+  }
+
+  return true;
 }
 
 static auto DiagnoseConversionFailureToConstraintValue(
@@ -913,25 +965,57 @@ static auto PerformBuiltinConversion(
     }
   }
 
-  // T explicitly converts to U if T is compatible with U.
-  if (target.kind == ConversionTarget::Kind::ExplicitAs &&
-      target.type_id != value_type_id) {
-    auto target_foundation_id =
-        context.types().GetTransitiveAdaptedType(target.type_id);
-    auto value_foundation_id =
-        context.types().GetTransitiveAdaptedType(value_type_id);
+  // T explicitly converts to U if T is compatible with U, and we're allowed to
+  // remove / add any qualifiers that differ.
+  if (target.is_explicit_as() && target.type_id != value_type_id) {
+    auto [target_foundation_id, target_quals] =
+        context.types().GetTransitiveUnqualifiedAdaptedType(target.type_id);
+    auto [value_foundation_id, value_quals] =
+        context.types().GetTransitiveUnqualifiedAdaptedType(value_type_id);
     if (target_foundation_id == value_foundation_id) {
-      // For a struct or tuple literal, perform a category conversion if
-      // necessary.
-      if (SemIR::GetExprCategory(context.sem_ir(), value_id) ==
-          SemIR::ExprCategory::Mixed) {
-        value_id = PerformBuiltinConversion(context, loc_id, value_id,
-                                            {.kind = ConversionTarget::Value,
-                                             .type_id = value_type_id,
-                                             .diagnose = target.diagnose});
+      auto category = SemIR::GetExprCategory(context.sem_ir(), value_id);
+      auto added_quals = target_quals & ~value_quals;
+      auto removed_quals = value_quals & ~target_quals;
+      if (CanAddQualifiers(added_quals, category) &&
+          CanRemoveQualifiers(
+              removed_quals, category,
+              target.kind == ConversionTarget::ExplicitUnsafeAs)) {
+        // For a struct or tuple literal, perform a category conversion if
+        // necessary.
+        if (category == SemIR::ExprCategory::Mixed) {
+          value_id = PerformBuiltinConversion(context, loc_id, value_id,
+                                              {.kind = ConversionTarget::Value,
+                                               .type_id = value_type_id,
+                                               .diagnose = target.diagnose});
+        }
+
+        // `MaybeUnformed(T)` has a pointer value representation, and `T` might
+        // not, so convert as needed when removing `MaybeUnformed`.
+        bool need_value_binding = false;
+        if ((removed_quals & SemIR::TypeQualifiers::MaybeUnformed) !=
+                SemIR::TypeQualifiers::None &&
+            category == SemIR::ExprCategory::Value) {
+          value_id = AddInst<SemIR::ValueAsRef>(
+              context, loc_id,
+              {.type_id = value_type_id, .value_id = value_id});
+          need_value_binding = true;
+        }
+
+        value_id = AddInst<SemIR::AsCompatible>(
+            context, loc_id,
+            {.type_id = target.type_id, .source_id = value_id});
+
+        if (need_value_binding) {
+          value_id = AddInst<SemIR::BindValue>(
+              context, loc_id,
+              {.type_id = target.type_id, .value_id = value_id});
+        }
+        return value_id;
+      } else {
+        // TODO: Produce a custom diagnostic explaining that we can't perform
+        // this conversion due to the change in qualifiers and/or the expression
+        // category.
       }
-      return AddInst<SemIR::AsCompatible>(
-          context, loc_id, {.type_id = target.type_id, .source_id = value_id});
     }
   }
 
@@ -996,24 +1080,30 @@ static auto PerformBuiltinConversion(
     }
   }
 
-  // A pointer T* converts to [const] U* if T is the same as U, or is a class
-  // derived from U.
+  // A pointer T* converts to [qualified] U* if T is the same as U, or is a
+  // class derived from U.
   if (auto target_pointer_type = target_type_inst.TryAs<SemIR::PointerType>()) {
     if (auto src_pointer_type =
             sem_ir.types().TryGetAs<SemIR::PointerType>(value_type_id)) {
+      auto target_pointee_id = context.types().GetTypeIdForTypeInstId(
+          target_pointer_type->pointee_id);
+      auto src_pointee_id =
+          context.types().GetTypeIdForTypeInstId(src_pointer_type->pointee_id);
+      // Try to complete the pointee types so that we can walk through adapters
+      // to their adapted types.
+      TryToCompleteType(context, target_pointee_id, loc_id);
+      TryToCompleteType(context, src_pointee_id, loc_id);
       auto [unqual_target_pointee_type_id, target_quals] =
-          sem_ir.types().GetUnqualifiedTypeAndQualifiers(
-              context.types().GetTypeIdForTypeInstId(
-                  target_pointer_type->pointee_id));
+          sem_ir.types().GetTransitiveUnqualifiedAdaptedType(target_pointee_id);
       auto [unqual_src_pointee_type_id, src_quals] =
-          sem_ir.types().GetUnqualifiedTypeAndQualifiers(
-              context.types().GetTypeIdForTypeInstId(
-                  src_pointer_type->pointee_id));
+          sem_ir.types().GetTransitiveUnqualifiedAdaptedType(src_pointee_id);
 
-      // If the qualifiers are incompatible, we can't perform a conversion.
-      if ((src_quals & ~target_quals) != SemIR::TypeQualifiers::None) {
+      // If the qualifiers are incompatible, we can't perform a conversion,
+      // except with `unsafe as`.
+      if ((src_quals & ~target_quals) != SemIR::TypeQualifiers::None &&
+          target.kind != ConversionTarget::ExplicitUnsafeAs) {
         // TODO: Consider producing a custom diagnostic here for a cast that
-        // discards constness. We should allow this with `unsafe as`.
+        // discards constness.
         return value_id;
       }
 
@@ -1098,8 +1188,7 @@ static auto PerformBuiltinConversion(
   // Type values can convert to facet values, and facet values can convert to
   // other facet values, as long as they satisfy the required interfaces of the
   // target `FacetType`.
-  if (target.type_id != value_type_id &&
-      sem_ir.types().Is<SemIR::FacetType>(target.type_id) &&
+  if (sem_ir.types().Is<SemIR::FacetType>(target.type_id) &&
       (sem_ir.types().Is<SemIR::TypeType>(value_type_id) ||
        sem_ir.types().Is<SemIR::FacetType>(value_type_id))) {
     // The value is a type or facet value, so it has a constant value. We get
@@ -1231,6 +1320,19 @@ static auto ConvertValueForCppThunkRef(Context& context, SemIR::InstId expr_id,
   return expr_id;
 }
 
+// Returns the Core interface name to use for a given kind of conversion.
+static auto GetConversionInterfaceName(ConversionTarget::Kind kind)
+    -> llvm::StringLiteral {
+  switch (kind) {
+    case ConversionTarget::ExplicitAs:
+      return "As";
+    case ConversionTarget::ExplicitUnsafeAs:
+      return "UnsafeAs";
+    default:
+      return "ImplicitAs";
+  }
+}
+
 auto PerformAction(Context& context, SemIR::LocId loc_id,
                    SemIR::ConvertToValueAction action) -> SemIR::InstId {
   return Convert(context, loc_id, action.inst_id,
@@ -1344,9 +1446,7 @@ auto Convert(Context& context, SemIR::LocId loc_id, SemIR::InstId expr_id,
     SemIR::InstId interface_args[] = {
         context.types().GetInstId(target.type_id)};
     Operator op = {
-        .interface_name = target.kind == ConversionTarget::ExplicitAs
-                              ? llvm::StringLiteral("As")
-                              : llvm::StringLiteral("ImplicitAs"),
+        .interface_name = GetConversionInterfaceName(target.kind),
         .interface_args_ref = interface_args,
         .op_name = "Convert",
     };
@@ -1354,28 +1454,31 @@ auto Convert(Context& context, SemIR::LocId loc_id, SemIR::InstId expr_id,
       if (!target.diagnose) {
         return context.emitter().BuildSuppressed();
       }
+      int target_kind_for_diag =
+          target.kind == ConversionTarget::ExplicitAs         ? 1
+          : target.kind == ConversionTarget::ExplicitUnsafeAs ? 2
+                                                              : 0;
       if (target.type_id == SemIR::TypeType::TypeId ||
           sem_ir.types().Is<SemIR::FacetType>(target.type_id)) {
         CARBON_DIAGNOSTIC(
             ConversionFailureNonTypeToFacet, Error,
-            "cannot{0:| implicitly} convert non-type value of type {1} "
-            "{2:to|into type implementing} {3}{0: with `as`|}",
-            Diagnostics::BoolAsSelect, TypeOfInstId, Diagnostics::BoolAsSelect,
+            "cannot{0:=0: implicitly|:} convert non-type value of type {1} "
+            "{2:to|into type implementing} {3}"
+            "{0:=1: with `as`|=2: with `unsafe as`|:}",
+            Diagnostics::IntAsSelect, TypeOfInstId, Diagnostics::BoolAsSelect,
             SemIR::TypeId);
         return context.emitter().Build(
-            loc_id, ConversionFailureNonTypeToFacet,
-            target.kind == ConversionTarget::ExplicitAs, expr_id,
-            target.type_id == SemIR::TypeType::TypeId, target.type_id);
+            loc_id, ConversionFailureNonTypeToFacet, target_kind_for_diag,
+            expr_id, target.type_id == SemIR::TypeType::TypeId, target.type_id);
       } else {
-        CARBON_DIAGNOSTIC(ConversionFailure, Error,
-                          "cannot{0:| implicitly} convert expression of type "
-                          "{1} to {2}{0: with `as`|}",
-                          Diagnostics::BoolAsSelect, TypeOfInstId,
-                          SemIR::TypeId);
-        return context.emitter().Build(
-            loc_id, ConversionFailure,
-            target.kind == ConversionTarget::ExplicitAs, expr_id,
-            target.type_id);
+        CARBON_DIAGNOSTIC(
+            ConversionFailure, Error,
+            "cannot{0:=0: implicitly|:} convert expression of type "
+            "{1} to {2}{0:=1: with `as`|=2: with `unsafe as`|:}",
+            Diagnostics::IntAsSelect, TypeOfInstId, SemIR::TypeId);
+        return context.emitter().Build(loc_id, ConversionFailure,
+                                       target_kind_for_diag, expr_id,
+                                       target.type_id);
       }
     });
 
@@ -1397,7 +1500,7 @@ auto Convert(Context& context, SemIR::LocId loc_id, SemIR::InstId expr_id,
 
   // For `as`, don't perform any value category conversions. In particular, an
   // identity conversion shouldn't change the expression category.
-  if (target.kind == ConversionTarget::ExplicitAs) {
+  if (target.is_explicit_as()) {
     return expr_id;
   }
 
@@ -1554,10 +1657,12 @@ auto ConvertToBoolValue(Context& context, SemIR::LocId loc_id,
 }
 
 auto ConvertForExplicitAs(Context& context, Parse::NodeId as_node,
-                          SemIR::InstId value_id, SemIR::TypeId type_id)
-    -> SemIR::InstId {
+                          SemIR::InstId value_id, SemIR::TypeId type_id,
+                          bool unsafe) -> SemIR::InstId {
   return Convert(context, as_node, value_id,
-                 {.kind = ConversionTarget::ExplicitAs, .type_id = type_id});
+                 {.kind = unsafe ? ConversionTarget::ExplicitUnsafeAs
+                                 : ConversionTarget::ExplicitAs,
+                  .type_id = type_id});
 }
 
 // TODO: Consider moving this to pattern_match.h.

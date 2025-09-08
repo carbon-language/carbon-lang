@@ -334,14 +334,14 @@ fn G() { F({}); }
 // CHECK:STDOUT:   %.loc11_17.1: ref %WithAddr = temporary_storage
 // CHECK:STDOUT:   %WithAddr.Make.call: init %WithAddr = call %Make.ref.loc11() to %.loc11_17.1
 // CHECK:STDOUT:   %.loc11_17.2: ref %WithAddr = temporary %.loc11_17.1, %WithAddr.Make.call
-// CHECK:STDOUT:   %WithAddr.as.Destroy.impl.Op.bound: <bound method> = bound_method %.loc11_17.1, constants.%WithAddr.as.Destroy.impl.Op
-// CHECK:STDOUT:   %addr.loc11: %ptr.b4e = addr_of %.loc11_17.1
+// CHECK:STDOUT:   %WithAddr.as.Destroy.impl.Op.bound: <bound method> = bound_method %.loc11_17.2, constants.%WithAddr.as.Destroy.impl.Op
+// CHECK:STDOUT:   %addr.loc11: %ptr.b4e = addr_of %.loc11_17.2
 // CHECK:STDOUT:   %WithAddr.as.Destroy.impl.Op.call: init %empty_tuple.type = call %WithAddr.as.Destroy.impl.Op.bound(%addr.loc11)
-// CHECK:STDOUT:   %ExplicitReturn.as.Destroy.impl.Op.bound: <bound method> = bound_method %.loc10_23.1, constants.%ExplicitReturn.as.Destroy.impl.Op
-// CHECK:STDOUT:   %addr.loc10: %ptr.b0a = addr_of %.loc10_23.1
+// CHECK:STDOUT:   %ExplicitReturn.as.Destroy.impl.Op.bound: <bound method> = bound_method %.loc10_23.2, constants.%ExplicitReturn.as.Destroy.impl.Op
+// CHECK:STDOUT:   %addr.loc10: %ptr.b0a = addr_of %.loc10_23.2
 // CHECK:STDOUT:   %ExplicitReturn.as.Destroy.impl.Op.call: init %empty_tuple.type = call %ExplicitReturn.as.Destroy.impl.Op.bound(%addr.loc10)
-// CHECK:STDOUT:   %NoAddr.as.Destroy.impl.Op.bound: <bound method> = bound_method %.loc9_15.1, constants.%NoAddr.as.Destroy.impl.Op
-// CHECK:STDOUT:   %addr.loc9: %ptr.4b8 = addr_of %.loc9_15.1
+// CHECK:STDOUT:   %NoAddr.as.Destroy.impl.Op.bound: <bound method> = bound_method %.loc9_15.2, constants.%NoAddr.as.Destroy.impl.Op
+// CHECK:STDOUT:   %addr.loc9: %ptr.4b8 = addr_of %.loc9_15.2
 // CHECK:STDOUT:   %NoAddr.as.Destroy.impl.Op.call: init %empty_tuple.type = call %NoAddr.as.Destroy.impl.Op.bound(%addr.loc9)
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }

@@ -181,9 +181,6 @@ var a: array(1, 1);
 // CHECK:STDOUT:   %tuple.type.14a: type = tuple_type (%tuple.type.734, %tuple.type.734) [concrete]
 // CHECK:STDOUT:   %int_0: Core.IntLiteral = int_value 0 [concrete]
 // CHECK:STDOUT:   %int_1: Core.IntLiteral = int_value 1 [concrete]
-// CHECK:STDOUT:   %T.as.Destroy.impl.Op.type.fe9: type = fn_type @T.as.Destroy.impl.Op, @T.as.Destroy.impl(%tuple.type.734) [concrete]
-// CHECK:STDOUT:   %T.as.Destroy.impl.Op.ae1: %T.as.Destroy.impl.Op.type.fe9 = struct_value () [concrete]
-// CHECK:STDOUT:   %ptr.dbe: type = ptr_type %tuple.type.734 [concrete]
 // CHECK:STDOUT:   %T.as.Destroy.impl.Op.type.280: type = fn_type @T.as.Destroy.impl.Op, @T.as.Destroy.impl(%array_type) [concrete]
 // CHECK:STDOUT:   %T.as.Destroy.impl.Op.d4f: %T.as.Destroy.impl.Op.type.280 = struct_value () [concrete]
 // CHECK:STDOUT: }
@@ -224,21 +221,11 @@ var a: array(1, 1);
 // CHECK:STDOUT:     %array_type: type = array_type %int_2, %.loc10_24.2 [concrete = constants.%array_type]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %v: ref %array_type = bind_name v, %v.var
-// CHECK:STDOUT:   %T.as.Destroy.impl.Op.bound.loc10_41.1: <bound method> = bound_method %.loc10_41.2, constants.%T.as.Destroy.impl.Op.ae1
+// CHECK:STDOUT:   %T.as.Destroy.impl.Op.bound: <bound method> = bound_method %v.var, constants.%T.as.Destroy.impl.Op.d4f
 // CHECK:STDOUT:   <elided>
-// CHECK:STDOUT:   %bound_method.loc10_41.1: <bound method> = bound_method %.loc10_41.2, %T.as.Destroy.impl.Op.specific_fn.1
-// CHECK:STDOUT:   %addr.loc10_41.1: %ptr.dbe = addr_of %.loc10_41.2
-// CHECK:STDOUT:   %T.as.Destroy.impl.Op.call.loc10_41.1: init %empty_tuple.type = call %bound_method.loc10_41.1(%addr.loc10_41.1)
-// CHECK:STDOUT:   %T.as.Destroy.impl.Op.bound.loc10_41.2: <bound method> = bound_method %.loc10_41.1, constants.%T.as.Destroy.impl.Op.ae1
-// CHECK:STDOUT:   <elided>
-// CHECK:STDOUT:   %bound_method.loc10_41.2: <bound method> = bound_method %.loc10_41.1, %T.as.Destroy.impl.Op.specific_fn.2
-// CHECK:STDOUT:   %addr.loc10_41.2: %ptr.dbe = addr_of %.loc10_41.1
-// CHECK:STDOUT:   %T.as.Destroy.impl.Op.call.loc10_41.2: init %empty_tuple.type = call %bound_method.loc10_41.2(%addr.loc10_41.2)
-// CHECK:STDOUT:   %T.as.Destroy.impl.Op.bound.loc10_3: <bound method> = bound_method %v.var, constants.%T.as.Destroy.impl.Op.d4f
-// CHECK:STDOUT:   <elided>
-// CHECK:STDOUT:   %bound_method.loc10_3: <bound method> = bound_method %v.var, %T.as.Destroy.impl.Op.specific_fn.3
-// CHECK:STDOUT:   %addr.loc10_3: %ptr.c6b = addr_of %v.var
-// CHECK:STDOUT:   %T.as.Destroy.impl.Op.call.loc10_3: init %empty_tuple.type = call %bound_method.loc10_3(%addr.loc10_3)
+// CHECK:STDOUT:   %bound_method: <bound method> = bound_method %v.var, %T.as.Destroy.impl.Op.specific_fn
+// CHECK:STDOUT:   %addr: %ptr.c6b = addr_of %v.var
+// CHECK:STDOUT:   %T.as.Destroy.impl.Op.call: init %empty_tuple.type = call %bound_method(%addr)
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -355,10 +342,10 @@ var a: array(1, 1);
 // CHECK:STDOUT:     %array_type: type = array_type %int_1, %.loc8_17.2 [concrete = constants.%array_type]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %t: ref %array_type = bind_name t, %t.var
-// CHECK:STDOUT:   %T.as.Destroy.impl.Op.bound.loc8_27: <bound method> = bound_method %.loc8_27.1, constants.%T.as.Destroy.impl.Op.f19
+// CHECK:STDOUT:   %T.as.Destroy.impl.Op.bound.loc8_27: <bound method> = bound_method %.loc8_27.2, constants.%T.as.Destroy.impl.Op.f19
 // CHECK:STDOUT:   <elided>
-// CHECK:STDOUT:   %bound_method.loc8_27: <bound method> = bound_method %.loc8_27.1, %T.as.Destroy.impl.Op.specific_fn.1
-// CHECK:STDOUT:   %addr.loc8_27: %ptr.652 = addr_of %.loc8_27.1
+// CHECK:STDOUT:   %bound_method.loc8_27: <bound method> = bound_method %.loc8_27.2, %T.as.Destroy.impl.Op.specific_fn.1
+// CHECK:STDOUT:   %addr.loc8_27: %ptr.652 = addr_of %.loc8_27.2
 // CHECK:STDOUT:   %T.as.Destroy.impl.Op.call.loc8_27: init %empty_tuple.type = call %bound_method.loc8_27(%addr.loc8_27)
 // CHECK:STDOUT:   %T.as.Destroy.impl.Op.bound.loc8_3: <bound method> = bound_method %t.var, constants.%T.as.Destroy.impl.Op.688
 // CHECK:STDOUT:   <elided>

@@ -253,30 +253,18 @@ class Class(T:! type) {
 // CHECK:STDOUT:       %Self.ref: type = name_ref Self, %.loc22_12.2 [symbolic = %Class.loc21_19.2 (constants.%Class)]
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %s: ref @Class.F.%Class.loc21_19.2 (%Class) = bind_name s, %s.var
-// CHECK:STDOUT:     %impl.elem0.loc22_5.1: @Class.F.%.loc22_5.2 (%.02c) = impl_witness_access constants.%Destroy.impl_witness.95a, element0 [symbolic = %Class.as.Destroy.impl.Op (constants.%Class.as.Destroy.impl.Op)]
-// CHECK:STDOUT:     %bound_method.loc22_5.1: <bound method> = bound_method %.loc22_5.1, %impl.elem0.loc22_5.1
-// CHECK:STDOUT:     %specific_fn.loc22_5.1: <specific function> = specific_function %impl.elem0.loc22_5.1, @Class.as.Destroy.impl.Op(constants.%T) [symbolic = %Class.as.Destroy.impl.Op.specific_fn (constants.%Class.as.Destroy.impl.Op.specific_fn)]
-// CHECK:STDOUT:     %bound_method.loc22_5.2: <bound method> = bound_method %.loc22_5.1, %specific_fn.loc22_5.1
-// CHECK:STDOUT:     %addr.loc22_5.1: @Class.F.%ptr (%ptr.955) = addr_of %.loc22_5.1
-// CHECK:STDOUT:     %Class.as.Destroy.impl.Op.call.loc22_5.1: init %empty_tuple.type = call %bound_method.loc22_5.2(%addr.loc22_5.1)
-// CHECK:STDOUT:     %impl.elem0.loc22_5.2: @Class.F.%.loc22_5.2 (%.02c) = impl_witness_access constants.%Destroy.impl_witness.95a, element0 [symbolic = %Class.as.Destroy.impl.Op (constants.%Class.as.Destroy.impl.Op)]
-// CHECK:STDOUT:     %bound_method.loc22_5.3: <bound method> = bound_method %s.var, %impl.elem0.loc22_5.2
-// CHECK:STDOUT:     %specific_fn.loc22_5.2: <specific function> = specific_function %impl.elem0.loc22_5.2, @Class.as.Destroy.impl.Op(constants.%T) [symbolic = %Class.as.Destroy.impl.Op.specific_fn (constants.%Class.as.Destroy.impl.Op.specific_fn)]
-// CHECK:STDOUT:     %bound_method.loc22_5.4: <bound method> = bound_method %s.var, %specific_fn.loc22_5.2
-// CHECK:STDOUT:     %addr.loc22_5.2: @Class.F.%ptr (%ptr.955) = addr_of %s.var
-// CHECK:STDOUT:     %Class.as.Destroy.impl.Op.call.loc22_5.2: init %empty_tuple.type = call %bound_method.loc22_5.4(%addr.loc22_5.2)
-// CHECK:STDOUT:     %impl.elem0.loc21_5.1: @Class.F.%.loc22_5.2 (%.02c) = impl_witness_access constants.%Destroy.impl_witness.95a, element0 [symbolic = %Class.as.Destroy.impl.Op (constants.%Class.as.Destroy.impl.Op)]
-// CHECK:STDOUT:     %bound_method.loc21_5.1: <bound method> = bound_method %.loc21_5, %impl.elem0.loc21_5.1
-// CHECK:STDOUT:     %specific_fn.loc21_5.1: <specific function> = specific_function %impl.elem0.loc21_5.1, @Class.as.Destroy.impl.Op(constants.%T) [symbolic = %Class.as.Destroy.impl.Op.specific_fn (constants.%Class.as.Destroy.impl.Op.specific_fn)]
-// CHECK:STDOUT:     %bound_method.loc21_5.2: <bound method> = bound_method %.loc21_5, %specific_fn.loc21_5.1
-// CHECK:STDOUT:     %addr.loc21_5.1: @Class.F.%ptr (%ptr.955) = addr_of %.loc21_5
-// CHECK:STDOUT:     %Class.as.Destroy.impl.Op.call.loc21_5.1: init %empty_tuple.type = call %bound_method.loc21_5.2(%addr.loc21_5.1)
-// CHECK:STDOUT:     %impl.elem0.loc21_5.2: @Class.F.%.loc22_5.2 (%.02c) = impl_witness_access constants.%Destroy.impl_witness.95a, element0 [symbolic = %Class.as.Destroy.impl.Op (constants.%Class.as.Destroy.impl.Op)]
-// CHECK:STDOUT:     %bound_method.loc21_5.3: <bound method> = bound_method %c.var, %impl.elem0.loc21_5.2
-// CHECK:STDOUT:     %specific_fn.loc21_5.2: <specific function> = specific_function %impl.elem0.loc21_5.2, @Class.as.Destroy.impl.Op(constants.%T) [symbolic = %Class.as.Destroy.impl.Op.specific_fn (constants.%Class.as.Destroy.impl.Op.specific_fn)]
-// CHECK:STDOUT:     %bound_method.loc21_5.4: <bound method> = bound_method %c.var, %specific_fn.loc21_5.2
-// CHECK:STDOUT:     %addr.loc21_5.2: @Class.F.%ptr (%ptr.955) = addr_of %c.var
-// CHECK:STDOUT:     %Class.as.Destroy.impl.Op.call.loc21_5.2: init %empty_tuple.type = call %bound_method.loc21_5.4(%addr.loc21_5.2)
+// CHECK:STDOUT:     %impl.elem0.loc22: @Class.F.%.loc22_5.2 (%.02c) = impl_witness_access constants.%Destroy.impl_witness.95a, element0 [symbolic = %Class.as.Destroy.impl.Op (constants.%Class.as.Destroy.impl.Op)]
+// CHECK:STDOUT:     %bound_method.loc22_5.1: <bound method> = bound_method %s.var, %impl.elem0.loc22
+// CHECK:STDOUT:     %specific_fn.loc22: <specific function> = specific_function %impl.elem0.loc22, @Class.as.Destroy.impl.Op(constants.%T) [symbolic = %Class.as.Destroy.impl.Op.specific_fn (constants.%Class.as.Destroy.impl.Op.specific_fn)]
+// CHECK:STDOUT:     %bound_method.loc22_5.2: <bound method> = bound_method %s.var, %specific_fn.loc22
+// CHECK:STDOUT:     %addr.loc22: @Class.F.%ptr (%ptr.955) = addr_of %s.var
+// CHECK:STDOUT:     %Class.as.Destroy.impl.Op.call.loc22: init %empty_tuple.type = call %bound_method.loc22_5.2(%addr.loc22)
+// CHECK:STDOUT:     %impl.elem0.loc21: @Class.F.%.loc22_5.2 (%.02c) = impl_witness_access constants.%Destroy.impl_witness.95a, element0 [symbolic = %Class.as.Destroy.impl.Op (constants.%Class.as.Destroy.impl.Op)]
+// CHECK:STDOUT:     %bound_method.loc21_5.1: <bound method> = bound_method %c.var, %impl.elem0.loc21
+// CHECK:STDOUT:     %specific_fn.loc21: <specific function> = specific_function %impl.elem0.loc21, @Class.as.Destroy.impl.Op(constants.%T) [symbolic = %Class.as.Destroy.impl.Op.specific_fn (constants.%Class.as.Destroy.impl.Op.specific_fn)]
+// CHECK:STDOUT:     %bound_method.loc21_5.2: <bound method> = bound_method %c.var, %specific_fn.loc21
+// CHECK:STDOUT:     %addr.loc21: @Class.F.%ptr (%ptr.955) = addr_of %c.var
+// CHECK:STDOUT:     %Class.as.Destroy.impl.Op.call.loc21: init %empty_tuple.type = call %bound_method.loc21_5.2(%addr.loc21)
 // CHECK:STDOUT:     return
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }

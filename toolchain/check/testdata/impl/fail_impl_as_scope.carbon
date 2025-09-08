@@ -464,8 +464,8 @@ class X {
 // CHECK:STDOUT:   %bound_method: <bound method> = bound_method %.loc29_7.1, %impl.elem1
 // CHECK:STDOUT:   %.loc29_7.2: %Point = bind_value %.loc29_7.1
 // CHECK:STDOUT:   %Point.as.Z.impl.Method.call: init %empty_tuple.type = call %bound_method(%.loc29_7.2)
-// CHECK:STDOUT:   %Point.as.Destroy.impl.Op.bound: <bound method> = bound_method %.loc29_5.2, constants.%Point.as.Destroy.impl.Op
-// CHECK:STDOUT:   %addr: %ptr.536 = addr_of %.loc29_5.2
+// CHECK:STDOUT:   %Point.as.Destroy.impl.Op.bound: <bound method> = bound_method %.loc29_5.4, constants.%Point.as.Destroy.impl.Op
+// CHECK:STDOUT:   %addr: %ptr.536 = addr_of %.loc29_5.4
 // CHECK:STDOUT:   %Point.as.Destroy.impl.Op.call: init %empty_tuple.type = call %Point.as.Destroy.impl.Op.bound(%addr)
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }

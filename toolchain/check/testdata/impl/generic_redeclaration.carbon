@@ -759,10 +759,10 @@ impl forall [T:! type] T as I {
 // CHECK:STDOUT:     %.loc21_14.2: ref %empty_tuple.type = temporary %.loc21_14.1, %T.as.I.impl.C.call
 // CHECK:STDOUT:     %tuple: %empty_tuple.type = tuple_value () [concrete = constants.%empty_tuple]
 // CHECK:STDOUT:     %.loc21_15: %empty_tuple.type = converted %T.as.I.impl.C.call, %tuple [concrete = constants.%empty_tuple]
-// CHECK:STDOUT:     %T.as.Destroy.impl.Op.bound: <bound method> = bound_method %.loc21_14.1, constants.%T.as.Destroy.impl.Op.ea3
+// CHECK:STDOUT:     %T.as.Destroy.impl.Op.bound: <bound method> = bound_method %.loc21_14.2, constants.%T.as.Destroy.impl.Op.ea3
 // CHECK:STDOUT:     %T.as.Destroy.impl.Op.specific_fn: <specific function> = specific_function constants.%T.as.Destroy.impl.Op.ea3, @T.as.Destroy.impl.Op(constants.%empty_tuple.type) [concrete = constants.%T.as.Destroy.impl.Op.specific_fn]
-// CHECK:STDOUT:     %bound_method: <bound method> = bound_method %.loc21_14.1, %T.as.Destroy.impl.Op.specific_fn
-// CHECK:STDOUT:     %addr: %ptr.843 = addr_of %.loc21_14.1
+// CHECK:STDOUT:     %bound_method: <bound method> = bound_method %.loc21_14.2, %T.as.Destroy.impl.Op.specific_fn
+// CHECK:STDOUT:     %addr: %ptr.843 = addr_of %.loc21_14.2
 // CHECK:STDOUT:     %T.as.Destroy.impl.Op.call: init %empty_tuple.type = call %bound_method(%addr)
 // CHECK:STDOUT:     return %.loc21_15
 // CHECK:STDOUT:   }

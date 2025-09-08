@@ -182,7 +182,7 @@ struct Assign {
 struct AssociatedConstantDecl {
   static constexpr auto Kind =
       InstKind::AssociatedConstantDecl
-          .Define<Parse::CompileTimeBindingPatternId>(
+          .Define<Parse::AssociatedConstantNameAndTypeId>(
               {.ir_name = "assoc_const_decl",
                .constant_kind = InstConstantKind::AlwaysUnique,
                .is_lowered = false});
@@ -1162,6 +1162,21 @@ struct LookupImplWitness {
   SpecificInterfaceId query_specific_interface_id;
 };
 
+// A type that holds an object representation of another type, that may or may
+// not be a valid representation. In particular, it may also hold an unformed
+// state.
+struct MaybeUnformedType {
+  static constexpr auto Kind =
+      InstKind::MaybeUnformedType.Define<Parse::NodeId>({
+          .ir_name = "maybe_unformed_type",
+          .is_type = InstIsType::Always,
+          .constant_kind = InstConstantKind::WheneverPossible,
+      });
+
+  TypeId type_id;
+  TypeInstId inner_id;
+};
+
 // A name-binding declaration, i.e. a declaration introduced with `let` or
 // `var`.
 struct NameBindingDecl {
@@ -1644,8 +1659,8 @@ struct SymbolicBindingPattern {
 
 // A temporary value.
 struct Temporary {
-  static constexpr auto Kind =
-      InstKind::Temporary.Define<Parse::NodeId>({.ir_name = "temporary"});
+  static constexpr auto Kind = InstKind::Temporary.Define<Parse::NodeId>(
+      {.ir_name = "temporary", .has_cleanup = true});
 
   TypeId type_id;
   DestInstId storage_id;
@@ -1654,11 +1669,11 @@ struct Temporary {
 
 // Storage for a temporary value.
 struct TemporaryStorage {
-  // TODO: Make Parse::NodeId more specific.
+  // The cleanup is owned by the `Temporary` instruction, so has_cleanup is set
+  // to `false` here.
   static constexpr auto Kind = InstKind::TemporaryStorage.Define<Parse::NodeId>(
       {.ir_name = "temporary_storage",
-       .constant_kind = InstConstantKind::Never,
-       .has_cleanup = true});
+       .constant_kind = InstConstantKind::Never});
 
   TypeId type_id;
 };

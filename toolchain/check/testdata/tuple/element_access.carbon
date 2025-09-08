@@ -371,10 +371,10 @@ var b: i32 = a.({.index = 2}.index);
 // CHECK:STDOUT:   %.loc7_12.2: ref %tuple.type.a1c = temporary %.loc7_12.1, %F.call
 // CHECK:STDOUT:   %tuple.elem0: ref %i32 = tuple_access %.loc7_12.2, element0
 // CHECK:STDOUT:   %.loc7_13: %i32 = bind_value %tuple.elem0
-// CHECK:STDOUT:   %T.as.Destroy.impl.Op.bound: <bound method> = bound_method %.loc7_12.1, constants.%T.as.Destroy.impl.Op.c8e
+// CHECK:STDOUT:   %T.as.Destroy.impl.Op.bound: <bound method> = bound_method %.loc7_12.2, constants.%T.as.Destroy.impl.Op.c8e
 // CHECK:STDOUT:   <elided>
-// CHECK:STDOUT:   %bound_method: <bound method> = bound_method %.loc7_12.1, %T.as.Destroy.impl.Op.specific_fn
-// CHECK:STDOUT:   %addr: %ptr.0b7 = addr_of %.loc7_12.1
+// CHECK:STDOUT:   %bound_method: <bound method> = bound_method %.loc7_12.2, %T.as.Destroy.impl.Op.specific_fn
+// CHECK:STDOUT:   %addr: %ptr.0b7 = addr_of %.loc7_12.2
 // CHECK:STDOUT:   %T.as.Destroy.impl.Op.call: init %empty_tuple.type = call %bound_method(%addr)
 // CHECK:STDOUT:   return %.loc7_13
 // CHECK:STDOUT: }

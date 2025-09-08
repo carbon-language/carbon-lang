@@ -249,11 +249,11 @@ let n: {.x: ()} = {.x = ()} as {.x = ()};
 // CHECK:STDOUT:   %tuple: %tuple.type.b67 = tuple_value (%.loc13_25.3, %.loc13_33.3)
 // CHECK:STDOUT:   %.loc13_34.2: %tuple.type.b67 = converted %.loc13_34.1, %tuple
 // CHECK:STDOUT:   %a: %tuple.type.b67 = bind_name a, %.loc13_34.2
-// CHECK:STDOUT:   %X.as.Destroy.impl.Op.bound.loc13_33: <bound method> = bound_method %.loc13_33.1, constants.%X.as.Destroy.impl.Op
-// CHECK:STDOUT:   %addr.loc13_33: %ptr.d17 = addr_of %.loc13_33.1
+// CHECK:STDOUT:   %X.as.Destroy.impl.Op.bound.loc13_33: <bound method> = bound_method %.loc13_33.2, constants.%X.as.Destroy.impl.Op
+// CHECK:STDOUT:   %addr.loc13_33: %ptr.d17 = addr_of %.loc13_33.2
 // CHECK:STDOUT:   %X.as.Destroy.impl.Op.call.loc13_33: init %empty_tuple.type = call %X.as.Destroy.impl.Op.bound.loc13_33(%addr.loc13_33)
-// CHECK:STDOUT:   %X.as.Destroy.impl.Op.bound.loc13_25: <bound method> = bound_method %.loc13_25.1, constants.%X.as.Destroy.impl.Op
-// CHECK:STDOUT:   %addr.loc13_25: %ptr.d17 = addr_of %.loc13_25.1
+// CHECK:STDOUT:   %X.as.Destroy.impl.Op.bound.loc13_25: <bound method> = bound_method %.loc13_25.2, constants.%X.as.Destroy.impl.Op
+// CHECK:STDOUT:   %addr.loc13_25: %ptr.d17 = addr_of %.loc13_25.2
 // CHECK:STDOUT:   %X.as.Destroy.impl.Op.call.loc13_25: init %empty_tuple.type = call %X.as.Destroy.impl.Op.bound.loc13_25(%addr.loc13_25)
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
@@ -286,17 +286,11 @@ let n: {.x: ()} = {.x = ()} as {.x = ()};
 // CHECK:STDOUT:     %.loc20_15.3: type = converted %.loc20_15.2, constants.%tuple.type.b67 [concrete = constants.%tuple.type.b67]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %b: ref %tuple.type.b67 = bind_name b, %b.var
-// CHECK:STDOUT:   %X.as.Destroy.impl.Op.bound.loc20_34.1: <bound method> = bound_method %tuple.elem1, constants.%X.as.Destroy.impl.Op
-// CHECK:STDOUT:   %addr.loc20_34.1: %ptr.d17 = addr_of %tuple.elem1
-// CHECK:STDOUT:   %X.as.Destroy.impl.Op.call.loc20_34.1: init %empty_tuple.type = call %X.as.Destroy.impl.Op.bound.loc20_34.1(%addr.loc20_34.1)
-// CHECK:STDOUT:   %X.as.Destroy.impl.Op.bound.loc20_34.2: <bound method> = bound_method %tuple.elem0, constants.%X.as.Destroy.impl.Op
-// CHECK:STDOUT:   %addr.loc20_34.2: %ptr.d17 = addr_of %tuple.elem0
-// CHECK:STDOUT:   %X.as.Destroy.impl.Op.call.loc20_34.2: init %empty_tuple.type = call %X.as.Destroy.impl.Op.bound.loc20_34.2(%addr.loc20_34.2)
 // CHECK:STDOUT:   %T.as.Destroy.impl.Op.bound: <bound method> = bound_method %b.var, constants.%T.as.Destroy.impl.Op.279
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT:   %bound_method: <bound method> = bound_method %b.var, %T.as.Destroy.impl.Op.specific_fn
-// CHECK:STDOUT:   %addr.loc20_3: %ptr.120 = addr_of %b.var
-// CHECK:STDOUT:   %T.as.Destroy.impl.Op.call: init %empty_tuple.type = call %bound_method(%addr.loc20_3)
+// CHECK:STDOUT:   %addr: %ptr.120 = addr_of %b.var
+// CHECK:STDOUT:   %T.as.Destroy.impl.Op.call: init %empty_tuple.type = call %bound_method(%addr)
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -360,12 +354,9 @@ let n: {.x: ()} = {.x = ()} as {.x = ()};
 // CHECK:STDOUT:   assign %x.var, %Make.call
 // CHECK:STDOUT:   %X.ref.loc24_10: type = name_ref X, file.%X.decl [concrete = constants.%X]
 // CHECK:STDOUT:   %x: ref %X = bind_name x, %x.var
-// CHECK:STDOUT:   %X.as.Destroy.impl.Op.bound.loc24_3.1: <bound method> = bound_method %.loc24, constants.%X.as.Destroy.impl.Op
-// CHECK:STDOUT:   %addr.loc24_3.1: %ptr.d17 = addr_of %.loc24
-// CHECK:STDOUT:   %X.as.Destroy.impl.Op.call.loc24_3.1: init %empty_tuple.type = call %X.as.Destroy.impl.Op.bound.loc24_3.1(%addr.loc24_3.1)
-// CHECK:STDOUT:   %X.as.Destroy.impl.Op.bound.loc24_3.2: <bound method> = bound_method %x.var, constants.%X.as.Destroy.impl.Op
-// CHECK:STDOUT:   %addr.loc24_3.2: %ptr.d17 = addr_of %x.var
-// CHECK:STDOUT:   %X.as.Destroy.impl.Op.call.loc24_3.2: init %empty_tuple.type = call %X.as.Destroy.impl.Op.bound.loc24_3.2(%addr.loc24_3.2)
+// CHECK:STDOUT:   %X.as.Destroy.impl.Op.bound: <bound method> = bound_method %x.var, constants.%X.as.Destroy.impl.Op
+// CHECK:STDOUT:   %addr: %ptr.d17 = addr_of %x.var
+// CHECK:STDOUT:   %X.as.Destroy.impl.Op.call: init %empty_tuple.type = call %X.as.Destroy.impl.Op.bound(%addr)
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

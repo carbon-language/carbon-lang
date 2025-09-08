@@ -69,9 +69,9 @@ fn F(a: i32) -> i32 {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.Int: %Int.type = import_ref Core//prelude/parts/int, Int, loaded [concrete = constants.%Int.generic]
 // CHECK:STDOUT:   %Core.ImplicitAs: %ImplicitAs.type.cc7 = import_ref Core//prelude/parts/as, ImplicitAs, loaded [concrete = constants.%ImplicitAs.generic]
-// CHECK:STDOUT:   %Core.import_ref.492: @ImplicitAs.%ImplicitAs.assoc_type (%ImplicitAs.assoc_type.ca0d85.1) = import_ref Core//prelude/parts/as, loc12_35, loaded [symbolic = @ImplicitAs.%assoc0 (constants.%assoc0.dc0)]
-// CHECK:STDOUT:   %Core.import_ref.1c7: @ImplicitAs.%ImplicitAs.Convert.type (%ImplicitAs.Convert.type.2751f3.1) = import_ref Core//prelude/parts/as, loc12_35, loaded [symbolic = @ImplicitAs.%ImplicitAs.Convert (constants.%ImplicitAs.Convert.42ebb8.1)]
-// CHECK:STDOUT:   %Core.import_ref.207 = import_ref Core//prelude/parts/as, loc12_35, unloaded
+// CHECK:STDOUT:   %Core.import_ref.492: @ImplicitAs.%ImplicitAs.assoc_type (%ImplicitAs.assoc_type.ca0d85.1) = import_ref Core//prelude/parts/as, loc17_35, loaded [symbolic = @ImplicitAs.%assoc0 (constants.%assoc0.dc0)]
+// CHECK:STDOUT:   %Core.import_ref.1c7: @ImplicitAs.%ImplicitAs.Convert.type (%ImplicitAs.Convert.type.2751f3.1) = import_ref Core//prelude/parts/as, loc17_35, loaded [symbolic = @ImplicitAs.%ImplicitAs.Convert (constants.%ImplicitAs.Convert.42ebb8.1)]
+// CHECK:STDOUT:   %Core.import_ref.207 = import_ref Core//prelude/parts/as, loc17_35, unloaded
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {

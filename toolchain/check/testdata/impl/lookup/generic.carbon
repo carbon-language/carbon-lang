@@ -503,10 +503,10 @@ fn G(x: A) {
 // CHECK:STDOUT:   %.loc13_21.2: ref %empty_struct_type = temporary %.loc13_21.1, %T.as.HasF.impl.F.call
 // CHECK:STDOUT:   %empty_struct: %empty_struct_type = struct_value () [concrete = constants.%empty_struct]
 // CHECK:STDOUT:   %.loc13_22: %empty_struct_type = converted %T.as.HasF.impl.F.call, %empty_struct [concrete = constants.%empty_struct]
-// CHECK:STDOUT:   %T.as.Destroy.impl.Op.bound: <bound method> = bound_method %.loc13_21.1, constants.%T.as.Destroy.impl.Op.d5a
+// CHECK:STDOUT:   %T.as.Destroy.impl.Op.bound: <bound method> = bound_method %.loc13_21.2, constants.%T.as.Destroy.impl.Op.d5a
 // CHECK:STDOUT:   %T.as.Destroy.impl.Op.specific_fn: <specific function> = specific_function constants.%T.as.Destroy.impl.Op.d5a, @T.as.Destroy.impl.Op(constants.%empty_struct_type) [concrete = constants.%T.as.Destroy.impl.Op.specific_fn]
-// CHECK:STDOUT:   %bound_method.loc13_21.2: <bound method> = bound_method %.loc13_21.1, %T.as.Destroy.impl.Op.specific_fn
-// CHECK:STDOUT:   %addr: %ptr.c28 = addr_of %.loc13_21.1
+// CHECK:STDOUT:   %bound_method.loc13_21.2: <bound method> = bound_method %.loc13_21.2, %T.as.Destroy.impl.Op.specific_fn
+// CHECK:STDOUT:   %addr: %ptr.c28 = addr_of %.loc13_21.2
 // CHECK:STDOUT:   %T.as.Destroy.impl.Op.call: init %empty_tuple.type = call %bound_method.loc13_21.2(%addr)
 // CHECK:STDOUT:   return %.loc13_22
 // CHECK:STDOUT: }

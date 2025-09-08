@@ -391,8 +391,8 @@ fn F() {
 // CHECK:STDOUT:   %G.specific_fn: <specific function> = specific_function %G.ref, @G(constants.%facet_value) [concrete = constants.%G.specific_fn]
 // CHECK:STDOUT:   %.loc45_8.2: %C = bind_value %.loc45_8.1
 // CHECK:STDOUT:   %G.call: init %empty_tuple.type = call %G.specific_fn(%.loc45_8.2)
-// CHECK:STDOUT:   %C.as.Destroy.impl.Op.bound: <bound method> = bound_method %.loc45_6.2, constants.%C.as.Destroy.impl.Op
-// CHECK:STDOUT:   %addr: %ptr.019 = addr_of %.loc45_6.2
+// CHECK:STDOUT:   %C.as.Destroy.impl.Op.bound: <bound method> = bound_method %.loc45_6.4, constants.%C.as.Destroy.impl.Op
+// CHECK:STDOUT:   %addr: %ptr.019 = addr_of %.loc45_6.4
 // CHECK:STDOUT:   %C.as.Destroy.impl.Op.call: init %empty_tuple.type = call %C.as.Destroy.impl.Op.bound(%addr)
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }

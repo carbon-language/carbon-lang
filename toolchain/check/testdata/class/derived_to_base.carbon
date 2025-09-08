@@ -373,8 +373,8 @@ fn PassConstB(p: const B) {
 // CHECK:STDOUT:   %.loc32_59.4: ref %A = converted %.loc32_59.1, %.loc32_59.3
 // CHECK:STDOUT:   %.loc32_59.5: %A = bind_value %.loc32_59.4
 // CHECK:STDOUT:   %a: %A = bind_name a, %.loc32_59.5
-// CHECK:STDOUT:   %C.as.Destroy.impl.Op.bound: <bound method> = bound_method %.loc32_57.2, constants.%C.as.Destroy.impl.Op
-// CHECK:STDOUT:   %addr: %ptr.019 = addr_of %.loc32_57.2
+// CHECK:STDOUT:   %C.as.Destroy.impl.Op.bound: <bound method> = bound_method %.loc32_57.9, constants.%C.as.Destroy.impl.Op
+// CHECK:STDOUT:   %addr: %ptr.019 = addr_of %.loc32_57.9
 // CHECK:STDOUT:   %C.as.Destroy.impl.Op.call: init %empty_tuple.type = call %C.as.Destroy.impl.Op.bound(%addr)
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }

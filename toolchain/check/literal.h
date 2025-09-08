@@ -18,6 +18,10 @@ namespace Carbon::Check {
 auto MakeIntLiteral(Context& context, Parse::NodeId node_id, IntId int_id)
     -> SemIR::InstId;
 
+// Forms a char type expression for `char` literal.
+auto MakeCharTypeLiteral(Context& context, Parse::NodeId node_id)
+    -> SemIR::InstId;
+
 // Forms an integer type expression for either an `iN` or `uN` literal.
 auto MakeIntTypeLiteral(Context& context, Parse::NodeId node_id,
                         SemIR::IntKind int_kind, IntId size_id)

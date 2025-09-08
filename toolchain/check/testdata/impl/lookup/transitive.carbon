@@ -401,8 +401,8 @@ fn Call() {
 // CHECK:STDOUT:   %.loc9_7.2: ref %C = temporary %.loc9_7.1, %Get.call
 // CHECK:STDOUT:   %.loc9_7.3: %C = bind_value %.loc9_7.2
 // CHECK:STDOUT:   %C.as.I.impl.F.call: init %empty_tuple.type = call %bound_method(%.loc9_7.3)
-// CHECK:STDOUT:   %C.as.Destroy.impl.Op.bound: <bound method> = bound_method %.loc9_7.1, constants.%C.as.Destroy.impl.Op
-// CHECK:STDOUT:   %addr: %ptr.019 = addr_of %.loc9_7.1
+// CHECK:STDOUT:   %C.as.Destroy.impl.Op.bound: <bound method> = bound_method %.loc9_7.2, constants.%C.as.Destroy.impl.Op
+// CHECK:STDOUT:   %addr: %ptr.019 = addr_of %.loc9_7.2
 // CHECK:STDOUT:   %C.as.Destroy.impl.Op.call: init %empty_tuple.type = call %C.as.Destroy.impl.Op.bound(%addr)
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }

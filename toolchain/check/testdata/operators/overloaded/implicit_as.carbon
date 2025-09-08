@@ -325,11 +325,11 @@ fn Test() {
 // CHECK:STDOUT:   %.loc35_20.5: ref %X = temporary %.loc35_20.1, %.loc35_20.4
 // CHECK:STDOUT:   %.loc35_20.6: %X = bind_value %.loc35_20.5
 // CHECK:STDOUT:   %Sink_X.call: init %empty_tuple.type = call %Sink_X.ref(%.loc35_20.6)
-// CHECK:STDOUT:   %X.as.Destroy.impl.Op.bound.loc35: <bound method> = bound_method %.loc35_20.1, constants.%X.as.Destroy.impl.Op
-// CHECK:STDOUT:   %addr.loc35: %ptr.d17 = addr_of %.loc35_20.1
+// CHECK:STDOUT:   %X.as.Destroy.impl.Op.bound.loc35: <bound method> = bound_method %.loc35_20.5, constants.%X.as.Destroy.impl.Op
+// CHECK:STDOUT:   %addr.loc35: %ptr.d17 = addr_of %.loc35_20.5
 // CHECK:STDOUT:   %X.as.Destroy.impl.Op.call.loc35: init %empty_tuple.type = call %X.as.Destroy.impl.Op.bound.loc35(%addr.loc35)
-// CHECK:STDOUT:   %X.as.Destroy.impl.Op.bound.loc34: <bound method> = bound_method %.loc34_20.1, constants.%X.as.Destroy.impl.Op
-// CHECK:STDOUT:   %addr.loc34: %ptr.d17 = addr_of %.loc34_20.1
+// CHECK:STDOUT:   %X.as.Destroy.impl.Op.bound.loc34: <bound method> = bound_method %.loc34_20.2, constants.%X.as.Destroy.impl.Op
+// CHECK:STDOUT:   %addr.loc34: %ptr.d17 = addr_of %.loc34_20.2
 // CHECK:STDOUT:   %X.as.Destroy.impl.Op.call.loc34: init %empty_tuple.type = call %X.as.Destroy.impl.Op.bound.loc34(%addr.loc34)
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }

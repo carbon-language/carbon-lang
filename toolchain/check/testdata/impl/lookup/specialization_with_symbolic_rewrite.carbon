@@ -534,9 +534,9 @@ fn F[T:! Ptr](var t: T) -> T.(Ptr.Type) {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.Destroy: type = import_ref Core//prelude/parts/destroy, Destroy, loaded [concrete = constants.%Destroy.type]
 // CHECK:STDOUT:   %Core.ImplicitAs: %ImplicitAs.type.cc7 = import_ref Core//prelude/parts/as, ImplicitAs, loaded [concrete = constants.%ImplicitAs.generic]
-// CHECK:STDOUT:   %Core.import_ref.492: @ImplicitAs.%ImplicitAs.assoc_type (%ImplicitAs.assoc_type.ca0) = import_ref Core//prelude/parts/as, loc12_35, loaded [symbolic = @ImplicitAs.%assoc0 (constants.%assoc0.dc0)]
-// CHECK:STDOUT:   %Core.import_ref.1c7: @ImplicitAs.%ImplicitAs.Convert.type (%ImplicitAs.Convert.type.275) = import_ref Core//prelude/parts/as, loc12_35, loaded [symbolic = @ImplicitAs.%ImplicitAs.Convert (constants.%ImplicitAs.Convert.42e)]
-// CHECK:STDOUT:   %Core.import_ref.207 = import_ref Core//prelude/parts/as, loc12_35, unloaded
+// CHECK:STDOUT:   %Core.import_ref.492: @ImplicitAs.%ImplicitAs.assoc_type (%ImplicitAs.assoc_type.ca0) = import_ref Core//prelude/parts/as, loc17_35, loaded [symbolic = @ImplicitAs.%assoc0 (constants.%assoc0.dc0)]
+// CHECK:STDOUT:   %Core.import_ref.1c7: @ImplicitAs.%ImplicitAs.Convert.type (%ImplicitAs.Convert.type.275) = import_ref Core//prelude/parts/as, loc17_35, loaded [symbolic = @ImplicitAs.%ImplicitAs.Convert (constants.%ImplicitAs.Convert.42e)]
+// CHECK:STDOUT:   %Core.import_ref.207 = import_ref Core//prelude/parts/as, loc17_35, unloaded
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -838,9 +838,9 @@ fn F[T:! Ptr](var t: T) -> T.(Ptr.Type) {
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %Ptr.type: type = facet_type <@Ptr> [concrete]
 // CHECK:STDOUT:   %Self: %Ptr.type = bind_symbolic_name Self, 0 [symbolic]
-// CHECK:STDOUT:   %.Self.644: type = bind_symbolic_name .Self [symbolic_self]
 // CHECK:STDOUT:   %Ptr.assoc_type: type = assoc_entity_type @Ptr [concrete]
 // CHECK:STDOUT:   %assoc0: %Ptr.assoc_type = assoc_entity element0, @Ptr.%Type [concrete]
+// CHECK:STDOUT:   %.Self.644: type = bind_symbolic_name .Self [symbolic_self]
 // CHECK:STDOUT:   %U: type = bind_symbolic_name U, 0 [symbolic]
 // CHECK:STDOUT:   %pattern_type.98f: type = pattern_type type [concrete]
 // CHECK:STDOUT:   %.Self.8b4: %Ptr.type = bind_symbolic_name .Self [symbolic_self]
@@ -1017,9 +1017,9 @@ fn F[T:! Ptr](var t: T) -> T.(Ptr.Type) {
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %Ptr.type: type = facet_type <@Ptr> [concrete]
 // CHECK:STDOUT:   %Self: %Ptr.type = bind_symbolic_name Self, 0 [symbolic]
-// CHECK:STDOUT:   %.Self.644: type = bind_symbolic_name .Self [symbolic_self]
 // CHECK:STDOUT:   %Ptr.assoc_type: type = assoc_entity_type @Ptr [concrete]
 // CHECK:STDOUT:   %assoc0: %Ptr.assoc_type = assoc_entity element0, @Ptr.%Type [concrete]
+// CHECK:STDOUT:   %.Self.644: type = bind_symbolic_name .Self [symbolic_self]
 // CHECK:STDOUT:   %U: type = bind_symbolic_name U, 0 [symbolic]
 // CHECK:STDOUT:   %pattern_type.98f: type = pattern_type type [concrete]
 // CHECK:STDOUT:   %.Self.8b4: %Ptr.type = bind_symbolic_name .Self [symbolic_self]
@@ -1206,9 +1206,9 @@ fn F[T:! Ptr](var t: T) -> T.(Ptr.Type) {
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %Ptr.type: type = facet_type <@Ptr> [concrete]
 // CHECK:STDOUT:   %Self: %Ptr.type = bind_symbolic_name Self, 0 [symbolic]
-// CHECK:STDOUT:   %.Self.644: type = bind_symbolic_name .Self [symbolic_self]
 // CHECK:STDOUT:   %Ptr.assoc_type: type = assoc_entity_type @Ptr [concrete]
 // CHECK:STDOUT:   %assoc0: %Ptr.assoc_type = assoc_entity element0, @Ptr.%Type [concrete]
+// CHECK:STDOUT:   %.Self.644: type = bind_symbolic_name .Self [symbolic_self]
 // CHECK:STDOUT:   %U: type = bind_symbolic_name U, 0 [symbolic]
 // CHECK:STDOUT:   %pattern_type.98f: type = pattern_type type [concrete]
 // CHECK:STDOUT:   %.Self.8b4: %Ptr.type = bind_symbolic_name .Self [symbolic_self]

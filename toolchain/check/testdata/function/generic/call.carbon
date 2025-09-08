@@ -64,7 +64,6 @@ fn CallSpecific(x: C) -> C {
 // CHECK:STDOUT:   %pattern_type.98f: type = pattern_type type [concrete]
 // CHECK:STDOUT:   %pattern_type.7dc: type = pattern_type %T [symbolic]
 // CHECK:STDOUT:   %Function.type: type = fn_type @Function [concrete]
-// CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [concrete]
 // CHECK:STDOUT:   %Function: %Function.type = struct_value () [concrete]
 // CHECK:STDOUT:   %require_complete.4ae: <witness> = require_complete_type %T [symbolic]
 // CHECK:STDOUT:   %CallGeneric.type: type = fn_type @CallGeneric [concrete]
@@ -79,7 +78,7 @@ fn CallSpecific(x: C) -> C {
 // CHECK:STDOUT:   %C: type = class_type @C [concrete]
 // CHECK:STDOUT:   %Destroy.type: type = facet_type <@Destroy> [concrete]
 // CHECK:STDOUT:   %pattern_type.f6d: type = pattern_type auto [concrete]
-// CHECK:STDOUT:   %Destroy.impl_witness.edd: <witness> = impl_witness @C.%Destroy.impl_witness_table [concrete]
+// CHECK:STDOUT:   %Destroy.impl_witness: <witness> = impl_witness @C.%Destroy.impl_witness_table [concrete]
 // CHECK:STDOUT:   %ptr.019: type = ptr_type %C [concrete]
 // CHECK:STDOUT:   %pattern_type.44a: type = pattern_type %ptr.019 [concrete]
 // CHECK:STDOUT:   %C.as.Destroy.impl.Op.type: type = fn_type @C.as.Destroy.impl.Op [concrete]
@@ -199,7 +198,7 @@ fn CallSpecific(x: C) -> C {
 // CHECK:STDOUT:   %Self.ref: type = name_ref Self, constants.%C [concrete = constants.%C]
 // CHECK:STDOUT:   impl_decl @C.as.Destroy.impl [concrete] {} {}
 // CHECK:STDOUT:   %Destroy.impl_witness_table = impl_witness_table (@C.as.Destroy.impl.%C.as.Destroy.impl.Op.decl), @C.as.Destroy.impl [concrete]
-// CHECK:STDOUT:   %Destroy.impl_witness: <witness> = impl_witness %Destroy.impl_witness_table [concrete = constants.%Destroy.impl_witness.edd]
+// CHECK:STDOUT:   %Destroy.impl_witness: <witness> = impl_witness %Destroy.impl_witness_table [concrete = constants.%Destroy.impl_witness]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness constants.%empty_struct_type [concrete = constants.%complete_type]
 // CHECK:STDOUT:   complete_type_witness = %complete_type
 // CHECK:STDOUT:
@@ -275,9 +274,6 @@ fn CallSpecific(x: C) -> C {
 // CHECK:STDOUT:   %Function.specific_fn: <specific function> = specific_function %Function.ref, @Function(constants.%C) [concrete = constants.%Function.specific_fn.1b5]
 // CHECK:STDOUT:   %.loc18: ref %C = splice_block %return {}
 // CHECK:STDOUT:   %Function.call: init %C = call %Function.specific_fn(%x.ref) to %.loc18
-// CHECK:STDOUT:   %C.as.Destroy.impl.Op.bound: <bound method> = bound_method %.loc18, constants.%C.as.Destroy.impl.Op
-// CHECK:STDOUT:   %addr: %ptr.019 = addr_of %.loc18
-// CHECK:STDOUT:   %C.as.Destroy.impl.Op.call: init %empty_tuple.type = call %C.as.Destroy.impl.Op.bound(%addr)
 // CHECK:STDOUT:   return %Function.call to %return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -324,7 +320,6 @@ fn CallSpecific(x: C) -> C {
 // CHECK:STDOUT:   %pattern_type.98f: type = pattern_type type [concrete]
 // CHECK:STDOUT:   %pattern_type.7dc: type = pattern_type %T [symbolic]
 // CHECK:STDOUT:   %Function.type: type = fn_type @Function [concrete]
-// CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [concrete]
 // CHECK:STDOUT:   %Function: %Function.type = struct_value () [concrete]
 // CHECK:STDOUT:   %require_complete.4ae: <witness> = require_complete_type %T [symbolic]
 // CHECK:STDOUT:   %CallGeneric.type: type = fn_type @CallGeneric [concrete]
@@ -339,7 +334,7 @@ fn CallSpecific(x: C) -> C {
 // CHECK:STDOUT:   %C: type = class_type @C [concrete]
 // CHECK:STDOUT:   %Destroy.type: type = facet_type <@Destroy> [concrete]
 // CHECK:STDOUT:   %pattern_type.f6d: type = pattern_type auto [concrete]
-// CHECK:STDOUT:   %Destroy.impl_witness.edd: <witness> = impl_witness @C.%Destroy.impl_witness_table [concrete]
+// CHECK:STDOUT:   %Destroy.impl_witness: <witness> = impl_witness @C.%Destroy.impl_witness_table [concrete]
 // CHECK:STDOUT:   %ptr.019: type = ptr_type %C [concrete]
 // CHECK:STDOUT:   %pattern_type.44a: type = pattern_type %ptr.019 [concrete]
 // CHECK:STDOUT:   %C.as.Destroy.impl.Op.type: type = fn_type @C.as.Destroy.impl.Op [concrete]
@@ -459,7 +454,7 @@ fn CallSpecific(x: C) -> C {
 // CHECK:STDOUT:   %Self.ref: type = name_ref Self, constants.%C [concrete = constants.%C]
 // CHECK:STDOUT:   impl_decl @C.as.Destroy.impl [concrete] {} {}
 // CHECK:STDOUT:   %Destroy.impl_witness_table = impl_witness_table (@C.as.Destroy.impl.%C.as.Destroy.impl.Op.decl), @C.as.Destroy.impl [concrete]
-// CHECK:STDOUT:   %Destroy.impl_witness: <witness> = impl_witness %Destroy.impl_witness_table [concrete = constants.%Destroy.impl_witness.edd]
+// CHECK:STDOUT:   %Destroy.impl_witness: <witness> = impl_witness %Destroy.impl_witness_table [concrete = constants.%Destroy.impl_witness]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness constants.%empty_struct_type [concrete = constants.%complete_type]
 // CHECK:STDOUT:   complete_type_witness = %complete_type
 // CHECK:STDOUT:
@@ -531,9 +526,6 @@ fn CallSpecific(x: C) -> C {
 // CHECK:STDOUT:   %Function.specific_fn: <specific function> = specific_function %Function.ref, @Function(constants.%C) [concrete = constants.%Function.specific_fn.1b5]
 // CHECK:STDOUT:   %.loc18: ref %C = splice_block %return {}
 // CHECK:STDOUT:   %Function.call: init %C = call %Function.specific_fn(%x.ref) to %.loc18
-// CHECK:STDOUT:   %C.as.Destroy.impl.Op.bound: <bound method> = bound_method %.loc18, constants.%C.as.Destroy.impl.Op
-// CHECK:STDOUT:   %addr: %ptr.019 = addr_of %.loc18
-// CHECK:STDOUT:   %C.as.Destroy.impl.Op.call: init %empty_tuple.type = call %C.as.Destroy.impl.Op.bound(%addr)
 // CHECK:STDOUT:   return %Function.call to %return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

@@ -11,6 +11,7 @@
 #include "toolchain/check/pointer_dereference.h"
 #include "toolchain/check/type.h"
 #include "toolchain/diagnostics/diagnostic_emitter.h"
+#include "toolchain/parse/typed_nodes.h"
 #include "toolchain/sem_ir/expr_info.h"
 
 namespace Carbon::Check {
@@ -53,14 +54,25 @@ auto HandleParseNode(Context& context, Parse::InfixOperatorAmpEqualId node_id)
   return HandleBinaryOperator(context, node_id, {"BitAndAssignWith"});
 }
 
+auto HandleParseNode(Context& context, Parse::UnsafeModifierId node_id)
+    -> bool {
+  auto [rhs_node, rhs_id] = context.node_stack().PopExprWithNodeId();
+  context.node_stack().Push(node_id, rhs_id);
+  return true;
+}
+
 auto HandleParseNode(Context& context, Parse::InfixOperatorAsId node_id)
     -> bool {
   auto [rhs_node, rhs_id] = context.node_stack().PopExprWithNodeId();
   auto [lhs_node, lhs_id] = context.node_stack().PopExprWithNodeId();
 
+  bool unsafe = context.parse_tree().node_kind(lhs_node) ==
+                Parse::NodeKind::UnsafeModifier;
+
   auto rhs_type_id = ExprAsType(context, rhs_node, rhs_id).type_id;
   context.node_stack().Push(
-      node_id, ConvertForExplicitAs(context, node_id, lhs_id, rhs_type_id));
+      node_id,
+      ConvertForExplicitAs(context, node_id, lhs_id, rhs_type_id, unsafe));
   return true;
 }
 

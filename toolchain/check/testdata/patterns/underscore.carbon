@@ -90,18 +90,6 @@ class C {
   var _: ();
 }
 
-// --- fail_interface.carbon
-
-library "[[@TEST_NAME]]";
-
-interface I {
-  // CHECK:STDERR: fail_interface.carbon:[[@LINE+4]]:7: error: semantics TODO: `_ used as associated constant name` [SemanticsTodo]
-  // CHECK:STDERR:   let _:! {};
-  // CHECK:STDERR:       ^~~~~~
-  // CHECK:STDERR:
-  let _:! {};
-}
-
 // --- fail_use.carbon
 
 fn F() -> {} {
@@ -500,50 +488,6 @@ fn F() -> {} {
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%C
 // CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: --- fail_interface.carbon
-// CHECK:STDOUT:
-// CHECK:STDOUT: constants {
-// CHECK:STDOUT:   %I.type: type = facet_type <@I> [concrete]
-// CHECK:STDOUT:   %Self: %I.type = bind_symbolic_name Self, 0 [symbolic]
-// CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [concrete]
-// CHECK:STDOUT:   %I.assoc_type: type = assoc_entity_type @I [concrete]
-// CHECK:STDOUT:   %assoc0: %I.assoc_type = assoc_entity element0, @I.%_ [concrete]
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: imports {
-// CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [concrete] {
-// CHECK:STDOUT:     import Core//prelude
-// CHECK:STDOUT:     import Core//prelude/...
-// CHECK:STDOUT:   }
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: file {
-// CHECK:STDOUT:   package: <namespace> = namespace [concrete] {
-// CHECK:STDOUT:     .Core = imports.%Core
-// CHECK:STDOUT:     .I = %I.decl
-// CHECK:STDOUT:   }
-// CHECK:STDOUT:   %Core.import = import Core
-// CHECK:STDOUT:   %I.decl: type = interface_decl @I [concrete = constants.%I.type] {} {}
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: interface @I {
-// CHECK:STDOUT:   %Self: %I.type = bind_symbolic_name Self, 0 [symbolic = constants.%Self]
-// CHECK:STDOUT:   %_: %empty_struct_type = assoc_const_decl @_ [concrete] {
-// CHECK:STDOUT:     %assoc0: %I.assoc_type = assoc_entity element0, @I.%_ [concrete = constants.%assoc0]
-// CHECK:STDOUT:   }
-// CHECK:STDOUT:
-// CHECK:STDOUT: !members:
-// CHECK:STDOUT:   .Self = %Self
-// CHECK:STDOUT:   ._ = @_.%assoc0
-// CHECK:STDOUT:   witness = (%_)
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: generic assoc_const @_(@I.%Self: %I.type) {
-// CHECK:STDOUT:   assoc_const _:! %empty_struct_type;
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: specific @_(constants.%Self) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- fail_use.carbon
 // CHECK:STDOUT:
