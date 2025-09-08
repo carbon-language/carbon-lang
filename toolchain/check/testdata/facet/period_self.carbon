@@ -192,7 +192,7 @@ fn G(U:! I(.Self) where .Self impls J(.Self)) {
   U.I1().(J.J1)().I1().(J.J1)().I1().(J.J1)();
 }
 
-// --- return_of_type_period_self_has_type_u.carbon
+// --- fail_todo_return_of_type_period_self_has_type_u.carbon
 library "[[@TEST_NAME]]";
 
 interface I(T:! type) {
@@ -200,17 +200,17 @@ interface I(T:! type) {
 }
 
 fn F(U:! I(.Self)) {
-  // CHECK:STDERR: return_of_type_period_self_has_type_u.carbon:[[@LINE+7]]:14: error: cannot implicitly convert expression of type `.Self` to `U` [ConversionFailure]
+  // CHECK:STDERR: fail_todo_return_of_type_period_self_has_type_u.carbon:[[@LINE+7]]:14: error: cannot implicitly convert expression of type `.Self` to `U` [ConversionFailure]
   // CHECK:STDERR:   let a: U = U.G();
   // CHECK:STDERR:              ^~~~~
-  // CHECK:STDERR: return_of_type_period_self_has_type_u.carbon:[[@LINE+4]]:14: note: type `.Self` does not implement interface `Core.ImplicitAs(U)` [MissingImplInMemberAccessNote]
+  // CHECK:STDERR: fail_todo_return_of_type_period_self_has_type_u.carbon:[[@LINE+4]]:14: note: type `.Self` does not implement interface `Core.ImplicitAs(U)` [MissingImplInMemberAccessNote]
   // CHECK:STDERR:   let a: U = U.G();
   // CHECK:STDERR:              ^~~~~
   // CHECK:STDERR:
   let a: U = U.G();
 }
 
-// --- return_of_type_period_self_assoc_const_has_type_u.carbon
+// --- fail_todo_return_of_type_period_self_assoc_const_has_type_u.carbon
 library "[[@TEST_NAME]]";
 
 interface I {
@@ -219,10 +219,10 @@ interface I {
 }
 
 fn F(U:! I where .X = .Self) {
-  // CHECK:STDERR: return_of_type_period_self_assoc_const_has_type_u.carbon:[[@LINE+7]]:14: error: cannot implicitly convert expression of type `.Self` to `U` [ConversionFailure]
+  // CHECK:STDERR: fail_todo_return_of_type_period_self_assoc_const_has_type_u.carbon:[[@LINE+7]]:14: error: cannot implicitly convert expression of type `.Self` to `U` [ConversionFailure]
   // CHECK:STDERR:   let a: U = U.G();
   // CHECK:STDERR:              ^~~~~
-  // CHECK:STDERR: return_of_type_period_self_assoc_const_has_type_u.carbon:[[@LINE+4]]:14: note: type `.Self` does not implement interface `Core.ImplicitAs(U)` [MissingImplInMemberAccessNote]
+  // CHECK:STDERR: fail_todo_return_of_type_period_self_assoc_const_has_type_u.carbon:[[@LINE+4]]:14: note: type `.Self` does not implement interface `Core.ImplicitAs(U)` [MissingImplInMemberAccessNote]
   // CHECK:STDERR:   let a: U = U.G();
   // CHECK:STDERR:              ^~~~~
   // CHECK:STDERR:
