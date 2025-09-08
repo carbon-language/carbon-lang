@@ -119,6 +119,74 @@ TEST_F(FilesystemTest, BasicWriteAndRead) {
   EXPECT_THAT(unlink_result, IsSuccess(_));
 }
 
+TEST_F(FilesystemTest, SeekReadAndWrite) {
+  std::string content_str = "0123456789";
+  // First write some initial content.
+  {
+    auto f = dir_.OpenWriteOnly("test", CreationOptions::CreateNew);
+    ASSERT_THAT(f, IsSuccess(_));
+    auto write_result = f->WriteFileFromString(content_str);
+    EXPECT_THAT(write_result, IsSuccess(_));
+    (*std::move(f)).Close().Check();
+  }
+
+  // Now seek and read.
+  {
+    auto f = dir_.OpenReadOnly("test");
+    ASSERT_THAT(f, IsSuccess(_));
+    auto seek_result = f->Seek(3);
+    ASSERT_THAT(seek_result, IsSuccess(Eq(3)));
+    std::array<std::byte, 4> buffer;
+    auto read_result = f->ReadToBuffer(buffer);
+    ASSERT_THAT(read_result, IsSuccess(_));
+    EXPECT_THAT(std::string(reinterpret_cast<char*>(read_result->data()),
+                            read_result->size()),
+                Eq(content_str.substr(3, read_result->size())));
+
+    // Now test that we can seek back to the beginning and read the full file.
+    auto read_file_result = f->ReadFileToString();
+    EXPECT_THAT(read_file_result, IsSuccess(Eq(content_str)));
+  }
+
+  // Now a mixture of reads, writes, an seeking.
+  {
+    auto f = dir_.OpenReadWrite("test");
+    ASSERT_THAT(f, IsSuccess(_));
+    auto seek_result = f->SeekFromEnd(-6);
+    ASSERT_THAT(seek_result, IsSuccess(Eq(content_str.size() - 6)));
+    std::string new_content_str = "abcdefg";
+    llvm::ArrayRef<std::byte> new_content_bytes(
+        reinterpret_cast<std::byte*>(new_content_str.data()),
+        new_content_str.size());
+    for (auto write_bytes = new_content_bytes.slice(0, 4);
+         !write_bytes.empty();) {
+      auto write_result = f->WriteFromBuffer(write_bytes);
+      ASSERT_THAT(write_result, IsSuccess(_));
+      write_bytes = *write_result;
+    }
+
+    std::array<std::byte, 4> buffer;
+    auto read_result = f->ReadToBuffer(buffer);
+    ASSERT_THAT(read_result, IsSuccess(_));
+    EXPECT_THAT(std::string(reinterpret_cast<char*>(read_result->data()),
+                            read_result->size()),
+                Eq(content_str.substr(8, read_result->size())));
+
+    EXPECT_THAT(*f->ReadFileToString(), "0123abcd89");
+
+    // Now write the entire file, also changing its size, after a fresh seek.
+    seek_result = f->Seek(-6);
+    ASSERT_THAT(seek_result, IsSuccess(Eq(content_str.size() - 6)));
+    auto write_file_result = f->WriteFileFromString(new_content_str);
+    EXPECT_THAT(write_file_result, IsSuccess(_));
+    EXPECT_THAT(*f->ReadFileToString(), "abcdefg");
+    (*std::move(f)).Close().Check();
+  }
+
+  auto unlink_result = dir_.Unlink("test");
+  EXPECT_THAT(unlink_result, IsSuccess(_));
+}
+
 TEST_F(FilesystemTest, CreateAndRemoveDirecotries) {
   auto d1 = Cwd().CreateDirectories(path() / "a" / "b" / "c" / "test1");
   ASSERT_THAT(d1, IsSuccess(_));
@@ -401,7 +469,7 @@ TEST_F(FilesystemTest, TryLock) {
   // Acquire an exclusive lock.
   auto lock = file->TryLock(FileLock::Exclusive);
   ASSERT_THAT(lock, IsSuccess(_));
-  EXPECT_TRUE(*lock);
+  EXPECT_TRUE(lock->is_locked());
 
   // Try to acquire a second lock from a different file object.
   auto file2 = dir_.OpenReadOnly("test_file");
@@ -417,22 +485,22 @@ TEST_F(FilesystemTest, TryLock) {
 
   // Release the first lock.
   *lock = {};
-  EXPECT_FALSE(*lock);
+  EXPECT_FALSE(lock->is_locked());
 
   // Now we can acquire an exclusive lock.
   lock2 = file2->TryLock(FileLock::Exclusive);
   ASSERT_THAT(lock2, IsSuccess(_));
-  EXPECT_TRUE(*lock2);
+  EXPECT_TRUE(lock2->is_locked());
   *lock2 = {};
 
   // Test shared locks.
   auto shared_lock1 = file->TryLock(FileLock::Shared);
   ASSERT_THAT(shared_lock1, IsSuccess(_));
-  EXPECT_TRUE(*shared_lock1);
+  EXPECT_TRUE(shared_lock1->is_locked());
 
   auto shared_lock2 = file2->TryLock(FileLock::Shared);
   ASSERT_THAT(shared_lock2, IsSuccess(_));
-  EXPECT_TRUE(*shared_lock2);
+  EXPECT_TRUE(shared_lock2->is_locked());
 
   // An exclusive lock should fail.
   auto file3 = dir_.OpenReadOnly("test_file");

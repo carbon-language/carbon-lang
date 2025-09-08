@@ -297,7 +297,8 @@ class FileStatus {
 // Can model either a shared or exclusive lock with respect to the file, but the
 // held lock is unique.
 //
-// Must be released prior to the underlying file or directory being closed.
+// Must be released prior to the underlying file or directory being closed as it
+// contains a non-owning reference to that underlying file.
 class FileLock {
  public:
   enum class Kind {
@@ -316,7 +317,7 @@ class FileLock {
   ~FileLock() { Destroy(); }
 
   // Returns true if the lock is currently held.
-  explicit operator bool() const { return fd_ != -1; }
+  auto is_locked() const -> bool { return fd_ != -1; }
 
  private:
   friend Internal::FileRefBase;
@@ -347,7 +348,7 @@ class Internal::FileRefBase {
   FileRefBase() = default;
 
   // Returns true if this refers to a valid open file, and false otherwise.
-  explicit operator bool() const { return fd_ != -1; }
+  auto is_valid() const -> bool { return fd_ != -1; }
 
   // Reads the file status.
   //
@@ -655,7 +656,7 @@ class DirRef {
   constexpr DirRef() = default;
 
   // Returns true if this refers to a valid open directory, and false otherwise.
-  explicit operator bool() const { return dfd_ != -1; }
+  auto is_valid() const -> bool { return dfd_ != -1; }
 
   // Begin reading the entries in a directory.
   //
@@ -672,16 +673,16 @@ class DirRef {
 
   // Reads all of the entries in this directory into a vector.
   //
-  // A helper function wrapping `Read` and walking the resulting reader's entries
-  // to produce a container.
+  // A helper function wrapping `Read` and walking the resulting reader's
+  // entries to produce a container.
   //
   // For details on errors, see the documentation of `Read` and `Reader`.
   auto ReadEntries()
       -> ErrorOr<llvm::SmallVector<std::filesystem::path>, FdError>;
 
   // Reads the directory and appends entries to a container if they pass a
-  // predicate. The predicate can be null, which is treated as if it always returns
-  // true.
+  // predicate. The predicate can be null, which is treated as if it always
+  // returns true.
   //
   // For details on errors, see the documentation of `Read` and `Reader`.
   auto AppendEntriesIf(
@@ -690,8 +691,8 @@ class DirRef {
       -> ErrorOr<Success, FdError>;
 
   // Reads the directory and appends entries to one of two containers if they
-  // pass a predicate.  The predicate can be null, which is treated as if it always
-  // returns true.
+  // pass a predicate.  The predicate can be null, which is treated as if it
+  // always returns true.
   //
   // Which container an entry is appended to depends on its kind -- directories
   // go to the first and non-directories go to the second. This turns out to be
@@ -1310,6 +1311,18 @@ class PathError : public Internal::ErrnoErrorBase<PathError> {
 
 // Implementation details only below.
 
+namespace Internal {
+
+inline auto DurationToTimespec(Duration d) -> timespec {
+  timespec ts = {};
+  ts.tv_sec = std::chrono::duration_cast<std::chrono::seconds>(d).count();
+  d -= std::chrono::seconds(ts.tv_sec);
+  ts.tv_nsec = std::chrono::duration_cast<std::chrono::nanoseconds>(d).count();
+  return ts;
+}
+
+}  // namespace Internal
+
 consteval auto Cwd() -> Dir { return Dir(AT_FDCWD); }
 
 inline auto FileLock::Destroy() -> void {
@@ -1347,13 +1360,8 @@ inline auto Internal::FileRefBase::UpdateTimes(
   }
 
   timespec times[2];
-  Duration nanos = time_point->time_since_epoch();
-  times[0].tv_sec =
-      std::chrono::duration_cast<std::chrono::seconds>(nanos).count();
-  nanos -= std::chrono::seconds(times[0].tv_sec);
-  times[0].tv_nsec = nanos.count();
-  times[1].tv_sec = times[0].tv_sec;
-  times[1].tv_nsec = times[0].tv_nsec;
+  times[0] = Internal::DurationToTimespec(time_point->time_since_epoch());
+  times[1] = times[0];
   if (futimens(fd_, times) == -1) {
     return FdError(errno, "File::UpdateTimes to a specific time on '{0}'", fd_);
   }
@@ -1582,13 +1590,8 @@ inline auto DirRef::UpdateTimes(const std::filesystem::path& path,
   }
 
   timespec times[2];
-  Duration nanos = time_point->time_since_epoch();
-  times[0].tv_sec =
-      std::chrono::duration_cast<std::chrono::seconds>(nanos).count();
-  nanos -= std::chrono::seconds(times[0].tv_sec);
-  times[0].tv_nsec = nanos.count();
-  times[1].tv_sec = times[0].tv_sec;
-  times[1].tv_nsec = times[0].tv_nsec;
+  times[0] = Internal::DurationToTimespec(time_point->time_since_epoch());
+  times[1] = times[0];
   if (utimensat(dfd_, path.c_str(), times, /*flags*/ 0) == -1) {
     return PathError(
         errno, "Dir::UpdateTimes to a specific time on '{0}' relative to '{1}'",

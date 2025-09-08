@@ -113,14 +113,6 @@ auto Internal::FileRefBase::WriteFileFromString(llvm::StringRef str)
   return Success();
 }
 
-static auto DurationToTimespec(Duration d) -> timespec {
-  timespec ts = {};
-  ts.tv_sec = std::chrono::duration_cast<std::chrono::seconds>(d).count();
-  d -= std::chrono::seconds(ts.tv_sec);
-  ts.tv_nsec = std::chrono::duration_cast<std::chrono::nanoseconds>(d).count();
-  return ts;
-}
-
 // For every platform but macOS we can sleep directly on an absolute time.
 #if !__APPLE__
 static auto Sleep(Duration sleep_nanos) -> void {
@@ -145,7 +137,7 @@ static auto Sleep(Duration sleep_nanos) -> void {
   nano_t += sleep_nanos;
 
   // Now convert back to timespec.
-  ts = DurationToTimespec(nano_t);
+  ts = Internal::DurationToTimespec(nano_t);
 
   do {
     result = clock_nanosleep(CLOCK_MONOTONIC, TIMER_ABSTIME, &ts, nullptr);
@@ -172,7 +164,7 @@ static auto Sleep(Duration sleep_nanos) -> void {
 static auto SleepMacos(Duration sleep_nanos) -> void {
   TimePoint stop = Clock::now() + sleep_nanos;
 
-  timespec sleep_ts = DurationToTimespec(sleep_nanos);
+  timespec sleep_ts = Internal::DurationToTimespec(sleep_nanos);
   for (;;) {
     timespec rem_sleep_ts = {};
     int result = nanosleep(&sleep_ts, &rem_sleep_ts);
