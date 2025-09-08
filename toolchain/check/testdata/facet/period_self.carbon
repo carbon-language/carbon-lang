@@ -243,9 +243,10 @@ interface I(T:! type) {
   fn G() -> T;
 }
 
-// The first `.Self` refers to `T`. The second `.Self` is not attached to a
-// facet value until later.
-fn F(T:! I(.Self) where .A = ((I(.Self) where .B = {}) where .A = {})) {
+// Both `.Self` refer to `T`. The first because it's the interface for the
+// binding. The second because it refers to the top level facet type which is
+// constraining the binding.
+fn F(T:! I(.Self) where .A = ((I(.Self) where .B = {}) where .A = {}) and .B = {}, U:! T.A) {
   // T.G() has type T.
   // CHECK:STDERR: fail_todo_nested_period_self.carbon:[[@LINE+7]]:14: error: cannot implicitly convert expression of type `.Self` to `T` [ConversionFailure]
   // CHECK:STDERR:   let t: T = T.G();
@@ -255,30 +256,40 @@ fn F(T:! I(.Self) where .A = ((I(.Self) where .B = {}) where .A = {})) {
   // CHECK:STDERR:              ^~~~~
   // CHECK:STDERR:
   let t: T = T.G();
-  // The second `.Self` now refers to `U`.
-  fn F2(U:! T.A) {
-    // U.G() has type U.
-    // CHECK:STDERR: fail_todo_nested_period_self.carbon:[[@LINE+7]]:16: error: cannot implicitly convert expression of type `.Self` to `U` [ConversionFailure]
-    // CHECK:STDERR:     let u: U = U.G();
-    // CHECK:STDERR:                ^~~~~
-    // CHECK:STDERR: fail_todo_nested_period_self.carbon:[[@LINE+4]]:16: note: type `.Self` does not implement interface `Core.ImplicitAs(U)` [MissingImplInMemberAccessNote]
-    // CHECK:STDERR:     let u: U = U.G();
-    // CHECK:STDERR:                ^~~~~
-    // CHECK:STDERR:
-    let u: U = U.G();
+    // U.G() has type T.
+  // CHECK:STDERR: fail_todo_nested_period_self.carbon:[[@LINE+7]]:14: error: cannot implicitly convert expression of type `.Self` to `T` [ConversionFailure]
+  // CHECK:STDERR:   let u: T = U.G();
+  // CHECK:STDERR:              ^~~~~
+  // CHECK:STDERR: fail_todo_nested_period_self.carbon:[[@LINE+4]]:14: note: type `.Self` does not implement interface `Core.ImplicitAs(T)` [MissingImplInMemberAccessNote]
+  // CHECK:STDERR:   let u: T = U.G();
+  // CHECK:STDERR:              ^~~~~
+  // CHECK:STDERR:
+  let u: T = U.G();
 
-    fn F3(V:! I(T) where .A = (I(U) where .A ={} and .B = {})) {
-      // CHECK:STDERR: fail_todo_nested_period_self.carbon:[[@LINE+7]]:7: error: cannot convert type `V` that implements `I(T) where .(I(T).A) = I(U) where .(I(U).A) = {} and .(I(U).B) = {}` into type implementing `I(.Self) where .(I(.Self).A) = I(.Self) where .(I(.Self).B) = {} and .(I(.Self).A) = {}` [ConversionFailureFacetToFacet]
-      // CHECK:STDERR:       F(V);
-      // CHECK:STDERR:       ^~~~
-      // CHECK:STDERR: fail_todo_nested_period_self.carbon:[[@LINE-26]]:1: note: while deducing parameters of generic declared here [DeductionGenericHere]
-      // CHECK:STDERR: fn F(T:! I(.Self) where .A = ((I(.Self) where .B = {}) where .A = {})) {
-      // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-      // CHECK:STDERR:
-      F(V);
-    }
-  }
+  // Shows both `I(.Self)` are `I(T)`.
+  // CHECK:STDERR: fail_todo_nested_period_self.carbon:[[@LINE+4]]:9: error: found cycle in facet type constraint for `.(I(T).A)` [FacetTypeConstraintCycle]
+  // CHECK:STDERR:   T as (I(T) where .A = (I(T) where .A = {} and .B = {}));
+  // CHECK:STDERR:         ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+  // CHECK:STDERR:
+  T as (I(T) where .A = (I(T) where .A = {} and .B = {}));
+  // CHECK:STDERR: fail_todo_nested_period_self.carbon:[[@LINE+4]]:3: error: cannot convert type `U` that implements `I(.Self) where .(I(.Self).B) = {} and .(I(.Self).A) = {}` into type implementing `I(T) where .(I(T).A) = {} and .(I(T).B) = {}` [ConversionFailureFacetToFacet]
+  // CHECK:STDERR:   U as (I(T) where .A ={} and .B = {});
+  // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+  // CHECK:STDERR:
+  U as (I(T) where .A ={} and .B = {});
 }
+
+// --- todo_fail_nested_period_self_ambiguous.carbon
+library "[[@TEST_NAME]]";
+
+interface I(T:! type) {
+  let A:! type;
+}
+
+// TODO: This should be an error: The third `.Self` becomes undefined. It's not
+// referring to `T` but we need each explicit `.Self` to be replaced with
+// something at the end of the expression.
+fn F(T:! I(.Self) where .A = (I(.Self) where .A = I(.Self))) {}
 
 // CHECK:STDOUT: --- period_self_param.carbon
 // CHECK:STDOUT:
