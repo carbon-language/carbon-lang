@@ -161,7 +161,7 @@ fn F(U:! I(.Self) & J(.Self)) {
   F2(U.I1().J1().I1().J1().I1().J1());
 }
 
-// --- fail_todo_return_of_period_self_impls_interface.carbon
+// --- fail_return_of_period_self_impls_interface.carbon
 library "[[@TEST_NAME]]";
 
 interface I(T:! type) {
@@ -173,23 +173,15 @@ interface J(T:! type) {
 }
 
 fn G(U:! I(.Self) where .Self impls J(.Self)) {
-  // TODO: U.I1() returns a value of type `U`. How do we call `J.J1` on that? It
-  // is accessible through non-compound member lookup when `U` extends `J`.
+  // It's not possible to do compound lookup here. You would have to work with
+  // the original type `U` instead.
   // See: https://github.com/carbon-language/carbon-lang/issues/6025
   //
-  // CHECK:STDERR: fail_todo_return_of_period_self_impls_interface.carbon:[[@LINE+12]]:11: error: type `<type of J>` does not support qualified expressions [QualifiedExprUnsupported]
-  // CHECK:STDERR:   U.I1().(J.J1)().I1().(J.J1)().I1().(J.J1)();
+  // CHECK:STDERR: fail_return_of_period_self_impls_interface.carbon:[[@LINE+4]]:11: error: type `<type of J>` does not support qualified expressions [QualifiedExprUnsupported]
+  // CHECK:STDERR:   U.I1().(J.J1)();
   // CHECK:STDERR:           ^~~~
   // CHECK:STDERR:
-  // CHECK:STDERR: fail_todo_return_of_period_self_impls_interface.carbon:[[@LINE+8]]:25: error: type `<type of J>` does not support qualified expressions [QualifiedExprUnsupported]
-  // CHECK:STDERR:   U.I1().(J.J1)().I1().(J.J1)().I1().(J.J1)();
-  // CHECK:STDERR:                         ^~~~
-  // CHECK:STDERR:
-  // CHECK:STDERR: fail_todo_return_of_period_self_impls_interface.carbon:[[@LINE+4]]:39: error: type `<type of J>` does not support qualified expressions [QualifiedExprUnsupported]
-  // CHECK:STDERR:   U.I1().(J.J1)().I1().(J.J1)().I1().(J.J1)();
-  // CHECK:STDERR:                                       ^~~~
-  // CHECK:STDERR:
-  U.I1().(J.J1)().I1().(J.J1)().I1().(J.J1)();
+  U.I1().(J.J1)();
 }
 
 // --- fail_todo_return_of_type_period_self_has_type_u.carbon

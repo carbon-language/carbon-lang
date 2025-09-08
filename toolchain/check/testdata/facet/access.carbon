@@ -150,7 +150,7 @@ fn F(U:! I where .X = .Self) {
   F3(U.G().G().G());
 }
 
-// --- fail_todo_compound_access_through_call.carbon
+// --- fail_compound_access_through_call.carbon
 library "[[@TEST_NAME]]";
 
 interface I {
@@ -159,19 +159,18 @@ interface I {
 }
 
 fn F(U:! I where .X = .Self) {
-  // TODO: The return of `I.G()` is a value with type `U` which is constrained
-  // by `I`. We have access to the methods of `I` through name lookup, but how
-  // do we get to them with compound member access?
+  // It's not possible to do compound member lookup here. You'd need
+  // to work with `U.(I.X)` instead.
   // See: https://github.com/carbon-language/carbon-lang/issues/6025
   //
-  // CHECK:STDERR: fail_todo_compound_access_through_call.carbon:[[@LINE+7]]:3: error: cannot implicitly convert non-type value of type `.Self` into type implementing `I` [ConversionFailureNonTypeToFacet]
-  // CHECK:STDERR:   U.(I.G)().(I.G)().(I.G)();
+  // CHECK:STDERR: fail_compound_access_through_call.carbon:[[@LINE+7]]:3: error: cannot implicitly convert non-type value of type `.Self` into type implementing `I` [ConversionFailureNonTypeToFacet]
+  // CHECK:STDERR:   U.(I.G)().(I.G)();
   // CHECK:STDERR:   ^~~~~~~~~~~~~~~
-  // CHECK:STDERR: fail_todo_compound_access_through_call.carbon:[[@LINE+4]]:3: note: type `.Self` does not implement interface `Core.ImplicitAs(I)` [MissingImplInMemberAccessNote]
-  // CHECK:STDERR:   U.(I.G)().(I.G)().(I.G)();
+  // CHECK:STDERR: fail_compound_access_through_call.carbon:[[@LINE+4]]:3: note: type `.Self` does not implement interface `Core.ImplicitAs(I)` [MissingImplInMemberAccessNote]
+  // CHECK:STDERR:   U.(I.G)().(I.G)();
   // CHECK:STDERR:   ^~~~~~~~~~~~~~~
   // CHECK:STDERR:
-  U.(I.G)().(I.G)().(I.G)();
+  U.(I.G)().(I.G)();
 }
 
 // --- fail_non_const_associated.carbon
