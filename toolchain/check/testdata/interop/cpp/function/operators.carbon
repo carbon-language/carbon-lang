@@ -47,6 +47,68 @@ fn F() {
 }
 
 // ============================================================================
+// Prefix increment and decrement vs postfix increment and decrement
+// ============================================================================
+
+// --- prefix_inc_and_dec.h
+
+class Prefix {};
+auto operator++(Prefix operand) -> Prefix;
+auto operator--(Prefix operand) -> Prefix;
+
+// --- fail_prefix_calling_postfix.carbon
+
+library "[[@TEST_NAME]]";
+
+import Cpp library "prefix_inc_and_dec.h";
+
+fn F() {
+  let prefix: Cpp.Prefix = Cpp.Prefix.Prefix();
+  // CHECK:STDERR: fail_prefix_calling_postfix.carbon:[[@LINE+8]]:9: error: expected `;` after expression statement [ExpectedExprSemi]
+  // CHECK:STDERR:   prefix++;
+  // CHECK:STDERR:         ^~
+  // CHECK:STDERR:
+  // CHECK:STDERR: fail_prefix_calling_postfix.carbon:[[@LINE+4]]:3: error: semantics TODO: `handle invalid parse trees in `check`` [SemanticsTodo]
+  // CHECK:STDERR:   prefix++;
+  // CHECK:STDERR:   ^~~~~~~~~
+  // CHECK:STDERR:
+  prefix++;
+  // CHECK:STDERR: fail_prefix_calling_postfix.carbon:[[@LINE+4]]:9: error: expected `;` after expression statement [ExpectedExprSemi]
+  // CHECK:STDERR:   prefix--;
+  // CHECK:STDERR:         ^~
+  // CHECK:STDERR:
+  prefix--;
+}
+
+// --- postfix_inc_and_dec.h
+
+class Postfix {};
+auto operator++(Postfix operand, int) -> Postfix;
+auto operator--(Postfix operand, int) -> Postfix;
+
+// --- fail_postfix_calling_prefix.carbon
+
+library "[[@TEST_NAME]]";
+
+import Cpp library "postfix_inc_and_dec.h";
+
+fn F() {
+  let postfix: Cpp.Postfix = Cpp.Postfix.Postfix();
+  // CHECK:STDERR: fail_postfix_calling_prefix.carbon:[[@LINE+5]]:3: error: 1 argument passed to function expecting 2 arguments [CallArgCountMismatch]
+  // CHECK:STDERR:   ++postfix;
+  // CHECK:STDERR:   ^~~~~~~~~
+  // CHECK:STDERR: fail_postfix_calling_prefix.carbon: note: calling function declared here [InCallToEntity]
+  // CHECK:STDERR:
+  ++postfix;
+  // CHECK:STDERR: fail_postfix_calling_prefix.carbon:[[@LINE+5]]:3: error: 1 argument passed to function expecting 2 arguments [CallArgCountMismatch]
+  // CHECK:STDERR:   --postfix;
+  // CHECK:STDERR:   ^~~~~~~~~
+  // CHECK:STDERR: fail_postfix_calling_prefix.carbon: note: calling function declared here [InCallToEntity]
+  // CHECK:STDERR:
+  --postfix;
+}
+
+// ============================================================================
 // AddWith
 // ============================================================================
 
