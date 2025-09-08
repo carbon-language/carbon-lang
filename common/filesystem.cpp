@@ -113,14 +113,24 @@ auto Internal::FileRefBase::WriteFileFromString(llvm::StringRef str)
   return Success();
 }
 
+static auto DurationToTimespec(Duration d) -> timespec {
+  timespec ts = {};
+  ts.tv_sec = std::chrono::duration_cast<std::chrono::seconds>(d).count();
+  d -= std::chrono::seconds(ts.tv_sec);
+  ts.tv_nsec = std::chrono::duration_cast<std::chrono::nanoseconds>(d).count();
+  return ts;
+}
+
+// For every platform but macOS we can sleep directly on an absolute time.
+#if !__APPLE__
 static auto Sleep(Duration sleep_nanos) -> void {
   // We use `clock_gettime` instead of the filesystem `Clock` or some other
   // `std::chrono` clock because we want to use the exact same clock that we'll
   // use for sleeping below, and we'll need the time in a `timespec` for that
   // call anyways. We do use a monotonic clock to try and avoid sleeps being
   // interrupted by clock changes.
-  timespec t = {};
-  int result = clock_gettime(CLOCK_MONOTONIC, &t);
+  timespec ts = {};
+  int result = clock_gettime(CLOCK_MONOTONIC, &ts);
   CARBON_CHECK(result == 0, "Error getting the time: {0}", strerror(errno));
 
   // Now convert the timespec to a duration that we can safely do arithmetic on.
@@ -130,18 +140,15 @@ static auto Sleep(Duration sleep_nanos) -> void {
   //
   // Note that our `Duration` uses `__int128` to avoid worrying about running
   // out of precision to represent the final deadline.
-  Duration nano_t = std::chrono::seconds(t.tv_sec);
-  nano_t += std::chrono::nanoseconds(t.tv_nsec);
+  Duration nano_t = std::chrono::seconds(ts.tv_sec);
+  nano_t += std::chrono::nanoseconds(ts.tv_nsec);
   nano_t += sleep_nanos;
 
   // Now convert back to timespec.
-  t.tv_sec = std::chrono::duration_cast<std::chrono::seconds>(nano_t).count();
-  nano_t -= std::chrono::seconds(t.tv_sec);
-  t.tv_nsec =
-      std::chrono::duration_cast<std::chrono::nanoseconds>(nano_t).count();
+  ts = DurationToTimespec(nano_t);
 
   do {
-    result = clock_nanosleep(CLOCK_MONOTONIC, TIMER_ABSTIME, &t, nullptr);
+    result = clock_nanosleep(CLOCK_MONOTONIC, TIMER_ABSTIME, &ts, nullptr);
 
     // Continue sleeping if we get interrupted by a resumable signal. Because
     // we're using a monotonic clock and an absolute deadline time we will
@@ -153,6 +160,43 @@ static auto Sleep(Duration sleep_nanos) -> void {
     RawStringOstream error_os;
     PrintErrorNumber(error_os, errnum);
     CARBON_FATAL("Unexpected error while sleeping: {0}", error_os.TakeStr());
+  }
+}
+#endif
+
+// A macOS specific sleep routine that builds on more standard utilities. This
+// is technically a portable implementation so we always compile it but only use
+// it on macOS where the more efficient direct use of `clock_nanosleep` isn't
+// available.
+[[maybe_unused]]
+static auto SleepMacos(Duration sleep_nanos) -> void {
+  TimePoint stop = Clock::now() + sleep_nanos;
+
+  timespec sleep_ts = DurationToTimespec(sleep_nanos);
+  for (;;) {
+    timespec rem_sleep_ts = {};
+    int result = nanosleep(&sleep_ts, &rem_sleep_ts);
+    if (result == 0) {
+      return;
+    }
+
+    // Continue sleeping if we get interrupted by a resumable signal. For
+    // everything else report it.
+    if (errno != EINTR) {
+      int errnum = errno;
+      RawStringOstream error_os;
+      PrintErrorNumber(error_os, errnum);
+      CARBON_FATAL("Unexpected error while sleeping: {0}", error_os.TakeStr());
+    }
+
+    // Update to the remaining sleep time for the next attempt at sleeping.
+    sleep_ts = rem_sleep_ts;
+
+    // Also check if the clock has past our stop time as a fallback to avoid too
+    // much clock skew.
+    if (Clock::now() > stop) {
+      return;
+    }
   }
 }
 
@@ -195,7 +239,7 @@ auto Internal::FileRefBase::TryLock(FileLock::Kind kind, Duration deadline,
     // The caller requested attempting to wait up to a deadline to acquire the
     // lock with a specific poll interval. Try to sleep for that poll interval
     // before trying the lock again.
-    Sleep(poll_interval);
+    SleepMacos(poll_interval);
   }
 }
 

@@ -266,8 +266,15 @@ class FileStatus {
   auto permissions() const -> ModeType { return stat_buf_.st_mode & 0777; }
 
   auto mtime() const -> TimePoint {
-    TimePoint t(std::chrono::seconds(stat_buf_.st_mtim.tv_sec));
-    return t + std::chrono::nanoseconds(stat_buf_.st_mtim.tv_nsec);
+    // Linux, FreeBSD, and OpenBSD all use `st_mtim`, but macOS uses a different
+    // spelling.
+#if __APPLE__
+    timespec ts = stat_buf_.st_mtimespec;
+#else
+    timespec ts = stat_buf_.st_mtim;
+#endif
+    TimePoint t(std::chrono::seconds(ts.tv_sec));
+    return t + std::chrono::nanoseconds(ts.tv_nsec);
   }
 
   // Non-portable APIs only available on Unix-like systems. See the
