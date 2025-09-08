@@ -113,9 +113,49 @@ auto Internal::FileRefBase::WriteFileFromString(llvm::StringRef str)
   return Success();
 }
 
-// For every platform but macOS we can sleep directly on an absolute time.
-#if !__APPLE__
+// A macOS specific sleep routine that builds on more standard utilities. This
+// is technically a portable implementation so we always compile it but only use
+// it on macOS where the more efficient direct use of `clock_nanosleep` isn't
+// available.
+[[maybe_unused]]
+static auto SleepMacos(Duration sleep_nanos) -> void {
+  TimePoint stop = Clock::now() + sleep_nanos;
+
+  timespec sleep_ts = Internal::DurationToTimespec(sleep_nanos);
+  for (;;) {
+    timespec rem_sleep_ts = {};
+    int result = nanosleep(&sleep_ts, &rem_sleep_ts);
+    if (result == 0) {
+      return;
+    }
+
+    // Continue sleeping if we get interrupted by a resumable signal. For
+    // everything else report it.
+    if (errno != EINTR) {
+      int errnum = errno;
+      RawStringOstream error_os;
+      PrintErrorNumber(error_os, errnum);
+      CARBON_FATAL("Unexpected error while sleeping: {0}", error_os.TakeStr());
+    }
+
+    // Update to the remaining sleep time for the next attempt at sleeping.
+    sleep_ts = rem_sleep_ts;
+
+    // Also check if the clock has past our stop time as a fallback to avoid too
+    // much clock skew.
+    if (Clock::now() > stop) {
+      return;
+    }
+  }
+}
+
 static auto Sleep(Duration sleep_nanos) -> void {
+  // For every platform but macOS we can sleep directly on an absolute time.
+#if __APPLE__
+  // On Apple platforms, dispatch to a specialized routine.
+  SleepMacos(sleep_nanos);
+#else
+
   // We use `clock_gettime` instead of the filesystem `Clock` or some other
   // `std::chrono` clock because we want to use the exact same clock that we'll
   // use for sleeping below, and we'll need the time in a `timespec` for that
@@ -153,43 +193,7 @@ static auto Sleep(Duration sleep_nanos) -> void {
     PrintErrorNumber(error_os, errnum);
     CARBON_FATAL("Unexpected error while sleeping: {0}", error_os.TakeStr());
   }
-}
 #endif
-
-// A macOS specific sleep routine that builds on more standard utilities. This
-// is technically a portable implementation so we always compile it but only use
-// it on macOS where the more efficient direct use of `clock_nanosleep` isn't
-// available.
-[[maybe_unused]]
-static auto SleepMacos(Duration sleep_nanos) -> void {
-  TimePoint stop = Clock::now() + sleep_nanos;
-
-  timespec sleep_ts = Internal::DurationToTimespec(sleep_nanos);
-  for (;;) {
-    timespec rem_sleep_ts = {};
-    int result = nanosleep(&sleep_ts, &rem_sleep_ts);
-    if (result == 0) {
-      return;
-    }
-
-    // Continue sleeping if we get interrupted by a resumable signal. For
-    // everything else report it.
-    if (errno != EINTR) {
-      int errnum = errno;
-      RawStringOstream error_os;
-      PrintErrorNumber(error_os, errnum);
-      CARBON_FATAL("Unexpected error while sleeping: {0}", error_os.TakeStr());
-    }
-
-    // Update to the remaining sleep time for the next attempt at sleeping.
-    sleep_ts = rem_sleep_ts;
-
-    // Also check if the clock has past our stop time as a fallback to avoid too
-    // much clock skew.
-    if (Clock::now() > stop) {
-      return;
-    }
-  }
 }
 
 auto Internal::FileRefBase::TryLock(FileLock::Kind kind, Duration deadline,
@@ -231,7 +235,7 @@ auto Internal::FileRefBase::TryLock(FileLock::Kind kind, Duration deadline,
     // The caller requested attempting to wait up to a deadline to acquire the
     // lock with a specific poll interval. Try to sleep for that poll interval
     // before trying the lock again.
-    SleepMacos(poll_interval);
+    Sleep(poll_interval);
   }
 }
 
