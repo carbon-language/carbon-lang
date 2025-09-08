@@ -351,6 +351,18 @@ auto operator--(C operand, int) -> C;
 // Bitwise.
 auto operator~(C operand) -> C;
 
+// Logical.
+auto operator!(C operand) -> C;
+
+// Pointer and Memory.
+class P {
+ public:
+  auto foo() -> P;
+  auto operator->() const -> P* _Nonnull;
+};
+auto operator*(P operand) -> P;
+auto operator&(P operand) -> P;
+
 // --- fail_todo_import_unsupported_unary_operators.carbon
 
 library "[[@TEST_NAME]]";
@@ -397,6 +409,21 @@ fn F() {
   // CHECK:STDERR:                          ^
   // CHECK:STDERR:
   let not_value: Cpp.C = ~c;
+
+  // Logical.
+  // CHECK:STDERR: fail_todo_import_unsupported_unary_operators.carbon:[[@LINE+4]]:35: error: `let` declarations must end with a `;` [ExpectedDeclSemi]
+  // CHECK:STDERR:   let not_result: Cpp.C = operator!(c1);
+  // CHECK:STDERR:                                   ^
+  // CHECK:STDERR:
+  let not_result: Cpp.C = operator!(c1);
+
+  // Pointer and Memory.
+  var p: Cpp.P = Cpp.P.P();
+
+  // Pointer and Memory.
+  let dereference: Cpp.P = *p;
+  let address: Cpp.P = operator&(p);
+  let call_result: Cpp.P = p->foo();
 }
 
 // ============================================================================
@@ -406,9 +433,15 @@ fn F() {
 // --- unsupported_binary_operators.h
 
 class C {};
+
+// Bitwise.
 // TODO: Change `lhs` and return value to reference when it is supported.
 auto operator<<=(C lhs, int num_bits) -> C;
 auto operator>>=(C lhs, int num_bits) -> C;
+
+// Logical.
+auto operator&&(C lhs, C rhs) -> C;
+auto operator||(C lhs, C rhs) -> C;
 
 // --- fail_todo_import_unsupported_binary_operators.carbon
 
@@ -418,6 +451,8 @@ import Cpp library "unsupported_binary_operators.h";
 
 fn F() {
   let c1: Cpp.C = Cpp.C.C();
+
+  // Bitwise.
   // CHECK:STDERR: fail_todo_import_unsupported_binary_operators.carbon:[[@LINE+11]]:3: error: semantics TODO: `Unsupported operator interface `LeftShiftAssignWith`` [SemanticsTodo]
   // CHECK:STDERR:   c1 <<= 1;
   // CHECK:STDERR:   ^~~~~~~~
@@ -442,111 +477,46 @@ fn F() {
   // CHECK:STDERR:   ^~~~~~~~
   // CHECK:STDERR:
   c1 >>= 2;
-}
 
-// ============================================================================
-// Logical operators
-// ============================================================================
-
-// --- logical_operators.h
-
-class C {};
-auto operator!(C operand) -> bool;
-auto operator&&(C lhs, C rhs) -> bool;
-auto operator||(C lhs, C rhs) -> bool;
-
-// --- fail_import_logical_operators.carbon
-
-library "[[@TEST_NAME]]";
-import Cpp library "logical_operators.h";
-
-fn F() {
-  let c1: Cpp.C = Cpp.C.C();
-  let c2: Cpp.C = Cpp.C.C();
-
-  // CHECK:STDERR: fail_import_logical_operators.carbon:[[@LINE+7]]:26: error: cannot implicitly convert expression of type `Cpp.C` to `bool` [ConversionFailure]
-  // CHECK:STDERR:   let not_result: bool = not c1;
-  // CHECK:STDERR:                          ^~~~~~
-  // CHECK:STDERR: fail_import_logical_operators.carbon:[[@LINE+4]]:26: note: type `Cpp.C` does not implement interface `Core.ImplicitAs(bool)` [MissingImplInMemberAccessNote]
-  // CHECK:STDERR:   let not_result: bool = not c1;
-  // CHECK:STDERR:                          ^~~~~~
+  // Logical.
+  // CHECK:STDERR: fail_todo_import_unsupported_binary_operators.carbon:[[@LINE+16]]:27: error: name `operator` not found [NameNotFound]
+  // CHECK:STDERR:   let and_result: Cpp.C = operator&&(c1, c2);
+  // CHECK:STDERR:                           ^~~~~~~~
   // CHECK:STDERR:
-  let not_result: bool = not c1;
-  // CHECK:STDERR: fail_import_logical_operators.carbon:[[@LINE+14]]:26: error: cannot implicitly convert expression of type `Cpp.C` to `bool` [ConversionFailure]
-  // CHECK:STDERR:   let and_result: bool = c1 and c2;
-  // CHECK:STDERR:                          ^~~~~~
-  // CHECK:STDERR: fail_import_logical_operators.carbon:[[@LINE+11]]:26: note: type `Cpp.C` does not implement interface `Core.ImplicitAs(bool)` [MissingImplInMemberAccessNote]
-  // CHECK:STDERR:   let and_result: bool = c1 and c2;
-  // CHECK:STDERR:                          ^~~~~~
+  // CHECK:STDERR: fail_todo_import_unsupported_binary_operators.carbon:[[@LINE+12]]:35: error: whitespace missing around binary operator [BinaryOperatorRequiresWhitespace]
+  // CHECK:STDERR:   let and_result: Cpp.C = operator&&(c1, c2);
+  // CHECK:STDERR:                                   ^
   // CHECK:STDERR:
-  // CHECK:STDERR: fail_import_logical_operators.carbon:[[@LINE+7]]:26: error: cannot implicitly convert expression of type `Cpp.C` to `bool` [ConversionFailure]
-  // CHECK:STDERR:   let and_result: bool = c1 and c2;
-  // CHECK:STDERR:                          ^~~~~~~~~
-  // CHECK:STDERR: fail_import_logical_operators.carbon:[[@LINE+4]]:26: note: type `Cpp.C` does not implement interface `Core.ImplicitAs(bool)` [MissingImplInMemberAccessNote]
-  // CHECK:STDERR:   let and_result: bool = c1 and c2;
-  // CHECK:STDERR:                          ^~~~~~~~~
+  // CHECK:STDERR: fail_todo_import_unsupported_binary_operators.carbon:[[@LINE+8]]:42: error: name `c2` not found [NameNotFound]
+  // CHECK:STDERR:   let and_result: Cpp.C = operator&&(c1, c2);
+  // CHECK:STDERR:                                          ^~
   // CHECK:STDERR:
-  let and_result: bool = c1 and c2;
-  // CHECK:STDERR: fail_import_logical_operators.carbon:[[@LINE+14]]:25: error: cannot implicitly convert expression of type `Cpp.C` to `bool` [ConversionFailure]
-  // CHECK:STDERR:   let or_result: bool = c1 or c2;
-  // CHECK:STDERR:                         ^~~~~
-  // CHECK:STDERR: fail_import_logical_operators.carbon:[[@LINE+11]]:25: note: type `Cpp.C` does not implement interface `Core.ImplicitAs(bool)` [MissingImplInMemberAccessNote]
-  // CHECK:STDERR:   let or_result: bool = c1 or c2;
-  // CHECK:STDERR:                         ^~~~~
+  // CHECK:STDERR: fail_todo_import_unsupported_binary_operators.carbon:[[@LINE+4]]:36: error: cannot take the address of non-reference expression [AddrOfNonRef]
+  // CHECK:STDERR:   let and_result: Cpp.C = operator&&(c1, c2);
+  // CHECK:STDERR:                                    ^
   // CHECK:STDERR:
-  // CHECK:STDERR: fail_import_logical_operators.carbon:[[@LINE+7]]:25: error: cannot implicitly convert expression of type `Cpp.C` to `bool` [ConversionFailure]
-  // CHECK:STDERR:   let or_result: bool = c1 or c2;
-  // CHECK:STDERR:                         ^~~~~~~~
-  // CHECK:STDERR: fail_import_logical_operators.carbon:[[@LINE+4]]:25: note: type `Cpp.C` does not implement interface `Core.ImplicitAs(bool)` [MissingImplInMemberAccessNote]
-  // CHECK:STDERR:   let or_result: bool = c1 or c2;
-  // CHECK:STDERR:                         ^~~~~~~~
+  let and_result: Cpp.C = operator&&(c1, c2);
+  // CHECK:STDERR: fail_todo_import_unsupported_binary_operators.carbon:[[@LINE+20]]:26: error: name `operator` not found [NameNotFound]
+  // CHECK:STDERR:   let or_result: Cpp.C = operator||(c1, c2);
+  // CHECK:STDERR:                          ^~~~~~~~
   // CHECK:STDERR:
-  let or_result: bool = c1 or c2;
-}
-
-// ============================================================================
-// Pointer and Memory operators
-// ============================================================================
-
-// --- pointer_and_memory_operators.h
-
-class C {
- public:
-  auto foo() -> C;
-  auto operator->() const -> C* _Nonnull;
-};
-
-auto operator*(C operand) -> C;
-auto operator&(C operand) -> C;
-
-// --- fail_import_pointer_and_memory_operators.carbon
-
-library "[[@TEST_NAME]]";
-
-import Cpp library "pointer_and_memory_operators.h";
-
-fn F() {
-  var c: Cpp.C = Cpp.C.C();
-
-  // Pointer and Memory.
-  // CHECK:STDERR: fail_import_pointer_and_memory_operators.carbon:[[@LINE+4]]:28: error: cannot dereference operand of non-pointer type `Cpp.C` [DerefOfNonPointer]
-  // CHECK:STDERR:   let dereference: Cpp.C = *c;
-  // CHECK:STDERR:                            ^
+  // CHECK:STDERR: fail_todo_import_unsupported_binary_operators.carbon:[[@LINE+16]]:34: error: whitespace missing around binary operator [BinaryOperatorRequiresWhitespace]
+  // CHECK:STDERR:   let or_result: Cpp.C = operator||(c1, c2);
+  // CHECK:STDERR:                                  ^
   // CHECK:STDERR:
-  let dereference: Cpp.C = *c;
-  // CHECK:STDERR: fail_import_pointer_and_memory_operators.carbon:[[@LINE+7]]:24: error: cannot implicitly convert expression of type `Cpp.C*` to `Cpp.C` [ConversionFailure]
-  // CHECK:STDERR:   let address: Cpp.C = &c;
-  // CHECK:STDERR:                        ^~
-  // CHECK:STDERR: fail_import_pointer_and_memory_operators.carbon:[[@LINE+4]]:24: note: type `Cpp.C*` does not implement interface `Core.ImplicitAs(Cpp.C)` [MissingImplInMemberAccessNote]
-  // CHECK:STDERR:   let address: Cpp.C = &c;
-  // CHECK:STDERR:                        ^~
+  // CHECK:STDERR: fail_todo_import_unsupported_binary_operators.carbon:[[@LINE+12]]:35: error: expected expression [ExpectedExpr]
+  // CHECK:STDERR:   let or_result: Cpp.C = operator||(c1, c2);
+  // CHECK:STDERR:                                   ^
   // CHECK:STDERR:
-  let address: Cpp.C = &c;
-  // CHECK:STDERR: fail_import_pointer_and_memory_operators.carbon:[[@LINE+4]]:29: error: cannot apply `->` operator to non-pointer type `Cpp.C` [ArrowOperatorOfNonPointer]
-  // CHECK:STDERR:   let call_result: Cpp.C = c->foo();
-  // CHECK:STDERR:                             ^~
+  // CHECK:STDERR: fail_todo_import_unsupported_binary_operators.carbon:[[@LINE+8]]:35: error: whitespace missing around binary operator [BinaryOperatorRequiresWhitespace]
+  // CHECK:STDERR:   let or_result: Cpp.C = operator||(c1, c2);
+  // CHECK:STDERR:                                   ^
   // CHECK:STDERR:
-  let call_result: Cpp.C = c->foo();
+  // CHECK:STDERR: fail_todo_import_unsupported_binary_operators.carbon:[[@LINE+4]]:35: error: semantics TODO: `handle invalid parse trees in `check`` [SemanticsTodo]
+  // CHECK:STDERR:   let or_result: Cpp.C = operator||(c1, c2);
+  // CHECK:STDERR:                                   ^
+  // CHECK:STDERR:
+  let or_result: Cpp.C = operator||(c1, c2);
 }
 
 // ============================================================================
