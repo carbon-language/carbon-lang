@@ -94,6 +94,7 @@ import Cpp library "postfix_inc_and_dec.h";
 
 fn F() {
   let postfix: Cpp.Postfix = Cpp.Postfix.Postfix();
+  // TODO: Make the error more descriptive to clarify we call prefix operators of a class with suffix operators.
   // CHECK:STDERR: fail_postfix_calling_prefix.carbon:[[@LINE+5]]:3: error: 1 argument passed to function expecting 2 arguments [CallArgCountMismatch]
   // CHECK:STDERR:   ++postfix;
   // CHECK:STDERR:   ^~~~~~~~~
