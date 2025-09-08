@@ -406,6 +406,9 @@ fn F() {
 // --- unsupported_binary_operators.h
 
 class C {};
+// TODO: Change `lhs` and return value to reference when it is supported.
+auto operator<<=(C lhs, int num_bits) -> C;
+auto operator>>=(C lhs, int num_bits) -> C;
 
 // --- fail_todo_import_unsupported_binary_operators.carbon
 
