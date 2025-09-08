@@ -1867,7 +1867,7 @@ static auto ImportVarDecl(Context& context, SemIR::LocId loc_id,
   SemIR::VarStorage var_storage{.type_id = var_type_id,
                                 .pattern_id = SemIR::InstId::None};
   // We can't use the convenience for `AddPlaceholderInstInNoBlock()` with typed
-  // nodes.
+  // nodes because it doesn't support insts with cleanup.
   SemIR::InstId var_storage_inst_id =
       AddPlaceholderInstInNoBlock(context, {loc_id, var_storage});
 
