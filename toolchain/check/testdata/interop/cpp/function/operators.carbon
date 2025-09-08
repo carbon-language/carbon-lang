@@ -272,6 +272,16 @@ fn F() {
 
 class C {};
 
+// Arithmetic.
+auto operator+(C operand) -> C;
+
+// Increment and Decrement.
+auto operator++(C operand, int) -> C;
+auto operator--(C operand, int) -> C;
+
+// Bitwise.
+auto operator~(C operand) -> C;
+
 // --- fail_todo_import_unsupported_unary_operators.carbon
 
 library "[[@TEST_NAME]]";
@@ -361,6 +371,9 @@ fn F() {
 // --- logical_operators.h
 
 class C {};
+auto operator!(C operand) -> bool;
+auto operator&&(C lhs, C rhs) -> bool;
+auto operator||(C lhs, C rhs) -> bool;
 
 // --- fail_import_logical_operators.carbon
 
@@ -417,7 +430,14 @@ fn F() {
 
 // --- pointer_and_memory_operators.h
 
-class C {};
+class C {
+ public:
+  auto foo() -> C;
+  auto operator->() const -> C* _Nonnull;
+};
+
+auto operator*(C operand) -> C;
+auto operator&(C operand) -> C;
 
 // --- fail_import_pointer_and_memory_operators.carbon
 
