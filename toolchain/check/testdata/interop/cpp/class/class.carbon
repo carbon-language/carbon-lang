@@ -362,13 +362,9 @@ fn MyF(bar: Cpp.Bar*);
 // CHECK:STDOUT: --- import_static_data_member.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
-// CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [concrete]
 // CHECK:STDOUT:   %Bar: type = class_type @Bar [concrete]
 // CHECK:STDOUT:   %ptr.f68: type = ptr_type %Bar [concrete]
-// CHECK:STDOUT:   %pattern_type.146: type = pattern_type %ptr.f68 [concrete]
-// CHECK:STDOUT:   %T.as.Destroy.impl.Op.type.4a2: type = fn_type @T.as.Destroy.impl.Op, @T.as.Destroy.impl(%ptr.f68) [concrete]
-// CHECK:STDOUT:   %T.as.Destroy.impl.Op.87e: %T.as.Destroy.impl.Op.type.4a2 = struct_value () [concrete]
-// CHECK:STDOUT:   %ptr.b75: type = ptr_type %ptr.f68 [concrete]
+// CHECK:STDOUT:   %pattern_type: type = pattern_type %ptr.f68 [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -383,7 +379,7 @@ fn MyF(bar: Cpp.Bar*);
 // CHECK:STDOUT: fn @MyF() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %bar.patt: %pattern_type.146 = binding_pattern bar [concrete]
+// CHECK:STDOUT:     %bar.patt: %pattern_type = binding_pattern bar [concrete]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Cpp.ref.loc8_23: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
 // CHECK:STDOUT:   %Bar.ref.loc8_26: type = name_ref Bar, imports.%Bar.decl [concrete = constants.%Bar]
@@ -395,11 +391,6 @@ fn MyF(bar: Cpp.Bar*);
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %.loc8_30: %ptr.f68 = bind_value %foo.ref
 // CHECK:STDOUT:   %bar: %ptr.f68 = bind_name bar, %.loc8_30
-// CHECK:STDOUT:   %T.as.Destroy.impl.Op.bound: <bound method> = bound_method imports.%foo.var, constants.%T.as.Destroy.impl.Op.87e
-// CHECK:STDOUT:   <elided>
-// CHECK:STDOUT:   %bound_method: <bound method> = bound_method imports.%foo.var, %T.as.Destroy.impl.Op.specific_fn
-// CHECK:STDOUT:   %addr: %ptr.b75 = addr_of imports.%foo.var
-// CHECK:STDOUT:   %T.as.Destroy.impl.Op.call: init %empty_tuple.type = call %bound_method(%addr)
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

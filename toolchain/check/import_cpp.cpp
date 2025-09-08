@@ -1895,7 +1895,6 @@ static auto ImportVarDecl(Context& context, SemIR::LocId loc_id,
 
   // Finalize the `VarStorage` instruction.
   ReplaceInstBeforeConstantUse(context, var_storage_inst_id, var_storage);
-  MaybeAddCleanupForInst(context, var_storage_inst_id);
   context.imports().push_back(var_storage_inst_id);
 
   return var_storage_inst_id;
