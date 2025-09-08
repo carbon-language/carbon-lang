@@ -80,6 +80,26 @@ fn UseIndirect[T:! I](x: T) -> T {
 //@dump-sem-ir-end
 }
 
+// --- fail_todo_convert_from_period_self_to_full_facet_value.carbon
+library "[[@TEST_NAME]]";
+
+interface I {
+  let I1:! type;
+}
+
+fn F(U:! I where .I1 = .Self) {
+  // CHECK:STDERR: fail_todo_convert_from_period_self_to_full_facet_value.carbon:[[@LINE+4]]:3: error: cannot convert type `U` that implements `I where .(I.I1) = .Self` into type implementing `I where .(I.I1) = U` [ConversionFailureFacetToFacet]
+  // CHECK:STDERR:   U as (I where .I1 = U);
+  // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~~~
+  // CHECK:STDERR:
+  U as (I where .I1 = U);
+  // CHECK:STDERR: fail_todo_convert_from_period_self_to_full_facet_value.carbon:[[@LINE+4]]:3: error: cannot convert type `U` into type implementing `I where .(I.I1) = U` [ConversionFailureTypeToFacet]
+  // CHECK:STDERR:   (U as type) as (I where .I1 = U);
+  // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+  // CHECK:STDERR:
+  (U as type) as (I where .I1 = U);
+}
+
 // --- fail_todo_access_through_call.carbon
 library "[[@TEST_NAME]]";
 
@@ -88,25 +108,49 @@ interface I {
   fn G() -> X;
 }
 
-fn F(U:! I where .X = .Self) {
-  U.G().G();
+fn F2[U:! I](T: U) {}
+fn F3[U:! I where .X = .Self](T: U) {}
 
-  // TODO: This should typecheck.
+fn F(U:! I where .X = .Self) {
+  // The returned value of `G` type `U` which has access to the methods of `I`.
+  //
+  // TODO: This works but a chained third call doesn't.
+  U.G().G();
   // - The first `.` is on a NameRef of type FacetType for `I where .X = .Self`.
   //   - This finds `G` through the FacetType.
   // - The second `.` is on a Call of type FacetAccessType into `BindSymbolicName` with type FacetType for `I`.
   //   - This finds `G` through the FacetType (impl lookup strips off FacetAccessType).
-  // - The second `.` is on a Call of type FacetAccessType into `ImplWitnessAccess` of `I.X` into `LookupImplWitness`, which has type `type`
+  // - The third `.` is on a Call of type FacetAccessType into `ImplWitnessAccess` of `I.X` into `LookupImplWitness`, which has type `type`
   //   - Can't make calls on an `ImplWitnessAccess`.
-  //
+  //   - We could expect that the constant value of the `ImplWitnessAccess` would
+  //     be the same type that we got for the second lookup.
   // CHECK:STDERR: fail_todo_access_through_call.carbon:[[@LINE+4]]:3: error: type `.(I.X)` does not support qualified expressions [QualifiedExprUnsupported]
   // CHECK:STDERR:   U.G().G().G();
   // CHECK:STDERR:   ^~~~~~~~~~~
   // CHECK:STDERR:
   U.G().G().G();
+  // CHECK:STDERR: fail_todo_access_through_call.carbon:[[@LINE+4]]:3: error: type `.(I.X)` does not support qualified expressions [QualifiedExprUnsupported]
+  // CHECK:STDERR:   (U as type).G().G().G();
+  // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~~
+  // CHECK:STDERR:
+  (U as type).G().G().G();
+
+  // The returned value of type `U` can be used as a value of type `U`.
+  // CHECK:STDERR: fail_todo_access_through_call.carbon:[[@LINE+4]]:6: error: type `.(I.X)` does not support qualified expressions [QualifiedExprUnsupported]
+  // CHECK:STDERR:   F2(U.G().G().G());
+  // CHECK:STDERR:      ^~~~~~~~~~~
+  // CHECK:STDERR:
+  F2(U.G().G().G());
+
+  // TODO: The constraints in the type `U` are preserved.
+  // CHECK:STDERR: fail_todo_access_through_call.carbon:[[@LINE+4]]:6: error: type `.(I.X)` does not support qualified expressions [QualifiedExprUnsupported]
+  // CHECK:STDERR:   F3(U.G().G().G());
+  // CHECK:STDERR:      ^~~~~~~~~~~
+  // CHECK:STDERR:
+  F3(U.G().G().G());
 }
 
-// --- fail_todo_access_through_call_converts_is_a_type.carbon
+// --- fail_todo_compound_access_through_call.carbon
 library "[[@TEST_NAME]]";
 
 interface I {
@@ -115,18 +159,19 @@ interface I {
 }
 
 fn F(U:! I where .X = .Self) {
-  // TODO: The return type of G() is a FacetAccessType of a BindSymbolicName. We
-  // try to convert a Call of type FacetAccessType (of type `type`) to `type`
-  // which fails.
+  // TODO: The return of `I.G()` is a value with type `U` which is constrained
+  // by `I`. We have access to the methods of `I` through name lookup, but how
+  // do we get to them with compound member access?
+  // See: https://github.com/carbon-language/carbon-lang/issues/6025
   //
-  // CHECK:STDERR: fail_todo_access_through_call_converts_is_a_type.carbon:[[@LINE+7]]:3: error: cannot convert non-type value of type `.Self` to `type` with `as` [ConversionFailureNonTypeToFacet]
-  // CHECK:STDERR:   U.G() as type;
-  // CHECK:STDERR:   ^~~~~~~~~~~~~
-  // CHECK:STDERR: fail_todo_access_through_call_converts_is_a_type.carbon:[[@LINE+4]]:3: note: type `.Self` does not implement interface `Core.As(type)` [MissingImplInMemberAccessNote]
-  // CHECK:STDERR:   U.G() as type;
-  // CHECK:STDERR:   ^~~~~~~~~~~~~
+  // CHECK:STDERR: fail_todo_compound_access_through_call.carbon:[[@LINE+7]]:3: error: cannot implicitly convert non-type value of type `.Self` into type implementing `I` [ConversionFailureNonTypeToFacet]
+  // CHECK:STDERR:   U.(I.G)().(I.G)().(I.G)();
+  // CHECK:STDERR:   ^~~~~~~~~~~~~~~
+  // CHECK:STDERR: fail_todo_compound_access_through_call.carbon:[[@LINE+4]]:3: note: type `.Self` does not implement interface `Core.ImplicitAs(I)` [MissingImplInMemberAccessNote]
+  // CHECK:STDERR:   U.(I.G)().(I.G)().(I.G)();
+  // CHECK:STDERR:   ^~~~~~~~~~~~~~~
   // CHECK:STDERR:
-  U.G() as type;
+  U.(I.G)().(I.G)().(I.G)();
 }
 
 // --- fail_non_const_associated.carbon
