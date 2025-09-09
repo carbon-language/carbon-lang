@@ -2076,6 +2076,31 @@ static auto GetClangOperatorKind(Context& context, SemIR::LocId loc_id,
                                  llvm::StringLiteral interface_name,
                                  llvm::StringLiteral op_name)
     -> std::optional<clang::OverloadedOperatorKind> {
+  // Unary operators.
+  if (interface_name == "Destroy" || interface_name == "As" ||
+      interface_name == "ImplicitAs") {
+    // TODO: Support destructors and conversions.
+    return std::nullopt;
+  }
+
+  // Increment and Decrement.
+  if (interface_name == "Inc") {
+    CARBON_CHECK(op_name == "Op");
+    return clang::OO_PlusPlus;
+  }
+  if (interface_name == "Dec") {
+    CARBON_CHECK(op_name == "Op");
+    return clang::OO_MinusMinus;
+  }
+
+  // Arithmetic.
+  if (interface_name == "Negate") {
+    CARBON_CHECK(op_name == "Op");
+    return clang::OO_Minus;
+  }
+
+  // Binary operators.
+
   // Arithmetic Operators.
   if (interface_name == "AddWith") {
     CARBON_CHECK(op_name == "Op");
