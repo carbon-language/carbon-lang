@@ -104,8 +104,8 @@ library "[[@TEST_NAME]]";
 // CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [concrete]
 // CHECK:STDOUT:   %A: %A.type = struct_value () [concrete]
 // CHECK:STDOUT:   %pattern_type.cb1: type = pattern_type %empty_tuple.type [concrete]
-// CHECK:STDOUT:   %T.as.Destroy.impl.Op.type.a63: type = fn_type @T.as.Destroy.impl.Op, @T.as.Destroy.impl(%empty_tuple.type) [concrete]
-// CHECK:STDOUT:   %T.as.Destroy.impl.Op.ea3: %T.as.Destroy.impl.Op.type.a63 = struct_value () [concrete]
+// CHECK:STDOUT:   %T.as.Destroy.impl.Op.type.abd: type = fn_type @T.as.Destroy.impl.Op, @T.as.Destroy.impl(%empty_tuple.type) [concrete]
+// CHECK:STDOUT:   %T.as.Destroy.impl.Op.bae: %T.as.Destroy.impl.Op.type.abd = struct_value () [concrete]
 // CHECK:STDOUT:   %ptr.843: type = ptr_type %empty_tuple.type [concrete]
 // CHECK:STDOUT:   %B.type: type = fn_type @B [concrete]
 // CHECK:STDOUT:   %B: %B.type = struct_value () [concrete]
@@ -158,7 +158,7 @@ library "[[@TEST_NAME]]";
 // CHECK:STDOUT:   %c.ref.loc20: ref %empty_tuple.type = name_ref c, %c
 // CHECK:STDOUT:   %tuple: %empty_tuple.type = tuple_value () [concrete = constants.%empty_tuple]
 // CHECK:STDOUT:   %.loc20: %empty_tuple.type = converted %c.ref.loc20, %tuple [concrete = constants.%empty_tuple]
-// CHECK:STDOUT:   %T.as.Destroy.impl.Op.bound: <bound method> = bound_method %c.var, constants.%T.as.Destroy.impl.Op.ea3
+// CHECK:STDOUT:   %T.as.Destroy.impl.Op.bound: <bound method> = bound_method %c.var, constants.%T.as.Destroy.impl.Op.bae
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT:   %bound_method: <bound method> = bound_method %c.var, %T.as.Destroy.impl.Op.specific_fn
 // CHECK:STDOUT:   %addr: %ptr.843 = addr_of %c.var
@@ -178,7 +178,7 @@ library "[[@TEST_NAME]]";
 // CHECK:STDOUT:   %C: type = class_type @C [concrete]
 // CHECK:STDOUT:   %C.I.type: type = fn_type @C.I [concrete]
 // CHECK:STDOUT:   %C.I: %C.I.type = struct_value () [concrete]
-// CHECK:STDOUT:   %Destroy.impl_witness.edd: <witness> = impl_witness @C.%Destroy.impl_witness_table [concrete]
+// CHECK:STDOUT:   %Destroy.impl_witness.9d0: <witness> = impl_witness @C.%Destroy.impl_witness_table [concrete]
 // CHECK:STDOUT:   %ptr.019: type = ptr_type %C [concrete]
 // CHECK:STDOUT:   %pattern_type.44a: type = pattern_type %ptr.019 [concrete]
 // CHECK:STDOUT:   %C.as.Destroy.impl.Op.type: type = fn_type @C.as.Destroy.impl.Op [concrete]
@@ -234,7 +234,7 @@ library "[[@TEST_NAME]]";
 // CHECK:STDOUT:   %Self.ref: type = name_ref Self, constants.%C [concrete = constants.%C]
 // CHECK:STDOUT:   impl_decl @C.as.Destroy.impl [concrete] {} {}
 // CHECK:STDOUT:   %Destroy.impl_witness_table = impl_witness_table (@C.as.Destroy.impl.%C.as.Destroy.impl.Op.decl), @C.as.Destroy.impl [concrete]
-// CHECK:STDOUT:   %Destroy.impl_witness: <witness> = impl_witness %Destroy.impl_witness_table [concrete = constants.%Destroy.impl_witness.edd]
+// CHECK:STDOUT:   %Destroy.impl_witness: <witness> = impl_witness %Destroy.impl_witness_table [concrete = constants.%Destroy.impl_witness.9d0]
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT:   complete_type_witness = %complete_type
 // CHECK:STDOUT:
@@ -261,8 +261,8 @@ library "[[@TEST_NAME]]";
 // CHECK:STDOUT:   %C.type: type = fn_type @C [concrete]
 // CHECK:STDOUT:   %C: %C.type = struct_value () [concrete]
 // CHECK:STDOUT:   %empty_tuple: %empty_tuple.type = tuple_value () [concrete]
-// CHECK:STDOUT:   %T.as.Destroy.impl.Op.type.a63: type = fn_type @T.as.Destroy.impl.Op, @T.as.Destroy.impl(%empty_tuple.type) [concrete]
-// CHECK:STDOUT:   %T.as.Destroy.impl.Op.ea3: %T.as.Destroy.impl.Op.type.a63 = struct_value () [concrete]
+// CHECK:STDOUT:   %T.as.Destroy.impl.Op.type.abd: type = fn_type @T.as.Destroy.impl.Op, @T.as.Destroy.impl(%empty_tuple.type) [concrete]
+// CHECK:STDOUT:   %T.as.Destroy.impl.Op.bae: %T.as.Destroy.impl.Op.type.abd = struct_value () [concrete]
 // CHECK:STDOUT:   %ptr.843: type = ptr_type %empty_tuple.type [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -287,13 +287,13 @@ library "[[@TEST_NAME]]";
 // CHECK:STDOUT:   %tuple.loc17: %empty_tuple.type = tuple_value () [concrete = constants.%empty_tuple]
 // CHECK:STDOUT:   %.loc17_7.3: %empty_tuple.type = converted %C.call, %tuple.loc17 [concrete = constants.%empty_tuple]
 // CHECK:STDOUT:   <elided>
-// CHECK:STDOUT:   %T.as.Destroy.impl.Op.bound.loc17: <bound method> = bound_method %.loc17_7.2, constants.%T.as.Destroy.impl.Op.ea3
+// CHECK:STDOUT:   %T.as.Destroy.impl.Op.bound.loc17: <bound method> = bound_method %.loc17_7.2, constants.%T.as.Destroy.impl.Op.bae
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT:   %bound_method.loc17: <bound method> = bound_method %.loc17_7.2, %T.as.Destroy.impl.Op.specific_fn.1
 // CHECK:STDOUT:   %addr.loc17: %ptr.843 = addr_of %.loc17_7.2
 // CHECK:STDOUT:   %T.as.Destroy.impl.Op.call.loc17: init %empty_tuple.type = call %bound_method.loc17(%addr.loc17)
 // CHECK:STDOUT:   <elided>
-// CHECK:STDOUT:   %T.as.Destroy.impl.Op.bound.loc13: <bound method> = bound_method %.loc13_7.2, constants.%T.as.Destroy.impl.Op.ea3
+// CHECK:STDOUT:   %T.as.Destroy.impl.Op.bound.loc13: <bound method> = bound_method %.loc13_7.2, constants.%T.as.Destroy.impl.Op.bae
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT:   %bound_method.loc13: <bound method> = bound_method %.loc13_7.2, %T.as.Destroy.impl.Op.specific_fn.3
 // CHECK:STDOUT:   %addr.loc13: %ptr.843 = addr_of %.loc13_7.2

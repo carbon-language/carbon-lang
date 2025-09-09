@@ -357,8 +357,8 @@ fn Use(y: Cpp.Y) -> i32 {
 // CHECK:STDOUT:   %ptr.13d: type = ptr_type %X [concrete]
 // CHECK:STDOUT:   %foo__carbon_thunk.type: type = fn_type @foo__carbon_thunk [concrete]
 // CHECK:STDOUT:   %foo__carbon_thunk: %foo__carbon_thunk.type = struct_value () [concrete]
-// CHECK:STDOUT:   %T.as.Destroy.impl.Op.type.0e5: type = fn_type @T.as.Destroy.impl.Op, @T.as.Destroy.impl(%X) [concrete]
-// CHECK:STDOUT:   %T.as.Destroy.impl.Op.cbf: %T.as.Destroy.impl.Op.type.0e5 = struct_value () [concrete]
+// CHECK:STDOUT:   %T.as.Destroy.impl.Op.type.ae2: type = fn_type @T.as.Destroy.impl.Op, @T.as.Destroy.impl(%X) [concrete]
+// CHECK:STDOUT:   %T.as.Destroy.impl.Op.128: %T.as.Destroy.impl.Op.type.ae2 = struct_value () [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -387,7 +387,7 @@ fn Use(y: Cpp.Y) -> i32 {
 // CHECK:STDOUT:   %foo__carbon_thunk.call: init %empty_tuple.type = call imports.%foo__carbon_thunk.decl(%addr.loc8_11.1)
 // CHECK:STDOUT:   %.loc8_11.2: init %X = in_place_init %foo__carbon_thunk.call, %.loc8_11.1
 // CHECK:STDOUT:   %.loc8_11.3: ref %X = temporary %.loc8_11.1, %.loc8_11.2
-// CHECK:STDOUT:   %T.as.Destroy.impl.Op.bound: <bound method> = bound_method %.loc8_11.3, constants.%T.as.Destroy.impl.Op.cbf
+// CHECK:STDOUT:   %T.as.Destroy.impl.Op.bound: <bound method> = bound_method %.loc8_11.3, constants.%T.as.Destroy.impl.Op.128
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT:   %bound_method: <bound method> = bound_method %.loc8_11.3, %T.as.Destroy.impl.Op.specific_fn
 // CHECK:STDOUT:   %addr.loc8_11.2: %ptr.13d = addr_of %.loc8_11.3

@@ -455,13 +455,13 @@ fn F() -> u32 {
 // CHECK:STDOUT:   %I.impl_witness: <witness> = impl_witness imports.%I.impl_witness_table [concrete]
 // CHECK:STDOUT:   %I.facet: %I.type = facet_value %C, (%I.impl_witness) [concrete]
 // CHECK:STDOUT:   %I.assoc_type: type = assoc_entity_type @I [concrete]
-// CHECK:STDOUT:   %assoc0.633: %I.assoc_type = assoc_entity element0, imports.%Main.import_ref.830 [concrete]
+// CHECK:STDOUT:   %assoc0.633c: %I.assoc_type = assoc_entity element0, imports.%Main.import_ref.830 [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT:   %Main.I: type = import_ref Main//uint, I, loaded [concrete = constants.%I.type]
 // CHECK:STDOUT:   %Main.C: type = import_ref Main//uint, C, loaded [concrete = constants.%C]
-// CHECK:STDOUT:   %Main.import_ref.d18: %I.assoc_type = import_ref Main//uint, loc5_10, loaded [concrete = constants.%assoc0.633]
+// CHECK:STDOUT:   %Main.import_ref.d18: %I.assoc_type = import_ref Main//uint, loc5_10, loaded [concrete = constants.%assoc0.633c]
 // CHECK:STDOUT:   %Main.import_ref.647: %u32 = import_ref Main//uint, loc10_28, loaded [concrete = constants.%int_8]
 // CHECK:STDOUT:   %I.impl_witness_table = impl_witness_table (%Main.import_ref.647), @C.as.I.impl [concrete]
 // CHECK:STDOUT:   %Main.import_ref.830: %u32 = import_ref Main//uint, loc5_10, loaded [concrete = %val]
@@ -474,7 +474,7 @@ fn F() -> u32 {
 // CHECK:STDOUT:   %I.ref: type = name_ref I, imports.%Main.I [concrete = constants.%I.type]
 // CHECK:STDOUT:   %I.facet: %I.type = facet_value constants.%C, (constants.%I.impl_witness) [concrete = constants.%I.facet]
 // CHECK:STDOUT:   %.loc7_13: %I.type = converted %C.ref, %I.facet [concrete = constants.%I.facet]
-// CHECK:STDOUT:   %val.ref: %I.assoc_type = name_ref val, imports.%Main.import_ref.d18 [concrete = constants.%assoc0.633]
+// CHECK:STDOUT:   %val.ref: %I.assoc_type = name_ref val, imports.%Main.import_ref.d18 [concrete = constants.%assoc0.633c]
 // CHECK:STDOUT:   %as_type: type = facet_access_type %.loc7_13 [concrete = constants.%C]
 // CHECK:STDOUT:   %.loc7_18: type = converted %.loc7_13, %as_type [concrete = constants.%C]
 // CHECK:STDOUT:   %impl.elem0: %u32 = impl_witness_access constants.%I.impl_witness, element0 [concrete = constants.%int_8]

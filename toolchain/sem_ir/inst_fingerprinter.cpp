@@ -249,18 +249,16 @@ struct Worklist {
 
   auto Add(FacetTypeId facet_type_id) -> void {
     const auto& facet_type = sem_ir->facet_types().Get(facet_type_id);
-    for (auto [interface_id, specific_id] : facet_type.extend_constraints) {
-      Add(interface_id);
-      Add(specific_id);
-    }
-    for (auto [interface_id, specific_id] : facet_type.self_impls_constraints) {
-      Add(interface_id);
-      Add(specific_id);
-    }
-    for (auto [lhs_id, rhs_id] : facet_type.rewrite_constraints) {
-      Add(lhs_id);
-      Add(rhs_id);
-    }
+    auto add_constraints = [&](auto constraints) {
+      contents.push_back(constraints.size());
+      for (auto [first, second] : constraints) {
+        Add(first);
+        Add(second);
+      }
+    };
+    add_constraints(facet_type.extend_constraints);
+    add_constraints(facet_type.self_impls_constraints);
+    add_constraints(facet_type.rewrite_constraints);
     contents.push_back(facet_type.other_requirements);
   }
 

@@ -123,7 +123,7 @@ fn For() {
 // CHECK:STDOUT: declare void @_CInclusiveRange.Core(ptr sret({ i32, i32 }), i32, i32)
 // CHECK:STDOUT:
 // CHECK:STDOUT: define linkonce_odr void @"_COp.Int.Core:Inc.Core.be1e879c1ad406d8"(ptr %self) !dbg !41 {
-// CHECK:STDOUT:   call void @"_COp:thunk.Int.Core:AddAssignWith.Core.abc639a111145970"(ptr %self, i32 1), !dbg !43
+// CHECK:STDOUT:   call void @"_COp:thunk.Int.Core:AddAssignWith.Core.81406e440463ef1d"(ptr %self, i32 1), !dbg !43
 // CHECK:STDOUT:   ret void, !dbg !44
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -141,7 +141,7 @@ fn For() {
 // CHECK:STDOUT:   ret void, !dbg !50
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: define linkonce_odr void @"_COp:thunk.Int.Core:AddAssignWith.Core.abc639a111145970"(ptr %self, i32 %other) !dbg !51 {
+// CHECK:STDOUT: define linkonce_odr void @"_COp:thunk.Int.Core:AddAssignWith.Core.81406e440463ef1d"(ptr %self, i32 %other) !dbg !51 {
 // CHECK:STDOUT:   %1 = call i32 @"_CConvert.8b3d5d6a6c17be04:ImplicitAs.Core.b88d1103f417c6d4"(i32 %other), !dbg !52
 // CHECK:STDOUT:   %2 = load i32, ptr %self, align 4, !dbg !53
 // CHECK:STDOUT:   %3 = add i32 %2, %1, !dbg !53
@@ -212,7 +212,7 @@ fn For() {
 // CHECK:STDOUT: !48 = distinct !DISubprogram(name: "None", linkageName: "_CNone.Optional.Core.b88d1103f417c6d4", scope: null, file: !35, line: 19, type: !5, spFlags: DISPFlagDefinition, unit: !2)
 // CHECK:STDOUT: !49 = !DILocation(line: 21, column: 5, scope: !48)
 // CHECK:STDOUT: !50 = !DILocation(line: 22, column: 5, scope: !48)
-// CHECK:STDOUT: !51 = distinct !DISubprogram(name: "Op", linkageName: "_COp:thunk.Int.Core:AddAssignWith.Core.abc639a111145970", scope: null, file: !42, line: 268, type: !5, spFlags: DISPFlagDefinition, unit: !2)
+// CHECK:STDOUT: !51 = distinct !DISubprogram(name: "Op", linkageName: "_COp:thunk.Int.Core:AddAssignWith.Core.81406e440463ef1d", scope: null, file: !42, line: 268, type: !5, spFlags: DISPFlagDefinition, unit: !2)
 // CHECK:STDOUT: !52 = !DILocation(line: 4294967295, scope: !51)
 // CHECK:STDOUT: !53 = !DILocation(line: 268, column: 3, scope: !51)
 // CHECK:STDOUT: !54 = distinct !DISubprogram(name: "Convert", linkageName: "_CConvert.8b3d5d6a6c17be04:ImplicitAs.Core.b88d1103f417c6d4", scope: null, file: !55, line: 23, type: !5, spFlags: DISPFlagDefinition, unit: !2)

@@ -36,20 +36,20 @@ fn MemberNamedSelf.F(x: Self, y: r#Self) {}
 // CHECK:STDOUT:   %Class.F: %Class.F.type = struct_value () [concrete]
 // CHECK:STDOUT:   %Destroy.type: type = facet_type <@Destroy> [concrete]
 // CHECK:STDOUT:   %pattern_type.f6d: type = pattern_type auto [concrete]
-// CHECK:STDOUT:   %Destroy.impl_witness.b40: <witness> = impl_witness @Class.%Destroy.impl_witness_table [concrete]
+// CHECK:STDOUT:   %Destroy.impl_witness.73b: <witness> = impl_witness @Class.%Destroy.impl_witness_table [concrete]
 // CHECK:STDOUT:   %ptr.e71: type = ptr_type %Class [concrete]
 // CHECK:STDOUT:   %pattern_type.796: type = pattern_type %ptr.e71 [concrete]
 // CHECK:STDOUT:   %Class.as.Destroy.impl.Op.type: type = fn_type @Class.as.Destroy.impl.Op [concrete]
 // CHECK:STDOUT:   %Class.as.Destroy.impl.Op: %Class.as.Destroy.impl.Op.type = struct_value () [concrete]
 // CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [concrete]
 // CHECK:STDOUT:   %complete_type.357: <witness> = complete_type_witness %empty_struct_type [concrete]
-// CHECK:STDOUT:   %T.as.Destroy.impl.Op.type.faa: type = fn_type @T.as.Destroy.impl.Op, @T.as.Destroy.impl(%ptr.e71) [concrete]
-// CHECK:STDOUT:   %T.as.Destroy.impl.Op.5a3: %T.as.Destroy.impl.Op.type.faa = struct_value () [concrete]
+// CHECK:STDOUT:   %T.as.Destroy.impl.Op.type.17c: type = fn_type @T.as.Destroy.impl.Op, @T.as.Destroy.impl(%ptr.e71) [concrete]
+// CHECK:STDOUT:   %T.as.Destroy.impl.Op.d98: %T.as.Destroy.impl.Op.type.17c = struct_value () [concrete]
 // CHECK:STDOUT:   %ptr.0dd: type = ptr_type %ptr.e71 [concrete]
-// CHECK:STDOUT:   %T.as.Destroy.impl.Op.specific_fn: <specific function> = specific_function %T.as.Destroy.impl.Op.5a3, @T.as.Destroy.impl.Op(%ptr.e71) [concrete]
+// CHECK:STDOUT:   %T.as.Destroy.impl.Op.specific_fn: <specific function> = specific_function %T.as.Destroy.impl.Op.d98, @T.as.Destroy.impl.Op(%ptr.e71) [concrete]
 // CHECK:STDOUT:   %MemberNamedSelf: type = class_type @MemberNamedSelf [concrete]
 // CHECK:STDOUT:   %Self.362: type = class_type @Self [concrete]
-// CHECK:STDOUT:   %Destroy.impl_witness.077: <witness> = impl_witness @Self.%Destroy.impl_witness_table [concrete]
+// CHECK:STDOUT:   %Destroy.impl_witness.d63: <witness> = impl_witness @Self.%Destroy.impl_witness_table [concrete]
 // CHECK:STDOUT:   %ptr.fbf: type = ptr_type %Self.362 [concrete]
 // CHECK:STDOUT:   %pattern_type.364: type = pattern_type %ptr.fbf [concrete]
 // CHECK:STDOUT:   %Self.as.Destroy.impl.Op.type: type = fn_type @Self.as.Destroy.impl.Op [concrete]
@@ -58,7 +58,7 @@ fn MemberNamedSelf.F(x: Self, y: r#Self) {}
 // CHECK:STDOUT:   %pattern_type.c06: type = pattern_type %Self.362 [concrete]
 // CHECK:STDOUT:   %MemberNamedSelf.F.type: type = fn_type @MemberNamedSelf.F [concrete]
 // CHECK:STDOUT:   %MemberNamedSelf.F: %MemberNamedSelf.F.type = struct_value () [concrete]
-// CHECK:STDOUT:   %Destroy.impl_witness.a94: <witness> = impl_witness @MemberNamedSelf.%Destroy.impl_witness_table [concrete]
+// CHECK:STDOUT:   %Destroy.impl_witness.db0: <witness> = impl_witness @MemberNamedSelf.%Destroy.impl_witness_table [concrete]
 // CHECK:STDOUT:   %ptr.9b1: type = ptr_type %MemberNamedSelf [concrete]
 // CHECK:STDOUT:   %pattern_type.64a: type = pattern_type %ptr.9b1 [concrete]
 // CHECK:STDOUT:   %MemberNamedSelf.as.Destroy.impl.Op.type: type = fn_type @MemberNamedSelf.as.Destroy.impl.Op [concrete]
@@ -151,7 +151,7 @@ fn MemberNamedSelf.F(x: Self, y: r#Self) {}
 // CHECK:STDOUT:   %Self.ref: type = name_ref Self, constants.%Class [concrete = constants.%Class]
 // CHECK:STDOUT:   impl_decl @Class.as.Destroy.impl [concrete] {} {}
 // CHECK:STDOUT:   %Destroy.impl_witness_table = impl_witness_table (@Class.as.Destroy.impl.%Class.as.Destroy.impl.Op.decl), @Class.as.Destroy.impl [concrete]
-// CHECK:STDOUT:   %Destroy.impl_witness: <witness> = impl_witness %Destroy.impl_witness_table [concrete = constants.%Destroy.impl_witness.b40]
+// CHECK:STDOUT:   %Destroy.impl_witness: <witness> = impl_witness %Destroy.impl_witness_table [concrete = constants.%Destroy.impl_witness.73b]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness constants.%empty_struct_type [concrete = constants.%complete_type.357]
 // CHECK:STDOUT:   complete_type_witness = %complete_type
 // CHECK:STDOUT:
@@ -178,7 +178,7 @@ fn MemberNamedSelf.F(x: Self, y: r#Self) {}
 // CHECK:STDOUT:   %Self.ref: type = name_ref Self, constants.%MemberNamedSelf [concrete = constants.%MemberNamedSelf]
 // CHECK:STDOUT:   impl_decl @MemberNamedSelf.as.Destroy.impl [concrete] {} {}
 // CHECK:STDOUT:   %Destroy.impl_witness_table = impl_witness_table (@MemberNamedSelf.as.Destroy.impl.%MemberNamedSelf.as.Destroy.impl.Op.decl), @MemberNamedSelf.as.Destroy.impl [concrete]
-// CHECK:STDOUT:   %Destroy.impl_witness: <witness> = impl_witness %Destroy.impl_witness_table [concrete = constants.%Destroy.impl_witness.a94]
+// CHECK:STDOUT:   %Destroy.impl_witness: <witness> = impl_witness %Destroy.impl_witness_table [concrete = constants.%Destroy.impl_witness.db0]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness constants.%empty_struct_type [concrete = constants.%complete_type.357]
 // CHECK:STDOUT:   complete_type_witness = %complete_type
 // CHECK:STDOUT:
@@ -192,7 +192,7 @@ fn MemberNamedSelf.F(x: Self, y: r#Self) {}
 // CHECK:STDOUT:   %Self.ref: type = name_ref Self, constants.%Self.362 [concrete = constants.%Self.362]
 // CHECK:STDOUT:   impl_decl @Self.as.Destroy.impl [concrete] {} {}
 // CHECK:STDOUT:   %Destroy.impl_witness_table = impl_witness_table (@Self.as.Destroy.impl.%Self.as.Destroy.impl.Op.decl), @Self.as.Destroy.impl [concrete]
-// CHECK:STDOUT:   %Destroy.impl_witness: <witness> = impl_witness %Destroy.impl_witness_table [concrete = constants.%Destroy.impl_witness.077]
+// CHECK:STDOUT:   %Destroy.impl_witness: <witness> = impl_witness %Destroy.impl_witness_table [concrete = constants.%Destroy.impl_witness.d63]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness constants.%empty_struct_type [concrete = constants.%complete_type.357]
 // CHECK:STDOUT:   complete_type_witness = %complete_type
 // CHECK:STDOUT:
@@ -225,13 +225,13 @@ fn MemberNamedSelf.F(x: Self, y: r#Self) {}
 // CHECK:STDOUT:     %ptr.loc18: type = ptr_type %Self.ref.loc18_12 [concrete = constants.%ptr.e71]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %p: ref %ptr.e71 = bind_name p, %p.var
-// CHECK:STDOUT:   %T.as.Destroy.impl.Op.bound.loc18: <bound method> = bound_method %p.var, constants.%T.as.Destroy.impl.Op.5a3
-// CHECK:STDOUT:   %T.as.Destroy.impl.Op.specific_fn.1: <specific function> = specific_function constants.%T.as.Destroy.impl.Op.5a3, @T.as.Destroy.impl.Op(constants.%ptr.e71) [concrete = constants.%T.as.Destroy.impl.Op.specific_fn]
+// CHECK:STDOUT:   %T.as.Destroy.impl.Op.bound.loc18: <bound method> = bound_method %p.var, constants.%T.as.Destroy.impl.Op.d98
+// CHECK:STDOUT:   %T.as.Destroy.impl.Op.specific_fn.1: <specific function> = specific_function constants.%T.as.Destroy.impl.Op.d98, @T.as.Destroy.impl.Op(constants.%ptr.e71) [concrete = constants.%T.as.Destroy.impl.Op.specific_fn]
 // CHECK:STDOUT:   %bound_method.loc18: <bound method> = bound_method %p.var, %T.as.Destroy.impl.Op.specific_fn.1
 // CHECK:STDOUT:   %addr.loc18: %ptr.0dd = addr_of %p.var
 // CHECK:STDOUT:   %T.as.Destroy.impl.Op.call.loc18: init %empty_tuple.type = call %bound_method.loc18(%addr.loc18)
-// CHECK:STDOUT:   %T.as.Destroy.impl.Op.bound.loc17: <bound method> = bound_method %Self.var, constants.%T.as.Destroy.impl.Op.5a3
-// CHECK:STDOUT:   %T.as.Destroy.impl.Op.specific_fn.2: <specific function> = specific_function constants.%T.as.Destroy.impl.Op.5a3, @T.as.Destroy.impl.Op(constants.%ptr.e71) [concrete = constants.%T.as.Destroy.impl.Op.specific_fn]
+// CHECK:STDOUT:   %T.as.Destroy.impl.Op.bound.loc17: <bound method> = bound_method %Self.var, constants.%T.as.Destroy.impl.Op.d98
+// CHECK:STDOUT:   %T.as.Destroy.impl.Op.specific_fn.2: <specific function> = specific_function constants.%T.as.Destroy.impl.Op.d98, @T.as.Destroy.impl.Op(constants.%ptr.e71) [concrete = constants.%T.as.Destroy.impl.Op.specific_fn]
 // CHECK:STDOUT:   %bound_method.loc17: <bound method> = bound_method %Self.var, %T.as.Destroy.impl.Op.specific_fn.2
 // CHECK:STDOUT:   %addr.loc17: %ptr.0dd = addr_of %Self.var
 // CHECK:STDOUT:   %T.as.Destroy.impl.Op.call.loc17: init %empty_tuple.type = call %bound_method.loc17(%addr.loc17)
