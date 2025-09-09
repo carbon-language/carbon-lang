@@ -14,6 +14,7 @@
 #include "toolchain/check/name_lookup.h"
 #include "toolchain/sem_ir/class.h"
 #include "toolchain/sem_ir/ids.h"
+#include "toolchain/sem_ir/name_scope.h"
 #include "toolchain/sem_ir/typed_insts.h"
 
 namespace Carbon::Check {
@@ -56,7 +57,17 @@ static auto GetCppClassTypeParentScope(Context& context, SemIR::InstId inst_id)
     return std::nullopt;
   }
 
-  return class_info.parent_scope_id;
+  SemIR::NameScopeId parent_scope_id = class_info.parent_scope_id;
+  do {
+    SemIR::NameScope& scope = context.name_scopes().Get(parent_scope_id);
+    if (context.insts().Is<SemIR::Namespace>(scope.inst_id())) {
+      break;
+    }
+    parent_scope_id = scope.parent_scope_id();
+
+  } while (parent_scope_id.has_value());
+
+  return parent_scope_id;
 }
 
 auto BuildUnaryOperator(Context& context, SemIR::LocId loc_id, Operator op,
