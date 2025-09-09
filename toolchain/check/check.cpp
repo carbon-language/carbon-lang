@@ -332,7 +332,7 @@ static auto BuildApiMapAndDiagnosePackaging(
 
 // Handles printing of formatted SemIR.
 static auto MaybeDumpFormattedSemIR(
-    const SemIR::File& sem_ir,
+    const SemIR::File& sem_ir, int total_ir_count,
     Parse::GetTreeAndSubtreesFn tree_and_subtrees_getter, bool include_in_dumps,
     const CheckParseTreesOptions& options) -> void {
   bool dump = options.dump_stream && include_in_dumps;
@@ -351,7 +351,7 @@ static auto MaybeDumpFormattedSemIR(
       options.dump_sem_ir_ranges !=
           CheckParseTreesOptions::DumpSemIRRanges::Ignore &&
       tokens.has_dump_sem_ir_ranges();
-  SemIR::Formatter formatter(&sem_ir, tree_and_subtrees_getter,
+  SemIR::Formatter formatter(&sem_ir, total_ir_count, tree_and_subtrees_getter,
                              options.include_in_dumps, use_dump_sem_ir_ranges);
   formatter.Format();
   if (options.vlog_stream) {
@@ -387,7 +387,8 @@ static auto MaybeDumpSemIR(
     }
 
     MaybeDumpFormattedSemIR(
-        *unit.sem_ir, tree_and_subtrees_getters.Get(unit.sem_ir->check_ir_id()),
+        *unit.sem_ir, units.size(),
+        tree_and_subtrees_getters.Get(unit.sem_ir->check_ir_id()),
         include_in_dumps, options);
   }
 }

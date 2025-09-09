@@ -151,7 +151,7 @@ auto Mangler::Mangle(SemIR::FunctionId function_id,
     return "main";
   }
   if (function.clang_decl_id.has_value()) {
-    return MangleCppClang(dyn_cast<clang::NamedDecl>(
+    return MangleCppClang(cast<clang::NamedDecl>(
         sem_ir().clang_decls().Get(function.clang_decl_id).decl));
   }
   RawStringOstream os;
@@ -205,10 +205,15 @@ auto Mangler::MangleGlobalVariable(SemIR::InstId pattern_id) -> std::string {
     return std::string();
   }
 
+  auto var_name = sem_ir().entity_names().Get(var_name_id);
+  if (var_name.clang_decl_id.has_value()) {
+    return MangleCppClang(cast<clang::NamedDecl>(
+        sem_ir().clang_decls().Get(var_name.clang_decl_id).decl));
+  }
+
   RawStringOstream os;
   os << "_C";
 
-  auto var_name = sem_ir().entity_names().Get(var_name_id);
   MangleNameId(os, var_name.name_id);
   // TODO: If the variable is private, also include the library name as part of
   // the mangling.

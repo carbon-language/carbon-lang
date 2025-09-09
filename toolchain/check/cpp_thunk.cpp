@@ -144,7 +144,7 @@ struct CalleeFunctionInfo {
       implicit_this_type = method_decl->getThisType();
     }
     effective_return_type =
-        is_ctor ? ast_context.getRecordType(method_decl->getParent())
+        is_ctor ? ast_context.getCanonicalTagType(method_decl->getParent())
                 : decl->getReturnType();
     has_simple_return_type =
         IsSimpleAbiType(ast_context, effective_return_type);
@@ -451,7 +451,7 @@ static auto BuildThunkBody(clang::Sema& sema,
       info.Constructor) {
     // In C++, there are no direct calls to constructors, only initialization,
     // so we need to type-check and build the call ourselves.
-    auto type = sema.Context.getRecordType(
+    auto type = sema.Context.getCanonicalTagType(
         cast<clang::CXXRecordDecl>(callee_info.decl->getParent()));
     llvm::SmallVector<clang::Expr*> converted_args;
     converted_args.reserve(call_args.size());
