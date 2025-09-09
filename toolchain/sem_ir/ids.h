@@ -65,7 +65,7 @@ constexpr TypeInstId TypeInstId::None = TypeInstId::UnsafeMake(InstId::None);
 // Unlike TypeInstId, this type can *not* be an operand in instructions, since
 // being a template prevents it from being used in non-generic contexts such as
 // switches.
-template <class T>
+template <typename T>
 struct KnownInstId : public InstId {
   static const KnownInstId None;
 
@@ -81,7 +81,7 @@ struct KnownInstId : public InstId {
       : InstId(id) {}
 };
 
-template <class T>
+template <typename T>
 constexpr KnownInstId<T> KnownInstId<T>::None =
     KnownInstId<T>::UnsafeMake(InstId::None);
 

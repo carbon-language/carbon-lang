@@ -78,12 +78,12 @@ concept IsStdVariant = IsStdVariantValue<std::decay_t<T>>;
 
 // Used to provide a reason in the compiler error from `ValidCaseType`, which
 // will state that "T does not satisfy TypeFoundInVariant".
-template <class T>
+template <typename T>
 concept TypeFoundInVariant = false;
 
 // Used to cause a compler error, which will state that "ValidCaseType was not
 // satisfied" for T and std::variant<...>.
-template <class T, class StdVariant>
+template <typename T, typename StdVariant>
   requires TypeFoundInVariant<T>
 struct ValidCaseType;
 

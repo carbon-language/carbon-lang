@@ -26,7 +26,7 @@ class LocIdForDiagnostics {
     return LocIdForDiagnostics(SemIR::LocId(node_id), true);
   }
 
-  template <class LocT>
+  template <typename LocT>
     requires std::constructible_from<SemIR::LocId, LocT>
   // NOLINTNEXTLINE(google-explicit-constructor)
   LocIdForDiagnostics(LocT loc_id)

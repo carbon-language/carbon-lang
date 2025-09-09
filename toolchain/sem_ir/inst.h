@@ -522,7 +522,7 @@ class InstStore {
     return TryGetAs<InstT>(inst_id);
   }
 
-  template <class InstT>
+  template <typename InstT>
   struct GetAsWithIdResult {
     KnownInstId<InstT> inst_id;
     InstT inst;

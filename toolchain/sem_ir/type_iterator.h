@@ -198,7 +198,7 @@ class TypeIterator::Step {
                    ClassStart, StructStart, TupleStart, InterfaceStart,
                    IntStart, ArrayStart, PointerStart, End, Done, Error>;
 
-  template <class T>
+  template <typename T>
   auto Is() const -> bool {
     return std::holds_alternative<T>(any);
   }
@@ -208,7 +208,7 @@ class TypeIterator::Step {
   // This is a template to allow implicit conversion directly from step values
   // that can go inside `Any` to `Step` (without having to make the `Any`
   // explicitly first).
-  template <class T>
+  template <typename T>
     requires std::constructible_from<Any, T>
   // NOLINTNEXTLINE(google-explicit-constructor)
   Step(T any) : any(any) {}
