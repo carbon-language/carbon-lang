@@ -58,7 +58,8 @@ fn CallUndefined() -> i32 {
 // CHECK:STDOUT: --- call_defined.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
-// CHECK:STDOUT:   %.Self.644: type = bind_symbolic_name .Self [symbolic_self]
+// CHECK:STDOUT:   %type: type = facet_type <type> [concrete]
+// CHECK:STDOUT:   %.Self.eb1: %type = bind_symbolic_name .Self [symbolic_self]
 // CHECK:STDOUT:   %T: type = bind_symbolic_name T, 0 [symbolic]
 // CHECK:STDOUT:   %pattern_type.98f: type = pattern_type type [concrete]
 // CHECK:STDOUT:   %pattern_type.7dcd0a.1: type = pattern_type %T [symbolic]
@@ -122,7 +123,7 @@ fn CallUndefined() -> i32 {
 // CHECK:STDOUT:     %return.param_patt: @Defined.%pattern_type (%pattern_type.7dcd0a.1) = out_param_pattern %return.patt, call_param1 [concrete]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %T.ref.loc4_31: type = name_ref T, %T.loc4_12.2 [symbolic = %T.loc4_12.1 (constants.%T)]
-// CHECK:STDOUT:     %.Self: type = bind_symbolic_name .Self [symbolic_self = constants.%.Self.644]
+// CHECK:STDOUT:     %.Self: %type = bind_symbolic_name .Self [symbolic_self = constants.%.Self.eb1]
 // CHECK:STDOUT:     %T.loc4_12.2: type = bind_symbolic_name T, 0 [symbolic = %T.loc4_12.1 (constants.%T)]
 // CHECK:STDOUT:     %x.param: @Defined.%T.loc4_12.1 (%T) = value_param call_param0
 // CHECK:STDOUT:     %T.ref.loc4_25: type = name_ref T, %T.loc4_12.2 [symbolic = %T.loc4_12.1 (constants.%T)]
@@ -191,7 +192,8 @@ fn CallUndefined() -> i32 {
 // CHECK:STDOUT: --- call_defined_late.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
-// CHECK:STDOUT:   %.Self.644: type = bind_symbolic_name .Self [symbolic_self]
+// CHECK:STDOUT:   %type: type = facet_type <type> [concrete]
+// CHECK:STDOUT:   %.Self.eb1: %type = bind_symbolic_name .Self [symbolic_self]
 // CHECK:STDOUT:   %T: type = bind_symbolic_name T, 0 [symbolic]
 // CHECK:STDOUT:   %pattern_type.98f: type = pattern_type type [concrete]
 // CHECK:STDOUT:   %pattern_type.7dcd0a.1: type = pattern_type %T [symbolic]
@@ -255,7 +257,7 @@ fn CallUndefined() -> i32 {
 // CHECK:STDOUT:     %return.param_patt: @Defined.%pattern_type (%pattern_type.7dcd0a.1) = out_param_pattern %return.patt, call_param1 [concrete]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %T.ref.loc4_31: type = name_ref T, %T.loc4_12.2 [symbolic = %T.loc4_12.1 (constants.%T)]
-// CHECK:STDOUT:     %.Self.2: type = bind_symbolic_name .Self [symbolic_self = constants.%.Self.644]
+// CHECK:STDOUT:     %.Self.2: %type = bind_symbolic_name .Self [symbolic_self = constants.%.Self.eb1]
 // CHECK:STDOUT:     %T.loc4_12.2: type = bind_symbolic_name T, 0 [symbolic = %T.loc4_12.1 (constants.%T)]
 // CHECK:STDOUT:     %x.param.loc4: @Defined.%T.loc4_12.1 (%T) = value_param call_param0
 // CHECK:STDOUT:     %T.ref.loc4_25: type = name_ref T, %T.loc4_12.2 [symbolic = %T.loc4_12.1 (constants.%T)]
@@ -280,7 +282,7 @@ fn CallUndefined() -> i32 {
 // CHECK:STDOUT:     %return.param_patt: @Defined.%pattern_type (%pattern_type.7dcd0a.1) = out_param_pattern %return.patt, call_param1 [concrete]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %T.ref.loc10_31: type = name_ref T, %T.loc10 [symbolic = %T.loc4_12.1 (constants.%T)]
-// CHECK:STDOUT:     %.Self.1: type = bind_symbolic_name .Self [symbolic_self = constants.%.Self.644]
+// CHECK:STDOUT:     %.Self.1: %type = bind_symbolic_name .Self [symbolic_self = constants.%.Self.eb1]
 // CHECK:STDOUT:     %T.loc10: type = bind_symbolic_name T, 0 [symbolic = %T.loc4_12.1 (constants.%T)]
 // CHECK:STDOUT:     %x.param.loc10: @Defined.%T.loc4_12.1 (%T) = value_param call_param0
 // CHECK:STDOUT:     %T.ref.loc10_25: type = name_ref T, %T.loc10 [symbolic = %T.loc4_12.1 (constants.%T)]
@@ -340,7 +342,8 @@ fn CallUndefined() -> i32 {
 // CHECK:STDOUT: --- fail_call_undefined.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
-// CHECK:STDOUT:   %.Self.644: type = bind_symbolic_name .Self [symbolic_self]
+// CHECK:STDOUT:   %type: type = facet_type <type> [concrete]
+// CHECK:STDOUT:   %.Self.eb1: %type = bind_symbolic_name .Self [symbolic_self]
 // CHECK:STDOUT:   %T: type = bind_symbolic_name T, 0 [symbolic]
 // CHECK:STDOUT:   %pattern_type.98f: type = pattern_type type [concrete]
 // CHECK:STDOUT:   %pattern_type.7dcd0a.1: type = pattern_type %T [symbolic]
@@ -401,7 +404,7 @@ fn CallUndefined() -> i32 {
 // CHECK:STDOUT:     %return.param_patt: @Undefined.%pattern_type (%pattern_type.7dcd0a.1) = out_param_pattern %return.patt, call_param1 [concrete]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %T.ref.loc4_33: type = name_ref T, %T.loc4_14.2 [symbolic = %T.loc4_14.1 (constants.%T)]
-// CHECK:STDOUT:     %.Self: type = bind_symbolic_name .Self [symbolic_self = constants.%.Self.644]
+// CHECK:STDOUT:     %.Self: %type = bind_symbolic_name .Self [symbolic_self = constants.%.Self.eb1]
 // CHECK:STDOUT:     %T.loc4_14.2: type = bind_symbolic_name T, 0 [symbolic = %T.loc4_14.1 (constants.%T)]
 // CHECK:STDOUT:     %x.param: @Undefined.%T.loc4_14.1 (%T) = value_param call_param0
 // CHECK:STDOUT:     %T.ref.loc4_27: type = name_ref T, %T.loc4_14.2 [symbolic = %T.loc4_14.1 (constants.%T)]

@@ -39,7 +39,8 @@ fn G(a: f64) -> Core.IntLiteral() {
 // CHECK:STDOUT: --- int.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
-// CHECK:STDOUT:   %.Self: type = bind_symbolic_name .Self [symbolic_self]
+// CHECK:STDOUT:   %type: type = facet_type <type> [concrete]
+// CHECK:STDOUT:   %.Self: %type = bind_symbolic_name .Self [symbolic_self]
 // CHECK:STDOUT:   %IntLiteral.type: type = fn_type @IntLiteral [concrete]
 // CHECK:STDOUT:   %IntLiteral: %IntLiteral.type = struct_value () [concrete]
 // CHECK:STDOUT:   %N: Core.IntLiteral = bind_symbolic_name N, 0 [symbolic]
@@ -92,7 +93,7 @@ fn G(a: f64) -> Core.IntLiteral() {
 // CHECK:STDOUT:     %.loc4_64.1: type = value_of_initializer %IntLiteral.call.loc4_64 [concrete = Core.IntLiteral]
 // CHECK:STDOUT:     %.loc4_64.2: type = converted %IntLiteral.call.loc4_64, %.loc4_64.1 [concrete = Core.IntLiteral]
 // CHECK:STDOUT:     %.loc4_26.1: type = splice_block %.loc4_26.3 [concrete = Core.IntLiteral] {
-// CHECK:STDOUT:       %.Self: type = bind_symbolic_name .Self [symbolic_self = constants.%.Self]
+// CHECK:STDOUT:       %.Self: %type = bind_symbolic_name .Self [symbolic_self = constants.%.Self]
 // CHECK:STDOUT:       %Core.ref.loc4_10: <namespace> = name_ref Core, imports.%Core [concrete = imports.%Core]
 // CHECK:STDOUT:       %IntLiteral.ref.loc4_14: %IntLiteral.type = name_ref IntLiteral, imports.%Core.IntLiteral [concrete = constants.%IntLiteral]
 // CHECK:STDOUT:       %IntLiteral.call.loc4_26: init type = call %IntLiteral.ref.loc4_14() [concrete = Core.IntLiteral]
@@ -177,7 +178,8 @@ fn G(a: f64) -> Core.IntLiteral() {
 // CHECK:STDOUT: --- float.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
-// CHECK:STDOUT:   %.Self: type = bind_symbolic_name .Self [symbolic_self]
+// CHECK:STDOUT:   %type: type = facet_type <type> [concrete]
+// CHECK:STDOUT:   %.Self: %type = bind_symbolic_name .Self [symbolic_self]
 // CHECK:STDOUT:   %IntLiteral.type: type = fn_type @IntLiteral [concrete]
 // CHECK:STDOUT:   %IntLiteral: %IntLiteral.type = struct_value () [concrete]
 // CHECK:STDOUT:   %N: Core.IntLiteral = bind_symbolic_name N, 0 [symbolic]
@@ -230,7 +232,7 @@ fn G(a: f64) -> Core.IntLiteral() {
 // CHECK:STDOUT:     %.loc4_66.1: type = value_of_initializer %IntLiteral.call.loc4_66 [concrete = Core.IntLiteral]
 // CHECK:STDOUT:     %.loc4_66.2: type = converted %IntLiteral.call.loc4_66, %.loc4_66.1 [concrete = Core.IntLiteral]
 // CHECK:STDOUT:     %.loc4_26.1: type = splice_block %.loc4_26.3 [concrete = Core.IntLiteral] {
-// CHECK:STDOUT:       %.Self: type = bind_symbolic_name .Self [symbolic_self = constants.%.Self]
+// CHECK:STDOUT:       %.Self: %type = bind_symbolic_name .Self [symbolic_self = constants.%.Self]
 // CHECK:STDOUT:       %Core.ref.loc4_10: <namespace> = name_ref Core, imports.%Core [concrete = imports.%Core]
 // CHECK:STDOUT:       %IntLiteral.ref.loc4_14: %IntLiteral.type = name_ref IntLiteral, imports.%Core.IntLiteral [concrete = constants.%IntLiteral]
 // CHECK:STDOUT:       %IntLiteral.call.loc4_26: init type = call %IntLiteral.ref.loc4_14() [concrete = Core.IntLiteral]
