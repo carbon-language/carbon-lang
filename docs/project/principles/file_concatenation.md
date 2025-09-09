@@ -1,4 +1,4 @@
-# Principle: File concatenation should introduce compiler errors
+# Principle: File concatenation should preserve meaning
 
 <!--
 Part of the Carbon Language project, under the Apache License v2.0 with LLVM
