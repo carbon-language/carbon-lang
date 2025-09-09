@@ -1301,7 +1301,8 @@ auto Formatter::FormatArg(FacetTypeId id) -> void {
     }
   }
 
-  if (info.other_requirements || !info.self_impls_constraints.empty() ||
+  if (!info.special_requirements_mask.empty() ||
+      !info.self_impls_constraints.empty() ||
       !info.rewrite_constraints.empty()) {
     out_ << " where ";
     llvm::ListSeparator and_sep(" and ");
@@ -1323,7 +1324,12 @@ auto Formatter::FormatArg(FacetTypeId id) -> void {
       out_ << " = ";
       FormatArg(rewrite.rhs_id);
     }
-    if (info.other_requirements) {
+    if (info.special_requirements_mask.has(
+            FacetTypeInfo::SpecialRequirement::TypeCanAggregateDestroy)) {
+      out_ << and_sep << "CanAggregateDestroy";
+    }
+    if (info.special_requirements_mask.has(
+            FacetTypeInfo::SpecialRequirement::Other)) {
       out_ << and_sep << "TODO";
     }
   }

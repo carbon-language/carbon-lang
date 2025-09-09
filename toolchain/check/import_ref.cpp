@@ -2542,7 +2542,8 @@ static auto TryResolveTypedInst(ImportRefResolver& resolver,
   }
 
   SemIR::FacetTypeInfo local_facet_type_info = {
-      .other_requirements = import_facet_type_info.other_requirements};
+      .special_requirements_mask =
+          import_facet_type_info.special_requirements_mask};
   local_facet_type_info.extend_constraints.reserve(
       import_facet_type_info.extend_constraints.size());
   for (auto interface : import_facet_type_info.extend_constraints) {

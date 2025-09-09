@@ -90,7 +90,7 @@ fn F(T:! I where {} impls Core.ImplicitAs(.Self) and .V = {});
 
 fn CallF() {
   // TODO: This call should eventually work.
-  // CHECK:STDERR: fail_todo_constrained_fn.carbon:[[@LINE+7]]:3: error: cannot convert type `{}` into type implementing `I where .(I.V) = {} and...` [ConversionFailureTypeToFacet]
+  // CHECK:STDERR: fail_todo_constrained_fn.carbon:[[@LINE+7]]:3: error: cannot convert type `{}` into type implementing `I where .(I.V) = {} and ...` [ConversionFailureTypeToFacet]
   // CHECK:STDERR:   F({});
   // CHECK:STDERR:   ^~~~~
   // CHECK:STDERR: fail_todo_constrained_fn.carbon:[[@LINE-7]]:6: note: initializing generic parameter `T` declared here [InitializingGenericParam]

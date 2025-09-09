@@ -94,7 +94,9 @@ static auto SubtractSorted(
 
 auto FacetTypeInfo::Combine(const FacetTypeInfo& lhs, const FacetTypeInfo& rhs)
     -> FacetTypeInfo {
-  FacetTypeInfo info = {.other_requirements = false};
+  FacetTypeInfo info = {.special_requirements_mask =
+                            lhs.special_requirements_mask.value |
+                            rhs.special_requirements_mask.value};
   info.extend_constraints.reserve(lhs.extend_constraints.size() +
                                   rhs.extend_constraints.size());
   llvm::append_range(info.extend_constraints, lhs.extend_constraints);
@@ -107,8 +109,6 @@ auto FacetTypeInfo::Combine(const FacetTypeInfo& lhs, const FacetTypeInfo& rhs)
                                    rhs.rewrite_constraints.size());
   llvm::append_range(info.rewrite_constraints, lhs.rewrite_constraints);
   llvm::append_range(info.rewrite_constraints, rhs.rewrite_constraints);
-  info.other_requirements |= lhs.other_requirements;
-  info.other_requirements |= rhs.other_requirements;
   return info;
 }
 
@@ -153,7 +153,12 @@ auto FacetTypeInfo::Print(llvm::raw_ostream& out) const -> void {
     }
   }
 
-  if (other_requirements) {
+  if (special_requirements_mask.has(
+          SpecialRequirement::TypeCanAggregateDestroy)) {
+    out << outer_sep << "TypeCanAggregateDestroy";
+  }
+
+  if (special_requirements_mask.has(SpecialRequirement::Other)) {
     out << outer_sep << "+ TODO requirements";
   }
 

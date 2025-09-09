@@ -6,6 +6,7 @@
 #define CARBON_TOOLCHAIN_SEM_IR_FACET_TYPE_INFO_H_
 
 #include "common/hashing.h"
+#include "llvm/ADT/BitmaskEnum.h"
 #include "llvm/ADT/StringExtras.h"
 #include "toolchain/base/canonical_value_store.h"
 #include "toolchain/sem_ir/ids.h"
@@ -13,7 +14,40 @@
 
 namespace Carbon::SemIR {
 
+LLVM_ENABLE_BITMASK_ENUMS_IN_NAMESPACE();
+
 struct FacetTypeInfo : Printable<FacetTypeInfo> {
+  // Requirements that aren't covered by standard constraints.
+  struct SpecialRequirement {
+    // Ways in which an instruction can depend on a generic parameter.
+    enum RawEnum : uint32_t {
+      None = 0,
+
+      // TODO: Remove once all requirements are supported.
+      Other = 1 << 0,
+
+      // Verifies types can use the builtin `type.aggregate_destroy`.
+      TypeCanAggregateDestroy = 1 << 1,
+
+      LLVM_MARK_AS_BITMASK_ENUM(/*LargestValue=*/TypeCanAggregateDestroy)
+    };
+
+    explicit(false) SpecialRequirement(RawEnum value) : value(value) {}
+
+    auto has(SpecialRequirement special_requirement) const -> bool {
+      return (value & special_requirement.value) == special_requirement.value;
+    }
+
+    auto empty() const -> bool { return value == None; }
+
+    auto operator|(SpecialRequirement other) -> SpecialRequirement {
+      return value | other.value;
+    }
+    auto operator|=(SpecialRequirement other) -> void { value |= other.value; }
+
+    RawEnum value;
+  };
+
   // Returns a FacetTypeInfo that combines `lhs` and `rhs`. It is not
   // canonicalized, so that it can be further modified by the caller if desired.
   static auto Combine(const FacetTypeInfo& lhs, const FacetTypeInfo& rhs)
@@ -53,7 +87,8 @@ struct FacetTypeInfo : Printable<FacetTypeInfo> {
 
   // TODO: Add same-type constraints.
   // TODO: Remove once all requirements are supported.
-  bool other_requirements;
+
+  SpecialRequirement special_requirements_mask = SpecialRequirement::None;
 
   // Sorts and deduplicates constraints. Call after building the value, and then
   // don't mutate this value afterwards.
@@ -68,7 +103,7 @@ struct FacetTypeInfo : Printable<FacetTypeInfo> {
   // represents, or `std::nullopt` if it has any other constraints.
   auto TryAsSingleInterface() const -> std::optional<ImplsConstraint> {
     if (extend_constraints.size() == 1 && self_impls_constraints.empty() &&
-        rewrite_constraints.empty() && !other_requirements) {
+        rewrite_constraints.empty() && special_requirements_mask.empty()) {
       return extend_constraints.front();
     }
     return std::nullopt;
@@ -79,7 +114,8 @@ struct FacetTypeInfo : Printable<FacetTypeInfo> {
     return lhs.extend_constraints == rhs.extend_constraints &&
            lhs.self_impls_constraints == rhs.self_impls_constraints &&
            lhs.rewrite_constraints == rhs.rewrite_constraints &&
-           lhs.other_requirements == rhs.other_requirements;
+           lhs.special_requirements_mask.value ==
+               rhs.special_requirements_mask.value;
   }
 };
 
@@ -148,7 +184,7 @@ inline auto CarbonHashValue(const FacetTypeInfo& value, uint64_t seed)
   hasher.HashSizedBytes(llvm::ArrayRef(value.extend_constraints));
   hasher.HashSizedBytes(llvm::ArrayRef(value.self_impls_constraints));
   hasher.HashSizedBytes(llvm::ArrayRef(value.rewrite_constraints));
-  hasher.HashRaw(value.other_requirements);
+  hasher.HashRaw(value.special_requirements_mask);
   // `complete_id` is not part of the state to hash.
   return static_cast<HashCode>(hasher);
 }

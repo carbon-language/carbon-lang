@@ -185,24 +185,24 @@ static auto FindAndDiagnoseImplLookupCycle(
 }
 
 // Gets the set of `SpecificInterface`s that are required by a facet type
-// (as a constant value).
+// (as a constant value), and any special requirements.
 static auto GetInterfacesFromConstantId(
-    Context& context, SemIR::ConstantId query_facet_type_const_id,
-    bool& has_other_requirements)
-    -> llvm::SmallVector<SemIR::SpecificInterface> {
+    Context& context, SemIR::ConstantId query_facet_type_const_id)
+    -> std::pair<llvm::SmallVector<SemIR::SpecificInterface>,
+                 SemIR::FacetTypeInfo::SpecialRequirement> {
   auto facet_type_inst_id =
       context.constant_values().GetInstId(query_facet_type_const_id);
   auto facet_type_inst =
       context.insts().GetAs<SemIR::FacetType>(facet_type_inst_id);
   const auto& facet_type_info =
       context.facet_types().Get(facet_type_inst.facet_type_id);
-  has_other_requirements = facet_type_info.other_requirements;
   auto identified_id = RequireIdentifiedFacetType(context, facet_type_inst);
   auto interfaces_array_ref =
       context.identified_facet_types().Get(identified_id).required_interfaces();
   // Returns a copy to avoid use-after-free when the identified_facet_types
   // store resizes.
-  return {interfaces_array_ref.begin(), interfaces_array_ref.end()};
+  return {{interfaces_array_ref.begin(), interfaces_array_ref.end()},
+          facet_type_info.special_requirements_mask};
 }
 
 static auto GetWitnessIdForImpl(Context& context, SemIR::LocId loc_id,
@@ -258,8 +258,7 @@ static auto GetWitnessIdForImpl(Context& context, SemIR::LocId loc_id,
   CARBON_CHECK(deduced_constraint_facet_type_info.extend_constraints.size() ==
                1);
 
-  if (deduced_constraint_facet_type_info.other_requirements) {
-    // TODO: Remove this when other requirements goes away.
+  if (!deduced_constraint_facet_type_info.special_requirements_mask.empty()) {
     return EvalImplLookupResult::MakeNone();
   }
 
@@ -536,6 +535,15 @@ static auto GetOrAddLookupImplWitness(Context& context, SemIR::LocId loc_id,
   return context.constant_values().GetInstId(witness_const_id);
 }
 
+// Returns true if the `Self` supports aggregate destruction.
+static auto TypeCanAggregateDestroy(Context& context,
+                                    SemIR::ConstantId query_self_const_id)
+    -> bool {
+  auto inst = context.insts().Get(
+      context.constant_values().GetInstId(query_self_const_id));
+  return inst.Is<SemIR::StructType>() || inst.Is<SemIR::TupleType>();
+}
+
 auto LookupImplWitness(Context& context, SemIR::LocId loc_id,
                        SemIR::ConstantId query_self_const_id,
                        SemIR::ConstantId query_facet_type_const_id)
@@ -577,11 +585,16 @@ auto LookupImplWitness(Context& context, SemIR::LocId loc_id,
     return SemIR::InstBlockIdOrError::MakeError();
   }
 
-  bool has_other_requirements = false;
-  auto interfaces = GetInterfacesFromConstantId(
-      context, query_facet_type_const_id, has_other_requirements);
-  if (has_other_requirements) {
+  auto [interfaces, special_requirements_mask] =
+      GetInterfacesFromConstantId(context, query_facet_type_const_id);
+  if (special_requirements_mask.has(
+          SemIR::FacetTypeInfo::SpecialRequirement::Other)) {
     // TODO: Remove this when other requirements go away.
+    return SemIR::InstBlockId::None;
+  }
+  if (special_requirements_mask.has(
+          SemIR::FacetTypeInfo::SpecialRequirement::TypeCanAggregateDestroy) &&
+      !TypeCanAggregateDestroy(context, query_self_const_id)) {
     return SemIR::InstBlockId::None;
   }
   if (interfaces.empty()) {
@@ -795,7 +808,6 @@ auto EvalLookupSingleImplWitness(Context& context, SemIR::LocId loc_id,
   auto candidate_impls = CollectCandidateImplsForQuery(
       context, self_facet_provides_witness, *query_type_structure,
       query_specific_interface);
-
   for (const auto& candidate : candidate_impls) {
     // In deferred lookup for a symbolic impl witness, while building a
     // specific, there may be no stack yet as this may be the first lookup. If

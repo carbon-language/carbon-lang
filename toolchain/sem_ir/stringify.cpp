@@ -13,6 +13,7 @@
 #include "common/raw_string_ostream.h"
 #include "toolchain/base/kind_switch.h"
 #include "toolchain/sem_ir/entity_with_params_base.h"
+#include "toolchain/sem_ir/facet_type_info.h"
 #include "toolchain/sem_ir/ids.h"
 #include "toolchain/sem_ir/inst_kind.h"
 #include "toolchain/sem_ir/singleton_insts.h"
@@ -325,8 +326,15 @@ class Stringifier {
         sem_ir_->facet_types().Get(inst.facet_type_id);
     // Output `where` restrictions.
     bool some_where = false;
-    if (facet_type_info.other_requirements) {
-      step_stack_->PushString("...");
+    if (facet_type_info.special_requirements_mask.has(
+            SemIR::FacetTypeInfo::SpecialRequirement::Other)) {
+      step_stack_->PushString(" ...");
+      some_where = true;
+    }
+    if (facet_type_info.special_requirements_mask.has(
+            SemIR::FacetTypeInfo::SpecialRequirement::
+                TypeCanAggregateDestroy)) {
+      step_stack_->PushString(" CanAggregateDestroy");
       some_where = true;
     }
     for (auto rewrite : llvm::reverse(facet_type_info.rewrite_constraints)) {
