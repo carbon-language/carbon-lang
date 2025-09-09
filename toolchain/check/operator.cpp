@@ -38,24 +38,6 @@ static auto GetOperatorOpFunction(Context& context, SemIR::LocId loc_id,
                              op_name_id);
 }
 
-auto BuildUnaryOperator(Context& context, SemIR::LocId loc_id, Operator op,
-                        SemIR::InstId operand_id,
-                        MakeDiagnosticBuilderFn missing_impl_diagnoser)
-    -> SemIR::InstId {
-  // Look up the operator function.
-  auto op_fn = GetOperatorOpFunction(context, loc_id, op);
-
-  // Form `operand.(Op)`.
-  auto bound_op_id = PerformCompoundMemberAccess(context, loc_id, operand_id,
-                                                 op_fn, missing_impl_diagnoser);
-  if (bound_op_id == SemIR::ErrorInst::InstId) {
-    return SemIR::ErrorInst::InstId;
-  }
-
-  // Form `bound_op()`.
-  return PerformCall(context, loc_id, bound_op_id, {});
-}
-
 // If the instruction is a C++ class, returns its parent scope id. Otherwise
 // returns `std::nullopt`.
 static auto GetCppClassTypeParentScope(Context& context, SemIR::InstId inst_id)
@@ -68,12 +50,45 @@ static auto GetCppClassTypeParentScope(Context& context, SemIR::InstId inst_id)
   }
 
   const SemIR::Class& class_info = context.classes().Get(class_type->class_id);
-  if (!context.name_scopes().Get(class_info.scope_id).is_cpp_scope()) {
+  if (!class_info.is_complete() ||
+      !context.name_scopes().Get(class_info.scope_id).is_cpp_scope()) {
     // Not a C++ class.
     return std::nullopt;
   }
 
   return class_info.parent_scope_id;
+}
+
+auto BuildUnaryOperator(Context& context, SemIR::LocId loc_id, Operator op,
+                        SemIR::InstId operand_id,
+                        MakeDiagnosticBuilderFn missing_impl_diagnoser)
+    -> SemIR::InstId {
+  // For unary operators with a C++ class as the operand, try to import and call
+  // the C++ operator.
+  // TODO: Change impl lookup instead. See
+  // https://github.com/carbon-language/carbon-lang/blob/db0a00d713015436844c55e7ac190a0f95556499/toolchain/check/operator.cpp#L76
+  auto cpp_parent_scope_id = GetCppClassTypeParentScope(context, operand_id);
+  if (cpp_parent_scope_id) {
+    SemIR::ScopeLookupResult cpp_lookup_result =
+        ImportOperatorFromCpp(context, loc_id, *cpp_parent_scope_id, op);
+    if (cpp_lookup_result.is_found()) {
+      return PerformCall(context, loc_id, cpp_lookup_result.target_inst_id(),
+                         {operand_id});
+    }
+  }
+
+  // Look up the operator function.
+  auto op_fn = GetOperatorOpFunction(context, loc_id, op);
+
+  // Form `operand.(Op)`.
+  auto bound_op_id = PerformCompoundMemberAccess(context, loc_id, operand_id,
+                                                 op_fn, missing_impl_diagnoser);
+  if (bound_op_id == SemIR::ErrorInst::InstId) {
+    return SemIR::ErrorInst::InstId;
+  }
+
+  // Form `bound_op()`.
+  return PerformCall(context, loc_id, bound_op_id, {});
 }
 
 auto BuildBinaryOperator(Context& context, SemIR::LocId loc_id, Operator op,

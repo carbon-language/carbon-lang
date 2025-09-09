@@ -313,6 +313,8 @@ class Context {
 
   // The SemIR::File being added to.
   SemIR::File* sem_ir_;
+  // The total number of files.
+  int total_ir_count_;
 
   // Whether to generate standard `impl`s for types, such as `Core.Destroy`; see
   // `CheckParseTreesOptions`.

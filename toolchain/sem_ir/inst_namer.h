@@ -43,7 +43,7 @@ class InstNamer {
 
   // Construct the instruction namer, and assign names to all instructions in
   // the provided file.
-  explicit InstNamer(const File* sem_ir);
+  explicit InstNamer(const File* sem_ir, int total_ir_count);
 
   // Returns the scope ID corresponding to an ID of a function, class, or
   // interface.

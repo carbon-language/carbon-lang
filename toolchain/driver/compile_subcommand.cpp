@@ -436,8 +436,8 @@ class MultiUnitCache;
 class CompilationUnit {
  public:
   // `driver_env`, `options`, and `consumer` must be non-null.
-  explicit CompilationUnit(SemIR::CheckIRId check_ir_id, DriverEnv* driver_env,
-                           const CompileOptions* options,
+  explicit CompilationUnit(SemIR::CheckIRId check_ir_id, int total_ir_count,
+                           DriverEnv* driver_env, const CompileOptions* options,
                            Diagnostics::Consumer* consumer,
                            llvm::StringRef input_filename);
 
@@ -499,6 +499,8 @@ class CompilationUnit {
 
   // The index of the unit amongst all units.
   SemIR::CheckIRId check_ir_id_;
+  // The number of units in total.
+  int total_ir_count_;
 
   DriverEnv* driver_env_;
   const CompileOptions* options_;
@@ -619,11 +621,12 @@ class MultiUnitCache {
 }  // namespace
 
 CompilationUnit::CompilationUnit(SemIR::CheckIRId check_ir_id,
-                                 DriverEnv* driver_env,
+                                 int total_ir_count, DriverEnv* driver_env,
                                  const CompileOptions* options,
                                  Diagnostics::Consumer* consumer,
                                  llvm::StringRef input_filename)
     : check_ir_id_(check_ir_id),
+      total_ir_count_(total_ir_count),
       driver_env_(driver_env),
       options_(options),
       input_filename_(input_filename),
@@ -724,6 +727,7 @@ auto CompilationUnit::GetCheckUnit() -> Check::Unit {
           .value_stores = &value_stores_,
           .timings = timings_ ? &*timings_ : nullptr,
           .sem_ir = &*sem_ir_,
+          .total_ir_count = total_ir_count_,
           .clang_ast_unit = &clang_ast_unit_};
 }
 
@@ -757,7 +761,7 @@ auto CompilationUnit::RunLower() -> void {
     }
     module_ = Lower::LowerToLLVM(*llvm_context_, driver_env_->fs,
                                  cache_->tree_and_subtrees_getters(), *sem_ir_,
-                                 options);
+                                 total_ir_count_, options);
   });
 }
 
@@ -955,16 +959,18 @@ auto CompileSubcommand::Run(DriverEnv& driver_env) -> DriverResult {
 
   // Prepare CompilationUnits before building scope exit handlers.
   llvm::SmallVector<std::unique_ptr<CompilationUnit>> units;
+  int total_unit_count = prelude.size() + options_.input_filenames.size();
   int unit_index = -1;
   auto unit_builder = [&](llvm::StringRef filename) {
     ++unit_index;
-    return std::make_unique<CompilationUnit>(SemIR::CheckIRId(unit_index),
-                                             &driver_env, &options_,
-                                             &driver_env.consumer, filename);
+    return std::make_unique<CompilationUnit>(
+        SemIR::CheckIRId(unit_index), total_unit_count, &driver_env, &options_,
+        &driver_env.consumer, filename);
   };
   llvm::append_range(units, llvm::map_range(prelude, unit_builder));
   llvm::append_range(units,
                      llvm::map_range(options_.input_filenames, unit_builder));
+  CARBON_CHECK(units.size() == static_cast<size_t>(total_unit_count));
 
   // Add the cache to all units. This must be done after all units are created.
   MultiUnitCache cache(&options_, units);

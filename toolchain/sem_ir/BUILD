@@ -172,6 +172,7 @@ cc_library(
         "//common:ostream",
         "//common:raw_string_ostream",
         "//common:type_enum",
+        "//toolchain/base:fixed_size_value_store",
         "//toolchain/base:kind_switch",
         "//toolchain/base:shared_value_stores",
         "//toolchain/base:value_ids",
