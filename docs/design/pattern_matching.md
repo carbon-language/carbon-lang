@@ -129,7 +129,7 @@ fn F() {
 
 A name binding pattern is a pattern.
 
--   _binding-pattern_ ::= `ref`? _identifier_ `:` _expression_
+-   _binding-pattern_ ::= `ref`? (_identifier_ | `self`) `:` _expression_
 -   _binding-pattern_ ::= `template`? _identifier_ `:!` _expression_
 -   _proper-pattern_ ::= _binding-pattern_
 
@@ -163,14 +163,20 @@ The binding declared by a binding pattern has a
 -   The phase is "runtime", "symbolic", or "template" depending on whether the
     pattern is a runtime, symbolic, or template binding pattern.
 
-During pattern matching, the scrutinee is converted as needed to have the same
-form, and then the binding is _bound_ to the result of these conversions. This
-makes a runtime or template binding an alias for the converted scrutinee
-expression, with the same form and value. Symbolic bindings are more complex:
-the binding will have the same type, category, and phase as the converted
-scrutinee expression, but its constant value is an opaque symbol introduced by
-the binding, which the type system knows to be equal to the converted scrutinee
-expression.
+During pattern matching, the scrutinee is implicitly converted as needed to have
+the same form, and then the binding is _bound_ to the result of these
+conversions. This makes a runtime or template binding an alias for the converted
+scrutinee expression, with the same form and value. Symbolic bindings are more
+complex: the binding will have the same type, category, and phase as the
+converted scrutinee expression, but its constant value is an opaque symbol
+introduced by the binding, which the type system knows to be equal to the
+converted scrutinee expression.
+
+Note that there is no way to implicitly convert to a durable reference
+expression from any other category, so the scrutinee of a reference binding
+pattern must already be a durable reference. `var` pattern matching ensures that
+this is the case for the bindings nested inside it, but for `ref` binding
+patterns the user-provided scrutinee must meet this requirement itself.
 
 ```carbon
 fn F() -> i32 {
@@ -184,6 +190,14 @@ fn F() -> i32 {
   }
 }
 ```
+
+`self` can be used instead of an identifier only if the pattern is an implicit
+parameter of a member function (optionally enclosed in a `var` pattern). This
+marks the function as a method; during pattern matching, the parameter pattern
+containing `self` is matched with the object that the method was invoked on.
+Other than that, a `self` pattern behaves just like an ordinary binding pattern,
+introducing a binding named `self` into scope, just as if `self` were an
+identifier rather than a keyword.
 
 #### Unused bindings
 

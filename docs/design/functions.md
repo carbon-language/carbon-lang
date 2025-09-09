@@ -90,8 +90,7 @@ possible syntaxes:
         `fn Sleep(seconds: i64) -> ();`.
     -   `()` is similar to a `void` return type in C++.
 
-> **TODO:** Update this section to cover form literals and
-> `ref`/`val`/`var`-qualified `auto`, as discussed
+> **TODO:** Update this section to cover return forms, as discussed
 > [here](values.md#function-calls-and-returns).
 
 ### `return` statements

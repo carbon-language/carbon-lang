@@ -20,6 +20,7 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
     -   [Local variables](#local-variables)
     -   [Consuming function parameters](#consuming-function-parameters)
 -   [Reference expressions](#reference-expressions)
+    -   [Owning reference expressions](#owning-reference-expressions)
     -   [Durable reference expressions](#durable-reference-expressions)
     -   [Ephemeral reference expressions](#ephemeral-reference-expressions)
 -   [Value expressions](#value-expressions)
@@ -33,7 +34,6 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
         -   [Deferred initialization from values and references](#deferred-initialization-from-values-and-references)
         -   [Declared `returned` variable](#declared-returned-variable)
 -   [Expression forms](#expression-forms)
-    -   [Form literals](#form-literals)
     -   [Form conversions](#form-conversions)
         -   [Type conversions](#type-conversions)
         -   [Category conversions](#category-conversions)
@@ -113,8 +113,8 @@ and have restrictions on how they are used. In contrast, durable reference
 expressions refer to storage that outlives the expression, and typically has a
 declared name. Owning reference expressions can only refer to complete objects,
 whereas non-owning reference expressions can refer to both complete objects and
-sub-objects. As a consequence, only owning reference expressions can be
-destructively moved.
+sub-objects (such as class fields and base class sub-objects). As a consequence,
+only owning reference expressions can be destructively moved.
 
 Value binding and copy initialization can be applied to any reference
 expression, but materialization only produces owning ephemeral reference
@@ -293,16 +293,43 @@ makes this a use case that requires a special marking on the declaration.
 _Reference expressions_ refer to _objects_ with _storage_ where a value may be
 read or written and the object's address can be taken.
 
-Calling a [method](/docs/design/classes.md#methods) on a reference expression
-where the method's `self` parameter has an `addr` specifier can always
-implicitly take the address of the referred-to object. This address is passed as
-a [pointer](#pointers) to the `self` parameter for such methods.
-
 Reference expressions can be either _durable_ or _ephemeral_. These refine the
 _lifetime_ of the underlying storage and provide safety restrictions reflecting
 that lifetime. Reference expressions can also be either _owning_ or
 _non-owning_, depending on whether the referenced object is known to be complete
 (rather than a sub-object of another object).
+
+### Owning reference expressions
+
+An _owning reference expression_ is one that is statically known to refer to a
+complete object. Other references are _non-owning_. Durable and ephemeral
+reference expressions can both be either owning or non-owning. An owning
+reference can be implicitly converted to a non-owning reference (with the same
+durability), because this merely discards the knowledge that the object is
+complete.
+
+Any context that accepts a reference expression can accept an owning reference
+expression, and unless otherwise specified it can accept non-owning references
+as well. Unless otherwise specified, an expression or operation that produces a
+reference produces a non-owning reference.
+
+Currently, the only context that requires an owning reference is the scrutinee
+of a `var` pattern, which must be an owning ephemeral reference.
+
+There is only one kind of explicit expression that produces an owning reference:
+the name of an object introduced with a
+[variable binding pattern](pattern_matching.md#name-binding-patterns) (in other
+words, a name that was declared with `var <name> : <type>`) is an owning durable
+reference.
+
+Two kinds of implicit expression can also produce owning references:
+
+-   The result of materialization is an owning ephemeral reference.
+-   When a [tuple pattern](pattern_matching.md#tuple-patterns) or
+    [struct pattern](pattern_matching.md#struct-patterns) is matched with an
+    owning ephemeral reference scrutinee, that scrutinee is destructured into
+    owning ephemeral references to its elements, which are then matched with the
+    corresponding subpatterns.
 
 ### Durable reference expressions
 
@@ -310,7 +337,7 @@ _Durable reference expressions_ are those where the object's storage outlives
 the full expression and the address could be meaningfully propagated out of it
 as well.
 
-There are two contexts that require a durable reference expression in Carbon:
+There are four contexts that require a durable reference expression in Carbon:
 
 -   [Assignment statements](/docs/design/assignment.md) require the
     left-hand-side of the `=` to be a durable reference. This stronger
@@ -318,6 +345,11 @@ There are two contexts that require a durable reference expression in Carbon:
     the `Carbon.Assign.Op` interface method.
 -   [Address-of expressions](#pointer-syntax) require their operand to be a
     durable reference and compute the address of the referenced object.
+-   [non-`self` `ref` binding patterns](pattern_matching.md#name-binding-patterns)
+    require their scrutinee to be a durable reference.
+-   If a function's [return form](#function-calls-and-returns) contains `ref`
+    tags, `return` statements require the corresponding parts of the operand to
+    be durable reference expressions.
 
 There are several kinds of expressions that produce durable references in
 Carbon:
@@ -331,6 +363,8 @@ Carbon:
 -   [Indexing](/docs/design/expressions/indexing.md) into a type similar to
     C++'s `std::span` that implements `IndirectIndexWith`, or indexing into any
     type with a durable reference expression such as `local_array[i]`.
+-   Calls to functions whose [return forms](#function-calls-and-returns) contain
+    `ref`.
 
 Durable reference expressions can only be produced _directly_ by one of these
 expressions. They are never produced by converting one of the other expression
@@ -344,24 +378,26 @@ expressions_. They still refer to an object with storage, but it may be storage
 that will not outlive the full expression. Because the storage is only
 temporary, we impose restrictions on where these reference expressions can be
 used: their address can only be taken implicitly as part of a method call whose
-`self` parameter is marked with the `addr` specifier.
+`self` parameter is marked with the `ref` specifier.
 
-**Future work:** The current design allows directly requiring an ephemeral
-reference for `addr`-methods because this replicates the flexibility in C++ --
-very few C++ methods are L-value-ref-qualified which would have a similar effect
-to `addr`-methods requiring a durable reference expression. This is leveraged
-frequently in C++ for builder APIs and other patterns. However, Carbon provides
-more tools in this space than C++ already, and so it may be worth evaluating
-whether we can switch `addr`-methods to the same restrictions as assignment and
-`&`. Temporaries would never have their address escaped (in a safe way) in that
-world and there would be fewer different kinds of entities. But this is reserved
-for future work as we should be very careful about the expressivity hit being
-tolerable both for native-Carbon API design and for migrated C++ code.
+> **Future work:** The current design does not support mutating ephemeral
+> references (or initializing expressions): assigning to an ephemeral reference
+> is disallowed directly, and invoking mutating methods is disallowed because
+> the `ref self` parameter can only bind to a durable reference. In C++ it's
+> unusual but not rare to intentionally mutate a temporary, such as in a
+> builder-style method chain (for example `MakeFoo().SetBar().AddBaz()`), so
+> Carbon will need to provide some interop and migration target for that kind of
+> code.
 
-There is one context that requires an ephemeral reference expression in Carbon:
-when
-[matching a `var` pattern](#binding-patterns-and-local-variables-with-let-and-var),
-the scrutinee must be an owning ephemeral reference expression.
+There is one context that requires an owning ephemeral reference expression in
+Carbon: the scrutinee of a
+[`var` pattern](#binding-patterns-and-local-variables-with-let-and-var). There
+is no context that requires a non-owning ephemeral reference expression.
+
+There is only one kind of explicit expression that produces an ephemeral
+reference: a member access expression `x.member` or `x.(member)`, where `x` is
+an initializing or ephemeral reference expression. Ephemeral reference
+expressions can also arise implicitly, as the result of materialization.
 
 ## Value expressions
 
@@ -510,7 +546,7 @@ to the operation in question. For example:
 ```carbon
 class S {
   fn ValueMemberFunction[self: Self]();
-  fn AddrMemberFunction[addr self: const Self*]();
+  fn RefMemberFunction[ref self: const Self]();
 }
 
 fn F(s_value: S) {
@@ -518,7 +554,7 @@ fn F(s_value: S) {
   s_value.ValueMemberFunction();
 
   // This requires an unsafe marker in the syntax.
-  s_value.unsafe AddrMemberFunction();
+  s_value.unsafe RefMemberFunction();
 }
 ```
 
@@ -547,19 +583,19 @@ the provided storage.
 **Future work:** The design should be expanded to fully cover how copying is
 managed and linked to from here.
 
-There are no contexts in Carbon that always require an initializing expression,
-and no expression syntax that always produces an initializing expression. By
-default, function call expressions are initializing expressions, and
-correspondingly the operand of `return` is required to be an initializing
+There are no syntactic contexts in Carbon that always require an initializing
+expression, and no expression syntax that always produces an initializing
+expression. By default, function call expressions are initializing expressions,
+and correspondingly the operand of `return` is required to be an initializing
 expression, but this default can be overridden by the
 [function signature](#function-calls-and-returns).
 
-The other case that requires forming an initializing expression in Carbon is
-when attempting to convert an expression into an ephemeral owning reference
-expression (particularly to match a `var` pattern): the expression is first
-converted to an initializing expression if necessary, and then temporary storage
-is materialized to act as its output, and as the referent of the resulting
-ephemeral reference expression.
+Initializing expressions can also be created implicitly, when attempting to
+convert an expression into an ephemeral owning reference expression
+(particularly to match a `var` pattern): the expression is first converted to an
+initializing expression if necessary, and then temporary storage is materialized
+to act as its output, and as the referent of the resulting ephemeral reference
+expression.
 
 ### Initializing outcomes
 
@@ -587,11 +623,20 @@ beforehand, and passed as an input to evaluation of the initializing expression.
 
 ### Function calls and returns
 
-If a function's return type is declared without `val` or `ref`, calls to that
-function are modeled directly as initializing expressions -- they require
-storage as an input and when evaluated cause that storage to be initialized with
-an object. This means that when a function call is used to initialize some
-variable pattern as here:
+Function calls can have almost arbitrary forms. The return clause of a function
+signature consists of `->` followed by a _return form_, an expression-like
+syntax that specifies not only the type but also the form of calls to the
+function. `return` expressions in the function body are expected to have that
+form, and are converted to it if necessary. When a function is declared without
+a return clause, it behaves from the caller's point of view as if the return
+clause were `-> ()`, but `return` statements in the function body don't take
+operands (and can be omitted at the end of the function).
+
+In the common case, the return form is a type expression, in which case calls
+are modeled directly as initializing expressions -- they require storage as an
+input and when evaluated cause that storage to be initialized with an object.
+This means that when a function call is used to initialize some variable pattern
+as here:
 
 ```carbon
 fn CreateMyObject() -> MyType {
@@ -610,19 +655,58 @@ the function's call expression. This in turn causes the property to hold
 _transitively_ across an arbitrary number of function calls and returns. The
 storage is forwarded at each stage and initialized exactly once.
 
-Note that functions without a specified return type work exactly the same as
-functions with a `()` return type for the purpose of expression categories.
+More generally, the syntax and semantics of a return form are as follows:
 
-More generally, the syntax following `->` in a function declaration is actually
-a [form literal](#form-literals), which specifies the form of calls to that
-function, and also the expected form of `return` expressions in the function
-body. `return` expressions are [converted](#form-conversions) to that form if
-possible.
+-   _return-clause_ ::= `->` _return-form_
+-   _return-form_ ::= _nesting-return-form_ | _auto-return-form_
+-   _nesting-return-form_ ::= _expression-return-form_ | _proper-return-form_
 
-> **TODO:** Clarify the role of `auto`: as of
-> (p5434)[/proposals/p5434.md#ref-and-val-returns], `ref auto`, `val auto`, and
-> `var auto` are supported, but perhaps only at the top level. Are these form
-> literals, or something else?
+Return forms can usually be nested, but syntaxes involving `auto` can only occur
+at top level. We further divide nesting return forms into expressions and
+"proper" return forms, but this is just a technical means of avoiding formal
+ambiguity in the grammar; it has no greater significance.
+
+-   _category-tag_ ::= `val` | `ref` | `var`
+
+These tags are used to specify "value", "non-owning durable reference", or
+"initializing" expression category (respectively). Note that there is no way to
+express an owning or ephemeral reference category in a return form.
+
+-   _auto-return-form_ ::= _category-tag_? `auto`
+
+This denotes a primitive form with runtime phase and deduced type. The category
+is determined by _category-tag_ if present, or "initializing" otherwise.
+
+-   _proper-return-form_ ::= _category-tag_ _expression_
+
+This denotes a primitive form with runtime phase, category _category-tag_, and
+type "_expression_ `as type`".
+
+-   _expression-return-form_ ::= _expression_
+
+An expression with no _category-tag_ is equivalent to "`var` _expression_".
+
+-   _proper-return-form_ ::= `(` [_expression-return-form_ `,`]\* _proper-return-form_
+    [`,` _nesting-return-form_]\* `,`? `)`
+
+A tuple literal of return forms denotes a tuple form whose sub-forms are
+specified by the comma-separated elements. To avoid formal ambiguity, this
+grammar rule requires at least one of the sub-forms to be proper.
+
+-   _expression-field-form_ ::= _designator_ `:` _expression-return-form_
+-   _proper-field-form_ ::= _designator_ `:` _proper-return-form_
+-   _field-form_ ::= _field-decl_
+-   _field-form_ ::= _proper-field-form_
+-   _proper-return-form_ ::= `{` [_expression-field-form_ `,`]\* _proper-field-form_
+    [`,` _field-form_]\* `}`
+
+A struct literal of return forms denotes a struct form whose field names and
+their forms are specified by the comma-separated field forms. To avoid formal
+ambiguity, this grammar rule requires at least one of the field forms to be
+proper.
+
+> **Open question:** Should there be a way to specify symbolic or template phase
+> in return forms?
 
 #### Deferred initialization from values and references
 
@@ -751,45 +835,6 @@ recursively in terms of the expression's form:
 -   The outcome of an expression with struct form is a struct of outcomes.
 
 An expression and its outcome always have the same form.
-
-### Form literals
-
-A _form literal_ is an expression-like syntax that denotes a form. A form
-literal can only appear in a context where a form is expected. Currently, the
-only such contexts are the expression following `->` in a function declaration,
-and sub-expressions of a form literal. The syntax and semantics are as follows:
-
--   _form-literal_ ::= `val` _expression_
--   _form-literal_ ::= `ref` _expression_
--   _form-literal_ ::= `var` _expression_
-
-These denote a primitive form with type "_expression_ `as type`" and runtime
-phase. The category is "value", "non-owning durable reference", or
-"initializing" for the `val`, `ref`, and `var` syntaxes, respectively. Note that
-there is no way to express an owning or ephemeral reference category in a form
-literal.
-
--   _init-form-literal_ ::= _expression_
--   _form-literal_ ::= _init-form-literal_
-
-This is equivalent to "`var` \_expression".
-
--   _proper-form-literal_ ::= `(` [_init-form-literal_ `,`]\* _proper-form-literal_
-    [`,` _form-literal_]\* `,`? `)`
-
-This denotes a tuple form whose sub-forms are specified by the comma-separated
-elements
-
--   _init-field-form_ ::= _designator_ `:` _init-form-literal_
--   _proper-field-form_ ::= _designator_ `:` _proper-form-literal_
--   _field-form_ ::= _field-decl_
--   _field-form_ ::= _proper-field-form_
--   _proper-form-literal_ ::= `{` [_init-field-form_ `,`]\* _proper-field-form_ [`,`
-    _field-form_]\*
-    `}`
-
-This denotes a struct form whose field names and their forms are specified by
-the comma-separated field forms.
 
 ### Form conversions
 
@@ -1126,7 +1171,7 @@ _thread-safe_ interface subset of an otherwise _thread-compatible_ type.
 
 Note that `const T` is a type qualification and is generally orthogonal to
 expression categories or what form of pattern is used, including for object
-parameters. Notionally, it can occur both with `addr` and value object
+parameters. Notionally, it can occur both with `ref` and value object
 parameters. However, on value patterns, it is redundant as there is no
 meaningful distinction between a value expression of type `T` and type
 `const T`. For example, given a type and methods:
@@ -1135,20 +1180,20 @@ meaningful distinction between a value expression of type `T` and type
 class X {
   fn Method[self: Self]();
   fn ConstMethod[self: const Self]();
-  fn AddrMethod[addr self: Self*]();
-  fn AddrConstMethod[addr self: const Self*]();
+  fn RefMethod[ref self: Self]();
+  fn RefConstMethod[ref self: const Self]();
 }
 ```
 
 The methods can be called on different kinds of expressions according to the
 following table:
 
-|  Expression category: | `let x: X` <br/> (value) | `let x: const X` <br/> (const value) | `var x: X` <br/> (reference) | `var x: const X` <br/> (const reference) |
-| --------------------: | ------------------------ | ------------------------------------ | ---------------------------- | ---------------------------------------- |
-|         `x.Method();` | ✅                       | ✅                                   | ✅                           | ✅                                       |
-|    `x.ConstMethod();` | ✅                       | ✅                                   | ✅                           | ✅                                       |
-|     `x.AddrMethod();` | ❌                       | ❌                                   | ✅                           | ❌                                       |
-| `x.AddrConstMethod()` | ❌                       | ❌                                   | ✅                           | ✅                                       |
+| Expression category: | `let x: X` <br/> (value) | `let x: const X` <br/> (const value) | `var x: X` <br/> (reference) | `var x: const X` <br/> (const reference) |
+| -------------------: | ------------------------ | ------------------------------------ | ---------------------------- | ---------------------------------------- |
+|        `x.Method();` | ✅                       | ✅                                   | ✅                           | ✅                                       |
+|   `x.ConstMethod();` | ✅                       | ✅                                   | ✅                           | ✅                                       |
+|     `x.RefMethod();` | ❌                       | ❌                                   | ✅                           | ❌                                       |
+| `x.RefConstMethod()` | ❌                       | ❌                                   | ✅                           | ✅                                       |
 
 The `const T` type has the same representation as `T` with the same field names,
 but all of its field types are also `const`-qualified. Other than fields, all
@@ -1191,12 +1236,11 @@ and realistic Carbon code patterns that cannot be expressed with the tools in
 this proposal in order to motivate a minimal extension. Some candidates based on
 functionality already proposed here or for [classes](/docs/design/classes.md):
 
--   Allow overloading between `addr me` and `me` in methods. This is among the
-    most appealing as it _doesn't_ have the combinatorial explosion. But it is
-    also very limited as it only applies to the implicit object parameter.
+-   Allow overloading between `ref self` and `self` in methods. This is among
+    the most appealing as it _doesn't_ have the combinatorial explosion. But it
+    is also very limited as it only applies to the implicit object parameter.
 -   Allow overloading between `var` and non-`var` parameters.
--   Expand the `addr` technique from object parameters to all parameters, and
-    allow overloading based on it.
+-   Allow overloading between `ref` and non-`ref` parameters in general.
 
 Perhaps more options will emerge as well. Again, the goal isn't to completely
 preclude pursuing this direction, but instead to try to ensure it is only
@@ -1259,7 +1303,7 @@ will require that the type containing that specifier satisfies the constraint
 ```carbon
 interface ReferenceImplicitAs {
   let T:! type;
-  fn Convert[addr self: const Self*]() -> T;
+  fn Convert[ref self: const Self]() -> T;
 }
 ```
 
@@ -1304,11 +1348,11 @@ class String {
   private var capacity: i64;
 
   impl as ReferenceImplicitAs where .T = StringView {
-    fn Op[addr self: const Self*]() -> StringView {
+    fn Op[ref self: const Self]() -> StringView {
       // Because this is called on the String object prior to it becoming
       // a value, we can access an SSO buffer or other interior pointers
       // of `self`.
-      return StringView.Make(self->data_ptr, self->size);
+      return StringView.Make(self.data_ptr, self.size);
     }
   }
 
@@ -1330,8 +1374,8 @@ class String {
   // Note that even though the `Self` type is `const` qualified here, this
   // cannot be called on a `String` value! That would require us to convert to a
   // `StringView` that does not track the extra data member.
-  fn Capacity[addr self: const Self*]() -> i64 {
-    return self->capacity;
+  fn Capacity[ref self: const Self]() -> i64 {
+    return self.capacity;
   }
 }
 ```
