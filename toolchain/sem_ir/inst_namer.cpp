@@ -649,16 +649,8 @@ auto InstNamer::NamingContext::AddInstName(std::string name) -> void {
       loc_id_or_fingerprint = LocId(inst_id_);
     }
     auto scoped_name = inst_namer_->GetScopeInfo(scope_id_).insts.AllocateName(
-<<<<<<< HEAD
         *inst_namer_, loc_id_or_fingerprint, std::move(name));
-    inst_namer_->insts_[inst_id_.index] = {scope_id_, scoped_name};
-||||||| parent of 7fa60367b (WIP)
-        *inst_namer_, loc_id_or_fingerprint, name);
-    inst_namer_->insts_[inst_id_.index] = {scope_id_, scoped_name};
-=======
-        *inst_namer_, loc_id_or_fingerprint, name);
     inst_namer_->insts_[index] = {scope_id_, scoped_name};
->>>>>>> 7fa60367b (WIP)
   } else {
     CARBON_CHECK(old_scope_id == scope_id_,
                  "Attempting to name inst in multiple scopes");
