@@ -19,7 +19,8 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
 ## Abstract
 
-It's always possible to concat together Carbon source files without changing the meaning of or diagnostics applied to the code.
+It's always possible to concat together Carbon source files without changing the
+meaning of or diagnostics applied to the code.
 
 ## Background
 
