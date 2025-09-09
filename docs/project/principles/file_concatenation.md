@@ -10,6 +10,7 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
 ## Table of contents
 
+-   [Abstract](#abstract)
 -   [Background](#background)
 -   [Principle](#principle)
 -   [Applications of these principles](#applications-of-these-principles)
