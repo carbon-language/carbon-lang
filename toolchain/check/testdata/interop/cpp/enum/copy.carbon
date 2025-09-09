@@ -14,7 +14,7 @@
 
 enum Enum : short { a, b, c };
 
-// --- fail_todo_copy_enum.carbon
+// --- copy_enum.carbon
 
 library "[[@TEST_NAME]]";
 
@@ -28,7 +28,7 @@ fn F() {
 }
 //@dump-sem-ir-end
 
-// CHECK:STDOUT: --- fail_todo_copy_enum.carbon
+// CHECK:STDOUT: --- copy_enum.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %F.type: type = fn_type @F [concrete]
