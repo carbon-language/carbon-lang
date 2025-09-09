@@ -795,10 +795,10 @@ struct FunctionTypeWithSelfType {
   InstId self_id;
 };
 
-// An overloaded C++ function declaration.
+// An unresolved C++ overload set value.
 struct CppOverloadSetValue {
   static constexpr auto Kind =
-      InstKind::CppOverloadSetValue.Define<Parse::AnyFunctionDeclId>(
+      InstKind::CppOverloadSetValue.Define<Parse::NodeId>(
           {.ir_name = "cpp_overload_set_value", .is_lowered = false});
 
   TypeId type_id;

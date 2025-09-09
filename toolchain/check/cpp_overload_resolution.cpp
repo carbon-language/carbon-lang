@@ -18,7 +18,7 @@ auto PerformCppOverloadResolution(Context& context, SemIR::LocId loc_id,
   Diagnostics::AnnotationScope annotate_diagnostics(
       &context.emitter(), [&](auto& builder) {
         CARBON_DIAGNOSTIC(InCallToCppFunction, Note,
-                          "in call to a Cpp function here");
+                          "in call to Cpp function here");
         builder.Note(loc_id, InCallToCppFunction);
       });
 
@@ -27,15 +27,17 @@ auto PerformCppOverloadResolution(Context& context, SemIR::LocId loc_id,
   arg_exprs.reserve(arg_ids.size());
   for (SemIR::InstId arg_id : arg_ids) {
     auto arg_cpp_type = MapToCppType(context, arg_id);
-    if (!arg_cpp_type) {
+    if (arg_cpp_type.isNull()) {
       CARBON_DIAGNOSTIC(CallArgTypeNotSupported, Error,
-                        "call arg of type {0} is not supported", TypeOfInstId);
+                        "call argument of type {0} is not supported",
+                        TypeOfInstId);
       context.emitter().Emit(loc_id, CallArgTypeNotSupported, arg_id);
       return std::nullopt;
     }
+    // TODO: Allocate these on the stack.
     auto* arg_expr = new (context.ast_context()) clang::OpaqueValueExpr(
         // TODO: Add location accordingly.
-        clang::SourceLocation(), arg_cpp_type->getNonReferenceType(),
+        clang::SourceLocation(), arg_cpp_type.getNonReferenceType(),
         clang::ExprValueKind::VK_LValue);
     arg_exprs.emplace_back(arg_expr);
   }
@@ -60,11 +62,17 @@ auto PerformCppOverloadResolution(Context& context, SemIR::LocId loc_id,
   CARBON_CHECK(ast);
   clang::Sema& sema = ast->getSema();
 
+  // TODO: Add support for method calls.
   for (clang::NamedDecl* candidate : overload_set.candidate_functions) {
     if (auto* fn_decl = dyn_cast<clang::FunctionDecl>(candidate)) {
       sema.AddOverloadCandidate(
           fn_decl, clang::DeclAccessPair::make(fn_decl, candidate->getAccess()),
           arg_exprs, candidate_set);
+    } else if (dyn_cast<clang::FunctionTemplateDecl>(candidate)) {
+      CARBON_DIAGNOSTIC(TemplateFunctionNotSupported, Error,
+                        "template function is not supported");
+      context.emitter().Emit(loc_id, TemplateFunctionNotSupported);
+      return std::nullopt;
     }
   }
 
@@ -81,29 +89,35 @@ auto PerformCppOverloadResolution(Context& context, SemIR::LocId loc_id,
 
   switch (overloading_result) {
     case clang::OverloadingResult::OR_Success: {
+      // TODO: Handle the cases when Function is null.
+      CARBON_CHECK(best_viable_fn->Function);
       SemIR::InstId result =
-          ImportFunctionDecl(context, loc_id, best_viable_fn->Function);
+          ImportCppFunctionDecl(context, loc_id, best_viable_fn->Function);
       return result;
     }
     case clang::OverloadingResult::OR_No_Viable_Function: {
-      CARBON_DIAGNOSTIC(
-          OverloadingNoViableFunctionFound, Error,
-          "no viable function found during overloading resolution");
-      context.emitter().Emit(loc_id, OverloadingNoViableFunctionFound);
+      // TODO: Add notes with the candidates.
+      CARBON_DIAGNOSTIC(OverloadingNoViableFunctionFound, Error,
+                        "no matching function for call to `{0}`",
+                        SemIR::NameId);
+      context.emitter().Emit(loc_id, OverloadingNoViableFunctionFound,
+                             overload_set.name_id);
       return std::nullopt;
     }
     case clang::OverloadingResult::OR_Ambiguous: {
-      CARBON_DIAGNOSTIC(
-          OverloadingAmbiguousCandidatesFound, Error,
-          "ambiguous candidates found during overloading resolution");
-      context.emitter().Emit(loc_id, OverloadingAmbiguousCandidatesFound);
+      // TODO: Add notes with the candidates.
+      CARBON_DIAGNOSTIC(OverloadingAmbiguousCandidatesFound, Error,
+                        "call to `{0}` is ambiguous", SemIR::NameId);
+      context.emitter().Emit(loc_id, OverloadingAmbiguousCandidatesFound,
+                             overload_set.name_id);
       return std::nullopt;
     }
     case clang::OverloadingResult::OR_Deleted: {
-      CARBON_DIAGNOSTIC(
-          OverloadingDeletedFunctionFound, Error,
-          "overloading resolution succeeded, but refers to a deleted function");
-      context.emitter().Emit(loc_id, OverloadingDeletedFunctionFound);
+      // TODO: Add notes with the candidates.
+      CARBON_DIAGNOSTIC(OverloadingDeletedFunctionFound, Error,
+                        "call to deleted function `{0}`", SemIR::NameId);
+      context.emitter().Emit(loc_id, OverloadingDeletedFunctionFound,
+                             overload_set.name_id);
       return std::nullopt;
     }
   }

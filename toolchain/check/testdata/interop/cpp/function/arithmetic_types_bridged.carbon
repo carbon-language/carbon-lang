@@ -126,7 +126,7 @@ fn F() {
   // CHECK:STDERR: fail_todo_import_wchar_t_param.carbon:[[@LINE+7]]:3: error: semantics TODO: `Unsupported: parameter type: wchar_t` [SemanticsTodo]
   // CHECK:STDERR:   Cpp.foo('X');
   // CHECK:STDERR:   ^~~~~~~~~~~~
-  // CHECK:STDERR: fail_todo_import_wchar_t_param.carbon:[[@LINE+4]]:3: note: in call to a Cpp function here [InCallToCppFunction]
+  // CHECK:STDERR: fail_todo_import_wchar_t_param.carbon:[[@LINE+4]]:3: note: in call to Cpp function here [InCallToCppFunction]
   // CHECK:STDERR:   Cpp.foo('X');
   // CHECK:STDERR:   ^~~~~~~~~~~~
   // CHECK:STDERR:
@@ -178,7 +178,7 @@ fn F() {
   // CHECK:STDERR: fail_todo_import_char16_t_param.carbon:[[@LINE+7]]:3: error: semantics TODO: `Unsupported: parameter type: char16_t` [SemanticsTodo]
   // CHECK:STDERR:   Cpp.foo(1);
   // CHECK:STDERR:   ^~~~~~~~~~
-  // CHECK:STDERR: fail_todo_import_char16_t_param.carbon:[[@LINE+4]]:3: note: in call to a Cpp function here [InCallToCppFunction]
+  // CHECK:STDERR: fail_todo_import_char16_t_param.carbon:[[@LINE+4]]:3: note: in call to Cpp function here [InCallToCppFunction]
   // CHECK:STDERR:   Cpp.foo(1);
   // CHECK:STDERR:   ^~~~~~~~~~
   // CHECK:STDERR:
@@ -205,7 +205,7 @@ fn F() {
   // CHECK:STDERR: fail_todo_import_char32_t_param.carbon:[[@LINE+7]]:3: error: semantics TODO: `Unsupported: parameter type: char32_t` [SemanticsTodo]
   // CHECK:STDERR:   Cpp.foo(1);
   // CHECK:STDERR:   ^~~~~~~~~~
-  // CHECK:STDERR: fail_todo_import_char32_t_param.carbon:[[@LINE+4]]:3: note: in call to a Cpp function here [InCallToCppFunction]
+  // CHECK:STDERR: fail_todo_import_char32_t_param.carbon:[[@LINE+4]]:3: note: in call to Cpp function here [InCallToCppFunction]
   // CHECK:STDERR:   Cpp.foo(1);
   // CHECK:STDERR:   ^~~~~~~~~~
   // CHECK:STDERR:
@@ -437,7 +437,7 @@ fn F() {
   // CHECK:STDERR: fail_todo_import_short_ref_param.carbon:[[@LINE+7]]:3: error: semantics TODO: `Unsupported: parameter type: short &` [SemanticsTodo]
   // CHECK:STDERR:   Cpp.foo(a);
   // CHECK:STDERR:   ^~~~~~~~~~
-  // CHECK:STDERR: fail_todo_import_short_ref_param.carbon:[[@LINE+4]]:3: note: in call to a Cpp function here [InCallToCppFunction]
+  // CHECK:STDERR: fail_todo_import_short_ref_param.carbon:[[@LINE+4]]:3: note: in call to Cpp function here [InCallToCppFunction]
   // CHECK:STDERR:   Cpp.foo(a);
   // CHECK:STDERR:   ^~~~~~~~~~
   // CHECK:STDERR:
@@ -465,7 +465,7 @@ fn F() {
   // CHECK:STDERR: fail_todo_import_const_short_ref_param.carbon:[[@LINE+7]]:3: error: semantics TODO: `Unsupported: parameter type: const short &` [SemanticsTodo]
   // CHECK:STDERR:   Cpp.foo(a);
   // CHECK:STDERR:   ^~~~~~~~~~
-  // CHECK:STDERR: fail_todo_import_const_short_ref_param.carbon:[[@LINE+4]]:3: note: in call to a Cpp function here [InCallToCppFunction]
+  // CHECK:STDERR: fail_todo_import_const_short_ref_param.carbon:[[@LINE+4]]:3: note: in call to Cpp function here [InCallToCppFunction]
   // CHECK:STDERR:   Cpp.foo(a);
   // CHECK:STDERR:   ^~~~~~~~~~
   // CHECK:STDERR:
@@ -656,7 +656,7 @@ fn F() {
   // CHECK:STDERR: fail_todo_import_bit_int_24_param.carbon:[[@LINE+7]]:3: error: semantics TODO: `Unsupported: parameter type: bit_int_24` [SemanticsTodo]
   // CHECK:STDERR:   Cpp.foo(1);
   // CHECK:STDERR:   ^~~~~~~~~~
-  // CHECK:STDERR: fail_todo_import_bit_int_24_param.carbon:[[@LINE+4]]:3: note: in call to a Cpp function here [InCallToCppFunction]
+  // CHECK:STDERR: fail_todo_import_bit_int_24_param.carbon:[[@LINE+4]]:3: note: in call to Cpp function here [InCallToCppFunction]
   // CHECK:STDERR:   Cpp.foo(1);
   // CHECK:STDERR:   ^~~~~~~~~~
   // CHECK:STDERR:

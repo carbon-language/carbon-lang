@@ -27,8 +27,8 @@ auto ImportCppFiles(Context& context,
 // Imports a function declaration from Clang to Carbon. If successful, returns
 // the new Carbon function declaration `InstId`. If the declaration was already
 // imported, returns the mapped instruction.
-auto ImportFunctionDecl(Context& context, SemIR::LocId loc_id,
-                        clang::FunctionDecl* clang_decl) -> SemIR::InstId;
+auto ImportCppFunctionDecl(Context& context, SemIR::LocId loc_id,
+                           clang::FunctionDecl* clang_decl) -> SemIR::InstId;
 
 // Looks up the given name in the Clang AST generated when importing C++ code
 // and returns a lookup result. If using the injected class name (`X.X()`),

@@ -26,57 +26,62 @@ namespace Carbon::Check {
 
 // Find the bit width of an integer literal.
 // The default bit width is 32. If the literal's bit width is greater than 32,
-// the bit width is increased to 64. Negative literals are assigned a bit width
-// of 64.
+// the bit width is increased to 64.
 static auto FindIntLiteralBitWidth(Context& context, SemIR::InstId arg_id,
                                    bool is_signed) -> IntId {
-  auto bit_width_id = IntId::MakeRaw(32);
-  auto arg = context.insts().TryGetAs<SemIR::IntValue>(arg_id);
-  if (arg) {
-    auto arg_val = context.ints().Get(arg->int_id);
-
-    auto width = bit_width_id.has_value()
-                     ? context.ints().Get(bit_width_id).getZExtValue()
-                     : arg_val.getBitWidth();
-
-    unsigned arg_non_sign_bits = arg_val.getSignificantBits() - 1;
-    return (arg_non_sign_bits + is_signed <= width) ? bit_width_id
-                                                    : IntId::MakeRaw(64);
+  auto arg_const_id = context.constant_values().Get(arg_id);
+  if (!arg_const_id.is_constant() ||
+      arg_const_id == SemIR::ErrorInst::ConstantId ||
+      arg_const_id.is_symbolic()) {
+    // TODO: Add tests for these cases.
+    return IntId::None;
   }
-  return IntId::MakeRaw(64);
+  auto arg = context.insts().GetAs<SemIR::IntValue>(
+      context.constant_values().GetInstId(arg_const_id));
+  auto arg_val = context.ints().Get(arg.int_id);
+  unsigned arg_non_sign_bits = arg_val.getSignificantBits() - 1;
+
+  auto bit_width_id = IntId::MakeRaw(32);
+  auto width = context.ints().Get(bit_width_id).getZExtValue();
+
+  // TODO: What if the literal is larger than 64 bits? Currently an error is
+  // reported that the int value is too large for type `i64`. Maybe try to fit
+  // in i128/i256? Try unsigned?
+  return (arg_non_sign_bits + is_signed <= width) ? bit_width_id
+                                                  : IntId::MakeRaw(64);
 }
 
-// Maps a Carbon record type to a Cpp type.
-// Returns `std::nullopt` if the Carbon type is not a ClassType or if the
-// Cpp record type has not yet been imported.
+// Maps a Carbon record type to a Cpp type. Returns an empty QualType if
+// the Carbon type is not a ClassType or if the Cpp record type has not yet been
+// imported.
+// TODO: Import the type if needed.
 static auto TryMapRecordType(Context& context, SemIR::TypeId type_id)
-    -> std::optional<clang::QualType> {
+    -> clang::QualType {
   auto class_type =
       context.sem_ir().types().TryGetAs<SemIR::ClassType>(type_id);
   if (!class_type) {
-    return std::nullopt;
+    return clang::QualType();
   }
   const SemIR::Class& class_info =
       context.sem_ir().classes().Get(class_type->class_id);
   auto clang_decl_id =
       context.name_scopes().Get(class_info.scope_id).clang_decl_context_id();
   if (!clang_decl_id.has_value()) {
-    return std::nullopt;
+    return clang::QualType();
   }
   clang::Decl* clang_decl =
       context.sem_ir().clang_decls().Get(clang_decl_id).decl;
-  auto* record_type_decl = clang::dyn_cast<clang::TagDecl>(clang_decl);
+  auto* record_type_decl = clang::cast<clang::TagDecl>(clang_decl);
   return context.ast_context().getTagDeclType(record_type_decl);
 }
 
-// Maps a Carbon builtin type to a Cpp type.
-// Returns `std::nullopt` if the type is not supported.
-static auto TryMapBuiltInType(Context& context, SemIR::InstId inst_id,
-                              SemIR::TypeId type_id)
-    -> std::optional<clang::QualType> {
+// Maps a Carbon builtin type to a Cpp type. Returns an empty QualType if the
+// type is not supported.
+static auto TryMapBuiltinType(Context& context, SemIR::InstId inst_id,
+                              SemIR::TypeId type_id) -> clang::QualType {
   auto object_repr_id = context.sem_ir().types().GetObjectRepr(type_id);
   if (!object_repr_id.has_value()) {
-    return std::nullopt;
+    return clang::QualType();
   }
   auto type_inst_id = context.sem_ir().types().GetInstId(object_repr_id);
   auto inst = context.insts().Get(type_inst_id);
@@ -93,6 +98,9 @@ static auto TryMapBuiltInType(Context& context, SemIR::InstId inst_id,
     }
     case SemIR::IntLiteralType::Kind: {
       auto bit_width = FindIntLiteralBitWidth(context, inst_id, true);
+      if (bit_width == IntId::None) {
+        return clang::QualType();
+      }
       mapped_type = context.ast_context().getIntTypeForBitwidth(
           bit_width.AsValue(), true);
       break;
@@ -116,28 +124,24 @@ static auto TryMapBuiltInType(Context& context, SemIR::InstId inst_id,
       break;
     }
     default: {
-      return std::nullopt;
+      return mapped_type;
     }
   }
   return mapped_type;
 }
 
 // Maps a non-wrapper (no const or pointer) Carbon type to a Cpp type.
-// TODO: function that checks if a type is a BuiltinType or a
-// RecordType?
 static auto MapNonWrapperType(Context& context, SemIR::InstId inst_id,
-                              SemIR::TypeId type_id)
-    -> std::optional<clang::QualType> {
-  auto mapped_type = TryMapBuiltInType(context, inst_id, type_id);
-  if (!mapped_type) {
+                              SemIR::TypeId type_id) -> clang::QualType {
+  auto mapped_type = TryMapBuiltinType(context, inst_id, type_id);
+  if (mapped_type.isNull()) {
     mapped_type = TryMapRecordType(context, type_id);
   }
   return mapped_type;
 }
 
 // TODO: unify this with the C++ to Carbon type mapping function.
-auto MapToCppType(Context& context, SemIR::InstId inst_id)
-    -> std::optional<clang::QualType> {
+auto MapToCppType(Context& context, SemIR::InstId inst_id) -> clang::QualType {
   auto type_id = context.insts().Get(inst_id).type_id();
   llvm::SmallVector<SemIR::TypeId> wrapper_types;
   while (true) {
@@ -159,23 +163,23 @@ auto MapToCppType(Context& context, SemIR::InstId inst_id)
     wrapper_types.push_back(orig_type_id);
   }
 
-  std::optional<clang::QualType> mapped_type =
-      MapNonWrapperType(context, inst_id, type_id);
-  if (!mapped_type) {
-    return std::nullopt;
+  clang::QualType mapped_type = MapNonWrapperType(context, inst_id, type_id);
+  if (mapped_type.isNull()) {
+    return mapped_type;
   }
 
   for (auto wrapper_type_id : llvm::reverse(wrapper_types)) {
     if (auto const_type = context.sem_ir().types().TryGetAs<SemIR::ConstType>(
             wrapper_type_id);
         const_type) {
-      mapped_type.value().addConst();
-    } else if (auto pointer_type =
-                   context.sem_ir().types().TryGetAs<SemIR::PointerType>(
-                       wrapper_type_id)) {
-      mapped_type = context.ast_context().getPointerType(mapped_type.value());
+      mapped_type.addConst();
+    } else if (context.sem_ir().types().TryGetAs<SemIR::PointerType>(
+                   wrapper_type_id)) {
+      auto pointer_type = context.ast_context().getPointerType(mapped_type);
+      mapped_type = context.ast_context().getAttributedType(
+          clang::attr::TypeNonNull, pointer_type, pointer_type);
     } else {
-      return std::nullopt;
+      return clang::QualType();
     }
   }
 

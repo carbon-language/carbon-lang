@@ -347,7 +347,7 @@ fn F() {
   // CHECK:STDERR: fail_todo_import_int_ref_param.carbon:[[@LINE+7]]:3: error: semantics TODO: `Unsupported: parameter type: int &` [SemanticsTodo]
   // CHECK:STDERR:   Cpp.foo(a);
   // CHECK:STDERR:   ^~~~~~~~~~
-  // CHECK:STDERR: fail_todo_import_int_ref_param.carbon:[[@LINE+4]]:3: note: in call to a Cpp function here [InCallToCppFunction]
+  // CHECK:STDERR: fail_todo_import_int_ref_param.carbon:[[@LINE+4]]:3: note: in call to Cpp function here [InCallToCppFunction]
   // CHECK:STDERR:   Cpp.foo(a);
   // CHECK:STDERR:   ^~~~~~~~~~
   // CHECK:STDERR:
@@ -375,7 +375,7 @@ fn F() {
   // CHECK:STDERR: fail_todo_import_const_int_ref_param.carbon:[[@LINE+7]]:3: error: semantics TODO: `Unsupported: parameter type: const int &` [SemanticsTodo]
   // CHECK:STDERR:   Cpp.foo(a);
   // CHECK:STDERR:   ^~~~~~~~~~
-  // CHECK:STDERR: fail_todo_import_const_int_ref_param.carbon:[[@LINE+4]]:3: note: in call to a Cpp function here [InCallToCppFunction]
+  // CHECK:STDERR: fail_todo_import_const_int_ref_param.carbon:[[@LINE+4]]:3: note: in call to Cpp function here [InCallToCppFunction]
   // CHECK:STDERR:   Cpp.foo(a);
   // CHECK:STDERR:   ^~~~~~~~~~
   // CHECK:STDERR:

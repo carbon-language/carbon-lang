@@ -188,7 +188,7 @@ fn MyF(bar: Cpp.Bar*) {
   // CHECK:STDERR: fail_todo_call_dynamic.carbon:[[@LINE+7]]:3: error: semantics TODO: `Unsupported: Virtual function` [SemanticsTodo]
   // CHECK:STDERR:   bar->f();
   // CHECK:STDERR:   ^~~~~~~~
-  // CHECK:STDERR: fail_todo_call_dynamic.carbon:[[@LINE+4]]:3: note: in call to a Cpp function here [InCallToCppFunction]
+  // CHECK:STDERR: fail_todo_call_dynamic.carbon:[[@LINE+4]]:3: note: in call to Cpp function here [InCallToCppFunction]
   // CHECK:STDERR:   bar->f();
   // CHECK:STDERR:   ^~~~~~~~
   // CHECK:STDERR:

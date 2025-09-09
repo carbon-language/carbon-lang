@@ -22,7 +22,9 @@ struct CppOverloadSet : public Printable<CppOverloadSet> {
   NameScopeId parent_scope_id;
 
   // List of all named decls found at name lookup.
-  clang::UnresolvedSet<1> candidate_functions;
+  // TODO: Find a good small size for the UnresolvedSet<size> or rework how we
+  // store the candidates.
+  clang::UnresolvedSet<4> candidate_functions;
 
   auto Print(llvm::raw_ostream& out) const -> void {
     out << "name: " << name_id << ", parent_scope: " << parent_scope_id;

@@ -1612,8 +1612,8 @@ static auto ImportFunction(Context& context, SemIR::LocId loc_id,
   return function_decl.function_id;
 }
 
-auto ImportFunctionDecl(Context& context, SemIR::LocId loc_id,
-                        clang::FunctionDecl* clang_decl) -> SemIR::InstId {
+auto ImportCppFunctionDecl(Context& context, SemIR::LocId loc_id,
+                           clang::FunctionDecl* clang_decl) -> SemIR::InstId {
   // Check if the declaration is already mapped.
   if (SemIR::InstId existing_inst_id =
           LookupClangDeclInstId(context, clang_decl);
@@ -1893,7 +1893,7 @@ static auto ImportNameDeclIntoScope(Context& context, SemIR::LocId loc_id,
 // Imports an overloaded function set from Clang to Carbon.
 static auto ImportCppOverloadSet(Context& context, SemIR::NameScopeId scope_id,
                                  SemIR::NameId name_id,
-                                 const clang::UnresolvedSet<1>& overload_set)
+                                 const clang::UnresolvedSet<4>& overload_set)
     -> SemIR::InstId {
   auto overload_set_inst = SemIR::CppOverloadSetValue{
       SemIR::TypeId::None, SemIR::CppOverloadSetId::None};
@@ -1924,7 +1924,7 @@ static auto ImportCppOverloadSet(Context& context, SemIR::NameScopeId scope_id,
 // if the access is not the same for all functions in the overload set.
 // TODO: Fix to support functions with different access levels.
 static auto GetOverloadSetAccess(Context& context, SemIR::LocId loc_id,
-                                 const clang::UnresolvedSet<1>& overload_set)
+                                 const clang::UnresolvedSet<4>& overload_set)
     -> std::optional<SemIR::AccessKind> {
   auto access = overload_set.begin().getAccess();
   for (auto it = overload_set.begin(); it != overload_set.end(); ++it) {
@@ -1940,7 +1940,7 @@ static auto GetOverloadSetAccess(Context& context, SemIR::LocId loc_id,
 
 static auto ImportOverloadSetAndDependencies(
     Context& context, SemIR::LocId loc_id, SemIR::NameScopeId scope_id,
-    SemIR::NameId name_id, const clang::UnresolvedSet<1>& overloaded_set)
+    SemIR::NameId name_id, const clang::UnresolvedSet<4>& overloaded_set)
     -> SemIR::InstId {
   ImportWorklist worklist;
   for (auto* fn_decl : overloaded_set) {
@@ -1956,7 +1956,7 @@ static auto ImportOverloadSetAndDependencies(
 // name into the `NameScope`.
 static auto ImportOverloadSetIntoScope(
     Context& context, SemIR::LocId loc_id, SemIR::NameScopeId scope_id,
-    SemIR::NameId name_id, const clang::UnresolvedSet<1>& overload_set)
+    SemIR::NameId name_id, const clang::UnresolvedSet<4>& overload_set)
     -> SemIR::ScopeLookupResult {
   std::optional<SemIR::AccessKind> access_kind =
       GetOverloadSetAccess(context, loc_id, overload_set);
@@ -1972,6 +1972,8 @@ static auto ImportOverloadSetIntoScope(
 }
 
 // TODO: Refactor this method.
+// TODO: Do we need to import the dependences for all functions in the overload
+// set?
 auto ImportNameFromCpp(Context& context, SemIR::LocId loc_id,
                        SemIR::NameScopeId scope_id, SemIR::NameId name_id)
     -> SemIR::ScopeLookupResult {
@@ -1993,7 +1995,7 @@ auto ImportNameFromCpp(Context& context, SemIR::LocId loc_id,
   if (lookup->isOverloadedResult() ||
       (lookup->isSingleResult() &&
        lookup->getFoundDecl()->isFunctionOrFunctionTemplate())) {
-    clang::UnresolvedSet<1> overload_set;
+    clang::UnresolvedSet<4> overload_set;
     overload_set.append(lookup->begin(), lookup->end());
     return ImportOverloadSetIntoScope(context, loc_id, scope_id, name_id,
                                       overload_set);
@@ -2023,7 +2025,7 @@ auto ImportNameFromCpp(Context& context, SemIR::LocId loc_id,
   clang::DeclContextLookupResult constructors_lookup =
       ClangConstructorLookup(context, scope_id);
 
-  clang::UnresolvedSet<1> overload_set;
+  clang::UnresolvedSet<4> overload_set;
   for (clang::Decl* decl : constructors_lookup) {
     auto* constructor = cast<clang::CXXConstructorDecl>(decl);
     if (constructor->isDeleted() || constructor->isCopyOrMoveConstructor()) {

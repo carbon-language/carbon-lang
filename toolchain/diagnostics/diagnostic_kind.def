@@ -253,6 +253,7 @@ CARBON_DIAGNOSTIC_KIND(OverloadingNoViableFunctionFound)
 CARBON_DIAGNOSTIC_KIND(OverloadingAmbiguousCandidatesFound)
 CARBON_DIAGNOSTIC_KIND(OverloadingDeletedFunctionFound)
 CARBON_DIAGNOSTIC_KIND(SelfParameterNotAllowed)
+CARBON_DIAGNOSTIC_KIND(TemplateFunctionNotSupported)
 
 // Function declaration checking.
 CARBON_DIAGNOSTIC_KIND(DefinedAbstractFunction)

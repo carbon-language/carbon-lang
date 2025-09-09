@@ -12,8 +12,7 @@
 namespace Carbon::Check {
 
 // Maps a Carbon type to a C++ type.
-auto MapToCppType(Context& context, SemIR::InstId inst_id)
-    -> std::optional<clang::QualType>;
+auto MapToCppType(Context& context, SemIR::InstId inst_id) -> clang::QualType;
 }  // namespace Carbon::Check
 
 #endif  // CARBON_TOOLCHAIN_CHECK_CPP_TYPE_MAPPING_H_
