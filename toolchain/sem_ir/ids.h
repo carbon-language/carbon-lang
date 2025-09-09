@@ -100,8 +100,7 @@ class AbsoluteInstId : public InstId {
 
   // Support implicit conversion from InstId so that InstId and AbsoluteInstId
   // have the same interface.
-  // NOLINTNEXTLINE(google-explicit-constructor)
-  constexpr AbsoluteInstId(InstId inst_id) : InstId(inst_id) {}
+  explicit(false) constexpr AbsoluteInstId(InstId inst_id) : InstId(inst_id) {}
 
   using InstId::InstId;
 };
@@ -124,8 +123,7 @@ class DestInstId : public InstId {
 
   // Support implicit conversion from InstId so that InstId and DestInstId
   // have the same interface.
-  // NOLINTNEXTLINE(google-explicit-constructor)
-  constexpr DestInstId(InstId inst_id) : InstId(inst_id) {}
+  explicit(false) constexpr DestInstId(InstId inst_id) : InstId(inst_id) {}
 
   using InstId::InstId;
 };
@@ -149,8 +147,7 @@ class MetaInstId : public InstId {
 
   // Support implicit conversion from InstId so that InstId and MetaInstId
   // have the same interface.
-  // NOLINTNEXTLINE(google-explicit-constructor)
-  constexpr MetaInstId(InstId inst_id) : InstId(inst_id) {}
+  explicit(false) constexpr MetaInstId(InstId inst_id) : InstId(inst_id) {}
 
   using InstId::InstId;
 };
@@ -698,8 +695,7 @@ constexpr InstBlockId InstBlockId::Unreachable = InstBlockId(NoneIndex - 1);
 // `InstBlockId` (unlike for the singleton error `InstId`).
 class InstBlockIdOrError {
  public:
-  // NOLINTNEXTLINE(google-explicit-constructor)
-  InstBlockIdOrError(InstBlockId inst_block_id)
+  explicit(false) InstBlockIdOrError(InstBlockId inst_block_id)
       : InstBlockIdOrError(inst_block_id, false) {}
 
   static auto MakeError() -> InstBlockIdOrError {
@@ -743,8 +739,7 @@ class AbsoluteInstBlockId : public InstBlockId {
  public:
   // Support implicit conversion from InstBlockId so that InstBlockId and
   // AbsoluteInstBlockId have the same interface.
-  // NOLINTNEXTLINE(google-explicit-constructor)
-  constexpr AbsoluteInstBlockId(InstBlockId inst_block_id)
+  explicit(false) constexpr AbsoluteInstBlockId(InstBlockId inst_block_id)
       : InstBlockId(inst_block_id) {}
 
   using InstBlockId::InstBlockId;
@@ -759,8 +754,7 @@ class DeclInstBlockId : public InstBlockId {
  public:
   // Support implicit conversion from InstBlockId so that InstBlockId and
   // DeclInstBlockId have the same interface.
-  // NOLINTNEXTLINE(google-explicit-constructor)
-  constexpr DeclInstBlockId(InstBlockId inst_block_id)
+  explicit(false) constexpr DeclInstBlockId(InstBlockId inst_block_id)
       : InstBlockId(inst_block_id) {}
 
   using InstBlockId::InstBlockId;
@@ -774,8 +768,8 @@ class LabelId : public InstBlockId {
  public:
   // Support implicit conversion from InstBlockId so that InstBlockId and
   // LabelId have the same interface.
-  // NOLINTNEXTLINE(google-explicit-constructor)
-  constexpr LabelId(InstBlockId inst_block_id) : InstBlockId(inst_block_id) {}
+  explicit(false) constexpr LabelId(InstBlockId inst_block_id)
+      : InstBlockId(inst_block_id) {}
 
   using InstBlockId::InstBlockId;
 };
@@ -936,19 +930,17 @@ struct LocId : public IdBase<LocId> {
 
   using IdBase::IdBase;
 
-  // NOLINTNEXTLINE(google-explicit-constructor)
-  constexpr LocId(ImportIRInstId import_ir_inst_id)
+  explicit(false) constexpr LocId(ImportIRInstId import_ir_inst_id)
       : IdBase(import_ir_inst_id.has_value()
                    ? FirstImportIRInstId - import_ir_inst_id.index
                    : NoneIndex) {}
 
   explicit constexpr LocId(InstId inst_id) : IdBase(inst_id.index) {}
 
-  // NOLINTNEXTLINE(google-explicit-constructor)
-  constexpr LocId(Parse::NoneNodeId /*none*/) : IdBase(NoneIndex) {}
+  explicit(false) constexpr LocId(Parse::NoneNodeId /*none*/)
+      : IdBase(NoneIndex) {}
 
-  // NOLINTNEXTLINE(google-explicit-constructor)
-  constexpr LocId(Parse::NodeId node_id)
+  explicit(false) constexpr LocId(Parse::NodeId node_id)
       : IdBase(FirstNodeId - node_id.index) {}
 
   // Forms an equivalent LocId for a desugared location. Prefer calling

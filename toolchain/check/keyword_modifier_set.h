@@ -65,8 +65,7 @@ class KeywordModifierSet {
 
   // Support implicit conversion so that the difference with the member enum is
   // opaque.
-  // NOLINTNEXTLINE(google-explicit-constructor)
-  constexpr KeywordModifierSet(RawEnumType set) : set_(set) {}
+  explicit(false) constexpr KeywordModifierSet(RawEnumType set) : set_(set) {}
 
   // Adds entries to the set.
   auto Add(KeywordModifierSet set) -> void { set_ |= set.set_; }

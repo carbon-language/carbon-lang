@@ -122,7 +122,7 @@ class EnumBase : public Printable<DerivedT> {
   // function.
   //
   // NOLINTNEXTLINE(google-explicit-constructor)
-  constexpr operator RawEnumType() const { return value_; }
+  explicit(false) constexpr operator RawEnumType() const { return value_; }
 
   // Conversion to bool is deleted to prevent direct use in an `if` condition
   // instead of comparing with another value.

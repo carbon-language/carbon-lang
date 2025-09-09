@@ -229,8 +229,7 @@ class Inst : public Printable<Inst> {
 
   template <typename TypedInst>
     requires Internal::InstLikeType<TypedInst>
-  // NOLINTNEXTLINE(google-explicit-constructor)
-  Inst(TypedInst typed_inst)
+  explicit(false) Inst(TypedInst typed_inst)
       // kind_ is always overwritten below.
       : kind_(),
         type_id_(TypeId::None),

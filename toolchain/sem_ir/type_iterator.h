@@ -210,8 +210,7 @@ class TypeIterator::Step {
   // explicitly first).
   template <class T>
     requires std::constructible_from<Any, T>
-  // NOLINTNEXTLINE(google-explicit-constructor)
-  Step(T any) : any(any) {}
+  explicit(false) Step(T any) : any(any) {}
 
   Any any;
 };
