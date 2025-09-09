@@ -16,6 +16,10 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
 <!-- tocstop -->
 
+## Abstract
+
+It's always possible to concat together Carbon source files without changing the meaning of or diagnostics applied to the code.
+
 ## Background
 
 In C++, it is a common practice to concatenate files together in order to
