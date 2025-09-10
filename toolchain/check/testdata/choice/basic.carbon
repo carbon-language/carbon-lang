@@ -146,9 +146,6 @@ let never: Never = {};
 // CHECK:STDOUT:   %int_0.5c6: Core.IntLiteral = int_value 0 [concrete]
 // CHECK:STDOUT:   %ImplicitAs.type.a92: type = facet_type <@ImplicitAs, @ImplicitAs(%u2)> [concrete]
 // CHECK:STDOUT:   %ImplicitAs.Convert.type.f0e: type = fn_type @ImplicitAs.Convert, @ImplicitAs(%u2) [concrete]
-// CHECK:STDOUT:   %Copy.type: type = facet_type <@Copy> [concrete]
-// CHECK:STDOUT:   %UInt.as.Copy.impl.Op.type.464: type = fn_type @UInt.as.Copy.impl.Op, @UInt.as.Copy.impl(%N) [symbolic]
-// CHECK:STDOUT:   %UInt.as.Copy.impl.Op.be7: %UInt.as.Copy.impl.Op.type.464 = struct_value () [symbolic]
 // CHECK:STDOUT:   %To: Core.IntLiteral = bind_symbolic_name To, 0 [symbolic]
 // CHECK:STDOUT:   %Core.IntLiteral.as.ImplicitAs.impl.Convert.type.367: type = fn_type @Core.IntLiteral.as.ImplicitAs.impl.Convert, @Core.IntLiteral.as.ImplicitAs.impl(%To) [symbolic]
 // CHECK:STDOUT:   %Core.IntLiteral.as.ImplicitAs.impl.Convert.8f6: %Core.IntLiteral.as.ImplicitAs.impl.Convert.type.367 = struct_value () [symbolic]
@@ -161,7 +158,10 @@ let never: Never = {};
 // CHECK:STDOUT:   %Core.IntLiteral.as.ImplicitAs.impl.Convert.specific_fn: <specific function> = specific_function %Core.IntLiteral.as.ImplicitAs.impl.Convert.0b2, @Core.IntLiteral.as.ImplicitAs.impl.Convert(%int_2.ecc) [concrete]
 // CHECK:STDOUT:   %bound_method.7b7: <bound method> = bound_method %int_0.5c6, %Core.IntLiteral.as.ImplicitAs.impl.Convert.specific_fn [concrete]
 // CHECK:STDOUT:   %int_0.9fd: %u2 = int_value 0 [concrete]
+// CHECK:STDOUT:   %Copy.type: type = facet_type <@Copy> [concrete]
 // CHECK:STDOUT:   %Copy.Op.type: type = fn_type @Copy.Op [concrete]
+// CHECK:STDOUT:   %UInt.as.Copy.impl.Op.type.464: type = fn_type @UInt.as.Copy.impl.Op, @UInt.as.Copy.impl(%N) [symbolic]
+// CHECK:STDOUT:   %UInt.as.Copy.impl.Op.be7: %UInt.as.Copy.impl.Op.type.464 = struct_value () [symbolic]
 // CHECK:STDOUT:   %Copy.impl_witness.9ce: <witness> = impl_witness imports.%Copy.impl_witness_table.70d, @UInt.as.Copy.impl(%int_2.ecc) [concrete]
 // CHECK:STDOUT:   %UInt.as.Copy.impl.Op.type.171: type = fn_type @UInt.as.Copy.impl.Op, @UInt.as.Copy.impl(%int_2.ecc) [concrete]
 // CHECK:STDOUT:   %UInt.as.Copy.impl.Op.766: %UInt.as.Copy.impl.Op.type.171 = struct_value () [concrete]
@@ -195,10 +195,10 @@ let never: Never = {};
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
-// CHECK:STDOUT:   %Core.import_ref.46f: @UInt.as.Copy.impl.%UInt.as.Copy.impl.Op.type (%UInt.as.Copy.impl.Op.type.464) = import_ref Core//prelude/parts/uint, loc17_31, loaded [symbolic = @UInt.as.Copy.impl.%UInt.as.Copy.impl.Op (constants.%UInt.as.Copy.impl.Op.be7)]
-// CHECK:STDOUT:   %Copy.impl_witness_table.70d = impl_witness_table (%Core.import_ref.46f), @UInt.as.Copy.impl [concrete]
 // CHECK:STDOUT:   %Core.import_ref.104: @Core.IntLiteral.as.ImplicitAs.impl.%Core.IntLiteral.as.ImplicitAs.impl.Convert.type (%Core.IntLiteral.as.ImplicitAs.impl.Convert.type.367) = import_ref Core//prelude/parts/uint, loc23_40, loaded [symbolic = @Core.IntLiteral.as.ImplicitAs.impl.%Core.IntLiteral.as.ImplicitAs.impl.Convert (constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.8f6)]
 // CHECK:STDOUT:   %ImplicitAs.impl_witness_table.b63 = impl_witness_table (%Core.import_ref.104), @Core.IntLiteral.as.ImplicitAs.impl [concrete]
+// CHECK:STDOUT:   %Core.import_ref.46f: @UInt.as.Copy.impl.%UInt.as.Copy.impl.Op.type (%UInt.as.Copy.impl.Op.type.464) = import_ref Core//prelude/parts/uint, loc17_31, loaded [symbolic = @UInt.as.Copy.impl.%UInt.as.Copy.impl.Op (constants.%UInt.as.Copy.impl.Op.be7)]
+// CHECK:STDOUT:   %Copy.impl_witness_table.70d = impl_witness_table (%Core.import_ref.46f), @UInt.as.Copy.impl [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {

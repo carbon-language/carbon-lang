@@ -180,7 +180,6 @@ var ptr: E* = &val;
 // CHECK:STDOUT:   %addr: %ptr.019 = addr_of file.%b_val.var [concrete]
 // CHECK:STDOUT:   %Copy.type: type = facet_type <@Copy> [concrete]
 // CHECK:STDOUT:   %Copy.Op.type: type = fn_type @Copy.Op [concrete]
-// CHECK:STDOUT:   %Destroy.type: type = facet_type <@Destroy> [concrete]
 // CHECK:STDOUT:   %T.8b3: type = bind_symbolic_name T, 0 [symbolic]
 // CHECK:STDOUT:   %ptr.as.Copy.impl.Op.type.f23: type = fn_type @ptr.as.Copy.impl.Op, @ptr.as.Copy.impl(%T.8b3) [symbolic]
 // CHECK:STDOUT:   %ptr.as.Copy.impl.Op.abf: %ptr.as.Copy.impl.Op.type.f23 = struct_value () [symbolic]
@@ -196,7 +195,7 @@ var ptr: E* = &val;
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT:   %Main.C: type = import_ref Main//a, C, loaded [concrete = constants.%C]
-// CHECK:STDOUT:   %Core.ece: <namespace> = namespace file.%Core.import, [concrete] {
+// CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [concrete] {
 // CHECK:STDOUT:     .Copy = %Core.Copy
 // CHECK:STDOUT:     import Core//prelude
 // CHECK:STDOUT:     import Core//prelude/...
@@ -204,9 +203,6 @@ var ptr: E* = &val;
 // CHECK:STDOUT:   %Main.import_ref.8f2: <witness> = import_ref Main//a, loc4_10, loaded [concrete = constants.%complete_type.357]
 // CHECK:STDOUT:   %Main.import_ref.2c4 = import_ref Main//a, inst18 [no loc], unloaded
 // CHECK:STDOUT:   %Core.Copy: type = import_ref Core//prelude/parts/copy, Copy, loaded [concrete = constants.%Copy.type]
-// CHECK:STDOUT:   %Main.import_ref.541 = import_ref Main//a, loc4_9, unloaded
-// CHECK:STDOUT:   %Main.import_ref.0ed: type = import_ref Main//a, loc4_9, loaded [concrete = constants.%C]
-// CHECK:STDOUT:   %Main.import_ref.063: type = import_ref Main//a, inst21 [no loc], loaded [concrete = constants.%Destroy.type]
 // CHECK:STDOUT:   %Core.import_ref.de9: @ptr.as.Copy.impl.%ptr.as.Copy.impl.Op.type (%ptr.as.Copy.impl.Op.type.f23) = import_ref Core//prelude/parts/copy, loc32_31, loaded [symbolic = @ptr.as.Copy.impl.%ptr.as.Copy.impl.Op (constants.%ptr.as.Copy.impl.Op.abf)]
 // CHECK:STDOUT:   %Copy.impl_witness_table.a71 = impl_witness_table (%Core.import_ref.de9), @ptr.as.Copy.impl [concrete]
 // CHECK:STDOUT: }
@@ -214,7 +210,7 @@ var ptr: E* = &val;
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace [concrete] {
 // CHECK:STDOUT:     .C = imports.%Main.C
-// CHECK:STDOUT:     .Core = imports.%Core.ece
+// CHECK:STDOUT:     .Core = imports.%Core
 // CHECK:STDOUT:     .D = %D
 // CHECK:STDOUT:     .b_val = %b_val
 // CHECK:STDOUT:     .b_ptr = %b_ptr
@@ -240,11 +236,6 @@ var ptr: E* = &val;
 // CHECK:STDOUT:     %ptr: type = ptr_type %D.ref [concrete = constants.%ptr.019]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %b_ptr: ref %ptr.019 = bind_name b_ptr, %b_ptr.var [concrete = %b_ptr.var]
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: impl @C.as.Destroy.impl: imports.%Main.import_ref.0ed as imports.%Main.import_ref.063 [from "a.carbon"] {
-// CHECK:STDOUT: !members:
-// CHECK:STDOUT:   witness = imports.%Main.import_ref.541
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @C [from "a.carbon"] {
@@ -284,7 +275,6 @@ var ptr: E* = &val;
 // CHECK:STDOUT:   %addr: %ptr.019 = addr_of file.%c_val.var [concrete]
 // CHECK:STDOUT:   %Copy.type: type = facet_type <@Copy> [concrete]
 // CHECK:STDOUT:   %Copy.Op.type: type = fn_type @Copy.Op [concrete]
-// CHECK:STDOUT:   %Destroy.type: type = facet_type <@Destroy> [concrete]
 // CHECK:STDOUT:   %T.8b3: type = bind_symbolic_name T, 0 [symbolic]
 // CHECK:STDOUT:   %ptr.as.Copy.impl.Op.type.f23: type = fn_type @ptr.as.Copy.impl.Op, @ptr.as.Copy.impl(%T.8b3) [symbolic]
 // CHECK:STDOUT:   %ptr.as.Copy.impl.Op.abf: %ptr.as.Copy.impl.Op.type.f23 = struct_value () [symbolic]
@@ -300,7 +290,7 @@ var ptr: E* = &val;
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT:   %Main.C: type = import_ref Main//a, C, loaded [concrete = constants.%C]
-// CHECK:STDOUT:   %Core.ece: <namespace> = namespace file.%Core.import, [concrete] {
+// CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [concrete] {
 // CHECK:STDOUT:     .Copy = %Core.Copy
 // CHECK:STDOUT:     import Core//prelude
 // CHECK:STDOUT:     import Core//prelude/...
@@ -308,9 +298,6 @@ var ptr: E* = &val;
 // CHECK:STDOUT:   %Main.import_ref.8f2: <witness> = import_ref Main//a, loc4_10, loaded [concrete = constants.%complete_type.357]
 // CHECK:STDOUT:   %Main.import_ref.2c4 = import_ref Main//a, inst18 [no loc], unloaded
 // CHECK:STDOUT:   %Core.Copy: type = import_ref Core//prelude/parts/copy, Copy, loaded [concrete = constants.%Copy.type]
-// CHECK:STDOUT:   %Main.import_ref.541 = import_ref Main//a, loc4_9, unloaded
-// CHECK:STDOUT:   %Main.import_ref.0ed: type = import_ref Main//a, loc4_9, loaded [concrete = constants.%C]
-// CHECK:STDOUT:   %Main.import_ref.063: type = import_ref Main//a, inst21 [no loc], loaded [concrete = constants.%Destroy.type]
 // CHECK:STDOUT:   %Core.import_ref.de9: @ptr.as.Copy.impl.%ptr.as.Copy.impl.Op.type (%ptr.as.Copy.impl.Op.type.f23) = import_ref Core//prelude/parts/copy, loc32_31, loaded [symbolic = @ptr.as.Copy.impl.%ptr.as.Copy.impl.Op (constants.%ptr.as.Copy.impl.Op.abf)]
 // CHECK:STDOUT:   %Copy.impl_witness_table.a71 = impl_witness_table (%Core.import_ref.de9), @ptr.as.Copy.impl [concrete]
 // CHECK:STDOUT: }
@@ -318,7 +305,7 @@ var ptr: E* = &val;
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace [concrete] {
 // CHECK:STDOUT:     .C = imports.%Main.C
-// CHECK:STDOUT:     .Core = imports.%Core.ece
+// CHECK:STDOUT:     .Core = imports.%Core
 // CHECK:STDOUT:     .E = %E
 // CHECK:STDOUT:     .c_val = %c_val
 // CHECK:STDOUT:     .c_ptr = %c_ptr
@@ -344,11 +331,6 @@ var ptr: E* = &val;
 // CHECK:STDOUT:     %ptr: type = ptr_type %E.ref [concrete = constants.%ptr.019]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %c_ptr: ref %ptr.019 = bind_name c_ptr, %c_ptr.var [concrete = %c_ptr.var]
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: impl @C.as.Destroy.impl: imports.%Main.import_ref.0ed as imports.%Main.import_ref.063 [from "a.carbon"] {
-// CHECK:STDOUT: !members:
-// CHECK:STDOUT:   witness = imports.%Main.import_ref.541
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @C [from "a.carbon"] {
@@ -388,7 +370,6 @@ var ptr: E* = &val;
 // CHECK:STDOUT:   %addr: %ptr.019 = addr_of file.%val.var [concrete]
 // CHECK:STDOUT:   %Copy.type: type = facet_type <@Copy> [concrete]
 // CHECK:STDOUT:   %Copy.Op.type: type = fn_type @Copy.Op [concrete]
-// CHECK:STDOUT:   %Destroy.type: type = facet_type <@Destroy> [concrete]
 // CHECK:STDOUT:   %T.8b3: type = bind_symbolic_name T, 0 [symbolic]
 // CHECK:STDOUT:   %ptr.as.Copy.impl.Op.type.f23: type = fn_type @ptr.as.Copy.impl.Op, @ptr.as.Copy.impl(%T.8b3) [symbolic]
 // CHECK:STDOUT:   %ptr.as.Copy.impl.Op.abf: %ptr.as.Copy.impl.Op.type.f23 = struct_value () [symbolic]
@@ -407,7 +388,7 @@ var ptr: E* = &val;
 // CHECK:STDOUT:   %Main.D: type = import_ref Main//b, D, loaded [concrete = constants.%C]
 // CHECK:STDOUT:   %Main.b_val = import_ref Main//b, b_val, unloaded
 // CHECK:STDOUT:   %Main.b_ptr = import_ref Main//b, b_ptr, unloaded
-// CHECK:STDOUT:   %Core.ece: <namespace> = namespace file.%Core.import, [concrete] {
+// CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [concrete] {
 // CHECK:STDOUT:     .Copy = %Core.Copy
 // CHECK:STDOUT:     import Core//prelude
 // CHECK:STDOUT:     import Core//prelude/...
@@ -415,9 +396,6 @@ var ptr: E* = &val;
 // CHECK:STDOUT:   %Main.import_ref.8f2: <witness> = import_ref Main//a, loc4_10, loaded [concrete = constants.%complete_type.357]
 // CHECK:STDOUT:   %Main.import_ref.2c4 = import_ref Main//a, inst18 [no loc], unloaded
 // CHECK:STDOUT:   %Core.Copy: type = import_ref Core//prelude/parts/copy, Copy, loaded [concrete = constants.%Copy.type]
-// CHECK:STDOUT:   %Main.import_ref.541 = import_ref Main//a, loc4_9, unloaded
-// CHECK:STDOUT:   %Main.import_ref.0ed: type = import_ref Main//a, loc4_9, loaded [concrete = constants.%C]
-// CHECK:STDOUT:   %Main.import_ref.063: type = import_ref Main//a, inst21 [no loc], loaded [concrete = constants.%Destroy.type]
 // CHECK:STDOUT:   %Core.import_ref.de9: @ptr.as.Copy.impl.%ptr.as.Copy.impl.Op.type (%ptr.as.Copy.impl.Op.type.f23) = import_ref Core//prelude/parts/copy, loc32_31, loaded [symbolic = @ptr.as.Copy.impl.%ptr.as.Copy.impl.Op (constants.%ptr.as.Copy.impl.Op.abf)]
 // CHECK:STDOUT:   %Copy.impl_witness_table.a71 = impl_witness_table (%Core.import_ref.de9), @ptr.as.Copy.impl [concrete]
 // CHECK:STDOUT: }
@@ -428,7 +406,7 @@ var ptr: E* = &val;
 // CHECK:STDOUT:     .D = imports.%Main.D
 // CHECK:STDOUT:     .b_val = imports.%Main.b_val
 // CHECK:STDOUT:     .b_ptr = imports.%Main.b_ptr
-// CHECK:STDOUT:     .Core = imports.%Core.ece
+// CHECK:STDOUT:     .Core = imports.%Core
 // CHECK:STDOUT:     .val = %val
 // CHECK:STDOUT:     .ptr = %ptr.loc8_5
 // CHECK:STDOUT:   }
@@ -451,11 +429,6 @@ var ptr: E* = &val;
 // CHECK:STDOUT:     %ptr.loc8_11: type = ptr_type %D.ref [concrete = constants.%ptr.019]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %ptr.loc8_5: ref %ptr.019 = bind_name ptr, %ptr.var [concrete = %ptr.var]
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: impl @C.as.Destroy.impl: imports.%Main.import_ref.0ed as imports.%Main.import_ref.063 [from "a.carbon"] {
-// CHECK:STDOUT: !members:
-// CHECK:STDOUT:   witness = imports.%Main.import_ref.541
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @C [from "a.carbon"] {
@@ -495,7 +468,6 @@ var ptr: E* = &val;
 // CHECK:STDOUT:   %addr: %ptr.019 = addr_of file.%val.var [concrete]
 // CHECK:STDOUT:   %Copy.type: type = facet_type <@Copy> [concrete]
 // CHECK:STDOUT:   %Copy.Op.type: type = fn_type @Copy.Op [concrete]
-// CHECK:STDOUT:   %Destroy.type: type = facet_type <@Destroy> [concrete]
 // CHECK:STDOUT:   %T.8b3: type = bind_symbolic_name T, 0 [symbolic]
 // CHECK:STDOUT:   %ptr.as.Copy.impl.Op.type.f23: type = fn_type @ptr.as.Copy.impl.Op, @ptr.as.Copy.impl(%T.8b3) [symbolic]
 // CHECK:STDOUT:   %ptr.as.Copy.impl.Op.abf: %ptr.as.Copy.impl.Op.type.f23 = struct_value () [symbolic]
@@ -514,7 +486,7 @@ var ptr: E* = &val;
 // CHECK:STDOUT:   %Main.b_val = import_ref Main//b, b_val, unloaded
 // CHECK:STDOUT:   %Main.b_ptr = import_ref Main//b, b_ptr, unloaded
 // CHECK:STDOUT:   %Main.C: type = import_ref Main//a, C, loaded [concrete = constants.%C]
-// CHECK:STDOUT:   %Core.ece: <namespace> = namespace file.%Core.import, [concrete] {
+// CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [concrete] {
 // CHECK:STDOUT:     .Copy = %Core.Copy
 // CHECK:STDOUT:     import Core//prelude
 // CHECK:STDOUT:     import Core//prelude/...
@@ -522,9 +494,6 @@ var ptr: E* = &val;
 // CHECK:STDOUT:   %Main.import_ref.8f2: <witness> = import_ref Main//a, loc4_10, loaded [concrete = constants.%complete_type.357]
 // CHECK:STDOUT:   %Main.import_ref.2c4 = import_ref Main//a, inst18 [no loc], unloaded
 // CHECK:STDOUT:   %Core.Copy: type = import_ref Core//prelude/parts/copy, Copy, loaded [concrete = constants.%Copy.type]
-// CHECK:STDOUT:   %Main.import_ref.541 = import_ref Main//a, loc4_9, unloaded
-// CHECK:STDOUT:   %Main.import_ref.0ed: type = import_ref Main//a, loc4_9, loaded [concrete = constants.%C]
-// CHECK:STDOUT:   %Main.import_ref.063: type = import_ref Main//a, inst21 [no loc], loaded [concrete = constants.%Destroy.type]
 // CHECK:STDOUT:   %Core.import_ref.de9: @ptr.as.Copy.impl.%ptr.as.Copy.impl.Op.type (%ptr.as.Copy.impl.Op.type.f23) = import_ref Core//prelude/parts/copy, loc32_31, loaded [symbolic = @ptr.as.Copy.impl.%ptr.as.Copy.impl.Op (constants.%ptr.as.Copy.impl.Op.abf)]
 // CHECK:STDOUT:   %Copy.impl_witness_table.a71 = impl_witness_table (%Core.import_ref.de9), @ptr.as.Copy.impl [concrete]
 // CHECK:STDOUT: }
@@ -535,7 +504,7 @@ var ptr: E* = &val;
 // CHECK:STDOUT:     .b_val = imports.%Main.b_val
 // CHECK:STDOUT:     .b_ptr = imports.%Main.b_ptr
 // CHECK:STDOUT:     .C = imports.%Main.C
-// CHECK:STDOUT:     .Core = imports.%Core.ece
+// CHECK:STDOUT:     .Core = imports.%Core
 // CHECK:STDOUT:     .val = %val
 // CHECK:STDOUT:     .ptr = %ptr.loc8_5
 // CHECK:STDOUT:   }
@@ -558,11 +527,6 @@ var ptr: E* = &val;
 // CHECK:STDOUT:     %ptr.loc8_11: type = ptr_type %D.ref [concrete = constants.%ptr.019]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %ptr.loc8_5: ref %ptr.019 = bind_name ptr, %ptr.var [concrete = %ptr.var]
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: impl @C.as.Destroy.impl: imports.%Main.import_ref.0ed as imports.%Main.import_ref.063 [from "a.carbon"] {
-// CHECK:STDOUT: !members:
-// CHECK:STDOUT:   witness = imports.%Main.import_ref.541
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @C [from "a.carbon"] {
@@ -605,7 +569,6 @@ var ptr: E* = &val;
 // CHECK:STDOUT:   %T.8b3: type = bind_symbolic_name T, 0 [symbolic]
 // CHECK:STDOUT:   %ptr.as.Copy.impl.Op.type.f23: type = fn_type @ptr.as.Copy.impl.Op, @ptr.as.Copy.impl(%T.8b3) [symbolic]
 // CHECK:STDOUT:   %ptr.as.Copy.impl.Op.abf: %ptr.as.Copy.impl.Op.type.f23 = struct_value () [symbolic]
-// CHECK:STDOUT:   %Destroy.type: type = facet_type <@Destroy> [concrete]
 // CHECK:STDOUT:   %Copy.impl_witness.a94: <witness> = impl_witness imports.%Copy.impl_witness_table.a71, @ptr.as.Copy.impl(%C) [concrete]
 // CHECK:STDOUT:   %ptr.as.Copy.impl.Op.type.0f5: type = fn_type @ptr.as.Copy.impl.Op, @ptr.as.Copy.impl(%C) [concrete]
 // CHECK:STDOUT:   %ptr.as.Copy.impl.Op.fd1: %ptr.as.Copy.impl.Op.type.0f5 = struct_value () [concrete]
@@ -623,7 +586,7 @@ var ptr: E* = &val;
 // CHECK:STDOUT:   %Main.E: type = import_ref Main//c, E, loaded [concrete = constants.%C]
 // CHECK:STDOUT:   %Main.c_val = import_ref Main//c, c_val, unloaded
 // CHECK:STDOUT:   %Main.c_ptr = import_ref Main//c, c_ptr, unloaded
-// CHECK:STDOUT:   %Core.ece: <namespace> = namespace file.%Core.import, [concrete] {
+// CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [concrete] {
 // CHECK:STDOUT:     .Copy = %Core.Copy
 // CHECK:STDOUT:     import Core//prelude
 // CHECK:STDOUT:     import Core//prelude/...
@@ -633,9 +596,6 @@ var ptr: E* = &val;
 // CHECK:STDOUT:   %Core.Copy: type = import_ref Core//prelude/parts/copy, Copy, loaded [concrete = constants.%Copy.type]
 // CHECK:STDOUT:   %Core.import_ref.de9: @ptr.as.Copy.impl.%ptr.as.Copy.impl.Op.type (%ptr.as.Copy.impl.Op.type.f23) = import_ref Core//prelude/parts/copy, loc32_31, loaded [symbolic = @ptr.as.Copy.impl.%ptr.as.Copy.impl.Op (constants.%ptr.as.Copy.impl.Op.abf)]
 // CHECK:STDOUT:   %Copy.impl_witness_table.a71 = impl_witness_table (%Core.import_ref.de9), @ptr.as.Copy.impl [concrete]
-// CHECK:STDOUT:   %Main.import_ref.541 = import_ref Main//a, loc4_9, unloaded
-// CHECK:STDOUT:   %Main.import_ref.0ed: type = import_ref Main//a, loc4_9, loaded [concrete = constants.%C]
-// CHECK:STDOUT:   %Main.import_ref.063: type = import_ref Main//a, inst21 [no loc], loaded [concrete = constants.%Destroy.type]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -646,7 +606,7 @@ var ptr: E* = &val;
 // CHECK:STDOUT:     .E = imports.%Main.E
 // CHECK:STDOUT:     .c_val = imports.%Main.c_val
 // CHECK:STDOUT:     .c_ptr = imports.%Main.c_ptr
-// CHECK:STDOUT:     .Core = imports.%Core.ece
+// CHECK:STDOUT:     .Core = imports.%Core
 // CHECK:STDOUT:     .val = %val
 // CHECK:STDOUT:     .ptr = %ptr.loc8_5
 // CHECK:STDOUT:   }
@@ -669,11 +629,6 @@ var ptr: E* = &val;
 // CHECK:STDOUT:     %ptr.loc8_11: type = ptr_type %E.ref [concrete = constants.%ptr.019]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %ptr.loc8_5: ref %ptr.019 = bind_name ptr, %ptr.var [concrete = %ptr.var]
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: impl @C.as.Destroy.impl: imports.%Main.import_ref.0ed as imports.%Main.import_ref.063 [from "a.carbon"] {
-// CHECK:STDOUT: !members:
-// CHECK:STDOUT:   witness = imports.%Main.import_ref.541
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @C [from "b.carbon"] {
@@ -716,7 +671,6 @@ var ptr: E* = &val;
 // CHECK:STDOUT:   %T.8b3: type = bind_symbolic_name T, 0 [symbolic]
 // CHECK:STDOUT:   %ptr.as.Copy.impl.Op.type.f23: type = fn_type @ptr.as.Copy.impl.Op, @ptr.as.Copy.impl(%T.8b3) [symbolic]
 // CHECK:STDOUT:   %ptr.as.Copy.impl.Op.abf: %ptr.as.Copy.impl.Op.type.f23 = struct_value () [symbolic]
-// CHECK:STDOUT:   %Destroy.type: type = facet_type <@Destroy> [concrete]
 // CHECK:STDOUT:   %Copy.impl_witness.a94: <witness> = impl_witness imports.%Copy.impl_witness_table.a71, @ptr.as.Copy.impl(%C) [concrete]
 // CHECK:STDOUT:   %ptr.as.Copy.impl.Op.type.0f5: type = fn_type @ptr.as.Copy.impl.Op, @ptr.as.Copy.impl(%C) [concrete]
 // CHECK:STDOUT:   %ptr.as.Copy.impl.Op.fd1: %ptr.as.Copy.impl.Op.type.0f5 = struct_value () [concrete]
@@ -734,7 +688,7 @@ var ptr: E* = &val;
 // CHECK:STDOUT:   %Main.D: type = import_ref Main//b, D, loaded [concrete = constants.%C]
 // CHECK:STDOUT:   %Main.b_val = import_ref Main//b, b_val, unloaded
 // CHECK:STDOUT:   %Main.b_ptr = import_ref Main//b, b_ptr, unloaded
-// CHECK:STDOUT:   %Core.ece: <namespace> = namespace file.%Core.import, [concrete] {
+// CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [concrete] {
 // CHECK:STDOUT:     .Copy = %Core.Copy
 // CHECK:STDOUT:     import Core//prelude
 // CHECK:STDOUT:     import Core//prelude/...
@@ -744,9 +698,6 @@ var ptr: E* = &val;
 // CHECK:STDOUT:   %Core.Copy: type = import_ref Core//prelude/parts/copy, Copy, loaded [concrete = constants.%Copy.type]
 // CHECK:STDOUT:   %Core.import_ref.de9: @ptr.as.Copy.impl.%ptr.as.Copy.impl.Op.type (%ptr.as.Copy.impl.Op.type.f23) = import_ref Core//prelude/parts/copy, loc32_31, loaded [symbolic = @ptr.as.Copy.impl.%ptr.as.Copy.impl.Op (constants.%ptr.as.Copy.impl.Op.abf)]
 // CHECK:STDOUT:   %Copy.impl_witness_table.a71 = impl_witness_table (%Core.import_ref.de9), @ptr.as.Copy.impl [concrete]
-// CHECK:STDOUT:   %Main.import_ref.541 = import_ref Main//a, loc4_9, unloaded
-// CHECK:STDOUT:   %Main.import_ref.0ed: type = import_ref Main//a, loc4_9, loaded [concrete = constants.%C]
-// CHECK:STDOUT:   %Main.import_ref.063: type = import_ref Main//a, inst21 [no loc], loaded [concrete = constants.%Destroy.type]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -757,7 +708,7 @@ var ptr: E* = &val;
 // CHECK:STDOUT:     .D = imports.%Main.D
 // CHECK:STDOUT:     .b_val = imports.%Main.b_val
 // CHECK:STDOUT:     .b_ptr = imports.%Main.b_ptr
-// CHECK:STDOUT:     .Core = imports.%Core.ece
+// CHECK:STDOUT:     .Core = imports.%Core
 // CHECK:STDOUT:     .val = %val
 // CHECK:STDOUT:     .ptr = %ptr.loc8_5
 // CHECK:STDOUT:   }
@@ -780,11 +731,6 @@ var ptr: E* = &val;
 // CHECK:STDOUT:     %ptr.loc8_11: type = ptr_type %E.ref [concrete = constants.%ptr.019]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %ptr.loc8_5: ref %ptr.019 = bind_name ptr, %ptr.var [concrete = %ptr.var]
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: impl @C.as.Destroy.impl: imports.%Main.import_ref.0ed as imports.%Main.import_ref.063 [from "a.carbon"] {
-// CHECK:STDOUT: !members:
-// CHECK:STDOUT:   witness = imports.%Main.import_ref.541
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @C [from "b.carbon"] {

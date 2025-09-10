@@ -187,14 +187,13 @@ fn F(c: C) { c.(I.Op)(); }
 // CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [concrete]
 // CHECK:STDOUT:   %F: %F.type = struct_value () [concrete]
 // CHECK:STDOUT:   %I.type: type = facet_type <@I> [concrete]
-// CHECK:STDOUT:   %Self.ce4: %I.type = bind_symbolic_name Self, 0 [symbolic]
+// CHECK:STDOUT:   %Self: %I.type = bind_symbolic_name Self, 0 [symbolic]
 // CHECK:STDOUT:   %I.assoc_type: type = assoc_entity_type @I [concrete]
 // CHECK:STDOUT:   %assoc0: %I.assoc_type = assoc_entity element0, imports.%Main.import_ref.7d9 [concrete]
 // CHECK:STDOUT:   %I.Op.type: type = fn_type @I.Op [concrete]
 // CHECK:STDOUT:   %I.Op: %I.Op.type = struct_value () [concrete]
-// CHECK:STDOUT:   %Self.as_type: type = facet_access_type %Self.ce4 [symbolic]
+// CHECK:STDOUT:   %Self.as_type: type = facet_access_type %Self [symbolic]
 // CHECK:STDOUT:   %pattern_type.802: type = pattern_type %Self.as_type [symbolic]
-// CHECK:STDOUT:   %Destroy.type: type = facet_type <@Destroy> [concrete]
 // CHECK:STDOUT:   %I.impl_witness: <witness> = impl_witness imports.%I.impl_witness_table [concrete]
 // CHECK:STDOUT:   %I.facet: %I.type = facet_value %C, (%I.impl_witness) [concrete]
 // CHECK:STDOUT:   %.72d: type = fn_type_with_self_type %I.Op.type, %I.facet [concrete]
@@ -205,7 +204,7 @@ fn F(c: C) { c.(I.Op)(); }
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT:   %Main.I: type = import_ref Main//included_with_range, I, loaded [concrete = constants.%I.type]
 // CHECK:STDOUT:   %Main.C: type = import_ref Main//included_with_range, C, loaded [concrete = constants.%C]
-// CHECK:STDOUT:   %Core.ece: <namespace> = namespace file.%Core.import, [concrete] {
+// CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [concrete] {
 // CHECK:STDOUT:     import Core//prelude
 // CHECK:STDOUT:     import Core//prelude/...
 // CHECK:STDOUT:   }
@@ -213,15 +212,12 @@ fn F(c: C) { c.(I.Op)(); }
 // CHECK:STDOUT:   %Main.import_ref.2c4 = import_ref Main//included_with_range, inst43 [no loc], unloaded
 // CHECK:STDOUT:   %Main.import_ref.b2b = import_ref Main//included_with_range, inst19 [no loc], unloaded
 // CHECK:STDOUT:   %Main.import_ref.9cd: %I.assoc_type = import_ref Main//included_with_range, loc8_22, loaded [concrete = constants.%assoc0]
-// CHECK:STDOUT:   %Main.Op.ca5 = import_ref Main//included_with_range, Op, unloaded
+// CHECK:STDOUT:   %Main.Op = import_ref Main//included_with_range, Op, unloaded
 // CHECK:STDOUT:   %Main.import_ref.7d9: %I.Op.type = import_ref Main//included_with_range, loc8_22, loaded [concrete = constants.%I.Op]
-// CHECK:STDOUT:   %Main.import_ref.72c: %I.type = import_ref Main//included_with_range, inst19 [no loc], loaded [symbolic = constants.%Self.ce4]
+// CHECK:STDOUT:   %Main.import_ref.72c: %I.type = import_ref Main//included_with_range, inst19 [no loc], loaded [symbolic = constants.%Self]
 // CHECK:STDOUT:   %Main.import_ref.a89: <witness> = import_ref Main//included_with_range, loc13_15, loaded [concrete = constants.%I.impl_witness]
 // CHECK:STDOUT:   %Main.import_ref.29a: type = import_ref Main//included_with_range, loc13_8, loaded [concrete = constants.%C]
 // CHECK:STDOUT:   %Main.import_ref.301: type = import_ref Main//included_with_range, loc13_13, loaded [concrete = constants.%I.type]
-// CHECK:STDOUT:   %Main.import_ref.541 = import_ref Main//included_with_range, loc12_9, unloaded
-// CHECK:STDOUT:   %Main.import_ref.0ed: type = import_ref Main//included_with_range, loc12_9, loaded [concrete = constants.%C]
-// CHECK:STDOUT:   %Main.import_ref.063: type = import_ref Main//included_with_range, inst62 [no loc], loaded [concrete = constants.%Destroy.type]
 // CHECK:STDOUT:   %Main.import_ref.f41: %C.as.I.impl.Op.type = import_ref Main//included_with_range, loc14_25, loaded [concrete = constants.%C.as.I.impl.Op]
 // CHECK:STDOUT:   %I.impl_witness_table = impl_witness_table (%Main.import_ref.f41), @C.as.I.impl [concrete]
 // CHECK:STDOUT: }
@@ -230,7 +226,7 @@ fn F(c: C) { c.(I.Op)(); }
 // CHECK:STDOUT:   package: <namespace> = namespace [concrete] {
 // CHECK:STDOUT:     .I = imports.%Main.I
 // CHECK:STDOUT:     .C = imports.%Main.C
-// CHECK:STDOUT:     .Core = imports.%Core.ece
+// CHECK:STDOUT:     .Core = imports.%Core
 // CHECK:STDOUT:     .F = %F.decl
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import = import Core
@@ -249,17 +245,12 @@ fn F(c: C) { c.(I.Op)(); }
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = imports.%Main.import_ref.b2b
 // CHECK:STDOUT:   .Op = imports.%Main.import_ref.9cd
-// CHECK:STDOUT:   witness = (imports.%Main.Op.ca5)
+// CHECK:STDOUT:   witness = (imports.%Main.Op)
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: impl @C.as.I.impl: imports.%Main.import_ref.29a as imports.%Main.import_ref.301 [from "exclude/included_with_range.carbon"] {
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   witness = imports.%Main.import_ref.a89
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: impl @C.as.Destroy.impl: imports.%Main.import_ref.0ed as imports.%Main.import_ref.063 [from "exclude/included_with_range.carbon"] {
-// CHECK:STDOUT: !members:
-// CHECK:STDOUT:   witness = imports.%Main.import_ref.541
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @C [from "exclude/included_with_range.carbon"] {
@@ -281,7 +272,7 @@ fn F(c: C) { c.(I.Op)(); }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic fn @I.Op(imports.%Main.import_ref.72c: %I.type) [from "exclude/included_with_range.carbon"] {
-// CHECK:STDOUT:   %Self: %I.type = bind_symbolic_name Self, 0 [symbolic = %Self (constants.%Self.ce4)]
+// CHECK:STDOUT:   %Self: %I.type = bind_symbolic_name Self, 0 [symbolic = %Self (constants.%Self)]
 // CHECK:STDOUT:   %Self.as_type: type = facet_access_type %Self [symbolic = %Self.as_type (constants.%Self.as_type)]
 // CHECK:STDOUT:   %pattern_type: type = pattern_type %Self.as_type [symbolic = %pattern_type (constants.%pattern_type.802)]
 // CHECK:STDOUT:
@@ -290,8 +281,8 @@ fn F(c: C) { c.(I.Op)(); }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @C.as.I.impl.Op [from "exclude/included_with_range.carbon"];
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @I.Op(constants.%Self.ce4) {
-// CHECK:STDOUT:   %Self => constants.%Self.ce4
+// CHECK:STDOUT: specific @I.Op(constants.%Self) {
+// CHECK:STDOUT:   %Self => constants.%Self
 // CHECK:STDOUT:   %Self.as_type => constants.%Self.as_type
 // CHECK:STDOUT:   %pattern_type => constants.%pattern_type.802
 // CHECK:STDOUT: }
@@ -319,7 +310,7 @@ fn F(c: C) { c.(I.Op)(); }
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT:   %Main.I: type = import_ref Main//excluded_with_range, I, loaded [concrete = constants.%I.type]
 // CHECK:STDOUT:   %Main.C: type = import_ref Main//excluded_with_range, C, loaded [concrete = constants.%C]
-// CHECK:STDOUT:   %Core.ece: <namespace> = namespace file.%Core.import, [concrete] {
+// CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [concrete] {
 // CHECK:STDOUT:     import Core//prelude
 // CHECK:STDOUT:     import Core//prelude/...
 // CHECK:STDOUT:   }
@@ -333,7 +324,7 @@ fn F(c: C) { c.(I.Op)(); }
 // CHECK:STDOUT:   package: <namespace> = namespace [concrete] {
 // CHECK:STDOUT:     .I = imports.%Main.I
 // CHECK:STDOUT:     .C = imports.%Main.C
-// CHECK:STDOUT:     .Core = imports.%Core.ece
+// CHECK:STDOUT:     .Core = imports.%Core
 // CHECK:STDOUT:     .F = %F.decl
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import = import Core

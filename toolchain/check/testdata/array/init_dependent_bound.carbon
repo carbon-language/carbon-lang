@@ -187,9 +187,9 @@ fn H() { G(3); }
 // CHECK:STDOUT:   %bound_method.7ed: <bound method> = bound_method %int_3.822, %Int.as.ImplicitAs.impl.Convert.specific_fn [concrete]
 // CHECK:STDOUT:   %inst.splice_block: <instruction> = inst_value [concrete] {
 // CHECK:STDOUT:     %.7b7: Core.IntLiteral = splice_block %.b7f [concrete = %int_3.1ba] {
-// CHECK:STDOUT:       %impl.elem0.b55: %.2d1 = impl_witness_access %ImplicitAs.impl_witness.6fb, element0 [concrete = %Int.as.ImplicitAs.impl.Convert.87c]
-// CHECK:STDOUT:       %bound_method.28c: <bound method> = bound_method %int_3.822, %impl.elem0.b55 [concrete = %Int.as.ImplicitAs.impl.Convert.bound]
-// CHECK:STDOUT:       %specific_fn: <specific function> = specific_function %impl.elem0.b55, @Int.as.ImplicitAs.impl.Convert(%int_32) [concrete = %Int.as.ImplicitAs.impl.Convert.specific_fn]
+// CHECK:STDOUT:       %impl.elem0: %.2d1 = impl_witness_access %ImplicitAs.impl_witness.6fb, element0 [concrete = %Int.as.ImplicitAs.impl.Convert.87c]
+// CHECK:STDOUT:       %bound_method.28c: <bound method> = bound_method %int_3.822, %impl.elem0 [concrete = %Int.as.ImplicitAs.impl.Convert.bound]
+// CHECK:STDOUT:       %specific_fn: <specific function> = specific_function %impl.elem0, @Int.as.ImplicitAs.impl.Convert(%int_32) [concrete = %Int.as.ImplicitAs.impl.Convert.specific_fn]
 // CHECK:STDOUT:       %bound_method.3c1: <bound method> = bound_method %int_3.822, %specific_fn [concrete = %bound_method.7ed]
 // CHECK:STDOUT:       %Int.as.ImplicitAs.impl.Convert.call: init Core.IntLiteral = call %bound_method.3c1(%int_3.822) [concrete = %int_3.1ba]
 // CHECK:STDOUT:       %.671: Core.IntLiteral = value_of_initializer %Int.as.ImplicitAs.impl.Convert.call [concrete = %int_3.1ba]

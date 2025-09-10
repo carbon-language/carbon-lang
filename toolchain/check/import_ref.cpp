@@ -3611,4 +3611,32 @@ auto ImportImpl(Context& context, SemIR::ImportIRId import_ir_id,
                        .first_decl_id());
 }
 
+auto ImportInterface(Context& context, SemIR::ImportIRId import_ir_id,
+                     SemIR::InterfaceId interface_id) -> SemIR::InterfaceId {
+  ImportRefResolver resolver(&context, import_ir_id);
+  auto local_id = resolver.Resolve(context.import_irs()
+                                       .Get(import_ir_id)
+                                       .sem_ir->interfaces()
+                                       .Get(interface_id)
+                                       .first_decl_id());
+  auto local_inst =
+      context.insts().Get(context.constant_values().GetInstId(local_id));
+
+  // A non-generic interface will import as a facet type for that single
+  // interface.
+  if (auto facet_type = local_inst.TryAs<SemIR::FacetType>()) {
+    auto interface = context.facet_types()
+                         .Get(facet_type->facet_type_id)
+                         .TryAsSingleInterface();
+    CARBON_CHECK(interface,
+                 "Importing an interface didn't produce a single interface");
+    return interface->interface_id;
+  }
+
+  // A generic interface will import as a constant of generic interface type.
+  auto generic_interface_type =
+      context.types().GetAs<SemIR::GenericInterfaceType>(local_inst.type_id());
+  return generic_interface_type.interface_id;
+}
+
 }  // namespace Carbon::Check

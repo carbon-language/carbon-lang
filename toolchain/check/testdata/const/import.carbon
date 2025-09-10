@@ -58,7 +58,7 @@ var a_ptr: const C* = a_ptr_ref;
 // CHECK:STDOUT:   %Main.C: type = import_ref Main//implicit, C, loaded [concrete = constants.%C]
 // CHECK:STDOUT:   %Main.a_ref: ref %const = import_ref Main//implicit, a_ref, loaded [concrete = %a_ref.var]
 // CHECK:STDOUT:   %Main.a_ptr_ref: ref %ptr.801 = import_ref Main//implicit, a_ptr_ref, loaded [concrete = %a_ptr_ref.var]
-// CHECK:STDOUT:   %Main.import_ref.e04: @ptr.as.Copy.impl.%ptr.as.Copy.impl.Op.type (%ptr.as.Copy.impl.Op.type.782) = import_ref Main//implicit, inst147 [indirect], loaded [symbolic = @ptr.as.Copy.impl.%ptr.as.Copy.impl.Op (constants.%ptr.as.Copy.impl.Op.58c)]
+// CHECK:STDOUT:   %Main.import_ref.e04: @ptr.as.Copy.impl.%ptr.as.Copy.impl.Op.type (%ptr.as.Copy.impl.Op.type.782) = import_ref Main//implicit, inst148 [indirect], loaded [symbolic = @ptr.as.Copy.impl.%ptr.as.Copy.impl.Op (constants.%ptr.as.Copy.impl.Op.58c)]
 // CHECK:STDOUT:   %Copy.impl_witness_table.3e8 = impl_witness_table (%Main.import_ref.e04), @ptr.as.Copy.impl [concrete]
 // CHECK:STDOUT:   %a_ref.patt: %pattern_type.6af = binding_pattern a_ref [concrete]
 // CHECK:STDOUT:   %a_ref.var_patt: %pattern_type.6af = var_pattern %a_ref.patt [concrete]
