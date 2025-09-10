@@ -79,6 +79,8 @@ static auto TryMapRecordType(Context& context, SemIR::TypeId type_id)
 // type is not supported.
 static auto TryMapBuiltinType(Context& context, SemIR::InstId inst_id,
                               SemIR::TypeId type_id) -> clang::QualType {
+  // TODO: Object representation should not be used here. Instead, use
+  // NumericTypeLiteralInfo to decompose a ClassType into a uN / iN / fN type.
   auto object_repr_id = context.sem_ir().types().GetObjectRepr(type_id);
   if (!object_repr_id.has_value()) {
     return clang::QualType();

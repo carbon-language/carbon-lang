@@ -799,6 +799,7 @@ struct FunctionTypeWithSelfType {
 struct CppOverloadSetValue {
   static constexpr auto Kind =
       InstKind::CppOverloadSetValue.Define<Parse::NodeId>(
+          // TODO: This should actually be lowered.
           {.ir_name = "cpp_overload_set_value", .is_lowered = false});
 
   TypeId type_id;
@@ -808,7 +809,7 @@ struct CppOverloadSetValue {
 // The type of an overloaded C++ function.
 struct CppOverloadSetType {
   static constexpr auto Kind =
-      InstKind::CppOverloadSetType.Define<Parse::AnyFunctionDeclId>(
+      InstKind::CppOverloadSetType.Define<Parse::NodeId>(
           {.ir_name = "cpp_overload_set_type",
            .is_type = InstIsType::Always,
            .constant_kind = InstConstantKind::WheneverPossible});

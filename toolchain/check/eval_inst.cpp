@@ -210,6 +210,8 @@ auto EvalConstantInst(Context& context, SemIR::InstId inst_id,
              : ConstantEvalResult::Error;
 }
 
+// TODO: This should not be necessary since the constant kind is
+// WheneverPossible.
 auto EvalConstantInst(Context& /*context*/, SemIR::CppOverloadSetValue inst)
     -> ConstantEvalResult {
   return ConstantEvalResult::NewSamePhase(SemIR::StructValue{

@@ -46,6 +46,8 @@ auto PerformCppOverloadResolution(Context& context, SemIR::LocId loc_id,
       context.types().GetAsInst(context.insts().Get(callee_id).type_id());
   auto overload_set_type =
       overload_set_type_inst.TryAs<SemIR::CppOverloadSetType>();
+  // TODO: CHECK-fail or store CppOverloadSetId in the CalleeFunction and pass
+  // it in here.
   if (!overload_set_type) {
     return std::nullopt;
   }

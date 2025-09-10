@@ -199,6 +199,7 @@ struct CalleeFunction : public Printable<CalleeFunction> {
   // True if an error instruction was found.
   bool is_error;
   // True if the function is a C++ overload set.
+  // TODO: Store the CppOverloadSetId instead of a bool.
   bool is_cpp_overload_set;
 
   auto Print(llvm::raw_ostream& out) const -> void {
