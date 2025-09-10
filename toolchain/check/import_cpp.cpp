@@ -1903,18 +1903,12 @@ static auto ImportCppOverloadSet(Context& context, SemIR::NameScopeId scope_id,
                             .parent_scope_id = scope_id,
                             .candidate_functions = overload_set});
 
-  auto overload_set_inst_id =
-      // TODO: Add a location.
-      AddPlaceholderInstInNoBlock(context, Parse::NodeId::None,
-                                  overload_set_inst);
-
-  // TODO: Check if this can be moved before adding the instruction, so that the
-  // placeholder is removed.
   overload_set_inst.type_id = GetCppOverloadSetType(
       context, overload_set_inst.overload_set_id, SemIR::SpecificId::None);
 
-  ReplaceInstBeforeConstantUse(context, overload_set_inst_id,
-                               overload_set_inst);
+  auto overload_set_inst_id =
+      // TODO: Add a location.
+      AddInstInNoBlock(context, Parse::NodeId::None, overload_set_inst);
 
   context.imports().push_back(overload_set_inst_id);
   return overload_set_inst_id;
