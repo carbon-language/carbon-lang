@@ -150,6 +150,25 @@ fn F() {
   Cpp.foo(-1);
 }
 
+// --- negative_literal_passed_to_unsigned.h
+
+auto foo(unsigned int a) -> void;
+
+// --- import_negative_literal_passed_to_unsigned.carbon
+
+library "[[@TEST_NAME]]";
+
+import Cpp library "negative_literal_passed_to_unsigned.h";
+
+fn F() {
+  // CHECK:STDERR: import_negative_literal_passed_to_unsigned.carbon:[[@LINE+5]]:11: error: negative integer value -1 converted to unsigned type `u32` [NegativeIntInUnsignedType]
+  // CHECK:STDERR:   Cpp.foo(-1);
+  // CHECK:STDERR:           ^~
+  // CHECK:STDERR: import_negative_literal_passed_to_unsigned.carbon: note: initializing function parameter [InCallToFunctionParam]
+  // CHECK:STDERR:
+  Cpp.foo(-1);
+}
+
 // --- struct_literal_call_arg.h
 
 struct S {};
@@ -1233,6 +1252,119 @@ fn F() {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @foo(%a.param: %i32);
+// CHECK:STDOUT:
+// CHECK:STDOUT: --- import_negative_literal_passed_to_unsigned.carbon
+// CHECK:STDOUT:
+// CHECK:STDOUT: constants {
+// CHECK:STDOUT:   %F.type: type = fn_type @F [concrete]
+// CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [concrete]
+// CHECK:STDOUT:   %F: %F.type = struct_value () [concrete]
+// CHECK:STDOUT:   %.c5d: type = cpp_overload_set_type @Negate.Op [concrete]
+// CHECK:STDOUT:   %empty_struct: %.c5d = struct_value () [concrete]
+// CHECK:STDOUT:   %int_1: Core.IntLiteral = int_value 1 [concrete]
+// CHECK:STDOUT:   %Negate.type: type = facet_type <@Negate> [concrete]
+// CHECK:STDOUT:   %Negate.Op.type: type = fn_type @Negate.Op [concrete]
+// CHECK:STDOUT:   %Negate.impl_witness.973: <witness> = impl_witness imports.%Negate.impl_witness_table.b22 [concrete]
+// CHECK:STDOUT:   %Negate.facet: %Negate.type = facet_value Core.IntLiteral, (%Negate.impl_witness.973) [concrete]
+// CHECK:STDOUT:   %.d3d: type = fn_type_with_self_type %Negate.Op.type, %Negate.facet [concrete]
+// CHECK:STDOUT:   %Core.IntLiteral.as.Negate.impl.Op.type: type = fn_type @Core.IntLiteral.as.Negate.impl.Op [concrete]
+// CHECK:STDOUT:   %Core.IntLiteral.as.Negate.impl.Op: %Core.IntLiteral.as.Negate.impl.Op.type = struct_value () [concrete]
+// CHECK:STDOUT:   %Core.IntLiteral.as.Negate.impl.Op.bound: <bound method> = bound_method %int_1, %Core.IntLiteral.as.Negate.impl.Op [concrete]
+// CHECK:STDOUT:   %int_-1.638: Core.IntLiteral = int_value -1 [concrete]
+// CHECK:STDOUT:   %int_32: Core.IntLiteral = int_value 32 [concrete]
+// CHECK:STDOUT:   %UInt.type: type = generic_class_type @UInt [concrete]
+// CHECK:STDOUT:   %UInt.generic: %UInt.type = struct_value () [concrete]
+// CHECK:STDOUT:   %u32: type = class_type @UInt, @UInt(%int_32) [concrete]
+// CHECK:STDOUT:   %pattern_type.4a9: type = pattern_type %u32 [concrete]
+// CHECK:STDOUT:   %foo.type: type = fn_type @foo [concrete]
+// CHECK:STDOUT:   %foo: %foo.type = struct_value () [concrete]
+// CHECK:STDOUT:   %ImplicitAs.type.cc7: type = generic_interface_type @ImplicitAs [concrete]
+// CHECK:STDOUT:   %ImplicitAs.generic: %ImplicitAs.type.cc7 = struct_value () [concrete]
+// CHECK:STDOUT:   %ImplicitAs.type.9b4: type = facet_type <@ImplicitAs, @ImplicitAs(%u32)> [concrete]
+// CHECK:STDOUT:   %ImplicitAs.Convert.type.92a: type = fn_type @ImplicitAs.Convert, @ImplicitAs(%u32) [concrete]
+// CHECK:STDOUT:   %To: Core.IntLiteral = bind_symbolic_name To, 0 [symbolic]
+// CHECK:STDOUT:   %Core.IntLiteral.as.ImplicitAs.impl.Convert.type.30e: type = fn_type @Core.IntLiteral.as.ImplicitAs.impl.Convert, @Core.IntLiteral.as.ImplicitAs.impl(%To) [symbolic]
+// CHECK:STDOUT:   %Core.IntLiteral.as.ImplicitAs.impl.Convert.d1a: %Core.IntLiteral.as.ImplicitAs.impl.Convert.type.30e = struct_value () [symbolic]
+// CHECK:STDOUT:   %ImplicitAs.impl_witness.ac5: <witness> = impl_witness imports.%ImplicitAs.impl_witness_table.bb8, @Core.IntLiteral.as.ImplicitAs.impl(%int_32) [concrete]
+// CHECK:STDOUT:   %Core.IntLiteral.as.ImplicitAs.impl.Convert.type.feb: type = fn_type @Core.IntLiteral.as.ImplicitAs.impl.Convert, @Core.IntLiteral.as.ImplicitAs.impl(%int_32) [concrete]
+// CHECK:STDOUT:   %Core.IntLiteral.as.ImplicitAs.impl.Convert.319: %Core.IntLiteral.as.ImplicitAs.impl.Convert.type.feb = struct_value () [concrete]
+// CHECK:STDOUT:   %ImplicitAs.facet: %ImplicitAs.type.9b4 = facet_value Core.IntLiteral, (%ImplicitAs.impl_witness.ac5) [concrete]
+// CHECK:STDOUT:   %.bd1: type = fn_type_with_self_type %ImplicitAs.Convert.type.92a, %ImplicitAs.facet [concrete]
+// CHECK:STDOUT:   %Core.IntLiteral.as.ImplicitAs.impl.Convert.bound: <bound method> = bound_method %int_-1.638, %Core.IntLiteral.as.ImplicitAs.impl.Convert.319 [concrete]
+// CHECK:STDOUT:   %Core.IntLiteral.as.ImplicitAs.impl.Convert.specific_fn: <specific function> = specific_function %Core.IntLiteral.as.ImplicitAs.impl.Convert.319, @Core.IntLiteral.as.ImplicitAs.impl.Convert(%int_32) [concrete]
+// CHECK:STDOUT:   %bound_method: <bound method> = bound_method %int_-1.638, %Core.IntLiteral.as.ImplicitAs.impl.Convert.specific_fn [concrete]
+// CHECK:STDOUT:   %int_-1.311: %u32 = int_value 18446744073709551615 [concrete]
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: imports {
+// CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [concrete] {
+// CHECK:STDOUT:     .Negate = %Core.Negate
+// CHECK:STDOUT:     .UInt = %Core.UInt
+// CHECK:STDOUT:     .ImplicitAs = %Core.ImplicitAs
+// CHECK:STDOUT:     import Core//prelude
+// CHECK:STDOUT:     import Core//prelude/...
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %Cpp: <namespace> = namespace file.%Cpp.import_cpp, [concrete] {
+// CHECK:STDOUT:     .foo = %.a21
+// CHECK:STDOUT:     import Cpp//...
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %.a21: %.c5d = cpp_overload_set_value @Negate.Op [concrete = constants.%empty_struct]
+// CHECK:STDOUT:   %Core.Negate: type = import_ref Core//prelude/parts/int_literal, Negate, loaded [concrete = constants.%Negate.type]
+// CHECK:STDOUT:   %Core.import_ref.abd = import_ref Core//prelude/parts/int_literal, loc13_50, unloaded
+// CHECK:STDOUT:   %Core.import_ref.5e6: %Core.IntLiteral.as.Negate.impl.Op.type = import_ref Core//prelude/parts/int_literal, loc14_31, loaded [concrete = constants.%Core.IntLiteral.as.Negate.impl.Op]
+// CHECK:STDOUT:   %Negate.impl_witness_table.b22 = impl_witness_table (%Core.import_ref.abd, %Core.import_ref.5e6), @Core.IntLiteral.as.Negate.impl [concrete]
+// CHECK:STDOUT:   %Core.UInt: %UInt.type = import_ref Core//prelude/parts/uint, UInt, loaded [concrete = constants.%UInt.generic]
+// CHECK:STDOUT:   %foo.decl: %foo.type = fn_decl @foo [concrete = constants.%foo] {
+// CHECK:STDOUT:     %a.patt: %pattern_type.4a9 = binding_pattern a [concrete]
+// CHECK:STDOUT:     %a.param_patt: %pattern_type.4a9 = value_param_pattern %a.patt, call_param0 [concrete]
+// CHECK:STDOUT:   } {
+// CHECK:STDOUT:     %a.param: %u32 = value_param call_param0
+// CHECK:STDOUT:     %.1: type = splice_block %u32 [concrete = constants.%u32] {
+// CHECK:STDOUT:       %int_32: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
+// CHECK:STDOUT:       %u32: type = class_type @UInt, @UInt(constants.%int_32) [concrete = constants.%u32]
+// CHECK:STDOUT:     }
+// CHECK:STDOUT:     %a: %u32 = bind_name a, %a.param
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %Core.ImplicitAs: %ImplicitAs.type.cc7 = import_ref Core//prelude/parts/as, ImplicitAs, loaded [concrete = constants.%ImplicitAs.generic]
+// CHECK:STDOUT:   %Core.import_ref.c3d: @Core.IntLiteral.as.ImplicitAs.impl.%Core.IntLiteral.as.ImplicitAs.impl.Convert.type (%Core.IntLiteral.as.ImplicitAs.impl.Convert.type.30e) = import_ref Core//prelude/parts/uint, loc16_40, loaded [symbolic = @Core.IntLiteral.as.ImplicitAs.impl.%Core.IntLiteral.as.ImplicitAs.impl.Convert (constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.d1a)]
+// CHECK:STDOUT:   %ImplicitAs.impl_witness_table.bb8 = impl_witness_table (%Core.import_ref.c3d), @Core.IntLiteral.as.ImplicitAs.impl [concrete]
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: file {
+// CHECK:STDOUT:   package: <namespace> = namespace [concrete] {
+// CHECK:STDOUT:     .Core = imports.%Core
+// CHECK:STDOUT:     .Cpp = imports.%Cpp
+// CHECK:STDOUT:     .F = %F.decl
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %Core.import = import Core
+// CHECK:STDOUT:   %Cpp.import_cpp = import_cpp {
+// CHECK:STDOUT:     import Cpp "negative_literal_passed_to_unsigned.h"
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [concrete = constants.%F] {} {}
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: fn @F() {
+// CHECK:STDOUT: !entry:
+// CHECK:STDOUT:   %Cpp.ref: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
+// CHECK:STDOUT:   %foo.ref: %.c5d = name_ref foo, imports.%.a21 [concrete = constants.%empty_struct]
+// CHECK:STDOUT:   %int_1: Core.IntLiteral = int_value 1 [concrete = constants.%int_1]
+// CHECK:STDOUT:   %impl.elem1: %.d3d = impl_witness_access constants.%Negate.impl_witness.973, element1 [concrete = constants.%Core.IntLiteral.as.Negate.impl.Op]
+// CHECK:STDOUT:   %bound_method.loc14_11.1: <bound method> = bound_method %int_1, %impl.elem1 [concrete = constants.%Core.IntLiteral.as.Negate.impl.Op.bound]
+// CHECK:STDOUT:   %Core.IntLiteral.as.Negate.impl.Op.call: init Core.IntLiteral = call %bound_method.loc14_11.1(%int_1) [concrete = constants.%int_-1.638]
+// CHECK:STDOUT:   %impl.elem0: %.bd1 = impl_witness_access constants.%ImplicitAs.impl_witness.ac5, element0 [concrete = constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.319]
+// CHECK:STDOUT:   %bound_method.loc14_11.2: <bound method> = bound_method %Core.IntLiteral.as.Negate.impl.Op.call, %impl.elem0 [concrete = constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.bound]
+// CHECK:STDOUT:   %specific_fn: <specific function> = specific_function %impl.elem0, @Core.IntLiteral.as.ImplicitAs.impl.Convert(constants.%int_32) [concrete = constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.specific_fn]
+// CHECK:STDOUT:   %bound_method.loc14_11.3: <bound method> = bound_method %Core.IntLiteral.as.Negate.impl.Op.call, %specific_fn [concrete = constants.%bound_method]
+// CHECK:STDOUT:   %.loc14_11.1: Core.IntLiteral = value_of_initializer %Core.IntLiteral.as.Negate.impl.Op.call [concrete = constants.%int_-1.638]
+// CHECK:STDOUT:   %.loc14_11.2: Core.IntLiteral = converted %Core.IntLiteral.as.Negate.impl.Op.call, %.loc14_11.1 [concrete = constants.%int_-1.638]
+// CHECK:STDOUT:   %Core.IntLiteral.as.ImplicitAs.impl.Convert.call: init %u32 = call %bound_method.loc14_11.3(%.loc14_11.2) [concrete = constants.%int_-1.311]
+// CHECK:STDOUT:   %.loc14_11.3: %u32 = value_of_initializer %Core.IntLiteral.as.ImplicitAs.impl.Convert.call [concrete = constants.%int_-1.311]
+// CHECK:STDOUT:   %.loc14_11.4: %u32 = converted %Core.IntLiteral.as.Negate.impl.Op.call, %.loc14_11.3 [concrete = constants.%int_-1.311]
+// CHECK:STDOUT:   %foo.call: init %empty_tuple.type = call imports.%foo.decl(%.loc14_11.4)
+// CHECK:STDOUT:   return
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: fn @foo(%a.param: %u32);
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- fail_todo_import_struct_literal_call_arg.carbon
 // CHECK:STDOUT:

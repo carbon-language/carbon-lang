@@ -27,8 +27,8 @@ namespace Carbon::Check {
 // Find the bit width of an integer literal.
 // The default bit width is 32. If the literal's bit width is greater than 32,
 // the bit width is increased to 64.
-static auto FindIntLiteralBitWidth(Context& context, SemIR::InstId arg_id,
-                                   bool is_signed) -> IntId {
+static auto FindIntLiteralBitWidth(Context& context, SemIR::InstId arg_id)
+    -> IntId {
   auto arg_const_id = context.constant_values().Get(arg_id);
   if (!arg_const_id.is_constant() ||
       arg_const_id == SemIR::ErrorInst::ConstantId ||
@@ -41,38 +41,10 @@ static auto FindIntLiteralBitWidth(Context& context, SemIR::InstId arg_id,
   auto arg_val = context.ints().Get(arg.int_id);
   unsigned arg_non_sign_bits = arg_val.getSignificantBits() - 1;
 
-  auto bit_width_id = IntId::MakeRaw(32);
-  auto width = context.ints().Get(bit_width_id).getZExtValue();
-
   // TODO: What if the literal is larger than 64 bits? Currently an error is
   // reported that the int value is too large for type `i64`. Maybe try to fit
   // in i128/i256? Try unsigned?
-  return (arg_non_sign_bits + is_signed <= width) ? bit_width_id
-                                                  : IntId::MakeRaw(64);
-}
-
-// Maps a Carbon record type to a Cpp type. Returns an empty QualType if
-// the Carbon type is not a ClassType or if the Cpp record type has not yet been
-// imported.
-// TODO: Import the type if needed.
-static auto TryMapRecordType(Context& context, SemIR::TypeId type_id)
-    -> clang::QualType {
-  auto class_type =
-      context.sem_ir().types().TryGetAs<SemIR::ClassType>(type_id);
-  if (!class_type) {
-    return clang::QualType();
-  }
-  const SemIR::Class& class_info =
-      context.sem_ir().classes().Get(class_type->class_id);
-  auto clang_decl_id =
-      context.name_scopes().Get(class_info.scope_id).clang_decl_context_id();
-  if (!clang_decl_id.has_value()) {
-    return clang::QualType();
-  }
-  clang::Decl* clang_decl =
-      context.sem_ir().clang_decls().Get(clang_decl_id).decl;
-  auto* record_type_decl = clang::cast<clang::TagDecl>(clang_decl);
-  return context.ast_context().getTagDeclType(record_type_decl);
+  return (arg_non_sign_bits <= 32) ? IntId::MakeRaw(32) : IntId::MakeRaw(64);
 }
 
 // Maps a Carbon builtin type to a Cpp type. Returns an empty QualType if the
@@ -99,7 +71,7 @@ static auto TryMapBuiltinType(Context& context, SemIR::InstId inst_id,
       break;
     }
     case SemIR::IntLiteralType::Kind: {
-      auto bit_width = FindIntLiteralBitWidth(context, inst_id, true);
+      auto bit_width = FindIntLiteralBitWidth(context, inst_id);
       if (bit_width == IntId::None) {
         return clang::QualType();
       }
@@ -130,6 +102,30 @@ static auto TryMapBuiltinType(Context& context, SemIR::InstId inst_id,
     }
   }
   return mapped_type;
+}
+
+// Maps a Carbon record type to a Cpp type. Returns an empty QualType if
+// the Carbon type is not a ClassType or if the Cpp record type has not yet been
+// imported.
+// TODO: Import the type if needed.
+static auto TryMapRecordType(Context& context, SemIR::TypeId type_id)
+    -> clang::QualType {
+  auto class_type =
+      context.sem_ir().types().TryGetAs<SemIR::ClassType>(type_id);
+  if (!class_type) {
+    return clang::QualType();
+  }
+  const SemIR::Class& class_info =
+      context.sem_ir().classes().Get(class_type->class_id);
+  auto clang_decl_id =
+      context.name_scopes().Get(class_info.scope_id).clang_decl_context_id();
+  if (!clang_decl_id.has_value()) {
+    return clang::QualType();
+  }
+  clang::Decl* clang_decl =
+      context.sem_ir().clang_decls().Get(clang_decl_id).decl;
+  auto* record_type_decl = clang::cast<clang::TagDecl>(clang_decl);
+  return context.ast_context().getTagDeclType(record_type_decl);
 }
 
 // Maps a non-wrapper (no const or pointer) Carbon type to a Cpp type.
