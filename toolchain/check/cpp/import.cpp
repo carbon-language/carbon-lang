@@ -1623,6 +1623,31 @@ static auto ImportFunction(Context& context, SemIR::LocId loc_id,
       AddPlaceholderInstInNoBlock(context, Parse::NodeId::None, function_decl);
   context.imports().push_back(decl_id);
 
+  auto virtual_function = SemIR::Function::VirtualModifier::None;
+  int32_t virtual_index = -1;
+  if (auto* method_decl = dyn_cast<clang::CXXMethodDecl>(clang_decl)) {
+    if (method_decl->size_overridden_methods()) {
+      virtual_function = SemIR::Function::VirtualModifier::Override;
+    } else if (method_decl->isVirtual()) {
+      virtual_function = SemIR::Function::VirtualModifier::Virtual;
+    }
+    // TODO: Handle the case where virtual functions might be overrides from
+    // further bases (so their numbering will be based on the order in the base,
+    // rather than the order in this class)
+    if (virtual_function != SemIR::Function::VirtualModifier::None) {
+      virtual_index = 0;
+      for (const auto* other_method_decl :
+           method_decl->getParent()->methods()) {
+        if (method_decl == other_method_decl) {
+          break;
+        }
+
+        if (other_method_decl->isVirtual()) {
+          ++virtual_index;
+        }
+      }
+    }
+  }
   auto function_info = SemIR::Function{
       {.name_id = GetFunctionName(context, clang_decl),
        .parent_scope_id = GetParentNameScopeId(context, clang_decl),
@@ -1640,7 +1665,8 @@ static auto ImportFunction(Context& context, SemIR::LocId loc_id,
        .definition_id = SemIR::InstId::None},
       {.call_params_id = function_params_insts->call_params_id,
        .return_slot_pattern_id = function_params_insts->return_slot_pattern_id,
-       .virtual_modifier = SemIR::FunctionFields::VirtualModifier::None,
+       .virtual_modifier = virtual_function,
+       .virtual_index = virtual_index,
        .self_param_id = FindSelfPattern(
            context, function_params_insts->implicit_param_patterns_id),
        .clang_decl_id = context.sem_ir().clang_decls().Add(
@@ -1673,14 +1699,6 @@ auto ImportCppFunctionDecl(Context& context, SemIR::LocId loc_id,
     context.TODO(loc_id, "Unsupported: Template function");
     MarkFailedDecl(context, clang_decl);
     return SemIR::ErrorInst::InstId;
-  }
-
-  if (auto* method_decl = dyn_cast<clang::CXXMethodDecl>(clang_decl)) {
-    if (method_decl->isVirtual()) {
-      context.TODO(loc_id, "Unsupported: Virtual function");
-      MarkFailedDecl(context, clang_decl);
-      return SemIR::ErrorInst::InstId;
-    }
   }
 
   CARBON_CHECK(clang_decl->getFunctionType()->isFunctionProtoType(),
