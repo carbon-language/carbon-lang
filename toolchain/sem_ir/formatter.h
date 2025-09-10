@@ -150,22 +150,23 @@ class Formatter {
                                  bool use_tentative_output_scopes) -> void;
 
   // Formats a full class.
-  auto FormatClass(ClassId id) -> void;
+  auto FormatClass(ClassId id, const Class& class_info) -> void;
 
   // Formats a full vtable.
-  auto FormatVtable(VtableId id) -> void;
+  auto FormatVtable(VtableId id, const Vtable& vtable_info) -> void;
 
   // Formats a full interface.
-  auto FormatInterface(InterfaceId id) -> void;
+  auto FormatInterface(InterfaceId id, const Interface& interface_info) -> void;
 
   // Formats an associated constant entity.
-  auto FormatAssociatedConstant(AssociatedConstantId id) -> void;
+  auto FormatAssociatedConstant(AssociatedConstantId id,
+                                const AssociatedConstant& assoc_const) -> void;
 
   // Formats a full impl.
-  auto FormatImpl(ImplId id) -> void;
+  auto FormatImpl(ImplId id, const Impl& impl) -> void;
 
   // Formats a full function.
-  auto FormatFunction(FunctionId id) -> void;
+  auto FormatFunction(FunctionId id, const Function& fn) -> void;
 
   // Helper for FormatSpecific to print regions.
   auto FormatSpecificRegion(const Generic& generic, const Specific& specific,
@@ -173,7 +174,7 @@ class Formatter {
                             llvm::StringRef region_name) -> void;
 
   // Formats a full specific.
-  auto FormatSpecific(SpecificId id) -> void;
+  auto FormatSpecific(SpecificId id, const Specific& specific) -> void;
 
   // Handles generic-specific setup for FormatEntityStart.
   auto FormatGenericStart(llvm::StringRef entity_kind, GenericId generic_id)

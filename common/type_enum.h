@@ -71,7 +71,7 @@ class TypeEnum : public Printable<TypeEnum<Types...>> {
   // Implicitly convert to the raw enum type, for use in `switch`.
   //
   // NOLINTNEXTLINE(google-explicit-constructor)
-  constexpr operator RawEnumType() const { return value_; }
+  explicit(false) constexpr operator RawEnumType() const { return value_; }
 
   // Conversion to bool is deleted to prevent direct use in an `if` condition
   // instead of comparing with another value.
