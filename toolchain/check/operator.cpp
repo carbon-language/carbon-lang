@@ -117,6 +117,9 @@ auto BuildBinaryOperator(Context& context, SemIR::LocId loc_id, Operator op,
   // https://github.com/carbon-language/carbon-lang/pull/5996/files/5d01fa69511b76f87efbc0387f5e40abcf4c911a#r2308666348
   // and
   // https://github.com/carbon-language/carbon-lang/pull/5996/files/5d01fa69511b76f87efbc0387f5e40abcf4c911a#r2308664536
+  // TODO: We should do ADL-only lookup for operators
+  // (`Sema::ArgumentDependentLookup`), when we support mapping Carbon types
+  // into C++ types.
   llvm::SmallVector<SemIR::NameScopeId, 2> cpp_operand_parent_scope_ids;
   for (SemIR::InstId operand_id : {lhs_id, rhs_id}) {
     auto cpp_parent_scope_id = GetCppClassTypeParentScope(context, operand_id);
