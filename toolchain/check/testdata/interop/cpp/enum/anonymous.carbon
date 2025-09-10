@@ -63,12 +63,12 @@ fn G() {
 // CHECK:STDOUT:   %F__carbon_thunk.type.eda1ac.2: type = fn_type @F__carbon_thunk.2 [concrete]
 // CHECK:STDOUT:   %F__carbon_thunk.0cd6a8.2: %F__carbon_thunk.type.eda1ac.2 = struct_value () [concrete]
 // CHECK:STDOUT:   %int_1.1d6: %.bb7 = int_value 1 [concrete]
-// CHECK:STDOUT:   %T.as.Destroy.impl.Op.type.8e9: type = fn_type @T.as.Destroy.impl.Op, @T.as.Destroy.impl(%.bb7) [concrete]
-// CHECK:STDOUT:   %T.as.Destroy.impl.Op.e52: %T.as.Destroy.impl.Op.type.8e9 = struct_value () [concrete]
-// CHECK:STDOUT:   %T.as.Destroy.impl.Op.type.1b3: type = fn_type @T.as.Destroy.impl.Op, @T.as.Destroy.impl(%C) [concrete]
-// CHECK:STDOUT:   %T.as.Destroy.impl.Op.21b: %T.as.Destroy.impl.Op.type.1b3 = struct_value () [concrete]
-// CHECK:STDOUT:   %T.as.Destroy.impl.Op.type.d1b: type = fn_type @T.as.Destroy.impl.Op, @T.as.Destroy.impl(%.4f0) [concrete]
-// CHECK:STDOUT:   %T.as.Destroy.impl.Op.002: %T.as.Destroy.impl.Op.type.d1b = struct_value () [concrete]
+// CHECK:STDOUT:   %T.as.Destroy.impl.Op.type.bf8: type = fn_type @T.as.Destroy.impl.Op, @T.as.Destroy.impl(%.bb7) [concrete]
+// CHECK:STDOUT:   %T.as.Destroy.impl.Op.823: %T.as.Destroy.impl.Op.type.bf8 = struct_value () [concrete]
+// CHECK:STDOUT:   %T.as.Destroy.impl.Op.type.140: type = fn_type @T.as.Destroy.impl.Op, @T.as.Destroy.impl(%C) [concrete]
+// CHECK:STDOUT:   %T.as.Destroy.impl.Op.d4e: %T.as.Destroy.impl.Op.type.140 = struct_value () [concrete]
+// CHECK:STDOUT:   %T.as.Destroy.impl.Op.type.a23: type = fn_type @T.as.Destroy.impl.Op, @T.as.Destroy.impl(%.4f0) [concrete]
+// CHECK:STDOUT:   %T.as.Destroy.impl.Op.8db: %T.as.Destroy.impl.Op.type.a23 = struct_value () [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -145,17 +145,17 @@ fn G() {
 // CHECK:STDOUT:   %.loc10_20.2: ref %.bb7 = temporary %.loc10_20.1, %e.ref
 // CHECK:STDOUT:   %addr.loc10_22: %ptr.73d = addr_of %.loc10_20.2
 // CHECK:STDOUT:   %F__carbon_thunk.call.loc10: init %empty_tuple.type = call imports.%F__carbon_thunk.decl.e1b8ec.2(%addr.loc10_11.2, %addr.loc10_22)
-// CHECK:STDOUT:   %T.as.Destroy.impl.Op.bound.loc10_20: <bound method> = bound_method %.loc10_20.2, constants.%T.as.Destroy.impl.Op.e52
+// CHECK:STDOUT:   %T.as.Destroy.impl.Op.bound.loc10_20: <bound method> = bound_method %.loc10_20.2, constants.%T.as.Destroy.impl.Op.823
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT:   %bound_method.loc10_20: <bound method> = bound_method %.loc10_20.2, %T.as.Destroy.impl.Op.specific_fn.1
 // CHECK:STDOUT:   %addr.loc10_20: %ptr.73d = addr_of %.loc10_20.2
 // CHECK:STDOUT:   %T.as.Destroy.impl.Op.call.loc10_20: init %empty_tuple.type = call %bound_method.loc10_20(%addr.loc10_20)
-// CHECK:STDOUT:   %T.as.Destroy.impl.Op.bound.loc10_11: <bound method> = bound_method %.loc10_11.3, constants.%T.as.Destroy.impl.Op.21b
+// CHECK:STDOUT:   %T.as.Destroy.impl.Op.bound.loc10_11: <bound method> = bound_method %.loc10_11.3, constants.%T.as.Destroy.impl.Op.d4e
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT:   %bound_method.loc10_11: <bound method> = bound_method %.loc10_11.3, %T.as.Destroy.impl.Op.specific_fn.2
 // CHECK:STDOUT:   %addr.loc10_11.3: %ptr.d9e = addr_of %.loc10_11.3
 // CHECK:STDOUT:   %T.as.Destroy.impl.Op.call.loc10_11: init %empty_tuple.type = call %bound_method.loc10_11(%addr.loc10_11.3)
-// CHECK:STDOUT:   %T.as.Destroy.impl.Op.bound.loc8: <bound method> = bound_method %.loc8_12.2, constants.%T.as.Destroy.impl.Op.002
+// CHECK:STDOUT:   %T.as.Destroy.impl.Op.bound.loc8: <bound method> = bound_method %.loc8_12.2, constants.%T.as.Destroy.impl.Op.8db
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT:   %bound_method.loc8: <bound method> = bound_method %.loc8_12.2, %T.as.Destroy.impl.Op.specific_fn.3
 // CHECK:STDOUT:   %addr.loc8_12: %ptr.793 = addr_of %.loc8_12.2

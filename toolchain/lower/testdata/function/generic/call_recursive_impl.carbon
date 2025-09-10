@@ -60,14 +60,14 @@ fn Run() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: define void @main() !dbg !12 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %G.call.loc40 = call i32 @_CG.Main.2c436a64dfc3fd29(i32 0), !dbg !13
-// CHECK:STDOUT:   %G.call.loc41 = call i32 @_CG.Main.c124d41ebc08c32b(i32 0), !dbg !14
+// CHECK:STDOUT:   %G.call.loc40 = call i32 @_CG.Main.27d9156284bd9d70(i32 0), !dbg !13
+// CHECK:STDOUT:   %G.call.loc41 = call i32 @_CG.Main.47f2921af8bb5bef(i32 0), !dbg !14
 // CHECK:STDOUT:   ret void, !dbg !15
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: declare i32 @printf(ptr, ...)
 // CHECK:STDOUT:
-// CHECK:STDOUT: define linkonce_odr i32 @_CG.Main.2c436a64dfc3fd29(i32 %count) !dbg !16 {
+// CHECK:STDOUT: define linkonce_odr i32 @_CG.Main.27d9156284bd9d70(i32 %count) !dbg !16 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   call void @"_CF.X.Main:I.Main"(), !dbg !17
 // CHECK:STDOUT:   %Int.as.OrderedWith.impl.Greater.call = icmp sgt i32 %count, 0, !dbg !18
@@ -78,11 +78,11 @@ fn Run() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: if.else:                                          ; preds = %entry
 // CHECK:STDOUT:   %Int.as.AddWith.impl.Op.call = add i32 %count, 1, !dbg !21
-// CHECK:STDOUT:   %G.call = call i32 @_CG.Main.2c436a64dfc3fd29(i32 %Int.as.AddWith.impl.Op.call), !dbg !22
+// CHECK:STDOUT:   %G.call = call i32 @_CG.Main.27d9156284bd9d70(i32 %Int.as.AddWith.impl.Op.call), !dbg !22
 // CHECK:STDOUT:   ret i32 %G.call, !dbg !23
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: define linkonce_odr i32 @_CG.Main.c124d41ebc08c32b(i32 %count) !dbg !24 {
+// CHECK:STDOUT: define linkonce_odr i32 @_CG.Main.47f2921af8bb5bef(i32 %count) !dbg !24 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   call void @"_CF.Y.Main:I.Main"(), !dbg !25
 // CHECK:STDOUT:   %Int.as.OrderedWith.impl.Greater.call = icmp sgt i32 %count, 0, !dbg !26
@@ -93,7 +93,7 @@ fn Run() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: if.else:                                          ; preds = %entry
 // CHECK:STDOUT:   %Int.as.AddWith.impl.Op.call = add i32 %count, 1, !dbg !29
-// CHECK:STDOUT:   %G.call = call i32 @_CG.Main.c124d41ebc08c32b(i32 %Int.as.AddWith.impl.Op.call), !dbg !30
+// CHECK:STDOUT:   %G.call = call i32 @_CG.Main.47f2921af8bb5bef(i32 %Int.as.AddWith.impl.Op.call), !dbg !30
 // CHECK:STDOUT:   ret i32 %G.call, !dbg !31
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -119,7 +119,7 @@ fn Run() {
 // CHECK:STDOUT: !13 = !DILocation(line: 40, column: 3, scope: !12)
 // CHECK:STDOUT: !14 = !DILocation(line: 41, column: 3, scope: !12)
 // CHECK:STDOUT: !15 = !DILocation(line: 39, column: 1, scope: !12)
-// CHECK:STDOUT: !16 = distinct !DISubprogram(name: "G", linkageName: "_CG.Main.2c436a64dfc3fd29", scope: null, file: !3, line: 30, type: !5, spFlags: DISPFlagDefinition, unit: !2)
+// CHECK:STDOUT: !16 = distinct !DISubprogram(name: "G", linkageName: "_CG.Main.27d9156284bd9d70", scope: null, file: !3, line: 30, type: !5, spFlags: DISPFlagDefinition, unit: !2)
 // CHECK:STDOUT: !17 = !DILocation(line: 31, column: 3, scope: !16)
 // CHECK:STDOUT: !18 = !DILocation(line: 33, column: 7, scope: !16)
 // CHECK:STDOUT: !19 = !DILocation(line: 33, column: 6, scope: !16)
@@ -127,7 +127,7 @@ fn Run() {
 // CHECK:STDOUT: !21 = !DILocation(line: 36, column: 15, scope: !16)
 // CHECK:STDOUT: !22 = !DILocation(line: 36, column: 10, scope: !16)
 // CHECK:STDOUT: !23 = !DILocation(line: 36, column: 3, scope: !16)
-// CHECK:STDOUT: !24 = distinct !DISubprogram(name: "G", linkageName: "_CG.Main.c124d41ebc08c32b", scope: null, file: !3, line: 30, type: !5, spFlags: DISPFlagDefinition, unit: !2)
+// CHECK:STDOUT: !24 = distinct !DISubprogram(name: "G", linkageName: "_CG.Main.47f2921af8bb5bef", scope: null, file: !3, line: 30, type: !5, spFlags: DISPFlagDefinition, unit: !2)
 // CHECK:STDOUT: !25 = !DILocation(line: 31, column: 3, scope: !24)
 // CHECK:STDOUT: !26 = !DILocation(line: 33, column: 7, scope: !24)
 // CHECK:STDOUT: !27 = !DILocation(line: 33, column: 6, scope: !24)
