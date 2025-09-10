@@ -78,6 +78,9 @@ auto BuildUnaryOperator(Context& context, SemIR::LocId loc_id, Operator op,
   // the C++ operator.
   // TODO: Change impl lookup instead. See
   // https://github.com/carbon-language/carbon-lang/blob/db0a00d713015436844c55e7ac190a0f95556499/toolchain/check/operator.cpp#L76
+  // TODO: We should do ADL-only lookup for operators
+  // (`Sema::ArgumentDependentLookup`), when we support mapping Carbon types
+  // into C++ types.
   auto cpp_parent_scope_id = GetCppClassTypeParentScope(context, operand_id);
   if (cpp_parent_scope_id) {
     SemIR::ScopeLookupResult cpp_lookup_result =
