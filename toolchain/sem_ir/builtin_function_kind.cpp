@@ -273,7 +273,7 @@ using FloatU = TypeParam<1, AnyFloat>;
 // generic type parameter that is constrained to be a sized float type.
 using SizedFloatT = TypeParam<0, AnySizedFloat>;
 
-// Convenience name ussed in the builtin type signatures below for a first
+// Convenience name used in the builtin type signatures below for a first
 // generic type parameter that supports primitive copy.
 using PrimitiveCopyParamT = TypeParam<0, PrimitiveCopyable>;
 
