@@ -141,7 +141,7 @@ static auto SleepMacos(Duration sleep_nanos) -> void {
     // Update to the remaining sleep time for the next attempt at sleeping.
     sleep_ts = rem_sleep_ts;
 
-    // Also check if the clock has past our stop time as a fallback to avoid too
+    // Also check if the clock has passed our stop time as a fallback to avoid too
     // much clock skew.
     if (Clock::now() > stop) {
       return;
