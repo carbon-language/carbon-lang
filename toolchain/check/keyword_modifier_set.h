@@ -7,75 +7,57 @@
 
 #include <optional>
 
-#include "llvm/ADT/BitmaskEnum.h"
+#include "common/enum_mask_base.h"
 #include "toolchain/sem_ir/name_scope.h"
 
 namespace Carbon::Check {
-
-LLVM_ENABLE_BITMASK_ENUMS_IN_NAMESPACE();
 
 // The order of modifiers. Each of these corresponds to a group on
 // KeywordModifierSet, and can be used as an array index.
 enum class ModifierOrder : int8_t { Access, Extern, Extend, Decl, Last = Decl };
 
+// A single X-macro to cover modifier groups. These are split out to make groups
+// clearer.
+#define CARBON_KEYWORD_MODIFIER_SET(X)                                       \
+  /* At most one of these access modifiers allowed for a given declaration,  \
+   * and if present it must be first. */                                     \
+  X(Private)                                                                 \
+  X(Protected)                                                               \
+                                                                             \
+  /* Extern is standalone. */                                                \
+  X(Extern)                                                                  \
+                                                                             \
+  /* Extend can be combined with Final, but no others in the group below. */ \
+  X(Extend)                                                                  \
+                                                                             \
+  /* At most one of these declaration modifiers allowed for a given          \
+   * declaration. */                                                         \
+  X(Abstract)                                                                \
+  X(Base)                                                                    \
+  X(Default)                                                                 \
+  X(Export)                                                                  \
+  X(Final)                                                                   \
+  X(Impl)                                                                    \
+  X(Returned)                                                                \
+  X(Virtual)
+
+// We expect this to grow, so are using a bigger size than needed.
+CARBON_DEFINE_RAW_ENUM_MASK(KeywordModifierSet, uint32_t) {
+  CARBON_KEYWORD_MODIFIER_SET(CARBON_RAW_ENUM_MASK_ENUMERATOR)
+};
+
 // Represents a set of keyword modifiers, using a separate bit per modifier.
-class KeywordModifierSet {
+class KeywordModifierSet : public CARBON_ENUM_MASK_BASE(KeywordModifierSet) {
  public:
-  // Provide values as an enum. This doesn't expose these as KeywordModifierSet
-  // instances just due to the duplication of declarations that would cause.
-  //
-  // We expect this to grow, so are using a bigger size than needed.
-  enum RawEnumType : uint32_t {
-    // At most one of these access modifiers allowed for a given declaration,
-    // and if present it must be first:
-    Private = 1 << 0,
-    Protected = 1 << 1,
+  CARBON_KEYWORD_MODIFIER_SET(CARBON_ENUM_MASK_CONSTANT_DECL)
 
-    // Extern is standalone.
-    Extern = 1 << 2,
-
-    // Extend can be combined with Final, but no others in the group below.
-    Extend = 1 << 3,
-
-    // At most one of these declaration modifiers allowed for a given
-    // declaration:
-    Abstract = 1 << 4,
-    Base = 1 << 5,
-    Default = 1 << 6,
-    Export = 1 << 7,
-    Final = 1 << 8,
-    Impl = 1 << 9,
-    Virtual = 1 << 10,
-    Returned = 1 << 11,
-
-    // Sets of modifiers:
-    Access = Private | Protected,
-    Class = Abstract | Base,
-    Method = Abstract | Impl | Virtual,
-    ImplDecl = Extend | Final,
-    Interface = Default | Final,
-    Decl = Class | Method | Interface | Export | Returned,
-    None = 0,
-
-    LLVM_MARK_AS_BITMASK_ENUM(/*LargestValue=*/Returned)
-  };
-
-  // Default construct to empty.
-  explicit KeywordModifierSet() : set_(None) {}
-
-  // Support implicit conversion so that the difference with the member enum is
-  // opaque.
-  explicit(false) constexpr KeywordModifierSet(RawEnumType set) : set_(set) {}
-
-  // Adds entries to the set.
-  auto Add(KeywordModifierSet set) -> void { set_ |= set.set_; }
-  // Removes entries from the set.
-  auto Remove(KeywordModifierSet set) -> void { set_ &= ~set.set_; }
-
-  // Returns true if there's a non-empty set intersection.
-  constexpr auto HasAnyOf(KeywordModifierSet other) const -> bool {
-    return set_ & other.set_;
-  }
+  // Sets of modifiers.
+  static const KeywordModifierSet Access;
+  static const KeywordModifierSet Class;
+  static const KeywordModifierSet Method;
+  static const KeywordModifierSet ImplDecl;
+  static const KeywordModifierSet Interface;
+  static const KeywordModifierSet Decl;
 
   // Return a builder that returns the new enumeration type once a series of
   // mapping `Case`s and a final `Default` are provided. For example:
@@ -91,8 +73,8 @@ class KeywordModifierSet {
      public:
       explicit Converter(const KeywordModifierSet& set) : set_(set) {}
 
-      auto Case(RawEnumType raw_enumerator, T result) -> Converter& {
-        if (set_.HasAnyOf(raw_enumerator)) {
+      auto Case(KeywordModifierSet other, T result) -> Converter& {
+        if (set_.HasAnyOf(other)) {
           result_ = result;
         }
         return *this;
@@ -122,34 +104,37 @@ class KeywordModifierSet {
     }
     return SemIR::AccessKind::Public;
   }
-
-  // Returns true if empty.
-  constexpr auto empty() const -> bool { return !set_; }
-
-  // Returns the set intersection.
-  constexpr auto operator&(KeywordModifierSet other) const
-      -> KeywordModifierSet {
-    return set_ & other.set_;
-  }
-
-  // Returns the set inverse.
-  auto operator~() const -> KeywordModifierSet { return ~set_; }
-
- private:
-  RawEnumType set_;
 };
 
-static_assert(!KeywordModifierSet(KeywordModifierSet::Access)
-                      .HasAnyOf(KeywordModifierSet::Extern) &&
-                  !KeywordModifierSet(KeywordModifierSet::Access |
-                                      KeywordModifierSet::Extern |
-                                      KeywordModifierSet::Extend)
-                       .HasAnyOf(KeywordModifierSet::Decl),
-              "Order-related sets must not overlap");
-static_assert(~KeywordModifierSet::None ==
-                  (KeywordModifierSet::Access | KeywordModifierSet::Extern |
-                   KeywordModifierSet::Extend | KeywordModifierSet::Decl),
-              "Modifier missing from all modifier sets");
+#define CARBON_KEYWORD_MODIFIER_SET_WITH_TYPE(X) \
+  CARBON_ENUM_MASK_CONSTANT_DEFINITION(KeywordModifierSet, X)
+CARBON_KEYWORD_MODIFIER_SET(CARBON_KEYWORD_MODIFIER_SET_WITH_TYPE)
+#undef CARBON_KEYWORD_MODIFIER_SET_WITH_TYPE
+
+constexpr KeywordModifierSet KeywordModifierSet::Access(Private | Protected);
+constexpr KeywordModifierSet KeywordModifierSet::Class(Abstract | Base);
+constexpr KeywordModifierSet KeywordModifierSet::Method(Abstract | Impl |
+                                                        Virtual);
+constexpr KeywordModifierSet KeywordModifierSet::ImplDecl(Extend | Final);
+constexpr KeywordModifierSet KeywordModifierSet::Interface(Default | Final);
+constexpr KeywordModifierSet KeywordModifierSet::Decl(Class | Method |
+                                                      Interface | Export |
+                                                      Returned);
+
+static_assert(
+    !KeywordModifierSet::Access.HasAnyOf(KeywordModifierSet::Extern) &&
+        !(KeywordModifierSet::Access | KeywordModifierSet::Extern |
+          KeywordModifierSet::Extend)
+             .HasAnyOf(KeywordModifierSet::Decl),
+    "Order-related sets must not overlap");
+
+#define CARBON_KEYWORD_MODIFIER_SET_IN_GROUP(Modifier)                     \
+  static_assert((KeywordModifierSet::Access | KeywordModifierSet::Extern | \
+                 KeywordModifierSet::Extend | KeywordModifierSet::Decl)    \
+                    .HasAnyOf(KeywordModifierSet::Modifier),               \
+                "Modifier missing from all modifier sets: " #Modifier);
+CARBON_KEYWORD_MODIFIER_SET(CARBON_KEYWORD_MODIFIER_SET_IN_GROUP)
+#undef CARBON_KEYWORD_MODIFIER_SET_IN_GROUP
 
 }  // namespace Carbon::Check
 

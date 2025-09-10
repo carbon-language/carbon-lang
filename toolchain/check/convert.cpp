@@ -773,7 +773,7 @@ static auto CanUseValueOfInitializer(const SemIR::File& sem_ir,
 // of an expression of the given category.
 static auto CanAddQualifiers(SemIR::TypeQualifiers quals,
                              SemIR::ExprCategory cat) -> bool {
-  if (HasTypeQualifier(quals, SemIR::TypeQualifiers::MaybeUnformed) &&
+  if (quals.HasAnyOf(SemIR::TypeQualifiers::MaybeUnformed) &&
       !SemIR::IsRefCategory(cat)) {
     // `MaybeUnformed(T)` may have a different value representation or
     // initializing representation from `T`, so only allow it to be added for a
@@ -794,13 +794,13 @@ static auto CanAddQualifiers(SemIR::TypeQualifiers quals,
 static auto CanRemoveQualifiers(SemIR::TypeQualifiers quals,
                                 SemIR::ExprCategory cat, bool allow_unsafe)
     -> bool {
-  if (HasTypeQualifier(quals, SemIR::TypeQualifiers::Const) && !allow_unsafe &&
+  if (quals.HasAnyOf(SemIR::TypeQualifiers::Const) && !allow_unsafe &&
       SemIR::IsRefCategory(cat)) {
     // Removing `const` is an unsafe conversion for a reference expression.
     return false;
   }
 
-  if (HasTypeQualifier(quals, SemIR::TypeQualifiers::Partial) &&
+  if (quals.HasAnyOf(SemIR::TypeQualifiers::Partial) &&
       (!allow_unsafe || cat == SemIR::ExprCategory::Initializing)) {
     // TODO: Allow removing `partial` for initializing expressions as a safe
     // conversion. `PerformBuiltinConversion` will need to initialize the vptr
@@ -808,7 +808,7 @@ static auto CanRemoveQualifiers(SemIR::TypeQualifiers quals,
     return false;
   }
 
-  if (HasTypeQualifier(quals, SemIR::TypeQualifiers::MaybeUnformed) &&
+  if (quals.HasAnyOf(SemIR::TypeQualifiers::MaybeUnformed) &&
       (!allow_unsafe || cat == SemIR::ExprCategory::Initializing)) {
     // As an unsafe conversion, `MaybeUnformed` can be removed from a value or
     // reference expression.

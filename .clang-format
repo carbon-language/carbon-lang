@@ -14,5 +14,10 @@ InsertBraces: 'true'
 PointerAlignment: Left
 # We abuse control macros for formatting other kinds of macros.
 SpaceBeforeParens: ControlStatementsExceptControlMacros
-IfMacros: ['CARBON_DEFINE_RAW_ENUM_CLASS', 'CARBON_KIND_SWITCH']
+IfMacros:
+  [
+    'CARBON_DEFINE_RAW_ENUM_CLASS',
+    'CARBON_DEFINE_RAW_ENUM_MASK',
+    'CARBON_KIND_SWITCH',
+  ]
 StatementMacros: ['ABSTRACT']

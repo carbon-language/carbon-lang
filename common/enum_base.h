@@ -165,6 +165,10 @@ class EnumBase : public Printable<DerivedT> {
   }
 
  private:
+  template <typename MaskDerivedT, typename MaskEnumT,
+            const llvm::StringLiteral MaskNames[]>
+  friend class EnumMaskBase;
+
   RawEnumType value_;
 };
 
@@ -175,21 +179,24 @@ class EnumBase : public Printable<DerivedT> {
 // raw enum class.
 #define CARBON_DEFINE_RAW_ENUM_CLASS(EnumClassName, UnderlyingType) \
   namespace Internal {                                              \
-  extern const llvm::StringLiteral EnumClassName##Names[];          \
-  enum class EnumClassName##RawEnum : UnderlyingType;               \
+  struct EnumClassName##Data {                                      \
+    static const llvm::StringLiteral Names[];                       \
+    enum class RawEnum : UnderlyingType;                            \
+  };                                                                \
   }                                                                 \
-  enum class Internal::EnumClassName##RawEnum : UnderlyingType
+  enum class Internal::EnumClassName##Data::RawEnum : UnderlyingType
 
-// In CARBON_DEFINE_RAW_ENUM_CLASS block, use this to generate each enumerator.
+// In the `CARBON_DEFINE_RAW_ENUM_CLASS` block, use this to generate each
+// enumerator.
 #define CARBON_RAW_ENUM_ENUMERATOR(Name) Name,
 
 // Use this to compute the `Internal::EnumBase` specialization for a Carbon enum
 // class. It both computes the name of the raw enum and ensures all the
 // namespaces are correct.
-#define CARBON_ENUM_BASE(EnumClassName)                          \
-  ::Carbon::Internal::EnumBase<EnumClassName,                    \
-                               Internal::EnumClassName##RawEnum, \
-                               Internal::EnumClassName##Names>
+#define CARBON_ENUM_BASE(EnumClassName)                                \
+  ::Carbon::Internal::EnumBase<EnumClassName,                          \
+                               Internal::EnumClassName##Data::RawEnum, \
+                               Internal::EnumClassName##Data::Names>
 
 // Use this within the Carbon enum class body to generate named constant
 // declarations for each value.
@@ -208,7 +215,7 @@ class EnumBase : public Printable<DerivedT> {
 // `clang-format` has a bug with spacing around `->` returns in macros. See
 // https://bugs.llvm.org/show_bug.cgi?id=48320 for details.
 #define CARBON_DEFINE_ENUM_CLASS_NAMES(EnumClassName) \
-  constexpr llvm::StringLiteral Internal::EnumClassName##Names[]
+  constexpr llvm::StringLiteral Internal::EnumClassName##Data::Names[]
 
 // Use this within the names array initializer to generate a string for each
 // name.
