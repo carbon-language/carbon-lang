@@ -15,10 +15,10 @@ package User;
 class C {};
 class D {};
 
-impl forall [T:! Core.ImplicitAs(C)] C as Core.AddWith(T) where .Result = C {
+impl C as Core.AddWith(C) where .Result = C {
   fn Op[self: C](other: C) -> C { return {}; }
 }
-impl forall [T:! Core.ImplicitAs(C)] C as Core.AddAssignWith(T) {
+impl C as Core.AddAssignWith(C) {
   fn Op[addr self: C*](other: C) {}
 }
 
