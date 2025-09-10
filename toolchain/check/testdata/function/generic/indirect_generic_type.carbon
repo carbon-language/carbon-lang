@@ -19,7 +19,8 @@ fn F(T:! type, p: T**) -> T* {
 // CHECK:STDOUT: --- indirect_generic_type.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
-// CHECK:STDOUT:   %.Self: type = bind_symbolic_name .Self [symbolic_self]
+// CHECK:STDOUT:   %type: type = facet_type <type> [concrete]
+// CHECK:STDOUT:   %.Self: %type = bind_symbolic_name .Self [symbolic_self]
 // CHECK:STDOUT:   %T: type = bind_symbolic_name T, 0 [symbolic]
 // CHECK:STDOUT:   %pattern_type.98f: type = pattern_type type [concrete]
 // CHECK:STDOUT:   %ptr.79f: type = ptr_type %T [symbolic]
@@ -45,7 +46,7 @@ fn F(T:! type, p: T**) -> T* {
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %T.ref.loc15_27: type = name_ref T, %T.loc15_6.2 [symbolic = %T.loc15_6.1 (constants.%T)]
 // CHECK:STDOUT:     %ptr.loc15_28: type = ptr_type %T.ref.loc15_27 [symbolic = %ptr.loc15_20.1 (constants.%ptr.79f)]
-// CHECK:STDOUT:     %.Self: type = bind_symbolic_name .Self [symbolic_self = constants.%.Self]
+// CHECK:STDOUT:     %.Self: %type = bind_symbolic_name .Self [symbolic_self = constants.%.Self]
 // CHECK:STDOUT:     %T.loc15_6.2: type = bind_symbolic_name T, 0 [symbolic = %T.loc15_6.1 (constants.%T)]
 // CHECK:STDOUT:     %p.param: @F.%ptr.loc15_21.1 (%ptr.a13) = value_param call_param0
 // CHECK:STDOUT:     %.loc15: type = splice_block %ptr.loc15_21.2 [symbolic = %ptr.loc15_21.1 (constants.%ptr.a13)] {

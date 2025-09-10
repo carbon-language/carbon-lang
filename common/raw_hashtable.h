@@ -373,8 +373,8 @@ class ViewImpl {
 
   // Support adding `const` to either key or value type of some other view.
   template <typename OtherKeyT, typename OtherValueT>
-  // NOLINTNEXTLINE(google-explicit-constructor)
-  ViewImpl(ViewImpl<OtherKeyT, OtherValueT, KeyContextT> other_view)
+  explicit(false)
+      ViewImpl(ViewImpl<OtherKeyT, OtherValueT, KeyContextT> other_view)
     requires(SameAsOneOf<KeyT, OtherKeyT, const OtherKeyT> &&
              SameAsOneOf<ValueT, OtherValueT, const OtherValueT>)
       : alloc_size_(other_view.alloc_size_), storage_(other_view.storage_) {}
@@ -493,7 +493,7 @@ class BaseImpl {
   ~BaseImpl() = default;
 
   // NOLINTNEXTLINE(google-explicit-constructor): Designed to implicitly decay.
-  operator ViewImplT() const { return view_impl(); }
+  explicit(false) operator ViewImplT() const { return view_impl(); }
 
   auto view_impl() const -> ViewImplT { return view_impl_; }
 

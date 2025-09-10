@@ -48,7 +48,8 @@ fn M() {
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %C: type = class_type @C [concrete]
 // CHECK:STDOUT:   %pattern_type.c48: type = pattern_type %C [concrete]
-// CHECK:STDOUT:   %.Self.644: type = bind_symbolic_name .Self [symbolic_self]
+// CHECK:STDOUT:   %type: type = facet_type <type> [concrete]
+// CHECK:STDOUT:   %.Self.eb1: %type = bind_symbolic_name .Self [symbolic_self]
 // CHECK:STDOUT:   %T: type = bind_symbolic_name T, 0 [symbolic]
 // CHECK:STDOUT:   %pattern_type.98f: type = pattern_type type [concrete]
 // CHECK:STDOUT:   %pattern_type.7dcd0a.1: type = pattern_type %T [symbolic]
@@ -141,7 +142,7 @@ fn M() {
 // CHECK:STDOUT:     %x.patt: @F.%pattern_type (%pattern_type.7dcd0a.1) = binding_pattern x [concrete]
 // CHECK:STDOUT:     %x.param_patt: @F.%pattern_type (%pattern_type.7dcd0a.1) = value_param_pattern %x.patt, call_param0 [concrete]
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %.Self: type = bind_symbolic_name .Self [symbolic_self = constants.%.Self.644]
+// CHECK:STDOUT:     %.Self: %type = bind_symbolic_name .Self [symbolic_self = constants.%.Self.eb1]
 // CHECK:STDOUT:     %T.loc20_6.2: type = bind_symbolic_name T, 0 [symbolic = %T.loc20_6.1 (constants.%T)]
 // CHECK:STDOUT:     %x.param: @F.%T.loc20_6.1 (%T) = value_param call_param0
 // CHECK:STDOUT:     %T.ref: type = name_ref T, %T.loc20_6.2 [symbolic = %T.loc20_6.1 (constants.%T)]
@@ -155,7 +156,7 @@ fn M() {
 // CHECK:STDOUT:     %return.param_patt: @H.%pattern_type (%pattern_type.7dcd0a.1) = out_param_pattern %return.patt, call_param1 [concrete]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %T.ref.loc23_25: type = name_ref T, %T.loc23_6.2 [symbolic = %T.loc23_6.1 (constants.%T)]
-// CHECK:STDOUT:     %.Self: type = bind_symbolic_name .Self [symbolic_self = constants.%.Self.644]
+// CHECK:STDOUT:     %.Self: %type = bind_symbolic_name .Self [symbolic_self = constants.%.Self.eb1]
 // CHECK:STDOUT:     %T.loc23_6.2: type = bind_symbolic_name T, 0 [symbolic = %T.loc23_6.1 (constants.%T)]
 // CHECK:STDOUT:     %x.param: @H.%T.loc23_6.1 (%T) = value_param call_param0
 // CHECK:STDOUT:     %T.ref.loc23_19: type = name_ref T, %T.loc23_6.2 [symbolic = %T.loc23_6.1 (constants.%T)]
@@ -171,7 +172,7 @@ fn M() {
 // CHECK:STDOUT:     %return.param_patt: @G.%pattern_type (%pattern_type.7dcd0a.1) = out_param_pattern %return.patt, call_param1 [concrete]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %T.ref.loc29_25: type = name_ref T, %T.loc29_6.2 [symbolic = %T.loc29_6.1 (constants.%T)]
-// CHECK:STDOUT:     %.Self: type = bind_symbolic_name .Self [symbolic_self = constants.%.Self.644]
+// CHECK:STDOUT:     %.Self: %type = bind_symbolic_name .Self [symbolic_self = constants.%.Self.eb1]
 // CHECK:STDOUT:     %T.loc29_6.2: type = bind_symbolic_name T, 0 [symbolic = %T.loc29_6.1 (constants.%T)]
 // CHECK:STDOUT:     %x.param: @G.%T.loc29_6.1 (%T) = value_param call_param0
 // CHECK:STDOUT:     %T.ref.loc29_19: type = name_ref T, %T.loc29_6.2 [symbolic = %T.loc29_6.1 (constants.%T)]
@@ -209,7 +210,7 @@ fn M() {
 // CHECK:STDOUT:     %self.param: %C = value_param call_param0
 // CHECK:STDOUT:     %Self.ref: type = name_ref Self, constants.%C [concrete = constants.%C]
 // CHECK:STDOUT:     %self: %C = bind_name self, %self.param
-// CHECK:STDOUT:     %.Self: type = bind_symbolic_name .Self [symbolic_self = constants.%.Self.644]
+// CHECK:STDOUT:     %.Self: %type = bind_symbolic_name .Self [symbolic_self = constants.%.Self.eb1]
 // CHECK:STDOUT:     %T.loc16_22.2: type = bind_symbolic_name T, 0 [symbolic = %T.loc16_22.1 (constants.%T)]
 // CHECK:STDOUT:     %x.param: @C.Cfn.%T.loc16_22.1 (%T) = value_param call_param1
 // CHECK:STDOUT:     %T.ref: type = name_ref T, %T.loc16_22.2 [symbolic = %T.loc16_22.1 (constants.%T)]

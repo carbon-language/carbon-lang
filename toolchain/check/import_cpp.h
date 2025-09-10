@@ -34,7 +34,8 @@ auto ImportNameFromCpp(Context& context, SemIR::LocId loc_id,
 
 // Looks up the given operator in the Clang AST generated when importing C++
 // code and returns a lookup result.
-auto ImportOperatorFromCpp(Context& context, SemIR::LocId loc_id, Operator op)
+auto ImportOperatorFromCpp(Context& context, SemIR::LocId loc_id,
+                           SemIR::NameScopeId scope_id, Operator op)
     -> SemIR::ScopeLookupResult;
 
 // Given a Carbon class declaration that was imported from some kind of C++

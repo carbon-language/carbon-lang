@@ -64,8 +64,7 @@ class NodeCategory : public Printable<NodeCategory> {
 
   // Support implicit conversion so that the difference with the member enum is
   // opaque.
-  // NOLINTNEXTLINE(google-explicit-constructor)
-  constexpr NodeCategory(RawEnumType value) : value_(value) {}
+  explicit(false) constexpr NodeCategory(RawEnumType value) : value_(value) {}
 
   // Returns true if there's a non-empty set intersection.
   constexpr auto HasAnyOf(NodeCategory other) const -> bool {

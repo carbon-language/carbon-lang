@@ -58,7 +58,8 @@ fn H(c: C(InClassArgs)) { c.(I(X).F)(); }
 // CHECK:STDOUT: --- types.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
-// CHECK:STDOUT:   %.Self: type = bind_symbolic_name .Self [symbolic_self]
+// CHECK:STDOUT:   %type: type = facet_type <type> [concrete]
+// CHECK:STDOUT:   %.Self: %type = bind_symbolic_name .Self [symbolic_self]
 // CHECK:STDOUT:   %T: type = bind_symbolic_name T, 0 [symbolic]
 // CHECK:STDOUT:   %pattern_type.98f: type = pattern_type type [concrete]
 // CHECK:STDOUT:   %I.type.dac: type = generic_interface_type @I [concrete]
@@ -88,13 +89,13 @@ fn H(c: C(InClassArgs)) { c.(I(X).F)(); }
 // CHECK:STDOUT:   %I.decl: %I.type.dac = interface_decl @I [concrete = constants.%I.generic] {
 // CHECK:STDOUT:     %T.patt: %pattern_type.98f = symbolic_binding_pattern T, 0 [concrete]
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %.Self: type = bind_symbolic_name .Self [symbolic_self = constants.%.Self]
+// CHECK:STDOUT:     %.Self: %type = bind_symbolic_name .Self [symbolic_self = constants.%.Self]
 // CHECK:STDOUT:     %T.loc4_13.2: type = bind_symbolic_name T, 0 [symbolic = %T.loc4_13.1 (constants.%T)]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %C.decl: %C.type = class_decl @C [concrete = constants.%C.generic] {
 // CHECK:STDOUT:     %T.patt: %pattern_type.98f = symbolic_binding_pattern T, 0 [concrete]
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %.Self: type = bind_symbolic_name .Self [symbolic_self = constants.%.Self]
+// CHECK:STDOUT:     %.Self: %type = bind_symbolic_name .Self [symbolic_self = constants.%.Self]
 // CHECK:STDOUT:     %T.loc5_9.2: type = bind_symbolic_name T, 0 [symbolic = %T.loc5_9.1 (constants.%T)]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %X.decl: type = class_decl @X [concrete = constants.%X] {} {}
@@ -219,13 +220,13 @@ fn H(c: C(InClassArgs)) { c.(I(X).F)(); }
 // CHECK:STDOUT:   %Main.C = import_ref Main//types, C, unloaded
 // CHECK:STDOUT:   %Main.X: type = import_ref Main//types, X, loaded [concrete = constants.%X]
 // CHECK:STDOUT:   %Main.import_ref.8f2: <witness> = import_ref Main//types, loc7_10, loaded [concrete = constants.%complete_type]
-// CHECK:STDOUT:   %Main.import_ref.acf = import_ref Main//types, inst69 [no loc], unloaded
+// CHECK:STDOUT:   %Main.import_ref.acf = import_ref Main//types, inst70 [no loc], unloaded
 // CHECK:STDOUT:   %Main.import_ref.5ab3ec.1: type = import_ref Main//types, loc4_13, loaded [symbolic = @I.%T (constants.%T)]
-// CHECK:STDOUT:   %Main.import_ref.4e2 = import_ref Main//types, inst27 [no loc], unloaded
+// CHECK:STDOUT:   %Main.import_ref.4e2 = import_ref Main//types, inst28 [no loc], unloaded
 // CHECK:STDOUT:   %Main.import_ref.2bb = import_ref Main//types, loc4_43, unloaded
 // CHECK:STDOUT:   %Main.F: @I.%I.F.type (%I.F.type.2ae) = import_ref Main//types, F, loaded [symbolic = @I.%I.F (constants.%I.F.bb2)]
 // CHECK:STDOUT:   %Main.import_ref.5ab3ec.2: type = import_ref Main//types, loc4_13, loaded [symbolic = @I.%T (constants.%T)]
-// CHECK:STDOUT:   %Main.import_ref.7dc: @I.%I.type (%I.type.328) = import_ref Main//types, inst27 [no loc], loaded [symbolic = @I.%Self (constants.%Self.0d8)]
+// CHECK:STDOUT:   %Main.import_ref.7dc: @I.%I.type (%I.type.328) = import_ref Main//types, inst28 [no loc], loaded [symbolic = @I.%Self (constants.%Self.0d8)]
 // CHECK:STDOUT:   %Main.import_ref.479 = import_ref Main//types, loc4_43, unloaded
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -386,13 +387,13 @@ fn H(c: C(InClassArgs)) { c.(I(X).F)(); }
 // CHECK:STDOUT:   %Main.X: type = import_ref Main//types, X, loaded [concrete = constants.%X]
 // CHECK:STDOUT:   %Main.InInterfaceArgs: type = import_ref Main//impl_in_interface_args, InInterfaceArgs, loaded [concrete = constants.%InInterfaceArgs]
 // CHECK:STDOUT:   %Main.import_ref.8f24d3.1: <witness> = import_ref Main//types, loc7_10, loaded [concrete = constants.%complete_type]
-// CHECK:STDOUT:   %Main.import_ref.acf = import_ref Main//types, inst69 [no loc], unloaded
+// CHECK:STDOUT:   %Main.import_ref.acf = import_ref Main//types, inst70 [no loc], unloaded
 // CHECK:STDOUT:   %Main.import_ref.5ab3ec.1: type = import_ref Main//types, loc4_13, loaded [symbolic = @I.%T (constants.%T)]
-// CHECK:STDOUT:   %Main.import_ref.4e2 = import_ref Main//types, inst27 [no loc], unloaded
+// CHECK:STDOUT:   %Main.import_ref.4e2 = import_ref Main//types, inst28 [no loc], unloaded
 // CHECK:STDOUT:   %Main.import_ref.474: @I.%I.assoc_type (%I.assoc_type.1e5) = import_ref Main//types, loc4_43, loaded [symbolic = @I.%assoc0 (constants.%assoc0.688)]
 // CHECK:STDOUT:   %Main.F = import_ref Main//types, F, unloaded
 // CHECK:STDOUT:   %Main.import_ref.5ab3ec.2: type = import_ref Main//types, loc4_13, loaded [symbolic = @I.%T (constants.%T)]
-// CHECK:STDOUT:   %Main.import_ref.7dc: @I.%I.type (%I.type.328) = import_ref Main//types, inst27 [no loc], loaded [symbolic = @I.%Self (constants.%Self.0d8)]
+// CHECK:STDOUT:   %Main.import_ref.7dc: @I.%I.type (%I.type.328) = import_ref Main//types, inst28 [no loc], loaded [symbolic = @I.%Self (constants.%Self.0d8)]
 // CHECK:STDOUT:   %Main.import_ref.e54: @I.%I.F.type (%I.F.type.2ae) = import_ref Main//types, loc4_43, loaded [symbolic = @I.%I.F (constants.%I.F.bb2)]
 // CHECK:STDOUT:   %Main.import_ref.8f24d3.2: <witness> = import_ref Main//impl_in_interface_args, loc5_24, loaded [concrete = constants.%complete_type]
 // CHECK:STDOUT:   %Main.import_ref.bf8 = import_ref Main//impl_in_interface_args, inst20 [no loc], unloaded
@@ -551,16 +552,16 @@ fn H(c: C(InClassArgs)) { c.(I(X).F)(); }
 // CHECK:STDOUT:   %Main.X: type = import_ref Main//types, X, loaded [concrete = constants.%X]
 // CHECK:STDOUT:   %Main.import_ref.5ab3ec.1: type = import_ref Main//types, loc5_9, loaded [symbolic = @C.%T (constants.%T)]
 // CHECK:STDOUT:   %Main.import_ref.8f24d3.1: <witness> = import_ref Main//types, loc5_20, loaded [concrete = constants.%complete_type]
-// CHECK:STDOUT:   %Main.import_ref.4c0 = import_ref Main//types, inst64 [no loc], unloaded
+// CHECK:STDOUT:   %Main.import_ref.4c0 = import_ref Main//types, inst65 [no loc], unloaded
 // CHECK:STDOUT:   %Main.import_ref.5ab3ec.2: type = import_ref Main//types, loc4_13, loaded [symbolic = @I.%T (constants.%T)]
-// CHECK:STDOUT:   %Main.import_ref.4e2 = import_ref Main//types, inst27 [no loc], unloaded
+// CHECK:STDOUT:   %Main.import_ref.4e2 = import_ref Main//types, inst28 [no loc], unloaded
 // CHECK:STDOUT:   %Main.import_ref.2bb = import_ref Main//types, loc4_43, unloaded
 // CHECK:STDOUT:   %Main.F: @I.%I.F.type (%I.F.type.2ae) = import_ref Main//types, F, loaded [symbolic = @I.%I.F (constants.%I.F.bb2)]
 // CHECK:STDOUT:   %Main.import_ref.5ab3ec.3: type = import_ref Main//types, loc4_13, loaded [symbolic = @I.%T (constants.%T)]
-// CHECK:STDOUT:   %Main.import_ref.7dc: @I.%I.type (%I.type.328) = import_ref Main//types, inst27 [no loc], loaded [symbolic = @I.%Self (constants.%Self.0d8)]
+// CHECK:STDOUT:   %Main.import_ref.7dc: @I.%I.type (%I.type.328) = import_ref Main//types, inst28 [no loc], loaded [symbolic = @I.%Self (constants.%Self.0d8)]
 // CHECK:STDOUT:   %Main.import_ref.479 = import_ref Main//types, loc4_43, unloaded
 // CHECK:STDOUT:   %Main.import_ref.8f24d3.2: <witness> = import_ref Main//types, loc7_10, loaded [concrete = constants.%complete_type]
-// CHECK:STDOUT:   %Main.import_ref.acf = import_ref Main//types, inst69 [no loc], unloaded
+// CHECK:STDOUT:   %Main.import_ref.acf = import_ref Main//types, inst70 [no loc], unloaded
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -749,18 +750,18 @@ fn H(c: C(InClassArgs)) { c.(I(X).F)(); }
 // CHECK:STDOUT:   %Main.InClassArgs: type = import_ref Main//impl_in_class_args, InClassArgs, loaded [concrete = constants.%InClassArgs]
 // CHECK:STDOUT:   %Main.import_ref.5ab3ec.1: type = import_ref Main//types, loc5_9, loaded [symbolic = @C.%T (constants.%T)]
 // CHECK:STDOUT:   %Main.import_ref.8f24d3.1: <witness> = import_ref Main//types, loc5_20, loaded [concrete = constants.%complete_type]
-// CHECK:STDOUT:   %Main.import_ref.4c0 = import_ref Main//types, inst64 [no loc], unloaded
+// CHECK:STDOUT:   %Main.import_ref.4c0 = import_ref Main//types, inst65 [no loc], unloaded
 // CHECK:STDOUT:   %Main.import_ref.8f24d3.2: <witness> = import_ref Main//impl_in_class_args, loc5_20, loaded [concrete = constants.%complete_type]
 // CHECK:STDOUT:   %Main.import_ref.683 = import_ref Main//impl_in_class_args, inst20 [no loc], unloaded
 // CHECK:STDOUT:   %Main.import_ref.5ab3ec.2: type = import_ref Main//types, loc4_13, loaded [symbolic = @I.%T (constants.%T)]
-// CHECK:STDOUT:   %Main.import_ref.4e2 = import_ref Main//types, inst27 [no loc], unloaded
+// CHECK:STDOUT:   %Main.import_ref.4e2 = import_ref Main//types, inst28 [no loc], unloaded
 // CHECK:STDOUT:   %Main.import_ref.474: @I.%I.assoc_type (%I.assoc_type.1e5) = import_ref Main//types, loc4_43, loaded [symbolic = @I.%assoc0 (constants.%assoc0.688)]
 // CHECK:STDOUT:   %Main.F = import_ref Main//types, F, unloaded
 // CHECK:STDOUT:   %Main.import_ref.5ab3ec.3: type = import_ref Main//types, loc4_13, loaded [symbolic = @I.%T (constants.%T)]
-// CHECK:STDOUT:   %Main.import_ref.7dc: @I.%I.type (%I.type.328) = import_ref Main//types, inst27 [no loc], loaded [symbolic = @I.%Self (constants.%Self.0d8)]
+// CHECK:STDOUT:   %Main.import_ref.7dc: @I.%I.type (%I.type.328) = import_ref Main//types, inst28 [no loc], loaded [symbolic = @I.%Self (constants.%Self.0d8)]
 // CHECK:STDOUT:   %Main.import_ref.e54: @I.%I.F.type (%I.F.type.2ae) = import_ref Main//types, loc4_43, loaded [symbolic = @I.%I.F (constants.%I.F.bb2)]
 // CHECK:STDOUT:   %Main.import_ref.8f24d3.3: <witness> = import_ref Main//types, loc7_10, loaded [concrete = constants.%complete_type]
-// CHECK:STDOUT:   %Main.import_ref.acf = import_ref Main//types, inst69 [no loc], unloaded
+// CHECK:STDOUT:   %Main.import_ref.acf = import_ref Main//types, inst70 [no loc], unloaded
 // CHECK:STDOUT:   %Main.import_ref.479 = import_ref Main//types, loc4_43, unloaded
 // CHECK:STDOUT:   %Main.import_ref.bd4: <witness> = import_ref Main//impl_in_class_args, loc7_29, loaded [concrete = constants.%I.impl_witness]
 // CHECK:STDOUT:   %Main.import_ref.d6e: type = import_ref Main//impl_in_class_args, loc7_19, loaded [concrete = constants.%C.23b]
