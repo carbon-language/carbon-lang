@@ -356,19 +356,21 @@ library "[[@TEST_NAME]]";
 
 interface Z {
   let V:! type;
-  fn ZZ() -> V;
+  fn ZZ() -> V*;
 }
+
+var t: ();
 
 interface Y {}
 impl forall [T:! Y] T as Z where .V = () {
-  fn ZZ() -> () { return (); }
+  fn ZZ() -> ()* { return &t; }
 }
 
-fn H(W:! Z, X: W.(Z.V)) -> W.(Z.V) {
+fn H(W:! Z, X: W.(Z.V)*) -> W.(Z.V)* {
   return X;
 }
 
-fn G(U:! Y) -> U.(Z.V) {
+fn G(U:! Y) -> U.(Z.V)* {
   return H(U, U.(Z.ZZ)());
 }
 
@@ -376,12 +378,14 @@ class C {
   impl as Y {}
 }
 
+var s: {};
+
 impl C as Z where .V = {} {
-  fn ZZ() -> {} { return {}; }
+  fn ZZ() -> {}* { return &s; }
 }
 
 fn F() {
-  let x: {} = G(C);
+  let x: {}* = G(C);
 }
 
 // --- specialization_written_after_generic_use_with_generic_interface.carbon
@@ -389,19 +393,21 @@ library "[[@TEST_NAME]]";
 
 interface Z(T:! type) {
   let V:! type;
-  fn ZZ() -> V;
+  fn ZZ() -> V*;
 }
+
+var t: ();
 
 interface Y {}
 impl forall [T:! Y] T as Z(T) where .V = () {
-  fn ZZ() -> () { return (); }
+  fn ZZ() -> ()* { return &t; }
 }
 
-fn H(U:! Y, W:! Y & Z(U), X: W.(Z(U).V)) -> W.(Z(U).V) {
+fn H(U:! Y, W:! Y & Z(U), X: W.(Z(U).V)*) -> W.(Z(U).V)* {
   return X;
 }
 
-fn G(U:! Y) -> U.(Z(U).V) {
+fn G(U:! Y) -> U.(Z(U).V)* {
   return H(U, U, U.(Z(U).ZZ)());
 }
 
@@ -409,12 +415,14 @@ class C {
   impl as Y {}
 }
 
+var s: {};
+
 impl C as Z(C) where .V = {} {
-  fn ZZ() -> {} { return {}; }
+  fn ZZ() -> {}* { return &s; }
 }
 
 fn F() {
-  let x: {} = G(C);
+  let x: {}* = G(C);
 }
 
 // --- type_structure_first_difference.carbon
@@ -457,12 +465,13 @@ impl forall [T:! type, S:! type] T as Z(S) where .X = {} {}
 
 class C(S:! type) {
   extend impl as Z(S) where .X = () {}
-  fn CC(a: Self.(Z(S).X)) -> Self.(Z(S).X) { return a; }
+  fn CC(a: Self.(Z(S).X)*) -> Self.(Z(S).X)* { return a; }
 }
 
 fn F() {
-  let a: () = C(()).CC(());
-  let b: C(()).X = a;
+  var t: ();
+  let a: ()* = C(()).CC(&t);
+  let b: C(()).X = *a;
 }
 
 // --- final_impl_as_specialization.carbon

@@ -228,13 +228,11 @@ fn G() {
 // CHECK:STDOUT:
 // CHECK:STDOUT:   fn() -> @Wrap.Make.%T (%T) {
 // CHECK:STDOUT:   !entry:
-// CHECK:STDOUT:     %.loc16_27: @Wrap.Make.%Wrap.Make.type (%Wrap.Make.type.652) = specific_constant @Wrap.%Wrap.Make.decl, @Wrap(constants.%T) [symbolic = %Wrap.Make (constants.%Wrap.Make.eb2)]
-// CHECK:STDOUT:     %Make.ref: @Wrap.Make.%Wrap.Make.type (%Wrap.Make.type.652) = name_ref Make, %.loc16_27 [symbolic = %Wrap.Make (constants.%Wrap.Make.eb2)]
+// CHECK:STDOUT:     %.loc16: @Wrap.Make.%Wrap.Make.type (%Wrap.Make.type.652) = specific_constant @Wrap.%Wrap.Make.decl, @Wrap(constants.%T) [symbolic = %Wrap.Make (constants.%Wrap.Make.eb2)]
+// CHECK:STDOUT:     %Make.ref: @Wrap.Make.%Wrap.Make.type (%Wrap.Make.type.652) = name_ref Make, %.loc16 [symbolic = %Wrap.Make (constants.%Wrap.Make.eb2)]
 // CHECK:STDOUT:     %Wrap.Make.specific_fn.loc16_27.1: <specific function> = specific_function %Make.ref, @Wrap.Make(constants.%T) [symbolic = %Wrap.Make.specific_fn.loc16_27.2 (constants.%Wrap.Make.specific_fn.bf1)]
 // CHECK:STDOUT:     %Wrap.Make.call: init @Wrap.Make.%T (%T) = call %Wrap.Make.specific_fn.loc16_27.1()
-// CHECK:STDOUT:     %.loc16_33.1: @Wrap.Make.%T (%T) = value_of_initializer %Wrap.Make.call
-// CHECK:STDOUT:     %.loc16_33.2: @Wrap.Make.%T (%T) = converted %Wrap.Make.call, %.loc16_33.1
-// CHECK:STDOUT:     return %.loc16_33.2
+// CHECK:STDOUT:     return %Wrap.Make.call to %return
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

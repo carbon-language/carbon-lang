@@ -17,6 +17,10 @@ private fn CharLiteral() -> type = "char_literal.make_type";
 private fn FloatLiteral() -> type = "float_literal.make_type";
 private fn IntLiteral() -> type = "int_literal.make_type";
 
+impl forall [T:! Copy] const T as Copy {
+  fn Op[self: Self]() -> Self { return (self as T).(Copy.Op)() as const T; }
+}
+
 impl Bool() as Copy {
   fn Op[self: Self]() -> Self = "primitive_copy";
 }
@@ -46,5 +50,13 @@ impl () as Copy {
 }
 
 impl forall [T:! Copy, U:! Copy] (T, U) as Copy {
-  fn Op[self: Self]() -> Self { return (self.0.Op(), self.1.Op()); }
+  fn Op[self: Self]() -> Self {
+    return (self.0.Op(), self.1.Op());
+  }
+}
+
+impl forall [T:! Copy, U:! Copy, V:! Copy] (T, U, V) as Copy {
+  fn Op[self: Self]() -> Self {
+    return (self.0.Op(), self.1.Op(), self.2.Op());
+  }
 }

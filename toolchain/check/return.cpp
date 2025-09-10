@@ -157,13 +157,10 @@ auto BuildReturnWithExpr(Context& context, SemIR::LocId loc_id,
     // We already diagnosed that the return type is invalid. Don't try to
     // convert to it.
     expr_id = SemIR::ErrorInst::InstId;
-  } else if (return_info.has_return_slot()) {
+  } else {
     return_slot_id = GetCurrentReturnSlot(context);
     CARBON_CHECK(return_slot_id.has_value());
     expr_id = Initialize(context, loc_id, return_slot_id, expr_id);
-  } else {
-    expr_id =
-        ConvertToValueOfType(context, loc_id, expr_id, return_info.type_id);
   }
 
   AddReturnCleanupBlockWithExpr(

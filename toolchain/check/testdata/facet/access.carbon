@@ -84,7 +84,7 @@ fn UseIndirect[T:! I](x: T) -> T {
 library "[[@TEST_NAME]]";
 
 interface I { let T:! type; }
-fn Id[U:! type](x: U) -> U { return x; }
+fn Id[U:! type](x: U) -> U { return Id(x); }
 impl () as I where .T = () {}
 // Type of member expr is associated entity type,
 // but value is not constant.
@@ -97,7 +97,7 @@ var v: ().(Id(I.T));
 // --- fail_non_const_associated_in_interface.carbon
 library "[[@TEST_NAME]]";
 
-fn Id[U:! type](x: U) -> U { return x; }
+fn Id[U:! type](x: U) -> U { return Id(x); }
 
 interface J {
   let T:! type;
@@ -274,9 +274,7 @@ fn G(AB:! A & B where .X = () and .Y = {}) -> AB.Y {
 // CHECK:STDOUT:     %impl.elem0.loc10_11.1: @Use.%.loc10_11.2 (%.7da) = impl_witness_access constants.%I.lookup_impl_witness, element0 [symbolic = %impl.elem0.loc10_11.2 (constants.%impl.elem0)]
 // CHECK:STDOUT:     %specific_impl_fn.loc10_11.1: <specific function> = specific_impl_function %impl.elem0.loc10_11.1, @I.Make(constants.%I.facet) [symbolic = %specific_impl_fn.loc10_11.2 (constants.%specific_impl_fn)]
 // CHECK:STDOUT:     %.loc10_17: init @Use.%T.as_type.loc8_18.1 (%T.as_type) = call %specific_impl_fn.loc10_11.1()
-// CHECK:STDOUT:     %.loc10_18.1: @Use.%T.as_type.loc8_18.1 (%T.as_type) = value_of_initializer %.loc10_17
-// CHECK:STDOUT:     %.loc10_18.2: @Use.%T.as_type.loc8_18.1 (%T.as_type) = converted %.loc10_17, %.loc10_18.1
-// CHECK:STDOUT:     return %.loc10_18.2
+// CHECK:STDOUT:     return %.loc10_17 to %return
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -362,9 +360,7 @@ fn G(AB:! A & B where .X = () and .Y = {}) -> AB.Y {
 // CHECK:STDOUT:     %specific_impl_fn.loc10_11.1: <specific function> = specific_impl_function %impl.elem0.loc10_11.1, @I.Copy(constants.%I.facet) [symbolic = %specific_impl_fn.loc10_11.2 (constants.%specific_impl_fn)]
 // CHECK:STDOUT:     %bound_method.loc10_17: <bound method> = bound_method %x.ref, %specific_impl_fn.loc10_11.1
 // CHECK:STDOUT:     %.loc10_17: init @Use.%T.as_type.loc9_18.1 (%T.as_type) = call %bound_method.loc10_17(%x.ref)
-// CHECK:STDOUT:     %.loc10_18.1: @Use.%T.as_type.loc9_18.1 (%T.as_type) = value_of_initializer %.loc10_17
-// CHECK:STDOUT:     %.loc10_18.2: @Use.%T.as_type.loc9_18.1 (%T.as_type) = converted %.loc10_17, %.loc10_18.1
-// CHECK:STDOUT:     return %.loc10_18.2
+// CHECK:STDOUT:     return %.loc10_17 to %return
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -468,9 +464,7 @@ fn G(AB:! A & B where .X = () and .Y = {}) -> AB.Y {
 // CHECK:STDOUT:     %specific_impl_fn.loc10_14.1: <specific function> = specific_impl_function %impl.elem0.loc10_14.1, @I.Copy(constants.%I.facet) [symbolic = %specific_impl_fn.loc10_14.2 (constants.%specific_impl_fn)]
 // CHECK:STDOUT:     %bound_method.loc10_21: <bound method> = bound_method %x.ref, %specific_impl_fn.loc10_14.1
 // CHECK:STDOUT:     %.loc10_21: init @UseIndirect.%T.as_type.loc8_26.1 (%T.as_type) = call %bound_method.loc10_21(%x.ref)
-// CHECK:STDOUT:     %.loc10_22.1: @UseIndirect.%T.as_type.loc8_26.1 (%T.as_type) = value_of_initializer %.loc10_21
-// CHECK:STDOUT:     %.loc10_22.2: @UseIndirect.%T.as_type.loc8_26.1 (%T.as_type) = converted %.loc10_21, %.loc10_22.1
-// CHECK:STDOUT:     return %.loc10_22.2
+// CHECK:STDOUT:     return %.loc10_21 to %return
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -547,10 +541,10 @@ fn G(AB:! A & B where .X = () and .Y = {}) -> AB.Y {
 // CHECK:STDOUT:
 // CHECK:STDOUT:   fn() -> %empty_tuple.type {
 // CHECK:STDOUT:   !entry:
-// CHECK:STDOUT:     %.loc7_11: %empty_tuple.type = tuple_literal ()
-// CHECK:STDOUT:     %empty_tuple: %empty_tuple.type = tuple_value () [concrete = constants.%empty_tuple]
-// CHECK:STDOUT:     %.loc7_12: %empty_tuple.type = converted %.loc7_11, %empty_tuple [concrete = constants.%empty_tuple]
-// CHECK:STDOUT:     return %.loc7_12
+// CHECK:STDOUT:     %.loc7_11.1: %empty_tuple.type = tuple_literal ()
+// CHECK:STDOUT:     %.loc7_11.2: init %empty_tuple.type = tuple_init () to %return [concrete = constants.%empty_tuple]
+// CHECK:STDOUT:     %.loc7_12: init %empty_tuple.type = converted %.loc7_11.1, %.loc7_11.2 [concrete = constants.%empty_tuple]
+// CHECK:STDOUT:     return %.loc7_12 to %return
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -707,10 +701,10 @@ fn G(AB:! A & B where .X = () and .Y = {}) -> AB.Y {
 // CHECK:STDOUT:
 // CHECK:STDOUT:   fn() -> %empty_tuple.type {
 // CHECK:STDOUT:   !entry:
-// CHECK:STDOUT:     %.loc15_11: %empty_tuple.type = tuple_literal ()
-// CHECK:STDOUT:     %empty_tuple: %empty_tuple.type = tuple_value () [concrete = constants.%empty_tuple]
-// CHECK:STDOUT:     %.loc15_12: %empty_tuple.type = converted %.loc15_11, %empty_tuple [concrete = constants.%empty_tuple]
-// CHECK:STDOUT:     return %.loc15_12
+// CHECK:STDOUT:     %.loc15_11.1: %empty_tuple.type = tuple_literal ()
+// CHECK:STDOUT:     %.loc15_11.2: init %empty_tuple.type = tuple_init () to %return [concrete = constants.%empty_tuple]
+// CHECK:STDOUT:     %.loc15_12: init %empty_tuple.type = converted %.loc15_11.1, %.loc15_11.2 [concrete = constants.%empty_tuple]
+// CHECK:STDOUT:     return %.loc15_12 to %return
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -723,10 +717,10 @@ fn G(AB:! A & B where .X = () and .Y = {}) -> AB.Y {
 // CHECK:STDOUT:
 // CHECK:STDOUT:   fn() -> %empty_struct_type {
 // CHECK:STDOUT:   !entry:
-// CHECK:STDOUT:     %.loc19_11: %empty_struct_type = struct_literal ()
-// CHECK:STDOUT:     %empty_struct: %empty_struct_type = struct_value () [concrete = constants.%empty_struct]
-// CHECK:STDOUT:     %.loc19_12: %empty_struct_type = converted %.loc19_11, %empty_struct [concrete = constants.%empty_struct]
-// CHECK:STDOUT:     return %.loc19_12
+// CHECK:STDOUT:     %.loc19_11.1: %empty_struct_type = struct_literal ()
+// CHECK:STDOUT:     %.loc19_11.2: init %empty_struct_type = struct_init () to %return [concrete = constants.%empty_struct]
+// CHECK:STDOUT:     %.loc19_12: init %empty_struct_type = converted %.loc19_11.1, %.loc19_11.2 [concrete = constants.%empty_struct]
+// CHECK:STDOUT:     return %.loc19_12 to %return
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

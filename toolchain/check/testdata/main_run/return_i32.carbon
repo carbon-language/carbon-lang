@@ -82,8 +82,7 @@ fn Run() -> i32 { return 0; }
 // CHECK:STDOUT:   %specific_fn: <specific function> = specific_function %impl.elem0, @Core.IntLiteral.as.ImplicitAs.impl.Convert(constants.%int_32) [concrete = constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.specific_fn]
 // CHECK:STDOUT:   %bound_method.loc14_27.2: <bound method> = bound_method %int_0, %specific_fn [concrete = constants.%bound_method]
 // CHECK:STDOUT:   %Core.IntLiteral.as.ImplicitAs.impl.Convert.call: init %i32 = call %bound_method.loc14_27.2(%int_0) [concrete = constants.%int_0.6a9]
-// CHECK:STDOUT:   %.loc14_27.1: %i32 = value_of_initializer %Core.IntLiteral.as.ImplicitAs.impl.Convert.call [concrete = constants.%int_0.6a9]
-// CHECK:STDOUT:   %.loc14_27.2: %i32 = converted %int_0, %.loc14_27.1 [concrete = constants.%int_0.6a9]
-// CHECK:STDOUT:   return %.loc14_27.2
+// CHECK:STDOUT:   %.loc14: init %i32 = converted %int_0, %Core.IntLiteral.as.ImplicitAs.impl.Convert.call [concrete = constants.%int_0.6a9]
+// CHECK:STDOUT:   return %.loc14 to %return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

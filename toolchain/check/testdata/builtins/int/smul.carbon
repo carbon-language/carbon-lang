@@ -92,8 +92,6 @@ let b: i32 = Mul(0x8000, 0x10000);
 // CHECK:STDOUT:   %a.ref: %i32 = name_ref a, %a
 // CHECK:STDOUT:   %b.ref: %i32 = name_ref b, %b
 // CHECK:STDOUT:   %Mul.call: init %i32 = call %Mul.ref(%a.ref, %b.ref)
-// CHECK:STDOUT:   %.loc20_19.1: %i32 = value_of_initializer %Mul.call
-// CHECK:STDOUT:   %.loc20_19.2: %i32 = converted %Mul.call, %.loc20_19.1
-// CHECK:STDOUT:   return %.loc20_19.2
+// CHECK:STDOUT:   return %Mul.call to %return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

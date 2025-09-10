@@ -287,7 +287,12 @@ fn Test() {
 // CHECK:STDOUT:   %n.ref: %X.elem = name_ref n, @X.%.loc16 [concrete = @X.%.loc16]
 // CHECK:STDOUT:   %.loc24_45.1: ref %i32 = class_element_access %self.ref, element0
 // CHECK:STDOUT:   %.loc24_45.2: %i32 = bind_value %.loc24_45.1
-// CHECK:STDOUT:   return %.loc24_45.2
+// CHECK:STDOUT:   %impl.elem0: %.3c4 = impl_witness_access constants.%Copy.impl_witness.f0b, element0 [concrete = constants.%Int.as.Copy.impl.Op.87e]
+// CHECK:STDOUT:   %bound_method.loc24_45.1: <bound method> = bound_method %.loc24_45.2, %impl.elem0
+// CHECK:STDOUT:   %specific_fn: <specific function> = specific_function %impl.elem0, @Int.as.Copy.impl.Op(constants.%int_32) [concrete = constants.%Int.as.Copy.impl.Op.specific_fn]
+// CHECK:STDOUT:   %bound_method.loc24_45.2: <bound method> = bound_method %.loc24_45.2, %specific_fn
+// CHECK:STDOUT:   %Int.as.Copy.impl.Op.call: init %i32 = call %bound_method.loc24_45.2(%.loc24_45.2)
+// CHECK:STDOUT:   return %Int.as.Copy.impl.Op.call to %return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Sink_i32(%n.param: %i32);
@@ -308,9 +313,7 @@ fn Test() {
 // CHECK:STDOUT:     %T.ref.loc31_42: type = name_ref T, %T.loc31_11.2 [symbolic = %T.loc31_11.1 (constants.%T.8b3)]
 // CHECK:STDOUT:     %Source.specific_fn.loc31_35.1: <specific function> = specific_function %Source.ref, @Source(constants.%T.8b3) [symbolic = %Source.specific_fn.loc31_35.2 (constants.%Source.specific_fn.ff0)]
 // CHECK:STDOUT:     %Source.call: init @Source.%T.loc31_11.1 (%T.8b3) = call %Source.specific_fn.loc31_35.1()
-// CHECK:STDOUT:     %.loc31_44.1: @Source.%T.loc31_11.1 (%T.8b3) = value_of_initializer %Source.call
-// CHECK:STDOUT:     %.loc31_44.2: @Source.%T.loc31_11.1 (%T.8b3) = converted %Source.call, %.loc31_44.1
-// CHECK:STDOUT:     return %.loc31_44.2
+// CHECK:STDOUT:     return %Source.call to %return
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
