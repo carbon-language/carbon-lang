@@ -658,8 +658,6 @@ class ImportImplFilter {
   // Returns whether the given impl is potentially relevant for the current
   // query.
   auto IsRelevantImpl(SemIR::ImplId import_impl_id) -> bool {
-    CARBON_CHECK(import_ir_, "Must call ResetForImportIR first");
-
     auto impl_interface_id =
         import_ir_->impls().Get(import_impl_id).interface.interface_id;
     if (!impl_interface_id.has_value()) {
