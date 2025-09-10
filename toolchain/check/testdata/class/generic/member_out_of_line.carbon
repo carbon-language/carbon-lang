@@ -391,7 +391,7 @@ fn Generic(T:! ()).WrongType() {}
 // CHECK:STDOUT:   %B.F: %B.F.type = struct_value () [symbolic]
 // CHECK:STDOUT:   %Destroy.type: type = facet_type <@Destroy> [concrete]
 // CHECK:STDOUT:   %pattern_type.f6d: type = pattern_type auto [concrete]
-// CHECK:STDOUT:   %Destroy.impl_witness.e41: <witness> = impl_witness @B.%Destroy.impl_witness_table, @B.as.Destroy.impl(%T, %N) [symbolic]
+// CHECK:STDOUT:   %Destroy.impl_witness.438: <witness> = impl_witness @B.%Destroy.impl_witness_table, @B.as.Destroy.impl(%T, %N) [symbolic]
 // CHECK:STDOUT:   %require_complete.4ae: <witness> = require_complete_type %T [symbolic]
 // CHECK:STDOUT:   %ptr.762: type = ptr_type %B [symbolic]
 // CHECK:STDOUT:   %pattern_type.fe8: type = pattern_type %ptr.762 [symbolic]
@@ -399,7 +399,7 @@ fn Generic(T:! ()).WrongType() {}
 // CHECK:STDOUT:   %B.as.Destroy.impl.Op: %B.as.Destroy.impl.Op.type = struct_value () [symbolic]
 // CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [concrete]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [concrete]
-// CHECK:STDOUT:   %Destroy.impl_witness.d93: <witness> = impl_witness @A.%Destroy.impl_witness_table, @A.as.Destroy.impl(%T) [symbolic]
+// CHECK:STDOUT:   %Destroy.impl_witness.7e1: <witness> = impl_witness @A.%Destroy.impl_witness_table, @A.as.Destroy.impl(%T) [symbolic]
 // CHECK:STDOUT:   %ptr.ca9: type = ptr_type %A [symbolic]
 // CHECK:STDOUT:   %pattern_type.09b: type = pattern_type %ptr.ca9 [symbolic]
 // CHECK:STDOUT:   %A.as.Destroy.impl.Op.type: type = fn_type @A.as.Destroy.impl.Op, @A.as.Destroy.impl(%T) [symbolic]
@@ -457,7 +457,7 @@ fn Generic(T:! ()).WrongType() {}
 // CHECK:STDOUT:   %T: type = bind_symbolic_name T, 0 [symbolic = %T (constants.%T)]
 // CHECK:STDOUT:   %N: @B.as.Destroy.impl.%T (%T) = bind_symbolic_name N, 1 [symbolic = %N (constants.%N)]
 // CHECK:STDOUT:   %B: type = class_type @B, @B(%T, %N) [symbolic = %B (constants.%B)]
-// CHECK:STDOUT:   %Destroy.impl_witness: <witness> = impl_witness @B.%Destroy.impl_witness_table, @B.as.Destroy.impl(%T, %N) [symbolic = %Destroy.impl_witness (constants.%Destroy.impl_witness.e41)]
+// CHECK:STDOUT:   %Destroy.impl_witness: <witness> = impl_witness @B.%Destroy.impl_witness_table, @B.as.Destroy.impl(%T, %N) [symbolic = %Destroy.impl_witness (constants.%Destroy.impl_witness.438)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %B.as.Destroy.impl.Op.type: type = fn_type @B.as.Destroy.impl.Op, @B.as.Destroy.impl(%T, %N) [symbolic = %B.as.Destroy.impl.Op.type (constants.%B.as.Destroy.impl.Op.type)]
@@ -486,7 +486,7 @@ fn Generic(T:! ()).WrongType() {}
 // CHECK:STDOUT: generic impl @A.as.Destroy.impl(@A.%T.loc4_9.2: type) {
 // CHECK:STDOUT:   %T: type = bind_symbolic_name T, 0 [symbolic = %T (constants.%T)]
 // CHECK:STDOUT:   %A: type = class_type @A, @A(%T) [symbolic = %A (constants.%A)]
-// CHECK:STDOUT:   %Destroy.impl_witness: <witness> = impl_witness @A.%Destroy.impl_witness_table, @A.as.Destroy.impl(%T) [symbolic = %Destroy.impl_witness (constants.%Destroy.impl_witness.d93)]
+// CHECK:STDOUT:   %Destroy.impl_witness: <witness> = impl_witness @A.%Destroy.impl_witness_table, @A.as.Destroy.impl(%T) [symbolic = %Destroy.impl_witness (constants.%Destroy.impl_witness.7e1)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %A.as.Destroy.impl.Op.type: type = fn_type @A.as.Destroy.impl.Op, @A.as.Destroy.impl(%T) [symbolic = %A.as.Destroy.impl.Op.type (constants.%A.as.Destroy.impl.Op.type)]
@@ -532,7 +532,7 @@ fn Generic(T:! ()).WrongType() {}
 // CHECK:STDOUT:     %Self.ref: type = name_ref Self, constants.%A [symbolic = @A.as.Destroy.impl.%A (constants.%A)]
 // CHECK:STDOUT:     impl_decl @A.as.Destroy.impl [concrete] {} {}
 // CHECK:STDOUT:     %Destroy.impl_witness_table = impl_witness_table (@A.as.Destroy.impl.%A.as.Destroy.impl.Op.decl), @A.as.Destroy.impl [concrete]
-// CHECK:STDOUT:     %Destroy.impl_witness: <witness> = impl_witness %Destroy.impl_witness_table, @A.as.Destroy.impl(constants.%T) [symbolic = @A.as.Destroy.impl.%Destroy.impl_witness (constants.%Destroy.impl_witness.d93)]
+// CHECK:STDOUT:     %Destroy.impl_witness: <witness> = impl_witness %Destroy.impl_witness_table, @A.as.Destroy.impl(constants.%T) [symbolic = @A.as.Destroy.impl.%Destroy.impl_witness (constants.%Destroy.impl_witness.7e1)]
 // CHECK:STDOUT:     %complete_type: <witness> = complete_type_witness constants.%empty_struct_type [concrete = constants.%complete_type]
 // CHECK:STDOUT:     complete_type_witness = %complete_type
 // CHECK:STDOUT:
@@ -573,7 +573,7 @@ fn Generic(T:! ()).WrongType() {}
 // CHECK:STDOUT:     %Self.ref: type = name_ref Self, constants.%B [symbolic = @B.as.Destroy.impl.%B (constants.%B)]
 // CHECK:STDOUT:     impl_decl @B.as.Destroy.impl [concrete] {} {}
 // CHECK:STDOUT:     %Destroy.impl_witness_table = impl_witness_table (@B.as.Destroy.impl.%B.as.Destroy.impl.Op.decl), @B.as.Destroy.impl [concrete]
-// CHECK:STDOUT:     %Destroy.impl_witness: <witness> = impl_witness %Destroy.impl_witness_table, @B.as.Destroy.impl(constants.%T, constants.%N) [symbolic = @B.as.Destroy.impl.%Destroy.impl_witness (constants.%Destroy.impl_witness.e41)]
+// CHECK:STDOUT:     %Destroy.impl_witness: <witness> = impl_witness %Destroy.impl_witness_table, @B.as.Destroy.impl(constants.%T, constants.%N) [symbolic = @B.as.Destroy.impl.%Destroy.impl_witness (constants.%Destroy.impl_witness.438)]
 // CHECK:STDOUT:     %complete_type: <witness> = complete_type_witness constants.%empty_struct_type [concrete = constants.%complete_type]
 // CHECK:STDOUT:     complete_type_witness = %complete_type
 // CHECK:STDOUT:
@@ -655,7 +655,7 @@ fn Generic(T:! ()).WrongType() {}
 // CHECK:STDOUT:   %T => constants.%T
 // CHECK:STDOUT:   %N => constants.%N
 // CHECK:STDOUT:   %B => constants.%B
-// CHECK:STDOUT:   %Destroy.impl_witness => constants.%Destroy.impl_witness.e41
+// CHECK:STDOUT:   %Destroy.impl_witness => constants.%Destroy.impl_witness.438
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @B.as.Destroy.impl.Op(constants.%T, constants.%N) {
@@ -669,7 +669,7 @@ fn Generic(T:! ()).WrongType() {}
 // CHECK:STDOUT: specific @A.as.Destroy.impl(constants.%T) {
 // CHECK:STDOUT:   %T => constants.%T
 // CHECK:STDOUT:   %A => constants.%A
-// CHECK:STDOUT:   %Destroy.impl_witness => constants.%Destroy.impl_witness.d93
+// CHECK:STDOUT:   %Destroy.impl_witness => constants.%Destroy.impl_witness.7e1
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @A.as.Destroy.impl.Op(constants.%T) {

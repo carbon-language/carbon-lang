@@ -63,15 +63,15 @@ CheckUnit::CheckUnit(
     : unit_and_imports_(unit_and_imports),
       tree_and_subtrees_getter_(tree_and_subtrees_getters->Get(
           unit_and_imports->unit->sem_ir->check_ir_id())),
-      total_ir_count_(tree_and_subtrees_getters->size()),
       fs_(std::move(fs)),
       clang_invocation_(std::move(clang_invocation)),
       emitter_(&unit_and_imports_->err_tracker, tree_and_subtrees_getters,
                unit_and_imports_->unit->sem_ir),
       context_(&emitter_, tree_and_subtrees_getter_,
                unit_and_imports_->unit->sem_ir,
-               GetImportedIRCount(unit_and_imports), total_ir_count_,
-               gen_implicit_type_impls, vlog_stream) {}
+               GetImportedIRCount(unit_and_imports),
+               unit_and_imports_->unit->total_ir_count, gen_implicit_type_impls,
+               vlog_stream) {}
 
 auto CheckUnit::Run() -> void {
   Timings::ScopedTiming timing(unit_and_imports_->unit->timings, "check");
@@ -195,7 +195,7 @@ auto CheckUnit::CollectTransitiveImports(SemIR::InstId import_decl_id,
   // exported to this IR.
   auto ir_to_result_index =
       FixedSizeValueStore<SemIR::CheckIRId, int>::MakeWithExplicitSize(
-          total_ir_count_, -1);
+          unit_and_imports_->unit->total_ir_count, -1);
 
   // First add direct imports. This means that if an entity is imported both
   // directly and indirectly, the import path will reflect the direct import.

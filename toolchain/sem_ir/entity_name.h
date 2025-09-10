@@ -8,6 +8,7 @@
 #include "common/hashing.h"
 #include "common/set.h"
 #include "toolchain/base/value_store.h"
+#include "toolchain/sem_ir/clang_decl.h"
 #include "toolchain/sem_ir/ids.h"
 
 namespace Carbon::SemIR {
@@ -16,7 +17,7 @@ struct EntityName : public Printable<EntityName> {
   auto Print(llvm::raw_ostream& out) const -> void {
     out << "{name: " << name_id << ", parent_scope: " << parent_scope_id
         << ", index: " << bind_index_value << ", is_template: " << is_template
-        << "}";
+        << ", clang_decl_id: " << clang_decl_id << "}";
   }
 
   friend auto CarbonHashtableEq(const EntityName& lhs, const EntityName& rhs)
@@ -55,6 +56,10 @@ struct EntityName : public Printable<EntityName> {
   int32_t bind_index_value : 31 = CompileTimeBindIndex::None.index;
   // Whether this binding is a template parameter.
   bool is_template : 1 = false;
+  // For imported C++ global variable names, the Clang decl to use for mangling.
+  // TODO: Move the mapping between global variables and the clang decl to avoid
+  // paying extra memory when the names are not imported from C++.
+  ClangDeclId clang_decl_id = ClangDeclId::None;
 };
 
 // Value store for EntityName. In addition to the regular ValueStore
@@ -63,12 +68,14 @@ struct EntityNameStore : public ValueStore<EntityNameId, EntityName> {
  public:
   // Adds an entity name for a symbolic binding.
   auto AddSymbolicBindingName(NameId name_id, NameScopeId parent_scope_id,
-                              CompileTimeBindIndex bind_index, bool is_template)
+                              CompileTimeBindIndex bind_index, bool is_template,
+                              ClangDeclId clang_decl_id = ClangDeclId::None)
       -> EntityNameId {
     return Add({.name_id = name_id,
                 .parent_scope_id = parent_scope_id,
                 .bind_index_value = bind_index.index,
-                .is_template = is_template});
+                .is_template = is_template,
+                .clang_decl_id = clang_decl_id});
   }
 
   // Convert an `EntityName` to a canonical ID. All calls to this with

@@ -22,7 +22,9 @@ class Mangler {
  public:
   // Initialize a new Mangler instance for mangling entities within the
   // specified `FileContext`.
-  explicit Mangler(FileContext& file_context) : file_context_(file_context) {}
+  explicit Mangler(FileContext& file_context)
+      : file_context_(file_context),
+        fingerprinter_(file_context_.context().total_ir_count()) {}
 
   // Produce a deterministically unique mangled name for the function specified
   // by `function_id` and `specific_id`.

@@ -35,11 +35,12 @@
 namespace Carbon::SemIR {
 
 Formatter::Formatter(
-    const File* sem_ir, Parse::GetTreeAndSubtreesFn get_tree_and_subtrees,
+    const File* sem_ir, int total_ir_count,
+    Parse::GetTreeAndSubtreesFn get_tree_and_subtrees,
     const FixedSizeValueStore<SemIR::CheckIRId, bool>* include_ir_in_dumps,
     bool use_dump_sem_ir_ranges)
     : sem_ir_(sem_ir),
-      inst_namer_(sem_ir_),
+      inst_namer_(sem_ir_, total_ir_count),
       get_tree_and_subtrees_(get_tree_and_subtrees),
       include_ir_in_dumps_(include_ir_in_dumps),
       use_dump_sem_ir_ranges_(use_dump_sem_ir_ranges),

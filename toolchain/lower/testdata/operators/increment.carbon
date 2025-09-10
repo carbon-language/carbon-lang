@@ -35,11 +35,11 @@ fn IncrSigned() {
 // CHECK:STDOUT: declare void @llvm.lifetime.start.p0(ptr captures(none)) #0
 // CHECK:STDOUT:
 // CHECK:STDOUT: define linkonce_odr void @"_COp.Int.Core:Inc.Core.be1e879c1ad406d8"(ptr %self) !dbg !10 {
-// CHECK:STDOUT:   call void @"_COp:thunk.Int.Core:AddAssignWith.Core.abc639a111145970"(ptr %self, i32 1), !dbg !12
+// CHECK:STDOUT:   call void @"_COp:thunk.Int.Core:AddAssignWith.Core.81406e440463ef1d"(ptr %self, i32 1), !dbg !12
 // CHECK:STDOUT:   ret void, !dbg !13
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: define linkonce_odr void @"_COp:thunk.Int.Core:AddAssignWith.Core.abc639a111145970"(ptr %self, i32 %other) !dbg !14 {
+// CHECK:STDOUT: define linkonce_odr void @"_COp:thunk.Int.Core:AddAssignWith.Core.81406e440463ef1d"(ptr %self, i32 %other) !dbg !14 {
 // CHECK:STDOUT:   %1 = call i32 @"_CConvert.8b3d5d6a6c17be04:ImplicitAs.Core.b88d1103f417c6d4"(i32 %other), !dbg !15
 // CHECK:STDOUT:   %2 = load i32, ptr %self, align 4, !dbg !16
 // CHECK:STDOUT:   %3 = add i32 %2, %1, !dbg !16
@@ -70,7 +70,7 @@ fn IncrSigned() {
 // CHECK:STDOUT: !11 = !DIFile(filename: "{{.*}}/prelude/types/int.carbon", directory: "")
 // CHECK:STDOUT: !12 = !DILocation(line: 334, column: 5, scope: !10)
 // CHECK:STDOUT: !13 = !DILocation(line: 332, column: 3, scope: !10)
-// CHECK:STDOUT: !14 = distinct !DISubprogram(name: "Op", linkageName: "_COp:thunk.Int.Core:AddAssignWith.Core.abc639a111145970", scope: null, file: !11, line: 268, type: !5, spFlags: DISPFlagDefinition, unit: !2)
+// CHECK:STDOUT: !14 = distinct !DISubprogram(name: "Op", linkageName: "_COp:thunk.Int.Core:AddAssignWith.Core.81406e440463ef1d", scope: null, file: !11, line: 268, type: !5, spFlags: DISPFlagDefinition, unit: !2)
 // CHECK:STDOUT: !15 = !DILocation(line: 4294967295, scope: !14)
 // CHECK:STDOUT: !16 = !DILocation(line: 268, column: 3, scope: !14)
 // CHECK:STDOUT: !17 = distinct !DISubprogram(name: "Convert", linkageName: "_CConvert.8b3d5d6a6c17be04:ImplicitAs.Core.b88d1103f417c6d4", scope: null, file: !18, line: 23, type: !5, spFlags: DISPFlagDefinition, unit: !2)

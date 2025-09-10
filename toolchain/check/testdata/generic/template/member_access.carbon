@@ -495,7 +495,7 @@ fn Test(e: E) {
 // CHECK:STDOUT:   %F.a8a: type = class_type @F.loc15 [concrete]
 // CHECK:STDOUT:   %Destroy.type: type = facet_type <@Destroy> [concrete]
 // CHECK:STDOUT:   %pattern_type.f6d: type = pattern_type auto [concrete]
-// CHECK:STDOUT:   %Destroy.impl_witness.51a: <witness> = impl_witness @F.loc15.%Destroy.impl_witness_table [concrete]
+// CHECK:STDOUT:   %Destroy.impl_witness.6fa: <witness> = impl_witness @F.loc15.%Destroy.impl_witness_table [concrete]
 // CHECK:STDOUT:   %ptr.01c: type = ptr_type %F.a8a [concrete]
 // CHECK:STDOUT:   %pattern_type.463: type = pattern_type %ptr.01c [concrete]
 // CHECK:STDOUT:   %F.as.Destroy.impl.Op.type: type = fn_type @F.as.Destroy.impl.Op [concrete]
@@ -503,7 +503,7 @@ fn Test(e: E) {
 // CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [concrete]
 // CHECK:STDOUT:   %complete_type.357: <witness> = complete_type_witness %empty_struct_type [concrete]
 // CHECK:STDOUT:   %E.elem: type = unbound_element_type %E, %F.a8a [concrete]
-// CHECK:STDOUT:   %Destroy.impl_witness.c1f: <witness> = impl_witness @E.%Destroy.impl_witness_table [concrete]
+// CHECK:STDOUT:   %Destroy.impl_witness.6cf: <witness> = impl_witness @E.%Destroy.impl_witness_table [concrete]
 // CHECK:STDOUT:   %ptr.742: type = ptr_type %E [concrete]
 // CHECK:STDOUT:   %pattern_type.88c: type = pattern_type %ptr.742 [concrete]
 // CHECK:STDOUT:   %E.as.Destroy.impl.Op.type: type = fn_type @E.as.Destroy.impl.Op [concrete]
@@ -621,7 +621,7 @@ fn Test(e: E) {
 // CHECK:STDOUT:   %Self.ref: type = name_ref Self, constants.%E [concrete = constants.%E]
 // CHECK:STDOUT:   impl_decl @E.as.Destroy.impl [concrete] {} {}
 // CHECK:STDOUT:   %Destroy.impl_witness_table = impl_witness_table (@E.as.Destroy.impl.%E.as.Destroy.impl.Op.decl), @E.as.Destroy.impl [concrete]
-// CHECK:STDOUT:   %Destroy.impl_witness: <witness> = impl_witness %Destroy.impl_witness_table [concrete = constants.%Destroy.impl_witness.c1f]
+// CHECK:STDOUT:   %Destroy.impl_witness: <witness> = impl_witness %Destroy.impl_witness_table [concrete = constants.%Destroy.impl_witness.6cf]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness constants.%struct_type.n.e4c [concrete = constants.%complete_type.5ba]
 // CHECK:STDOUT:   complete_type_witness = %complete_type
 // CHECK:STDOUT:
@@ -635,7 +635,7 @@ fn Test(e: E) {
 // CHECK:STDOUT:   %Self.ref: type = name_ref Self, constants.%F.a8a [concrete = constants.%F.a8a]
 // CHECK:STDOUT:   impl_decl @F.as.Destroy.impl [concrete] {} {}
 // CHECK:STDOUT:   %Destroy.impl_witness_table = impl_witness_table (@F.as.Destroy.impl.%F.as.Destroy.impl.Op.decl), @F.as.Destroy.impl [concrete]
-// CHECK:STDOUT:   %Destroy.impl_witness: <witness> = impl_witness %Destroy.impl_witness_table [concrete = constants.%Destroy.impl_witness.51a]
+// CHECK:STDOUT:   %Destroy.impl_witness: <witness> = impl_witness %Destroy.impl_witness_table [concrete = constants.%Destroy.impl_witness.6fa]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness constants.%empty_struct_type [concrete = constants.%complete_type.357]
 // CHECK:STDOUT:   complete_type_witness = %complete_type
 // CHECK:STDOUT:
