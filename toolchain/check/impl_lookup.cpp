@@ -647,20 +647,13 @@ namespace {
 // match.
 class ImportImplFilter {
  public:
-  explicit ImportImplFilter(Context& context,
+  explicit ImportImplFilter(Context& context, SemIR::ImportIRId import_ir_id,
                             SemIR::SpecificInterface interface)
       : context_(&context),
         interface_id_(interface.interface_id),
-        import_ir_id_(SemIR::ImportIRId::None),
-        import_ir_(nullptr),
+        import_ir_id_(import_ir_id),
+        import_ir_(context_->import_irs().Get(import_ir_id).sem_ir),
         cached_import_interface_id_(SemIR::InterfaceId::None) {}
-
-  // Prepare to filter impls imported from the given IR.
-  auto ResetForImportIR(SemIR::ImportIRId import_ir_id) -> void {
-    import_ir_id_ = import_ir_id;
-    import_ir_ = context_->import_irs().Get(import_ir_id).sem_ir;
-    cached_import_interface_id_ = SemIR::InterfaceId::None;
-  }
 
   // Returns whether the given impl is potentially relevant for the current
   // query.
@@ -737,11 +730,10 @@ static auto CollectCandidateImplsForQuery(
   auto import_irs = FindAssociatedImportIRs(context, query_self_const_id,
                                             query_specific_interface);
 
-  // Instead of importing all impls, only import ones that are in some way
-  // connected to this query.
-  ImportImplFilter filter(context, query_specific_interface);
   for (auto import_ir_id : import_irs) {
-    filter.ResetForImportIR(import_ir_id);
+    // Instead of importing all impls, only import ones that are in some way
+    // connected to this query.
+    ImportImplFilter filter(context, import_ir_id, query_specific_interface);
     for (auto [import_impl_id, _] :
          context.import_irs().Get(import_ir_id).sem_ir->impls().enumerate()) {
       if (filter.IsRelevantImpl(import_impl_id)) {
