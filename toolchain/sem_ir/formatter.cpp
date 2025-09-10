@@ -76,32 +76,33 @@ auto Formatter::Format() -> void {
       sem_ir_->inst_blocks().GetOrEmpty(sem_ir_->top_inst_block_id()),
       /*use_tentative_output_scopes=*/false);
 
-  for (auto [id, _] : sem_ir_->interfaces().enumerate()) {
-    FormatInterface(id);
+  for (const auto& [id, interface] : sem_ir_->interfaces().enumerate()) {
+    FormatInterface(id, interface);
   }
 
-  for (auto [id, _] : sem_ir_->associated_constants().enumerate()) {
-    FormatAssociatedConstant(id);
+  for (const auto& [id, assoc_const] :
+       sem_ir_->associated_constants().enumerate()) {
+    FormatAssociatedConstant(id, assoc_const);
   }
 
-  for (auto [id, _] : sem_ir_->impls().enumerate()) {
-    FormatImpl(id);
+  for (const auto& [id, impl] : sem_ir_->impls().enumerate()) {
+    FormatImpl(id, impl);
   }
 
-  for (auto [id, _] : sem_ir_->classes().enumerate()) {
-    FormatClass(id);
+  for (const auto& [id, class_info] : sem_ir_->classes().enumerate()) {
+    FormatClass(id, class_info);
   }
 
-  for (auto [id, _] : sem_ir_->vtables().enumerate()) {
-    FormatVtable(id);
+  for (const auto& [id, vtable] : sem_ir_->vtables().enumerate()) {
+    FormatVtable(id, vtable);
   }
 
-  for (auto [id, _] : sem_ir_->functions().enumerate()) {
-    FormatFunction(id);
+  for (const auto& [id, function] : sem_ir_->functions().enumerate()) {
+    FormatFunction(id, function);
   }
 
-  for (auto [id, _] : sem_ir_->specifics().enumerate()) {
-    FormatSpecific(id);
+  for (const auto& [id, specific] : sem_ir_->specifics().enumerate()) {
+    FormatSpecific(id, specific);
   }
 
   out_ << "\n";
@@ -330,8 +331,7 @@ auto Formatter::FormatTopLevelScopeIfUsed(InstNamer::ScopeId scope_id,
   indent_ -= 2;
 }
 
-auto Formatter::FormatClass(ClassId id) -> void {
-  const Class& class_info = sem_ir_->classes().Get(id);
+auto Formatter::FormatClass(ClassId id, const Class& class_info) -> void {
   if (!ShouldFormatEntity(class_info)) {
     return;
   }
@@ -365,8 +365,7 @@ auto Formatter::FormatClass(ClassId id) -> void {
   FormatEntityEnd(class_info.generic_id);
 }
 
-auto Formatter::FormatVtable(VtableId id) -> void {
-  const Vtable& vtable_info = sem_ir_->vtables().Get(id);
+auto Formatter::FormatVtable(VtableId id, const Vtable& vtable_info) -> void {
   out_ << '\n';
   Indent();
   out_ << "vtable ";
@@ -383,8 +382,8 @@ auto Formatter::FormatVtable(VtableId id) -> void {
   out_ << '\n';
 }
 
-auto Formatter::FormatInterface(InterfaceId id) -> void {
-  const Interface& interface_info = sem_ir_->interfaces().Get(id);
+auto Formatter::FormatInterface(InterfaceId id, const Interface& interface_info)
+    -> void {
   if (!ShouldFormatEntity(interface_info)) {
     return;
   }
@@ -418,9 +417,9 @@ auto Formatter::FormatInterface(InterfaceId id) -> void {
   FormatEntityEnd(interface_info.generic_id);
 }
 
-auto Formatter::FormatAssociatedConstant(AssociatedConstantId id) -> void {
-  const AssociatedConstant& assoc_const =
-      sem_ir_->associated_constants().Get(id);
+auto Formatter::FormatAssociatedConstant(AssociatedConstantId id,
+                                         const AssociatedConstant& assoc_const)
+    -> void {
   if (!ShouldFormatEntity(assoc_const.decl_id)) {
     return;
   }
@@ -443,8 +442,7 @@ auto Formatter::FormatAssociatedConstant(AssociatedConstantId id) -> void {
   FormatEntityEnd(assoc_const.generic_id);
 }
 
-auto Formatter::FormatImpl(ImplId id) -> void {
-  const Impl& impl_info = sem_ir_->impls().Get(id);
+auto Formatter::FormatImpl(ImplId id, const Impl& impl_info) -> void {
   if (!ShouldFormatEntity(impl_info)) {
     return;
   }
@@ -485,8 +483,7 @@ auto Formatter::FormatImpl(ImplId id) -> void {
   FormatEntityEnd(impl_info.generic_id);
 }
 
-auto Formatter::FormatFunction(FunctionId id) -> void {
-  const Function& fn = sem_ir_->functions().Get(id);
+auto Formatter::FormatFunction(FunctionId id, const Function& fn) -> void {
   if (!ShouldFormatEntity(fn)) {
     return;
   }
@@ -581,8 +578,8 @@ auto Formatter::FormatSpecificRegion(const Generic& generic,
   }
 }
 
-auto Formatter::FormatSpecific(SpecificId id) -> void {
-  const auto& specific = sem_ir_->specifics().Get(id);
+auto Formatter::FormatSpecific(SpecificId id, const Specific& specific)
+    -> void {
   const auto& generic = sem_ir_->generics().Get(specific.generic_id);
   if (!ShouldFormatEntity(generic.decl_id)) {
     // Omit specifics if we also omitted the generic.
