@@ -118,10 +118,10 @@ auto Internal::FileRefBase::WriteFileFromString(llvm::StringRef str)
 // it on macOS where the more efficient direct use of `clock_nanosleep` isn't
 // available.
 [[maybe_unused]]
-static auto SleepMacos(Duration sleep_nanos) -> void {
-  TimePoint stop = Clock::now() + sleep_nanos;
+static auto SleepMacos(Duration sleep) -> void {
+  TimePoint stop = Clock::now() + sleep;
 
-  timespec sleep_ts = Internal::DurationToTimespec(sleep_nanos);
+  timespec sleep_ts = Internal::DurationToTimespec(sleep);
   for (;;) {
     timespec rem_sleep_ts = {};
     int result = nanosleep(&sleep_ts, &rem_sleep_ts);
@@ -149,11 +149,11 @@ static auto SleepMacos(Duration sleep_nanos) -> void {
   }
 }
 
-static auto Sleep(Duration sleep_nanos) -> void {
+static auto Sleep(Duration sleep) -> void {
   // For every platform but macOS we can sleep directly on an absolute time.
 #if __APPLE__
   // On Apple platforms, dispatch to a specialized routine.
-  SleepMacos(sleep_nanos);
+  SleepMacos(sleep);
 #else
 
   // We use `clock_gettime` instead of the filesystem `Clock` or some other
@@ -172,12 +172,12 @@ static auto Sleep(Duration sleep_nanos) -> void {
   //
   // Note that our `Duration` uses `__int128` to avoid worrying about running
   // out of precision to represent the final deadline.
-  Duration nano_t = std::chrono::seconds(ts.tv_sec);
-  nano_t += std::chrono::nanoseconds(ts.tv_nsec);
-  nano_t += sleep_nanos;
+  Duration stop_time = std::chrono::seconds(ts.tv_sec);
+  stop_time += std::chrono::nanoseconds(ts.tv_nsec);
+  stop_time += sleep;
 
   // Now convert back to timespec.
-  ts = Internal::DurationToTimespec(nano_t);
+  ts = Internal::DurationToTimespec(stop_time);
 
   do {
     result = clock_nanosleep(CLOCK_MONOTONIC, TIMER_ABSTIME, &ts, nullptr);
