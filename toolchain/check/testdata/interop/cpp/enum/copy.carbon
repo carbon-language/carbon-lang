@@ -38,8 +38,8 @@ fn F() {
 // CHECK:STDOUT:   %pattern_type.ebf: type = pattern_type %Enum [concrete]
 // CHECK:STDOUT:   %int_0: %Enum = int_value 0 [concrete]
 // CHECK:STDOUT:   %int_1: %Enum = int_value 1 [concrete]
-// CHECK:STDOUT:   %T.as.Destroy.impl.Op.type.6f4: type = fn_type @T.as.Destroy.impl.Op, @T.as.Destroy.impl(%Enum) [concrete]
-// CHECK:STDOUT:   %T.as.Destroy.impl.Op.911: %T.as.Destroy.impl.Op.type.6f4 = struct_value () [concrete]
+// CHECK:STDOUT:   %T.as.Destroy.impl.Op.type.664: type = fn_type @T.as.Destroy.impl.Op, @T.as.Destroy.impl(%Enum) [concrete]
+// CHECK:STDOUT:   %T.as.Destroy.impl.Op.bbe: %T.as.Destroy.impl.Op.type.664 = struct_value () [concrete]
 // CHECK:STDOUT:   %ptr.47b: type = ptr_type %Enum [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -78,7 +78,7 @@ fn F() {
 // CHECK:STDOUT:   %Enum.ref.loc10: type = name_ref Enum, imports.%Enum.decl [concrete = constants.%Enum]
 // CHECK:STDOUT:   %b.ref: %Enum = name_ref b, imports.%int_1 [concrete = constants.%int_1]
 // CHECK:STDOUT:   assign %a.ref.loc10, %b.ref
-// CHECK:STDOUT:   %T.as.Destroy.impl.Op.bound: <bound method> = bound_method %a.var, constants.%T.as.Destroy.impl.Op.911
+// CHECK:STDOUT:   %T.as.Destroy.impl.Op.bound: <bound method> = bound_method %a.var, constants.%T.as.Destroy.impl.Op.bbe
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT:   %bound_method: <bound method> = bound_method %a.var, %T.as.Destroy.impl.Op.specific_fn
 // CHECK:STDOUT:   %addr: %ptr.47b = addr_of %a.var

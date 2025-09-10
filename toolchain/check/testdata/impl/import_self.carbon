@@ -120,11 +120,11 @@ fn F(x: (), y: ()) -> () {
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [concrete]
 // CHECK:STDOUT:   %Add.type: type = facet_type <@Add> [concrete]
-// CHECK:STDOUT:   %Self.b3d: %Add.type = bind_symbolic_name Self, 0 [symbolic]
+// CHECK:STDOUT:   %Self.365: %Add.type = bind_symbolic_name Self, 0 [symbolic]
 // CHECK:STDOUT:   %Add.Op.type: type = fn_type @Add.Op [concrete]
 // CHECK:STDOUT:   %Add.Op: %Add.Op.type = struct_value () [concrete]
-// CHECK:STDOUT:   %Self.as_type.f73: type = facet_access_type %Self.b3d [symbolic]
-// CHECK:STDOUT:   %pattern_type.8f9: type = pattern_type %Self.as_type.f73 [symbolic]
+// CHECK:STDOUT:   %Self.as_type.3c7: type = facet_access_type %Self.365 [symbolic]
+// CHECK:STDOUT:   %pattern_type.2f8: type = pattern_type %Self.as_type.3c7 [symbolic]
 // CHECK:STDOUT:   %Add.impl_witness: <witness> = impl_witness file.%Add.impl_witness_table [concrete]
 // CHECK:STDOUT:   %pattern_type.cb1: type = pattern_type %empty_tuple.type [concrete]
 // CHECK:STDOUT:   %empty_tuple.type.as.Add.impl.Op.type: type = fn_type @empty_tuple.type.as.Add.impl.Op [concrete]
@@ -135,12 +135,12 @@ fn F(x: (), y: ()) -> () {
 // CHECK:STDOUT:   %F: %F.type = struct_value () [concrete]
 // CHECK:STDOUT:   %Add.assoc_type: type = assoc_entity_type @Add [concrete]
 // CHECK:STDOUT:   %assoc0.5ca: %Add.assoc_type = assoc_entity element0, imports.%Main.import_ref.5a3 [concrete]
-// CHECK:STDOUT:   %.59e: type = fn_type_with_self_type %Add.Op.type, %Add.facet [concrete]
+// CHECK:STDOUT:   %.589: type = fn_type_with_self_type %Add.Op.type, %Add.facet [concrete]
 // CHECK:STDOUT:   %Destroy.type: type = facet_type <@Destroy> [concrete]
-// CHECK:STDOUT:   %T.as.Destroy.impl.Op.type.a63: type = fn_type @T.as.Destroy.impl.Op, @T.as.Destroy.impl(%empty_tuple.type) [concrete]
-// CHECK:STDOUT:   %T.as.Destroy.impl.Op.ea3: %T.as.Destroy.impl.Op.type.a63 = struct_value () [concrete]
+// CHECK:STDOUT:   %T.as.Destroy.impl.Op.type.abd: type = fn_type @T.as.Destroy.impl.Op, @T.as.Destroy.impl(%empty_tuple.type) [concrete]
+// CHECK:STDOUT:   %T.as.Destroy.impl.Op.bae: %T.as.Destroy.impl.Op.type.abd = struct_value () [concrete]
 // CHECK:STDOUT:   %ptr.843: type = ptr_type %empty_tuple.type [concrete]
-// CHECK:STDOUT:   %T.as.Destroy.impl.Op.specific_fn: <specific function> = specific_function %T.as.Destroy.impl.Op.ea3, @T.as.Destroy.impl.Op(%empty_tuple.type) [concrete]
+// CHECK:STDOUT:   %T.as.Destroy.impl.Op.specific_fn: <specific function> = specific_function %T.as.Destroy.impl.Op.bae, @T.as.Destroy.impl.Op(%empty_tuple.type) [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -150,10 +150,10 @@ fn F(x: (), y: ()) -> () {
 // CHECK:STDOUT:     import Core//prelude
 // CHECK:STDOUT:     import Core//prelude/...
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %Main.import_ref.07c = import_ref Main//a, inst19 [no loc], unloaded
+// CHECK:STDOUT:   %Main.import_ref.ff9 = import_ref Main//a, inst19 [no loc], unloaded
 // CHECK:STDOUT:   %Main.import_ref.f99: %Add.assoc_type = import_ref Main//a, loc5_41, loaded [concrete = constants.%assoc0.5ca]
 // CHECK:STDOUT:   %Main.Op: %Add.Op.type = import_ref Main//a, Op, loaded [concrete = constants.%Add.Op]
-// CHECK:STDOUT:   %Main.import_ref.e5e: %Add.type = import_ref Main//a, inst19 [no loc], loaded [symbolic = constants.%Self.b3d]
+// CHECK:STDOUT:   %Main.import_ref.2a7: %Add.type = import_ref Main//a, inst19 [no loc], loaded [symbolic = constants.%Self.365]
 // CHECK:STDOUT:   %Main.import_ref.5a3: %Add.Op.type = import_ref Main//a, loc5_41, loaded [concrete = constants.%Add.Op]
 // CHECK:STDOUT:   %Core.Destroy: type = import_ref Core//prelude/parts/destroy, Destroy, loaded [concrete = constants.%Destroy.type]
 // CHECK:STDOUT: }
@@ -202,7 +202,7 @@ fn F(x: (), y: ()) -> () {
 // CHECK:STDOUT:
 // CHECK:STDOUT: interface @Add [from "a.carbon"] {
 // CHECK:STDOUT: !members:
-// CHECK:STDOUT:   .Self = imports.%Main.import_ref.07c
+// CHECK:STDOUT:   .Self = imports.%Main.import_ref.ff9
 // CHECK:STDOUT:   .Op = imports.%Main.import_ref.f99
 // CHECK:STDOUT:   witness = (imports.%Main.Op)
 // CHECK:STDOUT: }
@@ -232,10 +232,10 @@ fn F(x: (), y: ()) -> () {
 // CHECK:STDOUT:   witness = file.%Add.impl_witness
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic fn @Add.Op(imports.%Main.import_ref.e5e: %Add.type) [from "a.carbon"] {
-// CHECK:STDOUT:   %Self: %Add.type = bind_symbolic_name Self, 0 [symbolic = %Self (constants.%Self.b3d)]
-// CHECK:STDOUT:   %Self.as_type: type = facet_access_type %Self [symbolic = %Self.as_type (constants.%Self.as_type.f73)]
-// CHECK:STDOUT:   %pattern_type: type = pattern_type %Self.as_type [symbolic = %pattern_type (constants.%pattern_type.8f9)]
+// CHECK:STDOUT: generic fn @Add.Op(imports.%Main.import_ref.2a7: %Add.type) [from "a.carbon"] {
+// CHECK:STDOUT:   %Self: %Add.type = bind_symbolic_name Self, 0 [symbolic = %Self (constants.%Self.365)]
+// CHECK:STDOUT:   %Self.as_type: type = facet_access_type %Self [symbolic = %Self.as_type (constants.%Self.as_type.3c7)]
+// CHECK:STDOUT:   %pattern_type: type = pattern_type %Self.as_type [symbolic = %pattern_type (constants.%pattern_type.2f8)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   fn;
 // CHECK:STDOUT: }
@@ -253,7 +253,7 @@ fn F(x: (), y: ()) -> () {
 // CHECK:STDOUT:   %x.ref: %empty_tuple.type = name_ref x, %x
 // CHECK:STDOUT:   %Add.ref: type = name_ref Add, imports.%Main.Add [concrete = constants.%Add.type]
 // CHECK:STDOUT:   %Op.ref: %Add.assoc_type = name_ref Op, imports.%Main.import_ref.f99 [concrete = constants.%assoc0.5ca]
-// CHECK:STDOUT:   %impl.elem0: %.59e = impl_witness_access constants.%Add.impl_witness, element0 [concrete = constants.%empty_tuple.type.as.Add.impl.Op]
+// CHECK:STDOUT:   %impl.elem0: %.589 = impl_witness_access constants.%Add.impl_witness, element0 [concrete = constants.%empty_tuple.type.as.Add.impl.Op]
 // CHECK:STDOUT:   %bound_method.loc11_11: <bound method> = bound_method %x.ref, %impl.elem0
 // CHECK:STDOUT:   %y.ref: %empty_tuple.type = name_ref y, %y
 // CHECK:STDOUT:   %empty_tuple.type.as.Add.impl.Op.call: init %empty_tuple.type = call %bound_method.loc11_11(%x.ref, %y.ref)
@@ -261,18 +261,18 @@ fn F(x: (), y: ()) -> () {
 // CHECK:STDOUT:   %.loc11_22.2: ref %empty_tuple.type = temporary %.loc11_22.1, %empty_tuple.type.as.Add.impl.Op.call
 // CHECK:STDOUT:   %tuple: %empty_tuple.type = tuple_value () [concrete = constants.%empty_tuple]
 // CHECK:STDOUT:   %.loc11_23: %empty_tuple.type = converted %empty_tuple.type.as.Add.impl.Op.call, %tuple [concrete = constants.%empty_tuple]
-// CHECK:STDOUT:   %T.as.Destroy.impl.Op.bound: <bound method> = bound_method %.loc11_22.2, constants.%T.as.Destroy.impl.Op.ea3
-// CHECK:STDOUT:   %T.as.Destroy.impl.Op.specific_fn: <specific function> = specific_function constants.%T.as.Destroy.impl.Op.ea3, @T.as.Destroy.impl.Op(constants.%empty_tuple.type) [concrete = constants.%T.as.Destroy.impl.Op.specific_fn]
+// CHECK:STDOUT:   %T.as.Destroy.impl.Op.bound: <bound method> = bound_method %.loc11_22.2, constants.%T.as.Destroy.impl.Op.bae
+// CHECK:STDOUT:   %T.as.Destroy.impl.Op.specific_fn: <specific function> = specific_function constants.%T.as.Destroy.impl.Op.bae, @T.as.Destroy.impl.Op(constants.%empty_tuple.type) [concrete = constants.%T.as.Destroy.impl.Op.specific_fn]
 // CHECK:STDOUT:   %bound_method.loc11_22: <bound method> = bound_method %.loc11_22.2, %T.as.Destroy.impl.Op.specific_fn
 // CHECK:STDOUT:   %addr: %ptr.843 = addr_of %.loc11_22.2
 // CHECK:STDOUT:   %T.as.Destroy.impl.Op.call: init %empty_tuple.type = call %bound_method.loc11_22(%addr)
 // CHECK:STDOUT:   return %.loc11_23
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @Add.Op(constants.%Self.b3d) {
-// CHECK:STDOUT:   %Self => constants.%Self.b3d
-// CHECK:STDOUT:   %Self.as_type => constants.%Self.as_type.f73
-// CHECK:STDOUT:   %pattern_type => constants.%pattern_type.8f9
+// CHECK:STDOUT: specific @Add.Op(constants.%Self.365) {
+// CHECK:STDOUT:   %Self => constants.%Self.365
+// CHECK:STDOUT:   %Self.as_type => constants.%Self.as_type.3c7
+// CHECK:STDOUT:   %pattern_type => constants.%pattern_type.2f8
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Add.Op(constants.%Add.facet) {

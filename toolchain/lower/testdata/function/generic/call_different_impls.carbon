@@ -52,20 +52,20 @@ fn Run() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: define void @main() !dbg !12 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   call void @_CG.Main.2c436a64dfc3fd29(), !dbg !13
-// CHECK:STDOUT:   call void @_CG.Main.c124d41ebc08c32b(), !dbg !14
+// CHECK:STDOUT:   call void @_CG.Main.27d9156284bd9d70(), !dbg !13
+// CHECK:STDOUT:   call void @_CG.Main.47f2921af8bb5bef(), !dbg !14
 // CHECK:STDOUT:   ret void, !dbg !15
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: declare i32 @printf(ptr, ...)
 // CHECK:STDOUT:
-// CHECK:STDOUT: define linkonce_odr void @_CG.Main.2c436a64dfc3fd29() !dbg !16 {
+// CHECK:STDOUT: define linkonce_odr void @_CG.Main.27d9156284bd9d70() !dbg !16 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   call void @"_CF.X.Main:I.Main"(), !dbg !17
 // CHECK:STDOUT:   ret void, !dbg !18
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: define linkonce_odr void @_CG.Main.c124d41ebc08c32b() !dbg !19 {
+// CHECK:STDOUT: define linkonce_odr void @_CG.Main.47f2921af8bb5bef() !dbg !19 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   call void @"_CF.Y.Main:I.Main"(), !dbg !20
 // CHECK:STDOUT:   ret void, !dbg !21
@@ -93,9 +93,9 @@ fn Run() {
 // CHECK:STDOUT: !13 = !DILocation(line: 32, column: 3, scope: !12)
 // CHECK:STDOUT: !14 = !DILocation(line: 33, column: 3, scope: !12)
 // CHECK:STDOUT: !15 = !DILocation(line: 31, column: 1, scope: !12)
-// CHECK:STDOUT: !16 = distinct !DISubprogram(name: "G", linkageName: "_CG.Main.2c436a64dfc3fd29", scope: null, file: !3, line: 29, type: !5, spFlags: DISPFlagDefinition, unit: !2)
+// CHECK:STDOUT: !16 = distinct !DISubprogram(name: "G", linkageName: "_CG.Main.27d9156284bd9d70", scope: null, file: !3, line: 29, type: !5, spFlags: DISPFlagDefinition, unit: !2)
 // CHECK:STDOUT: !17 = !DILocation(line: 29, column: 15, scope: !16)
 // CHECK:STDOUT: !18 = !DILocation(line: 29, column: 1, scope: !16)
-// CHECK:STDOUT: !19 = distinct !DISubprogram(name: "G", linkageName: "_CG.Main.c124d41ebc08c32b", scope: null, file: !3, line: 29, type: !5, spFlags: DISPFlagDefinition, unit: !2)
+// CHECK:STDOUT: !19 = distinct !DISubprogram(name: "G", linkageName: "_CG.Main.47f2921af8bb5bef", scope: null, file: !3, line: 29, type: !5, spFlags: DISPFlagDefinition, unit: !2)
 // CHECK:STDOUT: !20 = !DILocation(line: 29, column: 15, scope: !19)
 // CHECK:STDOUT: !21 = !DILocation(line: 29, column: 1, scope: !19)

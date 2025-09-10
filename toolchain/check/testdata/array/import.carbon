@@ -68,8 +68,8 @@ fn F() -> array(i32, 1) {
 // CHECK:STDOUT:   %int_42: Core.IntLiteral = int_value 42 [concrete]
 // CHECK:STDOUT:   %array_type: type = array_type %int_42, %i32 [concrete]
 // CHECK:STDOUT:   %ptr.830: type = ptr_type %array_type [concrete]
-// CHECK:STDOUT:   %T.as.Destroy.impl.Op.type.b8c: type = fn_type @T.as.Destroy.impl.Op, @T.as.Destroy.impl(%array_type) [concrete]
-// CHECK:STDOUT:   %T.as.Destroy.impl.Op.552: %T.as.Destroy.impl.Op.type.b8c = struct_value () [concrete]
+// CHECK:STDOUT:   %T.as.Destroy.impl.Op.type.886: type = fn_type @T.as.Destroy.impl.Op, @T.as.Destroy.impl(%array_type) [concrete]
+// CHECK:STDOUT:   %T.as.Destroy.impl.Op.923: %T.as.Destroy.impl.Op.type.886 = struct_value () [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -87,7 +87,7 @@ fn F() -> array(i32, 1) {
 // CHECK:STDOUT:   %i32.loc6: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
 // CHECK:STDOUT:   %.loc6_15.1: ref %i32 = array_index %.loc6_12.2, %n.ref
 // CHECK:STDOUT:   %.loc6_15.2: %i32 = bind_value %.loc6_15.1
-// CHECK:STDOUT:   %T.as.Destroy.impl.Op.bound: <bound method> = bound_method %.loc6_12.2, constants.%T.as.Destroy.impl.Op.552
+// CHECK:STDOUT:   %T.as.Destroy.impl.Op.bound: <bound method> = bound_method %.loc6_12.2, constants.%T.as.Destroy.impl.Op.923
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT:   %bound_method: <bound method> = bound_method %.loc6_12.2, %T.as.Destroy.impl.Op.specific_fn
 // CHECK:STDOUT:   %addr: %ptr.830 = addr_of %.loc6_12.2
