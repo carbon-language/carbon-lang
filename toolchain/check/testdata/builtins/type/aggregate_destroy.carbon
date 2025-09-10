@@ -41,6 +41,7 @@ interface DestroyLike {
 class C {}
 
 impl C as DestroyLike {
+  // TODO: This should fail because it has the wrong type.
   fn Op[addr self: Self*]() = "type.aggregate_destroy";
 }
 

@@ -150,7 +150,7 @@ fn EmptyStruct(Y:! J where .Self == {});
 // now there is no support for `==` constraints so it rejects it as an
 // "other currently unsupported constraint."
 fn NotEmptyStruct() {
-  // CHECK:STDERR: fail_todo_enforce_equality_constraint.carbon:[[@LINE+7]]:3: error: cannot convert type `C` into type implementing `J where ...` [ConversionFailureTypeToFacet]
+  // CHECK:STDERR: fail_todo_enforce_equality_constraint.carbon:[[@LINE+7]]:3: error: cannot convert type `C` into type implementing `J where...` [ConversionFailureTypeToFacet]
   // CHECK:STDERR:   EmptyStruct(C);
   // CHECK:STDERR:   ^~~~~~~~~~~~~~
   // CHECK:STDERR: fail_todo_enforce_equality_constraint.carbon:[[@LINE-9]]:16: note: initializing generic parameter `Y` declared here [InitializingGenericParam]
@@ -308,9 +308,9 @@ fn F() {
 // CHECK:STDOUT:   %assoc0: %I.assoc_type = assoc_entity element0, @I.%Member [concrete]
 // CHECK:STDOUT:   %.Self.92b: %I.type = bind_symbolic_name .Self [symbolic_self]
 // CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [concrete]
-// CHECK:STDOUT:   %I_where.type.122: type = facet_type <@I where TODO> [concrete]
-// CHECK:STDOUT:   %U: %I_where.type.122 = bind_symbolic_name U, 0 [symbolic]
-// CHECK:STDOUT:   %pattern_type.fc3: type = pattern_type %I_where.type.122 [concrete]
+// CHECK:STDOUT:   %I_where.type.950: type = facet_type <@I where TODO> [concrete]
+// CHECK:STDOUT:   %U: %I_where.type.950 = bind_symbolic_name U, 0 [symbolic]
+// CHECK:STDOUT:   %pattern_type.71c: type = pattern_type %I_where.type.950 [concrete]
 // CHECK:STDOUT:   %EqualEqual.type: type = fn_type @EqualEqual [concrete]
 // CHECK:STDOUT:   %EqualEqual: %EqualEqual.type = struct_value () [concrete]
 // CHECK:STDOUT:   %.Self.991: %J.type = bind_symbolic_name .Self [symbolic_self]
@@ -323,9 +323,9 @@ fn F() {
 // CHECK:STDOUT:   %.Self.as_type.154: type = facet_access_type %.Self.92b [symbolic_self]
 // CHECK:STDOUT:   %I.lookup_impl_witness: <witness> = lookup_impl_witness %.Self.92b, @I [symbolic_self]
 // CHECK:STDOUT:   %impl.elem0: type = impl_witness_access %I.lookup_impl_witness, element0 [symbolic_self]
-// CHECK:STDOUT:   %I_where.type.d59: type = facet_type <@I where .Self impls @J and TODO> [concrete]
-// CHECK:STDOUT:   %W: %I_where.type.d59 = bind_symbolic_name W, 0 [symbolic]
-// CHECK:STDOUT:   %pattern_type.9fb: type = pattern_type %I_where.type.d59 [concrete]
+// CHECK:STDOUT:   %I_where.type.fce: type = facet_type <@I where .Self impls @J and TODO> [concrete]
+// CHECK:STDOUT:   %W: %I_where.type.fce = bind_symbolic_name W, 0 [symbolic]
+// CHECK:STDOUT:   %pattern_type.c04: type = pattern_type %I_where.type.fce [concrete]
 // CHECK:STDOUT:   %And.type: type = fn_type @And [concrete]
 // CHECK:STDOUT:   %And: %And.type = struct_value () [concrete]
 // CHECK:STDOUT: }
@@ -335,20 +335,20 @@ fn F() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   %EqualEqual.decl: %EqualEqual.type = fn_decl @EqualEqual [concrete = constants.%EqualEqual] {
-// CHECK:STDOUT:     %U.patt: %pattern_type.fc3 = symbolic_binding_pattern U, 0 [concrete]
+// CHECK:STDOUT:     %U.patt: %pattern_type.71c = symbolic_binding_pattern U, 0 [concrete]
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %.loc12_21.1: type = splice_block %.loc12_21.2 [concrete = constants.%I_where.type.122] {
+// CHECK:STDOUT:     %.loc12_21.1: type = splice_block %.loc12_21.2 [concrete = constants.%I_where.type.950] {
 // CHECK:STDOUT:       <elided>
 // CHECK:STDOUT:       %I.ref: type = name_ref I, file.%I.decl [concrete = constants.%I.type]
 // CHECK:STDOUT:       <elided>
 // CHECK:STDOUT:       %.Self.ref: %I.type = name_ref .Self, %.Self.2 [symbolic_self = constants.%.Self.92b]
 // CHECK:STDOUT:       %.loc12_37: %empty_tuple.type = tuple_literal ()
-// CHECK:STDOUT:       %.loc12_21.2: type = where_expr %.Self.2 [concrete = constants.%I_where.type.122] {
+// CHECK:STDOUT:       %.loc12_21.2: type = where_expr %.Self.2 [concrete = constants.%I_where.type.950] {
 // CHECK:STDOUT:         requirement_base_facet_type constants.%I.type
 // CHECK:STDOUT:         requirement_equivalent %.Self.ref, %.loc12_37
 // CHECK:STDOUT:       }
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %U.loc12_15.2: %I_where.type.122 = bind_symbolic_name U, 0 [symbolic = %U.loc12_15.1 (constants.%U)]
+// CHECK:STDOUT:     %U.loc12_15.2: %I_where.type.950 = bind_symbolic_name U, 0 [symbolic = %U.loc12_15.1 (constants.%U)]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Impls.decl: %Impls.type = fn_decl @Impls [concrete = constants.%Impls] {
 // CHECK:STDOUT:     %V.patt: %pattern_type.8fd = symbolic_binding_pattern V, 0 [concrete]
@@ -369,9 +369,9 @@ fn F() {
 // CHECK:STDOUT:     %V.loc14_10.2: %J_where.type = bind_symbolic_name V, 0 [symbolic = %V.loc14_10.1 (constants.%V)]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %And.decl: %And.type = fn_decl @And [concrete = constants.%And] {
-// CHECK:STDOUT:     %W.patt: %pattern_type.9fb = symbolic_binding_pattern W, 0 [concrete]
+// CHECK:STDOUT:     %W.patt: %pattern_type.c04 = symbolic_binding_pattern W, 0 [concrete]
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %.loc16_14.1: type = splice_block %.loc16_14.2 [concrete = constants.%I_where.type.d59] {
+// CHECK:STDOUT:     %.loc16_14.1: type = splice_block %.loc16_14.2 [concrete = constants.%I_where.type.fce] {
 // CHECK:STDOUT:       <elided>
 // CHECK:STDOUT:       %I.ref: type = name_ref I, file.%I.decl [concrete = constants.%I.type]
 // CHECK:STDOUT:       <elided>
@@ -385,18 +385,18 @@ fn F() {
 // CHECK:STDOUT:       %.loc16_38: type = converted %.Self.ref.loc16_38, %.Self.as_type.loc16_38 [symbolic_self = constants.%.Self.as_type.154]
 // CHECK:STDOUT:       %impl.elem0: type = impl_witness_access constants.%I.lookup_impl_witness, element0 [symbolic_self = constants.%impl.elem0]
 // CHECK:STDOUT:       %.loc16_50: %empty_tuple.type = tuple_literal ()
-// CHECK:STDOUT:       %.loc16_14.2: type = where_expr %.Self.2 [concrete = constants.%I_where.type.d59] {
+// CHECK:STDOUT:       %.loc16_14.2: type = where_expr %.Self.2 [concrete = constants.%I_where.type.fce] {
 // CHECK:STDOUT:         requirement_base_facet_type constants.%I.type
 // CHECK:STDOUT:         requirement_impls %.loc16_20, %J.ref
 // CHECK:STDOUT:         requirement_equivalent %impl.elem0, %.loc16_50
 // CHECK:STDOUT:       }
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %W.loc16_8.2: %I_where.type.d59 = bind_symbolic_name W, 0 [symbolic = %W.loc16_8.1 (constants.%W)]
+// CHECK:STDOUT:     %W.loc16_8.2: %I_where.type.fce = bind_symbolic_name W, 0 [symbolic = %W.loc16_8.1 (constants.%W)]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic fn @EqualEqual(%U.loc12_15.2: %I_where.type.122) {
-// CHECK:STDOUT:   %U.loc12_15.1: %I_where.type.122 = bind_symbolic_name U, 0 [symbolic = %U.loc12_15.1 (constants.%U)]
+// CHECK:STDOUT: generic fn @EqualEqual(%U.loc12_15.2: %I_where.type.950) {
+// CHECK:STDOUT:   %U.loc12_15.1: %I_where.type.950 = bind_symbolic_name U, 0 [symbolic = %U.loc12_15.1 (constants.%U)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   fn();
 // CHECK:STDOUT: }
@@ -407,8 +407,8 @@ fn F() {
 // CHECK:STDOUT:   fn();
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic fn @And(%W.loc16_8.2: %I_where.type.d59) {
-// CHECK:STDOUT:   %W.loc16_8.1: %I_where.type.d59 = bind_symbolic_name W, 0 [symbolic = %W.loc16_8.1 (constants.%W)]
+// CHECK:STDOUT: generic fn @And(%W.loc16_8.2: %I_where.type.fce) {
+// CHECK:STDOUT:   %W.loc16_8.1: %I_where.type.fce = bind_symbolic_name W, 0 [symbolic = %W.loc16_8.1 (constants.%W)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   fn();
 // CHECK:STDOUT: }

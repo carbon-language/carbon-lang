@@ -617,9 +617,10 @@ static auto GetConstantFacetTypeInfo(EvalContext& eval_context,
                                      SemIR::LocId loc_id,
                                      const SemIR::FacetTypeInfo& orig,
                                      Phase* phase) -> SemIR::FacetTypeInfo {
-  // TODO: Process other requirements.
-  SemIR::FacetTypeInfo info = {.special_requirements_mask =
-                                   orig.special_requirements_mask};
+  SemIR::FacetTypeInfo info = {
+      .special_requirement_mask = orig.special_requirement_mask,
+      // TODO: Process other requirements.
+      .other_requirements = orig.other_requirements};
 
   info.extend_constraints.reserve(orig.extend_constraints.size());
   for (const auto& interface : orig.extend_constraints) {
@@ -1659,8 +1660,8 @@ static auto MakeConstantForBuiltinCall(EvalContext& eval_context,
     case SemIR::BuiltinFunctionKind::TypeCanAggregateDestroy: {
       CARBON_CHECK(arg_ids.empty());
       auto id = eval_context.facet_types().Add(
-          {.special_requirements_mask = SemIR::FacetTypeInfo::
-               SpecialRequirement::TypeCanAggregateDestroy});
+          {.special_requirement_mask = SemIR::FacetTypeInfo::
+               SpecialRequirementMask::TypeCanAggregateDestroy});
       return MakeConstantResult(
           eval_context.context(),
           SemIR::FacetType{.type_id = SemIR::TypeType::TypeId,
@@ -2212,7 +2213,8 @@ auto TryEvalTypedInst<SemIR::WhereExpr>(EvalContext& eval_context,
           info.extend_constraints.append(base_info.extend_constraints);
           info.self_impls_constraints.append(base_info.self_impls_constraints);
           info.rewrite_constraints.append(base_info.rewrite_constraints);
-          info.special_requirements_mask |= base_info.special_requirements_mask;
+          info.special_requirement_mask |= base_info.special_requirement_mask;
+          info.other_requirements |= base_info.other_requirements;
         }
       } else if (auto rewrite =
                      eval_context.insts().TryGetAs<SemIR::RequirementRewrite>(
@@ -2250,18 +2252,16 @@ auto TryEvalTypedInst<SemIR::WhereExpr>(EvalContext& eval_context,
             // Other requirements are copied in.
             llvm::append_range(info.rewrite_constraints,
                                more_info.rewrite_constraints);
-            info.special_requirements_mask |=
-                more_info.special_requirements_mask;
+            info.special_requirement_mask |= more_info.special_requirement_mask;
+            info.other_requirements |= more_info.other_requirements;
           }
         } else {
           // TODO: Handle `impls` constraints beyond `.Self impls`.
-          info.special_requirements_mask |=
-              SemIR::FacetTypeInfo::SpecialRequirement::Other;
+          info.other_requirements = true;
         }
       } else {
         // TODO: Handle other requirements.
-        info.special_requirements_mask |=
-            SemIR::FacetTypeInfo::SpecialRequirement::Other;
+        info.other_requirements = true;
       }
     }
   }

@@ -90,7 +90,7 @@ fn F(T:! I where {} impls Core.ImplicitAs(.Self) and .V = {});
 
 fn CallF() {
   // TODO: This call should eventually work.
-  // CHECK:STDERR: fail_todo_constrained_fn.carbon:[[@LINE+7]]:3: error: cannot convert type `{}` into type implementing `I where .(I.V) = {} and ...` [ConversionFailureTypeToFacet]
+  // CHECK:STDERR: fail_todo_constrained_fn.carbon:[[@LINE+7]]:3: error: cannot convert type `{}` into type implementing `I where .(I.V) = {} and...` [ConversionFailureTypeToFacet]
   // CHECK:STDERR:   F({});
   // CHECK:STDERR:   ^~~~~
   // CHECK:STDERR: fail_todo_constrained_fn.carbon:[[@LINE-7]]:6: note: initializing generic parameter `T` declared here [InitializingGenericParam]
@@ -779,7 +779,7 @@ fn CallF() {
 // CHECK:STDOUT:   %empty_struct: %empty_struct_type = struct_value () [concrete]
 // CHECK:STDOUT:   %I_where.type: type = facet_type <@I where %impl.elem0 = %empty_struct and TODO> [concrete]
 // CHECK:STDOUT:   %T: %I_where.type = bind_symbolic_name T, 0 [symbolic]
-// CHECK:STDOUT:   %pattern_type.6a4: type = pattern_type %I_where.type [concrete]
+// CHECK:STDOUT:   %pattern_type.4fd: type = pattern_type %I_where.type [concrete]
 // CHECK:STDOUT:   %F.type: type = fn_type @F [concrete]
 // CHECK:STDOUT:   %F: %F.type = struct_value () [concrete]
 // CHECK:STDOUT:   %CallF.type: type = fn_type @CallF [concrete]
@@ -805,7 +805,7 @@ fn CallF() {
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %I.decl: type = interface_decl @I [concrete = constants.%I.type] {} {}
 // CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [concrete = constants.%F] {
-// CHECK:STDOUT:     %T.patt: %pattern_type.6a4 = symbolic_binding_pattern T, 0 [concrete]
+// CHECK:STDOUT:     %T.patt: %pattern_type.4fd = symbolic_binding_pattern T, 0 [concrete]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %.loc8_12.1: type = splice_block %.loc8_12.2 [concrete = constants.%I_where.type] {
 // CHECK:STDOUT:       %.Self.1: type = bind_symbolic_name .Self [symbolic_self = constants.%.Self.644]

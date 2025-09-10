@@ -259,7 +259,7 @@ struct Worklist {
     add_constraints(facet_type.extend_constraints);
     add_constraints(facet_type.self_impls_constraints);
     add_constraints(facet_type.rewrite_constraints);
-    contents.push_back(facet_type.special_requirements_mask.value);
+    contents.push_back(facet_type.special_requirement_mask.value);
   }
 
   auto Add(GenericId generic_id) -> void {

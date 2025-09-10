@@ -229,8 +229,9 @@ static auto PopOperand(Context& context, Worklist& worklist,
       const auto& old_facet_type_info =
           context.facet_types().Get(facet_type_id);
       SemIR::FacetTypeInfo new_facet_type_info = {
-          .special_requirements_mask =
-              old_facet_type_info.special_requirements_mask};
+          .special_requirement_mask =
+              old_facet_type_info.special_requirement_mask,
+          .other_requirements = old_facet_type_info.other_requirements};
       // Since these were added to a stack, we get them back in reverse order.
       new_facet_type_info.rewrite_constraints.resize(
           old_facet_type_info.rewrite_constraints.size(),

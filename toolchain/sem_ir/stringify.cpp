@@ -326,15 +326,17 @@ class Stringifier {
         sem_ir_->facet_types().Get(inst.facet_type_id);
     // Output `where` restrictions.
     bool some_where = false;
-    if (facet_type_info.special_requirements_mask.has(
-            SemIR::FacetTypeInfo::SpecialRequirement::Other)) {
-      step_stack_->PushString(" ...");
+    if (facet_type_info.other_requirements) {
+      step_stack_->PushString("...");
       some_where = true;
     }
-    if (facet_type_info.special_requirements_mask.has(
-            SemIR::FacetTypeInfo::SpecialRequirement::
+    if (facet_type_info.special_requirement_mask.has(
+            SemIR::FacetTypeInfo::SpecialRequirementMask::
                 TypeCanAggregateDestroy)) {
-      step_stack_->PushString(" CanAggregateDestroy");
+      if (some_where) {
+        step_stack_->PushString(" and");
+      }
+      step_stack_->PushString(" .Self impls Core.CanAggregateDestroy");
       some_where = true;
     }
     for (auto rewrite : llvm::reverse(facet_type_info.rewrite_constraints)) {

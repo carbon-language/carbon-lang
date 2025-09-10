@@ -55,7 +55,7 @@ impl forall [U:! L] C(U) as M where .M0 = {} {}
 fn F(U:! type where C(.Self) impls (M where .M0 = {})) {}
 
 fn G(T:! L) {
-  // CHECK:STDERR: fail_todo_where_impls_tests_associated_constant_of_generic_type.carbon:[[@LINE+7]]:3: error: cannot convert type `T` that implements `L` into type implementing `type where ...` [ConversionFailureFacetToFacet]
+  // CHECK:STDERR: fail_todo_where_impls_tests_associated_constant_of_generic_type.carbon:[[@LINE+7]]:3: error: cannot convert type `T` that implements `L` into type implementing `type where...` [ConversionFailureFacetToFacet]
   // CHECK:STDERR:   F(T);
   // CHECK:STDERR:   ^~~~
   // CHECK:STDERR: fail_todo_where_impls_tests_associated_constant_of_generic_type.carbon:[[@LINE-6]]:6: note: initializing generic parameter `U` declared here [InitializingGenericParam]
@@ -81,7 +81,7 @@ impl forall [U:! L] C(U) as M where .M0 = () {}
 fn F(U:! type where C(.Self) impls (M where .M0 = {})) {}
 
 fn G(T:! L) {
-  // CHECK:STDERR: fail_where_impls_tests_associated_constant_of_generic_type_type_differs.carbon:[[@LINE+7]]:3: error: cannot convert type `T` that implements `L` into type implementing `type where ...` [ConversionFailureFacetToFacet]
+  // CHECK:STDERR: fail_where_impls_tests_associated_constant_of_generic_type_type_differs.carbon:[[@LINE+7]]:3: error: cannot convert type `T` that implements `L` into type implementing `type where...` [ConversionFailureFacetToFacet]
   // CHECK:STDERR:   F(T);
   // CHECK:STDERR:   ^~~~
   // CHECK:STDERR: fail_where_impls_tests_associated_constant_of_generic_type_type_differs.carbon:[[@LINE-6]]:6: note: initializing generic parameter `U` declared here [InitializingGenericParam]

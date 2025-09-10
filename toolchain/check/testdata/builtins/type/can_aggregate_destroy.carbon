@@ -46,7 +46,7 @@ fn CanAggregateDestroy() -> type = "type.can_aggregate_destroy";
 fn F(T:! CanAggregateDestroy()) {}
 
 fn G() {
-  // CHECK:STDERR: fail_type_mismatch.carbon:[[@LINE+7]]:3: error: cannot convert type `bool` into type implementing `type where CanAggregateDestroy` [ConversionFailureTypeToFacet]
+  // CHECK:STDERR: fail_type_mismatch.carbon:[[@LINE+7]]:3: error: cannot convert type `bool` into type implementing `type where .Self impls Core.CanAggregateDestroy` [ConversionFailureTypeToFacet]
   // CHECK:STDERR:   F(bool);
   // CHECK:STDERR:   ^~~~~~~
   // CHECK:STDERR: fail_type_mismatch.carbon:[[@LINE-6]]:6: note: initializing generic parameter `T` declared here [InitializingGenericParam]
@@ -60,14 +60,14 @@ fn G() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [concrete]
-// CHECK:STDOUT:   %type_where: type = facet_type <type where CanAggregateDestroy> [concrete]
+// CHECK:STDOUT:   %type_where: type = facet_type <type where .Self impls <CanAggregateDestroy>> [concrete]
 // CHECK:STDOUT:   %F.type: type = fn_type @F [concrete]
 // CHECK:STDOUT:   %F: %F.type = struct_value () [concrete]
-// CHECK:STDOUT:   %facet_value.7bb: %type_where = facet_value %empty_tuple.type, () [concrete]
-// CHECK:STDOUT:   %F.specific_fn.4da: <specific function> = specific_function %F, @F(%facet_value.7bb) [concrete]
+// CHECK:STDOUT:   %facet_value.80f: %type_where = facet_value %empty_tuple.type, () [concrete]
+// CHECK:STDOUT:   %F.specific_fn.b70: <specific function> = specific_function %F, @F(%facet_value.80f) [concrete]
 // CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [concrete]
-// CHECK:STDOUT:   %facet_value.f36: %type_where = facet_value %empty_struct_type, () [concrete]
-// CHECK:STDOUT:   %F.specific_fn.28e: <specific function> = specific_function %F, @F(%facet_value.f36) [concrete]
+// CHECK:STDOUT:   %facet_value.d70: %type_where = facet_value %empty_struct_type, () [concrete]
+// CHECK:STDOUT:   %F.specific_fn.ddb: <specific function> = specific_function %F, @F(%facet_value.d70) [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -77,15 +77,15 @@ fn G() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %F.ref.loc9: %F.type = name_ref F, file.%F.decl [concrete = constants.%F]
 // CHECK:STDOUT:   %.loc9_6: %empty_tuple.type = tuple_literal ()
-// CHECK:STDOUT:   %facet_value.loc9: %type_where = facet_value constants.%empty_tuple.type, () [concrete = constants.%facet_value.7bb]
-// CHECK:STDOUT:   %.loc9_7: %type_where = converted %.loc9_6, %facet_value.loc9 [concrete = constants.%facet_value.7bb]
-// CHECK:STDOUT:   %F.specific_fn.loc9: <specific function> = specific_function %F.ref.loc9, @F(constants.%facet_value.7bb) [concrete = constants.%F.specific_fn.4da]
+// CHECK:STDOUT:   %facet_value.loc9: %type_where = facet_value constants.%empty_tuple.type, () [concrete = constants.%facet_value.80f]
+// CHECK:STDOUT:   %.loc9_7: %type_where = converted %.loc9_6, %facet_value.loc9 [concrete = constants.%facet_value.80f]
+// CHECK:STDOUT:   %F.specific_fn.loc9: <specific function> = specific_function %F.ref.loc9, @F(constants.%facet_value.80f) [concrete = constants.%F.specific_fn.b70]
 // CHECK:STDOUT:   %F.call.loc9: init %empty_tuple.type = call %F.specific_fn.loc9()
 // CHECK:STDOUT:   %F.ref.loc10: %F.type = name_ref F, file.%F.decl [concrete = constants.%F]
 // CHECK:STDOUT:   %.loc10_6: %empty_struct_type = struct_literal ()
-// CHECK:STDOUT:   %facet_value.loc10: %type_where = facet_value constants.%empty_struct_type, () [concrete = constants.%facet_value.f36]
-// CHECK:STDOUT:   %.loc10_7: %type_where = converted %.loc10_6, %facet_value.loc10 [concrete = constants.%facet_value.f36]
-// CHECK:STDOUT:   %F.specific_fn.loc10: <specific function> = specific_function %F.ref.loc10, @F(constants.%facet_value.f36) [concrete = constants.%F.specific_fn.28e]
+// CHECK:STDOUT:   %facet_value.loc10: %type_where = facet_value constants.%empty_struct_type, () [concrete = constants.%facet_value.d70]
+// CHECK:STDOUT:   %.loc10_7: %type_where = converted %.loc10_6, %facet_value.loc10 [concrete = constants.%facet_value.d70]
+// CHECK:STDOUT:   %F.specific_fn.loc10: <specific function> = specific_function %F.ref.loc10, @F(constants.%facet_value.d70) [concrete = constants.%F.specific_fn.ddb]
 // CHECK:STDOUT:   %F.call.loc10: init %empty_tuple.type = call %F.specific_fn.loc10()
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
@@ -94,14 +94,14 @@ fn G() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [concrete]
-// CHECK:STDOUT:   %type_where: type = facet_type <type where CanAggregateDestroy> [concrete]
+// CHECK:STDOUT:   %type_where: type = facet_type <type where .Self impls <CanAggregateDestroy>> [concrete]
 // CHECK:STDOUT:   %F.type: type = fn_type @F [concrete]
 // CHECK:STDOUT:   %F: %F.type = struct_value () [concrete]
-// CHECK:STDOUT:   %facet_value.7bb: %type_where = facet_value %empty_tuple.type, () [concrete]
-// CHECK:STDOUT:   %F.specific_fn.4da: <specific function> = specific_function %F, @F(%facet_value.7bb) [concrete]
+// CHECK:STDOUT:   %facet_value.80f: %type_where = facet_value %empty_tuple.type, () [concrete]
+// CHECK:STDOUT:   %F.specific_fn.b70: <specific function> = specific_function %F, @F(%facet_value.80f) [concrete]
 // CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [concrete]
-// CHECK:STDOUT:   %facet_value.f36: %type_where = facet_value %empty_struct_type, () [concrete]
-// CHECK:STDOUT:   %F.specific_fn.28e: <specific function> = specific_function %F, @F(%facet_value.f36) [concrete]
+// CHECK:STDOUT:   %facet_value.d70: %type_where = facet_value %empty_struct_type, () [concrete]
+// CHECK:STDOUT:   %F.specific_fn.ddb: <specific function> = specific_function %F, @F(%facet_value.d70) [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -111,15 +111,15 @@ fn G() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %F.ref.loc9: %F.type = name_ref F, file.%F.decl [concrete = constants.%F]
 // CHECK:STDOUT:   %.loc9_6: %empty_tuple.type = tuple_literal ()
-// CHECK:STDOUT:   %facet_value.loc9: %type_where = facet_value constants.%empty_tuple.type, () [concrete = constants.%facet_value.7bb]
-// CHECK:STDOUT:   %.loc9_7: %type_where = converted %.loc9_6, %facet_value.loc9 [concrete = constants.%facet_value.7bb]
-// CHECK:STDOUT:   %F.specific_fn.loc9: <specific function> = specific_function %F.ref.loc9, @F(constants.%facet_value.7bb) [concrete = constants.%F.specific_fn.4da]
+// CHECK:STDOUT:   %facet_value.loc9: %type_where = facet_value constants.%empty_tuple.type, () [concrete = constants.%facet_value.80f]
+// CHECK:STDOUT:   %.loc9_7: %type_where = converted %.loc9_6, %facet_value.loc9 [concrete = constants.%facet_value.80f]
+// CHECK:STDOUT:   %F.specific_fn.loc9: <specific function> = specific_function %F.ref.loc9, @F(constants.%facet_value.80f) [concrete = constants.%F.specific_fn.b70]
 // CHECK:STDOUT:   %F.call.loc9: init %empty_tuple.type = call %F.specific_fn.loc9()
 // CHECK:STDOUT:   %F.ref.loc10: %F.type = name_ref F, file.%F.decl [concrete = constants.%F]
 // CHECK:STDOUT:   %.loc10_6: %empty_struct_type = struct_literal ()
-// CHECK:STDOUT:   %facet_value.loc10: %type_where = facet_value constants.%empty_struct_type, () [concrete = constants.%facet_value.f36]
-// CHECK:STDOUT:   %.loc10_7: %type_where = converted %.loc10_6, %facet_value.loc10 [concrete = constants.%facet_value.f36]
-// CHECK:STDOUT:   %F.specific_fn.loc10: <specific function> = specific_function %F.ref.loc10, @F(constants.%facet_value.f36) [concrete = constants.%F.specific_fn.28e]
+// CHECK:STDOUT:   %facet_value.loc10: %type_where = facet_value constants.%empty_struct_type, () [concrete = constants.%facet_value.d70]
+// CHECK:STDOUT:   %.loc10_7: %type_where = converted %.loc10_6, %facet_value.loc10 [concrete = constants.%facet_value.d70]
+// CHECK:STDOUT:   %F.specific_fn.loc10: <specific function> = specific_function %F.ref.loc10, @F(constants.%facet_value.d70) [concrete = constants.%F.specific_fn.ddb]
 // CHECK:STDOUT:   %F.call.loc10: init %empty_tuple.type = call %F.specific_fn.loc10()
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }

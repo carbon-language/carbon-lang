@@ -144,7 +144,7 @@ fn G(T:! type where C(()) impls I(.Self)) {}
 // CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [concrete]
 // CHECK:STDOUT:   %I_where.type: type = facet_type <@I where TODO> [concrete]
 // CHECK:STDOUT:   %T: %I_where.type = bind_symbolic_name T, 0 [symbolic]
-// CHECK:STDOUT:   %pattern_type.fc3: type = pattern_type %I_where.type [concrete]
+// CHECK:STDOUT:   %pattern_type.71c: type = pattern_type %I_where.type [concrete]
 // CHECK:STDOUT:   %PeriodSelf.type: type = fn_type @PeriodSelf [concrete]
 // CHECK:STDOUT:   %PeriodSelf: %PeriodSelf.type = struct_value () [concrete]
 // CHECK:STDOUT:   %.Self.as_type: type = facet_access_type %.Self.92b [symbolic_self]
@@ -165,7 +165,7 @@ fn G(T:! type where C(()) impls I(.Self)) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   %PeriodSelf.decl: %PeriodSelf.type = fn_decl @PeriodSelf [concrete = constants.%PeriodSelf] {
-// CHECK:STDOUT:     %T.patt: %pattern_type.fc3 = symbolic_binding_pattern T, 0 [concrete]
+// CHECK:STDOUT:     %T.patt: %pattern_type.71c = symbolic_binding_pattern T, 0 [concrete]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %.loc9_21.1: type = splice_block %.loc9_21.2 [concrete = constants.%I_where.type] {
 // CHECK:STDOUT:       <elided>
@@ -181,7 +181,7 @@ fn G(T:! type where C(()) impls I(.Self)) {}
 // CHECK:STDOUT:     %T.loc9_15.2: %I_where.type = bind_symbolic_name T, 0 [symbolic = %T.loc9_15.1 (constants.%T)]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %PeriodMember.decl: %PeriodMember.type = fn_decl @PeriodMember [concrete = constants.%PeriodMember] {
-// CHECK:STDOUT:     %U.patt: %pattern_type.fc3 = symbolic_binding_pattern U, 0 [concrete]
+// CHECK:STDOUT:     %U.patt: %pattern_type.71c = symbolic_binding_pattern U, 0 [concrete]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %.loc11_23.1: type = splice_block %.loc11_23.2 [concrete = constants.%I_where.type] {
 // CHECK:STDOUT:       <elided>

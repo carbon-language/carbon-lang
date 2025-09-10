@@ -188,8 +188,8 @@ static auto FindAndDiagnoseImplLookupCycle(
 // (as a constant value), and any special requirements.
 static auto GetInterfacesFromConstantId(
     Context& context, SemIR::ConstantId query_facet_type_const_id)
-    -> std::pair<llvm::SmallVector<SemIR::SpecificInterface>,
-                 SemIR::FacetTypeInfo::SpecialRequirement> {
+    -> std::tuple<llvm::SmallVector<SemIR::SpecificInterface>,
+                  SemIR::FacetTypeInfo::SpecialRequirementMask, bool> {
   auto facet_type_inst_id =
       context.constant_values().GetInstId(query_facet_type_const_id);
   auto facet_type_inst =
@@ -202,7 +202,8 @@ static auto GetInterfacesFromConstantId(
   // Returns a copy to avoid use-after-free when the identified_facet_types
   // store resizes.
   return {{interfaces_array_ref.begin(), interfaces_array_ref.end()},
-          facet_type_info.special_requirements_mask};
+          facet_type_info.special_requirement_mask,
+          facet_type_info.other_requirements};
 }
 
 static auto GetWitnessIdForImpl(Context& context, SemIR::LocId loc_id,
@@ -258,7 +259,8 @@ static auto GetWitnessIdForImpl(Context& context, SemIR::LocId loc_id,
   CARBON_CHECK(deduced_constraint_facet_type_info.extend_constraints.size() ==
                1);
 
-  if (!deduced_constraint_facet_type_info.special_requirements_mask.empty()) {
+  if (deduced_constraint_facet_type_info.other_requirements ||
+      !deduced_constraint_facet_type_info.special_requirement_mask.empty()) {
     return EvalImplLookupResult::MakeNone();
   }
 
@@ -585,15 +587,15 @@ auto LookupImplWitness(Context& context, SemIR::LocId loc_id,
     return SemIR::InstBlockIdOrError::MakeError();
   }
 
-  auto [interfaces, special_requirements_mask] =
+  auto [interfaces, special_requirement_mask, other_requirements] =
       GetInterfacesFromConstantId(context, query_facet_type_const_id);
-  if (special_requirements_mask.has(
-          SemIR::FacetTypeInfo::SpecialRequirement::Other)) {
+  if (other_requirements) {
     // TODO: Remove this when other requirements go away.
     return SemIR::InstBlockId::None;
   }
-  if (special_requirements_mask.has(
-          SemIR::FacetTypeInfo::SpecialRequirement::TypeCanAggregateDestroy) &&
+  if (special_requirement_mask.has(
+          SemIR::FacetTypeInfo::SpecialRequirementMask::
+              TypeCanAggregateDestroy) &&
       !TypeCanAggregateDestroy(context, query_self_const_id)) {
     return SemIR::InstBlockId::None;
   }
