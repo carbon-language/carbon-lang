@@ -5,7 +5,10 @@
 #include "common/filesystem.h"
 
 #include <fcntl.h>
+#include <time.h>  // NOLINT(modernize-deprecated-headers)
 #include <unistd.h>
+
+#include <chrono>
 
 #include "common/build_data.h"
 #include "llvm/Support/MathExtras.h"
@@ -63,7 +66,8 @@ auto PathError::Print(llvm::raw_ostream& out) const -> void {
   PrintErrorNumber(out, unix_errnum());
 }
 
-auto Internal::FileRefBase::ReadToString() -> ErrorOr<std::string, FdError> {
+auto Internal::FileRefBase::ReadFileToString()
+    -> ErrorOr<std::string, FdError> {
   std::string result;
 
   // Read a buffer at a time until we reach the end. We use the pipe buffer
@@ -76,6 +80,7 @@ auto Internal::FileRefBase::ReadToString() -> ErrorOr<std::string, FdError> {
   // be any faster, but it will be much more friendly to callers with
   // constrained stack sizes and use less memory overall.
   std::byte buffer[PIPE_BUF];
+  CARBON_RETURN_IF_ERROR(SeekFromBeginning(0));
   for (;;) {
     auto read_result = ReadToBuffer(buffer);
     if (!read_result.ok()) {
@@ -92,8 +97,9 @@ auto Internal::FileRefBase::ReadToString() -> ErrorOr<std::string, FdError> {
   return result;
 }
 
-auto Internal::FileRefBase::WriteFromString(llvm::StringRef str)
+auto Internal::FileRefBase::WriteFileFromString(llvm::StringRef str)
     -> ErrorOr<Success, FdError> {
+  CARBON_RETURN_IF_ERROR(SeekFromBeginning(0));
   auto bytes = llvm::ArrayRef<std::byte>(
       reinterpret_cast<const std::byte*>(str.data()), str.size());
   while (!bytes.empty()) {
@@ -102,6 +108,191 @@ auto Internal::FileRefBase::WriteFromString(llvm::StringRef str)
       return std::move(write_result).error();
     }
     bytes = *write_result;
+  }
+  CARBON_RETURN_IF_ERROR(Truncate(str.size()));
+  return Success();
+}
+
+// A macOS specific sleep routine that builds on more standard utilities. This
+// is technically a portable implementation so we always compile it but only use
+// it on macOS where the more efficient direct use of `clock_nanosleep` isn't
+// available.
+[[maybe_unused]]
+static auto SleepMacos(Duration sleep) -> void {
+  TimePoint stop = Clock::now() + sleep;
+
+  timespec sleep_ts = Internal::DurationToTimespec(sleep);
+  for (;;) {
+    timespec rem_sleep_ts = {};
+    int result = nanosleep(&sleep_ts, &rem_sleep_ts);
+    if (result == 0) {
+      return;
+    }
+
+    // Continue sleeping if we get interrupted by a resumable signal. For
+    // everything else report it.
+    if (errno != EINTR) {
+      int errnum = errno;
+      RawStringOstream error_os;
+      PrintErrorNumber(error_os, errnum);
+      CARBON_FATAL("Unexpected error while sleeping: {0}", error_os.TakeStr());
+    }
+
+    // Update to the remaining sleep time for the next attempt at sleeping.
+    sleep_ts = rem_sleep_ts;
+
+    // Also check if the clock has passed our stop time as a fallback to avoid
+    // too much clock skew.
+    if (Clock::now() > stop) {
+      return;
+    }
+  }
+}
+
+static auto Sleep(Duration sleep) -> void {
+  // For every platform but macOS we can sleep directly on an absolute time.
+#if __APPLE__
+  // On Apple platforms, dispatch to a specialized routine.
+  SleepMacos(sleep);
+#else
+
+  // We use `clock_gettime` instead of the filesystem `Clock` or some other
+  // `std::chrono` clock because we want to use the exact same clock that we'll
+  // use for sleeping below, and we'll need the time in a `timespec` for that
+  // call anyways. We do use a monotonic clock to try and avoid sleeps being
+  // interrupted by clock changes.
+  timespec ts = {};
+  int result = clock_gettime(CLOCK_MONOTONIC, &ts);
+  CARBON_CHECK(result == 0, "Error getting the time: {0}", strerror(errno));
+
+  // Now convert the timespec to a duration that we can safely do arithmetic on.
+  // Since the sleep interval is in nanoseconds it is tempting to directly do
+  // arithmetic here, but this has a subtle pitfall near the boundary between
+  // the nanosecond component and the second component.
+  //
+  // Note that our `Duration` uses `__int128` to avoid worrying about running
+  // out of precision to represent the final deadline.
+  Duration stop_time = std::chrono::seconds(ts.tv_sec);
+  stop_time += std::chrono::nanoseconds(ts.tv_nsec);
+  stop_time += sleep;
+
+  // Now convert back to timespec.
+  ts = Internal::DurationToTimespec(stop_time);
+
+  do {
+    result = clock_nanosleep(CLOCK_MONOTONIC, TIMER_ABSTIME, &ts, nullptr);
+
+    // Continue sleeping if we get interrupted by a resumable signal. Because
+    // we're using a monotonic clock and an absolute deadline time we will
+    // eventually progress past that deadline.
+  } while (result != 0 && (errno == EINTR));
+
+  if (result != 0) {
+    int errnum = errno;
+    RawStringOstream error_os;
+    PrintErrorNumber(error_os, errnum);
+    CARBON_FATAL("Unexpected error while sleeping: {0}", error_os.TakeStr());
+  }
+#endif
+}
+
+auto Internal::FileRefBase::TryLock(FileLock::Kind kind, Duration deadline,
+                                    Duration poll_interval)
+    -> ErrorOr<FileLock, FdError> {
+  CARBON_CHECK(poll_interval <= deadline);
+  if (deadline != Duration(0) && poll_interval == Duration(0)) {
+    // If the caller didn't provide a poll interval but did provide a deadline,
+    // pick a poll interval to roughly be 1/1000th of the deadline but at least
+    // 1 microsecond. We don't support polling faster than 1 microsecond given
+    // how expensive file locking is.
+    poll_interval =
+        std::max(Duration(std::chrono::microseconds(1)), deadline / 1000);
+  }
+  if (deadline != Duration(0)) {
+    CARBON_CHECK(
+        deadline >= std::chrono::microseconds(10),
+        "A deadline for a file lock shorter than 10 microseconds is not "
+        "supported, callers can implement their own polling logic.");
+    CARBON_CHECK(poll_interval >= std::chrono::microseconds(1),
+                 "Polling for a file lock faster than every microsecond is not "
+                 "supported, callers can implement their own polling logic.");
+  }
+  auto stop = Clock::now() + deadline;
+  for (;;) {
+    int result = flock(fd_, static_cast<int>(kind) | LOCK_NB);
+    if (result == 0) {
+      return FileLock(fd_);
+    }
+
+    // Return an error if this is something other than blocking for the lock to
+    // be available, or we didn't get a deadline for continuing to try and
+    // acquire the lock, or we've reached our deadline.
+    if (errno != EWOULDBLOCK || deadline == Duration(0) ||
+        Clock::now() >= stop) {
+      return FdError(errno, "File::TryLock on '{0}'", fd_);
+    }
+
+    // The caller requested attempting to wait up to a deadline to acquire the
+    // lock with a specific poll interval. Try to sleep for that poll interval
+    // before trying the lock again.
+    Sleep(poll_interval);
+  }
+}
+
+auto DirRef::AppendEntriesIf(
+    llvm::SmallVectorImpl<std::filesystem::path>& entries,
+    llvm::function_ref<auto(llvm::StringRef name)->bool> predicate)
+    -> ErrorOr<Success, FdError> {
+  CARBON_ASSIGN_OR_RETURN(Reader reader, Read());
+  for (const Entry& entry : reader) {
+    llvm::StringRef name = entry.name();
+    if (name == "." || name == "..") {
+      continue;
+    }
+    if (predicate && !predicate(name)) {
+      continue;
+    }
+    entries.push_back(name.str());
+  }
+  return Success();
+}
+
+auto DirRef::AppendEntriesIf(
+    llvm::SmallVectorImpl<std::filesystem::path>& dir_entries,
+    llvm::SmallVectorImpl<std::filesystem::path>& non_dir_entries,
+    llvm::function_ref<auto(llvm::StringRef name)->bool> predicate)
+    -> ErrorOr<Success, FdError> {
+  CARBON_ASSIGN_OR_RETURN(Reader reader, Read());
+  for (const Entry& entry : reader) {
+    llvm::StringRef name = entry.name();
+    if (name == "." || name == "..") {
+      continue;
+    }
+    if (predicate && !predicate(name)) {
+      continue;
+    }
+    std::filesystem::path name_path = name.str();
+    if (entry.is_known_dir()) {
+      dir_entries.push_back(std::move(name_path));
+      continue;
+    }
+    if (!entry.is_unknown_type()) {
+      non_dir_entries.push_back(std::move(name_path));
+      continue;
+    }
+
+    auto stat_result = Lstat(name_path);
+    if (!stat_result.ok()) {
+      return FdError(stat_result.error().unix_errnum(),
+                     "Dir::AppendEntriesIf on '{0}' failed while stat-ing "
+                     "entries to determine which are directories",
+                     dfd_);
+    }
+    if (stat_result->is_dir()) {
+      dir_entries.push_back(std::move(name_path));
+    } else {
+      non_dir_entries.push_back(std::move(name_path));
+    }
   }
   return Success();
 }
@@ -213,7 +404,7 @@ auto DirRef::OpenDir(const std::filesystem::path& path,
 auto DirRef::ReadFileToString(const std::filesystem::path& path)
     -> ErrorOr<std::string, PathError> {
   CARBON_ASSIGN_OR_RETURN(ReadFile f, OpenReadOnly(path));
-  auto result = f.ReadToString();
+  auto result = f.ReadFileToString();
   if (result.ok()) {
     return *std::move(result);
   }
@@ -227,14 +418,18 @@ auto DirRef::WriteFileFromString(const std::filesystem::path& path,
                                  CreationOptions creation_options)
     -> ErrorOr<Success, PathError> {
   CARBON_ASSIGN_OR_RETURN(WriteFile f, OpenWriteOnly(path, creation_options));
-  auto write_result = f.WriteFromString(content);
+  auto write_result = f.WriteFileFromString(content);
+  // Immediately close the file as even if there was a write error we don't want
+  // to leave the file open.
+  auto close_result = std::move(f).Close();
+
+  // Now report the first error encountered or return success.
   if (!write_result.ok()) {
     return PathError(
         write_result.error().unix_errnum(),
         "Write error in Dir::WriteFileFromString on '{0}' relative to '{1}'",
         path, dfd_);
   }
-  auto close_result = std::move(f).Close();
   if (!close_result.ok()) {
     return PathError(
         close_result.error().unix_errnum(),
@@ -499,6 +694,12 @@ auto MakeTmpDir() -> ErrorOr<RemovingDir, Error> {
 
   std::filesystem::path target = BuildData::BuildTarget.str();
   tmpdir_path /= target.filename();
+  return MakeTmpDirWithPrefix(std::move(tmpdir_path));
+}
+
+auto MakeTmpDirWithPrefix(std::filesystem::path prefix)
+    -> ErrorOr<RemovingDir, Error> {
+  std::filesystem::path tmpdir_path = std::move(prefix);
   tmpdir_path += ".XXXXXX";
 
   std::string tmpdir_path_buffer = tmpdir_path.native();

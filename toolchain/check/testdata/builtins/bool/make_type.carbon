@@ -23,7 +23,7 @@ library "[[@TEST_NAME]]";
 import library "types";
 
 //@dump-sem-ir-begin
-var b: Bool() = false;
+let b: Bool() = false;
 //@dump-sem-ir-end
 
 // CHECK:STDOUT: --- use_types.carbon
@@ -42,22 +42,19 @@ var b: Bool() = false;
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %b.patt: %pattern_type.831 = binding_pattern b [concrete]
-// CHECK:STDOUT:     %b.var_patt: %pattern_type.831 = var_pattern %b.patt [concrete]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %b.var: ref bool = var %b.var_patt [concrete]
 // CHECK:STDOUT:   %.loc7_13.1: type = splice_block %.loc7_13.3 [concrete = bool] {
 // CHECK:STDOUT:     %Bool.ref: %Bool.type = name_ref Bool, imports.%Main.Bool [concrete = constants.%Bool]
 // CHECK:STDOUT:     %Bool.call: init type = call %Bool.ref() [concrete = bool]
 // CHECK:STDOUT:     %.loc7_13.2: type = value_of_initializer %Bool.call [concrete = bool]
 // CHECK:STDOUT:     %.loc7_13.3: type = converted %Bool.call, %.loc7_13.2 [concrete = bool]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %b: ref bool = bind_name b, %b.var [concrete = %b.var]
+// CHECK:STDOUT:   %b: bool = bind_name b, @__global_init.%false
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %false: bool = bool_literal false [concrete = constants.%false]
-// CHECK:STDOUT:   assign file.%b.var, %false
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

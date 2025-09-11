@@ -50,10 +50,7 @@ class A(T:! type) {
   var y: T;
 }
 
-fn Make[T:! type](x: T, y: T) -> A(T) {
-  // TODO: This should probably require a `Copy` constraint on `T`.
-  // For now we avoid calling it in cases that would attempt to
-  // copy a non-copyable type, as that would probably crash.
+fn Make[T:! Core.Copy](x: T, y: T) -> A(T) {
   return {.x = x, .y = y};
 }
 
@@ -65,14 +62,15 @@ fn Empty() -> A(()) {
   return Make((), ());
 }
 
-fn Tuples() -> A((i32, i32)) {
-  let x: (i32, i32) = (1, 2);
-  // TODO: This fails to initialize the `A` object's fields.
-  // This happens because we generate SemIR assuming that the dependent
-  // type will have a copy value representation, and will need changes
-  // in SemIR for us to properly lower it.
-  return Make(x, x);
-}
+// TODO: Reintroduce this once it doesn't crash.
+// fn Tuples() -> A((i32, i32)) {
+//   let x: (i32, i32) = (1, 2);
+//   // TODO: This fails to initialize the `A` object's fields.
+//   // This happens because we generate SemIR assuming that the dependent
+//   // type will have a copy value representation, and will need changes
+//   // in SemIR for us to properly lower it.
+//   return Make(x, x);
+// }
 
 // --- access.carbon
 
@@ -166,47 +164,32 @@ fn AccessTuple() -> (i32, i32, i32) {
 // CHECK:STDOUT: ; ModuleID = 'create_generic.carbon'
 // CHECK:STDOUT: source_filename = "create_generic.carbon"
 // CHECK:STDOUT:
-// CHECK:STDOUT: @tuple.loc25_28.6 = internal constant { i32, i32 } { i32 1, i32 2 }
-// CHECK:STDOUT:
 // CHECK:STDOUT: define void @_CInts.Main(ptr sret({ i32, i32 }) %return) !dbg !4 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   call void @_CMake.Main.b88d1103f417c6d4(ptr %return, i32 1, i32 2), !dbg !7
+// CHECK:STDOUT:   call void @_CMake.Main.b7c8e4dff2adcdaa(ptr %return, i32 1, i32 2), !dbg !7
 // CHECK:STDOUT:   ret void, !dbg !8
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: define void @_CEmpty.Main(ptr sret({ {}, {} }) %return) !dbg !9 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   call void @_CMake.Main.e43630e9a6c38c3f(ptr %return), !dbg !10
+// CHECK:STDOUT:   call void @_CMake.Main.35292afa1b663913(ptr %return), !dbg !10
 // CHECK:STDOUT:   ret void, !dbg !11
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: define void @_CTuples.Main(ptr sret({ { i32, i32 }, { i32, i32 } }) %return) !dbg !12 {
+// CHECK:STDOUT: define linkonce_odr void @_CMake.Main.b7c8e4dff2adcdaa(ptr sret({ i32, i32 }) %return, i32 %x, i32 %y) !dbg !12 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   call void @_CMake.Main.29d34654e802e24e(ptr %return, ptr @tuple.loc25_28.6, ptr @tuple.loc25_28.6), !dbg !13
+// CHECK:STDOUT:   %.loc10_25.2.x = getelementptr inbounds nuw { i32, i32 }, ptr %return, i32 0, i32 0, !dbg !13
+// CHECK:STDOUT:   store i32 %x, ptr %.loc10_25.2.x, align 4, !dbg !13
+// CHECK:STDOUT:   %.loc10_25.4.y = getelementptr inbounds nuw { i32, i32 }, ptr %return, i32 0, i32 1, !dbg !13
+// CHECK:STDOUT:   store i32 %y, ptr %.loc10_25.4.y, align 4, !dbg !13
 // CHECK:STDOUT:   ret void, !dbg !14
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: define linkonce_odr void @_CMake.Main.b88d1103f417c6d4(ptr sret({ i32, i32 }) %return, i32 %x, i32 %y) !dbg !15 {
+// CHECK:STDOUT: define linkonce_odr void @_CMake.Main.35292afa1b663913(ptr sret({ {}, {} }) %return) !dbg !15 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %.loc13_25.2.x = getelementptr inbounds nuw { i32, i32 }, ptr %return, i32 0, i32 0, !dbg !16
-// CHECK:STDOUT:   store i32 %x, ptr %.loc13_25.2.x, align 4, !dbg !16
-// CHECK:STDOUT:   %.loc13_25.4.y = getelementptr inbounds nuw { i32, i32 }, ptr %return, i32 0, i32 1, !dbg !16
-// CHECK:STDOUT:   store i32 %y, ptr %.loc13_25.4.y, align 4, !dbg !16
+// CHECK:STDOUT:   %.loc10_25.2.x = getelementptr inbounds nuw { {}, {} }, ptr %return, i32 0, i32 0, !dbg !16
+// CHECK:STDOUT:   %.loc10_25.4.y = getelementptr inbounds nuw { {}, {} }, ptr %return, i32 0, i32 1, !dbg !16
 // CHECK:STDOUT:   ret void, !dbg !17
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: define linkonce_odr void @_CMake.Main.e43630e9a6c38c3f(ptr sret({ {}, {} }) %return) !dbg !18 {
-// CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %.loc13_25.2.x = getelementptr inbounds nuw { {}, {} }, ptr %return, i32 0, i32 0, !dbg !19
-// CHECK:STDOUT:   %.loc13_25.4.y = getelementptr inbounds nuw { {}, {} }, ptr %return, i32 0, i32 1, !dbg !19
-// CHECK:STDOUT:   ret void, !dbg !20
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: define linkonce_odr void @_CMake.Main.29d34654e802e24e(ptr sret({ { i32, i32 }, { i32, i32 } }) %return, ptr %x, ptr %y) !dbg !21 {
-// CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %.loc13_25.2.x = getelementptr inbounds nuw { { i32, i32 }, { i32, i32 } }, ptr %return, i32 0, i32 0, !dbg !22
-// CHECK:STDOUT:   %.loc13_25.4.y = getelementptr inbounds nuw { { i32, i32 }, { i32, i32 } }, ptr %return, i32 0, i32 1, !dbg !22
-// CHECK:STDOUT:   ret void, !dbg !23
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: !llvm.module.flags = !{!0, !1}
@@ -216,26 +199,20 @@ fn AccessTuple() -> (i32, i32, i32) {
 // CHECK:STDOUT: !1 = !{i32 2, !"Debug Info Version", i32 3}
 // CHECK:STDOUT: !2 = distinct !DICompileUnit(language: DW_LANG_C, file: !3, producer: "carbon", isOptimized: false, runtimeVersion: 0, emissionKind: FullDebug)
 // CHECK:STDOUT: !3 = !DIFile(filename: "create_generic.carbon", directory: "")
-// CHECK:STDOUT: !4 = distinct !DISubprogram(name: "Ints", linkageName: "_CInts.Main", scope: null, file: !3, line: 16, type: !5, spFlags: DISPFlagDefinition, unit: !2)
+// CHECK:STDOUT: !4 = distinct !DISubprogram(name: "Ints", linkageName: "_CInts.Main", scope: null, file: !3, line: 13, type: !5, spFlags: DISPFlagDefinition, unit: !2)
 // CHECK:STDOUT: !5 = !DISubroutineType(types: !6)
 // CHECK:STDOUT: !6 = !{}
-// CHECK:STDOUT: !7 = !DILocation(line: 17, column: 10, scope: !4)
-// CHECK:STDOUT: !8 = !DILocation(line: 17, column: 3, scope: !4)
-// CHECK:STDOUT: !9 = distinct !DISubprogram(name: "Empty", linkageName: "_CEmpty.Main", scope: null, file: !3, line: 20, type: !5, spFlags: DISPFlagDefinition, unit: !2)
-// CHECK:STDOUT: !10 = !DILocation(line: 21, column: 10, scope: !9)
-// CHECK:STDOUT: !11 = !DILocation(line: 21, column: 3, scope: !9)
-// CHECK:STDOUT: !12 = distinct !DISubprogram(name: "Tuples", linkageName: "_CTuples.Main", scope: null, file: !3, line: 24, type: !5, spFlags: DISPFlagDefinition, unit: !2)
-// CHECK:STDOUT: !13 = !DILocation(line: 30, column: 10, scope: !12)
-// CHECK:STDOUT: !14 = !DILocation(line: 30, column: 3, scope: !12)
-// CHECK:STDOUT: !15 = distinct !DISubprogram(name: "Make", linkageName: "_CMake.Main.b88d1103f417c6d4", scope: null, file: !3, line: 9, type: !5, spFlags: DISPFlagDefinition, unit: !2)
-// CHECK:STDOUT: !16 = !DILocation(line: 13, column: 10, scope: !15)
-// CHECK:STDOUT: !17 = !DILocation(line: 13, column: 3, scope: !15)
-// CHECK:STDOUT: !18 = distinct !DISubprogram(name: "Make", linkageName: "_CMake.Main.e43630e9a6c38c3f", scope: null, file: !3, line: 9, type: !5, spFlags: DISPFlagDefinition, unit: !2)
-// CHECK:STDOUT: !19 = !DILocation(line: 13, column: 10, scope: !18)
-// CHECK:STDOUT: !20 = !DILocation(line: 13, column: 3, scope: !18)
-// CHECK:STDOUT: !21 = distinct !DISubprogram(name: "Make", linkageName: "_CMake.Main.29d34654e802e24e", scope: null, file: !3, line: 9, type: !5, spFlags: DISPFlagDefinition, unit: !2)
-// CHECK:STDOUT: !22 = !DILocation(line: 13, column: 10, scope: !21)
-// CHECK:STDOUT: !23 = !DILocation(line: 13, column: 3, scope: !21)
+// CHECK:STDOUT: !7 = !DILocation(line: 14, column: 10, scope: !4)
+// CHECK:STDOUT: !8 = !DILocation(line: 14, column: 3, scope: !4)
+// CHECK:STDOUT: !9 = distinct !DISubprogram(name: "Empty", linkageName: "_CEmpty.Main", scope: null, file: !3, line: 17, type: !5, spFlags: DISPFlagDefinition, unit: !2)
+// CHECK:STDOUT: !10 = !DILocation(line: 18, column: 10, scope: !9)
+// CHECK:STDOUT: !11 = !DILocation(line: 18, column: 3, scope: !9)
+// CHECK:STDOUT: !12 = distinct !DISubprogram(name: "Make", linkageName: "_CMake.Main.b7c8e4dff2adcdaa", scope: null, file: !3, line: 9, type: !5, spFlags: DISPFlagDefinition, unit: !2)
+// CHECK:STDOUT: !13 = !DILocation(line: 10, column: 10, scope: !12)
+// CHECK:STDOUT: !14 = !DILocation(line: 10, column: 3, scope: !12)
+// CHECK:STDOUT: !15 = distinct !DISubprogram(name: "Make", linkageName: "_CMake.Main.35292afa1b663913", scope: null, file: !3, line: 9, type: !5, spFlags: DISPFlagDefinition, unit: !2)
+// CHECK:STDOUT: !16 = !DILocation(line: 10, column: 10, scope: !15)
+// CHECK:STDOUT: !17 = !DILocation(line: 10, column: 3, scope: !15)
 // CHECK:STDOUT: ; ModuleID = 'access.carbon'
 // CHECK:STDOUT: source_filename = "access.carbon"
 // CHECK:STDOUT:

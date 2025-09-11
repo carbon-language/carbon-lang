@@ -4,6 +4,7 @@
 
 package Core library "prelude/types/uint";
 
+import library "prelude/copy";
 import library "prelude/destroy";
 import library "prelude/operators";
 import library "prelude/types/int";
@@ -13,6 +14,12 @@ private fn MakeUInt(size: IntLiteral()) -> type = "int.make_type_unsigned";
 
 class UInt(N:! IntLiteral()) {
   adapt MakeUInt(N);
+}
+
+// Copy.
+
+impl forall [N:! IntLiteral()] UInt(N) as Copy {
+  fn Op[self: Self]() -> Self = "primitive_copy";
 }
 
 // Conversions.

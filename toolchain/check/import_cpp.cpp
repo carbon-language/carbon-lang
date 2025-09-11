@@ -2211,7 +2211,8 @@ static auto GetClangOperatorKind(Context& context, SemIR::LocId loc_id,
   return std::nullopt;
 }
 
-auto ImportOperatorFromCpp(Context& context, SemIR::LocId loc_id, Operator op)
+auto ImportOperatorFromCpp(Context& context, SemIR::LocId loc_id,
+                           SemIR::NameScopeId scope_id, Operator op)
     -> SemIR::ScopeLookupResult {
   Diagnostics::AnnotationScope annotate_diagnostics(
       &context.emitter(), [&](auto& builder) {
@@ -2231,7 +2232,7 @@ auto ImportOperatorFromCpp(Context& context, SemIR::LocId loc_id, Operator op)
   // into C++ types. See
   // https://github.com/carbon-language/carbon-lang/pull/5996/files/5d01fa69511b76f87efbc0387f5e40abcf4c911a#r2316950123
   auto decl_and_access = ClangLookupDeclarationName(
-      context, loc_id, SemIR::NameScopeId::None,
+      context, loc_id, scope_id,
       context.ast_context().DeclarationNames.getCXXOperatorName(*op_kind));
 
   if (!decl_and_access) {

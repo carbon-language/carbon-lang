@@ -103,10 +103,13 @@ interface X {
 
 impl A as X {
   //@dump-sem-ir-begin
-  // CHECK:STDERR: fail_inheritance_value_conversion_copy_return.carbon:[[@LINE+7]]:3: error: cannot copy value of type `A` [CopyOfUncopyableType]
+  // CHECK:STDERR: fail_inheritance_value_conversion_copy_return.carbon:[[@LINE+10]]:3: error: cannot copy value of type `A` [CopyOfUncopyableType]
   // CHECK:STDERR:   fn F() -> B;
   // CHECK:STDERR:   ^~~~~~~~~~~~
-  // CHECK:STDERR: fail_inheritance_value_conversion_copy_return.carbon:[[@LINE-8]]:3: note: while building thunk to match the signature of this function [ThunkSignature]
+  // CHECK:STDERR: fail_inheritance_value_conversion_copy_return.carbon:[[@LINE+7]]:3: note: type `A` does not implement interface `Core.Copy` [MissingImplInMemberAccessNote]
+  // CHECK:STDERR:   fn F() -> B;
+  // CHECK:STDERR:   ^~~~~~~~~~~~
+  // CHECK:STDERR: fail_inheritance_value_conversion_copy_return.carbon:[[@LINE-11]]:3: note: while building thunk to match the signature of this function [ThunkSignature]
   // CHECK:STDERR:   fn F() -> Self;
   // CHECK:STDERR:   ^~~~~~~~~~~~~~~
   // CHECK:STDERR:
@@ -622,9 +625,9 @@ impl () as I({}) {
 // CHECK:STDOUT:   %B.as.Destroy.impl.Op.type: type = fn_type @B.as.Destroy.impl.Op [concrete]
 // CHECK:STDOUT:   %B.as.Destroy.impl.Op: %B.as.Destroy.impl.Op.type = struct_value () [concrete]
 // CHECK:STDOUT:   %pattern_type.049: type = pattern_type %B [concrete]
-// CHECK:STDOUT:   %A.as.X.impl.F.type.d90acb.1: type = fn_type @A.as.X.impl.F.loc20_14.1 [concrete]
+// CHECK:STDOUT:   %A.as.X.impl.F.type.d90acb.1: type = fn_type @A.as.X.impl.F.loc23_14.1 [concrete]
 // CHECK:STDOUT:   %A.as.X.impl.F.4a6dbe.1: %A.as.X.impl.F.type.d90acb.1 = struct_value () [concrete]
-// CHECK:STDOUT:   %A.as.X.impl.F.type.d90acb.2: type = fn_type @A.as.X.impl.F.loc20_14.2 [concrete]
+// CHECK:STDOUT:   %A.as.X.impl.F.type.d90acb.2: type = fn_type @A.as.X.impl.F.loc23_14.2 [concrete]
 // CHECK:STDOUT:   %A.as.X.impl.F.4a6dbe.2: %A.as.X.impl.F.type.d90acb.2 = struct_value () [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -632,7 +635,7 @@ impl () as I({}) {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: impl @A.as.X.impl: %A.ref as %X.ref {
-// CHECK:STDOUT:   %A.as.X.impl.F.decl.loc20_14.1: %A.as.X.impl.F.type.d90acb.1 = fn_decl @A.as.X.impl.F.loc20_14.1 [concrete = constants.%A.as.X.impl.F.4a6dbe.1] {
+// CHECK:STDOUT:   %A.as.X.impl.F.decl.loc23_14.1: %A.as.X.impl.F.type.d90acb.1 = fn_decl @A.as.X.impl.F.loc23_14.1 [concrete = constants.%A.as.X.impl.F.4a6dbe.1] {
 // CHECK:STDOUT:     %return.patt: %pattern_type.049 = return_slot_pattern [concrete]
 // CHECK:STDOUT:     %return.param_patt: %pattern_type.049 = out_param_pattern %return.patt, call_param0 [concrete]
 // CHECK:STDOUT:   } {
@@ -640,7 +643,7 @@ impl () as I({}) {
 // CHECK:STDOUT:     %return.param: ref %B = out_param call_param0
 // CHECK:STDOUT:     %return: ref %B = return_slot %return.param
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %A.as.X.impl.F.decl.loc20_14.2: %A.as.X.impl.F.type.d90acb.2 = fn_decl @A.as.X.impl.F.loc20_14.2 [concrete = constants.%A.as.X.impl.F.4a6dbe.2] {
+// CHECK:STDOUT:   %A.as.X.impl.F.decl.loc23_14.2: %A.as.X.impl.F.type.d90acb.2 = fn_decl @A.as.X.impl.F.loc23_14.2 [concrete = constants.%A.as.X.impl.F.4a6dbe.2] {
 // CHECK:STDOUT:     <elided>
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     <elided>
@@ -648,24 +651,24 @@ impl () as I({}) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .B = <poisoned>
-// CHECK:STDOUT:   .F = %A.as.X.impl.F.decl.loc20_14.1
+// CHECK:STDOUT:   .F = %A.as.X.impl.F.decl.loc23_14.1
 // CHECK:STDOUT:   witness = file.%X.impl_witness
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @A.as.X.impl.F.loc20_14.1() -> %return.param: %B;
+// CHECK:STDOUT: fn @A.as.X.impl.F.loc23_14.1() -> %return.param: %B;
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @A.as.X.impl.F.loc20_14.2() -> %return.param: %A [thunk @A.as.X.impl.%A.as.X.impl.F.decl.loc20_14.1] {
+// CHECK:STDOUT: fn @A.as.X.impl.F.loc23_14.2() -> %return.param: %A [thunk @A.as.X.impl.%A.as.X.impl.F.decl.loc23_14.1] {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %F.ref: %A.as.X.impl.F.type.d90acb.1 = name_ref F, @A.as.X.impl.%A.as.X.impl.F.decl.loc20_14.1 [concrete = constants.%A.as.X.impl.F.4a6dbe.1]
+// CHECK:STDOUT:   %F.ref: %A.as.X.impl.F.type.d90acb.1 = name_ref F, @A.as.X.impl.%A.as.X.impl.F.decl.loc23_14.1 [concrete = constants.%A.as.X.impl.F.4a6dbe.1]
 // CHECK:STDOUT:   <elided>
-// CHECK:STDOUT:   %.loc20_14.1: ref %B = temporary_storage
-// CHECK:STDOUT:   %A.as.X.impl.F.call: init %B = call %F.ref() to %.loc20_14.1
-// CHECK:STDOUT:   %.loc20_14.2: ref %B = temporary %.loc20_14.1, %A.as.X.impl.F.call
-// CHECK:STDOUT:   %.loc20_14.3: ref %A = class_element_access %.loc20_14.2, element0
-// CHECK:STDOUT:   %.loc20_14.4: ref %A = converted %A.as.X.impl.F.call, %.loc20_14.3
-// CHECK:STDOUT:   %.loc20_14.5: %A = bind_value %.loc20_14.4
-// CHECK:STDOUT:   %B.as.Destroy.impl.Op.bound: <bound method> = bound_method %.loc20_14.2, constants.%B.as.Destroy.impl.Op
-// CHECK:STDOUT:   %addr: %ptr.e79 = addr_of %.loc20_14.2
+// CHECK:STDOUT:   %.loc23_14.1: ref %B = temporary_storage
+// CHECK:STDOUT:   %A.as.X.impl.F.call: init %B = call %F.ref() to %.loc23_14.1
+// CHECK:STDOUT:   %.loc23_14.2: ref %B = temporary %.loc23_14.1, %A.as.X.impl.F.call
+// CHECK:STDOUT:   %.loc23_14.3: ref %A = class_element_access %.loc23_14.2, element0
+// CHECK:STDOUT:   %.loc23_14.4: ref %A = converted %A.as.X.impl.F.call, %.loc23_14.3
+// CHECK:STDOUT:   %.loc23_14.5: %A = bind_value %.loc23_14.4
+// CHECK:STDOUT:   %B.as.Destroy.impl.Op.bound: <bound method> = bound_method %.loc23_14.2, constants.%B.as.Destroy.impl.Op
+// CHECK:STDOUT:   %addr: %ptr.e79 = addr_of %.loc23_14.2
 // CHECK:STDOUT:   %B.as.Destroy.impl.Op.call: init %empty_tuple.type = call %B.as.Destroy.impl.Op.bound(%addr)
 // CHECK:STDOUT:   return <error> to %return
 // CHECK:STDOUT: }

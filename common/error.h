@@ -104,8 +104,7 @@ class [[nodiscard]] ErrorOr {
 
   // Constructs with an error; the error must not be Error::Success().
   // Implicit for easy construction on returns.
-  // NOLINTNEXTLINE(google-explicit-constructor)
-  ErrorOr(ErrorT err) : val_(std::move(err)) {}
+  explicit(false) ErrorOr(ErrorT err) : val_(std::move(err)) {}
 
   // Constructs from a custom error type derived from `ErrorBase` into an
   // `ErrorOr` for `Error` to facilitate returning errors transparently.
@@ -113,8 +112,7 @@ class [[nodiscard]] ErrorOr {
     requires(std::same_as<ErrorT, Error> &&
              std::derived_from<OtherErrorT, ErrorBase<OtherErrorT>>)
   // Implicit for easy construction on returns.
-  // NOLINTNEXTLINE(google-explicit-constructor)
-  ErrorOr(OtherErrorT other_err) : val_(other_err.ToError()) {}
+  explicit(false) ErrorOr(OtherErrorT other_err) : val_(other_err.ToError()) {}
 
   // Constructs with any convertible error type, necessary for return statements
   // that are already converting to the `ErrorOr` wrapper.
@@ -126,21 +124,18 @@ class [[nodiscard]] ErrorOr {
     requires(std::constructible_from<ErrorT, OtherErrorT> &&
              std::derived_from<OtherErrorT, ErrorBase<OtherErrorT>>)
   // Implicit for easy construction on returns.
-  // NOLINTNEXTLINE(google-explicit-constructor)
-  ErrorOr(OtherErrorT other_err)
+  explicit(false) ErrorOr(OtherErrorT other_err)
       : val_(std::in_place_type<ErrorT>, std::move(other_err)) {}
 
   // Constructs with a reference.
   // Implicit for easy construction on returns.
-  // NOLINTNEXTLINE(google-explicit-constructor)
-  ErrorOr(T ref)
+  explicit(false) ErrorOr(T ref)
     requires std::is_reference_v<T>
       : val_(std::ref(ref)) {}
 
   // Constructs with a value.
   // Implicit for easy construction on returns.
-  // NOLINTNEXTLINE(google-explicit-constructor)
-  ErrorOr(T val)
+  explicit(false) ErrorOr(T val)
     requires(!std::is_reference_v<T>)
       : val_(std::move(val)) {}
 
@@ -224,11 +219,11 @@ class ErrorBuilder {
   }
 
   // NOLINTNEXTLINE(google-explicit-constructor): Implicit cast for returns.
-  operator Error() { return Error(out_->TakeStr()); }
+  explicit(false) operator Error() { return Error(out_->TakeStr()); }
 
   template <typename T>
   // NOLINTNEXTLINE(google-explicit-constructor): Implicit cast for returns.
-  operator ErrorOr<T>() {
+  explicit(false) operator ErrorOr<T>() {
     return Error(out_->TakeStr());
   }
 
