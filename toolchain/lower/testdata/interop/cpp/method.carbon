@@ -185,7 +185,7 @@ fn Call(n: Cpp.NeedThunk) {
 // CHECK:STDOUT:   %Base.virt0.call.memptr.virtualfn = load ptr, ptr %Base.virt0.call, align 8, !dbg !10
 // CHECK:STDOUT:   call void %Base.virt0.call.memptr.virtualfn(ptr %.loc7_4.3.base), !dbg !10
 // CHECK:STDOUT:   %A.virt1.call.vtable = load ptr, ptr %a, align 8, !dbg !11
-// CHECK:STDOUT:   %A.virt1.call = getelementptr ptr, ptr %A.virt1.call.vtable, i32 0, !dbg !11
+// CHECK:STDOUT:   %A.virt1.call = getelementptr ptr, ptr %A.virt1.call.vtable, i32 1, !dbg !11
 // CHECK:STDOUT:   %A.virt1.call.memptr.virtualfn = load ptr, ptr %A.virt1.call, align 8, !dbg !11
 // CHECK:STDOUT:   call void %A.virt1.call.memptr.virtualfn(ptr %a), !dbg !11
 // CHECK:STDOUT:   ret void, !dbg !12

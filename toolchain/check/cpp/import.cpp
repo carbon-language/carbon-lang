@@ -13,6 +13,7 @@
 #include "clang/AST/ASTContext.h"
 #include "clang/AST/RecordLayout.h"
 #include "clang/AST/UnresolvedSet.h"
+#include "clang/AST/VTableBuilder.h"
 #include "clang/Basic/FileManager.h"
 #include "clang/Frontend/ASTUnit.h"
 #include "clang/Frontend/CompilerInstance.h"
@@ -1631,21 +1632,10 @@ static auto ImportFunction(Context& context, SemIR::LocId loc_id,
     } else if (method_decl->isVirtual()) {
       virtual_function = SemIR::Function::VirtualModifier::Virtual;
     }
-    // TODO: Handle the case where virtual functions might be overrides from
-    // further bases (so their numbering will be based on the order in the base,
-    // rather than the order in this class)
     if (virtual_function != SemIR::Function::VirtualModifier::None) {
-      virtual_index = 0;
-      for (const auto* other_method_decl :
-           method_decl->getParent()->methods()) {
-        if (method_decl == other_method_decl) {
-          break;
-        }
-
-        if (other_method_decl->isVirtual()) {
-          ++virtual_index;
-        }
-      }
+      virtual_index = dyn_cast<clang::ItaniumVTableContext>(
+                          context.ast_context().getVTableContext())
+                          ->getMethodVTableIndex(method_decl);
     }
   }
   auto function_info = SemIR::Function{
