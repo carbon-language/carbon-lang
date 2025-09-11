@@ -1088,67 +1088,6 @@ static auto BuildEnumDefinition(Context& context,
   class_info.body_block_id = context.inst_block_stack().Pop();
 }
 
-auto ImportClassDefinitionForClangDecl(Context& context, SemIR::LocId loc_id,
-                                       SemIR::ClassId class_id,
-                                       SemIR::ClangDeclId clang_decl_id)
-    -> bool {
-  clang::ASTUnit* ast = context.sem_ir().clang_ast_unit();
-  CARBON_CHECK(ast);
-
-  auto* clang_decl = cast<clang::TagDecl>(
-      context.sem_ir().clang_decls().Get(clang_decl_id).decl);
-  auto class_inst_id = context.types().GetAsTypeInstId(
-      context.classes().Get(class_id).first_owning_decl_id);
-
-  // TODO: Map loc_id into a clang location and use it for diagnostics if
-  // instantiation fails, instead of annotating the diagnostic with another
-  // location.
-  clang::SourceLocation loc = clang_decl->getLocation();
-  Diagnostics::AnnotationScope annotate_diagnostics(
-      &context.emitter(), [&](auto& builder) {
-        CARBON_DIAGNOSTIC(InCppTypeCompletion, Note,
-                          "while completing C++ type {0}", SemIR::TypeId);
-        builder.Note(loc_id, InCppTypeCompletion,
-                     context.classes().Get(class_id).self_type_id);
-      });
-
-  // Ask Clang whether the type is complete. This triggers template
-  // instantiation if necessary.
-  clang::DiagnosticErrorTrap trap(ast->getDiagnostics());
-  if (!ast->getSema().isCompleteType(
-          loc, context.ast_context().getCanonicalTagType(clang_decl))) {
-    // Type is incomplete. Nothing more to do, but tell the caller if we
-    // produced an error.
-    return !trap.hasErrorOccurred();
-  }
-
-  auto import_ir_inst_id =
-      context.insts().GetCanonicalLocId(class_inst_id).import_ir_inst_id();
-
-  if (auto* class_decl = dyn_cast<clang::CXXRecordDecl>(clang_decl)) {
-    auto* class_def = class_decl->getDefinition();
-    CARBON_CHECK(class_def, "Complete type has no definition");
-
-    if (class_def->getNumVBases()) {
-      // TODO: Handle virtual bases. We don't actually know where they go in the
-      // layout. We may also want to use a different size in the layout for
-      // `partial C`, excluding the virtual base. It's also not entirely safe to
-      // just skip over the virtual base, as the type we would construct would
-      // have a misleading size. For now, treat a C++ class with vbases as
-      // incomplete in Carbon.
-      context.TODO(loc_id, "class with virtual bases");
-      return false;
-    }
-
-    BuildClassDefinition(context, import_ir_inst_id, class_id, class_inst_id,
-                         class_def);
-  } else if (auto* enum_decl = dyn_cast<clang::EnumDecl>(clang_decl)) {
-    BuildEnumDefinition(context, import_ir_inst_id, class_id, class_inst_id,
-                        enum_decl);
-  }
-  return true;
-}
-
 // Imports an enumerator declaration from Clang to Carbon.
 static auto ImportEnumConstantDecl(Context& context,
                                    clang::EnumConstantDecl* enumerator_decl)
@@ -2251,6 +2190,67 @@ auto ImportOperatorFromCpp(Context& context, SemIR::LocId loc_id,
   SemIR::AccessKind access_kind = MapAccess(access);
   return SemIR::ScopeLookupResult::MakeWrappedLookupResult(inst_id,
                                                            access_kind);
+}
+
+auto ImportClassDefinitionForClangDecl(Context& context, SemIR::LocId loc_id,
+                                       SemIR::ClassId class_id,
+                                       SemIR::ClangDeclId clang_decl_id)
+    -> bool {
+  clang::ASTUnit* ast = context.sem_ir().clang_ast_unit();
+  CARBON_CHECK(ast);
+
+  auto* clang_decl = cast<clang::TagDecl>(
+      context.sem_ir().clang_decls().Get(clang_decl_id).decl);
+  auto class_inst_id = context.types().GetAsTypeInstId(
+      context.classes().Get(class_id).first_owning_decl_id);
+
+  // TODO: Map loc_id into a clang location and use it for diagnostics if
+  // instantiation fails, instead of annotating the diagnostic with another
+  // location.
+  clang::SourceLocation loc = clang_decl->getLocation();
+  Diagnostics::AnnotationScope annotate_diagnostics(
+      &context.emitter(), [&](auto& builder) {
+        CARBON_DIAGNOSTIC(InCppTypeCompletion, Note,
+                          "while completing C++ type {0}", SemIR::TypeId);
+        builder.Note(loc_id, InCppTypeCompletion,
+                     context.classes().Get(class_id).self_type_id);
+      });
+
+  // Ask Clang whether the type is complete. This triggers template
+  // instantiation if necessary.
+  clang::DiagnosticErrorTrap trap(ast->getDiagnostics());
+  if (!ast->getSema().isCompleteType(
+          loc, context.ast_context().getCanonicalTagType(clang_decl))) {
+    // Type is incomplete. Nothing more to do, but tell the caller if we
+    // produced an error.
+    return !trap.hasErrorOccurred();
+  }
+
+  auto import_ir_inst_id =
+      context.insts().GetCanonicalLocId(class_inst_id).import_ir_inst_id();
+
+  if (auto* class_decl = dyn_cast<clang::CXXRecordDecl>(clang_decl)) {
+    auto* class_def = class_decl->getDefinition();
+    CARBON_CHECK(class_def, "Complete type has no definition");
+
+    if (class_def->getNumVBases()) {
+      // TODO: Handle virtual bases. We don't actually know where they go in the
+      // layout. We may also want to use a different size in the layout for
+      // `partial C`, excluding the virtual base. It's also not entirely safe to
+      // just skip over the virtual base, as the type we would construct would
+      // have a misleading size. For now, treat a C++ class with vbases as
+      // incomplete in Carbon.
+      context.TODO(loc_id, "class with virtual bases");
+      return false;
+    }
+
+    BuildClassDefinition(context, import_ir_inst_id, class_id, class_inst_id,
+                         class_def);
+  } else if (auto* enum_decl = dyn_cast<clang::EnumDecl>(clang_decl)) {
+    BuildEnumDefinition(context, import_ir_inst_id, class_id, class_inst_id,
+                        enum_decl);
+  }
+  return true;
 }
 
 }  // namespace Carbon::Check
