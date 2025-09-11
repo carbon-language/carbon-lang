@@ -1895,8 +1895,9 @@ static auto ImportCppOverloadSet(Context& context, SemIR::NameScopeId scope_id,
                                  SemIR::NameId name_id,
                                  const clang::UnresolvedSet<4>& overload_set)
     -> SemIR::InstId {
-  auto overload_set_inst = SemIR::CppOverloadSetValue{
-      SemIR::TypeId::None, SemIR::CppOverloadSetId::None};
+  SemIR::CppOverloadSetValue overload_set_inst = {
+      .type_id = SemIR::TypeId::None,
+      .overload_set_id = SemIR::CppOverloadSetId::None};
 
   overload_set_inst.overload_set_id = context.cpp_overload_sets().Add(
       SemIR::CppOverloadSet{.name_id = name_id,

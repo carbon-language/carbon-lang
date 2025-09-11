@@ -161,7 +161,7 @@ import Cpp library "template_function.h";
 
 fn F() {
   //@dump-sem-ir-begin
-  // CHECK:STDERR: fail_todo_import_template_function.carbon:[[@LINE+7]]:3: error: template function is not supported [TemplateFunctionNotSupported]
+  // CHECK:STDERR: fail_todo_import_template_function.carbon:[[@LINE+7]]:3: error: template function is not supported [CppTemplateFunctionNotSupported]
   // CHECK:STDERR:   Cpp.foo(1 as i32);
   // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~
   // CHECK:STDERR: fail_todo_import_template_function.carbon:[[@LINE+4]]:3: note: in call to Cpp function here [InCallToCppFunction]

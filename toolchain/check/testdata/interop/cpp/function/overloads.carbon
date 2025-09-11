@@ -183,7 +183,7 @@ library "[[@TEST_NAME]]";
 import Cpp library "struct_literal_call_arg.h";
 
 fn F() {
-  // CHECK:STDERR: fail_todo_import_struct_literal_call_arg.carbon:[[@LINE+7]]:3: error: call argument of type `{}` is not supported [CallArgTypeNotSupported]
+  // CHECK:STDERR: fail_todo_import_struct_literal_call_arg.carbon:[[@LINE+7]]:3: error: call argument of type `{}` is not supported [CppCallArgTypeNotSupported]
   // CHECK:STDERR:   Cpp.foo({});
   // CHECK:STDERR:   ^~~~~~~~~~~
   // CHECK:STDERR: fail_todo_import_struct_literal_call_arg.carbon:[[@LINE+4]]:3: note: in call to Cpp function here [InCallToCppFunction]
@@ -304,7 +304,7 @@ library "[[@TEST_NAME]]";
 import Cpp library "no_viable_function.h";
 
 fn F() {
-  // CHECK:STDERR: fail_import_no_viable_function.carbon:[[@LINE+7]]:3: error: no matching function for call to `foo` [OverloadingNoViableFunctionFound]
+  // CHECK:STDERR: fail_import_no_viable_function.carbon:[[@LINE+7]]:3: error: no matching function for call to `foo` [CppOverloadingNoViableFunctionFound]
   // CHECK:STDERR:   Cpp.foo(1 as i64);
   // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~
   // CHECK:STDERR: fail_import_no_viable_function.carbon:[[@LINE+4]]:3: note: in call to Cpp function here [InCallToCppFunction]
@@ -330,7 +330,7 @@ library "[[@TEST_NAME]]";
 import Cpp library "ambiguous_overload.h";
 
 fn F() {
-  // CHECK:STDERR: fail_import_ambiguous_overload.carbon:[[@LINE+7]]:3: error: call to `foo` is ambiguous [OverloadingAmbiguousCandidatesFound]
+  // CHECK:STDERR: fail_import_ambiguous_overload.carbon:[[@LINE+7]]:3: error: call to `foo` is ambiguous [CppOverloadingAmbiguousCandidatesFound]
   // CHECK:STDERR:   Cpp.foo(1 as i64);
   // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~
   // CHECK:STDERR: fail_import_ambiguous_overload.carbon:[[@LINE+4]]:3: note: in call to Cpp function here [InCallToCppFunction]
@@ -356,7 +356,7 @@ library "[[@TEST_NAME]]";
 import Cpp library "deleted_function.h";
 
 fn F() {
-  // CHECK:STDERR: fail_import_deleted_function.carbon:[[@LINE+7]]:3: error: call to deleted function `foo` [OverloadingDeletedFunctionFound]
+  // CHECK:STDERR: fail_import_deleted_function.carbon:[[@LINE+7]]:3: error: call to deleted function `foo` [CppOverloadingDeletedFunctionFound]
   // CHECK:STDERR:   Cpp.foo(1 as i32);
   // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~
   // CHECK:STDERR: fail_import_deleted_function.carbon:[[@LINE+4]]:3: note: in call to Cpp function here [InCallToCppFunction]

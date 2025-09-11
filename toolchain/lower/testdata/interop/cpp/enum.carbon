@@ -30,7 +30,7 @@ import Cpp library "enum_member.h";
 
 fn Pass() {
   Cpp.C.F(Cpp.C.a);
-  // CHECK:STDERR: fail_todo_pass_as_arg.carbon:[[@LINE+7]]:3: error: no matching function for call to `F` [OverloadingNoViableFunctionFound]
+  // CHECK:STDERR: fail_todo_pass_as_arg.carbon:[[@LINE+7]]:3: error: no matching function for call to `F` [CppOverloadingNoViableFunctionFound]
   // CHECK:STDERR:   Cpp.C.F(Cpp.C.b);
   // CHECK:STDERR:   ^~~~~~~~~~~~~~~~
   // CHECK:STDERR: fail_todo_pass_as_arg.carbon:[[@LINE+4]]:3: note: in call to Cpp function here [InCallToCppFunction]
@@ -38,7 +38,7 @@ fn Pass() {
   // CHECK:STDERR:   ^~~~~~~~~~~~~~~~
   // CHECK:STDERR:
   Cpp.C.F(Cpp.C.b);
-  // CHECK:STDERR: fail_todo_pass_as_arg.carbon:[[@LINE+7]]:3: error: no matching function for call to `F` [OverloadingNoViableFunctionFound]
+  // CHECK:STDERR: fail_todo_pass_as_arg.carbon:[[@LINE+7]]:3: error: no matching function for call to `F` [CppOverloadingNoViableFunctionFound]
   // CHECK:STDERR:   Cpp.C.F(Cpp.C.c);
   // CHECK:STDERR:   ^~~~~~~~~~~~~~~~
   // CHECK:STDERR: fail_todo_pass_as_arg.carbon:[[@LINE+4]]:3: note: in call to Cpp function here [InCallToCppFunction]
@@ -46,7 +46,7 @@ fn Pass() {
   // CHECK:STDERR:   ^~~~~~~~~~~~~~~~
   // CHECK:STDERR:
   Cpp.C.F(Cpp.C.c);
-  // CHECK:STDERR: fail_todo_pass_as_arg.carbon:[[@LINE+7]]:3: error: no matching function for call to `F` [OverloadingNoViableFunctionFound]
+  // CHECK:STDERR: fail_todo_pass_as_arg.carbon:[[@LINE+7]]:3: error: no matching function for call to `F` [CppOverloadingNoViableFunctionFound]
   // CHECK:STDERR:   Cpp.C.F(Cpp.C.E.a);
   // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~
   // CHECK:STDERR: fail_todo_pass_as_arg.carbon:[[@LINE+4]]:3: note: in call to Cpp function here [InCallToCppFunction]
@@ -54,7 +54,7 @@ fn Pass() {
   // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~
   // CHECK:STDERR:
   Cpp.C.F(Cpp.C.E.a);
-  // CHECK:STDERR: fail_todo_pass_as_arg.carbon:[[@LINE+7]]:3: error: no matching function for call to `F` [OverloadingNoViableFunctionFound]
+  // CHECK:STDERR: fail_todo_pass_as_arg.carbon:[[@LINE+7]]:3: error: no matching function for call to `F` [CppOverloadingNoViableFunctionFound]
   // CHECK:STDERR:   Cpp.C.F(Cpp.C.E.b);
   // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~
   // CHECK:STDERR: fail_todo_pass_as_arg.carbon:[[@LINE+4]]:3: note: in call to Cpp function here [InCallToCppFunction]
@@ -62,7 +62,7 @@ fn Pass() {
   // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~
   // CHECK:STDERR:
   Cpp.C.F(Cpp.C.E.b);
-  // CHECK:STDERR: fail_todo_pass_as_arg.carbon:[[@LINE+7]]:3: error: no matching function for call to `F` [OverloadingNoViableFunctionFound]
+  // CHECK:STDERR: fail_todo_pass_as_arg.carbon:[[@LINE+7]]:3: error: no matching function for call to `F` [CppOverloadingNoViableFunctionFound]
   // CHECK:STDERR:   Cpp.C.F(Cpp.C.E.c);
   // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~
   // CHECK:STDERR: fail_todo_pass_as_arg.carbon:[[@LINE+4]]:3: note: in call to Cpp function here [InCallToCppFunction]
@@ -89,7 +89,7 @@ fn ConvertEnumToI16(e: Cpp.C.E) {
 }
 
 fn ConvertI16ToEnum(n: i16) {
-  // CHECK:STDERR: fail_todo_convert.carbon:[[@LINE+7]]:3: error: no matching function for call to `F` [OverloadingNoViableFunctionFound]
+  // CHECK:STDERR: fail_todo_convert.carbon:[[@LINE+7]]:3: error: no matching function for call to `F` [CppOverloadingNoViableFunctionFound]
   // CHECK:STDERR:   Cpp.C.F(n as Cpp.C.E);
   // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~~
   // CHECK:STDERR: fail_todo_convert.carbon:[[@LINE+4]]:3: note: in call to Cpp function here [InCallToCppFunction]
@@ -120,7 +120,7 @@ import Cpp library "bitmask.h";
 fn BitOr(a: Cpp.Bits, b: Cpp.Bits) -> Cpp.Bits = "int.or";
 
 fn Call() {
-  // CHECK:STDERR: fail_todo_use_bitmask.carbon:[[@LINE+7]]:3: error: no matching function for call to `Take` [OverloadingNoViableFunctionFound]
+  // CHECK:STDERR: fail_todo_use_bitmask.carbon:[[@LINE+7]]:3: error: no matching function for call to `Take` [CppOverloadingNoViableFunctionFound]
   // CHECK:STDERR:   Cpp.Take(BitOr(Cpp.A, Cpp.C));
   // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~
   // CHECK:STDERR: fail_todo_use_bitmask.carbon:[[@LINE+4]]:3: note: in call to Cpp function here [InCallToCppFunction]

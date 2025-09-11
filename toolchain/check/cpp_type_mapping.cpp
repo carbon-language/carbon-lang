@@ -38,7 +38,7 @@ static auto FindIntLiteralBitWidth(Context& context, SemIR::InstId arg_id)
   }
   auto arg = context.insts().GetAs<SemIR::IntValue>(
       context.constant_values().GetInstId(arg_const_id));
-  auto arg_val = context.ints().Get(arg.int_id);
+  llvm::APInt arg_val = context.ints().Get(arg.int_id);
   unsigned arg_non_sign_bits = arg_val.getSignificantBits() - 1;
 
   // TODO: What if the literal is larger than 64 bits? Currently an error is
@@ -49,6 +49,8 @@ static auto FindIntLiteralBitWidth(Context& context, SemIR::InstId arg_id)
 
 // Maps a Carbon builtin type to a Cpp type. Returns an empty QualType if the
 // type is not supported.
+// TODO: Have both Carbon -> C++ and C++ -> Carbon mappings in a single place
+// to keep them in sync.
 static auto TryMapBuiltinType(Context& context, SemIR::InstId inst_id,
                               SemIR::TypeId type_id) -> clang::QualType {
   // TODO: Object representation should not be used here. Instead, use
@@ -60,53 +62,47 @@ static auto TryMapBuiltinType(Context& context, SemIR::InstId inst_id,
   auto type_inst_id = context.sem_ir().types().GetInstId(object_repr_id);
   auto inst = context.insts().Get(type_inst_id);
 
-  clang::QualType mapped_type;
   CARBON_KIND_SWITCH(inst) {
     case SemIR::BoolType::Kind: {
-      mapped_type = context.ast_context().BoolTy;
-      break;
+      return context.ast_context().BoolTy;
     }
     case Carbon::SemIR::CharLiteralType::Kind: {
-      mapped_type = context.ast_context().CharTy;
-      break;
+      return context.ast_context().CharTy;
     }
     case SemIR::IntLiteralType::Kind: {
       auto bit_width = FindIntLiteralBitWidth(context, inst_id);
       if (bit_width == IntId::None) {
         return clang::QualType();
       }
-      mapped_type = context.ast_context().getIntTypeForBitwidth(
-          bit_width.AsValue(), true);
-      break;
+      return context.ast_context().getIntTypeForBitwidth(bit_width.AsValue(),
+                                                         true);
     }
     case CARBON_KIND(SemIR::IntType int_type): {
       auto bit_width_inst = context.sem_ir().insts().TryGetAs<SemIR::IntValue>(
           int_type.bit_width_id);
-      mapped_type = context.ast_context().getIntTypeForBitwidth(
+      return context.ast_context().getIntTypeForBitwidth(
           bit_width_inst->int_id.AsValue(), int_type.int_kind.is_signed());
-      break;
     }
+    // TODO: What if the value doesn't fit to f64?
     case SemIR::FloatLiteralType::Kind: {
-      mapped_type = context.ast_context().DoubleTy;
-      break;
+      return context.ast_context().DoubleTy;
     }
     case CARBON_KIND(SemIR::FloatType float_type): {
       auto bit_width_inst = context.sem_ir().insts().TryGetAs<SemIR::IntValue>(
           float_type.bit_width_id);
-      mapped_type = context.ast_context().getRealTypeForBitwidth(
+      return context.ast_context().getRealTypeForBitwidth(
           bit_width_inst->int_id.AsValue(), clang::FloatModeKind::NoFloat);
-      break;
     }
     default: {
-      return mapped_type;
+      return clang::QualType();
     }
   }
-  return mapped_type;
+  return clang::QualType();
 }
 
-// Maps a Carbon record type to a Cpp type. Returns an empty QualType if
-// the Carbon type is not a ClassType or if the Cpp record type has not yet been
-// imported.
+// Maps a Carbon record type to a Cpp type. Returns an empty `QualType` if
+// the Carbon type is not a `ClassType` or if the Cpp record type has not yet
+// been
 // TODO: Import the type if needed.
 static auto TryMapRecordType(Context& context, SemIR::TypeId type_id)
     -> clang::QualType {
@@ -131,7 +127,7 @@ static auto TryMapRecordType(Context& context, SemIR::TypeId type_id)
 // Maps a non-wrapper (no const or pointer) Carbon type to a Cpp type.
 static auto MapNonWrapperType(Context& context, SemIR::InstId inst_id,
                               SemIR::TypeId type_id) -> clang::QualType {
-  auto mapped_type = TryMapBuiltinType(context, inst_id, type_id);
+  clang::QualType mapped_type = TryMapBuiltinType(context, inst_id, type_id);
   if (mapped_type.isNull()) {
     mapped_type = TryMapRecordType(context, type_id);
   }

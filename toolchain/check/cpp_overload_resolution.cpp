@@ -26,12 +26,12 @@ auto PerformCppOverloadResolution(Context& context, SemIR::LocId loc_id,
   llvm::SmallVector<clang::Expr*> arg_exprs;
   arg_exprs.reserve(arg_ids.size());
   for (SemIR::InstId arg_id : arg_ids) {
-    auto arg_cpp_type = MapToCppType(context, arg_id);
+    clang::QualType arg_cpp_type = MapToCppType(context, arg_id);
     if (arg_cpp_type.isNull()) {
-      CARBON_DIAGNOSTIC(CallArgTypeNotSupported, Error,
+      CARBON_DIAGNOSTIC(CppCallArgTypeNotSupported, Error,
                         "call argument of type {0} is not supported",
                         TypeOfInstId);
-      context.emitter().Emit(loc_id, CallArgTypeNotSupported, arg_id);
+      context.emitter().Emit(loc_id, CppCallArgTypeNotSupported, arg_id);
       return std::nullopt;
     }
     // TODO: Allocate these on the stack.
@@ -70,12 +70,13 @@ auto PerformCppOverloadResolution(Context& context, SemIR::LocId loc_id,
       sema.AddOverloadCandidate(
           fn_decl, clang::DeclAccessPair::make(fn_decl, candidate->getAccess()),
           arg_exprs, candidate_set);
-    } else if (dyn_cast<clang::FunctionTemplateDecl>(candidate)) {
-      CARBON_DIAGNOSTIC(TemplateFunctionNotSupported, Error,
+    } else if (isa<clang::FunctionTemplateDecl>(candidate)) {
+      CARBON_DIAGNOSTIC(CppTemplateFunctionNotSupported, Error,
                         "template function is not supported");
-      context.emitter().Emit(loc_id, TemplateFunctionNotSupported);
+      context.emitter().Emit(loc_id, CppTemplateFunctionNotSupported);
       return std::nullopt;
     }
+    // TODO: Diagnose if it's neither of these types.
   }
 
   // Find best viable function among the candidates.
@@ -99,26 +100,26 @@ auto PerformCppOverloadResolution(Context& context, SemIR::LocId loc_id,
     }
     case clang::OverloadingResult::OR_No_Viable_Function: {
       // TODO: Add notes with the candidates.
-      CARBON_DIAGNOSTIC(OverloadingNoViableFunctionFound, Error,
+      CARBON_DIAGNOSTIC(CppOverloadingNoViableFunctionFound, Error,
                         "no matching function for call to `{0}`",
                         SemIR::NameId);
-      context.emitter().Emit(loc_id, OverloadingNoViableFunctionFound,
+      context.emitter().Emit(loc_id, CppOverloadingNoViableFunctionFound,
                              overload_set.name_id);
       return std::nullopt;
     }
     case clang::OverloadingResult::OR_Ambiguous: {
       // TODO: Add notes with the candidates.
-      CARBON_DIAGNOSTIC(OverloadingAmbiguousCandidatesFound, Error,
+      CARBON_DIAGNOSTIC(CppOverloadingAmbiguousCandidatesFound, Error,
                         "call to `{0}` is ambiguous", SemIR::NameId);
-      context.emitter().Emit(loc_id, OverloadingAmbiguousCandidatesFound,
+      context.emitter().Emit(loc_id, CppOverloadingAmbiguousCandidatesFound,
                              overload_set.name_id);
       return std::nullopt;
     }
     case clang::OverloadingResult::OR_Deleted: {
       // TODO: Add notes with the candidates.
-      CARBON_DIAGNOSTIC(OverloadingDeletedFunctionFound, Error,
+      CARBON_DIAGNOSTIC(CppOverloadingDeletedFunctionFound, Error,
                         "call to deleted function `{0}`", SemIR::NameId);
-      context.emitter().Emit(loc_id, OverloadingDeletedFunctionFound,
+      context.emitter().Emit(loc_id, CppOverloadingDeletedFunctionFound,
                              overload_set.name_id);
       return std::nullopt;
     }

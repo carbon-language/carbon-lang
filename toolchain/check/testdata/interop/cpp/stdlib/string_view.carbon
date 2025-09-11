@@ -44,7 +44,7 @@ import Cpp library "string_view.h";
 
 //@dump-sem-ir-begin
 fn F() {
-  // CHECK:STDERR: fail_todo_import_multiple.carbon:[[@LINE+7]]:3: error: call argument of type `Core.String` is not supported [CallArgTypeNotSupported]
+  // CHECK:STDERR: fail_todo_import_multiple.carbon:[[@LINE+7]]:3: error: call argument of type `Core.String` is not supported [CppCallArgTypeNotSupported]
   // CHECK:STDERR:   Cpp.Consume("hello");
   // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~
   // CHECK:STDERR: fail_todo_import_multiple.carbon:[[@LINE+4]]:3: note: in call to Cpp function here [InCallToCppFunction]

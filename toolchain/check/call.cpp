@@ -311,6 +311,7 @@ auto PerformCall(Context& context, SemIR::LocId loc_id, SemIR::InstId callee_id,
       return SemIR::ErrorInst::InstId;
     }
   }
+  CARBON_CHECK(!callee_function.is_cpp_overload_set);
   if (callee_function.function_id.has_value()) {
     return PerformCallToFunction(context, loc_id, callee_id, callee_function,
                                  arg_ids);

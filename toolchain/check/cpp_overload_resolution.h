@@ -18,6 +18,7 @@ auto PerformCppOverloadResolution(Context& context, SemIR::LocId loc_id,
                                   SemIR::InstId callee_id,
                                   llvm::ArrayRef<SemIR::InstId> arg_ids)
     -> std::optional<SemIR::InstId>;
+
 }  // namespace Carbon::Check
 
 #endif  // CARBON_TOOLCHAIN_CHECK_CPP_OVERLOAD_RESOLUTION_H_

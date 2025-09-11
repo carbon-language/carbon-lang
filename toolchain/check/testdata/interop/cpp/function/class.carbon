@@ -35,7 +35,7 @@ fn F() {
   // CHECK:STDERR: class C;
   // CHECK:STDERR:       ^
   // CHECK:STDERR:
-  // CHECK:STDERR: fail_import_decl_value_param_type.carbon:[[@LINE+7]]:3: error: call argument of type `<error>` is not supported [CallArgTypeNotSupported]
+  // CHECK:STDERR: fail_import_decl_value_param_type.carbon:[[@LINE+7]]:3: error: call argument of type `<error>` is not supported [CppCallArgTypeNotSupported]
   // CHECK:STDERR:   Cpp.foo({} as Cpp.C);
   // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~
   // CHECK:STDERR: fail_import_decl_value_param_type.carbon:[[@LINE+4]]:3: note: in call to Cpp function here [InCallToCppFunction]
@@ -65,7 +65,7 @@ fn F() {
   // CHECK:STDERR:               ^
   // CHECK:STDERR:
   let c: Cpp.C;
-  // CHECK:STDERR: fail_import_decl_value_param_type_previously_imported.carbon:[[@LINE+7]]:3: error: call argument of type `<error>` is not supported [CallArgTypeNotSupported]
+  // CHECK:STDERR: fail_import_decl_value_param_type_previously_imported.carbon:[[@LINE+7]]:3: error: call argument of type `<error>` is not supported [CppCallArgTypeNotSupported]
   // CHECK:STDERR:   Cpp.foo(c);
   // CHECK:STDERR:   ^~~~~~~~~~
   // CHECK:STDERR: fail_import_decl_value_param_type_previously_imported.carbon:[[@LINE+4]]:3: note: in call to Cpp function here [InCallToCppFunction]
@@ -101,7 +101,7 @@ fn F() {
   // CHECK:STDERR: class C;
   // CHECK:STDERR:       ^
   // CHECK:STDERR:
-  // CHECK:STDERR: fail_import_double_decl_value_param_type.carbon:[[@LINE+7]]:3: error: call argument of type `<error>` is not supported [CallArgTypeNotSupported]
+  // CHECK:STDERR: fail_import_double_decl_value_param_type.carbon:[[@LINE+7]]:3: error: call argument of type `<error>` is not supported [CppCallArgTypeNotSupported]
   // CHECK:STDERR:   Cpp.foo1({} as Cpp.C);
   // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~~
   // CHECK:STDERR: fail_import_double_decl_value_param_type.carbon:[[@LINE+4]]:3: note: in call to Cpp function here [InCallToCppFunction]
@@ -117,7 +117,7 @@ fn F() {
   // CHECK:STDERR: class C;
   // CHECK:STDERR:       ^
   // CHECK:STDERR:
-  // CHECK:STDERR: fail_import_double_decl_value_param_type.carbon:[[@LINE+7]]:3: error: call argument of type `<error>` is not supported [CallArgTypeNotSupported]
+  // CHECK:STDERR: fail_import_double_decl_value_param_type.carbon:[[@LINE+7]]:3: error: call argument of type `<error>` is not supported [CppCallArgTypeNotSupported]
   // CHECK:STDERR:   Cpp.foo2({} as Cpp.C);
   // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~~
   // CHECK:STDERR: fail_import_double_decl_value_param_type.carbon:[[@LINE+4]]:3: note: in call to Cpp function here [InCallToCppFunction]
