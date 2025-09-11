@@ -368,6 +368,8 @@ auto FunctionContext::CopyValue(TypeInFile type, SemIR::InstId source_id,
   switch (GetValueRepr(type).repr.kind) {
     case SemIR::ValueRepr::Unknown:
       CARBON_FATAL("Attempt to copy incomplete type");
+    case SemIR::ValueRepr::Dependent:
+      CARBON_FATAL("Attempt to copy dependent type");
     case SemIR::ValueRepr::None:
       break;
     case SemIR::ValueRepr::Copy:

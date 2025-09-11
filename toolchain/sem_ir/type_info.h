@@ -22,6 +22,8 @@ struct ValueRepr : public Printable<ValueRepr> {
     // The value representation is not yet known. This is used for incomplete
     // types.
     Unknown,
+    // The value representation is dependent because the type is symbolic.
+    Dependent,
     // The type has no value representation. This is used for empty types, such
     // as `()`, where there is no value.
     None,

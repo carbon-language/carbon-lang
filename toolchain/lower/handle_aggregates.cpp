@@ -79,6 +79,8 @@ static auto GetAggregateElement(FunctionContext& context,
       switch (value_repr.repr.kind) {
         case SemIR::ValueRepr::Unknown:
           CARBON_FATAL("Lowering access to incomplete aggregate type");
+        case SemIR::ValueRepr::Dependent:
+          CARBON_FATAL("Lowering access to dependent aggregate type");
         case SemIR::ValueRepr::None:
           return aggr_value;
         case SemIR::ValueRepr::Copy:
@@ -241,7 +243,10 @@ static auto EmitAggregateValueRepr(FunctionContext& context,
   auto value_type = value_repr.type();
   switch (value_repr.repr.kind) {
     case SemIR::ValueRepr::Unknown:
-      CARBON_FATAL("Incomplete aggregate type in lowering");
+      CARBON_FATAL("Lowering value of incomplete aggregate type");
+
+    case SemIR::ValueRepr::Dependent:
+      CARBON_FATAL("Lowering value of dependent aggregate type");
 
     case SemIR::ValueRepr::None:
       // TODO: Add a helper to get a "no value representation" value.

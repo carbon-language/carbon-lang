@@ -66,6 +66,9 @@ class TypeCompleter {
   // state, such as empty structs and tuples.
   auto MakeEmptyValueRepr() const -> SemIR::ValueRepr;
 
+  // Makes a dependent value representation, which is used for symbolic types.
+  auto MakeDependentValueRepr(SemIR::TypeId type_id) const -> SemIR::ValueRepr;
+
   // Makes a value representation that uses pass-by-copy, copying the given
   // type.
   auto MakeCopyValueRepr(SemIR::TypeId rep_id,
@@ -165,8 +168,10 @@ class TypeCompleter {
     requires(InstT::Kind.is_symbolic_when_type())
   auto BuildInfoForInst(SemIR::TypeId type_id, InstT /*inst*/) const
       -> SemIR::CompleteTypeInfo {
-    // For symbolic types, we arbitrarily pick a copy representation.
-    return {.value_repr = MakeCopyValueRepr(type_id)};
+    // TODO: We're implicitly assuming here that dependent types are not
+    // abstract. How do we enforce that dependent types are non-abstract when
+    // they need to be?
+    return {.value_repr = MakeDependentValueRepr(type_id)};
   }
 
   // Builds and returns the `CompleteTypeInfo` for the given type. All nested
@@ -361,6 +366,11 @@ auto TypeCompleter::AddNestedIncompleteTypes(SemIR::Inst type_inst) -> bool {
 auto TypeCompleter::MakeEmptyValueRepr() const -> SemIR::ValueRepr {
   return {.kind = SemIR::ValueRepr::None,
           .type_id = GetTupleType(*context_, {})};
+}
+
+auto TypeCompleter::MakeDependentValueRepr(SemIR::TypeId type_id) const
+    -> SemIR::ValueRepr {
+  return {.kind = SemIR::ValueRepr::Dependent, .type_id = type_id};
 }
 
 auto TypeCompleter::MakeCopyValueRepr(
