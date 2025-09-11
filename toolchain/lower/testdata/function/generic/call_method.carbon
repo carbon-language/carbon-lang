@@ -48,11 +48,13 @@ fn CallF() -> i32 {
 // CHECK:STDOUT:
 // CHECK:STDOUT: define linkonce_odr i32 @_CF.C.Main.b7c8e4dff2adcdaa(ptr %self, i32 %x) !dbg !12 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   ret i32 %x, !dbg !13
+// CHECK:STDOUT:   %.loc15_12.1.temp = alloca i32, align 4, !dbg !13
+// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %.loc15_12.1.temp), !dbg !13
+// CHECK:STDOUT:   ret i32 %x, !dbg !14
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; uselistorder directives
-// CHECK:STDOUT: uselistorder ptr @llvm.lifetime.start.p0, { 1, 0 }
+// CHECK:STDOUT: uselistorder ptr @llvm.lifetime.start.p0, { 0, 2, 1 }
 // CHECK:STDOUT:
 // CHECK:STDOUT: attributes #0 = { nocallback nofree nosync nounwind willreturn memory(argmem: readwrite) }
 // CHECK:STDOUT: attributes #1 = { nocallback nofree nounwind willreturn memory(argmem: readwrite) }
@@ -73,4 +75,5 @@ fn CallF() -> i32 {
 // CHECK:STDOUT: !10 = !DILocation(line: 22, column: 10, scope: !4)
 // CHECK:STDOUT: !11 = !DILocation(line: 22, column: 3, scope: !4)
 // CHECK:STDOUT: !12 = distinct !DISubprogram(name: "F", linkageName: "_CF.C.Main.b7c8e4dff2adcdaa", scope: null, file: !3, line: 14, type: !5, spFlags: DISPFlagDefinition, unit: !2)
-// CHECK:STDOUT: !13 = !DILocation(line: 15, column: 5, scope: !12)
+// CHECK:STDOUT: !13 = !DILocation(line: 15, column: 12, scope: !12)
+// CHECK:STDOUT: !14 = !DILocation(line: 15, column: 5, scope: !12)

@@ -92,11 +92,18 @@ fn Run() {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: define linkonce_odr i32 @_CF.Main.fff9b6025d351f91(i32 %a, i32 %b) !dbg !18 {
-// CHECK:STDOUT:   ret i32 %a, !dbg !19
+// CHECK:STDOUT:   %temp = alloca i32, align 4, !dbg !19
+// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %temp), !dbg !19
+// CHECK:STDOUT:   ret i32 %a, !dbg !20
 // CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: ; Function Attrs: nocallback nofree nosync nounwind willreturn memory(argmem: readwrite)
+// CHECK:STDOUT: declare void @llvm.lifetime.start.p0(ptr captures(none)) #0
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; uselistorder directives
 // CHECK:STDOUT: uselistorder ptr @_CF.Main.fff9b6025d351f91, { 1, 0 }
+// CHECK:STDOUT:
+// CHECK:STDOUT: attributes #0 = { nocallback nofree nosync nounwind willreturn memory(argmem: readwrite) }
 // CHECK:STDOUT:
 // CHECK:STDOUT: !llvm.module.flags = !{!0, !1}
 // CHECK:STDOUT: !llvm.dbg.cu = !{!2}
@@ -120,4 +127,5 @@ fn Run() {
 // CHECK:STDOUT: !16 = !DILocation(line: 12, column: 10, scope: !14)
 // CHECK:STDOUT: !17 = !DILocation(line: 12, column: 3, scope: !14)
 // CHECK:STDOUT: !18 = distinct !DISubprogram(name: "F", linkageName: "_CF.Main.fff9b6025d351f91", scope: null, file: !11, line: 4, type: !5, spFlags: DISPFlagDefinition, unit: !2)
-// CHECK:STDOUT: !19 = !DILocation(line: 5, column: 3, scope: !18)
+// CHECK:STDOUT: !19 = !DILocation(line: 5, column: 10, scope: !18)
+// CHECK:STDOUT: !20 = !DILocation(line: 5, column: 3, scope: !18)

@@ -974,12 +974,13 @@ fn H() {
 // CHECK:STDOUT:   %X.G: @X.G.%X.G.type (%X.G.type.56f312.1) = struct_value () [symbolic = %X.G (constants.%X.G.b504c4.1)]
 // CHECK:STDOUT:   %X.G.specific_fn.loc5_24.2: <specific function> = specific_function %X.G, @X.G(%U) [symbolic = %X.G.specific_fn.loc5_24.2 (constants.%X.G.specific_fn.169)]
 // CHECK:STDOUT:
-// CHECK:STDOUT:   fn() -> @X.G.%U (%U) {
+// CHECK:STDOUT:   fn() -> %return.param: @X.G.%U (%U) {
 // CHECK:STDOUT:   !entry:
-// CHECK:STDOUT:     %.loc5: @X.G.%X.G.type (%X.G.type.56f312.1) = specific_constant @X.%X.G.decl, @X(constants.%U) [symbolic = %X.G (constants.%X.G.b504c4.1)]
-// CHECK:STDOUT:     %G.ref: @X.G.%X.G.type (%X.G.type.56f312.1) = name_ref G, %.loc5 [symbolic = %X.G (constants.%X.G.b504c4.1)]
+// CHECK:STDOUT:     %.loc5_24: @X.G.%X.G.type (%X.G.type.56f312.1) = specific_constant @X.%X.G.decl, @X(constants.%U) [symbolic = %X.G (constants.%X.G.b504c4.1)]
+// CHECK:STDOUT:     %G.ref: @X.G.%X.G.type (%X.G.type.56f312.1) = name_ref G, %.loc5_24 [symbolic = %X.G (constants.%X.G.b504c4.1)]
 // CHECK:STDOUT:     %X.G.specific_fn.loc5_24.1: <specific function> = specific_function %G.ref, @X.G(constants.%U) [symbolic = %X.G.specific_fn.loc5_24.2 (constants.%X.G.specific_fn.169)]
-// CHECK:STDOUT:     %X.G.call: init @X.G.%U (%U) = call %X.G.specific_fn.loc5_24.1()
+// CHECK:STDOUT:     %.loc5_10: ref @X.G.%U (%U) = splice_block %return {}
+// CHECK:STDOUT:     %X.G.call: init @X.G.%U (%U) = call %X.G.specific_fn.loc5_24.1() to %.loc5_10
 // CHECK:STDOUT:     return %X.G.call to %return
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
@@ -1174,7 +1175,7 @@ fn H() {
 // CHECK:STDOUT:   %Main.import_ref.b8a: @X.%X.G.type (%X.G.type.56f312.1) = import_ref Main//extend_generic_symbolic_base, loc5_15, loaded [symbolic = @X.%X.G (constants.%X.G.b504c4.1)]
 // CHECK:STDOUT:   %Main.import_ref.5ab3ec.2: type = import_ref Main//extend_generic_symbolic_base, loc8_9, loaded [symbolic = @C.%T (constants.%T)]
 // CHECK:STDOUT:   %Main.import_ref.93f: <witness> = import_ref Main//extend_generic_symbolic_base, loc10_1, loaded [symbolic = @C.%complete_type (constants.%complete_type.768)]
-// CHECK:STDOUT:   %Main.import_ref.4c0 = import_ref Main//extend_generic_symbolic_base, inst117 [no loc], unloaded
+// CHECK:STDOUT:   %Main.import_ref.4c0 = import_ref Main//extend_generic_symbolic_base, inst118 [no loc], unloaded
 // CHECK:STDOUT:   %Main.import_ref.65d = import_ref Main//extend_generic_symbolic_base, loc9_20, unloaded
 // CHECK:STDOUT:   %Main.import_ref.561eb2.2: type = import_ref Main//extend_generic_symbolic_base, loc9_19, loaded [symbolic = @C.%X (constants.%X.75b6d8.2)]
 // CHECK:STDOUT:   %Main.import_ref.5ab3ec.3: type = import_ref Main//extend_generic_symbolic_base, loc4_14, loaded [symbolic = @X.%U (constants.%U)]

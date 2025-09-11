@@ -183,19 +183,29 @@ fn AccessEmpty() -> () {
 // CHECK:STDOUT:
 // CHECK:STDOUT: define linkonce_odr void @_CMake.Main.b7c8e4dff2adcdaa(ptr sret({ i32, i32 }) %return, i32 %x, i32 %y) !dbg !12 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %.loc10_25.2.x = getelementptr inbounds nuw { i32, i32 }, ptr %return, i32 0, i32 0, !dbg !13
-// CHECK:STDOUT:   store i32 %x, ptr %.loc10_25.2.x, align 4, !dbg !13
-// CHECK:STDOUT:   %.loc10_25.4.y = getelementptr inbounds nuw { i32, i32 }, ptr %return, i32 0, i32 1, !dbg !13
-// CHECK:STDOUT:   store i32 %y, ptr %.loc10_25.4.y, align 4, !dbg !13
-// CHECK:STDOUT:   ret void, !dbg !14
+// CHECK:STDOUT:   %.loc10_16.1.temp = alloca i32, align 4, !dbg !13
+// CHECK:STDOUT:   %.loc10_24.1.temp = alloca i32, align 4, !dbg !14
+// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %.loc10_16.1.temp), !dbg !13
+// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %.loc10_24.1.temp), !dbg !14
+// CHECK:STDOUT:   ret void, !dbg !15
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: define linkonce_odr void @_CMake.Main.35292afa1b663913(ptr sret({ {}, {} }) %return) !dbg !15 {
+// CHECK:STDOUT: define linkonce_odr void @_CMake.Main.35292afa1b663913(ptr sret({ {}, {} }) %return) !dbg !16 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %.loc10_25.2.x = getelementptr inbounds nuw { {}, {} }, ptr %return, i32 0, i32 0, !dbg !16
-// CHECK:STDOUT:   %.loc10_25.4.y = getelementptr inbounds nuw { {}, {} }, ptr %return, i32 0, i32 1, !dbg !16
-// CHECK:STDOUT:   ret void, !dbg !17
+// CHECK:STDOUT:   %.loc10_16.1.temp = alloca {}, align 8, !dbg !17
+// CHECK:STDOUT:   %.loc10_24.1.temp = alloca {}, align 8, !dbg !18
+// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %.loc10_16.1.temp), !dbg !17
+// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %.loc10_24.1.temp), !dbg !18
+// CHECK:STDOUT:   ret void, !dbg !19
 // CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: ; Function Attrs: nocallback nofree nosync nounwind willreturn memory(argmem: readwrite)
+// CHECK:STDOUT: declare void @llvm.lifetime.start.p0(ptr captures(none)) #0
+// CHECK:STDOUT:
+// CHECK:STDOUT: ; uselistorder directives
+// CHECK:STDOUT: uselistorder ptr @llvm.lifetime.start.p0, { 3, 2, 1, 0 }
+// CHECK:STDOUT:
+// CHECK:STDOUT: attributes #0 = { nocallback nofree nosync nounwind willreturn memory(argmem: readwrite) }
 // CHECK:STDOUT:
 // CHECK:STDOUT: !llvm.module.flags = !{!0, !1}
 // CHECK:STDOUT: !llvm.dbg.cu = !{!2}
@@ -213,11 +223,13 @@ fn AccessEmpty() -> () {
 // CHECK:STDOUT: !10 = !DILocation(line: 18, column: 10, scope: !9)
 // CHECK:STDOUT: !11 = !DILocation(line: 18, column: 3, scope: !9)
 // CHECK:STDOUT: !12 = distinct !DISubprogram(name: "Make", linkageName: "_CMake.Main.b7c8e4dff2adcdaa", scope: null, file: !3, line: 9, type: !5, spFlags: DISPFlagDefinition, unit: !2)
-// CHECK:STDOUT: !13 = !DILocation(line: 10, column: 10, scope: !12)
-// CHECK:STDOUT: !14 = !DILocation(line: 10, column: 3, scope: !12)
-// CHECK:STDOUT: !15 = distinct !DISubprogram(name: "Make", linkageName: "_CMake.Main.35292afa1b663913", scope: null, file: !3, line: 9, type: !5, spFlags: DISPFlagDefinition, unit: !2)
-// CHECK:STDOUT: !16 = !DILocation(line: 10, column: 10, scope: !15)
-// CHECK:STDOUT: !17 = !DILocation(line: 10, column: 3, scope: !15)
+// CHECK:STDOUT: !13 = !DILocation(line: 10, column: 16, scope: !12)
+// CHECK:STDOUT: !14 = !DILocation(line: 10, column: 24, scope: !12)
+// CHECK:STDOUT: !15 = !DILocation(line: 10, column: 3, scope: !12)
+// CHECK:STDOUT: !16 = distinct !DISubprogram(name: "Make", linkageName: "_CMake.Main.35292afa1b663913", scope: null, file: !3, line: 9, type: !5, spFlags: DISPFlagDefinition, unit: !2)
+// CHECK:STDOUT: !17 = !DILocation(line: 10, column: 16, scope: !16)
+// CHECK:STDOUT: !18 = !DILocation(line: 10, column: 24, scope: !16)
+// CHECK:STDOUT: !19 = !DILocation(line: 10, column: 3, scope: !16)
 // CHECK:STDOUT: ; ModuleID = 'access.carbon'
 // CHECK:STDOUT: source_filename = "access.carbon"
 // CHECK:STDOUT:
@@ -273,19 +285,23 @@ fn AccessEmpty() -> () {
 // CHECK:STDOUT:
 // CHECK:STDOUT: define linkonce_odr i32 @_CGetT.C.Main.b7c8e4dff2adcdaa(ptr %self) !dbg !24 {
 // CHECK:STDOUT: entry:
+// CHECK:STDOUT:   %.loc9_16.3.temp = alloca i32, align 4, !dbg !25
 // CHECK:STDOUT:   %.loc9_16.1.w = getelementptr inbounds nuw { i1, i32 }, ptr %self, i32 0, i32 1, !dbg !25
 // CHECK:STDOUT:   %.loc9_16.2 = load i32, ptr %.loc9_16.1.w, align 4, !dbg !25
+// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %.loc9_16.3.temp), !dbg !25
 // CHECK:STDOUT:   ret i32 %.loc9_16.2, !dbg !26
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: define linkonce_odr void @_CGetT.C.Main.35292afa1b663913(ptr %self) !dbg !27 {
 // CHECK:STDOUT: entry:
+// CHECK:STDOUT:   %.loc9_16.3.temp = alloca {}, align 8, !dbg !28
 // CHECK:STDOUT:   %.loc9_16.1.w = getelementptr inbounds nuw { i1, {} }, ptr %self, i32 0, i32 1, !dbg !28
+// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %.loc9_16.3.temp), !dbg !28
 // CHECK:STDOUT:   ret void, !dbg !29
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; uselistorder directives
-// CHECK:STDOUT: uselistorder ptr @llvm.lifetime.start.p0, { 2, 1, 0 }
+// CHECK:STDOUT: uselistorder ptr @llvm.lifetime.start.p0, { 0, 1, 4, 3, 2 }
 // CHECK:STDOUT: uselistorder ptr @llvm.memcpy.p0.p0.i64, { 2, 1, 0 }
 // CHECK:STDOUT:
 // CHECK:STDOUT: attributes #0 = { nocallback nofree nosync nounwind willreturn memory(argmem: readwrite) }

@@ -306,22 +306,23 @@ fn H(U:! Core.Copy, c: Class(U)) -> U {
 // CHECK:STDOUT:   %Class.elem: type = unbound_element_type %Class.loc13_31.1, %T.as_type.loc13_31.1 [symbolic = %Class.elem (constants.%Class.elem.73af90.1)]
 // CHECK:STDOUT:   %Copy.lookup_impl_witness: <witness> = lookup_impl_witness %T.loc13_6.1, @Copy [symbolic = %Copy.lookup_impl_witness (constants.%Copy.lookup_impl_witness.3ba2b3.1)]
 // CHECK:STDOUT:   %Copy.facet: %Copy.type = facet_value %T.as_type.loc13_31.1, (%Copy.lookup_impl_witness) [symbolic = %Copy.facet (constants.%Copy.facet.72ea01.1)]
-// CHECK:STDOUT:   %.loc14_11.4: type = fn_type_with_self_type constants.%Copy.Op.type, %Copy.facet [symbolic = %.loc14_11.4 (constants.%.671c3a.1)]
-// CHECK:STDOUT:   %impl.elem0.loc14_11.2: @G.%.loc14_11.4 (%.671c3a.1) = impl_witness_access %Copy.lookup_impl_witness, element0 [symbolic = %impl.elem0.loc14_11.2 (constants.%impl.elem0.56eb4a.1)]
+// CHECK:STDOUT:   %.loc14_11.5: type = fn_type_with_self_type constants.%Copy.Op.type, %Copy.facet [symbolic = %.loc14_11.5 (constants.%.671c3a.1)]
+// CHECK:STDOUT:   %impl.elem0.loc14_11.2: @G.%.loc14_11.5 (%.671c3a.1) = impl_witness_access %Copy.lookup_impl_witness, element0 [symbolic = %impl.elem0.loc14_11.2 (constants.%impl.elem0.56eb4a.1)]
 // CHECK:STDOUT:   %specific_impl_fn.loc14_11.2: <specific function> = specific_impl_function %impl.elem0.loc14_11.2, @Copy.Op(%Copy.facet) [symbolic = %specific_impl_fn.loc14_11.2 (constants.%specific_impl_fn.fb70c0.1)]
 // CHECK:STDOUT:
-// CHECK:STDOUT:   fn(%c.param: @G.%Class.loc13_31.1 (%Class.b1d614.1)) -> @G.%T.as_type.loc13_31.1 (%T.as_type) {
+// CHECK:STDOUT:   fn(%c.param: @G.%Class.loc13_31.1 (%Class.b1d614.1)) -> %return.param: @G.%T.as_type.loc13_31.1 (%T.as_type) {
 // CHECK:STDOUT:   !entry:
 // CHECK:STDOUT:     %c.ref: @G.%Class.loc13_31.1 (%Class.b1d614.1) = name_ref c, %c
 // CHECK:STDOUT:     %x.ref: @G.%Class.elem (%Class.elem.73af90.1) = name_ref x, @Class.%.loc6 [concrete = @Class.%.loc6]
 // CHECK:STDOUT:     %.loc14_11.1: ref @G.%T.as_type.loc13_31.1 (%T.as_type) = class_element_access %c.ref, element0
 // CHECK:STDOUT:     %.loc14_11.2: @G.%T.as_type.loc13_31.1 (%T.as_type) = bind_value %.loc14_11.1
-// CHECK:STDOUT:     %impl.elem0.loc14_11.1: @G.%.loc14_11.4 (%.671c3a.1) = impl_witness_access constants.%Copy.lookup_impl_witness.3ba2b3.1, element0 [symbolic = %impl.elem0.loc14_11.2 (constants.%impl.elem0.56eb4a.1)]
+// CHECK:STDOUT:     %impl.elem0.loc14_11.1: @G.%.loc14_11.5 (%.671c3a.1) = impl_witness_access constants.%Copy.lookup_impl_witness.3ba2b3.1, element0 [symbolic = %impl.elem0.loc14_11.2 (constants.%impl.elem0.56eb4a.1)]
 // CHECK:STDOUT:     %bound_method.loc14_11.1: <bound method> = bound_method %.loc14_11.2, %impl.elem0.loc14_11.1
 // CHECK:STDOUT:     %specific_impl_fn.loc14_11.1: <specific function> = specific_impl_function %impl.elem0.loc14_11.1, @Copy.Op(constants.%Copy.facet.72ea01.1) [symbolic = %specific_impl_fn.loc14_11.2 (constants.%specific_impl_fn.fb70c0.1)]
 // CHECK:STDOUT:     %bound_method.loc14_11.2: <bound method> = bound_method %.loc14_11.2, %specific_impl_fn.loc14_11.1
-// CHECK:STDOUT:     %.loc14_11.3: init @G.%T.as_type.loc13_31.1 (%T.as_type) = call %bound_method.loc14_11.2(%.loc14_11.2)
-// CHECK:STDOUT:     return %.loc14_11.3 to %return
+// CHECK:STDOUT:     %.loc14_11.3: ref @G.%T.as_type.loc13_31.1 (%T.as_type) = temporary_storage
+// CHECK:STDOUT:     %.loc14_11.4: init @G.%T.as_type.loc13_31.1 (%T.as_type) = call %bound_method.loc14_11.2(%.loc14_11.2) to %.loc14_11.3
+// CHECK:STDOUT:     return %.loc14_11.4 to %return
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -338,22 +339,23 @@ fn H(U:! Core.Copy, c: Class(U)) -> U {
 // CHECK:STDOUT:   %Class.elem: type = unbound_element_type %Class.loc17_31.1, %U.as_type.loc17_31.1 [symbolic = %Class.elem (constants.%Class.elem.73af90.2)]
 // CHECK:STDOUT:   %Copy.lookup_impl_witness: <witness> = lookup_impl_witness %U.loc17_6.1, @Copy [symbolic = %Copy.lookup_impl_witness (constants.%Copy.lookup_impl_witness.3ba2b3.2)]
 // CHECK:STDOUT:   %Copy.facet: %Copy.type = facet_value %U.as_type.loc17_31.1, (%Copy.lookup_impl_witness) [symbolic = %Copy.facet (constants.%Copy.facet.72ea01.2)]
-// CHECK:STDOUT:   %.loc18_11.4: type = fn_type_with_self_type constants.%Copy.Op.type, %Copy.facet [symbolic = %.loc18_11.4 (constants.%.671c3a.2)]
-// CHECK:STDOUT:   %impl.elem0.loc18_11.2: @H.%.loc18_11.4 (%.671c3a.2) = impl_witness_access %Copy.lookup_impl_witness, element0 [symbolic = %impl.elem0.loc18_11.2 (constants.%impl.elem0.56eb4a.2)]
+// CHECK:STDOUT:   %.loc18_11.5: type = fn_type_with_self_type constants.%Copy.Op.type, %Copy.facet [symbolic = %.loc18_11.5 (constants.%.671c3a.2)]
+// CHECK:STDOUT:   %impl.elem0.loc18_11.2: @H.%.loc18_11.5 (%.671c3a.2) = impl_witness_access %Copy.lookup_impl_witness, element0 [symbolic = %impl.elem0.loc18_11.2 (constants.%impl.elem0.56eb4a.2)]
 // CHECK:STDOUT:   %specific_impl_fn.loc18_11.2: <specific function> = specific_impl_function %impl.elem0.loc18_11.2, @Copy.Op(%Copy.facet) [symbolic = %specific_impl_fn.loc18_11.2 (constants.%specific_impl_fn.fb70c0.2)]
 // CHECK:STDOUT:
-// CHECK:STDOUT:   fn(%c.param: @H.%Class.loc17_31.1 (%Class.b1d614.2)) -> @H.%U.as_type.loc17_31.1 (%U.as_type.565) {
+// CHECK:STDOUT:   fn(%c.param: @H.%Class.loc17_31.1 (%Class.b1d614.2)) -> %return.param: @H.%U.as_type.loc17_31.1 (%U.as_type.565) {
 // CHECK:STDOUT:   !entry:
 // CHECK:STDOUT:     %c.ref: @H.%Class.loc17_31.1 (%Class.b1d614.2) = name_ref c, %c
 // CHECK:STDOUT:     %x.ref: @H.%Class.elem (%Class.elem.73af90.2) = name_ref x, @Class.%.loc6 [concrete = @Class.%.loc6]
 // CHECK:STDOUT:     %.loc18_11.1: ref @H.%U.as_type.loc17_31.1 (%U.as_type.565) = class_element_access %c.ref, element0
 // CHECK:STDOUT:     %.loc18_11.2: @H.%U.as_type.loc17_31.1 (%U.as_type.565) = bind_value %.loc18_11.1
-// CHECK:STDOUT:     %impl.elem0.loc18_11.1: @H.%.loc18_11.4 (%.671c3a.2) = impl_witness_access constants.%Copy.lookup_impl_witness.3ba2b3.2, element0 [symbolic = %impl.elem0.loc18_11.2 (constants.%impl.elem0.56eb4a.2)]
+// CHECK:STDOUT:     %impl.elem0.loc18_11.1: @H.%.loc18_11.5 (%.671c3a.2) = impl_witness_access constants.%Copy.lookup_impl_witness.3ba2b3.2, element0 [symbolic = %impl.elem0.loc18_11.2 (constants.%impl.elem0.56eb4a.2)]
 // CHECK:STDOUT:     %bound_method.loc18_11.1: <bound method> = bound_method %.loc18_11.2, %impl.elem0.loc18_11.1
 // CHECK:STDOUT:     %specific_impl_fn.loc18_11.1: <specific function> = specific_impl_function %impl.elem0.loc18_11.1, @Copy.Op(constants.%Copy.facet.72ea01.2) [symbolic = %specific_impl_fn.loc18_11.2 (constants.%specific_impl_fn.fb70c0.2)]
 // CHECK:STDOUT:     %bound_method.loc18_11.2: <bound method> = bound_method %.loc18_11.2, %specific_impl_fn.loc18_11.1
-// CHECK:STDOUT:     %.loc18_11.3: init @H.%U.as_type.loc17_31.1 (%U.as_type.565) = call %bound_method.loc18_11.2(%.loc18_11.2)
-// CHECK:STDOUT:     return %.loc18_11.3 to %return
+// CHECK:STDOUT:     %.loc18_11.3: ref @H.%U.as_type.loc17_31.1 (%U.as_type.565) = temporary_storage
+// CHECK:STDOUT:     %.loc18_11.4: init @H.%U.as_type.loc17_31.1 (%U.as_type.565) = call %bound_method.loc18_11.2(%.loc18_11.2) to %.loc18_11.3
+// CHECK:STDOUT:     return %.loc18_11.4 to %return
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

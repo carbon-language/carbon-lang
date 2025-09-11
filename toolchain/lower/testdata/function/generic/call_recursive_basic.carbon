@@ -85,48 +85,54 @@ fn M() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: define linkonce_odr i32 @_CF.Main.b7c8e4dff2adcdaa(i32 %x, i32 %count) !dbg !22 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %Int.as.OrderedWith.impl.Greater.call = icmp sgt i32 %count, 0, !dbg !23
-// CHECK:STDOUT:   br i1 %Int.as.OrderedWith.impl.Greater.call, label %if.then, label %if.else, !dbg !24
+// CHECK:STDOUT:   %.loc23_12.1.temp = alloca i32, align 4, !dbg !23
+// CHECK:STDOUT:   %Int.as.OrderedWith.impl.Greater.call = icmp sgt i32 %count, 0, !dbg !24
+// CHECK:STDOUT:   br i1 %Int.as.OrderedWith.impl.Greater.call, label %if.then, label %if.else, !dbg !25
 // CHECK:STDOUT:
 // CHECK:STDOUT: if.then:                                          ; preds = %entry
-// CHECK:STDOUT:   ret i32 %x, !dbg !25
+// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %.loc23_12.1.temp), !dbg !23
+// CHECK:STDOUT:   ret i32 %x, !dbg !26
 // CHECK:STDOUT:
 // CHECK:STDOUT: if.else:                                          ; preds = %entry
-// CHECK:STDOUT:   %Int.as.AddWith.impl.Op.call = add i32 %count, 1, !dbg !26
-// CHECK:STDOUT:   %F.call = call i32 @_CF.Main.b7c8e4dff2adcdaa(i32 %x, i32 %Int.as.AddWith.impl.Op.call), !dbg !27
-// CHECK:STDOUT:   ret i32 %F.call, !dbg !28
+// CHECK:STDOUT:   %Int.as.AddWith.impl.Op.call = add i32 %count, 1, !dbg !27
+// CHECK:STDOUT:   %F.call = call i32 @_CF.Main.b7c8e4dff2adcdaa(i32 %x, i32 %Int.as.AddWith.impl.Op.call), !dbg !28
+// CHECK:STDOUT:   ret i32 %F.call, !dbg !29
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: define linkonce_odr double @_CF.Main.274514a8254d0859(double %x, i32 %count) !dbg !29 {
+// CHECK:STDOUT: define linkonce_odr double @_CF.Main.274514a8254d0859(double %x, i32 %count) !dbg !30 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %Int.as.OrderedWith.impl.Greater.call = icmp sgt i32 %count, 0, !dbg !30
-// CHECK:STDOUT:   br i1 %Int.as.OrderedWith.impl.Greater.call, label %if.then, label %if.else, !dbg !31
+// CHECK:STDOUT:   %.loc23_12.1.temp = alloca double, align 8, !dbg !31
+// CHECK:STDOUT:   %Int.as.OrderedWith.impl.Greater.call = icmp sgt i32 %count, 0, !dbg !32
+// CHECK:STDOUT:   br i1 %Int.as.OrderedWith.impl.Greater.call, label %if.then, label %if.else, !dbg !33
 // CHECK:STDOUT:
 // CHECK:STDOUT: if.then:                                          ; preds = %entry
-// CHECK:STDOUT:   ret double %x, !dbg !32
+// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %.loc23_12.1.temp), !dbg !31
+// CHECK:STDOUT:   ret double %x, !dbg !34
 // CHECK:STDOUT:
 // CHECK:STDOUT: if.else:                                          ; preds = %entry
-// CHECK:STDOUT:   %Int.as.AddWith.impl.Op.call = add i32 %count, 1, !dbg !33
-// CHECK:STDOUT:   %F.call = call double @_CF.Main.274514a8254d0859(double %x, i32 %Int.as.AddWith.impl.Op.call), !dbg !34
-// CHECK:STDOUT:   ret double %F.call, !dbg !35
+// CHECK:STDOUT:   %Int.as.AddWith.impl.Op.call = add i32 %count, 1, !dbg !35
+// CHECK:STDOUT:   %F.call = call double @_CF.Main.274514a8254d0859(double %x, i32 %Int.as.AddWith.impl.Op.call), !dbg !36
+// CHECK:STDOUT:   ret double %F.call, !dbg !37
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: define linkonce_odr ptr @_CF.Main.19c352736f719291(ptr %x, i32 %count) !dbg !36 {
+// CHECK:STDOUT: define linkonce_odr ptr @_CF.Main.19c352736f719291(ptr %x, i32 %count) !dbg !38 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %Int.as.OrderedWith.impl.Greater.call = icmp sgt i32 %count, 0, !dbg !37
-// CHECK:STDOUT:   br i1 %Int.as.OrderedWith.impl.Greater.call, label %if.then, label %if.else, !dbg !38
+// CHECK:STDOUT:   %.loc23_12.1.temp = alloca ptr, align 8, !dbg !39
+// CHECK:STDOUT:   %Int.as.OrderedWith.impl.Greater.call = icmp sgt i32 %count, 0, !dbg !40
+// CHECK:STDOUT:   br i1 %Int.as.OrderedWith.impl.Greater.call, label %if.then, label %if.else, !dbg !41
 // CHECK:STDOUT:
 // CHECK:STDOUT: if.then:                                          ; preds = %entry
-// CHECK:STDOUT:   ret ptr %x, !dbg !39
+// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %.loc23_12.1.temp), !dbg !39
+// CHECK:STDOUT:   ret ptr %x, !dbg !42
 // CHECK:STDOUT:
 // CHECK:STDOUT: if.else:                                          ; preds = %entry
-// CHECK:STDOUT:   %Int.as.AddWith.impl.Op.call = add i32 %count, 1, !dbg !40
-// CHECK:STDOUT:   %F.call = call ptr @_CF.Main.19c352736f719291(ptr %x, i32 %Int.as.AddWith.impl.Op.call), !dbg !41
-// CHECK:STDOUT:   ret ptr %F.call, !dbg !42
+// CHECK:STDOUT:   %Int.as.AddWith.impl.Op.call = add i32 %count, 1, !dbg !43
+// CHECK:STDOUT:   %F.call = call ptr @_CF.Main.19c352736f719291(ptr %x, i32 %Int.as.AddWith.impl.Op.call), !dbg !44
+// CHECK:STDOUT:   ret ptr %F.call, !dbg !45
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; uselistorder directives
-// CHECK:STDOUT: uselistorder ptr @llvm.lifetime.start.p0, { 3, 2, 1, 0 }
+// CHECK:STDOUT: uselistorder ptr @llvm.lifetime.start.p0, { 0, 1, 2, 6, 5, 4, 3 }
 // CHECK:STDOUT: uselistorder ptr @_CF.Main.19c352736f719291, { 1, 2, 0 }
 // CHECK:STDOUT:
 // CHECK:STDOUT: attributes #0 = { nocallback nofree nounwind willreturn memory(argmem: readwrite) }
@@ -158,23 +164,26 @@ fn M() {
 // CHECK:STDOUT: !20 = !DILocation(line: 37, column: 3, scope: !8)
 // CHECK:STDOUT: !21 = !DILocation(line: 28, column: 1, scope: !8)
 // CHECK:STDOUT: !22 = distinct !DISubprogram(name: "F", linkageName: "_CF.Main.b7c8e4dff2adcdaa", scope: null, file: !3, line: 21, type: !5, spFlags: DISPFlagDefinition, unit: !2)
-// CHECK:STDOUT: !23 = !DILocation(line: 22, column: 7, scope: !22)
-// CHECK:STDOUT: !24 = !DILocation(line: 22, column: 6, scope: !22)
-// CHECK:STDOUT: !25 = !DILocation(line: 23, column: 5, scope: !22)
-// CHECK:STDOUT: !26 = !DILocation(line: 25, column: 15, scope: !22)
-// CHECK:STDOUT: !27 = !DILocation(line: 25, column: 10, scope: !22)
-// CHECK:STDOUT: !28 = !DILocation(line: 25, column: 3, scope: !22)
-// CHECK:STDOUT: !29 = distinct !DISubprogram(name: "F", linkageName: "_CF.Main.274514a8254d0859", scope: null, file: !3, line: 21, type: !5, spFlags: DISPFlagDefinition, unit: !2)
-// CHECK:STDOUT: !30 = !DILocation(line: 22, column: 7, scope: !29)
-// CHECK:STDOUT: !31 = !DILocation(line: 22, column: 6, scope: !29)
-// CHECK:STDOUT: !32 = !DILocation(line: 23, column: 5, scope: !29)
-// CHECK:STDOUT: !33 = !DILocation(line: 25, column: 15, scope: !29)
-// CHECK:STDOUT: !34 = !DILocation(line: 25, column: 10, scope: !29)
-// CHECK:STDOUT: !35 = !DILocation(line: 25, column: 3, scope: !29)
-// CHECK:STDOUT: !36 = distinct !DISubprogram(name: "F", linkageName: "_CF.Main.19c352736f719291", scope: null, file: !3, line: 21, type: !5, spFlags: DISPFlagDefinition, unit: !2)
-// CHECK:STDOUT: !37 = !DILocation(line: 22, column: 7, scope: !36)
-// CHECK:STDOUT: !38 = !DILocation(line: 22, column: 6, scope: !36)
-// CHECK:STDOUT: !39 = !DILocation(line: 23, column: 5, scope: !36)
-// CHECK:STDOUT: !40 = !DILocation(line: 25, column: 15, scope: !36)
-// CHECK:STDOUT: !41 = !DILocation(line: 25, column: 10, scope: !36)
-// CHECK:STDOUT: !42 = !DILocation(line: 25, column: 3, scope: !36)
+// CHECK:STDOUT: !23 = !DILocation(line: 23, column: 12, scope: !22)
+// CHECK:STDOUT: !24 = !DILocation(line: 22, column: 7, scope: !22)
+// CHECK:STDOUT: !25 = !DILocation(line: 22, column: 6, scope: !22)
+// CHECK:STDOUT: !26 = !DILocation(line: 23, column: 5, scope: !22)
+// CHECK:STDOUT: !27 = !DILocation(line: 25, column: 15, scope: !22)
+// CHECK:STDOUT: !28 = !DILocation(line: 25, column: 10, scope: !22)
+// CHECK:STDOUT: !29 = !DILocation(line: 25, column: 3, scope: !22)
+// CHECK:STDOUT: !30 = distinct !DISubprogram(name: "F", linkageName: "_CF.Main.274514a8254d0859", scope: null, file: !3, line: 21, type: !5, spFlags: DISPFlagDefinition, unit: !2)
+// CHECK:STDOUT: !31 = !DILocation(line: 23, column: 12, scope: !30)
+// CHECK:STDOUT: !32 = !DILocation(line: 22, column: 7, scope: !30)
+// CHECK:STDOUT: !33 = !DILocation(line: 22, column: 6, scope: !30)
+// CHECK:STDOUT: !34 = !DILocation(line: 23, column: 5, scope: !30)
+// CHECK:STDOUT: !35 = !DILocation(line: 25, column: 15, scope: !30)
+// CHECK:STDOUT: !36 = !DILocation(line: 25, column: 10, scope: !30)
+// CHECK:STDOUT: !37 = !DILocation(line: 25, column: 3, scope: !30)
+// CHECK:STDOUT: !38 = distinct !DISubprogram(name: "F", linkageName: "_CF.Main.19c352736f719291", scope: null, file: !3, line: 21, type: !5, spFlags: DISPFlagDefinition, unit: !2)
+// CHECK:STDOUT: !39 = !DILocation(line: 23, column: 12, scope: !38)
+// CHECK:STDOUT: !40 = !DILocation(line: 22, column: 7, scope: !38)
+// CHECK:STDOUT: !41 = !DILocation(line: 22, column: 6, scope: !38)
+// CHECK:STDOUT: !42 = !DILocation(line: 23, column: 5, scope: !38)
+// CHECK:STDOUT: !43 = !DILocation(line: 25, column: 15, scope: !38)
+// CHECK:STDOUT: !44 = !DILocation(line: 25, column: 10, scope: !38)
+// CHECK:STDOUT: !45 = !DILocation(line: 25, column: 3, scope: !38)
