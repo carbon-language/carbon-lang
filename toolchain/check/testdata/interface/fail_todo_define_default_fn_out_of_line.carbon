@@ -56,7 +56,7 @@ library "dependent_return_type.carbon";
 
 interface Interface {
   // TODO: This should be
-  //   default fn F[self: Self](U:! type, u: U) -> U;
+  //   default fn F[self: Self](U:! type, u: U*) -> U*;
   // rather than a class member, but we don't currently accept that due to the
   // TODOs above.
   class C {
@@ -65,7 +65,7 @@ interface Interface {
 }
 
 // TODO: This should be
-//   fn Interface.F[self: Self](U:! type, u: U) -> U { return u; }
+//   fn Interface.F[self: Self](U:! type, u: U*) -> U* { return u; }
 fn Interface.C.F[self: Self](U:! type, u: U*) -> U* { return u; }
 
 // CHECK:STDOUT: --- fail_todo_define_default_fn_out_of_line.carbon
