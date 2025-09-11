@@ -49,10 +49,6 @@ namespace Carbon::Internal {
 template <typename DerivedT, typename EnumT, const llvm::StringLiteral Names[]>
 class EnumMaskBase : public EnumBase<DerivedT, EnumT, Names> {
  public:
-  using typename EnumBase<DerivedT, EnumT, Names>::RawEnumType;
-  using typename EnumBase<DerivedT, EnumT, Names>::EnumType;
-  using typename EnumBase<DerivedT, EnumT, Names>::UnderlyingType;
-
   // Provide a standard `None`.
   //
   // This uses a `&` to trigger slightly different instantiation behaviors in
@@ -99,17 +95,16 @@ class EnumMaskBase : public EnumBase<DerivedT, EnumT, Names> {
 
   // Prints this value as a `|`-separated list of mask entries, or `None`.
   auto Print(llvm::raw_ostream& out) const -> void {
-    auto value = this->AsInt();
+    int value = this->AsInt();
     if (value == 0) {
       out << "None";
       return;
     }
     llvm::ListSeparator sep("|");
-    for (int bit = 0; value != 0; ++bit) {
+    for (int bit = 0; value != 0; value >>= 1, ++bit) {
       if (value & 1) {
         out << sep << Names[bit];
       }
-      value = value >> 1;
     }
   }
 };
