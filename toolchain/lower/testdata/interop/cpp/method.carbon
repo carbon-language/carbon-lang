@@ -13,10 +13,13 @@
 
 // --- methods.h
 
-struct A {
+struct Base {
+  virtual void virt0();
+};
+
+struct A: Base {
   int by_val() const { return n; }
   int by_ref() { return n; }
-  virtual void virt0();
   virtual void virt1();
   int n;
 };
@@ -75,7 +78,8 @@ fn Call(n: Cpp.NeedThunk) {
 // CHECK:STDOUT: target datalayout = "e-m:e-p270:32:32-p271:32:32-p272:64:64-i64:64-i128:128-f80:128-n8:16:32:64-S128"
 // CHECK:STDOUT: target triple = "x86_64-unknown-linux-gnu"
 // CHECK:STDOUT:
-// CHECK:STDOUT: %struct.A = type <{ ptr, i32, [4 x i8] }>
+// CHECK:STDOUT: %struct.A = type <{ %struct.Base, i32, [4 x i8] }>
+// CHECK:STDOUT: %struct.Base = type { ptr }
 // CHECK:STDOUT:
 // CHECK:STDOUT: $_ZNK1A6by_valEv = comdat any
 // CHECK:STDOUT:
@@ -129,7 +133,8 @@ fn Call(n: Cpp.NeedThunk) {
 // CHECK:STDOUT: target datalayout = "e-m:e-p270:32:32-p271:32:32-p272:64:64-i64:64-i128:128-f80:128-n8:16:32:64-S128"
 // CHECK:STDOUT: target triple = "x86_64-unknown-linux-gnu"
 // CHECK:STDOUT:
-// CHECK:STDOUT: %struct.A = type <{ ptr, i32, [4 x i8] }>
+// CHECK:STDOUT: %struct.A = type <{ %struct.Base, i32, [4 x i8] }>
+// CHECK:STDOUT: %struct.Base = type { ptr }
 // CHECK:STDOUT:
 // CHECK:STDOUT: $_ZN1A6by_refEv = comdat any
 // CHECK:STDOUT:
@@ -174,18 +179,19 @@ fn Call(n: Cpp.NeedThunk) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: define void @_CUseVal.Main(ptr %a) !dbg !7 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %A.virt0.call.vtable = load ptr, ptr %a, align 8, !dbg !10
-// CHECK:STDOUT:   %A.virt0.call = getelementptr ptr, ptr %A.virt0.call.vtable, i32 0, !dbg !10
-// CHECK:STDOUT:   %A.virt0.call.memptr.virtualfn = load ptr, ptr %A.virt0.call, align 8, !dbg !10
-// CHECK:STDOUT:   call void %A.virt0.call.memptr.virtualfn(ptr %a), !dbg !10
+// CHECK:STDOUT:   %.loc7_4.3.base = getelementptr inbounds nuw [16 x i8], ptr %a, i32 0, i32 0, !dbg !10
+// CHECK:STDOUT:   %Base.virt0.call.vtable = load ptr, ptr %.loc7_4.3.base, align 8, !dbg !10
+// CHECK:STDOUT:   %Base.virt0.call = getelementptr ptr, ptr %Base.virt0.call.vtable, i32 0, !dbg !10
+// CHECK:STDOUT:   %Base.virt0.call.memptr.virtualfn = load ptr, ptr %Base.virt0.call, align 8, !dbg !10
+// CHECK:STDOUT:   call void %Base.virt0.call.memptr.virtualfn(ptr %.loc7_4.3.base), !dbg !10
 // CHECK:STDOUT:   %A.virt1.call.vtable = load ptr, ptr %a, align 8, !dbg !11
-// CHECK:STDOUT:   %A.virt1.call = getelementptr ptr, ptr %A.virt1.call.vtable, i32 1, !dbg !11
+// CHECK:STDOUT:   %A.virt1.call = getelementptr ptr, ptr %A.virt1.call.vtable, i32 0, !dbg !11
 // CHECK:STDOUT:   %A.virt1.call.memptr.virtualfn = load ptr, ptr %A.virt1.call, align 8, !dbg !11
 // CHECK:STDOUT:   call void %A.virt1.call.memptr.virtualfn(ptr %a), !dbg !11
 // CHECK:STDOUT:   ret void, !dbg !12
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: declare void @_ZN1A5virt0Ev(ptr)
+// CHECK:STDOUT: declare void @_ZN4Base5virt0Ev(ptr)
 // CHECK:STDOUT:
 // CHECK:STDOUT: declare void @_ZN1A5virt1Ev(ptr)
 // CHECK:STDOUT:
