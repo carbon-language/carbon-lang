@@ -68,7 +68,7 @@ def _build_generated_files(
     subprocess.check_call(
         [bazel, "build", "--keep_going", "--remote_download_outputs=toplevel"]
         + generated_file_labels
-        # We also need the Bazel C++ runfiles that aren't "generated", but not
+        # We also need the Bazel C++ runfiles that aren't "generated", but are not
         # linked into place until built.
         + ["@bazel_tools//tools/cpp/runfiles:runfiles"]
     )
@@ -83,11 +83,12 @@ def _get_config_for_entry(entry: Dict[str, Any]) -> str:
     if not arguments or len(arguments) < 2 or arguments[-2] != "-o":
         return "unknown"
     obj_file = arguments[-1]
+    assert obj_file is str
 
     # The configuration is the name of the subdirectory of `bazel-out`.
     if not obj_file.startswith("bazel-out/"):
         return "unknown"
-    return str(obj_file.split("/")[1])
+    return obj_file.split("/")[1]
 
 
 def _filter_compilation_database(file_path: str) -> None:
@@ -99,11 +100,9 @@ def _filter_compilation_database(file_path: str) -> None:
         with open(file_path, "r") as f:
             commands = json.load(f)
     except FileNotFoundError:
-        print(f"Error: The file '{file_path}' was not found.")
-        sys.exit(1)
+        sys.exit(f"Error: The file '{file_path}' was not found.")
     except json.JSONDecodeError:
-        print(f"Error: The file '{file_path}' is not a valid JSON file.")
-        sys.exit(1)
+        sys.exit(f"Error: The file '{file_path}' is not a valid JSON file.")
 
     # We want to skip compiles that were in the "exec" configuration for tools.
     # Because we generate compile commands for every target, these will already
@@ -113,7 +112,7 @@ def _filter_compilation_database(file_path: str) -> None:
     # Detecting this based on the `-exec-` string in the configuration name of
     # the directory is a bit of a hack, but there doesn't appear to be any way
     # to filter these out using Bazel when creating the compilation database, or
-    # a way to easily ask Bazel to compute what this string would be for th exec
+    # a way to easily ask Bazel to compute what this string would be for the exec
     # configuration.
     filtered_commands = [
         entry
@@ -122,12 +121,11 @@ def _filter_compilation_database(file_path: str) -> None:
     ]
 
     with open(file_path, "w") as f:
-        # Use indent=4 for a human-readable, pretty-printed output file
+        # Use indent=4 for a human-readable, pretty-printed output file.
         json.dump(filtered_commands, f, indent=4)
     print(
-        "Filtered out "
-        f"{len(commands) - len(filtered_commands)} "
-        "duplicate entries..."
+        f"Filtered out {len(commands) - len(filtered_commands)} duplicate "
+        "entries..."
     )
 
 
