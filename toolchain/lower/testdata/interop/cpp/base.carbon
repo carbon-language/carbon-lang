@@ -10,6 +10,8 @@
 // TIP: To dump output, run:
 // TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/lower/testdata/interop/cpp/base.carbon
 
+// TODO: Tests marked as `fail_todo_5891_` to fixed as a follow-up of https://github.com/carbon-language/carbon-lang/pull/5891.
+
 // --- structs.h
 
 struct A {
@@ -48,17 +50,17 @@ fn AccessVal(b: Cpp.B) -> i32 {
   return b.a;
 }
 
-// --- fail_todo_call_method.carbon
+// --- fail_todo_5891_call_method.carbon
 
 library "[[@TEST_NAME]]";
 
 import Cpp library "structs.h";
 
 fn Call(b: Cpp.B*) {
-  // CHECK:STDERR: fail_todo_call_method.carbon:[[@LINE+5]]:3: error: missing object argument in method call [MissingObjectInMethodCall]
+  // CHECK:STDERR: fail_todo_5891_call_method.carbon:[[@LINE+5]]:3: error: missing object argument in method call [MissingObjectInMethodCall]
   // CHECK:STDERR:   b->f();
   // CHECK:STDERR:   ^~~~~~
-  // CHECK:STDERR: fail_todo_call_method.carbon: note: calling function declared here [InCallToFunction]
+  // CHECK:STDERR: fail_todo_5891_call_method.carbon: note: calling function declared here [InCallToFunction]
   // CHECK:STDERR:
   b->f();
 }

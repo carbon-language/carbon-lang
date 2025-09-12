@@ -10,6 +10,8 @@
 // TIP: To dump output, run:
 // TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/lower/testdata/interop/cpp/enum.carbon
 
+// TODO: Tests marked as `fail_todo_5891_` to fixed as a follow-up of https://github.com/carbon-language/carbon-lang/pull/5891.
+
 // --- enum_member.h
 
 struct C {
@@ -22,7 +24,7 @@ struct C {
   static void F(E);
 };
 
-// --- fail_todo_pass_as_arg.carbon
+// --- fail_todo_5891_pass_as_arg.carbon
 
 library "[[@TEST_NAME]]";
 
@@ -30,49 +32,49 @@ import Cpp library "enum_member.h";
 
 fn Pass() {
   Cpp.C.F(Cpp.C.a);
-  // CHECK:STDERR: fail_todo_pass_as_arg.carbon:[[@LINE+7]]:3: error: no matching function for call to `F` [CppOverloadingNoViableFunctionFound]
+  // CHECK:STDERR: fail_todo_5891_pass_as_arg.carbon:[[@LINE+7]]:3: error: no matching function for call to `F` [CppOverloadingNoViableFunctionFound]
   // CHECK:STDERR:   Cpp.C.F(Cpp.C.b);
   // CHECK:STDERR:   ^~~~~~~~~~~~~~~~
-  // CHECK:STDERR: fail_todo_pass_as_arg.carbon:[[@LINE+4]]:3: note: in call to Cpp function here [InCallToCppFunction]
+  // CHECK:STDERR: fail_todo_5891_pass_as_arg.carbon:[[@LINE+4]]:3: note: in call to Cpp function here [InCallToCppFunction]
   // CHECK:STDERR:   Cpp.C.F(Cpp.C.b);
   // CHECK:STDERR:   ^~~~~~~~~~~~~~~~
   // CHECK:STDERR:
   Cpp.C.F(Cpp.C.b);
-  // CHECK:STDERR: fail_todo_pass_as_arg.carbon:[[@LINE+7]]:3: error: no matching function for call to `F` [CppOverloadingNoViableFunctionFound]
+  // CHECK:STDERR: fail_todo_5891_pass_as_arg.carbon:[[@LINE+7]]:3: error: no matching function for call to `F` [CppOverloadingNoViableFunctionFound]
   // CHECK:STDERR:   Cpp.C.F(Cpp.C.c);
   // CHECK:STDERR:   ^~~~~~~~~~~~~~~~
-  // CHECK:STDERR: fail_todo_pass_as_arg.carbon:[[@LINE+4]]:3: note: in call to Cpp function here [InCallToCppFunction]
+  // CHECK:STDERR: fail_todo_5891_pass_as_arg.carbon:[[@LINE+4]]:3: note: in call to Cpp function here [InCallToCppFunction]
   // CHECK:STDERR:   Cpp.C.F(Cpp.C.c);
   // CHECK:STDERR:   ^~~~~~~~~~~~~~~~
   // CHECK:STDERR:
   Cpp.C.F(Cpp.C.c);
-  // CHECK:STDERR: fail_todo_pass_as_arg.carbon:[[@LINE+7]]:3: error: no matching function for call to `F` [CppOverloadingNoViableFunctionFound]
+  // CHECK:STDERR: fail_todo_5891_pass_as_arg.carbon:[[@LINE+7]]:3: error: no matching function for call to `F` [CppOverloadingNoViableFunctionFound]
   // CHECK:STDERR:   Cpp.C.F(Cpp.C.E.a);
   // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~
-  // CHECK:STDERR: fail_todo_pass_as_arg.carbon:[[@LINE+4]]:3: note: in call to Cpp function here [InCallToCppFunction]
+  // CHECK:STDERR: fail_todo_5891_pass_as_arg.carbon:[[@LINE+4]]:3: note: in call to Cpp function here [InCallToCppFunction]
   // CHECK:STDERR:   Cpp.C.F(Cpp.C.E.a);
   // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~
   // CHECK:STDERR:
   Cpp.C.F(Cpp.C.E.a);
-  // CHECK:STDERR: fail_todo_pass_as_arg.carbon:[[@LINE+7]]:3: error: no matching function for call to `F` [CppOverloadingNoViableFunctionFound]
+  // CHECK:STDERR: fail_todo_5891_pass_as_arg.carbon:[[@LINE+7]]:3: error: no matching function for call to `F` [CppOverloadingNoViableFunctionFound]
   // CHECK:STDERR:   Cpp.C.F(Cpp.C.E.b);
   // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~
-  // CHECK:STDERR: fail_todo_pass_as_arg.carbon:[[@LINE+4]]:3: note: in call to Cpp function here [InCallToCppFunction]
+  // CHECK:STDERR: fail_todo_5891_pass_as_arg.carbon:[[@LINE+4]]:3: note: in call to Cpp function here [InCallToCppFunction]
   // CHECK:STDERR:   Cpp.C.F(Cpp.C.E.b);
   // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~
   // CHECK:STDERR:
   Cpp.C.F(Cpp.C.E.b);
-  // CHECK:STDERR: fail_todo_pass_as_arg.carbon:[[@LINE+7]]:3: error: no matching function for call to `F` [CppOverloadingNoViableFunctionFound]
+  // CHECK:STDERR: fail_todo_5891_pass_as_arg.carbon:[[@LINE+7]]:3: error: no matching function for call to `F` [CppOverloadingNoViableFunctionFound]
   // CHECK:STDERR:   Cpp.C.F(Cpp.C.E.c);
   // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~
-  // CHECK:STDERR: fail_todo_pass_as_arg.carbon:[[@LINE+4]]:3: note: in call to Cpp function here [InCallToCppFunction]
+  // CHECK:STDERR: fail_todo_5891_pass_as_arg.carbon:[[@LINE+4]]:3: note: in call to Cpp function here [InCallToCppFunction]
   // CHECK:STDERR:   Cpp.C.F(Cpp.C.E.c);
   // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~
   // CHECK:STDERR:
   Cpp.C.F(Cpp.C.E.c);
 }
 
-// --- fail_todo_convert.carbon
+// --- fail_todo_5891_convert.carbon
 
 library "[[@TEST_NAME]]";
 
@@ -89,10 +91,10 @@ fn ConvertEnumToI16(e: Cpp.C.E) {
 }
 
 fn ConvertI16ToEnum(n: i16) {
-  // CHECK:STDERR: fail_todo_convert.carbon:[[@LINE+7]]:3: error: no matching function for call to `F` [CppOverloadingNoViableFunctionFound]
+  // CHECK:STDERR: fail_todo_5891_convert.carbon:[[@LINE+7]]:3: error: no matching function for call to `F` [CppOverloadingNoViableFunctionFound]
   // CHECK:STDERR:   Cpp.C.F(n as Cpp.C.E);
   // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~~
-  // CHECK:STDERR: fail_todo_convert.carbon:[[@LINE+4]]:3: note: in call to Cpp function here [InCallToCppFunction]
+  // CHECK:STDERR: fail_todo_5891_convert.carbon:[[@LINE+4]]:3: note: in call to Cpp function here [InCallToCppFunction]
   // CHECK:STDERR:   Cpp.C.F(n as Cpp.C.E);
   // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~~
   // CHECK:STDERR:
@@ -109,7 +111,7 @@ enum Bits {
 
 void Take(Bits b);
 
-// --- fail_todo_use_bitmask.carbon
+// --- fail_todo_use_5891_bitmask.carbon
 
 library "[[@TEST_NAME]]";
 
@@ -120,10 +122,10 @@ import Cpp library "bitmask.h";
 fn BitOr(a: Cpp.Bits, b: Cpp.Bits) -> Cpp.Bits = "int.or";
 
 fn Call() {
-  // CHECK:STDERR: fail_todo_use_bitmask.carbon:[[@LINE+7]]:3: error: no matching function for call to `Take` [CppOverloadingNoViableFunctionFound]
+  // CHECK:STDERR: fail_todo_use_5891_bitmask.carbon:[[@LINE+7]]:3: error: no matching function for call to `Take` [CppOverloadingNoViableFunctionFound]
   // CHECK:STDERR:   Cpp.Take(BitOr(Cpp.A, Cpp.C));
   // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-  // CHECK:STDERR: fail_todo_use_bitmask.carbon:[[@LINE+4]]:3: note: in call to Cpp function here [InCallToCppFunction]
+  // CHECK:STDERR: fail_todo_use_5891_bitmask.carbon:[[@LINE+4]]:3: note: in call to Cpp function here [InCallToCppFunction]
   // CHECK:STDERR:   Cpp.Take(BitOr(Cpp.A, Cpp.C));
   // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~
   // CHECK:STDERR:
