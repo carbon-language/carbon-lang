@@ -451,6 +451,26 @@ interface N {
 // CHECK:STDERR:
 fn F(T:! N where .Y = {.a = {}} and .Y = {.a = ()}) {}
 
+// --- self_repeated_explicitly.carbon
+library "[[@TEST_NAME]]";
+
+interface N {
+  let Y1:! type;
+  let Y2:! type;
+}
+
+fn F(T:! N where .Y2 = .Y1 and .Y2 = .Self.Y1) { }
+
+// --- self_repeated_explicitly_with_value.carbon
+library "[[@TEST_NAME]]";
+
+interface N {
+  let Y1:! type;
+  let Y2:! type;
+}
+
+fn F(T:! N where .Y1 = () and .Y2 = .Y1 and .Y2 = .Self.Y1) { }
+
 // --- fail_todo_cycle_through_self_reference.carbon
 library "[[@TEST_NAME]]";
 
