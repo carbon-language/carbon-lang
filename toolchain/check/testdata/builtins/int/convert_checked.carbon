@@ -305,7 +305,7 @@ let convert_not_constant_widen: i64 = Int32ToInt64(not_constant);
 // CHECK:STDOUT:   %Main.Int32ToUint32: %Int32ToUint32.type = import_ref Main//int_ops, Int32ToUint32, loaded [concrete = constants.%Int32ToUint32]
 // CHECK:STDOUT:   %Main.Int32ToInt16: %Int32ToInt16.type = import_ref Main//int_ops, Int32ToInt16, loaded [concrete = constants.%Int32ToInt16]
 // CHECK:STDOUT:   %Main.Int32ToInt64: %Int32ToInt64.type = import_ref Main//int_ops, Int32ToInt64, loaded [concrete = constants.%Int32ToInt64]
-// CHECK:STDOUT:   %Core.import_ref.7bb: @Core.IntLiteral.as.ImplicitAs.impl.%Core.IntLiteral.as.ImplicitAs.impl.Convert.type (%Core.IntLiteral.as.ImplicitAs.impl.Convert.type.8a0) = import_ref Core//prelude/parts/int, loc16_39, loaded [symbolic = @Core.IntLiteral.as.ImplicitAs.impl.%Core.IntLiteral.as.ImplicitAs.impl.Convert (constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.1d6)]
+// CHECK:STDOUT:   %Core.import_ref.7bb: @Core.IntLiteral.as.ImplicitAs.impl.%Core.IntLiteral.as.ImplicitAs.impl.Convert.type (%Core.IntLiteral.as.ImplicitAs.impl.Convert.type.8a0) = import_ref Core//prelude/parts/int, loc23_39, loaded [symbolic = @Core.IntLiteral.as.ImplicitAs.impl.%Core.IntLiteral.as.ImplicitAs.impl.Convert (constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.1d6)]
 // CHECK:STDOUT:   %ImplicitAs.impl_witness_table.ba4 = impl_witness_table (%Core.import_ref.7bb), @Core.IntLiteral.as.ImplicitAs.impl [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

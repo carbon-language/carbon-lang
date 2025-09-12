@@ -131,8 +131,7 @@ class PrecedenceGroup {
 
   // We rely on implicit conversions via `int8_t` for enumerators defined in the
   // implementation.
-  // NOLINTNEXTLINE(google-explicit-constructor)
-  PrecedenceGroup(int8_t level) : level_(level) {}
+  explicit(false) PrecedenceGroup(int8_t level) : level_(level) {}
 
   // The precedence level.
   int8_t level_;

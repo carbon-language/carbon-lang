@@ -23,6 +23,9 @@
 
 namespace Carbon::Check {
 
+CARBON_DEFINE_ENUM_MASK_NAMES(DependentInstKind) = {
+    CARBON_DEPENDENT_INST_KIND(CARBON_ENUM_MASK_NAME_STRING)};
+
 static auto MakeSelfSpecificId(Context& context, SemIR::GenericId generic_id)
     -> SemIR::SpecificId;
 
@@ -302,14 +305,14 @@ auto AttachDependentInstToCurrentGeneric(Context& context,
   if (context.generic_region_stack().Empty()) {
     // This should only happen for `*Decl` instructions, never for template
     // actions.
-    CARBON_CHECK((dep_kind & DependentInst::Template) == DependentInst::None);
+    CARBON_CHECK(!dep_kind.HasAnyOf(DependentInstKind::Template));
     return;
   }
 
   context.generic_region_stack().AddDependentInst(dependent_inst.inst_id);
 
   // If the type is symbolic, replace it with a type specific to this generic.
-  if ((dep_kind & DependentInst::SymbolicType) != DependentInst::None) {
+  if (dep_kind.HasAnyOf(DependentInstKind::SymbolicType)) {
     auto inst = context.insts().Get(inst_id);
     auto type_id = AddGenericTypeToEvalBlock(context, SemIR::LocId(inst_id),
                                              inst.type_id());
@@ -327,7 +330,7 @@ auto AttachDependentInstToCurrentGeneric(Context& context,
   // we'll need to evaluate this instruction when forming the specific. Update
   // the constant value of the instruction to refer to the result of that
   // eventual evaluation.
-  if ((dep_kind & DependentInst::SymbolicConstant) != DependentInst::None) {
+  if (dep_kind.HasAnyOf(DependentInstKind::SymbolicConstant)) {
     // Update the constant value to refer to this generic.
     context.constant_values().Set(
         inst_id, AddGenericConstantToEvalBlock(context, inst_id));
@@ -335,7 +338,7 @@ auto AttachDependentInstToCurrentGeneric(Context& context,
 
   // If the instruction is a template action, add it directly to this position
   // in the eval block.
-  if ((dep_kind & DependentInst::Template) != DependentInst::None) {
+  if (dep_kind.HasAnyOf(DependentInstKind::Template)) {
     AddTemplateActionToEvalBlock(context, inst_id);
   }
 }

@@ -111,7 +111,7 @@ interface I(T:! Z) {}
 
 // Implied constraint: .Self impls Z, which is satisfied and checked at the end
 // of the fn signature.
-// CHECK:STDERR: fail_todo_self_in_interface_generic_param_constrained.carbon:[[@LINE+7]]:10: error: cannot convert type `.Self` into type implementing `Z` [ConversionFailureTypeToFacet]
+// CHECK:STDERR: fail_todo_self_in_interface_generic_param_constrained.carbon:[[@LINE+7]]:10: error: cannot convert type `.Self` that implements `type` into type implementing `Z` [ConversionFailureFacetToFacet]
 // CHECK:STDERR: fn F(T:! I(.Self) where .Self impls Z) {}
 // CHECK:STDERR:          ^~~~~~~~
 // CHECK:STDERR: fail_todo_self_in_interface_generic_param_constrained.carbon:[[@LINE-7]]:13: note: initializing generic parameter `T` declared here [InitializingGenericParam]
@@ -120,7 +120,7 @@ interface I(T:! Z) {}
 // CHECK:STDERR:
 fn F(T:! I(.Self) where .Self impls Z) {}
 
-// CHECK:STDERR: fail_todo_self_in_interface_generic_param_constrained.carbon:[[@LINE+7]]:14: error: cannot convert type `.Self` into type implementing `Z` [ConversionFailureTypeToFacet]
+// CHECK:STDERR: fail_todo_self_in_interface_generic_param_constrained.carbon:[[@LINE+7]]:14: error: cannot convert type `.Self` that implements `type` into type implementing `Z` [ConversionFailureFacetToFacet]
 // CHECK:STDERR: fn G(T:! Z & I(.Self)) {
 // CHECK:STDERR:              ^~~~~~~~
 // CHECK:STDERR: fail_todo_self_in_interface_generic_param_constrained.carbon:[[@LINE-16]]:13: note: initializing generic parameter `T` declared here [InitializingGenericParam]

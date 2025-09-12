@@ -3,6 +3,7 @@
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
 // INCLUDE-FILE: toolchain/testing/testdata/min_prelude/parts/as.carbon
+// INCLUDE-FILE: toolchain/testing/testdata/min_prelude/parts/copy.carbon
 // INCLUDE-FILE: toolchain/testing/testdata/min_prelude/parts/int_literal.carbon
 
 // --- min_prelude/parts/uint.carbon
@@ -10,12 +11,19 @@
 package Core library "prelude/parts/uint";
 
 export import library "prelude/parts/as";
+export import library "prelude/parts/copy";
 export import library "prelude/parts/int_literal";
 
 private fn MakeUInt(size: IntLiteral()) -> type = "int.make_type_unsigned";
 
 class UInt(N:! IntLiteral()) {
   adapt MakeUInt(N);
+}
+
+// Copy.
+
+impl forall [N:! IntLiteral()] UInt(N) as Copy {
+  fn Op[self: Self]() -> Self = "primitive_copy";
 }
 
 // Conversions.

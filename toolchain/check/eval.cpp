@@ -1669,6 +1669,10 @@ static auto MakeConstantForBuiltinCall(EvalContext& eval_context,
           phase);
     }
 
+    case SemIR::BuiltinFunctionKind::PrimitiveCopy: {
+      return context.constant_values().Get(arg_ids[0]);
+    }
+
     case SemIR::BuiltinFunctionKind::PrintChar:
     case SemIR::BuiltinFunctionKind::PrintInt:
     case SemIR::BuiltinFunctionKind::ReadChar:

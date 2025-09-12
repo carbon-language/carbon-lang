@@ -1081,7 +1081,7 @@ fn CallReturnAbstract() {
 // CHECK:STDOUT:   %base.ref: %Derived.elem.513 = name_ref base, @Derived.%.loc9 [concrete = @Derived.%.loc9]
 // CHECK:STDOUT:   %.loc15: ref %Abstract = class_element_access %d.ref, element0
 // CHECK:STDOUT:   %a.ref: <error> = name_ref a, <error> [concrete = <error>]
-// CHECK:STDOUT:   return <error>
+// CHECK:STDOUT:   return <error> to %return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- abstract_let_temporary.carbon

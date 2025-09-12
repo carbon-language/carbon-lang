@@ -4,6 +4,7 @@
 
 package Core library "prelude/types/string";
 
+import library "prelude/copy";
 import library "prelude/destroy";
 import library "prelude/types/char";
 import library "prelude/types/uint";

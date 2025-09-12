@@ -378,9 +378,7 @@ fn TestGreaterEqual(a: D, b: D) -> bool {
 // CHECK:STDOUT:   %impl.elem0: %.440 = impl_witness_access constants.%OrderedWith.impl_witness, element0 [concrete = constants.%C.as.OrderedWith.impl.Less]
 // CHECK:STDOUT:   %bound_method: <bound method> = bound_method %a.ref, %impl.elem0
 // CHECK:STDOUT:   %C.as.OrderedWith.impl.Less.call: init bool = call %bound_method(%a.ref, %b.ref)
-// CHECK:STDOUT:   %.loc14_15.1: bool = value_of_initializer %C.as.OrderedWith.impl.Less.call
-// CHECK:STDOUT:   %.loc14_15.2: bool = converted %C.as.OrderedWith.impl.Less.call, %.loc14_15.1
-// CHECK:STDOUT:   return %.loc14_15.2
+// CHECK:STDOUT:   return %C.as.OrderedWith.impl.Less.call to %return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @TestLessEqual(%a.param: %C, %b.param: %C) -> bool {
@@ -390,9 +388,7 @@ fn TestGreaterEqual(a: D, b: D) -> bool {
 // CHECK:STDOUT:   %impl.elem1: %.7af = impl_witness_access constants.%OrderedWith.impl_witness, element1 [concrete = constants.%C.as.OrderedWith.impl.LessOrEquivalent]
 // CHECK:STDOUT:   %bound_method: <bound method> = bound_method %a.ref, %impl.elem1
 // CHECK:STDOUT:   %C.as.OrderedWith.impl.LessOrEquivalent.call: init bool = call %bound_method(%a.ref, %b.ref)
-// CHECK:STDOUT:   %.loc18_16.1: bool = value_of_initializer %C.as.OrderedWith.impl.LessOrEquivalent.call
-// CHECK:STDOUT:   %.loc18_16.2: bool = converted %C.as.OrderedWith.impl.LessOrEquivalent.call, %.loc18_16.1
-// CHECK:STDOUT:   return %.loc18_16.2
+// CHECK:STDOUT:   return %C.as.OrderedWith.impl.LessOrEquivalent.call to %return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @TestGreater(%a.param: %C, %b.param: %C) -> bool {
@@ -402,9 +398,7 @@ fn TestGreaterEqual(a: D, b: D) -> bool {
 // CHECK:STDOUT:   %impl.elem2: %.3d4 = impl_witness_access constants.%OrderedWith.impl_witness, element2 [concrete = constants.%C.as.OrderedWith.impl.Greater]
 // CHECK:STDOUT:   %bound_method: <bound method> = bound_method %a.ref, %impl.elem2
 // CHECK:STDOUT:   %C.as.OrderedWith.impl.Greater.call: init bool = call %bound_method(%a.ref, %b.ref)
-// CHECK:STDOUT:   %.loc22_15.1: bool = value_of_initializer %C.as.OrderedWith.impl.Greater.call
-// CHECK:STDOUT:   %.loc22_15.2: bool = converted %C.as.OrderedWith.impl.Greater.call, %.loc22_15.1
-// CHECK:STDOUT:   return %.loc22_15.2
+// CHECK:STDOUT:   return %C.as.OrderedWith.impl.Greater.call to %return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @TestGreaterEqual(%a.param: %C, %b.param: %C) -> bool {
@@ -414,9 +408,7 @@ fn TestGreaterEqual(a: D, b: D) -> bool {
 // CHECK:STDOUT:   %impl.elem3: %.3b1 = impl_witness_access constants.%OrderedWith.impl_witness, element3 [concrete = constants.%C.as.OrderedWith.impl.GreaterOrEquivalent]
 // CHECK:STDOUT:   %bound_method: <bound method> = bound_method %a.ref, %impl.elem3
 // CHECK:STDOUT:   %C.as.OrderedWith.impl.GreaterOrEquivalent.call: init bool = call %bound_method(%a.ref, %b.ref)
-// CHECK:STDOUT:   %.loc26_16.1: bool = value_of_initializer %C.as.OrderedWith.impl.GreaterOrEquivalent.call
-// CHECK:STDOUT:   %.loc26_16.2: bool = converted %C.as.OrderedWith.impl.GreaterOrEquivalent.call, %.loc26_16.1
-// CHECK:STDOUT:   return %.loc26_16.2
+// CHECK:STDOUT:   return %C.as.OrderedWith.impl.GreaterOrEquivalent.call to %return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- fail_no_impl.carbon
@@ -588,27 +580,27 @@ fn TestGreaterEqual(a: D, b: D) -> bool {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %a.ref: %D = name_ref a, %a
 // CHECK:STDOUT:   %b.ref: %D = name_ref b, %b
-// CHECK:STDOUT:   return <error>
+// CHECK:STDOUT:   return <error> to %return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @TestLessEqual(%a.param: %D, %b.param: %D) -> bool {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %a.ref: %D = name_ref a, %a
 // CHECK:STDOUT:   %b.ref: %D = name_ref b, %b
-// CHECK:STDOUT:   return <error>
+// CHECK:STDOUT:   return <error> to %return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @TestGreater(%a.param: %D, %b.param: %D) -> bool {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %a.ref: %D = name_ref a, %a
 // CHECK:STDOUT:   %b.ref: %D = name_ref b, %b
-// CHECK:STDOUT:   return <error>
+// CHECK:STDOUT:   return <error> to %return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @TestGreaterEqual(%a.param: %D, %b.param: %D) -> bool {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %a.ref: %D = name_ref a, %a
 // CHECK:STDOUT:   %b.ref: %D = name_ref b, %b
-// CHECK:STDOUT:   return <error>
+// CHECK:STDOUT:   return <error> to %return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
