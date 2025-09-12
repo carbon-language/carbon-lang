@@ -80,10 +80,6 @@ auto PerformCppOverloadResolution(Context& context, SemIR::LocId loc_id,
   }
 
   // Find best viable function among the candidates.
-  // Note: In C++, a single non-templated function is also treated as an
-  // overloaded set and goes through the overload resolution to ensure that the
-  // function is viable for the call. Keeping the same behavior here for
-  // consistency.
   clang::OverloadCandidateSet::iterator best_viable_fn;
   clang::OverloadingResult overloading_result =
       // TODO: Add location accordingly.
