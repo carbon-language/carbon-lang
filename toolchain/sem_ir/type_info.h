@@ -95,7 +95,8 @@ struct InitRepr : Printable<InitRepr> {
     // The type has no initializing representation. This is used for empty
     // types, where no initialization is necessary.
     None,
-    // The initializing representation is dependent because the type is symbolic.
+    // The initializing representation is dependent because the type is
+    // symbolic.
     Dependent,
     // An initializing expression produces an object representation by value,
     // which is copied into the initialized object.
