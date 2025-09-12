@@ -69,6 +69,8 @@ auto HandleInst(FunctionContext& context, SemIR::InstId inst_id,
       break;
     case SemIR::InitRepr::Incomplete:
       CARBON_FATAL("Unexpected incomplete type");
+    case SemIR::InitRepr::Dependent:
+      CARBON_FATAL("Unexpected dependent type");
   }
 
   context.SetLocal(inst_id, value);

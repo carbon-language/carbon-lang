@@ -259,6 +259,9 @@ auto HandleInst(FunctionContext& context, SemIR::InstId /*inst_id*/,
     case SemIR::InitRepr::Incomplete:
       CARBON_FATAL("Lowering return of incomplete type {0}",
                    result_type.file->types().GetAsInst(result_type.type_id));
+    case SemIR::InitRepr::Dependent:
+      CARBON_FATAL("Lowering return of dependent type {0}",
+                   result_type.file->types().GetAsInst(result_type.type_id));
   }
 }
 

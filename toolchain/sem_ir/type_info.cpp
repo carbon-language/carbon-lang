@@ -60,8 +60,7 @@ auto InitRepr::ForType(const File& file, TypeId type_id) -> InitRepr {
       return {.kind = InitRepr::None};
 
     case ValueRepr::Dependent:
-      // Conservatively assume we need a return slot for a dependent type.
-      return {.kind = InitRepr::InPlace};
+      return {.kind = InitRepr::Dependent};
 
     case ValueRepr::Copy:
       // TODO: Use in-place initialization for types that have non-trivial

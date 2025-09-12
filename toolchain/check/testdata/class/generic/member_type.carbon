@@ -370,8 +370,9 @@ fn Test() -> i32 {
 // CHECK:STDOUT:     %bound_method.loc9_38.2: <bound method> = bound_method %n.ref, %specific_impl_fn.loc9_38.1
 // CHECK:STDOUT:     %.loc9_39.2: ref @Outer.F.%T.as_type.loc9_11.1 (%T.as_type) = class_element_access %return, element0
 // CHECK:STDOUT:     %.loc9_38.1: init @Outer.F.%T.as_type.loc9_11.1 (%T.as_type) = call %bound_method.loc9_38.2(%n.ref) to %.loc9_39.2
-// CHECK:STDOUT:     %.loc9_39.3: init @Outer.F.%Inner (%Inner.2a5) = class_init (%.loc9_38.1), %return
-// CHECK:STDOUT:     %.loc9_40: init @Outer.F.%Inner (%Inner.2a5) = converted %.loc9_39.1, %.loc9_39.3
+// CHECK:STDOUT:     %.loc9_39.3: init @Outer.F.%T.as_type.loc9_11.1 (%T.as_type) = initialize_from %.loc9_38.1 to %.loc9_39.2
+// CHECK:STDOUT:     %.loc9_39.4: init @Outer.F.%Inner (%Inner.2a5) = class_init (%.loc9_39.3), %return
+// CHECK:STDOUT:     %.loc9_40: init @Outer.F.%Inner (%Inner.2a5) = converted %.loc9_39.1, %.loc9_39.4
 // CHECK:STDOUT:     return %.loc9_40 to %return
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }

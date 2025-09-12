@@ -130,6 +130,7 @@ fn For() {
 // CHECK:STDOUT: define linkonce_odr void @_CSome.Optional.Core.b7c8e4dff2adcdaa(ptr sret({ i1, i32 }) %return, i32 %value) !dbg !45 {
 // CHECK:STDOUT:   %has_value = getelementptr inbounds nuw { i1, i32 }, ptr %return, i32 0, i32 0, !dbg !46
 // CHECK:STDOUT:   %value1 = getelementptr inbounds nuw { i1, i32 }, ptr %return, i32 0, i32 1, !dbg !46
+// CHECK:STDOUT:   store i32 %value, ptr %value1, align 4, !dbg !46
 // CHECK:STDOUT:   store i8 1, ptr %has_value, align 1, !dbg !46
 // CHECK:STDOUT:   ret void, !dbg !47
 // CHECK:STDOUT: }
