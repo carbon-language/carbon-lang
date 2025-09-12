@@ -398,20 +398,25 @@ impl i32 as Empty {
 // CHECK:STDOUT:   %tuple.f41: %tuple.type.9fb = tuple_value (%empty_tuple) [concrete]
 // CHECK:STDOUT:   %tuple.elem0.eaf: %empty_tuple.type = tuple_access %c, element0 [symbolic]
 // CHECK:STDOUT:   %tuple.elem1: %empty_tuple.type = tuple_access %c, element1 [symbolic]
-// CHECK:STDOUT:   %T.as.Destroy.impl.Op.type.13b: type = fn_type @T.as.Destroy.impl.Op, @T.as.Destroy.impl(%tuple.type.2d5) [concrete]
-// CHECK:STDOUT:   %T.as.Destroy.impl.Op.02a: %T.as.Destroy.impl.Op.type.13b = struct_value () [concrete]
-// CHECK:STDOUT:   %T.as.Destroy.impl.Op.specific_fn.2e5: <specific function> = specific_function %T.as.Destroy.impl.Op.02a, @T.as.Destroy.impl.Op(%tuple.type.2d5) [concrete]
-// CHECK:STDOUT:   %T.as.Destroy.impl.Op.type.779: type = fn_type @T.as.Destroy.impl.Op, @T.as.Destroy.impl(%tuple.type.bcd) [concrete]
-// CHECK:STDOUT:   %T.as.Destroy.impl.Op.e5f: %T.as.Destroy.impl.Op.type.779 = struct_value () [concrete]
-// CHECK:STDOUT:   %T.as.Destroy.impl.Op.specific_fn.e29: <specific function> = specific_function %T.as.Destroy.impl.Op.e5f, @T.as.Destroy.impl.Op(%tuple.type.bcd) [concrete]
-// CHECK:STDOUT:   %T.as.Destroy.impl.Op.type.839: type = fn_type @T.as.Destroy.impl.Op, @T.as.Destroy.impl(%tuple.type.9fb) [concrete]
-// CHECK:STDOUT:   %T.as.Destroy.impl.Op.571: %T.as.Destroy.impl.Op.type.839 = struct_value () [concrete]
+// CHECK:STDOUT:   %type_where: type = facet_type <type where .Self impls <CanAggregateDestroy>> [concrete]
+// CHECK:STDOUT:   %facet_value.c7f: %type_where = facet_value %tuple.type.2d5, () [concrete]
+// CHECK:STDOUT:   %AggregateT.as_type.as.Destroy.impl.Op.type.b05: type = fn_type @AggregateT.as_type.as.Destroy.impl.Op, @AggregateT.as_type.as.Destroy.impl(%facet_value.c7f) [concrete]
+// CHECK:STDOUT:   %AggregateT.as_type.as.Destroy.impl.Op.1d6: %AggregateT.as_type.as.Destroy.impl.Op.type.b05 = struct_value () [concrete]
+// CHECK:STDOUT:   %AggregateT.as_type.as.Destroy.impl.Op.specific_fn.cca: <specific function> = specific_function %AggregateT.as_type.as.Destroy.impl.Op.1d6, @AggregateT.as_type.as.Destroy.impl.Op(%facet_value.c7f) [concrete]
+// CHECK:STDOUT:   %facet_value.dcc: %type_where = facet_value %tuple.type.bcd, () [concrete]
+// CHECK:STDOUT:   %AggregateT.as_type.as.Destroy.impl.Op.type.85e: type = fn_type @AggregateT.as_type.as.Destroy.impl.Op, @AggregateT.as_type.as.Destroy.impl(%facet_value.dcc) [concrete]
+// CHECK:STDOUT:   %AggregateT.as_type.as.Destroy.impl.Op.50f: %AggregateT.as_type.as.Destroy.impl.Op.type.85e = struct_value () [concrete]
+// CHECK:STDOUT:   %AggregateT.as_type.as.Destroy.impl.Op.specific_fn.c15: <specific function> = specific_function %AggregateT.as_type.as.Destroy.impl.Op.50f, @AggregateT.as_type.as.Destroy.impl.Op(%facet_value.dcc) [concrete]
+// CHECK:STDOUT:   %facet_value.132: %type_where = facet_value %tuple.type.9fb, () [concrete]
+// CHECK:STDOUT:   %AggregateT.as_type.as.Destroy.impl.Op.type.2ee: type = fn_type @AggregateT.as_type.as.Destroy.impl.Op, @AggregateT.as_type.as.Destroy.impl(%facet_value.132) [concrete]
+// CHECK:STDOUT:   %AggregateT.as_type.as.Destroy.impl.Op.7ed: %AggregateT.as_type.as.Destroy.impl.Op.type.2ee = struct_value () [concrete]
 // CHECK:STDOUT:   %ptr.652: type = ptr_type %tuple.type.9fb [concrete]
-// CHECK:STDOUT:   %T.as.Destroy.impl.Op.specific_fn.db0: <specific function> = specific_function %T.as.Destroy.impl.Op.571, @T.as.Destroy.impl.Op(%tuple.type.9fb) [concrete]
-// CHECK:STDOUT:   %T.as.Destroy.impl.Op.type.08a: type = fn_type @T.as.Destroy.impl.Op, @T.as.Destroy.impl(%empty_tuple.type) [concrete]
-// CHECK:STDOUT:   %T.as.Destroy.impl.Op.daf: %T.as.Destroy.impl.Op.type.08a = struct_value () [concrete]
+// CHECK:STDOUT:   %AggregateT.as_type.as.Destroy.impl.Op.specific_fn.af4: <specific function> = specific_function %AggregateT.as_type.as.Destroy.impl.Op.7ed, @AggregateT.as_type.as.Destroy.impl.Op(%facet_value.132) [concrete]
+// CHECK:STDOUT:   %facet_value.ff9: %type_where = facet_value %empty_tuple.type, () [concrete]
+// CHECK:STDOUT:   %AggregateT.as_type.as.Destroy.impl.Op.type.4e0: type = fn_type @AggregateT.as_type.as.Destroy.impl.Op, @AggregateT.as_type.as.Destroy.impl(%facet_value.ff9) [concrete]
+// CHECK:STDOUT:   %AggregateT.as_type.as.Destroy.impl.Op.c00: %AggregateT.as_type.as.Destroy.impl.Op.type.4e0 = struct_value () [concrete]
 // CHECK:STDOUT:   %ptr.843: type = ptr_type %empty_tuple.type [concrete]
-// CHECK:STDOUT:   %T.as.Destroy.impl.Op.specific_fn.e94: <specific function> = specific_function %T.as.Destroy.impl.Op.daf, @T.as.Destroy.impl.Op(%empty_tuple.type) [concrete]
+// CHECK:STDOUT:   %AggregateT.as_type.as.Destroy.impl.Op.specific_fn.a54: <specific function> = specific_function %AggregateT.as_type.as.Destroy.impl.Op.c00, @AggregateT.as_type.as.Destroy.impl.Op(%facet_value.ff9) [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -554,8 +559,8 @@ impl i32 as Empty {
 // CHECK:STDOUT:     %a1.var: ref %empty_tuple.type = var %a1.var_patt
 // CHECK:STDOUT:     %a.ref: %empty_tuple.type = name_ref a, @C.%a
 // CHECK:STDOUT:     %.loc13_18: init %empty_tuple.type = tuple_init () to %a1.var [concrete = constants.%empty_tuple]
-// CHECK:STDOUT:     %.loc13_5: init %empty_tuple.type = converted %a.ref, %.loc13_18 [concrete = constants.%empty_tuple]
-// CHECK:STDOUT:     assign %a1.var, %.loc13_5
+// CHECK:STDOUT:     %.loc13_5.1: init %empty_tuple.type = converted %a.ref, %.loc13_18 [concrete = constants.%empty_tuple]
+// CHECK:STDOUT:     assign %a1.var, %.loc13_5.1
 // CHECK:STDOUT:     %.loc13_14.1: type = splice_block %.loc13_14.3 [concrete = constants.%empty_tuple.type] {
 // CHECK:STDOUT:       %.loc13_14.2: %empty_tuple.type = tuple_literal ()
 // CHECK:STDOUT:       %.loc13_14.3: type = converted %.loc13_14.2, constants.%empty_tuple.type [concrete = constants.%empty_tuple.type]
@@ -572,8 +577,8 @@ impl i32 as Empty {
 // CHECK:STDOUT:     %.loc14_21.1: init %empty_tuple.type = tuple_init () to %tuple.elem0.loc14_21.2 [concrete = constants.%empty_tuple]
 // CHECK:STDOUT:     %.loc14_21.2: init %empty_tuple.type = converted %tuple.elem0.loc14_21.1, %.loc14_21.1 [concrete = constants.%empty_tuple]
 // CHECK:STDOUT:     %.loc14_21.3: init %tuple.type.9fb = tuple_init (%.loc14_21.2) to %b1.var [concrete = constants.%tuple.f41]
-// CHECK:STDOUT:     %.loc14_5: init %tuple.type.9fb = converted %b.ref, %.loc14_21.3 [concrete = constants.%tuple.f41]
-// CHECK:STDOUT:     assign %b1.var, %.loc14_5
+// CHECK:STDOUT:     %.loc14_5.1: init %tuple.type.9fb = converted %b.ref, %.loc14_21.3 [concrete = constants.%tuple.f41]
+// CHECK:STDOUT:     assign %b1.var, %.loc14_5.1
 // CHECK:STDOUT:     %.loc14_17.1: type = splice_block %.loc14_17.4 [concrete = constants.%tuple.type.9fb] {
 // CHECK:STDOUT:       %.loc14_15: %empty_tuple.type = tuple_literal ()
 // CHECK:STDOUT:       %.loc14_17.2: %tuple.type.9fb = tuple_literal (%.loc14_15)
@@ -596,8 +601,8 @@ impl i32 as Empty {
 // CHECK:STDOUT:     %.loc15_24.3: init %empty_tuple.type = tuple_init () to %tuple.elem1.loc15_24.2 [concrete = constants.%empty_tuple]
 // CHECK:STDOUT:     %.loc15_24.4: init %empty_tuple.type = converted %tuple.elem1.loc15_24.1, %.loc15_24.3 [concrete = constants.%empty_tuple]
 // CHECK:STDOUT:     %.loc15_24.5: init %tuple.type.bcd = tuple_init (%.loc15_24.2, %.loc15_24.4) to %c1.var [concrete = constants.%tuple.d8f]
-// CHECK:STDOUT:     %.loc15_5: init %tuple.type.bcd = converted %c.ref, %.loc15_24.5 [concrete = constants.%tuple.d8f]
-// CHECK:STDOUT:     assign %c1.var, %.loc15_5
+// CHECK:STDOUT:     %.loc15_5.1: init %tuple.type.bcd = converted %c.ref, %.loc15_24.5 [concrete = constants.%tuple.d8f]
+// CHECK:STDOUT:     assign %c1.var, %.loc15_5.1
 // CHECK:STDOUT:     %.loc15_20.1: type = splice_block %.loc15_20.5 [concrete = constants.%tuple.type.bcd] {
 // CHECK:STDOUT:       %.loc15_15: %empty_tuple.type = tuple_literal ()
 // CHECK:STDOUT:       %.loc15_19: %empty_tuple.type = tuple_literal ()
@@ -626,8 +631,8 @@ impl i32 as Empty {
 // CHECK:STDOUT:     %.loc16_28.5: init %empty_tuple.type = tuple_init () to %tuple.elem2.loc16_28.2 [concrete = constants.%empty_tuple]
 // CHECK:STDOUT:     %.loc16_28.6: init %empty_tuple.type = converted %tuple.elem2.loc16_28.1, %.loc16_28.5 [concrete = constants.%empty_tuple]
 // CHECK:STDOUT:     %.loc16_28.7: init %tuple.type.2d5 = tuple_init (%.loc16_28.2, %.loc16_28.4, %.loc16_28.6) to %d1.var [concrete = constants.%tuple.7e4]
-// CHECK:STDOUT:     %.loc16_5: init %tuple.type.2d5 = converted %d.ref, %.loc16_28.7 [concrete = constants.%tuple.7e4]
-// CHECK:STDOUT:     assign %d1.var, %.loc16_5
+// CHECK:STDOUT:     %.loc16_5.1: init %tuple.type.2d5 = converted %d.ref, %.loc16_28.7 [concrete = constants.%tuple.7e4]
+// CHECK:STDOUT:     assign %d1.var, %.loc16_5.1
 // CHECK:STDOUT:     %.loc16_24.1: type = splice_block %.loc16_24.6 [concrete = constants.%tuple.type.2d5] {
 // CHECK:STDOUT:       %.loc16_15: %empty_tuple.type = tuple_literal ()
 // CHECK:STDOUT:       %.loc16_19: %empty_tuple.type = tuple_literal ()
@@ -639,26 +644,34 @@ impl i32 as Empty {
 // CHECK:STDOUT:       %.loc16_24.6: type = converted %.loc16_24.2, constants.%tuple.type.2d5 [concrete = constants.%tuple.type.2d5]
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %d1: ref %tuple.type.2d5 = bind_name d1, %d1.var
-// CHECK:STDOUT:     %T.as.Destroy.impl.Op.bound.loc16: <bound method> = bound_method %d1.var, constants.%T.as.Destroy.impl.Op.02a
-// CHECK:STDOUT:     %T.as.Destroy.impl.Op.specific_fn.1: <specific function> = specific_function constants.%T.as.Destroy.impl.Op.02a, @T.as.Destroy.impl.Op(constants.%tuple.type.2d5) [concrete = constants.%T.as.Destroy.impl.Op.specific_fn.2e5]
-// CHECK:STDOUT:     %bound_method.loc16: <bound method> = bound_method %d1.var, %T.as.Destroy.impl.Op.specific_fn.1
+// CHECK:STDOUT:     %facet_value.loc16: %type_where = facet_value constants.%tuple.type.2d5, () [concrete = constants.%facet_value.c7f]
+// CHECK:STDOUT:     %.loc16_5.2: %type_where = converted constants.%tuple.type.2d5, %facet_value.loc16 [concrete = constants.%facet_value.c7f]
+// CHECK:STDOUT:     %AggregateT.as_type.as.Destroy.impl.Op.bound.loc16: <bound method> = bound_method %d1.var, constants.%AggregateT.as_type.as.Destroy.impl.Op.1d6
+// CHECK:STDOUT:     %AggregateT.as_type.as.Destroy.impl.Op.specific_fn.1: <specific function> = specific_function constants.%AggregateT.as_type.as.Destroy.impl.Op.1d6, @AggregateT.as_type.as.Destroy.impl.Op(constants.%facet_value.c7f) [concrete = constants.%AggregateT.as_type.as.Destroy.impl.Op.specific_fn.cca]
+// CHECK:STDOUT:     %bound_method.loc16: <bound method> = bound_method %d1.var, %AggregateT.as_type.as.Destroy.impl.Op.specific_fn.1
 // CHECK:STDOUT:     %addr.loc16: %ptr.7fe = addr_of %d1.var
-// CHECK:STDOUT:     %T.as.Destroy.impl.Op.call.loc16: init %empty_tuple.type = call %bound_method.loc16(%addr.loc16)
-// CHECK:STDOUT:     %T.as.Destroy.impl.Op.bound.loc15: <bound method> = bound_method %c1.var, constants.%T.as.Destroy.impl.Op.e5f
-// CHECK:STDOUT:     %T.as.Destroy.impl.Op.specific_fn.2: <specific function> = specific_function constants.%T.as.Destroy.impl.Op.e5f, @T.as.Destroy.impl.Op(constants.%tuple.type.bcd) [concrete = constants.%T.as.Destroy.impl.Op.specific_fn.e29]
-// CHECK:STDOUT:     %bound_method.loc15: <bound method> = bound_method %c1.var, %T.as.Destroy.impl.Op.specific_fn.2
+// CHECK:STDOUT:     %AggregateT.as_type.as.Destroy.impl.Op.call.loc16: init %empty_tuple.type = call %bound_method.loc16(%addr.loc16)
+// CHECK:STDOUT:     %facet_value.loc15: %type_where = facet_value constants.%tuple.type.bcd, () [concrete = constants.%facet_value.dcc]
+// CHECK:STDOUT:     %.loc15_5.2: %type_where = converted constants.%tuple.type.bcd, %facet_value.loc15 [concrete = constants.%facet_value.dcc]
+// CHECK:STDOUT:     %AggregateT.as_type.as.Destroy.impl.Op.bound.loc15: <bound method> = bound_method %c1.var, constants.%AggregateT.as_type.as.Destroy.impl.Op.50f
+// CHECK:STDOUT:     %AggregateT.as_type.as.Destroy.impl.Op.specific_fn.2: <specific function> = specific_function constants.%AggregateT.as_type.as.Destroy.impl.Op.50f, @AggregateT.as_type.as.Destroy.impl.Op(constants.%facet_value.dcc) [concrete = constants.%AggregateT.as_type.as.Destroy.impl.Op.specific_fn.c15]
+// CHECK:STDOUT:     %bound_method.loc15: <bound method> = bound_method %c1.var, %AggregateT.as_type.as.Destroy.impl.Op.specific_fn.2
 // CHECK:STDOUT:     %addr.loc15: %ptr.709 = addr_of %c1.var
-// CHECK:STDOUT:     %T.as.Destroy.impl.Op.call.loc15: init %empty_tuple.type = call %bound_method.loc15(%addr.loc15)
-// CHECK:STDOUT:     %T.as.Destroy.impl.Op.bound.loc14: <bound method> = bound_method %b1.var, constants.%T.as.Destroy.impl.Op.571
-// CHECK:STDOUT:     %T.as.Destroy.impl.Op.specific_fn.3: <specific function> = specific_function constants.%T.as.Destroy.impl.Op.571, @T.as.Destroy.impl.Op(constants.%tuple.type.9fb) [concrete = constants.%T.as.Destroy.impl.Op.specific_fn.db0]
-// CHECK:STDOUT:     %bound_method.loc14: <bound method> = bound_method %b1.var, %T.as.Destroy.impl.Op.specific_fn.3
+// CHECK:STDOUT:     %AggregateT.as_type.as.Destroy.impl.Op.call.loc15: init %empty_tuple.type = call %bound_method.loc15(%addr.loc15)
+// CHECK:STDOUT:     %facet_value.loc14: %type_where = facet_value constants.%tuple.type.9fb, () [concrete = constants.%facet_value.132]
+// CHECK:STDOUT:     %.loc14_5.2: %type_where = converted constants.%tuple.type.9fb, %facet_value.loc14 [concrete = constants.%facet_value.132]
+// CHECK:STDOUT:     %AggregateT.as_type.as.Destroy.impl.Op.bound.loc14: <bound method> = bound_method %b1.var, constants.%AggregateT.as_type.as.Destroy.impl.Op.7ed
+// CHECK:STDOUT:     %AggregateT.as_type.as.Destroy.impl.Op.specific_fn.3: <specific function> = specific_function constants.%AggregateT.as_type.as.Destroy.impl.Op.7ed, @AggregateT.as_type.as.Destroy.impl.Op(constants.%facet_value.132) [concrete = constants.%AggregateT.as_type.as.Destroy.impl.Op.specific_fn.af4]
+// CHECK:STDOUT:     %bound_method.loc14: <bound method> = bound_method %b1.var, %AggregateT.as_type.as.Destroy.impl.Op.specific_fn.3
 // CHECK:STDOUT:     %addr.loc14: %ptr.652 = addr_of %b1.var
-// CHECK:STDOUT:     %T.as.Destroy.impl.Op.call.loc14: init %empty_tuple.type = call %bound_method.loc14(%addr.loc14)
-// CHECK:STDOUT:     %T.as.Destroy.impl.Op.bound.loc13: <bound method> = bound_method %a1.var, constants.%T.as.Destroy.impl.Op.daf
-// CHECK:STDOUT:     %T.as.Destroy.impl.Op.specific_fn.4: <specific function> = specific_function constants.%T.as.Destroy.impl.Op.daf, @T.as.Destroy.impl.Op(constants.%empty_tuple.type) [concrete = constants.%T.as.Destroy.impl.Op.specific_fn.e94]
-// CHECK:STDOUT:     %bound_method.loc13: <bound method> = bound_method %a1.var, %T.as.Destroy.impl.Op.specific_fn.4
+// CHECK:STDOUT:     %AggregateT.as_type.as.Destroy.impl.Op.call.loc14: init %empty_tuple.type = call %bound_method.loc14(%addr.loc14)
+// CHECK:STDOUT:     %facet_value.loc13: %type_where = facet_value constants.%empty_tuple.type, () [concrete = constants.%facet_value.ff9]
+// CHECK:STDOUT:     %.loc13_5.2: %type_where = converted constants.%empty_tuple.type, %facet_value.loc13 [concrete = constants.%facet_value.ff9]
+// CHECK:STDOUT:     %AggregateT.as_type.as.Destroy.impl.Op.bound.loc13: <bound method> = bound_method %a1.var, constants.%AggregateT.as_type.as.Destroy.impl.Op.c00
+// CHECK:STDOUT:     %AggregateT.as_type.as.Destroy.impl.Op.specific_fn.4: <specific function> = specific_function constants.%AggregateT.as_type.as.Destroy.impl.Op.c00, @AggregateT.as_type.as.Destroy.impl.Op(constants.%facet_value.ff9) [concrete = constants.%AggregateT.as_type.as.Destroy.impl.Op.specific_fn.a54]
+// CHECK:STDOUT:     %bound_method.loc13: <bound method> = bound_method %a1.var, %AggregateT.as_type.as.Destroy.impl.Op.specific_fn.4
 // CHECK:STDOUT:     %addr.loc13: %ptr.843 = addr_of %a1.var
-// CHECK:STDOUT:     %T.as.Destroy.impl.Op.call.loc13: init %empty_tuple.type = call %bound_method.loc13(%addr.loc13)
+// CHECK:STDOUT:     %AggregateT.as_type.as.Destroy.impl.Op.call.loc13: init %empty_tuple.type = call %bound_method.loc13(%addr.loc13)
 // CHECK:STDOUT:     return
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
