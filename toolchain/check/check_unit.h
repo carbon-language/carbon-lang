@@ -187,8 +187,6 @@ class CheckUnit {
 
   UnitAndImports* unit_and_imports_;
   Parse::GetTreeAndSubtreesFn tree_and_subtrees_getter_;
-  // The number of IRs being checked in total.
-  int total_ir_count_;
   llvm::IntrusiveRefCntPtr<llvm::vfs::FileSystem> fs_;
   std::shared_ptr<clang::CompilerInvocation> clang_invocation_;
 

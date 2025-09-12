@@ -5,7 +5,6 @@
 #ifndef CARBON_TOOLCHAIN_SEM_IR_TYPE_H_
 #define CARBON_TOOLCHAIN_SEM_IR_TYPE_H_
 
-#include "llvm/ADT/BitmaskEnum.h"
 #include "llvm/ADT/STLExtras.h"
 #include "toolchain/base/shared_value_stores.h"
 #include "toolchain/sem_ir/constant.h"
@@ -15,23 +14,25 @@
 
 namespace Carbon::SemIR {
 
-LLVM_ENABLE_BITMASK_ENUMS_IN_NAMESPACE();
+#define CARBON_TYPE_QUALIFIERS(X) \
+  X(Const)                        \
+  X(MaybeUnformed)                \
+  X(Partial)
 
-// A bitmask of type qualifiers.
-enum class TypeQualifiers {
-  None = 0,
-  Const = 1 << 0,
-  MaybeUnformed = 1 << 1,
-  Partial = 1 << 2,
-
-  LLVM_MARK_AS_BITMASK_ENUM(Partial)
+CARBON_DEFINE_RAW_ENUM_MASK(TypeQualifiers, uint8_t) {
+  CARBON_TYPE_QUALIFIERS(CARBON_RAW_ENUM_MASK_ENUMERATOR)
 };
 
-// Returns whether the type qualifier set `quals` contains `qual`.
-inline auto HasTypeQualifier(TypeQualifiers quals, TypeQualifiers qual)
-    -> bool {
-  return (quals & qual) != TypeQualifiers::None;
-}
+// Represents a set of keyword modifiers, using a separate bit per modifier.
+class TypeQualifiers : public CARBON_ENUM_MASK_BASE(TypeQualifiers) {
+ public:
+  CARBON_TYPE_QUALIFIERS(CARBON_ENUM_MASK_CONSTANT_DECL)
+};
+
+#define CARBON_TYPE_QUALIFIERS_WITH_TYPE(X) \
+  CARBON_ENUM_MASK_CONSTANT_DEFINITION(TypeQualifiers, X)
+CARBON_TYPE_QUALIFIERS(CARBON_TYPE_QUALIFIERS_WITH_TYPE)
+#undef CARBON_TYPE_QUALIFIERS_WITH_TYPE
 
 // Provides a ValueStore wrapper with an API specific to types.
 class TypeStore : public Yaml::Printable<TypeStore> {

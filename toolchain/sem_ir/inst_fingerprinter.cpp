@@ -13,6 +13,7 @@
 #include "llvm/ADT/STLExtras.h"
 #include "llvm/ADT/SmallVector.h"
 #include "llvm/ADT/StableHashing.h"
+#include "toolchain/base/fixed_size_value_store.h"
 #include "toolchain/base/value_ids.h"
 #include "toolchain/sem_ir/entity_with_params_base.h"
 #include "toolchain/sem_ir/ids.h"
@@ -22,6 +23,10 @@ namespace Carbon::SemIR {
 
 namespace {
 struct Worklist {
+  using FingerprintStore = FixedSizeValueStore<InstId, uint64_t>;
+  using FilesFingerprintStores =
+      FixedSizeValueStore<CheckIRId, FingerprintStore>;
+
   // The file containing the instruction we're currently processing.
   const File* sem_ir = nullptr;
   // The instructions we need to compute fingerprints for.
@@ -34,10 +39,30 @@ struct Worklist {
   llvm::SmallVector<llvm::stable_hash> contents = {};
   // Known cached instruction fingerprints. Each item in `todo` will be added to
   // the cache if not already present.
-  Map<std::pair<const File*, InstId>, uint64_t>* fingerprints;
+  FilesFingerprintStores* fingerprints;
 
   // Finish fingerprinting and compute the fingerprint.
   auto Finish() -> uint64_t { return llvm::stable_hash_combine(contents); }
+
+  // Gets the known fingerprint from the cache, or returns 0.
+  auto GetFingerprint(const File* file, InstId inst_id) -> uint64_t {
+    auto& store = fingerprints->Get(file->check_ir_id());
+    if (store.size() == 0) {
+      return 0;
+    }
+    return store.Get(inst_id);
+  }
+
+  // Sets the fingerprint for an instruction in the cache. Since 0 is used to
+  // indicate empty, we map 0 to another fixed value.
+  auto SetFingerprint(const File* file, InstId inst_id, uint64_t fingerprint) {
+    auto& store = fingerprints->Get(file->check_ir_id());
+    if (store.size() == 0) {
+      store = FixedSizeValueStore<InstId, uint64_t>::MakeWithExplicitSize(
+          file->insts().size(), 0);
+    }
+    store.Set(inst_id, fingerprint ? fingerprint : 1);
+  }
 
   // Add an invalid marker to the contents. This is used when the entity
   // contains a `None` ID. This uses an arbitrary fixed value that is assumed
@@ -96,11 +121,11 @@ struct Worklist {
       AddInvalid();
       return;
     }
-    if (auto lookup = fingerprints->Lookup(std::pair(file, inner_id))) {
-      contents.push_back(lookup.value());
-    } else {
-      todo.push_back({file, inner_id});
+    if (auto fingerprint = GetFingerprint(file, inner_id)) {
+      contents.push_back(fingerprint);
+      return;
     }
+    todo.push_back({file, inner_id});
   }
 
   auto Add(InstId inner_id) -> void { AddInFile(sem_ir, inner_id); }
@@ -224,18 +249,16 @@ struct Worklist {
 
   auto Add(FacetTypeId facet_type_id) -> void {
     const auto& facet_type = sem_ir->facet_types().Get(facet_type_id);
-    for (auto [interface_id, specific_id] : facet_type.extend_constraints) {
-      Add(interface_id);
-      Add(specific_id);
-    }
-    for (auto [interface_id, specific_id] : facet_type.self_impls_constraints) {
-      Add(interface_id);
-      Add(specific_id);
-    }
-    for (auto [lhs_id, rhs_id] : facet_type.rewrite_constraints) {
-      Add(lhs_id);
-      Add(rhs_id);
-    }
+    auto add_constraints = [&](auto constraints) {
+      contents.push_back(constraints.size());
+      for (auto [first, second] : constraints) {
+        Add(first);
+        Add(second);
+      }
+    };
+    add_constraints(facet_type.extend_constraints);
+    add_constraints(facet_type.self_impls_constraints);
+    add_constraints(facet_type.rewrite_constraints);
     contents.push_back(facet_type.other_requirements);
   }
 
@@ -406,11 +429,10 @@ struct Worklist {
 
       // If we already have a fingerprint for this instruction, we have nothing
       // to do. Just pop it from `todo`.
-      if (auto lookup =
-              fingerprints->Lookup(std::pair(next_sem_ir, next_inst_id))) {
+      if (auto fingerprint = GetFingerprint(next_sem_ir, next_inst_id)) {
         todo.pop_back();
         if (todo.empty()) {
-          return lookup.value();
+          return fingerprint;
         }
         continue;
       }
@@ -438,7 +460,7 @@ struct Worklist {
       // we can compute its fingerprint once we've finished the work we added.
       if (todo.size() == init_size) {
         uint64_t fingerprint = Finish();
-        fingerprints->Insert(std::pair(next_sem_ir, next_inst_id), fingerprint);
+        SetFingerprint(next_sem_ir, next_inst_id, fingerprint);
         todo.pop_back();
         if (todo.empty()) {
           return fingerprint;

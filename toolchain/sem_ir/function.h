@@ -95,6 +95,7 @@ struct Function : public EntityWithParamsBase,
     InstId inst_id;
     AnyParamPattern inst;
     EntityNameId entity_name_id;
+    KnownInstId<VarPattern> var_pattern_id;
   };
 
   auto Print(llvm::raw_ostream& out) const -> void {

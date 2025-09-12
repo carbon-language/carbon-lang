@@ -10,6 +10,9 @@
 
 namespace Carbon::SemIR {
 
+CARBON_DEFINE_ENUM_MASK_NAMES(TypeQualifiers) = {
+    CARBON_TYPE_QUALIFIERS(CARBON_ENUM_MASK_NAME_STRING)};
+
 // Verify that the constant value's type is `TypeType` (or an error).
 static void CheckTypeOfConstantIsTypeType(File& file, ConstantId constant_id) {
   CARBON_CHECK(constant_id.is_constant(),
@@ -101,13 +104,13 @@ auto TypeStore::GetUnqualifiedTypeAndQualifiers(TypeId type_id) const
       type_id = file_->types().GetTypeIdForTypeInstId(qualified_type->inner_id);
       switch (qualified_type->kind) {
         case ConstType::Kind:
-          quals |= TypeQualifiers::Const;
+          quals.Add(TypeQualifiers::Const);
           break;
         case MaybeUnformedType::Kind:
-          quals |= TypeQualifiers::MaybeUnformed;
+          quals.Add(TypeQualifiers::MaybeUnformed);
           break;
         case PartialType::Kind:
-          quals |= TypeQualifiers::Partial;
+          quals.Add(TypeQualifiers::Partial);
           break;
         default:
           CARBON_FATAL("Unknown type qualifier {0}", qualified_type->kind);
@@ -129,7 +132,7 @@ auto TypeStore::GetTransitiveUnqualifiedAdaptedType(TypeId type_id) const
       return {type_id, quals};
     }
     type_id = unqual_type_id;
-    quals |= inner_quals;
+    quals.Add(inner_quals);
   }
 }
 

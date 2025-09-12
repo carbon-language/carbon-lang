@@ -4,6 +4,7 @@
 
 package Core library "prelude/types/char";
 
+import library "prelude/copy";
 import library "prelude/destroy";
 import library "prelude/operators";
 import library "prelude/types/uint";
@@ -12,6 +13,10 @@ fn CharLiteral() -> type = "char_literal.make_type";
 
 class Char {
   adapt u8;
+}
+
+impl Char as Copy {
+  fn Op[self: Self]() -> Self = "primitive_copy";
 }
 
 impl CharLiteral() as ImplicitAs(Char) {

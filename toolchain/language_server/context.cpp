@@ -154,6 +154,7 @@ auto Context::File::SetText(Context& context, std::optional<int64_t> version,
                                             .value_stores = value_stores_.get(),
                                             .timings = nullptr,
                                             .sem_ir = &sem_ir,
+                                            .total_ir_count = 1,
                                             .clang_ast_unit = &clang_ast_unt}}};
 
   auto getter = [this]() -> const Parse::TreeAndSubtrees& {
@@ -163,7 +164,7 @@ auto Context::File::SetText(Context& context, std::optional<int64_t> version,
   llvm::IntrusiveRefCntPtr<llvm::vfs::FileSystem> fs =
       llvm::vfs::getRealFileSystem();
 
-  // TODO: Include the prelude.
+  // TODO: Include the prelude. Make sure `total_ir_count` includes the files.
   Check::CheckParseTreesOptions check_options;
   check_options.vlog_stream = context.vlog_stream();
   auto getters =

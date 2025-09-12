@@ -8,6 +8,7 @@
 
 #include "toolchain/sem_ir/file.h"
 #include "toolchain/sem_ir/ids.h"
+#include "toolchain/sem_ir/type_info.h"
 #include "toolchain/sem_ir/typed_insts.h"
 
 namespace Carbon::SemIR {
@@ -156,6 +157,17 @@ struct AnyFloat {
 // Constraint that requires the type to be the type type.
 using Type = BuiltinType<TypeType::TypeInstId>;
 
+// Constraint that a type supports a primitive copy. This happens if its
+// initializing representation is a copy of its value representation.
+struct PrimitiveCopyable {
+  static auto Check(const File& sem_ir, ValidateState& /*state*/,
+                    TypeId type_id) -> bool {
+    return InitRepr::ForType(sem_ir, type_id).IsCopyOfObjectRepr() &&
+           ValueRepr::ForType(sem_ir, type_id)
+               .IsCopyOfObjectRepr(sem_ir, type_id);
+  }
+};
+
 // Checks that the specified type matches the given type constraint.
 template <typename TypeConstraint>
 auto Check(const File& sem_ir, ValidateState& state, TypeId type_id) -> bool {
@@ -261,10 +273,18 @@ using FloatU = TypeParam<1, AnyFloat>;
 // generic type parameter that is constrained to be a sized float type.
 using SizedFloatT = TypeParam<0, AnySizedFloat>;
 
+// Convenience name used in the builtin type signatures below for a first
+// generic type parameter that supports primitive copy.
+using PrimitiveCopyParamT = TypeParam<0, PrimitiveCopyable>;
+
 // Not a builtin function.
 constexpr BuiltinInfo None = {"", nullptr};
 
 constexpr BuiltinInfo NoOp = {"no_op", ValidateNoOpSignature};
+
+constexpr BuiltinInfo PrimitiveCopy = {
+    "primitive_copy",
+    ValidateSignature<auto(PrimitiveCopyParamT)->PrimitiveCopyParamT>};
 
 // Prints a single character.
 constexpr BuiltinInfo PrintChar = {

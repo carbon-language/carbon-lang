@@ -18,7 +18,8 @@ Context::Context(
     llvm::LLVMContext* llvm_context,
     llvm::IntrusiveRefCntPtr<llvm::vfs::FileSystem> fs, bool want_debug_info,
     const Parse::GetTreeAndSubtreesStore* tree_and_subtrees_getters,
-    llvm::StringRef module_name, llvm::raw_ostream* vlog_stream)
+    llvm::StringRef module_name, int total_ir_count,
+    llvm::raw_ostream* vlog_stream)
     : llvm_context_(llvm_context),
       llvm_module_(std::make_unique<llvm::Module>(module_name, *llvm_context)),
       file_system_(std::move(fs)),
@@ -28,18 +29,22 @@ Context::Context(
               ? BuildDICompileUnit(module_name, *llvm_module_, di_builder_)
               : nullptr),
       tree_and_subtrees_getters_(tree_and_subtrees_getters),
-      vlog_stream_(vlog_stream) {}
+      vlog_stream_(vlog_stream),
+      total_ir_count_(total_ir_count),
+      file_contexts_(
+          FileContextStore::MakeForOverwriteWithExplicitSize(total_ir_count_)) {
+}
 
 auto Context::GetFileContext(const SemIR::File* file,
                              const SemIR::InstNamer* inst_namer)
     -> FileContext& {
-  auto insert_result = file_contexts_.Insert(file->check_ir_id(), [&] {
-    auto file_context =
+  auto& file_context = file_contexts_.Get(file->check_ir_id());
+  if (!file_context) {
+    file_context =
         std::make_unique<FileContext>(*this, *file, inst_namer, vlog_stream_);
     file_context->PrepareToLower();
-    return file_context;
-  });
-  return *insert_result.value();
+  }
+  return *file_context;
 }
 
 auto Context::LowerPendingDefinitions() -> void {
@@ -53,8 +58,11 @@ auto Context::LowerPendingDefinitions() -> void {
 auto Context::Finalize() && -> std::unique_ptr<llvm::Module> {
   LowerPendingDefinitions();
 
-  file_contexts_.ForEach(
-      [](auto, auto& file_context) { file_context->Finalize(); });
+  for (auto& file_context : file_contexts_.values()) {
+    if (file_context) {
+      file_context->Finalize();
+    }
+  }
 
   return std::move(llvm_module_);
 }

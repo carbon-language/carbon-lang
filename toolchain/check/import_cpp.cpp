@@ -28,6 +28,7 @@
 #include "toolchain/base/kind_switch.h"
 #include "toolchain/check/class.h"
 #include "toolchain/check/context.h"
+#include "toolchain/check/control_flow.h"
 #include "toolchain/check/convert.h"
 #include "toolchain/check/cpp_custom_type_mapping.h"
 #include "toolchain/check/cpp_thunk.h"
@@ -581,10 +582,8 @@ static auto IsDeclInjectedClassName(const Context& context,
 
   const clang::ASTContext& ast_context =
       context.sem_ir().clang_ast_unit()->getASTContext();
-  CARBON_CHECK(
-      ast_context.getCanonicalType(
-          ast_context.getRecordType(scope_record_decl)) ==
-      ast_context.getCanonicalType(ast_context.getRecordType(record_decl)));
+  CARBON_CHECK(ast_context.getCanonicalTagType(scope_record_decl) ==
+               ast_context.getCanonicalTagType(record_decl));
 
   auto class_decl =
       context.sem_ir().insts().GetAs<SemIR::ClassDecl>(clang_decl.inst_id);
@@ -1089,67 +1088,6 @@ static auto BuildEnumDefinition(Context& context,
   class_info.body_block_id = context.inst_block_stack().Pop();
 }
 
-auto ImportClassDefinitionForClangDecl(Context& context, SemIR::LocId loc_id,
-                                       SemIR::ClassId class_id,
-                                       SemIR::ClangDeclId clang_decl_id)
-    -> bool {
-  clang::ASTUnit* ast = context.sem_ir().clang_ast_unit();
-  CARBON_CHECK(ast);
-
-  auto* clang_decl = cast<clang::TagDecl>(
-      context.sem_ir().clang_decls().Get(clang_decl_id).decl);
-  auto class_inst_id = context.types().GetAsTypeInstId(
-      context.classes().Get(class_id).first_owning_decl_id);
-
-  // TODO: Map loc_id into a clang location and use it for diagnostics if
-  // instantiation fails, instead of annotating the diagnostic with another
-  // location.
-  clang::SourceLocation loc = clang_decl->getLocation();
-  Diagnostics::AnnotationScope annotate_diagnostics(
-      &context.emitter(), [&](auto& builder) {
-        CARBON_DIAGNOSTIC(InCppTypeCompletion, Note,
-                          "while completing C++ type {0}", SemIR::TypeId);
-        builder.Note(loc_id, InCppTypeCompletion,
-                     context.classes().Get(class_id).self_type_id);
-      });
-
-  // Ask Clang whether the type is complete. This triggers template
-  // instantiation if necessary.
-  clang::DiagnosticErrorTrap trap(ast->getDiagnostics());
-  if (!ast->getSema().isCompleteType(
-          loc, context.ast_context().getTypeDeclType(clang_decl))) {
-    // Type is incomplete. Nothing more to do, but tell the caller if we
-    // produced an error.
-    return !trap.hasErrorOccurred();
-  }
-
-  auto import_ir_inst_id =
-      context.insts().GetCanonicalLocId(class_inst_id).import_ir_inst_id();
-
-  if (auto* class_decl = dyn_cast<clang::CXXRecordDecl>(clang_decl)) {
-    auto* class_def = class_decl->getDefinition();
-    CARBON_CHECK(class_def, "Complete type has no definition");
-
-    if (class_def->getNumVBases()) {
-      // TODO: Handle virtual bases. We don't actually know where they go in the
-      // layout. We may also want to use a different size in the layout for
-      // `partial C`, excluding the virtual base. It's also not entirely safe to
-      // just skip over the virtual base, as the type we would construct would
-      // have a misleading size. For now, treat a C++ class with vbases as
-      // incomplete in Carbon.
-      context.TODO(loc_id, "class with virtual bases");
-      return false;
-    }
-
-    BuildClassDefinition(context, import_ir_inst_id, class_id, class_inst_id,
-                         class_def);
-  } else if (auto* enum_decl = dyn_cast<clang::EnumDecl>(clang_decl)) {
-    BuildEnumDefinition(context, import_ir_inst_id, class_id, class_inst_id,
-                        enum_decl);
-  }
-  return true;
-}
-
 // Imports an enumerator declaration from Clang to Carbon.
 static auto ImportEnumConstantDecl(Context& context,
                                    clang::EnumConstantDecl* enumerator_decl)
@@ -1267,7 +1205,7 @@ static auto LookupCustomRecordType(Context& context,
 // Maps a C++ tag type (class, struct, union, enum) to a Carbon type.
 static auto MapTagType(Context& context, const clang::TagType& type)
     -> TypeExpr {
-  auto* tag_decl = type.getDecl();
+  auto* tag_decl = type.getOriginalDecl();
   CARBON_CHECK(tag_decl);
 
   // Check if the declaration is already mapped.
@@ -1810,7 +1748,7 @@ static auto AddDependentUnimportedTypeDecls(const Context& context,
   }
 
   if (const auto* tag_type = type->getAs<clang::TagType>()) {
-    AddDependentDecl(context, tag_type->getDecl(), worklist);
+    AddDependentDecl(context, tag_type->getOriginalDecl(), worklist);
   }
 }
 
@@ -1844,6 +1782,59 @@ static auto AddDependentUnimportedDecls(const Context& context,
   if (!isa<clang::TranslationUnitDecl>(clang_decl)) {
     AddDependentDecl(context, GetParentDecl(clang_decl), worklist);
   }
+}
+
+static auto ImportVarDecl(Context& context, SemIR::LocId loc_id,
+                          clang::VarDecl* var_decl) -> SemIR::InstId {
+  if (SemIR::InstId existing_inst_id = LookupClangDeclInstId(context, var_decl);
+      existing_inst_id.has_value()) {
+    return existing_inst_id;
+  }
+
+  // Extract type and name.
+  clang::QualType var_type = var_decl->getType();
+  SemIR::TypeId var_type_id = MapType(context, loc_id, var_type).type_id;
+  if (!var_type_id.has_value()) {
+    context.TODO(loc_id, llvm::formatv("Unsupported: var type: {0}",
+                                       var_type.getAsString()));
+    return SemIR::ErrorInst::InstId;
+  }
+  SemIR::NameId var_name_id = AddIdentifierName(context, var_decl->getName());
+
+  SemIR::VarStorage var_storage{.type_id = var_type_id,
+                                .pattern_id = SemIR::InstId::None};
+  // We can't use the convenience for `AddPlaceholderInstInNoBlock()` with typed
+  // nodes because it doesn't support insts with cleanup.
+  SemIR::InstId var_storage_inst_id =
+      AddPlaceholderInstInNoBlock(context, {loc_id, var_storage});
+
+  auto clang_decl_id = context.sem_ir().clang_decls().Add(
+      {.decl = var_decl, .inst_id = var_storage_inst_id});
+
+  // Entity name referring to a Clang decl for mangling.
+  SemIR::EntityNameId entity_name_id =
+      context.entity_names().AddSymbolicBindingName(
+          var_name_id, GetParentNameScopeId(context, var_decl),
+          SemIR::CompileTimeBindIndex::None, false, clang_decl_id);
+
+  // Create `BindingPattern` and `VarPattern` in a `NameBindingDecl`.
+  context.pattern_block_stack().Push();
+  SemIR::TypeId pattern_type_id = GetPatternType(context, var_type_id);
+  SemIR::InstId binding_pattern_inst_id = AddPatternInst<SemIR::BindingPattern>(
+      context, loc_id,
+      {.type_id = pattern_type_id, .entity_name_id = entity_name_id});
+  var_storage.pattern_id = AddPatternInst<SemIR::VarPattern>(
+      context, Parse::VariablePatternId::None,
+      {.type_id = pattern_type_id, .subpattern_id = binding_pattern_inst_id});
+  context.imports().push_back(AddInstInNoBlock<SemIR::NameBindingDecl>(
+      context, loc_id,
+      {.pattern_block_id = context.pattern_block_stack().Pop()}));
+
+  // Finalize the `VarStorage` instruction.
+  ReplaceInstBeforeConstantUse(context, var_storage_inst_id, var_storage);
+  context.imports().push_back(var_storage_inst_id);
+
+  return var_storage_inst_id;
 }
 
 // Imports a declaration from Clang to Carbon. Returns the instruction for the
@@ -1884,6 +1875,9 @@ static auto ImportDeclAfterDependencies(Context& context, SemIR::LocId loc_id,
   }
   if (auto* enum_const_decl = dyn_cast<clang::EnumConstantDecl>(clang_decl)) {
     return ImportEnumConstantDecl(context, enum_const_decl);
+  }
+  if (auto* var_decl = dyn_cast<clang::VarDecl>(clang_decl)) {
+    return ImportVarDecl(context, loc_id, var_decl);
   }
 
   context.TODO(AddImportIRInst(context.sem_ir(), clang_decl->getLocation()),
@@ -2017,11 +2011,138 @@ auto ImportNameFromCpp(Context& context, SemIR::LocId loc_id,
                                  access);
 }
 
-static auto GetOperatorKind(Context& context, SemIR::LocId loc_id,
-                            llvm::StringLiteral interface_name)
+static auto GetClangOperatorKind(Context& context, SemIR::LocId loc_id,
+                                 llvm::StringLiteral interface_name,
+                                 llvm::StringLiteral op_name)
     -> std::optional<clang::OverloadedOperatorKind> {
+  // Unary operators.
+  if (interface_name == "Destroy" || interface_name == "As" ||
+      interface_name == "ImplicitAs") {
+    // TODO: Support destructors and conversions.
+    return std::nullopt;
+  }
+
+  // Increment and Decrement.
+  if (interface_name == "Inc") {
+    CARBON_CHECK(op_name == "Op");
+    return clang::OO_PlusPlus;
+  }
+  if (interface_name == "Dec") {
+    CARBON_CHECK(op_name == "Op");
+    return clang::OO_MinusMinus;
+  }
+
+  // Arithmetic.
+  if (interface_name == "Negate") {
+    CARBON_CHECK(op_name == "Op");
+    return clang::OO_Minus;
+  }
+
+  // Binary operators.
+
+  // Arithmetic Operators.
   if (interface_name == "AddWith") {
+    CARBON_CHECK(op_name == "Op");
     return clang::OO_Plus;
+  }
+  if (interface_name == "SubWith") {
+    CARBON_CHECK(op_name == "Op");
+    return clang::OO_Minus;
+  }
+  if (interface_name == "MulWith") {
+    CARBON_CHECK(op_name == "Op");
+    return clang::OO_Star;
+  }
+  if (interface_name == "DivWith") {
+    CARBON_CHECK(op_name == "Op");
+    return clang::OO_Slash;
+  }
+  if (interface_name == "ModWith") {
+    CARBON_CHECK(op_name == "Op");
+    return clang::OO_Percent;
+  }
+
+  // Bitwise Operators.
+  if (interface_name == "BitAndWith") {
+    CARBON_CHECK(op_name == "Op");
+    return clang::OO_Amp;
+  }
+  if (interface_name == "BitOrWith") {
+    CARBON_CHECK(op_name == "Op");
+    return clang::OO_Pipe;
+  }
+  if (interface_name == "BitXorWith") {
+    CARBON_CHECK(op_name == "Op");
+    return clang::OO_Caret;
+  }
+  if (interface_name == "LeftShiftWith") {
+    CARBON_CHECK(op_name == "Op");
+    return clang::OO_LessLess;
+  }
+  if (interface_name == "RightShiftWith") {
+    CARBON_CHECK(op_name == "Op");
+    return clang::OO_GreaterGreater;
+  }
+
+  // Compound Assignment Arithmetic Operators.
+  if (interface_name == "AddAssignWith") {
+    CARBON_CHECK(op_name == "Op");
+    return clang::OO_PlusEqual;
+  }
+  if (interface_name == "SubAssignWith") {
+    CARBON_CHECK(op_name == "Op");
+    return clang::OO_MinusEqual;
+  }
+  if (interface_name == "MulAssignWith") {
+    CARBON_CHECK(op_name == "Op");
+    return clang::OO_StarEqual;
+  }
+  if (interface_name == "DivAssignWith") {
+    CARBON_CHECK(op_name == "Op");
+    return clang::OO_SlashEqual;
+  }
+  if (interface_name == "ModAssignWith") {
+    CARBON_CHECK(op_name == "Op");
+    return clang::OO_PercentEqual;
+  }
+
+  // Compound Assignment Bitwise Operators.
+  if (interface_name == "BitAndAssignWith") {
+    CARBON_CHECK(op_name == "Op");
+    return clang::OO_AmpEqual;
+  }
+  if (interface_name == "BitOrAssignWith") {
+    CARBON_CHECK(op_name == "Op");
+    return clang::OO_PipeEqual;
+  }
+  if (interface_name == "BitXorAssignWith") {
+    CARBON_CHECK(op_name == "Op");
+    return clang::OO_CaretEqual;
+  }
+  // TODO: Add support for `LeftShiftAssignWith` (`OO_LessLessEqual`) and
+  // `RightShiftAssignWith` (`OO_GreaterGreaterEqual`) when references are
+  // supported.
+
+  // Relational Operators.
+  if (interface_name == "EqWith") {
+    if (op_name == "Equal") {
+      return clang::OO_EqualEqual;
+    }
+    CARBON_CHECK(op_name == "NotEqual");
+    return clang::OO_ExclaimEqual;
+  }
+  if (interface_name == "OrderedWith") {
+    if (op_name == "Less") {
+      return clang::OO_Less;
+    }
+    if (op_name == "Greater") {
+      return clang::OO_Greater;
+    }
+    if (op_name == "LessOrEquivalent") {
+      return clang::OO_LessEqual;
+    }
+    CARBON_CHECK(op_name == "GreaterOrEquivalent");
+    return clang::OO_GreaterEqual;
   }
 
   context.TODO(loc_id, llvm::formatv("Unsupported operator interface `{0}`",
@@ -2029,7 +2150,8 @@ static auto GetOperatorKind(Context& context, SemIR::LocId loc_id,
   return std::nullopt;
 }
 
-auto ImportOperatorFromCpp(Context& context, SemIR::LocId loc_id, Operator op)
+auto ImportOperatorFromCpp(Context& context, SemIR::LocId loc_id,
+                           SemIR::NameScopeId scope_id, Operator op)
     -> SemIR::ScopeLookupResult {
   Diagnostics::AnnotationScope annotate_diagnostics(
       &context.emitter(), [&](auto& builder) {
@@ -2038,7 +2160,8 @@ auto ImportOperatorFromCpp(Context& context, SemIR::LocId loc_id, Operator op)
         builder.Note(loc_id, InCppOperatorLookup, op.interface_name.str());
       });
 
-  auto op_kind = GetOperatorKind(context, loc_id, op.interface_name);
+  auto op_kind =
+      GetClangOperatorKind(context, loc_id, op.interface_name, op.op_name);
   if (!op_kind) {
     return SemIR::ScopeLookupResult::MakeNotFound();
   }
@@ -2048,7 +2171,7 @@ auto ImportOperatorFromCpp(Context& context, SemIR::LocId loc_id, Operator op)
   // into C++ types. See
   // https://github.com/carbon-language/carbon-lang/pull/5996/files/5d01fa69511b76f87efbc0387f5e40abcf4c911a#r2316950123
   auto decl_and_access = ClangLookupDeclarationName(
-      context, loc_id, SemIR::NameScopeId::None,
+      context, loc_id, scope_id,
       context.ast_context().DeclarationNames.getCXXOperatorName(*op_kind));
 
   if (!decl_and_access) {
@@ -2067,6 +2190,67 @@ auto ImportOperatorFromCpp(Context& context, SemIR::LocId loc_id, Operator op)
   SemIR::AccessKind access_kind = MapAccess(access);
   return SemIR::ScopeLookupResult::MakeWrappedLookupResult(inst_id,
                                                            access_kind);
+}
+
+auto ImportClassDefinitionForClangDecl(Context& context, SemIR::LocId loc_id,
+                                       SemIR::ClassId class_id,
+                                       SemIR::ClangDeclId clang_decl_id)
+    -> bool {
+  clang::ASTUnit* ast = context.sem_ir().clang_ast_unit();
+  CARBON_CHECK(ast);
+
+  auto* clang_decl = cast<clang::TagDecl>(
+      context.sem_ir().clang_decls().Get(clang_decl_id).decl);
+  auto class_inst_id = context.types().GetAsTypeInstId(
+      context.classes().Get(class_id).first_owning_decl_id);
+
+  // TODO: Map loc_id into a clang location and use it for diagnostics if
+  // instantiation fails, instead of annotating the diagnostic with another
+  // location.
+  clang::SourceLocation loc = clang_decl->getLocation();
+  Diagnostics::AnnotationScope annotate_diagnostics(
+      &context.emitter(), [&](auto& builder) {
+        CARBON_DIAGNOSTIC(InCppTypeCompletion, Note,
+                          "while completing C++ type {0}", SemIR::TypeId);
+        builder.Note(loc_id, InCppTypeCompletion,
+                     context.classes().Get(class_id).self_type_id);
+      });
+
+  // Ask Clang whether the type is complete. This triggers template
+  // instantiation if necessary.
+  clang::DiagnosticErrorTrap trap(ast->getDiagnostics());
+  if (!ast->getSema().isCompleteType(
+          loc, context.ast_context().getCanonicalTagType(clang_decl))) {
+    // Type is incomplete. Nothing more to do, but tell the caller if we
+    // produced an error.
+    return !trap.hasErrorOccurred();
+  }
+
+  auto import_ir_inst_id =
+      context.insts().GetCanonicalLocId(class_inst_id).import_ir_inst_id();
+
+  if (auto* class_decl = dyn_cast<clang::CXXRecordDecl>(clang_decl)) {
+    auto* class_def = class_decl->getDefinition();
+    CARBON_CHECK(class_def, "Complete type has no definition");
+
+    if (class_def->getNumVBases()) {
+      // TODO: Handle virtual bases. We don't actually know where they go in the
+      // layout. We may also want to use a different size in the layout for
+      // `partial C`, excluding the virtual base. It's also not entirely safe to
+      // just skip over the virtual base, as the type we would construct would
+      // have a misleading size. For now, treat a C++ class with vbases as
+      // incomplete in Carbon.
+      context.TODO(loc_id, "class with virtual bases");
+      return false;
+    }
+
+    BuildClassDefinition(context, import_ir_inst_id, class_id, class_inst_id,
+                         class_def);
+  } else if (auto* enum_decl = dyn_cast<clang::EnumDecl>(clang_decl)) {
+    BuildEnumDefinition(context, import_ir_inst_id, class_id, class_inst_id,
+                        enum_decl);
+  }
+  return true;
 }
 
 }  // namespace Carbon::Check

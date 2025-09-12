@@ -3,6 +3,7 @@
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
 // INCLUDE-FILE: toolchain/testing/testdata/min_prelude/parts/as.carbon
+// INCLUDE-FILE: toolchain/testing/testdata/min_prelude/parts/copy.carbon
 // EXTRA-ARGS: --custom-core --exclude-dump-file-prefix=min_prelude/
 
 // --- min_prelude/facet_types.carbon
@@ -12,6 +13,7 @@
 package Core library "prelude";
 
 export import library "prelude/parts/as";
+export import library "prelude/parts/copy";
 
 interface BitAndWith(Other:! type) {
   fn Op[self: Self](other: Other) -> Self;

@@ -165,6 +165,6 @@ fn G[X:! type](p: X*) -> (X*).(I.T) {
 // TODO: This should be diagnosed as poisoned, as H() uses an associated
 // constant from the `impl` which was treated as a symbolic, but this would
 // change it to be a concrete type.
-final impl forall [V:! type] V* as I where .T = V {
+final impl forall [V:! Core.Copy] V* as I where .T = V {
   fn F[self: Self]() -> V { return *self; }
 }

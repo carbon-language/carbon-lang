@@ -48,7 +48,7 @@ auto BuildRuntimesSubcommand::Run(DriverEnv& driver_env) -> DriverResult {
 
   // Don't run Clang when fuzzing, it is known to not be reliable under fuzzing
   // due to many unfixed issues.
-  if (!TestAndDiagnoseIfFuzzingExternalLibraries(driver_env, "clang")) {
+  if (TestAndDiagnoseIfFuzzingExternalLibraries(driver_env, "clang")) {
     return {.success = false};
   }
 

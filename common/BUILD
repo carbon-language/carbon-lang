@@ -160,6 +160,15 @@ cc_test(
 )
 
 cc_library(
+    name = "enum_mask_base",
+    hdrs = ["enum_mask_base.h"],
+    deps = [
+        ":enum_base",
+        "@llvm-project//llvm:Support",
+    ],
+)
+
+cc_library(
     name = "error",
     hdrs = ["error.h"],
     deps = [

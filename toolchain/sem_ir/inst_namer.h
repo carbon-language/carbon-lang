@@ -43,7 +43,7 @@ class InstNamer {
 
   // Construct the instruction namer, and assign names to all instructions in
   // the provided file.
-  explicit InstNamer(const File* sem_ir);
+  explicit InstNamer(const File* sem_ir, int total_ir_count);
 
   // Returns the scope ID corresponding to an ID of a function, class, or
   // interface.
@@ -110,7 +110,7 @@ class InstNamer {
     class Name {
      public:
       explicit Name() : value_(nullptr) {}
-      explicit Name(llvm::StringMapIterator<NameResult> it,
+      explicit Name(llvm::StringMap<NameResult>::iterator it,
                     size_t base_name_size)
           : value_(&*it), base_name_size_(base_name_size) {}
 

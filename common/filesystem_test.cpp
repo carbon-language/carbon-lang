@@ -9,6 +9,7 @@
 
 #include <concepts>
 #include <string>
+#include <thread>
 #include <utility>
 
 #include "common/error_test_helpers.h"
@@ -21,6 +22,7 @@ using ::testing::Eq;
 using ::testing::HasSubstr;
 using Testing::IsError;
 using Testing::IsSuccess;
+using ::testing::UnorderedElementsAre;
 
 class FilesystemTest : public ::testing::Test {
  public:
@@ -101,7 +103,7 @@ TEST_F(FilesystemTest, BasicWriteAndRead) {
   {
     auto f = dir_.OpenWriteOnly("test", CreationOptions::CreateNew);
     ASSERT_THAT(f, IsSuccess(_));
-    auto write_result = f->WriteFromString(content_str);
+    auto write_result = f->WriteFileFromString(content_str);
     EXPECT_THAT(write_result, IsSuccess(_));
     (*std::move(f)).Close().Check();
   }
@@ -109,8 +111,76 @@ TEST_F(FilesystemTest, BasicWriteAndRead) {
   {
     auto f = dir_.OpenReadOnly("test");
     ASSERT_THAT(f, IsSuccess(_));
-    auto read_result = f->ReadToString();
+    auto read_result = f->ReadFileToString();
     EXPECT_THAT(read_result, IsSuccess(Eq(content_str)));
+  }
+
+  auto unlink_result = dir_.Unlink("test");
+  EXPECT_THAT(unlink_result, IsSuccess(_));
+}
+
+TEST_F(FilesystemTest, SeekReadAndWrite) {
+  std::string content_str = "0123456789";
+  // First write some initial content.
+  {
+    auto f = dir_.OpenWriteOnly("test", CreationOptions::CreateNew);
+    ASSERT_THAT(f, IsSuccess(_));
+    auto write_result = f->WriteFileFromString(content_str);
+    EXPECT_THAT(write_result, IsSuccess(_));
+    (*std::move(f)).Close().Check();
+  }
+
+  // Now seek and read.
+  {
+    auto f = dir_.OpenReadOnly("test");
+    ASSERT_THAT(f, IsSuccess(_));
+    auto seek_result = f->Seek(3);
+    ASSERT_THAT(seek_result, IsSuccess(Eq(3)));
+    std::array<std::byte, 4> buffer;
+    auto read_result = f->ReadToBuffer(buffer);
+    ASSERT_THAT(read_result, IsSuccess(_));
+    EXPECT_THAT(std::string(reinterpret_cast<char*>(read_result->data()),
+                            read_result->size()),
+                Eq(content_str.substr(3, read_result->size())));
+
+    // Now test that we can seek back to the beginning and read the full file.
+    auto read_file_result = f->ReadFileToString();
+    EXPECT_THAT(read_file_result, IsSuccess(Eq(content_str)));
+  }
+
+  // Now a mixture of reads, writes, an seeking.
+  {
+    auto f = dir_.OpenReadWrite("test");
+    ASSERT_THAT(f, IsSuccess(_));
+    auto seek_result = f->SeekFromEnd(-6);
+    ASSERT_THAT(seek_result, IsSuccess(Eq(content_str.size() - 6)));
+    std::string new_content_str = "abcdefg";
+    llvm::ArrayRef<std::byte> new_content_bytes(
+        reinterpret_cast<std::byte*>(new_content_str.data()),
+        new_content_str.size());
+    for (auto write_bytes = new_content_bytes.slice(0, 4);
+         !write_bytes.empty();) {
+      auto write_result = f->WriteFromBuffer(write_bytes);
+      ASSERT_THAT(write_result, IsSuccess(_));
+      write_bytes = *write_result;
+    }
+
+    std::array<std::byte, 4> buffer;
+    auto read_result = f->ReadToBuffer(buffer);
+    ASSERT_THAT(read_result, IsSuccess(_));
+    EXPECT_THAT(std::string(reinterpret_cast<char*>(read_result->data()),
+                            read_result->size()),
+                Eq(content_str.substr(8, read_result->size())));
+
+    EXPECT_THAT(*f->ReadFileToString(), "0123abcd89");
+
+    // Now write the entire file, also changing its size, after a fresh seek.
+    seek_result = f->Seek(-6);
+    ASSERT_THAT(seek_result, IsSuccess(Eq(content_str.size() - 6)));
+    auto write_file_result = f->WriteFileFromString(new_content_str);
+    EXPECT_THAT(write_file_result, IsSuccess(_));
+    EXPECT_THAT(*f->ReadFileToString(), "abcdefg");
+    (*std::move(f)).Close().Check();
   }
 
   auto unlink_result = dir_.Unlink("test");
@@ -185,7 +255,7 @@ TEST_F(FilesystemTest, StatAndAccess) {
   ModeType permissions = 0450;
   auto f = dir_.OpenWriteOnly("test", CreationOptions::CreateNew, permissions);
   ASSERT_THAT(f, IsSuccess(_));
-  auto write_result = f->WriteFromString(content_str);
+  auto write_result = f->WriteFileFromString(content_str);
   EXPECT_THAT(write_result, IsSuccess(_));
 
   access_result = dir_.Access("test");
@@ -301,7 +371,7 @@ TEST_F(FilesystemTest, Chdir) {
   // Create a regular file and try to chdir to that.
   auto f = dir_.OpenWriteOnly("test2", CreationOptions::CreateNew);
   ASSERT_THAT(f, IsSuccess(_));
-  auto write_result = f->WriteFromString("test2");
+  auto write_result = f->WriteFileFromString("test2");
   EXPECT_THAT(write_result, IsSuccess(_));
   chdir_path_result = dir_.Chdir("test2");
   ASSERT_FALSE(chdir_path_result.ok());
@@ -390,6 +460,158 @@ TEST_F(FilesystemTest, Rename) {
   // infinite subdirectories.
   result = dir_.Rename("subdir1", d2, "infinite_subdirs");
   EXPECT_THAT(result.error().unix_errnum(), EINVAL) << result.error();
+}
+
+TEST_F(FilesystemTest, TryLock) {
+  auto file = dir_.OpenReadWrite("test_file", CreateNew);
+  ASSERT_THAT(file, IsSuccess(_));
+
+  // Acquire an exclusive lock.
+  auto lock = file->TryLock(FileLock::Exclusive);
+  ASSERT_THAT(lock, IsSuccess(_));
+  EXPECT_TRUE(lock->is_locked());
+
+  // Try to acquire a second lock from a different file object.
+  auto file2 = dir_.OpenReadOnly("test_file");
+  ASSERT_THAT(file2, IsSuccess(_));
+  auto lock2 = file2->TryLock(FileLock::Exclusive);
+  ASSERT_THAT(lock2, IsError(_));
+  EXPECT_TRUE(lock2.error().would_block());
+
+  // A shared lock should also fail.
+  auto lock3 = file2->TryLock(FileLock::Shared);
+  ASSERT_THAT(lock3, IsError(_));
+  EXPECT_TRUE(lock3.error().would_block());
+
+  // Release the first lock.
+  *lock = {};
+  EXPECT_FALSE(lock->is_locked());
+
+  // Now we can acquire an exclusive lock.
+  lock2 = file2->TryLock(FileLock::Exclusive);
+  ASSERT_THAT(lock2, IsSuccess(_));
+  EXPECT_TRUE(lock2->is_locked());
+  *lock2 = {};
+
+  // Test shared locks.
+  auto shared_lock1 = file->TryLock(FileLock::Shared);
+  ASSERT_THAT(shared_lock1, IsSuccess(_));
+  EXPECT_TRUE(shared_lock1->is_locked());
+
+  auto shared_lock2 = file2->TryLock(FileLock::Shared);
+  ASSERT_THAT(shared_lock2, IsSuccess(_));
+  EXPECT_TRUE(shared_lock2->is_locked());
+
+  // An exclusive lock should fail.
+  auto file3 = dir_.OpenReadOnly("test_file");
+  ASSERT_THAT(file3, IsSuccess(_));
+  auto exclusive_lock = file3->TryLock(FileLock::Exclusive);
+  ASSERT_THAT(exclusive_lock, IsError(_));
+  EXPECT_TRUE(exclusive_lock.error().would_block());
+
+  // Release locks and close files.
+  *shared_lock1 = {};
+  *shared_lock2 = {};
+  ASSERT_THAT((*std::move(file)).Close(), IsSuccess(_));
+  ASSERT_THAT((*std::move(file2)).Close(), IsSuccess(_));
+  ASSERT_THAT((*std::move(file3)).Close(), IsSuccess(_));
+}
+
+TEST_F(FilesystemTest, ReadAndAppendEntries) {
+  // Test with an empty directory.
+  {
+    auto entries = dir_.ReadEntries();
+    ASSERT_THAT(entries, IsSuccess(_));
+    EXPECT_TRUE(entries->empty());
+  }
+  {
+    llvm::SmallVector<std::filesystem::path> entries;
+    EXPECT_THAT(dir_.AppendEntriesIf(entries), IsSuccess(_));
+    EXPECT_TRUE(entries.empty());
+  }
+
+  // Create some files and directories.
+  ASSERT_THAT(dir_.WriteFileFromString("file1", ""), IsSuccess(_));
+  ASSERT_THAT(dir_.WriteFileFromString("file2", ""), IsSuccess(_));
+  ASSERT_THAT(dir_.WriteFileFromString(".hidden", ""), IsSuccess(_));
+  ASSERT_THAT(dir_.CreateDirectories("subdir1"), IsSuccess(_));
+  ASSERT_THAT(dir_.CreateDirectories("subdir2"), IsSuccess(_));
+
+  // Test ReadEntries.
+  {
+    auto entries = dir_.ReadEntries();
+    ASSERT_THAT(entries, IsSuccess(_));
+    EXPECT_THAT(*entries, UnorderedElementsAre(".hidden", "file1", "file2",
+                                               "subdir1", "subdir2"));
+  }
+
+  // Test AppendEntriesIf with no predicate.
+  {
+    llvm::SmallVector<std::filesystem::path> entries;
+    EXPECT_THAT(dir_.AppendEntriesIf(entries), IsSuccess(_));
+    EXPECT_THAT(entries, UnorderedElementsAre(".hidden", "file1", "file2",
+                                              "subdir1", "subdir2"));
+  }
+
+  // Test AppendEntriesIf with a predicate.
+  {
+    llvm::SmallVector<std::filesystem::path> entries;
+    auto result = dir_.AppendEntriesIf(
+        entries, [](llvm::StringRef name) { return name.starts_with("file"); });
+    EXPECT_THAT(result, IsSuccess(_));
+    EXPECT_THAT(entries, UnorderedElementsAre("file1", "file2"));
+  }
+
+  // Test AppendEntriesIf with directory splitting and a predicate.
+  {
+    llvm::SmallVector<std::filesystem::path> dir_entries;
+    llvm::SmallVector<std::filesystem::path> non_dir_entries;
+    auto result = dir_.AppendEntriesIf(
+        dir_entries, non_dir_entries,
+        [](llvm::StringRef name) { return !name.starts_with("."); });
+    EXPECT_THAT(result, IsSuccess(_));
+    EXPECT_THAT(dir_entries, UnorderedElementsAre("subdir1", "subdir2"));
+    EXPECT_THAT(non_dir_entries, UnorderedElementsAre("file1", "file2"));
+  }
+}
+
+TEST_F(FilesystemTest, MtimeAndUpdateTimes) {
+  // Test UpdateTimes on a path that doesn't exist.
+  auto update_missing = dir_.UpdateTimes("test_file");
+  ASSERT_THAT(update_missing, IsError(_));
+  EXPECT_TRUE(update_missing.error().no_entity());
+
+  // Create a file and get its initial modification time.
+  ASSERT_THAT(dir_.WriteFileFromString("test_file", "content"), IsSuccess(_));
+  auto stat = dir_.Stat("test_file");
+  ASSERT_THAT(stat, IsSuccess(_));
+  auto time1 = stat->mtime();
+
+  // Repeated stats have stable time.
+  stat = dir_.Stat("test_file");
+  ASSERT_THAT(stat, IsSuccess(_));
+  EXPECT_THAT(stat->mtime(), Eq(time1));
+
+  // Update the timestamp to a specific time in the past.
+  auto past_time = time1 - std::chrono::seconds(120);
+  ASSERT_THAT(dir_.UpdateTimes("test_file", past_time), IsSuccess(_));
+  stat = dir_.Stat("test_file");
+  ASSERT_THAT(stat, IsSuccess(_));
+  EXPECT_THAT(stat->mtime(), Eq(past_time));
+
+  // Now test updating times on an open file. Should still be at `past_time`.
+  auto file = *dir_.OpenReadWrite("test_file");
+  auto file_stat = file.Stat();
+  ASSERT_THAT(file_stat, IsSuccess(_));
+  EXPECT_THAT(file_stat->mtime(), Eq(past_time));
+
+  // Update the times through the file and verify those updates arrived.
+  ASSERT_THAT(file.UpdateTimes(time1), IsSuccess(_));
+  file_stat = file.Stat();
+  ASSERT_THAT(file_stat, IsSuccess(_));
+  EXPECT_THAT(file_stat->mtime(), Eq(time1));
+
+  ASSERT_THAT(std::move(file).Close(), IsSuccess(_));
 }
 
 }  // namespace

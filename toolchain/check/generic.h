@@ -5,14 +5,12 @@
 #ifndef CARBON_TOOLCHAIN_CHECK_GENERIC_H_
 #define CARBON_TOOLCHAIN_CHECK_GENERIC_H_
 
-#include "llvm/ADT/BitmaskEnum.h"
+#include "common/enum_mask_base.h"
 #include "toolchain/check/context.h"
 #include "toolchain/sem_ir/entity_with_params_base.h"
 #include "toolchain/sem_ir/ids.h"
 
 namespace Carbon::Check {
-
-LLVM_ENABLE_BITMASK_ENUMS_IN_NAMESPACE();
 
 // Start processing a declaration or definition that might be a generic entity.
 auto StartGenericDecl(Context& context) -> void;
@@ -21,22 +19,33 @@ auto StartGenericDecl(Context& context) -> void;
 auto StartGenericDefinition(Context& context, SemIR::GenericId generic_id)
     -> void;
 
+#define CARBON_DEPENDENT_INST_KIND(X)                                       \
+  /* The type of the instruction depends on a checked generic parameter. */ \
+  X(SymbolicType)                                                           \
+  /* The constant value of the instruction depends on a checked generic     \
+   * parameter. */                                                          \
+  X(SymbolicConstant)                                                       \
+  X(Template)
+
+CARBON_DEFINE_RAW_ENUM_MASK(DependentInstKind, uint8_t) {
+  CARBON_DEPENDENT_INST_KIND(CARBON_RAW_ENUM_MASK_ENUMERATOR)
+};
+
+// Represents a set of keyword modifiers, using a separate bit per modifier.
+class DependentInstKind : public CARBON_ENUM_MASK_BASE(DependentInstKind) {
+ public:
+  CARBON_DEPENDENT_INST_KIND(CARBON_ENUM_MASK_CONSTANT_DECL)
+};
+
+#define CARBON_DEPENDENT_INST_KIND_WITH_TYPE(X) \
+  CARBON_ENUM_MASK_CONSTANT_DEFINITION(DependentInstKind, X)
+CARBON_DEPENDENT_INST_KIND(CARBON_DEPENDENT_INST_KIND_WITH_TYPE)
+#undef CARBON_DEPENDENT_INST_KIND_WITH_TYPE
+
 // An instruction that depends on a generic parameter in some way.
 struct DependentInst {
-  // Ways in which an instruction can depend on a generic parameter.
-  enum Kind : int8_t {
-    None = 0x0,
-    // The type of the instruction depends on a checked generic parameter.
-    SymbolicType = 0x1,
-    // The constant value of the instruction depends on a checked generic
-    // parameter.
-    SymbolicConstant = 0x2,
-    Template = 0x4,
-    LLVM_MARK_AS_BITMASK_ENUM(/*LargestValue=*/Template)
-  };
-
   SemIR::InstId inst_id;
-  Kind kind;
+  DependentInstKind kind;
 };
 
 // Attach a dependent instruction to the current generic, updating its type and

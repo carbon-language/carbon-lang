@@ -20,6 +20,7 @@ Context::Context(DiagnosticEmitterBase* emitter,
     : emitter_(emitter),
       tree_and_subtrees_getter_(tree_and_subtrees_getter),
       sem_ir_(sem_ir),
+      total_ir_count_(total_ir_count),
       gen_implicit_type_impls_(gen_implicit_type_impls),
       vlog_stream_(vlog_stream),
       node_stack_(sem_ir->parse_tree(), vlog_stream),
@@ -33,7 +34,7 @@ Context::Context(DiagnosticEmitterBase* emitter,
       vtable_stack_("vtable_stack_", *sem_ir, vlog_stream),
       check_ir_map_(
           FixedSizeValueStore<SemIR::CheckIRId, SemIR::ImportIRId>::
-              MakeWithExplicitSize(total_ir_count, SemIR::ImportIRId::None)),
+              MakeWithExplicitSize(total_ir_count_, SemIR::ImportIRId::None)),
       global_init_(this),
       region_stack_([this](SemIR::LocId loc_id, std::string label) {
         TODO(loc_id, label);

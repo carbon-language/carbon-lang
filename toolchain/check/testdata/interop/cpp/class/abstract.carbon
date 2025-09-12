@@ -94,13 +94,9 @@ fn F() -> Cpp.AbstractFinal {
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %AbstractFinal: type = class_type @AbstractFinal [concrete]
-// CHECK:STDOUT:   %pattern_type.2e0: type = pattern_type %AbstractFinal [concrete]
+// CHECK:STDOUT:   %pattern_type: type = pattern_type %AbstractFinal [concrete]
 // CHECK:STDOUT:   %F.type: type = fn_type @F [concrete]
-// CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [concrete]
 // CHECK:STDOUT:   %F: %F.type = struct_value () [concrete]
-// CHECK:STDOUT:   %T.as.Destroy.impl.Op.type.4da: type = fn_type @T.as.Destroy.impl.Op, @T.as.Destroy.impl(%AbstractFinal) [concrete]
-// CHECK:STDOUT:   %T.as.Destroy.impl.Op.0fa: %T.as.Destroy.impl.Op.type.4da = struct_value () [concrete]
-// CHECK:STDOUT:   %ptr.d4c: type = ptr_type %AbstractFinal [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -113,8 +109,8 @@ fn F() -> Cpp.AbstractFinal {
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [concrete = constants.%F] {
-// CHECK:STDOUT:     %return.patt: %pattern_type.2e0 = return_slot_pattern [concrete]
-// CHECK:STDOUT:     %return.param_patt: %pattern_type.2e0 = out_param_pattern %return.patt, call_param0 [concrete]
+// CHECK:STDOUT:     %return.patt: %pattern_type = return_slot_pattern [concrete]
+// CHECK:STDOUT:     %return.param_patt: %pattern_type = out_param_pattern %return.patt, call_param0 [concrete]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %Cpp.ref: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
 // CHECK:STDOUT:     %AbstractFinal.ref: type = name_ref AbstractFinal, imports.%AbstractFinal.decl [concrete = constants.%AbstractFinal]
@@ -128,11 +124,6 @@ fn F() -> Cpp.AbstractFinal {
 // CHECK:STDOUT:   %F.ref: %F.type = name_ref F, file.%F.decl [concrete = constants.%F]
 // CHECK:STDOUT:   %.loc11: ref %AbstractFinal = splice_block %return {}
 // CHECK:STDOUT:   %F.call: init %AbstractFinal = call %F.ref() to %.loc11
-// CHECK:STDOUT:   %T.as.Destroy.impl.Op.bound: <bound method> = bound_method %.loc11, constants.%T.as.Destroy.impl.Op.0fa
-// CHECK:STDOUT:   <elided>
-// CHECK:STDOUT:   %bound_method: <bound method> = bound_method %.loc11, %T.as.Destroy.impl.Op.specific_fn
-// CHECK:STDOUT:   %addr: %ptr.d4c = addr_of %.loc11
-// CHECK:STDOUT:   %T.as.Destroy.impl.Op.call: init %empty_tuple.type = call %bound_method(%addr)
 // CHECK:STDOUT:   return %F.call to %return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
