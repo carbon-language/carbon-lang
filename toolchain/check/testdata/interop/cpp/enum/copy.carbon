@@ -67,9 +67,8 @@ fn F() {
 // CHECK:STDOUT:   %Cpp.ref.loc8_21: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
 // CHECK:STDOUT:   %Enum.ref.loc8_24: type = name_ref Enum, imports.%Enum.decl [concrete = constants.%Enum]
 // CHECK:STDOUT:   %a.ref.loc8: %Enum = name_ref a, imports.%int_0 [concrete = constants.%int_0]
-// CHECK:STDOUT:   %.loc8_29: init %Enum = initialize_from %a.ref.loc8 to %a.var [concrete = constants.%int_0]
-// CHECK:STDOUT:   assign %a.var, %.loc8_29
-// CHECK:STDOUT:   %.loc8_13: type = splice_block %Enum.ref.loc8_13 [concrete = constants.%Enum] {
+// CHECK:STDOUT:   assign %a.var, %a.ref.loc8
+// CHECK:STDOUT:   %.loc8: type = splice_block %Enum.ref.loc8_13 [concrete = constants.%Enum] {
 // CHECK:STDOUT:     %Cpp.ref.loc8_10: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
 // CHECK:STDOUT:     %Enum.ref.loc8_13: type = name_ref Enum, imports.%Enum.decl [concrete = constants.%Enum]
 // CHECK:STDOUT:   }
@@ -78,8 +77,7 @@ fn F() {
 // CHECK:STDOUT:   %Cpp.ref.loc10: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
 // CHECK:STDOUT:   %Enum.ref.loc10: type = name_ref Enum, imports.%Enum.decl [concrete = constants.%Enum]
 // CHECK:STDOUT:   %b.ref: %Enum = name_ref b, imports.%int_1 [concrete = constants.%int_1]
-// CHECK:STDOUT:   %.loc10: init %Enum = initialize_from %b.ref to %a.ref.loc10 [concrete = constants.%int_1]
-// CHECK:STDOUT:   assign %a.ref.loc10, %.loc10
+// CHECK:STDOUT:   assign %a.ref.loc10, %b.ref
 // CHECK:STDOUT:   %T.as.Destroy.impl.Op.bound: <bound method> = bound_method %a.var, constants.%T.as.Destroy.impl.Op.bbe
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT:   %bound_method: <bound method> = bound_method %a.var, %T.as.Destroy.impl.Op.specific_fn

@@ -124,9 +124,8 @@ fn G() {
 // CHECK:STDOUT:   %Cpp.ref.loc8_9: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
 // CHECK:STDOUT:   %b.ref: %.4f0 = name_ref b, imports.%int_1.81a [concrete = constants.%int_1.81a]
 // CHECK:STDOUT:   %.loc8_12.1: ref %.4f0 = temporary_storage
-// CHECK:STDOUT:   %.loc8_12.2: init %.4f0 = initialize_from %b.ref to %.loc8_12.1 [concrete = constants.%int_1.81a]
-// CHECK:STDOUT:   %.loc8_12.3: ref %.4f0 = temporary %.loc8_12.1, %.loc8_12.2
-// CHECK:STDOUT:   %addr.loc8_14: %ptr.793 = addr_of %.loc8_12.3
+// CHECK:STDOUT:   %.loc8_12.2: ref %.4f0 = temporary %.loc8_12.1, %b.ref
+// CHECK:STDOUT:   %addr.loc8_14: %ptr.793 = addr_of %.loc8_12.2
 // CHECK:STDOUT:   %F__carbon_thunk.call.loc8: init %empty_tuple.type = call imports.%F__carbon_thunk.decl.e1b8ec.1(%addr.loc8_14)
 // CHECK:STDOUT:   %Cpp.ref.loc10_3: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
 // CHECK:STDOUT:   %C.ref.loc10_6: type = name_ref C, imports.%C.decl [concrete = constants.%C]
@@ -143,24 +142,23 @@ fn G() {
 // CHECK:STDOUT:   %e.ref: %.bb7 = name_ref e, imports.%int_1.1d6 [concrete = constants.%int_1.1d6]
 // CHECK:STDOUT:   %addr.loc10_11.2: %ptr.d9e = addr_of %.loc10_11.3
 // CHECK:STDOUT:   %.loc10_20.1: ref %.bb7 = temporary_storage
-// CHECK:STDOUT:   %.loc10_20.2: init %.bb7 = initialize_from %e.ref to %.loc10_20.1 [concrete = constants.%int_1.1d6]
-// CHECK:STDOUT:   %.loc10_20.3: ref %.bb7 = temporary %.loc10_20.1, %.loc10_20.2
-// CHECK:STDOUT:   %addr.loc10_22: %ptr.73d = addr_of %.loc10_20.3
+// CHECK:STDOUT:   %.loc10_20.2: ref %.bb7 = temporary %.loc10_20.1, %e.ref
+// CHECK:STDOUT:   %addr.loc10_22: %ptr.73d = addr_of %.loc10_20.2
 // CHECK:STDOUT:   %F__carbon_thunk.call.loc10: init %empty_tuple.type = call imports.%F__carbon_thunk.decl.e1b8ec.2(%addr.loc10_11.2, %addr.loc10_22)
-// CHECK:STDOUT:   %T.as.Destroy.impl.Op.bound.loc10_20: <bound method> = bound_method %.loc10_20.3, constants.%T.as.Destroy.impl.Op.823
+// CHECK:STDOUT:   %T.as.Destroy.impl.Op.bound.loc10_20: <bound method> = bound_method %.loc10_20.2, constants.%T.as.Destroy.impl.Op.823
 // CHECK:STDOUT:   <elided>
-// CHECK:STDOUT:   %bound_method.loc10_20: <bound method> = bound_method %.loc10_20.3, %T.as.Destroy.impl.Op.specific_fn.1
-// CHECK:STDOUT:   %addr.loc10_20: %ptr.73d = addr_of %.loc10_20.3
+// CHECK:STDOUT:   %bound_method.loc10_20: <bound method> = bound_method %.loc10_20.2, %T.as.Destroy.impl.Op.specific_fn.1
+// CHECK:STDOUT:   %addr.loc10_20: %ptr.73d = addr_of %.loc10_20.2
 // CHECK:STDOUT:   %T.as.Destroy.impl.Op.call.loc10_20: init %empty_tuple.type = call %bound_method.loc10_20(%addr.loc10_20)
 // CHECK:STDOUT:   %T.as.Destroy.impl.Op.bound.loc10_11: <bound method> = bound_method %.loc10_11.3, constants.%T.as.Destroy.impl.Op.d4e
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT:   %bound_method.loc10_11: <bound method> = bound_method %.loc10_11.3, %T.as.Destroy.impl.Op.specific_fn.2
 // CHECK:STDOUT:   %addr.loc10_11.3: %ptr.d9e = addr_of %.loc10_11.3
 // CHECK:STDOUT:   %T.as.Destroy.impl.Op.call.loc10_11: init %empty_tuple.type = call %bound_method.loc10_11(%addr.loc10_11.3)
-// CHECK:STDOUT:   %T.as.Destroy.impl.Op.bound.loc8: <bound method> = bound_method %.loc8_12.3, constants.%T.as.Destroy.impl.Op.8db
+// CHECK:STDOUT:   %T.as.Destroy.impl.Op.bound.loc8: <bound method> = bound_method %.loc8_12.2, constants.%T.as.Destroy.impl.Op.8db
 // CHECK:STDOUT:   <elided>
-// CHECK:STDOUT:   %bound_method.loc8: <bound method> = bound_method %.loc8_12.3, %T.as.Destroy.impl.Op.specific_fn.3
-// CHECK:STDOUT:   %addr.loc8_12: %ptr.793 = addr_of %.loc8_12.3
+// CHECK:STDOUT:   %bound_method.loc8: <bound method> = bound_method %.loc8_12.2, %T.as.Destroy.impl.Op.specific_fn.3
+// CHECK:STDOUT:   %addr.loc8_12: %ptr.793 = addr_of %.loc8_12.2
 // CHECK:STDOUT:   %T.as.Destroy.impl.Op.call.loc8: init %empty_tuple.type = call %bound_method.loc8(%addr.loc8_12)
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }

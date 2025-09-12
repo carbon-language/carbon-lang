@@ -1290,10 +1290,7 @@ static auto PerformCopy(Context& context, SemIR::InstId expr_id,
   // type imported from C++. For now we fake it by providing a direct copy.
   auto type_id = context.insts().Get(expr_id).type_id();
   if (IsCppEnum(context, type_id)) {
-    target_block.InsertHere();
-    return AddInst<SemIR::InitializeFrom>(
-        context, SemIR::LocId(expr_id),
-        {.type_id = type_id, .src_id = expr_id, .dest_id = target_id});
+    return expr_id;
   }
 
   auto copy_id = BuildUnaryOperator(
@@ -1326,11 +1323,14 @@ static auto ConvertValueForCppThunkRef(Context& context, SemIR::InstId expr_id,
 
   // Otherwise, we need a temporary to pass as the thunk argument. Create a copy
   // and initialize a temporary from it.
+  auto temporary_id = AddInst<SemIR::TemporaryStorage>(
+      context, SemIR::LocId(expr_id), {.type_id = expr.type_id()});
   PendingBlock target_block(&context);
-  auto temporary_id = target_block.AddInst<SemIR::TemporaryStorage>(
-      SemIR::LocId(expr_id), {.type_id = expr.type_id()});
   expr_id = PerformCopy(context, expr_id, temporary_id, target_block, diagnose);
-  return MaterializeIfInitializing(context, expr_id);
+  return AddInstWithCleanup<SemIR::Temporary>(context, SemIR::LocId(expr_id),
+                                              {.type_id = expr.type_id(),
+                                               .storage_id = temporary_id,
+                                               .init_id = expr_id});
 }
 
 // Returns the Core interface name to use for a given kind of conversion.
