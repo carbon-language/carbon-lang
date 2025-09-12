@@ -58,15 +58,15 @@ fn Run() {
   var n: i64;
   while (ReadInt64(&n)) {
     total += ReduceToDigits(n, max_depth, 1, &digits);
-    PrintInt64(total);
-    digits.Print(max_depth - 1);
+    // PrintInt64(total);
+    // digits.Print(max_depth - 1);
     SkipSpaces();
   }
 
   var depth: i32 = max_depth - 1;
   while (depth >= 0) {
-    PrintInt64(total);
-    digits.Print(depth);
+    // PrintInt64(total);
+    // digits.Print(depth);
     for (digit: i32 in Core.Range(10)) {
       let m: i64 = digits.count[digit][depth];
       if (m > 0) {
