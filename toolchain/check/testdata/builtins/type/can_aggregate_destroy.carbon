@@ -67,7 +67,7 @@ class C {}
 interface I {}
 
 // CHECK:STDERR: fail_impl.carbon:[[@LINE+4]]:1: error: impl as 0 interfaces, expected 1 [ImplOfNotOneInterface]
-// CHECK:STDERR: impl C as CanAggregateDestroy() {
+// CHECK:STDERR: impl C as CanAggregateDestroy() {}
 // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 // CHECK:STDERR:
 impl C as CanAggregateDestroy() {}
