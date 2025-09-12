@@ -8,6 +8,7 @@
 #include <gtest/gtest.h>
 
 #include <forward_list>
+#include <iostream>
 #include <type_traits>
 
 #include "toolchain/lex/lex.h"
@@ -212,6 +213,9 @@ NodeIdInCategory Expr error: kind VariablePattern doesn't match
 Aggregate [^:]*: error
 Optional [^:]*: missing
 NodeIdForKind: VariablePattern consumed
+Vector: begin
+NodeIdForKind error: wrong kind VariableIntroducer, expected IdentifierNameQualifierWithoutParams
+Vector: end
 Optional [^:]*: begin
 NodeIdForKind error: wrong kind VariableIntroducer, expected ReturnedModifier
 Optional [^:]*: missing
@@ -244,6 +248,9 @@ NodeIdForKind: VariableInitializer consumed
 Aggregate [^:]*: success
 Optional [^:]*: found
 NodeIdForKind: VariablePattern consumed
+Vector: begin
+NodeIdForKind error: wrong kind VariableIntroducer, expected IdentifierNameQualifierWithoutParams
+Vector: end
 Optional [^:]*: begin
 NodeIdForKind error: wrong kind VariableIntroducer, expected ReturnedModifier
 Optional [^:]*: missing
