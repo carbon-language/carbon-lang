@@ -25,6 +25,17 @@ static auto HandleVar(Context& context, StateKind finish_state_kind,
     context.AddLeafNode(NodeKind::ReturnedModifier, returned_token);
   }
 
+  while (context.PositionIs(Lex::TokenKind::Identifier) &&
+         context.PositionIs(Lex::TokenKind::Period, Lookahead::NextToken)) {
+    // Parse qualifiers: `NS1.NS2.name`
+    auto identifier = context.ConsumeIf(Lex::TokenKind::Identifier);
+    auto period = context.Consume();
+
+    context.AddLeafNode(NodeKind::IdentifierNameNotBeforeParams, *identifier);
+    context.AddNode(NodeKind::IdentifierNameQualifierWithoutParams, period,
+                    state.has_error);
+  }
+
   context.PushStateForPattern(StateKind::Pattern, /*in_var_pattern=*/true);
 }
 

@@ -13,7 +13,18 @@ namespace Carbon::Parse {
 auto HandleLet(Context& context) -> void {
   auto state = context.PopState();
 
-  // These will start at the `let`.
+  while (context.PositionIs(Lex::TokenKind::Identifier) &&
+         context.PositionIs(Lex::TokenKind::Period, Lookahead::NextToken)) {
+    // Parse qualifiers: `NS1.NS2.name`
+    auto identifier = context.ConsumeIf(Lex::TokenKind::Identifier);
+    auto period = context.Consume();
+
+    context.AddLeafNode(NodeKind::IdentifierNameNotBeforeParams, *identifier);
+    context.AddNode(NodeKind::IdentifierNameQualifierWithoutParams, period,
+                    state.has_error);
+  }
+
+  // A normal let declaration.
   context.PushState(state, StateKind::LetFinishAsRegular);
   context.PushState(state, StateKind::LetAfterPatternAsRegular);
 

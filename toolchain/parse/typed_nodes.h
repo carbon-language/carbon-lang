@@ -544,6 +544,7 @@ struct LetDecl {
 
   LetIntroducerId introducer;
   llvm::SmallVector<AnyModifierId> modifiers;
+  llvm::SmallVector<IdentifierNameQualifierWithoutParamsId> qualifiers;
   AnyPatternId pattern;
 
   struct Initializer {
@@ -607,6 +608,7 @@ struct VariableDecl {
   VariableIntroducerId introducer;
   llvm::SmallVector<AnyModifierId> modifiers;
   std::optional<ReturnedModifierId> returned;
+  llvm::SmallVector<IdentifierNameQualifierWithoutParamsId> qualifiers;
   VariablePatternId pattern;
 
   struct Initializer {
