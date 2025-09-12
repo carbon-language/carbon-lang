@@ -15,6 +15,12 @@
 // Carbon, because the parameter and return types might have a non-trivial
 // calling convention.
 
+// TODO: Give more descriptive names for the overloaded set value and type in the SemIR printout instead of %.c5d, %.a21 etc.
+// E.g.
+// %.c5d: type = cpp_overload_set_type @foo [concrete]
+// %.a21: %.c5d = cpp_overload_set_value @foo [concrete = constants.%empty_struct]
+// Context: https://github.com/carbon-language/carbon-lang/pull/5891.
+
 // ============================================================================
 // bool param
 // ============================================================================
@@ -397,7 +403,6 @@ fn F() {
 
 auto foo(const short a) -> void;
 
-// TODO: Fix occurances of <error> in the SemIR printout.
 // --- fail_todo_import_const_short_param.carbon
 
 library "[[@TEST_NAME]]";
