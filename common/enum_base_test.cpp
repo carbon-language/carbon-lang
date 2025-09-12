@@ -30,7 +30,7 @@ class TestKind : public CARBON_ENUM_BASE(TestKind) {
   CARBON_ENUM_CONSTANT_DEFINITION(TestKind, Name)
 #include "common/enum_base_test.def"
 
-CARBON_DEFINE_ENUM_CLASS_NAMES(TestKind) = {
+CARBON_DEFINE_ENUM_CLASS_NAMES(TestKind) {
 #define CARBON_ENUM_BASE_TEST_KIND(Name) CARBON_ENUM_CLASS_NAME_STRING(Name)
 #include "common/enum_base_test.def"
 };

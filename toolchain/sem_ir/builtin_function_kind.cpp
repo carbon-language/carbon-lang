@@ -603,7 +603,7 @@ constexpr BuiltinInfo TypeAnd = {"type.and",
 
 }  // namespace BuiltinFunctionInfo
 
-CARBON_DEFINE_ENUM_CLASS_NAMES(BuiltinFunctionKind) = {
+CARBON_DEFINE_ENUM_CLASS_NAMES(BuiltinFunctionKind) {
 #define CARBON_SEM_IR_BUILTIN_FUNCTION_KIND(Name) \
   BuiltinFunctionInfo::Name.name,
 #include "toolchain/sem_ir/builtin_function_kind.def"

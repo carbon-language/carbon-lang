@@ -17,7 +17,9 @@ SpaceBeforeParens: ControlStatementsExceptControlMacros
 IfMacros:
   [
     'CARBON_DEFINE_RAW_ENUM_CLASS',
+    'CARBON_DEFINE_ENUM_CLASS_NAMES',
     'CARBON_DEFINE_RAW_ENUM_MASK',
+    'CARBON_DEFINE_ENUM_MASK_NAMES',
     'CARBON_KIND_SWITCH',
   ]
 StatementMacros: ['ABSTRACT']
