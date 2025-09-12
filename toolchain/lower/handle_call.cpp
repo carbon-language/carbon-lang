@@ -469,6 +469,26 @@ static auto HandleBuiltinCall(FunctionContext& context, SemIR::InstId inst_id,
       CARBON_FATAL("Missing constant value for call to comptime-only function");
     }
 
+    case SemIR::BuiltinFunctionKind::PointerMakeNull: {
+      // MaybeUnformed(T*) has an in-place initializing representation, so an
+      // out parameter will be passed.
+      context.builder().CreateStore(
+          llvm::ConstantPointerNull::get(
+              llvm::PointerType::get(context.llvm_context(),
+                                     /*AddressSpace=*/0)),
+          context.GetValue(arg_ids[0]));
+      context.SetLocal(inst_id,
+                       llvm::PoisonValue::get(context.GetTypeOfInst(inst_id)));
+      return;
+    }
+
+    case SemIR::BuiltinFunctionKind::PointerIsNull: {
+      auto* ptr = context.builder().CreateLoad(
+          context.GetTypeOfInst(arg_ids[0]), context.GetValue(arg_ids[0]));
+      context.SetLocal(inst_id, context.builder().CreateIsNull(ptr));
+      return;
+    }
+
     case SemIR::BuiltinFunctionKind::TypeDestroy:
       // TODO: Destroy aggregate members.
       return;

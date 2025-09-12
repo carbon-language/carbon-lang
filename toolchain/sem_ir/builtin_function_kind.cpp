@@ -80,6 +80,22 @@ struct PointerTo {
   }
 };
 
+// Constraint that a type is MaybeUnformed<T>.
+template <typename T>
+struct MaybeUnformed {
+  static auto Check(const File& sem_ir, ValidateState& state, TypeId type_id)
+      -> bool {
+    auto maybe_unformed =
+        sem_ir.types().TryGetAs<SemIR::MaybeUnformedType>(type_id);
+    if (!maybe_unformed) {
+      return false;
+    }
+    return Check<T>(
+        sem_ir, state,
+        sem_ir.types().GetTypeIdForTypeInstId(maybe_unformed->inner_id));
+  }
+};
+
 // Constraint that a type is `()`, used as the return type of builtin functions
 // with no return value.
 struct NoReturn {
@@ -604,6 +620,18 @@ constexpr BuiltinInfo BoolEq = {"bool.eq",
 // "bool.neq": bool non-equality comparison.
 constexpr BuiltinInfo BoolNeq = {"bool.neq",
                                  ValidateSignature<auto(Bool, Bool)->Bool>};
+
+// "pointer.make_null": returns the representation of a null pointer value. This
+// is an unformed state for the pointer type.
+constexpr BuiltinInfo PointerMakeNull = {
+    "pointer.make_null",
+    ValidateSignature<auto()->MaybeUnformed<PointerTo<AnyType>>>};
+
+// "pointer.is_null": determines whether the given pointer representation is a
+// null pointer value.
+constexpr BuiltinInfo PointerIsNull = {
+    "pointer.is_null",
+    ValidateSignature<auto(MaybeUnformed<PointerTo<AnyType>>)->Bool>};
 
 // "type.and": facet type combination.
 constexpr BuiltinInfo TypeAnd = {"type.and",
