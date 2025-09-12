@@ -397,6 +397,7 @@ fn F() {
 
 auto foo(const short a) -> void;
 
+// TODO: Fix occurances of <error> in the SemIR printout.
 // --- fail_todo_import_const_short_param.carbon
 
 library "[[@TEST_NAME]]";

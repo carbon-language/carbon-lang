@@ -1921,8 +1921,8 @@ static auto ImportCppOverloadSet(Context& context, SemIR::NameScopeId scope_id,
 static auto GetOverloadSetAccess(Context& context, SemIR::LocId loc_id,
                                  const clang::UnresolvedSet<4>& overload_set)
     -> std::optional<SemIR::AccessKind> {
-  auto access = overload_set.begin().getAccess();
-  for (auto it = overload_set.begin(); it != overload_set.end(); ++it) {
+  clang::AccessSpecifier access = overload_set.begin().getAccess();
+  for (auto it = overload_set.begin() + 1; it != overload_set.end(); ++it) {
     if (it.getAccess() != access) {
       context.TODO(
           loc_id,
@@ -1938,7 +1938,7 @@ static auto ImportOverloadSetAndDependencies(
     SemIR::NameId name_id, const clang::UnresolvedSet<4>& overloaded_set)
     -> SemIR::InstId {
   ImportWorklist worklist;
-  for (auto* fn_decl : overloaded_set) {
+  for (clang::NamedDecl* fn_decl : overloaded_set) {
     AddDependentDecl(context, fn_decl, worklist);
   }
   if (!ImportDeclSet(context, loc_id, worklist)) {

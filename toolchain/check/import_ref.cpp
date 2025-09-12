@@ -1834,9 +1834,12 @@ static auto TryResolveTypedInst(ImportRefResolver& resolver,
       resolver, {.type_id = SemIR::TypeType::TypeId, .inner_id = inner_id});
 }
 
-// TODO: Fix this properly. This is a WIP attempt to overcome the failing
-// `toolchain/check/testdata/interop/cpp/import.carbon` test. However part
-// of the issue is still present and this needs more work.
+// TODO: This is a WIP attempt to solve the failing
+// `toolchain/check/testdata/interop/cpp/import.carbon` test. Adding this method
+// solves the failure `TryResolveInst on unsupported instruction kind
+// CppOverloadSetType`. However there is a new failure
+// `./toolchain/base/value_store.h:111: id.index < size_: inst27` and this still
+// remains a WIP.
 static auto TryResolveTypedInst(ImportRefResolver& resolver,
                                 SemIR::CppOverloadSetType inst,
                                 SemIR::InstId inst_id, SemIR::Inst untyped_inst)
@@ -3137,7 +3140,6 @@ static auto TryResolveInstCanonical(ImportRefResolver& resolver,
       return TryResolveTypedInst(resolver, inst);
     }
     case CARBON_KIND(SemIR::CppOverloadSetType inst): {
-      // TODO: Fix this to work.
       return TryResolveTypedInst(resolver, inst, inst_id, untyped_inst);
     }
     case CARBON_KIND(SemIR::ExportDecl inst): {

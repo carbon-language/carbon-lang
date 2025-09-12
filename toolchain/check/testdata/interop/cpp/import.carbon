@@ -30,6 +30,7 @@ library "[[@TEST_NAME]]";
 
 import library "api";
 
+// TODO: broken with PR: https://github.com/carbon-language/carbon-lang/pull/5891.
 fn F() {
   //@dump-sem-ir-begin
   // FooShort(8 as i16);
