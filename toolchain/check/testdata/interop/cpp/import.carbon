@@ -10,8 +10,6 @@
 // TIP: To dump output, run:
 // TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/check/testdata/interop/cpp/import.carbon
 
-// TODO: Tests marked as `fail_todo_5891_` to fixed as a follow-up of https://github.com/carbon-language/carbon-lang/pull/5891.
-
 // --- header.h
 
 auto foo_short(short x) -> void;
@@ -26,12 +24,13 @@ import Cpp library "header.h";
 alias FooShort = Cpp.foo_short;
 alias FooInt = Cpp.foo_int;
 
-// --- fail_todo_5891_import_api.carbon
+// --- import_api.carbon
 
 library "[[@TEST_NAME]]";
 
 import library "api";
 
+// TODO: Fix this test as a follow-up of https://github.com/carbon-language/carbon-lang/pull/5891.
 fn F() {
   //@dump-sem-ir-begin
   // FooShort(8 as i16);
@@ -39,7 +38,7 @@ fn F() {
   //@dump-sem-ir-end
 }
 
-// CHECK:STDOUT: --- fail_todo_5891_import_api.carbon
+// CHECK:STDOUT: --- import_api.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT: }

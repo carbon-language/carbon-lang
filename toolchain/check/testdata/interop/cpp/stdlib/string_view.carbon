@@ -10,6 +10,8 @@
 // TIP: To dump output, run:
 // TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/check/testdata/interop/cpp/stdlib/string_view.carbon
 
+// TODO: Tests marked as `fail_todo_5891_` to fixed as a follow-up of https://github.com/carbon-language/carbon-lang/pull/5891.
+
 // --- string_view.h
 
 namespace std {
@@ -36,7 +38,7 @@ namespace std {
 auto Consume(std::string_view sv) -> void;
 auto Produce() -> std::string_view;
 
-// --- fail_todo_import_multiple.carbon
+// --- fail_todo_5891_import_multiple.carbon
 
 library "[[@TEST_NAME]]";
 
@@ -44,10 +46,10 @@ import Cpp library "string_view.h";
 
 //@dump-sem-ir-begin
 fn F() {
-  // CHECK:STDERR: fail_todo_import_multiple.carbon:[[@LINE+7]]:3: error: call argument of type `Core.String` is not supported [CppCallArgTypeNotSupported]
+  // CHECK:STDERR: fail_todo_5891_import_multiple.carbon:[[@LINE+7]]:3: error: call argument of type `Core.String` is not supported [CppCallArgTypeNotSupported]
   // CHECK:STDERR:   Cpp.Consume("hello");
   // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~
-  // CHECK:STDERR: fail_todo_import_multiple.carbon:[[@LINE+4]]:3: note: in call to Cpp function here [InCallToCppFunction]
+  // CHECK:STDERR: fail_todo_5891_import_multiple.carbon:[[@LINE+4]]:3: note: in call to Cpp function here [InCallToCppFunction]
   // CHECK:STDERR:   Cpp.Consume("hello");
   // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~
   // CHECK:STDERR:
@@ -61,7 +63,7 @@ fn G() -> str {
 }
 //@dump-sem-ir-end
 
-// CHECK:STDOUT: --- fail_todo_import_multiple.carbon
+// CHECK:STDOUT: --- fail_todo_5891_import_multiple.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %F.type: type = fn_type @F [concrete]
