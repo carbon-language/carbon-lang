@@ -118,7 +118,7 @@ constexpr KeywordModifierSet KeywordModifierSet::Method(Abstract | Override |
                                                         Virtual);
 constexpr KeywordModifierSet KeywordModifierSet::ImplDecl(Extend | Final);
 constexpr KeywordModifierSet KeywordModifierSet::Interface(Default | Final);
-constexpr KeywordModifierSet KeywordModifierSet::Decl(Class | Method |
+constexpr KeywordModifierSet KeywordModifierSet::Decl(Class | Method | Impl |
                                                       Interface | Export |
                                                       Returned);
 
