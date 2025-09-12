@@ -157,9 +157,8 @@ auto FacetTypeInfo::Print(llvm::raw_ostream& out) const -> void {
     }
   }
 
-  if (builtin_constraint_mask.HasAnyOf(
-          BuiltinConstraintMask::TypeCanAggregateDestroy)) {
-    out << outer_sep << "TypeCanAggregateDestroy";
+  if (!builtin_constraint_mask.empty()) {
+    out << outer_sep << "builtin_constraint_mask: " << builtin_constraint_mask;
   }
 
   if (other_requirements) {

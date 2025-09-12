@@ -260,6 +260,7 @@ struct Worklist {
     add_constraints(facet_type.self_impls_constraints);
     add_constraints(facet_type.rewrite_constraints);
     contents.push_back(facet_type.builtin_constraint_mask.AsInt());
+    contents.push_back(facet_type.other_requirements);
   }
 
   auto Add(GenericId generic_id) -> void {
