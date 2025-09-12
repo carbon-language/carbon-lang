@@ -168,9 +168,6 @@ class TypeCompleter {
     requires(InstT::Kind.is_symbolic_when_type())
   auto BuildInfoForInst(SemIR::TypeId type_id, InstT /*inst*/) const
       -> SemIR::CompleteTypeInfo {
-    // TODO: We're implicitly assuming here that dependent types are not
-    // abstract. How do we enforce that dependent types are non-abstract when
-    // they need to be?
     return {.value_repr = MakeDependentValueRepr(type_id)};
   }
 
