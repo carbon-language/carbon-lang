@@ -394,10 +394,10 @@ fn F() { ()[()]; }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @empty_tuple.type.as.IndexWith.impl.At(%self.param: %empty_tuple.type, %subscript.param: %empty_tuple.type) -> %empty_tuple.type {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %.loc8_13: %empty_tuple.type = tuple_literal ()
-// CHECK:STDOUT:   %empty_tuple: %empty_tuple.type = tuple_value () [concrete = constants.%empty_tuple]
-// CHECK:STDOUT:   %.loc8_14: %empty_tuple.type = converted %.loc8_13, %empty_tuple [concrete = constants.%empty_tuple]
-// CHECK:STDOUT:   return %.loc8_14
+// CHECK:STDOUT:   %.loc8_13.1: %empty_tuple.type = tuple_literal ()
+// CHECK:STDOUT:   %.loc8_13.2: init %empty_tuple.type = tuple_init () to %return [concrete = constants.%empty_tuple]
+// CHECK:STDOUT:   %.loc8_14: init %empty_tuple.type = converted %.loc8_13.1, %.loc8_13.2 [concrete = constants.%empty_tuple]
+// CHECK:STDOUT:   return %.loc8_14 to %return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F() {

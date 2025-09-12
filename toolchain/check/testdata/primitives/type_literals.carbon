@@ -440,7 +440,7 @@ var x: type = 42;
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
-// CHECK:STDOUT:   %Core.import_ref.7bd: %type.as.Copy.impl.Op.type = import_ref Core//prelude/parts/copy, loc36_31, loaded [concrete = constants.%type.as.Copy.impl.Op]
+// CHECK:STDOUT:   %Core.import_ref.7bd: %type.as.Copy.impl.Op.type = import_ref Core//prelude/parts/copy, loc40_31, loaded [concrete = constants.%type.as.Copy.impl.Op]
 // CHECK:STDOUT:   %Copy.impl_witness_table.095 = impl_witness_table (%Core.import_ref.7bd), @type.as.Copy.impl [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

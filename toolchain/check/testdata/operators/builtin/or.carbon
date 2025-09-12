@@ -40,13 +40,6 @@ fn PartialConstant(x: bool) {
 // CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [concrete]
 // CHECK:STDOUT:   %F: %F.type = struct_value () [concrete]
 // CHECK:STDOUT:   %true: bool = bool_literal true [concrete]
-// CHECK:STDOUT:   %G.type: type = fn_type @G [concrete]
-// CHECK:STDOUT:   %G: %G.type = struct_value () [concrete]
-// CHECK:STDOUT:   %Or.type: type = fn_type @Or [concrete]
-// CHECK:STDOUT:   %Or: %Or.type = struct_value () [concrete]
-// CHECK:STDOUT:   %Constant.type: type = fn_type @Constant [concrete]
-// CHECK:STDOUT:   %Constant: %Constant.type = struct_value () [concrete]
-// CHECK:STDOUT:   %false: bool = bool_literal false [concrete]
 // CHECK:STDOUT:   %Copy.type: type = facet_type <@Copy> [concrete]
 // CHECK:STDOUT:   %Copy.Op.type: type = fn_type @Copy.Op [concrete]
 // CHECK:STDOUT:   %Copy.impl_witness.09f: <witness> = impl_witness imports.%Copy.impl_witness_table.47e [concrete]
@@ -55,6 +48,13 @@ fn PartialConstant(x: bool) {
 // CHECK:STDOUT:   %bool.as.Copy.impl.Op.type: type = fn_type @bool.as.Copy.impl.Op [concrete]
 // CHECK:STDOUT:   %bool.as.Copy.impl.Op: %bool.as.Copy.impl.Op.type = struct_value () [concrete]
 // CHECK:STDOUT:   %bool.as.Copy.impl.Op.bound: <bound method> = bound_method %true, %bool.as.Copy.impl.Op [concrete]
+// CHECK:STDOUT:   %G.type: type = fn_type @G [concrete]
+// CHECK:STDOUT:   %G: %G.type = struct_value () [concrete]
+// CHECK:STDOUT:   %Or.type: type = fn_type @Or [concrete]
+// CHECK:STDOUT:   %Or: %Or.type = struct_value () [concrete]
+// CHECK:STDOUT:   %Constant.type: type = fn_type @Constant [concrete]
+// CHECK:STDOUT:   %Constant: %Constant.type = struct_value () [concrete]
+// CHECK:STDOUT:   %false: bool = bool_literal false [concrete]
 // CHECK:STDOUT:   %pattern_type.cb1: type = pattern_type %empty_tuple.type [concrete]
 // CHECK:STDOUT:   %empty_tuple: %empty_tuple.type = tuple_value () [concrete]
 // CHECK:STDOUT:   %Destroy.type: type = facet_type <@Destroy> [concrete]
@@ -80,7 +80,7 @@ fn PartialConstant(x: bool) {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.Bool: %Bool.type = import_ref Core//prelude/parts/bool, Bool, loaded [concrete = constants.%Bool]
 // CHECK:STDOUT:   %Core.Copy: type = import_ref Core//prelude/parts/copy, Copy, loaded [concrete = constants.%Copy.type]
-// CHECK:STDOUT:   %Core.import_ref.297: %bool.as.Copy.impl.Op.type = import_ref Core//prelude/parts/copy, loc16_31, loaded [concrete = constants.%bool.as.Copy.impl.Op]
+// CHECK:STDOUT:   %Core.import_ref.297: %bool.as.Copy.impl.Op.type = import_ref Core//prelude/parts/copy, loc20_31, loaded [concrete = constants.%bool.as.Copy.impl.Op]
 // CHECK:STDOUT:   %Copy.impl_witness_table.47e = impl_witness_table (%Core.import_ref.297), @bool.as.Copy.impl [concrete]
 // CHECK:STDOUT:   %Core.Destroy: type = import_ref Core//prelude/parts/destroy, Destroy, loaded [concrete = constants.%Destroy.type]
 // CHECK:STDOUT: }
@@ -143,13 +143,19 @@ fn PartialConstant(x: bool) {
 // CHECK:STDOUT: fn @F() -> bool {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %true: bool = bool_literal true [concrete = constants.%true]
-// CHECK:STDOUT:   return %true
+// CHECK:STDOUT:   %impl.elem0: %.235 = impl_witness_access constants.%Copy.impl_witness.09f, element0 [concrete = constants.%bool.as.Copy.impl.Op]
+// CHECK:STDOUT:   %bound_method: <bound method> = bound_method %true, %impl.elem0 [concrete = constants.%bool.as.Copy.impl.Op.bound]
+// CHECK:STDOUT:   %bool.as.Copy.impl.Op.call: init bool = call %bound_method(%true) [concrete = constants.%true]
+// CHECK:STDOUT:   return %bool.as.Copy.impl.Op.call to %return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @G() -> bool {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %true: bool = bool_literal true [concrete = constants.%true]
-// CHECK:STDOUT:   return %true
+// CHECK:STDOUT:   %impl.elem0: %.235 = impl_witness_access constants.%Copy.impl_witness.09f, element0 [concrete = constants.%bool.as.Copy.impl.Op]
+// CHECK:STDOUT:   %bound_method: <bound method> = bound_method %true, %impl.elem0 [concrete = constants.%bool.as.Copy.impl.Op.bound]
+// CHECK:STDOUT:   %bool.as.Copy.impl.Op.call: init bool = call %bound_method(%true) [concrete = constants.%true]
+// CHECK:STDOUT:   return %bool.as.Copy.impl.Op.call to %return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Or() -> bool {
@@ -171,7 +177,10 @@ fn PartialConstant(x: bool) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: !or.result:
 // CHECK:STDOUT:   %.loc19_14.6: bool = block_arg !or.result
-// CHECK:STDOUT:   return %.loc19_14.6
+// CHECK:STDOUT:   %impl.elem0: %.235 = impl_witness_access constants.%Copy.impl_witness.09f, element0 [concrete = constants.%bool.as.Copy.impl.Op]
+// CHECK:STDOUT:   %bound_method: <bound method> = bound_method %.loc19_14.6, %impl.elem0
+// CHECK:STDOUT:   %bool.as.Copy.impl.Op.call: init bool = call %bound_method(%.loc19_14.6)
+// CHECK:STDOUT:   return %bool.as.Copy.impl.Op.call to %return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Constant() {

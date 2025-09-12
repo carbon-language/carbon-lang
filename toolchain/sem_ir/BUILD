@@ -258,6 +258,7 @@ cc_library(
     deps = [
         ":file",
         ":stringify",
+        ":typed_insts",
         "//common:ostream",
         "//common:raw_string_ostream",
     ],

@@ -207,9 +207,7 @@ fn F(c: C) -> i32 {
 // CHECK:STDOUT:   %impl.elem0: %.6ae = impl_witness_access constants.%I.impl_witness, element0 [concrete = constants.%C.as.I.impl.F]
 // CHECK:STDOUT:   %bound_method: <bound method> = bound_method %c.ref, %impl.elem0
 // CHECK:STDOUT:   %C.as.I.impl.F.call: init %i32 = call %bound_method(%c.ref)
-// CHECK:STDOUT:   %.loc28_15.1: %i32 = value_of_initializer %C.as.I.impl.F.call
-// CHECK:STDOUT:   %.loc28_15.2: %i32 = converted %C.as.I.impl.F.call, %.loc28_15.1
-// CHECK:STDOUT:   return %.loc28_15.2
+// CHECK:STDOUT:   return %C.as.I.impl.F.call to %return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @I.F(constants.%Self.ce4) {

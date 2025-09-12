@@ -193,8 +193,6 @@ fn RuntimeCall(a: i32, b: i32) -> i32 {
 // CHECK:STDOUT:   %a.ref: %i32 = name_ref a, %a
 // CHECK:STDOUT:   %b.ref: %i32 = name_ref b, %b
 // CHECK:STDOUT:   %Add.call: init %i32 = call %Add.ref(%a.ref, %b.ref)
-// CHECK:STDOUT:   %.loc20_19.1: %i32 = value_of_initializer %Add.call
-// CHECK:STDOUT:   %.loc20_19.2: %i32 = converted %Add.call, %.loc20_19.1
-// CHECK:STDOUT:   return %.loc20_19.2
+// CHECK:STDOUT:   return %Add.call to %return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

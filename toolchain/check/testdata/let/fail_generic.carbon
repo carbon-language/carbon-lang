@@ -121,6 +121,6 @@ fn F(a: i32) -> i32 {
 // CHECK:STDOUT:   %x: %T = bind_name x, <error> [concrete = <error>]
 // CHECK:STDOUT:   %x.ref: %T = name_ref x, %x [concrete = <error>]
 // CHECK:STDOUT:   %.loc33: %i32 = converted %x.ref, <error> [concrete = <error>]
-// CHECK:STDOUT:   return <error>
+// CHECK:STDOUT:   return <error> to %return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

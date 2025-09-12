@@ -133,11 +133,9 @@ fn Run() -> i32 {
 // CHECK:STDOUT:   %c.ref: ref %Class = name_ref c, %c
 // CHECK:STDOUT:   %F.ref: %Class.F.type = name_ref F, @Class.%Class.F.decl [concrete = constants.%Class.F]
 // CHECK:STDOUT:   %Class.F.call: init %i32 = call %F.ref()
-// CHECK:STDOUT:   %.loc21_15.1: %i32 = value_of_initializer %Class.F.call
-// CHECK:STDOUT:   %.loc21_15.2: %i32 = converted %Class.F.call, %.loc21_15.1
 // CHECK:STDOUT:   %Class.as.Destroy.impl.Op.bound: <bound method> = bound_method %c.var, constants.%Class.as.Destroy.impl.Op
 // CHECK:STDOUT:   %addr: %ptr.e71 = addr_of %c.var
 // CHECK:STDOUT:   %Class.as.Destroy.impl.Op.call: init %empty_tuple.type = call %Class.as.Destroy.impl.Op.bound(%addr)
-// CHECK:STDOUT:   return %.loc21_15.2
+// CHECK:STDOUT:   return %Class.F.call to %return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
