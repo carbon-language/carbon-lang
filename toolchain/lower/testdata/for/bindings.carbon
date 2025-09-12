@@ -98,10 +98,8 @@ fn For() {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: define linkonce_odr void @_CGet.Optional.Core.b58238773758bec6(ptr sret({ i32, i32 }) %return, ptr %self) !dbg !22 {
-// CHECK:STDOUT:   %temp = alloca { i32, i32 }, align 8, !dbg !23
 // CHECK:STDOUT:   %value = getelementptr inbounds nuw { i1, { i32, i32 } }, ptr %self, i32 0, i32 1, !dbg !23
-// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %temp), !dbg !23
-// CHECK:STDOUT:   call void @"_COp.3dd5f2290af48b3e:Copy.Core.dfb3d0a519e662f4"(ptr %temp, ptr %value), !dbg !23
+// CHECK:STDOUT:   call void @"_COp.3dd5f2290af48b3e:Copy.Core.dfb3d0a519e662f4"(ptr %return, ptr %value), !dbg !23
 // CHECK:STDOUT:   ret void, !dbg !24
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -122,7 +120,7 @@ fn For() {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; uselistorder directives
-// CHECK:STDOUT: uselistorder ptr @llvm.lifetime.start.p0, { 0, 5, 4, 3, 2, 1 }
+// CHECK:STDOUT: uselistorder ptr @llvm.lifetime.start.p0, { 4, 3, 2, 1, 0 }
 // CHECK:STDOUT:
 // CHECK:STDOUT: attributes #0 = { nocallback nofree nosync nounwind willreturn memory(argmem: readwrite) }
 // CHECK:STDOUT: attributes #1 = { nocallback nofree nounwind willreturn memory(argmem: readwrite) }

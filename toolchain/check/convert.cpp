@@ -1282,16 +1282,21 @@ static auto IsCppEnum(Context& context, SemIR::TypeId type_id) -> bool {
 }
 
 // Given a value expression, form a corresponding initializer that copies from
-// that value, if it is possible to do so.
-static auto PerformCopy(Context& context, SemIR::InstId expr_id, bool diagnose)
-    -> SemIR::InstId {
+// that value to the specified target, if it is possible to do so.
+static auto PerformCopy(Context& context, SemIR::InstId expr_id,
+                        SemIR::InstId target_id, PendingBlock& target_block,
+                        bool diagnose) -> SemIR::InstId {
   // TODO: We don't have a mechanism yet to generate `Copy` impls for each enum
   // type imported from C++. For now we fake it by providing a direct copy.
-  if (IsCppEnum(context, context.insts().Get(expr_id).type_id())) {
-    return CopyValueToTemporary(context, expr_id);
+  auto type_id = context.insts().Get(expr_id).type_id();
+  if (IsCppEnum(context, type_id)) {
+    target_block.InsertHere();
+    return AddInst<SemIR::InitializeFrom>(
+        context, SemIR::LocId(expr_id),
+        {.type_id = type_id, .src_id = expr_id, .dest_id = target_id});
   }
 
-  return BuildUnaryOperator(
+  auto copy_id = BuildUnaryOperator(
       context, SemIR::LocId(expr_id), {"Copy"}, expr_id, [&] {
         if (!diagnose) {
           return context.emitter().BuildSuppressed();
@@ -1300,6 +1305,8 @@ static auto PerformCopy(Context& context, SemIR::InstId expr_id, bool diagnose)
                           "cannot copy value of type {0}", TypeOfInstId);
         return context.emitter().Build(expr_id, CopyOfUncopyableType, expr_id);
       });
+  MarkInitializerFor(context.sem_ir(), copy_id, target_id, target_block);
+  return copy_id;
 }
 
 // Convert a value expression so that it can be used to initialize a C++ thunk
@@ -1319,7 +1326,10 @@ static auto ConvertValueForCppThunkRef(Context& context, SemIR::InstId expr_id,
 
   // Otherwise, we need a temporary to pass as the thunk argument. Create a copy
   // and initialize a temporary from it.
-  expr_id = PerformCopy(context, expr_id, diagnose);
+  PendingBlock target_block(&context);
+  auto temporary_id = target_block.AddInst<SemIR::TemporaryStorage>(
+      SemIR::LocId(expr_id), {.type_id = expr.type_id()});
+  expr_id = PerformCopy(context, expr_id, temporary_id, target_block, diagnose);
   return MaterializeIfInitializing(context, expr_id);
 }
 
@@ -1577,7 +1587,8 @@ auto Convert(Context& context, SemIR::LocId loc_id, SemIR::InstId expr_id,
 
       // When initializing from a value, perform a copy.
       if (target.is_initializer()) {
-        expr_id = PerformCopy(context, expr_id, target.diagnose);
+        expr_id = PerformCopy(context, expr_id, target.init_id,
+                              *target.init_block, target.diagnose);
       }
 
       // When initializing a C++ thunk parameter, form a reference, creating a

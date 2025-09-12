@@ -48,13 +48,11 @@ fn M() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: define linkonce_odr ptr @_CF.Main.19c352736f719291(ptr %x) !dbg !17 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %.loc14_10.1.temp = alloca ptr, align 8, !dbg !18
-// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %.loc14_10.1.temp), !dbg !18
-// CHECK:STDOUT:   ret ptr %x, !dbg !19
+// CHECK:STDOUT:   ret ptr %x, !dbg !18
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; uselistorder directives
-// CHECK:STDOUT: uselistorder ptr @llvm.lifetime.start.p0, { 0, 3, 2, 1 }
+// CHECK:STDOUT: uselistorder ptr @llvm.lifetime.start.p0, { 2, 1, 0 }
 // CHECK:STDOUT: uselistorder ptr @_CF.Main.19c352736f719291, { 2, 1, 0 }
 // CHECK:STDOUT:
 // CHECK:STDOUT: attributes #0 = { nocallback nofree nosync nounwind willreturn memory(argmem: readwrite) }
@@ -80,5 +78,4 @@ fn M() {
 // CHECK:STDOUT: !15 = !DILocation(line: 23, column: 3, scope: !4)
 // CHECK:STDOUT: !16 = !DILocation(line: 17, column: 1, scope: !4)
 // CHECK:STDOUT: !17 = distinct !DISubprogram(name: "F", linkageName: "_CF.Main.19c352736f719291", scope: null, file: !3, line: 13, type: !5, spFlags: DISPFlagDefinition, unit: !2)
-// CHECK:STDOUT: !18 = !DILocation(line: 14, column: 10, scope: !17)
-// CHECK:STDOUT: !19 = !DILocation(line: 14, column: 3, scope: !17)
+// CHECK:STDOUT: !18 = !DILocation(line: 14, column: 3, scope: !17)
