@@ -87,6 +87,8 @@ class EnumMaskBase : public EnumBase<DerivedT, EnumT, Names> {
   // This method will be automatically defined using the static `names` string
   // table in the base class, which is in turn will be populated for each
   // derived type using the macro helpers in this file.
+  //
+  // This shadows EnumBase::name.
   auto name() const -> llvm::StringRef {
     CARBON_CHECK(std::has_single_bit(this->AsInt()), "Not a single bit: {0}",
                  this->AsInt());
@@ -94,6 +96,8 @@ class EnumMaskBase : public EnumBase<DerivedT, EnumT, Names> {
   }
 
   // Prints this value as a `|`-separated list of mask entries, or `None`.
+  //
+  // This shadows EnumBase::Print.
   auto Print(llvm::raw_ostream& out) const -> void {
     int value = this->AsInt();
     if (value == 0) {
