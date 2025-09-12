@@ -5,6 +5,7 @@
 #ifndef CARBON_COMMON_ENUM_BASE_H_
 #define CARBON_COMMON_ENUM_BASE_H_
 
+#include <compare>
 #include <type_traits>
 
 #include "common/ostream.h"
@@ -139,6 +140,8 @@ class EnumBase : public Printable<DerivedT> {
   friend auto operator<=(DerivedT lhs, DerivedT rhs) -> bool = delete;
   friend auto operator>(DerivedT lhs, DerivedT rhs) -> bool = delete;
   friend auto operator>=(DerivedT lhs, DerivedT rhs) -> bool = delete;
+  friend auto operator<=>(DerivedT lhs, DerivedT rhs)
+      -> std::partial_ordering = delete;
 
  protected:
   // The default constructor is explicitly defaulted (and constexpr) as a
