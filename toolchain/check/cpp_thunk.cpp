@@ -335,6 +335,10 @@ static auto CreateThunkFunctionDecl(
                                *callee_info.decl),
       clang_loc));
 
+  // Set function declaration type source info.
+  thunk_function_decl->setTypeSourceInfo(ast_context.getTrivialTypeSourceInfo(
+      thunk_function_decl->getType(), clang_loc));
+
   return thunk_function_decl;
 }
 

@@ -88,10 +88,9 @@ fn Main() -> {.a: i32} {
 // CHECK:STDOUT:   %specific_fn: <specific function> = specific_function %impl.elem0, @Core.IntLiteral.as.ImplicitAs.impl.Convert(constants.%int_32) [concrete = constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.specific_fn]
 // CHECK:STDOUT:   %bound_method.loc16_17.2: <bound method> = bound_method %int_3, %specific_fn [concrete = constants.%bound_method]
 // CHECK:STDOUT:   %Core.IntLiteral.as.ImplicitAs.impl.Convert.call: init %i32 = call %bound_method.loc16_17.2(%int_3) [concrete = constants.%int_3.822]
-// CHECK:STDOUT:   %.loc16_17.2: %i32 = value_of_initializer %Core.IntLiteral.as.ImplicitAs.impl.Convert.call [concrete = constants.%int_3.822]
-// CHECK:STDOUT:   %.loc16_17.3: %i32 = converted %int_3, %.loc16_17.2 [concrete = constants.%int_3.822]
-// CHECK:STDOUT:   %struct: %struct_type.a.ba9 = struct_value (%.loc16_17.3) [concrete = constants.%struct]
-// CHECK:STDOUT:   %.loc16_18: %struct_type.a.ba9 = converted %.loc16_17.1, %struct [concrete = constants.%struct]
-// CHECK:STDOUT:   return %.loc16_18
+// CHECK:STDOUT:   %.loc16_17.2: init %i32 = converted %int_3, %Core.IntLiteral.as.ImplicitAs.impl.Convert.call [concrete = constants.%int_3.822]
+// CHECK:STDOUT:   %.loc16_17.3: init %struct_type.a.ba9 = struct_init (%.loc16_17.2) to %return [concrete = constants.%struct]
+// CHECK:STDOUT:   %.loc16_18: init %struct_type.a.ba9 = converted %.loc16_17.1, %.loc16_17.3 [concrete = constants.%struct]
+// CHECK:STDOUT:   return %.loc16_18 to %return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

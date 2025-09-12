@@ -11,7 +11,7 @@
 // TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/lower/testdata/function/generic/call_method.carbon
 
 class C {
-  fn F[self: Self, T:! type](x: T) -> T {
+  fn F[self: Self, T:! Core.Copy](x: T) -> T {
     return x;
   }
 }
@@ -36,7 +36,7 @@ fn CallF() -> i32 {
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %n.var), !dbg !8
 // CHECK:STDOUT:   store i32 0, ptr %n.var, align 4, !dbg !8
 // CHECK:STDOUT:   %.loc22_14 = load i32, ptr %n.var, align 4, !dbg !9
-// CHECK:STDOUT:   %C.F.call = call i32 @_CF.C.Main.b88d1103f417c6d4(ptr %c.var, i32 %.loc22_14), !dbg !10
+// CHECK:STDOUT:   %C.F.call = call i32 @_CF.C.Main.b7c8e4dff2adcdaa(ptr %c.var, i32 %.loc22_14), !dbg !10
 // CHECK:STDOUT:   ret i32 %C.F.call, !dbg !11
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -46,7 +46,7 @@ fn CallF() -> i32 {
 // CHECK:STDOUT: ; Function Attrs: nocallback nofree nounwind willreturn memory(argmem: readwrite)
 // CHECK:STDOUT: declare void @llvm.memcpy.p0.p0.i64(ptr noalias writeonly captures(none), ptr noalias readonly captures(none), i64, i1 immarg) #1
 // CHECK:STDOUT:
-// CHECK:STDOUT: define linkonce_odr i32 @_CF.C.Main.b88d1103f417c6d4(ptr %self, i32 %x) !dbg !12 {
+// CHECK:STDOUT: define linkonce_odr i32 @_CF.C.Main.b7c8e4dff2adcdaa(ptr %self, i32 %x) !dbg !12 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   ret i32 %x, !dbg !13
 // CHECK:STDOUT: }
@@ -72,5 +72,5 @@ fn CallF() -> i32 {
 // CHECK:STDOUT: !9 = !DILocation(line: 22, column: 14, scope: !4)
 // CHECK:STDOUT: !10 = !DILocation(line: 22, column: 10, scope: !4)
 // CHECK:STDOUT: !11 = !DILocation(line: 22, column: 3, scope: !4)
-// CHECK:STDOUT: !12 = distinct !DISubprogram(name: "F", linkageName: "_CF.C.Main.b88d1103f417c6d4", scope: null, file: !3, line: 14, type: !5, spFlags: DISPFlagDefinition, unit: !2)
+// CHECK:STDOUT: !12 = distinct !DISubprogram(name: "F", linkageName: "_CF.C.Main.b7c8e4dff2adcdaa", scope: null, file: !3, line: 14, type: !5, spFlags: DISPFlagDefinition, unit: !2)
 // CHECK:STDOUT: !13 = !DILocation(line: 15, column: 5, scope: !12)

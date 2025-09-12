@@ -187,8 +187,7 @@ fn EnclosingButAfter(b: bool) -> i32 {
 // CHECK:STDOUT:   %specific_fn.loc22: <specific function> = specific_function %impl.elem0.loc22, @Core.IntLiteral.as.ImplicitAs.impl.Convert(constants.%int_32) [concrete = constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.specific_fn]
 // CHECK:STDOUT:   %bound_method.loc22_11.2: <bound method> = bound_method %int_0.loc22, %specific_fn.loc22 [concrete = constants.%bound_method.698]
 // CHECK:STDOUT:   %Core.IntLiteral.as.ImplicitAs.impl.Convert.call.loc22: init %i32 = call %bound_method.loc22_11.2(%int_0.loc22) [concrete = constants.%int_0.6a9]
-// CHECK:STDOUT:   %.loc22_11.1: %i32 = value_of_initializer %Core.IntLiteral.as.ImplicitAs.impl.Convert.call.loc22 [concrete = constants.%int_0.6a9]
-// CHECK:STDOUT:   %.loc22_11.2: %i32 = converted %int_0.loc22, %.loc22_11.1 [concrete = constants.%int_0.6a9]
+// CHECK:STDOUT:   %.loc22: init %i32 = converted %int_0.loc22, %Core.IntLiteral.as.ImplicitAs.impl.Convert.call.loc22 [concrete = constants.%int_0.6a9]
 // CHECK:STDOUT:   %Int.as.Destroy.impl.Op.bound.loc20: <bound method> = bound_method %w.var, constants.%Int.as.Destroy.impl.Op.054
 // CHECK:STDOUT:   %Int.as.Destroy.impl.Op.specific_fn.1: <specific function> = specific_function constants.%Int.as.Destroy.impl.Op.054, @Int.as.Destroy.impl.Op(constants.%int_32) [concrete = constants.%Int.as.Destroy.impl.Op.specific_fn]
 // CHECK:STDOUT:   %bound_method.loc20_14.3: <bound method> = bound_method %w.var, %Int.as.Destroy.impl.Op.specific_fn.1
@@ -199,7 +198,7 @@ fn EnclosingButAfter(b: bool) -> i32 {
 // CHECK:STDOUT:   %bound_method.loc17_14.3: <bound method> = bound_method %v.var, %Int.as.Destroy.impl.Op.specific_fn.2
 // CHECK:STDOUT:   %addr.loc17: %ptr.235 = addr_of %v.var
 // CHECK:STDOUT:   %Int.as.Destroy.impl.Op.call.loc17: init %empty_tuple.type = call %bound_method.loc17_14.3(%addr.loc17)
-// CHECK:STDOUT:   return %.loc22_11.2
+// CHECK:STDOUT:   return %.loc22 to %return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @EnclosingButAfter(%b.param: bool) -> %i32 {

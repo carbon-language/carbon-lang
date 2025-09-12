@@ -137,9 +137,7 @@ fn F() {
 // CHECK:STDOUT:   %Negate.ref: %Negate.type = name_ref Negate, file.%Negate.decl [concrete = constants.%Negate]
 // CHECK:STDOUT:   %a.ref: %u32 = name_ref a, %a
 // CHECK:STDOUT:   %Negate.call: init %u32 = call %Negate.ref(%a.ref)
-// CHECK:STDOUT:   %.loc13_19.1: %u32 = value_of_initializer %Negate.call
-// CHECK:STDOUT:   %.loc13_19.2: %u32 = converted %Negate.call, %.loc13_19.1
-// CHECK:STDOUT:   return %.loc13_19.2
+// CHECK:STDOUT:   return %Negate.call to %return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {

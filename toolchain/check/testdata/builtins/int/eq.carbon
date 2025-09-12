@@ -125,8 +125,6 @@ fn Test(n: Core.IntLiteral()) {
 // CHECK:STDOUT:   %a.ref: %i32 = name_ref a, %a
 // CHECK:STDOUT:   %b.ref: %i32 = name_ref b, %b
 // CHECK:STDOUT:   %Eq.call: init bool = call %Eq.ref(%a.ref, %b.ref)
-// CHECK:STDOUT:   %.loc16_18.1: bool = value_of_initializer %Eq.call
-// CHECK:STDOUT:   %.loc16_18.2: bool = converted %Eq.call, %.loc16_18.1
-// CHECK:STDOUT:   return %.loc16_18.2
+// CHECK:STDOUT:   return %Eq.call to %return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
