@@ -330,9 +330,8 @@ class Stringifier {
       step_stack_->PushString("...");
       some_where = true;
     }
-    if (facet_type_info.special_requirement_mask.has(
-            SemIR::FacetTypeInfo::SpecialRequirementMask::
-                TypeCanAggregateDestroy)) {
+    if (facet_type_info.builtin_constraint_mask.HasAnyOf(
+            SemIR::BuiltinConstraintMask::TypeCanAggregateDestroy)) {
       if (some_where) {
         step_stack_->PushString(" and");
       }

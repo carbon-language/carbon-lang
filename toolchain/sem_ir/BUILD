@@ -114,6 +114,7 @@ cc_library(
         ":typed_insts",
         "//common:check",
         "//common:enum_base",
+        "//common:enum_mask_base",
         "//common:error",
         "//common:hashing",
         "//common:map",

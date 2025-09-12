@@ -5,8 +5,8 @@
 #ifndef CARBON_TOOLCHAIN_SEM_IR_FACET_TYPE_INFO_H_
 #define CARBON_TOOLCHAIN_SEM_IR_FACET_TYPE_INFO_H_
 
+#include "common/enum_mask_base.h"
 #include "common/hashing.h"
-#include "llvm/ADT/BitmaskEnum.h"
 #include "llvm/ADT/StringExtras.h"
 #include "toolchain/base/canonical_value_store.h"
 #include "toolchain/sem_ir/ids.h"
@@ -14,38 +14,29 @@
 
 namespace Carbon::SemIR {
 
-LLVM_ENABLE_BITMASK_ENUMS_IN_NAMESPACE();
+#define CARBON_BUILTIN_CONSTRAINT_MASK(X)                            \
+  /* Verifies types can use the builtin `type.aggregate_destroy`. */ \
+  X(TypeCanAggregateDestroy)
+
+CARBON_DEFINE_RAW_ENUM_MASK(BuiltinConstraintMask, uint32_t) {
+  CARBON_BUILTIN_CONSTRAINT_MASK(CARBON_RAW_ENUM_MASK_ENUMERATOR)
+};
+
+// Constraints that are produced by builtin functions.
+class BuiltinConstraintMask
+    : public CARBON_ENUM_MASK_BASE(BuiltinConstraintMask) {
+ public:
+  CARBON_BUILTIN_CONSTRAINT_MASK(CARBON_ENUM_MASK_CONSTANT_DECL)
+
+  using EnumMaskBase::AsInt;
+};
+
+#define CARBON_BUILTIN_CONSTRAINT_MASK_WITH_TYPE(X) \
+  CARBON_ENUM_MASK_CONSTANT_DEFINITION(BuiltinConstraintMask, X)
+CARBON_BUILTIN_CONSTRAINT_MASK(CARBON_BUILTIN_CONSTRAINT_MASK_WITH_TYPE)
+#undef CARBON_BUILTIN_CONSTRAINT_MASK_WITH_TYPE
 
 struct FacetTypeInfo : Printable<FacetTypeInfo> {
-  // Constraints that are produced by builtin functions.
-  struct SpecialRequirementMask {
-    enum RawEnum : uint32_t {
-      None = 0,
-
-      // Verifies types can use the builtin `type.aggregate_destroy`.
-      TypeCanAggregateDestroy = 1 << 0,
-
-      LLVM_MARK_AS_BITMASK_ENUM(/*LargestValue=*/TypeCanAggregateDestroy)
-    };
-
-    explicit(false) SpecialRequirementMask(RawEnum value) : value(value) {}
-
-    auto has(SpecialRequirementMask special_requirement) const -> bool {
-      return (value & special_requirement.value) == special_requirement.value;
-    }
-
-    auto empty() const -> bool { return value == None; }
-
-    auto operator|(SpecialRequirementMask other) -> SpecialRequirementMask {
-      return value | other.value;
-    }
-    auto operator|=(SpecialRequirementMask other) -> void {
-      value |= other.value;
-    }
-
-    RawEnum value;
-  };
-
   // Returns a FacetTypeInfo that combines `lhs` and `rhs`. It is not
   // canonicalized, so that it can be further modified by the caller if desired.
   static auto Combine(const FacetTypeInfo& lhs, const FacetTypeInfo& rhs)
@@ -83,8 +74,7 @@ struct FacetTypeInfo : Printable<FacetTypeInfo> {
   };
   llvm::SmallVector<RewriteConstraint> rewrite_constraints;
 
-  SpecialRequirementMask special_requirement_mask =
-      SpecialRequirementMask::None;
+  BuiltinConstraintMask builtin_constraint_mask = BuiltinConstraintMask::None;
 
   // TODO: Add same-type constraints.
   // TODO: Remove once all requirements are supported.
@@ -103,7 +93,7 @@ struct FacetTypeInfo : Printable<FacetTypeInfo> {
   // represents, or `std::nullopt` if it has any other constraints.
   auto TryAsSingleInterface() const -> std::optional<ImplsConstraint> {
     if (extend_constraints.size() == 1 && self_impls_constraints.empty() &&
-        rewrite_constraints.empty() && special_requirement_mask.empty() &&
+        rewrite_constraints.empty() && builtin_constraint_mask.empty() &&
         !other_requirements) {
       return extend_constraints.front();
     }
@@ -115,8 +105,7 @@ struct FacetTypeInfo : Printable<FacetTypeInfo> {
     return lhs.extend_constraints == rhs.extend_constraints &&
            lhs.self_impls_constraints == rhs.self_impls_constraints &&
            lhs.rewrite_constraints == rhs.rewrite_constraints &&
-           lhs.special_requirement_mask.value ==
-               rhs.special_requirement_mask.value &&
+           lhs.builtin_constraint_mask == rhs.builtin_constraint_mask &&
            lhs.other_requirements == rhs.other_requirements;
   }
 };
@@ -186,7 +175,7 @@ inline auto CarbonHashValue(const FacetTypeInfo& value, uint64_t seed)
   hasher.HashSizedBytes(llvm::ArrayRef(value.extend_constraints));
   hasher.HashSizedBytes(llvm::ArrayRef(value.self_impls_constraints));
   hasher.HashSizedBytes(llvm::ArrayRef(value.rewrite_constraints));
-  hasher.HashRaw(value.special_requirement_mask);
+  hasher.HashRaw(value.builtin_constraint_mask);
   hasher.HashRaw(value.other_requirements);
   return static_cast<HashCode>(hasher);
 }

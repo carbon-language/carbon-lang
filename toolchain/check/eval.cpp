@@ -618,7 +618,7 @@ static auto GetConstantFacetTypeInfo(EvalContext& eval_context,
                                      const SemIR::FacetTypeInfo& orig,
                                      Phase* phase) -> SemIR::FacetTypeInfo {
   SemIR::FacetTypeInfo info = {
-      .special_requirement_mask = orig.special_requirement_mask,
+      .builtin_constraint_mask = orig.builtin_constraint_mask,
       // TODO: Process other requirements.
       .other_requirements = orig.other_requirements};
 
@@ -1660,8 +1660,8 @@ static auto MakeConstantForBuiltinCall(EvalContext& eval_context,
     case SemIR::BuiltinFunctionKind::TypeCanAggregateDestroy: {
       CARBON_CHECK(arg_ids.empty());
       auto id = eval_context.facet_types().Add(
-          {.special_requirement_mask = SemIR::FacetTypeInfo::
-               SpecialRequirementMask::TypeCanAggregateDestroy});
+          {.builtin_constraint_mask =
+               SemIR::BuiltinConstraintMask::TypeCanAggregateDestroy});
       return MakeConstantResult(
           eval_context.context(),
           SemIR::FacetType{.type_id = SemIR::TypeType::TypeId,
@@ -2217,7 +2217,7 @@ auto TryEvalTypedInst<SemIR::WhereExpr>(EvalContext& eval_context,
           info.extend_constraints.append(base_info.extend_constraints);
           info.self_impls_constraints.append(base_info.self_impls_constraints);
           info.rewrite_constraints.append(base_info.rewrite_constraints);
-          info.special_requirement_mask |= base_info.special_requirement_mask;
+          info.builtin_constraint_mask.Add(base_info.builtin_constraint_mask);
           info.other_requirements |= base_info.other_requirements;
         }
       } else if (auto rewrite =
@@ -2256,7 +2256,7 @@ auto TryEvalTypedInst<SemIR::WhereExpr>(EvalContext& eval_context,
             // Other requirements are copied in.
             llvm::append_range(info.rewrite_constraints,
                                more_info.rewrite_constraints);
-            info.special_requirement_mask |= more_info.special_requirement_mask;
+            info.builtin_constraint_mask.Add(more_info.builtin_constraint_mask);
             info.other_requirements |= more_info.other_requirements;
           }
         } else {

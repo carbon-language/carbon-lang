@@ -8,6 +8,9 @@
 
 namespace Carbon::SemIR {
 
+CARBON_DEFINE_ENUM_MASK_NAMES(BuiltinConstraintMask) = {
+    CARBON_BUILTIN_CONSTRAINT_MASK(CARBON_ENUM_MASK_NAME_STRING)};
+
 template <typename VecT, typename CompareT>
 static auto SortAndDeduplicate(VecT& vec, CompareT compare) -> void {
   llvm::sort(vec, compare);
@@ -107,8 +110,8 @@ auto FacetTypeInfo::Combine(const FacetTypeInfo& lhs, const FacetTypeInfo& rhs)
                                    rhs.rewrite_constraints.size());
   llvm::append_range(info.rewrite_constraints, lhs.rewrite_constraints);
   llvm::append_range(info.rewrite_constraints, rhs.rewrite_constraints);
-  info.special_requirement_mask =
-      lhs.special_requirement_mask.value | rhs.special_requirement_mask.value;
+  info.builtin_constraint_mask =
+      lhs.builtin_constraint_mask | rhs.builtin_constraint_mask;
   info.other_requirements = lhs.other_requirements || rhs.other_requirements;
   return info;
 }
@@ -154,8 +157,8 @@ auto FacetTypeInfo::Print(llvm::raw_ostream& out) const -> void {
     }
   }
 
-  if (special_requirement_mask.has(
-          SpecialRequirementMask::TypeCanAggregateDestroy)) {
+  if (builtin_constraint_mask.HasAnyOf(
+          BuiltinConstraintMask::TypeCanAggregateDestroy)) {
     out << outer_sep << "TypeCanAggregateDestroy";
   }
 

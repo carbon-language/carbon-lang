@@ -188,7 +188,7 @@ static auto FindAndDiagnoseImplLookupCycle(
 static auto GetInterfacesFromConstantId(
     Context& context, SemIR::ConstantId query_facet_type_const_id)
     -> std::tuple<llvm::SmallVector<SemIR::SpecificInterface>,
-                  SemIR::FacetTypeInfo::SpecialRequirementMask, bool> {
+                  SemIR::BuiltinConstraintMask, bool> {
   auto facet_type_inst_id =
       context.constant_values().GetInstId(query_facet_type_const_id);
   auto facet_type_inst =
@@ -201,7 +201,7 @@ static auto GetInterfacesFromConstantId(
   // Returns a copy to avoid use-after-free when the identified_facet_types
   // store resizes.
   return {{interfaces_array_ref.begin(), interfaces_array_ref.end()},
-          facet_type_info.special_requirement_mask,
+          facet_type_info.builtin_constraint_mask,
           facet_type_info.other_requirements};
 }
 
@@ -259,7 +259,7 @@ static auto GetWitnessIdForImpl(Context& context, SemIR::LocId loc_id,
                1);
 
   if (deduced_constraint_facet_type_info.other_requirements ||
-      !deduced_constraint_facet_type_info.special_requirement_mask.empty()) {
+      !deduced_constraint_facet_type_info.builtin_constraint_mask.empty()) {
     return EvalImplLookupResult::MakeNone();
   }
 
@@ -567,15 +567,14 @@ auto LookupImplWitness(Context& context, SemIR::LocId loc_id,
         context.constant_values().GetInstId(query_facet_type_const_id)));
   }
 
-  auto [interfaces, special_requirement_mask, other_requirements] =
+  auto [interfaces, builtin_constraint_mask, other_requirements] =
       GetInterfacesFromConstantId(context, query_facet_type_const_id);
   if (other_requirements) {
     // TODO: Remove this when other requirements go away.
     return SemIR::InstBlockId::None;
   }
-  if (special_requirement_mask.has(
-          SemIR::FacetTypeInfo::SpecialRequirementMask::
-              TypeCanAggregateDestroy) &&
+  if (builtin_constraint_mask.HasAnyOf(
+          SemIR::BuiltinConstraintMask::TypeCanAggregateDestroy) &&
       !TypeCanAggregateDestroy(context, query_self_const_id)) {
     return SemIR::InstBlockId::None;
   }
