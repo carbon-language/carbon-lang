@@ -159,7 +159,7 @@ struct S {
   auto foo() -> void;
 };
 
-// --- fail_todo_import_function_member_public.carbon
+// --- fail_todo_5891_import_function_member_public.carbon
 
 library "[[@TEST_NAME]]";
 
@@ -167,10 +167,10 @@ import Cpp library "function_member_public.h";
 
 fn F(s: Cpp.S*) {
   //@dump-sem-ir-begin
-  // CHECK:STDERR: fail_todo_import_function_member_public.carbon:[[@LINE+5]]:3: error: missing object argument in method call [MissingObjectInMethodCall]
+  // CHECK:STDERR: fail_todo_5891_import_function_member_public.carbon:[[@LINE+5]]:3: error: missing object argument in method call [MissingObjectInMethodCall]
   // CHECK:STDERR:   s->foo();
   // CHECK:STDERR:   ^~~~~~~~
-  // CHECK:STDERR: fail_todo_import_function_member_public.carbon: note: calling function declared here [InCallToFunction]
+  // CHECK:STDERR: fail_todo_5891_import_function_member_public.carbon: note: calling function declared here [InCallToFunction]
   // CHECK:STDERR:
   s->foo();
   //@dump-sem-ir-end
@@ -243,7 +243,7 @@ class C {
   static auto foo(int a, int b) -> void;
 };
 
-// --- fail_todo_import_overload_set_public.carbon
+// --- fail_todo_5891_import_overload_set_public.carbon
 
 library "[[@TEST_NAME]]";
 
@@ -251,10 +251,10 @@ import Cpp library "overload_set.h";
 
 fn F() {
   //@dump-sem-ir-begin
-  // CHECK:STDERR: fail_todo_import_overload_set_public.carbon:[[@LINE+7]]:3: error: semantics TODO: `Unsupported: Overloaded set with mixed access` [SemanticsTodo]
+  // CHECK:STDERR: fail_todo_5891_import_overload_set_public.carbon:[[@LINE+7]]:3: error: semantics TODO: `Unsupported: Overloaded set with mixed access` [SemanticsTodo]
   // CHECK:STDERR:   Cpp.C.foo();
   // CHECK:STDERR:   ^~~~~~~~~
-  // CHECK:STDERR: fail_todo_import_overload_set_public.carbon:[[@LINE+4]]:3: note: in `Cpp` name lookup for `foo` [InCppNameLookup]
+  // CHECK:STDERR: fail_todo_5891_import_overload_set_public.carbon:[[@LINE+4]]:3: note: in `Cpp` name lookup for `foo` [InCppNameLookup]
   // CHECK:STDERR:   Cpp.C.foo();
   // CHECK:STDERR:   ^~~~~~~~~
   // CHECK:STDERR:
@@ -262,34 +262,34 @@ fn F() {
   //@dump-sem-ir-end
 }
 
-// --- fail_todo_import_overload_set_protected.carbon
+// --- fail_todo_5891_import_overload_set_protected.carbon
 
 library "[[@TEST_NAME]]";
 
 import Cpp library "overload_set.h";
 
 fn F() {
-  // CHECK:STDERR: fail_todo_import_overload_set_protected.carbon:[[@LINE+7]]:3: error: semantics TODO: `Unsupported: Overloaded set with mixed access` [SemanticsTodo]
+  // CHECK:STDERR: fail_todo_5891_import_overload_set_protected.carbon:[[@LINE+7]]:3: error: semantics TODO: `Unsupported: Overloaded set with mixed access` [SemanticsTodo]
   // CHECK:STDERR:   Cpp.C.foo(1 as i32);
   // CHECK:STDERR:   ^~~~~~~~~
-  // CHECK:STDERR: fail_todo_import_overload_set_protected.carbon:[[@LINE+4]]:3: note: in `Cpp` name lookup for `foo` [InCppNameLookup]
+  // CHECK:STDERR: fail_todo_5891_import_overload_set_protected.carbon:[[@LINE+4]]:3: note: in `Cpp` name lookup for `foo` [InCppNameLookup]
   // CHECK:STDERR:   Cpp.C.foo(1 as i32);
   // CHECK:STDERR:   ^~~~~~~~~
   // CHECK:STDERR:
   Cpp.C.foo(1 as i32);
 }
 
-// --- fail_todo_import_overload_set_private.carbon
+// --- fail_todo_5891_import_overload_set_private.carbon
 
 library "[[@TEST_NAME]]";
 
 import Cpp library "overload_set.h";
 
 fn F() {
-  // CHECK:STDERR: fail_todo_import_overload_set_private.carbon:[[@LINE+7]]:3: error: semantics TODO: `Unsupported: Overloaded set with mixed access` [SemanticsTodo]
+  // CHECK:STDERR: fail_todo_5891_import_overload_set_private.carbon:[[@LINE+7]]:3: error: semantics TODO: `Unsupported: Overloaded set with mixed access` [SemanticsTodo]
   // CHECK:STDERR:   Cpp.C.foo(1 as i32, 2 as i32);
   // CHECK:STDERR:   ^~~~~~~~~
-  // CHECK:STDERR: fail_todo_import_overload_set_private.carbon:[[@LINE+4]]:3: note: in `Cpp` name lookup for `foo` [InCppNameLookup]
+  // CHECK:STDERR: fail_todo_5891_import_overload_set_private.carbon:[[@LINE+4]]:3: note: in `Cpp` name lookup for `foo` [InCppNameLookup]
   // CHECK:STDERR:   Cpp.C.foo(1 as i32, 2 as i32);
   // CHECK:STDERR:   ^~~~~~~~~
   // CHECK:STDERR:
@@ -430,7 +430,7 @@ fn F() {
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- fail_todo_import_function_member_public.carbon
+// CHECK:STDOUT: --- fail_todo_5891_import_function_member_public.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %S: type = class_type @S [concrete]
@@ -461,7 +461,7 @@ fn F() {
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- fail_todo_import_overload_set_public.carbon
+// CHECK:STDOUT: --- fail_todo_5891_import_overload_set_public.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %C: type = class_type @C [concrete]

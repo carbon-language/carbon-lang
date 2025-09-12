@@ -101,7 +101,7 @@ struct Derived : Base {
   void g() const;
 };
 
-// --- fail_todo_use_base_method.carbon
+// --- fail_todo_5891_use_base_method.carbon
 
 library "[[@TEST_NAME]]";
 
@@ -109,10 +109,10 @@ import Cpp library "base_method.h";
 
 fn CallDirect(d: Cpp.Derived) {
   //@dump-sem-ir-begin
-  // CHECK:STDERR: fail_todo_use_base_method.carbon:[[@LINE+5]]:3: error: missing object argument in method call [MissingObjectInMethodCall]
+  // CHECK:STDERR: fail_todo_5891_use_base_method.carbon:[[@LINE+5]]:3: error: missing object argument in method call [MissingObjectInMethodCall]
   // CHECK:STDERR:   d.f();
   // CHECK:STDERR:   ^~~~~
-  // CHECK:STDERR: fail_todo_use_base_method.carbon: note: calling function declared here [InCallToFunction]
+  // CHECK:STDERR: fail_todo_5891_use_base_method.carbon: note: calling function declared here [InCallToFunction]
   // CHECK:STDERR:
   d.f();
   //@dump-sem-ir-end
@@ -120,14 +120,14 @@ fn CallDirect(d: Cpp.Derived) {
 
 fn CallQualified(d: Cpp.Derived) {
   //@dump-sem-ir-begin
-  // CHECK:STDERR: fail_todo_use_base_method.carbon:[[@LINE+9]]:3: error: member name of type `<type of Cpp.g>` in compound member access is not an instance member or an interface member [CompoundMemberAccessDoesNotUseBase]
+  // CHECK:STDERR: fail_todo_5891_use_base_method.carbon:[[@LINE+9]]:3: error: member name of type `<type of Cpp.g>` in compound member access is not an instance member or an interface member [CompoundMemberAccessDoesNotUseBase]
   // CHECK:STDERR:   d.(Cpp.Base.g)();
   // CHECK:STDERR:   ^~~~~~~~~~~~~~
   // CHECK:STDERR:
-  // CHECK:STDERR: fail_todo_use_base_method.carbon:[[@LINE+5]]:3: error: missing object argument in method call [MissingObjectInMethodCall]
+  // CHECK:STDERR: fail_todo_5891_use_base_method.carbon:[[@LINE+5]]:3: error: missing object argument in method call [MissingObjectInMethodCall]
   // CHECK:STDERR:   d.(Cpp.Base.g)();
   // CHECK:STDERR:   ^~~~~~~~~~~~~~~~
-  // CHECK:STDERR: fail_todo_use_base_method.carbon: note: calling function declared here [InCallToFunction]
+  // CHECK:STDERR: fail_todo_5891_use_base_method.carbon: note: calling function declared here [InCallToFunction]
   // CHECK:STDERR:
   d.(Cpp.Base.g)();
   //@dump-sem-ir-end
@@ -422,7 +422,7 @@ class V {
 // CHECK:STDOUT:   return %.loc14_11.4
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- fail_todo_use_base_method.carbon
+// CHECK:STDOUT: --- fail_todo_5891_use_base_method.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %Derived: type = class_type @Derived [concrete]

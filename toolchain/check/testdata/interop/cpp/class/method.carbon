@@ -25,7 +25,7 @@ struct HasQualifiers {
   void const_ref_ref_this() const&&;
 };
 
-// --- fail_todo_use_object_param_qualifiers.carbon
+// --- fail_todo_5891_use_object_param_qualifiers.carbon
 
 library "[[@TEST_NAME]]";
 
@@ -33,90 +33,90 @@ import Cpp library "object_param_qualifiers.h";
 
 fn F(v: Cpp.HasQualifiers, p: Cpp.HasQualifiers*) {
   //@dump-sem-ir-begin
-  // CHECK:STDERR: fail_todo_use_object_param_qualifiers.carbon:[[@LINE+5]]:3: error: missing object argument in method call [MissingObjectInMethodCall]
+  // CHECK:STDERR: fail_todo_5891_use_object_param_qualifiers.carbon:[[@LINE+5]]:3: error: missing object argument in method call [MissingObjectInMethodCall]
   // CHECK:STDERR:   v.const_this();
   // CHECK:STDERR:   ^~~~~~~~~~~~~~
-  // CHECK:STDERR: fail_todo_use_object_param_qualifiers.carbon: note: calling function declared here [InCallToFunction]
+  // CHECK:STDERR: fail_todo_5891_use_object_param_qualifiers.carbon: note: calling function declared here [InCallToFunction]
   // CHECK:STDERR:
   v.const_this();
-  // CHECK:STDERR: fail_todo_use_object_param_qualifiers.carbon:[[@LINE+5]]:3: error: missing object argument in method call [MissingObjectInMethodCall]
+  // CHECK:STDERR: fail_todo_5891_use_object_param_qualifiers.carbon:[[@LINE+5]]:3: error: missing object argument in method call [MissingObjectInMethodCall]
   // CHECK:STDERR:   v.const_ref_this();
   // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~
-  // CHECK:STDERR: fail_todo_use_object_param_qualifiers.carbon: note: calling function declared here [InCallToFunction]
+  // CHECK:STDERR: fail_todo_5891_use_object_param_qualifiers.carbon: note: calling function declared here [InCallToFunction]
   // CHECK:STDERR:
   v.const_ref_this();
 
-  // CHECK:STDERR: fail_todo_use_object_param_qualifiers.carbon:[[@LINE+5]]:3: error: missing object argument in method call [MissingObjectInMethodCall]
+  // CHECK:STDERR: fail_todo_5891_use_object_param_qualifiers.carbon:[[@LINE+5]]:3: error: missing object argument in method call [MissingObjectInMethodCall]
   // CHECK:STDERR:   p->plain();
   // CHECK:STDERR:   ^~~~~~~~~~
-  // CHECK:STDERR: fail_todo_use_object_param_qualifiers.carbon: note: calling function declared here [InCallToFunction]
+  // CHECK:STDERR: fail_todo_5891_use_object_param_qualifiers.carbon: note: calling function declared here [InCallToFunction]
   // CHECK:STDERR:
   p->plain();
-  // CHECK:STDERR: fail_todo_use_object_param_qualifiers.carbon:[[@LINE+5]]:3: error: missing object argument in method call [MissingObjectInMethodCall]
+  // CHECK:STDERR: fail_todo_5891_use_object_param_qualifiers.carbon:[[@LINE+5]]:3: error: missing object argument in method call [MissingObjectInMethodCall]
   // CHECK:STDERR:   p->ref_this();
   // CHECK:STDERR:   ^~~~~~~~~~~~~
-  // CHECK:STDERR: fail_todo_use_object_param_qualifiers.carbon: note: calling function declared here [InCallToFunction]
+  // CHECK:STDERR: fail_todo_5891_use_object_param_qualifiers.carbon: note: calling function declared here [InCallToFunction]
   // CHECK:STDERR:
   p->ref_this();
-  // CHECK:STDERR: fail_todo_use_object_param_qualifiers.carbon:[[@LINE+5]]:3: error: missing object argument in method call [MissingObjectInMethodCall]
+  // CHECK:STDERR: fail_todo_5891_use_object_param_qualifiers.carbon:[[@LINE+5]]:3: error: missing object argument in method call [MissingObjectInMethodCall]
   // CHECK:STDERR:   p->const_this();
   // CHECK:STDERR:   ^~~~~~~~~~~~~~~
-  // CHECK:STDERR: fail_todo_use_object_param_qualifiers.carbon: note: calling function declared here [InCallToFunction]
+  // CHECK:STDERR: fail_todo_5891_use_object_param_qualifiers.carbon: note: calling function declared here [InCallToFunction]
   // CHECK:STDERR:
   p->const_this();
-  // CHECK:STDERR: fail_todo_use_object_param_qualifiers.carbon:[[@LINE+5]]:3: error: missing object argument in method call [MissingObjectInMethodCall]
+  // CHECK:STDERR: fail_todo_5891_use_object_param_qualifiers.carbon:[[@LINE+5]]:3: error: missing object argument in method call [MissingObjectInMethodCall]
   // CHECK:STDERR:   p->const_ref_this();
   // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~
-  // CHECK:STDERR: fail_todo_use_object_param_qualifiers.carbon: note: calling function declared here [InCallToFunction]
+  // CHECK:STDERR: fail_todo_5891_use_object_param_qualifiers.carbon: note: calling function declared here [InCallToFunction]
   // CHECK:STDERR:
   p->const_ref_this();
   //@dump-sem-ir-end
 }
 
-// --- fail_bad_object_param_qualifiers_by_value.carbon
+// --- fail_bad_5891_object_param_qualifiers_by_value.carbon
 
 library "[[@TEST_NAME]]";
 
 import Cpp library "object_param_qualifiers.h";
 
 fn Value(v: Cpp.HasQualifiers) {
-  // CHECK:STDERR: fail_bad_object_param_qualifiers_by_value.carbon:[[@LINE+5]]:3: error: missing object argument in method call [MissingObjectInMethodCall]
+  // CHECK:STDERR: fail_bad_5891_object_param_qualifiers_by_value.carbon:[[@LINE+5]]:3: error: missing object argument in method call [MissingObjectInMethodCall]
   // CHECK:STDERR:   v.plain();
   // CHECK:STDERR:   ^~~~~~~~~
-  // CHECK:STDERR: fail_bad_object_param_qualifiers_by_value.carbon: note: calling function declared here [InCallToFunction]
+  // CHECK:STDERR: fail_bad_5891_object_param_qualifiers_by_value.carbon: note: calling function declared here [InCallToFunction]
   // CHECK:STDERR:
   v.plain();
 
   // TODO: This should remain invalid once we support `volatile`.
-  // CHECK:STDERR: fail_bad_object_param_qualifiers_by_value.carbon:[[@LINE+7]]:3: error: semantics TODO: `Unsupported: object parameter type: volatile struct HasQualifiers` [SemanticsTodo]
+  // CHECK:STDERR: fail_bad_5891_object_param_qualifiers_by_value.carbon:[[@LINE+7]]:3: error: semantics TODO: `Unsupported: object parameter type: volatile struct HasQualifiers` [SemanticsTodo]
   // CHECK:STDERR:   v.volatile_this();
   // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~
-  // CHECK:STDERR: fail_bad_object_param_qualifiers_by_value.carbon:[[@LINE+4]]:3: note: in call to Cpp function here [InCallToCppFunction]
+  // CHECK:STDERR: fail_bad_5891_object_param_qualifiers_by_value.carbon:[[@LINE+4]]:3: note: in call to Cpp function here [InCallToCppFunction]
   // CHECK:STDERR:   v.volatile_this();
   // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~
   // CHECK:STDERR:
   v.volatile_this();
 
-  // CHECK:STDERR: fail_bad_object_param_qualifiers_by_value.carbon:[[@LINE+5]]:3: error: missing object argument in method call [MissingObjectInMethodCall]
+  // CHECK:STDERR: fail_bad_5891_object_param_qualifiers_by_value.carbon:[[@LINE+5]]:3: error: missing object argument in method call [MissingObjectInMethodCall]
   // CHECK:STDERR:   v.ref_this();
   // CHECK:STDERR:   ^~~~~~~~~~~~
-  // CHECK:STDERR: fail_bad_object_param_qualifiers_by_value.carbon: note: calling function declared here [InCallToFunction]
+  // CHECK:STDERR: fail_bad_5891_object_param_qualifiers_by_value.carbon: note: calling function declared here [InCallToFunction]
   // CHECK:STDERR:
   v.ref_this();
 
-  // CHECK:STDERR: fail_bad_object_param_qualifiers_by_value.carbon:[[@LINE+7]]:3: error: semantics TODO: `Unsupported: object parameter type: struct HasQualifiers &&` [SemanticsTodo]
+  // CHECK:STDERR: fail_bad_5891_object_param_qualifiers_by_value.carbon:[[@LINE+7]]:3: error: semantics TODO: `Unsupported: object parameter type: struct HasQualifiers &&` [SemanticsTodo]
   // CHECK:STDERR:   v.ref_ref_this();
   // CHECK:STDERR:   ^~~~~~~~~~~~~~~~
-  // CHECK:STDERR: fail_bad_object_param_qualifiers_by_value.carbon:[[@LINE+4]]:3: note: in call to Cpp function here [InCallToCppFunction]
+  // CHECK:STDERR: fail_bad_5891_object_param_qualifiers_by_value.carbon:[[@LINE+4]]:3: note: in call to Cpp function here [InCallToCppFunction]
   // CHECK:STDERR:   v.ref_ref_this();
   // CHECK:STDERR:   ^~~~~~~~~~~~~~~~
   // CHECK:STDERR:
   v.ref_ref_this();
 
-  // CHECK:STDERR: fail_bad_object_param_qualifiers_by_value.carbon:[[@LINE+7]]:3: error: semantics TODO: `Unsupported: object parameter type: const struct HasQualifiers &&` [SemanticsTodo]
+  // CHECK:STDERR: fail_bad_5891_object_param_qualifiers_by_value.carbon:[[@LINE+7]]:3: error: semantics TODO: `Unsupported: object parameter type: const struct HasQualifiers &&` [SemanticsTodo]
   // CHECK:STDERR:   v.const_ref_ref_this();
   // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~~~
-  // CHECK:STDERR: fail_bad_object_param_qualifiers_by_value.carbon:[[@LINE+4]]:3: note: in call to Cpp function here [InCallToCppFunction]
+  // CHECK:STDERR: fail_bad_5891_object_param_qualifiers_by_value.carbon:[[@LINE+4]]:3: note: in call to Cpp function here [InCallToCppFunction]
   // CHECK:STDERR:   v.const_ref_ref_this();
   // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~~~
   // CHECK:STDERR:
@@ -178,7 +178,7 @@ struct ExplicitObjectParam {
   void H(this Another);
 };
 
-// --- fail_todo_call_explicit_object_param.carbon
+// --- fail_todo_5891_call_explicit_object_param.carbon
 
 library "[[@TEST_NAME]]";
 
@@ -186,36 +186,36 @@ import Cpp library "explicit_object_param.h";
 
 fn Call(e: Cpp.ExplicitObjectParam, n: i32, a: Cpp.Another) {
   //@dump-sem-ir-begin
-  // CHECK:STDERR: fail_todo_call_explicit_object_param.carbon:[[@LINE+5]]:3: error: missing object argument in method call [MissingObjectInMethodCall]
+  // CHECK:STDERR: fail_todo_5891_call_explicit_object_param.carbon:[[@LINE+5]]:3: error: missing object argument in method call [MissingObjectInMethodCall]
   // CHECK:STDERR:   e.F();
   // CHECK:STDERR:   ^~~~~
-  // CHECK:STDERR: fail_todo_call_explicit_object_param.carbon: note: calling function declared here [InCallToFunction]
+  // CHECK:STDERR: fail_todo_5891_call_explicit_object_param.carbon: note: calling function declared here [InCallToFunction]
   // CHECK:STDERR:
   e.F();
-  // CHECK:STDERR: fail_todo_call_explicit_object_param.carbon:[[@LINE+9]]:3: error: member name of type `<type of Cpp.G>` in compound member access is not an instance member or an interface member [CompoundMemberAccessDoesNotUseBase]
+  // CHECK:STDERR: fail_todo_5891_call_explicit_object_param.carbon:[[@LINE+9]]:3: error: member name of type `<type of Cpp.G>` in compound member access is not an instance member or an interface member [CompoundMemberAccessDoesNotUseBase]
   // CHECK:STDERR:   n.(Cpp.ExplicitObjectParam.G)();
   // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~
   // CHECK:STDERR:
-  // CHECK:STDERR: fail_todo_call_explicit_object_param.carbon:[[@LINE+5]]:3: error: missing object argument in method call [MissingObjectInMethodCall]
+  // CHECK:STDERR: fail_todo_5891_call_explicit_object_param.carbon:[[@LINE+5]]:3: error: missing object argument in method call [MissingObjectInMethodCall]
   // CHECK:STDERR:   n.(Cpp.ExplicitObjectParam.G)();
   // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-  // CHECK:STDERR: fail_todo_call_explicit_object_param.carbon: note: calling function declared here [InCallToFunction]
+  // CHECK:STDERR: fail_todo_5891_call_explicit_object_param.carbon: note: calling function declared here [InCallToFunction]
   // CHECK:STDERR:
   n.(Cpp.ExplicitObjectParam.G)();
-  // CHECK:STDERR: fail_todo_call_explicit_object_param.carbon:[[@LINE+9]]:3: error: member name of type `<type of Cpp.H>` in compound member access is not an instance member or an interface member [CompoundMemberAccessDoesNotUseBase]
+  // CHECK:STDERR: fail_todo_5891_call_explicit_object_param.carbon:[[@LINE+9]]:3: error: member name of type `<type of Cpp.H>` in compound member access is not an instance member or an interface member [CompoundMemberAccessDoesNotUseBase]
   // CHECK:STDERR:   a.(Cpp.ExplicitObjectParam.H)();
   // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~
   // CHECK:STDERR:
-  // CHECK:STDERR: fail_todo_call_explicit_object_param.carbon:[[@LINE+5]]:3: error: missing object argument in method call [MissingObjectInMethodCall]
+  // CHECK:STDERR: fail_todo_5891_call_explicit_object_param.carbon:[[@LINE+5]]:3: error: missing object argument in method call [MissingObjectInMethodCall]
   // CHECK:STDERR:   a.(Cpp.ExplicitObjectParam.H)();
   // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-  // CHECK:STDERR: fail_todo_call_explicit_object_param.carbon: note: calling function declared here [InCallToFunction]
+  // CHECK:STDERR: fail_todo_5891_call_explicit_object_param.carbon: note: calling function declared here [InCallToFunction]
   // CHECK:STDERR:
   a.(Cpp.ExplicitObjectParam.H)();
   //@dump-sem-ir-end
 }
 
-// CHECK:STDOUT: --- fail_todo_use_object_param_qualifiers.carbon
+// CHECK:STDOUT: --- fail_todo_5891_use_object_param_qualifiers.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %HasQualifiers: type = class_type @HasQualifiers [concrete]
@@ -309,7 +309,7 @@ fn Call(e: Cpp.ExplicitObjectParam, n: i32, a: Cpp.Another) {
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- fail_todo_call_explicit_object_param.carbon
+// CHECK:STDOUT: --- fail_todo_5891_call_explicit_object_param.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %ExplicitObjectParam: type = class_type @ExplicitObjectParam [concrete]

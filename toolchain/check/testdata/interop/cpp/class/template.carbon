@@ -22,7 +22,7 @@ template<typename T> struct A : Base {
 using Aint = A<int>;
 using Along = A<long>;
 
-// --- fail_todo_use_class_template.carbon
+// --- fail_todo_5891_use_class_template.carbon
 
 library "[[@TEST_NAME]]";
 
@@ -31,10 +31,10 @@ import Cpp library "class_template.h";
 fn F(x: Cpp.Aint) -> i32 {
   // Trigger instantiation through name lookup.
   //@dump-sem-ir-begin
-  // CHECK:STDERR: fail_todo_use_class_template.carbon:[[@LINE+5]]:3: error: missing object argument in method call [MissingObjectInMethodCall]
+  // CHECK:STDERR: fail_todo_5891_use_class_template.carbon:[[@LINE+5]]:3: error: missing object argument in method call [MissingObjectInMethodCall]
   // CHECK:STDERR:   x.f();
   // CHECK:STDERR:   ^~~~~
-  // CHECK:STDERR: fail_todo_use_class_template.carbon: note: calling function declared here [InCallToFunction]
+  // CHECK:STDERR: fail_todo_5891_use_class_template.carbon: note: calling function declared here [InCallToFunction]
   // CHECK:STDERR:
   x.f();
   return x.n;
@@ -85,7 +85,7 @@ var x: Cpp.XY.r#type = 0;
 var y: Cpp.Xint.r#type = 0;
 //@dump-sem-ir-end
 
-// CHECK:STDOUT: --- fail_todo_use_class_template.carbon
+// CHECK:STDOUT: --- fail_todo_5891_use_class_template.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %A.0bedf0.1: type = class_type @A.1 [concrete]
