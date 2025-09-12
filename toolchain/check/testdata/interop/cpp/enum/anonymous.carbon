@@ -10,6 +10,8 @@
 // TIP: To dump output, run:
 // TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/check/testdata/interop/cpp/enum/anonymous.carbon
 
+// TODO: Tests marked as `fail_todo_5891_` to fixed as a follow-up of https://github.com/carbon-language/carbon-lang/pull/5891.
+
 // --- anon.h
 
 enum { a, b, c };
@@ -23,7 +25,7 @@ class C {
   void F(decltype(d));
 };
 
-// --- fail_todo_copy_enum.carbon
+// --- fail_todo_5891_copy_enum.carbon
 
 library "[[@TEST_NAME]]";
 
@@ -33,16 +35,16 @@ import Cpp library "anon.h";
 fn G() {
   Cpp.F(Cpp.b);
 
-  // CHECK:STDERR: fail_todo_copy_enum.carbon:[[@LINE+5]]:3: error: missing object argument in method call [MissingObjectInMethodCall]
+  // CHECK:STDERR: fail_todo_5891_copy_enum.carbon:[[@LINE+5]]:3: error: missing object argument in method call [MissingObjectInMethodCall]
   // CHECK:STDERR:   Cpp.C.C().F(Cpp.C.e);
   // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~
-  // CHECK:STDERR: fail_todo_copy_enum.carbon: note: calling function declared here [InCallToFunction]
+  // CHECK:STDERR: fail_todo_5891_copy_enum.carbon: note: calling function declared here [InCallToFunction]
   // CHECK:STDERR:
   Cpp.C.C().F(Cpp.C.e);
 }
 //@dump-sem-ir-end
 
-// CHECK:STDOUT: --- fail_todo_copy_enum.carbon
+// CHECK:STDOUT: --- fail_todo_5891_copy_enum.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %G.type: type = fn_type @G [concrete]
