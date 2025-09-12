@@ -171,17 +171,17 @@ fn AccessEmpty() -> () {
 // CHECK:STDOUT:
 // CHECK:STDOUT: define void @_CInts.Main(ptr sret({ i32, i32 }) %return) !dbg !4 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   call void @_CMake.Main.b7c8e4dff2adcdaa(ptr %return, i32 1, i32 2), !dbg !7
+// CHECK:STDOUT:   call void @_CMake.Main.de631560529e9861(ptr %return, i32 1, i32 2), !dbg !7
 // CHECK:STDOUT:   ret void, !dbg !8
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: define void @_CEmpty.Main(ptr sret({ {}, {} }) %return) !dbg !9 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   call void @_CMake.Main.35292afa1b663913(ptr %return), !dbg !10
+// CHECK:STDOUT:   call void @_CMake.Main.cf13cead63317d44(ptr %return), !dbg !10
 // CHECK:STDOUT:   ret void, !dbg !11
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: define linkonce_odr void @_CMake.Main.b7c8e4dff2adcdaa(ptr sret({ i32, i32 }) %return, i32 %x, i32 %y) !dbg !12 {
+// CHECK:STDOUT: define linkonce_odr void @_CMake.Main.de631560529e9861(ptr sret({ i32, i32 }) %return, i32 %x, i32 %y) !dbg !12 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   %.loc10_25.2.x = getelementptr inbounds nuw { i32, i32 }, ptr %return, i32 0, i32 0, !dbg !13
 // CHECK:STDOUT:   store i32 %x, ptr %.loc10_25.2.x, align 4, !dbg !13
@@ -190,7 +190,7 @@ fn AccessEmpty() -> () {
 // CHECK:STDOUT:   ret void, !dbg !14
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: define linkonce_odr void @_CMake.Main.35292afa1b663913(ptr sret({ {}, {} }) %return) !dbg !15 {
+// CHECK:STDOUT: define linkonce_odr void @_CMake.Main.cf13cead63317d44(ptr sret({ {}, {} }) %return) !dbg !15 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   %.loc10_25.2.x = getelementptr inbounds nuw { {}, {} }, ptr %return, i32 0, i32 0, !dbg !16
 // CHECK:STDOUT:   %.loc10_25.4.y = getelementptr inbounds nuw { {}, {} }, ptr %return, i32 0, i32 1, !dbg !16
@@ -212,17 +212,17 @@ fn AccessEmpty() -> () {
 // CHECK:STDOUT: !9 = distinct !DISubprogram(name: "Empty", linkageName: "_CEmpty.Main", scope: null, file: !3, line: 17, type: !5, spFlags: DISPFlagDefinition, unit: !2)
 // CHECK:STDOUT: !10 = !DILocation(line: 18, column: 10, scope: !9)
 // CHECK:STDOUT: !11 = !DILocation(line: 18, column: 3, scope: !9)
-// CHECK:STDOUT: !12 = distinct !DISubprogram(name: "Make", linkageName: "_CMake.Main.b7c8e4dff2adcdaa", scope: null, file: !3, line: 9, type: !5, spFlags: DISPFlagDefinition, unit: !2)
+// CHECK:STDOUT: !12 = distinct !DISubprogram(name: "Make", linkageName: "_CMake.Main.de631560529e9861", scope: null, file: !3, line: 9, type: !5, spFlags: DISPFlagDefinition, unit: !2)
 // CHECK:STDOUT: !13 = !DILocation(line: 10, column: 10, scope: !12)
 // CHECK:STDOUT: !14 = !DILocation(line: 10, column: 3, scope: !12)
-// CHECK:STDOUT: !15 = distinct !DISubprogram(name: "Make", linkageName: "_CMake.Main.35292afa1b663913", scope: null, file: !3, line: 9, type: !5, spFlags: DISPFlagDefinition, unit: !2)
+// CHECK:STDOUT: !15 = distinct !DISubprogram(name: "Make", linkageName: "_CMake.Main.cf13cead63317d44", scope: null, file: !3, line: 9, type: !5, spFlags: DISPFlagDefinition, unit: !2)
 // CHECK:STDOUT: !16 = !DILocation(line: 10, column: 10, scope: !15)
 // CHECK:STDOUT: !17 = !DILocation(line: 10, column: 3, scope: !15)
 // CHECK:STDOUT: ; ModuleID = 'access.carbon'
 // CHECK:STDOUT: source_filename = "access.carbon"
 // CHECK:STDOUT:
-// CHECK:STDOUT: @C.val.2d2.loc16_3 = internal constant { i1, i32 } { i1 true, i32 0 }
-// CHECK:STDOUT: @C.val.e5c.loc26_3 = internal constant { i1, {} } { i1 true, {} zeroinitializer }
+// CHECK:STDOUT: @C.val.bc7.loc16_3 = internal constant { i1, i32 } { i1 true, i32 0 }
+// CHECK:STDOUT: @C.val.f52.loc26_3 = internal constant { i1, {} } { i1 true, {} zeroinitializer }
 // CHECK:STDOUT:
 // CHECK:STDOUT: define i1 @_CAccessBool.Main() !dbg !4 {
 // CHECK:STDOUT: entry:
@@ -230,8 +230,8 @@ fn AccessEmpty() -> () {
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %c.var), !dbg !7
 // CHECK:STDOUT:   %.loc16_37.2.v = getelementptr inbounds nuw { i1, i32 }, ptr %c.var, i32 0, i32 0, !dbg !8
 // CHECK:STDOUT:   %.loc16_37.5.w = getelementptr inbounds nuw { i1, i32 }, ptr %c.var, i32 0, i32 1, !dbg !8
-// CHECK:STDOUT:   call void @llvm.memcpy.p0.p0.i64(ptr align 4 %c.var, ptr align 4 @C.val.2d2.loc16_3, i64 8, i1 false), !dbg !7
-// CHECK:STDOUT:   %C.GetBool.call = call i1 @_CGetBool.C.Main.b7c8e4dff2adcdaa(ptr %c.var), !dbg !9
+// CHECK:STDOUT:   call void @llvm.memcpy.p0.p0.i64(ptr align 4 %c.var, ptr align 4 @C.val.bc7.loc16_3, i64 8, i1 false), !dbg !7
+// CHECK:STDOUT:   %C.GetBool.call = call i1 @_CGetBool.C.Main.de631560529e9861(ptr %c.var), !dbg !9
 // CHECK:STDOUT:   ret i1 %C.GetBool.call, !dbg !10
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -241,8 +241,8 @@ fn AccessEmpty() -> () {
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %c.var), !dbg !12
 // CHECK:STDOUT:   %.loc21_37.2.v = getelementptr inbounds nuw { i1, i32 }, ptr %c.var, i32 0, i32 0, !dbg !13
 // CHECK:STDOUT:   %.loc21_37.5.w = getelementptr inbounds nuw { i1, i32 }, ptr %c.var, i32 0, i32 1, !dbg !13
-// CHECK:STDOUT:   call void @llvm.memcpy.p0.p0.i64(ptr align 4 %c.var, ptr align 4 @C.val.2d2.loc16_3, i64 8, i1 false), !dbg !12
-// CHECK:STDOUT:   %C.GetT.call = call i32 @_CGetT.C.Main.b7c8e4dff2adcdaa(ptr %c.var), !dbg !14
+// CHECK:STDOUT:   call void @llvm.memcpy.p0.p0.i64(ptr align 4 %c.var, ptr align 4 @C.val.bc7.loc16_3, i64 8, i1 false), !dbg !12
+// CHECK:STDOUT:   %C.GetT.call = call i32 @_CGetT.C.Main.de631560529e9861(ptr %c.var), !dbg !14
 // CHECK:STDOUT:   ret i32 %C.GetT.call, !dbg !15
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -252,8 +252,8 @@ fn AccessEmpty() -> () {
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %c.var), !dbg !17
 // CHECK:STDOUT:   %.loc26_37.2.v = getelementptr inbounds nuw { i1, {} }, ptr %c.var, i32 0, i32 0, !dbg !18
 // CHECK:STDOUT:   %.loc26_37.4.w = getelementptr inbounds nuw { i1, {} }, ptr %c.var, i32 0, i32 1, !dbg !18
-// CHECK:STDOUT:   call void @llvm.memcpy.p0.p0.i64(ptr align 1 %c.var, ptr align 1 @C.val.e5c.loc26_3, i64 1, i1 false), !dbg !17
-// CHECK:STDOUT:   call void @_CGetT.C.Main.35292afa1b663913(ptr %c.var), !dbg !19
+// CHECK:STDOUT:   call void @llvm.memcpy.p0.p0.i64(ptr align 1 %c.var, ptr align 1 @C.val.f52.loc26_3, i64 1, i1 false), !dbg !17
+// CHECK:STDOUT:   call void @_CGetT.C.Main.cf13cead63317d44(ptr %c.var), !dbg !19
 // CHECK:STDOUT:   ret void, !dbg !20
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -263,7 +263,7 @@ fn AccessEmpty() -> () {
 // CHECK:STDOUT: ; Function Attrs: nocallback nofree nounwind willreturn memory(argmem: readwrite)
 // CHECK:STDOUT: declare void @llvm.memcpy.p0.p0.i64(ptr noalias writeonly captures(none), ptr noalias readonly captures(none), i64, i1 immarg) #1
 // CHECK:STDOUT:
-// CHECK:STDOUT: define linkonce_odr i1 @_CGetBool.C.Main.b7c8e4dff2adcdaa(ptr %self) !dbg !21 {
+// CHECK:STDOUT: define linkonce_odr i1 @_CGetBool.C.Main.de631560529e9861(ptr %self) !dbg !21 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   %.loc6_16.1.v = getelementptr inbounds nuw { i1, i32 }, ptr %self, i32 0, i32 0, !dbg !22
 // CHECK:STDOUT:   %.loc6_16.2 = load i8, ptr %.loc6_16.1.v, align 1, !dbg !22
@@ -271,14 +271,14 @@ fn AccessEmpty() -> () {
 // CHECK:STDOUT:   ret i1 %.loc6_16.21, !dbg !23
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: define linkonce_odr i32 @_CGetT.C.Main.b7c8e4dff2adcdaa(ptr %self) !dbg !24 {
+// CHECK:STDOUT: define linkonce_odr i32 @_CGetT.C.Main.de631560529e9861(ptr %self) !dbg !24 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   %.loc9_16.1.w = getelementptr inbounds nuw { i1, i32 }, ptr %self, i32 0, i32 1, !dbg !25
 // CHECK:STDOUT:   %.loc9_16.2 = load i32, ptr %.loc9_16.1.w, align 4, !dbg !25
 // CHECK:STDOUT:   ret i32 %.loc9_16.2, !dbg !26
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: define linkonce_odr void @_CGetT.C.Main.35292afa1b663913(ptr %self) !dbg !27 {
+// CHECK:STDOUT: define linkonce_odr void @_CGetT.C.Main.cf13cead63317d44(ptr %self) !dbg !27 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   %.loc9_16.1.w = getelementptr inbounds nuw { i1, {} }, ptr %self, i32 0, i32 1, !dbg !28
 // CHECK:STDOUT:   ret void, !dbg !29
@@ -315,12 +315,12 @@ fn AccessEmpty() -> () {
 // CHECK:STDOUT: !18 = !DILocation(line: 26, column: 18, scope: !16)
 // CHECK:STDOUT: !19 = !DILocation(line: 27, column: 10, scope: !16)
 // CHECK:STDOUT: !20 = !DILocation(line: 27, column: 3, scope: !16)
-// CHECK:STDOUT: !21 = distinct !DISubprogram(name: "GetBool", linkageName: "_CGetBool.C.Main.b7c8e4dff2adcdaa", scope: null, file: !3, line: 5, type: !5, spFlags: DISPFlagDefinition, unit: !2)
+// CHECK:STDOUT: !21 = distinct !DISubprogram(name: "GetBool", linkageName: "_CGetBool.C.Main.de631560529e9861", scope: null, file: !3, line: 5, type: !5, spFlags: DISPFlagDefinition, unit: !2)
 // CHECK:STDOUT: !22 = !DILocation(line: 6, column: 12, scope: !21)
 // CHECK:STDOUT: !23 = !DILocation(line: 6, column: 5, scope: !21)
-// CHECK:STDOUT: !24 = distinct !DISubprogram(name: "GetT", linkageName: "_CGetT.C.Main.b7c8e4dff2adcdaa", scope: null, file: !3, line: 8, type: !5, spFlags: DISPFlagDefinition, unit: !2)
+// CHECK:STDOUT: !24 = distinct !DISubprogram(name: "GetT", linkageName: "_CGetT.C.Main.de631560529e9861", scope: null, file: !3, line: 8, type: !5, spFlags: DISPFlagDefinition, unit: !2)
 // CHECK:STDOUT: !25 = !DILocation(line: 9, column: 12, scope: !24)
 // CHECK:STDOUT: !26 = !DILocation(line: 9, column: 5, scope: !24)
-// CHECK:STDOUT: !27 = distinct !DISubprogram(name: "GetT", linkageName: "_CGetT.C.Main.35292afa1b663913", scope: null, file: !3, line: 8, type: !5, spFlags: DISPFlagDefinition, unit: !2)
+// CHECK:STDOUT: !27 = distinct !DISubprogram(name: "GetT", linkageName: "_CGetT.C.Main.cf13cead63317d44", scope: null, file: !3, line: 8, type: !5, spFlags: DISPFlagDefinition, unit: !2)
 // CHECK:STDOUT: !28 = !DILocation(line: 9, column: 12, scope: !27)
 // CHECK:STDOUT: !29 = !DILocation(line: 9, column: 5, scope: !27)

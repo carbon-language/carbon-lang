@@ -38,8 +38,8 @@ fn F() {
 // CHECK:STDOUT:   %pattern_type.ebf: type = pattern_type %Enum [concrete]
 // CHECK:STDOUT:   %int_0: %Enum = int_value 0 [concrete]
 // CHECK:STDOUT:   %int_1: %Enum = int_value 1 [concrete]
-// CHECK:STDOUT:   %T.as.Destroy.impl.Op.type.664: type = fn_type @T.as.Destroy.impl.Op, @T.as.Destroy.impl(%Enum) [concrete]
-// CHECK:STDOUT:   %T.as.Destroy.impl.Op.bbe: %T.as.Destroy.impl.Op.type.664 = struct_value () [concrete]
+// CHECK:STDOUT:   %T.as.Destroy.impl.Op.type.69f: type = fn_type @T.as.Destroy.impl.Op, @T.as.Destroy.impl(%Enum) [concrete]
+// CHECK:STDOUT:   %T.as.Destroy.impl.Op.cd4: %T.as.Destroy.impl.Op.type.69f = struct_value () [concrete]
 // CHECK:STDOUT:   %ptr.47b: type = ptr_type %Enum [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -82,17 +82,17 @@ fn F() {
 // CHECK:STDOUT:   %.loc10_15.1: ref %Enum = temporary_storage
 // CHECK:STDOUT:   %.loc10_15.2: ref %Enum = temporary %.loc10_15.1, %b.ref
 // CHECK:STDOUT:   assign %a.ref.loc10, %.loc10_15.2
-// CHECK:STDOUT:   %T.as.Destroy.impl.Op.bound.loc10: <bound method> = bound_method %.loc10_15.2, constants.%T.as.Destroy.impl.Op.bbe
+// CHECK:STDOUT:   %T.as.Destroy.impl.Op.bound.loc10: <bound method> = bound_method %.loc10_15.2, constants.%T.as.Destroy.impl.Op.cd4
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT:   %bound_method.loc10: <bound method> = bound_method %.loc10_15.2, %T.as.Destroy.impl.Op.specific_fn.1
 // CHECK:STDOUT:   %addr.loc10: %ptr.47b = addr_of %.loc10_15.2
 // CHECK:STDOUT:   %T.as.Destroy.impl.Op.call.loc10: init %empty_tuple.type = call %bound_method.loc10(%addr.loc10)
-// CHECK:STDOUT:   %T.as.Destroy.impl.Op.bound.loc8_29: <bound method> = bound_method %.loc8_29.2, constants.%T.as.Destroy.impl.Op.bbe
+// CHECK:STDOUT:   %T.as.Destroy.impl.Op.bound.loc8_29: <bound method> = bound_method %.loc8_29.2, constants.%T.as.Destroy.impl.Op.cd4
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT:   %bound_method.loc8_29: <bound method> = bound_method %.loc8_29.2, %T.as.Destroy.impl.Op.specific_fn.2
 // CHECK:STDOUT:   %addr.loc8_29: %ptr.47b = addr_of %.loc8_29.2
 // CHECK:STDOUT:   %T.as.Destroy.impl.Op.call.loc8_29: init %empty_tuple.type = call %bound_method.loc8_29(%addr.loc8_29)
-// CHECK:STDOUT:   %T.as.Destroy.impl.Op.bound.loc8_3: <bound method> = bound_method %a.var, constants.%T.as.Destroy.impl.Op.bbe
+// CHECK:STDOUT:   %T.as.Destroy.impl.Op.bound.loc8_3: <bound method> = bound_method %a.var, constants.%T.as.Destroy.impl.Op.cd4
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT:   %bound_method.loc8_3: <bound method> = bound_method %a.var, %T.as.Destroy.impl.Op.specific_fn.3
 // CHECK:STDOUT:   %addr.loc8_3: %ptr.47b = addr_of %a.var

@@ -23,6 +23,11 @@ CARBON_DEFINE_RAW_ENUM_MASK(BuiltinConstraintMask, uint32_t) {
 };
 
 // Constraints that are produced by builtin functions.
+//
+// Note these constraints are not treated as full interfaces, and behave
+// somewhat similarly to `type` as an API. Similarly, `impl C as
+// <BuiltinConstraint>` will be invalid because `impl` requires at least one
+// interface.
 class BuiltinConstraintMask
     : public CARBON_ENUM_MASK_BASE(BuiltinConstraintMask) {
  public:

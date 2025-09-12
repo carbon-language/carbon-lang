@@ -183,12 +183,17 @@ static auto FindAndDiagnoseImplLookupCycle(
   return false;
 }
 
+struct InterfacesFromConstantId {
+  llvm::SmallVector<SemIR::SpecificInterface> interfaces;
+  SemIR::BuiltinConstraintMask builtin_constraint_mask;
+  bool other_requirements;
+};
+
 // Gets the set of `SpecificInterface`s that are required by a facet type
 // (as a constant value), and any special requirements.
 static auto GetInterfacesFromConstantId(
     Context& context, SemIR::ConstantId query_facet_type_const_id)
-    -> std::tuple<llvm::SmallVector<SemIR::SpecificInterface>,
-                  SemIR::BuiltinConstraintMask, bool> {
+    -> InterfacesFromConstantId {
   auto facet_type_inst_id =
       context.constant_values().GetInstId(query_facet_type_const_id);
   auto facet_type_inst =
@@ -200,9 +205,10 @@ static auto GetInterfacesFromConstantId(
       context.identified_facet_types().Get(identified_id).required_interfaces();
   // Returns a copy to avoid use-after-free when the identified_facet_types
   // store resizes.
-  return {{interfaces_array_ref.begin(), interfaces_array_ref.end()},
-          facet_type_info.builtin_constraint_mask,
-          facet_type_info.other_requirements};
+  return {
+      .interfaces = {interfaces_array_ref.begin(), interfaces_array_ref.end()},
+      .builtin_constraint_mask = facet_type_info.builtin_constraint_mask,
+      .other_requirements = facet_type_info.other_requirements};
 }
 
 static auto GetWitnessIdForImpl(Context& context, SemIR::LocId loc_id,
