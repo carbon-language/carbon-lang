@@ -84,12 +84,6 @@ class EnumMaskBase : public EnumBase<DerivedT, EnumT, Names> {
     return DerivedT::FromInt(~this->AsInt());
   }
 
-  // Don't support comparison of masks.
-  friend auto operator<(DerivedT lhs, DerivedT rhs) -> bool = delete;
-  friend auto operator<=(DerivedT lhs, DerivedT rhs) -> bool = delete;
-  friend auto operator>(DerivedT lhs, DerivedT rhs) -> bool = delete;
-  friend auto operator>=(DerivedT lhs, DerivedT rhs) -> bool = delete;
-
   // Use `Print` for mask entries. This hides `EnumBase::name`; it's not
   // compatible with `EnumMaskBase`.
   auto name() const -> llvm::StringRef = delete;

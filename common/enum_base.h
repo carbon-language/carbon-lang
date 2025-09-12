@@ -134,6 +134,12 @@ class EnumBase : public Printable<DerivedT> {
   // Prints this value using its name.
   auto Print(llvm::raw_ostream& out) const -> void { out << name(); }
 
+  // Don't support comparison of enums by default.
+  friend auto operator<(DerivedT lhs, DerivedT rhs) -> bool = delete;
+  friend auto operator<=(DerivedT lhs, DerivedT rhs) -> bool = delete;
+  friend auto operator>(DerivedT lhs, DerivedT rhs) -> bool = delete;
+  friend auto operator>=(DerivedT lhs, DerivedT rhs) -> bool = delete;
+
  protected:
   // The default constructor is explicitly defaulted (and constexpr) as a
   // protected constructor to allow derived classes to be constructed but not
