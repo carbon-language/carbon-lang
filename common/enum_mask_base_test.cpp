@@ -82,26 +82,18 @@ TEST(EnumMaskBaseTest, Switch) {
   }
 }
 
-TEST(EnumMaskBaseTest, Comparison) {
+TEST(EnumMaskBaseTest, Equality) {
   TestKind kind = TestKind::Beep;
 
   // Make sure all the different comparisons work, and also to work with
   // GoogleTest expectations.
   EXPECT_EQ(TestKind::Beep, kind);
   EXPECT_NE(TestKind::Boop, kind);
-  EXPECT_LT(kind, TestKind::Boop);
-  EXPECT_GT(TestKind::Burr, kind);
-  EXPECT_LE(kind, TestKind::Beep);
-  EXPECT_GE(TestKind::Beep, kind);
 
   // These should also all be constexpr.
   constexpr TestKind Kind2 = TestKind::Beep;
   static_assert(Kind2 == TestKind::Beep);
   static_assert(Kind2 != TestKind::Boop);
-  static_assert(Kind2 < TestKind::Boop);
-  static_assert(!(Kind2 > TestKind::Burr));
-  static_assert(Kind2 <= TestKind::Beep);
-  static_assert(!(Kind2 >= TestKind::Burr));
 }
 
 TEST(EnumMaskBaseTest, AddRemove) {

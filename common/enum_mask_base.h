@@ -70,6 +70,8 @@ class EnumMaskBase : public EnumBase<DerivedT, EnumT, Names> {
   // Removes entries from the mask.
   auto Remove(DerivedT other) -> void { *this = *this & ~other; }
 
+  constexpr auto empty() const -> bool { return this->AsInt() == 0; }
+
   constexpr auto operator|(DerivedT other) const -> DerivedT {
     return DerivedT::FromInt(this->AsInt() | other.AsInt());
   }
@@ -82,7 +84,11 @@ class EnumMaskBase : public EnumBase<DerivedT, EnumT, Names> {
     return DerivedT::FromInt(~this->AsInt());
   }
 
-  constexpr auto empty() const -> bool { return this->AsInt() == 0; }
+  // Don't support comparison of masks.
+  friend auto operator<(DerivedT lhs, DerivedT rhs) -> bool = delete;
+  friend auto operator<=(DerivedT lhs, DerivedT rhs) -> bool = delete;
+  friend auto operator>(DerivedT lhs, DerivedT rhs) -> bool = delete;
+  friend auto operator>=(DerivedT lhs, DerivedT rhs) -> bool = delete;
 
   // Use `Print` for mask entries. This hides `EnumBase::name`; it's not
   // compatible with `EnumMaskBase`.
