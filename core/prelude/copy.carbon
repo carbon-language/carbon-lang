@@ -4,8 +4,6 @@
 
 package Core library "prelude/copy";
 
-import library "prelude/destroy";
-
 // Copying an object, which is a conversion from a value representation to an
 // initializing representation.
 interface Copy {
@@ -50,7 +48,6 @@ impl () as Copy {
   fn Op[self: Self]() -> Self = "no_op";
 }
 
-// TODO: This uses `T as Destroy`, but should not.
 impl forall [T:! Copy] (T,) as Copy {
   fn Op[self: Self]() -> Self {
     return (self.0.Op(),);

@@ -721,7 +721,7 @@ fn F() {
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     <elided>
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %Core.import_ref.297: %bool.as.Copy.impl.Op.type = import_ref Core//prelude/copy, loc25_31, loaded [concrete = constants.%bool.as.Copy.impl.Op]
+// CHECK:STDOUT:   %Core.import_ref.297: %bool.as.Copy.impl.Op.type = import_ref Core//prelude/copy, loc23_31, loaded [concrete = constants.%bool.as.Copy.impl.Op]
 // CHECK:STDOUT:   %Copy.impl_witness_table.47e = impl_witness_table (%Core.import_ref.297), @bool.as.Copy.impl [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -782,7 +782,7 @@ fn F() {
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     <elided>
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %Core.import_ref.297: %bool.as.Copy.impl.Op.type = import_ref Core//prelude/copy, loc25_31, loaded [concrete = constants.%bool.as.Copy.impl.Op]
+// CHECK:STDOUT:   %Core.import_ref.297: %bool.as.Copy.impl.Op.type = import_ref Core//prelude/copy, loc23_31, loaded [concrete = constants.%bool.as.Copy.impl.Op]
 // CHECK:STDOUT:   %Copy.impl_witness_table.47e = impl_witness_table (%Core.import_ref.297), @bool.as.Copy.impl [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -1933,7 +1933,7 @@ fn F() {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import_ref.52c: @Core.IntLiteral.as.As.impl.%Core.IntLiteral.as.As.impl.Convert.type (%Core.IntLiteral.as.As.impl.Convert.type.676) = import_ref Core//prelude/types/int, loc36_39, loaded [symbolic = @Core.IntLiteral.as.As.impl.%Core.IntLiteral.as.As.impl.Convert (constants.%Core.IntLiteral.as.As.impl.Convert.086)]
 // CHECK:STDOUT:   %As.impl_witness_table.3fe = impl_witness_table (%Core.import_ref.52c), @Core.IntLiteral.as.As.impl [concrete]
-// CHECK:STDOUT:   %Core.import_ref.ce8 = import_ref Core//prelude/copy, loc21_31, unloaded
+// CHECK:STDOUT:   %Core.import_ref.ce8 = import_ref Core//prelude/copy, loc19_31, unloaded
 // CHECK:STDOUT:   %Copy.impl_witness_table.159 = impl_witness_table (%Core.import_ref.ce8), @const.as.Copy.impl [concrete]
 // CHECK:STDOUT:   %Core.import_ref.46d = import_ref Core//prelude/types/int, loc21_31, unloaded
 // CHECK:STDOUT:   %Copy.impl_witness_table.000 = impl_witness_table (%Core.import_ref.46d), @Int.as.Copy.impl [concrete]
