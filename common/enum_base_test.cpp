@@ -79,7 +79,7 @@ TEST(EnumBaseTest, Switch) {
 TEST(EnumBaseTest, Comparison) {
   TestKind kind = TestKind::Beep;
 
-  // Make sure all the different comparisons work, and also to work with
+  // Make sure all the different comparisons work, and also work with
   // GoogleTest expectations.
   EXPECT_EQ(TestKind::Beep, kind);
   EXPECT_NE(TestKind::Boop, kind);
