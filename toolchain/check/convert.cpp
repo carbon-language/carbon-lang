@@ -147,6 +147,29 @@ static auto MakeElementAccessInst(Context& context, SemIR::LocId loc_id,
   }
 }
 
+// Get the conversion target kind to use when initializing an element of an
+// aggregate.
+static auto GetAggregateElementConversionTargetKind(SemIR::File& sem_ir,
+                                                    ConversionTarget target)
+    -> ConversionTarget::Kind {
+  // If we're forming an initializer, then we want an initializer for each
+  // element.
+  if (target.is_initializer()) {
+    // Perform a final destination store if we're performing an in-place
+    // initialization.
+    auto init_repr = SemIR::InitRepr::ForType(sem_ir, target.type_id);
+    CARBON_CHECK(init_repr.kind != SemIR::InitRepr::Dependent,
+                 "Aggregate should not have dependent init kind");
+    if (init_repr.kind == SemIR::InitRepr::InPlace) {
+      return ConversionTarget::FullInitializer;
+    }
+    return ConversionTarget::Initializer;
+  }
+
+  // Otherwise, we want a value representation for each element.
+  return ConversionTarget::Value;
+}
+
 // Converts an element of one aggregate so that it can be used as an element of
 // another aggregate.
 //
@@ -337,16 +360,8 @@ static auto ConvertTupleToTuple(Context& context, SemIR::TupleType src_type,
     return SemIR::ErrorInst::InstId;
   }
 
-  // If we're forming an initializer, then we want an initializer for each
-  // element. Otherwise, we want a value representation for each element.
-  // Perform a final destination store if we're performing an in-place
-  // initialization.
-  bool is_init = target.is_initializer();
   ConversionTarget::Kind inner_kind =
-      !is_init ? ConversionTarget::Value
-      : SemIR::InitRepr::ForType(sem_ir, target.type_id).MightBeInPlace()
-          ? ConversionTarget::FullInitializer
-          : ConversionTarget::Initializer;
+      GetAggregateElementConversionTargetKind(sem_ir, target);
 
   // Initialize each element of the destination from the corresponding element
   // of the source.
@@ -373,7 +388,7 @@ static auto ConvertTupleToTuple(Context& context, SemIR::TupleType src_type,
     new_block.Set(i, init_id);
   }
 
-  if (is_init) {
+  if (target.is_initializer()) {
     target.init_block->InsertHere();
     return AddInst<SemIR::TupleInit>(context, value_loc_id,
                                      {.type_id = target.type_id,
@@ -447,16 +462,8 @@ static auto ConvertStructToStructOrClass(
     }
   }
 
-  // If we're forming an initializer, then we want an initializer for each
-  // element. Otherwise, we want a value representation for each element.
-  // Perform a final destination store if we're performing an in-place
-  // initialization.
-  bool is_init = target.is_initializer();
   ConversionTarget::Kind inner_kind =
-      !is_init ? ConversionTarget::Value
-      : SemIR::InitRepr::ForType(sem_ir, target.type_id).MightBeInPlace()
-          ? ConversionTarget::FullInitializer
-          : ConversionTarget::Initializer;
+      GetAggregateElementConversionTargetKind(sem_ir, target);
 
   // Initialize each element of the destination from the corresponding element
   // of the source.
@@ -544,6 +551,7 @@ static auto ConvertStructToStructOrClass(
     new_block.Set(i, init_id);
   }
 
+  bool is_init = target.is_initializer();
   if (ToClass) {
     target.init_block->InsertHere();
     CARBON_CHECK(is_init,
