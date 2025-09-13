@@ -12,6 +12,7 @@
 #include "common/ostream.h"
 #include "llvm/ADT/ArrayRef.h"
 #include "llvm/ADT/StringRef.h"
+#include "llvm/Support/ThreadPool.h"
 #include "llvm/Support/VirtualFileSystem.h"
 #include "llvm/TargetParser/Triple.h"
 #include "toolchain/driver/runtimes_cache.h"
@@ -25,11 +26,15 @@ namespace Carbon {
 // incorporating custom command line flags from user invocations that we don't
 // parse, but will pass transparently along to Clang itself.
 //
+// This class is thread safe, allowing multiple threads to share a single runner
+// and concurrently invoke Clang.
+//
 // This doesn't literally use a subprocess to invoke Clang; it instead tries to
 // directly use the Clang command line driver library. We also work to simplify
 // how that driver operates and invoke it in an opinionated way to get the best
 // behavior for our expected use cases in the Carbon driver:
 //
+// - Ensure thread-safe invocation of Clang to enable concurrent usage.
 // - Minimize canonicalization of file names to try to preserve the paths as
 //   users type them.
 // - Minimize the use of subprocess invocations which are expensive on some
@@ -42,6 +47,13 @@ namespace Carbon {
 // standard output and standard error, and otherwise can only read and write
 // files based on their names described in the arguments. It doesn't provide any
 // higher-level abstraction such as streams for inputs or outputs.
+//
+// TODO: Switch the diagnostic machinery to buffer and do locked output so that
+// concurrent invocations of Clang don't intermingle their diagnostic output.
+//
+// TODO: If support for thread-local overrides of `llvm::errs` and `llvm::outs`
+// becomes available upstream, also buffer and synchronize those streams to
+// further improve the behavior of concurrent invocations.
 class ClangRunner : ToolRunnerBase {
  public:
   // Build a Clang runner that uses the provided `exe_name` and `err_stream`.
@@ -52,7 +64,8 @@ class ClangRunner : ToolRunnerBase {
               Runtimes::Cache* on_demand_runtimes_cache,
               llvm::IntrusiveRefCntPtr<llvm::vfs::FileSystem> fs,
               llvm::raw_ostream* vlog_stream = nullptr,
-              bool build_runtimes_on_demand = false);
+              bool build_runtimes_on_demand = false,
+              llvm::ThreadPoolInterface* runtimes_build_thread_pool = nullptr);
 
   // Run Clang with the provided arguments.
   //
@@ -88,7 +101,8 @@ class ClangRunner : ToolRunnerBase {
   // return the path.
   auto BuildTargetResourceDir(const Runtimes::Cache::Features& features,
                               Runtimes& runtimes,
-                              const std::filesystem::path& tmp_path)
+                              const std::filesystem::path& tmp_path,
+                              llvm::ThreadPoolInterface& threads)
       -> ErrorOr<std::filesystem::path>;
 
   // Enable leaking memory.
@@ -103,6 +117,14 @@ class ClangRunner : ToolRunnerBase {
   auto EnableLeakingMemory() -> void { enable_leaking_ = true; }
 
  private:
+  // Emulates `cc1_main` but in a way that doesn't assume it is running in the
+  // main thread and can more easily fit into library calls to do compiles.
+  //
+  // TODO: Much of the logic here should be factored out of the CC1
+  // implementation in Clang's driver and into a reusable part of its libraries.
+  // That should allow reducing the code here to a minimal amount.
+  auto RunCC1(llvm::SmallVectorImpl<const char*>& cc1_args) -> int;
+
   // Handles building the Clang driver and passing the arguments down to it.
   auto RunInternal(llvm::ArrayRef<llvm::StringRef> args, llvm::StringRef target,
                    std::optional<llvm::StringRef> target_resource_dir_path)
@@ -125,14 +147,16 @@ class ClangRunner : ToolRunnerBase {
   auto BuildBuiltinsLib(llvm::StringRef target,
                         const llvm::Triple& target_triple,
                         const std::filesystem::path& tmp_path,
-                        Filesystem::DirRef lib_dir) -> ErrorOr<Success>;
+                        Filesystem::DirRef lib_dir,
+                        llvm::ThreadPoolInterface& threads) -> ErrorOr<Success>;
 
   Runtimes::Cache* runtimes_cache_;
 
   llvm::IntrusiveRefCntPtr<llvm::vfs::FileSystem> fs_;
-  llvm::IntrusiveRefCntPtr<clang::DiagnosticIDs> diagnostic_ids_;
 
   std::optional<std::filesystem::path> prebuilt_runtimes_path_;
+
+  llvm::ThreadPoolInterface* runtimes_build_thread_pool_ = nullptr;
 
   bool build_runtimes_on_demand_;
   bool enable_leaking_ = false;

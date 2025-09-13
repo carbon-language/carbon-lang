@@ -191,8 +191,9 @@ TEST_F(ClangRunnerTest, BuildResourceDir) {
   Runtimes::Cache::Features features = {.target = target};
   auto runtimes = *runtimes_cache_.Lookup(features);
   auto tmp_dir = *Filesystem::MakeTmpDir();
-  auto build_result =
-      runner.BuildTargetResourceDir(features, runtimes, tmp_dir.abs_path());
+  llvm::DefaultThreadPool threads(llvm::optimal_concurrency());
+  auto build_result = runner.BuildTargetResourceDir(
+      features, runtimes, tmp_dir.abs_path(), threads);
   ASSERT_TRUE(build_result.ok()) << build_result.error();
   std::filesystem::path resource_dir_path = std::move(*build_result);
 

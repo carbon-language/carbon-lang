@@ -18,14 +18,21 @@
 
 #include "clang/Basic/Diagnostic.h"
 #include "clang/Basic/DiagnosticOptions.h"
+#include "clang/CodeGen/ObjectFilePCHContainerWriter.h"
 #include "clang/Driver/Compilation.h"
 #include "clang/Driver/Driver.h"
+#include "clang/Frontend/CompilerInstance.h"
 #include "clang/Frontend/CompilerInvocation.h"
+#include "clang/Frontend/TextDiagnosticBuffer.h"
 #include "clang/Frontend/TextDiagnosticPrinter.h"
+#include "clang/Frontend/Utils.h"
+#include "clang/FrontendTool/Utils.h"
+#include "clang/Serialization/ObjectFilePCHContainerReader.h"
 #include "common/filesystem.h"
 #include "common/vlog.h"
 #include "llvm/ADT/ArrayRef.h"
 #include "llvm/ADT/ScopeExit.h"
+#include "llvm/ADT/Statistic.h"
 #include "llvm/ADT/StringExtras.h"
 #include "llvm/ADT/StringRef.h"
 #include "llvm/IR/LLVMContext.h"
@@ -36,18 +43,10 @@
 #include "llvm/Support/LLVMDriver.h"
 #include "llvm/Support/Path.h"
 #include "llvm/Support/Program.h"
+#include "llvm/Support/TimeProfiler.h"
+#include "llvm/Support/Timer.h"
 #include "llvm/TargetParser/Host.h"
 #include "toolchain/base/runtime_sources.h"
-
-// Defined in:
-// https://github.com/llvm/llvm-project/blob/main/clang/tools/driver/driver.cpp
-//
-// While not in a header, this is the API used by llvm-driver.cpp for
-// busyboxing.
-//
-// NOLINTNEXTLINE(readability-identifier-naming)
-auto clang_main(int Argc, char** Argv, const llvm::ToolContext& ToolContext)
-    -> int;
 
 namespace Carbon {
 
@@ -55,11 +54,12 @@ ClangRunner::ClangRunner(const InstallPaths* install_paths,
                          Runtimes::Cache* runtimes_cache,
                          llvm::IntrusiveRefCntPtr<llvm::vfs::FileSystem> fs,
                          llvm::raw_ostream* vlog_stream,
-                         bool build_runtimes_on_demand)
+                         bool build_runtimes_on_demand,
+                         llvm::ThreadPoolInterface* runtimes_build_thread_pool)
     : ToolRunnerBase(install_paths, vlog_stream),
       runtimes_cache_(runtimes_cache),
       fs_(std::move(fs)),
-      diagnostic_ids_(new clang::DiagnosticIDs()),
+      runtimes_build_thread_pool_(runtimes_build_thread_pool),
       build_runtimes_on_demand_(build_runtimes_on_demand) {}
 
 // Searches an argument list to a Clang execution to determine the expected
@@ -165,11 +165,20 @@ auto ClangRunner::Run(llvm::ArrayRef<llvm::StringRef> args,
   // not once we are running Clang with the built runtime.
   std::filesystem::path resource_dir_path;
   {
+    // Build the temporary directory and threadpool needed.
     CARBON_ASSIGN_OR_RETURN(Filesystem::RemovingDir tmp_dir,
                             Filesystem::MakeTmpDir());
+
+    // If we don't have an on-demand runtimes build thread pool provided on
+    // constructions, provide a single threaded one.
+    llvm::SingleThreadExecutor single_thread({.ThreadsRequested = 1});
+
     CARBON_ASSIGN_OR_RETURN(
         resource_dir_path,
-        BuildTargetResourceDir(features, runtimes, tmp_dir.abs_path()));
+        BuildTargetResourceDir(features, runtimes, tmp_dir.abs_path(),
+                               runtimes_build_thread_pool_
+                                   ? *runtimes_build_thread_pool_
+                                   : single_thread));
   }
 
   // Note that this function always successfully runs `clang` and returns a bool
@@ -187,7 +196,8 @@ auto ClangRunner::RunTargetIndependentCommand(
 
 auto ClangRunner::BuildTargetResourceDir(
     const Runtimes::Cache::Features& features, Runtimes& runtimes,
-    const std::filesystem::path& tmp_path) -> ErrorOr<std::filesystem::path> {
+    const std::filesystem::path& tmp_path, llvm::ThreadPoolInterface& threads)
+    -> ErrorOr<std::filesystem::path> {
   // Disable any leaking of memory while building the target resource dir, and
   // restore the previous setting at the end.
   auto restore_leak_flag = llvm::make_scope_exit(
@@ -223,19 +233,168 @@ auto ClangRunner::BuildTargetResourceDir(
     return Error("TODO: Windows runtimes are untested and not yet supported.");
   }
 
+  llvm::ThreadPoolTaskGroup task_group(threads);
+
   // For Linux targets, the system libc (typically glibc) doesn't necessarily
   // provide the CRT begin/end files, and so we need to build them.
   if (target_triple.isOSLinux()) {
-    BuildCrtFile(target, RuntimeSources::CrtBegin,
-                 builder.path() / lib_path / "clang_rt.crtbegin.o");
-    BuildCrtFile(target, RuntimeSources::CrtEnd,
-                 builder.path() / lib_path / "clang_rt.crtend.o");
+    task_group.async(
+        [this, target,
+         path = builder.path() / lib_path / "clang_rt.crtbegin.o"] {
+          BuildCrtFile(target, RuntimeSources::CrtBegin, path);
+        });
+    task_group.async(
+        [this, target, path = builder.path() / lib_path / "clang_rt.crtend.o"] {
+          BuildCrtFile(target, RuntimeSources::CrtEnd, path);
+        });
   }
 
   CARBON_RETURN_IF_ERROR(
-      BuildBuiltinsLib(target, target_triple, tmp_path, lib_dir));
+      BuildBuiltinsLib(target, target_triple, tmp_path, lib_dir, threads));
+
+  // Now wait for all the queued builds to complete before we commit the
+  // runtimes into the cache.
+  task_group.wait();
 
   return std::move(builder).Commit();
+}
+
+auto ClangRunner::RunCC1(llvm::SmallVectorImpl<const char*>& cc1_args) -> int {
+  llvm::BumpPtrAllocator allocator;
+  llvm::cl::ExpansionContext expansion_context(
+      allocator, llvm::cl::TokenizeGNUCommandLine);
+  if (llvm::Error error = expansion_context.expandResponseFiles(cc1_args)) {
+    llvm::errs() << toString(std::move(error)) << '\n';
+    return 1;
+  }
+  CARBON_CHECK(cc1_args[1] == llvm::StringRef("-cc1"));
+
+  llvm::IntrusiveRefCntPtr<clang::DiagnosticIDs> diag_ids =
+      clang::DiagnosticIDs::create();
+
+  // Register the support for object-file-wrapped Clang modules.
+  auto pch_ops = std::make_shared<clang::PCHContainerOperations>();
+  pch_ops->registerWriter(
+      std::make_unique<clang::ObjectFilePCHContainerWriter>());
+  pch_ops->registerReader(
+      std::make_unique<clang::ObjectFilePCHContainerReader>());
+
+  // Buffer diagnostics from argument parsing so that we can output them using a
+  // well formed diagnostic object.
+  clang::DiagnosticOptions diag_opts;
+  clang::TextDiagnosticBuffer diag_buffer;
+  clang::DiagnosticsEngine diags(diag_ids, diag_opts, &diag_buffer,
+                                 /*ShouldOwnClient=*/false);
+
+  // Setup round-trip remarks for the DiagnosticsEngine used in CreateFromArgs.
+  if (llvm::find(cc1_args, llvm::StringRef("-Rround-trip-cc1-args")) !=
+      cc1_args.end()) {
+    diags.setSeverity(clang::diag::remark_cc1_round_trip_generated,
+                      clang::diag::Severity::Remark, {});
+  }
+
+  auto invocation = std::make_shared<clang::CompilerInvocation>();
+  bool success = clang::CompilerInvocation::CreateFromArgs(
+      *invocation, llvm::ArrayRef(cc1_args).slice(1), diags, cc1_args[0]);
+
+  // Heap allocate the compiler instance so that if we disable freeing we can
+  // discard the pointer without destroying or deallocating it.
+  auto clang_instance = std::make_unique<clang::CompilerInstance>(
+      std::move(invocation), std::move(pch_ops));
+
+  // Override the disabling of free when we don't want to leak memory.
+  if (!enable_leaking_) {
+    clang_instance->getFrontendOpts().DisableFree = false;
+  }
+
+  if (!clang_instance->getFrontendOpts().TimeTracePath.empty()) {
+    llvm::timeTraceProfilerInitialize(
+        clang_instance->getFrontendOpts().TimeTraceGranularity, cc1_args[0],
+        clang_instance->getFrontendOpts().TimeTraceVerbose);
+  }
+
+  // TODO: These options should take priority over the actual compilation.
+  // However, their implementation is currently not accessible from a library.
+  // We should factor the implementation into a reusable location and then use
+  // that here.
+  CARBON_CHECK(!clang_instance->getFrontendOpts().PrintSupportedCPUs &&
+               !clang_instance->getFrontendOpts().PrintSupportedExtensions &&
+               !clang_instance->getFrontendOpts().PrintEnabledExtensions);
+
+  // Infer the builtin include path if unspecified.
+  if (clang_instance->getHeaderSearchOpts().UseBuiltinIncludes &&
+      clang_instance->getHeaderSearchOpts().ResourceDir.empty()) {
+    clang_instance->getHeaderSearchOpts().ResourceDir =
+        installation_->clang_resource_path();
+  }
+
+  // Create the actual diagnostics engine.
+  clang_instance->createDiagnostics(*fs_);
+  if (!clang_instance->hasDiagnostics()) {
+    return EXIT_FAILURE;
+  }
+
+  // Now flush the buffered diagnostics into the Clang instance's diagnostic
+  // engine. If we've already hit an error, we can exit early once that's done.
+  diag_buffer.FlushDiagnostics(clang_instance->getDiagnostics());
+  if (!success) {
+    clang_instance->getDiagnosticClient().finish();
+    return EXIT_FAILURE;
+  }
+
+  // Execute the frontend actions.
+  {
+    llvm::TimeTraceScope time_scope("ExecuteCompiler");
+    bool time_passes = clang_instance->getCodeGenOpts().TimePasses;
+    if (time_passes) {
+      clang_instance->createFrontendTimer();
+    }
+    llvm::TimeRegion timer(time_passes ? &clang_instance->getFrontendTimer()
+                                       : nullptr);
+    success = clang::ExecuteCompilerInvocation(clang_instance.get());
+  }
+
+  // If any timers were active but haven't been destroyed yet, print their
+  // results now.  This happens in -disable-free mode.
+  std::unique_ptr<llvm::raw_ostream> io_file = llvm::CreateInfoOutputFile();
+  if (clang_instance->getCodeGenOpts().TimePassesJson) {
+    *io_file << "{\n";
+    llvm::TimerGroup::printAllJSONValues(*io_file, "");
+    *io_file << "\n}\n";
+  } else if (!clang_instance->getCodeGenOpts().TimePassesStatsFile) {
+    llvm::TimerGroup::printAll(*io_file);
+  }
+  llvm::TimerGroup::clearAll();
+
+  if (llvm::timeTraceProfilerEnabled()) {
+    // It is possible that the compiler instance doesn't own a file manager here
+    // if we're compiling a module unit. Since the file manager are owned by AST
+    // when we're compiling a module unit. So the file manager may be invalid
+    // here.
+    //
+    // It should be fine to create file manager here since the file system
+    // options are stored in the compiler invocation and we can recreate the VFS
+    // from the compiler invocation.
+    if (!clang_instance->hasFileManager()) {
+      clang_instance->createFileManager(fs_);
+    }
+
+    if (auto profiler_output = clang_instance->createOutputFile(
+            clang_instance->getFrontendOpts().TimeTracePath, /*Binary=*/false,
+            /*RemoveFileOnSignal=*/false,
+            /*useTemporary=*/false)) {
+      llvm::timeTraceProfilerWrite(*profiler_output);
+      profiler_output.reset();
+      llvm::timeTraceProfilerCleanup();
+      clang_instance->clearOutputFiles(false);
+    }
+  }
+
+  // When running with -disable-free, don't do any destruction or shutdown.
+  if (clang_instance->getFrontendOpts().DisableFree) {
+    llvm::BuryPointer(std::move(clang_instance));
+  }
+  return success ? EXIT_SUCCESS : EXIT_FAILURE;
 }
 
 auto ClangRunner::RunInternal(
@@ -250,12 +409,8 @@ auto ClangRunner::RunInternal(
 
   // Handle special dispatch for CC1 commands as they don't use the driver.
   if (!args.empty() && args[0].starts_with("-cc1")) {
-    CARBON_VLOG("Calling clang_main for cc1...");
-    // cstr_args[0] will be the `clang_path` so we don't need the prepend arg.
-    llvm::ToolContext tool_context = {
-        .Path = cstr_args[0], .PrependArg = "clang", .NeedsPrependArg = false};
-    int exit_code = clang_main(
-        cstr_args.size(), const_cast<char**>(cstr_args.data()), tool_context);
+    CARBON_VLOG("Calling Clang's CC1...");
+    int exit_code = RunCC1(cstr_args);
     // TODO: Should this be forwarding the full exit code?
     return exit_code == 0;
   }
@@ -273,8 +428,8 @@ auto ClangRunner::RunInternal(
   clang::TextDiagnosticPrinter diagnostic_client(llvm::errs(),
                                                  *diagnostic_options);
 
-  clang::DiagnosticsEngine diagnostics(diagnostic_ids_, *diagnostic_options,
-                                       &diagnostic_client,
+  clang::DiagnosticsEngine diagnostics(clang::DiagnosticIDs::create(),
+                                       *diagnostic_options, &diagnostic_client,
                                        /*ShouldOwnClient=*/false);
   clang::ProcessWarningOptions(diagnostics, *diagnostic_options, *fs_);
 
@@ -323,18 +478,8 @@ auto ClangRunner::RunInternal(
   //
   // Also note that we only do `-disable-free` filtering in the in-process
   // execution here, as subprocesses leaking memory won't impact this process.
-  auto cc1_main = [enable_leaking = enable_leaking_](
-                      llvm::SmallVectorImpl<const char*>& cc1_args) -> int {
-    if (!enable_leaking) {
-      // Last-flag wins, so this forcibly re-enables freeing memory.
-      cc1_args.push_back("-no-disable-free");
-    }
-
-    // cc1_args[0] will be the `clang_path` so we don't need the prepend arg.
-    llvm::ToolContext tool_context = {
-        .Path = cc1_args[0], .PrependArg = "clang", .NeedsPrependArg = false};
-    return clang_main(cc1_args.size(), const_cast<char**>(cc1_args.data()),
-                      tool_context);
+  auto cc1_main = [this](llvm::SmallVectorImpl<const char*>& cc1_args) -> int {
+    return RunCC1(cc1_args);
   };
   driver.CC1Main = cc1_main;
 
@@ -484,7 +629,8 @@ auto ClangRunner::BuildBuiltinsFile(llvm::StringRef target,
 auto ClangRunner::BuildBuiltinsLib(llvm::StringRef target,
                                    const llvm::Triple& target_triple,
                                    const std::filesystem::path& tmp_path,
-                                   Filesystem::DirRef lib_dir)
+                                   Filesystem::DirRef lib_dir,
+                                   llvm::ThreadPoolInterface& threads)
     -> ErrorOr<Success> {
   llvm::SmallVector<llvm::StringRef> src_files =
       CollectBuiltinsSrcFiles(target_triple);
@@ -492,8 +638,10 @@ auto ClangRunner::BuildBuiltinsLib(llvm::StringRef target,
   CARBON_ASSIGN_OR_RETURN(Filesystem::Dir tmp_dir,
                           Filesystem::Cwd().OpenDir(tmp_path));
 
-  llvm::SmallVector<llvm::NewArchiveMember> objs;
+  std::mutex mu;
+  llvm::SmallVector<llvm::NewArchiveMember, 0> objs;
   objs.reserve(src_files.size());
+  llvm::ThreadPoolTaskGroup member_group(threads);
   for (llvm::StringRef src_file : src_files) {
     // Create any subdirectories needed for this file.
     std::filesystem::path src_path = src_file.str();
@@ -501,16 +649,20 @@ auto ClangRunner::BuildBuiltinsLib(llvm::StringRef target,
       CARBON_RETURN_IF_ERROR(tmp_dir.CreateDirectories(src_path.parent_path()));
     }
 
-    std::filesystem::path obj_path = tmp_path / std::string_view(src_file);
-    obj_path += ".o";
-    BuildBuiltinsFile(target, src_file, obj_path);
+    member_group.async([this, target, src_file, &mu, &objs, &tmp_path] {
+      std::filesystem::path obj_path = tmp_path / std::string_view(src_file);
+      obj_path += ".o";
+      BuildBuiltinsFile(target, src_file, obj_path);
 
-    llvm::Expected<llvm::NewArchiveMember> obj =
-        llvm::NewArchiveMember::getFile(obj_path.native(),
-                                        /*Deterministic=*/true);
-    CARBON_CHECK(obj, "TODO: Diagnose this: {0}",
-                 llvm::fmt_consume(obj.takeError()));
-    objs.push_back(std::move(*obj));
+      auto obj_result = llvm::NewArchiveMember::getFile(obj_path.native(),
+                                                        /*Deterministic=*/true);
+      CARBON_CHECK(obj_result, "TODO: Diagnose this: {0}",
+                   llvm::fmt_consume(obj_result.takeError()));
+      {
+        std::scoped_lock lock(mu);
+        objs.push_back(std::move(*obj_result));
+      }
+    });
   }
 
   // Now build an archive out of the `.o` files for the builtins. Note that we
@@ -522,7 +674,7 @@ auto ClangRunner::BuildBuiltinsLib(llvm::StringRef target,
       lib_dir.OpenWriteOnly(builtins_a_path, Filesystem::CreateAlways));
   {
     llvm::raw_fd_ostream builtins_a_os = builtins_a_file.WriteStream();
-
+    member_group.wait();
     llvm::Error archive_err = llvm::writeArchiveToStream(
         builtins_a_os, objs, llvm::SymtabWritingMode::NormalSymtab,
         target_triple.isOSDarwin() ? llvm::object::Archive::K_DARWIN
@@ -534,7 +686,6 @@ auto ClangRunner::BuildBuiltinsLib(llvm::StringRef target,
     }
   }
   CARBON_RETURN_IF_ERROR(std::move(builtins_a_file).Close());
-
   return Success();
 }
 

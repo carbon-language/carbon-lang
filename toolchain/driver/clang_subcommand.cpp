@@ -72,7 +72,8 @@ auto ClangSubcommand::Run(DriverEnv& driver_env) -> DriverResult {
   ClangRunner runner(
       driver_env.installation, &driver_env.runtimes_cache, driver_env.fs,
       driver_env.vlog_stream,
-      /*build_runtimes_on_demand=*/options_.build_runtimes_on_demand);
+      /*build_runtimes_on_demand=*/options_.build_runtimes_on_demand,
+      driver_env.thread_pool);
 
   // Don't run Clang when fuzzing, it is known to not be reliable under fuzzing
   // due to many unfixed issues.

@@ -92,7 +92,8 @@ auto BuildRuntimesSubcommand::RunInternal(DriverEnv& driver_env)
                : Runtimes::Make(explicit_output_path, driver_env.vlog_stream));
   CARBON_ASSIGN_OR_RETURN(auto tmp_dir, Filesystem::MakeTmpDir());
 
-  return runner.BuildTargetResourceDir(features, runtimes, tmp_dir.abs_path());
+  return runner.BuildTargetResourceDir(features, runtimes, tmp_dir.abs_path(),
+                                       *driver_env.thread_pool);
 }
 
 }  // namespace Carbon
