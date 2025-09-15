@@ -8,8 +8,9 @@
 
 namespace Carbon::SemIR {
 
-CARBON_DEFINE_ENUM_MASK_NAMES(BuiltinConstraintMask) = {
-    CARBON_BUILTIN_CONSTRAINT_MASK(CARBON_ENUM_MASK_NAME_STRING)};
+CARBON_DEFINE_ENUM_MASK_NAMES(BuiltinConstraintMask) {
+  CARBON_BUILTIN_CONSTRAINT_MASK(CARBON_ENUM_MASK_NAME_STRING)
+};
 
 template <typename VecT, typename CompareT>
 static auto SortAndDeduplicate(VecT& vec, CompareT compare) -> void {

@@ -5,7 +5,6 @@
 #ifndef CARBON_TOOLCHAIN_SEM_IR_FUNCTION_H_
 #define CARBON_TOOLCHAIN_SEM_IR_FUNCTION_H_
 
-#include "clang/AST/Decl.h"
 #include "toolchain/base/value_store.h"
 #include "toolchain/sem_ir/builtin_function_kind.h"
 #include "toolchain/sem_ir/clang_decl.h"
@@ -27,7 +26,7 @@ struct FunctionFields {
   };
 
   // Kinds of virtual modifiers that can apply to functions.
-  enum class VirtualModifier : uint8_t { None, Virtual, Abstract, Impl };
+  enum class VirtualModifier : uint8_t { None, Virtual, Abstract, Override };
 
   // The following members always have values, and do not change throughout the
   // lifetime of the function.
@@ -200,6 +199,9 @@ struct CalleeFunction : public Printable<CalleeFunction> {
   InstId self_id;
   // True if an error instruction was found.
   bool is_error;
+  // True if the function is a C++ overload set.
+  // TODO: Store the CppOverloadSetId instead of a bool.
+  bool is_cpp_overload_set;
 
   auto Print(llvm::raw_ostream& out) const -> void {
     out << "{function_id: " << function_id

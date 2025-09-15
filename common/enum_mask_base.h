@@ -13,6 +13,8 @@
 namespace Carbon::Internal {
 
 // CRTP-style base class similar to `EnumBase`, but supporting mask enums.
+// Enumerator values are consecutive bit shifts (1 << 0, 1 << 1, 1 << 2, 1 << 3,
+// ...).
 //
 // Users must be in the `Carbon` namespace and should look like the following.
 //
@@ -24,7 +26,7 @@ namespace Carbon::Internal {
 //       X(Enumerator3)        \
 //       ...
 //
-//   CARBON_DEFINE_RAW_ENUM_MASK(MyKind) {
+//   CARBON_DEFINE_RAW_ENUM_MASK(MyKind, uint32_t) {
 //     CARBON_MY_KIND(CARBON_RAW_ENUM_MASK_ENUMERATOR)
 //   };
 //
@@ -43,8 +45,9 @@ namespace Carbon::Internal {
 //
 // In `my_kind.cpp`:
 //   ```
-//   CARBON_DEFINE_ENUM_MASK_NAMES(MyKind) = {
-//       CARBON_MY_KIND(CARBON_ENUM_MASK_NAME_STRING)};
+//   CARBON_DEFINE_ENUM_MASK_NAMES(MyKind) {
+//     CARBON_MY_KIND(CARBON_ENUM_MASK_NAME_STRING)
+//   };
 //   ```
 template <typename DerivedT, typename EnumT, const llvm::StringLiteral Names[]>
 class EnumMaskBase : public EnumBase<DerivedT, EnumT, Names> {
@@ -67,6 +70,8 @@ class EnumMaskBase : public EnumBase<DerivedT, EnumT, Names> {
   // Removes entries from the mask.
   auto Remove(DerivedT other) -> void { *this = *this & ~other; }
 
+  constexpr auto empty() const -> bool { return this->AsInt() == 0; }
+
   constexpr auto operator|(DerivedT other) const -> DerivedT {
     return DerivedT::FromInt(this->AsInt() | other.AsInt());
   }
@@ -79,21 +84,9 @@ class EnumMaskBase : public EnumBase<DerivedT, EnumT, Names> {
     return DerivedT::FromInt(~this->AsInt());
   }
 
-  constexpr auto empty() const -> bool { return this->AsInt() == 0; }
-
-  // Returns the name of this value. Requires it to be a single value, not
-  // combined.
-  //
-  // This method will be automatically defined using the static `names` string
-  // table in the base class, which is in turn will be populated for each
-  // derived type using the macro helpers in this file.
-  //
-  // This shadows EnumBase::name.
-  auto name() const -> llvm::StringRef {
-    CARBON_CHECK(std::has_single_bit(this->AsInt()), "Not a single bit: {0}",
-                 this->AsInt());
-    return Names[std::bit_width(this->AsInt())];
-  }
+  // Use `Print` for mask entries. This hides `EnumBase::name`; it's not
+  // compatible with `EnumMaskBase`.
+  auto name() const -> llvm::StringRef = delete;
 
   // Prints this value as a `|`-separated list of mask entries, or `None`.
   //
@@ -119,9 +112,9 @@ constexpr const DerivedT& EnumMaskBase<DerivedT, EnumT, Names>::None =
 
 }  // namespace Carbon::Internal
 
-// Use this before defining a class that derives from `EnumBase` to begin the
-// definition of the raw `enum class`. It should be followed by the body of that
-// raw enum class.
+// Use this before defining a class that derives from `EnumMaskBase` to begin
+// the definition of the raw `enum class`. It should be followed by the body of
+// that raw enum class.
 #define CARBON_DEFINE_RAW_ENUM_MASK(EnumMaskName, UnderlyingType)              \
   namespace Internal {                                                         \
   struct EnumMaskName##Data {                                                  \

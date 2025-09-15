@@ -5,6 +5,7 @@
 #ifndef CARBON_COMMON_ENUM_BASE_H_
 #define CARBON_COMMON_ENUM_BASE_H_
 
+#include <compare>
 #include <type_traits>
 
 #include "common/ostream.h"
@@ -53,7 +54,7 @@ namespace Carbon::Internal {
 //
 // In `my_kind.cpp`:
 //   ```
-//   CARBON_DEFINE_ENUM_CLASS_NAMES(MyKind) = {
+//   CARBON_DEFINE_ENUM_CLASS_NAMES(MyKind) {
 //   #define CARBON_MY_KIND(Name) CARBON_ENUM_CLASS_NAME_STRING(Name)
 //   #include ".../my_kind.def"
 //   };
@@ -129,14 +130,18 @@ class EnumBase : public Printable<DerivedT> {
   explicit operator bool() const = delete;
 
   // Returns the name of this value.
-  //
-  // This method will be automatically defined using the static `names` string
-  // table in the base class, which is in turn will be populated for each
-  // derived type using the macro helpers in this file.
   auto name() const -> llvm::StringRef { return Names[AsInt()]; }
 
   // Prints this value using its name.
   auto Print(llvm::raw_ostream& out) const -> void { out << name(); }
+
+  // Don't support comparison of enums by default.
+  friend auto operator<(DerivedT lhs, DerivedT rhs) -> bool = delete;
+  friend auto operator<=(DerivedT lhs, DerivedT rhs) -> bool = delete;
+  friend auto operator>(DerivedT lhs, DerivedT rhs) -> bool = delete;
+  friend auto operator>=(DerivedT lhs, DerivedT rhs) -> bool = delete;
+  friend auto operator<=>(DerivedT lhs, DerivedT rhs)
+      -> std::partial_ordering = delete;
 
  protected:
   // The default constructor is explicitly defaulted (and constexpr) as a
@@ -215,7 +220,7 @@ class EnumBase : public Printable<DerivedT> {
 // `clang-format` has a bug with spacing around `->` returns in macros. See
 // https://bugs.llvm.org/show_bug.cgi?id=48320 for details.
 #define CARBON_DEFINE_ENUM_CLASS_NAMES(EnumClassName) \
-  constexpr llvm::StringLiteral Internal::EnumClassName##Data::Names[]
+  constexpr llvm::StringLiteral Internal::EnumClassName##Data::Names[] =
 
 // Use this within the names array initializer to generate a string for each
 // name.

@@ -8,7 +8,8 @@
 
 namespace Carbon::Parse {
 
-CARBON_DEFINE_ENUM_MASK_NAMES(NodeCategory) = {
-    CARBON_NODE_CATEGORY(CARBON_ENUM_MASK_NAME_STRING)};
+CARBON_DEFINE_ENUM_MASK_NAMES(NodeCategory) {
+  CARBON_NODE_CATEGORY(CARBON_ENUM_MASK_NAME_STRING)
+};
 
 }  // namespace Carbon::Parse

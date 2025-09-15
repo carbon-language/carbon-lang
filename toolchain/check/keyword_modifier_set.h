@@ -38,6 +38,7 @@ enum class ModifierOrder : int8_t { Access, Extern, Extend, Decl, Last = Decl };
   X(Export)                                                                  \
   X(Final)                                                                   \
   X(Impl)                                                                    \
+  X(Override)                                                                \
   X(Returned)                                                                \
   X(Virtual)
 
@@ -113,11 +114,11 @@ CARBON_KEYWORD_MODIFIER_SET(CARBON_KEYWORD_MODIFIER_SET_WITH_TYPE)
 
 constexpr KeywordModifierSet KeywordModifierSet::Access(Private | Protected);
 constexpr KeywordModifierSet KeywordModifierSet::Class(Abstract | Base);
-constexpr KeywordModifierSet KeywordModifierSet::Method(Abstract | Impl |
+constexpr KeywordModifierSet KeywordModifierSet::Method(Abstract | Override |
                                                         Virtual);
 constexpr KeywordModifierSet KeywordModifierSet::ImplDecl(Extend | Final);
 constexpr KeywordModifierSet KeywordModifierSet::Interface(Default | Final);
-constexpr KeywordModifierSet KeywordModifierSet::Decl(Class | Method |
+constexpr KeywordModifierSet KeywordModifierSet::Decl(Class | Method | Impl |
                                                       Interface | Export |
                                                       Returned);
 

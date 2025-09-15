@@ -23,8 +23,9 @@
 
 namespace Carbon::Check {
 
-CARBON_DEFINE_ENUM_MASK_NAMES(DependentInstKind) = {
-    CARBON_DEPENDENT_INST_KIND(CARBON_ENUM_MASK_NAME_STRING)};
+CARBON_DEFINE_ENUM_MASK_NAMES(DependentInstKind) {
+  CARBON_DEPENDENT_INST_KIND(CARBON_ENUM_MASK_NAME_STRING)
+};
 
 static auto MakeSelfSpecificId(Context& context, SemIR::GenericId generic_id)
     -> SemIR::SpecificId;

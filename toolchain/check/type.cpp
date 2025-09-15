@@ -170,6 +170,13 @@ auto GetClassType(Context& context, SemIR::ClassId class_id,
   return GetTypeImpl<SemIR::ClassType>(context, class_id, specific_id);
 }
 
+auto GetCppOverloadSetType(Context& context,
+                           SemIR::CppOverloadSetId overload_set_id,
+                           SemIR::SpecificId specific_id) -> SemIR::TypeId {
+  return GetCompleteTypeImpl<SemIR::CppOverloadSetType>(
+      context, overload_set_id, specific_id);
+}
+
 auto GetFunctionType(Context& context, SemIR::FunctionId fn_id,
                      SemIR::SpecificId specific_id) -> SemIR::TypeId {
   return GetCompleteTypeImpl<SemIR::FunctionType>(context, fn_id, specific_id);

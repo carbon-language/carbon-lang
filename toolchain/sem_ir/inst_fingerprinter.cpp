@@ -15,6 +15,7 @@
 #include "llvm/ADT/StableHashing.h"
 #include "toolchain/base/fixed_size_value_store.h"
 #include "toolchain/base/value_ids.h"
+#include "toolchain/sem_ir/cpp_overload_set.h"
 #include "toolchain/sem_ir/entity_with_params_base.h"
 #include "toolchain/sem_ir/ids.h"
 #include "toolchain/sem_ir/typed_insts.h"
@@ -208,6 +209,17 @@ struct Worklist {
 
   auto Add(FunctionId function_id) -> void {
     AddEntity(sem_ir->functions().Get(function_id));
+  }
+
+  auto Add(CppOverloadSetId cpp_overload_set_id) -> void {
+    CppOverloadSet cpp_overload_set =
+        sem_ir->cpp_overload_sets().Get(cpp_overload_set_id);
+    Add(cpp_overload_set.name_id);
+    if (cpp_overload_set.parent_scope_id.has_value()) {
+      Add(sem_ir->name_scopes()
+              .Get(cpp_overload_set.parent_scope_id)
+              .inst_id());
+    }
   }
 
   auto Add(ClassId class_id) -> void {

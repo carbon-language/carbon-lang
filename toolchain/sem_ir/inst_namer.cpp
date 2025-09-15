@@ -140,6 +140,9 @@ auto InstNamer::GetScopeIdOffset(ScopeIdTypeEnum id_enum) const -> int {
     case ScopeIdTypeEnum::For<VtableId>:
       offset += sem_ir_->functions().size();
       [[fallthrough]];
+    case ScopeIdTypeEnum::For<CppOverloadSetId>:
+      offset += sem_ir_->cpp_overload_sets().size();
+      [[fallthrough]];
     case ScopeIdTypeEnum::For<FunctionId>:
       offset += sem_ir_->impls().size();
       [[fallthrough]];

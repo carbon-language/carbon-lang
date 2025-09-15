@@ -82,23 +82,26 @@ fn MyF() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [concrete]
+// CHECK:STDOUT:   %.c5d: type = cpp_overload_set_type @foo [concrete]
+// CHECK:STDOUT:   %empty_struct: %.c5d = struct_value () [concrete]
 // CHECK:STDOUT:   %foo.type: type = fn_type @foo [concrete]
 // CHECK:STDOUT:   %foo: %foo.type = struct_value () [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT:   %Cpp: <namespace> = namespace file.%Cpp.import_cpp, [concrete] {
-// CHECK:STDOUT:     .foo = %foo.decl
+// CHECK:STDOUT:     .foo = %.a21
 // CHECK:STDOUT:     import Cpp//...
 // CHECK:STDOUT:   }
+// CHECK:STDOUT:   %.a21: %.c5d = cpp_overload_set_value @foo [concrete = constants.%empty_struct]
 // CHECK:STDOUT:   %foo.decl: %foo.type = fn_decl @foo [concrete = constants.%foo] {} {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @MyF() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %Cpp.ref: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
-// CHECK:STDOUT:   %foo.ref: %foo.type = name_ref foo, imports.%foo.decl [concrete = constants.%foo]
-// CHECK:STDOUT:   %foo.call: init %empty_tuple.type = call %foo.ref()
+// CHECK:STDOUT:   %foo.ref: %.c5d = name_ref foo, imports.%.a21 [concrete = constants.%empty_struct]
+// CHECK:STDOUT:   %foo.call: init %empty_tuple.type = call imports.%foo.decl()
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -106,26 +109,29 @@ fn MyF() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [concrete]
+// CHECK:STDOUT:   %.c5d: type = cpp_overload_set_type @foo [concrete]
+// CHECK:STDOUT:   %empty_struct: %.c5d = struct_value () [concrete]
 // CHECK:STDOUT:   %foo.type: type = fn_type @foo [concrete]
 // CHECK:STDOUT:   %foo: %foo.type = struct_value () [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT:   %Cpp: <namespace> = namespace file.%Cpp.import_cpp, [concrete] {
-// CHECK:STDOUT:     .foo = %foo.decl
+// CHECK:STDOUT:     .foo = %.a21
 // CHECK:STDOUT:     import Cpp//...
 // CHECK:STDOUT:   }
+// CHECK:STDOUT:   %.a21: %.c5d = cpp_overload_set_value @foo [concrete = constants.%empty_struct]
 // CHECK:STDOUT:   %foo.decl: %foo.type = fn_decl @foo [concrete = constants.%foo] {} {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @MyF() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %Cpp.ref.loc9: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
-// CHECK:STDOUT:   %foo.ref.loc9: %foo.type = name_ref foo, imports.%foo.decl [concrete = constants.%foo]
-// CHECK:STDOUT:   %foo.call.loc9: init %empty_tuple.type = call %foo.ref.loc9()
+// CHECK:STDOUT:   %foo.ref.loc9: %.c5d = name_ref foo, imports.%.a21 [concrete = constants.%empty_struct]
+// CHECK:STDOUT:   %foo.call.loc9: init %empty_tuple.type = call imports.%foo.decl()
 // CHECK:STDOUT:   %Cpp.ref.loc12: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
-// CHECK:STDOUT:   %foo.ref.loc12: %foo.type = name_ref foo, imports.%foo.decl [concrete = constants.%foo]
-// CHECK:STDOUT:   %foo.call.loc12: init %empty_tuple.type = call %foo.ref.loc12()
+// CHECK:STDOUT:   %foo.ref.loc12: %.c5d = name_ref foo, imports.%.a21 [concrete = constants.%empty_struct]
+// CHECK:STDOUT:   %foo.call.loc12: init %empty_tuple.type = call imports.%foo.decl()
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -137,9 +143,11 @@ fn MyF() {
 // CHECK:STDOUT:   %N: Core.IntLiteral = bind_symbolic_name N, 0 [symbolic]
 // CHECK:STDOUT:   %i32: type = class_type @Int, @Int(%int_32) [concrete]
 // CHECK:STDOUT:   %pattern_type.7ce: type = pattern_type %i32 [concrete]
+// CHECK:STDOUT:   %.fef: type = cpp_overload_set_type @Int.as.ImplicitAs.impl.Convert [concrete]
+// CHECK:STDOUT:   %empty_struct.e92: %.fef = struct_value () [concrete]
+// CHECK:STDOUT:   %int_1.5b8: Core.IntLiteral = int_value 1 [concrete]
 // CHECK:STDOUT:   %WithoutThunk.type: type = fn_type @WithoutThunk [concrete]
 // CHECK:STDOUT:   %WithoutThunk: %WithoutThunk.type = struct_value () [concrete]
-// CHECK:STDOUT:   %int_1.5b8: Core.IntLiteral = int_value 1 [concrete]
 // CHECK:STDOUT:   %ImplicitAs.type.d14: type = facet_type <@ImplicitAs, @ImplicitAs(%i32)> [concrete]
 // CHECK:STDOUT:   %ImplicitAs.Convert.type.1b6: type = fn_type @ImplicitAs.Convert, @ImplicitAs(%i32) [concrete]
 // CHECK:STDOUT:   %To: Core.IntLiteral = bind_symbolic_name To, 0 [symbolic]
@@ -154,11 +162,11 @@ fn MyF() {
 // CHECK:STDOUT:   %Core.IntLiteral.as.ImplicitAs.impl.Convert.specific_fn.a29: <specific function> = specific_function %Core.IntLiteral.as.ImplicitAs.impl.Convert.0f0, @Core.IntLiteral.as.ImplicitAs.impl.Convert(%int_32) [concrete]
 // CHECK:STDOUT:   %bound_method.c11: <bound method> = bound_method %int_1.5b8, %Core.IntLiteral.as.ImplicitAs.impl.Convert.specific_fn.a29 [concrete]
 // CHECK:STDOUT:   %int_1.5d2: %i32 = int_value 1 [concrete]
+// CHECK:STDOUT:   %.281: type = cpp_overload_set_type @ThunkOnArg [concrete]
+// CHECK:STDOUT:   %empty_struct.a11: %.281 = struct_value () [concrete]
 // CHECK:STDOUT:   %int_16: Core.IntLiteral = int_value 16 [concrete]
 // CHECK:STDOUT:   %i16: type = class_type @Int, @Int(%int_16) [concrete]
 // CHECK:STDOUT:   %pattern_type.2f8: type = pattern_type %i16 [concrete]
-// CHECK:STDOUT:   %ThunkOnArg.type: type = fn_type @ThunkOnArg [concrete]
-// CHECK:STDOUT:   %ThunkOnArg: %ThunkOnArg.type = struct_value () [concrete]
 // CHECK:STDOUT:   %ptr.251: type = ptr_type %i16 [concrete]
 // CHECK:STDOUT:   %ThunkOnArg__carbon_thunk.type: type = fn_type @ThunkOnArg__carbon_thunk [concrete]
 // CHECK:STDOUT:   %ThunkOnArg__carbon_thunk: %ThunkOnArg__carbon_thunk.type = struct_value () [concrete]
@@ -185,12 +193,12 @@ fn MyF() {
 // CHECK:STDOUT:   %Int.as.Copy.impl.Op.bound: <bound method> = bound_method %int_1.f90, %Int.as.Copy.impl.Op.3dc [concrete]
 // CHECK:STDOUT:   %Int.as.Copy.impl.Op.specific_fn: <specific function> = specific_function %Int.as.Copy.impl.Op.3dc, @Int.as.Copy.impl.Op(%int_16) [concrete]
 // CHECK:STDOUT:   %bound_method.7c2: <bound method> = bound_method %int_1.f90, %Int.as.Copy.impl.Op.specific_fn [concrete]
-// CHECK:STDOUT:   %ThunkOnReturn.type: type = fn_type @ThunkOnReturn [concrete]
-// CHECK:STDOUT:   %ThunkOnReturn: %ThunkOnReturn.type = struct_value () [concrete]
+// CHECK:STDOUT:   %.3ed: type = cpp_overload_set_type @ThunkOnArg__carbon_thunk [concrete]
+// CHECK:STDOUT:   %empty_struct.232: %.3ed = struct_value () [concrete]
 // CHECK:STDOUT:   %ThunkOnReturn__carbon_thunk.type: type = fn_type @ThunkOnReturn__carbon_thunk [concrete]
 // CHECK:STDOUT:   %ThunkOnReturn__carbon_thunk: %ThunkOnReturn__carbon_thunk.type = struct_value () [concrete]
-// CHECK:STDOUT:   %ThunkOnBoth.type: type = fn_type @ThunkOnBoth [concrete]
-// CHECK:STDOUT:   %ThunkOnBoth: %ThunkOnBoth.type = struct_value () [concrete]
+// CHECK:STDOUT:   %.a8c: type = cpp_overload_set_type @Copy.Op [concrete]
+// CHECK:STDOUT:   %empty_struct.258: %.a8c = struct_value () [concrete]
 // CHECK:STDOUT:   %ThunkOnBoth__carbon_thunk.type: type = fn_type @ThunkOnBoth__carbon_thunk [concrete]
 // CHECK:STDOUT:   %ThunkOnBoth__carbon_thunk: %ThunkOnBoth__carbon_thunk.type = struct_value () [concrete]
 // CHECK:STDOUT:   %Int.as.Destroy.impl.Op.type.038: type = fn_type @Int.as.Destroy.impl.Op, @Int.as.Destroy.impl(%int_16) [concrete]
@@ -199,12 +207,13 @@ fn MyF() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT:   %Cpp: <namespace> = namespace file.%Cpp.import_cpp, [concrete] {
-// CHECK:STDOUT:     .WithoutThunk = %WithoutThunk.decl
-// CHECK:STDOUT:     .ThunkOnArg = %ThunkOnArg.decl
-// CHECK:STDOUT:     .ThunkOnReturn = %ThunkOnReturn.decl
-// CHECK:STDOUT:     .ThunkOnBoth = %ThunkOnBoth.decl
+// CHECK:STDOUT:     .WithoutThunk = %.1bd
+// CHECK:STDOUT:     .ThunkOnArg = %.c9b
+// CHECK:STDOUT:     .ThunkOnReturn = %.d87
+// CHECK:STDOUT:     .ThunkOnBoth = %.db9
 // CHECK:STDOUT:     import Cpp//...
 // CHECK:STDOUT:   }
+// CHECK:STDOUT:   %.1bd: %.fef = cpp_overload_set_value @Int.as.ImplicitAs.impl.Convert [concrete = constants.%empty_struct.e92]
 // CHECK:STDOUT:   %WithoutThunk.decl: %WithoutThunk.type = fn_decl @WithoutThunk [concrete = constants.%WithoutThunk] {
 // CHECK:STDOUT:     <elided>
 // CHECK:STDOUT:   } {
@@ -212,11 +221,7 @@ fn MyF() {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import_ref.ee7: @Core.IntLiteral.as.ImplicitAs.impl.%Core.IntLiteral.as.ImplicitAs.impl.Convert.type (%Core.IntLiteral.as.ImplicitAs.impl.Convert.type.340) = import_ref Core//prelude/parts/int, loc23_39, loaded [symbolic = @Core.IntLiteral.as.ImplicitAs.impl.%Core.IntLiteral.as.ImplicitAs.impl.Convert (constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.1c0)]
 // CHECK:STDOUT:   %ImplicitAs.impl_witness_table.9e9 = impl_witness_table (%Core.import_ref.ee7), @Core.IntLiteral.as.ImplicitAs.impl [concrete]
-// CHECK:STDOUT:   %ThunkOnArg.decl: %ThunkOnArg.type = fn_decl @ThunkOnArg [concrete = constants.%ThunkOnArg] {
-// CHECK:STDOUT:     <elided>
-// CHECK:STDOUT:   } {
-// CHECK:STDOUT:     <elided>
-// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %.c9b: %.281 = cpp_overload_set_value @ThunkOnArg [concrete = constants.%empty_struct.a11]
 // CHECK:STDOUT:   %ThunkOnArg__carbon_thunk.decl: %ThunkOnArg__carbon_thunk.type = fn_decl @ThunkOnArg__carbon_thunk [concrete = constants.%ThunkOnArg__carbon_thunk] {
 // CHECK:STDOUT:     <elided>
 // CHECK:STDOUT:   } {
@@ -224,21 +229,13 @@ fn MyF() {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import_ref.d0f6: @Int.as.Copy.impl.%Int.as.Copy.impl.Op.type (%Int.as.Copy.impl.Op.type.afd) = import_ref Core//prelude/parts/int, loc17_31, loaded [symbolic = @Int.as.Copy.impl.%Int.as.Copy.impl.Op (constants.%Int.as.Copy.impl.Op.6cd)]
 // CHECK:STDOUT:   %Copy.impl_witness_table.1ed = impl_witness_table (%Core.import_ref.d0f6), @Int.as.Copy.impl [concrete]
-// CHECK:STDOUT:   %ThunkOnReturn.decl: %ThunkOnReturn.type = fn_decl @ThunkOnReturn [concrete = constants.%ThunkOnReturn] {
-// CHECK:STDOUT:     <elided>
-// CHECK:STDOUT:   } {
-// CHECK:STDOUT:     <elided>
-// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %.d87: %.3ed = cpp_overload_set_value @ThunkOnArg__carbon_thunk [concrete = constants.%empty_struct.232]
 // CHECK:STDOUT:   %ThunkOnReturn__carbon_thunk.decl: %ThunkOnReturn__carbon_thunk.type = fn_decl @ThunkOnReturn__carbon_thunk [concrete = constants.%ThunkOnReturn__carbon_thunk] {
 // CHECK:STDOUT:     <elided>
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     <elided>
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %ThunkOnBoth.decl: %ThunkOnBoth.type = fn_decl @ThunkOnBoth [concrete = constants.%ThunkOnBoth] {
-// CHECK:STDOUT:     <elided>
-// CHECK:STDOUT:   } {
-// CHECK:STDOUT:     <elided>
-// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %.db9: %.a8c = cpp_overload_set_value @Copy.Op [concrete = constants.%empty_struct.258]
 // CHECK:STDOUT:   %ThunkOnBoth__carbon_thunk.decl: %ThunkOnBoth__carbon_thunk.type = fn_decl @ThunkOnBoth__carbon_thunk [concrete = constants.%ThunkOnBoth__carbon_thunk] {
 // CHECK:STDOUT:     <elided>
 // CHECK:STDOUT:   } {
@@ -252,7 +249,7 @@ fn MyF() {
 // CHECK:STDOUT:     %r1.patt: %pattern_type.7ce = binding_pattern r1 [concrete]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Cpp.ref.loc13: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
-// CHECK:STDOUT:   %WithoutThunk.ref: %WithoutThunk.type = name_ref WithoutThunk, imports.%WithoutThunk.decl [concrete = constants.%WithoutThunk]
+// CHECK:STDOUT:   %WithoutThunk.ref: %.fef = name_ref WithoutThunk, imports.%.1bd [concrete = constants.%empty_struct.e92]
 // CHECK:STDOUT:   %int_1.loc13: Core.IntLiteral = int_value 1 [concrete = constants.%int_1.5b8]
 // CHECK:STDOUT:   %impl.elem0.loc13: %.1df = impl_witness_access constants.%ImplicitAs.impl_witness.204, element0 [concrete = constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.0f0]
 // CHECK:STDOUT:   %bound_method.loc13_34.1: <bound method> = bound_method %int_1.loc13, %impl.elem0.loc13 [concrete = constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.bound.abf]
@@ -261,7 +258,7 @@ fn MyF() {
 // CHECK:STDOUT:   %Core.IntLiteral.as.ImplicitAs.impl.Convert.call.loc13: init %i32 = call %bound_method.loc13_34.2(%int_1.loc13) [concrete = constants.%int_1.5d2]
 // CHECK:STDOUT:   %.loc13_34.1: %i32 = value_of_initializer %Core.IntLiteral.as.ImplicitAs.impl.Convert.call.loc13 [concrete = constants.%int_1.5d2]
 // CHECK:STDOUT:   %.loc13_34.2: %i32 = converted %int_1.loc13, %.loc13_34.1 [concrete = constants.%int_1.5d2]
-// CHECK:STDOUT:   %WithoutThunk.call: init %i32 = call %WithoutThunk.ref(%.loc13_34.2)
+// CHECK:STDOUT:   %WithoutThunk.call: init %i32 = call imports.%WithoutThunk.decl(%.loc13_34.2)
 // CHECK:STDOUT:   %.loc13_11: type = splice_block %i32.loc13 [concrete = constants.%i32] {
 // CHECK:STDOUT:     %int_32.loc13: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
 // CHECK:STDOUT:     %i32.loc13: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
@@ -273,7 +270,7 @@ fn MyF() {
 // CHECK:STDOUT:     %r2.patt: %pattern_type.7ce = binding_pattern r2 [concrete]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Cpp.ref.loc14: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
-// CHECK:STDOUT:   %ThunkOnArg.ref: %ThunkOnArg.type = name_ref ThunkOnArg, imports.%ThunkOnArg.decl [concrete = constants.%ThunkOnArg]
+// CHECK:STDOUT:   %ThunkOnArg.ref: %.281 = name_ref ThunkOnArg, imports.%.c9b [concrete = constants.%empty_struct.a11]
 // CHECK:STDOUT:   %int_1.loc14: Core.IntLiteral = int_value 1 [concrete = constants.%int_1.5b8]
 // CHECK:STDOUT:   %impl.elem0.loc14_32.1: %.ee2 = impl_witness_access constants.%ImplicitAs.impl_witness.ed0, element0 [concrete = constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.4eb]
 // CHECK:STDOUT:   %bound_method.loc14_32.1: <bound method> = bound_method %int_1.loc14, %impl.elem0.loc14_32.1 [concrete = constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.bound.c97]
@@ -302,7 +299,7 @@ fn MyF() {
 // CHECK:STDOUT:     %r3.patt: %pattern_type.2f8 = binding_pattern r3 [concrete]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Cpp.ref.loc15: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
-// CHECK:STDOUT:   %ThunkOnReturn.ref: %ThunkOnReturn.type = name_ref ThunkOnReturn, imports.%ThunkOnReturn.decl [concrete = constants.%ThunkOnReturn]
+// CHECK:STDOUT:   %ThunkOnReturn.ref: %.3ed = name_ref ThunkOnReturn, imports.%.d87 [concrete = constants.%empty_struct.232]
 // CHECK:STDOUT:   %int_1.loc15: Core.IntLiteral = int_value 1 [concrete = constants.%int_1.5b8]
 // CHECK:STDOUT:   %impl.elem0.loc15: %.1df = impl_witness_access constants.%ImplicitAs.impl_witness.204, element0 [concrete = constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.0f0]
 // CHECK:STDOUT:   %bound_method.loc15_35.1: <bound method> = bound_method %int_1.loc15, %impl.elem0.loc15 [concrete = constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.bound.abf]
@@ -326,7 +323,7 @@ fn MyF() {
 // CHECK:STDOUT:     %r4.patt: %pattern_type.2f8 = binding_pattern r4 [concrete]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Cpp.ref.loc16: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
-// CHECK:STDOUT:   %ThunkOnBoth.ref: %ThunkOnBoth.type = name_ref ThunkOnBoth, imports.%ThunkOnBoth.decl [concrete = constants.%ThunkOnBoth]
+// CHECK:STDOUT:   %ThunkOnBoth.ref: %.a8c = name_ref ThunkOnBoth, imports.%.db9 [concrete = constants.%empty_struct.258]
 // CHECK:STDOUT:   %int_1.loc16: Core.IntLiteral = int_value 1 [concrete = constants.%int_1.5b8]
 // CHECK:STDOUT:   %impl.elem0.loc16_33.1: %.ee2 = impl_witness_access constants.%ImplicitAs.impl_witness.ed0, element0 [concrete = constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.4eb]
 // CHECK:STDOUT:   %bound_method.loc16_33.1: <bound method> = bound_method %int_1.loc16, %impl.elem0.loc16_33.1 [concrete = constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.bound.c97]

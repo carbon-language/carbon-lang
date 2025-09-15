@@ -34,7 +34,7 @@ import Modifiers;
 
 class Derived {
   extend base: Modifiers.Base;
-  impl fn H[self: Self]();
+  override fn H[self: Self]();
 }
 
 fn Use() {
@@ -72,7 +72,7 @@ abstract class A1 {
 
 abstract class A2 {
   extend base: A1;
-  impl fn F[self: Self]();
+  override fn F[self: Self]();
 }
 
 // --- impl_base.carbon
@@ -85,12 +85,12 @@ base class B1 {
 
 base class B2 {
   extend base: B1;
-  impl fn F[self: Self]();
+  override fn F[self: Self]();
 }
 
 class C {
   extend base: B2;
-  impl fn F[self: Self]();
+  override fn F[self: Self]();
 }
 
 fn Use() {
@@ -104,11 +104,11 @@ fn Use() {
 library "[[@TEST_NAME]]";
 
 class C {
-  // CHECK:STDERR: fail_modifiers.carbon:[[@LINE+4]]:3: error: impl without base class [ImplWithoutBase]
-  // CHECK:STDERR:   impl fn F[self: Self]();
-  // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~~~~~
+  // CHECK:STDERR: fail_modifiers.carbon:[[@LINE+4]]:3: error: override without base class [OverrideWithoutBase]
+  // CHECK:STDERR:   override fn F[self: Self]();
+  // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~~~~~~~~~
   // CHECK:STDERR:
-  impl fn F[self: Self]();
+  override fn F[self: Self]();
 }
 
 // --- init_members.carbon
@@ -139,11 +139,11 @@ base class Base {
 
 class Derived {
   extend base: Base;
-  // CHECK:STDERR: fail_impl_without_base_declaration.carbon:[[@LINE+4]]:3: error: impl without compatible virtual in base class [ImplWithoutVirtualInBase]
-  // CHECK:STDERR:   impl fn F[self: Self]();
-  // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~~~~~
+  // CHECK:STDERR: fail_impl_without_base_declaration.carbon:[[@LINE+4]]:3: error: override without compatible virtual in base class [OverrideWithoutVirtualInBase]
+  // CHECK:STDERR:   override fn F[self: Self]();
+  // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~~~~~~~~~
   // CHECK:STDERR:
-  impl fn F[self: Self]();
+  override fn F[self: Self]();
 }
 
 // --- abstract_impl.carbon
@@ -160,7 +160,7 @@ abstract class AbstractIntermediate {
 
 class Derived {
   extend base: AbstractIntermediate;
-  impl fn F[self: Self]();
+  override fn F[self: Self]();
 }
 
 // --- virtual_impl.carbon
@@ -177,7 +177,7 @@ base class VirtualIntermediate {
 
 class Derived {
   extend base: VirtualIntermediate;
-  impl fn F[self: Self]();
+  override fn F[self: Self]();
 }
 
 // --- fail_impl_mismatch.carbon
@@ -191,13 +191,13 @@ base class Base {
 class Derived {
   extend base: Base;
   // CHECK:STDERR: fail_impl_mismatch.carbon:[[@LINE+7]]:3: error: redeclaration differs because of parameter count of 1 [RedeclParamCountDiffers]
-  // CHECK:STDERR:   impl fn F[self: Self](v: i32);
-  // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+  // CHECK:STDERR:   override fn F[self: Self](v: i32);
+  // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
   // CHECK:STDERR: fail_impl_mismatch.carbon:[[@LINE-8]]:3: note: previously declared with parameter count of 0 [RedeclParamCountPrevious]
   // CHECK:STDERR:   virtual fn F[self: Self]();
   // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~~~~~~~~
   // CHECK:STDERR:
-  impl fn F[self: Self](v: i32);
+  override fn F[self: Self](v: i32);
 }
 
 // --- fail_todo_impl_conversion.carbon
@@ -223,13 +223,13 @@ base class Base {
 class Derived {
   extend base: Base;
   // CHECK:STDERR: fail_todo_impl_conversion.carbon:[[@LINE+7]]:3: error: function redeclaration differs because return type is `T2` [FunctionRedeclReturnTypeDiffers]
-  // CHECK:STDERR:   impl fn F[self: Self]() -> T2;
-  // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+  // CHECK:STDERR:   override fn F[self: Self]() -> T2;
+  // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
   // CHECK:STDERR: fail_todo_impl_conversion.carbon:[[@LINE-8]]:3: note: previously declared with return type `T1` [FunctionRedeclReturnTypePrevious]
   // CHECK:STDERR:   virtual fn F[self: Self]() -> T1;
   // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
   // CHECK:STDERR:
-  impl fn F[self: Self]() -> T2;
+  override fn F[self: Self]() -> T2;
 }
 
 // --- fail_generic_virtual_decl.carbon
@@ -261,7 +261,7 @@ base class Base(T:! type) {
 
 class Derived {
   extend base: Base(T1);
-  impl fn F[self: Self](t: T1) { }
+  override fn F[self: Self](t: T1) { }
 }
 
 // --- fail_virtual_without_self.carbon
@@ -284,10 +284,10 @@ abstract class T1 {
 class T2 {
   extend base: T1;
   // CHECK:STDERR: fail_virtual_without_self.carbon:[[@LINE+4]]:3: error: virtual class function [VirtualWithoutSelf]
-  // CHECK:STDERR:   impl fn F();
-  // CHECK:STDERR:   ^~~~~~~~~~~~
+  // CHECK:STDERR:   override fn F();
+  // CHECK:STDERR:   ^~~~~~~~~~~~~~~~
   // CHECK:STDERR:
-  impl fn F();
+  override fn F();
 }
 
 // --- fail_addr_self_mismatch.carbon
@@ -300,14 +300,14 @@ base class T1 {
 
 class T2 {
   extend base: T1;
-  // CHECK:STDERR: fail_addr_self_mismatch.carbon:[[@LINE+7]]:14: error: redeclaration differs at implicit parameter 1 [RedeclParamDiffers]
-  // CHECK:STDERR:   impl fn F1[addr self: Self*]();
-  // CHECK:STDERR:              ^~~~~~~~~~~~~~~~
+  // CHECK:STDERR: fail_addr_self_mismatch.carbon:[[@LINE+7]]:18: error: redeclaration differs at implicit parameter 1 [RedeclParamDiffers]
+  // CHECK:STDERR:   override fn F1[addr self: Self*]();
+  // CHECK:STDERR:                  ^~~~~~~~~~~~~~~~
   // CHECK:STDERR: fail_addr_self_mismatch.carbon:[[@LINE-8]]:17: note: previous declaration's corresponding implicit parameter here [RedeclParamPrevious]
   // CHECK:STDERR:   virtual fn F1[self: Self*]();
   // CHECK:STDERR:                 ^~~~~~~~~~~
   // CHECK:STDERR:
-  impl fn F1[addr self: Self*]();
+  override fn F1[addr self: Self*]();
 }
 
 // --- fail_generic_virtual.carbon
@@ -369,7 +369,7 @@ base class NonGenericBase {
 
 base class GenericDerived(T:! type) {
   extend base: NonGenericBase;
-  impl fn F2[self: Self]() { }
+  override fn F2[self: Self]() { }
   virtual fn F3[self: Self]() { }
 }
 
@@ -386,7 +386,7 @@ class T1;
 
 base class NonGenericDerived {
   extend base: GenericBase(T1);
-  impl fn F2[self: Self]() { }
+  override fn F2[self: Self]() { }
   virtual fn F3[self: Self]() { }
 }
 
@@ -400,7 +400,7 @@ base class Base(T:! type) {
 class T1;
 class D1 {
   extend base: Base(T1);
-  impl fn F[self: Self](t: Base(T1)*) { }
+  override fn F[self: Self](t: Base(T1)*) { }
 }
 
 // --- fail_impl_generic_specifically_mismatch.carbon
@@ -416,14 +416,14 @@ base class Base(T:! type) {
 
 class D1 {
   extend base: Base(T1);
-  // CHECK:STDERR: fail_impl_generic_specifically_mismatch.carbon:[[@LINE+7]]:25: error: type `<pattern for T2*>` of parameter 1 in redeclaration differs from previous parameter type `<pattern for T1*>` [RedeclParamDiffersType]
-  // CHECK:STDERR:   impl fn F[self: Self](t: T2*) { }
-  // CHECK:STDERR:                         ^~~~~~
+  // CHECK:STDERR: fail_impl_generic_specifically_mismatch.carbon:[[@LINE+7]]:29: error: type `<pattern for T2*>` of parameter 1 in redeclaration differs from previous parameter type `<pattern for T1*>` [RedeclParamDiffersType]
+  // CHECK:STDERR:   override fn F[self: Self](t: T2*) { }
+  // CHECK:STDERR:                             ^~~~~~
   // CHECK:STDERR: fail_impl_generic_specifically_mismatch.carbon:[[@LINE-8]]:28: note: previous declaration's corresponding parameter here [RedeclParamPrevious]
   // CHECK:STDERR:   virtual fn F[self: Self](t: T1*) { }
   // CHECK:STDERR:                            ^~~~~~
   // CHECK:STDERR:
-  impl fn F[self: Self](t: T2*) { }
+  override fn F[self: Self](t: T2*) { }
 }
 
 // --- fail_impl_generic_generic_mismatch.carbon
@@ -435,14 +435,14 @@ abstract class Base(T:! type) {
 }
 class Derived(T:! type) {
   extend base: Base(T);
-  // CHECK:STDERR: fail_impl_generic_generic_mismatch.carbon:[[@LINE+7]]:25: error: type `<pattern for T>` of parameter 1 in redeclaration differs from previous parameter type `<pattern for T*>` [RedeclParamDiffersType]
-  // CHECK:STDERR:   impl fn F[self: Self](t: T) { }
-  // CHECK:STDERR:                         ^~~~
+  // CHECK:STDERR: fail_impl_generic_generic_mismatch.carbon:[[@LINE+7]]:29: error: type `<pattern for T>` of parameter 1 in redeclaration differs from previous parameter type `<pattern for T*>` [RedeclParamDiffersType]
+  // CHECK:STDERR:   override fn F[self: Self](t: T) { }
+  // CHECK:STDERR:                             ^~~~
   // CHECK:STDERR: fail_impl_generic_generic_mismatch.carbon:[[@LINE-7]]:28: note: previous declaration's corresponding parameter here [RedeclParamPrevious]
   // CHECK:STDERR:   virtual fn F[self: Self](t: T*) { }
   // CHECK:STDERR:                            ^~~~~
   // CHECK:STDERR:
-  impl fn F[self: Self](t: T) { }
+  override fn F[self: Self](t: T) { }
 }
 
 // --- impl_generic_generic.carbon
@@ -454,7 +454,7 @@ abstract class Base(T:! type) {
 }
 class Derived(T:! type) {
   extend base: Base(T*);
-  impl fn F[self: Self](t: T*) { }
+  override fn F[self: Self](t: T*) { }
 }
 
 // --- abstract_generic_undefined.carbon
@@ -469,7 +469,7 @@ class T1;
 
 class Derived {
   extend base: Base(T1);
-  impl fn F[self: Self]() { }
+  override fn F[self: Self]() { }
 }
 
 // --- generic_lib.carbon
@@ -802,7 +802,7 @@ class T2(G2:! type) {
 // CHECK:STDOUT:   @Derived.%Derived.H.decl
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: impl fn @Derived.H(%self.param: %Derived);
+// CHECK:STDOUT: override fn @Derived.H(%self.param: %Derived);
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Derived.as.Destroy.impl.Op(%self.param: %ptr.404) = "no_op";
 // CHECK:STDOUT:
@@ -1236,7 +1236,7 @@ class T2(G2:! type) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @A1.as.Destroy.impl.Op(%self.param: %ptr.678) = "no_op";
 // CHECK:STDOUT:
-// CHECK:STDOUT: impl fn @A2.F(%self.param: %A2);
+// CHECK:STDOUT: override fn @A2.F(%self.param: %A2);
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @A2.as.Destroy.impl.Op(%self.param: %ptr.590) = "no_op";
 // CHECK:STDOUT:
@@ -1468,11 +1468,11 @@ class T2(G2:! type) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @B1.as.Destroy.impl.Op(%self.param: %ptr.890) = "no_op";
 // CHECK:STDOUT:
-// CHECK:STDOUT: impl fn @B2.F(%self.param: %B2);
+// CHECK:STDOUT: override fn @B2.F(%self.param: %B2);
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @B2.as.Destroy.impl.Op(%self.param: %ptr.afe) = "no_op";
 // CHECK:STDOUT:
-// CHECK:STDOUT: impl fn @C.F(%self.param: %C);
+// CHECK:STDOUT: override fn @C.F(%self.param: %C);
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @C.as.Destroy.impl.Op(%self.param: %ptr.019) = "no_op";
 // CHECK:STDOUT:
@@ -1617,7 +1617,7 @@ class T2(G2:! type) {
 // CHECK:STDOUT:   .F = %C.F.decl
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: impl fn @C.F(%self.param: %C);
+// CHECK:STDOUT: override fn @C.F(%self.param: %C);
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @C.as.Destroy.impl.Op(%self.param: %ptr.019) = "no_op";
 // CHECK:STDOUT:
@@ -2013,7 +2013,7 @@ class T2(G2:! type) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Base.as.Destroy.impl.Op(%self.param: %ptr.11f) = "no_op";
 // CHECK:STDOUT:
-// CHECK:STDOUT: impl fn @Derived.F(%self.param: %Derived);
+// CHECK:STDOUT: override fn @Derived.F(%self.param: %Derived);
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Derived.as.Destroy.impl.Op(%self.param: %ptr.404) = "no_op";
 // CHECK:STDOUT:
@@ -2218,7 +2218,7 @@ class T2(G2:! type) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @AbstractIntermediate.as.Destroy.impl.Op(%self.param: %ptr.fd8) = "no_op";
 // CHECK:STDOUT:
-// CHECK:STDOUT: impl fn @Derived.F(%self.param: %Derived);
+// CHECK:STDOUT: override fn @Derived.F(%self.param: %Derived);
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Derived.as.Destroy.impl.Op(%self.param: %ptr.404) = "no_op";
 // CHECK:STDOUT:
@@ -2423,7 +2423,7 @@ class T2(G2:! type) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @VirtualIntermediate.as.Destroy.impl.Op(%self.param: %ptr.7dc) = "no_op";
 // CHECK:STDOUT:
-// CHECK:STDOUT: impl fn @Derived.F(%self.param: %Derived);
+// CHECK:STDOUT: override fn @Derived.F(%self.param: %Derived);
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Derived.as.Destroy.impl.Op(%self.param: %ptr.404) = "no_op";
 // CHECK:STDOUT:
@@ -2590,7 +2590,7 @@ class T2(G2:! type) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Base.as.Destroy.impl.Op(%self.param: %ptr.11f) = "no_op";
 // CHECK:STDOUT:
-// CHECK:STDOUT: impl fn @Derived.F(%self.param: %Derived, %v.param: %i32);
+// CHECK:STDOUT: override fn @Derived.F(%self.param: %Derived, %v.param: %i32);
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Derived.as.Destroy.impl.Op(%self.param: %ptr.404) = "no_op";
 // CHECK:STDOUT:
@@ -2882,7 +2882,7 @@ class T2(G2:! type) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Base.as.Destroy.impl.Op(%self.param: %ptr.11f) = "no_op";
 // CHECK:STDOUT:
-// CHECK:STDOUT: impl fn @Derived.F(%self.param: %Derived) -> %return.param: %T2;
+// CHECK:STDOUT: override fn @Derived.F(%self.param: %Derived) -> %return.param: %T2;
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Derived.as.Destroy.impl.Op(%self.param: %ptr.404) = "no_op";
 // CHECK:STDOUT:
@@ -3320,7 +3320,7 @@ class T2(G2:! type) {
 // CHECK:STDOUT:   fn(%self.param: @Base.as.Destroy.impl.Op.%ptr (%ptr.b7c)) = "no_op";
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: impl fn @Derived.F(%self.param: %Derived, %t.param: %T1) {
+// CHECK:STDOUT: override fn @Derived.F(%self.param: %Derived, %t.param: %T1) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
@@ -3622,10 +3622,10 @@ class T2(G2:! type) {
 // CHECK:STDOUT:   %T2.F1.decl: %T2.F1.type = fn_decl @T2.F1 [concrete = constants.%T2.F1] {
 // CHECK:STDOUT:     %self.patt: %pattern_type.fb8 = binding_pattern self [concrete]
 // CHECK:STDOUT:     %self.param_patt: %pattern_type.fb8 = value_param_pattern %self.patt, call_param0 [concrete]
-// CHECK:STDOUT:     %.loc17_14: %pattern_type.f6d = addr_pattern %self.param_patt [concrete]
+// CHECK:STDOUT:     %.loc17_18: %pattern_type.f6d = addr_pattern %self.param_patt [concrete]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %self.param: %ptr.63e = value_param call_param0
-// CHECK:STDOUT:     %.loc17_29: type = splice_block %ptr [concrete = constants.%ptr.63e] {
+// CHECK:STDOUT:     %.loc17_33: type = splice_block %ptr [concrete = constants.%ptr.63e] {
 // CHECK:STDOUT:       %Self.ref: type = name_ref Self, constants.%T2 [concrete = constants.%T2]
 // CHECK:STDOUT:       %ptr: type = ptr_type %Self.ref [concrete = constants.%ptr.63e]
 // CHECK:STDOUT:     }
@@ -3660,7 +3660,7 @@ class T2(G2:! type) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @T1.as.Destroy.impl.Op(%self.param: %ptr.87b) = "no_op";
 // CHECK:STDOUT:
-// CHECK:STDOUT: impl fn @T2.F1(%self.param: %ptr.63e);
+// CHECK:STDOUT: override fn @T2.F1(%self.param: %ptr.63e);
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @T2.as.Destroy.impl.Op(%self.param: %ptr.63e) = "no_op";
 // CHECK:STDOUT:
@@ -4505,9 +4505,9 @@ class T2(G2:! type) {
 // CHECK:STDOUT:       %self.param_patt: @GenericDerived.F2.%pattern_type (%pattern_type.061) = value_param_pattern %self.patt, call_param0 [concrete]
 // CHECK:STDOUT:     } {
 // CHECK:STDOUT:       %self.param: @GenericDerived.F2.%GenericDerived (%GenericDerived) = value_param call_param0
-// CHECK:STDOUT:       %.loc11_20.1: type = splice_block %Self.ref [symbolic = %GenericDerived (constants.%GenericDerived)] {
-// CHECK:STDOUT:         %.loc11_20.2: type = specific_constant constants.%GenericDerived, @GenericDerived(constants.%T) [symbolic = %GenericDerived (constants.%GenericDerived)]
-// CHECK:STDOUT:         %Self.ref: type = name_ref Self, %.loc11_20.2 [symbolic = %GenericDerived (constants.%GenericDerived)]
+// CHECK:STDOUT:       %.loc11_24.1: type = splice_block %Self.ref [symbolic = %GenericDerived (constants.%GenericDerived)] {
+// CHECK:STDOUT:         %.loc11_24.2: type = specific_constant constants.%GenericDerived, @GenericDerived(constants.%T) [symbolic = %GenericDerived (constants.%GenericDerived)]
+// CHECK:STDOUT:         %Self.ref: type = name_ref Self, %.loc11_24.2 [symbolic = %GenericDerived (constants.%GenericDerived)]
 // CHECK:STDOUT:       }
 // CHECK:STDOUT:       %self: @GenericDerived.F2.%GenericDerived (%GenericDerived) = bind_name self, %self.param
 // CHECK:STDOUT:     }
@@ -4566,7 +4566,7 @@ class T2(G2:! type) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @NonGenericBase.as.Destroy.impl.Op(%self.param: %ptr.806) = "no_op";
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic impl fn @GenericDerived.F2(@GenericDerived.%T.loc9_27.2: type) {
+// CHECK:STDOUT: generic override fn @GenericDerived.F2(@GenericDerived.%T.loc9_27.2: type) {
 // CHECK:STDOUT:   %T: type = bind_symbolic_name T, 0 [symbolic = %T (constants.%T)]
 // CHECK:STDOUT:   %GenericDerived: type = class_type @GenericDerived, @GenericDerived(%T) [symbolic = %GenericDerived (constants.%GenericDerived)]
 // CHECK:STDOUT:   %pattern_type: type = pattern_type %GenericDerived [symbolic = %pattern_type (constants.%pattern_type.061)]
@@ -4574,7 +4574,7 @@ class T2(G2:! type) {
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %require_complete: <witness> = require_complete_type %GenericDerived [symbolic = %require_complete (constants.%require_complete)]
 // CHECK:STDOUT:
-// CHECK:STDOUT:   impl fn(%self.param: @GenericDerived.F2.%GenericDerived (%GenericDerived)) {
+// CHECK:STDOUT:   override fn(%self.param: @GenericDerived.F2.%GenericDerived (%GenericDerived)) {
 // CHECK:STDOUT:   !entry:
 // CHECK:STDOUT:     return
 // CHECK:STDOUT:   }
@@ -4921,7 +4921,7 @@ class T2(G2:! type) {
 // CHECK:STDOUT:   fn(%self.param: @GenericBase.as.Destroy.impl.Op.%ptr (%ptr.b68)) = "no_op";
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: impl fn @NonGenericDerived.F2(%self.param: %NonGenericDerived) {
+// CHECK:STDOUT: override fn @NonGenericDerived.F2(%self.param: %NonGenericDerived) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
@@ -5257,7 +5257,7 @@ class T2(G2:! type) {
 // CHECK:STDOUT:   fn(%self.param: @Base.as.Destroy.impl.Op.%ptr (%ptr.b7c)) = "no_op";
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: impl fn @D1.F(%self.param: %D1, %t.param: %ptr.184) {
+// CHECK:STDOUT: override fn @D1.F(%self.param: %D1, %t.param: %ptr.184) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
@@ -5568,7 +5568,7 @@ class T2(G2:! type) {
 // CHECK:STDOUT:   fn(%self.param: @Base.as.Destroy.impl.Op.%ptr (%ptr.b7c)) = "no_op";
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: impl fn @D1.F(%self.param: %D1, %t.param: %ptr.63e) {
+// CHECK:STDOUT: override fn @D1.F(%self.param: %D1, %t.param: %ptr.63e) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
@@ -5827,15 +5827,15 @@ class T2(G2:! type) {
 // CHECK:STDOUT:     %Base.loc8_22.1: type = class_type @Base, @Base(constants.%T) [symbolic = %Base.loc8_22.2 (constants.%Base)]
 // CHECK:STDOUT:     %.loc8: @Derived.%Derived.elem (%Derived.elem) = base_decl %Base.loc8_22.1, element0 [concrete]
 // CHECK:STDOUT:     %Derived.F.decl: @Derived.%Derived.F.type (%Derived.F.type) = fn_decl @Derived.F [symbolic = @Derived.%Derived.F (constants.%Derived.F)] {
-// CHECK:STDOUT:       %self.patt: @Derived.F.%pattern_type.loc16_13 (%pattern_type.423) = binding_pattern self [concrete]
-// CHECK:STDOUT:       %self.param_patt: @Derived.F.%pattern_type.loc16_13 (%pattern_type.423) = value_param_pattern %self.patt, call_param0 [concrete]
-// CHECK:STDOUT:       %t.patt: @Derived.F.%pattern_type.loc16_25 (%pattern_type.7dc) = binding_pattern t [concrete]
-// CHECK:STDOUT:       %t.param_patt: @Derived.F.%pattern_type.loc16_25 (%pattern_type.7dc) = value_param_pattern %t.patt, call_param1 [concrete]
+// CHECK:STDOUT:       %self.patt: @Derived.F.%pattern_type.loc16_17 (%pattern_type.423) = binding_pattern self [concrete]
+// CHECK:STDOUT:       %self.param_patt: @Derived.F.%pattern_type.loc16_17 (%pattern_type.423) = value_param_pattern %self.patt, call_param0 [concrete]
+// CHECK:STDOUT:       %t.patt: @Derived.F.%pattern_type.loc16_29 (%pattern_type.7dc) = binding_pattern t [concrete]
+// CHECK:STDOUT:       %t.param_patt: @Derived.F.%pattern_type.loc16_29 (%pattern_type.7dc) = value_param_pattern %t.patt, call_param1 [concrete]
 // CHECK:STDOUT:     } {
 // CHECK:STDOUT:       %self.param: @Derived.F.%Derived (%Derived) = value_param call_param0
-// CHECK:STDOUT:       %.loc16_19.1: type = splice_block %Self.ref [symbolic = %Derived (constants.%Derived)] {
-// CHECK:STDOUT:         %.loc16_19.2: type = specific_constant constants.%Derived, @Derived(constants.%T) [symbolic = %Derived (constants.%Derived)]
-// CHECK:STDOUT:         %Self.ref: type = name_ref Self, %.loc16_19.2 [symbolic = %Derived (constants.%Derived)]
+// CHECK:STDOUT:       %.loc16_23.1: type = splice_block %Self.ref [symbolic = %Derived (constants.%Derived)] {
+// CHECK:STDOUT:         %.loc16_23.2: type = specific_constant constants.%Derived, @Derived(constants.%T) [symbolic = %Derived (constants.%Derived)]
+// CHECK:STDOUT:         %Self.ref: type = name_ref Self, %.loc16_23.2 [symbolic = %Derived (constants.%Derived)]
 // CHECK:STDOUT:       }
 // CHECK:STDOUT:       %self: @Derived.F.%Derived (%Derived) = bind_name self, %self.param
 // CHECK:STDOUT:       %t.param: @Derived.F.%T (%T) = value_param call_param1
@@ -5898,19 +5898,19 @@ class T2(G2:! type) {
 // CHECK:STDOUT:   fn(%self.param: @Base.as.Destroy.impl.Op.%ptr (%ptr.b7c)) = "no_op";
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic impl fn @Derived.F(@Derived.%T.loc7_15.2: type) {
+// CHECK:STDOUT: generic override fn @Derived.F(@Derived.%T.loc7_15.2: type) {
 // CHECK:STDOUT:   %T: type = bind_symbolic_name T, 0 [symbolic = %T (constants.%T)]
 // CHECK:STDOUT:   %Derived: type = class_type @Derived, @Derived(%T) [symbolic = %Derived (constants.%Derived)]
-// CHECK:STDOUT:   %pattern_type.loc16_13: type = pattern_type %Derived [symbolic = %pattern_type.loc16_13 (constants.%pattern_type.423)]
+// CHECK:STDOUT:   %pattern_type.loc16_17: type = pattern_type %Derived [symbolic = %pattern_type.loc16_17 (constants.%pattern_type.423)]
 // CHECK:STDOUT:   %Base: type = class_type @Base, @Base(%T) [symbolic = %Base (constants.%Base)]
-// CHECK:STDOUT:   %require_complete.loc16_28: <witness> = require_complete_type %Base [symbolic = %require_complete.loc16_28 (constants.%require_complete.97d)]
-// CHECK:STDOUT:   %pattern_type.loc16_25: type = pattern_type %T [symbolic = %pattern_type.loc16_25 (constants.%pattern_type.7dc)]
+// CHECK:STDOUT:   %require_complete.loc16_32: <witness> = require_complete_type %Base [symbolic = %require_complete.loc16_32 (constants.%require_complete.97d)]
+// CHECK:STDOUT:   %pattern_type.loc16_29: type = pattern_type %T [symbolic = %pattern_type.loc16_29 (constants.%pattern_type.7dc)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
-// CHECK:STDOUT:   %require_complete.loc16_17: <witness> = require_complete_type %Derived [symbolic = %require_complete.loc16_17 (constants.%require_complete.5f4)]
-// CHECK:STDOUT:   %require_complete.loc16_26: <witness> = require_complete_type %T [symbolic = %require_complete.loc16_26 (constants.%require_complete.4ae)]
+// CHECK:STDOUT:   %require_complete.loc16_21: <witness> = require_complete_type %Derived [symbolic = %require_complete.loc16_21 (constants.%require_complete.5f4)]
+// CHECK:STDOUT:   %require_complete.loc16_30: <witness> = require_complete_type %T [symbolic = %require_complete.loc16_30 (constants.%require_complete.4ae)]
 // CHECK:STDOUT:
-// CHECK:STDOUT:   impl fn(%self.param: @Derived.F.%Derived (%Derived), %t.param: @Derived.F.%T (%T)) {
+// CHECK:STDOUT:   override fn(%self.param: @Derived.F.%Derived (%Derived), %t.param: @Derived.F.%T (%T)) {
 // CHECK:STDOUT:   !entry:
 // CHECK:STDOUT:     return
 // CHECK:STDOUT:   }
@@ -5979,14 +5979,14 @@ class T2(G2:! type) {
 // CHECK:STDOUT: specific @Derived.F(constants.%T) {
 // CHECK:STDOUT:   %T => constants.%T
 // CHECK:STDOUT:   %Derived => constants.%Derived
-// CHECK:STDOUT:   %pattern_type.loc16_13 => constants.%pattern_type.423
+// CHECK:STDOUT:   %pattern_type.loc16_17 => constants.%pattern_type.423
 // CHECK:STDOUT:   %Base => constants.%Base
-// CHECK:STDOUT:   %require_complete.loc16_28 => constants.%require_complete.97d
-// CHECK:STDOUT:   %pattern_type.loc16_25 => constants.%pattern_type.7dc
+// CHECK:STDOUT:   %require_complete.loc16_32 => constants.%require_complete.97d
+// CHECK:STDOUT:   %pattern_type.loc16_29 => constants.%pattern_type.7dc
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
-// CHECK:STDOUT:   %require_complete.loc16_17 => constants.%require_complete.5f4
-// CHECK:STDOUT:   %require_complete.loc16_26 => constants.%require_complete.4ae
+// CHECK:STDOUT:   %require_complete.loc16_21 => constants.%require_complete.5f4
+// CHECK:STDOUT:   %require_complete.loc16_30 => constants.%require_complete.4ae
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Derived.as.Destroy.impl(constants.%T) {
@@ -6210,23 +6210,23 @@ class T2(G2:! type) {
 // CHECK:STDOUT:     %Base.loc8_23.1: type = class_type @Base, @Base(constants.%ptr.79f) [symbolic = %Base.loc8_23.2 (constants.%Base.16b)]
 // CHECK:STDOUT:     %.loc8: @Derived.%Derived.elem (%Derived.elem) = base_decl %Base.loc8_23.1, element0 [concrete]
 // CHECK:STDOUT:     %Derived.F.decl: @Derived.%Derived.F.type (%Derived.F.type) = fn_decl @Derived.F [symbolic = @Derived.%Derived.F (constants.%Derived.F)] {
-// CHECK:STDOUT:       %self.patt: @Derived.F.%pattern_type.loc9_13 (%pattern_type.423) = binding_pattern self [concrete]
-// CHECK:STDOUT:       %self.param_patt: @Derived.F.%pattern_type.loc9_13 (%pattern_type.423) = value_param_pattern %self.patt, call_param0 [concrete]
-// CHECK:STDOUT:       %t.patt: @Derived.F.%pattern_type.loc9_25 (%pattern_type.afe) = binding_pattern t [concrete]
-// CHECK:STDOUT:       %t.param_patt: @Derived.F.%pattern_type.loc9_25 (%pattern_type.afe) = value_param_pattern %t.patt, call_param1 [concrete]
+// CHECK:STDOUT:       %self.patt: @Derived.F.%pattern_type.loc9_17 (%pattern_type.423) = binding_pattern self [concrete]
+// CHECK:STDOUT:       %self.param_patt: @Derived.F.%pattern_type.loc9_17 (%pattern_type.423) = value_param_pattern %self.patt, call_param0 [concrete]
+// CHECK:STDOUT:       %t.patt: @Derived.F.%pattern_type.loc9_29 (%pattern_type.afe) = binding_pattern t [concrete]
+// CHECK:STDOUT:       %t.param_patt: @Derived.F.%pattern_type.loc9_29 (%pattern_type.afe) = value_param_pattern %t.patt, call_param1 [concrete]
 // CHECK:STDOUT:     } {
 // CHECK:STDOUT:       %self.param: @Derived.F.%Derived (%Derived) = value_param call_param0
-// CHECK:STDOUT:       %.loc9_19.1: type = splice_block %Self.ref [symbolic = %Derived (constants.%Derived)] {
-// CHECK:STDOUT:         %.loc9_19.2: type = specific_constant constants.%Derived, @Derived(constants.%T) [symbolic = %Derived (constants.%Derived)]
-// CHECK:STDOUT:         %Self.ref: type = name_ref Self, %.loc9_19.2 [symbolic = %Derived (constants.%Derived)]
+// CHECK:STDOUT:       %.loc9_23.1: type = splice_block %Self.ref [symbolic = %Derived (constants.%Derived)] {
+// CHECK:STDOUT:         %.loc9_23.2: type = specific_constant constants.%Derived, @Derived(constants.%T) [symbolic = %Derived (constants.%Derived)]
+// CHECK:STDOUT:         %Self.ref: type = name_ref Self, %.loc9_23.2 [symbolic = %Derived (constants.%Derived)]
 // CHECK:STDOUT:       }
 // CHECK:STDOUT:       %self: @Derived.F.%Derived (%Derived) = bind_name self, %self.param
-// CHECK:STDOUT:       %t.param: @Derived.F.%ptr.loc9_28 (%ptr.79f) = value_param call_param1
-// CHECK:STDOUT:       %.loc9_29: type = splice_block %ptr.loc9_29 [symbolic = %ptr.loc9_28 (constants.%ptr.79f)] {
+// CHECK:STDOUT:       %t.param: @Derived.F.%ptr.loc9_32 (%ptr.79f) = value_param call_param1
+// CHECK:STDOUT:       %.loc9_33: type = splice_block %ptr.loc9_33 [symbolic = %ptr.loc9_32 (constants.%ptr.79f)] {
 // CHECK:STDOUT:         %T.ref: type = name_ref T, @Derived.%T.loc7_15.2 [symbolic = %T (constants.%T)]
-// CHECK:STDOUT:         %ptr.loc9_29: type = ptr_type %T.ref [symbolic = %ptr.loc9_28 (constants.%ptr.79f)]
+// CHECK:STDOUT:         %ptr.loc9_33: type = ptr_type %T.ref [symbolic = %ptr.loc9_32 (constants.%ptr.79f)]
 // CHECK:STDOUT:       }
-// CHECK:STDOUT:       %t: @Derived.F.%ptr.loc9_28 (%ptr.79f) = bind_name t, %t.param
+// CHECK:STDOUT:       %t: @Derived.F.%ptr.loc9_32 (%ptr.79f) = bind_name t, %t.param
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %Self.ref: type = name_ref Self, constants.%Derived [symbolic = @Derived.as.Destroy.impl.%Derived (constants.%Derived)]
 // CHECK:STDOUT:     impl_decl @Derived.as.Destroy.impl [concrete] {} {}
@@ -6283,20 +6283,20 @@ class T2(G2:! type) {
 // CHECK:STDOUT:   fn(%self.param: @Base.as.Destroy.impl.Op.%ptr (%ptr.b7c)) = "no_op";
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic impl fn @Derived.F(@Derived.%T.loc7_15.2: type) {
+// CHECK:STDOUT: generic override fn @Derived.F(@Derived.%T.loc7_15.2: type) {
 // CHECK:STDOUT:   %T: type = bind_symbolic_name T, 0 [symbolic = %T (constants.%T)]
 // CHECK:STDOUT:   %Derived: type = class_type @Derived, @Derived(%T) [symbolic = %Derived (constants.%Derived)]
-// CHECK:STDOUT:   %pattern_type.loc9_13: type = pattern_type %Derived [symbolic = %pattern_type.loc9_13 (constants.%pattern_type.423)]
-// CHECK:STDOUT:   %ptr.loc9_28: type = ptr_type %T [symbolic = %ptr.loc9_28 (constants.%ptr.79f)]
-// CHECK:STDOUT:   %Base: type = class_type @Base, @Base(%ptr.loc9_28) [symbolic = %Base (constants.%Base.16b)]
-// CHECK:STDOUT:   %require_complete.loc9_28: <witness> = require_complete_type %Base [symbolic = %require_complete.loc9_28 (constants.%require_complete.fce)]
-// CHECK:STDOUT:   %pattern_type.loc9_25: type = pattern_type %ptr.loc9_28 [symbolic = %pattern_type.loc9_25 (constants.%pattern_type.afe)]
+// CHECK:STDOUT:   %pattern_type.loc9_17: type = pattern_type %Derived [symbolic = %pattern_type.loc9_17 (constants.%pattern_type.423)]
+// CHECK:STDOUT:   %ptr.loc9_32: type = ptr_type %T [symbolic = %ptr.loc9_32 (constants.%ptr.79f)]
+// CHECK:STDOUT:   %Base: type = class_type @Base, @Base(%ptr.loc9_32) [symbolic = %Base (constants.%Base.16b)]
+// CHECK:STDOUT:   %require_complete.loc9_32: <witness> = require_complete_type %Base [symbolic = %require_complete.loc9_32 (constants.%require_complete.fce)]
+// CHECK:STDOUT:   %pattern_type.loc9_29: type = pattern_type %ptr.loc9_32 [symbolic = %pattern_type.loc9_29 (constants.%pattern_type.afe)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
-// CHECK:STDOUT:   %require_complete.loc9_17: <witness> = require_complete_type %Derived [symbolic = %require_complete.loc9_17 (constants.%require_complete.5f4)]
-// CHECK:STDOUT:   %require_complete.loc9_26: <witness> = require_complete_type %ptr.loc9_28 [symbolic = %require_complete.loc9_26 (constants.%require_complete.6e5)]
+// CHECK:STDOUT:   %require_complete.loc9_21: <witness> = require_complete_type %Derived [symbolic = %require_complete.loc9_21 (constants.%require_complete.5f4)]
+// CHECK:STDOUT:   %require_complete.loc9_30: <witness> = require_complete_type %ptr.loc9_32 [symbolic = %require_complete.loc9_30 (constants.%require_complete.6e5)]
 // CHECK:STDOUT:
-// CHECK:STDOUT:   impl fn(%self.param: @Derived.F.%Derived (%Derived), %t.param: @Derived.F.%ptr.loc9_28 (%ptr.79f)) {
+// CHECK:STDOUT:   override fn(%self.param: @Derived.F.%Derived (%Derived), %t.param: @Derived.F.%ptr.loc9_32 (%ptr.79f)) {
 // CHECK:STDOUT:   !entry:
 // CHECK:STDOUT:     return
 // CHECK:STDOUT:   }
@@ -6385,15 +6385,15 @@ class T2(G2:! type) {
 // CHECK:STDOUT: specific @Derived.F(constants.%T) {
 // CHECK:STDOUT:   %T => constants.%T
 // CHECK:STDOUT:   %Derived => constants.%Derived
-// CHECK:STDOUT:   %pattern_type.loc9_13 => constants.%pattern_type.423
-// CHECK:STDOUT:   %ptr.loc9_28 => constants.%ptr.79f
+// CHECK:STDOUT:   %pattern_type.loc9_17 => constants.%pattern_type.423
+// CHECK:STDOUT:   %ptr.loc9_32 => constants.%ptr.79f
 // CHECK:STDOUT:   %Base => constants.%Base.16b
-// CHECK:STDOUT:   %require_complete.loc9_28 => constants.%require_complete.fce
-// CHECK:STDOUT:   %pattern_type.loc9_25 => constants.%pattern_type.afe
+// CHECK:STDOUT:   %require_complete.loc9_32 => constants.%require_complete.fce
+// CHECK:STDOUT:   %pattern_type.loc9_29 => constants.%pattern_type.afe
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
-// CHECK:STDOUT:   %require_complete.loc9_17 => constants.%require_complete.5f4
-// CHECK:STDOUT:   %require_complete.loc9_26 => constants.%require_complete.6e5
+// CHECK:STDOUT:   %require_complete.loc9_21 => constants.%require_complete.5f4
+// CHECK:STDOUT:   %require_complete.loc9_30 => constants.%require_complete.6e5
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Derived.as.Destroy.impl(constants.%T) {
@@ -6623,7 +6623,7 @@ class T2(G2:! type) {
 // CHECK:STDOUT:   fn(%self.param: @Base.as.Destroy.impl.Op.%ptr (%ptr.b7c)) = "no_op";
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: impl fn @Derived.F(%self.param: %Derived) {
+// CHECK:STDOUT: override fn @Derived.F(%self.param: %Derived) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
