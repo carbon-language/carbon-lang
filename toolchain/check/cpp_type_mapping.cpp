@@ -99,11 +99,11 @@ static auto TryMapBuiltinType(Context& context, SemIR::InstId inst_id,
   }
 }
 
-// Maps a Carbon record type to a Cpp type. Returns an empty `QualType` if
-// the Carbon type is not a `ClassType` or if the Cpp record type has not yet
-// been
-// TODO: Import the type if needed.
-static auto TryMapRecordType(Context& context, SemIR::TypeId type_id)
+// Maps a Carbon class type to a C++ type. Returns a null `QualType` if the
+// Carbon type is not a `ClassType` or was not imported from C++.
+// TODO: If the class type wasn't imported from C++, create a corresponding C++
+// class type.
+static auto TryMapClassType(Context& context, SemIR::TypeId type_id)
     -> clang::QualType {
   auto class_type =
       context.sem_ir().types().TryGetAs<SemIR::ClassType>(type_id);
@@ -120,16 +120,16 @@ static auto TryMapRecordType(Context& context, SemIR::TypeId type_id)
   }
   clang::Decl* clang_decl =
       context.sem_ir().clang_decls().Get(clang_decl_id).decl;
-  auto* record_type_decl = clang::cast<clang::TagDecl>(clang_decl);
-  return context.ast_context().getCanonicalTagType(record_type_decl);
+  auto* tag_type_decl = clang::cast<clang::TagDecl>(clang_decl);
+  return context.ast_context().getCanonicalTagType(tag_type_decl);
 }
 
-// Maps a non-wrapper (no const or pointer) Carbon type to a Cpp type.
+// Maps a non-wrapper (no const or pointer) Carbon type to a C++ type.
 static auto MapNonWrapperType(Context& context, SemIR::InstId inst_id,
                               SemIR::TypeId type_id) -> clang::QualType {
   clang::QualType mapped_type = TryMapBuiltinType(context, inst_id, type_id);
   if (mapped_type.isNull()) {
-    mapped_type = TryMapRecordType(context, type_id);
+    mapped_type = TryMapClassType(context, type_id);
   }
   return mapped_type;
 }
