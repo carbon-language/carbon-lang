@@ -49,7 +49,7 @@ auto GetClassType(Context& context, SemIR::ClassId class_id,
 
 // Gets a C++ overload set type. The returned type will be complete.
 auto GetCppOverloadSetType(Context& context,
-                           SemIR::CppOverloadSetId overloaded_set_id,
+                           SemIR::CppOverloadSetId overload_set_id,
                            SemIR::SpecificId specific_id) -> SemIR::TypeId;
 
 // Gets a function type. The returned type will be complete.
