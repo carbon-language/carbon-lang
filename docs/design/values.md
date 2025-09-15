@@ -599,27 +599,21 @@ expression.
 
 ### Initializing outcomes
 
-An _initializing outcome_ is the result of evaluating an initializing
+An _initializing outcome_ is the notional result of evaluating an initializing
 expression, and represents an obligation to provide storage for an object of the
 expression's type. This obligation can be fulfilled by allocating suitable
 storage and materializing the initializing outcome into it, or it can be
 delegated by returning it to some enclosing context, where it acts as an
 initializing expression.
 
-The holder of the initializing outcome must fulfill that obligation exactly
-once, and if it is nested within a larger composite outcome (see
-[below](#form-conversions)), the computation that fulfills the obligation must
-be independent of any values or references in the enclosing complete outcome,
-and free of other side-effects. These requirements are enforced during
-typechecking. This ensures that the storage location can actually be computed
-beforehand, and passed as an input to evaluation of the initializing expression.
-
-> **Future work:** At present these requirements are somewhat trivial because an
-> initializing outcome is always fulfilled immediately, but a forthcoming
-> proposal is expected to introduce a way to bind a name to an initializing
-> outcome. That proposal may impose stricter requirements than the ones
-> described here, which are just the minimum necessary for initializing outcomes
-> to be coherent.
+This delegation only happens in a few local contexts whose semantics are defined
+by the core language, such as forming a tuple or struct literal from its
+elements, or [converting between composite forms](#form-conversions), where the
+generated code can compute the storage location beforehand, and use it as a
+hidden output parameter when evaluating the initializing expression. The
+initializing outcome abstracts away that hidden output parameter and lets us use
+the conventional vocabulary of expression evaluation, where information flows
+into an operation from its operands and not the other way around.
 
 ### Function calls and returns
 
