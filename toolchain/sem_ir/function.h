@@ -188,6 +188,8 @@ class File;
 struct CalleeFunction : public Printable<CalleeFunction> {
   // The function. `None` if not a function.
   FunctionId function_id;
+  // The overload set, if this is a C++ overload set rather than a function.
+  CppOverloadSetId cpp_overload_set_id;
   // The specific that contains the function.
   SpecificId enclosing_specific_id;
   // The specific for the callee itself, in a resolved call.
@@ -199,13 +201,15 @@ struct CalleeFunction : public Printable<CalleeFunction> {
   InstId self_id;
   // True if an error instruction was found.
   bool is_error;
-  // True if the function is a C++ overload set.
-  // TODO: Store the CppOverloadSetId instead of a bool.
-  bool is_cpp_overload_set;
 
   auto Print(llvm::raw_ostream& out) const -> void {
-    out << "{function_id: " << function_id
-        << ", enclosing_specific_id: " << enclosing_specific_id
+    out << "{";
+    if (cpp_overload_set_id.has_value()) {
+      out << "cpp_overload_set_id: " << cpp_overload_set_id;
+    } else {
+      out << "function_id: " << function_id;
+    }
+    out << ", enclosing_specific_id: " << enclosing_specific_id
         << ", resolved_specific_id: " << resolved_specific_id
         << ", self_type_id: " << self_type_id << ", self_id: " << self_id
         << ", is_error: " << is_error << "}";

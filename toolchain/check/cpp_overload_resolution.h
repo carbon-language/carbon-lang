@@ -6,6 +6,7 @@
 #define CARBON_TOOLCHAIN_CHECK_CPP_OVERLOAD_RESOLUTION_H_
 
 #include "toolchain/check/context.h"
+#include "toolchain/sem_ir/ids.h"
 
 namespace Carbon::Check {
 
@@ -23,7 +24,7 @@ namespace Carbon::Check {
 // consistency and supporting migrations so that the migrated callers from C++
 // remain valid.
 auto PerformCppOverloadResolution(Context& context, SemIR::LocId loc_id,
-                                  SemIR::InstId callee_id,
+                                  SemIR::CppOverloadSetId overload_set_id,
                                   llvm::ArrayRef<SemIR::InstId> arg_ids)
     -> std::optional<SemIR::InstId>;
 

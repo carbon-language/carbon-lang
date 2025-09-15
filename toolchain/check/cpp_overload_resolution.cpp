@@ -12,7 +12,7 @@
 namespace Carbon::Check {
 
 auto PerformCppOverloadResolution(Context& context, SemIR::LocId loc_id,
-                                  SemIR::InstId callee_id,
+                                  SemIR::CppOverloadSetId overload_set_id,
                                   llvm::ArrayRef<SemIR::InstId> arg_ids)
     -> std::optional<SemIR::InstId> {
   Diagnostics::AnnotationScope annotate_diagnostics(
@@ -41,17 +41,8 @@ auto PerformCppOverloadResolution(Context& context, SemIR::LocId loc_id,
         clang::ExprValueKind::VK_LValue));
   }
 
-  auto overload_set_type =
-      context.types()
-          .GetAsInst(context.insts().Get(callee_id).type_id())
-          .TryAs<SemIR::CppOverloadSetType>();
-  // TODO: CHECK-fail or store CppOverloadSetId in the CalleeFunction and pass
-  // it in here.
-  if (!overload_set_type) {
-    return std::nullopt;
-  }
   const SemIR::CppOverloadSet& overload_set =
-      context.cpp_overload_sets().Get(overload_set_type->overload_set_id);
+      context.cpp_overload_sets().Get(overload_set_id);
 
   // Add candidate functions from the name lookup.
   clang::OverloadCandidateSet candidate_set(
