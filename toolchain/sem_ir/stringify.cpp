@@ -13,6 +13,7 @@
 #include "common/raw_string_ostream.h"
 #include "toolchain/base/kind_switch.h"
 #include "toolchain/sem_ir/entity_with_params_base.h"
+#include "toolchain/sem_ir/facet_type_info.h"
 #include "toolchain/sem_ir/ids.h"
 #include "toolchain/sem_ir/inst_kind.h"
 #include "toolchain/sem_ir/singleton_insts.h"
@@ -329,6 +330,14 @@ class Stringifier {
       step_stack_->PushString("...");
       some_where = true;
     }
+    if (facet_type_info.builtin_constraint_mask.HasAnyOf(
+            SemIR::BuiltinConstraintMask::TypeCanAggregateDestroy)) {
+      if (some_where) {
+        step_stack_->PushString(" and");
+      }
+      step_stack_->PushString(" .Self impls Core.CanAggregateDestroy");
+      some_where = true;
+    }
     for (auto rewrite : llvm::reverse(facet_type_info.rewrite_constraints)) {
       if (some_where) {
         step_stack_->PushString(" and");
@@ -379,6 +388,15 @@ class Stringifier {
       *out_ << "Core.Float(";
       step_stack_->Push(inst.bit_width_id, ")");
     }
+  }
+
+  auto StringifyInst(InstId /*inst_id*/, CppOverloadSetType inst) -> void {
+    const auto& overload_set =
+        sem_ir_->cpp_overload_sets().Get(inst.overload_set_id);
+    *out_ << "<type of ";
+    step_stack_->Push(StepStack::QualifiedNameItem{overload_set.parent_scope_id,
+                                                   overload_set.name_id},
+                      ">");
   }
 
   auto StringifyInst(InstId /*inst_id*/, FunctionType inst) -> void {

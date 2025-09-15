@@ -8,6 +8,10 @@
 
 namespace Carbon::SemIR {
 
+CARBON_DEFINE_ENUM_MASK_NAMES(BuiltinConstraintMask) {
+  CARBON_BUILTIN_CONSTRAINT_MASK(CARBON_ENUM_MASK_NAME_STRING)
+};
+
 template <typename VecT, typename CompareT>
 static auto SortAndDeduplicate(VecT& vec, CompareT compare) -> void {
   llvm::sort(vec, compare);
@@ -94,7 +98,7 @@ static auto SubtractSorted(
 
 auto FacetTypeInfo::Combine(const FacetTypeInfo& lhs, const FacetTypeInfo& rhs)
     -> FacetTypeInfo {
-  FacetTypeInfo info = {.other_requirements = false};
+  FacetTypeInfo info;
   info.extend_constraints.reserve(lhs.extend_constraints.size() +
                                   rhs.extend_constraints.size());
   llvm::append_range(info.extend_constraints, lhs.extend_constraints);
@@ -107,8 +111,9 @@ auto FacetTypeInfo::Combine(const FacetTypeInfo& lhs, const FacetTypeInfo& rhs)
                                    rhs.rewrite_constraints.size());
   llvm::append_range(info.rewrite_constraints, lhs.rewrite_constraints);
   llvm::append_range(info.rewrite_constraints, rhs.rewrite_constraints);
-  info.other_requirements |= lhs.other_requirements;
-  info.other_requirements |= rhs.other_requirements;
+  info.builtin_constraint_mask =
+      lhs.builtin_constraint_mask | rhs.builtin_constraint_mask;
+  info.other_requirements = lhs.other_requirements || rhs.other_requirements;
   return info;
 }
 
@@ -151,6 +156,10 @@ auto FacetTypeInfo::Print(llvm::raw_ostream& out) const -> void {
     for (RewriteConstraint req : rewrite_constraints) {
       out << sep << req.lhs_id << "=" << req.rhs_id;
     }
+  }
+
+  if (!builtin_constraint_mask.empty()) {
+    out << outer_sep << "builtin_constraint_mask: " << builtin_constraint_mask;
   }
 
   if (other_requirements) {

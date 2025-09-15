@@ -10,6 +10,7 @@
 #include "toolchain/check/context.h"
 #include "toolchain/check/control_flow.h"
 #include "toolchain/check/convert.h"
+#include "toolchain/check/cpp_overload_resolution.h"
 #include "toolchain/check/cpp_thunk.h"
 #include "toolchain/check/deduce.h"
 #include "toolchain/check/facet_type.h"
@@ -298,6 +299,19 @@ auto PerformCall(Context& context, SemIR::LocId loc_id, SemIR::InstId callee_id,
   auto callee_function = GetCalleeFunction(context.sem_ir(), callee_id);
   if (callee_function.is_error) {
     return SemIR::ErrorInst::InstId;
+  }
+  if (callee_function.cpp_overload_set_id.has_value()) {
+    auto resolved_fn_id = PerformCppOverloadResolution(
+        context, loc_id, callee_function.cpp_overload_set_id, arg_ids);
+    if (!resolved_fn_id) {
+      return SemIR::ErrorInst::InstId;
+    }
+    callee_id = resolved_fn_id.value();
+    callee_function = GetCalleeFunction(context.sem_ir(), callee_id);
+    if (callee_function.is_error) {
+      return SemIR::ErrorInst::InstId;
+    }
+    CARBON_CHECK(!callee_function.cpp_overload_set_id.has_value());
   }
   if (callee_function.function_id.has_value()) {
     return PerformCallToFunction(context, loc_id, callee_id, callee_function,

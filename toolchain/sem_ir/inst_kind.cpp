@@ -8,7 +8,7 @@
 
 namespace Carbon::SemIR {
 
-CARBON_DEFINE_ENUM_CLASS_NAMES(InstKind) = {
+CARBON_DEFINE_ENUM_CLASS_NAMES(InstKind) {
 #define CARBON_SEM_IR_INST_KIND(Name) CARBON_ENUM_CLASS_NAME_STRING(Name)
 #include "toolchain/sem_ir/inst_kind.def"
 };

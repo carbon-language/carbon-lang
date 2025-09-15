@@ -23,6 +23,7 @@ cc_library(
     srcs = ["node_category.cpp"],
     hdrs = ["node_category.h"],
     deps = [
+        "//common:enum_mask_base",
         "//common:ostream",
         "@llvm-project//llvm:Support",
     ],

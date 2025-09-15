@@ -459,13 +459,18 @@ static auto HandleBuiltinCall(FunctionContext& context, SemIR::InstId inst_id,
 
     case SemIR::BuiltinFunctionKind::CharConvertChecked:
     case SemIR::BuiltinFunctionKind::FloatConvertChecked:
-    case SemIR::BuiltinFunctionKind::IntConvertChecked: {
+    case SemIR::BuiltinFunctionKind::IntConvertChecked:
+    case SemIR::BuiltinFunctionKind::TypeCanAggregateDestroy: {
       // TODO: Check this statically.
       CARBON_CHECK(builtin_kind.IsCompTimeOnly(
           context.sem_ir(), arg_ids,
           context.sem_ir().insts().Get(inst_id).type_id()));
       CARBON_FATAL("Missing constant value for call to comptime-only function");
     }
+
+    case SemIR::BuiltinFunctionKind::TypeAggregateDestroy:
+      // TODO: Destroy aggregate members.
+      return;
   }
 
   CARBON_FATAL("Unsupported builtin call.");

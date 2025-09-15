@@ -31,9 +31,9 @@ fn CallGetUL() -> u64 { return Cpp.GetUL(); }
 // We should switch to testing a different type when that case works.
 // CHECK:STDERR: fail_todo_use_u64_types.carbon:[[@LINE+7]]:33: error: semantics TODO: `Unsupported: return type: unsigned long long` [SemanticsTodo]
 // CHECK:STDERR: fn CallGetULL() -> u64 { return Cpp.GetULL(); }
-// CHECK:STDERR:                                 ^~~~~~~~~~
-// CHECK:STDERR: fail_todo_use_u64_types.carbon:[[@LINE+4]]:33: note: in `Cpp` name lookup for `GetULL` [InCppNameLookup]
+// CHECK:STDERR:                                 ^~~~~~~~~~~~
+// CHECK:STDERR: fail_todo_use_u64_types.carbon:[[@LINE+4]]:33: note: in call to Cpp function here [InCallToCppFunction]
 // CHECK:STDERR: fn CallGetULL() -> u64 { return Cpp.GetULL(); }
-// CHECK:STDERR:                                 ^~~~~~~~~~
+// CHECK:STDERR:                                 ^~~~~~~~~~~~
 // CHECK:STDERR:
 fn CallGetULL() -> u64 { return Cpp.GetULL(); }

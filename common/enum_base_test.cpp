@@ -30,7 +30,7 @@ class TestKind : public CARBON_ENUM_BASE(TestKind) {
   CARBON_ENUM_CONSTANT_DEFINITION(TestKind, Name)
 #include "common/enum_base_test.def"
 
-CARBON_DEFINE_ENUM_CLASS_NAMES(TestKind) = {
+CARBON_DEFINE_ENUM_CLASS_NAMES(TestKind) {
 #define CARBON_ENUM_BASE_TEST_KIND(Name) CARBON_ENUM_CLASS_NAME_STRING(Name)
 #include "common/enum_base_test.def"
 };
@@ -79,23 +79,15 @@ TEST(EnumBaseTest, Switch) {
 TEST(EnumBaseTest, Comparison) {
   TestKind kind = TestKind::Beep;
 
-  // Make sure all the different comparisons work, and also to work with
+  // Make sure all the different comparisons work, and also work with
   // GoogleTest expectations.
   EXPECT_EQ(TestKind::Beep, kind);
   EXPECT_NE(TestKind::Boop, kind);
-  EXPECT_LT(kind, TestKind::Boop);
-  EXPECT_GT(TestKind::Burr, kind);
-  EXPECT_LE(kind, TestKind::Beep);
-  EXPECT_GE(TestKind::Beep, kind);
 
   // These should also all be constexpr.
   constexpr TestKind Kind2 = TestKind::Beep;
   static_assert(Kind2 == TestKind::Beep);
   static_assert(Kind2 != TestKind::Boop);
-  static_assert(Kind2 < TestKind::Boop);
-  static_assert(!(Kind2 > TestKind::Burr));
-  static_assert(Kind2 <= TestKind::Beep);
-  static_assert(!(Kind2 >= TestKind::Burr));
 }
 
 TEST(EnumBaseTest, IntConversion) {
