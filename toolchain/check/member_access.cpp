@@ -45,16 +45,17 @@ static auto GetClassElementIndex(Context& context, SemIR::InstId element_id)
   CARBON_FATAL("Unexpected value {0} in class element name", element_inst);
 }
 
-// Returns whether `function_id` is an instance method, that is, whether it has
-// an implicit `self` parameter.
+// Returns whether `function_id` is an instance method: in other words, whether
+// it has an implicit `self` parameter.
 static auto IsInstanceMethod(const SemIR::File& sem_ir,
                              SemIR::FunctionId function_id) -> bool {
   const auto& function = sem_ir.functions().Get(function_id);
   return function.self_param_id.has_value();
 }
 
-// Returns whether `function_id` is an instance method, that is, whether it has
-// an implicit `self` parameter.
+// Returns whether the callee function is an instance method, either because
+// it's a Carbon instance method or because it's a C++ overload set that might
+// contain an instance method. an implicit `self` parameter.
 static auto IsInstanceMethod(const SemIR::File& sem_ir,
                              const SemIR::CalleeFunction& callee) -> bool {
   if (callee.function_id.has_value()) {
