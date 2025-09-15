@@ -78,8 +78,8 @@ class SetView : RawHashtable::ViewImpl<InputKeyT, void, InputKeyContextT> {
   };
 
   // Enable implicit conversions that add `const`-ness to the key type.
-  // NOLINTNEXTLINE(google-explicit-constructor)
-  SetView(const SetView<std::remove_const_t<KeyT>, KeyContextT>& other_view)
+  explicit(false)
+      SetView(const SetView<std::remove_const_t<KeyT>, KeyContextT>& other_view)
     requires(!std::same_as<KeyT, std::remove_const_t<KeyT>>)
       : ImplT(other_view) {}
 
@@ -115,8 +115,7 @@ class SetView : RawHashtable::ViewImpl<InputKeyT, void, InputKeyContextT> {
   using EntryT = typename ImplT::EntryT;
 
   SetView() = default;
-  // NOLINTNEXTLINE(google-explicit-constructor): Implicit by design.
-  SetView(ImplT base) : ImplT(base) {}
+  explicit(false) SetView(ImplT base) : ImplT(base) {}
   SetView(ssize_t size, RawHashtable::Storage* storage)
       : ImplT(size, storage) {}
 };
@@ -161,13 +160,15 @@ class SetBase
   // Implicitly convertible to the relevant view type.
   //
   // NOLINTNEXTLINE(google-explicit-constructor): Designed to implicitly decay.
-  operator ViewT() const { return this->view_impl(); }
+  explicit(false) operator ViewT() const { return this->view_impl(); }
 
   // We can't chain the above conversion with the conversions on `ViewT` to add
   // const, so explicitly support adding const to produce a view here.
   //
   // NOLINTNEXTLINE(google-explicit-constructor): Designed to implicitly decay.
-  operator SetView<const KeyT, KeyContextT>() const { return ViewT(*this); }
+  explicit(false) operator SetView<const KeyT, KeyContextT>() const {
+    return ViewT(*this);
+  }
 
   // Convenience forwarder to the view type.
   template <typename LookupKeyT>

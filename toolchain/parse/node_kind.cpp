@@ -9,7 +9,7 @@
 
 namespace Carbon::Parse {
 
-CARBON_DEFINE_ENUM_CLASS_NAMES(NodeKind) = {
+CARBON_DEFINE_ENUM_CLASS_NAMES(NodeKind) {
 #define CARBON_PARSE_NODE_KIND(Name) CARBON_ENUM_CLASS_NAME_STRING(Name)
 #include "toolchain/parse/node_kind.def"
 };

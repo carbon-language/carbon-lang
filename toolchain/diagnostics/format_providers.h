@@ -18,8 +18,7 @@ namespace Carbon::Diagnostics {
 //   `|`, with the true case first. the example would yield standard bool
 //   formatting.
 struct BoolAsSelect {
-  // NOLINTNEXTLINE(google-explicit-constructor)
-  BoolAsSelect(bool value) : value(value) {}
+  explicit(false) BoolAsSelect(bool value) : value(value) {}
 
   bool value;
 };
@@ -47,8 +46,7 @@ struct BoolAsSelect {
 //
 // As another example, `{0:=1:is|:are}` is a way to handle plural-based output.
 struct IntAsSelect {
-  // NOLINTNEXTLINE(google-explicit-constructor)
-  IntAsSelect(int value) : value(value) {}
+  explicit(false) IntAsSelect(int value) : value(value) {}
 
   int value;
 };

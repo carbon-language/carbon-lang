@@ -160,6 +160,27 @@ cc_test(
 )
 
 cc_library(
+    name = "enum_mask_base",
+    hdrs = ["enum_mask_base.h"],
+    deps = [
+        ":enum_base",
+        "@llvm-project//llvm:Support",
+    ],
+)
+
+cc_test(
+    name = "enum_mask_base_test",
+    size = "small",
+    srcs = ["enum_mask_base_test.cpp"],
+    deps = [
+        ":enum_mask_base",
+        ":raw_string_ostream",
+        "//testing/base:gtest_main",
+        "@googletest//:gtest",
+    ],
+)
+
+cc_library(
     name = "error",
     hdrs = ["error.h"],
     deps = [

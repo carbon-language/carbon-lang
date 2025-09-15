@@ -121,7 +121,7 @@ static auto TryMapRecordType(Context& context, SemIR::TypeId type_id)
   clang::Decl* clang_decl =
       context.sem_ir().clang_decls().Get(clang_decl_id).decl;
   auto* record_type_decl = clang::cast<clang::TagDecl>(clang_decl);
-  return context.ast_context().getTagDeclType(record_type_decl);
+  return context.ast_context().getCanonicalTagType(record_type_decl);
 }
 
 // Maps a non-wrapper (no const or pointer) Carbon type to a Cpp type.

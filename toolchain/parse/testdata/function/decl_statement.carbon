@@ -37,6 +37,7 @@ fn F() {
   namespace N;
   default fn F();
   impl fn G();
+  override fn H();
   virtual fn H();
   private var v: i32;
   protected var v: i32;
@@ -157,6 +158,12 @@ fn F() {
 // CHECK:STDOUT:         {kind: 'ExplicitParamList', text: ')', subtree_size: 2},
 // CHECK:STDOUT:       {kind: 'FunctionDecl', text: ';', subtree_size: 6},
 // CHECK:STDOUT:         {kind: 'FunctionIntroducer', text: 'fn'},
+// CHECK:STDOUT:         {kind: 'OverrideModifier', text: 'override'},
+// CHECK:STDOUT:         {kind: 'IdentifierNameBeforeParams', text: 'H'},
+// CHECK:STDOUT:           {kind: 'ExplicitParamListStart', text: '('},
+// CHECK:STDOUT:         {kind: 'ExplicitParamList', text: ')', subtree_size: 2},
+// CHECK:STDOUT:       {kind: 'FunctionDecl', text: ';', subtree_size: 6},
+// CHECK:STDOUT:         {kind: 'FunctionIntroducer', text: 'fn'},
 // CHECK:STDOUT:         {kind: 'VirtualModifier', text: 'virtual'},
 // CHECK:STDOUT:         {kind: 'IdentifierNameBeforeParams', text: 'H'},
 // CHECK:STDOUT:           {kind: 'ExplicitParamListStart', text: '('},
@@ -176,6 +183,6 @@ fn F() {
 // CHECK:STDOUT:           {kind: 'VarBindingPattern', text: ':', subtree_size: 3},
 // CHECK:STDOUT:         {kind: 'VariablePattern', text: 'var', subtree_size: 4},
 // CHECK:STDOUT:       {kind: 'VariableDecl', text: ';', subtree_size: 7},
-// CHECK:STDOUT:     {kind: 'FunctionDefinition', text: '}', subtree_size: 58},
+// CHECK:STDOUT:     {kind: 'FunctionDefinition', text: '}', subtree_size: 64},
 // CHECK:STDOUT:     {kind: 'FileEnd', text: ''},
 // CHECK:STDOUT:   ]

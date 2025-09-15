@@ -10,6 +10,10 @@
 
 namespace Carbon::SemIR {
 
+CARBON_DEFINE_ENUM_MASK_NAMES(TypeQualifiers) {
+  CARBON_TYPE_QUALIFIERS(CARBON_ENUM_MASK_NAME_STRING)
+};
+
 // Verify that the constant value's type is `TypeType` (or an error).
 static void CheckTypeOfConstantIsTypeType(File& file, ConstantId constant_id) {
   CARBON_CHECK(constant_id.is_constant(),
@@ -95,12 +99,42 @@ auto TypeStore::GetTransitiveAdaptedType(TypeId type_id) const -> TypeId {
 
 auto TypeStore::GetUnqualifiedTypeAndQualifiers(TypeId type_id) const
     -> std::pair<TypeId, TypeQualifiers> {
-  if (auto const_type = TryGetAs<ConstType>(type_id)) {
-    return {file_->types().GetTypeIdForTypeInstId(const_type->inner_id),
-            TypeQualifiers::Const};
+  TypeQualifiers quals = TypeQualifiers::None;
+  while (true) {
+    if (auto qualified_type = TryGetAs<AnyQualifiedType>(type_id)) {
+      type_id = file_->types().GetTypeIdForTypeInstId(qualified_type->inner_id);
+      switch (qualified_type->kind) {
+        case ConstType::Kind:
+          quals.Add(TypeQualifiers::Const);
+          break;
+        case MaybeUnformedType::Kind:
+          quals.Add(TypeQualifiers::MaybeUnformed);
+          break;
+        case PartialType::Kind:
+          quals.Add(TypeQualifiers::Partial);
+          break;
+        default:
+          CARBON_FATAL("Unknown type qualifier {0}", qualified_type->kind);
+      }
+    } else {
+      return {type_id, quals};
+    }
   }
-  // TODO: Look through PartialType when this is reachable/testable
-  return {type_id, TypeQualifiers::None};
+}
+
+auto TypeStore::GetTransitiveUnqualifiedAdaptedType(TypeId type_id) const
+    -> std::pair<TypeId, TypeQualifiers> {
+  TypeQualifiers quals = TypeQualifiers::None;
+  while (true) {
+    type_id = GetTransitiveAdaptedType(type_id);
+    auto [unqual_type_id, inner_quals] =
+        GetUnqualifiedTypeAndQualifiers(type_id);
+    if (unqual_type_id == type_id) {
+      return {type_id, quals};
+    }
+    type_id = unqual_type_id;
+    quals.Add(inner_quals);
+  }
 }
 
 auto TypeStore::TryGetIntTypeInfo(TypeId int_type_id) const

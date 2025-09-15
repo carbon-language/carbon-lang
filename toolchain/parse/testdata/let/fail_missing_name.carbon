@@ -16,9 +16,9 @@
 // CHECK:STDERR:
 let : i32 = 4;
 
-// --- fail_complietime_binding.carbon
+// --- fail_compiletime_binding.carbon
 
-// CHECK:STDERR: fail_complietime_binding.carbon:[[@LINE+4]]:5: error: expected name in binding pattern [ExpectedBindingPattern]
+// CHECK:STDERR: fail_compiletime_binding.carbon:[[@LINE+4]]:5: error: expected name in binding pattern [ExpectedBindingPattern]
 // CHECK:STDERR: let :! bool = true;
 // CHECK:STDERR:     ^~
 // CHECK:STDERR:
@@ -36,7 +36,7 @@ let :! bool = true;
 // CHECK:STDOUT:     {kind: 'LetDecl', text: ';', subtree_size: 7},
 // CHECK:STDOUT:     {kind: 'FileEnd', text: ''},
 // CHECK:STDOUT:   ]
-// CHECK:STDOUT: - filename: fail_complietime_binding.carbon
+// CHECK:STDOUT: - filename: fail_compiletime_binding.carbon
 // CHECK:STDOUT:   parse_tree: [
 // CHECK:STDOUT:     {kind: 'FileStart', text: ''},
 // CHECK:STDOUT:       {kind: 'LetIntroducer', text: 'let'},

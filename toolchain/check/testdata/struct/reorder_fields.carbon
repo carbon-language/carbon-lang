@@ -27,6 +27,7 @@ fn F() -> {.a: i32, .b: f64} {
 // CHECK:STDOUT:   %int_32: Core.IntLiteral = int_value 32 [concrete]
 // CHECK:STDOUT:   %Int.type: type = generic_class_type @Int [concrete]
 // CHECK:STDOUT:   %Int.generic: %Int.type = struct_value () [concrete]
+// CHECK:STDOUT:   %N: Core.IntLiteral = bind_symbolic_name N, 0 [symbolic]
 // CHECK:STDOUT:   %i32: type = class_type @Int, @Int(%int_32) [concrete]
 // CHECK:STDOUT:   %pattern_type.7ce: type = pattern_type %i32 [concrete]
 // CHECK:STDOUT:   %MakeI32.type: type = fn_type @MakeI32 [concrete]
@@ -44,17 +45,41 @@ fn F() -> {.a: i32, .b: f64} {
 // CHECK:STDOUT:   %F: %F.type = struct_value () [concrete]
 // CHECK:STDOUT:   %struct_type.b.a: type = struct_type {.b: %f64.d77, .a: %i32} [concrete]
 // CHECK:STDOUT:   %pattern_type.b43: type = pattern_type %struct_type.b.a [concrete]
+// CHECK:STDOUT:   %Copy.type: type = facet_type <@Copy> [concrete]
+// CHECK:STDOUT:   %Copy.Op.type: type = fn_type @Copy.Op [concrete]
+// CHECK:STDOUT:   %Int.as.Copy.impl.Op.type.857: type = fn_type @Int.as.Copy.impl.Op, @Int.as.Copy.impl(%N) [symbolic]
+// CHECK:STDOUT:   %Int.as.Copy.impl.Op.6aa: %Int.as.Copy.impl.Op.type.857 = struct_value () [symbolic]
+// CHECK:STDOUT:   %Copy.impl_witness.f0b: <witness> = impl_witness imports.%Copy.impl_witness_table.f59, @Int.as.Copy.impl(%int_32) [concrete]
+// CHECK:STDOUT:   %Int.as.Copy.impl.Op.type.af5: type = fn_type @Int.as.Copy.impl.Op, @Int.as.Copy.impl(%int_32) [concrete]
+// CHECK:STDOUT:   %Int.as.Copy.impl.Op.87e: %Int.as.Copy.impl.Op.type.af5 = struct_value () [concrete]
+// CHECK:STDOUT:   %Copy.facet.26d: %Copy.type = facet_value %i32, (%Copy.impl_witness.f0b) [concrete]
+// CHECK:STDOUT:   %.3c4: type = fn_type_with_self_type %Copy.Op.type, %Copy.facet.26d [concrete]
+// CHECK:STDOUT:   %Int.as.Copy.impl.Op.specific_fn: <specific function> = specific_function %Int.as.Copy.impl.Op.87e, @Int.as.Copy.impl.Op(%int_32) [concrete]
+// CHECK:STDOUT:   %Float.as.Copy.impl.Op.type.a25: type = fn_type @Float.as.Copy.impl.Op, @Float.as.Copy.impl(%N) [symbolic]
+// CHECK:STDOUT:   %Float.as.Copy.impl.Op.623: %Float.as.Copy.impl.Op.type.a25 = struct_value () [symbolic]
+// CHECK:STDOUT:   %Copy.impl_witness.160: <witness> = impl_witness imports.%Copy.impl_witness_table.e1b, @Float.as.Copy.impl(%int_64) [concrete]
+// CHECK:STDOUT:   %Float.as.Copy.impl.Op.type.256: type = fn_type @Float.as.Copy.impl.Op, @Float.as.Copy.impl(%int_64) [concrete]
+// CHECK:STDOUT:   %Float.as.Copy.impl.Op.47e: %Float.as.Copy.impl.Op.type.256 = struct_value () [concrete]
+// CHECK:STDOUT:   %Copy.facet.2da: %Copy.type = facet_value %f64.d77, (%Copy.impl_witness.160) [concrete]
+// CHECK:STDOUT:   %.2ef: type = fn_type_with_self_type %Copy.Op.type, %Copy.facet.2da [concrete]
+// CHECK:STDOUT:   %Float.as.Copy.impl.Op.specific_fn: <specific function> = specific_function %Float.as.Copy.impl.Op.47e, @Float.as.Copy.impl.Op(%int_64) [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [concrete] {
 // CHECK:STDOUT:     .Int = %Core.Int
 // CHECK:STDOUT:     .Float = %Core.Float
+// CHECK:STDOUT:     .Copy = %Core.Copy
 // CHECK:STDOUT:     import Core//prelude
 // CHECK:STDOUT:     import Core//prelude/...
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.Int: %Int.type = import_ref Core//prelude/parts/int, Int, loaded [concrete = constants.%Int.generic]
 // CHECK:STDOUT:   %Core.Float: %Float.type = import_ref Core//prelude/parts/float, Float, loaded [concrete = constants.%Float.generic]
+// CHECK:STDOUT:   %Core.Copy: type = import_ref Core//prelude/parts/copy, Copy, loaded [concrete = constants.%Copy.type]
+// CHECK:STDOUT:   %Core.import_ref.b3c: @Int.as.Copy.impl.%Int.as.Copy.impl.Op.type (%Int.as.Copy.impl.Op.type.857) = import_ref Core//prelude/parts/int, loc17_31, loaded [symbolic = @Int.as.Copy.impl.%Int.as.Copy.impl.Op (constants.%Int.as.Copy.impl.Op.6aa)]
+// CHECK:STDOUT:   %Copy.impl_witness_table.f59 = impl_witness_table (%Core.import_ref.b3c), @Int.as.Copy.impl [concrete]
+// CHECK:STDOUT:   %Core.import_ref.419: @Float.as.Copy.impl.%Float.as.Copy.impl.Op.type (%Float.as.Copy.impl.Op.type.a25) = import_ref Core//prelude/parts/float, loc16_31, loaded [symbolic = @Float.as.Copy.impl.%Float.as.Copy.impl.Op (constants.%Float.as.Copy.impl.Op.623)]
+// CHECK:STDOUT:   %Copy.impl_witness_table.e1b = impl_witness_table (%Core.import_ref.419), @Float.as.Copy.impl [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -143,11 +168,21 @@ fn F() -> {.a: i32, .b: f64} {
 // CHECK:STDOUT:   %y: %struct_type.b.a = bind_name y, %.loc20_31.3
 // CHECK:STDOUT:   %y.ref: %struct_type.b.a = name_ref y, %y
 // CHECK:STDOUT:   %.loc21_10.1: %i32 = struct_access %y.ref, element1
+// CHECK:STDOUT:   %impl.elem0.loc21_10.1: %.3c4 = impl_witness_access constants.%Copy.impl_witness.f0b, element0 [concrete = constants.%Int.as.Copy.impl.Op.87e]
+// CHECK:STDOUT:   %bound_method.loc21_10.1: <bound method> = bound_method %.loc21_10.1, %impl.elem0.loc21_10.1
+// CHECK:STDOUT:   %specific_fn.loc21_10.1: <specific function> = specific_function %impl.elem0.loc21_10.1, @Int.as.Copy.impl.Op(constants.%int_32) [concrete = constants.%Int.as.Copy.impl.Op.specific_fn]
+// CHECK:STDOUT:   %bound_method.loc21_10.2: <bound method> = bound_method %.loc21_10.1, %specific_fn.loc21_10.1
+// CHECK:STDOUT:   %Int.as.Copy.impl.Op.call: init %i32 = call %bound_method.loc21_10.2(%.loc21_10.1)
 // CHECK:STDOUT:   %.loc21_10.2: ref %i32 = struct_access %return, element1
-// CHECK:STDOUT:   %.loc21_10.3: init %i32 = initialize_from %.loc21_10.1 to %.loc21_10.2
+// CHECK:STDOUT:   %.loc21_10.3: init %i32 = initialize_from %Int.as.Copy.impl.Op.call to %.loc21_10.2
 // CHECK:STDOUT:   %.loc21_10.4: %f64.d77 = struct_access %y.ref, element0
+// CHECK:STDOUT:   %impl.elem0.loc21_10.2: %.2ef = impl_witness_access constants.%Copy.impl_witness.160, element0 [concrete = constants.%Float.as.Copy.impl.Op.47e]
+// CHECK:STDOUT:   %bound_method.loc21_10.3: <bound method> = bound_method %.loc21_10.4, %impl.elem0.loc21_10.2
+// CHECK:STDOUT:   %specific_fn.loc21_10.2: <specific function> = specific_function %impl.elem0.loc21_10.2, @Float.as.Copy.impl.Op(constants.%int_64) [concrete = constants.%Float.as.Copy.impl.Op.specific_fn]
+// CHECK:STDOUT:   %bound_method.loc21_10.4: <bound method> = bound_method %.loc21_10.4, %specific_fn.loc21_10.2
+// CHECK:STDOUT:   %Float.as.Copy.impl.Op.call: init %f64.d77 = call %bound_method.loc21_10.4(%.loc21_10.4)
 // CHECK:STDOUT:   %.loc21_10.5: ref %f64.d77 = struct_access %return, element0
-// CHECK:STDOUT:   %.loc21_10.6: init %f64.d77 = initialize_from %.loc21_10.4 to %.loc21_10.5
+// CHECK:STDOUT:   %.loc21_10.6: init %f64.d77 = initialize_from %Float.as.Copy.impl.Op.call to %.loc21_10.5
 // CHECK:STDOUT:   %.loc21_10.7: init %struct_type.a.b = struct_init (%.loc21_10.3, %.loc21_10.6) to %return
 // CHECK:STDOUT:   %.loc21_11: init %struct_type.a.b = converted %y.ref, %.loc21_10.7
 // CHECK:STDOUT:   return %.loc21_11 to %return

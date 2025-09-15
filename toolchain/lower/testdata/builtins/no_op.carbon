@@ -50,26 +50,24 @@ fn J() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: define void @_CH.Main() !dbg !11 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %.loc27_18.1.temp = alloca {}, align 8, !dbg !12
-// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %.loc27_18.1.temp), !dbg !12
-// CHECK:STDOUT:   ret void, !dbg !13
+// CHECK:STDOUT:   ret void, !dbg !12
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: declare void @_CI.Main()
 // CHECK:STDOUT:
-// CHECK:STDOUT: define void @_CJ.Main() !dbg !14 {
+// CHECK:STDOUT: define void @_CJ.Main() !dbg !13 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %.loc33_11.1.temp = alloca {}, align 8, !dbg !15
-// CHECK:STDOUT:   call void @_CI.Main(), !dbg !15
-// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %.loc33_11.1.temp), !dbg !15
-// CHECK:STDOUT:   ret void, !dbg !16
+// CHECK:STDOUT:   %.loc33_11.1.temp = alloca {}, align 8, !dbg !14
+// CHECK:STDOUT:   call void @_CI.Main(), !dbg !14
+// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %.loc33_11.1.temp), !dbg !14
+// CHECK:STDOUT:   ret void, !dbg !15
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nocallback nofree nosync nounwind willreturn memory(argmem: readwrite)
 // CHECK:STDOUT: declare void @llvm.lifetime.start.p0(ptr captures(none)) #0
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; uselistorder directives
-// CHECK:STDOUT: uselistorder ptr @llvm.lifetime.start.p0, { 2, 1, 0 }
+// CHECK:STDOUT: uselistorder ptr @llvm.lifetime.start.p0, { 1, 0 }
 // CHECK:STDOUT:
 // CHECK:STDOUT: attributes #0 = { nocallback nofree nosync nounwind willreturn memory(argmem: readwrite) }
 // CHECK:STDOUT:
@@ -88,8 +86,7 @@ fn J() {
 // CHECK:STDOUT: !9 = !DILocation(line: 22, column: 3, scope: !8)
 // CHECK:STDOUT: !10 = !DILocation(line: 23, column: 3, scope: !8)
 // CHECK:STDOUT: !11 = distinct !DISubprogram(name: "H", linkageName: "_CH.Main", scope: null, file: !3, line: 26, type: !5, spFlags: DISPFlagDefinition, unit: !2)
-// CHECK:STDOUT: !12 = !DILocation(line: 27, column: 10, scope: !11)
-// CHECK:STDOUT: !13 = !DILocation(line: 27, column: 3, scope: !11)
-// CHECK:STDOUT: !14 = distinct !DISubprogram(name: "J", linkageName: "_CJ.Main", scope: null, file: !3, line: 32, type: !5, spFlags: DISPFlagDefinition, unit: !2)
-// CHECK:STDOUT: !15 = !DILocation(line: 33, column: 9, scope: !14)
-// CHECK:STDOUT: !16 = !DILocation(line: 32, column: 1, scope: !14)
+// CHECK:STDOUT: !12 = !DILocation(line: 27, column: 3, scope: !11)
+// CHECK:STDOUT: !13 = distinct !DISubprogram(name: "J", linkageName: "_CJ.Main", scope: null, file: !3, line: 32, type: !5, spFlags: DISPFlagDefinition, unit: !2)
+// CHECK:STDOUT: !14 = !DILocation(line: 33, column: 9, scope: !13)
+// CHECK:STDOUT: !15 = !DILocation(line: 32, column: 1, scope: !13)

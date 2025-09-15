@@ -26,6 +26,7 @@
 #include "toolchain/sem_ir/ids.h"
 #include "toolchain/sem_ir/import_ir.h"
 #include "toolchain/sem_ir/inst.h"
+#include "toolchain/sem_ir/inst_categories.h"
 #include "toolchain/sem_ir/inst_kind.h"
 #include "toolchain/sem_ir/type_info.h"
 #include "toolchain/sem_ir/typed_insts.h"
@@ -1823,14 +1824,16 @@ static auto TryResolveTypedInst(ImportRefResolver& resolver,
                  .object_repr_type_inst_id = object_repr_type_inst_id});
 }
 
-static auto TryResolveTypedInst(ImportRefResolver& resolver,
-                                SemIR::ConstType inst) -> ResolveResult {
+template <typename InstT>
+  requires SemIR::Internal::HasInstCategory<SemIR::AnyQualifiedType, InstT>
+static auto TryResolveTypedInst(ImportRefResolver& resolver, InstT inst)
+    -> ResolveResult {
   CARBON_CHECK(inst.type_id == SemIR::TypeType::TypeId);
   auto inner_id = GetLocalTypeInstId(resolver, inst.inner_id);
   if (resolver.HasNewWork()) {
     return ResolveResult::Retry();
   }
-  return ResolveAsDeduplicated<SemIR::ConstType>(
+  return ResolveAsDeduplicated<InstT>(
       resolver, {.type_id = SemIR::TypeType::TypeId, .inner_id = inner_id});
 }
 
@@ -2065,9 +2068,7 @@ static auto TryResolveTypedInst(ImportRefResolver& resolver,
 }
 
 static auto TryResolveTypedInst(ImportRefResolver& resolver,
-                                SemIR::VtableDecl inst,
-                                SemIR::ConstantId /*vtable_const_id*/)
-    -> ResolveResult {
+                                SemIR::VtableDecl inst) -> ResolveResult {
   const auto& import_vtable = resolver.import_vtables().Get(inst.vtable_id);
   auto class_const_id =
       GetLocalConstantId(resolver, resolver.import_classes()
@@ -2136,9 +2137,7 @@ static auto TryResolveTypedInst(ImportRefResolver& resolver,
 }
 
 static auto TryResolveTypedInst(ImportRefResolver& resolver,
-                                SemIR::VtablePtr inst,
-                                SemIR::ConstantId /*vtable_const_id*/)
-    -> ResolveResult {
+                                SemIR::VtablePtr inst) -> ResolveResult {
   auto specific_data = GetLocalSpecificData(resolver, inst.specific_id);
 
   auto vtable_const_id = GetLocalConstantId(
@@ -2166,6 +2165,7 @@ static auto TryResolveTypedInst(ImportRefResolver& resolver,
   auto fn_val_id = GetLocalConstantInstId(
       resolver,
       resolver.import_functions().Get(inst.function_id).first_decl_id());
+
   auto specific_data = GetLocalSpecificData(resolver, inst.specific_id);
   if (resolver.HasNewWork()) {
     return ResolveResult::Retry();
@@ -3077,25 +3077,69 @@ static auto TryResolveInstCanonical(ImportRefResolver& resolver,
                                     SemIR::InstId inst_id,
                                     SemIR::ConstantId const_id)
     -> ResolveResult {
-  if (SemIR::IsSingletonInstId(inst_id)) {
-    CARBON_CHECK(!const_id.has_value());
-    // Constants for builtins can be directly copied.
-    return ResolveResult::Done(resolver.local_constant_values().Get(inst_id));
-  }
-
+  // These instruction types are imported across multiple phases to arrive at
+  // their constant value. We can't just import their constant value instruction
+  // directly.
   auto untyped_inst = resolver.import_insts().GetWithAttachedType(inst_id);
   CARBON_KIND_SWITCH(untyped_inst) {
+    case CARBON_KIND(SemIR::AssociatedConstantDecl inst): {
+      return TryResolveTypedInst(resolver, inst, const_id);
+    }
+    case CARBON_KIND(SemIR::ClassDecl inst): {
+      return TryResolveTypedInst(resolver, inst, const_id);
+    }
+    case CARBON_KIND(SemIR::FunctionDecl inst): {
+      return TryResolveTypedInst(resolver, inst, const_id);
+    }
+    case CARBON_KIND(SemIR::ImplDecl inst): {
+      return TryResolveTypedInst(resolver, inst, const_id);
+    }
+    case CARBON_KIND(SemIR::InterfaceDecl inst): {
+      return TryResolveTypedInst(resolver, inst, const_id);
+    }
+    default:
+      break;
+  }
+
+  // Other instructions are imported in a single phase (once their dependencies
+  // are all imported).
+  CARBON_CHECK(!const_id.has_value());
+
+  auto inst_constant_id = resolver.import_constant_values().Get(inst_id);
+  if (!inst_constant_id.is_constant()) {
+    // TODO: Import of non-constant BindNames happens when importing `let`
+    // declarations.
+    CARBON_CHECK(resolver.import_insts().Is<SemIR::BindName>(inst_id),
+                 "TryResolveInst on non-constant instruction {0}", inst_id);
+    return ResolveResult::Done(SemIR::ConstantId::NotConstant);
+  }
+
+  // Import the canonical constant value instruction for `inst_id` directly. We
+  // don't try to import the non-canonical `inst_id`.
+  auto constant_inst_id =
+      resolver.import_constant_values().GetInstId(inst_constant_id);
+  CARBON_DCHECK(resolver.import_constant_values().GetConstantInstId(
+                    constant_inst_id) == constant_inst_id,
+                "Constant value of constant instruction should refer to "
+                "the same instruction");
+
+  if (SemIR::IsSingletonInstId(constant_inst_id)) {
+    // Constants for builtins can be directly copied.
+    return ResolveResult::Done(
+        resolver.local_constant_values().Get(constant_inst_id));
+  }
+
+  auto untyped_constant_inst =
+      resolver.import_insts().GetWithAttachedType(constant_inst_id);
+  CARBON_KIND_SWITCH(untyped_constant_inst) {
     case CARBON_KIND(SemIR::AdaptDecl inst): {
-      return TryResolveTypedInst(resolver, inst, inst_id);
+      return TryResolveTypedInst(resolver, inst, constant_inst_id);
     }
     case CARBON_KIND(SemIR::AddrPattern inst): {
-      return TryResolveTypedInst(resolver, inst, inst_id);
+      return TryResolveTypedInst(resolver, inst, constant_inst_id);
     }
     case CARBON_KIND(SemIR::ArrayType inst): {
       return TryResolveTypedInst(resolver, inst);
-    }
-    case CARBON_KIND(SemIR::AssociatedConstantDecl inst): {
-      return TryResolveTypedInst(resolver, inst, const_id);
     }
     case CARBON_KIND(SemIR::AssociatedEntity inst): {
       return TryResolveTypedInst(resolver, inst);
@@ -3104,13 +3148,13 @@ static auto TryResolveInstCanonical(ImportRefResolver& resolver,
       return TryResolveTypedInst(resolver, inst);
     }
     case CARBON_KIND(SemIR::BaseDecl inst): {
-      return TryResolveTypedInst(resolver, inst, inst_id);
+      return TryResolveTypedInst(resolver, inst, constant_inst_id);
     }
     case CARBON_KIND(SemIR::BindAlias inst): {
       return TryResolveTypedInst(resolver, inst);
     }
     case CARBON_KIND(SemIR::BindingPattern inst): {
-      return TryResolveTypedInst(resolver, inst, inst_id);
+      return TryResolveTypedInst(resolver, inst, constant_inst_id);
     }
     case CARBON_KIND(SemIR::BindSymbolicName inst): {
       return TryResolveTypedInst(resolver, inst);
@@ -3126,9 +3170,6 @@ static auto TryResolveInstCanonical(ImportRefResolver& resolver,
     }
     case CARBON_KIND(SemIR::CharLiteralValue inst): {
       return TryResolveTypedInst(resolver, inst);
-    }
-    case CARBON_KIND(SemIR::ClassDecl inst): {
-      return TryResolveTypedInst(resolver, inst, const_id);
     }
     case CARBON_KIND(SemIR::ClassType inst): {
       return TryResolveTypedInst(resolver, inst);
@@ -3155,7 +3196,7 @@ static auto TryResolveInstCanonical(ImportRefResolver& resolver,
       return TryResolveTypedInst(resolver, inst);
     }
     case CARBON_KIND(SemIR::FieldDecl inst): {
-      return TryResolveTypedInst(resolver, inst, inst_id);
+      return TryResolveTypedInst(resolver, inst, constant_inst_id);
     }
     case CARBON_KIND(SemIR::FloatLiteralValue inst): {
       return TryResolveTypedInst(resolver, inst);
@@ -3165,9 +3206,6 @@ static auto TryResolveInstCanonical(ImportRefResolver& resolver,
     }
     case CARBON_KIND(SemIR::FloatValue inst): {
       return TryResolveTypedInst(resolver, inst);
-    }
-    case CARBON_KIND(SemIR::FunctionDecl inst): {
-      return TryResolveTypedInst(resolver, inst, const_id);
     }
     case CARBON_KIND(SemIR::FunctionType inst): {
       return TryResolveTypedInst(resolver, inst);
@@ -3181,9 +3219,6 @@ static auto TryResolveInstCanonical(ImportRefResolver& resolver,
     case CARBON_KIND(SemIR::GenericInterfaceType inst): {
       return TryResolveTypedInst(resolver, inst);
     }
-    case CARBON_KIND(SemIR::ImplDecl inst): {
-      return TryResolveTypedInst(resolver, inst, const_id);
-    }
     case CARBON_KIND(SemIR::LookupImplWitness inst): {
       return TryResolveTypedInst(resolver, inst);
     }
@@ -3194,13 +3229,10 @@ static auto TryResolveInstCanonical(ImportRefResolver& resolver,
       return TryResolveTypedInst(resolver, inst);
     }
     case CARBON_KIND(SemIR::ImplWitnessTable inst): {
-      return TryResolveTypedInst(resolver, inst, inst_id);
+      return TryResolveTypedInst(resolver, inst, constant_inst_id);
     }
     case CARBON_KIND(SemIR::ImportRefLoaded inst): {
-      return TryResolveTypedInst(resolver, inst, inst_id);
-    }
-    case CARBON_KIND(SemIR::InterfaceDecl inst): {
-      return TryResolveTypedInst(resolver, inst, const_id);
+      return TryResolveTypedInst(resolver, inst, constant_inst_id);
     }
     case CARBON_KIND(SemIR::IntValue inst): {
       return TryResolveTypedInst(resolver, inst);
@@ -3208,11 +3240,17 @@ static auto TryResolveInstCanonical(ImportRefResolver& resolver,
     case CARBON_KIND(SemIR::IntType inst): {
       return TryResolveTypedInst(resolver, inst);
     }
+    case CARBON_KIND(SemIR::MaybeUnformedType inst): {
+      return TryResolveTypedInst(resolver, inst);
+    }
     case CARBON_KIND(SemIR::Namespace inst): {
-      return TryResolveTypedInst(resolver, inst, inst_id);
+      return TryResolveTypedInst(resolver, inst, constant_inst_id);
     }
     case CARBON_KIND(SemIR::OutParamPattern inst): {
-      return TryResolveTypedInst(resolver, inst, inst_id);
+      return TryResolveTypedInst(resolver, inst, constant_inst_id);
+    }
+    case CARBON_KIND(SemIR::PartialType inst): {
+      return TryResolveTypedInst(resolver, inst);
     }
     case CARBON_KIND(SemIR::PatternType inst): {
       return TryResolveTypedInst(resolver, inst);
@@ -3221,13 +3259,13 @@ static auto TryResolveInstCanonical(ImportRefResolver& resolver,
       return TryResolveTypedInst(resolver, inst);
     }
     case CARBON_KIND(SemIR::RefParamPattern inst): {
-      return TryResolveTypedInst(resolver, inst, inst_id);
+      return TryResolveTypedInst(resolver, inst, constant_inst_id);
     }
     case CARBON_KIND(SemIR::RequireCompleteType inst): {
       return TryResolveTypedInst(resolver, inst);
     }
     case CARBON_KIND(SemIR::ReturnSlotPattern inst): {
-      return TryResolveTypedInst(resolver, inst, inst_id);
+      return TryResolveTypedInst(resolver, inst, constant_inst_id);
     }
     case CARBON_KIND(SemIR::SpecificFunction inst): {
       return TryResolveTypedInst(resolver, inst);
@@ -3245,13 +3283,13 @@ static auto TryResolveInstCanonical(ImportRefResolver& resolver,
       return TryResolveTypedInst(resolver, inst);
     }
     case CARBON_KIND(SemIR::SymbolicBindingPattern inst): {
-      return TryResolveTypedInst(resolver, inst, inst_id);
+      return TryResolveTypedInst(resolver, inst, constant_inst_id);
     }
     case CARBON_KIND(SemIR::TupleAccess inst): {
       return TryResolveTypedInst(resolver, inst);
     }
     case CARBON_KIND(SemIR::TuplePattern inst): {
-      return TryResolveTypedInst(resolver, inst, inst_id);
+      return TryResolveTypedInst(resolver, inst, constant_inst_id);
     }
     case CARBON_KIND(SemIR::TupleType inst): {
       return TryResolveTypedInst(resolver, inst);
@@ -3263,51 +3301,28 @@ static auto TryResolveInstCanonical(ImportRefResolver& resolver,
       return TryResolveTypedInst(resolver, inst);
     }
     case CARBON_KIND(SemIR::ValueParamPattern inst): {
-      return TryResolveTypedInst(resolver, inst, inst_id);
+      return TryResolveTypedInst(resolver, inst, constant_inst_id);
     }
     case CARBON_KIND(SemIR::VarPattern inst): {
-      return TryResolveTypedInst(resolver, inst, inst_id);
+      return TryResolveTypedInst(resolver, inst, constant_inst_id);
     }
     case CARBON_KIND(SemIR::VarStorage inst): {
-      return TryResolveTypedInst(resolver, inst, inst_id);
+      return TryResolveTypedInst(resolver, inst, constant_inst_id);
     }
     case CARBON_KIND(SemIR::VtableDecl inst): {
-      return TryResolveTypedInst(resolver, inst, const_id);
+      return TryResolveTypedInst(resolver, inst);
     }
     case CARBON_KIND(SemIR::VtablePtr inst): {
-      return TryResolveTypedInst(resolver, inst, const_id);
+      return TryResolveTypedInst(resolver, inst);
     }
-    default: {
-      auto inst_constant_id = resolver.import_constant_values().Get(inst_id);
-      if (!inst_constant_id.is_constant()) {
-        // TODO: Import of non-constant BindNames happens when importing `let`
-        // declarations.
-        CARBON_CHECK(untyped_inst.Is<SemIR::BindName>(),
-                     "TryResolveInst on non-constant instruction {0}",
-                     untyped_inst);
-        return ResolveResult::Done(SemIR::ConstantId::NotConstant);
-      }
-
-      // This instruction might have a constant value of a different kind.
-      auto constant_inst_id =
-          resolver.import_constant_values().GetInstId(inst_constant_id);
-      if (constant_inst_id == inst_id) {
-        // Produce a diagnostic to provide a source location with the CHECK
-        // failure.
-        resolver.local_context().TODO(
-            SemIR::LocId(AddImportIRInst(resolver, inst_id)),
-            llvm::formatv("TryResolveInst on {0}", untyped_inst.kind()).str());
-        CARBON_FATAL("TryResolveInst on unsupported instruction kind {0}",
-                     untyped_inst.kind());
-      }
-      // Try to resolve the constant value instead. Note that this can only
-      // retry once.
-      CARBON_DCHECK(resolver.import_constant_values().GetConstantInstId(
-                        constant_inst_id) == constant_inst_id,
-                    "Constant value of constant instruction should refer to "
-                    "the same instruction");
-      return TryResolveInstCanonical(resolver, constant_inst_id, const_id);
-    }
+    default:
+      // Found a canonical instruction which needs to be resolved, but which is
+      // not yet handled.
+      //
+      // TODO: Could we turn this into a compile-time error?
+      CARBON_FATAL(
+          "Missing case in TryResolveInstCanonical for instruction kind {0}",
+          untyped_constant_inst.kind());
   }
 }
 
@@ -3619,6 +3634,34 @@ auto ImportImpl(Context& context, SemIR::ImportIRId import_ir_id,
                        .sem_ir->impls()
                        .Get(impl_id)
                        .first_decl_id());
+}
+
+auto ImportInterface(Context& context, SemIR::ImportIRId import_ir_id,
+                     SemIR::InterfaceId interface_id) -> SemIR::InterfaceId {
+  ImportRefResolver resolver(&context, import_ir_id);
+  auto local_id = resolver.Resolve(context.import_irs()
+                                       .Get(import_ir_id)
+                                       .sem_ir->interfaces()
+                                       .Get(interface_id)
+                                       .first_decl_id());
+  auto local_inst =
+      context.insts().Get(context.constant_values().GetInstId(local_id));
+
+  // A non-generic interface will import as a facet type for that single
+  // interface.
+  if (auto facet_type = local_inst.TryAs<SemIR::FacetType>()) {
+    auto interface = context.facet_types()
+                         .Get(facet_type->facet_type_id)
+                         .TryAsSingleInterface();
+    CARBON_CHECK(interface,
+                 "Importing an interface didn't produce a single interface");
+    return interface->interface_id;
+  }
+
+  // A generic interface will import as a constant of generic interface type.
+  auto generic_interface_type =
+      context.types().GetAs<SemIR::GenericInterfaceType>(local_inst.type_id());
+  return generic_interface_type.interface_id;
 }
 
 }  // namespace Carbon::Check

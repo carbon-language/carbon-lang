@@ -109,7 +109,8 @@ namespace llvm {
 // locally instead.
 template <typename StreamT, typename ClassT>
   requires std::derived_from<std::decay_t<StreamT>, std::ostream> &&
-           (!std::same_as<std::decay_t<ClassT>, raw_ostream>)
+           (!std::same_as<std::decay_t<ClassT>, raw_ostream>) &&
+           requires(raw_ostream& os, const ClassT& value) { os << value; }
 auto operator<<(StreamT& standard_out, const ClassT& value) -> StreamT& {
   raw_os_ostream(standard_out) << value;
   return standard_out;

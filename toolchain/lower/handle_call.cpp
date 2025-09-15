@@ -5,6 +5,7 @@
 #include <algorithm>
 #include <vector>
 
+#include "common/raw_string_ostream.h"
 #include "llvm/IR/Type.h"
 #include "llvm/IR/Value.h"
 #include "toolchain/lower/function_context.h"
@@ -274,6 +275,10 @@ static auto HandleBuiltinCall(FunctionContext& context, SemIR::InstId inst_id,
     case SemIR::BuiltinFunctionKind::NoOp:
       return;
 
+    case SemIR::BuiltinFunctionKind::PrimitiveCopy:
+      context.SetLocal(inst_id, context.GetValue(arg_ids[0]));
+      return;
+
     case SemIR::BuiltinFunctionKind::PrintChar: {
       auto* i32_type = llvm::IntegerType::getInt32Ty(context.llvm_context());
       llvm::Value* arg_value = context.builder().CreateSExtOrTrunc(
@@ -324,6 +329,7 @@ static auto HandleBuiltinCall(FunctionContext& context, SemIR::InstId inst_id,
     case SemIR::BuiltinFunctionKind::IntLiteralMakeType:
     case SemIR::BuiltinFunctionKind::IntMakeTypeSigned:
     case SemIR::BuiltinFunctionKind::IntMakeTypeUnsigned:
+    case SemIR::BuiltinFunctionKind::MaybeUnformedMakeType:
       context.SetLocal(inst_id, context.GetTypeAsValue());
       return;
 
@@ -550,11 +556,27 @@ auto HandleInst(FunctionContext& context, SemIR::InstId inst_id,
                  i32_type, static_cast<uint64_t>(function.virtual_index) * 4)}),
         args);
   } else {
-    call = context.builder().CreateCall(
+    auto* callee =
         context.GetFileContext(callee_file)
             .GetOrCreateFunction(callee_function.function_id,
-                                 callee_function.resolved_specific_id),
-        args);
+                                 callee_function.resolved_specific_id);
+    auto describe_call = [&] {
+      RawStringOstream out;
+      out << "call ";
+      callee->printAsOperand(out);
+      out << "(";
+      llvm::ListSeparator sep;
+      for (auto* arg : args) {
+        out << sep;
+        arg->printAsOperand(out);
+      }
+      out << ")\n";
+      callee->print(out);
+      return out.TakeStr();
+    };
+    CARBON_CHECK(callee->arg_size() == args.size(),
+                 "Argument count mismatch: {0}", describe_call());
+    call = context.builder().CreateCall(callee, args);
   }
 
   context.SetLocal(inst_id, call);

@@ -41,9 +41,7 @@ fn RuntimeCallIsValid(a: i32, b: i32) -> i32 {
 // CHECK:STDOUT:   %a.ref: %i32 = name_ref a, %a
 // CHECK:STDOUT:   %b.ref: %i32 = name_ref b, %b
 // CHECK:STDOUT:   %Or.call: init %i32 = call %Or.ref(%a.ref, %b.ref)
-// CHECK:STDOUT:   %.loc9_18.1: %i32 = value_of_initializer %Or.call
-// CHECK:STDOUT:   %.loc9_18.2: %i32 = converted %Or.call, %.loc9_18.1
-// CHECK:STDOUT:   return %.loc9_18.2
+// CHECK:STDOUT:   return %Or.call to %return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {

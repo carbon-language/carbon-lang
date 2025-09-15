@@ -1656,6 +1656,10 @@ static auto MakeConstantForBuiltinCall(EvalContext& eval_context,
           phase);
     }
 
+    case SemIR::BuiltinFunctionKind::PrimitiveCopy: {
+      return context.constant_values().Get(arg_ids[0]);
+    }
+
     case SemIR::BuiltinFunctionKind::PrintChar:
     case SemIR::BuiltinFunctionKind::PrintInt:
     case SemIR::BuiltinFunctionKind::ReadChar:
@@ -1756,6 +1760,15 @@ static auto MakeConstantForBuiltinCall(EvalContext& eval_context,
 
     case SemIR::BuiltinFunctionKind::BoolMakeType: {
       return context.constant_values().Get(SemIR::BoolType::TypeInstId);
+    }
+
+    case SemIR::BuiltinFunctionKind::MaybeUnformedMakeType: {
+      return MakeConstantResult(
+          context,
+          SemIR::MaybeUnformedType{
+              .type_id = SemIR::TypeType::TypeId,
+              .inner_id = context.types().GetAsTypeInstId(arg_ids[0])},
+          phase);
     }
 
     // Character conversions.

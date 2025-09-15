@@ -23,12 +23,14 @@ library "[[@TEST_NAME]]";
 
 import library "types";
 
+fn Copy[T:! type](x: T) -> T = "primitive_copy";
+
 fn F(n: UInt(64)) ->
     //@dump-sem-ir-begin
     UInt(64)
     //@dump-sem-ir-end
     {
-  return n;
+  return Copy(n);
 }
 
 fn G(n: UInt(13)) ->
@@ -36,12 +38,12 @@ fn G(n: UInt(13)) ->
     UInt(13)
     //@dump-sem-ir-end
     {
-  return n;
+  return Copy(n);
 }
 
 fn Symbolic(N:! IntLiteral(), x: UInt(N)) -> UInt(N)
     {
-  return x;
+  return Copy(x);
 }
 
 // --- fail_zero_size.carbon

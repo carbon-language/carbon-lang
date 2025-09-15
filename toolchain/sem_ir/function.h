@@ -26,7 +26,7 @@ struct FunctionFields {
   };
 
   // Kinds of virtual modifiers that can apply to functions.
-  enum class VirtualModifier : uint8_t { None, Virtual, Abstract, Impl };
+  enum class VirtualModifier : uint8_t { None, Virtual, Abstract, Override };
 
   // The following members always have values, and do not change throughout the
   // lifetime of the function.
@@ -94,6 +94,7 @@ struct Function : public EntityWithParamsBase,
     InstId inst_id;
     AnyParamPattern inst;
     EntityNameId entity_name_id;
+    KnownInstId<VarPattern> var_pattern_id;
   };
 
   auto Print(llvm::raw_ostream& out) const -> void {

@@ -56,6 +56,13 @@ class DeriveFromi32 {
 
 // It's not really important whether this conversion produces an error or not,
 // but it shouldn't crash.
+// CHECK:STDERR: fail_derive_from_i32.carbon:[[@LINE+7]]:53: error: cannot implicitly convert expression of type `DeriveFromi32*` to `i32*` [ConversionFailure]
+// CHECK:STDERR: fn ConvertToBadBasei32(p: DeriveFromi32*) -> i32* { return p; }
+// CHECK:STDERR:                                                     ^~~~~~~~~
+// CHECK:STDERR: fail_derive_from_i32.carbon:[[@LINE+4]]:53: note: type `DeriveFromi32*` does not implement interface `Core.ImplicitAs(i32*)` [MissingImplInMemberAccessNote]
+// CHECK:STDERR: fn ConvertToBadBasei32(p: DeriveFromi32*) -> i32* { return p; }
+// CHECK:STDERR:                                                     ^~~~~~~~~
+// CHECK:STDERR:
 fn ConvertToBadBasei32(p: DeriveFromi32*) -> i32* { return p; }
 
 // CHECK:STDERR: fail_derive_from_i32.carbon:[[@LINE+4]]:70: error: member name `n` not found in `DeriveFromi32` [MemberNameNotFoundInInstScope]

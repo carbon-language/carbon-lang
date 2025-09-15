@@ -281,7 +281,7 @@ auto MatchContext::DoEmitPatternMatch(Context& context,
       context.emitter().Emit(entry.scrutinee_id, AddrSelfIsNonRef);
       // Add fake reference expression to preserve invariants.
       auto scrutinee = context.insts().GetWithLocId(entry.scrutinee_id);
-      scrutinee_ref_id = AddInstWithCleanup<SemIR::TemporaryStorage>(
+      scrutinee_ref_id = AddInst<SemIR::TemporaryStorage>(
           context, scrutinee.loc_id, {.type_id = scrutinee.inst.type_id()});
   }
   auto scrutinee_ref = context.insts().Get(scrutinee_ref_id);
@@ -480,7 +480,7 @@ auto MatchContext::DoEmitPatternMatch(Context& context,
       break;
     }
     case MatchKind::Caller: {
-      storage_id = AddInstWithCleanup<SemIR::TemporaryStorage>(
+      storage_id = AddInst<SemIR::TemporaryStorage>(
           context, SemIR::LocId(pattern_inst_id),
           {.type_id =
                ExtractScrutineeType(context.sem_ir(), var_pattern.type_id)});
@@ -497,10 +497,23 @@ auto MatchContext::DoEmitPatternMatch(Context& context,
   if (entry.scrutinee_id.has_value()) {
     auto init_id = Initialize(context, SemIR::LocId(pattern_inst_id),
                               storage_id, entry.scrutinee_id);
-    // TODO: Consider using different instruction kinds for assignment
-    // versus initialization.
-    AddInst<SemIR::Assign>(context, SemIR::LocId(pattern_inst_id),
-                           {.lhs_id = storage_id, .rhs_id = init_id});
+    // If we created a `TemporaryStorage` to hold the var, create a
+    // corresponding `Temporary` to model that its initialization is complete.
+    // TODO: If the subpattern is a binding, we may want to destroy the
+    // parameter variable in the callee instead of the caller so that we can
+    // support destructive move from it.
+    if (kind_ == MatchKind::Caller) {
+      storage_id = AddInstWithCleanup<SemIR::Temporary>(
+          context, SemIR::LocId(pattern_inst_id),
+          {.type_id = context.insts().Get(storage_id).type_id(),
+           .storage_id = storage_id,
+           .init_id = init_id});
+    } else {
+      // TODO: Consider using different instruction kinds for assignment
+      // versus initialization.
+      AddInst<SemIR::Assign>(context, SemIR::LocId(pattern_inst_id),
+                             {.lhs_id = storage_id, .rhs_id = init_id});
+    }
   }
   AddWork({.pattern_id = var_pattern.subpattern_id,
            .scrutinee_id = storage_id,

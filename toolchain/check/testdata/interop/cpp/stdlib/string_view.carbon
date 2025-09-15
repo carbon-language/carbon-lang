@@ -88,8 +88,6 @@ fn G() -> str {
 // CHECK:STDOUT:   %ptr.85f: type = ptr_type %String [concrete]
 // CHECK:STDOUT:   %Produce__carbon_thunk.type: type = fn_type @Produce__carbon_thunk [concrete]
 // CHECK:STDOUT:   %Produce__carbon_thunk: %Produce__carbon_thunk.type = struct_value () [concrete]
-// CHECK:STDOUT:   %String.as.Destroy.impl.Op.type: type = fn_type @String.as.Destroy.impl.Op [concrete]
-// CHECK:STDOUT:   %String.as.Destroy.impl.Op: %String.as.Destroy.impl.Op.type = struct_value () [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -133,12 +131,9 @@ fn G() -> str {
 // CHECK:STDOUT:   %Cpp.ref: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
 // CHECK:STDOUT:   %Produce.ref: %.a47 = name_ref Produce, imports.%.5d1 [concrete = constants.%empty_struct.ab9]
 // CHECK:STDOUT:   %.loc20: ref %String = splice_block %return {}
-// CHECK:STDOUT:   %addr.loc21: %ptr.85f = addr_of %.loc20
-// CHECK:STDOUT:   %Produce__carbon_thunk.call: init %empty_tuple.type = call imports.%Produce__carbon_thunk.decl(%addr.loc21)
+// CHECK:STDOUT:   %addr: %ptr.85f = addr_of %.loc20
+// CHECK:STDOUT:   %Produce__carbon_thunk.call: init %empty_tuple.type = call imports.%Produce__carbon_thunk.decl(%addr)
 // CHECK:STDOUT:   %.loc21: init %String = in_place_init %Produce__carbon_thunk.call, %.loc20
-// CHECK:STDOUT:   %String.as.Destroy.impl.Op.bound: <bound method> = bound_method %.loc20, constants.%String.as.Destroy.impl.Op
-// CHECK:STDOUT:   %addr.loc20: %ptr.85f = addr_of %.loc20
-// CHECK:STDOUT:   %String.as.Destroy.impl.Op.call: init %empty_tuple.type = call %String.as.Destroy.impl.Op.bound(%addr.loc20)
 // CHECK:STDOUT:   return %.loc21 to %return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

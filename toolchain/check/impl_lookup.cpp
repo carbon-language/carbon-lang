@@ -32,9 +32,9 @@ namespace Carbon::Check {
 
 // Returns IRs which are allowed to define an `impl` involving the arguments.
 // This is limited by the orphan rule.
-static auto FindAssociatedImportIRs(Context& context,
-                                    SemIR::ConstantId query_self_const_id,
-                                    SemIR::ConstantId query_facet_type_const_id)
+static auto FindAssociatedImportIRs(
+    Context& context, SemIR::ConstantId query_self_const_id,
+    SemIR::SpecificInterface query_specific_interface)
     -> llvm::SmallVector<SemIR::ImportIRId> {
   llvm::SmallVector<SemIR::ImportIRId> result;
 
@@ -53,11 +53,6 @@ static auto FindAssociatedImportIRs(Context& context,
   };
 
   llvm::SmallVector<SemIR::InstId> worklist;
-  worklist.push_back(context.constant_values().GetInstId(query_self_const_id));
-  if (query_facet_type_const_id.has_value()) {
-    worklist.push_back(
-        context.constant_values().GetInstId(query_facet_type_const_id));
-  }
 
   // Push the contents of an instruction block onto our worklist.
   auto push_block = [&](SemIR::InstBlockId block_id) {
@@ -72,6 +67,10 @@ static auto FindAssociatedImportIRs(Context& context,
       push_block(context.specifics().Get(specific_id).args_id);
     }
   };
+
+  worklist.push_back(context.constant_values().GetInstId(query_self_const_id));
+  add_entity(context.interfaces().Get(query_specific_interface.interface_id));
+  push_args(query_specific_interface.specific_id);
 
   while (!worklist.empty()) {
     auto inst_id = worklist.pop_back_val();
@@ -558,25 +557,6 @@ auto LookupImplWitness(Context& context, SemIR::LocId loc_id,
         context.constant_values().GetInstId(query_facet_type_const_id)));
   }
 
-  auto import_irs = FindAssociatedImportIRs(context, query_self_const_id,
-                                            query_facet_type_const_id);
-  for (auto import_ir : import_irs) {
-    // TODO: Instead of importing all impls, only import ones that are in some
-    // way connected to this query.
-    for (auto [import_impl_id, _] :
-         context.import_irs().Get(import_ir).sem_ir->impls().enumerate()) {
-      // TODO: Track the relevant impls and only consider those ones and any
-      // local impls, rather than looping over all impls below.
-      ImportImpl(context, import_ir, import_impl_id);
-    }
-  }
-
-  if (FindAndDiagnoseImplLookupCycle(context, context.impl_lookup_stack(),
-                                     loc_id, query_self_const_id,
-                                     query_facet_type_const_id)) {
-    return SemIR::InstBlockIdOrError::MakeError();
-  }
-
   bool has_other_requirements = false;
   auto interfaces = GetInterfacesFromConstantId(
       context, query_facet_type_const_id, has_other_requirements);
@@ -586,6 +566,12 @@ auto LookupImplWitness(Context& context, SemIR::LocId loc_id,
   }
   if (interfaces.empty()) {
     return SemIR::InstBlockId::Empty;
+  }
+
+  if (FindAndDiagnoseImplLookupCycle(context, context.impl_lookup_stack(),
+                                     loc_id, query_self_const_id,
+                                     query_facet_type_const_id)) {
+    return SemIR::InstBlockIdOrError::MakeError();
   }
 
   auto& stack = context.impl_lookup_stack();
@@ -652,6 +638,79 @@ static auto QueryIsConcrete(Context& context, SemIR::ConstantId self_const_id,
   return true;
 }
 
+namespace {
+// A class to filter imported impls based on whether they could possibly match a
+// query, prior to importing them. For now we only consider impls that are for
+// an interface that's being queried.
+//
+// TODO: There's a lot more we could do to filter out impls that can't possibly
+// match.
+class ImportImplFilter {
+ public:
+  explicit ImportImplFilter(Context& context, SemIR::ImportIRId import_ir_id,
+                            SemIR::SpecificInterface interface)
+      : context_(&context),
+        interface_id_(interface.interface_id),
+        import_ir_id_(import_ir_id),
+        import_ir_(context_->import_irs().Get(import_ir_id).sem_ir),
+        cached_import_interface_id_(SemIR::InterfaceId::None) {}
+
+  // Returns whether the given impl is potentially relevant for the current
+  // query.
+  auto IsRelevantImpl(SemIR::ImplId import_impl_id) -> bool {
+    auto impl_interface_id =
+        import_ir_->impls().Get(import_impl_id).interface.interface_id;
+    if (!impl_interface_id.has_value()) {
+      // This indicates that an error occurred when type-checking the impl.
+      // TODO: Use an explicit error value for this rather than None.
+      return false;
+    }
+    return IsRelevantInterface(impl_interface_id);
+  }
+
+ private:
+  // Returns whether an impl for the given interface might be relevant to the
+  // current query.
+  auto IsRelevantInterface(SemIR::InterfaceId import_interface_id) -> bool {
+    if (!cached_import_interface_id_.has_value()) {
+      if (IsSameInterface(import_interface_id, interface_id_)) {
+        cached_import_interface_id_ = import_interface_id;
+        return true;
+      }
+    } else if (cached_import_interface_id_ == import_interface_id) {
+      return true;
+    }
+    return false;
+  }
+
+  // Returns whether the given interfaces from two different IRs are the same.
+  auto IsSameInterface(SemIR::InterfaceId import_interface_id,
+                       SemIR::InterfaceId local_interface_id) -> bool {
+    // The names must be the same.
+    if (import_ir_->names().GetAsStringIfIdentifier(
+            import_ir_->interfaces().Get(import_interface_id).name_id) !=
+        context_->names().GetAsStringIfIdentifier(
+            context_->interfaces().Get(local_interface_id).name_id)) {
+      return false;
+    }
+    // Compare the interfaces themselves.
+    // TODO: Should we check the scope of the interface before doing this?
+    auto local_version_of_import_interface_id =
+        ImportInterface(*context_, import_ir_id_, import_interface_id);
+    return local_version_of_import_interface_id == local_interface_id;
+  }
+
+  Context* context_;
+  // The interface being looked up.
+  SemIR::InterfaceId interface_id_;
+  // The IR that we are currently importing impls from.
+  SemIR::ImportIRId import_ir_id_;
+  const SemIR::File* import_ir_;
+  // The interface ID of `interface_id_` in `import_ir_`, if known.
+  SemIR::InterfaceId cached_import_interface_id_;
+};
+}  // namespace
+
 struct CandidateImpl {
   SemIR::ImplId impl_id;
   SemIR::InstId loc_inst_id;
@@ -662,10 +721,27 @@ struct CandidateImpl {
 
 // Returns the list of candidates impls for lookup to select from.
 static auto CollectCandidateImplsForQuery(
-    Context& context, bool final_only,
+    Context& context, bool final_only, SemIR::ConstantId query_self_const_id,
     const TypeStructure& query_type_structure,
     SemIR::SpecificInterface& query_specific_interface)
     -> llvm::SmallVector<CandidateImpl> {
+  auto import_irs = FindAssociatedImportIRs(context, query_self_const_id,
+                                            query_specific_interface);
+
+  for (auto import_ir_id : import_irs) {
+    // Instead of importing all impls, only import ones that are in some way
+    // connected to this query.
+    ImportImplFilter filter(context, import_ir_id, query_specific_interface);
+    for (auto [import_impl_id, _] :
+         context.import_irs().Get(import_ir_id).sem_ir->impls().enumerate()) {
+      if (filter.IsRelevantImpl(import_impl_id)) {
+        // TODO: Track the relevant impls and only consider those ones and any
+        // local impls, rather than looping over all impls below.
+        ImportImpl(context, import_ir_id, import_impl_id);
+      }
+    }
+  }
+
   llvm::SmallVector<CandidateImpl> candidate_impls;
   for (auto [id, impl] : context.impls().enumerate()) {
     if (final_only && !IsImplEffectivelyFinal(context, impl)) {
@@ -793,8 +869,8 @@ auto EvalLookupSingleImplWitness(Context& context, SemIR::LocId loc_id,
   // not be concrete in this case, so only final impls can produce a concrete
   // witness for this query.
   auto candidate_impls = CollectCandidateImplsForQuery(
-      context, self_facet_provides_witness, *query_type_structure,
-      query_specific_interface);
+      context, self_facet_provides_witness, query_self_const_id,
+      *query_type_structure, query_specific_interface);
 
   for (const auto& candidate : candidate_impls) {
     // In deferred lookup for a symbolic impl witness, while building a

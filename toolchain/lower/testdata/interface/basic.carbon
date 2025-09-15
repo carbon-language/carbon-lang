@@ -16,14 +16,26 @@ interface I {
 
 // There are no interesting runtime operations here, but there's no rule saying
 // you can't pass a facet around at runtime, so make sure it works.
-fn F(T: I) -> I { return T; }
+fn F(T: I) {}
+
+fn G() -> I;
+
+fn H() -> I { return G(); }
 
 // CHECK:STDOUT: ; ModuleID = 'basic.carbon'
 // CHECK:STDOUT: source_filename = "basic.carbon"
 // CHECK:STDOUT:
-// CHECK:STDOUT: define {} @_CF.Main({} %T) !dbg !4 {
+// CHECK:STDOUT: define void @_CF.Main({} %T) !dbg !4 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   ret {} %T, !dbg !7
+// CHECK:STDOUT:   ret void, !dbg !7
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: declare {} @_CG.Main()
+// CHECK:STDOUT:
+// CHECK:STDOUT: define {} @_CH.Main() !dbg !8 {
+// CHECK:STDOUT: entry:
+// CHECK:STDOUT:   %G.call = call {} @_CG.Main(), !dbg !9
+// CHECK:STDOUT:   ret {} %G.call, !dbg !10
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: !llvm.module.flags = !{!0, !1}
@@ -36,4 +48,7 @@ fn F(T: I) -> I { return T; }
 // CHECK:STDOUT: !4 = distinct !DISubprogram(name: "F", linkageName: "_CF.Main", scope: null, file: !3, line: 19, type: !5, spFlags: DISPFlagDefinition, unit: !2)
 // CHECK:STDOUT: !5 = !DISubroutineType(types: !6)
 // CHECK:STDOUT: !6 = !{}
-// CHECK:STDOUT: !7 = !DILocation(line: 19, column: 19, scope: !4)
+// CHECK:STDOUT: !7 = !DILocation(line: 19, column: 1, scope: !4)
+// CHECK:STDOUT: !8 = distinct !DISubprogram(name: "H", linkageName: "_CH.Main", scope: null, file: !3, line: 23, type: !5, spFlags: DISPFlagDefinition, unit: !2)
+// CHECK:STDOUT: !9 = !DILocation(line: 23, column: 22, scope: !8)
+// CHECK:STDOUT: !10 = !DILocation(line: 23, column: 15, scope: !8)
