@@ -8,6 +8,7 @@
 #include "clang/Sema/Sema.h"
 #include "toolchain/check/cpp_type_mapping.h"
 #include "toolchain/check/import_cpp.h"
+#include "toolchain/sem_ir/expr_info.h"
 #include "toolchain/sem_ir/typed_insts.h"
 
 namespace Carbon::Check {
@@ -16,6 +17,33 @@ namespace Carbon::Check {
 // represent the given Carbon argument instruction.
 static auto InventClangArg(Context& context, SemIR::InstId arg_id)
     -> clang::Expr* {
+  clang::ExprValueKind value_kind;
+  switch (SemIR::GetExprCategory(context.sem_ir(), arg_id)) {
+    case SemIR::ExprCategory::NotExpr:
+      CARBON_FATAL("Should not see these here");
+
+    case SemIR::ExprCategory::Error:
+      return nullptr;
+
+    case SemIR::ExprCategory::DurableRef:
+      value_kind = clang::ExprValueKind::VK_LValue;
+      break;
+
+    case SemIR::ExprCategory::EphemeralRef:
+      value_kind = clang::ExprValueKind::VK_XValue;
+      break;
+
+    case SemIR::ExprCategory::Value:
+    case SemIR::ExprCategory::Initializing:
+      value_kind = clang::ExprValueKind::VK_PRValue;
+      break;
+
+    case SemIR::ExprCategory::Mixed:
+      // TODO: Handle this by creating an InitListExpr.
+      value_kind = clang::ExprValueKind::VK_PRValue;
+      break;
+  }
+
   if (context.insts().Get(arg_id).type_id() == SemIR::ErrorInst::TypeId) {
     // The argument error has already been diagnosed.
     return nullptr;
@@ -29,11 +57,12 @@ static auto InventClangArg(Context& context, SemIR::InstId arg_id)
     context.emitter().Emit(arg_id, CppCallArgTypeNotSupported, arg_id);
     return nullptr;
   }
-  // TODO: Allocate these on the stack.
+
+  // TODO: Avoid heap allocating more of these on every call. Either cache them
+  // somewhere or put them on the stack.
   return new (context.ast_context()) clang::OpaqueValueExpr(
       // TODO: Add location accordingly.
-      clang::SourceLocation(), arg_cpp_type.getNonReferenceType(),
-      clang::ExprValueKind::VK_LValue);
+      clang::SourceLocation(), arg_cpp_type.getNonReferenceType(), value_kind);
 }
 
 // Adds the given overload candidates to the candidate set.
