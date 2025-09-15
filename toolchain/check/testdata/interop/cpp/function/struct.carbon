@@ -27,20 +27,13 @@ library "[[@TEST_NAME]]";
 import Cpp library "decl_value_param_type.h";
 
 fn F() {
-  // CHECK:STDERR: fail_import_decl_value_param_type.carbon:[[@LINE+15]]:11: error: invalid use of incomplete type `Cpp.S` [IncompleteTypeInConversion]
+  // CHECK:STDERR: fail_import_decl_value_param_type.carbon:[[@LINE+8]]:11: error: invalid use of incomplete type `Cpp.S` [IncompleteTypeInConversion]
   // CHECK:STDERR:   Cpp.foo({} as Cpp.S);
   // CHECK:STDERR:           ^~~~~~~~~~~
   // CHECK:STDERR: fail_import_decl_value_param_type.carbon:[[@LINE-6]]:10: in file included here [InCppInclude]
   // CHECK:STDERR: ./decl_value_param_type.h:2:8: note: class was forward declared here [ClassForwardDeclaredHere]
   // CHECK:STDERR: struct S;
   // CHECK:STDERR:        ^
-  // CHECK:STDERR:
-  // CHECK:STDERR: fail_import_decl_value_param_type.carbon:[[@LINE+7]]:3: error: call argument of type `<error>` is not supported [CppCallArgTypeNotSupported]
-  // CHECK:STDERR:   Cpp.foo({} as Cpp.S);
-  // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~
-  // CHECK:STDERR: fail_import_decl_value_param_type.carbon:[[@LINE+4]]:3: note: in call to Cpp function here [InCallToCppFunction]
-  // CHECK:STDERR:   Cpp.foo({} as Cpp.S);
-  // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~
   // CHECK:STDERR:
   Cpp.foo({} as Cpp.S);
 }
@@ -65,13 +58,6 @@ fn F() {
   // CHECK:STDERR:               ^
   // CHECK:STDERR:
   let s: Cpp.S;
-  // CHECK:STDERR: fail_import_decl_value_param_type_previously_imported.carbon:[[@LINE+7]]:3: error: call argument of type `<error>` is not supported [CppCallArgTypeNotSupported]
-  // CHECK:STDERR:   Cpp.foo(s);
-  // CHECK:STDERR:   ^~~~~~~~~~
-  // CHECK:STDERR: fail_import_decl_value_param_type_previously_imported.carbon:[[@LINE+4]]:3: note: in call to Cpp function here [InCallToCppFunction]
-  // CHECK:STDERR:   Cpp.foo(s);
-  // CHECK:STDERR:   ^~~~~~~~~~
-  // CHECK:STDERR:
   Cpp.foo(s);
 }
 
@@ -93,7 +79,7 @@ library "[[@TEST_NAME]]";
 import Cpp library "double_decl_value_param_type.h";
 
 fn F() {
-  // CHECK:STDERR: fail_import_double_decl_value_param_type.carbon:[[@LINE+15]]:12: error: invalid use of incomplete type `Cpp.S` [IncompleteTypeInConversion]
+  // CHECK:STDERR: fail_import_double_decl_value_param_type.carbon:[[@LINE+8]]:12: error: invalid use of incomplete type `Cpp.S` [IncompleteTypeInConversion]
   // CHECK:STDERR:   Cpp.foo1({} as Cpp.S);
   // CHECK:STDERR:            ^~~~~~~~~~~
   // CHECK:STDERR: fail_import_double_decl_value_param_type.carbon:[[@LINE-6]]:10: in file included here [InCppInclude]
@@ -101,28 +87,14 @@ fn F() {
   // CHECK:STDERR: struct S;
   // CHECK:STDERR:        ^
   // CHECK:STDERR:
-  // CHECK:STDERR: fail_import_double_decl_value_param_type.carbon:[[@LINE+7]]:3: error: call argument of type `<error>` is not supported [CppCallArgTypeNotSupported]
-  // CHECK:STDERR:   Cpp.foo1({} as Cpp.S);
-  // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~~
-  // CHECK:STDERR: fail_import_double_decl_value_param_type.carbon:[[@LINE+4]]:3: note: in call to Cpp function here [InCallToCppFunction]
-  // CHECK:STDERR:   Cpp.foo1({} as Cpp.S);
-  // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~~
-  // CHECK:STDERR:
   Cpp.foo1({} as Cpp.S);
-  // CHECK:STDERR: fail_import_double_decl_value_param_type.carbon:[[@LINE+15]]:12: error: invalid use of incomplete type `Cpp.S` [IncompleteTypeInConversion]
+  // CHECK:STDERR: fail_import_double_decl_value_param_type.carbon:[[@LINE+8]]:12: error: invalid use of incomplete type `Cpp.S` [IncompleteTypeInConversion]
   // CHECK:STDERR:   Cpp.foo2({} as Cpp.S);
   // CHECK:STDERR:            ^~~~~~~~~~~
-  // CHECK:STDERR: fail_import_double_decl_value_param_type.carbon:[[@LINE-22]]:10: in file included here [InCppInclude]
+  // CHECK:STDERR: fail_import_double_decl_value_param_type.carbon:[[@LINE-15]]:10: in file included here [InCppInclude]
   // CHECK:STDERR: ./double_decl_value_param_type.h:2:8: note: class was forward declared here [ClassForwardDeclaredHere]
   // CHECK:STDERR: struct S;
   // CHECK:STDERR:        ^
-  // CHECK:STDERR:
-  // CHECK:STDERR: fail_import_double_decl_value_param_type.carbon:[[@LINE+7]]:3: error: call argument of type `<error>` is not supported [CppCallArgTypeNotSupported]
-  // CHECK:STDERR:   Cpp.foo2({} as Cpp.S);
-  // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~~
-  // CHECK:STDERR: fail_import_double_decl_value_param_type.carbon:[[@LINE+4]]:3: note: in call to Cpp function here [InCallToCppFunction]
-  // CHECK:STDERR:   Cpp.foo2({} as Cpp.S);
-  // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~~
   // CHECK:STDERR:
   Cpp.foo2({} as Cpp.S);
 }

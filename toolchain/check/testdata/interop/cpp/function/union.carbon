@@ -28,20 +28,13 @@ import Cpp library "decl_value_param_type.h";
 
 fn F() {
   //@dump-sem-ir-begin
-  // CHECK:STDERR: fail_import_decl_value_param_type.carbon:[[@LINE+15]]:11: error: invalid use of incomplete type `Cpp.U` [IncompleteTypeInConversion]
+  // CHECK:STDERR: fail_import_decl_value_param_type.carbon:[[@LINE+8]]:11: error: invalid use of incomplete type `Cpp.U` [IncompleteTypeInConversion]
   // CHECK:STDERR:   Cpp.foo({} as Cpp.U);
   // CHECK:STDERR:           ^~~~~~~~~~~
   // CHECK:STDERR: fail_import_decl_value_param_type.carbon:[[@LINE-7]]:10: in file included here [InCppInclude]
   // CHECK:STDERR: ./decl_value_param_type.h:2:7: note: class was forward declared here [ClassForwardDeclaredHere]
   // CHECK:STDERR: union U;
   // CHECK:STDERR:       ^
-  // CHECK:STDERR:
-  // CHECK:STDERR: fail_import_decl_value_param_type.carbon:[[@LINE+7]]:3: error: call argument of type `<error>` is not supported [CppCallArgTypeNotSupported]
-  // CHECK:STDERR:   Cpp.foo({} as Cpp.U);
-  // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~
-  // CHECK:STDERR: fail_import_decl_value_param_type.carbon:[[@LINE+4]]:3: note: in call to Cpp function here [InCallToCppFunction]
-  // CHECK:STDERR:   Cpp.foo({} as Cpp.U);
-  // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~
   // CHECK:STDERR:
   Cpp.foo({} as Cpp.U);
   //@dump-sem-ir-end
@@ -67,13 +60,6 @@ fn F() {
   // CHECK:STDERR:               ^
   // CHECK:STDERR:
   let u: Cpp.U;
-  // CHECK:STDERR: fail_import_decl_value_param_type_previously_imported.carbon:[[@LINE+7]]:3: error: call argument of type `<error>` is not supported [CppCallArgTypeNotSupported]
-  // CHECK:STDERR:   Cpp.foo(u);
-  // CHECK:STDERR:   ^~~~~~~~~~
-  // CHECK:STDERR: fail_import_decl_value_param_type_previously_imported.carbon:[[@LINE+4]]:3: note: in call to Cpp function here [InCallToCppFunction]
-  // CHECK:STDERR:   Cpp.foo(u);
-  // CHECK:STDERR:   ^~~~~~~~~~
-  // CHECK:STDERR:
   Cpp.foo(u);
 }
 
@@ -95,7 +81,7 @@ library "[[@TEST_NAME]]";
 import Cpp library "double_decl_value_param_type.h";
 
 fn F() {
-  // CHECK:STDERR: fail_import_double_decl_value_param_type.carbon:[[@LINE+15]]:12: error: invalid use of incomplete type `Cpp.U` [IncompleteTypeInConversion]
+  // CHECK:STDERR: fail_import_double_decl_value_param_type.carbon:[[@LINE+8]]:12: error: invalid use of incomplete type `Cpp.U` [IncompleteTypeInConversion]
   // CHECK:STDERR:   Cpp.foo1({} as Cpp.U);
   // CHECK:STDERR:            ^~~~~~~~~~~
   // CHECK:STDERR: fail_import_double_decl_value_param_type.carbon:[[@LINE-6]]:10: in file included here [InCppInclude]
@@ -103,28 +89,14 @@ fn F() {
   // CHECK:STDERR: union U;
   // CHECK:STDERR:       ^
   // CHECK:STDERR:
-  // CHECK:STDERR: fail_import_double_decl_value_param_type.carbon:[[@LINE+7]]:3: error: call argument of type `<error>` is not supported [CppCallArgTypeNotSupported]
-  // CHECK:STDERR:   Cpp.foo1({} as Cpp.U);
-  // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~~
-  // CHECK:STDERR: fail_import_double_decl_value_param_type.carbon:[[@LINE+4]]:3: note: in call to Cpp function here [InCallToCppFunction]
-  // CHECK:STDERR:   Cpp.foo1({} as Cpp.U);
-  // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~~
-  // CHECK:STDERR:
   Cpp.foo1({} as Cpp.U);
-  // CHECK:STDERR: fail_import_double_decl_value_param_type.carbon:[[@LINE+15]]:12: error: invalid use of incomplete type `Cpp.U` [IncompleteTypeInConversion]
+  // CHECK:STDERR: fail_import_double_decl_value_param_type.carbon:[[@LINE+8]]:12: error: invalid use of incomplete type `Cpp.U` [IncompleteTypeInConversion]
   // CHECK:STDERR:   Cpp.foo2({} as Cpp.U);
   // CHECK:STDERR:            ^~~~~~~~~~~
-  // CHECK:STDERR: fail_import_double_decl_value_param_type.carbon:[[@LINE-22]]:10: in file included here [InCppInclude]
+  // CHECK:STDERR: fail_import_double_decl_value_param_type.carbon:[[@LINE-15]]:10: in file included here [InCppInclude]
   // CHECK:STDERR: ./double_decl_value_param_type.h:2:7: note: class was forward declared here [ClassForwardDeclaredHere]
   // CHECK:STDERR: union U;
   // CHECK:STDERR:       ^
-  // CHECK:STDERR:
-  // CHECK:STDERR: fail_import_double_decl_value_param_type.carbon:[[@LINE+7]]:3: error: call argument of type `<error>` is not supported [CppCallArgTypeNotSupported]
-  // CHECK:STDERR:   Cpp.foo2({} as Cpp.U);
-  // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~~
-  // CHECK:STDERR: fail_import_double_decl_value_param_type.carbon:[[@LINE+4]]:3: note: in call to Cpp function here [InCallToCppFunction]
-  // CHECK:STDERR:   Cpp.foo2({} as Cpp.U);
-  // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~~
   // CHECK:STDERR:
   Cpp.foo2({} as Cpp.U);
 }
@@ -506,10 +478,10 @@ fn F() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F() {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %Cpp.ref.loc23_3: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
+// CHECK:STDOUT:   %Cpp.ref.loc16_3: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
 // CHECK:STDOUT:   %foo.ref: %.c5d = name_ref foo, imports.%.a21 [concrete = constants.%empty_struct]
-// CHECK:STDOUT:   %.loc23: %empty_struct_type = struct_literal ()
-// CHECK:STDOUT:   %Cpp.ref.loc23_17: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
+// CHECK:STDOUT:   %.loc16: %empty_struct_type = struct_literal ()
+// CHECK:STDOUT:   %Cpp.ref.loc16_17: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
 // CHECK:STDOUT:   %U.ref: type = name_ref U, imports.%U.decl [concrete = constants.%U]
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }

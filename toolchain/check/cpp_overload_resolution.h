@@ -25,8 +25,9 @@ namespace Carbon::Check {
 // remain valid.
 auto PerformCppOverloadResolution(Context& context, SemIR::LocId loc_id,
                                   SemIR::CppOverloadSetId overload_set_id,
+                                  SemIR::InstId self_id,
                                   llvm::ArrayRef<SemIR::InstId> arg_ids)
-    -> std::optional<SemIR::InstId>;
+    -> SemIR::InstId;
 
 }  // namespace Carbon::Check
 
