@@ -300,6 +300,9 @@ auto PerformCall(Context& context, SemIR::LocId loc_id, SemIR::InstId callee_id,
     return SemIR::ErrorInst::InstId;
   }
   if (callee_function.cpp_overload_set_id.has_value()) {
+    auto self_id = callee_function.self_id;
+    // TODO: Pass self_id into overload resolution so that it's taken into
+    // account when selecting the overload.
     auto resolved_fn_id = PerformCppOverloadResolution(
         context, loc_id, callee_function.cpp_overload_set_id, arg_ids);
     if (!resolved_fn_id) {
@@ -311,6 +314,10 @@ auto PerformCall(Context& context, SemIR::LocId loc_id, SemIR::InstId callee_id,
       return SemIR::ErrorInst::InstId;
     }
     CARBON_CHECK(!callee_function.cpp_overload_set_id.has_value());
+
+    // Preserve the `self` argument from the original callee.
+    CARBON_CHECK(!callee_function.self_id.has_value());
+    callee_function.self_id = self_id;
   }
   if (callee_function.function_id.has_value()) {
     return PerformCallToFunction(context, loc_id, callee_id, callee_function,

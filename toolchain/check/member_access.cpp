@@ -53,6 +53,25 @@ static auto IsInstanceMethod(const SemIR::File& sem_ir,
   return function.self_param_id.has_value();
 }
 
+// Returns whether `function_id` is an instance method, that is, whether it has
+// an implicit `self` parameter.
+static auto IsInstanceMethod(const SemIR::File& sem_ir,
+                             const SemIR::CalleeFunction& callee) -> bool {
+  if (callee.function_id.has_value()) {
+    return IsInstanceMethod(sem_ir, callee.function_id);
+  }
+  if (callee.cpp_overload_set_id.has_value()) {
+    // For now, treat all C++ overload sets as potentially containing instance
+    // methods. Overload resolution will handle the case where we actually
+    // found a static method.
+    // TODO: Consider returning `false` if there are no non-instance methods in
+    // the overload set. This would cause us to reject
+    // `instance.(Class.StaticMethod)()` like we do in pure Carbon code.
+    return true;
+  }
+  return false;
+}
+
 // Return whether `type_id`, the type of an associated entity, is for an
 // instance member (currently true only for instance methods).
 static auto IsInstanceType(Context& context, SemIR::TypeId type_id) -> bool {
@@ -372,10 +391,9 @@ static auto PerformInstanceBinding(Context& context, SemIR::LocId loc_id,
                                    SemIR::InstId member_id) -> SemIR::InstId {
   // If the member is a function, check whether it's an instance method.
   if (auto callee = SemIR::GetCalleeFunction(context.sem_ir(), member_id);
-      callee.function_id.has_value()) {
-    if (!IsInstanceMethod(context.sem_ir(), callee.function_id) ||
-        callee.self_id.has_value()) {
-      // Found a static member function or an already-bound method.
+      IsInstanceMethod(context.sem_ir(), callee)) {
+    if (callee.self_id.has_value()) {
+      // Found an already-bound method.
       return member_id;
     }
 

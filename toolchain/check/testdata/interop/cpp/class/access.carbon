@@ -161,7 +161,7 @@ struct S {
   auto foo() -> void;
 };
 
-// --- fail_todo_5891_import_function_member_public.carbon
+// --- import_function_member_public.carbon
 
 library "[[@TEST_NAME]]";
 
@@ -169,11 +169,6 @@ import Cpp library "function_member_public.h";
 
 fn F(s: Cpp.S*) {
   //@dump-sem-ir-begin
-  // CHECK:STDERR: fail_todo_5891_import_function_member_public.carbon:[[@LINE+5]]:3: error: missing object argument in method call [MissingObjectInMethodCall]
-  // CHECK:STDERR:   s->foo();
-  // CHECK:STDERR:   ^~~~~~~~
-  // CHECK:STDERR: fail_todo_5891_import_function_member_public.carbon: note: calling function declared here [InCallToFunction]
-  // CHECK:STDERR:
   s->foo();
   //@dump-sem-ir-end
 }
@@ -432,7 +427,7 @@ fn F() {
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- fail_todo_5891_import_function_member_public.carbon
+// CHECK:STDOUT: --- import_function_member_public.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %S: type = class_type @S [concrete]
@@ -456,10 +451,11 @@ fn F() {
 // CHECK:STDOUT: fn @F(%s.param: %ptr.5c7) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %s.ref: %ptr.5c7 = name_ref s, %s
-// CHECK:STDOUT:   %.loc13: ref %S = deref %s.ref
+// CHECK:STDOUT:   %.loc8: ref %S = deref %s.ref
 // CHECK:STDOUT:   %foo.ref: %.177 = name_ref foo, imports.%.dcb [concrete = constants.%empty_struct]
-// CHECK:STDOUT:   <elided>
-// CHECK:STDOUT:   %S.foo.call: init %empty_tuple.type = call imports.%S.foo.decl(<error>)
+// CHECK:STDOUT:   %bound_method: <bound method> = bound_method %.loc8, %foo.ref
+// CHECK:STDOUT:   %addr: %ptr.5c7 = addr_of %.loc8
+// CHECK:STDOUT:   %S.foo.call: init %empty_tuple.type = call imports.%S.foo.decl(%addr)
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

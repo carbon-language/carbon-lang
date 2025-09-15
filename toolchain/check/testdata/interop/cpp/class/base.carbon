@@ -10,8 +10,6 @@
 // TIP: To dump output, run:
 // TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/check/testdata/interop/cpp/class/base.carbon
 
-// TODO: Tests marked as `fail_todo_5891_` to fixed as a follow-up of https://github.com/carbon-language/carbon-lang/pull/5891.
-
 // --- derived_to_base_conversion.h
 
 class Base {};
@@ -103,7 +101,7 @@ struct Derived : Base {
   void g() const;
 };
 
-// --- fail_todo_5891_use_base_method.carbon
+// --- use_base_method.carbon
 
 library "[[@TEST_NAME]]";
 
@@ -111,26 +109,12 @@ import Cpp library "base_method.h";
 
 fn CallDirect(d: Cpp.Derived) {
   //@dump-sem-ir-begin
-  // CHECK:STDERR: fail_todo_5891_use_base_method.carbon:[[@LINE+5]]:3: error: missing object argument in method call [MissingObjectInMethodCall]
-  // CHECK:STDERR:   d.f();
-  // CHECK:STDERR:   ^~~~~
-  // CHECK:STDERR: fail_todo_5891_use_base_method.carbon: note: calling function declared here [InCallToFunction]
-  // CHECK:STDERR:
   d.f();
   //@dump-sem-ir-end
 }
 
 fn CallQualified(d: Cpp.Derived) {
   //@dump-sem-ir-begin
-  // CHECK:STDERR: fail_todo_5891_use_base_method.carbon:[[@LINE+9]]:3: error: member name of type `<type of Cpp.g>` in compound member access is not an instance member or an interface member [CompoundMemberAccessDoesNotUseBase]
-  // CHECK:STDERR:   d.(Cpp.Base.g)();
-  // CHECK:STDERR:   ^~~~~~~~~~~~~~
-  // CHECK:STDERR:
-  // CHECK:STDERR: fail_todo_5891_use_base_method.carbon:[[@LINE+5]]:3: error: missing object argument in method call [MissingObjectInMethodCall]
-  // CHECK:STDERR:   d.(Cpp.Base.g)();
-  // CHECK:STDERR:   ^~~~~~~~~~~~~~~~
-  // CHECK:STDERR: fail_todo_5891_use_base_method.carbon: note: calling function declared here [InCallToFunction]
-  // CHECK:STDERR:
   d.(Cpp.Base.g)();
   //@dump-sem-ir-end
 }
@@ -472,7 +456,7 @@ class V {
 // CHECK:STDOUT:   return %Int.as.Copy.impl.Op.call to %return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- fail_todo_5891_use_base_method.carbon
+// CHECK:STDOUT: --- use_base_method.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %Derived: type = class_type @Derived [concrete]
@@ -517,23 +501,33 @@ class V {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %d.ref: %Derived = name_ref d, %d
 // CHECK:STDOUT:   %f.ref: %.5b0 = name_ref f, imports.%.e54 [concrete = constants.%empty_struct.3f3]
-// CHECK:STDOUT:   %addr: %ptr.fb2 = addr_of <error> [concrete = <error>]
-// CHECK:STDOUT:   %.loc13_7.1: %ptr.a97 = as_compatible %addr [concrete = <error>]
-// CHECK:STDOUT:   %.loc13_7.2: %ptr.a97 = converted %addr, %.loc13_7.1 [concrete = <error>]
-// CHECK:STDOUT:   %f__carbon_thunk.call: init %empty_tuple.type = call imports.%f__carbon_thunk.decl(%.loc13_7.2)
+// CHECK:STDOUT:   %bound_method: <bound method> = bound_method %d.ref, %f.ref
+// CHECK:STDOUT:   %.loc8_3.1: ref %Base = class_element_access %d.ref, element0
+// CHECK:STDOUT:   %.loc8_3.2: ref %Base = converted %d.ref, %.loc8_3.1
+// CHECK:STDOUT:   %.loc8_3.3: %Base = bind_value %.loc8_3.2
+// CHECK:STDOUT:   %.loc8_3.4: ref %Base = value_as_ref %.loc8_3.3
+// CHECK:STDOUT:   %addr: %ptr.fb2 = addr_of %.loc8_3.4
+// CHECK:STDOUT:   %.loc8_7.1: %ptr.a97 = as_compatible %addr
+// CHECK:STDOUT:   %.loc8_7.2: %ptr.a97 = converted %addr, %.loc8_7.1
+// CHECK:STDOUT:   %f__carbon_thunk.call: init %empty_tuple.type = call imports.%f__carbon_thunk.decl(%.loc8_7.2)
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @CallQualified(%d.param: %Derived) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %d.ref: %Derived = name_ref d, %d
-// CHECK:STDOUT:   %Cpp.ref.loc28: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
+// CHECK:STDOUT:   %Cpp.ref.loc14: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
 // CHECK:STDOUT:   %Base.ref: type = name_ref Base, imports.%Base.decl [concrete = constants.%Base]
 // CHECK:STDOUT:   %g.ref: %.7c6 = name_ref g, imports.%.362 [concrete = constants.%empty_struct.49e]
-// CHECK:STDOUT:   %addr: %ptr.fb2 = addr_of <error> [concrete = <error>]
-// CHECK:STDOUT:   %.loc28_18.1: %ptr.a97 = as_compatible %addr [concrete = <error>]
-// CHECK:STDOUT:   %.loc28_18.2: %ptr.a97 = converted %addr, %.loc28_18.1 [concrete = <error>]
-// CHECK:STDOUT:   %g__carbon_thunk.call: init %empty_tuple.type = call imports.%g__carbon_thunk.decl(%.loc28_18.2)
+// CHECK:STDOUT:   %bound_method: <bound method> = bound_method %d.ref, %g.ref
+// CHECK:STDOUT:   %.loc14_3.1: ref %Base = class_element_access %d.ref, element0
+// CHECK:STDOUT:   %.loc14_3.2: ref %Base = converted %d.ref, %.loc14_3.1
+// CHECK:STDOUT:   %.loc14_3.3: %Base = bind_value %.loc14_3.2
+// CHECK:STDOUT:   %.loc14_3.4: ref %Base = value_as_ref %.loc14_3.3
+// CHECK:STDOUT:   %addr: %ptr.fb2 = addr_of %.loc14_3.4
+// CHECK:STDOUT:   %.loc14_18.1: %ptr.a97 = as_compatible %addr
+// CHECK:STDOUT:   %.loc14_18.2: %ptr.a97 = converted %addr, %.loc14_18.1
+// CHECK:STDOUT:   %g__carbon_thunk.call: init %empty_tuple.type = call imports.%g__carbon_thunk.decl(%.loc14_18.2)
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

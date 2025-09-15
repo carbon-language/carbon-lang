@@ -10,8 +10,6 @@
 // TIP: To dump output, run:
 // TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/check/testdata/interop/cpp/class/template.carbon
 
-// TODO: Tests marked as `fail_todo_5891_` to fixed as a follow-up of https://github.com/carbon-language/carbon-lang/pull/5891.
-
 // --- class_template.h
 
 struct Base {};
@@ -24,7 +22,7 @@ template<typename T> struct A : Base {
 using Aint = A<int>;
 using Along = A<long>;
 
-// --- fail_todo_5891_use_class_template.carbon
+// --- use_class_template.carbon
 
 library "[[@TEST_NAME]]";
 
@@ -33,11 +31,6 @@ import Cpp library "class_template.h";
 fn F(x: Cpp.Aint) -> i32 {
   // Trigger instantiation through name lookup.
   //@dump-sem-ir-begin
-  // CHECK:STDERR: fail_todo_5891_use_class_template.carbon:[[@LINE+5]]:3: error: missing object argument in method call [MissingObjectInMethodCall]
-  // CHECK:STDERR:   x.f();
-  // CHECK:STDERR:   ^~~~~
-  // CHECK:STDERR: fail_todo_5891_use_class_template.carbon: note: calling function declared here [InCallToFunction]
-  // CHECK:STDERR:
   x.f();
   return x.n;
   //@dump-sem-ir-end
@@ -87,7 +80,7 @@ var x: Cpp.XY.r#type = 0;
 var y: Cpp.Xint.r#type = 0;
 //@dump-sem-ir-end
 
-// CHECK:STDOUT: --- fail_todo_5891_use_class_template.carbon
+// CHECK:STDOUT: --- use_class_template.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %A.0bedf0.1: type = class_type @A.1 [concrete]
@@ -143,36 +136,38 @@ var y: Cpp.Xint.r#type = 0;
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F(%x.param: %A.0bedf0.1) -> %i32 {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %x.ref.loc14: %A.0bedf0.1 = name_ref x, %x
+// CHECK:STDOUT:   %x.ref.loc9: %A.0bedf0.1 = name_ref x, %x
 // CHECK:STDOUT:   %f.ref: %.658 = name_ref f, imports.%.d46 [concrete = constants.%empty_struct]
-// CHECK:STDOUT:   %addr: %ptr.270828.1 = addr_of <error> [concrete = <error>]
-// CHECK:STDOUT:   %.loc14_7.1: %ptr.703 = as_compatible %addr [concrete = <error>]
-// CHECK:STDOUT:   %.loc14_7.2: %ptr.703 = converted %addr, %.loc14_7.1 [concrete = <error>]
-// CHECK:STDOUT:   %f__carbon_thunk.call: init %empty_tuple.type = call imports.%f__carbon_thunk.decl(%.loc14_7.2)
-// CHECK:STDOUT:   %x.ref.loc15: %A.0bedf0.1 = name_ref x, %x
+// CHECK:STDOUT:   %bound_method.loc9: <bound method> = bound_method %x.ref.loc9, %f.ref
+// CHECK:STDOUT:   %.loc9_3: ref %A.0bedf0.1 = value_as_ref %x.ref.loc9
+// CHECK:STDOUT:   %addr: %ptr.270828.1 = addr_of %.loc9_3
+// CHECK:STDOUT:   %.loc9_7.1: %ptr.703 = as_compatible %addr
+// CHECK:STDOUT:   %.loc9_7.2: %ptr.703 = converted %addr, %.loc9_7.1
+// CHECK:STDOUT:   %f__carbon_thunk.call: init %empty_tuple.type = call imports.%f__carbon_thunk.decl(%.loc9_7.2)
+// CHECK:STDOUT:   %x.ref.loc10: %A.0bedf0.1 = name_ref x, %x
 // CHECK:STDOUT:   %n.ref: %A.elem.c3f = name_ref n, @A.1.%.2 [concrete = @A.1.%.2]
-// CHECK:STDOUT:   %.loc15_11.1: ref %i32 = class_element_access %x.ref.loc15, element1
-// CHECK:STDOUT:   %.loc15_11.2: %i32 = bind_value %.loc15_11.1
+// CHECK:STDOUT:   %.loc10_11.1: ref %i32 = class_element_access %x.ref.loc10, element1
+// CHECK:STDOUT:   %.loc10_11.2: %i32 = bind_value %.loc10_11.1
 // CHECK:STDOUT:   %impl.elem0: %.7fa = impl_witness_access constants.%Copy.impl_witness.a32, element0 [concrete = constants.%Int.as.Copy.impl.Op.f59]
-// CHECK:STDOUT:   %bound_method.loc15_11.1: <bound method> = bound_method %.loc15_11.2, %impl.elem0
+// CHECK:STDOUT:   %bound_method.loc10_11.1: <bound method> = bound_method %.loc10_11.2, %impl.elem0
 // CHECK:STDOUT:   %specific_fn: <specific function> = specific_function %impl.elem0, @Int.as.Copy.impl.Op(constants.%int_32) [concrete = constants.%Int.as.Copy.impl.Op.specific_fn]
-// CHECK:STDOUT:   %bound_method.loc15_11.2: <bound method> = bound_method %.loc15_11.2, %specific_fn
-// CHECK:STDOUT:   %Int.as.Copy.impl.Op.call: init %i32 = call %bound_method.loc15_11.2(%.loc15_11.2)
+// CHECK:STDOUT:   %bound_method.loc10_11.2: <bound method> = bound_method %.loc10_11.2, %specific_fn
+// CHECK:STDOUT:   %Int.as.Copy.impl.Op.call: init %i32 = call %bound_method.loc10_11.2(%.loc10_11.2)
 // CHECK:STDOUT:   return %Int.as.Copy.impl.Op.call to %return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @G(%p.param: %ptr.270828.2) -> %ptr.fb2 {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %p.ref: %ptr.270828.2 = name_ref p, %p
-// CHECK:STDOUT:   %.loc22_11.1: ref %A.0bedf0.2 = deref %p.ref
-// CHECK:STDOUT:   %.loc22_11.2: ref %Base = class_element_access %.loc22_11.1, element0
-// CHECK:STDOUT:   %addr: %ptr.fb2 = addr_of %.loc22_11.2
-// CHECK:STDOUT:   %.loc22_11.3: %ptr.fb2 = converted %p.ref, %addr
+// CHECK:STDOUT:   %.loc17_11.1: ref %A.0bedf0.2 = deref %p.ref
+// CHECK:STDOUT:   %.loc17_11.2: ref %Base = class_element_access %.loc17_11.1, element0
+// CHECK:STDOUT:   %addr: %ptr.fb2 = addr_of %.loc17_11.2
+// CHECK:STDOUT:   %.loc17_11.3: %ptr.fb2 = converted %p.ref, %addr
 // CHECK:STDOUT:   %impl.elem0: %.e43 = impl_witness_access constants.%Copy.impl_witness.fe1, element0 [concrete = constants.%ptr.as.Copy.impl.Op.07b]
-// CHECK:STDOUT:   %bound_method.loc22_11.1: <bound method> = bound_method %.loc22_11.3, %impl.elem0
+// CHECK:STDOUT:   %bound_method.loc17_11.1: <bound method> = bound_method %.loc17_11.3, %impl.elem0
 // CHECK:STDOUT:   %specific_fn: <specific function> = specific_function %impl.elem0, @ptr.as.Copy.impl.Op(constants.%Base) [concrete = constants.%ptr.as.Copy.impl.Op.specific_fn]
-// CHECK:STDOUT:   %bound_method.loc22_11.2: <bound method> = bound_method %.loc22_11.3, %specific_fn
-// CHECK:STDOUT:   %ptr.as.Copy.impl.Op.call: init %ptr.fb2 = call %bound_method.loc22_11.2(%.loc22_11.3)
+// CHECK:STDOUT:   %bound_method.loc17_11.2: <bound method> = bound_method %.loc17_11.3, %specific_fn
+// CHECK:STDOUT:   %ptr.as.Copy.impl.Op.call: init %ptr.fb2 = call %bound_method.loc17_11.2(%.loc17_11.3)
 // CHECK:STDOUT:   return %ptr.as.Copy.impl.Op.call to %return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

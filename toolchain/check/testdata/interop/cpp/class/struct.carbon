@@ -514,6 +514,7 @@ fn MyF(bar: Cpp.Bar*);
 // CHECK:STDOUT:   %bar.ref: %ptr.f68 = name_ref bar, %bar
 // CHECK:STDOUT:   %.loc15: ref %Bar = deref %bar.ref
 // CHECK:STDOUT:   %f.ref: %.2e2 = name_ref f, imports.%.6e0 [concrete = constants.%empty_struct]
+// CHECK:STDOUT:   %bound_method: <bound method> = bound_method %.loc15, %f.ref
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
