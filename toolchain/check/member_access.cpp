@@ -55,7 +55,7 @@ static auto IsInstanceMethod(const SemIR::File& sem_ir,
 
 // Returns whether the callee function is an instance method, either because
 // it's a Carbon instance method or because it's a C++ overload set that might
-// contain an instance method. an implicit `self` parameter.
+// contain an instance method.
 static auto IsInstanceMethod(const SemIR::File& sem_ir,
                              const SemIR::CalleeFunction& callee) -> bool {
   if (callee.function_id.has_value()) {
