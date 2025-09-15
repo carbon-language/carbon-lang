@@ -1990,9 +1990,8 @@ static auto ImportNameDeclIntoScope(Context& context, SemIR::LocId loc_id,
 static auto IsTopCppScope(Context& context, SemIR::NameScopeId scope_id)
     -> bool {
   const SemIR::NameScope& name_scope = context.name_scopes().Get(scope_id);
-  return name_scope.is_cpp_scope() && !context.name_scopes()
-                                           .Get(name_scope.parent_scope_id())
-                                           .is_cpp_scope();
+  CARBON_CHECK(name_scope.is_cpp_scope());
+  return name_scope.parent_scope_id() == SemIR::NameScopeId::Package;
 }
 
 // For builtin names like `Cpp.long`, return the associated types.
