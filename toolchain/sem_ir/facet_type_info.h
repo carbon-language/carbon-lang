@@ -24,10 +24,10 @@ CARBON_DEFINE_RAW_ENUM_MASK(BuiltinConstraintMask, uint32_t) {
 
 // Constraints that are produced by builtin functions.
 //
-// Note these constraints are not treated as full interfaces, and behave
-// somewhat similarly to `type where .Self impls <builtin>` as an API.
-// Similarly, `impl C as <BuiltinConstraint>` will be invalid because `impl`
-// requires at least one extended interface.
+// These constraints are not treated as full interfaces, and behave somewhat
+// similarly to `type where .Self impls <builtin>` as an API. Similarly, `impl C
+// as <BuiltinConstraint>` will be invalid because `impl` requires at least one
+// extended interface.
 class BuiltinConstraintMask
     : public CARBON_ENUM_MASK_BASE(BuiltinConstraintMask) {
  public:
@@ -121,6 +121,8 @@ constexpr FacetTypeInfo::RewriteConstraint
 
 using FacetTypeInfoStore = CanonicalValueStore<FacetTypeId, FacetTypeInfo>;
 
+// TODO: This should probably include `BuiltinConstraintMask`, allowing APIs to
+// include builtin constraints where `RequireIdentifiedFacetType` is used.
 struct IdentifiedFacetType {
   using RequiredInterface = SpecificInterface;
 
