@@ -35,17 +35,16 @@ auto PerformCppOverloadResolution(Context& context, SemIR::LocId loc_id,
       return std::nullopt;
     }
     // TODO: Allocate these on the stack.
-    auto* arg_expr = new (context.ast_context()) clang::OpaqueValueExpr(
+    arg_exprs.emplace_back(new (context.ast_context()) clang::OpaqueValueExpr(
         // TODO: Add location accordingly.
         clang::SourceLocation(), arg_cpp_type.getNonReferenceType(),
-        clang::ExprValueKind::VK_LValue);
-    arg_exprs.emplace_back(arg_expr);
+        clang::ExprValueKind::VK_LValue));
   }
 
-  auto overload_set_type_inst =
-      context.types().GetAsInst(context.insts().Get(callee_id).type_id());
   auto overload_set_type =
-      overload_set_type_inst.TryAs<SemIR::CppOverloadSetType>();
+      context.types()
+          .GetAsInst(context.insts().Get(callee_id).type_id())
+          .TryAs<SemIR::CppOverloadSetType>();
   // TODO: CHECK-fail or store CppOverloadSetId in the CalleeFunction and pass
   // it in here.
   if (!overload_set_type) {

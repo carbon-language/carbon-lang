@@ -1975,21 +1975,18 @@ static auto ImportCppOverloadSet(Context& context, SemIR::NameScopeId scope_id,
                                  SemIR::NameId name_id,
                                  const clang::UnresolvedSet<4>& overload_set)
     -> SemIR::InstId {
-  SemIR::CppOverloadSetValue overload_set_inst = {
-      .type_id = SemIR::TypeId::None,
-      .overload_set_id = SemIR::CppOverloadSetId::None};
-
-  overload_set_inst.overload_set_id = context.cpp_overload_sets().Add(
+  SemIR::CppOverloadSetId overload_set_id = context.cpp_overload_sets().Add(
       SemIR::CppOverloadSet{.name_id = name_id,
                             .parent_scope_id = scope_id,
                             .candidate_functions = overload_set});
 
-  overload_set_inst.type_id = GetCppOverloadSetType(
-      context, overload_set_inst.overload_set_id, SemIR::SpecificId::None);
-
   auto overload_set_inst_id =
       // TODO: Add a location.
-      AddInstInNoBlock(context, Parse::NodeId::None, overload_set_inst);
+      AddInstInNoBlock<SemIR::CppOverloadSetValue>(
+          context, Parse::NodeId::None,
+          {.type_id = GetCppOverloadSetType(context, overload_set_id,
+                                            SemIR::SpecificId::None),
+           .overload_set_id = overload_set_id});
 
   context.imports().push_back(overload_set_inst_id);
   return overload_set_inst_id;

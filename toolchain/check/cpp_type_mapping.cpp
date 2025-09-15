@@ -38,8 +38,8 @@ static auto FindIntLiteralBitWidth(Context& context, SemIR::InstId arg_id)
   }
   auto arg = context.insts().GetAs<SemIR::IntValue>(
       context.constant_values().GetInstId(arg_const_id));
-  llvm::APInt arg_val = context.ints().Get(arg.int_id);
-  unsigned arg_non_sign_bits = arg_val.getSignificantBits() - 1;
+  unsigned arg_non_sign_bits =
+      context.ints().Get(arg.int_id).getSignificantBits() - 1;
 
   // TODO: What if the literal is larger than 64 bits? Currently an error is
   // reported that the int value is too large for type `i64`. Maybe try to fit
@@ -59,10 +59,10 @@ static auto TryMapBuiltinType(Context& context, SemIR::InstId inst_id,
   if (!object_repr_id.has_value()) {
     return clang::QualType();
   }
-  auto type_inst_id = context.sem_ir().types().GetInstId(object_repr_id);
-  auto inst = context.insts().Get(type_inst_id);
+  auto type_inst =
+      context.insts().Get(context.sem_ir().types().GetInstId(object_repr_id));
 
-  CARBON_KIND_SWITCH(inst) {
+  CARBON_KIND_SWITCH(type_inst) {
     case SemIR::BoolType::Kind: {
       return context.ast_context().BoolTy;
     }
@@ -70,11 +70,11 @@ static auto TryMapBuiltinType(Context& context, SemIR::InstId inst_id,
       return context.ast_context().CharTy;
     }
     case SemIR::IntLiteralType::Kind: {
-      auto bit_width = FindIntLiteralBitWidth(context, inst_id);
-      if (bit_width == IntId::None) {
+      IntId bit_width_id = FindIntLiteralBitWidth(context, inst_id);
+      if (bit_width_id == IntId::None) {
         return clang::QualType();
       }
-      return context.ast_context().getIntTypeForBitwidth(bit_width.AsValue(),
+      return context.ast_context().getIntTypeForBitwidth(bit_width_id.AsValue(),
                                                          true);
     }
     case CARBON_KIND(SemIR::IntType int_type): {
@@ -97,7 +97,6 @@ static auto TryMapBuiltinType(Context& context, SemIR::InstId inst_id,
       return clang::QualType();
     }
   }
-  return clang::QualType();
 }
 
 // Maps a Carbon record type to a Cpp type. Returns an empty `QualType` if
@@ -111,10 +110,11 @@ static auto TryMapRecordType(Context& context, SemIR::TypeId type_id)
   if (!class_type) {
     return clang::QualType();
   }
-  const SemIR::Class& class_info =
-      context.sem_ir().classes().Get(class_type->class_id);
+
   auto clang_decl_id =
-      context.name_scopes().Get(class_info.scope_id).clang_decl_context_id();
+      context.name_scopes()
+          .Get(context.sem_ir().classes().Get(class_type->class_id).scope_id)
+          .clang_decl_context_id();
   if (!clang_decl_id.has_value()) {
     return clang::QualType();
   }
