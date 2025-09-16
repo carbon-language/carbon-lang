@@ -357,7 +357,7 @@ class NameScopeStore {
 
   // Returns whether the provided scope ID is valid and is directly contained
   // within the Core package.
-  auto IsInCorePackage(NameScopeId scope_id) const -> bool {
+  auto IsInCorePackageRoot(NameScopeId scope_id) const -> bool {
     return scope_id.has_value() &&
            IsCorePackage(Get(scope_id).parent_scope_id());
   }

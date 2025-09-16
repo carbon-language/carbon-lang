@@ -85,7 +85,7 @@ auto NumericTypeLiteralInfo::ForType(const File& file, ClassType class_type)
 
   // The class must be declared in the `Core` package.
   const auto& class_info = file.classes().Get(class_type.class_id);
-  if (!file.name_scopes().IsInCorePackage(class_info.scope_id)) {
+  if (!file.name_scopes().IsInCorePackageRoot(class_info.scope_id)) {
     return NumericTypeLiteralInfo::Invalid;
   }
 
@@ -145,7 +145,7 @@ auto TypeLiteralInfo::ForType(const File& file, ClassType class_type)
 
   // The class must be declared in the `Core` package.
   const auto& class_info = file.classes().Get(class_type.class_id);
-  if (!file.name_scopes().IsInCorePackage(class_info.scope_id)) {
+  if (!file.name_scopes().IsInCorePackageRoot(class_info.scope_id)) {
     return {.kind = None};
   }
 
@@ -164,7 +164,6 @@ auto TypeLiteralInfo::ForType(const File& file, ClassType class_type)
 
 auto TypeLiteralInfo::PrintLiteral(const File& file,
                                    llvm::raw_ostream& out) const -> void {
-  CARBON_CHECK(is_valid());
   switch (kind) {
     case None:
       CARBON_FATAL("Printing invalid type literal");
