@@ -476,6 +476,49 @@ static auto HandleBuiltinCall(FunctionContext& context, SemIR::InstId inst_id,
   CARBON_FATAL("Unsupported builtin call.");
 }
 
+static auto HandleVirtualCall(FunctionContext& context,
+                              llvm::ArrayRef<llvm::Value*> args,
+                              const SemIR::File* callee_file,
+                              const SemIR::Function& function,
+                              const SemIR::CalleeFunction& callee_function)
+    -> llvm::CallInst* {
+  CARBON_CHECK(!args.empty(),
+               "Virtual functions must have at least one parameter");
+  auto* ptr_type =
+      llvm::PointerType::get(context.llvm_context(), /*AddressSpace=*/0);
+  // The vtable pointer is always at the start of the object in the Carbon
+  // ABI, so a pointer to the object is a pointer to the vtable pointer - load
+  // that to get a pointer to the vtable.
+  // TODO: Handle the case in C++ interop where the vtable pointer isn't at
+  // the start of the object.
+  // TODO: Use `context.LoadObject`.
+  auto* vtable = context.builder().CreateLoad(ptr_type, args.front(), "vtable");
+  auto* i32_type = llvm::IntegerType::getInt32Ty(context.llvm_context());
+  auto* pointer_type =
+      llvm::PointerType::get(context.llvm_context(), /* address space */ 0);
+  auto function_type_info =
+      context.GetFileContext(callee_file)
+          .BuildFunctionTypeInfo(function,
+                                 callee_function.resolved_specific_id);
+  llvm::Value* virtual_fn;
+  if (function.clang_decl_id.has_value()) {
+    auto* virtual_function_pointer_address = context.builder().CreateGEP(
+        pointer_type, vtable,
+        {llvm::ConstantInt::get(
+            i32_type, static_cast<uint64_t>(function.virtual_index))});
+    virtual_fn = context.builder().CreateLoad(
+        pointer_type, virtual_function_pointer_address, "memptr.virtualfn");
+  } else {
+    virtual_fn = context.builder().CreateCall(
+        llvm::Intrinsic::getOrInsertDeclaration(
+            &context.llvm_module(), llvm::Intrinsic::load_relative, {i32_type}),
+        {vtable,
+         llvm::ConstantInt::get(
+             i32_type, static_cast<uint64_t>(function.virtual_index) * 4)});
+  }
+  return context.builder().CreateCall(function_type_info.type, virtual_fn,
+                                      args);
+}
 auto HandleInst(FunctionContext& context, SemIR::InstId inst_id,
                 SemIR::Call inst) -> void {
   llvm::ArrayRef<SemIR::InstId> arg_ids =
@@ -565,44 +608,8 @@ auto HandleInst(FunctionContext& context, SemIR::InstId inst_id,
                  "Argument count mismatch: {0}", describe_call());
     call = context.builder().CreateCall(callee, args);
   } else {
-    CARBON_CHECK(!args.empty(),
-                 "Virtual functions must have at least one parameter");
-    auto* ptr_type =
-        llvm::PointerType::get(context.llvm_context(), /*AddressSpace=*/0);
-    // The vtable pointer is always at the start of the object in the Carbon
-    // ABI, so a pointer to the object is a pointer to the vtable pointer - load
-    // that to get a pointer to the vtable.
-    // TODO: Handle the case in C++ interop where the vtable pointer isn't at
-    // the start of the object.
-    // TODO: Use `context.LoadObject`.
-    auto* vtable =
-        context.builder().CreateLoad(ptr_type, args.front(), "vtable");
-    auto* i32_type = llvm::IntegerType::getInt32Ty(context.llvm_context());
-    auto* pointer_type =
-        llvm::PointerType::get(context.llvm_context(), /* address space */ 0);
-    auto function_type_info =
-        context.GetFileContext(callee_file)
-            .BuildFunctionTypeInfo(function,
-                                   callee_function.resolved_specific_id);
-    llvm::Value* virtual_fn;
-    if (function.clang_decl_id.has_value()) {
-      auto* virtual_function_pointer_address = context.builder().CreateGEP(
-          pointer_type, vtable,
-          {llvm::ConstantInt::get(
-              i32_type, static_cast<uint64_t>(function.virtual_index))});
-      virtual_fn = context.builder().CreateLoad(
-          pointer_type, virtual_function_pointer_address, "memptr.virtualfn");
-    } else {
-      virtual_fn = context.builder().CreateCall(
-          llvm::Intrinsic::getOrInsertDeclaration(
-              &context.llvm_module(), llvm::Intrinsic::load_relative,
-              {i32_type}),
-          {vtable,
-           llvm::ConstantInt::get(
-               i32_type, static_cast<uint64_t>(function.virtual_index) * 4)});
-    }
-    call =
-        context.builder().CreateCall(function_type_info.type, virtual_fn, args);
+    call = HandleVirtualCall(context, args, callee_file, function,
+                             callee_function);
   }
 
   context.SetLocal(inst_id, call);
