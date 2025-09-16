@@ -127,9 +127,9 @@ static auto TryMapClassType(Context& context, SemIR::TypeId type_id)
 // Maps a non-wrapper (no const or pointer) Carbon type to a C++ type.
 static auto MapNonWrapperType(Context& context, SemIR::InstId inst_id,
                               SemIR::TypeId type_id) -> clang::QualType {
-  clang::QualType mapped_type = TryMapBuiltinType(context, inst_id, type_id);
+  clang::QualType mapped_type = TryMapClassType(context, type_id);
   if (mapped_type.isNull()) {
-    mapped_type = TryMapClassType(context, type_id);
+    mapped_type = TryMapBuiltinType(context, inst_id, type_id);
   }
   return mapped_type;
 }
