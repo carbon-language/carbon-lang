@@ -1255,8 +1255,8 @@ static auto MapPointerType(Context& context, clang::QualType type,
   if (auto nullability = type->getNullability();
       !nullability.has_value() ||
       *nullability != clang::NullabilityKind::NonNull) {
-    // If the type was produced by substitution, then we assume it was deduced
-    // from a Carbon pointer type, so it's non-null.
+    // If the type was produced by C++ template substitution, then we assume it
+    // was deduced from a Carbon pointer type, so it's non-null.
     if (!type->getAs<clang::SubstTemplateTypeParmType>()) {
       // TODO: Support nullable pointers.
       return TypeExpr::None;
