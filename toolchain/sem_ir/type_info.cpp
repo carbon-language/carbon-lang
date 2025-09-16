@@ -17,6 +17,9 @@ auto ValueRepr::Print(llvm::raw_ostream& out) const -> void {
     case Unknown:
       out << "unknown";
       break;
+    case Dependent:
+      out << "dependent";
+      break;
     case None:
       out << "none";
       break;
@@ -55,6 +58,9 @@ auto InitRepr::ForType(const File& file, TypeId type_id) -> InitRepr {
   switch (value_rep.kind) {
     case ValueRepr::None:
       return {.kind = InitRepr::None};
+
+    case ValueRepr::Dependent:
+      return {.kind = InitRepr::Dependent};
 
     case ValueRepr::Copy:
       // TODO: Use in-place initialization for types that have non-trivial

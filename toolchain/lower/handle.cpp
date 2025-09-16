@@ -232,10 +232,7 @@ auto HandleInst(FunctionContext& /*context*/, SemIR::InstId /*inst_id*/,
 
 auto HandleInst(FunctionContext& context, SemIR::InstId inst_id,
                 SemIR::ReturnSlot inst) -> void {
-  if (context.GetInitRepr(context.GetTypeIdOfInst(inst_id)).kind ==
-      SemIR::InitRepr::InPlace) {
-    context.SetLocal(inst_id, context.GetValue(inst.storage_id));
-  }
+  context.SetLocal(inst_id, context.GetValue(inst.storage_id));
 }
 
 auto HandleInst(FunctionContext& context, SemIR::InstId /*inst_id*/,
@@ -261,6 +258,9 @@ auto HandleInst(FunctionContext& context, SemIR::InstId /*inst_id*/,
       return;
     case SemIR::InitRepr::Incomplete:
       CARBON_FATAL("Lowering return of incomplete type {0}",
+                   result_type.file->types().GetAsInst(result_type.type_id));
+    case SemIR::InitRepr::Dependent:
+      CARBON_FATAL("Lowering return of dependent type {0}",
                    result_type.file->types().GetAsInst(result_type.type_id));
   }
 }

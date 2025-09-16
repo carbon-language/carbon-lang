@@ -39,8 +39,8 @@ def _build_generated_files(
     # files but aren't classified as "generated file".
     kinds_query = (
         "filter("
-        ' ".*\\.(h|cpp|cc|c|cxx|def|inc)$",'
-        ' kind("(generated file|generate_llvm_tools_def|manifest_as_cpp)",'
+        ' ".*\\.(h|hpp|hxx|cpp|cc|c|cxx|def|inc|s|S)$",'
+        ' kind("(.*generate.*|manifest_as_cpp)",'
         # tree_sitter is excluded here because it causes the query to failure on
         # `@platforms`.
         "      deps(//... except //utils/tree_sitter/...))"
@@ -66,6 +66,9 @@ def _build_generated_files(
     subprocess.check_call(
         [bazel, "build", "--keep_going", "--remote_download_outputs=toplevel"]
         + generated_file_labels
+        # We also need the Bazel C++ runfiles that aren't "generated", but are
+        # not linked into place until built.
+        + ["@bazel_tools//tools/cpp/runfiles:runfiles"]
     )
 
 
@@ -95,7 +98,15 @@ def main() -> None:
         "Generating compile_commands.json (may take a few minutes)...",
         flush=True,
     )
-    subprocess.run([bazel, "run", "@hedron_compile_commands//:refresh_all"])
+    subprocess.run(
+        [
+            bazel,
+            "run",
+            "@hedron_compile_commands//:refresh_all",
+            "--",
+            "--notool_deps",
+        ]
+    )
 
 
 if __name__ == "__main__":

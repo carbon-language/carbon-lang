@@ -496,8 +496,8 @@ auto Formatter::FormatFunction(FunctionId id, const Function& fn) -> void {
     case FunctionFields::VirtualModifier::Abstract:
       function_start += "abstract ";
       break;
-    case FunctionFields::VirtualModifier::Impl:
-      function_start += "impl ";
+    case FunctionFields::VirtualModifier::Override:
+      function_start += "override ";
       break;
     case FunctionFields::VirtualModifier::None:
       break;
@@ -1298,7 +1298,8 @@ auto Formatter::FormatArg(FacetTypeId id) -> void {
     }
   }
 
-  if (info.other_requirements || !info.self_impls_constraints.empty() ||
+  if (info.other_requirements || !info.builtin_constraint_mask.empty() ||
+      !info.self_impls_constraints.empty() ||
       !info.rewrite_constraints.empty()) {
     out_ << " where ";
     llvm::ListSeparator and_sep(" and ");
@@ -1319,6 +1320,10 @@ auto Formatter::FormatArg(FacetTypeId id) -> void {
       FormatArg(rewrite.lhs_id);
       out_ << " = ";
       FormatArg(rewrite.rhs_id);
+    }
+    if (info.builtin_constraint_mask.HasAnyOf(
+            BuiltinConstraintMask::TypeCanAggregateDestroy)) {
+      out_ << and_sep << ".Self impls <CanAggregateDestroy>";
     }
     if (info.other_requirements) {
       out_ << and_sep << "TODO";

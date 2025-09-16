@@ -106,8 +106,8 @@ fn Use() {
 // CHECK:STDOUT:   %pattern_type.855: type = pattern_type %ptr.cbd [concrete]
 // CHECK:STDOUT:   %reference.var: ref %const = var file.%reference.var_patt [concrete]
 // CHECK:STDOUT:   %addr.0c5: %ptr.cbd = addr_of %reference.var [concrete]
-// CHECK:STDOUT:   %T.as.Destroy.impl.Op.type.e3b: type = fn_type @T.as.Destroy.impl.Op, @T.as.Destroy.impl(%const) [concrete]
-// CHECK:STDOUT:   %T.as.Destroy.impl.Op.96e: %T.as.Destroy.impl.Op.type.e3b = struct_value () [concrete]
+// CHECK:STDOUT:   %T.as.Destroy.impl.Op.type.428: type = fn_type @T.as.Destroy.impl.Op, @T.as.Destroy.impl(%const) [concrete]
+// CHECK:STDOUT:   %T.as.Destroy.impl.Op.83d: %T.as.Destroy.impl.Op.type.428 = struct_value () [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -176,7 +176,7 @@ fn Use() {
 // CHECK:STDOUT:     %ptr.loc17_17: type = ptr_type %const.loc17_10 [concrete = constants.%ptr.cbd]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %b: %ptr.cbd = bind_name b, %.loc17_25.2
-// CHECK:STDOUT:   %T.as.Destroy.impl.Op.bound: <bound method> = bound_method %i.var, constants.%T.as.Destroy.impl.Op.96e
+// CHECK:STDOUT:   %T.as.Destroy.impl.Op.bound: <bound method> = bound_method %i.var, constants.%T.as.Destroy.impl.Op.83d
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT:   %bound_method: <bound method> = bound_method %i.var, %T.as.Destroy.impl.Op.specific_fn
 // CHECK:STDOUT:   %addr.loc14: %ptr.cbd = addr_of %i.var

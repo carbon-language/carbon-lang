@@ -6,7 +6,7 @@
 
 namespace Carbon::Diagnostics {
 
-CARBON_DEFINE_ENUM_CLASS_NAMES(Kind) = {
+CARBON_DEFINE_ENUM_CLASS_NAMES(Kind) {
 #define CARBON_DIAGNOSTIC_KIND(Name) CARBON_ENUM_CLASS_NAME_STRING(Name)
 #include "toolchain/diagnostics/diagnostic_kind.def"
 };

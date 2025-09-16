@@ -10,6 +10,8 @@
 // TIP: To dump output, run:
 // TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/check/testdata/interop/cpp/stdlib/string_view.carbon
 
+// TODO: Tests marked as `fail_todo_5891_` to fixed as a follow-up of https://github.com/carbon-language/carbon-lang/pull/5891.
+
 // --- string_view.h
 
 namespace std {
@@ -36,7 +38,7 @@ namespace std {
 auto Consume(std::string_view sv) -> void;
 auto Produce() -> std::string_view;
 
-// --- import_multiple.carbon
+// --- fail_todo_5891_import_multiple.carbon
 
 library "[[@TEST_NAME]]";
 
@@ -44,6 +46,13 @@ import Cpp library "string_view.h";
 
 //@dump-sem-ir-begin
 fn F() {
+  // CHECK:STDERR: fail_todo_5891_import_multiple.carbon:[[@LINE+7]]:3: error: call argument of type `Core.String` is not supported [CppCallArgTypeNotSupported]
+  // CHECK:STDERR:   Cpp.Consume("hello");
+  // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~
+  // CHECK:STDERR: fail_todo_5891_import_multiple.carbon:[[@LINE+4]]:3: note: in call to Cpp function here [InCallToCppFunction]
+  // CHECK:STDERR:   Cpp.Consume("hello");
+  // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~
+  // CHECK:STDERR:
   Cpp.Consume("hello");
 }
 //@dump-sem-ir-end
@@ -54,7 +63,7 @@ fn G() -> str {
 }
 //@dump-sem-ir-end
 
-// CHECK:STDOUT: --- import_multiple.carbon
+// CHECK:STDOUT: --- fail_todo_5891_import_multiple.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %F.type: type = fn_type @F [concrete]
@@ -66,44 +75,29 @@ fn G() -> str {
 // CHECK:STDOUT:   %int_8: Core.IntLiteral = int_value 8 [concrete]
 // CHECK:STDOUT:   %u8: type = class_type @UInt, @UInt(%int_8) [concrete]
 // CHECK:STDOUT:   %ptr.3e8: type = ptr_type %u8 [concrete]
-// CHECK:STDOUT:   %pattern_type.461: type = pattern_type %String [concrete]
-// CHECK:STDOUT:   %Consume.type: type = fn_type @Consume [concrete]
-// CHECK:STDOUT:   %Consume: %Consume.type = struct_value () [concrete]
-// CHECK:STDOUT:   %ptr.85f: type = ptr_type %String [concrete]
-// CHECK:STDOUT:   %Consume__carbon_thunk.type: type = fn_type @Consume__carbon_thunk [concrete]
-// CHECK:STDOUT:   %Consume__carbon_thunk: %Consume__carbon_thunk.type = struct_value () [concrete]
+// CHECK:STDOUT:   %.fd2: type = cpp_overload_set_type @Produce [concrete]
+// CHECK:STDOUT:   %empty_struct.c28: %.fd2 = struct_value () [concrete]
 // CHECK:STDOUT:   %str: %ptr.3e8 = string_literal "hello" [concrete]
 // CHECK:STDOUT:   %int_5: %u64 = int_value 5 [concrete]
 // CHECK:STDOUT:   %String.val: %String = struct_value (%str, %int_5) [concrete]
+// CHECK:STDOUT:   %pattern_type.461: type = pattern_type %String [concrete]
 // CHECK:STDOUT:   %G.type: type = fn_type @G [concrete]
 // CHECK:STDOUT:   %G: %G.type = struct_value () [concrete]
-// CHECK:STDOUT:   %Produce.type: type = fn_type @Produce [concrete]
-// CHECK:STDOUT:   %Produce: %Produce.type = struct_value () [concrete]
+// CHECK:STDOUT:   %.a47: type = cpp_overload_set_type @Produce__carbon_thunk [concrete]
+// CHECK:STDOUT:   %empty_struct.ab9: %.a47 = struct_value () [concrete]
+// CHECK:STDOUT:   %ptr.85f: type = ptr_type %String [concrete]
 // CHECK:STDOUT:   %Produce__carbon_thunk.type: type = fn_type @Produce__carbon_thunk [concrete]
 // CHECK:STDOUT:   %Produce__carbon_thunk: %Produce__carbon_thunk.type = struct_value () [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT:   %Cpp: <namespace> = namespace file.%Cpp.import_cpp, [concrete] {
-// CHECK:STDOUT:     .Consume = %Consume.decl
-// CHECK:STDOUT:     .Produce = %Produce.decl
+// CHECK:STDOUT:     .Consume = %.f17
+// CHECK:STDOUT:     .Produce = %.5d1
 // CHECK:STDOUT:     import Cpp//...
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %Consume.decl: %Consume.type = fn_decl @Consume [concrete = constants.%Consume] {
-// CHECK:STDOUT:     <elided>
-// CHECK:STDOUT:   } {
-// CHECK:STDOUT:     <elided>
-// CHECK:STDOUT:   }
-// CHECK:STDOUT:   %Consume__carbon_thunk.decl: %Consume__carbon_thunk.type = fn_decl @Consume__carbon_thunk [concrete = constants.%Consume__carbon_thunk] {
-// CHECK:STDOUT:     <elided>
-// CHECK:STDOUT:   } {
-// CHECK:STDOUT:     <elided>
-// CHECK:STDOUT:   }
-// CHECK:STDOUT:   %Produce.decl: %Produce.type = fn_decl @Produce [concrete = constants.%Produce] {
-// CHECK:STDOUT:     <elided>
-// CHECK:STDOUT:   } {
-// CHECK:STDOUT:     <elided>
-// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %.f17: %.fd2 = cpp_overload_set_value @Produce [concrete = constants.%empty_struct.c28]
+// CHECK:STDOUT:   %.5d1: %.a47 = cpp_overload_set_value @Produce__carbon_thunk [concrete = constants.%empty_struct.ab9]
 // CHECK:STDOUT:   %Produce__carbon_thunk.decl: %Produce__carbon_thunk.type = fn_decl @Produce__carbon_thunk [concrete = constants.%Produce__carbon_thunk] {
 // CHECK:STDOUT:     <elided>
 // CHECK:STDOUT:   } {
@@ -125,24 +119,21 @@ fn G() -> str {
 // CHECK:STDOUT: fn @F() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %Cpp.ref: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
-// CHECK:STDOUT:   %Consume.ref: %Consume.type = name_ref Consume, imports.%Consume.decl [concrete = constants.%Consume]
+// CHECK:STDOUT:   %Consume.ref: %.fd2 = name_ref Consume, imports.%.f17 [concrete = constants.%empty_struct.c28]
 // CHECK:STDOUT:   %str: %ptr.3e8 = string_literal "hello" [concrete = constants.%str]
 // CHECK:STDOUT:   %int_5: %u64 = int_value 5 [concrete = constants.%int_5]
 // CHECK:STDOUT:   %String.val: %String = struct_value (%str, %int_5) [concrete = constants.%String.val]
-// CHECK:STDOUT:   %.loc8: ref %String = value_as_ref %String.val
-// CHECK:STDOUT:   %addr: %ptr.85f = addr_of %.loc8
-// CHECK:STDOUT:   %Consume__carbon_thunk.call: init %empty_tuple.type = call imports.%Consume__carbon_thunk.decl(%addr)
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @G() -> %return.param: %String {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %Cpp.ref: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
-// CHECK:STDOUT:   %Produce.ref: %Produce.type = name_ref Produce, imports.%Produce.decl [concrete = constants.%Produce]
-// CHECK:STDOUT:   %.loc13: ref %String = splice_block %return {}
-// CHECK:STDOUT:   %addr: %ptr.85f = addr_of %.loc13
+// CHECK:STDOUT:   %Produce.ref: %.a47 = name_ref Produce, imports.%.5d1 [concrete = constants.%empty_struct.ab9]
+// CHECK:STDOUT:   %.loc20: ref %String = splice_block %return {}
+// CHECK:STDOUT:   %addr: %ptr.85f = addr_of %.loc20
 // CHECK:STDOUT:   %Produce__carbon_thunk.call: init %empty_tuple.type = call imports.%Produce__carbon_thunk.decl(%addr)
-// CHECK:STDOUT:   %.loc14: init %String = in_place_init %Produce__carbon_thunk.call, %.loc13
-// CHECK:STDOUT:   return %.loc14 to %return
+// CHECK:STDOUT:   %.loc21: init %String = in_place_init %Produce__carbon_thunk.call, %.loc20
+// CHECK:STDOUT:   return %.loc21 to %return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

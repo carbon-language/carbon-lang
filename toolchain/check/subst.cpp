@@ -228,7 +228,10 @@ static auto PopOperand(Context& context, Worklist& worklist,
     case CARBON_KIND(SemIR::FacetTypeId facet_type_id): {
       const auto& old_facet_type_info =
           context.facet_types().Get(facet_type_id);
-      SemIR::FacetTypeInfo new_facet_type_info;
+      SemIR::FacetTypeInfo new_facet_type_info = {
+          .builtin_constraint_mask =
+              old_facet_type_info.builtin_constraint_mask,
+          .other_requirements = old_facet_type_info.other_requirements};
       // Since these were added to a stack, we get them back in reverse order.
       new_facet_type_info.rewrite_constraints.resize(
           old_facet_type_info.rewrite_constraints.size(),
@@ -259,8 +262,6 @@ static auto PopOperand(Context& context, Worklist& worklist,
             .interface_id = old_constraint.interface_id,
             .specific_id = pop_specific(old_constraint.specific_id)};
       }
-      new_facet_type_info.other_requirements =
-          old_facet_type_info.other_requirements;
       new_facet_type_info.Canonicalize();
       return context.facet_types().Add(new_facet_type_info).index;
     }

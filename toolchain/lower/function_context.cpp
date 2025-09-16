@@ -285,6 +285,9 @@ auto FunctionContext::FinishInit(TypeInFile type, SemIR::InstId dest_id,
     case SemIR::InitRepr::Incomplete:
       CARBON_FATAL("Lowering aggregate initialization of incomplete type {0}",
                    type.file->types().GetAsInst(type.type_id));
+    case SemIR::InitRepr::Dependent:
+      CARBON_FATAL("Lowering aggregate initialization of dependent type {0}",
+                   type.file->types().GetAsInst(type.type_id));
   }
 }
 
@@ -368,6 +371,8 @@ auto FunctionContext::CopyValue(TypeInFile type, SemIR::InstId source_id,
   switch (GetValueRepr(type).repr.kind) {
     case SemIR::ValueRepr::Unknown:
       CARBON_FATAL("Attempt to copy incomplete type");
+    case SemIR::ValueRepr::Dependent:
+      CARBON_FATAL("Attempt to copy dependent type");
     case SemIR::ValueRepr::None:
       break;
     case SemIR::ValueRepr::Copy:

@@ -25,8 +25,7 @@ namespace Carbon::Check {
 auto FacetTypeFromInterface(Context& context, SemIR::InterfaceId interface_id,
                             SemIR::SpecificId specific_id) -> SemIR::FacetType {
   auto info =
-      SemIR::FacetTypeInfo{.extend_constraints = {{interface_id, specific_id}},
-                           .other_requirements = false};
+      SemIR::FacetTypeInfo{.extend_constraints = {{interface_id, specific_id}}};
   info.Canonicalize();
   SemIR::FacetTypeId facet_type_id = context.facet_types().Add(info);
   return {.type_id = SemIR::TypeType::TypeId, .facet_type_id = facet_type_id};

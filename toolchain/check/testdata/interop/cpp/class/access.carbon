@@ -10,6 +10,8 @@
 // TIP: To dump output, run:
 // TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/check/testdata/interop/cpp/class/access.carbon
 
+// TODO: Tests marked as `fail_todo_5891_` to fixed as a follow-up of https://github.com/carbon-language/carbon-lang/pull/5891.
+
 // ============================================================================
 // Public non-function member
 // ============================================================================
@@ -238,7 +240,7 @@ class C {
   static auto foo(int a, int b) -> void;
 };
 
-// --- fail_todo_import_overload_set_public.carbon
+// --- fail_todo_5891_import_overload_set_public.carbon
 
 library "[[@TEST_NAME]]";
 
@@ -246,10 +248,10 @@ import Cpp library "overload_set.h";
 
 fn F() {
   //@dump-sem-ir-begin
-  // CHECK:STDERR: fail_todo_import_overload_set_public.carbon:[[@LINE+7]]:3: error: semantics TODO: `Unsupported: Lookup succeeded but couldn't find a single result; LookupResultKind: 3` [SemanticsTodo]
+  // CHECK:STDERR: fail_todo_5891_import_overload_set_public.carbon:[[@LINE+7]]:3: error: semantics TODO: `Unsupported: Overloaded set with mixed access` [SemanticsTodo]
   // CHECK:STDERR:   Cpp.C.foo();
   // CHECK:STDERR:   ^~~~~~~~~
-  // CHECK:STDERR: fail_todo_import_overload_set_public.carbon:[[@LINE+4]]:3: note: in `Cpp` name lookup for `foo` [InCppNameLookup]
+  // CHECK:STDERR: fail_todo_5891_import_overload_set_public.carbon:[[@LINE+4]]:3: note: in `Cpp` name lookup for `foo` [InCppNameLookup]
   // CHECK:STDERR:   Cpp.C.foo();
   // CHECK:STDERR:   ^~~~~~~~~
   // CHECK:STDERR:
@@ -257,34 +259,34 @@ fn F() {
   //@dump-sem-ir-end
 }
 
-// --- fail_todo_import_overload_set_protected.carbon
+// --- fail_todo_5891_import_overload_set_protected.carbon
 
 library "[[@TEST_NAME]]";
 
 import Cpp library "overload_set.h";
 
 fn F() {
-  // CHECK:STDERR: fail_todo_import_overload_set_protected.carbon:[[@LINE+7]]:3: error: semantics TODO: `Unsupported: Lookup succeeded but couldn't find a single result; LookupResultKind: 3` [SemanticsTodo]
+  // CHECK:STDERR: fail_todo_5891_import_overload_set_protected.carbon:[[@LINE+7]]:3: error: semantics TODO: `Unsupported: Overloaded set with mixed access` [SemanticsTodo]
   // CHECK:STDERR:   Cpp.C.foo(1 as i32);
   // CHECK:STDERR:   ^~~~~~~~~
-  // CHECK:STDERR: fail_todo_import_overload_set_protected.carbon:[[@LINE+4]]:3: note: in `Cpp` name lookup for `foo` [InCppNameLookup]
+  // CHECK:STDERR: fail_todo_5891_import_overload_set_protected.carbon:[[@LINE+4]]:3: note: in `Cpp` name lookup for `foo` [InCppNameLookup]
   // CHECK:STDERR:   Cpp.C.foo(1 as i32);
   // CHECK:STDERR:   ^~~~~~~~~
   // CHECK:STDERR:
   Cpp.C.foo(1 as i32);
 }
 
-// --- fail_todo_import_overload_set_private.carbon
+// --- fail_todo_5891_import_overload_set_private.carbon
 
 library "[[@TEST_NAME]]";
 
 import Cpp library "overload_set.h";
 
 fn F() {
-  // CHECK:STDERR: fail_todo_import_overload_set_private.carbon:[[@LINE+7]]:3: error: semantics TODO: `Unsupported: Lookup succeeded but couldn't find a single result; LookupResultKind: 3` [SemanticsTodo]
+  // CHECK:STDERR: fail_todo_5891_import_overload_set_private.carbon:[[@LINE+7]]:3: error: semantics TODO: `Unsupported: Overloaded set with mixed access` [SemanticsTodo]
   // CHECK:STDERR:   Cpp.C.foo(1 as i32, 2 as i32);
   // CHECK:STDERR:   ^~~~~~~~~
-  // CHECK:STDERR: fail_todo_import_overload_set_private.carbon:[[@LINE+4]]:3: note: in `Cpp` name lookup for `foo` [InCppNameLookup]
+  // CHECK:STDERR: fail_todo_5891_import_overload_set_private.carbon:[[@LINE+4]]:3: note: in `Cpp` name lookup for `foo` [InCppNameLookup]
   // CHECK:STDERR:   Cpp.C.foo(1 as i32, 2 as i32);
   // CHECK:STDERR:   ^~~~~~~~~
   // CHECK:STDERR:
@@ -431,11 +433,14 @@ fn F() {
 // CHECK:STDOUT:   %S: type = class_type @S [concrete]
 // CHECK:STDOUT:   %ptr.5c7: type = ptr_type %S [concrete]
 // CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [concrete]
+// CHECK:STDOUT:   %.177: type = cpp_overload_set_type @S.foo [concrete]
+// CHECK:STDOUT:   %empty_struct: %.177 = struct_value () [concrete]
 // CHECK:STDOUT:   %S.foo.type: type = fn_type @S.foo [concrete]
 // CHECK:STDOUT:   %S.foo: %S.foo.type = struct_value () [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
+// CHECK:STDOUT:   %.dcb: %.177 = cpp_overload_set_value @S.foo [concrete = constants.%empty_struct]
 // CHECK:STDOUT:   %S.foo.decl: %S.foo.type = fn_decl @S.foo [concrete = constants.%S.foo] {
 // CHECK:STDOUT:     <elided>
 // CHECK:STDOUT:   } {
@@ -447,14 +452,14 @@ fn F() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %s.ref: %ptr.5c7 = name_ref s, %s
 // CHECK:STDOUT:   %.loc8: ref %S = deref %s.ref
-// CHECK:STDOUT:   %foo.ref: %S.foo.type = name_ref foo, imports.%S.foo.decl [concrete = constants.%S.foo]
-// CHECK:STDOUT:   %S.foo.bound: <bound method> = bound_method %.loc8, %foo.ref
+// CHECK:STDOUT:   %foo.ref: %.177 = name_ref foo, imports.%.dcb [concrete = constants.%empty_struct]
+// CHECK:STDOUT:   %bound_method: <bound method> = bound_method %.loc8, %foo.ref
 // CHECK:STDOUT:   %addr: %ptr.5c7 = addr_of %.loc8
-// CHECK:STDOUT:   %S.foo.call: init %empty_tuple.type = call %S.foo.bound(%addr)
+// CHECK:STDOUT:   %S.foo.call: init %empty_tuple.type = call imports.%S.foo.decl(%addr)
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- fail_todo_import_overload_set_public.carbon
+// CHECK:STDOUT: --- fail_todo_5891_import_overload_set_public.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %C: type = class_type @C [concrete]
@@ -481,6 +486,8 @@ fn F() {
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [concrete]
 // CHECK:STDOUT:   %DerivedPublic: type = class_type @DerivedPublic [concrete]
+// CHECK:STDOUT:   %.5a6: type = cpp_overload_set_type @Base.foo [concrete]
+// CHECK:STDOUT:   %empty_struct: %.5a6 = struct_value () [concrete]
 // CHECK:STDOUT:   %Base.foo.type: type = fn_type @Base.foo [concrete]
 // CHECK:STDOUT:   %Base.foo: %Base.foo.type = struct_value () [concrete]
 // CHECK:STDOUT: }
@@ -491,6 +498,7 @@ fn F() {
 // CHECK:STDOUT:     import Cpp//...
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %DerivedPublic.decl: type = class_decl @DerivedPublic [concrete = constants.%DerivedPublic] {} {}
+// CHECK:STDOUT:   %.607: %.5a6 = cpp_overload_set_value @Base.foo [concrete = constants.%empty_struct]
 // CHECK:STDOUT:   %Base.foo.decl: %Base.foo.type = fn_decl @Base.foo [concrete = constants.%Base.foo] {} {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -498,8 +506,8 @@ fn F() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %Cpp.ref: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
 // CHECK:STDOUT:   %DerivedPublic.ref: type = name_ref DerivedPublic, imports.%DerivedPublic.decl [concrete = constants.%DerivedPublic]
-// CHECK:STDOUT:   %foo.ref: %Base.foo.type = name_ref foo, imports.%Base.foo.decl [concrete = constants.%Base.foo]
-// CHECK:STDOUT:   %Base.foo.call: init %empty_tuple.type = call %foo.ref()
+// CHECK:STDOUT:   %foo.ref: %.5a6 = name_ref foo, imports.%.607 [concrete = constants.%empty_struct]
+// CHECK:STDOUT:   %Base.foo.call: init %empty_tuple.type = call imports.%Base.foo.decl()
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
