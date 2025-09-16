@@ -502,6 +502,8 @@ static auto HandleVirtualCall(FunctionContext& context,
                                  callee_function.resolved_specific_id);
   llvm::Value* virtual_fn;
   if (function.clang_decl_id.has_value()) {
+    // Use absolute vtables for clang interop - the itanium vtable contains
+    // function pointers.
     auto* virtual_function_pointer_address = context.builder().CreateGEP(
         pointer_type, vtable,
         {llvm::ConstantInt::get(
@@ -509,6 +511,15 @@ static auto HandleVirtualCall(FunctionContext& context,
     virtual_fn = context.builder().CreateLoad(
         pointer_type, virtual_function_pointer_address, "memptr.virtualfn");
   } else {
+    // For Carbon, use Relative VTables as pioneered by Fuchsia:
+    // https://llvm.org/devmtg/2021-11/slides/2021-RelativeVTablesinC.pdf
+    // In this case, the vtable contains an offset from the vtable itself to the
+    // function in question. This avoids the use of link-time relocations in the
+    // vtable (making object files smaller, improving link time) - at the cost
+    // of extra instructions to resolve the offset at the call-site.
+    // This uses the `llvm.load.relative` intrinsic (
+    // https://llvm.org/docs/LangRef.html#llvm-load-relative-intrinsic ) that
+    // essentially does the arithmetic in one-shot: ptr + *(ptr + offset)
     virtual_fn = context.builder().CreateCall(
         llvm::Intrinsic::getOrInsertDeclaration(
             &context.llvm_module(), llvm::Intrinsic::load_relative, {i32_type}),
