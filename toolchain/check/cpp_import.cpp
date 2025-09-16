@@ -1970,6 +1970,61 @@ static auto ImportNameDeclIntoScope(Context& context, SemIR::LocId loc_id,
                                                            access_kind);
 }
 
+// Returns true if the scope is the top `Cpp` scope.
+static auto IsTopCppScope(Context& context, SemIR::NameScopeId scope_id)
+    -> bool {
+  const SemIR::NameScope& name_scope = context.name_scopes().Get(scope_id);
+  CARBON_CHECK(name_scope.is_cpp_scope());
+  return name_scope.parent_scope_id() == SemIR::NameScopeId::Package;
+}
+
+// For builtin names like `Cpp.long`, return the associated types.
+static auto LookupBuiltInTypes(Context& context, SemIR::LocId loc_id,
+                               SemIR::NameScopeId scope_id,
+                               SemIR::NameId name_id) -> SemIR::InstId {
+  if (!IsTopCppScope(context, scope_id)) {
+    return SemIR::InstId::None;
+  }
+
+  auto name = context.names().GetAsStringIfIdentifier(name_id);
+  if (!name) {
+    return SemIR::InstId::None;
+  }
+
+  const clang::ASTContext& ast_context = context.ast_context();
+
+  // List of types based on
+  // https://github.com/carbon-language/carbon-lang/blob/trunk/proposals/p5448.md#details
+  auto builtin_type =
+      llvm::StringSwitch<clang::QualType>(*name)
+          .Case("signed_char", ast_context.SignedCharTy)
+          .Case("short", ast_context.ShortTy)
+          .Case("int", ast_context.IntTy)
+          .Case("long", ast_context.LongTy)
+          .Case("long_long", ast_context.LongLongTy)
+          .Case("unsigned_char", ast_context.UnsignedCharTy)
+          .Case("unsigned_short", ast_context.UnsignedShortTy)
+          .Case("unsigned_int", ast_context.UnsignedIntTy)
+          .Case("unsigned_long", ast_context.UnsignedLongTy)
+          .Case("unsigned_long_long", ast_context.UnsignedLongLongTy)
+          .Case("float", ast_context.FloatTy)
+          .Case("double", ast_context.DoubleTy)
+          .Case("long_double", ast_context.LongDoubleTy)
+          .Default(clang::QualType());
+  if (builtin_type.isNull()) {
+    return SemIR::InstId::None;
+  }
+
+  SemIR::InstId inst_id =
+      MapNonWrapperType(context, loc_id, builtin_type).inst_id;
+  if (!inst_id.has_value()) {
+    context.TODO(loc_id, llvm::formatv("Unsupported: builtin type: {0}",
+                                       builtin_type.getAsString()));
+    return SemIR::ErrorInst::InstId;
+  }
+  return inst_id;
+}
+
 // Imports an overloaded function set from Clang to Carbon.
 static auto ImportCppOverloadSet(Context& context, SemIR::NameScopeId scope_id,
                                  SemIR::NameId name_id,
@@ -2058,6 +2113,14 @@ auto ImportNameFromCpp(Context& context, SemIR::LocId loc_id,
 
   auto lookup = ClangLookupName(context, scope_id, name_id);
   if (!lookup) {
+    SemIR::InstId builtin_inst_id =
+        LookupBuiltInTypes(context, loc_id, scope_id, name_id);
+    if (builtin_inst_id.has_value()) {
+      AddNameToScope(context, scope_id, name_id, SemIR::AccessKind::Public,
+                     builtin_inst_id);
+      return SemIR::ScopeLookupResult::MakeWrappedLookupResult(
+          builtin_inst_id, SemIR::AccessKind::Public);
+    }
     return SemIR::ScopeLookupResult::MakeNotFound();
   }
 
