@@ -153,7 +153,7 @@ library "[[@TEST_NAME]]";
 
 import Cpp library "object_param_qualifiers_overloaded.h";
 
-fn F(v: Cpp.HasQualifiers, p: Cpp.HasQualifiers*) {
+fn CallF(v: Cpp.HasQualifiers, p: Cpp.HasQualifiers*) {
   //@dump-sem-ir-begin
   var a: i32 = v.F();
   var b: i32* = p->F();
@@ -356,7 +356,7 @@ fn Call(e: Cpp.ExplicitObjectParam, n: i32, a: Cpp.Another) {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @F(%v.param: %HasQualifiers, %p.param: %ptr.ec3) {
+// CHECK:STDOUT: fn @CallF(%v.param: %HasQualifiers, %p.param: %ptr.ec3) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %a.patt: %pattern_type.7ce = binding_pattern a [concrete]
