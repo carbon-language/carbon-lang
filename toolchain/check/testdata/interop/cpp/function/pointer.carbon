@@ -216,25 +216,43 @@ fn F() {
 struct S {};
 
 template<typename T>
-auto foo(T*) -> T*;
+auto Direct(T*) -> T*;
+
+template<typename T>
+using Wrap = T;
+
+template<typename U>
+using AddPointer = Wrap<U*>;
+
+template<typename V>
+auto Indirect(V) -> AddPointer<V>;
 
 // --- fail_import_deduced_pointer_param_as_pointer.carbon
 
 library "[[@TEST_NAME]]";
 
-import Cpp library "nullable_pointer_param.h";
+import Cpp library "deduced_pointer_param.h";
 
 fn F() {
   //@dump-sem-ir-begin
   var s: Cpp.S = {};
-  // CHECK:STDERR: fail_import_deduced_pointer_param_as_pointer.carbon:[[@LINE+7]]:3: error: semantics TODO: `Unsupported: parameter type: S *` [SemanticsTodo]
-  // CHECK:STDERR:   Cpp.foo(&s);
-  // CHECK:STDERR:   ^~~~~~~~~~~
+  // CHECK:STDERR: fail_import_deduced_pointer_param_as_pointer.carbon:[[@LINE+7]]:3: error: semantics TODO: `Unsupported: parameter type: struct S *` [SemanticsTodo]
+  // CHECK:STDERR:   Cpp.Direct(&s);
+  // CHECK:STDERR:   ^~~~~~~~~~~~~~
   // CHECK:STDERR: fail_import_deduced_pointer_param_as_pointer.carbon:[[@LINE+4]]:3: note: in call to Cpp function here [InCallToCppFunction]
-  // CHECK:STDERR:   Cpp.foo(&s);
-  // CHECK:STDERR:   ^~~~~~~~~~~
+  // CHECK:STDERR:   Cpp.Direct(&s);
+  // CHECK:STDERR:   ^~~~~~~~~~~~~~
   // CHECK:STDERR:
-  Cpp.foo(&s);
+  Cpp.Direct(&s);
+
+  // CHECK:STDERR: fail_import_deduced_pointer_param_as_pointer.carbon:[[@LINE+7]]:3: error: semantics TODO: `Unsupported: return type: AddPointer<struct S>` [SemanticsTodo]
+  // CHECK:STDERR:   Cpp.Indirect({} as Cpp.S);
+  // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~~~~~~
+  // CHECK:STDERR: fail_import_deduced_pointer_param_as_pointer.carbon:[[@LINE+4]]:3: note: in call to Cpp function here [InCallToCppFunction]
+  // CHECK:STDERR:   Cpp.Indirect({} as Cpp.S);
+  // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~~~~~~
+  // CHECK:STDERR:
+  Cpp.Indirect({} as Cpp.S);
   //@dump-sem-ir-end
 }
 
@@ -732,9 +750,13 @@ fn F() {
 // CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [concrete]
 // CHECK:STDOUT:   %pattern_type.7da: type = pattern_type %S [concrete]
 // CHECK:STDOUT:   %S.val: %S = struct_value () [concrete]
-// CHECK:STDOUT:   %.c5d: type = cpp_overload_set_type @Destroy.Op [concrete]
-// CHECK:STDOUT:   %empty_struct: %.c5d = struct_value () [concrete]
+// CHECK:STDOUT:   %.97c: type = cpp_overload_set_type @Destroy.Op [concrete]
+// CHECK:STDOUT:   %empty_struct.504: %.97c = struct_value () [concrete]
 // CHECK:STDOUT:   %ptr.5c7: type = ptr_type %S [concrete]
+// CHECK:STDOUT:   %.fed: type = cpp_overload_set_type @T.as.Destroy.impl.Op [concrete]
+// CHECK:STDOUT:   %empty_struct.6e8: %.fed = struct_value () [concrete]
+// CHECK:STDOUT:   %Indirect.type: type = fn_type @Indirect [concrete]
+// CHECK:STDOUT:   %Indirect: %Indirect.type = struct_value () [concrete]
 // CHECK:STDOUT:   %T.as.Destroy.impl.Op.type.d46: type = fn_type @T.as.Destroy.impl.Op, @T.as.Destroy.impl(%S) [concrete]
 // CHECK:STDOUT:   %T.as.Destroy.impl.Op.062: %T.as.Destroy.impl.Op.type.d46 = struct_value () [concrete]
 // CHECK:STDOUT: }
@@ -742,11 +764,18 @@ fn F() {
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT:   %Cpp: <namespace> = namespace file.%Cpp.import_cpp, [concrete] {
 // CHECK:STDOUT:     .S = %S.decl
-// CHECK:STDOUT:     .foo = %.a21
+// CHECK:STDOUT:     .Direct = %.e4a
+// CHECK:STDOUT:     .Indirect = %.9c4
 // CHECK:STDOUT:     import Cpp//...
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %S.decl: type = class_decl @S [concrete = constants.%S] {} {}
-// CHECK:STDOUT:   %.a21: %.c5d = cpp_overload_set_value @Destroy.Op [concrete = constants.%empty_struct]
+// CHECK:STDOUT:   %.e4a: %.97c = cpp_overload_set_value @Destroy.Op [concrete = constants.%empty_struct.504]
+// CHECK:STDOUT:   %.9c4: %.fed = cpp_overload_set_value @T.as.Destroy.impl.Op [concrete = constants.%empty_struct.6e8]
+// CHECK:STDOUT:   %Indirect.decl: %Indirect.type = fn_decl @Indirect [concrete = constants.%Indirect] {
+// CHECK:STDOUT:     <elided>
+// CHECK:STDOUT:   } {
+// CHECK:STDOUT:     <elided>
+// CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F() {
@@ -760,20 +789,36 @@ fn F() {
 // CHECK:STDOUT:   %.loc8_19.2: init %S = class_init (), %s.var [concrete = constants.%S.val]
 // CHECK:STDOUT:   %.loc8_3: init %S = converted %.loc8_19.1, %.loc8_19.2 [concrete = constants.%S.val]
 // CHECK:STDOUT:   assign %s.var, %.loc8_3
-// CHECK:STDOUT:   %.loc8_13: type = splice_block %S.ref [concrete = constants.%S] {
+// CHECK:STDOUT:   %.loc8_13: type = splice_block %S.ref.loc8 [concrete = constants.%S] {
 // CHECK:STDOUT:     %Cpp.ref.loc8: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
-// CHECK:STDOUT:     %S.ref: type = name_ref S, imports.%S.decl [concrete = constants.%S]
+// CHECK:STDOUT:     %S.ref.loc8: type = name_ref S, imports.%S.decl [concrete = constants.%S]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %s: ref %S = bind_name s, %s.var
-// CHECK:STDOUT:   %Cpp.ref.loc16: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
-// CHECK:STDOUT:   %foo.ref: %.c5d = name_ref foo, imports.%.a21 [concrete = constants.%empty_struct]
+// CHECK:STDOUT:   %Cpp.ref.loc17: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
+// CHECK:STDOUT:   %Direct.ref: %.97c = name_ref Direct, imports.%.e4a [concrete = constants.%empty_struct.504]
 // CHECK:STDOUT:   %s.ref: ref %S = name_ref s, %s
-// CHECK:STDOUT:   %addr.loc16: %ptr.5c7 = addr_of %s.ref
-// CHECK:STDOUT:   %T.as.Destroy.impl.Op.bound: <bound method> = bound_method %s.var, constants.%T.as.Destroy.impl.Op.062
+// CHECK:STDOUT:   %addr.loc17: %ptr.5c7 = addr_of %s.ref
+// CHECK:STDOUT:   %Cpp.ref.loc28_3: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
+// CHECK:STDOUT:   %Indirect.ref: %.fed = name_ref Indirect, imports.%.9c4 [concrete = constants.%empty_struct.6e8]
+// CHECK:STDOUT:   %.loc28_17.1: %empty_struct_type = struct_literal ()
+// CHECK:STDOUT:   %Cpp.ref.loc28_22: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
+// CHECK:STDOUT:   %S.ref.loc28: type = name_ref S, imports.%S.decl [concrete = constants.%S]
+// CHECK:STDOUT:   %.loc28_17.2: ref %S = temporary_storage
+// CHECK:STDOUT:   %.loc28_17.3: init %S = class_init (), %.loc28_17.2 [concrete = constants.%S.val]
+// CHECK:STDOUT:   %.loc28_17.4: ref %S = temporary %.loc28_17.2, %.loc28_17.3
+// CHECK:STDOUT:   %.loc28_19.1: ref %S = converted %.loc28_17.1, %.loc28_17.4
+// CHECK:STDOUT:   %.loc28_19.2: %S = bind_value %.loc28_19.1
+// CHECK:STDOUT:   %Indirect.call: init <error> = call imports.%Indirect.decl(%.loc28_19.2)
+// CHECK:STDOUT:   %T.as.Destroy.impl.Op.bound.loc28: <bound method> = bound_method %.loc28_17.4, constants.%T.as.Destroy.impl.Op.062
 // CHECK:STDOUT:   <elided>
-// CHECK:STDOUT:   %bound_method: <bound method> = bound_method %s.var, %T.as.Destroy.impl.Op.specific_fn
+// CHECK:STDOUT:   %bound_method.loc28: <bound method> = bound_method %.loc28_17.4, %T.as.Destroy.impl.Op.specific_fn.1
+// CHECK:STDOUT:   %addr.loc28: %ptr.5c7 = addr_of %.loc28_17.4
+// CHECK:STDOUT:   %T.as.Destroy.impl.Op.call.loc28: init %empty_tuple.type = call %bound_method.loc28(%addr.loc28)
+// CHECK:STDOUT:   %T.as.Destroy.impl.Op.bound.loc8: <bound method> = bound_method %s.var, constants.%T.as.Destroy.impl.Op.062
+// CHECK:STDOUT:   <elided>
+// CHECK:STDOUT:   %bound_method.loc8: <bound method> = bound_method %s.var, %T.as.Destroy.impl.Op.specific_fn.2
 // CHECK:STDOUT:   %addr.loc8: %ptr.5c7 = addr_of %s.var
-// CHECK:STDOUT:   %T.as.Destroy.impl.Op.call: init %empty_tuple.type = call %bound_method(%addr.loc8)
+// CHECK:STDOUT:   %T.as.Destroy.impl.Op.call.loc8: init %empty_tuple.type = call %bound_method.loc8(%addr.loc8)
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
