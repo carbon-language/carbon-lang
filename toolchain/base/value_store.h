@@ -165,7 +165,7 @@ class ValueStore
     CARBON_DCHECK(size_ < std::numeric_limits<int32_t>::max(), "Id overflow");
 
     IdType id(tag_.Apply(size_));
-    auto [chunk_index, pos] = IdToChunkIndices(size_);
+    auto [chunk_index, pos] = RawIndexToChunkIndices(size_);
     ++size_;
 
     CARBON_DCHECK(static_cast<size_t>(chunk_index) <= chunks_.size(),
@@ -181,15 +181,13 @@ class ValueStore
 
   // Returns a mutable value for an ID.
   auto Get(IdType id) -> RefType {
-    auto index = GetRawIndex(id);
-    auto [chunk_index, pos] = IdToChunkIndices(index);
+    auto [chunk_index, pos] = IdToChunkIndices(id);
     return chunks_[chunk_index].Get(pos);
   }
 
   // Returns the value for an ID.
   auto Get(IdType id) const -> ConstRefType {
-    auto index = GetRawIndex(id);
-    auto [chunk_index, pos] = IdToChunkIndices(index);
+    auto [chunk_index, pos] = IdToChunkIndices(id);
     return chunks_[chunk_index].Get(pos);
   }
 
@@ -198,7 +196,7 @@ class ValueStore
     if (size <= size_) {
       return;
     }
-    auto [final_chunk_index, _] = IdToChunkIndices(size - 1);
+    auto [final_chunk_index, _] = RawIndexToChunkIndices(size - 1);
     chunks_.resize(final_chunk_index + 1);
   }
 
@@ -208,10 +206,10 @@ class ValueStore
       return;
     }
 
-    auto [begin_chunk_index, begin_pos] = IdToChunkIndices(size_);
+    auto [begin_chunk_index, begin_pos] = RawIndexToChunkIndices(size_);
     // Use an inclusive range so that if `size` would be the next chunk, we
     // don't try doing something with it.
-    auto [end_chunk_index, end_pos] = IdToChunkIndices(size - 1);
+    auto [end_chunk_index, end_pos] = RawIndexToChunkIndices(size - 1);
     chunks_.resize(end_chunk_index + 1);
 
     // If the begin and end chunks are the same, we only fill from begin to end.
@@ -413,9 +411,10 @@ class ValueStore
     int32_t num_ = 0;
   };
 
-  // Converts an id into an index into the set of chunks, and an offset into
-  // that specific chunk. Looks for index overflow in non-optimized builds.
-  static auto IdToChunkIndices(int32_t index) -> std::pair<int32_t, int32_t> {
+  // Converts a raw index into an index into the set of chunks, and an offset
+  // into that specific chunk. Looks for index overflow in non-optimized builds.
+  static auto RawIndexToChunkIndices(int32_t index)
+      -> std::pair<int32_t, int32_t> {
     constexpr auto LowBits = Chunk::IndexBits();
 
     // Verify there are no unused bits when indexing up to the `Capacity`. This
@@ -433,6 +432,12 @@ class ValueStore
     // The index into the chunk is the low bits.
     auto pos = index & ((1 << LowBits) - 1);
     return {chunk, pos};
+  }
+
+  // Converts an id into an index into the set of chunks, and an offset into
+  // that specific chunk.
+  auto IdToChunkIndices(IdType id) const -> std::pair<int32_t, int32_t> {
+    return RawIndexToChunkIndices(GetRawIndex(id));
   }
 
   // Number of elements added to the store. The number should never exceed what
