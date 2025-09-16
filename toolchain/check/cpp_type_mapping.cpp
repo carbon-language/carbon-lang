@@ -10,6 +10,7 @@
 
 #include "clang/AST/Type.h"
 #include "clang/Basic/TargetInfo.h"
+#include "clang/Sema/Lookup.h"
 #include "toolchain/base/int.h"
 #include "toolchain/base/kind_switch.h"
 #include "toolchain/base/value_ids.h"
@@ -20,6 +21,7 @@
 #include "toolchain/sem_ir/ids.h"
 #include "toolchain/sem_ir/inst.h"
 #include "toolchain/sem_ir/type.h"
+#include "toolchain/sem_ir/type_info.h"
 #include "toolchain/sem_ir/typed_insts.h"
 
 namespace Carbon::Check {
@@ -47,20 +49,104 @@ static auto FindIntLiteralBitWidth(Context& context, SemIR::InstId arg_id)
   return (arg_non_sign_bits <= 32) ? IntId::MakeRaw(32) : IntId::MakeRaw(64);
 }
 
-// Maps a Carbon builtin type to a Cpp type. Returns an empty QualType if the
+// Attempts to look up a type by name, and returns the corresponding `QualType`,
+// or a null type if lookup fails.
+static auto LookupCppType(
+    Context& context, std::initializer_list<llvm::StringRef> name_components)
+    -> clang::QualType {
+  clang::ASTUnit* ast = context.sem_ir().clang_ast_unit();
+  CARBON_CHECK(ast);
+  clang::Sema& sema = ast->getSema();
+
+  clang::Decl* decl = sema.getASTContext().getTranslationUnitDecl();
+  for (auto name_component : name_components) {
+    auto* scope = dyn_cast<clang::DeclContext>(decl);
+    if (!scope) {
+      return clang::QualType();
+    }
+
+    // TODO: Map the LocId of the lookup to a clang SourceLocation and provide
+    // it here so that clang's diagnostics can point into the carbon code that
+    // uses the name.
+    auto* identifier = sema.getPreprocessor().getIdentifierInfo(name_component);
+    clang::LookupResult lookup(
+        sema, clang::DeclarationNameInfo(identifier, clang::SourceLocation()),
+        clang::Sema::LookupNameKind::LookupOrdinaryName);
+    if (!sema.LookupQualifiedName(lookup, scope) || !lookup.isSingleResult()) {
+      return clang::QualType();
+    }
+    decl = lookup.getFoundDecl();
+  }
+
+  auto* type_decl = dyn_cast<clang::TypeDecl>(decl);
+  return type_decl ? sema.getASTContext().getTypeDeclType(type_decl)
+                   : clang::QualType();
+}
+
+// Maps a Carbon class type to a C++ type. Returns a null `QualType` if the
 // type is not supported.
+static auto TryMapClassType(Context& context, SemIR::ClassType class_type)
+    -> clang::QualType {
+  // If the class was imported from C++, return the original C++ type.
+  auto clang_decl_id =
+      context.name_scopes()
+          .Get(context.sem_ir().classes().Get(class_type.class_id).scope_id)
+          .clang_decl_context_id();
+  if (clang_decl_id.has_value()) {
+    clang::Decl* clang_decl =
+        context.sem_ir().clang_decls().Get(clang_decl_id).decl;
+    auto* tag_type_decl = clang::cast<clang::TagDecl>(clang_decl);
+    return context.ast_context().getCanonicalTagType(tag_type_decl);
+  }
+
+  // If the class represents a Carbon type literal, map it to the corresponding
+  // C++ builtin type.
+  auto literal = SemIR::TypeLiteralInfo::ForType(context.sem_ir(), class_type);
+  switch (literal.kind) {
+    case SemIR::TypeLiteralInfo::None: {
+      break;
+    }
+    case SemIR::TypeLiteralInfo::Numeric: {
+      switch (literal.numeric.kind) {
+        case SemIR::NumericTypeLiteralInfo::None: {
+          CARBON_FATAL("Unexpected invalid numeric type literal");
+        }
+        case SemIR::NumericTypeLiteralInfo::Float: {
+          return context.ast_context().getRealTypeForBitwidth(
+              literal.numeric.bit_width_id.AsValue(),
+              clang::FloatModeKind::NoFloat);
+        }
+        case SemIR::NumericTypeLiteralInfo::Int: {
+          return context.ast_context().getIntTypeForBitwidth(
+              literal.numeric.bit_width_id.AsValue(), true);
+        }
+        case SemIR::NumericTypeLiteralInfo::UInt: {
+          return context.ast_context().getIntTypeForBitwidth(
+              literal.numeric.bit_width_id.AsValue(), false);
+        }
+      }
+    }
+    case SemIR::TypeLiteralInfo::Char: {
+      return context.ast_context().CharTy;
+    }
+    case SemIR::TypeLiteralInfo::Str: {
+      return LookupCppType(context, {"std", "string_view"});
+    }
+  }
+
+  // Otherwise we don't have a mapping for this Carbon class type.
+  // TODO: If the class type wasn't imported from C++, create a corresponding
+  // C++ class type.
+  return clang::QualType();
+}
+
+// Maps a non-wrapper (no const or pointer) Carbon type to a C++ type. Returns a
+// null QualType if the type is not supported.
 // TODO: Have both Carbon -> C++ and C++ -> Carbon mappings in a single place
 // to keep them in sync.
-static auto TryMapBuiltinType(Context& context, SemIR::InstId inst_id,
+static auto MapNonWrapperType(Context& context, SemIR::InstId inst_id,
                               SemIR::TypeId type_id) -> clang::QualType {
-  // TODO: Object representation should not be used here. Instead, use
-  // NumericTypeLiteralInfo to decompose a ClassType into a uN / iN / fN type.
-  auto object_repr_id = context.sem_ir().types().GetObjectRepr(type_id);
-  if (!object_repr_id.has_value()) {
-    return clang::QualType();
-  }
-  auto type_inst =
-      context.insts().Get(context.sem_ir().types().GetInstId(object_repr_id));
+  auto type_inst = context.sem_ir().types().GetAsInst(type_id);
 
   CARBON_KIND_SWITCH(type_inst) {
     case SemIR::BoolType::Kind: {
@@ -68,6 +154,9 @@ static auto TryMapBuiltinType(Context& context, SemIR::InstId inst_id,
     }
     case Carbon::SemIR::CharLiteralType::Kind: {
       return context.ast_context().CharTy;
+    }
+    case CARBON_KIND(SemIR::ClassType class_type): {
+      return TryMapClassType(context, class_type);
     }
     case SemIR::IntLiteralType::Kind: {
       IntId bit_width_id = FindIntLiteralBitWidth(context, inst_id);
@@ -77,66 +166,14 @@ static auto TryMapBuiltinType(Context& context, SemIR::InstId inst_id,
       return context.ast_context().getIntTypeForBitwidth(bit_width_id.AsValue(),
                                                          true);
     }
-    case CARBON_KIND(SemIR::IntType int_type): {
-      auto bit_width_inst = context.sem_ir().insts().TryGetAs<SemIR::IntValue>(
-          int_type.bit_width_id);
-      return context.ast_context().getIntTypeForBitwidth(
-          bit_width_inst->int_id.AsValue(), int_type.int_kind.is_signed());
-    }
     // TODO: What if the value doesn't fit to f64?
     case SemIR::FloatLiteralType::Kind: {
       return context.ast_context().DoubleTy;
-    }
-    case CARBON_KIND(SemIR::FloatType float_type): {
-      auto bit_width_inst = context.sem_ir().insts().TryGetAs<SemIR::IntValue>(
-          float_type.bit_width_id);
-      return context.ast_context().getRealTypeForBitwidth(
-          bit_width_inst->int_id.AsValue(), clang::FloatModeKind::NoFloat);
     }
     default: {
       return clang::QualType();
     }
   }
-}
-
-// Maps a Carbon class type to a C++ type. Returns a null `QualType` if the
-// Carbon type is not a `ClassType` or was not imported from C++.
-// TODO: If the class type wasn't imported from C++, create a corresponding C++
-// class type.
-static auto TryMapClassType(Context& context, SemIR::TypeId type_id)
-    -> clang::QualType {
-  auto class_type =
-      context.sem_ir().types().TryGetAs<SemIR::ClassType>(type_id);
-  if (!class_type) {
-    return clang::QualType();
-  }
-
-  auto clang_decl_id =
-      context.name_scopes()
-          .Get(context.sem_ir().classes().Get(class_type->class_id).scope_id)
-          .clang_decl_context_id();
-  if (!clang_decl_id.has_value()) {
-    return clang::QualType();
-  }
-  clang::Decl* clang_decl =
-      context.sem_ir().clang_decls().Get(clang_decl_id).decl;
-  auto* tag_type_decl = clang::cast<clang::TagDecl>(clang_decl);
-  return context.ast_context().getCanonicalTagType(tag_type_decl);
-}
-
-// Maps a non-wrapper (no const or pointer) Carbon type to a C++ type.
-static auto MapNonWrapperType(Context& context, SemIR::InstId inst_id,
-                              SemIR::TypeId type_id) -> clang::QualType {
-  // It's important to check for a class type first, because an enum imported
-  // from C++ is both a Carbon class type and has an object representation that
-  // is a builtin type, and we want to map back to the enum.
-  // TODO: The order won't matter once TryMapBuiltinType stops looking through
-  // adapters.
-  clang::QualType mapped_type = TryMapClassType(context, type_id);
-  if (mapped_type.isNull()) {
-    mapped_type = TryMapBuiltinType(context, inst_id, type_id);
-  }
-  return mapped_type;
 }
 
 // TODO: unify this with the C++ to Carbon type mapping function.

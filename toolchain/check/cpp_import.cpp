@@ -1979,7 +1979,7 @@ static auto IsTopCppScope(Context& context, SemIR::NameScopeId scope_id)
 }
 
 // For builtin names like `Cpp.long`, return the associated types.
-static auto LookupBuiltInTypes(Context& context, SemIR::LocId loc_id,
+static auto LookupBuiltinTypes(Context& context, SemIR::LocId loc_id,
                                SemIR::NameScopeId scope_id,
                                SemIR::NameId name_id) -> SemIR::InstId {
   if (!IsTopCppScope(context, scope_id)) {
@@ -2114,7 +2114,7 @@ auto ImportNameFromCpp(Context& context, SemIR::LocId loc_id,
   auto lookup = ClangLookupName(context, scope_id, name_id);
   if (!lookup) {
     SemIR::InstId builtin_inst_id =
-        LookupBuiltInTypes(context, loc_id, scope_id, name_id);
+        LookupBuiltinTypes(context, loc_id, scope_id, name_id);
     if (builtin_inst_id.has_value()) {
       AddNameToScope(context, scope_id, name_id, SemIR::AccessKind::Public,
                      builtin_inst_id);
