@@ -1633,6 +1633,7 @@ static auto ImportFunction(Context& context, SemIR::LocId loc_id,
       virtual_function = SemIR::Function::VirtualModifier::Virtual;
     }
     if (virtual_function != SemIR::Function::VirtualModifier::None) {
+      // TODO: Add support for Microsoft/non-Itanium vtables.
       virtual_index = dyn_cast<clang::ItaniumVTableContext>(
                           context.ast_context().getVTableContext())
                           ->getMethodVTableIndex(method_decl);
