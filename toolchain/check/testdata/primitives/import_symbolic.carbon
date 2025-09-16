@@ -245,10 +245,10 @@ fn F() -> u32 {
 // CHECK:STDOUT: --- import_char.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
-// CHECK:STDOUT:   %Char: type = class_type @Char [concrete]
+// CHECK:STDOUT:   %char: type = class_type @Char [concrete]
 // CHECK:STDOUT:   %C: type = class_type @C [concrete]
 // CHECK:STDOUT:   %I.type: type = facet_type <@I> [concrete]
-// CHECK:STDOUT:   %int_97: %Char = int_value 97 [concrete]
+// CHECK:STDOUT:   %int_97: %char = int_value 97 [concrete]
 // CHECK:STDOUT:   %I.impl_witness: <witness> = impl_witness imports.%I.impl_witness_table [concrete]
 // CHECK:STDOUT:   %I.facet: %I.type = facet_value %C, (%I.impl_witness) [concrete]
 // CHECK:STDOUT:   %I.assoc_type: type = assoc_entity_type @I [concrete]
@@ -256,26 +256,26 @@ fn F() -> u32 {
 // CHECK:STDOUT:   %Copy.type: type = facet_type <@Copy> [concrete]
 // CHECK:STDOUT:   %Copy.Op.type: type = fn_type @Copy.Op [concrete]
 // CHECK:STDOUT:   %Copy.impl_witness.9ba: <witness> = impl_witness imports.%Copy.impl_witness_table.0e0 [concrete]
-// CHECK:STDOUT:   %Copy.facet.3d0: %Copy.type = facet_value %Char, (%Copy.impl_witness.9ba) [concrete]
+// CHECK:STDOUT:   %Copy.facet.3d0: %Copy.type = facet_value %char, (%Copy.impl_witness.9ba) [concrete]
 // CHECK:STDOUT:   %.1ed: type = fn_type_with_self_type %Copy.Op.type, %Copy.facet.3d0 [concrete]
-// CHECK:STDOUT:   %Char.as.Copy.impl.Op.type: type = fn_type @Char.as.Copy.impl.Op [concrete]
-// CHECK:STDOUT:   %Char.as.Copy.impl.Op: %Char.as.Copy.impl.Op.type = struct_value () [concrete]
-// CHECK:STDOUT:   %Char.as.Copy.impl.Op.bound: <bound method> = bound_method %int_97, %Char.as.Copy.impl.Op [concrete]
+// CHECK:STDOUT:   %char.as.Copy.impl.Op.type: type = fn_type @char.as.Copy.impl.Op [concrete]
+// CHECK:STDOUT:   %char.as.Copy.impl.Op: %char.as.Copy.impl.Op.type = struct_value () [concrete]
+// CHECK:STDOUT:   %char.as.Copy.impl.Op.bound: <bound method> = bound_method %int_97, %char.as.Copy.impl.Op [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT:   %Main.I: type = import_ref Main//char, I, loaded [concrete = constants.%I.type]
 // CHECK:STDOUT:   %Main.C: type = import_ref Main//char, C, loaded [concrete = constants.%C]
 // CHECK:STDOUT:   %Main.import_ref.da1: %I.assoc_type = import_ref Main//char, loc5_10, loaded [concrete = constants.%assoc0.941]
-// CHECK:STDOUT:   %Main.import_ref.d0c: %Char = import_ref Main//char, loc10_30, loaded [concrete = constants.%int_97]
+// CHECK:STDOUT:   %Main.import_ref.d0c: %char = import_ref Main//char, loc10_30, loaded [concrete = constants.%int_97]
 // CHECK:STDOUT:   %I.impl_witness_table = impl_witness_table (%Main.import_ref.d0c), @C.as.I.impl [concrete]
-// CHECK:STDOUT:   %Main.import_ref.8e8: %Char = import_ref Main//char, loc5_10, loaded [concrete = %val]
-// CHECK:STDOUT:   %val: %Char = assoc_const_decl @val [concrete] {}
-// CHECK:STDOUT:   %Core.import_ref.247: %Char.as.Copy.impl.Op.type = import_ref Core//prelude/types/char, loc19_31, loaded [concrete = constants.%Char.as.Copy.impl.Op]
-// CHECK:STDOUT:   %Copy.impl_witness_table.0e0 = impl_witness_table (%Core.import_ref.247), @Char.as.Copy.impl [concrete]
+// CHECK:STDOUT:   %Main.import_ref.8e8: %char = import_ref Main//char, loc5_10, loaded [concrete = %val]
+// CHECK:STDOUT:   %val: %char = assoc_const_decl @val [concrete] {}
+// CHECK:STDOUT:   %Core.import_ref.247: %char.as.Copy.impl.Op.type = import_ref Core//prelude/types/char, loc19_31, loaded [concrete = constants.%char.as.Copy.impl.Op]
+// CHECK:STDOUT:   %Copy.impl_witness_table.0e0 = impl_witness_table (%Core.import_ref.247), @char.as.Copy.impl [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @F() -> %Char {
+// CHECK:STDOUT: fn @F() -> %char {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %C.ref: type = name_ref C, imports.%Main.C [concrete = constants.%C]
 // CHECK:STDOUT:   %I.ref: type = name_ref I, imports.%Main.I [concrete = constants.%I.type]
@@ -284,11 +284,11 @@ fn F() -> u32 {
 // CHECK:STDOUT:   %val.ref: %I.assoc_type = name_ref val, imports.%Main.import_ref.da1 [concrete = constants.%assoc0.941]
 // CHECK:STDOUT:   %as_type: type = facet_access_type %.loc7_13 [concrete = constants.%C]
 // CHECK:STDOUT:   %.loc7_18: type = converted %.loc7_13, %as_type [concrete = constants.%C]
-// CHECK:STDOUT:   %impl.elem0.loc7_18.1: %Char = impl_witness_access constants.%I.impl_witness, element0 [concrete = constants.%int_97]
-// CHECK:STDOUT:   %impl.elem0.loc7_18.2: %.1ed = impl_witness_access constants.%Copy.impl_witness.9ba, element0 [concrete = constants.%Char.as.Copy.impl.Op]
-// CHECK:STDOUT:   %bound_method: <bound method> = bound_method %impl.elem0.loc7_18.1, %impl.elem0.loc7_18.2 [concrete = constants.%Char.as.Copy.impl.Op.bound]
-// CHECK:STDOUT:   %Char.as.Copy.impl.Op.call: init %Char = call %bound_method(%impl.elem0.loc7_18.1) [concrete = constants.%int_97]
-// CHECK:STDOUT:   return %Char.as.Copy.impl.Op.call to %return
+// CHECK:STDOUT:   %impl.elem0.loc7_18.1: %char = impl_witness_access constants.%I.impl_witness, element0 [concrete = constants.%int_97]
+// CHECK:STDOUT:   %impl.elem0.loc7_18.2: %.1ed = impl_witness_access constants.%Copy.impl_witness.9ba, element0 [concrete = constants.%char.as.Copy.impl.Op]
+// CHECK:STDOUT:   %bound_method: <bound method> = bound_method %impl.elem0.loc7_18.1, %impl.elem0.loc7_18.2 [concrete = constants.%char.as.Copy.impl.Op.bound]
+// CHECK:STDOUT:   %char.as.Copy.impl.Op.call: init %char = call %bound_method(%impl.elem0.loc7_18.1) [concrete = constants.%int_97]
+// CHECK:STDOUT:   return %char.as.Copy.impl.Op.call to %return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- import_char_literal.carbon

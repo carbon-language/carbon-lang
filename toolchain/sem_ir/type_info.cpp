@@ -85,9 +85,7 @@ auto NumericTypeLiteralInfo::ForType(const File& file, ClassType class_type)
 
   // The class must be declared in the `Core` package.
   const auto& class_info = file.classes().Get(class_type.class_id);
-  if (!class_info.scope_id.has_value() ||
-      !file.name_scopes().IsCorePackage(
-          file.name_scopes().Get(class_info.scope_id).parent_scope_id())) {
+  if (!file.name_scopes().IsInCorePackage(class_info.scope_id)) {
     return NumericTypeLiteralInfo::Invalid;
   }
 
@@ -129,6 +127,60 @@ auto NumericTypeLiteralInfo::PrintLiteral(const File& file,
 }
 
 auto NumericTypeLiteralInfo::GetLiteralAsString(const File& file) const
+    -> std::string {
+  RawStringOstream out;
+  PrintLiteral(file, out);
+  return out.TakeStr();
+}
+
+auto TypeLiteralInfo::ForType(const File& file, ClassType class_type)
+    -> TypeLiteralInfo {
+  if (class_type.specific_id.has_value()) {
+    auto numeric = NumericTypeLiteralInfo::ForType(file, class_type);
+    if (numeric.is_valid()) {
+      return {.kind = Numeric, .numeric = numeric};
+    }
+    return {.kind = None};
+  }
+
+  // The class must be declared in the `Core` package.
+  const auto& class_info = file.classes().Get(class_type.class_id);
+  if (!file.name_scopes().IsInCorePackage(class_info.scope_id)) {
+    return {.kind = None};
+  }
+
+  // The class's name must be the name corresponding to a type literal.
+  auto name_ident = file.names().GetAsStringIfIdentifier(class_info.name_id);
+  if (!name_ident) {
+    return {.kind = None};
+  }
+
+  Kind kind = llvm::StringSwitch<Kind>(*name_ident)
+                  .Case("Char", Char)
+                  .Case("String", Str)
+                  .Default(None);
+  return {.kind = kind};
+}
+
+auto TypeLiteralInfo::PrintLiteral(const File& file,
+                                   llvm::raw_ostream& out) const -> void {
+  CARBON_CHECK(is_valid());
+  switch (kind) {
+    case None:
+      CARBON_FATAL("Printing invalid type literal");
+    case Numeric:
+      numeric.PrintLiteral(file, out);
+      break;
+    case Char:
+      out << "char";
+      break;
+    case Str:
+      out << "str";
+      break;
+  }
+}
+
+auto TypeLiteralInfo::GetLiteralAsString(const File& file) const
     -> std::string {
   RawStringOstream out;
   PrintLiteral(file, out);

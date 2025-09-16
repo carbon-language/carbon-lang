@@ -355,6 +355,13 @@ class NameScopeStore {
   // Returns whether the provided scope ID is for the Core package.
   auto IsCorePackage(NameScopeId scope_id) const -> bool;
 
+  // Returns whether the provided scope ID is valid and is directly contained
+  // within the Core package.
+  auto IsInCorePackage(NameScopeId scope_id) const -> bool {
+    return scope_id.has_value() &&
+           IsCorePackage(Get(scope_id).parent_scope_id());
+  }
+
   auto OutputYaml() const -> Yaml::OutputMapping {
     return values_.OutputYaml();
   }

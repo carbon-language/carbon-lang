@@ -794,26 +794,26 @@ fn F() {
 // CHECK:STDOUT:     %S.ref.loc8: type = name_ref S, imports.%S.decl [concrete = constants.%S]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %s: ref %S = bind_name s, %s.var
-// CHECK:STDOUT:   %Cpp.ref.loc17: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
+// CHECK:STDOUT:   %Cpp.ref.loc16: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
 // CHECK:STDOUT:   %Direct.ref: %.97c = name_ref Direct, imports.%.e4a [concrete = constants.%empty_struct.504]
 // CHECK:STDOUT:   %s.ref: ref %S = name_ref s, %s
-// CHECK:STDOUT:   %addr.loc17: %ptr.5c7 = addr_of %s.ref
-// CHECK:STDOUT:   %Cpp.ref.loc28_3: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
+// CHECK:STDOUT:   %addr.loc16: %ptr.5c7 = addr_of %s.ref
+// CHECK:STDOUT:   %Cpp.ref.loc25_3: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
 // CHECK:STDOUT:   %Indirect.ref: %.fed = name_ref Indirect, imports.%.9c4 [concrete = constants.%empty_struct.6e8]
-// CHECK:STDOUT:   %.loc28_17.1: %empty_struct_type = struct_literal ()
-// CHECK:STDOUT:   %Cpp.ref.loc28_22: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
-// CHECK:STDOUT:   %S.ref.loc28: type = name_ref S, imports.%S.decl [concrete = constants.%S]
-// CHECK:STDOUT:   %.loc28_17.2: ref %S = temporary_storage
-// CHECK:STDOUT:   %.loc28_17.3: init %S = class_init (), %.loc28_17.2 [concrete = constants.%S.val]
-// CHECK:STDOUT:   %.loc28_17.4: ref %S = temporary %.loc28_17.2, %.loc28_17.3
-// CHECK:STDOUT:   %.loc28_19.1: ref %S = converted %.loc28_17.1, %.loc28_17.4
-// CHECK:STDOUT:   %.loc28_19.2: %S = bind_value %.loc28_19.1
-// CHECK:STDOUT:   %Indirect.call: init <error> = call imports.%Indirect.decl(%.loc28_19.2)
-// CHECK:STDOUT:   %T.as.Destroy.impl.Op.bound.loc28: <bound method> = bound_method %.loc28_17.4, constants.%T.as.Destroy.impl.Op.062
+// CHECK:STDOUT:   %.loc25_17.1: %empty_struct_type = struct_literal ()
+// CHECK:STDOUT:   %Cpp.ref.loc25_22: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
+// CHECK:STDOUT:   %S.ref.loc25: type = name_ref S, imports.%S.decl [concrete = constants.%S]
+// CHECK:STDOUT:   %.loc25_17.2: ref %S = temporary_storage
+// CHECK:STDOUT:   %.loc25_17.3: init %S = class_init (), %.loc25_17.2 [concrete = constants.%S.val]
+// CHECK:STDOUT:   %.loc25_17.4: ref %S = temporary %.loc25_17.2, %.loc25_17.3
+// CHECK:STDOUT:   %.loc25_19.1: ref %S = converted %.loc25_17.1, %.loc25_17.4
+// CHECK:STDOUT:   %.loc25_19.2: %S = bind_value %.loc25_19.1
+// CHECK:STDOUT:   %Indirect.call: init <error> = call imports.%Indirect.decl(%.loc25_19.2)
+// CHECK:STDOUT:   %T.as.Destroy.impl.Op.bound.loc25: <bound method> = bound_method %.loc25_17.4, constants.%T.as.Destroy.impl.Op.062
 // CHECK:STDOUT:   <elided>
-// CHECK:STDOUT:   %bound_method.loc28: <bound method> = bound_method %.loc28_17.4, %T.as.Destroy.impl.Op.specific_fn.1
-// CHECK:STDOUT:   %addr.loc28: %ptr.5c7 = addr_of %.loc28_17.4
-// CHECK:STDOUT:   %T.as.Destroy.impl.Op.call.loc28: init %empty_tuple.type = call %bound_method.loc28(%addr.loc28)
+// CHECK:STDOUT:   %bound_method.loc25: <bound method> = bound_method %.loc25_17.4, %T.as.Destroy.impl.Op.specific_fn.1
+// CHECK:STDOUT:   %addr.loc25: %ptr.5c7 = addr_of %.loc25_17.4
+// CHECK:STDOUT:   %T.as.Destroy.impl.Op.call.loc25: init %empty_tuple.type = call %bound_method.loc25(%addr.loc25)
 // CHECK:STDOUT:   %T.as.Destroy.impl.Op.bound.loc8: <bound method> = bound_method %s.var, constants.%T.as.Destroy.impl.Op.062
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT:   %bound_method.loc8: <bound method> = bound_method %s.var, %T.as.Destroy.impl.Op.specific_fn.2
