@@ -1628,11 +1628,11 @@ static auto ImportFunction(Context& context, SemIR::LocId loc_id,
   int32_t virtual_index = -1;
   if (auto* method_decl = dyn_cast<clang::CXXMethodDecl>(clang_decl)) {
     if (method_decl->size_overridden_methods()) {
-      virtual_function = SemIR::Function::VirtualModifier::Override;
+      virtual_modifier = SemIR::Function::VirtualModifier::Override;
     } else if (method_decl->isVirtual()) {
-      virtual_function = SemIR::Function::VirtualModifier::Virtual;
+      virtual_modifier = SemIR::Function::VirtualModifier::Virtual;
     }
-    if (virtual_function != SemIR::Function::VirtualModifier::None) {
+    if (virtual_modifier != SemIR::Function::VirtualModifier::None) {
       // TODO: Add support for Microsoft/non-Itanium vtables.
       virtual_index = dyn_cast<clang::ItaniumVTableContext>(
                           context.ast_context().getVTableContext())
@@ -1656,7 +1656,7 @@ static auto ImportFunction(Context& context, SemIR::LocId loc_id,
        .definition_id = SemIR::InstId::None},
       {.call_params_id = function_params_insts->call_params_id,
        .return_slot_pattern_id = function_params_insts->return_slot_pattern_id,
-       .virtual_modifier = virtual_function,
+       .virtual_modifier = virtual_modifier,
        .virtual_index = virtual_index,
        .self_param_id = FindSelfPattern(
            context, function_params_insts->implicit_param_patterns_id),
