@@ -1006,12 +1006,12 @@ fn F() {
 // CHECK:STDOUT:   %.c5d: type = cpp_overload_set_type @foo [concrete]
 // CHECK:STDOUT:   %empty_struct: %.c5d = struct_value () [concrete]
 // CHECK:STDOUT:   %.d16: Core.CharLiteral = char_value U+0058 [concrete]
-// CHECK:STDOUT:   %Char: type = class_type @Char [concrete]
-// CHECK:STDOUT:   %ptr.fb0: type = ptr_type %Char [concrete]
+// CHECK:STDOUT:   %char: type = class_type @Char [concrete]
+// CHECK:STDOUT:   %ptr.fb0: type = ptr_type %char [concrete]
 // CHECK:STDOUT:   %foo__carbon_thunk.type: type = fn_type @foo__carbon_thunk [concrete]
 // CHECK:STDOUT:   %foo__carbon_thunk: %foo__carbon_thunk.type = struct_value () [concrete]
-// CHECK:STDOUT:   %ImplicitAs.type.3be: type = facet_type <@ImplicitAs, @ImplicitAs(%Char)> [concrete]
-// CHECK:STDOUT:   %ImplicitAs.Convert.type.f57: type = fn_type @ImplicitAs.Convert, @ImplicitAs(%Char) [concrete]
+// CHECK:STDOUT:   %ImplicitAs.type.3be: type = facet_type <@ImplicitAs, @ImplicitAs(%char)> [concrete]
+// CHECK:STDOUT:   %ImplicitAs.Convert.type.f57: type = fn_type @ImplicitAs.Convert, @ImplicitAs(%char) [concrete]
 // CHECK:STDOUT:   %Copy.type: type = facet_type <@Copy> [concrete]
 // CHECK:STDOUT:   %Copy.Op.type: type = fn_type @Copy.Op [concrete]
 // CHECK:STDOUT:   %ImplicitAs.impl_witness.892: <witness> = impl_witness imports.%ImplicitAs.impl_witness_table.1f2 [concrete]
@@ -1020,15 +1020,15 @@ fn F() {
 // CHECK:STDOUT:   %Core.CharLiteral.as.ImplicitAs.impl.Convert.type: type = fn_type @Core.CharLiteral.as.ImplicitAs.impl.Convert [concrete]
 // CHECK:STDOUT:   %Core.CharLiteral.as.ImplicitAs.impl.Convert: %Core.CharLiteral.as.ImplicitAs.impl.Convert.type = struct_value () [concrete]
 // CHECK:STDOUT:   %Core.CharLiteral.as.ImplicitAs.impl.Convert.bound: <bound method> = bound_method %.d16, %Core.CharLiteral.as.ImplicitAs.impl.Convert [concrete]
-// CHECK:STDOUT:   %int_88: %Char = int_value 88 [concrete]
+// CHECK:STDOUT:   %int_88: %char = int_value 88 [concrete]
 // CHECK:STDOUT:   %Copy.impl_witness.9ba: <witness> = impl_witness imports.%Copy.impl_witness_table.0e0 [concrete]
-// CHECK:STDOUT:   %Copy.facet.3d0: %Copy.type = facet_value %Char, (%Copy.impl_witness.9ba) [concrete]
+// CHECK:STDOUT:   %Copy.facet.3d0: %Copy.type = facet_value %char, (%Copy.impl_witness.9ba) [concrete]
 // CHECK:STDOUT:   %.1ed: type = fn_type_with_self_type %Copy.Op.type, %Copy.facet.3d0 [concrete]
-// CHECK:STDOUT:   %Char.as.Copy.impl.Op.type: type = fn_type @Char.as.Copy.impl.Op [concrete]
-// CHECK:STDOUT:   %Char.as.Copy.impl.Op: %Char.as.Copy.impl.Op.type = struct_value () [concrete]
-// CHECK:STDOUT:   %Char.as.Copy.impl.Op.bound: <bound method> = bound_method %int_88, %Char.as.Copy.impl.Op [concrete]
-// CHECK:STDOUT:   %Char.as.Destroy.impl.Op.type: type = fn_type @Char.as.Destroy.impl.Op [concrete]
-// CHECK:STDOUT:   %Char.as.Destroy.impl.Op: %Char.as.Destroy.impl.Op.type = struct_value () [concrete]
+// CHECK:STDOUT:   %char.as.Copy.impl.Op.type: type = fn_type @char.as.Copy.impl.Op [concrete]
+// CHECK:STDOUT:   %char.as.Copy.impl.Op: %char.as.Copy.impl.Op.type = struct_value () [concrete]
+// CHECK:STDOUT:   %char.as.Copy.impl.Op.bound: <bound method> = bound_method %int_88, %char.as.Copy.impl.Op [concrete]
+// CHECK:STDOUT:   %char.as.Destroy.impl.Op.type: type = fn_type @char.as.Destroy.impl.Op [concrete]
+// CHECK:STDOUT:   %char.as.Destroy.impl.Op: %char.as.Destroy.impl.Op.type = struct_value () [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -1044,8 +1044,8 @@ fn F() {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import_ref.543: %Core.CharLiteral.as.ImplicitAs.impl.Convert.type = import_ref Core//prelude/types/char, loc23_36, loaded [concrete = constants.%Core.CharLiteral.as.ImplicitAs.impl.Convert]
 // CHECK:STDOUT:   %ImplicitAs.impl_witness_table.1f2 = impl_witness_table (%Core.import_ref.543), @Core.CharLiteral.as.ImplicitAs.impl [concrete]
-// CHECK:STDOUT:   %Core.import_ref.247: %Char.as.Copy.impl.Op.type = import_ref Core//prelude/types/char, loc19_31, loaded [concrete = constants.%Char.as.Copy.impl.Op]
-// CHECK:STDOUT:   %Copy.impl_witness_table.0e0 = impl_witness_table (%Core.import_ref.247), @Char.as.Copy.impl [concrete]
+// CHECK:STDOUT:   %Core.import_ref.247: %char.as.Copy.impl.Op.type = import_ref Core//prelude/types/char, loc19_31, loaded [concrete = constants.%char.as.Copy.impl.Op]
+// CHECK:STDOUT:   %Copy.impl_witness_table.0e0 = impl_witness_table (%Core.import_ref.247), @char.as.Copy.impl [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F() {
@@ -1055,19 +1055,19 @@ fn F() {
 // CHECK:STDOUT:   %.loc8_11.1: Core.CharLiteral = char_value U+0058 [concrete = constants.%.d16]
 // CHECK:STDOUT:   %impl.elem0.loc8_11.1: %.8d6 = impl_witness_access constants.%ImplicitAs.impl_witness.892, element0 [concrete = constants.%Core.CharLiteral.as.ImplicitAs.impl.Convert]
 // CHECK:STDOUT:   %bound_method.loc8_11.1: <bound method> = bound_method %.loc8_11.1, %impl.elem0.loc8_11.1 [concrete = constants.%Core.CharLiteral.as.ImplicitAs.impl.Convert.bound]
-// CHECK:STDOUT:   %Core.CharLiteral.as.ImplicitAs.impl.Convert.call: init %Char = call %bound_method.loc8_11.1(%.loc8_11.1) [concrete = constants.%int_88]
-// CHECK:STDOUT:   %.loc8_11.2: %Char = value_of_initializer %Core.CharLiteral.as.ImplicitAs.impl.Convert.call [concrete = constants.%int_88]
-// CHECK:STDOUT:   %.loc8_11.3: %Char = converted %.loc8_11.1, %.loc8_11.2 [concrete = constants.%int_88]
-// CHECK:STDOUT:   %.loc8_11.4: ref %Char = temporary_storage
-// CHECK:STDOUT:   %impl.elem0.loc8_11.2: %.1ed = impl_witness_access constants.%Copy.impl_witness.9ba, element0 [concrete = constants.%Char.as.Copy.impl.Op]
-// CHECK:STDOUT:   %bound_method.loc8_11.2: <bound method> = bound_method %.loc8_11.3, %impl.elem0.loc8_11.2 [concrete = constants.%Char.as.Copy.impl.Op.bound]
-// CHECK:STDOUT:   %Char.as.Copy.impl.Op.call: init %Char = call %bound_method.loc8_11.2(%.loc8_11.3) [concrete = constants.%int_88]
-// CHECK:STDOUT:   %.loc8_11.5: ref %Char = temporary %.loc8_11.4, %Char.as.Copy.impl.Op.call
+// CHECK:STDOUT:   %Core.CharLiteral.as.ImplicitAs.impl.Convert.call: init %char = call %bound_method.loc8_11.1(%.loc8_11.1) [concrete = constants.%int_88]
+// CHECK:STDOUT:   %.loc8_11.2: %char = value_of_initializer %Core.CharLiteral.as.ImplicitAs.impl.Convert.call [concrete = constants.%int_88]
+// CHECK:STDOUT:   %.loc8_11.3: %char = converted %.loc8_11.1, %.loc8_11.2 [concrete = constants.%int_88]
+// CHECK:STDOUT:   %.loc8_11.4: ref %char = temporary_storage
+// CHECK:STDOUT:   %impl.elem0.loc8_11.2: %.1ed = impl_witness_access constants.%Copy.impl_witness.9ba, element0 [concrete = constants.%char.as.Copy.impl.Op]
+// CHECK:STDOUT:   %bound_method.loc8_11.2: <bound method> = bound_method %.loc8_11.3, %impl.elem0.loc8_11.2 [concrete = constants.%char.as.Copy.impl.Op.bound]
+// CHECK:STDOUT:   %char.as.Copy.impl.Op.call: init %char = call %bound_method.loc8_11.2(%.loc8_11.3) [concrete = constants.%int_88]
+// CHECK:STDOUT:   %.loc8_11.5: ref %char = temporary %.loc8_11.4, %char.as.Copy.impl.Op.call
 // CHECK:STDOUT:   %addr.loc8_14: %ptr.fb0 = addr_of %.loc8_11.5
 // CHECK:STDOUT:   %foo__carbon_thunk.call: init %empty_tuple.type = call imports.%foo__carbon_thunk.decl(%addr.loc8_14)
-// CHECK:STDOUT:   %Char.as.Destroy.impl.Op.bound: <bound method> = bound_method %.loc8_11.5, constants.%Char.as.Destroy.impl.Op
+// CHECK:STDOUT:   %char.as.Destroy.impl.Op.bound: <bound method> = bound_method %.loc8_11.5, constants.%char.as.Destroy.impl.Op
 // CHECK:STDOUT:   %addr.loc8_11: %ptr.fb0 = addr_of %.loc8_11.5
-// CHECK:STDOUT:   %Char.as.Destroy.impl.Op.call: init %empty_tuple.type = call %Char.as.Destroy.impl.Op.bound(%addr.loc8_11)
+// CHECK:STDOUT:   %char.as.Destroy.impl.Op.call: init %empty_tuple.type = call %char.as.Destroy.impl.Op.bound(%addr.loc8_11)
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

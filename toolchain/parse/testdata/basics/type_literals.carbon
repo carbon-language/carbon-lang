@@ -10,6 +10,7 @@
 
 var test_i32: i32 = 0;
 var test_f64: f64 = 0.1;
+var test_char: char = 'c';
 var test_str: str = "Test";
 
 // CHECK:STDOUT: - filename: type_literals.carbon
@@ -30,6 +31,14 @@ var test_str: str = "Test";
 // CHECK:STDOUT:       {kind: 'VariablePattern', text: 'var', subtree_size: 4},
 // CHECK:STDOUT:       {kind: 'VariableInitializer', text: '='},
 // CHECK:STDOUT:       {kind: 'RealLiteral', text: '0.1'},
+// CHECK:STDOUT:     {kind: 'VariableDecl', text: ';', subtree_size: 8},
+// CHECK:STDOUT:       {kind: 'VariableIntroducer', text: 'var'},
+// CHECK:STDOUT:           {kind: 'IdentifierNameNotBeforeParams', text: 'test_char'},
+// CHECK:STDOUT:           {kind: 'CharTypeLiteral', text: 'char'},
+// CHECK:STDOUT:         {kind: 'VarBindingPattern', text: ':', subtree_size: 3},
+// CHECK:STDOUT:       {kind: 'VariablePattern', text: 'var', subtree_size: 4},
+// CHECK:STDOUT:       {kind: 'VariableInitializer', text: '='},
+// CHECK:STDOUT:       {kind: 'CharLiteral', text: ''c''},
 // CHECK:STDOUT:     {kind: 'VariableDecl', text: ';', subtree_size: 8},
 // CHECK:STDOUT:       {kind: 'VariableIntroducer', text: 'var'},
 // CHECK:STDOUT:           {kind: 'IdentifierNameNotBeforeParams', text: 'test_str'},

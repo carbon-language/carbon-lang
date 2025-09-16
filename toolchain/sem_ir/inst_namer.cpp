@@ -774,7 +774,7 @@ auto InstNamer::NamingContext::NameInst() -> void {
       return;
     }
     case CARBON_KIND(ClassType inst): {
-      if (auto literal_info = NumericTypeLiteralInfo::ForType(sem_ir(), inst);
+      if (auto literal_info = TypeLiteralInfo::ForType(sem_ir(), inst);
           literal_info.is_valid()) {
         AddInstName(literal_info.GetLiteralAsString(sem_ir()));
       } else {

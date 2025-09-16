@@ -3,6 +3,7 @@
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
 // INCLUDE-FILE: toolchain/testing/testdata/min_prelude/parts/bool.carbon
+// INCLUDE-FILE: toolchain/testing/testdata/min_prelude/parts/char.carbon
 // INCLUDE-FILE: toolchain/testing/testdata/min_prelude/parts/copy.carbon
 // INCLUDE-FILE: toolchain/testing/testdata/min_prelude/parts/float.carbon
 // INCLUDE-FILE: toolchain/testing/testdata/min_prelude/parts/int.carbon
@@ -16,6 +17,7 @@
 package Core library "prelude";
 
 export import library "prelude/parts/bool";
+export import library "prelude/parts/char";
 export import library "prelude/parts/copy";
 export import library "prelude/parts/float";
 export import library "prelude/parts/int";

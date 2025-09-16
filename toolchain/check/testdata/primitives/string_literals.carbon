@@ -37,7 +37,7 @@ class String {
 
 import Core library "unusual_string";
 
-// CHECK:STDERR: fail_use_unusual_string.carbon:[[@LINE+4]]:14: error: unexpected representation for type `Core.String` [StringLiteralTypeUnexpected]
+// CHECK:STDERR: fail_use_unusual_string.carbon:[[@LINE+4]]:14: error: unexpected representation for type `str` [StringLiteralTypeUnexpected]
 // CHECK:STDERR: let x: str = "hello";
 // CHECK:STDERR:              ^~~~~~~
 // CHECK:STDERR:
@@ -116,14 +116,14 @@ This string contains 256 characters. Among them are:
 // CHECK:STDOUT: --- use_small_string.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
-// CHECK:STDOUT:   %String: type = class_type @String [concrete]
+// CHECK:STDOUT:   %str.ee0: type = class_type @String [concrete]
 // CHECK:STDOUT:   %int_8: Core.IntLiteral = int_value 8 [concrete]
 // CHECK:STDOUT:   %u8: type = class_type @UInt, @UInt(%int_8) [concrete]
 // CHECK:STDOUT:   %ptr.3e8: type = ptr_type %u8 [concrete]
-// CHECK:STDOUT:   %pattern_type.461: type = pattern_type %String [concrete]
-// CHECK:STDOUT:   %str: %ptr.3e8 = string_literal "hello" [concrete]
+// CHECK:STDOUT:   %pattern_type.461: type = pattern_type %str.ee0 [concrete]
+// CHECK:STDOUT:   %str.3b1: %ptr.3e8 = string_literal "hello" [concrete]
 // CHECK:STDOUT:   %int_5: %u8 = int_value 5 [concrete]
-// CHECK:STDOUT:   %String.val: %String = struct_value (%str, %int_5) [concrete]
+// CHECK:STDOUT:   %String.val: %str.ee0 = struct_value (%str.3b1, %int_5) [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -133,26 +133,26 @@ This string contains 256 characters. Among them are:
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %x.patt: %pattern_type.461 = binding_pattern x [concrete]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %x: %String = bind_name x, @__global_init.%String.val
+// CHECK:STDOUT:   %x: %str.ee0 = bind_name x, @__global_init.%String.val
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %str: %ptr.3e8 = string_literal "hello" [concrete = constants.%str]
+// CHECK:STDOUT:   %str: %ptr.3e8 = string_literal "hello" [concrete = constants.%str.3b1]
 // CHECK:STDOUT:   %int_5: %u8 = int_value 5 [concrete = constants.%int_5]
-// CHECK:STDOUT:   %String.val: %String = struct_value (%str, %int_5) [concrete = constants.%String.val]
+// CHECK:STDOUT:   %String.val: %str.ee0 = struct_value (%str, %int_5) [concrete = constants.%String.val]
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- fail_overfill_small_string.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
-// CHECK:STDOUT:   %String: type = class_type @String [concrete]
+// CHECK:STDOUT:   %str.ee0: type = class_type @String [concrete]
 // CHECK:STDOUT:   %int_8: Core.IntLiteral = int_value 8 [concrete]
 // CHECK:STDOUT:   %u8: type = class_type @UInt, @UInt(%int_8) [concrete]
 // CHECK:STDOUT:   %ptr.3e8: type = ptr_type %u8 [concrete]
-// CHECK:STDOUT:   %pattern_type.461: type = pattern_type %String [concrete]
-// CHECK:STDOUT:   %str: %ptr.3e8 = string_literal "A string so long its size does not fit in `u8`. This results in an error,\nbecause we can't form a `Core.String` value that describes this string.\n\nThis string contains 256 characters. Among them are:\n\n* 6 `g`s,\n* 21 `s`s,\n* 9 newlines,\n* and only one `p`.\n" [concrete]
+// CHECK:STDOUT:   %pattern_type.461: type = pattern_type %str.ee0 [concrete]
+// CHECK:STDOUT:   %str.294: %ptr.3e8 = string_literal "A string so long its size does not fit in `u8`. This results in an error,\nbecause we can't form a `Core.String` value that describes this string.\n\nThis string contains 256 characters. Among them are:\n\n* 6 `g`s,\n* 21 `s`s,\n* 9 newlines,\n* and only one `p`.\n" [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -162,12 +162,12 @@ This string contains 256 characters. Among them are:
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %x.patt: %pattern_type.461 = binding_pattern x [concrete]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %x: %String = bind_name x, <error> [concrete = <error>]
+// CHECK:STDOUT:   %x: %str.ee0 = bind_name x, <error> [concrete = <error>]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %str: %ptr.3e8 = string_literal "A string so long its size does not fit in `u8`. This results in an error,\nbecause we can't form a `Core.String` value that describes this string.\n\nThis string contains 256 characters. Among them are:\n\n* 6 `g`s,\n* 21 `s`s,\n* 9 newlines,\n* and only one `p`.\n" [concrete = constants.%str]
+// CHECK:STDOUT:   %str: %ptr.3e8 = string_literal "A string so long its size does not fit in `u8`. This results in an error,\nbecause we can't form a `Core.String` value that describes this string.\n\nThis string contains 256 characters. Among them are:\n\n* 6 `g`s,\n* 21 `s`s,\n* 9 newlines,\n* and only one `p`.\n" [concrete = constants.%str.294]
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

@@ -327,7 +327,7 @@ import Cpp library "plus_with_string_view_conversion.h";
 fn F() {
   let s1: str = "hello";
   let s2: str = "world";
-  // CHECK:STDERR: fail_todo_import_plus_with_string_view_conversion.carbon:[[@LINE+4]]:18: error: cannot access member of interface `Core.AddWith(Core.String)` in type `Core.String` that does not implement that interface [MissingImplInMemberAccess]
+  // CHECK:STDERR: fail_todo_import_plus_with_string_view_conversion.carbon:[[@LINE+4]]:18: error: cannot access member of interface `Core.AddWith(str)` in type `str` that does not implement that interface [MissingImplInMemberAccess]
   // CHECK:STDERR:   let c: Cpp.C = s1 + s2;
   // CHECK:STDERR:                  ^~~~~~~
   // CHECK:STDERR:

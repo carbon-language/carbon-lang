@@ -227,6 +227,38 @@ struct NumericTypeLiteralInfo {
   IntId bit_width_id;
 };
 
+// Information about a literal that corresponds to a type.
+struct TypeLiteralInfo {
+  enum Kind : char {
+    None,
+    // A numeric type literal such as `i8`; see `numeric` field for details.
+    Numeric,
+    // `char` / `Core.Char`.
+    Char,
+    // `str` / `Core.String`.
+    // TODO: Rename `Core.String` to `Core.Str`.
+    Str,
+  };
+
+  // Returns the type literal that would evaluate to this class type, if any.
+  static auto ForType(const File& file, ClassType class_type)
+      -> TypeLiteralInfo;
+
+  // Prints the type literal that corresponds to this type.
+  auto PrintLiteral(const File& file, llvm::raw_ostream& out) const -> void;
+
+  // Gets a string containing the literal.
+  auto GetLiteralAsString(const File& file) const -> std::string;
+
+  // Returns whether this is a valid type literal.
+  auto is_valid() const -> bool { return kind != None; }
+
+  // The kind of the literal.
+  Kind kind;
+  // If this is a numeric literal, additional information about the literal.
+  NumericTypeLiteralInfo numeric = NumericTypeLiteralInfo::Invalid;
+};
+
 inline constexpr NumericTypeLiteralInfo NumericTypeLiteralInfo::Invalid = {
     .kind = None, .bit_width_id = IntId::None};
 

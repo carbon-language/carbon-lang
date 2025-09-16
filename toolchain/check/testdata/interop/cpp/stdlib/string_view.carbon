@@ -46,7 +46,7 @@ import Cpp library "string_view.h";
 
 //@dump-sem-ir-begin
 fn F() {
-  // CHECK:STDERR: fail_todo_5891_import_multiple.carbon:[[@LINE+7]]:3: error: call argument of type `Core.String` is not supported [CppCallArgTypeNotSupported]
+  // CHECK:STDERR: fail_todo_5891_import_multiple.carbon:[[@LINE+7]]:3: error: call argument of type `str` is not supported [CppCallArgTypeNotSupported]
   // CHECK:STDERR:   Cpp.Consume("hello");
   // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~
   // CHECK:STDERR: fail_todo_5891_import_multiple.carbon:[[@LINE+4]]:3: note: in call to Cpp function here [InCallToCppFunction]
@@ -69,7 +69,7 @@ fn G() -> str {
 // CHECK:STDOUT:   %F.type: type = fn_type @F [concrete]
 // CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [concrete]
 // CHECK:STDOUT:   %F: %F.type = struct_value () [concrete]
-// CHECK:STDOUT:   %String: type = class_type @String [concrete]
+// CHECK:STDOUT:   %str.ee0: type = class_type @String [concrete]
 // CHECK:STDOUT:   %int_64: Core.IntLiteral = int_value 64 [concrete]
 // CHECK:STDOUT:   %u64: type = class_type @UInt, @UInt(%int_64) [concrete]
 // CHECK:STDOUT:   %int_8: Core.IntLiteral = int_value 8 [concrete]
@@ -77,15 +77,15 @@ fn G() -> str {
 // CHECK:STDOUT:   %ptr.3e8: type = ptr_type %u8 [concrete]
 // CHECK:STDOUT:   %.fd2: type = cpp_overload_set_type @Produce [concrete]
 // CHECK:STDOUT:   %empty_struct.c28: %.fd2 = struct_value () [concrete]
-// CHECK:STDOUT:   %str: %ptr.3e8 = string_literal "hello" [concrete]
+// CHECK:STDOUT:   %str.3b1: %ptr.3e8 = string_literal "hello" [concrete]
 // CHECK:STDOUT:   %int_5: %u64 = int_value 5 [concrete]
-// CHECK:STDOUT:   %String.val: %String = struct_value (%str, %int_5) [concrete]
-// CHECK:STDOUT:   %pattern_type.461: type = pattern_type %String [concrete]
+// CHECK:STDOUT:   %String.val: %str.ee0 = struct_value (%str.3b1, %int_5) [concrete]
+// CHECK:STDOUT:   %pattern_type.461: type = pattern_type %str.ee0 [concrete]
 // CHECK:STDOUT:   %G.type: type = fn_type @G [concrete]
 // CHECK:STDOUT:   %G: %G.type = struct_value () [concrete]
 // CHECK:STDOUT:   %.a47: type = cpp_overload_set_type @Produce__carbon_thunk [concrete]
 // CHECK:STDOUT:   %empty_struct.ab9: %.a47 = struct_value () [concrete]
-// CHECK:STDOUT:   %ptr.85f: type = ptr_type %String [concrete]
+// CHECK:STDOUT:   %ptr.85f: type = ptr_type %str.ee0 [concrete]
 // CHECK:STDOUT:   %Produce__carbon_thunk.type: type = fn_type @Produce__carbon_thunk [concrete]
 // CHECK:STDOUT:   %Produce__carbon_thunk: %Produce__carbon_thunk.type = struct_value () [concrete]
 // CHECK:STDOUT: }
@@ -111,8 +111,8 @@ fn G() -> str {
 // CHECK:STDOUT:     %return.patt: %pattern_type.461 = return_slot_pattern [concrete]
 // CHECK:STDOUT:     %return.param_patt: %pattern_type.461 = out_param_pattern %return.patt, call_param0 [concrete]
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %return.param: ref %String = out_param call_param0
-// CHECK:STDOUT:     %return: ref %String = return_slot %return.param
+// CHECK:STDOUT:     %return.param: ref %str.ee0 = out_param call_param0
+// CHECK:STDOUT:     %return: ref %str.ee0 = return_slot %return.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -120,20 +120,20 @@ fn G() -> str {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %Cpp.ref: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
 // CHECK:STDOUT:   %Consume.ref: %.fd2 = name_ref Consume, imports.%.f17 [concrete = constants.%empty_struct.c28]
-// CHECK:STDOUT:   %str: %ptr.3e8 = string_literal "hello" [concrete = constants.%str]
+// CHECK:STDOUT:   %str: %ptr.3e8 = string_literal "hello" [concrete = constants.%str.3b1]
 // CHECK:STDOUT:   %int_5: %u64 = int_value 5 [concrete = constants.%int_5]
-// CHECK:STDOUT:   %String.val: %String = struct_value (%str, %int_5) [concrete = constants.%String.val]
+// CHECK:STDOUT:   %String.val: %str.ee0 = struct_value (%str, %int_5) [concrete = constants.%String.val]
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @G() -> %return.param: %String {
+// CHECK:STDOUT: fn @G() -> %return.param: %str.ee0 {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %Cpp.ref: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
 // CHECK:STDOUT:   %Produce.ref: %.a47 = name_ref Produce, imports.%.5d1 [concrete = constants.%empty_struct.ab9]
-// CHECK:STDOUT:   %.loc20: ref %String = splice_block %return {}
+// CHECK:STDOUT:   %.loc20: ref %str.ee0 = splice_block %return {}
 // CHECK:STDOUT:   %addr: %ptr.85f = addr_of %.loc20
 // CHECK:STDOUT:   %Produce__carbon_thunk.call: init %empty_tuple.type = call imports.%Produce__carbon_thunk.decl(%addr)
-// CHECK:STDOUT:   %.loc21: init %String = in_place_init %Produce__carbon_thunk.call, %.loc20
+// CHECK:STDOUT:   %.loc21: init %str.ee0 = in_place_init %Produce__carbon_thunk.call, %.loc20
 // CHECK:STDOUT:   return %.loc21 to %return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
