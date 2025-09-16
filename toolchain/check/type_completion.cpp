@@ -6,8 +6,8 @@
 
 #include "llvm/ADT/SmallVector.h"
 #include "toolchain/base/kind_switch.h"
+#include "toolchain/check/cpp_import.h"
 #include "toolchain/check/generic.h"
-#include "toolchain/check/import_cpp.h"
 #include "toolchain/check/inst.h"
 #include "toolchain/check/type.h"
 #include "toolchain/diagnostics/format_providers.h"

@@ -6,9 +6,9 @@
 
 #include <optional>
 
+#include "toolchain/check/cpp_import.h"
 #include "toolchain/check/generic.h"
 #include "toolchain/check/import.h"
-#include "toolchain/check/import_cpp.h"
 #include "toolchain/check/import_ref.h"
 #include "toolchain/check/member_access.h"
 #include "toolchain/check/type_completion.h"

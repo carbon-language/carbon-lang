@@ -6,8 +6,8 @@
 
 #include "clang/Sema/Overload.h"
 #include "clang/Sema/Sema.h"
+#include "toolchain/check/cpp_import.h"
 #include "toolchain/check/cpp_type_mapping.h"
-#include "toolchain/check/import_cpp.h"
 
 namespace Carbon::Check {
 
