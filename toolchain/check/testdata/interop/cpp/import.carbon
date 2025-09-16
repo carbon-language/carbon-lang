@@ -64,7 +64,7 @@ import Cpp library "function.h";
 alias FooShort = Cpp.foo_short;
 alias FooInt = Cpp.foo_int;
 
-// --- todo_import_function_api.carbon
+// --- import_function_api.carbon
 
 library "[[@TEST_NAME]]";
 
@@ -98,7 +98,7 @@ fn F() {
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- todo_import_function_api.carbon
+// CHECK:STDOUT: --- import_function_api.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT: }
