@@ -1624,7 +1624,7 @@ static auto ImportFunction(Context& context, SemIR::LocId loc_id,
       AddPlaceholderInstInNoBlock(context, Parse::NodeId::None, function_decl);
   context.imports().push_back(decl_id);
 
-  auto virtual_function = SemIR::Function::VirtualModifier::None;
+  auto virtual_modifier = SemIR::Function::VirtualModifier::None;
   int32_t virtual_index = -1;
   if (auto* method_decl = dyn_cast<clang::CXXMethodDecl>(clang_decl)) {
     if (method_decl->size_overridden_methods()) {
