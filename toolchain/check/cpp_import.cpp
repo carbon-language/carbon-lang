@@ -1255,8 +1255,12 @@ static auto MapPointerType(Context& context, clang::QualType type,
   if (auto nullability = type->getNullability();
       !nullability.has_value() ||
       *nullability != clang::NullabilityKind::NonNull) {
-    // TODO: Support nullable pointers.
-    return TypeExpr::None;
+    // If the type was produced by substitution, then we assume it was deduced
+    // from a Carbon pointer type, so it's non-null.
+    if (!type->getAs<clang::SubstTemplateTypeParmType>()) {
+      // TODO: Support nullable pointers.
+      return TypeExpr::None;
+    }
   }
 
   SemIR::TypeId pointer_type_id =
