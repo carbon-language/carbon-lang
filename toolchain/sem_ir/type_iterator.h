@@ -135,7 +135,10 @@ class TypeIterator::Step {
   struct ArrayStart {
     SemIR::TypeId type_id;
   };
-  // Followed by the pointee type.
+  // Simple wrapped types, followed by the inner type.
+  struct ConstStart {};
+  struct MaybeUnformedStart {};
+  struct PartialStart {};
   struct PointerStart {};
 
   // ===========================================================================
@@ -196,7 +199,8 @@ class TypeIterator::Step {
                    SymbolicValue, StructFieldName, ClassStartOnly,
                    StructStartOnly, TupleStartOnly, InterfaceStartOnly,
                    ClassStart, StructStart, TupleStart, InterfaceStart,
-                   IntStart, ArrayStart, PointerStart, End, Done, Error>;
+                   IntStart, ArrayStart, ConstStart, MaybeUnformedStart,
+                   PartialStart, PointerStart, End, Done, Error>;
 
   template <typename T>
   auto Is() const -> bool {
