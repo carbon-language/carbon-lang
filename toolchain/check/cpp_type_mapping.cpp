@@ -50,8 +50,9 @@ static auto FindIntLiteralBitWidth(Context& context, SemIR::InstId arg_id)
 }
 
 // Attempts to look up a type by name, and returns the corresponding `QualType`,
-// or a null type if lookup fails. `name_components` is the full path of the type,
-// including any namespaces or nested types, separated into separate strings.
+// or a null type if lookup fails. `name_components` is the full path of the
+// type, including any namespaces or nested types, separated into separate
+// strings.
 static auto LookupCppType(
     Context& context, std::initializer_list<llvm::StringRef> name_components)
     -> clang::QualType {
