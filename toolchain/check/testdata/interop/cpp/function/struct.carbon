@@ -27,20 +27,13 @@ library "[[@TEST_NAME]]";
 import Cpp library "decl_value_param_type.h";
 
 fn F() {
-  // CHECK:STDERR: fail_import_decl_value_param_type.carbon:[[@LINE+15]]:11: error: invalid use of incomplete type `Cpp.S` [IncompleteTypeInConversion]
+  // CHECK:STDERR: fail_import_decl_value_param_type.carbon:[[@LINE+8]]:11: error: invalid use of incomplete type `Cpp.S` [IncompleteTypeInConversion]
   // CHECK:STDERR:   Cpp.foo({} as Cpp.S);
   // CHECK:STDERR:           ^~~~~~~~~~~
   // CHECK:STDERR: fail_import_decl_value_param_type.carbon:[[@LINE-6]]:10: in file included here [InCppInclude]
   // CHECK:STDERR: ./decl_value_param_type.h:2:8: note: class was forward declared here [ClassForwardDeclaredHere]
   // CHECK:STDERR: struct S;
   // CHECK:STDERR:        ^
-  // CHECK:STDERR:
-  // CHECK:STDERR: fail_import_decl_value_param_type.carbon:[[@LINE+7]]:3: error: call argument of type `<error>` is not supported [CppCallArgTypeNotSupported]
-  // CHECK:STDERR:   Cpp.foo({} as Cpp.S);
-  // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~
-  // CHECK:STDERR: fail_import_decl_value_param_type.carbon:[[@LINE+4]]:3: note: in call to Cpp function here [InCallToCppFunction]
-  // CHECK:STDERR:   Cpp.foo({} as Cpp.S);
-  // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~
   // CHECK:STDERR:
   Cpp.foo({} as Cpp.S);
 }
@@ -65,13 +58,6 @@ fn F() {
   // CHECK:STDERR:               ^
   // CHECK:STDERR:
   let s: Cpp.S;
-  // CHECK:STDERR: fail_import_decl_value_param_type_previously_imported.carbon:[[@LINE+7]]:3: error: call argument of type `<error>` is not supported [CppCallArgTypeNotSupported]
-  // CHECK:STDERR:   Cpp.foo(s);
-  // CHECK:STDERR:   ^~~~~~~~~~
-  // CHECK:STDERR: fail_import_decl_value_param_type_previously_imported.carbon:[[@LINE+4]]:3: note: in call to Cpp function here [InCallToCppFunction]
-  // CHECK:STDERR:   Cpp.foo(s);
-  // CHECK:STDERR:   ^~~~~~~~~~
-  // CHECK:STDERR:
   Cpp.foo(s);
 }
 
@@ -93,7 +79,7 @@ library "[[@TEST_NAME]]";
 import Cpp library "double_decl_value_param_type.h";
 
 fn F() {
-  // CHECK:STDERR: fail_import_double_decl_value_param_type.carbon:[[@LINE+15]]:12: error: invalid use of incomplete type `Cpp.S` [IncompleteTypeInConversion]
+  // CHECK:STDERR: fail_import_double_decl_value_param_type.carbon:[[@LINE+8]]:12: error: invalid use of incomplete type `Cpp.S` [IncompleteTypeInConversion]
   // CHECK:STDERR:   Cpp.foo1({} as Cpp.S);
   // CHECK:STDERR:            ^~~~~~~~~~~
   // CHECK:STDERR: fail_import_double_decl_value_param_type.carbon:[[@LINE-6]]:10: in file included here [InCppInclude]
@@ -101,28 +87,14 @@ fn F() {
   // CHECK:STDERR: struct S;
   // CHECK:STDERR:        ^
   // CHECK:STDERR:
-  // CHECK:STDERR: fail_import_double_decl_value_param_type.carbon:[[@LINE+7]]:3: error: call argument of type `<error>` is not supported [CppCallArgTypeNotSupported]
-  // CHECK:STDERR:   Cpp.foo1({} as Cpp.S);
-  // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~~
-  // CHECK:STDERR: fail_import_double_decl_value_param_type.carbon:[[@LINE+4]]:3: note: in call to Cpp function here [InCallToCppFunction]
-  // CHECK:STDERR:   Cpp.foo1({} as Cpp.S);
-  // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~~
-  // CHECK:STDERR:
   Cpp.foo1({} as Cpp.S);
-  // CHECK:STDERR: fail_import_double_decl_value_param_type.carbon:[[@LINE+15]]:12: error: invalid use of incomplete type `Cpp.S` [IncompleteTypeInConversion]
+  // CHECK:STDERR: fail_import_double_decl_value_param_type.carbon:[[@LINE+8]]:12: error: invalid use of incomplete type `Cpp.S` [IncompleteTypeInConversion]
   // CHECK:STDERR:   Cpp.foo2({} as Cpp.S);
   // CHECK:STDERR:            ^~~~~~~~~~~
-  // CHECK:STDERR: fail_import_double_decl_value_param_type.carbon:[[@LINE-22]]:10: in file included here [InCppInclude]
+  // CHECK:STDERR: fail_import_double_decl_value_param_type.carbon:[[@LINE-15]]:10: in file included here [InCppInclude]
   // CHECK:STDERR: ./double_decl_value_param_type.h:2:8: note: class was forward declared here [ClassForwardDeclaredHere]
   // CHECK:STDERR: struct S;
   // CHECK:STDERR:        ^
-  // CHECK:STDERR:
-  // CHECK:STDERR: fail_import_double_decl_value_param_type.carbon:[[@LINE+7]]:3: error: call argument of type `<error>` is not supported [CppCallArgTypeNotSupported]
-  // CHECK:STDERR:   Cpp.foo2({} as Cpp.S);
-  // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~~
-  // CHECK:STDERR: fail_import_double_decl_value_param_type.carbon:[[@LINE+4]]:3: note: in call to Cpp function here [InCallToCppFunction]
-  // CHECK:STDERR:   Cpp.foo2({} as Cpp.S);
-  // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~~
   // CHECK:STDERR:
   Cpp.foo2({} as Cpp.S);
 }
@@ -632,14 +604,10 @@ fn F() {
 // CHECK:STDOUT: --- fail_todo_import_definition_single_data_member_value_param_type.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
-// CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [concrete]
 // CHECK:STDOUT:   %S: type = class_type @S [concrete]
 // CHECK:STDOUT:   %.c5d: type = cpp_overload_set_type @As.Convert [concrete]
 // CHECK:STDOUT:   %empty_struct: %.c5d = struct_value () [concrete]
 // CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [concrete]
-// CHECK:STDOUT:   %ptr.5c7: type = ptr_type %S [concrete]
-// CHECK:STDOUT:   %foo__carbon_thunk.type: type = fn_type @foo__carbon_thunk [concrete]
-// CHECK:STDOUT:   %foo__carbon_thunk: %foo__carbon_thunk.type = struct_value () [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -650,11 +618,6 @@ fn F() {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %S.decl: type = class_decl @S [concrete = constants.%S] {} {}
 // CHECK:STDOUT:   %.a21: %.c5d = cpp_overload_set_value @As.Convert [concrete = constants.%empty_struct]
-// CHECK:STDOUT:   %foo__carbon_thunk.decl: %foo__carbon_thunk.type = fn_decl @foo__carbon_thunk [concrete = constants.%foo__carbon_thunk] {
-// CHECK:STDOUT:     <elided>
-// CHECK:STDOUT:   } {
-// CHECK:STDOUT:     <elided>
-// CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F() {
@@ -665,22 +628,16 @@ fn F() {
 // CHECK:STDOUT:   %Cpp.ref.loc15_17: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
 // CHECK:STDOUT:   %S.ref: type = name_ref S, imports.%S.decl [concrete = constants.%S]
 // CHECK:STDOUT:   %.loc15_14: %S = converted %.loc15_12, <error> [concrete = <error>]
-// CHECK:STDOUT:   %addr: %ptr.5c7 = addr_of <error> [concrete = <error>]
-// CHECK:STDOUT:   %foo__carbon_thunk.call: init %empty_tuple.type = call imports.%foo__carbon_thunk.decl(%addr)
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- fail_todo_import_definition_multiple_data_members_value_param_type.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
-// CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [concrete]
 // CHECK:STDOUT:   %S: type = class_type @S [concrete]
 // CHECK:STDOUT:   %.c5d: type = cpp_overload_set_type @As.Convert [concrete]
 // CHECK:STDOUT:   %empty_struct: %.c5d = struct_value () [concrete]
 // CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [concrete]
-// CHECK:STDOUT:   %ptr.5c7: type = ptr_type %S [concrete]
-// CHECK:STDOUT:   %foo__carbon_thunk.type: type = fn_type @foo__carbon_thunk [concrete]
-// CHECK:STDOUT:   %foo__carbon_thunk: %foo__carbon_thunk.type = struct_value () [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -691,11 +648,6 @@ fn F() {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %S.decl: type = class_decl @S [concrete = constants.%S] {} {}
 // CHECK:STDOUT:   %.a21: %.c5d = cpp_overload_set_value @As.Convert [concrete = constants.%empty_struct]
-// CHECK:STDOUT:   %foo__carbon_thunk.decl: %foo__carbon_thunk.type = fn_decl @foo__carbon_thunk [concrete = constants.%foo__carbon_thunk] {
-// CHECK:STDOUT:     <elided>
-// CHECK:STDOUT:   } {
-// CHECK:STDOUT:     <elided>
-// CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F() {
@@ -706,8 +658,6 @@ fn F() {
 // CHECK:STDOUT:   %Cpp.ref.loc15_17: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
 // CHECK:STDOUT:   %S.ref: type = name_ref S, imports.%S.decl [concrete = constants.%S]
 // CHECK:STDOUT:   %.loc15_14: %S = converted %.loc15_12, <error> [concrete = <error>]
-// CHECK:STDOUT:   %addr: %ptr.5c7 = addr_of <error> [concrete = <error>]
-// CHECK:STDOUT:   %foo__carbon_thunk.call: init %empty_tuple.type = call imports.%foo__carbon_thunk.decl(%addr)
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
