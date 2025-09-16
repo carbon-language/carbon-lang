@@ -89,6 +89,17 @@ auto IsCppThunkRequired(Context& context, const SemIR::Function& function)
   // we don't generate a thunk if any relevant type is erroneous.
   bool thunk_required = false;
 
+  // We require a thunk if any parameter is of reference type, even if the
+  // corresponding SemIR function has an acceptable parameter type.
+  // TODO: We should be able to avoid thunks for reference parameters.
+  const auto* decl = cast<clang::FunctionDecl>(
+      context.sem_ir().clang_decls().Get(function.clang_decl_id).decl);
+  for (auto* param : decl->parameters()) {
+    if (param->getType()->isReferenceType()) {
+      thunk_required = true;
+    }
+  }
+
   SemIR::TypeId return_type_id =
       function.GetDeclaredReturnType(context.sem_ir());
   if (return_type_id.has_value()) {
@@ -217,7 +228,8 @@ static auto GetThunkParameterType(clang::ASTContext& ast_context,
   if (IsSimpleAbiType(ast_context, callee_type)) {
     return callee_type;
   }
-  return GetNonnullType(ast_context, ast_context.getPointerType(callee_type));
+  return GetNonnullType(ast_context, ast_context.getPointerType(
+                                         callee_type.getNonReferenceType()));
 }
 
 // Creates the thunk parameter types given the callee function.
@@ -358,13 +370,24 @@ static auto BuildThunkParamRef(clang::Sema& sema,
       thunk_param, thunk_param->getType().getNonReferenceType(),
       clang::VK_LValue, clang_loc);
   if (!type.isNull() && thunk_param->getType() != type) {
-    // TODO: Consider inserting a cast to an rvalue. Note that we currently
-    // pass pointers to non-temporary objects as the argument when calling a
-    // thunk, so we'll need to either change that or generate different thunks
-    // depending on whether we're moving from each parameter.
     clang::ExprResult deref_result =
         sema.BuildUnaryOp(nullptr, clang_loc, clang::UO_Deref, call_arg);
     CARBON_CHECK(deref_result.isUsable());
+
+    // Cast to an rvalue when initializing an rvalue reference. The validity of
+    // the initialization of the reference should be validated by the caller of
+    // the thunk.
+    //
+    // TODO: Consider inserting a cast to an rvalue in more cases. Note that we
+    // currently pass pointers to non-temporary objects as the argument when
+    // calling a thunk, so we'll need to either change that or generate
+    // different thunks depending on whether we're moving from each parameter.
+    if (type->isRValueReferenceType()) {
+      deref_result = clang::ImplicitCastExpr::Create(
+          sema.getASTContext(), deref_result.get()->getType(), clang::CK_NoOp,
+          deref_result.get(), nullptr, clang::ExprValueKind::VK_XValue,
+          clang::FPOptionsOverride());
+    }
     call_arg = deref_result.get();
   }
   return call_arg;

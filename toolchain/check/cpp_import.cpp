@@ -1389,20 +1389,30 @@ static auto MakeParamPatternsBlockId(Context& context, SemIR::LocId loc_id,
     // be cv-qualified.
     clang::QualType param_type = param->getType();
 
+    // We map `T&` parameters to `addr param: T*`, and `T&&` parameters to
+    // `param: T`.
+    // TODO: Revisit this and decide what we really want to do here.
+    bool is_ref_param = param_type->isLValueReferenceType();
+    param_type = param_type.getNonReferenceType();
+
     // Mark the start of a region of insts, needed for the type expression
     // created later with the call of `EndSubpatternAsExpr()`.
     BeginSubpattern(context);
-    auto [type_inst_id, type_id] = MapType(context, loc_id, param_type);
+    auto [orig_type_inst_id, type_id] = MapType(context, loc_id, param_type);
     // Type expression of the binding pattern - a single-entry/single-exit
     // region that allows control flow in the type expression e.g. fn F(x: if C
     // then i32 else i64).
     SemIR::ExprRegionId type_expr_region_id =
-        EndSubpatternAsExpr(context, type_inst_id);
+        EndSubpatternAsExpr(context, orig_type_inst_id);
 
     if (!type_id.has_value()) {
       context.TODO(loc_id, llvm::formatv("Unsupported: parameter type: {0}",
-                                         param_type.getAsString()));
+                                         param->getType().getAsString()));
       return SemIR::InstBlockId::None;
+    }
+
+    if (is_ref_param) {
+      type_id = GetPointerType(context, orig_type_inst_id);
     }
 
     llvm::StringRef param_name = param->getName();
@@ -1417,19 +1427,29 @@ static auto MakeParamPatternsBlockId(Context& context, SemIR::LocId loc_id,
     bool is_template = false;
     // TODO: Fix this once generics are supported.
     bool is_generic = false;
-    SemIR::InstId binding_pattern_id =
+    SemIR::InstId pattern_id =
         // TODO: Fill in a location once available.
         AddBindingPattern(context, SemIR::LocId::None, name_id, type_id,
                           type_expr_region_id, is_generic, is_template)
             .pattern_id;
-    SemIR::InstId var_pattern_id = AddPatternInst(
+    pattern_id = AddPatternInst(
         context,
         // TODO: Fill in a location once available.
         SemIR::LocIdAndInst::NoLoc(SemIR::ValueParamPattern(
-            {.type_id = context.insts().Get(binding_pattern_id).type_id(),
-             .subpattern_id = binding_pattern_id,
+            {.type_id = context.insts().Get(pattern_id).type_id(),
+             .subpattern_id = pattern_id,
              .index = SemIR::CallParamIndex::None})));
-    params.push_back(var_pattern_id);
+    if (is_ref_param) {
+      pattern_id = AddPatternInst(
+          context,
+          // TODO: Fill in a location once available.
+          SemIR::LocIdAndInst::NoLoc(SemIR::AddrPattern(
+              {.type_id = GetPatternType(
+                   context,
+                   context.types().GetTypeIdForTypeInstId(orig_type_inst_id)),
+               .inner_id = pattern_id})));
+    }
+    params.push_back(pattern_id);
   }
   return context.inst_blocks().Add(params);
 }
