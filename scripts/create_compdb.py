@@ -26,8 +26,6 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 import argparse
 import subprocess
 import sys
-import json
-from typing import Any, Dict
 
 import scripts_utils
 
@@ -68,66 +66,9 @@ def _build_generated_files(
     subprocess.check_call(
         [bazel, "build", "--keep_going", "--remote_download_outputs=toplevel"]
         + generated_file_labels
-        # We also need the Bazel C++ runfiles that aren't "generated", but not
-        # linked into place until built.
+        # We also need the Bazel C++ runfiles that aren't "generated", but are
+        # not linked into place until built.
         + ["@bazel_tools//tools/cpp/runfiles:runfiles"]
-    )
-
-
-def _get_config_for_entry(entry: Dict[str, Any]) -> str:
-    """Returns the configuration for a compile command entry."""
-    arguments = entry.get("arguments")
-
-    # Only handle files where the object file argument is easily found as
-    # the last argument, which matches the expected structure from Bazel.
-    if not arguments or len(arguments) < 2 or arguments[-2] != "-o":
-        return "unknown"
-    obj_file = arguments[-1]
-
-    # The configuration is the name of the subdirectory of `bazel-out`.
-    if not obj_file.startswith("bazel-out/"):
-        return "unknown"
-    return str(obj_file.split("/")[1])
-
-
-def _filter_compilation_database(file_path: str) -> None:
-    """Filters out duplicate exec-configuration entries from the compilation
-    database.
-    """
-    print("Filtering out duplicate exec-configuration entries...")
-    try:
-        with open(file_path, "r") as f:
-            commands = json.load(f)
-    except FileNotFoundError:
-        print(f"Error: The file '{file_path}' was not found.")
-        sys.exit(1)
-    except json.JSONDecodeError:
-        print(f"Error: The file '{file_path}' is not a valid JSON file.")
-        sys.exit(1)
-
-    # We want to skip compiles that were in the "exec" configuration for tools.
-    # Because we generate compile commands for every target, these will already
-    # be covered there and this creates a smaller and more minimal compilation
-    # database.
-    #
-    # Detecting this based on the `-exec-` string in the configuration name of
-    # the directory is a bit of a hack, but there doesn't appear to be any way
-    # to filter these out using Bazel when creating the compilation database, or
-    # a way to easily ask Bazel to compute what this string would be for th exec
-    # configuration.
-    filtered_commands = [
-        entry
-        for entry in commands
-        if "-exec-" not in _get_config_for_entry(entry)
-    ]
-
-    with open(file_path, "w") as f:
-        # Use indent=4 for a human-readable, pretty-printed output file
-        json.dump(filtered_commands, f, indent=4)
-    print(
-        "Filtered out "
-        f"{len(commands) - len(filtered_commands)} "
-        "duplicate entries..."
     )
 
 
@@ -157,9 +98,15 @@ def main() -> None:
         "Generating compile_commands.json (may take a few minutes)...",
         flush=True,
     )
-    subprocess.run([bazel, "run", "@hedron_compile_commands//:refresh_all"])
-
-    _filter_compilation_database("compile_commands.json")
+    subprocess.run(
+        [
+            bazel,
+            "run",
+            "@hedron_compile_commands//:refresh_all",
+            "--",
+            "--notool_deps",
+        ]
+    )
 
 
 if __name__ == "__main__":
