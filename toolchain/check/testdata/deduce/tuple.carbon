@@ -235,12 +235,13 @@ fn G(pair: (C, D)) -> D {
 // CHECK:STDOUT:   %require_complete.loc7_30: <witness> = require_complete_type %tuple.type [symbolic = %require_complete.loc7_30 (constants.%require_complete.fe1)]
 // CHECK:STDOUT:   %F.specific_fn.loc7_54.2: <specific function> = specific_function constants.%F, @F(%T.loc7_6.1, %U.loc7_16.1) [symbolic = %F.specific_fn.loc7_54.2 (constants.%F.specific_fn.dd9)]
 // CHECK:STDOUT:
-// CHECK:STDOUT:   fn(%pair.param: @F.%tuple.type (%tuple.type.30b)) -> @F.%U.loc7_16.1 (%U) {
+// CHECK:STDOUT:   fn(%pair.param: @F.%tuple.type (%tuple.type.30b)) -> %return.param: @F.%U.loc7_16.1 (%U) {
 // CHECK:STDOUT:   !entry:
 // CHECK:STDOUT:     %F.ref: %F.type = name_ref F, file.%F.decl [concrete = constants.%F]
 // CHECK:STDOUT:     %pair.ref: @F.%tuple.type (%tuple.type.30b) = name_ref pair, %pair
 // CHECK:STDOUT:     %F.specific_fn.loc7_54.1: <specific function> = specific_function %F.ref, @F(constants.%T, constants.%U) [symbolic = %F.specific_fn.loc7_54.2 (constants.%F.specific_fn.dd9)]
-// CHECK:STDOUT:     %F.call: init @F.%U.loc7_16.1 (%U) = call %F.specific_fn.loc7_54.1(%pair.ref)
+// CHECK:STDOUT:     %.loc7_40: ref @F.%U.loc7_16.1 (%U) = splice_block %return {}
+// CHECK:STDOUT:     %F.call: init @F.%U.loc7_16.1 (%U) = call %F.specific_fn.loc7_54.1(%pair.ref) to %.loc7_40
 // CHECK:STDOUT:     return %F.call to %return
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }

@@ -368,8 +368,8 @@ fn Test() -> i32 {
 // CHECK:STDOUT:     %bound_method.loc9_38.1: <bound method> = bound_method %n.ref, %impl.elem0.loc9_38.1
 // CHECK:STDOUT:     %specific_impl_fn.loc9_38.1: <specific function> = specific_impl_function %impl.elem0.loc9_38.1, @Copy.Op(constants.%Copy.facet.021) [symbolic = %specific_impl_fn.loc9_38.2 (constants.%specific_impl_fn.547)]
 // CHECK:STDOUT:     %bound_method.loc9_38.2: <bound method> = bound_method %n.ref, %specific_impl_fn.loc9_38.1
-// CHECK:STDOUT:     %.loc9_38.1: init @Outer.F.%T.as_type.loc9_11.1 (%T.as_type) = call %bound_method.loc9_38.2(%n.ref)
 // CHECK:STDOUT:     %.loc9_39.2: ref @Outer.F.%T.as_type.loc9_11.1 (%T.as_type) = class_element_access %return, element0
+// CHECK:STDOUT:     %.loc9_38.1: init @Outer.F.%T.as_type.loc9_11.1 (%T.as_type) = call %bound_method.loc9_38.2(%n.ref) to %.loc9_39.2
 // CHECK:STDOUT:     %.loc9_39.3: init @Outer.F.%T.as_type.loc9_11.1 (%T.as_type) = initialize_from %.loc9_38.1 to %.loc9_39.2
 // CHECK:STDOUT:     %.loc9_39.4: init @Outer.F.%Inner (%Inner.6ee) = class_init (%.loc9_39.3), %return
 // CHECK:STDOUT:     %.loc9_40: init @Outer.F.%Inner (%Inner.6ee) = converted %.loc9_39.1, %.loc9_39.4
@@ -944,7 +944,7 @@ fn Test() -> i32 {
 // CHECK:STDOUT:   %pattern_type.loc6_10: type = pattern_type %Self.as_type.loc6_16.1 [symbolic = %pattern_type.loc6_10 (constants.%pattern_type.120)]
 // CHECK:STDOUT:   %pattern_type.loc6_24: type = pattern_type %T [symbolic = %pattern_type.loc6_24 (constants.%pattern_type.7dc)]
 // CHECK:STDOUT:
-// CHECK:STDOUT:   fn(%self.param: @Inner.F.%Self.as_type.loc6_16.1 (%Self.as_type.bd3)) -> @Inner.F.%T (%T);
+// CHECK:STDOUT:   fn(%self.param: @Inner.F.%Self.as_type.loc6_16.1 (%Self.as_type.bd3)) -> %return.param: @Inner.F.%T (%T);
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic fn @C.as.Inner.impl.F(@Outer.%T.loc4_13.2: type) {
@@ -967,7 +967,7 @@ fn Test() -> i32 {
 // CHECK:STDOUT:   %impl.elem0.loc11_41.2: @C.as.Inner.impl.F.%.loc11_41 (%.4e7) = impl_witness_access %Inner.lookup_impl_witness, element0 [symbolic = %impl.elem0.loc11_41.2 (constants.%impl.elem0)]
 // CHECK:STDOUT:   %specific_impl_fn.loc11_41.2: <specific function> = specific_impl_function %impl.elem0.loc11_41.2, @Inner.F(%T, %Inner.facet) [symbolic = %specific_impl_fn.loc11_41.2 (constants.%specific_impl_fn)]
 // CHECK:STDOUT:
-// CHECK:STDOUT:   fn(%self.param: @C.as.Inner.impl.F.%C (%C.390)) -> @C.as.Inner.impl.F.%T (%T) {
+// CHECK:STDOUT:   fn(%self.param: @C.as.Inner.impl.F.%C (%C.390)) -> %return.param: @C.as.Inner.impl.F.%T (%T) {
 // CHECK:STDOUT:   !entry:
 // CHECK:STDOUT:     %self.ref: @C.as.Inner.impl.F.%C (%C.390) = name_ref self, %self
 // CHECK:STDOUT:     %.loc11_43: type = specific_constant @Outer.%Inner.decl, @Outer(constants.%T) [symbolic = %Inner.type (constants.%Inner.type.d07)]
@@ -978,7 +978,8 @@ fn Test() -> i32 {
 // CHECK:STDOUT:     %bound_method.loc11_41: <bound method> = bound_method %self.ref, %impl.elem0.loc11_41.1
 // CHECK:STDOUT:     %specific_impl_fn.loc11_41.1: <specific function> = specific_impl_function %impl.elem0.loc11_41.1, @Inner.F(constants.%T, constants.%Inner.facet.949) [symbolic = %specific_impl_fn.loc11_41.2 (constants.%specific_impl_fn)]
 // CHECK:STDOUT:     %bound_method.loc11_52: <bound method> = bound_method %self.ref, %specific_impl_fn.loc11_41.1
-// CHECK:STDOUT:     %.loc11_52: init @C.as.Inner.impl.F.%T (%T) = call %bound_method.loc11_52(%self.ref)
+// CHECK:STDOUT:     %.loc11_23: ref @C.as.Inner.impl.F.%T (%T) = splice_block %return {}
+// CHECK:STDOUT:     %.loc11_52: init @C.as.Inner.impl.F.%T (%T) = call %bound_method.loc11_52(%self.ref) to %.loc11_23
 // CHECK:STDOUT:     return %.loc11_52 to %return
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }

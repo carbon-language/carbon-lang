@@ -2,8 +2,8 @@
 // Exceptions. See /LICENSE for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
-#ifndef CARBON_TOOLCHAIN_CHECK_IMPORT_CPP_H_
-#define CARBON_TOOLCHAIN_CHECK_IMPORT_CPP_H_
+#ifndef CARBON_TOOLCHAIN_CHECK_CPP_IMPORT_H_
+#define CARBON_TOOLCHAIN_CHECK_CPP_IMPORT_H_
 
 #include "llvm/ADT/ArrayRef.h"
 #include "llvm/ADT/IntrusiveRefCntPtr.h"
@@ -55,4 +55,4 @@ auto ImportClassDefinitionForClangDecl(Context& context, SemIR::LocId loc_id,
 
 }  // namespace Carbon::Check
 
-#endif  // CARBON_TOOLCHAIN_CHECK_IMPORT_CPP_H_
+#endif  // CARBON_TOOLCHAIN_CHECK_CPP_IMPORT_H_

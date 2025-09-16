@@ -6,8 +6,8 @@
 
 #include "llvm/ADT/SmallVector.h"
 #include "toolchain/base/kind_switch.h"
+#include "toolchain/check/cpp_import.h"
 #include "toolchain/check/generic.h"
-#include "toolchain/check/import_cpp.h"
 #include "toolchain/check/inst.h"
 #include "toolchain/check/type.h"
 #include "toolchain/diagnostics/format_providers.h"
@@ -65,6 +65,9 @@ class TypeCompleter {
   // Makes an empty value representation, which is used for types that have no
   // state, such as empty structs and tuples.
   auto MakeEmptyValueRepr() const -> SemIR::ValueRepr;
+
+  // Makes a dependent value representation, which is used for symbolic types.
+  auto MakeDependentValueRepr(SemIR::TypeId type_id) const -> SemIR::ValueRepr;
 
   // Makes a value representation that uses pass-by-copy, copying the given
   // type.
@@ -165,8 +168,7 @@ class TypeCompleter {
     requires(InstT::Kind.is_symbolic_when_type())
   auto BuildInfoForInst(SemIR::TypeId type_id, InstT /*inst*/) const
       -> SemIR::CompleteTypeInfo {
-    // For symbolic types, we arbitrarily pick a copy representation.
-    return {.value_repr = MakeCopyValueRepr(type_id)};
+    return {.value_repr = MakeDependentValueRepr(type_id)};
   }
 
   // Builds and returns the `CompleteTypeInfo` for the given type. All nested
@@ -361,6 +363,11 @@ auto TypeCompleter::AddNestedIncompleteTypes(SemIR::Inst type_inst) -> bool {
 auto TypeCompleter::MakeEmptyValueRepr() const -> SemIR::ValueRepr {
   return {.kind = SemIR::ValueRepr::None,
           .type_id = GetTupleType(*context_, {})};
+}
+
+auto TypeCompleter::MakeDependentValueRepr(SemIR::TypeId type_id) const
+    -> SemIR::ValueRepr {
+  return {.kind = SemIR::ValueRepr::Dependent, .type_id = type_id};
 }
 
 auto TypeCompleter::MakeCopyValueRepr(

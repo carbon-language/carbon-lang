@@ -272,7 +272,7 @@ class Declaration(T:! type);
 // CHECK:STDOUT:   %impl.elem0.loc11_16.2: @Class.GetValue.%.loc11_16.4 (%.c50) = impl_witness_access %Copy.lookup_impl_witness, element0 [symbolic = %impl.elem0.loc11_16.2 (constants.%impl.elem0.792)]
 // CHECK:STDOUT:   %specific_impl_fn.loc11_16.2: <specific function> = specific_impl_function %impl.elem0.loc11_16.2, @Copy.Op(%Copy.facet) [symbolic = %specific_impl_fn.loc11_16.2 (constants.%specific_impl_fn.547)]
 // CHECK:STDOUT:
-// CHECK:STDOUT:   fn(%self.param: @Class.GetValue.%Class (%Class)) -> @Class.GetValue.%T.as_type.loc10_32.1 (%T.as_type) {
+// CHECK:STDOUT:   fn(%self.param: @Class.GetValue.%Class (%Class)) -> %return.param: @Class.GetValue.%T.as_type.loc10_32.1 (%T.as_type) {
 // CHECK:STDOUT:   !entry:
 // CHECK:STDOUT:     %self.ref: @Class.GetValue.%Class (%Class) = name_ref self, %self
 // CHECK:STDOUT:     %k.ref: @Class.GetValue.%Class.elem (%Class.elem) = name_ref k, @Class.%.loc14_8 [concrete = @Class.%.loc14_8]
@@ -282,7 +282,8 @@ class Declaration(T:! type);
 // CHECK:STDOUT:     %bound_method.loc11_16.1: <bound method> = bound_method %.loc11_16.2, %impl.elem0.loc11_16.1
 // CHECK:STDOUT:     %specific_impl_fn.loc11_16.1: <specific function> = specific_impl_function %impl.elem0.loc11_16.1, @Copy.Op(constants.%Copy.facet.021) [symbolic = %specific_impl_fn.loc11_16.2 (constants.%specific_impl_fn.547)]
 // CHECK:STDOUT:     %bound_method.loc11_16.2: <bound method> = bound_method %.loc11_16.2, %specific_impl_fn.loc11_16.1
-// CHECK:STDOUT:     %.loc11_16.3: init @Class.GetValue.%T.as_type.loc10_32.1 (%T.as_type) = call %bound_method.loc11_16.2(%.loc11_16.2)
+// CHECK:STDOUT:     %.loc10_29: ref @Class.GetValue.%T.as_type.loc10_32.1 (%T.as_type) = splice_block %return {}
+// CHECK:STDOUT:     %.loc11_16.3: init @Class.GetValue.%T.as_type.loc10_32.1 (%T.as_type) = call %bound_method.loc11_16.2(%.loc11_16.2) to %.loc10_29
 // CHECK:STDOUT:     return %.loc11_16.3 to %return
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }

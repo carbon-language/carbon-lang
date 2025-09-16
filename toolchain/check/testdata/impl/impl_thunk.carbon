@@ -800,14 +800,15 @@ impl () as I({}) {
 // CHECK:STDOUT:   %impl.elem0.loc10_43.2: @empty_tuple.type.as.I.impl.F.loc10_34.1.%.loc10_43.2 (%.c500ab.2) = impl_witness_access %Copy.lookup_impl_witness, element0 [symbolic = %impl.elem0.loc10_43.2 (constants.%impl.elem0.792e99.2)]
 // CHECK:STDOUT:   %specific_impl_fn.loc10_43.2: <specific function> = specific_impl_function %impl.elem0.loc10_43.2, @Copy.Op(%Copy.facet) [symbolic = %specific_impl_fn.loc10_43.2 (constants.%specific_impl_fn.547931.2)]
 // CHECK:STDOUT:
-// CHECK:STDOUT:   fn(%x.param: @empty_tuple.type.as.I.impl.F.loc10_34.1.%U.as_type.loc10_26.1 (%U.as_type.870)) -> @empty_tuple.type.as.I.impl.F.loc10_34.1.%U.as_type.loc10_26.1 (%U.as_type.870) {
+// CHECK:STDOUT:   fn(%x.param: @empty_tuple.type.as.I.impl.F.loc10_34.1.%U.as_type.loc10_26.1 (%U.as_type.870)) -> %return.param: @empty_tuple.type.as.I.impl.F.loc10_34.1.%U.as_type.loc10_26.1 (%U.as_type.870) {
 // CHECK:STDOUT:   !entry:
 // CHECK:STDOUT:     %x.ref: @empty_tuple.type.as.I.impl.F.loc10_34.1.%U.as_type.loc10_26.1 (%U.as_type.870) = name_ref x, %x
 // CHECK:STDOUT:     %impl.elem0.loc10_43.1: @empty_tuple.type.as.I.impl.F.loc10_34.1.%.loc10_43.2 (%.c500ab.2) = impl_witness_access constants.%Copy.lookup_impl_witness.e15cec.2, element0 [symbolic = %impl.elem0.loc10_43.2 (constants.%impl.elem0.792e99.2)]
 // CHECK:STDOUT:     %bound_method.loc10_43.1: <bound method> = bound_method %x.ref, %impl.elem0.loc10_43.1
 // CHECK:STDOUT:     %specific_impl_fn.loc10_43.1: <specific function> = specific_impl_function %impl.elem0.loc10_43.1, @Copy.Op(constants.%Copy.facet.021101.2) [symbolic = %specific_impl_fn.loc10_43.2 (constants.%specific_impl_fn.547931.2)]
 // CHECK:STDOUT:     %bound_method.loc10_43.2: <bound method> = bound_method %x.ref, %specific_impl_fn.loc10_43.1
-// CHECK:STDOUT:     %.loc10_43.1: init @empty_tuple.type.as.I.impl.F.loc10_34.1.%U.as_type.loc10_26.1 (%U.as_type.870) = call %bound_method.loc10_43.2(%x.ref)
+// CHECK:STDOUT:     %.loc10_29: ref @empty_tuple.type.as.I.impl.F.loc10_34.1.%U.as_type.loc10_26.1 (%U.as_type.870) = splice_block %return {}
+// CHECK:STDOUT:     %.loc10_43.1: init @empty_tuple.type.as.I.impl.F.loc10_34.1.%U.as_type.loc10_26.1 (%U.as_type.870) = call %bound_method.loc10_43.2(%x.ref) to %.loc10_29
 // CHECK:STDOUT:     return %.loc10_43.1 to %return
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
@@ -955,14 +956,15 @@ impl () as I({}) {
 // CHECK:STDOUT:   %impl.elem0.loc19_53.2: @empty_tuple.type.as.I.impl.F.loc19_44.1.%.loc19_53.2 (%.c500ab.2) = impl_witness_access %Copy.lookup_impl_witness, element0 [symbolic = %impl.elem0.loc19_53.2 (constants.%impl.elem0.792e99.2)]
 // CHECK:STDOUT:   %specific_impl_fn.loc19_53.2: <specific function> = specific_impl_function %impl.elem0.loc19_53.2, @Copy.Op(%Copy.facet) [symbolic = %specific_impl_fn.loc19_53.2 (constants.%specific_impl_fn.547931.2)]
 // CHECK:STDOUT:
-// CHECK:STDOUT:   fn(%self.param: %empty_tuple.type, %x.param: @empty_tuple.type.as.I.impl.F.loc19_44.1.%U.as_type.loc19_36.1 (%U.as_type.870)) -> @empty_tuple.type.as.I.impl.F.loc19_44.1.%U.as_type.loc19_36.1 (%U.as_type.870) {
+// CHECK:STDOUT:   fn(%self.param: %empty_tuple.type, %x.param: @empty_tuple.type.as.I.impl.F.loc19_44.1.%U.as_type.loc19_36.1 (%U.as_type.870)) -> %return.param: @empty_tuple.type.as.I.impl.F.loc19_44.1.%U.as_type.loc19_36.1 (%U.as_type.870) {
 // CHECK:STDOUT:   !entry:
 // CHECK:STDOUT:     %x.ref: @empty_tuple.type.as.I.impl.F.loc19_44.1.%U.as_type.loc19_36.1 (%U.as_type.870) = name_ref x, %x
 // CHECK:STDOUT:     %impl.elem0.loc19_53.1: @empty_tuple.type.as.I.impl.F.loc19_44.1.%.loc19_53.2 (%.c500ab.2) = impl_witness_access constants.%Copy.lookup_impl_witness.e15cec.2, element0 [symbolic = %impl.elem0.loc19_53.2 (constants.%impl.elem0.792e99.2)]
 // CHECK:STDOUT:     %bound_method.loc19_53.1: <bound method> = bound_method %x.ref, %impl.elem0.loc19_53.1
 // CHECK:STDOUT:     %specific_impl_fn.loc19_53.1: <specific function> = specific_impl_function %impl.elem0.loc19_53.1, @Copy.Op(constants.%Copy.facet.021101.2) [symbolic = %specific_impl_fn.loc19_53.2 (constants.%specific_impl_fn.547931.2)]
 // CHECK:STDOUT:     %bound_method.loc19_53.2: <bound method> = bound_method %x.ref, %specific_impl_fn.loc19_53.1
-// CHECK:STDOUT:     %.loc19_53.1: init @empty_tuple.type.as.I.impl.F.loc19_44.1.%U.as_type.loc19_36.1 (%U.as_type.870) = call %bound_method.loc19_53.2(%x.ref)
+// CHECK:STDOUT:     %.loc19_39: ref @empty_tuple.type.as.I.impl.F.loc19_44.1.%U.as_type.loc19_36.1 (%U.as_type.870) = splice_block %return {}
+// CHECK:STDOUT:     %.loc19_53.1: init @empty_tuple.type.as.I.impl.F.loc19_44.1.%U.as_type.loc19_36.1 (%U.as_type.870) = call %bound_method.loc19_53.2(%x.ref) to %.loc19_39
 // CHECK:STDOUT:     return %.loc19_53.1 to %return
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }

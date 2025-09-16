@@ -145,7 +145,7 @@ fn G() -> i32 {
 // CHECK:STDOUT:     %.Self: %type = bind_symbolic_name .Self [symbolic_self = constants.%.Self]
 // CHECK:STDOUT:     %T.loc7_6.2: type = bind_symbolic_name T, 0 [symbolic = %T.loc7_6.1 (constants.%T)]
 // CHECK:STDOUT:     %p.param: @F.%C.loc7_22.1 (%C.f2e) = value_param call_param0
-// CHECK:STDOUT:     %.loc7: type = splice_block %C.loc7_22.2 [symbolic = %C.loc7_22.1 (constants.%C.f2e)] {
+// CHECK:STDOUT:     %.loc7_22: type = splice_block %C.loc7_22.2 [symbolic = %C.loc7_22.1 (constants.%C.f2e)] {
 // CHECK:STDOUT:       %C.ref: %C.type = name_ref C, file.%C.decl [concrete = constants.%C.generic]
 // CHECK:STDOUT:       %T.ref.loc7_21: type = name_ref T, %T.loc7_6.2 [symbolic = %T.loc7_6.1 (constants.%T)]
 // CHECK:STDOUT:       %C.loc7_22.2: type = class_type @C, @C(constants.%T) [symbolic = %C.loc7_22.1 (constants.%C.f2e)]
@@ -272,12 +272,13 @@ fn G() -> i32 {
 // CHECK:STDOUT:   %require_complete.loc7_17: <witness> = require_complete_type %C.loc7_22.1 [symbolic = %require_complete.loc7_17 (constants.%require_complete.389)]
 // CHECK:STDOUT:   %F.specific_fn.loc7_39.2: <specific function> = specific_function constants.%F, @F(%T.loc7_6.1) [symbolic = %F.specific_fn.loc7_39.2 (constants.%F.specific_fn.ef1)]
 // CHECK:STDOUT:
-// CHECK:STDOUT:   fn(%p.param: @F.%C.loc7_22.1 (%C.f2e)) -> @F.%T.loc7_6.1 (%T) {
+// CHECK:STDOUT:   fn(%p.param: @F.%C.loc7_22.1 (%C.f2e)) -> %return.param: @F.%T.loc7_6.1 (%T) {
 // CHECK:STDOUT:   !entry:
 // CHECK:STDOUT:     %F.ref: %F.type = name_ref F, file.%F.decl [concrete = constants.%F]
 // CHECK:STDOUT:     %p.ref: @F.%C.loc7_22.1 (%C.f2e) = name_ref p, %p
 // CHECK:STDOUT:     %F.specific_fn.loc7_39.1: <specific function> = specific_function %F.ref, @F(constants.%T) [symbolic = %F.specific_fn.loc7_39.2 (constants.%F.specific_fn.ef1)]
-// CHECK:STDOUT:     %F.call: init @F.%T.loc7_6.1 (%T) = call %F.specific_fn.loc7_39.1(%p.ref)
+// CHECK:STDOUT:     %.loc7_25: ref @F.%T.loc7_6.1 (%T) = splice_block %return {}
+// CHECK:STDOUT:     %F.call: init @F.%T.loc7_6.1 (%T) = call %F.specific_fn.loc7_39.1(%p.ref) to %.loc7_25
 // CHECK:STDOUT:     return %F.call to %return
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }

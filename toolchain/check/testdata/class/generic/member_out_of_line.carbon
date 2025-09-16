@@ -336,14 +336,15 @@ fn Generic(T:! ()).WrongType() {}
 // CHECK:STDOUT:   %impl.elem0.loc12_10.2: @Class.F.%.loc12_10.2 (%.c50) = impl_witness_access %Copy.lookup_impl_witness, element0 [symbolic = %impl.elem0.loc12_10.2 (constants.%impl.elem0.792)]
 // CHECK:STDOUT:   %specific_impl_fn.loc12_10.2: <specific function> = specific_impl_function %impl.elem0.loc12_10.2, @Copy.Op(%Copy.facet) [symbolic = %specific_impl_fn.loc12_10.2 (constants.%specific_impl_fn.547)]
 // CHECK:STDOUT:
-// CHECK:STDOUT:   fn(%n.param.loc11: @Class.F.%T.as_type.loc6_11.1 (%T.as_type)) -> @Class.F.%T.as_type.loc6_11.1 (%T.as_type) {
+// CHECK:STDOUT:   fn(%n.param.loc11: @Class.F.%T.as_type.loc6_11.1 (%T.as_type)) -> %return.param.loc11: @Class.F.%T.as_type.loc6_11.1 (%T.as_type) {
 // CHECK:STDOUT:   !entry:
 // CHECK:STDOUT:     %n.ref: @Class.F.%T.as_type.loc6_11.1 (%T.as_type) = name_ref n, %n.loc11
 // CHECK:STDOUT:     %impl.elem0.loc12_10.1: @Class.F.%.loc12_10.2 (%.c50) = impl_witness_access constants.%Copy.lookup_impl_witness.e15, element0 [symbolic = %impl.elem0.loc12_10.2 (constants.%impl.elem0.792)]
 // CHECK:STDOUT:     %bound_method.loc12_10.1: <bound method> = bound_method %n.ref, %impl.elem0.loc12_10.1
 // CHECK:STDOUT:     %specific_impl_fn.loc12_10.1: <specific function> = specific_impl_function %impl.elem0.loc12_10.1, @Copy.Op(constants.%Copy.facet.021) [symbolic = %specific_impl_fn.loc12_10.2 (constants.%specific_impl_fn.547)]
 // CHECK:STDOUT:     %bound_method.loc12_10.2: <bound method> = bound_method %n.ref, %specific_impl_fn.loc12_10.1
-// CHECK:STDOUT:     %.loc12_10.1: init @Class.F.%T.as_type.loc6_11.1 (%T.as_type) = call %bound_method.loc12_10.2(%n.ref)
+// CHECK:STDOUT:     %.loc11_33: ref @Class.F.%T.as_type.loc6_11.1 (%T.as_type) = splice_block %return.loc11 {}
+// CHECK:STDOUT:     %.loc12_10.1: init @Class.F.%T.as_type.loc6_11.1 (%T.as_type) = call %bound_method.loc12_10.2(%n.ref) to %.loc11_33
 // CHECK:STDOUT:     return %.loc12_10.1 to %return.loc11
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
@@ -365,7 +366,7 @@ fn Generic(T:! ()).WrongType() {}
 // CHECK:STDOUT:   %impl.elem0.loc16_14.2: @Class.G.%.loc16_14.4 (%.c50) = impl_witness_access %Copy.lookup_impl_witness, element0 [symbolic = %impl.elem0.loc16_14.2 (constants.%impl.elem0.792)]
 // CHECK:STDOUT:   %specific_impl_fn.loc16_14.2: <specific function> = specific_impl_function %impl.elem0.loc16_14.2, @Copy.Op(%Copy.facet) [symbolic = %specific_impl_fn.loc16_14.2 (constants.%specific_impl_fn.547)]
 // CHECK:STDOUT:
-// CHECK:STDOUT:   fn(%self.param.loc15: @Class.G.%Class (%Class)) -> @Class.G.%T.as_type.loc7_25.1 (%T.as_type) {
+// CHECK:STDOUT:   fn(%self.param.loc15: @Class.G.%Class (%Class)) -> %return.param.loc15: @Class.G.%T.as_type.loc7_25.1 (%T.as_type) {
 // CHECK:STDOUT:   !entry:
 // CHECK:STDOUT:     %self.ref: @Class.G.%Class (%Class) = name_ref self, %self.loc15
 // CHECK:STDOUT:     %n.ref: @Class.G.%Class.elem (%Class.elem) = name_ref n, @Class.%.loc8_8 [concrete = @Class.%.loc8_8]
@@ -375,7 +376,8 @@ fn Generic(T:! ()).WrongType() {}
 // CHECK:STDOUT:     %bound_method.loc16_14.1: <bound method> = bound_method %.loc16_14.2, %impl.elem0.loc16_14.1
 // CHECK:STDOUT:     %specific_impl_fn.loc16_14.1: <specific function> = specific_impl_function %impl.elem0.loc16_14.1, @Copy.Op(constants.%Copy.facet.021) [symbolic = %specific_impl_fn.loc16_14.2 (constants.%specific_impl_fn.547)]
 // CHECK:STDOUT:     %bound_method.loc16_14.2: <bound method> = bound_method %.loc16_14.2, %specific_impl_fn.loc16_14.1
-// CHECK:STDOUT:     %.loc16_14.3: init @Class.G.%T.as_type.loc7_25.1 (%T.as_type) = call %bound_method.loc16_14.2(%.loc16_14.2)
+// CHECK:STDOUT:     %.loc15_41: ref @Class.G.%T.as_type.loc7_25.1 (%T.as_type) = splice_block %return.loc15 {}
+// CHECK:STDOUT:     %.loc16_14.3: init @Class.G.%T.as_type.loc7_25.1 (%T.as_type) = call %bound_method.loc16_14.2(%.loc16_14.2) to %.loc15_41
 // CHECK:STDOUT:     return %.loc16_14.3 to %return.loc15
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }

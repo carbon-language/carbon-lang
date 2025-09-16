@@ -279,12 +279,12 @@ fn MyF() {
 // CHECK:STDOUT:   %Core.IntLiteral.as.ImplicitAs.impl.Convert.call.loc14: init %i16 = call %bound_method.loc14_32.2(%int_1.loc14) [concrete = constants.%int_1.f90]
 // CHECK:STDOUT:   %.loc14_32.1: %i16 = value_of_initializer %Core.IntLiteral.as.ImplicitAs.impl.Convert.call.loc14 [concrete = constants.%int_1.f90]
 // CHECK:STDOUT:   %.loc14_32.2: %i16 = converted %int_1.loc14, %.loc14_32.1 [concrete = constants.%int_1.f90]
+// CHECK:STDOUT:   %.loc14_32.3: ref %i16 = temporary_storage
 // CHECK:STDOUT:   %impl.elem0.loc14_32.2: %.798 = impl_witness_access constants.%Copy.impl_witness.2f8, element0 [concrete = constants.%Int.as.Copy.impl.Op.3dc]
 // CHECK:STDOUT:   %bound_method.loc14_32.3: <bound method> = bound_method %.loc14_32.2, %impl.elem0.loc14_32.2 [concrete = constants.%Int.as.Copy.impl.Op.bound]
 // CHECK:STDOUT:   %specific_fn.loc14_32.2: <specific function> = specific_function %impl.elem0.loc14_32.2, @Int.as.Copy.impl.Op(constants.%int_16) [concrete = constants.%Int.as.Copy.impl.Op.specific_fn]
 // CHECK:STDOUT:   %bound_method.loc14_32.4: <bound method> = bound_method %.loc14_32.2, %specific_fn.loc14_32.2 [concrete = constants.%bound_method.7c2]
 // CHECK:STDOUT:   %Int.as.Copy.impl.Op.call.loc14: init %i16 = call %bound_method.loc14_32.4(%.loc14_32.2) [concrete = constants.%int_1.f90]
-// CHECK:STDOUT:   %.loc14_32.3: ref %i16 = temporary_storage
 // CHECK:STDOUT:   %.loc14_32.4: ref %i16 = temporary %.loc14_32.3, %Int.as.Copy.impl.Op.call.loc14
 // CHECK:STDOUT:   %addr.loc14_33: %ptr.251 = addr_of %.loc14_32.4
 // CHECK:STDOUT:   %ThunkOnArg__carbon_thunk.call: init %i32 = call imports.%ThunkOnArg__carbon_thunk.decl(%addr.loc14_33)
@@ -332,12 +332,12 @@ fn MyF() {
 // CHECK:STDOUT:   %Core.IntLiteral.as.ImplicitAs.impl.Convert.call.loc16: init %i16 = call %bound_method.loc16_33.2(%int_1.loc16) [concrete = constants.%int_1.f90]
 // CHECK:STDOUT:   %.loc16_33.1: %i16 = value_of_initializer %Core.IntLiteral.as.ImplicitAs.impl.Convert.call.loc16 [concrete = constants.%int_1.f90]
 // CHECK:STDOUT:   %.loc16_33.2: %i16 = converted %int_1.loc16, %.loc16_33.1 [concrete = constants.%int_1.f90]
+// CHECK:STDOUT:   %.loc16_33.3: ref %i16 = temporary_storage
 // CHECK:STDOUT:   %impl.elem0.loc16_33.2: %.798 = impl_witness_access constants.%Copy.impl_witness.2f8, element0 [concrete = constants.%Int.as.Copy.impl.Op.3dc]
 // CHECK:STDOUT:   %bound_method.loc16_33.3: <bound method> = bound_method %.loc16_33.2, %impl.elem0.loc16_33.2 [concrete = constants.%Int.as.Copy.impl.Op.bound]
 // CHECK:STDOUT:   %specific_fn.loc16_33.2: <specific function> = specific_function %impl.elem0.loc16_33.2, @Int.as.Copy.impl.Op(constants.%int_16) [concrete = constants.%Int.as.Copy.impl.Op.specific_fn]
 // CHECK:STDOUT:   %bound_method.loc16_33.4: <bound method> = bound_method %.loc16_33.2, %specific_fn.loc16_33.2 [concrete = constants.%bound_method.7c2]
 // CHECK:STDOUT:   %Int.as.Copy.impl.Op.call.loc16: init %i16 = call %bound_method.loc16_33.4(%.loc16_33.2) [concrete = constants.%int_1.f90]
-// CHECK:STDOUT:   %.loc16_33.3: ref %i16 = temporary_storage
 // CHECK:STDOUT:   %.loc16_33.4: ref %i16 = temporary %.loc16_33.3, %Int.as.Copy.impl.Op.call.loc16
 // CHECK:STDOUT:   %addr.loc16_34.1: %ptr.251 = addr_of %.loc16_33.4
 // CHECK:STDOUT:   %.loc16_34.1: ref %i16 = temporary_storage

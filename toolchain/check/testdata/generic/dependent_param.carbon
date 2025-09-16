@@ -215,14 +215,15 @@ var n: i32 = Outer(i32).Inner(42).Get();
 // CHECK:STDOUT:   %specific_impl_fn.loc7_28.2: <specific function> = specific_impl_function %impl.elem0.loc7_28.2, @Copy.Op(%Copy.facet) [symbolic = %specific_impl_fn.loc7_28.2 (constants.%specific_impl_fn.547)]
 // CHECK:STDOUT:   %bound_method.loc7_28.4: <bound method> = bound_method %U, %specific_impl_fn.loc7_28.2 [symbolic = %bound_method.loc7_28.4 (constants.%bound_method.088)]
 // CHECK:STDOUT:
-// CHECK:STDOUT:   fn() -> @Inner.Get.%T.as_type.loc7_17.1 (%T.as_type) {
+// CHECK:STDOUT:   fn() -> %return.param: @Inner.Get.%T.as_type.loc7_17.1 (%T.as_type) {
 // CHECK:STDOUT:   !entry:
 // CHECK:STDOUT:     %U.ref: @Inner.Get.%T.as_type.loc7_17.1 (%T.as_type) = name_ref U, @Inner.%U.loc5_15.2 [symbolic = %U (constants.%U.afe)]
 // CHECK:STDOUT:     %impl.elem0.loc7_28.1: @Inner.Get.%.loc7_28.2 (%.c50) = impl_witness_access constants.%Copy.lookup_impl_witness.e15, element0 [symbolic = %impl.elem0.loc7_28.2 (constants.%impl.elem0.792)]
 // CHECK:STDOUT:     %bound_method.loc7_28.1: <bound method> = bound_method %U.ref, %impl.elem0.loc7_28.1 [symbolic = %bound_method.loc7_28.3 (constants.%bound_method.ba2)]
 // CHECK:STDOUT:     %specific_impl_fn.loc7_28.1: <specific function> = specific_impl_function %impl.elem0.loc7_28.1, @Copy.Op(constants.%Copy.facet.021) [symbolic = %specific_impl_fn.loc7_28.2 (constants.%specific_impl_fn.547)]
 // CHECK:STDOUT:     %bound_method.loc7_28.2: <bound method> = bound_method %U.ref, %specific_impl_fn.loc7_28.1 [symbolic = %bound_method.loc7_28.4 (constants.%bound_method.088)]
-// CHECK:STDOUT:     %.loc7_28.1: init @Inner.Get.%T.as_type.loc7_17.1 (%T.as_type) = call %bound_method.loc7_28.2(%U.ref)
+// CHECK:STDOUT:     %.loc7_14: ref @Inner.Get.%T.as_type.loc7_17.1 (%T.as_type) = splice_block %return {}
+// CHECK:STDOUT:     %.loc7_28.1: init @Inner.Get.%T.as_type.loc7_17.1 (%T.as_type) = call %bound_method.loc7_28.2(%U.ref) to %.loc7_14
 // CHECK:STDOUT:     return %.loc7_28.1 to %return
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }

@@ -89,15 +89,21 @@ fn M() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: define linkonce_odr void @_CB.Main.de631560529e9861(ptr %x) !dbg !24 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %.loc34_5.2 = load i32, ptr %x, align 4, !dbg !25
-// CHECK:STDOUT:   %D.call = call i32 @_CD.Main.de631560529e9861(i32 %.loc34_5.2), !dbg !26
+// CHECK:STDOUT:   %.loc34_7.3.temp = alloca i32, align 4, !dbg !25
+// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %.loc34_7.3.temp), !dbg !25
+// CHECK:STDOUT:   %.loc34_5.2 = load i32, ptr %x, align 4, !dbg !26
+// CHECK:STDOUT:   %D.call = call i32 @_CD.Main.de631560529e9861(i32 %.loc34_5.2), !dbg !25
+// CHECK:STDOUT:   store i32 %D.call, ptr %.loc34_7.3.temp, align 4, !dbg !25
 // CHECK:STDOUT:   ret void, !dbg !27
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: define linkonce_odr void @_CB.Main.3836ccc537683c19(ptr %x) !dbg !28 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %.loc34_5.2 = load double, ptr %x, align 8, !dbg !29
-// CHECK:STDOUT:   %D.call = call double @_CD.Main.3836ccc537683c19(double %.loc34_5.2), !dbg !30
+// CHECK:STDOUT:   %.loc34_7.3.temp = alloca double, align 8, !dbg !29
+// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %.loc34_7.3.temp), !dbg !29
+// CHECK:STDOUT:   %.loc34_5.2 = load double, ptr %x, align 8, !dbg !30
+// CHECK:STDOUT:   %D.call = call double @_CD.Main.3836ccc537683c19(double %.loc34_5.2), !dbg !29
+// CHECK:STDOUT:   store double %D.call, ptr %.loc34_7.3.temp, align 8, !dbg !29
 // CHECK:STDOUT:   ret void, !dbg !31
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -112,7 +118,7 @@ fn M() {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; uselistorder directives
-// CHECK:STDOUT: uselistorder ptr @llvm.lifetime.start.p0, { 1, 0 }
+// CHECK:STDOUT: uselistorder ptr @llvm.lifetime.start.p0, { 0, 1, 3, 2 }
 // CHECK:STDOUT: uselistorder ptr @_CA.Main.402deed6b8733082, { 1, 0 }
 // CHECK:STDOUT:
 // CHECK:STDOUT: attributes #0 = { nocallback nofree nosync nounwind willreturn memory(argmem: readwrite) }
@@ -145,12 +151,12 @@ fn M() {
 // CHECK:STDOUT: !22 = distinct !DISubprogram(name: "A", linkageName: "_CA.Main.402deed6b8733082", scope: null, file: !3, line: 25, type: !5, spFlags: DISPFlagDefinition, unit: !2)
 // CHECK:STDOUT: !23 = !DILocation(line: 26, column: 3, scope: !22)
 // CHECK:STDOUT: !24 = distinct !DISubprogram(name: "B", linkageName: "_CB.Main.de631560529e9861", scope: null, file: !3, line: 33, type: !5, spFlags: DISPFlagDefinition, unit: !2)
-// CHECK:STDOUT: !25 = !DILocation(line: 34, column: 5, scope: !24)
-// CHECK:STDOUT: !26 = !DILocation(line: 34, column: 3, scope: !24)
+// CHECK:STDOUT: !25 = !DILocation(line: 34, column: 3, scope: !24)
+// CHECK:STDOUT: !26 = !DILocation(line: 34, column: 5, scope: !24)
 // CHECK:STDOUT: !27 = !DILocation(line: 33, column: 1, scope: !24)
 // CHECK:STDOUT: !28 = distinct !DISubprogram(name: "B", linkageName: "_CB.Main.3836ccc537683c19", scope: null, file: !3, line: 33, type: !5, spFlags: DISPFlagDefinition, unit: !2)
-// CHECK:STDOUT: !29 = !DILocation(line: 34, column: 5, scope: !28)
-// CHECK:STDOUT: !30 = !DILocation(line: 34, column: 3, scope: !28)
+// CHECK:STDOUT: !29 = !DILocation(line: 34, column: 3, scope: !28)
+// CHECK:STDOUT: !30 = !DILocation(line: 34, column: 5, scope: !28)
 // CHECK:STDOUT: !31 = !DILocation(line: 33, column: 1, scope: !28)
 // CHECK:STDOUT: !32 = distinct !DISubprogram(name: "D", linkageName: "_CD.Main.de631560529e9861", scope: null, file: !3, line: 29, type: !5, spFlags: DISPFlagDefinition, unit: !2)
 // CHECK:STDOUT: !33 = !DILocation(line: 30, column: 3, scope: !32)

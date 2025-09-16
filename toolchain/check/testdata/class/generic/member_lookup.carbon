@@ -113,7 +113,7 @@ fn AccessMissingConcrete(x: Derived(i32)) -> i32 {
 // CHECK:STDOUT:   %impl.elem0.loc15_11.2: @AccessDerived.%.loc15_11.4 (%.c50) = impl_witness_access %Copy.lookup_impl_witness, element0 [symbolic = %impl.elem0.loc15_11.2 (constants.%impl.elem0.792)]
 // CHECK:STDOUT:   %specific_impl_fn.loc15_11.2: <specific function> = specific_impl_function %impl.elem0.loc15_11.2, @Copy.Op(%Copy.facet) [symbolic = %specific_impl_fn.loc15_11.2 (constants.%specific_impl_fn.547)]
 // CHECK:STDOUT:
-// CHECK:STDOUT:   fn(%x.param: @AccessDerived.%Derived.loc13_45.1 (%Derived.3ba)) -> @AccessDerived.%T.as_type.loc13_45.1 (%T.as_type) {
+// CHECK:STDOUT:   fn(%x.param: @AccessDerived.%Derived.loc13_45.1 (%Derived.3ba)) -> %return.param: @AccessDerived.%T.as_type.loc13_45.1 (%T.as_type) {
 // CHECK:STDOUT:   !entry:
 // CHECK:STDOUT:     %x.ref: @AccessDerived.%Derived.loc13_45.1 (%Derived.3ba) = name_ref x, %x
 // CHECK:STDOUT:     %d.ref: @AccessDerived.%Derived.elem (%Derived.elem.1c7) = name_ref d, @Derived.%.loc10 [concrete = @Derived.%.loc10]
@@ -123,7 +123,8 @@ fn AccessMissingConcrete(x: Derived(i32)) -> i32 {
 // CHECK:STDOUT:     %bound_method.loc15_11.1: <bound method> = bound_method %.loc15_11.2, %impl.elem0.loc15_11.1
 // CHECK:STDOUT:     %specific_impl_fn.loc15_11.1: <specific function> = specific_impl_function %impl.elem0.loc15_11.1, @Copy.Op(constants.%Copy.facet.021) [symbolic = %specific_impl_fn.loc15_11.2 (constants.%specific_impl_fn.547)]
 // CHECK:STDOUT:     %bound_method.loc15_11.2: <bound method> = bound_method %.loc15_11.2, %specific_impl_fn.loc15_11.1
-// CHECK:STDOUT:     %.loc15_11.3: init @AccessDerived.%T.as_type.loc13_45.1 (%T.as_type) = call %bound_method.loc15_11.2(%.loc15_11.2)
+// CHECK:STDOUT:     <elided>
+// CHECK:STDOUT:     %.loc15_11.3: init @AccessDerived.%T.as_type.loc13_45.1 (%T.as_type) = call %bound_method.loc15_11.2(%.loc15_11.2) to %.loc13_48
 // CHECK:STDOUT:     return %.loc15_11.3 to %return
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
@@ -143,7 +144,7 @@ fn AccessMissingConcrete(x: Derived(i32)) -> i32 {
 // CHECK:STDOUT:   %impl.elem0.loc21_11.2: @AccessBase.%.loc21_11.6 (%.c50) = impl_witness_access %Copy.lookup_impl_witness, element0 [symbolic = %impl.elem0.loc21_11.2 (constants.%impl.elem0.792)]
 // CHECK:STDOUT:   %specific_impl_fn.loc21_11.2: <specific function> = specific_impl_function %impl.elem0.loc21_11.2, @Copy.Op(%Copy.facet) [symbolic = %specific_impl_fn.loc21_11.2 (constants.%specific_impl_fn.547)]
 // CHECK:STDOUT:
-// CHECK:STDOUT:   fn(%x.param: @AccessBase.%Derived.loc19_42.1 (%Derived.3ba)) -> @AccessBase.%T.as_type.loc19_42.1 (%T.as_type) {
+// CHECK:STDOUT:   fn(%x.param: @AccessBase.%Derived.loc19_42.1 (%Derived.3ba)) -> %return.param: @AccessBase.%T.as_type.loc19_42.1 (%T.as_type) {
 // CHECK:STDOUT:   !entry:
 // CHECK:STDOUT:     %x.ref: @AccessBase.%Derived.loc19_42.1 (%Derived.3ba) = name_ref x, %x
 // CHECK:STDOUT:     %b.ref: @AccessBase.%Base.elem (%Base.elem.58f) = name_ref b, @Base.%.loc5 [concrete = @Base.%.loc5]
@@ -155,7 +156,8 @@ fn AccessMissingConcrete(x: Derived(i32)) -> i32 {
 // CHECK:STDOUT:     %bound_method.loc21_11.1: <bound method> = bound_method %.loc21_11.4, %impl.elem0.loc21_11.1
 // CHECK:STDOUT:     %specific_impl_fn.loc21_11.1: <specific function> = specific_impl_function %impl.elem0.loc21_11.1, @Copy.Op(constants.%Copy.facet.021) [symbolic = %specific_impl_fn.loc21_11.2 (constants.%specific_impl_fn.547)]
 // CHECK:STDOUT:     %bound_method.loc21_11.2: <bound method> = bound_method %.loc21_11.4, %specific_impl_fn.loc21_11.1
-// CHECK:STDOUT:     %.loc21_11.5: init @AccessBase.%T.as_type.loc19_42.1 (%T.as_type) = call %bound_method.loc21_11.2(%.loc21_11.4)
+// CHECK:STDOUT:     <elided>
+// CHECK:STDOUT:     %.loc21_11.5: init @AccessBase.%T.as_type.loc19_42.1 (%T.as_type) = call %bound_method.loc21_11.2(%.loc21_11.4) to %.loc19_45
 // CHECK:STDOUT:     return %.loc21_11.5 to %return
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }

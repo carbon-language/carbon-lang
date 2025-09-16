@@ -63,7 +63,10 @@ fn M() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: define linkonce_odr i32 @_CG.Main.de631560529e9861(i32 %x) !dbg !17 {
 // CHECK:STDOUT: entry:
+// CHECK:STDOUT:   %.loc25_6.3.temp = alloca i32, align 4, !dbg !18
+// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %.loc25_6.3.temp), !dbg !18
 // CHECK:STDOUT:   %H.call = call i32 @_CH.Main.de631560529e9861(i32 %x), !dbg !18
+// CHECK:STDOUT:   store i32 %H.call, ptr %.loc25_6.3.temp, align 4, !dbg !18
 // CHECK:STDOUT:   call void @_CF.Main.b88d1103f417c6d4(i32 %x), !dbg !19
 // CHECK:STDOUT:   ret i32 %x, !dbg !20
 // CHECK:STDOUT: }
@@ -75,7 +78,7 @@ fn M() {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; uselistorder directives
-// CHECK:STDOUT: uselistorder ptr @llvm.lifetime.start.p0, { 1, 0 }
+// CHECK:STDOUT: uselistorder ptr @llvm.lifetime.start.p0, { 0, 2, 1 }
 // CHECK:STDOUT:
 // CHECK:STDOUT: attributes #0 = { nocallback nofree nosync nounwind willreturn memory(argmem: readwrite) }
 // CHECK:STDOUT:

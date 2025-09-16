@@ -70,18 +70,34 @@ fn Run() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: define linkonce_odr void @_CG.Main.0dbf1a1c1733b53e() !dbg !16 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %.loc37_20.1 = call i1 @"_CF.X.Main:I.Main"(), !dbg !17
+// CHECK:STDOUT:   %.loc37_20.1.temp = alloca i1, align 1, !dbg !17
+// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %.loc37_20.1.temp), !dbg !17
+// CHECK:STDOUT:   %.loc37_20.2 = call i1 @"_CF.X.Main:I.Main"(), !dbg !17
+// CHECK:STDOUT:   %.loc37_20.3 = zext i1 %.loc37_20.2 to i8, !dbg !17
+// CHECK:STDOUT:   store i8 %.loc37_20.3, ptr %.loc37_20.1.temp, align 1, !dbg !17
+// CHECK:STDOUT:   %.loc37_20.4 = load i8, ptr %.loc37_20.1.temp, align 1, !dbg !17
+// CHECK:STDOUT:   %.loc37_20.41 = trunc i8 %.loc37_20.4 to i1, !dbg !17
 // CHECK:STDOUT:   ret void, !dbg !18
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: define linkonce_odr void @_CG.Main.358c93ba71c2d336() !dbg !19 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %.loc37_20.1 = call i32 @"_CF.Y.Main:I.Main"(), !dbg !20
+// CHECK:STDOUT:   %.loc37_20.1.temp = alloca i32, align 4, !dbg !20
+// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %.loc37_20.1.temp), !dbg !20
+// CHECK:STDOUT:   %.loc37_20.2 = call i32 @"_CF.Y.Main:I.Main"(), !dbg !20
+// CHECK:STDOUT:   store i32 %.loc37_20.2, ptr %.loc37_20.1.temp, align 4, !dbg !20
+// CHECK:STDOUT:   %.loc37_20.4 = load i32, ptr %.loc37_20.1.temp, align 4, !dbg !20
 // CHECK:STDOUT:   ret void, !dbg !21
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
+// CHECK:STDOUT: ; Function Attrs: nocallback nofree nosync nounwind willreturn memory(argmem: readwrite)
+// CHECK:STDOUT: declare void @llvm.lifetime.start.p0(ptr captures(none)) #0
+// CHECK:STDOUT:
 // CHECK:STDOUT: ; uselistorder directives
 // CHECK:STDOUT: uselistorder ptr @printf, { 1, 0 }
+// CHECK:STDOUT: uselistorder ptr @llvm.lifetime.start.p0, { 1, 0 }
+// CHECK:STDOUT:
+// CHECK:STDOUT: attributes #0 = { nocallback nofree nosync nounwind willreturn memory(argmem: readwrite) }
 // CHECK:STDOUT:
 // CHECK:STDOUT: !llvm.module.flags = !{!0, !1}
 // CHECK:STDOUT: !llvm.dbg.cu = !{!2}

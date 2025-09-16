@@ -307,12 +307,13 @@ fn Test() {
 // CHECK:STDOUT:   %require_complete: <witness> = require_complete_type %T.loc31_11.1 [symbolic = %require_complete (constants.%require_complete.4ae)]
 // CHECK:STDOUT:   %Source.specific_fn.loc31_35.2: <specific function> = specific_function constants.%Source, @Source(%T.loc31_11.1) [symbolic = %Source.specific_fn.loc31_35.2 (constants.%Source.specific_fn.ff0)]
 // CHECK:STDOUT:
-// CHECK:STDOUT:   fn() -> @Source.%T.loc31_11.1 (%T.8b3) {
+// CHECK:STDOUT:   fn() -> %return.param: @Source.%T.loc31_11.1 (%T.8b3) {
 // CHECK:STDOUT:   !entry:
 // CHECK:STDOUT:     %Source.ref: %Source.type = name_ref Source, file.%Source.decl [concrete = constants.%Source]
 // CHECK:STDOUT:     %T.ref.loc31_42: type = name_ref T, %T.loc31_11.2 [symbolic = %T.loc31_11.1 (constants.%T.8b3)]
 // CHECK:STDOUT:     %Source.specific_fn.loc31_35.1: <specific function> = specific_function %Source.ref, @Source(constants.%T.8b3) [symbolic = %Source.specific_fn.loc31_35.2 (constants.%Source.specific_fn.ff0)]
-// CHECK:STDOUT:     %Source.call: init @Source.%T.loc31_11.1 (%T.8b3) = call %Source.specific_fn.loc31_35.1()
+// CHECK:STDOUT:     %.loc31: ref @Source.%T.loc31_11.1 (%T.8b3) = splice_block %return {}
+// CHECK:STDOUT:     %Source.call: init @Source.%T.loc31_11.1 (%T.8b3) = call %Source.specific_fn.loc31_35.1() to %.loc31
 // CHECK:STDOUT:     return %Source.call to %return
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }

@@ -265,7 +265,7 @@ fn G(AB:! A & B where .X = () and .Y = {}) -> AB.Y {
 // CHECK:STDOUT:   %impl.elem0.loc10_11.2: @Use.%.loc10_11.2 (%.7cf) = impl_witness_access %I.lookup_impl_witness, element0 [symbolic = %impl.elem0.loc10_11.2 (constants.%impl.elem0)]
 // CHECK:STDOUT:   %specific_impl_fn.loc10_11.2: <specific function> = specific_impl_function %impl.elem0.loc10_11.2, @I.Make(%I.facet) [symbolic = %specific_impl_fn.loc10_11.2 (constants.%specific_impl_fn)]
 // CHECK:STDOUT:
-// CHECK:STDOUT:   fn() -> @Use.%T.as_type.loc8_18.1 (%T.as_type) {
+// CHECK:STDOUT:   fn() -> %return.param: @Use.%T.as_type.loc8_18.1 (%T.as_type) {
 // CHECK:STDOUT:   !entry:
 // CHECK:STDOUT:     %T.ref.loc10: %I.type = name_ref T, %T.loc8_8.2 [symbolic = %T.loc8_8.1 (constants.%T)]
 // CHECK:STDOUT:     %Make.ref: %I.assoc_type = name_ref Make, @I.%assoc0 [concrete = constants.%assoc0]
@@ -273,7 +273,8 @@ fn G(AB:! A & B where .X = () and .Y = {}) -> AB.Y {
 // CHECK:STDOUT:     %.loc10_11.1: type = converted %T.ref.loc10, %T.as_type.loc10 [symbolic = %T.as_type.loc8_18.1 (constants.%T.as_type)]
 // CHECK:STDOUT:     %impl.elem0.loc10_11.1: @Use.%.loc10_11.2 (%.7cf) = impl_witness_access constants.%I.lookup_impl_witness, element0 [symbolic = %impl.elem0.loc10_11.2 (constants.%impl.elem0)]
 // CHECK:STDOUT:     %specific_impl_fn.loc10_11.1: <specific function> = specific_impl_function %impl.elem0.loc10_11.1, @I.Make(constants.%I.facet) [symbolic = %specific_impl_fn.loc10_11.2 (constants.%specific_impl_fn)]
-// CHECK:STDOUT:     %.loc10_17: init @Use.%T.as_type.loc8_18.1 (%T.as_type) = call %specific_impl_fn.loc10_11.1()
+// CHECK:STDOUT:     <elided>
+// CHECK:STDOUT:     %.loc10_17: init @Use.%T.as_type.loc8_18.1 (%T.as_type) = call %specific_impl_fn.loc10_11.1() to %.loc8_15
 // CHECK:STDOUT:     return %.loc10_17 to %return
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
@@ -349,7 +350,7 @@ fn G(AB:! A & B where .X = () and .Y = {}) -> AB.Y {
 // CHECK:STDOUT:   %impl.elem0.loc10_11.2: @Use.%.loc10_11.2 (%.ee3) = impl_witness_access %I.lookup_impl_witness, element0 [symbolic = %impl.elem0.loc10_11.2 (constants.%impl.elem0)]
 // CHECK:STDOUT:   %specific_impl_fn.loc10_11.2: <specific function> = specific_impl_function %impl.elem0.loc10_11.2, @I.Copy(%I.facet) [symbolic = %specific_impl_fn.loc10_11.2 (constants.%specific_impl_fn)]
 // CHECK:STDOUT:
-// CHECK:STDOUT:   fn(%x.param: @Use.%T.as_type.loc9_18.1 (%T.as_type)) -> @Use.%T.as_type.loc9_18.1 (%T.as_type) {
+// CHECK:STDOUT:   fn(%x.param: @Use.%T.as_type.loc9_18.1 (%T.as_type)) -> %return.param: @Use.%T.as_type.loc9_18.1 (%T.as_type) {
 // CHECK:STDOUT:   !entry:
 // CHECK:STDOUT:     %x.ref: @Use.%T.as_type.loc9_18.1 (%T.as_type) = name_ref x, %x
 // CHECK:STDOUT:     %Copy.ref: %I.assoc_type = name_ref Copy, @I.%assoc0 [concrete = constants.%assoc0]
@@ -359,7 +360,8 @@ fn G(AB:! A & B where .X = () and .Y = {}) -> AB.Y {
 // CHECK:STDOUT:     %bound_method.loc10_11: <bound method> = bound_method %x.ref, %impl.elem0.loc10_11.1
 // CHECK:STDOUT:     %specific_impl_fn.loc10_11.1: <specific function> = specific_impl_function %impl.elem0.loc10_11.1, @I.Copy(constants.%I.facet) [symbolic = %specific_impl_fn.loc10_11.2 (constants.%specific_impl_fn)]
 // CHECK:STDOUT:     %bound_method.loc10_17: <bound method> = bound_method %x.ref, %specific_impl_fn.loc10_11.1
-// CHECK:STDOUT:     %.loc10_17: init @Use.%T.as_type.loc9_18.1 (%T.as_type) = call %bound_method.loc10_17(%x.ref)
+// CHECK:STDOUT:     %.loc9_21: ref @Use.%T.as_type.loc9_18.1 (%T.as_type) = splice_block %return {}
+// CHECK:STDOUT:     %.loc10_17: init @Use.%T.as_type.loc9_18.1 (%T.as_type) = call %bound_method.loc10_17(%x.ref) to %.loc9_21
 // CHECK:STDOUT:     return %.loc10_17 to %return
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
@@ -452,7 +454,7 @@ fn G(AB:! A & B where .X = () and .Y = {}) -> AB.Y {
 // CHECK:STDOUT:   %impl.elem0.loc10_14.2: @UseIndirect.%.loc10_14.2 (%.ee3) = impl_witness_access %I.lookup_impl_witness, element0 [symbolic = %impl.elem0.loc10_14.2 (constants.%impl.elem0)]
 // CHECK:STDOUT:   %specific_impl_fn.loc10_14.2: <specific function> = specific_impl_function %impl.elem0.loc10_14.2, @I.Copy(%I.facet) [symbolic = %specific_impl_fn.loc10_14.2 (constants.%specific_impl_fn)]
 // CHECK:STDOUT:
-// CHECK:STDOUT:   fn(%x.param: @UseIndirect.%T.as_type.loc8_26.1 (%T.as_type)) -> @UseIndirect.%T.as_type.loc8_26.1 (%T.as_type) {
+// CHECK:STDOUT:   fn(%x.param: @UseIndirect.%T.as_type.loc8_26.1 (%T.as_type)) -> %return.param: @UseIndirect.%T.as_type.loc8_26.1 (%T.as_type) {
 // CHECK:STDOUT:   !entry:
 // CHECK:STDOUT:     %x.ref: @UseIndirect.%T.as_type.loc8_26.1 (%T.as_type) = name_ref x, %x
 // CHECK:STDOUT:     %T.ref.loc10: %I.type = name_ref T, %T.loc8_16.2 [symbolic = %T.loc8_16.1 (constants.%T)]
@@ -463,7 +465,8 @@ fn G(AB:! A & B where .X = () and .Y = {}) -> AB.Y {
 // CHECK:STDOUT:     %bound_method.loc10_11: <bound method> = bound_method %x.ref, %impl.elem0.loc10_14.1
 // CHECK:STDOUT:     %specific_impl_fn.loc10_14.1: <specific function> = specific_impl_function %impl.elem0.loc10_14.1, @I.Copy(constants.%I.facet) [symbolic = %specific_impl_fn.loc10_14.2 (constants.%specific_impl_fn)]
 // CHECK:STDOUT:     %bound_method.loc10_21: <bound method> = bound_method %x.ref, %specific_impl_fn.loc10_14.1
-// CHECK:STDOUT:     %.loc10_21: init @UseIndirect.%T.as_type.loc8_26.1 (%T.as_type) = call %bound_method.loc10_21(%x.ref)
+// CHECK:STDOUT:     <elided>
+// CHECK:STDOUT:     %.loc10_21: init @UseIndirect.%T.as_type.loc8_26.1 (%T.as_type) = call %bound_method.loc10_21(%x.ref) to %.loc8_29
 // CHECK:STDOUT:     return %.loc10_21 to %return
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }

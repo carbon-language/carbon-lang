@@ -293,6 +293,9 @@ auto FindReturnSlotArgForInitializer(const File& sem_ir, InstId init_id)
         }
         return sem_ir.inst_blocks().Get(call.args_id).back();
       }
+      case CARBON_KIND(ErrorInst _): {
+        return InstId::None;
+      }
       default:
         CARBON_FATAL("Initialization from unexpected inst {0}", init_untyped);
     }

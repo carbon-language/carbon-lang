@@ -193,7 +193,7 @@ fn StaticMemberFunctionCall(T:! type) -> Class(T) {
 // CHECK:STDOUT:   %impl.elem0.loc9_16.2: @Class.Get.%.loc9_16.4 (%.c50) = impl_witness_access %Copy.lookup_impl_witness, element0 [symbolic = %impl.elem0.loc9_16.2 (constants.%impl.elem0.792)]
 // CHECK:STDOUT:   %specific_impl_fn.loc9_16.2: <specific function> = specific_impl_function %impl.elem0.loc9_16.2, @Copy.Op(%Copy.facet) [symbolic = %specific_impl_fn.loc9_16.2 (constants.%specific_impl_fn.547)]
 // CHECK:STDOUT:
-// CHECK:STDOUT:   fn(%self.param: @Class.Get.%Class (%Class.2c5)) -> @Class.Get.%T.as_type.loc7_27.1 (%T.as_type) {
+// CHECK:STDOUT:   fn(%self.param: @Class.Get.%Class (%Class.2c5)) -> %return.param: @Class.Get.%T.as_type.loc7_27.1 (%T.as_type) {
 // CHECK:STDOUT:   !entry:
 // CHECK:STDOUT:     %self.ref: @Class.Get.%Class (%Class.2c5) = name_ref self, %self
 // CHECK:STDOUT:     %x.ref: @Class.Get.%Class.elem (%Class.elem.3a8) = name_ref x, @Class.%.loc5_8 [concrete = @Class.%.loc5_8]
@@ -203,7 +203,8 @@ fn StaticMemberFunctionCall(T:! type) -> Class(T) {
 // CHECK:STDOUT:     %bound_method.loc9_16.1: <bound method> = bound_method %.loc9_16.2, %impl.elem0.loc9_16.1
 // CHECK:STDOUT:     %specific_impl_fn.loc9_16.1: <specific function> = specific_impl_function %impl.elem0.loc9_16.1, @Copy.Op(constants.%Copy.facet.021) [symbolic = %specific_impl_fn.loc9_16.2 (constants.%specific_impl_fn.547)]
 // CHECK:STDOUT:     %bound_method.loc9_16.2: <bound method> = bound_method %.loc9_16.2, %specific_impl_fn.loc9_16.1
-// CHECK:STDOUT:     %.loc9_16.3: init @Class.Get.%T.as_type.loc7_27.1 (%T.as_type) = call %bound_method.loc9_16.2(%.loc9_16.2)
+// CHECK:STDOUT:     <elided>
+// CHECK:STDOUT:     %.loc9_16.3: init @Class.Get.%T.as_type.loc7_27.1 (%T.as_type) = call %bound_method.loc9_16.2(%.loc9_16.2) to %.loc7_24
 // CHECK:STDOUT:     return %.loc9_16.3 to %return
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }

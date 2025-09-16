@@ -522,8 +522,16 @@ auto HandleInst(FunctionContext& context, SemIR::InstId inst_id,
   std::vector<llvm::Value*> args;
 
   auto inst_type = context.GetTypeIdOfInst(inst_id);
+  bool call_has_return_slot =
+      SemIR::ReturnTypeInfo::ForType(context.sem_ir(), inst.type_id)
+          .has_return_slot();
   if (context.GetReturnTypeInfo(inst_type).info.has_return_slot()) {
+    CARBON_CHECK(call_has_return_slot);
     args.push_back(context.GetValue(arg_ids.consume_back()));
+  } else if (call_has_return_slot) {
+    // Call instruction has a return slot but this specific callee does not.
+    // Just ignore it.
+    arg_ids.consume_back();
   }
 
   for (auto arg_id : arg_ids) {

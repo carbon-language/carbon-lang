@@ -357,6 +357,8 @@ auto FileContext::BuildFunctionTypeInfo(const SemIR::Function& function,
         return {.type = llvm::FunctionType::get(
                     llvm::Type::getVoidTy(llvm_context()),
                     /*isVarArg=*/false)};
+      case SemIR::ValueRepr::Dependent:
+        CARBON_FATAL("Lowering function with dependent parameter type");
       case SemIR::ValueRepr::None:
         break;
       case SemIR::ValueRepr::Copy:
@@ -630,10 +632,9 @@ auto FileContext::BuildFunctionBody(SemIR::FunctionId function_id,
     function_lowering.SetLocal(param_id, param_value);
   };
 
-  // The subset of call_param_ids that is already in the order that the LLVM
-  // calling convention expects.
-  llvm::ArrayRef<SemIR::InstId> sequential_param_ids;
+  // Lower the return slot parameter.
   if (declaration_function.return_slot_pattern_id.has_value()) {
+    auto call_param_id = call_param_ids.consume_back();
     // The LLVM calling convention has the return slot first rather than last.
     // Note that this queries whether there is a return slot at the LLVM level,
     // whereas `function.return_slot_pattern_id.has_value()` queries whether
@@ -641,14 +642,19 @@ auto FileContext::BuildFunctionBody(SemIR::FunctionId function_id,
     if (SemIR::ReturnTypeInfo::ForFunction(sem_ir(), declaration_function,
                                            specific_id)
             .has_return_slot()) {
-      lower_param(call_param_ids.back());
+      lower_param(call_param_id);
+    } else {
+      // The return slot might still be mentioned as a destination location, but
+      // shouldn't actually be used for anything, so we can use a poison value
+      // for it.
+      function_lowering.SetLocal(call_param_id,
+                                 llvm::PoisonValue::get(llvm::PointerType::get(
+                                     llvm_context(), /*AddressSpace=*/0)));
     }
-    sequential_param_ids = call_param_ids.drop_back();
-  } else {
-    sequential_param_ids = call_param_ids;
   }
 
-  for (auto param_id : sequential_param_ids) {
+  // Lower the remaining call parameters.
+  for (auto param_id : call_param_ids) {
     lower_param(param_id);
   }
 

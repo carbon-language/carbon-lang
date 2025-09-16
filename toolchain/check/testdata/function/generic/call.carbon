@@ -169,14 +169,15 @@ fn CallSpecific(x: C*) -> C* {
 // CHECK:STDOUT:   %impl.elem0.loc6_10.2: @Function.%.loc6_10.2 (%.c50) = impl_witness_access %Copy.lookup_impl_witness, element0 [symbolic = %impl.elem0.loc6_10.2 (constants.%impl.elem0.792)]
 // CHECK:STDOUT:   %specific_impl_fn.loc6_10.2: <specific function> = specific_impl_function %impl.elem0.loc6_10.2, @Copy.Op(%Copy.facet) [symbolic = %specific_impl_fn.loc6_10.2 (constants.%specific_impl_fn.547)]
 // CHECK:STDOUT:
-// CHECK:STDOUT:   fn(%x.param: @Function.%T.as_type.loc5_31.1 (%T.as_type)) -> @Function.%T.as_type.loc5_31.1 (%T.as_type) {
+// CHECK:STDOUT:   fn(%x.param: @Function.%T.as_type.loc5_31.1 (%T.as_type)) -> %return.param: @Function.%T.as_type.loc5_31.1 (%T.as_type) {
 // CHECK:STDOUT:   !entry:
 // CHECK:STDOUT:     %x.ref: @Function.%T.as_type.loc5_31.1 (%T.as_type) = name_ref x, %x
 // CHECK:STDOUT:     %impl.elem0.loc6_10.1: @Function.%.loc6_10.2 (%.c50) = impl_witness_access constants.%Copy.lookup_impl_witness.e15, element0 [symbolic = %impl.elem0.loc6_10.2 (constants.%impl.elem0.792)]
 // CHECK:STDOUT:     %bound_method.loc6_10.1: <bound method> = bound_method %x.ref, %impl.elem0.loc6_10.1
 // CHECK:STDOUT:     %specific_impl_fn.loc6_10.1: <specific function> = specific_impl_function %impl.elem0.loc6_10.1, @Copy.Op(constants.%Copy.facet.021) [symbolic = %specific_impl_fn.loc6_10.2 (constants.%specific_impl_fn.547)]
 // CHECK:STDOUT:     %bound_method.loc6_10.2: <bound method> = bound_method %x.ref, %specific_impl_fn.loc6_10.1
-// CHECK:STDOUT:     %.loc6_10.1: init @Function.%T.as_type.loc5_31.1 (%T.as_type) = call %bound_method.loc6_10.2(%x.ref)
+// CHECK:STDOUT:     %.loc5_34: ref @Function.%T.as_type.loc5_31.1 (%T.as_type) = splice_block %return {}
+// CHECK:STDOUT:     %.loc6_10.1: init @Function.%T.as_type.loc5_31.1 (%T.as_type) = call %bound_method.loc6_10.2(%x.ref) to %.loc5_34
 // CHECK:STDOUT:     return %.loc6_10.1 to %return
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
@@ -188,7 +189,7 @@ fn CallSpecific(x: C*) -> C* {
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT:   %Function.specific_fn.loc12_10.2: <specific function> = specific_function constants.%Function, @Function(%T.loc10_16.1) [symbolic = %Function.specific_fn.loc12_10.2 (constants.%Function.specific_fn.8cd)]
 // CHECK:STDOUT:
-// CHECK:STDOUT:   fn(%x.param: @CallGeneric.%T.as_type.loc10_34.1 (%T.as_type)) -> @CallGeneric.%T.as_type.loc10_34.1 (%T.as_type) {
+// CHECK:STDOUT:   fn(%x.param: @CallGeneric.%T.as_type.loc10_34.1 (%T.as_type)) -> %return.param: @CallGeneric.%T.as_type.loc10_34.1 (%T.as_type) {
 // CHECK:STDOUT:   !entry:
 // CHECK:STDOUT:     %Function.ref: %Function.type = name_ref Function, file.%Function.decl [concrete = constants.%Function]
 // CHECK:STDOUT:     %T.ref.loc12: %Copy.type = name_ref T, %T.loc10_16.2 [symbolic = %T.loc10_16.1 (constants.%T.be8)]
@@ -196,7 +197,8 @@ fn CallSpecific(x: C*) -> C* {
 // CHECK:STDOUT:     %.loc12_23.1: %Copy.type = converted constants.%T.as_type, constants.%T.be8 [symbolic = %T.loc10_16.1 (constants.%T.be8)]
 // CHECK:STDOUT:     %.loc12_23.2: %Copy.type = converted constants.%T.as_type, constants.%T.be8 [symbolic = %T.loc10_16.1 (constants.%T.be8)]
 // CHECK:STDOUT:     %Function.specific_fn.loc12_10.1: <specific function> = specific_function %Function.ref, @Function(constants.%T.be8) [symbolic = %Function.specific_fn.loc12_10.2 (constants.%Function.specific_fn.8cd)]
-// CHECK:STDOUT:     %Function.call: init @CallGeneric.%T.as_type.loc10_34.1 (%T.as_type) = call %Function.specific_fn.loc12_10.1(%x.ref)
+// CHECK:STDOUT:     <elided>
+// CHECK:STDOUT:     %Function.call: init @CallGeneric.%T.as_type.loc10_34.1 (%T.as_type) = call %Function.specific_fn.loc12_10.1(%x.ref) to %.loc10_37
 // CHECK:STDOUT:     return %Function.call to %return
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
@@ -398,14 +400,15 @@ fn CallSpecific(x: C*) -> C* {
 // CHECK:STDOUT:   %impl.elem0.loc6_10.2: @Function.%.loc6_10.2 (%.c50) = impl_witness_access %Copy.lookup_impl_witness, element0 [symbolic = %impl.elem0.loc6_10.2 (constants.%impl.elem0.792)]
 // CHECK:STDOUT:   %specific_impl_fn.loc6_10.2: <specific function> = specific_impl_function %impl.elem0.loc6_10.2, @Copy.Op(%Copy.facet) [symbolic = %specific_impl_fn.loc6_10.2 (constants.%specific_impl_fn.547)]
 // CHECK:STDOUT:
-// CHECK:STDOUT:   fn(%x.param: @Function.%T.as_type.loc5_31.1 (%T.as_type)) -> @Function.%T.as_type.loc5_31.1 (%T.as_type) {
+// CHECK:STDOUT:   fn(%x.param: @Function.%T.as_type.loc5_31.1 (%T.as_type)) -> %return.param: @Function.%T.as_type.loc5_31.1 (%T.as_type) {
 // CHECK:STDOUT:   !entry:
 // CHECK:STDOUT:     %x.ref: @Function.%T.as_type.loc5_31.1 (%T.as_type) = name_ref x, %x
 // CHECK:STDOUT:     %impl.elem0.loc6_10.1: @Function.%.loc6_10.2 (%.c50) = impl_witness_access constants.%Copy.lookup_impl_witness.e15, element0 [symbolic = %impl.elem0.loc6_10.2 (constants.%impl.elem0.792)]
 // CHECK:STDOUT:     %bound_method.loc6_10.1: <bound method> = bound_method %x.ref, %impl.elem0.loc6_10.1
 // CHECK:STDOUT:     %specific_impl_fn.loc6_10.1: <specific function> = specific_impl_function %impl.elem0.loc6_10.1, @Copy.Op(constants.%Copy.facet.021) [symbolic = %specific_impl_fn.loc6_10.2 (constants.%specific_impl_fn.547)]
 // CHECK:STDOUT:     %bound_method.loc6_10.2: <bound method> = bound_method %x.ref, %specific_impl_fn.loc6_10.1
-// CHECK:STDOUT:     %.loc6_10.1: init @Function.%T.as_type.loc5_31.1 (%T.as_type) = call %bound_method.loc6_10.2(%x.ref)
+// CHECK:STDOUT:     %.loc5_34: ref @Function.%T.as_type.loc5_31.1 (%T.as_type) = splice_block %return {}
+// CHECK:STDOUT:     %.loc6_10.1: init @Function.%T.as_type.loc5_31.1 (%T.as_type) = call %bound_method.loc6_10.2(%x.ref) to %.loc5_34
 // CHECK:STDOUT:     return %.loc6_10.1 to %return
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
@@ -417,14 +420,15 @@ fn CallSpecific(x: C*) -> C* {
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT:   %Function.specific_fn.loc12_10.2: <specific function> = specific_function constants.%Function, @Function(%T.loc10_16.1) [symbolic = %Function.specific_fn.loc12_10.2 (constants.%Function.specific_fn.8cd)]
 // CHECK:STDOUT:
-// CHECK:STDOUT:   fn(%x.param: @CallGeneric.%T.as_type.loc10_34.1 (%T.as_type)) -> @CallGeneric.%T.as_type.loc10_34.1 (%T.as_type) {
+// CHECK:STDOUT:   fn(%x.param: @CallGeneric.%T.as_type.loc10_34.1 (%T.as_type)) -> %return.param: @CallGeneric.%T.as_type.loc10_34.1 (%T.as_type) {
 // CHECK:STDOUT:   !entry:
 // CHECK:STDOUT:     %Function.ref: %Function.type = name_ref Function, file.%Function.decl [concrete = constants.%Function]
 // CHECK:STDOUT:     %x.ref: @CallGeneric.%T.as_type.loc10_34.1 (%T.as_type) = name_ref x, %x
 // CHECK:STDOUT:     %.loc12_20.1: %Copy.type = converted constants.%T.as_type, constants.%T.be8 [symbolic = %T.loc10_16.1 (constants.%T.be8)]
 // CHECK:STDOUT:     %.loc12_20.2: %Copy.type = converted constants.%T.as_type, constants.%T.be8 [symbolic = %T.loc10_16.1 (constants.%T.be8)]
 // CHECK:STDOUT:     %Function.specific_fn.loc12_10.1: <specific function> = specific_function %Function.ref, @Function(constants.%T.be8) [symbolic = %Function.specific_fn.loc12_10.2 (constants.%Function.specific_fn.8cd)]
-// CHECK:STDOUT:     %Function.call: init @CallGeneric.%T.as_type.loc10_34.1 (%T.as_type) = call %Function.specific_fn.loc12_10.1(%x.ref)
+// CHECK:STDOUT:     <elided>
+// CHECK:STDOUT:     %Function.call: init @CallGeneric.%T.as_type.loc10_34.1 (%T.as_type) = call %Function.specific_fn.loc12_10.1(%x.ref) to %.loc10_37
 // CHECK:STDOUT:     return %Function.call to %return
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }

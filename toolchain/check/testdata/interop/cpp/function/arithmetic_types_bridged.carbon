@@ -732,10 +732,10 @@ fn F() {
 // CHECK:STDOUT:   %Cpp.ref: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
 // CHECK:STDOUT:   %foo.ref: %.c5d = name_ref foo, imports.%.a21 [concrete = constants.%empty_struct]
 // CHECK:STDOUT:   %true: bool = bool_literal true [concrete = constants.%true]
+// CHECK:STDOUT:   %.loc8_11.1: ref bool = temporary_storage
 // CHECK:STDOUT:   %impl.elem0: %.05c = impl_witness_access constants.%Copy.impl_witness.a56, element0 [concrete = constants.%bool.as.Copy.impl.Op]
 // CHECK:STDOUT:   %bound_method.loc8_11.1: <bound method> = bound_method %true, %impl.elem0 [concrete = constants.%bool.as.Copy.impl.Op.bound]
 // CHECK:STDOUT:   %bool.as.Copy.impl.Op.call: init bool = call %bound_method.loc8_11.1(%true) [concrete = constants.%true]
-// CHECK:STDOUT:   %.loc8_11.1: ref bool = temporary_storage
 // CHECK:STDOUT:   %.loc8_11.2: ref bool = temporary %.loc8_11.1, %bool.as.Copy.impl.Op.call
 // CHECK:STDOUT:   %addr.loc8_15: %ptr.bb2 = addr_of %.loc8_11.2
 // CHECK:STDOUT:   %foo__carbon_thunk.call: init %empty_tuple.type = call imports.%foo__carbon_thunk.decl(%addr.loc8_15)
@@ -789,10 +789,10 @@ fn F() {
 // CHECK:STDOUT:   %Cpp.ref: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
 // CHECK:STDOUT:   %foo.ref: %.c5d = name_ref foo, imports.%.a21 [concrete = constants.%empty_struct]
 // CHECK:STDOUT:   %false: bool = bool_literal false [concrete = constants.%false]
+// CHECK:STDOUT:   %.loc8_11.1: ref bool = temporary_storage
 // CHECK:STDOUT:   %impl.elem0: %.05c = impl_witness_access constants.%Copy.impl_witness.a56, element0 [concrete = constants.%bool.as.Copy.impl.Op]
 // CHECK:STDOUT:   %bound_method.loc8_11.1: <bound method> = bound_method %false, %impl.elem0 [concrete = constants.%bool.as.Copy.impl.Op.bound]
 // CHECK:STDOUT:   %bool.as.Copy.impl.Op.call: init bool = call %bound_method.loc8_11.1(%false) [concrete = constants.%false]
-// CHECK:STDOUT:   %.loc8_11.1: ref bool = temporary_storage
 // CHECK:STDOUT:   %.loc8_11.2: ref bool = temporary %.loc8_11.1, %bool.as.Copy.impl.Op.call
 // CHECK:STDOUT:   %addr.loc8_16: %ptr.bb2 = addr_of %.loc8_11.2
 // CHECK:STDOUT:   %foo__carbon_thunk.call: init %empty_tuple.type = call imports.%foo__carbon_thunk.decl(%addr.loc8_16)
@@ -893,12 +893,12 @@ fn F() {
 // CHECK:STDOUT:   %Core.IntLiteral.as.ImplicitAs.impl.Convert.call: init %i8 = call %bound_method.loc8_11.3(%.loc8_11.2) [concrete = constants.%int_-1.416]
 // CHECK:STDOUT:   %.loc8_11.3: %i8 = value_of_initializer %Core.IntLiteral.as.ImplicitAs.impl.Convert.call [concrete = constants.%int_-1.416]
 // CHECK:STDOUT:   %.loc8_11.4: %i8 = converted %Core.IntLiteral.as.Negate.impl.Op.call, %.loc8_11.3 [concrete = constants.%int_-1.416]
+// CHECK:STDOUT:   %.loc8_11.5: ref %i8 = temporary_storage
 // CHECK:STDOUT:   %impl.elem0.loc8_11.2: %.216 = impl_witness_access constants.%Copy.impl_witness.f5f, element0 [concrete = constants.%Int.as.Copy.impl.Op.342]
 // CHECK:STDOUT:   %bound_method.loc8_11.4: <bound method> = bound_method %.loc8_11.4, %impl.elem0.loc8_11.2 [concrete = constants.%Int.as.Copy.impl.Op.bound]
 // CHECK:STDOUT:   %specific_fn.loc8_11.2: <specific function> = specific_function %impl.elem0.loc8_11.2, @Int.as.Copy.impl.Op(constants.%int_8) [concrete = constants.%Int.as.Copy.impl.Op.specific_fn]
 // CHECK:STDOUT:   %bound_method.loc8_11.5: <bound method> = bound_method %.loc8_11.4, %specific_fn.loc8_11.2 [concrete = constants.%bound_method.db2]
 // CHECK:STDOUT:   %Int.as.Copy.impl.Op.call: init %i8 = call %bound_method.loc8_11.5(%.loc8_11.4) [concrete = constants.%int_-1.416]
-// CHECK:STDOUT:   %.loc8_11.5: ref %i8 = temporary_storage
 // CHECK:STDOUT:   %.loc8_11.6: ref %i8 = temporary %.loc8_11.5, %Int.as.Copy.impl.Op.call
 // CHECK:STDOUT:   %addr.loc8_13: %ptr.5c1 = addr_of %.loc8_11.6
 // CHECK:STDOUT:   %foo__carbon_thunk.call: init %empty_tuple.type = call imports.%foo__carbon_thunk.decl(%addr.loc8_13)
@@ -982,12 +982,12 @@ fn F() {
 // CHECK:STDOUT:   %Core.IntLiteral.as.ImplicitAs.impl.Convert.call: init %u8 = call %bound_method.loc8_11.2(%int_1) [concrete = constants.%int_1.e80]
 // CHECK:STDOUT:   %.loc8_11.1: %u8 = value_of_initializer %Core.IntLiteral.as.ImplicitAs.impl.Convert.call [concrete = constants.%int_1.e80]
 // CHECK:STDOUT:   %.loc8_11.2: %u8 = converted %int_1, %.loc8_11.1 [concrete = constants.%int_1.e80]
+// CHECK:STDOUT:   %.loc8_11.3: ref %u8 = temporary_storage
 // CHECK:STDOUT:   %impl.elem0.loc8_11.2: %.c54 = impl_witness_access constants.%Copy.impl_witness.3d6, element0 [concrete = constants.%UInt.as.Copy.impl.Op.0cf]
 // CHECK:STDOUT:   %bound_method.loc8_11.3: <bound method> = bound_method %.loc8_11.2, %impl.elem0.loc8_11.2 [concrete = constants.%UInt.as.Copy.impl.Op.bound]
 // CHECK:STDOUT:   %specific_fn.loc8_11.2: <specific function> = specific_function %impl.elem0.loc8_11.2, @UInt.as.Copy.impl.Op(constants.%int_8) [concrete = constants.%UInt.as.Copy.impl.Op.specific_fn]
 // CHECK:STDOUT:   %bound_method.loc8_11.4: <bound method> = bound_method %.loc8_11.2, %specific_fn.loc8_11.2 [concrete = constants.%bound_method.501]
 // CHECK:STDOUT:   %UInt.as.Copy.impl.Op.call: init %u8 = call %bound_method.loc8_11.4(%.loc8_11.2) [concrete = constants.%int_1.e80]
-// CHECK:STDOUT:   %.loc8_11.3: ref %u8 = temporary_storage
 // CHECK:STDOUT:   %.loc8_11.4: ref %u8 = temporary %.loc8_11.3, %UInt.as.Copy.impl.Op.call
 // CHECK:STDOUT:   %addr.loc8_12: %ptr.3e8 = addr_of %.loc8_11.4
 // CHECK:STDOUT:   %foo__carbon_thunk.call: init %empty_tuple.type = call imports.%foo__carbon_thunk.decl(%addr.loc8_12)
@@ -1058,10 +1058,10 @@ fn F() {
 // CHECK:STDOUT:   %Core.CharLiteral.as.ImplicitAs.impl.Convert.call: init %Char = call %bound_method.loc8_11.1(%.loc8_11.1) [concrete = constants.%int_88]
 // CHECK:STDOUT:   %.loc8_11.2: %Char = value_of_initializer %Core.CharLiteral.as.ImplicitAs.impl.Convert.call [concrete = constants.%int_88]
 // CHECK:STDOUT:   %.loc8_11.3: %Char = converted %.loc8_11.1, %.loc8_11.2 [concrete = constants.%int_88]
+// CHECK:STDOUT:   %.loc8_11.4: ref %Char = temporary_storage
 // CHECK:STDOUT:   %impl.elem0.loc8_11.2: %.1ed = impl_witness_access constants.%Copy.impl_witness.9ba, element0 [concrete = constants.%Char.as.Copy.impl.Op]
 // CHECK:STDOUT:   %bound_method.loc8_11.2: <bound method> = bound_method %.loc8_11.3, %impl.elem0.loc8_11.2 [concrete = constants.%Char.as.Copy.impl.Op.bound]
 // CHECK:STDOUT:   %Char.as.Copy.impl.Op.call: init %Char = call %bound_method.loc8_11.2(%.loc8_11.3) [concrete = constants.%int_88]
-// CHECK:STDOUT:   %.loc8_11.4: ref %Char = temporary_storage
 // CHECK:STDOUT:   %.loc8_11.5: ref %Char = temporary %.loc8_11.4, %Char.as.Copy.impl.Op.call
 // CHECK:STDOUT:   %addr.loc8_14: %ptr.fb0 = addr_of %.loc8_11.5
 // CHECK:STDOUT:   %foo__carbon_thunk.call: init %empty_tuple.type = call imports.%foo__carbon_thunk.decl(%addr.loc8_14)
@@ -1276,12 +1276,12 @@ fn F() {
 // CHECK:STDOUT:   %Core.IntLiteral.as.As.impl.Convert.call: init %i16 = call %bound_method.loc8_13.2(%int_1) [concrete = constants.%int_1.f90]
 // CHECK:STDOUT:   %.loc8_13.1: %i16 = value_of_initializer %Core.IntLiteral.as.As.impl.Convert.call [concrete = constants.%int_1.f90]
 // CHECK:STDOUT:   %.loc8_13.2: %i16 = converted %int_1, %.loc8_13.1 [concrete = constants.%int_1.f90]
+// CHECK:STDOUT:   %.loc8_13.3: ref %i16 = temporary_storage
 // CHECK:STDOUT:   %impl.elem0.loc8_13.2: %.798 = impl_witness_access constants.%Copy.impl_witness.2f8, element0 [concrete = constants.%Int.as.Copy.impl.Op.3dc]
 // CHECK:STDOUT:   %bound_method.loc8_13.3: <bound method> = bound_method %.loc8_13.2, %impl.elem0.loc8_13.2 [concrete = constants.%Int.as.Copy.impl.Op.bound]
 // CHECK:STDOUT:   %specific_fn.loc8_13.2: <specific function> = specific_function %impl.elem0.loc8_13.2, @Int.as.Copy.impl.Op(constants.%int_16) [concrete = constants.%Int.as.Copy.impl.Op.specific_fn]
 // CHECK:STDOUT:   %bound_method.loc8_13.4: <bound method> = bound_method %.loc8_13.2, %specific_fn.loc8_13.2 [concrete = constants.%bound_method.7c2]
 // CHECK:STDOUT:   %Int.as.Copy.impl.Op.call: init %i16 = call %bound_method.loc8_13.4(%.loc8_13.2) [concrete = constants.%int_1.f90]
-// CHECK:STDOUT:   %.loc8_13.3: ref %i16 = temporary_storage
 // CHECK:STDOUT:   %.loc8_13.4: ref %i16 = temporary %.loc8_13.3, %Int.as.Copy.impl.Op.call
 // CHECK:STDOUT:   %addr.loc8_19: %ptr.251 = addr_of %.loc8_13.4
 // CHECK:STDOUT:   %foo__carbon_thunk.call: init %empty_tuple.type = call imports.%foo__carbon_thunk.decl(%addr.loc8_19)
@@ -1365,12 +1365,12 @@ fn F() {
 // CHECK:STDOUT:   %Core.IntLiteral.as.ImplicitAs.impl.Convert.call: init %i16 = call %bound_method.loc8_11.2(%int_32767) [concrete = constants.%int_32767.faa]
 // CHECK:STDOUT:   %.loc8_11.1: %i16 = value_of_initializer %Core.IntLiteral.as.ImplicitAs.impl.Convert.call [concrete = constants.%int_32767.faa]
 // CHECK:STDOUT:   %.loc8_11.2: %i16 = converted %int_32767, %.loc8_11.1 [concrete = constants.%int_32767.faa]
+// CHECK:STDOUT:   %.loc8_11.3: ref %i16 = temporary_storage
 // CHECK:STDOUT:   %impl.elem0.loc8_11.2: %.798 = impl_witness_access constants.%Copy.impl_witness.2f8, element0 [concrete = constants.%Int.as.Copy.impl.Op.3dc]
 // CHECK:STDOUT:   %bound_method.loc8_11.3: <bound method> = bound_method %.loc8_11.2, %impl.elem0.loc8_11.2 [concrete = constants.%Int.as.Copy.impl.Op.bound]
 // CHECK:STDOUT:   %specific_fn.loc8_11.2: <specific function> = specific_function %impl.elem0.loc8_11.2, @Int.as.Copy.impl.Op(constants.%int_16) [concrete = constants.%Int.as.Copy.impl.Op.specific_fn]
 // CHECK:STDOUT:   %bound_method.loc8_11.4: <bound method> = bound_method %.loc8_11.2, %specific_fn.loc8_11.2 [concrete = constants.%bound_method.556]
 // CHECK:STDOUT:   %Int.as.Copy.impl.Op.call: init %i16 = call %bound_method.loc8_11.4(%.loc8_11.2) [concrete = constants.%int_32767.faa]
-// CHECK:STDOUT:   %.loc8_11.3: ref %i16 = temporary_storage
 // CHECK:STDOUT:   %.loc8_11.4: ref %i16 = temporary %.loc8_11.3, %Int.as.Copy.impl.Op.call
 // CHECK:STDOUT:   %addr.loc8_17: %ptr.251 = addr_of %.loc8_11.4
 // CHECK:STDOUT:   %foo__carbon_thunk.call: init %empty_tuple.type = call imports.%foo__carbon_thunk.decl(%addr.loc8_17)
@@ -1471,12 +1471,12 @@ fn F() {
 // CHECK:STDOUT:   %Core.IntLiteral.as.ImplicitAs.impl.Convert.call: init %i16 = call %bound_method.loc8_11.3(%.loc8_11.2) [concrete = constants.%int_-32768.7e5]
 // CHECK:STDOUT:   %.loc8_11.3: %i16 = value_of_initializer %Core.IntLiteral.as.ImplicitAs.impl.Convert.call [concrete = constants.%int_-32768.7e5]
 // CHECK:STDOUT:   %.loc8_11.4: %i16 = converted %Core.IntLiteral.as.Negate.impl.Op.call, %.loc8_11.3 [concrete = constants.%int_-32768.7e5]
+// CHECK:STDOUT:   %.loc8_11.5: ref %i16 = temporary_storage
 // CHECK:STDOUT:   %impl.elem0.loc8_11.2: %.798 = impl_witness_access constants.%Copy.impl_witness.2f8, element0 [concrete = constants.%Int.as.Copy.impl.Op.3dc]
 // CHECK:STDOUT:   %bound_method.loc8_11.4: <bound method> = bound_method %.loc8_11.4, %impl.elem0.loc8_11.2 [concrete = constants.%Int.as.Copy.impl.Op.bound]
 // CHECK:STDOUT:   %specific_fn.loc8_11.2: <specific function> = specific_function %impl.elem0.loc8_11.2, @Int.as.Copy.impl.Op(constants.%int_16) [concrete = constants.%Int.as.Copy.impl.Op.specific_fn]
 // CHECK:STDOUT:   %bound_method.loc8_11.5: <bound method> = bound_method %.loc8_11.4, %specific_fn.loc8_11.2 [concrete = constants.%bound_method.b72]
 // CHECK:STDOUT:   %Int.as.Copy.impl.Op.call: init %i16 = call %bound_method.loc8_11.5(%.loc8_11.4) [concrete = constants.%int_-32768.7e5]
-// CHECK:STDOUT:   %.loc8_11.5: ref %i16 = temporary_storage
 // CHECK:STDOUT:   %.loc8_11.6: ref %i16 = temporary %.loc8_11.5, %Int.as.Copy.impl.Op.call
 // CHECK:STDOUT:   %addr.loc8_18: %ptr.251 = addr_of %.loc8_11.6
 // CHECK:STDOUT:   %foo__carbon_thunk.call: init %empty_tuple.type = call imports.%foo__carbon_thunk.decl(%addr.loc8_18)
@@ -1562,12 +1562,12 @@ fn F() {
 // CHECK:STDOUT:   %Core.IntLiteral.as.As.impl.Convert.call: init %i16 = call %bound_method.loc8_13.2(%int_1) [concrete = constants.%int_1.f90]
 // CHECK:STDOUT:   %.loc8_13.1: %i16 = value_of_initializer %Core.IntLiteral.as.As.impl.Convert.call [concrete = constants.%int_1.f90]
 // CHECK:STDOUT:   %.loc8_13.2: %i16 = converted %int_1, %.loc8_13.1 [concrete = constants.%int_1.f90]
+// CHECK:STDOUT:   %.loc8_13.3: ref %i16 = temporary_storage
 // CHECK:STDOUT:   %impl.elem0.loc8_13.2: %.798 = impl_witness_access constants.%Copy.impl_witness.2f8, element0 [concrete = constants.%Int.as.Copy.impl.Op.3dc]
 // CHECK:STDOUT:   %bound_method.loc8_13.3: <bound method> = bound_method %.loc8_13.2, %impl.elem0.loc8_13.2 [concrete = constants.%Int.as.Copy.impl.Op.bound]
 // CHECK:STDOUT:   %specific_fn.loc8_13.2: <specific function> = specific_function %impl.elem0.loc8_13.2, @Int.as.Copy.impl.Op(constants.%int_16) [concrete = constants.%Int.as.Copy.impl.Op.specific_fn]
 // CHECK:STDOUT:   %bound_method.loc8_13.4: <bound method> = bound_method %.loc8_13.2, %specific_fn.loc8_13.2 [concrete = constants.%bound_method.7c2]
 // CHECK:STDOUT:   %Int.as.Copy.impl.Op.call: init %i16 = call %bound_method.loc8_13.4(%.loc8_13.2) [concrete = constants.%int_1.f90]
-// CHECK:STDOUT:   %.loc8_13.3: ref %i16 = temporary_storage
 // CHECK:STDOUT:   %.loc8_13.4: ref %i16 = temporary %.loc8_13.3, %Int.as.Copy.impl.Op.call
 // CHECK:STDOUT:   %addr.loc8_19: %ptr.251 = addr_of %.loc8_13.4
 // CHECK:STDOUT:   %foo__carbon_thunk.call: init %empty_tuple.type = call imports.%foo__carbon_thunk.decl(%addr.loc8_19)
@@ -1653,12 +1653,12 @@ fn F() {
 // CHECK:STDOUT:   %Core.IntLiteral.as.As.impl.Convert.call: init %i16 = call %bound_method.loc8_13.2(%int_1) [concrete = constants.%int_1.f90]
 // CHECK:STDOUT:   %.loc8_13.1: %i16 = value_of_initializer %Core.IntLiteral.as.As.impl.Convert.call [concrete = constants.%int_1.f90]
 // CHECK:STDOUT:   %.loc8_13.2: %i16 = converted %int_1, %.loc8_13.1 [concrete = constants.%int_1.f90]
+// CHECK:STDOUT:   %.loc8_13.3: ref %i16 = temporary_storage
 // CHECK:STDOUT:   %impl.elem0.loc8_13.2: %.798 = impl_witness_access constants.%Copy.impl_witness.2f8, element0 [concrete = constants.%Int.as.Copy.impl.Op.3dc]
 // CHECK:STDOUT:   %bound_method.loc8_13.3: <bound method> = bound_method %.loc8_13.2, %impl.elem0.loc8_13.2 [concrete = constants.%Int.as.Copy.impl.Op.bound]
 // CHECK:STDOUT:   %specific_fn.loc8_13.2: <specific function> = specific_function %impl.elem0.loc8_13.2, @Int.as.Copy.impl.Op(constants.%int_16) [concrete = constants.%Int.as.Copy.impl.Op.specific_fn]
 // CHECK:STDOUT:   %bound_method.loc8_13.4: <bound method> = bound_method %.loc8_13.2, %specific_fn.loc8_13.2 [concrete = constants.%bound_method.7c2]
 // CHECK:STDOUT:   %Int.as.Copy.impl.Op.call: init %i16 = call %bound_method.loc8_13.4(%.loc8_13.2) [concrete = constants.%int_1.f90]
-// CHECK:STDOUT:   %.loc8_13.3: ref %i16 = temporary_storage
 // CHECK:STDOUT:   %.loc8_13.4: ref %i16 = temporary %.loc8_13.3, %Int.as.Copy.impl.Op.call
 // CHECK:STDOUT:   %addr.loc8_19: %ptr.251 = addr_of %.loc8_13.4
 // CHECK:STDOUT:   %foo__carbon_thunk.call: init %empty_tuple.type = call imports.%foo__carbon_thunk.decl(%addr.loc8_19)
@@ -1744,12 +1744,12 @@ fn F() {
 // CHECK:STDOUT:   %Core.IntLiteral.as.As.impl.Convert.call: init %i16 = call %bound_method.loc8_13.2(%int_1) [concrete = constants.%int_1.f90]
 // CHECK:STDOUT:   %.loc8_13.1: %i16 = value_of_initializer %Core.IntLiteral.as.As.impl.Convert.call [concrete = constants.%int_1.f90]
 // CHECK:STDOUT:   %.loc8_13.2: %i16 = converted %int_1, %.loc8_13.1 [concrete = constants.%int_1.f90]
+// CHECK:STDOUT:   %.loc8_13.3: ref %i16 = temporary_storage
 // CHECK:STDOUT:   %impl.elem0.loc8_13.2: %.798 = impl_witness_access constants.%Copy.impl_witness.2f8, element0 [concrete = constants.%Int.as.Copy.impl.Op.3dc]
 // CHECK:STDOUT:   %bound_method.loc8_13.3: <bound method> = bound_method %.loc8_13.2, %impl.elem0.loc8_13.2 [concrete = constants.%Int.as.Copy.impl.Op.bound]
 // CHECK:STDOUT:   %specific_fn.loc8_13.2: <specific function> = specific_function %impl.elem0.loc8_13.2, @Int.as.Copy.impl.Op(constants.%int_16) [concrete = constants.%Int.as.Copy.impl.Op.specific_fn]
 // CHECK:STDOUT:   %bound_method.loc8_13.4: <bound method> = bound_method %.loc8_13.2, %specific_fn.loc8_13.2 [concrete = constants.%bound_method.7c2]
 // CHECK:STDOUT:   %Int.as.Copy.impl.Op.call: init %i16 = call %bound_method.loc8_13.4(%.loc8_13.2) [concrete = constants.%int_1.f90]
-// CHECK:STDOUT:   %.loc8_13.3: ref %i16 = temporary_storage
 // CHECK:STDOUT:   %.loc8_13.4: ref %i16 = temporary %.loc8_13.3, %Int.as.Copy.impl.Op.call
 // CHECK:STDOUT:   %addr.loc8_19: %ptr.251 = addr_of %.loc8_13.4
 // CHECK:STDOUT:   %foo__carbon_thunk.call: init %empty_tuple.type = call imports.%foo__carbon_thunk.decl(%addr.loc8_19)
@@ -1835,12 +1835,12 @@ fn F() {
 // CHECK:STDOUT:   %Core.IntLiteral.as.As.impl.Convert.call: init %i16 = call %bound_method.loc8_13.2(%int_1) [concrete = constants.%int_1.f90]
 // CHECK:STDOUT:   %.loc8_13.1: %i16 = value_of_initializer %Core.IntLiteral.as.As.impl.Convert.call [concrete = constants.%int_1.f90]
 // CHECK:STDOUT:   %.loc8_13.2: %i16 = converted %int_1, %.loc8_13.1 [concrete = constants.%int_1.f90]
+// CHECK:STDOUT:   %.loc8_13.3: ref %i16 = temporary_storage
 // CHECK:STDOUT:   %impl.elem0.loc8_13.2: %.798 = impl_witness_access constants.%Copy.impl_witness.2f8, element0 [concrete = constants.%Int.as.Copy.impl.Op.3dc]
 // CHECK:STDOUT:   %bound_method.loc8_13.3: <bound method> = bound_method %.loc8_13.2, %impl.elem0.loc8_13.2 [concrete = constants.%Int.as.Copy.impl.Op.bound]
 // CHECK:STDOUT:   %specific_fn.loc8_13.2: <specific function> = specific_function %impl.elem0.loc8_13.2, @Int.as.Copy.impl.Op(constants.%int_16) [concrete = constants.%Int.as.Copy.impl.Op.specific_fn]
 // CHECK:STDOUT:   %bound_method.loc8_13.4: <bound method> = bound_method %.loc8_13.2, %specific_fn.loc8_13.2 [concrete = constants.%bound_method.7c2]
 // CHECK:STDOUT:   %Int.as.Copy.impl.Op.call: init %i16 = call %bound_method.loc8_13.4(%.loc8_13.2) [concrete = constants.%int_1.f90]
-// CHECK:STDOUT:   %.loc8_13.3: ref %i16 = temporary_storage
 // CHECK:STDOUT:   %.loc8_13.4: ref %i16 = temporary %.loc8_13.3, %Int.as.Copy.impl.Op.call
 // CHECK:STDOUT:   %addr.loc8_19: %ptr.251 = addr_of %.loc8_13.4
 // CHECK:STDOUT:   %foo__carbon_thunk.call: init %empty_tuple.type = call imports.%foo__carbon_thunk.decl(%addr.loc8_19)
@@ -2134,12 +2134,12 @@ fn F() {
 // CHECK:STDOUT:   %Core.FloatLiteral.as.As.impl.Convert.call: init %f16.a6a = call %bound_method.loc8_15.2(%float) [concrete = constants.%float.032]
 // CHECK:STDOUT:   %.loc8_15.1: %f16.a6a = value_of_initializer %Core.FloatLiteral.as.As.impl.Convert.call [concrete = constants.%float.032]
 // CHECK:STDOUT:   %.loc8_15.2: %f16.a6a = converted %float, %.loc8_15.1 [concrete = constants.%float.032]
+// CHECK:STDOUT:   %.loc8_15.3: ref %f16.a6a = temporary_storage
 // CHECK:STDOUT:   %impl.elem0.loc8_15.2: %.98a = impl_witness_access constants.%Copy.impl_witness.3e9, element0 [concrete = constants.%Float.as.Copy.impl.Op.9e9]
 // CHECK:STDOUT:   %bound_method.loc8_15.3: <bound method> = bound_method %.loc8_15.2, %impl.elem0.loc8_15.2 [concrete = constants.%Float.as.Copy.impl.Op.bound]
 // CHECK:STDOUT:   %specific_fn.loc8_15.2: <specific function> = specific_function %impl.elem0.loc8_15.2, @Float.as.Copy.impl.Op(constants.%int_16) [concrete = constants.%Float.as.Copy.impl.Op.specific_fn]
 // CHECK:STDOUT:   %bound_method.loc8_15.4: <bound method> = bound_method %.loc8_15.2, %specific_fn.loc8_15.2 [concrete = constants.%bound_method.086]
 // CHECK:STDOUT:   %Float.as.Copy.impl.Op.call: init %f16.a6a = call %bound_method.loc8_15.4(%.loc8_15.2) [concrete = constants.%float.032]
-// CHECK:STDOUT:   %.loc8_15.3: ref %f16.a6a = temporary_storage
 // CHECK:STDOUT:   %.loc8_15.4: ref %f16.a6a = temporary %.loc8_15.3, %Float.as.Copy.impl.Op.call
 // CHECK:STDOUT:   %addr.loc8_21: %ptr.823 = addr_of %.loc8_15.4
 // CHECK:STDOUT:   %foo__carbon_thunk.call: init %empty_tuple.type = call imports.%foo__carbon_thunk.decl(%addr.loc8_21)
@@ -2224,12 +2224,12 @@ fn F() {
 // CHECK:STDOUT:   %Core.FloatLiteral.as.As.impl.Convert.call: init %f32.97e = call %bound_method.loc8_15.2(%float) [concrete = constants.%float.4cb]
 // CHECK:STDOUT:   %.loc8_15.1: %f32.97e = value_of_initializer %Core.FloatLiteral.as.As.impl.Convert.call [concrete = constants.%float.4cb]
 // CHECK:STDOUT:   %.loc8_15.2: %f32.97e = converted %float, %.loc8_15.1 [concrete = constants.%float.4cb]
+// CHECK:STDOUT:   %.loc8_15.3: ref %f32.97e = temporary_storage
 // CHECK:STDOUT:   %impl.elem0.loc8_15.2: %.377 = impl_witness_access constants.%Copy.impl_witness.c6d, element0 [concrete = constants.%Float.as.Copy.impl.Op.4fd]
 // CHECK:STDOUT:   %bound_method.loc8_15.3: <bound method> = bound_method %.loc8_15.2, %impl.elem0.loc8_15.2 [concrete = constants.%Float.as.Copy.impl.Op.bound]
 // CHECK:STDOUT:   %specific_fn.loc8_15.2: <specific function> = specific_function %impl.elem0.loc8_15.2, @Float.as.Copy.impl.Op(constants.%int_32) [concrete = constants.%Float.as.Copy.impl.Op.specific_fn]
 // CHECK:STDOUT:   %bound_method.loc8_15.4: <bound method> = bound_method %.loc8_15.2, %specific_fn.loc8_15.2 [concrete = constants.%bound_method.21c]
 // CHECK:STDOUT:   %Float.as.Copy.impl.Op.call: init %f32.97e = call %bound_method.loc8_15.4(%.loc8_15.2) [concrete = constants.%float.4cb]
-// CHECK:STDOUT:   %.loc8_15.3: ref %f32.97e = temporary_storage
 // CHECK:STDOUT:   %.loc8_15.4: ref %f32.97e = temporary %.loc8_15.3, %Float.as.Copy.impl.Op.call
 // CHECK:STDOUT:   %addr.loc8_21: %ptr.0bc = addr_of %.loc8_15.4
 // CHECK:STDOUT:   %foo__carbon_thunk.call: init %empty_tuple.type = call imports.%foo__carbon_thunk.decl(%addr.loc8_21)
@@ -2314,12 +2314,12 @@ fn F() {
 // CHECK:STDOUT:   %Core.FloatLiteral.as.As.impl.Convert.call: init %f64.d77 = call %bound_method.loc8_15.2(%float) [concrete = constants.%float.0fc]
 // CHECK:STDOUT:   %.loc8_15.1: %f64.d77 = value_of_initializer %Core.FloatLiteral.as.As.impl.Convert.call [concrete = constants.%float.0fc]
 // CHECK:STDOUT:   %.loc8_15.2: %f64.d77 = converted %float, %.loc8_15.1 [concrete = constants.%float.0fc]
+// CHECK:STDOUT:   %.loc8_15.3: ref %f64.d77 = temporary_storage
 // CHECK:STDOUT:   %impl.elem0.loc8_15.2: %.5d7 = impl_witness_access constants.%Copy.impl_witness.911, element0 [concrete = constants.%Float.as.Copy.impl.Op.5b0]
 // CHECK:STDOUT:   %bound_method.loc8_15.3: <bound method> = bound_method %.loc8_15.2, %impl.elem0.loc8_15.2 [concrete = constants.%Float.as.Copy.impl.Op.bound]
 // CHECK:STDOUT:   %specific_fn.loc8_15.2: <specific function> = specific_function %impl.elem0.loc8_15.2, @Float.as.Copy.impl.Op(constants.%int_64) [concrete = constants.%Float.as.Copy.impl.Op.specific_fn]
 // CHECK:STDOUT:   %bound_method.loc8_15.4: <bound method> = bound_method %.loc8_15.2, %specific_fn.loc8_15.2 [concrete = constants.%bound_method.c97]
 // CHECK:STDOUT:   %Float.as.Copy.impl.Op.call: init %f64.d77 = call %bound_method.loc8_15.4(%.loc8_15.2) [concrete = constants.%float.0fc]
-// CHECK:STDOUT:   %.loc8_15.3: ref %f64.d77 = temporary_storage
 // CHECK:STDOUT:   %.loc8_15.4: ref %f64.d77 = temporary %.loc8_15.3, %Float.as.Copy.impl.Op.call
 // CHECK:STDOUT:   %addr.loc8_21: %ptr.bcc = addr_of %.loc8_15.4
 // CHECK:STDOUT:   %foo__carbon_thunk.call: init %empty_tuple.type = call imports.%foo__carbon_thunk.decl(%addr.loc8_21)
@@ -2404,12 +2404,12 @@ fn F() {
 // CHECK:STDOUT:   %Core.FloatLiteral.as.As.impl.Convert.call: init %f128.b8c = call %bound_method.loc8_15.2(%float) [concrete = constants.%float.709]
 // CHECK:STDOUT:   %.loc8_15.1: %f128.b8c = value_of_initializer %Core.FloatLiteral.as.As.impl.Convert.call [concrete = constants.%float.709]
 // CHECK:STDOUT:   %.loc8_15.2: %f128.b8c = converted %float, %.loc8_15.1 [concrete = constants.%float.709]
+// CHECK:STDOUT:   %.loc8_15.3: ref %f128.b8c = temporary_storage
 // CHECK:STDOUT:   %impl.elem0.loc8_15.2: %.421 = impl_witness_access constants.%Copy.impl_witness.1fe, element0 [concrete = constants.%Float.as.Copy.impl.Op.249]
 // CHECK:STDOUT:   %bound_method.loc8_15.3: <bound method> = bound_method %.loc8_15.2, %impl.elem0.loc8_15.2 [concrete = constants.%Float.as.Copy.impl.Op.bound]
 // CHECK:STDOUT:   %specific_fn.loc8_15.2: <specific function> = specific_function %impl.elem0.loc8_15.2, @Float.as.Copy.impl.Op(constants.%int_128) [concrete = constants.%Float.as.Copy.impl.Op.specific_fn]
 // CHECK:STDOUT:   %bound_method.loc8_15.4: <bound method> = bound_method %.loc8_15.2, %specific_fn.loc8_15.2 [concrete = constants.%bound_method.435]
 // CHECK:STDOUT:   %Float.as.Copy.impl.Op.call: init %f128.b8c = call %bound_method.loc8_15.4(%.loc8_15.2) [concrete = constants.%float.709]
-// CHECK:STDOUT:   %.loc8_15.3: ref %f128.b8c = temporary_storage
 // CHECK:STDOUT:   %.loc8_15.4: ref %f128.b8c = temporary %.loc8_15.3, %Float.as.Copy.impl.Op.call
 // CHECK:STDOUT:   %addr.loc8_22: %ptr.402 = addr_of %.loc8_15.4
 // CHECK:STDOUT:   %foo__carbon_thunk.call: init %empty_tuple.type = call imports.%foo__carbon_thunk.decl(%addr.loc8_22)

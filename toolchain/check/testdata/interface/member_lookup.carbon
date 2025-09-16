@@ -477,7 +477,7 @@ fn AccessMissingConcrete(I:! Interface(i32)) -> i32 {
 // CHECK:STDOUT:   %require_complete.loc8: <witness> = require_complete_type %T.loc8_25.1 [symbolic = %require_complete.loc8 (constants.%require_complete.4ae)]
 // CHECK:STDOUT:   %require_complete.loc13: <witness> = require_complete_type %Interface.type.loc8_50.1 [symbolic = %require_complete.loc13 (constants.%require_complete.a60)]
 // CHECK:STDOUT:
-// CHECK:STDOUT:   fn() -> @AccessMissingGeneric.%T.loc8_25.1 (%T) {
+// CHECK:STDOUT:   fn() -> %return.param: @AccessMissingGeneric.%T.loc8_25.1 (%T) {
 // CHECK:STDOUT:   !entry:
 // CHECK:STDOUT:     %I.ref: @AccessMissingGeneric.%Interface.type.loc8_50.1 (%Interface.type.cc2) = name_ref I, %I.loc8_35.2 [symbolic = %I.loc8_35.1 (constants.%I.01f)]
 // CHECK:STDOUT:     %nonesuch.ref: <error> = name_ref nonesuch, <error> [concrete = <error>]
