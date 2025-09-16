@@ -167,8 +167,8 @@ auto Context::File::SetText(Context& context, std::optional<int64_t> version,
   // TODO: Include the prelude. Make sure `total_ir_count` includes the files.
   Check::CheckParseTreesOptions check_options;
   check_options.vlog_stream = context.vlog_stream();
-  auto getters = Parse::GetTreeAndSubtreesStore::MakeWithExplicitSize(
-      CheckIRIdTag(), 1, getter);
+  auto getters =
+      Parse::GetTreeAndSubtreesStore::MakeWithExplicitSize(IdTag(), 1, getter);
 
   auto clang_invocation =
       BuildClangInvocation(consumer, fs, {context.installation().clang_path()});

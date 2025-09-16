@@ -48,7 +48,7 @@ class FixedSizeValueStore {
   }
 
   // Makes a ValueStore of the specified size, initialized to a default.
-  static auto MakeWithExplicitSize(CheckIRIdTag tag, size_t size,
+  static auto MakeWithExplicitSize(IdTag tag, size_t size,
                                    ConstRefType default_value)
       -> FixedSizeValueStore {
     FixedSizeValueStore store;
@@ -77,7 +77,7 @@ class FixedSizeValueStore {
     requires std::same_as<IdT, typename ValueStoreT::IdType>
   explicit FixedSizeValueStore(const ValueStoreT& size_source,
                                ConstRefType default_value)
-      : tag_(GetCheckIRIdTag(size_source)) {
+      : tag_(GetIdTag(size_source)) {
     values_.resize(size_source.size(), default_value);
   }
 
@@ -91,7 +91,7 @@ class FixedSizeValueStore {
           auto(IdT, typename ValueStoreT::ConstRefType)->ValueType>
           factory_fn)
       : values_(llvm::map_range(source.enumerate(), factory_fn)),
-        tag_(GetCheckIRIdTag(source)) {}
+        tag_(GetIdTag(source)) {}
 
   // Move-only.
   FixedSizeValueStore(FixedSizeValueStore&&) noexcept = default;
@@ -144,7 +144,7 @@ class FixedSizeValueStore {
   // Storage for the `ValueT` objects, indexed by the id.
   llvm::SmallVector<ValueT, 0> values_;
 
-  CheckIRIdTag tag_;
+  IdTag tag_;
 };
 
 }  // namespace Carbon

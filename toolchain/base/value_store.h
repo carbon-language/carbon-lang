@@ -32,11 +32,11 @@ class ValueStoreNotPrintable {};
 
 }  // namespace Internal
 
-struct CheckIRIdTag {
-  CheckIRIdTag()
-      : check_id_tag_(0),
+struct IdTag {
+  IdTag()
+      : id_tag_(0),
         initial_reserved_ids_(std::numeric_limits<int32_t>::max()) {}
-  explicit CheckIRIdTag(int32_t check_id_index, int32_t initial_reserved_ids)
+  explicit IdTag(int32_t id_index, int32_t initial_reserved_ids)
       : initial_reserved_ids_(initial_reserved_ids) {
     // Shift down by 1 to get out of the high bit to avoid using any negative
     // ids, since they have special uses.
@@ -45,17 +45,17 @@ struct CheckIRIdTag {
     // Add one to the index so it's not zero-based, to make it a bit less likely
     // this doesn't collide with anything else (though with the
     // second-highest-bit-tagging this might not be needed).
-    check_id_tag_ = llvm::reverseBits((((check_id_index + 1) << 1) | 1) << 1);
+    id_tag_ = llvm::reverseBits((((id_index + 1) << 1) | 1) << 1);
   }
   auto GetCheckIRId() const -> int32_t {
-    return (llvm::reverseBits(check_id_tag_) >> 2) - 1;
+    return (llvm::reverseBits(id_tag_) >> 2) - 1;
   }
   auto Apply(int32_t index) const -> int32_t {
     if (index < initial_reserved_ids_) {
       return index;
     }
-    // assert that check_id_tag_ doesn't have the second highest bit set
-    return index ^ check_id_tag_;
+    // assert that id_tag_ doesn't have the second highest bit set
+    return index ^ id_tag_;
   }
   static auto DecomposeWithBestEffort(int32_t tagged_index)
       -> std::pair<int32_t, int32_t> {
@@ -86,9 +86,9 @@ struct CheckIRIdTag {
       return {-1, tagged_index};
     }
     auto index_mask = llvm::maskTrailingOnes<uint32_t>(location);
-    auto check_ir_id = (llvm::reverseBits(tagged_index & ~index_mask) >> 2) - 1;
+    auto ir_id = (llvm::reverseBits(tagged_index & ~index_mask) >> 2) - 1;
     auto index = tagged_index & index_mask;
-    return {check_ir_id, index};
+    return {ir_id, index};
   }
   auto Remove(int32_t tagged_index) const -> int32_t {
     if ((llvm::reverseBits(2) & tagged_index) == 0) {
@@ -97,20 +97,20 @@ struct CheckIRIdTag {
                     "and should have been tagged.");
       return tagged_index;
     }
-    auto index = tagged_index ^ check_id_tag_;
+    auto index = tagged_index ^ id_tag_;
     CARBON_DCHECK(index >= initial_reserved_ids_,
                   "When removing tagging bits, found an index that "
                   "shouldn't've been tagged in the first place.");
     return index;
   }
-  int32_t check_id_tag_;
+  int32_t id_tag_;
   int32_t initial_reserved_ids_;
 };
 
 template <typename ValueStoreT>
-auto GetCheckIRIdTag(const ValueStoreT& value_store) {
+auto GetIdTag(const ValueStoreT& value_store) {
   (void)value_store;
-  return CheckIRIdTag();
+  return IdTag();
 }
 
 // A simple wrapper for accumulating values, providing IDs to later retrieve the
@@ -155,7 +155,7 @@ class ValueStore
   };
 
   ValueStore() = default;
-  explicit ValueStore(CheckIRIdTag tag) : tag_(tag) {}
+  explicit ValueStore(IdTag tag) : tag_(tag) {}
 
   // Stores the value and returns an ID to reference it.
   auto Add(ValueType value) -> IdType {
@@ -278,21 +278,20 @@ class ValueStore
     return llvm::map_range(llvm::seq(size_), index_to_id);
   }
 
-  auto GetCheckIRIdTag() const -> CheckIRIdTag { return tag_; }
+  auto GetIdTag() const -> IdTag { return tag_; }
   auto GetRawIndex(IdT id) const -> int32_t {
     auto index = tag_.Remove(id.index);
     CARBON_DCHECK(index >= 0, "{0}", index);
     // Attempt to decompose id.index to include extra detail in the check here
 #ifndef NDEBUG
     if (index >= size_) {
-      auto [check_ir_id, decomposed_index] =
-          CheckIRIdTag::DecomposeWithBestEffort(id.index);
+      auto [ir_id, decomposed_index] = IdTag::DecomposeWithBestEffort(id.index);
       CARBON_DCHECK(
           index < size_,
           "Untagged index was outside of container range. Possibly tagged "
           "index {0}. Best-effort decomposition: CheckIRId: {1}, index: {2}. "
-          "The CheckIRIdTag for this container is: {3}",
-          id.index, check_ir_id, decomposed_index, tag_.GetCheckIRId());
+          "The IdTag for this container is: {3}",
+          id.index, ir_id, decomposed_index, tag_.GetCheckIRId());
     }
 #endif
     return index;
@@ -444,7 +443,7 @@ class ValueStore
   // fits in an `int32_t`, which is checked in non-optimized builds in Add().
   int32_t size_ = 0;
 
-  CheckIRIdTag tag_;
+  IdTag tag_;
 
   // Storage for the `ValueType` objects, indexed by the id. We use a vector of
   // chunks of `ValueType` instead of just a vector of `ValueType` so that

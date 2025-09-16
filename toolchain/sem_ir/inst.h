@@ -647,9 +647,7 @@ class InstStore {
     return values_.GetRawIndex(id);
   }
 
-  auto GetCheckIRIdTag() const -> CheckIRIdTag {
-    return values_.GetCheckIRIdTag();
-  }
+  auto GetIdTag() const -> IdTag { return values_.GetIdTag(); }
 
  private:
   // Given a symbolic type, get the corresponding unattached type.
@@ -723,9 +721,8 @@ inline auto CarbonHashValue(const Inst& value, uint64_t seed) -> HashCode {
 
 namespace Carbon {
 template <>
-inline auto GetCheckIRIdTag<SemIR::InstStore>(
-    const SemIR::InstStore& value_store) {
-  return value_store.GetCheckIRIdTag();
+inline auto GetIdTag<SemIR::InstStore>(const SemIR::InstStore& value_store) {
+  return value_store.GetIdTag();
 }
 }  // namespace Carbon
 
