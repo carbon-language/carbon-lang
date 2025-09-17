@@ -20,7 +20,7 @@ auto InstId::Print(llvm::raw_ostream& out) const -> void {
     if (ir_id == -1) {
       IdBase::Print(out);
     } else {
-      out << "inst." << ir_id << '.' << simple_index;
+      out << "ir" << ir_id << ".inst" << simple_index;
     }
   }
 }
