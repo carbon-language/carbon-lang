@@ -19,19 +19,21 @@
 
 namespace Carbon {
 
-// Manages the runtime directories.
+// Manages a runtimes directory.
 //
-// This provides access to different directories with the built runtime
-// libraries used by the Carbon toolchain. This includes both Carbon and Clang
-// runtime libraries.
+// Carbon (including Clang) relies on a set of runtime libraries and data files.
+// These are organized into a directory modeled by a `Runtimes` object, with
+// each individual runtime library built into a subdirectory. The `Runtimes`
+// object in turn provides access to each of these subdirectories.
 //
-// Different runtimes components are managed separately so that we don't force
-// building all runtimes in a configuration where only one makes sense or is
+// Different runtime libraries are managed separately so that we don't force
+// building all of them in a configuration where only one makes sense or is
 // typically needed.
 //
-// Beyond providing access, this class also supports orchestrating the _build_
-// of these runtimes, including synchronizing between different threads or
-// processes trying to build the same component of the runtimes.
+// Beyond providing access, a `Runtimes` object also supports orchestrating the
+// _build_ of any of the runtime libraries into their designated subdirectories,
+// including synchronizing between different threads or processes trying to
+// build the same component of the runtimes.
 //
 // TODO: Add libc++ to the runtimes tree.
 // TODO: Add the Core library to the runtimes tree.
@@ -76,6 +78,9 @@ class Runtimes {
   auto base_dir() const -> Filesystem::DirRef { return base_dir_; }
 
   // Gets the path to an _existing_ Clang resource directory.
+  //
+  // Clang's resource directory contains all of the compiler-builtin runtime
+  // libraries, headers, and data files.
   //
   // This will return the path to the Clang resource directory if it exists in
   // the runtimes tree. Otherwise, it will return an error.
@@ -153,16 +158,20 @@ class Runtimes {
   llvm::raw_ostream* vlog_stream_ = nullptr;
 };
 
-// A managed cache of runtimes.
+// A managed cache of `Runtimes` directories.
 //
-// This class manages and provides access to a cache of runtimes. The runtimes
-// are keyed and looked-up by a set of `Features`. Whenever looking up runtimes
-// not already present in the cache, the cache will evict old runtimes before
-// creating the new ones. The eviction strategy is to remove any runtimes more
-// than a year old, as well as the least-recently used runtimes until there will
-// only be a maximum of 50 runtimes cached. The goal is to allow multiple
-// versions and build features to stay resident in the runtimes cache while
-// providing a stable upper bound on the disk space used.
+// This class manages and provides access to a cache of runtimes. Each entry in
+// the cache is a collection of runtimes for a specific set of `Feature`s in a
+// directory that can be modeled with an object of the `Runtimes` type. We call
+// these entries "runtimes" typically. The cache keys and looks up these
+// runtimes based on the set of `Feature`s and the input sources used to build
+// them (including the compiler). Whenever looking up runtimes not already
+// present in the cache, the cache will evict old runtimes before creating the
+// new ones. The eviction strategy is to remove any runtimes more than a year
+// old, as well as the least-recently used runtimes until there will only be a
+// maximum of 50 runtimes cached. The goal is to allow multiple versions and
+// build features to stay resident in the runtimes cache while providing a
+// stable upper bound on the disk space used.
 //
 // The cache can be formed around a specific directory, or it can search for a
 // system-default directory. The system default directory follows the guidance
