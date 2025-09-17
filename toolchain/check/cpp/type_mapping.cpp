@@ -2,7 +2,7 @@
 // Exceptions. See /LICENSE for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
-#include "toolchain/check/cpp_type_mapping.h"
+#include "toolchain/check/cpp/type_mapping.h"
 
 #include <cstddef>
 #include <iostream>

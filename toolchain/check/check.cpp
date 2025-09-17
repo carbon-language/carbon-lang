@@ -11,7 +11,7 @@
 #include "common/map.h"
 #include "toolchain/check/check_unit.h"
 #include "toolchain/check/context.h"
-#include "toolchain/check/cpp_import.h"
+#include "toolchain/check/cpp/import.h"
 #include "toolchain/check/diagnostic_emitter.h"
 #include "toolchain/check/diagnostic_helpers.h"
 #include "toolchain/diagnostics/diagnostic.h"
