@@ -37,7 +37,7 @@ library "[[@TEST_NAME]]";
 import library "namespace_api";
 
 fn F() {
-  // Imported name scopes are closed, so lookup is expected to fail.
+  // Imports are not implicitly re-exported, so lookup is expected to fail.
   // CHECK:STDERR: fail_import_namespace_api.carbon:[[@LINE+4]]:10: error: member name `MyClass` not found in `Cpp.MyNamespace` [MemberNameNotFoundInInstScope]
   // CHECK:STDERR:   var x: MyNamespaceAlias.MyClass;
   // CHECK:STDERR:          ^~~~~~~~~~~~~~~~~~~~~~~~
