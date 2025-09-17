@@ -6,7 +6,7 @@
 
 #include <optional>
 
-#include "toolchain/check/cpp_import.h"
+#include "toolchain/check/cpp/import.h"
 #include "toolchain/check/generic.h"
 #include "toolchain/check/import.h"
 #include "toolchain/check/import_ref.h"

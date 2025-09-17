@@ -2,7 +2,7 @@
 // Exceptions. See /LICENSE for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
-#include "toolchain/check/cpp_thunk.h"
+#include "toolchain/check/cpp/thunk.h"
 
 #include "clang/AST/GlobalDecl.h"
 #include "clang/AST/Mangle.h"

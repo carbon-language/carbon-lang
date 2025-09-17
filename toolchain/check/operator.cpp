@@ -8,7 +8,7 @@
 
 #include "toolchain/check/call.h"
 #include "toolchain/check/context.h"
-#include "toolchain/check/cpp_import.h"
+#include "toolchain/check/cpp/import.h"
 #include "toolchain/check/generic.h"
 #include "toolchain/check/member_access.h"
 #include "toolchain/check/name_lookup.h"
