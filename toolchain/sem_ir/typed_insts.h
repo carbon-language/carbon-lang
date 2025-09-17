@@ -648,11 +648,14 @@ struct FacetAccessType {
 
 // A facet type value.
 struct FacetType {
+  // Decided on 2025-04-02 not to do deduction through facet types, because
+  // types can implement a generic interface multiple times with different
+  // arguments. See:
+  // https://docs.google.com/document/d/1Iut5f2TQBrtBNIduF4vJYOKfw7MbS8xH_J01_Q4e6Rk/edit?pli=1&resourcekey=0-mc_vh5UzrzXfU4kO-3tOjA&tab=t.0#heading=h.95phmuvxog9n
   static constexpr auto Kind = InstKind::FacetType.Define<Parse::NodeId>(
       {.ir_name = "facet_type",
        .is_type = InstIsType::Always,
-       .constant_kind = InstConstantKind::Always,
-       .deduce_through = true});
+       .constant_kind = InstConstantKind::Always});
 
   TypeId type_id;
   // TODO: Rename this to facet_type_info_id.
