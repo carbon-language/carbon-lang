@@ -94,7 +94,7 @@ fn MyF() {
 
 // --- inline.h
 
-inline namespace { namespace N { inline namespace { void foo(); } } }
+inline namespace { namespace N { inline namespace { void foo() {} } } }
 
 // --- import_inline.carbon
 

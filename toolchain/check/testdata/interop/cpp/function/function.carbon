@@ -134,16 +134,21 @@ fn F() {
 
 static auto foo() -> void;
 
-// --- import_static.carbon
+// --- todo_fail_import_static.carbon
 
 library "[[@TEST_NAME]]";
 
+// TODO: Promote this warning to an error by default.
+// CHECK:STDERR: todo_fail_import_static.carbon:[[@LINE+5]]:10: in file included here [InCppInclude]
+// CHECK:STDERR: ./static.h:2:13: warning: function 'foo' has internal linkage but is not defined [CppInteropParseWarning]
+// CHECK:STDERR:     2 | static auto foo() -> void;
+// CHECK:STDERR:       |             ^
+// CHECK:STDERR:
 import Cpp library "static.h";
 
 fn F() {
   //@dump-sem-ir-begin
-  // TODO: We should eventually warn or error that `Cpp.foo` has internal
-  // linkage but is not defined.
+  // TODO: Produce a note pointing here.
   Cpp.foo();
   //@dump-sem-ir-end
 }
@@ -283,7 +288,7 @@ fn G() -> i32 {
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- import_static.carbon
+// CHECK:STDOUT: --- todo_fail_import_static.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [concrete]

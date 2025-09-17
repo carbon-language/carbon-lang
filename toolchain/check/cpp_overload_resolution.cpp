@@ -171,6 +171,8 @@ auto PerformCppOverloadResolution(Context& context, SemIR::LocId loc_id,
     case clang::OverloadingResult::OR_Success: {
       // TODO: Handle the cases when Function is null.
       CARBON_CHECK(best_viable_fn->Function);
+      sema.MarkFunctionReferenced(clang::SourceLocation(),
+                                  best_viable_fn->Function);
       SemIR::InstId result =
           ImportCppFunctionDecl(context, loc_id, best_viable_fn->Function);
       return result;

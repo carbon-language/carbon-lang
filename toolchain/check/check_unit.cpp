@@ -9,6 +9,7 @@
 #include <tuple>
 #include <utility>
 
+#include "clang/Sema/Sema.h"
 #include "common/growing_range.h"
 #include "common/pretty_stack_trace_function.h"
 #include "llvm/ADT/IntrusiveRefCntPtr.h"
@@ -579,6 +580,13 @@ auto CheckUnit::FinishRun() -> void {
   CheckRequiredDefinitions();
   CheckPoisonedConcreteImplLookupQueries();
   CheckImpls();
+
+  if (auto* clang_ast = context_.sem_ir().clang_ast_unit()) {
+    // Ask Clang to perform any cleanups required, including instantiating used
+    // templates.
+    clang_ast->getSema().ActOnEndOfTranslationUnit();
+    context_.emitter().Flush();
+  }
 
   // Pop information for the file-level scope.
   context_.sem_ir().set_top_inst_block_id(context_.inst_block_stack().Pop());
