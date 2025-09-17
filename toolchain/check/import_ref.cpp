@@ -447,6 +447,9 @@ class ImportRefResolver : public ImportContext {
 
       // Step 1: check for a constant value.
       auto existing = FindResolvedConstId(work.inst_id);
+      if (existing.const_id == SemIR::ErrorInst::ConstantId) {
+        return existing.const_id;
+      }
       if (existing.const_id.has_value() && !work.retry_with_constant_value) {
         work_stack_.pop_back();
         continue;
@@ -583,6 +586,11 @@ class ImportRefResolver : public ImportContext {
         return result;
       }
       auto ir_inst = cursor_ir->import_ir_insts().Get(import_ir_inst_id);
+      if (ir_inst.ir_id() == SemIR::ImportIRId::Cpp) {
+        local_context().TODO(SemIR::LocId::None,
+                             "Unsupported: Importing C++ indirectly");
+        return {.const_id = SemIR::ErrorInst::ConstantId};
+      }
 
       const auto* prev_ir = cursor_ir;
       auto prev_inst_id = cursor_inst_id;
