@@ -125,7 +125,9 @@ class ConstantValueStore {
   // Returns the constant value of the requested instruction, which is default_
   // if unallocated. This may be an attached constant.
   auto GetAttached(InstId inst_id) const -> ConstantId {
-    auto index = insts_ ? insts_->GetRawIndex(inst_id) : inst_id.index;
+    CARBON_CHECK(insts_,
+                 "Used ConstantValueStores must have an associated InstStore.");
+    auto index = insts_->GetRawIndex(inst_id);
     return static_cast<size_t>(index) >= values_.size() ? default_
                                                         : values_.Get(inst_id);
   }
@@ -133,7 +135,9 @@ class ConstantValueStore {
   // Sets the constant value of the given instruction, or sets that it is known
   // to not be a constant.
   auto Set(InstId inst_id, ConstantId const_id) -> void {
-    auto index = insts_ ? insts_->GetRawIndex(inst_id) : inst_id.index;
+    CARBON_CHECK(insts_,
+                 "Used ConstantValueStores must have an associated InstStore.");
+    auto index = insts_->GetRawIndex(inst_id);
     if (static_cast<size_t>(index) >= values_.size()) {
       values_.Resize(index + 1, default_);
     }
