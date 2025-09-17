@@ -98,7 +98,7 @@ fn F() {
   //@dump-sem-ir-end
 }
 
-// --- fail_todo_value_arg_for_rvalue_ref.carbon
+// --- todo_fail_value_arg_for_rvalue_ref.carbon
 
 library "[[@TEST_NAME]]";
 
@@ -432,7 +432,7 @@ fn F() {
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- fail_todo_value_arg_for_rvalue_ref.carbon
+// CHECK:STDOUT: --- todo_fail_value_arg_for_rvalue_ref.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [concrete]
