@@ -1694,6 +1694,13 @@ auto ImportCppFunctionDecl(Context& context, SemIR::LocId loc_id,
 
   SemIR::Function& function_info = context.functions().Get(*function_id);
   if (IsCppThunkRequired(context, function_info)) {
+    Diagnostics::AnnotationScope annotate_diagnostics(
+        &context.emitter(), [&](auto& builder) {
+          CARBON_DIAGNOSTIC(InCppThunk, Note,
+                            "in thunk for Cpp function used here");
+          builder.Note(loc_id, InCppThunk);
+        });
+
     clang::FunctionDecl* thunk_clang_decl =
         BuildCppThunk(context, function_info);
     if (thunk_clang_decl) {

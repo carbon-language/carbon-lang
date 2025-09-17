@@ -58,37 +58,29 @@ fn Value(v: Cpp.HasQualifiers) {
   v.plain();
 
   // TODO: This should remain invalid once we support `volatile`.
-  // CHECK:STDERR: fail_bad_object_param_qualifiers_by_value.carbon:[[@LINE+7]]:3: error: semantics TODO: `Unsupported: object parameter type: volatile struct HasQualifiers` [SemanticsTodo]
-  // CHECK:STDERR:   v.volatile_this();
-  // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~
-  // CHECK:STDERR: fail_bad_object_param_qualifiers_by_value.carbon:[[@LINE+4]]:3: note: in call to Cpp function here [InCallToCppFunction]
+  // CHECK:STDERR: fail_bad_object_param_qualifiers_by_value.carbon:[[@LINE+4]]:3: error: semantics TODO: `Unsupported: object parameter type: volatile struct HasQualifiers` [SemanticsTodo]
   // CHECK:STDERR:   v.volatile_this();
   // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~
   // CHECK:STDERR:
   v.volatile_this();
 
-  // CHECK:STDERR: fail_bad_object_param_qualifiers_by_value.carbon:[[@LINE+7]]:3: error: no matching function for call to `ref_this` [CppOverloadingNoViableFunctionFound]
-  // CHECK:STDERR:   v.ref_this();
-  // CHECK:STDERR:   ^~~~~~~~~~~~
-  // CHECK:STDERR: fail_bad_object_param_qualifiers_by_value.carbon:[[@LINE+4]]:3: note: in call to Cpp function here [InCallToCppFunction]
-  // CHECK:STDERR:   v.ref_this();
-  // CHECK:STDERR:   ^~~~~~~~~~~~
+  // CHECK:STDERR: fail_bad_object_param_qualifiers_by_value.carbon:[[@LINE+8]]:14: error: no matching function for call to 'ref_this' [CppInteropParseError]
+  // CHECK:STDERR:    29 |   v.ref_this();
+  // CHECK:STDERR:       |              ^
+  // CHECK:STDERR: fail_bad_object_param_qualifiers_by_value.carbon:[[@LINE-20]]:10: in file included here [InCppInclude]
+  // CHECK:STDERR: ./object_param_qualifiers.h:7:8: note: candidate function not viable: expects an lvalue for object argument [CppInteropParseNote]
+  // CHECK:STDERR:     7 |   void ref_this() &;
+  // CHECK:STDERR:       |        ^
   // CHECK:STDERR:
   v.ref_this();
 
-  // CHECK:STDERR: fail_bad_object_param_qualifiers_by_value.carbon:[[@LINE+7]]:3: error: semantics TODO: `Unsupported: object parameter type: struct HasQualifiers &&` [SemanticsTodo]
-  // CHECK:STDERR:   v.ref_ref_this();
-  // CHECK:STDERR:   ^~~~~~~~~~~~~~~~
-  // CHECK:STDERR: fail_bad_object_param_qualifiers_by_value.carbon:[[@LINE+4]]:3: note: in call to Cpp function here [InCallToCppFunction]
+  // CHECK:STDERR: fail_bad_object_param_qualifiers_by_value.carbon:[[@LINE+4]]:3: error: semantics TODO: `Unsupported: object parameter type: struct HasQualifiers &&` [SemanticsTodo]
   // CHECK:STDERR:   v.ref_ref_this();
   // CHECK:STDERR:   ^~~~~~~~~~~~~~~~
   // CHECK:STDERR:
   v.ref_ref_this();
 
-  // CHECK:STDERR: fail_bad_object_param_qualifiers_by_value.carbon:[[@LINE+7]]:3: error: semantics TODO: `Unsupported: object parameter type: const struct HasQualifiers &&` [SemanticsTodo]
-  // CHECK:STDERR:   v.const_ref_ref_this();
-  // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~~~
-  // CHECK:STDERR: fail_bad_object_param_qualifiers_by_value.carbon:[[@LINE+4]]:3: note: in call to Cpp function here [InCallToCppFunction]
+  // CHECK:STDERR: fail_bad_object_param_qualifiers_by_value.carbon:[[@LINE+4]]:3: error: semantics TODO: `Unsupported: object parameter type: const struct HasQualifiers &&` [SemanticsTodo]
   // CHECK:STDERR:   v.const_ref_ref_this();
   // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~~~
   // CHECK:STDERR:
@@ -103,10 +95,7 @@ import Cpp library "object_param_qualifiers.h";
 
 fn Ref(p: Cpp.HasQualifiers*) {
   // TODO: This should eventually be accepted if we support `volatile`.
-  // CHECK:STDERR: fail_todo_bad_object_param_qualifiers_by_ref.carbon:[[@LINE+7]]:3: error: semantics TODO: `Unsupported: object parameter type: volatile struct HasQualifiers` [SemanticsTodo]
-  // CHECK:STDERR:   p->volatile_this();
-  // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~
-  // CHECK:STDERR: fail_todo_bad_object_param_qualifiers_by_ref.carbon:[[@LINE+4]]:3: note: in call to Cpp function here [InCallToCppFunction]
+  // CHECK:STDERR: fail_todo_bad_object_param_qualifiers_by_ref.carbon:[[@LINE+4]]:3: error: semantics TODO: `Unsupported: object parameter type: volatile struct HasQualifiers` [SemanticsTodo]
   // CHECK:STDERR:   p->volatile_this();
   // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~
   // CHECK:STDERR:
@@ -120,21 +109,23 @@ library "[[@TEST_NAME]]";
 import Cpp library "object_param_qualifiers.h";
 
 fn Ref(p: Cpp.HasQualifiers*) {
-  // CHECK:STDERR: fail_bad_object_param_qualifiers_ref_ref.carbon:[[@LINE+7]]:3: error: no matching function for call to `ref_ref_this` [CppOverloadingNoViableFunctionFound]
-  // CHECK:STDERR:   p->ref_ref_this();
-  // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~
-  // CHECK:STDERR: fail_bad_object_param_qualifiers_ref_ref.carbon:[[@LINE+4]]:3: note: in call to Cpp function here [InCallToCppFunction]
-  // CHECK:STDERR:   p->ref_ref_this();
-  // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~
+  // CHECK:STDERR: fail_bad_object_param_qualifiers_ref_ref.carbon:[[@LINE+8]]:19: error: no matching function for call to 'ref_ref_this' [CppInteropParseError]
+  // CHECK:STDERR:    15 |   p->ref_ref_this();
+  // CHECK:STDERR:       |                   ^
+  // CHECK:STDERR: fail_bad_object_param_qualifiers_ref_ref.carbon:[[@LINE-6]]:10: in file included here [InCppInclude]
+  // CHECK:STDERR: ./object_param_qualifiers.h:10:8: note: candidate function not viable: expects an rvalue for object argument [CppInteropParseNote]
+  // CHECK:STDERR:    10 |   void ref_ref_this() &&;
+  // CHECK:STDERR:       |        ^
   // CHECK:STDERR:
   p->ref_ref_this();
 
-  // CHECK:STDERR: fail_bad_object_param_qualifiers_ref_ref.carbon:[[@LINE+7]]:3: error: no matching function for call to `const_ref_ref_this` [CppOverloadingNoViableFunctionFound]
-  // CHECK:STDERR:   p->const_ref_ref_this();
-  // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~~~~
-  // CHECK:STDERR: fail_bad_object_param_qualifiers_ref_ref.carbon:[[@LINE+4]]:3: note: in call to Cpp function here [InCallToCppFunction]
-  // CHECK:STDERR:   p->const_ref_ref_this();
-  // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~~~~
+  // CHECK:STDERR: fail_bad_object_param_qualifiers_ref_ref.carbon:[[@LINE+8]]:25: error: no matching function for call to 'const_ref_ref_this' [CppInteropParseError]
+  // CHECK:STDERR:    25 |   p->const_ref_ref_this();
+  // CHECK:STDERR:       |                         ^
+  // CHECK:STDERR: fail_bad_object_param_qualifiers_ref_ref.carbon:[[@LINE-16]]:10: in file included here [InCppInclude]
+  // CHECK:STDERR: ./object_param_qualifiers.h:11:8: note: candidate function not viable: expects an rvalue for object argument [CppInteropParseNote]
+  // CHECK:STDERR:    11 |   void const_ref_ref_this() const&&;
+  // CHECK:STDERR:       |        ^
   // CHECK:STDERR:
   p->const_ref_ref_this();
 }

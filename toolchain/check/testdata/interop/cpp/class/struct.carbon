@@ -177,10 +177,7 @@ import Cpp library "dynamic.h";
 
 //@dump-sem-ir-begin
 fn MyF(bar: Cpp.Bar*) {
-  // CHECK:STDERR: fail_todo_call_dynamic.carbon:[[@LINE+7]]:3: error: semantics TODO: `Unsupported: Virtual function` [SemanticsTodo]
-  // CHECK:STDERR:   bar->f();
-  // CHECK:STDERR:   ^~~~~~~~
-  // CHECK:STDERR: fail_todo_call_dynamic.carbon:[[@LINE+4]]:3: note: in call to Cpp function here [InCallToCppFunction]
+  // CHECK:STDERR: fail_todo_call_dynamic.carbon:[[@LINE+4]]:3: error: semantics TODO: `Unsupported: Virtual function` [SemanticsTodo]
   // CHECK:STDERR:   bar->f();
   // CHECK:STDERR:   ^~~~~~~~
   // CHECK:STDERR:
@@ -512,9 +509,9 @@ fn MyF(bar: Cpp.Bar*);
 // CHECK:STDOUT: fn @MyF(%bar.param: %ptr.f68) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %bar.ref: %ptr.f68 = name_ref bar, %bar
-// CHECK:STDOUT:   %.loc15: ref %Bar = deref %bar.ref
+// CHECK:STDOUT:   %.loc12: ref %Bar = deref %bar.ref
 // CHECK:STDOUT:   %f.ref: %.2e2 = name_ref f, imports.%.6e0 [concrete = constants.%empty_struct]
-// CHECK:STDOUT:   %bound_method: <bound method> = bound_method %.loc15, %f.ref
+// CHECK:STDOUT:   %bound_method: <bound method> = bound_method %.loc12, %f.ref
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

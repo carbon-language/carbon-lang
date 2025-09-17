@@ -4,14 +4,26 @@
 
 #include "toolchain/check/cpp/overload_resolution.h"
 
+#include "clang/Basic/DiagnosticSema.h"
 #include "clang/Sema/Overload.h"
 #include "clang/Sema/Sema.h"
 #include "toolchain/check/cpp/import.h"
+#include "toolchain/check/cpp/location.h"
 #include "toolchain/check/cpp/type_mapping.h"
 #include "toolchain/sem_ir/expr_info.h"
 #include "toolchain/sem_ir/typed_insts.h"
 
 namespace Carbon::Check {
+
+// Map a Carbon name into a C++ name.
+static auto GetCppName(Context& context, SemIR::NameId name_id)
+    -> clang::DeclarationName {
+  // TODO: Some special names should probably use different formatting. In
+  // particular, NameId::CppOperator should probably map back to a
+  // CXXOperatorName.
+  auto name_str = context.names().GetFormatted(name_id);
+  return clang::DeclarationName(&context.ast_context().Idents.get(name_str));
+}
 
 // Invents a Clang argument expression to use in overload resolution to
 // represent the given Carbon argument instruction.
@@ -60,9 +72,9 @@ static auto InventClangArg(Context& context, SemIR::InstId arg_id)
 
   // TODO: Avoid heap allocating more of these on every call. Either cache them
   // somewhere or put them on the stack.
-  return new (context.ast_context()) clang::OpaqueValueExpr(
-      // TODO: Add location accordingly.
-      clang::SourceLocation(), arg_cpp_type.getNonReferenceType(), value_kind);
+  return new (context.ast_context())
+      clang::OpaqueValueExpr(GetCppLocation(context, SemIR::LocId(arg_id)),
+                             arg_cpp_type.getNonReferenceType(), value_kind);
 }
 
 // Adds the given overload candidates to the candidate set.
@@ -119,13 +131,6 @@ auto PerformCppOverloadResolution(Context& context, SemIR::LocId loc_id,
                                   SemIR::InstId self_id,
                                   llvm::ArrayRef<SemIR::InstId> arg_ids)
     -> SemIR::InstId {
-  Diagnostics::AnnotationScope annotate_diagnostics(
-      &context.emitter(), [&](auto& builder) {
-        CARBON_DIAGNOSTIC(InCallToCppFunction, Note,
-                          "in call to Cpp function here");
-        builder.Note(loc_id, InCallToCppFunction);
-      });
-
   // Map Carbon call argument types to C++ types.
   clang::Expr* self_expr = nullptr;
   if (self_id.has_value()) {
@@ -147,11 +152,11 @@ auto PerformCppOverloadResolution(Context& context, SemIR::LocId loc_id,
   const SemIR::CppOverloadSet& overload_set =
       context.cpp_overload_sets().Get(overload_set_id);
 
+  clang::SourceLocation loc = GetCppLocation(context, loc_id);
+
   // Add candidate functions from the name lookup.
   clang::OverloadCandidateSet candidate_set(
-      // TODO: Add location accordingly.
-      clang::SourceLocation(),
-      clang::OverloadCandidateSet::CandidateSetKind::CSK_Normal);
+      loc, clang::OverloadCandidateSet::CandidateSetKind::CSK_Normal);
 
   clang::ASTUnit* ast = context.sem_ir().clang_ast_unit();
   CARBON_CHECK(ast);
@@ -163,43 +168,38 @@ auto PerformCppOverloadResolution(Context& context, SemIR::LocId loc_id,
   // Find best viable function among the candidates.
   clang::OverloadCandidateSet::iterator best_viable_fn;
   clang::OverloadingResult overloading_result =
-      // TODO: Add location accordingly.
-      candidate_set.BestViableFunction(sema, clang::SourceLocation(),
-                                       best_viable_fn);
+      candidate_set.BestViableFunction(sema, loc, best_viable_fn);
 
   switch (overloading_result) {
     case clang::OverloadingResult::OR_Success: {
       // TODO: Handle the cases when Function is null.
       CARBON_CHECK(best_viable_fn->Function);
-      sema.MarkFunctionReferenced(clang::SourceLocation(),
-                                  best_viable_fn->Function);
+      sema.MarkFunctionReferenced(loc, best_viable_fn->Function);
       SemIR::InstId result =
           ImportCppFunctionDecl(context, loc_id, best_viable_fn->Function);
       return result;
     }
     case clang::OverloadingResult::OR_No_Viable_Function: {
-      // TODO: Add notes with the candidates.
-      CARBON_DIAGNOSTIC(CppOverloadingNoViableFunctionFound, Error,
-                        "no matching function for call to `{0}`",
-                        SemIR::NameId);
-      context.emitter().Emit(loc_id, CppOverloadingNoViableFunctionFound,
-                             overload_set.name_id);
+      candidate_set.NoteCandidates(
+          clang::PartialDiagnosticAt(
+              loc, sema.PDiag(clang::diag::err_ovl_no_viable_function_in_call)
+                       << GetCppName(context, overload_set.name_id)),
+          sema, clang::OCD_AllCandidates, arg_exprs);
       return SemIR::ErrorInst::InstId;
     }
     case clang::OverloadingResult::OR_Ambiguous: {
-      // TODO: Add notes with the candidates.
-      CARBON_DIAGNOSTIC(CppOverloadingAmbiguousCandidatesFound, Error,
-                        "call to `{0}` is ambiguous", SemIR::NameId);
-      context.emitter().Emit(loc_id, CppOverloadingAmbiguousCandidatesFound,
-                             overload_set.name_id);
+      candidate_set.NoteCandidates(
+          clang::PartialDiagnosticAt(
+              loc, sema.PDiag(clang::diag::err_ovl_ambiguous_call)
+                       << GetCppName(context, overload_set.name_id)),
+          sema, clang::OCD_AmbiguousCandidates, arg_exprs);
       return SemIR::ErrorInst::InstId;
     }
     case clang::OverloadingResult::OR_Deleted: {
-      // TODO: Add notes with the candidates.
-      CARBON_DIAGNOSTIC(CppOverloadingDeletedFunctionFound, Error,
-                        "call to deleted function `{0}`", SemIR::NameId);
-      context.emitter().Emit(loc_id, CppOverloadingDeletedFunctionFound,
-                             overload_set.name_id);
+      sema.DiagnoseUseOfDeletedFunction(
+          loc, clang::SourceRange(loc, loc),
+          GetCppName(context, overload_set.name_id), candidate_set,
+          best_viable_fn->Function, arg_exprs);
       return SemIR::ErrorInst::InstId;
     }
   }
