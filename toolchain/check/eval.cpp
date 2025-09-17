@@ -674,7 +674,6 @@ static auto GetConstantValue(EvalContext& eval_context,
   SemIR::FacetTypeInfo info = GetConstantFacetTypeInfo(
       eval_context, SemIR::LocId::None,
       eval_context.facet_types().Get(facet_type_id), phase);
-  // TODO: Return `facet_type_id` if we can detect nothing has changed.
   return eval_context.facet_types().Add(info);
 }
 
