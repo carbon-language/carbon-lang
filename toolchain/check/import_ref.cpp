@@ -1837,26 +1837,22 @@ static auto TryResolveTypedInst(ImportRefResolver& resolver, InstT inst)
       resolver, {.type_id = SemIR::TypeType::TypeId, .inner_id = inner_id});
 }
 
-// TODO: This is a WIP attempt to solve the failing test
-// https://github.com/carbon-language/carbon-lang/blob/508a88e2a995c9f3342b019cee6948c162004b68/toolchain/check/testdata/interop/cpp/import.carbon.
-// Adding this method solves the failure `TryResolveInst on unsupported
-// instruction kind CppOverloadSetType`. However there is a new failure
-// `./toolchain/base/value_store.h:111: id.index < size_: inst27` and this still
-// remains a WIP.
 static auto TryResolveTypedInst(ImportRefResolver& resolver,
-                                SemIR::CppOverloadSetType inst,
-                                SemIR::InstId inst_id, SemIR::Inst untyped_inst)
+                                SemIR::CppOverloadSetType inst)
     -> ResolveResult {
-  resolver.local_context().TODO(SemIR::LocId::None,
-                                "Unsupported: Importing C++ functions that "
-                                "require thunks indirectly called here");
-  auto inst_constant_id = resolver.import_constant_values().Get(inst_id);
-  if (!inst_constant_id.is_constant()) {
-    CARBON_CHECK(untyped_inst.Is<SemIR::BindName>(),
-                 "TryResolveInst on non-constant instruction {0}", inst);
-    return ResolveResult::Done(SemIR::ConstantId::NotConstant);
-  }
-  return ResolveResult::Done(inst_constant_id);
+  // Supporting C++ overload resolution of imported functions is a large task,
+  // which might require serializing and deserializing AST for using decl ids,
+  // using modules and/or linking ASTs.
+  resolver.local_context().TODO(
+      SemIR::LocId::None,
+      llvm::formatv("Unsupported: Importing C++ function `{0}` indirectly",
+                    resolver.import_ir().names().GetAsStringIfIdentifier(
+                        resolver.import_ir()
+                            .cpp_overload_sets()
+                            .Get(inst.overload_set_id)
+                            .name_id)));
+  return ResolveResult::Done(SemIR::ErrorInst::ConstantId,
+                             SemIR::ErrorInst::InstId);
 }
 
 static auto TryResolveTypedInst(ImportRefResolver& resolver,
@@ -3182,7 +3178,7 @@ static auto TryResolveInstCanonical(ImportRefResolver& resolver,
       return TryResolveTypedInst(resolver, inst);
     }
     case CARBON_KIND(SemIR::CppOverloadSetType inst): {
-      return TryResolveTypedInst(resolver, inst, inst_id, untyped_inst);
+      return TryResolveTypedInst(resolver, inst);
     }
     case CARBON_KIND(SemIR::ExportDecl inst): {
       return TryResolveTypedInst(resolver, inst);
