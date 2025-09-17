@@ -95,7 +95,7 @@ fn TestGreaterEqual(a: D, b: D) -> bool {
 // CHECK:STDOUT:   %OrderedWith.type.270: type = generic_interface_type @OrderedWith [concrete]
 // CHECK:STDOUT:   %OrderedWith.generic: %OrderedWith.type.270 = struct_value () [concrete]
 // CHECK:STDOUT:   %pattern_type.831: type = pattern_type bool [concrete]
-// CHECK:STDOUT:   %OrderedWith.type.107: type = facet_type <@OrderedWith, @OrderedWith(%C)> [concrete]
+// CHECK:STDOUT:   %OrderedWith.type.b75: type = facet_type <@OrderedWith, @OrderedWith(%C)> [concrete]
 // CHECK:STDOUT:   %OrderedWith.Less.type.ef8: type = fn_type @OrderedWith.Less, @OrderedWith(%C) [concrete]
 // CHECK:STDOUT:   %OrderedWith.LessOrEquivalent.type.718: type = fn_type @OrderedWith.LessOrEquivalent, @OrderedWith(%C) [concrete]
 // CHECK:STDOUT:   %OrderedWith.Greater.type.394: type = fn_type @OrderedWith.Greater, @OrderedWith(%C) [concrete]
@@ -112,19 +112,19 @@ fn TestGreaterEqual(a: D, b: D) -> bool {
 // CHECK:STDOUT:   %C.as.OrderedWith.impl.Greater: %C.as.OrderedWith.impl.Greater.type = struct_value () [concrete]
 // CHECK:STDOUT:   %C.as.OrderedWith.impl.GreaterOrEquivalent.type: type = fn_type @C.as.OrderedWith.impl.GreaterOrEquivalent [concrete]
 // CHECK:STDOUT:   %C.as.OrderedWith.impl.GreaterOrEquivalent: %C.as.OrderedWith.impl.GreaterOrEquivalent.type = struct_value () [concrete]
-// CHECK:STDOUT:   %OrderedWith.facet: %OrderedWith.type.107 = facet_value %C, (%OrderedWith.impl_witness) [concrete]
+// CHECK:STDOUT:   %OrderedWith.facet: %OrderedWith.type.b75 = facet_value %C, (%OrderedWith.impl_witness) [concrete]
 // CHECK:STDOUT:   %TestLess.type: type = fn_type @TestLess [concrete]
 // CHECK:STDOUT:   %TestLess: %TestLess.type = struct_value () [concrete]
-// CHECK:STDOUT:   %.440: type = fn_type_with_self_type %OrderedWith.Less.type.ef8, %OrderedWith.facet [concrete]
+// CHECK:STDOUT:   %.9bd: type = fn_type_with_self_type %OrderedWith.Less.type.ef8, %OrderedWith.facet [concrete]
 // CHECK:STDOUT:   %TestLessEqual.type: type = fn_type @TestLessEqual [concrete]
 // CHECK:STDOUT:   %TestLessEqual: %TestLessEqual.type = struct_value () [concrete]
-// CHECK:STDOUT:   %.7af: type = fn_type_with_self_type %OrderedWith.LessOrEquivalent.type.718, %OrderedWith.facet [concrete]
+// CHECK:STDOUT:   %.851: type = fn_type_with_self_type %OrderedWith.LessOrEquivalent.type.718, %OrderedWith.facet [concrete]
 // CHECK:STDOUT:   %TestGreater.type: type = fn_type @TestGreater [concrete]
 // CHECK:STDOUT:   %TestGreater: %TestGreater.type = struct_value () [concrete]
-// CHECK:STDOUT:   %.3d4: type = fn_type_with_self_type %OrderedWith.Greater.type.394, %OrderedWith.facet [concrete]
+// CHECK:STDOUT:   %.a50: type = fn_type_with_self_type %OrderedWith.Greater.type.394, %OrderedWith.facet [concrete]
 // CHECK:STDOUT:   %TestGreaterEqual.type: type = fn_type @TestGreaterEqual [concrete]
 // CHECK:STDOUT:   %TestGreaterEqual: %TestGreaterEqual.type = struct_value () [concrete]
-// CHECK:STDOUT:   %.3b1: type = fn_type_with_self_type %OrderedWith.GreaterOrEquivalent.type.f2b, %OrderedWith.facet [concrete]
+// CHECK:STDOUT:   %.cfe: type = fn_type_with_self_type %OrderedWith.GreaterOrEquivalent.type.f2b, %OrderedWith.facet [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -156,7 +156,7 @@ fn TestGreaterEqual(a: D, b: D) -> bool {
 // CHECK:STDOUT:     %Core.ref: <namespace> = name_ref Core, imports.%Core [concrete = imports.%Core]
 // CHECK:STDOUT:     %OrderedWith.ref: %OrderedWith.type.270 = name_ref OrderedWith, imports.%Core.OrderedWith [concrete = constants.%OrderedWith.generic]
 // CHECK:STDOUT:     %C.ref.loc6_28: type = name_ref C, file.%C.decl [concrete = constants.%C]
-// CHECK:STDOUT:     %OrderedWith.type: type = facet_type <@OrderedWith, @OrderedWith(constants.%C)> [concrete = constants.%OrderedWith.type.107]
+// CHECK:STDOUT:     %OrderedWith.type: type = facet_type <@OrderedWith, @OrderedWith(constants.%C)> [concrete = constants.%OrderedWith.type.b75]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %OrderedWith.impl_witness_table = impl_witness_table (@C.as.OrderedWith.impl.%C.as.OrderedWith.impl.Less.decl, @C.as.OrderedWith.impl.%C.as.OrderedWith.impl.LessOrEquivalent.decl, @C.as.OrderedWith.impl.%C.as.OrderedWith.impl.Greater.decl, @C.as.OrderedWith.impl.%C.as.OrderedWith.impl.GreaterOrEquivalent.decl), @C.as.OrderedWith.impl [concrete]
 // CHECK:STDOUT:   %OrderedWith.impl_witness: <witness> = impl_witness %OrderedWith.impl_witness_table [concrete = constants.%OrderedWith.impl_witness]
@@ -375,7 +375,7 @@ fn TestGreaterEqual(a: D, b: D) -> bool {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %a.ref: %C = name_ref a, %a
 // CHECK:STDOUT:   %b.ref: %C = name_ref b, %b
-// CHECK:STDOUT:   %impl.elem0: %.440 = impl_witness_access constants.%OrderedWith.impl_witness, element0 [concrete = constants.%C.as.OrderedWith.impl.Less]
+// CHECK:STDOUT:   %impl.elem0: %.9bd = impl_witness_access constants.%OrderedWith.impl_witness, element0 [concrete = constants.%C.as.OrderedWith.impl.Less]
 // CHECK:STDOUT:   %bound_method: <bound method> = bound_method %a.ref, %impl.elem0
 // CHECK:STDOUT:   %C.as.OrderedWith.impl.Less.call: init bool = call %bound_method(%a.ref, %b.ref)
 // CHECK:STDOUT:   return %C.as.OrderedWith.impl.Less.call to %return
@@ -385,7 +385,7 @@ fn TestGreaterEqual(a: D, b: D) -> bool {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %a.ref: %C = name_ref a, %a
 // CHECK:STDOUT:   %b.ref: %C = name_ref b, %b
-// CHECK:STDOUT:   %impl.elem1: %.7af = impl_witness_access constants.%OrderedWith.impl_witness, element1 [concrete = constants.%C.as.OrderedWith.impl.LessOrEquivalent]
+// CHECK:STDOUT:   %impl.elem1: %.851 = impl_witness_access constants.%OrderedWith.impl_witness, element1 [concrete = constants.%C.as.OrderedWith.impl.LessOrEquivalent]
 // CHECK:STDOUT:   %bound_method: <bound method> = bound_method %a.ref, %impl.elem1
 // CHECK:STDOUT:   %C.as.OrderedWith.impl.LessOrEquivalent.call: init bool = call %bound_method(%a.ref, %b.ref)
 // CHECK:STDOUT:   return %C.as.OrderedWith.impl.LessOrEquivalent.call to %return
@@ -395,7 +395,7 @@ fn TestGreaterEqual(a: D, b: D) -> bool {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %a.ref: %C = name_ref a, %a
 // CHECK:STDOUT:   %b.ref: %C = name_ref b, %b
-// CHECK:STDOUT:   %impl.elem2: %.3d4 = impl_witness_access constants.%OrderedWith.impl_witness, element2 [concrete = constants.%C.as.OrderedWith.impl.Greater]
+// CHECK:STDOUT:   %impl.elem2: %.a50 = impl_witness_access constants.%OrderedWith.impl_witness, element2 [concrete = constants.%C.as.OrderedWith.impl.Greater]
 // CHECK:STDOUT:   %bound_method: <bound method> = bound_method %a.ref, %impl.elem2
 // CHECK:STDOUT:   %C.as.OrderedWith.impl.Greater.call: init bool = call %bound_method(%a.ref, %b.ref)
 // CHECK:STDOUT:   return %C.as.OrderedWith.impl.Greater.call to %return
@@ -405,7 +405,7 @@ fn TestGreaterEqual(a: D, b: D) -> bool {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %a.ref: %C = name_ref a, %a
 // CHECK:STDOUT:   %b.ref: %C = name_ref b, %b
-// CHECK:STDOUT:   %impl.elem3: %.3b1 = impl_witness_access constants.%OrderedWith.impl_witness, element3 [concrete = constants.%C.as.OrderedWith.impl.GreaterOrEquivalent]
+// CHECK:STDOUT:   %impl.elem3: %.cfe = impl_witness_access constants.%OrderedWith.impl_witness, element3 [concrete = constants.%C.as.OrderedWith.impl.GreaterOrEquivalent]
 // CHECK:STDOUT:   %bound_method: <bound method> = bound_method %a.ref, %impl.elem3
 // CHECK:STDOUT:   %C.as.OrderedWith.impl.GreaterOrEquivalent.call: init bool = call %bound_method(%a.ref, %b.ref)
 // CHECK:STDOUT:   return %C.as.OrderedWith.impl.GreaterOrEquivalent.call to %return

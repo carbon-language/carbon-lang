@@ -221,8 +221,8 @@ fn Use() {
 // CHECK:STDOUT:   %pattern_type.eb8: type = pattern_type %MaybeUnformed.275 [concrete]
 // CHECK:STDOUT:   %As.type.90f: type = generic_interface_type @As [concrete]
 // CHECK:STDOUT:   %As.generic: %As.type.90f = struct_value () [concrete]
-// CHECK:STDOUT:   %MaybeUnformed.as.Destroy.impl.Op.type.2b9: type = fn_type @MaybeUnformed.as.Destroy.impl.Op, @MaybeUnformed.as.Destroy.impl(%X) [concrete]
-// CHECK:STDOUT:   %MaybeUnformed.as.Destroy.impl.Op.9a0: %MaybeUnformed.as.Destroy.impl.Op.type.2b9 = struct_value () [concrete]
+// CHECK:STDOUT:   %MaybeUnformed.as.Destroy.impl.Op.type.fc3: type = fn_type @MaybeUnformed.as.Destroy.impl.Op, @MaybeUnformed.as.Destroy.impl(%X) [concrete]
+// CHECK:STDOUT:   %MaybeUnformed.as.Destroy.impl.Op.eef: %MaybeUnformed.as.Destroy.impl.Op.type.fc3 = struct_value () [concrete]
 // CHECK:STDOUT:   %ptr.58e: type = ptr_type %MaybeUnformed.275 [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -278,7 +278,7 @@ fn Use() {
 // CHECK:STDOUT:     %MaybeUnformed.loc27_30: type = class_type @MaybeUnformed, @MaybeUnformed(constants.%X) [concrete = constants.%MaybeUnformed.275]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %v: %MaybeUnformed.275 = bind_name v, <error> [concrete = <error>]
-// CHECK:STDOUT:   %MaybeUnformed.as.Destroy.impl.Op.bound: <bound method> = bound_method %i.var, constants.%MaybeUnformed.as.Destroy.impl.Op.9a0
+// CHECK:STDOUT:   %MaybeUnformed.as.Destroy.impl.Op.bound: <bound method> = bound_method %i.var, constants.%MaybeUnformed.as.Destroy.impl.Op.eef
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT:   %bound_method: <bound method> = bound_method %i.var, %MaybeUnformed.as.Destroy.impl.Op.specific_fn
 // CHECK:STDOUT:   %addr: %ptr.58e = addr_of %i.var

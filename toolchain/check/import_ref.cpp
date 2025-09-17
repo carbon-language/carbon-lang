@@ -1838,6 +1838,24 @@ static auto TryResolveTypedInst(ImportRefResolver& resolver, InstT inst)
 }
 
 static auto TryResolveTypedInst(ImportRefResolver& resolver,
+                                SemIR::CppOverloadSetType inst)
+    -> ResolveResult {
+  // Supporting C++ overload resolution of imported functions is a large task,
+  // which might require serializing and deserializing AST for using decl ids,
+  // using modules and/or linking ASTs.
+  resolver.local_context().TODO(
+      SemIR::LocId::None,
+      llvm::formatv("Unsupported: Importing C++ function `{0}` indirectly",
+                    resolver.import_ir().names().GetAsStringIfIdentifier(
+                        resolver.import_ir()
+                            .cpp_overload_sets()
+                            .Get(inst.overload_set_id)
+                            .name_id)));
+  return ResolveResult::Done(SemIR::ErrorInst::ConstantId,
+                             SemIR::ErrorInst::InstId);
+}
+
+static auto TryResolveTypedInst(ImportRefResolver& resolver,
                                 SemIR::ExportDecl inst) -> ResolveResult {
   auto value_id = GetLocalConstantId(resolver, inst.value_id);
   return RetryOrDone(resolver, value_id);
@@ -2542,6 +2560,7 @@ static auto TryResolveTypedInst(ImportRefResolver& resolver,
   }
 
   SemIR::FacetTypeInfo local_facet_type_info = {
+      .builtin_constraint_mask = import_facet_type_info.builtin_constraint_mask,
       .other_requirements = import_facet_type_info.other_requirements};
   local_facet_type_info.extend_constraints.reserve(
       import_facet_type_info.extend_constraints.size());
@@ -3156,6 +3175,9 @@ static auto TryResolveInstCanonical(ImportRefResolver& resolver,
       return TryResolveTypedInst(resolver, inst);
     }
     case CARBON_KIND(SemIR::ConstType inst): {
+      return TryResolveTypedInst(resolver, inst);
+    }
+    case CARBON_KIND(SemIR::CppOverloadSetType inst): {
       return TryResolveTypedInst(resolver, inst);
     }
     case CARBON_KIND(SemIR::ExportDecl inst): {

@@ -16,9 +16,6 @@ template<typename T> struct X {
   static void f(T t) {}
 };
 
-// TODO: We should be able to instantiate the class and function when needed.
-template struct X<int>;
-
 using Y = X<int>;
 
 // --- use_class_template.carbon
@@ -47,7 +44,7 @@ fn F() {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: mustprogress noinline nounwind optnone
-// CHECK:STDOUT: define weak_odr dso_local void @_ZN1XIiE1fEi(i32 %t) #0 comdat align 2 {
+// CHECK:STDOUT: define linkonce_odr dso_local void @_ZN1XIiE1fEi(i32 %t) #0 comdat align 2 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   %t.addr = alloca i32, align 4
 // CHECK:STDOUT:   store i32 %t, ptr %t.addr, align 4

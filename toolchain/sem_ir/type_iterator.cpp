@@ -122,26 +122,23 @@ auto TypeIterator::Next() -> Step {
         }
       }
       case CARBON_KIND(SemIR::ConstType const_type): {
-        // We don't stop at `const` since it is a modifier; just move to the
-        // inner type.
+        Push(EndType());
         PushInstId(const_type.inner_id);
-        break;
-      }
-      case CARBON_KIND(SemIR::MaybeUnformedType partial_type): {
-        // We don't stop at `MaybeUnformed` since it is a modifier; just move to
-        // the inner type.
-        PushInstId(partial_type.inner_id);
-        break;
-      }
-      case CARBON_KIND(SemIR::PartialType partial_type): {
-        // We don't stop at `partial` since it is a modifier; just move to the
-        // inner type.
-        PushInstId(partial_type.inner_id);
-        break;
+        return Step::ConstStart();
       }
       case CARBON_KIND(SemIR::ImplWitnessAssociatedConstant assoc): {
         Push(assoc.type_id);
         break;
+      }
+      case CARBON_KIND(SemIR::MaybeUnformedType maybe_unformed_type): {
+        Push(EndType());
+        PushInstId(maybe_unformed_type.inner_id);
+        return Step::MaybeUnformedStart();
+      }
+      case CARBON_KIND(SemIR::PartialType partial_type): {
+        Push(EndType());
+        PushInstId(partial_type.inner_id);
+        return Step::PartialStart();
       }
       case CARBON_KIND(SemIR::PointerType pointer_type): {
         Push(EndType());

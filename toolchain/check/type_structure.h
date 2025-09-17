@@ -10,6 +10,7 @@
 #include "common/ostream.h"
 #include "llvm/ADT/SmallVector.h"
 #include "toolchain/check/context.h"
+#include "toolchain/check/scope_index.h"
 #include "toolchain/sem_ir/ids.h"
 
 namespace Carbon::Check {
@@ -115,27 +116,30 @@ class TypeStructure : public Printable<TypeStructure> {
     Symbolic,
   };
 
-  // Marks an array type. The type and bound will appear as other entries.
-  struct ConcreteArrayType {
-    friend auto operator==(ConcreteArrayType /*lhs*/, ConcreteArrayType /*rhs*/)
-        -> bool = default;
+  // Marks a type of the named kind.
+  enum class ConcreteTypeStart {
+    // The type and bound will appear as other entries.
+    Array,
+
+    // The inner type will appear as another entry.
+    Const,
+
+    // The inner type will appear as another entry.
+    MaybeUnformed,
+
+    // The class type will appear as another entry.
+    Partial,
+
+    // The pointee type will appear as another entry.
+    Pointer,
+
+    // The field names and types will appear as other entries.
+    Struct,
+
+    // The type members (if any) will appear as other entries.
+    Tuple,
   };
-  // Marks a pointer type. The pointee type will appear as another entry.
-  struct ConcretePointerType {
-    friend auto operator==(ConcretePointerType /*lhs*/,
-                           ConcretePointerType /*rhs*/) -> bool = default;
-  };
-  // Marks a struct type. The field names and types will appear as other
-  // entries.
-  struct ConcreteStructType {
-    friend auto operator==(ConcreteStructType /*lhs*/,
-                           ConcreteStructType /*rhs*/) -> bool = default;
-  };
-  // Marks a tuple type. The type members (if any) will appear as other entries.
-  struct ConcreteTupleType {
-    friend auto operator==(ConcreteTupleType /*lhs*/, ConcreteTupleType /*rhs*/)
-        -> bool = default;
-  };
+
   // The `concrete_types_` tracks the specific concrete type for each
   // `Structural::Concrete` or `Structural::ConcreteOpenParen` in the type
   // structure.
@@ -146,8 +150,7 @@ class TypeStructure : public Printable<TypeStructure> {
   // `NameId` is used strictly for struct fields, as the field names are part of
   // the struct type.
   using ConcreteType =
-      std::variant<ConcreteArrayType, ConcretePointerType, ConcreteStructType,
-                   ConcreteTupleType, SemIR::ClassId, SemIR::ConstantId,
+      std::variant<ConcreteTypeStart, SemIR::ClassId, SemIR::ConstantId,
                    SemIR::InterfaceId, SemIR::NameId, SemIR::TypeId>;
 
   TypeStructure(llvm::SmallVector<Structural> structure,

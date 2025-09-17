@@ -111,10 +111,10 @@ fn Run() {
 // CHECK:STDOUT:   %complete_type.e4b: <witness> = complete_type_witness %struct_type.a [concrete]
 // CHECK:STDOUT:   %pattern_type.d3d: type = pattern_type %ptr.257 [concrete]
 // CHECK:STDOUT:   %Destroy.type: type = facet_type <@Destroy> [concrete]
-// CHECK:STDOUT:   %T.as.Destroy.impl.Op.type.7a5: type = fn_type @T.as.Destroy.impl.Op, @T.as.Destroy.impl(%ptr.257) [concrete]
-// CHECK:STDOUT:   %T.as.Destroy.impl.Op.3e5: %T.as.Destroy.impl.Op.type.7a5 = struct_value () [concrete]
+// CHECK:STDOUT:   %T.as.Destroy.impl.Op.type.f3f: type = fn_type @T.as.Destroy.impl.Op, @T.as.Destroy.impl(%ptr.257) [concrete]
+// CHECK:STDOUT:   %T.as.Destroy.impl.Op.76b: %T.as.Destroy.impl.Op.type.f3f = struct_value () [concrete]
 // CHECK:STDOUT:   %ptr.d80: type = ptr_type %ptr.257 [concrete]
-// CHECK:STDOUT:   %T.as.Destroy.impl.Op.specific_fn: <specific function> = specific_function %T.as.Destroy.impl.Op.3e5, @T.as.Destroy.impl.Op(%ptr.257) [concrete]
+// CHECK:STDOUT:   %T.as.Destroy.impl.Op.specific_fn: <specific function> = specific_function %T.as.Destroy.impl.Op.76b, @T.as.Destroy.impl.Op(%ptr.257) [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -128,9 +128,9 @@ fn Run() {
 // CHECK:STDOUT:   %Main.import_ref.3a6 = import_ref Main//a, inst18 [no loc], unloaded
 // CHECK:STDOUT:   %Main.import_ref.4e0 = import_ref Main//a, loc5_8, unloaded
 // CHECK:STDOUT:   %Core.Destroy: type = import_ref Core//prelude/parts/destroy, Destroy, loaded [concrete = constants.%Destroy.type]
-// CHECK:STDOUT:   %Main.import_ref.0d1 = import_ref Main//a, loc4_13, unloaded
+// CHECK:STDOUT:   %Main.import_ref.13a = import_ref Main//a, loc4_13, unloaded
 // CHECK:STDOUT:   %Main.import_ref.f64: type = import_ref Main//a, loc4_13, loaded [concrete = constants.%Cycle]
-// CHECK:STDOUT:   %Main.import_ref.063: type = import_ref Main//a, inst26 [no loc], loaded [concrete = constants.%Destroy.type]
+// CHECK:STDOUT:   %Main.import_ref.e45: type = import_ref Main//a, inst26 [no loc], loaded [concrete = constants.%Destroy.type]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -144,9 +144,9 @@ fn Run() {
 // CHECK:STDOUT:   %Run.decl: %Run.type = fn_decl @Run [concrete = constants.%Run] {} {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: impl @Cycle.as.Destroy.impl: imports.%Main.import_ref.f64 as imports.%Main.import_ref.063 [from "a.carbon"] {
+// CHECK:STDOUT: impl @Cycle.as.Destroy.impl: imports.%Main.import_ref.f64 as imports.%Main.import_ref.e45 [from "a.carbon"] {
 // CHECK:STDOUT: !members:
-// CHECK:STDOUT:   witness = imports.%Main.import_ref.0d1
+// CHECK:STDOUT:   witness = imports.%Main.import_ref.13a
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @Cycle [from "a.carbon"] {
@@ -169,8 +169,8 @@ fn Run() {
 // CHECK:STDOUT:     %ptr: type = ptr_type %Cycle.ref [concrete = constants.%ptr.257]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %a: ref %ptr.257 = bind_name a, %a.var
-// CHECK:STDOUT:   %T.as.Destroy.impl.Op.bound: <bound method> = bound_method %a.var, constants.%T.as.Destroy.impl.Op.3e5
-// CHECK:STDOUT:   %T.as.Destroy.impl.Op.specific_fn: <specific function> = specific_function constants.%T.as.Destroy.impl.Op.3e5, @T.as.Destroy.impl.Op(constants.%ptr.257) [concrete = constants.%T.as.Destroy.impl.Op.specific_fn]
+// CHECK:STDOUT:   %T.as.Destroy.impl.Op.bound: <bound method> = bound_method %a.var, constants.%T.as.Destroy.impl.Op.76b
+// CHECK:STDOUT:   %T.as.Destroy.impl.Op.specific_fn: <specific function> = specific_function constants.%T.as.Destroy.impl.Op.76b, @T.as.Destroy.impl.Op(constants.%ptr.257) [concrete = constants.%T.as.Destroy.impl.Op.specific_fn]
 // CHECK:STDOUT:   %bound_method: <bound method> = bound_method %a.var, %T.as.Destroy.impl.Op.specific_fn
 // CHECK:STDOUT:   %addr: %ptr.d80 = addr_of %a.var
 // CHECK:STDOUT:   %T.as.Destroy.impl.Op.call: init %empty_tuple.type = call %bound_method(%addr)

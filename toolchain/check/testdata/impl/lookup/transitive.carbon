@@ -126,11 +126,11 @@ fn Call() {
 // CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [concrete]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [concrete]
 // CHECK:STDOUT:   %I.type: type = facet_type <@I> [concrete]
-// CHECK:STDOUT:   %Self.ce4: %I.type = bind_symbolic_name Self, 0 [symbolic]
+// CHECK:STDOUT:   %Self.7ee: %I.type = bind_symbolic_name Self, 0 [symbolic]
 // CHECK:STDOUT:   %I.F.type: type = fn_type @I.F [concrete]
 // CHECK:STDOUT:   %I.F: %I.F.type = struct_value () [concrete]
-// CHECK:STDOUT:   %Self.as_type.4af: type = facet_access_type %Self.ce4 [symbolic]
-// CHECK:STDOUT:   %pattern_type.802: type = pattern_type %Self.as_type.4af [symbolic]
+// CHECK:STDOUT:   %Self.as_type.a67: type = facet_access_type %Self.7ee [symbolic]
+// CHECK:STDOUT:   %pattern_type.d22: type = pattern_type %Self.as_type.a67 [symbolic]
 // CHECK:STDOUT:   %I.impl_witness: <witness> = impl_witness file.%I.impl_witness_table [concrete]
 // CHECK:STDOUT:   %pattern_type.c48: type = pattern_type %C [concrete]
 // CHECK:STDOUT:   %C.as.I.impl.F.type: type = fn_type @C.as.I.impl.F [concrete]
@@ -146,10 +146,10 @@ fn Call() {
 // CHECK:STDOUT:     import Core//prelude/...
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.Destroy: type = import_ref Core//prelude/parts/destroy, Destroy, loaded [concrete = constants.%Destroy.type]
-// CHECK:STDOUT:   %Main.import_ref.b2b = import_ref Main//i, inst19 [no loc], unloaded
+// CHECK:STDOUT:   %Main.import_ref.8e7 = import_ref Main//i, inst19 [no loc], unloaded
 // CHECK:STDOUT:   %Main.import_ref.507 = import_ref Main//i, loc4_33, unloaded
 // CHECK:STDOUT:   %Main.F: %I.F.type = import_ref Main//i, F, loaded [concrete = constants.%I.F]
-// CHECK:STDOUT:   %Main.import_ref.72c: %I.type = import_ref Main//i, inst19 [no loc], loaded [symbolic = constants.%Self.ce4]
+// CHECK:STDOUT:   %Main.import_ref.de2: %I.type = import_ref Main//i, inst19 [no loc], loaded [symbolic = constants.%Self.7ee]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -171,7 +171,7 @@ fn Call() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: interface @I [from "i.carbon"] {
 // CHECK:STDOUT: !members:
-// CHECK:STDOUT:   .Self = imports.%Main.import_ref.b2b
+// CHECK:STDOUT:   .Self = imports.%Main.import_ref.8e7
 // CHECK:STDOUT:   .F = imports.%Main.import_ref.507
 // CHECK:STDOUT:   witness = (imports.%Main.F)
 // CHECK:STDOUT: }
@@ -221,10 +221,10 @@ fn Call() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @C.as.Destroy.impl.Op(%self.param: %ptr.019) = "no_op";
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic fn @I.F(imports.%Main.import_ref.72c: %I.type) [from "i.carbon"] {
-// CHECK:STDOUT:   %Self: %I.type = bind_symbolic_name Self, 0 [symbolic = %Self (constants.%Self.ce4)]
-// CHECK:STDOUT:   %Self.as_type: type = facet_access_type %Self [symbolic = %Self.as_type (constants.%Self.as_type.4af)]
-// CHECK:STDOUT:   %pattern_type: type = pattern_type %Self.as_type [symbolic = %pattern_type (constants.%pattern_type.802)]
+// CHECK:STDOUT: generic fn @I.F(imports.%Main.import_ref.de2: %I.type) [from "i.carbon"] {
+// CHECK:STDOUT:   %Self: %I.type = bind_symbolic_name Self, 0 [symbolic = %Self (constants.%Self.7ee)]
+// CHECK:STDOUT:   %Self.as_type: type = facet_access_type %Self [symbolic = %Self.as_type (constants.%Self.as_type.a67)]
+// CHECK:STDOUT:   %pattern_type: type = pattern_type %Self.as_type [symbolic = %pattern_type (constants.%pattern_type.d22)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   fn;
 // CHECK:STDOUT: }
@@ -234,10 +234,10 @@ fn Call() {
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @I.F(constants.%Self.ce4) {
-// CHECK:STDOUT:   %Self => constants.%Self.ce4
-// CHECK:STDOUT:   %Self.as_type => constants.%Self.as_type.4af
-// CHECK:STDOUT:   %pattern_type => constants.%pattern_type.802
+// CHECK:STDOUT: specific @I.F(constants.%Self.7ee) {
+// CHECK:STDOUT:   %Self => constants.%Self.7ee
+// CHECK:STDOUT:   %Self.as_type => constants.%Self.as_type.a67
+// CHECK:STDOUT:   %pattern_type => constants.%pattern_type.d22
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @I.F(constants.%I.facet) {
@@ -306,20 +306,20 @@ fn Call() {
 // CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [concrete]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [concrete]
 // CHECK:STDOUT:   %I.type: type = facet_type <@I> [concrete]
-// CHECK:STDOUT:   %Self.ce4: %I.type = bind_symbolic_name Self, 0 [symbolic]
+// CHECK:STDOUT:   %Self.7ee: %I.type = bind_symbolic_name Self, 0 [symbolic]
 // CHECK:STDOUT:   %I.assoc_type: type = assoc_entity_type @I [concrete]
 // CHECK:STDOUT:   %assoc0.3f3: %I.assoc_type = assoc_entity element0, imports.%Main.import_ref.e03 [concrete]
 // CHECK:STDOUT:   %I.F.type: type = fn_type @I.F [concrete]
 // CHECK:STDOUT:   %I.F: %I.F.type = struct_value () [concrete]
-// CHECK:STDOUT:   %Self.as_type.4af: type = facet_access_type %Self.ce4 [symbolic]
-// CHECK:STDOUT:   %pattern_type.802: type = pattern_type %Self.as_type.4af [symbolic]
+// CHECK:STDOUT:   %Self.as_type.a67: type = facet_access_type %Self.7ee [symbolic]
+// CHECK:STDOUT:   %pattern_type.d22: type = pattern_type %Self.as_type.a67 [symbolic]
 // CHECK:STDOUT:   %I.impl_witness: <witness> = impl_witness imports.%I.impl_witness_table [concrete]
 // CHECK:STDOUT:   %I.facet: %I.type = facet_value %C, (%I.impl_witness) [concrete]
-// CHECK:STDOUT:   %.115: type = fn_type_with_self_type %I.F.type, %I.facet [concrete]
+// CHECK:STDOUT:   %.dcb: type = fn_type_with_self_type %I.F.type, %I.facet [concrete]
 // CHECK:STDOUT:   %C.as.I.impl.F.type: type = fn_type @C.as.I.impl.F [concrete]
 // CHECK:STDOUT:   %C.as.I.impl.F: %C.as.I.impl.F.type = struct_value () [concrete]
 // CHECK:STDOUT:   %Destroy.type: type = facet_type <@Destroy> [concrete]
-// CHECK:STDOUT:   %Destroy.impl_witness.3a3: <witness> = impl_witness imports.%Destroy.impl_witness_table.a20 [concrete]
+// CHECK:STDOUT:   %Destroy.impl_witness.e02: <witness> = impl_witness imports.%Destroy.impl_witness_table.04e [concrete]
 // CHECK:STDOUT:   %C.as.Destroy.impl.Op.type: type = fn_type @C.as.Destroy.impl.Op [concrete]
 // CHECK:STDOUT:   %C.as.Destroy.impl.Op: %C.as.Destroy.impl.Op.type = struct_value () [concrete]
 // CHECK:STDOUT:   %ptr.019: type = ptr_type %C [concrete]
@@ -335,22 +335,22 @@ fn Call() {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Main.import_ref.8db: <witness> = import_ref Main//get, inst23 [indirect], loaded [concrete = constants.%complete_type]
 // CHECK:STDOUT:   %Main.import_ref.6a9 = import_ref Main//get, inst24 [indirect], unloaded
-// CHECK:STDOUT:   %Main.import_ref.b2b = import_ref Main//i, inst19 [no loc], unloaded
+// CHECK:STDOUT:   %Main.import_ref.8e7 = import_ref Main//i, inst19 [no loc], unloaded
 // CHECK:STDOUT:   %Main.import_ref.c44: %I.assoc_type = import_ref Main//i, loc4_33, loaded [concrete = constants.%assoc0.3f3]
 // CHECK:STDOUT:   %Main.F = import_ref Main//i, F, unloaded
 // CHECK:STDOUT:   %Main.import_ref.e03: %I.F.type = import_ref Main//i, loc4_33, loaded [concrete = constants.%I.F]
-// CHECK:STDOUT:   %Main.import_ref.72c: %I.type = import_ref Main//i, inst19 [no loc], loaded [symbolic = constants.%Self.ce4]
-// CHECK:STDOUT:   %Main.import_ref.55f: <witness> = import_ref Main//c, loc7_13, loaded [concrete = constants.%I.impl_witness]
+// CHECK:STDOUT:   %Main.import_ref.de2: %I.type = import_ref Main//i, inst19 [no loc], loaded [symbolic = constants.%Self.7ee]
+// CHECK:STDOUT:   %Main.import_ref.f2d: <witness> = import_ref Main//c, loc7_13, loaded [concrete = constants.%I.impl_witness]
 // CHECK:STDOUT:   %Main.import_ref.29a: type = import_ref Main//c, loc7_6, loaded [concrete = constants.%C]
 // CHECK:STDOUT:   %Main.import_ref.f50: type = import_ref Main//c, loc7_11, loaded [concrete = constants.%I.type]
-// CHECK:STDOUT:   %Main.import_ref.d0f: %C.as.I.impl.F.type = import_ref Main//c, loc7_34, loaded [concrete = constants.%C.as.I.impl.F]
-// CHECK:STDOUT:   %I.impl_witness_table = impl_witness_table (%Main.import_ref.d0f), @C.as.I.impl [concrete]
+// CHECK:STDOUT:   %Main.import_ref.540: %C.as.I.impl.F.type = import_ref Main//c, loc7_34, loaded [concrete = constants.%C.as.I.impl.F]
+// CHECK:STDOUT:   %I.impl_witness_table = impl_witness_table (%Main.import_ref.540), @C.as.I.impl [concrete]
 // CHECK:STDOUT:   %Core.Destroy: type = import_ref Core//prelude/parts/destroy, Destroy, loaded [concrete = constants.%Destroy.type]
-// CHECK:STDOUT:   %Main.import_ref.2a4: <witness> = import_ref Main//c, loc6_9, loaded [concrete = constants.%Destroy.impl_witness.3a3]
+// CHECK:STDOUT:   %Main.import_ref.f0a: <witness> = import_ref Main//c, loc6_9, loaded [concrete = constants.%Destroy.impl_witness.e02]
 // CHECK:STDOUT:   %Main.import_ref.0ed: type = import_ref Main//c, loc6_9, loaded [concrete = constants.%C]
-// CHECK:STDOUT:   %Main.import_ref.063: type = import_ref Main//c, inst23 [no loc], loaded [concrete = constants.%Destroy.type]
-// CHECK:STDOUT:   %Main.import_ref.3ed: %C.as.Destroy.impl.Op.type = import_ref Main//c, loc6_9, loaded [concrete = constants.%C.as.Destroy.impl.Op]
-// CHECK:STDOUT:   %Destroy.impl_witness_table.a20 = impl_witness_table (%Main.import_ref.3ed), @C.as.Destroy.impl [concrete]
+// CHECK:STDOUT:   %Main.import_ref.e45: type = import_ref Main//c, inst23 [no loc], loaded [concrete = constants.%Destroy.type]
+// CHECK:STDOUT:   %Main.import_ref.b95: %C.as.Destroy.impl.Op.type = import_ref Main//c, loc6_9, loaded [concrete = constants.%C.as.Destroy.impl.Op]
+// CHECK:STDOUT:   %Destroy.impl_witness_table.04e = impl_witness_table (%Main.import_ref.b95), @C.as.Destroy.impl [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -367,19 +367,19 @@ fn Call() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: interface @I [from "i.carbon"] {
 // CHECK:STDOUT: !members:
-// CHECK:STDOUT:   .Self = imports.%Main.import_ref.b2b
+// CHECK:STDOUT:   .Self = imports.%Main.import_ref.8e7
 // CHECK:STDOUT:   .F = imports.%Main.import_ref.c44
 // CHECK:STDOUT:   witness = (imports.%Main.F)
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: impl @C.as.I.impl: imports.%Main.import_ref.29a as imports.%Main.import_ref.f50 [from "c.carbon"] {
 // CHECK:STDOUT: !members:
-// CHECK:STDOUT:   witness = imports.%Main.import_ref.55f
+// CHECK:STDOUT:   witness = imports.%Main.import_ref.f2d
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: impl @C.as.Destroy.impl: imports.%Main.import_ref.0ed as imports.%Main.import_ref.063 [from "c.carbon"] {
+// CHECK:STDOUT: impl @C.as.Destroy.impl: imports.%Main.import_ref.0ed as imports.%Main.import_ref.e45 [from "c.carbon"] {
 // CHECK:STDOUT: !members:
-// CHECK:STDOUT:   witness = imports.%Main.import_ref.2a4
+// CHECK:STDOUT:   witness = imports.%Main.import_ref.f0a
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @C [from "get.carbon"] {
@@ -396,7 +396,7 @@ fn Call() {
 // CHECK:STDOUT:   %Get.call: init %C = call %Get.ref() to %.loc9_7.1
 // CHECK:STDOUT:   %I.ref: type = name_ref I, imports.%Main.I [concrete = constants.%I.type]
 // CHECK:STDOUT:   %F.ref: %I.assoc_type = name_ref F, imports.%Main.import_ref.c44 [concrete = constants.%assoc0.3f3]
-// CHECK:STDOUT:   %impl.elem0: %.115 = impl_witness_access constants.%I.impl_witness, element0 [concrete = constants.%C.as.I.impl.F]
+// CHECK:STDOUT:   %impl.elem0: %.dcb = impl_witness_access constants.%I.impl_witness, element0 [concrete = constants.%C.as.I.impl.F]
 // CHECK:STDOUT:   %bound_method: <bound method> = bound_method %Get.call, %impl.elem0
 // CHECK:STDOUT:   %.loc9_7.2: ref %C = temporary %.loc9_7.1, %Get.call
 // CHECK:STDOUT:   %.loc9_7.3: %C = bind_value %.loc9_7.2
@@ -409,10 +409,10 @@ fn Call() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Get [from "get.carbon"];
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic fn @I.F(imports.%Main.import_ref.72c: %I.type) [from "i.carbon"] {
-// CHECK:STDOUT:   %Self: %I.type = bind_symbolic_name Self, 0 [symbolic = %Self (constants.%Self.ce4)]
-// CHECK:STDOUT:   %Self.as_type: type = facet_access_type %Self [symbolic = %Self.as_type (constants.%Self.as_type.4af)]
-// CHECK:STDOUT:   %pattern_type: type = pattern_type %Self.as_type [symbolic = %pattern_type (constants.%pattern_type.802)]
+// CHECK:STDOUT: generic fn @I.F(imports.%Main.import_ref.de2: %I.type) [from "i.carbon"] {
+// CHECK:STDOUT:   %Self: %I.type = bind_symbolic_name Self, 0 [symbolic = %Self (constants.%Self.7ee)]
+// CHECK:STDOUT:   %Self.as_type: type = facet_access_type %Self [symbolic = %Self.as_type (constants.%Self.as_type.a67)]
+// CHECK:STDOUT:   %pattern_type: type = pattern_type %Self.as_type [symbolic = %pattern_type (constants.%pattern_type.d22)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   fn;
 // CHECK:STDOUT: }
@@ -421,9 +421,9 @@ fn Call() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @C.as.Destroy.impl.Op = "no_op" [from "c.carbon"];
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @I.F(constants.%Self.ce4) {
-// CHECK:STDOUT:   %Self => constants.%Self.ce4
-// CHECK:STDOUT:   %Self.as_type => constants.%Self.as_type.4af
-// CHECK:STDOUT:   %pattern_type => constants.%pattern_type.802
+// CHECK:STDOUT: specific @I.F(constants.%Self.7ee) {
+// CHECK:STDOUT:   %Self => constants.%Self.7ee
+// CHECK:STDOUT:   %Self.as_type => constants.%Self.as_type.a67
+// CHECK:STDOUT:   %pattern_type => constants.%pattern_type.d22
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

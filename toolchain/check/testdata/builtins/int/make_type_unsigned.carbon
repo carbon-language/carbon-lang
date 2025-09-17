@@ -23,7 +23,7 @@ library "[[@TEST_NAME]]";
 
 import library "types";
 
-fn Copy[T:! type](x: T) -> T = "primitive_copy";
+fn Copy[N:! IntLiteral()](x: UInt(N)) -> UInt(N) = "primitive_copy";
 
 fn F(n: UInt(64)) ->
     //@dump-sem-ir-begin
