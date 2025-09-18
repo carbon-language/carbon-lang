@@ -210,11 +210,14 @@ fn F(U:! I where .X = .Self) {
   // member lookup, but can't call methods without `self`. See the
   // `compound_access_through_call_with_self_param.carbon` test for the former.
   //
-  // CHECK:STDERR: fail_todo_compound_access_through_call.carbon:[[@LINE+4]]:6: error: value of type `<associated entity in I>` is not callable [CallToNonCallable]
-  // CHECK:STDERR:   u.(I.G());
-  // CHECK:STDERR:      ^~~~~
+  // CHECK:STDERR: fail_todo_compound_access_through_call.carbon:[[@LINE+7]]:3: error: cannot implicitly convert non-type value of type `U` into type implementing `I` [ConversionFailureNonTypeToFacet]
+  // CHECK:STDERR:   u.(I.G)();
+  // CHECK:STDERR:   ^~~~~~~
+  // CHECK:STDERR: fail_todo_compound_access_through_call.carbon:[[@LINE+4]]:3: note: type `U` does not implement interface `Core.ImplicitAs(I)` [MissingImplInMemberAccessNote]
+  // CHECK:STDERR:   u.(I.G)();
+  // CHECK:STDERR:   ^~~~~~~
   // CHECK:STDERR:
-  u.(I.G());
+  u.(I.G)();
 
   // This is the same as the above, since G() returns a non-type value of type
   // `U`.
@@ -237,39 +240,28 @@ interface I {
   fn G[self: Self]() -> X;
 }
 
-fn F(U:! I where .X = .Self) {
+fn F(U:! I where .X = .Self, v: U) {
   // Compound member lookup through a non-type value is possible for methods
   // which take a `self` parameter.
 
   // TODO: This should all work.
 
-  // CHECK:STDERR: fail_todo_compound_access_through_call_with_self_param.carbon:[[@LINE+4]]:14: error: cannot access member of interface `I` in type `I where .(I.X) = .Self` that does not implement that interface [MissingImplInMemberAccess]
-  // CHECK:STDERR:   let u: U = U.(I.G)();
-  // CHECK:STDERR:              ^~~~~~~
+  // CHECK:STDERR: fail_todo_compound_access_through_call_with_self_param.carbon:[[@LINE+7]]:14: error: cannot implicitly convert expression of type `.Self` to `U` [ConversionFailure]
+  // CHECK:STDERR:   let u: U = v.(I.G)();
+  // CHECK:STDERR:              ^~~~~~~~~
+  // CHECK:STDERR: fail_todo_compound_access_through_call_with_self_param.carbon:[[@LINE+4]]:14: note: type `.Self` does not implement interface `Core.ImplicitAs(U)` [MissingImplInMemberAccessNote]
+  // CHECK:STDERR:   let u: U = v.(I.G)();
+  // CHECK:STDERR:              ^~~~~~~~~
   // CHECK:STDERR:
-  let u: U = U.(I.G)();
+  let u: U = v.(I.G)();
   // `u` is a non-type value. Can call methods with `self` through compound
   // member lookup, but can't call methods without `self`. See the
   // `compound_access_through_call.carbon` test for the latter.
-  // CHECK:STDERR: fail_todo_compound_access_through_call_with_self_param.carbon:[[@LINE+4]]:6: error: member name `G2` not found in `I` [MemberNameNotFoundInInstScope]
-  // CHECK:STDERR:   u.(I.G2());
-  // CHECK:STDERR:      ^~~~
-  // CHECK:STDERR:
-  u.(I.G2());
+  u.(I.G)();
 
   // This is the same as the above, since G() returns a non-type value of type
-  // `U`.
-  //
-  // This works because G2 has a `self` parameter.
-  // CHECK:STDERR: fail_todo_compound_access_through_call_with_self_param.carbon:[[@LINE+8]]:3: error: cannot access member of interface `I` in type `I where .(I.X) = .Self` that does not implement that interface [MissingImplInMemberAccess]
-  // CHECK:STDERR:   U.(I.G)().(I.G2)();
-  // CHECK:STDERR:   ^~~~~~~
-  // CHECK:STDERR:
-  // CHECK:STDERR: fail_todo_compound_access_through_call_with_self_param.carbon:[[@LINE+4]]:14: error: member name `G2` not found in `I` [MemberNameNotFoundInInstScope]
-  // CHECK:STDERR:   U.(I.G)().(I.G2)();
-  // CHECK:STDERR:              ^~~~
-  // CHECK:STDERR:
-  U.(I.G)().(I.G2)();
+  // `U`. This works because G has a `self` parameter.
+  v.(I.G)().(I.G)();
 }
 
 // --- fail_non_const_associated.carbon
