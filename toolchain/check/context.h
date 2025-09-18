@@ -281,6 +281,12 @@ class Context {
   auto ast_context() -> clang::ASTContext& {
     return sem_ir().clang_ast_unit()->getASTContext();
   }
+  auto clang_decls() -> SemIR::ClangDeclStore& {
+    return sem_ir().clang_decls();
+  }
+  auto clang_decls() const -> const SemIR::ClangDeclStore& {
+    return sem_ir().clang_decls();
+  }
   auto names() -> SemIR::NameStoreWrapper { return sem_ir().names(); }
   auto name_scopes() -> SemIR::NameScopeStore& {
     return sem_ir().name_scopes();

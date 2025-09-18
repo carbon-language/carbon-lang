@@ -95,8 +95,7 @@ static auto TryMapClassType(Context& context, SemIR::ClassType class_type)
           .Get(context.sem_ir().classes().Get(class_type.class_id).scope_id)
           .clang_decl_context_id();
   if (clang_decl_id.has_value()) {
-    clang::Decl* clang_decl =
-        context.sem_ir().clang_decls().Get(clang_decl_id).decl;
+    clang::Decl* clang_decl = context.clang_decls().Get(clang_decl_id).decl;
     auto* tag_type_decl = clang::cast<clang::TagDecl>(clang_decl);
     return context.ast_context().getCanonicalTagType(tag_type_decl);
   }
