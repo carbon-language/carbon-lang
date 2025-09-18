@@ -18,11 +18,7 @@ static auto GetFile(Context& context, SemIR::CheckIRId ir_id)
 
   // If the file is imported, locate it in our imports map.
   auto import_id = context.check_ir_map().Get(ir_id);
-  if (!import_id.has_value()) {
-    // We never imported this CheckIR.
-    // TODO: Can this happen?
-    return nullptr;
-  }
+  CARBON_CHECK(import_id.has_value());
   return context.import_irs().Get(import_id).sem_ir;
 }
 
