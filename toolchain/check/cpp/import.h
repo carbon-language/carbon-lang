@@ -2,8 +2,8 @@
 // Exceptions. See /LICENSE for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
-#ifndef CARBON_TOOLCHAIN_CHECK_IMPORT_CPP_H_
-#define CARBON_TOOLCHAIN_CHECK_IMPORT_CPP_H_
+#ifndef CARBON_TOOLCHAIN_CHECK_CPP_IMPORT_H_
+#define CARBON_TOOLCHAIN_CHECK_CPP_IMPORT_H_
 
 #include "llvm/ADT/ArrayRef.h"
 #include "llvm/ADT/IntrusiveRefCntPtr.h"
@@ -25,6 +25,12 @@ auto ImportCppFiles(Context& context,
                     std::shared_ptr<clang::CompilerInvocation> invocation)
     -> std::unique_ptr<clang::ASTUnit>;
 
+// Imports a function declaration from Clang to Carbon. If successful, returns
+// the new Carbon function declaration `InstId`. If the declaration was already
+// imported, returns the mapped instruction.
+auto ImportCppFunctionDecl(Context& context, SemIR::LocId loc_id,
+                           clang::FunctionDecl* clang_decl) -> SemIR::InstId;
+
 // Looks up the given name in the Clang AST generated when importing C++ code
 // and returns a lookup result. If using the injected class name (`X.X()`),
 // imports the class constructor as a function named as the class.
@@ -34,7 +40,8 @@ auto ImportNameFromCpp(Context& context, SemIR::LocId loc_id,
 
 // Looks up the given operator in the Clang AST generated when importing C++
 // code and returns a lookup result.
-auto ImportOperatorFromCpp(Context& context, SemIR::LocId loc_id, Operator op)
+auto ImportOperatorFromCpp(Context& context, SemIR::LocId loc_id,
+                           SemIR::NameScopeId scope_id, Operator op)
     -> SemIR::ScopeLookupResult;
 
 // Given a Carbon class declaration that was imported from some kind of C++
@@ -48,4 +55,4 @@ auto ImportClassDefinitionForClangDecl(Context& context, SemIR::LocId loc_id,
 
 }  // namespace Carbon::Check
 
-#endif  // CARBON_TOOLCHAIN_CHECK_IMPORT_CPP_H_
+#endif  // CARBON_TOOLCHAIN_CHECK_CPP_IMPORT_H_

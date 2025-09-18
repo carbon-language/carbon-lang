@@ -35,8 +35,8 @@ constexpr auto IsValidTemplateString(int /*unused*/) -> std::true_type {
 struct AnythingAsTemplateArg {
   // An implicit constructor that can accept any argument and discards it.
   template <typename T>
-  // NOLINTNEXTLINE(google-explicit-constructor,bugprone-forwarding-reference-overload)
-  constexpr AnythingAsTemplateArg(T&& /*unused*/) {}
+  // NOLINTNEXTLINE(bugprone-forwarding-reference-overload)
+  explicit(false) constexpr AnythingAsTemplateArg(T&& /*unused*/) {}
 };
 
 // An overload that will be active for any template argument. Returns a false

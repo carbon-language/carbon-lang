@@ -21,7 +21,10 @@ fn F() {
   // TODO: This case should presumably work: `{...} as Class` should be an
   // initializing expression, not a value expression.
   //
-  // CHECK:STDERR: fail_init_as_inplace.carbon:[[@LINE+4]]:18: error: cannot copy value of type `Class` [CopyOfUncopyableType]
+  // CHECK:STDERR: fail_init_as_inplace.carbon:[[@LINE+7]]:18: error: cannot copy value of type `Class` [CopyOfUncopyableType]
+  // CHECK:STDERR:   var c: Class = {.a = 1, .b = 2} as Class;
+  // CHECK:STDERR:                  ^~~~~~~~~~~~~~~~~~~~~~~~~
+  // CHECK:STDERR: fail_init_as_inplace.carbon:[[@LINE+4]]:18: note: type `Class` does not implement interface `Core.Copy` [MissingImplInMemberAccessNote]
   // CHECK:STDERR:   var c: Class = {.a = 1, .b = 2} as Class;
   // CHECK:STDERR:                  ^~~~~~~~~~~~~~~~~~~~~~~~~
   // CHECK:STDERR:

@@ -9,6 +9,7 @@
 #include <tuple>
 #include <utility>
 
+#include "clang/Sema/Sema.h"
 #include "common/growing_range.h"
 #include "common/pretty_stack_trace_function.h"
 #include "llvm/ADT/IntrusiveRefCntPtr.h"
@@ -16,6 +17,7 @@
 #include "llvm/Support/VirtualFileSystem.h"
 #include "toolchain/base/fixed_size_value_store.h"
 #include "toolchain/base/kind_switch.h"
+#include "toolchain/check/cpp/import.h"
 #include "toolchain/check/diagnostic_helpers.h"
 #include "toolchain/check/generic.h"
 #include "toolchain/check/handle.h"
@@ -23,7 +25,6 @@
 #include "toolchain/check/impl_lookup.h"
 #include "toolchain/check/impl_validation.h"
 #include "toolchain/check/import.h"
-#include "toolchain/check/import_cpp.h"
 #include "toolchain/check/import_ref.h"
 #include "toolchain/check/inst.h"
 #include "toolchain/check/node_id_traversal.h"
@@ -579,6 +580,13 @@ auto CheckUnit::FinishRun() -> void {
   CheckRequiredDefinitions();
   CheckPoisonedConcreteImplLookupQueries();
   CheckImpls();
+
+  if (auto* clang_ast = context_.sem_ir().clang_ast_unit()) {
+    // Ask Clang to perform any cleanups required, including instantiating used
+    // templates.
+    clang_ast->getSema().ActOnEndOfTranslationUnit();
+    context_.emitter().Flush();
+  }
 
   // Pop information for the file-level scope.
   context_.sem_ir().set_top_inst_block_id(context_.inst_block_stack().Pop());

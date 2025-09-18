@@ -37,11 +37,11 @@ template <typename T>
 struct AnyField {
   template <typename FieldT>
   // NOLINTNEXTLINE(google-explicit-constructor)
-  operator FieldT&() const;
+  explicit(false) operator FieldT&() const;
 
   template <typename FieldT>
   // NOLINTNEXTLINE(google-explicit-constructor)
-  operator FieldT&&() const;
+  explicit(false) operator FieldT&&() const;
 
   // Don't allow conversion to T itself. This ensures we don't match against a
   // copy or move constructor.

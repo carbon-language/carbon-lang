@@ -135,7 +135,10 @@ class TypeIterator::Step {
   struct ArrayStart {
     SemIR::TypeId type_id;
   };
-  // Followed by the pointee type.
+  // Simple wrapped types, followed by the inner type.
+  struct ConstStart {};
+  struct MaybeUnformedStart {};
+  struct PartialStart {};
   struct PointerStart {};
 
   // ===========================================================================
@@ -196,9 +199,10 @@ class TypeIterator::Step {
                    SymbolicValue, StructFieldName, ClassStartOnly,
                    StructStartOnly, TupleStartOnly, InterfaceStartOnly,
                    ClassStart, StructStart, TupleStart, InterfaceStart,
-                   IntStart, ArrayStart, PointerStart, End, Done, Error>;
+                   IntStart, ArrayStart, ConstStart, MaybeUnformedStart,
+                   PartialStart, PointerStart, End, Done, Error>;
 
-  template <class T>
+  template <typename T>
   auto Is() const -> bool {
     return std::holds_alternative<T>(any);
   }
@@ -208,10 +212,9 @@ class TypeIterator::Step {
   // This is a template to allow implicit conversion directly from step values
   // that can go inside `Any` to `Step` (without having to make the `Any`
   // explicitly first).
-  template <class T>
+  template <typename T>
     requires std::constructible_from<Any, T>
-  // NOLINTNEXTLINE(google-explicit-constructor)
-  Step(T any) : any(any) {}
+  explicit(false) Step(T any) : any(any) {}
 
   Any any;
 };

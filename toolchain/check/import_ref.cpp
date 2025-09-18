@@ -447,6 +447,9 @@ class ImportRefResolver : public ImportContext {
 
       // Step 1: check for a constant value.
       auto existing = FindResolvedConstId(work.inst_id);
+      if (existing.const_id == SemIR::ErrorInst::ConstantId) {
+        return existing.const_id;
+      }
       if (existing.const_id.has_value() && !work.retry_with_constant_value) {
         work_stack_.pop_back();
         continue;
@@ -583,6 +586,11 @@ class ImportRefResolver : public ImportContext {
         return result;
       }
       auto ir_inst = cursor_ir->import_ir_insts().Get(import_ir_inst_id);
+      if (ir_inst.ir_id() == SemIR::ImportIRId::Cpp) {
+        local_context().TODO(SemIR::LocId::None,
+                             "Unsupported: Importing C++ indirectly");
+        return {.const_id = SemIR::ErrorInst::ConstantId};
+      }
 
       const auto* prev_ir = cursor_ir;
       auto prev_inst_id = cursor_inst_id;
@@ -1838,6 +1846,24 @@ static auto TryResolveTypedInst(ImportRefResolver& resolver, InstT inst)
 }
 
 static auto TryResolveTypedInst(ImportRefResolver& resolver,
+                                SemIR::CppOverloadSetType inst)
+    -> ResolveResult {
+  // Supporting C++ overload resolution of imported functions is a large task,
+  // which might require serializing and deserializing AST for using decl ids,
+  // using modules and/or linking ASTs.
+  resolver.local_context().TODO(
+      SemIR::LocId::None,
+      llvm::formatv("Unsupported: Importing C++ function `{0}` indirectly",
+                    resolver.import_ir().names().GetAsStringIfIdentifier(
+                        resolver.import_ir()
+                            .cpp_overload_sets()
+                            .Get(inst.overload_set_id)
+                            .name_id)));
+  return ResolveResult::Done(SemIR::ErrorInst::ConstantId,
+                             SemIR::ErrorInst::InstId);
+}
+
+static auto TryResolveTypedInst(ImportRefResolver& resolver,
                                 SemIR::ExportDecl inst) -> ResolveResult {
   auto value_id = GetLocalConstantId(resolver, inst.value_id);
   return RetryOrDone(resolver, value_id);
@@ -2542,6 +2568,7 @@ static auto TryResolveTypedInst(ImportRefResolver& resolver,
   }
 
   SemIR::FacetTypeInfo local_facet_type_info = {
+      .builtin_constraint_mask = import_facet_type_info.builtin_constraint_mask,
       .other_requirements = import_facet_type_info.other_requirements};
   local_facet_type_info.extend_constraints.reserve(
       import_facet_type_info.extend_constraints.size());
@@ -3158,6 +3185,9 @@ static auto TryResolveInstCanonical(ImportRefResolver& resolver,
     case CARBON_KIND(SemIR::ConstType inst): {
       return TryResolveTypedInst(resolver, inst);
     }
+    case CARBON_KIND(SemIR::CppOverloadSetType inst): {
+      return TryResolveTypedInst(resolver, inst);
+    }
     case CARBON_KIND(SemIR::ExportDecl inst): {
       return TryResolveTypedInst(resolver, inst);
     }
@@ -3609,6 +3639,34 @@ auto ImportImpl(Context& context, SemIR::ImportIRId import_ir_id,
                        .sem_ir->impls()
                        .Get(impl_id)
                        .first_decl_id());
+}
+
+auto ImportInterface(Context& context, SemIR::ImportIRId import_ir_id,
+                     SemIR::InterfaceId interface_id) -> SemIR::InterfaceId {
+  ImportRefResolver resolver(&context, import_ir_id);
+  auto local_id = resolver.Resolve(context.import_irs()
+                                       .Get(import_ir_id)
+                                       .sem_ir->interfaces()
+                                       .Get(interface_id)
+                                       .first_decl_id());
+  auto local_inst =
+      context.insts().Get(context.constant_values().GetInstId(local_id));
+
+  // A non-generic interface will import as a facet type for that single
+  // interface.
+  if (auto facet_type = local_inst.TryAs<SemIR::FacetType>()) {
+    auto interface = context.facet_types()
+                         .Get(facet_type->facet_type_id)
+                         .TryAsSingleInterface();
+    CARBON_CHECK(interface,
+                 "Importing an interface didn't produce a single interface");
+    return interface->interface_id;
+  }
+
+  // A generic interface will import as a constant of generic interface type.
+  auto generic_interface_type =
+      context.types().GetAs<SemIR::GenericInterfaceType>(local_inst.type_id());
+  return generic_interface_type.interface_id;
 }
 
 }  // namespace Carbon::Check

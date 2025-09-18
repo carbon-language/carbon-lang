@@ -58,10 +58,10 @@ fn destroy[self: Self]().Foo() {}
 
 // --- impl_fn.carbon
 
-impl fn F();
-abstract impl fn G();
-impl abstract fn H();
-private impl default fn I();
+override fn F();
+abstract override fn G();
+override abstract fn H();
+private override default fn I();
 
 // --- fail_identifier_instead_of_sig.carbon
 
@@ -346,20 +346,20 @@ fn (a tokens c d e f g h i j k l m n o p q r s t u v w x y z);
 // CHECK:STDOUT:   parse_tree: [
 // CHECK:STDOUT:     {kind: 'FileStart', text: ''},
 // CHECK:STDOUT:       {kind: 'FunctionIntroducer', text: 'fn'},
-// CHECK:STDOUT:       {kind: 'ImplModifier', text: 'impl'},
+// CHECK:STDOUT:       {kind: 'OverrideModifier', text: 'override'},
 // CHECK:STDOUT:       {kind: 'IdentifierNameBeforeParams', text: 'F'},
 // CHECK:STDOUT:         {kind: 'ExplicitParamListStart', text: '('},
 // CHECK:STDOUT:       {kind: 'ExplicitParamList', text: ')', subtree_size: 2},
 // CHECK:STDOUT:     {kind: 'FunctionDecl', text: ';', subtree_size: 6},
 // CHECK:STDOUT:       {kind: 'FunctionIntroducer', text: 'fn'},
 // CHECK:STDOUT:       {kind: 'AbstractModifier', text: 'abstract'},
-// CHECK:STDOUT:       {kind: 'ImplModifier', text: 'impl'},
+// CHECK:STDOUT:       {kind: 'OverrideModifier', text: 'override'},
 // CHECK:STDOUT:       {kind: 'IdentifierNameBeforeParams', text: 'G'},
 // CHECK:STDOUT:         {kind: 'ExplicitParamListStart', text: '('},
 // CHECK:STDOUT:       {kind: 'ExplicitParamList', text: ')', subtree_size: 2},
 // CHECK:STDOUT:     {kind: 'FunctionDecl', text: ';', subtree_size: 7},
 // CHECK:STDOUT:       {kind: 'FunctionIntroducer', text: 'fn'},
-// CHECK:STDOUT:       {kind: 'ImplModifier', text: 'impl'},
+// CHECK:STDOUT:       {kind: 'OverrideModifier', text: 'override'},
 // CHECK:STDOUT:       {kind: 'AbstractModifier', text: 'abstract'},
 // CHECK:STDOUT:       {kind: 'IdentifierNameBeforeParams', text: 'H'},
 // CHECK:STDOUT:         {kind: 'ExplicitParamListStart', text: '('},
@@ -367,7 +367,7 @@ fn (a tokens c d e f g h i j k l m n o p q r s t u v w x y z);
 // CHECK:STDOUT:     {kind: 'FunctionDecl', text: ';', subtree_size: 7},
 // CHECK:STDOUT:       {kind: 'FunctionIntroducer', text: 'fn'},
 // CHECK:STDOUT:       {kind: 'PrivateModifier', text: 'private'},
-// CHECK:STDOUT:       {kind: 'ImplModifier', text: 'impl'},
+// CHECK:STDOUT:       {kind: 'OverrideModifier', text: 'override'},
 // CHECK:STDOUT:       {kind: 'DefaultModifier', text: 'default'},
 // CHECK:STDOUT:       {kind: 'IdentifierNameBeforeParams', text: 'I'},
 // CHECK:STDOUT:         {kind: 'ExplicitParamListStart', text: '('},

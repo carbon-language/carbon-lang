@@ -13,6 +13,7 @@
 #include "common/raw_string_ostream.h"
 #include "toolchain/base/kind_switch.h"
 #include "toolchain/sem_ir/entity_with_params_base.h"
+#include "toolchain/sem_ir/facet_type_info.h"
 #include "toolchain/sem_ir/ids.h"
 #include "toolchain/sem_ir/inst_kind.h"
 #include "toolchain/sem_ir/singleton_insts.h"
@@ -287,7 +288,7 @@ class Stringifier {
 
   auto StringifyInst(InstId /*inst_id*/, ClassType inst) -> void {
     const auto& class_info = sem_ir_->classes().Get(inst.class_id);
-    if (auto literal_info = NumericTypeLiteralInfo::ForType(*sem_ir_, inst);
+    if (auto literal_info = TypeLiteralInfo::ForType(*sem_ir_, inst);
         literal_info.is_valid()) {
       literal_info.PrintLiteral(*sem_ir_, *out_);
       return;
@@ -327,6 +328,14 @@ class Stringifier {
     bool some_where = false;
     if (facet_type_info.other_requirements) {
       step_stack_->PushString("...");
+      some_where = true;
+    }
+    if (facet_type_info.builtin_constraint_mask.HasAnyOf(
+            SemIR::BuiltinConstraintMask::TypeCanAggregateDestroy)) {
+      if (some_where) {
+        step_stack_->PushString(" and");
+      }
+      step_stack_->PushString(" .Self impls Core.CanAggregateDestroy");
       some_where = true;
     }
     for (auto rewrite : llvm::reverse(facet_type_info.rewrite_constraints)) {
@@ -379,6 +388,15 @@ class Stringifier {
       *out_ << "Core.Float(";
       step_stack_->Push(inst.bit_width_id, ")");
     }
+  }
+
+  auto StringifyInst(InstId /*inst_id*/, CppOverloadSetType inst) -> void {
+    const auto& overload_set =
+        sem_ir_->cpp_overload_sets().Get(inst.overload_set_id);
+    *out_ << "<type of ";
+    step_stack_->Push(StepStack::QualifiedNameItem{overload_set.parent_scope_id,
+                                                   overload_set.name_id},
+                      ">");
   }
 
   auto StringifyInst(InstId /*inst_id*/, FunctionType inst) -> void {
@@ -733,7 +751,7 @@ auto StringifySpecific(const File& sem_ir, SpecificId specific_id)
       // Print `Core.Int(N)` as `iN`.
       // TODO: This duplicates work done in StringifyInst for ClassType.
       const auto& class_info = sem_ir.classes().Get(class_decl.class_id);
-      if (auto literal_info = NumericTypeLiteralInfo::ForType(
+      if (auto literal_info = TypeLiteralInfo::ForType(
               sem_ir, ClassType{.type_id = TypeType::TypeId,
                                 .class_id = class_decl.class_id,
                                 .specific_id = specific_id});

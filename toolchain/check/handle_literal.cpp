@@ -83,6 +83,13 @@ auto HandleParseNode(Context& context, Parse::BoolTypeLiteralId node_id)
   return true;
 }
 
+auto HandleParseNode(Context& context, Parse::CharTypeLiteralId node_id)
+    -> bool {
+  auto type_inst_id = MakeCharTypeLiteral(context, node_id);
+  context.node_stack().Push(node_id, type_inst_id);
+  return true;
+}
+
 // Shared implementation for handling `iN` and `uN` literals.
 static auto HandleIntOrUnsignedIntTypeLiteral(Context& context,
                                               Parse::NodeId node_id,

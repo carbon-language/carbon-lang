@@ -95,9 +95,7 @@ fn SubLiteral(a: Literal(), b: Literal()) -> Literal() = "float.sub";
 // CHECK:STDOUT:   %a.ref: %f64.d77 = name_ref a, %a
 // CHECK:STDOUT:   %b.ref: %f64.d77 = name_ref b, %b
 // CHECK:STDOUT:   %Sub.call: init %f64.d77 = call %Sub.ref(%a.ref, %b.ref)
-// CHECK:STDOUT:   %.loc8_19.1: %f64.d77 = value_of_initializer %Sub.call
-// CHECK:STDOUT:   %.loc8_19.2: %f64.d77 = converted %Sub.call, %.loc8_19.1
-// CHECK:STDOUT:   return %.loc8_19.2
+// CHECK:STDOUT:   return %Sub.call to %return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {

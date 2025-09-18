@@ -140,6 +140,9 @@ auto InstNamer::GetScopeIdOffset(ScopeIdTypeEnum id_enum) const -> int {
     case ScopeIdTypeEnum::For<VtableId>:
       offset += sem_ir_->functions().size();
       [[fallthrough]];
+    case ScopeIdTypeEnum::For<CppOverloadSetId>:
+      offset += sem_ir_->cpp_overload_sets().size();
+      [[fallthrough]];
     case ScopeIdTypeEnum::For<FunctionId>:
       offset += sem_ir_->impls().size();
       [[fallthrough]];
@@ -771,7 +774,7 @@ auto InstNamer::NamingContext::NameInst() -> void {
       return;
     }
     case CARBON_KIND(ClassType inst): {
-      if (auto literal_info = NumericTypeLiteralInfo::ForType(sem_ir(), inst);
+      if (auto literal_info = TypeLiteralInfo::ForType(sem_ir(), inst);
           literal_info.is_valid()) {
         AddInstName(literal_info.GetLiteralAsString(sem_ir()));
       } else {
@@ -827,6 +830,7 @@ auto InstNamer::NamingContext::NameInst() -> void {
       const auto& facet_type_info =
           sem_ir().facet_types().Get(inst.facet_type_id);
       bool has_where = facet_type_info.other_requirements ||
+                       !facet_type_info.builtin_constraint_mask.empty() ||
                        !facet_type_info.self_impls_constraints.empty() ||
                        !facet_type_info.rewrite_constraints.empty();
       if (facet_type_info.extend_constraints.size() == 1) {

@@ -252,6 +252,9 @@ class Context {
   auto entity_names() -> SemIR::EntityNameStore& {
     return sem_ir().entity_names();
   }
+  auto cpp_overload_sets() -> SemIR::CppOverloadSetStore& {
+    return sem_ir().cpp_overload_sets();
+  }
   auto functions() -> SemIR::FunctionStore& { return sem_ir().functions(); }
   auto classes() -> SemIR::ClassStore& { return sem_ir().classes(); }
   auto vtables() -> SemIR::VtableStore& { return sem_ir().vtables(); }
@@ -291,7 +294,7 @@ class Context {
   auto types() -> SemIR::TypeStore& { return sem_ir().types(); }
   // Instructions should be added with `AddInst` or `AddInstInNoBlock` from
   // `inst.h`. This is `const` to prevent accidental misuse.
-  auto insts() -> const SemIR::InstStore& { return sem_ir().insts(); }
+  auto insts() const -> const SemIR::InstStore& { return sem_ir().insts(); }
   auto constant_values() -> SemIR::ConstantValueStore& {
     return sem_ir().constant_values();
   }

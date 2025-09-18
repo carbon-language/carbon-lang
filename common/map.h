@@ -89,8 +89,8 @@ class MapView
   // type. This is always safe to do with a view. We use a template to avoid
   // needing all 3 versions.
   template <typename OtherKeyT, typename OtherValueT>
-  // NOLINTNEXTLINE(google-explicit-constructor)
-  MapView(MapView<OtherKeyT, OtherValueT, KeyContextT> other_view)
+  explicit(false)
+      MapView(MapView<OtherKeyT, OtherValueT, KeyContextT> other_view)
     requires(SameAsOneOf<KeyT, OtherKeyT, const OtherKeyT> &&
              SameAsOneOf<ValueT, OtherValueT, const OtherValueT>)
       : ImplT(other_view) {}
@@ -134,8 +134,7 @@ class MapView
   friend class MapView<const KeyT, const ValueT, KeyContextT>;
 
   MapView() = default;
-  // NOLINTNEXTLINE(google-explicit-constructor): Implicit by design.
-  MapView(ImplT base) : ImplT(base) {}
+  explicit(false) MapView(ImplT base) : ImplT(base) {}
   MapView(ssize_t size, RawHashtable::Storage* storage)
       : ImplT(size, storage) {}
 };
@@ -185,13 +184,13 @@ class MapBase : protected RawHashtable::BaseImpl<InputKeyT, InputValueT,
   // Implicitly convertible to the relevant view type.
   //
   // NOLINTNEXTLINE(google-explicit-constructor): Designed to implicitly decay.
-  operator ViewT() const { return this->view_impl(); }
+  explicit(false) operator ViewT() const { return this->view_impl(); }
 
   // We can't chain the above conversion with the conversions on `ViewT` to add
   // const, so explicitly support adding const to produce a view here.
   template <typename OtherKeyT, typename OtherValueT>
   // NOLINTNEXTLINE(google-explicit-constructor)
-  operator MapView<OtherKeyT, OtherValueT, KeyContextT>() const
+  explicit(false) operator MapView<OtherKeyT, OtherValueT, KeyContextT>() const
     requires(SameAsOneOf<OtherKeyT, KeyT, const KeyT> &&
              SameAsOneOf<OtherValueT, ValueT, const ValueT>)
   {

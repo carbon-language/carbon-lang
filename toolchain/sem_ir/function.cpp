@@ -9,12 +9,14 @@
 #include "toolchain/sem_ir/file.h"
 #include "toolchain/sem_ir/generic.h"
 #include "toolchain/sem_ir/ids.h"
+#include "toolchain/sem_ir/typed_insts.h"
 
 namespace Carbon::SemIR {
 
 auto GetCalleeFunction(const File& sem_ir, InstId callee_id,
                        SpecificId specific_id) -> CalleeFunction {
   CalleeFunction result = {.function_id = FunctionId::None,
+                           .cpp_overload_set_id = CppOverloadSetId::None,
                            .enclosing_specific_id = SpecificId::None,
                            .resolved_specific_id = SpecificId::None,
                            .self_type_id = InstId::None,
@@ -45,6 +47,11 @@ auto GetCalleeFunction(const File& sem_ir, InstId callee_id,
   }
   auto fn_type_inst =
       sem_ir.types().GetAsInst(sem_ir.insts().Get(val_id).type_id());
+
+  if (auto cpp_overload_set_type = fn_type_inst.TryAs<CppOverloadSetType>()) {
+    result.cpp_overload_set_id = cpp_overload_set_type->overload_set_id;
+    return result;
+  }
 
   if (auto impl_fn_type = fn_type_inst.TryAs<FunctionTypeWithSelfType>()) {
     // Combine the associated function's `Self` with the interface function

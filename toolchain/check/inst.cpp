@@ -18,13 +18,13 @@ namespace Carbon::Check {
 // any applicable instruction lists.
 static auto FinishInst(Context& context, SemIR::InstId inst_id,
                        SemIR::Inst inst) -> void {
-  DependentInst::Kind dep_kind = DependentInst::None;
+  DependentInstKind dep_kind = DependentInstKind::None;
 
   // If the instruction has a symbolic constant type, track that we need to
   // substitute into it.
   if (context.constant_values().DependsOnGenericParameter(
           context.types().GetConstantId(inst.type_id()))) {
-    dep_kind |= DependentInst::SymbolicType;
+    dep_kind.Add(DependentInstKind::SymbolicType);
   }
 
   // If the instruction has a constant value, compute it.
@@ -37,7 +37,7 @@ static auto FinishInst(Context& context, SemIR::InstId inst_id,
     // If the constant value is symbolic, track that we need to substitute into
     // it.
     if (context.constant_values().DependsOnGenericParameter(const_id)) {
-      dep_kind |= DependentInst::SymbolicConstant;
+      dep_kind.Add(DependentInstKind::SymbolicConstant);
     }
   }
 
@@ -48,7 +48,7 @@ static auto FinishInst(Context& context, SemIR::InstId inst_id,
       "Use AddDependentActionInst to add an action instruction");
 
   // Keep track of dependent instructions.
-  if (dep_kind != DependentInst::None) {
+  if (!dep_kind.empty()) {
     AttachDependentInstToCurrentGeneric(context,
                                         {.inst_id = inst_id, .kind = dep_kind});
   }
@@ -86,7 +86,7 @@ auto AddDependentActionInst(Context& context,
 
   // Register the instruction to be added to the eval block.
   AttachDependentInstToCurrentGeneric(
-      context, {.inst_id = inst_id, .kind = DependentInst::Template});
+      context, {.inst_id = inst_id, .kind = DependentInstKind::Template});
   return inst_id;
 }
 

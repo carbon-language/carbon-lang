@@ -8,8 +8,7 @@ on:
   push:
     branches: [trunk, action-test]
   pull_request:
-  # TODO: Don't run in merge_group until we're ready to replace clang-tidy.
-  # merge_group:
+  merge_group:
 
 permissions:
   contents: read # For actions/checkout.

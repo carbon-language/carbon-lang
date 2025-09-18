@@ -4,6 +4,8 @@
 
 package Core library "prelude/operators/as";
 
+import library "prelude/copy";
+
 interface UnsafeAs(Dest:! type) {
   fn Convert[self: Self]() -> Dest;
 }
@@ -18,7 +20,6 @@ interface ImplicitAs(Dest:! type) {
   fn Convert[self: Self]() -> Dest;
 }
 
-// TODO: This should only apply to copyable types.
-impl forall [T:! type] T as ImplicitAs(T) {
-  fn Convert[self: Self]() -> Self { return self; }
+impl forall [T:! Copy] T as ImplicitAs(T) {
+  fn Convert[self: Self]() -> Self { return self.(Copy.Op)(); }
 }
