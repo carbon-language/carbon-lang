@@ -41,6 +41,8 @@ fn G(_:! I(.Self) where .I1 = ()) {}
 // --- fail_period_self_as_type.carbon
 library "[[@TEST_NAME]]";
 
+// TODO: We should diagnose this use of `.Self` directly rather than later when
+// it is converted to `type`.
 interface I(T:! .Self) {
   // CHECK:STDERR: fail_period_self_as_type.carbon:[[@LINE+7]]:13: error: cannot implicitly convert non-type value of type `.Self` to `type` [ConversionFailureNonTypeToFacet]
   // CHECK:STDERR:   fn G() -> T;
@@ -161,7 +163,7 @@ fn F(U:! I(.Self) & J(.Self)) {
   F2(U.I1().J1().I1().J1().I1().J1());
 }
 
-// --- fail_return_of_period_self_impls_interface.carbon
+// --- fail_todo_return_of_period_self_impls_interface.carbon
 library "[[@TEST_NAME]]";
 
 interface I(T:! type) {
@@ -173,11 +175,35 @@ interface J(T:! type) {
 }
 
 fn G(U:! I(.Self) where .Self impls J(.Self)) {
-  // It's not possible to do compound lookup here. You would have to work with
-  // the original type `U` instead.
+  // Compound member lookup through a non-type value is possible for methods
+  // which take a `self` parameter. But it's not possible for methods without
+  // `self`. For those you need to go directly throug the type.
   // See: https://github.com/carbon-language/carbon-lang/issues/6025
+
+  // TODO: This step should work.
   //
-  // CHECK:STDERR: fail_return_of_period_self_impls_interface.carbon:[[@LINE+4]]:11: error: type `<type of J>` does not support qualified expressions [QualifiedExprUnsupported]
+  // CHECK:STDERR: fail_todo_return_of_period_self_impls_interface.carbon:[[@LINE+7]]:14: error: cannot implicitly convert expression of type `.Self` to `U` [ConversionFailure]
+  // CHECK:STDERR:   let u: U = U.I1();
+  // CHECK:STDERR:              ^~~~~~
+  // CHECK:STDERR: fail_todo_return_of_period_self_impls_interface.carbon:[[@LINE+4]]:14: note: type `.Self` does not implement interface `Core.ImplicitAs(U)` [MissingImplInMemberAccessNote]
+  // CHECK:STDERR:   let u: U = U.I1();
+  // CHECK:STDERR:              ^~~~~~
+  // CHECK:STDERR:
+  let u: U = U.I1();
+  // `u` is a non-type value. Can call methods with `self` through compound
+  // member lookup, but can't call methods without `self`. See the
+  // `compound_access_through_call_with_self_param.carbon` test for the former.
+  //
+  // CHECK:STDERR: fail_todo_return_of_period_self_impls_interface.carbon:[[@LINE+4]]:6: error: type `<type of J>` does not support qualified expressions [QualifiedExprUnsupported]
+  // CHECK:STDERR:   u.(J.J1)();
+  // CHECK:STDERR:      ^~~~
+  // CHECK:STDERR:
+  u.(J.J1)();
+
+  // This is the same as the above, since U.I1() returns a non-type value of
+  // type `U`.
+  //
+  // CHECK:STDERR: fail_todo_return_of_period_self_impls_interface.carbon:[[@LINE+4]]:11: error: type `<type of J>` does not support qualified expressions [QualifiedExprUnsupported]
   // CHECK:STDERR:   U.I1().(J.J1)();
   // CHECK:STDERR:           ^~~~
   // CHECK:STDERR:
@@ -221,19 +247,6 @@ fn F(U:! I where .X = .Self) {
   let a: U = U.G();
 }
 
-// --- fail_template_access.carbon
-library "[[@TEST_NAME]]";
-
-// TODO: Improved error: no member named `I1` in `T` of type `type`.
-//
-// CHECK:STDERR: fail_template_access.carbon:[[@LINE+4]]:36: error: cannot evaluate type expression [TypeExprEvaluationFailure]
-// CHECK:STDERR: interface I(template T:! type, N:! T.I1) {
-// CHECK:STDERR:                                    ^~~~
-// CHECK:STDERR:
-interface I(template T:! type, N:! T.I1) {
-    let I1:! type;
-}
-
 // --- fail_todo_nested_period_self.carbon
 library "[[@TEST_NAME]]";
 
@@ -273,10 +286,10 @@ fn F(T:! I(.Self) where .A = ((I(.Self) where .B = {}) where .A = {}) and .B = {
   // CHECK:STDERR:
   T as (I(T) where .A = (I(T) where .A = {} and .B = {}));
   // CHECK:STDERR: fail_todo_nested_period_self.carbon:[[@LINE+4]]:3: error: cannot convert type `U` that implements `I(.Self) where .(I(.Self).B) = {} and .(I(.Self).A) = {}` into type implementing `I(T) where .(I(T).A) = {} and .(I(T).B) = {}` [ConversionFailureFacetToFacet]
-  // CHECK:STDERR:   U as (I(T) where .A ={} and .B = {});
-  // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+  // CHECK:STDERR:   U as (I(T) where .A = {} and .B = {});
+  // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
   // CHECK:STDERR:
-  U as (I(T) where .A ={} and .B = {});
+  U as (I(T) where .A = {} and .B = {});
 }
 
 // --- todo_fail_nested_period_self_ambiguous.carbon
@@ -286,9 +299,9 @@ interface I(T:! type) {
   let A:! type;
 }
 
-// TODO: This should be an error: The third `.Self` becomes undefined. It's not
-// referring to `T` but we need each explicit `.Self` to be replaced with
-// something at the end of the expression.
+// TODO: This should be an error: The third `.Self` becomes is not able to be
+// bound to anything unambiguous here, as it could refer to `T` or to something
+// later being constrained by `T.A`.
 fn F(T:! I(.Self) where .A = (I(.Self) where .A = I(.Self))) {}
 
 // CHECK:STDOUT: --- period_self_param.carbon
