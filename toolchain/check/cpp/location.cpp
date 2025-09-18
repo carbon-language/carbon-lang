@@ -43,9 +43,7 @@ auto GetCppLocation(Context& context, SemIR::LocId loc_id)
   // final entry.
   auto absolute_node_id = absolute_node_ids.back();
   const auto* ir = GetFile(context, absolute_node_id.check_ir_id());
-  if (!ir) {
-    return clang::SourceLocation();
-  }
+  CHECK(ir, "Node location points at nonexistent IR");
   const auto& tree = ir->parse_tree();
   const auto& source = tree.tokens().source();
   auto offset =
@@ -58,7 +56,7 @@ auto GetCppLocation(Context& context, SemIR::LocId loc_id)
   auto file = src_mgr.getFileManager().getOptionalFileRef(source.filename());
   if (!file) {
     file = src_mgr.getFileManager().getVirtualFileRef(
-        source.filename(), static_cast<off_t>(0), static_cast<time_t>(0));
+        source.filename(), source.text.size(), /*ModificationTime=*/0);
   }
   src_mgr.overrideFileContents(
       *file, llvm::MemoryBufferRef(source.text(), source.filename()));
