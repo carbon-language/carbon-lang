@@ -10,8 +10,8 @@
 #include "toolchain/check/context.h"
 #include "toolchain/check/control_flow.h"
 #include "toolchain/check/convert.h"
-#include "toolchain/check/cpp_overload_resolution.h"
-#include "toolchain/check/cpp_thunk.h"
+#include "toolchain/check/cpp/overload_resolution.h"
+#include "toolchain/check/cpp/thunk.h"
 #include "toolchain/check/deduce.h"
 #include "toolchain/check/facet_type.h"
 #include "toolchain/check/function.h"
@@ -302,14 +302,8 @@ auto PerformCall(Context& context, SemIR::LocId loc_id, SemIR::InstId callee_id,
   }
   if (callee_function.cpp_overload_set_id.has_value()) {
     auto self_id = callee_function.self_id;
-    // TODO: Pass self_id into overload resolution so that it's taken into
-    // account when selecting the overload.
-    auto resolved_fn_id = PerformCppOverloadResolution(
-        context, loc_id, callee_function.cpp_overload_set_id, arg_ids);
-    if (!resolved_fn_id) {
-      return SemIR::ErrorInst::InstId;
-    }
-    callee_id = resolved_fn_id.value();
+    callee_id = PerformCppOverloadResolution(
+        context, loc_id, callee_function.cpp_overload_set_id, self_id, arg_ids);
     callee_function = GetCalleeFunction(context.sem_ir(), callee_id);
     if (callee_function.is_error) {
       return SemIR::ErrorInst::InstId;

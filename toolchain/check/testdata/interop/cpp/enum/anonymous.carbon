@@ -14,13 +14,13 @@
 
 enum { a, b, c };
 
-void F(decltype(a));
+void F(decltype(a)) {}
 
 class C {
  public:
   enum { d, e, f };
 
-  void F(decltype(d));
+  void F(decltype(d)) {}
 };
 
 // --- copy_enum.carbon

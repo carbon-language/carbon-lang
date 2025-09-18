@@ -183,9 +183,9 @@ library "[[@TEST_NAME]]";
 import Cpp library "struct_literal_call_arg.h";
 
 fn F() {
-  // CHECK:STDERR: fail_todo_import_struct_literal_call_arg.carbon:[[@LINE+7]]:3: error: call argument of type `{}` is not supported [CppCallArgTypeNotSupported]
+  // CHECK:STDERR: fail_todo_import_struct_literal_call_arg.carbon:[[@LINE+7]]:11: error: call argument of type `{}` is not supported [CppCallArgTypeNotSupported]
   // CHECK:STDERR:   Cpp.foo({});
-  // CHECK:STDERR:   ^~~~~~~~~~~
+  // CHECK:STDERR:           ^~
   // CHECK:STDERR: fail_todo_import_struct_literal_call_arg.carbon:[[@LINE+4]]:3: note: in call to Cpp function here [InCallToCppFunction]
   // CHECK:STDERR:   Cpp.foo({});
   // CHECK:STDERR:   ^~~~~~~~~~~

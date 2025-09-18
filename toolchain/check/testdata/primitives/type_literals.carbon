@@ -40,6 +40,14 @@ var test_f64: f64;
 var test_f128: f128;
 //@dump-sem-ir-end
 
+// --- char.carbon
+
+library "[[@TEST_NAME]]";
+
+//@dump-sem-ir-begin
+let test_char: char = 'c';
+//@dump-sem-ir-end
+
 // --- string.carbon
 
 library "[[@TEST_NAME]]";
@@ -200,6 +208,66 @@ library "[[@TEST_NAME]]";
 // CHECK:STDERR: ^~~~~~~~~~~
 // CHECK:STDERR:
 var x: type = 42;
+
+// --- fail_stringify_type_literals.carbon
+
+library "[[@TEST_NAME]]";
+
+// Ensure that type literals get stringified properly.
+
+// CHECK:STDERR: fail_stringify_type_literals.carbon:[[@LINE+7]]:1: error: cannot implicitly convert expression of type `()` to `i32` [ConversionFailure]
+// CHECK:STDERR: var test_i32: i32 = ();
+// CHECK:STDERR: ^~~~~~~~~~~~~~~~~
+// CHECK:STDERR: fail_stringify_type_literals.carbon:[[@LINE+4]]:1: note: type `()` does not implement interface `Core.ImplicitAs(i32)` [MissingImplInMemberAccessNote]
+// CHECK:STDERR: var test_i32: i32 = ();
+// CHECK:STDERR: ^~~~~~~~~~~~~~~~~
+// CHECK:STDERR:
+var test_i32: i32 = ();
+
+// CHECK:STDERR: fail_stringify_type_literals.carbon:[[@LINE+7]]:1: error: cannot implicitly convert expression of type `()` to `f32` [ConversionFailure]
+// CHECK:STDERR: var test_f32: f32 = ();
+// CHECK:STDERR: ^~~~~~~~~~~~~~~~~
+// CHECK:STDERR: fail_stringify_type_literals.carbon:[[@LINE+4]]:1: note: type `()` does not implement interface `Core.ImplicitAs(f32)` [MissingImplInMemberAccessNote]
+// CHECK:STDERR: var test_f32: f32 = ();
+// CHECK:STDERR: ^~~~~~~~~~~~~~~~~
+// CHECK:STDERR:
+var test_f32: f32 = ();
+
+// CHECK:STDERR: fail_stringify_type_literals.carbon:[[@LINE+7]]:1: error: cannot implicitly convert expression of type `()` to `u32` [ConversionFailure]
+// CHECK:STDERR: var test_u32: u32 = ();
+// CHECK:STDERR: ^~~~~~~~~~~~~~~~~
+// CHECK:STDERR: fail_stringify_type_literals.carbon:[[@LINE+4]]:1: note: type `()` does not implement interface `Core.ImplicitAs(u32)` [MissingImplInMemberAccessNote]
+// CHECK:STDERR: var test_u32: u32 = ();
+// CHECK:STDERR: ^~~~~~~~~~~~~~~~~
+// CHECK:STDERR:
+var test_u32: u32 = ();
+
+// CHECK:STDERR: fail_stringify_type_literals.carbon:[[@LINE+7]]:1: error: cannot implicitly convert expression of type `()` to `bool` [ConversionFailure]
+// CHECK:STDERR: var test_bool: bool = ();
+// CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~
+// CHECK:STDERR: fail_stringify_type_literals.carbon:[[@LINE+4]]:1: note: type `()` does not implement interface `Core.ImplicitAs(bool)` [MissingImplInMemberAccessNote]
+// CHECK:STDERR: var test_bool: bool = ();
+// CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~
+// CHECK:STDERR:
+var test_bool: bool = ();
+
+// CHECK:STDERR: fail_stringify_type_literals.carbon:[[@LINE+7]]:1: error: cannot implicitly convert expression of type `()` to `char` [ConversionFailure]
+// CHECK:STDERR: var test_char: char = ();
+// CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~
+// CHECK:STDERR: fail_stringify_type_literals.carbon:[[@LINE+4]]:1: note: type `()` does not implement interface `Core.ImplicitAs(char)` [MissingImplInMemberAccessNote]
+// CHECK:STDERR: var test_char: char = ();
+// CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~
+// CHECK:STDERR:
+var test_char: char = ();
+
+// CHECK:STDERR: fail_stringify_type_literals.carbon:[[@LINE+7]]:1: error: cannot implicitly convert expression of type `()` to `str` [ConversionFailure]
+// CHECK:STDERR: var test_str: str = ();
+// CHECK:STDERR: ^~~~~~~~~~~~~~~~~
+// CHECK:STDERR: fail_stringify_type_literals.carbon:[[@LINE+4]]:1: note: type `()` does not implement interface `Core.ImplicitAs(str)` [MissingImplInMemberAccessNote]
+// CHECK:STDERR: var test_str: str = ();
+// CHECK:STDERR: ^~~~~~~~~~~~~~~~~
+// CHECK:STDERR:
+var test_str: str = ();
 
 // CHECK:STDOUT: --- iN.carbon
 // CHECK:STDOUT:
@@ -390,19 +458,59 @@ var x: type = 42;
 // CHECK:STDOUT:   %test_f128: ref %f128.b8c = bind_name test_f128, %test_f128.var [concrete = %test_f128.var]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
+// CHECK:STDOUT: --- char.carbon
+// CHECK:STDOUT:
+// CHECK:STDOUT: constants {
+// CHECK:STDOUT:   %char: type = class_type @Char [concrete]
+// CHECK:STDOUT:   %pattern_type.b09: type = pattern_type %char [concrete]
+// CHECK:STDOUT:   %.b9b: Core.CharLiteral = char_value U+0063 [concrete]
+// CHECK:STDOUT:   %ImplicitAs.type.3be: type = facet_type <@ImplicitAs, @ImplicitAs(%char)> [concrete]
+// CHECK:STDOUT:   %ImplicitAs.Convert.type.f57: type = fn_type @ImplicitAs.Convert, @ImplicitAs(%char) [concrete]
+// CHECK:STDOUT:   %ImplicitAs.impl_witness: <witness> = impl_witness imports.%ImplicitAs.impl_witness_table [concrete]
+// CHECK:STDOUT:   %ImplicitAs.facet: %ImplicitAs.type.3be = facet_value Core.CharLiteral, (%ImplicitAs.impl_witness) [concrete]
+// CHECK:STDOUT:   %.8d6: type = fn_type_with_self_type %ImplicitAs.Convert.type.f57, %ImplicitAs.facet [concrete]
+// CHECK:STDOUT:   %Core.CharLiteral.as.ImplicitAs.impl.Convert.type: type = fn_type @Core.CharLiteral.as.ImplicitAs.impl.Convert [concrete]
+// CHECK:STDOUT:   %Core.CharLiteral.as.ImplicitAs.impl.Convert: %Core.CharLiteral.as.ImplicitAs.impl.Convert.type = struct_value () [concrete]
+// CHECK:STDOUT:   %Core.CharLiteral.as.ImplicitAs.impl.Convert.bound: <bound method> = bound_method %.b9b, %Core.CharLiteral.as.ImplicitAs.impl.Convert [concrete]
+// CHECK:STDOUT:   %int_99: %char = int_value 99 [concrete]
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: imports {
+// CHECK:STDOUT:   %Core.import_ref.543: %Core.CharLiteral.as.ImplicitAs.impl.Convert.type = import_ref Core//prelude/parts/char, loc13_36, loaded [concrete = constants.%Core.CharLiteral.as.ImplicitAs.impl.Convert]
+// CHECK:STDOUT:   %ImplicitAs.impl_witness_table = impl_witness_table (%Core.import_ref.543), @Core.CharLiteral.as.ImplicitAs.impl [concrete]
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: file {
+// CHECK:STDOUT:   name_binding_decl {
+// CHECK:STDOUT:     %test_char.patt: %pattern_type.b09 = binding_pattern test_char [concrete]
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %impl.elem0: %.8d6 = impl_witness_access constants.%ImplicitAs.impl_witness, element0 [concrete = constants.%Core.CharLiteral.as.ImplicitAs.impl.Convert]
+// CHECK:STDOUT:   %bound_method: <bound method> = bound_method @__global_init.%.loc5, %impl.elem0 [concrete = constants.%Core.CharLiteral.as.ImplicitAs.impl.Convert.bound]
+// CHECK:STDOUT:   %Core.CharLiteral.as.ImplicitAs.impl.Convert.call: init %char = call %bound_method(@__global_init.%.loc5) [concrete = constants.%int_99]
+// CHECK:STDOUT:   %.loc5_23.1: %char = value_of_initializer %Core.CharLiteral.as.ImplicitAs.impl.Convert.call [concrete = constants.%int_99]
+// CHECK:STDOUT:   %.loc5_23.2: %char = converted @__global_init.%.loc5, %.loc5_23.1 [concrete = constants.%int_99]
+// CHECK:STDOUT:   %test_char: %char = bind_name test_char, %.loc5_23.2
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: fn @__global_init() {
+// CHECK:STDOUT: !entry:
+// CHECK:STDOUT:   %.loc5: Core.CharLiteral = char_value U+0063 [concrete = constants.%.b9b]
+// CHECK:STDOUT:   <elided>
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
 // CHECK:STDOUT: --- string.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
-// CHECK:STDOUT:   %String: type = class_type @String [concrete]
+// CHECK:STDOUT:   %str.ee0: type = class_type @String [concrete]
 // CHECK:STDOUT:   %int_64: Core.IntLiteral = int_value 64 [concrete]
 // CHECK:STDOUT:   %u64: type = class_type @UInt, @UInt(%int_64) [concrete]
 // CHECK:STDOUT:   %int_8: Core.IntLiteral = int_value 8 [concrete]
 // CHECK:STDOUT:   %u8: type = class_type @UInt, @UInt(%int_8) [concrete]
 // CHECK:STDOUT:   %ptr.3e8: type = ptr_type %u8 [concrete]
-// CHECK:STDOUT:   %pattern_type.461: type = pattern_type %String [concrete]
-// CHECK:STDOUT:   %str: %ptr.3e8 = string_literal "Test" [concrete]
+// CHECK:STDOUT:   %pattern_type.461: type = pattern_type %str.ee0 [concrete]
+// CHECK:STDOUT:   %str.c1c: %ptr.3e8 = string_literal "Test" [concrete]
 // CHECK:STDOUT:   %int_4: %u64 = int_value 4 [concrete]
-// CHECK:STDOUT:   %String.val: %String = struct_value (%str, %int_4) [concrete]
+// CHECK:STDOUT:   %String.val: %str.ee0 = struct_value (%str.c1c, %int_4) [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -412,14 +520,14 @@ var x: type = 42;
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %test_str.patt: %pattern_type.461 = binding_pattern test_str [concrete]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %test_str: %String = bind_name test_str, @__global_init.%String.val
+// CHECK:STDOUT:   %test_str: %str.ee0 = bind_name test_str, @__global_init.%String.val
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %str: %ptr.3e8 = string_literal "Test" [concrete = constants.%str]
+// CHECK:STDOUT:   %str: %ptr.3e8 = string_literal "Test" [concrete = constants.%str.c1c]
 // CHECK:STDOUT:   %int_4: %u64 = int_value 4 [concrete = constants.%int_4]
-// CHECK:STDOUT:   %String.val: %String = struct_value (%str, %int_4) [concrete = constants.%String.val]
+// CHECK:STDOUT:   %String.val: %str.ee0 = struct_value (%str, %int_4) [concrete = constants.%String.val]
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

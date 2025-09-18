@@ -13,8 +13,8 @@ namespace Carbon::Check {
 // Performs overloading resolution for a call to an overloaded C++ set. A set
 // with a single non-templated function goes through the same rules for
 // overloading resolution. Uses Clang to find the best viable function for the
-// call. Returns the resolved function, or `nullopt` if overload resolution
-// failed.
+// call. Returns the resolved function, or an error instruction if overload
+// resolution failed.
 //
 // Note on non-overloaded functions: In C++, a single non-templated function is
 // also treated as an overloaded set and goes through the overload resolution to
@@ -25,8 +25,9 @@ namespace Carbon::Check {
 // remain valid.
 auto PerformCppOverloadResolution(Context& context, SemIR::LocId loc_id,
                                   SemIR::CppOverloadSetId overload_set_id,
+                                  SemIR::InstId self_id,
                                   llvm::ArrayRef<SemIR::InstId> arg_ids)
-    -> std::optional<SemIR::InstId>;
+    -> SemIR::InstId;
 
 }  // namespace Carbon::Check
 
