@@ -108,10 +108,10 @@ interface I {
   fn G() -> X;
 }
 
-fn F2[U:! I](T: U) {}
-fn F3[U:! I where .X = .Self](T: U) {}
+fn F2[U:! I](V: U) {}
+fn F3[U:! I where .X = .Self](V: U) {}
 
-fn F(U:! I where .X = .Self) {
+fn F(U:! I where .X = .Self, V: U) {
   // The returned value of `G` type `U` which has access to the methods of `I`.
   //
   // TODO: This works but a chained third call doesn't.
@@ -129,6 +129,8 @@ fn F(U:! I where .X = .Self) {
   // CHECK:STDERR:   ^~~~~~~~~~~
   // CHECK:STDERR:
   U.G().G().G();
+  // TODO: This works but a chained third call doesn't.
+  (U as type).G().G();
   // CHECK:STDERR: fail_todo_access_through_call.carbon:[[@LINE+4]]:3: error: type `.(I.X)` does not support qualified expressions [QualifiedExprUnsupported]
   // CHECK:STDERR:   (U as type).G().G().G();
   // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~~
@@ -136,13 +138,26 @@ fn F(U:! I where .X = .Self) {
   (U as type).G().G().G();
 
   // The returned value of type `U` can be used as a value of type `U`.
+  //
+  // TODO: This works but a chaining calls to G doesn't.
+  F2(U.G());
   // CHECK:STDERR: fail_todo_access_through_call.carbon:[[@LINE+4]]:6: error: type `.(I.X)` does not support qualified expressions [QualifiedExprUnsupported]
   // CHECK:STDERR:   F2(U.G().G().G());
   // CHECK:STDERR:      ^~~~~~~~~~~
   // CHECK:STDERR:
   F2(U.G().G().G());
 
-  // TODO: The constraints in the type `U` are preserved.
+  // The constraints in the type `U` are preserved.
+  //
+  // TODO: These should work.
+  // CHECK:STDERR: fail_todo_access_through_call.carbon:[[@LINE+7]]:3: error: cannot convert type `.Self` that implements `I` into type implementing `I where .(I.X) = .Self` [ConversionFailureFacetToFacet]
+  // CHECK:STDERR:   F3(U.G());
+  // CHECK:STDERR:   ^~~~~~~~~
+  // CHECK:STDERR: fail_todo_access_through_call.carbon:[[@LINE-44]]:1: note: while deducing parameters of generic declared here [DeductionGenericHere]
+  // CHECK:STDERR: fn F3[U:! I where .X = .Self](V: U) {}
+  // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+  // CHECK:STDERR:
+  F3(U.G());
   // CHECK:STDERR: fail_todo_access_through_call.carbon:[[@LINE+4]]:6: error: type `.(I.X)` does not support qualified expressions [QualifiedExprUnsupported]
   // CHECK:STDERR:   F3(U.G().G().G());
   // CHECK:STDERR:      ^~~~~~~~~~~
