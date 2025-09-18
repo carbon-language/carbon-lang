@@ -554,9 +554,7 @@ static auto TypeCanAggregateDestroy(Context& context,
       // provide destruction for `Cpp`-scoped classes.
       // TODO: Don't provide this for C++ types that lack a destructor.
       auto class_info = context.classes().Get(class_type.class_id);
-      return context.name_scopes()
-          .Get(class_info.parent_scope_id)
-          .is_cpp_scope();
+      return context.name_scopes().Get(class_info.scope_id).is_cpp_scope();
     }
     case SemIR::ArrayType::Kind:
     case SemIR::MaybeUnformedType::Kind:
