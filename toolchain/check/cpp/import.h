@@ -28,7 +28,8 @@ auto ImportCppFiles(Context& context,
 // the new Carbon function declaration `InstId`. If the declaration was already
 // imported, returns the mapped instruction.
 auto ImportCppFunctionDecl(Context& context, SemIR::LocId loc_id,
-                           clang::FunctionDecl* clang_decl) -> SemIR::InstId;
+                           clang::FunctionDecl* clang_decl, int num_params)
+    -> SemIR::InstId;
 
 // Imports an overloaded function set from Clang to Carbon.
 auto ImportCppOverloadSet(Context& context, SemIR::NameScopeId scope_id,

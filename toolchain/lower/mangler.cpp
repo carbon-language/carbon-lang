@@ -151,8 +151,11 @@ auto Mangler::Mangle(SemIR::FunctionId function_id,
     return "main";
   }
   if (function.clang_decl_id.has_value()) {
-    return MangleCppClang(cast<clang::NamedDecl>(
-        sem_ir().clang_decls().Get(function.clang_decl_id).decl));
+    CARBON_CHECK(function.special_function_kind !=
+                     SemIR::Function::SpecialFunctionKind::HasCppThunk,
+                 "Shouldn't mangle C++ function that uses a thunk");
+    const auto& clang_decl = sem_ir().clang_decls().Get(function.clang_decl_id);
+    return MangleCppClang(cast<clang::NamedDecl>(clang_decl.decl));
   }
   RawStringOstream os;
   os << "_C";
