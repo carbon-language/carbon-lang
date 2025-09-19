@@ -157,6 +157,11 @@ class Context {
     return import_ir_constant_values_;
   }
 
+  auto cpp_carbon_file_locations()
+      -> llvm::SmallVector<clang::SourceLocation, 0>& {
+    return cpp_carbon_file_locations_;
+  }
+
   auto definitions_required_by_decl() -> llvm::SmallVector<SemIR::InstId>& {
     return definitions_required_by_decl_;
   }
@@ -383,6 +388,10 @@ class Context {
   //
   // Inline 0 elements because it's expected to require heap allocation.
   llvm::SmallVector<SemIR::ConstantValueStore, 0> import_ir_constant_values_;
+
+  // Per-Carbon-file start locations for corresponding Clang source buffers.
+  // Owned and managed by code in cpp/location.cpp.
+  llvm::SmallVector<clang::SourceLocation, 0> cpp_carbon_file_locations_;
 
   // Declaration instructions of entities that should have definitions by the
   // end of the current source file.

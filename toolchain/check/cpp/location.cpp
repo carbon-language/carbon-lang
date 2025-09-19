@@ -9,17 +9,49 @@
 
 namespace Carbon::Check {
 
-static auto GetFile(Context& context, SemIR::CheckIRId ir_id)
-    -> const SemIR::File* {
-  if (ir_id == context.sem_ir().check_ir_id()) {
-    // Common case: the IR is the current file.
-    return &context.sem_ir();
-  }
+namespace {
+struct FileInfo {
+  const SemIR::File* sem_ir;
+  clang::SourceLocation start_loc;
+};
+}  // namespace
+
+// Map a CheckIRId into information about the corresponding file in both SemIR
+// and Clang's source manager.
+static auto GetFileInfo(Context& context, SemIR::CheckIRId ir_id) -> FileInfo {
+  const SemIR::File* sem_ir = &context.sem_ir();
+  unsigned file_index = 0;
 
   // If the file is imported, locate it in our imports map.
-  auto import_id = context.check_ir_map().Get(ir_id);
-  CARBON_CHECK(import_id.has_value());
-  return context.import_irs().Get(import_id).sem_ir;
+  if (ir_id != context.sem_ir().check_ir_id()) {
+    auto import_id = context.check_ir_map().Get(ir_id);
+    CARBON_CHECK(import_id.has_value());
+    file_index = import_id.index + 1;
+
+    sem_ir = context.import_irs().Get(import_id).sem_ir;
+    CARBON_CHECK(sem_ir, "Node location in nonexistent IR");
+  }
+
+  // If we've seen this file before, reuse the same FileID.
+  auto& file_start_locs = context.cpp_carbon_file_locations();
+  if (file_start_locs.size() <= file_index) {
+    file_start_locs.resize(file_index + 1);
+  }
+  if (file_start_locs[file_index].isValid()) {
+    return {.sem_ir = sem_ir, .start_loc = file_start_locs[file_index]};
+  }
+
+  // We've not seen this file before. Create a corresponding virtual file in
+  // Clang's source manager.
+  // TODO: Consider recreating the complete import path instead of only the
+  // final entry.
+  const auto& source = sem_ir->parse_tree().tokens().source();
+  auto& src_mgr = context.ast_context().getSourceManager();
+  auto file_id = src_mgr.createFileID(
+      llvm::MemoryBufferRef(source.text(), source.filename()));
+  auto file_start_loc = src_mgr.getLocForStartOfFile(file_id);
+  file_start_locs[file_index] = file_start_loc;
+  return {.sem_ir = sem_ir, .start_loc = file_start_loc};
 }
 
 auto GetCppLocation(Context& context, SemIR::LocId loc_id)
@@ -37,34 +69,14 @@ auto GetCppLocation(Context& context, SemIR::LocId loc_id)
         absolute_node_ids.back().clang_source_loc_id());
   }
 
-  // This is a location in Carbon code; decompose it so we can map it into a
-  // Clang location.
-  // TODO: Consider recreating the complete import path instead of only the
-  // final entry.
+  // This is a location in Carbon code; get or create a corresponding file in
+  // Clang and build a corresponding location.
   auto absolute_node_id = absolute_node_ids.back();
-  const auto* ir = GetFile(context, absolute_node_id.check_ir_id());
-  CARBON_CHECK(ir, "Node location points at nonexistent IR");
+  auto [ir, start_loc] = GetFileInfo(context, absolute_node_id.check_ir_id());
   const auto& tree = ir->parse_tree();
-  const auto& source = tree.tokens().source();
   auto offset =
       tree.tokens().GetByteOffset(tree.node_token(absolute_node_id.node_id()));
-
-  // Get or create a corresponding Clang file.
-  // TODO: Consider caching a mapping from Carbon ImportIRIds to Clang
-  // start-of-file SourceLocations.
-  auto& src_mgr = context.ast_context().getSourceManager();
-  auto file = src_mgr.getFileManager().getOptionalFileRef(source.filename());
-  if (!file) {
-    file = src_mgr.getFileManager().getVirtualFileRef(
-        source.filename(), source.text().size(), /*ModificationTime=*/0);
-  }
-  src_mgr.overrideFileContents(
-      *file, llvm::MemoryBufferRef(source.text(), source.filename()));
-
-  // Build a corresponding location.
-  auto file_id = src_mgr.getOrCreateFileID(
-      *file, clang::SrcMgr::CharacteristicKind::C_User);
-  return src_mgr.getLocForStartOfFile(file_id).getLocWithOffset(offset);
+  return start_loc.getLocWithOffset(offset);
 }
 
 }  // namespace Carbon::Check
