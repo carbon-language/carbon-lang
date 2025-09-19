@@ -77,6 +77,9 @@ class TypeIterator {
                    SymbolicNonTypeValue, StructFieldName,
                    SemIR::SpecificInterface, EndType>;
 
+  // Processes `next` when it's a `TypeId`.
+  auto ProcessTypeId(TypeId type_id) -> std::optional<Step>;
+
   // Get the TypeId for an instruction that is not a facet value, otherwise
   // return SymbolicType to indicate the instruction is a symbolic facet value.
   //
