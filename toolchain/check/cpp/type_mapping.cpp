@@ -108,22 +108,26 @@ static auto TryMapClassType(Context& context, SemIR::ClassType class_type)
       break;
     }
     case SemIR::TypeLiteralInfo::Numeric: {
+      // Carbon supports large bit width beyond C++ builtins; we don't need to
+      // translate those.
+      if (!literal.numeric.bit_width_id.is_embedded_value()) {
+        return clang::QualType();
+      }
+      int bit_width = literal.numeric.bit_width_id.AsValue();
+
       switch (literal.numeric.kind) {
         case SemIR::NumericTypeLiteralInfo::None: {
           CARBON_FATAL("Unexpected invalid numeric type literal");
         }
         case SemIR::NumericTypeLiteralInfo::Float: {
           return context.ast_context().getRealTypeForBitwidth(
-              literal.numeric.bit_width_id.AsValue(),
-              clang::FloatModeKind::NoFloat);
+              bit_width, clang::FloatModeKind::NoFloat);
         }
         case SemIR::NumericTypeLiteralInfo::Int: {
-          return context.ast_context().getIntTypeForBitwidth(
-              literal.numeric.bit_width_id.AsValue(), true);
+          return context.ast_context().getIntTypeForBitwidth(bit_width, true);
         }
         case SemIR::NumericTypeLiteralInfo::UInt: {
-          return context.ast_context().getIntTypeForBitwidth(
-              literal.numeric.bit_width_id.AsValue(), false);
+          return context.ast_context().getIntTypeForBitwidth(bit_width, false);
         }
       }
     }
