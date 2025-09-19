@@ -576,7 +576,7 @@ static auto ClangConstructorLookup(Context& context,
 
 // Returns true if the given Clang declaration is the implicit injected class
 // name within the class.
-static auto IsDeclInjectedClassName(const Context& context,
+static auto IsDeclInjectedClassName(Context& context,
                                     SemIR::NameScopeId scope_id,
                                     SemIR::NameId name_id,
                                     const clang::NamedDecl* named_decl)
@@ -648,7 +648,7 @@ static auto IsClangDeclImported(const Context& context, clang::Decl* decl)
 
 // If `decl` already mapped to an instruction, returns that instruction.
 // Otherwise returns `None`.
-static auto LookupClangDeclInstId(const Context& context, clang::Decl* decl)
+static auto LookupClangDeclInstId(Context& context, clang::Decl* decl)
     -> SemIR::InstId {
   const auto& clang_decls = context.clang_decls();
   if (auto context_clang_decl_id = clang_decls.Lookup(decl->getCanonicalDecl());
