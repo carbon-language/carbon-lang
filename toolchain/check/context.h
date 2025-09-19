@@ -299,7 +299,7 @@ class Context {
   auto types() -> SemIR::TypeStore& { return sem_ir().types(); }
   // Instructions should be added with `AddInst` or `AddInstInNoBlock` from
   // `inst.h`. This is `const` to prevent accidental misuse.
-  auto insts() -> const SemIR::InstStore& { return sem_ir().insts(); }
+  auto insts() const -> const SemIR::InstStore& { return sem_ir().insts(); }
   auto constant_values() -> SemIR::ConstantValueStore& {
     return sem_ir().constant_values();
   }

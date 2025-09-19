@@ -214,7 +214,7 @@ static auto BuildVtable(Context& context, Parse::ClassDefinitionId node_id,
         override_fn.virtual_index = vtable.size();
         CARBON_CHECK(override_fn.virtual_index == fn.virtual_index);
       } else if (auto base_vtable_specific_function =
-                     context.sem_ir().insts().TryGetAs<SemIR::SpecificFunction>(
+                     context.insts().TryGetAs<SemIR::SpecificFunction>(
                          derived_vtable_entry_id)) {
         if (derived_vtable_entry_const_id.is_symbolic()) {
           // Create a new instruction here that is otherwise identical to

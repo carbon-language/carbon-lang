@@ -651,8 +651,7 @@ struct FacetType {
   static constexpr auto Kind = InstKind::FacetType.Define<Parse::NodeId>(
       {.ir_name = "facet_type",
        .is_type = InstIsType::Always,
-       .constant_kind = InstConstantKind::Always,
-       .deduce_through = true});
+       .constant_kind = InstConstantKind::Always});
 
   TypeId type_id;
   // TODO: Rename this to facet_type_info_id.

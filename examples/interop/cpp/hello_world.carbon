@@ -5,8 +5,8 @@
 import Cpp inline "#include <cstdio>";
 
 fn Run() {
-  // TODO: Requires operator <<, declaration type Var (cout) and class with
-  // virtual bases (basic_ostream).
+  // TODO: Requires member operator << and class with virtual bases
+  // (basic_ostream).
   // Cpp.std.cout << "Hello world!\n";
 
   // TODO: Requires variadic function.
@@ -20,7 +20,7 @@ fn Run() {
 
   // TODO: Requires Core.String API.
   // let message: str = "Hello world!\n\n";
-  // for (c: Core.Char in msg) {
+  // for (c: Core.Char in message) {
   //   Cpp.putchar((c as u8) as i32);
   // }
 

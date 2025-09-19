@@ -21,7 +21,7 @@ fn H[T:! Core.Copy](x: T) -> T {
   return x;
 }
 
-fn G[T:! Core.Copy](x: T) -> T {
+fn G[T:! Core.Copy & Core.Destroy](x: T) -> T {
   H(x);
   F(x);
   return x;
@@ -48,7 +48,7 @@ fn M() {
 // CHECK:STDOUT:   %.loc34 = load i32, ptr %n.var, align 4, !dbg !9
 // CHECK:STDOUT:   call void @_CF.Main.b88d1103f417c6d4(i32 %.loc34), !dbg !10
 // CHECK:STDOUT:   %.loc35_9 = load i32, ptr %n.var, align 4, !dbg !11
-// CHECK:STDOUT:   %G.call = call i32 @_CG.Main.de631560529e9861(i32 %.loc35_9), !dbg !12
+// CHECK:STDOUT:   %G.call = call i32 @_CG.Main.dedae426f8f6526d(i32 %.loc35_9), !dbg !12
 // CHECK:STDOUT:   store i32 %G.call, ptr %m.var, align 4, !dbg !13
 // CHECK:STDOUT:   ret void, !dbg !14
 // CHECK:STDOUT: }
@@ -61,7 +61,7 @@ fn M() {
 // CHECK:STDOUT:   ret void, !dbg !16
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: define linkonce_odr i32 @_CG.Main.de631560529e9861(i32 %x) !dbg !17 {
+// CHECK:STDOUT: define linkonce_odr i32 @_CG.Main.dedae426f8f6526d(i32 %x) !dbg !17 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   %.loc25_6.3.temp = alloca i32, align 4, !dbg !18
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %.loc25_6.3.temp), !dbg !18
@@ -102,7 +102,7 @@ fn M() {
 // CHECK:STDOUT: !14 = !DILocation(line: 30, column: 1, scope: !4)
 // CHECK:STDOUT: !15 = distinct !DISubprogram(name: "F", linkageName: "_CF.Main.b88d1103f417c6d4", scope: null, file: !3, line: 16, type: !5, spFlags: DISPFlagDefinition, unit: !2)
 // CHECK:STDOUT: !16 = !DILocation(line: 16, column: 1, scope: !15)
-// CHECK:STDOUT: !17 = distinct !DISubprogram(name: "G", linkageName: "_CG.Main.de631560529e9861", scope: null, file: !3, line: 24, type: !5, spFlags: DISPFlagDefinition, unit: !2)
+// CHECK:STDOUT: !17 = distinct !DISubprogram(name: "G", linkageName: "_CG.Main.dedae426f8f6526d", scope: null, file: !3, line: 24, type: !5, spFlags: DISPFlagDefinition, unit: !2)
 // CHECK:STDOUT: !18 = !DILocation(line: 25, column: 3, scope: !17)
 // CHECK:STDOUT: !19 = !DILocation(line: 26, column: 3, scope: !17)
 // CHECK:STDOUT: !20 = !DILocation(line: 27, column: 3, scope: !17)

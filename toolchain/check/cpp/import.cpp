@@ -13,6 +13,7 @@
 #include "clang/AST/ASTContext.h"
 #include "clang/AST/RecordLayout.h"
 #include "clang/AST/UnresolvedSet.h"
+#include "clang/AST/VTableBuilder.h"
 #include "clang/Basic/FileManager.h"
 #include "clang/Frontend/ASTUnit.h"
 #include "clang/Frontend/CompilerInstance.h"
@@ -598,8 +599,7 @@ static auto IsDeclInjectedClassName(const Context& context,
   CARBON_CHECK(ast_context.getCanonicalTagType(scope_record_decl) ==
                ast_context.getCanonicalTagType(record_decl));
 
-  auto class_decl =
-      context.sem_ir().insts().GetAs<SemIR::ClassDecl>(clang_decl.inst_id);
+  auto class_decl = context.insts().GetAs<SemIR::ClassDecl>(clang_decl.inst_id);
   CARBON_CHECK(name_id ==
                context.sem_ir().classes().Get(class_decl.class_id).name_id);
   return true;
@@ -1623,6 +1623,21 @@ static auto ImportFunction(Context& context, SemIR::LocId loc_id,
       AddPlaceholderInstInNoBlock(context, Parse::NodeId::None, function_decl);
   context.imports().push_back(decl_id);
 
+  auto virtual_modifier = SemIR::Function::VirtualModifier::None;
+  int32_t virtual_index = -1;
+  if (auto* method_decl = dyn_cast<clang::CXXMethodDecl>(clang_decl)) {
+    if (method_decl->size_overridden_methods()) {
+      virtual_modifier = SemIR::Function::VirtualModifier::Override;
+    } else if (method_decl->isVirtual()) {
+      virtual_modifier = SemIR::Function::VirtualModifier::Virtual;
+    }
+    if (virtual_modifier != SemIR::Function::VirtualModifier::None) {
+      // TODO: Add support for Microsoft/non-Itanium vtables.
+      virtual_index = dyn_cast<clang::ItaniumVTableContext>(
+                          context.ast_context().getVTableContext())
+                          ->getMethodVTableIndex(method_decl);
+    }
+  }
   auto function_info = SemIR::Function{
       {.name_id = GetFunctionName(context, clang_decl),
        .parent_scope_id = GetParentNameScopeId(context, clang_decl),
@@ -1640,7 +1655,8 @@ static auto ImportFunction(Context& context, SemIR::LocId loc_id,
        .definition_id = SemIR::InstId::None},
       {.call_params_id = function_params_insts->call_params_id,
        .return_slot_pattern_id = function_params_insts->return_slot_pattern_id,
-       .virtual_modifier = SemIR::FunctionFields::VirtualModifier::None,
+       .virtual_modifier = virtual_modifier,
+       .virtual_index = virtual_index,
        .self_param_id = FindSelfPattern(
            context, function_params_insts->implicit_param_patterns_id),
        .clang_decl_id = context.sem_ir().clang_decls().Add(
@@ -1673,14 +1689,6 @@ auto ImportCppFunctionDecl(Context& context, SemIR::LocId loc_id,
     context.TODO(loc_id, "Unsupported: Template function");
     MarkFailedDecl(context, clang_decl);
     return SemIR::ErrorInst::InstId;
-  }
-
-  if (auto* method_decl = dyn_cast<clang::CXXMethodDecl>(clang_decl)) {
-    if (method_decl->isVirtual()) {
-      context.TODO(loc_id, "Unsupported: Virtual function");
-      MarkFailedDecl(context, clang_decl);
-      return SemIR::ErrorInst::InstId;
-    }
   }
 
   CARBON_CHECK(clang_decl->getFunctionType()->isFunctionProtoType(),
@@ -2141,6 +2149,15 @@ auto ImportNameFromCpp(Context& context, SemIR::LocId loc_id,
                           "in `Cpp` name lookup for `{0}`", SemIR::NameId);
         builder.Note(loc_id, InCppNameLookup, name_id);
       });
+
+  if (auto class_decl = context.insts().TryGetAs<SemIR::ClassDecl>(
+          context.name_scopes().Get(scope_id).inst_id());
+      class_decl.has_value()) {
+    if (!context.types().IsComplete(
+            context.classes().Get(class_decl->class_id).self_type_id)) {
+      return SemIR::ScopeLookupResult::MakeError();
+    }
+  }
 
   auto lookup = ClangLookupName(context, scope_id, name_id);
   if (!lookup) {
