@@ -2088,9 +2088,7 @@ static auto GetOverloadSetAccess(Context& context, SemIR::LocId loc_id,
   clang::AccessSpecifier access = overload_set.begin().getAccess();
   for (auto it = overload_set.begin() + 1; it != overload_set.end(); ++it) {
     if (it.getAccess() != access) {
-      context.TODO(
-          loc_id,
-          llvm::formatv("Unsupported: Overloaded set with mixed access").str());
+      context.TODO(loc_id, "Unsupported: Overloaded set with mixed access");
       return std::nullopt;
     }
   }
