@@ -563,7 +563,7 @@ static auto ClangLookupDeclarationName(Context& context, SemIR::LocId loc_id,
 }
 
 // Looks up for constructors in the class scope and returns the lookup result.
-static auto ClangConstructorLookup(const Context& context,
+static auto ClangConstructorLookup(Context& context,
                                    SemIR::NameScopeId scope_id)
     -> clang::DeclContextLookupResult {
   const SemIR::NameScope& scope = context.sem_ir().name_scopes().Get(scope_id);
