@@ -1942,22 +1942,19 @@ static auto MakeConstantForCall(EvalContext& eval_context,
   auto callee_function =
       SemIR::GetCalleeFunction(eval_context.sem_ir(), call.callee_id);
   auto builtin_kind = SemIR::BuiltinFunctionKind::None;
-  CARBON_KIND_SWITCH(callee_function.info) {
-    case CARBON_KIND(SemIR::CalleeFunction::Function fn): {
-      // Calls to builtins might be constant.
-      builtin_kind =
-          eval_context.functions().Get(fn.function_id).builtin_function_kind();
-      if (builtin_kind == SemIR::BuiltinFunctionKind::None) {
-        // TODO: Eventually we'll want to treat some kinds of non-builtin
-        // functions as producing constants.
-        return SemIR::ConstantId::NotConstant;
-      }
-      break;
+  if (auto* fn =
+          std::get_if<SemIR::CalleeFunction::Function>(&callee_function.info)) {
+    // Calls to builtins might be constant.
+    builtin_kind =
+        eval_context.functions().Get(fn->function_id).builtin_function_kind();
+    if (builtin_kind == SemIR::BuiltinFunctionKind::None) {
+      // TODO: Eventually we'll want to treat some kinds of non-builtin
+      // functions as producing constants.
+      return SemIR::ConstantId::NotConstant;
     }
-    default:
-      // Calls to non-functions, such as calls to generic entity names, might be
-      // constant.
-      break;
+  } else {
+    // Calls to non-functions, such as calls to generic entity names, might be
+    // constant.
   }
 
   // Find the argument values and the return type.
