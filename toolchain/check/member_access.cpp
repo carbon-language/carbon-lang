@@ -631,9 +631,9 @@ static auto GetAssociatedValueImpl(Context& context, SemIR::LocId loc_id,
   }
   // That facet value has both the self type we need below and the witness
   // we are going to use to look up the value of the associated member.
-  auto self_type_const_id = TryEvalInst(
-      context, SemIR::FacetAccessType{.type_id = SemIR::TypeType::TypeId,
-                                      .facet_value_inst_id = facet_inst_id});
+  auto self_type_const_id = TryEvalInst<SemIR::FacetAccessType>(
+      context, {.type_id = SemIR::TypeType::TypeId,
+                .facet_value_inst_id = facet_inst_id});
   // TODO: We should be able to lookup constant associated values from runtime
   // facet values by using their FacetType only, but we assume constant values
   // for impl lookup at the moment.
@@ -644,6 +644,11 @@ static auto GetAssociatedValueImpl(Context& context, SemIR::LocId loc_id,
   auto self_type_id =
       context.types().GetTypeIdForTypeConstantId(self_type_const_id);
 
+  // TODO: If `ConvertToValueOfType` returned a `FacetValue`, we already got a
+  // witness for this interface there. We don't need to do both a
+  // ConvertToValueOfType and LookupImplWitness, that is redundant. Since we
+  // want to do LookupImplWitness unconditionally (eg. if `base_id` has exactly
+  // the right FacetType already), can we drop the ConvertToValueOfType step?
   auto lookup_result = LookupImplWitness(
       context, loc_id, context.constant_values().Get(facet_inst_id),
       EvalOrAddInst(context, loc_id,

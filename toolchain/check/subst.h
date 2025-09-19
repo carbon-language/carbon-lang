@@ -82,6 +82,12 @@ class SubstInstCallbacks {
   auto RebuildNewInst(SemIR::LocId loc_id, SemIR::Inst new_inst) const
       -> SemIR::InstId;
 
+  template <typename InstT>
+  auto RebuildNewInst(SemIR::LocId loc_id, InstT new_inst) const
+      -> SemIR::InstId {
+    return RebuildNewInst(loc_id, static_cast<SemIR::Inst>(new_inst));
+  }
+
  private:
   Context* context_;
 };

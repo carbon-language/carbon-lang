@@ -627,6 +627,10 @@ class Stringifier {
     }
   }
 
+  auto StringifyInst(InstId /*inst_id*/, SymbolicBindingType inst) -> void {
+    step_stack_->PushEntityNameId(inst.entity_name_id);
+  }
+
   auto StringifyInst(InstId /*inst_id*/, TupleType inst) -> void {
     auto refs = sem_ir_->inst_blocks().Get(inst.type_elements_id);
     if (refs.empty()) {

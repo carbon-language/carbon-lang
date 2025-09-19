@@ -11,6 +11,7 @@
 #include "toolchain/check/import.h"
 #include "toolchain/check/import_ref.h"
 #include "toolchain/check/member_access.h"
+#include "toolchain/check/type.h"
 #include "toolchain/check/type_completion.h"
 #include "toolchain/diagnostics/format_providers.h"
 #include "toolchain/sem_ir/generic.h"

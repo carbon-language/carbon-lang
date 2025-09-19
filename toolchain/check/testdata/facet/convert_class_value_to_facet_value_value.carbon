@@ -32,12 +32,12 @@ fn F() {
 // CHECK:STDOUT:   %.Self: %type = bind_symbolic_name .Self [symbolic_self]
 // CHECK:STDOUT:   %T: %Animal.type = bind_symbolic_name T, 0 [symbolic]
 // CHECK:STDOUT:   %pattern_type.3c3: type = pattern_type %Animal.type [concrete]
-// CHECK:STDOUT:   %T.as_type: type = facet_access_type %T [symbolic]
-// CHECK:STDOUT:   %pattern_type.29d: type = pattern_type %T.as_type [symbolic]
+// CHECK:STDOUT:   %T.binding.as_type: type = symbolic_binding_type T, 0, %T [symbolic]
+// CHECK:STDOUT:   %pattern_type.a4a: type = pattern_type %T.binding.as_type [symbolic]
 // CHECK:STDOUT:   %WalkAnimal.type: type = fn_type @WalkAnimal [concrete]
 // CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [concrete]
 // CHECK:STDOUT:   %WalkAnimal: %WalkAnimal.type = struct_value () [concrete]
-// CHECK:STDOUT:   %require_complete.210: <witness> = require_complete_type %T.as_type [symbolic]
+// CHECK:STDOUT:   %require_complete.892: <witness> = require_complete_type %T.binding.as_type [symbolic]
 // CHECK:STDOUT:   %Goat: type = class_type @Goat [concrete]
 // CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [concrete]
 // CHECK:STDOUT:   %complete_type.357: <witness> = complete_type_witness %empty_struct_type [concrete]
@@ -51,10 +51,10 @@ fn F() {
 // CHECK:STDOUT:   %Destroy.type: type = facet_type <@Destroy> [concrete]
 // CHECK:STDOUT:   %type_where: type = facet_type <type where .Self impls <CanDestroy>> [concrete]
 // CHECK:STDOUT:   %facet_value: %type_where = facet_value %Goat, () [concrete]
-// CHECK:STDOUT:   %DestroyT.as_type.as.Destroy.impl.Op.type.f2a: type = fn_type @DestroyT.as_type.as.Destroy.impl.Op, @DestroyT.as_type.as.Destroy.impl(%facet_value) [concrete]
-// CHECK:STDOUT:   %DestroyT.as_type.as.Destroy.impl.Op.353: %DestroyT.as_type.as.Destroy.impl.Op.type.f2a = struct_value () [concrete]
+// CHECK:STDOUT:   %DestroyT.binding.as_type.as.Destroy.impl.Op.type.729: type = fn_type @DestroyT.binding.as_type.as.Destroy.impl.Op, @DestroyT.binding.as_type.as.Destroy.impl(%facet_value) [concrete]
+// CHECK:STDOUT:   %DestroyT.binding.as_type.as.Destroy.impl.Op.457: %DestroyT.binding.as_type.as.Destroy.impl.Op.type.729 = struct_value () [concrete]
 // CHECK:STDOUT:   %ptr.940: type = ptr_type %Goat [concrete]
-// CHECK:STDOUT:   %DestroyT.as_type.as.Destroy.impl.Op.specific_fn: <specific function> = specific_function %DestroyT.as_type.as.Destroy.impl.Op.353, @DestroyT.as_type.as.Destroy.impl.Op(%facet_value) [concrete]
+// CHECK:STDOUT:   %DestroyT.binding.as_type.as.Destroy.impl.Op.specific_fn: <specific function> = specific_function %DestroyT.binding.as_type.as.Destroy.impl.Op.457, @DestroyT.binding.as_type.as.Destroy.impl.Op(%facet_value) [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -78,21 +78,21 @@ fn F() {
 // CHECK:STDOUT:   %Animal.decl: type = interface_decl @Animal [concrete = constants.%Animal.type] {} {}
 // CHECK:STDOUT:   %WalkAnimal.decl: %WalkAnimal.type = fn_decl @WalkAnimal [concrete = constants.%WalkAnimal] {
 // CHECK:STDOUT:     %T.patt: %pattern_type.3c3 = symbolic_binding_pattern T, 0 [concrete]
-// CHECK:STDOUT:     %a.patt: @WalkAnimal.%pattern_type (%pattern_type.29d) = binding_pattern a [concrete]
-// CHECK:STDOUT:     %a.param_patt: @WalkAnimal.%pattern_type (%pattern_type.29d) = value_param_pattern %a.patt, call_param0 [concrete]
+// CHECK:STDOUT:     %a.patt: @WalkAnimal.%pattern_type (%pattern_type.a4a) = binding_pattern a [concrete]
+// CHECK:STDOUT:     %a.param_patt: @WalkAnimal.%pattern_type (%pattern_type.a4a) = value_param_pattern %a.patt, call_param0 [concrete]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %.loc17_19: type = splice_block %Animal.ref [concrete = constants.%Animal.type] {
 // CHECK:STDOUT:       %.Self: %type = bind_symbolic_name .Self [symbolic_self = constants.%.Self]
 // CHECK:STDOUT:       %Animal.ref: type = name_ref Animal, file.%Animal.decl [concrete = constants.%Animal.type]
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %T.loc17_15.2: %Animal.type = bind_symbolic_name T, 0 [symbolic = %T.loc17_15.1 (constants.%T)]
-// CHECK:STDOUT:     %a.param: @WalkAnimal.%T.as_type.loc17_30.1 (%T.as_type) = value_param call_param0
-// CHECK:STDOUT:     %.loc17_30.1: type = splice_block %.loc17_30.2 [symbolic = %T.as_type.loc17_30.1 (constants.%T.as_type)] {
+// CHECK:STDOUT:     %a.param: @WalkAnimal.%T.binding.as_type (%T.binding.as_type) = value_param call_param0
+// CHECK:STDOUT:     %.loc17_30.1: type = splice_block %.loc17_30.2 [symbolic = %T.binding.as_type (constants.%T.binding.as_type)] {
 // CHECK:STDOUT:       %T.ref: %Animal.type = name_ref T, %T.loc17_15.2 [symbolic = %T.loc17_15.1 (constants.%T)]
-// CHECK:STDOUT:       %T.as_type.loc17_30.2: type = facet_access_type %T.ref [symbolic = %T.as_type.loc17_30.1 (constants.%T.as_type)]
-// CHECK:STDOUT:       %.loc17_30.2: type = converted %T.ref, %T.as_type.loc17_30.2 [symbolic = %T.as_type.loc17_30.1 (constants.%T.as_type)]
+// CHECK:STDOUT:       %T.as_type: type = facet_access_type %T.ref [symbolic = %T.binding.as_type (constants.%T.binding.as_type)]
+// CHECK:STDOUT:       %.loc17_30.2: type = converted %T.ref, %T.as_type [symbolic = %T.binding.as_type (constants.%T.binding.as_type)]
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %a: @WalkAnimal.%T.as_type.loc17_30.1 (%T.as_type) = bind_name a, %a.param
+// CHECK:STDOUT:     %a: @WalkAnimal.%T.binding.as_type (%T.binding.as_type) = bind_name a, %a.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Goat.decl: type = class_decl @Goat [concrete = constants.%Goat] {} {}
 // CHECK:STDOUT:   impl_decl @Goat.as.Animal.impl [concrete] {} {
@@ -127,13 +127,13 @@ fn F() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic fn @WalkAnimal(%T.loc17_15.2: %Animal.type) {
 // CHECK:STDOUT:   %T.loc17_15.1: %Animal.type = bind_symbolic_name T, 0 [symbolic = %T.loc17_15.1 (constants.%T)]
-// CHECK:STDOUT:   %T.as_type.loc17_30.1: type = facet_access_type %T.loc17_15.1 [symbolic = %T.as_type.loc17_30.1 (constants.%T.as_type)]
-// CHECK:STDOUT:   %pattern_type: type = pattern_type %T.as_type.loc17_30.1 [symbolic = %pattern_type (constants.%pattern_type.29d)]
+// CHECK:STDOUT:   %T.binding.as_type: type = symbolic_binding_type T, 0, %T.loc17_15.1 [symbolic = %T.binding.as_type (constants.%T.binding.as_type)]
+// CHECK:STDOUT:   %pattern_type: type = pattern_type %T.binding.as_type [symbolic = %pattern_type (constants.%pattern_type.a4a)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
-// CHECK:STDOUT:   %require_complete: <witness> = require_complete_type %T.as_type.loc17_30.1 [symbolic = %require_complete (constants.%require_complete.210)]
+// CHECK:STDOUT:   %require_complete: <witness> = require_complete_type %T.binding.as_type [symbolic = %require_complete (constants.%require_complete.892)]
 // CHECK:STDOUT:
-// CHECK:STDOUT:   fn(%a.param: @WalkAnimal.%T.as_type.loc17_30.1 (%T.as_type)) {
+// CHECK:STDOUT:   fn(%a.param: @WalkAnimal.%T.binding.as_type (%T.binding.as_type)) {
 // CHECK:STDOUT:   !entry:
 // CHECK:STDOUT:     return
 // CHECK:STDOUT:   }
@@ -157,23 +157,23 @@ fn F() {
 // CHECK:STDOUT:   %WalkAnimal.call: init %empty_tuple.type = call %WalkAnimal.specific_fn(%.loc23_17.2)
 // CHECK:STDOUT:   %facet_value: %type_where = facet_value constants.%Goat, () [concrete = constants.%facet_value]
 // CHECK:STDOUT:   %.loc23_15.5: %type_where = converted constants.%Goat, %facet_value [concrete = constants.%facet_value]
-// CHECK:STDOUT:   %DestroyT.as_type.as.Destroy.impl.Op.bound: <bound method> = bound_method %.loc23_15.4, constants.%DestroyT.as_type.as.Destroy.impl.Op.353
-// CHECK:STDOUT:   %DestroyT.as_type.as.Destroy.impl.Op.specific_fn: <specific function> = specific_function constants.%DestroyT.as_type.as.Destroy.impl.Op.353, @DestroyT.as_type.as.Destroy.impl.Op(constants.%facet_value) [concrete = constants.%DestroyT.as_type.as.Destroy.impl.Op.specific_fn]
-// CHECK:STDOUT:   %bound_method: <bound method> = bound_method %.loc23_15.4, %DestroyT.as_type.as.Destroy.impl.Op.specific_fn
+// CHECK:STDOUT:   %DestroyT.binding.as_type.as.Destroy.impl.Op.bound: <bound method> = bound_method %.loc23_15.4, constants.%DestroyT.binding.as_type.as.Destroy.impl.Op.457
+// CHECK:STDOUT:   %DestroyT.binding.as_type.as.Destroy.impl.Op.specific_fn: <specific function> = specific_function constants.%DestroyT.binding.as_type.as.Destroy.impl.Op.457, @DestroyT.binding.as_type.as.Destroy.impl.Op(constants.%facet_value) [concrete = constants.%DestroyT.binding.as_type.as.Destroy.impl.Op.specific_fn]
+// CHECK:STDOUT:   %bound_method: <bound method> = bound_method %.loc23_15.4, %DestroyT.binding.as_type.as.Destroy.impl.Op.specific_fn
 // CHECK:STDOUT:   %addr: %ptr.940 = addr_of %.loc23_15.4
-// CHECK:STDOUT:   %DestroyT.as_type.as.Destroy.impl.Op.call: init %empty_tuple.type = call %bound_method(%addr)
+// CHECK:STDOUT:   %DestroyT.binding.as_type.as.Destroy.impl.Op.call: init %empty_tuple.type = call %bound_method(%addr)
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @WalkAnimal(constants.%T) {
 // CHECK:STDOUT:   %T.loc17_15.1 => constants.%T
-// CHECK:STDOUT:   %T.as_type.loc17_30.1 => constants.%T.as_type
-// CHECK:STDOUT:   %pattern_type => constants.%pattern_type.29d
+// CHECK:STDOUT:   %T.binding.as_type => constants.%T.binding.as_type
+// CHECK:STDOUT:   %pattern_type => constants.%pattern_type.a4a
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @WalkAnimal(constants.%Animal.facet) {
 // CHECK:STDOUT:   %T.loc17_15.1 => constants.%Animal.facet
-// CHECK:STDOUT:   %T.as_type.loc17_30.1 => constants.%Goat
+// CHECK:STDOUT:   %T.binding.as_type => constants.%Goat
 // CHECK:STDOUT:   %pattern_type => constants.%pattern_type.ab7
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:

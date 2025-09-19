@@ -90,7 +90,7 @@ fn G() {
 // CHECK:STDOUT:   %Generic.assoc_type.0fd877.2: type = assoc_entity_type @Generic, @Generic(%T) [symbolic]
 // CHECK:STDOUT:   %assoc0.2966cb.2: %Generic.assoc_type.0fd877.2 = assoc_entity element0, @Generic.%Generic.F.decl [symbolic]
 // CHECK:STDOUT:   %require_complete: <witness> = require_complete_type %Generic.type.2db63e.2 [symbolic]
-// CHECK:STDOUT:   %U.as_type: type = facet_access_type %U [symbolic]
+// CHECK:STDOUT:   %U.binding.as_type: type = symbolic_binding_type U, 1, %U [symbolic]
 // CHECK:STDOUT:   %Generic.lookup_impl_witness: <witness> = lookup_impl_witness %U, @Generic, @Generic(%T) [symbolic]
 // CHECK:STDOUT:   %.468: type = fn_type_with_self_type %Generic.F.type.f439a9.2, %U [symbolic]
 // CHECK:STDOUT:   %impl.elem0: %.468 = impl_witness_access %Generic.lookup_impl_witness, element0 [symbolic]
@@ -252,7 +252,7 @@ fn G() {
 // CHECK:STDOUT:   %require_complete: <witness> = require_complete_type %Generic.type.loc33_45.1 [symbolic = %require_complete (constants.%require_complete)]
 // CHECK:STDOUT:   %Generic.assoc_type: type = assoc_entity_type @Generic, @Generic(%T.loc33_22.1) [symbolic = %Generic.assoc_type (constants.%Generic.assoc_type.0fd877.2)]
 // CHECK:STDOUT:   %assoc0: @CallGenericMethod.%Generic.assoc_type (%Generic.assoc_type.0fd877.2) = assoc_entity element0, @Generic.%Generic.F.decl [symbolic = %assoc0 (constants.%assoc0.2966cb.2)]
-// CHECK:STDOUT:   %U.as_type.loc34_4.2: type = facet_access_type %U.loc33_32.1 [symbolic = %U.as_type.loc34_4.2 (constants.%U.as_type)]
+// CHECK:STDOUT:   %U.binding.as_type: type = symbolic_binding_type U, 1, %U.loc33_32.1 [symbolic = %U.binding.as_type (constants.%U.binding.as_type)]
 // CHECK:STDOUT:   %Generic.lookup_impl_witness: <witness> = lookup_impl_witness %U.loc33_32.1, @Generic, @Generic(%T.loc33_22.1) [symbolic = %Generic.lookup_impl_witness (constants.%Generic.lookup_impl_witness)]
 // CHECK:STDOUT:   %Generic.F.type: type = fn_type @Generic.F, @Generic(%T.loc33_22.1) [symbolic = %Generic.F.type (constants.%Generic.F.type.f439a9.2)]
 // CHECK:STDOUT:   %.loc34_4.3: type = fn_type_with_self_type %Generic.F.type, %U.loc33_32.1 [symbolic = %.loc34_4.3 (constants.%.468)]
@@ -264,8 +264,8 @@ fn G() {
 // CHECK:STDOUT:     %U.ref: @CallGenericMethod.%Generic.type.loc33_45.1 (%Generic.type.2db63e.2) = name_ref U, %U.loc33_32.2 [symbolic = %U.loc33_32.1 (constants.%U)]
 // CHECK:STDOUT:     %.loc34_4.1: @CallGenericMethod.%Generic.assoc_type (%Generic.assoc_type.0fd877.2) = specific_constant @Generic.%assoc0.loc16_9.1, @Generic(constants.%T) [symbolic = %assoc0 (constants.%assoc0.2966cb.2)]
 // CHECK:STDOUT:     %F.ref: @CallGenericMethod.%Generic.assoc_type (%Generic.assoc_type.0fd877.2) = name_ref F, %.loc34_4.1 [symbolic = %assoc0 (constants.%assoc0.2966cb.2)]
-// CHECK:STDOUT:     %U.as_type.loc34_4.1: type = facet_access_type %U.ref [symbolic = %U.as_type.loc34_4.2 (constants.%U.as_type)]
-// CHECK:STDOUT:     %.loc34_4.2: type = converted %U.ref, %U.as_type.loc34_4.1 [symbolic = %U.as_type.loc34_4.2 (constants.%U.as_type)]
+// CHECK:STDOUT:     %U.as_type: type = facet_access_type %U.ref [symbolic = %U.binding.as_type (constants.%U.binding.as_type)]
+// CHECK:STDOUT:     %.loc34_4.2: type = converted %U.ref, %U.as_type [symbolic = %U.binding.as_type (constants.%U.binding.as_type)]
 // CHECK:STDOUT:     %impl.elem0.loc34_4.1: @CallGenericMethod.%.loc34_4.3 (%.468) = impl_witness_access constants.%Generic.lookup_impl_witness, element0 [symbolic = %impl.elem0.loc34_4.2 (constants.%impl.elem0)]
 // CHECK:STDOUT:     %specific_impl_fn.loc34_4.1: <specific function> = specific_impl_function %impl.elem0.loc34_4.1, @Generic.F(constants.%T, constants.%U) [symbolic = %specific_impl_fn.loc34_4.2 (constants.%specific_impl_fn)]
 // CHECK:STDOUT:     %.loc34_7: init %empty_tuple.type = call %specific_impl_fn.loc34_4.1()
@@ -340,7 +340,7 @@ fn G() {
 // CHECK:STDOUT:   %require_complete => constants.%complete_type.ca2
 // CHECK:STDOUT:   %Generic.assoc_type => constants.%Generic.assoc_type.713
 // CHECK:STDOUT:   %assoc0 => constants.%assoc0.9b7
-// CHECK:STDOUT:   %U.as_type.loc34_4.2 => constants.%ImplsGeneric
+// CHECK:STDOUT:   %U.binding.as_type => constants.%ImplsGeneric
 // CHECK:STDOUT:   %Generic.lookup_impl_witness => constants.%Generic.impl_witness
 // CHECK:STDOUT:   %Generic.F.type => constants.%Generic.F.type.4cf
 // CHECK:STDOUT:   %.loc34_4.3 => constants.%.573

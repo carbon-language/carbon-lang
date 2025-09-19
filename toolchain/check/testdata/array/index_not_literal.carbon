@@ -95,8 +95,8 @@ fn F(a: array({}, 3)) -> {} {
 // CHECK:STDOUT:   %array: %array_type = tuple_value (%int_1.5d2, %int_2.ef8, %int_3.822) [concrete]
 // CHECK:STDOUT:   %type_where: type = facet_type <type where .Self impls <CanDestroy>> [concrete]
 // CHECK:STDOUT:   %facet_value: %type_where = facet_value %array_type, () [concrete]
-// CHECK:STDOUT:   %DestroyT.as_type.as.Destroy.impl.Op.type.ffb: type = fn_type @DestroyT.as_type.as.Destroy.impl.Op, @DestroyT.as_type.as.Destroy.impl(%facet_value) [concrete]
-// CHECK:STDOUT:   %DestroyT.as_type.as.Destroy.impl.Op.e7e: %DestroyT.as_type.as.Destroy.impl.Op.type.ffb = struct_value () [concrete]
+// CHECK:STDOUT:   %DestroyT.binding.as_type.as.Destroy.impl.Op.type.c98: type = fn_type @DestroyT.binding.as_type.as.Destroy.impl.Op, @DestroyT.binding.as_type.as.Destroy.impl(%facet_value) [concrete]
+// CHECK:STDOUT:   %DestroyT.binding.as_type.as.Destroy.impl.Op.cff: %DestroyT.binding.as_type.as.Destroy.impl.Op.type.c98 = struct_value () [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -173,11 +173,11 @@ fn F(a: array({}, 3)) -> {} {
 // CHECK:STDOUT:   %F.call: init %i32 = call %F.ref(%.loc10_20.15, %.loc10_23.2)
 // CHECK:STDOUT:   %facet_value: %type_where = facet_value constants.%array_type, () [concrete = constants.%facet_value]
 // CHECK:STDOUT:   %.loc10_20.16: %type_where = converted constants.%array_type, %facet_value [concrete = constants.%facet_value]
-// CHECK:STDOUT:   %DestroyT.as_type.as.Destroy.impl.Op.bound: <bound method> = bound_method %.loc10_20.14, constants.%DestroyT.as_type.as.Destroy.impl.Op.e7e
+// CHECK:STDOUT:   %DestroyT.binding.as_type.as.Destroy.impl.Op.bound: <bound method> = bound_method %.loc10_20.14, constants.%DestroyT.binding.as_type.as.Destroy.impl.Op.cff
 // CHECK:STDOUT:   <elided>
-// CHECK:STDOUT:   %bound_method.loc10_20.7: <bound method> = bound_method %.loc10_20.14, %DestroyT.as_type.as.Destroy.impl.Op.specific_fn
+// CHECK:STDOUT:   %bound_method.loc10_20.7: <bound method> = bound_method %.loc10_20.14, %DestroyT.binding.as_type.as.Destroy.impl.Op.specific_fn
 // CHECK:STDOUT:   %addr: %ptr.f01 = addr_of %.loc10_20.14
-// CHECK:STDOUT:   %DestroyT.as_type.as.Destroy.impl.Op.call: init %empty_tuple.type = call %bound_method.loc10_20.7(%addr)
+// CHECK:STDOUT:   %DestroyT.binding.as_type.as.Destroy.impl.Op.call: init %empty_tuple.type = call %bound_method.loc10_20.7(%addr)
 // CHECK:STDOUT:   return %F.call to %return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

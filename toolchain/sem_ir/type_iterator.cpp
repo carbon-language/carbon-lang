@@ -76,6 +76,13 @@ auto TypeIterator::ProcessTypeId(TypeId type_id) -> std::optional<Step> {
           sem_ir_->insts().Get(access.facet_value_inst_id).type_id();
       return Step::SymbolicType{.facet_type_id = facet_type_id};
     }
+    case CARBON_KIND(SemIR::SymbolicBindingType bind): {
+      // TODO: Look in ScopeStack with the entity_name_id to find the facet
+      // value.
+      auto facet_type_id =
+          sem_ir_->insts().Get(bind.facet_value_inst_id).type_id();
+      return Step::SymbolicType{.facet_type_id = facet_type_id};
+    }
 
       // ==== Concrete types ====
 

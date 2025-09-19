@@ -814,19 +814,22 @@ auto InstNamer::NamingContext::NameInst() -> void {
       return;
     }
     case CARBON_KIND(FacetAccessType inst): {
-      auto name_id = NameId::None;
       if (auto name =
               sem_ir().insts().TryGetAs<NameRef>(inst.facet_value_inst_id)) {
-        name_id = name->name_id;
-      } else if (auto symbolic = sem_ir().insts().TryGetAs<BindSymbolicName>(
-                     inst.facet_value_inst_id)) {
-        name_id = sem_ir().entity_names().Get(symbolic->entity_name_id).name_id;
-      }
-
-      if (name_id.has_value()) {
-        AddInstNameId(name_id, ".as_type");
+        AddInstNameId(name->name_id, ".as_type");
       } else {
         AddInstName("as_type");
+      }
+      return;
+    }
+    case CARBON_KIND(SymbolicBindingType inst): {
+      auto bind =
+          sem_ir().insts().GetAs<BindSymbolicName>(inst.facet_value_inst_id);
+      auto name_id = sem_ir().entity_names().Get(bind.entity_name_id).name_id;
+      if (name_id.has_value()) {
+        AddInstNameId(name_id, ".binding.as_type");
+      } else {
+        AddInstName("binding.as_type");
       }
       return;
     }

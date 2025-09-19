@@ -1687,6 +1687,23 @@ struct SymbolicBindingPattern {
   EntityNameId entity_name_id;
 };
 
+// The constant value of a FacetAccessType for a symbolic facet value.
+struct SymbolicBindingType {
+  static constexpr auto Kind =
+      InstKind::SymbolicBindingType.Define<Parse::NodeId>(
+          {.ir_name = "symbolic_binding_type",
+           .is_type = InstIsType::Always,
+           .constant_kind = InstConstantKind::SymbolicOnly});
+
+  // Always the builtin type TypeType.
+  TypeId type_id;
+  // The symbolic facet value binding for which this instruction accesses the
+  // concrete type once it is known for the symbolic value.
+  EntityNameId entity_name_id;
+  // TODO: Remove this, and find it through a lookup on ScopeStack.
+  InstId facet_value_inst_id;
+};
+
 // A temporary value.
 struct Temporary {
   static constexpr auto Kind = InstKind::Temporary.Define<Parse::NodeId>(

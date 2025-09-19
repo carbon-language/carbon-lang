@@ -146,7 +146,7 @@ fn G(T:! type where C(()) impls I(.Self)) {}
 // CHECK:STDOUT:   %pattern_type.917: type = pattern_type %I_where.type [concrete]
 // CHECK:STDOUT:   %PeriodSelf.type: type = fn_type @PeriodSelf [concrete]
 // CHECK:STDOUT:   %PeriodSelf: %PeriodSelf.type = struct_value () [concrete]
-// CHECK:STDOUT:   %.Self.as_type: type = facet_access_type %.Self.364 [symbolic_self]
+// CHECK:STDOUT:   %.Self.binding.as_type: type = symbolic_binding_type .Self, %.Self.364 [symbolic_self]
 // CHECK:STDOUT:   %I.lookup_impl_witness: <witness> = lookup_impl_witness %.Self.364, @I [symbolic_self]
 // CHECK:STDOUT:   %impl.elem0: type = impl_witness_access %I.lookup_impl_witness, element0 [symbolic_self]
 // CHECK:STDOUT:   %U: %I_where.type = bind_symbolic_name U, 0 [symbolic]
@@ -189,8 +189,8 @@ fn G(T:! type where C(()) impls I(.Self)) {}
 // CHECK:STDOUT:       <elided>
 // CHECK:STDOUT:       %.Self.ref: %I.type = name_ref .Self, %.Self.2 [symbolic_self = constants.%.Self.364]
 // CHECK:STDOUT:       %Member.ref: %I.assoc_type = name_ref Member, @Member.%assoc0 [concrete = constants.%assoc0]
-// CHECK:STDOUT:       %.Self.as_type: type = facet_access_type %.Self.ref [symbolic_self = constants.%.Self.as_type]
-// CHECK:STDOUT:       %.loc11_29: type = converted %.Self.ref, %.Self.as_type [symbolic_self = constants.%.Self.as_type]
+// CHECK:STDOUT:       %.Self.as_type: type = facet_access_type %.Self.ref [symbolic_self = constants.%.Self.binding.as_type]
+// CHECK:STDOUT:       %.loc11_29: type = converted %.Self.ref, %.Self.as_type [symbolic_self = constants.%.Self.binding.as_type]
 // CHECK:STDOUT:       %impl.elem0: type = impl_witness_access constants.%I.lookup_impl_witness, element0 [symbolic_self = constants.%impl.elem0]
 // CHECK:STDOUT:       %.loc11_41: %empty_tuple.type = tuple_literal ()
 // CHECK:STDOUT:       %.loc11_23.2: type = where_expr %.Self.2 [concrete = constants.%I_where.type] {

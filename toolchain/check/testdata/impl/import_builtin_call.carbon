@@ -85,8 +85,8 @@ var n: Int(64) = MakeFromClass(FromLiteral(64) as OtherInt);
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %Add.type: type = facet_type <@Add> [concrete]
 // CHECK:STDOUT:   %Self: %Add.type = bind_symbolic_name Self, 0 [symbolic]
-// CHECK:STDOUT:   %Self.as_type: type = facet_access_type %Self [symbolic]
-// CHECK:STDOUT:   %pattern_type.8ad: type = pattern_type %Self.as_type [symbolic]
+// CHECK:STDOUT:   %Self.binding.as_type: type = symbolic_binding_type Self, 0, %Self [symbolic]
+// CHECK:STDOUT:   %pattern_type.f29: type = pattern_type %Self.binding.as_type [symbolic]
 // CHECK:STDOUT:   %Add.Op.type: type = fn_type @Add.Op [concrete]
 // CHECK:STDOUT:   %Add.Op: %Add.Op.type = struct_value () [concrete]
 // CHECK:STDOUT:   %Add.assoc_type: type = assoc_entity_type @Add [concrete]
@@ -217,32 +217,32 @@ var n: Int(64) = MakeFromClass(FromLiteral(64) as OtherInt);
 // CHECK:STDOUT: interface @Add {
 // CHECK:STDOUT:   %Self: %Add.type = bind_symbolic_name Self, 0 [symbolic = constants.%Self]
 // CHECK:STDOUT:   %Add.Op.decl: %Add.Op.type = fn_decl @Add.Op [concrete = constants.%Add.Op] {
-// CHECK:STDOUT:     %self.patt: @Add.Op.%pattern_type (%pattern_type.8ad) = binding_pattern self [concrete]
-// CHECK:STDOUT:     %self.param_patt: @Add.Op.%pattern_type (%pattern_type.8ad) = value_param_pattern %self.patt, call_param0 [concrete]
-// CHECK:STDOUT:     %other.patt: @Add.Op.%pattern_type (%pattern_type.8ad) = binding_pattern other [concrete]
-// CHECK:STDOUT:     %other.param_patt: @Add.Op.%pattern_type (%pattern_type.8ad) = value_param_pattern %other.patt, call_param1 [concrete]
-// CHECK:STDOUT:     %return.patt: @Add.Op.%pattern_type (%pattern_type.8ad) = return_slot_pattern [concrete]
-// CHECK:STDOUT:     %return.param_patt: @Add.Op.%pattern_type (%pattern_type.8ad) = out_param_pattern %return.patt, call_param2 [concrete]
+// CHECK:STDOUT:     %self.patt: @Add.Op.%pattern_type (%pattern_type.f29) = binding_pattern self [concrete]
+// CHECK:STDOUT:     %self.param_patt: @Add.Op.%pattern_type (%pattern_type.f29) = value_param_pattern %self.patt, call_param0 [concrete]
+// CHECK:STDOUT:     %other.patt: @Add.Op.%pattern_type (%pattern_type.f29) = binding_pattern other [concrete]
+// CHECK:STDOUT:     %other.param_patt: @Add.Op.%pattern_type (%pattern_type.f29) = value_param_pattern %other.patt, call_param1 [concrete]
+// CHECK:STDOUT:     %return.patt: @Add.Op.%pattern_type (%pattern_type.f29) = return_slot_pattern [concrete]
+// CHECK:STDOUT:     %return.param_patt: @Add.Op.%pattern_type (%pattern_type.f29) = out_param_pattern %return.patt, call_param2 [concrete]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %Self.ref.loc5_37: %Add.type = name_ref Self, @Add.%Self [symbolic = %Self (constants.%Self)]
-// CHECK:STDOUT:     %Self.as_type.loc5_37: type = facet_access_type %Self.ref.loc5_37 [symbolic = %Self.as_type.loc5_15.1 (constants.%Self.as_type)]
-// CHECK:STDOUT:     %.loc5_37: type = converted %Self.ref.loc5_37, %Self.as_type.loc5_37 [symbolic = %Self.as_type.loc5_15.1 (constants.%Self.as_type)]
-// CHECK:STDOUT:     %self.param: @Add.Op.%Self.as_type.loc5_15.1 (%Self.as_type) = value_param call_param0
-// CHECK:STDOUT:     %.loc5_15.1: type = splice_block %.loc5_15.2 [symbolic = %Self.as_type.loc5_15.1 (constants.%Self.as_type)] {
+// CHECK:STDOUT:     %Self.as_type.loc5_37: type = facet_access_type %Self.ref.loc5_37 [symbolic = %Self.binding.as_type (constants.%Self.binding.as_type)]
+// CHECK:STDOUT:     %.loc5_37: type = converted %Self.ref.loc5_37, %Self.as_type.loc5_37 [symbolic = %Self.binding.as_type (constants.%Self.binding.as_type)]
+// CHECK:STDOUT:     %self.param: @Add.Op.%Self.binding.as_type (%Self.binding.as_type) = value_param call_param0
+// CHECK:STDOUT:     %.loc5_15.1: type = splice_block %.loc5_15.2 [symbolic = %Self.binding.as_type (constants.%Self.binding.as_type)] {
 // CHECK:STDOUT:       %Self.ref.loc5_15: %Add.type = name_ref Self, @Add.%Self [symbolic = %Self (constants.%Self)]
-// CHECK:STDOUT:       %Self.as_type.loc5_15.2: type = facet_access_type %Self.ref.loc5_15 [symbolic = %Self.as_type.loc5_15.1 (constants.%Self.as_type)]
-// CHECK:STDOUT:       %.loc5_15.2: type = converted %Self.ref.loc5_15, %Self.as_type.loc5_15.2 [symbolic = %Self.as_type.loc5_15.1 (constants.%Self.as_type)]
+// CHECK:STDOUT:       %Self.as_type.loc5_15: type = facet_access_type %Self.ref.loc5_15 [symbolic = %Self.binding.as_type (constants.%Self.binding.as_type)]
+// CHECK:STDOUT:       %.loc5_15.2: type = converted %Self.ref.loc5_15, %Self.as_type.loc5_15 [symbolic = %Self.binding.as_type (constants.%Self.binding.as_type)]
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %self: @Add.Op.%Self.as_type.loc5_15.1 (%Self.as_type) = bind_name self, %self.param
-// CHECK:STDOUT:     %other.param: @Add.Op.%Self.as_type.loc5_15.1 (%Self.as_type) = value_param call_param1
-// CHECK:STDOUT:     %.loc5_28.1: type = splice_block %.loc5_28.2 [symbolic = %Self.as_type.loc5_15.1 (constants.%Self.as_type)] {
+// CHECK:STDOUT:     %self: @Add.Op.%Self.binding.as_type (%Self.binding.as_type) = bind_name self, %self.param
+// CHECK:STDOUT:     %other.param: @Add.Op.%Self.binding.as_type (%Self.binding.as_type) = value_param call_param1
+// CHECK:STDOUT:     %.loc5_28.1: type = splice_block %.loc5_28.2 [symbolic = %Self.binding.as_type (constants.%Self.binding.as_type)] {
 // CHECK:STDOUT:       %Self.ref.loc5_28: %Add.type = name_ref Self, @Add.%Self [symbolic = %Self (constants.%Self)]
-// CHECK:STDOUT:       %Self.as_type.loc5_28: type = facet_access_type %Self.ref.loc5_28 [symbolic = %Self.as_type.loc5_15.1 (constants.%Self.as_type)]
-// CHECK:STDOUT:       %.loc5_28.2: type = converted %Self.ref.loc5_28, %Self.as_type.loc5_28 [symbolic = %Self.as_type.loc5_15.1 (constants.%Self.as_type)]
+// CHECK:STDOUT:       %Self.as_type.loc5_28: type = facet_access_type %Self.ref.loc5_28 [symbolic = %Self.binding.as_type (constants.%Self.binding.as_type)]
+// CHECK:STDOUT:       %.loc5_28.2: type = converted %Self.ref.loc5_28, %Self.as_type.loc5_28 [symbolic = %Self.binding.as_type (constants.%Self.binding.as_type)]
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %other: @Add.Op.%Self.as_type.loc5_15.1 (%Self.as_type) = bind_name other, %other.param
-// CHECK:STDOUT:     %return.param: ref @Add.Op.%Self.as_type.loc5_15.1 (%Self.as_type) = out_param call_param2
-// CHECK:STDOUT:     %return: ref @Add.Op.%Self.as_type.loc5_15.1 (%Self.as_type) = return_slot %return.param
+// CHECK:STDOUT:     %other: @Add.Op.%Self.binding.as_type (%Self.binding.as_type) = bind_name other, %other.param
+// CHECK:STDOUT:     %return.param: ref @Add.Op.%Self.binding.as_type (%Self.binding.as_type) = out_param call_param2
+// CHECK:STDOUT:     %return: ref @Add.Op.%Self.binding.as_type (%Self.binding.as_type) = return_slot %return.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %assoc0: %Add.assoc_type = assoc_entity element0, %Add.Op.decl [concrete = constants.%assoc0]
 // CHECK:STDOUT:
@@ -315,10 +315,10 @@ var n: Int(64) = MakeFromClass(FromLiteral(64) as OtherInt);
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic fn @Add.Op(@Add.%Self: %Add.type) {
 // CHECK:STDOUT:   %Self: %Add.type = bind_symbolic_name Self, 0 [symbolic = %Self (constants.%Self)]
-// CHECK:STDOUT:   %Self.as_type.loc5_15.1: type = facet_access_type %Self [symbolic = %Self.as_type.loc5_15.1 (constants.%Self.as_type)]
-// CHECK:STDOUT:   %pattern_type: type = pattern_type %Self.as_type.loc5_15.1 [symbolic = %pattern_type (constants.%pattern_type.8ad)]
+// CHECK:STDOUT:   %Self.binding.as_type: type = symbolic_binding_type Self, 0, %Self [symbolic = %Self.binding.as_type (constants.%Self.binding.as_type)]
+// CHECK:STDOUT:   %pattern_type: type = pattern_type %Self.binding.as_type [symbolic = %pattern_type (constants.%pattern_type.f29)]
 // CHECK:STDOUT:
-// CHECK:STDOUT:   fn(%self.param: @Add.Op.%Self.as_type.loc5_15.1 (%Self.as_type), %other.param: @Add.Op.%Self.as_type.loc5_15.1 (%Self.as_type)) -> @Add.Op.%Self.as_type.loc5_15.1 (%Self.as_type);
+// CHECK:STDOUT:   fn(%self.param: @Add.Op.%Self.binding.as_type (%Self.binding.as_type), %other.param: @Add.Op.%Self.binding.as_type (%Self.binding.as_type)) -> @Add.Op.%Self.binding.as_type (%Self.binding.as_type);
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @IntLiteral() -> type = "int_literal.make_type";
@@ -369,8 +369,8 @@ var n: Int(64) = MakeFromClass(FromLiteral(64) as OtherInt);
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Add.Op(constants.%Self) {
 // CHECK:STDOUT:   %Self => constants.%Self
-// CHECK:STDOUT:   %Self.as_type.loc5_15.1 => constants.%Self.as_type
-// CHECK:STDOUT:   %pattern_type => constants.%pattern_type.8ad
+// CHECK:STDOUT:   %Self.binding.as_type => constants.%Self.binding.as_type
+// CHECK:STDOUT:   %pattern_type => constants.%pattern_type.f29
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @MyInt(constants.%N) {
@@ -401,7 +401,7 @@ var n: Int(64) = MakeFromClass(FromLiteral(64) as OtherInt);
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Add.Op(constants.%Add.facet.366) {
 // CHECK:STDOUT:   %Self => constants.%Add.facet.366
-// CHECK:STDOUT:   %Self.as_type.loc5_15.1 => constants.%MyInt
+// CHECK:STDOUT:   %Self.binding.as_type => constants.%MyInt
 // CHECK:STDOUT:   %pattern_type => constants.%pattern_type.a71
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -413,7 +413,7 @@ var n: Int(64) = MakeFromClass(FromLiteral(64) as OtherInt);
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Add.Op(constants.%Add.facet.7bd) {
 // CHECK:STDOUT:   %Self => constants.%Add.facet.7bd
-// CHECK:STDOUT:   %Self.as_type.loc5_15.1 => constants.%MyInt
+// CHECK:STDOUT:   %Self.binding.as_type => constants.%MyInt
 // CHECK:STDOUT:   %pattern_type => constants.%pattern_type.a71
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -440,8 +440,8 @@ var n: Int(64) = MakeFromClass(FromLiteral(64) as OtherInt);
 // CHECK:STDOUT:   %assoc0: %Add.assoc_type = assoc_entity element0, imports.%Main.import_ref.5a3 [concrete]
 // CHECK:STDOUT:   %Add.Op.type: type = fn_type @Add.Op [concrete]
 // CHECK:STDOUT:   %Add.Op: %Add.Op.type = struct_value () [concrete]
-// CHECK:STDOUT:   %Self.as_type: type = facet_access_type %Self [symbolic]
-// CHECK:STDOUT:   %pattern_type.8ad: type = pattern_type %Self.as_type [symbolic]
+// CHECK:STDOUT:   %Self.binding.as_type: type = symbolic_binding_type Self, 0, %Self [symbolic]
+// CHECK:STDOUT:   %pattern_type.f29: type = pattern_type %Self.binding.as_type [symbolic]
 // CHECK:STDOUT:   %Add.impl_witness.be2: <witness> = impl_witness imports.%Add.impl_witness_table, @MyInt.as.Add.impl(%N) [symbolic]
 // CHECK:STDOUT:   %MyInt.as.Add.impl.Op.type.f50: type = fn_type @MyInt.as.Add.impl.Op, @MyInt.as.Add.impl(%N) [symbolic]
 // CHECK:STDOUT:   %MyInt.as.Add.impl.Op.319: %MyInt.as.Add.impl.Op.type.f50 = struct_value () [symbolic]
@@ -595,8 +595,8 @@ var n: Int(64) = MakeFromClass(FromLiteral(64) as OtherInt);
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic fn @Add.Op(imports.%Main.import_ref.942: %Add.type) [from "generic_impl.carbon"] {
 // CHECK:STDOUT:   %Self: %Add.type = bind_symbolic_name Self, 0 [symbolic = %Self (constants.%Self)]
-// CHECK:STDOUT:   %Self.as_type: type = facet_access_type %Self [symbolic = %Self.as_type (constants.%Self.as_type)]
-// CHECK:STDOUT:   %pattern_type: type = pattern_type %Self.as_type [symbolic = %pattern_type (constants.%pattern_type.8ad)]
+// CHECK:STDOUT:   %Self.binding.as_type: type = symbolic_binding_type Self, 0, %Self [symbolic = %Self.binding.as_type (constants.%Self.binding.as_type)]
+// CHECK:STDOUT:   %pattern_type: type = pattern_type %Self.binding.as_type [symbolic = %pattern_type (constants.%pattern_type.f29)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   fn;
 // CHECK:STDOUT: }
@@ -656,8 +656,8 @@ var n: Int(64) = MakeFromClass(FromLiteral(64) as OtherInt);
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Add.Op(constants.%Self) {
 // CHECK:STDOUT:   %Self => constants.%Self
-// CHECK:STDOUT:   %Self.as_type => constants.%Self.as_type
-// CHECK:STDOUT:   %pattern_type => constants.%pattern_type.8ad
+// CHECK:STDOUT:   %Self.binding.as_type => constants.%Self.binding.as_type
+// CHECK:STDOUT:   %pattern_type => constants.%pattern_type.f29
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @MyInt.as.Add.impl(constants.%N) {
@@ -704,7 +704,7 @@ var n: Int(64) = MakeFromClass(FromLiteral(64) as OtherInt);
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Add.Op(constants.%Add.facet.7bd) {
 // CHECK:STDOUT:   %Self => constants.%Add.facet.7bd
-// CHECK:STDOUT:   %Self.as_type => constants.%MyInt.09f
+// CHECK:STDOUT:   %Self.binding.as_type => constants.%MyInt.09f
 // CHECK:STDOUT:   %pattern_type => constants.%pattern_type.a71
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -724,7 +724,7 @@ var n: Int(64) = MakeFromClass(FromLiteral(64) as OtherInt);
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Add.Op(constants.%Add.facet.e3e) {
 // CHECK:STDOUT:   %Self => constants.%Add.facet.e3e
-// CHECK:STDOUT:   %Self.as_type => constants.%MyInt.f30
+// CHECK:STDOUT:   %Self.binding.as_type => constants.%MyInt.f30
 // CHECK:STDOUT:   %pattern_type => constants.%pattern_type.e50
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

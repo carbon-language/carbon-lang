@@ -1208,8 +1208,10 @@ static auto PerformBuiltinConversion(
     } else {
       type_inst_id = context.types().GetAsTypeInstId(value_id);
 
-      // Shortcut for lossless round trips through a FacetAccessType when
-      // converting back to the type of its original facet value.
+      // Shortcut for lossless round trips through a FacetAccessType (which
+      // evaluates to SymbolicBindingType when wrapping a symbolic binding) when
+      // converting back to the type of the original symbolic binding facet
+      // value.
       //
       // In the case where the FacetAccessType wraps a BindSymbolicName with the
       // exact facet type that we are converting to, the resulting FacetValue
@@ -1222,7 +1224,7 @@ static auto PerformBuiltinConversion(
       auto const_type_inst_id =
           sem_ir.constant_values().GetConstantTypeInstId(type_inst_id);
       if (auto facet_access_type_inst =
-              sem_ir.insts().TryGetAs<SemIR::FacetAccessType>(
+              sem_ir.insts().TryGetAs<SemIR::SymbolicBindingType>(
                   const_type_inst_id)) {
         auto facet_value_inst_id = facet_access_type_inst->facet_value_inst_id;
         if (sem_ir.insts().Get(facet_value_inst_id).type_id() ==

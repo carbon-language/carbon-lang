@@ -2171,6 +2171,82 @@ auto TryEvalTypedInst<SemIR::BindSymbolicName>(EvalContext& eval_context,
   return MakeConstantResult(eval_context.context(), bind, phase);
 }
 
+template <>
+auto TryEvalTypedInst<SemIR::SymbolicBindingType>(EvalContext& eval_context,
+                                                  SemIR::InstId inst_id,
+                                                  SemIR::Inst inst)
+    -> SemIR::ConstantId {
+  auto bind = inst.As<SemIR::SymbolicBindingType>();
+
+  Phase phase = Phase::Concrete;
+  bool updated_constants = false;
+
+  // If we know which specific we're evaluating within and this is the type
+  // component of a facet parameter of the generic, its constant value refers to
+  // the type component of the corresponding argument value of the specific.
+  const auto& bind_name = eval_context.entity_names().Get(bind.entity_name_id);
+  if (bind_name.bind_index().has_value()) {
+    // SymbolicBindingType comes from the evaluation of FacetAccessType when the
+    // facet value is symbolic. This block is effectively the deferred
+    // evaluation of that FacetAccessType now that a new value for the symbolic
+    // facet value has become known. The result is equivalent to creating a new
+    // FacetAccessType here with the `value_inst_id` and evaluating it.
+    if (auto value =
+            eval_context.GetCompileTimeBindValue(bind_name.bind_index());
+        value.has_value()) {
+      auto value_inst_id = eval_context.constant_values().GetInstId(value);
+      if (auto facet =
+              eval_context.insts().TryGetAs<SemIR::FacetValue>(value_inst_id)) {
+        return eval_context.constant_values().Get(facet->type_inst_id);
+      }
+
+      // Replace the fields with constant values as usual, except we get the
+      // EntityNameId from the BindSymbolicName in the specific, which
+      // ReplaceFieldWithConstantValue doesn't know how to do.
+      if (!ReplaceTypeWithConstantValue(eval_context, inst_id, &bind, &phase) ||
+          !ReplaceFieldWithConstantValue(
+              eval_context, &bind,
+              &SemIR::SymbolicBindingType::facet_value_inst_id, &phase)) {
+        return SemIR::ConstantId::NotConstant;
+      }
+
+      if (value_inst_id == SemIR::ErrorInst::InstId) {
+        phase = Phase::UnknownDueToError;
+      } else {
+        auto value_bind =
+            eval_context.insts().GetAs<SemIR::BindSymbolicName>(value_inst_id);
+        bind.entity_name_id =
+            GetConstantValue(eval_context, value_bind.entity_name_id, &phase);
+      }
+
+      updated_constants = true;
+    }
+  }
+
+  if (!updated_constants) {
+    if (!ReplaceTypeWithConstantValue(eval_context, inst_id, &inst, &phase) ||
+        !ReplaceAllFieldsWithConstantValues(eval_context, &inst, &phase)) {
+      return SemIR::ConstantId::NotConstant;
+    }
+    // Copy the updated constant field values into `bind`.
+    bind = inst.As<SemIR::SymbolicBindingType>();
+  }
+  // Propagate error phase after getting the constant value for all fields.
+  if (phase == Phase::UnknownDueToError) {
+    return SemIR::ErrorInst::ConstantId;
+  }
+
+  // TODO: Look in ScopeStack with the entity_name_id to find the facet value
+  // and get its constant value in the current specific context. The
+  // facet_value_inst_id will go away.
+  if (auto facet_value = eval_context.insts().TryGetAs<SemIR::FacetValue>(
+          bind.facet_value_inst_id)) {
+    return eval_context.constant_values().Get(facet_value->type_inst_id);
+  }
+
+  return MakeConstantResult(eval_context.context(), bind, phase);
+}
+
 // Returns whether `const_id` is the same constant facet value as
 // `facet_value_inst_id`.
 //

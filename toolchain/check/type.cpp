@@ -9,6 +9,7 @@
 #include "toolchain/check/type_completion.h"
 #include "toolchain/sem_ir/facet_type_info.h"
 #include "toolchain/sem_ir/ids.h"
+#include "toolchain/sem_ir/typed_insts.h"
 
 namespace Carbon::Check {
 
@@ -244,6 +245,12 @@ auto GetCanonicalFacetOrTypeValue(Context& context, SemIR::InstId inst_id)
 
   if (auto access =
           context.insts().TryGetAs<SemIR::FacetAccessType>(const_inst_id)) {
+    return access->facet_value_inst_id;
+  }
+
+  if (auto access =
+          context.insts().TryGetAs<SemIR::SymbolicBindingType>(const_inst_id)) {
+    // TODO: Look in ScopeStack with the entity_name_id to find the facet value.
     return access->facet_value_inst_id;
   }
 

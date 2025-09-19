@@ -239,44 +239,61 @@ fn Foo[T:! type](p: T*) -> (T*, ()) {
 // CHECK:STDOUT:     entity_name4:    {name: name(SelfType), parent_scope: name_scope<none>, index: 0, is_template: 0, clang_decl_id: clang_decl_id<none>}
 // CHECK:STDOUT:     entity_name5:    {name: name4, parent_scope: name_scope2, index: -1, is_template: 0, clang_decl_id: clang_decl_id<none>}
 // CHECK:STDOUT:     entity_name6:    {name: name(SelfType), parent_scope: name_scope<none>, index: 0, is_template: 0, clang_decl_id: clang_decl_id<none>}
-// CHECK:STDOUT:     entity_name7:    {name: name(SelfValue), parent_scope: name_scope<none>, index: -1, is_template: 0, clang_decl_id: clang_decl_id<none>}
-// CHECK:STDOUT:     entity_name8:    {name: name(SelfType), parent_scope: name_scope<none>, index: 0, is_template: 0, clang_decl_id: clang_decl_id<none>}
-// CHECK:STDOUT:     entity_name9:    {name: name1, parent_scope: name_scope<none>, index: 0, is_template: 0, clang_decl_id: clang_decl_id<none>}
-// CHECK:STDOUT:     entity_name10:   {name: name1, parent_scope: name_scope<none>, index: 0, is_template: 0, clang_decl_id: clang_decl_id<none>}
+// CHECK:STDOUT:     entity_name7:    {name: name(SelfType), parent_scope: name_scope<none>, index: 0, is_template: 0, clang_decl_id: clang_decl_id<none>}
+// CHECK:STDOUT:     entity_name8:    {name: name(SelfValue), parent_scope: name_scope<none>, index: -1, is_template: 0, clang_decl_id: clang_decl_id<none>}
+// CHECK:STDOUT:     entity_name9:    {name: name(SelfType), parent_scope: name_scope<none>, index: 0, is_template: 0, clang_decl_id: clang_decl_id<none>}
+// CHECK:STDOUT:     entity_name10:   {name: name(SelfType), parent_scope: name_scope<none>, index: 0, is_template: 0, clang_decl_id: clang_decl_id<none>}
 // CHECK:STDOUT:     entity_name11:   {name: name1, parent_scope: name_scope<none>, index: 0, is_template: 0, clang_decl_id: clang_decl_id<none>}
 // CHECK:STDOUT:     entity_name12:   {name: name1, parent_scope: name_scope<none>, index: 0, is_template: 0, clang_decl_id: clang_decl_id<none>}
-// CHECK:STDOUT:     entity_name13:   {name: name(SelfValue), parent_scope: name_scope<none>, index: -1, is_template: 0, clang_decl_id: clang_decl_id<none>}
+// CHECK:STDOUT:     entity_name13:   {name: name1, parent_scope: name_scope<none>, index: 0, is_template: 0, clang_decl_id: clang_decl_id<none>}
 // CHECK:STDOUT:     entity_name14:   {name: name1, parent_scope: name_scope<none>, index: 0, is_template: 0, clang_decl_id: clang_decl_id<none>}
 // CHECK:STDOUT:     entity_name15:   {name: name1, parent_scope: name_scope<none>, index: 0, is_template: 0, clang_decl_id: clang_decl_id<none>}
 // CHECK:STDOUT:     entity_name16:   {name: name1, parent_scope: name_scope<none>, index: 0, is_template: 0, clang_decl_id: clang_decl_id<none>}
-// CHECK:STDOUT:     entity_name17:   {name: name1, parent_scope: name_scope<none>, index: 0, is_template: 0, clang_decl_id: clang_decl_id<none>}
+// CHECK:STDOUT:     entity_name17:   {name: name(SelfValue), parent_scope: name_scope<none>, index: -1, is_template: 0, clang_decl_id: clang_decl_id<none>}
 // CHECK:STDOUT:     entity_name18:   {name: name1, parent_scope: name_scope<none>, index: 0, is_template: 0, clang_decl_id: clang_decl_id<none>}
-// CHECK:STDOUT:     entity_name19:   {name: name(SelfValue), parent_scope: name_scope<none>, index: -1, is_template: 0, clang_decl_id: clang_decl_id<none>}
+// CHECK:STDOUT:     entity_name19:   {name: name1, parent_scope: name_scope<none>, index: 0, is_template: 0, clang_decl_id: clang_decl_id<none>}
 // CHECK:STDOUT:     entity_name20:   {name: name1, parent_scope: name_scope<none>, index: 0, is_template: 0, clang_decl_id: clang_decl_id<none>}
-// CHECK:STDOUT:     entity_name21:   {name: name5, parent_scope: name_scope<none>, index: 1, is_template: 0, clang_decl_id: clang_decl_id<none>}
-// CHECK:STDOUT:     entity_name22:   {name: name5, parent_scope: name_scope<none>, index: 1, is_template: 0, clang_decl_id: clang_decl_id<none>}
+// CHECK:STDOUT:     entity_name21:   {name: name1, parent_scope: name_scope<none>, index: 0, is_template: 0, clang_decl_id: clang_decl_id<none>}
+// CHECK:STDOUT:     entity_name22:   {name: name1, parent_scope: name_scope<none>, index: 0, is_template: 0, clang_decl_id: clang_decl_id<none>}
 // CHECK:STDOUT:     entity_name23:   {name: name1, parent_scope: name_scope<none>, index: 0, is_template: 0, clang_decl_id: clang_decl_id<none>}
-// CHECK:STDOUT:     entity_name24:   {name: name1, parent_scope: name_scope<none>, index: 0, is_template: 0, clang_decl_id: clang_decl_id<none>}
-// CHECK:STDOUT:     entity_name25:   {name: name5, parent_scope: name_scope<none>, index: 1, is_template: 0, clang_decl_id: clang_decl_id<none>}
-// CHECK:STDOUT:     entity_name26:   {name: name1, parent_scope: name_scope<none>, index: 0, is_template: 0, clang_decl_id: clang_decl_id<none>}
+// CHECK:STDOUT:     entity_name24:   {name: name(SelfValue), parent_scope: name_scope<none>, index: -1, is_template: 0, clang_decl_id: clang_decl_id<none>}
+// CHECK:STDOUT:     entity_name25:   {name: name1, parent_scope: name_scope<none>, index: 0, is_template: 0, clang_decl_id: clang_decl_id<none>}
+// CHECK:STDOUT:     entity_name26:   {name: name5, parent_scope: name_scope<none>, index: 1, is_template: 0, clang_decl_id: clang_decl_id<none>}
 // CHECK:STDOUT:     entity_name27:   {name: name5, parent_scope: name_scope<none>, index: 1, is_template: 0, clang_decl_id: clang_decl_id<none>}
-// CHECK:STDOUT:     entity_name28:   {name: name(SelfValue), parent_scope: name_scope<none>, index: -1, is_template: 0, clang_decl_id: clang_decl_id<none>}
+// CHECK:STDOUT:     entity_name28:   {name: name5, parent_scope: name_scope<none>, index: 1, is_template: 0, clang_decl_id: clang_decl_id<none>}
 // CHECK:STDOUT:     entity_name29:   {name: name1, parent_scope: name_scope<none>, index: 0, is_template: 0, clang_decl_id: clang_decl_id<none>}
-// CHECK:STDOUT:     entity_name30:   {name: name5, parent_scope: name_scope<none>, index: 1, is_template: 0, clang_decl_id: clang_decl_id<none>}
-// CHECK:STDOUT:     entity_name31:   {name: name6, parent_scope: name_scope<none>, index: 2, is_template: 0, clang_decl_id: clang_decl_id<none>}
-// CHECK:STDOUT:     entity_name32:   {name: name6, parent_scope: name_scope<none>, index: 2, is_template: 0, clang_decl_id: clang_decl_id<none>}
+// CHECK:STDOUT:     entity_name30:   {name: name1, parent_scope: name_scope<none>, index: 0, is_template: 0, clang_decl_id: clang_decl_id<none>}
+// CHECK:STDOUT:     entity_name31:   {name: name5, parent_scope: name_scope<none>, index: 1, is_template: 0, clang_decl_id: clang_decl_id<none>}
+// CHECK:STDOUT:     entity_name32:   {name: name1, parent_scope: name_scope<none>, index: 0, is_template: 0, clang_decl_id: clang_decl_id<none>}
 // CHECK:STDOUT:     entity_name33:   {name: name5, parent_scope: name_scope<none>, index: 1, is_template: 0, clang_decl_id: clang_decl_id<none>}
 // CHECK:STDOUT:     entity_name34:   {name: name1, parent_scope: name_scope<none>, index: 0, is_template: 0, clang_decl_id: clang_decl_id<none>}
-// CHECK:STDOUT:     entity_name35:   {name: name1, parent_scope: name_scope<none>, index: 0, is_template: 0, clang_decl_id: clang_decl_id<none>}
-// CHECK:STDOUT:     entity_name36:   {name: name5, parent_scope: name_scope<none>, index: 1, is_template: 0, clang_decl_id: clang_decl_id<none>}
-// CHECK:STDOUT:     entity_name37:   {name: name6, parent_scope: name_scope<none>, index: 2, is_template: 0, clang_decl_id: clang_decl_id<none>}
+// CHECK:STDOUT:     entity_name35:   {name: name5, parent_scope: name_scope<none>, index: 1, is_template: 0, clang_decl_id: clang_decl_id<none>}
+// CHECK:STDOUT:     entity_name36:   {name: name(SelfValue), parent_scope: name_scope<none>, index: -1, is_template: 0, clang_decl_id: clang_decl_id<none>}
+// CHECK:STDOUT:     entity_name37:   {name: name1, parent_scope: name_scope<none>, index: 0, is_template: 0, clang_decl_id: clang_decl_id<none>}
 // CHECK:STDOUT:     entity_name38:   {name: name1, parent_scope: name_scope<none>, index: 0, is_template: 0, clang_decl_id: clang_decl_id<none>}
 // CHECK:STDOUT:     entity_name39:   {name: name5, parent_scope: name_scope<none>, index: 1, is_template: 0, clang_decl_id: clang_decl_id<none>}
-// CHECK:STDOUT:     entity_name40:   {name: name6, parent_scope: name_scope<none>, index: 2, is_template: 0, clang_decl_id: clang_decl_id<none>}
-// CHECK:STDOUT:     entity_name41:   {name: name(SelfValue), parent_scope: name_scope<none>, index: -1, is_template: 0, clang_decl_id: clang_decl_id<none>}
-// CHECK:STDOUT:     entity_name42:   {name: name1, parent_scope: name_scope<none>, index: 0, is_template: 0, clang_decl_id: clang_decl_id<none>}
-// CHECK:STDOUT:     entity_name43:   {name: name5, parent_scope: name_scope<none>, index: 1, is_template: 0, clang_decl_id: clang_decl_id<none>}
-// CHECK:STDOUT:     entity_name44:   {name: name6, parent_scope: name_scope<none>, index: 2, is_template: 0, clang_decl_id: clang_decl_id<none>}
+// CHECK:STDOUT:     entity_name40:   {name: name5, parent_scope: name_scope<none>, index: 1, is_template: 0, clang_decl_id: clang_decl_id<none>}
+// CHECK:STDOUT:     entity_name41:   {name: name6, parent_scope: name_scope<none>, index: 2, is_template: 0, clang_decl_id: clang_decl_id<none>}
+// CHECK:STDOUT:     entity_name42:   {name: name6, parent_scope: name_scope<none>, index: 2, is_template: 0, clang_decl_id: clang_decl_id<none>}
+// CHECK:STDOUT:     entity_name43:   {name: name6, parent_scope: name_scope<none>, index: 2, is_template: 0, clang_decl_id: clang_decl_id<none>}
+// CHECK:STDOUT:     entity_name44:   {name: name5, parent_scope: name_scope<none>, index: 1, is_template: 0, clang_decl_id: clang_decl_id<none>}
+// CHECK:STDOUT:     entity_name45:   {name: name1, parent_scope: name_scope<none>, index: 0, is_template: 0, clang_decl_id: clang_decl_id<none>}
+// CHECK:STDOUT:     entity_name46:   {name: name1, parent_scope: name_scope<none>, index: 0, is_template: 0, clang_decl_id: clang_decl_id<none>}
+// CHECK:STDOUT:     entity_name47:   {name: name5, parent_scope: name_scope<none>, index: 1, is_template: 0, clang_decl_id: clang_decl_id<none>}
+// CHECK:STDOUT:     entity_name48:   {name: name6, parent_scope: name_scope<none>, index: 2, is_template: 0, clang_decl_id: clang_decl_id<none>}
+// CHECK:STDOUT:     entity_name49:   {name: name1, parent_scope: name_scope<none>, index: 0, is_template: 0, clang_decl_id: clang_decl_id<none>}
+// CHECK:STDOUT:     entity_name50:   {name: name5, parent_scope: name_scope<none>, index: 1, is_template: 0, clang_decl_id: clang_decl_id<none>}
+// CHECK:STDOUT:     entity_name51:   {name: name6, parent_scope: name_scope<none>, index: 2, is_template: 0, clang_decl_id: clang_decl_id<none>}
+// CHECK:STDOUT:     entity_name52:   {name: name1, parent_scope: name_scope<none>, index: 0, is_template: 0, clang_decl_id: clang_decl_id<none>}
+// CHECK:STDOUT:     entity_name53:   {name: name5, parent_scope: name_scope<none>, index: 1, is_template: 0, clang_decl_id: clang_decl_id<none>}
+// CHECK:STDOUT:     entity_name54:   {name: name6, parent_scope: name_scope<none>, index: 2, is_template: 0, clang_decl_id: clang_decl_id<none>}
+// CHECK:STDOUT:     entity_name55:   {name: name(SelfValue), parent_scope: name_scope<none>, index: -1, is_template: 0, clang_decl_id: clang_decl_id<none>}
+// CHECK:STDOUT:     entity_name56:   {name: name1, parent_scope: name_scope<none>, index: 0, is_template: 0, clang_decl_id: clang_decl_id<none>}
+// CHECK:STDOUT:     entity_name57:   {name: name1, parent_scope: name_scope<none>, index: 0, is_template: 0, clang_decl_id: clang_decl_id<none>}
+// CHECK:STDOUT:     entity_name58:   {name: name5, parent_scope: name_scope<none>, index: 1, is_template: 0, clang_decl_id: clang_decl_id<none>}
+// CHECK:STDOUT:     entity_name59:   {name: name5, parent_scope: name_scope<none>, index: 1, is_template: 0, clang_decl_id: clang_decl_id<none>}
+// CHECK:STDOUT:     entity_name60:   {name: name6, parent_scope: name_scope<none>, index: 2, is_template: 0, clang_decl_id: clang_decl_id<none>}
+// CHECK:STDOUT:     entity_name61:   {name: name6, parent_scope: name_scope<none>, index: 2, is_template: 0, clang_decl_id: clang_decl_id<none>}
 // CHECK:STDOUT:   functions:
 // CHECK:STDOUT:     function0:       {name: name0, parent_scope: name_scope0, call_params_id: inst_block13, return_slot_pattern: ir0.inst48, body: [inst_block20]}
 // CHECK:STDOUT:     function1:       {name: name4, parent_scope: name_scope2, return_slot_pattern: ir0.inst85}
@@ -430,24 +447,24 @@ fn Foo[T:! type](p: T*) -> (T*, ()) {
 // CHECK:STDOUT:     ir0.inst79:      {kind: FunctionDecl, arg0: function1, arg1: inst_block_empty, type: type(ir0.inst80)}
 // CHECK:STDOUT:     ir0.inst80:      {kind: FunctionType, arg0: function1, arg1: specific<none>, type: type(TypeType)}
 // CHECK:STDOUT:     ir0.inst81:      {kind: StructValue, arg0: inst_block_empty, type: type(ir0.inst80)}
-// CHECK:STDOUT:     ir0.inst82:      {kind: FacetAccessType, arg0: ir0.inst72, type: type(TypeType)}
+// CHECK:STDOUT:     ir0.inst82:      {kind: SymbolicBindingType, arg0: entity_name4, arg1: ir0.inst72, type: type(TypeType)}
 // CHECK:STDOUT:     ir0.inst83:      {kind: PatternType, arg0: ir0.inst82, type: type(TypeType)}
 // CHECK:STDOUT:     ir0.inst84:      {kind: ReturnSlotPattern, arg0: inst<none>, type: type(symbolic_constant19)}
 // CHECK:STDOUT:     ir0.inst85:      {kind: OutParamPattern, arg0: ir0.inst84, arg1: call_param1, type: type(symbolic_constant19)}
-// CHECK:STDOUT:     ir0.inst86:      {kind: BindingPattern, arg0: entity_name7, type: type(symbolic_constant19)}
+// CHECK:STDOUT:     ir0.inst86:      {kind: BindingPattern, arg0: entity_name8, type: type(symbolic_constant19)}
 // CHECK:STDOUT:     ir0.inst87:      {kind: ValueParamPattern, arg0: ir0.inst86, arg1: call_param0, type: type(symbolic_constant19)}
 // CHECK:STDOUT:     ir0.inst88:      {kind: ImportRefLoaded, arg0: import_ir_inst11, arg1: entity_name<none>, type: type(ir0.inst71)}
 // CHECK:STDOUT:     ir0.inst89:      {kind: BindSymbolicName, arg0: entity_name4, arg1: inst<none>, type: type(ir0.inst71)}
-// CHECK:STDOUT:     ir0.inst90:      {kind: FacetAccessType, arg0: ir0.inst89, type: type(TypeType)}
+// CHECK:STDOUT:     ir0.inst90:      {kind: SymbolicBindingType, arg0: entity_name4, arg1: ir0.inst89, type: type(TypeType)}
 // CHECK:STDOUT:     ir0.inst91:      {kind: PatternType, arg0: ir0.inst90, type: type(TypeType)}
 // CHECK:STDOUT:     ir0.inst92:      {kind: LookupImplWitness, arg0: ir0.inst27, arg1: specific_interface0, type: type(inst(WitnessType))}
 // CHECK:STDOUT:     ir0.inst93:      {kind: ImportRefUnloaded, arg0: import_ir_inst15, arg1: entity_name<none>}
 // CHECK:STDOUT:     ir0.inst94:      {kind: ImplDecl, arg0: impl0, arg1: inst_block_empty}
 // CHECK:STDOUT:     ir0.inst95:      {kind: BindSymbolicName, arg0: entity_name1, arg1: inst<none>, type: type(ir0.inst71)}
-// CHECK:STDOUT:     ir0.inst96:      {kind: FacetAccessType, arg0: ir0.inst95, type: type(TypeType)}
+// CHECK:STDOUT:     ir0.inst96:      {kind: SymbolicBindingType, arg0: entity_name1, arg1: ir0.inst95, type: type(TypeType)}
 // CHECK:STDOUT:     ir0.inst97:      {kind: ConstType, arg0: ir0.inst96, type: type(TypeType)}
 // CHECK:STDOUT:     ir0.inst98:      {kind: PatternType, arg0: ir0.inst71, type: type(TypeType)}
-// CHECK:STDOUT:     ir0.inst99:      {kind: SymbolicBindingPattern, arg0: entity_name10, type: type(ir0.inst98)}
+// CHECK:STDOUT:     ir0.inst99:      {kind: SymbolicBindingPattern, arg0: entity_name13, type: type(ir0.inst98)}
 // CHECK:STDOUT:     ir0.inst100:     {kind: ImportRefLoaded, arg0: import_ir_inst18, arg1: entity_name<none>, type: type(ir0.inst71)}
 // CHECK:STDOUT:     ir0.inst101:     {kind: ImportRefLoaded, arg0: import_ir_inst19, arg1: entity_name<none>, type: type(TypeType)}
 // CHECK:STDOUT:     ir0.inst102:     {kind: ImportRefLoaded, arg0: import_ir_inst20, arg1: entity_name<none>, type: type(TypeType)}
@@ -455,7 +472,7 @@ fn Foo[T:! type](p: T*) -> (T*, ()) {
 // CHECK:STDOUT:     ir0.inst104:     {kind: ImplWitnessTable, arg0: inst_block30, arg1: impl0}
 // CHECK:STDOUT:     ir0.inst105:     {kind: ImplWitness, arg0: ir0.inst104, arg1: specific2, type: type(inst(WitnessType))}
 // CHECK:STDOUT:     ir0.inst106:     {kind: BindSymbolicName, arg0: entity_name1, arg1: inst<none>, type: type(ir0.inst71)}
-// CHECK:STDOUT:     ir0.inst107:     {kind: FacetAccessType, arg0: ir0.inst106, type: type(TypeType)}
+// CHECK:STDOUT:     ir0.inst107:     {kind: SymbolicBindingType, arg0: entity_name1, arg1: ir0.inst106, type: type(TypeType)}
 // CHECK:STDOUT:     ir0.inst108:     {kind: ConstType, arg0: ir0.inst107, type: type(TypeType)}
 // CHECK:STDOUT:     ir0.inst109:     {kind: ImplWitness, arg0: ir0.inst104, arg1: specific3, type: type(inst(WitnessType))}
 // CHECK:STDOUT:     ir0.inst110:     {kind: FunctionDecl, arg0: function2, arg1: inst_block_empty, type: type(symbolic_constant38)}
@@ -464,13 +481,13 @@ fn Foo[T:! type](p: T*) -> (T*, ()) {
 // CHECK:STDOUT:     ir0.inst113:     {kind: PatternType, arg0: ir0.inst97, type: type(TypeType)}
 // CHECK:STDOUT:     ir0.inst114:     {kind: ReturnSlotPattern, arg0: inst<none>, type: type(symbolic_constant43)}
 // CHECK:STDOUT:     ir0.inst115:     {kind: OutParamPattern, arg0: ir0.inst114, arg1: call_param1, type: type(symbolic_constant43)}
-// CHECK:STDOUT:     ir0.inst116:     {kind: BindingPattern, arg0: entity_name13, type: type(symbolic_constant43)}
+// CHECK:STDOUT:     ir0.inst116:     {kind: BindingPattern, arg0: entity_name17, type: type(symbolic_constant43)}
 // CHECK:STDOUT:     ir0.inst117:     {kind: ValueParamPattern, arg0: ir0.inst116, arg1: call_param0, type: type(symbolic_constant43)}
 // CHECK:STDOUT:     ir0.inst118:     {kind: ImportRefLoaded, arg0: import_ir_inst32, arg1: entity_name<none>, type: type(ir0.inst71)}
 // CHECK:STDOUT:     ir0.inst119:     {kind: FunctionType, arg0: function2, arg1: specific3, type: type(TypeType)}
 // CHECK:STDOUT:     ir0.inst120:     {kind: StructValue, arg0: inst_block_empty, type: type(symbolic_constant45)}
 // CHECK:STDOUT:     ir0.inst121:     {kind: BindSymbolicName, arg0: entity_name1, arg1: inst<none>, type: type(ir0.inst71)}
-// CHECK:STDOUT:     ir0.inst122:     {kind: FacetAccessType, arg0: ir0.inst121, type: type(TypeType)}
+// CHECK:STDOUT:     ir0.inst122:     {kind: SymbolicBindingType, arg0: entity_name1, arg1: ir0.inst121, type: type(TypeType)}
 // CHECK:STDOUT:     ir0.inst123:     {kind: ConstType, arg0: ir0.inst122, type: type(TypeType)}
 // CHECK:STDOUT:     ir0.inst124:     {kind: PatternType, arg0: ir0.inst123, type: type(TypeType)}
 // CHECK:STDOUT:     ir0.inst125:     {kind: RequireCompleteType, arg0: ir0.inst97, type: type(inst(WitnessType))}
@@ -504,7 +521,7 @@ fn Foo[T:! type](p: T*) -> (T*, ()) {
 // CHECK:STDOUT:     ir0.inst153:     {kind: ImportRefLoaded, arg0: import_ir_inst60, arg1: entity_name<none>, type: type(TypeType)}
 // CHECK:STDOUT:     ir0.inst154:     {kind: ImportRefLoaded, arg0: import_ir_inst61, arg1: entity_name<none>, type: type(inst(WitnessType))}
 // CHECK:STDOUT:     ir0.inst155:     {kind: ImplDecl, arg0: impl5, arg1: inst_block_empty}
-// CHECK:STDOUT:     ir0.inst156:     {kind: SymbolicBindingPattern, arg0: entity_name16, type: type(ir0.inst23)}
+// CHECK:STDOUT:     ir0.inst156:     {kind: SymbolicBindingPattern, arg0: entity_name21, type: type(ir0.inst23)}
 // CHECK:STDOUT:     ir0.inst157:     {kind: ImportRefLoaded, arg0: import_ir_inst64, arg1: entity_name<none>, type: type(TypeType)}
 // CHECK:STDOUT:     ir0.inst158:     {kind: ImportRefLoaded, arg0: import_ir_inst65, arg1: entity_name<none>, type: type(TypeType)}
 // CHECK:STDOUT:     ir0.inst159:     {kind: ImportRefLoaded, arg0: import_ir_inst66, arg1: entity_name<none>, type: type(TypeType)}
@@ -519,7 +536,7 @@ fn Foo[T:! type](p: T*) -> (T*, ()) {
 // CHECK:STDOUT:     ir0.inst168:     {kind: StructValue, arg0: inst_block_empty, type: type(symbolic_constant81)}
 // CHECK:STDOUT:     ir0.inst169:     {kind: ReturnSlotPattern, arg0: inst<none>, type: type(symbolic_constant85)}
 // CHECK:STDOUT:     ir0.inst170:     {kind: OutParamPattern, arg0: ir0.inst169, arg1: call_param1, type: type(symbolic_constant85)}
-// CHECK:STDOUT:     ir0.inst171:     {kind: BindingPattern, arg0: entity_name19, type: type(symbolic_constant85)}
+// CHECK:STDOUT:     ir0.inst171:     {kind: BindingPattern, arg0: entity_name24, type: type(symbolic_constant85)}
 // CHECK:STDOUT:     ir0.inst172:     {kind: ValueParamPattern, arg0: ir0.inst171, arg1: call_param0, type: type(symbolic_constant85)}
 // CHECK:STDOUT:     ir0.inst173:     {kind: ImportRefLoaded, arg0: import_ir_inst77, arg1: entity_name<none>, type: type(TypeType)}
 // CHECK:STDOUT:     ir0.inst174:     {kind: FunctionType, arg0: function3, arg1: specific8, type: type(TypeType)}
@@ -538,11 +555,11 @@ fn Foo[T:! type](p: T*) -> (T*, ()) {
 // CHECK:STDOUT:     ir0.inst187:     {kind: ImportRefLoaded, arg0: import_ir_inst91, arg1: entity_name<none>, type: type(TypeType)}
 // CHECK:STDOUT:     ir0.inst188:     {kind: ImportRefUnloaded, arg0: import_ir_inst92, arg1: entity_name<none>}
 // CHECK:STDOUT:     ir0.inst189:     {kind: ImplDecl, arg0: impl8, arg1: inst_block_empty}
-// CHECK:STDOUT:     ir0.inst190:     {kind: BindSymbolicName, arg0: entity_name21, arg1: inst<none>, type: type(ir0.inst71)}
-// CHECK:STDOUT:     ir0.inst191:     {kind: FacetAccessType, arg0: ir0.inst190, type: type(TypeType)}
+// CHECK:STDOUT:     ir0.inst190:     {kind: BindSymbolicName, arg0: entity_name26, arg1: inst<none>, type: type(ir0.inst71)}
+// CHECK:STDOUT:     ir0.inst191:     {kind: SymbolicBindingType, arg0: entity_name26, arg1: ir0.inst190, type: type(TypeType)}
 // CHECK:STDOUT:     ir0.inst192:     {kind: TupleType, arg0: inst_block57, type: type(TypeType)}
-// CHECK:STDOUT:     ir0.inst193:     {kind: SymbolicBindingPattern, arg0: entity_name22, type: type(ir0.inst98)}
-// CHECK:STDOUT:     ir0.inst194:     {kind: SymbolicBindingPattern, arg0: entity_name23, type: type(ir0.inst98)}
+// CHECK:STDOUT:     ir0.inst193:     {kind: SymbolicBindingPattern, arg0: entity_name28, type: type(ir0.inst98)}
+// CHECK:STDOUT:     ir0.inst194:     {kind: SymbolicBindingPattern, arg0: entity_name29, type: type(ir0.inst98)}
 // CHECK:STDOUT:     ir0.inst195:     {kind: ImportRefLoaded, arg0: import_ir_inst96, arg1: entity_name<none>, type: type(ir0.inst71)}
 // CHECK:STDOUT:     ir0.inst196:     {kind: ImportRefLoaded, arg0: import_ir_inst97, arg1: entity_name<none>, type: type(ir0.inst71)}
 // CHECK:STDOUT:     ir0.inst197:     {kind: ImportRefLoaded, arg0: import_ir_inst98, arg1: entity_name<none>, type: type(TypeType)}
@@ -551,9 +568,9 @@ fn Foo[T:! type](p: T*) -> (T*, ()) {
 // CHECK:STDOUT:     ir0.inst200:     {kind: ImplWitnessTable, arg0: inst_block60, arg1: impl8}
 // CHECK:STDOUT:     ir0.inst201:     {kind: ImplWitness, arg0: ir0.inst200, arg1: specific10, type: type(inst(WitnessType))}
 // CHECK:STDOUT:     ir0.inst202:     {kind: BindSymbolicName, arg0: entity_name1, arg1: inst<none>, type: type(ir0.inst71)}
-// CHECK:STDOUT:     ir0.inst203:     {kind: BindSymbolicName, arg0: entity_name21, arg1: inst<none>, type: type(ir0.inst71)}
-// CHECK:STDOUT:     ir0.inst204:     {kind: FacetAccessType, arg0: ir0.inst202, type: type(TypeType)}
-// CHECK:STDOUT:     ir0.inst205:     {kind: FacetAccessType, arg0: ir0.inst203, type: type(TypeType)}
+// CHECK:STDOUT:     ir0.inst203:     {kind: BindSymbolicName, arg0: entity_name26, arg1: inst<none>, type: type(ir0.inst71)}
+// CHECK:STDOUT:     ir0.inst204:     {kind: SymbolicBindingType, arg0: entity_name1, arg1: ir0.inst202, type: type(TypeType)}
+// CHECK:STDOUT:     ir0.inst205:     {kind: SymbolicBindingType, arg0: entity_name26, arg1: ir0.inst203, type: type(TypeType)}
 // CHECK:STDOUT:     ir0.inst206:     {kind: TupleType, arg0: inst_block62, type: type(TypeType)}
 // CHECK:STDOUT:     ir0.inst207:     {kind: ImplWitness, arg0: ir0.inst200, arg1: specific11, type: type(inst(WitnessType))}
 // CHECK:STDOUT:     ir0.inst208:     {kind: FunctionDecl, arg0: function4, arg1: inst_block_empty, type: type(symbolic_constant114)}
@@ -562,16 +579,16 @@ fn Foo[T:! type](p: T*) -> (T*, ()) {
 // CHECK:STDOUT:     ir0.inst211:     {kind: PatternType, arg0: ir0.inst192, type: type(TypeType)}
 // CHECK:STDOUT:     ir0.inst212:     {kind: ReturnSlotPattern, arg0: inst<none>, type: type(symbolic_constant119)}
 // CHECK:STDOUT:     ir0.inst213:     {kind: OutParamPattern, arg0: ir0.inst212, arg1: call_param1, type: type(symbolic_constant119)}
-// CHECK:STDOUT:     ir0.inst214:     {kind: BindingPattern, arg0: entity_name28, type: type(symbolic_constant119)}
+// CHECK:STDOUT:     ir0.inst214:     {kind: BindingPattern, arg0: entity_name36, type: type(symbolic_constant119)}
 // CHECK:STDOUT:     ir0.inst215:     {kind: ValueParamPattern, arg0: ir0.inst214, arg1: call_param0, type: type(symbolic_constant119)}
 // CHECK:STDOUT:     ir0.inst216:     {kind: ImportRefLoaded, arg0: import_ir_inst113, arg1: entity_name<none>, type: type(ir0.inst71)}
 // CHECK:STDOUT:     ir0.inst217:     {kind: ImportRefLoaded, arg0: import_ir_inst114, arg1: entity_name<none>, type: type(ir0.inst71)}
 // CHECK:STDOUT:     ir0.inst218:     {kind: FunctionType, arg0: function4, arg1: specific11, type: type(TypeType)}
 // CHECK:STDOUT:     ir0.inst219:     {kind: StructValue, arg0: inst_block_empty, type: type(symbolic_constant121)}
 // CHECK:STDOUT:     ir0.inst220:     {kind: BindSymbolicName, arg0: entity_name1, arg1: inst<none>, type: type(ir0.inst71)}
-// CHECK:STDOUT:     ir0.inst221:     {kind: FacetAccessType, arg0: ir0.inst220, type: type(TypeType)}
-// CHECK:STDOUT:     ir0.inst222:     {kind: BindSymbolicName, arg0: entity_name21, arg1: inst<none>, type: type(ir0.inst71)}
-// CHECK:STDOUT:     ir0.inst223:     {kind: FacetAccessType, arg0: ir0.inst222, type: type(TypeType)}
+// CHECK:STDOUT:     ir0.inst221:     {kind: SymbolicBindingType, arg0: entity_name1, arg1: ir0.inst220, type: type(TypeType)}
+// CHECK:STDOUT:     ir0.inst222:     {kind: BindSymbolicName, arg0: entity_name26, arg1: inst<none>, type: type(ir0.inst71)}
+// CHECK:STDOUT:     ir0.inst223:     {kind: SymbolicBindingType, arg0: entity_name26, arg1: ir0.inst222, type: type(TypeType)}
 // CHECK:STDOUT:     ir0.inst224:     {kind: TupleType, arg0: inst_block70, type: type(TypeType)}
 // CHECK:STDOUT:     ir0.inst225:     {kind: PatternType, arg0: ir0.inst224, type: type(TypeType)}
 // CHECK:STDOUT:     ir0.inst226:     {kind: RequireCompleteType, arg0: ir0.inst192, type: type(inst(WitnessType))}
@@ -594,12 +611,12 @@ fn Foo[T:! type](p: T*) -> (T*, ()) {
 // CHECK:STDOUT:     ir0.inst243:     {kind: PatternType, arg0: ir0.inst191, type: type(TypeType)}
 // CHECK:STDOUT:     ir0.inst244:     {kind: ImportRefUnloaded, arg0: import_ir_inst134, arg1: entity_name<none>}
 // CHECK:STDOUT:     ir0.inst245:     {kind: ImplDecl, arg0: impl9, arg1: inst_block_empty}
-// CHECK:STDOUT:     ir0.inst246:     {kind: BindSymbolicName, arg0: entity_name31, arg1: inst<none>, type: type(ir0.inst71)}
-// CHECK:STDOUT:     ir0.inst247:     {kind: FacetAccessType, arg0: ir0.inst246, type: type(TypeType)}
+// CHECK:STDOUT:     ir0.inst246:     {kind: BindSymbolicName, arg0: entity_name41, arg1: inst<none>, type: type(ir0.inst71)}
+// CHECK:STDOUT:     ir0.inst247:     {kind: SymbolicBindingType, arg0: entity_name41, arg1: ir0.inst246, type: type(TypeType)}
 // CHECK:STDOUT:     ir0.inst248:     {kind: TupleType, arg0: inst_block79, type: type(TypeType)}
-// CHECK:STDOUT:     ir0.inst249:     {kind: SymbolicBindingPattern, arg0: entity_name32, type: type(ir0.inst98)}
-// CHECK:STDOUT:     ir0.inst250:     {kind: SymbolicBindingPattern, arg0: entity_name33, type: type(ir0.inst98)}
-// CHECK:STDOUT:     ir0.inst251:     {kind: SymbolicBindingPattern, arg0: entity_name34, type: type(ir0.inst98)}
+// CHECK:STDOUT:     ir0.inst249:     {kind: SymbolicBindingPattern, arg0: entity_name43, type: type(ir0.inst98)}
+// CHECK:STDOUT:     ir0.inst250:     {kind: SymbolicBindingPattern, arg0: entity_name44, type: type(ir0.inst98)}
+// CHECK:STDOUT:     ir0.inst251:     {kind: SymbolicBindingPattern, arg0: entity_name45, type: type(ir0.inst98)}
 // CHECK:STDOUT:     ir0.inst252:     {kind: ImportRefLoaded, arg0: import_ir_inst139, arg1: entity_name<none>, type: type(ir0.inst71)}
 // CHECK:STDOUT:     ir0.inst253:     {kind: ImportRefLoaded, arg0: import_ir_inst140, arg1: entity_name<none>, type: type(ir0.inst71)}
 // CHECK:STDOUT:     ir0.inst254:     {kind: ImportRefLoaded, arg0: import_ir_inst141, arg1: entity_name<none>, type: type(ir0.inst71)}
@@ -609,11 +626,11 @@ fn Foo[T:! type](p: T*) -> (T*, ()) {
 // CHECK:STDOUT:     ir0.inst258:     {kind: ImplWitnessTable, arg0: inst_block82, arg1: impl9}
 // CHECK:STDOUT:     ir0.inst259:     {kind: ImplWitness, arg0: ir0.inst258, arg1: specific16, type: type(inst(WitnessType))}
 // CHECK:STDOUT:     ir0.inst260:     {kind: BindSymbolicName, arg0: entity_name1, arg1: inst<none>, type: type(ir0.inst71)}
-// CHECK:STDOUT:     ir0.inst261:     {kind: BindSymbolicName, arg0: entity_name21, arg1: inst<none>, type: type(ir0.inst71)}
-// CHECK:STDOUT:     ir0.inst262:     {kind: BindSymbolicName, arg0: entity_name31, arg1: inst<none>, type: type(ir0.inst71)}
-// CHECK:STDOUT:     ir0.inst263:     {kind: FacetAccessType, arg0: ir0.inst260, type: type(TypeType)}
-// CHECK:STDOUT:     ir0.inst264:     {kind: FacetAccessType, arg0: ir0.inst261, type: type(TypeType)}
-// CHECK:STDOUT:     ir0.inst265:     {kind: FacetAccessType, arg0: ir0.inst262, type: type(TypeType)}
+// CHECK:STDOUT:     ir0.inst261:     {kind: BindSymbolicName, arg0: entity_name26, arg1: inst<none>, type: type(ir0.inst71)}
+// CHECK:STDOUT:     ir0.inst262:     {kind: BindSymbolicName, arg0: entity_name41, arg1: inst<none>, type: type(ir0.inst71)}
+// CHECK:STDOUT:     ir0.inst263:     {kind: SymbolicBindingType, arg0: entity_name1, arg1: ir0.inst260, type: type(TypeType)}
+// CHECK:STDOUT:     ir0.inst264:     {kind: SymbolicBindingType, arg0: entity_name26, arg1: ir0.inst261, type: type(TypeType)}
+// CHECK:STDOUT:     ir0.inst265:     {kind: SymbolicBindingType, arg0: entity_name41, arg1: ir0.inst262, type: type(TypeType)}
 // CHECK:STDOUT:     ir0.inst266:     {kind: TupleType, arg0: inst_block84, type: type(TypeType)}
 // CHECK:STDOUT:     ir0.inst267:     {kind: ImplWitness, arg0: ir0.inst258, arg1: specific17, type: type(inst(WitnessType))}
 // CHECK:STDOUT:     ir0.inst268:     {kind: FunctionDecl, arg0: function5, arg1: inst_block_empty, type: type(symbolic_constant186)}
@@ -622,7 +639,7 @@ fn Foo[T:! type](p: T*) -> (T*, ()) {
 // CHECK:STDOUT:     ir0.inst271:     {kind: PatternType, arg0: ir0.inst248, type: type(TypeType)}
 // CHECK:STDOUT:     ir0.inst272:     {kind: ReturnSlotPattern, arg0: inst<none>, type: type(symbolic_constant191)}
 // CHECK:STDOUT:     ir0.inst273:     {kind: OutParamPattern, arg0: ir0.inst272, arg1: call_param1, type: type(symbolic_constant191)}
-// CHECK:STDOUT:     ir0.inst274:     {kind: BindingPattern, arg0: entity_name41, type: type(symbolic_constant191)}
+// CHECK:STDOUT:     ir0.inst274:     {kind: BindingPattern, arg0: entity_name55, type: type(symbolic_constant191)}
 // CHECK:STDOUT:     ir0.inst275:     {kind: ValueParamPattern, arg0: ir0.inst274, arg1: call_param0, type: type(symbolic_constant191)}
 // CHECK:STDOUT:     ir0.inst276:     {kind: ImportRefLoaded, arg0: import_ir_inst159, arg1: entity_name<none>, type: type(ir0.inst71)}
 // CHECK:STDOUT:     ir0.inst277:     {kind: ImportRefLoaded, arg0: import_ir_inst160, arg1: entity_name<none>, type: type(ir0.inst71)}
@@ -630,11 +647,11 @@ fn Foo[T:! type](p: T*) -> (T*, ()) {
 // CHECK:STDOUT:     ir0.inst279:     {kind: FunctionType, arg0: function5, arg1: specific17, type: type(TypeType)}
 // CHECK:STDOUT:     ir0.inst280:     {kind: StructValue, arg0: inst_block_empty, type: type(symbolic_constant193)}
 // CHECK:STDOUT:     ir0.inst281:     {kind: BindSymbolicName, arg0: entity_name1, arg1: inst<none>, type: type(ir0.inst71)}
-// CHECK:STDOUT:     ir0.inst282:     {kind: FacetAccessType, arg0: ir0.inst281, type: type(TypeType)}
-// CHECK:STDOUT:     ir0.inst283:     {kind: BindSymbolicName, arg0: entity_name21, arg1: inst<none>, type: type(ir0.inst71)}
-// CHECK:STDOUT:     ir0.inst284:     {kind: FacetAccessType, arg0: ir0.inst283, type: type(TypeType)}
-// CHECK:STDOUT:     ir0.inst285:     {kind: BindSymbolicName, arg0: entity_name31, arg1: inst<none>, type: type(ir0.inst71)}
-// CHECK:STDOUT:     ir0.inst286:     {kind: FacetAccessType, arg0: ir0.inst285, type: type(TypeType)}
+// CHECK:STDOUT:     ir0.inst282:     {kind: SymbolicBindingType, arg0: entity_name1, arg1: ir0.inst281, type: type(TypeType)}
+// CHECK:STDOUT:     ir0.inst283:     {kind: BindSymbolicName, arg0: entity_name26, arg1: inst<none>, type: type(ir0.inst71)}
+// CHECK:STDOUT:     ir0.inst284:     {kind: SymbolicBindingType, arg0: entity_name26, arg1: ir0.inst283, type: type(TypeType)}
+// CHECK:STDOUT:     ir0.inst285:     {kind: BindSymbolicName, arg0: entity_name41, arg1: inst<none>, type: type(ir0.inst71)}
+// CHECK:STDOUT:     ir0.inst286:     {kind: SymbolicBindingType, arg0: entity_name41, arg1: ir0.inst285, type: type(TypeType)}
 // CHECK:STDOUT:     ir0.inst287:     {kind: TupleType, arg0: inst_block92, type: type(TypeType)}
 // CHECK:STDOUT:     ir0.inst288:     {kind: PatternType, arg0: ir0.inst287, type: type(TypeType)}
 // CHECK:STDOUT:     ir0.inst289:     {kind: RequireCompleteType, arg0: ir0.inst248, type: type(inst(WitnessType))}

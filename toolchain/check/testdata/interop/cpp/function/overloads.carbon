@@ -398,9 +398,9 @@ fn F() {
 // CHECK:STDOUT:   %Destroy.type: type = facet_type <@Destroy> [concrete]
 // CHECK:STDOUT:   %type_where: type = facet_type <type where .Self impls <CanDestroy>> [concrete]
 // CHECK:STDOUT:   %facet_value: %type_where = facet_value %i16, () [concrete]
-// CHECK:STDOUT:   %DestroyT.as_type.as.Destroy.impl.Op.type.054: type = fn_type @DestroyT.as_type.as.Destroy.impl.Op, @DestroyT.as_type.as.Destroy.impl(%facet_value) [concrete]
-// CHECK:STDOUT:   %DestroyT.as_type.as.Destroy.impl.Op.ce5: %DestroyT.as_type.as.Destroy.impl.Op.type.054 = struct_value () [concrete]
-// CHECK:STDOUT:   %DestroyT.as_type.as.Destroy.impl.Op.specific_fn: <specific function> = specific_function %DestroyT.as_type.as.Destroy.impl.Op.ce5, @DestroyT.as_type.as.Destroy.impl.Op(%facet_value) [concrete]
+// CHECK:STDOUT:   %DestroyT.binding.as_type.as.Destroy.impl.Op.type.716: type = fn_type @DestroyT.binding.as_type.as.Destroy.impl.Op, @DestroyT.binding.as_type.as.Destroy.impl(%facet_value) [concrete]
+// CHECK:STDOUT:   %DestroyT.binding.as_type.as.Destroy.impl.Op.89b: %DestroyT.binding.as_type.as.Destroy.impl.Op.type.716 = struct_value () [concrete]
+// CHECK:STDOUT:   %DestroyT.binding.as_type.as.Destroy.impl.Op.specific_fn: <specific function> = specific_function %DestroyT.binding.as_type.as.Destroy.impl.Op.89b, @DestroyT.binding.as_type.as.Destroy.impl.Op(%facet_value) [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -476,11 +476,11 @@ fn F() {
 // CHECK:STDOUT:   %bar__carbon_thunk.call: init %empty_tuple.type = call imports.%bar__carbon_thunk.decl(%addr.loc7_19)
 // CHECK:STDOUT:   %facet_value: %type_where = facet_value constants.%i16, () [concrete = constants.%facet_value]
 // CHECK:STDOUT:   %.loc7_13.5: %type_where = converted constants.%i16, %facet_value [concrete = constants.%facet_value]
-// CHECK:STDOUT:   %DestroyT.as_type.as.Destroy.impl.Op.bound: <bound method> = bound_method %.loc7_13.4, constants.%DestroyT.as_type.as.Destroy.impl.Op.ce5
-// CHECK:STDOUT:   %DestroyT.as_type.as.Destroy.impl.Op.specific_fn: <specific function> = specific_function constants.%DestroyT.as_type.as.Destroy.impl.Op.ce5, @DestroyT.as_type.as.Destroy.impl.Op(constants.%facet_value) [concrete = constants.%DestroyT.as_type.as.Destroy.impl.Op.specific_fn]
-// CHECK:STDOUT:   %bound_method.loc7_13.5: <bound method> = bound_method %.loc7_13.4, %DestroyT.as_type.as.Destroy.impl.Op.specific_fn
+// CHECK:STDOUT:   %DestroyT.binding.as_type.as.Destroy.impl.Op.bound: <bound method> = bound_method %.loc7_13.4, constants.%DestroyT.binding.as_type.as.Destroy.impl.Op.89b
+// CHECK:STDOUT:   %DestroyT.binding.as_type.as.Destroy.impl.Op.specific_fn: <specific function> = specific_function constants.%DestroyT.binding.as_type.as.Destroy.impl.Op.89b, @DestroyT.binding.as_type.as.Destroy.impl.Op(constants.%facet_value) [concrete = constants.%DestroyT.binding.as_type.as.Destroy.impl.Op.specific_fn]
+// CHECK:STDOUT:   %bound_method.loc7_13.5: <bound method> = bound_method %.loc7_13.4, %DestroyT.binding.as_type.as.Destroy.impl.Op.specific_fn
 // CHECK:STDOUT:   %addr.loc7_13: %ptr.251 = addr_of %.loc7_13.4
-// CHECK:STDOUT:   %DestroyT.as_type.as.Destroy.impl.Op.call: init %empty_tuple.type = call %bound_method.loc7_13.5(%addr.loc7_13)
+// CHECK:STDOUT:   %DestroyT.binding.as_type.as.Destroy.impl.Op.call: init %empty_tuple.type = call %bound_method.loc7_13.5(%addr.loc7_13)
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -649,9 +649,9 @@ fn F() {
 // CHECK:STDOUT:   %Destroy.type: type = facet_type <@Destroy> [concrete]
 // CHECK:STDOUT:   %type_where: type = facet_type <type where .Self impls <CanDestroy>> [concrete]
 // CHECK:STDOUT:   %facet_value: %type_where = facet_value %i16, () [concrete]
-// CHECK:STDOUT:   %DestroyT.as_type.as.Destroy.impl.Op.type.054: type = fn_type @DestroyT.as_type.as.Destroy.impl.Op, @DestroyT.as_type.as.Destroy.impl(%facet_value) [concrete]
-// CHECK:STDOUT:   %DestroyT.as_type.as.Destroy.impl.Op.ce5: %DestroyT.as_type.as.Destroy.impl.Op.type.054 = struct_value () [concrete]
-// CHECK:STDOUT:   %DestroyT.as_type.as.Destroy.impl.Op.specific_fn: <specific function> = specific_function %DestroyT.as_type.as.Destroy.impl.Op.ce5, @DestroyT.as_type.as.Destroy.impl.Op(%facet_value) [concrete]
+// CHECK:STDOUT:   %DestroyT.binding.as_type.as.Destroy.impl.Op.type.716: type = fn_type @DestroyT.binding.as_type.as.Destroy.impl.Op, @DestroyT.binding.as_type.as.Destroy.impl(%facet_value) [concrete]
+// CHECK:STDOUT:   %DestroyT.binding.as_type.as.Destroy.impl.Op.89b: %DestroyT.binding.as_type.as.Destroy.impl.Op.type.716 = struct_value () [concrete]
+// CHECK:STDOUT:   %DestroyT.binding.as_type.as.Destroy.impl.Op.specific_fn: <specific function> = specific_function %DestroyT.binding.as_type.as.Destroy.impl.Op.89b, @DestroyT.binding.as_type.as.Destroy.impl.Op(%facet_value) [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -751,11 +751,11 @@ fn F() {
 // CHECK:STDOUT:   %foo__carbon_thunk.call: init %empty_tuple.type = call imports.%foo__carbon_thunk.decl(%addr.loc8_19)
 // CHECK:STDOUT:   %facet_value: %type_where = facet_value constants.%i16, () [concrete = constants.%facet_value]
 // CHECK:STDOUT:   %.loc8_13.5: %type_where = converted constants.%i16, %facet_value [concrete = constants.%facet_value]
-// CHECK:STDOUT:   %DestroyT.as_type.as.Destroy.impl.Op.bound: <bound method> = bound_method %.loc8_13.4, constants.%DestroyT.as_type.as.Destroy.impl.Op.ce5
-// CHECK:STDOUT:   %DestroyT.as_type.as.Destroy.impl.Op.specific_fn: <specific function> = specific_function constants.%DestroyT.as_type.as.Destroy.impl.Op.ce5, @DestroyT.as_type.as.Destroy.impl.Op(constants.%facet_value) [concrete = constants.%DestroyT.as_type.as.Destroy.impl.Op.specific_fn]
-// CHECK:STDOUT:   %bound_method.loc8_13.5: <bound method> = bound_method %.loc8_13.4, %DestroyT.as_type.as.Destroy.impl.Op.specific_fn
+// CHECK:STDOUT:   %DestroyT.binding.as_type.as.Destroy.impl.Op.bound: <bound method> = bound_method %.loc8_13.4, constants.%DestroyT.binding.as_type.as.Destroy.impl.Op.89b
+// CHECK:STDOUT:   %DestroyT.binding.as_type.as.Destroy.impl.Op.specific_fn: <specific function> = specific_function constants.%DestroyT.binding.as_type.as.Destroy.impl.Op.89b, @DestroyT.binding.as_type.as.Destroy.impl.Op(constants.%facet_value) [concrete = constants.%DestroyT.binding.as_type.as.Destroy.impl.Op.specific_fn]
+// CHECK:STDOUT:   %bound_method.loc8_13.5: <bound method> = bound_method %.loc8_13.4, %DestroyT.binding.as_type.as.Destroy.impl.Op.specific_fn
 // CHECK:STDOUT:   %addr.loc8_13: %ptr.251 = addr_of %.loc8_13.4
-// CHECK:STDOUT:   %DestroyT.as_type.as.Destroy.impl.Op.call: init %empty_tuple.type = call %bound_method.loc8_13.5(%addr.loc8_13)
+// CHECK:STDOUT:   %DestroyT.binding.as_type.as.Destroy.impl.Op.call: init %empty_tuple.type = call %bound_method.loc8_13.5(%addr.loc8_13)
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -1897,9 +1897,9 @@ fn F() {
 // CHECK:STDOUT:   %.Self: %type = bind_symbolic_name .Self [symbolic_self]
 // CHECK:STDOUT:   %ValueT: %I.type = bind_symbolic_name ValueT, 0 [symbolic]
 // CHECK:STDOUT:   %pattern_type.09a: type = pattern_type %I.type [concrete]
-// CHECK:STDOUT:   %ValueT.as_type: type = facet_access_type %ValueT [symbolic]
-// CHECK:STDOUT:   %value: %ValueT.as_type = bind_symbolic_name value, 1 [symbolic]
-// CHECK:STDOUT:   %pattern_type.d22: type = pattern_type %ValueT.as_type [symbolic]
+// CHECK:STDOUT:   %ValueT.binding.as_type: type = symbolic_binding_type ValueT, 0, %ValueT [symbolic]
+// CHECK:STDOUT:   %value: %ValueT.binding.as_type = bind_symbolic_name value, 1 [symbolic]
+// CHECK:STDOUT:   %pattern_type.3f7: type = pattern_type %ValueT.binding.as_type [symbolic]
 // CHECK:STDOUT:   %EchoValue.type: type = fn_type @EchoValue [concrete]
 // CHECK:STDOUT:   %EchoValue: %EchoValue.type = struct_value () [concrete]
 // CHECK:STDOUT:   %F.type: type = fn_type @F [concrete]
@@ -1935,20 +1935,20 @@ fn F() {
 // CHECK:STDOUT:   %I.decl: type = interface_decl @I [concrete = constants.%I.type] {} {}
 // CHECK:STDOUT:   %EchoValue.decl: %EchoValue.type = fn_decl @EchoValue [concrete = constants.%EchoValue] {
 // CHECK:STDOUT:     %ValueT.patt: %pattern_type.09a = symbolic_binding_pattern ValueT, 0 [concrete]
-// CHECK:STDOUT:     %value.patt: @EchoValue.%pattern_type (%pattern_type.d22) = symbolic_binding_pattern value, 1 [concrete]
+// CHECK:STDOUT:     %value.patt: @EchoValue.%pattern_type (%pattern_type.3f7) = symbolic_binding_pattern value, 1 [concrete]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %.loc10_23: type = splice_block %I.ref [concrete = constants.%I.type] {
 // CHECK:STDOUT:       %.Self.2: %type = bind_symbolic_name .Self [symbolic_self = constants.%.Self]
 // CHECK:STDOUT:       %I.ref: type = name_ref I, file.%I.decl [concrete = constants.%I.type]
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %ValueT.loc10_14.2: %I.type = bind_symbolic_name ValueT, 0 [symbolic = %ValueT.loc10_14.1 (constants.%ValueT)]
-// CHECK:STDOUT:     %.loc10_34.1: type = splice_block %.loc10_34.2 [symbolic = %ValueT.as_type.loc10_34.1 (constants.%ValueT.as_type)] {
+// CHECK:STDOUT:     %.loc10_34.1: type = splice_block %.loc10_34.2 [symbolic = %ValueT.binding.as_type (constants.%ValueT.binding.as_type)] {
 // CHECK:STDOUT:       %.Self.1: %type = bind_symbolic_name .Self [symbolic_self = constants.%.Self]
 // CHECK:STDOUT:       %ValueT.ref: %I.type = name_ref ValueT, %ValueT.loc10_14.2 [symbolic = %ValueT.loc10_14.1 (constants.%ValueT)]
-// CHECK:STDOUT:       %ValueT.as_type.loc10_34.2: type = facet_access_type %ValueT.ref [symbolic = %ValueT.as_type.loc10_34.1 (constants.%ValueT.as_type)]
-// CHECK:STDOUT:       %.loc10_34.2: type = converted %ValueT.ref, %ValueT.as_type.loc10_34.2 [symbolic = %ValueT.as_type.loc10_34.1 (constants.%ValueT.as_type)]
+// CHECK:STDOUT:       %ValueT.as_type: type = facet_access_type %ValueT.ref [symbolic = %ValueT.binding.as_type (constants.%ValueT.binding.as_type)]
+// CHECK:STDOUT:       %.loc10_34.2: type = converted %ValueT.ref, %ValueT.as_type [symbolic = %ValueT.binding.as_type (constants.%ValueT.binding.as_type)]
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %value.loc10_26.2: @EchoValue.%ValueT.as_type.loc10_34.1 (%ValueT.as_type) = bind_symbolic_name value, 1 [symbolic = %value.loc10_26.1 (constants.%value)]
+// CHECK:STDOUT:     %value.loc10_26.2: @EchoValue.%ValueT.binding.as_type (%ValueT.binding.as_type) = bind_symbolic_name value, 1 [symbolic = %value.loc10_26.1 (constants.%value)]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [concrete = constants.%F] {} {}
 // CHECK:STDOUT: }
@@ -1961,11 +1961,11 @@ fn F() {
 // CHECK:STDOUT:   witness = ()
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic fn @EchoValue(%ValueT.loc10_14.2: %I.type, %value.loc10_26.2: @EchoValue.%ValueT.as_type.loc10_34.1 (%ValueT.as_type)) {
+// CHECK:STDOUT: generic fn @EchoValue(%ValueT.loc10_14.2: %I.type, %value.loc10_26.2: @EchoValue.%ValueT.binding.as_type (%ValueT.binding.as_type)) {
 // CHECK:STDOUT:   %ValueT.loc10_14.1: %I.type = bind_symbolic_name ValueT, 0 [symbolic = %ValueT.loc10_14.1 (constants.%ValueT)]
-// CHECK:STDOUT:   %ValueT.as_type.loc10_34.1: type = facet_access_type %ValueT.loc10_14.1 [symbolic = %ValueT.as_type.loc10_34.1 (constants.%ValueT.as_type)]
-// CHECK:STDOUT:   %value.loc10_26.1: @EchoValue.%ValueT.as_type.loc10_34.1 (%ValueT.as_type) = bind_symbolic_name value, 1 [symbolic = %value.loc10_26.1 (constants.%value)]
-// CHECK:STDOUT:   %pattern_type: type = pattern_type %ValueT.as_type.loc10_34.1 [symbolic = %pattern_type (constants.%pattern_type.d22)]
+// CHECK:STDOUT:   %ValueT.binding.as_type: type = symbolic_binding_type ValueT, 0, %ValueT.loc10_14.1 [symbolic = %ValueT.binding.as_type (constants.%ValueT.binding.as_type)]
+// CHECK:STDOUT:   %value.loc10_26.1: @EchoValue.%ValueT.binding.as_type (%ValueT.binding.as_type) = bind_symbolic_name value, 1 [symbolic = %value.loc10_26.1 (constants.%value)]
+// CHECK:STDOUT:   %pattern_type: type = pattern_type %ValueT.binding.as_type [symbolic = %pattern_type (constants.%pattern_type.3f7)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:
@@ -1985,8 +1985,8 @@ fn F() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @EchoValue(constants.%ValueT, constants.%value) {
 // CHECK:STDOUT:   %ValueT.loc10_14.1 => constants.%ValueT
-// CHECK:STDOUT:   %ValueT.as_type.loc10_34.1 => constants.%ValueT.as_type
+// CHECK:STDOUT:   %ValueT.binding.as_type => constants.%ValueT.binding.as_type
 // CHECK:STDOUT:   %value.loc10_26.1 => constants.%value
-// CHECK:STDOUT:   %pattern_type => constants.%pattern_type.d22
+// CHECK:STDOUT:   %pattern_type => constants.%pattern_type.3f7
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

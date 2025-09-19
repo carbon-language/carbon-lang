@@ -150,8 +150,8 @@ fn F[A:! J, B:! A](x: C(A, B)) {
 // CHECK:STDOUT:   %.843: type = fn_type_with_self_type %Eats.Eat.type, %Eats.facet [concrete]
 // CHECK:STDOUT:   %type_where: type = facet_type <type where .Self impls <CanDestroy>> [concrete]
 // CHECK:STDOUT:   %facet_value: %type_where = facet_value %Goat, () [concrete]
-// CHECK:STDOUT:   %DestroyT.as_type.as.Destroy.impl.Op.type.f2a: type = fn_type @DestroyT.as_type.as.Destroy.impl.Op, @DestroyT.as_type.as.Destroy.impl(%facet_value) [concrete]
-// CHECK:STDOUT:   %DestroyT.as_type.as.Destroy.impl.Op.353: %DestroyT.as_type.as.Destroy.impl.Op.type.f2a = struct_value () [concrete]
+// CHECK:STDOUT:   %DestroyT.binding.as_type.as.Destroy.impl.Op.type.729: type = fn_type @DestroyT.binding.as_type.as.Destroy.impl.Op, @DestroyT.binding.as_type.as.Destroy.impl(%facet_value) [concrete]
+// CHECK:STDOUT:   %DestroyT.binding.as_type.as.Destroy.impl.Op.457: %DestroyT.binding.as_type.as.Destroy.impl.Op.type.729 = struct_value () [concrete]
 // CHECK:STDOUT:   %ptr.940: type = ptr_type %Goat [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -217,25 +217,25 @@ fn F[A:! J, B:! A](x: C(A, B)) {
 // CHECK:STDOUT:   %Goat.as.Eats.impl.Eat.call.loc27: init %empty_tuple.type = call %impl.elem0.loc27()
 // CHECK:STDOUT:   %facet_value.loc27: %type_where = facet_value constants.%Goat, () [concrete = constants.%facet_value]
 // CHECK:STDOUT:   %.loc27_6.5: %type_where = converted constants.%Goat, %facet_value.loc27 [concrete = constants.%facet_value]
-// CHECK:STDOUT:   %DestroyT.as_type.as.Destroy.impl.Op.bound.loc27: <bound method> = bound_method %.loc27_6.4, constants.%DestroyT.as_type.as.Destroy.impl.Op.353
+// CHECK:STDOUT:   %DestroyT.binding.as_type.as.Destroy.impl.Op.bound.loc27: <bound method> = bound_method %.loc27_6.4, constants.%DestroyT.binding.as_type.as.Destroy.impl.Op.457
 // CHECK:STDOUT:   <elided>
-// CHECK:STDOUT:   %bound_method.loc27: <bound method> = bound_method %.loc27_6.4, %DestroyT.as_type.as.Destroy.impl.Op.specific_fn.1
+// CHECK:STDOUT:   %bound_method.loc27: <bound method> = bound_method %.loc27_6.4, %DestroyT.binding.as_type.as.Destroy.impl.Op.specific_fn.1
 // CHECK:STDOUT:   %addr.loc27: %ptr.940 = addr_of %.loc27_6.4
-// CHECK:STDOUT:   %DestroyT.as_type.as.Destroy.impl.Op.call.loc27: init %empty_tuple.type = call %bound_method.loc27(%addr.loc27)
+// CHECK:STDOUT:   %DestroyT.binding.as_type.as.Destroy.impl.Op.call.loc27: init %empty_tuple.type = call %bound_method.loc27(%addr.loc27)
 // CHECK:STDOUT:   %facet_value.loc26: %type_where = facet_value constants.%Goat, () [concrete = constants.%facet_value]
 // CHECK:STDOUT:   %.loc26_6.5: %type_where = converted constants.%Goat, %facet_value.loc26 [concrete = constants.%facet_value]
-// CHECK:STDOUT:   %DestroyT.as_type.as.Destroy.impl.Op.bound.loc26: <bound method> = bound_method %.loc26_6.4, constants.%DestroyT.as_type.as.Destroy.impl.Op.353
+// CHECK:STDOUT:   %DestroyT.binding.as_type.as.Destroy.impl.Op.bound.loc26: <bound method> = bound_method %.loc26_6.4, constants.%DestroyT.binding.as_type.as.Destroy.impl.Op.457
 // CHECK:STDOUT:   <elided>
-// CHECK:STDOUT:   %bound_method.loc26: <bound method> = bound_method %.loc26_6.4, %DestroyT.as_type.as.Destroy.impl.Op.specific_fn.2
+// CHECK:STDOUT:   %bound_method.loc26: <bound method> = bound_method %.loc26_6.4, %DestroyT.binding.as_type.as.Destroy.impl.Op.specific_fn.2
 // CHECK:STDOUT:   %addr.loc26: %ptr.940 = addr_of %.loc26_6.4
-// CHECK:STDOUT:   %DestroyT.as_type.as.Destroy.impl.Op.call.loc26: init %empty_tuple.type = call %bound_method.loc26(%addr.loc26)
+// CHECK:STDOUT:   %DestroyT.binding.as_type.as.Destroy.impl.Op.call.loc26: init %empty_tuple.type = call %bound_method.loc26(%addr.loc26)
 // CHECK:STDOUT:   %facet_value.loc22: %type_where = facet_value constants.%Goat, () [concrete = constants.%facet_value]
 // CHECK:STDOUT:   %.loc22_28.5: %type_where = converted constants.%Goat, %facet_value.loc22 [concrete = constants.%facet_value]
-// CHECK:STDOUT:   %DestroyT.as_type.as.Destroy.impl.Op.bound.loc22: <bound method> = bound_method %.loc22_28.4, constants.%DestroyT.as_type.as.Destroy.impl.Op.353
+// CHECK:STDOUT:   %DestroyT.binding.as_type.as.Destroy.impl.Op.bound.loc22: <bound method> = bound_method %.loc22_28.4, constants.%DestroyT.binding.as_type.as.Destroy.impl.Op.457
 // CHECK:STDOUT:   <elided>
-// CHECK:STDOUT:   %bound_method.loc22: <bound method> = bound_method %.loc22_28.4, %DestroyT.as_type.as.Destroy.impl.Op.specific_fn.3
+// CHECK:STDOUT:   %bound_method.loc22: <bound method> = bound_method %.loc22_28.4, %DestroyT.binding.as_type.as.Destroy.impl.Op.specific_fn.3
 // CHECK:STDOUT:   %addr.loc22: %ptr.940 = addr_of %.loc22_28.4
-// CHECK:STDOUT:   %DestroyT.as_type.as.Destroy.impl.Op.call.loc22: init %empty_tuple.type = call %bound_method.loc22(%addr.loc22)
+// CHECK:STDOUT:   %DestroyT.binding.as_type.as.Destroy.impl.Op.call.loc22: init %empty_tuple.type = call %bound_method.loc22(%addr.loc22)
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -244,13 +244,13 @@ fn F[A:! J, B:! A](x: C(A, B)) {
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %J.type: type = facet_type <@J> [concrete]
 // CHECK:STDOUT:   %A: %J.type = bind_symbolic_name A, 0 [symbolic]
-// CHECK:STDOUT:   %A.as_type: type = facet_access_type %A [symbolic]
-// CHECK:STDOUT:   %B: %A.as_type = bind_symbolic_name B, 1 [symbolic]
-// CHECK:STDOUT:   %pattern_type.8ba: type = pattern_type %A.as_type [symbolic]
+// CHECK:STDOUT:   %A.binding.as_type: type = symbolic_binding_type A, 0, %A [symbolic]
+// CHECK:STDOUT:   %B: %A.binding.as_type = bind_symbolic_name B, 1 [symbolic]
+// CHECK:STDOUT:   %pattern_type.a23: type = pattern_type %A.binding.as_type [symbolic]
 // CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [concrete]
 // CHECK:STDOUT:   %C: type = class_type @C, @C(%A, %B) [symbolic]
-// CHECK:STDOUT:   %require_complete.8dd: <witness> = require_complete_type %A.as_type [symbolic]
-// CHECK:STDOUT:   %pattern_type.f19: type = pattern_type %C [symbolic]
+// CHECK:STDOUT:   %require_complete.bb1: <witness> = require_complete_type %A.binding.as_type [symbolic]
+// CHECK:STDOUT:   %pattern_type.e0c: type = pattern_type %C [symbolic]
 // CHECK:STDOUT:   %G.type: type = fn_type @G [concrete]
 // CHECK:STDOUT:   %G: %G.type = struct_value () [concrete]
 // CHECK:STDOUT:   %G.specific_fn: <specific function> = specific_function %G, @G(%A, %B) [symbolic]
@@ -259,7 +259,7 @@ fn F[A:! J, B:! A](x: C(A, B)) {
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic fn @F(%A.loc25_6.2: %J.type, %B.loc25_13.2: @F.%A.as_type.loc25_17.1 (%A.as_type)) {
+// CHECK:STDOUT: generic fn @F(%A.loc25_6.2: %J.type, %B.loc25_13.2: @F.%A.binding.as_type (%A.binding.as_type)) {
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
@@ -270,8 +270,8 @@ fn F[A:! J, B:! A](x: C(A, B)) {
 // CHECK:STDOUT:   !entry:
 // CHECK:STDOUT:     %G.ref: %G.type = name_ref G, file.%G.decl [concrete = constants.%G]
 // CHECK:STDOUT:     %x.ref: @F.%C.loc25_29.1 (%C) = name_ref x, %x
-// CHECK:STDOUT:     %.loc27_6.1: %J.type = converted constants.%A.as_type, constants.%A [symbolic = %A.loc25_6.1 (constants.%A)]
-// CHECK:STDOUT:     %.loc27_6.2: %J.type = converted constants.%A.as_type, constants.%A [symbolic = %A.loc25_6.1 (constants.%A)]
+// CHECK:STDOUT:     %.loc27_6.1: %J.type = converted constants.%A.binding.as_type, constants.%A [symbolic = %A.loc25_6.1 (constants.%A)]
+// CHECK:STDOUT:     %.loc27_6.2: %J.type = converted constants.%A.binding.as_type, constants.%A [symbolic = %A.loc25_6.1 (constants.%A)]
 // CHECK:STDOUT:     %G.specific_fn.loc27_3.1: <specific function> = specific_function %G.ref, @G(constants.%A, constants.%B) [symbolic = %G.specific_fn.loc27_3.2 (constants.%G.specific_fn)]
 // CHECK:STDOUT:     %G.call: init %empty_tuple.type = call %G.specific_fn.loc27_3.1(%x.ref)
 // CHECK:STDOUT:     <elided>
@@ -280,11 +280,11 @@ fn F[A:! J, B:! A](x: C(A, B)) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @F(constants.%A, constants.%B) {
 // CHECK:STDOUT:   %A.loc25_6.1 => constants.%A
-// CHECK:STDOUT:   %A.as_type.loc25_17.1 => constants.%A.as_type
+// CHECK:STDOUT:   %A.binding.as_type => constants.%A.binding.as_type
 // CHECK:STDOUT:   %B.loc25_13.1 => constants.%B
-// CHECK:STDOUT:   %pattern_type.loc25_13 => constants.%pattern_type.8ba
-// CHECK:STDOUT:   %require_complete.loc25_29 => constants.%require_complete.8dd
+// CHECK:STDOUT:   %pattern_type.loc25_13 => constants.%pattern_type.a23
+// CHECK:STDOUT:   %require_complete.loc25_29 => constants.%require_complete.bb1
 // CHECK:STDOUT:   %C.loc25_29.1 => constants.%C
-// CHECK:STDOUT:   %pattern_type.loc25_20 => constants.%pattern_type.f19
+// CHECK:STDOUT:   %pattern_type.loc25_20 => constants.%pattern_type.e0c
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

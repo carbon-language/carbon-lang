@@ -200,6 +200,31 @@ auto EvalConstantInst(Context& context, SemIR::FacetAccessType inst)
     return ConstantEvalResult::Existing(
         context.constant_values().Get(facet_value->type_inst_id));
   }
+
+  if (auto bind_name = context.insts().TryGetAs<SemIR::BindSymbolicName>(
+          inst.facet_value_inst_id)) {
+    return ConstantEvalResult::NewSamePhase(SemIR::SymbolicBindingType{
+        .type_id = SemIR::TypeType::TypeId,
+        .entity_name_id = bind_name->entity_name_id,
+        // TODO: This is to be removed, at which point explore if we should
+        // replace NewSamePhase with NewAnyPhase (to make the constant value
+        // concrete). This is still a symbolic type though even if the inst
+        // doesn't contain a symbolic constant. Previously we crashed in CHECKs
+        // when we had a symbolic instruction with only an EntityNameId, due to
+        // it not changing in a generic eval block. Maybe that has improved in
+        // the latest version of this instruction. If it's not symbolic, then
+        // SubstConstantCallbacks and other Subst callers may need to handle
+        // looking through concrete instructions which would be unfortunate.
+        .facet_value_inst_id = inst.facet_value_inst_id});
+  }
+
+  // The `facet_value_inst_id` is always a facet value (has type facet type).
+  CARBON_CHECK(context.types().Is<SemIR::FacetType>(
+      context.insts().Get(inst.facet_value_inst_id).type_id()));
+
+  // Other instructions (e.g. ImplWitnessAccess) of type FacetType can appear
+  // here, in which case the constant inst is a FacetAccessType until those
+  // instructions resolve to one of the above.
   return ConstantEvalResult::NewSamePhase(inst);
 }
 
@@ -207,13 +232,14 @@ auto EvalConstantInst(Context& context, SemIR::FacetValue inst)
     -> ConstantEvalResult {
   // A FacetValue that just wraps a BindSymbolicName without adding/removing any
   // witnesses is evaluated back to the BindSymbolicName itself.
-  if (auto access =
-          context.insts().TryGetAs<SemIR::FacetAccessType>(inst.type_inst_id)) {
-    auto bind_id = access->facet_value_inst_id;
-    auto bind = context.insts().TryGetAs<SemIR::BindSymbolicName>(bind_id);
+  if (auto bind_as_type = context.insts().TryGetAs<SemIR::SymbolicBindingType>(
+          inst.type_inst_id)) {
+    // TODO: Look in ScopeStack with the entity_name_id to find the facet value.
+    auto bind_id = bind_as_type->facet_value_inst_id;
+    auto bind = context.insts().GetAs<SemIR::BindSymbolicName>(bind_id);
     // If the FacetTypes are the same, then the FacetValue didn't add/remove
     // any witnesses.
-    if (bind.has_value() && bind->type_id == inst.type_id) {
+    if (bind.type_id == inst.type_id) {
       return ConstantEvalResult::Existing(
           context.constant_values().Get(bind_id));
     }

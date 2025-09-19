@@ -153,6 +153,7 @@ auto GetExprCategory(const File& file, InstId inst_id) -> ExprCategory {
       case StringLiteral::Kind:
       case StructType::Kind:
       case StructValue::Kind:
+      case SymbolicBindingType::Kind:
       case TupleType::Kind:
       case TupleValue::Kind:
       case TypeOfInst::Kind:
