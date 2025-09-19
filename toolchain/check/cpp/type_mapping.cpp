@@ -22,6 +22,7 @@
 #include "toolchain/sem_ir/expr_info.h"
 #include "toolchain/sem_ir/ids.h"
 #include "toolchain/sem_ir/inst.h"
+#include "toolchain/sem_ir/stringify.h"
 #include "toolchain/sem_ir/type.h"
 #include "toolchain/sem_ir/type_info.h"
 #include "toolchain/sem_ir/typed_insts.h"
@@ -229,6 +230,29 @@ static auto MapToCppType(Context& context, SemIR::InstId inst_id)
   return mapped_type;
 }
 
+// Maps the type of a given Carbon instruction to a C++ type. Adds type sugar so
+// the type prints the same as the Carbon type.
+static auto MapToPrettyCppType(Context& context, SemIR::InstId inst_id)
+    -> clang::QualType {
+  auto type = MapToCppType(context, inst_id);
+  if (type.isNull()) {
+    return clang::QualType();
+  }
+
+  auto type_inst_id =
+      context.types().GetInstId(context.insts().Get(inst_id).type_id());
+  auto type_name = SemIR::StringifyConstantInst(context.sem_ir(), type_inst_id);
+
+  // TODO: Cache these and only create them once per type!
+  auto& ast = context.ast_context();
+  auto* typedef_decl = clang::TypedefDecl::Create(
+      ast, ast.getTranslationUnitDecl(), clang::SourceLocation(),
+      clang::SourceLocation(), &ast.Idents.get(type_name),
+      ast.getTrivialTypeSourceInfo(type));
+  return ast.getTypedefType(clang::ElaboratedTypeKeyword::None, std::nullopt,
+                            typedef_decl);
+}
+
 auto InventClangArg(Context& context, SemIR::InstId arg_id) -> clang::Expr* {
   clang::ExprValueKind value_kind;
   switch (SemIR::GetExprCategory(context.sem_ir(), arg_id)) {
@@ -262,7 +286,7 @@ auto InventClangArg(Context& context, SemIR::InstId arg_id) -> clang::Expr* {
     return nullptr;
   }
 
-  clang::QualType arg_cpp_type = MapToCppType(context, arg_id);
+  clang::QualType arg_cpp_type = MapToPrettyCppType(context, arg_id);
   if (arg_cpp_type.isNull()) {
     CARBON_DIAGNOSTIC(CppCallArgTypeNotSupported, Error,
                       "call argument of type {0} is not supported",

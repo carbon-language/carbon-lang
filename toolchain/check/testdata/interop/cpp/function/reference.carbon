@@ -59,7 +59,7 @@ fn F() {
   // CHECK:STDERR:    29 |   Cpp.TakesLValue(t);
   // CHECK:STDERR:       |                    ^
   // CHECK:STDERR: fail_lvalue_ref.carbon:[[@LINE-20]]:10: in file included here [InCppInclude]
-  // CHECK:STDERR: ./lvalue_ref.h:5:6: note: candidate function not viable: no known conversion from 'T' to 'S &' for 1st argument [CppInteropParseNote]
+  // CHECK:STDERR: ./lvalue_ref.h:5:6: note: candidate function not viable: no known conversion from 'Cpp.T' (aka 'T') to 'S &' for 1st argument [CppInteropParseNote]
   // CHECK:STDERR:     5 | auto TakesLValue(S&) -> void;
   // CHECK:STDERR:       |      ^           ~~
   // CHECK:STDERR:
@@ -70,7 +70,7 @@ fn F() {
   // CHECK:STDERR:    40 |   Cpp.TakesLValue(u as const Cpp.S);
   // CHECK:STDERR:       |                                   ^
   // CHECK:STDERR: fail_lvalue_ref.carbon:[[@LINE-31]]:10: in file included here [InCppInclude]
-  // CHECK:STDERR: ./lvalue_ref.h:5:6: note: candidate function not viable: 1st argument ('const S') would lose const qualifier [CppInteropParseNote]
+  // CHECK:STDERR: ./lvalue_ref.h:5:6: note: candidate function not viable: 1st argument ('const Cpp.S' (aka 'const S')) would lose const qualifier [CppInteropParseNote]
   // CHECK:STDERR:     5 | auto TakesLValue(S&) -> void;
   // CHECK:STDERR:       |      ^           ~~
   // CHECK:STDERR:
@@ -142,7 +142,7 @@ fn F() {
   // CHECK:STDERR:    28 |   Cpp.TakesRValue(t);
   // CHECK:STDERR:       |                    ^
   // CHECK:STDERR: fail_rvalue_ref.carbon:[[@LINE-19]]:10: in file included here [InCppInclude]
-  // CHECK:STDERR: ./rvalue_ref.h:5:6: note: candidate function not viable: no known conversion from 'T' to 'S' for 1st argument [CppInteropParseNote]
+  // CHECK:STDERR: ./rvalue_ref.h:5:6: note: candidate function not viable: no known conversion from 'Cpp.T' (aka 'T') to 'S' for 1st argument [CppInteropParseNote]
   // CHECK:STDERR:     5 | auto TakesRValue(S&&) -> void;
   // CHECK:STDERR:       |      ^           ~~~
   // CHECK:STDERR:
@@ -152,7 +152,7 @@ fn F() {
   // CHECK:STDERR:    38 |   Cpp.TakesRValue(({} as Cpp.S) as const Cpp.S);
   // CHECK:STDERR:       |                                               ^
   // CHECK:STDERR: fail_rvalue_ref.carbon:[[@LINE-29]]:10: in file included here [InCppInclude]
-  // CHECK:STDERR: ./rvalue_ref.h:5:6: note: candidate function not viable: 1st argument ('const S') would lose const qualifier [CppInteropParseNote]
+  // CHECK:STDERR: ./rvalue_ref.h:5:6: note: candidate function not viable: 1st argument ('const Cpp.S' (aka 'const S')) would lose const qualifier [CppInteropParseNote]
   // CHECK:STDERR:     5 | auto TakesRValue(S&&) -> void;
   // CHECK:STDERR:       |      ^           ~~~
   // CHECK:STDERR:
@@ -211,7 +211,7 @@ fn F() {
   // CHECK:STDERR:    29 |   Cpp.TakesConstLValue(t);
   // CHECK:STDERR:       |                         ^
   // CHECK:STDERR: fail_const_lvalue_ref.carbon:[[@LINE-20]]:10: in file included here [InCppInclude]
-  // CHECK:STDERR: ./const_lvalue_ref.h:5:6: note: candidate function not viable: no known conversion from 'T' to 'const S' for 1st argument [CppInteropParseNote]
+  // CHECK:STDERR: ./const_lvalue_ref.h:5:6: note: candidate function not viable: no known conversion from 'Cpp.T' (aka 'T') to 'const S' for 1st argument [CppInteropParseNote]
   // CHECK:STDERR:     5 | auto TakesConstLValue(const S&) -> void;
   // CHECK:STDERR:       |      ^                ~~~~~~~~
   // CHECK:STDERR:

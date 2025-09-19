@@ -234,7 +234,7 @@ fn F() {
   // CHECK:STDERR:    16 |   let c2: Cpp.C = c1 + 5;
   // CHECK:STDERR:       |                      ^
   // CHECK:STDERR: fail_call_with_wrong_type.carbon:[[@LINE-7]]:10: in file included here [InCppInclude]
-  // CHECK:STDERR: ./binary_operators.h:5:6: note: candidate function not viable: no known conversion from 'int' to 'C' for 2nd argument [CppInteropParseNote]
+  // CHECK:STDERR: ./binary_operators.h:5:6: note: candidate function not viable: no known conversion from 'Core.IntLiteral' (aka 'int') to 'C' for 2nd argument [CppInteropParseNote]
   // CHECK:STDERR:     5 | auto operator+(C lhs, C rhs) -> C;
   // CHECK:STDERR:       |      ^                ~~~~~
   // CHECK:STDERR:
@@ -243,7 +243,7 @@ fn F() {
   // CHECK:STDERR:    25 |   let c3: Cpp.C = 6 + c1;
   // CHECK:STDERR:       |                     ^
   // CHECK:STDERR: fail_call_with_wrong_type.carbon:[[@LINE-16]]:10: in file included here [InCppInclude]
-  // CHECK:STDERR: ./binary_operators.h:5:6: note: candidate function not viable: no known conversion from 'int' to 'C' for 1st argument [CppInteropParseNote]
+  // CHECK:STDERR: ./binary_operators.h:5:6: note: candidate function not viable: no known conversion from 'Core.IntLiteral' (aka 'int') to 'C' for 1st argument [CppInteropParseNote]
   // CHECK:STDERR:     5 | auto operator+(C lhs, C rhs) -> C;
   // CHECK:STDERR:       |      ^         ~~~~~
   // CHECK:STDERR:
