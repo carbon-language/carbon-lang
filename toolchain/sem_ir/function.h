@@ -225,6 +225,7 @@ auto GetCalleeFunction(const File& sem_ir, InstId callee_id,
                        SpecificId specific_id = SpecificId::None)
     -> CalleeFunction;
 
+// Like `GetCalleeFunction`, but restricts to the `Function` callee kind.
 auto GetCalleeFunctionAsFunction(const File& sem_ir, InstId callee_id,
                                  SpecificId specific_id = SpecificId::None)
     -> CalleeFunction::Function;
