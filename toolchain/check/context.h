@@ -158,7 +158,7 @@ class Context {
   }
 
   auto cpp_carbon_file_locations()
-      -> llvm::SmallVector<clang::SourceLocation, 0>& {
+      -> llvm::SmallVector<clang::SourceLocation>& {
     return cpp_carbon_file_locations_;
   }
 
@@ -391,7 +391,7 @@ class Context {
 
   // Per-Carbon-file start locations for corresponding Clang source buffers.
   // Owned and managed by code in cpp/location.cpp.
-  llvm::SmallVector<clang::SourceLocation, 0> cpp_carbon_file_locations_;
+  llvm::SmallVector<clang::SourceLocation> cpp_carbon_file_locations_;
 
   // Declaration instructions of entities that should have definitions by the
   // end of the current source file.

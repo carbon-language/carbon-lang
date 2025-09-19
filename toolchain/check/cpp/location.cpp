@@ -20,7 +20,7 @@ struct FileInfo {
 // and Clang's source manager.
 static auto GetFileInfo(Context& context, SemIR::CheckIRId ir_id) -> FileInfo {
   const SemIR::File* sem_ir = &context.sem_ir();
-  unsigned file_index = 0;
+  int file_index = 0;
 
   // If the file is imported, locate it in our imports map.
   if (ir_id != context.sem_ir().check_ir_id()) {
@@ -35,9 +35,9 @@ static auto GetFileInfo(Context& context, SemIR::CheckIRId ir_id) -> FileInfo {
   // If we've seen this file before, reuse the same FileID.
   auto& file_start_locs = context.cpp_carbon_file_locations();
   if (file_start_locs.size() <= file_index) {
+    // Never valid; prepare a slot for the caching below.
     file_start_locs.resize(file_index + 1);
-  }
-  if (file_start_locs[file_index].isValid()) {
+  } else if (file_start_locs[file_index].isValid()) {
     return {.sem_ir = sem_ir, .start_loc = file_start_locs[file_index]};
   }
 
