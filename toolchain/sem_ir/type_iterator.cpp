@@ -63,15 +63,15 @@ auto TypeIterator::ProcessTypeId(TypeId type_id) -> std::optional<Step> {
   CARBON_KIND_SWITCH(inst) {
       // ==== Symbolic types ====
 
-    case SemIR::BindSymbolicName::Kind:
-    case SemIR::SymbolicBindingPattern::Kind: {
+    case BindSymbolicName::Kind:
+    case SymbolicBindingPattern::Kind: {
       return Step::SymbolicType{.facet_type_id = type_id};
     }
-    case SemIR::TypeOfInst::Kind: {
+    case TypeOfInst::Kind: {
       return Step::TemplateType();
     }
 
-    case CARBON_KIND(SemIR::FacetAccessType access): {
+    case CARBON_KIND(FacetAccessType access): {
       auto facet_type_id =
           sem_ir_->insts().Get(access.facet_value_inst_id).type_id();
       return Step::SymbolicType{.facet_type_id = facet_type_id};
@@ -79,25 +79,25 @@ auto TypeIterator::ProcessTypeId(TypeId type_id) -> std::optional<Step> {
 
       // ==== Concrete types ====
 
-    case SemIR::AssociatedEntityType::Kind:
-    case SemIR::BoolType::Kind:
-    case SemIR::CharLiteralType::Kind:
-    case SemIR::FacetType::Kind:
-    case SemIR::FloatLiteralType::Kind:
-    case SemIR::FloatType::Kind:
-    case SemIR::FunctionType::Kind:
-    case SemIR::FunctionTypeWithSelfType::Kind:
-    case SemIR::GenericClassType::Kind:
-    case SemIR::GenericInterfaceType::Kind:
-    case SemIR::ImplWitnessAccess::Kind:
-    case SemIR::IntLiteralType::Kind:
-    case SemIR::NamespaceType::Kind:
-    case SemIR::TypeType::Kind:
-    case SemIR::WitnessType::Kind: {
+    case AssociatedEntityType::Kind:
+    case BoolType::Kind:
+    case CharLiteralType::Kind:
+    case FacetType::Kind:
+    case FloatLiteralType::Kind:
+    case FloatType::Kind:
+    case FunctionType::Kind:
+    case FunctionTypeWithSelfType::Kind:
+    case GenericClassType::Kind:
+    case GenericInterfaceType::Kind:
+    case ImplWitnessAccess::Kind:
+    case IntLiteralType::Kind:
+    case NamespaceType::Kind:
+    case TypeType::Kind:
+    case WitnessType::Kind: {
       return Step::ConcreteType{.type_id = type_id};
     }
 
-    case CARBON_KIND(SemIR::IntType int_type): {
+    case CARBON_KIND(IntType int_type): {
       Push(EndType());
       PushArgs({int_type.bit_width_id});
       return Step::IntStart{.type_id = type_id};
@@ -105,13 +105,13 @@ auto TypeIterator::ProcessTypeId(TypeId type_id) -> std::optional<Step> {
 
       // ==== Aggregate types ====
 
-    case CARBON_KIND(SemIR::ArrayType array_type): {
+    case CARBON_KIND(ArrayType array_type): {
       Push(EndType());
       PushInstId(array_type.element_type_inst_id);
       PushInstId(array_type.bound_id);
       return Step::ArrayStart{.type_id = type_id};
     }
-    case CARBON_KIND(SemIR::ClassType class_type): {
+    case CARBON_KIND(ClassType class_type): {
       auto args = GetSpecificArgs(class_type.specific_id);
       if (args.empty()) {
         return Step::ClassStartOnly{
@@ -123,31 +123,31 @@ auto TypeIterator::ProcessTypeId(TypeId type_id) -> std::optional<Step> {
                                 .type_id = type_id};
       }
     }
-    case CARBON_KIND(SemIR::ConstType const_type): {
+    case CARBON_KIND(ConstType const_type): {
       Push(EndType());
       PushInstId(const_type.inner_id);
       return Step::ConstStart();
     }
-    case CARBON_KIND(SemIR::ImplWitnessAssociatedConstant assoc): {
+    case CARBON_KIND(ImplWitnessAssociatedConstant assoc): {
       Push(assoc.type_id);
       return std::nullopt;
     }
-    case CARBON_KIND(SemIR::MaybeUnformedType maybe_unformed_type): {
+    case CARBON_KIND(MaybeUnformedType maybe_unformed_type): {
       Push(EndType());
       PushInstId(maybe_unformed_type.inner_id);
       return Step::MaybeUnformedStart();
     }
-    case CARBON_KIND(SemIR::PartialType partial_type): {
+    case CARBON_KIND(PartialType partial_type): {
       Push(EndType());
       PushInstId(partial_type.inner_id);
       return Step::PartialStart();
     }
-    case CARBON_KIND(SemIR::PointerType pointer_type): {
+    case CARBON_KIND(PointerType pointer_type): {
       Push(EndType());
       PushInstId(pointer_type.pointee_id);
       return Step::PointerStart();
     }
-    case CARBON_KIND(SemIR::TupleType tuple_type): {
+    case CARBON_KIND(TupleType tuple_type): {
       auto inner_types =
           sem_ir_->inst_blocks().Get(tuple_type.type_elements_id);
       if (inner_types.empty()) {
@@ -158,7 +158,7 @@ auto TypeIterator::ProcessTypeId(TypeId type_id) -> std::optional<Step> {
         return Step::TupleStart{.type_id = type_id};
       }
     }
-    case CARBON_KIND(SemIR::StructType struct_type): {
+    case CARBON_KIND(StructType struct_type): {
       auto fields = sem_ir_->struct_type_fields().Get(struct_type.fields_id);
       if (fields.empty()) {
         return Step::StructStartOnly{{.type_id = type_id}};
@@ -172,7 +172,7 @@ auto TypeIterator::ProcessTypeId(TypeId type_id) -> std::optional<Step> {
       }
     }
 
-    case SemIR::ErrorInst::Kind:
+    case ErrorInst::Kind:
       return Step::Error();
 
     default:
@@ -182,10 +182,9 @@ auto TypeIterator::ProcessTypeId(TypeId type_id) -> std::optional<Step> {
   }
 }
 
-auto TypeIterator::TryGetInstIdAsTypeId(SemIR::InstId inst_id) const
-    -> std::variant<SemIR::TypeId, SymbolicType> {
-  if (auto facet_value =
-          sem_ir_->insts().TryGetAs<SemIR::FacetValue>(inst_id)) {
+auto TypeIterator::TryGetInstIdAsTypeId(InstId inst_id) const
+    -> std::variant<TypeId, SymbolicType> {
+  if (auto facet_value = sem_ir_->insts().TryGetAs<FacetValue>(inst_id)) {
     inst_id = facet_value->type_inst_id;
   }
 
@@ -206,19 +205,19 @@ auto TypeIterator::TryGetInstIdAsTypeId(SemIR::InstId inst_id) const
   // FacetType it does so through a FacetAccessType, which is of type TypeType
   // and thus does not match here.
   if (auto facet_type =
-          sem_ir_->types().TryGetAs<SemIR::FacetType>(type_id_of_inst_id)) {
+          sem_ir_->types().TryGetAs<FacetType>(type_id_of_inst_id)) {
     return SymbolicType{.facet_type_id = type_id_of_inst_id};
   }
   // Non-type values are concrete, only types are symbolic.
-  if (type_id_of_inst_id != SemIR::TypeType::TypeId) {
-    return SemIR::TypeId::None;
+  if (type_id_of_inst_id != TypeType::TypeId) {
+    return TypeId::None;
   }
   return sem_ir_->types().GetTypeIdForTypeInstId(inst_id);
 }
 
-auto TypeIterator::GetSpecificArgs(SemIR::SpecificId specific_id) const
-    -> llvm::ArrayRef<SemIR::InstId> {
-  if (specific_id == SemIR::SpecificId::None) {
+auto TypeIterator::GetSpecificArgs(SpecificId specific_id) const
+    -> llvm::ArrayRef<InstId> {
+  if (specific_id == SpecificId::None) {
     return {};
   }
   auto specific = sem_ir_->specifics().Get(specific_id);
@@ -226,7 +225,7 @@ auto TypeIterator::GetSpecificArgs(SemIR::SpecificId specific_id) const
 }
 
 // Push all arguments from the array into the work queue.
-auto TypeIterator::PushArgs(llvm::ArrayRef<SemIR::InstId> args) -> void {
+auto TypeIterator::PushArgs(llvm::ArrayRef<InstId> args) -> void {
   for (auto arg_id : llvm::reverse(args)) {
     PushInstId(arg_id);
   }
@@ -234,11 +233,11 @@ auto TypeIterator::PushArgs(llvm::ArrayRef<SemIR::InstId> args) -> void {
 
 // Push an instruction's type value into the work queue, or a marker if the
 // instruction has a symbolic value.
-auto TypeIterator::PushInstId(SemIR::InstId inst_id) -> void {
+auto TypeIterator::PushInstId(InstId inst_id) -> void {
   auto maybe_type_id = TryGetInstIdAsTypeId(inst_id);
   if (std::holds_alternative<SymbolicType>(maybe_type_id)) {
     Push(std::get<SymbolicType>(maybe_type_id));
-  } else if (auto type_id = std::get<SemIR::TypeId>(maybe_type_id);
+  } else if (auto type_id = std::get<TypeId>(maybe_type_id);
              type_id.has_value()) {
     Push(type_id);
   } else if (sem_ir_->constant_values().Get(inst_id).is_symbolic()) {
