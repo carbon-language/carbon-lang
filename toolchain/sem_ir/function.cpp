@@ -6,12 +6,41 @@
 
 #include <optional>
 
+#include "toolchain/base/kind_switch.h"
 #include "toolchain/sem_ir/file.h"
 #include "toolchain/sem_ir/generic.h"
 #include "toolchain/sem_ir/ids.h"
 #include "toolchain/sem_ir/typed_insts.h"
 
 namespace Carbon::SemIR {
+
+auto CalleeFunction::Print(llvm::raw_ostream& out) const -> void {
+  out << "{";
+  CARBON_KIND_SWITCH(info) {
+    case CARBON_KIND(SemIR::CalleeFunction::Function fn): {
+      out << "Function{function_id: " << fn.function_id
+          << ", enclosing_specific_id: " << fn.enclosing_specific_id
+          << ", resolved_specific_id: " << fn.resolved_specific_id
+          << ", self_type_id: " << fn.self_type_id
+          << ", self_id: " << fn.self_id << "}";
+      break;
+    }
+    case CARBON_KIND(SemIR::CalleeFunction::CppOverload overload): {
+      out << "CppOverload{cpp_overload_set_id: " << overload.cpp_overload_set_id
+          << ", self_id: " << overload.self_id << "}";
+      break;
+    }
+    case CARBON_KIND(SemIR::CalleeFunction::Error _): {
+      out << "Error{}";
+      break;
+    }
+    case CARBON_KIND(SemIR::CalleeFunction::GenericEntity _): {
+      out << "GenericEntity{}";
+      break;
+    }
+  }
+  out << "}";
+}
 
 auto GetCalleeFunction(const File& sem_ir, InstId callee_id,
                        SpecificId specific_id) -> CalleeFunction {

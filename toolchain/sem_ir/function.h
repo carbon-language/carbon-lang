@@ -217,20 +217,7 @@ struct CalleeFunction : public Printable<CalleeFunction> {
 
   std::variant<CppOverload, Error, Function, GenericEntity> info;
 
-  auto Print(llvm::raw_ostream& out) const -> void {
-    out << "{";
-    /*
-    if (cpp_overload_set_id.has_value()) {
-      out << "cpp_overload_set_id: " << cpp_overload_set_id;
-    } else {
-      out << "function_id: " << function_id;
-    }
-    out << ", enclosing_specific_id: " << enclosing_specific_id
-        << ", resolved_specific_id: " << resolved_specific_id
-        << ", self_type_id: " << self_type_id << ", self_id: " << self_id
-        << ", is_error: " << is_error << "}";
-    */
-  }
+  auto Print(llvm::raw_ostream& out) const -> void;
 };
 
 // Returns information for the function corresponding to callee_id.
