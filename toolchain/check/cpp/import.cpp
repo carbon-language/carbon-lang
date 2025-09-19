@@ -1697,7 +1697,7 @@ auto ImportCppFunctionDecl(Context& context, SemIR::LocId loc_id,
     Diagnostics::AnnotationScope annotate_diagnostics(
         &context.emitter(), [&](auto& builder) {
           CARBON_DIAGNOSTIC(InCppThunk, Note,
-                            "in thunk for Cpp function used here");
+                            "in thunk for C++ function used here");
           builder.Note(loc_id, InCppThunk);
         });
 
