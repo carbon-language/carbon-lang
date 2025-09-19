@@ -268,7 +268,7 @@ class Runtimes::Cache {
   static constexpr auto MaxLockedEntryAge = std::chrono::days(10);
 
   // Runtimes are locked while in use to avoid them being removed concurrently,
-  // but this is an even more advisory lock than usual. We use a relatively
+  // but the lock will be disregarded for entries older than `MaxLockedEntryAge`. We use a relatively
   // short deadline and fast poll interval here as this is on the critical path
   // even for an existing, built runtimes entry.
   static constexpr auto RuntimesLockDeadline = std::chrono::milliseconds(100);

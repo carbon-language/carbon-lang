@@ -59,7 +59,7 @@ def install_target(name, target, executable = False, is_driver = False, is_diges
       is_driver: False if it should be included in the `no_driver_name`
         filegroup.
       is_digest: False if it should be included in the `no_digest_name`
-        filegorup.
+        filegroup.
     """
     return {
         "executable": executable,

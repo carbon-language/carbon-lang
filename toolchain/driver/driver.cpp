@@ -88,7 +88,8 @@ Specify a custom runtimes cache location.
 By default, the runtimes cache is located in the `carbon_runtimes` subdirectory
 of `$XDG_CACHE_HOME` (or `$HOME/.cache` if not set). If unable to use either, it
 will be placed in a temporary directory that is removed when the command
-completes. This flag overrides that logic with a specific path.
+completes. This flag overrides that logic with a specific path. It has no effect
+if --prebuilt-runtimes is set.
 )""",
       },
       [&](auto& arg_b) { arg_b.Set(&runtimes_cache_path); });

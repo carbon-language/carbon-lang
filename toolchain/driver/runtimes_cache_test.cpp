@@ -225,6 +225,7 @@ TEST_F(RuntimesCacheTest, BasicBuild) {
   llvm::SmallVector<std::filesystem::path> built_runtimes_paths;
 
   for (const std::string& target : targets) {
+    SCOPED_TRACE(target);
     auto lookup_result = cache_.Lookup({.target = target});
     ASSERT_THAT(lookup_result, IsSuccess(_));
     auto runtimes = *std::move(lookup_result);
@@ -253,6 +254,7 @@ TEST_F(RuntimesCacheTest, BasicBuild) {
 
   for (const auto& [target, built_runtimes_path] :
        llvm::zip(targets, built_runtimes_paths)) {
+    SCOPED_TRACE(target);
     auto lookup_result = cache_.Lookup({.target = target});
     ASSERT_THAT(lookup_result, IsSuccess(_));
     auto runtimes = *std::move(lookup_result);

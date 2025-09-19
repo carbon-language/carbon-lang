@@ -127,7 +127,7 @@ auto Runtimes::Cache::InitSystemCache(const InstallPaths& install)
   // Carbon are cached, persistent built library data, not something that only
   // exists during the running of the Carbon tool like a socket.
   //
-  // If we find a cache directory, we locate or create a Carbon specific
+  // If we find a cache directory, we locate or create a Carbon-specific
   // runtimes directory below it where all our runtimes will be managed.
   //
   // If we cannot find an existing cache directory, we will create a temporary
@@ -225,7 +225,7 @@ auto Runtimes::Cache::InitCachePath(const InstallPaths& install,
 }
 
 auto Runtimes::Cache::Lookup(const Features& features) -> ErrorOr<Runtimes> {
-  // Compute the hash of the features, we'll use this to build the subdirectory
+  // Compute the hash of the features. We'll use this to build the subdirectory
   // within the cache.
 
   llvm::SHA256 entry_hasher;
