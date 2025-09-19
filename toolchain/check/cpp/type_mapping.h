@@ -11,10 +11,15 @@
 
 namespace Carbon::Check {
 
-// Maps a Carbon type to a C++ type. Accepts an InstId, representing a value
-// whose type is mapped to a C++ type. Returns `clang::QualType` if the mapping
-// succeeds, or `clang::QualType::isNull()` if the type is not supported.
-auto MapToCppType(Context& context, SemIR::InstId inst_id) -> clang::QualType;
+// Invents a Clang argument expression to use in overload resolution to
+// represent the given Carbon argument instruction.
+auto InventClangArg(Context& context, SemIR::InstId arg_id) -> clang::Expr*;
+
+// For each arg, invents a Clang argument expression to use in overload
+// resolution or argument dependent lookup (ADL) to represent the given Carbon
+// argument instructions. Returns std::nullopt if any arg failed.
+auto InventClangArgs(Context& context, llvm::ArrayRef<SemIR::InstId> arg_ids)
+    -> std::optional<llvm::SmallVector<clang::Expr*>>;
 
 }  // namespace Carbon::Check
 

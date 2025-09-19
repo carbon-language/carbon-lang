@@ -94,17 +94,22 @@ import Cpp library "postfix_inc_and_dec.h";
 
 fn F() {
   let postfix: Cpp.Postfix = Cpp.Postfix.Postfix();
-  // TODO: Make the error more descriptive to clarify we call prefix operators of a class with suffix operators.
-  // CHECK:STDERR: fail_postfix_calling_prefix.carbon:[[@LINE+5]]:3: error: 1 argument passed to function expecting 2 arguments [CallArgCountMismatch]
-  // CHECK:STDERR:   ++postfix;
-  // CHECK:STDERR:   ^~~~~~~~~
-  // CHECK:STDERR: fail_postfix_calling_prefix.carbon: note: calling function declared here [InCallToEntity]
+  // CHECK:STDERR: fail_postfix_calling_prefix.carbon:[[@LINE+8]]:3: error: no matching function for call to '<C++ operator>' [CppInteropParseError]
+  // CHECK:STDERR:    16 |   ++postfix;
+  // CHECK:STDERR:       |   ^
+  // CHECK:STDERR: fail_postfix_calling_prefix.carbon:[[@LINE-7]]:10: in file included here [InCppInclude]
+  // CHECK:STDERR: ./postfix_inc_and_dec.h:3:6: note: candidate function not viable: requires 2 arguments, but 1 was provided [CppInteropParseNote]
+  // CHECK:STDERR:     3 | auto operator++(Postfix operand, int) -> Postfix;
+  // CHECK:STDERR:       |      ^          ~~~~~~~~~~~~~~~~~~~~
   // CHECK:STDERR:
   ++postfix;
-  // CHECK:STDERR: fail_postfix_calling_prefix.carbon:[[@LINE+5]]:3: error: 1 argument passed to function expecting 2 arguments [CallArgCountMismatch]
-  // CHECK:STDERR:   --postfix;
-  // CHECK:STDERR:   ^~~~~~~~~
-  // CHECK:STDERR: fail_postfix_calling_prefix.carbon: note: calling function declared here [InCallToEntity]
+  // CHECK:STDERR: fail_postfix_calling_prefix.carbon:[[@LINE+8]]:3: error: no matching function for call to '<C++ operator>' [CppInteropParseError]
+  // CHECK:STDERR:    25 |   --postfix;
+  // CHECK:STDERR:       |   ^
+  // CHECK:STDERR: fail_postfix_calling_prefix.carbon:[[@LINE-16]]:10: in file included here [InCppInclude]
+  // CHECK:STDERR: ./postfix_inc_and_dec.h:4:6: note: candidate function not viable: requires 2 arguments, but 1 was provided [CppInteropParseNote]
+  // CHECK:STDERR:     4 | auto operator--(Postfix operand, int) -> Postfix;
+  // CHECK:STDERR:       |      ^          ~~~~~~~~~~~~~~~~~~~~
   // CHECK:STDERR:
   --postfix;
 }
@@ -225,22 +230,22 @@ import Cpp library "binary_operators.h";
 
 fn F() {
   let c1: Cpp.C = Cpp.C.C();
-  // CHECK:STDERR: fail_call_with_wrong_type.carbon:[[@LINE+8]]:24: error: cannot implicitly convert expression of type `Core.IntLiteral` to `Cpp.C` [ConversionFailure]
-  // CHECK:STDERR:   let c2: Cpp.C = c1 + 5;
-  // CHECK:STDERR:                        ^
-  // CHECK:STDERR: fail_call_with_wrong_type.carbon:[[@LINE+5]]:24: note: type `Core.IntLiteral` does not implement interface `Core.ImplicitAs(Cpp.C)` [MissingImplInMemberAccessNote]
-  // CHECK:STDERR:   let c2: Cpp.C = c1 + 5;
-  // CHECK:STDERR:                        ^
-  // CHECK:STDERR: fail_call_with_wrong_type.carbon: note: initializing function parameter [InCallToFunctionParam]
+  // CHECK:STDERR: fail_call_with_wrong_type.carbon:[[@LINE+8]]:22: error: no matching function for call to '<C++ operator>' [CppInteropParseError]
+  // CHECK:STDERR:    16 |   let c2: Cpp.C = c1 + 5;
+  // CHECK:STDERR:       |                      ^
+  // CHECK:STDERR: fail_call_with_wrong_type.carbon:[[@LINE-7]]:10: in file included here [InCppInclude]
+  // CHECK:STDERR: ./binary_operators.h:5:6: note: candidate function not viable: no known conversion from 'int' to 'C' for 2nd argument [CppInteropParseNote]
+  // CHECK:STDERR:     5 | auto operator+(C lhs, C rhs) -> C;
+  // CHECK:STDERR:       |      ^                ~~~~~
   // CHECK:STDERR:
   let c2: Cpp.C = c1 + 5;
-  // CHECK:STDERR: fail_call_with_wrong_type.carbon:[[@LINE+8]]:19: error: cannot implicitly convert expression of type `Core.IntLiteral` to `Cpp.C` [ConversionFailure]
-  // CHECK:STDERR:   let c3: Cpp.C = 6 + c1;
-  // CHECK:STDERR:                   ^
-  // CHECK:STDERR: fail_call_with_wrong_type.carbon:[[@LINE+5]]:19: note: type `Core.IntLiteral` does not implement interface `Core.ImplicitAs(Cpp.C)` [MissingImplInMemberAccessNote]
-  // CHECK:STDERR:   let c3: Cpp.C = 6 + c1;
-  // CHECK:STDERR:                   ^
-  // CHECK:STDERR: fail_call_with_wrong_type.carbon: note: initializing function parameter [InCallToFunctionParam]
+  // CHECK:STDERR: fail_call_with_wrong_type.carbon:[[@LINE+8]]:21: error: no matching function for call to '<C++ operator>' [CppInteropParseError]
+  // CHECK:STDERR:    25 |   let c3: Cpp.C = 6 + c1;
+  // CHECK:STDERR:       |                     ^
+  // CHECK:STDERR: fail_call_with_wrong_type.carbon:[[@LINE-16]]:10: in file included here [InCppInclude]
+  // CHECK:STDERR: ./binary_operators.h:5:6: note: candidate function not viable: no known conversion from 'int' to 'C' for 1st argument [CppInteropParseNote]
+  // CHECK:STDERR:     5 | auto operator+(C lhs, C rhs) -> C;
+  // CHECK:STDERR:       |      ^         ~~~~~
   // CHECK:STDERR:
   let c3: Cpp.C = 6 + c1;
 }
@@ -600,9 +605,9 @@ fn F() {
   //@dump-sem-ir-begin
   let c1: Cpp.N.C = Cpp.N.C.C();
   let c2: Cpp.N.C = Cpp.N.C.C();
-  // CHECK:STDERR: fail_todo_import_operands_in_namespace_operator_in_global.carbon:[[@LINE+4]]:21: error: cannot access member of interface `Core.AddWith(Cpp.N.C)` in type `Cpp.N.C` that does not implement that interface [MissingImplInMemberAccess]
-  // CHECK:STDERR:   let c3: Cpp.N.C = c1 + c2;
-  // CHECK:STDERR:                     ^~~~~~~
+  // CHECK:STDERR: fail_todo_import_operands_in_namespace_operator_in_global.carbon:[[@LINE+4]]:24: error: no matching function for call to '<C++ operator>' [CppInteropParseError]
+  // CHECK:STDERR:    14 |   let c3: Cpp.N.C = c1 + c2;
+  // CHECK:STDERR:       |                        ^
   // CHECK:STDERR:
   let c3: Cpp.N.C = c1 + c2;
   //@dump-sem-ir-end
@@ -672,7 +677,7 @@ class C {
   auto operator+(C rhs) -> C;
 };
 
-// --- fail_todo_import_member__add_with.carbon
+// --- fail_todo_import_member_add_with.carbon
 
 library "[[@TEST_NAME]]";
 
@@ -682,9 +687,13 @@ fn F() {
   //@dump-sem-ir-begin
   let c1: Cpp.C = Cpp.C.C();
   let c2: Cpp.C = Cpp.C.C();
-  // CHECK:STDERR: fail_todo_import_member__add_with.carbon:[[@LINE+4]]:19: error: cannot access member of interface `Core.AddWith(Cpp.C)` in type `Cpp.C` that does not implement that interface [MissingImplInMemberAccess]
-  // CHECK:STDERR:   let c3: Cpp.C = c1 + c2;
-  // CHECK:STDERR:                   ^~~~~~~
+  // CHECK:STDERR: fail_todo_import_member_add_with.carbon:[[@LINE+8]]:22: error: no matching function for call to '<C++ operator>' [CppInteropParseError]
+  // CHECK:STDERR:    18 |   let c3: Cpp.C = c1 + c2;
+  // CHECK:STDERR:       |                      ^
+  // CHECK:STDERR: fail_todo_import_member_add_with.carbon:[[@LINE-9]]:10: in file included here [InCppInclude]
+  // CHECK:STDERR: ./member_add_with.h:4:8: note: candidate function not viable: requires single argument 'rhs', but 2 arguments were provided [CppInteropParseNote]
+  // CHECK:STDERR:     4 |   auto operator+(C rhs) -> C;
+  // CHECK:STDERR:       |        ^         ~~~~~
   // CHECK:STDERR:
   let c3: Cpp.C = c1 + c2;
   //@dump-sem-ir-end
@@ -737,11 +746,43 @@ import Cpp library "not_found.h";
 fn F() {
   let c1: Cpp.C = Cpp.C.C();
   let c2: Cpp.C = Cpp.C.C();
-  // CHECK:STDERR: fail_import_not_found.carbon:[[@LINE+4]]:19: error: cannot access member of interface `Core.AddWith(Cpp.C)` in type `Cpp.C` that does not implement that interface [MissingImplInMemberAccess]
-  // CHECK:STDERR:   let c3: Cpp.C = c1 + c2;
-  // CHECK:STDERR:                   ^~~~~~~
+  // CHECK:STDERR: fail_import_not_found.carbon:[[@LINE+4]]:22: error: no matching function for call to '<C++ operator>' [CppInteropParseError]
+  // CHECK:STDERR:    13 |   let c3: Cpp.C = c1 + c2;
+  // CHECK:STDERR:       |                      ^
   // CHECK:STDERR:
   let c3: Cpp.C = c1 + c2;
+}
+
+// ============================================================================
+// Incomplete operand
+// ============================================================================
+
+// --- incomplete.h
+
+class Incomplete;
+class Complete {};
+
+auto operator+(Complete lhs, Incomplete rhs) -> Complete;
+
+auto foo(Complete complete) -> void;
+
+// --- fail_import_incomplete.carbon
+
+library "[[@TEST_NAME]]";
+
+import Cpp library "incomplete.h";
+
+fn F() {
+  var c1: Cpp.Complete = Cpp.Complete.Complete();
+  // CHECK:STDERR: fail_import_incomplete.carbon:[[@LINE+8]]:40: error: invalid use of incomplete type `Cpp.Incomplete` [IncompleteTypeInConversion]
+  // CHECK:STDERR:   let c3: Cpp.Complete = Cpp.foo(c1 + ({} as Cpp.Incomplete));
+  // CHECK:STDERR:                                        ^~~~~~~~~~~~~~~~~~~~
+  // CHECK:STDERR: fail_import_incomplete.carbon:[[@LINE-7]]:10: in file included here [InCppInclude]
+  // CHECK:STDERR: ./incomplete.h:2:7: note: class was forward declared here [ClassForwardDeclaredHere]
+  // CHECK:STDERR: class Incomplete;
+  // CHECK:STDERR:       ^
+  // CHECK:STDERR:
+  let c3: Cpp.Complete = Cpp.foo(c1 + ({} as Cpp.Incomplete));
 }
 
 // ============================================================================
@@ -755,7 +796,7 @@ auto operator+(C lhs, C rhs) -> C;
 class D {};
 auto operator+(D lhs, D rhs) -> D;
 
-// --- fail_todo_import_overloading.carbon
+// --- import_overloading.carbon
 
 library "[[@TEST_NAME]]";
 
@@ -764,13 +805,6 @@ import Cpp library "overloading.h";
 fn F() {
   let c1: Cpp.C = Cpp.C.C();
   let c2: Cpp.C = Cpp.C.C();
-  // CHECK:STDERR: fail_todo_import_overloading.carbon:[[@LINE+7]]:19: error: semantics TODO: `Unsupported: Lookup succeeded but couldn't find a single result; LookupResultKind: 3` [SemanticsTodo]
-  // CHECK:STDERR:   let c3: Cpp.C = c1 + c2;
-  // CHECK:STDERR:                   ^~~~~~~
-  // CHECK:STDERR: fail_todo_import_overloading.carbon:[[@LINE+4]]:19: note: in `Cpp` operator `AddWith` lookup [InCppOperatorLookup]
-  // CHECK:STDERR:   let c3: Cpp.C = c1 + c2;
-  // CHECK:STDERR:                   ^~~~~~~
-  // CHECK:STDERR:
   let c3: Cpp.C = c1 + c2;
 }
 
@@ -780,8 +814,8 @@ fn F() {
 // CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [concrete]
 // CHECK:STDOUT:   %C: type = class_type @C [concrete]
 // CHECK:STDOUT:   %pattern_type.217: type = pattern_type %C [concrete]
-// CHECK:STDOUT:   %.d40: type = cpp_overload_set_type @C.C [concrete]
-// CHECK:STDOUT:   %empty_struct: %.d40 = struct_value () [concrete]
+// CHECK:STDOUT:   %.d40: type = cpp_overload_set_type @operator++__carbon_thunk [concrete]
+// CHECK:STDOUT:   %empty_struct.e73: %.d40 = struct_value () [concrete]
 // CHECK:STDOUT:   %ptr.d9e: type = ptr_type %C [concrete]
 // CHECK:STDOUT:   %C__carbon_thunk.type: type = fn_type @C__carbon_thunk [concrete]
 // CHECK:STDOUT:   %C__carbon_thunk: %C__carbon_thunk.type = struct_value () [concrete]
@@ -803,7 +837,7 @@ fn F() {
 // CHECK:STDOUT:     import Cpp//...
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %C.decl: type = class_decl @C [concrete = constants.%C] {} {}
-// CHECK:STDOUT:   %.40b: %.d40 = cpp_overload_set_value @C.C [concrete = constants.%empty_struct]
+// CHECK:STDOUT:   %.40b: %.d40 = cpp_overload_set_value @operator++__carbon_thunk [concrete = constants.%empty_struct.e73]
 // CHECK:STDOUT:   %C__carbon_thunk.decl: %C__carbon_thunk.type = fn_decl @C__carbon_thunk [concrete = constants.%C__carbon_thunk] {
 // CHECK:STDOUT:     <elided>
 // CHECK:STDOUT:   } {
@@ -833,7 +867,7 @@ fn F() {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Cpp.ref.loc8_18: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
 // CHECK:STDOUT:   %C.ref.loc8_21: type = name_ref C, imports.%C.decl [concrete = constants.%C]
-// CHECK:STDOUT:   %C.ref.loc8_23: %.d40 = name_ref C, imports.%.40b [concrete = constants.%empty_struct]
+// CHECK:STDOUT:   %C.ref.loc8_23: %.d40 = name_ref C, imports.%.40b [concrete = constants.%empty_struct.e73]
 // CHECK:STDOUT:   %.loc8_26.1: ref %C = temporary_storage
 // CHECK:STDOUT:   %addr.loc8_26.1: %ptr.d9e = addr_of %.loc8_26.1
 // CHECK:STDOUT:   %C__carbon_thunk.call: init %empty_tuple.type = call imports.%C__carbon_thunk.decl(%addr.loc8_26.1)
@@ -915,8 +949,8 @@ fn F() {
 // CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [concrete]
 // CHECK:STDOUT:   %C: type = class_type @C [concrete]
 // CHECK:STDOUT:   %pattern_type.217: type = pattern_type %C [concrete]
-// CHECK:STDOUT:   %.d40: type = cpp_overload_set_type @C.C [concrete]
-// CHECK:STDOUT:   %empty_struct: %.d40 = struct_value () [concrete]
+// CHECK:STDOUT:   %.d40: type = cpp_overload_set_type @Copy.Op [concrete]
+// CHECK:STDOUT:   %empty_struct.e73: %.d40 = struct_value () [concrete]
 // CHECK:STDOUT:   %ptr.d9e: type = ptr_type %C [concrete]
 // CHECK:STDOUT:   %C__carbon_thunk.type: type = fn_type @C__carbon_thunk [concrete]
 // CHECK:STDOUT:   %C__carbon_thunk: %C__carbon_thunk.type = struct_value () [concrete]
@@ -1005,7 +1039,7 @@ fn F() {
 // CHECK:STDOUT:     import Cpp//...
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %C.decl: type = class_decl @C [concrete = constants.%C] {} {}
-// CHECK:STDOUT:   %.40b: %.d40 = cpp_overload_set_value @C.C [concrete = constants.%empty_struct]
+// CHECK:STDOUT:   %.40b: %.d40 = cpp_overload_set_value @Copy.Op [concrete = constants.%empty_struct.e73]
 // CHECK:STDOUT:   %C__carbon_thunk.decl: %C__carbon_thunk.type = fn_decl @C__carbon_thunk [concrete = constants.%C__carbon_thunk] {
 // CHECK:STDOUT:     <elided>
 // CHECK:STDOUT:   } {
@@ -1144,7 +1178,7 @@ fn F() {
 // CHECK:STDOUT:   %c1.var: ref %C = var %c1.var_patt
 // CHECK:STDOUT:   %Cpp.ref.loc8_19: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
 // CHECK:STDOUT:   %C.ref.loc8_22: type = name_ref C, imports.%C.decl [concrete = constants.%C]
-// CHECK:STDOUT:   %C.ref.loc8_24: %.d40 = name_ref C, imports.%.40b [concrete = constants.%empty_struct]
+// CHECK:STDOUT:   %C.ref.loc8_24: %.d40 = name_ref C, imports.%.40b [concrete = constants.%empty_struct.e73]
 // CHECK:STDOUT:   %.loc8_3.1: ref %C = splice_block %c1.var {}
 // CHECK:STDOUT:   %addr.loc8_27: %ptr.d9e = addr_of %.loc8_3.1
 // CHECK:STDOUT:   %C__carbon_thunk.call.loc8: init %empty_tuple.type = call imports.%C__carbon_thunk.decl(%addr.loc8_27)
@@ -1162,7 +1196,7 @@ fn F() {
 // CHECK:STDOUT:   %c2.var: ref %C = var %c2.var_patt
 // CHECK:STDOUT:   %Cpp.ref.loc9_19: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
 // CHECK:STDOUT:   %C.ref.loc9_22: type = name_ref C, imports.%C.decl [concrete = constants.%C]
-// CHECK:STDOUT:   %C.ref.loc9_24: %.d40 = name_ref C, imports.%.40b [concrete = constants.%empty_struct]
+// CHECK:STDOUT:   %C.ref.loc9_24: %.d40 = name_ref C, imports.%.40b [concrete = constants.%empty_struct.e73]
 // CHECK:STDOUT:   %.loc9_3.1: ref %C = splice_block %c2.var {}
 // CHECK:STDOUT:   %addr.loc9_27: %ptr.d9e = addr_of %.loc9_3.1
 // CHECK:STDOUT:   %C__carbon_thunk.call.loc9: init %empty_tuple.type = call imports.%C__carbon_thunk.decl(%addr.loc9_27)
@@ -1792,8 +1826,8 @@ fn F() {
 // CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [concrete]
 // CHECK:STDOUT:   %C: type = class_type @C [concrete]
 // CHECK:STDOUT:   %pattern_type.217: type = pattern_type %C [concrete]
-// CHECK:STDOUT:   %.d40: type = cpp_overload_set_type @C.C [concrete]
-// CHECK:STDOUT:   %empty_struct: %.d40 = struct_value () [concrete]
+// CHECK:STDOUT:   %.d40: type = cpp_overload_set_type @operator+__carbon_thunk [concrete]
+// CHECK:STDOUT:   %empty_struct.e73: %.d40 = struct_value () [concrete]
 // CHECK:STDOUT:   %ptr.d9e: type = ptr_type %C [concrete]
 // CHECK:STDOUT:   %C__carbon_thunk.type: type = fn_type @C__carbon_thunk [concrete]
 // CHECK:STDOUT:   %C__carbon_thunk: %C__carbon_thunk.type = struct_value () [concrete]
@@ -1811,7 +1845,7 @@ fn F() {
 // CHECK:STDOUT:     import Cpp//...
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %C.decl: type = class_decl @C [concrete = constants.%C] {} {}
-// CHECK:STDOUT:   %.40b: %.d40 = cpp_overload_set_value @C.C [concrete = constants.%empty_struct]
+// CHECK:STDOUT:   %.40b: %.d40 = cpp_overload_set_value @operator+__carbon_thunk [concrete = constants.%empty_struct.e73]
 // CHECK:STDOUT:   %C__carbon_thunk.decl: %C__carbon_thunk.type = fn_decl @C__carbon_thunk [concrete = constants.%C__carbon_thunk] {
 // CHECK:STDOUT:     <elided>
 // CHECK:STDOUT:   } {
@@ -1831,7 +1865,7 @@ fn F() {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Cpp.ref.loc8_19: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
 // CHECK:STDOUT:   %C.ref.loc8_22: type = name_ref C, imports.%C.decl [concrete = constants.%C]
-// CHECK:STDOUT:   %C.ref.loc8_24: %.d40 = name_ref C, imports.%.40b [concrete = constants.%empty_struct]
+// CHECK:STDOUT:   %C.ref.loc8_24: %.d40 = name_ref C, imports.%.40b [concrete = constants.%empty_struct.e73]
 // CHECK:STDOUT:   %.loc8_27.1: ref %C = temporary_storage
 // CHECK:STDOUT:   %addr.loc8_27.1: %ptr.d9e = addr_of %.loc8_27.1
 // CHECK:STDOUT:   %C__carbon_thunk.call.loc8: init %empty_tuple.type = call imports.%C__carbon_thunk.decl(%addr.loc8_27.1)
@@ -1848,7 +1882,7 @@ fn F() {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Cpp.ref.loc9_19: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
 // CHECK:STDOUT:   %C.ref.loc9_22: type = name_ref C, imports.%C.decl [concrete = constants.%C]
-// CHECK:STDOUT:   %C.ref.loc9_24: %.d40 = name_ref C, imports.%.40b [concrete = constants.%empty_struct]
+// CHECK:STDOUT:   %C.ref.loc9_24: %.d40 = name_ref C, imports.%.40b [concrete = constants.%empty_struct.e73]
 // CHECK:STDOUT:   %.loc9_27.1: ref %C = temporary_storage
 // CHECK:STDOUT:   %addr.loc9_27.1: %ptr.d9e = addr_of %.loc9_27.1
 // CHECK:STDOUT:   %C__carbon_thunk.call.loc9: init %empty_tuple.type = call imports.%C__carbon_thunk.decl(%addr.loc9_27.1)
@@ -1964,8 +1998,8 @@ fn F() {
 // CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [concrete]
 // CHECK:STDOUT:   %C: type = class_type @C [concrete]
 // CHECK:STDOUT:   %pattern_type.69f: type = pattern_type %C [concrete]
-// CHECK:STDOUT:   %.169: type = cpp_overload_set_type @C.C [concrete]
-// CHECK:STDOUT:   %empty_struct: %.169 = struct_value () [concrete]
+// CHECK:STDOUT:   %.169: type = cpp_overload_set_type @C__carbon_thunk [concrete]
+// CHECK:STDOUT:   %empty_struct.41c: %.169 = struct_value () [concrete]
 // CHECK:STDOUT:   %ptr.838: type = ptr_type %C [concrete]
 // CHECK:STDOUT:   %C__carbon_thunk.type: type = fn_type @C__carbon_thunk [concrete]
 // CHECK:STDOUT:   %C__carbon_thunk: %C__carbon_thunk.type = struct_value () [concrete]
@@ -1987,7 +2021,7 @@ fn F() {
 // CHECK:STDOUT:     import Cpp//...
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %C.decl: type = class_decl @C [concrete = constants.%C] {} {}
-// CHECK:STDOUT:   %.c52: %.169 = cpp_overload_set_value @C.C [concrete = constants.%empty_struct]
+// CHECK:STDOUT:   %.c52: %.169 = cpp_overload_set_value @C__carbon_thunk [concrete = constants.%empty_struct.41c]
 // CHECK:STDOUT:   %C__carbon_thunk.decl: %C__carbon_thunk.type = fn_decl @C__carbon_thunk [concrete = constants.%C__carbon_thunk] {
 // CHECK:STDOUT:     <elided>
 // CHECK:STDOUT:   } {
@@ -2008,7 +2042,7 @@ fn F() {
 // CHECK:STDOUT:   %Cpp.ref.loc8_21: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
 // CHECK:STDOUT:   %N.ref.loc8_24: <namespace> = name_ref N, imports.%N [concrete = imports.%N]
 // CHECK:STDOUT:   %C.ref.loc8_26: type = name_ref C, imports.%C.decl [concrete = constants.%C]
-// CHECK:STDOUT:   %C.ref.loc8_28: %.169 = name_ref C, imports.%.c52 [concrete = constants.%empty_struct]
+// CHECK:STDOUT:   %C.ref.loc8_28: %.169 = name_ref C, imports.%.c52 [concrete = constants.%empty_struct.41c]
 // CHECK:STDOUT:   %.loc8_31.1: ref %C = temporary_storage
 // CHECK:STDOUT:   %addr.loc8_31.1: %ptr.838 = addr_of %.loc8_31.1
 // CHECK:STDOUT:   %C__carbon_thunk.call.loc8: init %empty_tuple.type = call imports.%C__carbon_thunk.decl(%addr.loc8_31.1)
@@ -2027,7 +2061,7 @@ fn F() {
 // CHECK:STDOUT:   %Cpp.ref.loc9_21: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
 // CHECK:STDOUT:   %N.ref.loc9_24: <namespace> = name_ref N, imports.%N [concrete = imports.%N]
 // CHECK:STDOUT:   %C.ref.loc9_26: type = name_ref C, imports.%C.decl [concrete = constants.%C]
-// CHECK:STDOUT:   %C.ref.loc9_28: %.169 = name_ref C, imports.%.c52 [concrete = constants.%empty_struct]
+// CHECK:STDOUT:   %C.ref.loc9_28: %.169 = name_ref C, imports.%.c52 [concrete = constants.%empty_struct.41c]
 // CHECK:STDOUT:   %.loc9_31.1: ref %C = temporary_storage
 // CHECK:STDOUT:   %addr.loc9_31.1: %ptr.838 = addr_of %.loc9_31.1
 // CHECK:STDOUT:   %C__carbon_thunk.call.loc9: init %empty_tuple.type = call imports.%C__carbon_thunk.decl(%addr.loc9_31.1)
@@ -2091,14 +2125,14 @@ fn F() {
 // CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [concrete]
 // CHECK:STDOUT:   %C1: type = class_type @C1 [concrete]
 // CHECK:STDOUT:   %pattern_type.20f: type = pattern_type %C1 [concrete]
-// CHECK:STDOUT:   %.eb7: type = cpp_overload_set_type @C1__carbon_thunk [concrete]
+// CHECK:STDOUT:   %.eb7: type = cpp_overload_set_type @C2__carbon_thunk [concrete]
 // CHECK:STDOUT:   %empty_struct.56f: %.eb7 = struct_value () [concrete]
 // CHECK:STDOUT:   %ptr.087: type = ptr_type %C1 [concrete]
 // CHECK:STDOUT:   %C1__carbon_thunk.type: type = fn_type @C1__carbon_thunk [concrete]
 // CHECK:STDOUT:   %C1__carbon_thunk: %C1__carbon_thunk.type = struct_value () [concrete]
 // CHECK:STDOUT:   %C2: type = class_type @C2 [concrete]
 // CHECK:STDOUT:   %pattern_type.846: type = pattern_type %C2 [concrete]
-// CHECK:STDOUT:   %.74f: type = cpp_overload_set_type @C2.C2 [concrete]
+// CHECK:STDOUT:   %.74f: type = cpp_overload_set_type @cpp_operator.1 [concrete]
 // CHECK:STDOUT:   %empty_struct.c81: %.74f = struct_value () [concrete]
 // CHECK:STDOUT:   %ptr.51f: type = ptr_type %C2 [concrete]
 // CHECK:STDOUT:   %C2__carbon_thunk.type: type = fn_type @C2__carbon_thunk [concrete]
@@ -2127,7 +2161,7 @@ fn F() {
 // CHECK:STDOUT:     import Cpp//...
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %C1.decl: type = class_decl @C1 [concrete = constants.%C1] {} {}
-// CHECK:STDOUT:   %.91f: %.eb7 = cpp_overload_set_value @C1__carbon_thunk [concrete = constants.%empty_struct.56f]
+// CHECK:STDOUT:   %.91f: %.eb7 = cpp_overload_set_value @C2__carbon_thunk [concrete = constants.%empty_struct.56f]
 // CHECK:STDOUT:   %C1__carbon_thunk.decl: %C1__carbon_thunk.type = fn_decl @C1__carbon_thunk [concrete = constants.%C1__carbon_thunk] {
 // CHECK:STDOUT:     <elided>
 // CHECK:STDOUT:   } {
@@ -2138,7 +2172,7 @@ fn F() {
 // CHECK:STDOUT:     import Cpp//...
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %C2.decl: type = class_decl @C2 [concrete = constants.%C2] {} {}
-// CHECK:STDOUT:   %.ed5: %.74f = cpp_overload_set_value @C2.C2 [concrete = constants.%empty_struct.c81]
+// CHECK:STDOUT:   %.ed5: %.74f = cpp_overload_set_value @cpp_operator.1 [concrete = constants.%empty_struct.c81]
 // CHECK:STDOUT:   %C2__carbon_thunk.decl: %C2__carbon_thunk.type = fn_decl @C2__carbon_thunk [concrete = constants.%C2__carbon_thunk] {
 // CHECK:STDOUT:     <elided>
 // CHECK:STDOUT:   } {
@@ -2275,8 +2309,8 @@ fn F() {
 // CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [concrete]
 // CHECK:STDOUT:   %C: type = class_type @C [concrete]
 // CHECK:STDOUT:   %pattern_type.69f: type = pattern_type %C [concrete]
-// CHECK:STDOUT:   %.169: type = cpp_overload_set_type @C.C [concrete]
-// CHECK:STDOUT:   %empty_struct: %.169 = struct_value () [concrete]
+// CHECK:STDOUT:   %.169: type = cpp_overload_set_type @C__carbon_thunk [concrete]
+// CHECK:STDOUT:   %empty_struct.41c: %.169 = struct_value () [concrete]
 // CHECK:STDOUT:   %ptr.838: type = ptr_type %C [concrete]
 // CHECK:STDOUT:   %C__carbon_thunk.type: type = fn_type @C__carbon_thunk [concrete]
 // CHECK:STDOUT:   %C__carbon_thunk: %C__carbon_thunk.type = struct_value () [concrete]
@@ -2296,7 +2330,7 @@ fn F() {
 // CHECK:STDOUT:     import Cpp//...
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %C.decl: type = class_decl @C [concrete = constants.%C] {} {}
-// CHECK:STDOUT:   %.c52: %.169 = cpp_overload_set_value @C.C [concrete = constants.%empty_struct]
+// CHECK:STDOUT:   %.c52: %.169 = cpp_overload_set_value @C__carbon_thunk [concrete = constants.%empty_struct.41c]
 // CHECK:STDOUT:   %C__carbon_thunk.decl: %C__carbon_thunk.type = fn_decl @C__carbon_thunk [concrete = constants.%C__carbon_thunk] {
 // CHECK:STDOUT:     <elided>
 // CHECK:STDOUT:   } {
@@ -2312,7 +2346,7 @@ fn F() {
 // CHECK:STDOUT:   %Cpp.ref.loc8_21: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
 // CHECK:STDOUT:   %N.ref.loc8_24: <namespace> = name_ref N, imports.%N [concrete = imports.%N]
 // CHECK:STDOUT:   %C.ref.loc8_26: type = name_ref C, imports.%C.decl [concrete = constants.%C]
-// CHECK:STDOUT:   %C.ref.loc8_28: %.169 = name_ref C, imports.%.c52 [concrete = constants.%empty_struct]
+// CHECK:STDOUT:   %C.ref.loc8_28: %.169 = name_ref C, imports.%.c52 [concrete = constants.%empty_struct.41c]
 // CHECK:STDOUT:   %.loc8_31.1: ref %C = temporary_storage
 // CHECK:STDOUT:   %addr.loc8_31.1: %ptr.838 = addr_of %.loc8_31.1
 // CHECK:STDOUT:   %C__carbon_thunk.call.loc8: init %empty_tuple.type = call imports.%C__carbon_thunk.decl(%addr.loc8_31.1)
@@ -2331,7 +2365,7 @@ fn F() {
 // CHECK:STDOUT:   %Cpp.ref.loc9_21: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
 // CHECK:STDOUT:   %N.ref.loc9_24: <namespace> = name_ref N, imports.%N [concrete = imports.%N]
 // CHECK:STDOUT:   %C.ref.loc9_26: type = name_ref C, imports.%C.decl [concrete = constants.%C]
-// CHECK:STDOUT:   %C.ref.loc9_28: %.169 = name_ref C, imports.%.c52 [concrete = constants.%empty_struct]
+// CHECK:STDOUT:   %C.ref.loc9_28: %.169 = name_ref C, imports.%.c52 [concrete = constants.%empty_struct.41c]
 // CHECK:STDOUT:   %.loc9_31.1: ref %C = temporary_storage
 // CHECK:STDOUT:   %addr.loc9_31.1: %ptr.838 = addr_of %.loc9_31.1
 // CHECK:STDOUT:   %C__carbon_thunk.call.loc9: init %empty_tuple.type = call imports.%C__carbon_thunk.decl(%addr.loc9_31.1)
@@ -2379,8 +2413,8 @@ fn F() {
 // CHECK:STDOUT:   %O: type = class_type @O [concrete]
 // CHECK:STDOUT:   %C: type = class_type @C [concrete]
 // CHECK:STDOUT:   %pattern_type.b28: type = pattern_type %C [concrete]
-// CHECK:STDOUT:   %.d80: type = cpp_overload_set_type @C.C [concrete]
-// CHECK:STDOUT:   %empty_struct: %.d80 = struct_value () [concrete]
+// CHECK:STDOUT:   %.d80: type = cpp_overload_set_type @C__carbon_thunk [concrete]
+// CHECK:STDOUT:   %empty_struct.06f: %.d80 = struct_value () [concrete]
 // CHECK:STDOUT:   %ptr.de2: type = ptr_type %C [concrete]
 // CHECK:STDOUT:   %C__carbon_thunk.type: type = fn_type @C__carbon_thunk [concrete]
 // CHECK:STDOUT:   %C__carbon_thunk: %C__carbon_thunk.type = struct_value () [concrete]
@@ -2399,7 +2433,7 @@ fn F() {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %O.decl: type = class_decl @O [concrete = constants.%O] {} {}
 // CHECK:STDOUT:   %C.decl: type = class_decl @C [concrete = constants.%C] {} {}
-// CHECK:STDOUT:   %.7a9: %.d80 = cpp_overload_set_value @C.C [concrete = constants.%empty_struct]
+// CHECK:STDOUT:   %.7a9: %.d80 = cpp_overload_set_value @C__carbon_thunk [concrete = constants.%empty_struct.06f]
 // CHECK:STDOUT:   %C__carbon_thunk.decl: %C__carbon_thunk.type = fn_decl @C__carbon_thunk [concrete = constants.%C__carbon_thunk] {
 // CHECK:STDOUT:     <elided>
 // CHECK:STDOUT:   } {
@@ -2420,7 +2454,7 @@ fn F() {
 // CHECK:STDOUT:   %Cpp.ref.loc8_21: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
 // CHECK:STDOUT:   %O.ref.loc8_24: type = name_ref O, imports.%O.decl [concrete = constants.%O]
 // CHECK:STDOUT:   %C.ref.loc8_26: type = name_ref C, imports.%C.decl [concrete = constants.%C]
-// CHECK:STDOUT:   %C.ref.loc8_28: %.d80 = name_ref C, imports.%.7a9 [concrete = constants.%empty_struct]
+// CHECK:STDOUT:   %C.ref.loc8_28: %.d80 = name_ref C, imports.%.7a9 [concrete = constants.%empty_struct.06f]
 // CHECK:STDOUT:   %.loc8_31.1: ref %C = temporary_storage
 // CHECK:STDOUT:   %addr.loc8_31.1: %ptr.de2 = addr_of %.loc8_31.1
 // CHECK:STDOUT:   %C__carbon_thunk.call.loc8: init %empty_tuple.type = call imports.%C__carbon_thunk.decl(%addr.loc8_31.1)
@@ -2439,7 +2473,7 @@ fn F() {
 // CHECK:STDOUT:   %Cpp.ref.loc9_21: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
 // CHECK:STDOUT:   %O.ref.loc9_24: type = name_ref O, imports.%O.decl [concrete = constants.%O]
 // CHECK:STDOUT:   %C.ref.loc9_26: type = name_ref C, imports.%C.decl [concrete = constants.%C]
-// CHECK:STDOUT:   %C.ref.loc9_28: %.d80 = name_ref C, imports.%.7a9 [concrete = constants.%empty_struct]
+// CHECK:STDOUT:   %C.ref.loc9_28: %.d80 = name_ref C, imports.%.7a9 [concrete = constants.%empty_struct.06f]
 // CHECK:STDOUT:   %.loc9_31.1: ref %C = temporary_storage
 // CHECK:STDOUT:   %addr.loc9_31.1: %ptr.de2 = addr_of %.loc9_31.1
 // CHECK:STDOUT:   %C__carbon_thunk.call.loc9: init %empty_tuple.type = call imports.%C__carbon_thunk.decl(%addr.loc9_31.1)
@@ -2504,8 +2538,8 @@ fn F() {
 // CHECK:STDOUT:   %O: type = class_type @O [concrete]
 // CHECK:STDOUT:   %C: type = class_type @C [concrete]
 // CHECK:STDOUT:   %pattern_type.84b: type = pattern_type %C [concrete]
-// CHECK:STDOUT:   %.62f: type = cpp_overload_set_type @C.C [concrete]
-// CHECK:STDOUT:   %empty_struct: %.62f = struct_value () [concrete]
+// CHECK:STDOUT:   %.62f: type = cpp_overload_set_type @C__carbon_thunk [concrete]
+// CHECK:STDOUT:   %empty_struct.e94: %.62f = struct_value () [concrete]
 // CHECK:STDOUT:   %ptr.4b2: type = ptr_type %C [concrete]
 // CHECK:STDOUT:   %C__carbon_thunk.type: type = fn_type @C__carbon_thunk [concrete]
 // CHECK:STDOUT:   %C__carbon_thunk: %C__carbon_thunk.type = struct_value () [concrete]
@@ -2528,7 +2562,7 @@ fn F() {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %O.decl: type = class_decl @O [concrete = constants.%O] {} {}
 // CHECK:STDOUT:   %C.decl: type = class_decl @C [concrete = constants.%C] {} {}
-// CHECK:STDOUT:   %.f56: %.62f = cpp_overload_set_value @C.C [concrete = constants.%empty_struct]
+// CHECK:STDOUT:   %.f56: %.62f = cpp_overload_set_value @C__carbon_thunk [concrete = constants.%empty_struct.e94]
 // CHECK:STDOUT:   %C__carbon_thunk.decl: %C__carbon_thunk.type = fn_decl @C__carbon_thunk [concrete = constants.%C__carbon_thunk] {
 // CHECK:STDOUT:     <elided>
 // CHECK:STDOUT:   } {
@@ -2550,7 +2584,7 @@ fn F() {
 // CHECK:STDOUT:   %N.ref.loc8_26: <namespace> = name_ref N, imports.%N [concrete = imports.%N]
 // CHECK:STDOUT:   %O.ref.loc8_28: type = name_ref O, imports.%O.decl [concrete = constants.%O]
 // CHECK:STDOUT:   %C.ref.loc8_30: type = name_ref C, imports.%C.decl [concrete = constants.%C]
-// CHECK:STDOUT:   %C.ref.loc8_32: %.62f = name_ref C, imports.%.f56 [concrete = constants.%empty_struct]
+// CHECK:STDOUT:   %C.ref.loc8_32: %.62f = name_ref C, imports.%.f56 [concrete = constants.%empty_struct.e94]
 // CHECK:STDOUT:   %.loc8_35.1: ref %C = temporary_storage
 // CHECK:STDOUT:   %addr.loc8_35.1: %ptr.4b2 = addr_of %.loc8_35.1
 // CHECK:STDOUT:   %C__carbon_thunk.call.loc8: init %empty_tuple.type = call imports.%C__carbon_thunk.decl(%addr.loc8_35.1)
@@ -2571,7 +2605,7 @@ fn F() {
 // CHECK:STDOUT:   %N.ref.loc9_26: <namespace> = name_ref N, imports.%N [concrete = imports.%N]
 // CHECK:STDOUT:   %O.ref.loc9_28: type = name_ref O, imports.%O.decl [concrete = constants.%O]
 // CHECK:STDOUT:   %C.ref.loc9_30: type = name_ref C, imports.%C.decl [concrete = constants.%C]
-// CHECK:STDOUT:   %C.ref.loc9_32: %.62f = name_ref C, imports.%.f56 [concrete = constants.%empty_struct]
+// CHECK:STDOUT:   %C.ref.loc9_32: %.62f = name_ref C, imports.%.f56 [concrete = constants.%empty_struct.e94]
 // CHECK:STDOUT:   %.loc9_35.1: ref %C = temporary_storage
 // CHECK:STDOUT:   %addr.loc9_35.1: %ptr.4b2 = addr_of %.loc9_35.1
 // CHECK:STDOUT:   %C__carbon_thunk.call.loc9: init %empty_tuple.type = call imports.%C__carbon_thunk.decl(%addr.loc9_35.1)
@@ -2631,14 +2665,14 @@ fn F() {
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- fail_todo_import_member__add_with.carbon
+// CHECK:STDOUT: --- fail_todo_import_member_add_with.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [concrete]
 // CHECK:STDOUT:   %C: type = class_type @C [concrete]
 // CHECK:STDOUT:   %pattern_type.217: type = pattern_type %C [concrete]
-// CHECK:STDOUT:   %.d40: type = cpp_overload_set_type @C.C [concrete]
-// CHECK:STDOUT:   %empty_struct: %.d40 = struct_value () [concrete]
+// CHECK:STDOUT:   %.d40: type = cpp_overload_set_type @C__carbon_thunk [concrete]
+// CHECK:STDOUT:   %empty_struct.e73: %.d40 = struct_value () [concrete]
 // CHECK:STDOUT:   %ptr.d9e: type = ptr_type %C [concrete]
 // CHECK:STDOUT:   %C__carbon_thunk.type: type = fn_type @C__carbon_thunk [concrete]
 // CHECK:STDOUT:   %C__carbon_thunk: %C__carbon_thunk.type = struct_value () [concrete]
@@ -2654,7 +2688,7 @@ fn F() {
 // CHECK:STDOUT:     import Cpp//...
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %C.decl: type = class_decl @C [concrete = constants.%C] {} {}
-// CHECK:STDOUT:   %.40b: %.d40 = cpp_overload_set_value @C.C [concrete = constants.%empty_struct]
+// CHECK:STDOUT:   %.40b: %.d40 = cpp_overload_set_value @C__carbon_thunk [concrete = constants.%empty_struct.e73]
 // CHECK:STDOUT:   %C__carbon_thunk.decl: %C__carbon_thunk.type = fn_decl @C__carbon_thunk [concrete = constants.%C__carbon_thunk] {
 // CHECK:STDOUT:     <elided>
 // CHECK:STDOUT:   } {
@@ -2669,7 +2703,7 @@ fn F() {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Cpp.ref.loc8_19: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
 // CHECK:STDOUT:   %C.ref.loc8_22: type = name_ref C, imports.%C.decl [concrete = constants.%C]
-// CHECK:STDOUT:   %C.ref.loc8_24: %.d40 = name_ref C, imports.%.40b [concrete = constants.%empty_struct]
+// CHECK:STDOUT:   %C.ref.loc8_24: %.d40 = name_ref C, imports.%.40b [concrete = constants.%empty_struct.e73]
 // CHECK:STDOUT:   %.loc8_27.1: ref %C = temporary_storage
 // CHECK:STDOUT:   %addr.loc8_27.1: %ptr.d9e = addr_of %.loc8_27.1
 // CHECK:STDOUT:   %C__carbon_thunk.call.loc8: init %empty_tuple.type = call imports.%C__carbon_thunk.decl(%addr.loc8_27.1)
@@ -2686,7 +2720,7 @@ fn F() {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Cpp.ref.loc9_19: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
 // CHECK:STDOUT:   %C.ref.loc9_22: type = name_ref C, imports.%C.decl [concrete = constants.%C]
-// CHECK:STDOUT:   %C.ref.loc9_24: %.d40 = name_ref C, imports.%.40b [concrete = constants.%empty_struct]
+// CHECK:STDOUT:   %C.ref.loc9_24: %.d40 = name_ref C, imports.%.40b [concrete = constants.%empty_struct.e73]
 // CHECK:STDOUT:   %.loc9_27.1: ref %C = temporary_storage
 // CHECK:STDOUT:   %addr.loc9_27.1: %ptr.d9e = addr_of %.loc9_27.1
 // CHECK:STDOUT:   %C__carbon_thunk.call.loc9: init %empty_tuple.type = call imports.%C__carbon_thunk.decl(%addr.loc9_27.1)
@@ -2703,9 +2737,9 @@ fn F() {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %c1.ref: %C = name_ref c1, %c1
 // CHECK:STDOUT:   %c2.ref: %C = name_ref c2, %c2
-// CHECK:STDOUT:   %.loc14: type = splice_block %C.ref.loc14 [concrete = constants.%C] {
-// CHECK:STDOUT:     %Cpp.ref.loc14: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
-// CHECK:STDOUT:     %C.ref.loc14: type = name_ref C, imports.%C.decl [concrete = constants.%C]
+// CHECK:STDOUT:   %.loc18: type = splice_block %C.ref.loc18 [concrete = constants.%C] {
+// CHECK:STDOUT:     %Cpp.ref.loc18: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
+// CHECK:STDOUT:     %C.ref.loc18: type = name_ref C, imports.%C.decl [concrete = constants.%C]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %c3: %C = bind_name c3, <error> [concrete = <error>]
 // CHECK:STDOUT:   %facet_value.loc9: %type_where = facet_value constants.%C, () [concrete = constants.%facet_value]

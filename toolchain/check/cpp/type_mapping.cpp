@@ -16,8 +16,10 @@
 #include "toolchain/base/value_ids.h"
 #include "toolchain/check/context.h"
 #include "toolchain/check/convert.h"
+#include "toolchain/check/cpp/location.h"
 #include "toolchain/check/literal.h"
 #include "toolchain/sem_ir/class.h"
+#include "toolchain/sem_ir/expr_info.h"
 #include "toolchain/sem_ir/ids.h"
 #include "toolchain/sem_ir/inst.h"
 #include "toolchain/sem_ir/type.h"
@@ -95,8 +97,7 @@ static auto TryMapClassType(Context& context, SemIR::ClassType class_type)
           .Get(context.sem_ir().classes().Get(class_type.class_id).scope_id)
           .clang_decl_context_id();
   if (clang_decl_id.has_value()) {
-    clang::Decl* clang_decl =
-        context.sem_ir().clang_decls().Get(clang_decl_id).decl;
+    clang::Decl* clang_decl = context.clang_decls().Get(clang_decl_id).decl;
     auto* tag_type_decl = clang::cast<clang::TagDecl>(clang_decl);
     return context.ast_context().getCanonicalTagType(tag_type_decl);
   }
@@ -178,8 +179,12 @@ static auto MapNonWrapperType(Context& context, SemIR::InstId inst_id,
   }
 }
 
+// Maps a Carbon type to a C++ type. Accepts an InstId, representing a value
+// whose type is mapped to a C++ type. Returns `clang::QualType` if the mapping
+// succeeds, or `clang::QualType::isNull()` if the type is not supported.
 // TODO: unify this with the C++ to Carbon type mapping function.
-auto MapToCppType(Context& context, SemIR::InstId inst_id) -> clang::QualType {
+static auto MapToCppType(Context& context, SemIR::InstId inst_id)
+    -> clang::QualType {
   auto type_id = context.insts().Get(inst_id).type_id();
   llvm::SmallVector<SemIR::TypeId> wrapper_types;
   while (true) {
@@ -222,6 +227,69 @@ auto MapToCppType(Context& context, SemIR::InstId inst_id) -> clang::QualType {
   }
 
   return mapped_type;
+}
+
+auto InventClangArg(Context& context, SemIR::InstId arg_id) -> clang::Expr* {
+  clang::ExprValueKind value_kind;
+  switch (SemIR::GetExprCategory(context.sem_ir(), arg_id)) {
+    case SemIR::ExprCategory::NotExpr:
+      CARBON_FATAL("Should not see these here");
+
+    case SemIR::ExprCategory::Error:
+      return nullptr;
+
+    case SemIR::ExprCategory::DurableRef:
+      value_kind = clang::ExprValueKind::VK_LValue;
+      break;
+
+    case SemIR::ExprCategory::EphemeralRef:
+      value_kind = clang::ExprValueKind::VK_XValue;
+      break;
+
+    case SemIR::ExprCategory::Value:
+    case SemIR::ExprCategory::Initializing:
+      value_kind = clang::ExprValueKind::VK_PRValue;
+      break;
+
+    case SemIR::ExprCategory::Mixed:
+      // TODO: Handle this by creating an InitListExpr.
+      value_kind = clang::ExprValueKind::VK_PRValue;
+      break;
+  }
+
+  if (context.insts().Get(arg_id).type_id() == SemIR::ErrorInst::TypeId) {
+    // The argument error has already been diagnosed.
+    return nullptr;
+  }
+
+  clang::QualType arg_cpp_type = MapToCppType(context, arg_id);
+  if (arg_cpp_type.isNull()) {
+    CARBON_DIAGNOSTIC(CppCallArgTypeNotSupported, Error,
+                      "call argument of type {0} is not supported",
+                      TypeOfInstId);
+    context.emitter().Emit(arg_id, CppCallArgTypeNotSupported, arg_id);
+    return nullptr;
+  }
+
+  // TODO: Avoid heap allocating more of these on every call. Either cache them
+  // somewhere or put them on the stack.
+  return new (context.ast_context())
+      clang::OpaqueValueExpr(GetCppLocation(context, SemIR::LocId(arg_id)),
+                             arg_cpp_type.getNonReferenceType(), value_kind);
+}
+
+auto InventClangArgs(Context& context, llvm::ArrayRef<SemIR::InstId> arg_ids)
+    -> std::optional<llvm::SmallVector<clang::Expr*>> {
+  llvm::SmallVector<clang::Expr*> arg_exprs;
+  arg_exprs.reserve(arg_ids.size());
+  for (SemIR::InstId arg_id : arg_ids) {
+    auto* arg_expr = InventClangArg(context, arg_id);
+    if (!arg_expr) {
+      return std::nullopt;
+    }
+    arg_exprs.push_back(arg_expr);
+  }
+  return arg_exprs;
 }
 
 }  // namespace Carbon::Check
