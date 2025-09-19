@@ -186,24 +186,40 @@ using FunctionStore = ValueStore<FunctionId, Function>;
 class File;
 
 struct CalleeFunction : public Printable<CalleeFunction> {
-  // The function. `None` if not a function.
-  FunctionId function_id;
-  // The overload set, if this is a C++ overload set rather than a function.
-  CppOverloadSetId cpp_overload_set_id;
-  // The specific that contains the function.
-  SpecificId enclosing_specific_id;
-  // The specific for the callee itself, in a resolved call.
-  SpecificId resolved_specific_id;
-  // The bound `Self` type or facet value. `None` if not a bound interface
-  // member.
-  InstId self_type_id;
-  // The bound `self` parameter. `None` if not a method.
-  InstId self_id;
-  // True if an error instruction was found.
-  bool is_error;
+  // This is a C++ overload set.
+  struct CppOverload {
+    // The overload set.
+    CppOverloadSetId cpp_overload_set_id;
+    // The bound `self` parameter. `None` if not a method.
+    InstId self_id;
+  };
+
+  // An error instruction was found.
+  struct Error {};
+
+  // This is a function.
+  struct Function {
+    // The function.
+    FunctionId function_id;
+    // The specific that contains the function.
+    SpecificId enclosing_specific_id;
+    // The specific for the callee itself, in a resolved call.
+    SpecificId resolved_specific_id;
+    // The bound `Self` type or facet value. `None` if not a bound interface
+    // member.
+    InstId self_type_id;
+    // The bound `self` parameter. `None` if not a method.
+    InstId self_id;
+  };
+
+  // This is a generic entity, not a function.
+  struct GenericEntity {};
+
+  std::variant<CppOverload, Error, Function, GenericEntity> info;
 
   auto Print(llvm::raw_ostream& out) const -> void {
     out << "{";
+    /*
     if (cpp_overload_set_id.has_value()) {
       out << "cpp_overload_set_id: " << cpp_overload_set_id;
     } else {
@@ -213,6 +229,7 @@ struct CalleeFunction : public Printable<CalleeFunction> {
         << ", resolved_specific_id: " << resolved_specific_id
         << ", self_type_id: " << self_type_id << ", self_id: " << self_id
         << ", is_error: " << is_error << "}";
+    */
   }
 };
 
@@ -220,6 +237,10 @@ struct CalleeFunction : public Printable<CalleeFunction> {
 auto GetCalleeFunction(const File& sem_ir, InstId callee_id,
                        SpecificId specific_id = SpecificId::None)
     -> CalleeFunction;
+
+auto GetCalleeFunctionAsFunction(const File& sem_ir, InstId callee_id,
+                                 SpecificId specific_id = SpecificId::None)
+    -> CalleeFunction::Function;
 
 struct DecomposedVirtualFunction {
   // The canonical instruction from the `fn_decl_const_id`.
