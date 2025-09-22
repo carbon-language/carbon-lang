@@ -1357,14 +1357,18 @@ static auto MakeParamPatternsBlockId(Context& context, SemIR::LocId loc_id,
   CARBON_CHECK(
       static_cast<int>(clang_decl.getNumNonObjectParams()) >= num_params,
       "varargs functions are not supported");
+  const auto* function_type =
+      clang_decl.getType()->castAs<clang::FunctionProtoType>();
   for (int i : llvm::seq(num_params)) {
     const auto* param = clang_decl.getNonObjectParameter(i);
-    // TODO: Get the parameter type from the function, not from the
-    // `ParmVarDecl`. The type of the `ParmVarDecl` is the type within the
-    // function, and isn't in general the same as the type that's exposed to
-    // callers. In particular, the parameter type exposed to callers will never
-    // be cv-qualified.
-    clang::QualType param_type = param->getType();
+    // The parameter type is decayed but hasn't necessarily had its qualifiers
+    // removed.
+    // TODO: The presence of qualifiers here is probably a Clang bug.
+    clang::QualType param_type =
+        function_type
+            ->getParamType(clang_decl.hasCXXExplicitFunctionObjectParameter() +
+                           i)
+            .getUnqualifiedType();
 
     // We map `T&` parameters to `addr param: T*`, and `T&&` parameters to
     // `param: T`.
@@ -1383,8 +1387,9 @@ static auto MakeParamPatternsBlockId(Context& context, SemIR::LocId loc_id,
         EndSubpatternAsExpr(context, orig_type_inst_id);
 
     if (!type_id.has_value()) {
-      context.TODO(loc_id, llvm::formatv("Unsupported: parameter type: {0}",
-                                         param->getType().getAsString()));
+      context.TODO(loc_id,
+                   llvm::formatv("Unsupported: parameter type: {0}",
+                                 function_type->getParamType(i).getAsString()));
       return SemIR::InstBlockId::None;
     }
 
@@ -1747,11 +1752,12 @@ static auto AddDependentUnimportedTypeDecls(const Context& context,
 static auto AddDependentUnimportedFunctionDecls(
     const Context& context, const clang::FunctionDecl& clang_decl,
     int num_params, ImportWorklist& worklist) -> void {
-  for (auto [i, param] : llvm::enumerate(clang_decl.parameters())) {
-    if (static_cast<int>(i) >= num_params) {
-      break;
-    }
-    AddDependentUnimportedTypeDecls(context, param->getType(), worklist);
+  const auto* function_type =
+      clang_decl.getType()->castAs<clang::FunctionProtoType>();
+  for (int i : llvm::seq(clang_decl.hasCXXExplicitFunctionObjectParameter() +
+                         num_params)) {
+    AddDependentUnimportedTypeDecls(context, function_type->getParamType(i),
+                                    worklist);
   }
   AddDependentUnimportedTypeDecls(context, clang_decl.getReturnType(),
                                   worklist);

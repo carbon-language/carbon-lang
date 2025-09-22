@@ -232,9 +232,6 @@ static auto MapToCppType(Context& context, SemIR::InstId inst_id)
 auto InventClangArg(Context& context, SemIR::InstId arg_id) -> clang::Expr* {
   clang::ExprValueKind value_kind;
   switch (SemIR::GetExprCategory(context.sem_ir(), arg_id)) {
-    case SemIR::ExprCategory::NotExpr:
-      CARBON_FATAL("Should not see these here");
-
     case SemIR::ExprCategory::Error:
       return nullptr;
 
@@ -244,6 +241,13 @@ auto InventClangArg(Context& context, SemIR::InstId arg_id) -> clang::Expr* {
 
     case SemIR::ExprCategory::EphemeralRef:
       value_kind = clang::ExprValueKind::VK_XValue;
+      break;
+
+    case SemIR::ExprCategory::NotExpr:
+      // A call using this expression as an argument won't be valid, but we
+      // don't diagnose that until we convert the expression to the parameter
+      // type.
+      value_kind = clang::ExprValueKind::VK_PRValue;
       break;
 
     case SemIR::ExprCategory::Value:

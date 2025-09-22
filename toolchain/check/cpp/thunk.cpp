@@ -263,15 +263,11 @@ static auto BuildThunkParameterTypes(clang::ASTContext& ast_context,
         GetNonnullType(ast_context, callee_info.implicit_this_type));
   }
 
-  for (auto [i, callee_param] :
-       llvm::enumerate(callee_info.decl->parameters())) {
-    if (static_cast<int>(i) >= callee_info.num_params) {
-      break;
-    }
-    // TODO: We should use the type from the function signature, not the type of
-    // the parameter here.
+  const auto* function_type =
+      callee_info.decl->getType()->castAs<clang::FunctionProtoType>();
+  for (int i : llvm::seq(callee_info.num_params)) {
     thunk_param_types.push_back(
-        GetThunkParameterType(ast_context, callee_param->getType()));
+        GetThunkParameterType(ast_context, function_type->getParamType(i)));
   }
 
   if (!callee_info.has_simple_return_type) {
@@ -292,7 +288,7 @@ static auto BuildThunkParameters(clang::ASTContext& ast_context,
   clang::SourceLocation clang_loc = callee_info.decl->getLocation();
 
   const auto* thunk_function_proto_type =
-      thunk_function_decl->getFunctionType()->getAs<clang::FunctionProtoType>();
+      thunk_function_decl->getType()->castAs<clang::FunctionProtoType>();
 
   llvm::SmallVector<clang::ParmVarDecl*> thunk_params;
   unsigned num_thunk_params = thunk_function_decl->getNumParams();

@@ -63,8 +63,9 @@ struct ClangDeclKey : public Printable<ClangDeclKey> {
   // `clang::LazyDeclPtr`.
   clang::Decl* decl = nullptr;
 
-  // The number of parameters to import for a function declaration. Always -1
-  // for a non-function declaration.
+  // The number of parameters to import for a function declaration. Excludes the
+  // implicit object parameter, if there is one. Always -1 for a non-function
+  // declaration.
   int32_t num_params = -1;
 
  private:
