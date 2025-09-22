@@ -58,9 +58,7 @@ static auto FindIntLiteralBitWidth(Context& context, SemIR::InstId arg_id)
 static auto LookupCppType(
     Context& context, std::initializer_list<llvm::StringRef> name_components)
     -> clang::QualType {
-  clang::ASTUnit* ast = context.sem_ir().clang_ast_unit();
-  CARBON_CHECK(ast);
-  clang::Sema& sema = ast->getSema();
+  clang::Sema& sema = context.clang_sema();
 
   clang::Decl* decl = sema.getASTContext().getTranslationUnitDecl();
   for (auto name_component : name_components) {

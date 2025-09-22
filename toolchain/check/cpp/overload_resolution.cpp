@@ -102,9 +102,7 @@ auto PerformCppOverloadResolution(Context& context, SemIR::LocId loc_id,
   clang::OverloadCandidateSet candidate_set(
       loc, clang::OverloadCandidateSet::CandidateSetKind::CSK_Normal);
 
-  clang::ASTUnit* ast = context.sem_ir().clang_ast_unit();
-  CARBON_CHECK(ast);
-  clang::Sema& sema = ast->getSema();
+  clang::Sema& sema = context.clang_sema();
 
   AddOverloadCandidataes(sema, candidate_set, overload_set.candidate_functions,
                          self_expr, arg_exprs);

@@ -174,7 +174,7 @@ auto LookupCppOperator(Context& context, SemIR::LocId loc_id, Operator op,
     return SemIR::ErrorInst::InstId;
   }
 
-  clang::Sema& sema = context.sem_ir().clang_ast_unit()->getSema();
+  clang::Sema& sema = context.clang_sema();
 
   clang::UnresolvedSet<4> functions;
   // TODO: Add location accordingly.
