@@ -527,46 +527,11 @@ static auto ClangLookup(Context& context, SemIR::NameScopeId scope_id,
   return lookup;
 }
 
-// Looks up the given declaration name in the Clang AST in a specific scope.
-// Returns the found declaration and its access. If not found, returns
-// `nullopt`. If there's not a single result, returns `nullptr` and default
-// access.
-static auto ClangLookupDeclarationName(Context& context, SemIR::LocId loc_id,
-                                       SemIR::NameScopeId scope_id,
-                                       clang::DeclarationName name)
-    -> std::optional<std::tuple<clang::NamedDecl*, clang::AccessSpecifier>> {
-  auto lookup = ClangLookup(context, scope_id, name);
-  if (!lookup) {
-    return std::nullopt;
-  }
-
-  std::tuple<clang::NamedDecl*, clang::AccessSpecifier> result{
-      nullptr, clang::AccessSpecifier::AS_none};
-
-  // Access checks are performed separately by the Carbon name lookup logic.
-  lookup->suppressAccessDiagnostics();
-
-  if (!lookup->isSingleResult()) {
-    // Clang will diagnose ambiguous lookup results for us.
-    if (!lookup->isAmbiguous()) {
-      context.TODO(loc_id,
-                   llvm::formatv("Unsupported: Lookup succeeded but couldn't "
-                                 "find a single result; LookupResultKind: {0}",
-                                 static_cast<int>(lookup->getResultKind())));
-    }
-
-    return result;
-  }
-
-  result = {lookup->getFoundDecl(), lookup->begin().getAccess()};
-  return result;
-}
-
 // Looks up for constructors in the class scope and returns the lookup result.
 static auto ClangConstructorLookup(Context& context,
                                    SemIR::NameScopeId scope_id)
     -> clang::DeclContextLookupResult {
-  const SemIR::NameScope& scope = context.sem_ir().name_scopes().Get(scope_id);
+  const SemIR::NameScope& scope = context.name_scopes().Get(scope_id);
 
   clang::Sema& sema = context.sem_ir().clang_ast_unit()->getSema();
   clang::Decl* decl =
@@ -591,17 +556,15 @@ static auto IsDeclInjectedClassName(Context& context,
   }
 
   const SemIR::ClangDecl& clang_decl = context.clang_decls().Get(
-      context.sem_ir().name_scopes().Get(scope_id).clang_decl_context_id());
+      context.name_scopes().Get(scope_id).clang_decl_context_id());
   const auto* scope_record_decl = cast<clang::CXXRecordDecl>(clang_decl.decl);
 
-  const clang::ASTContext& ast_context =
-      context.sem_ir().clang_ast_unit()->getASTContext();
+  const clang::ASTContext& ast_context = context.ast_context();
   CARBON_CHECK(ast_context.getCanonicalTagType(scope_record_decl) ==
                ast_context.getCanonicalTagType(record_decl));
 
   auto class_decl = context.insts().GetAs<SemIR::ClassDecl>(clang_decl.inst_id);
-  CARBON_CHECK(name_id ==
-               context.sem_ir().classes().Get(class_decl.class_id).name_id);
+  CARBON_CHECK(name_id == context.classes().Get(class_decl.class_id).name_id);
   return true;
 }
 
@@ -637,12 +600,8 @@ static auto ClangLookupName(Context& context, SemIR::NameScopeId scope_id,
 }
 
 // Returns whether `decl` already mapped to an instruction.
-static auto IsClangDeclImported(const Context& context, clang::Decl* decl)
-    -> bool {
-  return context.sem_ir()
-      .clang_decls()
-      .Lookup(decl->getCanonicalDecl())
-      .has_value();
+static auto IsClangDeclImported(Context& context, clang::Decl* decl) -> bool {
+  return context.clang_decls().Lookup(decl->getCanonicalDecl()).has_value();
 }
 
 // If `decl` already mapped to an instruction, returns that instruction.
@@ -1483,8 +1442,7 @@ static auto GetReturnTypeExpr(Context& context, SemIR::LocId loc_id,
 
   // TODO: Make this a `PartialType`.
   SemIR::TypeInstId record_type_inst_id = context.types().GetAsTypeInstId(
-      context.sem_ir()
-          .clang_decls()
+      context.clang_decls()
           .Get(context.clang_decls().Lookup(
               cast<clang::Decl>(clang_decl->getParent())))
           .inst_id);
@@ -1702,6 +1660,13 @@ auto ImportCppFunctionDecl(Context& context, SemIR::LocId loc_id,
 
   SemIR::Function& function_info = context.functions().Get(*function_id);
   if (IsCppThunkRequired(context, function_info)) {
+    Diagnostics::AnnotationScope annotate_diagnostics(
+        &context.emitter(), [&](auto& builder) {
+          CARBON_DIAGNOSTIC(InCppThunk, Note,
+                            "in thunk for C++ function used here");
+          builder.Note(loc_id, InCppThunk);
+        });
+
     clang::FunctionDecl* thunk_clang_decl =
         BuildCppThunk(context, function_info);
     if (thunk_clang_decl) {
@@ -1731,7 +1696,7 @@ using ImportWorklist = llvm::SmallVector<ImportItem>;
 }  // namespace
 
 // Adds the given declaration to our list of declarations to import.
-static auto AddDependentDecl(const Context& context, clang::Decl* decl,
+static auto AddDependentDecl(Context& context, clang::Decl* decl,
                              ImportWorklist& worklist) -> void {
   if (!IsClangDeclImported(context, decl)) {
     worklist.push_back({.decl = decl, .added_dependencies = false});
@@ -1740,7 +1705,7 @@ static auto AddDependentDecl(const Context& context, clang::Decl* decl,
 
 // Finds all decls that need to be imported before importing the given type and
 // adds them to the given set.
-static auto AddDependentUnimportedTypeDecls(const Context& context,
+static auto AddDependentUnimportedTypeDecls(Context& context,
                                             clang::QualType type,
                                             ImportWorklist& worklist) -> void {
   while (true) {
@@ -1762,7 +1727,7 @@ static auto AddDependentUnimportedTypeDecls(const Context& context,
 // Finds all decls that need to be imported before importing the given function
 // and adds them to the given set.
 static auto AddDependentUnimportedFunctionDecls(
-    const Context& context, const clang::FunctionDecl& clang_decl,
+    Context& context, const clang::FunctionDecl& clang_decl,
     ImportWorklist& worklist) -> void {
   for (const auto* param : clang_decl.parameters()) {
     AddDependentUnimportedTypeDecls(context, param->getType(), worklist);
@@ -1773,7 +1738,7 @@ static auto AddDependentUnimportedFunctionDecls(
 
 // Finds all decls that need to be imported before importing the given
 // declaration and adds them to the given set.
-static auto AddDependentUnimportedDecls(const Context& context,
+static auto AddDependentUnimportedDecls(Context& context,
                                         clang::Decl* clang_decl,
                                         ImportWorklist& worklist) -> void {
   if (auto* clang_function_decl = clang_decl->getAsFunction()) {
@@ -1894,11 +1859,8 @@ static auto ImportDeclAfterDependencies(Context& context, SemIR::LocId loc_id,
 
 // Attempts to import a set of declarations. Returns `false` if an error was
 // produced, `true` otherwise.
-// TODO: Merge overload set and operators and remove the `is_overload_set`
-// param.
 static auto ImportDeclSet(Context& context, SemIR::LocId loc_id,
-                          ImportWorklist& worklist,
-                          bool is_overload_set = false) -> bool {
+                          ImportWorklist& worklist) -> bool {
   // Walk the dependency graph in depth-first order, and import declarations
   // once we've imported all of their dependencies.
   while (!worklist.empty()) {
@@ -1924,7 +1886,7 @@ static auto ImportDeclSet(Context& context, SemIR::LocId loc_id,
       // Functions that are part of the overload set are imported at a later
       // point, once the overload resolution has selected the suitable function
       // for the call.
-      if (is_overload_set && decl->getAsFunction()) {
+      if (decl->getAsFunction()) {
         continue;
       }
       auto inst_id = ImportDeclAfterDependencies(context, loc_id, decl);
@@ -2056,10 +2018,9 @@ static auto LookupBuiltinTypes(Context& context, SemIR::LocId loc_id,
   return inst_id;
 }
 
-// Imports an overloaded function set from Clang to Carbon.
-static auto ImportCppOverloadSet(Context& context, SemIR::NameScopeId scope_id,
-                                 SemIR::NameId name_id,
-                                 const clang::UnresolvedSet<4>& overload_set)
+auto ImportCppOverloadSet(Context& context, SemIR::NameScopeId scope_id,
+                          SemIR::NameId name_id,
+                          const clang::UnresolvedSet<4>& overload_set)
     -> SemIR::InstId {
   SemIR::CppOverloadSetId overload_set_id = context.cpp_overload_sets().Add(
       SemIR::CppOverloadSet{.name_id = name_id,
@@ -2102,7 +2063,7 @@ static auto ImportOverloadSetAndDependencies(
   for (clang::NamedDecl* fn_decl : overloaded_set) {
     AddDependentDecl(context, fn_decl, worklist);
   }
-  if (!ImportDeclSet(context, loc_id, worklist, true)) {
+  if (!ImportDeclSet(context, loc_id, worklist)) {
     return SemIR::ErrorInst::InstId;
   }
   return ImportCppOverloadSet(context, scope_id, name_id, overloaded_set);
@@ -2211,187 +2172,6 @@ auto ImportNameFromCpp(Context& context, SemIR::LocId loc_id,
 
   return ImportOverloadSetIntoScope(context, loc_id, scope_id, name_id,
                                     overload_set);
-}
-
-static auto GetClangOperatorKind(Context& context, SemIR::LocId loc_id,
-                                 llvm::StringLiteral interface_name,
-                                 llvm::StringLiteral op_name)
-    -> std::optional<clang::OverloadedOperatorKind> {
-  // Unary operators.
-  if (interface_name == "Destroy" || interface_name == "As" ||
-      interface_name == "ImplicitAs") {
-    // TODO: Support destructors and conversions.
-    return std::nullopt;
-  }
-
-  // Increment and Decrement.
-  if (interface_name == "Inc") {
-    CARBON_CHECK(op_name == "Op");
-    return clang::OO_PlusPlus;
-  }
-  if (interface_name == "Dec") {
-    CARBON_CHECK(op_name == "Op");
-    return clang::OO_MinusMinus;
-  }
-
-  // Arithmetic.
-  if (interface_name == "Negate") {
-    CARBON_CHECK(op_name == "Op");
-    return clang::OO_Minus;
-  }
-
-  // Binary operators.
-
-  // Arithmetic Operators.
-  if (interface_name == "AddWith") {
-    CARBON_CHECK(op_name == "Op");
-    return clang::OO_Plus;
-  }
-  if (interface_name == "SubWith") {
-    CARBON_CHECK(op_name == "Op");
-    return clang::OO_Minus;
-  }
-  if (interface_name == "MulWith") {
-    CARBON_CHECK(op_name == "Op");
-    return clang::OO_Star;
-  }
-  if (interface_name == "DivWith") {
-    CARBON_CHECK(op_name == "Op");
-    return clang::OO_Slash;
-  }
-  if (interface_name == "ModWith") {
-    CARBON_CHECK(op_name == "Op");
-    return clang::OO_Percent;
-  }
-
-  // Bitwise Operators.
-  if (interface_name == "BitAndWith") {
-    CARBON_CHECK(op_name == "Op");
-    return clang::OO_Amp;
-  }
-  if (interface_name == "BitOrWith") {
-    CARBON_CHECK(op_name == "Op");
-    return clang::OO_Pipe;
-  }
-  if (interface_name == "BitXorWith") {
-    CARBON_CHECK(op_name == "Op");
-    return clang::OO_Caret;
-  }
-  if (interface_name == "LeftShiftWith") {
-    CARBON_CHECK(op_name == "Op");
-    return clang::OO_LessLess;
-  }
-  if (interface_name == "RightShiftWith") {
-    CARBON_CHECK(op_name == "Op");
-    return clang::OO_GreaterGreater;
-  }
-
-  // Compound Assignment Arithmetic Operators.
-  if (interface_name == "AddAssignWith") {
-    CARBON_CHECK(op_name == "Op");
-    return clang::OO_PlusEqual;
-  }
-  if (interface_name == "SubAssignWith") {
-    CARBON_CHECK(op_name == "Op");
-    return clang::OO_MinusEqual;
-  }
-  if (interface_name == "MulAssignWith") {
-    CARBON_CHECK(op_name == "Op");
-    return clang::OO_StarEqual;
-  }
-  if (interface_name == "DivAssignWith") {
-    CARBON_CHECK(op_name == "Op");
-    return clang::OO_SlashEqual;
-  }
-  if (interface_name == "ModAssignWith") {
-    CARBON_CHECK(op_name == "Op");
-    return clang::OO_PercentEqual;
-  }
-
-  // Compound Assignment Bitwise Operators.
-  if (interface_name == "BitAndAssignWith") {
-    CARBON_CHECK(op_name == "Op");
-    return clang::OO_AmpEqual;
-  }
-  if (interface_name == "BitOrAssignWith") {
-    CARBON_CHECK(op_name == "Op");
-    return clang::OO_PipeEqual;
-  }
-  if (interface_name == "BitXorAssignWith") {
-    CARBON_CHECK(op_name == "Op");
-    return clang::OO_CaretEqual;
-  }
-  // TODO: Add support for `LeftShiftAssignWith` (`OO_LessLessEqual`) and
-  // `RightShiftAssignWith` (`OO_GreaterGreaterEqual`) when references are
-  // supported.
-
-  // Relational Operators.
-  if (interface_name == "EqWith") {
-    if (op_name == "Equal") {
-      return clang::OO_EqualEqual;
-    }
-    CARBON_CHECK(op_name == "NotEqual");
-    return clang::OO_ExclaimEqual;
-  }
-  if (interface_name == "OrderedWith") {
-    if (op_name == "Less") {
-      return clang::OO_Less;
-    }
-    if (op_name == "Greater") {
-      return clang::OO_Greater;
-    }
-    if (op_name == "LessOrEquivalent") {
-      return clang::OO_LessEqual;
-    }
-    CARBON_CHECK(op_name == "GreaterOrEquivalent");
-    return clang::OO_GreaterEqual;
-  }
-
-  context.TODO(loc_id, llvm::formatv("Unsupported operator interface `{0}`",
-                                     interface_name));
-  return std::nullopt;
-}
-
-auto ImportOperatorFromCpp(Context& context, SemIR::LocId loc_id,
-                           SemIR::NameScopeId scope_id, Operator op)
-    -> SemIR::ScopeLookupResult {
-  Diagnostics::AnnotationScope annotate_diagnostics(
-      &context.emitter(), [&](auto& builder) {
-        CARBON_DIAGNOSTIC(InCppOperatorLookup, Note,
-                          "in `Cpp` operator `{0}` lookup", std::string);
-        builder.Note(loc_id, InCppOperatorLookup, op.interface_name.str());
-      });
-
-  auto op_kind =
-      GetClangOperatorKind(context, loc_id, op.interface_name, op.op_name);
-  if (!op_kind) {
-    return SemIR::ScopeLookupResult::MakeNotFound();
-  }
-
-  // TODO: We should do ADL-only lookup for operators
-  // (`Sema::ArgumentDependentLookup`), when we support mapping Carbon types
-  // into C++ types. See
-  // https://github.com/carbon-language/carbon-lang/pull/5996/files/5d01fa69511b76f87efbc0387f5e40abcf4c911a#r2316950123
-  auto decl_and_access = ClangLookupDeclarationName(
-      context, loc_id, scope_id,
-      context.ast_context().DeclarationNames.getCXXOperatorName(*op_kind));
-
-  if (!decl_and_access) {
-    return SemIR::ScopeLookupResult::MakeNotFound();
-  }
-  auto [decl, access] = *decl_and_access;
-  if (!decl) {
-    return SemIR::ScopeLookupResult::MakeError();
-  }
-
-  SemIR::InstId inst_id = ImportDeclAndDependencies(context, loc_id, decl);
-  if (!inst_id.has_value()) {
-    return SemIR::ScopeLookupResult::MakeNotFound();
-  }
-
-  SemIR::AccessKind access_kind = MapAccess(access);
-  return SemIR::ScopeLookupResult::MakeWrappedLookupResult(inst_id,
-                                                           access_kind);
 }
 
 auto ImportClassDefinitionForClangDecl(Context& context, SemIR::LocId loc_id,

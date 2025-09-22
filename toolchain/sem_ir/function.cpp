@@ -80,10 +80,10 @@ auto DecomposeVirtualFunction(const File& sem_ir, InstId fn_decl_id,
   auto fn_decl_const_id =
       GetConstantValueInSpecific(sem_ir, base_class_specific_id, fn_decl_id);
   fn_decl_id = sem_ir.constant_values().GetInstId(fn_decl_const_id);
-  auto specific_id = SemIR::SpecificId::None;
+  auto specific_id = SpecificId::None;
   auto callee_id = fn_decl_id;
   if (auto specific_function =
-          sem_ir.insts().TryGetAs<SemIR::SpecificFunction>(fn_decl_id)) {
+          sem_ir.insts().TryGetAs<SpecificFunction>(fn_decl_id)) {
     specific_id = specific_function->specific_id;
     callee_id = specific_function->callee_id;
   }

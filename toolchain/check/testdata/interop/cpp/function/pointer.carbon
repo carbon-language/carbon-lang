@@ -176,10 +176,7 @@ import Cpp library "nullable_pointer_param.h";
 fn F() {
   //@dump-sem-ir-begin
   var s: Cpp.S = {};
-  // CHECK:STDERR: fail_todo_import_nullable_pointer_param.carbon:[[@LINE+7]]:3: error: semantics TODO: `Unsupported: parameter type: S *` [SemanticsTodo]
-  // CHECK:STDERR:   Cpp.foo(&s);
-  // CHECK:STDERR:   ^~~~~~~~~~~
-  // CHECK:STDERR: fail_todo_import_nullable_pointer_param.carbon:[[@LINE+4]]:3: note: in call to Cpp function here [InCallToCppFunction]
+  // CHECK:STDERR: fail_todo_import_nullable_pointer_param.carbon:[[@LINE+4]]:3: error: semantics TODO: `Unsupported: parameter type: S *` [SemanticsTodo]
   // CHECK:STDERR:   Cpp.foo(&s);
   // CHECK:STDERR:   ^~~~~~~~~~~
   // CHECK:STDERR:
@@ -236,19 +233,13 @@ import Cpp library "deduced_pointer_param.h";
 fn F() {
   //@dump-sem-ir-begin
   var s: Cpp.S = {};
-  // CHECK:STDERR: fail_import_deduced_pointer_param_as_pointer.carbon:[[@LINE+7]]:3: error: semantics TODO: `Unsupported: parameter type: struct S *` [SemanticsTodo]
-  // CHECK:STDERR:   Cpp.Direct(&s);
-  // CHECK:STDERR:   ^~~~~~~~~~~~~~
-  // CHECK:STDERR: fail_import_deduced_pointer_param_as_pointer.carbon:[[@LINE+4]]:3: note: in call to Cpp function here [InCallToCppFunction]
+  // CHECK:STDERR: fail_import_deduced_pointer_param_as_pointer.carbon:[[@LINE+4]]:3: error: semantics TODO: `Unsupported: parameter type: struct S *` [SemanticsTodo]
   // CHECK:STDERR:   Cpp.Direct(&s);
   // CHECK:STDERR:   ^~~~~~~~~~~~~~
   // CHECK:STDERR:
   Cpp.Direct(&s);
 
-  // CHECK:STDERR: fail_import_deduced_pointer_param_as_pointer.carbon:[[@LINE+7]]:3: error: semantics TODO: `Unsupported: return type: AddPointer<struct S>` [SemanticsTodo]
-  // CHECK:STDERR:   Cpp.Indirect({} as Cpp.S);
-  // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~~~~~~
-  // CHECK:STDERR: fail_import_deduced_pointer_param_as_pointer.carbon:[[@LINE+4]]:3: note: in call to Cpp function here [InCallToCppFunction]
+  // CHECK:STDERR: fail_import_deduced_pointer_param_as_pointer.carbon:[[@LINE+4]]:3: error: semantics TODO: `Unsupported: return type: AddPointer<struct S>` [SemanticsTodo]
   // CHECK:STDERR:   Cpp.Indirect({} as Cpp.S);
   // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~~~~~~
   // CHECK:STDERR:
@@ -681,10 +672,10 @@ fn F() {
 // CHECK:STDOUT:     %S.ref: type = name_ref S, imports.%S.decl [concrete = constants.%S]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %s: ref %S = bind_name s, %s.var
-// CHECK:STDOUT:   %Cpp.ref.loc16: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
+// CHECK:STDOUT:   %Cpp.ref.loc13: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
 // CHECK:STDOUT:   %foo.ref: %.c5d = name_ref foo, imports.%.a21 [concrete = constants.%empty_struct]
 // CHECK:STDOUT:   %s.ref: ref %S = name_ref s, %s
-// CHECK:STDOUT:   %addr.loc16: %ptr.5c7 = addr_of %s.ref
+// CHECK:STDOUT:   %addr.loc13: %ptr.5c7 = addr_of %s.ref
 // CHECK:STDOUT:   %facet_value: %type_where = facet_value constants.%S, () [concrete = constants.%facet_value]
 // CHECK:STDOUT:   %.loc8_3.2: %type_where = converted constants.%S, %facet_value [concrete = constants.%facet_value]
 // CHECK:STDOUT:   %AggregateT.as_type.as.Destroy.impl.Op.bound: <bound method> = bound_method %s.var, constants.%AggregateT.as_type.as.Destroy.impl.Op.cc2
@@ -826,28 +817,28 @@ fn F() {
 // CHECK:STDOUT:     %S.ref.loc8: type = name_ref S, imports.%S.decl [concrete = constants.%S]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %s: ref %S = bind_name s, %s.var
-// CHECK:STDOUT:   %Cpp.ref.loc16: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
+// CHECK:STDOUT:   %Cpp.ref.loc13: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
 // CHECK:STDOUT:   %Direct.ref: %.97c = name_ref Direct, imports.%.e4a [concrete = constants.%empty_struct.504]
 // CHECK:STDOUT:   %s.ref: ref %S = name_ref s, %s
-// CHECK:STDOUT:   %addr.loc16: %ptr.5c7 = addr_of %s.ref
-// CHECK:STDOUT:   %Cpp.ref.loc25_3: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
+// CHECK:STDOUT:   %addr.loc13: %ptr.5c7 = addr_of %s.ref
+// CHECK:STDOUT:   %Cpp.ref.loc19_3: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
 // CHECK:STDOUT:   %Indirect.ref: %.fed = name_ref Indirect, imports.%.9c4 [concrete = constants.%empty_struct.6e8]
-// CHECK:STDOUT:   %.loc25_17.1: %empty_struct_type = struct_literal ()
-// CHECK:STDOUT:   %Cpp.ref.loc25_22: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
-// CHECK:STDOUT:   %S.ref.loc25: type = name_ref S, imports.%S.decl [concrete = constants.%S]
-// CHECK:STDOUT:   %.loc25_17.2: ref %S = temporary_storage
-// CHECK:STDOUT:   %.loc25_17.3: init %S = class_init (), %.loc25_17.2 [concrete = constants.%S.val]
-// CHECK:STDOUT:   %.loc25_17.4: ref %S = temporary %.loc25_17.2, %.loc25_17.3
-// CHECK:STDOUT:   %.loc25_19.1: ref %S = converted %.loc25_17.1, %.loc25_17.4
-// CHECK:STDOUT:   %.loc25_19.2: %S = bind_value %.loc25_19.1
-// CHECK:STDOUT:   %Indirect.call: init <error> = call imports.%Indirect.decl(%.loc25_19.2)
-// CHECK:STDOUT:   %facet_value.loc25: %type_where = facet_value constants.%S, () [concrete = constants.%facet_value]
-// CHECK:STDOUT:   %.loc25_17.5: %type_where = converted constants.%S, %facet_value.loc25 [concrete = constants.%facet_value]
-// CHECK:STDOUT:   %AggregateT.as_type.as.Destroy.impl.Op.bound.loc25: <bound method> = bound_method %.loc25_17.4, constants.%AggregateT.as_type.as.Destroy.impl.Op.cc2
+// CHECK:STDOUT:   %.loc19_17.1: %empty_struct_type = struct_literal ()
+// CHECK:STDOUT:   %Cpp.ref.loc19_22: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
+// CHECK:STDOUT:   %S.ref.loc19: type = name_ref S, imports.%S.decl [concrete = constants.%S]
+// CHECK:STDOUT:   %.loc19_17.2: ref %S = temporary_storage
+// CHECK:STDOUT:   %.loc19_17.3: init %S = class_init (), %.loc19_17.2 [concrete = constants.%S.val]
+// CHECK:STDOUT:   %.loc19_17.4: ref %S = temporary %.loc19_17.2, %.loc19_17.3
+// CHECK:STDOUT:   %.loc19_19.1: ref %S = converted %.loc19_17.1, %.loc19_17.4
+// CHECK:STDOUT:   %.loc19_19.2: %S = bind_value %.loc19_19.1
+// CHECK:STDOUT:   %Indirect.call: init <error> = call imports.%Indirect.decl(%.loc19_19.2)
+// CHECK:STDOUT:   %facet_value.loc19: %type_where = facet_value constants.%S, () [concrete = constants.%facet_value]
+// CHECK:STDOUT:   %.loc19_17.5: %type_where = converted constants.%S, %facet_value.loc19 [concrete = constants.%facet_value]
+// CHECK:STDOUT:   %AggregateT.as_type.as.Destroy.impl.Op.bound.loc19: <bound method> = bound_method %.loc19_17.4, constants.%AggregateT.as_type.as.Destroy.impl.Op.cc2
 // CHECK:STDOUT:   <elided>
-// CHECK:STDOUT:   %bound_method.loc25: <bound method> = bound_method %.loc25_17.4, %AggregateT.as_type.as.Destroy.impl.Op.specific_fn.1
-// CHECK:STDOUT:   %addr.loc25: %ptr.5c7 = addr_of %.loc25_17.4
-// CHECK:STDOUT:   %AggregateT.as_type.as.Destroy.impl.Op.call.loc25: init %empty_tuple.type = call %bound_method.loc25(%addr.loc25)
+// CHECK:STDOUT:   %bound_method.loc19: <bound method> = bound_method %.loc19_17.4, %AggregateT.as_type.as.Destroy.impl.Op.specific_fn.1
+// CHECK:STDOUT:   %addr.loc19: %ptr.5c7 = addr_of %.loc19_17.4
+// CHECK:STDOUT:   %AggregateT.as_type.as.Destroy.impl.Op.call.loc19: init %empty_tuple.type = call %bound_method.loc19(%addr.loc19)
 // CHECK:STDOUT:   %facet_value.loc8: %type_where = facet_value constants.%S, () [concrete = constants.%facet_value]
 // CHECK:STDOUT:   %.loc8_3.2: %type_where = converted constants.%S, %facet_value.loc8 [concrete = constants.%facet_value]
 // CHECK:STDOUT:   %AggregateT.as_type.as.Destroy.impl.Op.bound.loc8: <bound method> = bound_method %s.var, constants.%AggregateT.as_type.as.Destroy.impl.Op.cc2

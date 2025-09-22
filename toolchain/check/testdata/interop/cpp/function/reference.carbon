@@ -44,32 +44,35 @@ fn F() {
   //@dump-sem-ir-begin
   var v: Cpp.S;
   let s: Cpp.S = v;
-  // CHECK:STDERR: fail_lvalue_ref.carbon:[[@LINE+7]]:3: error: no matching function for call to `TakesLValue` [CppOverloadingNoViableFunctionFound]
-  // CHECK:STDERR:   Cpp.TakesLValue(s);
-  // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~
-  // CHECK:STDERR: fail_lvalue_ref.carbon:[[@LINE+4]]:3: note: in call to Cpp function here [InCallToCppFunction]
-  // CHECK:STDERR:   Cpp.TakesLValue(s);
-  // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~
+  // CHECK:STDERR: fail_lvalue_ref.carbon:[[@LINE+8]]:20: error: no matching function for call to 'TakesLValue' [CppInteropParseError]
+  // CHECK:STDERR:    18 |   Cpp.TakesLValue(s);
+  // CHECK:STDERR:       |                    ^
+  // CHECK:STDERR: fail_lvalue_ref.carbon:[[@LINE-9]]:10: in file included here [InCppInclude]
+  // CHECK:STDERR: ./lvalue_ref.h:5:6: note: candidate function not viable: expects an lvalue for 1st argument [CppInteropParseNote]
+  // CHECK:STDERR:     5 | auto TakesLValue(S&) -> void;
+  // CHECK:STDERR:       |      ^           ~~
   // CHECK:STDERR:
   Cpp.TakesLValue(s);
 
   var t: Cpp.T;
-  // CHECK:STDERR: fail_lvalue_ref.carbon:[[@LINE+7]]:3: error: no matching function for call to `TakesLValue` [CppOverloadingNoViableFunctionFound]
-  // CHECK:STDERR:   Cpp.TakesLValue(t);
-  // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~
-  // CHECK:STDERR: fail_lvalue_ref.carbon:[[@LINE+4]]:3: note: in call to Cpp function here [InCallToCppFunction]
-  // CHECK:STDERR:   Cpp.TakesLValue(t);
-  // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~
+  // CHECK:STDERR: fail_lvalue_ref.carbon:[[@LINE+8]]:20: error: no matching function for call to 'TakesLValue' [CppInteropParseError]
+  // CHECK:STDERR:    29 |   Cpp.TakesLValue(t);
+  // CHECK:STDERR:       |                    ^
+  // CHECK:STDERR: fail_lvalue_ref.carbon:[[@LINE-20]]:10: in file included here [InCppInclude]
+  // CHECK:STDERR: ./lvalue_ref.h:5:6: note: candidate function not viable: no known conversion from 'T' to 'S &' for 1st argument [CppInteropParseNote]
+  // CHECK:STDERR:     5 | auto TakesLValue(S&) -> void;
+  // CHECK:STDERR:       |      ^           ~~
   // CHECK:STDERR:
   Cpp.TakesLValue(t);
 
   var u: Cpp.S;
-  // CHECK:STDERR: fail_lvalue_ref.carbon:[[@LINE+7]]:3: error: no matching function for call to `TakesLValue` [CppOverloadingNoViableFunctionFound]
-  // CHECK:STDERR:   Cpp.TakesLValue(u as const Cpp.S);
-  // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-  // CHECK:STDERR: fail_lvalue_ref.carbon:[[@LINE+4]]:3: note: in call to Cpp function here [InCallToCppFunction]
-  // CHECK:STDERR:   Cpp.TakesLValue(u as const Cpp.S);
-  // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+  // CHECK:STDERR: fail_lvalue_ref.carbon:[[@LINE+8]]:35: error: no matching function for call to 'TakesLValue' [CppInteropParseError]
+  // CHECK:STDERR:    40 |   Cpp.TakesLValue(u as const Cpp.S);
+  // CHECK:STDERR:       |                                   ^
+  // CHECK:STDERR: fail_lvalue_ref.carbon:[[@LINE-31]]:10: in file included here [InCppInclude]
+  // CHECK:STDERR: ./lvalue_ref.h:5:6: note: candidate function not viable: 1st argument ('const S') would lose const qualifier [CppInteropParseNote]
+  // CHECK:STDERR:     5 | auto TakesLValue(S&) -> void;
+  // CHECK:STDERR:       |      ^           ~~
   // CHECK:STDERR:
   Cpp.TakesLValue(u as const Cpp.S);
   //@dump-sem-ir-end
@@ -124,31 +127,34 @@ import Cpp library "rvalue_ref.h";
 fn F() {
   //@dump-sem-ir-begin
   var s: Cpp.S;
-  // CHECK:STDERR: fail_rvalue_ref.carbon:[[@LINE+7]]:3: error: no matching function for call to `TakesRValue` [CppOverloadingNoViableFunctionFound]
-  // CHECK:STDERR:   Cpp.TakesRValue(s);
-  // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~
-  // CHECK:STDERR: fail_rvalue_ref.carbon:[[@LINE+4]]:3: note: in call to Cpp function here [InCallToCppFunction]
-  // CHECK:STDERR:   Cpp.TakesRValue(s);
-  // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~
+  // CHECK:STDERR: fail_rvalue_ref.carbon:[[@LINE+8]]:20: error: no matching function for call to 'TakesRValue' [CppInteropParseError]
+  // CHECK:STDERR:    17 |   Cpp.TakesRValue(s);
+  // CHECK:STDERR:       |                    ^
+  // CHECK:STDERR: fail_rvalue_ref.carbon:[[@LINE-8]]:10: in file included here [InCppInclude]
+  // CHECK:STDERR: ./rvalue_ref.h:5:6: note: candidate function not viable: expects an rvalue for 1st argument [CppInteropParseNote]
+  // CHECK:STDERR:     5 | auto TakesRValue(S&&) -> void;
+  // CHECK:STDERR:       |      ^           ~~~
   // CHECK:STDERR:
   Cpp.TakesRValue(s);
 
   var t: Cpp.T;
-  // CHECK:STDERR: fail_rvalue_ref.carbon:[[@LINE+7]]:3: error: no matching function for call to `TakesRValue` [CppOverloadingNoViableFunctionFound]
-  // CHECK:STDERR:   Cpp.TakesRValue(t);
-  // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~
-  // CHECK:STDERR: fail_rvalue_ref.carbon:[[@LINE+4]]:3: note: in call to Cpp function here [InCallToCppFunction]
-  // CHECK:STDERR:   Cpp.TakesRValue(t);
-  // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~
+  // CHECK:STDERR: fail_rvalue_ref.carbon:[[@LINE+8]]:20: error: no matching function for call to 'TakesRValue' [CppInteropParseError]
+  // CHECK:STDERR:    28 |   Cpp.TakesRValue(t);
+  // CHECK:STDERR:       |                    ^
+  // CHECK:STDERR: fail_rvalue_ref.carbon:[[@LINE-19]]:10: in file included here [InCppInclude]
+  // CHECK:STDERR: ./rvalue_ref.h:5:6: note: candidate function not viable: no known conversion from 'T' to 'S' for 1st argument [CppInteropParseNote]
+  // CHECK:STDERR:     5 | auto TakesRValue(S&&) -> void;
+  // CHECK:STDERR:       |      ^           ~~~
   // CHECK:STDERR:
   Cpp.TakesRValue(t);
 
-  // CHECK:STDERR: fail_rvalue_ref.carbon:[[@LINE+7]]:3: error: no matching function for call to `TakesRValue` [CppOverloadingNoViableFunctionFound]
-  // CHECK:STDERR:   Cpp.TakesRValue(({} as Cpp.S) as const Cpp.S);
-  // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-  // CHECK:STDERR: fail_rvalue_ref.carbon:[[@LINE+4]]:3: note: in call to Cpp function here [InCallToCppFunction]
-  // CHECK:STDERR:   Cpp.TakesRValue(({} as Cpp.S) as const Cpp.S);
-  // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+  // CHECK:STDERR: fail_rvalue_ref.carbon:[[@LINE+8]]:47: error: no matching function for call to 'TakesRValue' [CppInteropParseError]
+  // CHECK:STDERR:    38 |   Cpp.TakesRValue(({} as Cpp.S) as const Cpp.S);
+  // CHECK:STDERR:       |                                               ^
+  // CHECK:STDERR: fail_rvalue_ref.carbon:[[@LINE-29]]:10: in file included here [InCppInclude]
+  // CHECK:STDERR: ./rvalue_ref.h:5:6: note: candidate function not viable: 1st argument ('const S') would lose const qualifier [CppInteropParseNote]
+  // CHECK:STDERR:     5 | auto TakesRValue(S&&) -> void;
+  // CHECK:STDERR:       |      ^           ~~~
   // CHECK:STDERR:
   Cpp.TakesRValue(({} as Cpp.S) as const Cpp.S);
   //@dump-sem-ir-end
@@ -201,12 +207,13 @@ fn F() {
   Cpp.TakesConstLValue(s);
 
   var t: Cpp.T;
-  // CHECK:STDERR: fail_const_lvalue_ref.carbon:[[@LINE+7]]:3: error: no matching function for call to `TakesConstLValue` [CppOverloadingNoViableFunctionFound]
-  // CHECK:STDERR:   Cpp.TakesConstLValue(t);
-  // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~~~~
-  // CHECK:STDERR: fail_const_lvalue_ref.carbon:[[@LINE+4]]:3: note: in call to Cpp function here [InCallToCppFunction]
-  // CHECK:STDERR:   Cpp.TakesConstLValue(t);
-  // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~~~~
+  // CHECK:STDERR: fail_const_lvalue_ref.carbon:[[@LINE+8]]:25: error: no matching function for call to 'TakesConstLValue' [CppInteropParseError]
+  // CHECK:STDERR:    29 |   Cpp.TakesConstLValue(t);
+  // CHECK:STDERR:       |                         ^
+  // CHECK:STDERR: fail_const_lvalue_ref.carbon:[[@LINE-20]]:10: in file included here [InCppInclude]
+  // CHECK:STDERR: ./const_lvalue_ref.h:5:6: note: candidate function not viable: no known conversion from 'T' to 'const S' for 1st argument [CppInteropParseNote]
+  // CHECK:STDERR:     5 | auto TakesConstLValue(const S&) -> void;
+  // CHECK:STDERR:       |      ^                ~~~~~~~~
   // CHECK:STDERR:
   Cpp.TakesConstLValue(t);
   //@dump-sem-ir-end
@@ -333,54 +340,54 @@ fn F() {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %.loc9_18: %S = bind_value %v.ref
 // CHECK:STDOUT:   %s: %S = bind_name s, %.loc9_18
-// CHECK:STDOUT:   %Cpp.ref.loc17: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
-// CHECK:STDOUT:   %TakesLValue.ref.loc17: %.547 = name_ref TakesLValue, imports.%.a7f [concrete = constants.%empty_struct]
+// CHECK:STDOUT:   %Cpp.ref.loc18: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
+// CHECK:STDOUT:   %TakesLValue.ref.loc18: %.547 = name_ref TakesLValue, imports.%.a7f [concrete = constants.%empty_struct]
 // CHECK:STDOUT:   %s.ref: %S = name_ref s, %s
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %t.patt: %pattern_type.e6b = binding_pattern t [concrete]
 // CHECK:STDOUT:     %t.var_patt: %pattern_type.e6b = var_pattern %t.patt [concrete]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %t.var: ref %T = var %t.var_patt
-// CHECK:STDOUT:   %.loc19_13: type = splice_block %T.ref [concrete = constants.%T] {
-// CHECK:STDOUT:     %Cpp.ref.loc19: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
+// CHECK:STDOUT:   %.loc20_13: type = splice_block %T.ref [concrete = constants.%T] {
+// CHECK:STDOUT:     %Cpp.ref.loc20: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
 // CHECK:STDOUT:     %T.ref: type = name_ref T, imports.%T.decl [concrete = constants.%T]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %t: ref %T = bind_name t, %t.var
-// CHECK:STDOUT:   %Cpp.ref.loc27: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
-// CHECK:STDOUT:   %TakesLValue.ref.loc27: %.547 = name_ref TakesLValue, imports.%.a7f [concrete = constants.%empty_struct]
+// CHECK:STDOUT:   %Cpp.ref.loc29: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
+// CHECK:STDOUT:   %TakesLValue.ref.loc29: %.547 = name_ref TakesLValue, imports.%.a7f [concrete = constants.%empty_struct]
 // CHECK:STDOUT:   %t.ref: ref %T = name_ref t, %t
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %u.patt: %pattern_type.7da = binding_pattern u [concrete]
 // CHECK:STDOUT:     %u.var_patt: %pattern_type.7da = var_pattern %u.patt [concrete]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %u.var: ref %S = var %u.var_patt
-// CHECK:STDOUT:   %.loc29_13: type = splice_block %S.ref.loc29 [concrete = constants.%S] {
-// CHECK:STDOUT:     %Cpp.ref.loc29: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
-// CHECK:STDOUT:     %S.ref.loc29: type = name_ref S, imports.%S.decl [concrete = constants.%S]
+// CHECK:STDOUT:   %.loc31_13: type = splice_block %S.ref.loc31 [concrete = constants.%S] {
+// CHECK:STDOUT:     %Cpp.ref.loc31: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
+// CHECK:STDOUT:     %S.ref.loc31: type = name_ref S, imports.%S.decl [concrete = constants.%S]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %u: ref %S = bind_name u, %u.var
-// CHECK:STDOUT:   %Cpp.ref.loc37_3: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
-// CHECK:STDOUT:   %TakesLValue.ref.loc37: %.547 = name_ref TakesLValue, imports.%.a7f [concrete = constants.%empty_struct]
+// CHECK:STDOUT:   %Cpp.ref.loc40_3: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
+// CHECK:STDOUT:   %TakesLValue.ref.loc40: %.547 = name_ref TakesLValue, imports.%.a7f [concrete = constants.%empty_struct]
 // CHECK:STDOUT:   %u.ref: ref %S = name_ref u, %u
-// CHECK:STDOUT:   %Cpp.ref.loc37_30: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
-// CHECK:STDOUT:   %S.ref.loc37: type = name_ref S, imports.%S.decl [concrete = constants.%S]
-// CHECK:STDOUT:   %const: type = const_type %S.ref.loc37 [concrete = constants.%const.e39]
-// CHECK:STDOUT:   %.loc37_21.1: ref %const.e39 = as_compatible %u.ref
-// CHECK:STDOUT:   %.loc37_21.2: ref %const.e39 = converted %u.ref, %.loc37_21.1
-// CHECK:STDOUT:   %facet_value.loc29: %type_where = facet_value constants.%S, () [concrete = constants.%facet_value.7bd]
-// CHECK:STDOUT:   %.loc29_3: %type_where = converted constants.%S, %facet_value.loc29 [concrete = constants.%facet_value.7bd]
-// CHECK:STDOUT:   %AggregateT.as_type.as.Destroy.impl.Op.bound.loc29: <bound method> = bound_method %u.var, constants.%AggregateT.as_type.as.Destroy.impl.Op.cc2
+// CHECK:STDOUT:   %Cpp.ref.loc40_30: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
+// CHECK:STDOUT:   %S.ref.loc40: type = name_ref S, imports.%S.decl [concrete = constants.%S]
+// CHECK:STDOUT:   %const: type = const_type %S.ref.loc40 [concrete = constants.%const.e39]
+// CHECK:STDOUT:   %.loc40_21.1: ref %const.e39 = as_compatible %u.ref
+// CHECK:STDOUT:   %.loc40_21.2: ref %const.e39 = converted %u.ref, %.loc40_21.1
+// CHECK:STDOUT:   %facet_value.loc31: %type_where = facet_value constants.%S, () [concrete = constants.%facet_value.7bd]
+// CHECK:STDOUT:   %.loc31_3: %type_where = converted constants.%S, %facet_value.loc31 [concrete = constants.%facet_value.7bd]
+// CHECK:STDOUT:   %AggregateT.as_type.as.Destroy.impl.Op.bound.loc31: <bound method> = bound_method %u.var, constants.%AggregateT.as_type.as.Destroy.impl.Op.cc2
 // CHECK:STDOUT:   <elided>
-// CHECK:STDOUT:   %bound_method.loc29: <bound method> = bound_method %u.var, %AggregateT.as_type.as.Destroy.impl.Op.specific_fn.1
-// CHECK:STDOUT:   %addr.loc29: %ptr.5c7 = addr_of %u.var
-// CHECK:STDOUT:   %AggregateT.as_type.as.Destroy.impl.Op.call.loc29: init %empty_tuple.type = call %bound_method.loc29(%addr.loc29)
-// CHECK:STDOUT:   %facet_value.loc19: %type_where = facet_value constants.%T, () [concrete = constants.%facet_value.19d]
-// CHECK:STDOUT:   %.loc19_3: %type_where = converted constants.%T, %facet_value.loc19 [concrete = constants.%facet_value.19d]
-// CHECK:STDOUT:   %AggregateT.as_type.as.Destroy.impl.Op.bound.loc19: <bound method> = bound_method %t.var, constants.%AggregateT.as_type.as.Destroy.impl.Op.8c8
+// CHECK:STDOUT:   %bound_method.loc31: <bound method> = bound_method %u.var, %AggregateT.as_type.as.Destroy.impl.Op.specific_fn.1
+// CHECK:STDOUT:   %addr.loc31: %ptr.5c7 = addr_of %u.var
+// CHECK:STDOUT:   %AggregateT.as_type.as.Destroy.impl.Op.call.loc31: init %empty_tuple.type = call %bound_method.loc31(%addr.loc31)
+// CHECK:STDOUT:   %facet_value.loc20: %type_where = facet_value constants.%T, () [concrete = constants.%facet_value.19d]
+// CHECK:STDOUT:   %.loc20_3: %type_where = converted constants.%T, %facet_value.loc20 [concrete = constants.%facet_value.19d]
+// CHECK:STDOUT:   %AggregateT.as_type.as.Destroy.impl.Op.bound.loc20: <bound method> = bound_method %t.var, constants.%AggregateT.as_type.as.Destroy.impl.Op.8c8
 // CHECK:STDOUT:   <elided>
-// CHECK:STDOUT:   %bound_method.loc19: <bound method> = bound_method %t.var, %AggregateT.as_type.as.Destroy.impl.Op.specific_fn.2
-// CHECK:STDOUT:   %addr.loc19: %ptr.b04 = addr_of %t.var
-// CHECK:STDOUT:   %AggregateT.as_type.as.Destroy.impl.Op.call.loc19: init %empty_tuple.type = call %bound_method.loc19(%addr.loc19)
+// CHECK:STDOUT:   %bound_method.loc20: <bound method> = bound_method %t.var, %AggregateT.as_type.as.Destroy.impl.Op.specific_fn.2
+// CHECK:STDOUT:   %addr.loc20: %ptr.b04 = addr_of %t.var
+// CHECK:STDOUT:   %AggregateT.as_type.as.Destroy.impl.Op.call.loc20: init %empty_tuple.type = call %bound_method.loc20(%addr.loc20)
 // CHECK:STDOUT:   %facet_value.loc8: %type_where = facet_value constants.%S, () [concrete = constants.%facet_value.7bd]
 // CHECK:STDOUT:   %.loc8_3: %type_where = converted constants.%S, %facet_value.loc8 [concrete = constants.%facet_value.7bd]
 // CHECK:STDOUT:   %AggregateT.as_type.as.Destroy.impl.Op.bound.loc8: <bound method> = bound_method %v.var, constants.%AggregateT.as_type.as.Destroy.impl.Op.cc2
@@ -563,50 +570,50 @@ fn F() {
 // CHECK:STDOUT:     %S.ref.loc8: type = name_ref S, imports.%S.decl [concrete = constants.%S]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %s: ref %S = bind_name s, %s.var
-// CHECK:STDOUT:   %Cpp.ref.loc16: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
-// CHECK:STDOUT:   %TakesRValue.ref.loc16: %.1b9 = name_ref TakesRValue, imports.%.1f6 [concrete = constants.%empty_struct]
+// CHECK:STDOUT:   %Cpp.ref.loc17: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
+// CHECK:STDOUT:   %TakesRValue.ref.loc17: %.1b9 = name_ref TakesRValue, imports.%.1f6 [concrete = constants.%empty_struct]
 // CHECK:STDOUT:   %s.ref: ref %S = name_ref s, %s
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %t.patt: %pattern_type.e6b = binding_pattern t [concrete]
 // CHECK:STDOUT:     %t.var_patt: %pattern_type.e6b = var_pattern %t.patt [concrete]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %t.var: ref %T = var %t.var_patt
-// CHECK:STDOUT:   %.loc18_13: type = splice_block %T.ref [concrete = constants.%T] {
-// CHECK:STDOUT:     %Cpp.ref.loc18: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
+// CHECK:STDOUT:   %.loc19_13: type = splice_block %T.ref [concrete = constants.%T] {
+// CHECK:STDOUT:     %Cpp.ref.loc19: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
 // CHECK:STDOUT:     %T.ref: type = name_ref T, imports.%T.decl [concrete = constants.%T]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %t: ref %T = bind_name t, %t.var
-// CHECK:STDOUT:   %Cpp.ref.loc26: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
-// CHECK:STDOUT:   %TakesRValue.ref.loc26: %.1b9 = name_ref TakesRValue, imports.%.1f6 [concrete = constants.%empty_struct]
+// CHECK:STDOUT:   %Cpp.ref.loc28: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
+// CHECK:STDOUT:   %TakesRValue.ref.loc28: %.1b9 = name_ref TakesRValue, imports.%.1f6 [concrete = constants.%empty_struct]
 // CHECK:STDOUT:   %t.ref: ref %T = name_ref t, %t
-// CHECK:STDOUT:   %Cpp.ref.loc35_3: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
-// CHECK:STDOUT:   %TakesRValue.ref.loc35: %.1b9 = name_ref TakesRValue, imports.%.1f6 [concrete = constants.%empty_struct]
-// CHECK:STDOUT:   %.loc35_21.1: %empty_struct_type = struct_literal ()
-// CHECK:STDOUT:   %Cpp.ref.loc35_26: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
-// CHECK:STDOUT:   %S.ref.loc35_29: type = name_ref S, imports.%S.decl [concrete = constants.%S]
-// CHECK:STDOUT:   %.loc35_21.2: ref %S = temporary_storage
-// CHECK:STDOUT:   %.loc35_21.3: init %S = class_init (), %.loc35_21.2 [concrete = constants.%S.val]
-// CHECK:STDOUT:   %.loc35_21.4: ref %S = temporary %.loc35_21.2, %.loc35_21.3
-// CHECK:STDOUT:   %.loc35_23: ref %S = converted %.loc35_21.1, %.loc35_21.4
-// CHECK:STDOUT:   %Cpp.ref.loc35_42: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
-// CHECK:STDOUT:   %S.ref.loc35_45: type = name_ref S, imports.%S.decl [concrete = constants.%S]
-// CHECK:STDOUT:   %const: type = const_type %S.ref.loc35_45 [concrete = constants.%const.e39]
-// CHECK:STDOUT:   %.loc35_33.1: ref %const.e39 = as_compatible %.loc35_23
-// CHECK:STDOUT:   %.loc35_33.2: ref %const.e39 = converted %.loc35_23, %.loc35_33.1
-// CHECK:STDOUT:   %facet_value.loc35: %type_where = facet_value constants.%S, () [concrete = constants.%facet_value.7bd]
-// CHECK:STDOUT:   %.loc35_21.5: %type_where = converted constants.%S, %facet_value.loc35 [concrete = constants.%facet_value.7bd]
-// CHECK:STDOUT:   %AggregateT.as_type.as.Destroy.impl.Op.bound.loc35: <bound method> = bound_method %.loc35_21.4, constants.%AggregateT.as_type.as.Destroy.impl.Op.cc2
+// CHECK:STDOUT:   %Cpp.ref.loc38_3: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
+// CHECK:STDOUT:   %TakesRValue.ref.loc38: %.1b9 = name_ref TakesRValue, imports.%.1f6 [concrete = constants.%empty_struct]
+// CHECK:STDOUT:   %.loc38_21.1: %empty_struct_type = struct_literal ()
+// CHECK:STDOUT:   %Cpp.ref.loc38_26: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
+// CHECK:STDOUT:   %S.ref.loc38_29: type = name_ref S, imports.%S.decl [concrete = constants.%S]
+// CHECK:STDOUT:   %.loc38_21.2: ref %S = temporary_storage
+// CHECK:STDOUT:   %.loc38_21.3: init %S = class_init (), %.loc38_21.2 [concrete = constants.%S.val]
+// CHECK:STDOUT:   %.loc38_21.4: ref %S = temporary %.loc38_21.2, %.loc38_21.3
+// CHECK:STDOUT:   %.loc38_23: ref %S = converted %.loc38_21.1, %.loc38_21.4
+// CHECK:STDOUT:   %Cpp.ref.loc38_42: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
+// CHECK:STDOUT:   %S.ref.loc38_45: type = name_ref S, imports.%S.decl [concrete = constants.%S]
+// CHECK:STDOUT:   %const: type = const_type %S.ref.loc38_45 [concrete = constants.%const.e39]
+// CHECK:STDOUT:   %.loc38_33.1: ref %const.e39 = as_compatible %.loc38_23
+// CHECK:STDOUT:   %.loc38_33.2: ref %const.e39 = converted %.loc38_23, %.loc38_33.1
+// CHECK:STDOUT:   %facet_value.loc38: %type_where = facet_value constants.%S, () [concrete = constants.%facet_value.7bd]
+// CHECK:STDOUT:   %.loc38_21.5: %type_where = converted constants.%S, %facet_value.loc38 [concrete = constants.%facet_value.7bd]
+// CHECK:STDOUT:   %AggregateT.as_type.as.Destroy.impl.Op.bound.loc38: <bound method> = bound_method %.loc38_21.4, constants.%AggregateT.as_type.as.Destroy.impl.Op.cc2
 // CHECK:STDOUT:   <elided>
-// CHECK:STDOUT:   %bound_method.loc35: <bound method> = bound_method %.loc35_21.4, %AggregateT.as_type.as.Destroy.impl.Op.specific_fn.1
-// CHECK:STDOUT:   %addr.loc35: %ptr.5c7 = addr_of %.loc35_21.4
-// CHECK:STDOUT:   %AggregateT.as_type.as.Destroy.impl.Op.call.loc35: init %empty_tuple.type = call %bound_method.loc35(%addr.loc35)
-// CHECK:STDOUT:   %facet_value.loc18: %type_where = facet_value constants.%T, () [concrete = constants.%facet_value.19d]
-// CHECK:STDOUT:   %.loc18_3: %type_where = converted constants.%T, %facet_value.loc18 [concrete = constants.%facet_value.19d]
-// CHECK:STDOUT:   %AggregateT.as_type.as.Destroy.impl.Op.bound.loc18: <bound method> = bound_method %t.var, constants.%AggregateT.as_type.as.Destroy.impl.Op.8c8
+// CHECK:STDOUT:   %bound_method.loc38: <bound method> = bound_method %.loc38_21.4, %AggregateT.as_type.as.Destroy.impl.Op.specific_fn.1
+// CHECK:STDOUT:   %addr.loc38: %ptr.5c7 = addr_of %.loc38_21.4
+// CHECK:STDOUT:   %AggregateT.as_type.as.Destroy.impl.Op.call.loc38: init %empty_tuple.type = call %bound_method.loc38(%addr.loc38)
+// CHECK:STDOUT:   %facet_value.loc19: %type_where = facet_value constants.%T, () [concrete = constants.%facet_value.19d]
+// CHECK:STDOUT:   %.loc19_3: %type_where = converted constants.%T, %facet_value.loc19 [concrete = constants.%facet_value.19d]
+// CHECK:STDOUT:   %AggregateT.as_type.as.Destroy.impl.Op.bound.loc19: <bound method> = bound_method %t.var, constants.%AggregateT.as_type.as.Destroy.impl.Op.8c8
 // CHECK:STDOUT:   <elided>
-// CHECK:STDOUT:   %bound_method.loc18: <bound method> = bound_method %t.var, %AggregateT.as_type.as.Destroy.impl.Op.specific_fn.2
-// CHECK:STDOUT:   %addr.loc18: %ptr.b04 = addr_of %t.var
-// CHECK:STDOUT:   %AggregateT.as_type.as.Destroy.impl.Op.call.loc18: init %empty_tuple.type = call %bound_method.loc18(%addr.loc18)
+// CHECK:STDOUT:   %bound_method.loc19: <bound method> = bound_method %t.var, %AggregateT.as_type.as.Destroy.impl.Op.specific_fn.2
+// CHECK:STDOUT:   %addr.loc19: %ptr.b04 = addr_of %t.var
+// CHECK:STDOUT:   %AggregateT.as_type.as.Destroy.impl.Op.call.loc19: init %empty_tuple.type = call %bound_method.loc19(%addr.loc19)
 // CHECK:STDOUT:   %facet_value.loc8: %type_where = facet_value constants.%S, () [concrete = constants.%facet_value.7bd]
 // CHECK:STDOUT:   %.loc8_3: %type_where = converted constants.%S, %facet_value.loc8 [concrete = constants.%facet_value.7bd]
 // CHECK:STDOUT:   %AggregateT.as_type.as.Destroy.impl.Op.bound.loc8: <bound method> = bound_method %s.var, constants.%AggregateT.as_type.as.Destroy.impl.Op.cc2
@@ -774,8 +781,8 @@ fn F() {
 // CHECK:STDOUT:     %T.ref: type = name_ref T, imports.%T.decl [concrete = constants.%T]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %t: ref %T = bind_name t, %t.var
-// CHECK:STDOUT:   %Cpp.ref.loc28: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
-// CHECK:STDOUT:   %TakesConstLValue.ref.loc28: %.4e1 = name_ref TakesConstLValue, imports.%.9bc [concrete = constants.%empty_struct]
+// CHECK:STDOUT:   %Cpp.ref.loc29: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
+// CHECK:STDOUT:   %TakesConstLValue.ref.loc29: %.4e1 = name_ref TakesConstLValue, imports.%.9bc [concrete = constants.%empty_struct]
 // CHECK:STDOUT:   %t.ref: ref %T = name_ref t, %t
 // CHECK:STDOUT:   %facet_value.loc20: %type_where = facet_value constants.%T, () [concrete = constants.%facet_value.19d]
 // CHECK:STDOUT:   %.loc20_3: %type_where = converted constants.%T, %facet_value.loc20 [concrete = constants.%facet_value.19d]

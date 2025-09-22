@@ -70,7 +70,7 @@ class InstNamer::NamingContext {
     AddInstName((inst_namer_->MaybePushEntity(id) + suffix).str());
   }
 
-  auto sem_ir() -> const SemIR::File& { return *inst_namer_->sem_ir_; }
+  auto sem_ir() -> const File& { return *inst_namer_->sem_ir_; }
 
   InstNamer* inst_namer_;
   ScopeId scope_id_;

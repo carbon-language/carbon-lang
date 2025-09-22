@@ -37,7 +37,7 @@ namespace Carbon::SemIR {
 Formatter::Formatter(
     const File* sem_ir, int total_ir_count,
     Parse::GetTreeAndSubtreesFn get_tree_and_subtrees,
-    const FixedSizeValueStore<SemIR::CheckIRId, bool>* include_ir_in_dumps,
+    const FixedSizeValueStore<CheckIRId, bool>* include_ir_in_dumps,
     bool use_dump_sem_ir_ranges)
     : sem_ir_(sem_ir),
       inst_namer_(sem_ir_, total_ir_count),
@@ -943,23 +943,23 @@ auto Formatter::FormatInstArgAndKind(Inst::ArgAndKind arg_and_kind) -> void {
 
 auto Formatter::FormatInstRhs(Inst inst) -> void {
   CARBON_KIND_SWITCH(inst) {
-    case SemIR::InstKind::ArrayInit:
-    case SemIR::InstKind::StructInit:
-    case SemIR::InstKind::TupleInit: {
+    case InstKind::ArrayInit:
+    case InstKind::StructInit:
+    case InstKind::TupleInit: {
       auto init = inst.As<AnyAggregateInit>();
       FormatArgs(init.elements_id);
       FormatReturnSlotArg(init.dest_id);
       return;
     }
 
-    case SemIR::InstKind::ImportRefLoaded:
-    case SemIR::InstKind::ImportRefUnloaded:
+    case InstKind::ImportRefLoaded:
+    case InstKind::ImportRefUnloaded:
       FormatImportRefRhs(inst.As<AnyImportRef>());
       return;
 
-    case SemIR::InstKind::OutParam:
-    case SemIR::InstKind::RefParam:
-    case SemIR::InstKind::ValueParam: {
+    case InstKind::OutParam:
+    case InstKind::RefParam:
+    case InstKind::ValueParam: {
       auto param = inst.As<AnyParam>();
       FormatArgs(param.index);
       // Omit pretty_name because it's an implementation detail of
