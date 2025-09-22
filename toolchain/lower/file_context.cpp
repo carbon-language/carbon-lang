@@ -437,7 +437,7 @@ auto FileContext::BuildFunctionDecl(SemIR::FunctionId function_id,
     return nullptr;
   }
 
-  // Don't lower C++ function that use a thunk. We will never reference them
+  // Don't lower C++ functions that use a thunk. We will never reference them
   // directly, and their signatures would not be expected to match the
   // corresponding C++ function anyway.
   if (function.special_function_kind ==

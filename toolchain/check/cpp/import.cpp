@@ -1740,10 +1740,10 @@ static auto AddDependentUnimportedTypeDecls(const Context& context,
 // Finds all decls that need to be imported before importing the given function
 // and adds them to the given set.
 static auto AddDependentUnimportedFunctionDecls(
-    const Context& context, const clang::FunctionDecl& clang_decl, int params,
-    ImportWorklist& worklist) -> void {
+    const Context& context, const clang::FunctionDecl& clang_decl,
+    int num_params, ImportWorklist& worklist) -> void {
   for (auto [i, param] : llvm::enumerate(clang_decl.parameters())) {
-    if (static_cast<int>(i) >= params) {
+    if (static_cast<int>(i) >= num_params) {
       break;
     }
     AddDependentUnimportedTypeDecls(context, param->getType(), worklist);
@@ -1838,7 +1838,8 @@ static auto ImportDeclAfterDependencies(Context& context, SemIR::LocId loc_id,
     -> SemIR::InstId {
   clang::Decl* clang_decl = key.decl;
   if (auto* clang_function_decl = clang_decl->getAsFunction()) {
-    return ImportFunctionDecl(context, loc_id, clang_function_decl, key.num_params);
+    return ImportFunctionDecl(context, loc_id, clang_function_decl,
+                              key.num_params);
   }
   if (auto* clang_namespace_decl = dyn_cast<clang::NamespaceDecl>(clang_decl)) {
     return ImportNamespaceDecl(context, clang_namespace_decl);

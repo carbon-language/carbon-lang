@@ -439,9 +439,8 @@ static auto BuildCalleeArgs(clang::Sema& sema,
   // list, so the first argument corresponds to the second parameter if there is
   // an explicit object parameter and the first parameter otherwise.
   int first_param = callee_info.has_explicit_object_parameter();
-  int num_params = callee_info.num_params;
-  call_args.reserve(num_params - first_param);
-  for (unsigned callee_index : llvm::seq(first_param, num_params)) {
+  call_args.reserve(callee_info.num_params - first_param);
+  for (unsigned callee_index : llvm::seq(first_param, callee_info.num_params)) {
     call_args.push_back(BuildParamRefForCalleeArg(sema, thunk_function_decl,
                                                   callee_info, callee_index));
   }
