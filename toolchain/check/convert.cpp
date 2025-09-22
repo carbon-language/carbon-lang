@@ -63,7 +63,7 @@ static auto CopyValueToTemporary(Context& context, SemIR::InstId init_id)
     -> SemIR::InstId {
   // TODO: Consider using `None` to mean that we immediately materialize and
   // initialize a temporary, rather than two separate instructions.
-  auto init = context.sem_ir().insts().Get(init_id);
+  auto init = context.insts().Get(init_id);
   auto temporary_id = AddInst<SemIR::TemporaryStorage>(
       context, SemIR::LocId(init_id), {.type_id = init.type_id()});
   return AddInstWithCleanup<SemIR::Temporary>(context, SemIR::LocId(init_id),

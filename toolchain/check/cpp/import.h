@@ -11,7 +11,6 @@
 #include "llvm/Support/VirtualFileSystem.h"
 #include "toolchain/check/context.h"
 #include "toolchain/check/diagnostic_helpers.h"
-#include "toolchain/check/operator.h"
 #include "toolchain/diagnostics/diagnostic_emitter.h"
 
 namespace Carbon::Check {
@@ -31,17 +30,17 @@ auto ImportCppFiles(Context& context,
 auto ImportCppFunctionDecl(Context& context, SemIR::LocId loc_id,
                            clang::FunctionDecl* clang_decl) -> SemIR::InstId;
 
+// Imports an overloaded function set from Clang to Carbon.
+auto ImportCppOverloadSet(Context& context, SemIR::NameScopeId scope_id,
+                          SemIR::NameId name_id,
+                          const clang::UnresolvedSet<4>& overload_set)
+    -> SemIR::InstId;
+
 // Looks up the given name in the Clang AST generated when importing C++ code
 // and returns a lookup result. If using the injected class name (`X.X()`),
 // imports the class constructor as a function named as the class.
 auto ImportNameFromCpp(Context& context, SemIR::LocId loc_id,
                        SemIR::NameScopeId scope_id, SemIR::NameId name_id)
-    -> SemIR::ScopeLookupResult;
-
-// Looks up the given operator in the Clang AST generated when importing C++
-// code and returns a lookup result.
-auto ImportOperatorFromCpp(Context& context, SemIR::LocId loc_id,
-                           SemIR::NameScopeId scope_id, Operator op)
     -> SemIR::ScopeLookupResult;
 
 // Given a Carbon class declaration that was imported from some kind of C++

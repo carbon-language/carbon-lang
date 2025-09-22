@@ -21,48 +21,32 @@ fn AsF32(f: FloatLiteral()) -> Float(32) = "float.convert_checked";
 fn AsF64(f: FloatLiteral()) -> Float(64) = "float.convert_checked";
 fn AsF128(f: FloatLiteral()) -> Float(128) = "float.convert_checked";
 
-fn F() {
-  var i: Int(32) = AsI32(1);
-  var e: Float(16) = AsF16(1.0);
-  var f: Float(32) = AsF32(1.0);
-  var g: Float(64) = AsF64(1.0);
-  var h: Float(128) = AsF128(1.0);
-  var b: Bool() = false;
+fn IntParam(i: Int(32));
+fn FloatParam(e: Float(16), f: Float(32), g: Float(64), h: Float(128));
+fn BoolParam(b: Bool());
+
+fn Uses() {
+  IntParam(AsI32(1));
+  FloatParam(AsF16(1.0), AsF32(1.0), AsF64(1.0), AsF128(1.0));
+  BoolParam(false);
 }
 
 // CHECK:STDOUT: ; ModuleID = 'types.carbon'
 // CHECK:STDOUT: source_filename = "types.carbon"
 // CHECK:STDOUT:
-// CHECK:STDOUT: define void @_CF.Main() !dbg !4 {
+// CHECK:STDOUT: declare void @_CIntParam.Main(i32)
+// CHECK:STDOUT:
+// CHECK:STDOUT: declare void @_CFloatParam.Main(half, float, double, fp128)
+// CHECK:STDOUT:
+// CHECK:STDOUT: declare void @_CBoolParam.Main(i1)
+// CHECK:STDOUT:
+// CHECK:STDOUT: define void @_CUses.Main() !dbg !4 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %i.var = alloca i32, align 4, !dbg !7
-// CHECK:STDOUT:   %e.var = alloca half, align 2, !dbg !8
-// CHECK:STDOUT:   %f.var = alloca float, align 4, !dbg !9
-// CHECK:STDOUT:   %g.var = alloca double, align 8, !dbg !10
-// CHECK:STDOUT:   %h.var = alloca fp128, align 16, !dbg !11
-// CHECK:STDOUT:   %b.var = alloca i1, align 1, !dbg !12
-// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %i.var), !dbg !7
-// CHECK:STDOUT:   store i32 1, ptr %i.var, align 4, !dbg !7
-// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %e.var), !dbg !8
-// CHECK:STDOUT:   store half 0xH3C00, ptr %e.var, align 2, !dbg !8
-// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %f.var), !dbg !9
-// CHECK:STDOUT:   store float 1.000000e+00, ptr %f.var, align 4, !dbg !9
-// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %g.var), !dbg !10
-// CHECK:STDOUT:   store double 1.000000e+00, ptr %g.var, align 8, !dbg !10
-// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %h.var), !dbg !11
-// CHECK:STDOUT:   store fp128 0xL00000000000000003FFF000000000000, ptr %h.var, align 16, !dbg !11
-// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %b.var), !dbg !12
-// CHECK:STDOUT:   store i8 0, ptr %b.var, align 1, !dbg !12
-// CHECK:STDOUT:   ret void, !dbg !13
+// CHECK:STDOUT:   call void @_CIntParam.Main(i32 1), !dbg !7
+// CHECK:STDOUT:   call void @_CFloatParam.Main(half 0xH3C00, float 1.000000e+00, double 1.000000e+00, fp128 0xL00000000000000003FFF000000000000), !dbg !8
+// CHECK:STDOUT:   call void @_CBoolParam.Main(i1 false), !dbg !9
+// CHECK:STDOUT:   ret void, !dbg !10
 // CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: ; Function Attrs: nocallback nofree nosync nounwind willreturn memory(argmem: readwrite)
-// CHECK:STDOUT: declare void @llvm.lifetime.start.p0(ptr captures(none)) #0
-// CHECK:STDOUT:
-// CHECK:STDOUT: ; uselistorder directives
-// CHECK:STDOUT: uselistorder ptr @llvm.lifetime.start.p0, { 5, 4, 3, 2, 1, 0 }
-// CHECK:STDOUT:
-// CHECK:STDOUT: attributes #0 = { nocallback nofree nosync nounwind willreturn memory(argmem: readwrite) }
 // CHECK:STDOUT:
 // CHECK:STDOUT: !llvm.module.flags = !{!0, !1}
 // CHECK:STDOUT: !llvm.dbg.cu = !{!2}
@@ -71,13 +55,10 @@ fn F() {
 // CHECK:STDOUT: !1 = !{i32 2, !"Debug Info Version", i32 3}
 // CHECK:STDOUT: !2 = distinct !DICompileUnit(language: DW_LANG_C, file: !3, producer: "carbon", isOptimized: false, runtimeVersion: 0, emissionKind: FullDebug)
 // CHECK:STDOUT: !3 = !DIFile(filename: "types.carbon", directory: "")
-// CHECK:STDOUT: !4 = distinct !DISubprogram(name: "F", linkageName: "_CF.Main", scope: null, file: !3, line: 24, type: !5, spFlags: DISPFlagDefinition, unit: !2)
+// CHECK:STDOUT: !4 = distinct !DISubprogram(name: "Uses", linkageName: "_CUses.Main", scope: null, file: !3, line: 28, type: !5, spFlags: DISPFlagDefinition, unit: !2)
 // CHECK:STDOUT: !5 = !DISubroutineType(types: !6)
 // CHECK:STDOUT: !6 = !{}
-// CHECK:STDOUT: !7 = !DILocation(line: 25, column: 3, scope: !4)
-// CHECK:STDOUT: !8 = !DILocation(line: 26, column: 3, scope: !4)
-// CHECK:STDOUT: !9 = !DILocation(line: 27, column: 3, scope: !4)
-// CHECK:STDOUT: !10 = !DILocation(line: 28, column: 3, scope: !4)
-// CHECK:STDOUT: !11 = !DILocation(line: 29, column: 3, scope: !4)
-// CHECK:STDOUT: !12 = !DILocation(line: 30, column: 3, scope: !4)
-// CHECK:STDOUT: !13 = !DILocation(line: 24, column: 1, scope: !4)
+// CHECK:STDOUT: !7 = !DILocation(line: 29, column: 3, scope: !4)
+// CHECK:STDOUT: !8 = !DILocation(line: 30, column: 3, scope: !4)
+// CHECK:STDOUT: !9 = !DILocation(line: 31, column: 3, scope: !4)
+// CHECK:STDOUT: !10 = !DILocation(line: 28, column: 1, scope: !4)

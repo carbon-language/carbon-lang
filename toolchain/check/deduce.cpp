@@ -113,11 +113,6 @@ class DeductionWorklist {
       case SemIR::IdKind::None:
       case SemIR::IdKind::For<SemIR::ClassId>:
       case SemIR::IdKind::For<SemIR::IntKind>:
-      // Decided on 2025-04-02 not to do deduction through facet types, because
-      // types can implement a generic interface multiple times with different
-      // arguments. See:
-      // https://docs.google.com/document/d/1Iut5f2TQBrtBNIduF4vJYOKfw7MbS8xH_J01_Q4e6Rk/edit?pli=1&resourcekey=0-mc_vh5UzrzXfU4kO-3tOjA&tab=t.0#heading=h.95phmuvxog9n
-      case SemIR::IdKind::For<SemIR::FacetTypeId>:
         break;
       case CARBON_KIND(SemIR::InstId inst_id): {
         Add(inst_id, SemIR::InstId(arg));

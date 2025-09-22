@@ -508,7 +508,7 @@ minimal `Core` package and `prelude` library to the file test with the
 `check/testdata/facet_types/min_prelude/my_test.carbon` might contain:
 
 ```
-// INCLUDE-FILE: toolchain/testing/testdata/min_prelude/facet_types.carbon
+// INCLUDE-FILE: toolchain/testing/testdata/min_prelude/convert.carbon
 ```
 
 We have a set of minimal `Core` preludes for testing different compiler feature

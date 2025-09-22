@@ -93,7 +93,7 @@ auto IsCppThunkRequired(Context& context, const SemIR::Function& function)
   // corresponding SemIR function has an acceptable parameter type.
   // TODO: We should be able to avoid thunks for reference parameters.
   const auto* decl = cast<clang::FunctionDecl>(
-      context.sem_ir().clang_decls().Get(function.clang_decl_id).decl);
+      context.clang_decls().Get(function.clang_decl_id).decl);
   for (auto* param : decl->parameters()) {
     if (param->getType()->isReferenceType()) {
       thunk_required = true;

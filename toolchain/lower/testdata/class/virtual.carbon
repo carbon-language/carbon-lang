@@ -120,7 +120,7 @@ base class Base(T:! type) {
 
 library "[[@TEST_NAME]]";
 
-base class Base(T:! type) {
+base class Base(T:! Core.Destroy) {
   virtual fn F[self: Self]() {
     var v: T;
   }
@@ -467,10 +467,10 @@ fn Make() {
 // CHECK:STDOUT: ; ModuleID = 'generic_use.carbon'
 // CHECK:STDOUT: source_filename = "generic_use.carbon"
 // CHECK:STDOUT:
-// CHECK:STDOUT: @"_CBase.Main.$vtable.4d2ffa01ebfb7a1d" = unnamed_addr constant [1 x i32] [i32 trunc (i64 sub (i64 ptrtoint (ptr @_CF.Base.Main.4d2ffa01ebfb7a1d to i64), i64 ptrtoint (ptr @"_CBase.Main.$vtable.4d2ffa01ebfb7a1d" to i64)) to i32)]
-// CHECK:STDOUT: @"_CBase.Main.$vtable.4f4310253a4de9ab" = unnamed_addr constant [1 x i32] [i32 trunc (i64 sub (i64 ptrtoint (ptr @_CF.Base.Main.4f4310253a4de9ab to i64), i64 ptrtoint (ptr @"_CBase.Main.$vtable.4f4310253a4de9ab" to i64)) to i32)]
-// CHECK:STDOUT: @Base.val.20a.loc16_3 = internal constant { ptr } { ptr @"_CBase.Main.$vtable.4d2ffa01ebfb7a1d" }
-// CHECK:STDOUT: @Base.val.f56.loc17_3 = internal constant { ptr } { ptr @"_CBase.Main.$vtable.4f4310253a4de9ab" }
+// CHECK:STDOUT: @"_CBase.Main.$vtable.6f3ba65278fae545" = unnamed_addr constant [1 x i32] [i32 trunc (i64 sub (i64 ptrtoint (ptr @_CF.Base.Main.6f3ba65278fae545 to i64), i64 ptrtoint (ptr @"_CBase.Main.$vtable.6f3ba65278fae545" to i64)) to i32)]
+// CHECK:STDOUT: @"_CBase.Main.$vtable.2f61a5251c699b4c" = unnamed_addr constant [1 x i32] [i32 trunc (i64 sub (i64 ptrtoint (ptr @_CF.Base.Main.2f61a5251c699b4c to i64), i64 ptrtoint (ptr @"_CBase.Main.$vtable.2f61a5251c699b4c" to i64)) to i32)]
+// CHECK:STDOUT: @Base.val.e09.loc16_3 = internal constant { ptr } { ptr @"_CBase.Main.$vtable.6f3ba65278fae545" }
+// CHECK:STDOUT: @Base.val.865.loc17_3 = internal constant { ptr } { ptr @"_CBase.Main.$vtable.2f61a5251c699b4c" }
 // CHECK:STDOUT:
 // CHECK:STDOUT: define void @_CF.Main() !dbg !4 {
 // CHECK:STDOUT: entry:
@@ -478,21 +478,21 @@ fn Make() {
 // CHECK:STDOUT:   %t2.var = alloca { ptr }, align 8, !dbg !8
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %t1.var), !dbg !7
 // CHECK:STDOUT:   %.loc16_23.2.vptr = getelementptr inbounds nuw { ptr }, ptr %t1.var, i32 0, i32 0, !dbg !9
-// CHECK:STDOUT:   call void @llvm.memcpy.p0.p0.i64(ptr align 8 %t1.var, ptr align 8 @Base.val.20a.loc16_3, i64 8, i1 false), !dbg !7
+// CHECK:STDOUT:   call void @llvm.memcpy.p0.p0.i64(ptr align 8 %t1.var, ptr align 8 @Base.val.e09.loc16_3, i64 8, i1 false), !dbg !7
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %t2.var), !dbg !8
 // CHECK:STDOUT:   %.loc17_23.2.vptr = getelementptr inbounds nuw { ptr }, ptr %t2.var, i32 0, i32 0, !dbg !10
-// CHECK:STDOUT:   call void @llvm.memcpy.p0.p0.i64(ptr align 8 %t2.var, ptr align 8 @Base.val.f56.loc17_3, i64 8, i1 false), !dbg !8
+// CHECK:STDOUT:   call void @llvm.memcpy.p0.p0.i64(ptr align 8 %t2.var, ptr align 8 @Base.val.865.loc17_3, i64 8, i1 false), !dbg !8
 // CHECK:STDOUT:   ret void, !dbg !11
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: define linkonce_odr void @_CF.Base.Main.4d2ffa01ebfb7a1d(ptr %self) !dbg !12 {
+// CHECK:STDOUT: define linkonce_odr void @_CF.Base.Main.6f3ba65278fae545(ptr %self) !dbg !12 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   %v.var = alloca {}, align 8, !dbg !13
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %v.var), !dbg !13
 // CHECK:STDOUT:   ret void, !dbg !14
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: define linkonce_odr void @_CF.Base.Main.4f4310253a4de9ab(ptr %self) !dbg !15 {
+// CHECK:STDOUT: define linkonce_odr void @_CF.Base.Main.2f61a5251c699b4c(ptr %self) !dbg !15 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   %v.var = alloca { {} }, align 8, !dbg !16
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %v.var), !dbg !16
@@ -527,10 +527,10 @@ fn Make() {
 // CHECK:STDOUT: !9 = !DILocation(line: 16, column: 22, scope: !4)
 // CHECK:STDOUT: !10 = !DILocation(line: 17, column: 22, scope: !4)
 // CHECK:STDOUT: !11 = !DILocation(line: 15, column: 1, scope: !4)
-// CHECK:STDOUT: !12 = distinct !DISubprogram(name: "F", linkageName: "_CF.Base.Main.4d2ffa01ebfb7a1d", scope: null, file: !3, line: 5, type: !5, spFlags: DISPFlagDefinition, unit: !2)
+// CHECK:STDOUT: !12 = distinct !DISubprogram(name: "F", linkageName: "_CF.Base.Main.6f3ba65278fae545", scope: null, file: !3, line: 5, type: !5, spFlags: DISPFlagDefinition, unit: !2)
 // CHECK:STDOUT: !13 = !DILocation(line: 6, column: 5, scope: !12)
 // CHECK:STDOUT: !14 = !DILocation(line: 5, column: 3, scope: !12)
-// CHECK:STDOUT: !15 = distinct !DISubprogram(name: "F", linkageName: "_CF.Base.Main.4f4310253a4de9ab", scope: null, file: !3, line: 5, type: !5, spFlags: DISPFlagDefinition, unit: !2)
+// CHECK:STDOUT: !15 = distinct !DISubprogram(name: "F", linkageName: "_CF.Base.Main.2f61a5251c699b4c", scope: null, file: !3, line: 5, type: !5, spFlags: DISPFlagDefinition, unit: !2)
 // CHECK:STDOUT: !16 = !DILocation(line: 6, column: 5, scope: !15)
 // CHECK:STDOUT: !17 = !DILocation(line: 5, column: 3, scope: !15)
 // CHECK:STDOUT: ; ModuleID = 'generic_base.carbon'

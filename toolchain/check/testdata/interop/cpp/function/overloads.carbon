@@ -183,12 +183,9 @@ library "[[@TEST_NAME]]";
 import Cpp library "struct_literal_call_arg.h";
 
 fn F() {
-  // CHECK:STDERR: fail_todo_import_struct_literal_call_arg.carbon:[[@LINE+7]]:11: error: call argument of type `{}` is not supported [CppCallArgTypeNotSupported]
+  // CHECK:STDERR: fail_todo_import_struct_literal_call_arg.carbon:[[@LINE+4]]:11: error: call argument of type `{}` is not supported [CppCallArgTypeNotSupported]
   // CHECK:STDERR:   Cpp.foo({});
   // CHECK:STDERR:           ^~
-  // CHECK:STDERR: fail_todo_import_struct_literal_call_arg.carbon:[[@LINE+4]]:3: note: in call to Cpp function here [InCallToCppFunction]
-  // CHECK:STDERR:   Cpp.foo({});
-  // CHECK:STDERR:   ^~~~~~~~~~~
   // CHECK:STDERR:
   Cpp.foo({});
 }
@@ -304,12 +301,13 @@ library "[[@TEST_NAME]]";
 import Cpp library "no_viable_function.h";
 
 fn F() {
-  // CHECK:STDERR: fail_import_no_viable_function.carbon:[[@LINE+7]]:3: error: no matching function for call to `foo` [CppOverloadingNoViableFunctionFound]
-  // CHECK:STDERR:   Cpp.foo(1 as i64);
-  // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~
-  // CHECK:STDERR: fail_import_no_viable_function.carbon:[[@LINE+4]]:3: note: in call to Cpp function here [InCallToCppFunction]
-  // CHECK:STDERR:   Cpp.foo(1 as i64);
-  // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~
+  // CHECK:STDERR: fail_import_no_viable_function.carbon:[[@LINE+8]]:19: error: no matching function for call to 'foo' [CppInteropParseError]
+  // CHECK:STDERR:    15 |   Cpp.foo(1 as i64);
+  // CHECK:STDERR:       |                   ^
+  // CHECK:STDERR: fail_import_no_viable_function.carbon:[[@LINE-6]]:10: in file included here [InCppInclude]
+  // CHECK:STDERR: ./no_viable_function.h:2:6: note: candidate function not viable: requires 2 arguments, but 1 was provided [CppInteropParseNote]
+  // CHECK:STDERR:     2 | auto foo(short a, int b) -> void;
+  // CHECK:STDERR:       |      ^   ~~~~~~~~~~~~~~
   // CHECK:STDERR:
   Cpp.foo(1 as i64);
 }
@@ -330,12 +328,17 @@ library "[[@TEST_NAME]]";
 import Cpp library "ambiguous_overload.h";
 
 fn F() {
-  // CHECK:STDERR: fail_import_ambiguous_overload.carbon:[[@LINE+7]]:3: error: call to `foo` is ambiguous [CppOverloadingAmbiguousCandidatesFound]
-  // CHECK:STDERR:   Cpp.foo(1 as i64);
-  // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~
-  // CHECK:STDERR: fail_import_ambiguous_overload.carbon:[[@LINE+4]]:3: note: in call to Cpp function here [InCallToCppFunction]
-  // CHECK:STDERR:   Cpp.foo(1 as i64);
-  // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~
+  // CHECK:STDERR: fail_import_ambiguous_overload.carbon:[[@LINE+12]]:19: error: call to 'foo' is ambiguous [CppInteropParseError]
+  // CHECK:STDERR:    19 |   Cpp.foo(1 as i64);
+  // CHECK:STDERR:       |                   ^
+  // CHECK:STDERR: fail_import_ambiguous_overload.carbon:[[@LINE-6]]:10: in file included here [InCppInclude]
+  // CHECK:STDERR: ./ambiguous_overload.h:2:6: note: candidate function [CppInteropParseNote]
+  // CHECK:STDERR:     2 | auto foo(short a) -> void;
+  // CHECK:STDERR:       |      ^
+  // CHECK:STDERR: fail_import_ambiguous_overload.carbon:[[@LINE-10]]:10: in file included here [InCppInclude]
+  // CHECK:STDERR: ./ambiguous_overload.h:3:6: note: candidate function [CppInteropParseNote]
+  // CHECK:STDERR:     3 | auto foo(int a) -> void;
+  // CHECK:STDERR:       |      ^
   // CHECK:STDERR:
   Cpp.foo(1 as i64);
 }
@@ -356,12 +359,17 @@ library "[[@TEST_NAME]]";
 import Cpp library "deleted_function.h";
 
 fn F() {
-  // CHECK:STDERR: fail_import_deleted_function.carbon:[[@LINE+7]]:3: error: call to deleted function `foo` [CppOverloadingDeletedFunctionFound]
-  // CHECK:STDERR:   Cpp.foo(1 as i32);
-  // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~
-  // CHECK:STDERR: fail_import_deleted_function.carbon:[[@LINE+4]]:3: note: in call to Cpp function here [InCallToCppFunction]
-  // CHECK:STDERR:   Cpp.foo(1 as i32);
-  // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~
+  // CHECK:STDERR: fail_import_deleted_function.carbon:[[@LINE+12]]:19: error: call to deleted function 'foo' [CppInteropParseError]
+  // CHECK:STDERR:    19 |   Cpp.foo(1 as i32);
+  // CHECK:STDERR:       |                   ^
+  // CHECK:STDERR: fail_import_deleted_function.carbon:[[@LINE-6]]:10: in file included here [InCppInclude]
+  // CHECK:STDERR: ./deleted_function.h:3:6: note: candidate function has been explicitly deleted [CppInteropParseNote]
+  // CHECK:STDERR:     3 | auto foo(int a) -> void = delete;
+  // CHECK:STDERR:       |      ^
+  // CHECK:STDERR: fail_import_deleted_function.carbon:[[@LINE-10]]:10: in file included here [InCppInclude]
+  // CHECK:STDERR: ./deleted_function.h:2:6: note: candidate function [CppInteropParseNote]
+  // CHECK:STDERR:     2 | auto foo(short a) -> void;
+  // CHECK:STDERR:       |      ^
   // CHECK:STDERR:
   Cpp.foo(1 as i32);
 }
@@ -1456,7 +1464,7 @@ fn F() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %Cpp.ref: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
 // CHECK:STDOUT:   %foo.ref: %.c5d = name_ref foo, imports.%.a21 [concrete = constants.%empty_struct]
-// CHECK:STDOUT:   %.loc14: %empty_struct_type = struct_literal ()
+// CHECK:STDOUT:   %.loc11: %empty_struct_type = struct_literal ()
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -1940,12 +1948,12 @@ fn F() {
 // CHECK:STDOUT:   %int_64: Core.IntLiteral = int_value 64 [concrete = constants.%int_64]
 // CHECK:STDOUT:   %i64: type = class_type @Int, @Int(constants.%int_64) [concrete = constants.%i64]
 // CHECK:STDOUT:   %impl.elem0: %.b12 = impl_witness_access constants.%As.impl_witness.4f1, element0 [concrete = constants.%Core.IntLiteral.as.As.impl.Convert.fe2]
-// CHECK:STDOUT:   %bound_method.loc14_13.1: <bound method> = bound_method %int_1, %impl.elem0 [concrete = constants.%Core.IntLiteral.as.As.impl.Convert.bound]
+// CHECK:STDOUT:   %bound_method.loc15_13.1: <bound method> = bound_method %int_1, %impl.elem0 [concrete = constants.%Core.IntLiteral.as.As.impl.Convert.bound]
 // CHECK:STDOUT:   %specific_fn: <specific function> = specific_function %impl.elem0, @Core.IntLiteral.as.As.impl.Convert(constants.%int_64) [concrete = constants.%Core.IntLiteral.as.As.impl.Convert.specific_fn]
-// CHECK:STDOUT:   %bound_method.loc14_13.2: <bound method> = bound_method %int_1, %specific_fn [concrete = constants.%bound_method]
-// CHECK:STDOUT:   %Core.IntLiteral.as.As.impl.Convert.call: init %i64 = call %bound_method.loc14_13.2(%int_1) [concrete = constants.%int_1.41a]
-// CHECK:STDOUT:   %.loc14_13.1: %i64 = value_of_initializer %Core.IntLiteral.as.As.impl.Convert.call [concrete = constants.%int_1.41a]
-// CHECK:STDOUT:   %.loc14_13.2: %i64 = converted %int_1, %.loc14_13.1 [concrete = constants.%int_1.41a]
+// CHECK:STDOUT:   %bound_method.loc15_13.2: <bound method> = bound_method %int_1, %specific_fn [concrete = constants.%bound_method]
+// CHECK:STDOUT:   %Core.IntLiteral.as.As.impl.Convert.call: init %i64 = call %bound_method.loc15_13.2(%int_1) [concrete = constants.%int_1.41a]
+// CHECK:STDOUT:   %.loc15_13.1: %i64 = value_of_initializer %Core.IntLiteral.as.As.impl.Convert.call [concrete = constants.%int_1.41a]
+// CHECK:STDOUT:   %.loc15_13.2: %i64 = converted %int_1, %.loc15_13.1 [concrete = constants.%int_1.41a]
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -2018,12 +2026,12 @@ fn F() {
 // CHECK:STDOUT:   %int_64: Core.IntLiteral = int_value 64 [concrete = constants.%int_64]
 // CHECK:STDOUT:   %i64: type = class_type @Int, @Int(constants.%int_64) [concrete = constants.%i64]
 // CHECK:STDOUT:   %impl.elem0: %.b12 = impl_witness_access constants.%As.impl_witness.4f1, element0 [concrete = constants.%Core.IntLiteral.as.As.impl.Convert.fe2]
-// CHECK:STDOUT:   %bound_method.loc14_13.1: <bound method> = bound_method %int_1, %impl.elem0 [concrete = constants.%Core.IntLiteral.as.As.impl.Convert.bound]
+// CHECK:STDOUT:   %bound_method.loc19_13.1: <bound method> = bound_method %int_1, %impl.elem0 [concrete = constants.%Core.IntLiteral.as.As.impl.Convert.bound]
 // CHECK:STDOUT:   %specific_fn: <specific function> = specific_function %impl.elem0, @Core.IntLiteral.as.As.impl.Convert(constants.%int_64) [concrete = constants.%Core.IntLiteral.as.As.impl.Convert.specific_fn]
-// CHECK:STDOUT:   %bound_method.loc14_13.2: <bound method> = bound_method %int_1, %specific_fn [concrete = constants.%bound_method]
-// CHECK:STDOUT:   %Core.IntLiteral.as.As.impl.Convert.call: init %i64 = call %bound_method.loc14_13.2(%int_1) [concrete = constants.%int_1.41a]
-// CHECK:STDOUT:   %.loc14_13.1: %i64 = value_of_initializer %Core.IntLiteral.as.As.impl.Convert.call [concrete = constants.%int_1.41a]
-// CHECK:STDOUT:   %.loc14_13.2: %i64 = converted %int_1, %.loc14_13.1 [concrete = constants.%int_1.41a]
+// CHECK:STDOUT:   %bound_method.loc19_13.2: <bound method> = bound_method %int_1, %specific_fn [concrete = constants.%bound_method]
+// CHECK:STDOUT:   %Core.IntLiteral.as.As.impl.Convert.call: init %i64 = call %bound_method.loc19_13.2(%int_1) [concrete = constants.%int_1.41a]
+// CHECK:STDOUT:   %.loc19_13.1: %i64 = value_of_initializer %Core.IntLiteral.as.As.impl.Convert.call [concrete = constants.%int_1.41a]
+// CHECK:STDOUT:   %.loc19_13.2: %i64 = converted %int_1, %.loc19_13.1 [concrete = constants.%int_1.41a]
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -2096,12 +2104,12 @@ fn F() {
 // CHECK:STDOUT:   %int_32: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
 // CHECK:STDOUT:   %i32: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
 // CHECK:STDOUT:   %impl.elem0: %.351 = impl_witness_access constants.%As.impl_witness.080, element0 [concrete = constants.%Core.IntLiteral.as.As.impl.Convert.414]
-// CHECK:STDOUT:   %bound_method.loc14_13.1: <bound method> = bound_method %int_1, %impl.elem0 [concrete = constants.%Core.IntLiteral.as.As.impl.Convert.bound]
+// CHECK:STDOUT:   %bound_method.loc19_13.1: <bound method> = bound_method %int_1, %impl.elem0 [concrete = constants.%Core.IntLiteral.as.As.impl.Convert.bound]
 // CHECK:STDOUT:   %specific_fn: <specific function> = specific_function %impl.elem0, @Core.IntLiteral.as.As.impl.Convert(constants.%int_32) [concrete = constants.%Core.IntLiteral.as.As.impl.Convert.specific_fn]
-// CHECK:STDOUT:   %bound_method.loc14_13.2: <bound method> = bound_method %int_1, %specific_fn [concrete = constants.%bound_method]
-// CHECK:STDOUT:   %Core.IntLiteral.as.As.impl.Convert.call: init %i32 = call %bound_method.loc14_13.2(%int_1) [concrete = constants.%int_1.5d2]
-// CHECK:STDOUT:   %.loc14_13.1: %i32 = value_of_initializer %Core.IntLiteral.as.As.impl.Convert.call [concrete = constants.%int_1.5d2]
-// CHECK:STDOUT:   %.loc14_13.2: %i32 = converted %int_1, %.loc14_13.1 [concrete = constants.%int_1.5d2]
+// CHECK:STDOUT:   %bound_method.loc19_13.2: <bound method> = bound_method %int_1, %specific_fn [concrete = constants.%bound_method]
+// CHECK:STDOUT:   %Core.IntLiteral.as.As.impl.Convert.call: init %i32 = call %bound_method.loc19_13.2(%int_1) [concrete = constants.%int_1.5d2]
+// CHECK:STDOUT:   %.loc19_13.1: %i32 = value_of_initializer %Core.IntLiteral.as.As.impl.Convert.call [concrete = constants.%int_1.5d2]
+// CHECK:STDOUT:   %.loc19_13.2: %i32 = converted %int_1, %.loc19_13.1 [concrete = constants.%int_1.5d2]
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
