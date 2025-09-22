@@ -2096,19 +2096,6 @@ static auto ImportOverloadSetIntoScope(
                                                            access_kind.value());
 }
 
-// Imports a Clang overloaded lookup result into the scope.
-static auto ImportOverloadedResultIntoScope(Context& context,
-                                            SemIR::LocId loc_id,
-                                            SemIR::NameScopeId scope_id,
-                                            SemIR::NameId name_id,
-                                            clang::LookupResult& lookup)
-    -> SemIR::ScopeLookupResult {
-  clang::UnresolvedSet<4> overload_set;
-  overload_set.append(lookup.begin(), lookup.end());
-  return ImportOverloadSetIntoScope(context, loc_id, scope_id, name_id,
-                                    overload_set);
-}
-
 // Imports the constructors for a given class name. The found constructors are
 // imported as part of an overload set into the scope. Currently copy/move
 // constructors are not imported.
@@ -2186,8 +2173,10 @@ auto ImportNameFromCpp(Context& context, SemIR::LocId loc_id,
   if (lookup->isOverloadedResult() ||
       (lookup->isSingleResult() &&
        lookup->getFoundDecl()->isFunctionOrFunctionTemplate())) {
-    return ImportOverloadedResultIntoScope(context, loc_id, scope_id, name_id,
-                                           *lookup);
+    clang::UnresolvedSet<4> overload_set;
+    overload_set.append(lookup->begin(), lookup->end());
+    return ImportOverloadSetIntoScope(context, loc_id, scope_id, name_id,
+                                      overload_set);
   }
   if (!lookup->isSingleResult()) {
     // Clang will diagnose ambiguous lookup results for us.
