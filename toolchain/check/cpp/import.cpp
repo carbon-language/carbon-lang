@@ -922,6 +922,8 @@ static auto ImportClassObjectRepr(Context& context, SemIR::ClassId class_id,
                              context, class_type_inst_id, field_type_inst_id),
                          .name_id = field_name_id,
                          .index = SemIR::ElementIndex(fields.size())}));
+    // The imported SemIR::FieldDecl represents the original declaration `decl`,
+    // which is either the field or the indirect field declaration.
     auto key = SemIR::ClangDeclKey::ForNonFunctionDecl(decl);
     context.clang_decls().Add({.key = key, .inst_id = field_decl_id});
 
