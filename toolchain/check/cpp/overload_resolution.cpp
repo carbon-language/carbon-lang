@@ -10,6 +10,7 @@
 #include "toolchain/check/cpp/import.h"
 #include "toolchain/check/cpp/location.h"
 #include "toolchain/check/cpp/type_mapping.h"
+#include "toolchain/diagnostics/diagnostic_emitter.h"
 #include "toolchain/sem_ir/ids.h"
 #include "toolchain/sem_ir/typed_insts.h"
 
@@ -79,6 +80,12 @@ auto PerformCppOverloadResolution(Context& context, SemIR::LocId loc_id,
                                   SemIR::InstId self_id,
                                   llvm::ArrayRef<SemIR::InstId> arg_ids)
     -> SemIR::InstId {
+  // Register an annotation scope to flush any Clang diagnostics when we return.
+  // This is important to ensure that Clang diagnostics are properly interleaved
+  // with Carbon diagnostics.
+  Diagnostics::AnnotationScope annotate_diagnostics(&context.emitter(),
+                                                    [](auto& /*builder*/) {});
+
   // Map Carbon call argument types to C++ types.
   clang::Expr* self_expr = nullptr;
   if (self_id.has_value()) {
