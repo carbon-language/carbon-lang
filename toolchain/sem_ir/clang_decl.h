@@ -81,12 +81,8 @@ struct ClangDeclKey : public Printable<ClangDeclKey> {
 // a single `ClangDecl` exists for each `ClangDeclKey` used.
 struct ClangDecl : public Printable<ClangDecl> {
   // Comparison against ClangDeclKey, required by CanonicalValueStore.
-  auto operator==(const ClangDeclKey& rhs) const -> bool {
-    return key == rhs;
-  }
-  auto operator==(const ClangDecl& rhs) const -> bool {
-    return key == rhs.key;
-  }
+  auto operator==(const ClangDeclKey& rhs) const -> bool { return key == rhs; }
+  auto operator==(const ClangDecl& rhs) const -> bool { return key == rhs.key; }
 
   // Hashing for ClangDecl. See common/hashing.h.
   friend auto CarbonHashValue(const ClangDecl& value, uint64_t seed)
