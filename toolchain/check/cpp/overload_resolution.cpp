@@ -55,21 +55,23 @@ static auto AddOverloadCandidataes(clang::Sema& sema,
             cast<clang::CXXRecordDecl>(template_decl->getDeclContext()),
             ExplicitTemplateArgs, self_type, self_classification, args,
             candidate_set, SuppressUserConversions, PartialOverloading);
+      } else if (method_decl->isOverloadedOperator()) {
+        sema.AddMemberOperatorCandidates(method_decl->getOverloadedOperator(),
+                                         candidate_set.getLocation(), args,
+                                         candidate_set);
       } else {
         sema.AddMethodCandidate(method_decl, found_decl,
                                 method_decl->getParent(), self_type,
                                 self_classification, args, candidate_set,
                                 SuppressUserConversions, PartialOverloading);
       }
+    } else if (template_decl) {
+      sema.AddTemplateOverloadCandidate(
+          template_decl, found_decl, ExplicitTemplateArgs, args, candidate_set,
+          SuppressUserConversions, PartialOverloading);
     } else {
-      if (template_decl) {
-        sema.AddTemplateOverloadCandidate(
-            template_decl, found_decl, ExplicitTemplateArgs, args,
-            candidate_set, SuppressUserConversions, PartialOverloading);
-      } else {
-        sema.AddOverloadCandidate(fn_decl, found_decl, args, candidate_set,
-                                  SuppressUserConversions, PartialOverloading);
-      }
+      sema.AddOverloadCandidate(fn_decl, found_decl, args, candidate_set,
+                                SuppressUserConversions, PartialOverloading);
     }
   }
 }

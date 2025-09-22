@@ -194,4 +194,31 @@ auto LookupCppOperator(Context& context, SemIR::LocId loc_id, Operator op,
                               SemIR::NameId::CppOperator, functions);
 }
 
+// C++ operators can be member functions, in which case the first argument is
+// actually the `self` argument. In this case, we extract the `self` argument
+// from the arguments.
+auto AdjustSelfAndArgsForCppMemberOverloadedOperator(
+    Context& context, SemIR::FunctionId function_id, SemIR::InstId& self_id,
+    llvm::ArrayRef<SemIR::InstId>& arg_ids) -> void {
+  if (self_id.has_value()) {
+    return;
+  }
+
+  SemIR::ClangDeclId clang_decl_id =
+      context.functions().Get(function_id).clang_decl_id;
+  if (!clang_decl_id.has_value()) {
+    return;
+  }
+
+  auto* clang_method_decl = dyn_cast<clang::CXXMethodDecl>(
+      context.clang_decls().Get(clang_decl_id).decl);
+  if (!clang_method_decl || !clang_method_decl->isOverloadedOperator()) {
+    return;
+  }
+
+  CARBON_CHECK(arg_ids.size() >= 1);
+  self_id = arg_ids.front();
+  arg_ids = arg_ids.drop_front();
+}
+
 }  // namespace Carbon::Check

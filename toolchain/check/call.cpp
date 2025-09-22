@@ -10,6 +10,7 @@
 #include "toolchain/check/context.h"
 #include "toolchain/check/control_flow.h"
 #include "toolchain/check/convert.h"
+#include "toolchain/check/cpp/operators.h"
 #include "toolchain/check/cpp/overload_resolution.h"
 #include "toolchain/check/cpp/thunk.h"
 #include "toolchain/check/deduce.h"
@@ -313,6 +314,10 @@ auto PerformCall(Context& context, SemIR::LocId loc_id, SemIR::InstId callee_id,
     // Preserve the `self` argument from the original callee.
     CARBON_CHECK(!callee_function.self_id.has_value());
     callee_function.self_id = self_id;
+
+    // Special handling for C++ member overloaded operators.
+    AdjustSelfAndArgsForCppMemberOverloadedOperator(
+        context, callee_function.function_id, callee_function.self_id, arg_ids);
   }
   if (callee_function.function_id.has_value()) {
     return PerformCallToFunction(context, loc_id, callee_id, callee_function,
