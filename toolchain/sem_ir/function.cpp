@@ -34,8 +34,8 @@ auto CalleeFunction::Print(llvm::raw_ostream& out) const -> void {
       out << "Error{}";
       break;
     }
-    case CARBON_KIND(SemIR::CalleeFunction::GenericEntity _): {
-      out << "GenericEntity{}";
+    case CARBON_KIND(SemIR::CalleeFunction::Other _): {
+      out << "Other{}";
       break;
     }
   }
@@ -70,7 +70,7 @@ auto GetCalleeFunction(const File& sem_ir, InstId callee_id,
   // Identify the function we're calling by its type.
   auto val_id = sem_ir.constant_values().GetConstantInstId(callee_id);
   if (!val_id.has_value()) {
-    return {.info = CalleeFunction::GenericEntity()};
+    return {.info = CalleeFunction::Other()};
   }
   auto fn_type_inst =
       sem_ir.types().GetAsInst(sem_ir.insts().Get(val_id).type_id());
@@ -93,7 +93,7 @@ auto GetCalleeFunction(const File& sem_ir, InstId callee_id,
     if (fn_type_inst.Is<ErrorInst>()) {
       return {.info = CalleeFunction::Error()};
     }
-    return {.info = CalleeFunction::GenericEntity()};
+    return {.info = CalleeFunction::Other()};
   }
 
   fn.function_id = fn_type->function_id;

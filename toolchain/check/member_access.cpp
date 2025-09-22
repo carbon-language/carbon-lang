@@ -80,7 +80,7 @@ static auto GetSelfIfInstanceMethod(const SemIR::File& sem_ir,
     case CARBON_KIND(SemIR::CalleeFunction::Error _): {
       return std::nullopt;
     }
-    case CARBON_KIND(SemIR::CalleeFunction::GenericEntity _): {
+    case CARBON_KIND(SemIR::CalleeFunction::Other _): {
       return std::nullopt;
     }
   }

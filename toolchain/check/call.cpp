@@ -292,10 +292,11 @@ static auto PerformCallToFunction(
   }
 }
 
-// Performs a call where the callee is a generic type.
-static auto PerformCallToGenericType(Context& context, SemIR::LocId loc_id,
-                                     SemIR::InstId callee_id,
-                                     llvm::ArrayRef<SemIR::InstId> arg_ids)
+// Performs a call where the callee is a generic type. If it's not a generic
+// type, produces a diagnostic.
+static auto PerformCallToOther(Context& context, SemIR::LocId loc_id,
+                               SemIR::InstId callee_id,
+                               llvm::ArrayRef<SemIR::InstId> arg_ids)
     -> SemIR::InstId {
   auto type_inst =
       context.types().GetAsInst(context.insts().Get(callee_id).type_id());
@@ -330,8 +331,8 @@ auto PerformCall(Context& context, SemIR::LocId loc_id, SemIR::InstId callee_id,
     case CARBON_KIND(SemIR::CalleeFunction::Function fn): {
       return PerformCallToFunction(context, loc_id, callee_id, fn, arg_ids);
     }
-    case CARBON_KIND(SemIR::CalleeFunction::GenericEntity _): {
-      return PerformCallToGenericType(context, loc_id, callee_id, arg_ids);
+    case CARBON_KIND(SemIR::CalleeFunction::Other _): {
+      return PerformCallToOther(context, loc_id, callee_id, arg_ids);
     }
 
     case CARBON_KIND(SemIR::CalleeFunction::CppOverload overload): {
@@ -349,8 +350,8 @@ auto PerformCall(Context& context, SemIR::LocId loc_id, SemIR::InstId callee_id,
           fn.self_id = overload.self_id;
           return PerformCallToFunction(context, loc_id, callee_id, fn, arg_ids);
         }
-        case CARBON_KIND(SemIR::CalleeFunction::GenericEntity _): {
-          return PerformCallToGenericType(context, loc_id, callee_id, arg_ids);
+        case CARBON_KIND(SemIR::CalleeFunction::Other _): {
+          return PerformCallToOther(context, loc_id, callee_id, arg_ids);
         }
         case CARBON_KIND(SemIR::CalleeFunction::CppOverload _): {
           CARBON_FATAL("overloads can't be recursive");

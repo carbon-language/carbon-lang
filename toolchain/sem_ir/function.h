@@ -212,10 +212,10 @@ struct CalleeFunction : public Printable<CalleeFunction> {
     InstId self_id;
   };
 
-  // This is a generic entity, not a function.
-  struct GenericEntity {};
+  // This may be a generic type, or could be an invalid callee.
+  struct Other {};
 
-  std::variant<CppOverload, Error, Function, GenericEntity> info;
+  std::variant<CppOverload, Error, Function, Other> info;
 
   auto Print(llvm::raw_ostream& out) const -> void;
 };
