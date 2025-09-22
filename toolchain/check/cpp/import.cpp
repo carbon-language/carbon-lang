@@ -563,16 +563,11 @@ static auto GetDeclarationName(Context& context, SemIR::NameId name_id)
                                     .getIdentifierInfo(*name));
 }
 
-// Performs a qualified name lookup of the name in the given scope. Returns the
-// lookup result if lookup was successful.
-static auto ClangLookupName(Context& context, SemIR::NameScopeId scope_id,
-                            SemIR::NameId name_id)
+// Performs a qualified name lookup of the declaration name in the given scope.
+// Returns the lookup result if lookup was successful.
+static auto ClangLookup(Context& context, SemIR::NameScopeId scope_id,
+                        clang::DeclarationName name)
     -> std::optional<clang::LookupResult> {
-  auto declaration_name = GetDeclarationName(context, name_id);
-  if (!declaration_name) {
-    return std::nullopt;
-  }
-
   clang::ASTUnit* ast = context.sem_ir().clang_ast_unit();
   CARBON_CHECK(ast);
   clang::Sema& sema = ast->getSema();
@@ -581,8 +576,7 @@ static auto ClangLookupName(Context& context, SemIR::NameScopeId scope_id,
   // here so that clang's diagnostics can point into the carbon code that uses
   // the name.
   clang::LookupResult lookup(
-      sema,
-      clang::DeclarationNameInfo(*declaration_name, clang::SourceLocation()),
+      sema, clang::DeclarationNameInfo(name, clang::SourceLocation()),
       clang::Sema::LookupNameKind::LookupOrdinaryName);
 
   bool found =
@@ -593,6 +587,19 @@ static auto ClangLookupName(Context& context, SemIR::NameScopeId scope_id,
   }
 
   return lookup;
+}
+
+// Looks up the given name in the Clang AST in a specific scope. Returns the
+// lookup result if lookup was successful.
+static auto ClangLookupName(Context& context, SemIR::NameScopeId scope_id,
+                            SemIR::NameId name_id)
+    -> std::optional<clang::LookupResult> {
+  auto declaration_name = GetDeclarationName(context, name_id);
+  if (!declaration_name) {
+    return std::nullopt;
+  }
+
+  return ClangLookup(context, scope_id, *declaration_name);
 }
 
 // Returns whether `decl` already mapped to an instruction.
