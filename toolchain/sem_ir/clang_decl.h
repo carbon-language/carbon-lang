@@ -46,8 +46,6 @@ struct ClangDeclKey : public Printable<ClangDeclKey> {
 
   auto Print(llvm::raw_ostream& out) const -> void;
 
-  auto PrintFields(llvm::raw_ostream& out) const -> void;
-
   auto operator==(const ClangDeclKey& rhs) const -> bool {
     return decl == rhs.decl && num_params == rhs.num_params;
   }
@@ -80,15 +78,25 @@ struct ClangDeclKey : public Printable<ClangDeclKey> {
 //
 // Instances of this type are managed by a `ClangDeclStore`, which ensures that
 // a single `ClangDecl` exists for each `ClangDeclKey` used.
-struct ClangDecl : public ClangDeclKey, public Printable<ClangDecl> {
-  // This is intentionally not explicit to permit braced initialization.
-  explicit(false) ClangDecl(ClangDeclKey key, InstId inst_id)
-      : ClangDeclKey(key), inst_id(inst_id) {}
+struct ClangDecl : public Printable<ClangDecl> {
+  // Comparison against ClangDeclKey, required by CanonicalValueStore.
+  auto operator==(const ClangDeclKey& rhs) const -> bool {
+    return key == rhs;
+  }
+  auto operator==(const ClangDecl& rhs) const -> bool {
+    return key == rhs.key;
+  }
+
+  // Hashing for ClangDecl. See common/hashing.h.
+  friend auto CarbonHashValue(const ClangDecl& value, uint64_t seed)
+      -> HashCode {
+    return HashValue(value.key, seed);
+  }
 
   auto Print(llvm::raw_ostream& out) const -> void;
 
-  // operator== and hashing are intentionally provided by slicing to the base
-  // class.
+  // The key by which this declaration can be looked up.
+  ClangDeclKey key;
 
   // The instruction the Clang declaration is mapped to.
   InstId inst_id;

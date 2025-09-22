@@ -480,9 +480,9 @@ auto ImportCppFiles(Context& context,
   SemIR::NameScope& name_scope = context.name_scopes().Get(name_scope_id);
   name_scope.set_is_closed_import(true);
   name_scope.set_clang_decl_context_id(context.clang_decls().Add(
-      {SemIR::ClangDeclKey(
+      {.key = SemIR::ClangDeclKey(
            generated_ast->getASTContext().getTranslationUnitDecl()),
-       name_scope.inst_id()}));
+       .inst_id = name_scope.inst_id()}));
 
   if (ast_has_error) {
     name_scope.set_has_error();
@@ -501,7 +501,7 @@ static auto GetDeclContext(Context& context, SemIR::NameScopeId scope_id)
   auto scope_clang_decl_context_id =
       context.name_scopes().Get(scope_id).clang_decl_context_id();
   return dyn_cast<clang::DeclContext>(
-      context.clang_decls().Get(scope_clang_decl_context_id).decl);
+      context.clang_decls().Get(scope_clang_decl_context_id).key.decl);
 }
 
 static auto ClangLookup(Context& context, SemIR::NameScopeId scope_id,
@@ -536,7 +536,7 @@ static auto ClangConstructorLookup(Context& context,
 
   clang::Sema& sema = context.sem_ir().clang_ast_unit()->getSema();
   clang::Decl* decl =
-      context.clang_decls().Get(scope.clang_decl_context_id()).decl;
+      context.clang_decls().Get(scope.clang_decl_context_id()).key.decl;
   return sema.LookupConstructors(cast<clang::CXXRecordDecl>(decl));
 }
 
@@ -558,7 +558,8 @@ static auto IsDeclInjectedClassName(Context& context,
 
   const SemIR::ClangDecl& clang_decl = context.clang_decls().Get(
       context.sem_ir().name_scopes().Get(scope_id).clang_decl_context_id());
-  const auto* scope_record_decl = cast<clang::CXXRecordDecl>(clang_decl.decl);
+  const auto* scope_record_decl =
+      cast<clang::CXXRecordDecl>(clang_decl.key.decl);
 
   const clang::ASTContext& ast_context =
       context.sem_ir().clang_ast_unit()->getASTContext();
@@ -677,7 +678,7 @@ static auto ImportNamespaceDecl(Context& context,
   context.name_scopes()
       .Get(result.name_scope_id)
       .set_clang_decl_context_id(
-          context.clang_decls().Add({key, result.inst_id}));
+          context.clang_decls().Add({.key = key, .inst_id = result.inst_id}));
   return result.inst_id;
 }
 
@@ -743,7 +744,8 @@ static auto ImportTagDecl(Context& context, clang::TagDecl* clang_decl)
 
   // TODO: The caller does the same lookup. Avoid doing it twice.
   auto key = SemIR::ClangDeclKey(clang_decl);
-  auto clang_decl_id = context.clang_decls().Add({key, class_inst_id});
+  auto clang_decl_id =
+      context.clang_decls().Add({.key = key, .inst_id = class_inst_id});
 
   // Name lookup into the Carbon class looks in the C++ class definition.
   auto& class_info = context.classes().Get(class_id);
@@ -921,7 +923,7 @@ static auto ImportClassObjectRepr(Context& context, SemIR::ClassId class_id,
                          .name_id = field_name_id,
                          .index = SemIR::ElementIndex(fields.size())}));
     auto key = SemIR::ClangDeclKey::ForNonFunctionDecl(decl);
-    context.clang_decls().Add({key, field_decl_id});
+    context.clang_decls().Add({.key = key, .inst_id = field_decl_id});
 
     // Compute the offset to the field that appears directly in the class.
     uint64_t offset = clang_layout.getFieldOffset(
@@ -1053,13 +1055,13 @@ static auto ImportEnumConstantDecl(Context& context,
   auto inst_id = AddInstInNoBlock<SemIR::IntValue>(
       context, loc_id, {.type_id = type_id, .int_id = int_id});
   context.imports().push_back(inst_id);
-  context.clang_decls().Add({key, inst_id});
+  context.clang_decls().Add({.key = key, .inst_id = inst_id});
   return inst_id;
 }
 
 // Mark the given `key` as failed in `clang_decls`.
 static auto MarkFailedDecl(Context& context, SemIR::ClangDeclKey key) {
-  context.clang_decls().Add({key, SemIR::ErrorInst::InstId});
+  context.clang_decls().Add({.key = key, .inst_id = SemIR::ErrorInst::InstId});
 }
 
 // Creates an integer type of the given size.
@@ -1160,7 +1162,7 @@ static auto MapTagType(Context& context, const clang::TagType& type)
     if (auto* record_decl = dyn_cast<clang::CXXRecordDecl>(tag_decl)) {
       auto custom_type = LookupCustomRecordType(context, record_decl);
       if (custom_type.inst_id.has_value()) {
-        context.clang_decls().Add({key, custom_type.inst_id});
+        context.clang_decls().Add({.key = key, .inst_id = custom_type.inst_id});
         return custom_type;
       }
     }
@@ -1628,7 +1630,8 @@ static auto ImportFunction(Context& context, SemIR::LocId loc_id,
        .self_param_id = FindSelfPattern(
            context, function_params_insts->implicit_param_patterns_id),
        .clang_decl_id = context.clang_decls().Add(
-           {SemIR::ClangDeclKey(clang_decl, num_params), decl_id})}};
+           {.key = SemIR::ClangDeclKey(clang_decl, num_params),
+            .inst_id = decl_id})}};
 
   function_decl.function_id = context.functions().Add(function_info);
   function_decl.type_id = GetFunctionType(context, function_decl.function_id,
@@ -1802,7 +1805,7 @@ static auto ImportVarDecl(Context& context, SemIR::LocId loc_id,
       AddPlaceholderInstInNoBlock(context, {loc_id, var_storage});
 
   auto clang_decl_id = context.clang_decls().Add(
-      {SemIR::ClangDeclKey(var_decl), var_storage_inst_id});
+      {.key = SemIR::ClangDeclKey(var_decl), .inst_id = var_storage_inst_id});
 
   // Entity name referring to a Clang decl for mangling.
   SemIR::EntityNameId entity_name_id =
@@ -1853,7 +1856,7 @@ static auto ImportDeclAfterDependencies(Context& context, SemIR::LocId loc_id,
                                  type.getAsString()));
       return SemIR::ErrorInst::InstId;
     }
-    context.clang_decls().Add({key, type_inst_id});
+    context.clang_decls().Add({.key = key, .inst_id = type_inst_id});
     return type_inst_id;
   }
   if (isa<clang::FieldDecl, clang::IndirectFieldDecl>(clang_decl)) {
@@ -2190,7 +2193,7 @@ auto ImportClassDefinitionForClangDecl(Context& context, SemIR::LocId loc_id,
   CARBON_CHECK(ast);
 
   auto* clang_decl =
-      cast<clang::TagDecl>(context.clang_decls().Get(clang_decl_id).decl);
+      cast<clang::TagDecl>(context.clang_decls().Get(clang_decl_id).key.decl);
   auto class_inst_id = context.types().GetAsTypeInstId(
       context.classes().Get(class_id).first_owning_decl_id);
 

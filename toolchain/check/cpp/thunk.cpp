@@ -95,8 +95,9 @@ auto IsCppThunkRequired(Context& context, const SemIR::Function& function)
   bool thunk_required = false;
 
   const auto& decl_info = context.clang_decls().Get(function.clang_decl_id);
-  const auto* decl = cast<clang::FunctionDecl>(decl_info.decl);
-  if (decl_info.num_params != static_cast<int>(decl->getNumNonObjectParams())) {
+  const auto* decl = cast<clang::FunctionDecl>(decl_info.key.decl);
+  if (decl_info.key.num_params !=
+      static_cast<int>(decl->getNumNonObjectParams())) {
     // We require a thunk if the number of parameters we want isn't all of them.
     // This happens if default arguments are in use, or (eventually) when
     // calling a varargs function.
@@ -541,7 +542,7 @@ auto BuildCppThunk(Context& context, const SemIR::Function& callee_function)
   clang::FunctionDecl* callee_function_decl =
       context.clang_decls()
           .Get(callee_function.clang_decl_id)
-          .decl->getAsFunction();
+          .key.decl->getAsFunction();
   CARBON_CHECK(callee_function_decl);
 
   CalleeFunctionInfo callee_info(
