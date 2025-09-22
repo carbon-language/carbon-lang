@@ -11,8 +11,8 @@ namespace Carbon::SemIR {
 auto ClangDeclKey::PrintFields(llvm::raw_ostream& out) const -> void {
   out << "decl: ";
   decl->print(out);
-  if (params != -1) {
-    out << ", params: " << params;
+  if (num_params != -1) {
+    out << ", num_params: " << num_params;
   }
 }
 

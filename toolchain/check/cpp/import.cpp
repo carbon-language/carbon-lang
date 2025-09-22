@@ -1760,7 +1760,7 @@ static auto AddDependentUnimportedDecls(const Context& context,
   clang::Decl* clang_decl = key.decl;
   if (auto* clang_function_decl = clang_decl->getAsFunction()) {
     AddDependentUnimportedFunctionDecls(context, *clang_function_decl,
-                                        key.params, worklist);
+                                        key.num_params, worklist);
   } else if (auto* type_decl = dyn_cast<clang::TypeDecl>(clang_decl)) {
     if (!isa<clang::TagDecl>(clang_decl)) {
       AddDependentUnimportedTypeDecls(
@@ -1838,7 +1838,7 @@ static auto ImportDeclAfterDependencies(Context& context, SemIR::LocId loc_id,
     -> SemIR::InstId {
   clang::Decl* clang_decl = key.decl;
   if (auto* clang_function_decl = clang_decl->getAsFunction()) {
-    return ImportFunctionDecl(context, loc_id, clang_function_decl, key.params);
+    return ImportFunctionDecl(context, loc_id, clang_function_decl, key.num_params);
   }
   if (auto* clang_namespace_decl = dyn_cast<clang::NamespaceDecl>(clang_decl)) {
     return ImportNamespaceDecl(context, clang_namespace_decl);

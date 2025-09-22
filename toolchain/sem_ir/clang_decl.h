@@ -35,7 +35,7 @@ struct ClangDeclKey : public Printable<ClangDeclKey> {
   // For declaration classes that are derived from FunctionDecl, a parameter
   // count is required.
   explicit ClangDeclKey(clang::FunctionDecl* decl, int params)
-      : decl(decl->getCanonicalDecl()), params(params) {}
+      : decl(decl->getCanonicalDecl()), num_params(params) {}
 
   // Factory function for clang declaration that is dynamically known to not be
   // a function declaration.
@@ -49,7 +49,7 @@ struct ClangDeclKey : public Printable<ClangDeclKey> {
   auto PrintFields(llvm::raw_ostream& out) const -> void;
 
   auto operator==(const ClangDeclKey& rhs) const -> bool {
-    return decl == rhs.decl && params == rhs.params;
+    return decl == rhs.decl && num_params == rhs.num_params;
   }
 
   // Hashing for ClangDecl. See common/hashing.h.
@@ -57,7 +57,7 @@ struct ClangDeclKey : public Printable<ClangDeclKey> {
       -> HashCode {
     // Manual hashing support is required because this type has tail padding in
     // 64-bit compilations.
-    return HashValue(std::pair{value.decl, value.params}, seed);
+    return HashValue(std::pair{value.decl, value.num_params}, seed);
   }
 
   // The Clang declaration pointing to the Clang AST.
@@ -67,7 +67,7 @@ struct ClangDeclKey : public Printable<ClangDeclKey> {
 
   // The number of parameters to import for a function declaration. Always -1
   // for a non-function declaration.
-  int params = -1;
+  int32_t num_params = -1;
 
  private:
   struct UncheckedTag {

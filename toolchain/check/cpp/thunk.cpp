@@ -96,7 +96,7 @@ auto IsCppThunkRequired(Context& context, const SemIR::Function& function)
 
   const auto& decl_info = context.clang_decls().Get(function.clang_decl_id);
   const auto* decl = cast<clang::FunctionDecl>(decl_info.decl);
-  if (decl_info.params != static_cast<int>(decl->getNumNonObjectParams())) {
+  if (decl_info.num_params != static_cast<int>(decl->getNumNonObjectParams())) {
     // We require a thunk if the number of parameters we want isn't all of them.
     // This happens if default arguments are in use, or (eventually) when
     // calling a varargs function.
