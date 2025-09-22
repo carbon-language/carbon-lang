@@ -335,7 +335,7 @@ auto PerformCall(Context& context, SemIR::LocId loc_id, SemIR::InstId callee_id,
       return PerformCallToOther(context, loc_id, callee_id, arg_ids);
     }
 
-    case CARBON_KIND(SemIR::CalleeFunction::CppOverload overload): {
+    case CARBON_KIND(SemIR::CalleeFunction::CppOverloadSet overload): {
       callee_id = PerformCppOverloadResolution(context, loc_id,
                                                overload.cpp_overload_set_id,
                                                overload.self_id, arg_ids);
@@ -353,7 +353,7 @@ auto PerformCall(Context& context, SemIR::LocId loc_id, SemIR::InstId callee_id,
         case CARBON_KIND(SemIR::CalleeFunction::Other _): {
           return PerformCallToOther(context, loc_id, callee_id, arg_ids);
         }
-        case CARBON_KIND(SemIR::CalleeFunction::CppOverload _): {
+        case CARBON_KIND(SemIR::CalleeFunction::CppOverloadSet _): {
           CARBON_FATAL("overloads can't be recursive");
         }
       }

@@ -67,7 +67,7 @@ static auto GetSelfIfInstanceMethod(const SemIR::File& sem_ir,
       }
       return std::nullopt;
     }
-    case CARBON_KIND(SemIR::CalleeFunction::CppOverload overload): {
+    case CARBON_KIND(SemIR::CalleeFunction::CppOverloadSet overload): {
       // For now, treat all C++ overload sets as potentially containing instance
       // methods. Overload resolution will handle the case where we actually
       // found a static method.

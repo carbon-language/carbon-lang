@@ -25,7 +25,7 @@ auto CalleeFunction::Print(llvm::raw_ostream& out) const -> void {
           << ", self_id: " << fn.self_id << "}";
       break;
     }
-    case CARBON_KIND(SemIR::CalleeFunction::CppOverload overload): {
+    case CARBON_KIND(SemIR::CalleeFunction::CppOverloadSet overload): {
       out << "CppOverload{cpp_overload_set_id: " << overload.cpp_overload_set_id
           << ", self_id: " << overload.self_id << "}";
       break;
@@ -76,7 +76,7 @@ auto GetCalleeFunction(const File& sem_ir, InstId callee_id,
       sem_ir.types().GetAsInst(sem_ir.insts().Get(val_id).type_id());
 
   if (auto cpp_overload_set_type = fn_type_inst.TryAs<CppOverloadSetType>()) {
-    return {.info = CalleeFunction::CppOverload{
+    return {.info = CalleeFunction::CppOverloadSet{
                 .cpp_overload_set_id = cpp_overload_set_type->overload_set_id,
                 .self_id = fn.self_id}};
   }

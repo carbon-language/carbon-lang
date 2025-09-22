@@ -187,7 +187,7 @@ class File;
 
 struct CalleeFunction : public Printable<CalleeFunction> {
   // This is a C++ overload set.
-  struct CppOverload {
+  struct CppOverloadSet {
     // The overload set.
     CppOverloadSetId cpp_overload_set_id;
     // The bound `self` parameter. `None` if not a method.
