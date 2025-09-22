@@ -213,9 +213,9 @@ struct CalleeFunction : public Printable<CalleeFunction> {
   };
 
   // This may be a generic type, or could be an invalid callee.
-  struct Other {};
+  struct NonFunction {};
 
-  std::variant<CppOverloadSet, Error, Function, Other> info;
+  std::variant<CppOverloadSet, Error, Function, NonFunction> info;
 
   auto Print(llvm::raw_ostream& out) const -> void;
 };

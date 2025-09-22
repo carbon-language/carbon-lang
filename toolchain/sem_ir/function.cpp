@@ -34,7 +34,7 @@ auto CalleeFunction::Print(llvm::raw_ostream& out) const -> void {
       out << "Error{}";
       break;
     }
-    case CARBON_KIND(SemIR::CalleeFunction::Other _): {
+    case CARBON_KIND(SemIR::CalleeFunction::NonFunction _): {
       out << "Other{}";
       break;
     }
@@ -70,12 +70,14 @@ auto GetCalleeFunction(const File& sem_ir, InstId callee_id,
   // Identify the function we're calling by its type.
   auto val_id = sem_ir.constant_values().GetConstantInstId(callee_id);
   if (!val_id.has_value()) {
-    return {.info = CalleeFunction::Other()};
+    return {.info = CalleeFunction::NonFunction()};
   }
   auto fn_type_inst =
       sem_ir.types().GetAsInst(sem_ir.insts().Get(val_id).type_id());
 
   if (auto cpp_overload_set_type = fn_type_inst.TryAs<CppOverloadSetType>()) {
+    CARBON_CHECK(!fn.resolved_specific_id.has_value(),
+                 "Only `SpecificFunction` will be resolved, not C++ overloads");
     return {.info = CalleeFunction::CppOverloadSet{
                 .cpp_overload_set_id = cpp_overload_set_type->overload_set_id,
                 .self_id = fn.self_id}};
@@ -93,7 +95,7 @@ auto GetCalleeFunction(const File& sem_ir, InstId callee_id,
     if (fn_type_inst.Is<ErrorInst>()) {
       return {.info = CalleeFunction::Error()};
     }
-    return {.info = CalleeFunction::Other()};
+    return {.info = CalleeFunction::NonFunction()};
   }
 
   fn.function_id = fn_type->function_id;
