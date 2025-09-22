@@ -553,8 +553,7 @@ auto PerformCppThunkCall(Context& context, SemIR::LocId loc_id,
   auto callee_function_params =
       context.inst_blocks().Get(callee_function.call_params_id);
 
-  auto thunk_callee =
-      GetCalleeFunctionAsFunction(context.sem_ir(), thunk_callee_id);
+  auto thunk_callee = GetCalleeAsFunction(context.sem_ir(), thunk_callee_id);
   auto& thunk_function = context.functions().Get(thunk_callee.function_id);
   auto thunk_function_params =
       context.inst_blocks().Get(thunk_function.call_params_id);

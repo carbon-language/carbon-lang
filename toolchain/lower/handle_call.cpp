@@ -477,10 +477,12 @@ static auto HandleBuiltinCall(FunctionContext& context, SemIR::InstId inst_id,
   CARBON_FATAL("Unsupported builtin call.");
 }
 
-static auto HandleVirtualCall(
-    FunctionContext& context, llvm::ArrayRef<llvm::Value*> args,
-    const SemIR::File* callee_file, const SemIR::Function& function,
-    const SemIR::CalleeFunction::Function& callee_function) -> llvm::CallInst* {
+static auto HandleVirtualCall(FunctionContext& context,
+                              llvm::ArrayRef<llvm::Value*> args,
+                              const SemIR::File* callee_file,
+                              const SemIR::Function& function,
+                              const SemIR::CalleeFunction& callee_function)
+    -> llvm::CallInst* {
   CARBON_CHECK(!args.empty(),
                "Virtual functions must have at least one parameter");
   auto* ptr_type =
@@ -534,7 +536,7 @@ auto HandleInst(FunctionContext& context, SemIR::InstId inst_id,
   llvm::ArrayRef<SemIR::InstId> arg_ids =
       context.sem_ir().inst_blocks().Get(inst.args_id);
 
-  // TODO: This duplicates the SpecificId handling in `GetCalleeFunction`.
+  // TODO: This duplicates the SpecificId handling in `GetCallee`.
 
   // TODO: Should the `bound_method` be removed when forming the `call`
   // instruction? The `self` parameter is transferred into the call argument
@@ -557,8 +559,7 @@ auto HandleInst(FunctionContext& context, SemIR::InstId inst_id,
     CARBON_CHECK(callee_id.has_value());
   }
 
-  auto callee_function =
-      SemIR::GetCalleeFunctionAsFunction(*callee_file, callee_id);
+  auto callee_function = SemIR::GetCalleeAsFunction(*callee_file, callee_id);
 
   const SemIR::Function& function =
       callee_file->functions().Get(callee_function.function_id);

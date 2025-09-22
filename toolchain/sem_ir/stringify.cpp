@@ -569,8 +569,8 @@ class Stringifier {
   }
 
   auto StringifyInst(InstId /*inst_id*/, SpecificFunction inst) -> void {
-    auto callee = GetCalleeFunction(*sem_ir_, inst.callee_id);
-    if (auto* fn = std::get_if<CalleeFunction::Function>(&callee.info)) {
+    auto callee = GetCallee(*sem_ir_, inst.callee_id);
+    if (auto* fn = std::get_if<CalleeFunction>(&callee)) {
       step_stack_->PushEntityName(sem_ir_->functions().Get(fn->function_id),
                                   inst.specific_id);
       return;
@@ -579,8 +579,8 @@ class Stringifier {
   }
 
   auto StringifyInst(InstId /*inst_id*/, SpecificImplFunction inst) -> void {
-    auto callee = GetCalleeFunction(*sem_ir_, inst.callee_id);
-    if (auto* fn = std::get_if<CalleeFunction::Function>(&callee.info)) {
+    auto callee = GetCallee(*sem_ir_, inst.callee_id);
+    if (auto* fn = std::get_if<CalleeFunction>(&callee)) {
       // TODO: The specific_id here is for the interface member, but the
       // entity we're passing is the impl member. This might result in
       // strange output once we render specific arguments properly.

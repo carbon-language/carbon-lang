@@ -1939,11 +1939,9 @@ static auto MakeConstantForCall(EvalContext& eval_context,
   bool has_constant_callee = ReplaceFieldWithConstantValue(
       eval_context, &call, &SemIR::Call::callee_id, &phase);
 
-  auto callee_function =
-      SemIR::GetCalleeFunction(eval_context.sem_ir(), call.callee_id);
+  auto callee = SemIR::GetCallee(eval_context.sem_ir(), call.callee_id);
   auto builtin_kind = SemIR::BuiltinFunctionKind::None;
-  if (auto* fn =
-          std::get_if<SemIR::CalleeFunction::Function>(&callee_function.info)) {
+  if (auto* fn = std::get_if<SemIR::CalleeFunction>(&callee)) {
     // Calls to builtins might be constant.
     builtin_kind =
         eval_context.functions().Get(fn->function_id).builtin_function_kind();
@@ -1978,8 +1976,7 @@ static auto MakeConstantForCall(EvalContext& eval_context,
       CARBON_DIAGNOSTIC(CompTimeOnlyFunctionHere, Note,
                         "compile-time-only function declared here");
       const auto& function = eval_context.functions().Get(
-          std::get<SemIR::CalleeFunction::Function>(callee_function.info)
-              .function_id);
+          std::get<SemIR::CalleeFunction>(callee).function_id);
       eval_context.emitter()
           .Build(inst_id, NonConstantCallToCompTimeOnlyFunction)
           .Note(function.latest_decl_id(), CompTimeOnlyFunctionHere)

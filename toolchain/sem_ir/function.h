@@ -185,50 +185,47 @@ using FunctionStore = ValueStore<FunctionId, Function>;
 
 class File;
 
-struct CalleeFunction : public Printable<CalleeFunction> {
-  // This is a C++ overload set.
-  struct CppOverloadSet {
-    // The overload set.
-    CppOverloadSetId cpp_overload_set_id;
-    // The bound `self` parameter. `None` if not a method.
-    InstId self_id;
-  };
-
-  // An error instruction was found.
-  struct Error {};
-
-  // This is a function.
-  struct Function {
-    // The function.
-    FunctionId function_id;
-    // The specific that contains the function.
-    SpecificId enclosing_specific_id;
-    // The specific for the callee itself, in a resolved call.
-    SpecificId resolved_specific_id;
-    // The bound `Self` type or facet value. `None` if not a bound interface
-    // member.
-    InstId self_type_id;
-    // The bound `self` parameter. `None` if not a method.
-    InstId self_id;
-  };
-
-  // This may be a generic type, or could be an invalid callee.
-  struct NonFunction {};
-
-  std::variant<CppOverloadSet, Error, Function, NonFunction> info;
-
-  auto Print(llvm::raw_ostream& out) const -> void;
+// The callee as a C++ overload set.
+struct CalleeCppOverloadSet {
+  // The overload set.
+  CppOverloadSetId cpp_overload_set_id;
+  // The bound `self` parameter. `None` if not a method.
+  InstId self_id;
 };
 
-// Returns information for the function corresponding to callee_id.
-auto GetCalleeFunction(const File& sem_ir, InstId callee_id,
-                       SpecificId specific_id = SpecificId::None)
-    -> CalleeFunction;
+// The callee as an error instruction.
+struct CalleeError {};
 
-// Like `GetCalleeFunction`, but restricts to the `Function` callee kind.
-auto GetCalleeFunctionAsFunction(const File& sem_ir, InstId callee_id,
-                                 SpecificId specific_id = SpecificId::None)
-    -> CalleeFunction::Function;
+// The callee as a function.
+struct CalleeFunction {
+  // The function.
+  FunctionId function_id;
+  // The specific that contains the function.
+  SpecificId enclosing_specific_id;
+  // The specific for the callee itself, in a resolved call.
+  SpecificId resolved_specific_id;
+  // The bound `Self` type or facet value. `None` if not a bound interface
+  // member.
+  InstId self_type_id;
+  // The bound `self` parameter. `None` if not a method.
+  InstId self_id;
+};
+
+// The callee may be a generic type, or could be an invalid callee.
+struct CalleeNonFunction {};
+
+// A variant combining the callee forms.
+using Callee = std::variant<CalleeCppOverloadSet, CalleeError, CalleeFunction,
+                            CalleeNonFunction>;
+
+// Returns information for the function corresponding to callee_id.
+auto GetCallee(const File& sem_ir, InstId callee_id,
+               SpecificId specific_id = SpecificId::None) -> Callee;
+
+// Like `GetCallee`, but restricts to the `Function` callee kind.
+auto GetCalleeAsFunction(const File& sem_ir, InstId callee_id,
+                         SpecificId specific_id = SpecificId::None)
+    -> CalleeFunction;
 
 struct DecomposedVirtualFunction {
   // The canonical instruction from the `fn_decl_const_id`.

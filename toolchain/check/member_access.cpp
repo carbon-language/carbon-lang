@@ -58,16 +58,16 @@ static auto IsInstanceMethod(const SemIR::File& sem_ir,
 // instance method or because it's a C++ overload set that might contain an
 // instance method.
 static auto GetSelfIfInstanceMethod(const SemIR::File& sem_ir,
-                                    const SemIR::CalleeFunction& callee)
+                                    const SemIR::Callee& callee)
     -> std::optional<SemIR::InstId> {
-  CARBON_KIND_SWITCH(callee.info) {
-    case CARBON_KIND(SemIR::CalleeFunction::Function fn): {
+  CARBON_KIND_SWITCH(callee) {
+    case CARBON_KIND(SemIR::CalleeFunction fn): {
       if (IsInstanceMethod(sem_ir, fn.function_id)) {
         return fn.self_id;
       }
       return std::nullopt;
     }
-    case CARBON_KIND(SemIR::CalleeFunction::CppOverloadSet overload): {
+    case CARBON_KIND(SemIR::CalleeCppOverloadSet overload): {
       // For now, treat all C++ overload sets as potentially containing instance
       // methods. Overload resolution will handle the case where we actually
       // found a static method.
@@ -77,10 +77,10 @@ static auto GetSelfIfInstanceMethod(const SemIR::File& sem_ir,
       return overload.self_id;
     }
 
-    case CARBON_KIND(SemIR::CalleeFunction::Error _): {
+    case CARBON_KIND(SemIR::CalleeError _): {
       return std::nullopt;
     }
-    case CARBON_KIND(SemIR::CalleeFunction::NonFunction _): {
+    case CARBON_KIND(SemIR::CalleeNonFunction _): {
       return std::nullopt;
     }
   }
@@ -405,8 +405,7 @@ static auto PerformInstanceBinding(Context& context, SemIR::LocId loc_id,
                                    SemIR::InstId member_id) -> SemIR::InstId {
   // If the member is a function, check whether it's an instance method.
   if (auto self_id = GetSelfIfInstanceMethod(
-          context.sem_ir(),
-          SemIR::GetCalleeFunction(context.sem_ir(), member_id))) {
+          context.sem_ir(), SemIR::GetCallee(context.sem_ir(), member_id))) {
     if (self_id->has_value()) {
       // Found an already-bound method.
       return member_id;

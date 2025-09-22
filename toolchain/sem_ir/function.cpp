@@ -14,41 +14,13 @@
 
 namespace Carbon::SemIR {
 
-auto CalleeFunction::Print(llvm::raw_ostream& out) const -> void {
-  out << "{";
-  CARBON_KIND_SWITCH(info) {
-    case CARBON_KIND(SemIR::CalleeFunction::Function fn): {
-      out << "Function{function_id: " << fn.function_id
-          << ", enclosing_specific_id: " << fn.enclosing_specific_id
-          << ", resolved_specific_id: " << fn.resolved_specific_id
-          << ", self_type_id: " << fn.self_type_id
-          << ", self_id: " << fn.self_id << "}";
-      break;
-    }
-    case CARBON_KIND(SemIR::CalleeFunction::CppOverloadSet overload): {
-      out << "CppOverload{cpp_overload_set_id: " << overload.cpp_overload_set_id
-          << ", self_id: " << overload.self_id << "}";
-      break;
-    }
-    case CARBON_KIND(SemIR::CalleeFunction::Error _): {
-      out << "Error{}";
-      break;
-    }
-    case CARBON_KIND(SemIR::CalleeFunction::NonFunction _): {
-      out << "Other{}";
-      break;
-    }
-  }
-  out << "}";
-}
-
-auto GetCalleeFunction(const File& sem_ir, InstId callee_id,
-                       SpecificId specific_id) -> CalleeFunction {
-  CalleeFunction::Function fn = {.function_id = FunctionId::None,
-                                 .enclosing_specific_id = SpecificId::None,
-                                 .resolved_specific_id = SpecificId::None,
-                                 .self_type_id = InstId::None,
-                                 .self_id = InstId::None};
+auto GetCallee(const File& sem_ir, InstId callee_id, SpecificId specific_id)
+    -> Callee {
+  CalleeFunction fn = {.function_id = FunctionId::None,
+                       .enclosing_specific_id = SpecificId::None,
+                       .resolved_specific_id = SpecificId::None,
+                       .self_type_id = InstId::None,
+                       .self_id = InstId::None};
   if (auto bound_method = sem_ir.insts().TryGetAs<BoundMethod>(callee_id)) {
     fn.self_id = bound_method->object_id;
     callee_id = bound_method->function_decl_id;
@@ -70,7 +42,7 @@ auto GetCalleeFunction(const File& sem_ir, InstId callee_id,
   // Identify the function we're calling by its type.
   auto val_id = sem_ir.constant_values().GetConstantInstId(callee_id);
   if (!val_id.has_value()) {
-    return {.info = CalleeFunction::NonFunction()};
+    return CalleeNonFunction();
   }
   auto fn_type_inst =
       sem_ir.types().GetAsInst(sem_ir.insts().Get(val_id).type_id());
@@ -78,9 +50,9 @@ auto GetCalleeFunction(const File& sem_ir, InstId callee_id,
   if (auto cpp_overload_set_type = fn_type_inst.TryAs<CppOverloadSetType>()) {
     CARBON_CHECK(!fn.resolved_specific_id.has_value(),
                  "Only `SpecificFunction` will be resolved, not C++ overloads");
-    return {.info = CalleeFunction::CppOverloadSet{
-                .cpp_overload_set_id = cpp_overload_set_type->overload_set_id,
-                .self_id = fn.self_id}};
+    return CalleeCppOverloadSet{
+        .cpp_overload_set_id = cpp_overload_set_type->overload_set_id,
+        .self_id = fn.self_id};
   }
 
   if (auto impl_fn_type = fn_type_inst.TryAs<FunctionTypeWithSelfType>()) {
@@ -93,21 +65,19 @@ auto GetCalleeFunction(const File& sem_ir, InstId callee_id,
   auto fn_type = fn_type_inst.TryAs<FunctionType>();
   if (!fn_type) {
     if (fn_type_inst.Is<ErrorInst>()) {
-      return {.info = CalleeFunction::Error()};
+      return CalleeError();
     }
-    return {.info = CalleeFunction::NonFunction()};
+    return CalleeNonFunction();
   }
 
   fn.function_id = fn_type->function_id;
   fn.enclosing_specific_id = fn_type->specific_id;
-  return {.info = fn};
+  return fn;
 }
 
-auto GetCalleeFunctionAsFunction(const File& sem_ir, InstId callee_id,
-                                 SpecificId specific_id)
-    -> CalleeFunction::Function {
-  return std::get<CalleeFunction::Function>(
-      GetCalleeFunction(sem_ir, callee_id, specific_id).info);
+auto GetCalleeAsFunction(const File& sem_ir, InstId callee_id,
+                         SpecificId specific_id) -> CalleeFunction {
+  return std::get<CalleeFunction>(GetCallee(sem_ir, callee_id, specific_id));
 }
 
 auto DecomposeVirtualFunction(const File& sem_ir, InstId fn_decl_id,

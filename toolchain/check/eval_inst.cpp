@@ -501,7 +501,7 @@ auto EvalConstantInst(Context& context, SemIR::InstId inst_id,
 auto EvalConstantInst(Context& context, SemIR::InstId inst_id,
                       SemIR::SpecificFunction inst) -> ConstantEvalResult {
   auto callee_function =
-      SemIR::GetCalleeFunctionAsFunction(context.sem_ir(), inst.callee_id);
+      SemIR::GetCalleeAsFunction(context.sem_ir(), inst.callee_id);
   const auto& fn = context.functions().Get(callee_function.function_id);
   if (!callee_function.self_type_id.has_value() &&
       fn.builtin_function_kind() != SemIR::BuiltinFunctionKind::NoOp &&

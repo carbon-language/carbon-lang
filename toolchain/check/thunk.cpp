@@ -227,7 +227,7 @@ static auto HasDeclaredReturnType(Context& context,
 auto BuildThunk(Context& context, SemIR::FunctionId signature_id,
                 SemIR::SpecificId signature_specific_id,
                 SemIR::InstId callee_id) -> SemIR::InstId {
-  auto callee = SemIR::GetCalleeFunctionAsFunction(context.sem_ir(), callee_id);
+  auto callee = SemIR::GetCalleeAsFunction(context.sem_ir(), callee_id);
 
   // Check whether we can use the given function without a thunk.
   // TODO: For virtual functions, we want different rules for checking `self`.
