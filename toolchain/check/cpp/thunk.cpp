@@ -517,8 +517,7 @@ static auto BuildThunkBody(clang::Sema& sema,
 auto BuildCppThunk(Context& context, const SemIR::Function& callee_function)
     -> clang::FunctionDecl* {
   clang::FunctionDecl* callee_function_decl =
-      context.sem_ir()
-          .clang_decls()
+      context.clang_decls()
           .Get(callee_function.clang_decl_id)
           .decl->getAsFunction();
   CARBON_CHECK(callee_function_decl);
