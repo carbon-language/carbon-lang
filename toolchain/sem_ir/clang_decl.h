@@ -39,7 +39,7 @@ struct ClangDeclKey : public Printable<ClangDeclKey> {
 
   // Factory function for clang declaration that is dynamically known to not be
   // a function declaration.
-  static auto NonFunctionDecl(clang::Decl* decl) -> ClangDeclKey {
+  static auto ForNonFunctionDecl(clang::Decl* decl) -> ClangDeclKey {
     CARBON_CHECK(!isa<clang::FunctionDecl>(decl));
     return ClangDeclKey(decl, UncheckedTag());
   }

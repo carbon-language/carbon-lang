@@ -647,7 +647,7 @@ static auto GetParentNameScopeId(Context& context, clang::Decl* clang_decl)
 
   if (isa<clang::NamespaceDecl, clang::TranslationUnitDecl>(parent_decl)) {
     auto namespace_inst_id = LookupClangDeclInstId(
-        context, SemIR::ClangDeclKey::NonFunctionDecl(parent_decl));
+        context, SemIR::ClangDeclKey::ForNonFunctionDecl(parent_decl));
     CARBON_CHECK(namespace_inst_id.has_value());
     return context.insts()
         .GetAs<SemIR::Namespace>(namespace_inst_id)
@@ -920,7 +920,7 @@ static auto ImportClassObjectRepr(Context& context, SemIR::ClassId class_id,
                              context, class_type_inst_id, field_type_inst_id),
                          .name_id = field_name_id,
                          .index = SemIR::ElementIndex(fields.size())}));
-    auto key = SemIR::ClangDeclKey::NonFunctionDecl(decl);
+    auto key = SemIR::ClangDeclKey::ForNonFunctionDecl(decl);
     context.clang_decls().Add({key, field_decl_id});
 
     // Compute the offset to the field that appears directly in the class.
@@ -1771,7 +1771,7 @@ static auto AddDependentUnimportedDecls(const Context& context,
   auto* parent = GetParentDecl(clang_decl);
   if (llvm::isa_and_nonnull<clang::TagDecl, clang::NamespaceDecl,
                             clang::TranslationUnitDecl>(parent)) {
-    AddDependentDecl(context, SemIR::ClangDeclKey::NonFunctionDecl(parent),
+    AddDependentDecl(context, SemIR::ClangDeclKey::ForNonFunctionDecl(parent),
                      worklist);
   }
 }
@@ -2157,7 +2157,7 @@ auto ImportNameFromCpp(Context& context, SemIR::LocId loc_id,
 
   if (!IsDeclInjectedClassName(context, scope_id, name_id,
                                lookup->getFoundDecl())) {
-    auto key = SemIR::ClangDeclKey::NonFunctionDecl(lookup->getFoundDecl());
+    auto key = SemIR::ClangDeclKey::ForNonFunctionDecl(lookup->getFoundDecl());
     return ImportNameDeclIntoScope(context, loc_id, scope_id, name_id, key,
                                    lookup->begin().getAccess());
   }
