@@ -531,7 +531,7 @@ static auto ClangLookup(Context& context, SemIR::NameScopeId scope_id,
 static auto ClangConstructorLookup(Context& context,
                                    SemIR::NameScopeId scope_id)
     -> clang::DeclContextLookupResult {
-  const SemIR::NameScope& scope = context.sem_ir().name_scopes().Get(scope_id);
+  const SemIR::NameScope& scope = context.name_scopes().Get(scope_id);
 
   clang::Sema& sema = context.sem_ir().clang_ast_unit()->getSema();
   clang::Decl* decl =
@@ -556,17 +556,15 @@ static auto IsDeclInjectedClassName(Context& context,
   }
 
   const SemIR::ClangDecl& clang_decl = context.clang_decls().Get(
-      context.sem_ir().name_scopes().Get(scope_id).clang_decl_context_id());
+      context.name_scopes().Get(scope_id).clang_decl_context_id());
   const auto* scope_record_decl = cast<clang::CXXRecordDecl>(clang_decl.decl);
 
-  const clang::ASTContext& ast_context =
-      context.sem_ir().clang_ast_unit()->getASTContext();
+  const clang::ASTContext& ast_context = context.ast_context();
   CARBON_CHECK(ast_context.getCanonicalTagType(scope_record_decl) ==
                ast_context.getCanonicalTagType(record_decl));
 
   auto class_decl = context.insts().GetAs<SemIR::ClassDecl>(clang_decl.inst_id);
-  CARBON_CHECK(name_id ==
-               context.sem_ir().classes().Get(class_decl.class_id).name_id);
+  CARBON_CHECK(name_id == context.classes().Get(class_decl.class_id).name_id);
   return true;
 }
 
@@ -602,12 +600,8 @@ static auto ClangLookupName(Context& context, SemIR::NameScopeId scope_id,
 }
 
 // Returns whether `decl` already mapped to an instruction.
-static auto IsClangDeclImported(const Context& context, clang::Decl* decl)
-    -> bool {
-  return context.sem_ir()
-      .clang_decls()
-      .Lookup(decl->getCanonicalDecl())
-      .has_value();
+static auto IsClangDeclImported(Context& context, clang::Decl* decl) -> bool {
+  return context.clang_decls().Lookup(decl->getCanonicalDecl()).has_value();
 }
 
 // If `decl` already mapped to an instruction, returns that instruction.
@@ -1448,8 +1442,7 @@ static auto GetReturnTypeExpr(Context& context, SemIR::LocId loc_id,
 
   // TODO: Make this a `PartialType`.
   SemIR::TypeInstId record_type_inst_id = context.types().GetAsTypeInstId(
-      context.sem_ir()
-          .clang_decls()
+      context.clang_decls()
           .Get(context.clang_decls().Lookup(
               cast<clang::Decl>(clang_decl->getParent())))
           .inst_id);
@@ -1703,7 +1696,7 @@ using ImportWorklist = llvm::SmallVector<ImportItem>;
 }  // namespace
 
 // Adds the given declaration to our list of declarations to import.
-static auto AddDependentDecl(const Context& context, clang::Decl* decl,
+static auto AddDependentDecl(Context& context, clang::Decl* decl,
                              ImportWorklist& worklist) -> void {
   if (!IsClangDeclImported(context, decl)) {
     worklist.push_back({.decl = decl, .added_dependencies = false});
@@ -1712,7 +1705,7 @@ static auto AddDependentDecl(const Context& context, clang::Decl* decl,
 
 // Finds all decls that need to be imported before importing the given type and
 // adds them to the given set.
-static auto AddDependentUnimportedTypeDecls(const Context& context,
+static auto AddDependentUnimportedTypeDecls(Context& context,
                                             clang::QualType type,
                                             ImportWorklist& worklist) -> void {
   while (true) {
@@ -1734,7 +1727,7 @@ static auto AddDependentUnimportedTypeDecls(const Context& context,
 // Finds all decls that need to be imported before importing the given function
 // and adds them to the given set.
 static auto AddDependentUnimportedFunctionDecls(
-    const Context& context, const clang::FunctionDecl& clang_decl,
+    Context& context, const clang::FunctionDecl& clang_decl,
     ImportWorklist& worklist) -> void {
   for (const auto* param : clang_decl.parameters()) {
     AddDependentUnimportedTypeDecls(context, param->getType(), worklist);
@@ -1745,7 +1738,7 @@ static auto AddDependentUnimportedFunctionDecls(
 
 // Finds all decls that need to be imported before importing the given
 // declaration and adds them to the given set.
-static auto AddDependentUnimportedDecls(const Context& context,
+static auto AddDependentUnimportedDecls(Context& context,
                                         clang::Decl* clang_decl,
                                         ImportWorklist& worklist) -> void {
   if (auto* clang_function_decl = clang_decl->getAsFunction()) {
