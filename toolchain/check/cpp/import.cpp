@@ -1637,7 +1637,7 @@ static auto ImportFunction(Context& context, SemIR::LocId loc_id,
        .self_param_id = FindSelfPattern(
            context, function_params_insts->implicit_param_patterns_id),
        .clang_decl_id = context.clang_decls().Add(
-           {.key = SemIR::ClangDeclKey(clang_decl, num_params),
+           {.key = SemIR::ClangDeclKey::ForFunctionDecl(clang_decl, num_params),
             .inst_id = decl_id})}};
 
   function_decl.function_id = context.functions().Add(function_info);
@@ -1650,7 +1650,7 @@ static auto ImportFunction(Context& context, SemIR::LocId loc_id,
 static auto ImportFunctionDecl(Context& context, SemIR::LocId loc_id,
                                clang::FunctionDecl* clang_decl, int num_params)
     -> SemIR::InstId {
-  auto key = SemIR::ClangDeclKey(clang_decl, num_params);
+  auto key = SemIR::ClangDeclKey::ForFunctionDecl(clang_decl, num_params);
 
   // Check if the declaration is already mapped.
   if (SemIR::InstId existing_inst_id = LookupClangDeclInstId(context, key);
@@ -1960,8 +1960,9 @@ static auto ImportTypeAndDependencies(Context& context, SemIR::LocId loc_id,
 auto ImportCppFunctionDecl(Context& context, SemIR::LocId loc_id,
                            clang::FunctionDecl* clang_decl, int num_params)
     -> SemIR::InstId {
-  return ImportDeclAndDependencies(context, loc_id,
-                                   SemIR::ClangDeclKey(clang_decl, num_params));
+  return ImportDeclAndDependencies(
+      context, loc_id,
+      SemIR::ClangDeclKey::ForFunctionDecl(clang_decl, num_params));
 }
 
 // Maps `clang::AccessSpecifier` to `SemIR::AccessKind`.

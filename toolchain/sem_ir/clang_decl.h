@@ -30,18 +30,20 @@ struct ClangDeclKey : public Printable<ClangDeclKey> {
     requires(std::derived_from<DeclT, clang::Decl> &&
              !std::derived_from<clang::FunctionDecl, DeclT> &&
              !std::derived_from<DeclT, clang::FunctionDecl>)
-  explicit ClangDeclKey(DeclT* decl) : decl(decl->getCanonicalDecl()) {}
+  explicit ClangDeclKey(DeclT* decl) : ClangDeclKey(decl, -1, UncheckedTag()) {}
 
   // For declaration classes that are derived from FunctionDecl, a parameter
   // count is required.
-  explicit ClangDeclKey(clang::FunctionDecl* decl, int params)
-      : decl(decl->getCanonicalDecl()), num_params(params) {}
+  static auto ForFunctionDecl(clang::FunctionDecl* decl, int num_params)
+      -> ClangDeclKey {
+    return ClangDeclKey(decl, num_params, UncheckedTag());
+  }
 
   // Factory function for clang declaration that is dynamically known to not be
   // a function declaration.
   static auto ForNonFunctionDecl(clang::Decl* decl) -> ClangDeclKey {
     CARBON_CHECK(!isa<clang::FunctionDecl>(decl));
-    return ClangDeclKey(decl, UncheckedTag());
+    return ClangDeclKey(decl, -1, UncheckedTag());
   }
 
   auto Print(llvm::raw_ostream& out) const -> void;
@@ -72,7 +74,8 @@ struct ClangDeclKey : public Printable<ClangDeclKey> {
   struct UncheckedTag {
     explicit UncheckedTag() = default;
   };
-  ClangDeclKey(clang::Decl* decl, UncheckedTag /*_*/) : decl(decl) {}
+  ClangDeclKey(clang::Decl* decl, int num_params, UncheckedTag /*_*/)
+      : decl(decl->getCanonicalDecl()), num_params(num_params) {}
 };
 
 // A Clang declaration mapped to a Carbon instruction.
