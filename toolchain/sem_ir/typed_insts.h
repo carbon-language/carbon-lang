@@ -666,7 +666,7 @@ struct FacetType {
 // so evaluates to the `type_inst_id` within.
 //
 // If the FacetValue is just a wrapper around a BindSymbolicName (converted to
-// `type`), it evaluates back to the BindSymbolicName.
+// `type` and back, for example), it evaluates back to the BindSymbolicName.
 struct FacetValue {
   static constexpr auto Kind = InstKind::FacetValue.Define<Parse::NodeId>(
       {.ir_name = "facet_value",
