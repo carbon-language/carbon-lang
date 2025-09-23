@@ -73,11 +73,11 @@ class C(A:! J, B:! A) {}
 // value for `A` again, so it needs to match, even though the argument is now
 // `FacetAccessType(A)`.
 //
-// This this depends on a convert to unwrap the `FacetAccessType(A)` when
-// converting it to the type of `A`, instead of constructing a `FacetValue` out
-// of the `FacetAccessType(A)` with a witness from the type of `A`. This
-// preserves the original facet value instead of constructing a different facet
-// value referring to the same symbolic type and with the same facet type.
+// This depends on unwrapping the `FacetAccessType(A)` when converting it to the
+// type of `A`, instead of evaluating to a `FacetValue` holding the
+// `FacetAccessType(A)` with a witness from the type of `A`. This preserves the
+// original facet value instead of constructing a different facet value
+// referring to the same symbolic type and with the same facet type.
 // Essentially, it allows lossless round trips through a FacetAccessType when
 // converting back to the type of its original facet value.
 fn G[A:! J, B:! A](x: C(A, B)) {}
