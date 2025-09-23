@@ -612,8 +612,11 @@ auto DeduceImplArguments(Context& context, SemIR::LocId loc_id,
                              /*self_type_id=*/SemIR::InstId::None,
                              /*diagnose=*/false);
 
-  // Prepare to perform deduction of the type and interface.
-  deduction.Add(impl.self_id, context.constant_values().GetInstId(self_id));
+  // Prepare to perform deduction of the type and interface. Use the canonical
+  // `self_id` to save a trip through the deduce loop, which will then need to
+  // get the canonical instruction.
+  deduction.Add(context.constant_values().GetConstantInstId(impl.self_id),
+                context.constant_values().GetInstId(self_id));
   deduction.Add(impl.interface.specific_id, constraint_specific_id);
 
   if (!deduction.Deduce() || !deduction.CheckDeductionIsComplete()) {
