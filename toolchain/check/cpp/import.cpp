@@ -1647,6 +1647,10 @@ static auto ImportFunction(Context& context, SemIR::LocId loc_id,
   return function_decl.function_id;
 }
 
+// Imports a C++ function, returning a corresponding Carbon function.
+// `num_params` specifies how many parameters the corresponding Carbon function
+// should have, which may be fewer than the number of parameters that the C++
+// function has if default arguments are available for the trailing parameters.
 static auto ImportFunctionDecl(Context& context, SemIR::LocId loc_id,
                                clang::FunctionDecl* clang_decl, int num_params)
     -> SemIR::InstId {
