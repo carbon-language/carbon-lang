@@ -53,24 +53,37 @@ static auto IsInstanceMethod(const SemIR::File& sem_ir,
   return function.self_param_id.has_value();
 }
 
-// Returns whether the callee function is an instance method, either because
-// it's a Carbon instance method or because it's a C++ overload set that might
-// contain an instance method.
-static auto IsInstanceMethod(const SemIR::File& sem_ir,
-                             const SemIR::CalleeFunction& callee) -> bool {
-  if (callee.function_id.has_value()) {
-    return IsInstanceMethod(sem_ir, callee.function_id);
+// For callee functions which are instance methods, returns the `self_id` (which
+// may be `None`). This may be an instance method either because it's a Carbon
+// instance method or because it's a C++ overload set that might contain an
+// instance method.
+static auto GetSelfIfInstanceMethod(const SemIR::File& sem_ir,
+                                    const SemIR::CalleeFunction& callee)
+    -> std::optional<SemIR::InstId> {
+  CARBON_KIND_SWITCH(callee.info) {
+    case CARBON_KIND(SemIR::CalleeFunction::Function fn): {
+      if (IsInstanceMethod(sem_ir, fn.function_id)) {
+        return fn.self_id;
+      }
+      return std::nullopt;
+    }
+    case CARBON_KIND(SemIR::CalleeFunction::CppOverloadSet overload): {
+      // For now, treat all C++ overload sets as potentially containing instance
+      // methods. Overload resolution will handle the case where we actually
+      // found a static method.
+      // TODO: Consider returning `None` if there are no non-instance methods
+      // in the overload set. This would cause us to reject
+      // `instance.(Class.StaticMethod)()` like we do in pure Carbon code.
+      return overload.self_id;
+    }
+
+    case CARBON_KIND(SemIR::CalleeFunction::Error _): {
+      return std::nullopt;
+    }
+    case CARBON_KIND(SemIR::CalleeFunction::NonFunction _): {
+      return std::nullopt;
+    }
   }
-  if (callee.cpp_overload_set_id.has_value()) {
-    // For now, treat all C++ overload sets as potentially containing instance
-    // methods. Overload resolution will handle the case where we actually
-    // found a static method.
-    // TODO: Consider returning `false` if there are no non-instance methods in
-    // the overload set. This would cause us to reject
-    // `instance.(Class.StaticMethod)()` like we do in pure Carbon code.
-    return true;
-  }
-  return false;
 }
 
 // Return whether `type_id`, the type of an associated entity, is for an
@@ -391,9 +404,10 @@ static auto PerformInstanceBinding(Context& context, SemIR::LocId loc_id,
                                    SemIR::InstId base_id,
                                    SemIR::InstId member_id) -> SemIR::InstId {
   // If the member is a function, check whether it's an instance method.
-  if (auto callee = SemIR::GetCalleeFunction(context.sem_ir(), member_id);
-      IsInstanceMethod(context.sem_ir(), callee)) {
-    if (callee.self_id.has_value()) {
+  if (auto self_id = GetSelfIfInstanceMethod(
+          context.sem_ir(),
+          SemIR::GetCalleeFunction(context.sem_ir(), member_id))) {
+    if (self_id->has_value()) {
       // Found an already-bound method.
       return member_id;
     }

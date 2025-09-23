@@ -16,6 +16,7 @@
 #include "toolchain/check/literal.h"
 #include "toolchain/check/type.h"
 #include "toolchain/check/type_completion.h"
+#include "toolchain/sem_ir/function.h"
 #include "toolchain/sem_ir/ids.h"
 #include "toolchain/sem_ir/typed_insts.h"
 
@@ -531,7 +532,7 @@ auto BuildCppThunk(Context& context, const SemIR::Function& callee_function)
       CreateThunkFunctionDecl(context, callee_info, thunk_param_types);
 
   // Build the thunk function body.
-  clang::Sema& sema = context.sem_ir().clang_ast_unit()->getSema();
+  clang::Sema& sema = context.clang_sema();
   clang::Sema::ContextRAII context_raii(sema, thunk_function_decl);
   sema.ActOnStartOfFunctionDef(nullptr, thunk_function_decl);
   clang::StmtResult body =
@@ -552,7 +553,8 @@ auto PerformCppThunkCall(Context& context, SemIR::LocId loc_id,
   auto callee_function_params =
       context.inst_blocks().Get(callee_function.call_params_id);
 
-  auto thunk_callee = GetCalleeFunction(context.sem_ir(), thunk_callee_id);
+  auto thunk_callee =
+      GetCalleeFunctionAsFunction(context.sem_ir(), thunk_callee_id);
   auto& thunk_function = context.functions().Get(thunk_callee.function_id);
   auto thunk_function_params =
       context.inst_blocks().Get(thunk_function.call_params_id);

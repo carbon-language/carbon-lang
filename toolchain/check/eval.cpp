@@ -1942,11 +1942,11 @@ static auto MakeConstantForCall(EvalContext& eval_context,
   auto callee_function =
       SemIR::GetCalleeFunction(eval_context.sem_ir(), call.callee_id);
   auto builtin_kind = SemIR::BuiltinFunctionKind::None;
-  if (callee_function.function_id.has_value()) {
+  if (auto* fn =
+          std::get_if<SemIR::CalleeFunction::Function>(&callee_function.info)) {
     // Calls to builtins might be constant.
-    builtin_kind = eval_context.functions()
-                       .Get(callee_function.function_id)
-                       .builtin_function_kind();
+    builtin_kind =
+        eval_context.functions().Get(fn->function_id).builtin_function_kind();
     if (builtin_kind == SemIR::BuiltinFunctionKind::None) {
       // TODO: Eventually we'll want to treat some kinds of non-builtin
       // functions as producing constants.
@@ -1977,12 +1977,12 @@ static auto MakeConstantForCall(EvalContext& eval_context,
                         "non-constant call to compile-time-only function");
       CARBON_DIAGNOSTIC(CompTimeOnlyFunctionHere, Note,
                         "compile-time-only function declared here");
+      const auto& function = eval_context.functions().Get(
+          std::get<SemIR::CalleeFunction::Function>(callee_function.info)
+              .function_id);
       eval_context.emitter()
           .Build(inst_id, NonConstantCallToCompTimeOnlyFunction)
-          .Note(eval_context.functions()
-                    .Get(callee_function.function_id)
-                    .latest_decl_id(),
-                CompTimeOnlyFunctionHere)
+          .Note(function.latest_decl_id(), CompTimeOnlyFunctionHere)
           .Emit();
     }
     return SemIR::ConstantId::NotConstant;

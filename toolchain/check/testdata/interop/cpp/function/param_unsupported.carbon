@@ -58,6 +58,44 @@ fn F() {
   //@dump-sem-ir-end
 }
 
+// ============================================================================
+// Unconvertible integer argument.
+// ============================================================================
+
+// --- int_param.h
+
+auto foo(int a) -> void;
+
+// --- fail_large_int.carbon
+
+library "[[@TEST_NAME]]";
+
+import Cpp library "int_param.h";
+
+// This doesn't have a direct type mapping in `getIntTypeForBitwidth`.
+fn F(x: i512) {
+  // CHECK:STDERR: fail_large_int.carbon:[[@LINE+4]]:11: error: call argument of type `i512` is not supported [CppCallArgTypeNotSupported]
+  // CHECK:STDERR:   Cpp.foo(x);
+  // CHECK:STDERR:           ^
+  // CHECK:STDERR:
+  Cpp.foo(x);
+}
+
+// --- fail_very_large_int.carbon
+
+library "[[@TEST_NAME]]";
+
+import Cpp library "int_param.h";
+
+// This doesn't fit as an embedded `IntId` value.
+fn F(x: i8388608) {
+  // CHECK:STDERR: fail_very_large_int.carbon:[[@LINE+4]]:11: error: call argument of type `i8388608` is not supported [CppCallArgTypeNotSupported]
+  // CHECK:STDERR:   Cpp.foo(x);
+  // CHECK:STDERR:           ^
+  // CHECK:STDERR:
+  Cpp.foo(x);
+}
+
 // CHECK:STDOUT: --- fail_todo_import_unsupported_primitive_type.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {

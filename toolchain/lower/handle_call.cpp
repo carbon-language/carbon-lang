@@ -10,6 +10,7 @@
 #include "llvm/IR/Value.h"
 #include "toolchain/lower/function_context.h"
 #include "toolchain/sem_ir/builtin_function_kind.h"
+#include "toolchain/sem_ir/function.h"
 #include "toolchain/sem_ir/ids.h"
 #include "toolchain/sem_ir/typed_insts.h"
 
@@ -476,12 +477,10 @@ static auto HandleBuiltinCall(FunctionContext& context, SemIR::InstId inst_id,
   CARBON_FATAL("Unsupported builtin call.");
 }
 
-static auto HandleVirtualCall(FunctionContext& context,
-                              llvm::ArrayRef<llvm::Value*> args,
-                              const SemIR::File* callee_file,
-                              const SemIR::Function& function,
-                              const SemIR::CalleeFunction& callee_function)
-    -> llvm::CallInst* {
+static auto HandleVirtualCall(
+    FunctionContext& context, llvm::ArrayRef<llvm::Value*> args,
+    const SemIR::File* callee_file, const SemIR::Function& function,
+    const SemIR::CalleeFunction::Function& callee_function) -> llvm::CallInst* {
   CARBON_CHECK(!args.empty(),
                "Virtual functions must have at least one parameter");
   auto* ptr_type =
@@ -558,8 +557,8 @@ auto HandleInst(FunctionContext& context, SemIR::InstId inst_id,
     CARBON_CHECK(callee_id.has_value());
   }
 
-  auto callee_function = SemIR::GetCalleeFunction(*callee_file, callee_id);
-  CARBON_CHECK(callee_function.function_id.has_value());
+  auto callee_function =
+      SemIR::GetCalleeFunctionAsFunction(*callee_file, callee_id);
 
   const SemIR::Function& function =
       callee_file->functions().Get(callee_function.function_id);

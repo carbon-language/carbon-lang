@@ -107,8 +107,8 @@ class ClangImportCollector : public clang::DiagnosticRenderer {
 auto DiagnosticLocConverter::ConvertWithImports(LocId loc_id,
                                                 bool token_only) const
     -> LocAndImports {
-  llvm::SmallVector<SemIR::AbsoluteNodeId> absolute_node_ids =
-      SemIR::GetAbsoluteNodeId(sem_ir_, loc_id);
+  llvm::SmallVector<AbsoluteNodeId> absolute_node_ids =
+      GetAbsoluteNodeId(sem_ir_, loc_id);
   auto final_node_id = absolute_node_ids.pop_back_val();
 
   // Convert the final location.
@@ -125,7 +125,7 @@ auto DiagnosticLocConverter::ConvertWithImports(LocId loc_id,
   }
 
   // Convert the C++ import locations.
-  if (final_node_id.check_ir_id() == SemIR::CheckIRId::Cpp) {
+  if (final_node_id.check_ir_id() == CheckIRId::Cpp) {
     const clang::ASTUnit* ast = sem_ir_->clang_ast_unit();
     // Collect the location backtrace that Clang would use for an error here.
     ClangImportCollector(ast->getLangOpts(),
@@ -143,15 +143,15 @@ auto DiagnosticLocConverter::ConvertWithImports(LocId loc_id,
 
 auto DiagnosticLocConverter::Convert(LocId loc_id, bool token_only) const
     -> Diagnostics::ConvertedLoc {
-  llvm::SmallVector<SemIR::AbsoluteNodeId> absolute_node_ids =
-      SemIR::GetAbsoluteNodeId(sem_ir_, loc_id);
+  llvm::SmallVector<AbsoluteNodeId> absolute_node_ids =
+      GetAbsoluteNodeId(sem_ir_, loc_id);
   return ConvertImpl(absolute_node_ids.back(), token_only);
 }
 
-auto DiagnosticLocConverter::ConvertImpl(SemIR::AbsoluteNodeId absolute_node_id,
+auto DiagnosticLocConverter::ConvertImpl(AbsoluteNodeId absolute_node_id,
                                          bool token_only) const
     -> Diagnostics::ConvertedLoc {
-  if (absolute_node_id.check_ir_id() == SemIR::CheckIRId::Cpp) {
+  if (absolute_node_id.check_ir_id() == CheckIRId::Cpp) {
     return ConvertImpl(absolute_node_id.clang_source_loc_id());
   }
 
@@ -159,11 +159,11 @@ auto DiagnosticLocConverter::ConvertImpl(SemIR::AbsoluteNodeId absolute_node_id,
                      token_only);
 }
 
-auto DiagnosticLocConverter::ConvertImpl(SemIR::CheckIRId check_ir_id,
+auto DiagnosticLocConverter::ConvertImpl(CheckIRId check_ir_id,
                                          Parse::NodeId node_id,
                                          bool token_only) const
     -> Diagnostics::ConvertedLoc {
-  CARBON_CHECK(check_ir_id != SemIR::CheckIRId::Cpp);
+  CARBON_CHECK(check_ir_id != CheckIRId::Cpp);
   const auto& tree_and_subtrees =
       tree_and_subtrees_getters_->Get(check_ir_id)();
   return tree_and_subtrees.NodeToDiagnosticLoc(node_id, token_only);

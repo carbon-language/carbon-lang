@@ -509,7 +509,7 @@ static auto ClangConstructorLookup(Context& context,
     -> clang::DeclContextLookupResult {
   const SemIR::NameScope& scope = context.name_scopes().Get(scope_id);
 
-  clang::Sema& sema = context.sem_ir().clang_ast_unit()->getSema();
+  clang::Sema& sema = context.clang_sema();
   clang::Decl* decl =
       context.clang_decls().Get(scope.clang_decl_context_id()).decl;
   return sema.LookupConstructors(cast<clang::CXXRecordDecl>(decl));
@@ -554,11 +554,8 @@ static auto GetDeclarationName(Context& context, SemIR::NameId name_id)
     return std::nullopt;
   }
 
-  return clang::DeclarationName(context.sem_ir()
-                                    .clang_ast_unit()
-                                    ->getSema()
-                                    .getPreprocessor()
-                                    .getIdentifierInfo(*name));
+  return clang::DeclarationName(
+      context.clang_sema().getPreprocessor().getIdentifierInfo(*name));
 }
 
 // Performs a qualified name lookup of the declaration name in the given scope.
@@ -566,9 +563,7 @@ static auto GetDeclarationName(Context& context, SemIR::NameId name_id)
 static auto ClangLookup(Context& context, SemIR::NameScopeId scope_id,
                         clang::DeclarationName name)
     -> std::optional<clang::LookupResult> {
-  clang::ASTUnit* ast = context.sem_ir().clang_ast_unit();
-  CARBON_CHECK(ast);
-  clang::Sema& sema = ast->getSema();
+  clang::Sema& sema = context.clang_sema();
 
   // TODO: Map the LocId of the lookup to a clang SourceLocation and provide it
   // here so that clang's diagnostics can point into the carbon code that uses

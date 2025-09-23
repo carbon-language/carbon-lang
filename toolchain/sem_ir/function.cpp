@@ -6,6 +6,7 @@
 
 #include <optional>
 
+#include "toolchain/base/kind_switch.h"
 #include "toolchain/sem_ir/file.h"
 #include "toolchain/sem_ir/generic.h"
 #include "toolchain/sem_ir/ids.h"
@@ -13,17 +14,43 @@
 
 namespace Carbon::SemIR {
 
+auto CalleeFunction::Print(llvm::raw_ostream& out) const -> void {
+  out << "{";
+  CARBON_KIND_SWITCH(info) {
+    case CARBON_KIND(SemIR::CalleeFunction::Function fn): {
+      out << "Function{function_id: " << fn.function_id
+          << ", enclosing_specific_id: " << fn.enclosing_specific_id
+          << ", resolved_specific_id: " << fn.resolved_specific_id
+          << ", self_type_id: " << fn.self_type_id
+          << ", self_id: " << fn.self_id << "}";
+      break;
+    }
+    case CARBON_KIND(SemIR::CalleeFunction::CppOverloadSet overload): {
+      out << "CppOverload{cpp_overload_set_id: " << overload.cpp_overload_set_id
+          << ", self_id: " << overload.self_id << "}";
+      break;
+    }
+    case CARBON_KIND(SemIR::CalleeFunction::Error _): {
+      out << "Error{}";
+      break;
+    }
+    case CARBON_KIND(SemIR::CalleeFunction::NonFunction _): {
+      out << "Other{}";
+      break;
+    }
+  }
+  out << "}";
+}
+
 auto GetCalleeFunction(const File& sem_ir, InstId callee_id,
                        SpecificId specific_id) -> CalleeFunction {
-  CalleeFunction result = {.function_id = FunctionId::None,
-                           .cpp_overload_set_id = CppOverloadSetId::None,
-                           .enclosing_specific_id = SpecificId::None,
-                           .resolved_specific_id = SpecificId::None,
-                           .self_type_id = InstId::None,
-                           .self_id = InstId::None,
-                           .is_error = false};
+  CalleeFunction::Function fn = {.function_id = FunctionId::None,
+                                 .enclosing_specific_id = SpecificId::None,
+                                 .resolved_specific_id = SpecificId::None,
+                                 .self_type_id = InstId::None,
+                                 .self_id = InstId::None};
   if (auto bound_method = sem_ir.insts().TryGetAs<BoundMethod>(callee_id)) {
-    result.self_id = bound_method->object_id;
+    fn.self_id = bound_method->object_id;
     callee_id = bound_method->function_decl_id;
   }
 
@@ -36,39 +63,51 @@ auto GetCalleeFunction(const File& sem_ir, InstId callee_id,
 
   if (auto specific_function =
           sem_ir.insts().TryGetAs<SpecificFunction>(callee_id)) {
-    result.resolved_specific_id = specific_function->specific_id;
+    fn.resolved_specific_id = specific_function->specific_id;
     callee_id = specific_function->callee_id;
   }
 
   // Identify the function we're calling by its type.
   auto val_id = sem_ir.constant_values().GetConstantInstId(callee_id);
   if (!val_id.has_value()) {
-    return result;
+    return {.info = CalleeFunction::NonFunction()};
   }
   auto fn_type_inst =
       sem_ir.types().GetAsInst(sem_ir.insts().Get(val_id).type_id());
 
   if (auto cpp_overload_set_type = fn_type_inst.TryAs<CppOverloadSetType>()) {
-    result.cpp_overload_set_id = cpp_overload_set_type->overload_set_id;
-    return result;
+    CARBON_CHECK(!fn.resolved_specific_id.has_value(),
+                 "Only `SpecificFunction` will be resolved, not C++ overloads");
+    return {.info = CalleeFunction::CppOverloadSet{
+                .cpp_overload_set_id = cpp_overload_set_type->overload_set_id,
+                .self_id = fn.self_id}};
   }
 
   if (auto impl_fn_type = fn_type_inst.TryAs<FunctionTypeWithSelfType>()) {
     // Combine the associated function's `Self` with the interface function
     // data.
-    result.self_type_id = impl_fn_type->self_id;
+    fn.self_type_id = impl_fn_type->self_id;
     fn_type_inst = sem_ir.insts().Get(impl_fn_type->interface_function_type_id);
   }
 
   auto fn_type = fn_type_inst.TryAs<FunctionType>();
   if (!fn_type) {
-    result.is_error = fn_type_inst.Is<ErrorInst>();
-    return result;
+    if (fn_type_inst.Is<ErrorInst>()) {
+      return {.info = CalleeFunction::Error()};
+    }
+    return {.info = CalleeFunction::NonFunction()};
   }
 
-  result.function_id = fn_type->function_id;
-  result.enclosing_specific_id = fn_type->specific_id;
-  return result;
+  fn.function_id = fn_type->function_id;
+  fn.enclosing_specific_id = fn_type->specific_id;
+  return {.info = fn};
+}
+
+auto GetCalleeFunctionAsFunction(const File& sem_ir, InstId callee_id,
+                                 SpecificId specific_id)
+    -> CalleeFunction::Function {
+  return std::get<CalleeFunction::Function>(
+      GetCalleeFunction(sem_ir, callee_id, specific_id).info);
 }
 
 auto DecomposeVirtualFunction(const File& sem_ir, InstId fn_decl_id,
@@ -80,10 +119,10 @@ auto DecomposeVirtualFunction(const File& sem_ir, InstId fn_decl_id,
   auto fn_decl_const_id =
       GetConstantValueInSpecific(sem_ir, base_class_specific_id, fn_decl_id);
   fn_decl_id = sem_ir.constant_values().GetInstId(fn_decl_const_id);
-  auto specific_id = SemIR::SpecificId::None;
+  auto specific_id = SpecificId::None;
   auto callee_id = fn_decl_id;
   if (auto specific_function =
-          sem_ir.insts().TryGetAs<SemIR::SpecificFunction>(fn_decl_id)) {
+          sem_ir.insts().TryGetAs<SpecificFunction>(fn_decl_id)) {
     specific_id = specific_function->specific_id;
     callee_id = specific_function->callee_id;
   }
