@@ -1349,7 +1349,7 @@ static auto MakeImplicitParamPatternsBlockId(
 static auto MakeParamPatternsBlockId(Context& context, SemIR::LocId loc_id,
                                      const clang::FunctionDecl& clang_decl,
                                      int num_params) -> SemIR::InstBlockId {
-  if (clang_decl.parameters().empty() || !num_params) {
+  if (clang_decl.parameters().empty() || num_params == 0) {
     return SemIR::InstBlockId::Empty;
   }
   llvm::SmallVector<SemIR::InstId> params;
