@@ -38,6 +38,28 @@ fn G() {
   //@dump-sem-ir-end
 }
 
+// --- symbolic.carbon
+library "[[@TEST_NAME]]";
+
+interface Z {}
+
+fn CanDestroy() -> type = "type.can_destroy";
+
+fn G(U:! CanDestroy()) {}
+
+fn F(T:! Z & CanDestroy()) {
+  // Requires a conversion (and thus impl lookup into `T`) since `T` and `U`
+  // have different (but compatible) facet types.
+  // CHECK:STDERR: symbolic.carbon:[[@LINE+7]]:3: error: cannot convert type `T` that implements `Z where .Self impls Core.CanDestroy` into type implementing `type where .Self impls Core.CanDestroy` [ConversionFailureFacetToFacet]
+  // CHECK:STDERR:   G(T);
+  // CHECK:STDERR:   ^~~~
+  // CHECK:STDERR: symbolic.carbon:[[@LINE-8]]:6: note: initializing generic parameter `U` declared here [InitializingGenericParam]
+  // CHECK:STDERR: fn G(U:! CanDestroy()) {}
+  // CHECK:STDERR:      ^
+  // CHECK:STDERR:
+  G(T);
+}
+
 // --- fail_incomplete.carbon
 library "[[@TEST_NAME]]";
 
