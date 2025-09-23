@@ -185,7 +185,7 @@ using FunctionStore = ValueStore<FunctionId, Function>;
 
 class File;
 
-// The callee as a C++ overload set.
+// Information about a callee that's a C++ overload set.
 struct CalleeCppOverloadSet {
   // The overload set.
   CppOverloadSetId cpp_overload_set_id;
@@ -193,10 +193,10 @@ struct CalleeCppOverloadSet {
   InstId self_id;
 };
 
-// The callee as an error instruction.
+// Information about a callee that's `ErrorInst`.
 struct CalleeError {};
 
-// The callee as a function.
+// Information about a callee that's a function.
 struct CalleeFunction {
   // The function.
   FunctionId function_id;
@@ -211,7 +211,8 @@ struct CalleeFunction {
   InstId self_id;
 };
 
-// The callee may be a generic type, or could be an invalid callee.
+// Information about a callee that may be a generic type, or could be an
+// invalid callee.
 struct CalleeNonFunction {};
 
 // A variant combining the callee forms.
