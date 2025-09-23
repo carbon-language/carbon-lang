@@ -180,6 +180,14 @@ auto EvalConstantInst(Context& context, SemIR::Converted inst)
       context.constant_values().Get(inst.result_id));
 }
 
+// TODO: This should not be necessary since the constant kind is
+// WheneverPossible.
+auto EvalConstantInst(Context& /*context*/, SemIR::CppOverloadSetValue inst)
+    -> ConstantEvalResult {
+  return ConstantEvalResult::NewSamePhase(SemIR::StructValue{
+      .type_id = inst.type_id, .elements_id = SemIR::InstBlockId::Empty});
+}
+
 auto EvalConstantInst(Context& /*context*/, SemIR::Deref /*inst*/)
     -> ConstantEvalResult {
   // TODO: Handle this.
@@ -203,19 +211,32 @@ auto EvalConstantInst(Context& context, SemIR::FacetAccessType inst)
   return ConstantEvalResult::NewSamePhase(inst);
 }
 
+auto EvalConstantInst(Context& context, SemIR::FacetValue inst)
+    -> ConstantEvalResult {
+  // A FacetValue that just wraps a BindSymbolicName without adding/removing any
+  // witnesses is evaluated back to the BindSymbolicName itself.
+  if (auto access =
+          context.insts().TryGetAs<SemIR::FacetAccessType>(inst.type_inst_id)) {
+    auto bind_id = access->facet_value_inst_id;
+    auto bind = context.insts().Get(bind_id);
+    if (bind.Is<SemIR::BindSymbolicName>()) {
+      // If the FacetTypes are the same, then the FacetValue didn't add/remove
+      // any witnesses.
+      if (bind.type_id() == inst.type_id) {
+        return ConstantEvalResult::Existing(
+            context.constant_values().Get(bind_id));
+      }
+    }
+  }
+
+  return ConstantEvalResult::NewSamePhase(inst);
+}
+
 auto EvalConstantInst(Context& context, SemIR::InstId inst_id,
                       SemIR::FloatType inst) -> ConstantEvalResult {
   return ValidateFloatTypeAndSetKind(context, SemIR::LocId(inst_id), inst)
              ? ConstantEvalResult::NewSamePhase(inst)
              : ConstantEvalResult::Error;
-}
-
-// TODO: This should not be necessary since the constant kind is
-// WheneverPossible.
-auto EvalConstantInst(Context& /*context*/, SemIR::CppOverloadSetValue inst)
-    -> ConstantEvalResult {
-  return ConstantEvalResult::NewSamePhase(SemIR::StructValue{
-      .type_id = inst.type_id, .elements_id = SemIR::InstBlockId::Empty});
 }
 
 auto EvalConstantInst(Context& /*context*/, SemIR::FunctionDecl inst)

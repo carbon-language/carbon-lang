@@ -665,8 +665,8 @@ fn G() {
 // CHECK:STDOUT:   %AggregateT.as_type.as.Destroy.impl.Op.type.4e0: type = fn_type @AggregateT.as_type.as.Destroy.impl.Op, @AggregateT.as_type.as.Destroy.impl(%facet_value) [concrete]
 // CHECK:STDOUT:   %AggregateT.as_type.as.Destroy.impl.Op.c00: %AggregateT.as_type.as.Destroy.impl.Op.type.4e0 = struct_value () [concrete]
 // CHECK:STDOUT:   %ptr.843: type = ptr_type %empty_tuple.type [concrete]
-// CHECK:STDOUT:   %Destroy.facet.265: %Destroy.type = facet_value %empty_tuple.type, (%Destroy.impl_witness.8e6) [concrete]
-// CHECK:STDOUT:   %.b16: type = fn_type_with_self_type %Destroy.Op.type, %Destroy.facet.265 [concrete]
+// CHECK:STDOUT:   %Destroy.facet: %Destroy.type = facet_value %empty_tuple.type, (%Destroy.impl_witness.8e6) [concrete]
+// CHECK:STDOUT:   %.b16: type = fn_type_with_self_type %Destroy.Op.type, %Destroy.facet [concrete]
 // CHECK:STDOUT:   %AggregateT.as_type.as.Destroy.impl.Op.specific_fn: <specific function> = specific_function %AggregateT.as_type.as.Destroy.impl.Op.c00, @AggregateT.as_type.as.Destroy.impl.Op(%facet_value) [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

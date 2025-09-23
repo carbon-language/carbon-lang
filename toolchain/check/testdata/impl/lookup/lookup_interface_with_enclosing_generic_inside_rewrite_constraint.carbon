@@ -119,7 +119,6 @@ fn F() {
 // CHECK:STDOUT:   %require_complete: <witness> = require_complete_type %Y.type.420 [symbolic]
 // CHECK:STDOUT:   %.Self.as_type.667: type = facet_access_type %.Self.5c8 [symbolic]
 // CHECK:STDOUT:   %Y.lookup_impl_witness.a57: <witness> = lookup_impl_witness %.Self.5c8, @Y, @Y(%OuterParam) [symbolic]
-// CHECK:STDOUT:   %Y.facet.2f0: %Y.type.420 = facet_value %.Self.as_type.667, (%Y.lookup_impl_witness.a57) [symbolic]
 // CHECK:STDOUT:   %impl.elem0.a37: type = impl_witness_access %Y.lookup_impl_witness.a57, element0 [symbolic]
 // CHECK:STDOUT:   %Y_where.type.197: type = facet_type <@Y, @Y(%OuterParam) where %impl.elem0.a37 = %empty_tuple.type> [symbolic]
 // CHECK:STDOUT:   %H: %Y_where.type.197 = bind_symbolic_name H, 1 [symbolic]
@@ -146,7 +145,6 @@ fn F() {
 // CHECK:STDOUT:   %assoc0.0a6: %Y.assoc_type.06e = assoc_entity element0, @Y.%T [concrete]
 // CHECK:STDOUT:   %.Self.as_type.2b9: type = facet_access_type %.Self.0fc [symbolic_self]
 // CHECK:STDOUT:   %Y.lookup_impl_witness.1fc: <witness> = lookup_impl_witness %.Self.0fc, @Y, @Y(%empty_tuple.type) [symbolic_self]
-// CHECK:STDOUT:   %Y.facet.18f: %Y.type.c91 = facet_value %.Self.as_type.2b9, (%Y.lookup_impl_witness.1fc) [symbolic_self]
 // CHECK:STDOUT:   %impl.elem0.f73: type = impl_witness_access %Y.lookup_impl_witness.1fc, element0 [symbolic_self]
 // CHECK:STDOUT:   %Y_where.type.145: type = facet_type <@Y, @Y(%empty_tuple.type) where %impl.elem0.f73 = %empty_tuple.type> [concrete]
 // CHECK:STDOUT:   %Y.impl_witness: <witness> = impl_witness file.%Y.impl_witness_table [concrete]
@@ -387,7 +385,7 @@ fn F() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @T(constants.%OuterParam, constants.%Self.42a) {}
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @T(constants.%OuterParam, constants.%Y.facet.2f0) {}
+// CHECK:STDOUT: specific @T(constants.%OuterParam, constants.%.Self.5c8) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Outer.G(constants.%OuterParam, constants.%H) {
 // CHECK:STDOUT:   %OuterParam => constants.%OuterParam
@@ -435,7 +433,7 @@ fn F() {
 // CHECK:STDOUT:   %assoc0 => constants.%assoc0.0a6
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @T(constants.%empty_tuple.type, constants.%Y.facet.18f) {}
+// CHECK:STDOUT: specific @T(constants.%empty_tuple.type, constants.%.Self.0fc) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Outer.G(constants.%empty_tuple.type, constants.%facet_value) {
 // CHECK:STDOUT:   %OuterParam => constants.%empty_tuple.type
@@ -477,7 +475,6 @@ fn F() {
 // CHECK:STDOUT:   %require_complete.83f: <witness> = require_complete_type %Y.type.699 [symbolic]
 // CHECK:STDOUT:   %.Self.as_type.29f: type = facet_access_type %.Self.707 [symbolic]
 // CHECK:STDOUT:   %Y.lookup_impl_witness.5a6: <witness> = lookup_impl_witness %.Self.707, @Y, @Y(%OuterParam) [symbolic]
-// CHECK:STDOUT:   %Y.facet: %Y.type.699 = facet_value %.Self.as_type.29f, (%Y.lookup_impl_witness.5a6) [symbolic]
 // CHECK:STDOUT:   %impl.elem0.31f: type = impl_witness_access %Y.lookup_impl_witness.5a6, element0 [symbolic]
 // CHECK:STDOUT:   %Y_where.type.6e4: type = facet_type <@Y, @Y(%OuterParam) where %impl.elem0.31f = %empty_tuple.type> [symbolic]
 // CHECK:STDOUT:   %H: %Y_where.type.6e4 = bind_symbolic_name H, 1 [symbolic]
@@ -860,7 +857,7 @@ fn F() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @T(constants.%OuterParam, constants.%Self.763) {}
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @T(constants.%OuterParam, constants.%Y.facet) {}
+// CHECK:STDOUT: specific @T(constants.%OuterParam, constants.%.Self.707) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Outer.G(constants.%OuterParam, constants.%H) {
 // CHECK:STDOUT:   %OuterParam => constants.%OuterParam
