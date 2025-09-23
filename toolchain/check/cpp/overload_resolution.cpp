@@ -10,6 +10,7 @@
 #include "toolchain/check/cpp/import.h"
 #include "toolchain/check/cpp/location.h"
 #include "toolchain/check/cpp/type_mapping.h"
+#include "toolchain/sem_ir/function.h"
 #include "toolchain/sem_ir/ids.h"
 #include "toolchain/sem_ir/typed_insts.h"
 
@@ -76,10 +77,12 @@ static auto AddOverloadCandidataes(clang::Sema& sema,
   }
 }
 
-auto PerformCppOverloadResolution(Context& context, SemIR::LocId loc_id,
-                                  SemIR::CppOverloadSetId overload_set_id,
-                                  SemIR::InstId self_id,
-                                  llvm::ArrayRef<SemIR::InstId> arg_ids)
+// Resolve which function to call, or returns an error instruction if overload
+// resolution failed.
+static auto ResolveCalleeId(Context& context, SemIR::LocId loc_id,
+                            SemIR::CppOverloadSetId overload_set_id,
+                            SemIR::InstId self_id,
+                            llvm::ArrayRef<SemIR::InstId> arg_ids)
     -> SemIR::InstId {
   // Map Carbon call argument types to C++ types.
   clang::Expr* self_expr = nullptr;
@@ -149,6 +152,47 @@ auto PerformCppOverloadResolution(Context& context, SemIR::LocId loc_id,
       return SemIR::ErrorInst::InstId;
     }
   }
+}
+
+// Returns whether the function is an imported C++ operator member function.
+static auto IsCppOperatorMethod(Context& context, SemIR::FunctionId function_id)
+    -> bool {
+  SemIR::ClangDeclId clang_decl_id =
+      context.functions().Get(function_id).clang_decl_id;
+  if (!clang_decl_id.has_value()) {
+    return false;
+  }
+
+  auto* clang_method_decl = dyn_cast<clang::CXXMethodDecl>(
+      context.clang_decls().Get(clang_decl_id).decl);
+  return clang_method_decl && clang_method_decl->isOverloadedOperator();
+}
+
+auto PerformCppOverloadResolution(Context& context, SemIR::LocId loc_id,
+                                  SemIR::CppOverloadSetId overload_set_id,
+                                  SemIR::InstId self_id,
+                                  llvm::ArrayRef<SemIR::InstId> arg_ids)
+    -> std::tuple<SemIR::InstId, SemIR::CalleeFunction,
+                  llvm::ArrayRef<SemIR::InstId>> {
+  SemIR::InstId callee_id =
+      ResolveCalleeId(context, loc_id, overload_set_id, self_id, arg_ids);
+  SemIR::CalleeFunction callee_function =
+      GetCalleeFunction(context.sem_ir(), callee_id);
+  if (callee_function.is_error) {
+    return {SemIR::ErrorInst::InstId, callee_function, arg_ids};
+  }
+
+  CARBON_CHECK(!callee_function.cpp_overload_set_id.has_value());
+
+  CARBON_CHECK(!callee_function.self_id.has_value());
+  if (self_id.has_value()) {
+    // Preserve the `self` argument from the original callee.
+    callee_function.self_id = self_id;
+  } else if (IsCppOperatorMethod(context, callee_function.function_id)) {
+    // Adjust `self` and args for C++ overloaded operator methods.
+    callee_function.self_id = arg_ids.consume_front();
+  }
+  return {callee_id, callee_function, arg_ids};
 }
 
 }  // namespace Carbon::Check

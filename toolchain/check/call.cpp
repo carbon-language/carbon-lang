@@ -302,22 +302,12 @@ auto PerformCall(Context& context, SemIR::LocId loc_id, SemIR::InstId callee_id,
     return SemIR::ErrorInst::InstId;
   }
   if (callee_function.cpp_overload_set_id.has_value()) {
-    auto self_id = callee_function.self_id;
-    callee_id = PerformCppOverloadResolution(
-        context, loc_id, callee_function.cpp_overload_set_id, self_id, arg_ids);
-    callee_function = GetCalleeFunction(context.sem_ir(), callee_id);
+    std::tie(callee_id, callee_function, arg_ids) =
+        PerformCppOverloadResolution(context, loc_id,
+                                     callee_function.cpp_overload_set_id,
+                                     callee_function.self_id, arg_ids);
     if (callee_function.is_error) {
       return SemIR::ErrorInst::InstId;
-    }
-    CARBON_CHECK(!callee_function.cpp_overload_set_id.has_value());
-
-    // Preserve the `self` argument from the original callee.
-    CARBON_CHECK(!callee_function.self_id.has_value());
-    if (self_id.has_value()) {
-      callee_function.self_id = self_id;
-    } else if (IsCppOperatorMethod(context, callee_function.function_id)) {
-      // Adjust `self` and args for C++ overloaded operator methods.
-      callee_function.self_id = arg_ids.consume_front();
     }
   }
   if (callee_function.function_id.has_value()) {

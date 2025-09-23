@@ -194,17 +194,4 @@ auto LookupCppOperator(Context& context, SemIR::LocId loc_id, Operator op,
                               SemIR::NameId::CppOperator, functions);
 }
 
-auto IsCppOperatorMethod(Context& context, SemIR::FunctionId function_id)
-    -> bool {
-  SemIR::ClangDeclId clang_decl_id =
-      context.functions().Get(function_id).clang_decl_id;
-  if (!clang_decl_id.has_value()) {
-    return false;
-  }
-
-  auto* clang_method_decl = dyn_cast<clang::CXXMethodDecl>(
-      context.clang_decls().Get(clang_decl_id).decl);
-  return clang_method_decl && clang_method_decl->isOverloadedOperator();
-}
-
 }  // namespace Carbon::Check
