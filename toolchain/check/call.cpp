@@ -313,11 +313,12 @@ auto PerformCall(Context& context, SemIR::LocId loc_id, SemIR::InstId callee_id,
 
     // Preserve the `self` argument from the original callee.
     CARBON_CHECK(!callee_function.self_id.has_value());
-    callee_function.self_id = self_id;
-
-    // Special handling for C++ member overloaded operators.
-    AdjustSelfAndArgsForCppMemberOverloadedOperator(
-        context, callee_function.function_id, callee_function.self_id, arg_ids);
+    if (self_id.has_value()) {
+      callee_function.self_id = self_id;
+    } else if (IsCppOperatorMethod(context, callee_function.function_id)) {
+      // Adjust `self` and args for C++ overloaded operator methods.
+      callee_function.self_id = arg_ids.consume_front();
+    }
   }
   if (callee_function.function_id.has_value()) {
     return PerformCallToFunction(context, loc_id, callee_id, callee_function,

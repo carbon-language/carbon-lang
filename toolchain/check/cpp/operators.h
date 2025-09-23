@@ -17,12 +17,9 @@ namespace Carbon::Check {
 auto LookupCppOperator(Context& context, SemIR::LocId loc_id, Operator op,
                        llvm::ArrayRef<SemIR::InstId> arg_ids) -> SemIR::InstId;
 
-// C++ operators can be member functions, in which case the first argument is
-// actually the `self` argument. In this case, we extract the `self` argument
-// from the arguments.
-auto AdjustSelfAndArgsForCppMemberOverloadedOperator(
-    Context& context, SemIR::FunctionId function_id, SemIR::InstId& self_id,
-    llvm::ArrayRef<SemIR::InstId>& arg_ids) -> void;
+// Returns whether the function is an imported C++ operator member function.
+auto IsCppOperatorMethod(Context& context, SemIR::FunctionId function_id)
+    -> bool;
 
 }  // namespace Carbon::Check
 
