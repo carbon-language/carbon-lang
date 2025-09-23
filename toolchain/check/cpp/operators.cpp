@@ -216,9 +216,7 @@ auto AdjustSelfAndArgsForCppMemberOverloadedOperator(
     return;
   }
 
-  CARBON_CHECK(arg_ids.size() >= 1);
-  self_id = arg_ids.front();
-  arg_ids = arg_ids.drop_front();
+  self_id = arg_ids.consume_front();
 }
 
 }  // namespace Carbon::Check
