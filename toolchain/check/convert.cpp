@@ -1211,23 +1211,14 @@ static auto PerformBuiltinConversion(
 
     if (auto facet_access_type_inst =
             sem_ir.insts().TryGetAs<SemIR::FacetAccessType>(const_value_id)) {
-      // Lossless round trips through a FacetAccessType when converting back to
-      // the type of its original facet value.
+      // Shortcut for lossless round trips through a FacetAccessType when
+      // converting back to the type of its original facet value.
       //
-      // Given a symbolic facet value X, if a FacetAccessType(X) is converted to
-      // the type of X, we make the past introduction of the FacetAccessType
-      // preserve the original facet value by converting back into that original
-      // facet value. This is only needed when the (facet type) types match
-      // exactly, which allows the result to have equality with the original
-      // facet value.
-      //
-      // ```
-      // fn F(A:! Interface, B:! A) {
-      //    // typeof(B) is a FacetAccessType(A). We want the following to be
-      //    // true:
-      //    (typeof(B) as typeof(A)) == A;
-      // }
-      // ```
+      // In the case where the FacetAccessType wraps a BindSymbolicName with the
+      // exact facet type that we are converting to, the resulting FacetValue
+      // would evaluate back to the original BindSymbolicName as its canonical
+      // form. We can skip past the whole impl lookup step then and do that
+      // here.
       //
       // See also test:
       // facet_access_type_converts_back_to_original_facet_value.carbon
