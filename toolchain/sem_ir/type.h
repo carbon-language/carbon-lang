@@ -255,8 +255,7 @@ class TypeStore : public Yaml::Printable<TypeStore> {
 };
 
 // Returns the scrutinee type of `type_id`, which must be a `PatternType`.
-auto ExtractScrutineeType(const File& sem_ir, SemIR::TypeId type_id)
-    -> SemIR::TypeId;
+auto ExtractScrutineeType(const File& sem_ir, TypeId type_id) -> TypeId;
 
 }  // namespace Carbon::SemIR
 

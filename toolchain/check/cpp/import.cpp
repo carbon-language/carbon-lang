@@ -504,37 +504,13 @@ static auto GetDeclContext(Context& context, SemIR::NameScopeId scope_id)
       context.clang_decls().Get(scope_clang_decl_context_id).key.decl);
 }
 
-static auto ClangLookup(Context& context, SemIR::NameScopeId scope_id,
-                        clang::DeclarationName name)
-    -> std::optional<clang::LookupResult> {
-  clang::ASTUnit* ast = context.sem_ir().clang_ast_unit();
-  CARBON_CHECK(ast);
-  clang::Sema& sema = ast->getSema();
-
-  // TODO: Map the LocId of the lookup to a clang SourceLocation and provide it
-  // here so that clang's diagnostics can point into the carbon code that uses
-  // the name.
-  clang::LookupResult lookup(
-      sema, clang::DeclarationNameInfo(name, clang::SourceLocation()),
-      clang::Sema::LookupNameKind::LookupOrdinaryName);
-
-  bool found =
-      sema.LookupQualifiedName(lookup, GetDeclContext(context, scope_id));
-
-  if (!found) {
-    return std::nullopt;
-  }
-
-  return lookup;
-}
-
 // Looks up for constructors in the class scope and returns the lookup result.
 static auto ClangConstructorLookup(Context& context,
                                    SemIR::NameScopeId scope_id)
     -> clang::DeclContextLookupResult {
-  const SemIR::NameScope& scope = context.sem_ir().name_scopes().Get(scope_id);
+  const SemIR::NameScope& scope = context.name_scopes().Get(scope_id);
 
-  clang::Sema& sema = context.sem_ir().clang_ast_unit()->getSema();
+  clang::Sema& sema = context.clang_sema();
   clang::Decl* decl =
       context.clang_decls().Get(scope.clang_decl_context_id()).key.decl;
   return sema.LookupConstructors(cast<clang::CXXRecordDecl>(decl));
@@ -557,18 +533,16 @@ static auto IsDeclInjectedClassName(Context& context,
   }
 
   const SemIR::ClangDecl& clang_decl = context.clang_decls().Get(
-      context.sem_ir().name_scopes().Get(scope_id).clang_decl_context_id());
+      context.name_scopes().Get(scope_id).clang_decl_context_id());
   const auto* scope_record_decl =
       cast<clang::CXXRecordDecl>(clang_decl.key.decl);
 
-  const clang::ASTContext& ast_context =
-      context.sem_ir().clang_ast_unit()->getASTContext();
+  const clang::ASTContext& ast_context = context.ast_context();
   CARBON_CHECK(ast_context.getCanonicalTagType(scope_record_decl) ==
                ast_context.getCanonicalTagType(record_decl));
 
   auto class_decl = context.insts().GetAs<SemIR::ClassDecl>(clang_decl.inst_id);
-  CARBON_CHECK(name_id ==
-               context.sem_ir().classes().Get(class_decl.class_id).name_id);
+  CARBON_CHECK(name_id == context.classes().Get(class_decl.class_id).name_id);
   return true;
 }
 
@@ -582,16 +556,36 @@ static auto GetDeclarationName(Context& context, SemIR::NameId name_id)
     return std::nullopt;
   }
 
-  return clang::DeclarationName(context.sem_ir()
-                                    .clang_ast_unit()
-                                    ->getSema()
-                                    .getPreprocessor()
-                                    .getIdentifierInfo(*name));
+  return clang::DeclarationName(
+      context.clang_sema().getPreprocessor().getIdentifierInfo(*name));
+}
+
+// Performs a qualified name lookup of the declaration name in the given scope.
+// Returns the lookup result if lookup was successful.
+static auto ClangLookup(Context& context, SemIR::NameScopeId scope_id,
+                        clang::DeclarationName name)
+    -> std::optional<clang::LookupResult> {
+  clang::Sema& sema = context.clang_sema();
+
+  // TODO: Map the LocId of the lookup to a clang SourceLocation and provide it
+  // here so that clang's diagnostics can point into the carbon code that uses
+  // the name.
+  clang::LookupResult lookup(
+      sema, clang::DeclarationNameInfo(name, clang::SourceLocation()),
+      clang::Sema::LookupNameKind::LookupOrdinaryName);
+
+  bool found =
+      sema.LookupQualifiedName(lookup, GetDeclContext(context, scope_id));
+
+  if (!found) {
+    return std::nullopt;
+  }
+
+  return lookup;
 }
 
 // Looks up the given name in the Clang AST in a specific scope. Returns the
 // lookup result if lookup was successful.
-// TODO: Merge this with `ClangLookupDeclarationName`.
 static auto ClangLookupName(Context& context, SemIR::NameScopeId scope_id,
                             SemIR::NameId name_id)
     -> std::optional<clang::LookupResult> {
@@ -604,9 +598,9 @@ static auto ClangLookupName(Context& context, SemIR::NameScopeId scope_id,
 }
 
 // Returns whether `decl` already mapped to an instruction.
-static auto IsClangDeclImported(const Context& context, SemIR::ClangDeclKey key)
+static auto IsClangDeclImported(Context& context, SemIR::ClangDeclKey key)
     -> bool {
-  return context.sem_ir().clang_decls().Lookup(key).has_value();
+  return context.clang_decls().Lookup(key).has_value();
 }
 
 // If `decl` already mapped to an instruction, returns that instruction.
@@ -1722,7 +1716,7 @@ using ImportWorklist = llvm::SmallVector<ImportItem>;
 }  // namespace
 
 // Adds the given declaration to our list of declarations to import.
-static auto AddDependentDecl(const Context& context, SemIR::ClangDeclKey decl,
+static auto AddDependentDecl(Context& context, SemIR::ClangDeclKey decl,
                              ImportWorklist& worklist) -> void {
   if (!IsClangDeclImported(context, decl)) {
     worklist.push_back({.decl_key = decl, .added_dependencies = false});
@@ -1731,7 +1725,7 @@ static auto AddDependentDecl(const Context& context, SemIR::ClangDeclKey decl,
 
 // Finds all decls that need to be imported before importing the given type and
 // adds them to the given set.
-static auto AddDependentUnimportedTypeDecls(const Context& context,
+static auto AddDependentUnimportedTypeDecls(Context& context,
                                             clang::QualType type,
                                             ImportWorklist& worklist) -> void {
   while (true) {
@@ -1754,8 +1748,8 @@ static auto AddDependentUnimportedTypeDecls(const Context& context,
 // Finds all decls that need to be imported before importing the given function
 // and adds them to the given set.
 static auto AddDependentUnimportedFunctionDecls(
-    const Context& context, const clang::FunctionDecl& clang_decl,
-    int num_params, ImportWorklist& worklist) -> void {
+    Context& context, const clang::FunctionDecl& clang_decl, int num_params,
+    ImportWorklist& worklist) -> void {
   const auto* function_type =
       clang_decl.getType()->castAs<clang::FunctionProtoType>();
   for (int i : llvm::seq(clang_decl.hasCXXExplicitFunctionObjectParameter() +
@@ -1769,7 +1763,7 @@ static auto AddDependentUnimportedFunctionDecls(
 
 // Finds all decls that need to be imported before importing the given
 // declaration and adds them to the given set.
-static auto AddDependentUnimportedDecls(const Context& context,
+static auto AddDependentUnimportedDecls(Context& context,
                                         SemIR::ClangDeclKey key,
                                         ImportWorklist& worklist) -> void {
   clang::Decl* clang_decl = key.decl;
@@ -2112,73 +2106,13 @@ static auto ImportOverloadSetIntoScope(
                                                            access_kind.value());
 }
 
-// TODO: Refactor this method.
-// TODO: Do we need to import the dependences for all functions in the overload
-// set?
-auto ImportNameFromCpp(Context& context, SemIR::LocId loc_id,
-                       SemIR::NameScopeId scope_id, SemIR::NameId name_id)
+// Imports the constructors for a given class name. The found constructors are
+// imported as part of an overload set into the scope. Currently copy/move
+// constructors are not imported.
+static auto ImportConstructorsIntoScope(Context& context, SemIR::LocId loc_id,
+                                        SemIR::NameScopeId scope_id,
+                                        SemIR::NameId name_id)
     -> SemIR::ScopeLookupResult {
-  Diagnostics::AnnotationScope annotate_diagnostics(
-      &context.emitter(), [&](auto& builder) {
-        CARBON_DIAGNOSTIC(InCppNameLookup, Note,
-                          "in `Cpp` name lookup for `{0}`", SemIR::NameId);
-        builder.Note(loc_id, InCppNameLookup, name_id);
-      });
-
-  if (auto class_decl = context.insts().TryGetAs<SemIR::ClassDecl>(
-          context.name_scopes().Get(scope_id).inst_id());
-      class_decl.has_value()) {
-    if (!context.types().IsComplete(
-            context.classes().Get(class_decl->class_id).self_type_id)) {
-      return SemIR::ScopeLookupResult::MakeError();
-    }
-  }
-
-  auto lookup = ClangLookupName(context, scope_id, name_id);
-  if (!lookup) {
-    SemIR::InstId builtin_inst_id =
-        LookupBuiltinTypes(context, loc_id, scope_id, name_id);
-    if (builtin_inst_id.has_value()) {
-      AddNameToScope(context, scope_id, name_id, SemIR::AccessKind::Public,
-                     builtin_inst_id);
-      return SemIR::ScopeLookupResult::MakeWrappedLookupResult(
-          builtin_inst_id, SemIR::AccessKind::Public);
-    }
-    return SemIR::ScopeLookupResult::MakeNotFound();
-  }
-
-  // Access checks are performed separately by the Carbon name lookup logic.
-  lookup->suppressAccessDiagnostics();
-
-  if (lookup->isOverloadedResult() ||
-      (lookup->isSingleResult() &&
-       lookup->getFoundDecl()->isFunctionOrFunctionTemplate())) {
-    clang::UnresolvedSet<4> overload_set;
-    overload_set.append(lookup->begin(), lookup->end());
-    return ImportOverloadSetIntoScope(context, loc_id, scope_id, name_id,
-                                      overload_set);
-  }
-
-  if (!lookup->isSingleResult()) {
-    // Clang will diagnose ambiguous lookup results for us.
-    if (!lookup->isAmbiguous()) {
-      context.TODO(loc_id,
-                   llvm::formatv("Unsupported: Lookup succeeded but couldn't "
-                                 "find a single result; LookupResultKind: {0}",
-                                 static_cast<int>(lookup->getResultKind())));
-    }
-    context.name_scopes().AddRequiredName(scope_id, name_id,
-                                          SemIR::ErrorInst::InstId);
-    return SemIR::ScopeLookupResult::MakeError();
-  }
-
-  if (!IsDeclInjectedClassName(context, scope_id, name_id,
-                               lookup->getFoundDecl())) {
-    auto key = SemIR::ClangDeclKey::ForNonFunctionDecl(lookup->getFoundDecl());
-    return ImportNameDeclIntoScope(context, loc_id, scope_id, name_id, key,
-                                   lookup->begin().getAccess());
-  }
-
   clang::DeclContextLookupResult constructors_lookup =
       ClangConstructorLookup(context, scope_id);
 
@@ -2196,6 +2130,83 @@ auto ImportNameFromCpp(Context& context, SemIR::LocId loc_id,
 
   return ImportOverloadSetIntoScope(context, loc_id, scope_id, name_id,
                                     overload_set);
+}
+
+// Imports a builtin type from Clang to Carbon and adds the name into the
+// scope.
+static auto ImportBuiltinTypesIntoScope(Context& context, SemIR::LocId loc_id,
+                                        SemIR::NameScopeId scope_id,
+                                        SemIR::NameId name_id)
+    -> SemIR::ScopeLookupResult {
+  SemIR::InstId builtin_inst_id =
+      LookupBuiltinTypes(context, loc_id, scope_id, name_id);
+  if (builtin_inst_id.has_value()) {
+    AddNameToScope(context, scope_id, name_id, SemIR::AccessKind::Public,
+                   builtin_inst_id);
+    return SemIR::ScopeLookupResult::MakeWrappedLookupResult(
+        builtin_inst_id, SemIR::AccessKind::Public);
+  }
+  return SemIR::ScopeLookupResult::MakeNotFound();
+}
+
+// Checks if the name scope is a class that is not complete.
+static auto IsIncompleteClass(Context& context, SemIR::NameScopeId scope_id)
+    -> bool {
+  auto class_decl = context.insts().TryGetAs<SemIR::ClassDecl>(
+      context.name_scopes().Get(scope_id).inst_id());
+  return class_decl.has_value() &&
+         !context.types().IsComplete(
+             context.classes().Get(class_decl->class_id).self_type_id);
+}
+
+// TODO: Do we need to import the dependences for all functions in the overload
+// set?
+auto ImportNameFromCpp(Context& context, SemIR::LocId loc_id,
+                       SemIR::NameScopeId scope_id, SemIR::NameId name_id)
+    -> SemIR::ScopeLookupResult {
+  Diagnostics::AnnotationScope annotate_diagnostics(
+      &context.emitter(), [&](auto& builder) {
+        CARBON_DIAGNOSTIC(InCppNameLookup, Note,
+                          "in `Cpp` name lookup for `{0}`", SemIR::NameId);
+        builder.Note(loc_id, InCppNameLookup, name_id);
+      });
+  if (IsIncompleteClass(context, scope_id)) {
+    return SemIR::ScopeLookupResult::MakeError();
+  }
+  auto lookup = ClangLookupName(context, scope_id, name_id);
+  if (!lookup) {
+    return ImportBuiltinTypesIntoScope(context, loc_id, scope_id, name_id);
+  }
+  // Access checks are performed separately by the Carbon name lookup logic.
+  lookup->suppressAccessDiagnostics();
+
+  if (lookup->isOverloadedResult() ||
+      (lookup->isSingleResult() &&
+       lookup->getFoundDecl()->isFunctionOrFunctionTemplate())) {
+    clang::UnresolvedSet<4> overload_set;
+    overload_set.append(lookup->begin(), lookup->end());
+    return ImportOverloadSetIntoScope(context, loc_id, scope_id, name_id,
+                                      overload_set);
+  }
+  if (!lookup->isSingleResult()) {
+    // Clang will diagnose ambiguous lookup results for us.
+    if (!lookup->isAmbiguous()) {
+      context.TODO(loc_id,
+                   llvm::formatv("Unsupported: Lookup succeeded but couldn't "
+                                 "find a single result; LookupResultKind: {0}",
+                                 static_cast<int>(lookup->getResultKind())));
+    }
+    context.name_scopes().AddRequiredName(scope_id, name_id,
+                                          SemIR::ErrorInst::InstId);
+    return SemIR::ScopeLookupResult::MakeError();
+  }
+  if (IsDeclInjectedClassName(context, scope_id, name_id,
+                              lookup->getFoundDecl())) {
+    return ImportConstructorsIntoScope(context, loc_id, scope_id, name_id);
+  }
+  auto key = SemIR::ClangDeclKey::ForNonFunctionDecl(lookup->getFoundDecl());
+  return ImportNameDeclIntoScope(context, loc_id, scope_id, name_id, key,
+                                 lookup->begin().getAccess());
 }
 
 auto ImportClassDefinitionForClangDecl(Context& context, SemIR::LocId loc_id,

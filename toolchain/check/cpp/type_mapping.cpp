@@ -58,9 +58,7 @@ static auto FindIntLiteralBitWidth(Context& context, SemIR::InstId arg_id)
 static auto LookupCppType(
     Context& context, std::initializer_list<llvm::StringRef> name_components)
     -> clang::QualType {
-  clang::ASTUnit* ast = context.sem_ir().clang_ast_unit();
-  CARBON_CHECK(ast);
-  clang::Sema& sema = ast->getSema();
+  clang::Sema& sema = context.clang_sema();
 
   clang::Decl* decl = sema.getASTContext().getTranslationUnitDecl();
   for (auto name_component : name_components) {
@@ -94,7 +92,7 @@ static auto TryMapClassType(Context& context, SemIR::ClassType class_type)
   // If the class was imported from C++, return the original C++ type.
   auto clang_decl_id =
       context.name_scopes()
-          .Get(context.sem_ir().classes().Get(class_type.class_id).scope_id)
+          .Get(context.classes().Get(class_type.class_id).scope_id)
           .clang_decl_context_id();
   if (clang_decl_id.has_value()) {
     clang::Decl* clang_decl = context.clang_decls().Get(clang_decl_id).key.decl;
@@ -110,22 +108,26 @@ static auto TryMapClassType(Context& context, SemIR::ClassType class_type)
       break;
     }
     case SemIR::TypeLiteralInfo::Numeric: {
+      // Carbon supports large bit width beyond C++ builtins; we don't need to
+      // translate those.
+      if (!literal.numeric.bit_width_id.is_embedded_value()) {
+        return clang::QualType();
+      }
+      int bit_width = literal.numeric.bit_width_id.AsValue();
+
       switch (literal.numeric.kind) {
         case SemIR::NumericTypeLiteralInfo::None: {
           CARBON_FATAL("Unexpected invalid numeric type literal");
         }
         case SemIR::NumericTypeLiteralInfo::Float: {
           return context.ast_context().getRealTypeForBitwidth(
-              literal.numeric.bit_width_id.AsValue(),
-              clang::FloatModeKind::NoFloat);
+              bit_width, clang::FloatModeKind::NoFloat);
         }
         case SemIR::NumericTypeLiteralInfo::Int: {
-          return context.ast_context().getIntTypeForBitwidth(
-              literal.numeric.bit_width_id.AsValue(), true);
+          return context.ast_context().getIntTypeForBitwidth(bit_width, true);
         }
         case SemIR::NumericTypeLiteralInfo::UInt: {
-          return context.ast_context().getIntTypeForBitwidth(
-              literal.numeric.bit_width_id.AsValue(), false);
+          return context.ast_context().getIntTypeForBitwidth(bit_width, false);
         }
       }
     }
@@ -149,7 +151,7 @@ static auto TryMapClassType(Context& context, SemIR::ClassType class_type)
 // to keep them in sync.
 static auto MapNonWrapperType(Context& context, SemIR::InstId inst_id,
                               SemIR::TypeId type_id) -> clang::QualType {
-  auto type_inst = context.sem_ir().types().GetAsInst(type_id);
+  auto type_inst = context.types().GetAsInst(type_id);
 
   CARBON_KIND_SWITCH(type_inst) {
     case SemIR::BoolType::Kind: {
@@ -189,17 +191,14 @@ static auto MapToCppType(Context& context, SemIR::InstId inst_id)
   llvm::SmallVector<SemIR::TypeId> wrapper_types;
   while (true) {
     SemIR::TypeId orig_type_id = type_id;
-    if (auto const_type =
-            context.sem_ir().types().TryGetAs<SemIR::ConstType>(type_id);
+    if (auto const_type = context.types().TryGetAs<SemIR::ConstType>(type_id);
         const_type) {
-      type_id =
-          context.sem_ir().types().GetTypeIdForTypeInstId(const_type->inner_id);
+      type_id = context.types().GetTypeIdForTypeInstId(const_type->inner_id);
     } else if (auto pointer_type =
-                   context.sem_ir().types().TryGetAs<SemIR::PointerType>(
-                       type_id);
+                   context.types().TryGetAs<SemIR::PointerType>(type_id);
                pointer_type) {
-      type_id = context.sem_ir().types().GetTypeIdForTypeInstId(
-          pointer_type->pointee_id);
+      type_id =
+          context.types().GetTypeIdForTypeInstId(pointer_type->pointee_id);
     } else {
       break;
     }
@@ -212,12 +211,11 @@ static auto MapToCppType(Context& context, SemIR::InstId inst_id)
   }
 
   for (auto wrapper_type_id : llvm::reverse(wrapper_types)) {
-    if (auto const_type = context.sem_ir().types().TryGetAs<SemIR::ConstType>(
-            wrapper_type_id);
+    if (auto const_type =
+            context.types().TryGetAs<SemIR::ConstType>(wrapper_type_id);
         const_type) {
       mapped_type.addConst();
-    } else if (context.sem_ir().types().TryGetAs<SemIR::PointerType>(
-                   wrapper_type_id)) {
+    } else if (context.types().TryGetAs<SemIR::PointerType>(wrapper_type_id)) {
       auto pointer_type = context.ast_context().getPointerType(mapped_type);
       mapped_type = context.ast_context().getAttributedType(
           clang::attr::TypeNonNull, pointer_type, pointer_type);
