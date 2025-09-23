@@ -306,7 +306,7 @@ auto PerformCall(Context& context, SemIR::LocId loc_id, SemIR::InstId callee_id,
         PerformCppOverloadResolution(context, loc_id,
                                      callee_function.cpp_overload_set_id,
                                      callee_function.self_id, arg_ids);
-    if (callee_function.is_error) {
+    if (callee_id == SemIR::ErrorInst::InstId) {
       return SemIR::ErrorInst::InstId;
     }
   }
