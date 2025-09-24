@@ -102,10 +102,13 @@ static auto GenerateCppIncludesHeaderCode(
       GenerateLineMarker(context, code_stream,
                          context.tokens().GetLineNumber(
                              context.parse_tree().node_token(import.node_id)));
-      code_stream << "#include \""
-                  << FormatEscaped(
-                         context.string_literal_values().Get(import.library_id))
-                  << "\"\n";
+      auto name = context.string_literal_values().Get(import.library_id);
+      if (name.starts_with('<') && name.ends_with('>')) {
+        code_stream << "#include <"
+                    << FormatEscaped(name.drop_front().drop_back()) << ">\n";
+      } else {
+        code_stream << "#include \"" << FormatEscaped(name) << "\"\n";
+      }
     }
   }
 
