@@ -21,7 +21,7 @@ interface I {
 }
 
 fn Use(T:! I) {
-  // CHECK:STDERR: fail_member_access.carbon:[[@LINE+4]]:3: error: type `<type of F in T as I>` does not support qualified expressions [QualifiedExprUnsupported]
+  // CHECK:STDERR: fail_member_access.carbon:[[@LINE+4]]:3: error: type `<type of F in T>` does not support qualified expressions [QualifiedExprUnsupported]
   // CHECK:STDERR:   T.F.member;
   // CHECK:STDERR:   ^~~~~~~~~~
   // CHECK:STDERR:
@@ -47,10 +47,9 @@ fn Use(T:! I) {
 // CHECK:STDOUT:   %Use: %Use.type = struct_value () [concrete]
 // CHECK:STDOUT:   %T.as_type: type = facet_access_type %T [symbolic]
 // CHECK:STDOUT:   %I.lookup_impl_witness: <witness> = lookup_impl_witness %T, @I [symbolic]
-// CHECK:STDOUT:   %I.facet: %I.type = facet_value %T.as_type, (%I.lookup_impl_witness) [symbolic]
-// CHECK:STDOUT:   %.7b1: type = fn_type_with_self_type %I.F.type, %I.facet [symbolic]
-// CHECK:STDOUT:   %impl.elem0: %.7b1 = impl_witness_access %I.lookup_impl_witness, element0 [symbolic]
-// CHECK:STDOUT:   %require_complete: <witness> = require_complete_type %.7b1 [symbolic]
+// CHECK:STDOUT:   %.a90: type = fn_type_with_self_type %I.F.type, %T [symbolic]
+// CHECK:STDOUT:   %impl.elem0: %.a90 = impl_witness_access %I.lookup_impl_witness, element0 [symbolic]
+// CHECK:STDOUT:   %require_complete: <witness> = require_complete_type %.a90 [symbolic]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -106,9 +105,8 @@ fn Use(T:! I) {
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %T.as_type.loc13_4.2: type = facet_access_type %T.loc8_8.1 [symbolic = %T.as_type.loc13_4.2 (constants.%T.as_type)]
 // CHECK:STDOUT:   %I.lookup_impl_witness: <witness> = lookup_impl_witness %T.loc8_8.1, @I [symbolic = %I.lookup_impl_witness (constants.%I.lookup_impl_witness)]
-// CHECK:STDOUT:   %I.facet: %I.type = facet_value %T.as_type.loc13_4.2, (%I.lookup_impl_witness) [symbolic = %I.facet (constants.%I.facet)]
-// CHECK:STDOUT:   %.loc13_4.2: type = fn_type_with_self_type constants.%I.F.type, %I.facet [symbolic = %.loc13_4.2 (constants.%.7b1)]
-// CHECK:STDOUT:   %impl.elem0.loc13_4.2: @Use.%.loc13_4.2 (%.7b1) = impl_witness_access %I.lookup_impl_witness, element0 [symbolic = %impl.elem0.loc13_4.2 (constants.%impl.elem0)]
+// CHECK:STDOUT:   %.loc13_4.2: type = fn_type_with_self_type constants.%I.F.type, %T.loc8_8.1 [symbolic = %.loc13_4.2 (constants.%.a90)]
+// CHECK:STDOUT:   %impl.elem0.loc13_4.2: @Use.%.loc13_4.2 (%.a90) = impl_witness_access %I.lookup_impl_witness, element0 [symbolic = %impl.elem0.loc13_4.2 (constants.%impl.elem0)]
 // CHECK:STDOUT:   %require_complete: <witness> = require_complete_type %.loc13_4.2 [symbolic = %require_complete (constants.%require_complete)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   fn() {
@@ -117,7 +115,7 @@ fn Use(T:! I) {
 // CHECK:STDOUT:     %F.ref: %I.assoc_type = name_ref F, @I.%assoc0 [concrete = constants.%assoc0]
 // CHECK:STDOUT:     %T.as_type.loc13_4.1: type = facet_access_type %T.ref [symbolic = %T.as_type.loc13_4.2 (constants.%T.as_type)]
 // CHECK:STDOUT:     %.loc13_4.1: type = converted %T.ref, %T.as_type.loc13_4.1 [symbolic = %T.as_type.loc13_4.2 (constants.%T.as_type)]
-// CHECK:STDOUT:     %impl.elem0.loc13_4.1: @Use.%.loc13_4.2 (%.7b1) = impl_witness_access constants.%I.lookup_impl_witness, element0 [symbolic = %impl.elem0.loc13_4.2 (constants.%impl.elem0)]
+// CHECK:STDOUT:     %impl.elem0.loc13_4.1: @Use.%.loc13_4.2 (%.a90) = impl_witness_access constants.%I.lookup_impl_witness, element0 [symbolic = %impl.elem0.loc13_4.2 (constants.%impl.elem0)]
 // CHECK:STDOUT:     return
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }

@@ -7,9 +7,11 @@
 #include "clang/Basic/DiagnosticSema.h"
 #include "clang/Sema/Overload.h"
 #include "clang/Sema/Sema.h"
+#include "toolchain/base/kind_switch.h"
 #include "toolchain/check/cpp/import.h"
 #include "toolchain/check/cpp/location.h"
 #include "toolchain/check/cpp/type_mapping.h"
+#include "toolchain/diagnostics/diagnostic_emitter.h"
 #include "toolchain/sem_ir/function.h"
 #include "toolchain/sem_ir/ids.h"
 #include "toolchain/sem_ir/typed_insts.h"
@@ -77,6 +79,12 @@ static auto AddOverloadCandidataes(clang::Sema& sema,
   }
 }
 
+// Returns whether the decl is an operator member function.
+static auto IsOperatorMethodDecl(clang::Decl* decl) -> bool {
+  auto* clang_method_decl = dyn_cast<clang::CXXMethodDecl>(decl);
+  return clang_method_decl && clang_method_decl->isOverloadedOperator();
+}
+
 // Resolve which function to call, or returns an error instruction if overload
 // resolution failed.
 static auto ResolveCalleeId(Context& context, SemIR::LocId loc_id,
@@ -84,6 +92,12 @@ static auto ResolveCalleeId(Context& context, SemIR::LocId loc_id,
                             SemIR::InstId self_id,
                             llvm::ArrayRef<SemIR::InstId> arg_ids)
     -> SemIR::InstId {
+  // Register an annotation scope to flush any Clang diagnostics when we return.
+  // This is important to ensure that Clang diagnostics are properly interleaved
+  // with Carbon diagnostics.
+  Diagnostics::AnnotationScope annotate_diagnostics(&context.emitter(),
+                                                    [](auto& /*builder*/) {});
+
   // Map Carbon call argument types to C++ types.
   clang::Expr* self_expr = nullptr;
   if (self_id.has_value()) {
@@ -107,9 +121,7 @@ static auto ResolveCalleeId(Context& context, SemIR::LocId loc_id,
   clang::OverloadCandidateSet candidate_set(
       loc, clang::OverloadCandidateSet::CandidateSetKind::CSK_Normal);
 
-  clang::ASTUnit* ast = context.sem_ir().clang_ast_unit();
-  CARBON_CHECK(ast);
-  clang::Sema& sema = ast->getSema();
+  clang::Sema& sema = context.clang_sema();
 
   AddOverloadCandidataes(sema, candidate_set, overload_set.candidate_functions,
                          self_expr, arg_exprs);
@@ -124,8 +136,10 @@ static auto ResolveCalleeId(Context& context, SemIR::LocId loc_id,
       // TODO: Handle the cases when Function is null.
       CARBON_CHECK(best_viable_fn->Function);
       sema.MarkFunctionReferenced(loc, best_viable_fn->Function);
-      SemIR::InstId result =
-          ImportCppFunctionDecl(context, loc_id, best_viable_fn->Function);
+      SemIR::InstId result = ImportCppFunctionDecl(
+          context, loc_id, best_viable_fn->Function,
+          arg_exprs.size() -
+              (IsOperatorMethodDecl(best_viable_fn->Function) ? 1 : 0));
       return result;
     }
     case clang::OverloadingResult::OR_No_Viable_Function: {
@@ -163,9 +177,8 @@ static auto IsCppOperatorMethod(Context& context, SemIR::FunctionId function_id)
     return false;
   }
 
-  auto* clang_method_decl = dyn_cast<clang::CXXMethodDecl>(
-      context.clang_decls().Get(clang_decl_id).decl);
-  return clang_method_decl && clang_method_decl->isOverloadedOperator();
+  return IsOperatorMethodDecl(
+      context.clang_decls().Get(clang_decl_id).key.decl);
 }
 
 auto PerformCppOverloadResolution(Context& context, SemIR::LocId loc_id,
@@ -176,25 +189,32 @@ auto PerformCppOverloadResolution(Context& context, SemIR::LocId loc_id,
   CppOverloadResolutionResult result = {
       .callee_id =
           ResolveCalleeId(context, loc_id, overload_set_id, self_id, arg_ids),
-      .callee_function = GetCalleeFunction(context.sem_ir(), result.callee_id),
       .arg_ids = arg_ids};
-  SemIR::CalleeFunction& callee_function = result.callee_function;
-  if (callee_function.is_error) {
-    result.callee_id = SemIR::ErrorInst::InstId;
-    return result;
+  SemIR::Callee callee = GetCallee(context.sem_ir(), result.callee_id);
+  CARBON_KIND_SWITCH(callee) {
+    case CARBON_KIND(SemIR::CalleeError _): {
+      result.callee_id = SemIR::ErrorInst::InstId;
+      return result;
+    }
+    case CARBON_KIND(SemIR::CalleeFunction fn): {
+      CARBON_CHECK(!fn.self_id.has_value());
+      if (self_id.has_value()) {
+        // Preserve the `self` argument from the original callee.
+        fn.self_id = self_id;
+      } else if (IsCppOperatorMethod(context, fn.function_id)) {
+        // Adjust `self` and args for C++ overloaded operator methods.
+        fn.self_id = result.arg_ids.consume_front();
+      }
+      result.callee_function = fn;
+      return result;
+    }
+    case CARBON_KIND(SemIR::CalleeCppOverloadSet _): {
+      CARBON_FATAL("overloads can't be recursive");
+    }
+    case CARBON_KIND(SemIR::CalleeNonFunction _): {
+      CARBON_FATAL("overloads should produce functions");
+    }
   }
-
-  CARBON_CHECK(!callee_function.cpp_overload_set_id.has_value());
-
-  CARBON_CHECK(!callee_function.self_id.has_value());
-  if (self_id.has_value()) {
-    // Preserve the `self` argument from the original callee.
-    callee_function.self_id = self_id;
-  } else if (IsCppOperatorMethod(context, callee_function.function_id)) {
-    // Adjust `self` and args for C++ overloaded operator methods.
-    callee_function.self_id = result.arg_ids.consume_front();
-  }
-  return result;
 }
 
 }  // namespace Carbon::Check

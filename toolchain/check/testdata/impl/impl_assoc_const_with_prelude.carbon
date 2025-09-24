@@ -51,7 +51,6 @@ impl () as I where .X = {.a = true, .b = (1, 2)} and .X = {.a = false, .b = (3, 
 // CHECK:STDOUT:   %.Self.364: %I.type = bind_symbolic_name .Self [symbolic_self]
 // CHECK:STDOUT:   %.Self.as_type: type = facet_access_type %.Self.364 [symbolic_self]
 // CHECK:STDOUT:   %I.lookup_impl_witness: <witness> = lookup_impl_witness %.Self.364, @I [symbolic_self]
-// CHECK:STDOUT:   %I.facet: %I.type = facet_value %.Self.as_type, (%I.lookup_impl_witness) [symbolic_self]
 // CHECK:STDOUT:   %impl.elem0.805: %struct_type.a.b.fe2 = impl_witness_access %I.lookup_impl_witness, element0 [symbolic_self]
 // CHECK:STDOUT:   %true: bool = bool_literal true [concrete]
 // CHECK:STDOUT:   %int_1.5b8: Core.IntLiteral = int_value 1 [concrete]
@@ -247,7 +246,7 @@ impl () as I where .X = {.a = true, .b = (1, 2)} and .X = {.a = false, .b = (3, 
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @X(constants.%Self.7ee) {}
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @X(constants.%I.facet) {}
+// CHECK:STDOUT: specific @X(constants.%.Self.364) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- fail_two_different_non_type.carbon
 // CHECK:STDOUT:
@@ -268,7 +267,6 @@ impl () as I where .X = {.a = true, .b = (1, 2)} and .X = {.a = false, .b = (3, 
 // CHECK:STDOUT:   %.Self: %I.type = bind_symbolic_name .Self [symbolic_self]
 // CHECK:STDOUT:   %.Self.as_type: type = facet_access_type %.Self [symbolic_self]
 // CHECK:STDOUT:   %I.lookup_impl_witness: <witness> = lookup_impl_witness %.Self, @I [symbolic_self]
-// CHECK:STDOUT:   %I.facet: %I.type = facet_value %.Self.as_type, (%I.lookup_impl_witness) [symbolic_self]
 // CHECK:STDOUT:   %impl.elem0.805: %struct_type.a.b.fe2 = impl_witness_access %I.lookup_impl_witness, element0 [symbolic_self]
 // CHECK:STDOUT:   %true: bool = bool_literal true [concrete]
 // CHECK:STDOUT:   %int_1.5b8: Core.IntLiteral = int_value 1 [concrete]
@@ -424,5 +422,5 @@ impl () as I where .X = {.a = true, .b = (1, 2)} and .X = {.a = false, .b = (3, 
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @X(constants.%Self.7ee) {}
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @X(constants.%I.facet) {}
+// CHECK:STDOUT: specific @X(constants.%.Self) {}
 // CHECK:STDOUT:

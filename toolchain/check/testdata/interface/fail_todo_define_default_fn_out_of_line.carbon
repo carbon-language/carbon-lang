@@ -233,10 +233,10 @@ fn Interface.C.F[self: Self](U:! type, u: U*) -> U* { return u; }
 // CHECK:STDOUT:   %Copy.type: type = facet_type <@Copy> [concrete]
 // CHECK:STDOUT:   %Copy.Op.type: type = fn_type @Copy.Op [concrete]
 // CHECK:STDOUT:   %Copy.lookup_impl_witness.043: <witness> = lookup_impl_witness %ptr.b51, @Copy [symbolic]
-// CHECK:STDOUT:   %Copy.facet.02f: %Copy.type = facet_value %ptr.b51, (%Copy.lookup_impl_witness.043) [symbolic]
-// CHECK:STDOUT:   %.7c8: type = fn_type_with_self_type %Copy.Op.type, %Copy.facet.02f [symbolic]
+// CHECK:STDOUT:   %Copy.facet: %Copy.type = facet_value %ptr.b51, (%Copy.lookup_impl_witness.043) [symbolic]
+// CHECK:STDOUT:   %.7c8: type = fn_type_with_self_type %Copy.Op.type, %Copy.facet [symbolic]
 // CHECK:STDOUT:   %impl.elem0.170: %.7c8 = impl_witness_access %Copy.lookup_impl_witness.043, element0 [symbolic]
-// CHECK:STDOUT:   %specific_impl_fn.830: <specific function> = specific_impl_function %impl.elem0.170, @Copy.Op(%Copy.facet.02f) [symbolic]
+// CHECK:STDOUT:   %specific_impl_fn.830: <specific function> = specific_impl_function %impl.elem0.170, @Copy.Op(%Copy.facet) [symbolic]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -386,7 +386,7 @@ fn Interface.C.F[self: Self](U:! type, u: U*) -> U* { return u; }
 // CHECK:STDOUT:   %require_complete.loc20_47: <witness> = require_complete_type %ptr.loc14_36.1 [symbolic = %require_complete.loc20_47 (constants.%require_complete.301)]
 // CHECK:STDOUT:   %require_complete.loc20_22: <witness> = require_complete_type %C [symbolic = %require_complete.loc20_22 (constants.%require_complete.c4c)]
 // CHECK:STDOUT:   %Copy.lookup_impl_witness: <witness> = lookup_impl_witness %ptr.loc14_36.1, @Copy [symbolic = %Copy.lookup_impl_witness (constants.%Copy.lookup_impl_witness.043)]
-// CHECK:STDOUT:   %Copy.facet: %Copy.type = facet_value %ptr.loc14_36.1, (%Copy.lookup_impl_witness) [symbolic = %Copy.facet (constants.%Copy.facet.02f)]
+// CHECK:STDOUT:   %Copy.facet: %Copy.type = facet_value %ptr.loc14_36.1, (%Copy.lookup_impl_witness) [symbolic = %Copy.facet (constants.%Copy.facet)]
 // CHECK:STDOUT:   %.loc20_62.2: type = fn_type_with_self_type constants.%Copy.Op.type, %Copy.facet [symbolic = %.loc20_62.2 (constants.%.7c8)]
 // CHECK:STDOUT:   %impl.elem0.loc20_62.2: @C.F.%.loc20_62.2 (%.7c8) = impl_witness_access %Copy.lookup_impl_witness, element0 [symbolic = %impl.elem0.loc20_62.2 (constants.%impl.elem0.170)]
 // CHECK:STDOUT:   %specific_impl_fn.loc20_62.2: <specific function> = specific_impl_function %impl.elem0.loc20_62.2, @Copy.Op(%Copy.facet) [symbolic = %specific_impl_fn.loc20_62.2 (constants.%specific_impl_fn.830)]
@@ -396,7 +396,7 @@ fn Interface.C.F[self: Self](U:! type, u: U*) -> U* { return u; }
 // CHECK:STDOUT:     %u.ref: @C.F.%ptr.loc14_36.1 (%ptr.b51) = name_ref u, %u.loc20
 // CHECK:STDOUT:     %impl.elem0.loc20_62.1: @C.F.%.loc20_62.2 (%.7c8) = impl_witness_access constants.%Copy.lookup_impl_witness.043, element0 [symbolic = %impl.elem0.loc20_62.2 (constants.%impl.elem0.170)]
 // CHECK:STDOUT:     %bound_method.loc20_62.1: <bound method> = bound_method %u.ref, %impl.elem0.loc20_62.1
-// CHECK:STDOUT:     %specific_impl_fn.loc20_62.1: <specific function> = specific_impl_function %impl.elem0.loc20_62.1, @Copy.Op(constants.%Copy.facet.02f) [symbolic = %specific_impl_fn.loc20_62.2 (constants.%specific_impl_fn.830)]
+// CHECK:STDOUT:     %specific_impl_fn.loc20_62.1: <specific function> = specific_impl_function %impl.elem0.loc20_62.1, @Copy.Op(constants.%Copy.facet) [symbolic = %specific_impl_fn.loc20_62.2 (constants.%specific_impl_fn.830)]
 // CHECK:STDOUT:     %bound_method.loc20_62.2: <bound method> = bound_method %u.ref, %specific_impl_fn.loc20_62.1
 // CHECK:STDOUT:     %.loc20_62.1: init @C.F.%ptr.loc14_36.1 (%ptr.b51) = call %bound_method.loc20_62.2(%u.ref)
 // CHECK:STDOUT:     return %.loc20_62.1 to %return.loc20

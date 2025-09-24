@@ -39,10 +39,10 @@ fn F() {
 // CHECK:STDOUT:   %Destroy.Op.type: type = fn_type @Destroy.Op [concrete]
 // CHECK:STDOUT:   %ptr.a13abe.2: type = ptr_type %ptr.79f131.1 [symbolic]
 // CHECK:STDOUT:   %Destroy.lookup_impl_witness.3af: <witness> = lookup_impl_witness %ptr.79f131.1, @Destroy [symbolic]
-// CHECK:STDOUT:   %Destroy.facet.64e: %Destroy.type = facet_value %ptr.79f131.1, (%Destroy.lookup_impl_witness.3af) [symbolic]
-// CHECK:STDOUT:   %.fc8: type = fn_type_with_self_type %Destroy.Op.type, %Destroy.facet.64e [symbolic]
+// CHECK:STDOUT:   %Destroy.facet: %Destroy.type = facet_value %ptr.79f131.1, (%Destroy.lookup_impl_witness.3af) [symbolic]
+// CHECK:STDOUT:   %.fc8: type = fn_type_with_self_type %Destroy.Op.type, %Destroy.facet [symbolic]
 // CHECK:STDOUT:   %impl.elem0.108: %.fc8 = impl_witness_access %Destroy.lookup_impl_witness.3af, element0 [symbolic]
-// CHECK:STDOUT:   %specific_impl_fn.a84: <specific function> = specific_impl_function %impl.elem0.108, @Destroy.Op(%Destroy.facet.64e) [symbolic]
+// CHECK:STDOUT:   %specific_impl_fn.a84: <specific function> = specific_impl_function %impl.elem0.108, @Destroy.Op(%Destroy.facet) [symbolic]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -95,7 +95,7 @@ fn F() {
 // CHECK:STDOUT:   %a: %T = bind_name a, %.loc18_14.2
 // CHECK:STDOUT:   %impl.elem0: %.fc8 = impl_witness_access constants.%Destroy.lookup_impl_witness.3af, element0 [symbolic = constants.%impl.elem0.108]
 // CHECK:STDOUT:   %bound_method.loc17_3.1: <bound method> = bound_method %p.var, %impl.elem0
-// CHECK:STDOUT:   %specific_impl_fn: <specific function> = specific_impl_function %impl.elem0, @Destroy.Op(constants.%Destroy.facet.64e) [symbolic = constants.%specific_impl_fn.a84]
+// CHECK:STDOUT:   %specific_impl_fn: <specific function> = specific_impl_function %impl.elem0, @Destroy.Op(constants.%Destroy.facet) [symbolic = constants.%specific_impl_fn.a84]
 // CHECK:STDOUT:   %bound_method.loc17_3.2: <bound method> = bound_method %p.var, %specific_impl_fn
 // CHECK:STDOUT:   %addr: %ptr.a13abe.2 = addr_of %p.var
 // CHECK:STDOUT:   %.loc17_3: init %empty_tuple.type = call %bound_method.loc17_3.2(%addr)

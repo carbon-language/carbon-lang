@@ -25,7 +25,7 @@ auto ImportIRInst::Print(llvm::raw_ostream& out) const -> void {
   out << "}";
 }
 
-auto GetCanonicalFileAndInstId(const File* sem_ir, SemIR::InstId inst_id)
+auto GetCanonicalFileAndInstId(const File* sem_ir, InstId inst_id)
     -> std::pair<const File*, InstId> {
   while (true) {
     // Step through an imported instruction to the instruction it was imported
@@ -43,8 +43,7 @@ auto GetCanonicalFileAndInstId(const File* sem_ir, SemIR::InstId inst_id)
     }
 
     // Step through export declarations to their exported value.
-    if (auto export_decl =
-            sem_ir->insts().TryGetAs<SemIR::ExportDecl>(inst_id)) {
+    if (auto export_decl = sem_ir->insts().TryGetAs<ExportDecl>(inst_id)) {
       inst_id = export_decl->value_id;
       continue;
     }

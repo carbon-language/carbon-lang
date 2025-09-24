@@ -16,10 +16,10 @@ struct CppOverloadResolutionResult {
   // The resolved callee id, or ErrorInst::InstId on error.
   SemIR::InstId callee_id;
 
-  // The resolved callee function, which may be different from the result of
+  // The resolved callee, which may be different from the result of
   // `GetCalleeFunction()` to preserve self or set it to be the first argument
-  // for C++ member operators.
-  SemIR::CalleeFunction callee_function;
+  // for C++ member operators. Not set if overload resolution failed.
+  std::optional<SemIR::CalleeFunction> callee_function;
 
   // The arguments to pass to the callee, which may be different from the
   // original arguments if the callee is a C++ member operator.

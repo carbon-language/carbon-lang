@@ -1211,11 +1211,17 @@ static auto PerformBuiltinConversion(
 
     if (auto facet_access_type_inst =
             sem_ir.insts().TryGetAs<SemIR::FacetAccessType>(const_value_id)) {
-      // Conversion from a `FacetAccessType` to a `FacetValue` of the target
-      // `FacetType` if the instruction in the `FacetAccessType` is of a
-      // `FacetType` that satisfies the requirements of the target `FacetType`.
-      // If the `FacetType` exactly matches the target `FacetType` then we can
-      // shortcut and use that value, and avoid impl lookup.
+      // Shortcut for lossless round trips through a FacetAccessType when
+      // converting back to the type of its original facet value.
+      //
+      // In the case where the FacetAccessType wraps a BindSymbolicName with the
+      // exact facet type that we are converting to, the resulting FacetValue
+      // would evaluate back to the original BindSymbolicName as its canonical
+      // form. We can skip past the whole impl lookup step then and do that
+      // here.
+      //
+      // See also test:
+      // facet_access_type_converts_back_to_original_facet_value.carbon
       auto facet_value_inst_id = facet_access_type_inst->facet_value_inst_id;
       if (sem_ir.insts().Get(facet_value_inst_id).type_id() == target.type_id) {
         return facet_value_inst_id;

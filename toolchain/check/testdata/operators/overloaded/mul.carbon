@@ -50,14 +50,14 @@ fn TestAssign(a: C*, b: C) {
 // CHECK:STDOUT:   %MulWith.impl_witness: <witness> = impl_witness file.%MulWith.impl_witness_table [concrete]
 // CHECK:STDOUT:   %C.as.MulWith.impl.Op.type: type = fn_type @C.as.MulWith.impl.Op [concrete]
 // CHECK:STDOUT:   %C.as.MulWith.impl.Op: %C.as.MulWith.impl.Op.type = struct_value () [concrete]
-// CHECK:STDOUT:   %MulWith.facet.295: %MulWith.type.c1e = facet_value %C, (%MulWith.impl_witness) [concrete]
+// CHECK:STDOUT:   %MulWith.facet: %MulWith.type.c1e = facet_value %C, (%MulWith.impl_witness) [concrete]
 // CHECK:STDOUT:   %MulAssignWith.type.c63: type = facet_type <@MulAssignWith, @MulAssignWith(%C)> [concrete]
 // CHECK:STDOUT:   %MulAssignWith.Op.type.5c8: type = fn_type @MulAssignWith.Op, @MulAssignWith(%C) [concrete]
 // CHECK:STDOUT:   %MulAssignWith.impl_witness: <witness> = impl_witness file.%MulAssignWith.impl_witness_table [concrete]
 // CHECK:STDOUT:   %C.as.MulAssignWith.impl.Op.type: type = fn_type @C.as.MulAssignWith.impl.Op [concrete]
 // CHECK:STDOUT:   %C.as.MulAssignWith.impl.Op: %C.as.MulAssignWith.impl.Op.type = struct_value () [concrete]
 // CHECK:STDOUT:   %MulAssignWith.facet: %MulAssignWith.type.c63 = facet_value %C, (%MulAssignWith.impl_witness) [concrete]
-// CHECK:STDOUT:   %.b53: type = fn_type_with_self_type %MulWith.Op.type.2c9, %MulWith.facet.295 [concrete]
+// CHECK:STDOUT:   %.b53: type = fn_type_with_self_type %MulWith.Op.type.2c9, %MulWith.facet [concrete]
 // CHECK:STDOUT:   %.78a: type = fn_type_with_self_type %MulAssignWith.Op.type.5c8, %MulAssignWith.facet [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

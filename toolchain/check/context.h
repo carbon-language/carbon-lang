@@ -286,6 +286,9 @@ class Context {
   auto ast_context() -> clang::ASTContext& {
     return sem_ir().clang_ast_unit()->getASTContext();
   }
+  auto clang_sema() -> clang::Sema& {
+    return sem_ir().clang_ast_unit()->getSema();
+  }
   auto clang_decls() -> SemIR::ClangDeclStore& {
     return sem_ir().clang_decls();
   }

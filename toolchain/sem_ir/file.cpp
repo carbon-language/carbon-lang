@@ -101,6 +101,7 @@ auto File::OutputYaml(bool include_singletons) const -> Yaml::OutputMapping {
     map.Add("sem_ir", Yaml::OutputMapping([&](Yaml::OutputMapping::Map map) {
               map.Add("import_irs", import_irs_.OutputYaml());
               map.Add("import_ir_insts", import_ir_insts_.OutputYaml());
+              map.Add("clang_decls", clang_decls_.OutputYaml());
               map.Add("name_scopes", name_scopes_.OutputYaml());
               map.Add("entity_names", entity_names_.OutputYaml());
               map.Add("functions", functions_.OutputYaml());
@@ -139,6 +140,7 @@ auto File::CollectMemUsage(MemUsage& mem_usage, llvm::StringRef label) const
   mem_usage.Collect(MemUsage::ConcatLabel(label, "import_irs_"), import_irs_);
   mem_usage.Collect(MemUsage::ConcatLabel(label, "import_ir_insts_"),
                     import_ir_insts_);
+  mem_usage.Collect(MemUsage::ConcatLabel(label, "clang_decls_"), clang_decls_);
   mem_usage.Collect(MemUsage::ConcatLabel(label, "struct_type_fields_"),
                     struct_type_fields_);
   mem_usage.Collect(MemUsage::ConcatLabel(label, "insts_"), insts_);

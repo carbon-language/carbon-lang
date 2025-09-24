@@ -294,30 +294,12 @@ static auto PerformCallToFunction(Context& context, SemIR::LocId loc_id,
   }
 }
 
-auto PerformCall(Context& context, SemIR::LocId loc_id, SemIR::InstId callee_id,
-                 llvm::ArrayRef<SemIR::InstId> arg_ids) -> SemIR::InstId {
-  // Try treating the callee as a function first.
-  auto callee_function = GetCalleeFunction(context.sem_ir(), callee_id);
-  if (callee_function.is_error) {
-    return SemIR::ErrorInst::InstId;
-  }
-  if (callee_function.cpp_overload_set_id.has_value()) {
-    CppOverloadResolutionResult result = PerformCppOverloadResolution(
-        context, loc_id, callee_function.cpp_overload_set_id,
-        callee_function.self_id, arg_ids);
-    callee_id = result.callee_id;
-    if (callee_id == SemIR::ErrorInst::InstId) {
-      return SemIR::ErrorInst::InstId;
-    }
-    callee_function = result.callee_function;
-    arg_ids = result.arg_ids;
-  }
-  if (callee_function.function_id.has_value()) {
-    return PerformCallToFunction(context, loc_id, callee_id, callee_function,
-                                 arg_ids);
-  }
-
-  // Callee isn't a function, so try treating it as a generic type.
+// Performs a call where the callee is a generic type. If it's not a generic
+// type, produces a diagnostic.
+static auto PerformCallToNonFunction(Context& context, SemIR::LocId loc_id,
+                                     SemIR::InstId callee_id,
+                                     llvm::ArrayRef<SemIR::InstId> arg_ids)
+    -> SemIR::InstId {
   auto type_inst =
       context.types().GetAsInst(context.insts().Get(callee_id).type_id());
   CARBON_KIND_SWITCH(type_inst) {
@@ -336,6 +318,37 @@ auto PerformCall(Context& context, SemIR::LocId loc_id, SemIR::InstId callee_id,
                         "value of type {0} is not callable", TypeOfInstId);
       context.emitter().Emit(loc_id, CallToNonCallable, callee_id);
       return SemIR::ErrorInst::InstId;
+    }
+  }
+}
+
+auto PerformCall(Context& context, SemIR::LocId loc_id, SemIR::InstId callee_id,
+                 llvm::ArrayRef<SemIR::InstId> arg_ids) -> SemIR::InstId {
+  // Try treating the callee as a function first.
+  auto callee = GetCallee(context.sem_ir(), callee_id);
+  CARBON_KIND_SWITCH(callee) {
+    case CARBON_KIND(SemIR::CalleeError _): {
+      return SemIR::ErrorInst::InstId;
+    }
+    case CARBON_KIND(SemIR::CalleeFunction fn): {
+      return PerformCallToFunction(context, loc_id, callee_id, fn, arg_ids);
+    }
+    case CARBON_KIND(SemIR::CalleeNonFunction _): {
+      return PerformCallToNonFunction(context, loc_id, callee_id, arg_ids);
+    }
+
+    case CARBON_KIND(SemIR::CalleeCppOverloadSet overload): {
+      CppOverloadResolutionResult overload_result =
+          PerformCppOverloadResolution(context, loc_id,
+                                       overload.cpp_overload_set_id,
+                                       overload.self_id, arg_ids);
+      if (overload_result.callee_id == SemIR::ErrorInst::InstId) {
+        return SemIR::ErrorInst::InstId;
+      }
+      CARBON_CHECK(overload_result.callee_function.has_value());
+      return PerformCallToFunction(context, loc_id, overload_result.callee_id,
+                                   *overload_result.callee_function,
+                                   overload_result.arg_ids);
     }
   }
 }

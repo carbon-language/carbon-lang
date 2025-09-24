@@ -39,8 +39,8 @@ fn TestOp(a: C) -> C {
 // CHECK:STDOUT:   %BitComplement.impl_witness: <witness> = impl_witness file.%BitComplement.impl_witness_table [concrete]
 // CHECK:STDOUT:   %C.as.BitComplement.impl.Op.type: type = fn_type @C.as.BitComplement.impl.Op [concrete]
 // CHECK:STDOUT:   %C.as.BitComplement.impl.Op: %C.as.BitComplement.impl.Op.type = struct_value () [concrete]
-// CHECK:STDOUT:   %BitComplement.facet.6cb: %BitComplement.type = facet_value %C, (%BitComplement.impl_witness) [concrete]
-// CHECK:STDOUT:   %.832: type = fn_type_with_self_type %BitComplement.Op.type, %BitComplement.facet.6cb [concrete]
+// CHECK:STDOUT:   %BitComplement.facet: %BitComplement.type = facet_value %C, (%BitComplement.impl_witness) [concrete]
+// CHECK:STDOUT:   %.832: type = fn_type_with_self_type %BitComplement.Op.type, %BitComplement.facet [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {

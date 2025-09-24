@@ -64,17 +64,16 @@ class Declaration(T:! type);
 // CHECK:STDOUT:   %require_complete.3e3: <witness> = require_complete_type %Class [symbolic]
 // CHECK:STDOUT:   %Copy.Op.type: type = fn_type @Copy.Op [concrete]
 // CHECK:STDOUT:   %Copy.lookup_impl_witness.e15: <witness> = lookup_impl_witness %T.be8, @Copy [symbolic]
-// CHECK:STDOUT:   %Copy.facet.021: %Copy.type = facet_value %T.as_type, (%Copy.lookup_impl_witness.e15) [symbolic]
-// CHECK:STDOUT:   %.c50: type = fn_type_with_self_type %Copy.Op.type, %Copy.facet.021 [symbolic]
-// CHECK:STDOUT:   %impl.elem0.792: %.c50 = impl_witness_access %Copy.lookup_impl_witness.e15, element0 [symbolic]
-// CHECK:STDOUT:   %specific_impl_fn.547: <specific function> = specific_impl_function %impl.elem0.792, @Copy.Op(%Copy.facet.021) [symbolic]
+// CHECK:STDOUT:   %.427: type = fn_type_with_self_type %Copy.Op.type, %T.be8 [symbolic]
+// CHECK:STDOUT:   %impl.elem0.168: %.427 = impl_witness_access %Copy.lookup_impl_witness.e15, element0 [symbolic]
+// CHECK:STDOUT:   %specific_impl_fn.2ce: <specific function> = specific_impl_function %impl.elem0.168, @Copy.Op(%T.be8) [symbolic]
 // CHECK:STDOUT:   %T.8b3: type = bind_symbolic_name T, 0 [symbolic]
 // CHECK:STDOUT:   %pattern_type.98f: type = pattern_type type [concrete]
 // CHECK:STDOUT:   %Copy.lookup_impl_witness.046: <witness> = lookup_impl_witness %ptr.f3f, @Copy [symbolic]
-// CHECK:STDOUT:   %Copy.facet.c30: %Copy.type = facet_value %ptr.f3f, (%Copy.lookup_impl_witness.046) [symbolic]
-// CHECK:STDOUT:   %.10a: type = fn_type_with_self_type %Copy.Op.type, %Copy.facet.c30 [symbolic]
+// CHECK:STDOUT:   %Copy.facet: %Copy.type = facet_value %ptr.f3f, (%Copy.lookup_impl_witness.046) [symbolic]
+// CHECK:STDOUT:   %.10a: type = fn_type_with_self_type %Copy.Op.type, %Copy.facet [symbolic]
 // CHECK:STDOUT:   %impl.elem0.823: %.10a = impl_witness_access %Copy.lookup_impl_witness.046, element0 [symbolic]
-// CHECK:STDOUT:   %specific_impl_fn.831: <specific function> = specific_impl_function %impl.elem0.823, @Copy.Op(%Copy.facet.c30) [symbolic]
+// CHECK:STDOUT:   %specific_impl_fn.831: <specific function> = specific_impl_function %impl.elem0.823, @Copy.Op(%Copy.facet) [symbolic]
 // CHECK:STDOUT:   %Declaration.type: type = generic_class_type @Declaration [concrete]
 // CHECK:STDOUT:   %Declaration.generic: %Declaration.type = struct_value () [concrete]
 // CHECK:STDOUT: }
@@ -234,7 +233,7 @@ class Declaration(T:! type);
 // CHECK:STDOUT:   %require_complete.loc7: <witness> = require_complete_type %Class [symbolic = %require_complete.loc7 (constants.%require_complete.3e3)]
 // CHECK:STDOUT:   %Class.elem: type = unbound_element_type %Class, %T.as_type.loc6_38.1 [symbolic = %Class.elem (constants.%Class.elem)]
 // CHECK:STDOUT:   %Copy.lookup_impl_witness: <witness> = lookup_impl_witness %ptr.loc6_38.1, @Copy [symbolic = %Copy.lookup_impl_witness (constants.%Copy.lookup_impl_witness.046)]
-// CHECK:STDOUT:   %Copy.facet: %Copy.type = facet_value %ptr.loc6_38.1, (%Copy.lookup_impl_witness) [symbolic = %Copy.facet (constants.%Copy.facet.c30)]
+// CHECK:STDOUT:   %Copy.facet: %Copy.type = facet_value %ptr.loc6_38.1, (%Copy.lookup_impl_witness) [symbolic = %Copy.facet (constants.%Copy.facet)]
 // CHECK:STDOUT:   %.loc7_12.2: type = fn_type_with_self_type constants.%Copy.Op.type, %Copy.facet [symbolic = %.loc7_12.2 (constants.%.10a)]
 // CHECK:STDOUT:   %impl.elem0.loc7_12.2: @Class.GetAddr.%.loc7_12.2 (%.10a) = impl_witness_access %Copy.lookup_impl_witness, element0 [symbolic = %impl.elem0.loc7_12.2 (constants.%impl.elem0.823)]
 // CHECK:STDOUT:   %specific_impl_fn.loc7_12.2: <specific function> = specific_impl_function %impl.elem0.loc7_12.2, @Copy.Op(%Copy.facet) [symbolic = %specific_impl_fn.loc7_12.2 (constants.%specific_impl_fn.831)]
@@ -248,7 +247,7 @@ class Declaration(T:! type);
 // CHECK:STDOUT:     %addr: @Class.GetAddr.%ptr.loc6_38.1 (%ptr.f3f) = addr_of %.loc7_17.2
 // CHECK:STDOUT:     %impl.elem0.loc7_12.1: @Class.GetAddr.%.loc7_12.2 (%.10a) = impl_witness_access constants.%Copy.lookup_impl_witness.046, element0 [symbolic = %impl.elem0.loc7_12.2 (constants.%impl.elem0.823)]
 // CHECK:STDOUT:     %bound_method.loc7_12.1: <bound method> = bound_method %addr, %impl.elem0.loc7_12.1
-// CHECK:STDOUT:     %specific_impl_fn.loc7_12.1: <specific function> = specific_impl_function %impl.elem0.loc7_12.1, @Copy.Op(constants.%Copy.facet.c30) [symbolic = %specific_impl_fn.loc7_12.2 (constants.%specific_impl_fn.831)]
+// CHECK:STDOUT:     %specific_impl_fn.loc7_12.1: <specific function> = specific_impl_function %impl.elem0.loc7_12.1, @Copy.Op(constants.%Copy.facet) [symbolic = %specific_impl_fn.loc7_12.2 (constants.%specific_impl_fn.831)]
 // CHECK:STDOUT:     %bound_method.loc7_12.2: <bound method> = bound_method %addr, %specific_impl_fn.loc7_12.1
 // CHECK:STDOUT:     %.loc7_12.1: init @Class.GetAddr.%ptr.loc6_38.1 (%ptr.f3f) = call %bound_method.loc7_12.2(%addr)
 // CHECK:STDOUT:     return %.loc7_12.1 to %return
@@ -267,10 +266,9 @@ class Declaration(T:! type);
 // CHECK:STDOUT:   %Class.elem: type = unbound_element_type %Class, %T.as_type.loc10_32.1 [symbolic = %Class.elem (constants.%Class.elem)]
 // CHECK:STDOUT:   %require_complete.loc11: <witness> = require_complete_type %T.as_type.loc10_32.1 [symbolic = %require_complete.loc11 (constants.%require_complete.07c)]
 // CHECK:STDOUT:   %Copy.lookup_impl_witness: <witness> = lookup_impl_witness %T, @Copy [symbolic = %Copy.lookup_impl_witness (constants.%Copy.lookup_impl_witness.e15)]
-// CHECK:STDOUT:   %Copy.facet: %Copy.type = facet_value %T.as_type.loc10_32.1, (%Copy.lookup_impl_witness) [symbolic = %Copy.facet (constants.%Copy.facet.021)]
-// CHECK:STDOUT:   %.loc11_16.4: type = fn_type_with_self_type constants.%Copy.Op.type, %Copy.facet [symbolic = %.loc11_16.4 (constants.%.c50)]
-// CHECK:STDOUT:   %impl.elem0.loc11_16.2: @Class.GetValue.%.loc11_16.4 (%.c50) = impl_witness_access %Copy.lookup_impl_witness, element0 [symbolic = %impl.elem0.loc11_16.2 (constants.%impl.elem0.792)]
-// CHECK:STDOUT:   %specific_impl_fn.loc11_16.2: <specific function> = specific_impl_function %impl.elem0.loc11_16.2, @Copy.Op(%Copy.facet) [symbolic = %specific_impl_fn.loc11_16.2 (constants.%specific_impl_fn.547)]
+// CHECK:STDOUT:   %.loc11_16.4: type = fn_type_with_self_type constants.%Copy.Op.type, %T [symbolic = %.loc11_16.4 (constants.%.427)]
+// CHECK:STDOUT:   %impl.elem0.loc11_16.2: @Class.GetValue.%.loc11_16.4 (%.427) = impl_witness_access %Copy.lookup_impl_witness, element0 [symbolic = %impl.elem0.loc11_16.2 (constants.%impl.elem0.168)]
+// CHECK:STDOUT:   %specific_impl_fn.loc11_16.2: <specific function> = specific_impl_function %impl.elem0.loc11_16.2, @Copy.Op(%T) [symbolic = %specific_impl_fn.loc11_16.2 (constants.%specific_impl_fn.2ce)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   fn(%self.param: @Class.GetValue.%Class (%Class)) -> %return.param: @Class.GetValue.%T.as_type.loc10_32.1 (%T.as_type) {
 // CHECK:STDOUT:   !entry:
@@ -278,9 +276,9 @@ class Declaration(T:! type);
 // CHECK:STDOUT:     %k.ref: @Class.GetValue.%Class.elem (%Class.elem) = name_ref k, @Class.%.loc14_8 [concrete = @Class.%.loc14_8]
 // CHECK:STDOUT:     %.loc11_16.1: ref @Class.GetValue.%T.as_type.loc10_32.1 (%T.as_type) = class_element_access %self.ref, element0
 // CHECK:STDOUT:     %.loc11_16.2: @Class.GetValue.%T.as_type.loc10_32.1 (%T.as_type) = bind_value %.loc11_16.1
-// CHECK:STDOUT:     %impl.elem0.loc11_16.1: @Class.GetValue.%.loc11_16.4 (%.c50) = impl_witness_access constants.%Copy.lookup_impl_witness.e15, element0 [symbolic = %impl.elem0.loc11_16.2 (constants.%impl.elem0.792)]
+// CHECK:STDOUT:     %impl.elem0.loc11_16.1: @Class.GetValue.%.loc11_16.4 (%.427) = impl_witness_access constants.%Copy.lookup_impl_witness.e15, element0 [symbolic = %impl.elem0.loc11_16.2 (constants.%impl.elem0.168)]
 // CHECK:STDOUT:     %bound_method.loc11_16.1: <bound method> = bound_method %.loc11_16.2, %impl.elem0.loc11_16.1
-// CHECK:STDOUT:     %specific_impl_fn.loc11_16.1: <specific function> = specific_impl_function %impl.elem0.loc11_16.1, @Copy.Op(constants.%Copy.facet.021) [symbolic = %specific_impl_fn.loc11_16.2 (constants.%specific_impl_fn.547)]
+// CHECK:STDOUT:     %specific_impl_fn.loc11_16.1: <specific function> = specific_impl_function %impl.elem0.loc11_16.1, @Copy.Op(constants.%T.be8) [symbolic = %specific_impl_fn.loc11_16.2 (constants.%specific_impl_fn.2ce)]
 // CHECK:STDOUT:     %bound_method.loc11_16.2: <bound method> = bound_method %.loc11_16.2, %specific_impl_fn.loc11_16.1
 // CHECK:STDOUT:     %.loc10_29: ref @Class.GetValue.%T.as_type.loc10_32.1 (%T.as_type) = splice_block %return {}
 // CHECK:STDOUT:     %.loc11_16.3: init @Class.GetValue.%T.as_type.loc10_32.1 (%T.as_type) = call %bound_method.loc11_16.2(%.loc11_16.2) to %.loc10_29
