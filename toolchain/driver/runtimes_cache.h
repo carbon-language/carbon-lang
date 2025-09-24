@@ -23,17 +23,19 @@ namespace Carbon {
 //
 // Carbon (including Clang) relies on a set of runtime libraries and data files.
 // These are organized into a directory modeled by a `Runtimes` object, with
-// each individual runtime library built into a subdirectory. The `Runtimes`
-// object in turn provides access to each of these subdirectories.
+// different components of those runtimes built into subdirectories. The
+// `Runtimes` object in turn provides access to each of these subdirectories.
 //
-// Different runtime libraries are managed separately so that we don't force
-// building all of them in a configuration where only one makes sense or is
-// typically needed.
+// Different components are managed in separate directories based on how they
+// are _built_, and each one may contain a mixture of one or more runtime
+// libraries or data files. The separation of each component is so that we don't
+// force building all of them in a configuration where only one makes sense or
+// is typically needed.
 //
 // Beyond providing access, a `Runtimes` object also supports orchestrating the
-// _build_ of any of the runtime libraries into their designated subdirectories,
-// including synchronizing between different threads or processes trying to
-// build the same component of the runtimes.
+// build of these components into their designated subdirectories, including
+// synchronizing between different threads or processes trying to build the same
+// component.
 //
 // TODO: Add libc++ to the runtimes tree.
 // TODO: Add the Core library to the runtimes tree.
@@ -41,6 +43,12 @@ class Runtimes {
  public:
   class Builder;
   class Cache;
+
+  enum Component {
+    ClangResourceDir,
+
+    NumComponents,
+  };
 
   // Creates a `Runtimes` object for a specific existing directory.
   //
@@ -84,7 +92,7 @@ class Runtimes {
   //
   // This will return the path to the Clang resource directory if it exists in
   // the runtimes tree. Otherwise, it will return an error.
-  auto GetExistingClangResourceDir() -> ErrorOr<std::filesystem::path>;
+  auto Get(Component component) -> ErrorOr<std::filesystem::path>;
 
   // Builds or returns a Clang resource directory.
   //
@@ -93,7 +101,7 @@ class Runtimes {
   // there is not yet a Clang resource directory in this runtimes tree, returns
   // a `Builder` object that can be used to build and commit a Clang resource
   // directory to this runtimes tree.
-  auto BuildClangResourceDir()
+  auto Build(Component component)
       -> ErrorOr<std::variant<std::filesystem::path, Builder>>;
 
  private:
@@ -124,7 +132,14 @@ class Runtimes {
   // The path to the clang resource directory within the runtimes.
   //
   // This uses `std::string_view` to simply using with paths.
-  static constexpr std::string_view ClangResourceDirPath = "clang_resource_dir";
+  static constexpr auto ComponentPath(Component component) -> std::string_view {
+    switch (component) {
+      case ClangResourceDir:
+        return "clang_resource_dir";
+      case NumComponents:
+        CARBON_FATAL("Invalid component");
+    }
+  }
 
   // A format string used to form the lock file for a given directory in the
   // runtimes. This needs to be C-string, so directly expose the character
@@ -145,8 +160,8 @@ class Runtimes {
 
   // Implementation of building the Clang resource directory. This exposes the
   // deadline and poll interval to allow testing with artificial values.
-  auto BuildClangResourceDirImpl(Filesystem::Duration deadline,
-                                 Filesystem::Duration poll_interval)
+  auto BuildImpl(Component component, Filesystem::Duration deadline,
+                 Filesystem::Duration poll_interval)
       -> ErrorOr<std::variant<std::filesystem::path, Builder>>;
 
   auto Destroy() -> void;
@@ -268,9 +283,10 @@ class Runtimes::Cache {
   static constexpr auto MaxLockedEntryAge = std::chrono::days(10);
 
   // Runtimes are locked while in use to avoid them being removed concurrently,
-  // but the lock will be disregarded for entries older than `MaxLockedEntryAge`. We use a relatively
-  // short deadline and fast poll interval here as this is on the critical path
-  // even for an existing, built runtimes entry.
+  // but the lock will be disregarded for entries older than
+  // `MaxLockedEntryAge`. We use a relatively short deadline and fast poll
+  // interval here as this is on the critical path even for an existing, built
+  // runtimes entry.
   static constexpr auto RuntimesLockDeadline = std::chrono::milliseconds(100);
   static constexpr auto RuntimesLockPollInterval = std::chrono::milliseconds(1);
 

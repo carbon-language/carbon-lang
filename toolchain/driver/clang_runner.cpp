@@ -149,7 +149,7 @@ auto ClangRunner::Run(llvm::ArrayRef<llvm::StringRef> args,
   // If we have pre-built runtimes, use them rather than building on demand.
   if (prebuilt_runtimes) {
     CARBON_ASSIGN_OR_RETURN(std::filesystem::path prebuilt_resource_dir_path,
-                            prebuilt_runtimes->GetExistingClangResourceDir());
+                            prebuilt_runtimes->Get(Runtimes::ClangResourceDir));
     return RunInternal(args, target, prebuilt_resource_dir_path.native());
   }
   CARBON_CHECK(build_runtimes_on_demand_);
@@ -194,7 +194,8 @@ auto ClangRunner::BuildTargetResourceDir(
       [&, orig_flag = enable_leaking_] { enable_leaking_ = orig_flag; });
   enable_leaking_ = false;
 
-  CARBON_ASSIGN_OR_RETURN(auto build_dir, runtimes.BuildClangResourceDir());
+  CARBON_ASSIGN_OR_RETURN(auto build_dir,
+                          runtimes.Build(Runtimes::ClangResourceDir));
   if (std::holds_alternative<std::filesystem::path>(build_dir)) {
     // Found cached build.
     return std::get<std::filesystem::path>(std::move(build_dir));

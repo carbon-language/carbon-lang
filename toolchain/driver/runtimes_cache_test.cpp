@@ -34,17 +34,17 @@ namespace Carbon {
 
 class RuntimesTestPeer {
  public:
-  static auto ClangResourceDirLockFilePath() -> std::string {
+  static auto LockFilePath(Runtimes::Component component) -> std::string {
     return llvm::formatv(Runtimes::LockFileFormat,
-                         Runtimes::ClangResourceDirPath)
+                         Runtimes::ComponentPath(component))
         .str();
   }
 
-  static auto BuildClangResourceDirImpl(Runtimes& runtimes,
-                                        Filesystem::Duration deadline,
-                                        Filesystem::Duration poll_interval)
+  static auto BuildImpl(Runtimes& runtimes, Runtimes::Component component,
+                        Filesystem::Duration deadline,
+                        Filesystem::Duration poll_interval)
       -> ErrorOr<std::variant<std::filesystem::path, Runtimes::Builder>> {
-    return runtimes.BuildClangResourceDirImpl(deadline, poll_interval);
+    return runtimes.BuildImpl(component, deadline, poll_interval);
   }
 
   static auto CacheMinNumEntries() -> int {
@@ -230,7 +230,7 @@ TEST_F(RuntimesCacheTest, BasicBuild) {
     ASSERT_THAT(lookup_result, IsSuccess(_));
     auto runtimes = *std::move(lookup_result);
 
-    auto build_result = runtimes.BuildClangResourceDir();
+    auto build_result = runtimes.Build(Runtimes::ClangResourceDir);
     ASSERT_THAT(build_result, IsSuccess(VariantWith<Runtimes::Builder>(_)));
     auto builder = std::get<Runtimes::Builder>(*std::move(build_result));
     EXPECT_TRUE(builder.path().is_absolute()) << builder.path();
@@ -247,7 +247,7 @@ TEST_F(RuntimesCacheTest, BasicBuild) {
     std::filesystem::path clang_runtimes_path = *std::move(commit_result);
 
     EXPECT_THAT(
-        runtimes.BuildClangResourceDir(),
+        runtimes.Build(Runtimes::ClangResourceDir),
         IsSuccess(VariantWith<std::filesystem::path>(Eq(clang_runtimes_path))));
     built_runtimes_paths.push_back(clang_runtimes_path);
   }
@@ -260,7 +260,7 @@ TEST_F(RuntimesCacheTest, BasicBuild) {
     auto runtimes = *std::move(lookup_result);
 
     EXPECT_THAT(
-        runtimes.BuildClangResourceDir(),
+        runtimes.Build(Runtimes::ClangResourceDir),
         IsSuccess(VariantWith<std::filesystem::path>(Eq(built_runtimes_path))));
   }
 }
@@ -304,7 +304,7 @@ TEST_F(RuntimesCacheTest, ConcurrentBuilds) {
   auto runtimes2 = *cache2.Lookup({.target = target});
 
   // Start the first build, this will lock the directory.
-  auto build_result1 = runtimes1.BuildClangResourceDir();
+  auto build_result1 = runtimes1.Build(Runtimes::ClangResourceDir);
   ASSERT_THAT(build_result1, IsSuccess(VariantWith<Runtimes::Builder>(_)));
   auto builder1 = std::get<Runtimes::Builder>(*std::move(build_result1));
   EXPECT_THAT(builder1.dir().WriteFileFromString("runtime_file", "build1"),
@@ -319,7 +319,7 @@ TEST_F(RuntimesCacheTest, ConcurrentBuilds) {
     // with the first build. However, the file locking is always _advisory_ and
     // may fail. As a consequence we can't make assumptions about whether this
     // blocks or not.
-    auto build_result2 = runtimes2.BuildClangResourceDir();
+    auto build_result2 = runtimes2.Build(Runtimes::ClangResourceDir);
     ASSERT_THAT(build_result2, IsSuccess(_));
     if (std::holds_alternative<std::filesystem::path>(*build_result2)) {
       // In the common case, we blocked on a file lock and find the first built
@@ -347,7 +347,7 @@ TEST_F(RuntimesCacheTest, ConcurrentBuilds) {
 
   // Even though there may be is another thread running, we should now get
   // non-blocking access directly to the built runtime.
-  EXPECT_THAT(runtimes1.BuildClangResourceDir(),
+  EXPECT_THAT(runtimes1.Build(Runtimes::ClangResourceDir),
               IsSuccess(VariantWith<std::filesystem::path>(Eq(build1_path))));
 
   // Now join the second cache's build thread to ensure it completes and verify
@@ -382,7 +382,7 @@ TEST_F(RuntimesCacheTest, ConcurrentBuildsWithFailedLocking) {
   auto runtimes2 = *cache2.Lookup({.target = target});
 
   // Start the first build, this will lock the directory.
-  auto build_result1 = runtimes1.BuildClangResourceDir();
+  auto build_result1 = runtimes1.Build(Runtimes::ClangResourceDir);
   ASSERT_THAT(build_result1, IsSuccess(VariantWith<Runtimes::Builder>(_)));
   auto builder1 = std::get<Runtimes::Builder>(*std::move(build_result1));
   EXPECT_THAT(builder1.dir().WriteFileFromString("runtime_file", "build1"),
@@ -393,7 +393,7 @@ TEST_F(RuntimesCacheTest, ConcurrentBuildsWithFailedLocking) {
   // being cleaned. The cache should be resilient against this and it gives us a
   // good way to have two racing builds of the same directory.
   std::filesystem::path lock_file_path =
-      RuntimesTestPeer::ClangResourceDirLockFilePath();
+      RuntimesTestPeer::LockFilePath(Runtimes::ClangResourceDir);
   ASSERT_THAT(runtimes1.base_dir().Unlink(lock_file_path), IsSuccess(_));
 
   // We will synchronize with the thread to ensure we _actually_ have two
@@ -407,7 +407,7 @@ TEST_F(RuntimesCacheTest, ConcurrentBuildsWithFailedLocking) {
   std::filesystem::path build2_path;
   auto build2_lambda = [&build2_path, &runtimes2, target, &m, &cv,
                         &build_started] {
-    auto build_result2 = runtimes2.BuildClangResourceDir();
+    auto build_result2 = runtimes2.Build(Runtimes::ClangResourceDir);
     ASSERT_THAT(build_result2, IsSuccess(VariantWith<Runtimes::Builder>(_)));
     auto builder2 = std::get<Runtimes::Builder>(*std::move(build_result2));
     EXPECT_THAT(builder2.dir().WriteFileFromString("runtime_file", "build2"),
@@ -429,7 +429,7 @@ TEST_F(RuntimesCacheTest, ConcurrentBuildsWithFailedLocking) {
     // Even though there may be another thread running, and even holding a lock
     // file, we should now get non-blocking access directly to the built
     // runtime.
-    EXPECT_THAT(runtimes2.BuildClangResourceDir(),
+    EXPECT_THAT(runtimes2.Build(Runtimes::ClangResourceDir),
                 IsSuccess(VariantWith<std::filesystem::path>(Eq(build2_path))));
   };
   std::thread build2_thread(build2_lambda);
@@ -446,7 +446,7 @@ TEST_F(RuntimesCacheTest, ConcurrentBuildsWithFailedLocking) {
 
   // Even though there may be is another thread running, we should now get
   // non-blocking access directly to the built runtime.
-  EXPECT_THAT(runtimes1.BuildClangResourceDir(),
+  EXPECT_THAT(runtimes1.Build(Runtimes::ClangResourceDir),
               IsSuccess(VariantWith<std::filesystem::path>(Eq(build1_path))));
 
   // Now join the second cache's build thread to ensure it completes and verify
@@ -476,7 +476,7 @@ TEST_F(RuntimesCacheTest, ConcurrentBuildsLockTimeout) {
   auto runtimes2 = *cache2.Lookup({.target = target});
 
   // Start the first build, this will lock the directory.
-  auto build_result1 = runtimes1.BuildClangResourceDir();
+  auto build_result1 = runtimes1.Build(Runtimes::ClangResourceDir);
   ASSERT_THAT(build_result1, IsSuccess(VariantWith<Runtimes::Builder>(_)));
   auto builder1 = std::get<Runtimes::Builder>(*std::move(build_result1));
   EXPECT_THAT(builder1.dir().WriteFileFromString("runtime_file", "build1"),
@@ -494,8 +494,9 @@ TEST_F(RuntimesCacheTest, ConcurrentBuildsLockTimeout) {
   // either way we have successfully exercised the code path with lock file
   // timeout. The lowered time here just ensures that the test finishes promptly
   // relative to the system load.
-  auto build_result2 = RuntimesTestPeer::BuildClangResourceDirImpl(
-      runtimes2, std::chrono::milliseconds(50), std::chrono::milliseconds(10));
+  auto build_result2 = RuntimesTestPeer::BuildImpl(
+      runtimes2, Runtimes::ClangResourceDir, std::chrono::milliseconds(50),
+      std::chrono::milliseconds(10));
   ASSERT_THAT(build_result2, IsSuccess(VariantWith<Runtimes::Builder>(_)));
   auto builder2 = std::get<Runtimes::Builder>(*std::move(build_result2));
   EXPECT_THAT(builder2.dir().WriteFileFromString("runtime_file", "build2"),
@@ -509,7 +510,7 @@ TEST_F(RuntimesCacheTest, ConcurrentBuildsLockTimeout) {
 
   // Now, even though we still have the lock file held, repeatedly building
   // proceeds without blocking.
-  EXPECT_THAT(runtimes2.BuildClangResourceDir(),
+  EXPECT_THAT(runtimes2.Build(Runtimes::ClangResourceDir),
               IsSuccess(VariantWith<std::filesystem::path>(Eq(build2_path))));
 
   // Finally, commit the lock-holding build to ensure it also succeeds, even

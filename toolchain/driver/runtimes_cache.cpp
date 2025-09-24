@@ -51,26 +51,26 @@ auto Runtimes::Destroy() -> void {
   }
 }
 
-auto Runtimes::GetExistingClangResourceDir() -> ErrorOr<std::filesystem::path> {
-  std::filesystem::path path = base_path_ / ClangResourceDirPath;
+auto Runtimes::Get(Component component) -> ErrorOr<std::filesystem::path> {
+  std::filesystem::path path = base_path_ / ComponentPath(component);
   auto open_result =
-      base_dir_.OpenDir(ClangResourceDirPath, Filesystem::OpenExisting);
+      base_dir_.OpenDir(ComponentPath(component), Filesystem::OpenExisting);
   if (open_result.ok()) {
     return path;
   }
   return open_result.error().ToError();
 }
 
-auto Runtimes::BuildClangResourceDir()
+auto Runtimes::Build(Component component)
     -> ErrorOr<std::variant<std::filesystem::path, Builder>> {
-  return BuildClangResourceDirImpl(BuildLockDeadline, BuildLockPollInterval);
+  return BuildImpl(component, BuildLockDeadline, BuildLockPollInterval);
 }
 
-auto Runtimes::BuildClangResourceDirImpl(Filesystem::Duration deadline,
-                                         Filesystem::Duration poll_interval)
+auto Runtimes::BuildImpl(Component component, Filesystem::Duration deadline,
+                         Filesystem::Duration poll_interval)
     -> ErrorOr<std::variant<std::filesystem::path, Builder>> {
   // Try to get an existing resource directory first.
-  auto existing_result = GetExistingClangResourceDir();
+  auto existing_result = Get(component);
   if (existing_result.ok()) {
     return {*std::move(existing_result)};
   }
@@ -78,13 +78,14 @@ auto Runtimes::BuildClangResourceDirImpl(Filesystem::Duration deadline,
   // Otherwise, we will need to build the runtimes and commit them into this
   // directory once ready. Try and acquire an advisory lock to avoid redundant
   // computation.
+  std::string_view component_path = ComponentPath(component);
   CARBON_ASSIGN_OR_RETURN(
       Filesystem::ReadWriteFile lock_file,
       base_dir_.OpenReadWrite(
-          llvm::formatv(LockFileFormat, ClangResourceDirPath).str(),
+          llvm::formatv(LockFileFormat, component_path).str(),
           Filesystem::OpenAlways, /*creation_mode=*/0700));
   CARBON_VLOG("PID {0} locking cache path: {1}\n", getpid(),
-              base_path_ / ClangResourceDirPath);
+              base_path_ / component_path);
   Filesystem::FileLock flock;
   auto flock_result = lock_file.TryLock(Filesystem::FileLock::Exclusive,
                                         deadline, poll_interval);
@@ -109,11 +110,11 @@ auto Runtimes::BuildClangResourceDirImpl(Filesystem::Duration deadline,
   // runtimes. Create a temporary directory where we can do that safely
   // regardless of what else is happening.
   std::filesystem::path tmp_path =
-      base_path_ / llvm::formatv(".{0}.tmp", ClangResourceDirPath).str();
+      base_path_ / llvm::formatv(".{0}.tmp", component_path).str();
   CARBON_ASSIGN_OR_RETURN(Filesystem::RemovingDir tmp_dir,
                           Filesystem::MakeTmpDirWithPrefix(tmp_path));
   return {Builder(*this, std::move(lock_file), std::move(flock),
-                  std::move(tmp_dir), ClangResourceDirPath)};
+                  std::move(tmp_dir), component_path)};
 }
 
 auto Runtimes::Cache::InitSystemCache(const InstallPaths& install)
