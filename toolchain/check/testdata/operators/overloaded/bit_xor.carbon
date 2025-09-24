@@ -43,7 +43,6 @@ fn TestAssign(a: C*, b: C) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %C: type = class_type @C [concrete]
-// CHECK:STDOUT:   %ptr.019: type = ptr_type %C [concrete]
 // CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [concrete]
 // CHECK:STDOUT:   %BitXorWith.type.bf8: type = facet_type <@BitXorWith, @BitXorWith(%C)> [concrete]
 // CHECK:STDOUT:   %BitXorWith.Op.type.502: type = fn_type @BitXorWith.Op, @BitXorWith(%C) [concrete]
@@ -54,6 +53,7 @@ fn TestAssign(a: C*, b: C) {
 // CHECK:STDOUT:   %BitXorAssignWith.type.38a: type = facet_type <@BitXorAssignWith, @BitXorAssignWith(%C)> [concrete]
 // CHECK:STDOUT:   %BitXorAssignWith.Op.type.ad0: type = fn_type @BitXorAssignWith.Op, @BitXorAssignWith(%C) [concrete]
 // CHECK:STDOUT:   %BitXorAssignWith.impl_witness: <witness> = impl_witness file.%BitXorAssignWith.impl_witness_table [concrete]
+// CHECK:STDOUT:   %ptr.019: type = ptr_type %C [concrete]
 // CHECK:STDOUT:   %C.as.BitXorAssignWith.impl.Op.type: type = fn_type @C.as.BitXorAssignWith.impl.Op [concrete]
 // CHECK:STDOUT:   %C.as.BitXorAssignWith.impl.Op: %C.as.BitXorAssignWith.impl.Op.type = struct_value () [concrete]
 // CHECK:STDOUT:   %BitXorAssignWith.facet: %BitXorAssignWith.type.38a = facet_value %C, (%BitXorAssignWith.impl_witness) [concrete]
