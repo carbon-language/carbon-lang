@@ -46,10 +46,10 @@ fn F(template T:! type, U:! type) -> (T, U) {
 // CHECK:STDOUT:   %Copy.type: type = facet_type <@Copy> [concrete]
 // CHECK:STDOUT:   %Copy.Op.type: type = fn_type @Copy.Op [concrete]
 // CHECK:STDOUT:   %Copy.lookup_impl_witness.cb2: <witness> = lookup_impl_witness %ptr.79f131.1, @Copy [template]
-// CHECK:STDOUT:   %Copy.facet.2d1: %Copy.type = facet_value %ptr.79f131.1, (%Copy.lookup_impl_witness.cb2) [template]
-// CHECK:STDOUT:   %.1cc: type = fn_type_with_self_type %Copy.Op.type, %Copy.facet.2d1 [template]
+// CHECK:STDOUT:   %Copy.facet: %Copy.type = facet_value %ptr.79f131.1, (%Copy.lookup_impl_witness.cb2) [template]
+// CHECK:STDOUT:   %.1cc: type = fn_type_with_self_type %Copy.Op.type, %Copy.facet [template]
 // CHECK:STDOUT:   %impl.elem0.751: %.1cc = impl_witness_access %Copy.lookup_impl_witness.cb2, element0 [template]
-// CHECK:STDOUT:   %specific_impl_fn.f44: <specific function> = specific_impl_function %impl.elem0.751, @Copy.Op(%Copy.facet.2d1) [template]
+// CHECK:STDOUT:   %specific_impl_fn.f44: <specific function> = specific_impl_function %impl.elem0.751, @Copy.Op(%Copy.facet) [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -90,7 +90,7 @@ fn F(template T:! type, U:! type) -> (T, U) {
 // CHECK:STDOUT:   %require_complete.loc5_33: <witness> = require_complete_type %ptr.loc5_29.1 [template = %require_complete.loc5_33 (constants.%require_complete.6e5e64.1)]
 // CHECK:STDOUT:   %require_complete.loc5_26: <witness> = require_complete_type %ptr.loc5_30.1 [template = %require_complete.loc5_26 (constants.%require_complete.132)]
 // CHECK:STDOUT:   %Copy.lookup_impl_witness: <witness> = lookup_impl_witness %ptr.loc5_29.1, @Copy [template = %Copy.lookup_impl_witness (constants.%Copy.lookup_impl_witness.cb2)]
-// CHECK:STDOUT:   %Copy.facet: %Copy.type = facet_value %ptr.loc5_29.1, (%Copy.lookup_impl_witness) [template = %Copy.facet (constants.%Copy.facet.2d1)]
+// CHECK:STDOUT:   %Copy.facet: %Copy.type = facet_value %ptr.loc5_29.1, (%Copy.lookup_impl_witness) [template = %Copy.facet (constants.%Copy.facet)]
 // CHECK:STDOUT:   %.loc6_10.4: type = fn_type_with_self_type constants.%Copy.Op.type, %Copy.facet [template = %.loc6_10.4 (constants.%.1cc)]
 // CHECK:STDOUT:   %impl.elem0.loc6_10.2: @F.%.loc6_10.4 (%.1cc) = impl_witness_access %Copy.lookup_impl_witness, element0 [template = %impl.elem0.loc6_10.2 (constants.%impl.elem0.751)]
 // CHECK:STDOUT:   %specific_impl_fn.loc6_10.2: <specific function> = specific_impl_function %impl.elem0.loc6_10.2, @Copy.Op(%Copy.facet) [template = %specific_impl_fn.loc6_10.2 (constants.%specific_impl_fn.f44)]
@@ -102,7 +102,7 @@ fn F(template T:! type, U:! type) -> (T, U) {
 // CHECK:STDOUT:     %.loc6_10.2: @F.%ptr.loc5_29.1 (%ptr.79f131.1) = bind_value %.loc6_10.1
 // CHECK:STDOUT:     %impl.elem0.loc6_10.1: @F.%.loc6_10.4 (%.1cc) = impl_witness_access constants.%Copy.lookup_impl_witness.cb2, element0 [template = %impl.elem0.loc6_10.2 (constants.%impl.elem0.751)]
 // CHECK:STDOUT:     %bound_method.loc6_10.1: <bound method> = bound_method %.loc6_10.2, %impl.elem0.loc6_10.1
-// CHECK:STDOUT:     %specific_impl_fn.loc6_10.1: <specific function> = specific_impl_function %impl.elem0.loc6_10.1, @Copy.Op(constants.%Copy.facet.2d1) [template = %specific_impl_fn.loc6_10.2 (constants.%specific_impl_fn.f44)]
+// CHECK:STDOUT:     %specific_impl_fn.loc6_10.1: <specific function> = specific_impl_function %impl.elem0.loc6_10.1, @Copy.Op(constants.%Copy.facet) [template = %specific_impl_fn.loc6_10.2 (constants.%specific_impl_fn.f44)]
 // CHECK:STDOUT:     %bound_method.loc6_10.2: <bound method> = bound_method %.loc6_10.2, %specific_impl_fn.loc6_10.1
 // CHECK:STDOUT:     %.loc6_10.3: init @F.%ptr.loc5_29.1 (%ptr.79f131.1) = call %bound_method.loc6_10.2(%.loc6_10.2)
 // CHECK:STDOUT:     return %.loc6_10.3 to %return

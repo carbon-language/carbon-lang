@@ -658,12 +658,19 @@ struct FacetType {
   FacetTypeId facet_type_id;
 };
 
-// A facet value, the value of a facet type. This consists of a type and a set
-// of witnesses that it satisfies the required interfaces of the facet type.
+// A facet value is a general value of type FacetType. This consists of a type
+// and a set of witnesses that it satisfies the required interfaces of the
+// FacetType.
+//
+// This instruction is never a type. Though it can be converted to type, doing
+// so evaluates to the `type_inst_id` within.
+//
+// If the FacetValue is just a wrapper around a BindSymbolicName (converted to
+// `type` and back, for example), it evaluates back to the BindSymbolicName.
 struct FacetValue {
   static constexpr auto Kind = InstKind::FacetValue.Define<Parse::NodeId>(
       {.ir_name = "facet_value",
-       .constant_kind = InstConstantKind::Always,
+       .constant_kind = InstConstantKind::Conditional,
        .deduce_through = true});
 
   // A `FacetType`.

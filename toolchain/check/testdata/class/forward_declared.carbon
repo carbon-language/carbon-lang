@@ -32,8 +32,8 @@ fn F(p: Class*) -> Class* { return p; }
 // CHECK:STDOUT:   %Copy.impl_witness.929: <witness> = impl_witness imports.%Copy.impl_witness_table.53c, @ptr.as.Copy.impl(%Class) [concrete]
 // CHECK:STDOUT:   %ptr.as.Copy.impl.Op.type.039: type = fn_type @ptr.as.Copy.impl.Op, @ptr.as.Copy.impl(%Class) [concrete]
 // CHECK:STDOUT:   %ptr.as.Copy.impl.Op.275: %ptr.as.Copy.impl.Op.type.039 = struct_value () [concrete]
-// CHECK:STDOUT:   %Copy.facet.a65: %Copy.type = facet_value %ptr.e71, (%Copy.impl_witness.929) [concrete]
-// CHECK:STDOUT:   %.93e: type = fn_type_with_self_type %Copy.Op.type, %Copy.facet.a65 [concrete]
+// CHECK:STDOUT:   %Copy.facet: %Copy.type = facet_value %ptr.e71, (%Copy.impl_witness.929) [concrete]
+// CHECK:STDOUT:   %.93e: type = fn_type_with_self_type %Copy.Op.type, %Copy.facet [concrete]
 // CHECK:STDOUT:   %ptr.as.Copy.impl.Op.specific_fn: <specific function> = specific_function %ptr.as.Copy.impl.Op.275, @ptr.as.Copy.impl.Op(%Class) [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

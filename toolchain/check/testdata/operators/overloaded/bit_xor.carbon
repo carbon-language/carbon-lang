@@ -50,14 +50,14 @@ fn TestAssign(a: C*, b: C) {
 // CHECK:STDOUT:   %BitXorWith.impl_witness: <witness> = impl_witness file.%BitXorWith.impl_witness_table [concrete]
 // CHECK:STDOUT:   %C.as.BitXorWith.impl.Op.type: type = fn_type @C.as.BitXorWith.impl.Op [concrete]
 // CHECK:STDOUT:   %C.as.BitXorWith.impl.Op: %C.as.BitXorWith.impl.Op.type = struct_value () [concrete]
-// CHECK:STDOUT:   %BitXorWith.facet.af5: %BitXorWith.type.bf8 = facet_value %C, (%BitXorWith.impl_witness) [concrete]
+// CHECK:STDOUT:   %BitXorWith.facet: %BitXorWith.type.bf8 = facet_value %C, (%BitXorWith.impl_witness) [concrete]
 // CHECK:STDOUT:   %BitXorAssignWith.type.38a: type = facet_type <@BitXorAssignWith, @BitXorAssignWith(%C)> [concrete]
 // CHECK:STDOUT:   %BitXorAssignWith.Op.type.ad0: type = fn_type @BitXorAssignWith.Op, @BitXorAssignWith(%C) [concrete]
 // CHECK:STDOUT:   %BitXorAssignWith.impl_witness: <witness> = impl_witness file.%BitXorAssignWith.impl_witness_table [concrete]
 // CHECK:STDOUT:   %C.as.BitXorAssignWith.impl.Op.type: type = fn_type @C.as.BitXorAssignWith.impl.Op [concrete]
 // CHECK:STDOUT:   %C.as.BitXorAssignWith.impl.Op: %C.as.BitXorAssignWith.impl.Op.type = struct_value () [concrete]
 // CHECK:STDOUT:   %BitXorAssignWith.facet: %BitXorAssignWith.type.38a = facet_value %C, (%BitXorAssignWith.impl_witness) [concrete]
-// CHECK:STDOUT:   %.a7b: type = fn_type_with_self_type %BitXorWith.Op.type.502, %BitXorWith.facet.af5 [concrete]
+// CHECK:STDOUT:   %.a7b: type = fn_type_with_self_type %BitXorWith.Op.type.502, %BitXorWith.facet [concrete]
 // CHECK:STDOUT:   %.d84: type = fn_type_with_self_type %BitXorAssignWith.Op.type.ad0, %BitXorAssignWith.facet [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
