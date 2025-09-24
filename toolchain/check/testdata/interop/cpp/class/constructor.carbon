@@ -210,7 +210,7 @@ fn F() {
 // CHECK:STDOUT:   %C: type = class_type @C [concrete]
 // CHECK:STDOUT:   %pattern_type.217: type = pattern_type %C [concrete]
 // CHECK:STDOUT:   %.d40: type = cpp_overload_set_type @C.C [concrete]
-// CHECK:STDOUT:   %empty_struct: %.d40 = struct_value () [concrete]
+// CHECK:STDOUT:   %.40b: %.d40 = cpp_overload_set_value @C.C [concrete]
 // CHECK:STDOUT:   %ptr.d9e: type = ptr_type %C [concrete]
 // CHECK:STDOUT:   %C__carbon_thunk.type: type = fn_type @C__carbon_thunk [concrete]
 // CHECK:STDOUT:   %C__carbon_thunk: %C__carbon_thunk.type = struct_value () [concrete]
@@ -224,7 +224,7 @@ fn F() {
 // CHECK:STDOUT:     import Cpp//...
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %C.decl: type = class_decl @C [concrete = constants.%C] {} {}
-// CHECK:STDOUT:   %.40b: %.d40 = cpp_overload_set_value @C.C [concrete = constants.%empty_struct]
+// CHECK:STDOUT:   %.40b: %.d40 = cpp_overload_set_value @C.C [concrete = constants.%.40b]
 // CHECK:STDOUT:   %C__carbon_thunk.decl: %C__carbon_thunk.type = fn_decl @C__carbon_thunk [concrete = constants.%C__carbon_thunk] {
 // CHECK:STDOUT:     <elided>
 // CHECK:STDOUT:   } {
@@ -239,7 +239,7 @@ fn F() {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Cpp.ref.loc8_18: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
 // CHECK:STDOUT:   %C.ref.loc8_21: type = name_ref C, imports.%C.decl [concrete = constants.%C]
-// CHECK:STDOUT:   %C.ref.loc8_23: %.d40 = name_ref C, imports.%.40b [concrete = constants.%empty_struct]
+// CHECK:STDOUT:   %C.ref.loc8_23: %.d40 = name_ref C, imports.%.40b [concrete = constants.%.40b]
 // CHECK:STDOUT:   %.loc8_26.1: ref %C = temporary_storage
 // CHECK:STDOUT:   %addr.loc8_26.1: %ptr.d9e = addr_of %.loc8_26.1
 // CHECK:STDOUT:   %C__carbon_thunk.call: init %empty_tuple.type = call imports.%C__carbon_thunk.decl(%addr.loc8_26.1)
@@ -266,7 +266,7 @@ fn F() {
 // CHECK:STDOUT:   %C: type = class_type @C [concrete]
 // CHECK:STDOUT:   %pattern_type.217: type = pattern_type %C [concrete]
 // CHECK:STDOUT:   %.d40: type = cpp_overload_set_type @C.C [concrete]
-// CHECK:STDOUT:   %empty_struct: %.d40 = struct_value () [concrete]
+// CHECK:STDOUT:   %.40b: %.d40 = cpp_overload_set_value @C.C [concrete]
 // CHECK:STDOUT:   %int_123.fff: Core.IntLiteral = int_value 123 [concrete]
 // CHECK:STDOUT:   %int_456.010: Core.IntLiteral = int_value 456 [concrete]
 // CHECK:STDOUT:   %int_32: Core.IntLiteral = int_value 32 [concrete]
@@ -301,7 +301,7 @@ fn F() {
 // CHECK:STDOUT:     import Cpp//...
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %C.decl: type = class_decl @C [concrete = constants.%C] {} {}
-// CHECK:STDOUT:   %.40b: %.d40 = cpp_overload_set_value @C.C [concrete = constants.%empty_struct]
+// CHECK:STDOUT:   %.40b: %.d40 = cpp_overload_set_value @C.C [concrete = constants.%.40b]
 // CHECK:STDOUT:   %C__carbon_thunk.decl: %C__carbon_thunk.type = fn_decl @C__carbon_thunk [concrete = constants.%C__carbon_thunk] {
 // CHECK:STDOUT:     <elided>
 // CHECK:STDOUT:   } {
@@ -318,7 +318,7 @@ fn F() {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Cpp.ref.loc8_18: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
 // CHECK:STDOUT:   %C.ref.loc8_21: type = name_ref C, imports.%C.decl [concrete = constants.%C]
-// CHECK:STDOUT:   %C.ref.loc8_23: %.d40 = name_ref C, imports.%.40b [concrete = constants.%empty_struct]
+// CHECK:STDOUT:   %C.ref.loc8_23: %.d40 = name_ref C, imports.%.40b [concrete = constants.%.40b]
 // CHECK:STDOUT:   %int_123: Core.IntLiteral = int_value 123 [concrete = constants.%int_123.fff]
 // CHECK:STDOUT:   %int_456: Core.IntLiteral = int_value 456 [concrete = constants.%int_456.010]
 // CHECK:STDOUT:   %.loc8_34.1: ref %C = temporary_storage
@@ -361,7 +361,7 @@ fn F() {
 // CHECK:STDOUT:   %C: type = class_type @C [concrete]
 // CHECK:STDOUT:   %pattern_type.217: type = pattern_type %C [concrete]
 // CHECK:STDOUT:   %.d40: type = cpp_overload_set_type @C.C.1 [concrete]
-// CHECK:STDOUT:   %empty_struct: %.d40 = struct_value () [concrete]
+// CHECK:STDOUT:   %.40b: %.d40 = cpp_overload_set_value @C.C.1 [concrete]
 // CHECK:STDOUT:   %ptr.d9e: type = ptr_type %C [concrete]
 // CHECK:STDOUT:   %C__carbon_thunk.type.65f120.1: type = fn_type @C__carbon_thunk.1 [concrete]
 // CHECK:STDOUT:   %C__carbon_thunk.d98342.1: %C__carbon_thunk.type.65f120.1 = struct_value () [concrete]
@@ -398,7 +398,7 @@ fn F() {
 // CHECK:STDOUT:     import Cpp//...
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %C.decl: type = class_decl @C [concrete = constants.%C] {} {}
-// CHECK:STDOUT:   %.40b: %.d40 = cpp_overload_set_value @C.C.1 [concrete = constants.%empty_struct]
+// CHECK:STDOUT:   %.40b: %.d40 = cpp_overload_set_value @C.C.1 [concrete = constants.%.40b]
 // CHECK:STDOUT:   %C__carbon_thunk.decl.8acdfe.1: %C__carbon_thunk.type.65f120.1 = fn_decl @C__carbon_thunk.1 [concrete = constants.%C__carbon_thunk.d98342.1] {
 // CHECK:STDOUT:     <elided>
 // CHECK:STDOUT:   } {
@@ -420,7 +420,7 @@ fn F() {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Cpp.ref.loc8_19: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
 // CHECK:STDOUT:   %C.ref.loc8_22: type = name_ref C, imports.%C.decl [concrete = constants.%C]
-// CHECK:STDOUT:   %C.ref.loc8_24: %.d40 = name_ref C, imports.%.40b [concrete = constants.%empty_struct]
+// CHECK:STDOUT:   %C.ref.loc8_24: %.d40 = name_ref C, imports.%.40b [concrete = constants.%.40b]
 // CHECK:STDOUT:   %.loc8_27.1: ref %C = temporary_storage
 // CHECK:STDOUT:   %addr.loc8_27.1: %ptr.d9e = addr_of %.loc8_27.1
 // CHECK:STDOUT:   %C__carbon_thunk.call.loc8: init %empty_tuple.type = call imports.%C__carbon_thunk.decl.8acdfe.1(%addr.loc8_27.1)
@@ -437,7 +437,7 @@ fn F() {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Cpp.ref.loc9_19: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
 // CHECK:STDOUT:   %C.ref.loc9_22: type = name_ref C, imports.%C.decl [concrete = constants.%C]
-// CHECK:STDOUT:   %C.ref.loc9_24: %.d40 = name_ref C, imports.%.40b [concrete = constants.%empty_struct]
+// CHECK:STDOUT:   %C.ref.loc9_24: %.d40 = name_ref C, imports.%.40b [concrete = constants.%.40b]
 // CHECK:STDOUT:   %int_123: Core.IntLiteral = int_value 123 [concrete = constants.%int_123.fff]
 // CHECK:STDOUT:   %int_456: Core.IntLiteral = int_value 456 [concrete = constants.%int_456.010]
 // CHECK:STDOUT:   %.loc9_35.1: ref %C = temporary_storage
@@ -485,7 +485,7 @@ fn F() {
 // CHECK:STDOUT:   %C: type = class_type @C [concrete]
 // CHECK:STDOUT:   %pattern_type.217: type = pattern_type %C [concrete]
 // CHECK:STDOUT:   %.d40: type = cpp_overload_set_type @C.C [concrete]
-// CHECK:STDOUT:   %empty_struct: %.d40 = struct_value () [concrete]
+// CHECK:STDOUT:   %.40b: %.d40 = cpp_overload_set_value @C.C [concrete]
 // CHECK:STDOUT:   %int_8.b85: Core.IntLiteral = int_value 8 [concrete]
 // CHECK:STDOUT:   %int_9.988: Core.IntLiteral = int_value 9 [concrete]
 // CHECK:STDOUT:   %int_32: Core.IntLiteral = int_value 32 [concrete]
@@ -520,7 +520,7 @@ fn F() {
 // CHECK:STDOUT:     import Cpp//...
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %C.decl: type = class_decl @C [concrete = constants.%C] {} {}
-// CHECK:STDOUT:   %.40b: %.d40 = cpp_overload_set_value @C.C [concrete = constants.%empty_struct]
+// CHECK:STDOUT:   %.40b: %.d40 = cpp_overload_set_value @C.C [concrete = constants.%.40b]
 // CHECK:STDOUT:   %C__carbon_thunk.decl: %C__carbon_thunk.type = fn_decl @C__carbon_thunk [concrete = constants.%C__carbon_thunk] {
 // CHECK:STDOUT:     <elided>
 // CHECK:STDOUT:   } {
@@ -537,7 +537,7 @@ fn F() {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Cpp.ref.loc8_19: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
 // CHECK:STDOUT:   %C.ref.loc8_22: type = name_ref C, imports.%C.decl [concrete = constants.%C]
-// CHECK:STDOUT:   %C.ref.loc8_24: %.d40 = name_ref C, imports.%.40b [concrete = constants.%empty_struct]
+// CHECK:STDOUT:   %C.ref.loc8_24: %.d40 = name_ref C, imports.%.40b [concrete = constants.%.40b]
 // CHECK:STDOUT:   %int_8.loc8: Core.IntLiteral = int_value 8 [concrete = constants.%int_8.b85]
 // CHECK:STDOUT:   %int_9: Core.IntLiteral = int_value 9 [concrete = constants.%int_9.988]
 // CHECK:STDOUT:   %.loc8_31.1: ref %C = temporary_storage
@@ -570,7 +570,7 @@ fn F() {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Cpp.ref.loc14_19: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
 // CHECK:STDOUT:   %C.ref.loc14_22: type = name_ref C, imports.%C.decl [concrete = constants.%C]
-// CHECK:STDOUT:   %C.ref.loc14_24: %.d40 = name_ref C, imports.%.40b [concrete = constants.%empty_struct]
+// CHECK:STDOUT:   %C.ref.loc14_24: %.d40 = name_ref C, imports.%.40b [concrete = constants.%.40b]
 // CHECK:STDOUT:   %int_8.loc14: Core.IntLiteral = int_value 8 [concrete = constants.%int_8.b85]
 // CHECK:STDOUT:   %.loc14: type = splice_block %C.ref.loc14_14 [concrete = constants.%C] {
 // CHECK:STDOUT:     %Cpp.ref.loc14_11: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
@@ -592,7 +592,7 @@ fn F() {
 // CHECK:STDOUT:   %C: type = class_type @C [concrete]
 // CHECK:STDOUT:   %pattern_type.217: type = pattern_type %C [concrete]
 // CHECK:STDOUT:   %.d40: type = cpp_overload_set_type @C.C [concrete]
-// CHECK:STDOUT:   %empty_struct: %.d40 = struct_value () [concrete]
+// CHECK:STDOUT:   %.40b: %.d40 = cpp_overload_set_value @C.C [concrete]
 // CHECK:STDOUT:   %int_8.b85: Core.IntLiteral = int_value 8 [concrete]
 // CHECK:STDOUT:   %int_32: Core.IntLiteral = int_value 32 [concrete]
 // CHECK:STDOUT:   %i32: type = class_type @Int, @Int(%int_32) [concrete]
@@ -635,7 +635,7 @@ fn F() {
 // CHECK:STDOUT:     import Cpp//...
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %C.decl: type = class_decl @C [concrete = constants.%C] {} {}
-// CHECK:STDOUT:   %.40b: %.d40 = cpp_overload_set_value @C.C [concrete = constants.%empty_struct]
+// CHECK:STDOUT:   %.40b: %.d40 = cpp_overload_set_value @C.C [concrete = constants.%.40b]
 // CHECK:STDOUT:   %C__carbon_thunk.decl: %C__carbon_thunk.type = fn_decl @C__carbon_thunk [concrete = constants.%C__carbon_thunk] {
 // CHECK:STDOUT:     <elided>
 // CHECK:STDOUT:   } {
@@ -654,7 +654,7 @@ fn F() {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Cpp.ref.loc8_19: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
 // CHECK:STDOUT:   %C.ref.loc8_22: type = name_ref C, imports.%C.decl [concrete = constants.%C]
-// CHECK:STDOUT:   %C.ref.loc8_24: %.d40 = name_ref C, imports.%.40b [concrete = constants.%empty_struct]
+// CHECK:STDOUT:   %C.ref.loc8_24: %.d40 = name_ref C, imports.%.40b [concrete = constants.%.40b]
 // CHECK:STDOUT:   %int_8.loc8: Core.IntLiteral = int_value 8 [concrete = constants.%int_8.b85]
 // CHECK:STDOUT:   %.loc8_28.1: ref %C = temporary_storage
 // CHECK:STDOUT:   %impl.elem0.loc8: %.1df = impl_witness_access constants.%ImplicitAs.impl_witness.204, element0 [concrete = constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.0f0]
@@ -708,7 +708,7 @@ fn F() {
 // CHECK:STDOUT:   %C: type = class_type @C [concrete]
 // CHECK:STDOUT:   %pattern_type.217: type = pattern_type %C [concrete]
 // CHECK:STDOUT:   %.d40: type = cpp_overload_set_type @C.C [concrete]
-// CHECK:STDOUT:   %empty_struct: %.d40 = struct_value () [concrete]
+// CHECK:STDOUT:   %.40b: %.d40 = cpp_overload_set_value @C.C [concrete]
 // CHECK:STDOUT:   %int_8.b85: Core.IntLiteral = int_value 8 [concrete]
 // CHECK:STDOUT:   %int_9.988: Core.IntLiteral = int_value 9 [concrete]
 // CHECK:STDOUT:   %int_32: Core.IntLiteral = int_value 32 [concrete]
@@ -755,7 +755,7 @@ fn F() {
 // CHECK:STDOUT:     import Cpp//...
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %C.decl: type = class_decl @C [concrete = constants.%C] {} {}
-// CHECK:STDOUT:   %.40b: %.d40 = cpp_overload_set_value @C.C [concrete = constants.%empty_struct]
+// CHECK:STDOUT:   %.40b: %.d40 = cpp_overload_set_value @C.C [concrete = constants.%.40b]
 // CHECK:STDOUT:   %C__carbon_thunk.decl: %C__carbon_thunk.type = fn_decl @C__carbon_thunk [concrete = constants.%C__carbon_thunk] {
 // CHECK:STDOUT:     <elided>
 // CHECK:STDOUT:   } {
@@ -774,7 +774,7 @@ fn F() {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Cpp.ref.loc8_19: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
 // CHECK:STDOUT:   %C.ref.loc8_22: type = name_ref C, imports.%C.decl [concrete = constants.%C]
-// CHECK:STDOUT:   %C.ref.loc8_24: %.d40 = name_ref C, imports.%.40b [concrete = constants.%empty_struct]
+// CHECK:STDOUT:   %C.ref.loc8_24: %.d40 = name_ref C, imports.%.40b [concrete = constants.%.40b]
 // CHECK:STDOUT:   %int_8.loc8: Core.IntLiteral = int_value 8 [concrete = constants.%int_8.b85]
 // CHECK:STDOUT:   %int_9: Core.IntLiteral = int_value 9 [concrete = constants.%int_9.988]
 // CHECK:STDOUT:   %.loc8_31.1: ref %C = temporary_storage
@@ -807,7 +807,7 @@ fn F() {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Cpp.ref.loc14_19: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
 // CHECK:STDOUT:   %C.ref.loc14_22: type = name_ref C, imports.%C.decl [concrete = constants.%C]
-// CHECK:STDOUT:   %C.ref.loc14_24: %.d40 = name_ref C, imports.%.40b [concrete = constants.%empty_struct]
+// CHECK:STDOUT:   %C.ref.loc14_24: %.d40 = name_ref C, imports.%.40b [concrete = constants.%.40b]
 // CHECK:STDOUT:   %int_8.loc14: Core.IntLiteral = int_value 8 [concrete = constants.%int_8.b85]
 // CHECK:STDOUT:   %.loc14: type = splice_block %C.ref.loc14_14 [concrete = constants.%C] {
 // CHECK:STDOUT:     %Cpp.ref.loc14_11: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]

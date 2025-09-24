@@ -326,7 +326,7 @@ fn MyF(bar: Cpp.Bar*);
 // CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [concrete]
 // CHECK:STDOUT:   %Bar: type = class_type @Bar [concrete]
 // CHECK:STDOUT:   %.c07: type = cpp_overload_set_type @Bar.foo [concrete]
-// CHECK:STDOUT:   %empty_struct: %.c07 = struct_value () [concrete]
+// CHECK:STDOUT:   %.617: %.c07 = cpp_overload_set_value @Bar.foo [concrete]
 // CHECK:STDOUT:   %Bar.foo.type: type = fn_type @Bar.foo [concrete]
 // CHECK:STDOUT:   %Bar.foo: %Bar.foo.type = struct_value () [concrete]
 // CHECK:STDOUT: }
@@ -337,7 +337,7 @@ fn MyF(bar: Cpp.Bar*);
 // CHECK:STDOUT:     import Cpp//...
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Bar.decl: type = class_decl @Bar [concrete = constants.%Bar] {} {}
-// CHECK:STDOUT:   %.617: %.c07 = cpp_overload_set_value @Bar.foo [concrete = constants.%empty_struct]
+// CHECK:STDOUT:   %.617: %.c07 = cpp_overload_set_value @Bar.foo [concrete = constants.%.617]
 // CHECK:STDOUT:   %Bar.foo.decl: %Bar.foo.type = fn_decl @Bar.foo [concrete = constants.%Bar.foo] {} {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -345,7 +345,7 @@ fn MyF(bar: Cpp.Bar*);
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %Cpp.ref: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
 // CHECK:STDOUT:   %Bar.ref: type = name_ref Bar, imports.%Bar.decl [concrete = constants.%Bar]
-// CHECK:STDOUT:   %foo.ref: %.c07 = name_ref foo, imports.%.617 [concrete = constants.%empty_struct]
+// CHECK:STDOUT:   %foo.ref: %.c07 = name_ref foo, imports.%.617 [concrete = constants.%.617]
 // CHECK:STDOUT:   %Bar.foo.call: init %empty_tuple.type = call imports.%Bar.foo.decl()
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
@@ -482,7 +482,7 @@ fn MyF(bar: Cpp.Bar*);
 // CHECK:STDOUT:   %MyF.type: type = fn_type @MyF [concrete]
 // CHECK:STDOUT:   %MyF: %MyF.type = struct_value () [concrete]
 // CHECK:STDOUT:   %.2e2: type = cpp_overload_set_type @<null name> [concrete]
-// CHECK:STDOUT:   %empty_struct: %.2e2 = struct_value () [concrete]
+// CHECK:STDOUT:   %.6e0: %.2e2 = cpp_overload_set_value @<null name> [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -491,7 +491,7 @@ fn MyF(bar: Cpp.Bar*);
 // CHECK:STDOUT:     import Cpp//...
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Bar.decl: type = class_decl @Bar [concrete = constants.%Bar] {} {}
-// CHECK:STDOUT:   %.6e0: %.2e2 = cpp_overload_set_value @<null name> [concrete = constants.%empty_struct]
+// CHECK:STDOUT:   %.6e0: %.2e2 = cpp_overload_set_value @<null name> [concrete = constants.%.6e0]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -513,7 +513,7 @@ fn MyF(bar: Cpp.Bar*);
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %bar.ref: %ptr.f68 = name_ref bar, %bar
 // CHECK:STDOUT:   %.loc15: ref %Bar = deref %bar.ref
-// CHECK:STDOUT:   %f.ref: %.2e2 = name_ref f, imports.%.6e0 [concrete = constants.%empty_struct]
+// CHECK:STDOUT:   %f.ref: %.2e2 = name_ref f, imports.%.6e0 [concrete = constants.%.6e0]
 // CHECK:STDOUT:   %bound_method: <bound method> = bound_method %.loc15, %f.ref
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
