@@ -27,13 +27,13 @@ fn F();
 // CHECK:STDERR:
 var b: i32 = F[1];
 
-// CHECK:STDERR: fail_invalid_base.carbon:[[@LINE+4]]:14: error: type `{.a: Core.IntLiteral, .b: Core.IntLiteral}` does not support indexing [TypeNotIndexable]
+// CHECK:STDERR: fail_invalid_base.carbon:[[@LINE+4]]:14: error: cannot access member of interface `Core.IndexWith(Core.IntLiteral)` in type `{.a: Core.IntLiteral, .b: Core.IntLiteral}` that does not implement that interface [MissingImplInMemberAccess]
 // CHECK:STDERR: var c: i32 = {.a = 1, .b = 2}[0];
 // CHECK:STDERR:              ^~~~~~~~~~~~~~~~~~~
 // CHECK:STDERR:
 var c: i32 = {.a = 1, .b = 2}[0];
 
-// CHECK:STDERR: fail_invalid_base.carbon:[[@LINE+4]]:14: error: type `type` does not support indexing [TypeNotIndexable]
+// CHECK:STDERR: fail_invalid_base.carbon:[[@LINE+4]]:14: error: cannot access member of interface `Core.IndexWith(Core.IntLiteral)` in type `type` that does not implement that interface [MissingImplInMemberAccess]
 // CHECK:STDERR: var d: i32 = {.a: i32, .b: i32}[0];
 // CHECK:STDERR:              ^~~~~~~~~~~~~~~~~~~~~
 // CHECK:STDERR:

@@ -57,6 +57,11 @@ auto BuildUnaryOperator(Context& context, SemIR::LocId loc_id, Operator op,
                         SemIR::InstId operand_id,
                         MakeDiagnosticBuilderFn missing_impl_diagnoser)
     -> SemIR::InstId {
+  if (operand_id == SemIR::ErrorInst::InstId) {
+    // Exit early for errors, which prevent forming an `Op` function.
+    return SemIR::ErrorInst::InstId;
+  }
+
   // For unary operators with a C++ class as the operand, try to import and call
   // the C++ operator.
   // TODO: Change impl lookup instead. See
@@ -87,6 +92,11 @@ auto BuildBinaryOperator(Context& context, SemIR::LocId loc_id, Operator op,
                          SemIR::InstId lhs_id, SemIR::InstId rhs_id,
                          MakeDiagnosticBuilderFn missing_impl_diagnoser)
     -> SemIR::InstId {
+  if (lhs_id == SemIR::ErrorInst::InstId) {
+    // Exit early for errors, which prevent forming an `Op` function.
+    return SemIR::ErrorInst::InstId;
+  }
+
   // For binary operators with a C++ class as at least one of the operands, try
   // to import and call the C++ operator.
   // TODO: Instead of hooking this here, change impl lookup, so that a generic
