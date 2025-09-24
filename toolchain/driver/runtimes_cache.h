@@ -299,9 +299,9 @@ class Runtimes::Cache {
 
   // Tries to find a viable cache root.
   //
-  // This must be an existing directory,
-  // not one we create. We use the XDG base directory specification as the basis
-  // for these directories: https://specifications.freedesktop.org/basedir-spec/
+  // This must be an existing directory, not one we create. We use the XDG base
+  // directory specification as the basis for these directories:
+  // https://specifications.freedesktop.org/basedir-spec/
   //
   // Note that there is a concept of a "runtimes" directory in this spec, but it
   // uses a different meaning of the term "runtimes" than ours. Runtimes for
