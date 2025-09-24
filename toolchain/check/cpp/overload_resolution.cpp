@@ -174,12 +174,9 @@ static auto IsCppOperatorMethod(Context& context, SemIR::FunctionId function_id)
     -> bool {
   SemIR::ClangDeclId clang_decl_id =
       context.functions().Get(function_id).clang_decl_id;
-  if (!clang_decl_id.has_value()) {
-    return false;
-  }
-
-  return IsOperatorMethodDecl(
-      context.clang_decls().Get(clang_decl_id).key.decl);
+  return clang_decl_id.has_value() &&
+         IsOperatorMethodDecl(
+             context.clang_decls().Get(clang_decl_id).key.decl);
 }
 
 auto PerformCppOverloadResolution(Context& context, SemIR::LocId loc_id,
