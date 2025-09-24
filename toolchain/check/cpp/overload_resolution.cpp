@@ -138,6 +138,7 @@ static auto ResolveCalleeId(Context& context, SemIR::LocId loc_id,
       sema.MarkFunctionReferenced(loc, best_viable_fn->Function);
       SemIR::InstId result = ImportCppFunctionDecl(
           context, loc_id, best_viable_fn->Function,
+          // If this is an operator method, the first arg will be used as self.
           arg_exprs.size() -
               (IsOperatorMethodDecl(best_viable_fn->Function) ? 1 : 0));
       return result;
