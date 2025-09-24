@@ -30,19 +30,49 @@ import Cpp library "namespace.h";
 
 alias MyNamespaceAlias = Cpp.MyNamespace;
 
-// --- fail_todo_import_namespace_api.carbon
+// --- fail_import_namespace_api.carbon
 
 library "[[@TEST_NAME]]";
 
 import library "namespace_api";
 
 fn F() {
-  //@dump-sem-ir-begin
-  // CHECK:STDERR: fail_todo_import_namespace_api.carbon:[[@LINE+4]]:10: error: member name `MyClass` not found in `Cpp.MyNamespace` [MemberNameNotFoundInInstScope]
+  // Imports are not implicitly re-exported, so lookup is expected to fail.
+  // CHECK:STDERR: fail_import_namespace_api.carbon:[[@LINE+4]]:10: error: member name `MyClass` not found in `Cpp.MyNamespace` [MemberNameNotFoundInInstScope]
   // CHECK:STDERR:   var x: MyNamespaceAlias.MyClass;
   // CHECK:STDERR:          ^~~~~~~~~~~~~~~~~~~~~~~~
   // CHECK:STDERR:
   var x: MyNamespaceAlias.MyClass;
+}
+
+// ============================================================================
+// Import C++ struct indirectly
+// ============================================================================
+
+// --- struct.h
+
+struct MyStruct { void Foo(); };
+
+// --- struct_api.carbon
+
+library "[[@TEST_NAME]]";
+
+import Cpp library "struct.h";
+
+alias MyStructAlias = Cpp.MyStruct;
+
+// --- fail_todo_import_struct_api.carbon
+// CHECK:STDERR: fail_todo_import_struct_api.carbon: error: semantics TODO: `Unsupported: Importing C++ indirectly` [SemanticsTodo]
+// CHECK:STDERR:
+
+library "[[@TEST_NAME]]";
+
+import library "struct_api";
+
+fn F() {
+  //@dump-sem-ir-begin
+  var x: MyStructAlias;
+  x.Foo();
   //@dump-sem-ir-end
 }
 
@@ -81,12 +111,13 @@ fn F() {
   //@dump-sem-ir-end
 }
 
-// CHECK:STDOUT: --- fail_todo_import_namespace_api.carbon
+// CHECK:STDOUT: --- fail_todo_import_struct_api.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
+// CHECK:STDOUT:   %Main.MyStructAlias: type = import_ref Main//struct_api, MyStructAlias, loaded [concrete = <error>]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F() {
@@ -96,8 +127,10 @@ fn F() {
 // CHECK:STDOUT:     %x.var_patt: <error> = var_pattern %x.patt [concrete]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %x.var: ref <error> = var %x.var_patt [concrete = <error>]
-// CHECK:STDOUT:   <elided>
+// CHECK:STDOUT:   %MyStructAlias.ref: type = name_ref MyStructAlias, imports.%Main.MyStructAlias [concrete = <error>]
 // CHECK:STDOUT:   %x: <error> = bind_name x, <error> [concrete = <error>]
+// CHECK:STDOUT:   %x.ref: <error> = name_ref x, %x [concrete = <error>]
+// CHECK:STDOUT:   %Foo.ref: <error> = name_ref Foo, <error> [concrete = <error>]
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

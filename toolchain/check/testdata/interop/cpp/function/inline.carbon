@@ -43,16 +43,18 @@ inline void foo();
 library "[[@TEST_NAME]]";
 
 // TODO: Promote this warning to an error by default.
-// CHECK:STDERR: todo_fail_import_without_definition.carbon:[[@LINE+5]]:10: in file included here [InCppInclude]
+// CHECK:STDERR: todo_fail_import_without_definition.carbon:[[@LINE+4]]:10: in file included here [InCppInclude]
 // CHECK:STDERR: ./without_definition.h:2:13: warning: inline function 'foo' is not defined [CppInteropParseWarning]
 // CHECK:STDERR:     2 | inline void foo();
 // CHECK:STDERR:       |             ^
-// CHECK:STDERR:
 import Cpp library "without_definition.h";
 
 fn MyF() {
   //@dump-sem-ir-begin
-  // TODO: Produce a note pointing here.
+  // CHECK:STDERR: todo_fail_import_without_definition.carbon:[[@LINE+4]]:11: note: used here [CppInteropParseNote]
+  // CHECK:STDERR:    17 |   Cpp.foo();
+  // CHECK:STDERR:       |           ^
+  // CHECK:STDERR:
   Cpp.foo();
 
   // Don't error on repeated calls.
@@ -132,12 +134,12 @@ fn MyF() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @MyF() {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %Cpp.ref.loc15: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
-// CHECK:STDOUT:   %foo.ref.loc15: %.c5d = name_ref foo, imports.%.a21 [concrete = constants.%empty_struct]
-// CHECK:STDOUT:   %foo.call.loc15: init %empty_tuple.type = call imports.%foo.decl()
-// CHECK:STDOUT:   %Cpp.ref.loc18: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
-// CHECK:STDOUT:   %foo.ref.loc18: %.c5d = name_ref foo, imports.%.a21 [concrete = constants.%empty_struct]
-// CHECK:STDOUT:   %foo.call.loc18: init %empty_tuple.type = call imports.%foo.decl()
+// CHECK:STDOUT:   %Cpp.ref.loc17: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
+// CHECK:STDOUT:   %foo.ref.loc17: %.c5d = name_ref foo, imports.%.a21 [concrete = constants.%empty_struct]
+// CHECK:STDOUT:   %foo.call.loc17: init %empty_tuple.type = call imports.%foo.decl()
+// CHECK:STDOUT:   %Cpp.ref.loc20: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
+// CHECK:STDOUT:   %foo.ref.loc20: %.c5d = name_ref foo, imports.%.a21 [concrete = constants.%empty_struct]
+// CHECK:STDOUT:   %foo.call.loc20: init %empty_tuple.type = call imports.%foo.decl()
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -194,8 +196,8 @@ fn MyF() {
 // CHECK:STDOUT:   %Copy.impl_witness.2f8: <witness> = impl_witness imports.%Copy.impl_witness_table.1ed, @Int.as.Copy.impl(%int_16) [concrete]
 // CHECK:STDOUT:   %Int.as.Copy.impl.Op.type.c73: type = fn_type @Int.as.Copy.impl.Op, @Int.as.Copy.impl(%int_16) [concrete]
 // CHECK:STDOUT:   %Int.as.Copy.impl.Op.3dc: %Int.as.Copy.impl.Op.type.c73 = struct_value () [concrete]
-// CHECK:STDOUT:   %Copy.facet.4bb: %Copy.type = facet_value %i16, (%Copy.impl_witness.2f8) [concrete]
-// CHECK:STDOUT:   %.798: type = fn_type_with_self_type %Copy.Op.type, %Copy.facet.4bb [concrete]
+// CHECK:STDOUT:   %Copy.facet: %Copy.type = facet_value %i16, (%Copy.impl_witness.2f8) [concrete]
+// CHECK:STDOUT:   %.798: type = fn_type_with_self_type %Copy.Op.type, %Copy.facet [concrete]
 // CHECK:STDOUT:   %Int.as.Copy.impl.Op.bound: <bound method> = bound_method %int_1.f90, %Int.as.Copy.impl.Op.3dc [concrete]
 // CHECK:STDOUT:   %Int.as.Copy.impl.Op.specific_fn: <specific function> = specific_function %Int.as.Copy.impl.Op.3dc, @Int.as.Copy.impl.Op(%int_16) [concrete]
 // CHECK:STDOUT:   %bound_method.7c2: <bound method> = bound_method %int_1.f90, %Int.as.Copy.impl.Op.specific_fn [concrete]

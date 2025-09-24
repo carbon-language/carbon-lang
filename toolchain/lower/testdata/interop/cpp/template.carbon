@@ -62,13 +62,6 @@ fn PassClass(a: Cpp.Class) -> Cpp.Class {
 // CHECK:STDOUT:   ret i32 %0
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: ; Function Attrs: mustprogress noinline nounwind optnone
-// CHECK:STDOUT: define linkonce_odr dso_local void @_Z8identityI5ClassET_S1_() #0 comdat {
-// CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %x = alloca %class.Class, align 1
-// CHECK:STDOUT:   ret void
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: alwaysinline mustprogress
 // CHECK:STDOUT: define dso_local void @_Z8identityI5ClassET_S1_.carbon_thunk(ptr %x, ptr %return) #1 {
 // CHECK:STDOUT: entry:
@@ -81,6 +74,13 @@ fn PassClass(a: Cpp.Class) -> Cpp.Class {
 // CHECK:STDOUT:   %0 = load ptr, ptr %return.addr, align 8
 // CHECK:STDOUT:   %1 = load ptr, ptr %x.addr, align 8
 // CHECK:STDOUT:   call void @_Z8identityI5ClassET_S1_()
+// CHECK:STDOUT:   ret void
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: ; Function Attrs: mustprogress noinline nounwind optnone
+// CHECK:STDOUT: define linkonce_odr dso_local void @_Z8identityI5ClassET_S1_() #0 comdat {
+// CHECK:STDOUT: entry:
+// CHECK:STDOUT:   %x = alloca %class.Class, align 1
 // CHECK:STDOUT:   ret void
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

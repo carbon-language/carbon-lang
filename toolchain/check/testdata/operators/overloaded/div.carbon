@@ -50,14 +50,14 @@ fn TestAssign(a: C*, b: C) {
 // CHECK:STDOUT:   %DivWith.impl_witness: <witness> = impl_witness file.%DivWith.impl_witness_table [concrete]
 // CHECK:STDOUT:   %C.as.DivWith.impl.Op.type: type = fn_type @C.as.DivWith.impl.Op [concrete]
 // CHECK:STDOUT:   %C.as.DivWith.impl.Op: %C.as.DivWith.impl.Op.type = struct_value () [concrete]
-// CHECK:STDOUT:   %DivWith.facet.9a0: %DivWith.type.75d = facet_value %C, (%DivWith.impl_witness) [concrete]
+// CHECK:STDOUT:   %DivWith.facet: %DivWith.type.75d = facet_value %C, (%DivWith.impl_witness) [concrete]
 // CHECK:STDOUT:   %DivAssignWith.type.226: type = facet_type <@DivAssignWith, @DivAssignWith(%C)> [concrete]
 // CHECK:STDOUT:   %DivAssignWith.Op.type.629: type = fn_type @DivAssignWith.Op, @DivAssignWith(%C) [concrete]
 // CHECK:STDOUT:   %DivAssignWith.impl_witness: <witness> = impl_witness file.%DivAssignWith.impl_witness_table [concrete]
 // CHECK:STDOUT:   %C.as.DivAssignWith.impl.Op.type: type = fn_type @C.as.DivAssignWith.impl.Op [concrete]
 // CHECK:STDOUT:   %C.as.DivAssignWith.impl.Op: %C.as.DivAssignWith.impl.Op.type = struct_value () [concrete]
 // CHECK:STDOUT:   %DivAssignWith.facet: %DivAssignWith.type.226 = facet_value %C, (%DivAssignWith.impl_witness) [concrete]
-// CHECK:STDOUT:   %.b8d: type = fn_type_with_self_type %DivWith.Op.type.c4b, %DivWith.facet.9a0 [concrete]
+// CHECK:STDOUT:   %.b8d: type = fn_type_with_self_type %DivWith.Op.type.c4b, %DivWith.facet [concrete]
 // CHECK:STDOUT:   %.5f7: type = fn_type_with_self_type %DivAssignWith.Op.type.629, %DivAssignWith.facet [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

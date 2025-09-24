@@ -70,7 +70,7 @@ class InstNamer::NamingContext {
     AddInstName((inst_namer_->MaybePushEntity(id) + suffix).str());
   }
 
-  auto sem_ir() -> const SemIR::File& { return *inst_namer_->sem_ir_; }
+  auto sem_ir() -> const File& { return *inst_namer_->sem_ir_; }
 
   InstNamer* inst_namer_;
   ScopeId scope_id_;
@@ -759,12 +759,12 @@ auto InstNamer::NamingContext::NameInst() -> void {
       return;
     }
     case CARBON_KIND(Call inst): {
-      auto callee_function = GetCalleeFunction(sem_ir(), inst.callee_id);
-      if (!callee_function.function_id.has_value()) {
-        AddInstName("");
+      auto callee = GetCallee(sem_ir(), inst.callee_id);
+      if (auto* fn = std::get_if<CalleeFunction>(&callee)) {
+        AddEntityNameAndMaybePush(fn->function_id, ".call");
         return;
       }
-      AddEntityNameAndMaybePush(callee_function.function_id, ".call");
+      AddInstName("");
       return;
     }
     case CARBON_KIND(ClassDecl inst): {

@@ -169,7 +169,7 @@ import Cpp library "dynamic.h";
 fn MyF(bar: Cpp.Bar*);
 //@dump-sem-ir-end
 
-// --- fail_todo_call_dynamic.carbon
+// --- call_dynamic.carbon
 
 library "[[@TEST_NAME]]";
 
@@ -177,13 +177,6 @@ import Cpp library "dynamic.h";
 
 //@dump-sem-ir-begin
 fn MyF(bar: Cpp.Bar*) {
-  // CHECK:STDERR: fail_todo_call_dynamic.carbon:[[@LINE+7]]:3: error: semantics TODO: `Unsupported: Virtual function` [SemanticsTodo]
-  // CHECK:STDERR:   bar->f();
-  // CHECK:STDERR:   ^~~~~~~~
-  // CHECK:STDERR: fail_todo_call_dynamic.carbon:[[@LINE+4]]:3: note: in call to Cpp function here [InCallToCppFunction]
-  // CHECK:STDERR:   bar->f();
-  // CHECK:STDERR:   ^~~~~~~~
-  // CHECK:STDERR:
   bar->f();
 }
 //@dump-sem-ir-end
@@ -473,16 +466,19 @@ fn MyF(bar: Cpp.Bar*);
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @MyF(%bar.param: %ptr);
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- fail_todo_call_dynamic.carbon
+// CHECK:STDOUT: --- call_dynamic.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %Bar: type = class_type @Bar [concrete]
 // CHECK:STDOUT:   %ptr.f68: type = ptr_type %Bar [concrete]
-// CHECK:STDOUT:   %pattern_type: type = pattern_type %ptr.f68 [concrete]
+// CHECK:STDOUT:   %pattern_type.146: type = pattern_type %ptr.f68 [concrete]
 // CHECK:STDOUT:   %MyF.type: type = fn_type @MyF [concrete]
+// CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [concrete]
 // CHECK:STDOUT:   %MyF: %MyF.type = struct_value () [concrete]
-// CHECK:STDOUT:   %.2e2: type = cpp_overload_set_type @<null name> [concrete]
+// CHECK:STDOUT:   %.2e2: type = cpp_overload_set_type @Bar.f [concrete]
 // CHECK:STDOUT:   %empty_struct: %.2e2 = struct_value () [concrete]
+// CHECK:STDOUT:   %Bar.f.type: type = fn_type @Bar.f [concrete]
+// CHECK:STDOUT:   %Bar.f: %Bar.f.type = struct_value () [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -491,13 +487,18 @@ fn MyF(bar: Cpp.Bar*);
 // CHECK:STDOUT:     import Cpp//...
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Bar.decl: type = class_decl @Bar [concrete = constants.%Bar] {} {}
-// CHECK:STDOUT:   %.6e0: %.2e2 = cpp_overload_set_value @<null name> [concrete = constants.%empty_struct]
+// CHECK:STDOUT:   %.6e0: %.2e2 = cpp_overload_set_value @Bar.f [concrete = constants.%empty_struct]
+// CHECK:STDOUT:   %Bar.f.decl: %Bar.f.type = fn_decl @Bar.f [concrete = constants.%Bar.f] {
+// CHECK:STDOUT:     <elided>
+// CHECK:STDOUT:   } {
+// CHECK:STDOUT:     <elided>
+// CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   %MyF.decl: %MyF.type = fn_decl @MyF [concrete = constants.%MyF] {
-// CHECK:STDOUT:     %bar.patt: %pattern_type = binding_pattern bar [concrete]
-// CHECK:STDOUT:     %bar.param_patt: %pattern_type = value_param_pattern %bar.patt, call_param0 [concrete]
+// CHECK:STDOUT:     %bar.patt: %pattern_type.146 = binding_pattern bar [concrete]
+// CHECK:STDOUT:     %bar.param_patt: %pattern_type.146 = value_param_pattern %bar.patt, call_param0 [concrete]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %bar.param: %ptr.f68 = value_param call_param0
 // CHECK:STDOUT:     %.loc7: type = splice_block %ptr [concrete = constants.%ptr.f68] {
@@ -512,9 +513,11 @@ fn MyF(bar: Cpp.Bar*);
 // CHECK:STDOUT: fn @MyF(%bar.param: %ptr.f68) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %bar.ref: %ptr.f68 = name_ref bar, %bar
-// CHECK:STDOUT:   %.loc15: ref %Bar = deref %bar.ref
+// CHECK:STDOUT:   %.loc8: ref %Bar = deref %bar.ref
 // CHECK:STDOUT:   %f.ref: %.2e2 = name_ref f, imports.%.6e0 [concrete = constants.%empty_struct]
-// CHECK:STDOUT:   %bound_method: <bound method> = bound_method %.loc15, %f.ref
+// CHECK:STDOUT:   %bound_method: <bound method> = bound_method %.loc8, %f.ref
+// CHECK:STDOUT:   %addr: %ptr.f68 = addr_of %.loc8
+// CHECK:STDOUT:   %Bar.f.call: init %empty_tuple.type = call imports.%Bar.f.decl(%addr)
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

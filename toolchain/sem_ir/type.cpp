@@ -170,14 +170,12 @@ auto TypeStore::GetIntTypeInfo(TypeId int_type_id) const -> IntTypeInfo {
   return *int_info;
 }
 
-auto ExtractScrutineeType(const File& sem_ir, SemIR::TypeId type_id)
-    -> SemIR::TypeId {
-  if (auto pattern_type =
-          sem_ir.types().TryGetAs<SemIR::PatternType>(type_id)) {
+auto ExtractScrutineeType(const File& sem_ir, TypeId type_id) -> TypeId {
+  if (auto pattern_type = sem_ir.types().TryGetAs<PatternType>(type_id)) {
     return sem_ir.types().GetTypeIdForTypeInstId(
         pattern_type->scrutinee_type_inst_id);
   }
-  CARBON_CHECK(type_id == SemIR::ErrorInst::TypeId,
+  CARBON_CHECK(type_id == ErrorInst::TypeId,
                "Inst kind doesn't have scrutinee type: {0}",
                sem_ir.types().GetAsInst(type_id).kind());
   return type_id;

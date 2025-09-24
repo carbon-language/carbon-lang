@@ -251,8 +251,7 @@ class ConstantValueStore {
 // the eval block that computes the constant value in each specific.
 //
 // Returns InstId::None if the ConstantId is None or NotConstant.
-auto GetInstWithConstantValue(const SemIR::File& file,
-                              SemIR::ConstantId const_id) -> SemIR::InstId;
+auto GetInstWithConstantValue(const File& file, ConstantId const_id) -> InstId;
 
 // Provides storage for instructions representing deduplicated global constants.
 class ConstantStore {

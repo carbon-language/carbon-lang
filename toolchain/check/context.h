@@ -157,6 +157,11 @@ class Context {
     return import_ir_constant_values_;
   }
 
+  auto cpp_carbon_file_locations()
+      -> llvm::SmallVector<clang::SourceLocation>& {
+    return cpp_carbon_file_locations_;
+  }
+
   auto definitions_required_by_decl() -> llvm::SmallVector<SemIR::InstId>& {
     return definitions_required_by_decl_;
   }
@@ -281,6 +286,12 @@ class Context {
   auto ast_context() -> clang::ASTContext& {
     return sem_ir().clang_ast_unit()->getASTContext();
   }
+  auto clang_sema() -> clang::Sema& {
+    return sem_ir().clang_ast_unit()->getSema();
+  }
+  auto clang_decls() -> SemIR::ClangDeclStore& {
+    return sem_ir().clang_decls();
+  }
   auto names() -> SemIR::NameStoreWrapper { return sem_ir().names(); }
   auto name_scopes() -> SemIR::NameScopeStore& {
     return sem_ir().name_scopes();
@@ -294,7 +305,7 @@ class Context {
   auto types() -> SemIR::TypeStore& { return sem_ir().types(); }
   // Instructions should be added with `AddInst` or `AddInstInNoBlock` from
   // `inst.h`. This is `const` to prevent accidental misuse.
-  auto insts() -> const SemIR::InstStore& { return sem_ir().insts(); }
+  auto insts() const -> const SemIR::InstStore& { return sem_ir().insts(); }
   auto constant_values() -> SemIR::ConstantValueStore& {
     return sem_ir().constant_values();
   }
@@ -383,6 +394,10 @@ class Context {
   //
   // Inline 0 elements because it's expected to require heap allocation.
   llvm::SmallVector<SemIR::ConstantValueStore, 0> import_ir_constant_values_;
+
+  // Per-Carbon-file start locations for corresponding Clang source buffers.
+  // Owned and managed by code in cpp/location.cpp.
+  llvm::SmallVector<clang::SourceLocation> cpp_carbon_file_locations_;
 
   // Declaration instructions of entities that should have definitions by the
   // end of the current source file.
