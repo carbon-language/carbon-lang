@@ -124,8 +124,6 @@ mechanical best practices to most effectively navigate them.
     -   Make any in-file comments needed, but add them to a pending review
         rather than sending them directly.
     -   Finish the review and add any top-level review comments there.
--   Don't mark a review as requesting changes - this feature doesn't work well
-    for Carbon's review workflows. Only use the "comment" review state.
 -   Don't mark reviews as requesting changes. Sometimes reviewers get busy and
     somebody else approves; the "request changes" feature still blocks merges
     until the original requester approves, which can slow reviews down.
