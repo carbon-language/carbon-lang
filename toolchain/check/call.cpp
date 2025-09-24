@@ -344,7 +344,7 @@ auto PerformCall(Context& context, SemIR::LocId loc_id, SemIR::InstId callee_id,
       if (overload_result.callee_id == SemIR::ErrorInst::InstId) {
         return SemIR::ErrorInst::InstId;
       }
-      CARBON_CHECK(overload_result.callee_function.has_value());
+      CARBON_CHECK(overload_result.callee_function);
       return PerformCallToFunction(context, loc_id, overload_result.callee_id,
                                    *overload_result.callee_function,
                                    overload_result.arg_ids);
