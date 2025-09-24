@@ -142,7 +142,7 @@ class Runtimes {
   }
 
   // A format string used to form the lock file for a given directory in the
-  // runtimes. This needs to be C-string, so directly expose the character
+  // runtimes tree. This needs to be C-string, so directly expose the character
   // array.
   static constexpr char LockFileFormat[] = ".{0}.lock";
 
