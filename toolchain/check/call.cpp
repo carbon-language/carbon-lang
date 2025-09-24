@@ -302,13 +302,15 @@ auto PerformCall(Context& context, SemIR::LocId loc_id, SemIR::InstId callee_id,
     return SemIR::ErrorInst::InstId;
   }
   if (callee_function.cpp_overload_set_id.has_value()) {
-    std::tie(callee_id, callee_function, arg_ids) =
-        PerformCppOverloadResolution(context, loc_id,
-                                     callee_function.cpp_overload_set_id,
-                                     callee_function.self_id, arg_ids);
+    CppOverloadResolutionResult result = PerformCppOverloadResolution(
+        context, loc_id, callee_function.cpp_overload_set_id,
+        callee_function.self_id, arg_ids);
+    callee_id = result.callee_id;
     if (callee_id == SemIR::ErrorInst::InstId) {
       return SemIR::ErrorInst::InstId;
     }
+    callee_function = result.callee_function;
+    arg_ids = result.arg_ids;
   }
   if (callee_function.function_id.has_value()) {
     return PerformCallToFunction(context, loc_id, callee_id, callee_function,

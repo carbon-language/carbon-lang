@@ -11,11 +11,25 @@
 
 namespace Carbon::Check {
 
+// The result of performing C++ overload resolution.
+struct CppOverloadResolutionResult {
+  // The resolved callee id, or ErrorInst::InstId on error.
+  SemIR::InstId callee_id;
+
+  // The resolved callee function, which may be different from the result of
+  // `GetCalleeFunction()` to preserve self or set it to be the first argument
+  // for C++ member operators.
+  SemIR::CalleeFunction callee_function;
+
+  // The arguments to pass to the callee, which may be different from the
+  // original arguments if the callee is a C++ member operator.
+  llvm::ArrayRef<SemIR::InstId> arg_ids;
+};
+
 // Performs overloading resolution for a call to an overloaded C++ set. A set
 // with a single non-templated function goes through the same rules for
 // overloading resolution. Uses Clang to find the best viable function for the
-// call. Returns the resolved callee function id, callee function and args. On
-// failure returns an error instruction.
+// call.
 //
 // The callee function preserves the given self, if set. If not set, and the
 // function is a a C++ member operator, self will be set to the first argument,
@@ -32,8 +46,7 @@ auto PerformCppOverloadResolution(Context& context, SemIR::LocId loc_id,
                                   SemIR::CppOverloadSetId overload_set_id,
                                   SemIR::InstId self_id,
                                   llvm::ArrayRef<SemIR::InstId> arg_ids)
-    -> std::tuple<SemIR::InstId, SemIR::CalleeFunction,
-                  llvm::ArrayRef<SemIR::InstId>>;
+    -> CppOverloadResolutionResult;
 
 }  // namespace Carbon::Check
 

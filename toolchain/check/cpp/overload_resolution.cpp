@@ -172,14 +172,16 @@ auto PerformCppOverloadResolution(Context& context, SemIR::LocId loc_id,
                                   SemIR::CppOverloadSetId overload_set_id,
                                   SemIR::InstId self_id,
                                   llvm::ArrayRef<SemIR::InstId> arg_ids)
-    -> std::tuple<SemIR::InstId, SemIR::CalleeFunction,
-                  llvm::ArrayRef<SemIR::InstId>> {
-  SemIR::InstId callee_id =
-      ResolveCalleeId(context, loc_id, overload_set_id, self_id, arg_ids);
-  SemIR::CalleeFunction callee_function =
-      GetCalleeFunction(context.sem_ir(), callee_id);
+    -> CppOverloadResolutionResult {
+  CppOverloadResolutionResult result = {
+      .callee_id =
+          ResolveCalleeId(context, loc_id, overload_set_id, self_id, arg_ids),
+      .callee_function = GetCalleeFunction(context.sem_ir(), result.callee_id),
+      .arg_ids = arg_ids};
+  SemIR::CalleeFunction& callee_function = result.callee_function;
   if (callee_function.is_error) {
-    return {SemIR::ErrorInst::InstId, callee_function, arg_ids};
+    result.callee_id = SemIR::ErrorInst::InstId;
+    return result;
   }
 
   CARBON_CHECK(!callee_function.cpp_overload_set_id.has_value());
@@ -190,9 +192,9 @@ auto PerformCppOverloadResolution(Context& context, SemIR::LocId loc_id,
     callee_function.self_id = self_id;
   } else if (IsCppOperatorMethod(context, callee_function.function_id)) {
     // Adjust `self` and args for C++ overloaded operator methods.
-    callee_function.self_id = arg_ids.consume_front();
+    callee_function.self_id = result.arg_ids.consume_front();
   }
-  return {callee_id, callee_function, arg_ids};
+  return result;
 }
 
 }  // namespace Carbon::Check
