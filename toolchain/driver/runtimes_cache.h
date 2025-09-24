@@ -112,18 +112,18 @@ class Runtimes {
   // The deadline for acquiring a lock to build a new component of the runtimes.
   // This needs to be quite large as this is how long racing processes or
   // threads will wait to allow some other process to complete building the
-  // runtimes. The result is that this should be significantly longer than the
-  // expected slowest-to-build runtimes.
+  // component. The result is that this should be significantly longer than the
+  // expected slowest-to-build component.
   //
   // Note, nothing goes _wrong_ if this deadline is exceeded, but multiple
-  // copies of runtimes may end up being built and all but one thrown away.
+  // copies of the component may end up being built and all but one thrown away.
   static constexpr Filesystem::Duration BuildLockDeadline =
       std::chrono::seconds(200);
   // The interval at which to poll for a build lock. This needs to be small
   // enough that we don't waste an excessive amount of time if a build of the
-  // runtimes completes *just* after a poll. Typically, that means we want this
+  // component completes *just* after a poll. Typically, that means we want this
   // to be significant lower than the expected time it would take to build the
-  // runtimes. Note that we don't poll if the runtimes have been completely
+  // component. Note that we don't poll if the component has been completely
   // built prior to the query coming in, so this doesn't form the _minimum_ time
   // to find a component of the runtimes tree.
   static constexpr Filesystem::Duration BuildLockPollInterval =
