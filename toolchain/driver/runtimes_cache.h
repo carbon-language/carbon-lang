@@ -290,12 +290,51 @@ class Runtimes::Cache {
   static constexpr auto RuntimesLockDeadline = std::chrono::milliseconds(100);
   static constexpr auto RuntimesLockPollInterval = std::chrono::milliseconds(1);
 
+  struct Entry {
+    std::filesystem::path path;
+    Filesystem::Duration age;
+  };
+
   explicit Cache(llvm::raw_ostream* vlog_stream) : vlog_stream_(vlog_stream) {}
 
+  // Tries to find a viable cache root.
+  //
+  // This must be an existing directory,
+  // not one we create. We use the XDG base directory specification as the basis
+  // for these directories: https://specifications.freedesktop.org/basedir-spec/
+  //
+  // Note that there is a concept of a "runtimes" directory in this spec, but it
+  // uses a different meaning of the term "runtimes" than ours. Runtimes for
+  // Carbon are cached, persistent built library data, not something that only
+  // exists during the running of the Carbon tool like a socket.
+  auto FindXdgCachePath() -> std::optional<std::filesystem::path>;
+
+  // Initializes a system cache in a temporary directory.
+  //
+  // The cache will create and own a temporary directory, removing it on
+  // destruction. This limits the caching lifetime but is used as a fallback
+  // when unable to create a persistent cache.
+  auto InitTmpSystemCache() -> ErrorOr<Success>;
+
+  // Helper function implementing the logic for `MakeSystem`.
   auto InitSystemCache(const InstallPaths& install) -> ErrorOr<Success>;
+
+  // Helper function implementing the logic for `MakeCustom`.
   auto InitCachePath(const InstallPaths& install,
                      std::filesystem::path cache_path) -> ErrorOr<Success>;
 
+  // Computes the ages for each input path, and combines the path and age into
+  // the returned vector of `Entry` objects. This consumes the input paths when
+  // building the output `Entry` structs, and so accepts the vector of paths by
+  // value.
+  auto ComputeEntryAges(llvm::SmallVector<std::filesystem::path> entry_paths)
+      -> llvm::SmallVector<Entry>;
+
+  // Prunes stale runtimes sufficiently to insert the provided new entry path
+  // into the cache without growing it beyond the thresholds for the cache size.
+  //
+  // Errors during pruning are logged rather than returned as this is expected
+  // to be a background operation and not something we can always recover from.
   auto PruneStaleRuntimes(const std::filesystem::path& new_entry_path) -> void;
 
   llvm::raw_ostream* vlog_stream_ = nullptr;

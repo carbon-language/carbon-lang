@@ -94,8 +94,7 @@ auto Runtimes::BuildImpl(Component component, Filesystem::Duration deadline,
     CARBON_VLOG("Successfully locked cache path\n");
     // As a debugging aid, write our PID into the lock file when we
     // successfully acquire it. Ignore errors here though.
-    auto write_result = lock_file.WriteFileFromString(std::to_string(getpid()));
-    static_cast<void>(write_result);
+    (void)lock_file.WriteFileFromString(std::to_string(getpid()));
   } else if (!flock_result.error().would_block()) {
     // Some unexpected filesystem error, report that rather than trying to
     // continue.
@@ -103,7 +102,19 @@ auto Runtimes::BuildImpl(Component component, Filesystem::Duration deadline,
   } else {
     CARBON_VLOG("Unable to lock cache path, held by: {1}\n",
                 *lock_file.ReadFileToString());
-    CARBON_RETURN_IF_ERROR(std::move(lock_file).Close());
+    (void)std::move(lock_file).Close();
+  }
+
+  // See if another process has built the runtimes while we waited on the lock.
+  // We do this even if we didn't successfully acquire the lock because we
+  // ensure that a successful build atomically creates a viable directory.
+  existing_result = Get(component);
+  if (existing_result.ok()) {
+    // Clear and close the lock file.
+    (void)lock_file.WriteFileFromString("");
+    flock = {};
+    (void)std::move(lock_file).Close();
+    return {*std::move(existing_result)};
   }
 
   // Whether we hold the lock file or not, we're going to now build these
@@ -117,79 +128,80 @@ auto Runtimes::BuildImpl(Component component, Filesystem::Duration deadline,
                   std::move(tmp_dir), component_path)};
 }
 
+auto Runtimes::Cache::FindXdgCachePath()
+    -> std::optional<std::filesystem::path> {
+  if (const char* xdg_cache_home = getenv("XDG_CACHE_HOME");
+      xdg_cache_home != nullptr) {
+    std::filesystem::path path = xdg_cache_home;
+    if (!path.empty() && path.is_absolute()) {
+      CARBON_VLOG("Using '$XDG_CACHE_HOME' cache: {0}", path);
+      return path;
+    }
+  }
+
+  // Unable to use the standard environment variable. Try the designated
+  // fallback of `$HOME/.cache`.
+  const char* home = getenv("HOME");
+  if (home == nullptr) {
+    return std::nullopt;
+  }
+
+  std::filesystem::path path = home;
+  if (path.empty() || !path.is_absolute()) {
+    return std::nullopt;
+  }
+  path /= ".cache";
+  CARBON_VLOG("Using '$HOME/.cache' cache: {0}", path);
+  return path;
+}
+
+auto Runtimes::Cache::InitTmpSystemCache() -> ErrorOr<Success> {
+  CARBON_ASSIGN_OR_RETURN(dir_owner_, Filesystem::MakeTmpDir());
+  path_ = std::get<Filesystem::RemovingDir>(dir_owner_).abs_path();
+  dir_ = std::get<Filesystem::RemovingDir>(dir_owner_);
+  CARBON_VLOG("Using temporary cache: {0}", path_);
+  return Success();
+}
+
 auto Runtimes::Cache::InitSystemCache(const InstallPaths& install)
     -> ErrorOr<Success> {
-  // First, try to find a viable cache root. This must be an existing directory,
-  // not one we create. We use the XDG base directory specification as the basis
-  // for these directories: https://specifications.freedesktop.org/basedir-spec/
-  //
-  // Note that there is a concept of a "runtimes" directory in this spec, but it
-  // uses a different meaning of the term "runtimes" than ours. Runtimes for
-  // Carbon are cached, persistent built library data, not something that only
-  // exists during the running of the Carbon tool like a socket.
-  //
-  // If we find a cache directory, we locate or create a Carbon-specific
-  // runtimes directory below it where all our runtimes will be managed.
-  //
-  // If we cannot find an existing cache directory, we will create a temporary
-  // directory and use that instead.
   constexpr llvm::StringLiteral CachePath = "carbon_runtimes";
 
+  // If we have a digest to use as the cache key, save it and we can try to
+  // use persistent caches.
   auto read_digest_result =
       Filesystem::Cwd().ReadFileToString(install.digest_path());
-  if (read_digest_result.ok()) {
-    // If we have a digest to use as the cache key, save it and we can try to
-    // use persistent caches.
-    cache_key_ = *std::move(read_digest_result);
+  if (!read_digest_result.ok()) {
+    return InitTmpSystemCache();
+  }
+  cache_key_ = *std::move(read_digest_result);
 
-    if (const char* xdg_cache_home = getenv("XDG_CACHE_HOME");
-        xdg_cache_home != nullptr) {
-      path_ = xdg_cache_home;
-      CARBON_VLOG("Using '$XDG_CACHE_HOME' cache: {0}", path_);
-    }
-    if (path_.empty() || !path_.is_absolute()) {
-      // Unable to use the standard environment variable. Try the designated
-      // fallback of `$HOME/.cache`.
-      if (const char* home = getenv("HOME"); home != nullptr) {
-        path_ = home;
-        if (!path_.empty() && path_.is_absolute()) {
-          path_ /= ".cache";
-          CARBON_VLOG("Using '$HOME/.cache' cache: {0}", path_);
-        } else {
-          path_.clear();
-        }
-      }
-    }
-    if (!path_.empty()) {
-      // We have a candidate XDG-based cache path. Try to open that, and a
-      // directory below it for Carbon's runtimes. Note that we don't error on a
-      // missing directory, we fall through to using a temporary directory.
-      auto open_result = Filesystem::Cwd().OpenDir(path_);
-      if (!open_result.ok() && !open_result.error().no_entity()) {
-        // Some other error, bail.
-        return std::move(open_result).error();
-      }
-      if (open_result.ok()) {
-        // Now open a subdirectory of the cache for Carbon's usage. This will
-        // create a subdirectory if one doesn't yet exist.
-        path_ /= std::string_view(CachePath);
-        CARBON_ASSIGN_OR_RETURN(
-            dir_owner_,
-            open_result->OpenDir(CachePath.str(), Filesystem::OpenAlways,
-                                 /*creation_mode=*/0700));
-        dir_ = std::get<Filesystem::Dir>(dir_owner_);
-      }
-    }
+  auto xdg_path_result = FindXdgCachePath();
+  if (!xdg_path_result) {
+    return InitTmpSystemCache();
   }
 
-  // If none of that was able to create a persistent cache, create a temporary
-  // directory to allow making progress.
-  if (!dir_.is_valid()) {
-    CARBON_ASSIGN_OR_RETURN(dir_owner_, Filesystem::MakeTmpDir());
-    path_ = std::get<Filesystem::RemovingDir>(dir_owner_).abs_path();
-    dir_ = std::get<Filesystem::RemovingDir>(dir_owner_);
-    CARBON_VLOG("Using temporary cache: {0}", path_);
+  // We have a candidate XDG-based cache path. Try to open that, and a
+  // directory below it for Carbon's runtimes. Note that we don't error on a
+  // missing directory, we fall through to using a temporary directory.
+  auto open_result = Filesystem::Cwd().OpenDir(*xdg_path_result);
+  if (!open_result.ok()) {
+    if (!open_result.error().no_entity()) {
+      // Some other unexpected error in the filesystem, propagate that.
+      return std::move(open_result).error();
+    }
+    // Otherwise we fall back to a temporary system cache.
+    return InitTmpSystemCache();
   }
+
+  path_ = *std::move(xdg_path_result);
+  // Now open a subdirectory of the cache for Carbon's usage. This will
+  // create a subdirectory if one doesn't yet exist.
+  path_ /= std::string_view(CachePath);
+  CARBON_ASSIGN_OR_RETURN(
+      dir_owner_, open_result->OpenDir(CachePath.str(), Filesystem::OpenAlways,
+                                       /*creation_mode=*/0700));
+  dir_ = std::get<Filesystem::Dir>(dir_owner_);
 
   // Ensure the directory has narrow permissions so runtimes can't be
   // overwritten.
@@ -274,6 +286,29 @@ auto Runtimes::Cache::Lookup(const Features& features) -> ErrorOr<Runtimes> {
                   std::move(lock_file), std::move(flock), vlog_stream_);
 }
 
+auto Runtimes::Cache::ComputeEntryAges(
+    llvm::SmallVector<std::filesystem::path> entry_paths)
+    -> llvm::SmallVector<Entry> {
+  llvm::SmallVector<Entry> entries;
+
+  Filesystem::TimePoint now = Filesystem::Clock::now();
+  for (auto& path : entry_paths) {
+    // We use the `mtime` from the lock file in the directory rather than the
+    // directory itself to avoid any oddities with `mtime` on directories.
+    //
+    // Note that we also ignore errors here as if we can't read the stamp file
+    // we will pick an arbitrary old time stamp, and we want pruning to be
+    // maximally resilient to partially deleted or corrupted caches in order to
+    // prune them back into a healthy state.
+    auto stat_result = dir_.Lstat(path / ".lock");
+    auto mtime = stat_result.ok()
+                     ? stat_result->mtime()
+                     : Filesystem::TimePoint(Filesystem::Duration(0));
+    entries.push_back({.path = std::move(path), .age = now - mtime});
+  }
+  return entries;
+}
+
 auto Runtimes::Cache::PruneStaleRuntimes(
     const std::filesystem::path& new_entry_path) -> void {
   llvm::SmallVector<std::filesystem::path> dir_entries;
@@ -302,24 +337,7 @@ auto Runtimes::Cache::PruneStaleRuntimes(
     return;
   }
 
-  struct Entry {
-    std::filesystem::path path;
-    Filesystem::Duration age;
-  };
-  llvm::SmallVector<Entry> entries;
-
-  Filesystem::TimePoint now = Filesystem::Clock::now();
-  for (auto& path : dir_entries) {
-    // Try to get an `mtime` from the lock file in the directory. We don't use
-    // the directory itself to avoid any oddities with `mtime` on directories.
-    // Note that we ignore errors here as if we can't read the stamp file we
-    // will pick an arbitrary old time stamp.
-    auto stat_result = dir_.Lstat(path / ".lock");
-    auto mtime = stat_result.ok()
-                     ? stat_result->mtime()
-                     : Filesystem::TimePoint(Filesystem::Duration(0));
-    entries.push_back({.path = std::move(path), .age = now - mtime});
-  }
+  llvm::SmallVector<Entry> entries = ComputeEntryAges(std::move(dir_entries));
 
   auto rm_entry = [&](const std::filesystem::path& entry_name) {
     // Note that we don't propagate errors here because we want to prune as much
@@ -348,6 +366,50 @@ auto Runtimes::Cache::PruneStaleRuntimes(
   // Now try to get the number of entries below our max target by removing the
   // least-recently used entries that are either more than our max locked age or
   // unlocked.
+  auto rm_unlocked_entry = [&](const std::filesystem::path& name,
+                               Filesystem::Duration age) {
+    // Past a certain age, bypass the locking for efficiency and to avoid
+    // retaining entries with stale locks.
+    if (age > MaxLockedEntryAge) {
+      return rm_entry(name);
+    }
+
+    CARBON_VLOG("Attempting to lock cache entry '{0}'", name);
+    auto lock_file_open_result =
+        dir_.OpenReadOnly(name / ".lock", Filesystem::OpenAlways);
+    if (!lock_file_open_result.ok()) {
+      if (lock_file_open_result.error().no_entity() ||
+          lock_file_open_result.error().not_dir()) {
+        // The only way these failures should be possible is if something
+        // removed the cache directory between our read above and here. Assume
+        // the entry is gone and continue.
+        return true;
+      }
+
+      // For other errors, assume locked.
+      CARBON_VLOG("Error opening lock file for cache entry '{0}': {1}", name,
+                  lock_file_open_result.error());
+      return false;
+    }
+
+    Filesystem::ReadFile lock_file = *std::move(lock_file_open_result);
+    auto lock_result =
+        lock_file.TryLock(Filesystem::FileLock::Exclusive, RuntimesLockDeadline,
+                          RuntimesLockPollInterval);
+    if (!lock_result.ok()) {
+      // The normal case is when locking would block, log anything else.
+      if (!lock_result.error().would_block()) {
+        CARBON_VLOG("Error locking cache entry '{0}': {1}", name,
+                    lock_result.error());
+      }
+      // However, don't try to remove it as we didn't acquire the lock.
+      return false;
+    }
+
+    // The lock is held, remove the entry.
+    return rm_entry(name);
+  };
+
   int num_entries = entries.size();
   for (const auto& [name, age] : entries) {
     if (num_entries < MaxNumEntries) {
@@ -361,49 +423,7 @@ auto Runtimes::Cache::PruneStaleRuntimes(
       continue;
     }
 
-    Filesystem::ReadFile lock_file;
-    Filesystem::FileLock flock;
-    if (age <= MaxLockedEntryAge) {
-      CARBON_VLOG("Attempting to lock cache entry '{0}'", name);
-      auto lock_file_open_result =
-          dir_.OpenReadOnly(name / ".lock", Filesystem::OpenAlways);
-      if (!lock_file_open_result.ok()) {
-        if (lock_file_open_result.error().no_entity() ||
-            lock_file_open_result.error().not_dir()) {
-          // The only way these failures should be possible is if something
-          // removed the cache directory between our read above and here. Assume
-          // the entry is gone and continue.
-          --num_entries;
-          continue;
-        }
-
-        // For other errors, assume locked.
-        CARBON_VLOG("Error opening lock file for cache entry '{0}': {1}", name,
-                    lock_file_open_result.error());
-        continue;
-      } else {
-        lock_file = *std::move(lock_file_open_result);
-        auto lock_result =
-            lock_file.TryLock(Filesystem::FileLock::Exclusive,
-                              RuntimesLockDeadline, RuntimesLockPollInterval);
-        if (lock_result.ok()) {
-          flock = *std::move(lock_result);
-        } else {
-          // The normal case is when locking would block, log anything else.
-          if (!lock_result.error().would_block()) {
-            CARBON_VLOG("Error locking cache entry '{0}': {1}", name,
-                        lock_result.error());
-          }
-          // However, don't try to remove it as we didn't acquire the lock.
-          continue;
-        }
-      }
-
-      // We should always have acquired the lock at this point.
-      CARBON_CHECK(flock.is_locked());
-    }
-
-    if (rm_entry(name)) {
+    if (rm_unlocked_entry(name, age)) {
       --num_entries;
     }
   }
@@ -431,15 +451,7 @@ auto Runtimes::Builder::Commit() && -> ErrorOr<std::filesystem::path> {
   // release that state.
   if (rename_result.ok()) {
     std::move(dir_).Release();
-  } else if (!rename_result.error().not_empty()) {
-    // An unexpected error occurred, propagate it and let the normal cleanup
-    // occur.
-    //
-    // TODO: It's possible we need to handle `EBUSY` here, likely by ensuring it
-    // is the *destination* that is busy and an existing, valid directory built
-    // concurrently.
-    return std::move(rename_result).error();
-  } else {
+  } else if (rename_result.error().not_empty()) {
     // Some other runtimes were successfully committed before ours, so we want
     // to discard ours. We report errors cleaning up here as we don't want to
     // pollute the filesystem excessively.
@@ -449,6 +461,14 @@ auto Runtimes::Builder::Commit() && -> ErrorOr<std::filesystem::path> {
     CARBON_VLOG("PID {0} found racily built runtimes in cache path: {1}",
                 getpid(), dest_path);
     CARBON_RETURN_IF_ERROR(std::move(dir_).Remove());
+  } else {
+    // An unexpected error occurred, propagate it and let the normal cleanup
+    // occur.
+    //
+    // TODO: It's possible we need to handle `EBUSY` here, likely by ensuring it
+    // is the *destination* that is busy and an existing, valid directory built
+    // concurrently.
+    return std::move(rename_result).error();
   }
 
   // Now that we've got a final path in place successfully, clear the flock if
@@ -468,12 +488,9 @@ auto Runtimes::Builder::ReleaseFileLock() -> void {
     std::filesystem::path dest_path = runtimes_->base_path() / dest_;
     CARBON_VLOG("PID {0} releasing lock on cache path: {1}", getpid(),
                 dest_path);
-    // FIXME: better write API
-    auto write_result = lock_file_.WriteFileFromString("");
-    static_cast<void>(write_result);
+    (void)lock_file_.WriteFileFromString("");
     flock_ = {};
-    auto close_result = std::move(lock_file_).Close();
-    static_cast<void>(close_result);
+    (void)std::move(lock_file_).Close();
   } else {
     CARBON_CHECK(!lock_file_.is_valid());
   }

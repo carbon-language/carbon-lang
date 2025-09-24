@@ -23,15 +23,32 @@ namespace Carbon {
 namespace {
 
 // A class implementing our digest program.
+//
+// The program is started with a call to `Run`, and either returns an error or
+// an exit code for `main`. It has a very simple command line interface:
+// - An optional flag `--verbose` that must be the first argument if provided.
+// - A required positional argument of a manifest file of all the files in a
+//   Carbon installation that should be added to the digest.
+// - A required positional argument of an output file for the digest.
+//
+// The program reads the manifest of all the files in the Carbon installation,
+// and adds each of those files to a running cryptographic digest. Once
+// complete, it writes this cryptographic digest to the provided output digest
+// file.
+//
+// The exact digest format is unspecified, but should provide a strong guarantee
+// that changes to any of the files in the manifest of the install produce
+// different digests.
 class DigestProgram {
  public:
   auto Run(int argc, char** argv) -> ErrorOr<int>;
+
+ private:
   auto ComputeFileDigest(Filesystem::ReadFileRef file)
       -> std::array<uint8_t, 32>;
 
- private:
   llvm::raw_ostream* vlog_stream_ = nullptr;
-  Map<uint64_t, std::array<uint8_t, 32>> file_digests;
+  Map<uint64_t, std::array<uint8_t, 32>> file_digests_;
 };
 
 auto DigestProgram::Run(int argc, char** argv) -> ErrorOr<int> {
@@ -108,7 +125,7 @@ auto DigestProgram::ComputeFileDigest(Filesystem::ReadFileRef file)
   // Filesystem errors are unlikely here, and the library will check them just
   // in case.
   Filesystem::FileStatus stat = *file.Stat();
-  auto result = file_digests.Insert(stat.unix_inode(), [file]() mutable {
+  auto result = file_digests_.Insert(stat.unix_inode(), [file]() mutable {
     llvm::SHA256 sha256;
     // TODO: We could do this more efficiently by using a fixed buffer.
     sha256.update(*file.ReadFileToString());

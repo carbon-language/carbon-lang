@@ -93,13 +93,10 @@ class RuntimesCacheTest : public ::testing::Test {
 };
 
 TEST_F(RuntimesCacheTest, BuildSystemCache) {
-  // Test the basic logic of selecting different roots for the cache.
-
   // Create an install with a missing digest.
   auto bad_install_dir = *tmp_dir_.CreateDirectories("bad_install/lib/carbon");
-  ASSERT_THAT(
-      bad_install_dir.WriteFileFromString("carbon_install.txt", "no digest"),
-      IsSuccess(_));
+  bad_install_dir.WriteFileFromString("carbon_install.txt", "no digest")
+      .Check();
   InstallPaths bad_install =
       InstallPaths::Make((tmp_dir_.abs_path() / "bad_install").native());
 
@@ -128,6 +125,7 @@ TEST_F(RuntimesCacheTest, BuildSystemCache) {
     }
   });
 
+  // Begin testing the basic logic of selecting different roots for the cache.
   setenv(XdgCacheEnv, xdg_path.c_str(), /*overwrite*/ true);
   setenv(HomeEnv, home_path.c_str(), /*overwrite*/ true);
 
@@ -140,7 +138,7 @@ TEST_F(RuntimesCacheTest, BuildSystemCache) {
   EXPECT_THAT(result->path(), Not(StartsWith(home_cache_path)));
   EXPECT_THAT(result->path(), Not(StartsWith(xdg_path)));
 
-  // Now the main XDG cache logic should work.
+  // Once we have a digest, the main XDG cache logic should work.
   result = Runtimes::Cache::MakeSystem(install_);
   ASSERT_THAT(result, IsSuccess(_));
   EXPECT_THAT(result->path(), StartsWith(xdg_path));
@@ -151,7 +149,7 @@ TEST_F(RuntimesCacheTest, BuildSystemCache) {
   // Remove the XDG cache directory, but leave the environment set. We want to
   // be robust against this, but it isn't important *how* the fallback occurs,
   // it could go to `$HOME/.cache`, or to a temporary directory.
-  ASSERT_THAT(tmp_dir_.Rmtree("xdg_cache_home"), IsSuccess(_));
+  tmp_dir_.Rmtree("xdg_cache_home").Check();
   EXPECT_THAT(Runtimes::Cache::MakeSystem(install_), IsSuccess(_));
 
   // Set the XDG environment to the empty string which should trigger using the
@@ -201,9 +199,9 @@ TEST_F(RuntimesCacheTest, BuildSystemCache) {
   EXPECT_THAT(result->path(), StartsWith(home_cache_path));
 
   // Now try removing directories around home.
-  ASSERT_THAT(test_home.Rmtree(".cache"), IsSuccess(_));
+  test_home.Rmtree(".cache").Check();
   EXPECT_THAT(Runtimes::Cache::MakeSystem(install_), IsSuccess(_));
-  ASSERT_THAT(tmp_dir_.Rmtree("test_home"), IsSuccess(_));
+  tmp_dir_.Rmtree("test_home").Check();
   EXPECT_THAT(Runtimes::Cache::MakeSystem(install_), IsSuccess(_));
 
   // Finally, double check that these temporary caches still produce a writable
@@ -236,8 +234,8 @@ TEST_F(RuntimesCacheTest, BasicBuild) {
     EXPECT_TRUE(builder.path().is_absolute()) << builder.path();
 
     // Create a file as our "runtime".
-    EXPECT_THAT(builder.dir().WriteFileFromString("runtime_file", target),
-                IsSuccess(_));
+    builder.dir().WriteFileFromString("runtime_file", target).Check();
+    // Make sure the builder's path finds this file.
     EXPECT_THAT(
         Filesystem::Cwd().ReadFileToString(builder.path() / "runtime_file"),
         IsSuccess(StrEq(target)));
@@ -274,12 +272,9 @@ TEST_F(RuntimesCacheTest, DifferentKeys) {
   // toolchain.
   auto custom_install_dir =
       *tmp_dir_.CreateDirectories("custom_install/lib/carbon");
-  ASSERT_THAT(custom_install_dir.WriteFileFromString("carbon_install.txt",
-                                                     "diff digest"),
-              IsSuccess(_));
-  ASSERT_THAT(
-      custom_install_dir.WriteFileFromString("install_digest.txt", "abcd"),
-      IsSuccess(_));
+  custom_install_dir.WriteFileFromString("carbon_install.txt", "diff digest")
+      .Check();
+  custom_install_dir.WriteFileFromString("install_digest.txt", "abcd").Check();
   InstallPaths install2 =
       InstallPaths::Make((tmp_dir_.abs_path() / "custom_install").native());
   auto cache2 = *Runtimes::Cache::MakeCustom(install2, tmp_dir_.abs_path());
@@ -331,8 +326,7 @@ TEST_F(RuntimesCacheTest, ConcurrentBuilds) {
       // that so we should still succeed, but now we need to handle building in
       // this thread as well.
       auto builder2 = std::get<Runtimes::Builder>(*std::move(build_result2));
-      EXPECT_THAT(builder2.dir().WriteFileFromString("runtime_file", "build2"),
-                  IsSuccess(_));
+      builder2.dir().WriteFileFromString("runtime_file", "build2").Check();
       auto commit2_result = std::move(builder2).Commit();
       ASSERT_THAT(commit2_result, IsSuccess(_));
       build2_path = *std::move(commit2_result);
@@ -385,8 +379,7 @@ TEST_F(RuntimesCacheTest, ConcurrentBuildsWithFailedLocking) {
   auto build_result1 = runtimes1.Build(Runtimes::ClangResourceDir);
   ASSERT_THAT(build_result1, IsSuccess(VariantWith<Runtimes::Builder>(_)));
   auto builder1 = std::get<Runtimes::Builder>(*std::move(build_result1));
-  EXPECT_THAT(builder1.dir().WriteFileFromString("runtime_file", "build1"),
-              IsSuccess(_));
+  builder1.dir().WriteFileFromString("runtime_file", "build1").Check();
 
   // Now sneakily remove the lock file from the runtimes directory in the cache.
   // This is something that could happen, for example from temporary directories
@@ -410,8 +403,7 @@ TEST_F(RuntimesCacheTest, ConcurrentBuildsWithFailedLocking) {
     auto build_result2 = runtimes2.Build(Runtimes::ClangResourceDir);
     ASSERT_THAT(build_result2, IsSuccess(VariantWith<Runtimes::Builder>(_)));
     auto builder2 = std::get<Runtimes::Builder>(*std::move(build_result2));
-    EXPECT_THAT(builder2.dir().WriteFileFromString("runtime_file", "build2"),
-                IsSuccess(_));
+    builder2.dir().WriteFileFromString("runtime_file", "build2").Check();
 
     // Notify the first thread to commit its build and concurrently commit this
     // built runtime. The goal is to get as close as we can to having these
@@ -444,7 +436,7 @@ TEST_F(RuntimesCacheTest, ConcurrentBuildsWithFailedLocking) {
   ASSERT_THAT(commit_result, IsSuccess(_));
   std::filesystem::path build1_path = *std::move(commit_result);
 
-  // Even though there may be is another thread running, we should now get
+  // Even though there may be another thread running, we should now get
   // non-blocking access directly to the built runtime.
   EXPECT_THAT(runtimes1.Build(Runtimes::ClangResourceDir),
               IsSuccess(VariantWith<std::filesystem::path>(Eq(build1_path))));
@@ -479,8 +471,7 @@ TEST_F(RuntimesCacheTest, ConcurrentBuildsLockTimeout) {
   auto build_result1 = runtimes1.Build(Runtimes::ClangResourceDir);
   ASSERT_THAT(build_result1, IsSuccess(VariantWith<Runtimes::Builder>(_)));
   auto builder1 = std::get<Runtimes::Builder>(*std::move(build_result1));
-  EXPECT_THAT(builder1.dir().WriteFileFromString("runtime_file", "build1"),
-              IsSuccess(_));
+  builder1.dir().WriteFileFromString("runtime_file", "build1").Check();
 
   // Directly simulate a second thread or process timing out on acquiring the
   // file-based advisory lock by giving it an artificially short timeout and
@@ -499,8 +490,7 @@ TEST_F(RuntimesCacheTest, ConcurrentBuildsLockTimeout) {
       std::chrono::milliseconds(10));
   ASSERT_THAT(build_result2, IsSuccess(VariantWith<Runtimes::Builder>(_)));
   auto builder2 = std::get<Runtimes::Builder>(*std::move(build_result2));
-  EXPECT_THAT(builder2.dir().WriteFileFromString("runtime_file", "build2"),
-              IsSuccess(_));
+  builder2.dir().WriteFileFromString("runtime_file", "build2").Check();
 
   // Commit the second runtime, as this one *doesn't* hold any lock. This leaves
   // the lock present and held, but creates a valid runtimes directory.
@@ -548,8 +538,7 @@ TEST_F(RuntimesCacheTest, Lookup) {
 TEST_F(RuntimesCacheTest, LookupFailsIfCannotCreateDir) {
   // Create a read-only directory with the cache in it to cause failures.
   std::filesystem::path ro_cache_path = tmp_dir_.abs_path() / "ro_cache";
-  ASSERT_THAT(tmp_dir_.CreateDirectories("ro_cache", /*creation_mode=*/0500),
-              IsSuccess(_));
+  tmp_dir_.CreateDirectories("ro_cache", /*creation_mode=*/0500).Check();
   auto ro_cache = *Runtimes::Cache::MakeCustom(install_, ro_cache_path);
 
   auto lookup_result = ro_cache.Lookup({.target = "aarch64-unknown-unknown"});
@@ -570,10 +559,8 @@ TEST_F(RuntimesCacheTest, LookupWithSmallNumberOfStaleRuntimes) {
   // stale.
   auto now = Filesystem::Clock::now();
   auto two_years_ago = now - std::chrono::years(2);
-  ASSERT_THAT(runtimes1.base_dir().UpdateTimes(".lock", two_years_ago),
-              IsSuccess(_));
-  ASSERT_THAT(runtimes2.base_dir().UpdateTimes(".lock", two_years_ago),
-              IsSuccess(_));
+  runtimes1.base_dir().UpdateTimes(".lock", two_years_ago).Check();
+  runtimes2.base_dir().UpdateTimes(".lock", two_years_ago).Check();
 
   // Close the runtimes, releasing any locks.
   runtimes1 = {};
@@ -619,8 +606,7 @@ TEST_F(RuntimesCacheTest, LookupWithManyStaleRuntimes) {
   auto now = Filesystem::Clock::now();
   auto two_years_ago = now - std::chrono::years(2);
   for (auto& stale_runtime : stale_runtimes) {
-    ASSERT_THAT(stale_runtime.base_dir().UpdateTimes(".lock", two_years_ago),
-                IsSuccess(_));
+    stale_runtime.base_dir().UpdateTimes(".lock", two_years_ago).Check();
   }
 
   // Close the runtimes, releasing any locks.
@@ -673,14 +659,14 @@ TEST_F(RuntimesCacheTest, LookupWithTooManyRuntimes) {
   // reliance on the clock behavior or the amount of time passing between lookup
   // calls.
   auto now = Filesystem::Clock::now();
-  ASSERT_THAT(runtimes1.base_dir().UpdateTimes(".lock", now), IsSuccess(_));
-  ASSERT_THAT(runtimes2.base_dir().UpdateTimes(".lock", now), IsSuccess(_));
+  runtimes1.base_dir().UpdateTimes(".lock", now).Check();
+  runtimes2.base_dir().UpdateTimes(".lock", now).Check();
   // Now set the stale runtimes to times further and further in the past.
   now -= std::chrono::milliseconds(1);
   for (auto [i, stale_runtime] : llvm::enumerate(stale_runtimes)) {
-    ASSERT_THAT(stale_runtime.base_dir().UpdateTimes(
-                    ".lock", now - std::chrono::milliseconds(i * i)),
-                IsSuccess(_));
+    stale_runtime.base_dir()
+        .UpdateTimes(".lock", now - std::chrono::milliseconds(i * i))
+        .Check();
   }
 
   // Close most of the runtimes to release the locks, but keep the oldest stale
