@@ -14,9 +14,9 @@ interface Copy {
   fn Op[self: Self]() -> Self;
 }
 
-fn F[T:! Copy](a: T) -> T {
-  var v: T = a.Op();
-  return a.Op();
+fn F[T:! Copy & Core.Destroy](a: T) -> T {
+  var v: T = a.(Copy.Op)();
+  return a.(Copy.Op)();
 }
 
 impl i32 as Copy {
@@ -84,7 +84,7 @@ fn F_nested_tuple(a: ((i32, i32), X)) -> ((i32, i32), X) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: define i32 @_CF_i32.Main(i32 %a) !dbg !8 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %F.call = call i32 @_CF.Main.c51f5dcf0e081157(i32 %a), !dbg !9
+// CHECK:STDOUT:   %F.call = call i32 @_CF.Main.91acb171499e2658(i32 %a), !dbg !9
 // CHECK:STDOUT:   ret i32 %F.call, !dbg !10
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -103,7 +103,7 @@ fn F_nested_tuple(a: ((i32, i32), X)) -> ((i32, i32), X) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: define void @_CF_X.Main(ptr sret({ i32, i32 }) %return, ptr %a) !dbg !16 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   call void @_CF.Main.b1d03582403d0f2e(ptr %return, ptr %a), !dbg !17
+// CHECK:STDOUT:   call void @_CF.Main.6ef35d4a7684e057(ptr %return, ptr %a), !dbg !17
 // CHECK:STDOUT:   ret void, !dbg !18
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -114,7 +114,7 @@ fn F_nested_tuple(a: ((i32, i32), X)) -> ((i32, i32), X) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: define void @_CF_empty_tuple.Main() !dbg !21 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   call void @_CF.Main.f0b2e3523ff3fa17(), !dbg !22
+// CHECK:STDOUT:   call void @_CF.Main.bcfa232a7f7e3dde(), !dbg !22
 // CHECK:STDOUT:   ret void, !dbg !23
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -133,7 +133,7 @@ fn F_nested_tuple(a: ((i32, i32), X)) -> ((i32, i32), X) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: define void @_CF_two_tuple.Main(ptr sret({ i32, i32 }) %return, ptr %a) !dbg !27 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   call void @_CF.Main.09ed05d6841b72fa(ptr %return, ptr %a), !dbg !28
+// CHECK:STDOUT:   call void @_CF.Main.fd0a4d4c23847a64(ptr %return, ptr %a), !dbg !28
 // CHECK:STDOUT:   ret void, !dbg !29
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -152,21 +152,21 @@ fn F_nested_tuple(a: ((i32, i32), X)) -> ((i32, i32), X) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: define void @_CF_nested_tuple.Main(ptr sret({ { i32, i32 }, { i32, i32 } }) %return, ptr %a) !dbg !35 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   call void @_CF.Main.6513c914c89dac0d(ptr %return, ptr %a), !dbg !36
+// CHECK:STDOUT:   call void @_CF.Main.73a97bc8c9926cb5(ptr %return, ptr %a), !dbg !36
 // CHECK:STDOUT:   ret void, !dbg !37
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: define linkonce_odr i32 @_CF.Main.c51f5dcf0e081157(i32 %a) !dbg !38 {
+// CHECK:STDOUT: define linkonce_odr i32 @_CF.Main.91acb171499e2658(i32 %a) !dbg !38 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   %v.var = alloca i32, align 4, !dbg !39
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %v.var), !dbg !39
-// CHECK:STDOUT:   %.loc18_19 = call i32 @"_COp.Int.Core:Copy.Main"(i32 %a), !dbg !40
-// CHECK:STDOUT:   store i32 %.loc18_19, ptr %v.var, align 4, !dbg !39
-// CHECK:STDOUT:   %.loc19_15 = call i32 @"_COp.Int.Core:Copy.Main"(i32 %a), !dbg !41
-// CHECK:STDOUT:   ret i32 %.loc19_15, !dbg !42
+// CHECK:STDOUT:   %.loc18_26 = call i32 @"_COp.Int.Core:Copy.Main"(i32 %a), !dbg !40
+// CHECK:STDOUT:   store i32 %.loc18_26, ptr %v.var, align 4, !dbg !39
+// CHECK:STDOUT:   %.loc19 = call i32 @"_COp.Int.Core:Copy.Main"(i32 %a), !dbg !41
+// CHECK:STDOUT:   ret i32 %.loc19, !dbg !42
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: define linkonce_odr void @_CF.Main.b1d03582403d0f2e(ptr sret({ i32, i32 }) %return, ptr %a) !dbg !43 {
+// CHECK:STDOUT: define linkonce_odr void @_CF.Main.6ef35d4a7684e057(ptr sret({ i32, i32 }) %return, ptr %a) !dbg !43 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   %v.var = alloca { i32, i32 }, align 8, !dbg !44
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %v.var), !dbg !44
@@ -175,7 +175,7 @@ fn F_nested_tuple(a: ((i32, i32), X)) -> ((i32, i32), X) {
 // CHECK:STDOUT:   ret void, !dbg !47
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: define linkonce_odr void @_CF.Main.f0b2e3523ff3fa17() !dbg !48 {
+// CHECK:STDOUT: define linkonce_odr void @_CF.Main.bcfa232a7f7e3dde() !dbg !48 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   %v.var = alloca {}, align 8, !dbg !49
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %v.var), !dbg !49
@@ -184,7 +184,7 @@ fn F_nested_tuple(a: ((i32, i32), X)) -> ((i32, i32), X) {
 // CHECK:STDOUT:   ret void, !dbg !52
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: define linkonce_odr void @_CF.Main.09ed05d6841b72fa(ptr sret({ i32, i32 }) %return, ptr %a) !dbg !53 {
+// CHECK:STDOUT: define linkonce_odr void @_CF.Main.fd0a4d4c23847a64(ptr sret({ i32, i32 }) %return, ptr %a) !dbg !53 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   %v.var = alloca { i32, i32 }, align 8, !dbg !54
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %v.var), !dbg !54
@@ -193,7 +193,7 @@ fn F_nested_tuple(a: ((i32, i32), X)) -> ((i32, i32), X) {
 // CHECK:STDOUT:   ret void, !dbg !57
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: define linkonce_odr void @_CF.Main.6513c914c89dac0d(ptr sret({ { i32, i32 }, { i32, i32 } }) %return, ptr %a) !dbg !58 {
+// CHECK:STDOUT: define linkonce_odr void @_CF.Main.73a97bc8c9926cb5(ptr sret({ { i32, i32 }, { i32, i32 } }) %return, ptr %a) !dbg !58 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   %v.var = alloca { { i32, i32 }, { i32, i32 } }, align 8, !dbg !59
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %v.var), !dbg !59
@@ -251,27 +251,27 @@ fn F_nested_tuple(a: ((i32, i32), X)) -> ((i32, i32), X) {
 // CHECK:STDOUT: !35 = distinct !DISubprogram(name: "F_nested_tuple", linkageName: "_CF_nested_tuple.Main", scope: null, file: !3, line: 73, type: !5, spFlags: DISPFlagDefinition, unit: !2)
 // CHECK:STDOUT: !36 = !DILocation(line: 74, column: 10, scope: !35)
 // CHECK:STDOUT: !37 = !DILocation(line: 74, column: 3, scope: !35)
-// CHECK:STDOUT: !38 = distinct !DISubprogram(name: "F", linkageName: "_CF.Main.c51f5dcf0e081157", scope: null, file: !3, line: 17, type: !5, spFlags: DISPFlagDefinition, unit: !2)
+// CHECK:STDOUT: !38 = distinct !DISubprogram(name: "F", linkageName: "_CF.Main.91acb171499e2658", scope: null, file: !3, line: 17, type: !5, spFlags: DISPFlagDefinition, unit: !2)
 // CHECK:STDOUT: !39 = !DILocation(line: 18, column: 3, scope: !38)
 // CHECK:STDOUT: !40 = !DILocation(line: 18, column: 14, scope: !38)
 // CHECK:STDOUT: !41 = !DILocation(line: 19, column: 10, scope: !38)
 // CHECK:STDOUT: !42 = !DILocation(line: 19, column: 3, scope: !38)
-// CHECK:STDOUT: !43 = distinct !DISubprogram(name: "F", linkageName: "_CF.Main.b1d03582403d0f2e", scope: null, file: !3, line: 17, type: !5, spFlags: DISPFlagDefinition, unit: !2)
+// CHECK:STDOUT: !43 = distinct !DISubprogram(name: "F", linkageName: "_CF.Main.6ef35d4a7684e057", scope: null, file: !3, line: 17, type: !5, spFlags: DISPFlagDefinition, unit: !2)
 // CHECK:STDOUT: !44 = !DILocation(line: 18, column: 3, scope: !43)
 // CHECK:STDOUT: !45 = !DILocation(line: 18, column: 14, scope: !43)
 // CHECK:STDOUT: !46 = !DILocation(line: 19, column: 10, scope: !43)
 // CHECK:STDOUT: !47 = !DILocation(line: 19, column: 3, scope: !43)
-// CHECK:STDOUT: !48 = distinct !DISubprogram(name: "F", linkageName: "_CF.Main.f0b2e3523ff3fa17", scope: null, file: !3, line: 17, type: !5, spFlags: DISPFlagDefinition, unit: !2)
+// CHECK:STDOUT: !48 = distinct !DISubprogram(name: "F", linkageName: "_CF.Main.bcfa232a7f7e3dde", scope: null, file: !3, line: 17, type: !5, spFlags: DISPFlagDefinition, unit: !2)
 // CHECK:STDOUT: !49 = !DILocation(line: 18, column: 3, scope: !48)
 // CHECK:STDOUT: !50 = !DILocation(line: 18, column: 14, scope: !48)
 // CHECK:STDOUT: !51 = !DILocation(line: 19, column: 10, scope: !48)
 // CHECK:STDOUT: !52 = !DILocation(line: 19, column: 3, scope: !48)
-// CHECK:STDOUT: !53 = distinct !DISubprogram(name: "F", linkageName: "_CF.Main.09ed05d6841b72fa", scope: null, file: !3, line: 17, type: !5, spFlags: DISPFlagDefinition, unit: !2)
+// CHECK:STDOUT: !53 = distinct !DISubprogram(name: "F", linkageName: "_CF.Main.fd0a4d4c23847a64", scope: null, file: !3, line: 17, type: !5, spFlags: DISPFlagDefinition, unit: !2)
 // CHECK:STDOUT: !54 = !DILocation(line: 18, column: 3, scope: !53)
 // CHECK:STDOUT: !55 = !DILocation(line: 18, column: 14, scope: !53)
 // CHECK:STDOUT: !56 = !DILocation(line: 19, column: 10, scope: !53)
 // CHECK:STDOUT: !57 = !DILocation(line: 19, column: 3, scope: !53)
-// CHECK:STDOUT: !58 = distinct !DISubprogram(name: "F", linkageName: "_CF.Main.6513c914c89dac0d", scope: null, file: !3, line: 17, type: !5, spFlags: DISPFlagDefinition, unit: !2)
+// CHECK:STDOUT: !58 = distinct !DISubprogram(name: "F", linkageName: "_CF.Main.73a97bc8c9926cb5", scope: null, file: !3, line: 17, type: !5, spFlags: DISPFlagDefinition, unit: !2)
 // CHECK:STDOUT: !59 = !DILocation(line: 18, column: 3, scope: !58)
 // CHECK:STDOUT: !60 = !DILocation(line: 18, column: 14, scope: !58)
 // CHECK:STDOUT: !61 = !DILocation(line: 19, column: 10, scope: !58)

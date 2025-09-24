@@ -115,10 +115,7 @@ import Cpp library "variadic.h";
 
 fn F() {
   //@dump-sem-ir-begin
-  // CHECK:STDERR: fail_todo_import_variadic.carbon:[[@LINE+7]]:3: error: semantics TODO: `Unsupported: Variadic function` [SemanticsTodo]
-  // CHECK:STDERR:   Cpp.foo(8);
-  // CHECK:STDERR:   ^~~~~~~~~~
-  // CHECK:STDERR: fail_todo_import_variadic.carbon:[[@LINE+4]]:3: note: in call to Cpp function here [InCallToCppFunction]
+  // CHECK:STDERR: fail_todo_import_variadic.carbon:[[@LINE+4]]:3: error: semantics TODO: `Unsupported: Variadic function` [SemanticsTodo]
   // CHECK:STDERR:   Cpp.foo(8);
   // CHECK:STDERR:   ^~~~~~~~~~
   // CHECK:STDERR:
@@ -139,16 +136,18 @@ static auto foo() -> void;
 library "[[@TEST_NAME]]";
 
 // TODO: Promote this warning to an error by default.
-// CHECK:STDERR: todo_fail_import_static.carbon:[[@LINE+5]]:10: in file included here [InCppInclude]
+// CHECK:STDERR: todo_fail_import_static.carbon:[[@LINE+4]]:10: in file included here [InCppInclude]
 // CHECK:STDERR: ./static.h:2:13: warning: function 'foo' has internal linkage but is not defined [CppInteropParseWarning]
 // CHECK:STDERR:     2 | static auto foo() -> void;
 // CHECK:STDERR:       |             ^
-// CHECK:STDERR:
 import Cpp library "static.h";
 
 fn F() {
   //@dump-sem-ir-begin
-  // TODO: Produce a note pointing here.
+  // CHECK:STDERR: todo_fail_import_static.carbon:[[@LINE+4]]:11: note: used here [CppInteropParseNote]
+  // CHECK:STDERR:    17 |   Cpp.foo();
+  // CHECK:STDERR:       |           ^
+  // CHECK:STDERR:
   Cpp.foo();
   //@dump-sem-ir-end
 }

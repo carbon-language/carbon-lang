@@ -203,6 +203,27 @@ auto EvalConstantInst(Context& context, SemIR::FacetAccessType inst)
   return ConstantEvalResult::NewSamePhase(inst);
 }
 
+auto EvalConstantInst(Context& context, SemIR::FacetValue inst)
+    -> ConstantEvalResult {
+  // A FacetValue that just wraps a BindSymbolicName without adding/removing any
+  // witnesses is evaluated back to the BindSymbolicName itself.
+  if (auto access =
+          context.insts().TryGetAs<SemIR::FacetAccessType>(inst.type_inst_id)) {
+    auto bind_id = access->facet_value_inst_id;
+    auto bind = context.insts().Get(bind_id);
+    if (bind.Is<SemIR::BindSymbolicName>()) {
+      // If the FacetTypes are the same, then the FacetValue didn't add/remove
+      // any witnesses.
+      if (bind.type_id() == inst.type_id) {
+        return ConstantEvalResult::Existing(
+            context.constant_values().Get(bind_id));
+      }
+    }
+  }
+
+  return ConstantEvalResult::NewSamePhase(inst);
+}
+
 auto EvalConstantInst(Context& context, SemIR::InstId inst_id,
                       SemIR::FloatType inst) -> ConstantEvalResult {
   return ValidateFloatTypeAndSetKind(context, SemIR::LocId(inst_id), inst)
@@ -493,7 +514,7 @@ auto EvalConstantInst(Context& context, SemIR::InstId inst_id,
 auto EvalConstantInst(Context& context, SemIR::InstId inst_id,
                       SemIR::SpecificFunction inst) -> ConstantEvalResult {
   auto callee_function =
-      SemIR::GetCalleeFunction(context.sem_ir(), inst.callee_id);
+      SemIR::GetCalleeAsFunction(context.sem_ir(), inst.callee_id);
   const auto& fn = context.functions().Get(callee_function.function_id);
   if (!callee_function.self_type_id.has_value() &&
       fn.builtin_function_kind() != SemIR::BuiltinFunctionKind::NoOp &&

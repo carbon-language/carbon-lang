@@ -50,14 +50,14 @@ fn TestAssign(a: C*, b: C) {
 // CHECK:STDOUT:   %LeftShiftWith.impl_witness: <witness> = impl_witness file.%LeftShiftWith.impl_witness_table [concrete]
 // CHECK:STDOUT:   %C.as.LeftShiftWith.impl.Op.type: type = fn_type @C.as.LeftShiftWith.impl.Op [concrete]
 // CHECK:STDOUT:   %C.as.LeftShiftWith.impl.Op: %C.as.LeftShiftWith.impl.Op.type = struct_value () [concrete]
-// CHECK:STDOUT:   %LeftShiftWith.facet.23f: %LeftShiftWith.type.dad = facet_value %C, (%LeftShiftWith.impl_witness) [concrete]
+// CHECK:STDOUT:   %LeftShiftWith.facet: %LeftShiftWith.type.dad = facet_value %C, (%LeftShiftWith.impl_witness) [concrete]
 // CHECK:STDOUT:   %LeftShiftAssignWith.type.981: type = facet_type <@LeftShiftAssignWith, @LeftShiftAssignWith(%C)> [concrete]
 // CHECK:STDOUT:   %LeftShiftAssignWith.Op.type.30f: type = fn_type @LeftShiftAssignWith.Op, @LeftShiftAssignWith(%C) [concrete]
 // CHECK:STDOUT:   %LeftShiftAssignWith.impl_witness: <witness> = impl_witness file.%LeftShiftAssignWith.impl_witness_table [concrete]
 // CHECK:STDOUT:   %C.as.LeftShiftAssignWith.impl.Op.type: type = fn_type @C.as.LeftShiftAssignWith.impl.Op [concrete]
 // CHECK:STDOUT:   %C.as.LeftShiftAssignWith.impl.Op: %C.as.LeftShiftAssignWith.impl.Op.type = struct_value () [concrete]
 // CHECK:STDOUT:   %LeftShiftAssignWith.facet: %LeftShiftAssignWith.type.981 = facet_value %C, (%LeftShiftAssignWith.impl_witness) [concrete]
-// CHECK:STDOUT:   %.fc3: type = fn_type_with_self_type %LeftShiftWith.Op.type.097, %LeftShiftWith.facet.23f [concrete]
+// CHECK:STDOUT:   %.fc3: type = fn_type_with_self_type %LeftShiftWith.Op.type.097, %LeftShiftWith.facet [concrete]
 // CHECK:STDOUT:   %.f59: type = fn_type_with_self_type %LeftShiftAssignWith.Op.type.30f, %LeftShiftAssignWith.facet [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

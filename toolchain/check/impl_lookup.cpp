@@ -548,7 +548,22 @@ static auto TypeCanAggregateDestroy(Context& context,
     -> bool {
   auto inst = context.insts().Get(
       context.constant_values().GetInstId(query_self_const_id));
-  return inst.Is<SemIR::StructType>() || inst.Is<SemIR::TupleType>();
+  CARBON_KIND_SWITCH(inst) {
+    case CARBON_KIND(SemIR::ClassType class_type): {
+      // Carbon classes will generate a `Destroy` impl, but we use this to
+      // provide destruction for `Cpp`-scoped classes.
+      // TODO: Don't provide this for C++ types that lack a destructor.
+      auto class_info = context.classes().Get(class_type.class_id);
+      return context.name_scopes().Get(class_info.scope_id).is_cpp_scope();
+    }
+    case SemIR::ArrayType::Kind:
+    case SemIR::MaybeUnformedType::Kind:
+    case SemIR::StructType::Kind:
+    case SemIR::TupleType::Kind:
+      return true;
+    default:
+      return false;
+  }
 }
 
 auto LookupImplWitness(Context& context, SemIR::LocId loc_id,

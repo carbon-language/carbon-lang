@@ -26,10 +26,7 @@ import Cpp library "unsupported_primitive_type.h";
 
 fn F() {
   //@dump-sem-ir-begin
-  // CHECK:STDERR: fail_todo_import_unsupported_primitive_type.carbon:[[@LINE+7]]:3: error: semantics TODO: `Unsupported: parameter type: _BitInt(23)` [SemanticsTodo]
-  // CHECK:STDERR:   Cpp.foo(11);
-  // CHECK:STDERR:   ^~~~~~~~~~~
-  // CHECK:STDERR: fail_todo_import_unsupported_primitive_type.carbon:[[@LINE+4]]:3: note: in call to Cpp function here [InCallToCppFunction]
+  // CHECK:STDERR: fail_todo_import_unsupported_primitive_type.carbon:[[@LINE+4]]:3: error: semantics TODO: `Unsupported: parameter type: _BitInt(23)` [SemanticsTodo]
   // CHECK:STDERR:   Cpp.foo(11);
   // CHECK:STDERR:   ^~~~~~~~~~~
   // CHECK:STDERR:
@@ -53,15 +50,50 @@ import Cpp library "unsupported_primitive_type_among_params.h";
 
 fn F() {
   //@dump-sem-ir-begin
-  // CHECK:STDERR: fail_todo_import_unsupported_primitive_type_among_params.carbon:[[@LINE+7]]:3: error: semantics TODO: `Unsupported: parameter type: _BitInt(23)` [SemanticsTodo]
-  // CHECK:STDERR:   Cpp.foo(1, 20);
-  // CHECK:STDERR:   ^~~~~~~~~~~~~~
-  // CHECK:STDERR: fail_todo_import_unsupported_primitive_type_among_params.carbon:[[@LINE+4]]:3: note: in call to Cpp function here [InCallToCppFunction]
+  // CHECK:STDERR: fail_todo_import_unsupported_primitive_type_among_params.carbon:[[@LINE+4]]:3: error: semantics TODO: `Unsupported: parameter type: _BitInt(23)` [SemanticsTodo]
   // CHECK:STDERR:   Cpp.foo(1, 20);
   // CHECK:STDERR:   ^~~~~~~~~~~~~~
   // CHECK:STDERR:
   Cpp.foo(1, 20);
   //@dump-sem-ir-end
+}
+
+// ============================================================================
+// Unconvertible integer argument.
+// ============================================================================
+
+// --- int_param.h
+
+auto foo(int a) -> void;
+
+// --- fail_large_int.carbon
+
+library "[[@TEST_NAME]]";
+
+import Cpp library "int_param.h";
+
+// This doesn't have a direct type mapping in `getIntTypeForBitwidth`.
+fn F(x: i512) {
+  // CHECK:STDERR: fail_large_int.carbon:[[@LINE+4]]:11: error: call argument of type `i512` is not supported [CppCallArgTypeNotSupported]
+  // CHECK:STDERR:   Cpp.foo(x);
+  // CHECK:STDERR:           ^
+  // CHECK:STDERR:
+  Cpp.foo(x);
+}
+
+// --- fail_very_large_int.carbon
+
+library "[[@TEST_NAME]]";
+
+import Cpp library "int_param.h";
+
+// This doesn't fit as an embedded `IntId` value.
+fn F(x: i8388608) {
+  // CHECK:STDERR: fail_very_large_int.carbon:[[@LINE+4]]:11: error: call argument of type `i8388608` is not supported [CppCallArgTypeNotSupported]
+  // CHECK:STDERR:   Cpp.foo(x);
+  // CHECK:STDERR:           ^
+  // CHECK:STDERR:
+  Cpp.foo(x);
 }
 
 // CHECK:STDOUT: --- fail_todo_import_unsupported_primitive_type.carbon

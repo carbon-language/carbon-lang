@@ -68,18 +68,6 @@ fn PassRefs() {
 // CHECK:STDOUT:   ret void, !dbg !20
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: declare void @_Z8TakeCRefR1C(ptr)
-// CHECK:STDOUT:
-// CHECK:STDOUT: declare void @_Z9TakeCRRefO1C(ptr)
-// CHECK:STDOUT:
-// CHECK:STDOUT: declare void @_Z13TakeConstCRefRK1C(ptr)
-// CHECK:STDOUT:
-// CHECK:STDOUT: declare void @_Z10TakeIntRefRi(ptr)
-// CHECK:STDOUT:
-// CHECK:STDOUT: declare void @_Z11TakeIntRRefOi(i32)
-// CHECK:STDOUT:
-// CHECK:STDOUT: declare void @_Z15TakeConstIntRefRKi(ptr)
-// CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nocallback nofree nosync nounwind willreturn memory(argmem: readwrite)
 // CHECK:STDOUT: declare void @llvm.lifetime.start.p0(ptr captures(none)) #0
 // CHECK:STDOUT:
@@ -96,6 +84,8 @@ fn PassRefs() {
 // CHECK:STDOUT:   ret void
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
+// CHECK:STDOUT: declare void @_Z8TakeCRefR1C(ptr nonnull align 1 dereferenceable(1)) #3
+// CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: alwaysinline mustprogress
 // CHECK:STDOUT: define dso_local void @_Z9TakeCRRefO1C.carbon_thunk(ptr %0) #2 {
 // CHECK:STDOUT: entry:
@@ -105,6 +95,8 @@ fn PassRefs() {
 // CHECK:STDOUT:   call void @_Z9TakeCRRefO1C(ptr nonnull align 1 dereferenceable(1) %1)
 // CHECK:STDOUT:   ret void
 // CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: declare void @_Z9TakeCRRefO1C(ptr nonnull align 1 dereferenceable(1)) #3
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: alwaysinline mustprogress
 // CHECK:STDOUT: define dso_local void @_Z13TakeConstCRefRK1C.carbon_thunk(ptr %0) #2 {
@@ -116,6 +108,8 @@ fn PassRefs() {
 // CHECK:STDOUT:   ret void
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
+// CHECK:STDOUT: declare void @_Z13TakeConstCRefRK1C(ptr nonnull align 1 dereferenceable(1)) #3
+// CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: alwaysinline mustprogress
 // CHECK:STDOUT: define dso_local void @_Z10TakeIntRefRi.carbon_thunk(ptr %0) #2 {
 // CHECK:STDOUT: entry:
@@ -125,6 +119,8 @@ fn PassRefs() {
 // CHECK:STDOUT:   call void @_Z10TakeIntRefRi(ptr nonnull align 4 dereferenceable(4) %1)
 // CHECK:STDOUT:   ret void
 // CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: declare void @_Z10TakeIntRefRi(ptr nonnull align 4 dereferenceable(4)) #3
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: alwaysinline mustprogress
 // CHECK:STDOUT: define dso_local void @_Z11TakeIntRRefOi.carbon_thunk(ptr %0) #2 {
@@ -136,6 +132,8 @@ fn PassRefs() {
 // CHECK:STDOUT:   ret void
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
+// CHECK:STDOUT: declare void @_Z11TakeIntRRefOi(ptr nonnull align 4 dereferenceable(4)) #3
+// CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: alwaysinline mustprogress
 // CHECK:STDOUT: define dso_local void @_Z15TakeConstIntRefRKi.carbon_thunk(ptr %0) #2 {
 // CHECK:STDOUT: entry:
@@ -146,12 +144,15 @@ fn PassRefs() {
 // CHECK:STDOUT:   ret void
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
+// CHECK:STDOUT: declare void @_Z15TakeConstIntRefRKi(ptr nonnull align 4 dereferenceable(4)) #3
+// CHECK:STDOUT:
 // CHECK:STDOUT: ; uselistorder directives
 // CHECK:STDOUT: uselistorder ptr @llvm.lifetime.start.p0, { 3, 2, 1, 0 }
 // CHECK:STDOUT:
 // CHECK:STDOUT: attributes #0 = { nocallback nofree nosync nounwind willreturn memory(argmem: readwrite) }
 // CHECK:STDOUT: attributes #1 = { nocallback nofree nounwind willreturn memory(argmem: readwrite) }
 // CHECK:STDOUT: attributes #2 = { alwaysinline mustprogress "min-legal-vector-width"="0" "no-trapping-math"="true" "stack-protector-buffer-size"="0" "target-cpu"="x86-64" "target-features"="+cmov,+cx8,+fxsr,+mmx,+sse,+sse2,+x87" "tune-cpu"="generic" }
+// CHECK:STDOUT: attributes #3 = { "no-trapping-math"="true" "stack-protector-buffer-size"="0" "target-cpu"="x86-64" "target-features"="+cmov,+cx8,+fxsr,+mmx,+sse,+sse2,+x87" "tune-cpu"="generic" }
 // CHECK:STDOUT:
 // CHECK:STDOUT: !llvm.module.flags = !{!0, !1, !2, !3, !4}
 // CHECK:STDOUT: !llvm.dbg.cu = !{!5}

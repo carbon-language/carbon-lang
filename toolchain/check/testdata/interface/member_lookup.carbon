@@ -75,7 +75,6 @@ fn AccessMissingConcrete(I:! Interface(i32)) -> i32 {
 // CHECK:STDOUT:   %require_complete.a60: <witness> = require_complete_type %Interface.type.cc2 [symbolic]
 // CHECK:STDOUT:   %I.as_type.021: type = facet_access_type %I.01f [symbolic]
 // CHECK:STDOUT:   %Interface.lookup_impl_witness.387: <witness> = lookup_impl_witness %I.01f, @Interface, @Interface(%T.8b3) [symbolic]
-// CHECK:STDOUT:   %Interface.facet.2f6: %Interface.type.cc2 = facet_value %I.as_type.021, (%Interface.lookup_impl_witness.387) [symbolic]
 // CHECK:STDOUT:   %impl.elem0.97f: %ptr.79f = impl_witness_access %Interface.lookup_impl_witness.387, element0 [symbolic]
 // CHECK:STDOUT:   %Copy.type: type = facet_type <@Copy> [concrete]
 // CHECK:STDOUT:   %Copy.Op.type: type = fn_type @Copy.Op [concrete]
@@ -104,7 +103,6 @@ fn AccessMissingConcrete(I:! Interface(i32)) -> i32 {
 // CHECK:STDOUT:   %assoc0.04e: %Interface.assoc_type.aaa = assoc_entity element0, @Interface.%X [concrete]
 // CHECK:STDOUT:   %I.as_type.48f: type = facet_access_type %I.328 [symbolic]
 // CHECK:STDOUT:   %Interface.lookup_impl_witness.252: <witness> = lookup_impl_witness %I.328, @Interface, @Interface(%i32) [symbolic]
-// CHECK:STDOUT:   %Interface.facet.303: %Interface.type.02f = facet_value %I.as_type.48f, (%Interface.lookup_impl_witness.252) [symbolic]
 // CHECK:STDOUT:   %complete_type.3d0: <witness> = complete_type_witness %ptr.235 [concrete]
 // CHECK:STDOUT:   %impl.elem0.031: %ptr.235 = impl_witness_access %Interface.lookup_impl_witness.252, element0 [symbolic]
 // CHECK:STDOUT:   %Copy.impl_witness.a93: <witness> = impl_witness imports.%Copy.impl_witness_table.53c, @ptr.as.Copy.impl(%i32) [concrete]
@@ -309,7 +307,7 @@ fn AccessMissingConcrete(I:! Interface(i32)) -> i32 {
 // CHECK:STDOUT:   %pattern_type.loc8_46 => constants.%pattern_type.afe
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @X(constants.%T.8b3, constants.%Interface.facet.2f6) {
+// CHECK:STDOUT: specific @X(constants.%T.8b3, constants.%I.01f) {
 // CHECK:STDOUT:   %T => constants.%T.8b3
 // CHECK:STDOUT:   %ptr => constants.%ptr.79f
 // CHECK:STDOUT:   %require_complete => constants.%require_complete.6e5
@@ -329,7 +327,7 @@ fn AccessMissingConcrete(I:! Interface(i32)) -> i32 {
 // CHECK:STDOUT:   %I.loc12_19.1 => constants.%I.328
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @X(constants.%i32, constants.%Interface.facet.303) {
+// CHECK:STDOUT: specific @X(constants.%i32, constants.%I.328) {
 // CHECK:STDOUT:   %T => constants.%i32
 // CHECK:STDOUT:   %ptr => constants.%ptr.235
 // CHECK:STDOUT:   %require_complete => constants.%complete_type.3d0
