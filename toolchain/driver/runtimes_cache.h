@@ -129,7 +129,7 @@ class Runtimes {
   static constexpr Filesystem::Duration BuildLockPollInterval =
       std::chrono::milliseconds(200);
 
-  // The path to the clang resource directory within the runtimes.
+  // The path to the clang resource directory within the runtimes tree.
   //
   // This uses `std::string_view` to simply using with paths.
   static constexpr auto ComponentPath(Component component) -> std::string_view {
@@ -205,7 +205,7 @@ class Runtimes {
 // used.
 class Runtimes::Cache {
  public:
-  // The features of a cached runtime.
+  // The features of a cached runtimes directory.
   //
   // TODO: Add support for more build flags that we want to enable when building
   // runtimes such as sanitizers and CPU-specific optimizations.
@@ -260,9 +260,9 @@ class Runtimes::Cache {
   // The path to the cache directory.
   auto path() const -> const std::filesystem::path& { return path_; }
 
-  // Looks up a runtime in the cache.
+  // Looks up a runtimes directory in the cache.
   //
-  // This will return a `Runtimes` object for the given features. If a runtime
+  // This will return a `Runtimes` object for the given features. If an entry
   // for these features does not exist in the cache, any stale cache entries
   // will be pruned if needed, and then a new entry will be created and
   // returned.
@@ -282,7 +282,7 @@ class Runtimes::Cache {
   // currently using that entry.
   static constexpr auto MaxLockedEntryAge = std::chrono::days(10);
 
-  // Runtimes are locked while in use to avoid them being removed concurrently,
+  // Entries are locked while in use to avoid them being removed concurrently,
   // but the lock will be disregarded for entries older than
   // `MaxLockedEntryAge`. We use a relatively short deadline and fast poll
   // interval here as this is on the critical path even for an existing, built
