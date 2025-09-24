@@ -10,7 +10,6 @@
 #include "toolchain/check/context.h"
 #include "toolchain/check/control_flow.h"
 #include "toolchain/check/convert.h"
-#include "toolchain/check/cpp/operators.h"
 #include "toolchain/check/cpp/overload_resolution.h"
 #include "toolchain/check/cpp/thunk.h"
 #include "toolchain/check/deduce.h"
