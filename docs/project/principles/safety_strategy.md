@@ -37,6 +37,11 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
 ## Background
 
+TODO: This is outdated in some places (philosophy, emphasis on runtime
+checks and build modes), see the more recent 
+[Updating Carbon's safety strategy](../../../proposals/p5914.md) and 
+[Safety Design](../../design/safety/README.md).
+
 Carbon's goal is to provide
 [practical safety and testing mechanisms](../goals.md#practical-safety-and-testing-mechanisms).
 
