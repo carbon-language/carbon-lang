@@ -336,8 +336,9 @@ class Runtimes::Cache {
   auto ComputeEntryAges(llvm::SmallVector<std::filesystem::path> entry_paths)
       -> llvm::SmallVector<Entry>;
 
-  // Prunes stale runtimes sufficiently to insert the provided new entry path
-  // into the cache without growing it beyond the thresholds for the cache size.
+  // Prunes stale cache entries sufficiently to insert the provided new entry
+  // path into the cache without growing it beyond the thresholds for the cache
+  // size.
   //
   // Errors during pruning are logged rather than returned as this is expected
   // to be a background operation and not something we can always recover from.
