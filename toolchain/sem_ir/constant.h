@@ -111,8 +111,7 @@ class ConstantValueStore {
  public:
   explicit ConstantValueStore(ConstantId default_value, const InstStore* insts)
       : default_(default_value),
-        values_(insts ? insts->GetIdTag()
-                      : IdTag(),
+        values_(insts ? insts->GetIdTag() : IdTag()),
         insts_(insts) {}
 
   // Returns the constant value of the requested instruction, which is default_
