@@ -169,8 +169,7 @@ auto ClangRunner::Run(llvm::ArrayRef<llvm::StringRef> args,
     CARBON_ASSIGN_OR_RETURN(Filesystem::RemovingDir tmp_dir,
                             Filesystem::MakeTmpDir());
 
-    // If we don't have an on-demand runtimes build thread pool provided on
-    // constructions, provide a single threaded one.
+    // We use a thread pool for building runtimes on-demand. If the caller did not provide a thread pool, use a single threaded one.
     llvm::SingleThreadExecutor single_thread({.ThreadsRequested = 1});
 
     CARBON_ASSIGN_OR_RETURN(
