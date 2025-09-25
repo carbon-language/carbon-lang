@@ -169,7 +169,8 @@ auto ClangRunner::Run(llvm::ArrayRef<llvm::StringRef> args,
     CARBON_ASSIGN_OR_RETURN(Filesystem::RemovingDir tmp_dir,
                             Filesystem::MakeTmpDir());
 
-    // We use a thread pool for building runtimes on-demand. If the caller did not provide a thread pool, use a single threaded one.
+    // We use a thread pool for building runtimes on-demand. If the caller did
+    // not provide a thread pool, use a single threaded one.
     llvm::SingleThreadExecutor single_thread({.ThreadsRequested = 1});
 
     CARBON_ASSIGN_OR_RETURN(
@@ -678,7 +679,7 @@ auto ClangRunner::BuildBuiltinsLib(llvm::StringRef target,
   member_group.wait();
   llvm::SmallVector<llvm::NewArchiveMember, 0> unwrapped_objs;
   unwrapped_objs.reserve(objs.size());
-  for (auto &obj : objs) {
+  for (auto& obj : objs) {
     unwrapped_objs.push_back(*std::move(obj));
   }
   objs.clear();
