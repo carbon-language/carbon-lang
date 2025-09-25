@@ -25,6 +25,7 @@ static auto GetOperatorOpFunction(Context& context, SemIR::LocId loc_id,
   auto implicit_loc_id = context.insts().GetLocIdForDesugaring(loc_id);
 
   // Look up the interface, and pass it any generic arguments.
+  // TODO: Improve diagnostics when the found `interface_id` isn't callable.
   auto interface_id =
       LookupNameInCore(context, implicit_loc_id, op.interface_name);
   if (!op.interface_args_ref.empty()) {
