@@ -10,6 +10,7 @@
 #include "toolchain/check/cpp/type_mapping.h"
 #include "toolchain/check/inst.h"
 #include "toolchain/check/type.h"
+#include "toolchain/check/type_completion.h"
 #include "toolchain/sem_ir/ids.h"
 
 namespace Carbon::Check {
@@ -169,19 +170,33 @@ auto LookupCppOperator(Context& context, SemIR::LocId loc_id, Operator op,
     return SemIR::InstId::None;
   }
 
+  // Make sure all operands are complete before lookup.
+  for (SemIR::InstId arg_id : arg_ids) {
+    SemIR::TypeId arg_type_id = context.insts().Get(arg_id).type_id();
+    if (!RequireCompleteType(context, arg_type_id, loc_id, [&] {
+          CARBON_DIAGNOSTIC(
+              IncompletOperandTypeInCppOperatorLookup, Error,
+              "looking up a C++ operator with incomplete operand type {0}",
+              SemIR::TypeId);
+          return context.emitter().Build(
+              loc_id, IncompletOperandTypeInCppOperatorLookup, arg_type_id);
+        })) {
+      return SemIR::ErrorInst::InstId;
+    }
+  }
+
   auto arg_exprs = InventClangArgs(context, arg_ids);
   if (!arg_exprs.has_value()) {
     return SemIR::ErrorInst::InstId;
   }
-
-  clang::Sema& sema = context.clang_sema();
 
   clang::UnresolvedSet<4> functions;
   // TODO: Add location accordingly.
   clang::OverloadCandidateSet candidate_set(
       clang::SourceLocation(), clang::OverloadCandidateSet::CSK_Operator);
   // This works for both unary and binary operators.
-  sema.LookupOverloadedBinOp(candidate_set, *op_kind, functions, *arg_exprs);
+  context.clang_sema().LookupOverloadedBinOp(candidate_set, *op_kind, functions,
+                                             *arg_exprs);
 
   for (auto& it : candidate_set) {
     if (!it.Function) {

@@ -48,9 +48,10 @@ static auto IsCppClassType(Context& context, SemIR::InstId inst_id) -> bool {
     return false;
   }
 
-  const SemIR::Class& class_info = context.classes().Get(class_type->class_id);
-  return class_info.is_complete() &&
-         context.name_scopes().Get(class_info.scope_id).is_cpp_scope();
+  SemIR::NameScopeId class_scope_id =
+      context.classes().Get(class_type->class_id).scope_id;
+  return class_scope_id.has_value() &&
+         context.name_scopes().Get(class_scope_id).is_cpp_scope();
 }
 
 auto BuildUnaryOperator(Context& context, SemIR::LocId loc_id, Operator op,
