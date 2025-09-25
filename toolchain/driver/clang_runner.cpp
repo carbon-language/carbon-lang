@@ -368,9 +368,9 @@ auto ClangRunner::RunCC1(llvm::SmallVectorImpl<const char*>& cc1_args) -> int {
 
   if (llvm::timeTraceProfilerEnabled()) {
     // It is possible that the compiler instance doesn't own a file manager here
-    // if we're compiling a module unit. Since the file manager are owned by AST
-    // when we're compiling a module unit. So the file manager may be invalid
-    // here.
+    // if we're compiling a module unit. Since the file manager is owned by the
+    // AST when we're compiling a module unit. So the file manager may be
+    // invalid here.
     //
     // It should be fine to create file manager here since the file system
     // options are stored in the compiler invocation and we can recreate the VFS
@@ -428,6 +428,8 @@ auto ClangRunner::RunInternal(
   clang::TextDiagnosticPrinter diagnostic_client(llvm::errs(),
                                                  *diagnostic_options);
 
+  // Note that the `DiagnosticsEngine` takes ownership (via a ref count) of the
+  // DiagnosticIDs, unlike the other parameters.
   clang::DiagnosticsEngine diagnostics(clang::DiagnosticIDs::create(),
                                        *diagnostic_options, &diagnostic_client,
                                        /*ShouldOwnClient=*/false);
@@ -638,18 +640,19 @@ auto ClangRunner::BuildBuiltinsLib(llvm::StringRef target,
   CARBON_ASSIGN_OR_RETURN(Filesystem::Dir tmp_dir,
                           Filesystem::Cwd().OpenDir(tmp_path));
 
-  std::mutex mu;
-  llvm::SmallVector<llvm::NewArchiveMember, 0> objs;
-  objs.reserve(src_files.size());
+  // `NewArchiveMember` isn't default constructable unfortunately, so we first
+  // build the objects using an optional wrapper.
+  llvm::SmallVector<std::optional<llvm::NewArchiveMember>, 0> objs;
+  objs.resize(src_files.size());
   llvm::ThreadPoolTaskGroup member_group(threads);
-  for (llvm::StringRef src_file : src_files) {
+  for (auto [src_file, obj] : llvm::zip(src_files, objs)) {
     // Create any subdirectories needed for this file.
     std::filesystem::path src_path = src_file.str();
     if (src_path.has_parent_path()) {
       CARBON_RETURN_IF_ERROR(tmp_dir.CreateDirectories(src_path.parent_path()));
     }
 
-    member_group.async([this, target, src_file, &mu, &objs, &tmp_path] {
+    member_group.async([this, target, src_file, &obj, &tmp_path] {
       std::filesystem::path obj_path = tmp_path / std::string_view(src_file);
       obj_path += ".o";
       BuildBuiltinsFile(target, src_file, obj_path);
@@ -658,10 +661,7 @@ auto ClangRunner::BuildBuiltinsLib(llvm::StringRef target,
                                                         /*Deterministic=*/true);
       CARBON_CHECK(obj_result, "TODO: Diagnose this: {0}",
                    llvm::fmt_consume(obj_result.takeError()));
-      {
-        std::scoped_lock lock(mu);
-        objs.push_back(std::move(*obj_result));
-      }
+      obj = std::move(*obj_result);
     });
   }
 
@@ -672,11 +672,22 @@ auto ClangRunner::BuildBuiltinsLib(llvm::StringRef target,
   CARBON_ASSIGN_OR_RETURN(
       Filesystem::WriteFile builtins_a_file,
       lib_dir.OpenWriteOnly(builtins_a_path, Filesystem::CreateAlways));
+
+  // Wait for all the object compiles to complete, and then move the objects out
+  // of their optional wrappers to match the API required by the archive writer.
+  member_group.wait();
+  llvm::SmallVector<llvm::NewArchiveMember, 0> unwrapped_objs;
+  unwrapped_objs.reserve(objs.size());
+  for (auto &obj : objs) {
+    unwrapped_objs.push_back(*std::move(obj));
+  }
+  objs.clear();
+
+  // Write the actual archive.
   {
     llvm::raw_fd_ostream builtins_a_os = builtins_a_file.WriteStream();
-    member_group.wait();
     llvm::Error archive_err = llvm::writeArchiveToStream(
-        builtins_a_os, objs, llvm::SymtabWritingMode::NormalSymtab,
+        builtins_a_os, unwrapped_objs, llvm::SymtabWritingMode::NormalSymtab,
         target_triple.isOSDarwin() ? llvm::object::Archive::K_DARWIN
                                    : llvm::object::Archive::K_GNU,
         /*Deterministic=*/true, /*Thin=*/false);
