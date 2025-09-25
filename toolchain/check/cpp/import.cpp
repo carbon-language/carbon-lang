@@ -824,6 +824,15 @@ static auto ImportClassObjectRepr(Context& context, SemIR::ClassId class_id,
 
   // TODO: Import vptr(s).
 
+  // The kind of base class we've picked so far. These are ordered in increasing
+  // preference order.
+  enum class BaseKind {
+    None,
+    Empty,
+    NonEmpty,
+    Polymorphic,
+  } base_kind = BaseKind::None;
+
   // Import bases.
   for (const auto& base : clang_def->bases()) {
     CARBON_CHECK(!base.isVirtual(),
@@ -845,18 +854,26 @@ static auto ImportClassObjectRepr(Context& context, SemIR::ClassId class_id,
                             .base_type_inst_id = base_type_inst_id,
                             .index = SemIR::ElementIndex(fields.size())}));
 
-    // If there's exactly one base class, treat it as a Carbon base class too.
-    // TODO: Improve handling for the case where the class has multiple base
-    // classes.
-    if (clang_def->getNumBases() == 1) {
-      auto& class_info = context.classes().Get(class_id);
-      CARBON_CHECK(!class_info.base_id.has_value());
-      class_info.base_id = base_decl_id;
-    }
-
     auto* base_class = base.getType()->getAsCXXRecordDecl();
     CARBON_CHECK(base_class, "Base class {0} is not a class",
                  base.getType().getAsString());
+
+    // If there's a unique "best" base class, treat it as a Carbon base class
+    // too.
+    // TODO: Improve handling for the case where the class has multiple base
+    // classes.
+    BaseKind kind = base_class->isPolymorphic() ? BaseKind::Polymorphic
+                    : base_class->isEmpty()     ? BaseKind::Empty
+                                                : BaseKind::NonEmpty;
+    auto& class_info = context.classes().Get(class_id);
+    if (kind > base_kind) {
+      // This base is better than the previous best.
+      class_info.base_id = base_decl_id;
+      base_kind = kind;
+    } else if (kind == base_kind) {
+      // Multiple base classes of this kind: no unique best.
+      class_info.base_id = SemIR::InstId::None;
+    }
 
     auto base_offset = base.isVirtual()
                            ? clang_layout.getVBaseClassOffset(base_class)

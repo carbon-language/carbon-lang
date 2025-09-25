@@ -125,6 +125,20 @@ struct A { int a; };
 struct B { int b; };
 struct C : A, B {};
 
+struct Empty1 {};
+struct Empty2 {};
+struct OneNonEmpty : Empty1, A, Empty2 {};
+struct TwoNonEmpty : Empty1, A, B, Empty2 {};
+
+struct Polymorphic1 {
+  virtual void f();
+};
+struct Polymorphic2 {
+  virtual void g();
+};
+struct OnePolymorphic : A, B, Polymorphic1, Empty1 {};
+struct TwoPolymorphic : Polymorphic1, Polymorphic2 {};
+
 // --- fail_todo_use_multiple_inheritance.carbon
 
 library "[[@TEST_NAME]]";
@@ -150,6 +164,112 @@ fn ConvertB(p: Cpp.C*) -> Cpp.B* {
   // CHECK:STDERR:   return p;
   // CHECK:STDERR:   ^~~~~~~~~
   // CHECK:STDERR:
+  return p;
+}
+
+fn ConvertOneNonEmptyToEmpty1(p: Cpp.OneNonEmpty*) -> Cpp.Empty1* {
+  // CHECK:STDERR: fail_todo_use_multiple_inheritance.carbon:[[@LINE+7]]:3: error: cannot implicitly convert expression of type `Cpp.OneNonEmpty*` to `Cpp.Empty1*` [ConversionFailure]
+  // CHECK:STDERR:   return p;
+  // CHECK:STDERR:   ^~~~~~~~~
+  // CHECK:STDERR: fail_todo_use_multiple_inheritance.carbon:[[@LINE+4]]:3: note: type `Cpp.OneNonEmpty*` does not implement interface `Core.ImplicitAs(Cpp.Empty1*)` [MissingImplInMemberAccessNote]
+  // CHECK:STDERR:   return p;
+  // CHECK:STDERR:   ^~~~~~~~~
+  // CHECK:STDERR:
+  return p;
+}
+
+fn ConvertOneNonEmptyToEmpty2(p: Cpp.OneNonEmpty*) -> Cpp.Empty2* {
+  // CHECK:STDERR: fail_todo_use_multiple_inheritance.carbon:[[@LINE+7]]:3: error: cannot implicitly convert expression of type `Cpp.OneNonEmpty*` to `Cpp.Empty2*` [ConversionFailure]
+  // CHECK:STDERR:   return p;
+  // CHECK:STDERR:   ^~~~~~~~~
+  // CHECK:STDERR: fail_todo_use_multiple_inheritance.carbon:[[@LINE+4]]:3: note: type `Cpp.OneNonEmpty*` does not implement interface `Core.ImplicitAs(Cpp.Empty2*)` [MissingImplInMemberAccessNote]
+  // CHECK:STDERR:   return p;
+  // CHECK:STDERR:   ^~~~~~~~~
+  // CHECK:STDERR:
+  return p;
+}
+
+fn ConvertTwoNonEmptyToA(p: Cpp.TwoNonEmpty*) -> Cpp.A* {
+  // CHECK:STDERR: fail_todo_use_multiple_inheritance.carbon:[[@LINE+7]]:3: error: cannot implicitly convert expression of type `Cpp.TwoNonEmpty*` to `Cpp.A*` [ConversionFailure]
+  // CHECK:STDERR:   return p;
+  // CHECK:STDERR:   ^~~~~~~~~
+  // CHECK:STDERR: fail_todo_use_multiple_inheritance.carbon:[[@LINE+4]]:3: note: type `Cpp.TwoNonEmpty*` does not implement interface `Core.ImplicitAs(Cpp.A*)` [MissingImplInMemberAccessNote]
+  // CHECK:STDERR:   return p;
+  // CHECK:STDERR:   ^~~~~~~~~
+  // CHECK:STDERR:
+  return p;
+}
+
+fn ConvertTwoNonEmptyToB(p: Cpp.TwoNonEmpty*) -> Cpp.B* {
+  // CHECK:STDERR: fail_todo_use_multiple_inheritance.carbon:[[@LINE+7]]:3: error: cannot implicitly convert expression of type `Cpp.TwoNonEmpty*` to `Cpp.B*` [ConversionFailure]
+  // CHECK:STDERR:   return p;
+  // CHECK:STDERR:   ^~~~~~~~~
+  // CHECK:STDERR: fail_todo_use_multiple_inheritance.carbon:[[@LINE+4]]:3: note: type `Cpp.TwoNonEmpty*` does not implement interface `Core.ImplicitAs(Cpp.B*)` [MissingImplInMemberAccessNote]
+  // CHECK:STDERR:   return p;
+  // CHECK:STDERR:   ^~~~~~~~~
+  // CHECK:STDERR:
+  return p;
+}
+
+fn ConvertOnePolymorphicToA(p: Cpp.OnePolymorphic*) -> Cpp.A* {
+  // CHECK:STDERR: fail_todo_use_multiple_inheritance.carbon:[[@LINE+7]]:3: error: cannot implicitly convert expression of type `Cpp.OnePolymorphic*` to `Cpp.A*` [ConversionFailure]
+  // CHECK:STDERR:   return p;
+  // CHECK:STDERR:   ^~~~~~~~~
+  // CHECK:STDERR: fail_todo_use_multiple_inheritance.carbon:[[@LINE+4]]:3: note: type `Cpp.OnePolymorphic*` does not implement interface `Core.ImplicitAs(Cpp.A*)` [MissingImplInMemberAccessNote]
+  // CHECK:STDERR:   return p;
+  // CHECK:STDERR:   ^~~~~~~~~
+  // CHECK:STDERR:
+  return p;
+}
+
+fn ConvertOnePolymorphicToB(p: Cpp.OnePolymorphic*) -> Cpp.B* {
+  // CHECK:STDERR: fail_todo_use_multiple_inheritance.carbon:[[@LINE+7]]:3: error: cannot implicitly convert expression of type `Cpp.OnePolymorphic*` to `Cpp.B*` [ConversionFailure]
+  // CHECK:STDERR:   return p;
+  // CHECK:STDERR:   ^~~~~~~~~
+  // CHECK:STDERR: fail_todo_use_multiple_inheritance.carbon:[[@LINE+4]]:3: note: type `Cpp.OnePolymorphic*` does not implement interface `Core.ImplicitAs(Cpp.B*)` [MissingImplInMemberAccessNote]
+  // CHECK:STDERR:   return p;
+  // CHECK:STDERR:   ^~~~~~~~~
+  // CHECK:STDERR:
+  return p;
+}
+
+fn ConvertTwoPolymorphicToPolymorphic1(p: Cpp.TwoPolymorphic*) -> Cpp.Polymorphic1* {
+  // CHECK:STDERR: fail_todo_use_multiple_inheritance.carbon:[[@LINE+7]]:3: error: cannot implicitly convert expression of type `Cpp.TwoPolymorphic*` to `Cpp.Polymorphic1*` [ConversionFailure]
+  // CHECK:STDERR:   return p;
+  // CHECK:STDERR:   ^~~~~~~~~
+  // CHECK:STDERR: fail_todo_use_multiple_inheritance.carbon:[[@LINE+4]]:3: note: type `Cpp.TwoPolymorphic*` does not implement interface `Core.ImplicitAs(Cpp.Polymorphic1*)` [MissingImplInMemberAccessNote]
+  // CHECK:STDERR:   return p;
+  // CHECK:STDERR:   ^~~~~~~~~
+  // CHECK:STDERR:
+  return p;
+}
+
+fn ConvertTwoPolymorphicToPolymorphic2(p: Cpp.TwoPolymorphic*) -> Cpp.Polymorphic2* {
+  // CHECK:STDERR: fail_todo_use_multiple_inheritance.carbon:[[@LINE+7]]:3: error: cannot implicitly convert expression of type `Cpp.TwoPolymorphic*` to `Cpp.Polymorphic2*` [ConversionFailure]
+  // CHECK:STDERR:   return p;
+  // CHECK:STDERR:   ^~~~~~~~~
+  // CHECK:STDERR: fail_todo_use_multiple_inheritance.carbon:[[@LINE+4]]:3: note: type `Cpp.TwoPolymorphic*` does not implement interface `Core.ImplicitAs(Cpp.Polymorphic2*)` [MissingImplInMemberAccessNote]
+  // CHECK:STDERR:   return p;
+  // CHECK:STDERR:   ^~~~~~~~~
+  // CHECK:STDERR:
+  return p;
+}
+
+// --- multiple_inheritance_with_preferred_base.carbon
+
+library "[[@TEST_NAME]]";
+
+import Cpp library "multiple_inheritance.h";
+
+// If there's only one non-empty base, that's our preferred base class. We can
+// convert to that.
+fn ConvertOneNonEmptyToA(p: Cpp.OneNonEmpty*) -> Cpp.A* {
+  return p;
+}
+
+// If there's only one polymorphic base, that's our preferred base class. We can
+// convert to that.
+fn ConvertOnePolymorphicToPolymorphic1(p: Cpp.OnePolymorphic*) -> Cpp.Polymorphic1* {
   return p;
 }
 
