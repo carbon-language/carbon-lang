@@ -333,7 +333,11 @@ TEST_F(RuntimesCacheTest, ConcurrentBuilds) {
       build2_path = *std::move(commit2_result);
     }
   };
-  std::jthread build2_thread(build2_lambda);
+  std::thread build2_thread(build2_lambda);
+  // Use a scoped join to avoid leaking the thread as some platforms don't have
+  // `std::jthread`.
+  auto scoped_join =
+      llvm::make_scope_exit([&build2_thread] { build2_thread.join(); });
 
   // Commit the first built runtime.
   auto commit_result = std::move(builder1).Commit();
@@ -348,6 +352,7 @@ TEST_F(RuntimesCacheTest, ConcurrentBuilds) {
   // Now join the second cache's build thread to ensure it completes and verify
   // that it produces the same path fully-built path.
   build2_thread.join();
+  scoped_join.release();
   EXPECT_THAT(build2_path, Eq(build1_path));
 
   // Note that we don't know which build actually ended up committed here so
@@ -426,7 +431,11 @@ TEST_F(RuntimesCacheTest, ConcurrentBuildsWithFailedLocking) {
     EXPECT_THAT(runtimes2.Build(Runtimes::ClangResourceDir),
                 IsSuccess(VariantWith<std::filesystem::path>(Eq(build2_path))));
   };
-  std::jthread build2_thread(build2_lambda);
+  std::thread build2_thread(build2_lambda);
+  // Use a scoped join to avoid leaking the thread as some platforms don't have
+  // `std::jthread`.
+  auto scoped_join =
+      llvm::make_scope_exit([&build2_thread] { build2_thread.join(); });
 
   // As soon as the second thread notifies that its build is started and ready
   // to commit, also commit the first built runtime.
@@ -446,6 +455,7 @@ TEST_F(RuntimesCacheTest, ConcurrentBuildsWithFailedLocking) {
   // Now join the second cache's build thread to ensure it completes and verify
   // that it produces the same path fully-built path.
   build2_thread.join();
+  scoped_join.release();
   EXPECT_THAT(build2_path, Eq(build1_path));
 
   // Much like the simple concurrent build, we can't know which build finished
