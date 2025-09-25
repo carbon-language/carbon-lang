@@ -65,7 +65,10 @@ auto BuildUnaryOperator(Context& context, SemIR::LocId loc_id, Operator op,
   if (IsCppClassType(context, operand_id)) {
     SemIR::InstId cpp_inst_id =
         LookupCppOperator(context, loc_id, op, {operand_id});
-    if (cpp_inst_id.has_value() && cpp_inst_id != SemIR::ErrorInst::InstId) {
+    if (cpp_inst_id.has_value()) {
+      if (cpp_inst_id == SemIR::ErrorInst::InstId) {
+        return SemIR::ErrorInst::InstId;
+      }
       return PerformCall(context, loc_id, cpp_inst_id, {operand_id});
     }
   }
@@ -99,7 +102,10 @@ auto BuildBinaryOperator(Context& context, SemIR::LocId loc_id, Operator op,
   if (IsCppClassType(context, lhs_id) || IsCppClassType(context, rhs_id)) {
     SemIR::InstId cpp_inst_id =
         LookupCppOperator(context, loc_id, op, {lhs_id, rhs_id});
-    if (cpp_inst_id.has_value() && cpp_inst_id != SemIR::ErrorInst::InstId) {
+    if (cpp_inst_id.has_value()) {
+      if (cpp_inst_id == SemIR::ErrorInst::InstId) {
+        return SemIR::ErrorInst::InstId;
+      }
       return PerformCall(context, loc_id, cpp_inst_id, {lhs_id, rhs_id});
     }
   }
