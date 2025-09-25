@@ -185,14 +185,14 @@ class Runtimes {
 // distinct target environment, potentially ABI, and set of runtimes that could
 // be used.
 //
-// The cache looks up runtimes entries based on the set of `Feature`s and the
-// input sources used to build them (including the compiler itself). Whenever
-// looking up runtimes not already present in the cache, the cache will evict
-// old runtimes before creating the new ones. The eviction strategy is to remove
-// any runtimes more than a year old, as well as the least-recently used
-// runtimes until there will only be a maximum of 50 runtimes cached. The goal
-// is to allow multiple versions and build features to stay resident in the
-// runtimes cache while providing a stable upper bound on the disk space used.
+// The cache looks up entries based on the set of `Feature`s and the input
+// sources used to build them (including the compiler itself). Whenever looking
+// up an entry not already present in the cache, the cache will evict old
+// entries before creating the new one. The eviction strategy is to remove any
+// entries more than a year old, as well as the least-recently used entries
+// until there will only be a maximum of 50 entries in the cache. The goal is to
+// allow multiple versions and build features to stay resident in the cache
+// while providing a stable upper bound on the disk space used.
 //
 // The cache can be formed around a specific directory, or it can search for a
 // system-default directory. The system default directory follows the guidance
@@ -207,8 +207,8 @@ class Runtimes {
 //
 // These system-wide paths are only used if the installation contains a digest
 // file that can be used to ensure different builds and installs of Carbon don't
-// incorrectly share a cached runtimes. When missing, a temporary directory is
-// used.
+// incorrectly share cache entries built from different sources. When missing, a
+// temporary directory is used.
 class Runtimes::Cache {
  public:
   // The features of a cached runtimes directory.
