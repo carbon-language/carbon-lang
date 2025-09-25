@@ -77,7 +77,7 @@ class FixedSizeValueStore {
     requires std::same_as<IdT, typename ValueStoreT::IdType>
   explicit FixedSizeValueStore(const ValueStoreT& size_source,
                                ConstRefType default_value)
-      : tag_(GetIdTag(size_source)) {
+      : tag_(size_source.GetIdTag()) {
     values_.resize(size_source.size(), default_value);
   }
 

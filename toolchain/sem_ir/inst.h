@@ -719,11 +719,4 @@ inline auto CarbonHashValue(const Inst& value, uint64_t seed) -> HashCode {
 
 }  // namespace Carbon::SemIR
 
-namespace Carbon {
-template <>
-inline auto GetIdTag<SemIR::InstStore>(const SemIR::InstStore& value_store) {
-  return value_store.GetIdTag();
-}
-}  // namespace Carbon
-
 #endif  // CARBON_TOOLCHAIN_SEM_IR_INST_H_

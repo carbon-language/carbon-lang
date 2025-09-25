@@ -107,12 +107,6 @@ struct IdTag {
   int32_t initial_reserved_ids_;
 };
 
-template <typename ValueStoreT>
-auto GetIdTag(const ValueStoreT& value_store) {
-  (void)value_store;
-  return IdTag();
-}
-
 // A simple wrapper for accumulating values, providing IDs to later retrieve the
 // value. This does not do deduplication.
 template <typename IdT, typename ValueT>
