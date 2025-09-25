@@ -108,10 +108,19 @@ struct SymbolicConstant : Printable<SymbolicConstant> {
 // Provides a ValueStore wrapper for tracking the constant values of
 // instructions.
 class ConstantValueStore {
+  struct UnusableType {};
+
  public:
+  inline static const auto Unusable = UnusableType();
+
+  // Constructs an unusable ConstantValueStore, only good as a placeholder (eg:
+  // in C++ interop, where there's no foreign SemIR to reference)
+  explicit ConstantValueStore(UnusableType /* tag */)
+      : default_(ConstantId::None), insts_(nullptr) {}
+
   explicit ConstantValueStore(ConstantId default_value, const InstStore* insts)
       : default_(default_value),
-        values_(insts ? insts->GetIdTag() : IdTag()),
+        values_((CARBON_CHECK(insts), insts->GetIdTag())),
         insts_(insts) {}
 
   // Returns the constant value of the requested instruction, which is default_
