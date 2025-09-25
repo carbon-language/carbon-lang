@@ -761,9 +761,7 @@ fn F() {
 class Incomplete;
 class Complete {};
 
-auto operator+(Complete lhs, Incomplete rhs) -> Complete;
-
-auto foo(Complete complete) -> void;
+auto CreateIncomplete() -> Incomplete* _Nonnull;
 
 // --- fail_import_incomplete.carbon
 
@@ -772,16 +770,19 @@ library "[[@TEST_NAME]]";
 import Cpp library "incomplete.h";
 
 fn F() {
-  var c1: Cpp.Complete = Cpp.Complete.Complete();
-  // CHECK:STDERR: fail_import_incomplete.carbon:[[@LINE+8]]:40: error: invalid use of incomplete type `Cpp.Incomplete` [IncompleteTypeInConversion]
-  // CHECK:STDERR:   let c3: Cpp.Complete = Cpp.foo(c1 + ({} as Cpp.Incomplete));
-  // CHECK:STDERR:                                        ^~~~~~~~~~~~~~~~~~~~
+  var complete: Cpp.Complete = Cpp.Complete.Complete();
+  // CHECK:STDERR: fail_import_incomplete.carbon:[[@LINE+11]]:21: error: looking up a C++ operator with incomplete operand type `Cpp.Incomplete` [IncompleteOperandTypeInCppOperatorLookup]
+  // CHECK:STDERR:   let result: i32 = complete + *Cpp.CreateIncomplete();
+  // CHECK:STDERR:                     ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
   // CHECK:STDERR: fail_import_incomplete.carbon:[[@LINE-7]]:10: in file included here [InCppInclude]
   // CHECK:STDERR: ./incomplete.h:2:7: note: class was forward declared here [ClassForwardDeclaredHere]
   // CHECK:STDERR: class Incomplete;
   // CHECK:STDERR:       ^
+  // CHECK:STDERR: fail_import_incomplete.carbon:[[@LINE+4]]:21: note: in `Cpp` operator `AddWith` lookup [InCppOperatorLookup]
+  // CHECK:STDERR:   let result: i32 = complete + *Cpp.CreateIncomplete();
+  // CHECK:STDERR:                     ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
   // CHECK:STDERR:
-  let c3: Cpp.Complete = Cpp.foo(c1 + ({} as Cpp.Incomplete));
+  let result: i32 = complete + *Cpp.CreateIncomplete();
 }
 
 // ============================================================================
