@@ -763,7 +763,28 @@ class Complete {};
 
 auto CreateIncomplete() -> Incomplete* _Nonnull;
 
-// --- fail_import_incomplete.carbon
+// --- fail_import_incomplete_unary.carbon
+
+library "[[@TEST_NAME]]";
+
+import Cpp library "incomplete.h";
+
+fn F() {
+  // CHECK:STDERR: fail_import_incomplete_unary.carbon:[[@LINE+11]]:27: error: looking up a C++ operator with incomplete operand type `Cpp.Incomplete` [IncompleteOperandTypeInCppOperatorLookup]
+  // CHECK:STDERR:   let result_unary: i32 = -*Cpp.CreateIncomplete();
+  // CHECK:STDERR:                           ^~~~~~~~~~~~~~~~~~~~~~~~
+  // CHECK:STDERR: fail_import_incomplete_unary.carbon:[[@LINE-6]]:10: in file included here [InCppInclude]
+  // CHECK:STDERR: ./incomplete.h:2:7: note: class was forward declared here [ClassForwardDeclaredHere]
+  // CHECK:STDERR: class Incomplete;
+  // CHECK:STDERR:       ^
+  // CHECK:STDERR: fail_import_incomplete_unary.carbon:[[@LINE+4]]:27: note: in `Cpp` operator `Negate` lookup [InCppOperatorLookup]
+  // CHECK:STDERR:   let result_unary: i32 = -*Cpp.CreateIncomplete();
+  // CHECK:STDERR:                           ^~~~~~~~~~~~~~~~~~~~~~~~
+  // CHECK:STDERR:
+  let result_unary: i32 = -*Cpp.CreateIncomplete();
+}
+
+// --- fail_import_incomplete_binary.carbon
 
 library "[[@TEST_NAME]]";
 
@@ -771,18 +792,18 @@ import Cpp library "incomplete.h";
 
 fn F() {
   var complete: Cpp.Complete = Cpp.Complete.Complete();
-  // CHECK:STDERR: fail_import_incomplete.carbon:[[@LINE+11]]:21: error: looking up a C++ operator with incomplete operand type `Cpp.Incomplete` [IncompleteOperandTypeInCppOperatorLookup]
-  // CHECK:STDERR:   let result: i32 = complete + *Cpp.CreateIncomplete();
-  // CHECK:STDERR:                     ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-  // CHECK:STDERR: fail_import_incomplete.carbon:[[@LINE-7]]:10: in file included here [InCppInclude]
+  // CHECK:STDERR: fail_import_incomplete_binary.carbon:[[@LINE+11]]:28: error: looking up a C++ operator with incomplete operand type `Cpp.Incomplete` [IncompleteOperandTypeInCppOperatorLookup]
+  // CHECK:STDERR:   let result_binary: i32 = complete + *Cpp.CreateIncomplete();
+  // CHECK:STDERR:                            ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+  // CHECK:STDERR: fail_import_incomplete_binary.carbon:[[@LINE-7]]:10: in file included here [InCppInclude]
   // CHECK:STDERR: ./incomplete.h:2:7: note: class was forward declared here [ClassForwardDeclaredHere]
   // CHECK:STDERR: class Incomplete;
   // CHECK:STDERR:       ^
-  // CHECK:STDERR: fail_import_incomplete.carbon:[[@LINE+4]]:21: note: in `Cpp` operator `AddWith` lookup [InCppOperatorLookup]
-  // CHECK:STDERR:   let result: i32 = complete + *Cpp.CreateIncomplete();
-  // CHECK:STDERR:                     ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+  // CHECK:STDERR: fail_import_incomplete_binary.carbon:[[@LINE+4]]:28: note: in `Cpp` operator `AddWith` lookup [InCppOperatorLookup]
+  // CHECK:STDERR:   let result_binary: i32 = complete + *Cpp.CreateIncomplete();
+  // CHECK:STDERR:                            ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
   // CHECK:STDERR:
-  let result: i32 = complete + *Cpp.CreateIncomplete();
+  let result_binary: i32 = complete + *Cpp.CreateIncomplete();
 }
 
 // ============================================================================
@@ -830,7 +851,27 @@ struct Unsupported : public virtual Supported {};
 using UnsupportedAlias = Unsupported<int>;
 extern UnsupportedAlias unsupported;
 
-// --- fail_import_unsupported_in_instantiation.carbon
+// --- fail_import_unsupported_in_instantiation_unary.carbon
+
+library "[[@TEST_NAME]]";
+
+import Cpp library "unsupported_in_instantiation.h";
+
+fn F() {
+  // CHECK:STDERR: fail_import_unsupported_in_instantiation_unary.carbon:[[@LINE+10]]:21: error: semantics TODO: `class with virtual bases` [SemanticsTodo]
+  // CHECK:STDERR:   let result: i32 = -Cpp.unsupported;
+  // CHECK:STDERR:                     ^~~~~~~~~~~~~~~~
+  // CHECK:STDERR: fail_import_unsupported_in_instantiation_unary.carbon:[[@LINE+7]]:21: note: while completing C++ type `Cpp.Unsupported` [InCppTypeCompletion]
+  // CHECK:STDERR:   let result: i32 = -Cpp.unsupported;
+  // CHECK:STDERR:                     ^~~~~~~~~~~~~~~~
+  // CHECK:STDERR: fail_import_unsupported_in_instantiation_unary.carbon:[[@LINE+4]]:21: note: in `Cpp` operator `Negate` lookup [InCppOperatorLookup]
+  // CHECK:STDERR:   let result: i32 = -Cpp.unsupported;
+  // CHECK:STDERR:                     ^~~~~~~~~~~~~~~~
+  // CHECK:STDERR:
+  let result: i32 = -Cpp.unsupported;
+}
+
+// --- fail_import_unsupported_in_instantiation_binary.carbon
 
 library "[[@TEST_NAME]]";
 
@@ -838,13 +879,13 @@ import Cpp library "unsupported_in_instantiation.h";
 
 fn F() {
   var supported: Cpp.Supported = Cpp.Supported.Supported();
-  // CHECK:STDERR: fail_import_unsupported_in_instantiation.carbon:[[@LINE+10]]:21: error: semantics TODO: `class with virtual bases` [SemanticsTodo]
+  // CHECK:STDERR: fail_import_unsupported_in_instantiation_binary.carbon:[[@LINE+10]]:21: error: semantics TODO: `class with virtual bases` [SemanticsTodo]
   // CHECK:STDERR:   let result: i32 = supported + Cpp.unsupported;
   // CHECK:STDERR:                     ^~~~~~~~~~~~~~~~~~~~~~~~~~~
-  // CHECK:STDERR: fail_import_unsupported_in_instantiation.carbon:[[@LINE+7]]:21: note: while completing C++ type `Cpp.Unsupported` [InCppTypeCompletion]
+  // CHECK:STDERR: fail_import_unsupported_in_instantiation_binary.carbon:[[@LINE+7]]:21: note: while completing C++ type `Cpp.Unsupported` [InCppTypeCompletion]
   // CHECK:STDERR:   let result: i32 = supported + Cpp.unsupported;
   // CHECK:STDERR:                     ^~~~~~~~~~~~~~~~~~~~~~~~~~~
-  // CHECK:STDERR: fail_import_unsupported_in_instantiation.carbon:[[@LINE+4]]:21: note: in `Cpp` operator `AddWith` lookup [InCppOperatorLookup]
+  // CHECK:STDERR: fail_import_unsupported_in_instantiation_binary.carbon:[[@LINE+4]]:21: note: in `Cpp` operator `AddWith` lookup [InCppOperatorLookup]
   // CHECK:STDERR:   let result: i32 = supported + Cpp.unsupported;
   // CHECK:STDERR:                     ^~~~~~~~~~~~~~~~~~~~~~~~~~~
   // CHECK:STDERR:
