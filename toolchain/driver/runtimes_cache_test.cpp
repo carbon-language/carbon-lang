@@ -332,7 +332,7 @@ TEST_F(RuntimesCacheTest, ConcurrentBuilds) {
       build2_path = *std::move(commit2_result);
     }
   };
-  std::thread build2_thread(build2_lambda);
+  std::jthread build2_thread(build2_lambda);
 
   // Commit the first built runtime.
   auto commit_result = std::move(builder1).Commit();
@@ -420,11 +420,12 @@ TEST_F(RuntimesCacheTest, ConcurrentBuildsWithFailedLocking) {
 
     // Even though there may be another thread running, and even holding a lock
     // file, we should now get non-blocking access directly to the built
-    // runtime.
+    // runtime. This is mostly added for completeness, a held lock is more
+    // directly tested in `CurrentBuildsLockTimeout`.
     EXPECT_THAT(runtimes2.Build(Runtimes::ClangResourceDir),
                 IsSuccess(VariantWith<std::filesystem::path>(Eq(build2_path))));
   };
-  std::thread build2_thread(build2_lambda);
+  std::jthread build2_thread(build2_lambda);
 
   // As soon as the second thread notifies that its build is started and ready
   // to commit, also commit the first built runtime.

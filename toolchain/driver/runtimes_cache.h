@@ -176,17 +176,23 @@ class Runtimes {
 // A managed cache of `Runtimes` directories.
 //
 // This class manages and provides access to a cache of runtimes. Each entry in
-// the cache is a collection of runtimes for a specific set of `Feature`s in a
-// directory that can be modeled with an object of the `Runtimes` type. We call
-// these entries "runtimes" typically. The cache keys and looks up these
-// runtimes based on the set of `Feature`s and the input sources used to build
-// them (including the compiler). Whenever looking up runtimes not already
-// present in the cache, the cache will evict old runtimes before creating the
-// new ones. The eviction strategy is to remove any runtimes more than a year
-// old, as well as the least-recently used runtimes until there will only be a
-// maximum of 50 runtimes cached. The goal is to allow multiple versions and
-// build features to stay resident in the runtimes cache while providing a
-// stable upper bound on the disk space used.
+// the cache is a runtimes directory for a specific set of `Feature`s,
+// represented by an object of the `Runtimes` type. An entry is sometimes
+// referred to simply as the "runtimes" in a specific context. Each of these
+// entries can consist of one or more components that together make up a
+// collection of runtime libraries, runtime data files, or other runtime
+// resources. However, entries are never combined -- each entry represents a
+// distinct target environment, potentially ABI, and set of runtimes that could
+// be used.
+//
+// The cache looks up runtimes entries based on the set of `Feature`s and the
+// input sources used to build them (including the compiler itself). Whenever
+// looking up runtimes not already present in the cache, the cache will evict
+// old runtimes before creating the new ones. The eviction strategy is to remove
+// any runtimes more than a year old, as well as the least-recently used
+// runtimes until there will only be a maximum of 50 runtimes cached. The goal
+// is to allow multiple versions and build features to stay resident in the
+// runtimes cache while providing a stable upper bound on the disk space used.
 //
 // The cache can be formed around a specific directory, or it can search for a
 // system-default directory. The system default directory follows the guidance

@@ -133,7 +133,7 @@ auto Runtimes::Cache::FindXdgCachePath()
   if (const char* xdg_cache_home = getenv("XDG_CACHE_HOME");
       xdg_cache_home != nullptr) {
     std::filesystem::path path = xdg_cache_home;
-    if (!path.empty() && path.is_absolute()) {
+    if (path.is_absolute()) {
       CARBON_VLOG("Using '$XDG_CACHE_HOME' cache: {0}", path);
       return path;
     }
@@ -147,7 +147,7 @@ auto Runtimes::Cache::FindXdgCachePath()
   }
 
   std::filesystem::path path = home;
-  if (path.empty() || !path.is_absolute()) {
+  if (!path.is_absolute()) {
     return std::nullopt;
   }
   path /= ".cache";
