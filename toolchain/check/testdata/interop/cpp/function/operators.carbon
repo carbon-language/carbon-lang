@@ -803,13 +803,17 @@ fn CreateIncomplete() -> Incomplete*;
 
 fn F() {
   var complete: Cpp.Complete = Cpp.Complete.Complete();
-  // CHECK:STDERR: fail_incomplete_operand_carbon_type.carbon:[[@LINE+10]]:21: error: looking up a C++ operator with incomplete operand type `Incomplete` [IncompleteOperandTypeInCppOperatorLookup]
+  // CHECK:STDERR: fail_incomplete_operand_carbon_type.carbon:[[@LINE+14]]:21: error: looking up a C++ operator with incomplete operand type `Incomplete` [IncompletOperandTypeInCppOperatorLookup]
   // CHECK:STDERR:   let result: i32 = *CreateIncomplete() + complete;
   // CHECK:STDERR:                     ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
   // CHECK:STDERR: fail_incomplete_operand_carbon_type.carbon:[[@LINE-8]]:1: note: class was forward declared here [ClassForwardDeclaredHere]
   // CHECK:STDERR: class Incomplete;
   // CHECK:STDERR: ^~~~~~~~~~~~~~~~~
-  // CHECK:STDERR: fail_incomplete_operand_carbon_type.carbon:[[@LINE+4]]:21: note: in `Cpp` operator `AddWith` lookup [InCppOperatorLookup]
+  // CHECK:STDERR: fail_incomplete_operand_carbon_type.carbon:[[@LINE+8]]:21: note: in `Cpp` operator `AddWith` lookup [InCppOperatorLookup]
+  // CHECK:STDERR:   let result: i32 = *CreateIncomplete() + complete;
+  // CHECK:STDERR:                     ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+  // CHECK:STDERR:
+  // CHECK:STDERR: fail_incomplete_operand_carbon_type.carbon:[[@LINE+4]]:21: error: cannot access member of interface `Core.AddWith(Cpp.Complete)` in type `Incomplete` that does not implement that interface [MissingImplInMemberAccess]
   // CHECK:STDERR:   let result: i32 = *CreateIncomplete() + complete;
   // CHECK:STDERR:                     ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
   // CHECK:STDERR:
@@ -837,13 +841,17 @@ import Cpp library "unsupported_in_instantiation.h";
 
 fn F() {
   var supported: Cpp.Supported = Cpp.Supported.Supported();
-  // CHECK:STDERR: fail_import_unsupported_in_instantiation.carbon:[[@LINE+10]]:21: error: semantics TODO: `class with virtual bases` [SemanticsTodo]
+  // CHECK:STDERR: fail_import_unsupported_in_instantiation.carbon:[[@LINE+14]]:21: error: semantics TODO: `class with virtual bases` [SemanticsTodo]
   // CHECK:STDERR:   let result: i32 = supported + Cpp.unsupported;
   // CHECK:STDERR:                     ^~~~~~~~~~~~~~~~~~~~~~~~~~~
-  // CHECK:STDERR: fail_import_unsupported_in_instantiation.carbon:[[@LINE+7]]:21: note: while completing C++ type `Cpp.Unsupported` [InCppTypeCompletion]
+  // CHECK:STDERR: fail_import_unsupported_in_instantiation.carbon:[[@LINE+11]]:21: note: while completing C++ type `Cpp.Unsupported` [InCppTypeCompletion]
   // CHECK:STDERR:   let result: i32 = supported + Cpp.unsupported;
   // CHECK:STDERR:                     ^~~~~~~~~~~~~~~~~~~~~~~~~~~
-  // CHECK:STDERR: fail_import_unsupported_in_instantiation.carbon:[[@LINE+4]]:21: note: in `Cpp` operator `AddWith` lookup [InCppOperatorLookup]
+  // CHECK:STDERR: fail_import_unsupported_in_instantiation.carbon:[[@LINE+8]]:21: note: in `Cpp` operator `AddWith` lookup [InCppOperatorLookup]
+  // CHECK:STDERR:   let result: i32 = supported + Cpp.unsupported;
+  // CHECK:STDERR:                     ^~~~~~~~~~~~~~~~~~~~~~~~~~~
+  // CHECK:STDERR:
+  // CHECK:STDERR: fail_import_unsupported_in_instantiation.carbon:[[@LINE+4]]:21: error: cannot access member of interface `Core.AddWith(Cpp.Unsupported)` in type `Cpp.Supported` that does not implement that interface [MissingImplInMemberAccess]
   // CHECK:STDERR:   let result: i32 = supported + Cpp.unsupported;
   // CHECK:STDERR:                     ^~~~~~~~~~~~~~~~~~~~~~~~~~~
   // CHECK:STDERR:
