@@ -175,11 +175,11 @@ auto LookupCppOperator(Context& context, SemIR::LocId loc_id, Operator op,
     SemIR::TypeId arg_type_id = context.insts().Get(arg_id).type_id();
     if (!RequireCompleteType(context, arg_type_id, loc_id, [&] {
           CARBON_DIAGNOSTIC(
-              IncompletOperandTypeInCppOperatorLookup, Error,
+              IncompleteOperandTypeInCppOperatorLookup, Error,
               "looking up a C++ operator with incomplete operand type {0}",
               SemIR::TypeId);
           return context.emitter().Build(
-              loc_id, IncompletOperandTypeInCppOperatorLookup, arg_type_id);
+              loc_id, IncompleteOperandTypeInCppOperatorLookup, arg_type_id);
         })) {
       return SemIR::ErrorInst::InstId;
     }
