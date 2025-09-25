@@ -112,7 +112,7 @@ class ConstantValueStore {
   explicit ConstantValueStore(ConstantId default_value, const InstStore* insts)
       : default_(default_value),
         values_(insts ? insts->GetIdTag()
-                      : IdTag(0, std::numeric_limits<int32_t>::max())),
+                      : IdTag(),
         insts_(insts) {}
 
   // Returns the constant value of the requested instruction, which is default_
