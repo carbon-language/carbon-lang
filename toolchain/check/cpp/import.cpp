@@ -831,7 +831,8 @@ static auto ImportClassObjectRepr(Context& context, SemIR::ClassId class_id,
     Empty,
     NonEmpty,
     Polymorphic,
-  } base_kind = BaseKind::None;
+  };
+  BaseKind base_kind = BaseKind::None;
 
   // Import bases.
   for (const auto& base : clang_def->bases()) {
