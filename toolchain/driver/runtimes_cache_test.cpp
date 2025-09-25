@@ -324,7 +324,8 @@ TEST_F(RuntimesCacheTest, ConcurrentBuilds) {
       // In rare cases, the initial build will fail to acquire the file lock.
       // The entire build process is designed specifically to be resilient to
       // that so we should still succeed, but now we need to handle building in
-      // this thread as well.
+      // this thread as well. Note that a true failure here may only
+      // show up intermittently.
       auto builder2 = std::get<Runtimes::Builder>(*std::move(build_result2));
       builder2.dir().WriteFileFromString("runtime_file", "build2").Check();
       auto commit2_result = std::move(builder2).Commit();

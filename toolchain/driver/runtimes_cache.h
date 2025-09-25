@@ -207,7 +207,7 @@ class Runtimes {
 //
 // These system-wide paths are only used if the installation contains a digest
 // file that can be used to ensure different builds and installs of Carbon don't
-// incorrectly share cached runtimes. When missing, a temporary directory is
+// incorrectly share a cached runtimes. When missing, a temporary directory is
 // used.
 class Runtimes::Cache {
  public:
