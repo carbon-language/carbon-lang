@@ -803,7 +803,7 @@ fn CreateIncomplete() -> Incomplete*;
 
 fn F() {
   var complete: Cpp.Complete = Cpp.Complete.Complete();
-  // CHECK:STDERR: fail_incomplete_operand_carbon_type.carbon:[[@LINE+10]]:21: error: looking up a C++ operator with incomplete operand type `Incomplete` [IncompletOperandTypeInCppOperatorLookup]
+  // CHECK:STDERR: fail_incomplete_operand_carbon_type.carbon:[[@LINE+10]]:21: error: looking up a C++ operator with incomplete operand type `Incomplete` [IncompleteOperandTypeInCppOperatorLookup]
   // CHECK:STDERR:   let result: i32 = *CreateIncomplete() + complete;
   // CHECK:STDERR:                     ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
   // CHECK:STDERR: fail_incomplete_operand_carbon_type.carbon:[[@LINE-8]]:1: note: class was forward declared here [ClassForwardDeclaredHere]
