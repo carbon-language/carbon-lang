@@ -141,9 +141,7 @@ fn Test(n: Core.IntLiteral()) {
 // CHECK:STDOUT:   %a.ref: %i32 = name_ref a, %a
 // CHECK:STDOUT:   %b.ref: %i32 = name_ref b, %b
 // CHECK:STDOUT:   %And.call: init %i32 = call %And.ref(%a.ref, %b.ref)
-// CHECK:STDOUT:   %.loc11_19.1: %i32 = value_of_initializer %And.call
-// CHECK:STDOUT:   %.loc11_19.2: %i32 = converted %And.call, %.loc11_19.1
-// CHECK:STDOUT:   return %.loc11_19.2
+// CHECK:STDOUT:   return %And.call to %return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {

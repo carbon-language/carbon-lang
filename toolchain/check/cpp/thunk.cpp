@@ -2,7 +2,7 @@
 // Exceptions. See /LICENSE for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
-#include "toolchain/check/cpp_thunk.h"
+#include "toolchain/check/cpp/thunk.h"
 
 #include "clang/AST/GlobalDecl.h"
 #include "clang/AST/Mangle.h"
@@ -16,6 +16,7 @@
 #include "toolchain/check/literal.h"
 #include "toolchain/check/type.h"
 #include "toolchain/check/type_completion.h"
+#include "toolchain/sem_ir/function.h"
 #include "toolchain/sem_ir/ids.h"
 #include "toolchain/sem_ir/typed_insts.h"
 
@@ -34,11 +35,16 @@ static auto GetGlobalDecl(const clang::FunctionDecl* decl)
 // Returns the C++ thunk mangled name given the callee function.
 static auto GenerateThunkMangledName(
     clang::MangleContext& mangle_context,
-    const clang::FunctionDecl& callee_function_decl) -> std::string {
+    const clang::FunctionDecl& callee_function_decl, int num_params)
+    -> std::string {
   RawStringOstream mangled_name_stream;
   mangle_context.mangleName(GetGlobalDecl(&callee_function_decl),
                             mangled_name_stream);
   mangled_name_stream << ".carbon_thunk";
+  if (num_params !=
+      static_cast<int>(callee_function_decl.getNumNonObjectParams())) {
+    mangled_name_stream << num_params;
+  }
 
   return mangled_name_stream.TakeStr();
 }
@@ -89,6 +95,25 @@ auto IsCppThunkRequired(Context& context, const SemIR::Function& function)
   // we don't generate a thunk if any relevant type is erroneous.
   bool thunk_required = false;
 
+  const auto& decl_info = context.clang_decls().Get(function.clang_decl_id);
+  const auto* decl = cast<clang::FunctionDecl>(decl_info.key.decl);
+  if (decl_info.key.num_params !=
+      static_cast<int>(decl->getNumNonObjectParams())) {
+    // We require a thunk if the number of parameters we want isn't all of them.
+    // This happens if default arguments are in use, or (eventually) when
+    // calling a varargs function.
+    thunk_required = true;
+  } else {
+    // We require a thunk if any parameter is of reference type, even if the
+    // corresponding SemIR function has an acceptable parameter type.
+    // TODO: We should be able to avoid thunks for reference parameters.
+    for (auto* param : decl->parameters()) {
+      if (param->getType()->isReferenceType()) {
+        thunk_required = true;
+      }
+    }
+  }
+
   SemIR::TypeId return_type_id =
       function.GetDeclaredReturnType(context.sem_ir());
   if (return_type_id.has_value()) {
@@ -135,7 +160,9 @@ static auto IsSimpleAbiType(clang::ASTContext& ast_context,
 namespace {
 // Information about the callee of a thunk.
 struct CalleeFunctionInfo {
-  explicit CalleeFunctionInfo(clang::FunctionDecl* decl) : decl(decl) {
+  explicit CalleeFunctionInfo(clang::FunctionDecl* decl, int num_params)
+      : decl(decl),
+        num_params(num_params + decl->hasCXXExplicitFunctionObjectParameter()) {
     auto& ast_context = decl->getASTContext();
     const auto* method_decl = dyn_cast<clang::CXXMethodDecl>(decl);
     bool is_ctor = isa<clang::CXXConstructorDecl>(decl);
@@ -162,7 +189,7 @@ struct CalleeFunctionInfo {
 
   // Returns the number of parameters the thunk should have.
   auto num_thunk_params() const -> unsigned {
-    return has_implicit_object_parameter() + decl->getNumParams() +
+    return has_implicit_object_parameter() + num_params +
            !has_simple_return_type;
   }
 
@@ -176,11 +203,16 @@ struct CalleeFunctionInfo {
   // the address of the return value.
   auto GetThunkReturnParamIndex() const -> unsigned {
     CARBON_CHECK(!has_simple_return_type);
-    return has_implicit_object_parameter() + decl->getNumParams();
+    return has_implicit_object_parameter() + num_params;
   }
 
   // The callee function.
   clang::FunctionDecl* decl;
+
+  // The number of explicit parameters to import. This may be less than the
+  // number of parameters that the function has if default arguments are being
+  // used.
+  int num_params;
 
   // Whether the callee has an object parameter, which might be explicit or
   // implicit.
@@ -217,7 +249,8 @@ static auto GetThunkParameterType(clang::ASTContext& ast_context,
   if (IsSimpleAbiType(ast_context, callee_type)) {
     return callee_type;
   }
-  return GetNonnullType(ast_context, ast_context.getPointerType(callee_type));
+  return GetNonnullType(ast_context, ast_context.getPointerType(
+                                         callee_type.getNonReferenceType()));
 }
 
 // Creates the thunk parameter types given the callee function.
@@ -231,12 +264,11 @@ static auto BuildThunkParameterTypes(clang::ASTContext& ast_context,
         GetNonnullType(ast_context, callee_info.implicit_this_type));
   }
 
-  for (const clang::ParmVarDecl* callee_param :
-       callee_info.decl->parameters()) {
-    // TODO: We should use the type from the function signature, not the type of
-    // the parameter here.
+  const auto* function_type =
+      callee_info.decl->getType()->castAs<clang::FunctionProtoType>();
+  for (int i : llvm::seq(callee_info.num_params)) {
     thunk_param_types.push_back(
-        GetThunkParameterType(ast_context, callee_param->getType()));
+        GetThunkParameterType(ast_context, function_type->getParamType(i)));
   }
 
   if (!callee_info.has_simple_return_type) {
@@ -257,7 +289,7 @@ static auto BuildThunkParameters(clang::ASTContext& ast_context,
   clang::SourceLocation clang_loc = callee_info.decl->getLocation();
 
   const auto* thunk_function_proto_type =
-      thunk_function_decl->getFunctionType()->getAs<clang::FunctionProtoType>();
+      thunk_function_decl->getType()->castAs<clang::FunctionProtoType>();
 
   llvm::SmallVector<clang::ParmVarDecl*> thunk_params;
   unsigned num_thunk_params = thunk_function_decl->getNumParams();
@@ -272,7 +304,7 @@ static auto BuildThunkParameters(clang::ASTContext& ast_context,
     thunk_params.push_back(thunk_param);
   }
 
-  for (unsigned i : llvm::seq(callee_info.decl->getNumParams())) {
+  for (int i : llvm::seq(callee_info.num_params)) {
     clang::ParmVarDecl* thunk_param = clang::ParmVarDecl::Create(
         ast_context, thunk_function_decl, clang_loc, clang_loc,
         callee_info.decl->getParamDecl(i)->getIdentifier(),
@@ -331,9 +363,14 @@ static auto CreateThunkFunctionDecl(
   // Set asm("<callee function mangled name>.carbon_thunk").
   thunk_function_decl->addAttr(clang::AsmLabelAttr::CreateImplicit(
       ast_context,
-      GenerateThunkMangledName(*context.sem_ir().clang_mangle_context(),
-                               *callee_info.decl),
+      GenerateThunkMangledName(
+          *context.sem_ir().clang_mangle_context(), *callee_info.decl,
+          callee_info.num_params - callee_info.has_explicit_object_parameter()),
       clang_loc));
+
+  // Set function declaration type source info.
+  thunk_function_decl->setTypeSourceInfo(ast_context.getTrivialTypeSourceInfo(
+      thunk_function_decl->getType(), clang_loc));
 
   return thunk_function_decl;
 }
@@ -354,13 +391,24 @@ static auto BuildThunkParamRef(clang::Sema& sema,
       thunk_param, thunk_param->getType().getNonReferenceType(),
       clang::VK_LValue, clang_loc);
   if (!type.isNull() && thunk_param->getType() != type) {
-    // TODO: Consider inserting a cast to an rvalue. Note that we currently
-    // pass pointers to non-temporary objects as the argument when calling a
-    // thunk, so we'll need to either change that or generate different thunks
-    // depending on whether we're moving from each parameter.
     clang::ExprResult deref_result =
         sema.BuildUnaryOp(nullptr, clang_loc, clang::UO_Deref, call_arg);
     CARBON_CHECK(deref_result.isUsable());
+
+    // Cast to an rvalue when initializing an rvalue reference. The validity of
+    // the initialization of the reference should be validated by the caller of
+    // the thunk.
+    //
+    // TODO: Consider inserting a cast to an rvalue in more cases. Note that we
+    // currently pass pointers to non-temporary objects as the argument when
+    // calling a thunk, so we'll need to either change that or generate
+    // different thunks depending on whether we're moving from each parameter.
+    if (type->isRValueReferenceType()) {
+      deref_result = clang::ImplicitCastExpr::Create(
+          sema.getASTContext(), deref_result.get()->getType(), clang::CK_NoOp,
+          deref_result.get(), nullptr, clang::ExprValueKind::VK_XValue,
+          clang::FPOptionsOverride());
+    }
     call_arg = deref_result.get();
   }
   return call_arg;
@@ -388,10 +436,9 @@ static auto BuildCalleeArgs(clang::Sema& sema,
   // The object parameter is always passed as `self`, not in the callee argument
   // list, so the first argument corresponds to the second parameter if there is
   // an explicit object parameter and the first parameter otherwise.
-  unsigned first_param = callee_info.has_explicit_object_parameter();
-  unsigned num_params = callee_info.decl->getNumParams();
-  call_args.reserve(num_params - first_param);
-  for (unsigned callee_index : llvm::seq(first_param, num_params)) {
+  int first_param = callee_info.has_explicit_object_parameter();
+  call_args.reserve(callee_info.num_params - first_param);
+  for (unsigned callee_index : llvm::seq(first_param, callee_info.num_params)) {
     call_args.push_back(BuildParamRefForCalleeArg(sema, thunk_function_decl,
                                                   callee_info, callee_index));
   }
@@ -490,13 +537,14 @@ static auto BuildThunkBody(clang::Sema& sema,
 auto BuildCppThunk(Context& context, const SemIR::Function& callee_function)
     -> clang::FunctionDecl* {
   clang::FunctionDecl* callee_function_decl =
-      context.sem_ir()
-          .clang_decls()
+      context.clang_decls()
           .Get(callee_function.clang_decl_id)
-          .decl->getAsFunction();
+          .key.decl->getAsFunction();
   CARBON_CHECK(callee_function_decl);
 
-  CalleeFunctionInfo callee_info(callee_function_decl);
+  CalleeFunctionInfo callee_info(
+      callee_function_decl,
+      context.inst_blocks().Get(callee_function.param_patterns_id).size());
 
   // Build the thunk function declaration.
   auto thunk_param_types =
@@ -505,7 +553,7 @@ auto BuildCppThunk(Context& context, const SemIR::Function& callee_function)
       CreateThunkFunctionDecl(context, callee_info, thunk_param_types);
 
   // Build the thunk function body.
-  clang::Sema& sema = context.sem_ir().clang_ast_unit()->getSema();
+  clang::Sema& sema = context.clang_sema();
   clang::Sema::ContextRAII context_raii(sema, thunk_function_decl);
   sema.ActOnStartOfFunctionDef(nullptr, thunk_function_decl);
   clang::StmtResult body =
@@ -526,7 +574,7 @@ auto PerformCppThunkCall(Context& context, SemIR::LocId loc_id,
   auto callee_function_params =
       context.inst_blocks().Get(callee_function.call_params_id);
 
-  auto thunk_callee = GetCalleeFunction(context.sem_ir(), thunk_callee_id);
+  auto thunk_callee = GetCalleeAsFunction(context.sem_ir(), thunk_callee_id);
   auto& thunk_function = context.functions().Get(thunk_callee.function_id);
   auto thunk_function_params =
       context.inst_blocks().Get(thunk_function.call_params_id);
@@ -564,7 +612,8 @@ auto PerformCppThunkCall(Context& context, SemIR::LocId loc_id,
   // We assume that the call parameters exactly match the parameter patterns for
   // both the thunk and the callee. This is currently guaranteed because we only
   // create trivial *ParamPatterns when importing a C++ function.
-  CARBON_CHECK(num_callee_args == callee_function_params.size());
+  CARBON_CHECK(num_callee_args == callee_function_params.size(), "{0} != {1}",
+               num_callee_args, callee_function_params.size());
   CARBON_CHECK(num_callee_args == callee_arg_ids.size());
   CARBON_CHECK(num_thunk_args == thunk_function_params.size());
 

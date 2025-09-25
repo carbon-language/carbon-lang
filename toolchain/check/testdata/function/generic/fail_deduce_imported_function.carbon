@@ -53,10 +53,10 @@ fn B() {
 // CHECK:STDOUT:   %type: type = facet_type <type> [concrete]
 // CHECK:STDOUT:   %.Self: %type = bind_symbolic_name .Self [symbolic_self]
 // CHECK:STDOUT:   %T: %Z.type = bind_symbolic_name T, 0 [symbolic]
-// CHECK:STDOUT:   %pattern_type.6ea: type = pattern_type %Z.type [concrete]
+// CHECK:STDOUT:   %pattern_type.4a0: type = pattern_type %Z.type [concrete]
 // CHECK:STDOUT:   %T.as_type: type = facet_access_type %T [symbolic]
 // CHECK:STDOUT:   %struct_type.a: type = struct_type {.a: %T.as_type} [symbolic]
-// CHECK:STDOUT:   %pattern_type.559: type = pattern_type %struct_type.a [symbolic]
+// CHECK:STDOUT:   %pattern_type.ba1: type = pattern_type %struct_type.a [symbolic]
 // CHECK:STDOUT:   %A.type: type = fn_type @A [concrete]
 // CHECK:STDOUT:   %A: %A.type = struct_value () [concrete]
 // CHECK:STDOUT:   %require_complete: <witness> = require_complete_type %struct_type.a [symbolic]
@@ -69,9 +69,9 @@ fn B() {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Z.decl: type = interface_decl @Z [concrete = constants.%Z.type] {} {}
 // CHECK:STDOUT:   %A.decl: %A.type = fn_decl @A [concrete = constants.%A] {
-// CHECK:STDOUT:     %T.patt: %pattern_type.6ea = symbolic_binding_pattern T, 0 [concrete]
-// CHECK:STDOUT:     %x.patt: @A.%pattern_type (%pattern_type.559) = binding_pattern x [concrete]
-// CHECK:STDOUT:     %x.param_patt: @A.%pattern_type (%pattern_type.559) = value_param_pattern %x.patt, call_param0 [concrete]
+// CHECK:STDOUT:     %T.patt: %pattern_type.4a0 = symbolic_binding_pattern T, 0 [concrete]
+// CHECK:STDOUT:     %x.patt: @A.%pattern_type (%pattern_type.ba1) = binding_pattern x [concrete]
+// CHECK:STDOUT:     %x.param_patt: @A.%pattern_type (%pattern_type.ba1) = value_param_pattern %x.patt, call_param0 [concrete]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %.loc4_10: type = splice_block %Z.ref [concrete = constants.%Z.type] {
 // CHECK:STDOUT:       %.Self: %type = bind_symbolic_name .Self [symbolic_self = constants.%.Self]
@@ -101,7 +101,7 @@ fn B() {
 // CHECK:STDOUT:   %T.loc4_6.1: %Z.type = bind_symbolic_name T, 0 [symbolic = %T.loc4_6.1 (constants.%T)]
 // CHECK:STDOUT:   %T.as_type.loc4_21.1: type = facet_access_type %T.loc4_6.1 [symbolic = %T.as_type.loc4_21.1 (constants.%T.as_type)]
 // CHECK:STDOUT:   %struct_type.a.loc4_22.1: type = struct_type {.a: @A.%T.as_type.loc4_21.1 (%T.as_type)} [symbolic = %struct_type.a.loc4_22.1 (constants.%struct_type.a)]
-// CHECK:STDOUT:   %pattern_type: type = pattern_type %struct_type.a.loc4_22.1 [symbolic = %pattern_type (constants.%pattern_type.559)]
+// CHECK:STDOUT:   %pattern_type: type = pattern_type %struct_type.a.loc4_22.1 [symbolic = %pattern_type (constants.%pattern_type.ba1)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %require_complete: <witness> = require_complete_type %struct_type.a.loc4_22.1 [symbolic = %require_complete (constants.%require_complete)]
@@ -116,7 +116,7 @@ fn B() {
 // CHECK:STDOUT:   %T.loc4_6.1 => constants.%T
 // CHECK:STDOUT:   %T.as_type.loc4_21.1 => constants.%T.as_type
 // CHECK:STDOUT:   %struct_type.a.loc4_22.1 => constants.%struct_type.a
-// CHECK:STDOUT:   %pattern_type => constants.%pattern_type.559
+// CHECK:STDOUT:   %pattern_type => constants.%pattern_type.ba1
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- fail_deduce_imported_function.carbon
@@ -126,10 +126,10 @@ fn B() {
 // CHECK:STDOUT:   %.Self: %type = bind_symbolic_name .Self [symbolic_self]
 // CHECK:STDOUT:   %Z.type: type = facet_type <@Z> [concrete]
 // CHECK:STDOUT:   %T: %Z.type = bind_symbolic_name T, 0 [symbolic]
-// CHECK:STDOUT:   %pattern_type.e5e: type = pattern_type %Z.type [concrete]
+// CHECK:STDOUT:   %pattern_type.819: type = pattern_type %Z.type [concrete]
 // CHECK:STDOUT:   %T.as_type: type = facet_access_type %T [symbolic]
 // CHECK:STDOUT:   %struct_type.a: type = struct_type {.a: %T.as_type} [symbolic]
-// CHECK:STDOUT:   %pattern_type.a66: type = pattern_type %struct_type.a [symbolic]
+// CHECK:STDOUT:   %pattern_type.143: type = pattern_type %struct_type.a [symbolic]
 // CHECK:STDOUT:   %A.type.00d: type = fn_type @A.loc4 [concrete]
 // CHECK:STDOUT:   %A.1db: %A.type.00d = struct_value () [concrete]
 // CHECK:STDOUT:   %require_complete: <witness> = require_complete_type %struct_type.a [symbolic]
@@ -148,9 +148,9 @@ fn B() {
 // CHECK:STDOUT:     import Lib//default
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Lib.Z: type = import_ref Lib//default, Z, loaded [concrete = constants.%Z.type]
-// CHECK:STDOUT:   %Lib.import_ref.9e6 = import_ref Lib//default, inst17 [no loc], unloaded
+// CHECK:STDOUT:   %Lib.import_ref.362 = import_ref Lib//default, inst17 [no loc], unloaded
 // CHECK:STDOUT:   %Lib.A: %A.type.fad = import_ref Lib//default, A, loaded [concrete = constants.%A.7a0]
-// CHECK:STDOUT:   %Lib.import_ref.1b2: %Z.type = import_ref Lib//default, loc4_6, loaded [symbolic = @A.1.%T (constants.%T)]
+// CHECK:STDOUT:   %Lib.import_ref.c90: %Z.type = import_ref Lib//default, loc4_6, loaded [symbolic = @A.1.%T (constants.%T)]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -161,9 +161,9 @@ fn B() {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Lib.import = import Lib
 // CHECK:STDOUT:   %A.decl: %A.type.00d = fn_decl @A.loc4 [concrete = constants.%A.1db] {
-// CHECK:STDOUT:     %T.patt: %pattern_type.e5e = symbolic_binding_pattern T, 0 [concrete]
-// CHECK:STDOUT:     %x.patt: @A.loc4.%pattern_type (%pattern_type.a66) = binding_pattern x [concrete]
-// CHECK:STDOUT:     %x.param_patt: @A.loc4.%pattern_type (%pattern_type.a66) = value_param_pattern %x.patt, call_param0 [concrete]
+// CHECK:STDOUT:     %T.patt: %pattern_type.819 = symbolic_binding_pattern T, 0 [concrete]
+// CHECK:STDOUT:     %x.patt: @A.loc4.%pattern_type (%pattern_type.143) = binding_pattern x [concrete]
+// CHECK:STDOUT:     %x.param_patt: @A.loc4.%pattern_type (%pattern_type.143) = value_param_pattern %x.patt, call_param0 [concrete]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %.loc4_13: type = splice_block %Z.ref [concrete = constants.%Z.type] {
 // CHECK:STDOUT:       %.Self: %type = bind_symbolic_name .Self [symbolic_self = constants.%.Self]
@@ -185,7 +185,7 @@ fn B() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: interface @Z [from "lib.carbon"] {
 // CHECK:STDOUT: !members:
-// CHECK:STDOUT:   .Self = imports.%Lib.import_ref.9e6
+// CHECK:STDOUT:   .Self = imports.%Lib.import_ref.362
 // CHECK:STDOUT:   witness = ()
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -193,7 +193,7 @@ fn B() {
 // CHECK:STDOUT:   %T.loc4_6.1: %Z.type = bind_symbolic_name T, 0 [symbolic = %T.loc4_6.1 (constants.%T)]
 // CHECK:STDOUT:   %T.as_type.loc4_25.1: type = facet_access_type %T.loc4_6.1 [symbolic = %T.as_type.loc4_25.1 (constants.%T.as_type)]
 // CHECK:STDOUT:   %struct_type.a.loc4_26.1: type = struct_type {.a: @A.loc4.%T.as_type.loc4_25.1 (%T.as_type)} [symbolic = %struct_type.a.loc4_26.1 (constants.%struct_type.a)]
-// CHECK:STDOUT:   %pattern_type: type = pattern_type %struct_type.a.loc4_26.1 [symbolic = %pattern_type (constants.%pattern_type.a66)]
+// CHECK:STDOUT:   %pattern_type: type = pattern_type %struct_type.a.loc4_26.1 [symbolic = %pattern_type (constants.%pattern_type.143)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %require_complete: <witness> = require_complete_type %struct_type.a.loc4_26.1 [symbolic = %require_complete (constants.%require_complete)]
@@ -216,11 +216,11 @@ fn B() {
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic fn @A.1(imports.%Lib.import_ref.1b2: %Z.type) [from "lib.carbon"] {
+// CHECK:STDOUT: generic fn @A.1(imports.%Lib.import_ref.c90: %Z.type) [from "lib.carbon"] {
 // CHECK:STDOUT:   %T: %Z.type = bind_symbolic_name T, 0 [symbolic = %T (constants.%T)]
 // CHECK:STDOUT:   %T.as_type: type = facet_access_type %T [symbolic = %T.as_type (constants.%T.as_type)]
 // CHECK:STDOUT:   %struct_type.a: type = struct_type {.a: @A.1.%T.as_type (%T.as_type)} [symbolic = %struct_type.a (constants.%struct_type.a)]
-// CHECK:STDOUT:   %pattern_type: type = pattern_type %struct_type.a [symbolic = %pattern_type (constants.%pattern_type.a66)]
+// CHECK:STDOUT:   %pattern_type: type = pattern_type %struct_type.a [symbolic = %pattern_type (constants.%pattern_type.143)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %require_complete: <witness> = require_complete_type %struct_type.a [symbolic = %require_complete (constants.%require_complete)]
@@ -232,13 +232,13 @@ fn B() {
 // CHECK:STDOUT:   %T.loc4_6.1 => constants.%T
 // CHECK:STDOUT:   %T.as_type.loc4_25.1 => constants.%T.as_type
 // CHECK:STDOUT:   %struct_type.a.loc4_26.1 => constants.%struct_type.a
-// CHECK:STDOUT:   %pattern_type => constants.%pattern_type.a66
+// CHECK:STDOUT:   %pattern_type => constants.%pattern_type.143
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @A.1(constants.%T) {
 // CHECK:STDOUT:   %T => constants.%T
 // CHECK:STDOUT:   %T.as_type => constants.%T.as_type
 // CHECK:STDOUT:   %struct_type.a => constants.%struct_type.a
-// CHECK:STDOUT:   %pattern_type => constants.%pattern_type.a66
+// CHECK:STDOUT:   %pattern_type => constants.%pattern_type.143
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

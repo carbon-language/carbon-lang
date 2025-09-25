@@ -2,7 +2,7 @@
 // Exceptions. See /LICENSE for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
-// INCLUDE-FILE: toolchain/testing/testdata/min_prelude/facet_types.carbon
+// INCLUDE-FILE: toolchain/testing/testdata/min_prelude/convert.carbon
 //
 // AUTOUPDATE
 // TIP: To test this file alone, run:
@@ -103,14 +103,14 @@ class D(T:! J) {
   var c: C(T)*;
 }
 
-fn F(T:! I & J) -> T.(I.X) {
+fn F(T:! I & J) -> T.(I.X)* {
   var x: C(T);
   var y: D(T);
   // The witness for `I` found here directly, and inside `D` from a FacetValue
   // come from the same facet, the `T` binding in the params of F, so they
   // should be compatible.
   y.c = &x;
-  return (*y.c).b;
+  return &(*y.c).b;
 }
 
 // --- todo_fail_facet_value_rewrite_incompatible_with_final_impl.carbon

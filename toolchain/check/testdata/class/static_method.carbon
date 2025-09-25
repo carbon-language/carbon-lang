@@ -35,7 +35,7 @@ fn Run() -> i32 {
 // CHECK:STDOUT:   %Class.F: %Class.F.type = struct_value () [concrete]
 // CHECK:STDOUT:   %Destroy.type: type = facet_type <@Destroy> [concrete]
 // CHECK:STDOUT:   %pattern_type.f6d: type = pattern_type auto [concrete]
-// CHECK:STDOUT:   %Destroy.impl_witness.73b: <witness> = impl_witness @Class.%Destroy.impl_witness_table [concrete]
+// CHECK:STDOUT:   %Destroy.impl_witness.955: <witness> = impl_witness @Class.%Destroy.impl_witness_table [concrete]
 // CHECK:STDOUT:   %ptr.e71: type = ptr_type %Class [concrete]
 // CHECK:STDOUT:   %pattern_type.796: type = pattern_type %ptr.e71 [concrete]
 // CHECK:STDOUT:   %Class.as.Destroy.impl.Op.type: type = fn_type @Class.as.Destroy.impl.Op [concrete]
@@ -108,7 +108,7 @@ fn Run() -> i32 {
 // CHECK:STDOUT:   %Self.ref: type = name_ref Self, constants.%Class [concrete = constants.%Class]
 // CHECK:STDOUT:   impl_decl @Class.as.Destroy.impl [concrete] {} {}
 // CHECK:STDOUT:   %Destroy.impl_witness_table = impl_witness_table (@Class.as.Destroy.impl.%Class.as.Destroy.impl.Op.decl), @Class.as.Destroy.impl [concrete]
-// CHECK:STDOUT:   %Destroy.impl_witness: <witness> = impl_witness %Destroy.impl_witness_table [concrete = constants.%Destroy.impl_witness.73b]
+// CHECK:STDOUT:   %Destroy.impl_witness: <witness> = impl_witness %Destroy.impl_witness_table [concrete = constants.%Destroy.impl_witness.955]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness constants.%empty_struct_type [concrete = constants.%complete_type.357]
 // CHECK:STDOUT:   complete_type_witness = %complete_type
 // CHECK:STDOUT:
@@ -133,11 +133,9 @@ fn Run() -> i32 {
 // CHECK:STDOUT:   %c.ref: ref %Class = name_ref c, %c
 // CHECK:STDOUT:   %F.ref: %Class.F.type = name_ref F, @Class.%Class.F.decl [concrete = constants.%Class.F]
 // CHECK:STDOUT:   %Class.F.call: init %i32 = call %F.ref()
-// CHECK:STDOUT:   %.loc21_15.1: %i32 = value_of_initializer %Class.F.call
-// CHECK:STDOUT:   %.loc21_15.2: %i32 = converted %Class.F.call, %.loc21_15.1
 // CHECK:STDOUT:   %Class.as.Destroy.impl.Op.bound: <bound method> = bound_method %c.var, constants.%Class.as.Destroy.impl.Op
 // CHECK:STDOUT:   %addr: %ptr.e71 = addr_of %c.var
 // CHECK:STDOUT:   %Class.as.Destroy.impl.Op.call: init %empty_tuple.type = call %Class.as.Destroy.impl.Op.bound(%addr)
-// CHECK:STDOUT:   return %.loc21_15.2
+// CHECK:STDOUT:   return %Class.F.call to %return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

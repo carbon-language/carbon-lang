@@ -5,7 +5,7 @@
 #include "common/filesystem.h"
 
 #include <fcntl.h>
-#include <time.h>  // NOLINT(modernize-deprecated-headers)
+#include <time.h>
 #include <unistd.h>
 
 #include <chrono>

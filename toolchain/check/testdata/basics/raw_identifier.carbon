@@ -30,6 +30,7 @@ fn C(r#if: ()) -> () {
 // CHECK:STDOUT:   %pattern_type: type = pattern_type %empty_tuple.type [concrete]
 // CHECK:STDOUT:   %A.type: type = fn_type @A [concrete]
 // CHECK:STDOUT:   %A: %A.type = struct_value () [concrete]
+// CHECK:STDOUT:   %empty_tuple: %empty_tuple.type = tuple_value () [concrete]
 // CHECK:STDOUT:   %B.type: type = fn_type @B [concrete]
 // CHECK:STDOUT:   %B: %B.type = struct_value () [concrete]
 // CHECK:STDOUT:   %C.type: type = fn_type @C [concrete]
@@ -98,18 +99,24 @@ fn C(r#if: ()) -> () {
 // CHECK:STDOUT: fn @A(%n.param: %empty_tuple.type) -> %empty_tuple.type {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %n.ref: %empty_tuple.type = name_ref n, %n
-// CHECK:STDOUT:   return %n.ref
+// CHECK:STDOUT:   %.loc15_10: init %empty_tuple.type = tuple_init () to %return [concrete = constants.%empty_tuple]
+// CHECK:STDOUT:   %.loc15_13: init %empty_tuple.type = converted %n.ref, %.loc15_10 [concrete = constants.%empty_tuple]
+// CHECK:STDOUT:   return %.loc15_13 to %return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @B(%n.param: %empty_tuple.type) -> %empty_tuple.type {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %n.ref: %empty_tuple.type = name_ref n, %n
-// CHECK:STDOUT:   return %n.ref
+// CHECK:STDOUT:   %.loc19_10: init %empty_tuple.type = tuple_init () to %return [concrete = constants.%empty_tuple]
+// CHECK:STDOUT:   %.loc19_11: init %empty_tuple.type = converted %n.ref, %.loc19_10 [concrete = constants.%empty_tuple]
+// CHECK:STDOUT:   return %.loc19_11 to %return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @C(%if.param: %empty_tuple.type) -> %empty_tuple.type {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %if.ref: %empty_tuple.type = name_ref r#if, %if
-// CHECK:STDOUT:   return %if.ref
+// CHECK:STDOUT:   %.loc23_10: init %empty_tuple.type = tuple_init () to %return [concrete = constants.%empty_tuple]
+// CHECK:STDOUT:   %.loc23_14: init %empty_tuple.type = converted %if.ref, %.loc23_10 [concrete = constants.%empty_tuple]
+// CHECK:STDOUT:   return %.loc23_14 to %return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

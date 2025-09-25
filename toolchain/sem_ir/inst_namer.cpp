@@ -70,7 +70,7 @@ class InstNamer::NamingContext {
     AddInstName((inst_namer_->MaybePushEntity(id) + suffix).str());
   }
 
-  auto sem_ir() -> const SemIR::File& { return *inst_namer_->sem_ir_; }
+  auto sem_ir() -> const File& { return *inst_namer_->sem_ir_; }
 
   InstNamer* inst_namer_;
   ScopeId scope_id_;
@@ -139,6 +139,9 @@ auto InstNamer::GetScopeIdOffset(ScopeIdTypeEnum id_enum) const -> int {
       [[fallthrough]];
     case ScopeIdTypeEnum::For<VtableId>:
       offset += sem_ir_->functions().size();
+      [[fallthrough]];
+    case ScopeIdTypeEnum::For<CppOverloadSetId>:
+      offset += sem_ir_->cpp_overload_sets().size();
       [[fallthrough]];
     case ScopeIdTypeEnum::For<FunctionId>:
       offset += sem_ir_->impls().size();
@@ -756,12 +759,12 @@ auto InstNamer::NamingContext::NameInst() -> void {
       return;
     }
     case CARBON_KIND(Call inst): {
-      auto callee_function = GetCalleeFunction(sem_ir(), inst.callee_id);
-      if (!callee_function.function_id.has_value()) {
-        AddInstName("");
+      auto callee = GetCallee(sem_ir(), inst.callee_id);
+      if (auto* fn = std::get_if<CalleeFunction>(&callee)) {
+        AddEntityNameAndMaybePush(fn->function_id, ".call");
         return;
       }
-      AddEntityNameAndMaybePush(callee_function.function_id, ".call");
+      AddInstName("");
       return;
     }
     case CARBON_KIND(ClassDecl inst): {
@@ -771,7 +774,7 @@ auto InstNamer::NamingContext::NameInst() -> void {
       return;
     }
     case CARBON_KIND(ClassType inst): {
-      if (auto literal_info = NumericTypeLiteralInfo::ForType(sem_ir(), inst);
+      if (auto literal_info = TypeLiteralInfo::ForType(sem_ir(), inst);
           literal_info.is_valid()) {
         AddInstName(literal_info.GetLiteralAsString(sem_ir()));
       } else {
@@ -827,6 +830,7 @@ auto InstNamer::NamingContext::NameInst() -> void {
       const auto& facet_type_info =
           sem_ir().facet_types().Get(inst.facet_type_id);
       bool has_where = facet_type_info.other_requirements ||
+                       !facet_type_info.builtin_constraint_mask.empty() ||
                        !facet_type_info.self_impls_constraints.empty() ||
                        !facet_type_info.rewrite_constraints.empty();
       if (facet_type_info.extend_constraints.size() == 1) {

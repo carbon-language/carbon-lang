@@ -11,6 +11,7 @@ namespace Carbon::Check {
 
 // Constructs `impl <class> as Destroy { ... }`, with appropriate implementation
 // based on the `destroy` function and members.
+// TODO: Also generate the impl for `partial T` for non-final types.
 auto MakeClassDestroyImpl(Context& context, SemIR::ClassId class_id) -> void;
 
 }  // namespace Carbon::Check

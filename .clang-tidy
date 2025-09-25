@@ -22,6 +22,7 @@ Checks:
   - '-misc-const-correctness'
   - '-misc-include-cleaner'
   - '-misc-use-anonymous-namespace'
+  - '-modernize-deprecated-headers'
   - '-modernize-return-braced-init-list'
   - '-modernize-use-default-member-init'
   - '-modernize-use-integer-sign-comparison'

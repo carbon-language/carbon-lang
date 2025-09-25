@@ -617,7 +617,10 @@ static auto GetConstantFacetTypeInfo(EvalContext& eval_context,
                                      SemIR::LocId loc_id,
                                      const SemIR::FacetTypeInfo& orig,
                                      Phase* phase) -> SemIR::FacetTypeInfo {
-  SemIR::FacetTypeInfo info;
+  SemIR::FacetTypeInfo info = {
+      .builtin_constraint_mask = orig.builtin_constraint_mask,
+      // TODO: Process other requirements.
+      .other_requirements = orig.other_requirements};
 
   info.extend_constraints.reserve(orig.extend_constraints.size());
   for (const auto& interface : orig.extend_constraints) {
@@ -661,9 +664,6 @@ static auto GetConstantFacetTypeInfo(EvalContext& eval_context,
     rewrite = {.lhs_id = lhs_id, .rhs_id = rhs_id};
   }
 
-  // TODO: Process other requirements.
-  info.other_requirements = orig.other_requirements;
-
   info.Canonicalize();
   return info;
 }
@@ -674,7 +674,6 @@ static auto GetConstantValue(EvalContext& eval_context,
   SemIR::FacetTypeInfo info = GetConstantFacetTypeInfo(
       eval_context, SemIR::LocId::None,
       eval_context.facet_types().Get(facet_type_id), phase);
-  // TODO: Return `facet_type_id` if we can detect nothing has changed.
   return eval_context.facet_types().Add(info);
 }
 
@@ -1646,7 +1645,8 @@ static auto MakeConstantForBuiltinCall(EvalContext& eval_context,
     case SemIR::BuiltinFunctionKind::None:
       CARBON_FATAL("Not a builtin function.");
 
-    case SemIR::BuiltinFunctionKind::NoOp: {
+    case SemIR::BuiltinFunctionKind::NoOp:
+    case SemIR::BuiltinFunctionKind::TypeAggregateDestroy: {
       // Return an empty tuple value.
       auto type_id = GetTupleType(eval_context.context(), {});
       return MakeConstantResult(
@@ -1654,6 +1654,22 @@ static auto MakeConstantForBuiltinCall(EvalContext& eval_context,
           SemIR::TupleValue{.type_id = type_id,
                             .elements_id = SemIR::InstBlockId::Empty},
           phase);
+    }
+
+    case SemIR::BuiltinFunctionKind::TypeCanAggregateDestroy: {
+      CARBON_CHECK(arg_ids.empty());
+      auto id = eval_context.facet_types().Add(
+          {.builtin_constraint_mask =
+               SemIR::BuiltinConstraintMask::TypeCanAggregateDestroy});
+      return MakeConstantResult(
+          eval_context.context(),
+          SemIR::FacetType{.type_id = SemIR::TypeType::TypeId,
+                           .facet_type_id = id},
+          phase);
+    }
+
+    case SemIR::BuiltinFunctionKind::PrimitiveCopy: {
+      return context.constant_values().Get(arg_ids[0]);
     }
 
     case SemIR::BuiltinFunctionKind::PrintChar:
@@ -1923,14 +1939,12 @@ static auto MakeConstantForCall(EvalContext& eval_context,
   bool has_constant_callee = ReplaceFieldWithConstantValue(
       eval_context, &call, &SemIR::Call::callee_id, &phase);
 
-  auto callee_function =
-      SemIR::GetCalleeFunction(eval_context.sem_ir(), call.callee_id);
+  auto callee = SemIR::GetCallee(eval_context.sem_ir(), call.callee_id);
   auto builtin_kind = SemIR::BuiltinFunctionKind::None;
-  if (callee_function.function_id.has_value()) {
+  if (auto* fn = std::get_if<SemIR::CalleeFunction>(&callee)) {
     // Calls to builtins might be constant.
-    builtin_kind = eval_context.functions()
-                       .Get(callee_function.function_id)
-                       .builtin_function_kind();
+    builtin_kind =
+        eval_context.functions().Get(fn->function_id).builtin_function_kind();
     if (builtin_kind == SemIR::BuiltinFunctionKind::None) {
       // TODO: Eventually we'll want to treat some kinds of non-builtin
       // functions as producing constants.
@@ -1961,12 +1975,11 @@ static auto MakeConstantForCall(EvalContext& eval_context,
                         "non-constant call to compile-time-only function");
       CARBON_DIAGNOSTIC(CompTimeOnlyFunctionHere, Note,
                         "compile-time-only function declared here");
+      const auto& function = eval_context.functions().Get(
+          std::get<SemIR::CalleeFunction>(callee).function_id);
       eval_context.emitter()
           .Build(inst_id, NonConstantCallToCompTimeOnlyFunction)
-          .Note(eval_context.functions()
-                    .Get(callee_function.function_id)
-                    .latest_decl_id(),
-                CompTimeOnlyFunctionHere)
+          .Note(function.latest_decl_id(), CompTimeOnlyFunctionHere)
           .Emit();
     }
     return SemIR::ConstantId::NotConstant;
@@ -2179,7 +2192,7 @@ auto TryEvalTypedInst<SemIR::WhereExpr>(EvalContext& eval_context,
   auto typed_inst = inst.As<SemIR::WhereExpr>();
 
   Phase phase = Phase::Concrete;
-  SemIR::FacetTypeInfo info = {.other_requirements = false};
+  SemIR::FacetTypeInfo info;
 
   // Add the constraints from the `WhereExpr` instruction into `info`.
   if (typed_inst.requirements_id.has_value()) {
@@ -2200,6 +2213,7 @@ auto TryEvalTypedInst<SemIR::WhereExpr>(EvalContext& eval_context,
           info.extend_constraints.append(base_info.extend_constraints);
           info.self_impls_constraints.append(base_info.self_impls_constraints);
           info.rewrite_constraints.append(base_info.rewrite_constraints);
+          info.builtin_constraint_mask.Add(base_info.builtin_constraint_mask);
           info.other_requirements |= base_info.other_requirements;
         }
       } else if (auto rewrite =
@@ -2238,6 +2252,7 @@ auto TryEvalTypedInst<SemIR::WhereExpr>(EvalContext& eval_context,
             // Other requirements are copied in.
             llvm::append_range(info.rewrite_constraints,
                                more_info.rewrite_constraints);
+            info.builtin_constraint_mask.Add(more_info.builtin_constraint_mask);
             info.other_requirements |= more_info.other_requirements;
           }
         } else {
@@ -2245,7 +2260,7 @@ auto TryEvalTypedInst<SemIR::WhereExpr>(EvalContext& eval_context,
           info.other_requirements = true;
         }
       } else {
-        // TODO: Handle other requirements
+        // TODO: Handle other requirements.
         info.other_requirements = true;
       }
     }

@@ -68,13 +68,17 @@ class PendingBlock {
   }
 
   // Replace the instruction at target_id with the instructions in this block.
-  // The new value for target_id should be value_id.
-  auto MergeReplacing(SemIR::InstId target_id, SemIR::InstId value_id) -> void {
+  // The new value for target_id should be value_id. Returns the InstId that
+  // should be used to refer to the result from now on.
+  auto MergeReplacing(SemIR::InstId target_id, SemIR::InstId value_id)
+      -> SemIR::InstId {
     SemIR::LocIdAndInst value = context_->insts().GetWithLocId(value_id);
 
+    auto result_id = value_id;
     if (insts_.size() == 1 && insts_[0] == value_id) {
       // The block is {value_id}. Replace `target_id` with the instruction
       // referred to by `value_id`. This is intended to be the common case.
+      result_id = target_id;
     } else {
       // Anything else: splice it into the IR, replacing `target_id`. This
       // includes empty blocks, which `Add` handles.
@@ -88,6 +92,7 @@ class PendingBlock {
 
     // Prepare to stash more pending instructions.
     insts_.clear();
+    return result_id;
   }
 
  private:

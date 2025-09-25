@@ -99,7 +99,7 @@ arguments and return values with a size only known at runtime.
 
 For this reason, Rust's dynamic trait dispatch system, trait objects, only works
 with traits that are
-["object safe,"](https://doc.rust-lang.org/reference/items/traits.html#object-safety)
+["dyn-compatible,"](https://doc.rust-lang.org/reference/items/traits.html#dyn-compatibility)
 which includes a requirement that
 [all the associated types have specified values](https://github.com/rust-lang/rfcs/blob/master/text/0195-associated-items.md#trait-objects).
 This reduces the expressivity of Rust traits to the subset that could be

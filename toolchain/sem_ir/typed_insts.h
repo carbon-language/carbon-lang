@@ -651,20 +651,26 @@ struct FacetType {
   static constexpr auto Kind = InstKind::FacetType.Define<Parse::NodeId>(
       {.ir_name = "facet_type",
        .is_type = InstIsType::Always,
-       .constant_kind = InstConstantKind::Always,
-       .deduce_through = true});
+       .constant_kind = InstConstantKind::Always});
 
   TypeId type_id;
   // TODO: Rename this to facet_type_info_id.
   FacetTypeId facet_type_id;
 };
 
-// A facet value, the value of a facet type. This consists of a type and a set
-// of witnesses that it satisfies the required interfaces of the facet type.
+// A facet value is a general value of type FacetType. This consists of a type
+// and a set of witnesses that it satisfies the required interfaces of the
+// FacetType.
+//
+// This instruction is never a type. Though it can be converted to type, doing
+// so evaluates to the `type_inst_id` within.
+//
+// If the FacetValue is just a wrapper around a BindSymbolicName (converted to
+// `type` and back, for example), it evaluates back to the BindSymbolicName.
 struct FacetValue {
   static constexpr auto Kind = InstKind::FacetValue.Define<Parse::NodeId>(
       {.ir_name = "facet_value",
-       .constant_kind = InstConstantKind::Always,
+       .constant_kind = InstConstantKind::Conditional,
        .deduce_through = true});
 
   // A `FacetType`.
@@ -793,6 +799,30 @@ struct FunctionTypeWithSelfType {
   // The value to use for `Self` in this function. May be a type or a facet
   // value.
   InstId self_id;
+};
+
+// The type of an overloaded C++ function.
+struct CppOverloadSetType {
+  static constexpr auto Kind =
+      InstKind::CppOverloadSetType.Define<Parse::NodeId>(
+          {.ir_name = "cpp_overload_set_type",
+           .is_type = InstIsType::Always,
+           .constant_kind = InstConstantKind::WheneverPossible});
+
+  TypeId type_id;
+  CppOverloadSetId overload_set_id;
+  SpecificId specific_id;
+};
+
+// An unresolved C++ overload set value.
+struct CppOverloadSetValue {
+  static constexpr auto Kind =
+      InstKind::CppOverloadSetValue.Define<Parse::NodeId>(
+          // TODO: This should actually be lowered.
+          {.ir_name = "cpp_overload_set_value", .is_lowered = false});
+
+  TypeId type_id;
+  CppOverloadSetId overload_set_id;
 };
 
 // The type of the name of a generic class. The corresponding value is an empty

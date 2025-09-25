@@ -79,9 +79,7 @@ fn F(a: Core.IntLiteral()) -> Core.IntLiteral() {
 // CHECK:STDOUT:   %Complement.ref: %Complement.type = name_ref Complement, file.%Complement.decl [concrete = constants.%Complement]
 // CHECK:STDOUT:   %a.ref: %i32 = name_ref a, %a
 // CHECK:STDOUT:   %Complement.call: init %i32 = call %Complement.ref(%a.ref)
-// CHECK:STDOUT:   %.loc12_23.1: %i32 = value_of_initializer %Complement.call
-// CHECK:STDOUT:   %.loc12_23.2: %i32 = converted %Complement.call, %.loc12_23.1
-// CHECK:STDOUT:   return %.loc12_23.2
+// CHECK:STDOUT:   return %Complement.call to %return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {

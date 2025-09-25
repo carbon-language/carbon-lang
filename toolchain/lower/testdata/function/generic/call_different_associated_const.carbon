@@ -20,7 +20,7 @@ interface I {
 }
 
 fn G(U:! I) {
-  var x: U.T;
+  var x: U.T*;
 }
 
 class C {}
@@ -37,36 +37,28 @@ fn H() {
   G(D);
 }
 
-
 // CHECK:STDOUT: ; ModuleID = 'call_different_associated_const.carbon'
 // CHECK:STDOUT: source_filename = "call_different_associated_const.carbon"
 // CHECK:STDOUT:
 // CHECK:STDOUT: define void @_CH.Main() !dbg !4 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   call void @_CG.Main.ab883398692fb8de(), !dbg !7
-// CHECK:STDOUT:   call void @_CG.Main.f3e0eb3cce913d6d(), !dbg !8
+// CHECK:STDOUT:   call void @_CG.Main.f4fac657790396cb(), !dbg !7
+// CHECK:STDOUT:   call void @_CG.Main.f4fac657790396cb(), !dbg !8
 // CHECK:STDOUT:   ret void, !dbg !9
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: define linkonce_odr void @_CG.Main.ab883398692fb8de() !dbg !10 {
+// CHECK:STDOUT: define linkonce_odr void @_CG.Main.f4fac657790396cb() !dbg !10 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %x.var = alloca i1, align 1, !dbg !11
+// CHECK:STDOUT:   %x.var = alloca ptr, align 8, !dbg !11
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %x.var), !dbg !11
 // CHECK:STDOUT:   ret void, !dbg !12
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: define linkonce_odr void @_CG.Main.f3e0eb3cce913d6d() !dbg !13 {
-// CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %x.var = alloca i32, align 4, !dbg !14
-// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %x.var), !dbg !14
-// CHECK:STDOUT:   ret void, !dbg !15
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nocallback nofree nosync nounwind willreturn memory(argmem: readwrite)
 // CHECK:STDOUT: declare void @llvm.lifetime.start.p0(ptr captures(none)) #0
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; uselistorder directives
-// CHECK:STDOUT: uselistorder ptr @llvm.lifetime.start.p0, { 1, 0 }
+// CHECK:STDOUT: uselistorder ptr @_CG.Main.f4fac657790396cb, { 1, 0 }
 // CHECK:STDOUT:
 // CHECK:STDOUT: attributes #0 = { nocallback nofree nosync nounwind willreturn memory(argmem: readwrite) }
 // CHECK:STDOUT:
@@ -83,9 +75,6 @@ fn H() {
 // CHECK:STDOUT: !7 = !DILocation(line: 36, column: 3, scope: !4)
 // CHECK:STDOUT: !8 = !DILocation(line: 37, column: 3, scope: !4)
 // CHECK:STDOUT: !9 = !DILocation(line: 35, column: 1, scope: !4)
-// CHECK:STDOUT: !10 = distinct !DISubprogram(name: "G", linkageName: "_CG.Main.ab883398692fb8de", scope: null, file: !3, line: 22, type: !5, spFlags: DISPFlagDefinition, unit: !2)
+// CHECK:STDOUT: !10 = distinct !DISubprogram(name: "G", linkageName: "_CG.Main.f4fac657790396cb", scope: null, file: !3, line: 22, type: !5, spFlags: DISPFlagDefinition, unit: !2)
 // CHECK:STDOUT: !11 = !DILocation(line: 23, column: 3, scope: !10)
 // CHECK:STDOUT: !12 = !DILocation(line: 22, column: 1, scope: !10)
-// CHECK:STDOUT: !13 = distinct !DISubprogram(name: "G", linkageName: "_CG.Main.f3e0eb3cce913d6d", scope: null, file: !3, line: 22, type: !5, spFlags: DISPFlagDefinition, unit: !2)
-// CHECK:STDOUT: !14 = !DILocation(line: 23, column: 3, scope: !13)
-// CHECK:STDOUT: !15 = !DILocation(line: 22, column: 1, scope: !13)

@@ -140,10 +140,6 @@ fn PassValueExpr(y: Cpp.Y) {
 // CHECK:STDOUT:   ret void, !dbg !18
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: declare void @_Z11pass_signedasil(i8, i16, i32, i64)
-// CHECK:STDOUT:
-// CHECK:STDOUT: declare void @_Z13pass_unsignedhtjm(i8, i16, i32, i64)
-// CHECK:STDOUT:
 // CHECK:STDOUT: declare i16 @_CMakeShort.Main()
 // CHECK:STDOUT:
 // CHECK:STDOUT: define void @_CPassShort.Main(i16 %a, ptr %b) !dbg !19 {
@@ -170,8 +166,6 @@ fn PassValueExpr(y: Cpp.Y) {
 // CHECK:STDOUT:   ret void, !dbg !28
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: declare void @_Z10pass_shorts(i16)
-// CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nocallback nofree nosync nounwind willreturn memory(argmem: readwrite)
 // CHECK:STDOUT: declare void @llvm.lifetime.start.p0(ptr captures(none)) #0
 // CHECK:STDOUT:
@@ -196,6 +190,8 @@ fn PassValueExpr(y: Cpp.Y) {
 // CHECK:STDOUT:   ret void
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
+// CHECK:STDOUT: declare void @_Z11pass_signedasil(i8 signext, i16 signext, i32, i64) #2
+// CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: alwaysinline mustprogress
 // CHECK:STDOUT: define dso_local void @_Z13pass_unsignedhtjm.carbon_thunk(ptr %0, ptr %1, ptr %2, ptr %3) #1 {
 // CHECK:STDOUT: entry:
@@ -219,6 +215,8 @@ fn PassValueExpr(y: Cpp.Y) {
 // CHECK:STDOUT:   ret void
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
+// CHECK:STDOUT: declare void @_Z13pass_unsignedhtjm(i8 zeroext, i16 zeroext, i32, i64) #2
+// CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: alwaysinline mustprogress
 // CHECK:STDOUT: define dso_local void @_Z10pass_shorts.carbon_thunk(ptr %0) #1 {
 // CHECK:STDOUT: entry:
@@ -230,11 +228,14 @@ fn PassValueExpr(y: Cpp.Y) {
 // CHECK:STDOUT:   ret void
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
+// CHECK:STDOUT: declare void @_Z10pass_shorts(i16 signext) #2
+// CHECK:STDOUT:
 // CHECK:STDOUT: ; uselistorder directives
 // CHECK:STDOUT: uselistorder ptr @llvm.lifetime.start.p0, { 9, 8, 7, 6, 5, 4, 3, 2, 1, 0 }
 // CHECK:STDOUT:
 // CHECK:STDOUT: attributes #0 = { nocallback nofree nosync nounwind willreturn memory(argmem: readwrite) }
 // CHECK:STDOUT: attributes #1 = { alwaysinline mustprogress "min-legal-vector-width"="0" "no-trapping-math"="true" "stack-protector-buffer-size"="0" "target-cpu"="x86-64" "target-features"="+cmov,+cx8,+fxsr,+mmx,+sse,+sse2,+x87" "tune-cpu"="generic" }
+// CHECK:STDOUT: attributes #2 = { "no-trapping-math"="true" "stack-protector-buffer-size"="0" "target-cpu"="x86-64" "target-features"="+cmov,+cx8,+fxsr,+mmx,+sse,+sse2,+x87" "tune-cpu"="generic" }
 // CHECK:STDOUT:
 // CHECK:STDOUT: !llvm.module.flags = !{!0, !1, !2, !3, !4}
 // CHECK:STDOUT: !llvm.dbg.cu = !{!5}
@@ -289,8 +290,6 @@ fn PassValueExpr(y: Cpp.Y) {
 // CHECK:STDOUT:   ret void, !dbg !15
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: declare void @_Z11pass_struct1X(ptr)
-// CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nocallback nofree nosync nounwind willreturn memory(argmem: readwrite)
 // CHECK:STDOUT: declare void @llvm.lifetime.start.p0(ptr captures(none)) #0
 // CHECK:STDOUT:
@@ -315,12 +314,15 @@ fn PassValueExpr(y: Cpp.Y) {
 // CHECK:STDOUT: ; Function Attrs: nocallback nofree nounwind willreturn memory(argmem: readwrite)
 // CHECK:STDOUT: declare void @llvm.memcpy.p0.p0.i64(ptr noalias writeonly captures(none), ptr noalias readonly captures(none), i64, i1 immarg) #2
 // CHECK:STDOUT:
+// CHECK:STDOUT: declare void @_Z11pass_struct1X(i64, i32) #3
+// CHECK:STDOUT:
 // CHECK:STDOUT: ; uselistorder directives
 // CHECK:STDOUT: uselistorder ptr @llvm.memcpy.p0.p0.i64, { 1, 0 }
 // CHECK:STDOUT:
 // CHECK:STDOUT: attributes #0 = { nocallback nofree nosync nounwind willreturn memory(argmem: readwrite) }
 // CHECK:STDOUT: attributes #1 = { alwaysinline mustprogress "min-legal-vector-width"="0" "no-trapping-math"="true" "stack-protector-buffer-size"="0" "target-cpu"="x86-64" "target-features"="+cmov,+cx8,+fxsr,+mmx,+sse,+sse2,+x87" "tune-cpu"="generic" }
 // CHECK:STDOUT: attributes #2 = { nocallback nofree nounwind willreturn memory(argmem: readwrite) }
+// CHECK:STDOUT: attributes #3 = { "no-trapping-math"="true" "stack-protector-buffer-size"="0" "target-cpu"="x86-64" "target-features"="+cmov,+cx8,+fxsr,+mmx,+sse,+sse2,+x87" "tune-cpu"="generic" }
 // CHECK:STDOUT:
 // CHECK:STDOUT: !llvm.module.flags = !{!0, !1, !2, !3, !4}
 // CHECK:STDOUT: !llvm.dbg.cu = !{!5}
@@ -362,8 +364,6 @@ fn PassValueExpr(y: Cpp.Y) {
 // CHECK:STDOUT:   ret void, !dbg !15
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: declare void @_Z11pass_struct1Y(ptr)
-// CHECK:STDOUT:
 // CHECK:STDOUT: declare void @_CMake.Main(ptr sret([12 x i8]))
 // CHECK:STDOUT:
 // CHECK:STDOUT: define void @_CPassInitExpr.Main() !dbg !16 {
@@ -397,6 +397,8 @@ fn PassValueExpr(y: Cpp.Y) {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: declare void @_ZN1YC1ERKS_(ptr nonnull align 4 dereferenceable(12), ptr nonnull align 4 dereferenceable(12)) unnamed_addr #2
+// CHECK:STDOUT:
+// CHECK:STDOUT: declare void @_Z11pass_struct1Y(ptr dead_on_return) #2
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; uselistorder directives
 // CHECK:STDOUT: uselistorder ptr @llvm.lifetime.start.p0, { 1, 0 }

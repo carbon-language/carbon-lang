@@ -163,9 +163,7 @@ fn F(U:! type, T:! type) -> U* {
 // CHECK:STDOUT:     %T.ref.loc7: type = name_ref T, %T.loc6 [symbolic = %T.loc4_6.1 (constants.%T)]
 // CHECK:STDOUT:     %F.specific_fn.loc7_10.1: <specific function> = specific_function %F.ref, @F(constants.%T) [symbolic = %F.specific_fn.loc7_10.2 (constants.%F.specific_fn)]
 // CHECK:STDOUT:     %F.call: init @F.%ptr.loc4_20.1 (%ptr) = call %F.specific_fn.loc7_10.1()
-// CHECK:STDOUT:     %.loc7_14.1: @F.%ptr.loc4_20.1 (%ptr) = value_of_initializer %F.call
-// CHECK:STDOUT:     %.loc7_14.2: @F.%ptr.loc4_20.1 (%ptr) = converted %F.call, %.loc7_14.1
-// CHECK:STDOUT:     return %.loc7_14.2
+// CHECK:STDOUT:     return %F.call to %return.loc6
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -265,7 +263,7 @@ fn F(U:! type, T:! type) -> U* {
 // CHECK:STDOUT:   !entry:
 // CHECK:STDOUT:     %F.ref: %F.type.b25846.1 = name_ref F, file.%F.decl.loc4 [concrete = constants.%F.c41931.1]
 // CHECK:STDOUT:     %T.ref: type = name_ref T, %T.loc13_6.2 [symbolic = %T.loc13_6.1 (constants.%T)]
-// CHECK:STDOUT:     return <error>
+// CHECK:STDOUT:     return <error> to %return
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -371,7 +369,7 @@ fn F(U:! type, T:! type) -> U* {
 // CHECK:STDOUT:   !entry:
 // CHECK:STDOUT:     %F.ref: %F.type.b25846.1 = name_ref F, file.%F.decl.loc4 [concrete = constants.%F.c41931.1]
 // CHECK:STDOUT:     %T.ref.loc21: type = name_ref T, %T.loc13_16.2 [symbolic = %T.loc13_16.1 (constants.%T.336)]
-// CHECK:STDOUT:     return <error>
+// CHECK:STDOUT:     return <error> to %return
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -477,7 +475,7 @@ fn F(U:! type, T:! type) -> U* {
 // CHECK:STDOUT:   !entry:
 // CHECK:STDOUT:     %F.ref: %F.type.b25846.1 = name_ref F, file.%F.decl.loc4 [concrete = constants.%F.c41931.1]
 // CHECK:STDOUT:     %T.ref: type = name_ref T, %T.loc13_16.2 [symbolic = %T.loc13_16.1 (constants.%T.336)]
-// CHECK:STDOUT:     return <error>
+// CHECK:STDOUT:     return <error> to %return
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

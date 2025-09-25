@@ -50,8 +50,6 @@ fn RuntimeCallIsValid(a: f64, b: f64) -> bool {
 // CHECK:STDOUT:   %a.ref: %f64.d77 = name_ref a, %a
 // CHECK:STDOUT:   %b.ref: %f64.d77 = name_ref b, %b
 // CHECK:STDOUT:   %GreaterEq.call: init bool = call %GreaterEq.ref(%a.ref, %b.ref)
-// CHECK:STDOUT:   %.loc18_25.1: bool = value_of_initializer %GreaterEq.call
-// CHECK:STDOUT:   %.loc18_25.2: bool = converted %GreaterEq.call, %.loc18_25.1
-// CHECK:STDOUT:   return %.loc18_25.2
+// CHECK:STDOUT:   return %GreaterEq.call to %return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
