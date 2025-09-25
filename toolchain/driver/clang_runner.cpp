@@ -305,6 +305,7 @@ auto ClangRunner::RunCC1(llvm::SmallVectorImpl<const char*>& cc1_args) -> int {
   // Override the disabling of free when we don't want to leak memory.
   if (!enable_leaking_) {
     clang_instance->getFrontendOpts().DisableFree = false;
+    clang_instance->getCodeGenOpts().DisableFree = false;
   }
 
   if (!clang_instance->getFrontendOpts().TimeTracePath.empty()) {
