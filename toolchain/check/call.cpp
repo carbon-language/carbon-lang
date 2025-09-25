@@ -337,27 +337,17 @@ auto PerformCall(Context& context, SemIR::LocId loc_id, SemIR::InstId callee_id,
     }
 
     case CARBON_KIND(SemIR::CalleeCppOverloadSet overload): {
-      callee_id = PerformCppOverloadResolution(context, loc_id,
-                                               overload.cpp_overload_set_id,
-                                               overload.self_id, arg_ids);
-      auto overload_result = GetCallee(context.sem_ir(), callee_id);
-      CARBON_KIND_SWITCH(overload_result) {
-        case CARBON_KIND(SemIR::CalleeError _): {
-          return SemIR::ErrorInst::InstId;
-        }
-        case CARBON_KIND(SemIR::CalleeFunction fn): {
-          // Preserve the `self` argument from the original callee.
-          CARBON_CHECK(!fn.self_id.has_value());
-          fn.self_id = overload.self_id;
-          return PerformCallToFunction(context, loc_id, callee_id, fn, arg_ids);
-        }
-        case CARBON_KIND(SemIR::CalleeCppOverloadSet _): {
-          CARBON_FATAL("overloads can't be recursive");
-        }
-        case CARBON_KIND(SemIR::CalleeNonFunction _): {
-          CARBON_FATAL("overloads should produce functions");
-        }
+      CppOverloadResolutionResult overload_result =
+          PerformCppOverloadResolution(context, loc_id,
+                                       overload.cpp_overload_set_id,
+                                       overload.self_id, arg_ids);
+      if (overload_result.callee_id == SemIR::ErrorInst::InstId) {
+        return SemIR::ErrorInst::InstId;
       }
+      CARBON_CHECK(overload_result.callee_function);
+      return PerformCallToFunction(context, loc_id, overload_result.callee_id,
+                                   *overload_result.callee_function,
+                                   overload_result.arg_ids);
     }
   }
 }

@@ -14,8 +14,8 @@
 
 library "[[@TEST_NAME]]";
 
-fn Example() -> Core.Char {
-  var c: Core.Char = 'a';
+fn Example() -> char {
+  var c: char = 'a';
   return c;
 }
 

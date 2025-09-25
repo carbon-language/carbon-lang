@@ -21,6 +21,7 @@
 #include "clang/Frontend/TextDiagnostic.h"
 #include "clang/Lex/PreprocessorOptions.h"
 #include "clang/Sema/Lookup.h"
+#include "clang/Sema/Overload.h"
 #include "common/check.h"
 #include "common/ostream.h"
 #include "common/raw_string_ostream.h"
@@ -2117,12 +2118,12 @@ static auto ImportConstructorsIntoScope(Context& context, SemIR::LocId loc_id,
       ClangConstructorLookup(context, scope_id);
 
   clang::UnresolvedSet<4> overload_set;
-  for (clang::Decl* decl : constructors_lookup) {
-    auto* constructor = cast<clang::CXXConstructorDecl>(decl);
-    if (constructor->isDeleted() || constructor->isCopyOrMoveConstructor()) {
+  for (auto* decl : constructors_lookup) {
+    auto info = clang::getConstructorInfo(decl);
+    if (!info.Constructor || info.Constructor->isCopyOrMoveConstructor()) {
       continue;
     }
-    overload_set.addDecl(constructor, constructor->getAccess());
+    overload_set.addDecl(info.FoundDecl, info.FoundDecl->getAccess());
   }
   if (overload_set.empty()) {
     return SemIR::ScopeLookupResult::MakeNotFound();
