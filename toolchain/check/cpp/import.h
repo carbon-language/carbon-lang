@@ -34,7 +34,8 @@ auto ImportCppFunctionDecl(Context& context, SemIR::LocId loc_id,
 // Imports an overloaded function set from Clang to Carbon.
 auto ImportCppOverloadSet(Context& context, SemIR::NameScopeId scope_id,
                           SemIR::NameId name_id,
-                          const clang::UnresolvedSet<4>& overload_set)
+                          clang::CXXRecordDecl* naming_class,
+                          clang::UnresolvedSet<4>&& overload_set)
     -> SemIR::InstId;
 
 // Looks up the given name in the Clang AST generated when importing C++ code

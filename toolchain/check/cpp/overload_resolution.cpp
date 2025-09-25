@@ -11,9 +11,12 @@
 #include "toolchain/check/cpp/import.h"
 #include "toolchain/check/cpp/location.h"
 #include "toolchain/check/cpp/type_mapping.h"
+#include "toolchain/check/member_access.h"
+#include "toolchain/check/name_lookup.h"
 #include "toolchain/diagnostics/diagnostic_emitter.h"
 #include "toolchain/sem_ir/function.h"
 #include "toolchain/sem_ir/ids.h"
+#include "toolchain/sem_ir/name_scope.h"
 #include "toolchain/sem_ir/typed_insts.h"
 
 namespace Carbon::Check {
@@ -79,6 +82,40 @@ static auto AddOverloadCandidataes(clang::Sema& sema,
   }
 }
 
+// Checks whether a selected overload is accessible and diagnoses if not.
+static auto CheckOverloadAccess(Context& context, SemIR::LocId loc_id,
+                                const SemIR::CppOverloadSet& overload_set,
+                                clang::DeclAccessPair overload,
+                                SemIR::InstId overload_inst_id) -> void {
+  SemIR::AccessKind member_access_kind;
+  switch (overload->getAccess()) {
+    case clang::AS_none:
+    case clang::AS_public: {
+      return;
+    }
+
+    case clang::AS_protected: {
+      member_access_kind = SemIR::AccessKind::Protected;
+      break;
+    }
+
+    case clang::AS_private: {
+      member_access_kind = SemIR::AccessKind::Private;
+      break;
+    }
+  }
+
+  auto name_scope_const_id = context.constant_values().Get(
+      context.name_scopes().Get(overload_set.parent_scope_id).inst_id());
+  SemIR::AccessKind allowed_access_kind =
+      GetHighestAllowedAccess(context, loc_id, name_scope_const_id);
+  CheckAccess(context, loc_id, SemIR::LocId(overload_inst_id),
+              overload_set.name_id, member_access_kind,
+              /*is_parent_access=*/false,
+              {.constant_id = name_scope_const_id,
+               .highest_allowed_access = allowed_access_kind});
+}
+
 // Returns whether the decl is an operator member function.
 static auto IsOperatorMethodDecl(clang::Decl* decl) -> bool {
   auto* clang_method_decl = dyn_cast<clang::CXXMethodDecl>(decl);
@@ -136,12 +173,14 @@ static auto ResolveCalleeId(Context& context, SemIR::LocId loc_id,
       // TODO: Handle the cases when Function is null.
       CARBON_CHECK(best_viable_fn->Function);
       sema.MarkFunctionReferenced(loc, best_viable_fn->Function);
-      SemIR::InstId result = ImportCppFunctionDecl(
+      SemIR::InstId result_id = ImportCppFunctionDecl(
           context, loc_id, best_viable_fn->Function,
           // If this is an operator method, the first arg will be used as self.
           arg_exprs.size() -
               (IsOperatorMethodDecl(best_viable_fn->Function) ? 1 : 0));
-      return result;
+      CheckOverloadAccess(context, loc_id, overload_set,
+                          best_viable_fn->FoundDecl, result_id);
+      return result_id;
     }
     case clang::OverloadingResult::OR_No_Viable_Function: {
       candidate_set.NoteCandidates(
