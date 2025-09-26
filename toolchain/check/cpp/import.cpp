@@ -2090,6 +2090,9 @@ static auto GetOverloadSetAccess(const clang::UnresolvedSet<4>& overload_set)
     -> SemIR::AccessKind {
   clang::AccessSpecifier access = overload_set.begin().getAccess();
   for (auto it = overload_set.begin() + 1; it != overload_set.end(); ++it) {
+    CARBON_CHECK(
+        (it.getAccess() == clang::AS_none) == (access == clang::AS_none),
+        "Unexpected mixture of members and non-members");
     if (it.getAccess() < access) {
       access = it->getAccess();
     }
