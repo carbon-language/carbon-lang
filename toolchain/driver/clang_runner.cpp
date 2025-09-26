@@ -369,7 +369,7 @@ auto ClangRunner::RunCC1(llvm::SmallVectorImpl<const char*>& cc1_args) -> int {
 
   if (llvm::timeTraceProfilerEnabled()) {
     // It is possible that the compiler instance doesn't own a file manager here
-    // if we're compiling a module unit. Since the file manager is owned by the
+    // if we're compiling a module unit, since the file manager is owned by the
     // AST when we're compiling a module unit. So the file manager may be
     // invalid here.
     //
@@ -646,7 +646,7 @@ auto ClangRunner::BuildBuiltinsLib(llvm::StringRef target,
   llvm::SmallVector<std::optional<llvm::NewArchiveMember>, 0> objs;
   objs.resize(src_files.size());
   llvm::ThreadPoolTaskGroup member_group(threads);
-  for (auto [src_file, obj] : llvm::zip(src_files, objs)) {
+  for (auto [src_file, obj] : llvm::zip_equal(src_files, objs)) {
     // Create any subdirectories needed for this file.
     std::filesystem::path src_path = src_file.str();
     if (src_path.has_parent_path()) {
