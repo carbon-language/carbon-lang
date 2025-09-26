@@ -643,7 +643,7 @@ auto ClangRunner::BuildBuiltinsLib(llvm::StringRef target,
 
   // `NewArchiveMember` isn't default constructable unfortunately, so we first
   // build the objects using an optional wrapper.
-  llvm::SmallVector<std::optional<llvm::NewArchiveMember>, 0> objs;
+  llvm::SmallVector<std::optional<llvm::NewArchiveMember>> objs;
   objs.resize(src_files.size());
   llvm::ThreadPoolTaskGroup member_group(threads);
   for (auto [src_file, obj] : llvm::zip_equal(src_files, objs)) {
@@ -677,7 +677,7 @@ auto ClangRunner::BuildBuiltinsLib(llvm::StringRef target,
   // Wait for all the object compiles to complete, and then move the objects out
   // of their optional wrappers to match the API required by the archive writer.
   member_group.wait();
-  llvm::SmallVector<llvm::NewArchiveMember, 0> unwrapped_objs;
+  llvm::SmallVector<llvm::NewArchiveMember> unwrapped_objs;
   unwrapped_objs.reserve(objs.size());
   for (auto& obj : objs) {
     unwrapped_objs.push_back(*std::move(obj));
