@@ -324,7 +324,7 @@ fn F() {
   Cpp.C.foo(1 as i32, 2 as i32);
 }
 
-// --- import_overload_set_private_base.carbon
+// --- fail_import_overload_set_private_base.carbon
 
 library "[[@TEST_NAME]]";
 
@@ -334,19 +334,19 @@ class D {
   extend base: Cpp.C;
 
   fn MakePrivate() -> D {
-    // CHECK:STDERR: import_overload_set_private_base.carbon:[[@LINE+5]]:21: error: cannot access private member `C` of type `Cpp.C` [ClassInvalidMemberAccess]
+    // CHECK:STDERR: fail_import_overload_set_private_base.carbon:[[@LINE+5]]:21: error: cannot access private member `C` of type `Cpp.C` [ClassInvalidMemberAccess]
     // CHECK:STDERR:     return {.base = C(1 as i32, 2 as i32)};
     // CHECK:STDERR:                     ^~~~~~~~~~~~~~~~~~~~~
-    // CHECK:STDERR: import_overload_set_private_base.carbon: note: declared here [ClassMemberDeclaration]
+    // CHECK:STDERR: fail_import_overload_set_private_base.carbon: note: declared here [ClassMemberDeclaration]
     // CHECK:STDERR:
     return {.base = C(1 as i32, 2 as i32)};
   }
 
   fn CallPrivate() {
-    // CHECK:STDERR: import_overload_set_private_base.carbon:[[@LINE+5]]:5: error: cannot access private member `foo` of type `Cpp.C` [ClassInvalidMemberAccess]
+    // CHECK:STDERR: fail_import_overload_set_private_base.carbon:[[@LINE+5]]:5: error: cannot access private member `foo` of type `Cpp.C` [ClassInvalidMemberAccess]
     // CHECK:STDERR:     foo(1 as i32, 2 as i32);
     // CHECK:STDERR:     ^~~~~~~~~~~~~~~~~~~~~~~
-    // CHECK:STDERR: import_overload_set_private_base.carbon: note: declared here [ClassMemberDeclaration]
+    // CHECK:STDERR: fail_import_overload_set_private_base.carbon: note: declared here [ClassMemberDeclaration]
     // CHECK:STDERR:
     foo(1 as i32, 2 as i32);
   }
