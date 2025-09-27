@@ -390,7 +390,7 @@ interface Equatable {
 // `Iterable` requires that `Equatable` is implemented.
 interface Iterable {
   require Self impls Equatable;
-  fn Advance[addr self: Self*]();
+  fn Advance[ref self: Self]();
 }
 ```
 
@@ -442,9 +442,9 @@ interface Renderable {
   fn Draw[self: Self]();
 }
 interface EndOfGame {
-  fn SetWinner[addr self: Self*](player: i32);
+  fn SetWinner[ref self: Self](player: i32);
   // Indicate the game was a draw
-  fn Draw[addr self: Self*]();
+  fn Draw[ref self: Self]();
 }
 
 fn F[T:! Renderable & EndOfGame](game_state: T*) -> (i32, i32) {
@@ -568,9 +568,9 @@ convenient to use. Imagine a `Stack` interface. Different types implementing
 ```
 interface Stack {
   let ElementType:! Movable;
-  fn Push[addr self: Self*](value: ElementType);
-  fn Pop[addr self: Self*]() -> ElementType;
-  fn IsEmpty[addr self: Self*]() -> bool;
+  fn Push[ref self: Self](value: ElementType);
+  fn Pop[ref self: Self]() -> ElementType;
+  fn IsEmpty[ref self: Self]() -> bool;
 }
 ```
 

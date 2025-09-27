@@ -76,7 +76,7 @@ For example:
 namespace Widgets;
 
 interface Widgets.Widget {
-  fn Grow[addr self: Self*](factor: f64);
+  fn Grow[ref self: Self](factor: f64);
 }
 
 class Widgets.Cog {
@@ -773,7 +773,7 @@ If instance binding is performed:
 
     ```carbon
     class Blob {
-      fn Mutate[addr self: Self*](n: i32);
+      fn Mutate[ref self: Self](n: i32);
     }
     fn F(p: Blob*) {
       // ✅ OK, forms bound method `((*p).M)` and calls it.

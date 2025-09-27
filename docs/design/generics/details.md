@@ -1210,7 +1210,7 @@ we use the same semantics and `require Self impls` syntax as we do for
 interface Equatable { fn Equals[self: Self](rhs: Self) -> bool; }
 
 interface Iterable {
-  fn Advance[addr self: Self*]() -> bool;
+  fn Advance[ref self: Self]() -> bool;
   require Self impls Equatable;
 }
 
@@ -1431,7 +1431,7 @@ Conversely, an `interface` can extend a `constraint`:
 interface MovieCodec {
   extend Combined;
 
-  fn Load[addr self: Self*](filename: String);
+  fn Load[ref self: Self](filename: String);
 }
 ```
 
@@ -1445,7 +1445,7 @@ interface MovieCodec {
   require Self impls Job;
   alias Run = Job.Run;
 
-  fn Load[addr self: Self*](filename: String);
+  fn Load[ref self: Self](filename: String);
 }
 ```
 
@@ -1459,19 +1459,19 @@ Consider this set of interfaces, simplified from
 
 ```carbon
 interface Graph {
-  fn Source[addr self: Self*](e: EdgeDescriptor) -> VertexDescriptor;
-  fn Target[addr self: Self*](e: EdgeDescriptor) -> VertexDescriptor;
+  fn Source[ref self: Self](e: EdgeDescriptor) -> VertexDescriptor;
+  fn Target[ref self: Self](e: EdgeDescriptor) -> VertexDescriptor;
 }
 
 interface IncidenceGraph {
   extend Graph;
-  fn OutEdges[addr self: Self*](u: VertexDescriptor)
+  fn OutEdges[ref self: Self](u: VertexDescriptor)
     -> (EdgeIterator, EdgeIterator);
 }
 
 interface EdgeListGraph {
   extend Graph;
-  fn Edges[addr self: Self*]() -> (EdgeIterator, EdgeIterator);
+  fn Edges[ref self: Self]() -> (EdgeIterator, EdgeIterator);
 }
 ```
 
@@ -1498,11 +1498,11 @@ though could be defined in the `impl` block of `IncidenceGraph`,
       extend impl as IncidenceGraph {
         fn Source[self: Self](e: EdgeDescriptor) -> VertexDescriptor { ... }
         fn Target[self: Self](e: EdgeDescriptor) -> VertexDescriptor { ... }
-        fn OutEdges[addr self: Self*](u: VertexDescriptor)
+        fn OutEdges[ref self: Self](u: VertexDescriptor)
             -> (EdgeIterator, EdgeIterator) { ... }
       }
       extend impl as EdgeListGraph {
-        fn Edges[addr self: Self*]() -> (EdgeIterator, EdgeIterator) { ... }
+        fn Edges[ref self: Self]() -> (EdgeIterator, EdgeIterator) { ... }
       }
     }
     ```
@@ -1514,12 +1514,12 @@ though could be defined in the `impl` block of `IncidenceGraph`,
     class MyEdgeListIncidenceGraph {
       extend impl as IncidenceGraph {
         fn Source[self: Self](e: EdgeDescriptor) -> VertexDescriptor { ... }
-        fn OutEdges[addr self: Self*](u: VertexDescriptor)
+        fn OutEdges[ref self: Self](u: VertexDescriptor)
             -> (EdgeIterator, EdgeIterator) { ... }
       }
       extend impl as EdgeListGraph {
         fn Target[self: Self](e: EdgeDescriptor) -> VertexDescriptor { ... }
-        fn Edges[addr self: Self*]() -> (EdgeIterator, EdgeIterator) { ... }
+        fn Edges[ref self: Self]() -> (EdgeIterator, EdgeIterator) { ... }
       }
     }
     ```
@@ -2021,10 +2021,10 @@ as an associated constant.
 interface NSpacePoint {
   let N:! i32;
   // The following require: 0 <= i < N.
-  fn Get[addr self: Self*](i: i32) -> f64;
-  fn Set[addr self: Self*](i: i32, value: f64);
+  fn Get[ref self: Self](i: i32) -> f64;
+  fn Set[ref self: Self](i: i32, value: f64);
   // Associated constants may be used in signatures:
-  fn SetAll[addr self: Self*](value: Array(f64, N));
+  fn SetAll[ref self: Self](value: Array(f64, N));
 }
 ```
 
@@ -2044,17 +2044,17 @@ a [`where` clause](#where-constraints). For example, implementations of
 ```carbon
 class Point2D {
   extend impl as NSpacePoint where .N = 2 {
-    fn Get[addr self: Self*](i: i32) -> f64 { ... }
-    fn Set[addr self: Self*](i: i32, value: f64) { ... }
-    fn SetAll[addr self: Self*](value: Array(f64, 2)) { ... }
+    fn Get[ref self: Self](i: i32) -> f64 { ... }
+    fn Set[ref self: Self](i: i32, value: f64) { ... }
+    fn SetAll[ref self: Self](value: Array(f64, 2)) { ... }
   }
 }
 
 class Point3D {
   extend impl as NSpacePoint where .N = 3 {
-    fn Get[addr self: Self*](i: i32) -> f64 { ... }
-    fn Set[addr self: Self*](i: i32, value: f64) { ... }
-    fn SetAll[addr self: Self*](value: Array(f64, 3)) { ... }
+    fn Get[ref self: Self](i: i32) -> f64 { ... }
+    fn Set[ref self: Self](i: i32, value: f64) { ... }
+    fn SetAll[ref self: Self](value: Array(f64, 3)) { ... }
   }
 }
 ```
@@ -2154,9 +2154,9 @@ a specified name. For example:
 ```carbon
 interface StackAssociatedFacet {
   let ElementType:! type;
-  fn Push[addr self: Self*](value: ElementType);
-  fn Pop[addr self: Self*]() -> ElementType;
-  fn IsEmpty[addr self: Self*]() -> bool;
+  fn Push[ref self: Self](value: ElementType);
+  fn Pop[ref self: Self]() -> ElementType;
+  fn IsEmpty[ref self: Self]() -> bool;
 }
 ```
 
@@ -2169,26 +2169,26 @@ of `StackAssociatedFacet` must also define. For example, maybe a `DynamicArray`
 ```carbon
 class DynamicArray(T:! type) {
   class IteratorType { ... }
-  fn Begin[addr self: Self*]() -> IteratorType;
-  fn End[addr self: Self*]() -> IteratorType;
-  fn Insert[addr self: Self*](pos: IteratorType, value: T);
-  fn Remove[addr self: Self*](pos: IteratorType);
+  fn Begin[ref self: Self]() -> IteratorType;
+  fn End[ref self: Self]() -> IteratorType;
+  fn Insert[ref self: Self](pos: IteratorType, value: T);
+  fn Remove[ref self: Self](pos: IteratorType);
 
   // Set the associated facet `ElementType` to `T`.
   extend impl as StackAssociatedFacet where .ElementType = T {
-    fn Push[addr self: Self*](value: ElementType) {
-      self->Insert(self->End(), value);
+    fn Push[ref self: Self](value: ElementType) {
+      self.Insert(self.End(), value);
     }
-    fn Pop[addr self: Self*]() -> ElementType {
-      var pos: IteratorType = self->End();
-      Assert(pos != self->Begin());
+    fn Pop[ref self: Self]() -> ElementType {
+      var pos: IteratorType = self.End();
+      Assert(pos != self.Begin());
       --pos;
       returned var ret: ElementType = *pos;
-      self->Remove(pos);
+      self.Remove(pos);
       return var;
     }
-    fn IsEmpty[addr self: Self*]() -> bool {
-      return self->Begin() == self->End();
+    fn IsEmpty[ref self: Self]() -> bool {
+      return self.Begin() == self.End();
     }
   }
 }
@@ -2290,9 +2290,9 @@ after the name of the interface:
 
 ```carbon
 interface StackParameterized(ElementType:! type) {
-  fn Push[addr self: Self*](value: ElementType);
-  fn Pop[addr self: Self*]() -> ElementType;
-  fn IsEmpty[addr self: Self*]() -> bool;
+  fn Push[ref self: Self](value: ElementType);
+  fn Pop[ref self: Self]() -> ElementType;
+  fn IsEmpty[ref self: Self]() -> bool;
 }
 ```
 
@@ -2304,25 +2304,25 @@ class Produce {
   var fruit: DynamicArray(Fruit);
   var veggie: DynamicArray(Veggie);
   extend impl as StackParameterized(Fruit) {
-    fn Push[addr self: Self*](value: Fruit) {
-      self->fruit.Push(value);
+    fn Push[ref self: Self](value: Fruit) {
+      self.fruit.Push(value);
     }
-    fn Pop[addr self: Self*]() -> Fruit {
-      return self->fruit.Pop();
+    fn Pop[ref self: Self]() -> Fruit {
+      return self.fruit.Pop();
     }
-    fn IsEmpty[addr self: Self*]() -> bool {
-      return self->fruit.IsEmpty();
+    fn IsEmpty[ref self: Self]() -> bool {
+      return self.fruit.IsEmpty();
     }
   }
   extend impl as StackParameterized(Veggie) {
-    fn Push[addr self: Self*](value: Veggie) {
-      self->veggie.Push(value);
+    fn Push[ref self: Self](value: Veggie) {
+      self.veggie.Push(value);
     }
-    fn Pop[addr self: Self*]() -> Veggie {
-      return self->veggie.Pop();
+    fn Pop[ref self: Self]() -> Veggie {
+      return self.veggie.Pop();
     }
-    fn IsEmpty[addr self: Self*]() -> bool {
-      return self->veggie.IsEmpty();
+    fn IsEmpty[ref self: Self]() -> bool {
+      return self.veggie.IsEmpty();
     }
   }
 }
@@ -2430,7 +2430,7 @@ parameters are required to always be different. For example:
 
 ```carbon
 interface Map(FromType:! type, ToType:! type) {
-  fn Map[addr self: Self*](needle: FromType) -> Optional(ToType);
+  fn Map[ref self: Self](needle: FromType) -> Optional(ToType);
 }
 class Bijection(FromType:! type, ToType:! type) {
   extend impl as Map(FromType, ToType) { ... }
@@ -2658,7 +2658,7 @@ interface Container {
   let SliceType:! Container where .Self impls SliceConstraint(ElementType, .Self);
 
   // `Self` means the type implementing `Container`.
-  fn GetSlice[addr self: Self*]
+  fn GetSlice[ref self: Self]
       (start: IteratorType, end: IteratorType) -> SliceType;
 }
 
@@ -2768,7 +2768,7 @@ with any mentioned parameters substituted into that type.
 interface Container {
   let Element:! type;
   let Slice:! Container where .Element = Element;
-  fn Add[addr self: Self*](x: Element);
+  fn Add[ref self: Self](x: Element);
 }
 // `T.Slice.Element` rewritten to `T.Element`
 //     because type of `T.Slice` says `.Element = Element`.
@@ -2960,7 +2960,7 @@ interface Edge {
 interface Node {
   let E:! EdgeFor(Self);
   fn GetE[self: Self]() -> E;
-  fn AddE[addr self: Self*](e: E);
+  fn AddE[ref self: Self](e: E);
   fn NearN[self: Self](n: Self) -> bool;
 }
 
@@ -6295,7 +6295,7 @@ class HashMap(
   // `Self` is `HashMap(KeyT, ValueT)`.
 
   // Class parameters may be used in function signatures.
-  fn Insert[addr self: Self*](k: KeyT, v: ValueT);
+  fn Insert[ref self: Self](k: KeyT, v: ValueT);
 
   // Class parameters may be used in field types.
   private var buckets: DynArray((KeyT, ValueT));

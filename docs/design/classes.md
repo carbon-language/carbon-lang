@@ -903,14 +903,14 @@ class Circle {
   fn Diameter[self: Self]() -> f32 {
     return self.radius * 2;
   }
-  fn Expand[addr self: Self*](distance: f32);
+  fn Expand[ref self: Self](distance: f32);
 
   var center: Point;
   var radius: f32;
 }
 
-fn Circle.Expand[addr self: Self*](distance: f32) {
-  self->radius += distance;
+fn Circle.Expand[ref self: Self](distance: f32) {
+  self.radius += distance;
 }
 
 var c: Circle = {.center = Point.Origin(), .radius = 1.5 };
@@ -925,7 +925,7 @@ Assert(Math.Abs(c.Diameter() - 4.0) < 0.001);
     the `Circle` instance. This is signified using `[self: Self]` in the method
     declaration.
 -   `c.Expand(`...`)` does modify the value of `c`. This is signified using
-    `[addr self: Self*]` in the method declaration.
+    `[ref self: Self]` in the method declaration.
 
 The pattern '`addr self:` _type_' means "first take the address of the argument,
 which must be an
@@ -1585,7 +1585,7 @@ or:
 ```carbon
 class MyClass {
   // Can modify `self` in the body.
-  fn destroy[addr self: Self*]() { ... }
+  fn destroy[ref self: Self]() { ... }
 }
 ```
 
@@ -1608,9 +1608,9 @@ Destructors may be declared in class scope and then defined out-of-line:
 
 ```carbon
 class MyClass {
-  fn destroy[addr self: Self*]();
+  fn destroy[ref self: Self]();
 }
-fn MyClass.destroy[addr self: Self*]() { ... }
+fn MyClass.destroy[ref self: Self]() { ... }
 ```
 
 It is illegal to delete an instance of a derived class through a pointer to one
@@ -1622,12 +1622,12 @@ must be `override`:
 
 ```carbon
 base class MyBaseClass {
-  virtual fn destroy[addr self: Self*]() { ... }
+  virtual fn destroy[ref self: Self]() { ... }
 }
 
 class MyDerivedClass {
   extend base: MyBaseClass;
-  override fn destroy[addr self: Self*]() { ... }
+  override fn destroy[ref self: Self]() { ... }
 }
 ```
 
@@ -1677,8 +1677,8 @@ call the `UnsafeDelete` method instead. Note that you may not call
 ```
 interface Allocator {
   // ...
-  fn Delete[T:! Deletable, addr self: Self*](p: T*);
-  fn UnsafeDelete[T:! Destructible, addr self: Self*](p: T*);
+  fn Delete[T:! Deletable, ref self: Self](p: T*);
+  fn UnsafeDelete[T:! Destructible, ref self: Self](p: T*);
 }
 ```
 
@@ -1835,10 +1835,10 @@ base class MyBaseClass {
 
 class MyDerivedClass {
   extend base: MyBaseClass;
-  fn UsesProtected[addr self: Self*]() {
+  fn UsesProtected[ref self: Self]() {
     // Can access protected members in derived class
     var x: i32 = HelperClassFunction(3);
-    self->data = self->HelperMethod(x);
+    self.data = self.HelperMethod(x);
   }
 }
 ```

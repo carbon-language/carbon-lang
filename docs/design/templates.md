@@ -47,8 +47,8 @@ bound early to the extent possible. For example:
 class Stack(template T:! type) {
   var storage: Array(T);
 
-  fn Push[addr self: Self*](value: T);
-  fn Pop[addr self: Self*]() -> T;
+  fn Push[ref self: Self](value: T);
+  fn Pop[ref self: Self]() -> T;
 }
 ```
 

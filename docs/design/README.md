@@ -1767,16 +1767,16 @@ class Point {
     return Math.Sqrt(dx * dx + dy * dy);
   }
   // Mutating method declaration
-  fn Offset[addr self: Self*](dx: i32, dy: i32);
+  fn Offset[ref self: Self](dx: i32, dy: i32);
 
   var x: i32;
   var y: i32;
 }
 
 // Out-of-line definition of method declared inline
-fn Point.Offset[addr self: Self*](dx: i32, dy: i32) {
-  self->x += dx;
-  self->y += dy;
+fn Point.Offset[ref self: Self](dx: i32, dy: i32) {
+  self.x += dx;
+  self.y += dy;
 }
 
 var origin: Point = {.x = 0, .y = 0};
@@ -1797,7 +1797,7 @@ two methods `Distance` and `Offset`:
     modifying the `Point`. This is signified using `[self: Self]` in the method
     declaration.
 -   `origin.Offset(`...`)` does modify the value of `origin`. This is signified
-    using `[addr self: Self*]` in the method declaration. Since calling this
+    using `[ref self: Self]` in the method declaration. Since calling this
     method requires taking the [non-`const`](#const) address of `origin`, it may
     only be called on [reference expressions](#expression-categories).
 -   Methods may be declared lexically inline like `Distance`, or lexically out
@@ -1955,7 +1955,7 @@ names resolvable by the compiler, and don't act like forward declarations.
 
 A destructor for a class is custom code executed when the lifetime of a value of
 that type ends. They are defined with `fn destroy` followed by either
-`[self: Self]` or `[addr self: Self*]` (as is done with [methods](#methods)) and
+`[self: Self]` or `[ref self: Self]` (as is done with [methods](#methods)) and
 the block of code in the class definition, as in:
 
 ```carbon
@@ -1969,7 +1969,7 @@ or:
 ```carbon
 class MyClass {
   // Can modify `self` in the body.
-  fn destroy[addr self: Self*]() { ... }
+  fn destroy[ref self: Self]() { ... }
 }
 ```
 
@@ -2996,8 +2996,8 @@ associated constant to represent the type of elements stored in the stack.
 ```
 interface StackInterface {
   let ElementType:! Movable;
-  fn Push[addr self: Self*](value: ElementType);
-  fn Pop[addr self: Self*]() -> ElementType;
+  fn Push[ref self: Self](value: ElementType);
+  fn Pop[ref self: Self]() -> ElementType;
   fn IsEmpty[self: Self]() -> bool;
 }
 ```
@@ -3008,14 +3008,14 @@ for the `ElementType` member of the interface using a `where` clause:
 ```carbon
 class IntStack {
   extend impl as StackInterface where .ElementType = i32 {
-    fn Push[addr self: Self*](value: i32);
+    fn Push[ref self: Self](value: i32);
     // ...
   }
 }
 
 class FruitStack {
   extend impl as StackInterface where .ElementType = Fruit {
-    fn Push[addr self: Self*](value: Fruit);
+    fn Push[ref self: Self](value: Fruit);
     // ...
   }
 }
@@ -3043,8 +3043,8 @@ values of any type `T`:
 
 ```carbon
 class Stack(T:! type) {
-  fn Push[addr self: Self*](value: T);
-  fn Pop[addr self: Self*]() -> T;
+  fn Push[ref self: Self](value: T);
+  fn Pop[ref self: Self]() -> T;
 
   var storage: Array(T);
 }

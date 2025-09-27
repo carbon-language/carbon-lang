@@ -473,7 +473,7 @@ to the operation in question. For example:
 ```carbon
 class S {
   fn ValueMemberFunction[self: Self]();
-  fn AddrMemberFunction[addr self: const Self*]();
+  fn AddrMemberFunction[ref self: const Self]();
 }
 
 fn F(s_value: S) {
@@ -803,8 +803,8 @@ meaningful distinction between a value expression of type `T` and type
 class X {
   fn Method[self: Self]();
   fn ConstMethod[self: const Self]();
-  fn AddrMethod[addr self: Self*]();
-  fn AddrConstMethod[addr self: const Self*]();
+  fn AddrMethod[ref self: Self]();
+  fn AddrConstMethod[ref self: const Self]();
 }
 ```
 
@@ -927,7 +927,7 @@ will require that the type containing that specifier satisfies the constraint
 ```carbon
 interface ReferenceImplicitAs {
   let T:! type;
-  fn Convert[addr self: const Self*]() -> T;
+  fn Convert[ref self: const Self]() -> T;
 }
 ```
 
@@ -972,11 +972,11 @@ class String {
   private var capacity: i64;
 
   impl as ReferenceImplicitAs where .T = StringView {
-    fn Op[addr self: const Self*]() -> StringView {
+    fn Op[ref self: const Self]() -> StringView {
       // Because this is called on the String object prior to it becoming
       // a value, we can access an SSO buffer or other interior pointers
       // of `self`.
-      return StringView.Make(self->data_ptr, self->size);
+      return StringView.Make(self.data_ptr, self.size);
     }
   }
 
@@ -998,8 +998,8 @@ class String {
   // Note that even though the `Self` type is `const` qualified here, this
   // cannot be called on a `String` value! That would require us to convert to a
   // `StringView` that does not track the extra data member.
-  fn Capacity[addr self: const Self*]() -> i64 {
-    return self->capacity;
+  fn Capacity[ref self: const Self]() -> i64 {
+    return self.capacity;
   }
 }
 ```
