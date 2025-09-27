@@ -6371,7 +6371,7 @@ its elements implement the `Ordered` interface:
 ```carbon
 class DynArray(T:! type) {
   // `DynArray(T)` has a `Sort()` method if `T impls Ordered`.
-  fn Sort[C:! Ordered, addr self: DynArray(C)*]();
+  fn Sort[C:! Ordered, ref self: DynArray(C)]();
 }
 ```
 
