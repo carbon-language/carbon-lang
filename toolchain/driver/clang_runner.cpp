@@ -326,8 +326,11 @@ auto ClangRunner::RunCC1(llvm::SmallVectorImpl<const char*>& cc1_args) -> int {
         installation_->clang_resource_path();
   }
 
+  // Create the filesystem.
+  clang_instance->createVirtualFileSystem(fs_, &diag_buffer);
+
   // Create the actual diagnostics engine.
-  clang_instance->createDiagnostics(*fs_);
+  clang_instance->createDiagnostics();
   if (!clang_instance->hasDiagnostics()) {
     return EXIT_FAILURE;
   }
@@ -374,7 +377,7 @@ auto ClangRunner::RunCC1(llvm::SmallVectorImpl<const char*>& cc1_args) -> int {
     // options are stored in the compiler invocation and we can recreate the VFS
     // from the compiler invocation.
     if (!clang_instance->hasFileManager()) {
-      clang_instance->createFileManager(fs_);
+      clang_instance->createFileManager();
     }
 
     if (auto profiler_output = clang_instance->createOutputFile(

@@ -1181,7 +1181,7 @@ static auto LookupCustomRecordType(Context& context,
 // Maps a C++ tag type (class, struct, union, enum) to a Carbon type.
 static auto MapTagType(Context& context, const clang::TagType& type)
     -> TypeExpr {
-  auto* tag_decl = type.getOriginalDecl();
+  auto* tag_decl = type.getDecl();
   CARBON_CHECK(tag_decl);
 
   // Check if the declaration is already mapped.
@@ -1833,7 +1833,7 @@ static auto AddDependentUnimportedTypeDecls(Context& context,
   }
 
   if (const auto* tag_type = type->getAs<clang::TagType>()) {
-    AddDependentDecl(context, SemIR::ClangDeclKey(tag_type->getOriginalDecl()),
+    AddDependentDecl(context, SemIR::ClangDeclKey(tag_type->getDecl()),
                      worklist);
   }
 }
