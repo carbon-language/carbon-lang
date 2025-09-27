@@ -1796,10 +1796,9 @@ two methods `Distance` and `Offset`:
 -   `Distance` computes and returns the distance to another point, without
     modifying the `Point`. This is signified using `[self: Self]` in the method
     declaration.
--   `origin.Offset(`...`)` does modify the value of `origin`. This is signified
-    using `[ref self: Self]` in the method declaration. Since calling this
-    method requires taking the [non-`const`](#const) address of `origin`, it may
-    only be called on [reference expressions](#expression-categories).
+-   `origin.Offset(`...`)` _does_ modify the value of `origin`. This is
+    signified using `[ref self: Self]` in the method declaration. It may only be
+    called on [reference expressions](#expression-categories).
 -   Methods may be declared lexically inline like `Distance`, or lexically out
     of line like `Offset`.
 

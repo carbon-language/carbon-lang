@@ -263,11 +263,6 @@ makes this a use case that requires a special marking on the declaration.
 _Reference expressions_ refer to _objects_ with _storage_ where a value may be
 read or written and the object's address can be taken.
 
-Calling a [method](/docs/design/classes.md#methods) on a reference expression
-where the method's `self` parameter has an `ref` specifier can always implicitly
-take the address of the referred-to object. This address is passed as a
-[pointer](#pointers) to the `self` parameter for such methods.
-
 There are two sub-categories of reference expressions: _durable_ and
 _ephemeral_. These refine the _lifetime_ of the underlying storage and provide
 safety restrictions reflecting that lifetime.
