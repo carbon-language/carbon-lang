@@ -473,7 +473,7 @@ to the operation in question. For example:
 ```carbon
 class S {
   fn ValueMemberFunction[self: Self]();
-  fn AddrMemberFunction[ref self: const Self]();
+  fn RefMemberFunction[ref self: const Self]();
 }
 
 fn F(s_value: S) {
@@ -481,7 +481,7 @@ fn F(s_value: S) {
   s_value.ValueMemberFunction();
 
   // This requires an unsafe marker in the syntax.
-  s_value.unsafe AddrMemberFunction();
+  s_value.unsafe RefMemberFunction();
 }
 ```
 
@@ -803,20 +803,20 @@ meaningful distinction between a value expression of type `T` and type
 class X {
   fn Method[self: Self]();
   fn ConstMethod[self: const Self]();
-  fn AddrMethod[ref self: Self]();
-  fn AddrConstMethod[ref self: const Self]();
+  fn RefMethod[ref self: Self]();
+  fn RefConstMethod[ref self: const Self]();
 }
 ```
 
 The methods can be called on different kinds of expressions according to the
 following table:
 
-|  Expression category: | `let x: X` <br/> (value) | `let x: const X` <br/> (const value) | `var x: X` <br/> (reference) | `var x: const X` <br/> (const reference) |
-| --------------------: | ------------------------ | ------------------------------------ | ---------------------------- | ---------------------------------------- |
-|         `x.Method();` | ✅                       | ✅                                   | ✅                           | ✅                                       |
-|    `x.ConstMethod();` | ✅                       | ✅                                   | ✅                           | ✅                                       |
-|     `x.AddrMethod();` | ❌                       | ❌                                   | ✅                           | ❌                                       |
-| `x.AddrConstMethod()` | ❌                       | ❌                                   | ✅                           | ✅                                       |
+| Expression category: | `let x: X` <br/> (value) | `let x: const X` <br/> (const value) | `var x: X` <br/> (reference) | `var x: const X` <br/> (const reference) |
+| -------------------: | ------------------------ | ------------------------------------ | ---------------------------- | ---------------------------------------- |
+|        `x.Method();` | ✅                       | ✅                                   | ✅                           | ✅                                       |
+|   `x.ConstMethod();` | ✅                       | ✅                                   | ✅                           | ✅                                       |
+|     `x.RefMethod();` | ❌                       | ❌                                   | ✅                           | ❌                                       |
+| `x.RefConstMethod()` | ❌                       | ❌                                   | ✅                           | ✅                                       |
 
 The `const T` type has the same representation as `T` with the same field names,
 but all of its field types are also `const`-qualified. Other than fields, all
