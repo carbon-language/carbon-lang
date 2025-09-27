@@ -51,16 +51,9 @@
 namespace Carbon {
 
 ClangRunner::ClangRunner(const InstallPaths* install_paths,
-                         Runtimes::Cache* runtimes_cache,
                          llvm::IntrusiveRefCntPtr<llvm::vfs::FileSystem> fs,
-                         llvm::raw_ostream* vlog_stream,
-                         bool build_runtimes_on_demand,
-                         llvm::ThreadPoolInterface* runtimes_build_thread_pool)
-    : ToolRunnerBase(install_paths, vlog_stream),
-      runtimes_cache_(runtimes_cache),
-      fs_(std::move(fs)),
-      runtimes_build_thread_pool_(runtimes_build_thread_pool),
-      build_runtimes_on_demand_(build_runtimes_on_demand) {}
+                         llvm::raw_ostream* vlog_stream)
+    : ToolRunnerBase(install_paths, vlog_stream), fs_(std::move(fs)) {}
 
 // Searches an argument list to a Clang execution to determine the expected
 // target string, suitable for use with `llvm::Triple`.
@@ -133,31 +126,41 @@ static auto IsNonLinkCommand(llvm::ArrayRef<llvm::StringRef> args) -> bool {
   });
 }
 
-auto ClangRunner::Run(llvm::ArrayRef<llvm::StringRef> args,
-                      Runtimes* prebuilt_runtimes) -> ErrorOr<bool> {
+auto ClangRunner::RunPrebuiltRuntimes(llvm::ArrayRef<llvm::StringRef> args,
+                                      Runtimes& prebuilt_runtimes)
+    -> ErrorOr<bool> {
   // Check the args to see if we have a known target-independent command. If so,
   // directly dispatch it to avoid the cost of building the target resource
   // directory.
   // TODO: Maybe handle response file expansion similar to the Clang CLI?
-  if (args.empty() || args[0].starts_with("-cc1") || IsNonLinkCommand(args) ||
-      (!build_runtimes_on_demand_ && !prebuilt_runtimes)) {
-    return RunTargetIndependentCommand(args);
+  if (args.empty() || args[0].starts_with("-cc1") || IsNonLinkCommand(args)) {
+    return RunNoRuntimes(args);
   }
 
   std::string target = ComputeClangTarget(args);
 
-  // If we have pre-built runtimes, use them rather than building on demand.
-  if (prebuilt_runtimes) {
-    CARBON_ASSIGN_OR_RETURN(std::filesystem::path prebuilt_resource_dir_path,
-                            prebuilt_runtimes->Get(Runtimes::ClangResourceDir));
-    return RunInternal(args, target, prebuilt_resource_dir_path.native());
-  }
-  CARBON_CHECK(build_runtimes_on_demand_);
+  CARBON_ASSIGN_OR_RETURN(std::filesystem::path prebuilt_resource_dir_path,
+                          prebuilt_runtimes.Get(Runtimes::ClangResourceDir));
+  return RunInternal(args, target, prebuilt_resource_dir_path.native());
+}
 
-  // Otherwise, we need to build a target resource directory.
+auto ClangRunner::Run(llvm::ArrayRef<llvm::StringRef> args,
+                      Runtimes::Cache& runtimes_cache,
+                      llvm::ThreadPoolInterface& runtimes_build_thread_pool)
+    -> ErrorOr<bool> {
+  // Check the args to see if we have a known target-independent command. If so,
+  // directly dispatch it to avoid the cost of building the target resource
+  // directory.
+  // TODO: Maybe handle response file expansion similar to the Clang CLI?
+  if (args.empty() || args[0].starts_with("-cc1") || IsNonLinkCommand(args)) {
+    return RunNoRuntimes(args);
+  }
+
+  std::string target = ComputeClangTarget(args);
+
   CARBON_VLOG("Building target resource dir...\n");
   Runtimes::Cache::Features features = {.target = target};
-  CARBON_ASSIGN_OR_RETURN(Runtimes runtimes, runtimes_cache_->Lookup(features));
+  CARBON_ASSIGN_OR_RETURN(Runtimes runtimes, runtimes_cache.Lookup(features));
 
   // We need to build the Clang resource directory for these runtimes. This
   // requires a temporary directory as well as the destination directory for
@@ -169,16 +172,10 @@ auto ClangRunner::Run(llvm::ArrayRef<llvm::StringRef> args,
     CARBON_ASSIGN_OR_RETURN(Filesystem::RemovingDir tmp_dir,
                             Filesystem::MakeTmpDir());
 
-    // We use a thread pool for building runtimes on-demand. If the caller did
-    // not provide a thread pool, use a single threaded one.
-    llvm::SingleThreadExecutor single_thread({.ThreadsRequested = 1});
-
     CARBON_ASSIGN_OR_RETURN(
         resource_dir_path,
         BuildTargetResourceDir(features, runtimes, tmp_dir.abs_path(),
-                               runtimes_build_thread_pool_
-                                   ? *runtimes_build_thread_pool_
-                                   : single_thread));
+                               runtimes_build_thread_pool));
   }
 
   // Note that this function always successfully runs `clang` and returns a bool
@@ -188,8 +185,7 @@ auto ClangRunner::Run(llvm::ArrayRef<llvm::StringRef> args,
   return RunInternal(args, target, resource_dir_path.native());
 }
 
-auto ClangRunner::RunTargetIndependentCommand(
-    llvm::ArrayRef<llvm::StringRef> args) -> bool {
+auto ClangRunner::RunNoRuntimes(llvm::ArrayRef<llvm::StringRef> args) -> bool {
   std::string target = ComputeClangTarget(args);
   return RunInternal(args, target, std::nullopt);
 }
@@ -532,7 +528,7 @@ auto ClangRunner::BuildCrtFile(llvm::StringRef target, llvm::StringRef src_file,
   CARBON_VLOG("Building `{0}' from `{1}`...\n", out_path, src_path);
 
   std::string target_arg = llvm::formatv("--target={0}", target).str();
-  CARBON_CHECK(RunTargetIndependentCommand({
+  CARBON_CHECK(RunNoRuntimes({
       "-no-canonical-prefixes",
       target_arg,
       "-DCRT_HAS_INITFINI_ARRAY",
@@ -611,7 +607,7 @@ auto ClangRunner::BuildBuiltinsFile(llvm::StringRef target,
   CARBON_VLOG("Building `{0}' from `{1}`...\n", out_path, src_path);
 
   std::string target_arg = llvm::formatv("--target={0}", target).str();
-  CARBON_CHECK(RunTargetIndependentCommand({
+  CARBON_CHECK(RunNoRuntimes({
       "-no-canonical-prefixes",
       target_arg,
       "-O3",

@@ -118,9 +118,10 @@ auto LinkSubcommand::Run(DriverEnv& driver_env) -> DriverResult {
   clang_args.append(options_.object_filenames.begin(),
                     options_.object_filenames.end());
 
-  ClangRunner runner(driver_env.installation, &driver_env.runtimes_cache,
-                     driver_env.fs, driver_env.vlog_stream);
-  ErrorOr<bool> run_result = runner.Run(clang_args);
+  ClangRunner runner(driver_env.installation, driver_env.fs,
+                     driver_env.vlog_stream);
+  ErrorOr<bool> run_result = runner.Run(clang_args, driver_env.runtimes_cache,
+                                        *driver_env.thread_pool);
   if (!run_result.ok()) {
     // This is not a Clang failure, but a failure to even run Clang, so we need
     // to diagnose it here.

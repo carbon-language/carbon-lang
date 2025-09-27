@@ -69,11 +69,8 @@ ClangSubcommand::ClangSubcommand() : DriverSubcommand(SubcommandInfo) {}
 // add more.
 // https://github.com/llvm/llvm-project/blob/main/clang/tools/driver/driver.cpp
 auto ClangSubcommand::Run(DriverEnv& driver_env) -> DriverResult {
-  ClangRunner runner(
-      driver_env.installation, &driver_env.runtimes_cache, driver_env.fs,
-      driver_env.vlog_stream,
-      /*build_runtimes_on_demand=*/options_.build_runtimes_on_demand,
-      driver_env.thread_pool);
+  ClangRunner runner(driver_env.installation, driver_env.fs,
+                     driver_env.vlog_stream);
 
   // Don't run Clang when fuzzing, it is known to not be reliable under fuzzing
   // due to many unfixed issues.
@@ -86,9 +83,16 @@ auto ClangSubcommand::Run(DriverEnv& driver_env) -> DriverResult {
     runner.EnableLeakingMemory();
   }
 
-  ErrorOr<bool> run_result = runner.Run(
-      options_.args,
-      driver_env.prebuilt_runtimes ? &*driver_env.prebuilt_runtimes : nullptr);
+  ErrorOr<bool> run_result = false;
+  if (driver_env.prebuilt_runtimes) {
+    run_result = runner.RunPrebuiltRuntimes(options_.args,
+                                            *driver_env.prebuilt_runtimes);
+  } else if (options_.build_runtimes_on_demand) {
+    run_result = runner.Run(options_.args, driver_env.runtimes_cache,
+                            *driver_env.thread_pool);
+  } else {
+    run_result = runner.RunNoRuntimes(options_.args);
+  }
   if (!run_result.ok()) {
     // This is not a Clang failure, but a failure to even run Clang, so we need
     // to diagnose it here.

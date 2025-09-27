@@ -68,8 +68,8 @@ auto BuildRuntimesSubcommand::Run(DriverEnv& driver_env) -> DriverResult {
 
 auto BuildRuntimesSubcommand::RunInternal(DriverEnv& driver_env)
     -> ErrorOr<std::filesystem::path> {
-  ClangRunner runner(driver_env.installation, &driver_env.runtimes_cache,
-                     driver_env.fs, driver_env.vlog_stream);
+  ClangRunner runner(driver_env.installation, driver_env.fs,
+                     driver_env.vlog_stream);
 
   Runtimes::Cache::Features features = {
       .target = options_.codegen_options.target.str()};
