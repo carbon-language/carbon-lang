@@ -927,7 +927,7 @@ Assert(Math.Abs(c.Diameter() - 4.0) < 0.001);
 -   `c.Expand(`...`)` does modify the value of `c`. This is signified using
     `[ref self: Self]` in the method declaration.
 
-The pattern '`addr self:` _type_' means "first take the address of the argument,
+The pattern '`ref self:` _type_' means "first take the address of the argument,
 which must be an
 [l-value](<https://en.wikipedia.org/wiki/Value_(computer_science)#lrvalue>), and
 then match pattern '`self:` _type_' against it".

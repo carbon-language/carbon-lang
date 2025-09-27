@@ -264,9 +264,9 @@ _Reference expressions_ refer to _objects_ with _storage_ where a value may be
 read or written and the object's address can be taken.
 
 Calling a [method](/docs/design/classes.md#methods) on a reference expression
-where the method's `self` parameter has an `addr` specifier can always
-implicitly take the address of the referred-to object. This address is passed as
-a [pointer](#pointers) to the `self` parameter for such methods.
+where the method's `self` parameter has an `ref` specifier can always implicitly
+take the address of the referred-to object. This address is passed as a
+[pointer](#pointers) to the `self` parameter for such methods.
 
 There are two sub-categories of reference expressions: _durable_ and
 _ephemeral_. These refine the _lifetime_ of the underlying storage and provide
@@ -312,15 +312,15 @@ expressions_. They still refer to an object with storage, but it may be storage
 that will not outlive the full expression. Because the storage is only
 temporary, we impose restrictions on where these reference expressions can be
 used: their address can only be taken implicitly as part of a method call whose
-`self` parameter is marked with the `addr` specifier.
+`self` parameter is marked with the `ref` specifier.
 
 **Future work:** The current design allows directly requiring an ephemeral
-reference for `addr`-methods because this replicates the flexibility in C++ --
+reference for `ref`-methods because this replicates the flexibility in C++ --
 very few C++ methods are L-value-ref-qualified which would have a similar effect
-to `addr`-methods requiring a durable reference expression. This is leveraged
+to `ref`-methods requiring a durable reference expression. This is leveraged
 frequently in C++ for builder APIs and other patterns. However, Carbon provides
 more tools in this space than C++ already, and so it may be worth evaluating
-whether we can switch `addr`-methods to the same restrictions as assignment and
+whether we can switch `ref`-methods to the same restrictions as assignment and
 `&`. Temporaries would never have their address escaped (in a safe way) in that
 world and there would be fewer different kinds of entities. But this is reserved
 for future work as we should be very careful about the expressivity hit being
@@ -794,7 +794,7 @@ _thread-safe_ interface subset of an otherwise _thread-compatible_ type.
 
 Note that `const T` is a type qualification and is generally orthogonal to
 expression categories or what form of pattern is used, including for object
-parameters. Notionally, it can occur both with `addr` and value object
+parameters. Notionally, it can occur both with `ref` and value object
 parameters. However, on value patterns, it is redundant as there is no
 meaningful distinction between a value expression of type `T` and type
 `const T`. For example, given a type and methods:
@@ -859,11 +859,11 @@ and realistic Carbon code patterns that cannot be expressed with the tools in
 this proposal in order to motivate a minimal extension. Some candidates based on
 functionality already proposed here or for [classes](/docs/design/classes.md):
 
--   Allow overloading between `addr me` and `me` in methods. This is among the
-    most appealing as it _doesn't_ have the combinatorial explosion. But it is
-    also very limited as it only applies to the implicit object parameter.
+-   Allow overloading between `ref self` and `self` in methods. This is among
+    the most appealing as it _doesn't_ have the combinatorial explosion. But it
+    is also very limited as it only applies to the implicit object parameter.
 -   Allow overloading between `var` and non-`var` parameters.
--   Expand the `addr` technique from object parameters to all parameters, and
+-   Expand the `ref` technique from object parameters to all parameters, and
     allow overloading based on it.
 
 Perhaps more options will emerge as well. Again, the goal isn't to completely

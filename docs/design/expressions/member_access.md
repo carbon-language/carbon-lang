@@ -767,7 +767,7 @@ If instance binding is performed:
     a function call `F(args)` behaves the same as a call to `M(args)` with the
     `self` parameter initialized by a corresponding recipient argument:
 
-    -   If the method declares its `self` parameter with `addr`, the recipient
+    -   If the method declares its `self` parameter with `ref`, the recipient
         argument is `&x`.
     -   Otherwise, the recipient argument is `x`.
 

@@ -2004,8 +2004,8 @@ For every type `MyClass`, there is the type `const MyClass` such that:
     has type `const T`.
 -   While all of the member names in `MyClass` are also member names in
     `const MyClass`, the effective API of a `const MyClass` reference expression
-    is a subset of `MyClass`, because only `addr` methods accepting a
-    `const Self*` will be valid.
+    is a subset of `MyClass`, because only `ref` methods accepting a
+    `const Self` will be valid.
 
 Note that `const` binds more tightly than postfix-`*` for forming a pointer
 type, so `const MyClass*` is equal to `(const MyClass)*`.
