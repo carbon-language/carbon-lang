@@ -331,7 +331,9 @@ date, and can easily find out what has changed. For example:
 
 See the `docs/design` changes in
 [#5606: Keep design documents current](https://github.com/carbon-language/carbon-lang/pull/5606)
-for additional examples of adding those comments.
+for additional examples of adding those comments. As with other parts of the
+proposal, these comments should be included in the initial PR, and updated as
+needed during the review.
 
 As an exception, proposals that will have a widespread, pervasive effect on the
 design documents (such as proposals to replace widely-used vocabulary) usually
