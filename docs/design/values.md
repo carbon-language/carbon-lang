@@ -617,14 +617,14 @@ into an operation from its operands and not the other way around.
 
 ### Function calls and returns
 
-Function calls can have almost arbitrary forms. The return clause of a function
-signature consists of `->` followed by a _return form_, an expression-like
-syntax that specifies not only the type but also the form of calls to the
-function. `return` expressions in the function body are expected to have that
-form, and are converted to it if necessary. When a function is declared without
-a return clause, it behaves from the caller's point of view as if the return
-clause were `-> ()`, but `return` statements in the function body don't take
-operands (and can be omitted at the end of the function).
+The outcome of a function call can have an almost arbitrary form. The return
+clause of a function signature consists of `->` followed by a _return form_, an
+expression-like syntax that specifies not only the type but also the form of the
+function call's outcome. `return` expressions in the function body are expected
+to have that form, and are converted to it if necessary. When a function is
+declared without a return clause, it behaves from the caller's point of view as
+if the return clause were `-> ()`, but `return` statements in the function body
+don't take operands (and can be omitted at the end of the function).
 
 In the common case, the return form is a type expression, in which case calls
 are modeled directly as initializing expressions -- they require storage as an
@@ -931,9 +931,9 @@ of that conversion.
 
 #### Category conversions
 
-_Form composition_ converts a composite form with consistent category
-to a primitive form as follows (where `min` as applied to phases uses the
-ordering "runtime" < "symbolic" < "template"):
+_Form composition_ converts a composite form with consistent category to a
+primitive form as follows (where `min` as applied to phases uses the ordering
+"runtime" < "symbolic" < "template"):
 
 -   A tuple form `([T1, C, P1, V1], [T2, C, P2, V2], ... [TN, C, PN, VN])` can
     be converted to a primitive form
