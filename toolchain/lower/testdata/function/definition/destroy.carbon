@@ -16,7 +16,7 @@
 library "[[@TEST_NAME]]";
 
 class HasDestroy {
-  // TODO: Use `fn destroy` instead once lowering supports it.
+  // TODO: Change for `Destruction`+`Destroy`.
   impl as Core.Destroy {
     fn Op[self: Self]();
   }

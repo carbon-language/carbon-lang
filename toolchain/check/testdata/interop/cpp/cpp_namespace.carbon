@@ -79,6 +79,25 @@ impl library "[[@TEST_NAME]]";
 import Cpp library "header.h";
 //@dump-sem-ir-end
 
+
+// --- /usr/include/system_header.h
+
+auto system_function() -> void;
+
+// --- system_header.carbon
+
+library "[[@TEST_NAME]]";
+
+//@dump-sem-ir-begin
+import Cpp library "<system_header.h>";
+//@dump-sem-ir-end
+
+fn F() {
+//@dump-sem-ir-begin
+  Cpp.system_function();
+//@dump-sem-ir-end
+}
+
 // CHECK:STDOUT: --- cpp_in_inner_namespace.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -118,5 +137,38 @@ import Cpp library "header.h";
 // CHECK:STDOUT: --- api_and_impl.impl.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: --- system_header.carbon
+// CHECK:STDOUT:
+// CHECK:STDOUT: constants {
+// CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [concrete]
+// CHECK:STDOUT:   %.98d: type = cpp_overload_set_type @system_function [concrete]
+// CHECK:STDOUT:   %empty_struct: %.98d = struct_value () [concrete]
+// CHECK:STDOUT:   %system_function.type: type = fn_type @system_function [concrete]
+// CHECK:STDOUT:   %system_function: %system_function.type = struct_value () [concrete]
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: imports {
+// CHECK:STDOUT:   %Cpp: <namespace> = namespace file.%Cpp.import_cpp, [concrete] {
+// CHECK:STDOUT:     .system_function = %.769
+// CHECK:STDOUT:     import Cpp//...
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %.769: %.98d = cpp_overload_set_value @system_function [concrete = constants.%empty_struct]
+// CHECK:STDOUT:   %system_function.decl: %system_function.type = fn_decl @system_function [concrete = constants.%system_function] {} {}
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: file {
+// CHECK:STDOUT:   %Cpp.import_cpp = import_cpp {
+// CHECK:STDOUT:     import Cpp "<system_header.h>"
+// CHECK:STDOUT:   }
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: fn @F() {
+// CHECK:STDOUT: !entry:
+// CHECK:STDOUT:   %Cpp.ref: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
+// CHECK:STDOUT:   %system_function.ref: %.98d = name_ref system_function, imports.%.769 [concrete = constants.%empty_struct]
+// CHECK:STDOUT:   %system_function.call: init %empty_tuple.type = call imports.%system_function.decl()
+// CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

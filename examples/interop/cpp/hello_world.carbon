@@ -5,8 +5,7 @@
 import Cpp inline "#include <cstdio>";
 
 fn Run() {
-  // TODO: Requires member operator << and class with virtual bases
-  // (basic_ostream).
+  // TODO: Requires class with virtual bases (`basic_ostream`).
   // Cpp.std.cout << "Hello world!\n";
 
   // TODO: Requires variadic function.
@@ -20,13 +19,13 @@ fn Run() {
 
   // TODO: Requires Core.String API.
   // let message: str = "Hello world!\n\n";
-  // for (c: Core.Char in message) {
+  // for (c: char in message) {
   //   Cpp.putchar((c as u8) as i32);
   // }
 
-  let message: array(Core.Char, 13) =
+  let message: array(char, 13) =
       ('H', 'e', 'l', 'l', 'o', ' ', 'w', 'o', 'r', 'l', 'd', '!', '\n');
-  for (c: Core.Char in message) {
+  for (c: char in message) {
     // TODO: u8 should probably have an implicit cast to i32.
     Cpp.putchar((c as u8) as i32);
   }

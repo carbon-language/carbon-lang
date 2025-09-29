@@ -21,6 +21,9 @@ struct CppOverloadSet : public Printable<CppOverloadSet> {
   // The parent scope.
   NameScopeId parent_scope_id;
 
+  // The naming class in the name lookup that found this overload set.
+  clang::CXXRecordDecl* naming_class;
+
   // List of all named decls found at name lookup.
   // TODO: Find a good small size for the UnresolvedSet<size> or rework how we
   // store the candidates.

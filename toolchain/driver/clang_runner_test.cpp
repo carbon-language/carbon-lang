@@ -62,13 +62,15 @@ class ClangRunnerTest : public ::testing::Test {
  public:
   InstallPaths install_paths_ =
       InstallPaths::MakeForBazelRunfiles(Testing::GetExePath());
+  Runtimes::Cache runtimes_cache_ =
+      *Runtimes::Cache::MakeSystem(install_paths_);
   llvm::IntrusiveRefCntPtr<llvm::vfs::FileSystem> vfs_ =
       llvm::vfs::getRealFileSystem();
 };
 
 TEST_F(ClangRunnerTest, Version) {
   RawStringOstream test_os;
-  ClangRunner runner(&install_paths_, vfs_, &test_os);
+  ClangRunner runner(&install_paths_, &runtimes_cache_, vfs_, &test_os);
 
   std::string out;
   std::string err;
@@ -99,7 +101,7 @@ TEST_F(ClangRunnerTest, DashC) {
   std::filesystem::path test_output = *Testing::WriteTestFile("test.o", "");
 
   RawStringOstream verbose_out;
-  ClangRunner runner(&install_paths_, vfs_, &verbose_out);
+  ClangRunner runner(&install_paths_, &runtimes_cache_, vfs_, &verbose_out);
   std::string out;
   std::string err;
   EXPECT_TRUE(Testing::CallWithCapturedOutput(
@@ -128,7 +130,7 @@ TEST_F(ClangRunnerTest, BuitinHeaders) {
   std::filesystem::path test_output = *Testing::WriteTestFile("test.o", "");
 
   RawStringOstream verbose_out;
-  ClangRunner runner(&install_paths_, vfs_, &verbose_out);
+  ClangRunner runner(&install_paths_, &runtimes_cache_, vfs_, &verbose_out);
   std::string out;
   std::string err;
   EXPECT_TRUE(Testing::CallWithCapturedOutput(
@@ -155,7 +157,7 @@ TEST_F(ClangRunnerTest, CompileMultipleFiles) {
     std::filesystem::path output = *Testing::WriteTestFile(output_file, "");
 
     RawStringOstream verbose_out;
-    ClangRunner runner(&install_paths_, vfs_, &verbose_out);
+    ClangRunner runner(&install_paths_, &runtimes_cache_, vfs_, &verbose_out);
     std::string out;
     std::string err;
     EXPECT_TRUE(Testing::CallWithCapturedOutput(
@@ -178,7 +180,7 @@ TEST_F(ClangRunnerTest, CompileMultipleFiles) {
 }
 
 TEST_F(ClangRunnerTest, BuildResourceDir) {
-  ClangRunner runner(&install_paths_, vfs_, &llvm::errs(),
+  ClangRunner runner(&install_paths_, &runtimes_cache_, vfs_, &llvm::errs(),
                      /*build_runtimes_on_demand=*/true);
 
   // Note that we can't test arbitrary targets here as we need to be able to
@@ -186,12 +188,13 @@ TEST_F(ClangRunnerTest, BuildResourceDir) {
   // the most likely to pass.
   std::string target = llvm::sys::getDefaultTargetTriple();
   llvm::Triple target_triple(target);
+  Runtimes::Cache::Features features = {.target = target};
+  auto runtimes = *runtimes_cache_.Lookup(features);
   auto tmp_dir = *Filesystem::MakeTmpDir();
-  std::filesystem::path resource_dir_path = tmp_dir.abs_path() / "clang";
-
-  auto build_result = runner.BuildTargetResourceDir(target, resource_dir_path,
-                                                    tmp_dir.abs_path());
+  auto build_result =
+      runner.BuildTargetResourceDir(features, runtimes, tmp_dir.abs_path());
   ASSERT_TRUE(build_result.ok()) << build_result.error();
+  std::filesystem::path resource_dir_path = std::move(*build_result);
 
   // For Linux we can directly check the CRT begin/end object files.
   if (target_triple.isOSLinux()) {
@@ -267,7 +270,7 @@ TEST_F(ClangRunnerTest, LinkCommandEcho) {
   std::filesystem::path bar_file = *Testing::WriteTestFile("bar.o", "");
 
   RawStringOstream verbose_out;
-  ClangRunner runner(&install_paths_, vfs_, &verbose_out);
+  ClangRunner runner(&install_paths_, &runtimes_cache_, vfs_, &verbose_out);
   std::string out;
   std::string err;
   EXPECT_TRUE(Testing::CallWithCapturedOutput(

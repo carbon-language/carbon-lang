@@ -22,6 +22,8 @@
 // ============================================================================
 
 CARBON_DIAGNOSTIC_KIND(DriverInstallInvalid)
+CARBON_DIAGNOSTIC_KIND(DriverRuntimesCacheInvalid)
+CARBON_DIAGNOSTIC_KIND(DriverPrebuiltRuntimesInvalid)
 CARBON_DIAGNOSTIC_KIND(DriverCommandLineParseFailed)
 CARBON_DIAGNOSTIC_KIND(CompilePhaseFlagConflict)
 CARBON_DIAGNOSTIC_KIND(CompilePreludeManifestError)
@@ -266,13 +268,6 @@ CARBON_DIAGNOSTIC_KIND(InvalidBuiltinSignature)
 CARBON_DIAGNOSTIC_KIND(ThunkSignature)
 CARBON_DIAGNOSTIC_KIND(ThunkCallee)
 
-CARBON_DIAGNOSTIC_KIND(DestroyFunctionOutsideClass)
-CARBON_DIAGNOSTIC_KIND(DestroyFunctionMissingSelf)
-CARBON_DIAGNOSTIC_KIND(DestroyFunctionUnexpectedImplicitParam)
-CARBON_DIAGNOSTIC_KIND(DestroyFunctionPositionalParams)
-CARBON_DIAGNOSTIC_KIND(DestroyFunctionNonEmptyExplicitParams)
-CARBON_DIAGNOSTIC_KIND(DestroyFunctionIncorrectReturnType)
-
 // Class checking.
 CARBON_DIAGNOSTIC_KIND(AdaptDeclRepeated)
 CARBON_DIAGNOSTIC_KIND(AdaptWithBase)
@@ -367,6 +362,7 @@ CARBON_DIAGNOSTIC_KIND(QualifiedDeclInUndefinedInterfaceScope)
 CARBON_DIAGNOSTIC_KIND(InCppNameLookup)
 CARBON_DIAGNOSTIC_KIND(InCppOperatorLookup)
 CARBON_DIAGNOSTIC_KIND(InNameLookup)
+CARBON_DIAGNOSTIC_KIND(IncompleteOperandTypeInCppOperatorLookup)
 CARBON_DIAGNOSTIC_KIND(NameAmbiguousDueToExtend)
 CARBON_DIAGNOSTIC_KIND(NameNotFound)
 CARBON_DIAGNOSTIC_KIND(MemberNameNotFound)
