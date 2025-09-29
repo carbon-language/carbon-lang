@@ -25,5 +25,6 @@ wants to pursue, as well as those we want to exclude.
 -   [Information accumulation](information_accumulation.md)
 -   [Low context-sensitivity](low_context_sensitivity.md)
 -   [Prefer providing only one way to do a given thing](one_way.md)
+-   [Safety](safety.md)
 -   [One static open extension mechanism](static_open_extension.md)
 -   [Success criteria](success_criteria.md)
