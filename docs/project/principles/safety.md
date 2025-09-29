@@ -17,24 +17,28 @@ will have interesting properties.
 *Static checking* is a compile-time method to ensure program properties through
 analysis and annotations that describe intended behavior.
 
-A language that aims to provides rigorous memory safety guarantees 
-through static checking needs to navigate a tension between safety and 
-expressivity. Carbon aims to provide a memory-safe language, which
-means statically checked language that covers realistic programming
-use cases.
+Carbon aims to provides rigorous memory safety guarantees 
+through static checking. This requires navigating a field of tension 
+between safety and expressivity. Carbon's statically checked safety 
+guarantees should not come at the price of losing possibility to cover
+realistic programming use cases.
+
+Static checking cannot fully eliminate the need for dynamic techniques
+for safety (e.g. bounds checks) but it can provide constraints on
+runtime program behaviors to minimize such checks.
 
 ## Strict and Permissive Carbon
 
-The goals of Carbon include incremental migration from C++. Further,
+The goals of Carbon include incremental migration from C++, which does not
+come withs statically checked safety guarantees. Further,
 interactions with system components not written in Carbon place a limit 
 on safety guarantees.
 
-For this reason, we distinguish between a *strict* and a *permissive* variant of the Carbon 
-language. The strict variant provides rigorous memory safety guarantees,
-whereas the *permissive* variant does not provides no such guarantees.
+For this reason, Carbon's design distinguishes between a *strict* and a *permissive* variant of the
+language and clarifies the interaction and boundary between these variants.
 
 A strict-Carbon program fragment is only accepted by the compiler
-if execution is guaranteed to be free of safety-related execution errors 
+if execution is guaranteed to be entirely free of safety-related execution errors 
 and its behavior with respect to safety is predictable.
 
 A permissive-Carbon program is accepted independent without any guarantee
