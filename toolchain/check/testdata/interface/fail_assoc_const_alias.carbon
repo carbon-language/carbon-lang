@@ -374,7 +374,7 @@ interface C {
 // CHECK:STDOUT:     %Self.as_type.loc15_14.3: type = facet_access_type constants.%Self.a70 [symbolic = %Self.as_type.loc15_14.1 (constants.%Self.as_type)]
 // CHECK:STDOUT:     %.loc15_14.1: type = converted constants.%Self.a70, %Self.as_type.loc15_14.3 [symbolic = %Self.as_type.loc15_14.1 (constants.%Self.as_type)]
 // CHECK:STDOUT:     %.loc15_14.2: %J2.type = converted %.loc15_14.1, constants.%Self.a70 [symbolic = %Self (constants.%Self.a70)]
-// CHECK:STDOUT:     %I2.facet.loc15_14.2: %I2.type = facet_value constants.%Self.as_type, (constants.%I2.lookup_impl_witness.cb8) [symbolic = %I2.facet.loc15_14.1 (constants.%I2.facet)]
+// CHECK:STDOUT:     %I2.facet.loc15_14.2: %I2.type = facet_value %Self.as_type.loc15_14.2, (constants.%I2.lookup_impl_witness.cb8) [symbolic = %I2.facet.loc15_14.1 (constants.%I2.facet)]
 // CHECK:STDOUT:     %.loc15_14.3: %I2.type = converted @J2.%Self, %I2.facet.loc15_14.2 [symbolic = %I2.facet.loc15_14.1 (constants.%I2.facet)]
 // CHECK:STDOUT:     %impl.elem0.loc15_14.2: type = impl_witness_access constants.%I2.lookup_impl_witness.cb8, element0 [symbolic = %impl.elem0.loc15_14.1 (constants.%impl.elem0.dc2)]
 // CHECK:STDOUT:     %U2.ref: type = name_ref U2, %impl.elem0.loc15_14.2 [symbolic = %impl.elem0.loc15_14.1 (constants.%impl.elem0.dc2)]

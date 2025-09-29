@@ -176,7 +176,7 @@ impl i32 as I {
 // CHECK:STDOUT:       %C.ref: %C.type = name_ref C, file.%C.decl [concrete = constants.%C.generic]
 // CHECK:STDOUT:       %Bool.call: init type = call constants.%Bool() [concrete = bool]
 // CHECK:STDOUT:       %I.ref: type = name_ref I, file.%I.decl [concrete = constants.%I.type]
-// CHECK:STDOUT:       %I.facet: %I.type = facet_value bool, (constants.%I.impl_witness.ef0) [concrete = constants.%I.facet.acb]
+// CHECK:STDOUT:       %I.facet: %I.type = facet_value %Bool.call, (constants.%I.impl_witness.ef0) [concrete = constants.%I.facet.acb]
 // CHECK:STDOUT:       %.loc32_18: %I.type = converted %Bool.call, %I.facet [concrete = constants.%I.facet.acb]
 // CHECK:STDOUT:       %C: type = class_type @C, @C(constants.%I.type, constants.%I.facet.acb) [concrete = constants.%C.41d]
 // CHECK:STDOUT:     }

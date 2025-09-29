@@ -463,7 +463,7 @@ fn H(T:! type) {
 // CHECK:STDOUT:     %DD.ref: type = name_ref DD, @D.%DD.loc14_9.2 [symbolic = %DD (constants.%DD)]
 // CHECK:STDOUT:     %ptr.loc21_14.1: type = ptr_type %DD.ref [symbolic = %ptr.loc21_14.2 (constants.%ptr.79f131.2)]
 // CHECK:STDOUT:     %B.type.loc21_15.1: type = facet_type <@B, @B(constants.%ptr.79f131.2)> [symbolic = %B.type.loc21_15.2 (constants.%B.type.6d756f.2)]
-// CHECK:STDOUT:     %B.facet.loc21_7.1: @D.G.%B.type.loc21_15.2 (%B.type.6d756f.2) = facet_value constants.%T.336, (constants.%B.lookup_impl_witness.8e3) [symbolic = %B.facet.loc21_7.2 (constants.%B.facet.c0e)]
+// CHECK:STDOUT:     %B.facet.loc21_7.1: @D.G.%B.type.loc21_15.2 (%B.type.6d756f.2) = facet_value %T.ref, (constants.%B.lookup_impl_witness.8e3) [symbolic = %B.facet.loc21_7.2 (constants.%B.facet.c0e)]
 // CHECK:STDOUT:     %.loc21: @D.G.%B.type.loc21_15.2 (%B.type.6d756f.2) = converted %T.ref, %B.facet.loc21_7.1 [symbolic = %B.facet.loc21_7.2 (constants.%B.facet.c0e)]
 // CHECK:STDOUT:     <elided>
 // CHECK:STDOUT:   }

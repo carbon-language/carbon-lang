@@ -1207,17 +1207,14 @@ static auto PerformBuiltinConversion(
 
     // Get the canonical type for which we want to attach a new set of witnesses
     // to match the requirements of the target FacetType.
-    auto const_type_inst_id = SemIR::TypeInstId::None;
+    auto type_inst_id = SemIR::TypeInstId::None;
     if (sem_ir.types().Is<SemIR::FacetType>(value_type_id)) {
-      auto type_inst_id = AddTypeInst<SemIR::FacetAccessType>(
+      type_inst_id = AddTypeInst<SemIR::FacetAccessType>(
           context, loc_id,
           {.type_id = SemIR::TypeType::TypeId,
            .facet_value_inst_id = value_id});
-      const_type_inst_id =
-          sem_ir.constant_values().GetConstantTypeInstId(type_inst_id);
     } else {
-      const_type_inst_id = sem_ir.constant_values().GetConstantTypeInstId(
-          context.types().GetAsTypeInstId(value_id));
+      type_inst_id = context.types().GetAsTypeInstId(value_id);
 
       // Shortcut for lossless round trips through a FacetAccessType when
       // converting back to the type of its original facet value.
@@ -1233,6 +1230,8 @@ static auto PerformBuiltinConversion(
       //
       // TODO: This instruction is going to become a `SymbolicBindingType`, so
       // we'll need to handle that instead.
+      auto const_type_inst_id =
+          sem_ir.constant_values().GetConstantTypeInstId(type_inst_id);
       if (auto facet_access_type_inst =
               sem_ir.insts().TryGetAs<SemIR::FacetAccessType>(
                   const_type_inst_id)) {
@@ -1249,7 +1248,7 @@ static auto PerformBuiltinConversion(
     // type satisfies the requirements of the target `FacetType`, as determined
     // by finding impl witnesses for the target FacetType.
     auto lookup_result = LookupImplWitness(
-        context, loc_id, sem_ir.constant_values().Get(const_type_inst_id),
+        context, loc_id, sem_ir.constant_values().Get(type_inst_id),
         sem_ir.types().GetConstantId(target.type_id));
     if (lookup_result.has_value()) {
       if (lookup_result.has_error_value()) {
@@ -1262,7 +1261,7 @@ static auto PerformBuiltinConversion(
         return AddInst<SemIR::FacetValue>(
             context, loc_id,
             {.type_id = target.type_id,
-             .type_inst_id = const_type_inst_id,
+             .type_inst_id = type_inst_id,
              .witnesses_block_id = lookup_result.inst_block_id()});
       }
     } else {
