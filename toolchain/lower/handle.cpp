@@ -126,7 +126,7 @@ auto HandleInst(FunctionContext& context, SemIR::InstId inst_id,
 
 auto HandleInst(FunctionContext& /*context*/, SemIR::InstId /*inst_id*/,
                 SemIR::CppOverloadSetValue /*inst*/) -> void {
-  // lowered as an empty struct value.
+  // Lowered as an empty struct value.
 }
 
 auto HandleInst(FunctionContext& context, SemIR::InstId /*inst_id*/,
