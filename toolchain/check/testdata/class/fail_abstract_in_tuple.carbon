@@ -536,7 +536,7 @@ fn Var5() {
 // CHECK:STDOUT:     import Core//prelude/...
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Main.import_ref.8f2: <witness> = import_ref Main//lib, loc3_26, loaded [concrete = constants.%complete_type]
-// CHECK:STDOUT:   %Main.import_ref.ee1 = import_ref Main//lib, inst18 [no loc], unloaded
+// CHECK:STDOUT:   %Main.import_ref.ee1 = import_ref Main//lib, inst{{\d+}} [no loc], unloaded
 // CHECK:STDOUT:   %Core.Destroy: type = import_ref Core//prelude/parts/destroy, Destroy, loaded [concrete = constants.%Destroy.type]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

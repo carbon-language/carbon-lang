@@ -222,7 +222,7 @@ fn F() -> u32 {
 // CHECK:STDOUT:   %I.impl_witness_table = impl_witness_table (%Main.import_ref.d18), @C.as.I.impl [concrete]
 // CHECK:STDOUT:   %Main.import_ref.030: bool = import_ref Main//bool, loc5_10, loaded [concrete = %val]
 // CHECK:STDOUT:   %val: bool = assoc_const_decl @val [concrete] {}
-// CHECK:STDOUT:   %Core.import_ref.cc5: %bool.as.Copy.impl.Op.type = import_ref Core//prelude/copy, loc23_31, loaded [concrete = constants.%bool.as.Copy.impl.Op]
+// CHECK:STDOUT:   %Core.import_ref.cc5: %bool.as.Copy.impl.Op.type = import_ref Core//prelude/copy, loc{{\d+_\d+}}, loaded [concrete = constants.%bool.as.Copy.impl.Op]
 // CHECK:STDOUT:   %Copy.impl_witness_table.189 = impl_witness_table (%Core.import_ref.cc5), @bool.as.Copy.impl [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -271,7 +271,7 @@ fn F() -> u32 {
 // CHECK:STDOUT:   %I.impl_witness_table = impl_witness_table (%Main.import_ref.d0c), @C.as.I.impl [concrete]
 // CHECK:STDOUT:   %Main.import_ref.8e8: %char = import_ref Main//char, loc5_10, loaded [concrete = %val]
 // CHECK:STDOUT:   %val: %char = assoc_const_decl @val [concrete] {}
-// CHECK:STDOUT:   %Core.import_ref.247: %char.as.Copy.impl.Op.type = import_ref Core//prelude/types/char, loc19_31, loaded [concrete = constants.%char.as.Copy.impl.Op]
+// CHECK:STDOUT:   %Core.import_ref.247: %char.as.Copy.impl.Op.type = import_ref Core//prelude/types/char, loc{{\d+_\d+}}, loaded [concrete = constants.%char.as.Copy.impl.Op]
 // CHECK:STDOUT:   %Copy.impl_witness_table.0e0 = impl_witness_table (%Core.import_ref.247), @char.as.Copy.impl [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -319,7 +319,7 @@ fn F() -> u32 {
 // CHECK:STDOUT:   %I.impl_witness_table = impl_witness_table (%Main.import_ref.43e), @C.as.I.impl [concrete]
 // CHECK:STDOUT:   %Main.import_ref.dcc: Core.CharLiteral = import_ref Main//char_literal, loc5_10, loaded [concrete = %val]
 // CHECK:STDOUT:   %val: Core.CharLiteral = assoc_const_decl @val [concrete] {}
-// CHECK:STDOUT:   %Core.import_ref.70c: %Core.CharLiteral.as.Copy.impl.Op.type = import_ref Core//prelude/copy, loc27_31, loaded [concrete = constants.%Core.CharLiteral.as.Copy.impl.Op]
+// CHECK:STDOUT:   %Core.import_ref.70c: %Core.CharLiteral.as.Copy.impl.Op.type = import_ref Core//prelude/copy, loc{{\d+_\d+}}, loaded [concrete = constants.%Core.CharLiteral.as.Copy.impl.Op]
 // CHECK:STDOUT:   %Copy.impl_witness_table.51e = impl_witness_table (%Core.import_ref.70c), @Core.CharLiteral.as.Copy.impl [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -374,7 +374,7 @@ fn F() -> u32 {
 // CHECK:STDOUT:   %I.impl_witness_table = impl_witness_table (%Main.import_ref.0d9), @C.as.I.impl [concrete]
 // CHECK:STDOUT:   %Main.import_ref.267: %f64.d77 = import_ref Main//float, loc5_10, loaded [concrete = %val]
 // CHECK:STDOUT:   %val: %f64.d77 = assoc_const_decl @val [concrete] {}
-// CHECK:STDOUT:   %Core.import_ref.6cc: @Float.as.Copy.impl.%Float.as.Copy.impl.Op.type (%Float.as.Copy.impl.Op.type.89d) = import_ref Core//prelude/types/float, loc22_31, loaded [symbolic = @Float.as.Copy.impl.%Float.as.Copy.impl.Op (constants.%Float.as.Copy.impl.Op.b4c)]
+// CHECK:STDOUT:   %Core.import_ref.6cc: @Float.as.Copy.impl.%Float.as.Copy.impl.Op.type (%Float.as.Copy.impl.Op.type.89d) = import_ref Core//prelude/types/float, loc{{\d+_\d+}}, loaded [symbolic = @Float.as.Copy.impl.%Float.as.Copy.impl.Op (constants.%Float.as.Copy.impl.Op.b4c)]
 // CHECK:STDOUT:   %Copy.impl_witness_table.3b9 = impl_witness_table (%Core.import_ref.6cc), @Float.as.Copy.impl [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -424,7 +424,7 @@ fn F() -> u32 {
 // CHECK:STDOUT:   %I.impl_witness_table = impl_witness_table (%Main.import_ref.dec), @C.as.I.impl [concrete]
 // CHECK:STDOUT:   %Main.import_ref.e01: Core.FloatLiteral = import_ref Main//float_literal, loc5_10, loaded [concrete = %val]
 // CHECK:STDOUT:   %val: Core.FloatLiteral = assoc_const_decl @val [concrete] {}
-// CHECK:STDOUT:   %Core.import_ref.3bb: %Core.FloatLiteral.as.Copy.impl.Op.type = import_ref Core//prelude/copy, loc31_31, loaded [concrete = constants.%Core.FloatLiteral.as.Copy.impl.Op]
+// CHECK:STDOUT:   %Core.import_ref.3bb: %Core.FloatLiteral.as.Copy.impl.Op.type = import_ref Core//prelude/copy, loc{{\d+_\d+}}, loaded [concrete = constants.%Core.FloatLiteral.as.Copy.impl.Op]
 // CHECK:STDOUT:   %Copy.impl_witness_table.3b2 = impl_witness_table (%Core.import_ref.3bb), @Core.FloatLiteral.as.Copy.impl [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -479,7 +479,7 @@ fn F() -> u32 {
 // CHECK:STDOUT:   %I.impl_witness_table = impl_witness_table (%Main.import_ref.330), @C.as.I.impl [concrete]
 // CHECK:STDOUT:   %Main.import_ref.05e: %i32 = import_ref Main//int, loc5_10, loaded [concrete = %val]
 // CHECK:STDOUT:   %val: %i32 = assoc_const_decl @val [concrete] {}
-// CHECK:STDOUT:   %Core.import_ref.d0f6: @Int.as.Copy.impl.%Int.as.Copy.impl.Op.type (%Int.as.Copy.impl.Op.type.afd) = import_ref Core//prelude/types/int, loc21_31, loaded [symbolic = @Int.as.Copy.impl.%Int.as.Copy.impl.Op (constants.%Int.as.Copy.impl.Op.6cd)]
+// CHECK:STDOUT:   %Core.import_ref.d0f6: @Int.as.Copy.impl.%Int.as.Copy.impl.Op.type (%Int.as.Copy.impl.Op.type.afd) = import_ref Core//prelude/types/int, loc{{\d+_\d+}}, loaded [symbolic = @Int.as.Copy.impl.%Int.as.Copy.impl.Op (constants.%Int.as.Copy.impl.Op.6cd)]
 // CHECK:STDOUT:   %Copy.impl_witness_table.1ed = impl_witness_table (%Core.import_ref.d0f6), @Int.as.Copy.impl [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -529,7 +529,7 @@ fn F() -> u32 {
 // CHECK:STDOUT:   %I.impl_witness_table = impl_witness_table (%Main.import_ref.bc3), @C.as.I.impl [concrete]
 // CHECK:STDOUT:   %Main.import_ref.d59: Core.IntLiteral = import_ref Main//int_literal, loc5_10, loaded [concrete = %val]
 // CHECK:STDOUT:   %val: Core.IntLiteral = assoc_const_decl @val [concrete] {}
-// CHECK:STDOUT:   %Core.import_ref.831: %Core.IntLiteral.as.Copy.impl.Op.type = import_ref Core//prelude/copy, loc35_31, loaded [concrete = constants.%Core.IntLiteral.as.Copy.impl.Op]
+// CHECK:STDOUT:   %Core.import_ref.831: %Core.IntLiteral.as.Copy.impl.Op.type = import_ref Core//prelude/copy, loc{{\d+_\d+}}, loaded [concrete = constants.%Core.IntLiteral.as.Copy.impl.Op]
 // CHECK:STDOUT:   %Copy.impl_witness_table.954 = impl_witness_table (%Core.import_ref.831), @Core.IntLiteral.as.Copy.impl [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -584,7 +584,7 @@ fn F() -> u32 {
 // CHECK:STDOUT:   %I.impl_witness_table = impl_witness_table (%Main.import_ref.647), @C.as.I.impl [concrete]
 // CHECK:STDOUT:   %Main.import_ref.830: %u32 = import_ref Main//uint, loc5_10, loaded [concrete = %val]
 // CHECK:STDOUT:   %val: %u32 = assoc_const_decl @val [concrete] {}
-// CHECK:STDOUT:   %Core.import_ref.ba6: @UInt.as.Copy.impl.%UInt.as.Copy.impl.Op.type (%UInt.as.Copy.impl.Op.type.cb3) = import_ref Core//prelude/types/uint, loc22_31, loaded [symbolic = @UInt.as.Copy.impl.%UInt.as.Copy.impl.Op (constants.%UInt.as.Copy.impl.Op.ee7)]
+// CHECK:STDOUT:   %Core.import_ref.ba6: @UInt.as.Copy.impl.%UInt.as.Copy.impl.Op.type (%UInt.as.Copy.impl.Op.type.cb3) = import_ref Core//prelude/types/uint, loc{{\d+_\d+}}, loaded [symbolic = @UInt.as.Copy.impl.%UInt.as.Copy.impl.Op (constants.%UInt.as.Copy.impl.Op.ee7)]
 // CHECK:STDOUT:   %Copy.impl_witness_table.46a = impl_witness_table (%Core.import_ref.ba6), @UInt.as.Copy.impl [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

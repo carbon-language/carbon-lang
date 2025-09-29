@@ -248,7 +248,7 @@ fn G() { F(B); }
 // CHECK:STDOUT:     import Core//prelude/...
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.Destroy: type = import_ref Core//prelude/parts/destroy, Destroy, loaded [concrete = constants.%Destroy.type]
-// CHECK:STDOUT:   %Core.import_ref.58c: @ptr.as.Destroy.impl.%ptr.as.Destroy.impl.Op.type (%ptr.as.Destroy.impl.Op.type.eb7d1c.1) = import_ref Core//prelude/parts/destroy, loc23_29, loaded [symbolic = @ptr.as.Destroy.impl.%ptr.as.Destroy.impl.Op (constants.%ptr.as.Destroy.impl.Op.60a6c7.1)]
+// CHECK:STDOUT:   %Core.import_ref.58c: @ptr.as.Destroy.impl.%ptr.as.Destroy.impl.Op.type (%ptr.as.Destroy.impl.Op.type.eb7d1c.1) = import_ref Core//prelude/parts/destroy, loc{{\d+_\d+}}, loaded [symbolic = @ptr.as.Destroy.impl.%ptr.as.Destroy.impl.Op (constants.%ptr.as.Destroy.impl.Op.60a6c7.1)]
 // CHECK:STDOUT:   %Destroy.impl_witness_table.1ab = impl_witness_table (%Core.import_ref.58c), @ptr.as.Destroy.impl [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -400,7 +400,7 @@ fn G() { F(B); }
 // CHECK:STDOUT:     import Core//prelude/...
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.Destroy: type = import_ref Core//prelude/parts/destroy, Destroy, loaded [concrete = constants.%Destroy.type]
-// CHECK:STDOUT:   %Core.import_ref.58c: @ptr.as.Destroy.impl.%ptr.as.Destroy.impl.Op.type (%ptr.as.Destroy.impl.Op.type.eb7d1c.1) = import_ref Core//prelude/parts/destroy, loc23_29, loaded [symbolic = @ptr.as.Destroy.impl.%ptr.as.Destroy.impl.Op (constants.%ptr.as.Destroy.impl.Op.60a6c7.1)]
+// CHECK:STDOUT:   %Core.import_ref.58c: @ptr.as.Destroy.impl.%ptr.as.Destroy.impl.Op.type (%ptr.as.Destroy.impl.Op.type.eb7d1c.1) = import_ref Core//prelude/parts/destroy, loc{{\d+_\d+}}, loaded [symbolic = @ptr.as.Destroy.impl.%ptr.as.Destroy.impl.Op (constants.%ptr.as.Destroy.impl.Op.60a6c7.1)]
 // CHECK:STDOUT:   %Destroy.impl_witness_table.1ab = impl_witness_table (%Core.import_ref.58c), @ptr.as.Destroy.impl [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

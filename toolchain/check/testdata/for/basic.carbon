@@ -112,10 +112,10 @@ fn Run() {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
-// CHECK:STDOUT:   %Core.import_ref.1a3: %empty_tuple.type.as.Copy.impl.Op.type = import_ref Core//prelude/parts/copy, loc44_31, loaded [concrete = constants.%empty_tuple.type.as.Copy.impl.Op]
+// CHECK:STDOUT:   %Core.import_ref.1a3: %empty_tuple.type.as.Copy.impl.Op.type = import_ref Core//prelude/parts/copy, loc{{\d+_\d+}}, loaded [concrete = constants.%empty_tuple.type.as.Copy.impl.Op]
 // CHECK:STDOUT:   %Copy.impl_witness_table.955 = impl_witness_table (%Core.import_ref.1a3), @empty_tuple.type.as.Copy.impl [concrete]
-// CHECK:STDOUT:   %Core.import_ref.b87: @Optional.%Optional.HasValue.type (%Optional.HasValue.type.b77) = import_ref Core//prelude/parts/iterate, inst106 [indirect], loaded [symbolic = @Optional.%Optional.HasValue (constants.%Optional.HasValue.110)]
-// CHECK:STDOUT:   %Core.import_ref.d08: @Optional.%Optional.Get.type (%Optional.Get.type.81f) = import_ref Core//prelude/parts/iterate, inst107 [indirect], loaded [symbolic = @Optional.%Optional.Get (constants.%Optional.Get.546)]
+// CHECK:STDOUT:   %Core.import_ref.b87: @Optional.%Optional.HasValue.type (%Optional.HasValue.type.b77) = import_ref Core//prelude/parts/iterate, inst{{\d+}} [indirect], loaded [symbolic = @Optional.%Optional.HasValue (constants.%Optional.HasValue.110)]
+// CHECK:STDOUT:   %Core.import_ref.d08: @Optional.%Optional.Get.type (%Optional.Get.type.81f) = import_ref Core//prelude/parts/iterate, inst{{\d+}} [indirect], loaded [symbolic = @Optional.%Optional.Get (constants.%Optional.Get.546)]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Run() {
