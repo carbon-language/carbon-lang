@@ -33,12 +33,12 @@ var a_ptr: const C* = a_ptr_ref;
 // CHECK:STDOUT: --- implicit.impl.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
-// CHECK:STDOUT:   %C: type = class_type @C [concrete]
 // CHECK:STDOUT:   %Copy.type: type = facet_type <@Copy> [concrete]
 // CHECK:STDOUT:   %Copy.Op.type: type = fn_type @Copy.Op [concrete]
 // CHECK:STDOUT:   %T.8b3: type = bind_symbolic_name T, 0 [symbolic]
 // CHECK:STDOUT:   %ptr.as.Copy.impl.Op.type.222: type = fn_type @ptr.as.Copy.impl.Op, @ptr.as.Copy.impl(%T.8b3) [symbolic]
 // CHECK:STDOUT:   %ptr.as.Copy.impl.Op.3ef: %ptr.as.Copy.impl.Op.type.222 = struct_value () [symbolic]
+// CHECK:STDOUT:   %C: type = class_type @C [concrete]
 // CHECK:STDOUT:   %const.668: type = const_type %C [concrete]
 // CHECK:STDOUT:   %ptr.801: type = ptr_type %const.668 [concrete]
 // CHECK:STDOUT:   %pattern_type.c0d: type = pattern_type %ptr.801 [concrete]
@@ -58,7 +58,7 @@ var a_ptr: const C* = a_ptr_ref;
 // CHECK:STDOUT:   %Main.C: type = import_ref Main//implicit, C, loaded [concrete = constants.%C]
 // CHECK:STDOUT:   %Main.a_ref: ref %const.668 = import_ref Main//implicit, a_ref, loaded [concrete = %a_ref.var]
 // CHECK:STDOUT:   %Main.a_ptr_ref: ref %ptr.801 = import_ref Main//implicit, a_ptr_ref, loaded [concrete = %a_ptr_ref.var]
-// CHECK:STDOUT:   %Main.import_ref.790: @ptr.as.Copy.impl.%ptr.as.Copy.impl.Op.type (%ptr.as.Copy.impl.Op.type.222) = import_ref Main//implicit, inst193 [indirect], loaded [symbolic = @ptr.as.Copy.impl.%ptr.as.Copy.impl.Op (constants.%ptr.as.Copy.impl.Op.3ef)]
+// CHECK:STDOUT:   %Main.import_ref.790: @ptr.as.Copy.impl.%ptr.as.Copy.impl.Op.type (%ptr.as.Copy.impl.Op.type.222) = import_ref Main//implicit, inst154 [indirect], loaded [symbolic = @ptr.as.Copy.impl.%ptr.as.Copy.impl.Op (constants.%ptr.as.Copy.impl.Op.3ef)]
 // CHECK:STDOUT:   %Copy.impl_witness_table.573 = impl_witness_table (%Main.import_ref.790), @ptr.as.Copy.impl [concrete]
 // CHECK:STDOUT:   %a_ref.patt: %pattern_type.6af = binding_pattern a_ref [concrete]
 // CHECK:STDOUT:   %a_ref.var_patt: %pattern_type.6af = var_pattern %a_ref.patt [concrete]

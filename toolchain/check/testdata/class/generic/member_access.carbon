@@ -81,8 +81,6 @@ fn StaticMemberFunctionCall(T:! type) -> Class(T) {
 // CHECK:STDOUT:   %pattern_type.f74: type = pattern_type %ptr.f3f [symbolic]
 // CHECK:STDOUT:   %Class.GetAddr.type.2b0: type = fn_type @Class.GetAddr, @Class(%T.be8) [symbolic]
 // CHECK:STDOUT:   %Class.GetAddr.913: %Class.GetAddr.type.2b0 = struct_value () [symbolic]
-// CHECK:STDOUT:   %Destroy.type: type = facet_type <@Destroy> [concrete]
-// CHECK:STDOUT:   %Destroy.impl_witness: <witness> = impl_witness @Class.%Destroy.impl_witness_table, @Class.as.Destroy.impl(%T.be8) [symbolic]
 // CHECK:STDOUT:   %struct_type.x.419: type = struct_type {.x: %T.as_type} [symbolic]
 // CHECK:STDOUT:   %complete_type.1d8: <witness> = complete_type_witness %struct_type.x.419 [symbolic]
 // CHECK:STDOUT:   %require_complete.3e3: <witness> = require_complete_type %Class.2c5 [symbolic]
@@ -143,21 +141,6 @@ fn StaticMemberFunctionCall(T:! type) -> Class(T) {
 // CHECK:STDOUT:   %Copy.impl_witness_table.53c = impl_witness_table (%Core.import_ref.0e4), @ptr.as.Copy.impl [concrete]
 // CHECK:STDOUT:   %Core.import_ref.d0f6: @Int.as.Copy.impl.%Int.as.Copy.impl.Op.type (%Int.as.Copy.impl.Op.type.afd) = import_ref Core//prelude/parts/int, loc17_31, loaded [symbolic = @Int.as.Copy.impl.%Int.as.Copy.impl.Op (constants.%Int.as.Copy.impl.Op.6cd)]
 // CHECK:STDOUT:   %Copy.impl_witness_table.1ed = impl_witness_table (%Core.import_ref.d0f6), @Int.as.Copy.impl [concrete]
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: generic impl @Class.as.Destroy.impl(@Class.%T.loc4_13.2: %Copy.type) {
-// CHECK:STDOUT:   <elided>
-// CHECK:STDOUT:
-// CHECK:STDOUT: !definition:
-// CHECK:STDOUT:   <elided>
-// CHECK:STDOUT:
-// CHECK:STDOUT:   impl: @Class.%Self.ref as constants.%Destroy.type {
-// CHECK:STDOUT:     <elided>
-// CHECK:STDOUT:
-// CHECK:STDOUT:   !members:
-// CHECK:STDOUT:     .Op = %Class.as.Destroy.impl.Op.decl
-// CHECK:STDOUT:     witness = @Class.%Destroy.impl_witness
-// CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic class @Class(%T.loc4_13.2: %Copy.type) {
@@ -234,14 +217,6 @@ fn StaticMemberFunctionCall(T:! type) -> Class(T) {
 // CHECK:STDOUT:     %.loc15_12.1: init @Class.GetAddr.%ptr.loc13_38.1 (%ptr.f3f) = call %bound_method.loc15_12.2(%addr)
 // CHECK:STDOUT:     return %.loc15_12.1 to %return
 // CHECK:STDOUT:   }
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: generic fn @Class.as.Destroy.impl.Op(@Class.%T.loc4_13.2: %Copy.type) {
-// CHECK:STDOUT:   <elided>
-// CHECK:STDOUT:
-// CHECK:STDOUT: !definition:
-// CHECK:STDOUT:
-// CHECK:STDOUT:   fn(%self.param: @Class.as.Destroy.impl.Op.%ptr (%ptr.818)) = "no_op";
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @DirectFieldAccess(%x.param: %Class.062) -> %i32 {
@@ -325,19 +300,6 @@ fn StaticMemberFunctionCall(T:! type) -> Class(T) {
 // CHECK:STDOUT:   %T.as_type.loc13_38.1 => constants.%T.as_type
 // CHECK:STDOUT:   %ptr.loc13_38.1 => constants.%ptr.f3f
 // CHECK:STDOUT:   %pattern_type.loc13_34 => constants.%pattern_type.f74
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: specific @Class.as.Destroy.impl(constants.%T.be8) {
-// CHECK:STDOUT:   %T => constants.%T.be8
-// CHECK:STDOUT:   %Class => constants.%Class.2c5
-// CHECK:STDOUT:   %Destroy.impl_witness => constants.%Destroy.impl_witness
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: specific @Class.as.Destroy.impl.Op(constants.%T.be8) {
-// CHECK:STDOUT:   %T => constants.%T.be8
-// CHECK:STDOUT:   %Class => constants.%Class.2c5
-// CHECK:STDOUT:   %ptr => constants.%ptr.818
-// CHECK:STDOUT:   %pattern_type => constants.%pattern_type.e8f
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Class(constants.%Copy.facet.c49) {

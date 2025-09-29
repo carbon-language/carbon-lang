@@ -195,7 +195,7 @@ auto LookupNameInExactScope(Context& context, SemIR::LocId loc_id,
 
 // Prints diagnostics on invalid qualified name access.
 static auto DiagnoseInvalidQualifiedNameAccess(
-    Context& context, SemIR::LocId loc_id, SemIR::InstId scope_result_id,
+    Context& context, SemIR::LocId loc_id, SemIR::LocId member_loc_id,
     SemIR::NameId name_id, SemIR::AccessKind access_kind, bool is_parent_access,
     AccessInfo access_info) -> void {
   auto class_type = context.insts().TryGetAs<SemIR::ClassType>(
@@ -231,7 +231,7 @@ static auto DiagnoseInvalidQualifiedNameAccess(
   context.emitter()
       .Build(loc_id, ClassInvalidMemberAccess,
              access_kind == SemIR::AccessKind::Private, name_id, parent_type_id)
-      .Note(scope_result_id, ClassMemberDeclaration)
+      .Note(member_loc_id, ClassMemberDeclaration)
       .Emit();
 }
 
@@ -252,6 +252,17 @@ static auto IsAccessProhibited(std::optional<AccessInfo> access_info,
       return access_info->highest_allowed_access !=
                  SemIR::AccessKind::Private ||
              is_parent_access;
+  }
+}
+
+auto CheckAccess(Context& context, SemIR::LocId loc_id,
+                 SemIR::LocId member_loc_id, SemIR::NameId name_id,
+                 SemIR::AccessKind access_kind, bool is_parent_access,
+                 AccessInfo access_info) -> void {
+  if (IsAccessProhibited(access_info, access_kind, is_parent_access)) {
+    DiagnoseInvalidQualifiedNameAccess(context, loc_id, member_loc_id, name_id,
+                                       access_kind, is_parent_access,
+                                       access_info);
   }
 }
 
@@ -475,9 +486,9 @@ auto LookupQualifiedName(Context& context, SemIR::LocId loc_id,
 
         // Note, `access_info` is guaranteed to have a value here, since
         // `prohibited_accesses` is non-empty.
-        DiagnoseInvalidQualifiedNameAccess(context, loc_id, scope_result_id,
-                                           name_id, access_kind,
-                                           is_parent_access, *access_info);
+        DiagnoseInvalidQualifiedNameAccess(
+            context, loc_id, SemIR::LocId(scope_result_id), name_id,
+            access_kind, is_parent_access, *access_info);
       }
     }
 

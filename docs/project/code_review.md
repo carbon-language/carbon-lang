@@ -124,15 +124,9 @@ mechanical best practices to most effectively navigate them.
     -   Make any in-file comments needed, but add them to a pending review
         rather than sending them directly.
     -   Finish the review and add any top-level review comments there.
--   If you are an owner who will be providing approval for the change, then make
-    sure to mark a review as requesting changes when you want the author to
-    begin addressing your comment. Only use the "comment" review state if you
-    are still in the process of reviewing and don't expect the author to begin
-    working on further changes.
-    -   If you are not an owner asked to approve, use the difference between a
-        comment and requesting a change to help the author know whether to
-        circle back with you before landing the pull request if the relevant
-        owner(s) approve it.
+-   Don't mark reviews as requesting changes. Sometimes reviewers get busy and
+    somebody else approves; the "request changes" feature still blocks merges
+    until the original requester approves, which can slow reviews down.
 -   Don't reply to in-file comment threads in the conversation view, or with
     direct single reply comments.
     -   Add all replies to in-file comment threads using the `Files Changed` tab

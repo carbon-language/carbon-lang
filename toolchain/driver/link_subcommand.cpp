@@ -118,8 +118,8 @@ auto LinkSubcommand::Run(DriverEnv& driver_env) -> DriverResult {
   clang_args.append(options_.object_filenames.begin(),
                     options_.object_filenames.end());
 
-  ClangRunner runner(driver_env.installation, driver_env.fs,
-                     driver_env.vlog_stream);
+  ClangRunner runner(driver_env.installation, &driver_env.runtimes_cache,
+                     driver_env.fs, driver_env.vlog_stream);
   ErrorOr<bool> run_result = runner.Run(clang_args);
   if (!run_result.ok()) {
     // This is not a Clang failure, but a failure to even run Clang, so we need

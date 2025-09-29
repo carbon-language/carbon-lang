@@ -125,12 +125,12 @@ fn NonConstNonConst(p: X**) { TakeNonConstConst(p); }
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %X: type = class_type @X [concrete]
-// CHECK:STDOUT:   %ptr.d17: type = ptr_type %X [concrete]
-// CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [concrete]
 // CHECK:STDOUT:   %const.dde: type = const_type %X [concrete]
 // CHECK:STDOUT:   %ptr.cbd: type = ptr_type %const.dde [concrete]
 // CHECK:STDOUT:   %TakeConst.type: type = fn_type @TakeConst [concrete]
+// CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [concrete]
 // CHECK:STDOUT:   %TakeConst: %TakeConst.type = struct_value () [concrete]
+// CHECK:STDOUT:   %ptr.d17: type = ptr_type %X [concrete]
 // CHECK:STDOUT:   %TakeNonConst.type: type = fn_type @TakeNonConst [concrete]
 // CHECK:STDOUT:   %TakeNonConst: %TakeNonConst.type = struct_value () [concrete]
 // CHECK:STDOUT:   %const.5df: type = const_type %ptr.cbd [concrete]
@@ -178,14 +178,14 @@ fn NonConstNonConst(p: X**) { TakeNonConstConst(p); }
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %X: type = class_type @X [concrete]
-// CHECK:STDOUT:   %ptr.d17: type = ptr_type %X [concrete]
-// CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [concrete]
 // CHECK:STDOUT:   %const.dde: type = const_type %X [concrete]
 // CHECK:STDOUT:   %ptr.cbd: type = ptr_type %const.dde [concrete]
 // CHECK:STDOUT:   %const.5df: type = const_type %ptr.cbd [concrete]
 // CHECK:STDOUT:   %ptr.20a: type = ptr_type %const.5df [concrete]
 // CHECK:STDOUT:   %TakeConstConst.type: type = fn_type @TakeConstConst [concrete]
+// CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [concrete]
 // CHECK:STDOUT:   %TakeConstConst: %TakeConstConst.type = struct_value () [concrete]
+// CHECK:STDOUT:   %ptr.d17: type = ptr_type %X [concrete]
 // CHECK:STDOUT:   %ptr.b1b: type = ptr_type %ptr.d17 [concrete]
 // CHECK:STDOUT:   %const.2bc: type = const_type %ptr.d17 [concrete]
 // CHECK:STDOUT:   %ptr.297: type = ptr_type %const.2bc [concrete]
