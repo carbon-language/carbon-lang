@@ -5,6 +5,7 @@
 #include "toolchain/driver/driver.h"
 
 #include <algorithm>
+#include <filesystem>
 #include <memory>
 #include <optional>
 
@@ -31,6 +32,9 @@ struct Options {
   bool verbose = false;
   bool fuzzing = false;
   bool include_diagnostic_kind = false;
+
+  llvm::StringRef runtimes_cache_path;
+  llvm::StringRef prebuilt_runtimes_path;
 
   BuildRuntimesSubcommand runtimes;
   ClangSubcommand clang;
@@ -73,6 +77,35 @@ auto Options::Build(CommandLine::CommandBuilder& b) -> void {
           .help = "Enable verbose logging to the stderr stream.",
       },
       [&](CommandLine::FlagBuilder& arg_b) { arg_b.Set(&verbose); });
+
+  b.AddStringOption(
+      {
+          .name = "runtimes-cache",
+          .value_name = "PATH",
+          .help = R"""(
+Specify a custom runtimes cache location.
+
+By default, the runtimes cache is located in the `carbon_runtimes` subdirectory
+of `$XDG_CACHE_HOME` (or `$HOME/.cache` if not set). If unable to use either, it
+will be placed in a temporary directory that is removed when the command
+completes. This flag overrides that logic with a specific path. It has no effect
+if --prebuilt-runtimes is set.
+)""",
+      },
+      [&](auto& arg_b) { arg_b.Set(&runtimes_cache_path); });
+
+  b.AddStringOption(
+      {
+          .name = "prebuilt-runtimes",
+          .value_name = "PATH",
+          .help = R"""(
+Path to prebuilt runtimes tree.
+
+If this option is provided, runtimes will not be built on demand and this path
+will be used instead.
+)""",
+      },
+      [&](auto& arg_b) { arg_b.Set(&prebuilt_runtimes_path); });
 
   b.AddFlag(
       {
@@ -133,6 +166,38 @@ auto Driver::RunCommand(llvm::ArrayRef<llvm::StringRef> args) -> DriverResult {
     return {.success = false};
   } else if (*result == CommandLine::ParseResult::MetaSuccess) {
     return {.success = true};
+  }
+
+  auto cache_result =
+      options.runtimes_cache_path.empty()
+          ? Runtimes::Cache::MakeSystem(*driver_env_.installation,
+                                        driver_env_.vlog_stream)
+          : Runtimes::Cache::MakeCustom(
+                *driver_env_.installation,
+                std::filesystem::absolute(options.runtimes_cache_path.str()),
+                driver_env_.vlog_stream);
+  if (!cache_result.ok()) {
+    // TODO: We should provide a better diagnostic than the raw error.
+    CARBON_DIAGNOSTIC(DriverRuntimesCacheInvalid, Error, "{0}", std::string);
+    driver_env_.emitter.Emit(DriverRuntimesCacheInvalid,
+                             cache_result.error().message());
+    return {.success = false};
+  }
+  driver_env_.runtimes_cache = std::move(*cache_result);
+
+  if (!options.prebuilt_runtimes_path.empty()) {
+    auto result = Runtimes::Make(
+        std::filesystem::absolute(options.prebuilt_runtimes_path.str()),
+        driver_env_.vlog_stream);
+    if (!result.ok()) {
+      // TODO: We should provide a better diagnostic than the raw error.
+      CARBON_DIAGNOSTIC(DriverPrebuiltRuntimesInvalid, Error, "{0}",
+                        std::string);
+      driver_env_.emitter.Emit(DriverPrebuiltRuntimesInvalid,
+                               result.error().message());
+      return {.success = false};
+    }
+    driver_env_.prebuilt_runtimes = *std::move(result);
   }
 
   if (options.verbose) {

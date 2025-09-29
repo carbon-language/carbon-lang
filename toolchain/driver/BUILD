@@ -23,6 +23,7 @@ cc_library(
     hdrs = ["clang_runner.h"],
     deps = [
         ":llvm_runner",
+        ":runtimes_cache",
         ":tool_runner_base",
         "//common:error",
         "//common:filesystem",
@@ -130,6 +131,7 @@ cc_library(
         ":clang_runner",
         ":lld_runner",
         ":llvm_runner",
+        ":runtimes_cache",
         "//common:command_line",
         "//common:error",
         "//common:ostream",
@@ -263,6 +265,44 @@ cc_test(
         "//common:ostream",
         "//common:raw_string_ostream",
         "//testing/base:capture_std_streams",
+        "//testing/base:global_exe_path",
+        "//testing/base:gtest_main",
+        "@googletest//:gtest",
+        "@llvm-project//llvm:Support",
+    ],
+)
+
+cc_library(
+    name = "runtimes_cache",
+    srcs = ["runtimes_cache.cpp"],
+    hdrs = ["runtimes_cache.h"],
+    deps = [
+        "//common:check",
+        "//common:error",
+        "//common:filesystem",
+        "//common:ostream",
+        "//common:version",
+        "//common:vlog",
+        "//toolchain/install:install_paths",
+        "@llvm-project//llvm:Support",
+    ],
+)
+
+cc_test(
+    name = "runtimes_cache_test",
+    size = "small",
+    srcs = ["runtimes_cache_test.cpp"],
+    data = ["//toolchain/install:install_data"],
+    deps = [
+        ":runtimes_cache",
+        "//common:check",
+        "//common:error_test_helpers",
+        "//common:filesystem",
+        "//common:ostream",
+        "//common:raw_string_ostream",
+        "//common:version",
+        "//testing/base:capture_std_streams",
+        "//testing/base:file_helpers",
         "//testing/base:global_exe_path",
         "//testing/base:gtest_main",
         "@googletest//:gtest",

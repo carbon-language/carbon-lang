@@ -4,6 +4,8 @@
 
 #include "toolchain/driver/build_runtimes_subcommand.h"
 
+#include <variant>
+
 #include "llvm/TargetParser/Triple.h"
 #include "toolchain/driver/clang_runner.h"
 
@@ -43,9 +45,6 @@ BuildRuntimesSubcommand::BuildRuntimesSubcommand()
     : DriverSubcommand(SubcommandInfo) {}
 
 auto BuildRuntimesSubcommand::Run(DriverEnv& driver_env) -> DriverResult {
-  ClangRunner runner(driver_env.installation, driver_env.fs,
-                     driver_env.vlog_stream);
-
   // Don't run Clang when fuzzing, it is known to not be reliable under fuzzing
   // due to many unfixed issues.
   if (TestAndDiagnoseIfFuzzingExternalLibraries(driver_env, "clang")) {
@@ -56,39 +55,44 @@ auto BuildRuntimesSubcommand::Run(DriverEnv& driver_env) -> DriverResult {
   CARBON_DIAGNOSTIC(FailureBuildingRuntimes, Error,
                     "failure building runtimes: {0}", std::string);
 
-  auto tmp_result = Filesystem::MakeTmpDir();
-  if (!tmp_result.ok()) {
+  auto run_result = RunInternal(driver_env);
+  if (!run_result.ok()) {
     driver_env.emitter.Emit(FailureBuildingRuntimes,
-                            tmp_result.error().message());
+                            run_result.error().message());
     return {.success = false};
   }
-  Filesystem::RemovingDir tmp_dir = *std::move(tmp_result);
 
-  // TODO: Currently, the default location is just a subdirectory of the
-  // temporary directory used for the build. This allows the subcommand to be
-  // used to test and debug runtime building, but not for the results to be
-  // reused. Eventually, this should be connected to the same runtimes cache
-  // used by link commands.
-  std::filesystem::path output_path =
-      options_.directory.empty()
-          ? tmp_dir.abs_path() / "runtimes"
-          : std::filesystem::path(options_.directory.str());
+  llvm::outs() << "Built runtimes: " << *run_result << "\n";
+  return {.success = true};
+}
 
-  // Hard code a subdirectory of the runtimes output for the Clang resource
-  // directory runtimes.
-  //
-  // TODO: This should be replaced with an abstraction that manages the layout
-  // of the generated runtimes rather than hardcoding it.
-  std::filesystem::path resource_dir_path = output_path / "clang_resource_dir";
+auto BuildRuntimesSubcommand::RunInternal(DriverEnv& driver_env)
+    -> ErrorOr<std::filesystem::path> {
+  ClangRunner runner(driver_env.installation, &driver_env.runtimes_cache,
+                     driver_env.fs, driver_env.vlog_stream);
 
-  auto build_result = runner.BuildTargetResourceDir(
-      options_.codegen_options.target, resource_dir_path, tmp_dir.abs_path());
-  if (!build_result.ok()) {
-    driver_env.emitter.Emit(FailureBuildingRuntimes,
-                            build_result.error().message());
+  Runtimes::Cache::Features features = {
+      .target = options_.codegen_options.target.str()};
+
+  bool is_cache = options_.directory.empty();
+  std::filesystem::path explicit_output_path = options_.directory.str();
+  if (!is_cache) {
+    auto access_result = Filesystem::Cwd().Access(explicit_output_path);
+    if (access_result.ok()) {
+      return Error("output directory already exists");
+    }
+    if (!access_result.error().no_entity()) {
+      return std::move(access_result).error();
+    }
   }
 
-  return {.success = build_result.ok()};
+  CARBON_ASSIGN_OR_RETURN(
+      auto runtimes,
+      is_cache ? driver_env.runtimes_cache.Lookup(features)
+               : Runtimes::Make(explicit_output_path, driver_env.vlog_stream));
+  CARBON_ASSIGN_OR_RETURN(auto tmp_dir, Filesystem::MakeTmpDir());
+
+  return runner.BuildTargetResourceDir(features, runtimes, tmp_dir.abs_path());
 }
 
 }  // namespace Carbon

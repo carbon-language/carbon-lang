@@ -17,6 +17,9 @@ namespace Carbon::Check {
 auto LookupCppOperator(Context& context, SemIR::LocId loc_id, Operator op,
                        llvm::ArrayRef<SemIR::InstId> arg_ids) -> SemIR::InstId;
 
+// Returns whether the decl is an operator member function.
+auto IsCppOperatorMethodDecl(clang::Decl* decl) -> bool;
+
 }  // namespace Carbon::Check
 
 #endif  // CARBON_TOOLCHAIN_CHECK_CPP_OPERATORS_H_

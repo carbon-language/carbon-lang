@@ -10,8 +10,6 @@
 // TIP: To dump output, run:
 // TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/check/testdata/interop/cpp/class/access.carbon
 
-// TODO: Tests marked as `fail_todo_5891_` to fixed as a follow-up of https://github.com/carbon-language/carbon-lang/pull/5891.
-
 // ============================================================================
 // Public non-function member
 // ============================================================================
@@ -233,14 +231,17 @@ fn F(c: Cpp.C*) {
 
 class C {
  public:
+  C();
   static auto foo() -> void;
  protected:
+  C(int);
   static auto foo(int a) -> void;
  private:
+  C(int, int);
   static auto foo(int a, int b) -> void;
 };
 
-// --- fail_todo_5891_import_overload_set_public.carbon
+// --- import_overload_set_public.carbon
 
 library "[[@TEST_NAME]]";
 
@@ -248,49 +249,107 @@ import Cpp library "overload_set.h";
 
 fn F() {
   //@dump-sem-ir-begin
-  // CHECK:STDERR: fail_todo_5891_import_overload_set_public.carbon:[[@LINE+7]]:3: error: semantics TODO: `Unsupported: Overloaded set with mixed access` [SemanticsTodo]
-  // CHECK:STDERR:   Cpp.C.foo();
-  // CHECK:STDERR:   ^~~~~~~~~
-  // CHECK:STDERR: fail_todo_5891_import_overload_set_public.carbon:[[@LINE+4]]:3: note: in `Cpp` name lookup for `foo` [InCppNameLookup]
-  // CHECK:STDERR:   Cpp.C.foo();
-  // CHECK:STDERR:   ^~~~~~~~~
-  // CHECK:STDERR:
+  Cpp.C.C();
   Cpp.C.foo();
   //@dump-sem-ir-end
 }
 
-// --- fail_todo_5891_import_overload_set_protected.carbon
+// --- fail_import_overload_set_protected.carbon
 
 library "[[@TEST_NAME]]";
 
 import Cpp library "overload_set.h";
 
 fn F() {
-  // CHECK:STDERR: fail_todo_5891_import_overload_set_protected.carbon:[[@LINE+7]]:3: error: semantics TODO: `Unsupported: Overloaded set with mixed access` [SemanticsTodo]
+  // CHECK:STDERR: fail_import_overload_set_protected.carbon:[[@LINE+5]]:3: error: cannot access protected member `C` of type `Cpp.C` [ClassInvalidMemberAccess]
+  // CHECK:STDERR:   Cpp.C.C(1 as i32);
+  // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~
+  // CHECK:STDERR: fail_import_overload_set_protected.carbon: note: declared here [ClassMemberDeclaration]
+  // CHECK:STDERR:
+  Cpp.C.C(1 as i32);
+
+  // CHECK:STDERR: fail_import_overload_set_protected.carbon:[[@LINE+5]]:3: error: cannot access protected member `foo` of type `Cpp.C` [ClassInvalidMemberAccess]
   // CHECK:STDERR:   Cpp.C.foo(1 as i32);
-  // CHECK:STDERR:   ^~~~~~~~~
-  // CHECK:STDERR: fail_todo_5891_import_overload_set_protected.carbon:[[@LINE+4]]:3: note: in `Cpp` name lookup for `foo` [InCppNameLookup]
-  // CHECK:STDERR:   Cpp.C.foo(1 as i32);
-  // CHECK:STDERR:   ^~~~~~~~~
+  // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~
+  // CHECK:STDERR: fail_import_overload_set_protected.carbon: note: declared here [ClassMemberDeclaration]
   // CHECK:STDERR:
   Cpp.C.foo(1 as i32);
 }
 
-// --- fail_todo_5891_import_overload_set_private.carbon
+// --- import_overload_set_protected_base.carbon
+
+library "[[@TEST_NAME]]";
+
+import Cpp library "overload_set.h";
+
+class D {
+  extend base: Cpp.C;
+
+  fn MakePublic() -> D {
+    return {.base = C()};
+  }
+
+  fn MakeProtected() -> D {
+    return {.base = C(1 as i32)};
+  }
+
+  fn CallPublic() {
+    foo();
+  }
+
+  fn CallProtected() {
+    foo(1 as i32);
+  }
+}
+
+// --- fail_import_overload_set_private.carbon
 
 library "[[@TEST_NAME]]";
 
 import Cpp library "overload_set.h";
 
 fn F() {
-  // CHECK:STDERR: fail_todo_5891_import_overload_set_private.carbon:[[@LINE+7]]:3: error: semantics TODO: `Unsupported: Overloaded set with mixed access` [SemanticsTodo]
+  // CHECK:STDERR: fail_import_overload_set_private.carbon:[[@LINE+5]]:3: error: cannot access private member `C` of type `Cpp.C` [ClassInvalidMemberAccess]
+  // CHECK:STDERR:   Cpp.C.C(1 as i32, 2 as i32);
+  // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~~~~~~~~
+  // CHECK:STDERR: fail_import_overload_set_private.carbon: note: declared here [ClassMemberDeclaration]
+  // CHECK:STDERR:
+  Cpp.C.C(1 as i32, 2 as i32);
+
+  // CHECK:STDERR: fail_import_overload_set_private.carbon:[[@LINE+5]]:3: error: cannot access private member `foo` of type `Cpp.C` [ClassInvalidMemberAccess]
   // CHECK:STDERR:   Cpp.C.foo(1 as i32, 2 as i32);
-  // CHECK:STDERR:   ^~~~~~~~~
-  // CHECK:STDERR: fail_todo_5891_import_overload_set_private.carbon:[[@LINE+4]]:3: note: in `Cpp` name lookup for `foo` [InCppNameLookup]
-  // CHECK:STDERR:   Cpp.C.foo(1 as i32, 2 as i32);
-  // CHECK:STDERR:   ^~~~~~~~~
+  // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+  // CHECK:STDERR: fail_import_overload_set_private.carbon: note: declared here [ClassMemberDeclaration]
   // CHECK:STDERR:
   Cpp.C.foo(1 as i32, 2 as i32);
+}
+
+// --- fail_import_overload_set_private_base.carbon
+
+library "[[@TEST_NAME]]";
+
+import Cpp library "overload_set.h";
+
+class D {
+  extend base: Cpp.C;
+
+  fn MakePrivate() -> D {
+    // CHECK:STDERR: fail_import_overload_set_private_base.carbon:[[@LINE+5]]:21: error: cannot access private member `C` of type `Cpp.C` [ClassInvalidMemberAccess]
+    // CHECK:STDERR:     return {.base = C(1 as i32, 2 as i32)};
+    // CHECK:STDERR:                     ^~~~~~~~~~~~~~~~~~~~~
+    // CHECK:STDERR: fail_import_overload_set_private_base.carbon: note: declared here [ClassMemberDeclaration]
+    // CHECK:STDERR:
+    return {.base = C(1 as i32, 2 as i32)};
+  }
+
+  fn CallPrivate() {
+    // CHECK:STDERR: fail_import_overload_set_private_base.carbon:[[@LINE+5]]:5: error: cannot access private member `foo` of type `Cpp.C` [ClassInvalidMemberAccess]
+    // CHECK:STDERR:     foo(1 as i32, 2 as i32);
+    // CHECK:STDERR:     ^~~~~~~~~~~~~~~~~~~~~~~
+    // CHECK:STDERR: fail_import_overload_set_private_base.carbon: note: declared here [ClassMemberDeclaration]
+    // CHECK:STDERR:
+    foo(1 as i32, 2 as i32);
+  }
 }
 
 // ============================================================================
@@ -459,10 +518,24 @@ fn F() {
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- fail_todo_5891_import_overload_set_public.carbon
+// CHECK:STDOUT: --- import_overload_set_public.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
+// CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [concrete]
 // CHECK:STDOUT:   %C: type = class_type @C [concrete]
+// CHECK:STDOUT:   %.d40: type = cpp_overload_set_type @C__carbon_thunk [concrete]
+// CHECK:STDOUT:   %empty_struct.e73: %.d40 = struct_value () [concrete]
+// CHECK:STDOUT:   %ptr.d9e: type = ptr_type %C [concrete]
+// CHECK:STDOUT:   %C__carbon_thunk.type: type = fn_type @C__carbon_thunk [concrete]
+// CHECK:STDOUT:   %C__carbon_thunk: %C__carbon_thunk.type = struct_value () [concrete]
+// CHECK:STDOUT:   %.cd1: type = cpp_overload_set_type @C.foo [concrete]
+// CHECK:STDOUT:   %empty_struct.b85: %.cd1 = struct_value () [concrete]
+// CHECK:STDOUT:   %C.foo.type: type = fn_type @C.foo [concrete]
+// CHECK:STDOUT:   %C.foo: %C.foo.type = struct_value () [concrete]
+// CHECK:STDOUT:   %type_where: type = facet_type <type where .Self impls <CanAggregateDestroy>> [concrete]
+// CHECK:STDOUT:   %facet_value: %type_where = facet_value %C, () [concrete]
+// CHECK:STDOUT:   %AggregateT.as_type.as.Destroy.impl.Op.type.fc1: type = fn_type @AggregateT.as_type.as.Destroy.impl.Op, @AggregateT.as_type.as.Destroy.impl(%facet_value) [concrete]
+// CHECK:STDOUT:   %AggregateT.as_type.as.Destroy.impl.Op.6b9: %AggregateT.as_type.as.Destroy.impl.Op.type.fc1 = struct_value () [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -471,13 +544,37 @@ fn F() {
 // CHECK:STDOUT:     import Cpp//...
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %C.decl: type = class_decl @C [concrete = constants.%C] {} {}
+// CHECK:STDOUT:   %.40b: %.d40 = cpp_overload_set_value @C__carbon_thunk [concrete = constants.%empty_struct.e73]
+// CHECK:STDOUT:   %C__carbon_thunk.decl: %C__carbon_thunk.type = fn_decl @C__carbon_thunk [concrete = constants.%C__carbon_thunk] {
+// CHECK:STDOUT:     <elided>
+// CHECK:STDOUT:   } {
+// CHECK:STDOUT:     <elided>
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %.e4a: %.cd1 = cpp_overload_set_value @C.foo [concrete = constants.%empty_struct.b85]
+// CHECK:STDOUT:   %C.foo.decl: %C.foo.type = fn_decl @C.foo [concrete = constants.%C.foo] {} {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F() {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %Cpp.ref: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
-// CHECK:STDOUT:   %C.ref: type = name_ref C, imports.%C.decl [concrete = constants.%C]
-// CHECK:STDOUT:   %foo.ref: <error> = name_ref foo, <error> [concrete = <error>]
+// CHECK:STDOUT:   %Cpp.ref.loc8: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
+// CHECK:STDOUT:   %C.ref.loc8_6: type = name_ref C, imports.%C.decl [concrete = constants.%C]
+// CHECK:STDOUT:   %C.ref.loc8_8: %.d40 = name_ref C, imports.%.40b [concrete = constants.%empty_struct.e73]
+// CHECK:STDOUT:   %.loc8_11.1: ref %C = temporary_storage
+// CHECK:STDOUT:   %addr.loc8_11.1: %ptr.d9e = addr_of %.loc8_11.1
+// CHECK:STDOUT:   %C__carbon_thunk.call: init %empty_tuple.type = call imports.%C__carbon_thunk.decl(%addr.loc8_11.1)
+// CHECK:STDOUT:   %.loc8_11.2: init %C = in_place_init %C__carbon_thunk.call, %.loc8_11.1
+// CHECK:STDOUT:   %.loc8_11.3: ref %C = temporary %.loc8_11.1, %.loc8_11.2
+// CHECK:STDOUT:   %Cpp.ref.loc9: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
+// CHECK:STDOUT:   %C.ref.loc9: type = name_ref C, imports.%C.decl [concrete = constants.%C]
+// CHECK:STDOUT:   %foo.ref: %.cd1 = name_ref foo, imports.%.e4a [concrete = constants.%empty_struct.b85]
+// CHECK:STDOUT:   %C.foo.call: init %empty_tuple.type = call imports.%C.foo.decl()
+// CHECK:STDOUT:   %facet_value: %type_where = facet_value constants.%C, () [concrete = constants.%facet_value]
+// CHECK:STDOUT:   %.loc8_11.4: %type_where = converted constants.%C, %facet_value [concrete = constants.%facet_value]
+// CHECK:STDOUT:   %AggregateT.as_type.as.Destroy.impl.Op.bound: <bound method> = bound_method %.loc8_11.3, constants.%AggregateT.as_type.as.Destroy.impl.Op.6b9
+// CHECK:STDOUT:   <elided>
+// CHECK:STDOUT:   %bound_method: <bound method> = bound_method %.loc8_11.3, %AggregateT.as_type.as.Destroy.impl.Op.specific_fn
+// CHECK:STDOUT:   %addr.loc8_11.2: %ptr.d9e = addr_of %.loc8_11.3
+// CHECK:STDOUT:   %AggregateT.as_type.as.Destroy.impl.Op.call: init %empty_tuple.type = call %bound_method(%addr.loc8_11.2)
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

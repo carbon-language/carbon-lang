@@ -111,6 +111,11 @@ class InstallPaths {
   // The path to the root of LLVM runtime sources.
   auto llvm_runtime_srcs() const -> std::filesystem::path;
 
+  // The installation digest path.
+  //
+  // This file contains a digest of the installation.
+  auto digest_path() const -> std::filesystem::path;
+
  private:
   friend class InstallPathsTestPeer;
 

@@ -48,9 +48,10 @@ static auto IsCppClassType(Context& context, SemIR::InstId inst_id) -> bool {
     return false;
   }
 
-  const SemIR::Class& class_info = context.classes().Get(class_type->class_id);
-  return class_info.is_complete() &&
-         context.name_scopes().Get(class_info.scope_id).is_cpp_scope();
+  SemIR::NameScopeId class_scope_id =
+      context.classes().Get(class_type->class_id).scope_id;
+  return class_scope_id.has_value() &&
+         context.name_scopes().Get(class_scope_id).is_cpp_scope();
 }
 
 auto BuildUnaryOperator(Context& context, SemIR::LocId loc_id, Operator op,
@@ -64,7 +65,10 @@ auto BuildUnaryOperator(Context& context, SemIR::LocId loc_id, Operator op,
   if (IsCppClassType(context, operand_id)) {
     SemIR::InstId cpp_inst_id =
         LookupCppOperator(context, loc_id, op, {operand_id});
-    if (cpp_inst_id.has_value() && cpp_inst_id != SemIR::ErrorInst::InstId) {
+    if (cpp_inst_id.has_value()) {
+      if (cpp_inst_id == SemIR::ErrorInst::InstId) {
+        return SemIR::ErrorInst::InstId;
+      }
       return PerformCall(context, loc_id, cpp_inst_id, {operand_id});
     }
   }
@@ -98,7 +102,10 @@ auto BuildBinaryOperator(Context& context, SemIR::LocId loc_id, Operator op,
   if (IsCppClassType(context, lhs_id) || IsCppClassType(context, rhs_id)) {
     SemIR::InstId cpp_inst_id =
         LookupCppOperator(context, loc_id, op, {lhs_id, rhs_id});
-    if (cpp_inst_id.has_value() && cpp_inst_id != SemIR::ErrorInst::InstId) {
+    if (cpp_inst_id.has_value()) {
+      if (cpp_inst_id == SemIR::ErrorInst::InstId) {
+        return SemIR::ErrorInst::InstId;
+      }
       return PerformCall(context, loc_id, cpp_inst_id, {lhs_id, rhs_id});
     }
   }

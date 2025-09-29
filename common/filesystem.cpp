@@ -62,7 +62,10 @@ auto PathError::Print(llvm::raw_ostream& out) const -> void {
   // The `format_` member is a `StringLiteral` that is null terminated, so
   // `.data()` is safe here.
   // NOLINTNEXTLINE(bugprone-suspicious-stringview-data-usage)
-  out << llvm::formatv(format_.data(), path_, dir_fd_) << " failed: ";
+  out << llvm::formatv(format_.data(), path_,
+                       dir_fd_ == AT_FDCWD ? std::string("AT_FDCWD")
+                                           : std::to_string(dir_fd_))
+      << " failed: ";
   PrintErrorNumber(out, unix_errnum());
 }
 
