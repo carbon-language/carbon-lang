@@ -331,11 +331,11 @@ class Stringifier {
       some_where = true;
     }
     if (facet_type_info.builtin_constraint_mask.HasAnyOf(
-            SemIR::BuiltinConstraintMask::TypeCanAggregateDestroy)) {
+            SemIR::BuiltinConstraintMask::TypeCanDestroy)) {
       if (some_where) {
         step_stack_->PushString(" and");
       }
-      step_stack_->PushString(" .Self impls Core.CanAggregateDestroy");
+      step_stack_->PushString(" .Self impls Core.CanDestroy");
       some_where = true;
     }
     for (auto rewrite : llvm::reverse(facet_type_info.rewrite_constraints)) {

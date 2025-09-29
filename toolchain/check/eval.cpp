@@ -1646,7 +1646,7 @@ static auto MakeConstantForBuiltinCall(EvalContext& eval_context,
       CARBON_FATAL("Not a builtin function.");
 
     case SemIR::BuiltinFunctionKind::NoOp:
-    case SemIR::BuiltinFunctionKind::TypeAggregateDestroy: {
+    case SemIR::BuiltinFunctionKind::TypeDestroy: {
       // Return an empty tuple value.
       auto type_id = GetTupleType(eval_context.context(), {});
       return MakeConstantResult(
@@ -1656,11 +1656,11 @@ static auto MakeConstantForBuiltinCall(EvalContext& eval_context,
           phase);
     }
 
-    case SemIR::BuiltinFunctionKind::TypeCanAggregateDestroy: {
+    case SemIR::BuiltinFunctionKind::TypeCanDestroy: {
       CARBON_CHECK(arg_ids.empty());
       auto id = eval_context.facet_types().Add(
           {.builtin_constraint_mask =
-               SemIR::BuiltinConstraintMask::TypeCanAggregateDestroy});
+               SemIR::BuiltinConstraintMask::TypeCanDestroy});
       return MakeConstantResult(
           eval_context.context(),
           SemIR::FacetType{.type_id = SemIR::TypeType::TypeId,

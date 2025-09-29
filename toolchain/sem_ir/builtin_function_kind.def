@@ -126,8 +126,8 @@ CARBON_SEM_IR_BUILTIN_FUNCTION_KIND(BoolNeq)
 // Facet type combination.
 CARBON_SEM_IR_BUILTIN_FUNCTION_KIND(TypeAnd)
 
-// Primitive type destruction.
-CARBON_SEM_IR_BUILTIN_FUNCTION_KIND(TypeAggregateDestroy)
-CARBON_SEM_IR_BUILTIN_FUNCTION_KIND(TypeCanAggregateDestroy)
+// The blanket impl for `Destroy`.
+CARBON_SEM_IR_BUILTIN_FUNCTION_KIND(TypeDestroy)
+CARBON_SEM_IR_BUILTIN_FUNCTION_KIND(TypeCanDestroy)
 
 #undef CARBON_SEM_IR_BUILTIN_FUNCTION_KIND

@@ -6,9 +6,9 @@
 //
 // AUTOUPDATE
 // TIP: To test this file alone, run:
-// TIP:   bazel test //toolchain/testing:file_test --test_arg=--file_tests=toolchain/check/testdata/builtins/type/aggregate_destroy.carbon
+// TIP:   bazel test //toolchain/testing:file_test --test_arg=--file_tests=toolchain/check/testdata/builtins/type/destroy.carbon
 // TIP: To dump output, run:
-// TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/check/testdata/builtins/type/aggregate_destroy.carbon
+// TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/check/testdata/builtins/type/destroy.carbon
 
 // --- forall.carbon
 library "[[@TEST_NAME]]";
@@ -18,7 +18,7 @@ interface DestroyLike {
 }
 
 impl forall [T:! type] T as DestroyLike {
-  fn Op[addr self: Self*]() = "type.aggregate_destroy";
+  fn Op[addr self: Self*]() = "type.destroy";
 }
 
 var a: ();
@@ -29,20 +29,6 @@ fn F() {
   a.(DestroyLike.Op)();
   b.(DestroyLike.Op)();
   //@dump-sem-ir-end
-}
-
-// --- todo_fail_wrong_type.carbon
-library "[[@TEST_NAME]]";
-
-interface DestroyLike {
-  fn Op[addr self: Self*]();
-}
-
-class C {}
-
-impl C as DestroyLike {
-  // TODO: This should fail because it has the wrong type.
-  fn Op[addr self: Self*]() = "type.aggregate_destroy";
 }
 
 // CHECK:STDOUT: --- forall.carbon

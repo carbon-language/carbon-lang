@@ -609,18 +609,17 @@ constexpr BuiltinInfo BoolNeq = {"bool.neq",
 constexpr BuiltinInfo TypeAnd = {"type.and",
                                  ValidateSignature<auto(Type, Type)->Type>};
 
-// Destroys a primitive type. The argument must be destructible, which can be
-// checked with `type.can_aggregate_destroy`.
+// The implementation of `Destroy` for a type. The argument must be checked with
+// `type.can_destroy` first.
 // TODO: The argument should be `addr self: Self*`. Consider modifying
 // `ValidateSignature` to more fully enforce the structure.
-constexpr BuiltinInfo TypeAggregateDestroy = {
-    "type.aggregate_destroy",
-    ValidateSignature<auto(PointerTo<AnyType>)->NoReturn>};
+constexpr BuiltinInfo TypeDestroy = {
+    "type.destroy", ValidateSignature<auto(PointerTo<AnyType>)->NoReturn>};
 
 // Returns a facet type that's used to determine whether a type can use
-// `type.aggregate_destroy`.
-constexpr BuiltinInfo TypeCanAggregateDestroy = {
-    "type.can_aggregate_destroy", ValidateSignature<auto()->Type>};
+// `type.destroy`.
+constexpr BuiltinInfo TypeCanDestroy = {"type.can_destroy",
+                                        ValidateSignature<auto()->Type>};
 
 }  // namespace BuiltinFunctionInfo
 
@@ -734,7 +733,7 @@ auto BuiltinFunctionKind::IsCompTimeOnly(const File& sem_ir,
     case TypeAnd:
       return true;
 
-    case TypeCanAggregateDestroy:
+    case TypeCanDestroy:
       // Type queries must be compile-time.
       return true;
 
