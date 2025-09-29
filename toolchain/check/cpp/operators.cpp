@@ -158,12 +158,11 @@ static auto GetClangOperatorKind(Context& context, SemIR::LocId loc_id,
 
 auto LookupCppOperator(Context& context, SemIR::LocId loc_id, Operator op,
                        llvm::ArrayRef<SemIR::InstId> arg_ids) -> SemIR::InstId {
-  Diagnostics::AnnotationScope annotate_diagnostics(
-      &context.emitter(), [&](auto& builder) {
-        CARBON_DIAGNOSTIC(InCppOperatorLookup, Note,
-                          "in `Cpp` operator `{0}` lookup", std::string);
-        builder.Note(loc_id, InCppOperatorLookup, op.interface_name.str());
-      });
+  // Register an annotation scope to flush any Clang diagnostics when we return.
+  // This is important to ensure that Clang diagnostics are properly interleaved
+  // with Carbon diagnostics.
+  Diagnostics::AnnotationScope annotate_diagnostics(&context.emitter(),
+                                                    [](auto& /*builder*/) {});
 
   auto op_kind =
       GetClangOperatorKind(context, loc_id, op.interface_name, op.op_name);

@@ -462,10 +462,7 @@ fn F() {
   var c1: Cpp.C = Cpp.C.C();
 
   // Bitwise.
-  // CHECK:STDERR: fail_todo_import_unsupported_binary_operators.carbon:[[@LINE+11]]:3: error: semantics TODO: `Unsupported operator interface `LeftShiftAssignWith`` [SemanticsTodo]
-  // CHECK:STDERR:   c1 <<= 1;
-  // CHECK:STDERR:   ^~~~~~~~
-  // CHECK:STDERR: fail_todo_import_unsupported_binary_operators.carbon:[[@LINE+8]]:3: note: in `Cpp` operator `LeftShiftAssignWith` lookup [InCppOperatorLookup]
+  // CHECK:STDERR: fail_todo_import_unsupported_binary_operators.carbon:[[@LINE+8]]:3: error: semantics TODO: `Unsupported operator interface `LeftShiftAssignWith`` [SemanticsTodo]
   // CHECK:STDERR:   c1 <<= 1;
   // CHECK:STDERR:   ^~~~~~~~
   // CHECK:STDERR:
@@ -474,10 +471,7 @@ fn F() {
   // CHECK:STDERR:   ^~~~~~~~
   // CHECK:STDERR:
   c1 <<= 1;
-  // CHECK:STDERR: fail_todo_import_unsupported_binary_operators.carbon:[[@LINE+11]]:3: error: semantics TODO: `Unsupported operator interface `RightShiftAssignWith`` [SemanticsTodo]
-  // CHECK:STDERR:   c1 >>= 2;
-  // CHECK:STDERR:   ^~~~~~~~
-  // CHECK:STDERR: fail_todo_import_unsupported_binary_operators.carbon:[[@LINE+8]]:3: note: in `Cpp` operator `RightShiftAssignWith` lookup [InCppOperatorLookup]
+  // CHECK:STDERR: fail_todo_import_unsupported_binary_operators.carbon:[[@LINE+8]]:3: error: semantics TODO: `Unsupported operator interface `RightShiftAssignWith`` [SemanticsTodo]
   // CHECK:STDERR:   c1 >>= 2;
   // CHECK:STDERR:   ^~~~~~~~
   // CHECK:STDERR:
@@ -770,16 +764,13 @@ library "[[@TEST_NAME]]";
 import Cpp library "incomplete.h";
 
 fn F() {
-  // CHECK:STDERR: fail_import_incomplete_unary.carbon:[[@LINE+11]]:27: error: looking up a C++ operator with incomplete operand type `Cpp.Incomplete` [IncompleteOperandTypeInCppOperatorLookup]
+  // CHECK:STDERR: fail_import_incomplete_unary.carbon:[[@LINE+8]]:27: error: looking up a C++ operator with incomplete operand type `Cpp.Incomplete` [IncompleteOperandTypeInCppOperatorLookup]
   // CHECK:STDERR:   let result_unary: i32 = -*Cpp.CreateIncomplete();
   // CHECK:STDERR:                           ^~~~~~~~~~~~~~~~~~~~~~~~
   // CHECK:STDERR: fail_import_incomplete_unary.carbon:[[@LINE-6]]:10: in file included here [InCppInclude]
   // CHECK:STDERR: ./incomplete.h:2:7: note: class was forward declared here [ClassForwardDeclaredHere]
   // CHECK:STDERR: class Incomplete;
   // CHECK:STDERR:       ^
-  // CHECK:STDERR: fail_import_incomplete_unary.carbon:[[@LINE+4]]:27: note: in `Cpp` operator `Negate` lookup [InCppOperatorLookup]
-  // CHECK:STDERR:   let result_unary: i32 = -*Cpp.CreateIncomplete();
-  // CHECK:STDERR:                           ^~~~~~~~~~~~~~~~~~~~~~~~
   // CHECK:STDERR:
   let result_unary: i32 = -*Cpp.CreateIncomplete();
 }
@@ -792,16 +783,13 @@ import Cpp library "incomplete.h";
 
 fn F() {
   var complete: Cpp.Complete = Cpp.Complete.Complete();
-  // CHECK:STDERR: fail_import_incomplete_binary.carbon:[[@LINE+11]]:28: error: looking up a C++ operator with incomplete operand type `Cpp.Incomplete` [IncompleteOperandTypeInCppOperatorLookup]
+  // CHECK:STDERR: fail_import_incomplete_binary.carbon:[[@LINE+8]]:28: error: looking up a C++ operator with incomplete operand type `Cpp.Incomplete` [IncompleteOperandTypeInCppOperatorLookup]
   // CHECK:STDERR:   let result_binary: i32 = complete + *Cpp.CreateIncomplete();
   // CHECK:STDERR:                            ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
   // CHECK:STDERR: fail_import_incomplete_binary.carbon:[[@LINE-7]]:10: in file included here [InCppInclude]
   // CHECK:STDERR: ./incomplete.h:2:7: note: class was forward declared here [ClassForwardDeclaredHere]
   // CHECK:STDERR: class Incomplete;
   // CHECK:STDERR:       ^
-  // CHECK:STDERR: fail_import_incomplete_binary.carbon:[[@LINE+4]]:28: note: in `Cpp` operator `AddWith` lookup [InCppOperatorLookup]
-  // CHECK:STDERR:   let result_binary: i32 = complete + *Cpp.CreateIncomplete();
-  // CHECK:STDERR:                            ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
   // CHECK:STDERR:
   let result_binary: i32 = complete + *Cpp.CreateIncomplete();
 }
@@ -825,15 +813,12 @@ fn CreateIncomplete() -> Incomplete*;
 
 fn F() {
   var complete: Cpp.Complete = Cpp.Complete.Complete();
-  // CHECK:STDERR: fail_incomplete_operand_carbon_type.carbon:[[@LINE+10]]:21: error: looking up a C++ operator with incomplete operand type `Incomplete` [IncompleteOperandTypeInCppOperatorLookup]
+  // CHECK:STDERR: fail_incomplete_operand_carbon_type.carbon:[[@LINE+7]]:21: error: looking up a C++ operator with incomplete operand type `Incomplete` [IncompleteOperandTypeInCppOperatorLookup]
   // CHECK:STDERR:   let result: i32 = *CreateIncomplete() + complete;
   // CHECK:STDERR:                     ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
   // CHECK:STDERR: fail_incomplete_operand_carbon_type.carbon:[[@LINE-8]]:1: note: class was forward declared here [ClassForwardDeclaredHere]
   // CHECK:STDERR: class Incomplete;
   // CHECK:STDERR: ^~~~~~~~~~~~~~~~~
-  // CHECK:STDERR: fail_incomplete_operand_carbon_type.carbon:[[@LINE+4]]:21: note: in `Cpp` operator `AddWith` lookup [InCppOperatorLookup]
-  // CHECK:STDERR:   let result: i32 = *CreateIncomplete() + complete;
-  // CHECK:STDERR:                     ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
   // CHECK:STDERR:
   let result: i32 = *CreateIncomplete() + complete;
 }
@@ -858,13 +843,10 @@ library "[[@TEST_NAME]]";
 import Cpp library "unsupported_in_instantiation.h";
 
 fn F() {
-  // CHECK:STDERR: fail_import_unsupported_in_instantiation_unary.carbon:[[@LINE+10]]:21: error: semantics TODO: `class with virtual bases` [SemanticsTodo]
+  // CHECK:STDERR: fail_import_unsupported_in_instantiation_unary.carbon:[[@LINE+7]]:21: error: semantics TODO: `class with virtual bases` [SemanticsTodo]
   // CHECK:STDERR:   let result: i32 = -Cpp.unsupported;
   // CHECK:STDERR:                     ^~~~~~~~~~~~~~~~
-  // CHECK:STDERR: fail_import_unsupported_in_instantiation_unary.carbon:[[@LINE+7]]:21: note: while completing C++ type `Cpp.Unsupported` [InCppTypeCompletion]
-  // CHECK:STDERR:   let result: i32 = -Cpp.unsupported;
-  // CHECK:STDERR:                     ^~~~~~~~~~~~~~~~
-  // CHECK:STDERR: fail_import_unsupported_in_instantiation_unary.carbon:[[@LINE+4]]:21: note: in `Cpp` operator `Negate` lookup [InCppOperatorLookup]
+  // CHECK:STDERR: fail_import_unsupported_in_instantiation_unary.carbon:[[@LINE+4]]:21: note: while completing C++ type `Cpp.Unsupported` [InCppTypeCompletion]
   // CHECK:STDERR:   let result: i32 = -Cpp.unsupported;
   // CHECK:STDERR:                     ^~~~~~~~~~~~~~~~
   // CHECK:STDERR:
@@ -879,13 +861,10 @@ import Cpp library "unsupported_in_instantiation.h";
 
 fn F() {
   var supported: Cpp.Supported = Cpp.Supported.Supported();
-  // CHECK:STDERR: fail_import_unsupported_in_instantiation_binary.carbon:[[@LINE+10]]:21: error: semantics TODO: `class with virtual bases` [SemanticsTodo]
+  // CHECK:STDERR: fail_import_unsupported_in_instantiation_binary.carbon:[[@LINE+7]]:21: error: semantics TODO: `class with virtual bases` [SemanticsTodo]
   // CHECK:STDERR:   let result: i32 = supported + Cpp.unsupported;
   // CHECK:STDERR:                     ^~~~~~~~~~~~~~~~~~~~~~~~~~~
-  // CHECK:STDERR: fail_import_unsupported_in_instantiation_binary.carbon:[[@LINE+7]]:21: note: while completing C++ type `Cpp.Unsupported` [InCppTypeCompletion]
-  // CHECK:STDERR:   let result: i32 = supported + Cpp.unsupported;
-  // CHECK:STDERR:                     ^~~~~~~~~~~~~~~~~~~~~~~~~~~
-  // CHECK:STDERR: fail_import_unsupported_in_instantiation_binary.carbon:[[@LINE+4]]:21: note: in `Cpp` operator `AddWith` lookup [InCppOperatorLookup]
+  // CHECK:STDERR: fail_import_unsupported_in_instantiation_binary.carbon:[[@LINE+4]]:21: note: while completing C++ type `Cpp.Unsupported` [InCppTypeCompletion]
   // CHECK:STDERR:   let result: i32 = supported + Cpp.unsupported;
   // CHECK:STDERR:                     ^~~~~~~~~~~~~~~~~~~~~~~~~~~
   // CHECK:STDERR:
@@ -935,15 +914,12 @@ using X = B<A<int>>;
 ''';
 
 fn F(x: Cpp.X) -> i32 {
-  // CHECK:STDERR: fail_indirect_template_instantiation_error.carbon:[[@LINE+11]]:12: note: in instantiation of template class 'A<int>' requested here [CppInteropParseNote]
-  // CHECK:STDERR:    28 |   return x + x;
+  // CHECK:STDERR: fail_indirect_template_instantiation_error.carbon:[[@LINE+8]]:12: note: in instantiation of template class 'A<int>' requested here [CppInteropParseNote]
+  // CHECK:STDERR:    25 |   return x + x;
   // CHECK:STDERR:       |            ^
-  // CHECK:STDERR: fail_indirect_template_instantiation_error.carbon:[[@LINE+8]]:10: note: in `Cpp` operator `AddWith` lookup [InCppOperatorLookup]
-  // CHECK:STDERR:   return x + x;
-  // CHECK:STDERR:          ^~~~~
   // CHECK:STDERR:
   // CHECK:STDERR: fail_indirect_template_instantiation_error.carbon:[[@LINE+4]]:12: error: no matching function for call to '<C++ operator>' [CppInteropParseError]
-  // CHECK:STDERR:    28 |   return x + x;
+  // CHECK:STDERR:    25 |   return x + x;
   // CHECK:STDERR:       |            ^
   // CHECK:STDERR:
   return x + x;
