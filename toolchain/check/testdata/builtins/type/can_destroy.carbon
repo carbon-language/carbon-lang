@@ -58,6 +58,26 @@ fn G() {
   F(Incomplete);
 }
 
+// --- fail_abstract.carbon
+library "[[@TEST_NAME]]";
+
+fn CanDestroy() -> type = "type.can_destroy";
+
+fn F(T:! CanDestroy()) {}
+
+abstract class Abstract {}
+
+fn G() {
+  // CHECK:STDERR: fail_abstract.carbon:[[@LINE+7]]:3: error: cannot convert type `Abstract` into type implementing `type where .Self impls Core.CanDestroy` [ConversionFailureTypeToFacet]
+  // CHECK:STDERR:   F(Abstract);
+  // CHECK:STDERR:   ^~~~~~~~~~~
+  // CHECK:STDERR: fail_abstract.carbon:[[@LINE-8]]:6: note: initializing generic parameter `T` declared here [InitializingGenericParam]
+  // CHECK:STDERR: fn F(T:! CanDestroy()) {}
+  // CHECK:STDERR:      ^
+  // CHECK:STDERR:
+  F(Abstract);
+}
+
 // --- fail_impl.carbon
 library "[[@TEST_NAME]]";
 
