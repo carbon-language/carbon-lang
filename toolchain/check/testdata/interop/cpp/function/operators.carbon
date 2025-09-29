@@ -893,6 +893,63 @@ fn F() {
 }
 
 // ============================================================================
+// Indirect template instantiation
+// ============================================================================
+
+// --- indirect_template_instantiation.carbon
+
+library "[[@TEST_NAME]]";
+
+import Cpp inline '''
+template<typename T> struct B {};
+template<typename T> struct A {};
+
+using X = B<A<int>>;
+int operator+(X, X);
+''';
+
+fn F(x: Cpp.X) -> i32 {
+  //@dump-sem-ir-begin
+  return x + x;
+  //@dump-sem-ir-end
+}
+
+// ============================================================================
+// Indirect template instantiation error
+// ============================================================================
+
+// --- fail_indirect_template_instantiation_error.carbon
+
+library "[[@TEST_NAME]]";
+
+import Cpp inline '''
+template<typename T> struct B {};
+template<typename T> struct A {
+  // CHECK:STDERR: fail_indirect_template_instantiation_error.carbon:[[@LINE+3]]:19: error: type 'int' cannot be used prior to '::' because it has no members [CppInteropParseError]
+  // CHECK:STDERR:    10 |   friend typename T::error operator+(B<A>, B<A>);
+  // CHECK:STDERR:       |                   ^
+  friend typename T::error operator+(B<A>, B<A>);
+};
+
+using X = B<A<int>>;
+''';
+
+fn F(x: Cpp.X) -> i32 {
+  // CHECK:STDERR: fail_indirect_template_instantiation_error.carbon:[[@LINE+11]]:12: note: in instantiation of template class 'A<int>' requested here [CppInteropParseNote]
+  // CHECK:STDERR:    28 |   return x + x;
+  // CHECK:STDERR:       |            ^
+  // CHECK:STDERR: fail_indirect_template_instantiation_error.carbon:[[@LINE+8]]:10: note: in `Cpp` operator `AddWith` lookup [InCppOperatorLookup]
+  // CHECK:STDERR:   return x + x;
+  // CHECK:STDERR:          ^~~~~
+  // CHECK:STDERR:
+  // CHECK:STDERR: fail_indirect_template_instantiation_error.carbon:[[@LINE+4]]:12: error: no matching function for call to '<C++ operator>' [CppInteropParseError]
+  // CHECK:STDERR:    28 |   return x + x;
+  // CHECK:STDERR:       |            ^
+  // CHECK:STDERR:
+  return x + x;
+}
+
+// ============================================================================
 // Operator overloading
 // ============================================================================
 
@@ -912,7 +969,9 @@ import Cpp library "overloading.h";
 fn F() {
   let c1: Cpp.C = Cpp.C.C();
   let c2: Cpp.C = Cpp.C.C();
+  //@dump-sem-ir-begin
   let c3: Cpp.C = c1 + c2;
+  //@dump-sem-ir-end
 }
 
 // CHECK:STDOUT: --- import_unary_operators.carbon
@@ -2880,6 +2939,98 @@ fn F() {
 // CHECK:STDOUT:   %bound_method.loc8: <bound method> = bound_method %c1.var, %AggregateT.as_type.as.Destroy.impl.Op.specific_fn.3
 // CHECK:STDOUT:   %addr.loc8_3: %ptr.d9e = addr_of %c1.var
 // CHECK:STDOUT:   %AggregateT.as_type.as.Destroy.impl.Op.call.loc8: init %empty_tuple.type = call %bound_method.loc8(%addr.loc8_3)
+// CHECK:STDOUT:   <elided>
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: --- indirect_template_instantiation.carbon
+// CHECK:STDOUT:
+// CHECK:STDOUT: constants {
+// CHECK:STDOUT:   %B: type = class_type @B [concrete]
+// CHECK:STDOUT:   %int_32: Core.IntLiteral = int_value 32 [concrete]
+// CHECK:STDOUT:   %i32: type = class_type @Int, @Int(%int_32) [concrete]
+// CHECK:STDOUT:   %ptr.a04: type = ptr_type %B [concrete]
+// CHECK:STDOUT:   %operator+__carbon_thunk.type: type = fn_type @operator+__carbon_thunk [concrete]
+// CHECK:STDOUT:   %operator+__carbon_thunk: %operator+__carbon_thunk.type = struct_value () [concrete]
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: imports {
+// CHECK:STDOUT:   %operator+__carbon_thunk.decl: %operator+__carbon_thunk.type = fn_decl @operator+__carbon_thunk [concrete = constants.%operator+__carbon_thunk] {
+// CHECK:STDOUT:     <elided>
+// CHECK:STDOUT:   } {
+// CHECK:STDOUT:     <elided>
+// CHECK:STDOUT:   }
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: fn @F(%x.param: %B) -> %i32 {
+// CHECK:STDOUT: !entry:
+// CHECK:STDOUT:   %x.ref.loc14_10: %B = name_ref x, %x
+// CHECK:STDOUT:   %x.ref.loc14_14: %B = name_ref x, %x
+// CHECK:STDOUT:   %.loc14_10: ref %B = value_as_ref %x.ref.loc14_10
+// CHECK:STDOUT:   %addr.loc14_12.1: %ptr.a04 = addr_of %.loc14_10
+// CHECK:STDOUT:   %.loc14_14: ref %B = value_as_ref %x.ref.loc14_14
+// CHECK:STDOUT:   %addr.loc14_12.2: %ptr.a04 = addr_of %.loc14_14
+// CHECK:STDOUT:   %operator+__carbon_thunk.call: init %i32 = call imports.%operator+__carbon_thunk.decl(%addr.loc14_12.1, %addr.loc14_12.2)
+// CHECK:STDOUT:   return %operator+__carbon_thunk.call to %return
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: --- import_overloading.carbon
+// CHECK:STDOUT:
+// CHECK:STDOUT: constants {
+// CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [concrete]
+// CHECK:STDOUT:   %C: type = class_type @C [concrete]
+// CHECK:STDOUT:   %pattern_type.217: type = pattern_type %C [concrete]
+// CHECK:STDOUT:   %ptr.d9e: type = ptr_type %C [concrete]
+// CHECK:STDOUT:   %operator+__carbon_thunk.type: type = fn_type @operator+__carbon_thunk [concrete]
+// CHECK:STDOUT:   %operator+__carbon_thunk: %operator+__carbon_thunk.type = struct_value () [concrete]
+// CHECK:STDOUT:   %type_where: type = facet_type <type where .Self impls <CanAggregateDestroy>> [concrete]
+// CHECK:STDOUT:   %facet_value: %type_where = facet_value %C, () [concrete]
+// CHECK:STDOUT:   %AggregateT.as_type.as.Destroy.impl.Op.type.fc1: type = fn_type @AggregateT.as_type.as.Destroy.impl.Op, @AggregateT.as_type.as.Destroy.impl(%facet_value) [concrete]
+// CHECK:STDOUT:   %AggregateT.as_type.as.Destroy.impl.Op.6b9: %AggregateT.as_type.as.Destroy.impl.Op.type.fc1 = struct_value () [concrete]
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: imports {
+// CHECK:STDOUT:   %Cpp: <namespace> = namespace file.%Cpp.import_cpp, [concrete] {
+// CHECK:STDOUT:     .C = %C.decl
+// CHECK:STDOUT:     import Cpp//...
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %C.decl: type = class_decl @C [concrete = constants.%C] {} {}
+// CHECK:STDOUT:   %operator+__carbon_thunk.decl: %operator+__carbon_thunk.type = fn_decl @operator+__carbon_thunk [concrete = constants.%operator+__carbon_thunk] {
+// CHECK:STDOUT:     <elided>
+// CHECK:STDOUT:   } {
+// CHECK:STDOUT:     <elided>
+// CHECK:STDOUT:   }
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: fn @F() {
+// CHECK:STDOUT: !entry:
+// CHECK:STDOUT:   <elided>
+// CHECK:STDOUT:   name_binding_decl {
+// CHECK:STDOUT:     %c3.patt: %pattern_type.217 = binding_pattern c3 [concrete]
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %c1.ref: %C = name_ref c1, %c1
+// CHECK:STDOUT:   %c2.ref: %C = name_ref c2, %c2
+// CHECK:STDOUT:   %.loc10_22.1: ref %C = temporary_storage
+// CHECK:STDOUT:   %.loc10_19: ref %C = value_as_ref %c1.ref
+// CHECK:STDOUT:   %addr.loc10_22.1: %ptr.d9e = addr_of %.loc10_19
+// CHECK:STDOUT:   %.loc10_24: ref %C = value_as_ref %c2.ref
+// CHECK:STDOUT:   %addr.loc10_22.2: %ptr.d9e = addr_of %.loc10_24
+// CHECK:STDOUT:   %addr.loc10_22.3: %ptr.d9e = addr_of %.loc10_22.1
+// CHECK:STDOUT:   %operator+__carbon_thunk.call: init %empty_tuple.type = call imports.%operator+__carbon_thunk.decl(%addr.loc10_22.1, %addr.loc10_22.2, %addr.loc10_22.3)
+// CHECK:STDOUT:   %.loc10_22.2: init %C = in_place_init %operator+__carbon_thunk.call, %.loc10_22.1
+// CHECK:STDOUT:   %.loc10_14: type = splice_block %C.ref.loc10 [concrete = constants.%C] {
+// CHECK:STDOUT:     %Cpp.ref.loc10: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
+// CHECK:STDOUT:     %C.ref.loc10: type = name_ref C, imports.%C.decl [concrete = constants.%C]
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %.loc10_22.3: ref %C = temporary %.loc10_22.1, %.loc10_22.2
+// CHECK:STDOUT:   %.loc10_22.4: %C = bind_value %.loc10_22.3
+// CHECK:STDOUT:   %c3: %C = bind_name c3, %.loc10_22.4
+// CHECK:STDOUT:   %facet_value.loc10: %type_where = facet_value constants.%C, () [concrete = constants.%facet_value]
+// CHECK:STDOUT:   %.loc10_22.5: %type_where = converted constants.%C, %facet_value.loc10 [concrete = constants.%facet_value]
+// CHECK:STDOUT:   %AggregateT.as_type.as.Destroy.impl.Op.bound.loc10: <bound method> = bound_method %.loc10_22.3, constants.%AggregateT.as_type.as.Destroy.impl.Op.6b9
+// CHECK:STDOUT:   <elided>
+// CHECK:STDOUT:   %bound_method.loc10: <bound method> = bound_method %.loc10_22.3, %AggregateT.as_type.as.Destroy.impl.Op.specific_fn.1
+// CHECK:STDOUT:   %addr.loc10_22.4: %ptr.d9e = addr_of %.loc10_22.3
+// CHECK:STDOUT:   %AggregateT.as_type.as.Destroy.impl.Op.call.loc10: init %empty_tuple.type = call %bound_method.loc10(%addr.loc10_22.4)
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
