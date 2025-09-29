@@ -550,10 +550,12 @@ static auto TypeCanDestroy(Context& context,
   CARBON_KIND_SWITCH(inst) {
     case CARBON_KIND(SemIR::ClassType class_type): {
       auto class_info = context.classes().Get(class_type.class_id);
-      // Incomplete classes can't be destroyed.
+      // Incomplete and abstract classes can't be destroyed.
       // TODO: Return false if the object repr doesn't impl `Destroy`.
       // TODO: Return false for C++ types that lack a destructor.
-      return class_info.is_complete();
+      return class_info.is_complete() &&
+             class_info.inheritance_kind !=
+                 SemIR::Class::InheritanceKind::Abstract;
     }
     case SemIR::ArrayType::Kind:
     case SemIR::ConstType::Kind:
