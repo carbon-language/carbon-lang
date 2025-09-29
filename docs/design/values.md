@@ -931,7 +931,7 @@ of that conversion.
 
 #### Category conversions
 
-_Form composition_ converts a composite form with consistent category and phase
+_Form composition_ converts a composite form with consistent category
 to a primitive form as follows (where `min` as applied to phases uses the
 ordering "runtime" < "symbolic" < "template"):
 

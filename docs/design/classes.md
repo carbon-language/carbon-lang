@@ -606,7 +606,9 @@ field of the new object is initialized from the corresponding element of the
 result, in the new object's field order. However, in some cases evaluation of
 the initializer can directly initialize fields on the left-hand side, without
 any intervening conversions. When that happens, the order of initialization of
-those fields is determined by the evaluation order of the initializer. See
+those fields is determined by the evaluation order of the initializer, and
+happens before initializing the fields of the new object that are not
+initialized directly. See
 [here](values.md#type-conversions) for details.
 
 **Open question:** What operations and in what order happen for assignment and
