@@ -25,6 +25,7 @@ static auto GetOperatorOpFunction(Context& context, SemIR::LocId loc_id,
   auto implicit_loc_id = context.insts().GetLocIdForDesugaring(loc_id);
 
   // Look up the interface, and pass it any generic arguments.
+  // TODO: Improve diagnostics when the found `interface_id` isn't callable.
   auto interface_id =
       LookupNameInCore(context, implicit_loc_id, op.interface_name);
   if (!op.interface_args_ref.empty()) {
@@ -58,6 +59,11 @@ auto BuildUnaryOperator(Context& context, SemIR::LocId loc_id, Operator op,
                         SemIR::InstId operand_id,
                         MakeDiagnosticBuilderFn missing_impl_diagnoser)
     -> SemIR::InstId {
+  if (operand_id == SemIR::ErrorInst::InstId) {
+    // Exit early for errors, which prevent forming an `Op` function.
+    return SemIR::ErrorInst::InstId;
+  }
+
   // For unary operators with a C++ class as the operand, try to import and call
   // the C++ operator.
   // TODO: Change impl lookup instead. See
@@ -91,6 +97,11 @@ auto BuildBinaryOperator(Context& context, SemIR::LocId loc_id, Operator op,
                          SemIR::InstId lhs_id, SemIR::InstId rhs_id,
                          MakeDiagnosticBuilderFn missing_impl_diagnoser)
     -> SemIR::InstId {
+  if (lhs_id == SemIR::ErrorInst::InstId) {
+    // Exit early for errors, which prevent forming an `Op` function.
+    return SemIR::ErrorInst::InstId;
+  }
+
   // For binary operators with a C++ class as at least one of the operands, try
   // to import and call the C++ operator.
   // TODO: Instead of hooking this here, change impl lookup, so that a generic

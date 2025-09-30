@@ -319,6 +319,16 @@ auto ToolchainFileTest::DoExtraCheckReplacements(std::string& check_line) const
         {{data_->installation.core_package().native(), "{{.*}}"}}, &check_line);
     if (component_ == "check") {
       DoClangASTCheckReplacements(check_line);
+
+      // Reduce instruction numbering sensitivity; this is brittle for
+      // instruction edits including adding/removing singleton instructions.
+      static RE2 inst_re(R"((import_ref [^,]*, inst)\d+)");
+      RE2::Replace(&check_line, inst_re, R"(\1{{\\d+}})");
+
+      // Reduce location sensitivity in imports referring to `Core`; this is
+      // brittle for small edits, including comment changes.
+      static RE2 core_loc_re(R"((import_ref Core//[^,]*, loc)\d+_\d+)");
+      RE2::Replace(&check_line, core_loc_re, R"(\1{{\\d+_\\d+}})");
     }
   } else {
     FileTestBase::DoExtraCheckReplacements(check_line);

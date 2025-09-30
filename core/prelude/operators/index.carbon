@@ -4,6 +4,7 @@
 
 package Core library "prelude/operators/index";
 
-interface IndexWith(SubscriptType:! type, ElementType:! type) {
+interface IndexWith(SubscriptType:! type) {
+  let ElementType:! type;
   fn At[self: Self](subscript: SubscriptType) -> ElementType;
 }
