@@ -127,14 +127,14 @@ static auto IsNonLinkCommand(llvm::ArrayRef<llvm::StringRef> args) -> bool {
 }
 
 auto ClangRunner::RunWithPrebuiltRuntimes(llvm::ArrayRef<llvm::StringRef> args,
-                                      Runtimes& prebuilt_runtimes)
+                                          Runtimes& prebuilt_runtimes)
     -> ErrorOr<bool> {
   // Check the args to see if we have a known target-independent command. If so,
   // directly dispatch it to avoid the cost of building the target resource
   // directory.
   // TODO: Maybe handle response file expansion similar to the Clang CLI?
   if (args.empty() || args[0].starts_with("-cc1") || IsNonLinkCommand(args)) {
-    return RunNoRuntimes(args);
+    return RunWithNoRuntimes(args);
   }
 
   std::string target = ComputeClangTarget(args);
@@ -153,7 +153,7 @@ auto ClangRunner::Run(llvm::ArrayRef<llvm::StringRef> args,
   // directory.
   // TODO: Maybe handle response file expansion similar to the Clang CLI?
   if (args.empty() || args[0].starts_with("-cc1") || IsNonLinkCommand(args)) {
-    return RunNoRuntimes(args);
+    return RunWithNoRuntimes(args);
   }
 
   std::string target = ComputeClangTarget(args);
@@ -185,7 +185,8 @@ auto ClangRunner::Run(llvm::ArrayRef<llvm::StringRef> args,
   return RunInternal(args, target, resource_dir_path.native());
 }
 
-auto ClangRunner::RunNoRuntimes(llvm::ArrayRef<llvm::StringRef> args) -> bool {
+auto ClangRunner::RunWithNoRuntimes(llvm::ArrayRef<llvm::StringRef> args)
+    -> bool {
   std::string target = ComputeClangTarget(args);
   return RunInternal(args, target, std::nullopt);
 }
@@ -528,7 +529,7 @@ auto ClangRunner::BuildCrtFile(llvm::StringRef target, llvm::StringRef src_file,
   CARBON_VLOG("Building `{0}' from `{1}`...\n", out_path, src_path);
 
   std::string target_arg = llvm::formatv("--target={0}", target).str();
-  CARBON_CHECK(RunNoRuntimes({
+  CARBON_CHECK(RunWithNoRuntimes({
       "-no-canonical-prefixes",
       target_arg,
       "-DCRT_HAS_INITFINI_ARRAY",
@@ -607,7 +608,7 @@ auto ClangRunner::BuildBuiltinsFile(llvm::StringRef target,
   CARBON_VLOG("Building `{0}' from `{1}`...\n", out_path, src_path);
 
   std::string target_arg = llvm::formatv("--target={0}", target).str();
-  CARBON_CHECK(RunNoRuntimes({
+  CARBON_CHECK(RunWithNoRuntimes({
       "-no-canonical-prefixes",
       target_arg,
       "-O3",

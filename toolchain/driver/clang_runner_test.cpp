@@ -75,7 +75,7 @@ TEST_F(ClangRunnerTest, Version) {
   std::string out;
   std::string err;
   EXPECT_TRUE(Testing::CallWithCapturedOutput(
-      out, err, [&] { return runner.RunNoRuntimes({"--version"}); }));
+      out, err, [&] { return runner.RunWithNoRuntimes({"--version"}); }));
   // The arguments to Clang should be part of the verbose log.
   EXPECT_THAT(test_os.TakeStr(), HasSubstr("--version"));
 
@@ -106,7 +106,7 @@ TEST_F(ClangRunnerTest, DashC) {
   EXPECT_TRUE(Testing::CallWithCapturedOutput(
       out, err,
       [&] {
-        return runner.RunNoRuntimes(
+        return runner.RunWithNoRuntimes(
             {"-c", test_file.string(), "-o", test_output.string()});
       }))
       << "Verbose output from runner:\n"
@@ -135,7 +135,7 @@ TEST_F(ClangRunnerTest, BuitinHeaders) {
   EXPECT_TRUE(Testing::CallWithCapturedOutput(
       out, err,
       [&] {
-        return runner.RunNoRuntimes(
+        return runner.RunWithNoRuntimes(
             {"-c", test_file.string(), "-o", test_output.string()});
       }))
       << "Verbose output from runner:\n"
@@ -159,12 +159,12 @@ TEST_F(ClangRunnerTest, CompileMultipleFiles) {
     ClangRunner runner(&install_paths_, vfs_, &verbose_out);
     std::string out;
     std::string err;
-    EXPECT_TRUE(Testing::CallWithCapturedOutput(out, err,
-                                                [&] {
-                                                  return runner.RunNoRuntimes(
-                                                      {"-c", file.string(),
-                                                       "-o", output.string()});
-                                                }))
+    EXPECT_TRUE(Testing::CallWithCapturedOutput(
+        out, err,
+        [&] {
+          return runner.RunWithNoRuntimes(
+              {"-c", file.string(), "-o", output.string()});
+        }))
         << "Verbose output from runner:\n"
         << verbose_out.TakeStr() << "\n";
     verbose_out.clear();
@@ -279,7 +279,7 @@ TEST_F(ClangRunnerTest, LinkCommandEcho) {
         // we're just getting the echo-ed output back. For this to actually
         // link, we'd need to have the target-dependent resources, but those are
         // expensive to build so we only want to test them once (above).
-        return runner.RunNoRuntimes(
+        return runner.RunWithNoRuntimes(
             {"-###", "-o", "binary", foo_file.string(), bar_file.string()});
       }))
       << "Verbose output from runner:\n"

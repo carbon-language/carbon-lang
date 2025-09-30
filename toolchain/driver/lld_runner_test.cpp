@@ -92,7 +92,7 @@ static auto CompileTwoSources(const InstallPaths& install_paths,
   CARBON_CHECK(Testing::CallWithCapturedOutput(
                    out, err,
                    [&] {
-                     auto run_result = clang.RunNoRuntimes(
+                     auto run_result = clang.RunWithNoRuntimes(
                          {target_arg, "-fPIE", "-c", test_a_file.string(), "-o",
                           test_a_output.string()});
                      return run_result;
@@ -104,7 +104,7 @@ static auto CompileTwoSources(const InstallPaths& install_paths,
   CARBON_CHECK(Testing::CallWithCapturedOutput(
                    out, err,
                    [&] {
-                     auto run_result = clang.RunNoRuntimes(
+                     auto run_result = clang.RunWithNoRuntimes(
                          {target_arg, "-fPIE", "-c", test_b_file.string(), "-o",
                           test_b_output.string()});
                      return run_result;

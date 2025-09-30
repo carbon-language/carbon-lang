@@ -85,8 +85,8 @@ class ClangRunner : ToolRunnerBase {
   //
   // Similar to `Run`, but requires and uses pre-built runtimes rather than a
   // cache or building them on demand.
-  auto RunPrebuiltRuntimes(llvm::ArrayRef<llvm::StringRef> args,
-                           Runtimes& prebuilt_runtimes) -> ErrorOr<bool>;
+  auto RunWithPrebuiltRuntimes(llvm::ArrayRef<llvm::StringRef> args,
+                               Runtimes& prebuilt_runtimes) -> ErrorOr<bool>;
 
   // Run Clang with the provided arguments and without any target runtimes.
   //
@@ -97,7 +97,7 @@ class ClangRunner : ToolRunnerBase {
   //
   // This function simply returns true or false depending on whether Clang runs
   // successfully, as it should display any needed error messages.
-  auto RunNoRuntimes(llvm::ArrayRef<llvm::StringRef> args) -> bool;
+  auto RunWithNoRuntimes(llvm::ArrayRef<llvm::StringRef> args) -> bool;
 
   // Builds the target-specific resource directory for Clang.
   //
