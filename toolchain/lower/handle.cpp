@@ -124,11 +124,6 @@ auto HandleInst(FunctionContext& context, SemIR::InstId inst_id,
   context.SetLocal(inst_id, context.GetValue(inst.function_decl_id));
 }
 
-auto HandleInst(FunctionContext& /*context*/, SemIR::InstId /*inst_id*/,
-                SemIR::CppOverloadSetValue /*inst*/) -> void {
-  // Lowered as an empty struct value.
-}
-
 auto HandleInst(FunctionContext& context, SemIR::InstId /*inst_id*/,
                 SemIR::Branch inst) -> void {
   // Opportunistically avoid creating a BasicBlock that contains just a branch.

@@ -819,7 +819,7 @@ struct CppOverloadSetValue {
   static constexpr auto Kind =
       InstKind::CppOverloadSetValue.Define<Parse::NodeId>(
           {.ir_name = "cpp_overload_set_value",
-           .constant_kind = InstConstantKind::WheneverPossible});
+           .constant_kind = InstConstantKind::Always});
 
   TypeId type_id;
   CppOverloadSetId overload_set_id;
